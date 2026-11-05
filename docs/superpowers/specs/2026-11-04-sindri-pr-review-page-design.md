@@ -9,7 +9,7 @@ repos: [jthorare/agentic-workflow]
 
 # Sindri's PR review page, configured per project, mapped against the design docs
 
-**Status:** draft for the owner, revision 3 (after /autoplan rounds 1 and 2, two rounds of context and ideas section reviews, and the owner's answers of 2026-11-04) · **Date:** 2026-11-04 · **Lane:** ui (this spec), with context (§5, the library's store) and ideas (§4, the convention and the skills) · **Builds on:** the Projects page spec `2026-10-29-sindri-projects-page-design.md`, the owned index spec `2026-10-27-sindri-owned-index-design.md`, the PR babysitter spec `2026-10-15-sindri-pr-babysitter-docs-sync-design.md` with `docs/csharp/sindri-pr.md` and `docs/csharp/forge.md`, the pages and actions spec `2026-10-29-sindri-pages-actions-design.md` (profile entries saved with one-click approval), `docs/csharp/sindri-profile.md` · **Next:** /autoplan round 3, meta's UX check, the owner's read; then /specToProvenPR takes §12's phases.
+**Status:** draft for the owner, revision 4 (after /autoplan rounds 1 to 3, two rounds of context and ideas section reviews, and the owner's answers of 2026-11-04) · **Date:** 2026-11-04 · **Lane:** ui (this spec), with context (§5, the library's store) and ideas (§4, the convention and the skills) · **Builds on:** the Projects page spec `2026-10-29-sindri-projects-page-design.md`, the owned index spec `2026-10-27-sindri-owned-index-design.md`, the PR babysitter spec `2026-10-15-sindri-pr-babysitter-docs-sync-design.md` with `docs/csharp/sindri-pr.md` and `docs/csharp/forge.md`, the pages and actions spec `2026-10-29-sindri-pages-actions-design.md` (profile entries saved with one-click approval), `docs/csharp/sindri-profile.md` · **Next:** meta's UX check, the owner's read; then /specToProvenPR takes §12's phases.
 
 Every file path below is one the author or a reviewing lane opened on main (94ff1714e, rechecked at 89a4d4b). Every command, route, event, key and type is marked **existing** or **new**. This file is written in the convention §4 defines, so the first index run has a real document to itemize.
 
@@ -106,7 +106,7 @@ What exists today (checked on main 94ff1714e):
 - **Counts the app keeps** (a `review.opened` event per page open, plus the existing `review.fix-sent` and `review.posted`): PRs opened in Reviews against PRs reviewed in the window, the share of opened PRs with a resolved claim, fix tasks sent and closed, reviews posted (release 2). `sindri review stats [--since D]` (new) prints them.
 - **Trial.** Two weeks, starting once 5 open PRs in this repo carry `Covers:` (not on the release date), with the owner reviewing this repo's PRs from Reviews.
 - **Target.** For PRs with `Covers:`, the owner never opens the design doc by hand to find the phase (their word at the end, against the baseline). At least 80% of required checks are decided by Sindri, not by a manual tick, and the settings must hold at least one `covers:` or `ci:` check besides `changedWith:`.
-- **Stop line.** If fewer than half of the PRs the owner reviewed in the trial were opened in Reviews, Ph8 and Ph9 wait, and the owner decides what changes.
+- **Stop line.** The denominator is the PRs on the owner's list (authored or requested) that merged or got a review in the trial, from stored PR records; the numerator is those opened in Reviews (`review.opened`). `review stats` prints both. If fewer than half were opened in Reviews, Ph8 and Ph9 wait, and the owner decides what changes.
 
 **Non-goals**
 - Merging from the page. The babysitter's `merge` verb stays where it is.
@@ -161,8 +161,8 @@ status: draft                     # required: draft | review | approved | buildi
 project: prj_01J...               # optional: a Sindri project id, or linear:project/<id>
 repos: [acme/harbor-web]          # optional: owner/name; exactly one decides who may read it (§5.4)
 issues: [412, 415, ENG-12]       # optional: GitHub issue numbers (plain numbers, so Obsidian's Properties editor keeps them) or Linear keys (^[A-Z][A-Z0-9]{0,9}-\d+$); anything else is SND-LIB-010
-supersedes: harbor-booking-v1     # optional: a doc id in the same scope
-parent: harbor-booking-plan       # optional: the doc this one belongs to
+supersedes: harbor-booking-v1     # optional: a doc id in the same scope, or a full ref (doc:<root>[/<slug>]/<id>) for another scope
+parent: harbor-booking-plan       # optional: the doc this one belongs to; same rule (a stage map names its repo spec as doc:repo:<name>/<id>)
 generated: write_packet.py        # only on generated files, with source-sha256 (below)
 source-sha256: 3f2a...
 ---
@@ -217,7 +217,7 @@ A doc with errors other than `015` is stored with them and without items, so it 
 |---|---|
 | officeHours | Front matter on `plan.md` (kind `plan`) and on the domain docs (`product`, `engineering`, `design`, `tasks`, each with `parent`). Ids unchanged. The doc id is the folder slug. **A rerun on the same slug** writes the new folder's docs with `supersedes: <old id>` and a numeric suffix on the id (`harbor-booking-2`); it never writes into the old folder, and the old doc reads as superseded through that link. `TASKS.md`'s per-task `---` key blocks become `- reqs:` / `- depends:` list items under each `## TASK-n` heading (archReview, planDevexReview, productReview and dark-factory's check 7 read TASKS.md as prose, so the move is safe; dark-factory's wording is updated in the same PR) |
 | system-design | `write_packet.py` also writes `doc.md`. Its front matter has `generated: write_packet.py`, the `source-sha256` of `packet.json`, and an id from `packet.json`'s slug (never the title). Its items are generated from the packet: sections, a `Ph<n>` per PR card (no leading zeros), a `REQ-<n>` per EARS criterion, a `TP-<n>` per card test row |
-| specToProvenPR | `stages.md` gets front matter (kind `stages`, `parent` = the spec's doc id) and a `Ph<n>` heading per stage. The verification plan gets front matter, and its journey rows become `TP-<n>` with a `verifies` cell. Before `gh pr create`, it runs `sindri library validate --pr-body <body.md>` and fixes what it finds |
+| specToProvenPR | `stages.md` gets front matter (kind `stages`, `parent: doc:repo:<name>/<spec id>`, the full ref, since the spec lives in the repo and the stage map under `~/.agentic-workflow`) and a `Ph<n>` heading per stage. The verification plan gets front matter, and its journey rows become `TP-<n>` with a `verifies` cell. Before `gh pr create`, it runs `sindri library validate --pr-body <body.md>` and fixes what it finds |
 | `_shared/pr-body.md` | A `Covers:` line under Summary, e.g. `Covers: harbor-booking-tdd#Ph2, harbor-booking-tdd#REQ-E3` |
 
 Each skill runs `sindri library validate "$OUT" --json` as its last step. When `sindri` isn't on PATH, or has no `library` verb yet (before Ph5), it prints one line, "Skipped the design-doc check: sindri library isn't installed", and goes on. Front matter at the top of a plan file is new to the skills that read plans (archReview, planDesignReview, planDevexReview, productReview, autoplan); Ph4a runs each once on a fixture plan with front matter and checks its review still names the plan's sections.
@@ -231,8 +231,9 @@ Each skill runs `sindri library validate "$OUT" --json` as its last step. When `
 ### 4.4 Mapping a PR to items
 
 1. **Claimed**: the `Covers:` refs, resolved **when read**, so a PR synced before its doc, or a doc that renames an item, is right on the next read.
-   - **Where a short ref looks** (`<doc id>#<item>` in a PR body): the PR repo's own root (`repo:<name>`), then the `aw` root under that repo's slug, then vault docs whose `repos:` names the PR's repo. Two matches at the same step is `SND-LIB-021` "ambiguous; use the full ref".
-   - **A doc this PR adds or edits**: when the PR's changed files hold a front-matter `.md` with that doc id, the ref is checked against that file as of the head (parsed from the forge's file content) and shows "in this PR".
+   - **Where a short ref looks** (`<doc id>#<item>` in a PR body): the PR repo's own root (`repo:<name>`), then `aw` and vault docs whose `repos:` names the PR's repo (matched by front matter, never by the state folder's name, which can differ from the repo's: `joi-fairshare-agentic-workflow` vs `jthorare/agentic-workflow`). The skills write `repos:` from the repo they run in. Two matches at the same step is `SND-LIB-022` "ambiguous; use the full ref".
+   - **Grammar**: one line `Covers: <ref>, <ref>…` (case-insensitive key, refs may sit in backticks, nothing after the last ref), or `Covers: none (<reason>)`, which passes `covers: true` as "claims no design doc: <reason>". A second `Covers:` line is `SND-LIB-021`.
+   - **A doc this PR adds or edits**: when the PR's changed files hold a front-matter `.md` with that doc id, the ref is checked against that file at the head, read through `FileText` (§8.3), and shows "in this PR". A file that can't be read shows "in this PR; not checked".
    - A ref that resolves nowhere is a broken claim (`SND-LIB-021`). On a merged PR whose item was later removed, it shows as "stale claim", not as an error.
 2. **Suggested by issue**: a `Part of #N` or `Fixes #N` in the body matches the `issues:` of a doc whose `repos:` names the PR's repo. That doc's phases are offered, none pre-picked.
 3. **Suggested by branch**: the head branch contains a doc id.
@@ -329,7 +330,7 @@ Doc text in results is fenced as untrusted.
 
 The Reviews list needs, per open PR, its author login and requested reviewer logins (§6.1). The author is already on the record (`StoredRecord.Author`, from `ConnectorFeed.cs:75`). Ph2b adds `RequestedReviewers` to `GitHubPullDetail` (`Aw.Connectors.Core/GitHub/GitHubPullDetail.cs`), read by `GitHubWire.ReadPull`, the single-PR read that already gives `Merged`, `Draft`, `MergedAt` and `Paths`, and stores it on the PR record (the context lane picks the column, in migration 0030 or its own).
 - **Team requests** land in GitHub's `requested_teams`, not `requested_reviewers`, so a review asked of a team the owner is on isn't "Waiting on you" in v1. The list's empty state says so.
-- **A PR the owner already reviewed** drops out of `requested_reviewers`, so new commits after the owner's review don't bring it back unless someone re-requests. Whether to add "reviewed by you, with commits since" is §14 open Q4.
+- **A PR the owner already reviewed** drops out of `requested_reviewers`, so new commits after the owner's review don't bring it back unless someone re-requests. Whether to add "reviewed by you, with commits since" is §14 open Q4; until it ships, the waiting count undercounts, and the list's header says so.
 - Until Ph2b lands, the list shows only the PRs the owner authored, with the line "Review requests show here once Sindri reads requested reviewers." in its header.
 
 ## 6. The review page
@@ -450,7 +451,7 @@ review:
 - **`sindri review settings <owner/repo>`** (new) prints the settings that repo's PRs get, with `extends` resolved and where each value came from, so a hand edit can be checked before the editor exists (Ph9).
 - **Globs** follow the `denyPaths` rules. `panels` names each panel at most once, and leaving one out hides it.
 - **`review.login`** is a GitHub login (GitHub's name rules). It's set by the Reviews tab's first-run field, pre-filled with the login the forge credential answers (`Self`), which the owner can change.
-- **`review.credential`** is a secret pointer, `env:NAME` or `command:<argv>` (`ForgeCredentialSpec`, the same parser as `workflow.forge.credential`), never a value, and it's used only to post (§8.3). Its variable (`AW_REVIEW_GITHUB_TOKEN` by default, or whatever `env:` names) is added to the list a launched Step's environment empties (`LaunchEnvironment.Credentials`), with a test. When it's set, `sindri doctor` asks GitHub who the credential is (`GET /user` with it) and warns when that isn't `review.login`. Without it, release 2's post buttons open GitHub instead.
+- **`review.credential`** is a secret pointer, `env:NAME` or `command:<argv>` (`ForgeCredentialSpec`, the same parser as `workflow.forge.credential`), never a value, and it's used only to post (§8.3). Its variable (`AW_REVIEW_GITHUB_TOKEN` by default, or whatever `env:` names) is added to the list a launched Step's environment empties (`LaunchEnvironment.Credentials`), with a test. That covers sessions Sindri launches only: a lane the owner starts by hand inherits whatever the owner's shell exports. So the documented pointer is `command:` (e.g. a keychain or `gh auth token` call), which puts nothing in any environment; `env:` stays for CI and is documented with that caveat. When it's set, `sindri doctor` asks GitHub who the credential is (`GET /user` with it) and warns when that isn't `review.login`. Without it, release 2's post buttons open GitHub instead.
 
 ### 7.2 Projects and repos
 
@@ -528,17 +529,17 @@ The draft holds the line comments, the body, the test-plan ticks, the manual tic
    - `link` = the PR record key.
 2. **Posts the finding as a PR thread**, only when the PR's author is `review.login` or the forge credential's own login (an agent PR). It goes through `SubmitReview` with verdict `comment` and one line comment (§8.3), with the marker `sindri.fix:<item id>`, using the forge credential the babysitter uses, because it's Sindri's note, not the owner's review. On anyone else's PR (a contributor's) the sheet says "Item only: Sindri won't post on <author>'s PR" and skips this step.
 3. **Reaches the owning lane.** In this order:
-   - **a babysitter instance watching the PR**: its comment loop takes the thread. `PrCommentQueue` today drops every thread by Sindri's login or with a `sindri` marker (`PrCommentQueue.cs:140-143`); Ph5 changes that rule so a `sindri.fix:` thread is work. When the loop marks it `fixed`, it closes the item (`CloseItem`, by the id in the marker).
+   - **a babysitter instance watching the PR**: its comment loop takes the thread. `PrCommentQueue` today drops every thread by Sindri's login or with a `sindri` marker (`PrCommentQueue.cs:140-143`); Ph5 changes that rule, and the same one in `PrSnapshotStep` (`PrSnapshotStep.cs:69,294-295`), so a `sindri.fix:` thread is work; Sindri's own login is trusted by `Classify` for those threads only. The marker goes on the **line comment** (the review body is empty), so one thread is one work item. When the loop marks it `fixed`, it closes the item (`CloseItem`, by the id in the marker).
    - **otherwise, a live agent session on the head**: `sindri agents` (existing) gives each session's working directory; a session matches when that checkout's `origin` is the PR's head repo **and** its branch is the head branch. Matching on the branch name alone would send a fork's `main` to an unrelated session.
    - **no session**: the item stays open in Work as "Waiting on <branch>", and the hook shows it to the first session on that head.
 4. **Records `review.fix-sent`**: the item, the PR, the thread link, and where it went, or the failure.
 
-**The hook, `sindri-tasks.sh`** (new, per prompt). Sindri keeps one file per head, `$AW_SINDRI_HOME/fix-tasks/<owner>/<repo>/<branch>.json`, listing the open fix tasks' item ids and PR numbers, rewritten when one opens or closes. The hook starts no .NET process:
+**The hook, `sindri-tasks.sh`** (new, per prompt). Sindri keeps one file per head, `$AW_SINDRI_HOME/fix-tasks/<sha256 of "head-owner/head-repo:branch">.json`, listing the open fix tasks' item ids and PR numbers. The item service rewrites it whenever a fix-task item opens or closes, by any path. The hook starts no .NET process:
 - it reads the session id from the hook's input, the checkout's `origin` and branch (`git`, bounded), and that one file;
 - it prints one line per task **not yet shown to this session**: "Fix task 01J… on #2071 is waiting. `sindri review tasks` shows it." Ids and numbers only, never finding text, which can come from a PR author;
-- it records what it showed in `$AW_SINDRI_HOME/fix-tasks/seen/<session id>`, so each task is said once per session;
-- it is silent in a Sindri-launched child session (`AW_SINDRI_CHILD`, as `sindri-nudge` is), when there's nothing new, or on any error; it exits 0 always and is bounded at 500 ms;
-- it's installed for every provider whose adapter maps a per-prompt event (Claude Code's `UserPromptSubmit`; Codex and Cursor through `config/hooks/adapters/`), and `.agents/rules/hooks.md` lists which.
+- it records what it showed in `$AW_SINDRI_HOME/fix-tasks/seen/<session id>` (a session id that isn't letters, digits and `-` is ignored), so each task is said once per session; seen files older than 7 days are pruned by the next run;
+- it is silent in judge child sessions (`AW_JUDGE_CHILD`), when there's nothing new, or on any error; it exits 0 always and is bounded at 500 ms. Sessions Sindri launches (`AW_SINDRI_CHILD`) aren't matched in step 3: a launched Step gets its work through its recipe, so the hook stays silent there too;
+- providers: Claude Code (`UserPromptSubmit`) and Codex (through `config/hooks/adapters/codex.sh`). Cursor's `beforeSubmitPrompt` can't add context (`config/hooks/adapters/README.md:65`), so a Cursor session sees fix tasks through `sindri review tasks` and the Work item; `.agents/rules/hooks.md` lists the three rows.
 The lane fixes the finding and closes the item with `sindri item close`.
 
 **Half-done sends.** If the item is created but the post fails, the sheet says "Item <id> created in Work; posting to #2071 failed: <reason>", with **Retry post**. The retry reuses the item and the same marker, so it can't post twice. If the item can't be created, nothing is posted.
@@ -550,6 +551,7 @@ New members on `IForge` and `IPullRequests`, with `ForgeContract` and `PullReque
 | Member | GitHub | File adapter, `FakeForge` |
 |---|---|---|
 | `Files(link)` → `PullFile[]` `{path, previousPath, status, additions, deletions, patch?}` | `GET .../pulls/{n}/files`, 100 per page, up to GitHub's 3,000-file cap (the page says when it's hit) | seeded (`aw-forge-fake seed files`, new) |
+| `FileText(link, path, sha)` → text, capped at 1 MiB | `GET .../contents/{path}?ref={sha}` | seeded with `seed files` |
 | `Get` gains `Checks.Runs[]` `{name, app, conclusion, sha}` | check runs (every page) and commit statuses for the head sha | seeded by `seed checks --runs` |
 | `SubmitReview(link, expectedHead, verdict, body, comments[], marker)` → `Posted` \| `AlreadyDelivered` \| `HeadMoved` \| `LineRejected` | Reads the head first, and returns `HeadMoved` when it isn't `expectedHead`. Then `POST .../pulls/{n}/reviews` with `commit_id`, `event` (`COMMENT`, `APPROVE`, `REQUEST_CHANGES`), the body with the marker in an HTML comment (so it doesn't render), and `comments`. A 422 on a comment's line is `LineRejected` | stored in the world |
 
@@ -593,7 +595,13 @@ It's unproven whether GitHub itself refuses a review on an old `commit_id`. The 
 | `SND-REVIEW-013` | GitHub refused a line comment (the line isn't in the diff it has) | "GitHub refused the comment on <file>:<line>. Move it to a line in the diff, or drop it." |
 | `SND-LIB-001` | a bad `context.sources.library` key, including a root at `/`, the home folder, or holding `$AW_SINDRI_HOME` | names the key path and the allowed values |
 | `SND-LIB-010`..`019` | §4.2's table, one code each | file, line and the fix |
-| `SND-LIB-021` | a `Covers:` ref that doesn't resolve | "#2071 claims harbor-booking-tdd#Ph9, and that doc has no Ph9." |
+| `SND-LIB-021` | a `Covers:` ref that doesn't resolve, or a second `Covers:` line | "#2071 claims harbor-booking-tdd#Ph9, and that doc has no Ph9." |
+| `SND-LIB-022` | a short `Covers:` ref two docs match | "harbor-booking-tdd is in two places; write doc:<root>/harbor-booking-tdd#Ph2." |
+| `SND-REVIEW-006` | a fix task's item was created but its thread wasn't posted | §8.2's half-done text |
+| `SND-REVIEW-007` | a review route or verb before `review.login` is set | "Set your GitHub login on the Reviews tab first." |
+| `SND-REVIEW-014` | a confirm token used twice or older than 10 minutes | "This confirmation expired. Open the sheet again." |
+
+Codes 008, 009 and `SND-LIB-020` are left free on purpose, for the next errors of the same kinds.
 
 Registered in `docs/csharp/sindri.md`'s error table; `SND-LIB-01x` are also listed on `docs/conventions/design-docs.md`. An older Sindri refuses a profile with `context.sources.library` or `review` keys as unknown, so downgrading means removing them first (`sindri-profile.md` says so). A doc with `aw-doc: 2` is stored by a v1 reader with `SND-LIB-010` "convention version 2 needs a newer Sindri" and no items.
 
@@ -627,7 +635,7 @@ Registered in `docs/csharp/sindri.md`'s error table; `SND-LIB-01x` are also list
 
 | Phase | Release | Lane | What | Depends on | Proof |
 |---|---|---|---|---|---|
-| **Ph0** | — | ideas | The convention page (with a copy-paste first doc) and `schemas/library/design-doc.schema.json`. Made-up fixtures in `tests/fixtures/library/`: a TDD; an officeHours plan in its real shape, with REQ refs in its engineering and tasks docs, a Traceability table repeating each REQ, ACs in their own section, and TASKS.md's `- reqs:` / `- depends:` lines; near misses (`aw-doc: "1"`, `1.0`, a blank first line); a stage map and verification plan; a doc with a fenced example; `Ph01` vs `Ph1`; a rerun pair; two repo-slugs sharing an id; one broken doc per `SND-LIB-01x`; a vault with `.obsidian/`, a private folder, a symlink and a note without front matter. Also the baseline count of this repo's last 20 merged PRs, both ways, and the go/no-go (§2) | — | a schema test over the fixtures: the good ones pass, and each broken one fails with its rule |
+| **Ph0** | — | ideas | The convention page (with a copy-paste first doc) and `schemas/library/design-doc.schema.json`. Made-up fixtures in `tests/fixtures/library/`: a TDD; an officeHours plan in its real shape, with REQ refs in its engineering and tasks docs, a Traceability table repeating each REQ, ACs in their own section, and TASKS.md's `- reqs:` / `- depends:` lines; near misses (`aw-doc: "1"`, `1.0`, a blank first line); a stage map whose `parent` is a repo spec's full ref; a stage map and verification plan; a doc with a fenced example; `Ph01` vs `Ph1`; a rerun pair; two repo-slugs sharing an id; one broken doc per `SND-LIB-01x`; a vault with `.obsidian/`, a private folder, a symlink and a note without front matter. Also the baseline count of this repo's last 20 merged PRs, both ways, and the go/no-go (§2) | — | a schema test over the fixtures: the good ones pass, and each broken one fails with its rule |
 | **Ph1** | 1 | context | `DesignDocParser`; itemizing in `RecordBatches.From` (doc records of `repo-docs` and `library` only); migration 0030 and the `IRecordStore.Commit` rows, deleted with the record's `removed_at`; claims from PR records, resolved on read; the parser version in the cursor fingerprint and the re-read check; the `owner:` audience key and its rules (§5.4); `IContextLibrary` with the caller's scope; the ERD | Ph0's draft schema | unit: the parser over every fixture; the three audience tests (§5.4). integration: **an existing `aw-doc` repo spec (this file) itemizes on the first tick after upgrade with no new commit**; a PR body's claims land, and one written before its doc resolves once the doc lands; a removed doc's rows go and its id passes to the next doc |
 | **Ph2** | 1 | context | The `library` feed (front-matter files only, near misses counted); `context.sources.library` keys and rules; the zero-repo catalog change; the doctor row; `library sync`; the decision-pass and reranker skips (D13) | Ph1 | unit: keys, `~/` expanded before the check, refused roots, built-in deny, symlinks, caps, skipping a file without front matter, near misses. integration: a tick over the fixture vault, a removed file, an unreadable root that removes nothing; no model call for the `library` source with `models: false`. aot-smoke `expected.txt` |
 | **Ph2b** | 1 | context | PR records gain requested reviewers (§5.6; the author is already stored). If the owner says yes to §14 open Q4: also "reviewed by you, with commits since" | — | unit: the mapping. integration: a GitHub fake PR with two reviewers |
@@ -693,3 +701,13 @@ Open (raised by the reviews):
 2. **Release 1 without posting.** Release 1 shows everything and sends fix tasks, but its review buttons open GitHub, and posting from Sindri comes in release 2. I'd ship in that order, because release 1 carries what GitHub can't do. OK?
 3. **The fix-task hook.** A lane hears about a fix task through a new per-prompt hook: one line, once per task, only when the lane's branch has an open task. It reads one small file, starts no Sindri process, and stays under 500 ms. It's one more hook every session runs; the other way is the SessionStart hook only, which a long-running lane wouldn't see until it restarts. The new hook?
 4. **PRs you already reviewed.** GitHub drops you from a PR's requested reviewers once you review it, so when the author pushes new commits, the PR leaves "Waiting on you" unless someone re-requests you. I'd add those PRs to "Waiting on you" as "reviewed, N new commits". Cost: Sindri reads each open PR's reviews from GitHub (one extra call per open PR), but only when the PR's update time or head changed since the last read, so in practice a few calls per tick. The context lane builds it next to requested reviewers (Ph2b). Add it?
+
+## 15. Left for the phases (autoplan round 3)
+
+Round 3 passed in all five lenses (no critical or high findings; `plans/pr-review-page-r3/consolidated-review.md`). These medium findings are settled in the phase that builds the part, and each phase's plan names how:
+- **Ph1**: store a claim's parsed parts (doc id, item id) with an index on them, so "claimed by #N" doesn't scan every claim.
+- **Ph3**: the owner's posts go through a narrow port over the second client (`Self`, `SubmitReview`), and `aw-forge-fake` gains a second acting login, so TP-10 can tell the owner from the App.
+- **Ph5**: split into Ph5a (library CLI and routes), Ph5b (review block, page model, checks) and Ph5c (fix tasks, `PrCommentQueue`, the hook), each with its own proof. Every new verb follows `sindri`'s CLI rules (`--json`, exit 0/1/2, reads never start serve), written in `docs/csharp/sindri-review.md` and `sindri-library.md` (new).
+- **Ph6** (mockups): the page's own width decides the layout, including when a side sheet is open; a whole-page state row (merged or closed, not found, not served, offline with no cache) and a composer row; the action bar's names ("Approve on GitHub" in release 1) and focus; a file list with viewed marks, and the binary, renamed and deleted texts; the Reviews list's row names and `J`/`K`/`Enter`; the summary strip's buttons, panel toggles and the tick's `Space`; ranges by `Shift+j`/`Shift+k` or a hunk header.
+- **Ph7**: whether Settings → Library waits for release 2, with release 1 keeping the header count and `sindri library list --errors`; the owner's pick at Ph6.
+- **Owner steps**: the final text adds restarting a running serve after `./setup.sh`, `sindri mcp register` for `sindri_review`, the first tick's up-to-5-minute wait, and a "worked" check (`sindri doctor`'s library row, `sindri review list`).
