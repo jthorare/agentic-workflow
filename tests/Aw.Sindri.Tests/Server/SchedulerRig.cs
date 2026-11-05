@@ -41,7 +41,7 @@ internal sealed class SchedulerRig : IAsyncDisposable
             _ = collection.AddSingleton(service);
         }
 
-        Progress = new ProjectorProgress(H.Clock);
+        Progress = FirstPass.Progress(H.Clock);
         _provider = collection.BuildServiceProvider();
         _clock = new SteppedClock(H.Clock);
         _builtIns = [.. builtIns];

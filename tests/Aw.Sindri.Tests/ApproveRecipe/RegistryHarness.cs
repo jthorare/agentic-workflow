@@ -59,7 +59,7 @@ internal sealed class RegistryHarness : IAsyncDisposable
         Challenges = new InMemoryChallenges(H.Clock);
         var services = new ServiceCollection()
             .AddSingleton<TimeProvider>(H.Clock)
-            .AddSingleton<Core.Views.IProjectorStatus>(new Core.Views.ProjectorProgress(H.Clock))
+            .AddSingleton<Core.Views.IProjectorStatus>(Aw.Sindri.Tests.Views.FirstPass.Progress(H.Clock))
             .AddSingleton<IIdGenerator>(H.Ids)
             .AddSingleton<ILedgerStore>(H.Store)
             .AddSingleton<ILease>(H.Store)
@@ -67,7 +67,7 @@ internal sealed class RegistryHarness : IAsyncDisposable
             .AddSingleton(H.Events)
             .AddSingleton(H.Callers)
             .AddSingleton<ICommandCatalog>(new CommandCatalog())
-            .AddSingleton<Core.Views.IProjectorStatus>(new Core.Views.ProjectorProgress(H.Clock))
+            .AddSingleton<Core.Views.IProjectorStatus>(Aw.Sindri.Tests.Views.FirstPass.Progress(H.Clock))
             .AddSingleton<ILogger<AuditTrail>>(new ListLogger<AuditTrail>())
             .AddSingleton<IRecipeStore>(Recipes)
             .AddSingleton<IRecipeApprovals>(Approvals)

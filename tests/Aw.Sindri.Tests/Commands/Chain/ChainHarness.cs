@@ -21,6 +21,7 @@ using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Server;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Aw.Sindri.Tests.Views;
 
 namespace Aw.Sindri.Tests.Commands.Chain;
 
@@ -37,7 +38,7 @@ internal sealed class ChainHarness : IAsyncDisposable
     {
         FixtureGrants = grants ?? [];
         Ledger = ledger?.Invoke(H.Store) ?? H.Store;
-        Progress = new ProjectorProgress(H.Clock);
+        Progress = FirstPass.Progress(H.Clock);
         var fixture = Authorization.Rows.Of(ActionClass.Desk, "FixtureCommand", typeof(FixtureCommand)) with { ReadsViews = fixtureReadsViews, ServiceGrants = FixtureGrants };
         _provider = new ServiceCollection()
             .AddSingleton<TimeProvider>(H.Clock)

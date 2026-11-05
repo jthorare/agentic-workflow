@@ -24,6 +24,7 @@ using Aw.Sindri.Tests.Commands.Authorization;
 using Aw.Sindri.Tests.Commands.Chain;
 using Aw.Sindri.Tests.Server;
 using Microsoft.Extensions.DependencyInjection;
+using Aw.Sindri.Tests.Views;
 
 namespace Aw.Sindri.Tests.Jobs;
 
@@ -62,7 +63,7 @@ internal sealed class RealJobRuntime : IJobRuntimeSubject
             .AddSingleton(H.Callers)
             .AddSingleton(options)
             .AddSingleton<ICommandCatalog>(catalog)
-            .AddSingleton<IProjectorStatus>(new ProjectorProgress(H.Clock))
+            .AddSingleton<IProjectorStatus>(FirstPass.Progress(H.Clock))
             .AddSingleton<IHeavySlots>(_heavy)
             .AddSingleton(scrubber ?? new PassThroughScrubber())
             .AddSingleton<IJobContextAccessor>(new FakeJobContextAccessor())
