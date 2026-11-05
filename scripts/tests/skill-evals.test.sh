@@ -843,6 +843,20 @@ git -C "$REPO" commit -qam "no list"
 run --skills alpha --selftest
 expect "a case without allowed_tools is a selftest error" 1 'SELFTEST-CASE: .*alpha-near-miss: no allowed_tools'
 
+echo "the ceiling: no case it can't afford, no PARTIAL when every case ran (#2090)"
+mkrepo; mkclaude; mkresult 1 true 5
+run --skills alpha --kind routing
+expect "a case the money left can't pay for is not launched, and the run is partial" 2 'PARTIAL'
+[ "$(wc -l <"$BIN/cases.txt")" = 1 ] && ok "one call: \$3 left is less than the \$5 a case cost" || fail "calls: $(tr '\n' ' ' <"$BIN/cases.txt")"
+has -F 'skipped (no result): alpha / alpha-near-miss' <<<"$OUT" && ok "the unaffordable case is listed as skipped" || { fail "skipped listing"; show; }
+has -E 'stopped before alpha-near-miss: \$3\.00 left, a case cost \$5\.00' <<<"$OUT" && ok "the stop line names the money left and the case cost" || { fail "stop line"; show; }
+[ "$(jq -s '[.[]|select(.t=="settle")]|last|.usd*1' "$STATE/skill-evals/spend.jsonl")" = 5 ] && ok "the settle row is 5" || { fail "settle: $(cat "$STATE/skill-evals/spend.jsonl")"; }
+mkrepo; mkclaude; mkresult 1 true 2.17
+run --skills alpha --kind behaviour --max-cost-usd 2
+expect "one call that overshot the ceiling but ran every case exits 0" 0 '\| alpha-forced \|'
+lacks "every case ran, so the run is not PARTIAL" 'PARTIAL'
+has -E 'over the ceiling by \$0\.17' <<<"$OUT" && ok "the overshoot is reported" || { fail "overshoot line"; show; }
+
 echo
 echo "skill-evals: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]
