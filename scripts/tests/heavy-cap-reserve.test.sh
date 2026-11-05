@@ -71,4 +71,34 @@ echo 1 > "$T/heavy-slots-cap"
 check "box: wrapper holds slot 1, cap lowered to 1, a locks.sh taker gets no slot 2" "$(lockssh "$BASE" 2 2)" "none"
 wait "$wrap"
 
+# A reserve that leaves a slot open is no reason to stop counting: cap 2, reserve 1, slot 2 busy with a lane job. A
+# non-meta taker's wait counts toward its timeout and it gives up (ideas on #2061: it used to wait forever).
+scratch locks-timeout 2 1; hold "$BASE.2"
+SECONDS=0; got="$(lockssh "$BASE" 2 2)"; took=$SECONDS
+check "locks.sh: reserve 1, slot 2 busy, timeout 2 gives up inside 6 s" "$got $([ "$took" -lt 6 ] && echo fast || echo "slow ${took}s")" "none fast"
+
+# The wrapper the same way, on a copy with TIMEOUT=2 (the real one is a constant 5400 s); it finds config/lib beside it.
+mkdir -p "$WORK/w/scripts"; ln -s "$DIR/../../config" "$WORK/w/config"
+TWO="$WORK/w/scripts/heavy-two.sh"; sed 's/^TIMEOUT=5400$/TIMEOUT=2/' "$HEAVY" > "$TWO"
+check "the TIMEOUT=2 copy differs from the wrapper in one line" "$(diff "$HEAVY" "$TWO" | grep -c '^>')" "1"
+scratch wrapper-timeout 2 1; hold "$BASE.2"
+rc=0; SECONDS=0
+timeout 10 env AW_STATE_DIR="$T" AW_HEAVY_JOB_LOCK="$BASE" AW_HEAVY_SESSION_PID="$live" AW_HEAVY_RUN_MAX=0 AW_HEAVY_MIN_FREE_MB=0 \
+  bash "$TWO" --expensive true >/dev/null 2>&1 || rc=$?
+check "wrapper: reserve 1, slot 2 busy, TIMEOUT=2 exits 75 inside 6 s" "$rc $([ "$SECONDS" -lt 6 ] && echo fast || echo "slow ${SECONDS}s")" "75 fast"
+
+# Taking the cap file away while a job waits goes back to the given count (ideas on #2061: the lowered value stuck).
+scratch locks-uncap 1 ""; hold "$BASE"
+( sleep 1; rm -f "$T/heavy-slots-cap" ) & freer=$!
+check "locks.sh: cap file 1 removed while waiting, the argument's 2 slots apply again" "$(lockssh "$BASE" 2 5)" "slot[.2]"
+wait "$freer"
+
+scratch wrapper-uncap 1 ""; hold "$BASE"
+( sleep 1; rm -f "$T/heavy-slots-cap" ) & freer=$!
+rc=0
+timeout 8 env AW_STATE_DIR="$T" AW_HEAVY_JOB_LOCK="$BASE" AW_HEAVY_SESSION_PID="$live" AW_HEAVY_RUN_MAX=0 AW_HEAVY_MIN_FREE_MB=0 AW_HEAVY_SLOTS=2 \
+  bash "$HEAVY" --expensive true >/dev/null 2>&1 || rc=$?
+wait "$freer"
+check "wrapper: cap file 1 removed while waiting, AW_HEAVY_SLOTS=2 applies again" "$rc" "0"
+
 exit "$fail"

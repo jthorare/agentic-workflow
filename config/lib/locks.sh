@@ -113,19 +113,20 @@ release_lock() {
 }
 
 acquire_any_lock() {
-  local base="$1" slots="$2" timeout_s="$3" waited=0 printed=0 k dir heavy="" reserve=0 reserved_skip
+  local base="$1" slots="$2" timeout_s="$3" waited=0 printed=0 k dir heavy="" reserve=0 given
   case "$slots" in ''|*[!0-9]*) slots=1 ;; esac
   [ "$slots" -ge 1 ] || slots=1
+  given="$slots"
   # The box-wide heavy-job lock only (#2061): the cap file wins over <slots> and a non-meta taker stays off the meta
   # reserve, both read again on every pass like the heavy wrapper does. Every other lock counts the slots it was given.
   [ "$base" = "${AW_HEAVY_JOB_LOCK:-${AW_STATE_DIR:-$HOME/.agentic-workflow}/locks/heavy-job.lock}" ] && heavy=1
   while :; do
-    reserved_skip=0
-    if [ -n "$heavy" ]; then slots="$(heavy_cap "$slots")"; reserve="$(heavy_reserve "$slots")"; fi
+    # The cap falls back to the given count each pass, so taking the cap file away restores it.
+    if [ -n "$heavy" ]; then slots="$(heavy_cap "$given")"; reserve="$(heavy_reserve "$slots")"; fi
     k=1
     while [ "$k" -le "$slots" ]; do
       if [ -n "$heavy" ] && [ "${AW_HEAVY_PRIORITY:-}" != meta ] && [ "$k" -le "$reserve" ]; then
-        reserved_skip=1; k=$((k + 1)); continue
+        k=$((k + 1)); continue
       fi
       if [ "$k" -eq 1 ]; then dir="$base"; else dir="$base.$k"; fi
       if _lock_take "$dir" || { _lock_reclaim_dead "$dir" && _lock_take "$dir"; }; then
@@ -140,7 +141,8 @@ acquire_any_lock() {
     fi
     [ "$waited" -ge "$timeout_s" ] && return 1
     sleep 1
-    # A wait blocked only by the reserve does not count toward the timeout (as in the heavy wrapper).
-    [ "$reserved_skip" = 1 ] || waited=$((waited + 1))
+    # Only a reserve covering every slot keeps a non-meta wait off the timeout (as in the heavy wrapper); a reserve that
+    # leaves a slot open counts, or a taker would wait forever behind ordinary busy slots.
+    if [ -n "$heavy" ] && [ "${AW_HEAVY_PRIORITY:-}" != meta ] && [ "$reserve" -ge "$slots" ]; then :; else waited=$((waited + 1)); fi
   done
 }

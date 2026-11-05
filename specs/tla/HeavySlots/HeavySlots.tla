@@ -106,7 +106,8 @@ Init ==
     /\ resBreak = FALSE
 
 \* The cap and the reserve every taker works to (#2061): the files as they read now, re-read on each pass (the read and the
-\* mkdir after it are one step; the code leaves a window of microseconds between them, like Age's assumption). The reserve
+\* mkdir after it are one step, and the retry mkdir after a reclaim re-checks them; the code reads once per pass and then
+\* tries every slot, a reclaim included, so its window is one pass, milliseconds). The reserve
 \* never exceeds the cap. Only a Meta job (a wrapper job with AW_HEAVY_PRIORITY=meta) may take the reserved slots.
 CapNow == cap
 ResNow == Min(reserve, cap)
