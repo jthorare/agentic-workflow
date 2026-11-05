@@ -134,9 +134,10 @@ public sealed class HeavyReservationTests
     [InlineData(0, 3, 0)]
     [InlineData(1, 3, 3)]
     [InlineData(2, 3, 5)]
-    [InlineData(3, 3, 7)]
-    [InlineData(2, 2, 7)]
-    [InlineData(1, 1, 7)]
+    [InlineData(1, 2, 3)]
+    [InlineData(2, 4, 5)]
+    [InlineData(3, 4, 7)]
+    [InlineData(4, 5, 7)]
     [InlineData(3, 5, 5)]
     public void The_printed_argument_is_the_one_that_makes_the_script_keep_the_slots(int reserve, int cap, int argument)
     {
@@ -145,6 +146,41 @@ public sealed class HeavyReservationTests
         Assert.Equal(argument, slots.ScriptDepth);
         Assert.Contains("set it with meta-gate-reserve " + argument.ToString(CultureInfo.InvariantCulture), slots.Line(), StringComparison.Ordinal);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_script_never_keeps_more_than_the_reservation_and_keeps_exactly_every_count_it_has_a_tier_for()
+    {
+        for (var cap = 1; cap <= 6; cap++)
+        {
+            for (var reserve = 0; reserve < cap; reserve++)
+            {
+                var kept = ScriptKeeps(new HeavySlots(cap, reserve, Depth: 2, A.At(0)).ScriptDepth, cap);
+                var state = string.Create(CultureInfo.InvariantCulture, $"cap {cap}, reserve {reserve}: the script keeps {kept}");
+
+                Assert.True(kept <= reserve, state);
+                if (reserve <= 2 || reserve == cap - 1)
+                {
+                    Assert.True(kept == reserve, state);
+                }
+            }
+        }
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    public void An_old_reservation_of_the_whole_cap_still_prints_7_and_the_script_keeps_the_cap_less_one(int cap)
+    {
+        var argument = new HeavySlots(cap, Reserve: cap, Depth: 2, A.At(0)).ScriptDepth;
+
+        Assert.Equal(7, argument);
+        Assert.Equal(cap - 1, ScriptKeeps(argument, cap));
+    }
+
+    // scripts/meta-gate-reserve.sh's tiers: 0-2 -> 0, 3-4 -> 1, 5-6 -> 2, 7 or more -> the cap, each held to the cap less one.
+    private static int ScriptKeeps(int depth, int cap) =>
+        Math.Min(depth switch { <= 2 => 0, <= 4 => 1, <= 6 => 2, _ => cap }, cap - 1);
 
     [Fact, Trait("Lane", "unit")]
     public async Task Custom_tiers_print_the_script_argument_and_not_the_queue_depth()
