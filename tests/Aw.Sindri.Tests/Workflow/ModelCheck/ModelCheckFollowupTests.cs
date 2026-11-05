@@ -13,8 +13,8 @@ using Aw.Sindri.Testing.Packets;
 using Aw.Sindri.Testing.Prove;
 using Aw.Sindri.Testing.Scoping;
 using Aw.Sindri.Testing.Workflow;
-using Aw.Sindri.Tests.Workflow.BuildShip;
 using Aw.Sindri.Tests.Workflow.Blocks.Contracts;
+using Aw.Sindri.Tests.Workflow.BuildShip;
 
 namespace Aw.Sindri.Tests.Workflow.ModelCheck;
 
