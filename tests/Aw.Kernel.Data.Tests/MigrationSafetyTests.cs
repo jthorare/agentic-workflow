@@ -135,6 +135,96 @@ public sealed class MigrationSafetyTests
     }
 
     [Fact]
+    public async Task A_successful_upgrade_keeps_only_the_newest_backup()
+    {
+        using var db = new TempDatabase();
+        _ = await Runner(db).Migrate([Schema.Items], Ct);
+        _ = await Runner(db).Migrate([Schema.Items, Schema.Tags], Ct);
+        _ = await Runner(db).Migrate([Schema.Items, Schema.Tags, Schema.Notes], Ct);
+
+        Assert.True(File.Exists(db.Path + ".bak-v2"));
+        Assert.False(File.Exists(db.Path + ".bak-v1"));
+    }
+
+    [Fact]
+    public async Task Pruning_leaves_temp_files_and_other_names_alone()
+    {
+        using var db = new TempDatabase();
+        _ = await Runner(db).Migrate([Schema.Items], Ct);
+        _ = await Runner(db).Migrate([Schema.Items, Schema.Tags], Ct);
+        string[] bystanders =
+        [
+            db.Path + ".bak-v1.tmp-1-x",
+            db.Path + ".bak-vX",
+            Path.Combine(db.Directory, "other.db.bak-v1"),
+        ];
+        foreach (var path in bystanders)
+        {
+            await File.WriteAllTextAsync(path, "keep", Ct);
+        }
+
+        _ = await Runner(db).Migrate([Schema.Items, Schema.Tags, Schema.Notes], Ct);
+
+        Assert.False(File.Exists(db.Path + ".bak-v1"));
+        Assert.True(File.Exists(db.Path + ".bak-v2"));
+        Assert.All(bystanders, path => Assert.True(File.Exists(path), path));
+    }
+
+    [Fact]
+    public async Task A_failed_migration_prunes_nothing()
+    {
+        using var db = new TempDatabase();
+        var extra = new Migration(2, "extra", "CREATE TABLE extra (id INTEGER PRIMARY KEY);");
+        var orphaning = new Migration(3, "orphan", "INSERT INTO child VALUES (1, 999);");
+        _ = await Runner(db).Migrate([Parent], Ct);
+        _ = await Runner(db).Migrate([Parent, extra], Ct);
+
+        var refused = await Runner(db).Migrate([Parent, extra, orphaning], Ct);
+
+        Assert.Equal(DataErrors.Constraint.Code, refused.Error.Code);
+        Assert.True(File.Exists(db.Path + ".bak-v1"));
+        Assert.True(File.Exists(db.Path + ".bak-v2"));
+    }
+
+    [Fact]
+    public async Task An_upgrade_backup_is_readable_only_by_its_owner()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes");
+            return;
+        }
+
+        using var db = new TempDatabase();
+        _ = await Runner(db).Migrate([Schema.Items], Ct);
+        _ = await Runner(db).Migrate([Schema.Items, Schema.Tags], Ct);
+
+        var mode = File.GetUnixFileMode(db.Path + ".bak-v1");
+
+        Assert.Equal(UnixFileMode.UserRead | UnixFileMode.UserWrite, mode);
+    }
+
+    [Fact]
+    public async Task An_existing_group_readable_backup_is_made_owner_only_on_the_next_upgrade()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes");
+            return;
+        }
+
+        using var db = new TempDatabase();
+        _ = await Runner(db).Migrate([Schema.Items], Ct);
+        var old = db.Path + ".bak-v1";
+        await File.WriteAllTextAsync(old, "written before backups were owner-only", Ct);
+        File.SetUnixFileMode(old, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.GroupRead | UnixFileMode.OtherRead);
+
+        _ = await Runner(db).Migrate([Schema.Items, Schema.Tags], Ct);
+
+        Assert.Equal(UnixFileMode.UserRead | UnixFileMode.UserWrite, File.GetUnixFileMode(old));
+    }
+
+    [Fact]
     public async Task Two_runners_at_once_apply_each_migration_once_and_both_report_the_final_version()
     {
         using var db = new TempDatabase();
