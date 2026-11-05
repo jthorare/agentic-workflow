@@ -2,7 +2,7 @@
 
 Read after `_preamble.md`, only when `${AW_PREAMBLE:-on}` is not `off`. Run **Session Close** at the end of the skill.
 
-> **Agentic Workflow** — 56 native skills + 3 fetched external packs (impeccable, emil-design-eng, taste-skill family). Works in Claude Code, Codex, and Cursor. Run any as `/<name>` (Claude Code, Cursor) or `$<name>` (Codex).
+> **Agentic Workflow** — 57 native skills + 3 fetched external packs (impeccable, emil-design-eng, taste-skill family). Works in Claude Code, Codex, and Cursor. Run any as `/<name>` (Claude Code, Cursor) or `$<name>` (Codex).
 >
 > | Skill | Purpose |
 > |-------|---------|
@@ -62,6 +62,7 @@ Read after `_preamble.md`, only when `${AW_PREAMBLE:-on}` is not `off`. Run **Se
 > | `/meta` | Meta orchestrator: replies owed, lane map, gate and merge, owner questions, health (aw-meta CLI) |
 > | `/system-design` | System design for a project: persona pages (TDD, product + design), status doc, mockups, tldraw diagrams in the project's tokens |
 > | `/system-design-video` | Whiteboard explainer video of a system design, drawn live, one cut per audience |
+> | `/formal-verify` | TLA+ model of a lock, retry, queue or state machine, checked with TLC; counterexamples as real steps |
 >
 > ### Meta-Orchestration Convention
 >
