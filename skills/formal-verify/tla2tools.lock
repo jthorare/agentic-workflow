@@ -1,0 +1,7 @@
+# tla2tools.lock — the TLA+ tools (TLC, SANY, PlusCal translator) formal-verify runs, pinned by version and sha256.
+# One row, whitespace-separated: version  sha256  url
+#   sha256  64 lowercase hex digits of the jar at url (scripts/tlc.sh fetch refuses any other file)
+# v1.7.4 "Xenophanes", published 2024-08-05, MIT. The release publishes sha1 only (bee4a54f3ee3d4afc347c3240ec2d9e93b075104 for
+# tla2tools.jar, release notes "Checksums"); the sha256 below is of the jar whose sha1 matched it, downloaded 2026-11-04.
+# Changing the row is a reviewed change: check the new jar against the release's own checksum the same way.
+1.7.4  936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88  https://github.com/tlaplus/tlaplus/releases/download/v1.7.4/tla2tools.jar

@@ -1,0 +1,1 @@
+Bash	{"command": "S=\"$HOME/.agentic-workflow/toolkit/skills/formal-verify\"; bash \"$S/scripts/tlc.sh\" check \"/work/.aw-state/work/formal-verify/job-claim/JobClaim.tla\""}
