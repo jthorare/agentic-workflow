@@ -44,8 +44,9 @@ EOF
 chmod +x "$STUB/dotnet"
 # Copies of the wrapper with the 5400 s lock timeout cut (TIMEOUT is a constant there, no variable sets it): FAST gives up on the
 # first pass (0 s), ONE after one counted second.
-FAST="$WORK/heavy-fast.sh"; sed 's/^TIMEOUT=5400$/TIMEOUT=0/' "$HEAVY" > "$FAST"
-ONE="$WORK/heavy-one.sh"; sed 's/^TIMEOUT=5400$/TIMEOUT=1/' "$HEAVY" > "$ONE"
+mkdir -p "$WORK/scripts"; ln -s "$DIR/../config" "$WORK/config"   # the copies find config/lib/heavy-config.sh beside their own folder, as the wrapper does
+FAST="$WORK/scripts/heavy-fast.sh"; sed 's/^TIMEOUT=5400$/TIMEOUT=0/' "$HEAVY" > "$FAST"
+ONE="$WORK/scripts/heavy-one.sh"; sed 's/^TIMEOUT=5400$/TIMEOUT=1/' "$HEAVY" > "$ONE"
 check "the copies differ from the wrapper only in TIMEOUT" "$(diff "$HEAVY" "$FAST" | grep -c '^>')$(diff "$HEAVY" "$ONE" | grep -c '^>')" "11"
 
 # The wrapper's watchdog leaves a `sleep 5` holding its stdout after the job ends, so a $(...) around it would wait up to 5 s for

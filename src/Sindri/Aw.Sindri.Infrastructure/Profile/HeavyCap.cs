@@ -30,11 +30,24 @@ internal static class HeavyCap
         return string.IsNullOrEmpty(text) ? DefaultSlots : Count(text) ?? 1;
     }
 
-    private static int? FromFile(string path)
+    /// <summary>The meta reserve now: the whole number in $AW_STATE_DIR/heavy-meta-reserve (0 when the file is missing or holds anything else), at most <paramref name="slots"/>, as scripts/heavy.sh and config/lib/heavy-config.sh read it. Slots 1 to the reserve are for meta jobs only.</summary>
+    /// <param name="stateRoot">The state root (AW_STATE_DIR or ~/.agentic-workflow).</param>
+    /// <param name="slots">The slot count the reserve is clamped to.</param>
+    /// <returns>The reserve, from 0 to <paramref name="slots"/>.</returns>
+    internal static int Reserve(string stateRoot, int slots)
+    {
+        var text = ReadText(Path.Combine(stateRoot, "heavy-meta-reserve"));
+        // All digits but too big for an int is still a number: clamp it to the slot count, as bash does; anything else is 0.
+        return text is { Length: > 0 } && text.All(char.IsAsciiDigit) ? (int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var n) ? Math.Min(n, slots) : slots) : 0;
+    }
+
+    private static int? FromFile(string path) => ReadText(path) is { } text ? Count(text) : null;
+
+    private static string? ReadText(string path)
     {
         try
         {
-            return File.Exists(path) ? Count(File.ReadAllText(path).Trim()) : null;
+            return File.Exists(path) ? File.ReadAllText(path).Trim() : null;
         }
         catch (IOException)
         {

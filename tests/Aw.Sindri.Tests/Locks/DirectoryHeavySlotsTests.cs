@@ -535,6 +535,40 @@ public sealed class DirectoryHeavySlotsTests : IDisposable
         Assert.Equal(("/x/lock", 3, true), (set.Lock, set.Slots, set.Held));
     }
 
+    private HeavyLockSettings SettingsOverStateRoot() =>
+        HeavyLockSettings.Read(name => name == "AW_HEAVY_JOB_LOCK" ? Lock : null, _root);
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Take_counts_slots_by_the_cap_file_as_it_reads_now()
+    {
+        await File.WriteAllTextAsync(Path.Combine(_root, "heavy-slots-cap"), "2\n", TestContext.Current.CancellationToken);
+        var slots = new DirectoryHeavySlots(SettingsOverStateRoot(), TimeProvider.System);
+        await using var first = await Taken(slots, "first job");
+
+        await File.WriteAllTextAsync(Path.Combine(_root, "heavy-slots-cap"), "1\n", TestContext.Current.CancellationToken);
+        var second = (await slots.Take("second job", TimeSpan.Zero, waiting: null, TestContext.Current.CancellationToken)).Value;
+        if (second.Lease is { } lease)
+        {
+            await lease.DisposeAsync();
+        }
+
+        Assert.False(Directory.Exists(Lock + ".2"), "the cap was lowered to 1 after construction, yet Take handed out slot 2");
+        Assert.Null(second.Lease);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Take_skips_slots_inside_the_meta_reserve()
+    {
+        await File.WriteAllTextAsync(Path.Combine(_root, "heavy-slots-cap"), "2\n", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(Path.Combine(_root, "heavy-meta-reserve"), "1\n", TestContext.Current.CancellationToken);
+        var slots = new DirectoryHeavySlots(SettingsOverStateRoot(), TimeProvider.System);
+
+        await using var lease = await Taken(slots, "sindri job");
+
+        Assert.False(Directory.Exists(Lock), "slot 1 is reserved for meta (heavy-meta-reserve=1) and a Sindri job is not meta");
+        Assert.True(Directory.Exists(Lock + ".2"));
+    }
+
     [Theory, Trait("Lane", "unit")]
     [InlineData(null, 1)]
     [InlineData("", 1)]
