@@ -4,12 +4,12 @@ using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Ids;
-using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.GetStatus;
 using Aw.Sindri.Features.StopProcess;
 using Aw.Sindri.Host;
 using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.Views;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Tests.Commands;
@@ -34,7 +34,7 @@ public sealed class CliClientTests : IDisposable
     public async Task Json_prints_the_api_body_unchanged()
     {
         var h = new SliceHarness();
-        var status = (await new GetStatusService(h.Held, new ProfileReads(h.Profiles, h.Profiles), h.Store, h.Events, new ProjectorProgress(h.Clock), new HealthServiceRows(new InMemoryViewStore(SliceHarness.Json), []), new InMemorySessionSnapshot()).Handle(new GetStatusRequest(), Token)).Value;
+        var status = (await new GetStatusService(h.Held, new ProfileReads(h.Profiles, h.Profiles), h.Store, h.Events, FirstPass.Progress(h.Clock), new HealthServiceRows(new InMemoryViewStore(SliceHarness.Json), []), new InMemorySessionSnapshot()).Handle(new GetStatusRequest(), Token)).Value;
         var body = "{ " + Encoding.UTF8.GetString(AwJson.Serialize(status, SliceHarness.Json))[1..].Replace(",", ",\n  ", StringComparison.Ordinal);   // spaced as no serializer here would write it
         using var client = Client(new CliStubApi(HttpStatusCode.OK, body));
 

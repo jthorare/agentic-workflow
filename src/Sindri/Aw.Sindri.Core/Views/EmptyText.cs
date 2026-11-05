@@ -113,6 +113,10 @@ public static class EmptyText
     public static string Rebuilding(long cursor, long head) =>
         string.Create(CultureInfo.InvariantCulture, $"Rebuilding views (cursor {cursor} of {head})…");
 
+    /// <summary>The projector hasn't finished its first pass since boot.</summary>
+    /// <returns>The sentence.</returns>
+    public static string Starting() => "Starting up: the views haven't had their first pass yet…";
+
     /// <summary>The projector stalled.</summary>
     /// <param name="at">The sequence it stalled at.</param>
     /// <returns>The sentence.</returns>

@@ -233,8 +233,25 @@ test_pr_without_base_fails_closed() {
   echo "PASS: test_pr_without_base_fails_closed"
 }
 
+# A run-everything path listed first, with far more paths after it than a pipe
+# holds: the filter stops classifying early, and git must still exit cleanly.
+test_a_large_diff_that_runs_everything_exits_zero() {
+  local repo base got code=0
+  repo="$(scratch_repo)"; base="$(git -C "$repo" rev-parse HEAD)"
+  mkdir -p "$repo/.github" "$repo/docs/many"
+  printf 'on: push\n' > "$repo/.github/ci.yml"
+  for i in $(seq 1 4000); do : > "$repo/docs/many/page-with-a-long-name-$i.md"; done
+  git -C "$repo" add -A && git -C "$repo" commit -qm many
+  got="$(cd "$repo" && bash "$DIR/../ci/changed-areas.sh" pull_request "$base" trunk trunk)" || code=$?
+  rm -rf "$repo"
+  [ "$code" = 0 ] && [ "$got" = "$(printf 'bash=true\ndotnet=true\ntla=true')" ] \
+    || { echo "FAIL: a large diff touching .github/ must exit 0 and run everything, got exit $code: $got"; exit 1; }
+  echo "PASS: test_a_large_diff_that_runs_everything_exits_zero"
+}
+
 test_non_pr_event_runs_everything
 test_pr_without_base_fails_closed
+test_a_large_diff_that_runs_everything_exits_zero
 test_rename_out_of_an_area_selects_the_area
 test_non_ascii_filename_in_an_area_selects_the_area
 test_a_stacked_pr_runs_everything
