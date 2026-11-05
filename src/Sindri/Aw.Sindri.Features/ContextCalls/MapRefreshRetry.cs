@@ -14,7 +14,7 @@ internal static class MapRefreshRetry
 
     /// <summary>
     /// Whether a retry can help: a dependency that was unavailable, a timeout or a rate limit. Invalid, not found, conflict, budget and forbidden errors are not retried, and neither is a wait for the map build slot
-    /// that ran out (owner, 2026-11-05, #2106): the build ahead of it already held the slot for 30 min, so another 30 min of waiting would only hide it; the job fails as timed out.
+    /// that ran out (owner, 2026-11-05, #2106): the build ahead of it wrote no line for 30 min, so another 30 min of waiting would only hide it; the job fails as timed out.
     /// </summary>
     internal static bool Transient(Error error) =>
         error.Kind is ErrorKind.Unavailable or ErrorKind.Timeout or ErrorKind.RateLimited && error.Code != ContextErrors.MapBuildWaitTimedOut.Code;

@@ -10159,6 +10159,7 @@ Aw.Context.Core.Extract.MapBuildGate.MapBuildGate(System.TimeProvider! clock) ->
 static Aw.Context.Core.Extract.MapBuildGate.WaitLimit.get -> System.TimeSpan
 Aw.Context.Core.Extract.MapBuildTurn
 Aw.Context.Core.Extract.MapBuildTurn.Dispose() -> void
+Aw.Context.Core.Extract.MapBuildTurn.Progress.get -> System.IProgress<string!>!
 Aw.Context.Core.Extract.MapBuildTurn.Waited.get -> bool
 Aw.Context.Core.Extract.GithubRemote
 Aw.Context.Core.Extract.GithubRemote.Blob(string? commit, string! path, Aw.Context.Core.Trust.IEgressScrubber! egress) -> System.Uri?

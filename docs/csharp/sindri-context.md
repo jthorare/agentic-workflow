@@ -626,7 +626,7 @@ sources status, doctor row, item query), `ContextCliTests` and `ContextReviewRow
 | `SND-CONTEXT-257` | Not found (404) | 1 | No page has that id (remove, `context_pages`) |
 | `SND-CONTEXT-258` | Not found (404) | 1 | `context_pages` names no such concept or repo |
 | `SND-CONTEXT-259` | Invalid (400) | 2 | A pasted page list (`QUERY /sindri/context/pages/preview`) is empty or over 65,536 UTF-8 bytes |
-| `SND-CONTEXT-260` | Timeout (504) | 2 | A map build waited 30 min for the running map build (the one build slot) and gave up; the refresh job does not retry it |
+| `SND-CONTEXT-260` | Timeout (504) | 2 | A map build waited for the running map build (the one build slot) and gave up because that build wrote no progress line for 30 min (a build that keeps writing lines is waited for, with a "still waiting" line every 5 min); the refresh job does not retry it |
 
 084-086 are reserved for review findings, 087-089 for S-7B. Reused: 020, 030, 040, 048 (a cut git can't read: that sample is dropped and counted), 005, 004 (a cache or context.db read failing stops the run with its own code), 001, 011.
 

@@ -55,7 +55,7 @@ internal sealed partial class BuildMapService(
             return saved;
         }
 
-        return await Build(request.Progress, settings, mappedRepos, scope.Repos, cancellationToken).ConfigureAwait(false);
+        return await Build(turn.Progress, settings, mappedRepos, scope.Repos, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<MapBuildReport>> Build(IProgress<string>? progress, ContextSettings settings, IReadOnlyList<ContextRepo> mappedRepos, IReadOnlyList<ContextRepo> profileRepos, CancellationToken cancellationToken)

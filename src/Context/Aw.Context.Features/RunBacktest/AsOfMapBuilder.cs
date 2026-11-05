@@ -134,14 +134,14 @@ internal sealed class AsOfMapBuilder(IRepoReader repos, IClusterSource clusters,
         var entered = await gate.Enter(request.Scope.Job, request.Progress, cancellationToken).ConfigureAwait(false);
         if (entered.IsError)
         {
-            return new ClusterSet([], Available: false);   // why: a slot that stayed taken for 30 min reads like an absent cluster source, as a failing one does
+            return new ClusterSet([], Available: false);   // why: a slot whose holder wrote no line for 30 min reads like an absent cluster source, as a failing one does
         }
 
         using (entered.Value)
         {
             // why: graphify writes nothing while it runs; one that bounds itself says it is alive every 5 min, and with no limit (0) it stays silent so the stall watch can catch a hang
             set = limits.TimeoutMinutes > 0
-                ? await StepHeartbeat.Run("graphify", request.Progress, clock, () => clusters.Clusters(repo, request.Sample.Cut, limits, cancellationToken), cancellationToken).ConfigureAwait(false)
+                ? await StepHeartbeat.Run("graphify", entered.Value.Progress, clock, () => clusters.Clusters(repo, request.Sample.Cut, limits, cancellationToken), cancellationToken).ConfigureAwait(false)
                 : await clusters.Clusters(repo, request.Sample.Cut, limits, cancellationToken).ConfigureAwait(false);
         }
 
