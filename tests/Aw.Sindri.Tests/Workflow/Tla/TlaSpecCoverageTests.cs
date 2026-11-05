@@ -12,10 +12,10 @@ public sealed class TlaSpecCoverageTests
 {
     private const string KindPrefix = "DeadlineKind.";
 
-    [Fact, Trait("Lane", "unit")]   // reads specs/tla/*/README.md only
+    [Fact, Trait("Lane", "integration")]   // reads specs/tla/*/README.md off disk
     public void Some_spec_readme_lists_its_actions() => Assert.NotEmpty(Readmes());
 
-    [Fact, Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "integration")]
     public void Every_engine_trigger_is_named_in_a_spec_readme()
     {
         var named = NamedInReadmes();
@@ -25,7 +25,7 @@ public sealed class TlaSpecCoverageTests
         Assert.True(missing.Count == 0, $"no specs/tla/*/README.md names {string.Join(", ", missing)} under 'Actions:' or 'Leaves out:' (fix: model it, or leave it out with a reason)");
     }
 
-    [Fact, Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "integration")]
     public void Every_deadline_kind_is_named_in_a_spec_readme()
     {
         var named = NamedInReadmes();
@@ -35,7 +35,7 @@ public sealed class TlaSpecCoverageTests
         Assert.True(missing.Count == 0, $"no specs/tla/*/README.md names {string.Join(", ", missing.Select(static k => KindPrefix + k))} under 'Actions:' or 'Leaves out:'");
     }
 
-    [Fact, Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "integration")]
     public void Every_name_a_spec_readme_lists_still_exists()
     {
         var types = typeof(Trigger).Assembly.GetTypes().Select(static t => t.Name).ToHashSet(StringComparer.Ordinal);
@@ -50,7 +50,7 @@ public sealed class TlaSpecCoverageTests
         Assert.True(gone.Count == 0, $"a README names C# that no longer exists: {string.Join("; ", gone)}");
     }
 
-    [Fact, Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "integration")]
     public void A_leaves_out_line_reads_the_names_before_its_reason_and_skips_prose()
     {
         var names = Names("Actions: Takeover = TakeoverRequested · Elapse = (time passing, no C# trigger)\nLeaves out: StepFailed, WaitSatisfied: not part of takeover · Temporal replay, the ledger mirror.");
