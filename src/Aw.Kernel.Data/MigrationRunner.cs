@@ -11,7 +11,8 @@ namespace Aw.Kernel.Data;
 /// AW-DATA-009) and an applied history that doesn't match the build (AW-DATA-006, AW-DATA-007). A refused file is left
 /// byte-for-byte unchanged: only then does the read-write open switch it to WAL.</item>
 /// <item>Before upgrading a database that already has migrations, it writes a consistent copy with VACUUM INTO to
-/// 'file.bak-vN' (the first backup of a version is kept).</item>
+/// 'file.bak-vN' (the first backup of a version is kept), owner-only on Unix. Once the upgrade succeeds, older backups
+/// of the file are removed: the newest one and the one this run took or kept stay.</item>
 /// <item>Each migration runs in its own transaction with its schema_version row, with foreign keys off (the SQLite
 /// table-rebuild recipe needs that; the pragma is a no-op inside a transaction, so it's switched before BEGIN) and a
 /// foreign_key_check before commit. Violations roll back as AW-DATA-004.</item>
@@ -84,12 +85,19 @@ public sealed class MigrationRunner(ISqliteConnectionFactory connections, TimePr
             }
 
             var target = Math.Min(targetVersion ?? migrations.Count, migrations.Count);
-            if (backupBeforeUpgrade && applied.Value > 0 && applied.Value < target)
+            var backedUp = backupBeforeUpgrade && applied.Value > 0 && applied.Value < target;
+            if (backedUp)
             {
                 await Backup(connection, applied.Value, cancellationToken).ConfigureAwait(false);
             }
 
-            return await ApplyPending(connection, migrations, applied.Value, target, cancellationToken).ConfigureAwait(false);
+            var report = await ApplyPending(connection, migrations, applied.Value, target, cancellationToken).ConfigureAwait(false);
+            if (backedUp && !report.IsError)
+            {
+                MigrationBackups.Prune(connection.DataSource, applied.Value);
+            }
+
+            return report;
         }
         catch (SqliteException exception) when (SqliteErrors.TryMap(exception, "Migrating", out var error))
         {
@@ -146,6 +154,7 @@ public sealed class MigrationRunner(ISqliteConnectionFactory connections, TimePr
             command.CommandText = "VACUUM INTO $path";
             _ = command.Bind("$path", temp);
             _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            MigrationBackups.RestrictToOwner(temp); // why: VACUUM INTO writes by umask (0644) while the database itself is 0600
             try
             {
                 File.Move(temp, backup, overwrite: false);
