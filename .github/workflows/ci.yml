@@ -36,6 +36,7 @@ jobs:
     outputs:
       bash: ${{ steps.detect.outputs.bash }}
       dotnet: ${{ steps.detect.outputs.dotnet }}
+      tla: ${{ steps.detect.outputs.tla }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -352,9 +353,37 @@ jobs:
           fi
           exit "$code"
 
+  tla:
+    name: TLA+ specs (TLC)
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CHANGED: ${{ needs.changes.outputs.tla }}
+    steps:
+      - name: No-op when unchanged
+        if: env.CHANGED != 'true'
+        run: |
+          echo "no-op: no TLA+ spec, runner or formal-verify change — TLC not needed"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: env.CHANGED == 'true'
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        if: env.CHANGED == 'true'
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Fetch the pinned tla2tools.jar
+        if: env.CHANGED == 'true'
+        run: bash skills/formal-verify/scripts/tlc.sh fetch
+      - name: Check every spec under specs/tla with TLC, and that each known gap still fails
+        if: env.CHANGED == 'true'
+        run: bash scripts/tlc-check.sh --witnesses
+
   ci-result:
     name: CI result
-    needs: [changes, bash-tests, gate, dotnet, scaffold]
+    needs: [changes, bash-tests, gate, dotnet, scaffold, tla]
     # The one job-level `if:` in this file: it must run (and fail) even when a need
     # failed or was skipped, since GitHub counts a skipped required check as passing.
     if: always()

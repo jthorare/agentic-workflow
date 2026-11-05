@@ -134,6 +134,9 @@ node scripts/check-deps.mjs --mermaid [--base-file F]   # Also print the Mermaid
 scripts/binaries-lock.sh check          # Shape of binaries.lock: six fields, one version per name, all four platforms
 scripts/binaries-lock.sh fetch <name>   # Download this platform's row, verify its sha256, install under $AW_STATE_DIR/cache/bin/<name>-<version>/
 
+# TLA+ specs (specs/tla/<Name>/; TLC through skills/formal-verify/scripts/tlc.sh)
+scripts/tlc-check.sh [--root DIR] [--timeout SECONDS] [--witnesses] [<spec-dir>...]    # TLC on every specs/tla/*/ folder (or the given ones), once per *.cfg, on MC<Name>.tla when present; one summary line per check, TLC's output only when it isn't PASS; --root takes specs and models: paths from another repo, --timeout stops a check that runs too long (TIMEOUT line, exit 2), --witnesses also runs each <folder>/gaps/*.cfg and expects it to fail on the invariant its line 1 `\* witness: <Name>` names (WITNESS-CAUGHT, or WITNESS-WRONG / WITNESS-MISSED exit 1); CI job "TLA+ specs (TLC)"; exit 0 all pass, 1 a violation, 2 an error (or a folder without <Name>.tla or .cfg), 3 java or the jar missing (`bash skills/formal-verify/scripts/tlc.sh fetch`)
+
 scripts/images-lock.sh check             # Shape of deploy/images.lock (every deployment image by index and per-platform digest; unresolved ones are `todo` rows) and that the Dockerfile names only pinned images; exit 0 ok, 1 a check failed
 
 # Old Onyx leftovers (#1598: Sindri no longer runs Onyx)
@@ -179,6 +182,7 @@ bash scripts/tests/check-env-example.test.sh
 bash scripts/tests/check-skills-toolkit.test.sh   # scripts/check-skills-toolkit.sh and scripts/skills-toolkit-rewrite.sh on fixture trees: a bare toolkit path or a hand-spelled per-repo path fails with file:line, the rewrite is idempotent
 bash scripts/tests/check-skill-requires.test.sh   # scripts/check-skill-requires.sh on fixture skills: good, missing sidecar, empty file, unknown key, unknown agent, unknown mcp, unknown bin (and a stub), missing or misplaced gate line, two Result blocks, an opening that never runs the gate or runs it after the first heading, the unswept list (skipped, stale and unknown entries), usage errors, then the real tree
 bash scripts/tests/binaries-lock.test.sh
+bash scripts/tests/tlc-check.test.sh   # scripts/tlc-check.sh with a stub tlc.sh: the summary lines, MC<Name>.tla, several cfgs, the exits 1/2/3 and their order, a folder without .tla or .cfg, explicit dirs, no specs; one real TLC case on specs/tla/LedgerProjector when java and the jar are present
 bash scripts/tests/images-lock.test.sh
 bash scripts/tests/code-index-lock.test.sh
 bash scripts/tests/install-deps.test.sh
