@@ -89,7 +89,7 @@ internal sealed class GateRunService(IMetaConfig config, GateWorkspace workspace
     private async ValueTask<Result<GateRunResponse>> Record(GatePlan plan, IReadOnlyList<GateStep> ran, HeavySlots? heavy, CancellationToken cancellationToken)
     {
         var verdict = !plan.Prepared.Merged ? GateVerdict.Conflict : ran.All(s => s.Verdict == GateVerdict.Pass) ? GateVerdict.Pass : GateVerdict.Fail;
-        var record = new GateRecord(plan.Pr, plan.Prepared.Pr.Head, plan.Prepared.Main, plan.Scopes, ran, verdict, clock.GetUtcNow()) { Tree = plan.Prepared.TreeSha, Stack = [] };
+        var record = new GateRecord(plan.Pr, plan.Prepared.Pr.Head, plan.Prepared.Main, plan.Scopes, ran, verdict, clock.GetUtcNow()) { Run = plan.Run, Tree = plan.Prepared.TreeSha, Stack = [] };
         var saved = await gates.Save(record, cancellationToken).ConfigureAwait(false);
         return saved.IsError ? saved.Error : new GateRunResponse(saved.Value, heavy);
     }

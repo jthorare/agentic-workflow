@@ -186,7 +186,7 @@ internal sealed class QueueGateService(TrainSelection queue, GateWorkspace works
     {
         var @base = TrainText.BaseOf(gate.Stack);
         var verdict = ran.All(s => s.Verdict == GateVerdict.Pass) ? GateVerdict.Pass : GateVerdict.Fail;
-        var record = new GateRecord(gate.Pr, gate.Head, gate.Prepared.Main, gate.Scopes, ran, verdict, clock.GetUtcNow()) { Tree = gate.Prepared.TreeSha, Stack = gate.Stack };
+        var record = new GateRecord(gate.Pr, gate.Head, gate.Prepared.Main, gate.Scopes, ran, verdict, clock.GetUtcNow()) { Run = gate.Run, Tree = gate.Prepared.TreeSha, Stack = gate.Stack };
         var saved = await gates.Save(record, CancellationToken.None).ConfigureAwait(false);
         await board.Set(saved.IsError
             ? new TrainEntry(gate.Position, gate.Pr, @base, TrainState.Error, saved.Error.Message.ReplaceLineEndings(" "))
