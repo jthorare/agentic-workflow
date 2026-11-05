@@ -96,6 +96,15 @@ Leaves out: Temporal replay, the ledger mirror, desk timeouts, more than one ins
 - No `models:` line: the folder is always checked under `touched`. It never silently drops out.
 - A path that doesn't exist: the step adds an `MDL-SPEC-002` finding to the run (not an outcome), so a stale path shows on the page. The folder is still matched on its own files. Scoping's models have no repo yet, so the step skips this check under `specs: model/*/`.
 
+**What M-3 found building it** (the code follows these):
+- Under `touched`, the step keeps only the folders the change touches first, then applies the `MDL-SPEC-001` rules to those. A broken folder the change doesn't touch never fails an unrelated change.
+- The runner's labels carry the file name: `tlc-check: Takeover/Takeover.cfg: ...`, `Takeover/gaps/FullTimeoutOnHandback.cfg: ...`. A cfg with no line counts as unrun (`tooBig`) only when the run timed out, hit the output cap, or nothing else went wrong. The output cap is 256 KiB, through `CheckInvocation.OutputLimit` and `CommandSet.OutputLimit`; every other command keeps the 4,000-character tail.
+- A violation reads as one step per state. State 1 is "Start" and lists every variable; each later state lists only the variables that changed, named from the README's `Vars:` line. A blank line ends a state, so TLC's statistics never land in the last one.
+- `fact:modelCheck` is `{ skipped, looked: [paths], specs: [{ name, bounds, constants, cfgs: [{ cfg, distinct, depth }], witnesses: [{ cfg, property }] }], warnings: [finding] }`. Findings: `MDL-VIOLATION-001`, `MDL-WITNESS-001`, `MDL-SPEC-ERROR-001`, `MDL-SPEC-001`, `MDL-TOOBIG-001`, `MDL-TOOL-001`; warnings: `MDL-SPEC-002`.
+- `TMPDIR` is the stable `$AW_STATE_DIR/tmp/model-check`, not a directory made per run. The runner's path is read when `sindri serve` starts, so a runner installed later needs a restart, which install-cs.sh already requires.
+- Left for M-4: the stale `models:` path check (`MDL-SPEC-002` for a path that doesn't exist; it needs a path-exists port) and `MDL-SPEC-003` (reads `fact:activePacket`).
+- The descriptor reads `fact:change` as well as `fact:workspace`, so a recipe that uses the step must supply both (`RCP-WIRE-001`). Scoping (`scope: all`) has no `fact:change`, so M-5 adds a step that produces one, or splits the descriptor.
+
 ## 4. Where recipes use it
 
 ### 4.1 The build line (`workflow.build`)
