@@ -25,20 +25,41 @@ public sealed class RebuiltThroughTests
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_store_with_no_recorded_rebuild_adopts_the_newest_one_without_rebuilding()
+    public async Task A_store_from_before_the_rebuild_record_rebuilds_once_and_then_not_again()
     {
         await Append(ToggleProjection.Put, 3);
         await Append(EventTypes.ViewsRebuilt, 1);
-        _ = await _views.Open(ViewSchema.Version, Token);   // a views.db from before the column: it exists (not fresh), same schema, no rebuilt_through
-        _ = await _views.Open(ViewSchema.Version, Token);
-        var log = new ListLogger<Projector>();
+        await OpenWithoutRecord();
+        var first = new ListLogger<Projector>();
 
-        var pass = await Projector(out _, log).CatchUp(Token);
+        Assert.Equal(ProjectorPass.CaughtUp, await Projector(out _, first).CatchUp(Token));
 
-        Assert.Equal(ProjectorPass.CaughtUp, pass);
+        Assert.Contains(first.Lines, l => l.Contains("Views rebuilding", StringComparison.Ordinal));
         Assert.Equal(4L, (await _memory.State(Token)).Value?.RebuiltThrough);
-        Assert.DoesNotContain(log.Lines, l => l.Contains("Views rebuilding", StringComparison.Ordinal));
-        Assert.Equal(3, _projection.Calls);   // folded once from cursor 0, never replayed
+        Assert.Equal(3, _projection.Calls);   // reset, then replayed from cursor 0
+
+        var second = new ListLogger<Projector>();
+        _ = await Projector(out _, second).CatchUp(Token);   // the next start
+
+        Assert.DoesNotContain(second.Lines, l => l.Contains("Views rebuilding", StringComparison.Ordinal));
+        Assert.Equal(3, _projection.Calls);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_store_from_before_the_rebuild_record_with_no_rebuild_in_the_ledger_records_zero_and_does_not_rebuild_again()
+    {
+        await Append(ToggleProjection.Put, 3);
+        await OpenWithoutRecord();
+
+        _ = await Projector(out _).CatchUp(Token);
+        Assert.Equal(0L, (await _memory.State(Token)).Value?.RebuiltThrough);
+        Assert.Equal(3, _projection.Calls);
+
+        var second = new ListLogger<Projector>();
+        _ = await Projector(out _, second).CatchUp(Token);
+
+        Assert.DoesNotContain(second.Lines, l => l.Contains("Views rebuilding", StringComparison.Ordinal));
+        Assert.Equal(3, _projection.Calls);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -75,6 +96,12 @@ public sealed class RebuiltThroughTests
         Assert.Equal(ProjectorPass.CaughtUp, pass);
         Assert.Equal(6, _projection.Calls);
         Assert.Equal(4L, (await _memory.State(Token)).Value?.RebuiltThrough);
+    }
+
+    private async Task OpenWithoutRecord()
+    {
+        _ = await _views.Open(ViewSchema.Version, Token);   // a views.db from before the column: it exists (not fresh), same schema, no rebuilt_through
+        _ = await _views.Open(ViewSchema.Version, Token);
     }
 
     private Projector Projector(out ProjectorProgress progress, ListLogger<Projector>? log = null)

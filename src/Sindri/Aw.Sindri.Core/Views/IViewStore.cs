@@ -35,12 +35,6 @@ public interface IViewStore
     public ValueTask<Result<ProjectorState>> Reset(IReadOnlyList<string> views, int schemaVersion, DateTimeOffset at, long rebuiltThrough,
         CancellationToken cancellationToken);
 
-    /// <summary>Records <paramref name="rebuiltThrough"/> without rebuilding, only where none is recorded yet (a store from before the column).</summary>
-    /// <param name="rebuiltThrough">The newest <c lang="text">views.rebuilt</c> sequence in the ledger (0 when it has none).</param>
-    /// <param name="cancellationToken">Cancels the operation.</param>
-    /// <returns>Success.</returns>
-    public ValueTask<Result<Unit>> AdoptRebuiltThrough(long rebuiltThrough, CancellationToken cancellationToken);
-
     /// <summary>Clears the rebuilding mark once the replay reached the head.</summary>
     /// <param name="cancellationToken">Cancels the operation.</param>
     /// <returns>Success.</returns>

@@ -54,9 +54,6 @@ internal sealed class FlakyViewStore(InMemoryViewStore inner) : IViewStore, IVie
         return inner.Reset(views, schemaVersion, at, rebuiltThrough, cancellationToken);
     }
 
-    public ValueTask<Result<Unit>> AdoptRebuiltThrough(long rebuiltThrough, CancellationToken cancellationToken) =>
-        inner.AdoptRebuiltThrough(rebuiltThrough, cancellationToken);
-
     public ValueTask<Result<Unit>> FinishRebuild(CancellationToken cancellationToken) => inner.FinishRebuild(cancellationToken);
 
     public ValueTask<Result<TRow?>> Get<TRow>(string view, string key, CancellationToken cancellationToken)

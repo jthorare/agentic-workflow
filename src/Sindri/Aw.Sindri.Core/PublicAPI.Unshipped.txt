@@ -2191,7 +2191,6 @@ Aw.Sindri.Core.Views.IViewStore
 Aw.Sindri.Core.Views.IViewStore.Apply(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ledger.LedgerEvent!>! page, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Views.IProjection!>! projections, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Views.PageApplied!>!>
 Aw.Sindri.Core.Views.IViewStore.FinishRebuild(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Views.IViewStore.Open(int schemaVersion, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Views.ProjectorState!>!>
-Aw.Sindri.Core.Views.IViewStore.AdoptRebuiltThrough(long rebuiltThrough, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Views.IViewStore.Reset(System.Collections.Generic.IReadOnlyList<string!>! views, int schemaVersion, System.DateTimeOffset at, long rebuiltThrough, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Views.ProjectorState!>!>
 Aw.Sindri.Core.Views.ItemRow
 Aw.Sindri.Core.Views.ItemRow.<Clone>$() -> Aw.Sindri.Core.Views.ItemRow!

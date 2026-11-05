@@ -23,7 +23,6 @@ internal static class ViewSql
         "UPDATE projector_state SET cursor = 0, schema_version = $schemaVersion, projected_at = $at, rebuilding = 1, stalled_at = NULL, " +
         "stalled_type = NULL, rebuilt_through = $rebuiltThrough WHERE id = 1";
 
-    internal const string AdoptRebuiltThrough = "UPDATE projector_state SET rebuilt_through = $rebuiltThrough WHERE id = 1 AND rebuilt_through IS NULL";
 
     internal const string FinishRebuild = "UPDATE projector_state SET rebuilding = 0 WHERE id = 1";
 

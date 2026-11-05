@@ -77,14 +77,6 @@ internal sealed class SqliteViewStore(ViewsDatabase database, JsonSerializerOpti
             return reset.IsError ? ViewsDatabase.Translate(reset.Error) : await ReadState(session, cancellationToken).ConfigureAwait(false);
         }, cancellationToken);
 
-    public ValueTask<Result<Unit>> AdoptRebuiltThrough(long rebuiltThrough, CancellationToken cancellationToken) =>
-        InSession(async session =>
-        {
-            var adopted = await SqliteQueries.Execute(session, new SqlStatement(ViewSql.AdoptRebuiltThrough, c => c.Bind("$rebuiltThrough", rebuiltThrough)),
-                cancellationToken).ConfigureAwait(false);
-            return adopted.IsError ? ViewsDatabase.Translate(adopted.Error) : Results.Success(Unit.Value);
-        }, cancellationToken);
-
     public ValueTask<Result<Unit>> FinishRebuild(CancellationToken cancellationToken) =>
         InSession(async session =>
         {

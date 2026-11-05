@@ -89,7 +89,7 @@ internal sealed partial class Projector(
         var reason = requested ? "requested" : RebuildReason(state, through);
         if (reason is null)
         {
-            return await Adopt(state, through, ct).ConfigureAwait(false);
+            return state;
         }
 
         var reset = await Rebuild(state, reason, through, head, ct).ConfigureAwait(false);
@@ -102,19 +102,7 @@ internal sealed partial class Projector(
     }
 
     private string? RebuildReason(ProjectorState state, long through) =>
-        state.RebuiltThrough is { } done && through > done ? "recorded rebuild" : _healing ? "unreadable rows" : state.Fresh ? "views.db created" : state.SchemaVersion != ViewSchema.Version ? "schema version changed" : null;
-
-    /// <summary>A views.db from before the rebuilt_through column takes the ledger's newest rebuild as done, so an upgrade doesn't rebuild every box once.</summary>
-    private async ValueTask<Kernel.Result<ProjectorState>> Adopt(ProjectorState state, long through, CancellationToken ct)
-    {
-        if (state.RebuiltThrough is not null)
-        {
-            return state;
-        }
-
-        var adopted = await store.AdoptRebuiltThrough(through, ct).ConfigureAwait(false);
-        return adopted.IsError ? adopted.Error : state with { RebuiltThrough = through };
-    }
+        state.RebuiltThrough is { } done && through > done ? "recorded rebuild" : _healing ? "unreadable rows" : state.Fresh ? "views.db created" : state.SchemaVersion != ViewSchema.Version ? "schema version changed" : state.RebuiltThrough is null ? "no rebuild record" : null;
 
     private async ValueTask<Kernel.Result<ProjectorState>> Rebuild(ProjectorState state, string reason, long through, long head, CancellationToken ct)
     {

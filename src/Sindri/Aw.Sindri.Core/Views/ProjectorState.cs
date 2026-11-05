@@ -8,6 +8,6 @@ namespace Aw.Sindri.Core.Views;
 /// <param name="StalledAt">The sequence the projector stalled at, or null.</param>
 /// <param name="StalledType">That event's type, or null.</param>
 /// <param name="Fresh">True when this Open created the store (views.db was missing).</param>
-/// <param name="RebuiltThrough">The newest <c lang="text">views.rebuilt</c> sequence a reset (or an adoption) has covered, or null for a store from before the column (#2054).</param>
+/// <param name="RebuiltThrough">The newest <c lang="text">views.rebuilt</c> sequence a reset has covered, or null for a store from before the column (it rebuilds once, which sets it) (#2054).</param>
 public sealed record ProjectorState(long Cursor, int SchemaVersion, DateTimeOffset? ProjectedAt, bool Rebuilding,
     long? StalledAt, string? StalledType, bool Fresh, long? RebuiltThrough = null);

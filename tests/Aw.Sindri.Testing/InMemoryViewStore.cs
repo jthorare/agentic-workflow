@@ -74,20 +74,6 @@ public sealed class InMemoryViewStore(JsonSerializerOptions options) : IViewStor
     }
 
     /// <inheritdoc/>
-    public ValueTask<Result<Unit>> AdoptRebuiltThrough(long rebuiltThrough, CancellationToken cancellationToken)
-    {
-        lock (_gate)
-        {
-            if (_state is { RebuiltThrough: null })
-            {
-                _state = _state with { RebuiltThrough = rebuiltThrough };
-            }
-
-            return ValueTask.FromResult<Result<Unit>>(Unit.Value);
-        }
-    }
-
-    /// <inheritdoc/>
     public ValueTask<Result<Unit>> FinishRebuild(CancellationToken cancellationToken)
     {
         lock (_gate)

@@ -109,23 +109,6 @@ public abstract class ViewStoreContract
         Expect.True((await reader.State(Token)).Value is { Rebuilding: false, Cursor: 0 });
     }
 
-    /// <summary>A store with no recorded rebuild adopts the first value it is given and keeps it; a reset overwrites it (#2054).</summary>
-    /// <returns>The test.</returns>
-    [Fact]
-    public async Task AdoptRebuiltThrough_fills_only_an_empty_value_and_a_reset_overwrites_it()
-    {
-        var (store, reader) = Create();
-        var opened = (await store.Open(ViewSchema.Version, Token)).Value;
-        Expect.True(opened.RebuiltThrough is null);
-
-        _ = (await store.AdoptRebuiltThrough(4, Token)).Value;
-        _ = (await store.AdoptRebuiltThrough(9, Token)).Value;
-        Expect.Equal(4L, (await reader.State(Token)).Value?.RebuiltThrough);
-
-        _ = (await store.Reset(ViewNames.All, ViewSchema.Version, Clock.GetUtcNow(), 9, Token)).Value;
-        Expect.Equal(9L, (await reader.State(Token)).Value?.RebuiltThrough);
-    }
-
     /// <summary>A row reads back equal to what the projection wrote, nested records, enums and times included.</summary>
     /// <returns>The test.</returns>
     [Fact]
