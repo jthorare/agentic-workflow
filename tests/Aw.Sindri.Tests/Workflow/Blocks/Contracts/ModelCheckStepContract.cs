@@ -19,7 +19,7 @@ public sealed class ModelCheckStepContract : BlockContract
 
     protected override BlockDescriptor Descriptor => ModelCheckSteps.Check;
 
-    protected override string ExpectedHash => "sha256:0000000000000000000000000000000000000000000000000000000000000000";   // pinned by the first run: the failing assertion prints the hash
+    protected override string ExpectedHash => "sha256:fbb8e322dc7f3fc4718c73237190c93eaf6656fad64b99e060df53f4519b26a4";
 
     protected override JsonSerializerOptions Json => ShippedComposition.Json;
 
