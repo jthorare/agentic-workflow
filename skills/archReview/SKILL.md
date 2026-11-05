@@ -85,6 +85,15 @@ Failure-mode definitions:
 
 Findings (F1, F2, …): severity per `_shared/severity.md`, description, location, concrete mitigation.
 
+## Step 5.2: Formal Check (only when the plan has a state machine, protocol or concurrency)
+
+Concurrency means two or more actors that can interleave: locks, leases, retries with idempotency, queues and workers, multi-step writes across actors, failover or leader election, ordering between processes. The bad case it catches: two workers both claim a job because the check and the set are separate statements. When the plan has that logic, **Invoke skill `formal-verify`** on that part only (args: the plan section, `--slug <name>`) and fold the result in:
+- `violation` is a must-fix finding (CRITICAL when it breaks a safety property): summarize the trace in real steps (who does what, in what order, and the state that breaks), cite its `report.md` path.
+- `pass` is listed with its bounds ("2 workers, 2 jobs, 1 crash"), never as "proven correct".
+- `blocked` (no java or jar) and `error` are named in the review as not checked, never treated as a pass.
+
+Otherwise write one line in the review: "Formal check: skipped (no state machine, protocol or concurrency in this plan)".
+
 ## Step 5.5: Review Self-Check
 
 Verify your own evidence: for every `OK — <evidence>` cell in the matrix, confirm the cited code actually exists by searching and reading it (grep the named timeout, validator, handler, or config key). Downgrade any cell whose evidence does not hold to a finding.

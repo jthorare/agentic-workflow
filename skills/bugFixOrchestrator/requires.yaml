@@ -1,2 +1,3 @@
 bins: [bugfix-state, git, heavy, judge, ui-evidence]
 agents: [lean-coder, qa-runner]
+skills: [formal-verify]
