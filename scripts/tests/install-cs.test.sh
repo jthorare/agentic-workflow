@@ -110,12 +110,13 @@ export PATH="$WORK/fakebin:$PATH"
 
 # A miniature checkout: the script, its inputs list, a pinned SDK, some sources and two shipped recipes.
 REPO="$WORK/repo"
-mkdir -p "$REPO/scripts/lib" "$REPO/src/Sindri/Aw.Sindri.Host" "$REPO/src/Judge" "$REPO/recipes/sindri"
+mkdir -p "$REPO/scripts/lib" "$REPO/skills/formal-verify/scripts" "$REPO/src/Sindri/Aw.Sindri.Host" "$REPO/src/Judge" "$REPO/recipes/sindri"
 cp "$DIR/install-cs.sh" "$REPO/scripts/"
 cp "$DIR/lib/sindri-build-inputs.sh" "$DIR/lib/sindri-open-runs.sh" "$REPO/scripts/lib/"
 printf '#!/usr/bin/env bash\n[ "${1:-}" = --expensive ] && shift\nexec "$@"\n' > "$REPO/scripts/heavy.sh"; chmod +x "$REPO/scripts/heavy.sh"
 printf '{"sdk":{"version":"%s"}}\n' "$FAKE_SDK" > "$REPO/global.json"
 echo a > "$REPO/src/Sindri/Aw.Sindri.Host/a.cs"; echo b > "$REPO/src/Judge/b.cs"
+echo "runner" > "$REPO/scripts/tlc-check.sh"; echo "tlc" > "$REPO/skills/formal-verify/scripts/tlc.sh"; echo "lock" > "$REPO/skills/formal-verify/tla2tools.lock"
 echo "name: one" > "$REPO/recipes/sindri/one.yaml"; echo "name: two" > "$REPO/recipes/sindri/two.yaml"
 g() { git -C "$REPO" -c user.name=t -c user.email=t@example.invalid "$@"; }
 g init -q -b main && g add -A && g commit -q -m base
@@ -134,6 +135,7 @@ bash "$INSTALL" --publish --link > /dev/null 2>&1; check "--publish with --link 
 out="$(bash "$INSTALL" --dry-run 2>&1)"; rc=$?
 check "dry run exits 0" "$rc" "0"
 has "dry run says what it would do" "$out" "install-cs: [dry-run] would"
+has "dry run prints the model-check copy" "$out" "would copy the model-check runner"
 check "dry run writes no state" "$([ -e "$AW_STATE_DIR" ] && echo yes || echo no)" "no"
 check "dry run publishes nothing" "$(wc -l < "$FAKE_LOG" | tr -d ' ')" "0"
 has "dry run says it would link heavy through current" "$out" "[dry-run] would link $AW_STATE_DIR/bin-r1b/heavy -> $AW_STATE_DIR/bin/cs/current/heavy"
@@ -153,6 +155,7 @@ check "one stamped build" "$(printf '%s' "$S1" | wc -c | tr -d ' ')" "16"
 for f in sindri sindri-ui judge aw-packets bugfix-state ui-evidence aw-readiness libe_sqlite3.so libSkiaSharp.so build-info; do
   check "build has $f" "$([ -e "$B/$S1/$f" ] && echo yes || echo no)" "yes"
 done
+check "the model-check runner is copied at its repo layout" "$(cat "$B/$S1/tlc/scripts/tlc-check.sh" "$B/$S1/tlc/skills/formal-verify/scripts/tlc.sh" "$B/$S1/tlc/skills/formal-verify/tla2tools.lock" | tr '\n' ' ')" "runner tlc lock "
 check "seven publishes, each stamped with the commit" "$(grep -c "rev=$(g rev-parse HEAD)$" "$FAKE_LOG")" "7"
 check "the build carries heavy, executable" "$([ -x "$B/$S1/heavy" ] && echo yes || echo no)" "yes"
 check "the build's heavy is scripts/heavy.sh" "$(cmp -s "$B/$S1/heavy" "$REPO/scripts/heavy.sh" && echo same || echo differs)" "same"

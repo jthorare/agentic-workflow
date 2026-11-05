@@ -6,7 +6,7 @@ using Aw.Sindri.Infrastructure.Processes;
 
 namespace Aw.Sindri.Infrastructure.Checks;
 
-/// <summary><see cref="ICheckCommands"/> over <see cref="IToolRunner"/>: the command runs in the worktree, and what it printed is scrubbed and cut to its tail before anyone sees it.</summary>
+/// <summary><see cref="ICheckCommands"/> over <see cref="IToolRunner"/>: the command runs in the worktree, and what it printed is scrubbed and cut to its tail (the invocation's limit) before anyone sees it.</summary>
 /// <param name="runner">Runs the program.</param>
 /// <param name="scrubber">Takes secrets out of what it printed.</param>
 /// <param name="clock">Times the run.</param>
@@ -30,8 +30,8 @@ internal sealed class ToolCheckCommands(IToolRunner runner, ITextScrubber scrubb
         {
             ToolOutcome.Cancelled => throw new OperationCanceledException(cancellationToken),
             ToolOutcome.Missing => SindriErrors.InvalidInput.With($"'{command.Argv[0]}' (the command '{command.Name}') can't be started: no such program, or no such directory {workingDirectory}"),
-            ToolOutcome.TimedOut => CheckRun.Of(-1, timedOut: true, took, scrubber.Scrub(run.Output + run.Error)),
-            ToolOutcome.Exited => CheckRun.Of(run.ExitCode, timedOut: false, took, scrubber.Scrub(run.Output + run.Error)),
+            ToolOutcome.TimedOut => CheckRun.Of(-1, timedOut: true, took, scrubber.Scrub(run.Output + run.Error), command.OutputLimit),
+            ToolOutcome.Exited => CheckRun.Of(run.ExitCode, timedOut: false, took, scrubber.Scrub(run.Output + run.Error), command.OutputLimit),
             _ => throw new InvalidOperationException("unknown tool outcome"),
         };
     }

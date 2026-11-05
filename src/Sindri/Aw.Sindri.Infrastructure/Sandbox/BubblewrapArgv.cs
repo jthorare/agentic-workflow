@@ -61,7 +61,7 @@ internal static class BubblewrapArgv
             PlanMountKind.ReadWrite or PlanMountKind.PerLaunchDir => [m.Optional ? "--bind-try" : "--bind", source, m.Path],
             PlanMountKind.Dev => ["--dev", m.Path],
             PlanMountKind.Proc => ["--proc", m.Path],
-            PlanMountKind.Tmpfs => Tmpfs(m),
+            PlanMountKind.Tmpfs => m.Optional && host.KindOf(m.Path) == HostPathKind.Missing ? [] : Tmpfs(m),   // why: an optional tmpfs needs its mount point on the host (bubblewrap can't make one in a read-only bind), so a missing one is skipped
             PlanMountKind.Deny => Deny(mounts, index, host),
             PlanMountKind.Link => throw new InvalidOperationException($"A link ({m.Path}) is a Seatbelt entry: bubblewrap binds, it never links; the plan was built for another mechanism."),
             _ => throw new ArgumentOutOfRangeException(nameof(mounts), m.Kind, "unknown mount kind"),
