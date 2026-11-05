@@ -26,6 +26,8 @@
 # write) is freed once over two minutes old (GNU find -mmin +1 truncates; Sindri waits one); younger is a holder mid-write, and rmdir fails if it
 # writes meanwhile. A dir holding other files (sindri's TS lock) is never reclaimed.
 
+. "$(dirname "${BASH_SOURCE[0]}")/heavy-config.sh"
+
 # _lock_pid_alive <pid>: 0 (alive) unless the pid is a number whose process is gone.
 _lock_pid_alive() {
   case "$1" in ''|*[!0-9]*) return 0 ;; esac
@@ -111,12 +113,25 @@ release_lock() {
 }
 
 acquire_any_lock() {
-  local base="$1" slots="$2" timeout_s="$3" waited=0 printed=0 k dir
+  local base="$1" slots="$2" timeout_s="$3" waited=0 printed=0 k dir heavy="" reserve=0 given reserve_blocked
   case "$slots" in ''|*[!0-9]*) slots=1 ;; esac
   [ "$slots" -ge 1 ] || slots=1
+  given="$slots"
+  # The box-wide heavy-job lock only (#2061): the cap file wins over <slots> and a non-meta taker stays off the meta
+  # reserve, both read again on every pass like the heavy wrapper does. Every other lock counts the slots it was given.
+  [ "$base" = "${AW_HEAVY_JOB_LOCK:-${AW_STATE_DIR:-$HOME/.agentic-workflow}/locks/heavy-job.lock}" ] && heavy=1
   while :; do
+    reserve_blocked=0
+    # The cap falls back to the given count each pass, so taking the cap file away restores it.
+    if [ -n "$heavy" ]; then slots="$(heavy_cap "$given")"; reserve="$(heavy_reserve "$slots")"; fi
     k=1
     while [ "$k" -le "$slots" ]; do
+      if [ -n "$heavy" ] && [ "${AW_HEAVY_PRIORITY:-}" != meta ] && [ "$k" -le "$reserve" ]; then
+        # A free slot skipped for the reserve means only the reserve kept this pass from a slot.
+        if [ "$k" -eq 1 ]; then dir="$base"; else dir="$base.$k"; fi
+        [ -d "$dir" ] || reserve_blocked=1
+        k=$((k + 1)); continue
+      fi
       if [ "$k" -eq 1 ]; then dir="$base"; else dir="$base.$k"; fi
       if _lock_take "$dir" || { _lock_reclaim_dead "$dir" && _lock_take "$dir"; }; then
         printf '%s\n' "$dir"
@@ -130,6 +145,8 @@ acquire_any_lock() {
     fi
     [ "$waited" -ge "$timeout_s" ] && return 1
     sleep 1
-    waited=$((waited + 1))
+    # A pass blocked only by the reserve (it skipped a free reserved slot) doesn't count toward the timeout, as in the heavy
+    # wrapper (owner 2026-10-17). Any other pass counts, so a taker never waits forever behind ordinary busy slots.
+    [ "$reserve_blocked" = 1 ] || waited=$((waited + 1))
   done
 }
