@@ -144,7 +144,7 @@ the other:
 - aw-meta **computes** the reservation from the **merge-queue depth**: the pull requests lanes said are `ready` that are not yet
   merged, ended or dropped (what `status` lists as the merge queue), sized against the team's `heavy.cap` (default 3; keep it equal
   to the wrapper's own cap). The tier with the highest `minDepth` the depth reaches decides; with the defaults a depth of 3 or 4
-  reserves 1 slot, 5 or 6 reserves 2, 7 or more reserves all of them (`"all"` is `heavy.cap`), and 0 to 2 reserves none. It
+  reserves 1 slot, 5 or 6 reserves 2, 7 or more reserves all but one (`"all"` is `heavy.cap`; every tier is held to `heavy.cap` less one so a lane job always keeps a slot), and 0 to 2 reserves none. It
   keeps the result, the depth behind it and the time in `heavy-reserve` in the team's state directory (`meta/teams/<team>/`, or
   `meta/` for a legacy team), and recomputes it wherever the queue changes: before each `gate-run`, after each `merge-run` (even
   when its log line fails), after each `queue-drop`, on every `watch` poll (a ready message, a drop, or a pull request seen
@@ -155,8 +155,8 @@ the other:
   it with meta-gate-reserve A`, and the meta runs `meta-gate-reserve A` (the installed bash script, the only writer of the
   wrapper's file) before each gate. `A` is **not the queue depth**: the script has its own fixed tiers (depth 0-2 reserves 0, 3-4
   reserves 1, 5-6 reserves 2, 7 or more reserves its cap, and every tier is capped at the cap minus one so a lane job always keeps a slot), which differ from a team's custom `heavy.reserve` tiers or `heavy.cap`.
-  aw-meta prints the argument that makes the script keep the slots it computed: 0 slots prints 0, 1 prints 3, 2 prints 5, and all
-  of them (N = C) prints 7. A count between 2 and the cap has no argument; it prints 5 (the script keeps 2, never more than computed).
+  aw-meta prints the argument that makes the script keep the slots it computed: 0 slots prints 0, 1 prints 3, 2 prints 5, and the cap less one
+  (from 3) prints 7. A count in between has no argument; it prints 5 (the script keeps 2, never more than computed).
   `gate-run` computes before its steps and prints the line after them, so to apply the reservation before a gate read it from
   `status` (which recomputes it). The wrapper then gives every expensive job *without* the priority only the
   slots above the reservation, and does not count a wait for the reservation toward its timeout. A line ending `[stale: computed
@@ -319,7 +319,7 @@ working untouched. `team-migrate` moves it into `teams/<its team name>/` on requ
 | `worktrees` | `{roots?, buildOutputs?, enabled?}` for the worktree cleanup (see that section): the directories whose worktrees may be removed (`~` is the home directory), the directory names of untracked build output that don't keep a worktree, and `enabled` (default true; false makes the merge-run and watch triggers only report) |
 | `resources` | `{diskFloorGb?, memFloorGb?, swapHighPct?}`, defaults 30, 8 and 90 (floors 0 or more, `swapHighPct` 1 to 100; anything else is AW-META-003 at load; `swapHighPct` is deprecated: still accepted and validated, but ignored): the watch reports `DISK LOW` below `diskFloorGb` free on the state disk and `MEMORY LOW` below `memFloorGb` available. Swap use is shown by `health` as information and never makes memory low (owner decision, 2026-10-18). See "Resources and adaptation" |
 | `builders` | `{maxPerLane?, worktreeGb?}`, defaults none and 4 (`maxPerLane`, when set, 1 or more, `worktreeGb` 0 or more; anything else is AW-META-003 at load): the most builder subagents a lane runs at once (advice only: nothing enforces it; unset means no cap), and the disk one builder's worktree and build output take (the `health` advice) |
-| `heavy` | `{reserve?, cap?}`: `reserve` is an array of `{minDepth, slots}` tiers (slots is a whole number or `"all"`), `true` or absent for the defaults `[{"minDepth":3,"slots":1},{"minDepth":5,"slots":2},{"minDepth":7,"slots":"all"}]`, or `false` to compute no reservation; `cap` (default 3, at least 1) is the slot count the reservation is sized against, to keep equal to the wrapper's own |
+| `heavy` | `{reserve?, cap?}`: `reserve` is an array of `{minDepth, slots}` tiers (slots is a whole number or `"all"`, the cap; every tier is held to the cap less one), `true` or absent for the defaults `[{"minDepth":3,"slots":1},{"minDepth":5,"slots":2},{"minDepth":7,"slots":"all"}]`, or `false` to compute no reservation; `cap` (default 3, at least 1) is the slot count the reservation is sized against, to keep equal to the wrapper's own |
 | `context` | `{recycleAt?}`, default 300000 (1 or more; anything else is AW-META-003 at load): the context tokens at which `lanes-context` says `recycle` and `watch` reports `CONTEXT HIGH`. `health` and `status` print a compact `context: api 487k (recycle), engine 120k` line |
 | `usage` | `{resumeMarginSeconds?, probeMinutes?, autoResume?}`, defaults 120, 15 and true (`resumeMarginSeconds` 0 or more, `probeMinutes` 1 or more; anything else is AW-META-003 at load): how long after a limit's stated reset the window counts as back, how often an unknown-reset limit (and a resume that did not take) is tried again, and whether the watch types the resume line into an idle lane (see "Usage limits") |
 | `knownFlakes` | Test names (or Class.Method, or a class) a red is checked against before it counts as real; matched as whole dot-separated segments, never as a substring |
