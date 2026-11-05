@@ -194,7 +194,7 @@ Two folders, both run by the `tla` CI job.
 **What it models:**
 - `Core/Workflow/Engine/Rules/StateTimers.cs` (`Takeovers`, `HandedBack`)
 - `Core/Workflow/Engine/Rules/Suspensions.cs` (takeover, `EndCurrent`, the queued parks)
-- `TransitionDecision.EngineTriggers.cs` (takeover, handback, cancel)
+- `Core/Workflow/Engine/Rules/TransitionDecision.EngineTriggers.cs` (takeover, handback, cancel)
 - `Aw.Sindri.Workflows/TimerScopes.cs` (`Pause`, `Resume`)
 
 **Actors:**
@@ -204,7 +204,7 @@ Two folders, both run by the `tla` CI job.
 - the engine: a park arrives
 - time: `Elapse` lowers the remaining time by one while a timer runs and the instance isn't taken over. Without it a paused timer always holds the full timeout, "arm the full timeout" can't be told apart from "resume what was left", and the planted bug below could never be caught.
 
-The timer's remaining time is `none` or a small counter (0..3). `none` is a takeover that kept no timer, a start taken over (`StateTimers.cs:54`), and it's different from a timer that ran out.
+The timer's remaining time is `none` or a small counter (0..3). `none` is a takeover that kept no timer, and it's different from a timer that ran out. A start taken over is not `none` in practice: `StateTimers.cs:54` treats it as keeping nothing, but the interpreter stores the state's full timeout on the suspension (`RecipeWorkflow.First`, `RecipeWorkflow.cs:229`, through `TimerScopes.Held`), so its handback resumes that. The "kept nothing, arm the full timeout" path only runs when the paused state has no timer or its timer was already used. A timer that had already fired when the takeover came is kept as 0 left (`TimerScopes.Pause`) and fires right after the handback. The spec has all of these (M-1 found them in the code).
 
 **A handback has three results** (`StateTimers.cs:79-83`), and the spec has all three:
 - back to the park the takeover covered: no timer (the park has none);
@@ -213,7 +213,7 @@ The timer's remaining time is `none` or a small counter (0..3). `none` is a take
 
 **Properties, in plain words:**
 - `TimerStoppedWhileTakenOver`: while the instance is taken over, no state timer is running.
-- `NoTimeGained`: when a takeover paused a running timer, the time left after the handback is never more than the time left when it paused. A takeover that kept no timer arms the full timeout on handback, and so does a new state entry or an answer to a park.
+- `NoTimeGained`: when a takeover paused a running timer, the time left after the handback is never more than the time left when it paused. A takeover that kept no timer arms the full timeout on handback, and so does a new state entry or an answer to a park. So a park raised during a takeover over a running timer drops the paused time: the handback goes to the park with no timer, and answering it arms the full timeout. That's the engine's rule today, not a hole, and the property covers only a handback straight back to active.
 - `ParkSurvivesTakeover`: a park that arrives during a takeover is the suspension after the handback. The instance never goes back to active with that park lost.
 - `NoTimerOnPark`: a handback back to a park runs no state timer.
 - `AtMostOneSuspension`, plus `TypeOK`.
@@ -223,7 +223,7 @@ The timer's remaining time is `none` or a small counter (0..3). `none` is a take
 
 **Bounds:** 1 instance, 2 recipe states, up to 2 takeovers, up to 2 parks, remaining time none or 0..3.
 
-**The planted bug** (`gaps/FullTimeoutOnHandback.cfg`, the go/no-go in §7): a constant switches the handback to arm the full timeout even when the takeover paused a running timer. Its first line is `\* witness: NoTimeGained`. TLC must report `VIOLATION invariant NoTimeGained` with a trace of at most 6 states; the shortest is 5 (start, enter a state, `Elapse`, takeover, handback), and it needs at least one `Elapse` before the takeover. In this repo the runner's `--witnesses` runs it in the `tla` CI job.
+**The planted bug** (`gaps/FullTimeoutOnHandback.cfg`, the go/no-go in §7): a constant switches the handback to arm the full timeout even when the takeover paused a running timer. Its first line is `\* witness: NoTimeGained`. TLC must report `VIOLATION invariant NoTimeGained` with a trace of at most 6 states; M-1's is 4 (start in a state with its timer, `Elapse`, takeover, handback), and it needs at least one `Elapse` before the takeover. In this repo the runner's `--witnesses` runs it in the `tla` CI job.
 
 ### 5.2 `specs/tla/RecipeWorkflow/`
 
