@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# Canned stand-in for ffmpeg (system-design-video evals). Decode check (`-f null -`) is clean unless the answer file
-# (see the ffprobe stub) sets "decode_error"; a raw pixel read prints the board color; any other output is a small
-# placeholder file. Writes no files (a run's Bash can't write where a later call or grader sees), so it does not check that an -i input exists: an earlier stub call never made it. Exits 1 on a call with no input.
+# Behaviour and shapes: evals/stubs/README.md "system-design-video".
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+media="$here/../media"
 cfg="${AW_STUB_FFPROBE_JSON:-}"
 [ -n "$cfg" ] && [ -f "$cfg" ] || { cfg=""; d="$PWD"; while [ "$d" != "/" ]; do [ -f "$d/ffprobe.json" ] && { cfg="$d/ffprobe.json"; break; }; d="$(dirname "$d")"; done; }
 [ -n "$cfg" ] && [ -f "$cfg" ] || cfg="$here/../ffprobe.json"
 val() { [ -f "$cfg" ] && sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"\{0,1\}\([^\",}]*\)\"\{0,1\}.*/\1/p" "$cfg" | head -1; }
 args=("$@"); n=${#args[@]}
-[ "$n" -ge 1 ] || { echo "ffmpeg stub: no arguments" >&2; exit 1; }
-[ "${args[0]}" = "-version" ] && { echo "ffmpeg version stub"; exit 0; }
-inputs=0
-for ((i = 0; i < n; i++)); do [ "${args[i]}" = "-i" ] && inputs=$((inputs + 1)); done
-[ "$inputs" -ge 1 ] || { echo "ffmpeg stub: unknown call (no -i): $*" >&2; exit 1; }
+[ "$n" -ge 1 ] || { echo "Hyper fast Audio and Video encoder" >&2; echo "usage: ffmpeg [options] [[infile options] -i infile]... {[outfile options] outfile}..." >&2; exit 1; }
+[ "${args[0]}" = "-version" ] && { echo "ffmpeg version 7.1.1 Copyright (c) 2000-2025 the FFmpeg developers"; exit 0; }
+inputs=()
+for ((i = 0; i < n - 1; i++)); do [ "${args[i]}" = "-i" ] && inputs+=("${args[i+1]}"); done
+[ "${#inputs[@]}" -ge 1 ] || { echo "At least one output file must be specified" >&2; exit 1; }
+for f in "${inputs[@]}"; do [ -f "$f" ] || { echo "$f: No such file or directory" >&2; exit 1; }; done
 last="${args[n-1]}"
 all="$*"
 if [ "$last" = "-" ]; then
@@ -22,8 +22,21 @@ if [ "$last" = "-" ]; then
       printf "\\x${hex:0:2}\\x${hex:2:2}\\x${hex:4:2}" ;;
     *"-f null"*)
       err="$(val decode_error)"; [ -z "$err" ] || echo "$err" >&2 ;;
-    *) echo "ffmpeg stub: unknown call: $all" >&2; exit 1 ;;
+    *) echo "Unable to choose an output format for '-'" >&2; exit 1 ;;
   esac
   exit 0
 fi
-exit 0
+mkdir -p "$(dirname "$last")" 2>/dev/null
+case "$(basename "$last")" in
+  sheet-*.jpg) cp "$media/sheet.jpg" "$last" ;;
+  [0-9]*-*.jpg)
+    id="$(basename "$last" .jpg)"; id="${id#*-}"
+    src="$media/$id.jpg"; [ -f "$src" ] || src="$media/model.jpg"
+    cp "$src" "$last" ;;
+  *.jpg) cp "$media/model.jpg" "$last" ;;
+  *.png) cp "$media/model.png" "$last" ;;
+  *.mp4)
+    size=1600000; case "$all" in *"scale=1280:720"*) size=600000 ;; esac
+    { printf '\000\000\000\040ftypisom\000\000\002\000isomiso2avc1mp41'; head -c "$size" /dev/urandom; } > "$last" ;;
+  *) echo "Unable to choose an output format for '$last'; use a standard extension for the filename or specify the format manually." >&2; exit 1 ;;
+esac

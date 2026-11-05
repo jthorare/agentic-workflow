@@ -1,29 +1,52 @@
 #!/usr/bin/env bash
-# Canned stand-in for bun (system-design-video evals). Two shapes only:
-#   bun <dir>/render.ts <storyboard.json> <out-dir> --tokens <tokens.json> [--still t1,t2]   -> footage.mp4 (placeholder),
-#       prints a one-line summary and the board color (first #rrggbb in the tokens file); writes nothing
-#   bun -e '<script>'   (review.sh's beat index)   -> one "NN id seconds" line per beat of the nearest storyboard.json upward
-# Anything else (bun add, bunx, bun run) exits 1. Writes no files: a run's Bash can't write where a later call or grader sees.
-sbfile() { local d="$PWD"; while [ "$d" != "/" ]; do [ -f "$d/storyboard.json" ] && { echo "$d/storyboard.json"; return; }; d="$(dirname "$d")"; done; }
-if [ "${1:-}" = "-e" ]; then
-  sb="$(sbfile)"; [ -n "$sb" ] || { echo "bun stub: no storyboard.json at or above $PWD" >&2; exit 1; }
-  i=0
-  for id in $(grep -o '"id"[[:space:]]*:[[:space:]]*"[^"]*"' "$sb" | sed 's/.*"\([^"]*\)"$/\1/'); do
-    printf '%02d %s %s.50\n' "$i" "$id" "$((i * 4 + 2))"; i=$((i + 1))
+# Behaviour and shapes: evals/stubs/README.md "system-design-video".
+media="$(cd "$(dirname "${BASH_SOURCE[0]}")/../media" && pwd)"
+beat_secs=23
+ids_of() { grep -o '"id"[[:space:]]*:[[:space:]]*"[^"]*"' "$1" | sed 's/.*"\([^"]*\)"$/\1/'; }
+case "${1:-}" in
+  --version) echo "1.2.19"; exit 0 ;;
+  -e)
+    [ -f layout.json ] || { echo "error: ENOENT: no such file or directory, open '$PWD/layout.json'" >&2; exit 1; }
+    i=0
+    for id in $(ids_of layout.json); do
+      printf '%02d %s %d.70\n' "$i" "$id" "$((i * beat_secs + 18))"; i=$((i + 1))
+    done
+    exit 0 ;;
+  *render.ts) ;;
+  *) echo "error: Script not found \"${1:-}\"" >&2; exit 1 ;;
+esac
+usage="usage: bun render.ts <storyboard.json> <out-dir> --tokens <design-tokens.json> [--fps 30] [--still t1,t2] [--range a..b]"
+sb="${2:-}"; out="${3:-}"
+[ -n "$sb" ] && [ -n "$out" ] || { echo "$usage" >&2; exit 1; }
+shift 3
+tokens=""; still=""; fps=30
+while [ $# -gt 0 ]; do case "$1" in --tokens) tokens="${2:-}"; shift 2 ;; --still) still="${2:-}"; shift 2 ;; --fps) fps="${2:-30}"; shift 2 ;; --range) shift 2 ;; *) shift ;; esac; done
+[ -f "$sb" ] || { echo "error: ENOENT: no such file or directory, open '$sb'" >&2; exit 1; }
+[ -n "$tokens" ] || { echo "$usage" >&2; exit 1; }
+[ -f "$tokens" ] || { echo "error: ENOENT: no such file or directory, open '$tokens'" >&2; exit 1; }
+mkdir -p "$out" || exit 1
+mapfile -t hexes < <(grep -o '#[0-9a-fA-F]\{6\}' "$tokens")
+mapfile -t ids < <(ids_of "$sb")
+n=${#ids[@]}; total=$((n * beat_secs))
+printf '{\n  "board": "%s",\n  "chalk": "%s",\n  "primary": "%s"\n}\n' "${hexes[0]:-#0d1117}" "${hexes[1]:-#e6edf3}" "${hexes[2]:-#58a6ff}" > "$out/resolved-inks.json"
+{
+  printf '{\n  "total": %d,\n  "beats": [\n' "$total"
+  for ((i = 0; i < n; i++)); do
+    s=$((i * beat_secs))
+    printf '    { "id": "%s", "start": %d, "land": %d, "settle": %d.5, "end": %d }%s\n' "${ids[i]}" "$s" "$((s + 18))" "$((s + 18))" "$((s + beat_secs))" "$([ $i -lt $((n - 1)) ] && echo ,)"
   done
+  printf '  ]\n}\n'
+} > "$out/layout.json"
+if [ -n "$still" ]; then
+  mkdir -p "$out/stills"
+  IFS=',' read -r -a ts <<< "$still"
+  for t in "${ts[@]}"; do
+    k=$(awk -v t="$t" -v b="$beat_secs" -v n="$n" 'BEGIN { k = int(t / b); if (k >= n) k = n - 1; if (k < 0) k = 0; print k }')
+    src="$media/${ids[k]}.png"; [ -f "$src" ] || src="$media/model.png"
+    cp "$src" "$out/stills/t$(awk -v t="$t" 'BEGIN { printf "%.1f", t }').png"
+  done
+  echo "stills in $out/stills; total $total.00s"
   exit 0
 fi
-case "${1:-}" in
-  *render.ts)
-    sb="${2:-}"; out="${3:-}"; shift 3 2>/dev/null || { echo "usage: bun render.ts <storyboard.json> <out-dir> --tokens <design-tokens.json>" >&2; exit 1; }
-    tokens=""; still=""
-    while [ $# -gt 0 ]; do case "$1" in --tokens) tokens="${2:-}"; shift 2 ;; --still) still="${2:-}"; shift 2 ;; --fps|--range) shift 2 ;; *) shift ;; esac; done
-    [ -f "$sb" ] || { echo "storyboard not found: $sb" >&2; exit 1; }
-    [ -n "$tokens" ] || { echo "usage: bun render.ts <storyboard.json> <out-dir> --tokens <design-tokens.json>" >&2; exit 1; }
-    [ -f "$tokens" ] || { echo "tokens file not found: $tokens" >&2; exit 1; }
-    board="$(grep -o '#[0-9a-fA-F]\{6\}' "$tokens" | head -1)"; board="${board:-#0d1117}"
-    ids="$(grep -o '"id"[[:space:]]*:[[:space:]]*"[^"]*"' "$sb" | sed 's/.*"\([^"]*\)"$/\1/')"
-    if [ -n "$still" ]; then echo "stills: $still (board $board)"
-    else echo "footage.mp4: stub frames; beats: $(printf '%s\n' "$ids" | grep -c .); board $board"; fi ;;
-  *) echo "bun stub: unknown call: $*" >&2; exit 1 ;;
-esac
+{ printf '\000\000\000\040ftypisom\000\000\002\000isomiso2avc1mp41'; head -c 2400000 /dev/urandom; } > "$out/footage.mp4"
+echo "footage.mp4: $((total * fps)) frames @${fps}fps, $total.00s; beats: $n"

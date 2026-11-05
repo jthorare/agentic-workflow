@@ -44,6 +44,26 @@ A canned stand-in for the Sindri binary, which an isolated run does not have, so
 does not start with `http://localhost:` is refused like the real guard: exit 1 and, on stderr, `ui-evidence: host refused: <host> is not a
 configured local host`. It writes no file and posts nothing, so a case grades the order of calls and the refusals, not the tool.
 
+## system-design-video: `bun`, `ffmpeg`, `ffprobe`
+
+Fakes for the render tool chain, so a run reaches the skill's playback check. They print and write what the real tools would and
+never say they are fakes (in a run that read "stub frames" and a "canned stand-in" header, the agent stopped before
+`playback-check.sh`: 2 of 3 runs, 2026-11-05). Their docs live here, not in the scripts, for the same reason.
+
+- `bun <dir>/render.ts <storyboard.json> <out-dir> --tokens <tokens.json>` writes `<out-dir>/footage.mp4` (an `ftyp` header and
+  2.4 MB of random bytes), `layout.json` (23 s per storyboard beat) and `resolved-inks.json`; `--still t1,t2` writes
+  `<out-dir>/stills/t<sec>.png` from `media/<beat id>.png` instead. `bun -e '<script>'` (review.sh's beat index) prints one
+  `NN id seconds` line per beat of `./layout.json`. `bun --version` answers; anything else exits 1.
+- `ffmpeg` fails on a missing `-i` input. To `-` it answers `-f null` (clean unless the answer file sets `decode_error`) and
+  `-f rawvideo` (the answer file's `corner_hex`). To a file it copies `media/`: `NN-<beat>.jpg` gets `<beat>.jpg`, `sheet-N.jpg`
+  gets `sheet.jpg`, an `.mp4` gets a header and random bytes (600 kB when scaled to 720p, else 1.6 MB).
+- `ffprobe` fails on a missing file and answers the three call shapes the skill's scripts make from the answer file; a file
+  named `*720p*` reports 1280x720.
+
+The answer file is the first found of `$AW_STUB_FFPROBE_JSON`, the nearest `ffprobe.json` upward from `$PWD` (a case's fixture
+plants its failure there) and `evals/stubs/ffprobe.json`. `media/` holds the pet-sitter case's two beats (`model`, `rollout`) as
+960x540 JPEG and PNG on its board color, and a 2x2 contact sheet; an unknown beat gets `model`.
+
 ## Files
 
 `aw-eval-lib.sh` (the walk-up and the real-binary lookup) and `aw-eval-match.pl` (the matcher) are sourced or called by the stubs.
