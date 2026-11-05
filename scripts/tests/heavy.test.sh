@@ -19,11 +19,12 @@ check() {
     echo "not ok - $1"; echo "  expected: $3"; echo "  actual:   $2"; fail=1
   fi
 }
+shown() { printf '%s\n' "$1" | sed 's/^/  in: /'; }   # every line prefixed: the CI runner keeps only "  in:" lines of a failing suite
 has() { # has <name> <text> <fixed string>
-  if printf '%s' "$2" | grep -qF -- "$3"; then echo "ok - $1"; else echo "not ok - $1"; echo "  missing: $3"; echo "  in: $2"; fail=1; fi
+  if printf '%s' "$2" | grep -qF -- "$3"; then echo "ok - $1"; else echo "not ok - $1"; echo "  missing: $3"; shown "$2"; fail=1; fi
 }
 lacks() {
-  if printf '%s' "$2" | grep -qF -- "$3"; then echo "not ok - $1"; echo "  unexpected: $3"; echo "  in: $2"; fail=1; else echo "ok - $1"; fi
+  if printf '%s' "$2" | grep -qF -- "$3"; then echo "not ok - $1"; echo "  unexpected: $3"; shown "$2"; fail=1; else echo "ok - $1"; fi
 }
 WORK="$(mktemp -d)"
 bgpids=()
