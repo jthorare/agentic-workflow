@@ -1,8 +1,8 @@
 {"start":{"inputs":{"fact:phasePacket":{"phase":"1"},"fact:lineContext":{"base":"origin/main","run":"line-1"}}}}
 {"trigger":{"kind":"step.completed","outcome":"seeded","outputs":{"fact:buildNotes":{},"fact:workspace":"/work/phase-1","fact:built":{},"fact:change":{},"fact:redTests":{}}},"expect":{"state":"build"}}
-{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:built":{"head":"abc123"},"fact:change":{"head":"abc123"},"fact:redTests":{"tests":[]},"fact:activePacket":{"phase":"1","grants":[]}}},"expect":{"state":"prove"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:built":{"head":"abc123"},"fact:change":{"head":"abc123"},"fact:redTests":{"tests":[]},"fact:modelCheck":{"skipped":true,"looked":[],"specs":[]},"fact:activePacket":{"phase":"1","grants":[]}}},"expect":{"state":"prove"}}
 {"trigger":{"kind":"wait.satisfied","outcome":"unresolved","outputs":{"fact:findings":[{"item":"AC-1","message":"hidden scenario failed"}]}},"expect":{"state":"build"}}
-{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:built":{"head":"abc123"},"fact:change":{"head":"abc123"},"fact:redTests":{"tests":[]},"fact:activePacket":{"phase":"1","grants":[]}}},"expect":{"state":"prove"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:built":{"head":"abc123"},"fact:change":{"head":"abc123"},"fact:redTests":{"tests":[]},"fact:modelCheck":{"skipped":true,"looked":[],"specs":[]},"fact:activePacket":{"phase":"1","grants":[]}}},"expect":{"state":"prove"}}
 {"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:proofPack":{"phase":"1"}}},"expect":{"state":"review"}}
 {"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:review":{"blocking":0}}},"expect":{"state":"drift"}}
 {"trigger":{"kind":"step.completed","outcome":"same"},"expect":{"state":"ship"}}

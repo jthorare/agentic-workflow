@@ -20,14 +20,15 @@ public sealed class DiskSpecFoldersContractTests : SpecFoldersContract, IDisposa
 
     protected override (ISpecFolders Folders, string Workspace) Arrange(IReadOnlyList<SpecFolder> folders)
     {
-        _ = Directory.CreateDirectory(_root);
+        var workspace = Path.Combine(_root, "ws");
+        _ = Directory.CreateDirectory(workspace);
         var secret = Path.Combine(_root, "outside.txt");
         File.WriteAllText(secret, "text a link must not hand over");
         foreach (var folder in folders)
         {
             foreach (var file in folder.Files)
             {
-                var path = Path.Combine(_root, folder.Path, file.Name);
+                var path = Path.Combine(workspace, folder.Path, file.Name);
                 _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);   // why: a path built from a folder and a file name always has a parent
                 switch (file.Kind)
                 {
@@ -45,6 +46,6 @@ public sealed class DiskSpecFoldersContractTests : SpecFoldersContract, IDisposa
             }
         }
 
-        return (new DiskSpecFolders(), _root);
+        return (new DiskSpecFolders(), workspace);
     }
 }
