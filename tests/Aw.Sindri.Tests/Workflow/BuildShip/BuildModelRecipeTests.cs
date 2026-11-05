@@ -1,6 +1,7 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Checks;
 using Aw.Sindri.Core.Workflow.Recipes;
+using Aw.Sindri.Features.EvalRecipe;
 using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Tests.Workflow.Engine;
 
@@ -80,8 +81,8 @@ public sealed class BuildModelRecipeTests
             _ = files.With(path, ShippedRecipes.Read(path));
         }
 
-        var response = (await EvalComposition.Service(files).Handle(new Aw.Sindri.Features.EvalRecipe.EvalRecipeRequest(Build, Aw.Sindri.Features.EvalRecipe.EvalMode.Run), TestContext.Current.CancellationToken)).Value;
+        var response = (await EvalComposition.Service(files).Handle(new EvalRecipeRequest(Build, EvalMode.Run), TestContext.Current.CancellationToken)).Value;
 
-        Assert.Equal($"{name} pass", response.Cases.Single(c => c.Case == name).ToLine());
+        Assert.Equal($"{name} pass", response.Cases.Single(c => c.Name == name).ToLine());
     }
 }
