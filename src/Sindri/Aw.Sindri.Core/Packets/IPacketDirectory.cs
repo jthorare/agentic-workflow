@@ -8,7 +8,7 @@ namespace Aw.Sindri.Core.Packets;
 /// </summary>
 public interface IPacketDirectory
 {
-    /// <summary>Reads the files directly under a packet directory.</summary>
+    /// <summary>Reads the files directly under a packet directory, and a scoping packet's model/&lt;Name&gt;/ files (the model, its gaps/ cfgs) with their '/'-separated relative paths; no other nested file.</summary>
     /// <param name="directory">The packet directory.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>File name to text; an error when the directory is missing or a file cannot be read.</returns>
