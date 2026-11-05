@@ -52,7 +52,11 @@ One block step. Any recipe can name it, and nothing about it is specific to scop
 - A spec may `EXTENDS` only TLC's standard modules. The step refuses (`MDL-SPEC-001`) a spec that extends `IOUtils` or any other module that can run commands, so a spec in a worktree can't run a process on the host. That's an honest-mistake guard, not a sandbox.
 - `blocked` is its own outcome, not `failed`. A box without java isn't a broken model, and the recipe decides what to do (park with the fix line, below).
 
-The `models:` line means api's README format becomes, on line 1: `models: <path>[:line] <path>[:line] ...`. That's one change to what api and I already agreed, and I'll confirm it with api.
+The `models:` line (agreed with api). Line 1 of every `specs/tla/<Name>/README.md` is exactly `models: <path>[:line] <path>[:line] ...`, and the `# <Name>` heading goes on line 2.
+- Paths are repo-relative and separated by spaces.
+- `scope: touched` matches on the path only and ignores `:line`. Line numbers drift with every edit, and a stale line must not drop a spec from the check.
+- A path ending in `/` names a folder and matches anything under it.
+- `scripts/tlc-check.sh` warns on a missing `models:` line or a path that doesn't exist, without changing its exit code.
 
 ## 4. Where recipes use it
 
