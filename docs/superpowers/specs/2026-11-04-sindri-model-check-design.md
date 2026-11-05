@@ -143,11 +143,13 @@ Everything below is text. No result is shown by color alone, and the trace is a 
 | running | "Checking the design model: Takeover, RecipeWorkflow (up to 10 min)" |
 | `pass` | "Model checked: Takeover passed, 1,204 states, at up to 2 takeovers and 2 parks. Nothing past that is checked." |
 | `skipped` | "Model check skipped: this change touches none of the modelled code (Takeover, RecipeWorkflow)." |
-| `violation` | "The model found a hole: NoTimeGained — handing an item back gave its timer more time than it had." |
-| `vacuous` | "The model missed the bug planted in it (gaps/FullTimeoutOnHandback), so it checks nothing there. Sent back to fix the model." |
-| `specError` | "The model doesn't parse: Takeover.tla line 42, unknown operator Remain. Sent back to fix it." |
+| `violation` | "The model found a hole: handing an item back gave its timer more time than it had (NoTimeGained)." |
+| `vacuous` | "The model didn't catch the bug planted to test it, so it proves nothing there. Sent back to fix the model." (the `gaps/` cfg's path goes in the finding's details) |
+| `specError` | "The model doesn't parse: unknown operator Remain (Takeover.tla line 42). Sent back to fix it." |
 | `tooBig` | "The model is too big to check: Takeover ran 3 min at its bounds. Sent back to make the bounds smaller." |
-| `cantRun` | "The model check can't run: java isn't installed. Install java 21 (`brew install openjdk@21` or `sudo apt-get install -y openjdk-21-jre-headless`), then press Check again." |
+| `cantRun` | "The model check can't run: java isn't installed. Install java 21: `sudo apt-get install -y openjdk-21-jre-headless`, then press Check again." The install line is only this box's: `brew` on macOS, the detected package manager on Linux (the same detection `config/lib/sys-pkg.sh` uses for setup). |
+
+The rule for every owner-facing line here: plain words first. A property name, a file path or a finding code goes last in parentheses, or into the finding's details, never up front.
 
 **`model-desk`** is a desk state like `scope-desk`, so it shows in the needs-you list with its buttons: the question is the `cantRun` line, and the buttons are **Check again** and **Stop** (build) or **Skip the model** (scoping). The buttons' words are the outcomes' `onOutcome` texts (RCP-DISPLAY-002), so they never show as raw ids.
 
@@ -159,7 +161,7 @@ Everything below is text. No result is shown by color alone, and the trace is a 
 - `model-gate` no: "No design model needed: this item has no state machine, protocol or timing."
 - `model-gate` yes: "Needs a design model: <the one reason the classifier gave>."
 - `model-write` running: "Writing the design model (try 1 of 2)", so the `models` cap shows.
-- At "Approve the scope", the packet summary the owner approves carries one line: "Design model: checked (Takeover, 1,204 states at ...)", "Design model: skipped by you (java wasn't installed)", or "Design model: not needed (<the gate's reason>)". The owner never approves a scope without knowing whether its design was checked.
+- At "Approve the scope", the packet summary the owner approves carries one line: "Design model: checked (Takeover, 1,204 states at ...)", "Design model: skipped by you (java wasn't installed)", or "Design model: not needed (<the gate's reason>)". The owner never approves a scope without knowing whether its design was checked. The "checked" line has a **View** link that opens the model's README and the pass result (states, depth, bounds per cfg) from `fact:modelCheck`, so the owner can see what was checked without leaving the approval.
 
 **A violation's finding** (`MDL-VIOLATION-001`), in this order:
 1. The property in plain words, from the README's line for it.
