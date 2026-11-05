@@ -109,7 +109,7 @@ Leaves out: Temporal replay, the ledger mirror, desk timeouts, more than one ins
 
 ### 4.1 The build line (`workflow.build`)
 
-Add two states after `checks`: `model` (this step, `scope: touched`) and `model-desk` (the owner's buttons when it can't run). `model-desk` is served by a new desk step, `step.model.desk` (a `HumanDeskStep` like `step.build.scope-desk`, `BuildSteps.cs:38`). It reads `fact:findings` and reports three outcomes, `again`, `stop` and `skip`. Each recipe wires only the two it uses: build wires `again` and `stop`, scoping wires `again` and `skip`. `model` has a state timeout above the step's 15 min `maxDuration` (RCP-TIME-003), and `model-desk` has `14d then park`, like `scope-desk`. A desk waiting on java holds no heavy slot. `checks` → `model` on `pass`, and `model` routes:
+Add two states after `checks`: `model` (this step, `scope: touched`) and `model-desk` (the owner's buttons when it can't run). `model-desk` is served by a new desk step, `step.model.desk` (a `HumanDeskStep` like `step.build.scope-desk`, `BuildSteps.cs:38`). It reads `fact:findings` and reports two outcomes, `again` and `stop`. Scoping gets its own desk step in M-5, `step.scope.model-desk`, reporting `again` and `skip`: RCP-OUTCOME-001 needs every outcome a step reports handled by the recipe, so one desk can't report three outcomes to two recipes that each handle two (found building M-4, #2075). `model` → `model-desk` → `model` is a cycle, so `model-desk` sits in a `model-retries` loop, cap 3 (RCP-LOOP-001); the cap hit parks like any loop. `model` has a state timeout above the step's 15 min `maxDuration` (RCP-TIME-003), and `model-desk` has `14d then park`, like `scope-desk`. A desk waiting on java holds no heavy slot. `checks` → `model` on `pass`, and `model` routes:
 - `pass` / `skipped` → `built`
 - `violation`, `vacuous`, `specError`, `tooBig` → `green`, with the findings. The builder fixes the code or, when the design changed on purpose, the spec or its bounds. This is inside the existing `revisions` loop (cap 6), so a fix that keeps breaking the model parks `rounds` like any other failing check.
 - `cantRun` → `model-desk`, whose answers are **Check again** (→ `model`) and **Stop** (→ `stopped`).
@@ -134,7 +134,7 @@ Scoping is before code exists, so there's nothing in `specs/tla/` to check yet. 
    - Then `model-check` (this step, `specs: model/*/`, `scope: all`, `witnesses: true`) runs TLC on what the agent wrote. The agent's own "pass" is never taken as the result.
    - `violation` → `draft` with the findings. The design has a real hole, and that's the point of running it here.
    - `vacuous`, `specError`, `tooBig` → `model-write` with the findings: the model is wrong, not the design.
-   - `cantRun` → `model-desk`, with **Check again** and **Skip the model** (the scope goes on without one, and the packet says so). A skipped model leaves nothing for the build line to check later, which is fine: `touched` has no spec to run.
+   - `cantRun` → `model-desk` (served by `step.scope.model-desk`, not the build's `step.model.desk`), with **Check again** and **Skip the model** (the scope goes on without one, and the packet says so). A skipped model leaves nothing for the build line to check later, which is fine: `touched` has no spec to run.
    - Past the `models` cap, the next round parks `rounds`. The last findings stay on the instance's Facts row, so the owner reads the trace from the park.
 
 This is a detour out of `check` on `pass`, guarded by a fact latch (`fact:modelClosed`), the same shape as the gap search. When the build happens, the build agent moves `model/<Name>/` into `specs/tla/<Name>/` in the PR (§4.1 checks it). From then on the build line's `touched` check keeps it true.
@@ -284,7 +284,7 @@ So a new trigger fails the build until someone adds it to a spec, or says why it
 | M-3u | The `Findings` fact viewer (trace layout for `MDL-VIOLATION-001`, its accessibility in §4.3); the Health page's Tools section | M-3's finding shape; the status field (api) | ui, api |
 | M-4 | `workflow.build` v7: `model`, `model-desk` (names, `why`, `next`, outcome words, timeouts), the PR body line, the plan's spec files, the `models:` check at the move, evals, the doctor's double-run warning | M-3, and M-1's go/no-go | engine |
 | M-5t | The offline trial: `model-write` + `model-check` on 3 past scoping items with a known design hole | M-3 | engine |
-| M-5 | `workflow.scoping`: `model-gate`, `model-write`, `model-check`, `model-desk`, the `models` loop, the approval line, the ledger counts, the packet's `model/` folder, evals | M-3, M-1's go/no-go, M-5t's go/no-go | engine (+ context/ui for the scoping view's new states) |
+| M-5 | `workflow.scoping`: `model-gate`, `model-write`, `model-check`, `model-desk` with its own `step.scope.model-desk` (`again`, `skip`), the `models` loop, the approval line, the ledger counts, the packet's `model/` folder, evals | M-3, M-1's go/no-go, M-5t's go/no-go | engine (+ context/ui for the scoping view's new states) |
 
 **Go/no-go after M-1.** M-1's PR shows TLC catching the planted handback bug (`gaps/FullTimeoutOnHandback.cfg`): the violation line, its trace, and the run time at the spec's bounds. If it's caught, M-4 and M-5 go. If not, they wait, and the note comes back to the owner with what the spec missed.
 
