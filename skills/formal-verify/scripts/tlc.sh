@@ -67,10 +67,10 @@ java_line() {
   esac
 }
 
-# java_major: the major version java reports (8 for 1.8.0_x), or empty when java is missing.
+# java_major: the major version java reports (8 for 1.8.0_x), or empty when java is missing or fails -version (the macOS /usr/bin/java stub counts as missing).
 java_major() {
   command -v java >/dev/null 2>&1 || return 0
-  java -version 2>&1 | awk -F'"' '/version/ { split($2, v, "."); print (v[1] == "1" ? v[2] : v[1]); exit }'
+  { java -version 2>&1 || true; } | awk -F'"' '/version/ { split($2, v, "."); print (v[1] == "1" ? v[2] : v[1]); exit }'
 }
 
 need_tools() {

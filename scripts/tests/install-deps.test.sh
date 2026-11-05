@@ -356,6 +356,14 @@ grep -q "openjdk" "$LOG" && fail "AW_NO_SYSTEM_INSTALL=1 still installed java" |
 run AW_DEPS_OS=Linux AW_STATE_DIR="$S" AW_DRY_RUN=1 TLC_STUB_JAR=none
 grep -q "^tlc fetch" "$TMPROOT/tlc.log" && fail "dry run fetched the jar" || ok "dry run never fetches"
 
+# the real tlc.sh doctor with a java stub whose `-version` fails (macOS without a JDK, #2096): java counts as missing, so the
+# java install is planned; a doctor that dies with exit 1 is not what setup should report
+fake java 'echo "The operation couldn'"'"'t be completed. Unable to locate a Java Runtime." >&2; exit 1'
+run AW_DEPS_OS=Linux AW_STATE_DIR="$S" AW_DRY_RUN=1 TLC_SH="$REPO/skills/formal-verify/scripts/tlc.sh"
+expect "a java stub whose -version fails counts as missing java and plans the install" 0 "java: MISSING or older than 11" "would run: sudo apt-get install -y openjdk-21-jre-headless\$"
+if printf '%s\n' "$OUT" | has "WARN: tlc.sh doctor failed"; then fail "a failing java stub made tlc.sh doctor fail"; else ok "a failing java stub does not make tlc.sh doctor fail"; fi
+find "$BIN" -name java -delete
+
 echo ""
 echo "$PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]

@@ -75,6 +75,21 @@ PATH="$TMPROOT/fakebin:$OLDPATH" run doctor
 expect "doctor flags java 8 as too old, with the fix" 3 'java: 8, too old'
 PATH="$TMPROOT/fakebin:$OLDPATH" run check "$TMPROOT/spec/M.tla"
 expect "check refuses java 8" 3 'java 8 is too old'
+# macOS with no JDK: /usr/bin/java is a stub whose `java -version` prints a message and exits 1 (#2096). Under pipefail that
+# used to kill tlc.sh with exit 1 and no output; it is a missing java, exit 3 with the fix line.
+mkdir -p "$TMPROOT/stubjava"
+cat >"$TMPROOT/stubjava/java" <<'EOF3'
+#!/bin/sh
+echo "The operation couldn't be completed. Unable to locate a Java Runtime." >&2
+exit 1
+EOF3
+chmod +x "$TMPROOT/stubjava/java"
+PATH="$TMPROOT/stubjava:$OLDPATH" run doctor --jar "$TMPROOT/nowhere.jar"
+expect "doctor treats a java stub that fails -version as missing java" 3 'java: missing'
+printf '%s\n' "$OUT" | has -E -- '^  fix: ' && ok "doctor with the java stub prints the fix line" || fail "doctor with the java stub prints no fix line"
+PATH="$TMPROOT/stubjava:$OLDPATH" run check "$TMPROOT/spec/M.tla"
+expect "check refuses a java stub that fails -version, as not on PATH" 3 'java is not on PATH'
+printf '%s\n' "$OUT" | has -E -- '^  fix: ' && ok "check with the java stub prints the fix line" || fail "check with the java stub prints no fix line"
 run doctor --jar "$TMPROOT/nowhere.jar"
 if command -v java >/dev/null 2>&1; then
   expect "doctor reports a missing jar with the fetch line" 3 'tlc.sh fetch'
