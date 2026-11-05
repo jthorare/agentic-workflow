@@ -22,8 +22,9 @@
 # slot="$(acquire_any_lock ...)"). A waiter that finds a pid file naming a dead process
 # (SIGKILL, a cleared session) reclaims the lock. The C# ui-evidence holder writes the same
 # <dir>/pid, and an older one only <dir>/owner, whose first word is its pid; both are read.
-# A dir with neither file (an older holder, sindri's TS lock) is never reclaimed, so a waiter
-# that sees the dir between the holder's mkdir and its pid write leaves it alone.
+# A dir with neither file and no entries at all (a holder killed between its mkdir and its pid
+# write) is freed once over two minutes old (GNU find -mmin +1 truncates; Sindri waits one); younger is a holder mid-write, and rmdir fails if it
+# writes meanwhile. A dir holding other files (sindri's TS lock) is never reclaimed.
 
 # _lock_pid_alive <pid>: 0 (alive) unless the pid is a number whose process is gone.
 _lock_pid_alive() {
@@ -47,6 +48,10 @@ _lock_take() {
 # the dir is over 6 h old (a reused pid, or a reclaimer that failed without dying): then it is freed whoever N is.
 _lock_reclaim_orphan() {
   local dir="$1" f n m left=() aged=""
+  if [ -z "$(ls -A "$dir" 2>/dev/null)" ]; then
+    [ -n "$(find "$dir" -maxdepth 0 -mmin +1 2>/dev/null)" ] && rmdir "$dir" 2>/dev/null
+    return
+  fi
   [ -n "$(find "$dir" -maxdepth 0 -mmin +360 2>/dev/null)" ] && aged=1
   for f in "$dir"/pid.reclaim.* "$dir"/owner.reclaim.*; do
     [ -e "$f" ] || continue
