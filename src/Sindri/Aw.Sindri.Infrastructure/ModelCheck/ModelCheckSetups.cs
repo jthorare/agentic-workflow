@@ -8,7 +8,7 @@ namespace Aw.Sindri.Infrastructure.ModelCheck;
 /// </summary>
 internal static class ModelCheckSetups
 {
-    private const string Heap = "2g";
+    private const string DefaultHeap = "2g";
 
     /// <summary>The setup for this process.</summary>
     /// <param name="environment">Reads an environment variable.</param>
@@ -30,7 +30,7 @@ internal static class ModelCheckSetups
             environment("HOME") ?? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
             state,
             Path.Combine(tree, "skills", "formal-verify", "scripts", "tlc.sh"),
-            Heap,
+            environment("TLC_HEAP") is { Length: > 0 } heap ? heap : DefaultHeap,   // the owner's TLC_HEAP (tlc.sh checks its form), else 2g
             Path.Combine(state, "tmp", "model-check"));
     }
 }
