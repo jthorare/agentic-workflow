@@ -75,7 +75,7 @@ public sealed class SqliteModelHistoryTests : IDisposable
         }
 
         var incremental = await Snapshot();
-        _ = (await _views.Store.Reset(ViewNames.All, ViewSchema.Version, _h.Clock.GetUtcNow(), Token)).Value;
+        _ = (await _views.Store.Reset(ViewNames.All, ViewSchema.Version, _h.Clock.GetUtcNow(), 0, Token)).Value;
         Assert.Empty((await _views.Reader.List<ModelHistoryRow>(ViewNames.ModelHistory, Token)).Value);
         Assert.Null((await _views.Store.Apply(ledger, projections, _h.Clock.GetUtcNow(), Token)).Value.Stall);
         _ = (await _views.Store.FinishRebuild(Token)).Value;
