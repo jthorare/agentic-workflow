@@ -40,7 +40,7 @@ internal sealed class ModelPaths(ISpecFolders folders, IPacketDirectory packets)
         var findings = new List<RuleFinding>();
         foreach (var name in read.Value.Keys.Where(static k => k.StartsWith("model/", StringComparison.Ordinal) && k.IndexOf('/', 6) > 6).Select(static k => k[6..k.IndexOf('/', 6)]).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal))
         {
-            var spec = all.Find(s => string.Equals(s.Folder.Path[(s.Folder.Path.LastIndexOf('/') + 1)..], name, StringComparison.Ordinal));
+            var spec = all.Find(s => string.Equals(s.Folder.Path, Moved + name, StringComparison.Ordinal));
             if (spec is null)
             {
                 findings.Add(new RuleFinding(MoveRule, $"The scoping model {name} was not moved: the head has no {Moved}{name}/ (fix: move model/{name}/ of the packet to {Moved}{name}/ in this change)", $"{Moved}{name}/"));

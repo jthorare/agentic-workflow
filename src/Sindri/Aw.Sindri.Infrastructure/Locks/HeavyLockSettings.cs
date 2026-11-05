@@ -17,8 +17,8 @@ internal sealed record HeavyLockSettings(string Lock, int Slots, bool Held)
     /// <summary>The slot count now: the cap file and AW_HEAVY_SLOTS as they read at this moment, so a cap lowered after serve started applies to the next look.</summary>
     internal int CurrentSlots() => LiveSlots?.Invoke() ?? Slots;
 
-    /// <summary>The slots, counted from slot 1, that only meta may take now (heavy-meta-reserve, at most <paramref name="slots"/>). Sindri's jobs are never meta, so a Sindri taker skips them.</summary>
-    /// <param name="slots">The slot count the reserve is clamped to.</param>
+    /// <summary>The slots, counted from slot 1, that only meta may take now (heavy-meta-reserve, at most <paramref name="slots"/> - 1). Sindri's jobs are never meta, so a Sindri taker skips them.</summary>
+    /// <param name="slots">The slot count; the reserve is clamped to one less.</param>
     internal int CurrentReserve(int slots) => LiveReserve?.Invoke(slots) ?? 0;
 
     /// <summary>Reads the settings from the environment, the way config/lib/locks.sh reads the same variables; the slot count comes from <see cref="HeavyCap.Slots"/>.</summary>

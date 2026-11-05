@@ -154,7 +154,7 @@ the other:
 - **Applying it is the meta's step**: `gate-run`, `status` and `health` print `heavy reservation: N of C slots (queue depth D) - set
   it with meta-gate-reserve A`, and the meta runs `meta-gate-reserve A` (the installed bash script, the only writer of the
   wrapper's file) before each gate. `A` is **not the queue depth**: the script has its own fixed tiers (depth 0-2 reserves 0, 3-4
-  reserves 1, 5-6 reserves 2, 7 or more reserves its cap less one), which differ from a team's custom `heavy.reserve` tiers or `heavy.cap`.
+  reserves 1, 5-6 reserves 2, 7 or more reserves its cap, and every tier is capped at the cap minus one so a lane job always keeps a slot), which differ from a team's custom `heavy.reserve` tiers or `heavy.cap`.
   aw-meta prints the argument that makes the script keep the slots it computed: 0 slots prints 0, 1 prints 3, 2 prints 5, and the cap less one
   (from 3) prints 7. A count in between has no argument; it prints 5 (the script keeps 2, never more than computed).
   `gate-run` computes before its steps and prints the line after them, so to apply the reservation before a gate read it from
