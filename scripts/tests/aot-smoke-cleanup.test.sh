@@ -125,15 +125,14 @@ harness() { # dir [ENV=value...]: the harness in the foreground, bounded at 25 s
     perl -e 'alarm 25; exec @ARGV' bash "$tmp/harness.sh" >/dev/null 2>&1
 }
 
-verdicts() { # label scratch-expected-gone(0|1) pid... (0 = skip): every pid shares one deadline
-  local label="$1" scratch_gone="$2" p
+verdicts() { # label scratch-expected-gone(0|1) role=pid...: every pid shares one deadline
+  local label="$1" scratch_gone="$2" rp
   shift 2
   local live=()
-  for p in "$@"; do [ "$p" = 0 ] || live+=("$p"); done
+  for rp in "$@"; do live+=("${rp#*=}"); done
   gone_within 10 "${live[@]}"
-  for p in "$@"; do
-    [ "$p" = 0 ] && continue
-    gone_within 0 "$p"; check "$label: pid $p is gone (still alive otherwise)" $?
+  for rp in "$@"; do
+    gone_within 0 "${rp#*=}"; check "$label: ${rp%%=*} (pid ${rp#*=}) is gone" $?
   done
   if [ "$scratch_gone" -eq 1 ]; then [ ! -e "$tmp/$label/scratch" ]; check "$label: the scratch dir is deleted" $?; fi
 }
@@ -141,13 +140,13 @@ verdicts() { # label scratch-expected-gone(0|1) pid... (0 = skip): every pid sha
 # 1. normal exit: serve ignores TERM, has a child
 d="$tmp/normal"; start_pair "$d"; write_control "$d" "$serve" "$temporal" "$d/ctl.json"
 harness "$d" H_CTLS="$d/ctl.json"
-verdicts normal 1 "$serve" "$child" "$temporal" "$tchild"
+verdicts normal 1 "serve=$serve" "serve's child=$child" "temporal=$temporal" "temporal's child=$tchild"
 
 # 2. control.json gone before cleanup
 d="$tmp/nocontrol"; start_pair "$d"; write_control "$d" "$serve" "$temporal" "$d/ctl.json"
 harness "$d" H_CTLS="$d/ctl.json" H_RM=1
 [ "$has_remember" -eq 1 ]; check "nocontrol: run.sh defines remember_servers" $?
-verdicts nocontrol 0 "$serve" "$child" "$temporal" "$tchild"
+verdicts nocontrol 0 "serve=$serve" "serve's child=$child" "temporal=$temporal" "temporal's child=$tchild"
 
 # 3. signal mid-run (perl resets the dispositions a background job inherits as ignored)
 for sig in TERM INT; do
@@ -159,7 +158,7 @@ for sig in TERM INT; do
   for _ in $(seq 50); do [ -s "$d/sleep.pid" ] && break; sleep 0.1; done
   [ -s "$d/sleep.pid" ] && recorded+=("$(cat "$d/sleep.pid")")
   kill "-$sig" "$hpid" 2>/dev/null
-  verdicts "sig$sig" 0 "$serve" "$child" "$temporal" "$tchild"
+  verdicts "sig$sig" 0 "serve=$serve" "serve's child=$child" "temporal=$temporal" "temporal's child=$tchild"
 done
 
 # 4. temporal on its own: serve already exited, control.json still names temporal
@@ -168,7 +167,7 @@ kill -KILL -- "-$serve" 2>/dev/null   # the serve this suite started, its own gr
 gone_within 5 "$serve" "$child"
 write_control "$d" "$serve" "$temporal" "$d/scratch/run/home/control.json"
 harness "$d"
-verdicts temporal-only 0 "$temporal" "$tchild"
+verdicts temporal-only 0 "temporal=$temporal" "temporal's child=$tchild"
 
 # 5. every start is remembered: pair A, then pair B overwrites control.json, then control.json is removed
 a="$tmp/pairA"; b="$tmp/pairB"
@@ -176,7 +175,7 @@ start_pair "$a"; sa="$serve"; ca="$child"; ta="$temporal"; tca="$tchild"
 start_pair "$b"; sb="$serve"; cb="$child"; tb="$temporal"; tcb="$tchild"
 write_control "$a" "$sa" "$ta" "$a/ctl.json"; write_control "$a" "$sb" "$tb" "$a/ctlB.json"
 harness "$a" H_CTLS="$a/ctl.json $a/ctlB.json" H_RM=1
-verdicts remembered 0 "$sa" "$ca" "$ta" "$tca" "$sb" "$cb" "$tb" "$tcb"
+verdicts remembered 0 "pair A serve=$sa" "pair A serve's child=$ca" "pair A temporal=$ta" "pair A temporal's child=$tca" "pair B serve=$sb" "pair B serve's child=$cb" "pair B temporal=$tb" "pair B temporal's child=$tcb"
 
 # 6. a reused pid is left alone: a plain sleep, no sindri or temporal in its command line, is what control.json names
 d="$tmp/reuse"; mkdir -p "$d"
@@ -199,6 +198,6 @@ alive "$hpid" && kill -KILL "$hpid" 2>/dev/null
 sleep 0.5
 for f in stop.pid stopsleep.pid; do [ -s "$d/$f" ] && recorded+=("$(cat "$d/$f")"); done
 awk -v e="$elapsed" 'BEGIN { exit !(e < 8) }'; check "hung-stop: cleanup returned in under 8 s (took ${elapsed} s)" $?
-verdicts hung-stop 0 "$serve" "$child" "$temporal" "$tchild"
+verdicts hung-stop 0 "serve=$serve" "serve's child=$child" "temporal=$temporal" "temporal's child=$tchild"
 
 if [ "$fail" -eq 0 ]; then echo "PASS: aot-smoke-cleanup tests"; else echo "FAIL: aot-smoke-cleanup tests"; exit 1; fi
