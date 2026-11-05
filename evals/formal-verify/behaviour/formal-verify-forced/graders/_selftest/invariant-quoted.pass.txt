@@ -1,0 +1,3 @@
+The config checks:
+
+    INVARIANT OneOwner
