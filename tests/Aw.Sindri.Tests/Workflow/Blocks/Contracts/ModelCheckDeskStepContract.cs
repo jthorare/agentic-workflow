@@ -12,7 +12,7 @@ public sealed class ModelCheckDeskStepContract : DescriptorContract
 {
     protected override BlockDescriptor Descriptor => ModelCheckSteps.Desk;
 
-    protected override string ExpectedHash => "sha256:3b0065f2b8c1b35e5d205e2dfe3b34c02c082d90a6b56e39d8700b480b558db6";
+    protected override string ExpectedHash => "sha256:73c49e5667ce192a6c75454838a7240e3e129d77ea0af3b98670095f4fb2a441";
 
     protected override JsonSerializerOptions Json => ShippedComposition.Json;
 

@@ -12,6 +12,8 @@ namespace Aw.Sindri.Infrastructure.Packets;
 /// <param name="settings">Sindri's home.</param>
 internal sealed class DiskPacketDirectory(SindriSettings settings) : IPacketDirectory
 {
+    private const string ModelFolder = "model";
+
     public async ValueTask<Result<IReadOnlyDictionary<string, string>>> Read(string directory, CancellationToken cancellationToken)
     {
         if (!Directory.Exists(directory))
@@ -25,6 +27,16 @@ internal sealed class DiskPacketDirectory(SindriSettings settings) : IPacketDire
             foreach (var path in Directory.EnumerateFiles(directory))
             {
                 files[Path.GetFileName(path)] = await File.ReadAllTextAsync(path, cancellationToken).ConfigureAwait(false);
+            }
+
+            // A scoping packet's model/<Name>/ files (the model, its gaps/ cfgs) read with their relative paths ('/'-separated); no other nested file (the proof pack's evidence/ holds screenshots) is read.
+            var models = Path.Combine(directory, ModelFolder);
+            if (Directory.Exists(models) && new DirectoryInfo(models).LinkTarget is null)
+            {
+                foreach (var path in Directory.EnumerateFiles(models, "*", new EnumerationOptions { RecurseSubdirectories = true, AttributesToSkip = FileAttributes.ReparsePoint }))
+                {
+                    files[ModelFolder + "/" + Path.GetRelativePath(models, path).Replace('\\', '/')] = await File.ReadAllTextAsync(path, cancellationToken).ConfigureAwait(false);
+                }
             }
 
             return files;

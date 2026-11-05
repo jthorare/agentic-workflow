@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.phase
-version: 5
+version: 6
 description: "The per-phase child of the line: build, prove, review and ship one phase as one PR, then babysit it (docs sync inside) to the owner's ready-to-merge stop and the merge."
 displayName: "Build, prove and ship one phase"
 urgency: work
@@ -36,7 +36,7 @@ states:
              waitFor: { child: { recipe: workflow.ship, onParked: propagate,
                                  inputs: { "fact:phasePacket": { fact: fact:phasePacket }, "fact:proofPack": { fact: fact:proofPack },
                                            "fact:review": { fact: fact:review }, "fact:workspace": { fact: fact:workspace },
-                                           "fact:lineContext": { fact: fact:lineContext } } } },
+                                           "fact:lineContext": { fact: fact:lineContext }, "fact:modelCheck": { fact: fact:modelCheck } } } },
              next: "Waiting for {child}: {item}'s GREEN gate and its PR." }
   babysit: { displayName: "Watch the pull request", why: "Waits for the checks to go green and the docs to sync before you merge.", kind: wait, timeout: { after: 30d, then: escalate },
              waitFor: { child: { recipe: workflow.pr-babysitter, onParked: propagate,
@@ -52,7 +52,7 @@ transitions:
   - { from: seed, to: build, on: step.completed, when: { outcome: seeded },
       produces: [fact:buildNotes, fact:workspace, fact:built, fact:change, fact:redTests] }
   - { from: build, to: prove,   on: wait.satisfied, when: { outcome: resolved },
-      produces: [fact:built, fact:change, fact:redTests, { fact: fact:phasePacket, from: fact:activePacket }] }
+      produces: [fact:built, fact:change, fact:redTests, fact:modelCheck, { fact: fact:phasePacket, from: fact:activePacket }] }
   - { label: "build got stuck: you decide", from: build, to: owner,   on: wait.satisfied, when: { outcome: unresolved } }
   - { from: build, to: dropped, on: wait.satisfied, when: { outcome: cancelled } }
   - { from: prove, to: review,  on: wait.satisfied, when: { outcome: resolved },   produces: [fact:proofPack] }

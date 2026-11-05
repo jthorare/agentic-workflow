@@ -6,6 +6,7 @@ using Aw.Sindri.Features.Blocks.Step;
 using Aw.Sindri.Features.ModelCheck;
 using Aw.Sindri.Infrastructure.ModelCheck;
 using Aw.Sindri.Testing.Checks;
+using Aw.Sindri.Testing.Packets;
 using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Tests.Workflow.BuildShip;
 using Aw.Sindri.Tests.Workflow.ModelCheck;
@@ -20,7 +21,7 @@ public sealed class ModelCheckStepContract : BlockContract
 
     protected override BlockDescriptor Descriptor => ModelCheckSteps.Check;
 
-    protected override string ExpectedHash => "sha256:fbb8e322dc7f3fc4718c73237190c93eaf6656fad64b99e060df53f4519b26a4";
+    protected override string ExpectedHash => "sha256:a889a75856c004e1ff4861923cfd6752e8ed707e0299f4c5ccc9ec56f154c76f";
 
     protected override JsonSerializerOptions Json => ShippedComposition.Json;
 
@@ -30,6 +31,6 @@ public sealed class ModelCheckStepContract : BlockContract
     {
         var rig = new StepRig();
         var setup = new ModelCheckSetup("/runner/tlc-check.sh", "/usr/bin", "/home/u", "/home/u/.state", "/runner/tlc.sh", "2g", "/tmp/m");
-        _ = await new ModelCheckStep(new FakeSpecFolders(), rig.Changes, rig.Runner, new IdentityScrubber(), setup, new DiskScratchDirectories()).Run(BuildShipContexts.Of("step.model.check", []), cancellationToken);
+        _ = await new ModelCheckStep(new FakeSpecFolders(), rig.Changes, rig.Runner, new IdentityScrubber(), setup, new InMemoryPacketDirectory(), new DiskScratchDirectories()).Run(BuildShipContexts.Of("step.model.check", []), cancellationToken);
     }
 }

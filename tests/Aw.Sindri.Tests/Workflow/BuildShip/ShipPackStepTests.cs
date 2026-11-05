@@ -138,6 +138,37 @@ public sealed class ShipPackStepTests
     }
 
     [Fact]
+    public async Task The_body_says_which_model_was_checked_at_what_bounds()
+    {
+        var rig = new Rig();
+        var check = """{"skipped":false,"looked":["src/a.cs"],"specs":[{"name":"Takeover","bounds":"up to 2 takeovers and 2 parks","constants":[],"cfgs":[{"cfg":"Takeover","distinct":1000,"depth":14},{"cfg":"Takeover2","distinct":204,"depth":9}],"witnesses":[]}],"warnings":[]}""";
+
+        _ = await rig.Step().Run(Context(With("modelCheck", check)), Token);
+
+        Assert.Contains("Model checked: Takeover (specs/tla/Takeover/, 1,204 states at up to 2 takeovers and 2 parks)", rig.Draft()["body.md"], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task The_body_says_when_the_model_check_was_skipped()
+    {
+        var rig = new Rig();
+
+        _ = await rig.Step().Run(Context(With("modelCheck", """{"skipped":true,"looked":["src/a.cs"],"specs":[]}""")), Token);
+
+        Assert.Contains("Model check skipped: no modelled code changed", rig.Draft()["body.md"], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_phase_with_no_model_check_fact_has_no_model_line()
+    {
+        var rig = new Rig();
+
+        _ = await rig.Step().Run(Context(), Token);
+
+        Assert.DoesNotContain("Model check", rig.Draft()["body.md"], StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task A_stacked_phase_opens_against_its_parents_branch_and_the_body_says_so()
     {
         var rig = new Rig();
