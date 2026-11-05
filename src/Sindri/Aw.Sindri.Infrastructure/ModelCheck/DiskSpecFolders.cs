@@ -33,8 +33,54 @@ internal sealed class DiskSpecFolders : ISpecFolders
         }
     }
 
-    // Red stub: the green commit checks the path on disk.
-    public ValueTask<bool> Exists(string workspace, string path, CancellationToken cancellationToken) => throw new NotSupportedException("the stale models: path check is not built yet (red)");
+    public ValueTask<bool> Exists(string workspace, string path, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(workspace);
+        ArgumentNullException.ThrowIfNull(path);
+        cancellationToken.ThrowIfCancellationRequested();
+        var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (Path.IsPathRooted(path) || segments.Length == 0 || segments.Contains("..", StringComparer.Ordinal))
+        {
+            return ValueTask.FromResult(false);   // a path that climbs out or starts at the root is not in the workspace
+        }
+
+        try
+        {
+            return ValueTask.FromResult(ExistsInside(Path.GetFullPath(workspace), segments));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return ValueTask.FromResult(false);   // boundary: disk; a path that can't be read is not there
+        }
+    }
+
+    // Walks the path one segment at a time; a link is followed only when its target is still inside the workspace.
+    private static bool ExistsInside(string root, string[] segments)
+    {
+        var current = root;
+        foreach (var segment in segments)
+        {
+            var next = Path.Combine(current, segment);
+            var info = new FileInfo(next);
+            if (info.LinkTarget is not null || new DirectoryInfo(next).LinkTarget is not null)
+            {
+                var target = (info.ResolveLinkTarget(returnFinalTarget: true) ?? new DirectoryInfo(next).ResolveLinkTarget(returnFinalTarget: true))?.FullName;
+                if (target is null || !Inside(root, target))
+                {
+                    return false;
+                }
+
+                next = target;
+            }
+
+            current = next;
+        }
+
+        return File.Exists(current) || Directory.Exists(current);
+    }
+
+    private static bool Inside(string root, string full) =>
+        string.Equals(full, root, StringComparison.Ordinal) || full.StartsWith(root.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.Ordinal);
 
     private static List<string> Match(string workspace, string[] segments, string relative, CancellationToken cancellationToken)
     {

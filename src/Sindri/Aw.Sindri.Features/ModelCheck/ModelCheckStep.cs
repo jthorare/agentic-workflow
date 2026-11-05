@@ -24,6 +24,8 @@ namespace Aw.Sindri.Features.ModelCheck;
 /// <param name="packets">Reads the packet in force, for the scoping model's move into specs/tla/ (MDL-SPEC-003).</param>
 internal sealed class ModelCheckStep(ISpecFolders folders, IBranchChanges changes, RepoCommandRunner commands, ITextScrubber scrubber, ModelCheckSetup setup, IPacketDirectory packets) : IBlockStep, IBlockStepId
 {
+    private readonly ModelPaths _paths = new(folders, packets);
+
     /// <summary>The most characters of the runner's output the step keeps: TLC prints a full trace under every check that is not a PASS.</summary>
     internal const int OutputLimit = 256 * 1024;
 
@@ -46,7 +48,6 @@ internal sealed class ModelCheckStep(ISpecFolders folders, IBranchChanges change
     {
         ArgumentNullException.ThrowIfNull(context);
         cancellationToken.ThrowIfCancellationRequested();
-        _ = packets;   // red: the stale-path and move checks are not built yet
         if (StepFacts.Text(context, "fact:workspace") is not { } workspace)
         {
             return BlockStepResult.Failed("step.model.check needs fact:workspace (a path)");
@@ -60,6 +61,16 @@ internal sealed class ModelCheckStep(ISpecFolders folders, IBranchChanges change
         }
 
         var all = listed.Value.Select(static f => new Spec(f, ModelReadme.Parse(ReadmeText(f)))).ToList();
+        if (!options.Specs.StartsWith("model/", StringComparison.Ordinal))
+        {
+            // A scoping model's paths can't exist before the code does; for the build, the move into specs/tla/ is checked before TLC runs.
+            var moved = await _paths.Move(context, workspace, all, cancellationToken).ConfigureAwait(false);
+            if (moved.IsError || moved.Value.Count > 0)
+            {
+                return moved.IsError ? BlockStepResult.Failed($"step.model.check can't read the packet in force: {moved.Error.Message}") : Findings("specError", moved.Value);
+            }
+        }
+
         var chosen = all;
         if (options.Touched)
         {
@@ -89,10 +100,11 @@ internal sealed class ModelCheckStep(ISpecFolders folders, IBranchChanges change
             return Findings("cantRun", [Tool("the TLC runner isn't installed next to sindri (fix: reinstall with scripts/install-cs.sh)")]);
         }
 
+        var stale = request.Options.Specs.StartsWith("model/", StringComparison.Ordinal) ? [] : await _paths.Stale(request.Workspace, runnable, cancellationToken).ConfigureAwait(false);
         var ran = await RunRunner(runner, request.Workspace, runnable, request.Options, cancellationToken).ConfigureAwait(false);
         return ran.IsError
             ? BlockStepResult.Failed($"step.model.check: {ran.Error.Message}")
-            : Judge(ran.Value.Single().Run, new Judged(runnable, rules, request.Options));
+            : Judge(ran.Value.Single().Run, new Judged(runnable, rules, request.Options, stale));
     }
 
     private static string ReadmeText(SpecFolder folder) => folder.Files.FirstOrDefault(static f => f.Kind == SpecFileKind.Regular && string.Equals(f.Name, "README.md", StringComparison.Ordinal))?.Text ?? string.Empty;
@@ -157,7 +169,7 @@ internal sealed class ModelCheckStep(ISpecFolders folders, IBranchChanges change
         findings.AddRange(tooBig);
         if (findings.Count == 0)
         {
-            return Pass(judged.Runnable, lines);
+            return Pass(judged.Runnable, lines, judged.Stale);
         }
 
         var outcome = lines.Exists(static l => l.Result == TlcResult.Violation) ? "violation"
@@ -171,11 +183,11 @@ internal sealed class ModelCheckStep(ISpecFolders folders, IBranchChanges change
 
     private RuleFinding Tool(string fix) => new(ToolRule, $"The model check can't run: {fix}. The PATH the step saw: {setup.Path}");
 
-    private static BlockStepResult Pass(List<Spec> runnable, List<TlcCheckLine> lines)
+    private static BlockStepResult Pass(List<Spec> runnable, List<TlcCheckLine> lines, List<RuleFinding> stale)
     {
         var warnings = runnable.Where(static s => s.Readme.Bounds is null)
             .Select(static s => new RuleFinding(WarningRule, $"{s.Folder.Path}/README.md has no 'Bounds:' line; the cfg's CONSTANT lines stand in for it", $"{s.Folder.Path}/README.md"))
-            .ToList();
+            .Concat(stale).ToList();
         var specs = new JsonArray([.. runnable.Select(spec => SpecFact(spec, lines))]);
         return StepFacts.Done(
             "pass",
@@ -208,9 +220,7 @@ internal sealed class ModelCheckStep(ISpecFolders folders, IBranchChanges change
 
     private sealed record Request(string Workspace, ModelCheckOptions Options, List<Spec> All, List<Spec> Chosen);
 
-    private sealed record Spec(SpecFolder Folder, ModelReadme Readme);
-
-    private sealed record Judged(List<Spec> Runnable, IReadOnlyList<RuleFinding> Rules, ModelCheckOptions Options);
+    private sealed record Judged(List<Spec> Runnable, IReadOnlyList<RuleFinding> Rules, ModelCheckOptions Options, List<RuleFinding> Stale);
 
     private sealed class Found(List<Spec> runnable, List<TlcCheckLine> lines, CheckRun run)
     {

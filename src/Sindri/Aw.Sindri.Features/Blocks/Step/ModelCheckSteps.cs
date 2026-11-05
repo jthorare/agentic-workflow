@@ -9,7 +9,7 @@ internal static class ModelCheckSteps
 {
     /// <summary>'step.model.check': runs TLC on the workspace's spec folders; 'pass' or 'skipped' with the bounds checked, any other outcome with findings.</summary>
     public static BlockDescriptor Check { get; } = BlockStep("step.model.check", Capability.Tools)
-        .Reads("fact:workspace", "fact:change").Reports("pass", "skipped", "violation", "vacuous", "specError", "tooBig", "cantRun").Long(CommandStepLimits.ModelCheckMaxDuration)
+        .Reads("fact:workspace", "fact:change", "fact:activePacket").Reports("pass", "skipped", "violation", "vacuous", "specError", "tooBig", "cantRun").Long(CommandStepLimits.ModelCheckMaxDuration)
         .Writes(On("fact:modelCheck", "pass", "skipped"), On("fact:findings", "violation", "vacuous", "specError", "tooBig", "cantRun"));
 
     /// <summary>'step.model.desk': the owner's call when the model check can't run, human-only: again, stop or skip. A recipe wires the two it uses.</summary>

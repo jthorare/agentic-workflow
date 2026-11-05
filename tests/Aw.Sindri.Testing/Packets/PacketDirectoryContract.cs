@@ -16,6 +16,12 @@ public abstract class PacketDirectoryContract
     /// <returns>The port.</returns>
     protected abstract IPacketDirectory Create();
 
+    /// <summary>Makes a directory holding exactly these files; a key may have '/'-separated segments.</summary>
+    /// <param name="files">The port the test reads through.</param>
+    /// <param name="tree">Relative path to text.</param>
+    /// <returns>The directory.</returns>
+    protected abstract string Seed(IPacketDirectory files, IReadOnlyDictionary<string, string> tree);
+
     /// <summary>A directory no packet was ever written to.</summary>
     protected abstract string Nothing { get; }
 
@@ -71,5 +77,21 @@ public abstract class PacketDirectoryContract
         var read = await Create().Read(Nothing, Token);
 
         Expect.True(read.IsError);
+    }
+
+    /// <summary>A scoping packet's model/&lt;Name&gt;/ files (the model, its gaps/ cfgs) read back with their '/'-separated relative paths, beside the top-level files (model-check design §4.1).</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_scoping_models_files_read_back_with_their_relative_paths()
+    {
+        var files = Create();
+        var directory = Seed(files, new Dictionary<string, string>(StringComparer.Ordinal) { ["phase.json"] = "{}", ["model/Retry/Retry.tla"] = "m", ["model/Retry/gaps/Bug.cfg"] = "g" });
+
+        var read = await files.Read(directory, Token);
+
+        Expect.True(read.IsSuccess);
+        Expect.Equal("{}", read.Value["phase.json"]);
+        Expect.Equal("m", read.Value["model/Retry/Retry.tla"]);
+        Expect.Equal("g", read.Value["model/Retry/gaps/Bug.cfg"]);
     }
 }
