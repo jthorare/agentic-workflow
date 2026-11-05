@@ -6,7 +6,8 @@ namespace Aw.Judge.Features.CheckTraits;
 
 /// <summary>
 /// Works out what a check asks Jev, without asking: the repo, its traits, the changed files and their excerpts. A plan
-/// is null when there is nothing to ask (not a repo, no traits, no changed file a trait covers).
+/// is null when there is nothing to ask (not a repo, no traits, no changed file a trait covers) or the check is skipped
+/// (<see cref="TraitSkips"/>).
 /// </summary>
 /// <param name="git">git through the process runner.</param>
 /// <param name="traits">The repo's traits.</param>
@@ -14,6 +15,8 @@ namespace Aw.Judge.Features.CheckTraits;
 /// <param name="log">The trait-check log.</param>
 internal sealed class TraitWorkspace(TraitGit git, ITraitStore traits, ITraitFiles files, ITraitCheckLog log)
 {
+    private readonly TraitSkips _skips = new(git, files);
+
     private const int MaxSourceChars = 20_000;
     private const int MaxImages = 4;
     private const long MaxImageBytes = 4 * 1024 * 1024;
@@ -31,8 +34,14 @@ internal sealed class TraitWorkspace(TraitGit git, ITraitStore traits, ITraitFil
         }
 
         var root = top.Trim();
+        if (request.Mode != TraitCheckMode.Scan && await _skips.OperationInProgress(root, cancellationToken).ConfigureAwait(false))
+        {
+            log.Append(new System.Text.Json.Nodes.JsonObject { ["event"] = "skipped", ["reason"] = "operation-in-progress" });
+            return null;
+        }
+
         var active = await Active(request, root, cancellationToken).ConfigureAwait(false);
-        var edited = request.Mode == TraitCheckMode.Edit ? Relative(root, request.Files) : [];
+        var edited = request.Mode == TraitCheckMode.Edit ? await NotGenerated(root, Relative(root, request.Files), cancellationToken).ConfigureAwait(false) : [];
         if (active.Count == 0 || (request.Mode == TraitCheckMode.Edit && !edited.Exists(file => active.Exists(trait => TraitGlob.InScope(trait.Paths, file)))))
         {
             return null;
@@ -40,8 +49,20 @@ internal sealed class TraitWorkspace(TraitGit git, ITraitStore traits, ITraitFil
 
         var diffs = request.Mode == TraitCheckMode.Scan
             ? await Scanned(root, request.Paths ?? [], active, cancellationToken).ConfigureAwait(false)
-            : TraitDiff.Parse(await Changed(root, request, edited, cancellationToken).ConfigureAwait(false));
+            : await NotGenerated(root, TraitDiff.Parse(await Changed(root, request, edited, cancellationToken).ConfigureAwait(false)), cancellationToken).ConfigureAwait(false);
         return await WithImages(root, edited, active, Tasks(root, diffs, active), cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<List<string>> NotGenerated(string root, List<string> paths, CancellationToken cancellationToken)
+    {
+        var generated = await _skips.Generated(root, paths, cancellationToken).ConfigureAwait(false);
+        return [.. paths.Where(path => !generated.Contains(path))];
+    }
+
+    private async ValueTask<IReadOnlyList<FileDiff>> NotGenerated(string root, IReadOnlyList<FileDiff> diffs, CancellationToken cancellationToken)
+    {
+        var generated = await _skips.Generated(root, [.. diffs.Select(diff => diff.Path)], cancellationToken).ConfigureAwait(false);
+        return [.. diffs.Where(diff => !generated.Contains(diff.Path))];
     }
 
     // An edit (the only mode with edited files) also asks about its image files; a plan is null when there is nothing to ask and nothing was skipped.
@@ -144,12 +165,13 @@ internal sealed class TraitWorkspace(TraitGit git, ITraitStore traits, ITraitFil
     }
 
     // Scan: every tracked file under the pathspecs, as one all-added hunk, so the same question judges existing code.
-    // Files no active trait covers are never read.
+    // Files no active trait covers, and generated files, are never read.
     private async ValueTask<IReadOnlyList<FileDiff>> Scanned(string root, IReadOnlyList<string> paths, List<Trait> active, CancellationToken cancellationToken)
     {
         var (_, listed) = await git.Run(["ls-files", "-z", "--", .. paths], root, cancellationToken).ConfigureAwait(false);
+        List<string> covered = [.. listed.Split('\0', StringSplitOptions.RemoveEmptyEntries).Where(file => active.Exists(trait => TraitGlob.InScope(trait.Paths, file)))];
         List<FileDiff> scanned = [];
-        foreach (var file in listed.Split('\0', StringSplitOptions.RemoveEmptyEntries).Where(file => active.Exists(trait => TraitGlob.InScope(trait.Paths, file))))
+        foreach (var file in await NotGenerated(root, covered, cancellationToken).ConfigureAwait(false))
         {
             if (files.ReadText(Path.Combine(root, file)) is { } text)
             {
