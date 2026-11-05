@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Aw.Kernel;
 using Aw.Sindri.Core.Checks;
 using Aw.Sindri.Core.ModelCheck;
+using Aw.Sindri.Core.Packets;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Workflow.Blocks;
@@ -20,7 +21,8 @@ namespace Aw.Sindri.Features.ModelCheck;
 /// <param name="commands">Runs the runner under one heavy slot.</param>
 /// <param name="scrubber">Takes secrets out of a trace.</param>
 /// <param name="setup">The runner's path and the environment it gets.</param>
-internal sealed class ModelCheckStep(ISpecFolders folders, IBranchChanges changes, RepoCommandRunner commands, ITextScrubber scrubber, ModelCheckSetup setup) : IBlockStep, IBlockStepId
+/// <param name="packets">Reads the packet in force, for the scoping model's move into specs/tla/ (MDL-SPEC-003).</param>
+internal sealed class ModelCheckStep(ISpecFolders folders, IBranchChanges changes, RepoCommandRunner commands, ITextScrubber scrubber, ModelCheckSetup setup, IPacketDirectory packets) : IBlockStep, IBlockStepId
 {
     /// <summary>The most characters of the runner's output the step keeps: TLC prints a full trace under every check that is not a PASS.</summary>
     internal const int OutputLimit = 256 * 1024;
@@ -44,6 +46,7 @@ internal sealed class ModelCheckStep(ISpecFolders folders, IBranchChanges change
     {
         ArgumentNullException.ThrowIfNull(context);
         cancellationToken.ThrowIfCancellationRequested();
+        _ = packets;   // red: the stale-path and move checks are not built yet
         if (StepFacts.Text(context, "fact:workspace") is not { } workspace)
         {
             return BlockStepResult.Failed("step.model.check needs fact:workspace (a path)");

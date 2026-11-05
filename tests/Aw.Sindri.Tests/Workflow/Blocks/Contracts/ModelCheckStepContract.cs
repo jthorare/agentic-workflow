@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Features.Blocks.Step;
 using Aw.Sindri.Features.ModelCheck;
 using Aw.Sindri.Testing.Checks;
+using Aw.Sindri.Testing.Packets;
 using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Tests.Workflow.BuildShip;
 using Aw.Sindri.Tests.Workflow.ModelCheck;
@@ -29,6 +30,6 @@ public sealed class ModelCheckStepContract : BlockContract
     {
         var rig = new StepRig();
         var setup = new ModelCheckSetup("/runner/tlc-check.sh", "/usr/bin", "/home/u", "/home/u/.state", "/runner/tlc.sh", "2g", "/tmp/m");
-        _ = await new ModelCheckStep(new FakeSpecFolders(), rig.Changes, rig.Runner, new IdentityScrubber(), setup).Run(BuildShipContexts.Of("step.model.check", []), cancellationToken);
+        _ = await new ModelCheckStep(new FakeSpecFolders(), rig.Changes, rig.Runner, new IdentityScrubber(), setup, new InMemoryPacketDirectory()).Run(BuildShipContexts.Of("step.model.check", []), cancellationToken);
     }
 }

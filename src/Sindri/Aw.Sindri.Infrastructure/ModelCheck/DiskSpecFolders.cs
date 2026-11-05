@@ -33,6 +33,9 @@ internal sealed class DiskSpecFolders : ISpecFolders
         }
     }
 
+    // Red stub: the green commit checks the path on disk.
+    public ValueTask<bool> Exists(string workspace, string path, CancellationToken cancellationToken) => throw new NotSupportedException("the stale models: path check is not built yet (red)");
+
     private static List<string> Match(string workspace, string[] segments, string relative, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
