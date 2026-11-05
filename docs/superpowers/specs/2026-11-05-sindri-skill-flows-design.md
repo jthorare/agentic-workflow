@@ -1,8 +1,8 @@
 # Sindri skill flows: chain repo skills from one trigger, and jump into any running one
 
-Status: DRAFT (2026-11-05). Engine wrote §0-§5 and §7-§9; ui wrote §6. Autoplan round 1 (NEEDS_WORK, R1-R21) is folded in: release 1 is re-cut to skill blocks, one hand-written recipe and "waiting on you" on the existing takeover; the flow format, its compiler and the canvas move to release 2. No ready until 3 /autoplan rounds, meta's UX check and the owner's read. Lane: engine (lead) + ui. Related: the engine spec (2026-10-10), the session launcher (2026-10-15), the sandbox (2026-10-18), the Linear hub (#2077, context).
+Status: DRAFT (2026-11-05). Engine wrote §0-§5 and §7-§9; ui wrote §6. Autoplan round 1 (NEEDS_WORK, R1-R21) is folded in: release 1 is re-cut to skill blocks, one hand-written recipe and "waiting on you" on the existing takeover; the flow format, its compiler and the canvas move to release 2. Round 2 (NEEDS_WORK, S1-S32) is folded into §0-§5 and §7-§9 (legal camelCase fact keys, push through SB-7's agent-app mode with per-repo approval, `skill run` in release 1, F-2 split in two); ui folds §6. No ready until 3 /autoplan rounds, meta's UX check and the owner's read. Lane: engine (lead) + ui. Related: the engine spec (2026-10-10), the session launcher (2026-10-15), the sandbox (2026-10-18), the Linear hub (#2077, context).
 
-Research behind this note (file:line refs): `~/repos/aw-wt/briefs-engine/flow/flow-internal.md` (Sindri today), `flow-external.md` (n8n, Node-RED, Windmill, Kestra; Avalonia node editors; reference languages), `flow-decisions.md` (canvas and draft rules agreed with ui). Round 1 reviews: `~/.agentic-workflow/joi-fairshare-agentic-workflow/plans/skill-flows-r1/`. Paths below are relative to the repo root unless they start with `~` or `$`.
+Research behind this note (file:line refs): `~/repos/aw-wt/briefs-engine/flow/flow-internal.md` (Sindri today), `flow-external.md` (n8n, Node-RED, Windmill, Kestra; Avalonia node editors; reference languages), `flow-decisions.md` (canvas and draft rules agreed with ui). Reviews: `~/.agentic-workflow/joi-fairshare-agentic-workflow/plans/skill-flows-r1/` and `skill-flows-r2/`. Paths below are relative to the repo root unless they start with `~` or `$`.
 
 ## 0. The owner's ask (2026-11-05, via meta)
 
@@ -33,14 +33,14 @@ Reading the table: Sindri already has the hard half (durable runs, pins, loops w
 
 ## 2. Decisions (engine's picks after round 1; each gets tested again in rounds 2 and 3)
 
-D1. **A skill is a block made from a small manifest, not C#.** `skills/<name>/block.yaml` lists one or more blocks (officeHours ships two: start from an idea, and revise a plan from a review). Each declares an `id`, typed `inputs` (`text` or `path` in release 1), `outputs` mapped from the result JSON, `outcomes` with one `success` outcome, `pushes`, `maxDuration`. Sindri loads them at serve start as descriptors `step.skill.<id>` (runtime agent, so no new block kind). The descriptor hash covers the block's entry in the manifest; there is no hand-kept version field. The launch records the SKILL.md sha; a pushing block also pins it (owner Q1).
+D1. **A skill is a block made from a small manifest, not C#.** `skills/<name>/block.yaml` lists one or more blocks (officeHours ships two: start from an idea, and revise a plan from a review). Each declares an `id`, typed `inputs` (`text` or `path` in release 1), `outputs` mapped from the result JSON, `outcomes` with one `success` outcome, `pushes`, `maxDuration`. Sindri loads them at serve start as descriptors `step.skill.<id>` (runtime agent, so no new block kind). An output's fact key is `fact:<block id in camelCase><Output, first letter capitalised>`, e.g. `fact:officeHoursFeatureDir`, because `FactKey` allows only `^fact:[a-z][A-Za-z0-9]*` (`FactKey.cs:23`; round 2 S1). The descriptor's `Version` is a number derived from the canonical hash of the block's whole manifest entry (`args`, `from`, `values` included), so there's no hand-kept version field and no edit slips past the pin (S16). The launch records the SKILL.md sha. A pushing block pins the hash of its whole skill folder, not just SKILL.md (owner Q3).
 D2. **The block's session** is an agent Step through the existing launcher, seeded with the skill's invocation in the target agent's form (`/officeHours ...` for Claude Code, `$officeHours ...` for Codex). It finishes when the skill writes its result to a per-launch file Sindri names; Sindri reads it at each turn end and completes the Step (§3.3). The agent never has to know it runs under Sindri.
-D3. **A skill block is never idle-failed.** Its turn ending without a finished result means it's **waiting on you**: a needs-you row with the skill's question (from the result's new `waiting` key) or "stopped without a result", and **Take over** on the row. The idle sweep skips skill-block launches. The state timeout is the only bound. No `asking` signal, no timer pause, no new Answer route in release 1 (round 1 R2, R14).
+D3. **A skill block is never idle-failed.** Its turn ending without a finished result means it's **waiting on you**: a needs-you row with the skill's question (from the result's new `waiting` key) or "stopped without a result", and **Take over** on the row. The idle sweep and the stalled check (`StalledAgentRuns.cs:25`, which today flags a quiet launch after 120 s) both skip skill-block launches (S13). The state timeout is the only bound. No `asking` signal, no timer pause, no new Answer route in release 1 (round 1 R2, R14).
 D4. **Release 1 wires blocks in a hand-written recipe.** The first chain, `workflow.skill.idea-to-pr`, is a shipped recipe in today's long form using `step.skill.*` Steps, so the validator, evals, approval, pins, Temporal and the ledger apply unchanged. The flow format and its compiler (§4) are release 2, built once the owner has run the hand-written chain and a second one (round 1 R10). The compiler needs one recipe change, Step output aliasing (R1), which is release 2 work too.
-D5. **Routing is explicit.** In the recipe that's already true. In the release 2 flow format, a block's `success` outcome goes to its `next` (default: the next block in file order), and every other outcome must have an `on` entry; there is no hidden skip rule (R4, R5). Loops on skill blocks take a `cap` only (R3).
+D5. **Routing is explicit.** In the recipe that's already true. In the release 2 flow format, a block's `success` outcome goes to its `next` (default: the next block in file order), and every other outcome must have an `on` entry; there is no hidden skip rule (R4, R5). Loops on skill blocks declare `noProgress: [sameFailure]`. Leaving `noProgress` out means all three signals (`LoopSpec.cs:12`), and `emptyDiff` would park the rework loop after its first round, since the revise block edits the plan folder under `$AW_DIR`, not the worktree. An empty list is refused (`RCP-LOOP-003`) (R3, S6).
 D6. **Trigger in release 1:** the existing starts (the app's Start page, `sindri workflow start`), with the recipe's input form. `sindri flow run` and the Flows page come with the format in release 2; Linear after #2077.
-D7. **Skills that push or open PRs** (specToProvenPR, bugFixOrchestrator, shipRelease) run scrubbed today. A block with `pushes: true` gets a push grant only when the owner approved a recipe whose preview showed it. The grant is a git credential helper and a `gh` wrapper in the session that ask the control plane for the 1 h agent App token of that repo, minted per call and refused once the Step ends (R11). Starting any recipe with a pushing block is owner-only, wherever the start comes from (R9). Owner Q2.
-D8. **Sandbox and policy:** the host computes the repo's slug once and passes `AW_DIR=$AW_STATE_DIR/<slug>/`; the sandbox plan mounts exactly that folder writable and the policy adds it to the writable paths (R12). Before launch Sindri checks the skill's `requires.yaml` against the agent home and the sandbox PATH and refuses with the missing names (R16).
+D7. **Skills that push or open PRs** (specToProvenPR, bugFixOrchestrator, shipRelease) run scrubbed today. A block with `pushes: true` runs its Step with SB-7's existing `sandbox.credentials.github: agent-app` (`docs/csharp/sindri-sandbox.md` "GitHub (agent-app) (SB-7)"): `GitHubAppTokenSource` mints the repo's agent App token into a 0600 file in the session home, the `gh` and `git-credential-sindri` shims read it, serve renews it every 45 min, and `Release` stops it when the Step ends, parks, is cancelled or drift-parks. The pre-push hook stays on and allows only `refs/heads/<run namespace>` (`sindri/<instance>/<run>`), never a delete. No new route, no new secret (S3). The approval is keyed per (recipe, version, hash, repo): the first start on a repo opens the preview naming that repo, and every row's [Approve] opens the preview and never approves in place (S4). Re-entering a pushing state (a desk's "Try again", a rewind) reuses the approved grant; it never widens it (S30). Starting any recipe with a pushing block is owner-only, wherever the start comes from (R9). Owner Q2.
+D8. **Sandbox and policy:** the host computes the repo's slug once and passes `AW_DIR=$AW_STATE_DIR/<slug>/`; the sandbox plan mounts exactly that folder writable and the policy adds it to the writable paths (R12). `skills/_shared/repo-slug.sh` overwrites `AW_DIR` today (line 13); F-1 makes it keep a preset `AW_DIR`, with a bash test, and keeps `skill-evals.sh`'s rewrite working (S17). The plan's wall limit (`limits.wall`, 70 min in the sandbox doc's example) is set from the state's `timeout`, so a 48 h build isn't killed at 70 min (found while folding round 2; S-0 checks the real default). Before launch Sindri checks the skill's `requires.yaml` against the agent home and the sandbox PATH and refuses with the missing names (R16).
 D9. **Canvas (ui, §6, release 2):** custom, on `ZoomBorder`, `GraphEdgesControl`, `MiniMapControl` and the run canvas; no third-party node editor unless one passes the UI AOT smoke clean. Server-side drafts, a candidates call at drag start, keyboard wiring, optimistic edits, undo as inverse ops, no ledger rows for draft edits, `draft.changed` events, one draft per flow (the assistant edits it too). Full list in flow-decisions.md.
 D10. **References (release 2):** structured `{ ref: <block>.<output> }` or a literal `{ value: ... }`, checked against the producing block's declared outputs at validate time. Computed values (a CEL subset) only in the n8n phase.
 
@@ -59,7 +59,7 @@ blocks:
     inputs:
       plan: { type: path, label: Plan folder, required: true }
       mode: { type: text, label: Review mode, required: false, values: [mvp, growth, scale, pivot] }
-    args: "{plan} --mode {mode}"     # an empty optional drops its flag
+    args: ["{plan}", { flag: --mode, input: mode }]   # a fragment: an empty optional drops the flag and its value
     outputs:
       report:     { type: path, from: "artifacts[consolidated-review.md]" }
       featureDir: { type: path, from: feature_dir }
@@ -78,8 +78,8 @@ blocks:
   - id: office-hours
     sentence: Shapes an idea into a plan folder with requirements and tasks.
     inputs:  { idea: { type: text, label: What do you want built?, required: true } }
-    args: "{idea}"
-    outputs: { featureDir: { type: path, from: feature_dir } }
+    args: ["{idea}"]
+    outputs: { featureDir: { type: path, from: feature_dir } }   # F-1 adds feature_dir to officeHours' Result block (it writes plan_dir today, SKILL.md:657)
     outcomes: { success: done }
     pushes: false
     maxDuration: 3h
@@ -88,7 +88,7 @@ blocks:
     inputs:
       plan:   { type: path, label: Plan folder, required: true }
       review: { type: path, label: Review report, required: true }
-    args: "--revise {plan} --review {review}"
+    args: [{ flag: --revise, input: plan }, { flag: --review, input: review }]
     outputs: {}
     outcomes: { success: done }
     pushes: false
@@ -96,34 +96,39 @@ blocks:
 ```
 
 - **Input types:** `text` and `path` (an absolute path the session can read). The type picks the form field (text box, folder picker). `pr`, `issue` and `packet` wait until a block needs them (C6). Every input is also written as `<key>.json` into the run directory (the launcher does this for declared inputs, `sindri-launcher.md:256`).
-- **Long text:** a `text` value of one line up to 500 characters is put into the seed as is; anything longer, or with a newline, is replaced in the seed by `(the text in <run dir>/<key>.json)`, so the seed is always one line (R13).
-- **Outputs** read the result JSON: a top-level key (`feature_dir`), `verdict`, or one artifact by file name (`artifacts[<name>]`, the one path in `artifacts` ending in `/<name>`). Output types are `text` and `path`. A **path fact holds the path, not the file**: a later block may edit the folder in place (the revise block relies on this), and the file's sha256 at completion is recorded on the run.
-- **Fact keys** are fixed per block: `fact:<block id>.<output>`, so `fact:autoplan.report`, `fact:office-hours.featureDir`. Two Steps of the same block in one recipe write the same key, the later one winning (today's rule for a fact written on two transitions); a recipe that needs both keeps them apart by using different blocks. Renaming per use is release 2's aliasing (§4.2).
+- **`args` grammar** (S19): a list, joined with single spaces in order. A string item is literal text with `{input}` slots. A `{ flag, input }` item becomes `<flag> <value>`, and is dropped whole when that optional input is empty. Each value is placed as one token, and one with a space is double-quoted (a golden pins a path with a space). The seed is typed into the agent's prompt, never run by a shell, so `$(...)` is just text.
+- **Long or risky text:** a `text` value of one line up to 500 characters, not starting with `/` or `$`, is put into the seed as is. Anything longer, with a newline, or with that leading character (it would read as a command) is replaced in the seed by `(the text in <run dir>/<key>.json)`, so the seed is always one line and starts with the skill's own invocation (R13, S19).
+- **Outputs** read the result JSON: a top-level key (`feature_dir`), `verdict`, or one artifact by file name (`artifacts[<name>]`: `<name>` is a file name, matched against the one path in `artifacts` ending in `/<name>`). Output types are `text` and `path`. A path output must be absolute, exist, and hold no newline, or it's SND-SKILL-004 (S19). A **path fact holds the path, not the file**: a later block may edit the folder in place (the revise block relies on this), and the file's sha256 at completion is recorded on the run.
+- **Fact keys** are fixed per block: `fact:<block id in camelCase><Output capitalised>`, so `fact:autoplanReport`, `fact:autoplanFeatureDir`, `fact:officeHoursFeatureDir` (S1). Two Steps of the same block in one recipe write the same key, the later one winning (today's rule for a fact written on two transitions). In release 1, a recipe that needs both keeps them apart by using different blocks, and the Start page's description says so when a shipped chain repeats one. Renaming per use is release 2's aliasing (§4.2).
 - **Outcomes:** `from: verdict` with a `map` to camelCase names and the one `success` outcome; with no `from`, the only outcome is `success` (named `done` by convention).
-- **Checks** (`node scripts/check-skill-blocks.mjs`, beside `scripts/check-skill-requires.sh`, in the bash suites): schema; ids unique across all manifests; every `{name}` in `args` is an input; `success` is one of the mapped outcomes; every output's `from` names a key the skill's Result block lists. The Result block's grammar for that is fixed in F-1: a fenced `aw-result` example in SKILL.md, read as JSON.
+- **The `aw-result` grammar** (S20): each skill with a manifest has one fenced ` ```aw-result ` block in its SKILL.md's Result section, a JSON example of the result it writes. Its top-level keys are the names an output's `from` may use, and its `artifacts` array lists example paths whose file names `artifacts[<name>]` may use.
+- **Checks** (`node scripts/check-skill-blocks.mjs`, beside `scripts/check-skill-requires.sh`, in the bash suites): schema; ids unique across all manifests; every `{name}` and fragment `input` in `args` is a declared input, and every required input appears; `success` is one of the mapped outcomes; every output's `from` names a key or artifact file name in the `aw-result` block; every `values` entry is a non-empty string list on a `text` input.
 
 ### 3.2 From manifest to descriptor
 
-At serve start Sindri reads every `skills/*/block.yaml` under the toolkit (`${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}`, the installed copy, not a checkout; `sindri skills` prints the path each block came from) and registers one descriptor per block:
+At serve start Sindri reads every `skills/*/block.yaml` under the skills folder and registers one descriptor per block. The folder is, in order (S8): `--skills <dir>` on `recipe validate|eval` and `sindri skills`; `AW_SKILLS_DIR`; the checkout's `skills/` when run inside an agentic-workflow checkout; else the installed toolkit's (`${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills`). `sindri skills` prints the path each block came from. `install-cs.sh`'s `recipe eval --shipped` and CI pass `--skills skills`, so a published binary is checked against the manifests it ships with. The author loop is written as numbered steps in `sindri-skills.md`: edit `block.yaml`, `node scripts/check-skill-blocks.mjs`, `sindri skill run <id> --input ...` (§7), restart serve.
 
 | Descriptor field | From the manifest |
 |---|---|
 | `Id` | `step.skill.<id>` |
 | `Runtime` | agent |
 | `Parameters` | one per input, `ParameterType.Text`, `Required` as declared. Values come as `with: {fact: ...}` or a literal; RCP-WIRE-001 already checks fact-valued parameters (`WiringRules.Upstream.cs:94`) |
-| `Outputs` | `fact:<id>.<output>` per output, `RequiredOn` the success outcome |
+| `Version` | a number derived from the canonical hash of the manifest entry (D1, S16) |
+| `Outputs` | `fact:<idCamel><Output>` per output (D1), `RequiredOn` the success outcome |
 | `Outcomes` | the mapped outcomes, or `done` |
 | `Capabilities` | `Tools`, `WriteScope`, plus `Effects` when `pushes: true` (it shows in the approval preview) |
 | `MaxDuration` | `maxDuration`. An agent Step isn't held to it by the runtime; the recipe's state `timeout` is the real bound, and the check in §3.5 makes the recipe say it |
 | `Sentence` | `sentence` (not hashed, like every sentence today) |
 
-A manifest that fails the checks is skipped with a doctor row `skills:block <id> is not loaded: <reason>`, never a failed serve; no toolkit folder at all is an empty list and one doctor row. A recipe naming a block that isn't loaded fails validation with that reason. Manifest edits need a serve restart in release 1; `sindri doctor` warns when a loaded manifest's hash differs from the file on disk. After the restart, runs using a changed block drift-park, and the existing remedy applies: re-approving the same recipe version (`sindri recipe approve`) pins the new descriptor hashes and wakes them (`sindri-workflow.md:199-245`; R6). The needs-you row says it: "autoplan's block changed. Approve idea-to-pr again to continue: [Approve]".
+A manifest that fails the checks is skipped with a doctor row `skills:block <id> is not loaded: <reason>`, never a failed serve; no skills folder at all is an empty list and one doctor row. A recipe naming a block that isn't loaded fails validation with that reason, and only recipes naming it become unloadable; the rest load as usual (S8). Manifest edits need a serve restart in release 1; `sindri doctor` warns when a loaded manifest's hash differs from the file on disk.
+
+After the restart, a run using a changed block keeps going until its next effect, because drift parking is lazy (`sindri-workflow.md:1120-1124`; S15). For a skill Step that means: the session already running finishes its turn, and its completion from the result file is refused with `SND-RECIPE-006` and drift-parks the run. The existing remedy then applies: re-approving the same recipe version (`sindri recipe approve`) pins the new descriptor hashes and wakes it, completing from the same result file (R6). The needs-you row says it in the owner's words: "autoplan's skill was updated. Approve idea-to-pr again to continue: [Approve]", and that Approve opens the preview (D7).
 
 ### 3.3 The session and how it finishes
 
-1. **Launch.** The existing `LaunchAgentStep`: worktree, sandbox, policy and scrubbed env as for any agent Step, plus `AW_DIR` (D8), `AW_RESULT=1`, `AW_RESULT_SKILL=<name>`, and `AW_RESULT_FILE=<run dir>/.sindri-out/result-<launch>.json`: a new name per launch, so a loop's second round can never read the first round's file. The `requires.yaml` check runs first (SND-SKILL-005 below).
+1. **Launch.** The existing `LaunchAgentStep`: worktree, sandbox, policy and scrubbed env as for any agent Step, plus `AW_DIR` (D8), `AW_RESULT=1`, `AW_RESULT_SKILL=<name>`, and `AW_RESULT_FILE=<run dir>/.sindri-out/result-<launch>.json`: a new name per launch, so a loop's second round can never read the first round's file. The run dir is the launch's run area under `$AW_SINDRI_HOME`, never inside the worktree, so a pushing skill's `git add -A` can't commit the result (S18). The `requires.yaml` check runs first (SND-SKILL-005 below).
 2. **The skill writes its result.** One change to `skills/_shared/output-contract.md` and to the Result block of each skill with a manifest: when `AW_RESULT_SKILL` equals the skill's own name, write the result to `AW_RESULT_FILE` instead of `$AW_DIR/results/<skill>-<ts>.json`. The name check keeps autoplan's five lens skills, which run in the same session, writing their own default files. And in that mode, **a question goes back in the result, not in a picker**: the skill writes `"waiting": "<the question, one line>"` with the rest of the result as it stands, prints it, and ends its turn, instead of calling AskUserQuestion (a pending picker is invisible to Sindri: the session looks busy forever). When unset, nothing changes, and a bash test pins that.
-3. **Sindri reads the file at each turn end** (the Stop hook's marker, the moment today's idle sweep looks):
+3. **Sindri reads the file at each turn end.** The reader is a 10 s sweep over live skill launches (S14). When a launch's turn-end marker (the Stop hook's, the one today's idle sweep reads) is newer than the last one it handled, it reads the result file. So a result is picked up within 10 s. "The same file as last time" is kept in memory: a serve restart reads it again and at worst repeats a waiting row, which is harmless. A completion goes in as a `StepCompleted`, the way `agent:recovered` does (`RecipeWorkflow.AgentEscalation.cs:36`). A skill launch with no turn-end marker after 10 min gets a doctor row naming it. S-0 checks the marker for Codex as well as Claude Code. Result text (`waiting`, `summary`) goes through `Aw.Redaction` before it reaches the ledger or a row (S18).
 
 | What it finds | What happens | Code |
 |---|---|---|
@@ -134,26 +139,27 @@ A manifest that fails the checks is skipped with a doctor row `skills:block <id>
 | Not valid JSON | Waiting on you, with the parse error on the row (Take over, fix or tell the skill) | SND-SKILL-001 |
 | `skill` names another skill | Waiting on you, "the result came from <other>" | SND-SKILL-002 |
 | A verdict missing from the map | `step.failed`: "autoplan said 'MAYBE', which its block.yaml doesn't map" | SND-SKILL-003 |
-| A mapped output missing | `step.failed`: "autoplan's result has no artifact 'consolidated-review.md' (it has: arch-review.md, ...)" | SND-SKILL-004 |
+| A mapped output missing, or a path output that's relative, missing on disk or holds a newline | `step.failed`: "autoplan's result has no artifact 'consolidated-review.md' (it has: arch-review.md, ...)" | SND-SKILL-004 |
 | (before launch) `requires.yaml` names a bin, MCP server or skill the agent home lacks | `step.failed` before any session starts, naming each one and its fix | SND-SKILL-005 |
 
-   The two failures are block-author bugs, so they fail; everything the owner can sort out in the session waits for them. A `sindri workflow complete` call from a skill still works if one makes it.
+   The two failures are block-author bugs, so they fail; everything the owner can sort out in the session waits for them. Each waiting row is a `launch.owner-waiting` ledger event (§7), one per turn end. A `sindri workflow complete` call from a skill still works if one makes it.
 4. **Waiting on you is bounded only by the state timeout.** The idle sweep skips skill-block launches; the session stays alive in tmux. The state's `timeout` ends the wait (`then: park`), and the park row offers Resume and Stop.
 
-Worked example: autoplan's run ends with `{"skill":"autoplan","verdict":"NEEDS_WORK","feature_dir":"/home/u/.agentic-workflow/acme-api/plans/20261105-rate-limits","artifacts":[".../consolidated-review.md", ".../arch-review.md", ...]}` in `.sindri-out/result-LCH-7Q2.json`. Sindri records `fact:autoplan.report = ".../consolidated-review.md"`, `fact:autoplan.featureDir = ".../plans/20261105-rate-limits"` (plus each file's sha256 on the run) and the outcome `needsWork`. Had officeHours instead ended a turn with `"waiting": "Who calls this API: browsers, servers, or both?"`, the row would read "idea-to-pr › Shape the idea is waiting on you: Who calls this API: browsers, servers, or both? [Take over]".
+Worked example: autoplan's run ends with `{"skill":"autoplan","verdict":"NEEDS_WORK","feature_dir":"/home/u/.agentic-workflow/acme-api/plans/20261105-rate-limits","artifacts":[".../consolidated-review.md", ".../arch-review.md", ...]}` in `.sindri-out/result-LCH-7Q2.json`. Sindri records `fact:autoplanReport = ".../consolidated-review.md"`, `fact:autoplanFeatureDir = ".../plans/20261105-rate-limits"` (plus each file's sha256 on the run) and the outcome `needsWork`. Had officeHours instead ended a turn with `"waiting": "Who calls this API: browsers, servers, or both?"`, the row would read "idea-to-pr › Shape the idea is waiting on you: Who calls this API: browsers, servers, or both? [Take over]".
 
 ### 3.4 Where it runs and what it may touch
 
-- **Working directory:** one worktree per run, `flow/<instance>` off the repo's default branch, shared by the run's Steps in order (one active state, so they never write at the same time). Sindri creates it at run start, removes it when the run resolves, and keeps it while parked. A skill that makes its own worktrees (specToProvenPR) makes them from there.
+- **Working directory:** one worktree per run off the repo's default branch, shared by the run's Steps in order (one active state, so they never write at the same time). Sindri creates it at run start, removes it when the run resolves, and keeps it while parked. Its branch sits inside the sandbox's run namespace (`sindri/<instance>/<run>/work`), because a write session can only lock refs under `refs/heads/sindri/<instance>/<run>/` (`sindri-sandbox.md:135`); a branch like `flow/<instance>` would fail at the first commit. S-0 checks whether `<run>` is per launch or per instance. If it's per launch, F-1 pins one run segment for the whole instance. A skill that makes its own worktrees or branches (specToProvenPR) names its branches under the prefix Sindri passes in `AW_BRANCH_PREFIX`, an F-1 edit to that skill that S-0 tries first.
 - **`$AW_DIR`:** exactly `$AW_STATE_DIR/<slug>/` of the run's repo, computed by the host (D8), so a skill inside `flow/<instance>` can't land in a second folder. Two runs on the same repo share it; the result file is per launch, and the skills' own folders are timestamped.
-- **Push (D7):** `pushes: true` is a request. The block gets the credential helper only if the approval preview showed "build (specToProvenPR) can push to <repo>" and the owner approved. Then its launch keeps the pre-push hook off and installs the helper; every token it hands out is the repo's 1 h agent App token, minted per call, and the ledger records the grant on the launch (`launch.started` carries `push: true`). Otherwise the block runs scrubbed, and a push fails the way it does today (`SND-LAUNCH-023`). A pushing block pins its SKILL.md sha: an edit to that SKILL.md drift-parks the run like a `block.yaml` change.
+- **Push (D7):** `pushes: true` is a request. The block's Step runs with `sandbox.credentials.github: agent-app` only if the approval preview for this repo showed "build (specToProvenPR) can push to <owner/repo>, branches under sindri/<instance>/" and the owner approved. The SB-7 machinery does the rest: the token file, the shims, renewal, the pre-push hook on the run namespace, and `Release` when the Step ends, parks or is cancelled. The ledger records the grant on the launch (`launch.started` carries `push: true`). Otherwise the block runs scrubbed, and a push fails the way it does today (`SND-LAUNCH-023`). A pushing block pins the hash of its skill folder, so an edit to any file in it drift-parks the run like a `block.yaml` change (§3.2).
 - **Agent and model:** the profile's `workflow.agent.target`, or the state's `agent:` (RCP-AGENT-001). The seed's form comes from the target's launcher entry.
 
 ### 3.5 The recipe rules a skill state follows
 
 - A skill state has `timeout: { after: <at least the block's maxDuration>, then: park }`: a new rule, RCP-SKILL-001, so the manifest's `maxDuration` is never a number nothing enforces (R17). `idea-to-pr`'s `build` state: `after: 48h`.
 - Only `exit`, `idle` and `lost` failures route to the recipe's desk; a launch the launcher couldn't start keeps today's `unavailable` rule (two reruns, then park), so a down launcher doesn't turn into three "try again" clicks.
-- Loops on skill states take a `cap` and no `noProgress`: skills write outside the worktree, so `emptyDiff` would fire every round (R3).
+- Loops on skill states declare `noProgress: [sameFailure]` (D5): skills write outside the worktree, so the default's `emptyDiff` would park every rework loop after one round (R3, S6).
+- Every outcome a skill block declares has a transition. That's today's `RCP-OUTCOME-001`, so no new rule; `idea-to-pr`'s evals include "build says blocked" to prove it (S21).
 - A recipe with a `pushes: true` block is owner-only to start: `workflow start`, the item router and the API all refuse an agent session with `SND-AUTH-002` (R9).
 
 ## 4. The flow format and the compiler (release 2; D4, D5, D10)
@@ -183,12 +189,12 @@ blocks:
     with: { plan: { ref: shape.featureDir }, mode: { value: mvp } }
     next: build                                   # pass; written out because the next block in file order is revise
     on:
-      needsWork: { to: revise, loop: { name: rework, cap: 2 } }
+      needsWork: { to: revise, loop: { name: rework, cap: 2 } }   # the edge entering the cycle carries the loop
       blocked: stop
   revise:
     use: office-hours-revise
     with: { plan: { ref: shape.featureDir }, review: { ref: critique.report } }
-    next: critique
+    next: critique                                # closes the cycle; needs no loop of its own
   build:
     use: spec-to-proven-pr
     with: { spec: { ref: shape.featureDir } }
@@ -199,26 +205,26 @@ Rules:
 - `use:` is the block id from `block.yaml` (no name mapping).
 - A block's **success** outcome goes to `next:`: a block id, `end` (resolved) or `stop` (unresolved). Left out, it's the next block in file order, or `end` for the last. The validator refuses a left-out `next` whose default target is also reached by an explicit edge (`critique` would fall into `revise`), so the file says it.
 - **Every other outcome needs an `on` entry** (`<block>`, `stop`, or `{ to, loop }`). An unhandled non-success outcome is a finding: `flows/idea-to-pr.yaml:14 critique.on: outcome 'blocked' is not handled; add 'blocked: stop' or 'blocked: <block>'`. A BLOCKED plan can't reach a pushing block by default.
-- `with:` values are `{ ref: input.<key> }`, `{ ref: <block>.<output> }` or `{ value: <literal> }`. A ref is checked at validate time: the block exists, declares that output, the types fit (`path` into `path` or `text`; `text` into `text`), and the producer runs before the reader on every path (RCP-WIRE-001 on the compiled recipe, mapped back to flow names).
-- A back-edge names a `loop` with a `cap` (RCP-LOOP-001/002); the compiler gives skill loops no `noProgress`.
+- `with:` values are `{ ref: input.<key> }`, `{ ref: <block>.<output> }` or `{ value: <literal> }`. A ref is checked at validate time: the block exists, declares that output, the types fit (`path` into `path` or `text`; `text` into `text`), and the producer runs before the reader on every path (RCP-WIRE-001 on the compiled recipe, mapped back to flow names). Refs use flow names (`shape.featureDir`); the compiled fact keys are camelCase (`fact:shapeFeatureDir`, §4.2).
+- **Loops** (S7): every cycle in the block graph carries exactly one `loop:`, on the edge that enters the cycle. The compiler puts it on the state that edge enters, which is what the validator expects today (a looped state needs a transition back into it, `RCP-LOOP-002`). In `idea-to-pr`, `critique.needsWork → revise` carries `rework`, and `revise.next: critique` closes the cycle with none. File order doesn't decide it: a wire to an earlier block that closes no cycle needs no loop. A cycle with no `loop:` is a finding. Each loop has a `cap` (RCP-LOOP-001), and the compiler gives skill loops `noProgress: [sameFailure]` (D5).
 - Positions for the canvas live in `<name>.layout.json` beside the file, never in the hash.
 
 ### 4.2 What it compiles to
 
-`sindri flow compile <file>` prints the recipe long form; validate, eval, approve and run all go through it. It is exactly the hand-written recipe of §5.1 with three differences: state ids are block ids, every state gets `displayName` = the block id so `workflow status` and needs-you rows never show compiled names (R20), and facts are per use. That last one needs **Step output aliasing**, the one recipe schema change: `produces: [{ fact: fact:shape.featureDir, from: fact:office-hours.featureDir }]` on a Step's transition, the form a child's outputs already use. RCP-WIRE-002 is extended to allow it, the descriptor's own keys stay what the agent writes, and replay goes behind a `Workflow.Patched("step-output-alias")` marker. With it, one block used twice keeps both outputs.
+`sindri flow compile <file>` prints the recipe long form; validate, eval, approve and run all go through it. It is exactly the hand-written recipe of §5.1 with three differences: state ids are block ids, every state gets `displayName` = the block id so `workflow status` and needs-you rows never show compiled names (R20), and facts are per use. That last one needs **Step output aliasing**, the one recipe schema change: `produces: [{ fact: fact:shapeFeatureDir, from: fact:officeHoursFeatureDir }]` on a Step's transition (aliases follow D1's rule with the flow block id: `fact:<blockCamel><Output>`), the form a child's outputs already use. RCP-WIRE-002 is extended to allow it, the descriptor's own keys stay what the agent writes, and replay goes behind a `Workflow.Patched("step-output-alias")` marker. With it, one block used twice keeps both outputs.
 
-- **Errors point at the flow.** Every compiled state and transition carries its flow source position; findings print against the flow file (`flows/idea-to-pr.yaml:14 critique.with.plan: 'shape.featurDir' is not an output of office-hours (it has: featureDir)`). The spec of F-4 lists the eight messages as golden text: unknown block, unknown output, unknown outcome, type mismatch, back-edge without a loop, unhandled outcome, ambiguous default `next`, unreachable block.
+- **Errors point at the flow.** Every compiled state and transition carries its flow source position; findings print against the flow file (`flows/idea-to-pr.yaml:14 critique.with.plan: 'shape.featurDir' is not an output of office-hours (it has: featureDir)`). The spec of F-4 lists the eight messages as golden text: unknown block, unknown output, unknown outcome, type mismatch, cycle without a loop, unhandled outcome, ambiguous default `next`, unreachable block.
 - **Hash and pins:** the recipe hash covers the compiled long form (a block rename changes it; moving a card doesn't). The flow's `version` is the recipe's version (RCP-VERSION-001).
 
 ### 4.3 Evals
 
-`sindri flow eval --scaffold <file> --out <dir>` writes one case per outcome path (it calls `recipe eval --scaffold` on the compiled recipe). `idea-to-pr` gets 5: pass, needsWork then pass, needsWork x3 (cap hit, parked), blocked, a failed block then again.
+`sindri flow eval --scaffold <file> --out <dir>` writes one case per outcome path (it calls `recipe eval --scaffold` on the compiled recipe). `idea-to-pr` gets 6: pass, needsWork then pass, needsWork twice then pass (reaches build: the loop's `sameFailure` doesn't fire on a changing review, S6), needsWork x3 (cap hit, parked), critique blocked, build blocked, a failed block then again.
 
 ## 5. Trigger, run page and jumping in
 
 ### 5.1 Release 1's chain: `workflow.skill.idea-to-pr`
 
-A shipped recipe in `recipes/sindri/` (trimmed: labels and sentences left out):
+A shipped recipe in `recipes/sindri/`. The sketch is trimmed: labels and sentences are left out, and real recipes nest `use`/`with` under `step:` (S31).
 
 ```yaml
 id: workflow.skill.idea-to-pr
@@ -227,19 +233,19 @@ inputs: [{ key: fact:idea, type: text, kind: text }]
 initial: shape
 states:
   shape:    { use: step.skill.office-hours,        with: { idea: { fact: fact:idea } },                       timeout: { after: 3h,  then: park } }
-  critique: { use: step.skill.autoplan,            with: { plan: { fact: fact:office-hours.featureDir }, mode: mvp }, timeout: { after: 3h,  then: park } }
+  critique: { use: step.skill.autoplan,            with: { plan: { fact: fact:officeHoursFeatureDir }, mode: mvp }, timeout: { after: 3h,  then: park } }
   revise:   { use: step.skill.office-hours-revise, loop: rework,
-              with: { plan: { fact: fact:office-hours.featureDir }, review: { fact: fact:autoplan.report } }, timeout: { after: 2h,  then: park } }
-  build:    { use: step.skill.spec-to-proven-pr,   with: { spec: { fact: fact:office-hours.featureDir } },    timeout: { after: 48h, then: park } }
+              with: { plan: { fact: fact:officeHoursFeatureDir }, review: { fact: fact:autoplanReport } }, timeout: { after: 2h,  then: park } }
+  build:    { use: step.skill.spec-to-proven-pr,   with: { spec: { fact: fact:officeHoursFeatureDir } },    timeout: { after: 48h, then: park } }
   shape-failed:    { use: step.skill.failed-desk, loop: retry-shape, with: { block: shape } }   # one per skill state
   # ... critique-failed, revise-failed, build-failed
   done:     { outcome: resolved }
   stopped:  { outcome: unresolved }
-loops: { rework: { cap: 2 }, retry-shape: { cap: 3 }, ... }
+loops: { rework: { cap: 2, noProgress: [sameFailure] }, retry-shape: { cap: 3, noProgress: [sameFailure] }, ... }
 transitions:
-  - { from: shape,    to: critique, on: step.completed, produces: [fact:office-hours.featureDir] }
-  - { from: critique, to: build,    on: step.completed, when: { outcome: pass },      produces: [fact:autoplan.report, fact:autoplan.featureDir] }
-  - { from: critique, to: revise,   on: step.completed, when: { outcome: needsWork }, produces: [fact:autoplan.report, fact:autoplan.featureDir] }
+  - { from: shape,    to: critique, on: step.completed, produces: [fact:officeHoursFeatureDir] }
+  - { from: critique, to: build,    on: step.completed, when: { outcome: pass },      produces: [fact:autoplanReport, fact:autoplanFeatureDir] }
+  - { from: critique, to: revise,   on: step.completed, when: { outcome: needsWork }, produces: [fact:autoplanReport, fact:autoplanFeatureDir] }
   - { from: critique, to: stopped,  on: step.completed, when: { outcome: blocked } }
   - { from: revise,   to: critique, on: step.completed }
   - { from: build,    to: done,     on: step.completed, when: { outcome: done } }
@@ -250,11 +256,11 @@ transitions:
   # ... the same three per skill state
 ```
 
-`step.skill.failed-desk` is the one new shipped desk block (F-2): outcomes `again` and `stop`, its row shows the failed Step's one-line reason, and Take over sits on the same row. Today's desks are domain ones (`step.build.scope-desk`, `step.evidence.desk`) or the route twin `step.desk.choose`, none of which fits. One desk per skill state, each behind its own retry loop (cap 3), is also what the compiler emits in release 2. Its evals (5 cases, as §4.3) ship with it. Start: the app's Start page lists it with its one input, or `sindri workflow start workflow.skill.idea-to-pr` with the input (owner only, D7).
+`step.skill.failed-desk` is the one new shipped desk block (F-2a): outcomes `again` and `stop`, its row shows the failed Step's one-line reason, and Take over sits on the same row. Today's desks are domain ones (`step.build.scope-desk`, `step.evidence.desk`) or the route twin `step.desk.choose`, none of which fits. One desk per skill state, each behind its own retry loop (cap 3), is also what the compiler emits in release 2. Its evals (the 6 cases of §4.3) ship with it. Start: the app's Start page lists it with its one input, or `sindri workflow start workflow.skill.idea-to-pr` with the input (owner only, D7).
 
 ### 5.2 The run page
 
-A run is a recipe instance, so the instance frame (`Views/Instance/InstanceFrameView`, states band, facts panel, timeline) already works. What ui adds in release 1 (F-3) is a skill state's card: its block's sentence, its state (waiting to start, running, **waiting on you** with the question, done with its outcome, failed), its outputs as clickable paths, loop rounds ("round 2 of 2"), and Take over on a running or waiting one. State is a word on the card, never colour alone, and the waiting row announces once, politely, through the live-region pattern `TakeoverBannerView` uses.
+A run is a recipe instance, so the instance frame (`Views/Instance/InstanceFrameView`, states band, facts panel, timeline) already works. What ui adds in release 1 (F-3) is a skill state's card: its block's sentence, its state (waiting to start, running, **waiting on you** with the question, done with its outcome, failed), its outputs as clickable paths, loop rounds ("round 2 of 2"), the session's cost when the launcher reports one (summed on the run header, S32), and Take over on a running or waiting one. State is a word on the card, never colour alone, and the waiting row announces once, politely, through the live-region pattern `TakeoverBannerView` uses.
 
 ### 5.3 Jumping in
 
@@ -276,8 +282,8 @@ When API P10a's attach lands (Attach without a takeover, the `AttachButton` main
 | Loop cap hit | "Rework hit its cap of 2: <autoplan's summary>" (the park) | Run once more, Stop, Take over | An answer |
 | Blocked | "autoplan blocked the plan: <summary>" with the report linked, on the run's resolved-unresolved notice | Open report | Dismiss |
 | Timeout | "Build ran past 48 h" (the park) | Resume, Stop | An answer |
-| Block changed | "autoplan's block changed. Approve idea-to-pr again to continue" | Approve | Re-approval |
-| Unapproved recipe on Start | The approval preview opens, Approve then starts it (one click) | Approve and run, Cancel | - |
+| Skill updated (drift park, §3.2) | "autoplan's skill was updated. Approve idea-to-pr again to continue" | Approve (opens the preview) | Re-approval |
+| Unapproved recipe, or first start on this repo | The approval preview opens, naming the repo and each pushing block's branches; Approve then starts it (one click) | Approve and run, Cancel | - |
 | Run in progress | the instance frame's existing Cancel | Cancel | - |
 
 Every row names the run (`idea-to-pr › ...`), so two runs on one repo never share a row.
@@ -441,12 +447,14 @@ All new routes are on the existing loopback control plane and follow its error a
 
 | Route | What it does | Caller |
 |---|---|---|
-| `GET /sindri/skills` | Loaded skill blocks: id, skill, descriptor id and hash, sentence, inputs, outputs, outcomes, `pushes`, SKILL.md sha, the path it was loaded from, and the doctor reason for any that didn't load | any |
-| `POST /sindri/launches/{launch}/push-token` | The push grant's helper (D7): a fresh 1 h agent App token for the launch's repo, only while its Step runs and only for a launch started with `push: true` | the launch's own session (by its launch secret) |
+| `GET /sindri/skills` | Loaded skill blocks: id, skill, descriptor id and version, sentence, inputs, outputs, outcomes, `pushes`, SKILL.md sha, the path it was loaded from, and the doctor reason for any that didn't load | any |
+| `POST /sindri/skills/{id}/runs` | One block as a trial run: a one-state synthetic recipe (no approval), always scrubbed (no push grant, even for `pushes: true`), counted against the session cap, in a fresh scratch worktree at the repo's default branch that's removed after. The same path as §6.5's Test block (S5, S24) | owner; a session is refused `SND-AUTH-002` |
 
-CLI: `sindri skills [--json]` (exit 0 ok, 1 not running). Listed in `Usage.cs`, the help goldens and aot-smoke's expected text. Everything else uses today's verbs: `sindri workflow start|status`, `takeover`, `handback`, `recipe approve`.
+There's no push-token route: pushing uses SB-7's agent-app mode (D7, S3).
 
-Ledger: `launch.started` carries `skill`, the SKILL.md sha and `push`; the `workflow.transition` of a skill Step's completion carries the result file's sha256; new `launch.waiting` (the turn ended waiting on the owner: `launchId`, `reason` = `question` | `noResult` | `unreadable`, the question text) feeds the needs-you row. The API goldens for these are integration-lane and run in F-1's and F-2's gates.
+CLI: `sindri skills [--skills <dir>] [--json]` (exit 0 ok, 1 not running); `sindri skill run <id> --input k=v | --input-file k=<path> [--repo R] [--follow]` (the route above; exit 0 started, 1 not running, 2 refused). Both are listed in `Usage.cs`, the help goldens and aot-smoke's expected text. `recipe validate|eval` take `--skills <dir>` (§3.2). Everything else uses today's verbs: `sindri workflow start|status`, `takeover`, `handback`, `recipe approve`.
+
+Ledger: `launch.started` carries `skill`, the SKILL.md sha and `push`; the `workflow.transition` of a skill Step's completion carries the result file's sha256. A new **`launch.owner-waiting`** event, one per turn end, feeds the needs-you row. Its fields are `launchId`, `reason` (`question` | `noResult` | `unreadable`), `text` (the question, redacted), `resultPath`, and `detail` (the parse error or the other skill's name) (S2, S22). `launch.waiting` already exists (the session-cap wait, `EventTypes.cs:168`), and the hyphenated name follows `launch.session-reported`. The row's details show `resultPath`. The API goldens for these are integration-lane and run in F-1's and F-2a's gates.
 
 **Release 2** (with the format and the canvas):
 
@@ -455,9 +463,9 @@ Ledger: `launch.started` carries `skill`, the SKILL.md sha and `push`; the `work
 | `GET /sindri/flows`, `GET /sindri/flows/{id}` | Flows with their approval state, source, layout and the compiled recipe's hash | any |
 | `POST /sindri/flows/validate` | Body: a flow file. Findings against flow positions (§4.2). Writes nothing | any |
 | `POST /sindri/flows/{id}/runs` | Body: inputs. Starts a run | owner; a session is refused `SND-AUTH-002` |
-| `POST /sindri/flows/{id}/draft`, `PATCH .../draft` (`{rev, ops[]}`, the response carries the new rev's findings), `GET .../draft/candidates?rev=&port=`, `POST .../draft/test`, `POST .../draft/promote` | The canvas's server-side draft (§6): PATCHes not in the ledger; `draft.changed` on the event stream carries the op list; `renameBlock` is one op that rewrites every ref; promote = a new flow version (ledger `flow.saved`) | owner, the assistant; promote is the owner's |
+| `POST /sindri/flows/{id}/draft`, `PATCH .../draft` (`{rev, ops[]}`, the response carries the new rev's findings), `GET .../draft/candidates?rev=&port=`, `POST .../draft/test`, `POST .../draft/promote` | The canvas's server-side draft (§6.4): drafts live in `$AW_SINDRI_HOME/drafts.db` (not a ledger view, so `views rebuild` doesn't touch it), are never deleted by age (Health lists ones idle over 14 days), and record their base file and its hash. PATCHes are not in the ledger. `draft.changed` is an SSE frame with no id, never replayed (the canvas re-pulls on reconnect), and carries the op list. `renameBlock` is one op that rewrites every ref. The candidates response marks each target that would close a cycle with `closesCycle`, names the edge the loop belongs on (§4.1), and says whether that edge has one already (§6.9.5). `test` is §7's skill-run path at the draft's rev. Promote writes `<repo>/.agentic-workflow/flows/<name>.yaml` and bumps `version`; a shipped flow forks under a new id; a changed base file refuses promote until the owner picks Re-base or Discard (S9). Promote's ledger row is `flow.saved` | owner, the assistant; promote and test are the owner's |
 
-CLI: `sindri flow list|show <id>`; `sindri flow validate|compile|eval <file> [--json]` (in process, no serve, like `recipe validate`; exit 0 pass, 1 findings, 2 usage); `sindri flow approve <file>` (registers and approves the compiled recipe; the preview lists each block, its pushes and its SKILL.md sha; owner only); `sindri flow run <id> --input k=v | --input-file k=<path> [--follow]` (relative paths resolve against the cwd; exit 0 started, 1 not running, 2 refused); `sindri skill run <id> --input k=v` (one block as a one-state trial run, the CLI half of the canvas's Test block).
+CLI: `sindri flow list|show <id>`; `sindri flow validate|compile|eval <file> [--json]` (in process, no serve, like `recipe validate`; exit 0 pass, 1 findings, 2 usage); `sindri flow approve <file>` (registers and approves the compiled recipe; the preview lists each block, its pushes and its SKILL.md sha; owner only); `sindri flow run <id> --input k=v | --input-file k=<path> [--follow]` (relative paths resolve against the cwd; exit 0 started, 1 not running, 2 refused).
 
 ## 8. Phases and the parallel plan
 
@@ -467,16 +475,19 @@ CLI: `sindri flow list|show <id>`; `sindri flow validate|compile|eval <file> [--
 
 | Phase | What ships | Lane | Needs | Proof in the running app |
 |---|---|---|---|---|
-| **S-0** Spike (day one, R18) | No product code. Run autoplan and officeHours in a launcher session with `AW_RESULT_SKILL` / `AW_RESULT_FILE` set by hand; check each writes the per-launch file, hands a question back as `waiting` instead of AskUserQuestion, and what the hooks report meanwhile. Notes into this spec | engine | - | The two result files and the hook markers, pasted into the spec's §3.3 as fixtures |
-| **F-1** Skill blocks | `block.yaml` for the six blocks + `check-skill-blocks.mjs`; the output-contract change (`AW_RESULT_SKILL`, `AW_RESULT_FILE`, `waiting`) in the five skills; officeHours' revise mode; manifest loader and `step.skill.*` descriptors; result-file completion and SND-SKILL-001..005; `requires.yaml` launch check; `AW_DIR` in the sandbox plan and policy; `GET /sindri/skills`, `sindri skills`; **docs**: `docs/csharp/sindri-skills.md` (block.yaml author guide, the result-file table, the error codes), `.agents/rules/skills.md` (the new file), `AGENTS.md` lines (R8) | engine | S-0 | A one-state hand-written recipe running `step.skill.autoplan` on a real plan folder completes with the right verdict and facts, with no `workflow complete` call from the agent |
-| **F-2** Waiting on you, and the chain | The idle sweep skips skill launches; `launch.waiting` and its needs-you rows; the finished-while-taken-over nudge; handback completes from the result file; RCP-SKILL-001; owner-only start for pushing recipes; the push grant (helper, token route, preview line); `step.skill.failed-desk`; the shipped `workflow.skill.idea-to-pr` with its evals; docs: the owner-states table in `sindri-skills.md`, the push grant in `sindri-launcher.md` | engine | F-1 | Start `idea-to-pr` on a scratch repo from the app; officeHours asks its first question; the row shows it; Take over opens Warp; answer, hand back; the chain runs shape -> critique -> (rework once) -> build to a pushed PR on the scratch repo |
-| **F-3** Skill cards | The skill state's card on the instance frame (§5.2), the rows of §5.4, Take over and the nudge on them, the approve-and-run preview from Start | ui | F-1's `/sindri/skills` golden, F-2's event goldens | The F-2 run watched and jumped into from the app only |
+| **S-0** Spike (day one, R18; ~0.5 day) | No product code. Run autoplan and officeHours in a launcher session with `AW_RESULT_SKILL` / `AW_RESULT_FILE` set by hand, under both Claude Code and Codex. Check: each writes the per-launch file; a question comes back as `waiting` instead of AskUserQuestion; what the hooks report meanwhile, including the turn-end marker for Codex (S14); how many turn ends officeHours takes to shape one idea (S25); whether the sandbox's run namespace `<run>` is per launch or per instance, and the default wall limit (§3.4, D8); specToProvenPR naming its branches under `AW_BRANCH_PREFIX`. Notes into this spec | engine | - | The two result files and the hook markers, pasted into the spec's §3.3 as fixtures. If officeHours needs more than 3 turn ends per idea, API P10a's attach (Answer without Take over) becomes a dependency of F-3 (S25) |
+| **F-1** Skill blocks (~3 days) | `block.yaml` for the six blocks + `check-skill-blocks.mjs`; the output-contract change (`AW_RESULT_SKILL`, `AW_RESULT_FILE`, `waiting`) and the `aw-result` block in the five skills; `feature_dir` in officeHours' Result block and its revise mode; `AW_BRANCH_PREFIX` in specToProvenPR; `repo-slug.sh` keeps a preset `AW_DIR` (+ bash test); manifest loader with `--skills` / `AW_SKILLS_DIR`, and `step.skill.*` descriptors; result-file completion through the 10 s reader, and SND-SKILL-001..005; `requires.yaml` launch check; `AW_DIR` and the wall limit in the sandbox plan and policy; `GET /sindri/skills`, `sindri skills`, and `sindri skill run` with its route (S24); `.env.example` lines for `AW_TOOLKIT`, `AW_SKILLS_DIR`, `AW_RESULT_SKILL`, `AW_RESULT_FILE`, `AW_BRANCH_PREFIX`; aot-smoke `expected.txt` for the new doctor rows and help (S23); **docs**: `docs/csharp/sindri-skills.md` (block.yaml author guide and the numbered author loop, the result-file table, the error codes), `.agents/rules/skills.md` (the new file), `AGENTS.md` lines (R8) | engine | S-0 | `sindri skill run autoplan --input plan=<a real plan folder>` completes with the right verdict and facts, with no `workflow complete` call from the agent |
+| **F-2a** Waiting on you, and the chain to a proven plan (~3 days) | The idle sweep and `StalledAgentRuns` skip skill launches; `launch.owner-waiting` and its needs-you rows; the finished-while-taken-over nudge; handback completes from the result file; drift refusal at completion (§3.2); RCP-SKILL-001; owner-only start for pushing recipes; `step.skill.failed-desk`; the shipped `workflow.skill.idea-to-pr` with its 6 evals; docs: the owner-states table in `sindri-skills.md` | engine | F-1 | Start `idea-to-pr` on a scratch repo from the app; officeHours asks its first question; the row shows it; Take over opens Warp; answer, hand back; the chain runs shape -> critique -> (rework once) -> a passed plan. `build` is run by Take over (no push grant yet), and its push fails with `SND-LAUNCH-023` as today |
+| **F-2b** Push (~1.5 days) | `pushes: true` -> SB-7 `agent-app` on the Step; the approval keyed per repo and the preview line naming repo and branch prefix; every row's Approve opens the preview; grant reuse on re-entry; docs: the push section in `sindri-launcher.md` | engine | F-2a | The same run reaches build on its own and ends in a pushed PR on the scratch repo, on a `sindri/<instance>/...` branch. A second start on another repo opens the preview first |
+| **F-3** Skill cards (~3 days, ui) | The skill state's card on the instance frame (§5.2), the rows of §5.4, Take over and the nudge on them, the approve-and-run preview from Start | ui | F-1's `/sindri/skills` golden, F-2a's `launch.owner-waiting` golden and its Needs you row; P10a only if S-0 says so | The F-2b run watched and jumped into from the app only |
+
+Estimates are engine's guess for a lead with builders, and S-0 re-checks them.
 
 **Release 2** (starts on the owner's word after using release 1; §8.3):
 
 | Phase | What ships | Lane | Needs | Proof |
 |---|---|---|---|---|
-| **F-4** Flow format | Flow schema, compiler, Step output aliasing (Patched), source-position findings and their golden messages, `flow validate|compile|eval|approve|run`, `skill run`, `/sindri/flows*`, `flows/idea-to-pr.yaml` replacing the hand-written recipe; docs `sindri-flows.md` | engine | release 1 | `sindri flow run idea-to-pr` runs the same chain as F-2 |
+| **F-4** Flow format | Flow schema, compiler, Step output aliasing (Patched), source-position findings and their golden messages, `flow validate|compile|eval|approve|run`, `/sindri/flows*`, `drafts.db`, `flows/idea-to-pr.yaml` replacing the hand-written recipe; docs `sindri-flows.md` | engine | release 1 | `sindri flow run idea-to-pr` runs the same chain as F-2b |
 | **F-5** Canvas | §6, the draft routes, candidates, test one block | ui + api | F-4's format frozen | Build `idea-to-pr` on the canvas from an empty flow by keyboard, run it |
 | **F-6** Linear trigger | "Run flow on this issue" | context | #2077 merged, F-4 | One issue starts one run, linked both ways |
 | Later | Parallel blocks (children), the n8n palette (cron, Slack, code, logic, CEL), a native graph runtime if §8.3 says so | - | - | - |
@@ -484,21 +495,24 @@ CLI: `sindri flow list|show <id>`; `sindri flow validate|compile|eval <file> [--
 ### 8.2 Parallel plan (always-busy)
 
 - **Engine, day one:** the lead runs S-0 (a few hours, no builder). In parallel, builder A writes F-1's red commit: the `/sindri/skills` golden, the loader tests over two fixture manifests in `tests/Aw.Sindri.Testing`, and the result-file table as one test per row. After S-0, builder A goes green on F-1's C# half and builder B does the skill-side half (the five `block.yaml` files, the output-contract and Result block edits, officeHours revise, `check-skill-blocks.mjs`, docs), which touches no C#.
-- **After F-1's descriptors land:** builder A on F-2's server half; builder B on `idea-to-pr` and its evals (recipe only).
-- **ui, day one:** F-3's cards and rows against fake routes and the goldens from F-1's and F-2's red commits. Then §6's view models against the release 2 goldens, which engine writes when F-4 starts.
+- **After F-1's descriptors land:** builder A on F-2a's server half; builder B on `idea-to-pr` and its evals (recipe only). F-2b follows F-2a on builder A; it's mostly wiring an existing SB-7 mode.
+- **ui, day one:** F-3's cards and rows against fake routes and the goldens from F-1's and F-2a's red commits (engine pings ui with each red sha). Then §6's view models against the release 2 goldens, which engine writes when F-4 starts.
 - **context:** F-6 once #2077 and F-4 are in; nothing before.
 - Red first in every phase: each PR opens with its failing tests and goldens.
 
 ### 8.3 When to build the format, and when to stop compiling
 
-Release 2 starts when the owner has run `idea-to-pr` and written or asked for a second chain by hand, and says the long form is the slow part. If they're happy writing recipes, F-4 waits and the canvas edits recipes instead (a smaller §6).
+Release 2 starts when the owner has run `idea-to-pr` and written or asked for a second chain by hand, and says the long form is the slow part. If they're happy writing recipes, F-4 waits and the canvas edits recipes instead (a smaller §6). Three counters, read from ledger rows and shown on the Flows section of Health, back that call with numbers (S27):
+1. Runs per chain (`workflow.started` per recipe id). Is the chain used at all?
+2. Takeovers per run (`instance.taken-over` per instance). Is the owner jumping in on every run? If yes, the blocks need work before a canvas does.
+3. Rework rounds per run (loop entries of `rework`). Does autoplan send plans back so often that the chain's shape is wrong?
 
 Compiling then stays the plan while every flow the owner writes fits it. Any one of these, met on a real flow, is the signal to write a native-runtime spec: (1) a flow needs two blocks running at once that children can't express cleanly; (2) a compiled flow passes 40 states (twice the median of today's big recipes, `flow-internal.md` §1) and its findings stop reading well against the flow file; (3) the owner wants an edit to apply to a running run, which pinning forbids by design.
 
 ## 9. Owner questions
 
 1. **Release 1 is skill blocks plus one ready-made chain (idea -> officeHours -> autoplan, needs work loops back at most twice -> specToProvenPR), started from the Start page, with Take over to jump in. The flow file and the canvas come after you've used it. OK?** My pick: yes. The chain runs sooner, and the format gets built from what hurts in practice.
-2. **May a block push and open PRs?** My pick: yes, per block, only when you approve the chain and the preview says "build (specToProvenPR) can push to <repo>". It uses the 1 h agent token, fetched fresh on each push. Without it, specToProvenPR can't finish a PR inside a chain.
-3. **When you edit a skill's SKILL.md, should chains already running stop and wait for you?** My pick: only for blocks that push. Any other skill's prompt edit is recorded on the run but stops nothing; a `block.yaml` change (inputs, outputs) always stops them until you approve again.
+2. **May a block push and open PRs?** My pick: yes, per block and per repo, only when you approve the chain for that repo and the preview says "build (specToProvenPR) can push to <owner/repo>, branches under sindri/<instance>/". It runs the same way Sindri's own pushing Steps do: the agent App token, renewed every 45 min and dropped when the block ends, with a hook that refuses any other branch and any delete. Without it, specToProvenPR can't finish a PR inside a chain. Starting the chain on a second repo asks again.
+3. **When you edit a skill, should chains already running stop and wait for you?** My pick: only for blocks that push, and then for an edit to any file in that skill's folder. Any other skill's prompt edit is recorded on the run but stops nothing. A `block.yaml` change (inputs, outputs) always stops them, at the block's next finish, until you approve again.
 4. **Inside a chain, skills ask their questions as plain text and stop, instead of the pop-up picker, so Sindri can see they're waiting and show you the question. OK?** My pick: yes. A pending picker looks like a busy session, so nothing would tell you it's waiting.
-5. **Which chain ships first?** My pick: idea -> officeHours -> autoplan -> specToProvenPR. The other one I'd consider is bug -> bugFixOrchestrator -> review.
+5. **Which chain ships first?** My pick: idea -> officeHours -> autoplan -> specToProvenPR. The second one, written by hand after it, would be bug -> `bug-fix-orchestrator` -> `review`, with review's "needs changes" going back to the fix at most twice. Those are two different blocks, so nothing collides. Release 1's limit: a chain can't use the same block in two places and keep both results; it keeps the later one. Release 2's aliasing lifts that.
