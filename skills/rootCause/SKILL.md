@@ -21,7 +21,7 @@ Every run ends with the [Result block](#result-block), whatever the outcome: fix
 Extract the starting point for the investigation from the argument:
 
 - **`--depth N`** — dispatch-chain depth guard (default 0). If N ≥ 2, this run must NOT dispatch any sub-skill (Sub-skill Dispatch is disabled) — report findings only. When dispatching, always pass `--depth N+1`.
-- **`--investigate-only`** — diagnose without fixing (used by `/bugFixOrchestrator`, whose implementers write the fix). Run Phases 0–3.6, skip Phase 4, write the Phase 5 report + handoff — status `diagnosed` when a hypothesis is confirmed, `unfixed` when all were ruled out — and never dispatch a sub-skill. The working tree must end exactly as it started.
+- **`--investigate-only`** — diagnose without fixing (used by `/bugFixOrchestrator`, whose implementers write the fix). Run Phases 0–3.6, skip Phase 4, write the Phase 5 report + handoff — status `diagnosed` when a hypothesis is confirmed, `unfixed` when all were ruled out — and never dispatch a sub-skill (one exception: `formal-verify` for a race or ordering bug, Phase 3, since it writes only under `$AW_DIR`). The working tree must end exactly as it started.
 - **Error message or issue description** — the normal entry.
 - **Production-incident entry** — if the argument is a JSON object of the shape `{merge_sha, release_id, symptom, logs_excerpt}` (as passed by `/canary` on an UNHEALTHY verdict), treat this as a production incident:
   - `logs_excerpt` is the primary evidence; `symptom` is the failure description.
@@ -50,12 +50,15 @@ Read the relevant source and map the call chain.
 
 Generate 2-3 hypotheses ranked by likelihood. Document each as: **Hypothesis** (one-sentence suspected cause) · **Confirms if** (evidence that would confirm it) · **Rules out if** (evidence that would eliminate it) · **Likelihood** (High / Medium / Low).
 
+For a race or ordering bug (two or more actors that can interleave: locks, leases, retries with idempotency, queues and workers, multi-step writes across actors, failover or leader election, ordering between processes), a hypothesis may be checked with **Invoke skill `formal-verify`** on the mechanism inside the module boundary: model the real atomic steps and the property the report says broke. The bad case: two workers both claim a job because the check and the set are separate statements. `formal-verify` writes only under `$AW_DIR` and changes no code, so it is allowed under `--investigate-only`; at `--depth` 2 or more it is a sub-skill like any other and is not run. Otherwise the report says in one line: "Formal check: skipped (not a race, ordering or state-machine bug)".
+
 ## Phase 3.5: Confirm Before Editing
 
 **Run the "Confirms if" check for hypothesis #1 BEFORE editing any code** — add the log line, run the narrowed test, inspect the state, whatever the check specifies.
 
 - **Confirmed** → proceed to Phase 3.6 with hypothesis #1.
 - **Ruled out** → record the result in the hypotheses table, promote hypothesis #2, and run its check.
+- A TLC counterexample whose steps reproduce the reported symptom counts as the "Confirms if" check for that hypothesis; record the `report.md` path in the hypotheses table. A `pass` within its bounds rules out only what the model covers.
 - Never implement a fix whose hypothesis has not been confirmed by its own check. "Confirms if / Rules out if" is an executable contract, not documentation.
 
 **With `--investigate-only`:** run the confirm check for each hypothesis in order until one is confirmed or all are ruled out, recording every result. Revert any temporary instrumentation (log lines, narrowed test edits) — `git status --porcelain` must show nothing you added. Then run Phase 3.6 for the confirmed cause (skip it when every hypothesis was ruled out), skip Phase 4 and go to Phase 5 with status `diagnosed` if a hypothesis was confirmed, or `unfixed` if every one was ruled out (the caller must not fix an unconfirmed cause). In the report, write `n/a — investigate-only` under **Fix Applied** and **Verification**.
@@ -76,6 +79,7 @@ Fix the confirmed cause.
 2. **Verify:**
    - If a local failing command exists, re-run it, and run the mechanism's own proof from the handoff block (it must reject a second representative bad instance, or be shown working across more than one case).
    - If the symptom is production/UI-only (no local failing command), run the app-path check instead: **Invoke skill `verify-app`** with args `--yes --journey <repro steps from Phase 1>`. The fix is verified only on a PASS verdict in the resulting evidence pack. For a desktop app that pack comes from `verify-desktop` (the real app on seeded data, screens judged against their mockups).
+   - If a TLC model confirmed the cause, run `formal-verify --rerun <slug>` on the same properties after the fix; it must pass (the properties stay unchanged).
 3. **If verification still fails**, revert the change, return to Phase 3.5 for the next hypothesis. Repeat up to hypothesis #3.
 4. **If a fix requires changes outside the module boundary**, do NOT make the change. Instead, flag it:
 
