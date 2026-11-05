@@ -235,20 +235,13 @@ expect "a gap that breaks another invariant is WRONG, exit 1" 1 '^tlc-check: Alp
 script Alpha.tla G.cfg 0 "tlc: PASS distinct=1 depth=1"
 run --witnesses "$S/Alpha"
 expect "a gap that passes is MISSED, exit 1" 1 '^tlc-check: Alpha/gaps/G\.cfg: WITNESS-MISSED Inv$'
-script Alpha.tla G.cfg 1 "tlc: VIOLATION property unnamed (the config checks 2 properties: check them one at a time to find it)"
-run --witnesses "$S/Alpha"
-expect "unnamed property with several properties is WRONG" 1 'WITNESS-WRONG property unnamed \(expected Inv\)'
 mkgap Alpha G.cfg '\* witness: Live' 'PROPERTY Live'
-script Alpha.tla G.cfg 1 "tlc: VIOLATION property unnamed (the config checks 1 properties)"
+script Alpha.tla G.cfg 1 "tlc: VIOLATION property Live"
 run --witnesses "$S/Alpha"
-expect "unnamed property, single PROPERTY equal to the witness (#2063) is CAUGHT" 0 '^tlc-check: Alpha/gaps/G\.cfg: WITNESS-CAUGHT property Live$'
-mkgap Alpha G.cfg '\* witness: Live' 'PROPERTIES
-    Live'
+expect "a broken property named as the witness is CAUGHT" 0 '^tlc-check: Alpha/gaps/G\.cfg: WITNESS-CAUGHT property Live$'
+script Alpha.tla G.cfg 1 "tlc: VIOLATION property unnamed (the config checks 2 properties)"
 run --witnesses "$S/Alpha"
-expect "the same with PROPERTIES and the name on the next line" 0 'WITNESS-CAUGHT property Live$'
-mkgap Alpha G.cfg '\* witness: Live' 'PROPERTY Other'
-run --witnesses "$S/Alpha"
-expect "unnamed property, single PROPERTY not the witness is WRONG" 1 'WITNESS-WRONG property unnamed'
+expect "an unnamed property is WRONG" 1 'WITNESS-WRONG property unnamed \(expected Live\)'
 mkgap Alpha G.cfg ''
 script Alpha.tla G.cfg 1 "tlc: VIOLATION invariant Inv"
 run --witnesses "$S/Alpha"

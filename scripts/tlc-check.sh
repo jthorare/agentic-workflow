@@ -100,19 +100,6 @@ abort_timed() {
 }
 CHILD_PID=""
 
-# cfg_properties <cfg>: the PROPERTY/PROPERTIES name when the cfg lists exactly one, else nothing. Names follow the keyword on
-# its line or on the lines after it, up to the next cfg keyword. (tlc.sh's own count misses the names on following lines.)
-cfg_properties() {
-  awk '{ sub(/\\\*.*/, "") }
-    NF == 0 { next }
-    $1 ~ /^(INIT|NEXT|SPECIFICATION|INVARIANTS?|PROPERT(Y|IES)|CONSTANTS?|CONSTRAINTS?|ACTION_CONSTRAINTS?|SYMMETRY|VIEW|ALIAS|POSTCONDITION)$/ {
-      inprop = ($1 ~ /^PROPERT/)
-      for (i = 2; i <= NF && inprop; i++) n[++c] = $i
-      next }
-    inprop && NF == 1 { n[++c] = $1 }
-    END { if (c == 1) print n[1] }' "$1"
-}
-
 TIMEOUT=""
 WITNESSES=""
 dirs=()
@@ -203,8 +190,6 @@ for dir in "${dirs[@]}"; do
         "VIOLATION "*)
           set -- $last
           kind="${2:-}"; actual="${3:-}"
-          # tlc.sh prints "unnamed" for a temporal property violation (#2063); #2066 fixes it, then this can go.
-          if [ "$kind" = property ] && { [ -z "$actual" ] || [ "$actual" = unnamed ]; } && [ "$(cfg_properties "$cfg")" = "$witness" ]; then actual="$witness"; fi
           if [ "$actual" = "$witness" ]; then last="WITNESS-CAUGHT $kind $witness"; rc=0
           else last="WITNESS-WRONG $kind ${actual:-unnamed} (expected $witness)"; rc=1; fi ;;
       esac
