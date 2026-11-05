@@ -50,6 +50,8 @@ internal static class RunAreaPreparer
             _ = Directory.CreateDirectory(mount.Source ?? mount.Path);
         }
 
+        CreateTmpfsMountPoints(plan);
+
         if (area is null)
         {
             return null;
@@ -69,6 +71,15 @@ internal static class RunAreaPreparer
         WriteIfAbsent(area + "/gitconfig.empty", string.Empty, executable: false);
         OwnerOnly.WriteAtomically(Path.Combine(area, LaunchPaths.PlanName), AwJson.Serialize(plan, SandboxFilesJson.Options));   // value-free: launcher-supplied variables carry no value; 'sandbox explain' reads this file
         return null;
+    }
+
+    // why: bubblewrap can't create a mount point inside a read-only bind, so an optional tmpfs under a host directory that exists gets its directory made first (0700); under a missing one it stays skipped.
+    private static void CreateTmpfsMountPoints(SandboxPlan plan)
+    {
+        foreach (var mount in plan.Mounts.Where(m => m is { Optional: true, Kind: PlanMountKind.Tmpfs } && Path.GetDirectoryName(m.Path) is { } parent && Directory.Exists(parent) && !Directory.Exists(m.Path)))
+        {
+            _ = OperatingSystem.IsWindows() ? Directory.CreateDirectory(mount.Path) : Directory.CreateDirectory(mount.Path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        }
     }
 
     // why: the shims exec absolute paths, resolved here from the PATH the plan gives the box (its host part is bound, so a path found now is visible inside); heavy is the

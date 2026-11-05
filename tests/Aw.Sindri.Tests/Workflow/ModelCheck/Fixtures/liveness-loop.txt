@@ -1,0 +1,16 @@
+tlc-check: Settle/Settle.cfg: VIOLATION property EventuallySettles
+  | TLC2 Version 2.19 of 08 August 2024 (rev: 5a47802)
+  | Error: Temporal properties were violated.
+  | Error: The following behavior constitutes a counter-example:
+  | State 1: <Initial predicate>
+  | /\ x = 0
+  | 
+  | State 2: <Bump line 12, col 5 to line 13, col 20 of module Settle>
+  | /\ x = 1
+  | 
+  | State 3: Stuttering
+  | /\ x = 1
+  | 
+  | Back to state 2: <Bump line 12, col 5 to line 13, col 20 of module Settle>
+  | 
+  | 9 states generated, 4 distinct states found, 0 states left on queue.
