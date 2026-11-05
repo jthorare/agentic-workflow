@@ -377,9 +377,9 @@ jobs:
       - name: Fetch the pinned tla2tools.jar
         if: env.CHANGED == 'true'
         run: bash skills/formal-verify/scripts/tlc.sh fetch
-      - name: Check every spec under specs/tla with TLC
+      - name: Check every spec under specs/tla with TLC, and that each known gap still fails
         if: env.CHANGED == 'true'
-        run: bash scripts/tlc-check.sh
+        run: bash scripts/tlc-check.sh --witnesses
 
   ci-result:
     name: CI result
