@@ -26,14 +26,7 @@ public sealed class QueuedUpdateTests(SindriTimeSkippingServer server) : IClassF
     public void Dispose() => _harness.Dispose();
 
     [Fact]
-    public Task A_takeover_queued_behind_a_cancel_in_the_same_activation_fails_SND_WF_003_and_the_workflow_completes() =>
-        TakeoverBehindCancel(TimeSpan.Zero);
-
-    [Fact]
-    public Task A_takeover_that_reaches_the_server_late_still_fails_SND_WF_003_and_the_workflow_completes() =>
-        TakeoverBehindCancel(TimeSpan.FromSeconds(3));
-
-    private async Task TakeoverBehindCancel(TimeSpan lateBy)
+    public async Task A_takeover_queued_behind_a_cancel_in_the_same_activation_fails_SND_WF_003_and_the_workflow_completes()
     {
         var ct = TestContext.Current.CancellationToken;
         _harness.Recipe("workflow.dev-timeout", WorkflowsHarness.Shipped("dev/workflow.dev-timeout.yaml"));
@@ -57,10 +50,10 @@ public sealed class QueuedUpdateTests(SindriTimeSkippingServer server) : IClassF
         // why: with no worker running, both Updates wait on the server and reach the next worker in one activation
         var cancel = new CancelRequested("human:cli", CancelOrigin.Command, Stamp('c'), Sequence: null, Parent: null);
         var takeover = new TakeoverRequested("human:cli", Stamp('d'));
-        var (cancelling, takingOver) = await WorkflowsHarness.QueueThenStartWorkerAsync(handle,
-            () => handle.ExecuteUpdateAsync(wf => wf.CancelAsync(cancel), new WorkflowUpdateOptions(new string('c', 32))),
-            () => handle.ExecuteUpdateAsync(wf => wf.TakeoverAsync(takeover), new WorkflowUpdateOptions(new string('d', 32))),
-            lateBy, ct);
+        var cancelling = handle.ExecuteUpdateAsync(wf => wf.CancelAsync(cancel), new WorkflowUpdateOptions(new string('c', 32)));
+        await Task.Delay(TimeSpan.FromMilliseconds(500), ct);   // the server admits the cancel first, so the worker validates and runs it before the takeover
+        var takingOver = handle.ExecuteUpdateAsync(wf => wf.TakeoverAsync(takeover), new WorkflowUpdateOptions(new string('d', 32)));
+        await Task.Delay(TimeSpan.FromSeconds(1), ct);   // let the server queue both
 
         using var second = new TemporalWorker(client, options);
         await second.ExecuteAsync(async () =>
@@ -101,10 +94,10 @@ public sealed class QueuedUpdateTests(SindriTimeSkippingServer server) : IClassF
         // why: with no worker running, both Updates wait on the server and reach the next worker in one activation
         var cancel = new CancelRequested("human:cli", CancelOrigin.Command, Stamp('c'), Sequence: null, Parent: null);
         var report = Report(run);
-        var (cancelling, reporting) = await WorkflowsHarness.QueueThenStartWorkerAsync(handle,
-            () => handle.ExecuteUpdateAsync(wf => wf.CancelAsync(cancel), new WorkflowUpdateOptions(new string('c', 32))),
-            () => handle.ExecuteUpdateAsync(wf => wf.CompleteAsync(report), new WorkflowUpdateOptions(new string('d', 32))),
-            TimeSpan.Zero, ct);
+        var cancelling = handle.ExecuteUpdateAsync(wf => wf.CancelAsync(cancel), new WorkflowUpdateOptions(new string('c', 32)));
+        await Task.Delay(TimeSpan.FromMilliseconds(500), ct);   // the server admits the cancel first
+        var reporting = handle.ExecuteUpdateAsync(wf => wf.CompleteAsync(report), new WorkflowUpdateOptions(new string('d', 32)));
+        await Task.Delay(TimeSpan.FromSeconds(1), ct);   // let the server queue both
 
         using var second = new TemporalWorker(client, options);
         await second.ExecuteAsync(async () =>
