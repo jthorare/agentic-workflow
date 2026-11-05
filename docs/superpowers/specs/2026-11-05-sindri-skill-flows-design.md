@@ -288,7 +288,7 @@ Release 2. The canvas edits one flow's server-side draft (§7, F-5 routes) and d
 
 ### 6.1 Where it sits
 
-- **Top bar:** a **Flows** page beside Workflows and Recipes, chord `G F` (free today; `ShellViewModel.Chords.cs` `SecondKey`). The Flows page lists flows (§5.1's list with **Run**) plus **New flow**.
+- **Top bar:** a **Flows** page beside Workflows and Recipes, chord `G F` (free today; `ShellViewModel.Chords.cs` `SecondKey`). The Flows page lists flows (`GET /sindri/flows`, §7), each with **Run**, plus **New flow**.
 - **A flow's page** has three tabs: **Canvas** (this section), **Runs** (its runs, each opening the run page of §5.2), and **File** (the flow YAML of the open draft, read-only, with each finding's line marked). The File tab is how the owner checks that the canvas wrote what they meant.
 - **Opening a flow with an open draft** asks once: "You have a draft from 14:02 (12 edits). Resume or discard?" Discard asks again before it deletes. With no draft, the canvas shows the current version read-only with an **Edit** button. The first edit creates the draft (`POST .../draft`).
 
@@ -350,7 +350,7 @@ Port glyphs carry the type (`text`, `path`, `pr`, `issue`, `packet`) as a letter
 - **Refused or 409.** A refused op rolls back that one edit, and the reason shows on the card or wire for 6 s and in the status bar. A 409 (someone else's rev landed first) re-pulls the draft, re-applies the ops not yet sent on top, and only then sends them.
 - **Undo** sends the inverse ops as a new edit (removing a wire you added re-adds it, `move` restores the old position). The stack holds ops, never revisions, so an assistant edit between yours survives your undo. The stack lives with the page: leaving the flow clears it, but the draft stays.
 - **`draft.changed`** from someone else (the assistant, another window) applies the new revision live. What changed is outlined for 2 s, and the status bar says "Assistant added review after critique" (from the event's op list). An edit you're making (a wire in the air, the loop form open) is kept and re-checked against the new revision when you finish it.
-- **Findings** come back on every PATCH response for the new revision. That's one request instead of PATCH-then-validate, so it's an ask of the §7 route (below). Each finding attaches to its card, port or wire and is listed in the status bar. **Save as vN** (`POST .../draft/promote`) is enabled at 0 findings and says what blocks it otherwise ("2 findings: build.spec is not wired").
+- **Findings** come back on every PATCH response for the new revision. That's one request instead of PATCH-then-validate, and the §7 PATCH route returns them. Each finding attaches to its card, port or wire and is listed in the status bar. **Save as vN** (`POST .../draft/promote`) is enabled at 0 findings and says what blocks it otherwise ("2 findings: build.spec is not wired").
 - **Status bar:** "Draft rev 14 · saving… / saved · N findings", then Undo, Redo, Discard and Save as vN.
 
 ### 6.5 Test this block
@@ -374,7 +374,7 @@ New: the port controls and the in-air wire, the palette, the inspector, the draf
 ### 6.7 Proof and tests
 
 - **Unit (Ui.Tests, headless):** the op inverse table (every op's undo, round-tripped), 409 replay order, rollback of one refused op among three in flight, the next-wire rule, the unwired-non-success-outcome finding, the back-edge-needs-a-loop rule, stale marking, and the automation names against goldens.
-- **API goldens first:** the draft, candidates and PATCH-with-findings responses as fake-route goldens, so the canvas is built and tested before F-5's server half lands. That's the same day-one start as F-4 (§8.2).
+- **API goldens first:** the draft, candidates and PATCH-with-findings responses as fake-route goldens, so the canvas is built and tested before F-5's server half lands. ui starts on them as soon as engine writes them at F-4's start (§8.2), the way F-3 starts on F-1's and F-2's goldens.
 - **Proof in the running app (F-5's row in §8.1):** build `idea-to-pr` from an empty flow **by keyboard only**, driven through `aw-ui-driver`: inputs, four blocks, data wires, the rework loop, then Save as v1. Then one more step with the mouse. Then an assistant edit arrives mid-session and shows live. Then undo steps over the owner's edit and leaves the assistant's. Each step gets a screenshot and its automation tree.
 
 ### 6.8 Asks of engine's sections (ui's picks; all four accepted by engine, folded into §4.1 and §7)
