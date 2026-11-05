@@ -1,3 +1,4 @@
+models: src/Sindri/Aw.Sindri.Host/Server/Projector.cs:54 src/Sindri/Aw.Sindri.Infrastructure/Views/SqliteViewStore.cs src/Sindri/Aw.Sindri.Core/Views/ProjectorProgress.cs src/Sindri/Aw.Sindri.Core/Health/HealthSummary.cs
 # LedgerProjector
 
 - **Models:** `src/Sindri/Aw.Sindri.Host/Server/Projector.cs` (`Pass`, `Prepare`, `Fold`, `Finish`, the 30 s stall gate), `src/Sindri/Aw.Sindri.Infrastructure/Views/SqliteViewStore.cs` (`Open`, `Reset`, `Apply`: one transaction per page, a savepoint per event, then `FinishRebuild`), `src/Sindri/Aw.Sindri.Core/Views/ProjectorProgress.cs` (the published status, the in-memory rebuild request) and `src/Sindri/Aw.Sindri.Core/Health/HealthSummary.cs` (the health word). Each SQLite transaction is one step. A crash between steps loses the projector's memory, and serve restarts.
