@@ -29,6 +29,8 @@
 #   bugfix-state src/BugFix/Aw.BugFix.Host        NativeAOT
 #   ui-evidence  src/Evidence/Aw.Evidence.Host    framework-dependent
 #   aw-readiness src/Readiness/Aw.Readiness.App   NativeAOT
+#   tlc/         the model-check runner, copied (scripts/tlc-check.sh, skills/formal-verify/scripts/tlc.sh and tla2tools.lock, at
+#                their repo-relative paths)
 # aw-meta is not here: it stays opt-in through scripts/install-meta.sh.
 #
 # Every published binary answers one state-free call before the build is made a candidate ("install didn't take" otherwise):
@@ -76,6 +78,9 @@ heavy="$state/bin-r1b/heavy"
 link_dir="${CLAUDE_LOCAL_BIN:-$HOME/.local/bin}"
 skip_dl="${AW_CS_SKIP_DOWNLOADS:-0}"
 BINARIES=(sindri judge bugfix-state ui-evidence aw-packets aw-readiness)
+# The model-check step's runner (sindri's step.model.check runs tlc/scripts/tlc-check.sh beside the binary). tlc.sh finds the
+# lock one directory above itself, so the repo's relative layout is kept. Each is also in SINDRI_BUILD_PATHSPECS.
+TLC_FILES=(scripts/tlc-check.sh skills/formal-verify/scripts/tlc.sh skills/formal-verify/tla2tools.lock)
 
 case "$(uname -s)/$(uname -m)" in
   Darwin/arm64) platform=osx-arm64 ;; Darwin/x86_64) platform=osx-x64 ;;
@@ -167,6 +172,7 @@ publish() {
   # 1. The pinned SDK and temporal.
   if [ "$dry" = 1 ]; then
     say "[dry-run] would ensure the .NET SDK $sdk, fetch the pinned temporal CLI, and publish ${BINARIES[*]} sindri-ui into $base/$stamp"
+    say "[dry-run] would copy the model-check runner (${TLC_FILES[*]}) into $base/$stamp/tlc/, keeping the repo's layout"
     return 0
   fi
   local dotnet_root_given="${DOTNET_ROOT:-}" sdk_line sdk_dir
@@ -266,6 +272,13 @@ publish() {
   pub aw-packets src/Packets/Aw.Packets.App/Aw.Packets.App.csproj "${aot[@]}"
   pub bugfix-state src/BugFix/Aw.BugFix.Host/Aw.BugFix.Host.csproj "${aot[@]}"
   pub aw-readiness src/Readiness/Aw.Readiness.App/Aw.Readiness.App.csproj "${aot[@]}"
+
+  local t
+  for t in "${TLC_FILES[@]}"; do
+    [ -f "$tree/$t" ] || die "the model-check runner file $t is missing from the build inputs"
+    mkdir -p "$stage/tlc/$(dirname "$t")"
+    cp -p "$tree/$t" "$stage/tlc/$t"
+  done
 
   check_skia_fontconfig "$stage"
 
