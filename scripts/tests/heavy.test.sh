@@ -5,7 +5,7 @@
 # AW_HEAVY_SESSION_PID (this shell, or a dead pid, or a sleeping stand-in session). Nothing real is built or tested.
 # Covers: usage (exit 2); the exit code of the job passes through; the lock files (heavy-session/<pid>.lock, heavy-job.lock
 # and .k, the owner line, released on exit, a dead owner reclaimed, an ownerless dir never); the cap file heavy-slots-cap;
-# the memory guard (AW_HEAVY_MIN_FREE_MB and _STEP_MB, Linux /proc/meminfo only); the meta reserve heavy-meta-reserve and
+# the memory guard (AW_HEAVY_MIN_FREE_MB and _STEP_MB, Linux /proc/meminfo only); the meta reserve heavy-meta-reserve (capped at slots-1, #2060) and
 # AW_HEAVY_PRIORITY=meta; the lock timeout (75, on a copy of the script with TIMEOUT=0: the real one is a constant 5400 s);
 # the session dying (124); INT and TERM (130); a nested run under AW_HEAVY_LOCK_HELD=1 taking no lock; --light, --expensive
 # and the auto classification; the --timeout added to `dotnet test`.
@@ -246,30 +246,34 @@ if [ "$have_meminfo" = 1 ]; then
   echo 2 > "$STATE/heavy-meta-reserve"
   out="$(AW_HEAVY_MIN_FREE_MB=0 H --light echo light-ok 2>&1)"; check "a light job ignores the reserve" "$out" "light-ok"
   check "reserve 2 of 2: a meta job still runs" "$(AW_HEAVY_PRIORITY=meta AW_HEAVY_MIN_FREE_MB=0 slot_of)" "$LOCKS/heavy-job.lock"
-  # fully reserved, a non-meta job waits and the wait is not counted: it never times out, so the check bounds it from outside
-  AW_HEAVY_PRIORITY=other AW_HEAVY_MIN_FREE_MB=0 timeout 2 bash "$ONE" --expensive echo ran > "$WORK/other.out" 2>&1
-  check "AW_HEAVY_PRIORITY=other is not meta: still waiting when timeout(1) stops it (124), the job never ran" "$?:$(grep -c '^ran$' "$WORK/other.out")" "124:0"
+  # the reserve is capped at the slot count minus one (#2060, owner 2026-11-05), so a lane job always has a slot: bounded
+  # from outside, since a job blocked only by the reserve never times out
+  out="$(AW_HEAVY_PRIORITY=other AW_HEAVY_MIN_FREE_MB=0 timeout 5 bash "$HEAVY" --expensive bash -c 'echo slot=$AW_HEAVY_SLOT' 2>&1 | sed -n 's/^slot=//p')"
+  check "reserve 2 of 2 is capped to 1: a lane job (AW_HEAVY_PRIORITY=other is not meta) takes slot 2" "$out" "$LOCKS/heavy-job.lock.2"
+  # blocked only by the reserve (slot 1 free, slot 2 busy): the wait is not counted; the file is re-read each second
+  echo 1 > "$STATE/heavy-meta-reserve"; hold "$LOCKS/heavy-job.lock.2"
+  AW_HEAVY_MIN_FREE_MB=0 bash "$ONE" --expensive echo ran > "$WORK/res.out" 2> "$WORK/res.err" &
+  rp=$!; bgpids+=("$rp")
+  sleep 2.3
+  check "reserved: a lane job is still waiting after 2 s although TIMEOUT is 1 s" "$(kill -0 "$rp" 2> /dev/null && echo waiting || echo exited)" "waiting"
+  has "reserved: it announced the wait" "$(cat "$WORK/res.err")" "heavy: waiting for the box-wide lock"
+  lacks "reserved: no timeout sentence" "$(cat "$WORK/res.err")" "timeout"
+  echo 0 > "$STATE/heavy-meta-reserve"
+  wait "$rp"; rc=$?
+  check "reserve drained: the waiting job runs on slot 1 and exits 0" "$rc" "0"
+  check "...and printed its output" "$(cat "$WORK/res.out")" "ran"
 else
   echo "ok - (skipped: no /proc/meminfo; the memory guard fails closed there, so slots above 1 are never taken - pinned as is)"
 fi
 
-# --- the meta reserve with one slot: the wait is not counted toward the timeout; the file is re-read each second ---
+# --- the meta reserve with one slot: capped at the slot count minus one (#2060, owner 2026-11-05), so it is 0 ---
 reset
 echo 1 > "$STATE/heavy-meta-reserve"
 check "reserve 1 of 1: a meta job runs" "$(AW_HEAVY_PRIORITY=meta H --expensive echo ran 2>&1)" "ran"
+check "reserve 1 of 1 is capped to 0: a lane job runs (bounded from outside)" "$(timeout 5 bash "$HEAVY" --expensive echo ran 2>&1)" "ran"
 echo 9 > "$STATE/heavy-meta-reserve"
-check "a reserve above the slot count is capped to it: a meta job runs" "$(AW_HEAVY_PRIORITY=meta H --expensive echo ran 2>&1)" "ran"
-echo 1 > "$STATE/heavy-meta-reserve"
-bash "$ONE" --expensive echo ran > "$WORK/res.out" 2> "$WORK/res.err" &
-rp=$!; bgpids+=("$rp")
-sleep 2.3
-check "reserved: a lane job is still waiting after 2 s although TIMEOUT is 1 s" "$(kill -0 "$rp" 2> /dev/null && echo waiting || echo exited)" "waiting"
-has "reserved: it announced the wait" "$(cat "$WORK/res.err")" "heavy: waiting for the box-wide lock"
-lacks "reserved: no timeout sentence" "$(cat "$WORK/res.err")" "timeout"
-echo 0 > "$STATE/heavy-meta-reserve"
-wait "$rp"; rc=$?
-check "reserve drained: the waiting job runs and exits 0" "$rc" "0"
-check "...and printed its output" "$(cat "$WORK/res.out")" "ran"
+check "a reserve above the slot count: a meta job runs" "$(AW_HEAVY_PRIORITY=meta H --expensive echo ran 2>&1)" "ran"
+check "a reserve above the slot count is capped to 0: a lane job runs (bounded from outside)" "$(timeout 5 bash "$HEAVY" --expensive echo ran 2>&1)" "ran"
 echo abc > "$STATE/heavy-meta-reserve"
 check "a garbage reserve is 0" "$(H --expensive echo ran 2>&1)" "ran"
 
