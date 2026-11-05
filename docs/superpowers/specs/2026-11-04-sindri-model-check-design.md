@@ -240,7 +240,15 @@ The timer's remaining time is `none` or a small counter (0..3). `none` is a take
 - `UnmatchedFailureRetriesThenParks`: a `StepFailed` with no transition runs the step again at most twice, then parks `unavailable`; an unmatched `StepCompleted` never moves the instance.
 - Liveness, `EventuallySettles`: with fair steps and an owner who eventually answers, every instance reaches a terminal state or a park waiting on a person.
 
-**Planted bug:** `gaps/LoopCapOffByOne.cfg` (first line `\* witness: LoopCapHolds`) lets a loop run one round past its cap; TLC must report `LoopCapHolds`.
+**What M-2 found in the code** (the spec follows the code):
+- `Decide` never checks the suspension for a recipe trigger. A parked or taken-over instance refuses one only because `instance.State` returns the suspension's name ("parked", "taken-over"), so no transition matches. If `State` ever returned the recipe state, a parked instance would take transitions. The spec models today's behaviour.
+- A refused gate in a loop state reruns the step as the next round (`RefusalRules.RefuseStep`) and parks `rounds` at the cap, so `LoopCapHolds` covers gate refusals too. A rewind spends no round (`Rewind` calls `Enter`, not `Reenter`).
+- Answering a `rounds` park without a grant parks it again at the cap. Only a grant or a cancel gets out, and grants are left out of the spec. So `EventuallySettles` means "ended, parked or taken over": it doesn't prove the owner can always get an instance out of a park.
+- An unmatched `StepFailed` isn't always the retry path. A launch failure in a loop state goes through `LaunchFailed` (3 failures, then a park), and a limit kill parks `NeedsAnswer` at once (`IsLimitKill`). Both are left out. The 2 retries are `Unavailables.MaxRetries`, and an answer resets them.
+- An unmatched, undeclared (`Malformed`) or stale-run (`StaleRun`) `StepCompleted` is rejected, and the spec treats all three as no change. A `DeadlineFired` for another entry, a suspended instance or an ended one is absorbed (`Expired`). The spec always parks `timeout` on a state timer and leaves `then: retry` and `DeadlineKind.Retry` to the code.
+- `NoStaleTimer` uses an abstract "a stale timer is out" flag, not entry numbers, which keeps the spec at about 1,600 states.
+
+**Planted bugs:** `gaps/LoopCapOffByOne.cfg` (first line `\* witness: LoopCapHolds`) lets a loop run one round past its cap; TLC must report `LoopCapHolds` (3 states in M-2). `gaps/GateRefusalFallsThrough.cfg` (`\* witness: GateRefusalNeverFallsThrough`) lets a refused gate take its transition anyway (2 states).
 
 **Keeping a spec true to the code.** A spec drifts silently when the code changes. A unit test in `Aw.Sindri.Tests`, `TlaSpecCoverageTests`, reads every README's `Actions:` and `Leaves out:` lines and checks two things:
 - every trigger type in `Core/Workflow/Engine/Triggers/` that derives from `Trigger` (17 today), and every `DeadlineKind` value (`Core/Workflow/Engine/DeadlineKind.cs`), is named in some spec's README, as an action or under `Leaves out:` with a reason (`SessionLost`, `LaunchRefused`, `OpenRequested`, `OutboxRefused`, `RecipeWake`, `RuntimeUnavailable` and `ChildChanged` start there);
