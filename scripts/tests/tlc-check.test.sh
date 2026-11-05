@@ -142,6 +142,116 @@ run "$S/Alpha"
 expect "a good models: line passes" 0 '^tlc-check: Alpha/Alpha\.cfg: PASS'
 lacks "a good models: line has no warning" 'warning'
 
+# --root: another repo's specs/tla/ and models: paths resolve against it, not the script's checkout.
+reset; R="$TMPROOT/otherrepo"; mkspec "$R/specs/tla" Rx; : >"$R/code.cs"
+printf 'models: code.cs:4\n' >"$R/specs/tla/Rx/README.md"
+run --root "$R"
+expect "--root runs the folders under <dir>/specs/tla" 0 '^tlc-check: Rx/Rx\.cfg: PASS'
+lacks "--root resolves models: paths against <dir>" 'warning'
+run "$R/specs/tla/Rx"
+expect "the same paths without --root warn" 0 'warning: models path missing: code\.cs'
+run --root "$R" specs/tla/Rx
+expect "--root: a relative spec-dir is taken from <dir>" 0 '^tlc-check: Rx/Rx\.cfg: PASS'
+mkspec "$R/model" Mx; printf 'models: code.cs:9 %s/code.cs\n' "$R" >"$R/model/Mx/README.md"
+rm -f "$TMPROOT/calls"
+run --root "$R" specs/tla/Rx/ model/Mx/ "$R/model/Mx"
+expect "--root: relative folders outside specs/tla (trailing /) and absolute ones all run" 0 '^tlc-check: Mx/Mx\.cfg: PASS'
+lacks "--root: folder args' models: paths (relative and absolute) resolve" 'warning'
+if [ "$(ncalls)" = 3 ]; then ok "--root: explicit folders run, not the specs/tla default"; else fail "--root explicit: $(ncalls) calls, want 3"; fi
+run --root "$TMPROOT/nope"
+expect "--root missing exits 2" 2 'tlc-check: --root'
+: >"$TMPROOT/afile"; run --root "$TMPROOT/afile"
+expect "--root a file exits 2" 2 'tlc-check: --root'
+
+# The per-cfg line format is parsed by a Sindri step: pin it exactly.
+reset; mkspec "$S" Alpha Alpha.cfg Alpha-big.cfg
+run "$S/Alpha"
+want="$(printf 'tlc-check: Alpha/Alpha-big.cfg: PASS distinct=7 depth=3\ntlc-check: Alpha/Alpha.cfg: PASS distinct=7 depth=3')"
+if [ "$(printf '%s\n' "$OUT" | grep -v warning)" = "$want" ]; then ok "per-cfg line format is pinned (a Sindri step parses it)"; else fail "per-cfg line format changed"; fi
+
+# gaps/ cfgs live in a subfolder and are not run.
+reset; mkspec "$S" Alpha; mkdir -p "$S/Alpha/gaps"; : >"$S/Alpha/gaps/Gap.cfg"
+run "$S/Alpha"
+if [ "$(ncalls)" = 1 ]; then ok "gaps/ cfgs are skipped"; else fail "gaps/ cfgs ran: $(ncalls) calls"; fi
+
+# --timeout
+reset; mkspec "$S" Alpha
+run --timeout 0 "$S/Alpha"; expect "--timeout 0 exits 2" 2 'tlc-check: --timeout'
+run --timeout abc "$S/Alpha"; expect "--timeout abc exits 2" 2 'tlc-check: --timeout'
+run --timeout "$S/Alpha"; expect "--timeout without a number exits 2" 2 'tlc-check: --timeout'
+run --timeout 5 "$S/Alpha"
+expect "--timeout: a fast check still passes" 0 '^tlc-check: Alpha/Alpha\.cfg: PASS distinct=7 depth=3$'
+
+# A stub that ignores TERM and keeps a child: both pids must be gone after the group KILL.
+HANG="$TMPROOT/hang-stub.sh"
+cat >"$HANG" <<'S'
+#!/usr/bin/env bash
+trap '' TERM
+sleep 300 &
+echo "$$ $!" >"$TMPROOT/pids"
+wait
+S
+reset; mkspec "$S" Alpha; rm -f "$TMPROOT/pids"
+start=$SECONDS
+set +e; OUT="$(TLC_SH="$HANG" bash "$SCRIPT" --timeout 1 "$S/Alpha" 2>&1)"; RC=$?; set -e
+took=$((SECONDS - start))
+expect "--timeout: a hung check prints TIMEOUT and counts as exit 2" 2 '^tlc-check: Alpha/Alpha\.cfg: TIMEOUT after 1 s$'
+if [ "$took" -lt 20 ]; then ok "--timeout: finished in ${took}s"; else fail "--timeout: took ${took}s"; fi
+p1=""; p2=""; read -r p1 p2 <"$TMPROOT/pids" || true
+if [ -n "$p1" ] && ! kill -0 "$p1" 2>/dev/null && ! kill -0 "$p2" 2>/dev/null; then ok "--timeout: stub and its child are gone"; else fail "--timeout: pids $p1 $p2 survive"; fi
+
+# Killing tlc-check.sh itself (a caller's timeout, Ctrl-C) must also stop the TLC it started, which sits in its own group.
+if command -v setsid >/dev/null 2>&1; then
+  reset; mkspec "$S" Alpha; rm -f "$TMPROOT/pids" "$TMPROOT/cpid"
+  TT="$TMPROOT/tt"; mkdir -p "$TT"
+  TLC_SH="$HANG" TMPDIR="$TT" setsid bash -c 'echo $$ >"$TMPROOT/cpid"; exec bash "$0" --timeout 30 "$1"' "$SCRIPT" "$S/Alpha" >/dev/null 2>&1 &
+  cp=$!
+  for _ in $(seq 1 300); do [ -s "$TMPROOT/pids" ] && break; sleep 0.1; done
+  gid=""; read -r gid <"$TMPROOT/cpid" || gid="$cp"
+  kill -TERM -- "-$gid" 2>/dev/null || true
+  set +e; wait "$cp"; RC=$?; set -e
+  p1=""; p2=""; read -r p1 p2 <"$TMPROOT/pids" || true
+  if [ "$RC" -eq 143 ]; then ok "killed tlc-check.sh exits 143"; else fail "killed tlc-check.sh exit $RC, want 143"; fi
+  for _ in $(seq 1 50); do { ! kill -0 "$p1" 2>/dev/null && ! kill -0 "$p2" 2>/dev/null; } && break; sleep 0.1; done   # init reaps the orphans
+  if [ -n "$p1" ] && ! kill -0 "$p1" 2>/dev/null && ! kill -0 "$p2" 2>/dev/null; then ok "killed tlc-check.sh: the check and its child are gone"; else fail "killed tlc-check.sh: pids $p1 $p2 survive"; fi
+  if [ -z "$(ls "$TT" 2>/dev/null)" ]; then ok "killed tlc-check.sh leaves no temp file"; else fail "temp files left: $(ls "$TT")"; fi
+else
+  echo "  SKIP killing tlc-check.sh: no setsid on this box"
+fi
+
+# --witnesses: each gaps/*.cfg must fail on the invariant or property its line 1 names.
+mkgap() {   # <name> <cfg> <witness line or empty> [body]: a gap cfg under specs/Alpha/gaps
+  mkdir -p "$S/$1/gaps"
+  { [ -z "$3" ] || printf '%s\n' "$3"; printf '%s\n' "${4:-INVARIANT X}"; } >"$S/$1/gaps/$2"
+}
+reset; mkspec "$S" Alpha; mkgap Alpha G.cfg '\* witness: Inv'
+run "$S/Alpha"
+if [ "$(ncalls)" = 1 ]; then ok "without --witnesses gaps/ is skipped"; else fail "without --witnesses: $(ncalls) calls"; fi
+script Alpha.tla G.cfg 1 "tlc: VIOLATION invariant Inv"
+run --witnesses "$S/Alpha"
+expect "a gap that breaks the named invariant is CAUGHT, exit 0" 0 '^tlc-check: Alpha/gaps/G\.cfg: WITNESS-CAUGHT invariant Inv$'
+script Alpha.tla G.cfg 1 "tlc: VIOLATION invariant Other"
+run --witnesses "$S/Alpha"
+expect "a gap that breaks another invariant is WRONG, exit 1" 1 '^tlc-check: Alpha/gaps/G\.cfg: WITNESS-WRONG invariant Other \(expected Inv\)$'
+script Alpha.tla G.cfg 0 "tlc: PASS distinct=1 depth=1"
+run --witnesses "$S/Alpha"
+expect "a gap that passes is MISSED, exit 1" 1 '^tlc-check: Alpha/gaps/G\.cfg: WITNESS-MISSED Inv$'
+mkgap Alpha G.cfg '\* witness: Live' 'PROPERTY Live'
+script Alpha.tla G.cfg 1 "tlc: VIOLATION property Live"
+run --witnesses "$S/Alpha"
+expect "a broken property named as the witness is CAUGHT" 0 '^tlc-check: Alpha/gaps/G\.cfg: WITNESS-CAUGHT property Live$'
+script Alpha.tla G.cfg 1 "tlc: VIOLATION property unnamed (the config checks 2 properties)"
+run --witnesses "$S/Alpha"
+expect "an unnamed property is WRONG" 1 'WITNESS-WRONG property unnamed \(expected Live\)'
+mkgap Alpha G.cfg ''
+script Alpha.tla G.cfg 1 "tlc: VIOLATION invariant Inv"
+run --witnesses "$S/Alpha"
+expect "a gap cfg without a witness line is an ERROR, exit 2" 2 '^tlc-check: Alpha/gaps/G\.cfg: ERROR no witness line$'
+mkgap Alpha G.cfg '\* witness: Inv'
+script Alpha.tla G.cfg 2 "tlc: ERROR parse error"
+run --witnesses "$S/Alpha"
+expect "a gap cfg TLC errors on stays an ERROR, exit 2" 2 'gaps/G\.cfg: ERROR parse error'
+
 # No arguments: every specs/tla/* of the repo, sorted. A copy of the script in a scratch repo root sees only that repo's folders.
 reset
 FAKE="$TMPROOT/fakerepo"
