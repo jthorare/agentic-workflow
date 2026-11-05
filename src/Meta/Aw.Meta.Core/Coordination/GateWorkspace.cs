@@ -16,18 +16,16 @@ public sealed class GateWorkspace(RepoCommands repo, GateTree trees, MetaPaths p
     private const string Fields = "headRefOid,headRefName,isDraft,title";
 
     /// <summary>
-    /// The run number of a pull request's next gate pass: one above the highest of the latest recorded run and the highest
-    /// gates/&lt;pr&gt;/&lt;run&gt;/ directory on disk, so a pass that was cancelled before it was recorded keeps its directory to itself.
+    /// Claims a pull request's next gate pass: its run number is one above the highest of the latest recorded run and the highest
+    /// gates/&lt;pr&gt;/&lt;run&gt;/ directory on disk, and the directory is created at once, so a pass that was cancelled before it was
+    /// recorded, or one planned at the same moment, never shares it.
     /// </summary>
     /// <param name="pr">The pull request number.</param>
     /// <param name="recorded">The latest recorded run, 0 when none.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The run number, or the error from reading the gate directory.</returns>
-    public async ValueTask<Result<int>> NextRun(int pr, int recorded, CancellationToken cancellationToken)
-    {
-        var onDisk = await logs.LatestRun(paths.GateDirectory(pr), cancellationToken).ConfigureAwait(false);
-        return onDisk.IsError ? onDisk.Error : Results.Success(Math.Max(recorded, onDisk.Value) + 1);
-    }
+    public ValueTask<Result<int>> NextRun(int pr, int recorded, CancellationToken cancellationToken) =>
+        logs.ClaimRun(paths.GateDirectory(pr), recorded, cancellationToken);
 
     /// <summary>The gate tree of a pull request.</summary>
     /// <param name="pr">The pull request number.</param>

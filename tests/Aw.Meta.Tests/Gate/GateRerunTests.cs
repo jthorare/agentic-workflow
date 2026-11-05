@@ -4,7 +4,6 @@ using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Gate;
 using Aw.Meta.Features.GateRerun;
-using Aw.Meta.Infrastructure.Files;
 using Aw.Meta.Testing;
 
 namespace Aw.Meta.Tests.Gate;
@@ -19,7 +18,7 @@ public sealed class GateRerunTests
     private GateRerunService Service() => new(
         _world.Config,
         _world.Gates,
-        new GateWorkspace(_world.Repo, _world.Trees, _world.Paths, new FileLogFiles()),
+        new GateWorkspace(_world.Repo, _world.Trees, _world.Paths, _world.LogFiles),
         new RerunExecutor(_world.Runner, _world.Paths),
         _world.LogFiles);
 

@@ -19,7 +19,7 @@ public sealed class GateRunTests
 
     private GateRunService Service() => new(
         _world.Config,
-        new GateWorkspace(_world.Repo, _world.Trees, _world.Paths, new FileLogFiles()),
+        new GateWorkspace(_world.Repo, _world.Trees, _world.Paths, _world.LogFiles),
         new GateStepRunner(_world.Runner, _world.Paths),
         _world.Gates,
         Worlds.Reservation(_world),
