@@ -148,6 +148,10 @@ Based on the codebase, tech stack, existing infrastructure, and the requirements
 
 Then ask: **"Which of these resonates? Is there something I'm missing about your position?"**
 
+### 5f.5: Formal check (only when the spec has a state machine, protocol or concurrency)
+
+Concurrency means two or more actors that can interleave: locks, leases, retries with idempotency, queues and workers, multi-step writes across actors, failover or leader election, ordering between processes. The bad case: two workers both claim a job because the check and the set are separate statements. When the spec has that logic, offer a formal check before the plan hand-off: write with the user, in plain words, what must never happen and what must eventually happen, then **Invoke skill `formal-verify`** with those properties. Put the result (verdict, bounds, `report.md` path) in the Risks of engineering.md. Otherwise one line: "Formal check: skipped (no state machine, protocol or concurrency in this spec)".
+
 ### 5g: Success Criteria (always runs)
 
 Present 2-3 derived acceptance criteria from the requirements gathered so far. Distinguish between leading indicators (can measure in days) and lagging indicators (takes weeks).
