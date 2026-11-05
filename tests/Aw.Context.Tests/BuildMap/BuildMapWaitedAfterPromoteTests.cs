@@ -43,7 +43,7 @@ public sealed class BuildMapWaitedAfterPromoteTests : IDisposable
         var earlier = (await _world.Map.BuildMap(progress: null, scope, MapWorld.None)).Value;
         _ = (await _world.Store.Promote(earlier.Draft.Number, ct)).Value;   // current at these very heads before the wait began
         var gate = _world.Service<MapBuildGate>();
-        var holder = await gate.Enter(job: null, progress: null, ct);
+        var holder = (await gate.Enter(job: null, progress: null, ct)).Value;
 
         var waiting = _world.Map.BuildMap(progress: null, scope, MapWorld.None).AsTask();
         await Task.Delay(TimeSpan.FromMilliseconds(100), TimeProvider.System, ct);

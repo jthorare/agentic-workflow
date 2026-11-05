@@ -278,7 +278,7 @@ public static partial class ContextErrors
          HeavyLockBusy, LabelingUnavailable, ReviewFileNoMatch, NoDraftMap, RepoOutsideScope, PromoteRefused, ReviewTargetStale, ExtractionUnreadable,
          LinearUrlRefused, LinearKeyRefused, LinearUnexpectedReply, LinearRecordNotFound, SyncRunning, ModelAnswerRefused, SyncSourceUnknown, MapUnconnected, MapOversized, SyncCapped,
          NoEligibleSample, NoBriefSource, UnknownArm, AdjudicationCapped, CommitUnknown, NoMergeBase, MapVersionNotRetained, HistoryDeadline, IntentNotSynced, CodeGlobInvalid, CodeGlobsTooMany, CodeSearchTimedOut, RecognizerInvalid, RecognizerOverCap, PatternTimedOut, DraftChanged, MapHeadInvalid, GraphifyLimitInvalid, RerankUnavailable, ModelHarnessesUnavailable, NoModelHarness, ChoiceRejected, ChoiceUnavailable, AreaUnknown, NodeNotInScopeGraph, PinUnknown, NoPins, PinNewerThanMap, PinNeedsMap,
-         PageConceptUnknown, PageKeyUnknown, PageRepoAmbiguous, PageOverCap, PageIdDuplicate, PageNameInvalid, PageActionSpecInvalid, PageNotFound, PageQueryUnknown, PagePreviewInvalid,
+         PageConceptUnknown, PageKeyUnknown, PageRepoAmbiguous, PageOverCap, PageIdDuplicate, PageNameInvalid, PageActionSpecInvalid, PageNotFound, PageQueryUnknown, PagePreviewInvalid, MapBuildWaitTimedOut,
          PinInvalid, PinFeatureUnknown, PinIdClash, PinNotInProfile, PinHasFolderRules, PinInRepoProfile, PinLineUnreadable, PinSuggestInvalid];
 
     /// <summary>
