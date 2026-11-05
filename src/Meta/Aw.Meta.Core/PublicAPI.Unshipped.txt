@@ -175,7 +175,8 @@ Aw.Meta.Core.Coordination.GateTree.GateTree(Aw.Meta.Core.Coordination.RepoComman
 Aw.Meta.Core.Coordination.GateTree.Merge(string! tree, string! head) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
 Aw.Meta.Core.Coordination.GateTree.Prepare(string! repoDirectory, string! tree, string! revision) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Coordination.GateWorkspace
-Aw.Meta.Core.Coordination.GateWorkspace.GateWorkspace(Aw.Meta.Core.Coordination.RepoCommands! repo, Aw.Meta.Core.Coordination.GateTree! trees, Aw.Meta.Core.MetaPaths! paths) -> void
+Aw.Meta.Core.Coordination.GateWorkspace.GateWorkspace(Aw.Meta.Core.Coordination.RepoCommands! repo, Aw.Meta.Core.Coordination.GateTree! trees, Aw.Meta.Core.MetaPaths! paths, Aw.Meta.Core.Ports.ILogFiles! logs) -> void
+Aw.Meta.Core.Coordination.GateWorkspace.NextRun(int pr, int recorded, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Meta.Core.Coordination.GateWorkspace.LogPath(int pr, int run, string! name) -> string!
 Aw.Meta.Core.Coordination.GateWorkspace.MainTreePath(int pr) -> string!
 Aw.Meta.Core.Coordination.GateWorkspace.PrepareMain(Aw.Meta.Core.Config.TeamConfig! config, int pr, string! main) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
@@ -1001,6 +1002,7 @@ Aw.Meta.Core.Ports.ILaneStore
 Aw.Meta.Core.Ports.ILaneStore.Current(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Lanes.LaneMapState!>!>
 Aw.Meta.Core.Ports.ILaneStore.Save(Aw.Meta.Core.Lanes.LaneMapState! map, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Ports.ILogFiles
+Aw.Meta.Core.Ports.ILogFiles.LatestRun(string! gateDirectory, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Meta.Core.Ports.ILogFiles.Tail(string! path, int maxCharacters, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
 Aw.Meta.Core.Ports.IMessageStore
 Aw.Meta.Core.Ports.IMessageStore.Messages(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.InboxMessage!>!>!>

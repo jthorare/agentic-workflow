@@ -7,7 +7,7 @@ namespace Aw.Meta.Core.Ports;
 /// <summary>Gate runs and merges.</summary>
 public interface IGateStore
 {
-    /// <summary>Stores a gate run and numbers it within its pull request.</summary>
+    /// <summary>Stores a gate run and numbers it within its pull request: one above the stored maximum, or the run's own number when that is higher (a planned number that skips a cancelled run is kept).</summary>
     /// <param name="gate">The run.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The stored run with its run number (1 for the first of a pull request).</returns>
