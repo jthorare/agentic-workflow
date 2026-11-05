@@ -1,6 +1,7 @@
 using System.Reflection;
 using Aw.Context.Core.Extract;
 using Aw.Context.Features.BuildMap;
+using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Context.Tests.BuildMap;
 
@@ -24,26 +25,26 @@ public sealed class ClusterSourceGateTests
     public async Task A_second_enter_waits_and_names_the_holder_job()
     {
         var ct = TestContext.Current.CancellationToken;
-        using var gate = new MapBuildGate();
+        using var gate = new MapBuildGate(new FakeTimeProvider());
         var progress = new SyncProgress();
-        var first = await gate.Enter("JOB-A", progress: null, ct);
+        var first = (await gate.Enter("JOB-A", progress: null, ct)).Value;
 
         var second = gate.Enter("JOB-B", progress, ct);
 
         Assert.False(second.IsCompleted);
         Assert.Equal(["waiting for the map build of job JOB-A"], progress.Lines);
         first.Dispose();
-        (await second).Dispose();
+        (await second).Value.Dispose();
     }
 
     [Fact, Trait("Lane", "unit")]
     public async Task An_enter_with_no_one_holding_reports_nothing()
     {
         var ct = TestContext.Current.CancellationToken;
-        using var gate = new MapBuildGate();
+        using var gate = new MapBuildGate(new FakeTimeProvider());
         var progress = new SyncProgress();
 
-        (await gate.Enter("JOB-A", progress, ct)).Dispose();
+        (await gate.Enter("JOB-A", progress, ct)).Value.Dispose();
 
         Assert.Empty(progress.Lines);
     }

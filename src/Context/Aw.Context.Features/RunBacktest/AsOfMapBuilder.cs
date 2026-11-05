@@ -14,7 +14,7 @@ namespace Aw.Context.Features.RunBacktest;
 /// nodes whose code the cut doesn't have are dropped), and the override rows dated before it. The extraction is cached by repo, commit, extractor
 /// version and whether clusters answered. Nothing is written to context.db.
 /// </summary>
-internal sealed class AsOfMapBuilder(IRepoReader repos, IClusterSource clusters, MapBuildGate gate, IGraphStore store, IEvalStore cache)
+internal sealed class AsOfMapBuilder(IRepoReader repos, IClusterSource clusters, MapBuildGate gate, IGraphStore store, IEvalStore cache, TimeProvider clock)
 {
     public async ValueTask<Result<AsOfGraph>> Build(AsOfRequest request, CancellationToken cancellationToken)
     {
@@ -131,9 +131,18 @@ internal sealed class AsOfMapBuilder(IRepoReader repos, IClusterSource clusters,
     {
         var repo = request.Repo;
         Result<ClusterSet> set;
-        using (await gate.Enter(request.Scope.Job, request.Progress, cancellationToken).ConfigureAwait(false))
+        var entered = await gate.Enter(request.Scope.Job, request.Progress, cancellationToken).ConfigureAwait(false);
+        if (entered.IsError)
         {
-            set = await clusters.Clusters(repo, request.Sample.Cut, limits, cancellationToken).ConfigureAwait(false);
+            return new ClusterSet([], Available: false);   // why: a slot whose holder wrote no line for 30 min reads like an absent cluster source, as a failing one does
+        }
+
+        using (entered.Value)
+        {
+            // why: graphify writes nothing while it runs; one that bounds itself says it is alive every 5 min, and with no limit (0) it stays silent so the stall watch can catch a hang
+            set = limits.TimeoutMinutes > 0
+                ? await StepHeartbeat.Run("graphify", entered.Value.Progress, clock, () => clusters.Clusters(repo, request.Sample.Cut, limits, cancellationToken), cancellationToken).ConfigureAwait(false)
+                : await clusters.Clusters(repo, request.Sample.Cut, limits, cancellationToken).ConfigureAwait(false);
         }
 
         return set.IsError || !set.Value.Available

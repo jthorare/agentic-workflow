@@ -792,6 +792,7 @@ There is no decision, desk, protected, job or step-report tool, and no `sindri_c
 | `SND-JOB-001` | The process stopped while the job ran. Only ever a job's `code` (the recovery pass writes it at the next start), never an HTTP response (API P6) |
 | `SND-JOB-002` | Too many jobs are running (8) (429; API P6) |
 | `SND-JOB-003` | The job is not waiting for a model harness (409; `ResumeJob`) |
+| `SND-JOB-004` | A refresh job wrote no progress line for 30 min and was ended as timed out (`RefreshContextMap`; never retried; a job that keeps writing lines is never cut off) |
 | `SND-SVC-404` | No service of the approved profile, and no built-in, has that name (404; API P6) |
 
 ### Workflow errors (`WorkflowErrors`)
