@@ -129,7 +129,7 @@ internal sealed partial class ModelCheckStep(ISpecFolders folders, IBranchChange
 
     private static BlockStepResult Skipped(List<Spec> all) => StepFacts.Done(
         "skipped",
-        ("fact:modelCheck", new JsonObject { ["skipped"] = true, ["looked"] = Looked(all), ["specs"] = new JsonArray() }));
+        ("fact:modelCheck", new JsonObject { ["skipped"] = true, ["looked"] = Looked(all), ["specs"] = new JsonArray(), ["specFolders"] = all.Count }));
 
     private static JsonArray Looked(List<Spec> all) => new([.. all.SelectMany(static s => s.Readme.Models ?? []).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).Select(static p => (JsonNode?)p)]);
 
