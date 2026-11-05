@@ -1,0 +1,23 @@
+{"start":{"inputs":{"fact:phasePacket":{"hash":"sha256:aa","dir":"packets/p1"},"fact:workspace":"/work/p1","fact:buildNotes":{},"fact:lineContext":{}}}}
+{"trigger":{"kind":"step.completed","outcome":"ready","outputs":{"fact:activePacket":{"hash":"sha256:aa"},"fact:redTests":{},"fact:built":{},"fact:change":{},"fact:findings":[],"fact:answers":{}}},"expect":{"state":"slot"}}
+{"trigger":{"kind":"wait.satisfied"},"expect":{"state":"red"}}
+{"trigger":{"kind":"step.completed","outcome":"written","outputs":{"fact:redTests":{"i1":["T1"]}}},"expect":{"state":"red-check"}}
+{"trigger":{"kind":"step.completed","outcome":"red"},"expect":{"state":"green"}}
+{"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h1"}}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"pass","outputs":{"fact:built":{"head":"h1"},"fact:change":{"repo":"r","branch":"b","base":"m","head":"h1"}}},"expect":{"state":"model"}}
+{"trigger":{"kind":"step.completed","outcome":"violation","outputs":{"fact:findings":[{"rule":"MDL-VIOLATION-001","message":"NoTimeGained 1"}]}},"expect":{"state":"green"}}
+{"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h2"}}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"pass","outputs":{"fact:built":{"head":"h2"},"fact:change":{"repo":"r","branch":"b","base":"m","head":"h2"}}},"expect":{"state":"model"}}
+{"trigger":{"kind":"step.completed","outcome":"violation","outputs":{"fact:findings":[{"rule":"MDL-VIOLATION-001","message":"NoTimeGained 2"}]}},"expect":{"state":"green"}}
+{"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h3"}}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"pass","outputs":{"fact:built":{"head":"h3"},"fact:change":{"repo":"r","branch":"b","base":"m","head":"h3"}}},"expect":{"state":"model"}}
+{"trigger":{"kind":"step.completed","outcome":"violation","outputs":{"fact:findings":[{"rule":"MDL-VIOLATION-001","message":"NoTimeGained 3"}]}},"expect":{"state":"green"}}
+{"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h4"}}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"pass","outputs":{"fact:built":{"head":"h4"},"fact:change":{"repo":"r","branch":"b","base":"m","head":"h4"}}},"expect":{"state":"model"}}
+{"trigger":{"kind":"step.completed","outcome":"violation","outputs":{"fact:findings":[{"rule":"MDL-VIOLATION-001","message":"NoTimeGained 4"}]}},"expect":{"state":"green"}}
+{"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h5"}}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"pass","outputs":{"fact:built":{"head":"h5"},"fact:change":{"repo":"r","branch":"b","base":"m","head":"h5"}}},"expect":{"state":"model"}}
+{"trigger":{"kind":"step.completed","outcome":"violation","outputs":{"fact:findings":[{"rule":"MDL-VIOLATION-001","message":"NoTimeGained 5"}]}},"expect":{"state":"green"}}
+{"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h6"}}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"pass","outputs":{"fact:built":{"head":"h6"},"fact:change":{"repo":"r","branch":"b","base":"m","head":"h6"}}},"expect":{"state":"model"}}
+{"trigger":{"kind":"step.completed","outcome":"violation","outputs":{"fact:findings":[{"rule":"MDL-VIOLATION-001","message":"NoTimeGained 6"}]}},"expect":{"state":"parked","park":"rounds"}}
