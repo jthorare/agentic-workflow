@@ -17,7 +17,8 @@ namespace Aw.Sindri.Features.Ship;
 /// <param name="Workspace">The phase worktree.</param>
 /// <param name="Commands">The commands the local GREEN gate ran, from fact:green.</param>
 /// <param name="Line">The line's name, phase and attempt from fact:lineContext; null outside a line (an empty context).</param>
-internal sealed record ShipPackInputs(string Address, RepoName Repo, string PacketDir, string PacketHash, string? Stack, string ProofDir, string ProofHash, string ReviewDir, string ReviewHash, string Workspace, IReadOnlyList<string> Commands, LineRef? Line)
+/// <param name="ModelCheck">The build's fact:modelCheck when the instance holds it (model-check design §4.1); null otherwise, and the body then has no model line.</param>
+internal sealed record ShipPackInputs(string Address, RepoName Repo, string PacketDir, string PacketHash, string? Stack, string ProofDir, string ProofHash, string ReviewDir, string ReviewHash, string Workspace, IReadOnlyList<string> Commands, LineRef? Line, JsonNode? ModelCheck = null)
 {
     /// <summary>Reads them; null when the context lacks one.</summary>
     /// <param name="context">The Step's context.</param>
@@ -32,7 +33,7 @@ internal sealed record ShipPackInputs(string Address, RepoName Repo, string Pack
             && StepFacts.Field(proof, "dir") is { } proofDir && StepFacts.Field(proof, "hash") is { } proofHash
             && StepFacts.Field(review, "dir") is { } reviewDir && StepFacts.Field(review, "hash") is { } reviewHash
             && StepFacts.Text(context, "fact:workspace") is { } workspace
-                ? new ShipPackInputs(address, repo, dir, hash, StackOf(packet), proofDir, proofHash, reviewDir, reviewHash, workspace, CommandsOf(StepFacts.Read(context, "fact:green")), LineRef.Of(StepFacts.Read(context, "fact:lineContext")))
+                ? new ShipPackInputs(address, repo, dir, hash, StackOf(packet), proofDir, proofHash, reviewDir, reviewHash, workspace, CommandsOf(StepFacts.Read(context, "fact:green")), LineRef.Of(StepFacts.Read(context, "fact:lineContext")), StepFacts.Read(context, "fact:modelCheck"))
                 : null;
     }
 
