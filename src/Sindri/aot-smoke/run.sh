@@ -48,18 +48,23 @@ work=""
 remember_servers() {
   jq -r '(.pid // empty), (.temporal.pid // empty)' "$AW_SINDRI_HOME/control.json" >>"$work/servers.pids" 2>/dev/null || true
 }
-# stop_recorded <pids-file> signals every pid listed in the file (SIGTERM, a shared wait of ~3 s, SIGKILL for survivors) only
+# started <pid> prints the process's start time in one form whatever the TZ or LC_TIME of the caller (ps prints local time): the owner
+# file and reap_stale's check both use it, so a run under another TZ than the one that wrote the file doesn't look dead.
+started() { LC_ALL=C TZ=UTC ps -o lstart= -p "$1" 2>/dev/null | tr -s ' ' | sed 's/^ //;s/ $//'; }
+# stop_recorded <pids-file> [<required-substring>] signals every pid listed in the file (SIGTERM, a shared wait of ~3 s, SIGKILL for survivors) only
 # while its command line still names sindri or temporal, so a reused pid is left alone. serve and temporal lead their own
 # session, so one that leads its own process group, not run.sh's, is signalled as a group to take its children too. cleanup
-# and reap_stale share it.
+# and reap_stale share it. With a second argument the command line must also contain it (reap_stale: a pid recorded days ago may now
+# be the owner's real sindri or temporal).
 stop_recorded() {
-  local pid cmd pgid mine targets=() sig live
+  local pid cmd pgid mine targets=() sig live need="${2:-}"
   mine="$(ps -o pgid= -p $$ 2>/dev/null | tr -d ' ')"
   while read -r pid; do
     [ -n "$pid" ] || continue
     if [ -r "/proc/$pid/cmdline" ]; then cmd="$(tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null || true)"
     else cmd="$(ps -p "$pid" -o command= 2>/dev/null || true)"; fi
     case "$cmd" in *sindri*|*temporal*) ;; *) continue ;; esac
+    case "$cmd" in *"$need"*) ;; *) continue ;; esac
     pgid="$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')"
     if [ "$pgid" = "$pid" ] && [ "$pgid" != "$mine" ]; then targets+=("-$pid"); else targets+=("$pid"); fi
   done <"$1"
@@ -104,9 +109,9 @@ reap_stale() {
     [ "$dir" != "$scratch" ] || continue
     { { read -r pid && read -r lstart; } <"$dir/owner"; } 2>/dev/null || continue
     [ -n "$pid" ] || continue
-    recorded="$(ps -o lstart= -p "$pid" 2>/dev/null || true)"
+    recorded="$(started "$pid" || true)"
     [ "$recorded" != "$lstart" ] || [ -z "$recorded" ] || continue   # alive with the same start time: a live run's dir
-    [ ! -f "$dir/run/servers.pids" ] || stop_recorded "$dir/run/servers.pids" || true
+    [ ! -f "$dir/run/servers.pids" ] || stop_recorded "$dir/run/servers.pids" aot-sindri-smoke || true
     find "$dir" -delete 2>/dev/null || true
   done
   return 0
@@ -120,7 +125,7 @@ trap 'cleanup; exit 129' HUP
 scratch="$(cd "$(mktemp -d "${TMPDIR:-/tmp}/aot-sindri-smoke.XXXXXX")" && pwd -P)"
 tree="$scratch/tree"
 work="$scratch/run"
-printf '%s\n%s\n' "$$" "$(ps -o lstart= -p $$)" >"$scratch/owner"
+printf '%s\n%s\n' "$$" "$(started $$)" >"$scratch/owner"
 reap_stale
 mkdir -p "$tree" "$work"
 # shellcheck source=../../../scripts/lib/sindri-build-inputs.sh
