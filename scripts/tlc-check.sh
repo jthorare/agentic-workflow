@@ -63,15 +63,19 @@ check_models() {
 # which has no setsid binary), output to $tout. Sets rc; 124 marks the timeout.
 run_timed() {
   local limit="$1" pid waited=0 grace=0
+  # The check's group is not ours, so a signal that kills us would leave TLC running: stop its group first. The traps are
+  # set before the check starts; a signal after the '&' but before CHILD_PID is set finds the check through $! (it differs
+  # from PREV_BG once the check exists).
+  CHILD_PID=""
+  PREV_BG="${!:-}"
+  trap 'abort_timed 143' TERM
+  trap 'abort_timed 130' INT
+  trap 'abort_timed 129' HUP
   set -m
   bash "$TLC_SH" check "$spec" --config "$cfg" >"$tout" 2>&1 &
   pid=$!
   set +m
-  # The check's group is not ours, so a signal that kills us would leave TLC running: stop its group first.
   CHILD_PID="$pid"
-  trap 'abort_timed 143' TERM
-  trap 'abort_timed 130' INT
-  trap 'abort_timed 129' HUP
   while kill -0 "$pid" 2>/dev/null && [ "$waited" -lt "$limit" ]; do sleep 1; waited=$((waited + 1)); done
   if kill -0 "$pid" 2>/dev/null; then
     kill -TERM -- "-$pid" 2>/dev/null || true
@@ -90,15 +94,18 @@ run_timed() {
 abort_timed() {
   local grace=0
   trap - TERM INT HUP
+  if [ -z "$CHILD_PID" ] && [ -n "${!:-}" ] && [ "${!:-}" != "$PREV_BG" ]; then CHILD_PID="$!"; fi
   if [ -n "$CHILD_PID" ]; then
     kill -TERM -- "-$CHILD_PID" 2>/dev/null || true
     while kill -0 "$CHILD_PID" 2>/dev/null && [ "$grace" -lt 5 ]; do sleep 1; grace=$((grace + 1)); done
     kill -KILL -- "-$CHILD_PID" 2>/dev/null || true
+    { wait "$CHILD_PID"; } 2>/dev/null || true
   fi
   rm -f "$tout"
   exit "$1"
 }
 CHILD_PID=""
+PREV_BG=""
 
 TIMEOUT=""
 WITNESSES=""
