@@ -104,12 +104,14 @@ internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets
         }
     }
 
-    // What Jev can't take, decided before anything is read or sent: too many options, a question that needs reasons (Jev only
-    // classifies) unless the question lets Jev settle it anyway (visual-critique: a page that looks right needs none).
+    // What Jev can't take, decided before anything is read or sent: too many options, a question that needs reasons or
+    // any other extra answer field (Jev only classifies) unless the question lets Jev settle it anyway (visual-critique:
+    // a page that looks right needs none).
     private static ProviderResult? Refused(QuestionRef question) =>
         question.Outputs.Count > MaxOptions ? new ProviderErrored(ProviderReasons.TooManyOptions)
-        : !question.JevMaySettle && question.ExtraProperties?.ContainsKey(ResolutionCheckQuestion.Reasons) == true ? new ProviderUnavailable(ProviderReasons.CannotExplain)
-        : null;
+        : question.JevMaySettle || question.ExtraProperties is not { Count: > 0 } extra ? null
+        : extra.ContainsKey(ResolutionCheckQuestion.Reasons) ? new ProviderUnavailable(ProviderReasons.CannotExplain)
+        : new ProviderUnavailable(ProviderReasons.NeedsExtraProperties);
 
     // The answer, with the sizes of the images that were sent when the call had any.
     private static async ValueTask<ProviderResult> Answer(HttpResponseMessage response, QuestionRef question, List<ImageAttachment> sent, CancellationToken cancellationToken)

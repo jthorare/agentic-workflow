@@ -34,6 +34,7 @@ make_serve() { # make_serve <build dir>
   mkdir -p "$1"
   printf '#!/usr/bin/env bash\nwhile :; do sleep 1; done\n' > "$1/sindri"
   chmod +x "$1/sindri"
+  printf '#!/usr/bin/env bash\n' > "$1/heavy"; chmod +x "$1/heavy"   # --link refuses a build without heavy
   echo built > "$1/build-info"
 }
 # start_serve <build dir> <home dir>: starts the fake serve and a fake temporal; sets SERVE_PID; writes control.json compact
@@ -105,7 +106,7 @@ BASE="$AW_STATE_DIR/bin/cs"
 stampB="$(bash "$INSTALL" --link --dry-run 2>&1 | sed -n 's/.*would point .*current at \([0-9a-f]\{16\}\),.*/\1/p' | head -n 1)"
 check "B the dry run names the stamp to link" "${#stampB}" 16
 mkdir -p "$BASE/stampA" "$BASE/stampC" "$BASE/stampD" "$BASE/$stampB"
-for s in stampC stampD "$stampB"; do echo built > "$BASE/$s/build-info"; done
+for s in stampC stampD "$stampB"; do echo built > "$BASE/$s/build-info"; printf '#!/usr/bin/env bash\n' > "$BASE/$s/heavy"; chmod +x "$BASE/$s/heavy"; done
 make_serve "$BASE/stampA"
 touch -t 202001010100 "$BASE/stampA"; touch -t 202001010200 "$BASE/stampC"; touch -t 202001010300 "$BASE/stampD"
 ln -s stampA "$BASE/current"
