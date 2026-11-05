@@ -12,12 +12,13 @@ Bounds: 1 instance, 2 recipe states (state 1 has a 3-tick timeout, state 2 none)
 - HandbackResumes: a handback that resumes a timer is followed by the step completing, the timer firing, or the instance being parked, taken over again or cancelled.
 Vars: tmr = ticks left on the running state timer (-1 = no timer) · kept = ticks the takeover paused (-1 = it kept none) · susp = none, park or takeover · pend = parks queued behind the current suspension · idle = the takeoverIdle reminder (off, armed, fired) · retried = the entry's one retry is used
 Actions: Takeover = TakeoverRequested · Handback = HandbackRequested · Answer = AnswerGiven · Complete = StepCompleted · Cancel = CancelRequested · Fire = DeadlineFired DeadlineKind.State DeadlineKind.Retry · IdleFire = DeadlineFired DeadlineKind.TakeoverIdle · ParkArrives = (a park from any other trigger, no single C# trigger) · Elapse = (time passing, no C# trigger)
-Leaves out: StepFailed, WaitSatisfied, RewindRequested, CommandFired, ChildChanged, OpenRequested, OutboxRefused, SessionLost, LaunchRefused, RecipeWake, RuntimeUnavailable: not part of takeover; RecipeWorkflow (M-2) models it · Temporal replay, the ledger mirror, desk timeouts, the approved flag and same-kind park absorption, the timer kind (state or retry) a paused timer keeps, more than one instance.
+Leaves out: Temporal replay, the ledger mirror, desk timeouts, the approved flag and same-kind park absorption, the timer kind (state or retry) a paused timer keeps, the recipe triggers that move an instance between states (RecipeWorkflow/ models them), more than one instance.
 
 ## Known gaps (`gaps/*.cfg`, run as witnesses: `tlc-check.sh --witnesses` expects each to fail on the invariant its line 1 `\* witness: <Name>` names)
 
 | Config | Fails | What TLC shows |
 |---|---|---|
 | `gaps/FullTimeoutOnHandback.cfg` | `NoTimeGained` | A handback that arms the full timeout even though the takeover paused a running timer: start, one tick, takeover (2 left), handback (3 left). 4 states. Needs the `Elapse` action: without it the timer is always full when paused and the bug is invisible. |
+| `gaps/PauseKeepsFull.cfg` | `NoTimeGained` | A takeover that keeps the state's full timeout instead of the ticks left (`TimerScopes.Pause`): start, one tick, takeover (keeps 3, had 2), handback (3 left). 4 states. Also needs `Elapse`. |
 
 Run: `scripts/tlc-check.sh --witnesses specs/tla/Takeover`.
