@@ -50,12 +50,14 @@ internal sealed class DirectoryHeavySlots(HeavyLockSettings settings, TimeProvid
             return new HeavySlotTaken(HeavySlotLease.Inherited, string.Empty);
         }
 
-        var slots = Slots();
         var deadline = clock.GetUtcNow() + timeout;
         var announced = false;
         while (true)
         {
-            var taken = TryTakeAny(slots, holder);
+            // The cap and the meta reserve are read again on every pass, so a lowered cap or a raised reserve applies to a waiting job too (#2061).
+            var slots = Slots();
+            var reserve = settings.CurrentReserve(slots.Length);
+            var taken = TryTakeAny(slots, reserve, holder);
             if (taken.IsError || taken.Value is not null)
             {
                 return taken.IsError ? taken.Error : new HeavySlotTaken(taken.Value, string.Empty);
@@ -83,11 +85,12 @@ internal sealed class DirectoryHeavySlots(HeavyLockSettings settings, TimeProvid
     internal static bool IsOurs(string ownerLine) => ownerLine.Split(' ', 2)[0] == Environment.ProcessId.ToString(CultureInfo.InvariantCulture);
 
     private string[] Slots() =>
-        [.. Enumerable.Range(1, settings.Slots).Select(k => k == 1 ? settings.Lock : string.Create(CultureInfo.InvariantCulture, $"{settings.Lock}.{k}"))];
+        [.. Enumerable.Range(1, settings.CurrentSlots()).Select(k => k == 1 ? settings.Lock : string.Create(CultureInfo.InvariantCulture, $"{settings.Lock}.{k}"))];
 
-    private Result<HeavySlotLease?> TryTakeAny(string[] slots, string holder)
+    // Slots 1 to <reserve> are meta's: a Sindri job is never meta, so it starts above them.
+    private Result<HeavySlotLease?> TryTakeAny(string[] slots, int reserve, string holder)
     {
-        foreach (var slot in slots)
+        foreach (var slot in slots.Skip(reserve))
         {
             var taken = TryTake(slot);
             if (taken.IsError)
