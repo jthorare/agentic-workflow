@@ -135,7 +135,7 @@ scripts/binaries-lock.sh check          # Shape of binaries.lock: six fields, on
 scripts/binaries-lock.sh fetch <name>   # Download this platform's row, verify its sha256, install under $AW_STATE_DIR/cache/bin/<name>-<version>/
 
 # TLA+ specs (specs/tla/<Name>/; TLC through skills/formal-verify/scripts/tlc.sh)
-scripts/tlc-check.sh [<spec-dir>...]    # TLC on every specs/tla/*/ folder (or the given ones), once per *.cfg, on MC<Name>.tla when present; one summary line per check, TLC's output only when it isn't PASS; CI job "TLA+ specs (TLC)"; exit 0 all pass, 1 a violation, 2 an error (or a folder without <Name>.tla or .cfg), 3 java or the jar missing (`bash skills/formal-verify/scripts/tlc.sh fetch`)
+scripts/tlc-check.sh [--root DIR] [--timeout SECONDS] [<spec-dir>...]    # TLC on every specs/tla/*/ folder (or the given ones), once per *.cfg, on MC<Name>.tla when present; one summary line per check, TLC's output only when it isn't PASS; --root takes specs and models: paths from another repo, --timeout stops a check that runs too long (TIMEOUT line, exit 2); CI job "TLA+ specs (TLC)"; exit 0 all pass, 1 a violation, 2 an error (or a folder without <Name>.tla or .cfg), 3 java or the jar missing (`bash skills/formal-verify/scripts/tlc.sh fetch`)
 
 scripts/images-lock.sh check             # Shape of deploy/images.lock (every deployment image by index and per-platform digest; unresolved ones are `todo` rows) and that the Dockerfile names only pinned images; exit 0 ok, 1 a check failed
 

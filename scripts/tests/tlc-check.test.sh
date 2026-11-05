@@ -142,6 +142,58 @@ run "$S/Alpha"
 expect "a good models: line passes" 0 '^tlc-check: Alpha/Alpha\.cfg: PASS'
 lacks "a good models: line has no warning" 'warning'
 
+# --root: another repo's specs/tla/ and models: paths resolve against it, not the script's checkout.
+reset; R="$TMPROOT/otherrepo"; mkspec "$R/specs/tla" Rx; : >"$R/code.cs"
+printf 'models: code.cs:4\n' >"$R/specs/tla/Rx/README.md"
+run --root "$R"
+expect "--root runs the folders under <dir>/specs/tla" 0 '^tlc-check: Rx/Rx\.cfg: PASS'
+lacks "--root resolves models: paths against <dir>" 'warning'
+run "$R/specs/tla/Rx"
+expect "the same paths without --root warn" 0 'warning: models path missing: code\.cs'
+run --root "$R" specs/tla/Rx
+expect "--root: a relative spec-dir is taken from <dir>" 0 '^tlc-check: Rx/Rx\.cfg: PASS'
+run --root "$TMPROOT/nope"
+expect "--root missing exits 2" 2 'tlc-check: --root'
+: >"$TMPROOT/afile"; run --root "$TMPROOT/afile"
+expect "--root a file exits 2" 2 'tlc-check: --root'
+
+# The per-cfg line format is parsed by a Sindri step: pin it exactly.
+reset; mkspec "$S" Alpha Alpha.cfg Alpha-big.cfg
+run "$S/Alpha"
+want="$(printf 'tlc-check: Alpha/Alpha-big.cfg: PASS distinct=7 depth=3\ntlc-check: Alpha/Alpha.cfg: PASS distinct=7 depth=3')"
+if [ "$(printf '%s\n' "$OUT" | grep -v warning)" = "$want" ]; then ok "per-cfg line format is pinned (a Sindri step parses it)"; else fail "per-cfg line format changed"; fi
+
+# gaps/ cfgs live in a subfolder and are not run.
+reset; mkspec "$S" Alpha; mkdir -p "$S/Alpha/gaps"; : >"$S/Alpha/gaps/Gap.cfg"
+run "$S/Alpha"
+if [ "$(ncalls)" = 1 ]; then ok "gaps/ cfgs are skipped"; else fail "gaps/ cfgs ran: $(ncalls) calls"; fi
+
+# --timeout
+reset; mkspec "$S" Alpha
+run --timeout 0 "$S/Alpha"; expect "--timeout 0 exits 2" 2 'tlc-check: --timeout'
+run --timeout abc "$S/Alpha"; expect "--timeout abc exits 2" 2 'tlc-check: --timeout'
+run --timeout "$S/Alpha"; expect "--timeout without a number exits 2" 2 'tlc-check: --timeout'
+run --timeout 5 "$S/Alpha"
+expect "--timeout: a fast check still passes" 0 '^tlc-check: Alpha/Alpha\.cfg: PASS distinct=7 depth=3$'
+
+# A stub that ignores TERM and keeps a child: both pids must be gone after the group KILL.
+HANG="$TMPROOT/hang-stub.sh"
+cat >"$HANG" <<'S'
+#!/usr/bin/env bash
+trap '' TERM
+sleep 300 &
+echo "$$ $!" >"$TMPROOT/pids"
+wait
+S
+reset; mkspec "$S" Alpha; rm -f "$TMPROOT/pids"
+start=$SECONDS
+set +e; OUT="$(TLC_SH="$HANG" bash "$SCRIPT" --timeout 1 "$S/Alpha" 2>&1)"; RC=$?; set -e
+took=$((SECONDS - start))
+expect "--timeout: a hung check prints TIMEOUT and counts as exit 2" 2 '^tlc-check: Alpha/Alpha\.cfg: TIMEOUT after 1 s$'
+if [ "$took" -lt 10 ]; then ok "--timeout: finished in ${took}s"; else fail "--timeout: took ${took}s"; fi
+p1=""; p2=""; read -r p1 p2 <"$TMPROOT/pids" || true
+if [ -n "$p1" ] && ! kill -0 "$p1" 2>/dev/null && ! kill -0 "$p2" 2>/dev/null; then ok "--timeout: stub and its child are gone"; else fail "--timeout: pids $p1 $p2 survive"; fi
+
 # No arguments: every specs/tla/* of the repo, sorted. A copy of the script in a scratch repo root sees only that repo's folders.
 reset
 FAKE="$TMPROOT/fakerepo"
