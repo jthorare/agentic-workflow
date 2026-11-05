@@ -259,6 +259,35 @@ internal sealed class WorkflowsHarness : IDisposable
     public static async Task<WorkflowHandle<RecipeWorkflow, RecipeResult>> Start(ITemporalClient client, InstanceStart start) =>
         await client.StartWorkflowAsync((RecipeWorkflow wf) => wf.RunAsync(start), new WorkflowOptions(id: start.WorkflowId().Value, taskQueue: TemporalSettings.DefaultTaskQueue));
 
+    /// <summary>
+    /// Sends two Updates to a workflow no worker is running, the first before the second, and returns once the caller may start the
+    /// next worker. <paramref name="lateBy"/> models a loaded box where the second Update's RPC reaches the server that much later.
+    /// </summary>
+    public static async Task<(Task<TFirst> First, Task<TSecond> Second)> QueueThenStartWorkerAsync<TFirst, TSecond>(
+        WorkflowHandle<RecipeWorkflow, RecipeResult> handle, Func<Task<TFirst>> first, Func<Task<TSecond>> second, TimeSpan lateBy, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(handle);
+        var sentFirst = first();
+        await Task.Delay(TimeSpan.FromMilliseconds(500), ct);   // the server admits the first Update first, so the worker validates and runs it before the second
+        Task<TSecond> sentSecond;
+        if (lateBy <= TimeSpan.Zero)
+        {
+            sentSecond = second();
+        }
+        else
+        {
+            // why: the second RPC is still in flight when the caller starts the worker, as on a loaded box
+            sentSecond = Task.Run(async () =>
+            {
+                await Task.Delay(lateBy, ct);
+                return await second();
+            }, ct);
+        }
+
+        await Task.Delay(TimeSpan.FromSeconds(1), ct);   // let the server queue both
+        return (sentFirst, sentSecond);
+    }
+
     /// <summary>Queries 'GetInstance' until <paramref name="holds"/>, failing the test after the patience runs out.</summary>
     public static async Task<InstanceView> Until(WorkflowHandle<RecipeWorkflow> handle, Func<InstanceView, bool> holds)
     {
