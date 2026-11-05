@@ -13,10 +13,10 @@ internal sealed class TraitGit(IProcessRunner runner)
     private const int OutputLimit = 16 << 20;
 
     // 'git diff --no-index' exits 1 when the files differ, which is its success case, so any exit code is an answer.
-    internal async ValueTask<(int Code, string Output)> Run(IReadOnlyList<string> arguments, string workingDirectory, CancellationToken cancellationToken)
+    internal async ValueTask<(int Code, string Output)> Run(IReadOnlyList<string> arguments, string workingDirectory, CancellationToken cancellationToken, string? input = null)
     {
         var result = await runner.Run(
-            new ProcessRequest { FileName = "git", Arguments = arguments, WorkingDirectory = workingDirectory, Timeout = _timeout, OutputLimit = OutputLimit },
+            new ProcessRequest { FileName = "git", Arguments = arguments, StandardInput = input, WorkingDirectory = workingDirectory, Timeout = _timeout, OutputLimit = OutputLimit },
             cancellationToken).ConfigureAwait(false);
         return result is { End: ProcessEnd.Exited, ExitCode: { } code } ? (code, result.StandardOutput) : (-1, "");
     }

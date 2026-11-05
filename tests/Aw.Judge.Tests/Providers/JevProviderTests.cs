@@ -46,6 +46,23 @@ public sealed class JevProviderTests
     }
 
     [Fact]
+    public async Task A_question_that_needs_an_extra_answer_field_is_not_sent_to_jev_which_returns_only_the_choice()
+    {
+        var handler = FakeHttpHandler.Answering(HttpStatusCode.OK, Answer);
+        using var provider = new JevProvider(new HttpClient(handler), Secrets(), new FakeInputRedactor());
+        var question = Questions.Text with
+        {
+            Name = "ui-element-repair",
+            ExtraProperties = new Dictionary<string, JsonObject>(StringComparer.Ordinal) { [UiElementRepairQuestion.ChosenIndex] = new() { ["type"] = "integer" } },
+        };
+
+        var result = await provider.Decide(question, Questions.Input, Questions.Budget, TestContext.Current.CancellationToken);
+
+        Assert.Equal(new ProviderUnavailable("needs-extra-properties"), result);
+        Assert.Empty(handler.Requests);
+    }
+
+    [Fact]
     public async Task It_posts_to_the_api_with_the_bearer_key()
     {
         var handler = FakeHttpHandler.Answering(HttpStatusCode.OK, Answer);

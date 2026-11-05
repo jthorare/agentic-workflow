@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+# The whole script is one { } block, so bash parses all of it before running: editing this file while a job
+# waits for a slot can't break that job. Edit it by writing a new file and mv-ing it over this one.
+{
+# heavy <cmd...> — run a build/test/install under the heavy-job locks (owner, 2026-10-14, after the box crashed under load):
+#   1. Per session: one heavy job at a time. A session is the nearest `claude` ancestor process (a lane session and all
+#      its subagents share it). Lock: <locks>/heavy-session/<pid>.lock (AW_SESSION_HEAVY_SLOTS, default 1).
+#   2. Box-wide, for expensive jobs only: AW_HEAVY_SLOTS slots (default 1) of <locks>/heavy-job.lock (slot 1 is the
+#      bare path, slot k is .k; mkdir mutexes, config/lib/locks.sh). ui-evidence's browser lock and sindri's TS lock
+#      take slot 1 of the same lock, so they count against this cap too.
+#   A job is expensive when it builds or tests the whole solution, publishes or smoke-tests a NativeAOT/framework
+#   binary, or opens a browser (Playwright, ui-evidence, Aw.Evidence); `heavy --expensive <cmd>` forces it,
+#   `heavy --light <cmd>` forces the per-session slot only.
+set -u
+export DOTNET_ROOT="$HOME/.dotnet" PATH="${AW_HEAVY_TEST_PATH:+$AW_HEAVY_TEST_PATH:}$HOME/.dotnet:$PATH" DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
+LOCKS="${AW_STATE_DIR:-$HOME/.agentic-workflow}/locks"
+LOCK="${AW_HEAVY_JOB_LOCK:-$LOCKS/heavy-job.lock}"
+SLOTS="${AW_HEAVY_SLOTS:-1}"
+SESSION_SLOTS="${AW_SESSION_HEAVY_SLOTS:-1}"
+# A non-number, 0 or negative would take no slot and make every job wait out TIMEOUT; treat it as 1 (as config/lib/locks.sh does).
+case $SLOTS in ""|*[!0-9]*|0) SLOTS=1 ;; esac
+case $SESSION_SLOTS in ""|*[!0-9]*|0) SESSION_SLOTS=1 ;; esac
+# Owner cap (2026-10-14; 2026-10-15: the cap file is the box-wide slot count): ~/.agentic-workflow/heavy-slots-cap sets
+# the box-wide slots, whatever a session's inherited AW_HEAVY_SLOTS says (sessions were launched with AW_HEAVY_SLOTS=1).
+CAP="$(cat "${AW_STATE_DIR:-$HOME/.agentic-workflow}/heavy-slots-cap" 2>/dev/null)"
+case $CAP in ""|*[!0-9]*|0) ;; *) SLOTS="$CAP" ;; esac
+# Memory guard (owner, 2026-10-15): a box-wide slot above 1 is only taken while MemAvailable is at least
+# AW_HEAVY_MIN_FREE_MB (default 10240); below that, jobs queue for slot 1 as before.
+MIN_FREE_MB="${AW_HEAVY_MIN_FREE_MB:-10240}"
+case $MIN_FREE_MB in ""|*[!0-9]*) MIN_FREE_MB=10240 ;; esac
+# Slot k (k >= 2) needs MIN_FREE_MB + (k-2) * STEP_MB available (owner, 2026-10-15: slot 3 needs 14 GB by default).
+STEP_MB="${AW_HEAVY_MIN_FREE_STEP_MB:-4096}"
+case $STEP_MB in ""|*[!0-9]*) STEP_MB=4096 ;; esac
+mem_ok() { local kb need; need=$((MIN_FREE_MB + (${1:-2} - 2) * STEP_MB)); kb="$(awk '/^MemAvailable:/ {print $2; exit}' /proc/meminfo 2>/dev/null)"; [ -n "$kb" ] && [ "$((kb / 1024))" -ge "$need" ]; }
+TIMEOUT=5400
+# Meta gate reservation (owner, 2026-10-17): the meta orchestrator writes how many box-wide slots its gates reserve
+# (0..SLOTS) to <state>/heavy-meta-reserve, scaled to its merge-queue depth. A job run with AW_HEAVY_PRIORITY=meta may
+# take any slot; any other expensive job may take only slots above the reservation. Nothing running is pre-empted, and
+# a job blocked only by the reservation does not count that wait toward TIMEOUT.
+RESERVE="$(cat "${AW_STATE_DIR:-$HOME/.agentic-workflow}/heavy-meta-reserve" 2>/dev/null)"
+case $RESERVE in ""|*[!0-9]*) RESERVE=0 ;; esac
+[ "$RESERVE" -gt "$SLOTS" ] && RESERVE="$SLOTS"
+PRIORITY="${AW_HEAVY_PRIORITY:-}"
+
+mode=auto
+case "${1:-}" in --expensive) mode=expensive; shift ;; --light) mode=light; shift ;; esac
+[ "$#" -ge 1 ] || { echo "usage: heavy [--expensive|--light] <cmd...>" >&2; exit 2; }
+# Nested call (a heavy job running heavy again): the outer job already holds this session's slot, so waiting on it
+# again would deadlock. Run straight through.
+if [ "${AW_HEAVY_LOCK_HELD:-}" = 1 ]; then exec "$@"; fi
+
+if [ "$mode" = auto ]; then
+  # Owner, 2026-10-14 (second tightening, swap full at load 128): every build is expensive. Light is only what
+  # compiles nothing: a `dotnet test --no-build`, a plain script. Everything that compiles, restores, publishes,
+  # formats or opens a browser shares the box-wide slots.
+  mode=light
+  case " $* " in
+    *" dotnet build "*|*" dotnet publish "*|*" dotnet format "*|*" dotnet pack "*|*" dotnet restore "*|*" dotnet run "*) mode=expensive ;;
+    *" dotnet test "*) case " $* " in *" --no-build "*) ;; *) mode=expensive ;; esac ;;
+    *" npm ci "*|*" npm install "*|*" npm test "*|*" npx vitest "*|*" npx tsc "*|*vitest*) mode=expensive ;;
+    *AgenticWorkflow.slnx*|*aot-smoke*|*playwright*|*ui-evidence*|*Aw.Evidence*|*" e2e.sh "*) mode=expensive ;;
+  esac
+fi
+
+# The session: nearest ancestor whose command is `claude`; fall back to the parent shell's pid.
+session=""; p=$PPID
+for _ in $(seq 1 20); do
+  [ -z "$p" ] || [ "$p" -le 1 ] && break
+  c="$(ps -o comm= -p "$p" 2>/dev/null)"; c="${c##*/}"
+  if [ "$c" = claude ]; then session="$p"; break; fi
+  # Linux / npm installs: the process is `node …/claude …`
+  if [ "$c" = node ] && ps -o args= -p "$p" 2>/dev/null | grep -qE '(^|/)claude( |$)|/claude-code/'; then session="$p"; break; fi
+  p="$(ps -o ppid= -p "$p" 2>/dev/null | tr -d ' ')"
+done
+# claude_found: a real claude ancestor (or AW_HEAVY_SESSION_PID, for tests); only then does the orphan watchdog run.
+claude_found=""; [ -n "$session" ] && claude_found=1
+if [ -n "${AW_HEAVY_SESSION_PID:-}" ]; then session="$AW_HEAVY_SESSION_PID"; claude_found=1; fi
+[ -n "$session" ] || session="$PPID"
+
+mkdir -p "$LOCKS/heavy-session" "$(dirname "$LOCK")"
+HELD=()
+release() { local d; for d in "${HELD[@]+"${HELD[@]}"}"; do unlink "$d/owner" 2>/dev/null; rmdir "$d" 2>/dev/null || true; done; }
+trap release EXIT
+job=""; dog=""
+stop_job() { [ -n "$job" ] && kill -TERM -- "-$job" 2>/dev/null; [ -n "$dog" ] && kill "$dog" 2>/dev/null; return 0; }
+trap 'stop_job; release; exit 130' INT TERM
+
+# acquire <label> <base> <slots>: take one slot of a mkdir-mutex pool; a slot whose owner pid is gone is reclaimed.
+acquire() {
+  local label="$1" base="$2" slots="$3" waited=0 printed=0 k d got="" owner reserved_skip=0
+  while [ -z "$got" ]; do
+    reserved_skip=0
+    # Re-read the reservation each pass so a drained queue releases waiting lane jobs promptly.
+    if [ "$label" = box-wide ]; then RESERVE="$(cat "${AW_STATE_DIR:-$HOME/.agentic-workflow}/heavy-meta-reserve" 2>/dev/null)"; case $RESERVE in ""|*[!0-9]*) RESERVE=0 ;; esac; [ "$RESERVE" -gt "$slots" ] && RESERVE="$slots"; fi
+    for k in $(seq 1 "$slots"); do
+      if [ "$k" -eq 1 ]; then d="$base"; else d="$base.$k"; fi
+      # Box-wide slots above 1 need the memory guard; the per-session pool doesn't.
+      if [ "$label" = box-wide ] && [ "$PRIORITY" != meta ] && [ "$k" -le "$RESERVE" ]; then reserved_skip=1; continue; fi
+      if [ "$k" -gt 1 ] && [ "$label" = box-wide ] && ! mem_ok "$k"; then continue; fi
+      if mkdir "$d" 2>/dev/null; then got="$d"; break; fi
+      owner="$(awk '{print $1; exit}' "$d/owner" 2>/dev/null)"
+      if [ -n "$owner" ] && ! kill -0 "$owner" 2>/dev/null; then
+        unlink "$d/owner" 2>/dev/null; rmdir "$d" 2>/dev/null
+        if mkdir "$d" 2>/dev/null; then got="$d"; break; fi
+      fi
+    done
+    [ -n "$got" ] && break
+    [ "$printed" -eq 0 ] && { echo "heavy: waiting for the $label lock ($slots slot(s), $base)" >&2; printed=1; }
+    [ "$waited" -ge "$TIMEOUT" ] && { echo "heavy: $label lock timeout ($base)" >&2; exit 75; }
+    sleep 1; [ "$reserved_skip" = 1 ] || waited=$((waited + 1))
+  done
+  echo "$$ $(date -u +%FT%TZ) session=$session $*" > "$got/owner" 2>/dev/null || true
+  HELD+=("$got")
+}
+
+# Order: the session slot first, then the box-wide one, so a session never holds a box-wide slot while queued behind itself.
+acquire session "$LOCKS/heavy-session/$session.lock" "$SESSION_SLOTS" "$@"
+if [ "$mode" = expensive ]; then acquire box-wide "$LOCK" "$SLOTS" "$@"; export AW_HEAVY_SLOT="${HELD[1]}"; fi
+export AW_HEAVY_LOCK_HELD=1 AW_HEAVY_MODE="$mode"
+# Keep one job from taking the whole box: fewer cores per .NET process (MSBuild -m, test parallelism), no MSBuild
+# worker reuse (nodes exit with the build instead of staying resident between builds).
+export DOTNET_PROCESSOR_COUNT="${AW_HEAVY_CPUS:-4}" MSBUILDDISABLENODEREUSE=1 DOTNET_CLI_USE_MSBUILD_SERVER=0
+# Hang limit (owner, 2026-10-22, after an orphaned test run held a slot for 2.5 h). AW_HEAVY_RUN_MAX is minutes:
+# 45 for `dotnet test`, 120 otherwise, 0 = no limit. The clock starts here, after the slots are held. The job runs in
+# its own process group, so test hosts started under `dotnet test` go with it: TERM to the group, KILL 30 s later,
+# exit 124. A watchdog also kills the job when its claude session is gone (never for a fallback, non-claude pid).
+# A `dotnet test` with no --timeout of its own gets the test platform's --timeout, 5 minutes inside the limit.
+# It is appended last, so a command that ends in `-- <args>` would pass it to the test app instead (none of ours do).
+is_dotnet_test=""; [ "${1##*/}" = dotnet ] && [ "${2:-}" = test ] && is_dotnet_test=1
+run_max="${AW_HEAVY_RUN_MAX:-}"
+case $run_max in ""|*[!0-9]*) if [ -n "$is_dotnet_test" ]; then run_max=45; else run_max=120; fi ;; esac
+if [ -n "$is_dotnet_test" ] && [ "$run_max" -gt 0 ]; then
+  case " $* " in
+    *" --timeout "*|*" --timeout="*) ;;
+    *) if [ "$run_max" -gt 5 ]; then set -- "$@" --timeout "$((run_max - 5))m"; else set -- "$@" --timeout "${run_max}m"; fi ;;
+  esac
+fi
+# This relies on job control being off (non-interactive bash): the background child is not a group leader, so setsid
+# execs in place, $! is the job's pid and its group id. Under job control setsid would fork and $! would exit at once.
+if command -v setsid >/dev/null 2>&1; then setsid "$@" & else perl -e 'setpgrp(0, 0); exec @ARGV or exit 127' "$@" & fi
+job=$!
+reason="$(mktemp "${TMPDIR:-/tmp}/heavy-reason.XXXXXX")"
+(
+  start=$SECONDS
+  while kill -0 "$job" 2>/dev/null; do
+    why=""
+    [ "$run_max" -gt 0 ] && [ $((SECONDS - start)) -ge $((run_max * 60)) ] && why="ran past AW_HEAVY_RUN_MAX=${run_max}m"
+    [ -z "$why" ] && [ -n "$claude_found" ] && ! kill -0 "$session" 2>/dev/null && why="session $session ended"
+    if [ -n "$why" ]; then
+      echo "$why" > "$reason"
+      kill -TERM -- "-$job" 2>/dev/null
+      for _ in $(seq 1 30); do kill -0 -- "-$job" 2>/dev/null || exit 0; sleep 1; done
+      kill -KILL -- "-$job" 2>/dev/null
+      exit 0
+    fi
+    sleep 5
+  done
+) &
+dog=$!
+wait "$job"; rc=$?
+kill "$dog" 2>/dev/null; wait "$dog" 2>/dev/null
+if [ -s "$reason" ]; then echo "heavy: $(cat "$reason"), killed: $*" >&2; rc=124; fi
+rm -f "$reason"
+exit $rc
+}
