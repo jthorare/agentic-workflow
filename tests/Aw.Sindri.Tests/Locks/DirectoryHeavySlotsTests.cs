@@ -90,15 +90,51 @@ public sealed class DirectoryHeavySlotsTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_slot_with_no_owner_record_stays_held_before_the_six_hour_last_resort_because_locks_sh_and_ui_evidence_write_none()
+    public async Task An_empty_slot_under_a_minute_old_is_a_holder_between_its_mkdir_and_its_record_and_stays_held()
     {
         Directory.CreateDirectory(Lock);
-        Directory.SetLastWriteTimeUtc(Lock, RealTime.NowDateTime.AddHours(-6).AddMinutes(1));   // just under the boundary
+        Directory.SetLastWriteTimeUtc(Lock, RealTime.NowDateTime.AddSeconds(-30));
 
         var taken = (await Slots(slots: 1).Take("x", TimeSpan.Zero, waiting: null, TestContext.Current.CancellationToken)).Value;
 
         Assert.Null(taken.Lease);
         Assert.Contains("an unknown holder", taken.Busy, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_empty_slot_over_a_minute_old_is_a_holder_killed_before_its_record_and_is_freed_like_the_heavy_wrapper_does()
+    {
+        Directory.CreateDirectory(Lock);
+        Directory.SetLastWriteTimeUtc(Lock, RealTime.NowDateTime.AddMinutes(-2));
+
+        await using var lease = await Taken(Slots(slots: 1));
+
+        Assert.Contains(Pid, await File.ReadAllTextAsync(Path.Combine(Lock, "owner"), TestContext.Current.CancellationToken), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_slot_whose_locks_sh_pid_file_names_a_dead_process_is_reclaimed()
+    {
+        Directory.CreateDirectory(Lock);
+        await File.WriteAllTextAsync(Path.Combine(Lock, "pid"), "2147483646\n", TestContext.Current.CancellationToken);
+
+        await using var lease = await Taken(Slots(slots: 1));
+
+        Assert.False(File.Exists(Path.Combine(Lock, "pid")));
+        Assert.Contains(Pid, await File.ReadAllTextAsync(Path.Combine(Lock, "owner"), TestContext.Current.CancellationToken), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_slot_whose_locks_sh_pid_file_names_a_live_process_stays_held_past_the_empty_slot_minute()
+    {
+        Directory.CreateDirectory(Lock);
+        await File.WriteAllTextAsync(Path.Combine(Lock, "pid"), Pid + "\n", TestContext.Current.CancellationToken);
+        Directory.SetLastWriteTimeUtc(Lock, RealTime.NowDateTime.AddMinutes(-2));
+
+        var taken = (await Slots(slots: 1).Take("x", TimeSpan.Zero, waiting: null, TestContext.Current.CancellationToken)).Value;
+
+        Assert.Null(taken.Lease);
+        Assert.True(File.Exists(Path.Combine(Lock, "pid")));
     }
 
     [Fact, Trait("Lane", "unit")]
