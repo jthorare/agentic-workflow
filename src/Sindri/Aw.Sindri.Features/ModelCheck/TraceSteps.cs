@@ -77,13 +77,19 @@ internal static class TraceSteps
     private static List<TraceState> States(IReadOnlyList<string> trace)
     {
         var states = new List<TraceState>();
+        var closed = false;
         foreach (var line in trace)
         {
             if (_state.Match(line) is { Success: true } header)
             {
+                closed = false;
                 states.Add(new TraceState(states.Count, line, header.Groups["action"].Value.Trim(), [], new Dictionary<string, string>(StringComparer.Ordinal)));
             }
-            else if (states.Count > 0)
+            else if (states.Count > 0 && !closed && string.IsNullOrWhiteSpace(line))
+            {
+                closed = true;   // TLC ends a state with a blank line; the statistics after the last state are not part of it
+            }
+            else if (states.Count > 0 && !closed)
             {
                 var current = states[^1];
                 current.Lines.Add(line);

@@ -7,7 +7,7 @@ namespace Aw.Sindri.Features.ModelCheck;
 /// One 'tlc-check: &lt;Name&gt;/&lt;cfg&gt;: &lt;RESULT&gt; ...' line of the runner (scripts/tlc-check.sh) with the '  | ' lines under it. The result word decides; a word the step doesn't know is <see cref="TlcResult.Error"/>.
 /// </summary>
 /// <param name="Name">The spec folder's name.</param>
-/// <param name="Cfg">The cfg, 'Takeover' or 'gaps/FullTimeout' (without '.cfg').</param>
+/// <param name="Cfg">The cfg, 'Takeover' or 'gaps/FullTimeout', without '.cfg' (the runner prints it with or without).</param>
 /// <param name="Result">The result.</param>
 /// <param name="Rest">What follows the result word.</param>
 /// <param name="Detail">The indented lines under it (TLC's output), without the '  | ' margin.</param>
@@ -19,8 +19,8 @@ internal sealed record TlcCheckLine(string Name, string Cfg, TlcResult Result, s
 
     private static readonly Regex _counts = new(@"distinct=(?<distinct>\d+)\s+depth=(?<depth>\d+)", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(1));
 
-    /// <summary>The label the runner prints: 'Name/cfg'.</summary>
-    internal string Label => $"{Name}/{Cfg}";
+    /// <summary>The label as a person names the file: 'Name/cfg.cfg'.</summary>
+    internal string Label => $"{Name}/{Cfg}.cfg";
 
     /// <summary>The distinct states of a PASS, or 0.</summary>
     internal int Distinct => Count("distinct");
@@ -68,8 +68,10 @@ internal sealed record TlcCheckLine(string Name, string Cfg, TlcResult Result, s
         var space = after.IndexOf(' ', StringComparison.Ordinal);
         var word = space < 0 ? after : after[..space];
         var rest = space < 0 ? string.Empty : after[(space + 1)..].Trim();
-        return new TlcCheckLine(text[..slash], text[(slash + 1)..colon], Classify(word), _known.Contains(word) ? rest : $"{word} {rest}".Trim(), []);
+        return new TlcCheckLine(text[..slash], WithoutExtension(text[(slash + 1)..colon]), Classify(word), _known.Contains(word) ? rest : $"{word} {rest}".Trim(), []);
     }
+
+    private static string WithoutExtension(string cfg) => cfg.EndsWith(".cfg", StringComparison.Ordinal) ? cfg[..^4] : cfg;
 
     private static TlcResult Classify(string word) => word switch
     {

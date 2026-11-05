@@ -271,7 +271,7 @@ internal sealed class ModelCheckStep(ISpecFolders folders, IBranchChanges change
         {
             var name = NameOf(spec.Folder);
             return spec.Folder.Files.Where(f => f.Kind == SpecFileKind.Regular && f.Name.EndsWith(".cfg", StringComparison.Ordinal) && (witnesses || !f.Name.StartsWith("gaps/", StringComparison.Ordinal)))
-                .Select(f => $"{name}/{f.Name[..^4]}");
+                .Select(f => $"{name}/{f.Name}");
         }
 
         private static bool IsOutOfMemory(TlcCheckLine line) => line.Rest.Contains("OutOfMemoryError", StringComparison.Ordinal) || line.Detail.Any(static d => d.Contains("OutOfMemoryError", StringComparison.Ordinal));

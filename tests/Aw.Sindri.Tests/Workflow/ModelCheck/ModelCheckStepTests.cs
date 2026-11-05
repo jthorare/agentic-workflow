@@ -105,6 +105,34 @@ public sealed class ModelCheckStepTests
     }
 
     [Fact]
+    public async Task A_real_TLC_violation_reads_as_four_numbered_steps_in_the_READMEs_words_and_the_runners_warnings_are_not_results()
+    {
+        const string Readme = "models: src/StateTimers.cs\n# Takeover\nBounds: 1 instance, up to 2 takeovers.\n- NoTimeGained: handing an item back never gives its timer more time than it had.\nVars: tmr = ticks left on the running state timer (-1 = none) · nTake = takeovers so far\n";
+        var h = new Harness().Folder(Folders.Spec("Takeover", readme: Readme));
+        h.Prints(1, await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Workflow", "ModelCheck", "Fixtures", "takeover-violation.txt"), Token));
+
+        var result = await h.Step().Run(Harness.Context(), Token);
+
+        Assert.Equal("violation", result.Result!.Outcome.Value);
+        var finding = StepRig.Out(result, "findings").AsArray().Single()!;   // the 'models path missing' warnings are not results, and the witness cfg that did not report is not a finding here
+        Assert.Equal("MDL-VIOLATION-001", (string?)finding["rule"]);
+        Assert.Contains("NoTimeGained", (string?)finding["message"], StringComparison.Ordinal);
+        Assert.Contains("Takeover/Takeover.cfg", (string?)finding["message"], StringComparison.Ordinal);
+        Assert.StartsWith("The model found a hole: handing an item back never gives its timer more time than it had", (string?)finding["message"], StringComparison.Ordinal);
+        var steps = ((string?)finding["detail"])!.Split('\n').TakeWhile(static l => l.Length > 0).ToList();   // why: a violation finding always carries its steps
+        Assert.Equal(4, steps.Count);
+        Assert.Matches(@"^1\. Start: ", steps[0]);
+        Assert.StartsWith("2. Elapse: ", steps[1], StringComparison.Ordinal);
+        Assert.StartsWith("3. Takeover: ", steps[2], StringComparison.Ordinal);
+        Assert.StartsWith("4. Handback: ", steps[3], StringComparison.Ordinal);
+        Assert.Contains("ticks left on the running state timer 3 -> 2", steps[1], StringComparison.Ordinal);   // only what changed after state 1
+        Assert.DoesNotContain("ended", steps[1], StringComparison.Ordinal);
+        Assert.Contains("ticks left on the running state timer 2 -> -1", steps[2], StringComparison.Ordinal);
+        Assert.Contains("ticks left on the running state timer -1 -> 3", steps[3], StringComparison.Ordinal);
+        Assert.DoesNotContain("states generated", (string?)finding["detail"], StringComparison.Ordinal);   // the statistics after the last state are not part of the trace
+    }
+
+    [Fact]
     public async Task A_missed_or_wrong_witness_is_vacuous()
     {
         var missed = new Harness().Folder(Folders.Spec("Takeover"));
