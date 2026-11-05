@@ -12602,11 +12602,13 @@ Aw.Sindri.Core.Checks.CheckInvocation
 Aw.Sindri.Core.Checks.CheckInvocation.<Clone>$() -> Aw.Sindri.Core.Checks.CheckInvocation!
 Aw.Sindri.Core.Checks.CheckInvocation.Argv.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Sindri.Core.Checks.CheckInvocation.Argv.init -> void
-Aw.Sindri.Core.Checks.CheckInvocation.CheckInvocation(string! Name, System.Collections.Generic.IReadOnlyList<string!>! Argv, System.TimeSpan Timeout) -> void
-Aw.Sindri.Core.Checks.CheckInvocation.Deconstruct(out string! Name, out System.Collections.Generic.IReadOnlyList<string!>! Argv, out System.TimeSpan Timeout) -> void
+Aw.Sindri.Core.Checks.CheckInvocation.CheckInvocation(string! Name, System.Collections.Generic.IReadOnlyList<string!>! Argv, System.TimeSpan Timeout, int OutputLimit = 4000) -> void
+Aw.Sindri.Core.Checks.CheckInvocation.Deconstruct(out string! Name, out System.Collections.Generic.IReadOnlyList<string!>! Argv, out System.TimeSpan Timeout, out int OutputLimit) -> void
 Aw.Sindri.Core.Checks.CheckInvocation.Equals(Aw.Sindri.Core.Checks.CheckInvocation? other) -> bool
 Aw.Sindri.Core.Checks.CheckInvocation.Name.get -> string!
 Aw.Sindri.Core.Checks.CheckInvocation.Name.init -> void
+Aw.Sindri.Core.Checks.CheckInvocation.OutputLimit.get -> int
+Aw.Sindri.Core.Checks.CheckInvocation.OutputLimit.init -> void
 Aw.Sindri.Core.Checks.CheckInvocation.Timeout.get -> System.TimeSpan
 Aw.Sindri.Core.Checks.CheckInvocation.Timeout.init -> void
 Aw.Sindri.Core.Checks.CheckRun
@@ -12656,7 +12658,7 @@ static Aw.Sindri.Core.Checks.ChangedFile.operator !=(Aw.Sindri.Core.Checks.Chang
 static Aw.Sindri.Core.Checks.ChangedFile.operator ==(Aw.Sindri.Core.Checks.ChangedFile? left, Aw.Sindri.Core.Checks.ChangedFile? right) -> bool
 static Aw.Sindri.Core.Checks.CheckInvocation.operator !=(Aw.Sindri.Core.Checks.CheckInvocation? left, Aw.Sindri.Core.Checks.CheckInvocation? right) -> bool
 static Aw.Sindri.Core.Checks.CheckInvocation.operator ==(Aw.Sindri.Core.Checks.CheckInvocation? left, Aw.Sindri.Core.Checks.CheckInvocation? right) -> bool
-static Aw.Sindri.Core.Checks.CheckRun.Of(int exitCode, bool timedOut, System.TimeSpan duration, string! output) -> Aw.Sindri.Core.Checks.CheckRun!
+static Aw.Sindri.Core.Checks.CheckRun.Of(int exitCode, bool timedOut, System.TimeSpan duration, string! output, int limit = 4000) -> Aw.Sindri.Core.Checks.CheckRun!
 static Aw.Sindri.Core.Checks.CheckRun.operator !=(Aw.Sindri.Core.Checks.CheckRun? left, Aw.Sindri.Core.Checks.CheckRun? right) -> bool
 static Aw.Sindri.Core.Checks.CheckRun.operator ==(Aw.Sindri.Core.Checks.CheckRun? left, Aw.Sindri.Core.Checks.CheckRun? right) -> bool
 Aw.Sindri.Core.Checks.BranchRules
