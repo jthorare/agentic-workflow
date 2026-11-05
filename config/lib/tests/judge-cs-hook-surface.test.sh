@@ -343,6 +343,8 @@ PY
     jq -nc '{type:"user", message:{role:"user", content:[{type:"tool_result", tool_use_id:"tu", content:"ok"}]}}' >> "$1"
     jq -nc '{type:"assistant", message:{content:[{type:"text", text:"I will look at the logs next."}]}}' >> "$1"
   }
+  # done-gate prints this on every exit 2 (config/hooks/done-gate.sh); anything else on stderr is a leak.
+  CONTINUE_NOTICE="Next step already authorized by the brief or plan — continuing without asking."
   jev_env() { TYPESAFE_API_KEY=stub-key AW_JUDGE_JEV_IMAGES=1 AW_JUDGE_PROVIDERS=rules,jev AW_JUDGE_JEV_URL="http://127.0.0.1:$(cat "$WORK/jev.port")/v1/systemone" "$@"; }
 
   # 3024x1964 is over Jev's 1568 px side: it goes downscaled, Jev answers 'continue' (exit 2), the row says jev.
@@ -364,7 +366,7 @@ PY
   [ "$(cat "$WORK/jev.log")" = "application/json -" ] || fail "done-img-small: expected one text request, got '$(cat "$WORK/jev.log")'"
   id="$(sqlite3 "$s/judge/decisions.sqlite" "SELECT id FROM decisions WHERE question = 'ask-check'" 2> /dev/null | head -n 1)"
   judge_on cs "$s" why "$id" 2> /dev/null | has "jev images dropped: image 1 is 200x120, under Jev's 280 px minimum; asked jev as text" || fail "done-img-small: judge why should carry the dropped-image line"
-  [ -z "$(err_of done-img-small)" ] || fail "done-img-small: a dropped image is never on stderr, got '$(err_of done-img-small)'"
+  [ "$(err_of done-img-small)" = "$CONTINUE_NOTICE" ] || fail "done-img-small: a dropped image is never on stderr (only the continue notice), got '$(err_of done-img-small)'"
   no_failopen done-img-small
 
   # A file named .png that isn't a PNG is dropped, and the answer comes as text.
@@ -373,7 +375,7 @@ PY
   (cd "$WORK/img-repo" && jev_env hook cs "$s" done-gate.sh "$(stop "$WORK/t-fake.jsonl")" done-img-fake)
   [ "$(rc_of done-img-fake)" = 2 ] || fail "done-img-fake: Jev settles ask-check as text (exit 2), got $(rc_of done-img-fake): $(err_of done-img-fake)"
   [ "$(cat "$WORK/jev.log")" = "application/json -" ] || fail "done-img-fake: expected one text request, got '$(cat "$WORK/jev.log")'"
-  [ -z "$(err_of done-img-fake)" ] || fail "done-img-fake: nothing on stderr, got '$(err_of done-img-fake)'"
+  [ "$(err_of done-img-fake)" = "$CONTINUE_NOTICE" ] || fail "done-img-fake: only the continue notice on stderr, got '$(err_of done-img-fake)'"
   no_failopen done-img-fake
 
   kill "$JEV_PID" 2> /dev/null || true

@@ -52,7 +52,7 @@ Some commands only a person may run, at a real terminal. Sindri refuses them to 
 
 | Need | Version or size | How |
 |---|---|---|
-| .NET SDK | `10.0.401` exactly (`global.json`) | `scripts/install-cs.sh` (run by `setup.sh`) installs it into `~/.dotnet` when missing |
+| .NET SDK | `10.0.403` exactly (`global.json`) | `scripts/install-cs.sh` (run by `setup.sh`) installs it into `~/.dotnet` when missing |
 | Temporal CLI | the pin in `binaries.lock` | `scripts/binaries-lock.sh fetch temporal` (`install-cs.sh` runs it too) |
 | Disk | room under `$AW_SINDRI_HOME` for the map build and the record index | |
 | graphify and a sandbox | graphify at Sindri's pin; `sandbox-exec` (macOS, built in) or `bwrap` (Linux) | `scripts/install-deps.sh` (`AW_DRY_RUN=1` prints only) |
