@@ -40,7 +40,7 @@ public sealed class HeavyReservationTests
     [InlineData(2, 0)]
     [InlineData(3, 1)]
     [InlineData(5, 2)]
-    [InlineData(7, 3)]
+    [InlineData(7, 2)]
     public async Task The_reservation_follows_the_merge_queue_depth(int depth, int reserved)
     {
         await Ready(depth);
@@ -53,14 +53,14 @@ public sealed class HeavyReservationTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task All_means_the_teams_heavy_cap()
+    public async Task All_means_the_teams_heavy_cap_less_the_slot_kept_for_lanes()
     {
         await Ready(7);
         await Configure(team => team with { Heavy = team.Heavy with { Cap = 5 } });
 
         var applied = await Apply();
 
-        Assert.Equal(5, _world.Heavy.Reserve);
+        Assert.Equal(4, _world.Heavy.Reserve);
         Assert.Equal(5, applied.Value!.Cap);
     }
 
@@ -127,16 +127,17 @@ public sealed class HeavyReservationTests
 
         _ = await Apply();
 
-        Assert.Equal(3, _world.Heavy.Reserve);
+        Assert.Equal(2, _world.Heavy.Reserve);
     }
 
     [Theory, Trait("Lane", "unit")]
     [InlineData(0, 3, 0)]
     [InlineData(1, 3, 3)]
     [InlineData(2, 3, 5)]
-    [InlineData(3, 3, 7)]
-    [InlineData(2, 2, 7)]
-    [InlineData(1, 1, 7)]
+    [InlineData(1, 2, 3)]
+    [InlineData(2, 4, 5)]
+    [InlineData(3, 4, 7)]
+    [InlineData(4, 5, 7)]
     [InlineData(3, 5, 5)]
     public void The_printed_argument_is_the_one_that_makes_the_script_keep_the_slots(int reserve, int cap, int argument)
     {
@@ -147,6 +148,41 @@ public sealed class HeavyReservationTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void The_script_never_keeps_more_than_the_reservation_and_keeps_exactly_every_count_it_has_a_tier_for()
+    {
+        for (var cap = 1; cap <= 6; cap++)
+        {
+            for (var reserve = 0; reserve < cap; reserve++)
+            {
+                var kept = ScriptKeeps(new HeavySlots(cap, reserve, Depth: 2, A.At(0)).ScriptDepth, cap);
+                var state = string.Create(CultureInfo.InvariantCulture, $"cap {cap}, reserve {reserve}: the script keeps {kept}");
+
+                Assert.True(kept <= reserve, state);
+                if (reserve <= 2 || reserve == cap - 1)
+                {
+                    Assert.True(kept == reserve, state);
+                }
+            }
+        }
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    public void An_old_reservation_of_the_whole_cap_still_prints_7_and_the_script_keeps_the_cap_less_one(int cap)
+    {
+        var argument = new HeavySlots(cap, Reserve: cap, Depth: 2, A.At(0)).ScriptDepth;
+
+        Assert.Equal(7, argument);
+        Assert.Equal(cap - 1, ScriptKeeps(argument, cap));
+    }
+
+    // scripts/meta-gate-reserve.sh's tiers: 0-2 -> 0, 3-4 -> 1, 5-6 -> 2, 7 or more -> the cap, each held to the cap less one.
+    private static int ScriptKeeps(int depth, int cap) =>
+        Math.Min(depth switch { <= 2 => 0, <= 4 => 1, <= 6 => 2, _ => cap }, cap - 1);
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Custom_tiers_print_the_script_argument_and_not_the_queue_depth()
     {
         await Ready(2);
@@ -154,8 +190,8 @@ public sealed class HeavyReservationTests
 
         var applied = await Apply();
 
-        Assert.Equal("heavy reservation: 3 of 3 slots (queue depth 2) - set it with meta-gate-reserve 7", applied.Value!.Line());
-        Assert.Contains("set it with meta-gate-reserve 7", Assert.Single(_world.Log.Lines), StringComparison.Ordinal);
+        Assert.Equal("heavy reservation: 2 of 3 slots (queue depth 2) - set it with meta-gate-reserve 5", applied.Value!.Line());
+        Assert.Contains("set it with meta-gate-reserve 5", Assert.Single(_world.Log.Lines), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -163,7 +199,7 @@ public sealed class HeavyReservationTests
     {
         await Ready(7);
         _ = await Apply();
-        Assert.Equal(3, _world.Heavy.Reserve);
+        Assert.Equal(2, _world.Heavy.Reserve);
         var drop = new QueueDropService(_world.Messages, _world.Gates, _world.Values, _world.Log, Worlds.Reservation(_world), _world.Clock);
 
         foreach (var pr in new[] { 190, 191, 192, 193, 194 })
