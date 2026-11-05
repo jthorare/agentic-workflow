@@ -37,7 +37,8 @@ internal static class HeavyCap
     internal static int Reserve(string stateRoot, int slots)
     {
         var text = ReadText(Path.Combine(stateRoot, "heavy-meta-reserve"));
-        return int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var n) ? Math.Min(n, slots) : 0;
+        // All digits but too big for an int is still a number: clamp it to the slot count, as bash does; anything else is 0.
+        return text is { Length: > 0 } && text.All(char.IsAsciiDigit) ? (int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var n) ? Math.Min(n, slots) : slots) : 0;
     }
 
     private static int? FromFile(string path) => ReadText(path) is { } text ? Count(text) : null;
