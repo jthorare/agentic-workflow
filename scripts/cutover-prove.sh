@@ -393,7 +393,8 @@ run again-link bash "$CS" --link
 run again-post bash "$CLEAN" --post-link
 snap_box | stable > "$WORK/now.snap"
 chg="$(diff "$WORK/flipped.snap" "$WORK/now.snap" | grep -v -e 'decisions.sqlite-' | head -n 6 | tr '\n' ';')"
-nothing=0; cat "$WORK/again-pre.out" "$WORK/again-post.out" 2> /dev/null | grep -q 'cutover: nothing to remove' && nothing=1
+# grep reads the files itself: piped from cat, grep -q's early exit can SIGPIPE cat, and pipefail then reads it as no match.
+nothing=0; grep -q 'cutover: nothing to remove' "$WORK/again-pre.out" "$WORK/again-post.out" 2> /dev/null && nothing=1
 if [ "$(rc again-publish)$(rc again-pre)$(rc again-link)$(rc again-post)" = 0000 ] && [ "$nothing" = 1 ] && [ -z "$chg" ]; then pass second-run-no-change
 else fail second-run-no-change "rcs=$(rc again-publish)$(rc again-pre)$(rc again-link)$(rc again-post) nothing_to_remove=$nothing diff=$chg"; fi
 live_after="$(snap "$STATE/judge" | grep -e 'config.json' -e 'decisions.sqlite' | grep -v -e '-wal' -e '-shm')"

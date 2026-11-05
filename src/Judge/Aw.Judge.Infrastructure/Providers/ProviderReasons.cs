@@ -20,6 +20,9 @@ internal static class ProviderReasons
     /// <summary>Unavailable: the question needs reasons and Jev only classifies; nothing is sent.</summary>
     public const string CannotExplain = "cannot-explain";
 
+    /// <summary>Unavailable: the question asks for extra answer fields (ui-element-repair's chosenIndex) and Jev returns only the choice; nothing is sent.</summary>
+    public const string NeedsExtraProperties = "needs-extra-properties";
+
     /// <summary>Unavailable: no TypeSafe API key in the environment or the keychain (not a failure).</summary>
     public const string NoApiKey = "no-api-key";
 

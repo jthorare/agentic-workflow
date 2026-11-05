@@ -5,8 +5,8 @@
 # Pins: the base image by digest (its tag is the exact SDK in global.json), Node by version and SHA-256 (the
 # major in .nvmrc), uv by image digest. scripts/tests/repo-templates.test.sh checks they stay in step.
 
-# .NET SDK 10.0.401 (global.json: rollForward disable) on Ubuntu 24.04.
-FROM mcr.microsoft.com/dotnet/sdk:10.0.401-noble@sha256:e70cdb7f80b0348f5cb85f19a8f670fca061f033d57eed12fa003d58b0e06317
+# .NET SDK 10.0.403 (global.json: rollForward disable) on Ubuntu 24.04.
+FROM mcr.microsoft.com/dotnet/sdk:10.0.403-noble@sha256:de4fe90a98845d75910b9769662465c84de1a934665c431279d1382b2bddc02b
 
 # uv 0.12.17 (published 2026-09-18).
 COPY --from=ghcr.io/astral-sh/uv:0.12.17@sha256:10787c682e4184e4f290de1171fd4703dc63de99221f10fe1c99002ce7fa9acc /uv /uvx /usr/local/bin/
