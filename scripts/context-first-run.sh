@@ -2,7 +2,7 @@
 # scripts/context-first-run.sh — the first real context run of the C# Sindri on THIS repo, as one command (owner's call).
 # Walk-through and what to check at each step: docs/sindri/first-context-run.md.
 #
-#   scripts/context-first-run.sh up [--dry-run] [--no-ui] [--no-embeddings] [--no-graph]
+#   scripts/context-first-run.sh up [--dry-run] [--no-ui] [--no-embeddings] [--no-graph] [--stop-after N]
 #   scripts/context-first-run.sh continue [...]     the same as up: every step checks its outcome first and skips what is done
 #   scripts/context-first-run.sh status [--dry-run]
 #   scripts/context-first-run.sh down [--dry-run]
@@ -26,6 +26,7 @@
 # status  The plane, the index, the map and the item, read only.
 # down    `sindri stop`, closes the app this script opened, and deletes the scratch home. Nothing else is touched.
 #
+# --stop-after N ends `up` with exit 0 once step N (0 to 9) is done; scripts/model-limit-check.sh stops after the index build (5).
 # --dry-run prints every command it would run (and the checks it would make) and runs nothing, writes nothing: not the home,
 # not a profile, no build. It always shows the whole path as if nothing were done yet.
 #
@@ -39,6 +40,7 @@
 #   FIRST_RUN_INDEX_TIMEOUT   seconds to wait for the first build; default 1800
 #   FIRST_RUN_MAP_POLL_SECONDS  seconds between map status reads while it is held; default 10
 #   FIRST_RUN_MAP_TIMEOUT     seconds to wait for a held map; default 1020
+#   FIRST_RUN_CONTEXT_EXTRA   YAML lines, indented two spaces, appended to the profile's context: section when it is written; default none
 #   SINDRI                    the sindri command line, split on spaces; default `sindri` on the PATH (the C# build
 #                             scripts/install-cs.sh links; run it first)
 #   AW_SINDRI_UI              the sindri-ui binary; default $AW_STATE_DIR/bin/cs/current/sindri-ui
@@ -57,13 +59,17 @@ action="$1"; shift
 case "$action" in up|continue|status|down) ;; -h|--help) usage ;; *) usage ;; esac
 [ "$action" = continue ] && action=up
 
-dry=0 no_ui=0 no_embeddings=0 no_graph=0
+dry=0 no_ui=0 no_embeddings=0 no_graph=0 stop_after=
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --dry-run) dry=1 ;;
     --no-ui) [ "$action" = up ] || usage; no_ui=1 ;;
     --no-embeddings) [ "$action" = up ] || usage; no_embeddings=1 ;;
     --no-graph) [ "$action" = up ] || usage; no_graph=1 ;;
+    --stop-after)
+      [ "$action" = up ] && [ "$#" -ge 2 ] || usage
+      case "$2" in [0-9]) stop_after="$2" ;; *) die "--stop-after takes a step number 0 to 9 (got '$2')" ;; esac
+      shift ;;
     *) echo "context-first-run: unknown option $1" >&2; usage ;;
   esac
   shift
@@ -275,6 +281,7 @@ index:
 context:
   publish: { waitForIndexMinutes: 15 }
 EOF
+  [ -z "${FIRST_RUN_CONTEXT_EXTRA:-}" ] || printf '%s\n' "$FIRST_RUN_CONTEXT_EXTRA"
 }
 
 # ---- 3. approval gate ----
@@ -457,17 +464,25 @@ start_scoping() {
 }
 
 # ---- the verbs ----
+# stopped <step>: with --stop-after <step>, end here (exit 0).
+stopped() {
+  [ "$stop_after" = "$1" ] || return 0
+  echo
+  echo "context-first-run up: stopped after step $1 (--stop-after $1)."
+  exit 0
+}
+
 do_up() {
   guard
-  preflight
-  make_home
-  write_profile
-  approval_gate
-  start_serve
-  build_index
-  publish_map
-  open_ui
-  recipes_gate
+  preflight; stopped 0
+  make_home; stopped 1
+  write_profile; stopped 2
+  approval_gate; stopped 3
+  start_serve; stopped 4
+  build_index; stopped 5
+  publish_map; stopped 6
+  open_ui; stopped 7
+  recipes_gate; stopped 8
   start_scoping
   echo
   echo "context-first-run up: done. Look at the app, then clean up with: $self down"
