@@ -129,6 +129,22 @@ internal sealed class SchedulerRig : IAsyncDisposable
         _sequence = 0;
     }
 
+    /// <summary>The process boots: views.db keeps the last run's rows, but the projector hasn't published its first pass.</summary>
+    /// <returns>A task that completes then.</returns>
+    public Task BeginStarting()
+    {
+        Progress.Publish(Progress.Current with { Starting = true });
+        return Task.CompletedTask;
+    }
+
+    /// <summary>The first pass has published.</summary>
+    /// <returns>A task that completes then.</returns>
+    public Task EndStarting()
+    {
+        Progress.Publish(Progress.Current with { Starting = false });
+        return Task.CompletedTask;
+    }
+
     /// <summary>The rebuild is done: the pauses given are refolded and the status is fresh again.</summary>
     /// <param name="paused">The services paused in the ledger.</param>
     /// <returns>A task that completes then.</returns>

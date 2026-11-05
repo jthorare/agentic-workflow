@@ -47,6 +47,25 @@ public sealed class SchedulerPauseAndGuardTests
     }
 
     [Fact]
+    public async Task A_service_paused_in_the_last_run_does_not_run_while_the_projector_is_starting()
+    {
+        var tidy = new ScriptedService(ScriptedService.Worked);
+        var counted = new CountingService();
+        await using var rig = await SchedulerRig.Start([tidy, counted], ("tidy", "5s"), ("counted", "5s"));
+        await rig.Pause("tidy");   // views.db holds the pause from the previous run
+        await rig.BeginStarting();
+        await rig.Begin();
+
+        await rig.Step(12);
+        Expect.Equal((0, 0), (tidy.Runs, counted.Runs));   // no pause is readable yet, so no profile service runs
+        await rig.EndStarting();
+        await rig.Step(12);
+
+        Assert.True(counted.Runs >= 1);
+        Expect.Equal(0, tidy.Runs);
+    }
+
+    [Fact]
     public async Task No_service_runs_until_the_first_good_read_of_the_pauses()
     {
         var tidy = new ScriptedService(ScriptedService.Worked);
