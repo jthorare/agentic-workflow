@@ -131,7 +131,13 @@ internal sealed class AsOfMapBuilder(IRepoReader repos, IClusterSource clusters,
     {
         var repo = request.Repo;
         Result<ClusterSet> set;
-        using (await gate.Enter(request.Scope.Job, request.Progress, cancellationToken).ConfigureAwait(false))
+        var entered = await gate.Enter(request.Scope.Job, request.Progress, cancellationToken).ConfigureAwait(false);
+        if (entered.IsError)
+        {
+            return new ClusterSet([], Available: false);   // why: a slot that stayed taken for 30 min reads like an absent cluster source, as a failing one does
+        }
+
+        using (entered.Value)
         {
             set = await clusters.Clusters(repo, request.Sample.Cut, limits, cancellationToken).ConfigureAwait(false);
         }

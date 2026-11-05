@@ -1,21 +1,27 @@
+using Aw.Kernel;
+
 namespace Aw.Context.Core.Extract;
 
 /// <summary>
 /// One graphify run at a time per host (a host has one map store and one cluster source): a map build, a refresh and a backtest's as-of cut all take it, and a second caller
 /// waits for the first instead of failing, so two refreshes of one map never write over each other. One instance per host, in this process only: a build started by another process is not covered. The box-wide heavy-job lock is separate (a backtest takes its own heavy slot) and does not replace this gate.
 /// </summary>
-public sealed class MapBuildGate : IDisposable
+/// <param name="clock">Times the wait for the slot (<see cref="WaitLimit"/>).</param>
+public sealed class MapBuildGate(TimeProvider clock) : IDisposable
 {
     private readonly SemaphoreSlim _one = new(1, 1);
     private readonly Lock _holderLock = new();
     private string? _holder;
 
-    /// <summary>Takes the gate at once when it is free; otherwise says who holds it and waits for them. Holds the gate until the returned lease is disposed.</summary>
+    /// <summary>How long a caller waits for the slot before giving up (#2106: a build that never ends must not hold every later build forever).</summary>
+    public static TimeSpan WaitLimit { get; } = TimeSpan.FromMinutes(30);
+
+    /// <summary>Takes the gate at once when it is free; otherwise says who holds it and waits for them, for at most <see cref="WaitLimit"/>. Holds the gate until the returned lease is disposed.</summary>
     /// <param name="job">The job the caller runs for, named to a caller that has to wait behind it; null when it runs for no job.</param>
     /// <param name="progress">Told once, before the wait starts, that the call is waiting and for whom; null to say nothing.</param>
-    /// <param name="cancellationToken">Cancels the wait.</param>
-    /// <returns>The lease, which says whether the call had to wait.</returns>
-    public async ValueTask<MapBuildTurn> Enter(string? job, IProgress<string>? progress, CancellationToken cancellationToken)
+    /// <param name="cancellationToken">Cancels the wait (the call throws, as before).</param>
+    /// <returns>The lease, which says whether the call had to wait; <see cref="ContextErrors.MapBuildWaitTimedOut"/> when the wait ran out.</returns>
+    public async ValueTask<Result<MapBuildTurn>> Enter(string? job, IProgress<string>? progress, CancellationToken cancellationToken)
     {
         var waited = !await _one.WaitAsync(0, cancellationToken).ConfigureAwait(false);
         if (waited)
@@ -28,7 +34,16 @@ public sealed class MapBuildGate : IDisposable
             }
 
             progress?.Report(holder is null ? "waiting for the running map build" : $"waiting for the map build of job {holder}");
-            await _one.WaitAsync(cancellationToken).ConfigureAwait(false);
+            using var limit = new CancellationTokenSource(WaitLimit, clock);
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, limit.Token);
+            try
+            {
+                await _one.WaitAsync(linked.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (limit.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+            {
+                return ContextErrors.MapBuildWaitTimedOut.With($"waited 30 min for the map build of job {holder ?? "unknown"}");
+            }
         }
 
         lock (_holderLock)

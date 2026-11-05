@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Context.Core;
 using Aw.Kernel;
 
 namespace Aw.Sindri.Features.ContextCalls;
@@ -11,8 +12,12 @@ internal static class MapRefreshRetry
 
     private static readonly TimeSpan[] _waits = [TimeSpan.FromSeconds(30), TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(10)];
 
-    /// <summary>Whether a retry can help: a dependency that was unavailable, a timeout or a rate limit. Invalid, not found, conflict, budget and forbidden errors are not retried.</summary>
-    internal static bool Transient(Error error) => error.Kind is ErrorKind.Unavailable or ErrorKind.Timeout or ErrorKind.RateLimited;
+    /// <summary>
+    /// Whether a retry can help: a dependency that was unavailable, a timeout or a rate limit. Invalid, not found, conflict, budget and forbidden errors are not retried, and neither is a wait for the map build slot
+    /// that ran out (owner, 2026-11-05, #2106): the build ahead of it already held the slot for 30 min, so another 30 min of waiting would only hide it; the job fails as timed out.
+    /// </summary>
+    internal static bool Transient(Error error) =>
+        error.Kind is ErrorKind.Unavailable or ErrorKind.Timeout or ErrorKind.RateLimited && error.Code != ContextErrors.MapBuildWaitTimedOut.Code;
 
     /// <summary>How long to wait before the given attempt (2 to 4), or null when the error is not transient or the attempts are spent.</summary>
     internal static TimeSpan? WaitBefore(int attempt, Error error) =>
