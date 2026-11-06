@@ -30,7 +30,8 @@ internal static class LinearIssueItem
         return new RecordItem(
             RecordKey.From(Prefix + issue.Id), RecordKind.Issue, issue.Title, LinearText.Of(issue, writeUserId), issue.Creator?.Name, issue.Url, State(issue.State?.Type), issue.State?.Name,
             issue.CreatedAt, issue.UpdatedAt, issue.CompletedAt ?? issue.CanceledAt, SourceVersion.From(issue.UpdatedAt.UtcDateTime.ToString("O", CultureInfo.InvariantCulture) + FeedFormat),
-            Links(issue, githubRepos), Repo: null, issue.Team is { } team && AudienceKey.TryFrom("linear:" + team.Key, out var audience) ? audience : null);
+            Links(issue, githubRepos), Repo: null, issue.Team is { } team && AudienceKey.TryFrom("linear:" + team.Key, out var audience) ? audience : null,
+            Side: new LinearSideRows(Side(issue, writeUserId)));
     }
 
     /// <summary>The issue's fields and newest comments, for the side tables (spec 2026-11-04 §4.1).</summary>

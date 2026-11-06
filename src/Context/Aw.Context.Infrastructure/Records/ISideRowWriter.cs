@@ -7,7 +7,7 @@ namespace Aw.Context.Infrastructure.Records;
 
 /// <summary>
 /// The seam for rows a source keeps beside its records (<see cref="SideRows"/>). <c language="text">SqliteRecordStore.Commit</c> calls it inside the page's transaction, so a record and its side rows are never out of step.
-/// The design-doc and PR-claim writers are the first; the Linear writer (linear_issue, linear_comment, linear_issue_change; Linear hub spec 2026-11-04 D4) comes next on this same seam. A writer owns its tables and one payload type; it never touches <c language="text">source_record</c>.
+/// The design-doc, PR-claim and Linear (linear_issue, linear_comment, linear_issue_change; Linear hub spec 2026-11-04 D4) writers are on it. A writer owns its tables and one payload type; it never touches <c language="text">source_record</c>.
 /// </summary>
 internal interface ISideRowWriter
 {

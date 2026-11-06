@@ -13,7 +13,7 @@ namespace Aw.Context.Infrastructure.Records;
 internal sealed partial class SqliteRecordStore(ContextDatabase database, IReadOnlyList<ISideRowWriter>? sideRowWriters = null) : IRecordStore
 {
     // The writers for rows a source keeps beside its records (RecordWrite.Side); a source adds its own here.
-    private readonly IReadOnlyList<ISideRowWriter> _sideRowWriters = sideRowWriters ?? [new DesignDocRowWriter(), new PrClaimRowWriter()];
+    private readonly IReadOnlyList<ISideRowWriter> _sideRowWriters = sideRowWriters ?? [new DesignDocRowWriter(), new PrClaimRowWriter(), new LinearRowWriter()];
 
     public async ValueTask<Result<StoredRecord?>> Get(RecordKey key, CancellationToken cancellationToken)
     {

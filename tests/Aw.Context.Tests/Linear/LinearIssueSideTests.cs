@@ -180,4 +180,16 @@ public sealed class LinearIssueSideTests
 
         Assert.Equal("2026-11-01T09:00:00.0000000Z;f3", item.Version.Value);
     }
+
+    [Fact]
+    public void The_item_carries_the_issues_side_rows_for_the_store()
+    {
+        var item = LinearIssueItem.Of(WithComments(Comment("c1", "hello", 1)), [], _sindri);
+
+        var side = Assert.IsType<LinearSideRows>(item.Side);
+
+        Assert.Equal(LinearIssueItem.Side(WithComments(Comment("c1", "hello", 1)), _sindri).Fields, side.Issue.Fields);
+        Assert.Equal("hello", Assert.Single(side.Issue.Comments).Body);
+        Assert.Equal(LinearWrittenFields.None, side.Written);
+    }
 }
