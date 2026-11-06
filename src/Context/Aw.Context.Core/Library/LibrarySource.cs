@@ -16,5 +16,23 @@ public static class LibrarySource
     /// <param name="key">The record's key; a library doc is 'doc:&lt;root&gt;/&lt;path&gt;'.</param>
     /// <param name="modelRoots">The library roots that opted in (<see cref="Engine.ContextSettings.LibraryModelRoots"/>).</param>
     /// <returns>True when the model may read it.</returns>
-    public static bool ModelMayRead(SourceId source, RecordKey key, IReadOnlyList<string> modelRoots) => throw new NotSupportedException();
+    public static bool ModelMayRead(SourceId source, RecordKey key, IReadOnlyList<string> modelRoots)
+    {
+        ArgumentNullException.ThrowIfNull(modelRoots);
+        return source != Id || (Root(key) is { } root && modelRoots.Contains(root, StringComparer.Ordinal));
+    }
+
+    // 'doc:<root>/<path>': the root is the segment after 'doc:' up to the first '/'
+    private static string? Root(RecordKey key)
+    {
+        const string prefix = "doc:";
+        var value = key.Value;
+        if (!value.StartsWith(prefix, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var end = value.IndexOf('/', prefix.Length);
+        return end < 0 ? null : value[prefix.Length..end];
+    }
 }

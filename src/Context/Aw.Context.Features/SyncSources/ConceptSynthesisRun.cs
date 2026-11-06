@@ -1,6 +1,7 @@
 using System.Text;
 using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Library;
 using Aw.Context.Core.Models;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
@@ -50,7 +51,7 @@ internal sealed class ConceptSynthesisRun(IRecordStore records, IVectorScan scan
             return ConceptSynthesisReport.Failed(built.Error.Code);
         }
 
-        var live = await Live(cancellationToken).ConfigureAwait(false);
+        var live = await Live(libraryModelRoots, cancellationToken).ConfigureAwait(false);
         var read = live.IsError ? live.Error : await Embeddings(live.Value, cancellationToken).ConfigureAwait(false);
         var grouped = read.IsError ? read.Error : ConceptGrouper.Group(read.Value.Vectors, settings.Grouping, scan);
         var stored = grouped.IsError ? grouped.Error : await concepts.All(cancellationToken).ConfigureAwait(false);
@@ -72,8 +73,8 @@ internal sealed class ConceptSynthesisRun(IRecordStore records, IVectorScan scan
         return pass.Report(plans.Count, read.Value.Vectors.Count, grouped.Value.EdgeCosines);
     }
 
-    /// <summary>The records that are not removed and not blocked, by key.</summary>
-    private async ValueTask<Result<Dictionary<string, StoredRecord>>> Live(CancellationToken cancellationToken)
+    /// <summary>The records that are not removed and not blocked, by key, without those a model may not read: an 'owner:' audience, or a library root that did not opt in.</summary>
+    private async ValueTask<Result<Dictionary<string, StoredRecord>>> Live(IReadOnlyList<string> libraryModelRoots, CancellationToken cancellationToken)
     {
         var live = new Dictionary<string, StoredRecord>(StringComparer.Ordinal);
         RecordKey? after = null;
@@ -90,7 +91,7 @@ internal sealed class ConceptSynthesisRun(IRecordStore records, IVectorScan scan
                 return live;
             }
 
-            foreach (var record in page.Value.Where(r => !r.Blocked && r.RemovedAt is null))
+            foreach (var record in page.Value.Where(r => !r.Blocked && r.RemovedAt is null && !r.Audience.IsOwner() && LibrarySource.ModelMayRead(r.Source, r.Key, libraryModelRoots)))
             {
                 live[record.Key.Value] = record;
             }
