@@ -13,7 +13,11 @@
 #   `heavy --light <cmd>` forces the per-session slot only.
 set -u
 # The cap and reserve readers live next to locks.sh; this script may run through a link (~/.agentic-workflow/bin-r1b/heavy).
-. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../config/lib/heavy-config.sh"
+# In a build folder it sits beside this script; in the repo it is ../config/lib.
+_hd="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+if [ -f "$_hd/heavy-config.sh" ]; then . "$_hd/heavy-config.sh"
+elif [ -f "$_hd/../config/lib/heavy-config.sh" ]; then . "$_hd/../config/lib/heavy-config.sh"
+else echo "heavy: heavy-config.sh not found next to $_hd or in ../config/lib" >&2; exit 2; fi
 export DOTNET_ROOT="$HOME/.dotnet" PATH="${AW_HEAVY_TEST_PATH:+$AW_HEAVY_TEST_PATH:}$HOME/.dotnet:$PATH" DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
 LOCKS="${AW_STATE_DIR:-$HOME/.agentic-workflow}/locks"
 LOCK="${AW_HEAVY_JOB_LOCK:-$LOCKS/heavy-job.lock}"
