@@ -149,8 +149,13 @@ internal sealed partial class GitHubForge
 
         return posted.Value.Ok ? ReviewOutcome.Posted
             : posted.Value.Status == 422 && request.Comments.Count > 0 && NamesALine(posted.Value.Body) ? ReviewOutcome.LineRejected
+            : posted.Value.Status == 422 ? Unprocessable(posted.Value.Body)
             : GitHubApi.Fail(posted.Value);
     }
+
+    // why: GitHub puts the reason of a 422 in "errors" (the "message" is just "Unprocessable Entity"), so the error carries both.
+    private static Error Unprocessable(JsonElement body) =>
+        ForgeErrors.Rejected.With(Inv.S($"422: {body.Str("message")} {(body.At("errors") is { } errors ? errors.GetRawText() : string.Empty)}").TrimEnd());
 
     // why: a 422 on a review has many causes (approving your own pull request, a stale commit_id, an empty body on REQUEST_CHANGES); only the ones about a comment's line or path mean "re-anchor the comments".
     private static bool NamesALine(JsonElement body)
