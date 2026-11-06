@@ -19,7 +19,7 @@ public sealed class LinearProbeOverFakeTests
     {
         await using var linear = await Start();
 
-        var run = await Probe(linear, "--url", linear.Url.ToString());
+        var run = await ProbeWithWriteKey(linear, writeKey: "", "--url", linear.Url.ToString());
 
         Assert.True(run.ExitCode == 0, run.Text);
         foreach (var line in new[]
