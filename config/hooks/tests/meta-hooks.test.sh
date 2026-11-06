@@ -294,7 +294,7 @@ OUT="$(report '{"hook_event_name":"SessionStart","session_id":"abc-123"}')"; RC=
 check "outside a lane or a Sindri launch: exit 0, nothing written" "$RC:$OUT:$(ls "$LS" 2>/dev/null | wc -l | tr -d ' ')" "0::0"
 OUT="$(printf '%s' '{"hook_event_name":"SessionStart","session_id":"0199aaaa-bbbb-4ccc-8ddd-eeeeffff0001"}' | AW_META_TEAM=t1 AW_META_LANE=api bash "$HOOKS/session-id-report.sh")"; RC=$?
 check "in a lane: exit 0, silent, the id is lane-sessions/<lane>" "$RC:$OUT:$(cat "$LS/api")" "0::0199aaaa-bbbb-4ccc-8ddd-eeeeffff0001"
-check "the lane file is 0600 and no temp file is left" "$(stat -c %a "$LS/api" 2>/dev/null || stat -f %Lp "$LS/api"):$(ls -A "$LS" | wc -l | tr -d ' ')" "600:1"
+check "the lane file is 0600 and no temp file is left (only the id and the hook trace)" "$(stat -c %a "$LS/api" 2>/dev/null || stat -f %Lp "$LS/api"):$(ls -A "$LS" | tr '\n' ' ')" "600:api api.hook "
 printf '%s' '{"session_id":"0199aaaa-bbbb-4ccc-8ddd-eeeeffff0002"}' | AW_META_TEAM=t1 AW_META_LANE=api bash "$HOOKS/session-id-report.sh"
 check "a new session in the lane replaces the id" "$(cat "$LS/api")" "0199aaaa-bbbb-4ccc-8ddd-eeeeffff0002"
 printf '%s' '{"session_id":"id-ui"}' | AW_META_TEAM=t1 AW_META_LANE=ui bash "$HOOKS/session-id-report.sh"
