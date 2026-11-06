@@ -19,7 +19,7 @@ temp home and prints the pull request link.
 
 ## Variants
 
-Every variant seeds its head's checks with counts the Sindri UI shows (`seed checks --passed/--pending`): a green head has 7 passed, none pending.
+Every variant seeds its head's checks with counts the Sindri UI shows (`seed checks --passed/--pending`; `--runs` also sets named check runs, and `seed files` seeds changed files): a green head has 7 passed, none pending.
 
 | Variant | What it loads | Consumed by |
 |---|---|---|
