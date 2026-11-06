@@ -1,7 +1,7 @@
 using Aw.Meta.Core.Commands;
+using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Ids;
 using Aw.Meta.Core.Messages;
-using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Usage;
 using Aw.Meta.Features.Watch;
 using Aw.Meta.Testing;

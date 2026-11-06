@@ -85,9 +85,11 @@ own_agent() {
 
 STATE="${AW_STATE_DIR:-$HOME/.agentic-workflow}"
 # trace <outcome>: lane-sessions/<lane>.hook, "<UTC time> session-id-report <event> <outcome>" (see meta-lane-gate.sh). Never fails the hook.
+EVENT=""
 trace() {
   local d="${AW_META_DIR:-$STATE/meta}/lane-sessions"
-  { mkdir -p "$d" && printf '%s session-id-report %s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${EVENT:-unknown}" "$1" > "$d/$AW_META_LANE.hook"; } 2> /dev/null || true
+  local event="$EVENT"; [ -n "$event" ] || event=unknown
+  { mkdir -p "$d" && printf '%s session-id-report %s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$event" "$1" > "$d/$AW_META_LANE.hook"; } 2> /dev/null || true
 }
 EVENT="$(printf '%s' "$INPUT" | jq -r '.hook_event_name // empty' 2>/dev/null)"
 # Only the lane's own agent reports its id: not a nested instance (codex exec, cursor-agent -p), and never a Claude lane's.

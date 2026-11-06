@@ -80,7 +80,8 @@ EVENT=""; TRACE_FAILED=0
 trace() {
   [ "$TRACE_FAILED" = 1 ] && return 0
   case "$1" in *-failed) TRACE_FAILED=1 ;; esac
-  { mkdir -p "$LANE_DIR" && printf '%s meta-lane-gate %s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${EVENT:-unknown}" "$1" > "$LANE_DIR/$AW_META_LANE.hook"; } 2> /dev/null || true
+  local event="$EVENT"; [ -n "$event" ] || event=unknown
+  { mkdir -p "$LANE_DIR" && printf '%s meta-lane-gate %s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$event" "$1" > "$LANE_DIR/$AW_META_LANE.hook"; } 2> /dev/null || true
 }
 # code_of <output>: "-AW-META-NNN" when aw-meta's first line is a coded error, appended to a failopen cause (the code, never the text)
 code_of() { if [[ "$1" =~ ^(AW-META-[0-9][0-9][0-9]): ]]; then printf -- '-%s' "${BASH_REMATCH[1]}"; fi; }
