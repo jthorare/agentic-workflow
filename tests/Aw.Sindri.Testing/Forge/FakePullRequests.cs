@@ -352,6 +352,43 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
         return Done(Results.Success<IReadOnlyList<PullDigest>>(digests));
     }
 
+    /// <summary>Plays the forge: sets the changed files of the pull request at a link, with each file's text at the head by path.</summary>
+    /// <param name="link">The pull request's link.</param>
+    /// <param name="files">The files.</param>
+    /// <param name="texts">The text of each file at the head, by path.</param>
+    public void SeedFiles(string link, IReadOnlyList<PullFile> files, IReadOnlyDictionary<string, string> texts)
+    {
+        ArgumentNullException.ThrowIfNull(files);
+        ArgumentNullException.ThrowIfNull(texts);
+        var pull = Locate(link).Value;
+        pull.Files = files;
+        pull.FileTexts.Clear();
+        foreach (var (path, text) in texts)
+        {
+            pull.FileTexts[path] = text;
+        }
+    }
+
+    /// <summary>Plays CI: sets the check runs Get reports on the pull request at a link.</summary>
+    /// <param name="link">The pull request's link.</param>
+    /// <param name="runs">The runs.</param>
+    public void SeedRuns(string link, IReadOnlyList<PullCheckRun> runs)
+    {
+        ArgumentNullException.ThrowIfNull(runs);
+        var pull = Locate(link).Value;
+        var failing = runs.Where(static r => r.Conclusion == "failure").Select(static r => r.Name).ToList();
+        pull.Checks = new PullChecks(failing.Count > 0 ? PullChecksState.Failing : PullChecksState.Passing, pull.HeadSha, failing, runs.Count - failing.Count, Pending: 0, runs);
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<PullFiles>> Files(string link, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    /// <inheritdoc />
+    public ValueTask<Result<string>> FileText(string link, string path, string sha, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    /// <inheritdoc />
+    public ValueTask<Result<PullReviewOutcome>> SubmitReview(PullReview review, CancellationToken cancellationToken) => throw new NotSupportedException();
+
     private PullDelivery Deliver(string key) => _delivered.Add(key) ? PullDelivery.Delivered : PullDelivery.AlreadyDelivered;
 
     private static ValueTask<Result<T>> Done<T>(Result<T> result) => ValueTask.FromResult(result);

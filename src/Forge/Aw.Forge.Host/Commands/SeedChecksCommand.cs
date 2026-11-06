@@ -13,7 +13,7 @@ internal static class SeedChecksCommand
     internal const string Name = "seed checks";
 
     internal static readonly CommandSpec Spec = new(
-        "seed checks <link> --state none|pending|passing|failing [--failing <name,name>] [--passed <n>] [--pending <n>]", ["state"], ["failing", "passed", "pending"], [], Positionals: 1);
+        "seed checks <link> --state none|pending|passing|failing [--failing <name,name>] [--passed <n>] [--pending <n>] [--runs <name:conclusion[:app],...>]", ["state"], ["failing", "passed", "pending", "runs"], [], Positionals: 1);
 
     internal static Task<int> Run(CommandLine line, IServiceProvider services, JsonSerializerOptions json)
     {

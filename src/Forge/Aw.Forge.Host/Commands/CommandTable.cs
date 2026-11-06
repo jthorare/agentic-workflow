@@ -15,6 +15,7 @@ internal static class CommandTable
             [ThreadsCommand.Name] = (ThreadsCommand.Spec, ThreadsCommand.Run),
             [SeedThreadCommand.Name] = (SeedThreadCommand.Spec, SeedThreadCommand.Run),
             [SeedChecksCommand.Name] = (SeedChecksCommand.Spec, SeedChecksCommand.Run),
+            [SeedFilesCommand.Name] = (SeedFilesCommand.Spec, SeedFilesCommand.Run),
             [SeedAdvanceCommand.Name] = (SeedAdvanceCommand.Spec, SeedAdvanceCommand.Run),
         };
 

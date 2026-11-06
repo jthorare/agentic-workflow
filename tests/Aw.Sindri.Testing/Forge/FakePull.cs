@@ -67,6 +67,15 @@ public sealed class FakePull(PullRepo repo, int number, string head, string head
     /// <summary>Gets the threads, oldest first.</summary>
     public IList<PullThread> Threads { get; } = [];
 
+    /// <summary>Gets or sets the changed files.</summary>
+    public IReadOnlyList<PullFile> Files { get; set; } = [];
+
+    /// <summary>Gets the text of each file at the head, by path.</summary>
+    public IDictionary<string, string> FileTexts { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
+
+    /// <summary>Gets the reviews posted, by marker.</summary>
+    public IDictionary<string, PullReview> Reviews { get; } = new Dictionary<string, PullReview>(StringComparer.Ordinal);
+
     /// <summary>Gets the pull request's link.</summary>
     public string Link => string.Create(CultureInfo.InvariantCulture, $"https://{Repo.Host}/{Repo.Owner}/{Repo.Name}/pull/{Number}");
 }

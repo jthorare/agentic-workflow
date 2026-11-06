@@ -59,4 +59,10 @@ internal sealed class RecordingPulls : IPullRequests
     public ValueTask<Result<string>> DefaultBranch(PullRepo repo, CancellationToken cancellationToken) => throw new NotSupportedException();
 
     public ValueTask<Result<IReadOnlyList<PullDigest>>> Digest(IReadOnlyList<string> links, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    public ValueTask<Result<PullFiles>> Files(string link, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    public ValueTask<Result<string>> FileText(string link, string path, string sha, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    public ValueTask<Result<PullReviewOutcome>> SubmitReview(PullReview review, CancellationToken cancellationToken) => throw new NotSupportedException();
 }

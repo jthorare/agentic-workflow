@@ -274,6 +274,107 @@ public abstract class ForgeContract : ForgeReadContract
         Expect.That(leased == PushOutcome.Pushed && snapshot.Head.Sha == Sha('c'), "the right lease pushes and the pull request follows its branch");
     }
 
+    /// <summary>Seeded files list back in order with a rename's old path and a binary file's missing patch, and the cap flag follows the seed.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Files_round_trip_with_a_renamed_and_a_binary_file()
+    {
+        var (run, pull) = await Open();
+        SeedFile[] files =
+        [
+            new(new PullFile("src/a.cs", PreviousPath: null, PullFileStatus.Modified, 3, 1, "@@ -1,2 +1,4 @@\n+x"), "class A;"),
+            new(new PullFile("src/b.cs", "src/old-b.cs", PullFileStatus.Renamed, 0, 0, Patch: null), "class B;"),
+            new(new PullFile("assets/logo.png", PreviousPath: null, PullFileStatus.Added, 0, 0, Patch: null), Text: null),
+        ];
+
+        _ = Expect.Ok(run.Seed!.SeedFiles(new SeedFilesRequest(pull, files)), "SeedFiles");
+        var listed = Expect.Ok(await run.Forge.Files(pull, Ct), "Files");
+        _ = Expect.Ok(run.Seed.SeedFiles(new SeedFilesRequest(pull, files, CapReached: true)), "SeedFiles with the cap");
+        var capped = Expect.Ok(await run.Forge.Files(pull, Ct), "Files at the cap");
+
+        Expect.That(listed.Files.SequenceEqual(files.Select(f => f.File)) && !listed.CapReached, "the files come back as seeded, in order, with the cap not reached");
+        Expect.That(listed.Files[1].PreviousPath == "src/old-b.cs" && listed.Files[1].Status == PullFileStatus.Renamed, "a rename keeps its old path");
+        Expect.That(listed.Files[2].Patch is null, "a binary file has no patch");
+        Expect.That(capped.CapReached, "the cap flag follows the seed");
+        _ = Expect.Fails(await run.Forge.Files(Missing(run), Ct), "AW-FORGE-004", "Files of a missing pull");
+    }
+
+    /// <summary>FileText reads a seeded file at the head (and a renamed file's old text at the base), caps at 1 MiB, and is not found for a binary or unknown file.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task FileText_reads_seeded_text_and_caps_it()
+    {
+        var (run, pull) = await Open();
+        var big = new string('x', ForgeLimits.FileTextBytes + 100);
+        SeedFile[] files =
+        [
+            new(new PullFile("src/a.cs", PreviousPath: null, PullFileStatus.Modified, 1, 0, "@@"), "class A;", BaseText: "class Old;"),
+            new(new PullFile("src/big.txt", PreviousPath: null, PullFileStatus.Added, 1, 0, "@@"), big),
+            new(new PullFile("assets/logo.png", PreviousPath: null, PullFileStatus.Added, 0, 0, Patch: null), Text: null),
+        ];
+        _ = Expect.Ok(run.Seed!.SeedFiles(new SeedFilesRequest(pull, files)), "SeedFiles");
+        var snapshot = Expect.Ok(await run.Forge.GetPull(pull, Ct), "GetPull");
+
+        var head = Expect.Ok(await run.Forge.FileText(pull, "src/a.cs", snapshot.Head.Sha, Ct), "FileText at the head");
+        var atBase = Expect.Ok(await run.Forge.FileText(pull, "src/a.cs", snapshot.Base.Sha, Ct), "FileText at the base");
+        var capped = Expect.Ok(await run.Forge.FileText(pull, "src/big.txt", snapshot.Head.Sha, Ct), "FileText of a big file");
+
+        Expect.That(head == "class A;" && atBase == "class Old;", "the head's and the base's text");
+        Expect.That(System.Text.Encoding.UTF8.GetByteCount(capped) <= ForgeLimits.FileTextBytes && capped.Length > 0, "the text is capped at 1 MiB");
+        _ = Expect.Fails(await run.Forge.FileText(pull, "assets/logo.png", snapshot.Head.Sha, Ct), "AW-FORGE-004", "FileText of a binary file");
+        _ = Expect.Fails(await run.Forge.FileText(pull, "src/none.cs", snapshot.Head.Sha, Ct), "AW-FORGE-004", "FileText of an unknown file");
+    }
+
+    /// <summary>Seeded check runs show on Get with their name, app, conclusion and commit.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Check_runs_follow_the_seed()
+    {
+        var (run, pull) = await Open();
+        CheckRun[] runs = [new("build", "github-actions", "success", Sha('a')), new("lint", App: null, "failure", Sha('a'))];
+        var seed = new SeedChecksRequest(pull, ChecksState.Failing, ["lint"], new Dictionary<string, string>(StringComparer.Ordinal), Passed: 1, Runs: runs);
+
+        _ = Expect.Ok(run.Seed!.SeedChecks(seed), "SeedChecks with runs");
+        var checks = Expect.Ok(await run.Forge.GetPull(pull, Ct), "GetPull").Checks;
+
+        Expect.That(checks.Runs is { } seen && seen.SequenceEqual(runs), "the runs read back as seeded");
+    }
+
+    /// <summary>A review posts once per marker and shows in the conversation with its marker.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_review_is_posted_once_per_marker()
+    {
+        var (run, pull) = await Open();
+        var request = new SubmitReviewRequest(pull, Sha('a'), ReviewVerdict.Comment, "Looks fine", [new ReviewComment("src/a.cs", 12, "Nit")], "owner-review:d1:1");
+
+        var first = Expect.Ok(await run.Forge.SubmitReview(request, Ct), "SubmitReview");
+        var again = Expect.Ok(await run.Forge.SubmitReview(request, Ct), "SubmitReview again");
+        var threads = Expect.Ok(await run.Forge.ListThreads(pull, Ct), "ListThreads");
+
+        Expect.That(first == ReviewOutcome.Posted && again == ReviewOutcome.AlreadyDelivered, "the second review with the same marker is not posted");
+        Expect.That(threads.Where(t => t.Kind == CommentKind.Review && t.Markers.Contains("owner-review:d1:1", StringComparer.Ordinal)).Take(2).Count() == 1, "the review shows once, with its marker");
+        _ = Expect.Fails(await run.Forge.SubmitReview(request with { Marker = "has space" }, Ct), "AW-FORGE-001", "SubmitReview with a bad marker");
+        _ = Expect.Fails(await run.Forge.SubmitReview(request with { Pull = Missing(run) }, Ct), "AW-FORGE-004", "SubmitReview on a missing pull");
+    }
+
+    /// <summary>A review written against a head that has moved is HeadMoved and posts nothing.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_review_on_a_moved_head_is_not_posted()
+    {
+        var (run, pull) = await Open();
+        var request = new SubmitReviewRequest(pull, Sha('a'), ReviewVerdict.RequestChanges, "Stale", [], "owner-review:d2:1");
+        _ = Expect.Ok(run.Seed!.AdvanceHead(pull, Sha('c')), "AdvanceHead");
+
+        var outcome = Expect.Ok(await run.Forge.SubmitReview(request, Ct), "SubmitReview on the old head");
+        var threads = Expect.Ok(await run.Forge.ListThreads(pull, Ct), "ListThreads");
+        var onNewHead = Expect.Ok(await run.Forge.SubmitReview(request with { ExpectedHead = Sha('c') }, Ct), "SubmitReview on the new head");
+
+        Expect.That(outcome == ReviewOutcome.HeadMoved && !threads.Any(t => t.Kind == CommentKind.Review), "nothing was posted on a stale head");
+        Expect.That(onNewHead == ReviewOutcome.Posted, "the same marker posts once the head is right: HeadMoved did not use it up");
+    }
+
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private static PushRequest Push(string sha, string? lease) => new("/unused", sha, "https://forge.test/acme/widgets.git", Feature, lease);
