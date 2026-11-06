@@ -101,7 +101,7 @@ schema: 1
 blocks:
   - id: bug-fix-orchestrator
     sentence: Reproduces a bug with a failing check, fixes it until that check passes, and opens a draft PR.
-    inputs:  { bug: { type: text, label: The bug (a Linear id, a link or the report), required: true } }
+    inputs:  { bug: { type: text, label: "The bug (a Linear id, a link or the report)", required: true } }
     args: ["{bug}"]
     outputs:
       pr:         { type: text, from: pr }                         # new key, F-1: the draft PR's URL
