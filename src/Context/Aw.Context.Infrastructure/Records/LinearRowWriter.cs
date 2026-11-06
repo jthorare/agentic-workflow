@@ -1,6 +1,7 @@
 using Aw.Context.Core.Linear;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
+using Aw.Context.Infrastructure.Linear;
 using Aw.Context.Infrastructure.Store;
 using Aw.Kernel;
 using Aw.Kernel.Data;
@@ -10,7 +11,7 @@ namespace Aw.Context.Infrastructure.Records;
 
 /// <summary>
 /// The writer of <see cref="LinearSideRows"/> (Linear hub spec 2026-11-04 §4.1): <c language="text">linear_issue</c>, <c language="text">linear_comment</c> and <c language="text">linear_issue_change</c>, migration 0032. A replace logs a change row for
-/// the assignee and for the state when the new fields differ from the stored ones; an issue with no stored fields (the first ';f3' re-save) logs none. Rows older than <see cref="ChangeRetention"/> are deleted by the same replace.
+/// the assignee and for the state when the new fields differ from the stored ones; an issue with no stored fields logs none, except that a record new to Sindri after the feed's first pass logs its assignee from nobody. Rows older than <see cref="ChangeRetention"/> are deleted by the same replace.
 /// </summary>
 /// <param name="clock">The clock the change rows' times and the retention cut-off come from.</param>
 internal sealed class LinearRowWriter(TimeProvider? clock = null) : ISideRowWriter
@@ -48,7 +49,7 @@ internal sealed class LinearRowWriter(TimeProvider? clock = null) : ISideRowWrit
             : !CommentsEqual(comments.Value, wanted.Comments) || !string.Equals(description.Value.Count > 0 ? description.Value[0] : string.Empty, wanted.Description ?? string.Empty, StringComparison.Ordinal);
     }
 
-    public async ValueTask<Error?> Replace(ISqliteSession session, RecordKey key, SideRows rows, CancellationToken cancellationToken)
+    public async ValueTask<Error?> Replace(ISqliteSession session, RecordKey key, SideRows rows, bool newRecord, CancellationToken cancellationToken)
     {
         var side = (LinearSideRows)rows;
         var stored = await StoredFields(session, key, cancellationToken).ConfigureAwait(false);
@@ -59,7 +60,7 @@ internal sealed class LinearRowWriter(TimeProvider? clock = null) : ISideRowWrit
 
         return await UpsertIssue(session, key, side.Issue, cancellationToken).ConfigureAwait(false)
             ?? await ReplaceComments(session, key, side.Issue.Comments, cancellationToken).ConfigureAwait(false)
-            ?? await LogChanges(session, key, stored.Value, side, cancellationToken).ConfigureAwait(false)
+            ?? await LogChanges(session, key, new Prior(stored.Value, newRecord), side, cancellationToken).ConfigureAwait(false)
             ?? await SqliteRecordStore.Exec(session, LinearSql.PruneChanges, c => c.Bind("@cutoff", _clock.GetUtcNow() - ChangeRetention), cancellationToken).ConfigureAwait(false);
     }
 
@@ -111,16 +112,26 @@ internal sealed class LinearRowWriter(TimeProvider? clock = null) : ISideRowWrit
         return failure;
     }
 
-    // why: no stored fields means the issue's first side rows (the ';f3' re-save, or a tombstoned issue that came back), and a first sight is not a change
-    private async ValueTask<Error?> LogChanges(ISqliteSession session, RecordKey key, LinearIssueFields? before, LinearSideRows side, CancellationToken cancellationToken)
+    // why: no stored fields means the issue's first side rows. A record that already existed (the ';f3' re-save, or a tombstoned issue that came back) is a first sight, not a change. A record that is new to Sindri,
+    // seen after the feed finished a pass, is news: its assignee goes from nobody to someone, which is how an issue a teammate opened for the owner reaches Since. Its first state is not a move. While the first
+    // pass is still running every record is new, so none of them logs.
+    private async ValueTask<Error?> LogChanges(ISqliteSession session, RecordKey key, Prior prior, LinearSideRows side, CancellationToken cancellationToken)
     {
-        if (before is null)
-        {
-            return null;
-        }
-
         var after = side.Issue.Fields;
         var at = _clock.GetUtcNow();
+        if (prior.Fields is not { } before)
+        {
+            if (!prior.NewRecord || after.AssigneeId is null)
+            {
+                return null;
+            }
+
+            var watermark = await HasWatermark(session, cancellationToken).ConfigureAwait(false);
+            return watermark.IsError ? watermark.Error
+                : watermark.Value ? await Log(session, key, new Change("assignee", Old: null, after.AssigneeId, side.Written.HasFlag(LinearWrittenFields.Assignee)), at, cancellationToken).ConfigureAwait(false)
+                : null;
+        }
+
         if (before.AssigneeId != after.AssigneeId
             && await Log(session, key, new Change("assignee", before.AssigneeId, after.AssigneeId, side.Written.HasFlag(LinearWrittenFields.Assignee)), at, cancellationToken).ConfigureAwait(false) is { } assignee)
         {
@@ -130,6 +141,18 @@ internal sealed class LinearRowWriter(TimeProvider? clock = null) : ISideRowWrit
         return before.StateId != after.StateId
             ? await Log(session, key, new Change("state", before.StateId, after.StateId, side.Written.HasFlag(LinearWrittenFields.State)), at, cancellationToken).ConfigureAwait(false)
             : null;
+    }
+
+    // Whether the feed has finished a pass: its cursor's watermark is set. Read in the page's own transaction, before the page moves the cursor.
+    private static async ValueTask<Result<bool>> HasWatermark(ISqliteSession session, CancellationToken cancellationToken)
+    {
+        var rows = await SqliteQueries.List(session, new SqlStatement(LinearSql.StoredCursor, c => c.Bind("@source", LinearSourceIds.Issues.Value)), SideRowReads.Text, cancellationToken).ConfigureAwait(false);
+        if (rows.IsError)
+        {
+            return ContextDatabase.Translate(rows.Error);
+        }
+
+        return rows.Value.Count > 0 && rows.Value[0].Length > 0 && FeedCursor.Read(SourceCursor.From(rows.Value[0])).Since is not null;
     }
 
     private static ValueTask<Error?> Log(ISqliteSession session, RecordKey key, Change change, DateTimeOffset at, CancellationToken cancellationToken) =>
@@ -170,6 +193,8 @@ internal sealed class LinearRowWriter(TimeProvider? clock = null) : ISideRowWrit
     }
 
     private static string Labels(IReadOnlyList<ExternalId> ids) => DesignDocJson.Strings([.. ids.Select(static i => i.Value)]);
+
+    private sealed record Prior(LinearIssueFields? Fields, bool NewRecord);
 
     private sealed record Change(string Field, ExternalId? Old, ExternalId? New, bool Written);
 }

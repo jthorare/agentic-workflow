@@ -169,7 +169,7 @@ internal sealed partial class SqliteRecordStore
         var key = record.Key.Value;
         var failure = await Exec(session, RecordSql.UpsertRecord, c => BindRecord(c, record), cancellationToken).ConfigureAwait(false)
             ?? await Exec(session, RecordSql.DeleteLinks, c => c.Bind("@key", key), cancellationToken).ConfigureAwait(false)
-            ?? await WriteSide(session, write, cancellationToken).ConfigureAwait(false);
+            ?? await WriteSide(session, write, isNew, cancellationToken).ConfigureAwait(false);
         if (failure is not null)
         {
             return failure;

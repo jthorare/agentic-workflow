@@ -6,6 +6,9 @@ internal static class LinearSql
     internal const string StoredIssue =
         "SELECT team_id, identifier, state_id, state_type, assignee_id, priority, estimate, cycle_id, project_id, parent_id, labels, due_date, sort_order, updated_at FROM linear_issue WHERE key = @key";
 
+    /// <summary>The feed's stored cursor; its 's=' part is the watermark of the last finished pass.</summary>
+    internal const string StoredCursor = "SELECT coalesce(cursor, '') FROM source_cursor WHERE source = @source AND repo = 'records'";
+
     internal const string StoredDescription = "SELECT coalesce(description, '') FROM linear_issue WHERE key = @key";
 
     internal const string StoredComments =
