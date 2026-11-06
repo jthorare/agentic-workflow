@@ -80,6 +80,9 @@ EVENT=""; TRACE_FAILED=0
 trace() {
   [ "$TRACE_FAILED" = 1 ] && return 0
   case "$1" in *-failed) TRACE_FAILED=1 ;; esac
+  # a nested agent (codex exec, cursor-agent -p) inherits the lane variables: its not-own-agent never replaces the lane's own trace
+  # from this session (a trace file newer than the session id file)
+  if [ "$1" = not-own-agent ] && [ "$LANE_DIR/$AW_META_LANE.hook" -nt "$LANE_DIR/$AW_META_LANE" ] 2> /dev/null; then return 0; fi
   local event="$EVENT"; [ -n "$event" ] || event=unknown
   { mkdir -p "$LANE_DIR" && printf '%s meta-lane-gate %s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$event" "$1" > "$LANE_DIR/$AW_META_LANE.hook"; } 2> /dev/null || true
 }
