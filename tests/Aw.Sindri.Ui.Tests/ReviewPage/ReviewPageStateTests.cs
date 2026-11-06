@@ -138,4 +138,14 @@ public sealed class ReviewPageStateTests
         Assert.True(page.IsYours);
         Assert.Equal((false, false, "You can't approve or request changes on your own PR: GitHub takes a comment only"), (page.ApproveEnabled, page.RequestChangesEnabled, page.OwnPrText));
     }
+
+    [Fact]
+    public async Task On_an_agent_PR_the_fix_thread_is_posted_while_the_review_buttons_follow_only_yours()
+    {
+        // an agent's PR: its author is the forge credential's login, not review.login, so yours is false and postsFixThreads is true
+        var page = await _f.Opened("full", json => json["pr"]!["postsFixThreads"] = true, Token);
+
+        Assert.Equal((false, true), (page.IsYours, page.FixTarget!.PostsThreads));
+        Assert.Equal((true, true, string.Empty), (page.ApproveEnabled, page.RequestChangesEnabled, page.OwnPrText));   // GUESS: only the owner's own PR turns them off
+    }
 }
