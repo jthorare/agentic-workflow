@@ -13,6 +13,7 @@ namespace Aw.Sindri.Core.Reviews;
 /// <param name="Reviews">Each reviewer's latest review.</param>
 /// <param name="ReviewersRead">Whether Sindri has read this record's reviewers yet.</param>
 /// <param name="Claims">The refs of the PR's Covers: line.</param>
+/// <param name="Url">The PR's link on the forge, which the forge port takes; null when the record has none.</param>
 public sealed record ReviewPull(
     string Repo,
     int Number,
@@ -25,4 +26,5 @@ public sealed record ReviewPull(
     IReadOnlyList<string> RequestedReviewers,
     IReadOnlyList<ReviewedAt> Reviews,
     bool ReviewersRead,
-    IReadOnlyList<ReviewClaim> Claims);
+    IReadOnlyList<ReviewClaim> Claims,
+    string? Url = null);

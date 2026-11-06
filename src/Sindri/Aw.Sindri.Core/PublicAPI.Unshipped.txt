@@ -22385,20 +22385,9 @@ Aw.Sindri.Core.Reviews.ReviewFactsSnapshot.Library.init -> void
 Aw.Sindri.Core.Reviews.ReviewFactsSnapshot.Pulls.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPull!>!
 Aw.Sindri.Core.Reviews.ReviewFactsSnapshot.Pulls.init -> void
 Aw.Sindri.Core.Reviews.ReviewFactsSnapshot.ReviewFactsSnapshot(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPull!>! Pulls, Aw.Sindri.Core.Projects.Facts.ProjectSourceFreshness? Github, Aw.Sindri.Core.Reviews.ReviewLibraryFacts! Library) -> void
-Aw.Sindri.Core.Reviews.ReviewGroup
-Aw.Sindri.Core.Reviews.ReviewGroup.<Clone>$() -> Aw.Sindri.Core.Reviews.ReviewGroup!
-Aw.Sindri.Core.Reviews.ReviewGroup.Deconstruct(out Aw.Sindri.Core.Reviews.ReviewGroupKind Kind, out string! Title, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewSection!>! Sections) -> void
-Aw.Sindri.Core.Reviews.ReviewGroup.Equals(Aw.Sindri.Core.Reviews.ReviewGroup? other) -> bool
 Aw.Sindri.Core.Reviews.ReviewGroupKind
-Aw.Sindri.Core.Reviews.ReviewGroup.Kind.get -> Aw.Sindri.Core.Reviews.ReviewGroupKind
-Aw.Sindri.Core.Reviews.ReviewGroup.Kind.init -> void
 Aw.Sindri.Core.Reviews.ReviewGroupKind.Waiting = 0 -> Aw.Sindri.Core.Reviews.ReviewGroupKind
 Aw.Sindri.Core.Reviews.ReviewGroupKind.Yours = 1 -> Aw.Sindri.Core.Reviews.ReviewGroupKind
-Aw.Sindri.Core.Reviews.ReviewGroup.ReviewGroup(Aw.Sindri.Core.Reviews.ReviewGroupKind Kind, string! Title, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewSection!>! Sections) -> void
-Aw.Sindri.Core.Reviews.ReviewGroup.Sections.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewSection!>!
-Aw.Sindri.Core.Reviews.ReviewGroup.Sections.init -> void
-Aw.Sindri.Core.Reviews.ReviewGroup.Title.get -> string!
-Aw.Sindri.Core.Reviews.ReviewGroup.Title.init -> void
 Aw.Sindri.Core.Reviews.ReviewLibrary
 Aw.Sindri.Core.Reviews.ReviewLibrary.<Clone>$() -> Aw.Sindri.Core.Reviews.ReviewLibrary!
 Aw.Sindri.Core.Reviews.ReviewLibrary.Deconstruct(out string! State, out int Docs, out int WithErrors, out int UnreadableRoots, out string! Text) -> void
@@ -22430,15 +22419,12 @@ Aw.Sindri.Core.Reviews.ReviewLibrary.WithErrors.init -> void
 Aw.Sindri.Core.Reviews.ReviewListBuilder
 Aw.Sindri.Core.Reviews.ReviewListParts
 Aw.Sindri.Core.Reviews.ReviewListParts.<Clone>$() -> Aw.Sindri.Core.Reviews.ReviewListParts!
-Aw.Sindri.Core.Reviews.ReviewListParts.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewGroup!>! Groups, out int WaitingCount, out string? Notice, out Aw.Sindri.Core.Reviews.ReviewEmpty? Empty) -> void
 Aw.Sindri.Core.Reviews.ReviewListParts.Empty.get -> Aw.Sindri.Core.Reviews.ReviewEmpty?
 Aw.Sindri.Core.Reviews.ReviewListParts.Empty.init -> void
 Aw.Sindri.Core.Reviews.ReviewListParts.Equals(Aw.Sindri.Core.Reviews.ReviewListParts? other) -> bool
-Aw.Sindri.Core.Reviews.ReviewListParts.Groups.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewGroup!>!
 Aw.Sindri.Core.Reviews.ReviewListParts.Groups.init -> void
 Aw.Sindri.Core.Reviews.ReviewListParts.Notice.get -> string?
 Aw.Sindri.Core.Reviews.ReviewListParts.Notice.init -> void
-Aw.Sindri.Core.Reviews.ReviewListParts.ReviewListParts(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewGroup!>! Groups, int WaitingCount, string? Notice, Aw.Sindri.Core.Reviews.ReviewEmpty? Empty) -> void
 Aw.Sindri.Core.Reviews.ReviewListParts.WaitingCount.get -> int
 Aw.Sindri.Core.Reviews.ReviewListParts.WaitingCount.init -> void
 Aw.Sindri.Core.Reviews.ReviewLoginPrompt
@@ -22462,21 +22448,6 @@ Aw.Sindri.Core.Reviews.ReviewProjectName.Name.get -> string!
 Aw.Sindri.Core.Reviews.ReviewProjectName.Name.init -> void
 Aw.Sindri.Core.Reviews.ReviewProjectName.ReviewProjectName(string! Key, string! Name) -> void
 Aw.Sindri.Core.Reviews.ReviewPull
-Aw.Sindri.Core.Reviews.ReviewPull.Author.get -> string!
-Aw.Sindri.Core.Reviews.ReviewPull.Author.init -> void
-Aw.Sindri.Core.Reviews.ReviewPull.Claims.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewClaim!>!
-Aw.Sindri.Core.Reviews.ReviewPull.Claims.init -> void
-Aw.Sindri.Core.Reviews.ReviewPull.<Clone>$() -> Aw.Sindri.Core.Reviews.ReviewPull!
-Aw.Sindri.Core.Reviews.ReviewPull.Deconstruct(out string! Repo, out int Number, out string! Title, out string! Author, out bool Draft, out System.DateTimeOffset OpenedAt, out System.DateTimeOffset UpdatedAt, out string? HeadSha, out System.Collections.Generic.IReadOnlyList<string!>! RequestedReviewers, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewedAt!>! Reviews, out bool ReviewersRead, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewClaim!>! Claims) -> void
-Aw.Sindri.Core.Reviews.ReviewPull.Draft.get -> bool
-Aw.Sindri.Core.Reviews.ReviewPull.Draft.init -> void
-Aw.Sindri.Core.Reviews.ReviewPull.Equals(Aw.Sindri.Core.Reviews.ReviewPull? other) -> bool
-Aw.Sindri.Core.Reviews.ReviewPull.HeadSha.get -> string?
-Aw.Sindri.Core.Reviews.ReviewPull.HeadSha.init -> void
-Aw.Sindri.Core.Reviews.ReviewPull.Number.get -> int
-Aw.Sindri.Core.Reviews.ReviewPull.Number.init -> void
-Aw.Sindri.Core.Reviews.ReviewPull.OpenedAt.get -> System.DateTimeOffset
-Aw.Sindri.Core.Reviews.ReviewPull.OpenedAt.init -> void
 Aw.Sindri.Core.Reviews.ReviewPullRef
 Aw.Sindri.Core.Reviews.ReviewPullRef.<Clone>$() -> Aw.Sindri.Core.Reviews.ReviewPullRef!
 Aw.Sindri.Core.Reviews.ReviewPullRef.Deconstruct(out string! Owner, out string! Repo, out int Number) -> void
@@ -22489,19 +22460,6 @@ Aw.Sindri.Core.Reviews.ReviewPullRef.Owner.init -> void
 Aw.Sindri.Core.Reviews.ReviewPullRef.Repo.get -> string!
 Aw.Sindri.Core.Reviews.ReviewPullRef.Repo.init -> void
 Aw.Sindri.Core.Reviews.ReviewPullRef.ReviewPullRef(string! Owner, string! Repo, int Number) -> void
-Aw.Sindri.Core.Reviews.ReviewPull.Repo.get -> string!
-Aw.Sindri.Core.Reviews.ReviewPull.Repo.init -> void
-Aw.Sindri.Core.Reviews.ReviewPull.RequestedReviewers.get -> System.Collections.Generic.IReadOnlyList<string!>!
-Aw.Sindri.Core.Reviews.ReviewPull.RequestedReviewers.init -> void
-Aw.Sindri.Core.Reviews.ReviewPull.ReviewersRead.get -> bool
-Aw.Sindri.Core.Reviews.ReviewPull.ReviewersRead.init -> void
-Aw.Sindri.Core.Reviews.ReviewPull.ReviewPull(string! Repo, int Number, string! Title, string! Author, bool Draft, System.DateTimeOffset OpenedAt, System.DateTimeOffset UpdatedAt, string? HeadSha, System.Collections.Generic.IReadOnlyList<string!>! RequestedReviewers, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewedAt!>! Reviews, bool ReviewersRead, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewClaim!>! Claims) -> void
-Aw.Sindri.Core.Reviews.ReviewPull.Reviews.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewedAt!>!
-Aw.Sindri.Core.Reviews.ReviewPull.Reviews.init -> void
-Aw.Sindri.Core.Reviews.ReviewPull.Title.get -> string!
-Aw.Sindri.Core.Reviews.ReviewPull.Title.init -> void
-Aw.Sindri.Core.Reviews.ReviewPull.UpdatedAt.get -> System.DateTimeOffset
-Aw.Sindri.Core.Reviews.ReviewPull.UpdatedAt.init -> void
 Aw.Sindri.Core.Reviews.ReviewRow
 Aw.Sindri.Core.Reviews.ReviewRow.Author.get -> string!
 Aw.Sindri.Core.Reviews.ReviewRow.Author.init -> void
@@ -22607,9 +22565,6 @@ override Aw.Sindri.Core.Reviews.ReviewEmpty.ToString() -> string!
 override Aw.Sindri.Core.Reviews.ReviewFactsSnapshot.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Reviews.ReviewFactsSnapshot.GetHashCode() -> int
 override Aw.Sindri.Core.Reviews.ReviewFactsSnapshot.ToString() -> string!
-override Aw.Sindri.Core.Reviews.ReviewGroup.Equals(object? obj) -> bool
-override Aw.Sindri.Core.Reviews.ReviewGroup.GetHashCode() -> int
-override Aw.Sindri.Core.Reviews.ReviewGroup.ToString() -> string!
 override Aw.Sindri.Core.Reviews.ReviewLibrary.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Reviews.ReviewLibraryFacts.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Reviews.ReviewLibraryFacts.GetHashCode() -> int
@@ -22625,12 +22580,9 @@ override Aw.Sindri.Core.Reviews.ReviewLoginPrompt.ToString() -> string!
 override Aw.Sindri.Core.Reviews.ReviewProjectName.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Reviews.ReviewProjectName.GetHashCode() -> int
 override Aw.Sindri.Core.Reviews.ReviewProjectName.ToString() -> string!
-override Aw.Sindri.Core.Reviews.ReviewPull.Equals(object? obj) -> bool
-override Aw.Sindri.Core.Reviews.ReviewPull.GetHashCode() -> int
 override Aw.Sindri.Core.Reviews.ReviewPullRef.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Reviews.ReviewPullRef.GetHashCode() -> int
 override Aw.Sindri.Core.Reviews.ReviewPullRef.ToString() -> string!
-override Aw.Sindri.Core.Reviews.ReviewPull.ToString() -> string!
 override Aw.Sindri.Core.Reviews.ReviewRow.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Reviews.ReviewRow.GetHashCode() -> int
 override Aw.Sindri.Core.Reviews.ReviewRow.ToString() -> string!
@@ -22662,8 +22614,6 @@ static Aw.Sindri.Core.Reviews.ReviewEmpty.operator ==(Aw.Sindri.Core.Reviews.Rev
 static Aw.Sindri.Core.Reviews.ReviewEmpty.Words.get -> Aw.Sindri.Core.Reviews.ReviewEmpty!
 static Aw.Sindri.Core.Reviews.ReviewFactsSnapshot.operator !=(Aw.Sindri.Core.Reviews.ReviewFactsSnapshot? left, Aw.Sindri.Core.Reviews.ReviewFactsSnapshot? right) -> bool
 static Aw.Sindri.Core.Reviews.ReviewFactsSnapshot.operator ==(Aw.Sindri.Core.Reviews.ReviewFactsSnapshot? left, Aw.Sindri.Core.Reviews.ReviewFactsSnapshot? right) -> bool
-static Aw.Sindri.Core.Reviews.ReviewGroup.operator !=(Aw.Sindri.Core.Reviews.ReviewGroup? left, Aw.Sindri.Core.Reviews.ReviewGroup? right) -> bool
-static Aw.Sindri.Core.Reviews.ReviewGroup.operator ==(Aw.Sindri.Core.Reviews.ReviewGroup? left, Aw.Sindri.Core.Reviews.ReviewGroup? right) -> bool
 static Aw.Sindri.Core.Reviews.ReviewLibraryFacts.operator !=(Aw.Sindri.Core.Reviews.ReviewLibraryFacts? left, Aw.Sindri.Core.Reviews.ReviewLibraryFacts? right) -> bool
 static Aw.Sindri.Core.Reviews.ReviewLibraryFacts.operator ==(Aw.Sindri.Core.Reviews.ReviewLibraryFacts? left, Aw.Sindri.Core.Reviews.ReviewLibraryFacts? right) -> bool
 static Aw.Sindri.Core.Reviews.ReviewLibrary.From(Aw.Sindri.Core.Reviews.ReviewLibraryFacts! facts) -> Aw.Sindri.Core.Reviews.ReviewLibrary!
@@ -22678,8 +22628,6 @@ static Aw.Sindri.Core.Reviews.ReviewLoginPrompt.operator !=(Aw.Sindri.Core.Revie
 static Aw.Sindri.Core.Reviews.ReviewLoginPrompt.operator ==(Aw.Sindri.Core.Reviews.ReviewLoginPrompt? left, Aw.Sindri.Core.Reviews.ReviewLoginPrompt? right) -> bool
 static Aw.Sindri.Core.Reviews.ReviewProjectName.operator !=(Aw.Sindri.Core.Reviews.ReviewProjectName? left, Aw.Sindri.Core.Reviews.ReviewProjectName? right) -> bool
 static Aw.Sindri.Core.Reviews.ReviewProjectName.operator ==(Aw.Sindri.Core.Reviews.ReviewProjectName? left, Aw.Sindri.Core.Reviews.ReviewProjectName? right) -> bool
-static Aw.Sindri.Core.Reviews.ReviewPull.operator !=(Aw.Sindri.Core.Reviews.ReviewPull? left, Aw.Sindri.Core.Reviews.ReviewPull? right) -> bool
-static Aw.Sindri.Core.Reviews.ReviewPull.operator ==(Aw.Sindri.Core.Reviews.ReviewPull? left, Aw.Sindri.Core.Reviews.ReviewPull? right) -> bool
 static Aw.Sindri.Core.Reviews.ReviewPullRef.IsSha(string! sha) -> bool
 static Aw.Sindri.Core.Reviews.ReviewPullRef.operator !=(Aw.Sindri.Core.Reviews.ReviewPullRef? left, Aw.Sindri.Core.Reviews.ReviewPullRef? right) -> bool
 static Aw.Sindri.Core.Reviews.ReviewPullRef.operator ==(Aw.Sindri.Core.Reviews.ReviewPullRef? left, Aw.Sindri.Core.Reviews.ReviewPullRef? right) -> bool
@@ -22694,3 +22642,60 @@ static Aw.Sindri.Core.Reviews.ReviewSummary.operator !=(Aw.Sindri.Core.Reviews.R
 static Aw.Sindri.Core.Reviews.ReviewSummary.operator ==(Aw.Sindri.Core.Reviews.ReviewSummary? left, Aw.Sindri.Core.Reviews.ReviewSummary? right) -> bool
 static Aw.Sindri.Core.Reviews.ReviewWait.operator !=(Aw.Sindri.Core.Reviews.ReviewWait? left, Aw.Sindri.Core.Reviews.ReviewWait? right) -> bool
 static Aw.Sindri.Core.Reviews.ReviewWait.operator ==(Aw.Sindri.Core.Reviews.ReviewWait? left, Aw.Sindri.Core.Reviews.ReviewWait? right) -> bool
+Aw.Sindri.Core.Reviews.ReviewPull.Author.get -> string!
+Aw.Sindri.Core.Reviews.ReviewPull.Author.init -> void
+Aw.Sindri.Core.Reviews.ReviewPull.Claims.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewClaim!>!
+Aw.Sindri.Core.Reviews.ReviewPull.Claims.init -> void
+Aw.Sindri.Core.Reviews.ReviewPull.<Clone>$() -> Aw.Sindri.Core.Reviews.ReviewPull!
+Aw.Sindri.Core.Reviews.ReviewPull.Deconstruct(out string! Repo, out int Number, out string! Title, out string! Author, out bool Draft, out System.DateTimeOffset OpenedAt, out System.DateTimeOffset UpdatedAt, out string? HeadSha, out System.Collections.Generic.IReadOnlyList<string!>! RequestedReviewers, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewedAt!>! Reviews, out bool ReviewersRead, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewClaim!>! Claims, out string? Url) -> void
+Aw.Sindri.Core.Reviews.ReviewPull.Draft.get -> bool
+Aw.Sindri.Core.Reviews.ReviewPull.Draft.init -> void
+Aw.Sindri.Core.Reviews.ReviewPull.Equals(Aw.Sindri.Core.Reviews.ReviewPull? other) -> bool
+Aw.Sindri.Core.Reviews.ReviewPull.HeadSha.get -> string?
+Aw.Sindri.Core.Reviews.ReviewPull.HeadSha.init -> void
+Aw.Sindri.Core.Reviews.ReviewPull.Number.get -> int
+Aw.Sindri.Core.Reviews.ReviewPull.Number.init -> void
+Aw.Sindri.Core.Reviews.ReviewPull.OpenedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Reviews.ReviewPull.OpenedAt.init -> void
+Aw.Sindri.Core.Reviews.ReviewPull.Repo.get -> string!
+Aw.Sindri.Core.Reviews.ReviewPull.Repo.init -> void
+Aw.Sindri.Core.Reviews.ReviewPull.RequestedReviewers.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Reviews.ReviewPull.RequestedReviewers.init -> void
+Aw.Sindri.Core.Reviews.ReviewPull.ReviewersRead.get -> bool
+Aw.Sindri.Core.Reviews.ReviewPull.ReviewersRead.init -> void
+Aw.Sindri.Core.Reviews.ReviewPull.ReviewPull(string! Repo, int Number, string! Title, string! Author, bool Draft, System.DateTimeOffset OpenedAt, System.DateTimeOffset UpdatedAt, string? HeadSha, System.Collections.Generic.IReadOnlyList<string!>! RequestedReviewers, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewedAt!>! Reviews, bool ReviewersRead, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewClaim!>! Claims, string? Url = null) -> void
+Aw.Sindri.Core.Reviews.ReviewPull.Reviews.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewedAt!>!
+Aw.Sindri.Core.Reviews.ReviewPull.Reviews.init -> void
+Aw.Sindri.Core.Reviews.ReviewPull.Title.get -> string!
+Aw.Sindri.Core.Reviews.ReviewPull.Title.init -> void
+Aw.Sindri.Core.Reviews.ReviewPull.UpdatedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Reviews.ReviewPull.UpdatedAt.init -> void
+Aw.Sindri.Core.Reviews.ReviewPull.Url.get -> string?
+Aw.Sindri.Core.Reviews.ReviewPull.Url.init -> void
+override Aw.Sindri.Core.Reviews.ReviewPull.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Reviews.ReviewPull.GetHashCode() -> int
+override Aw.Sindri.Core.Reviews.ReviewPull.ToString() -> string!
+static Aw.Sindri.Core.Reviews.ReviewPull.operator !=(Aw.Sindri.Core.Reviews.ReviewPull? left, Aw.Sindri.Core.Reviews.ReviewPull? right) -> bool
+static Aw.Sindri.Core.Reviews.ReviewPull.operator ==(Aw.Sindri.Core.Reviews.ReviewPull? left, Aw.Sindri.Core.Reviews.ReviewPull? right) -> bool
+Aw.Sindri.Core.Reviews.ReviewFreshness
+static Aw.Sindri.Core.Reviews.ReviewFreshness.Row(Aw.Sindri.Core.Projects.Facts.ProjectSourceFreshness! source, System.DateTimeOffset now) -> Aw.Sindri.Core.Projects.Cards.ProjectFreshnessRow!
+static Aw.Sindri.Core.Reviews.ReviewFreshness.Stale(Aw.Sindri.Core.Projects.Facts.ProjectSourceFreshness! source) -> Aw.Sindri.Core.Reviews.ReviewStale?
+Aw.Sindri.Core.Reviews.ReviewListGroup
+Aw.Sindri.Core.Reviews.ReviewListGroup.<Clone>$() -> Aw.Sindri.Core.Reviews.ReviewListGroup!
+Aw.Sindri.Core.Reviews.ReviewListGroup.Deconstruct(out Aw.Sindri.Core.Reviews.ReviewGroupKind Kind, out string! Title, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewSection!>! Sections) -> void
+Aw.Sindri.Core.Reviews.ReviewListGroup.Equals(Aw.Sindri.Core.Reviews.ReviewListGroup? other) -> bool
+Aw.Sindri.Core.Reviews.ReviewListGroup.Kind.get -> Aw.Sindri.Core.Reviews.ReviewGroupKind
+Aw.Sindri.Core.Reviews.ReviewListGroup.Kind.init -> void
+Aw.Sindri.Core.Reviews.ReviewListGroup.ReviewListGroup(Aw.Sindri.Core.Reviews.ReviewGroupKind Kind, string! Title, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewSection!>! Sections) -> void
+Aw.Sindri.Core.Reviews.ReviewListGroup.Sections.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewSection!>!
+Aw.Sindri.Core.Reviews.ReviewListGroup.Sections.init -> void
+Aw.Sindri.Core.Reviews.ReviewListGroup.Title.get -> string!
+Aw.Sindri.Core.Reviews.ReviewListGroup.Title.init -> void
+Aw.Sindri.Core.Reviews.ReviewListParts.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewListGroup!>! Groups, out int WaitingCount, out string? Notice, out Aw.Sindri.Core.Reviews.ReviewEmpty? Empty) -> void
+Aw.Sindri.Core.Reviews.ReviewListParts.Groups.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewListGroup!>!
+Aw.Sindri.Core.Reviews.ReviewListParts.ReviewListParts(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewListGroup!>! Groups, int WaitingCount, string? Notice, Aw.Sindri.Core.Reviews.ReviewEmpty? Empty) -> void
+override Aw.Sindri.Core.Reviews.ReviewListGroup.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Reviews.ReviewListGroup.GetHashCode() -> int
+override Aw.Sindri.Core.Reviews.ReviewListGroup.ToString() -> string!
+static Aw.Sindri.Core.Reviews.ReviewListGroup.operator !=(Aw.Sindri.Core.Reviews.ReviewListGroup? left, Aw.Sindri.Core.Reviews.ReviewListGroup? right) -> bool
+static Aw.Sindri.Core.Reviews.ReviewListGroup.operator ==(Aw.Sindri.Core.Reviews.ReviewListGroup? left, Aw.Sindri.Core.Reviews.ReviewListGroup? right) -> bool

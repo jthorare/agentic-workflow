@@ -5,4 +5,4 @@ namespace Aw.Sindri.Core.Reviews;
 /// <param name="WaitingCount">The Waiting group's size.</param>
 /// <param name="Notice">The line above the list while reviewers were never read; null otherwise.</param>
 /// <param name="Empty">The empty state when there are no rows; null otherwise.</param>
-public sealed record ReviewListParts(IReadOnlyList<ReviewGroup> Groups, int WaitingCount, string? Notice, ReviewEmpty? Empty);
+public sealed record ReviewListParts(IReadOnlyList<ReviewListGroup> Groups, int WaitingCount, string? Notice, ReviewEmpty? Empty);
