@@ -71,7 +71,7 @@
       "type": "object",
       "required": ["aw-doc", "id", "kind", "title", "status"],
       "properties": {
-        "aw-doc": { "description": "The convention version; the number 1 opts the file in.", "const": 1 },
+        "aw-doc": { "description": "The convention version; the number 1 opts the file in. The parser decides this from the raw line, not the parsed value: YAML reads 1.0 as the number 1, and aw-doc: 1.0 is a near miss (SND-LIB-019).", "const": 1 },
         "id": { "$ref": "#/$defs/docId" },
         "kind": { "enum": ["tdd", "spec", "plan", "stages", "product", "engineering", "design", "tasks", "verification", "note"] },
         "title": { "type": "string", "minLength": 1 },
