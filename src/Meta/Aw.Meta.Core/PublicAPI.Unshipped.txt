@@ -2201,3 +2201,6 @@ override Aw.Meta.Core.Coordination.LaneHealthOptions.ToString() -> string!
 static Aw.Meta.Core.Coordination.LaneHealthOptions.Default.get -> Aw.Meta.Core.Coordination.LaneHealthOptions!
 static Aw.Meta.Core.Coordination.LaneHealthOptions.operator !=(Aw.Meta.Core.Coordination.LaneHealthOptions? left, Aw.Meta.Core.Coordination.LaneHealthOptions? right) -> bool
 static Aw.Meta.Core.Coordination.LaneHealthOptions.operator ==(Aw.Meta.Core.Coordination.LaneHealthOptions? left, Aw.Meta.Core.Coordination.LaneHealthOptions? right) -> bool
+Aw.Meta.Core.Coordination.InboxCounts
+Aw.Meta.Core.Coordination.InboxCounts.InboxCounts(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Coordination.ObligationReader! reader, System.TimeProvider! clock) -> void
+Aw.Meta.Core.Coordination.InboxCounts.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<(int Total, int Open)>!>

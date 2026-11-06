@@ -141,6 +141,9 @@ public sealed class MetaWorld
     /// <summary>The lane refresher.</summary>
     public LaneRefresher Refresher => new(Sessions, Messages, Lanes);
 
+    /// <summary>The inbox counts the watch polls.</summary>
+    public InboxCounts InboxCounts => new(Config, Messages, Reader, Clock);
+
     /// <summary>The obligation reader.</summary>
     public ObligationReader Reader => new(Messages, Lanes, Owner, Gates, Values);
 

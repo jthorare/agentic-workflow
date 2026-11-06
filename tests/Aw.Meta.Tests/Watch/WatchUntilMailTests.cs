@@ -16,7 +16,7 @@ public sealed class WatchUntilMailTests
 
     private WatchService Service() => new(
         _world.Config,
-        new WatchPoller(_world.Repo, _world.Resources, _world.Messages, _world.Values, new WatchSweeper(_world.Config, _world.Sweeper, _world.Values), Worlds.Reservation(_world), _world.Context),
+        new WatchPoller(_world.Repo, _world.Resources, _world.InboxCounts, _world.Values, new WatchSweeper(_world.Config, _world.Sweeper, _world.Values), Worlds.Reservation(_world), _world.Context),
         _world.Values,
         _world.Delay,
         _world.Clock,
