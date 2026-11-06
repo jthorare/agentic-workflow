@@ -146,6 +146,6 @@ public sealed class ReviewPageStateTests
         var page = await _f.Opened("full", json => json["pr"]!["postsFixThreads"] = true, Token);
 
         Assert.Equal((false, true), (page.IsYours, page.FixTarget!.PostsThreads));
-        Assert.Equal((true, true, string.Empty), (page.ApproveEnabled, page.RequestChangesEnabled, page.OwnPrText));   // GUESS: only the owner's own PR turns them off
+        Assert.Equal((true, true, string.Empty), (page.ApproveEnabled, page.RequestChangesEnabled, page.OwnPrText));   // spec §16 pick 4: disabled only on the owner's own PR
     }
 }
