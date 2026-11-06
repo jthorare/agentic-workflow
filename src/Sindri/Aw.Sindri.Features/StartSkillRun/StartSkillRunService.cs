@@ -89,18 +89,31 @@ internal sealed class StartSkillRunService(
         foreach (var input in declared)
         {
             _ = inputs.TryGetValue(input.Key, out var value);
-            if (input.Required && string.IsNullOrWhiteSpace(value))
+            if (ValueRefusal(block.Manifest.Name, input, value) is { } refused)
             {
-                return SindriErrors.InvalidInput.With($"block '{block.Manifest.Name}' needs input '{input.Key}' ({input.Label}) (fix: --input {input.Key}=<value>)");
-            }
-
-            if (value is not null && input.Values is { Count: > 0 } allowed && !allowed.Contains(value, StringComparer.Ordinal))
-            {
-                return SindriErrors.InvalidInput.With($"input '{input.Key}' of block '{block.Manifest.Name}' is one of: {string.Join(", ", allowed)}");
+                return refused;
             }
         }
 
         return null;
+    }
+
+    /// <summary>A required input without a value, a bad PR reference, or a value outside a declared list; null when the value fits.</summary>
+    private static Error? ValueRefusal(string block, SkillInput input, string? value)
+    {
+        if (input.Required && string.IsNullOrWhiteSpace(value))
+        {
+            return SindriErrors.InvalidInput.With($"block '{block}' needs input '{input.Key}' ({input.Label}) (fix: --input {input.Key}=<value>)");
+        }
+
+        if (value is not null && string.Equals(input.Key, PrReference.InputKey, StringComparison.Ordinal) && PrReference.Number(value) is { IsError: true } badPr)
+        {
+            return badPr.Error;   // SND-SKILL-006, before any recipe is made (the launch would refuse it too)
+        }
+
+        return value is not null && input.Values is { Count: > 0 } allowed && !allowed.Contains(value, StringComparer.Ordinal)
+            ? SindriErrors.InvalidInput.With($"input '{input.Key}' of block '{block}' is one of: {string.Join(", ", allowed)}")
+            : null;
     }
 
     /// <summary>Each input as a start fact, and the skills folder when the run has one.</summary>
