@@ -154,6 +154,12 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
         return new SkillRunReport(answer.Skill, answer.ManifestHash, outcome, Succeeded: string.Equals(outcome, answer.Success, StringComparison.Ordinal), facts, resultFile, error);
     }
 
+    /// <summary>The refusal of the item's latest launch that never started: '&lt;code&gt; &lt;message&gt;' of its newest 'launch.failed'; null when there is none or the ledger can't be read.</summary>
+    /// <param name="item">The item the trial ran on.</param>
+    /// <param name="ct">Cancels the read.</param>
+    /// <returns>The line, or null.</returns>
+    internal Task<string?> LaunchRefusalOf(string item, CancellationToken ct) => throw new NotSupportedException();
+
     /// <summary>The result file of the item's latest skill launch: <c lang="text">skill.resultFile</c> of its newest 'launch.started', read from the ledger; empty when the ledger has none or can't be read (the report then leaves the line out).</summary>
     /// <param name="item">The item the trial ran on.</param>
     /// <param name="ct">Cancels the read.</param>

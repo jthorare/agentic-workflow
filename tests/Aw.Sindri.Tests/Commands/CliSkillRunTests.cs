@@ -75,8 +75,36 @@ public sealed class CliSkillRunTests : IDisposable
         Assert.Equal(string.Empty, await Verb(down).ResultFileOf(A.FirstItemId.Value, Token));
     }
 
-    private static PublicEvent Started(long sequence, string payload) =>
-        new(sequence, EventId.From(new Guid((int)sequence, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)), "launch.started", 1, KnownInstants.Epoch, "service:host", "local", 0, A.FirstItemId,
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_step_failed_before_launch_reports_the_newest_launch_refusal_with_its_code()
+    {
+        // why: the failed transition's reason is only the class ('launch'); the refusal and its fix live on launch.failed (found in F-1's hand test)
+        var api = new RoutedApi().On("/sindri/ledger", HttpStatusCode.OK, new LedgerPage(
+        [
+            Event(1, "launch.failed", """{"launchId":"LCH-1","code":"SND-SKILL-007","message":"older"}"""),
+            Event(2, "launch.failed", """{"launchId":"LCH-2","code":"SND-SKILL-005","message":"review needs MCP server prism-mcp (register it with the agent)"}"""),
+        ], Next: null));
+
+        var line = await Verb(api).LaunchRefusalOf(A.FirstItemId.Value, Token);
+
+        Assert.Equal("SND-SKILL-005 review needs MCP server prism-mcp (register it with the agent)", line);
+        Assert.Equal("?item=" + A.FirstItemId.Value + "&type=launch.failed", api.Calls[^1].Query);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task No_launch_refusal_or_an_unreadable_ledger_gives_none()
+    {
+        var none = new RoutedApi().On("/sindri/ledger", HttpStatusCode.OK, new LedgerPage([], Next: null));
+        var down = new RoutedApi().OnRaw("/sindri/ledger", HttpStatusCode.ServiceUnavailable, """{"title":"SND-API-011","detail":"views are behind"}""");
+
+        Assert.Null(await Verb(none).LaunchRefusalOf(A.FirstItemId.Value, Token));
+        Assert.Null(await Verb(down).LaunchRefusalOf(A.FirstItemId.Value, Token));
+    }
+
+    private static PublicEvent Started(long sequence, string payload) => Event(sequence, "launch.started", payload);
+
+    private static PublicEvent Event(long sequence, string type, string payload) =>
+        new(sequence, EventId.From(new Guid((int)sequence, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)), type, 1, KnownInstants.Epoch, "service:host", "local", 0, A.FirstItemId,
             CorrelationId.From(new Guid(9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)), CausationId: null, TraceId: null, JsonDocument.Parse(payload).RootElement);
 
     private static ItemView View(long version) =>
