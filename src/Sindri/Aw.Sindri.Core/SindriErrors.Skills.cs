@@ -22,4 +22,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-SKILL-006: a skill block's 'pr' input is neither a PR number nor a github.com pull request link (the host fetches the PR head before the launch).</summary>
     public static readonly ErrorDefinition SkillPrInputInvalid = new("SND-SKILL-006", ErrorKind.Invalid, "The pr input is not a PR number or link");
+
+    /// <summary>SND-SKILL-008: git could not fetch the pull request's head before a skill Step's launch (step.failed with git's own words, scrubbed; no session started).</summary>
+    public static readonly ErrorDefinition SkillPrFetchFailed = new("SND-SKILL-008", ErrorKind.Unavailable, "The pull request could not be fetched");
 }

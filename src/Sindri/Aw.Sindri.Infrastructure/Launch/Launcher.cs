@@ -260,7 +260,7 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunch
             throw;
         }
 
-        return new StartedLaunch(started.Value, viewer, host.AttachArgv(started.Value), source.Source, source.Item2) { ChosenSession = prepared.Session, Sandbox = prepared.Sandbox, RunDirectory = RunDirectoryOf(request) };
+        return new StartedLaunch(started.Value, viewer, host.AttachArgv(started.Value), source.Source, source.Item2) { ChosenSession = prepared.Session, Sandbox = prepared.Sandbox, RunDirectory = RunDirectoryOf(request), PrHead = prepared.PrHead };
     }
 
     private async ValueTask<LaunchResult> RunOnViewer(LaunchRequest request, ISessionHost host, (string Name, string WorkDir, List<string> Argv) session, ((CatalogSource Source, string Hash) Entry, string? Chosen, SandboxSummary? Sandbox) started, CancellationToken cancellationToken)
