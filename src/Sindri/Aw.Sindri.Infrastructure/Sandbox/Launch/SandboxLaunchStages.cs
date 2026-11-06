@@ -100,6 +100,13 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
         return SkillLaunchGate.Check(skill, new FileAgentHome(folder, skill.Target, host.Home, host.Environment.GetValueOrDefault("PATH", string.Empty)));
     }
 
+    /// <summary>The agent home a skill launch's checks read on the host: a separate login's own folder, else the owner's '~/.claude' or '~/.codex'.</summary>
+    /// <param name="login">The launch's prepared login.</param>
+    /// <param name="target">The agent the launch runs.</param>
+    /// <param name="home">The owner's home on the host.</param>
+    /// <returns>The folder.</returns>
+    internal static string AgentHomeFolder(PreparedLogin login, SkillTarget target, string home) => throw new NotSupportedException();
+
     // The branch namespace the session may write refs in: an open's own, a Step's run, or none.
     private static string RunNamespace(LaunchRequest request) =>
         request.Attended ? AttendedOpen.RunNamespace(request.Launch)
