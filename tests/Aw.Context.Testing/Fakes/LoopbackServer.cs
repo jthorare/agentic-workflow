@@ -70,7 +70,21 @@ internal sealed class LoopbackServer : IAsyncDisposable
         var target = request.Path + context.Request.QueryString.Value;
         _requests.Enqueue(new RecordedRequest(request.Method, target, reply.Operation, reply.Status));
         _log.Enqueue(string.Create(CultureInfo.InvariantCulture, $"{request.Method} {target} -> {reply.Status} {reply.Operation}"));
+        if (reply.Status == FakeHttpReply.DroppedStatus)
+        {
+            context.Abort();
+            return;
+        }
+
         context.Response.StatusCode = reply.Status;
+        if (reply.Headers is not null)
+        {
+            foreach (var header in reply.Headers)
+            {
+                context.Response.Headers[header.Key] = header.Value;
+            }
+        }
+
         context.Response.ContentType = "application/json; charset=utf-8";
         await using var json = new Utf8JsonWriter(context.Response.Body, _writer);
         reply.Body.WriteTo(json);

@@ -8,17 +8,28 @@ namespace Aw.Context.Testing.Fakes;
 /// Reads the GraphQL a read needs: one query operation, its variable definitions (with defaults), and a tree of
 /// fields with aliases, arguments and sub-selections. Argument values are variables or scalar literals; objects and
 /// lists come through variables. Fragments, directives, block strings and undeclared variables are refused with a
-/// message saying so, never guessed.
+/// message saying so, never guessed. A reader made with allowMutation also reads one mutation operation, and one made with
+/// allowObjects reads object and list literals inline (the stateful fake Linear; the replaying one keeps both off).
 /// </summary>
-internal sealed class GraphQlReader(string text, JsonObject? variables)
+internal sealed class GraphQlReader(string text, JsonObject? variables, bool allowMutation = false, bool allowObjects = false)
 {
     private readonly Dictionary<string, JsonNode?> _declared = new(StringComparer.Ordinal);
     private const int MaxDepth = 32;
     private int _at;
     private int _depth;
 
+    private bool _mutation;
+
     public static IReadOnlyList<GraphQlField> RootFields(string query, JsonObject? variables) =>
         new GraphQlReader(query, variables).Operation();
+
+    /// <summary>Reads a query or (when allowed) a mutation, and says which it was.</summary>
+    public static (bool Mutation, IReadOnlyList<GraphQlField> Fields) Read(string query, JsonObject? variables, bool allowMutation, bool allowObjects)
+    {
+        var reader = new GraphQlReader(query, variables, allowMutation, allowObjects);
+        var fields = reader.Operation();
+        return (reader._mutation, fields);
+    }
 
     private char Peek => _at < text.Length ? text[_at] : '\0';
 
@@ -38,12 +49,15 @@ internal sealed class GraphQlReader(string text, JsonObject? variables)
     private void OperationHeader()
     {
         var kind = Name();
-        if (string.Equals(kind, "mutation", StringComparison.Ordinal) || string.Equals(kind, "subscription", StringComparison.Ordinal))
+        if (string.Equals(kind, "mutation", StringComparison.Ordinal) && allowMutation)
+        {
+            _mutation = true;
+        }
+        else if (string.Equals(kind, "mutation", StringComparison.Ordinal) || string.Equals(kind, "subscription", StringComparison.Ordinal))
         {
             throw FakeRequestException.Invalid($"The fake Linear server is read-only: '{kind}' operations aren't served.");
         }
-
-        if (!string.Equals(kind, "query", StringComparison.Ordinal))
+        else if (!string.Equals(kind, "query", StringComparison.Ordinal))
         {
             throw FakeRequestException.Invalid($"Expected 'query', 'mutation' or '{{' at the start of the document, found '{kind}'.");
         }
@@ -152,7 +166,7 @@ internal sealed class GraphQlReader(string text, JsonObject? variables)
             SkipIgnored();
             Expect(':');
             SkipIgnored();
-            arguments[name] = Peek == '$' ? Variable() : Literal(name);
+            arguments[name] = Value(name);
         }
 
         _at++;
@@ -169,6 +183,63 @@ internal sealed class GraphQlReader(string text, JsonObject? variables)
         }
 
         return variables is not null && variables.TryGetPropertyValue(name, out var value) ? value?.DeepClone() : fallback?.DeepClone();
+    }
+
+    private JsonNode? Value(string argument)
+    {
+        if (Peek == '$')
+        {
+            return Variable();
+        }
+
+        return Peek switch
+        {
+            '{' when allowObjects => ObjectLiteral(),
+            '[' when allowObjects => ListLiteral(argument),
+            _ => Literal(argument),
+        };
+    }
+
+    private JsonObject ObjectLiteral()
+    {
+        Nest();
+        Expect('{');
+        var result = new JsonObject();
+        for (SkipIgnored(); Peek != '}'; SkipIgnored())
+        {
+            var name = Name();
+            SkipIgnored();
+            Expect(':');
+            SkipIgnored();
+            result[name] = Value(name);
+        }
+
+        _at++;
+        _depth--;
+        return result;
+    }
+
+    private JsonArray ListLiteral(string argument)
+    {
+        Nest();
+        Expect('[');
+        var result = new JsonArray();
+        for (SkipIgnored(); Peek != ']'; SkipIgnored())
+        {
+            result.Add(Value(argument));
+        }
+
+        _at++;
+        _depth--;
+        return result;
+    }
+
+    private void Nest()
+    {
+        if (++_depth > MaxDepth)
+        {
+            throw FakeRequestException.Invalid(string.Create(CultureInfo.InvariantCulture, $"Values nest deeper than {MaxDepth} levels."));
+        }
     }
 
     private JsonValue? Literal(string argument)
