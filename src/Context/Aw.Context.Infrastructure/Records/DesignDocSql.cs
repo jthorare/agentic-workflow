@@ -26,5 +26,5 @@ internal static class DesignDocSql
 
     internal const string DeleteClaims = "DELETE FROM design_doc_claim WHERE pr_key = @key";
 
-    internal const string InsertClaim = "INSERT INTO design_doc_claim (pr_key, ref) VALUES (@key, @ref) ON CONFLICT DO NOTHING";
+    internal const string InsertClaim = "INSERT INTO design_doc_claim (pr_key, ref, doc_id, item_id) VALUES (@key, @ref, @doc, @item) ON CONFLICT DO NOTHING";
 }
