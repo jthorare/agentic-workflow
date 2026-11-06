@@ -158,13 +158,13 @@ internal sealed class LibraryReader(ILibraryStore store, AudienceScope audience)
 
     // The doc that keeps its id: it has one, its front matter reads, and no other doc of its scope beat it to it.
     private static bool Holds(LibraryDoc doc) =>
-        doc.Slug is not null && !doc.Errors.Any(static e => string.Equals(e.Code, DesignDocCodes.BadFrontMatter, StringComparison.Ordinal) || string.Equals(e.Code, DesignDocCodes.SharedDocId, StringComparison.Ordinal));
+        DesignDocFrontMatter.IsDocId(doc.Slug) && !doc.Errors.Any(static e => string.Equals(e.Code, DesignDocCodes.SharedDocId, StringComparison.Ordinal));
 
     // The live doc at the lowest key keeps a shared id and the others show SND-LIB-012; a doc removed later hands the id to the next one on the next read.
     private static List<LibraryDoc> Mark(List<LibraryDoc> docs)
     {
         var losers = new Dictionary<RecordKey, DesignDocError>();
-        foreach (var group in docs.Where(static d => d.Slug is not null && !d.Errors.Any(static e => e.Code == DesignDocCodes.BadFrontMatter)).GroupBy(static d => (d.Scope, d.Slug)))
+        foreach (var group in docs.Where(static d => DesignDocFrontMatter.IsDocId(d.Slug)).GroupBy(static d => (d.Scope, d.Slug)))
         {
             var ordered = group.OrderBy(static d => d.Key.Value, StringComparer.Ordinal).ToList();
             foreach (var loser in ordered.Skip(1))
@@ -176,7 +176,7 @@ internal sealed class LibraryReader(ILibraryStore store, AudienceScope audience)
         return [.. docs.Select(d => losers.TryGetValue(d.Key, out var error) ? d with { Errors = [.. d.Errors, error] } : d)];
     }
 
-    // A phase is stored without leading zeros, so a ref to 'Ph01' names 'Ph1'.
+    // A phase is stored without leading zeros, as the parser keeps it: 'Ph01' names 'Ph1' and 'Ph2-01' names 'Ph2-1'.
     private static string NoLeadingZeros(string item)
     {
         if (!item.StartsWith("Ph", StringComparison.Ordinal))
@@ -184,12 +184,27 @@ internal sealed class LibraryReader(ILibraryStore store, AudienceScope audience)
             return item;
         }
 
-        var i = 2;
-        while (i < item.Length - 1 && item[i] == '0' && char.IsAsciiDigit(item[i + 1]))
+        var end = 2;
+        while (end < item.Length && char.IsAsciiDigit(item[end]))
         {
-            i++;
+            end++;
         }
 
-        return "Ph" + item[i..];
+        var number = Trimmed(item[2..end]);
+        var rest = item[end..];
+        return rest.Length > 1 && rest[0] == '-' && rest[1..].All(char.IsAsciiDigit)
+            ? "Ph" + number + "-" + Trimmed(rest[1..])
+            : "Ph" + number + rest;
+    }
+
+    private static string Trimmed(string digits)
+    {
+        if (digits.Length == 0)
+        {
+            return digits;
+        }
+
+        var trimmed = digits.TrimStart('0');
+        return trimmed.Length == 0 ? "0" : trimmed;
     }
 }

@@ -37,6 +37,9 @@ internal sealed partial class DesignDocWalker(string path, IReadOnlyList<string>
     /// <summary>The number of items found (before the limit is applied).</summary>
     internal int ItemCount => _candidates.Count;
 
+    /// <summary>The number of distinct refs found (before the limit is applied).</summary>
+    internal int RefCount { get; private set; }
+
     /// <summary>Walks the body.</summary>
     /// <returns>The items and refs (empty when the body has an error), and the body's errors.</returns>
     internal (List<DesignItem> Items, List<DesignRef> Refs, List<DesignDocError> Errors) Walk()
@@ -60,9 +63,11 @@ internal sealed partial class DesignDocWalker(string path, IReadOnlyList<string>
         }
 
         ResolveAcceptance();
-        return _errors.Count > 0 || _candidates.Count > DesignDocParser.MaxItems
+        var refs = _refs.Distinct().ToList();
+        RefCount = refs.Count;
+        return _errors.Count > 0 || _candidates.Count > DesignDocParser.MaxItems || refs.Count > DesignDocParser.MaxRefs
             ? ([], [], _errors)
-            : ([.. _candidates.Select(ToItem)], [.. _refs.Distinct()], _errors);
+            : ([.. _candidates.Select(ToItem)], refs, _errors);
     }
 
     private static bool IsDefinedIn(string? kind, DesignItemKind item) => (item, kind) switch

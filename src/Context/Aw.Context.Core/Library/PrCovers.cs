@@ -8,6 +8,12 @@ namespace Aw.Context.Core.Library;
 /// <param name="Doubled">True when the body has a second <c language="text">Covers:</c> line (SND-LIB-021): nothing is claimed.</param>
 public sealed partial record PrCovers(IReadOnlyList<string> Refs, bool Declined, bool Doubled)
 {
+    /// <summary>The most refs one PR claims; the first ones are kept and <see cref="Capped"/> says there were more.</summary>
+    public const int MaxRefs = 200;
+
+    /// <summary>True when the Covers line had more than <see cref="MaxRefs"/> refs and the rest were dropped.</summary>
+    public bool Capped { get; init; }
+
     /// <summary>A body with no Covers line.</summary>
     public static PrCovers None { get; } = new([], Declined: false, Doubled: false);
 
@@ -56,8 +62,11 @@ public sealed partial record PrCovers(IReadOnlyList<string> Refs, bool Declined,
             .Select(static t => t.Trim().Trim('`').Trim())
             .Where(static t => RefShape.IsMatch(t))
             .Distinct(StringComparer.Ordinal)
+            .Take(MaxRefs + 1)
             .ToList();
-        return new PrCovers(refs, Declined: false, Doubled: false);
+        return refs.Count > MaxRefs
+            ? new PrCovers(refs[..MaxRefs], Declined: false, Doubled: false) { Capped = true }
+            : new PrCovers(refs, Declined: false, Doubled: false);
     }
 
     [GeneratedRegex(@"^\s*covers\s*:(?<rest>.*)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]

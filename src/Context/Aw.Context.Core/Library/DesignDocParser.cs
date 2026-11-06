@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Aw.Context.Core.Library;
 
@@ -17,6 +18,9 @@ public static class DesignDocParser
 
     /// <summary>The most items one doc holds.</summary>
     public const int MaxItems = 2000;
+
+    /// <summary>The most distinct refs one doc holds.</summary>
+    public const int MaxRefs = 5000;
 
     /// <summary>The most characters an item's text keeps.</summary>
     public const int MaxTextChars = 4000;
@@ -42,9 +46,28 @@ public static class DesignDocParser
     /// <param name="text">Its cleaned text.</param>
     /// <param name="actualSourceSha256">The sha256 of the source a generated doc was made from, when known; a mismatch with the doc's <c language="text">source-sha256</c> is SND-LIB-017.</param>
     /// <returns>The parsed doc.</returns>
-    public static ParsedDesignDoc Parse(string path, string text, string? actualSourceSha256 = null)
+    public static ParsedDesignDoc Parse(string path, string text, string? actualSourceSha256 = null) =>
+        Guard(path, () => ParseText(path, text, actualSourceSha256));
+
+    /// <summary>Runs a parse; a regex timeout (a pathological line) is a doc with the error "too large" (SND-LIB-018) and no items, so one doc cannot fail a repo's sync (#1769).</summary>
+    /// <param name="path">The doc's path, for the message.</param>
+    /// <param name="parse">The parse.</param>
+    /// <returns>The parse, or the timed-out doc.</returns>
+    internal static ParsedDesignDoc Guard(string path, Func<ParsedDesignDoc> parse)
     {
-        var lines = text.TrimStart('﻿').ReplaceLineEndings("\n").Split('\n');
+        try
+        {
+            return parse();
+        }
+        catch (RegexMatchTimeoutException)   // boundary: one pathological doc must not fail the sync of its repo
+        {
+            return new ParsedDesignDoc(Version, FrontMatter: null, Items: [], Refs: [], Errors: [TooLarge(path, "a line took too long to read.")]);
+        }
+    }
+
+    private static ParsedDesignDoc ParseText(string path, string text, string? actualSourceSha256)
+    {
+        var lines = text.TrimStart('﻿').Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n').Split('\n');
         var head = FrontMatterBlock.Find(path, lines);
         if (!head.Read || head.FrontMatter is null)
         {
@@ -68,14 +91,24 @@ public static class DesignDocParser
         var walker = new DesignDocWalker(path, lines, head.BodyStart, fm.Kind);
         var (items, refs, bodyErrors) = walker.Walk();
         errors.AddRange(bodyErrors);
-        if (walker.ItemCount > MaxItems)
-        {
-            errors.Add(TooLarge(path, $"the file has more than {MaxItems} items."));
-        }
+        errors.AddRange(Limits(path, walker));
 
         return errors.Count > 0
             ? new ParsedDesignDoc(Version, fm, Items: [], Refs: [], Errors: Sorted(errors))
             : new ParsedDesignDoc(Version, fm, items, refs, Errors: []);
+    }
+
+    private static IEnumerable<DesignDocError> Limits(string path, DesignDocWalker walker)
+    {
+        if (walker.ItemCount > MaxItems)
+        {
+            yield return TooLarge(path, $"the file has more than {MaxItems} items.");
+        }
+
+        if (walker.RefCount > MaxRefs)
+        {
+            yield return TooLarge(path, $"the file has more than {MaxRefs} refs.");
+        }
     }
 
     private static DesignDocError TooLarge(string path, string what) =>

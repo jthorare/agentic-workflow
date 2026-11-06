@@ -20,8 +20,9 @@ internal sealed class PrClaimRowWriter : ISideRowWriter
             return ContextDatabase.Translate(stored.Error);
         }
 
-        var wanted = ((PrClaimSideRows)rows).Refs.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal);
-        return !stored.Value.SequenceEqual(wanted, StringComparer.Ordinal);
+        // why: a set, not a sequence: SQLite orders text by its UTF-8 bytes and string.CompareOrdinal by UTF-16 units, which differ for non-ASCII refs, so an ordered compare would rewrite them on every sync
+        var wanted = ((PrClaimSideRows)rows).Refs.ToHashSet(StringComparer.Ordinal);
+        return !wanted.SetEquals(stored.Value);
     }
 
     public async ValueTask<Error?> Replace(ISqliteSession session, RecordKey key, SideRows rows, CancellationToken cancellationToken)
@@ -34,7 +35,8 @@ internal sealed class PrClaimRowWriter : ISideRowWriter
 
         foreach (var claim in ((PrClaimSideRows)rows).Refs)
         {
-            failure = await SqliteRecordStore.Exec(session, DesignDocSql.InsertClaim, c => c.Bind("@key", key.Value).Bind("@ref", claim), cancellationToken).ConfigureAwait(false);
+            var (doc, item) = Halves(claim);
+            failure = await SqliteRecordStore.Exec(session, DesignDocSql.InsertClaim, c => c.Bind("@key", key.Value).Bind("@ref", claim).Bind("@doc", doc).Bind("@item", item), cancellationToken).ConfigureAwait(false);
             if (failure is not null)
             {
                 return failure;
@@ -46,4 +48,12 @@ internal sealed class PrClaimRowWriter : ISideRowWriter
 
     public ValueTask<Error?> Delete(ISqliteSession session, RecordKey key, CancellationToken cancellationToken) =>
         SqliteRecordStore.Exec(session, DesignDocSql.DeleteClaims, c => c.Bind("@key", key.Value), cancellationToken);
+
+    // 'harbor#REQ-1' or 'doc:aw/slug/harbor#REQ-1': the doc id is after the last '/' of the part before '#'. The parser only keeps refs with one '#'.
+    private static (string Doc, string Item) Halves(string reference)
+    {
+        var hash = reference.LastIndexOf('#');
+        var head = hash < 0 ? reference : reference[..hash];
+        return (head[(head.LastIndexOf('/') + 1)..], hash < 0 ? string.Empty : reference[(hash + 1)..]);
+    }
 }

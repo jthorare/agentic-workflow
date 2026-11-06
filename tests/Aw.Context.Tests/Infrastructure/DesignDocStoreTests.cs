@@ -50,7 +50,7 @@ public sealed class DesignDocStoreTests : IDisposable
             Assert.Equal(1, _world.Count($"SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = '{table}'"));
         }
 
-        foreach (var index in new[] { "design_doc_by_scope_id", "design_doc_ref_by_to_ref", "design_doc_claim_by_ref" })
+        foreach (var index in new[] { "design_doc_by_scope_id", "design_doc_by_doc_id", "design_doc_ref_by_to_ref", "design_doc_claim_by_ref", "design_doc_claim_by_doc_id" })
         {
             Assert.Equal(1, _world.Count($"SELECT count(*) FROM sqlite_master WHERE type = 'index' AND name = '{index}'"));
         }
@@ -160,6 +160,27 @@ public sealed class DesignDocStoreTests : IDisposable
         _ = await Commit(RecordSamples.Github, 4, PrWrite(["harbor#Ph2"], version: "v4"));
         _ = await Remove(RecordSamples.Github, 5, PrKey);
         Assert.Empty(Claims());
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_claim_stores_the_doc_id_and_item_id_halves_of_its_ref()
+    {
+        _ = await Commit(RecordSamples.Github, 1, PrWrite(["harbor#REQ-1", "doc:aw/slug/harbor-booking#Ph2-1"]));
+
+        Assert.Equal(["harbor-booking|Ph2-1", "harbor|REQ-1"], Texts("SELECT doc_id || '|' || item_id FROM design_doc_claim ORDER BY ref"));
+        Assert.Equal(1, _world.Count("SELECT count(*) FROM pragma_index_list('design_doc_claim') WHERE name = 'design_doc_claim_by_doc_id'"));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task Claims_with_non_ascii_refs_are_not_rewritten_by_a_sync_that_changed_nothing()
+    {
+        var write = PrWrite(["harbor#\uFF21", "harbor#\U0001F600"]);
+        _ = await Commit(RecordSamples.Github, 1, write);
+        _world.Sql("UPDATE design_doc_claim SET item_id = 'marker'");
+
+        _ = await Commit(RecordSamples.Github, 2, write);
+
+        Assert.Equal(2, _world.Count("SELECT count(*) FROM design_doc_claim WHERE item_id = 'marker'"));
     }
 
     [Fact, Trait("Lane", "integration")]

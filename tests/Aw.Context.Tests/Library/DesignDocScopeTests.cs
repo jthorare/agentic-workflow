@@ -134,4 +134,57 @@ public sealed class DesignDocScopeTests
 
         Assert.Empty(DesignDocScope.Check([skipped, broken]));
     }
+
+    private static ScopedDesignDoc Stored(ScopedDesignDoc doc) =>
+        doc with { Doc = doc.Doc with { FrontMatter = doc.Doc.FrontMatter! with { KeyLines = new Dictionary<string, int>(StringComparer.Ordinal) } } };
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_doc_read_back_from_storage_has_no_key_lines_and_its_findings_have_no_line()
+    {
+        var a = Stored(Doc("/aw/a.md", Aw, "note", "harbor-notes", "## Goals\n"));
+        var b = Stored(Doc("/aw/b.md", Aw, "note", "harbor-notes", "## Goals\n", "parent: harbor-missing\n"));
+
+        var findings = DesignDocScope.Check([a, b]);
+
+        Assert.Equal([DesignDocCodes.SharedDocId, DesignDocCodes.UnknownDocLink], [.. findings.Select(static f => f.Error.Code).Order(StringComparer.Ordinal)]);
+        Assert.All(findings, static f => Assert.Null(f.Error.Line));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_doc_with_a_bad_status_keeps_its_id_so_a_parent_naming_it_and_refs_to_it_resolve()
+    {
+        var a = Doc("/aw/a.md", Aw, "tasks", "harbor-parent", "## TASK-5 Thing\n", "status: nope\n");
+        var b = Doc("/aw/b.md", Aw, "tasks", "harbor-child", "## TASK-1 Form\n- reqs: harbor-parent#TASK-5\n", "parent: harbor-parent\n");
+
+        var findings = DesignDocScope.Check([a, b]);
+
+        Assert.DoesNotContain(findings, static f => f.Error.Code == DesignDocCodes.UnknownDocLink);
+        Assert.DoesNotContain(findings, static f => f.Error.Code == DesignDocCodes.BrokenRef);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_bare_ref_through_a_parent_in_another_scope_is_checked_against_that_scope_when_it_is_loaded()
+    {
+        const string Other = "aw/other-repo";
+        var product = Doc("/aw/other.md", Other, "product", "harbor-booking-product", "## Goals\n- **REQ-U1** rider books\n");
+        var tasks = Doc("/aw/tasks.md", Aw, "tasks", "harbor-booking-tasks", "## TASK-1 Form\n- reqs: REQ-U1, REQ-99\n", $"parent: doc:{Other}/harbor-booking-product\n");
+
+        var loaded = Assert.Single(DesignDocScope.Check([tasks, product]));
+        var notLoaded = DesignDocScope.Check([tasks]);
+
+        Assert.Equal(DesignDocCodes.BrokenRef, loaded.Error.Code);
+        Assert.Contains("REQ-99", loaded.Error.Message, StringComparison.Ordinal);
+        Assert.Empty(notLoaded);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_doc_that_is_its_own_parent_is_016()
+    {
+        var doc = Doc("/aw/a.md", Aw, "note", "harbor-notes", "## Goals\n", "parent: harbor-notes\n");
+
+        var finding = Assert.Single(DesignDocScope.Check([doc]));
+
+        Assert.Equal(DesignDocCodes.UnknownDocLink, finding.Error.Code);
+        Assert.Contains("the doc itself", finding.Error.Message, StringComparison.Ordinal);
+    }
 }

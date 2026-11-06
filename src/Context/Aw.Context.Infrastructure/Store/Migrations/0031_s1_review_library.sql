@@ -18,6 +18,9 @@ CREATE TABLE design_doc (
 -- Not unique: who owns a shared doc id is decided on read (spec §4.2).
 CREATE INDEX design_doc_by_scope_id ON design_doc (scope, doc_id);
 
+-- The library read asks for the docs of one id wherever their scope is.
+CREATE INDEX design_doc_by_doc_id ON design_doc (doc_id);
+
 CREATE TABLE design_doc_item (
     doc_key    TEXT NOT NULL REFERENCES design_doc (doc_key) ON DELETE CASCADE,
     item_id    TEXT NOT NULL,
@@ -40,13 +43,17 @@ CREATE INDEX design_doc_ref_by_to_ref ON design_doc_ref (to_ref);
 CREATE INDEX design_doc_ref_by_doc ON design_doc_ref (doc_key);
 
 -- No resolved columns: a claim resolves on read (spec §4.4), so a PR synced before its doc, or a doc that renames an item, is right on the next read.
+-- doc_id and item_id are the two halves of the ref as written ('doc:aw/slug/harbor#REQ-1' is 'harbor' and 'REQ-1'), parsed when the claim is written, so the claims naming a doc are an index lookup.
 CREATE TABLE design_doc_claim (
-    pr_key TEXT NOT NULL REFERENCES source_record (key) ON DELETE CASCADE,
-    ref    TEXT NOT NULL,
+    pr_key  TEXT NOT NULL REFERENCES source_record (key) ON DELETE CASCADE,
+    ref     TEXT NOT NULL,
+    doc_id  TEXT NOT NULL,
+    item_id TEXT NOT NULL,
     PRIMARY KEY (pr_key, ref)
 ) STRICT;
 
 CREATE INDEX design_doc_claim_by_ref ON design_doc_claim (ref);
+CREATE INDEX design_doc_claim_by_doc_id ON design_doc_claim (doc_id);
 
 -- A PR's claims come from its body when the PR record is written, and a PR that has not changed is never written again, so this is the one-time re-read 0030 did: GitHub PR rows are invalidated
 -- (version '', which the store's unchanged-record check never matches) and the GitHub record feed goes back to the start of Recent with no watermark. Nothing else is touched.

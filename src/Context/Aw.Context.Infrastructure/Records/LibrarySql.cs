@@ -25,8 +25,8 @@ internal static class LibrarySql
         "SELECT c.pr_key, r.audience_key, r.state, c.ref FROM design_doc_claim c JOIN source_record r ON r.key = c.pr_key " +
         "WHERE c.pr_key = @key AND r.removed_at IS NULL ORDER BY c.ref";
 
-    // A doc id is lowercase letters, digits and '-', so it holds no LIKE wildcard; the service resolves each ref exactly.
+    // doc_id is the doc half of the ref as written (design_doc_claim_by_doc_id); the service resolves each ref exactly.
     internal const string ClaimsNaming =
         "SELECT c.pr_key, r.audience_key, r.state, c.ref FROM design_doc_claim c JOIN source_record r ON r.key = c.pr_key " +
-        "WHERE r.removed_at IS NULL AND c.ref LIKE '%' || @slug || '#%' ORDER BY c.pr_key, c.ref";
+        "WHERE r.removed_at IS NULL AND c.doc_id = @slug ORDER BY c.pr_key, c.ref";
 }

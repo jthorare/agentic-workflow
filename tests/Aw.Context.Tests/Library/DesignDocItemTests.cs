@@ -234,4 +234,21 @@ public sealed class DesignDocItemTests
         Assert.Empty(doc.Errors);
         Assert.Equal(["phases"], ADoc.Ids(doc));
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_backtick_run_with_a_backtick_after_it_on_the_line_is_not_a_fence()
+    {
+        var doc = ADoc.Parse("spec", "## Goals\n```code``` text\n- **REQ-1** still read\n```text\n- **REQ-2** fenced\n```\n");
+
+        Assert.Equal(["goals", "REQ-1"], ADoc.Ids(doc));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Only_cr_lf_and_cr_end_a_line_so_unicode_separators_keep_the_line_numbers()
+    {
+        var doc = ADoc.Parse("spec", "## Goals\u2028 split\f\u0085\u2029here\r\n- **REQ-1** one\r- **REQ-2** two\n");
+
+        Assert.Equal(B + 2, doc.Items.Single(static i => i.Key == "REQ-1").LineStart);
+        Assert.Equal(B + 3, doc.Items.Single(static i => i.Key == "REQ-2").LineStart);
+    }
 }
