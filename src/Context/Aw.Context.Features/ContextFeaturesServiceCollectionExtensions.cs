@@ -62,6 +62,7 @@ using Aw.Context.Features.GetWholeMap;
 using Aw.Context.Features.HeldMap;
 using Aw.Context.Features.HoldMap;
 using Aw.Context.Features.ImportMap;
+using Aw.Context.Features.LinearWriteThrough;
 using Aw.Context.Features.ListNeighbors;
 using Aw.Context.Features.MapHeads;
 using Aw.Context.Features.PreviewMap;
@@ -135,7 +136,9 @@ public static class ContextFeaturesServiceCollectionExtensions
 
     private static IServiceCollection AddRecordSearch(this IServiceCollection services) => services.AddScoped<RecordSearch>();
 
-    private static IServiceCollection AddIndexSync(this IServiceCollection services) => services.AddScoped<FeedDecisions>().AddScoped<TickSteps>().AddScoped<ConceptSynthesisRun>().AddScoped<IIndexSync, IndexSync>();
+    private static IServiceCollection AddIndexSync(this IServiceCollection services) => services.AddScoped<FeedDecisions>().AddScoped<TickSteps>().AddScoped<ConceptSynthesisRun>().AddScoped<IIndexSync, IndexSync>()
+        .AddSingleton<ISourcePurges>(static sp => sp.GetRequiredService<RecordFeedSync>())
+        .AddScoped<IService<LinearWriteThroughRequest, LinearWriteThroughResponse>, LinearWriteThroughService>();
 
     private static IServiceCollection AddContextSlices(this IServiceCollection services) => services
         .AddBacktest()

@@ -11574,3 +11574,9 @@ Aw.Context.Core.Records.RecordBatch.Position.get -> Aw.Context.Core.Records.Sync
 Aw.Context.Core.Records.RecordBatch.RecordBatch(Aw.Context.Core.Sources.SourceId Source, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordWrite!>! Records, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>! Removed, Aw.Context.Core.Records.SyncPosition? Position, System.DateTimeOffset At, bool Guard = false) -> void
 static Aw.Context.Core.Sync.RecordBatches.From(Aw.Context.Core.Sources.SourceId source, Aw.Context.Core.Sync.RecordPage! page, Aw.Context.Core.Trust.Scrubbers! scrubbers, System.DateTimeOffset at) -> Aw.Context.Core.Records.RecordBatch!
 virtual Aw.Context.Core.Sync.RecordFeed.Guard.get -> bool
+Aw.Context.Core.Linear.LinearHubErrors
+Aw.Context.Core.Sync.ILinearIssueReads
+Aw.Context.Core.Sync.ILinearIssueReads.Read(Aw.Context.Core.Linear.LinearSettings! settings, System.Collections.Generic.IReadOnlyList<string!>! githubRepos, Aw.Context.Core.Sources.ExternalId issueId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Sync.RecordItem?>!>
+static readonly Aw.Context.Core.Linear.LinearHubErrors.NotStored -> Aw.Kernel.ErrorDefinition!
+Aw.Context.Core.Sync.ISourcePurges
+Aw.Context.Core.Sync.ISourcePurges.IsPurging(Aw.Context.Core.Sources.SourceId source) -> bool
