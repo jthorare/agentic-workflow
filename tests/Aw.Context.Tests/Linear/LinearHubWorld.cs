@@ -42,7 +42,7 @@ internal sealed class LinearHubWorld : IAsyncDisposable
         Linear = linear;
         Clock = new FakeTimeProvider(Now);
         _databasePath = SettingsFromEnvironment.Read(name => name == "AW_SINDRI_HOME" ? _home : null).DatabasePath;
-        var parts = new LinearSourceParts(new HttpClient(new SocketsHttpHandler { AllowAutoRedirect = false, UseProxy = false }), name => name == "env:" + KeyName ? linear.Token : null, Clock, NullLogger<LinearClient>.Instance);
+        var parts = new LinearSourceParts(new HttpClient(new Spy(this, new SocketsHttpHandler { AllowAutoRedirect = false, UseProxy = false })), name => name == "env:" + KeyName ? linear.Token : null, Clock, NullLogger<LinearClient>.Instance);
         Sources = new LinearSources(parts);
         Provider = new ServiceCollection()
             .AddSingleton<TimeProvider>(Clock)
@@ -65,6 +65,9 @@ internal sealed class LinearHubWorld : IAsyncDisposable
     }
 
     public FakeLinear Linear { get; }
+
+    /// <summary>Called with the body of every request the index sends to the fake Linear, before it is sent (a test uses it to move the clock mid-tick).</summary>
+    public Action<string>? OnRequest { get; set; }
 
     public FakeTimeProvider Clock { get; }
 
@@ -109,6 +112,15 @@ internal sealed class LinearHubWorld : IAsyncDisposable
     public Task Update(string issueId, JsonObject input) =>
         Mutate("mutation M($id: String!, $input: IssueUpdateInput!) { issueUpdate(id: $id, input: $input) { success } }", new JsonObject { ["id"] = issueId, ["input"] = input });
 
+    /// <summary>Runs one statement on the context database (a row planted or removed to set a test up).</summary>
+    public void Sql(string sql)
+    {
+        using var connection = Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        _ = command.ExecuteNonQuery();
+    }
+
     /// <summary>The first column of the first row of a query on the context database.</summary>
     public long Count(string sql)
     {
@@ -141,5 +153,18 @@ internal sealed class LinearHubWorld : IAsyncDisposable
         var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = _databasePath, Pooling = false }.ToString());
         connection.Open();
         return connection;
+    }
+
+    private sealed class Spy(LinearHubWorld world, HttpMessageHandler inner) : DelegatingHandler(inner)
+    {
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            if (world.OnRequest is { } hook && request.Content is { } content)
+            {
+                hook(await content.ReadAsStringAsync(cancellationToken));
+            }
+
+            return await base.SendAsync(request, cancellationToken);
+        }
     }
 }

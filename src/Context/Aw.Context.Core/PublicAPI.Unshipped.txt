@@ -11580,3 +11580,4 @@ Aw.Context.Core.Sync.ILinearIssueReads.Read(Aw.Context.Core.Linear.LinearSetting
 static readonly Aw.Context.Core.Linear.LinearHubErrors.NotStored -> Aw.Kernel.ErrorDefinition!
 Aw.Context.Core.Sync.ISourcePurges
 Aw.Context.Core.Sync.ISourcePurges.IsPurging(Aw.Context.Core.Sources.SourceId source) -> bool
+Aw.Context.Core.Linear.ILinearLookupStore.Team(string! teamKey, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearTeamLookups?>!>

@@ -6,7 +6,7 @@ namespace Aw.Context.Testing.Records;
 
 /// <summary>
 /// The contract every <see cref="ILinearLookupStore"/> honours: a team's lists read back whole, a second replace swaps the lists (rows Linear dropped are gone), and teams don't mix.
-/// The store has no read of its own yet, so the implementation says how its tests read a team back.
+/// A team is read back by its key; the contract's teams are 'ENG' and 'OPS'.
 /// </summary>
 /// <typeparam name="TStore">The implementation.</typeparam>
 public abstract class LinearLookupStoreContract<TStore>
@@ -20,11 +20,8 @@ public abstract class LinearLookupStoreContract<TStore>
     /// <returns>The store.</returns>
     protected abstract TStore Create();
 
-    /// <summary>What <paramref name="store"/> holds for a team.</summary>
-    /// <param name="store">The store.</param>
-    /// <param name="teamId">The team's Linear id.</param>
-    /// <returns>The team's lists, or null when the store holds none for it.</returns>
-    protected abstract LinearTeamLookups? Read(TStore store, ExternalId teamId);
+    private static async Task<LinearTeamLookups?> Read(TStore store, ExternalId teamId) =>
+        ContractCheck.Ok(_owner, await store.Team(teamId == _eng ? "ENG" : "OPS", CancellationToken.None));
 
     private static LinearTeamLookups Team(ExternalId id, string key, params string[] names) => new(
         id,
@@ -39,11 +36,8 @@ public abstract class LinearLookupStoreContract<TStore>
     /// <summary>A team never stored has no rows.</summary>
     /// <returns>A task.</returns>
     [Fact]
-    public Task A_team_never_stored_reads_as_null()
-    {
-        ContractCheck.That(_owner, Read(Create(), _eng) is null, "an unknown team reads as null");
-        return Task.CompletedTask;
-    }
+    public async Task A_team_never_stored_reads_as_null() =>
+        ContractCheck.That(_owner, await Read(Create(), _eng) is null, "an unknown team reads as null");
 
     /// <summary>The lists of a team read back whole.</summary>
     /// <returns>A task.</returns>
@@ -53,7 +47,7 @@ public abstract class LinearLookupStoreContract<TStore>
         var store = Create();
         var team = Team(_eng, "ENG", "one", "two");
         _ = ContractCheck.Ok(_owner, await store.ReplaceTeam(team, CancellationToken.None));
-        var read = Read(store, _eng);
+        var read = await Read(store, _eng);
         ContractCheck.That(_owner, read is not null, "the team reads back");
         ContractCheck.That(_owner, read!.States.SequenceEqual(team.States) && read.Cycles.SequenceEqual(team.Cycles) && read.Members.SequenceEqual(team.Members) && read.Labels.SequenceEqual(team.Labels), "every list reads back whole");
     }
@@ -67,7 +61,7 @@ public abstract class LinearLookupStoreContract<TStore>
         _ = ContractCheck.Ok(_owner, await store.ReplaceTeam(Team(_eng, "ENG", "one", "two", "three"), CancellationToken.None));
         var later = Team(_eng, "ENG", "one");
         _ = ContractCheck.Ok(_owner, await store.ReplaceTeam(later, CancellationToken.None));
-        var read = Read(store, _eng);
+        var read = await Read(store, _eng);
         ContractCheck.That(_owner, read is not null && read.States.Count == 1 && read.Cycles.Count == 1 && read.Members.Count == 1 && read.Labels.Count == 1, "only the later rows remain");
     }
 
@@ -81,8 +75,40 @@ public abstract class LinearLookupStoreContract<TStore>
         _ = ContractCheck.Ok(_owner, await store.ReplaceTeam(ops, CancellationToken.None));
         _ = ContractCheck.Ok(_owner, await store.ReplaceTeam(Team(_eng, "ENG", "one", "two"), CancellationToken.None));
         _ = ContractCheck.Ok(_owner, await store.ReplaceTeam(Team(_eng, "ENG"), CancellationToken.None));
-        var read = Read(store, _ops);
+        var read = await Read(store, _ops);
         ContractCheck.That(_owner, read is not null && read.States.SequenceEqual(ops.States) && read.Labels.SequenceEqual(ops.Labels), "the other team keeps its rows");
-        ContractCheck.That(_owner, Read(store, _eng) is { States.Count: 0, Labels.Count: 0 }, "the replaced team now has empty lists");
+        ContractCheck.That(_owner, await Read(store, _eng) is { States.Count: 0, Labels.Count: 0 }, "the replaced team now has empty lists");
+    }
+
+    /// <summary>A stored team reads back by its key, in the order the pickers show it, and an unknown key reads as null.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_team_reads_back_by_its_key_in_picker_order()
+    {
+        var store = Create();
+        var team = Team(_eng, "ENG", "one", "two");
+        var reversed = team with { States = [.. team.States.Reverse()], Cycles = [.. team.Cycles.Reverse()], Members = [.. team.Members.Reverse()], Labels = [.. team.Labels.Reverse()] };
+        _ = ContractCheck.Ok(_owner, await store.ReplaceTeam(reversed, CancellationToken.None));
+
+        var read = ContractCheck.Ok(_owner, await store.Team("ENG", CancellationToken.None));
+
+        ContractCheck.That(_owner, read is not null && read.TeamId == _eng && string.Equals(read.TeamKey, "ENG", StringComparison.Ordinal), "the team reads back by its key");
+        ContractCheck.That(_owner, read!.States.SequenceEqual(team.States) && read.Cycles.SequenceEqual(team.Cycles) && read.Members.SequenceEqual(team.Members) && read.Labels.SequenceEqual(team.Labels), "the lists read in picker order");
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.Team("OPS", CancellationToken.None)) is null, "an unknown key reads as null");
+    }
+
+    /// <summary>Two teams are read apart by their keys.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Two_teams_read_apart_by_their_keys()
+    {
+        var store = Create();
+        _ = ContractCheck.Ok(_owner, await store.ReplaceTeam(Team(_eng, "ENG", "one", "two"), CancellationToken.None));
+        _ = ContractCheck.Ok(_owner, await store.ReplaceTeam(Team(_ops, "OPS", "ops"), CancellationToken.None));
+
+        var ops = ContractCheck.Ok(_owner, await store.Team("OPS", CancellationToken.None));
+        var eng = ContractCheck.Ok(_owner, await store.Team("ENG", CancellationToken.None));
+
+        ContractCheck.That(_owner, ops is { States.Count: 1 } && eng is { States.Count: 2 }, "each key reads its own team's rows");
     }
 }

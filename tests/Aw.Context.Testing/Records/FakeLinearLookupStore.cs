@@ -26,6 +26,17 @@ public sealed class FakeLinearLookupStore : ILinearLookupStore
     }
 
     /// <inheritdoc />
+    public ValueTask<Result<LinearTeamLookups?>> Team(string teamKey, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(teamKey);
+        lock (_gate)
+        {
+            var team = _teams.Values.FirstOrDefault(t => string.Equals(t.TeamKey, teamKey, StringComparison.Ordinal));
+            return ValueTask.FromResult(Results.Success(team is null ? null : Sorted(team)));
+        }
+    }
+
+    /// <inheritdoc />
     public ValueTask<Result<Unit>> ReplaceTeam(LinearTeamLookups team, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(team);
@@ -37,4 +48,13 @@ public sealed class FakeLinearLookupStore : ILinearLookupStore
         _ = Interlocked.Increment(ref _replaces);
         return ValueTask.FromResult<Result<Unit>>(Unit.Value);
     }
+
+    // the order a real store reads a team in: states by position, cycles by start, members and labels by name
+    private static LinearTeamLookups Sorted(LinearTeamLookups team) => team with
+    {
+        States = [.. team.States.OrderBy(static s => s.Position).ThenBy(static s => s.Name, StringComparer.Ordinal).ThenBy(static s => s.Id.Value, StringComparer.Ordinal)],
+        Cycles = [.. team.Cycles.OrderBy(static c => c.StartsAt).ThenBy(static c => c.Number).ThenBy(static c => c.Id.Value, StringComparer.Ordinal)],
+        Members = [.. team.Members.OrderBy(static m => m.Name, StringComparer.OrdinalIgnoreCase).ThenBy(static m => m.Name, StringComparer.Ordinal).ThenBy(static m => m.Id.Value, StringComparer.Ordinal)],
+        Labels = [.. team.Labels.OrderBy(static l => l.Name, StringComparer.OrdinalIgnoreCase).ThenBy(static l => l.Name, StringComparer.Ordinal).ThenBy(static l => l.Id.Value, StringComparer.Ordinal)],
+    };
 }

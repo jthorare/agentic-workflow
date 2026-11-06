@@ -19,7 +19,7 @@ public sealed class LinearHubMigrationTests : IDisposable
         await _world.Migrate();
 
         Assert.Equal("0032", ContextDatabase.Migrations[31].Version.ToString("D4", CultureInfo.InvariantCulture));
-        foreach (var table in new[] { "linear_issue", "linear_comment", "linear_issue_change", "linear_state", "linear_cycle", "linear_member", "linear_label" })
+        foreach (var table in new[] { "linear_issue", "linear_comment", "linear_issue_change", "linear_team", "linear_state", "linear_cycle", "linear_member", "linear_label" })
         {
             Assert.Equal(1, _world.Count($"SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = '{table}'"));
         }

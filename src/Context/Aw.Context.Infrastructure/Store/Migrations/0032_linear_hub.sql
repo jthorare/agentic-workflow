@@ -49,6 +49,14 @@ CREATE INDEX linear_issue_change_by_issue ON linear_issue_change (issue_key);
 CREATE INDEX linear_issue_change_by_at ON linear_issue_change (at);
 
 -- The pickers' lists (§4.2): one small table each, replaced per team in one transaction. A member or a label can belong to more than one team, so the team is part of the key.
+-- 'linear_team' maps a team's key ('ENG'), which is what the profile, the audience and the owner use, to its Linear id.
+CREATE TABLE linear_team (
+    id  TEXT PRIMARY KEY NOT NULL,
+    key TEXT NOT NULL
+) STRICT;
+
+CREATE UNIQUE INDEX linear_team_by_key ON linear_team (key);
+
 CREATE TABLE linear_state (
     team_id  TEXT NOT NULL,
     id       TEXT NOT NULL,
