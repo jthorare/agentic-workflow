@@ -172,11 +172,7 @@ case "$EVENT" in
          # `aw-meta health` shows the stop cap either way)
          [ -z "$OUT" ] || jq -nc --arg m "$OUT" '{systemMessage: $m}' 2> /dev/null
          exit 0 ;;
-      1) if [ "$UNMARKED" = 1 ]; then   # the lane owes a reply and this answer carries none: say so, in front of the block text
-           trace reply-unmarked
-           OUT="Your last answer has no line starting REPLY TO META:, so meta did not get it. End the turn with REPLY TO META: <reply>.
-$OUT"
-         else trace ran; fi
+      1) if [ "$UNMARKED" = 1 ]; then trace reply-unmarked; else trace ran; fi
          # A block shows the owed messages, so it is a delivery too: a new owed list makes the same reply text recordable again (the
          # agent answers "on it" to a message that arrived mid-turn); the same list blocked again (the stop cap loop) does not.
          OSUM="$(printf '%s' "$OUT" | cksum | tr ' ' ':')"
@@ -184,6 +180,10 @@ $OUT"
            unlink "$REPLIED" 2> /dev/null
            mkdir -p "$LANE_DIR" 2> /dev/null && printf '%s\n' "$OSUM" > "$OWED" 2> /dev/null
          fi
+         # the lane owes a reply and this answer carries none: say so, in front of the block text (after the checksum, which is the
+         # owed list's alone)
+         [ "$UNMARKED" = 1 ] && OUT="Your last answer has no line starting REPLY TO META:, so meta did not get it. End the turn with REPLY TO META: <reply>.
+$OUT"
          printf '%s\n' "$OUT" >&2; exit 2 ;;
       *) trace lane-stop-check-failed; failopen "lane-stop-check-exit-$rc$(code_of "$OUT")"; exit 0 ;;
     esac ;;
