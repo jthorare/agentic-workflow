@@ -1,6 +1,6 @@
 namespace Aw.Context.Infrastructure.Records;
 
-/// <summary>The Linear pickers' lists' SQL (migration 0032_linear_hub). Values are always bound, never formatted in.</summary>
+/// <summary>The Linear pickers' lists' SQL (migration 0032_s1l_linear_hub). Values are always bound, never formatted in.</summary>
 internal static class LinearLookupSql
 {
     internal const string TeamByKey = "SELECT id, key FROM linear_team WHERE key = @key";

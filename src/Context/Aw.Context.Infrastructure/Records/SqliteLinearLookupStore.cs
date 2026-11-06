@@ -7,7 +7,7 @@ using Microsoft.Data.Sqlite;
 
 namespace Aw.Context.Infrastructure.Records;
 
-/// <summary>The pickers' lists in context.db (migration 0032_linear_hub, Linear hub spec 2026-11-04 §4.2): a team's states, cycles, members and labels, replaced together in one transaction and read back by the team's key.</summary>
+/// <summary>The pickers' lists in context.db (migration 0032_s1l_linear_hub, Linear hub spec 2026-11-04 §4.2): a team's states, cycles, members and labels, replaced together in one transaction and read back by the team's key.</summary>
 /// <param name="database">The context database.</param>
 internal sealed class SqliteLinearLookupStore(ContextDatabase database) : ILinearLookupStore
 {

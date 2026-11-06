@@ -9,7 +9,7 @@ using Microsoft.Data.Sqlite;
 namespace Aw.Context.Infrastructure.Records;
 
 /// <summary>
-/// The stored Linear issues, their comments and changes read from context.db (migration 0032_linear_hub, Linear hub spec 2026-11-04 §4.3). Every statement joins the issue's record, so the caller's audience, a tombstone and a withheld
+/// The stored Linear issues, their comments and changes read from context.db (migration 0032_s1l_linear_hub, Linear hub spec 2026-11-04 §4.3). Every statement joins the issue's record, so the caller's audience, a tombstone and a withheld
 /// record apply to the side tables exactly as they do to the record.
 /// </summary>
 /// <param name="database">The context database.</param>
