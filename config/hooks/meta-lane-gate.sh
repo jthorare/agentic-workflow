@@ -15,7 +15,7 @@
 # Every aw-meta call carries AW_META_HOOK=<event>: only a hook's call counts as hook proof (a hand-typed run does not). Each run
 # writes one line to lane-sessions/<lane>.hook, "<UTC time> meta-lane-gate <event> <outcome>", which `aw-meta health` reads to name
 # why a lane's hooks are not verified (outcomes: ran, not-own-agent, aw-meta-missing, meta-lane, lane-inbox-failed,
-# lane-reply-failed, lane-stop-check-failed). A failure is not overwritten by a later `ran` of the same run. Never fails the hook.
+# lane-reply-failed, lane-stop-check-failed, reply-unmarked: a Stop that owes a reply after an answer with no marker line). A failure is not overwritten by a later `ran` of the same run. Never fails the hook.
 # Only lane-stop-check exit 1 blocks. Exit 0, exit 2 (variables unset, no team config, a tool error) and anything else pass,
 # the cause logged by failopen.
 set -uo pipefail
@@ -115,8 +115,12 @@ fi
 
 # record_reply: the text after the last line that starts with the marker (the rest of that line and every line after it) goes to
 # `aw-meta lane-reply --stdin`, once. The marker may carry markdown decoration (> - * # ** __ `) before it and around its colon.
+# Sets UNMARKED=1 when the text is non-blank and has no marker line.
+UNMARKED=0
 record_reply() { # <text>
   local REPLY SUM RO rrc
+  UNMARKED=0
+  if [ -n "$(printf '%s' "$1" | tr -d '[:space:]')" ] && ! printf '%s\n' "$1" | grep -Eq '^[[:space:]>*#_`-]*REPLY TO META:'; then UNMARKED=1; fi
   REPLY="$(printf '%s\n' "$1" | awk '
     { if (match($0, /^[[:space:]>*#_`-]*REPLY TO META:/)) { found = 1; sub(/^[[:space:]>*#_`-]*REPLY TO META:(\*\*|__|`)?[[:space:]]*/, ""); text = $0; next }
       if (found) text = text "\n" $0 }
@@ -168,7 +172,11 @@ case "$EVENT" in
          # `aw-meta health` shows the stop cap either way)
          [ -z "$OUT" ] || jq -nc --arg m "$OUT" '{systemMessage: $m}' 2> /dev/null
          exit 0 ;;
-      1) trace ran
+      1) if [ "$UNMARKED" = 1 ]; then   # the lane owes a reply and this answer carries none: say so, in front of the block text
+           trace reply-unmarked
+           OUT="Your last answer has no line starting REPLY TO META:, so meta did not get it. End the turn with REPLY TO META: <reply>.
+$OUT"
+         else trace ran; fi
          # A block shows the owed messages, so it is a delivery too: a new owed list makes the same reply text recordable again (the
          # agent answers "on it" to a message that arrived mid-turn); the same list blocked again (the stop cap loop) does not.
          OSUM="$(printf '%s' "$OUT" | cksum | tr ' ' ':')"
