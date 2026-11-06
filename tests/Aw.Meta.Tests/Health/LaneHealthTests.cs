@@ -28,7 +28,7 @@ public sealed class LaneHealthTests
 
         var row = Assert.Single(await Read());
 
-        Assert.Equal(("api", "codex", "hooks not running: trust them with /hooks in codex", true), (row.Lane, row.Agent, row.State, row.Attention));
+        Assert.Equal(("api", "codex", "hooks never ran: trust them with /hooks in codex (each install that changes a hook asks again)", true), (row.Lane, row.Agent, row.State, row.Attention));
     }
 
     [Fact, Trait("Lane", "unit")]

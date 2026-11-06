@@ -17,11 +17,12 @@ for v in $(compgen -e | grep '^AW_META_'); do unset "$v"; done   # the caller ma
 export HOME="$WORK/home"; mkdir -p "$HOME"
 export AW_STATE_DIR="$WORK/state"
 unset AW_JUDGE_CHILD AW_SINDRI_HOME CLAUDE_LOCAL_BIN   # a caller's Sindri home must not receive the session-id-report cases' launch files
-export CALLS="$WORK/calls" STDIN_SEEN="$WORK/stdin"
+export CALLS="$WORK/calls" STDIN_SEEN="$WORK/stdin" HOOKLOG="$WORK/hooklog"
 STUB="$WORK/aw-meta"
 cat > "$STUB" <<'EOF'
 #!/usr/bin/env bash
 echo "$*" >> "$CALLS"
+echo "$1|${AW_META_HOOK:-}" >> "$HOOKLOG"   # the command and the hook event the caller named (none: a hand-typed run)
 if [ "$1" = outbox-record ] || [ "$1" = lane-reply ]; then cat > "$STDIN_SEEN"; fi
 [ -n "${STUB_OUT:-}" ] && echo "$STUB_OUT"
 # lane-reply answers STUB_REPLY_RC when set (a lane that records its reply and is still blocked), else STUB_RC like every command
@@ -293,7 +294,7 @@ OUT="$(report '{"hook_event_name":"SessionStart","session_id":"abc-123"}')"; RC=
 check "outside a lane or a Sindri launch: exit 0, nothing written" "$RC:$OUT:$(ls "$LS" 2>/dev/null | wc -l | tr -d ' ')" "0::0"
 OUT="$(printf '%s' '{"hook_event_name":"SessionStart","session_id":"0199aaaa-bbbb-4ccc-8ddd-eeeeffff0001"}' | AW_META_TEAM=t1 AW_META_LANE=api bash "$HOOKS/session-id-report.sh")"; RC=$?
 check "in a lane: exit 0, silent, the id is lane-sessions/<lane>" "$RC:$OUT:$(cat "$LS/api")" "0::0199aaaa-bbbb-4ccc-8ddd-eeeeffff0001"
-check "the lane file is 0600 and no temp file is left" "$(stat -c %a "$LS/api" 2>/dev/null || stat -f %Lp "$LS/api"):$(ls -A "$LS" | wc -l | tr -d ' ')" "600:1"
+check "the lane file is 0600 and no temp file is left (only the id and the hook trace)" "$(stat -c %a "$LS/api" 2>/dev/null || stat -f %Lp "$LS/api"):$(ls -A "$LS" | tr '\n' ' ')" "600:api api.hook "
 printf '%s' '{"session_id":"0199aaaa-bbbb-4ccc-8ddd-eeeeffff0002"}' | AW_META_TEAM=t1 AW_META_LANE=api bash "$HOOKS/session-id-report.sh"
 check "a new session in the lane replaces the id" "$(cat "$LS/api")" "0199aaaa-bbbb-4ccc-8ddd-eeeeffff0002"
 printf '%s' '{"session_id":"id-ui"}' | AW_META_TEAM=t1 AW_META_LANE=ui bash "$HOOKS/session-id-report.sh"
@@ -340,7 +341,7 @@ check "role-set failing: the cause is logged" "$?" "0"
 
 : > "$CALLS"
 OUT="$(AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta STUB_OUT="a message" bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/ups.json")"
-check "meta lane: UserPromptSubmit runs no lane command and prints nothing" "$OUT:$(cat "$CALLS")" ":"
+check "meta lane: UserPromptSubmit prints the meta inbox (aw-meta inbox) and runs no lane command" "$OUT:$(cat "$CALLS")" "a message:inbox"
 printf '%s' '{"hook_event_name":"Stop","session_id":"s-9","stop_hook_active":false,"last_assistant_message":"REPLY TO META: ok"}' > "$WORK/stop-meta.json"
 : > "$CALLS"
 AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta STUB_RC=1 STUB_OUT="owes" bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/stop-meta.json" 2> "$WORK/err"; RC=$?
@@ -348,5 +349,141 @@ check "meta lane: Stop runs no lane-reply or lane-stop-check and never blocks" "
 : > "$CALLS"
 OUT="$(AW_META_CONFIG="$WORK/team.json" LANE_NAME=api STUB_OUT="a message" bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/ups.json")"
 check "another lane of the same team keeps its inbox" "$OUT:$(cat "$CALLS")" "a message:lane-inbox"
+
+# --- #2122: every aw-meta call a hook makes names its event; the hook trace file says what the hook did ---
+# trace [lane]: "<hook> <event> <outcome>" of lane-sessions/<lane>.hook when its first field is a UTC ISO time, else why not
+trace() {
+  local f="$LS/${1:-api}.hook" t h e o
+  [ -f "$f" ] || { echo "no trace file"; return; }
+  read -r t h e o < "$f"
+  [[ "$t" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?Z$ ]] || { echo "bad time: $t"; return; }
+  echo "$h $e $o"
+}
+clear_lane() { find "$LS" -mindepth 1 -delete 2> /dev/null; : > "$CALLS"; : > "$HOOKLOG"; : > "$STDIN_SEEN"; }
+STOPR='{"hook_event_name":"Stop","session_id":"s-5","last_assistant_message":"REPLY TO META: c1 reply"}'
+AAR='{"hook_event_name":"AfterAgentResponse","session_id":"s-5","last_assistant_message":"Done.\nREPLY TO META: aar reply"}'
+
+# C1: AW_META_HOOK on every aw-meta call
+clear_lane; lane "$UPS" > /dev/null
+check "C1 UserPromptSubmit: lane-inbox carries AW_META_HOOK=UserPromptSubmit" "$(cat "$HOOKLOG")" "lane-inbox|UserPromptSubmit"
+clear_lane; lane '{"hook_event_name":"SessionStart","session_id":"s-5"}' > /dev/null
+check "C1 SessionStart: lane-inbox carries AW_META_HOOK=SessionStart" "$(cat "$HOOKLOG")" "lane-inbox|SessionStart"
+clear_lane; lane '{"hook_event_name":"PostToolUse","session_id":"s-5","tool_name":"Shell"}' > /dev/null
+check "C1 PostToolUse: lane-inbox carries AW_META_HOOK=PostToolUse" "$(cat "$HOOKLOG")" "lane-inbox|PostToolUse"
+clear_lane; lane "$STOPR"
+check "C1 Stop: lane-reply and lane-stop-check carry AW_META_HOOK=Stop" "$(paste -sd' ' "$HOOKLOG")" "lane-reply|Stop lane-stop-check|Stop"
+clear_lane; lane "$AAR"
+check "C1 AfterAgentResponse: lane-reply carries AW_META_HOOK=AfterAgentResponse" "$(cat "$HOOKLOG")" "lane-reply|AfterAgentResponse"
+
+# C2: the trace file, one line, "<UTC time> <hook> <event> <outcome>"
+clear_lane; lane "$UPS" > /dev/null
+check "C2 trace after a lane-inbox run: ran" "$(trace)" "meta-lane-gate UserPromptSubmit ran"
+check "C2 trace is a single line" "$(wc -l < "$LS/api.hook" | tr -d ' ')" "1"
+clear_lane; lane "$STOPR"
+check "C2 trace after a Stop: ran" "$(trace)" "meta-lane-gate Stop ran"
+clear_lane; printf '%s' "$UPS" > "$WORK/in"
+AW_META_LANE_PID=999999 AW_META_TEAM=t1 AW_META_LANE=api bash "$HOOKS/meta-lane-gate.sh" 2> /dev/null < "$WORK/in"
+check "C2 trace when the hook is not under the lane's agent: not-own-agent" "$(trace)" "meta-lane-gate UserPromptSubmit not-own-agent"
+clear_lane; printf '%s' "$UPS" > "$WORK/in"
+AW_META_BIN="$WORK/missing" AW_META_TEAM=t1 AW_META_LANE=api bash "$HOOKS/meta-lane-gate.sh" 2> /dev/null < "$WORK/in"
+check "C2 trace when aw-meta is not installed: aw-meta-missing" "$(trace)" "meta-lane-gate UserPromptSubmit aw-meta-missing"
+clear_lane; STUB_RC=2 lane "$UPS" > /dev/null
+check "C2 trace when lane-inbox fails: lane-inbox-failed" "$(trace)" "meta-lane-gate UserPromptSubmit lane-inbox-failed"
+clear_lane; STUB_REPLY_RC=2 STUB_RC=0 lane "$STOPR"
+check "C2 trace when lane-reply fails: lane-reply-failed (the later lane-stop-check passing does not overwrite it)" "$(trace)" "meta-lane-gate Stop lane-reply-failed"
+clear_lane; STUB_RC=2 lane '{"hook_event_name":"Stop","session_id":"s-5","last_assistant_message":"no marker"}'
+check "C2 trace when lane-stop-check fails: lane-stop-check-failed" "$(trace)" "meta-lane-gate Stop lane-stop-check-failed"
+clear_lane; lane "$UPS" > /dev/null; lane '{"hook_event_name":"Stop","session_id":"s-5","last_assistant_message":"no marker"}'
+check "C2 trace is overwritten by the next hook run" "$(trace)" "meta-lane-gate Stop ran"
+clear_lane; printf '%s' '{"hook_event_name":"SessionStart","session_id":"s-6"}' > "$WORK/in"
+AW_META_TEAM=t1 AW_META_LANE=api bash "$HOOKS/session-id-report.sh" 2> /dev/null < "$WORK/in"
+check "C2 session-id-report writes its trace: ran" "$(trace)" "session-id-report SessionStart ran"
+clear_lane; AW_META_LANE_PID=999999 AW_META_TEAM=t1 AW_META_LANE=api bash "$HOOKS/session-id-report.sh" 2> /dev/null < "$WORK/in"
+check "C2 session-id-report outside the lane's agent: not-own-agent" "$(trace)" "session-id-report SessionStart not-own-agent"
+clear_lane; printf '%s' "$UPS" > "$WORK/in"; AW_JUDGE_CHILD=1 bash "$HOOKS/meta-lane-gate.sh" 2> /dev/null < "$WORK/in"
+check "C2 outside a lane no trace is written" "$(ls -A "$LS" | wc -l | tr -d ' ')" "0"
+
+# C5: the team's meta lane gets `aw-meta inbox` as context, never a lane command
+printf '%s' '{"hook_event_name":"SessionStart","session_id":"s-7"}' > "$WORK/start-meta.json"
+clear_lane
+OUT="$(AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta STUB_OUT="mail for the meta" bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/ups.json")"
+check "C5 meta lane UserPromptSubmit: the stub's inbox output is printed as plain text" "$OUT" "mail for the meta"
+check "C5 meta lane UserPromptSubmit: calls inbox and never a lane-* command" "$(awk '{print $1}' "$CALLS" | paste -sd, -)" "inbox"
+check "C5 meta lane trace: meta-lane" "$(trace meta)" "meta-lane-gate UserPromptSubmit meta-lane"
+clear_lane
+OUT="$(AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta STUB_OUT="mail for the meta" bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/start-meta.json")"
+check "C5 meta lane SessionStart: additionalContext JSON with the inbox" "$(jq -r .hookSpecificOutput.additionalContext <<< "$OUT" 2> /dev/null)" "mail for the meta"
+check "C5 meta lane SessionStart: calls inbox only" "$(awk '{print $1}' "$CALLS" | paste -sd, -)" "inbox"
+clear_lane
+AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta STUB_RC=1 STUB_OUT="owes" bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/stop-meta.json" 2> /dev/null; RC=$?
+check "C5 meta lane Stop: passes, nothing called, trace meta-lane" "$RC:$(cat "$CALLS"):$(trace meta)" "0::meta-lane-gate Stop meta-lane"
+clear_lane
+OUT="$(AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/ups.json")"
+check "C5 meta lane with an empty inbox prints nothing" "$OUT" ""
+
+# C6: AfterAgentResponse records the reply, never runs lane-stop-check; Stop does not record it again
+clear_lane
+lane "$AAR"; RC=$?
+check "C6 AfterAgentResponse: exit 0, the reply is recorded, lane-stop-check is not called" "$RC:$(cat "$CALLS")" "0:lane-reply --stdin"
+check "C6 AfterAgentResponse: the reply text (marker removed) goes to lane-reply on stdin" "$(cat "$STDIN_SEEN")" "aar reply"
+lane '{"hook_event_name":"Stop","session_id":"s-5","last_assistant_message":"Done.\nREPLY TO META: aar reply"}'
+check "C6 a reply recorded at AfterAgentResponse is not recorded again at the next Stop with the same text" "$(grep -c '^lane-reply' "$CALLS"):$(grep -c '^lane-stop-check' "$CALLS")" "1:1"
+clear_lane
+STUB_RC=1 STUB_OUT="owes" lane "$AAR"; RC=$?
+check "C6 AfterAgentResponse never blocks, even when the lane owes a reply" "$RC:$(cat "$WORK/err")" "0:"
+clear_lane
+lane '{"hook_event_name":"AfterAgentResponse","session_id":"s-5","last_assistant_message":"nothing to answer"}'
+check "C6 AfterAgentResponse without the marker: aw-meta is not called" "$(cat "$CALLS")" ""
+
+# C6: marker tolerance (Stop and AfterAgentResponse)
+# row <text> <expected captured reply, "" = not captured>
+for ev in AfterAgentResponse Stop; do
+  while IFS='|' read -r label text want; do
+    clear_lane
+    lane "$(jq -nc --arg e "$ev" --arg m "$text" '{hook_event_name: $e, session_id: "s-5", last_assistant_message: $m}')"
+    got="$(grep -c '^lane-reply' "$CALLS"):$(cat "$STDIN_SEEN")"
+    if [ -n "$want" ]; then exp="1:$want"; else exp="0:"; fi
+    check "C6 $ev marker: $label" "$got" "$exp"
+  done <<'ROWS'
+plain|REPLY TO META: x|x
+bold marker|**REPLY TO META:** x|x
+quoted|> REPLY TO META: x|x
+list item|- REPLY TO META: x|x
+star list item|* REPLY TO META: x|x
+heading|## REPLY TO META: x|x
+indented bold|  **REPLY TO META:** x|x
+mid-line text is not a reply|see REPLY TO META: x|
+mid-line after a quote mark is not a reply|> see REPLY TO META: x|
+ROWS
+done
+
+# An answer that owes a reply but has no REPLY TO META: line is visible: trace reply-unmarked and a line in front of the block text
+UNMARKED_LINE='Your last answer has no line starting REPLY TO META:, so meta did not get it. End the turn with REPLY TO META: <reply>.'
+UNM='{"hook_event_name":"Stop","session_id":"s-5","last_assistant_message":"Rebased, all green."}'
+clear_lane; STUB_RC=1 STUB_OUT="owes the meta a reply" lane "$UNM"; RC=$?
+check "unmarked answer, lane owes a reply: exit 2, the line then the block text on stderr" "$RC:$(cat "$WORK/err")" "2:$UNMARKED_LINE
+owes the meta a reply"
+check "unmarked answer, lane owes a reply: trace reply-unmarked" "$(trace)" "meta-lane-gate Stop reply-unmarked"
+printf '%s\n' '{"role":"assistant","message":{"content":[{"type":"text","text":"Rebased, all green."}]}}' > "$WORK/tr-unm.jsonl"
+clear_lane
+OUT="$(jq -nc --arg tp "$WORK/tr-unm.jsonl" '{hook_event_name:"stop",conversation_id:"c-1",loop_count:0,transcript_path:$tp}' | STUB_RC=1 STUB_OUT="owes the meta a reply" AW_META_TEAM=t1 AW_META_LANE=api bash "$CURSOR" "$HOOKS/meta-lane-gate.sh" 2> /dev/null)"
+check "unmarked answer through the Cursor adapter: followup_message starts with the line" "$(jq -r .followup_message <<< "$OUT")" "$UNMARKED_LINE
+owes the meta a reply"
+clear_lane; lane "$UNM"; RC=$?
+check "unmarked answer, nothing owed: allowed, no extra line, trace ran" "$RC:$(cat "$WORK/err"):$(trace)" "0::meta-lane-gate Stop ran"
+clear_lane; STUB_REPLY_RC=0 STUB_RC=1 STUB_OUT="owes the meta a reply" lane "$STOPR"; RC=$?
+check "marked reply, lane still owes (mail arrived mid-turn): no unmarked line, trace ran" "$RC:$(cat "$WORK/err"):$(trace)" "2:owes the meta a reply:meta-lane-gate Stop ran"
+
+# A nested agent's not-own-agent trace does not replace the lane's own trace from this session
+nested() { printf '%s' "$2" > "$WORK/in"; AW_META_LANE_PID=999999 AW_META_TEAM=t1 AW_META_LANE=api bash "$HOOKS/$1" 2> /dev/null < "$WORK/in"; }
+clear_lane; STUB_RC=1 STUB_OUT="owes the meta a reply" lane "$UNM"
+printf 'id-1\n' > "$LS/api"; touch -d '2 seconds ago' "$LS/api"
+nested meta-lane-gate.sh "$UPS"
+check "a nested agent's gate run keeps the lane's reply-unmarked trace (newer than the session id)" "$(trace)" "meta-lane-gate Stop reply-unmarked"
+nested session-id-report.sh '{"hook_event_name":"SessionStart","session_id":"s-6"}'
+check "a nested agent's session-id-report run keeps it too" "$(trace)" "meta-lane-gate Stop reply-unmarked"
+touch "$LS/api"   # a new session id: the old trace is from an earlier session
+nested meta-lane-gate.sh "$UPS"
+check "a trace older than the session id is replaced by not-own-agent" "$(trace)" "meta-lane-gate UserPromptSubmit not-own-agent"
 
 exit $fail

@@ -27,7 +27,7 @@ internal static class LaneStopCheckCommand
         var max = int.TryParse(context.Io.Env("AW_META_STOP_MAX"), NumberStyles.None, CultureInfo.InvariantCulture, out var configured) && configured > 0
             ? configured
             : StopCheckCommand.DefaultMaxBlocks;
-        var request = new LaneStopCheckRequest(identity.Value, context.Line.Has("stop-hook-active"), max);
+        var request = new LaneStopCheckRequest(identity.Value, context.Line.Has("stop-hook-active"), max) { HookEvent = LaneInput.HookEvent(context) };
         return CommandOutput.Call<LaneStopCheckRequest, LaneStopCheckResponse>(context, request, response => Text(identity.Value, response), static r => r.Blocked);
     }
 

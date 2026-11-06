@@ -32,4 +32,7 @@ public enum FactType
 
     /// <summary>Anything else, shown as a tree.</summary>
     Payload = 9,
+
+    /// <summary>A list of rule findings (<c language="text">fact:findings</c>), shown as rows.</summary>
+    Findings = 10,
 }

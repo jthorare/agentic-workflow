@@ -21,6 +21,9 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
     private bool _failing;
     private IReadOnlySet<string> _high = context.High;
 
+    /// <summary>How many inbox messages were still owed a reply at the last poll.</summary>
+    internal int Open { get; private set; }
+
     /// <summary>How many lines were emitted.</summary>
     internal int Lines { get; private set; }
 
@@ -63,7 +66,7 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
 
         await ReportLanes(polled.Value.Context).ConfigureAwait(false);
 
-        _inbox = polled.Value.Inbox;
+        (_inbox, Open) = (polled.Value.Inbox, polled.Value.Open);
         _state = step.State;
         await Remember().ConfigureAwait(false);
     }

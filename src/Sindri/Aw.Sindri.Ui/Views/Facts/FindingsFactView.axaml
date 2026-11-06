@@ -1,0 +1,51 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:facts="using:Aw.Sindri.Ui.ViewModels.Facts"
+             x:Class="Aw.Sindri.Ui.Views.Facts.FindingsFactView"
+             x:DataType="facts:FindingsFactViewer">
+  <!-- A findings fact: a row per finding, its message first. A violation's steps are a list in order, with the full trace behind a toggle button that reports whether it is open; a body that is not a findings list is the payload tree. -->
+  <StackPanel Spacing="6">
+    <TextBlock x:Name="FindingsLoading" Classes="caption muted" Text="{Binding LoadingText}" IsVisible="{Binding IsLoading}" />
+    <TextBlock x:Name="FindingsAnnouncement" Classes="caption live-region" Classes.live="{Binding Voice.IsAnnouncing}" Width="0" Opacity="0" IsHitTestVisible="False" Text="{Binding Voice.Announcement}" />
+    <TextBlock x:Name="FindingsProblem" Classes="body" Text="{Binding ProblemText}" IsVisible="{Binding HasProblem}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ProblemText}" />
+    <TextBlock x:Name="FindingsNone" Classes="body" Text="{Binding NoneText}" IsVisible="{Binding ShowsNone}" AutomationProperties.Name="{Binding NoneText}" />
+    <ItemsControl x:Name="FindingsRows" ItemsSource="{Binding Findings}" IsVisible="{Binding ShowsFindings}" AutomationProperties.Name="{Binding Row.Label}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="facts:FindingRowViewModel">
+          <StackPanel Spacing="4" Margin="0,0,0,10">
+            <Border Name="FindingMessageName" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+              <TextBlock Name="FindingMessage" Classes="body-strong" Text="{Binding Message}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+            </Border>
+            <TextBlock Name="FindingMeta" Classes="caption mono subtle" Text="{Binding Meta}" IsVisible="{Binding HasMeta}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+            <SelectableTextBlock Name="FindingDetail" Classes="caption mono" Text="{Binding Detail}" IsVisible="{Binding HasDetail}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Detail}" />
+            <ListBox Name="FindingSteps" ItemsSource="{Binding Steps}" IsVisible="{Binding HasSteps}" AutomationProperties.Name="{Binding StepsName}">
+              <ListBox.Styles>
+                <Style Selector="ListBoxItem" x:DataType="x:String">
+                  <Setter Property="AutomationProperties.Name" Value="{Binding}" />
+                </Style>
+              </ListBox.Styles>
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="x:String">
+                  <TextBlock Name="FindingStep" Classes="caption mono" Text="{Binding}" TextWrapping="Wrap" />
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+            <ToggleButton Name="FindingTraceToggle" HorizontalAlignment="Left" Content="{Binding TraceName}" IsChecked="{Binding IsTraceOpen, Mode=TwoWay}" IsVisible="{Binding HasSteps}" AutomationProperties.Name="{Binding TraceName}" />
+            <SelectableTextBlock Name="FindingTrace" Classes="caption mono" Text="{Binding FullTrace}" IsVisible="{Binding IsTraceOpen}" TextWrapping="Wrap" AutomationProperties.Name="{Binding FullTraceName}" />
+          </StackPanel>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+    <StackPanel Spacing="6" IsVisible="{Binding ShowsTree}">
+      <TextBlock x:Name="FindingsScalar" Classes="caption mono" Text="{Binding ScalarLine}" IsVisible="{Binding HasScalarLine}" TextWrapping="Wrap" />
+      <TreeView x:Name="FindingsTree" ItemsSource="{Binding Tree}" MaxHeight="280" AutomationProperties.Name="{Binding Row.Label}">
+        <TreeView.ItemTemplate>
+          <TreeDataTemplate x:DataType="facts:PayloadNodeViewModel" ItemsSource="{Binding Children}">
+            <TextBlock Classes="caption mono" Text="{Binding Text}" TextWrapping="Wrap" />
+          </TreeDataTemplate>
+        </TreeView.ItemTemplate>
+      </TreeView>
+    </StackPanel>
+    <TextBlock x:Name="FindingsTruncated" Classes="caption" Text="{Binding TruncatedNote}" IsVisible="{Binding HasTruncatedNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding TruncatedNote}" />
+  </StackPanel>
+</UserControl>

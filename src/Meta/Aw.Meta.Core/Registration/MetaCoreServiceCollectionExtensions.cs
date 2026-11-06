@@ -13,6 +13,7 @@ public static class MetaCoreServiceCollectionExtensions
     /// <returns>The same collection.</returns>
     public static IServiceCollection AddMetaCore(this IServiceCollection services) => services
         .AddScoped<InboxSync>()
+        .AddScoped<InboxCounts>()
         .AddScoped<LaneRefresher>()
         .AddScoped<ObligationReader>()
         .AddScoped<MetaSession>()

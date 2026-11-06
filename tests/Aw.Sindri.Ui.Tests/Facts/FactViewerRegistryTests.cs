@@ -81,6 +81,25 @@ public sealed class FactViewerRegistryTests
     }
 
     [Fact]
+    public void Findings_have_their_own_viewer_and_view()
+    {
+        var registry = FactViewerRegistry.CreateDefault();
+        var findings = FactFixtures.Row("project-build", "fact:project") with { Type = FactType.Findings };
+
+        Assert.True(registry.IsRegistered(FactType.Findings));
+        _ = Assert.IsType<FindingsFactViewer>(registry.Create(findings, Context()));
+        Assert.True(FactViewTemplates.HasView(typeof(FindingsFactViewer)));
+    }
+
+    [Fact]
+    public void The_findings_word_reads_as_the_findings_type()
+    {
+        var row = FactFixtures.Retyped("project-build", "fact:project", "findings");
+
+        Assert.Equal(FactType.Findings, row.Type);
+    }
+
+    [Fact]
     public void U13_can_register_a_viewer_without_editing_U8_files()
     {
         var registry = FactViewerRegistry.CreateDefault();

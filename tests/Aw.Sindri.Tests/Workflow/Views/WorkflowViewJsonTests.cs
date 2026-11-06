@@ -77,7 +77,7 @@ public sealed class WorkflowViewJsonTests
 
     [Theory, Trait("Lane", "unit")]
     [InlineData(FactType.Text), InlineData(FactType.File), InlineData(FactType.Item), InlineData(FactType.Link), InlineData(FactType.ScopeMap),
-        InlineData(FactType.Packet), InlineData(FactType.Evidence), InlineData(FactType.Decision), InlineData(FactType.Payload)]
+        InlineData(FactType.Packet), InlineData(FactType.Evidence), InlineData(FactType.Decision), InlineData(FactType.Payload), InlineData(FactType.Findings)]
     public void Every_fact_type_round_trips(FactType type) =>
         Assert.Equal(type, JsonSerializer.Deserialize<FactType>(JsonSerializer.Serialize(type, _options), _options));
 

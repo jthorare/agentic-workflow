@@ -61,6 +61,14 @@
     <Setter Property="FontWeight" Value="Normal" />
     <Setter Property="LetterSpacing" Value="0" />
   </Style>
+  <!-- A type selector matches the exact type, so the copyable mono text (a model trace) needs its own. -->
+  <Style Selector="SelectableTextBlock.mono">
+    <Setter Property="FontFamily" Value="{DynamicResource Font.Mono}" />
+    <Setter Property="FontSize" Value="{DynamicResource Type.Mono.Size}" />
+    <Setter Property="LineHeight" Value="{DynamicResource Type.Mono.LineHeight}" />
+    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="LetterSpacing" Value="0" />
+  </Style>
   <Style Selector="TextBlock.kbd">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Mono}" />
     <Setter Property="FontSize" Value="{DynamicResource Type.Kbd.Size}" />

@@ -11,7 +11,7 @@ internal static class WatchCommand
 
     internal static CommandEntry Entry { get; } = new(
         "watch",
-        new CommandSpec("watch [--interval 120] [--for 29m] [--json]", [], ["interval", "for"], []),
+        new CommandSpec("watch [--interval 120] [--for 29m] [--until-mail] [--json]", [], ["interval", "for"], ["until-mail"]),
         NeedsConfig: true,
         Run);
 
@@ -28,7 +28,7 @@ internal static class WatchCommand
             await context.Io.Out.FlushAsync(context.Cancellation).ConfigureAwait(false);
         }
 
-        return CommandOutput.Call<WatchRequest, WatchResponse>(context, new WatchRequest(interval, duration, Print), static _ => string.Empty);
+        return CommandOutput.Call<WatchRequest, WatchResponse>(context, new WatchRequest(interval, duration, Print) { UntilMail = context.Line.Has("until-mail") }, static _ => string.Empty);
     }
 
     private static bool Duration(string? text, TimeSpan fallback, out TimeSpan value)

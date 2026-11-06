@@ -29,7 +29,7 @@ internal sealed class StartFieldViewModel : ObservableObject
             FactType.Text => StartFieldKind.Text,
             FactType.File => StartFieldKind.File,
             FactType.Link => StartFieldKind.Link,
-            FactType.Item or FactType.ScopeMap or FactType.Packet or FactType.Evidence or FactType.Decision or FactType.Payload => StartFieldKind.Payload,
+            FactType.Item or FactType.ScopeMap or FactType.Packet or FactType.Evidence or FactType.Decision or FactType.Payload or FactType.Findings => StartFieldKind.Payload,
             _ => StartFieldKind.Payload,   // a type this build has no field for is JSON text, like the API reads it
         };
         var generated = input.Generate is not null;

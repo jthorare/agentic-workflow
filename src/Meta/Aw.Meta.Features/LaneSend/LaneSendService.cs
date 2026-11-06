@@ -12,7 +12,7 @@ namespace Aw.Meta.Features.LaneSend;
 /// <summary>
 /// The meta's send to a non-Claude lane, which has no SendMessage: the message goes into the lane's inbox (its hooks deliver it at
 /// the next prompt or stop) and is recorded as a send to "team-lane", which closes the meta's reply obligation the way a
-/// SendMessage does. An idle lane whose agent is up and with nobody attached is woken with one typed line.
+/// SendMessage does. An idle lane whose agent is up is woken with one typed line, which counts only once the lane's next hook answers it.
 /// </summary>
 /// <param name="config">The team config.</param>
 /// <param name="files">The lane records.</param>
@@ -48,21 +48,21 @@ internal sealed class LaneSendService(IMetaConfig config, ILaneFiles files, ILan
         }
 
         return record.Value is { IsNonClaude: true, Agent: { } agent } found
-            ? await Deliver(new Target(team.Value.Team, name, found, agent), request.Text, cancellationToken).ConfigureAwait(false)
+            ? await Deliver(new Target(team.Value.Team, name, found, agent), request, cancellationToken).ConfigureAwait(false)
             : MetaErrors.ClaudeLane.With($"lane {name} runs Claude Code (or the launcher recorded no other agent for it): use SendMessage to {team.Value.Team}-{name}");
     }
 
-    private async ValueTask<Result<LaneSendResponse>> Deliver(Target target, string text, CancellationToken cancellationToken)
+    private async ValueTask<Result<LaneSendResponse>> Deliver(Target target, LaneSendRequest request, CancellationToken cancellationToken)
     {
         var now = clock.GetUtcNow();
-        var seq = await mail.Send(target.Lane, text, now, cancellationToken).ConfigureAwait(false);
+        var seq = await mail.Send(target.Lane, request.Text, now, cancellationToken).ConfigureAwait(false);
         if (seq.IsError)
         {
             return seq.Error;
         }
 
         var id = MessageId.From(string.Create(CultureInfo.InvariantCulture, $"lane-send:{target.Lane}:{seq.Value}"));
-        var sent = await messages.RecordOutbound(new Outbound(target.Session, text, now) { Id = id }, cancellationToken).ConfigureAwait(false);
+        var sent = await messages.RecordOutbound(new Outbound(target.Session, request.Text, now) { Id = id }, cancellationToken).ConfigureAwait(false);
         if (sent.IsError)
         {
             return sent.Error;
@@ -74,10 +74,10 @@ internal sealed class LaneSendService(IMetaConfig config, ILaneFiles files, ILan
             return attention.Error;
         }
 
-        var (woken, skipped) = attention.Value is null
-            ? await Wake(target, now, cancellationToken).ConfigureAwait(false)
-            : (false, "the lane's hooks can't take part, so the message waits");
-        return new LaneSendResponse(target.Lane, id, woken, skipped, attention.Value);
+        var (woken, skipped, viewer) = attention.Value is null
+            ? await Wake(target, TimeSpan.FromSeconds(request.WakeConfirmSeconds), cancellationToken).ConfigureAwait(false)
+            : (false, "the lane's hooks can't take part, so the message waits", false);
+        return new LaneSendResponse(target.Lane, id, woken, skipped, attention.Value) { ViewerAttached = viewer };
     }
 
     // Why the lane can't act on the message, or null when its hooks have run since launch.
@@ -94,38 +94,64 @@ internal sealed class LaneSendService(IMetaConfig config, ILaneFiles files, ILan
             return beat.Error;
         }
 
-        return beat.Value is not { } last || target.Record.Session is null || (target.Record.RecordedAt is { } recorded && last.At < recorded)
-            ? LaneHealthReader.HooksNotRunning(target.Agent)
-            : Results.Success<string?>(value: null);
+        if (beat.Value is { } last && target.Record.Session is not null && !(target.Record.RecordedAt is { } recorded && last.At < recorded))
+        {
+            return Results.Success<string?>(value: null);
+        }
+
+        var why = await LaneHealthReader.WhyNoHooks(files, beats, target.Record, target.Agent, cancellationToken).ConfigureAwait(false);
+        return why.IsError ? why.Error : Results.Success<string?>(why.Value);
     }
 
-    // The three guards: the lane is idle, its agent is up in the pane, and nobody is attached. Otherwise the message waits for its next hook.
-    private async ValueTask<(bool Woken, string? Skipped)> Wake(Target target, DateTimeOffset now, CancellationToken cancellationToken)
+    // The guards: the lane is idle and its agent is up in the pane. A hook beat newer than the typed line confirms the wake; an attached viewer doesn't block it.
+    private async ValueTask<(bool Woken, string? Skipped, bool Viewer)> Wake(Target target, TimeSpan confirm, CancellationToken cancellationToken)
     {
         var idle = await beats.IsIdle(target.Lane, cancellationToken).ConfigureAwait(false);
         if (idle.IsError || !idle.Value)
         {
-            return (false, "the lane is not idle: the message waits for its next hook");
+            return (false, "the lane is not idle: the message waits for its next hook", false);
         }
 
         var state = await pane.Probe(target.Session, cancellationToken).ConfigureAwait(false);
         if (state.IsError || state.Value is not { } found || !string.Equals(found.Command, target.Agent.ProcessName, StringComparison.Ordinal))
         {
-            return (false, "lane down: no " + target.Agent.ProcessName + " in its pane");
+            return (false, "lane down: no " + target.Agent.ProcessName + " in its pane", false);
         }
 
-        if (found.Clients > 0)
-        {
-            return (false, "a client is attached: the message waits for its next hook");
-        }
-
+        var viewer = found.Clients > 0;
+        var typedAt = clock.GetUtcNow();
         var typed = await pane.Wake(target.Session, WakeLine, cancellationToken).ConfigureAwait(false);
         if (typed.IsError)
         {
-            return (false, "the wake failed: " + typed.Error.Message.ReplaceLineEndings(" "));
+            return (false, "the wake failed: " + typed.Error.Message.ReplaceLineEndings(" "), viewer);
         }
 
-        _ = await beats.Woke(target.Lane, now, cancellationToken).ConfigureAwait(false);
-        return (true, null);
+        if (!await Confirmed(target, typedAt, confirm, cancellationToken).ConfigureAwait(false))
+        {
+            var seconds = (int)(confirm.TotalSeconds * 2);
+            return (false, string.Create(CultureInfo.InvariantCulture, $"typed the wake line but no hook answered in {seconds} s: the line may sit unsent in the pane (aw-meta lane-send again, or press Enter in it)"), viewer);
+        }
+
+        _ = await beats.Woke(target.Lane, typedAt, cancellationToken).ConfigureAwait(false);
+        return (true, null, viewer);
+    }
+
+    // The lane's next hook beat after the typed line; when none comes, Enter once more (the agent's input box may have swallowed the first) and wait again.
+    private async ValueTask<bool> Confirmed(Target target, DateTimeOffset typedAt, TimeSpan confirm, CancellationToken cancellationToken)
+    {
+        var answered = await beats.WaitForHook(target.Lane, typedAt, confirm, cancellationToken).ConfigureAwait(false);
+        if (answered.IsError || answered.Value)
+        {
+            return answered.IsSuccess;
+        }
+
+        var again = await pane.PressEnter(target.Session, cancellationToken).ConfigureAwait(false);
+        if (again.IsError)
+        {
+            return false;
+        }
+
+        answered = await beats.WaitForHook(target.Lane, typedAt, confirm, cancellationToken).ConfigureAwait(false);
+        return answered.IsSuccess && answered.Value;
     }
 }
