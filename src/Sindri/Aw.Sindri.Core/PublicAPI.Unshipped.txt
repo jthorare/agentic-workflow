@@ -22263,3 +22263,26 @@ Aw.Sindri.Core.Skills.ISkillCatalog
 Aw.Sindri.Core.Skills.ISkillCatalog.Blocks.get -> Aw.Sindri.Core.Skills.SkillBlocks!
 Aw.Sindri.Core.Skills.ISkillCatalog.Folder.get -> string!
 Aw.Sindri.Core.Skills.ISkillCatalog.LoadFolder(string! directory) -> Aw.Sindri.Core.Skills.SkillBlocks!
+Aw.Sindri.Core.Skills.SkillTrialPlan
+Aw.Sindri.Core.Skills.SkillTrialPlan.<Clone>$() -> Aw.Sindri.Core.Skills.SkillTrialPlan!
+Aw.Sindri.Core.Skills.SkillTrialPlan.Deconstruct(out Aw.Sindri.Core.Workflow.Ids.RecipeId Id, out int Version, out string! Text) -> void
+Aw.Sindri.Core.Skills.SkillTrialPlan.Equals(Aw.Sindri.Core.Skills.SkillTrialPlan? other) -> bool
+Aw.Sindri.Core.Skills.SkillTrialPlan.Id.get -> Aw.Sindri.Core.Workflow.Ids.RecipeId
+Aw.Sindri.Core.Skills.SkillTrialPlan.Id.init -> void
+Aw.Sindri.Core.Skills.SkillTrialPlan.SkillTrialPlan(Aw.Sindri.Core.Workflow.Ids.RecipeId Id, int Version, string! Text) -> void
+Aw.Sindri.Core.Skills.SkillTrialPlan.Text.get -> string!
+Aw.Sindri.Core.Skills.SkillTrialPlan.Text.init -> void
+Aw.Sindri.Core.Skills.SkillTrialPlan.Version.get -> int
+Aw.Sindri.Core.Skills.SkillTrialPlan.Version.init -> void
+override Aw.Sindri.Core.Skills.SkillTrialPlan.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Skills.SkillTrialPlan.GetHashCode() -> int
+override Aw.Sindri.Core.Skills.SkillTrialPlan.ToString() -> string!
+static Aw.Sindri.Core.Skills.SkillTrialPlan.operator !=(Aw.Sindri.Core.Skills.SkillTrialPlan? left, Aw.Sindri.Core.Skills.SkillTrialPlan? right) -> bool
+static Aw.Sindri.Core.Skills.SkillTrialPlan.operator ==(Aw.Sindri.Core.Skills.SkillTrialPlan? left, Aw.Sindri.Core.Skills.SkillTrialPlan? right) -> bool
+Aw.Sindri.Core.Skills.SkillTrialRecipe
+const Aw.Sindri.Core.Skills.SkillTrialRecipe.IdPrefix = "workflow.skill-trial-" -> string!
+const Aw.Sindri.Core.Skills.SkillTrialRecipe.SkillsFolderFact = "fact:skillTrialFolder" -> string!
+static Aw.Sindri.Core.Skills.SkillTrialRecipe.Build(Aw.Sindri.Core.Skills.LoadedSkillBlock! block, System.Collections.Generic.IReadOnlyCollection<string!>! provided, bool foldered = false) -> Aw.Kernel.Result<Aw.Sindri.Core.Skills.SkillTrialPlan!>!
+static Aw.Sindri.Core.Skills.SkillTrialRecipe.FactOf(string! inputKey) -> Aw.Kernel.Result<Aw.Sindri.Core.Workflow.Ids.FactKey>!
+static Aw.Sindri.Core.Skills.SkillTrialRecipe.IsTrial(Aw.Sindri.Core.Workflow.Ids.RecipeId recipe) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.SkillPrInputInvalid -> Aw.Kernel.ErrorDefinition!

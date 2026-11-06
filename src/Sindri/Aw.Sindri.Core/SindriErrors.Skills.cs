@@ -19,4 +19,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-SKILL-005: the skill's requires.yaml names a bin, MCP server, skill or agent the agent home lacks (step.failed before any session starts; 'detail' names each one and its fix).</summary>
     public static readonly ErrorDefinition SkillRequirementMissing = new("SND-SKILL-005", ErrorKind.Unavailable, "The skill needs something this machine doesn't have");
+
+    /// <summary>SND-SKILL-006: a skill block's 'pr' input is neither a PR number nor a github.com pull request link (the host fetches the PR head before the launch).</summary>
+    public static readonly ErrorDefinition SkillPrInputInvalid = new("SND-SKILL-006", ErrorKind.Invalid, "The pr input is not a PR number or link");
 }
