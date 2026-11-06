@@ -52,18 +52,18 @@ public sealed class ShellViewModelTests
 
     // Screens spec §3 and the Projects page spec §7: eight pages, each with its G-chord key; Settings is not a tab.
     [Fact]
-    public async Task Nav_is_Home_Projects_Workflows_Work_Recipes_Context_Agents_System()
+    public async Task Nav_is_Home_Projects_Workflows_Work_Recipes_Context_Agents_System_Reviews()
     {
         var shell = await Shell();
 
         Assert.Equal(
-            [PageId.Home, PageId.Projects, PageId.Workflows, PageId.Work, PageId.Recipes, PageId.Context, PageId.Agents, PageId.System],
+            [PageId.Home, PageId.Projects, PageId.Workflows, PageId.Work, PageId.Recipes, PageId.Context, PageId.Agents, PageId.System, PageId.Reviews],
             shell.Navigation.Select(n => n.Page));
         Assert.Equal(
-            [Labels.Home, Labels.Projects, Labels.Workflows, Labels.Work, Labels.Recipes, Labels.Context, Labels.Agents, Labels.System],
+            [Labels.Home, Labels.Projects, Labels.Workflows, Labels.Work, Labels.Recipes, Labels.Context, Labels.Agents, Labels.System, Labels.ReviewsTab],
             shell.Navigation.Select(n => n.Label),
             StringComparer.Ordinal);
-        Assert.Equal(["H", "P", "W", "Q", "R", "C", "A", "."], shell.Navigation.Select(n => n.Key), StringComparer.Ordinal);
+        Assert.Equal(["H", "P", "W", "Q", "R", "C", "A", ".", "V"], shell.Navigation.Select(n => n.Key), StringComparer.Ordinal);
         Assert.All(shell.Navigation, n => Assert.Equal(string.Empty, n.Count));
     }
 
@@ -105,7 +105,7 @@ public sealed class ShellViewModelTests
         var shell = await Shell();
 
         Assert.Equal((PageId.Projects, Labels.Projects), (shell.Navigation[1].Page, shell.Navigation[1].Label));
-        Assert.Equal(8, shell.Navigation.Count);
+        Assert.Equal(9, shell.Navigation.Count);
         Assert.Equal(PageId.Projects, Enum.GetValues<PageId>()[1]);
     }
 

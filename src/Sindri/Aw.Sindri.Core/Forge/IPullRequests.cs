@@ -117,6 +117,26 @@ public interface IPullRequests
     /// <returns>One digest per link, in order, or the error.</returns>
     public ValueTask<Result<IReadOnlyList<PullDigest>>> Digest(IReadOnlyList<string> links, CancellationToken cancellationToken);
 
+    /// <summary>Lists the files a pull request changes, up to the forge's cap. The patches are untrusted text.</summary>
+    /// <param name="link">The pull request's link.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The files, and whether the cap cut the list, or the error.</returns>
+    public ValueTask<Result<PullFiles>> Files(string link, CancellationToken cancellationToken);
+
+    /// <summary>Reads a file's text at a commit, capped at 1 MiB. The text is untrusted.</summary>
+    /// <param name="link">The pull request's link, which names the repository.</param>
+    /// <param name="path">The file's path.</param>
+    /// <param name="sha">The commit.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The text, or the error (SND-FORGE-003 for a missing, binary or removed file).</returns>
+    public ValueTask<Result<string>> FileText(string link, string path, string sha, CancellationToken cancellationToken);
+
+    /// <summary>Posts a review as the credential the port holds, once per marker, only if the head is still the expected one. The forge adapter redacts the text.</summary>
+    /// <param name="review">The review.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>How it ended, or the error.</returns>
+    public ValueTask<Result<PullReviewOutcome>> SubmitReview(PullReview review, CancellationToken cancellationToken);
+
     /// <summary>The most pull requests one forge call carries in <see cref="Digest"/>.</summary>
     public const int DigestBatchSize = 20;
 }

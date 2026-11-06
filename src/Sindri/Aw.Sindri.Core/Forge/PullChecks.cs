@@ -6,4 +6,5 @@ namespace Aw.Sindri.Core.Forge;
 /// <param name="Failing">The names of the failing checks.</param>
 /// <param name="Passed">How many checks passed.</param>
 /// <param name="Pending">How many checks have not finished.</param>
-public sealed record PullChecks(PullChecksState State, string Sha, IReadOnlyList<string> Failing, int Passed, int Pending);
+/// <param name="Runs">Every check run and commit status on <see cref="Sha"/>, one entry each; null where the port did not read them.</param>
+public sealed record PullChecks(PullChecksState State, string Sha, IReadOnlyList<string> Failing, int Passed, int Pending, IReadOnlyList<PullCheckRun>? Runs = null);

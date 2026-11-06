@@ -12,7 +12,7 @@ internal sealed partial class SqliteRecordStore
 {
     /// <summary>
     /// One page in one 'BEGIN IMMEDIATE' transaction (spec §5.5): the records, their links and chunks (the full-text rows follow by trigger), the intent layer's queue rows, the tombstones and the moved
-    /// position. Any failure rolls all of it back, so a cursor never moves past a record that did not commit.
+    /// position, and a design doc's items and refs or a PR's claims (spec 2026-11-04 §5.3). Any failure rolls all of it back, so a cursor never moves past a record that did not commit.
     /// </summary>
     public async ValueTask<Result<CommitReport>> Commit(RecordBatch batch, CancellationToken cancellationToken)
     {
@@ -49,40 +49,6 @@ internal sealed partial class SqliteRecordStore
         }
     }
 
-    // Why a page can't be committed, or null. Checked before anything is opened, so a refused page touches nothing.
-    private static string? Problem(RecordBatch batch)
-    {
-        var keys = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var write in batch.Records)
-        {
-            var record = write.Record;
-            if (record.Source != batch.Source)
-            {
-                return $"record '{record.Key.Value}' belongs to source '{record.Source.Value}', not '{batch.Source.Value}'";
-            }
-
-            if (!keys.Add(record.Key.Value))
-            {
-                return $"record '{record.Key.Value}' is in the page twice";
-            }
-
-            if (record.Blocked && write.Chunks.Count > 0)
-            {
-                return $"record '{record.Key.Value}' is blocked and must have no chunks";
-            }
-
-            for (var i = 0; i < write.Chunks.Count; i++)
-            {
-                if (write.Chunks[i].Seq != i)
-                {
-                    return $"record '{record.Key.Value}' has chunk number {write.Chunks[i].Seq.ToString(CultureInfo.InvariantCulture)} where {i.ToString(CultureInfo.InvariantCulture)} was expected";
-                }
-            }
-        }
-
-        return batch.Removed.Any(k => keys.Contains(k.Value)) ? "a record is both written and removed in the page" : null;
-    }
-
     private static Action<SqliteCommand> PositionBinder(RecordBatch batch) => c => c
         .Bind("@source", batch.Source.Value)
         .Bind("@cursor", batch.Position.Cursor?.Value)
@@ -91,7 +57,7 @@ internal sealed partial class SqliteRecordStore
         .Bind("@backfill", batch.Position.BackfillCursor?.Value)
         .BindAt("@before", batch.Position.BackfillBefore);
 
-    private static async ValueTask<Result<(CommitReport Report, bool RemovedText)>> WritePage(SqliteUnitOfWork session, RecordBatch batch, CancellationToken cancellationToken)
+    private async ValueTask<Result<(CommitReport Report, bool RemovedText)>> WritePage(SqliteUnitOfWork session, RecordBatch batch, CancellationToken cancellationToken)
     {
         var records = await WriteRecords(session, batch, cancellationToken).ConfigureAwait(false);
         if (records.IsError)
@@ -106,7 +72,7 @@ internal sealed partial class SqliteRecordStore
     }
 
     // An old text, even a replaced one, may still sit in a freed page or an old full-text segment, hence ChangedOld.
-    private static async ValueTask<Result<(int Written, int Unchanged, bool ChangedOld)>> WriteRecords(SqliteUnitOfWork session, RecordBatch batch, CancellationToken cancellationToken)
+    private async ValueTask<Result<(int Written, int Unchanged, bool ChangedOld)>> WriteRecords(SqliteUnitOfWork session, RecordBatch batch, CancellationToken cancellationToken)
     {
         int written = 0, unchanged = 0;
         var changedOld = false;
@@ -122,6 +88,12 @@ internal sealed partial class SqliteRecordStore
             var before = existing.Value.Count == 0 ? null : existing.Value[0];
             if (before is { Removed: false } && Same(before, write.Record))
             {
+                var side = await WriteChangedSide(session, write, cancellationToken).ConfigureAwait(false);
+                if (side.IsError)
+                {
+                    return side.Error;
+                }
+
                 unchanged++;
                 continue;
             }
@@ -138,7 +110,7 @@ internal sealed partial class SqliteRecordStore
         return (written, unchanged, changedOld);
     }
 
-    private static async ValueTask<Result<int>> Tombstone(SqliteUnitOfWork session, RecordBatch batch, CancellationToken cancellationToken)
+    private async ValueTask<Result<int>> Tombstone(SqliteUnitOfWork session, RecordBatch batch, CancellationToken cancellationToken)
     {
         var tombstoned = 0;
         foreach (var removed in batch.Removed)
@@ -156,7 +128,8 @@ internal sealed partial class SqliteRecordStore
 
             var failure = await Exec(session, RecordSql.DeleteChunks, c => c.Bind("@key", removed.Value), cancellationToken).ConfigureAwait(false)
                 ?? await Exec(session, RecordSql.DeleteLinks, c => c.Bind("@key", removed.Value), cancellationToken).ConfigureAwait(false)
-                ?? await Exec(session, RecordSql.ClearInboundTitles, c => c.Bind("@key", removed.Value), cancellationToken).ConfigureAwait(false);
+                ?? await Exec(session, RecordSql.ClearInboundTitles, c => c.Bind("@key", removed.Value), cancellationToken).ConfigureAwait(false)
+                ?? await DeleteSide(session, removed, cancellationToken).ConfigureAwait(false);
             if (failure is not null)
             {
                 return failure;
@@ -174,12 +147,13 @@ internal sealed partial class SqliteRecordStore
         && string.Equals(stored.Ruleset, record.Ruleset, StringComparison.Ordinal)
         && stored.Blocked == record.Blocked;
 
-    private static async ValueTask<Error?> WriteRecord(SqliteUnitOfWork session, RecordBatch batch, RecordWrite write, bool isNew, CancellationToken cancellationToken)
+    private async ValueTask<Error?> WriteRecord(SqliteUnitOfWork session, RecordBatch batch, RecordWrite write, bool isNew, CancellationToken cancellationToken)
     {
         var record = write.Record;
         var key = record.Key.Value;
         var failure = await Exec(session, RecordSql.UpsertRecord, c => BindRecord(c, record), cancellationToken).ConfigureAwait(false)
-            ?? await Exec(session, RecordSql.DeleteLinks, c => c.Bind("@key", key), cancellationToken).ConfigureAwait(false);
+            ?? await Exec(session, RecordSql.DeleteLinks, c => c.Bind("@key", key), cancellationToken).ConfigureAwait(false)
+            ?? await WriteSide(session, write, cancellationToken).ConfigureAwait(false);
         if (failure is not null)
         {
             return failure;
@@ -286,7 +260,7 @@ internal sealed partial class SqliteRecordStore
     }
 
     // A statement whose row count doesn't matter: its error, or null.
-    private static async ValueTask<Error?> Exec(ISqliteSession session, string sql, Action<SqliteCommand>? bind, CancellationToken cancellationToken)
+    internal static async ValueTask<Error?> Exec(ISqliteSession session, string sql, Action<SqliteCommand>? bind, CancellationToken cancellationToken)
     {
         var done = await Run(session, sql, bind, cancellationToken).ConfigureAwait(false);
         return done.IsError ? done.Error : null;

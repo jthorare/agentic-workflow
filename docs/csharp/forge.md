@@ -55,8 +55,18 @@ dotnet run --project src/Forge/Aw.Forge.Host -- <command> [options]
 | `pull <link>` | Print the snapshot |
 | `threads <link>` | Print the conversation |
 | `seed thread <link> --author <login> --body <text> [--kind thread\|review\|comment] [--association <text>] [--path <file>] [--bot]` | Seed a thread (file adapter) |
-| `seed checks <link> --state none\|pending\|passing\|failing [--failing <name,name>] [--passed <n>] [--pending <n>]` | Seed the head's checks (file adapter); `--passed` and `--pending` set the counts the summary reports (default 0) |
+| `seed checks <link> --state none\|pending\|passing\|failing [--failing <name,name>] [--passed <n>] [--pending <n>] [--runs <name:conclusion[:app],...>]` | Seed the head's checks (file adapter); `--passed` and `--pending` set the counts the summary reports (default 0); `--runs` sets the check runs `Get` returns in `checks.runs`, each on the pull's head (`build:success:github-actions,lint:failure`; the app is optional) |
+| `seed files <link> --from <file.json> [--cap-reached]` | Seed the changed files and their texts (file adapter); `--from` is a camelCase JSON list, `--cap-reached` makes `Files` report the file cap was hit |
 | `seed advance <link> --sha <sha>` | Move the head out of band (file adapter) |
+
+`seed files` example (`text` is the file at the head, `baseText` at the base, null for a binary file):
+
+```json
+[{"file":{"path":"src/a.cs","previousPath":null,"status":"Modified","additions":2,"deletions":1,"patch":"@@ -1 +1,2 @@"},"text":"class A;","baseText":"class Old;"},
+ {"file":{"path":"logo.png","previousPath":null,"status":"Added","additions":0,"deletions":0,"patch":null},"text":null}]
+```
+
+On GitHub, `Get`'s check totals (`failing`, `passed`, `pending`) count every page of check runs plus the commit statuses (`/commits/{sha}/status`, an `error` state reads as `failure`; a 404 there means no statuses), and `checks.runs` lists them one by one.
 
 The checks summary of a snapshot (`pull`) is `{state, sha, failing, passed, pending}`: `failing` names the failing checks, `passed` counts the successful, neutral and skipped ones, `pending` the queued, in-progress and pending ones (GitHub counts them from the check runs; the file adapter reports what `seed checks` set, a re-run turns the failed checks into pending ones, and a new head resets both to 0).
 

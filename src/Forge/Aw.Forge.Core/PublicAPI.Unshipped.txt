@@ -55,9 +55,7 @@ Aw.Forge.Core.Pulls.ChecksState.None = 1 -> Aw.Forge.Core.Pulls.ChecksState
 Aw.Forge.Core.Pulls.ChecksState.Passing = 3 -> Aw.Forge.Core.Pulls.ChecksState
 Aw.Forge.Core.Pulls.ChecksState.Pending = 2 -> Aw.Forge.Core.Pulls.ChecksState
 Aw.Forge.Core.Pulls.ChecksSummary
-Aw.Forge.Core.Pulls.ChecksSummary.ChecksSummary(Aw.Forge.Core.Pulls.ChecksState State, string! Sha, System.Collections.Generic.IReadOnlyList<string!>! Failing, int Passed, int Pending) -> void
 Aw.Forge.Core.Pulls.ChecksSummary.<Clone>$() -> Aw.Forge.Core.Pulls.ChecksSummary!
-Aw.Forge.Core.Pulls.ChecksSummary.Deconstruct(out Aw.Forge.Core.Pulls.ChecksState State, out string! Sha, out System.Collections.Generic.IReadOnlyList<string!>! Failing, out int Passed, out int Pending) -> void
 Aw.Forge.Core.Pulls.ChecksSummary.Equals(Aw.Forge.Core.Pulls.ChecksSummary? other) -> bool
 Aw.Forge.Core.Pulls.ChecksSummary.Failing.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Forge.Core.Pulls.ChecksSummary.Failing.init -> void
@@ -268,7 +266,6 @@ Aw.Forge.Core.Pulls.ReplyRequest.ThreadKey.get -> string!
 Aw.Forge.Core.Pulls.ReplyRequest.ThreadKey.init -> void
 Aw.Forge.Core.Pulls.SeedChecksRequest
 Aw.Forge.Core.Pulls.SeedChecksRequest.<Clone>$() -> Aw.Forge.Core.Pulls.SeedChecksRequest!
-Aw.Forge.Core.Pulls.SeedChecksRequest.Deconstruct(out Aw.Forge.Core.Refs.ForgeRef! Pull, out Aw.Forge.Core.Pulls.ChecksState State, out System.Collections.Generic.IReadOnlyList<string!>! Failing, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Logs, out int Passed, out int Pending) -> void
 Aw.Forge.Core.Pulls.SeedChecksRequest.Equals(Aw.Forge.Core.Pulls.SeedChecksRequest? other) -> bool
 Aw.Forge.Core.Pulls.SeedChecksRequest.Failing.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Forge.Core.Pulls.SeedChecksRequest.Failing.init -> void
@@ -280,7 +277,6 @@ Aw.Forge.Core.Pulls.SeedChecksRequest.Pending.get -> int
 Aw.Forge.Core.Pulls.SeedChecksRequest.Pending.init -> void
 Aw.Forge.Core.Pulls.SeedChecksRequest.Pull.get -> Aw.Forge.Core.Refs.ForgeRef!
 Aw.Forge.Core.Pulls.SeedChecksRequest.Pull.init -> void
-Aw.Forge.Core.Pulls.SeedChecksRequest.SeedChecksRequest(Aw.Forge.Core.Refs.ForgeRef! Pull, Aw.Forge.Core.Pulls.ChecksState State, System.Collections.Generic.IReadOnlyList<string!>! Failing, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Logs, int Passed = 0, int Pending = 0) -> void
 Aw.Forge.Core.Pulls.SeedChecksRequest.State.get -> Aw.Forge.Core.Pulls.ChecksState
 Aw.Forge.Core.Pulls.SeedChecksRequest.State.init -> void
 Aw.Forge.Core.Pulls.SeedThreadRequest
@@ -483,3 +479,158 @@ Aw.Forge.Core.Pulls.OpenPullRequest.Labels.get -> System.Collections.Generic.IRe
 Aw.Forge.Core.Pulls.OpenPullRequest.Labels.init -> void
 Aw.Forge.Core.Pulls.PullSnapshot.Labels.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Forge.Core.Pulls.PullSnapshot.Labels.init -> void
+Aw.Forge.Core.Ports.IForge.FileText(Aw.Forge.Core.Refs.ForgeRef! pull, string! path, string! sha, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Forge.Core.Ports.IForge.Files(Aw.Forge.Core.Refs.ForgeRef! pull, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Forge.Core.Pulls.PullFiles!>!>
+Aw.Forge.Core.Ports.IForge.SubmitReview(Aw.Forge.Core.Pulls.SubmitReviewRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Forge.Core.Pulls.ReviewOutcome>!>
+Aw.Forge.Core.Ports.IForgeSeed.SeedFiles(Aw.Forge.Core.Pulls.SeedFilesRequest! request) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+Aw.Forge.Core.Pulls.CheckRun
+Aw.Forge.Core.Pulls.CheckRun.<Clone>$() -> Aw.Forge.Core.Pulls.CheckRun!
+Aw.Forge.Core.Pulls.CheckRun.App.get -> string?
+Aw.Forge.Core.Pulls.CheckRun.App.init -> void
+Aw.Forge.Core.Pulls.CheckRun.CheckRun(string! Name, string? App, string! Conclusion, string! Sha) -> void
+Aw.Forge.Core.Pulls.CheckRun.Conclusion.get -> string!
+Aw.Forge.Core.Pulls.CheckRun.Conclusion.init -> void
+Aw.Forge.Core.Pulls.CheckRun.Deconstruct(out string! Name, out string? App, out string! Conclusion, out string! Sha) -> void
+Aw.Forge.Core.Pulls.CheckRun.Equals(Aw.Forge.Core.Pulls.CheckRun? other) -> bool
+Aw.Forge.Core.Pulls.CheckRun.Name.get -> string!
+Aw.Forge.Core.Pulls.CheckRun.Name.init -> void
+Aw.Forge.Core.Pulls.CheckRun.Sha.get -> string!
+Aw.Forge.Core.Pulls.CheckRun.Sha.init -> void
+Aw.Forge.Core.Pulls.ChecksSummary.ChecksSummary(Aw.Forge.Core.Pulls.ChecksState State, string! Sha, System.Collections.Generic.IReadOnlyList<string!>! Failing, int Passed, int Pending, System.Collections.Generic.IReadOnlyList<Aw.Forge.Core.Pulls.CheckRun!>? Runs = null) -> void
+Aw.Forge.Core.Pulls.ChecksSummary.Deconstruct(out Aw.Forge.Core.Pulls.ChecksState State, out string! Sha, out System.Collections.Generic.IReadOnlyList<string!>! Failing, out int Passed, out int Pending, out System.Collections.Generic.IReadOnlyList<Aw.Forge.Core.Pulls.CheckRun!>? Runs) -> void
+Aw.Forge.Core.Pulls.ChecksSummary.Runs.get -> System.Collections.Generic.IReadOnlyList<Aw.Forge.Core.Pulls.CheckRun!>?
+Aw.Forge.Core.Pulls.ChecksSummary.Runs.init -> void
+Aw.Forge.Core.Pulls.PullFile
+Aw.Forge.Core.Pulls.PullFile.<Clone>$() -> Aw.Forge.Core.Pulls.PullFile!
+Aw.Forge.Core.Pulls.PullFile.Additions.get -> int
+Aw.Forge.Core.Pulls.PullFile.Additions.init -> void
+Aw.Forge.Core.Pulls.PullFile.Deconstruct(out string! Path, out string? PreviousPath, out Aw.Forge.Core.Pulls.PullFileStatus Status, out int Additions, out int Deletions, out string? Patch) -> void
+Aw.Forge.Core.Pulls.PullFile.Deletions.get -> int
+Aw.Forge.Core.Pulls.PullFile.Deletions.init -> void
+Aw.Forge.Core.Pulls.PullFile.Equals(Aw.Forge.Core.Pulls.PullFile? other) -> bool
+Aw.Forge.Core.Pulls.PullFile.Patch.get -> string?
+Aw.Forge.Core.Pulls.PullFile.Patch.init -> void
+Aw.Forge.Core.Pulls.PullFile.Path.get -> string!
+Aw.Forge.Core.Pulls.PullFile.Path.init -> void
+Aw.Forge.Core.Pulls.PullFile.PreviousPath.get -> string?
+Aw.Forge.Core.Pulls.PullFile.PreviousPath.init -> void
+Aw.Forge.Core.Pulls.PullFile.PullFile(string! Path, string? PreviousPath, Aw.Forge.Core.Pulls.PullFileStatus Status, int Additions, int Deletions, string? Patch) -> void
+Aw.Forge.Core.Pulls.PullFile.Status.get -> Aw.Forge.Core.Pulls.PullFileStatus
+Aw.Forge.Core.Pulls.PullFile.Status.init -> void
+Aw.Forge.Core.Pulls.PullFileStatus
+Aw.Forge.Core.Pulls.PullFileStatus.Added = 1 -> Aw.Forge.Core.Pulls.PullFileStatus
+Aw.Forge.Core.Pulls.PullFileStatus.Changed = 6 -> Aw.Forge.Core.Pulls.PullFileStatus
+Aw.Forge.Core.Pulls.PullFileStatus.Copied = 5 -> Aw.Forge.Core.Pulls.PullFileStatus
+Aw.Forge.Core.Pulls.PullFileStatus.Modified = 2 -> Aw.Forge.Core.Pulls.PullFileStatus
+Aw.Forge.Core.Pulls.PullFileStatus.Removed = 3 -> Aw.Forge.Core.Pulls.PullFileStatus
+Aw.Forge.Core.Pulls.PullFileStatus.Renamed = 4 -> Aw.Forge.Core.Pulls.PullFileStatus
+Aw.Forge.Core.Pulls.PullFileStatus.Unchanged = 7 -> Aw.Forge.Core.Pulls.PullFileStatus
+Aw.Forge.Core.Pulls.PullFiles
+Aw.Forge.Core.Pulls.PullFiles.<Clone>$() -> Aw.Forge.Core.Pulls.PullFiles!
+Aw.Forge.Core.Pulls.PullFiles.CapReached.get -> bool
+Aw.Forge.Core.Pulls.PullFiles.CapReached.init -> void
+Aw.Forge.Core.Pulls.PullFiles.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Forge.Core.Pulls.PullFile!>! Files, out bool CapReached) -> void
+Aw.Forge.Core.Pulls.PullFiles.Equals(Aw.Forge.Core.Pulls.PullFiles? other) -> bool
+Aw.Forge.Core.Pulls.PullFiles.Files.get -> System.Collections.Generic.IReadOnlyList<Aw.Forge.Core.Pulls.PullFile!>!
+Aw.Forge.Core.Pulls.PullFiles.Files.init -> void
+Aw.Forge.Core.Pulls.PullFiles.PullFiles(System.Collections.Generic.IReadOnlyList<Aw.Forge.Core.Pulls.PullFile!>! Files, bool CapReached) -> void
+Aw.Forge.Core.Pulls.ReviewComment.<Clone>$() -> Aw.Forge.Core.Pulls.ReviewComment!
+Aw.Forge.Core.Pulls.ReviewComment.Deconstruct(out string! Path, out int Line, out string! Body) -> void
+Aw.Forge.Core.Pulls.ReviewComment.Equals(Aw.Forge.Core.Pulls.ReviewComment? other) -> bool
+const Aw.Forge.Core.ForgeLimits.FileTextBytes = 1048576 -> int
+const Aw.Forge.Core.ForgeLimits.PullFileCap = 3000 -> int
+override Aw.Forge.Core.Pulls.CheckRun.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.CheckRun.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.CheckRun.ToString() -> string!
+override Aw.Forge.Core.Pulls.PullFile.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.PullFile.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.PullFile.ToString() -> string!
+override Aw.Forge.Core.Pulls.PullFiles.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.PullFiles.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.PullFiles.ToString() -> string!
+static Aw.Forge.Core.Pulls.CheckRun.operator !=(Aw.Forge.Core.Pulls.CheckRun? left, Aw.Forge.Core.Pulls.CheckRun? right) -> bool
+static Aw.Forge.Core.Pulls.CheckRun.operator ==(Aw.Forge.Core.Pulls.CheckRun? left, Aw.Forge.Core.Pulls.CheckRun? right) -> bool
+static Aw.Forge.Core.Pulls.PullFile.operator !=(Aw.Forge.Core.Pulls.PullFile? left, Aw.Forge.Core.Pulls.PullFile? right) -> bool
+static Aw.Forge.Core.Pulls.PullFile.operator ==(Aw.Forge.Core.Pulls.PullFile? left, Aw.Forge.Core.Pulls.PullFile? right) -> bool
+static Aw.Forge.Core.Pulls.PullFiles.operator !=(Aw.Forge.Core.Pulls.PullFiles? left, Aw.Forge.Core.Pulls.PullFiles? right) -> bool
+static Aw.Forge.Core.Pulls.PullFiles.operator ==(Aw.Forge.Core.Pulls.PullFiles? left, Aw.Forge.Core.Pulls.PullFiles? right) -> bool
+Aw.Forge.Core.Pulls.ReviewComment
+Aw.Forge.Core.Pulls.ReviewComment.Body.get -> string!
+Aw.Forge.Core.Pulls.ReviewComment.Body.init -> void
+Aw.Forge.Core.Pulls.ReviewComment.Line.get -> int
+Aw.Forge.Core.Pulls.ReviewComment.Line.init -> void
+Aw.Forge.Core.Pulls.ReviewComment.Path.get -> string!
+Aw.Forge.Core.Pulls.ReviewComment.Path.init -> void
+Aw.Forge.Core.Pulls.ReviewComment.ReviewComment(string! Path, int Line, string! Body) -> void
+Aw.Forge.Core.Pulls.ReviewOutcome
+Aw.Forge.Core.Pulls.ReviewOutcome.AlreadyDelivered = 2 -> Aw.Forge.Core.Pulls.ReviewOutcome
+Aw.Forge.Core.Pulls.ReviewOutcome.HeadMoved = 3 -> Aw.Forge.Core.Pulls.ReviewOutcome
+Aw.Forge.Core.Pulls.ReviewOutcome.LineRejected = 4 -> Aw.Forge.Core.Pulls.ReviewOutcome
+Aw.Forge.Core.Pulls.ReviewOutcome.Posted = 1 -> Aw.Forge.Core.Pulls.ReviewOutcome
+Aw.Forge.Core.Pulls.ReviewVerdict
+Aw.Forge.Core.Pulls.ReviewVerdict.Approve = 2 -> Aw.Forge.Core.Pulls.ReviewVerdict
+Aw.Forge.Core.Pulls.ReviewVerdict.Comment = 1 -> Aw.Forge.Core.Pulls.ReviewVerdict
+Aw.Forge.Core.Pulls.ReviewVerdict.RequestChanges = 3 -> Aw.Forge.Core.Pulls.ReviewVerdict
+Aw.Forge.Core.Pulls.SeedChecksRequest.Deconstruct(out Aw.Forge.Core.Refs.ForgeRef! Pull, out Aw.Forge.Core.Pulls.ChecksState State, out System.Collections.Generic.IReadOnlyList<string!>! Failing, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Logs, out int Passed, out int Pending, out System.Collections.Generic.IReadOnlyList<Aw.Forge.Core.Pulls.CheckRun!>? Runs) -> void
+Aw.Forge.Core.Pulls.SeedChecksRequest.Runs.get -> System.Collections.Generic.IReadOnlyList<Aw.Forge.Core.Pulls.CheckRun!>?
+Aw.Forge.Core.Pulls.SeedChecksRequest.Runs.init -> void
+Aw.Forge.Core.Pulls.SeedChecksRequest.SeedChecksRequest(Aw.Forge.Core.Refs.ForgeRef! Pull, Aw.Forge.Core.Pulls.ChecksState State, System.Collections.Generic.IReadOnlyList<string!>! Failing, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Logs, int Passed = 0, int Pending = 0, System.Collections.Generic.IReadOnlyList<Aw.Forge.Core.Pulls.CheckRun!>? Runs = null) -> void
+Aw.Forge.Core.Pulls.SeedFile
+Aw.Forge.Core.Pulls.SeedFile.<Clone>$() -> Aw.Forge.Core.Pulls.SeedFile!
+Aw.Forge.Core.Pulls.SeedFile.BaseText.get -> string?
+Aw.Forge.Core.Pulls.SeedFile.BaseText.init -> void
+Aw.Forge.Core.Pulls.SeedFile.Deconstruct(out Aw.Forge.Core.Pulls.PullFile! File, out string? Text, out string? BaseText) -> void
+Aw.Forge.Core.Pulls.SeedFile.Equals(Aw.Forge.Core.Pulls.SeedFile? other) -> bool
+Aw.Forge.Core.Pulls.SeedFile.File.get -> Aw.Forge.Core.Pulls.PullFile!
+Aw.Forge.Core.Pulls.SeedFile.File.init -> void
+Aw.Forge.Core.Pulls.SeedFile.SeedFile(Aw.Forge.Core.Pulls.PullFile! File, string? Text, string? BaseText = null) -> void
+Aw.Forge.Core.Pulls.SeedFile.Text.get -> string?
+Aw.Forge.Core.Pulls.SeedFile.Text.init -> void
+Aw.Forge.Core.Pulls.SeedFilesRequest
+Aw.Forge.Core.Pulls.SeedFilesRequest.<Clone>$() -> Aw.Forge.Core.Pulls.SeedFilesRequest!
+Aw.Forge.Core.Pulls.SeedFilesRequest.CapReached.get -> bool
+Aw.Forge.Core.Pulls.SeedFilesRequest.CapReached.init -> void
+Aw.Forge.Core.Pulls.SeedFilesRequest.Deconstruct(out Aw.Forge.Core.Refs.ForgeRef! Pull, out System.Collections.Generic.IReadOnlyList<Aw.Forge.Core.Pulls.SeedFile!>! Files, out bool CapReached) -> void
+Aw.Forge.Core.Pulls.SeedFilesRequest.Equals(Aw.Forge.Core.Pulls.SeedFilesRequest? other) -> bool
+Aw.Forge.Core.Pulls.SeedFilesRequest.Files.get -> System.Collections.Generic.IReadOnlyList<Aw.Forge.Core.Pulls.SeedFile!>!
+Aw.Forge.Core.Pulls.SeedFilesRequest.Files.init -> void
+Aw.Forge.Core.Pulls.SeedFilesRequest.Pull.get -> Aw.Forge.Core.Refs.ForgeRef!
+Aw.Forge.Core.Pulls.SeedFilesRequest.Pull.init -> void
+Aw.Forge.Core.Pulls.SeedFilesRequest.SeedFilesRequest(Aw.Forge.Core.Refs.ForgeRef! Pull, System.Collections.Generic.IReadOnlyList<Aw.Forge.Core.Pulls.SeedFile!>! Files, bool CapReached = false) -> void
+Aw.Forge.Core.Pulls.SubmitReviewRequest
+Aw.Forge.Core.Pulls.SubmitReviewRequest.<Clone>$() -> Aw.Forge.Core.Pulls.SubmitReviewRequest!
+Aw.Forge.Core.Pulls.SubmitReviewRequest.Body.get -> string!
+Aw.Forge.Core.Pulls.SubmitReviewRequest.Body.init -> void
+Aw.Forge.Core.Pulls.SubmitReviewRequest.Comments.get -> System.Collections.Generic.IReadOnlyList<Aw.Forge.Core.Pulls.ReviewComment!>!
+Aw.Forge.Core.Pulls.SubmitReviewRequest.Comments.init -> void
+Aw.Forge.Core.Pulls.SubmitReviewRequest.Deconstruct(out Aw.Forge.Core.Refs.ForgeRef! Pull, out string! ExpectedHead, out Aw.Forge.Core.Pulls.ReviewVerdict Verdict, out string! Body, out System.Collections.Generic.IReadOnlyList<Aw.Forge.Core.Pulls.ReviewComment!>! Comments, out string! Marker) -> void
+Aw.Forge.Core.Pulls.SubmitReviewRequest.Equals(Aw.Forge.Core.Pulls.SubmitReviewRequest? other) -> bool
+Aw.Forge.Core.Pulls.SubmitReviewRequest.ExpectedHead.get -> string!
+Aw.Forge.Core.Pulls.SubmitReviewRequest.ExpectedHead.init -> void
+Aw.Forge.Core.Pulls.SubmitReviewRequest.Marker.get -> string!
+Aw.Forge.Core.Pulls.SubmitReviewRequest.Marker.init -> void
+Aw.Forge.Core.Pulls.SubmitReviewRequest.Pull.get -> Aw.Forge.Core.Refs.ForgeRef!
+Aw.Forge.Core.Pulls.SubmitReviewRequest.Pull.init -> void
+Aw.Forge.Core.Pulls.SubmitReviewRequest.SubmitReviewRequest(Aw.Forge.Core.Refs.ForgeRef! Pull, string! ExpectedHead, Aw.Forge.Core.Pulls.ReviewVerdict Verdict, string! Body, System.Collections.Generic.IReadOnlyList<Aw.Forge.Core.Pulls.ReviewComment!>! Comments, string! Marker) -> void
+Aw.Forge.Core.Pulls.SubmitReviewRequest.Verdict.get -> Aw.Forge.Core.Pulls.ReviewVerdict
+Aw.Forge.Core.Pulls.SubmitReviewRequest.Verdict.init -> void
+override Aw.Forge.Core.Pulls.ReviewComment.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.ReviewComment.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.ReviewComment.ToString() -> string!
+override Aw.Forge.Core.Pulls.SeedFile.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.SeedFile.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.SeedFile.ToString() -> string!
+override Aw.Forge.Core.Pulls.SeedFilesRequest.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.SeedFilesRequest.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.SeedFilesRequest.ToString() -> string!
+override Aw.Forge.Core.Pulls.SubmitReviewRequest.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.SubmitReviewRequest.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.SubmitReviewRequest.ToString() -> string!
+static Aw.Forge.Core.Pulls.ReviewComment.operator !=(Aw.Forge.Core.Pulls.ReviewComment? left, Aw.Forge.Core.Pulls.ReviewComment? right) -> bool
+static Aw.Forge.Core.Pulls.ReviewComment.operator ==(Aw.Forge.Core.Pulls.ReviewComment? left, Aw.Forge.Core.Pulls.ReviewComment? right) -> bool
+static Aw.Forge.Core.Pulls.SeedFile.operator !=(Aw.Forge.Core.Pulls.SeedFile? left, Aw.Forge.Core.Pulls.SeedFile? right) -> bool
+static Aw.Forge.Core.Pulls.SeedFile.operator ==(Aw.Forge.Core.Pulls.SeedFile? left, Aw.Forge.Core.Pulls.SeedFile? right) -> bool
+static Aw.Forge.Core.Pulls.SeedFilesRequest.operator !=(Aw.Forge.Core.Pulls.SeedFilesRequest? left, Aw.Forge.Core.Pulls.SeedFilesRequest? right) -> bool
+static Aw.Forge.Core.Pulls.SeedFilesRequest.operator ==(Aw.Forge.Core.Pulls.SeedFilesRequest? left, Aw.Forge.Core.Pulls.SeedFilesRequest? right) -> bool
+static Aw.Forge.Core.Pulls.SubmitReviewRequest.operator !=(Aw.Forge.Core.Pulls.SubmitReviewRequest? left, Aw.Forge.Core.Pulls.SubmitReviewRequest? right) -> bool
+static Aw.Forge.Core.Pulls.SubmitReviewRequest.operator ==(Aw.Forge.Core.Pulls.SubmitReviewRequest? left, Aw.Forge.Core.Pulls.SubmitReviewRequest? right) -> bool

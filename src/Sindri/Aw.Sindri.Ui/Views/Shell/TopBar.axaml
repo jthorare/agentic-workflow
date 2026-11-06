@@ -55,7 +55,7 @@
             </ListBox.ItemsPanel>
             <ListBox.Styles>
               <Style Selector="ListBoxItem" x:DataType="shell:NavEntry">
-                <Setter Property="AutomationProperties.Name" Value="{Binding Label}" />
+                <Setter Property="AutomationProperties.Name" Value="{Binding AccessibleName}" />
               </Style>
               <!-- A count shows when there is one, and not at all once the bar has stepped down to its last step (TopBar.Counts.cs). -->
               <Style Selector="TextBlock.nav-count">
@@ -72,7 +72,7 @@
               <DataTemplate x:DataType="shell:NavEntry">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                   <Ellipse Classes="nav-dot" VerticalAlignment="Center" />
-                  <TextBlock Classes="body-strong nav-label" Text="{Binding Label}" AutomationProperties.Name="{Binding Label}" />
+                  <TextBlock Classes="body-strong nav-label" Text="{Binding DisplayLabel}" AutomationProperties.Name="{Binding Label}" />
                   <TextBlock Classes="caption subtle nav-count" Classes.has="{Binding HasCount}" Text="{Binding Count}" AutomationProperties.Name="{Binding Count}" />
                 </StackPanel>
               </DataTemplate>

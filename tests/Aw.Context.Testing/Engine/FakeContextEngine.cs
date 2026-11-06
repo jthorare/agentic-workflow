@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Aw.Context.Core;
+using Aw.Context.Core.Audience;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptScan;
@@ -12,6 +13,7 @@ using Aw.Context.Core.Facade;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Library;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Pages;
@@ -99,6 +101,30 @@ public sealed class FakeContextEngine : IContextEngine
     /// <summary>The fake keeps no records: a project read answers like every query (all sources unavailable).</summary>
     public ValueTask<Result<ProjectFactsAnswer>> Projects(ProjectFactsRequest request, ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<ProjectFactsAnswer>>(Down());
+
+    /// <summary>The fake keeps no library: every read finds nothing.</summary>
+    public ValueTask<Result<IReadOnlyList<LibraryDoc>>> ListDocs(LibraryDocFilter filter, AudienceScope audience, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryDoc>>([]));
+
+    /// <inheritdoc cref="ListDocs" />
+    public ValueTask<Result<LibraryDoc?>> GetDoc(RecordKey key, AudienceScope audience, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<LibraryDoc?>>((LibraryDoc?)null);
+
+    /// <inheritdoc cref="ListDocs" />
+    public ValueTask<Result<IReadOnlyList<LibraryItem>>> Items(RecordKey docKey, AudienceScope audience, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryItem>>([]));
+
+    /// <summary>The fake keeps no library: every ref is missing.</summary>
+    public ValueTask<Result<IReadOnlyList<LibraryRefResolution>>> Resolve(IReadOnlyList<string> refs, string? repo, AudienceScope audience, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryRefResolution>>([.. refs.Select(static r => new LibraryRefResolution(r, LibraryRefStatus.Missing, Doc: null, Item: null))]));
+
+    /// <inheritdoc cref="ListDocs" />
+    public ValueTask<Result<IReadOnlyList<LibraryClaim>>> Claims(RecordKey prKey, AudienceScope audience, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryClaim>>([]));
+
+    /// <inheritdoc cref="ListDocs" />
+    public ValueTask<Result<IReadOnlyList<LibraryClaim>>> ClaimsOn(RecordKey docKey, AudienceScope audience, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryClaim>>([]));
 
     /// <summary>An embed run answers like every query (all sources unavailable) unless the engine came from <see cref="WithEmbed"/>.</summary>
     public ValueTask<Result<EmbedRecordsReport>> Embed(EmbedRecordsRequest request, ContextScope scope, CancellationToken cancellationToken) =>

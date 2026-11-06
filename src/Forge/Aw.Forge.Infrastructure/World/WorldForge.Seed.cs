@@ -40,6 +40,7 @@ internal partial class WorldForge
                 p.PassedChecks = request.Passed;
                 p.PendingChecks = request.Pending;
                 p.Logs = new Dictionary<string, string>(request.Logs, StringComparer.Ordinal);
+                p.Runs = request.Runs?.Select(r => new WorldRun { Name = r.Name, App = r.App, Conclusion = r.Conclusion, Sha = r.Sha.Length > 0 ? r.Sha : p.HeadSha }).ToList();
                 return Results.Ok();
             });
 
@@ -56,6 +57,7 @@ internal partial class WorldForge
                 p.HeadSha = sha;
                 p.ChecksSha = sha;
                 p.Checks = ChecksState.None;
+                p.Runs = null;
                 p.Failing = [];
                 p.PassedChecks = 0;
                 p.PendingChecks = 0;
@@ -77,7 +79,7 @@ internal partial class WorldForge
             new HeadBranch(p.HeadRef, p.HeadSha, p.Fork),
             p.Mergeable,
             p.ReviewDecision,
-            new ChecksSummary(p.Checks, p.ChecksSha, [.. p.Failing], p.PassedChecks, p.PendingChecks),
+            new ChecksSummary(p.Checks, p.ChecksSha, [.. p.Failing], p.PassedChecks, p.PendingChecks, p.Runs?.Select(r => new CheckRun(r.Name, r.App, r.Conclusion, r.Sha)).ToList()),
             [.. p.Labels]);
     }
 

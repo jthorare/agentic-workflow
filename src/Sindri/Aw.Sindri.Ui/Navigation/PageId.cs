@@ -27,6 +27,9 @@ internal enum PageId
     /// <summary>Dependencies, services and health (screens spec §4.6).</summary>
     System,
 
+    /// <summary>The owner's PRs and the ones waiting on the owner (review page spec §6.1). The ninth tab, after System; G V opens it, its badge is the waiting count.</summary>
+    Reviews,
+
     /// <summary>The background jobs Sindri ran (API P6). Not a tab: G J, the palette and System's Jobs link open it.</summary>
     Jobs,
 

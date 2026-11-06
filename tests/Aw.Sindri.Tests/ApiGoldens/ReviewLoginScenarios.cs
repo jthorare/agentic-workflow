@@ -3,6 +3,7 @@ using static Aw.Sindri.Tests.Callers.CallerRequests;
 namespace Aw.Sindri.Tests.ApiGoldens;
 
 /// <summary>
+/// Not registered in ApiScenarios until the Ph5 route lands (the rows answer 404 until then).
 /// The Reviews tab's login save (PR review page spec §6.1, §9): 'POST /reviews/login' with a body {login}. Hand-written first (Ph5 red): the route doesn't exist yet, so every row
 /// answers 404 against its golden. The Ph5 implementation seeds what each row's `// seeded in Ph5:` note names.
 /// </summary>

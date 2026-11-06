@@ -1,0 +1,133 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:rvm="using:Aw.Sindri.Ui.ViewModels.Reviews"
+             xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
+             x:Class="Aw.Sindri.Ui.Views.Reviews.ReviewsPage"
+             x:DataType="rvm:ReviewsPageViewModel">
+  <!-- The Reviews list (review page spec §6.1, §6.3, mockups list-main, list-state-*): the title with the sub line and the library header, the served notice
+       and stale lines, a panel per group (Waiting on you, then Yours) with a section per project or repo, and the login prompt or the empty lines in place of
+       the groups. A row's CI is a glyph and its word, never color alone (§6.4). J and K move the row focus (ReviewsPage.axaml.cs). -->
+  <UserControl.Styles>
+    <Style Selector="TextBlock.waiting"><Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" /></Style>
+    <Style Selector="TextBlock.warns"><Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" /></Style>
+    <Style Selector="Border.review-row:focus-within, Border.review-row:focus"><Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" /></Style>
+  </UserControl.Styles>
+  <StackPanel x:Name="ReviewsRoot" Spacing="{StaticResource Size.PanelGap}">
+    <Grid ColumnDefinitions="*,Auto">
+      <StackPanel>
+        <TextBlock x:Name="ReviewsTitle" Classes="page-title" Focusable="True" Text="{Binding Title}" AutomationProperties.Name="{Binding Title}" />
+        <TextBlock x:Name="ReviewsSubLine" Classes="caption subtle" Text="{Binding SubLine}" TextWrapping="Wrap" IsVisible="{Binding SubLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+      </StackPanel>
+      <Button x:Name="ReviewsLibrary" Grid.Column="1" VerticalAlignment="Top" IsEnabled="False" AutomationProperties.Name="{Binding LibraryText}"
+              IsVisible="{Binding LibraryText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+        <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+          <icons:StateIcon Glyph="Warning" IsVisible="{Binding LibraryWarns}" VerticalAlignment="Center" />
+          <TextBlock Classes="body" Classes.warns="{Binding LibraryWarns}" Text="{Binding LibraryText}" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+    </Grid>
+
+    <TextBlock x:Name="ReviewsError" Classes="caption subtle" Text="{Binding Error}" TextWrapping="Wrap" IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    <TextBlock x:Name="ReviewsNotice" Classes="caption subtle" Text="{Binding Notice}" TextWrapping="Wrap" IsVisible="{Binding Notice, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Notice}" />
+    <StackPanel x:Name="ReviewsStale" Orientation="Horizontal" Spacing="{StaticResource Space.XS}" IsVisible="{Binding StaleText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+      <icons:StateIcon Glyph="Stale" VerticalAlignment="Center" />
+      <TextBlock Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding StaleText}" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.Name="{Binding StaleText}" />
+    </StackPanel>
+
+    <StackPanel x:Name="ReviewsLoading" Spacing="8" IsVisible="{Binding IsLoading}" AutomationProperties.AccessibilityView="Raw">
+      <Border Classes="panel" Height="64" Opacity="0.6" />
+      <Border Classes="panel" Height="64" Opacity="0.6" />
+      <TextBlock Classes="caption subtle" Text="{Binding ReadingText}" />
+    </StackPanel>
+
+    <Border x:Name="ReviewsLogin" Classes="panel" IsVisible="{Binding IsLoginPrompt}">
+      <StackPanel Margin="24" Spacing="{StaticResource Space.MD}" MaxWidth="420" HorizontalAlignment="Left">
+        <TextBlock Classes="body-strong" Text="{Binding LoginHeading}" AutomationProperties.Name="{Binding LoginHeading}" />
+        <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
+          <TextBox x:Name="ReviewsLoginField" Width="260" Text="{Binding LoginField, Mode=TwoWay}" AutomationProperties.Name="{Binding LoginFieldName}" />
+          <Button x:Name="ReviewsLoginSave" Content="{Binding SaveText}" IsEnabled="False" AutomationProperties.Name="{Binding SaveText}" />
+        </StackPanel>
+      </StackPanel>
+    </Border>
+
+    <Border x:Name="ReviewsEmpty" Classes="panel" IsVisible="{Binding EmptyLines, Converter={x:Static ObjectConverters.IsNotNull}}">
+      <ItemsControl Margin="32" ItemsSource="{Binding EmptyLines}" HorizontalAlignment="Center">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="x:String">
+            <TextBlock Classes="body muted" Text="{Binding}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,2" />
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </Border>
+
+    <ItemsControl x:Name="ReviewsGroups" ItemsSource="{Binding Groups}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="rvm:ReviewGroupViewModel">
+          <StackPanel Spacing="{StaticResource Space.XS}" Margin="0,0,0,16">
+            <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+              <TextBlock x:Name="ReviewsGroupHeading" Classes="eyebrow subtle" Classes.waiting="{Binding IsWaiting}" Text="{Binding Title}" />
+              <TextBlock Classes="eyebrow" Foreground="{DynamicResource Brush.InkSubtle}" Text="{Binding Count}" />
+            </StackPanel>
+            <Border Classes="panel">
+              <StackPanel>
+                <Grid ColumnDefinitions="*,140,70,120,160,140" Margin="16,8">
+                  <TextBlock Classes="caption subtle" Text="PULL REQUEST" AutomationProperties.AccessibilityView="Raw" />
+                  <TextBlock Grid.Column="1" Classes="caption subtle" Text="AUTHOR" AutomationProperties.AccessibilityView="Raw" />
+                  <TextBlock Grid.Column="2" Classes="caption subtle" Text="AGE" AutomationProperties.AccessibilityView="Raw" />
+                  <TextBlock Grid.Column="3" Classes="caption subtle" Text="CI" AutomationProperties.AccessibilityView="Raw" />
+                  <TextBlock Grid.Column="4" Classes="caption subtle" Text="REQUIRED CHECKS" AutomationProperties.AccessibilityView="Raw" />
+                  <TextBlock Grid.Column="5" Classes="caption subtle" Text="DESIGN DOC" AutomationProperties.AccessibilityView="Raw" />
+                </Grid>
+                <ItemsControl ItemsSource="{Binding Sections}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="rvm:ReviewSectionViewModel">
+                      <StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}" Margin="16,8,16,4">
+                          <TextBlock Classes="body-strong" Classes.mono="{Binding !IsProject}" Text="{Binding Name}" />
+                          <TextBlock Classes="caption subtle" Text="{Binding Kind}" IsVisible="{Binding IsProject}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <ItemsControl ItemsSource="{Binding Rows}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="rvm:ReviewRowViewModel">
+                              <Border x:Name="ReviewRowFrame" Classes="review-row" Focusable="True" BorderThickness="1" Padding="16,8"
+                                      AutomationProperties.Name="{Binding AutomationName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+                                <Grid ColumnDefinitions="*,140,70,120,160,140" AutomationProperties.AccessibilityView="Raw">
+                                  <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
+                                      <TextBlock Classes="body-strong" Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
+                                      <Border Classes="chip" IsVisible="{Binding HasWaitingChip}" BorderBrush="{DynamicResource Brush.Attention}" BorderThickness="1" CornerRadius="4" Padding="6,0">
+                                        <TextBlock Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding WaitingChip}" />
+                                      </Border>
+                                      <Border Classes="chip" IsVisible="{Binding IsDraft}" BorderBrush="{DynamicResource Brush.HairlineStrong}" BorderThickness="1" CornerRadius="4" Padding="6,0">
+                                        <TextBlock Classes="caption subtle" Text="{Binding DraftText}" />
+                                      </Border>
+                                    </StackPanel>
+                                    <TextBlock Classes="caption mono subtle" Text="{Binding Ref}" />
+                                  </StackPanel>
+                                  <TextBlock Grid.Column="1" Classes="body" VerticalAlignment="Center" Text="{Binding Author}" />
+                                  <TextBlock Grid.Column="2" Classes="body muted" VerticalAlignment="Center" Text="{Binding Age}" />
+                                  <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="{StaticResource Space.XS}" VerticalAlignment="Center">
+                                    <icons:StateIcon Glyph="{Binding CiGlyph}" VerticalAlignment="Center" />
+                                    <TextBlock Classes="body" Text="{Binding Ci}" />
+                                  </StackPanel>
+                                  <TextBlock Grid.Column="4" Classes="body" VerticalAlignment="Center" Text="{Binding Required}" />
+                                  <TextBlock Grid.Column="5" Classes="body muted" VerticalAlignment="Center" Text="{Binding Doc}" />
+                                </Grid>
+                              </Border>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </StackPanel>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <TextBlock x:Name="ReviewsHint" Classes="caption subtle" Text="{Binding HintText}" IsVisible="{Binding !IsLoading}" />
+  </StackPanel>
+</UserControl>

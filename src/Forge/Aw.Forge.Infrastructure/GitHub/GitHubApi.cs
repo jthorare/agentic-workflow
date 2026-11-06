@@ -31,10 +31,14 @@ internal sealed class GitHubApi(HttpClient http, ICredentialSource credentials, 
         Hosts.Allows(host) ? null : ForgeErrors.HostNotAllowed.With($"host '{host}' is not in the forge hosts");
 
     internal ValueTask<Result<GitHubReply>> Call(string host, HttpMethod method, string path, byte[]? body, CancellationToken cancellationToken) =>
-        Send(host, method, Rest(host, path), body, cancellationToken);
+        Send(host, new Wire(method, Rest(host, path), body), cancellationToken);
+
+    /// <summary>Reads a file's bytes with GitHub's raw media type (no 1 MB limit): the reply's Raw holds them; JSON answers (an error, a directory) still parse.</summary>
+    internal ValueTask<Result<GitHubReply>> CallRaw(string host, string path, CancellationToken cancellationToken) =>
+        Send(host, new Wire(HttpMethod.Get, Rest(host, path), Body: null, Raw: true), cancellationToken);
 
     internal ValueTask<Result<GitHubReply>> Query(string host, byte[] body, CancellationToken cancellationToken) =>
-        Send(host, HttpMethod.Post, GraphQl(host), body, cancellationToken);
+        Send(host, new Wire(HttpMethod.Post, GraphQl(host), body), cancellationToken);
 
     /// <summary>Reads every page of a list endpoint into one list of elements.</summary>
     internal async ValueTask<Result<IReadOnlyList<JsonElement>>> All(string host, string path, CancellationToken cancellationToken)
@@ -43,7 +47,7 @@ internal sealed class GitHubApi(HttpClient http, ICredentialSource credentials, 
         var url = Rest(host, path + (path.Contains('?', StringComparison.Ordinal) ? "&" : "?") + "per_page=100");
         for (var page = 0; page < 20; page++)
         {
-            var reply = await Send(host, HttpMethod.Get, url, body: null, cancellationToken).ConfigureAwait(false);
+            var reply = await Send(host, new Wire(HttpMethod.Get, url, Body: null), cancellationToken).ConfigureAwait(false);
             if (reply.IsError)
             {
                 return reply.Error;
@@ -66,6 +70,42 @@ internal sealed class GitHubApi(HttpClient http, ICredentialSource credentials, 
         return items;
     }
 
+    /// <summary>
+    /// Reads the pages of a list endpoint from <paramref name="path"/> (used as given), one reply per page, stopping after
+    /// <paramref name="maxPages"/> or once <paramref name="enough"/> says so. the set's More is true when it stopped with a next page left.
+    /// </summary>
+    internal async ValueTask<Result<PageSet>> Pages(string host, string path, int maxPages, Func<IReadOnlyList<GitHubReply>, bool> enough, CancellationToken cancellationToken)
+    {
+        var replies = new List<GitHubReply>();
+        var url = Rest(host, path);
+        for (var page = 1; ; page++)
+        {
+            var reply = await Send(host, new Wire(HttpMethod.Get, url, Body: null), cancellationToken).ConfigureAwait(false);
+            if (reply.IsError)
+            {
+                return reply.Error;
+            }
+
+            if (!reply.Value.Ok)
+            {
+                return Fail(reply.Value);
+            }
+
+            replies.Add(reply.Value);
+            if (reply.Value.Next is not { } next || !SameOrigin(next, url))
+            {
+                return new PageSet(replies, More: false);
+            }
+
+            if (page >= maxPages || enough(replies))
+            {
+                return new PageSet(replies, More: true);
+            }
+
+            url = next;
+        }
+    }
+
     private static bool SameOrigin(Uri next, Uri current) =>
         string.Equals(next.Scheme, "https", StringComparison.Ordinal) && string.Equals(next.Host, current.Host, StringComparison.OrdinalIgnoreCase);
 
@@ -81,7 +121,7 @@ internal sealed class GitHubApi(HttpClient http, ICredentialSource credentials, 
         };
     }
 
-    private async ValueTask<Result<GitHubReply>> Send(string host, HttpMethod method, Uri url, byte[]? body, CancellationToken cancellationToken)
+    private async ValueTask<Result<GitHubReply>> Send(string host, Wire wire, CancellationToken cancellationToken)
     {
         for (var attempt = 0; ; attempt++)
         {
@@ -91,7 +131,7 @@ internal sealed class GitHubApi(HttpClient http, ICredentialSource credentials, 
                 return token.Error;
             }
 
-            var answered = await Once(method, url, body, token.Value, cancellationToken).ConfigureAwait(false);
+            var answered = await Once(wire, token.Value, cancellationToken).ConfigureAwait(false);
             if (answered.IsError || answered.Value.Status != (int)HttpStatusCode.Unauthorized)
             {
                 return answered;
@@ -104,11 +144,12 @@ internal sealed class GitHubApi(HttpClient http, ICredentialSource credentials, 
         }
     }
 
-    private async ValueTask<Result<GitHubReply>> Once(HttpMethod method, Uri url, byte[]? body, string token, CancellationToken cancellationToken)
+    private async ValueTask<Result<GitHubReply>> Once(Wire wire, string token, CancellationToken cancellationToken)
     {
+        var (method, url, body, raw) = wire;
         using var request = new HttpRequestMessage(method, url);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        request.Headers.Accept.ParseAdd("application/vnd.github+json");
+        request.Headers.Accept.ParseAdd(raw ? "application/vnd.github.raw" : "application/vnd.github+json");
         request.Headers.UserAgent.ParseAdd("agentic-workflow-forge");
         request.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
         if (body is not null)
@@ -121,7 +162,7 @@ internal sealed class GitHubApi(HttpClient http, ICredentialSource credentials, 
         try
         {
             using var response = await http.SendAsync(request, cancellationToken).ConfigureAwait(false);
-            return await Read(response, cancellationToken).ConfigureAwait(false);
+            return await Read(response, raw, cancellationToken).ConfigureAwait(false);
         }
         catch (HttpRequestException ex)
         {
@@ -133,7 +174,7 @@ internal sealed class GitHubApi(HttpClient http, ICredentialSource credentials, 
         }
     }
 
-    private static async ValueTask<Result<GitHubReply>> Read(HttpResponseMessage response, CancellationToken cancellationToken)
+    private static async ValueTask<Result<GitHubReply>> Read(HttpResponseMessage response, bool raw, CancellationToken cancellationToken)
     {
         var status = (int)response.StatusCode;
         if (status >= 500)
@@ -146,22 +187,41 @@ internal sealed class GitHubApi(HttpClient http, ICredentialSource credentials, 
             return ForgeErrors.RateLimited.With("the forge is rate limiting this credential");
         }
 
-        var text = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-        var body = default(JsonElement);
-        if (text.Length > 0)
+        string text;
+        if (raw)
         {
-            try
+            var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+            if (response.Content.Headers.ContentType?.MediaType?.Contains("json", StringComparison.OrdinalIgnoreCase) != true)
             {
-                using var document = JsonDocument.Parse(text);
-                body = document.RootElement.Clone();
+                return new GitHubReply(status, default, NextPage(response), bytes);
             }
-            catch (JsonException)
-            {
-                body = default;
-            }
+
+            text = System.Text.Encoding.UTF8.GetString(bytes);
+        }
+        else
+        {
+            text = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        return new GitHubReply(status, body, NextPage(response));
+        return new GitHubReply(status, ParseBody(text), NextPage(response));
+    }
+
+    private static JsonElement ParseBody(string text)
+    {
+        if (text.Length == 0)
+        {
+            return default;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(text);
+            return document.RootElement.Clone();
+        }
+        catch (JsonException)
+        {
+            return default;
+        }
     }
 
     private static Uri? NextPage(HttpResponseMessage response)
