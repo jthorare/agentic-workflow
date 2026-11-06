@@ -40,9 +40,24 @@ public static class RecordBatches
     {
         ArgumentNullException.ThrowIfNull(page);
         ArgumentNullException.ThrowIfNull(scrubbers);
-        var writes = page.Items.Select(item => Write(source, item, scrubbers, at)).ToList();
-        return new RecordBatch(source, writes, page.Removed, new SyncPosition(page.Next, phase, BackfillCursor: null), at);
+        return new RecordBatch(source, Writes(source, page, scrubbers, at), page.Removed, new SyncPosition(page.Next, phase, BackfillCursor: null), at);
     }
+
+    /// <summary>Builds the batch for records that are not a page of the feed (a write-through of one record): the same scrubbing, fencing, ruleset and chunking, and no position, so the stored one stays.</summary>
+    /// <param name="source">The source the records came from.</param>
+    /// <param name="page">The records; its cursor is not used.</param>
+    /// <param name="scrubbers">The call's scrubbers; their ruleset is stored on every record.</param>
+    /// <param name="at">The driver's clock.</param>
+    /// <returns>The batch, with a null position.</returns>
+    public static RecordBatch From(SourceId source, RecordPage page, Scrubbers scrubbers, DateTimeOffset at)
+    {
+        ArgumentNullException.ThrowIfNull(page);
+        ArgumentNullException.ThrowIfNull(scrubbers);
+        return new RecordBatch(source, Writes(source, page, scrubbers, at), page.Removed, Position: null, at);
+    }
+
+    private static List<RecordWrite> Writes(SourceId source, RecordPage page, Scrubbers scrubbers, DateTimeOffset at) =>
+        [.. page.Items.Select(item => Write(source, item, scrubbers, at))];
 
     private static RecordWrite Write(SourceId source, RecordItem item, Scrubbers scrubbers, DateTimeOffset at)
     {

@@ -9,7 +9,7 @@ using static Aw.Context.Testing.Records.LinearSideSamples;
 
 namespace Aw.Context.Tests.Sync;
 
-/// <summary>What <see cref="RecordBatches.From"/> does with the side rows a Linear issue item carries (Linear hub spec 2026-11-04 §4.1, D4): the comments are cleaned like the text, and the fields pass through.</summary>
+/// <summary>What <see cref="RecordBatches"/> does with the side rows a Linear issue item carries (Linear hub spec 2026-11-04 §4.1, D4): the comments are cleaned like the text, and the fields pass through.</summary>
 [Trait("Lane", "unit")]
 public sealed class RecordBatchLinearTests
 {
@@ -93,5 +93,24 @@ public sealed class RecordBatchLinearTests
         Assert.True(write.Record.Blocked);
         Assert.Equal("ENG-1", side.Issue.Fields.Identifier);
         Assert.Empty(side.Issue.Comments);
+    }
+
+    [Fact]
+    public void The_overload_with_no_phase_builds_the_same_writes_with_no_position_and_no_guard()
+    {
+        var item = new RecordItem(
+            RecordKey.From(Key), RecordKind.Issue, "Title", "Body", Author: null, Url: null, State: null, StateRaw: null,
+            CreatedAt: null, UpdatedAt: null, ClosedAt: null, SourceVersion.From("v1"), [], Repo: null, Audience: null, Side: Rows(Fields(Ada, Todo)));
+        var page = new RecordPage([item], [], SourceCursor.From("c"), CursorReset: false);
+
+        var paged = RecordBatches.From(RecordSamples.Linear, page, SyncPhase.Incremental, _scrubbers, RecordSamples.Now);
+        var single = RecordBatches.From(RecordSamples.Linear, page, _scrubbers, RecordSamples.Now);
+
+        Assert.Null(single.Position);
+        Assert.False(single.Guard);
+        Assert.NotNull(paged.Position);
+        Assert.Equal(paged.Records.Single().Record, single.Records.Single().Record);
+        Assert.Equal(paged.Records.Single().Chunks, single.Records.Single().Chunks);
+        Assert.Equal(paged.Records.Single().Side, single.Records.Single().Side);
     }
 }

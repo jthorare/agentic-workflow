@@ -8682,11 +8682,8 @@ Aw.Context.Core.Records.RecordBatch
 Aw.Context.Core.Records.RecordBatch.<Clone>$() -> Aw.Context.Core.Records.RecordBatch!
 Aw.Context.Core.Records.RecordBatch.At.get -> System.DateTimeOffset
 Aw.Context.Core.Records.RecordBatch.At.init -> void
-Aw.Context.Core.Records.RecordBatch.Deconstruct(out Aw.Context.Core.Sources.SourceId Source, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordWrite!>! Records, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>! Removed, out Aw.Context.Core.Records.SyncPosition! Position, out System.DateTimeOffset At) -> void
 Aw.Context.Core.Records.RecordBatch.Equals(Aw.Context.Core.Records.RecordBatch? other) -> bool
-Aw.Context.Core.Records.RecordBatch.Position.get -> Aw.Context.Core.Records.SyncPosition!
 Aw.Context.Core.Records.RecordBatch.Position.init -> void
-Aw.Context.Core.Records.RecordBatch.RecordBatch(Aw.Context.Core.Sources.SourceId Source, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordWrite!>! Records, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>! Removed, Aw.Context.Core.Records.SyncPosition! Position, System.DateTimeOffset At) -> void
 Aw.Context.Core.Records.RecordBatch.Records.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordWrite!>!
 Aw.Context.Core.Records.RecordBatch.Records.init -> void
 Aw.Context.Core.Records.RecordBatch.Removed.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>!
@@ -11570,3 +11567,10 @@ override Aw.Context.Core.Linear.LinearSideRows.ToString() -> string!
 override sealed Aw.Context.Core.Linear.LinearSideRows.Equals(Aw.Context.Core.Records.SideRows? other) -> bool
 static Aw.Context.Core.Linear.LinearSideRows.operator !=(Aw.Context.Core.Linear.LinearSideRows? left, Aw.Context.Core.Linear.LinearSideRows? right) -> bool
 static Aw.Context.Core.Linear.LinearSideRows.operator ==(Aw.Context.Core.Linear.LinearSideRows? left, Aw.Context.Core.Linear.LinearSideRows? right) -> bool
+Aw.Context.Core.Records.RecordBatch.Deconstruct(out Aw.Context.Core.Sources.SourceId Source, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordWrite!>! Records, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>! Removed, out Aw.Context.Core.Records.SyncPosition? Position, out System.DateTimeOffset At, out bool Guard) -> void
+Aw.Context.Core.Records.RecordBatch.Guard.get -> bool
+Aw.Context.Core.Records.RecordBatch.Guard.init -> void
+Aw.Context.Core.Records.RecordBatch.Position.get -> Aw.Context.Core.Records.SyncPosition?
+Aw.Context.Core.Records.RecordBatch.RecordBatch(Aw.Context.Core.Sources.SourceId Source, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordWrite!>! Records, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>! Removed, Aw.Context.Core.Records.SyncPosition? Position, System.DateTimeOffset At, bool Guard = false) -> void
+static Aw.Context.Core.Sync.RecordBatches.From(Aw.Context.Core.Sources.SourceId source, Aw.Context.Core.Sync.RecordPage! page, Aw.Context.Core.Trust.Scrubbers! scrubbers, System.DateTimeOffset at) -> Aw.Context.Core.Records.RecordBatch!
+virtual Aw.Context.Core.Sync.RecordFeed.Guard.get -> bool

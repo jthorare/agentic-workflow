@@ -9,7 +9,7 @@ internal static class RecordSql
     /// <summary>The page commit's transaction is a write session, so the freed pages of every delete are zeroed (spec §4.5).</summary>
     internal const string SecureDelete = "PRAGMA secure_delete = ON";
 
-    internal const string Existing = "SELECT version, text_hash, ruleset, blocked, removed_at FROM source_record WHERE key = @key";
+    internal const string Existing = "SELECT version, text_hash, ruleset, blocked, removed_at, updated_at FROM source_record WHERE key = @key";
 
     internal const string UpsertRecord =
         "INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at, health, due_at, description, pull_facts) " +
