@@ -67,4 +67,7 @@ internal enum DeepLinkKind
 
     /// <summary>'reviews/&lt;owner&gt;/&lt;repo&gt;/&lt;number&gt;': one PR's review page over the Reviews tab (review page spec §6.2); the subject is "owner/repo/number".</summary>
     Review,
+
+    /// <summary>'reviews/fix': the fix-task sheet over the review page (review page spec §8.2); it has no subject, the page's request carries the finding.</summary>
+    FixTaskSheet,
 }

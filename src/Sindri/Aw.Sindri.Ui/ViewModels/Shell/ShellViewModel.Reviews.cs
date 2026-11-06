@@ -13,6 +13,12 @@ internal sealed partial class ShellViewModel
     /// <summary>One PR's review page, shown over the Reviews list while a 'reviews/&lt;owner&gt;/&lt;repo&gt;/&lt;number&gt;' link is open (review page spec §6.2).</summary>
     public ReviewPageViewModel ReviewPage { get; private set; }
 
+    /// <summary>The fix-task sheet's content.</summary>
+    public ReviewFixSheetViewModel ReviewFix { get; private set; }
+
+    /// <summary>True when the sheet is the fix-task sheet.</summary>
+    public bool IsFixTaskSheet => SheetLink?.Kind == DeepLinkKind.FixTaskSheet;
+
     /// <summary>True while the review page shows over the Reviews list.</summary>
     public bool IsReviewPageShown => ReviewPageOpen && IsReviews;
 
@@ -46,11 +52,12 @@ internal sealed partial class ShellViewModel
     /// <summary>Opens Reviews from Home's waiting line.</summary>
     internal void OpenReviews() => GoTo(PageId.Reviews);
 
-    [MemberNotNull(nameof(Reviews), nameof(ReviewPage))]
+    [MemberNotNull(nameof(Reviews), nameof(ReviewPage), nameof(ReviewFix))]
     private void InitReviews()
     {
         Reviews = new ReviewsPageViewModel(_api, _clock);
         ReviewPage = new ReviewPageViewModel(_api, _clock);
+        ReviewFix = new ReviewFixSheetViewModel(_api, _clock);
         Reviews.LibraryRequested += (_, _) =>
         {
             OpenSheet(DeepLink.LibrarySheet);

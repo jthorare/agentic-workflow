@@ -7,7 +7,7 @@ namespace Aw.Sindri.Ui.ViewModels.Reviews;
 /// One PR's review page (review page spec §6.2-6.4, §16): the header, the summary strip, the panels in settings order and the diff, in every state of §6.3.
 /// Release 1 posts nothing: the review buttons open GitHub.
 /// </summary>
-internal sealed class ReviewPageViewModel : ObservableObject
+internal sealed partial class ReviewPageViewModel : ObservableObject
 {
     private readonly ISindriApi _api;
     private readonly TimeProvider _clock;

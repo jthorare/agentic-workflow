@@ -9,10 +9,10 @@ internal enum ReviewFocusRegion
     /// <summary>The summary strip's first segment.</summary>
     StripFirst,
 
-    /// <summary>A panel's header or row; the key names it.</summary>
+    /// <summary>A panel's header or row; the key is the panel id, or "panelId:rowId" for a row.</summary>
     Panel,
 
-    /// <summary>A diff line; the key is "path:line".</summary>
+    /// <summary>A diff line; the key is "path:+line" for an added line, "path:-line" for a removed one, "path:line" for an unchanged one.</summary>
     DiffLine,
 
     /// <summary>A diff group's header; the key is its name.</summary>

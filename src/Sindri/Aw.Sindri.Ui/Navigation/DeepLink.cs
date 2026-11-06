@@ -33,6 +33,9 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
     /// <summary>The library errors sheet.</summary>
     internal static DeepLink LibrarySheet { get; } = new(DeepLinkKind.LibrarySheet, Subject: null);
 
+    /// <summary>The fix-task sheet.</summary>
+    internal static DeepLink FixTaskSheet { get; } = new(DeepLinkKind.FixTaskSheet, Subject: null);
+
     /// <summary>The Pin sheet.</summary>
     internal static DeepLink PinSheet { get; } = new(DeepLinkKind.PinSheet, Subject: null);
 
@@ -75,7 +78,7 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
     // The links that have no subject: 'home/needs-you', 'setup', 'projects' and 'projects/add'.
     private static bool TryParsePage(string? text, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out DeepLink? link)
     {
-        link = string.Equals(text, HomeNeedsYouText, StringComparison.Ordinal) ? HomeNeedsYou : string.Equals(text, SetupText, StringComparison.Ordinal) ? Setup : string.Equals(text, ProjectsText, StringComparison.Ordinal) ? Projects : string.Equals(text, ReviewsText, StringComparison.Ordinal) ? Reviews : string.Equals(text, LibrarySheetText, StringComparison.Ordinal) ? LibrarySheet : string.Equals(text, ProjectAddText, StringComparison.Ordinal) ? ProjectAdd : string.Equals(text, PinSheetText, StringComparison.Ordinal) ? PinSheet : string.Equals(text, PageSheetText, StringComparison.Ordinal) ? PageSheet : string.Equals(text, AddSeveralPagesText, StringComparison.Ordinal) ? AddSeveralPages : ContextItemOf(text);
+        link = Array.Find(_pageTexts, p => string.Equals(p.Text, text, StringComparison.Ordinal)) is { Text: not null } page ? new DeepLink(page.Kind, Subject: null) : ContextItemOf(text);
         return link is not null;
     }
 
@@ -94,7 +97,7 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
     private static readonly (DeepLinkKind Kind, string Text)[] _pageTexts =
     [
         (DeepLinkKind.HomeNeedsYou, HomeNeedsYouText), (DeepLinkKind.Setup, SetupText), (DeepLinkKind.Projects, ProjectsText), (DeepLinkKind.Reviews, ReviewsText),
-        (DeepLinkKind.LibrarySheet, LibrarySheetText), (DeepLinkKind.ProjectAdd, ProjectAddText), (DeepLinkKind.PinSheet, PinSheetText), (DeepLinkKind.PageSheet, PageSheetText),
+        (DeepLinkKind.LibrarySheet, LibrarySheetText), (DeepLinkKind.FixTaskSheet, FixTaskSheetText), (DeepLinkKind.ProjectAdd, ProjectAddText), (DeepLinkKind.PinSheet, PinSheetText), (DeepLinkKind.PageSheet, PageSheetText),
         (DeepLinkKind.AddSeveralPages, AddSeveralPagesText),
     ];
 
@@ -107,6 +110,8 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
     private const string ReviewsText = "reviews";
 
     private const string LibrarySheetText = "reviews/library";
+
+    private const string FixTaskSheetText = "reviews/fix";
 
     private const string ProjectAddText = "projects/add";
 
@@ -143,7 +148,7 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
         DeepLinkKind.Session => IsSessionRef(subject),
         DeepLinkKind.Project => IsEscapedId(subject),
         DeepLinkKind.Review => false,   // red until the review link's rule is written
-        DeepLinkKind.HomeNeedsYou or DeepLinkKind.NeedsYou or DeepLinkKind.Item or DeepLinkKind.Decision or DeepLinkKind.Service or DeepLinkKind.Job or DeepLinkKind.Node or DeepLinkKind.ContextItem or DeepLinkKind.System or DeepLinkKind.Setup or DeepLinkKind.Projects or DeepLinkKind.Reviews or DeepLinkKind.LibrarySheet or DeepLinkKind.ProjectAdd or DeepLinkKind.PageSheet or DeepLinkKind.AddSeveralPages or DeepLinkKind.PinSheet => IsSubject(subject),
+        DeepLinkKind.HomeNeedsYou or DeepLinkKind.NeedsYou or DeepLinkKind.Item or DeepLinkKind.Decision or DeepLinkKind.Service or DeepLinkKind.Job or DeepLinkKind.Node or DeepLinkKind.ContextItem or DeepLinkKind.System or DeepLinkKind.Setup or DeepLinkKind.Projects or DeepLinkKind.Reviews or DeepLinkKind.LibrarySheet or DeepLinkKind.FixTaskSheet or DeepLinkKind.ProjectAdd or DeepLinkKind.PageSheet or DeepLinkKind.AddSeveralPages or DeepLinkKind.PinSheet => IsSubject(subject),
         _ => false,
     };
 

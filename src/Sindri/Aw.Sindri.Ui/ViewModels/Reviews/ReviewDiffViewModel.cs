@@ -17,4 +17,20 @@ internal sealed class ReviewDiffViewModel : ObservableObject
 
     /// <summary>The groups, in order.</summary>
     public IReadOnlyList<ReviewDiffGroupViewModel> Groups { get; } = [];
+
+    /// <summary>The file the diff keys act on (j and k move it); null before the first key and after its group folds.</summary>
+    public ReviewDiffFileViewModel? FocusedFile { get; }
+
+    /// <summary>The hunk the diff keys act on (n and p move it); null when the focused file has none.</summary>
+    public ReviewDiffHunkViewModel? FocusedHunk { get; }
+
+    /// <summary>The line `c` sends as a fix task; null when no line has focus.</summary>
+    public ReviewDiffLineViewModel? FocusedLine { get; }
+
+    /// <summary>The files in the order j and k walk them: the files of the groups that are open.</summary>
+    public IReadOnlyList<ReviewDiffFileViewModel> VisibleFiles { get; } = [];
+
+    /// <summary>A line was clicked or focused: it becomes the focused line, with its hunk and file.</summary>
+    /// <param name="line">The line.</param>
+    internal void FocusLine(ReviewDiffLineViewModel line) => OnChanged(line.AutomationName);
 }
