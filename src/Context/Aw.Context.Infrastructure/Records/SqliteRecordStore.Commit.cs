@@ -145,7 +145,8 @@ internal sealed partial class SqliteRecordStore
         string.Equals(stored.Version, record.Version.Value, StringComparison.Ordinal)
         && string.Equals(stored.TextHash, record.TextHash, StringComparison.Ordinal)
         && string.Equals(stored.Ruleset, record.Ruleset, StringComparison.Ordinal)
-        && stored.Blocked == record.Blocked;
+        && stored.Blocked == record.Blocked
+        && string.Equals(stored.Audience, record.Audience?.Value, StringComparison.Ordinal);
 
     private async ValueTask<Error?> WriteRecord(SqliteUnitOfWork session, RecordBatch batch, RecordWrite write, bool isNew, CancellationToken cancellationToken)
     {

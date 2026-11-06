@@ -307,14 +307,17 @@ public sealed class FakeRecordStore : IRecordStore
         }
     }
 
+    private static bool Same(StoredRecord existing, StoredRecord record) =>
+        existing.RemovedAt is null && existing.Version == record.Version && existing.TextHash == record.TextHash
+        && existing.Ruleset == record.Ruleset && existing.Blocked == record.Blocked && existing.Audience == record.Audience;
+
     private (int Written, int Unchanged) Apply(IReadOnlyList<RecordWrite> writes)
     {
         var written = 0;
         var unchanged = 0;
         foreach (var write in writes)
         {
-            if (_records.TryGetValue(write.Record.Key, out var existing) && existing.RemovedAt is null && existing.Version == write.Record.Version && existing.TextHash == write.Record.TextHash
-                && existing.Ruleset == write.Record.Ruleset && existing.Blocked == write.Record.Blocked)
+            if (_records.TryGetValue(write.Record.Key, out var existing) && Same(existing, write.Record))
             {
                 unchanged++;
                 continue;
