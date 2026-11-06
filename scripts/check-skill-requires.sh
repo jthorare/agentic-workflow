@@ -15,6 +15,8 @@
 #     reply opens with the aw-result block, so the result file never stands in for it (#2002). Skills listed in
 #     scripts/check-skill-requires.unswept (one skill directory per line, `#` comments) are skipped until they are swept; a listed
 #     skill that already has the opening, or that does not exist, is a finding, so the list only shrinks
+#   - a skill with a block.yaml (a Sindri block) has `AW_RESULT_FILE` and `waiting` in its Result block: under AW_RESULT_SKILL it
+#     writes the result there and hands a question back as `waiting`, never a picker (skill-flows spec §3.3)
 # A skills/ directory without a SKILL.md (_shared, the preamble files) is not a skill.
 # Usage: scripts/check-skill-requires.sh [--root DIR] [--skip-bins]
 set -uo pipefail
@@ -119,6 +121,12 @@ for skill_md in skills/*/SKILL.md bootstrap/SKILL.md; do
   fi
   if awk '/^## Result block[[:space:]]*$/ { in_block = 1; next } in_block && /^## / { in_block = 0 } in_block { print }' "$skill_md" | grep -F -- '`aw-result` block' | grep -F -- 'before `## Next steps`' | grep -qvF -- 'final reply'; then
     finding "$skill_md" "the Result block puts the aw-result block before ## Next steps without saying final reply (write every file first, then print it in the final reply, after the last tool call)"
+  fi
+  if [ -f "$dir/block.yaml" ]; then
+    block_text="$(awk '/^## Result block[[:space:]]*$/ { in_block = 1; next } in_block && /^## / { in_block = 0 } in_block { print }' "$skill_md")"
+    for word in AW_RESULT_FILE waiting; do
+      printf '%s\n' "$block_text" | grep -qF -- "$word" || finding "$skill_md" "has a block.yaml but its Result block never mentions $word (under AW_RESULT_SKILL it writes AW_RESULT_FILE and hands a question back as waiting)"
+    done
   fi
   case "$UNSWEPT" in
     *" $dir "*) ;;

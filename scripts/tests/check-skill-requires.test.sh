@@ -130,6 +130,16 @@ in_block "$T/skills/tailorder/SKILL.md" 'Write the result file first; then print
 run "$T"; expect_rc "aw-result block after the reply's prose fails" 1
 expect_out "after-prose reason" 'tailorder/SKILL.md: the Result block puts the aw-result block after the reply.s prose'
 
+# A skill with a block.yaml (a Sindri block) names AW_RESULT_FILE and waiting in its Result block
+T="$(fixture block-wording)"; skill "$T" blocky '{}'; echo 'schema: 1' > "$T/skills/blocky/block.yaml"
+run "$T"; expect_rc "a block skill whose Result block lacks the file and waiting wording fails" 1
+expect_out "names AW_RESULT_FILE" 'blocky/SKILL.md: has a block.yaml but its Result block never mentions AW_RESULT_FILE'
+expect_out "names waiting" 'blocky/SKILL.md: has a block.yaml but its Result block never mentions waiting'
+in_block "$T/skills/blocky/SKILL.md" 'Under AW_RESULT_SKILL write the result to AW_RESULT_FILE; a question goes in `"waiting"`.'
+run "$T"; expect_rc "a block skill with the wording passes" 0
+T="$(fixture no-block-yaml)"; skill "$T" plain '{}'
+run "$T"; expect_rc "a skill with no block.yaml needs no such wording" 0
+
 # The opening: the gate runs before the first step, so an early stop still ends with the Result block (#2002)
 T="$(fixture no-opening)"; skill "$T" noopen '{}'
 grep -vF -- '(#result-block)' "$T/skills/noopen/SKILL.md" > "$T/x" && mv "$T/x" "$T/skills/noopen/SKILL.md"
