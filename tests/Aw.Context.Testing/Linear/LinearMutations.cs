@@ -267,8 +267,8 @@ internal sealed class LinearMutations(LinearStore store, FakeLinearSwitches swit
     {
         var input = Input(field, "IssueLabelCreateInput");
         var clientId = ClientId(input, "IssueLabel", id => store.Labels.Exists(l => l.Id == id));
-        var label = new LinearRow(clientId ?? store.NewId(), Required(input, "name"));
+        var label = new LinearRow(clientId ?? store.NewId(), Required(input, "name"), TeamId: Str(input, "teamId"));
         store.Labels.Add(label);
-        return Payload("issueLabel", LinearRender.Ref(label));
+        return Payload("issueLabel", LinearRender.Label(store, label));
     }
 }

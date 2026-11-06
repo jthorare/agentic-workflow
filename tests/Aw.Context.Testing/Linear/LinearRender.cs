@@ -41,6 +41,15 @@ internal static class LinearRender
         };
     }
 
+    /// <summary>A label with its team (null for a workspace label), as 'issueLabels' filters it by team.</summary>
+    public static JsonObject Label(LinearStore s, LinearRow l)
+    {
+        var node = Ref(l);
+        var team = l.TeamId is null ? null : s.Teams.Find(t => t.Id == l.TeamId);
+        node["team"] = team is null ? null : Ref(team, key: true);
+        return node;
+    }
+
     public static JsonObject Comment(LinearStore s, FakeLinearComment c) => new()
     {
         ["id"] = c.Id,
@@ -48,8 +57,16 @@ internal static class LinearRender
         ["createdAt"] = c.CreatedAt,
         ["updatedAt"] = c.UpdatedAt,
         ["user"] = Ref(LinearStore.FindRow(s.Members, c.User) ?? s.Viewer),
-        ["issue"] = new JsonObject { ["id"] = c.IssueId },
+        ["issue"] = Commented(s, c.IssueId),
     };
+
+    // why: Linear filters comments by 'issue: { team: { key: ... } }', so the issue carries its team
+    private static JsonObject Commented(LinearStore s, string issueId)
+    {
+        var issue = s.Issues.Find(i => i.Id == issueId);
+        var team = issue is null ? null : s.Teams.Find(t => t.Key == issue.Team);
+        return new JsonObject { ["id"] = issueId, ["identifier"] = issue?.Identifier, ["team"] = team is null ? null : Ref(team, key: true) };
+    }
 
     public static JsonObject Attachment(FakeLinearAttachment a) => new()
     {

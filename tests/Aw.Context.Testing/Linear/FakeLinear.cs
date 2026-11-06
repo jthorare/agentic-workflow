@@ -25,12 +25,14 @@ public sealed class FakeLinear : IAsyncDisposable
     private readonly LinearMutations _mutations;
     private readonly List<string> _bodies = [];
     private LoopbackServer _server = null!;
+    private readonly string? _writeToken;
     private int _requests;
 
-    private FakeLinear(LinearStore store, string token)
+    private FakeLinear(LinearStore store, string token, string? writeToken)
     {
         _store = store;
         Token = token;
+        _writeToken = writeToken;
         _queries = new LinearQueries(store);
         _mutations = new LinearMutations(store, Switches);
     }
@@ -59,12 +61,13 @@ public sealed class FakeLinear : IAsyncDisposable
     /// <summary>Starts the fake on an ephemeral loopback port.</summary>
     /// <param name="seed">Fills the made-up data; null seeds one team, 'ENG'.</param>
     /// <param name="token">The credential to accept; null takes <see cref="DefaultToken"/>.</param>
+    /// <param name="writeToken">A second credential to accept, for a client that keeps a read key and a write key apart (spec D2); null accepts only <paramref name="token"/>. The fake treats both alike.</param>
     /// <returns>The running fake.</returns>
-    public static async Task<FakeLinear> Start(Action<FakeLinearSeed>? seed = null, string? token = null)
+    public static async Task<FakeLinear> Start(Action<FakeLinearSeed>? seed = null, string? token = null, string? writeToken = null)
     {
         var data = new FakeLinearSeed();
         (seed ?? (s => s.Team("ENG")))(data);
-        var linear = new FakeLinear(data.Store, token ?? DefaultToken);
+        var linear = new FakeLinear(data.Store, token ?? DefaultToken, writeToken);
         linear._server = await LoopbackServer.Start("fake-linear-stateful", linear.Handle).ConfigureAwait(false);
         return linear;
     }
@@ -172,8 +175,10 @@ public sealed class FakeLinear : IAsyncDisposable
         }
     }
 
-    private bool TokenOk(string? authorization) =>
-        string.Equals(authorization, Token, StringComparison.Ordinal) || string.Equals(authorization, "Bearer " + Token, StringComparison.Ordinal);
+    private bool TokenOk(string? authorization) => Accepts(authorization, Token) || (_writeToken is not null && Accepts(authorization, _writeToken));
+
+    private static bool Accepts(string? authorization, string token) =>
+        string.Equals(authorization, token, StringComparison.Ordinal) || string.Equals(authorization, "Bearer " + token, StringComparison.Ordinal);
 
     private FakeHttpReply Answer(string body)
     {

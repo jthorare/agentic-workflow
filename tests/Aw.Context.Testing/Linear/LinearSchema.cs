@@ -6,7 +6,7 @@ namespace Aw.Context.Testing.Linear;
 internal static class LinearSchema
 {
     public static readonly IReadOnlyList<string> Queries =
-        ["issues", "issue", "viewer", "teams", "users", "issueLabels", "workflowStates", "cycles", "projects", "documents", "projectUpdates"];
+        ["issues", "issue", "comments", "viewer", "teams", "users", "issueLabels", "workflowStates", "cycles", "projects", "documents", "projectUpdates"];
 
     public static readonly IReadOnlyList<string> Mutations =
         ["issueCreate", "issueUpdate", "commentCreate", "commentUpdate", "attachmentLinkURL", "issueArchive", "issueLabelCreate"];
@@ -32,6 +32,21 @@ internal static class LinearSchema
 
     /// <summary>The answer to __type(name:), or null for a type the fake doesn't know.</summary>
     public static JsonObject? Type(string name) =>
+        name switch
+        {
+            "Query" => ObjectType(name, Queries),
+            "Mutation" => ObjectType(name, Mutations),
+            _ => InputType(name),
+        };
+
+    private static JsonObject ObjectType(string name, IReadOnlyList<string> fields) => new()
+    {
+        ["name"] = name,
+        ["kind"] = "OBJECT",
+        ["fields"] = new JsonArray([.. fields.Select(f => (JsonNode)new JsonObject { ["name"] = f })]),
+    };
+
+    private static JsonObject? InputType(string name) =>
         Inputs.TryGetValue(name, out var fields)
             ? new JsonObject
             {

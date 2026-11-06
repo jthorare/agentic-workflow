@@ -13,7 +13,7 @@ await using var linear = await FakeLinear.Start(seed => seed
     .Member("Ada Fixture")
     .Label("bug")
     .Issue("ENG", "Fix the login timeout", new FakeLinearIssueSeed { State = "In Progress", Assignee = "Ada Fixture" }));
-// POST linear.Url with the header  Authorization: <linear.Token>
+// POST linear.Url with the header  Authorization: <linear.Token>  (FakeLinear.Start(seed, token, writeToken) accepts a second key; both act alike)
 // ids for mutation inputs: linear.TeamId("ENG"), StateId("ENG", "Done"), MemberId, LabelId, CycleId, ProjectId
 // read-only views: linear.Issues, linear.Comments, linear.Attachments, linear.RequestBodies (bodies only, never a header)
 ```
@@ -22,14 +22,14 @@ await using var linear = await FakeLinear.Start(seed => seed
 
 - Queries (answered from state): `viewer`, `issues` (filter, first, after, orderBy, includeArchived; newest first, archived
   issues hidden unless `includeArchived: true`), `issue(id:)` (by id, identifier, or an identifier the issue had before a team
-  move), `teams`, `users`, `issueLabels`, `workflowStates`, `cycles`, `projects`, empty `documents` and `projectUpdates`.
+  move), `comments` (newest first; filter by `issue: { team: { key } }`), `teams`, `users`, `issueLabels` (each with its `team`, null for a workspace label), `workflowStates`, `cycles`, `projects`, empty `documents` and `projectUpdates`.
   A field the fake doesn't have is a 400 that names it.
 - Mutations: `issueCreate`, `issueUpdate`, `commentCreate`, `commentUpdate`, `attachmentLinkURL`, `issueArchive`,
   `issueLabelCreate`. Each answers `{ success, lastSyncId, <entity> }`: `issue`, `comment`, `attachment`, `issueLabel`, and
   `entity` for `issueArchive`. Inputs may come through variables or inline.
 - Introspection: `__type(name:)` for `IssueCreateInput`, `IssueUpdateInput`, `CommentCreateInput`, `CommentUpdateInput`,
   `IssueLabelCreateInput` (`inputFields { name type { name kind ofType { name kind } } }`), and
-  `__schema { queryType { fields { name } } mutationType { fields { name } } }`. The input types live in `LinearSchema.cs`;
+  `__type(name: "Query")` and `__type(name: "Mutation")` (`fields { name }`), and `__schema { queryType { fields { name } } mutationType { fields { name } } }`. The input types live in `LinearSchema.cs`;
   the same table refuses unknown input fields. (Ph0 checks: `id` exists on `IssueCreateInput` and `CommentCreateInput`.)
 - Rate-limit headers on every answer: `x-ratelimit-requests-limit` (5000), `x-ratelimit-requests-remaining`,
   `x-ratelimit-requests-reset`, `x-complexity`. (Ph0 checks: names and numbers.)

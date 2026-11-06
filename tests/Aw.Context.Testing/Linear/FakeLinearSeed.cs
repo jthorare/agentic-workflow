@@ -36,10 +36,24 @@ public sealed class FakeLinearSeed
 
     /// <summary>Adds a label.</summary>
     /// <param name="name">The label name.</param>
+    /// <param name="teamKey">The team the label belongs to; null makes a workspace label.</param>
     /// <returns>This seed.</returns>
-    public FakeLinearSeed Label(string name)
+    public FakeLinearSeed Label(string name, string? teamKey = null)
     {
-        Store.Labels.Add(new LinearRow(Store.NewId(), name));
+        var team = teamKey is null ? null : Store.Teams.Find(t => t.Key == teamKey) ?? throw new ArgumentException($"Seed the team '{teamKey}' before its labels.", nameof(teamKey));
+        Store.Labels.Add(new LinearRow(Store.NewId(), name, TeamId: team?.Id));
+        return this;
+    }
+
+    /// <summary>Adds a comment, by the viewer, to a seeded issue.</summary>
+    /// <param name="issueIdentifier">The issue's identifier ('ENG-1').</param>
+    /// <param name="body">The comment text.</param>
+    /// <returns>This seed.</returns>
+    public FakeLinearSeed Comment(string issueIdentifier, string body)
+    {
+        var issue = Store.FindIssue(issueIdentifier) ?? throw new ArgumentException($"Seed the issue '{issueIdentifier}' before its comments.", nameof(issueIdentifier));
+        var now = Store.Now();
+        Store.Comments.Add(new FakeLinearComment(Store.NewId(), issue.Id, body, Store.Viewer.Name, now, now));
         return this;
     }
 

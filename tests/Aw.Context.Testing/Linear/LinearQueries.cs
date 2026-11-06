@@ -24,6 +24,8 @@ internal sealed class LinearQueries(LinearStore store)
                 return Issue(field);
             case "issues":
                 return (Select(field, Issues(field), newestFirst: true), null);
+            case "comments":
+                return (Select(field, store.Comments.Select(c => (JsonNode)LinearRender.Comment(store, c)), newestFirst: true), null);
             default:
                 return (Select(field, Rows(field.Name), newestFirst: false), null);
         }
@@ -33,7 +35,7 @@ internal sealed class LinearQueries(LinearStore store)
     {
         "teams" => store.Teams.Select(t => (JsonNode)LinearRender.Team(t)),
         "users" => store.Members.Select(m => (JsonNode)LinearRender.Member(m)),
-        "issueLabels" => store.Labels.Select(l => (JsonNode)LinearRender.Ref(l)),
+        "issueLabels" => store.Labels.Select(l => (JsonNode)LinearRender.Label(store, l)),
         "workflowStates" => store.States.Select(x => (JsonNode)LinearRender.State(store, x)),
         "cycles" => store.Cycles.Select(c => (JsonNode)LinearRender.Ref(c)),
         "projects" => store.Projects.Select(p => (JsonNode)LinearRender.Project(store, p)),
