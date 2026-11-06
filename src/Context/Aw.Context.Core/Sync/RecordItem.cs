@@ -24,6 +24,7 @@ namespace Aw.Context.Core.Sync;
 /// <param name="DueAt">The day a project is due, or null.</param>
 /// <param name="Description">A project's description as the source gave it (free text), or null; the driver scrubs and caps it.</param>
 /// <param name="Pull">A pull request's reviewers, head and reviewed commits, or null for any other record.</param>
+/// <param name="Side">Rows the source's writer keeps beside the record (the Linear issue's fields and comments), raw: the driver cleans their text. Null: the driver builds the side rows it knows from the item, or none.</param>
 public sealed record RecordItem(
     RecordKey Key,
     RecordKind Kind,
@@ -43,4 +44,5 @@ public sealed record RecordItem(
     string? Health = null,
     DateOnly? DueAt = null,
     string? Description = null,
-    PullFacts? Pull = null);
+    PullFacts? Pull = null,
+    SideRows? Side = null);

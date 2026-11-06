@@ -31,10 +31,14 @@ public sealed class FakeRecordStore : IRecordStore
                 return Fail<CommitReport>(invalid);
             }
 
-            var (written, unchanged) = Apply(batch.Records);
+            var (written, unchanged) = Apply(batch.Records, batch.Guard);
             var tombstoned = Tombstone(batch.Removed, batch.At);
 
-            _positions[batch.Source] = batch.Position;
+            if (batch.Position is { } position)
+            {
+                _positions[batch.Source] = position;
+            }
+
             if (written + tombstoned > 0)
             {
                 _recordStamp++;
@@ -307,14 +311,19 @@ public sealed class FakeRecordStore : IRecordStore
         }
     }
 
-    private (int Written, int Unchanged) Apply(IReadOnlyList<RecordWrite> writes)
+    private (int Written, int Unchanged) Apply(IReadOnlyList<RecordWrite> writes, bool guard)
     {
         var written = 0;
         var unchanged = 0;
         foreach (var write in writes)
         {
-            if (_records.TryGetValue(write.Record.Key, out var existing) && existing.RemovedAt is null && existing.Version == write.Record.Version && existing.TextHash == write.Record.TextHash
-                && existing.Ruleset == write.Record.Ruleset && existing.Blocked == write.Record.Blocked)
+            if (guard && Stale(write.Record))
+            {
+                unchanged++;   // a newer write is stored
+                continue;
+            }
+
+            if (Same(write.Record))
             {
                 unchanged++;
                 continue;
@@ -329,6 +338,14 @@ public sealed class FakeRecordStore : IRecordStore
 
         return (written, unchanged);
     }
+
+    private bool Same(StoredRecord incoming) =>
+        _records.TryGetValue(incoming.Key, out var existing) && existing.RemovedAt is null && existing.Version == incoming.Version && existing.TextHash == incoming.TextHash
+        && existing.Ruleset == incoming.Ruleset && existing.Blocked == incoming.Blocked;
+
+    // The stored record is strictly newer than the incoming one; an equal time passes, and so does a record with no time on either side.
+    private bool Stale(StoredRecord incoming) =>
+        _records.TryGetValue(incoming.Key, out var kept) && kept.UpdatedAt is { } stored && incoming.UpdatedAt is { } at && at < stored;
 
     private int Tombstone(IReadOnlyList<RecordKey> removed, DateTimeOffset at)
     {

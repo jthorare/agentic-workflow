@@ -59,12 +59,19 @@ public sealed class FakeLinearSeed
 
     /// <summary>Adds a cycle.</summary>
     /// <param name="name">The cycle name.</param>
+    /// <param name="teamKey">The team the cycle belongs to; null makes a cycle every team has.</param>
+    /// <param name="startsAt">When it starts; two weeks per cycle from 2026-01-01 when null.</param>
+    /// <param name="endsAt">When it ends; two weeks after it starts when null.</param>
     /// <returns>This seed.</returns>
-    public FakeLinearSeed Cycle(string name)
+    public FakeLinearSeed Cycle(string name, string? teamKey = null, DateTimeOffset? startsAt = null, DateTimeOffset? endsAt = null)
     {
-        Store.Cycles.Add(new LinearRow(Store.NewId(), name));
+        var team = teamKey is null ? null : Store.Teams.Find(t => t.Key == teamKey) ?? throw new ArgumentException($"Seed the team '{teamKey}' before its cycles.", nameof(teamKey));
+        var start = startsAt ?? new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero).AddDays(14 * Store.Cycles.Count);
+        Store.Cycles.Add(new LinearRow(Store.NewId(), name, TeamId: team?.Id, StartsAt: Iso(start), EndsAt: Iso(endsAt ?? start.AddDays(14))));
         return this;
     }
+
+    private static string Iso(DateTimeOffset at) => at.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", System.Globalization.CultureInfo.InvariantCulture);
 
     /// <summary>Adds a project.</summary>
     /// <param name="name">The project name.</param>

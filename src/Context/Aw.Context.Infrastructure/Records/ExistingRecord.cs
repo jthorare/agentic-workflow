@@ -6,4 +6,5 @@ namespace Aw.Context.Infrastructure.Records;
 /// <param name="Ruleset">The stored scrub ruleset.</param>
 /// <param name="Blocked">Whether it was withheld.</param>
 /// <param name="Removed">Whether it is a tombstone.</param>
-internal sealed record ExistingRecord(string Version, string TextHash, string Ruleset, bool Blocked, bool Removed);
+/// <param name="UpdatedAt">When the source last changed it, or null when it said nothing.</param>
+internal sealed record ExistingRecord(string Version, string TextHash, string Ruleset, bool Blocked, bool Removed, DateTimeOffset? UpdatedAt);

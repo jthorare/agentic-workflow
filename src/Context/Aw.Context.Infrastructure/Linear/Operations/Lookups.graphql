@@ -1,0 +1,12 @@
+query Lookups($filter: TeamFilter, $first: Int, $after: String) {
+  teams(filter: $filter, first: $first, after: $after) {
+    nodes {
+      id key name
+      states(first: 100) { nodes { id name type position } }
+      cycles(first: 50) { nodes { id number name startsAt endsAt } }
+      members(first: 250) { nodes { id name displayName active } }
+      labels(first: 250) { nodes { id name } }
+    }
+    pageInfo { hasNextPage endCursor }
+  }
+}

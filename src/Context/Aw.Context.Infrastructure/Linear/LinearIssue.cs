@@ -19,4 +19,11 @@ namespace Aw.Context.Infrastructure.Linear;
 /// <param name="Parent">The Parent Linear serves.</param>
 /// <param name="CompletedAt">The CompletedAt Linear serves.</param>
 /// <param name="CanceledAt">The CanceledAt Linear serves.</param>
-internal sealed record LinearIssue(string Id, string Identifier, string Title, DateTimeOffset UpdatedAt, string? Description = null, string? Url = null, DateTimeOffset? CreatedAt = null, LinearTeam? Team = null, LinearNamed? Creator = null, LinearConnection<LinearComment>? Comments = null, LinearConnection<LinearAttachment>? Attachments = null, LinearNamed? Project = null, LinearConnection<LinearRelation>? Relations = null, LinearConnection<LinearRelation>? InverseRelations = null, LinearState? State = null, LinearIssueRef? Parent = null, DateTimeOffset? CompletedAt = null, DateTimeOffset? CanceledAt = null);
+/// <param name="Assignee">The Assignee Linear serves.</param>
+/// <param name="Priority">The Priority Linear serves.</param>
+/// <param name="Estimate">The Estimate Linear serves.</param>
+/// <param name="Cycle">The Cycle Linear serves.</param>
+/// <param name="Labels">The Labels Linear serves.</param>
+/// <param name="DueDate">The DueDate Linear serves.</param>
+/// <param name="SortOrder">The SortOrder Linear serves.</param>
+internal sealed record LinearIssue(string Id, string Identifier, string Title, DateTimeOffset UpdatedAt, string? Description = null, string? Url = null, DateTimeOffset? CreatedAt = null, LinearTeam? Team = null, LinearNamed? Creator = null, LinearConnection<LinearComment>? Comments = null, LinearConnection<LinearAttachment>? Attachments = null, LinearNamed? Project = null, LinearConnection<LinearRelation>? Relations = null, LinearConnection<LinearRelation>? InverseRelations = null, LinearState? State = null, LinearIssueRef? Parent = null, DateTimeOffset? CompletedAt = null, DateTimeOffset? CanceledAt = null, LinearNamed? Assignee = null, int? Priority = null, double? Estimate = null, LinearNamed? Cycle = null, LinearConnection<LinearNamed>? Labels = null, string? DueDate = null, double? SortOrder = null);

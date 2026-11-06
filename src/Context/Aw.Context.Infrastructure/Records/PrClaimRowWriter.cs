@@ -25,7 +25,7 @@ internal sealed class PrClaimRowWriter : ISideRowWriter
         return !wanted.SetEquals(stored.Value);
     }
 
-    public async ValueTask<Error?> Replace(ISqliteSession session, RecordKey key, SideRows rows, CancellationToken cancellationToken)
+    public async ValueTask<Error?> Replace(ISqliteSession session, RecordKey key, SideRows rows, bool newRecord, CancellationToken cancellationToken)
     {
         var failure = await Delete(session, key, cancellationToken).ConfigureAwait(false);
         if (failure is not null)
