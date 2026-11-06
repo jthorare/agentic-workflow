@@ -13,6 +13,11 @@ public interface ITraitFiles
     /// <returns>The text, or null when the file is missing or can't be read, or is binary (holds a NUL).</returns>
     public string? ReadText(string path);
 
+    /// <summary>Whether a directory exists (an edited path's directory may be gone, or not made yet).</summary>
+    /// <param name="path">The directory's path.</param>
+    /// <returns>True when it exists and is a directory.</returns>
+    public bool DirectoryExists(string path);
+
     /// <summary>The size of a file from its metadata, without reading it.</summary>
     /// <param name="path">The file's path.</param>
     /// <returns>The size in bytes, or null when the file is missing or can't be examined.</returns>

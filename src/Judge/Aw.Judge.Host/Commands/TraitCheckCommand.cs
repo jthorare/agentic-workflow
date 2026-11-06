@@ -9,13 +9,13 @@ namespace Aw.Judge.Host.Commands;
 
 /// <summary>
 /// 'judge trait-check --edit --file &lt;p&gt;… | --stop [--base ref] | --scan [--path p…] [--trait n…]' (trait-check.sh calls
-/// the first two), with --budget-ms, --min-p and --concurrency. Exit 0 nothing to report or skipped, 2 findings
+/// the first two, with --session), with --budget-ms, --min-p and --concurrency. Exit 0 nothing to report or skipped, 2 findings
 /// (edit and stop: the message on stderr; scan: JSON lines on stdout), 3 Jev unavailable, 64 usage.
 /// </summary>
 internal static class TraitCheckCommand
 {
     internal const string Name = "trait-check";
-    internal const string Synopsis = "trait-check --edit --file <path>… | --stop [--base <ref>] | --scan [--path <path>…] [--trait <name>…]";
+    internal const string Synopsis = "trait-check --edit --file <path>… [--session <id>] | --stop [--base <ref>] [--session <id>] | --scan [--path <path>…] [--trait <name>…]";
 
     private const int FindingsExit = 2;
     private const int JevUnavailableExit = 3;

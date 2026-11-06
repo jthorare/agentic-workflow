@@ -1,0 +1,2 @@
+bins: [aws, bun, curl, docker, gh, git, lsof, node, security]
+mcp: [prism-mcp]

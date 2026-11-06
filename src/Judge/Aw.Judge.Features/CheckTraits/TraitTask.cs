@@ -10,4 +10,7 @@ internal sealed record TraitTask(DiffSource Source, IReadOnlyList<Trait> Batch)
 {
     /// <summary>The picture the excerpt stands for (an edited PNG or JPEG), or none.</summary>
     public IReadOnlyList<ImageAttachment> Images { get; init; } = [];
+
+    /// <summary>The top-level directory of the repo the excerpt's file is in; the source's path is relative to it.</summary>
+    public string Root { get; init; } = "";
 }
