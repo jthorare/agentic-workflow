@@ -1,7 +1,7 @@
 using Aw.Kernel.Services;
+using Aw.Sindri.Core.Workflow.RegistryWrites;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.GetSkills;
-using Aw.Sindri.Core.Workflow.RegistryWrites;
 using Aw.Sindri.Features.StartSkillRun;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
