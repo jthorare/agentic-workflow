@@ -134,7 +134,7 @@ public sealed class RecordBatchLinearTests
     }
 
     [Fact]
-    public void A_description_over_64_KiB_is_cut_to_it()
+    public void A_description_over_65536_characters_is_cut_to_it()
     {
         var write = Build(Described(Rows(Fields(Ada, Todo)), new string('x', RecordBatches.MaxIssueDescription + 10)));
 

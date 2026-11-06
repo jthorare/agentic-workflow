@@ -1,5 +1,5 @@
 -- The Linear hub (spec 2026-11-04 §4.1, §4.2): an issue's fields, its newest comments, the assignee and state changes between two reads, and the lists the pickers need. The first three are written by the 'linear'
--- side-row writer in the same transaction as the issue record. Records are soft-deleted, so no cascade fires on a tombstone: every read filters 'removed_at IS NULL'; only a purge cascades from source_record.
+-- side-row writer in the same transaction as the issue record. A tombstone deletes the issue's side rows (the writer's Delete, in the tombstone's transaction) and a purge cascades from source_record; every read still filters 'removed_at IS NULL'.
 CREATE TABLE linear_issue (
     key         TEXT PRIMARY KEY NOT NULL REFERENCES source_record (key) ON DELETE CASCADE,
     team_id     TEXT NULL,
@@ -22,6 +22,7 @@ CREATE TABLE linear_issue (
 CREATE INDEX linear_issue_by_assignee_state ON linear_issue (assignee_id, state_type);
 CREATE INDEX linear_issue_by_project ON linear_issue (project_id);
 CREATE INDEX linear_issue_by_cycle ON linear_issue (cycle_id);
+CREATE INDEX linear_issue_by_updated ON linear_issue (updated_at, key);   -- the list's order: updated_at DESC, key
 
 CREATE TABLE linear_comment (
     id         TEXT PRIMARY KEY NOT NULL,

@@ -22,7 +22,7 @@ public static class RecordBatches
     /// <summary>The most characters a stored Linear comment keeps (the issue's text holds the newest 20 whole for search).</summary>
     public const int MaxCommentBody = 8000;
 
-    /// <summary>The most characters a stored Linear issue description keeps (Linear's input limit, 64 KiB).</summary>
+    /// <summary>The most characters a stored Linear issue description keeps (Linear's input limit, 65,536 characters).</summary>
     public const int MaxIssueDescription = 65536;
 
     /// <summary>What a stored Linear comment says when the scrubber withheld its text.</summary>
