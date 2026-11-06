@@ -11,8 +11,9 @@ namespace Aw.Sindri.Core.Views;
 /// <param name="Stalled">True when the projector stopped on an event, or (with a null <paramref name="StalledAt"/>) couldn't run at all.</param>
 /// <param name="StalledAt">The sequence it stopped at, when stalled on an event.</param>
 /// <param name="StalledType">That event's type, when stalled on an event; else why it can't run, as 'code: detail' with the failing call's own code (SND-VIEW-001 for views.db, SND-LEDGER-00x for the ledger).</param>
+/// <param name="Starting">True from boot until the projector's first publish: not Healthy yet, but not a rebuild either, so commands wait for the first pass. Never serialized (#2053).</param>
 public sealed record ViewsStatus(long Cursor, long LedgerHead, DateTimeOffset? ProjectedAt, bool Rebuilding, bool Stalled,
-    long? StalledAt, string? StalledType)
+    long? StalledAt, string? StalledType, [property: JsonIgnore] bool Starting = false)
 {
     /// <summary>The freshness a view answer carries.</summary>
     [JsonIgnore]

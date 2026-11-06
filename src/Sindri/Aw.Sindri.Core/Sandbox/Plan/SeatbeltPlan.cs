@@ -86,7 +86,11 @@ internal static class SeatbeltPlan
                 return;
             }
 
-            if (m.Kind is PlanMountKind.Tmpfs or PlanMountKind.Deny)
+            if (m is { Kind: PlanMountKind.Tmpfs, PrivateScratch: true })
+            {
+                _out.Add(m with { Kind = PlanMountKind.ReadWrite });   // why: Seatbelt has no tmpfs; the .NET runtime's private scratch directory gets a write allowance on its real path, any other tmpfs is denied
+            }
+            else if (m.Kind is PlanMountKind.Tmpfs or PlanMountKind.Deny)
             {
                 AddDeny(m);
             }

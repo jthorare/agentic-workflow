@@ -1,0 +1,83 @@
+tlc-check: Takeover: warning: models path missing: src/Sindri/Aw.Sindri.Core/Workflow/Engine/Rules/StateTimers.cs
+tlc-check: Takeover: warning: models path missing: src/Sindri/Aw.Sindri.Core/Workflow/Engine/Rules/Suspensions.cs
+tlc-check: Takeover: warning: models path missing: src/Sindri/Aw.Sindri.Core/Workflow/Engine/Rules/TransitionDecision.EngineTriggers.cs
+tlc-check: Takeover: warning: models path missing: src/Sindri/Aw.Sindri.Workflows/TimerScopes.cs
+tlc-check: Takeover/Takeover.cfg: VIOLATION invariant NoTimeGained
+  | TLC2 Version 2.19 of 08 August 2024 (rev: 5a47802)
+  | Running breadth-first search Model-Checking with fp 92 and seed 3504290034585203988 with 1 worker on 16 cores with 7113MB heap and 64MB offheap memory [pid: 3048031] (Linux 7.0.0-38-generic amd64, Ubuntu 21.0.12.1 x86_64, MSBDiskFPSet, DiskStateQueue).
+  | Parsing file /work/specs/tla/Takeover/Takeover.tla
+  | Parsing file /tmp/Integers.tla
+  | Parsing file /tmp/Naturals.tla
+  | Semantic processing of module Naturals
+  | Semantic processing of module Integers
+  | Semantic processing of module Takeover
+  | Starting... (2026-11-04 19:54:47)
+  | Computing initial states...
+  | Finished computing initial states: 2 distinct states generated at 2026-11-04 19:54:48.
+  | Error: Invariant NoTimeGained is violated.
+  | Error: The behavior up to this point is:
+  | State 1: <Initial predicate>
+  | /\ kept = -1
+  | /\ ended = FALSE
+  | /\ st = 1
+  | /\ idle = "off"
+  | /\ nTake = 0
+  | /\ held = 0
+  | /\ resumed = FALSE
+  | /\ ceiling = -1
+  | /\ pend = 0
+  | /\ retried = FALSE
+  | /\ nPark = 0
+  | /\ susp = "none"
+  | /\ tmr = 3
+  | 
+  | State 2: <Elapse line 129, col 5 to line 131, col 101 of module Takeover>
+  | /\ kept = -1
+  | /\ ended = FALSE
+  | /\ st = 1
+  | /\ idle = "off"
+  | /\ nTake = 0
+  | /\ held = 0
+  | /\ resumed = FALSE
+  | /\ ceiling = -1
+  | /\ pend = 0
+  | /\ retried = FALSE
+  | /\ nPark = 0
+  | /\ susp = "none"
+  | /\ tmr = 2
+  | 
+  | State 3: <Takeover line 60, col 5 to line 73, col 52 of module Takeover>
+  | /\ kept = 3
+  | /\ ended = FALSE
+  | /\ st = 1
+  | /\ idle = "armed"
+  | /\ nTake = 1
+  | /\ held = 0
+  | /\ resumed = FALSE
+  | /\ ceiling = 2
+  | /\ pend = 0
+  | /\ retried = FALSE
+  | /\ nPark = 0
+  | /\ susp = "takeover"
+  | /\ tmr = -1
+  | 
+  | State 4: <Handback line 77, col 5 to line 90, col 59 of module Takeover>
+  | /\ kept = -1
+  | /\ ended = FALSE
+  | /\ st = 1
+  | /\ idle = "off"
+  | /\ nTake = 1
+  | /\ held = 0
+  | /\ resumed = TRUE
+  | /\ ceiling = 2
+  | /\ pend = 0
+  | /\ retried = FALSE
+  | /\ nPark = 0
+  | /\ susp = "none"
+  | /\ tmr = 3
+  | 
+  | 77 states generated, 46 distinct states found, 23 states left on queue.
+  | The depth of the complete state graph search is 4.
+  | The average outdegree of the complete state graph is 2 (minimum is 0, the maximum 5 and the 95th percentile is 4).
+  | Finished in 00s at (2026-11-04 19:54:48)
+  | tlc: VIOLATION invariant NoTimeGained

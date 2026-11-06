@@ -218,7 +218,7 @@ public sealed class WatchTests
         _lines.Clear();
         _ = await Watch(TimeSpan.FromSeconds(120));
 
-        Assert.Equal(3, before);
+        Assert.Equal(2, before);   // depth 7 holds the cap less one (#2100)
         Assert.Equal(0, _world.Heavy.Reserve);
     }
 

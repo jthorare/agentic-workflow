@@ -3,7 +3,7 @@ using System.Globalization;
 
 namespace Aw.Sindri.Infrastructure.Locks;
 
-/// <summary>Reads who holds a slot (our owner file or the TS sindri's holder.json) and judges whether that holder is dead.</summary>
+/// <summary>Reads who holds a slot (our owner file, config/lib/locks.sh's pid file or the TS sindri's holder.json) and judges whether that holder is dead.</summary>
 internal static class HolderRecords
 {
     private static readonly System.Text.Json.JsonSerializerOptions _json = Kernel.Json.AwJson.CreateOptions(HolderJsonContext.Default);
@@ -14,13 +14,14 @@ internal static class HolderRecords
     internal static HolderRecord? RecordOf(string directory)
     {
         var owner = Path.Combine(directory, DirectoryHeavySlots.OwnerFile);
+        if (!File.Exists(owner) && PidRecordOf(directory) is { } fromPid)
+        {
+            return fromPid;
+        }
+
         if (File.Exists(owner))
         {
-            var text = File.ReadAllText(owner);
-            var words = text.Split(' ', 3);
-            return int.TryParse(words[0], NumberStyles.None, CultureInfo.InvariantCulture, out var pid)
-                ? new HolderRecord(owner, text, pid, Host: null, words.Length > 1 && DateTimeOffset.TryParse(words[1], CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var parsedAt) ? parsedAt : null)
-                : null;
+            return OwnerRecordOf(owner);
         }
 
         var beside = directory + ".holder.json";
@@ -36,6 +37,30 @@ internal static class HolderRecords
             : new HolderRecord(beside, json, parsed.Value.Pid, parsed.Value.Host, DateTimeOffset.TryParse(parsed.Value.StartedAt, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var written) ? written : null);
     }
 
+    private static HolderRecord? OwnerRecordOf(string owner)
+    {
+        var text = File.ReadAllText(owner);
+        var words = text.Split(' ', 3);
+        return int.TryParse(words[0], NumberStyles.None, CultureInfo.InvariantCulture, out var pid)
+            ? new HolderRecord(owner, text, pid, Host: null, words.Length > 1 && DateTimeOffset.TryParse(words[1], CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var parsedAt) ? parsedAt : null)
+            : null;
+    }
+
+    // config/lib/locks.sh's holder: <slot>/pid, one line, the pid, no time. Null when there is no such file or it is no pid.
+    private static HolderRecord? PidRecordOf(string directory)
+    {
+        var path = Path.Combine(directory, DirectoryHeavySlots.PidFile);
+        if (!File.Exists(path))
+        {
+            return null;
+        }
+
+        var text = File.ReadAllText(path);
+        return int.TryParse(text.Split(' ', 2)[0].Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var pid)
+            ? new HolderRecord(path, text, pid, Host: null, At: null)
+            : null;
+    }
+
     // Dead on this host: the pid is gone, or a live process of that pid started after the record was written (the pid was reused). The host is compared up to its
     // first '.' on both sides, since .NET's MachineName cuts the domain that os.hostname() keeps.
     internal static bool Dead(HolderRecord record) =>
@@ -44,7 +69,7 @@ internal static class HolderRecords
 
     private static string ShortHost(string host) => host.Split('.', 2)[0];
 
-    private static bool StartedAfter(int pid, DateTimeOffset? recorded)
+    internal static bool StartedAfter(int pid, DateTimeOffset? recorded)
     {
         if (recorded is null)
         {

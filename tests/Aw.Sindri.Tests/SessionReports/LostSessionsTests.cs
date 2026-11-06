@@ -1,6 +1,7 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launches;
+using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Features.SweepLostSessions;
 using Aw.Sindri.Testing;
@@ -164,6 +165,23 @@ public sealed class LostSessionsTests
 
         Assert.Null(await Sweeper().SweepFiles(TimeSpan.FromSeconds(60), Token));
         Assert.Empty(_s.Files.Swept);
+    }
+
+    [Fact]
+    public async Task The_start_sweep_waits_for_the_projectors_first_pass()
+    {
+        await _s.Started();
+        var dead = LaunchId.From("LCH-" + new string('0', 31) + "9");
+        _s.Files.Open(dead);
+        var progress = new ProjectorProgress(_s.Views.Slice.Clock);   // serve just booted: Starting, cursor 0 of 0
+        var sweeper = new LostSessions(_s.Liveness, _s.Events(), _s.Views.Slice.Clock, _s.Files, new LaunchViews(_s.Views.Views), progress, _hosted);
+
+        Assert.Null(await sweeper.SweepFiles(TimeSpan.FromSeconds(60), Token));
+        Assert.Empty(_s.Files.Swept);
+        progress.Publish(new ViewsStatus(0, 0, ProjectedAt: null, Rebuilding: false, Stalled: false, StalledAt: null, StalledType: null));
+
+        Expect.Equal(1, await sweeper.SweepFiles(TimeSpan.FromSeconds(60), Token));
+        Expect.Equal(dead, Assert.Single(_s.Files.Swept));
     }
 
     [Fact]

@@ -11,7 +11,8 @@
 #   AW_NO_SYSTEM_INSTALL=1    never install: print the exact command and return 1 (for CI and boxes you don't administer).
 #   AW_DEPS_OS                overrides `uname -s` (tests).
 #
-# Logical names: jq build-tools tmux bubblewrap secret-tool clang zlib-dev lsof curl git socat python3 pip docker.
+# Logical names: jq build-tools tmux bubblewrap secret-tool clang zlib-dev lsof curl git socat python3 pip docker java.
+# `java` is a JDK/JRE 21 (TLC needs 11 or newer); under Homebrew it is keg-only, so scripts/install-deps.sh links it onto PATH.
 # A name with no package on a platform (bubblewrap on macOS, build-tools under Homebrew) is skipped there.
 
 _aw_sys_os() { echo "${AW_DEPS_OS:-$(uname -s)}"; }
@@ -31,6 +32,11 @@ _aw_sys_pkg() {
     brew:build-tools|brew:bubblewrap|brew:secret-tool|brew:clang|brew:zlib-dev|brew:lsof) echo "" ;;  # Command Line Tools / base system
     brew:python3|brew:pip) echo "python@3.13" ;;
     brew:docker) echo "cask:docker-desktop" ;;
+    brew:java) echo "openjdk@21" ;;
+    apt-get:java) echo "openjdk-21-jre-headless" ;;
+    dnf:java|yum:java) echo "java-21-openjdk-headless" ;;
+    pacman:java) echo "jre21-openjdk-headless" ;;   # unchecked on a real box
+    zypper:java) echo "java-21-openjdk-headless" ;;   # unchecked on a real box
     apt-get:build-tools) echo "build-essential" ;;
     pacman:build-tools) echo "base-devel" ;;
     *:build-tools) echo "gcc-c++ make" ;;

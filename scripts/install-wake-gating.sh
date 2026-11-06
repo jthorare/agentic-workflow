@@ -52,10 +52,12 @@ if [ "${1:-}" = "--uninstall" ]; then
     echo "  wake-gating: removed $TEAMMATE_NAMES_FILE"
   fi
 
-  if [ -f "$HOOKS_DIR/lib/locks.sh" ]; then
-    rm "$HOOKS_DIR/lib/locks.sh"
-    echo "  wake-gating: removed $HOOKS_DIR/lib/locks.sh"
-  fi
+  for lib in locks.sh heavy-config.sh; do
+    if [ -f "$HOOKS_DIR/lib/$lib" ]; then
+      rm "$HOOKS_DIR/lib/$lib"
+      echo "  wake-gating: removed $HOOKS_DIR/lib/$lib"
+    fi
+  done
   if [ -d "$HOOKS_DIR/lib" ] && [ -z "$(ls -A "$HOOKS_DIR/lib" 2>/dev/null)" ]; then
     rmdir "$HOOKS_DIR/lib"
     echo "  wake-gating: removed empty $HOOKS_DIR/lib"
@@ -80,6 +82,7 @@ mkdir -p "$HOOKS_DIR"
 # "$(dirname "${BASH_SOURCE[0]}")/lib/locks.sh" first — i.e. right here.
 mkdir -p "$HOOKS_DIR/lib"
 cp "$ROOT/config/lib/locks.sh" "$HOOKS_DIR/lib/locks.sh"
+cp "$ROOT/config/lib/heavy-config.sh" "$HOOKS_DIR/lib/heavy-config.sh"   # locks.sh sources it from its own folder
 aw_install_failopen_lib "$HOOKS_DIR"
 
 cp "$ROOT/config/hooks/send-gate.sh" "$HOOKS_DIR/send-gate.sh"

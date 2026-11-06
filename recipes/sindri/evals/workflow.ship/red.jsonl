@@ -1,4 +1,4 @@
-{"start":{"inputs":{"fact:phasePacket":{"phase":"1"},"fact:proofPack":{"head":"abc123"},"fact:review":{"blocking":0},"fact:workspace":"/tmp/wt","fact:lineContext":{"line":"l1","phase":"1"}}}}
+{"start":{"inputs":{"fact:phasePacket":{"phase":"1"},"fact:proofPack":{"head":"abc123"},"fact:review":{"blocking":0},"fact:workspace":"/tmp/wt","fact:modelCheck":{"skipped":true,"looked":[],"specs":[]},"fact:lineContext":{"line":"l1","phase":"1"}}}}
 {"trigger":{"kind":"wait.satisfied"},"expect":{"state":"green"}}
 {"trigger":{"kind":"step.completed","outcome":"red","outputs":{"fact:findings":{"failed":"typecheck"}}},"expect":{"state":"return"}}
 {"trigger":{"kind":"step.completed","outcome":"noted","outputs":{"fact:returnNotes":{"why":"typecheck red"}}},"expect":{"state":"returned","outcome":"unresolved"}}

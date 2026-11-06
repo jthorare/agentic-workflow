@@ -12,7 +12,10 @@
 #   check      runs TLC on the spec with its .cfg (default: the spec's name with .cfg). TLC's state files go in a temp dir that
 #              is removed afterwards, so nothing is written next to the spec. Prints TLC's output, then one last line:
 #              'tlc: PASS distinct=<n> depth=<n>', 'tlc: VIOLATION <invariant|deadlock|property|assumption> <name>' or
-#              'tlc: ERROR <first error line>'.
+#              'tlc: ERROR <first error line>'. TLC runs with -Xmx$TLC_HEAP (default 2g; a number with an optional k, m or g);
+#              a run out of heap ends 'tlc: ERROR ... java.lang.OutOfMemoryError ... TLC_HEAP=<value> ...' (exit 2; a Sindri
+#              step matches the text OutOfMemoryError: keep it). A TERM, INT or HUP to tlc.sh stops the java it started (TERM,
+#              then KILL after 5 s), removes the temp dir and exits 143, 130 or 129.
 #   translate  runs the PlusCal translator on the spec in place (the TLA+ translation goes between its BEGIN/END TRANSLATION lines).
 # --jar J uses that tla2tools.jar instead of the cached one.
 # Exit: 0 pass (or ok), 1 TLC found a violation (or the sha256 didn't match), 2 usage, parse or tool error,
@@ -64,10 +67,10 @@ java_line() {
   esac
 }
 
-# java_major: the major version java reports (8 for 1.8.0_x), or empty when java is missing.
+# java_major: the major version java reports (8 for 1.8.0_x), or empty when java is missing or fails -version (the macOS /usr/bin/java stub counts as missing).
 java_major() {
   command -v java >/dev/null 2>&1 || return 0
-  java -version 2>&1 | awk -F'"' '/version/ { split($2, v, "."); print (v[1] == "1" ? v[2] : v[1]); exit }'
+  { java -version 2>&1 || true; } | awk -F'"' '/version/ { split($2, v, "."); print (v[1] == "1" ? v[2] : v[1]); exit }'
 }
 
 need_tools() {
@@ -116,6 +119,9 @@ check() {
   [ -n "$cfg" ] || cfg="${spec%.tla}.cfg"
   [ -f "$cfg" ] || { echo "tlc: no config at $cfg (write one next to the spec, or pass --config)" >&2; exit 2; }
   cfg="$(cd "$(dirname "$cfg")" && pwd)/$(basename "$cfg")"   # absolute: TLC runs from the spec's directory
+  local heap="${TLC_HEAP:-2g}" n
+  n="${heap%[kKmMgG]}"
+  case "$n" in ''|*[!0-9]*|0*) echo "tlc: TLC_HEAP wants a number with an optional k, m or g (like 2g or 512m), got '$heap'" >&2; exit 2 ;; esac
   need_tools
   local dir base out rc flags=""
   dir="$(cd "$(dirname "$spec")" && pwd)"; base="$(basename "$spec" .tla)"
@@ -124,10 +130,17 @@ check() {
   trap 'rm -rf "$meta"' EXIT
   [ "$deadlock" = 1 ] || flags="-deadlock"
   set +e
+  # in the background so a trapped signal runs now, not after java exits; exec makes $! java's own pid
   # shellcheck disable=SC2086
-  (cd "$dir" && java -XX:+UseParallelGC -cp "$jar" tlc2.TLC -cleanup -metadir "$meta/states" -workers "$workers" \
-    $flags -config "$cfg" "$base") >"$out" 2>&1
+  (cd "$dir" && exec java -Xmx"$heap" -XX:+UseParallelGC -cp "$jar" tlc2.TLC -cleanup -metadir "$meta/states" \
+    -workers "$workers" $flags -config "$cfg" "$base") >"$out" 2>&1 &
+  java_pid=$!   # global: the signal traps read it
+  trap 'stop_java 143' TERM
+  trap 'stop_java 130' INT
+  trap 'stop_java 129' HUP
+  wait "$java_pid"
   rc=$?
+  trap - TERM INT HUP
   set -e
   cat "$out"
   summarize "$out" "$rc"
@@ -163,11 +176,30 @@ summarize() {
     echo "tlc: PASS distinct=$(printf '%s' "$line" | awk '{print $4}') depth=$(sed -n 's/^The depth of the complete state graph search is \([0-9]*\).*/\1/p' "$out" | tail -1)"
     exit 0
   fi
+  if grep -q 'OutOfMemoryError' "$out"; then
+    line="$(grep -m1 'OutOfMemoryError' "$out")"
+    echo "tlc: ERROR $line (TLC_HEAP=${TLC_HEAP:-2g}: raise it, or shrink the model's constants) (full output above)"
+    exit 2
+  fi
   # the specific line (an unknown symbol, what the parser met), not TLC's "Semantic errors:" header
   line="$(grep -m1 -E 'Could not|Encountered|Unknown|[Ee]xpect|Lexical error|[Ee]xception|^Error: ' "$out" | grep -v 'Parsing or semantic analysis failed' || true)"
   [ -n "$line" ] || line="$(grep -m1 -E 'Error|error' "$out" || true)"
   echo "tlc: ERROR ${line:-TLC exited $rc without a result} (full output above)"
   exit 2
+}
+
+# stop_java RC: TERM the java check started, KILL it after 5 s, remove the temp dir, exit RC.
+stop_java() {
+  local i
+  kill -TERM "$java_pid" 2>/dev/null
+  for i in 1 2 3 4 5 6 7 8 9 10; do
+    kill -0 "$java_pid" 2>/dev/null || break
+    sleep 0.5
+  done
+  kill -KILL "$java_pid" 2>/dev/null
+  wait "$java_pid" 2>/dev/null
+  rm -rf "$meta"
+  exit "$1"
 }
 
 translate() {

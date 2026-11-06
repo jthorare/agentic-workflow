@@ -2191,7 +2191,7 @@ Aw.Sindri.Core.Views.IViewStore
 Aw.Sindri.Core.Views.IViewStore.Apply(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ledger.LedgerEvent!>! page, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Views.IProjection!>! projections, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Views.PageApplied!>!>
 Aw.Sindri.Core.Views.IViewStore.FinishRebuild(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Views.IViewStore.Open(int schemaVersion, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Views.ProjectorState!>!>
-Aw.Sindri.Core.Views.IViewStore.Reset(System.Collections.Generic.IReadOnlyList<string!>! views, int schemaVersion, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Views.ProjectorState!>!>
+Aw.Sindri.Core.Views.IViewStore.Reset(System.Collections.Generic.IReadOnlyList<string!>! views, int schemaVersion, System.DateTimeOffset at, long rebuiltThrough, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Views.ProjectorState!>!>
 Aw.Sindri.Core.Views.ItemRow
 Aw.Sindri.Core.Views.ItemRow.<Clone>$() -> Aw.Sindri.Core.Views.ItemRow!
 Aw.Sindri.Core.Views.ItemRow.Alias.get -> Aw.Sindri.Core.Ids.ItemAlias?
@@ -2282,13 +2282,15 @@ Aw.Sindri.Core.Views.ProjectorState
 Aw.Sindri.Core.Views.ProjectorState.<Clone>$() -> Aw.Sindri.Core.Views.ProjectorState!
 Aw.Sindri.Core.Views.ProjectorState.Cursor.get -> long
 Aw.Sindri.Core.Views.ProjectorState.Cursor.init -> void
-Aw.Sindri.Core.Views.ProjectorState.Deconstruct(out long Cursor, out int SchemaVersion, out System.DateTimeOffset? ProjectedAt, out bool Rebuilding, out long? StalledAt, out string? StalledType, out bool Fresh) -> void
+Aw.Sindri.Core.Views.ProjectorState.Deconstruct(out long Cursor, out int SchemaVersion, out System.DateTimeOffset? ProjectedAt, out bool Rebuilding, out long? StalledAt, out string? StalledType, out bool Fresh, out long? RebuiltThrough) -> void
 Aw.Sindri.Core.Views.ProjectorState.Equals(Aw.Sindri.Core.Views.ProjectorState? other) -> bool
 Aw.Sindri.Core.Views.ProjectorState.Fresh.get -> bool
 Aw.Sindri.Core.Views.ProjectorState.Fresh.init -> void
 Aw.Sindri.Core.Views.ProjectorState.ProjectedAt.get -> System.DateTimeOffset?
 Aw.Sindri.Core.Views.ProjectorState.ProjectedAt.init -> void
-Aw.Sindri.Core.Views.ProjectorState.ProjectorState(long Cursor, int SchemaVersion, System.DateTimeOffset? ProjectedAt, bool Rebuilding, long? StalledAt, string? StalledType, bool Fresh) -> void
+Aw.Sindri.Core.Views.ProjectorState.ProjectorState(long Cursor, int SchemaVersion, System.DateTimeOffset? ProjectedAt, bool Rebuilding, long? StalledAt, string? StalledType, bool Fresh, long? RebuiltThrough = null) -> void
+Aw.Sindri.Core.Views.ProjectorState.RebuiltThrough.get -> long?
+Aw.Sindri.Core.Views.ProjectorState.RebuiltThrough.init -> void
 Aw.Sindri.Core.Views.ProjectorState.Rebuilding.get -> bool
 Aw.Sindri.Core.Views.ProjectorState.Rebuilding.init -> void
 Aw.Sindri.Core.Views.ProjectorState.SchemaVersion.get -> int
@@ -2386,7 +2388,7 @@ Aw.Sindri.Core.Views.ViewsStatus.<Clone>$() -> Aw.Sindri.Core.Views.ViewsStatus!
 Aw.Sindri.Core.Views.ViewsStatus.AsOf.get -> Aw.Sindri.Core.Views.AsOf!
 Aw.Sindri.Core.Views.ViewsStatus.Cursor.get -> long
 Aw.Sindri.Core.Views.ViewsStatus.Cursor.init -> void
-Aw.Sindri.Core.Views.ViewsStatus.Deconstruct(out long Cursor, out long LedgerHead, out System.DateTimeOffset? ProjectedAt, out bool Rebuilding, out bool Stalled, out long? StalledAt, out string? StalledType) -> void
+Aw.Sindri.Core.Views.ViewsStatus.Deconstruct(out long Cursor, out long LedgerHead, out System.DateTimeOffset? ProjectedAt, out bool Rebuilding, out bool Stalled, out long? StalledAt, out string? StalledType, out bool Starting) -> void
 Aw.Sindri.Core.Views.ViewsStatus.Equals(Aw.Sindri.Core.Views.ViewsStatus? other) -> bool
 Aw.Sindri.Core.Views.ViewsStatus.LedgerHead.get -> long
 Aw.Sindri.Core.Views.ViewsStatus.LedgerHead.init -> void
@@ -2403,7 +2405,7 @@ Aw.Sindri.Core.Views.ViewsStatus.StalledPhrase() -> string!
 Aw.Sindri.Core.Views.ViewsStatus.StalledType.get -> string?
 Aw.Sindri.Core.Views.ViewsStatus.StalledType.init -> void
 Aw.Sindri.Core.Views.ViewsStatus.Text.get -> string?
-Aw.Sindri.Core.Views.ViewsStatus.ViewsStatus(long Cursor, long LedgerHead, System.DateTimeOffset? ProjectedAt, bool Rebuilding, bool Stalled, long? StalledAt, string? StalledType) -> void
+Aw.Sindri.Core.Views.ViewsStatus.ViewsStatus(long Cursor, long LedgerHead, System.DateTimeOffset? ProjectedAt, bool Rebuilding, bool Stalled, long? StalledAt, string? StalledType, bool Starting = false) -> void
 Aw.Sindri.Core.Workflow.Blocks.BlockCatalog
 Aw.Sindri.Core.Workflow.Blocks.BlockCatalog.Blocks.get -> System.Collections.Generic.IReadOnlyCollection<Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor!>!
 Aw.Sindri.Core.Workflow.Blocks.BlockCatalog.Events.get -> System.Collections.Generic.IReadOnlyCollection<Aw.Sindri.Core.Workflow.Blocks.EventDescriptor!>!
@@ -8369,6 +8371,7 @@ static readonly Aw.Sindri.Core.SindriErrors.JobConflict -> Aw.Kernel.ErrorDefini
 static readonly Aw.Sindri.Core.SindriErrors.JobInterrupted -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.JobNotFound -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.JobNotWaiting -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.JobStalled -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.JobsRateLimited -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.LeaseHeld -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.LeaseLost -> Aw.Kernel.ErrorDefinition!
@@ -10043,6 +10046,7 @@ Aw.Sindri.Core.Workflow.Engine.Triggers.StepCompleted.Decision.init -> void
 Aw.Sindri.Core.Workflow.Engine.Triggers.StepCompleted.Deconstruct(out string! Actor, out Aw.Sindri.Core.Workflow.Engine.RunToken Run, out Aw.Sindri.Core.Workflow.Ids.OutcomeName Outcome, out System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Engine.FactValue!>! Outputs, out int Tokens, out Aw.Sindri.Core.Workflow.Engine.StepRuntime Via, out string! ReportSha256, out string? Decision, out System.Collections.Generic.IReadOnlyList<string!>? FindingKeys, out bool EmptyDiff) -> void
 Aw.Sindri.Core.Workflow.Engine.Triggers.StepCompleted.StepCompleted(string! Actor, Aw.Sindri.Core.Workflow.Engine.RunToken Run, Aw.Sindri.Core.Workflow.Ids.OutcomeName Outcome, System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Engine.FactValue!>! Outputs, int Tokens, Aw.Sindri.Core.Workflow.Engine.StepRuntime Via, string! ReportSha256, string? Decision = null, System.Collections.Generic.IReadOnlyList<string!>? FindingKeys = null, bool EmptyDiff = false) -> void
 Aw.Sindri.Core.Workflow.Engine.Decisions.MatchMiss.EngineOwnedRun = 5 -> Aw.Sindri.Core.Workflow.Engine.Decisions.MatchMiss
+Aw.Sindri.Core.Workflow.Engine.Decisions.MatchMiss.Suspended = 6 -> Aw.Sindri.Core.Workflow.Engine.Decisions.MatchMiss
 Aw.Sindri.Core.Workflow.Blocks.BlockLimits
 static Aw.Sindri.Core.Workflow.Blocks.BlockLimits.MaxDuration(Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor! descriptor) -> System.TimeSpan
 static readonly Aw.Sindri.Core.Workflow.Blocks.BlockLimits.Fallback -> System.TimeSpan
@@ -12602,11 +12606,13 @@ Aw.Sindri.Core.Checks.CheckInvocation
 Aw.Sindri.Core.Checks.CheckInvocation.<Clone>$() -> Aw.Sindri.Core.Checks.CheckInvocation!
 Aw.Sindri.Core.Checks.CheckInvocation.Argv.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Sindri.Core.Checks.CheckInvocation.Argv.init -> void
-Aw.Sindri.Core.Checks.CheckInvocation.CheckInvocation(string! Name, System.Collections.Generic.IReadOnlyList<string!>! Argv, System.TimeSpan Timeout) -> void
-Aw.Sindri.Core.Checks.CheckInvocation.Deconstruct(out string! Name, out System.Collections.Generic.IReadOnlyList<string!>! Argv, out System.TimeSpan Timeout) -> void
+Aw.Sindri.Core.Checks.CheckInvocation.CheckInvocation(string! Name, System.Collections.Generic.IReadOnlyList<string!>! Argv, System.TimeSpan Timeout, int OutputLimit = 4000) -> void
+Aw.Sindri.Core.Checks.CheckInvocation.Deconstruct(out string! Name, out System.Collections.Generic.IReadOnlyList<string!>! Argv, out System.TimeSpan Timeout, out int OutputLimit) -> void
 Aw.Sindri.Core.Checks.CheckInvocation.Equals(Aw.Sindri.Core.Checks.CheckInvocation? other) -> bool
 Aw.Sindri.Core.Checks.CheckInvocation.Name.get -> string!
 Aw.Sindri.Core.Checks.CheckInvocation.Name.init -> void
+Aw.Sindri.Core.Checks.CheckInvocation.OutputLimit.get -> int
+Aw.Sindri.Core.Checks.CheckInvocation.OutputLimit.init -> void
 Aw.Sindri.Core.Checks.CheckInvocation.Timeout.get -> System.TimeSpan
 Aw.Sindri.Core.Checks.CheckInvocation.Timeout.init -> void
 Aw.Sindri.Core.Checks.CheckRun
@@ -12656,7 +12662,7 @@ static Aw.Sindri.Core.Checks.ChangedFile.operator !=(Aw.Sindri.Core.Checks.Chang
 static Aw.Sindri.Core.Checks.ChangedFile.operator ==(Aw.Sindri.Core.Checks.ChangedFile? left, Aw.Sindri.Core.Checks.ChangedFile? right) -> bool
 static Aw.Sindri.Core.Checks.CheckInvocation.operator !=(Aw.Sindri.Core.Checks.CheckInvocation? left, Aw.Sindri.Core.Checks.CheckInvocation? right) -> bool
 static Aw.Sindri.Core.Checks.CheckInvocation.operator ==(Aw.Sindri.Core.Checks.CheckInvocation? left, Aw.Sindri.Core.Checks.CheckInvocation? right) -> bool
-static Aw.Sindri.Core.Checks.CheckRun.Of(int exitCode, bool timedOut, System.TimeSpan duration, string! output) -> Aw.Sindri.Core.Checks.CheckRun!
+static Aw.Sindri.Core.Checks.CheckRun.Of(int exitCode, bool timedOut, System.TimeSpan duration, string! output, int limit = 4000) -> Aw.Sindri.Core.Checks.CheckRun!
 static Aw.Sindri.Core.Checks.CheckRun.operator !=(Aw.Sindri.Core.Checks.CheckRun? left, Aw.Sindri.Core.Checks.CheckRun? right) -> bool
 static Aw.Sindri.Core.Checks.CheckRun.operator ==(Aw.Sindri.Core.Checks.CheckRun? left, Aw.Sindri.Core.Checks.CheckRun? right) -> bool
 Aw.Sindri.Core.Checks.BranchRules
@@ -15663,13 +15669,15 @@ Aw.Sindri.Core.Checks.CheckResult.Run.init -> void
 Aw.Sindri.Core.Checks.CheckResult.Summary.get -> string!
 Aw.Sindri.Core.Checks.CommandSet
 Aw.Sindri.Core.Checks.CommandSet.<Clone>$() -> Aw.Sindri.Core.Checks.CommandSet!
-Aw.Sindri.Core.Checks.CommandSet.CommandSet(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.BuildCommand!>! Commands, System.TimeSpan Each) -> void
+Aw.Sindri.Core.Checks.CommandSet.CommandSet(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.BuildCommand!>! Commands, System.TimeSpan Each, int OutputLimit = 4000) -> void
 Aw.Sindri.Core.Checks.CommandSet.Commands.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.BuildCommand!>!
 Aw.Sindri.Core.Checks.CommandSet.Commands.init -> void
-Aw.Sindri.Core.Checks.CommandSet.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.BuildCommand!>! Commands, out System.TimeSpan Each) -> void
+Aw.Sindri.Core.Checks.CommandSet.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.BuildCommand!>! Commands, out System.TimeSpan Each, out int OutputLimit) -> void
 Aw.Sindri.Core.Checks.CommandSet.Each.get -> System.TimeSpan
 Aw.Sindri.Core.Checks.CommandSet.Each.init -> void
 Aw.Sindri.Core.Checks.CommandSet.Equals(Aw.Sindri.Core.Checks.CommandSet? other) -> bool
+Aw.Sindri.Core.Checks.CommandSet.OutputLimit.get -> int
+Aw.Sindri.Core.Checks.CommandSet.OutputLimit.init -> void
 Aw.Sindri.Core.Checks.IBuildCommandSource
 Aw.Sindri.Core.Checks.IBuildCommandSource.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Checks.CommandSet!>!>
 Aw.Sindri.Core.Checks.ProfileBuildCommands
@@ -18778,7 +18786,7 @@ Aw.Sindri.Core.Sandbox.Plan.PlanLimits.WallGrace.get -> System.TimeSpan
 Aw.Sindri.Core.Sandbox.Plan.PlanLimits.WallGrace.init -> void
 Aw.Sindri.Core.Sandbox.Plan.PlanMount
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.<Clone>$() -> Aw.Sindri.Core.Sandbox.Plan.PlanMount!
-Aw.Sindri.Core.Sandbox.Plan.PlanMount.Deconstruct(out string! Path, out Aw.Sindri.Core.Sandbox.Plan.PlanMountKind Kind, out string? Source, out long? Size, out string! Reason, out bool Optional) -> void
+Aw.Sindri.Core.Sandbox.Plan.PlanMount.Deconstruct(out string! Path, out Aw.Sindri.Core.Sandbox.Plan.PlanMountKind Kind, out string? Source, out long? Size, out string! Reason, out bool Optional, out bool PrivateScratch) -> void
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Equals(Aw.Sindri.Core.Sandbox.Plan.PlanMount? other) -> bool
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Kind.get -> Aw.Sindri.Core.Sandbox.Plan.PlanMountKind
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Kind.init -> void
@@ -18786,7 +18794,9 @@ Aw.Sindri.Core.Sandbox.Plan.PlanMount.Optional.get -> bool
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Optional.init -> void
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Path.get -> string!
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Path.init -> void
-Aw.Sindri.Core.Sandbox.Plan.PlanMount.PlanMount(string! Path, Aw.Sindri.Core.Sandbox.Plan.PlanMountKind Kind, string? Source = null, long? Size = null, string! Reason = "", bool Optional = false) -> void
+Aw.Sindri.Core.Sandbox.Plan.PlanMount.PlanMount(string! Path, Aw.Sindri.Core.Sandbox.Plan.PlanMountKind Kind, string? Source = null, long? Size = null, string! Reason = "", bool Optional = false, bool PrivateScratch = false) -> void
+Aw.Sindri.Core.Sandbox.Plan.PlanMount.PrivateScratch.get -> bool
+Aw.Sindri.Core.Sandbox.Plan.PlanMount.PrivateScratch.init -> void
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Reason.get -> string!
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Reason.init -> void
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Size.get -> long?
@@ -21916,3 +21926,71 @@ Aw.Sindri.Core.Workflow.Views.StepRun.ImagesDropped.init -> void
 Aw.Sindri.Core.Judge.IStepImageFiles
 Aw.Sindri.Core.Judge.IStepImageFiles.RealDirectory(string! directory) -> string!
 Aw.Sindri.Core.Judge.IStepImageFiles.RealPath(string! path) -> string?
+Aw.Sindri.Core.ModelCheck.IScratchDirectories
+Aw.Sindri.Core.ModelCheck.IScratchDirectories.Make(string! parent) -> Aw.Kernel.Result<string!>!
+Aw.Sindri.Core.ModelCheck.IScratchDirectories.Remove(string! directory) -> void
+Aw.Sindri.Core.ModelCheck.ISpecFolders
+Aw.Sindri.Core.ModelCheck.ISpecFolders.List(string! workspace, string! pattern, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.ModelCheck.SpecFolder!>!>!>
+Aw.Sindri.Core.ModelCheck.SpecFile
+Aw.Sindri.Core.ModelCheck.SpecFile.<Clone>$() -> Aw.Sindri.Core.ModelCheck.SpecFile!
+Aw.Sindri.Core.ModelCheck.SpecFile.Deconstruct(out string! Name, out Aw.Sindri.Core.ModelCheck.SpecFileKind Kind, out string! Text) -> void
+Aw.Sindri.Core.ModelCheck.SpecFile.Equals(Aw.Sindri.Core.ModelCheck.SpecFile? other) -> bool
+Aw.Sindri.Core.ModelCheck.SpecFileKind
+Aw.Sindri.Core.ModelCheck.SpecFile.Kind.get -> Aw.Sindri.Core.ModelCheck.SpecFileKind
+Aw.Sindri.Core.ModelCheck.SpecFile.Kind.init -> void
+Aw.Sindri.Core.ModelCheck.SpecFileKind.Other = 2 -> Aw.Sindri.Core.ModelCheck.SpecFileKind
+Aw.Sindri.Core.ModelCheck.SpecFileKind.Regular = 0 -> Aw.Sindri.Core.ModelCheck.SpecFileKind
+Aw.Sindri.Core.ModelCheck.SpecFileKind.Symlink = 1 -> Aw.Sindri.Core.ModelCheck.SpecFileKind
+Aw.Sindri.Core.ModelCheck.SpecFile.Name.get -> string!
+Aw.Sindri.Core.ModelCheck.SpecFile.Name.init -> void
+Aw.Sindri.Core.ModelCheck.SpecFile.SpecFile(string! Name, Aw.Sindri.Core.ModelCheck.SpecFileKind Kind, string! Text) -> void
+Aw.Sindri.Core.ModelCheck.SpecFile.Text.get -> string!
+Aw.Sindri.Core.ModelCheck.SpecFile.Text.init -> void
+Aw.Sindri.Core.ModelCheck.SpecFolder
+Aw.Sindri.Core.ModelCheck.SpecFolder.<Clone>$() -> Aw.Sindri.Core.ModelCheck.SpecFolder!
+Aw.Sindri.Core.ModelCheck.SpecFolder.Deconstruct(out string! Path, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.ModelCheck.SpecFile!>! Files) -> void
+Aw.Sindri.Core.ModelCheck.SpecFolder.Equals(Aw.Sindri.Core.ModelCheck.SpecFolder? other) -> bool
+Aw.Sindri.Core.ModelCheck.SpecFolder.Files.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.ModelCheck.SpecFile!>!
+Aw.Sindri.Core.ModelCheck.SpecFolder.Files.init -> void
+Aw.Sindri.Core.ModelCheck.SpecFolder.Path.get -> string!
+Aw.Sindri.Core.ModelCheck.SpecFolder.Path.init -> void
+Aw.Sindri.Core.ModelCheck.SpecFolder.SpecFolder(string! Path, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.ModelCheck.SpecFile!>! Files) -> void
+override Aw.Sindri.Core.ModelCheck.SpecFile.Equals(object? obj) -> bool
+override Aw.Sindri.Core.ModelCheck.SpecFile.GetHashCode() -> int
+override Aw.Sindri.Core.ModelCheck.SpecFile.ToString() -> string!
+override Aw.Sindri.Core.ModelCheck.SpecFolder.Equals(object? obj) -> bool
+override Aw.Sindri.Core.ModelCheck.SpecFolder.GetHashCode() -> int
+override Aw.Sindri.Core.ModelCheck.SpecFolder.ToString() -> string!
+static Aw.Sindri.Core.ModelCheck.SpecFile.operator !=(Aw.Sindri.Core.ModelCheck.SpecFile? left, Aw.Sindri.Core.ModelCheck.SpecFile? right) -> bool
+static Aw.Sindri.Core.ModelCheck.SpecFile.operator ==(Aw.Sindri.Core.ModelCheck.SpecFile? left, Aw.Sindri.Core.ModelCheck.SpecFile? right) -> bool
+static Aw.Sindri.Core.ModelCheck.SpecFolder.operator !=(Aw.Sindri.Core.ModelCheck.SpecFolder? left, Aw.Sindri.Core.ModelCheck.SpecFolder? right) -> bool
+static Aw.Sindri.Core.ModelCheck.SpecFolder.operator ==(Aw.Sindri.Core.ModelCheck.SpecFolder? left, Aw.Sindri.Core.ModelCheck.SpecFolder? right) -> bool
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.<Clone>$() -> Aw.Sindri.Core.ModelCheck.ModelCheckSetup!
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Deconstruct(out string? Runner, out string! Path, out string! Home, out string! StateDir, out string! TlcSh, out string! TlcHeap, out string! Tmp) -> void
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Equals(Aw.Sindri.Core.ModelCheck.ModelCheckSetup? other) -> bool
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Home.get -> string!
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Home.init -> void
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.ModelCheckSetup(string? Runner, string! Path, string! Home, string! StateDir, string! TlcSh, string! TlcHeap, string! Tmp) -> void
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Path.get -> string!
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Path.init -> void
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Runner.get -> string?
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Runner.init -> void
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.StateDir.get -> string!
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.StateDir.init -> void
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.TlcHeap.get -> string!
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.TlcHeap.init -> void
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.TlcSh.get -> string!
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.TlcSh.init -> void
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Tmp.get -> string!
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Tmp.init -> void
+override Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Equals(object? obj) -> bool
+override Aw.Sindri.Core.ModelCheck.ModelCheckSetup.GetHashCode() -> int
+override Aw.Sindri.Core.ModelCheck.ModelCheckSetup.ToString() -> string!
+static Aw.Sindri.Core.ModelCheck.ModelCheckSetup.operator !=(Aw.Sindri.Core.ModelCheck.ModelCheckSetup? left, Aw.Sindri.Core.ModelCheck.ModelCheckSetup? right) -> bool
+static Aw.Sindri.Core.ModelCheck.ModelCheckSetup.operator ==(Aw.Sindri.Core.ModelCheck.ModelCheckSetup? left, Aw.Sindri.Core.ModelCheck.ModelCheckSetup? right) -> bool
+static Aw.Sindri.Core.Checks.CommandStepLimits.ModelCheckMaxDuration.get -> System.TimeSpan
+Aw.Sindri.Core.ModelCheck.ISpecFolders.Exists(string! workspace, string! path, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
+Aw.Sindri.Core.Views.ViewsStatus.Starting.get -> bool
+Aw.Sindri.Core.Views.ViewsStatus.Starting.init -> void
+static Aw.Sindri.Core.Views.EmptyText.Starting() -> string!

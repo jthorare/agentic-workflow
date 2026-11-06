@@ -6,4 +6,5 @@
 {"trigger":{"kind":"step.completed","outcome":"blocked","outputs":{"fact:findings":"needs src/x.cs"}},"expect":{"state":"scope-desk"}}
 {"trigger":{"kind":"step.completed","outcome":"revert","outputs":{"fact:answers":{"revert":["src/x.cs"]}}},"expect":{"state":"green"}}
 {"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h1"}}},"expect":{"state":"checks"}}
-{"trigger":{"kind":"step.completed","outcome":"pass","outputs":{"fact:built":{"head":"h1"},"fact:change":{"repo":"r","branch":"b","base":"m","head":"h1"}}},"expect":{"state":"built","outcome":"resolved"}}
+{"trigger":{"kind":"step.completed","outcome":"pass","outputs":{"fact:built":{"head":"h1"},"fact:change":{"repo":"r","branch":"b","base":"m","head":"h1"}}},"expect":{"state":"model"}}
+{"trigger":{"kind":"step.completed","outcome":"skipped","outputs":{"fact:modelCheck":{"skipped":true,"looked":[],"specs":[]}}},"expect":{"state":"built","outcome":"resolved"}}

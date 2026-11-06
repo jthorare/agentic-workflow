@@ -10154,10 +10154,15 @@ static Aw.Context.Core.Records.RecordSourceLink.operator !=(Aw.Context.Core.Reco
 static Aw.Context.Core.Records.RecordSourceLink.operator ==(Aw.Context.Core.Records.RecordSourceLink? left, Aw.Context.Core.Records.RecordSourceLink? right) -> bool
 Aw.Context.Core.Extract.MapBuildGate
 Aw.Context.Core.Extract.MapBuildGate.Dispose() -> void
-Aw.Context.Core.Extract.MapBuildGate.Enter(string? job, System.IProgress<string!>? progress, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Context.Core.Extract.MapBuildTurn!>
-Aw.Context.Core.Extract.MapBuildGate.MapBuildGate() -> void
+Aw.Context.Core.Extract.MapBuildGate.Enter(string? job, System.IProgress<string!>? progress, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Extract.MapBuildTurn!>!>
+Aw.Context.Core.Extract.MapBuildGate.MapBuildGate(System.TimeProvider! clock) -> void
+static Aw.Context.Core.Extract.MapBuildGate.WaitLimit.get -> System.TimeSpan
+Aw.Context.Core.Extract.StepHeartbeat
+static Aw.Context.Core.Extract.StepHeartbeat.Every.get -> System.TimeSpan
+static Aw.Context.Core.Extract.StepHeartbeat.Run<T>(string! step, System.IProgress<string!>? progress, System.TimeProvider! clock, System.Func<System.Threading.Tasks.ValueTask<T>>! work, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<T>
 Aw.Context.Core.Extract.MapBuildTurn
 Aw.Context.Core.Extract.MapBuildTurn.Dispose() -> void
+Aw.Context.Core.Extract.MapBuildTurn.Progress.get -> System.IProgress<string!>!
 Aw.Context.Core.Extract.MapBuildTurn.Waited.get -> bool
 Aw.Context.Core.Extract.GithubRemote
 Aw.Context.Core.Extract.GithubRemote.Blob(string? commit, string! path, Aw.Context.Core.Trust.IEgressScrubber! egress) -> System.Uri?
@@ -11010,6 +11015,7 @@ static Aw.Context.Core.Pages.PageListRow.operator !=(Aw.Context.Core.Pages.PageL
 static Aw.Context.Core.Pages.PageListRow.operator ==(Aw.Context.Core.Pages.PageListRow? left, Aw.Context.Core.Pages.PageListRow? right) -> bool
 static Aw.Context.Core.Pages.PageListText.Parse(string! text) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListBlock!>!
 static readonly Aw.Context.Core.ContextErrors.PagePreviewInvalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.MapBuildWaitTimedOut -> Aw.Kernel.ErrorDefinition!
 Aw.Context.Core.Concepts.ConceptsView.PagesInNoConcept.get -> int?
 Aw.Context.Core.Concepts.ConceptsView.PagesInNoConcept.init -> void
 Aw.Context.Core.Audience.RecordMask

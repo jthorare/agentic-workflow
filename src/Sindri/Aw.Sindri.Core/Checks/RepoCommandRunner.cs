@@ -100,7 +100,7 @@ public sealed class RepoCommandRunner(IBuildCommandSource source, ICheckCommands
             }
 
             var own = set.Each < left;
-            var invocation = new CheckInvocation(command.Name, command.Run, own ? set.Each : left);
+            var invocation = new CheckInvocation(command.Name, command.Run, own ? set.Each : left, set.OutputLimit);
             var run = await commands.Run(invocation, workingDirectory, cancellationToken).ConfigureAwait(false);
             if (run.IsError)
             {

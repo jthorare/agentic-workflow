@@ -42,11 +42,11 @@ VARIABLES
     pub,        \* ProjectorProgress._current: the status every reader sees
     fixed,      \* TRUE once a build that folds the Poison events runs
     crashes,
-    requests
+    requests    \* the ledger's views.rebuilt events so far: the newest rebuild request's seq (durable, survives a crash)
 
 vars == <<head, db, pc, passHead, gate, rebuildReq, pub, fixed, crashes, requests>>
 
-DbState == [rows: Seq(1..MaxEvents), cursor: 0..MaxEvents, stalledAt: 0..MaxEvents, rebuilding: BOOLEAN]
+DbState == [rows: Seq(1..MaxEvents), cursor: 0..MaxEvents, stalledAt: 0..MaxEvents, rebuilding: BOOLEAN, rebuiltThrough: 0..MaxRebuilds]
 Status == [stalled: BOOLEAN, rebuilding: BOOLEAN, cursor: 0..MaxEvents]
 
 \* ProjectorProgress's initial _current: (0, 0, Rebuilding: false, Stalled: false)
@@ -69,7 +69,7 @@ TypeOK ==
 
 Init ==
     /\ head = 0
-    /\ db = [rows |-> <<>>, cursor |-> 0, stalledAt |-> NULL, rebuilding |-> FALSE]
+    /\ db = [rows |-> <<>>, cursor |-> 0, stalledAt |-> NULL, rebuilding |-> FALSE, rebuiltThrough |-> 0]
     /\ pc = "idle" /\ passHead = 0
     /\ gate = FALSE /\ rebuildReq = FALSE /\ fixed = FALSE
     /\ pub = InitialStatus
@@ -82,7 +82,8 @@ AppendEvent ==
     /\ head' = head + 1
     /\ UNCHANGED <<db, pc, passHead, gate, rebuildReq, pub, fixed, crashes, requests>>
 
-\* `sindri views rebuild` -> RebuildViewsService -> ProjectorProgress.RequestRebuild
+\* `sindri views rebuild` -> RebuildViewsService -> ProjectorProgress.RequestRebuild, after a views.rebuilt event is appended
+\* to the ledger (requests is its seq): the request is durable, rebuildReq is only the in-memory copy.
 RequestRebuild ==
     /\ requests < MaxRebuilds
     /\ requests' = requests + 1
@@ -96,16 +97,23 @@ RetryDue ==
     /\ gate' = FALSE
     /\ UNCHANGED <<head, db, pc, passHead, rebuildReq, pub, fixed, crashes, requests>>
 
-\* Pass: read the head, Prepare (a requested rebuild resets in one transaction and only then takes the request), then
+\* Prepare resets when the in-memory request is set, or when views.db's projector_state.rebuilt_through is behind the
+\* ledger's newest views.rebuilt seq (a request that survived a crash only in the ledger).
+Pending == db.rebuiltThrough < requests
+
+\* Pass: read the head, Prepare (a requested or pending rebuild resets in one transaction, recording rebuilt_through =
+\* the newest views.rebuilt seq it read, and only then takes the request), then
 \* Fold's first Publish. A gated pass (stalled, no request, inside 30 s) returns Stalled and changes nothing.
 StartPass ==
     /\ pc = "idle"
-    /\ ~gate \/ rebuildReq
-    /\ LET d == IF rebuildReq
-                  THEN [rows |-> <<>>, cursor |-> 0, stalledAt |-> NULL, rebuilding |-> TRUE]   \* Reset + ResetState
+    /\ ~gate \/ rebuildReq \/ Pending
+    /\ LET reset == rebuildReq \/ Pending
+           d == IF reset
+                  THEN [rows |-> <<>>, cursor |-> 0, stalledAt |-> NULL, rebuilding |-> TRUE,
+                        rebuiltThrough |-> requests]                                         \* Reset + ResetState, one transaction
                   ELSE db
        IN /\ db' = d
-          /\ gate' = IF rebuildReq THEN FALSE ELSE gate
+          /\ gate' = IF reset THEN FALSE ELSE gate
           /\ rebuildReq' = FALSE                                                              \* TakeRebuildRequest
           /\ pub' = Shown(d, FALSE)
     /\ passHead' = head
@@ -203,7 +211,8 @@ AllEventsLand == (\A e \in 1..MaxEvents : Folds(e)) ~> (db.cursor = head)
 \* throws every time (ProjectorHost's catch) publishes nothing, so the last Healthy would stand forever.
 HealthyMeansProgress == (Healthy /\ db.cursor < head) ~> (db.cursor = head \/ ~Healthy)
 
-\* A requested rebuild eventually runs: the views are reset and replayed.
-RebuildHappens == rebuildReq ~> db.rebuilding
+\* An accepted rebuild request eventually runs: a reset commits that covers it and the views are replayed.  Pending is
+\* durable (ledger seq vs views.db), so a crash that loses rebuildReq can't satisfy this vacuously.
+RebuildHappens == Pending ~> ~Pending
 
 =============================================================================

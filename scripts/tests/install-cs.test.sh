@@ -110,11 +110,14 @@ export PATH="$WORK/fakebin:$PATH"
 
 # A miniature checkout: the script, its inputs list, a pinned SDK, some sources and two shipped recipes.
 REPO="$WORK/repo"
-mkdir -p "$REPO/scripts/lib" "$REPO/src/Sindri/Aw.Sindri.Host" "$REPO/src/Judge" "$REPO/recipes/sindri"
+mkdir -p "$REPO/scripts/lib" "$REPO/skills/formal-verify/scripts" "$REPO/src/Sindri/Aw.Sindri.Host" "$REPO/src/Judge" "$REPO/recipes/sindri"
 cp "$DIR/install-cs.sh" "$REPO/scripts/"
 cp "$DIR/lib/sindri-build-inputs.sh" "$DIR/lib/sindri-open-runs.sh" "$REPO/scripts/lib/"
+printf '#!/usr/bin/env bash\n[ "${1:-}" = --expensive ] && shift\nexec "$@"\n' > "$REPO/scripts/heavy.sh"; chmod +x "$REPO/scripts/heavy.sh"
+printf '#!/bin/sh\necho "reserve-stub $*"\n' > "$REPO/scripts/meta-gate-reserve.sh"; chmod +x "$REPO/scripts/meta-gate-reserve.sh"
 printf '{"sdk":{"version":"%s"}}\n' "$FAKE_SDK" > "$REPO/global.json"
 echo a > "$REPO/src/Sindri/Aw.Sindri.Host/a.cs"; echo b > "$REPO/src/Judge/b.cs"
+echo "runner" > "$REPO/scripts/tlc-check.sh"; echo "tlc" > "$REPO/skills/formal-verify/scripts/tlc.sh"; echo "lock" > "$REPO/skills/formal-verify/tla2tools.lock"
 echo "name: one" > "$REPO/recipes/sindri/one.yaml"; echo "name: two" > "$REPO/recipes/sindri/two.yaml"
 g() { git -C "$REPO" -c user.name=t -c user.email=t@example.invalid "$@"; }
 g init -q -b main && g add -A && g commit -q -m base
@@ -133,8 +136,11 @@ bash "$INSTALL" --publish --link > /dev/null 2>&1; check "--publish with --link 
 out="$(bash "$INSTALL" --dry-run 2>&1)"; rc=$?
 check "dry run exits 0" "$rc" "0"
 has "dry run says what it would do" "$out" "install-cs: [dry-run] would"
+has "dry run prints the model-check copy" "$out" "would copy the model-check runner"
 check "dry run writes no state" "$([ -e "$AW_STATE_DIR" ] && echo yes || echo no)" "no"
 check "dry run publishes nothing" "$(wc -l < "$FAKE_LOG" | tr -d ' ')" "0"
+has "dry run says it would link heavy through current" "$out" "[dry-run] would link $AW_STATE_DIR/bin-r1b/heavy -> $AW_STATE_DIR/bin/cs/current/heavy"
+has "dry run says it would link meta-gate-reserve through current" "$out" "[dry-run] would link $AW_STATE_DIR/bin-r1b/meta-gate-reserve -> $AW_STATE_DIR/bin/cs/current/meta-gate-reserve"
 
 # --- link before any build ---
 out="$(bash "$INSTALL" --link 2>&1)"; rc=$?
@@ -151,7 +157,14 @@ check "one stamped build" "$(printf '%s' "$S1" | wc -c | tr -d ' ')" "16"
 for f in sindri sindri-ui judge aw-packets bugfix-state ui-evidence aw-readiness libe_sqlite3.so libSkiaSharp.so build-info; do
   check "build has $f" "$([ -e "$B/$S1/$f" ] && echo yes || echo no)" "yes"
 done
+check "the model-check runner is copied at its repo layout" "$(cat "$B/$S1/tlc/scripts/tlc-check.sh" "$B/$S1/tlc/skills/formal-verify/scripts/tlc.sh" "$B/$S1/tlc/skills/formal-verify/tla2tools.lock" | tr '\n' ' ')" "runner tlc lock "
 check "seven publishes, each stamped with the commit" "$(grep -c "rev=$(g rev-parse HEAD)$" "$FAKE_LOG")" "7"
+check "the build carries heavy, executable" "$([ -x "$B/$S1/heavy" ] && echo yes || echo no)" "yes"
+check "the build's heavy is scripts/heavy.sh" "$(cmp -s "$B/$S1/heavy" "$REPO/scripts/heavy.sh" && echo same || echo differs)" "same"
+check "the build carries meta-gate-reserve, executable" "$([ -x "$B/$S1/meta-gate-reserve" ] && echo yes || echo no)" "yes"
+check "the build's meta-gate-reserve is scripts/meta-gate-reserve.sh" "$(cmp -s "$B/$S1/meta-gate-reserve" "$REPO/scripts/meta-gate-reserve.sh" && echo same || echo differs)" "same"
+check "--publish leaves the meta-gate-reserve link alone" "$([ -e "$AW_STATE_DIR/bin-r1b/meta-gate-reserve" ] || [ -L "$AW_STATE_DIR/bin-r1b/meta-gate-reserve" ] && echo yes || echo no)" "no"
+check "--publish leaves the heavy link alone" "$([ -e "$AW_STATE_DIR/bin-r1b/heavy" ] || [ -L "$AW_STATE_DIR/bin-r1b/heavy" ] && echo yes || echo no)" "no"
 check "--publish leaves current alone" "$([ -e "$B/current" ] && echo yes || echo no)" "no"
 check "--publish writes no wrapper" "$(ls "$CLAUDE_LOCAL_BIN" | wc -l | tr -d ' ')" "0"
 has "the recipe evals ran" "$(cat "$FAKE_CALLS")" "sindri state="
@@ -167,8 +180,45 @@ check "a second --publish publishes nothing" "$(wc -l < "$FAKE_LOG" | tr -d ' ')
 
 # --- link ---
 printf '#!/bin/sh\necho ts-wrapper\n' > "$CLAUDE_LOCAL_BIN/judge"; chmod +x "$CLAUDE_LOCAL_BIN/judge"
+HV="$AW_STATE_DIR/bin-r1b/heavy"
+mkdir -p "$AW_STATE_DIR/bin-r1b"; printf '#!/bin/sh\necho old-heavy\n' > "$HV"; chmod +x "$HV"
+MR="$AW_STATE_DIR/bin-r1b/meta-gate-reserve"
+printf '#!/bin/sh\necho old-reserve\n' > "$MR"; chmod +x "$MR"
 out="$(bash "$INSTALL" --link 2>&1)"; rc=$?
 check "--link exits 0" "$rc" "0"
+check "heavy links through current" "$(readlink "$HV")" "$B/current/heavy"
+check "heavy resolves into the build dir" "$(readlink -f "$HV")" "$(cd "$B/$S1" && pwd -P)/heavy"
+case "$(readlink -f "$HV")" in "$REPO"/*) r=repo ;; *) r=outside ;; esac
+check "heavy never resolves into the repo" "$r" "outside"
+git_top="$(cd "$(dirname "$(readlink -f "$HV")")" && git rev-parse --show-toplevel 2> /dev/null || true)"
+check "heavy never resolves into any git tree" "$git_top" ""
+check "the resolved heavy is scripts/heavy.sh" "$(cmp -s "$HV" "$REPO/scripts/heavy.sh" && echo same || echo differs)" "same"
+check "the old real file moved to heavy.pre-repo" "$(sh "$HV.pre-repo")" "old-heavy"
+bash "$INSTALL" --link > /dev/null 2>&1
+check "a second --link keeps the link" "$(readlink "$HV")" "$B/current/heavy"
+check "meta-gate-reserve links through current" "$(readlink "$MR")" "$B/current/meta-gate-reserve"
+check "meta-gate-reserve resolves into the build dir" "$(readlink -f "$MR")" "$(cd "$B/$S1" && pwd -P)/meta-gate-reserve"
+case "$(readlink -f "$MR")" in "$REPO"/*) r=repo ;; *) r=outside ;; esac
+check "meta-gate-reserve never resolves into the repo" "$r" "outside"
+check "the resolved meta-gate-reserve is scripts/meta-gate-reserve.sh" "$(cmp -s "$MR" "$REPO/scripts/meta-gate-reserve.sh" && echo same || echo differs)" "same"
+check "the old real meta-gate-reserve moved to meta-gate-reserve.pre-repo" "$(sh "$MR.pre-repo")" "old-reserve"
+check "a second --link adds no other file" "$(ls "$AW_STATE_DIR/bin-r1b" | tr '\n' ' ')" "heavy heavy.pre-repo meta-gate-reserve meta-gate-reserve.pre-repo "
+check "the linked meta-gate-reserve runs" "$("$MR" --show)" "reserve-stub --show"
+check "the linked heavy runs its command" "$("$HV" --expensive echo ran)" "ran"
+mv "$B/$S1/heavy" "$B/$S1/heavy.away"
+out="$(bash "$INSTALL" --link 2>&1)"; rc=$?
+check "--link of a build without heavy fails" "$rc" "1"
+has "...and names the fix" "$out" "has no heavy; run scripts/install-cs.sh --publish --rebuild"
+check "...current unchanged" "$(readlink "$B/current")" "$S1"
+check "...heavy link unchanged" "$(readlink "$HV")" "$B/current/heavy"
+mv "$B/$S1/heavy.away" "$B/$S1/heavy"
+mv "$B/$S1/meta-gate-reserve" "$B/$S1/meta-gate-reserve.away"
+out="$(bash "$INSTALL" --link 2>&1)"; rc=$?
+check "--link of a build without meta-gate-reserve fails" "$rc" "1"
+has "...and names the fix" "$out" "has no meta-gate-reserve; run scripts/install-cs.sh --publish --rebuild"
+check "...current unchanged" "$(readlink "$B/current")" "$S1"
+check "...meta-gate-reserve link unchanged" "$(readlink "$MR")" "$B/current/meta-gate-reserve"
+mv "$B/$S1/meta-gate-reserve.away" "$B/$S1/meta-gate-reserve"
 check "current is a symlink to the stamp" "$(readlink "$B/current")" "$S1"
 check "the six wrappers, not sindri-ui" "$(ls "$CLAUDE_LOCAL_BIN" | tr '\n' ' ')" "aw-packets aw-readiness bugfix-state judge sindri ui-evidence "
 check "the TS judge wrapper was replaced" "$(grep -c ts-wrapper "$CLAUDE_LOCAL_BIN/judge")" "0"

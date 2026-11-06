@@ -25,7 +25,9 @@ classify_changes() {
   while IFS= read -r -d '' file || [ -n "$file" ]; do
     [ -n "$file" ] || continue
     case "$file" in
-      .github/*|scripts/ci/*|.nvmrc) print_all; return 0 ;;
+      # Drain the rest of stdin: returning early on a long diff would kill git with
+      # SIGPIPE, and under pipefail the step fails with exit 141.
+      .github/*|scripts/ci/*|.nvmrc) print_all; cat >/dev/null; return 0 ;;
     esac
     case "$file" in
       spikes/*) continue ;;  # throwaway spike projects: no area, never the dotnet job
@@ -50,7 +52,7 @@ classify_changes() {
     case "$file" in
       # The dotnet job's hook-contract step runs these hooks against the C# judge
       # (config/lib/tests/judge-cs-hook-surface.test.sh|config/lib/tests/sindri-cs-hook-surface.test.sh); bash-tests.sh leaves that test to it.
-      config/hooks/*|config/statusline.sh|config/lib/failopen.sh|config/lib/locks.sh|config/lib/tests/judge-cs-hook-surface.test.sh)
+      config/hooks/*|config/statusline.sh|config/lib/failopen.sh|config/lib/locks.sh|config/lib/heavy-config.sh|config/lib/tests/judge-cs-hook-surface.test.sh)
         dotnet=true ;;
     esac
     case "$file" in
@@ -60,7 +62,7 @@ classify_changes() {
       scripts/deps/*) dotnet=true ;;
       schemas/packets/*) ;;  # the packet schemas belong to Aw.Packets (its golden test, the dotnet area above)
       # Aw.Evidence's lock interop tests source it: the C# lock adapter and the shell tools share one lock format
-      config/lib/locks.sh) dotnet=true ;;
+      config/lib/locks.sh|config/lib/heavy-config.sh) dotnet=true ;;
       # recipes/ is embedded in the Sindri tests (ShippedRecipes) and read by the schema check (check-scoping-schemas.mjs)
       recipes/*) dotnet=true; bash=true ;;
       schemas/*|rules/*) bash=true ;;  # check-deps and check-rules (and their suites) read these

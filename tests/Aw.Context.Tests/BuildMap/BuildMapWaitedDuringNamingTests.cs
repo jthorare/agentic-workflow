@@ -43,7 +43,7 @@ public sealed class BuildMapWaitedDuringNamingTests : IDisposable
         var scope = MapWorld.HumanWith(MapWorld.OnlyFixtureRepo);
         var earlier = (await _world.Map.BuildMap(progress: null, scope, MapWorld.None)).Value;
         var gate = _world.Service<MapBuildGate>();
-        var holder = await gate.Enter(job: null, progress: null, ct);
+        var holder = (await gate.Enter(job: null, progress: null, ct)).Value;
 
         var waiting = _world.Map.BuildMap(progress: null, scope, MapWorld.None).AsTask();
         await Task.Delay(TimeSpan.FromMilliseconds(100), TimeProvider.System, ct);

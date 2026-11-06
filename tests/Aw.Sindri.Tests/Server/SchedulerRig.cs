@@ -41,7 +41,7 @@ internal sealed class SchedulerRig : IAsyncDisposable
             _ = collection.AddSingleton(service);
         }
 
-        Progress = new ProjectorProgress(H.Clock);
+        Progress = FirstPass.Progress(H.Clock);
         _provider = collection.BuildServiceProvider();
         _clock = new SteppedClock(H.Clock);
         _builtIns = [.. builtIns];
@@ -125,8 +125,24 @@ internal sealed class SchedulerRig : IAsyncDisposable
     public async Task BeginRebuild()
     {
         Progress.Publish(Progress.Current with { Rebuilding = true });
-        _ = await _views.Reset([ViewNames.Services], ViewSchema.Version, H.Clock.GetUtcNow(), TestContext.Current.CancellationToken);
+        _ = await _views.Reset([ViewNames.Services], ViewSchema.Version, H.Clock.GetUtcNow(), 0, TestContext.Current.CancellationToken);
         _sequence = 0;
+    }
+
+    /// <summary>The process boots: views.db keeps the last run's rows, but the projector hasn't published its first pass.</summary>
+    /// <returns>A task that completes then.</returns>
+    public Task BeginStarting()
+    {
+        Progress.Publish(Progress.Current with { Starting = true });
+        return Task.CompletedTask;
+    }
+
+    /// <summary>The first pass has published.</summary>
+    /// <returns>A task that completes then.</returns>
+    public Task EndStarting()
+    {
+        Progress.Publish(Progress.Current with { Starting = false });
+        return Task.CompletedTask;
     }
 
     /// <summary>The rebuild is done: the pauses given are refolded and the status is fresh again.</summary>

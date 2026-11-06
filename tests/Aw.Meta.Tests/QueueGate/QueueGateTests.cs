@@ -5,7 +5,9 @@ using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Gate;
 using Aw.Meta.Features.QueueGate;
+using Aw.Meta.Infrastructure.Files;
 using Aw.Meta.Testing;
+using Aw.Meta.Tests.Adapters;
 using Aw.Meta.Tests.Reserve;
 
 namespace Aw.Meta.Tests.QueueGate;
@@ -16,7 +18,7 @@ public sealed class QueueGateTests
 
     private QueueGateService Service() => new(
         new TrainSelection(_world.Config, Worlds.Queue(_world)),
-        new GateWorkspace(_world.Repo, _world.Trees, _world.Paths),
+        new GateWorkspace(_world.Repo, _world.Trees, _world.Paths, _world.LogFiles),
         new GateStepRunner(_world.Runner, _world.Paths),
         _world.Gates,
         _world.Values,
@@ -195,6 +197,41 @@ public sealed class QueueGateTests
         Assert.Equal([TrainState.Fail, TrainState.Cancelled, TrainState.Cancelled], response.Entries.Select(e => e.State));
         Assert.Null((await _world.Gates.Latest(12, TestContext.Current.CancellationToken)).Value);
         Assert.Null((await _world.Gates.Latest(13, TestContext.Current.CancellationToken)).Value);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_gate_after_a_cancelled_one_of_the_same_pull_request_gets_its_own_run_number_and_directory()
+    {
+        using var disk = new TempDirectory();
+        var cancelled = Path.Combine(disk.Path, "11", "1");
+        _ = Directory.CreateDirectory(cancelled);
+        await File.WriteAllTextAsync(Path.Combine(cancelled, "check.log"), "cancelled pass\n", TestContext.Current.CancellationToken);
+        await SaveGate(parallel: null, new StepConfig("check", ["scripts/check.sh"]));
+        _ = _world.Runner.When("scripts/check.sh", request =>
+        {
+            _ = Directory.CreateDirectory(Path.GetDirectoryName(request.LogFile!)!);
+            File.AppendAllText(request.LogFile!, "new pass\n");
+            return Exit(0);
+        });
+        ScriptPr(11);
+        ScriptGit();
+        var paths = new MetaPaths("/state/meta", disk.Path, "/bin/heavy", "gh");
+        var service = new QueueGateService(
+            new TrainSelection(_world.Config, Worlds.Queue(_world)),
+            new GateWorkspace(_world.Repo, _world.Trees, paths, new FileLogFiles()),
+            new GateStepRunner(_world.Runner, paths),
+            _world.Gates,
+            _world.Values,
+            Worlds.Reservation(_world),
+            _world.Clock);
+
+        var result = await service.Handle(new QueueGateRequest([11], Max: null), TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Equal(2, result.Value.Gates.Single().Run);
+        Assert.Equal(2, (await _world.Gates.Latest(11, TestContext.Current.CancellationToken)).Value!.Run);
+        Assert.Equal("new pass\n", await File.ReadAllTextAsync(Path.Combine(disk.Path, "11", "2", "check.log"), TestContext.Current.CancellationToken));
+        Assert.Equal("cancelled pass\n", await File.ReadAllTextAsync(Path.Combine(cancelled, "check.log"), TestContext.Current.CancellationToken));
     }
 
     [Theory, Trait("Lane", "unit")]

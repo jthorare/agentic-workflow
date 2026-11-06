@@ -42,14 +42,20 @@ internal sealed partial class BuildMapService(
 
         var (settings, mappedRepos) = mapped.Value;
         var before = await NewestSaved(cancellationToken).ConfigureAwait(false);
-        using var turn = await gate.Enter(scope.Job, request.Progress, cancellationToken).ConfigureAwait(false);
+        var entered = await gate.Enter(scope.Job, request.Progress, cancellationToken).ConfigureAwait(false);
+        if (entered.IsError)
+        {
+            return entered.Error;
+        }
+
+        using var turn = entered.Value;
         // A build that waited may have been queued behind one that mapped these very commits: it returns the version saved meanwhile (a draft, or one already promoted) instead of mapping them again.
         if (turn.Waited && await SavedWhileWaiting(settings, mappedRepos, scope.Repos, before, cancellationToken).ConfigureAwait(false) is { } saved)
         {
             return saved;
         }
 
-        return await Build(request.Progress, settings, mappedRepos, scope.Repos, cancellationToken).ConfigureAwait(false);
+        return await Build(turn.Progress, settings, mappedRepos, scope.Repos, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<MapBuildReport>> Build(IProgress<string>? progress, ContextSettings settings, IReadOnlyList<ContextRepo> mappedRepos, IReadOnlyList<ContextRepo> profileRepos, CancellationToken cancellationToken)
@@ -156,7 +162,7 @@ internal sealed partial class BuildMapService(
         var (commit, files, paths) = read.Value;
         var (extracted, timedOut) = MapExtractor.Extract(repo.Name, files, recognizers, settings.SchemaGlobs);
         var home = HomeFeatures.Assign(repo, paths, extracted, pins);
-        var clusters = await Clusters(repo, commit, settings.Graphify, cancellationToken).ConfigureAwait(false);
+        var clusters = await Clusters(progress, repo, commit, settings.Graphify, cancellationToken).ConfigureAwait(false);
         var labels = await Labels(progress, settings, home.LabelRequests, cancellationToken).ConfigureAwait(false);
         if (labels.IsError && labels.Error.Code == ContextErrors.LabelingUnavailable.Code)
         {
@@ -222,21 +228,6 @@ internal sealed partial class BuildMapService(
 
         Tell(progress, files.Count, wanted.Count);
         return (head.Value, files, listed.Value);
-    }
-
-    // A cluster source that fails reads like one that is absent; a denied path never reaches the labeler or the graph.
-    private async ValueTask<ClusterSet> Clusters(ContextRepo repo, string commit, ClusterLimits limits, CancellationToken cancellationToken)
-    {
-        var set = await clusterSource.Clusters(repo, commit, limits, cancellationToken).ConfigureAwait(false);
-        if (set.IsError || !set.Value.Available)
-        {
-            return new ClusterSet([], Available: false, set.IsError ? null : set.Value.Reason);
-        }
-
-        return new ClusterSet(
-            [.. set.Value.Clusters.Select(c => c with { Files = [.. c.Files.Where(f => !repo.Denies(f))] }).Where(c => c.Files.Count > 0)],
-            Available: true,
-            set.Value.Reason);
     }
 
     private async ValueTask<Result<LabelPass>> Labels(IProgress<string>? progress, ContextSettings settings, IReadOnlyList<FileCluster> requests, CancellationToken cancellationToken)

@@ -46,6 +46,15 @@ normalize() {
   printf '%s\n' "$out"
 }
 
+# The model-check runner install-cs copies to tlc/ (TLC_FILES) is in the pathspecs, so a change to it republishes.
+read -r -a tlc_files <<< "$(grep -E '^TLC_FILES=\(' "$ROOT/scripts/install-cs.sh" | sed -E 's/^TLC_FILES=\(//; s/\).*$//')"
+[ "${#tlc_files[@]}" -gt 0 ] || { echo "not ok - install-cs.sh has no TLC_FILES=( line"; fail=1; }
+for f in ${tlc_files[@]+"${tlc_files[@]}"}; do
+  if [ ! -f "$ROOT/$f" ]; then echo "not ok - $f (TLC_FILES) does not exist"; fail=1
+  elif printf '%s\n' "${SINDRI_BUILD_PATHSPECS[@]}" | grep -Fxq -- "$f"; then echo "ok - $f is in SINDRI_BUILD_PATHSPECS"
+  else echo "not ok - $f is copied to tlc/ but is not in SINDRI_BUILD_PATHSPECS"; fail=1; fi
+done
+
 seen=""
 queue=("${published[@]}")
 while [ "${#queue[@]}" -gt 0 ]; do
