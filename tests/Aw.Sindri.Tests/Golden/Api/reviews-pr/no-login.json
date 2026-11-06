@@ -2,6 +2,6 @@
   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
   "title": "SND-REVIEW-007",
   "status": 409,
-  "detail": "Set your GitHub login",
+  "detail": "Set your GitHub login on the Reviews tab first.",
   "traceId": "<trace>"
 }
