@@ -22300,3 +22300,4 @@ Aw.Sindri.Core.Skills.ISkillBlocks.Loaded.get -> System.Collections.Generic.IRea
 Aw.Sindri.Core.Skills.ISkillBlocks.Skipped.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Skills.SkippedSkillBlock!>!
 Aw.Sindri.Core.Skills.SkillManifestParser
 static Aw.Sindri.Core.Skills.SkillManifestParser.Parse(string! skill, string! path, string! manifestJson, string? skillMarkdown) -> Aw.Sindri.Core.Skills.SkillBlocks!
+Aw.Sindri.Core.Skills.ISkillBlocks.Folder.get -> string!
