@@ -113,6 +113,7 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
     private async Task<Result<SkillRunReport>> Follow(StartSkillRunResponse answer, CancellationToken ct)
     {
         var route = $"{InstanceReads.Instances}/{InstanceRoute.Segment(answer.Instance.Id.Value)}";
+        string? shown = null;
         while (true)
         {
             var got = await client.Get<InstanceDetail>(route, ct).ConfigureAwait(false);
@@ -125,6 +126,13 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
             if (detail.States.FirstOrDefault(s => string.Equals(s.State, detail.State, StringComparison.Ordinal) && s.Terminal) is { } ended)
             {
                 return await Report(answer, detail, ended, route, ct).ConfigureAwait(false);
+            }
+
+            // A park waits for an answer or a resume, which the follow then sees through; it says why once, so the run never sits silent (found in F-1's hand test).
+            if (SkillRunText.Parked(detail.EngineOwned, detail.Current.Status) is { } park && !string.Equals(park, shown, StringComparison.Ordinal))
+            {
+                await output.Notice(park).ConfigureAwait(false);
+                shown = park;
             }
 
             await Task.Delay(_poll, clock, ct).ConfigureAwait(false);

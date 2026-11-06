@@ -47,5 +47,15 @@ internal static class SkillRunText
     /// <param name="owned">The instance's engine-owned badge.</param>
     /// <param name="status">The instance's status fields.</param>
     /// <returns>The line, or null.</returns>
-    internal static string? Parked(EngineOwnedBadge? owned, StatusFields status) => throw new NotSupportedException();
+    internal static string? Parked(EngineOwnedBadge? owned, StatusFields status)
+    {
+        ArgumentNullException.ThrowIfNull(status);
+        if (owned?.Kind != EngineOwnedKind.Parked)
+        {
+            return null;
+        }
+
+        var line = "parked: " + (status.Next ?? owned.Reason);
+        return status.Answer is { } answer ? line + "\nanswer: " + answer.Cli : line;
+    }
 }
