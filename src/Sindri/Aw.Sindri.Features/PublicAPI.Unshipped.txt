@@ -5912,3 +5912,42 @@ static Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest.operator !=(Aw.Si
 static Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest.operator ==(Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest? left, Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest? right) -> bool
 static Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse.operator !=(Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse? left, Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse? right) -> bool
 static Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse.operator ==(Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse? left, Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse? right) -> bool
+Aw.Sindri.Features.ListReviews.ListReviewsRequest
+Aw.Sindri.Features.ListReviews.ListReviewsRequest.<Clone>$() -> Aw.Sindri.Features.ListReviews.ListReviewsRequest!
+Aw.Sindri.Features.ListReviews.ListReviewsRequest.Equals(Aw.Sindri.Features.ListReviews.ListReviewsRequest? other) -> bool
+Aw.Sindri.Features.ListReviews.ListReviewsRequest.ListReviewsRequest() -> void
+Aw.Sindri.Features.ListReviews.ListReviewsResponse
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.AsOf.get -> Aw.Sindri.Core.Views.AsOf!
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.AsOf.init -> void
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.<Clone>$() -> Aw.Sindri.Features.ListReviews.ListReviewsResponse!
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.Empty.get -> Aw.Sindri.Core.Reviews.ReviewEmpty?
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.Empty.init -> void
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.Equals(Aw.Sindri.Features.ListReviews.ListReviewsResponse? other) -> bool
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.Freshness.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectFreshnessRow!>!
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.Freshness.init -> void
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.Groups.init -> void
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.Library.get -> Aw.Sindri.Core.Reviews.ReviewLibrary!
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.Library.init -> void
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.Login.get -> string?
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.Login.init -> void
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.LoginPrompt.get -> Aw.Sindri.Core.Reviews.ReviewLoginPrompt?
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.LoginPrompt.init -> void
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.Notice.get -> string?
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.Notice.init -> void
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.Stale.get -> Aw.Sindri.Core.Reviews.ReviewStale?
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.Stale.init -> void
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.WaitingCount.get -> int
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.WaitingCount.init -> void
+override Aw.Sindri.Features.ListReviews.ListReviewsRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListReviews.ListReviewsRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ListReviews.ListReviewsRequest.ToString() -> string!
+override Aw.Sindri.Features.ListReviews.ListReviewsResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListReviews.ListReviewsResponse.GetHashCode() -> int
+override Aw.Sindri.Features.ListReviews.ListReviewsResponse.ToString() -> string!
+static Aw.Sindri.Features.ListReviews.ListReviewsRequest.operator !=(Aw.Sindri.Features.ListReviews.ListReviewsRequest? left, Aw.Sindri.Features.ListReviews.ListReviewsRequest? right) -> bool
+static Aw.Sindri.Features.ListReviews.ListReviewsRequest.operator ==(Aw.Sindri.Features.ListReviews.ListReviewsRequest? left, Aw.Sindri.Features.ListReviews.ListReviewsRequest? right) -> bool
+static Aw.Sindri.Features.ListReviews.ListReviewsResponse.operator !=(Aw.Sindri.Features.ListReviews.ListReviewsResponse? left, Aw.Sindri.Features.ListReviews.ListReviewsResponse? right) -> bool
+static Aw.Sindri.Features.ListReviews.ListReviewsResponse.operator ==(Aw.Sindri.Features.ListReviews.ListReviewsResponse? left, Aw.Sindri.Features.ListReviews.ListReviewsResponse? right) -> bool
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.Deconstruct(out Aw.Sindri.Core.Views.AsOf! AsOf, out string? Login, out Aw.Sindri.Core.Reviews.ReviewLoginPrompt? LoginPrompt, out string? Notice, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectFreshnessRow!>! Freshness, out Aw.Sindri.Core.Reviews.ReviewStale? Stale, out Aw.Sindri.Core.Reviews.ReviewLibrary! Library, out int WaitingCount, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewListGroup!>! Groups, out Aw.Sindri.Core.Reviews.ReviewEmpty? Empty) -> void
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.Groups.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewListGroup!>!
+Aw.Sindri.Features.ListReviews.ListReviewsResponse.ListReviewsResponse(Aw.Sindri.Core.Views.AsOf! AsOf, string? Login, Aw.Sindri.Core.Reviews.ReviewLoginPrompt? LoginPrompt, string? Notice, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectFreshnessRow!>! Freshness, Aw.Sindri.Core.Reviews.ReviewStale? Stale, Aw.Sindri.Core.Reviews.ReviewLibrary! Library, int WaitingCount, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewListGroup!>! Groups, Aw.Sindri.Core.Reviews.ReviewEmpty? Empty) -> void

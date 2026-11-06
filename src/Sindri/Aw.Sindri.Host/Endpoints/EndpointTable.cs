@@ -31,7 +31,7 @@ internal static class EndpointTable
         _ = queries.MapGetItemTimeline();
         _ = queries.MapGetItemScope();
         _ = MapProjectQueries(queries);
-        _ = queries.MapGetQueue();
+        _ = queries.MapGetQueue().MapGetReviews();
         _ = queries.MapGetSession();
         _ = queries.MapGetRunSuspension();
         _ = queries.MapGetNeedsYou();
