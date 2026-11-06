@@ -348,6 +348,7 @@ public abstract class PullRequestsContract
     public async Task SubmitReview_posts_once_per_marker()
     {
         var (run, opened) = await Open();
+        run.SeedFiles(opened.Link, [new PullFile("src/a.cs", PreviousPath: null, PullFileStatus.Modified, 2, 0, "@@ -10,3 +10,5 @@\n+x")], new Dictionary<string, string>(StringComparer.Ordinal));
         var review = new PullReview(opened.Link, Sha('a'), PullReviewVerdict.Comment, "Looks fine overall", [new PullReviewComment("src/a.cs", 12, "Nit here")], "owner-review:d1:1");
 
         var first = Ok(await run.Pulls.SubmitReview(review, Ct), "SubmitReview");
@@ -372,6 +373,39 @@ public abstract class PullRequestsContract
 
         Expect.Equal(PullReviewOutcome.HeadMoved, outcome);
         Expect.Equal(0, threads.Count(t => t.Kind == PullCommentKind.Review));
+    }
+
+    /// <summary>A review that was posted stays delivered when the head moves afterwards: the marker is checked before the head.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task SubmitReview_with_a_posted_marker_is_delivered_even_after_the_head_moved()
+    {
+        var (run, opened) = await Open();
+        var review = new PullReview(opened.Link, Sha('a'), PullReviewVerdict.Comment, "Fine", [], "owner-review:d3:1");
+        Expect.Equal(PullReviewOutcome.Posted, Ok(await run.Pulls.SubmitReview(review, Ct), "SubmitReview"));
+
+        var moved = Ok(await run.Pulls.SubmitReview(review with { ExpectedHead = Sha('b') }, Ct), "SubmitReview after the head moved");
+
+        Expect.Equal(PullReviewOutcome.AlreadyDelivered, moved);
+    }
+
+    /// <summary>A line comment outside the diff (a line no hunk covers, a file the pull request doesn't change, or a file with no patch) is LineRejected and posts nothing.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task SubmitReview_with_a_comment_outside_the_diff_posts_nothing()
+    {
+        var (run, opened) = await Open();
+        run.SeedFiles(opened.Link, [new PullFile("src/a.cs", PreviousPath: null, PullFileStatus.Modified, 2, 0, "@@ -10,3 +10,5 @@\n+x"), new PullFile("assets/logo.png", PreviousPath: null, PullFileStatus.Added, 0, 0, Patch: null)], new Dictionary<string, string>(StringComparer.Ordinal));
+        var before = Ok(await run.Pulls.Threads(opened.Link, Ct), "Threads").Count;
+        var n = 0;
+
+        foreach (var comment in new[] { new PullReviewComment("src/a.cs", 40, "Outside the hunk"), new PullReviewComment("src/other.cs", 12, "Not in the pull request"), new PullReviewComment("assets/logo.png", 1, "Binary") })
+        {
+            var review = new PullReview(opened.Link, Sha('a'), PullReviewVerdict.Comment, "Body", [comment], "owner-review:d4:" + (++n).ToString(System.Globalization.CultureInfo.InvariantCulture));
+            Expect.Equal(PullReviewOutcome.LineRejected, Ok(await run.Pulls.SubmitReview(review, Ct), "SubmitReview on " + comment.Path));
+        }
+
+        Expect.Equal(before, Ok(await run.Pulls.Threads(opened.Link, Ct), "Threads after").Count);
     }
 
     /// <summary>The review reads refuse a host outside the list and answer SND-FORGE-003 for a pull request that isn't there.</summary>
