@@ -45,7 +45,7 @@ d="$(copy missing)"; mv "$d/vault/ferry-ideas.md" "$TMPROOT/ferry-ideas.moved"
 run "$d"; expect_rc "a listed file that is missing fails" 1; expect_out "names the file" "vault/ferry-ideas.md: is in expected.json but missing on disk"
 
 d="$(copy stray)"; echo '{}' > "$d/vault/stray.json"
-run "$d"; expect_rc "a non-md file that is not in supporting fails" 1; expect_out "names the file" "vault/stray.json"
+run "$d"; expect_rc "a non-md file that is not in supporting fails" 1; expect_out "names the file" "vault/stray.json: is a file under the fixtures but not in expected.json"
 
 d="$(copy nocode)"; mv "$d/broken/013-two-headings.md" "$TMPROOT/013.moved"; edit "$d/expected.json" '.files |= map(select(.path != "broken/013-two-headings.md")) | del(.codes["SND-LIB-013"])'
 run "$d"; expect_rc "a code with no fixture fails" 1; expect_out "names the code" "SND-LIB-013: has no fixture"
@@ -69,7 +69,34 @@ d="$(copy vaultread)"; edit "$d/expected.json" '(.files[] | select(.path == "vau
 run "$d"; expect_rc "a denied vault doc listed as read fails" 1; expect_out "names the doc" "vault/private/diary.md: sits in a vault dot folder or deny glob but is read"
 
 d="$(copy twoids)"; subst "$d/broken/012-shared-id-b.md" -e 's/^id: shared-doc-id$/id: shared-doc-id-b/'
-run "$d"; expect_rc "a 012 fixture with no shared id fails" 1; expect_out "names the doc" "012-shared-id-b.md"
+run "$d"; expect_rc "a 012 fixture with no shared id fails" 1; expect_out "names the doc" "012-shared-id-b.md: has SND-LIB-012 but is the lowest path"
+
+d="$(copy body013)"; subst "$d/broken/013-two-headings.md" -e 's/^## Ph1 Second$/## Ph2 Second/'
+run "$d"; expect_rc "a 013 fixture that defines no id twice fails" 1; expect_out "names the doc" "013-two-headings.md: SND-LIB-013 fixture defines no id twice"
+
+d="$(copy badkey)"; edit "$d/expected.json" '(.files[] | select(.path == "broken/010-bad-kind.md")) |= (.badKey = "/id")'
+run "$d"; expect_rc "a 010 fixture failing at another key fails" 1; expect_out "names the paths" "fails at /kind, want only /id"
+
+d="$(copy links)"; edit "$d/expected.json" '(.files[] | select(.path | endswith("harbor-epic/stages.md"))) |= del(.frontMatterLinks)'
+run "$d"; expect_rc "a parent missing from frontMatterLinks fails" 1; expect_out "names the key" "frontMatterLinks.parent"
+
+d="$(copy refline)"; edit "$d/expected.json" '(.files[] | select(.path | endswith("TASKS.md"))).refs[0].line = 1'
+run "$d"; expect_rc "a ref on the wrong line fails" 1; expect_out "names the ref" "does not mention REQ-U1"
+
+d="$(copy refkind)"; edit "$d/expected.json" '(.files[] | select(.path | endswith("TASKS.md"))).refs[0].kind = "parent"'
+run "$d"; expect_rc "a ref of kind parent fails the ref schema" 1; expect_out "names the schema" "fails \$defs/ref"
+
+d="$(copy body015)"; subst "$d/broken/015-broken-ref.md" -e 's/REQ-99/REQ-1/'; edit "$d/expected.json" '(.files[] | select(.path == "broken/015-broken-ref.md")).refs[0].to = "REQ-1"'
+run "$d"; expect_rc "a 015 fixture whose target exists fails" 1; expect_out "names the holder" "SND-LIB-015 fixture: REQ-1 is defined in"
+
+d="$(copy body016)"; subst "$d/broken/016-unknown-parent.md" -e 's/^parent: no-such-doc$/parent: shared-doc-id/'; edit "$d/expected.json" '(.files[] | select(.path == "broken/016-unknown-parent.md")).frontMatterLinks.parent = "shared-doc-id"'
+run "$d"; expect_rc "a 016 fixture whose parent exists fails" 1; expect_out "names the doc" "016-unknown-parent.md: SND-LIB-016 fixture: its parent and supersedes all match"
+
+d="$(copy body014)"; subst "$d/broken/014-orphan-ac.md" -e 's/^## Criteria$/## Criteria\n\n- REQ-2 Now there is one./'
+run "$d"; expect_rc "a 014 fixture with a requirement above its AC fails" 1; expect_out "names the doc" "014-orphan-ac.md: SND-LIB-014 fixture has no AC without a requirement"
+
+d="$(copy body011)"; subst "$d/broken/011-bad-item-id.md" -e 's/REQ-\*\*/REQ-1**/'
+run "$d"; expect_rc "a 011 fixture with a numbered id fails" 1; expect_out "names the doc" "011-bad-item-id.md: SND-LIB-011 fixture has no REQ- without a number"
 
 echo
 echo "passed $PASS, failed $FAIL"

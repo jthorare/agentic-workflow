@@ -11,12 +11,13 @@
 //  1. Every .md under DIR (README.md aside) is an entry in expected.json, every entry exists (lstat), and the non-md files
 //     are exactly the `supporting` list.
 //  2. Every code SND-LIB-010..019 has a fixture, and the `codes` map matches the entries' errors.
-//  3. A read doc without SND-LIB-010 has front matter that passes $defs/frontMatter.
-//  4. An SND-LIB-010 fixture's front matter fails it; a near miss has no aw-doc number 1, or a blank first line.
+//  3. A read doc without SND-LIB-010 has front matter that passes $defs/frontMatter; its refs validate against $defs/ref and sit on a line that names their target; frontMatterLinks (parent, supersedes) are its front matter's.
+//  4. An SND-LIB-010 fixture's front matter fails it, at the one instance path its badKey names; a near miss has no aw-doc number 1, or a blank first line.
 //  5. A generated doc's source-sha256 is the sha256 of its source file (SND-LIB-017: it differs).
 //  6. A skipped doc has its reason: a symlink is a symlink, a dot folder or a deny glob is in the path, a near miss is one,
 //     a no-front-matter file has none; vault dot folders and deny globs are never read; the vault covers each reason.
-//  7. Entries agree with themselves: errors and keepsItems, unique ids per scope (the lowest path keeps a shared one),
+//  7. Body codes hold: 013 defines an id twice, 014 has an orphan AC, 015 targets an id nothing defines, 016 names no doc in its scope, 011 has a REQ- with no number.
+//     Entries agree with themselves: errors and keepsItems, unique ids per scope (the lowest path keeps a shared one),
 //     unique items, a doc over the cap really has more than 2,000 headings.
 // Exit codes: 0 ok, 1 a check failed (one line each), 2 a tool error (missing Ajv: run `npm ci --prefix scripts`).
 
@@ -50,7 +51,6 @@ try {
 const CODES = Array.from({ length: 10 }, (_, i) => `SND-LIB-0${10 + i}`);
 const KEEP = new Set(["SND-LIB-012", "SND-LIB-015", "SND-LIB-016"]);
 const REASONS = new Set(["near-miss", "no-front-matter", "symlink", "dot-folder", "deny"]);
-const REF_KINDS = new Set(["relates", "blocks", "verifies", "parent", "supersedes"]);
 
 // The strict front-matter reader. Returns { fm } or { fm: null, why }. Scalars: "double" or 'single' quoted text is a string;
 // an unquoted integer is a number; anything else (1.0, yes) is a string, because the line as written decides.
@@ -81,6 +81,29 @@ function readFrontMatter(text) {
 }
 const head4k = (text) => Buffer.from(text, "utf8").subarray(0, 4096).toString("utf8");
 
+// The item-bearing lines of a doc body (headings ## to ####, list items, table rows), outside fences and quotes.
+function scanItems(text) {
+  const ev = [];
+  const lines = text.split("\n");
+  let i = 0, fence = null;
+  if (lines[0] === "---") { const end = lines.indexOf("---", 1); if (end > 0) i = end + 1; }
+  for (; i < lines.length; i++) {
+    const ln = lines[i], n = i + 1, f = ln.match(/^ {0,3}(```|~~~)/);
+    if (fence) { if (f && f[1] === fence) fence = null; continue; }
+    if (f) { fence = f[1]; continue; }
+    if (/^\s*>/.test(ln)) continue;
+    let m;
+    if ((m = ln.match(/^(#{2,4})\s+(.*)$/))) ev.push({ type: "h", text: m[2], line: n });
+    else if ((m = ln.match(/^\s*(?:[-*]|\d+\.)\s+(.*)$/))) ev.push({ type: "li", text: m[1], line: n });
+    else if (/^\|/.test(ln)) {
+      const cells = ln.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
+      if (!cells.every((c) => /^:?-+:?$/.test(c))) ev.push({ type: "tr", text: cells[0], cells, line: n });
+    }
+  }
+  return ev;
+}
+const idOf = (t) => (t.replace(/\*\*/g, "").match(/^(Ph\d+(?:[a-z]|-\d+)?|REQ-[UESOW]?\d+|AC-\d+|TP-\d+|TASK-\d+)(?![A-Za-z0-9-])/) ?? [])[1];
+
 // Walk DIR without following symlinks.
 const found = new Map(); // relative path -> { symlink }
 function walk(rel) {
@@ -97,6 +120,7 @@ try {
   const ajv = new Ajv2020({ strict: false, allErrors: true });
   ajv.addSchema(schema);
   const frontMatterOk = ajv.getSchema(`${schema.$id}#/$defs/frontMatter`);
+  const refOk = ajv.getSchema(`${schema.$id}#/$defs/ref`);
 
   const expected = JSON.parse(fs.readFileSync(path.join(DIR, "expected.json"), "utf8"));
   walk("");
@@ -142,7 +166,7 @@ try {
     if (!e.keepsItems && (e.items ?? []).length) fail(p, "keepsItems is false but items are listed");
     if (new Set(e.items ?? []).size !== (e.items ?? []).length) fail(p, "lists an item id twice");
     for (const a of Object.keys(e.parents ?? {})) if (!(e.items ?? []).includes(a)) fail(p, `parents names ${a}, which is not one of its items`);
-    for (const r of e.refs ?? []) if (!r.to || !REF_KINDS.has(r.kind) || !("from" in r)) fail(p, `has a malformed ref ${JSON.stringify(r)}`);
+    for (const k of Object.keys(e.frontMatterLinks ?? {})) if (!["parent", "supersedes"].includes(k)) fail(p, `frontMatterLinks has ${k}, want parent or supersedes`);
     if (!e.why) fail(p, "has no why");
 
     const rootDir = (expected.roots?.[e.root]?.dir) ?? e.path.split("/")[0];
@@ -176,10 +200,23 @@ try {
     const valid = frontMatterOk(fm);
     if (errs.includes("SND-LIB-010")) {
       if (valid) fail(p, "SND-LIB-010 fixture: its front matter passes $defs/frontMatter, so it breaks no key");
+      else {
+        const at = [...new Set(frontMatterOk.errors.map((x) => x.instancePath))];
+        if (!e.badKey) fail(p, "SND-LIB-010 fixture names no badKey (the instance path it fails at)");
+        else if (at.length !== 1 || at[0] !== e.badKey) fail(p, `SND-LIB-010 fixture fails at ${at.join(", ")}, want only ${e.badKey}`);
+      }
     } else if (!valid) {
       fail(p, `front matter fails $defs/frontMatter: ${ajv.errorsText(frontMatterOk.errors)}`);
     }
     docs.push({ e, fm, text });
+    // front matter links (parent, supersedes) are not refs; refs validate against $defs/ref and point at their own line
+    for (const k of ["parent", "supersedes"]) if (fm[k] !== e.frontMatterLinks?.[k]) fail(p, `frontMatterLinks.${k} is ${JSON.stringify(e.frontMatterLinks?.[k])} but the front matter has ${JSON.stringify(fm[k])}`);
+    const flines = text.split("\n");
+    for (const r of e.refs ?? []) {
+      if (!refOk(r)) { fail(p, `ref ${JSON.stringify(r)} fails $defs/ref: ${ajv.errorsText(refOk.errors)}`); continue; }
+      if (r.line > flines.length) fail(p, `ref ${r.from}->${r.to} is on line ${r.line}, past the end (${flines.length} lines)`);
+      else if (!flines[r.line - 1].includes(r.to.split("#").pop())) fail(p, `ref ${r.from}->${r.to}: line ${r.line} does not mention ${r.to.split("#").pop()}`);
+    }
 
     // 5. generated docs
     if (fm.generated !== undefined) {
@@ -214,6 +251,41 @@ try {
       if (i === 0 && has012) fail(p, `has SND-LIB-012 but is the lowest path with id ${k.split(" ")[1]} in ${k.split(" ")[0]}`);
       if (i > 0 && !has012) fail(p, `shares id ${k.split(" ")[1]} in ${k.split(" ")[0]} with ${paths[0]} but lacks SND-LIB-012`);
     });
+  }
+
+  // 7b. the body codes: the fixture really holds the problem its code names
+  const withCode = (c) => docs.filter((d) => d.e.errors.includes(c));
+  for (const d of withCode("SND-LIB-013")) {
+    const ev = scanItems(d.text);
+    const dup = (type) => { const seen = new Set(); return ev.filter((x) => x.type === type).map((x) => idOf(x.text)).filter(Boolean).some((id) => seen.size === seen.add(id).size); };
+    if (!dup("h") && !dup("li")) fail(d.e.path, "SND-LIB-013 fixture defines no id twice (two headings or two list items starting with it)");
+  }
+  for (const d of withCode("SND-LIB-014")) {
+    const ev = scanItems(d.text);
+    const orphan = ev.some((x, i) => {
+      const id = x.type !== "h" && idOf(x.text);
+      if (!id || !id.startsWith("AC-")) return false;
+      let j = i - 1;
+      while (j >= 0 && ev[j].type !== "h") { if ((idOf(ev[j].text) ?? "").startsWith("REQ-")) return false; j--; }
+      return !ev.some((r) => r.type === "tr" && (idOf(r.text) ?? "").startsWith("REQ-") && r.cells.slice(1).some((c) => c.includes(id)));
+    });
+    if (!orphan) fail(d.e.path, "SND-LIB-014 fixture has no AC without a requirement above it in its section and without a Traceability row");
+  }
+  for (const d of withCode("SND-LIB-015")) {
+    if (!(d.e.refs ?? []).length) { fail(d.e.path, "SND-LIB-015 fixture asserts no ref"); continue; }
+    for (const r of d.e.refs) {
+      const target = r.to.split("#").pop();
+      const holder = docs.find((o) => o.e.scope === d.e.scope && scanItems(o.text).some((x) => idOf(x.text) === target));
+      if (holder) fail(d.e.path, `SND-LIB-015 fixture: ${target} is defined in ${holder.e.path}, so the ref is not broken`);
+    }
+  }
+  for (const d of withCode("SND-LIB-016")) {
+    const vals = Object.values(d.e.frontMatterLinks ?? {}).filter((v) => !v.startsWith("doc:"));
+    if (!vals.length) fail(d.e.path, "SND-LIB-016 fixture has no parent or supersedes");
+    else if (!vals.some((v) => !docs.some((o) => o.e.scope === d.e.scope && o.fm.id === v))) fail(d.e.path, "SND-LIB-016 fixture: its parent and supersedes all match a doc id in the scope");
+  }
+  for (const d of withCode("SND-LIB-011")) {
+    if (!scanItems(d.text).some((x) => /^\*{0,2}REQ-(?![UESOW]?\d)/.test(x.text))) fail(d.e.path, "SND-LIB-011 fixture has no REQ- without a number");
   }
 
   // 6. the vault covers each reason
