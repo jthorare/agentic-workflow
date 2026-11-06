@@ -147,10 +147,12 @@ internal static class LauncherServiceCollectionExtensions
         return latest.IsError ? null : latest.Value?.Profile.Agents;
     };
 
-    private static Func<CancellationToken, ValueTask<string?>> ReviewCredential(IServiceProvider sp) => async ct =>
+    internal static Func<CancellationToken, ValueTask<string?>> ReviewCredential(IServiceProvider sp) => async ct =>
     {
         var latest = await sp.GetRequiredService<IApprovedProfile>().Latest(ct).ConfigureAwait(false);
-        return latest.IsError ? null : PrReviewRules.CredentialVariable(latest.Value?.Profile.Review);   // null for a 'command:' pointer; the default variable is already in the fixed list
+        return latest.IsError || latest.Value?.Profile.Review is not { Credential: { } pointer } review || !pointer.StartsWith("env:", StringComparison.Ordinal)
+            ? null
+            : PrReviewRules.CredentialVariable(review);   // null for a 'command:' pointer, no block or an unreadable profile; the default variable is already in the fixed list
     };
 
     private static DetectionInputs Detection(IServiceProvider sp, Func<string, string?> environment) =>
