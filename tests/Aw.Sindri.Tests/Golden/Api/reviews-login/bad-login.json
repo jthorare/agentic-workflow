@@ -1,7 +1,0 @@
-{
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-  "title": "SND-REVIEW-001",
-  "status": 400,
-  "detail": "review.login: '-bad-' isn't a GitHub login (fix: use 1 to 39 letters, digits or single hyphens, not starting or ending with a hyphen)",
-  "traceId": "<trace>"
-}

@@ -1,7 +1,0 @@
-{
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
-  "title": "SND-AUTH-002",
-  "status": 403,
-  "detail": "review.login is the owner's to set; a session can't save it (fix: set it on the Reviews tab)",
-  "traceId": "<trace>"
-}
