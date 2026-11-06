@@ -158,13 +158,13 @@ internal sealed class LibraryReader(ILibraryStore store, AudienceScope audience)
 
     // The doc that keeps its id: it has one, its front matter reads, and no other doc of its scope beat it to it.
     private static bool Holds(LibraryDoc doc) =>
-        doc.Slug is not null && !doc.Errors.Any(static e => string.Equals(e.Code, DesignDocCodes.BadFrontMatter, StringComparison.Ordinal) || string.Equals(e.Code, DesignDocCodes.SharedDocId, StringComparison.Ordinal));
+        DesignDocFrontMatter.IsDocId(doc.Slug) && !doc.Errors.Any(static e => string.Equals(e.Code, DesignDocCodes.SharedDocId, StringComparison.Ordinal));
 
     // The live doc at the lowest key keeps a shared id and the others show SND-LIB-012; a doc removed later hands the id to the next one on the next read.
     private static List<LibraryDoc> Mark(List<LibraryDoc> docs)
     {
         var losers = new Dictionary<RecordKey, DesignDocError>();
-        foreach (var group in docs.Where(static d => d.Slug is not null && !d.Errors.Any(static e => e.Code == DesignDocCodes.BadFrontMatter)).GroupBy(static d => (d.Scope, d.Slug)))
+        foreach (var group in docs.Where(static d => DesignDocFrontMatter.IsDocId(d.Slug)).GroupBy(static d => (d.Scope, d.Slug)))
         {
             var ordered = group.OrderBy(static d => d.Key.Value, StringComparer.Ordinal).ToList();
             foreach (var loser in ordered.Skip(1))

@@ -11,9 +11,9 @@ public static class DesignDocScope
     /// <returns>The findings, by path then line.</returns>
     public static IReadOnlyList<DesignDocFinding> Check(IReadOnlyList<ScopedDesignDoc> docs)
     {
-        // why: the Where on the next line keeps only docs whose front matter and slug exist
+        // why: a doc is in the id namespace when its own id reads; a bad status or parent (010) does not take it out
         var entries = docs
-            .Where(static d => d.Doc.FrontMatter?.Slug is not null && !d.Doc.Errors.Any(static e => string.Equals(e.Code, DesignDocCodes.BadFrontMatter, StringComparison.Ordinal)))
+            .Where(static d => DesignDocFrontMatter.IsDocId(d.Doc.FrontMatter?.Slug))
             .Select(static d => new ScopeEntry(d, d.Doc.FrontMatter!.Slug!, d.Doc.FrontMatter))
             .ToList();
         var findings = new List<DesignDocFinding>();
@@ -41,7 +41,7 @@ public static class DesignDocScope
                 index.Items.UnionWith(ordered[0].Doc.Doc.Items.Select(static i => i.Key));
                 findings.AddRange(ordered.Skip(1).Select(loser => new DesignDocFinding(loser.Doc.Path, FrontMatterBlock.Error(
                     loser.Doc.Path,
-                    loser.Fm.KeyLines["id"],
+                    Line(loser.Fm, "id"),
                     DesignDocCodes.SharedDocId,
                     $"doc id \"{byId.Key}\" is also used by {ordered[0].Doc.Path}.",
                     "Rename one of them."))));
@@ -57,10 +57,10 @@ public static class DesignDocScope
     {
         var doc = entry.Doc;
         var own = doc.Doc.Items.Select(static i => i.Key).ToHashSet(StringComparer.Ordinal);
-        var foreign = IsForeign(entry.Fm.Parent, doc.Scope) || IsForeign(entry.Fm.Supersedes, doc.Scope);
+        var foreign = ForeignScopes(entry.Fm, doc.Scope);
         foreach (var r in doc.Doc.Refs.DistinctBy(static r => (r.To, r.Line)))
         {
-            var ok = r.To.Contains('#', StringComparison.Ordinal) ? Qualified(r.To, doc.Scope, scopes) : own.Contains(r.To) || scopes[doc.Scope].Items.Contains(r.To) || foreign;
+            var ok = r.To.Contains('#', StringComparison.Ordinal) ? Qualified(r.To, doc.Scope, scopes) : own.Contains(r.To) || scopes[doc.Scope].Items.Contains(r.To) || InForeign(r.To, foreign, scopes);
             if (!ok)
             {
                 findings.Add(new DesignDocFinding(doc.Path, FrontMatterBlock.Error(
@@ -88,7 +88,7 @@ public static class DesignDocScope
 
         findings.Add(new DesignDocFinding(entry.Doc.Path, FrontMatterBlock.Error(
             entry.Doc.Path,
-            entry.Fm.KeyLines[key],
+            Line(entry.Fm, key),
             DesignDocCodes.UnknownDocLink,
             $"{key} \"{value}\" is not a doc in this scope.",
             "Use the id of a doc in the scope, or the full doc:<root>[/<slug>]/<doc id> ref.")));
@@ -103,8 +103,18 @@ public static class DesignDocScope
             || (index.Winners.TryGetValue(id, out var target) && target.Doc.Items.Any(i => string.Equals(i.Key, item, StringComparison.Ordinal)));
     }
 
-    private static bool IsForeign(string? link, string ownScope) =>
-        link is not null && link.StartsWith("doc:", StringComparison.Ordinal) && !string.Equals(SplitDoc(link[4..]).Scope, ownScope, StringComparison.Ordinal);
+    // why: a doc whose parent or supersedes lives in another scope may mention that scope's items bare; they are checked against it when it is loaded, and pass when it is not
+    private static List<string> ForeignScopes(DesignDocFrontMatter fm, string ownScope) =>
+        [.. new[] { fm.Parent, fm.Supersedes }
+            .Where(static l => l is not null && l.StartsWith("doc:", StringComparison.Ordinal))
+            .Select(static l => SplitDoc(l![4..]).Scope)
+            .Where(scope => !string.Equals(scope, ownScope, StringComparison.Ordinal))
+            .Distinct(StringComparer.Ordinal)];
+
+    private static bool InForeign(string item, List<string> foreign, Dictionary<string, ScopeIndex> scopes) =>
+        foreign.Exists(scope => !scopes.TryGetValue(scope, out var index) || index.Items.Contains(item));
+
+    private static int? Line(DesignDocFrontMatter fm, string key) => fm.KeyLines.TryGetValue(key, out var line) ? line : null;
 
     private static (string Scope, string Id) SplitDoc(string target)
     {

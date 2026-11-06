@@ -30,6 +30,11 @@ public sealed record DesignDocFrontMatter(
     [property: JsonPropertyName("source-sha256")] string? SourceSha256)
 {
     /// <summary>The line (from 1) each key is on, for errors decided later; not part of the parsed shape.</summary>
+    /// <summary>Says whether a text is a doc id: 3 to 64 lowercase letters, digits or '-'.</summary>
+    /// <param name="id">The text.</param>
+    /// <returns>True for a doc id.</returns>
+    public static bool IsDocId(string? id) => id is not null && FrontMatterChecker.IsDocId(id);
+
     [JsonIgnore]
     public IReadOnlyDictionary<string, int> KeyLines { get; init; } = new Dictionary<string, int>(StringComparer.Ordinal);
 }
