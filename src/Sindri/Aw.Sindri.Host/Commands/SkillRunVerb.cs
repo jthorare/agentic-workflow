@@ -1,8 +1,11 @@
 using Aw.Kernel;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Items.Vocabulary;
 using Aw.Sindri.Core.Workflow.Views;
 using Aw.Sindri.Features.CreateItem;
+using Aw.Sindri.Features.GetItem;
 using Aw.Sindri.Features.GetInstanceEvents;
 using Aw.Sindri.Features.StartSkillRun;
 using Aw.Sindri.Host.Endpoints;
@@ -77,8 +80,30 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
         }
 
         var item = await client.Post<CreateItemRequest, ItemCreatedResponse>("/sindri/items", new CreateItemRequest($"Try the {run.Block} block", repo), ct).ConfigureAwait(false);
-        return item.IsError ? item.Error
-            : await client.Post<StartSkillRunBody, StartSkillRunResponse>($"/sindri/skills/{Uri.EscapeDataString(run.Block)}/runs", new StartSkillRunBody(item.Value.Value.ItemId.Value, run.Inputs, run.Skills), ct).ConfigureAwait(false);
+        if (item.IsError)
+        {
+            return item.Error;
+        }
+
+        var id = item.Value.Value.ItemId.Value;
+        var started = await client.Post<StartSkillRunBody, StartSkillRunResponse>($"/sindri/skills/{Uri.EscapeDataString(run.Block)}/runs", new StartSkillRunBody(id, run.Inputs, run.Skills), ct).ConfigureAwait(false);
+        if (started.IsError)
+        {
+            await CancelItem(id, ct).ConfigureAwait(false);   // the refusal is the answer; the item it was made for must not stay open
+        }
+
+        return started;
+    }
+
+    /// <summary>Closes the trial's item as cancelled, best effort: a failure here must not replace the refusal the caller is about to report.</summary>
+    private async Task CancelItem(string id, CancellationToken ct)
+    {
+        var route = "/sindri/items/" + Uri.EscapeDataString(id);
+        var read = await client.GetView<ItemView>(route, ct).ConfigureAwait(false);
+        if (read.IsSuccess)
+        {
+            _ = await client.Post<CloseItemBody, CommandAccepted>(route + "/close", new CloseItemBody(CloseReason.Cancelled, read.Value.Value.Version), ct).ConfigureAwait(false);
+        }
     }
 
     /// <summary>Polls the instance until it sits in a terminal state, then reads its outcome, the facts the block wrote and, for a failed Step, why.</summary>
