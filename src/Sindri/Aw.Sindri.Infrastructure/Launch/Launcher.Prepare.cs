@@ -20,6 +20,11 @@ internal sealed partial class Launcher
             return located.Error;
         }
         var workDir = located.Value;
+        if (created && request.Worktree is { } made && LaunchWorktree.IsTrial(request))
+        {
+            _trialTrees[request.Launch] = (request.RepoPath, made);   // removed when the launch ends, whatever the outcome (Cleanup)
+        }
+
         if (await GuardAndPrepare(request, entry, (workDir, created), cancellationToken).ConfigureAwait(false) is { } refusedStart)
         {
             return refusedStart;   // the guard's refusal, or SND-LAUNCH-021 (a step failure; nothing started)
@@ -263,6 +268,10 @@ internal sealed partial class Launcher
         LaunchFileStore.DeleteIn(parts.Options.LaunchDirectory, McpLaunchConfig.PathFor(parts.Options.LaunchDirectory, launch));
         _ = await parts.Scratch.Remove(ScratchPath(launch), CancellationToken.None).ConfigureAwait(false);   // the evaluator's checkout; none for any other launch
         await ReleaseSandbox(launch).ConfigureAwait(false);
+        if (_trialTrees.TryRemove(launch, out var trial))
+        {
+            await LaunchWorktree.Remove(trial.Repo, trial.Worktree, parts.Warn).ConfigureAwait(false);   // after the session is stopped: its files are no longer in use
+        }
     }
 
     private string ScratchPath(LaunchId launch) => Path.Combine(parts.Options.ScratchDirectory, "eval-" + launch.Value);

@@ -12,7 +12,7 @@ namespace Aw.Sindri.Features.StartSkillRun;
 /// <summary>
 /// Runs one skill block as a trial (skill flows spec §7). It checks the inputs against the block, builds the block's trial recipe (<see cref="SkillTrialRecipe"/>), registers it, records an approval of its hash with the caller as approver
 /// (the owner's request is the approval, and every start needs one: StartInstanceService), stores the inputs as start facts and starts the instance. The same block with the same inputs registers as the same recipe, so a second trial finds it
-/// approved already. The launch reads the recipe's id (<see cref="SkillTrialRecipe.IsTrial"/>) to run scrubbed and mark 'trial'.
+/// approved already. The launch reads the recipe's id (<c language="text">SkillTrialRecipe.IsTrial</c>) to run scrubbed and mark 'trial'.
 /// </summary>
 /// <param name="blocks">The loaded skill blocks, and the one-folder load of the author loop.</param>
 /// <param name="items">Resolves the item the trial runs on.</param>

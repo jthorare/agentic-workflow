@@ -9,7 +9,7 @@ namespace Aw.Sindri.Core.Skills;
 
 /// <summary>
 /// The one-state recipe 'sindri skill run' runs a block in (skill flows spec §7): a single active state around 'step.skill.&lt;id&gt;' whose inputs are start facts, one terminal state per outcome and one for a failed Step.
-/// Its id is 'workflow.skill-trial-&lt;block&gt;', which is how the launch knows it is a trial (<see cref="IsTrial"/>: no push grant, 'trial' on launch.started). Its version comes from the manifest hash and the inputs given, so the same block and
+/// Its id is 'workflow.skill-trial-&lt;block&gt;', which is how the launch knows it is a trial (<see cref="IsTrial(RecipeId)"/>: no push grant, 'trial' on launch.started). Its version comes from the manifest hash and the inputs given, so the same block and
 /// inputs register as the same recipe and an edited manifest as a new version, never SND-RECIPE-007.
 /// </summary>
 public static class SkillTrialRecipe
@@ -24,6 +24,12 @@ public static class SkillTrialRecipe
     /// <param name="recipe">The recipe id.</param>
     /// <returns>True for 'workflow.skill-trial-…'.</returns>
     public static bool IsTrial(RecipeId recipe) => recipe.Value.StartsWith(IdPrefix, StringComparison.Ordinal);
+
+    /// <summary>Whether <paramref name="instance"/> is a trial run, from its address ('&lt;item&gt;/skill-trial-&lt;block&gt;/&lt;attempt&gt;', or a child of one).</summary>
+    /// <param name="instance">The instance address.</param>
+    /// <returns>True for a trial's.</returns>
+    public static bool IsTrial(Aw.Sindri.Core.Workflow.Engine.InstanceAddress instance) =>
+        instance.Value.Split('/') is [_, var recipe, ..] && recipe.StartsWith(IdPrefix["workflow.".Length..], StringComparison.Ordinal);
 
     /// <summary>The fact an input arrives in: 'fact:&lt;key&gt;'.</summary>
     /// <param name="inputKey">The input's key.</param>
