@@ -9,9 +9,10 @@ public sealed class LaneStopCheckTests
 
     private LaneStopCheckService Service() => new(_world.Config, _world.LaneMail, _world.Beats, _world.LaneGuard, _world.Clock);
 
-    private async Task<LaneStopCheckResponse> Check(Core.Lanes.LaneIdentity lane, bool active = false, int max = 3)
+    // The lane's own stop hook exports AW_META_HOOK; a call typed by hand does not.
+    private async Task<LaneStopCheckResponse> Check(Core.Lanes.LaneIdentity lane, bool active = false, int max = 3, string? hook = "Stop")
     {
-        var result = await Service().Handle(new LaneStopCheckRequest(lane, active, max), CancellationToken.None);
+        var result = await Service().Handle(new LaneStopCheckRequest(lane, active, max) { HookEvent = hook }, CancellationToken.None);
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
         return result.Value;
     }
@@ -116,5 +117,33 @@ public sealed class LaneStopCheckTests
 
         Assert.False(response.Blocked);
         Assert.Null((await _world.Beats.Last("api", CancellationToken.None)).Value);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_hand_typed_stop_check_is_not_hook_proof_and_does_not_make_the_lane_idle()
+    {
+        await _world.Ready();
+        var lane = _world.PutLane("api");
+
+        var response = await Check(lane, hook: null);
+
+        Assert.False(response.Blocked);
+        Assert.Null((await _world.Beats.Last("api", CancellationToken.None)).Value);
+        Assert.False((await _world.Beats.IsIdle("api", CancellationToken.None)).Value);
+        Assert.Equal(_world.Clock.GetUtcNow(), (await _world.Beats.LastCli("api", CancellationToken.None)).Value);
+        var health = Assert.Single((await _world.LaneHealth.Read((await _world.Config.Load(CancellationToken.None)).Value, CancellationToken.None)).Value);
+        Assert.StartsWith("hooks not verified: only manual aw-meta runs seen", health.State, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_stop_check_from_the_stop_hook_still_records_the_beat()
+    {
+        await _world.Ready();
+        var lane = _world.PutLane("api");
+
+        _ = await Check(lane, hook: "Stop");
+
+        Assert.True((await _world.Beats.Last("api", CancellationToken.None)).Value!.Stopped);
+        Assert.True((await _world.Beats.IsIdle("api", CancellationToken.None)).Value);
     }
 }
