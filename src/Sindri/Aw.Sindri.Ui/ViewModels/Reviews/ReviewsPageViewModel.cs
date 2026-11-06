@@ -165,7 +165,7 @@ internal sealed class ReviewsPageViewModel : ObservableObject, IDisposable
     {
         (IsLoading, Error) = (false, string.Empty);
         var now = _clock.GetUtcNow();
-        var groups = list.Groups.Select(g => new ReviewGroupViewModel(g, list.Login, now)).ToList();
+        var groups = list.Groups.Select(g => new ReviewGroupViewModel(g, list.Login, now)).Where(g => g.Count > 0).ToList();
         ShowHeader(list, groups);
         (Notice, StaleText, LibraryText, WaitingCount) = (list.Notice, list.Stale?.Text, list.Library.Text, list.WaitingCount);
         LibraryWarns = list.Library.WithErrors > 0 || list.Library.UnreadableRoots > 0;
