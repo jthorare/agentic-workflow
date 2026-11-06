@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Host.Commands;
+namespace Aw.Sindri.Host.Endpoints;
 
 /// <summary>How a followed 'sindri skill run' ended (skill flows spec §7).</summary>
 /// <param name="Skill">The block's skill.</param>

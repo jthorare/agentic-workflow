@@ -1,5 +1,6 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Host.Commands;
+using Aw.Sindri.Host.Endpoints;
 
 namespace Aw.Sindri.Tests.Skills;
 
