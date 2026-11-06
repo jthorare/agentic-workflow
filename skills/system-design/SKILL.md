@@ -43,6 +43,7 @@ Every run ends with the [Result block](#result-block), whatever the outcome: don
 ```
 $SD/
   packet.json            manifest: slug, title, personas -> page, diagrams -> mmd/svg, sections in TDD order with anchors, prs
+  doc.md                 the design-doc convention, generated from packet.json by write_packet.py (sections, Ph<n> per PR, REQ-<n> per EARS criterion, TP-<n> per PR test row)
   tdd.html               engineering page; PR cards + deep-dive dialog at its PR-order section
   share/story.json       the shareable TDD's story: the one source of tdd-share.html and deck.html
   tdd-share.html         shareable TDD: the pre-read engineers get as a link (build_share.py)
@@ -55,7 +56,7 @@ $SD/
   mockups/ shots/        working files
 ```
 
-`packet.json` is written by `scripts/write_packet.py` from what is on disk (step 12); never hand-edit it.
+`packet.json` and `doc.md` are written by `scripts/write_packet.py` from what is on disk (step 12); never hand-edit them.
 
 ## Personas
 
@@ -83,7 +84,7 @@ Each step writes to `$SD/status.md`, the one living doc. Sections: surfaces, cou
 9. **Diagrams.** Next section.
 10. **Style pass.** **Invoke skill** `design-refine` on each hand-written page, then re-apply the style and build the shareable TDD and deck (below). Their look lives in `templates/share-base.css` and `deck-base.css`; never hand-edit the generated files, they are rewritten on every build.
 11. **Verify.** Every page rendered (the deck included: `verify_page.mjs` also fails a slide whose content overflows its 16:9 frame; open slides of each kind and read them), 0 broken images, no horizontal scroll at 390px, every screenshot opened and read by you. The script gives metrics; the metrics are not the review.
-12. **Packet.** `python3 -I "$S/scripts/write_packet.py" "$SD" --slug <slug> --title "<title>"` after the last page and diagram change; open `packet.json` and check every path exists.
+12. **Packet.** `python3 -I "$S/scripts/write_packet.py" "$SD" --slug <slug> --title "<title>" [--repo "$(gh repo view --json nameWithOwner -q .nameWithOwner)"]` after the last page and diagram change (omit `--repo` when that `gh` call fails); open `packet.json` and check every path exists. It also writes `doc.md`, the design-doc convention (`docs/conventions/design-docs.md`): generated from `packet.json`, so hand edits are lost on the next run and show as `SND-LIB-017`. EARS criteria are read from `tdd.html` (a list item or table cell that starts with When, While, Where, If or The and holds "shall"), test rows from each card's `## Tests` list or table. Its id is `<slug>-tdd`. Then run "The check" from `_shared/design-doc-front-matter.md` with `OUT="$SD/doc.md"`; an error there is fixed in the packet (or the card), then rerun this step.
 13. **Tracker last.** Create issues only after the owner approves scope and pages, in whatever state the project's tracker uses for "not started".
 
 ## Diagrams
