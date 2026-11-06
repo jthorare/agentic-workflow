@@ -176,4 +176,65 @@ public sealed class SkillResultReaderTests
 
         Assert.Equal((SkillResultKind.StepFailed, SindriErrors.SkillOutputInvalid.Code), (decision.Kind, decision.Error?.Code));
     }
+
+    [Theory]
+    [InlineData("null")]
+    [InlineData("\"\"")]
+    public void An_empty_or_null_waiting_is_not_waiting_the_rest_of_the_result_decides(string waiting)
+    {
+        var decision = SkillResultReader.Decide(Review($$"""{"skill":"review","waiting":{{waiting}},"verdict":"PASS","review_file":"{{Findings}}"}"""));
+
+        Assert.Equal((SkillResultKind.Complete, "pass"), (decision.Kind, decision.Outcome));
+    }
+
+    [Fact]
+    public void Waiting_is_checked_before_the_outcome_map_so_an_unmapped_status_is_never_SND_SKILL_003()
+    {
+        var input = Input(SkillFixtures.BugFixOrchestrator, """{"skill":"bugFixOrchestrator","status":"waiting","waiting":"Is the expected behaviour X or Y?"}""", skill: "bugFixOrchestrator");
+
+        var decision = SkillResultReader.Decide(input);
+
+        Assert.Equal((SkillResultKind.OwnerWaiting, SkillWaitReason.Question), (decision.Kind, decision.Reason));
+        Assert.Null(decision.Error);
+    }
+
+    [Fact]
+    public void A_file_older_than_the_last_prompt_raises_no_row_because_the_turn_is_still_working()
+    {
+        var written = _started.AddMinutes(30);
+
+        var decision = SkillResultReader.Decide(Review("""{"skill":"review","waiting":"Which PR?"}""", modified: written) with { LastPrompt = written.AddMinutes(2) });
+
+        Assert.Equal(SkillResultKind.Working, decision.Kind);
+        Assert.Null(decision.Error);
+    }
+
+    [Fact]
+    public void No_file_after_a_later_prompt_is_working_not_no_result()
+    {
+        var decision = SkillResultReader.Decide(Review(json: null) with { LastPrompt = _started.AddMinutes(10) });
+
+        Assert.Equal(SkillResultKind.Working, decision.Kind);
+    }
+
+    [Fact]
+    public void A_file_written_after_the_last_prompt_can_make_a_waiting_row()
+    {
+        var decision = SkillResultReader.Decide(Review("""{"skill":"review","waiting":"Which PR?"}""", modified: _started.AddMinutes(30)) with { LastPrompt = _started.AddMinutes(20) });
+
+        Assert.Equal((SkillResultKind.OwnerWaiting, SkillWaitReason.Question), (decision.Kind, decision.Reason));
+    }
+
+    [Fact]
+    public void The_unchanged_file_is_still_waiting_only_when_no_prompt_came_after_the_last_turn_end()
+    {
+        var written = _started.AddMinutes(30);
+        var handled = written.AddMinutes(1);
+
+        var quiet = SkillResultReader.Decide(Review("""{"skill":"review","waiting":"Which PR?"}""", modified: written, lastHandled: handled) with { LastPrompt = written.AddMinutes(-1) });
+        var prompted = SkillResultReader.Decide(Review("""{"skill":"review","waiting":"Which PR?"}""", modified: written, lastHandled: handled) with { LastPrompt = handled.AddMinutes(1) });
+
+        Assert.Equal(SkillResultKind.StillWaiting, quiet.Kind);
+        Assert.Equal(SkillResultKind.Working, prompted.Kind);   // a prompt after the turn end means a new turn is running; the old file says nothing new
+    }
 }

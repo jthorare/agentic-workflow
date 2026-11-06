@@ -14,4 +14,7 @@ public enum SkillResultKind
 
     /// <summary>step.failed: a block-author bug (SND-SKILL-003, SND-SKILL-004).</summary>
     StepFailed = 3,
+
+    /// <summary>Working, no new result: the file is older than the launch's last prompt. No row, nothing to say.</summary>
+    Working = 4,
 }

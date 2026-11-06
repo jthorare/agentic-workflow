@@ -22256,3 +22256,6 @@ static readonly Aw.Sindri.Core.SindriErrors.SkillRequirementMissing -> Aw.Kernel
 static readonly Aw.Sindri.Core.SindriErrors.SkillResultUnreadable -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.SkillResultWrongSkill -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.SkillVerdictUnmapped -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Skills.SkillResultInput.LastPrompt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Skills.SkillResultInput.LastPrompt.init -> void
+Aw.Sindri.Core.Skills.SkillResultKind.Working = 4 -> Aw.Sindri.Core.Skills.SkillResultKind
