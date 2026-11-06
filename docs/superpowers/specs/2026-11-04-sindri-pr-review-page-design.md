@@ -733,7 +733,7 @@ The mockups are in `2026-11-04-sindri-pr-review-page-design/mockups/` (`README.m
 5. **Home's line** "N PRs waiting on you" sits under the Needs-you rows and isn't counted in them; it opens Reviews.
 6. **Near misses** show in the library errors sheet as well as in `library validate` and the doctor row (§4.2 changes to match §6.1).
 
-**Measured.** Nine full tab labels fit at the 1,000 px minimum with 46 px spare (23 px at 130% text), so no label shortens (§3). Ph7's UI tests measure the bar at 1,000 px and 130%.
+**Measured.** Measured in Ph7: nine full labels don't fit at 1,000 px with 130% text (the pill overran by 30 px), so below 1,100 px "Reviews" shows as "PRs" and "Workflows" as "Flows"; their screen-reader names stay full (owner, 2026-11-06).
 
 **Wording the mockups set** (Ph7 uses it; §6.3 and §8.2 point here):
 - Fix-task outcomes: the babysitter took it, a live session on the branch took it, or "Waiting on <branch>": the item waits in Work. `SND-REVIEW-006` is the half-done text (§8.2), with Retry.

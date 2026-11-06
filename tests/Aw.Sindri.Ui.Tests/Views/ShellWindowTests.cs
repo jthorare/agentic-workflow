@@ -1539,7 +1539,7 @@ public sealed class ShellWindowTests : IDisposable
     [Theory]
     [InlineData(1.0)]
     [InlineData(1.3)]
-    public Task At_the_1000_px_minimum_all_eight_tab_labels_are_whole(double scale) => OnUi(async () =>
+    public Task At_the_1000_px_minimum_all_nine_tab_labels_are_whole(double scale) => OnUi(async () =>
     {
         await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, 1000, 600) });
         var window = await ShowIn(BarState.Normal);
@@ -1551,8 +1551,8 @@ public sealed class ShellWindowTests : IDisposable
             var shell = (ShellViewModel)window.DataContext!;
             var labels = Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("nav-label")).ToList();
 
-            Assert.Equal(shell.Navigation.Select(n => n.Label), labels.Select(t => t.Text), StringComparer.Ordinal);
-            Assert.Equal(8, labels.Count);
+            Assert.Equal(shell.Navigation.Select(n => n.DisplayLabel), labels.Select(t => t.Text), StringComparer.Ordinal);   // the short label where the tab has one
+            Assert.Equal(9, labels.Count);
             foreach (var label in labels)
             {
                 using var layout = new TextLayout(label.Text, new Typeface(label.FontFamily, label.FontStyle, label.FontWeight), label.FontSize, foreground: null);
@@ -1568,6 +1568,25 @@ public sealed class ShellWindowTests : IDisposable
             TextScale.Apply(resources, 1.0);
             Settle(window);
         }
+    });
+
+    // Below 1,100 px the Workflows and Reviews tabs draw "Flows" and "PRs"; their names for assistive tech stay full. With room they draw the full labels.
+    [Theory]
+    [InlineData(1000, "Flows", "PRs")]
+    [InlineData(1440, "Workflows", "Reviews")]
+    public Task Narrow_windows_shorten_the_Workflows_and_Reviews_tabs_and_keep_their_names(int width, string workflows, string reviews) => OnUi(async () =>
+    {
+        await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, width, 600) });
+        var window = await ShowIn(BarState.Normal);
+        Settle(window);
+
+        var labels = Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("nav-label")).ToList();
+        string[] shown = [.. labels.Select(t => t.Text!)];
+        Assert.Contains(workflows, shown, StringComparer.Ordinal);
+        Assert.Contains(reviews, shown, StringComparer.Ordinal);
+        var names = labels.Select(t => AutomationProperties.GetName(t)).ToList();
+        Assert.Contains(Labels.Workflows, names, StringComparer.Ordinal);
+        Assert.Contains(Labels.ReviewsTab, names, StringComparer.Ordinal);
     });
 
     // Sending… beside Refresh, and the not-responding sentence in full in its banner.
@@ -1693,8 +1712,9 @@ public sealed class ShellWindowTests : IDisposable
     [Fact]
     public Task With_room_the_search_field_keeps_its_full_width() => OnUi(async () =>
     {
-        _records.Write(A.Record());
-        var (window, _) = await Show(s => s.State == ShellState.Normal);
+        await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, 1440, 800) });
+        var window = await ShowIn(BarState.Normal);
+        Settle(window);
 
         Assert.Equal(300, Box(window, "SearchField").Width, precision: 0);
         Assert.Equal(window.ClientSize.Width - 16, Box(window, "HealthPill").Right, precision: 0);

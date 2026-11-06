@@ -33,7 +33,7 @@ internal sealed partial class ShellViewModel : ObservableObject
     private static readonly string[] _pageProperties =
     [
         nameof(CurrentPage), nameof(PageName), nameof(SelectedNav), nameof(IsHome), nameof(IsProjects), nameof(IsWorkflows), nameof(IsWork), nameof(IsRecipes), nameof(IsContext),
-        nameof(IsAgents), nameof(IsSystem), nameof(IsJobs), nameof(IsSettings), nameof(IsNotRunningPanel), nameof(IsPageVisible), nameof(IsHomeShown), nameof(IsInboxShown), nameof(IsPagesShown),
+        nameof(IsAgents), nameof(IsSystem), nameof(IsReviews), nameof(IsJobs), nameof(IsSettings), nameof(IsNotRunningPanel), nameof(IsPageVisible), nameof(IsHomeShown), nameof(IsInboxShown), nameof(IsPagesShown),
     ];
 
     private readonly Preferences _store;
@@ -113,12 +113,13 @@ internal sealed partial class ShellViewModel : ObservableObject
     [
         new(PageId.Home, Labels.Home, "H", string.Empty),
         new(PageId.Projects, Labels.Projects, "P", string.Empty),
-        new(PageId.Workflows, Labels.Workflows, "W", string.Empty),
+        new(PageId.Workflows, Labels.Workflows, "W", string.Empty, Labels.WorkflowsTabShort),
         new(PageId.Work, Labels.Work, "Q", string.Empty),
         new(PageId.Recipes, Labels.Recipes, "R", string.Empty),
         new(PageId.Context, Labels.Context, "C", string.Empty),
         new(PageId.Agents, Labels.Agents, "A", string.Empty),
         new(PageId.System, Labels.System, ".", string.Empty),
+        new(PageId.Reviews, Labels.ReviewsTab, "V", string.Empty, Labels.ReviewsTabShort),
     ];
 
     /// <summary>Every page the window can show, in order: the eight tabs, then Jobs and Settings.</summary>
