@@ -1,6 +1,8 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Workflow.Views;
 using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Host.Endpoints;
+using Aw.Sindri.Testing.Views;
 
 namespace Aw.Sindri.Tests.Skills;
 
@@ -37,5 +39,25 @@ public sealed class SkillRunTextTests
         Assert.Equal(0, SkillRunText.ExitCode(_passed));
         Assert.Equal(3, SkillRunText.ExitCode(_passed with { Outcome = "needsChanges", Succeeded = false }));
         Assert.Equal(4, SkillRunText.ExitCode(_passed with { Outcome = null, Succeeded = false, ErrorLine = "SND-SKILL-004 autoplan's result has no artifact 'consolidated-review.md'" }));
+    }
+
+    [Fact]
+    public void A_park_while_following_prints_why_and_the_answer()
+    {
+        // why: a launch the sandbox refuses parks instead of failing; --follow waited on it silently (found in F-1's hand test, SND-LAUNCH-016)
+        var status = WorkflowViewFixtures.StatusParkedBudget();
+
+        var line = SkillRunText.Parked(new EngineOwnedBadge(EngineOwnedKind.Parked, Reason: "budget"), status);
+
+        Assert.Equal($"parked: {status.Next}\nanswer: {status.Answer!.Cli}", line);
+    }
+
+    [Fact]
+    public void A_run_that_is_not_parked_prints_no_park_line()
+    {
+        var status = WorkflowViewFixtures.StatusDone();
+
+        Assert.Null(SkillRunText.Parked(owned: null, status));
+        Assert.Null(SkillRunText.Parked(new EngineOwnedBadge(EngineOwnedKind.TakenOver, Reason: "with you"), status));
     }
 }

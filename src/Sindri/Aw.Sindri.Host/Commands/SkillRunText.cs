@@ -1,4 +1,5 @@
 using System.Text;
+using Aw.Sindri.Core.Workflow.Views;
 using Aw.Sindri.Host.Endpoints;
 
 namespace Aw.Sindri.Host.Commands;
@@ -41,4 +42,10 @@ internal static class SkillRunText
         ArgumentNullException.ThrowIfNull(report);
         return report.ErrorLine is not null || report.Outcome is null ? 4 : report.Succeeded ? 0 : 3;
     }
+
+    /// <summary>The line '--follow' prints when the run parks: why, and the command that answers it; null when the run is not parked.</summary>
+    /// <param name="owned">The instance's engine-owned badge.</param>
+    /// <param name="status">The instance's status fields.</param>
+    /// <returns>The line, or null.</returns>
+    internal static string? Parked(EngineOwnedBadge? owned, StatusFields status) => throw new NotSupportedException();
 }
