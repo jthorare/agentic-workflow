@@ -31,6 +31,67 @@ public sealed class LinearSideRowStoreTests : IDisposable
     private async Task<CommitReport> Remove(int page, string key = Key) =>
         (await _store.Commit(RecordSamples.Batch(RecordSamples.Linear, page) with { Removed = [RecordKey.From(key)] }, Ct)).Value;
 
+    // A page of a feed that has finished a pass: its cursor carries the watermark ('s='), which is what tells the writer a new issue is news and not the first sync.
+    private async Task<CommitReport> CommitAfterFirstPass(int page, params RecordWrite[] writes) =>
+        (await _store.Commit(RecordSamples.Batch(RecordSamples.Linear, page, writes) with
+        {
+            Position = new SyncPosition(SourceCursor.From("s=2026-11-06T00:00:00.0000000Z;a=;t="), SyncPhase.Incremental, BackfillCursor: null),
+        }, Ct)).Value;
+
+    // A page in the middle of the first pass: no watermark yet.
+    private async Task<CommitReport> CommitDuringFirstPass(int page, params RecordWrite[] writes) =>
+        (await _store.Commit(RecordSamples.Batch(RecordSamples.Linear, page, writes) with
+        {
+            Position = new SyncPosition(SourceCursor.From($"s=;a=end-{page.ToString(CultureInfo.InvariantCulture)};t=2026-11-06T00:00:00.0000000Z"), SyncPhase.Recent, BackfillCursor: null),
+        }, Ct)).Value;
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_new_issue_after_the_first_pass_logs_the_assignee_as_a_change_from_nobody()
+    {
+        _ = await CommitAfterFirstPass(1, Write(Rows(Fields(Ada, Todo))));
+
+        Assert.Equal(1, _world.Count($"SELECT count(*) FROM linear_issue_change WHERE issue_key = '{Key}' AND field = 'assignee' AND \"old\" IS NULL AND \"new\" = 'user-ada' AND via = 'feed'"));
+        Assert.Equal(1, _world.Count("SELECT count(*) FROM linear_issue_change"));   // its first state is not a move
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_new_unassigned_issue_after_the_first_pass_logs_nothing()
+    {
+        _ = await CommitAfterFirstPass(1, Write(Rows(Fields(assignee: null, Todo))));
+
+        Assert.Equal(0, _world.Count("SELECT count(*) FROM linear_issue_change"));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_new_issue_during_the_first_pass_logs_nothing()
+    {
+        _ = await CommitDuringFirstPass(1, Write(Rows(Fields(Ada, Todo))));
+
+        Assert.Equal(1, _world.Count("SELECT count(*) FROM linear_issue"));
+        Assert.Equal(0, _world.Count("SELECT count(*) FROM linear_issue_change"));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task The_f3_re_save_of_an_existing_record_logs_nothing_even_after_the_first_pass()
+    {
+        _ = await CommitAfterFirstPass(1, Write(side: null));   // stored by the feed version before side rows
+
+        _ = await CommitAfterFirstPass(2, Write(Rows(Fields(Ada, Todo))));
+
+        Assert.Equal(1, _world.Count("SELECT count(*) FROM linear_issue"));
+        Assert.Equal(0, _world.Count("SELECT count(*) FROM linear_issue_change"));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_reassignment_after_the_first_pass_logs_one_row_per_hop()
+    {
+        _ = await CommitAfterFirstPass(1, Write(Rows(Fields(Bo, Todo))));
+        _ = await CommitAfterFirstPass(2, Write(Rows(Fields(Ada, Todo, RecordSamples.Now.AddMinutes(1))), version: "v2"));
+
+        Assert.Equal(1, _world.Count("SELECT count(*) FROM linear_issue_change WHERE field = 'assignee' AND \"old\" IS NULL AND \"new\" = 'user-bo'"));
+        Assert.Equal(1, _world.Count("SELECT count(*) FROM linear_issue_change WHERE field = 'assignee' AND \"old\" = 'user-bo' AND \"new\" = 'user-ada'"));
+    }
+
     [Fact, Trait("Lane", "integration")]
     public async Task A_new_issue_stores_its_fields_and_comments_and_logs_no_change()
     {
