@@ -4,6 +4,7 @@ using Aw.Sindri.Core.Checks;
 using Aw.Sindri.Core.ModelCheck;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Workflow.Blocks;
+using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Features.ModelCheck;
 using Aw.Sindri.Infrastructure.ModelCheck;
 using Aw.Sindri.Testing.Packets;
@@ -47,6 +48,19 @@ public sealed class ModelCheckStepTests
     }
 
     [Fact]
+    public async Task Pass_writes_empty_findings_so_an_earlier_violation_is_cleared()
+    {
+        var h = new Harness().Folder(Folders.Spec("Takeover"));
+        h.Prints(0, "tlc-check: Takeover/Takeover.cfg: PASS distinct=1204 depth=14", "tlc-check: Takeover/gaps/PlantedBug.cfg: WITNESS-CAUGHT NoTimeGained");
+
+        var result = await h.Step().Run(Harness.Context(), Token);
+
+        Assert.Equal("pass", result.Result!.Outcome.Value);
+        Assert.True(result.Result.Outputs.ContainsKey(FactKey.From("fact:findings")), "a pass leaves fact:findings unwritten, so an earlier violation's findings stay");
+        Assert.Equal("[]", StepRig.Out(result, "findings").ToJsonString());
+    }
+
+    [Fact]
     public async Task A_label_without_the_cfg_extension_still_parses()
     {
         var h = new Harness().Folder(Folders.Spec("Takeover"));
@@ -70,6 +84,18 @@ public sealed class ModelCheckStepTests
         Assert.Contains("src/Timers.cs", fact["looked"]!.ToJsonString(), StringComparison.Ordinal);   // the files it looked for
         Assert.Empty(h.Rig.Commands.Calls);
         Assert.Equal(0, h.Rig.Slots.Taken);
+    }
+
+    [Fact]
+    public async Task Skipped_writes_empty_findings_so_an_earlier_violation_is_cleared()
+    {
+        var h = new Harness().Folder(Folders.Spec("Takeover")).Changed("src/other.cs", "docs/x.md");
+
+        var result = await h.Step().Run(Harness.Context(scope: "touched"), Token);
+
+        Assert.Equal("skipped", result.Result!.Outcome.Value);
+        Assert.True(result.Result.Outputs.ContainsKey(FactKey.From("fact:findings")), "a skip leaves fact:findings unwritten, so an earlier violation's findings stay");
+        Assert.Equal("[]", StepRig.Out(result, "findings").ToJsonString());
     }
 
     [Theory]
