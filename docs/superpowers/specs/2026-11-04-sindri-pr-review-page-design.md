@@ -750,3 +750,19 @@ The mockups are in `2026-11-04-sindri-pr-review-page-design/mockups/` (`README.m
 - The list: zero open required checks reads "none open"; project groups come before repo-name groups; the hint line shows `J`/`K`/`Enter` and `G V`.
 - Settings → Library is a section of the Settings page (titled cards, no left nav), beside Connections. Repo roots are listed read-only ("set by the repo list"); the `aw` root has Turn off, not Remove.
 
+## 17. Ph0 baseline (ideas, 2026-11-06)
+
+The last 20 merged PRs in this repo (#2101 to #2133, 2026-11-05 and 06), counted the §2 way: would a doc map the PR by issue (`Part of` / `Fixes #N` in the body against a doc's `issues:`) or by branch (the head branch holds a doc id)?
+
+| Count | Today | As if every doc had front matter |
+|---|---|---|
+| By issue | 0: no doc has `issues:` yet | 3: #2125 and #2126 (`Part of #2076`, this spec) and #2127 (`Part of #2077`, the Linear hub spec), with each spec's `issues:` holding the number lanes track it by |
+| By branch | 0 | 0: branches are named by phase (`feat/review-ph2b-reviewers`, `feat/linear-hub-ph0`), never by the doc id (`sindri-pr-review-page`) |
+| By `Covers:` (not part of the §2 count) | 2: #2124 and #2132, both written after Ph4a's convention | 2 |
+| Never | 13 bug fixes with no design doc behind them: "This PR names no design doc" is the right answer | 13 |
+
+Two more are one hop away: #2114 says `Part of #2112`, an issue under the model routing spec's #1567, and #2104 fixes #2095, a follow-up of the model check spec. They map only if a spec's `issues:` also lists the follow-up issues filed under it.
+
+**Go/no-go.** 3 of 20 map by issue or branch even with front matter, under §2's 5. So Ph4a and the `Covers:` flow ship before Ph7 and the trial waits for them. Ph4a merged (#2132), so the `Covers:` line is in every specToProvenPR PR from here, and the trial's own start rule (5 open PRs with `Covers:`) is the wait. Issue and branch suggestions stay a fallback, not the main path.
+
+**The owner's review time today**: asked (via meta), recorded here when answered.
