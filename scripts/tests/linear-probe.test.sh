@@ -23,7 +23,7 @@ export HOME="$WORK/home" AW_STATE_DIR="$WORK/state"
 mkdir -p "$HOME" "$AW_STATE_DIR/sindri-app/profile" "$WORK/bin"
 cp "$FIX/curl" "$WORK/bin/"
 export STUB_FIX="$FIX" STUB_LOG="$WORK/stub.log" STUB_STATE="$WORK/stub-state" PATH="$WORK/bin:$PATH"
-unset AW_SINDRI_HOME AW_LINEAR_PROBE_KEY AW_LINEAR_PROBE_WRITE_KEY STUB_ID_MODE STUB_SHARED STUB_STRAY STUB_BLOCK_WRITES STUB_FAIL_CREATE_N STUB_FAIL STUB_TEAM_EXTRA STUB_PAGE STUB_ARCHIVE_VISIBLE STUB_SLEEP_OP \
+unset AW_SINDRI_HOME AW_LINEAR_PROBE_KEY AW_LINEAR_PROBE_WRITE_KEY STUB_ID_MODE STUB_SHARED STUB_STRAY STUB_STRAY_N STUB_BLOCK_WRITES STUB_FAIL_CREATE_N STUB_FAIL STUB_TEAM_EXTRA STUB_PAGE STUB_ARCHIVE_VISIBLE STUB_SLEEP_OP \
   PROBE_TEST_LINEAR_KEY PROBE_TEST_LINEAR_WRITE_KEY
 LOOP="http://127.0.0.1:9/graphql"
 
@@ -88,6 +88,13 @@ has "variants: the pre-existing one is warned about" "$out" "warning: 1 sindri-p
 check "variants: the pre-existing one is never archived" "$(count 'ARCHIVED stray-1' "$STUB_LOG")" 0
 has "variants: shared budget raw numbers" "$out" "ratelimit.read.remaining_before: 1497 1495"
 has "variants: nothing left" "$out" "cleanup.left: 0"
+
+# --- a full baseline page (250 labelled issues) may be cut off: the probe writes nothing and archives nothing ---
+run PROBE_TEST_LINEAR_KEY="$RKEY" PROBE_TEST_LINEAR_WRITE_KEY="$WKEY" STUB_STRAY_N=250 -- --url "$LOOP" --team ENG --write
+check "full baseline: exit 1" "$rc" 1
+has "full baseline: refused" "$out" "refused: 250 or more sindri-probe issues already exist in the team"
+has "full baseline: failed line" "$out" "failed: baseline full (250 or more labelled issues), nothing written"
+check "full baseline: nothing archived" "$(count 'ARCHIVED' "$STUB_LOG")" 0
 
 # --- paging ok with two issues in the team; a repeated page fails; an archived issue visible by default ---
 run PROBE_TEST_LINEAR_KEY="$RKEY" PROBE_TEST_LINEAR_WRITE_KEY="$WKEY" STUB_TEAM_EXTRA=1 STUB_ARCHIVE_VISIBLE=1 -- --url "$LOOP" --team ENG --write

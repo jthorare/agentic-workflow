@@ -278,6 +278,8 @@ read_baseline() {
   gql write ProbeIssues "$cnt_query" "$(jq -nc --argjson f "$(probe_filter)" '{filter:$f,first:250}')" || return 1
   baseline_json="$(jq -c '[.data.issues.nodes[]?.id]' "$work/ProbeIssues.json")"
   local n; n="$(jq 'length' <<<"$baseline_json")"
+  # a full page may be cut off, and an issue past it would read as this run's and be archived: refuse to write instead
+  if [ "$n" -ge 250 ]; then echo "refused: $n or more $label_name issues already exist in the team; archive or unlabel them, then run again" >&2; return 2; fi
   if [ "$n" -gt 0 ]; then echo "warning: $n $label_name issues existed before this run; left alone" >&2; fi
 }
 
@@ -359,7 +361,11 @@ write_part() {
     emit label created; label_made=1
   fi
   # the baseline comes before the first create; a label made just now has no issues, so there is nothing to read
-  if [ "$label_made" -eq 0 ]; then read_baseline || { failed "baseline query"; return; }; fi
+  if [ "$label_made" -eq 0 ]; then
+    read_baseline; rc=$?
+    [ "$rc" -eq 2 ] && { failed "baseline full (250 or more labelled issues), nothing written"; return; }
+    [ "$rc" -eq 0 ] || { failed "baseline query"; return; }
+  fi
   cleanup_armed=1   # from here on the label exists and the cleanup has something to find
 
   # issue create with a client id

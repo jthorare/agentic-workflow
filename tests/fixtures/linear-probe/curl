@@ -11,7 +11,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 mkdir -p "$st"; touch "$st/issues.ndjson" "$st/comments" "$st/attach"
-[ "${STUB_STRAY:-}" = 1 ] && touch "$st/label"   # a stray labelled issue means the label already existed
+{ [ "${STUB_STRAY:-}" = 1 ] || [ -n "${STUB_STRAY_N:-}" ]; } && touch "$st/label"   # a stray labelled issue means the label already existed
 if [ "${STUB_TEAM_EXTRA:-}" = 1 ] && [ ! -f "$st/extra" ]; then touch "$st/extra"; jq -nc '{id:"other-1",archived:false,labeled:false,updatedAt:1}' >> "$st/issues.ndjson"; fi
 q="$(jq -r .query "$data")"; vars="$(jq -c .variables "$data")"
 op="$(sed -n 's/^\(query\|mutation\) \([A-Za-z0-9]*\).*/\1 \2/p' <<<"$q" | head -n1)"
@@ -79,6 +79,7 @@ case "$opname" in
     reply '{"data":{"issueUpdate":{"success":true}}}' ;;
   ProbeIssues)
     [ "${STUB_STRAY:-}" = 1 ] && [ ! -f "$st/stray" ] && { touch "$st/stray"; jq -nc '{id:"stray-1",archived:false,labeled:true,updatedAt:1}' >> "$st/issues.ndjson"; }
+    [ -n "${STUB_STRAY_N:-}" ] && [ ! -f "$st/stray" ] && { touch "$st/stray"; for i in $(seq 1 "$STUB_STRAY_N"); do jq -nc --arg id "stray-$i" '{id:$id,archived:false,labeled:true,updatedAt:1}'; done >> "$st/issues.ndjson"; }
     reply "{\"data\":{\"issues\":{\"nodes\":$(jq -c 'select(.archived==false and .labeled==true) | {id}' "$st/issues.ndjson" | jq -sc .)}}}" ;;
   ArchivedDefault|ArchivedIncluded)
     iid="$(jq -r .f.id.eq <<<"$vars")"
