@@ -1,4 +1,7 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Workflow.Engine;
+using Aw.Sindri.Core.Workflow.Engine.Runtime;
+using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Core.Workflow.Views;
 using EngineFactTypes = Aw.Sindri.Core.Workflow.Engine.Runtime.FactTypes;
 using RecipeFactTypes = Aw.Sindri.Core.Workflow.Recipes.FactTypes;
@@ -29,5 +32,19 @@ public sealed class FindingsFactTypeTests
     {
         Assert.Equal(FactType.Payload, EngineFactTypes.Parse("hologram"));
         Assert.Equal(FactType.Payload, EngineFactTypes.Parse(null));
+    }
+
+    [Fact]
+    public void A_produced_findings_fact_gets_its_key_handle_like_a_payload_does()
+    {
+        var recipe = RecipeReaderTests.Bind(RecipeReaderTests.Minimal + "outputs: [{ key: fact:output, label: Findings, type: findings, from: produce }]\n");
+        var instance = EngineFixture.At(EngineFixture.Step, "done") with
+        {
+            Facts = new Dictionary<FactKey, FactValue> { [FactKey.From("fact:output")] = EngineFixture.Fact("[]") },
+        };
+
+        var row = Assert.Single(FactRows.Of(instance, GetInstance.StatusCases.Recipe with { Recipe = recipe }, task: null, new Dictionary<FactKey, FactProvenance>()));
+
+        Assert.Equal((FactType.Findings, FactStatus.Produced, "fact:output"), (row.Type, row.Status, row.Ref?.FactKey));
     }
 }

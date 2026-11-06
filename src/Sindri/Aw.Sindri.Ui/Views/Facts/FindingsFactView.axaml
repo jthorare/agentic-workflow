@@ -19,6 +19,11 @@
             <TextBlock Name="FindingMeta" Classes="caption mono subtle" Text="{Binding Meta}" IsVisible="{Binding HasMeta}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
             <SelectableTextBlock Name="FindingDetail" Classes="caption mono" Text="{Binding Detail}" IsVisible="{Binding HasDetail}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Detail}" />
             <ListBox Name="FindingSteps" ItemsSource="{Binding Steps}" IsVisible="{Binding HasSteps}" AutomationProperties.Name="{Binding StepsName}">
+              <ListBox.Styles>
+                <Style Selector="ListBoxItem" x:DataType="x:String">
+                  <Setter Property="AutomationProperties.Name" Value="{Binding}" />
+                </Style>
+              </ListBox.Styles>
               <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="x:String">
                   <TextBlock Name="FindingStep" Classes="caption mono" Text="{Binding}" TextWrapping="Wrap" />
