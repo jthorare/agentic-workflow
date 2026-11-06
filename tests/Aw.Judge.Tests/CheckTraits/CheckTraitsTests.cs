@@ -204,6 +204,7 @@ public sealed class CheckTraitsTests
             new FileTraitFiles(elsewhere.Path),
             new JevTraitJudge(harness.Jev, new FakeInputRedactor(), new InMemoryJudgeConfigStore()),
             harness.Log,
+            new FileTraitCheckSessions(Path.Combine(elsewhere.Path, "sessions"), TimeProvider.System),
             TimeProvider.System);
 
         var result = await service.Handle(A.CheckTraitsRequest().Stop().Build(), _ct);

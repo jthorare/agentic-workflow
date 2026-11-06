@@ -13,12 +13,12 @@ namespace Aw.Judge.Features.CheckTraits;
 /// whole files (scan), in batched Jev requests. A repo without traits, or an edit no trait's paths cover, costs no
 /// Jev call. A diff reaches Jev redacted (ITraitJudge).
 /// </summary>
-internal sealed class CheckTraitsService(IProcessRunner runner, ITraitStore traits, ITraitFiles files, ITraitJudge judge, ITraitCheckLog log, TimeProvider clock) : IService<CheckTraitsRequest, CheckTraitsResponse>
+internal sealed class CheckTraitsService(IProcessRunner runner, ITraitStore traits, ITraitFiles files, ITraitJudge judge, ITraitCheckLog log, ITraitCheckSessions sessions, TimeProvider clock) : IService<CheckTraitsRequest, CheckTraitsResponse>
 {
     private static readonly TimeSpan _minimumCallBudget = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan _maximumCallBudget = TimeSpan.FromSeconds(60);
 
-    private readonly TraitWorkspace _workspace = new(new TraitGit(runner), traits, files, log);
+    private readonly TraitWorkspace _workspace = new(new TraitGit(runner), traits, files, log, sessions);
     private readonly TraitVerdicts _verdicts = new(log);
 
     public async ValueTask<Result<CheckTraitsResponse>> Handle(CheckTraitsRequest request, CancellationToken cancellationToken)

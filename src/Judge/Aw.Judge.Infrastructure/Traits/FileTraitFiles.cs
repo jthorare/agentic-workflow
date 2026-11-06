@@ -27,6 +27,9 @@ internal sealed class FileTraitFiles(string workingDirectory, IImageReader? imag
     }
 
     /// <inheritdoc />
+    public bool DirectoryExists(string path) => Directory.Exists(path);
+
+    /// <inheritdoc />
     public long? FileSize(string path)
     {
         try

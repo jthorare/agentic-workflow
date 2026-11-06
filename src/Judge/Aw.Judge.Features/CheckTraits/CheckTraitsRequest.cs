@@ -1,3 +1,4 @@
+using Aw.Judge.Core.Ids;
 using Aw.Judge.Core.Providers;
 
 namespace Aw.Judge.Features.CheckTraits;
@@ -12,6 +13,7 @@ namespace Aw.Judge.Features.CheckTraits;
 /// <param name="MinProbability">The lowest probability a finding is reported at (--min-p), or null for the default.</param>
 /// <param name="Concurrency">How many Jev requests run at once (--concurrency), or null for the default.</param>
 /// <param name="Providers">The --providers / AW_JUDGE_PROVIDERS allowlist, or null for every provider (with Jev excluded nothing is judged and the check is Jev-unavailable, exit 3).</param>
+/// <param name="SessionId">The agent session (--session, the hook's session_id): an edit records the repos it touched under it, and a stop judges those repos besides the working directory's; null records and reads nothing.</param>
 public sealed record CheckTraitsRequest(
     TraitCheckMode Mode,
     IReadOnlyList<string> Files,
@@ -21,4 +23,5 @@ public sealed record CheckTraitsRequest(
     TimeSpan? Budget = null,
     double? MinProbability = null,
     int? Concurrency = null,
-    IReadOnlyList<ProviderName>? Providers = null);
+    IReadOnlyList<ProviderName>? Providers = null,
+    SessionId? SessionId = null);
