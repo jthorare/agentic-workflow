@@ -22263,6 +22263,41 @@ static readonly Aw.Sindri.Core.SindriErrors.SkillVerdictUnmapped -> Aw.Kernel.Er
 Aw.Sindri.Core.Skills.SkillResultInput.LastPrompt.get -> System.DateTimeOffset?
 Aw.Sindri.Core.Skills.SkillResultInput.LastPrompt.init -> void
 Aw.Sindri.Core.Skills.SkillResultKind.Working = 4 -> Aw.Sindri.Core.Skills.SkillResultKind
+Aw.Sindri.Core.Skills.SkillTrialPlan
+Aw.Sindri.Core.Skills.SkillTrialPlan.<Clone>$() -> Aw.Sindri.Core.Skills.SkillTrialPlan!
+Aw.Sindri.Core.Skills.SkillTrialPlan.Deconstruct(out Aw.Sindri.Core.Workflow.Ids.RecipeId Id, out int Version, out string! Text) -> void
+Aw.Sindri.Core.Skills.SkillTrialPlan.Equals(Aw.Sindri.Core.Skills.SkillTrialPlan? other) -> bool
+Aw.Sindri.Core.Skills.SkillTrialPlan.Id.get -> Aw.Sindri.Core.Workflow.Ids.RecipeId
+Aw.Sindri.Core.Skills.SkillTrialPlan.Id.init -> void
+Aw.Sindri.Core.Skills.SkillTrialPlan.SkillTrialPlan(Aw.Sindri.Core.Workflow.Ids.RecipeId Id, int Version, string! Text) -> void
+Aw.Sindri.Core.Skills.SkillTrialPlan.Text.get -> string!
+Aw.Sindri.Core.Skills.SkillTrialPlan.Text.init -> void
+Aw.Sindri.Core.Skills.SkillTrialPlan.Version.get -> int
+Aw.Sindri.Core.Skills.SkillTrialPlan.Version.init -> void
+override Aw.Sindri.Core.Skills.SkillTrialPlan.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Skills.SkillTrialPlan.GetHashCode() -> int
+override Aw.Sindri.Core.Skills.SkillTrialPlan.ToString() -> string!
+static Aw.Sindri.Core.Skills.SkillTrialPlan.operator !=(Aw.Sindri.Core.Skills.SkillTrialPlan? left, Aw.Sindri.Core.Skills.SkillTrialPlan? right) -> bool
+static Aw.Sindri.Core.Skills.SkillTrialPlan.operator ==(Aw.Sindri.Core.Skills.SkillTrialPlan? left, Aw.Sindri.Core.Skills.SkillTrialPlan? right) -> bool
+Aw.Sindri.Core.Skills.SkillTrialRecipe
+const Aw.Sindri.Core.Skills.SkillTrialRecipe.IdPrefix = "workflow.skill-trial-" -> string!
+const Aw.Sindri.Core.Skills.SkillTrialRecipe.SkillsFolderFact = "fact:skillTrialFolder" -> string!
+static Aw.Sindri.Core.Skills.SkillTrialRecipe.Build(Aw.Sindri.Core.Skills.LoadedSkillBlock! block, System.Collections.Generic.IReadOnlyCollection<string!>! provided, bool foldered = false) -> Aw.Kernel.Result<Aw.Sindri.Core.Skills.SkillTrialPlan!>!
+static Aw.Sindri.Core.Skills.SkillTrialRecipe.FactOf(string! inputKey) -> Aw.Kernel.Result<Aw.Sindri.Core.Workflow.Ids.FactKey>!
+static Aw.Sindri.Core.Skills.SkillTrialRecipe.IsTrial(Aw.Sindri.Core.Workflow.Ids.RecipeId recipe) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.SkillPrInputInvalid -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Events.LaunchStarted.PrHead.get -> string?
+Aw.Sindri.Core.Events.LaunchStarted.PrHead.init -> void
+Aw.Sindri.Core.Events.LaunchStartedPublic.PrHead.get -> string?
+Aw.Sindri.Core.Events.LaunchStartedPublic.PrHead.init -> void
+Aw.Sindri.Core.Launch.StartedLaunch.PrHead.get -> string?
+Aw.Sindri.Core.Launch.StartedLaunch.PrHead.init -> void
+Aw.Sindri.Core.Skills.PrReference
+const Aw.Sindri.Core.Skills.PrReference.InputKey = "pr" -> string!
+static Aw.Sindri.Core.Skills.PrReference.BranchOf(Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId instance, int runNumber) -> string!
+static Aw.Sindri.Core.Skills.PrReference.Number(string! input) -> Aw.Kernel.Result<int>!
+static Aw.Sindri.Core.Skills.PrReference.Refspec(int number, string! branch) -> string!
+static readonly Aw.Sindri.Core.SindriErrors.SkillPrFetchFailed -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Skills.ISkillBlocks
 Aw.Sindri.Core.Skills.ISkillBlocks.LoadFolder(string! folder) -> Aw.Sindri.Core.Skills.SkillBlocks!
 Aw.Sindri.Core.Skills.ISkillBlocks.Loaded.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Skills.LoadedSkillBlock!>!
@@ -22445,3 +22480,5 @@ static Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock.operator ==(Aw.Sindri.Core.W
 Aw.Sindri.Core.Workflow.Blocks.BlockCatalog.WhyUnloaded(Aw.Sindri.Core.Workflow.Ids.BlockId id) -> string?
 Aw.Sindri.Core.Events.LaunchSkill.ResultFile.get -> string?
 Aw.Sindri.Core.Events.LaunchSkill.ResultFile.init -> void
+Aw.Sindri.Core.Skills.ISkillBlocks.Folder.get -> string!
+static Aw.Sindri.Core.Skills.SkillTrialRecipe.IsTrial(Aw.Sindri.Core.Workflow.Engine.InstanceAddress instance) -> bool

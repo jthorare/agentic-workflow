@@ -20,6 +20,12 @@ public static partial class SindriErrors
     /// <summary>SND-SKILL-005: the skill's requires.yaml names a bin, MCP server, skill or agent the agent home lacks (step.failed before any session starts; 'detail' names each one and its fix).</summary>
     public static readonly ErrorDefinition SkillRequirementMissing = new("SND-SKILL-005", ErrorKind.Unavailable, "The skill needs something this machine doesn't have");
 
+    /// <summary>SND-SKILL-006: a skill block's 'pr' input is neither a PR number nor a github.com pull request link (the host fetches the PR head before the launch).</summary>
+    public static readonly ErrorDefinition SkillPrInputInvalid = new("SND-SKILL-006", ErrorKind.Invalid, "The pr input is not a PR number or link");
+
     /// <summary>SND-SKILL-007: the agent home's SKILL.md isn't the file Sindri loaded (step.failed before any session starts; 'detail' names both paths and both shas, and the fix).</summary>
     public static readonly ErrorDefinition SkillAgentCopyDiffers = new("SND-SKILL-007", ErrorKind.Conflict, "The agent would run a different SKILL.md than the one Sindri loaded");
+
+    /// <summary>SND-SKILL-008: git could not fetch the pull request's head before a skill Step's launch (step.failed with git's own words, scrubbed; no session started).</summary>
+    public static readonly ErrorDefinition SkillPrFetchFailed = new("SND-SKILL-008", ErrorKind.Unavailable, "The pull request could not be fetched");
 }

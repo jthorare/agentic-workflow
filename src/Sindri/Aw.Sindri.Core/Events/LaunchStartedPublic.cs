@@ -29,4 +29,9 @@ public sealed record LaunchStartedPublic(
     InstanceAddress? Instance = null, string? State = null, int? Attempt = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] SandboxSummary? Sandbox = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Model = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] LaunchSkill? Skill = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] LaunchSkill? Skill = null)
+{
+    /// <summary>The sha of the PR head the host fetched into the run's own refs before the launch (skill flows spec §3.1, the 'pr' input of review and address-review), or null when the launch had no PR; left out when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PrHead { get; init; }
+}

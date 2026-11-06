@@ -18,4 +18,7 @@ public sealed record StartedLaunch(HostRef Host, ViewerOutcome Viewer, IReadOnly
 
     /// <summary>The sandbox summary the engine copies onto 'launch.started' (sandbox spec §6), or null before SB-5a and for an attended open before SB-5b.</summary>
     public SandboxSummary? Sandbox { get; init; }
+
+    /// <summary>The sha of the PR head the launcher fetched for a skill Step's 'pr' input (<c lang="text">launch.started</c>'s prHead), or null when the Step had none.</summary>
+    public string? PrHead { get; init; }
 }

@@ -132,5 +132,20 @@ public sealed class UsageTests
         Assert.Contains("1 not running, 2 invalid, refused or error", line, StringComparison.Ordinal);
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public void Help_lists_the_skill_verbs_with_the_exit_codes_of_a_followed_run()
+    {
+        _ = Assert.Single(Lines(), l => l.StartsWith("sindri skills [--json] ", StringComparison.Ordinal));
+        var run = Assert.Single(Lines(), l => l.StartsWith("sindri skill run <id> ", StringComparison.Ordinal));
+
+        Assert.Contains("3 on another mapped outcome, 4 when the Step failed", run, StringComparison.Ordinal);
+        Assert.Contains("--skills <dir>", run, StringComparison.Ordinal);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("sindri recipe validate <file> [--json] [--skills <dir>]")]
+    [InlineData("sindri recipe eval <file> [--json] [--skills <dir>]")]
+    public void Help_lists_the_skills_flag_of_the_in_process_recipe_verbs(string start) => Assert.Single(Lines(), l => l.StartsWith(start, StringComparison.Ordinal));
+
     private static IEnumerable<string> Lines() => Usage.Text.Split('\n').Select(static l => l.Trim().Replace("usage: ", string.Empty, StringComparison.Ordinal));
 }

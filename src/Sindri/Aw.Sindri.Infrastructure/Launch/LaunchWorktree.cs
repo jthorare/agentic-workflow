@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Skills;
 
 namespace Aw.Sindri.Infrastructure.Launch;
 
@@ -22,7 +23,8 @@ internal static class LaunchWorktree
         try
         {
             // why: an open's sandbox writes refs under its own namespace only, so its worktree starts on a branch there (sandbox spec §3.9); a Step's comes from the engine on its run branch
-            string[] add = request.Attended ? ["-C", request.RepoPath, "worktree", "add", "-b", AttendedOpen.Branch(request.Launch), worktree] : ["-C", request.RepoPath, "worktree", "add", "--detach", worktree];
+            string[] start = IsTrial(request) && await DefaultBranch(request.RepoPath, cancellationToken).ConfigureAwait(false) is { } trunk ? [trunk] : [];   // a skill trial starts from the repo's default branch, not whatever HEAD is
+            string[] add = request.Attended ? ["-C", request.RepoPath, "worktree", "add", "-b", AttendedOpen.Branch(request.Launch), worktree] : ["-C", request.RepoPath, "worktree", "add", "--detach", worktree, .. start];
             if (await ViewerProcess.Output("git", add, _gitBudget, cancellationToken).ConfigureAwait(false) is not null)
             {
                 return null;
@@ -36,6 +38,37 @@ internal static class LaunchWorktree
 
         await Discard(request.RepoPath, worktree).ConfigureAwait(false);
         return SindriErrors.LaunchRepoMissing.With($"the Step's worktree could not be created at {worktree}");
+    }
+
+    /// <summary>Whether the launch is a skill trial's Step (its instance is a 'skill-trial' recipe's).</summary>
+    internal static bool IsTrial(LaunchRequest request) => !request.Attended && request.Instance is { } instance && SkillTrialRecipe.IsTrial(instance);
+
+    /// <summary>The origin's HEAD branch ('origin/main'), else a local 'main'; null when neither is there (the worktree then starts at HEAD).</summary>
+    internal static async ValueTask<string?> DefaultBranch(string repoPath, CancellationToken cancellationToken)
+    {
+        foreach (var candidate in new[] { await ViewerProcess.Output("git", ["-C", repoPath, "symbolic-ref", "--short", "refs/remotes/origin/HEAD"], _gitBudget, cancellationToken).ConfigureAwait(false), "main" })
+        {
+            var name = candidate?.Trim();
+            if (!string.IsNullOrEmpty(name) && await ViewerProcess.Output("git", ["-C", repoPath, "rev-parse", "--verify", "--quiet", name + "^{commit}"], _gitBudget, cancellationToken).ConfigureAwait(false) is not null)
+            {
+                return name;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Removes a trial's worktree with plain 'git worktree remove' (never forced): a tree with changes in it is kept, and the warning names it so the agent's work is never lost.</summary>
+    /// <param name="repoPath">The repo.</param>
+    /// <param name="worktree">The worktree.</param>
+    /// <param name="warn">Where the one warning line goes.</param>
+    internal static async ValueTask Remove(string repoPath, string worktree, Action<string> warn)
+    {
+        var removed = await ViewerProcess.Output("git", ["-C", repoPath, "worktree", "remove", worktree], _gitBudget, CancellationToken.None).ConfigureAwait(false);
+        if (removed is null && Directory.Exists(worktree))
+        {
+            warn($"warn: the skill trial's worktree {worktree} was kept: git would not remove it (changes in it?); remove it by hand with git worktree remove --force when you have looked");
+        }
     }
 
     // A failed or cancelled add may leave a registered, locked worktree; removing it lets the next launch start clean.

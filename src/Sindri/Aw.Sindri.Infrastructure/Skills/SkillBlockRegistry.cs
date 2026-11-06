@@ -9,6 +9,9 @@ internal sealed class SkillBlockRegistry(string folder) : ISkillBlocks
     private readonly Lazy<SkillBlocks> _current = new(() => SkillManifestLoader.Load(folder));
 
     /// <inheritdoc/>
+    public string Folder => folder;
+
+    /// <inheritdoc/>
     public IReadOnlyList<LoadedSkillBlock> Loaded => _current.Value.Loaded;
 
     /// <inheritdoc/>

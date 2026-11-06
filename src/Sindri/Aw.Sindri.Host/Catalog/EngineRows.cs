@@ -9,6 +9,7 @@ using Aw.Sindri.Features.IssueNonce;
 using Aw.Sindri.Features.RegisterRecipe;
 using Aw.Sindri.Features.RevokeRecipe;
 using Aw.Sindri.Features.StartInstance;
+using Aw.Sindri.Features.StartSkillRun;
 
 namespace Aw.Sindri.Host.Catalog;
 
@@ -38,6 +39,8 @@ internal static class EngineRows
         // ---- P4: instances (bound and mapped), and P5's takeover and handback ----
         Ready("StartInstance", typeof(StartInstanceRequest), ActionClass.Desk, "POST /sindri/workflow/instances", "sindri workflow start <recipe> --item <itemId>") with { ReadsViews = true }, // UI spec E-19: it waits for the launches view head
         // Run again: a desk row, not destructive, offered only on a root instance that ended failed, unresolved or cancelled (Reruns). Its CLI is the start's next attempt; the app's button also repeats the inputs.
+        // Skill flows spec §7: one block as a trial, a desk row (a launched session is refused); the CLI makes its item first, so it waits for the views head.
+        Ready("StartSkillRun", typeof(StartSkillRunRequest), ActionClass.Desk, "POST /sindri/skills/{id}/runs", "sindri skill run <block> --input <key>=<value>") with { ReadsViews = true },   // the item the CLI made must be in the items view
         Ready("RerunInstance", typeof(RerunInstanceRequest), ActionClass.Desk, "POST /sindri/workflow/instances/{instanceId}/rerun", "sindri workflow start <recipe> --item <itemId> --attempt next"),
         Ready("IssueNonce", typeof(IssueNonceRequest), ActionClass.Issue, "POST /sindri/workflow/instances/{instanceId}/nonce", "sindri workflow command <address> <verb>"),
         Ready("ApplyCommand:answer-text", typeof(ApplyCommandRequest), ActionClass.Desk, Commands, "sindri workflow answer <address> --text <text>"),

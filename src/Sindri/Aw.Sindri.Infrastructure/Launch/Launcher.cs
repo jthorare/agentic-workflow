@@ -19,6 +19,7 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunch
     private static readonly TimeSpan _viewerGrace = TimeSpan.FromSeconds(1);
     private static readonly System.Text.Json.JsonSerializerOptions _captureJson = AwJson.CreateOptions(LauncherJsonContext.Default);
     private readonly ConcurrentDictionary<LaunchId, StartedLaunch> _started = new();
+    private readonly ConcurrentDictionary<LaunchId, (string Repo, string Worktree)> _trialTrees = new();   // a skill trial's own worktrees, removed with the launch
     private readonly LaunchGates _gates = new();
 
     /// <inheritdoc/>
@@ -260,7 +261,7 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunch
             throw;
         }
 
-        return new StartedLaunch(started.Value, viewer, host.AttachArgv(started.Value), source.Source, source.Item2) { ChosenSession = prepared.Session, Sandbox = prepared.Sandbox, RunDirectory = RunDirectoryOf(request) };
+        return new StartedLaunch(started.Value, viewer, host.AttachArgv(started.Value), source.Source, source.Item2) { ChosenSession = prepared.Session, Sandbox = prepared.Sandbox, RunDirectory = RunDirectoryOf(request), PrHead = prepared.PrHead };
     }
 
     private async ValueTask<LaunchResult> RunOnViewer(LaunchRequest request, ISessionHost host, (string Name, string WorkDir, List<string> Argv) session, ((CatalogSource Source, string Hash) Entry, string? Chosen, SandboxSummary? Sandbox) started, CancellationToken cancellationToken)
