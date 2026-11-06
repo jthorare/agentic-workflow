@@ -1,0 +1,20 @@
+{
+  "asOf": {
+    "cursor": 5,
+    "ledgerHead": 5,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "docs": 33,
+  "withErrors": 0,
+  "broken": [],
+  "nearMisses": [],
+  "unreadableRoots": [
+    {
+      "root": "~/notes/vault",
+      "reason": "permission denied"
+    }
+  ],
+  "cappedText": null
+}
