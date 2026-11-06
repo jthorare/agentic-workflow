@@ -603,6 +603,7 @@ It's unproven whether GitHub itself refuses a review on an old `commit_id`. The 
 | `SND-LIB-022` | a short `Covers:` ref two docs match | "harbor-booking-tdd is in two places; write doc:<root>/harbor-booking-tdd#Ph2." |
 | `SND-REVIEW-006` | a fix task's item was created but its thread wasn't posted | §8.2's half-done text |
 | `SND-REVIEW-007` | a review route or verb before `review.login` is set | "Set your GitHub login on the Reviews tab first." |
+| `SND-REVIEW-404` | a review route for a PR the forge does not have | "PR not found" |
 | `SND-REVIEW-014` | a confirm token used twice or older than 10 minutes | "This confirmation expired. Open the sheet again." |
 
 Codes 008, 009 and `SND-LIB-020` are left free on purpose, for the next errors of the same kinds.

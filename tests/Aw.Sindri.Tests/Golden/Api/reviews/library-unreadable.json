@@ -1,0 +1,140 @@
+{
+  "asOf": {
+    "cursor": 5,
+    "ledgerHead": 5,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "login": "joi-example",
+  "loginPrompt": null,
+  "notice": null,
+  "freshness": [
+    {
+      "source": "github",
+      "state": "ok",
+      "text": "synced 14 min ago",
+      "at": "2025-12-31T23:45:36.0000000Z"
+    }
+  ],
+  "stale": null,
+  "library": {
+    "state": "error",
+    "docs": 33,
+    "withErrors": 0,
+    "unreadableRoots": 1,
+    "text": "Library: 33 docs, 1 folder can't be read"
+  },
+  "waitingCount": 2,
+  "groups": [
+    {
+      "kind": "waiting",
+      "title": "Waiting on you",
+      "sections": [
+        {
+          "by": "project",
+          "id": "prj_0000000000000000000000000A",
+          "name": "Sindri",
+          "rows": [
+            {
+              "repo": "acme/api",
+              "number": 2071,
+              "title": "Add retry budget to the sync worker",
+              "author": "sam-dev",
+              "draft": false,
+              "openedAt": "2025-12-29T12:00:00.0000000Z",
+              "lastActivity": "2025-12-31T12:00:00.0000000Z",
+              "waiting": "requested",
+              "waitingText": "review requested",
+              "newCommits": null,
+              "ci": "fail",
+              "requiredOpen": 2,
+              "requiredText": "2 open",
+              "claimsDoc": true,
+              "href": "/reviews/acme/api/2071"
+            }
+          ]
+        },
+        {
+          "by": "repo",
+          "id": null,
+          "name": "acme/web",
+          "rows": [
+            {
+              "repo": "acme/web",
+              "number": 880,
+              "title": "Fold the settings tabs into one page",
+              "author": "kim-dev",
+              "draft": false,
+              "openedAt": "2025-12-27T12:00:00.0000000Z",
+              "lastActivity": "2025-12-30T12:00:00.0000000Z",
+              "waiting": "newCommits",
+              "waitingText": "reviewed, 2 new commits",
+              "newCommits": 2,
+              "ci": "pass",
+              "requiredOpen": 0,
+              "requiredText": "none open",
+              "claimsDoc": false,
+              "href": "/reviews/acme/web/880"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "yours",
+      "title": "Yours",
+      "sections": [
+        {
+          "by": "repo",
+          "id": null,
+          "name": "acme/api",
+          "rows": [
+            {
+              "repo": "acme/api",
+              "number": 2064,
+              "title": "Cache the repo list between syncs",
+              "author": "joi-example",
+              "draft": false,
+              "openedAt": "2025-12-28T12:00:00.0000000Z",
+              "lastActivity": "2025-12-31T12:00:00.0000000Z",
+              "waiting": null,
+              "waitingText": null,
+              "newCommits": null,
+              "ci": "running",
+              "requiredOpen": 1,
+              "requiredText": "1 open",
+              "claimsDoc": true,
+              "href": "/reviews/acme/api/2064"
+            }
+          ]
+        },
+        {
+          "by": "repo",
+          "id": null,
+          "name": "acme/web",
+          "rows": [
+            {
+              "repo": "acme/web",
+              "number": 875,
+              "title": "Draft: new empty state for Work",
+              "author": "joi-example",
+              "draft": true,
+              "openedAt": "2025-12-30T12:00:00.0000000Z",
+              "lastActivity": "2025-12-30T12:00:00.0000000Z",
+              "waiting": null,
+              "waitingText": null,
+              "newCommits": null,
+              "ci": "none",
+              "requiredOpen": null,
+              "requiredText": null,
+              "claimsDoc": false,
+              "href": "/reviews/acme/web/875"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "empty": null
+}

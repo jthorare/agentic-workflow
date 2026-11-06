@@ -1,0 +1,122 @@
+{
+  "asOf": {
+    "cursor": 5,
+    "ledgerHead": 5,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "pr": {
+    "repo": "acme/api",
+    "number": 2071,
+    "title": "Add retry budget to the sync worker",
+    "author": "sam-dev",
+    "yours": false,
+    "draft": false,
+    "state": "open",
+    "head": {
+      "sha": "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678",
+      "sha7": "a1b2c3d",
+      "branch": "feat/retry-budget"
+    },
+    "base": "main",
+    "url": "https://github.com/acme/api/pull/2071",
+    "issues": [
+      {
+        "key": "ENG-12",
+        "href": "sindri://linear/ENG-12"
+      }
+    ]
+  },
+  "settings": {
+    "name": "sindri",
+    "from": "review.projects[0]"
+  },
+  "moving": null,
+  "offline": null,
+  "strip": [
+    {
+      "panel": "requiredChecks",
+      "text": "none open"
+    },
+    {
+      "panel": "docMap",
+      "text": "No doc named"
+    }
+  ],
+  "panels": [
+    {
+      "id": "requiredChecks",
+      "state": "empty",
+      "text": "No required checks for this project",
+      "data": {
+        "checks": []
+      }
+    },
+    {
+      "id": "docMap",
+      "state": "empty",
+      "text": "This PR names no design doc",
+      "data": {
+        "claims": [],
+        "doc": null,
+        "suggested": [],
+        "projectDocs": [
+          {
+            "id": "sindri-pr-review",
+            "title": "Sindri PR review page",
+            "path": "docs/superpowers/specs/2026-11-04-sindri-pr-review-page-design.md"
+          }
+        ]
+      }
+    },
+    {
+      "id": "testPlan",
+      "state": "empty",
+      "text": "No test plan rows for the claimed items",
+      "data": {
+        "rows": []
+      }
+    },
+    {
+      "id": "ci",
+      "state": "empty",
+      "text": "No CI runs on a1b2c3d yet",
+      "data": {
+        "runs": [],
+        "babysitter": null
+      }
+    },
+    {
+      "id": "evidence",
+      "state": "empty",
+      "text": "No evidence found for a1b2c3d",
+      "data": {
+        "items": []
+      }
+    },
+    {
+      "id": "risk",
+      "state": "empty",
+      "text": "No risky paths touched",
+      "data": {
+        "hits": []
+      }
+    },
+    {
+      "id": "conversation",
+      "state": "empty",
+      "text": "No threads yet",
+      "data": {
+        "threads": []
+      }
+    }
+  ],
+  "diff": {
+    "state": "empty",
+    "text": "This PR changes no files",
+    "fileCount": 0,
+    "capped": false,
+    "groups": []
+  }
+}
