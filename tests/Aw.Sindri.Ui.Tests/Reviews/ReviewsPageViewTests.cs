@@ -91,6 +91,7 @@ public sealed class ReviewsPageViewTests : FrameHost
         var sheet = window.Get<Border>("Sheet");
         Assert.Contains("covers", sheet.Classes, StringComparer.Ordinal);
         Assert.False(window.Get<Border>("Page").IsEffectivelyEnabled);
+        Assert.Equal(sheet.Bounds.Width, window.ClientSize.Width, precision: 0);   // it takes the whole window width
         Assert.True(sheet.IsVisualAncestorOf(Named<TextBlock>(window, "ReviewsLibrarySummary")));
 
         shell.CloseSheet();
