@@ -19,7 +19,14 @@ internal sealed partial class ShellViewModel
     /// <summary>True when the sheet is the library errors sheet.</summary>
     public bool IsLibrarySheet => SheetLink?.Kind == DeepLinkKind.LibrarySheet;
 
-    private void OnLibrarySheetOpened() => Changed(nameof(IsLibrarySheet), nameof(SheetTitleIsMono));
+    /// <summary>True when the Reviews header's library button opened the sheet, so Esc and Close return focus to it.</summary>
+    internal bool OpenerLibrary { get; private set; }
+
+    private void OnLibrarySheetOpened()
+    {
+        OpenerLibrary = false;   // the sheet's own opening clears it; the button's handler sets it right after
+        Changed(nameof(IsLibrarySheet), nameof(SheetTitleIsMono));
+    }
 
     /// <summary>Opens Reviews from Home's waiting line.</summary>
     internal void OpenReviews() => GoTo(PageId.Reviews);
@@ -28,7 +35,11 @@ internal sealed partial class ShellViewModel
     private void InitReviews()
     {
         Reviews = new ReviewsPageViewModel(_api, _clock);
-        Reviews.LibraryRequested += (_, _) => OpenSheet(DeepLink.LibrarySheet);
+        Reviews.LibraryRequested += (_, _) =>
+        {
+            OpenSheet(DeepLink.LibrarySheet);
+            OpenerLibrary = true;
+        };
         Health.Follow(Reviews.Refresh);   // every read, whichever page is shown: the badge and Home's line need the count
         PropertyChanged += (_, e) =>
         {

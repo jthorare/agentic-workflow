@@ -46,7 +46,7 @@ public sealed class ReviewsPageViewTests : FrameHost
 
         Assert.True(Visible(window, "ReviewsLogin"));
         Assert.Equal("joi-example", Named<TextBox>(window, "ReviewsLoginField").Text);
-        Assert.False(Named<Button>(window, "ReviewsLoginSave").IsEnabled);
+        Assert.True(Named<Button>(window, "ReviewsLoginSave").IsEnabled);   // the suggestion fills the field, so Save can be pressed
         Assert.DoesNotContain(window.GetVisualDescendants().OfType<TextBlock>(), t => t.Name == "ReviewsGroupHeading");
     });
 
@@ -75,6 +75,26 @@ public sealed class ReviewsPageViewTests : FrameHost
 
         shell.CloseSheet();
         await Until(window, () => !Visible(window, "ReviewsLibrarySummary") && !shell.Reviews.Library.IsOpen, "the library sheet never closed");
+    });
+
+    [Fact]
+    public Task At_1000_px_the_library_sheet_covers_the_page_and_Close_returns_focus_to_the_header_button() => OnUi(async () =>
+    {
+        var (window, shell) = await Connected(width: 1000);
+        shell.GoTo(PageId.Reviews);
+        await Until(window, () => !shell.Reviews.IsLoading, "the Reviews page never read the list");
+        var button = Named<Button>(window, "ReviewsLibrary");
+
+        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        await Until(window, () => shell.IsLibrarySheet && !shell.Reviews.Library.IsLoading && Visible(window, "ReviewsLibrarySummary"), "the library sheet never showed");
+
+        var sheet = window.Get<Border>("Sheet");
+        Assert.Contains("covers", sheet.Classes, StringComparer.Ordinal);
+        Assert.False(window.Get<Border>("Page").IsEffectivelyEnabled);
+        Assert.True(sheet.IsVisualAncestorOf(Named<TextBlock>(window, "ReviewsLibrarySummary")));
+
+        shell.CloseSheet();
+        await Until(window, () => ReferenceEquals(TopLevel.GetTopLevel(window)?.FocusManager?.GetFocusedElement(), button), "focus never came back to the library button");
     });
 
     [Fact]
