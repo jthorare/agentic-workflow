@@ -88,6 +88,9 @@ STATE="${AW_STATE_DIR:-$HOME/.agentic-workflow}"
 EVENT=""
 trace() {
   local d="${AW_META_DIR:-$STATE/meta}/lane-sessions"
+  # a nested agent (codex exec, cursor-agent -p) inherits the lane variables: its not-own-agent never replaces the lane's own trace
+  # from this session (a trace file newer than the session id file)
+  if [ "$1" = not-own-agent ] && [ "$d/$AW_META_LANE.hook" -nt "$d/$AW_META_LANE" ] 2> /dev/null; then return 0; fi
   local event="$EVENT"; [ -n "$event" ] || event=unknown
   { mkdir -p "$d" && printf '%s session-id-report %s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$event" "$1" > "$d/$AW_META_LANE.hook"; } 2> /dev/null || true
 }

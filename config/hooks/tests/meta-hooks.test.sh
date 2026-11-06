@@ -474,4 +474,16 @@ check "unmarked answer, nothing owed: allowed, no extra line, trace ran" "$RC:$(
 clear_lane; STUB_REPLY_RC=0 STUB_RC=1 STUB_OUT="owes the meta a reply" lane "$STOPR"; RC=$?
 check "marked reply, lane still owes (mail arrived mid-turn): no unmarked line, trace ran" "$RC:$(cat "$WORK/err"):$(trace)" "2:owes the meta a reply:meta-lane-gate Stop ran"
 
+# A nested agent's not-own-agent trace does not replace the lane's own trace from this session
+nested() { printf '%s' "$2" > "$WORK/in"; AW_META_LANE_PID=999999 AW_META_TEAM=t1 AW_META_LANE=api bash "$HOOKS/$1" 2> /dev/null < "$WORK/in"; }
+clear_lane; STUB_RC=1 STUB_OUT="owes the meta a reply" lane "$UNM"
+printf 'id-1\n' > "$LS/api"; touch -d '2 seconds ago' "$LS/api"
+nested meta-lane-gate.sh "$UPS"
+check "a nested agent's gate run keeps the lane's reply-unmarked trace (newer than the session id)" "$(trace)" "meta-lane-gate Stop reply-unmarked"
+nested session-id-report.sh '{"hook_event_name":"SessionStart","session_id":"s-6"}'
+check "a nested agent's session-id-report run keeps it too" "$(trace)" "meta-lane-gate Stop reply-unmarked"
+touch "$LS/api"   # a new session id: the old trace is from an earlier session
+nested meta-lane-gate.sh "$UPS"
+check "a trace older than the session id is replaced by not-own-agent" "$(trace)" "meta-lane-gate UserPromptSubmit not-own-agent"
+
 exit $fail
