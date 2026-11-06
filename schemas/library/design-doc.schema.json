@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentic-workflow.local/schemas/library/design-doc.schema.json",
+  "title": "A parsed design doc",
+  "description": "What the design-doc parser makes of one Markdown file with aw-doc front matter: its front matter, its items, the refs between items, and its errors. The parser, not this schema, owns the rules that need the text or the scope: which doc kinds define which item ids, near misses from the raw line, and resolving refs. The convention is docs/conventions/design-docs.md; the spec is docs/superpowers/specs/2026-11-04-sindri-pr-review-page-design.md §4.",
+  "type": "object",
+  "required": ["parserVersion", "frontMatter", "items", "refs", "errors"],
+  "additionalProperties": false,
+  "properties": {
+    "parserVersion": {
+      "description": "The parser's version. A new version re-reads every doc (spec §5.3, Backfill).",
+      "type": "integer",
+      "minimum": 1
+    },
+    "frontMatter": {
+      "description": "The front matter as read. It holds the convention's shape unless errors names SND-LIB-010 (a bad key) or SND-LIB-019 (a near miss, which has no front matter to keep).",
+      "type": ["object", "null"]
+    },
+    "items": {
+      "description": "The doc's items in document order. Empty when a parse error is present (see allOf).",
+      "type": "array",
+      "maxItems": 2000,
+      "items": { "$ref": "#/$defs/item" }
+    },
+    "refs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ref" }
+    },
+    "errors": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/error" }
+    }
+  },
+  "allOf": [
+    {
+      "description": "Without a front-matter error, the front matter is the convention's.",
+      "if": {
+        "properties": {
+          "errors": { "not": { "contains": { "properties": { "code": { "enum": ["SND-LIB-010", "SND-LIB-019"] } }, "required": ["code"] } } }
+        }
+      },
+      "then": { "properties": { "frontMatter": { "$ref": "#/$defs/frontMatter" } } }
+    },
+    {
+      "description": "A doc with a parse error has no items: it is stored broken instead of vanishing. The scope errors (SND-LIB-012 shared id, SND-LIB-015 broken ref, SND-LIB-016 unknown parent or supersedes) are decided on read and keep the items.",
+      "if": {
+        "properties": {
+          "errors": { "contains": { "properties": { "code": { "not": { "enum": ["SND-LIB-012", "SND-LIB-015", "SND-LIB-016"] } } }, "required": ["code"] } }
+        }
+      },
+      "then": { "properties": { "items": { "maxItems": 0 } } }
+    }
+  ],
+  "$defs": {
+    "docId": {
+      "description": "Lowercase letters, digits and '-', 3 to 64 characters.",
+      "type": "string",
+      "pattern": "^[a-z0-9-]{3,64}$"
+    },
+    "fullDocRef": {
+      "description": "doc:<root>[/<slug>]/<doc id>: root aw (with the repo-slug), a vault name (spaces allowed), or repo:<name>.",
+      "type": "string",
+      "pattern": "^doc:[^/#]*[^/#\\s][^/#]*(/[^/#\\s]+)?/[a-z0-9-]{3,64}$"
+    },
+    "docLink": {
+      "description": "A doc id in the same scope, or a full ref to a doc in another scope.",
+      "anyOf": [{ "$ref": "#/$defs/docId" }, { "$ref": "#/$defs/fullDocRef" }]
+    },
+    "frontMatter": {
+      "description": "The convention's front matter (spec §4.2). Keys it doesn't name (an Obsidian note's tags, say) are kept and ignored.",
+      "type": "object",
+      "required": ["aw-doc", "id", "kind", "title", "status"],
+      "properties": {
+        "aw-doc": { "description": "The convention version; the number 1 opts the file in. The parser decides this from the raw line, not the parsed value: YAML reads 1.0 as the number 1, and aw-doc: 1.0 is a near miss (SND-LIB-019).", "const": 1 },
+        "id": { "$ref": "#/$defs/docId" },
+        "kind": { "enum": ["tdd", "spec", "plan", "stages", "product", "engineering", "design", "tasks", "verification", "note"] },
+        "title": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["draft", "review", "approved", "building", "done", "superseded"] },
+        "project": {
+          "description": "A Sindri project id, or linear:project/<id>.",
+          "type": "string",
+          "pattern": "^(prj_[0-9A-Za-z]+|linear:project/[^\\s/]+)$"
+        },
+        "repos": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" }
+        },
+        "issues": {
+          "description": "GitHub issue numbers as plain numbers, or Linear keys.",
+          "type": "array",
+          "items": {
+            "anyOf": [
+              { "type": "integer", "minimum": 1 },
+              { "type": "string", "pattern": "^[A-Z][A-Z0-9]{0,9}-[0-9]+$" }
+            ]
+          }
+        },
+        "supersedes": { "$ref": "#/$defs/docLink" },
+        "parent": { "$ref": "#/$defs/docLink" },
+        "generated": { "description": "The tool that wrote this file; only on generated files.", "type": "string", "minLength": 1 },
+        "source-sha256": { "description": "The sha256 of the generated file's source.", "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      },
+      "dependentRequired": {
+        "generated": ["source-sha256"]
+      }
+    },
+    "item": {
+      "type": "object",
+      "required": ["id", "kind", "parent", "lineStart", "lineEnd", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["section", "phase", "requirement", "acceptance", "testPlan", "task"] },
+        "parent": {
+          "description": "The item this one belongs to: an acceptance criterion's requirement, or the section a heading sits under. Null at the top.",
+          "type": ["string", "null"]
+        },
+        "lineStart": { "type": "integer", "minimum": 1 },
+        "lineEnd": { "type": "integer", "minimum": 1 },
+        "text": { "description": "The item's line and the lines under it, capped at 4,000 characters.", "type": "string", "maxLength": 4000 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "section" } } },
+          "then": { "properties": { "id": { "description": "The heading's anchor, by GitHub's slug rule.", "pattern": "^[^\\sA-Z#]+$" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "phase" } } },
+          "then": { "properties": { "id": { "description": "Ph<n>, an optional lowercase letter or -<n>, no leading zeros (Ph01 is stored as Ph1).", "pattern": "^Ph(0|[1-9][0-9]*)([a-z]|-(0|[1-9][0-9]*))?$" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "requirement" } } },
+          "then": { "properties": { "id": { "pattern": "^REQ-[UESOW]?[0-9]+$" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "acceptance" } } },
+          "then": { "properties": { "id": { "pattern": "^AC-[0-9]+$" }, "parent": { "type": "string", "pattern": "^REQ-[UESOW]?[0-9]+$" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "testPlan" } } },
+          "then": { "properties": { "id": { "pattern": "^TP-[0-9]+$" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "task" } } },
+          "then": { "properties": { "id": { "pattern": "^TASK-[0-9]+$" } } }
+        }
+      ]
+    },
+    "ref": {
+      "description": "A link from an item (or the doc, when from is null) to an item here or in another doc.",
+      "type": "object",
+      "required": ["from", "to", "kind", "line"],
+      "additionalProperties": false,
+      "properties": {
+        "from": { "type": ["string", "null"] },
+        "to": {
+          "description": "<item id> in this doc, <doc id>#<item id> in this scope, or doc:<root>[/<slug>]/<doc id>#<item id>.",
+          "type": "string",
+          "pattern": "^(([a-z0-9-]{3,64}|doc:[^/#]*[^/#\\s][^/#]*(/[^/#\\s]+)?/[a-z0-9-]{3,64})#)?[^\\s#]+$"
+        },
+        "kind": { "enum": ["verifies", "relates", "blocks"] },
+        "line": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "error": {
+      "type": "object",
+      "required": ["code", "line", "message", "fix"],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "enum": ["SND-LIB-010", "SND-LIB-011", "SND-LIB-012", "SND-LIB-013", "SND-LIB-014", "SND-LIB-015", "SND-LIB-016", "SND-LIB-017", "SND-LIB-018", "SND-LIB-019"]
+        },
+        "line": { "description": "The line the error is on; null for a whole-file error (too large, blocked).", "type": ["integer", "null"], "minimum": 1 },
+        "message": { "type": "string", "minLength": 1 },
+        "fix": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

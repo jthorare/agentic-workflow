@@ -213,7 +213,7 @@ The full ref form is `doc:<root>[/<slug>]/<doc id>#<item id>`. A ref inside the 
 | `SND-LIB-018` | "too large" (over 1 MiB or 2,000 items), or "blocked" (the scrubber hit) |
 | `SND-LIB-019` | a near miss: `aw-doc:` present but not the number 1 (§4.1); only `validate` and the doctor row show it |
 
-A doc with errors other than `015` is stored with them and without items, so it shows as broken instead of vanishing. A broken ref (`015`) is listed on the doc, and the rest of its items stay.
+A doc with errors other than `012`, `015` and `016` is stored with them and without items, so it shows as broken instead of vanishing. Those three are decided against the rest of the scope when read (a shared id, a broken ref, an unknown `parent` or `supersedes`): they are listed on the doc, and its items stay.
 
 ### 4.3 What each skill writes (Ph4a)
 

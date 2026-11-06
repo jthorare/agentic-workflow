@@ -1,0 +1,70 @@
+{
+  "parserVersion": 1,
+  "frontMatter": {
+    "aw-doc": 1,
+    "id": "sindri-pr-review-page",
+    "kind": "spec",
+    "title": "Sindri's PR review page, configured per project, mapped against the design docs",
+    "status": "wip",
+    "repos": [
+      "jthorare/agentic-workflow"
+    ]
+  },
+  "items": [
+    {
+      "id": "2-goals-and-non-goals",
+      "kind": "section",
+      "parent": null,
+      "lineStart": 89,
+      "lineEnd": 123,
+      "text": "## 2. Goals and non-goals"
+    },
+    {
+      "id": "REQ-7",
+      "kind": "requirement",
+      "parent": "2-goals-and-non-goals",
+      "lineStart": 99,
+      "lineEnd": 99,
+      "text": "- **REQ-7** Front-matter docs in `~/.agentic-workflow` and each configured vault are indexed and itemized."
+    },
+    {
+      "id": "12-phases-and-parallel-plan-for-spectoprovenpr",
+      "kind": "section",
+      "parent": null,
+      "lineStart": 638,
+      "lineEnd": 675,
+      "text": "## 12. Phases and parallel plan (for /specToProvenPR)"
+    },
+    {
+      "id": "Ph0",
+      "kind": "phase",
+      "parent": "12-phases-and-parallel-plan-for-spectoprovenpr",
+      "lineStart": 642,
+      "lineEnd": 642,
+      "text": "| **Ph0** | — | ideas | The convention page ..."
+    },
+    {
+      "id": "TP-1",
+      "kind": "testPlan",
+      "parent": "13-proof",
+      "lineStart": 680,
+      "lineEnd": 680,
+      "text": "| **TP-1** | The fixture vault and `aw` tree on a scratch Sindri home ... Verifies REQ-7, REQ-12 |"
+    }
+  ],
+  "refs": [
+    {
+      "from": "TP-1",
+      "to": "REQ-7",
+      "kind": "verifies",
+      "line": 680
+    },
+    {
+      "from": "TP-1",
+      "to": "REQ-12",
+      "kind": "verifies",
+      "line": 680
+    }
+  ],
+  "errors": []
+}
