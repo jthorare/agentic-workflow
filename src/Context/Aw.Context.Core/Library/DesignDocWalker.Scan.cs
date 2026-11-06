@@ -129,7 +129,7 @@ internal sealed partial class DesignDocWalker
         return cells;
     }
 
-    [GeneratedRegex("^[ \\t]*(?<fence>`{3,}|~{3,})", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex("^[ \\t]*(?:(?<fence>`{3,})[^`]*\\z|(?<fence>~{3,}))", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex FenceOpen { get; }
 
     [GeneratedRegex("^ {0,3}(?<hashes>#{1,6})[ \\t]+(?<text>.*?)(?:[ \\t]+#+)?[ \\t]*\\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]

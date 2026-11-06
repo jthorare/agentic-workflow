@@ -184,4 +184,15 @@ public sealed class LibraryReadTests : IDisposable
         Assert.Equal((Pr, RecordState.Merged, "Ph1"), (shown.Pr.Value, shown.PrState, shown.Resolution.Item?.Key));
         Assert.Equal(LibraryRefStatus.Resolved, Assert.Single(closed).Resolution.Status);   // the PR's own claims are still readable
     }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_sub_phase_ref_with_leading_zeros_names_the_sub_phase()
+    {
+        await PutDoc(RepoDocs.Id, RepoDoc, _repoAudience, Parsed("harbor", "## Phases\n- **Ph2-1** Sub step.\n"));
+
+        var both = (await Library.Resolve(["harbor#Ph2-01", "harbor#Ph02-01"], "acme/widgets", Owner(), Ct)).Value;
+
+        Assert.Equal(["Ph2-1", "Ph2-1"], both.Select(static r => r.Item?.Key));
+        Assert.All(both, static r => Assert.Equal(LibraryRefStatus.Resolved, r.Status));
+    }
 }

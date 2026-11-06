@@ -64,7 +64,7 @@ public static class DesignDocParser
 
     private static ParsedDesignDoc ParseText(string path, string text, string? actualSourceSha256)
     {
-        var lines = text.TrimStart('﻿').ReplaceLineEndings("\n").Split('\n');
+        var lines = text.TrimStart('﻿').Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n').Split('\n');
         var head = FrontMatterBlock.Find(path, lines);
         if (!head.Read || head.FrontMatter is null)
         {
