@@ -134,7 +134,7 @@ public sealed class ReviewPageKeysTests
 
         Assert.Equal(new ReviewFixSource(ReviewFixKind.Line, "var b = 3;", string.Empty, string.Empty, X, Line: 11, Added: true), asked?.Source);
         Assert.Equal(new ReviewFocus(ReviewFocusRegion.DiffLine, X + ":+11"), asked?.ReturnTo);
-        Assert.Equal(new ReviewFixTarget("acme/api", 2071, "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678", "a1b2c3d", "feat/retry-budget", "sam-dev", Yours: false, "sindri-pr-review"), asked?.Target);
+        Assert.Equal(new ReviewFixTarget("acme/api", 2071, "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678", "a1b2c3d", "feat/retry-budget", "sam-dev", PostsThreads: false, "sindri-pr-review"), asked?.Target);
     }
 
     [Fact]

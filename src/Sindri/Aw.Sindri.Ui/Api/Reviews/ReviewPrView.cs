@@ -12,4 +12,5 @@ internal sealed record ReviewPrView(
     ReviewHeadView Head,
     string Base,
     string Url,
-    IReadOnlyList<ReviewIssueView> Issues);
+    IReadOnlyList<ReviewIssueView> Issues,
+    bool PostsFixThreads = false);

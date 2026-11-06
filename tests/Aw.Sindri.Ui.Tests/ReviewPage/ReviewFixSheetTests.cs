@@ -10,8 +10,8 @@ public sealed class ReviewFixSheetTests
 {
     private const string X = "src/Api/A/A.Core/X.cs";
 
-    private static readonly ReviewFixTarget _mine = new("acme/api", 2071, "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678", "a1b2c3d", "feat/retry-budget", "joi-example", Yours: true, "sindri-pr-review");
-    private static readonly ReviewFixTarget _theirs = _mine with { Author = "sam-dev", Yours = false };
+    private static readonly ReviewFixTarget _mine = new("acme/api", 2071, "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678", "a1b2c3d", "feat/retry-budget", "joi-example", PostsThreads: true, "sindri-pr-review");
+    private static readonly ReviewFixTarget _theirs = _mine with { Author = "sam-dev", PostsThreads = false };
     private static readonly ReviewFixSource _check = new(ReviewFixKind.Check, "Recipe change shows Ui tests ran", "ci-ui", "ui-tests: failure on a1b2c3d", string.Empty, Line: null, Added: false);
     private static readonly ReviewFixSource _requirement = new(ReviewFixKind.Requirement, "Offline PRs answer from the cache", "REQ-E4", string.Empty, string.Empty, Line: null, Added: false);
     private static readonly ReviewFixSource _line = new(ReviewFixKind.Line, "var b = 3;", string.Empty, string.Empty, X, Line: 11, Added: true);
