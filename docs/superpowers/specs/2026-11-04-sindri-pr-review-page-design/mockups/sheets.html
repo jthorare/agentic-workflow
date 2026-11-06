@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PR review sheets mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<!--
+  Sindri PR review page mockups, sheets (spec 2026-11-04-sindri-pr-review-page-design.md §6.3, §6.4, §8.1-8.3, §9; Ph6 "mockup first").
+  Static: no production code. Colors, sizes and radii are the app's tokens (src/Sindri/Aw.Sindri.Ui/Theme/Tokens.axaml), no new ones.
+  Query:
+    sheet=fix     src=line|check|req  state=open|sending|o1|o2|o3|contrib|half      (release 1, §8.2)
+    sheet=confirm state=open|posting|e010|e011|e012|e013                             (release 2, §8.3)
+    composer=1 [suggest=1]                                                           (release 2, §8.1: inline under the diff line, no sheet)
+-->
+<style>
+:root {
+  --canvas:#010102; --s1:#0f1011; --s2:#141516; --s3:#18191a; --s4:#191a1b;
+  --hair:#23252a; --hair2:#34343a; --hair3:#3e3e44;
+  --ink:#f7f8f8; --muted:#d0d6e0; --subtle:#8a8f98; --tert:#62666d;
+  --primary:#5e6ad2; --primarySoft:#1d2036; --onPrimary:#fff;
+  --success:#27a644; --attention:#f2994a; --error:#eb5757;
+  --attentionSoft:#23160c; --errorSoft:#220d0e;
+  --xxs:4px; --xs:8px; --sm:12px; --md:16px; --lg:24px; --xl:32px;
+  --rxs:4px; --rsm:6px; --rmd:8px; --rlg:12px;
+  --topbar:48px; --sheet:520px; --control:30px;
+}
+* { box-sizing:border-box; }
+html, body { margin:0; height:100%; }
+body { background:var(--canvas); color:var(--ink); font:13px/1.45 Inter, system-ui, sans-serif; overflow:hidden; }
+.mono { font-family:"JetBrains Mono", Menlo, monospace; font-size:12px; }
+
+.top { height:var(--topbar); display:flex; align-items:center; gap:var(--xxs); padding:0 var(--md); border-bottom:1px solid var(--hair); background:var(--canvas); }
+.logo { width:24px; height:24px; border-radius:var(--rsm); background:var(--ink); color:#000; font-weight:600; display:grid; place-items:center; margin-right:var(--sm); font-size:12px; }
+.tab { height:var(--control); padding:0 10px; display:flex; align-items:center; gap:6px; border-radius:var(--rsm); color:var(--subtle); white-space:nowrap; }
+.tab.on { color:var(--ink); background:var(--s3); }
+.badge { min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:var(--primary); color:var(--onPrimary); font-size:11px; font-weight:600; display:inline-grid; place-items:center; }
+.top .grow { flex:1; }
+.status { display:flex; align-items:center; gap:6px; color:var(--subtle); font-size:12px; white-space:nowrap; }
+.dot { width:8px; height:8px; border-radius:50%; display:inline-block; flex:none; }
+.dot.ok { background:var(--success); }
+
+.body { position:absolute; top:var(--topbar); left:0; right:0; bottom:0; display:flex; }
+.page { flex:1; min-width:0; overflow:hidden; padding:var(--md) var(--lg) 0; }
+.btn { height:var(--control); padding:0 var(--sm); border-radius:var(--rmd); border:1px solid var(--hair2); background:var(--s2); color:var(--ink); display:inline-flex; align-items:center; gap:6px; font:500 13px Inter, sans-serif; white-space:nowrap; }
+.btn.primary { background:var(--ink); color:#000; border-color:var(--ink); }
+.btn.danger { color:var(--error); }
+.btn.ghost { background:transparent; border-color:transparent; color:var(--subtle); }
+.btn.sm { height:24px; padding:0 var(--xs); font-size:12px; border-radius:var(--rsm); }
+.btn.off { opacity:.5; }
+.btn.focus, .focus { outline:2px solid var(--primary); outline-offset:2px; }
+.chip { display:inline-flex; align-items:center; height:18px; padding:0 6px; border-radius:var(--rxs); border:1px solid var(--hair2); color:var(--subtle); font-size:11px; white-space:nowrap; }
+.chip.violet { color:#a78bfa; border-color:#3a2d5c; }
+.ok { color:var(--success); } .bad { color:var(--error); } .wait { color:var(--attention); }
+
+/* Simplified review page behind the sheets (page mockup owns the real one). */
+.ph { display:flex; align-items:baseline; gap:var(--sm); flex-wrap:wrap; }
+.ph h1 { font-size:18px; font-weight:600; margin:0; letter-spacing:-0.01em; }
+.meta { color:var(--subtle); font-size:12px; margin:2px 0 var(--sm); display:flex; gap:var(--sm); flex-wrap:wrap; align-items:center; }
+.strip { display:flex; gap:var(--md); flex-wrap:wrap; font-size:12px; color:var(--muted); border:1px solid var(--hair); background:var(--s1); border-radius:var(--rmd); padding:6px var(--sm); margin-bottom:var(--sm); }
+.cols { display:flex; gap:var(--md); align-items:flex-start; }
+.cols .panels { width:420px; flex:none; }
+.cols .diffcol { flex:1; min-width:0; }
+.panel { border:1px solid var(--hair); background:var(--s1); border-radius:var(--rmd); margin-bottom:var(--xs); }
+.panel .phd { display:flex; align-items:center; gap:var(--xs); padding:6px var(--sm); color:var(--muted); font-weight:500; }
+.panel .phd .n { color:var(--subtle); font-weight:400; font-size:12px; }
+.panel .phd .chev { color:var(--subtle); width:10px; }
+.row { display:flex; align-items:center; gap:var(--xs); padding:6px var(--sm); border-top:1px solid var(--hair); min-width:0; }
+.row .t { flex:1; min-width:0; }
+.row .t b { font-weight:500; }
+.row .t .s { color:var(--subtle); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.row.src { background:var(--s3); box-shadow:inset 2px 0 0 var(--hair3); }
+.diff { border:1px solid var(--hair); border-radius:var(--rmd); background:var(--s1); overflow:hidden; }
+.diff .fh { display:flex; gap:var(--xs); align-items:center; padding:6px var(--sm); background:var(--s2); border-bottom:1px solid var(--hair); }
+.diff .hh { color:var(--subtle); padding:2px var(--sm); background:var(--canvas); font-family:"JetBrains Mono", Menlo, monospace; font-size:12px; }
+.ln { display:grid; grid-template-columns:40px 18px 1fr; font-family:"JetBrains Mono", Menlo, monospace; font-size:12px; line-height:20px; white-space:pre; }
+.ln .no { color:var(--tert); text-align:right; padding-right:var(--xs); }
+.ln .sg { text-align:center; color:var(--subtle); }
+.ln.add { background:rgba(39,166,68,.12); } .ln.add .sg { color:var(--success); }
+.ln.del { background:rgba(235,87,87,.12); } .ln.del .sg { color:var(--error); }
+.ln.src { box-shadow:inset 2px 0 0 var(--hair3); outline:1px solid var(--hair3); outline-offset:-1px; }
+.ln .tx { overflow:hidden; text-overflow:ellipsis; }
+.cmt { margin:var(--xs) var(--sm) var(--xs) 58px; background:var(--s2); border:1px solid var(--hair2); border-radius:var(--rmd); padding:6px var(--sm); font-family:Inter, sans-serif; white-space:normal; font-size:12px; line-height:1.45; }
+.cmt .h { color:var(--subtle); display:flex; gap:var(--xs); align-items:center; margin-bottom:2px; }
+
+/* The sheet (§3.2 of the Projects spec; 520 px side sheet at >= 1,100 px, covers the page below). */
+.sheet { width:var(--sheet); flex:none; background:var(--s2); border-left:1px solid var(--hair2); padding:var(--lg); overflow:hidden; display:flex; flex-direction:column; gap:var(--md); }
+.sheet.cover { position:absolute; right:0; top:0; bottom:0; box-shadow:-24px 0 48px rgba(0,0,0,.6); }
+.scrim { position:absolute; inset:0; background:rgba(0,0,0,.5); }
+.sheet h2 { font-size:18px; font-weight:600; margin:0; display:inline; align-self:flex-start; }
+.sheet h2.f { outline:2px solid var(--primary); outline-offset:4px; border-radius:2px; }
+.sheet .sub { color:var(--muted); display:flex; gap:var(--xs); align-items:center; flex-wrap:wrap; }
+.sec { color:var(--subtle); font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:500; margin-bottom:var(--xs); }
+.srcbox { border:1px solid var(--hair2); background:var(--s1); border-radius:var(--rmd); overflow:hidden; }
+.srcbox .sh { padding:6px var(--sm); color:var(--muted); display:flex; gap:var(--xs); align-items:center; flex-wrap:wrap; }
+.srcbox .ln { border-top:1px solid var(--hair); }
+.ta { border:1px solid var(--hair2); background:var(--s1); border-radius:var(--rmd); padding:var(--sm); min-height:96px; color:var(--ink); }
+.ta.focus { border-color:var(--primary); outline:2px solid var(--primary); outline-offset:2px; }
+.ta.dim { color:var(--subtle); background:var(--s2); }
+.caret { display:inline-block; width:1px; height:14px; background:var(--ink); vertical-align:-2px; }
+.tcnt { display:flex; justify-content:space-between; color:var(--tert); font-size:11px; margin-top:var(--xxs); font-variant-numeric:tabular-nums; }
+.will { border:1px solid var(--hair); border-radius:var(--rmd); background:var(--s1); }
+.will .w { display:grid; grid-template-columns:84px 1fr; gap:var(--sm); padding:var(--xs) var(--sm); border-top:1px solid var(--hair); }
+.will .w:first-child { border-top:none; }
+.will .k { color:var(--subtle); }
+.will .skip { color:var(--attention); }
+.actions { display:flex; gap:var(--xs); margin-top:auto; padding-top:var(--md); border-top:1px solid var(--hair); align-items:center; }
+.outcome { border:1px solid var(--hair2); border-radius:var(--rmd); background:var(--s1); padding:var(--sm); display:flex; gap:var(--xs); line-height:1.5; }
+.outcome.focus { border-color:var(--primary); outline:2px solid var(--primary); outline-offset:2px; }
+.outcome.warn { border-color:#5a3a1c; background:var(--attentionSoft); }
+.outcome .ic { flex:none; width:16px; }
+.kv { display:grid; grid-template-columns:96px 1fr; row-gap:var(--xs); column-gap:var(--md); }
+.kv .k { color:var(--subtle); }
+.kv a { color:var(--ink); text-decoration:underline; text-decoration-color:var(--hair3); text-underline-offset:3px; }
+.banner { border:1px solid var(--hair); background:var(--s1); border-radius:var(--rlg); padding:var(--sm) var(--md); color:var(--muted); display:flex; gap:var(--sm); }
+.banner.err { border-color:#4a1f21; background:var(--errorSoft); }
+.banner.att { border-color:#5a3a1c; background:var(--attentionSoft); }
+.banner .code { color:var(--subtle); font-size:11px; margin-top:2px; }
+.seg { display:flex; border:1px solid var(--hair2); border-radius:var(--rmd); overflow:hidden; align-self:flex-start; }
+.seg div { padding:0 var(--md); height:var(--control); display:flex; align-items:center; gap:6px; color:var(--subtle); border-left:1px solid var(--hair2); }
+.seg div:first-child { border-left:none; }
+.seg .on { background:var(--s4); color:var(--ink); box-shadow:inset 0 -2px 0 var(--primary); }
+.seg .off { opacity:.45; text-decoration:line-through; }
+.clist { border:1px solid var(--hair); border-radius:var(--rmd); background:var(--s1); }
+.clist .c { padding:var(--xs) var(--sm); border-top:1px solid var(--hair); }
+.clist .c:first-child { border-top:none; }
+.clist .c .fl { color:var(--subtle); display:flex; gap:var(--xs); align-items:center; flex-wrap:wrap; }
+.clist .c.refused { background:var(--errorSoft); box-shadow:inset 2px 0 0 var(--error); }
+.label { position:fixed; left:8px; bottom:8px; color:var(--tert); font-size:11px; }
+</style>
+</head>
+<body>
+<div class="top" id="top"></div>
+<div class="body" id="body"></div>
+<script>
+const q = new URLSearchParams(location.search);
+const SHEET = q.get('sheet'), SRC = q.get('src') || 'line', STATE = q.get('state') || 'open', COMPOSER = q.get('composer') === '1', SUGGEST = q.get('suggest') === '1';
+const W = window.innerWidth;
+const sideSheet = SHEET && W >= 1100;
+const pageW = W - (sideSheet ? 520 : 0);
+const wide = pageW >= 1280;              // §6.2: the page's own width decides panels-beside-diff vs stacked
+const contrib = (SHEET === 'confirm') || STATE === 'contrib';
+const PR = contrib ? { n:324, title:'Expire abandoned slot holds', author:'maya-ortiz', branch:'fix/hold-expiry', sha:'a1b2c3d' }
+                   : { n:318, title:'Hold booking slots for 10 minutes', author:'jthorare', branch:'feat/slot-hold', sha:'a1b2c3d' };
+const ITEM = '01J9Z3T7KQ';
+
+// Top bar: nine tabs, Reviews ninth with the waiting count (the list mockup owns the measuring; ~580 px of tabs, so full labels fit at 1,000 too).
+const TABS = ['Home','Projects','Workflows','Work','Recipes','Context','Agents','System','Reviews'];
+const TABS_NARROW = TABS.slice();
+document.getElementById('top').innerHTML = `<div class="logo">S</div>` +
+  (W >= 1100 ? TABS : TABS_NARROW).map(t => `<div class="tab${t === 'Reviews' ? ' on' : ''}">${t}${t === 'Reviews' ? '<span class="badge">3</span>' : ''}</div>`).join('') +
+  `<div class="grow"></div><div class="status"><span class="dot ok"></span>Running</div>`;
+
+const ic = { pass:'<span class="ok">✓ pass</span>', fail:'<span class="bad">✕ fail</span>', tick:'<span class="wait">○ needs a tick</span>', unclaimed:'<span class="wait">○ unclaimed</span>', covered:'<span class="ok">✓ covered</span>' };
+
+// ---- The page behind the sheet ----
+function checksPanel(srcCheck) {
+  return `<div class="panel"><div class="phd"><span class="chev">▾</span>Required checks <span class="n">· 1 fail, 1 needs a tick, 1 pass</span></div>
+    <div class="row${srcCheck ? ' src' : ''}"><div class="t"><b>A recipe change shows the Ui tests ran</b><div class="s">ui-tests failed on ${PR.sha}</div></div>${ic.fail}<span class="btn sm">Send as fix task</span></div>
+    <div class="row"><div class="t"><b>I ran it myself</b><div class="s">ticked on this head resets on a new head</div></div>${ic.tick}</div>
+    <div class="row"><div class="t"><b>A new env var is in .env.example</b><div class="s">check-env-example passed on ${PR.sha}</div></div>${ic.pass}</div></div>`;
+}
+function docPanel(open, srcReq) {
+  if (!open) return `<div class="panel"><div class="phd"><span class="chev">▸</span>Doc map <span class="n">· covers Ph2, REQ-E3 · 1 unclaimed</span></div></div>`;
+  return `<div class="panel"><div class="phd"><span class="chev">▾</span>Doc map <span class="n">· harbor-booking-tdd</span></div>
+    <div class="row"><div class="t"><b>Ph2</b> Slot hold</div>${ic.covered}</div>
+    <div class="row"><div class="t"><b>REQ-E3</b> A hold lasts 10 minutes</div>${ic.covered}</div>
+    <div class="row${srcReq ? ' src' : ''}"><div class="t"><b>REQ-E5</b> A cancelled booking frees its hold<div class="s">no PR claims it</div></div>${ic.unclaimed}<span class="btn sm">Send as fix task</span></div>
+    <div class="row"><div class="t"><b>TP-4</b> Hold expires after 10 minutes <span class="chip">claimed by #321</span></div><span class="chip">Ph3</span></div></div>`;
+}
+const coll = (t, n) => `<div class="panel"><div class="phd"><span class="chev">▸</span>${t} <span class="n">· ${n}</span></div></div>`;
+const collapsed = () => coll('Test plan','2 rows') + coll('CI','1 failing') + coll('Evidence','1 run') + coll('Risk','1 risky file') + coll('Conversation','2 threads');
+
+function dl(no, sg, tx, cls, extra) { return `<div class="ln ${cls||''}"><span class="no">${no}</span><span class="sg">${sg}</span><span class="tx">${tx}</span></div>${extra||''}`; }
+function diffHtml(srcLine) {
+  const L = [
+    dl(38,'',' public sealed class SlotHold'),
+    dl(39,'',' {'),
+    dl(40,'-','     private static readonly TimeSpan Ttl = TimeSpan.FromMinutes(5);','del'),
+    dl(40,'+','     private static readonly TimeSpan Ttl = TimeSpan.FromMinutes(10);','add'),
+    dl(41,'',' '),
+    dl(42,'+','     public bool Expired(DateTimeOffset now) => now - Taken > Ttl;','add' + (srcLine ? ' src' : ''),
+       COMPOSER ? composerHtml() : ''),
+    dl(43,'+','     public void Release() => Taken = null;','add'),
+    dl(44,'',' }'),
+  ];
+  return `<div class="diff"><div class="fh"><span class="mono">src/Harbor.Booking/SlotHold.cs</span><span class="chip">modified</span><span style="color:var(--subtle);font-size:12px;margin-left:auto">+3 −1</span></div>
+    <div class="hh">@@ -38,6 +38,8 @@ SlotHold</div>${L.join('')}
+    <div class="hh">@@ -51,4 +53,9 @@ SlotHold</div>
+    ${dl(51,'+','     public Hold Take(Guid slot, DateTimeOffset now)','add','')}
+    ${COMPOSER ? `<div class="cmt"><div class="h"><span class="chip">Draft</span><span>line 51</span><span style="margin-left:auto">Edit · Delete</span></div>Take() should reject a slot that's already held.</div>` : ''}
+    ${dl(52,'+','     {','add')}${dl(53,'+','         if (Taken is not null) throw new InvalidOperationException();','add')}</div>`;
+}
+function composerHtml() {
+  const body = SUGGEST
+    ? `Release should also clear the timer, otherwise a cancelled booking keeps its hold alive.<br><span class="mono" style="display:block;margin-top:6px;padding:6px var(--xs);background:var(--s1);border:1px solid var(--hair);border-radius:var(--rsm)">\`\`\`suggestion<br>    public void Release() { Taken = null; Timer?.Stop(); }<br>\`\`\`<span class="caret"></span></span>`
+    : `Release the hold when the booking is cancelled, not only when it expires.<span class="caret"></span>`;
+  return `<div class="cmt" style="font-size:13px"><div class="h"><span class="chip">Draft</span><span>Comment on line 42</span><span style="margin-left:auto;color:var(--tert)">Saved just now</span></div>
+    <div class="ta focus" style="min-height:${SUGGEST ? 104 : 64}px;padding:var(--xs) var(--sm)">${body}</div>
+    <div style="display:flex;gap:var(--xs);margin-top:var(--xs);align-items:center"><span class="btn sm">Suggest a change</span><span style="color:var(--tert);font-size:11px">Markdown</span><span style="flex:1"></span><span class="btn sm primary">Save</span><span class="btn sm">Cancel</span></div></div>`;
+}
+function page() {
+  const srcCheck = SHEET === 'fix' && SRC === 'check', srcReq = SHEET === 'fix' && SRC === 'req', srcLine = SHEET === 'fix' && SRC === 'line';
+  const head = `<div class="ph"><h1>${PR.title}</h1><span class="mono" style="color:var(--subtle)">#${PR.n}</span></div>
+    <div class="meta"><span>acme/harbor</span><span>${PR.author}</span><span class="mono">${PR.sha}</span><span class="chip">HB-212</span></div>
+    <div class="strip"><span>2 open required checks</span><span>Covers Ph2, REQ-E3</span><span>1 risky file</span><span class="bad">✕ CI failing: ui-tests</span></div>`;
+  const panels = checksPanel(srcCheck) + docPanel(wide || srcReq, srcReq) + collapsed();
+  if (wide) return head + `<div class="cols"><div class="panels">${panels}</div><div class="diffcol">${diffHtml(srcLine)}</div></div>`;
+  return head + checksPanel(srcCheck) + docPanel(srcReq, srcReq) + (srcReq ? '' : collapsed()) + (srcReq ? '' : diffHtml(srcLine));
+}
+
+// ---- Sheets ----
+const where = `${PR.branch}`;
+function srcBox() {
+  if (SRC === 'check') return `<div class="srcbox"><div class="sh"><span class="bad">✕ fail</span><b style="font-weight:500">A recipe change shows the Ui tests ran</b></div><div class="sh" style="border-top:1px solid var(--hair);color:var(--subtle)">Required check · ui-tests failed on ${PR.sha}</div></div>`;
+  if (SRC === 'req') return `<div class="srcbox"><div class="sh"><span class="wait">○ unclaimed</span><b style="font-weight:500">REQ-E5</b> A cancelled booking frees its hold</div><div class="sh" style="border-top:1px solid var(--hair);color:var(--subtle)">Requirement · harbor-booking-tdd · no PR claims it</div></div>`;
+  return `<div class="srcbox"><div class="sh"><span class="mono">src/Harbor.Booking/SlotHold.cs:42</span><span class="chip">added line</span></div>
+    ${dl(41,'','','')}${dl(42,'+','    public bool Expired(DateTimeOffset now) => now - Taken > Ttl;','add')}${dl(43,'+','    public void Release() => Taken = null;','add')}</div>`;
+}
+const typed = SRC === 'check' ? 'Required check failed: A recipe change shows the Ui tests ran. ui-tests failed on a1b2c3d. Fix it, or say why it doesn\'t apply here.'
+            : SRC === 'req' ? 'REQ-E5 (A cancelled booking frees its hold) in harbor-booking-tdd isn\'t covered by this PR. Cover it, or say why it waits.'
+            : 'Release the hold when the booking is cancelled, not only when it expires.';
+const first = typed.split('\n')[0];
+const title = 'Fix: ' + (first.length > 44 ? first.slice(0, 43) + '…' : first);
+
+function fixSheet() {
+  const closeBtn = '<span class="btn primary focus">Close</span>';
+  const sendRow = (busy) => `<div class="actions"><span class="btn primary${busy ? ' off' : ''}">${busy ? 'Sending…' : 'Send'}</span><span class="btn">Cancel</span><span style="margin-left:auto;color:var(--tert);font-size:11px">Esc cancels</span></div>`;
+  const will = `<div><div class="sec">What Send does</div><div class="will">
+      <div class="w"><span class="k">Work item</span><span><b style="font-weight:500">${title}</b><br><span style="color:var(--subtle)">acme/harbor · links PR #${PR.n}</span></span></div>
+      <div class="w"><span class="k">PR thread</span>${contrib
+        ? `<span class="skip">Item only: Sindri won't post on ${PR.author}'s PR</span>`
+        : `<span>${SRC === 'line' ? 'Line comment on src/Harbor.Booking/SlotHold.cs:42' : 'Comment on #' + PR.n + ', first changed line of the file'}, from Sindri (verdict comment, marker <span class="mono">sindri.fix:&lt;item id&gt;</span>)</span>`}</div>
+      <div class="w"><span class="k">Goes to</span><span>The babysitter watching #${PR.n}, else a live session on <span class="mono">${where}</span>, else the item waits in Work</span></div></div></div>`;
+  if (STATE === 'open' || STATE === 'sending' || (STATE === 'contrib' && false)) {
+    const busy = STATE === 'sending';
+    return `<h2 class="${busy ? '' : 'nf'}">Send as fix task</h2>
+      <div class="sub"><span class="mono">acme/harbor #${PR.n}</span><span style="color:var(--subtle)">· ${PR.branch} · ${PR.sha}</span></div>
+      <div><div class="sec">From</div>${srcBox()}</div>
+      <div><div class="sec">What needs fixing</div><div class="ta ${busy ? 'dim' : 'focus'}">${typed}${busy ? '' : '<span class="caret"></span>'}</div><div class="tcnt"><span>${busy ? 'Locked while sending' : 'Becomes the item title and the thread text'}</span><span>${typed.length} / 2,000</span></div></div>
+      ${will}${sendRow(busy)}`;
+  }
+  // after Send
+  const sent = {
+    o1: { t:`Fix task sent to the babysitter on #${PR.n}. It takes the thread as work and closes the item when it's fixed.`, to:`Babysitter watching #${PR.n}`, thread:`#${PR.n} · SlotHold.cs:42` },
+    o2: { t:`Fix task sent to the session on ${PR.branch} (claude, ~/repos/aw-wt/harbor-slot-hold).`, to:`Session on ${PR.branch}`, thread:`#${PR.n} · SlotHold.cs:42` },
+    o3: { t:`No session is on ${PR.branch}. The item waits in Work as "Waiting on ${PR.branch}", and the first session on that branch is told.`, to:`Waiting on ${PR.branch}`, thread:`#${PR.n} · SlotHold.cs:42` },
+    contrib: { t:`Item only: Sindri won't post on ${PR.author}'s PR. The item waits in Work as "Waiting on ${PR.branch}".`, to:`Waiting on ${PR.branch}`, thread:'not posted (not your PR)' },
+  };
+  if (STATE === 'half') {
+    return `<h2 class="nf">Fix task not fully sent</h2>
+      <div class="sub"><span class="mono">acme/harbor #${PR.n}</span><span style="color:var(--subtle)">· ${PR.branch} · ${PR.sha}</span></div>
+      <div class="outcome warn focus"><span class="ic wait">!</span><span>Item ${ITEM} created in Work; posting to #${PR.n} failed: GitHub answered 502 (bad gateway).</span></div>
+      <div class="kv"><span class="k">Work item</span><span><a>${ITEM}</a> · ${title}</span><span class="k">PR thread</span><span class="wait">not posted</span><span class="k">Code</span><span class="mono">SND-REVIEW-006</span></div>
+      <div style="color:var(--subtle)">Retry reuses the item and the same marker, so the thread can't post twice.</div>
+      <div class="actions"><span class="btn primary">Retry post</span><span class="btn">Close</span></div>`;
+  }
+  const s = sent[STATE];
+  return `<h2 class="nf">Fix task sent</h2>
+    <div class="sub"><span class="mono">acme/harbor #${PR.n}</span><span style="color:var(--subtle)">· ${PR.branch} · ${PR.sha}</span></div>
+    <div class="outcome focus"><span class="ic ${STATE === 'o3' || STATE === 'contrib' ? 'wait' : 'ok'}">${STATE === 'o3' || STATE === 'contrib' ? '○' : '✓'}</span><span>${s.t}</span></div>
+    <div class="kv"><span class="k">Work item</span><span><a>${ITEM}</a> · ${title}</span><span class="k">PR thread</span><span>${contrib ? s.thread : '<a>' + s.thread + '</a>'}</span><span class="k">Went to</span><span>${s.to}</span></div>
+    <div class="actions">${closeBtn}<span style="color:var(--tert);font-size:11px">Closing puts focus back on the row you came from</span></div>`;
+}
+
+function confirmSheet() {
+  const busy = STATE === 'posting';
+  const err = {
+    e010:['SND-REVIEW-010','This review changed in another window. Reload it.','Reload draft'],
+    e011:['SND-REVIEW-011','The PR moved to c9e4f01. Reload to see the new commits. Kept: your 3 comments. Reset: 1 tick (I ran it myself).','Reload page'],
+    e012:['SND-REVIEW-012','Set review.credential to your own GitHub token to post from Sindri.','Open Settings'],
+    e013:['SND-REVIEW-013','GitHub refused the comment on src/Harbor.Booking/SlotHold.cs:42. Move it to a line in the diff, or drop it.','Show the comment'],
+  }[STATE];
+  const refused = STATE === 'e013';
+  const login = STATE === 'e012' ? '<span class="wait">no credential set</span>' : '<b style="font-weight:500">@jthorare</b>';
+  const cm = (f, l, tx, extra, cls) => `<div class="c ${cls||''}"><div class="fl"><span class="mono">${f}:${l}</span>${extra||''}</div>${tx}</div>`;
+  return `<h2 class="f">Post review</h2>
+    <div class="sub"><span class="mono">acme/harbor #${PR.n}</span><span style="color:var(--subtle)">· ${PR.author} · ${PR.sha}</span></div>
+    <div class="sub">Posting as ${login}${STATE === 'e012' ? '' : '<span style="color:var(--tert)">· from GitHub, for your credential</span>'}</div>
+    <div class="banner att"><span class="wait">✕</span><span><b style="font-weight:500;color:var(--ink)">Checked again just now.</b> One required check went from pass to fail since you opened this page: <i style="font-style:normal;color:var(--ink)">A new env var is in .env.example</i>, check-env-example failed on ${PR.sha}.</span></div>
+    <div><div class="sec">Verdict</div><div class="seg"><div>Comment</div><div>Approve</div><div class="on">✓ Request changes</div></div></div>
+    <div><div class="sec">Review text</div><div class="ta" style="min-height:0;color:var(--muted)">Two things before this lands: the hold needs releasing on cancel, and REQ-E5 isn't covered yet.</div></div>
+    <div><div class="sec">3 line comments</div><div class="clist">
+      ${cm('SlotHold.cs',42,'Release the hold when the booking is cancelled, not only when it expires.', refused ? '<span class="bad">✕ refused by GitHub</span>' : '', refused ? 'refused' : '')}
+      ${cm('SlotHold.cs',51,'Take() should reject a slot that\'s already held.')}
+      ${cm('SlotHold.cs',43,'Release should also clear the timer.', '<span class="chip violet">Suggested by lane-booking</span>')}</div></div>
+    ${err ? `<div class="banner err"><span class="bad">✕</span><span>${err[1]}<div class="code mono">${err[0]} · your draft is kept</div></span></div>` : ''}
+    <div class="actions">${err ? `<span class="btn primary">${err[2]}</span><span class="btn">Close</span>` : `<span class="btn primary${busy ? ' off' : ''}">${busy ? 'Posting…' : 'Post review'}</span><span class="btn">Cancel</span>`}<span style="margin-left:auto;color:var(--tert);font-size:11px">${busy ? 'Posting as one review' : 'Esc returns to Post'}</span></div>`;
+}
+
+const sheetHtml = SHEET ? `<div class="sheet${sideSheet ? '' : ' cover'}">${SHEET === 'fix' ? fixSheet() : confirmSheet()}</div>` : '';
+document.getElementById('body').innerHTML = `<div class="page">${page()}</div>` + (SHEET && !sideSheet ? '<div class="scrim"></div>' : '') + sheetHtml;
+// The screen name lives in the PNG file name; a drawn caption covered the diff.
+// document.body.insertAdjacentHTML('beforeend', `<div class="label">mockup · sheets · ${SHEET || 'composer'}${SHEET === 'fix' ? ' ' + SRC : ''} · ${STATE} · ${W}px${SHEET === 'confirm' ? ' · release 2' : ''}</div>`);
+</script>
+</body>
+</html>

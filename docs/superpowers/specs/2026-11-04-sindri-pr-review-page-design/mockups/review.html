@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Review page mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<!--
+  Sindri PR review page mockups (spec 2026-11-04-sindri-pr-review-page-design.md §6.2-6.4, §7, release 1; Ph6 "mockup first").
+  Static: no production code. Colors, sizes and radii are the app's tokens (src/Sindri/Aw.Sindri.Ui/Theme/Tokens.axaml), no new ones
+  (the added/removed row tints are the success/error tokens at low alpha).
+  Query: v=a|b · tab=checks|docmap|tests|ci|evidence|risk|threads (B) · panels=ok|empty|error|loading ·
+         diff=ok|loading|none|error|offline|cap · banner=moved · focus=strip · page=main|merged|closed|notfound|notserved|offline
+-->
+<style>
+:root {
+  --canvas:#010102; --s1:#0f1011; --s2:#141516; --s3:#18191a; --s4:#191a1b;
+  --hair:#23252a; --hair2:#34343a; --hair3:#3e3e44;
+  --ink:#f7f8f8; --muted:#d0d6e0; --subtle:#8a8f98; --tert:#62666d;
+  --primary:#5e6ad2; --primarySoft:#1d2036; --onPrimary:#fff;
+  --success:#27a644; --attention:#f2994a; --error:#eb5757;
+  --attentionSoft:#23160c; --errorSoft:#220d0e;
+  --xxs:4px; --xs:8px; --sm:12px; --md:16px; --lg:24px; --xl:32px;
+  --rxs:4px; --rsm:6px; --rmd:8px; --rlg:12px;
+  --topbar:48px; --sheet:520px; --control:30px;
+}
+* { box-sizing:border-box; }
+html, body { margin:0; height:100%; }
+body { background:var(--canvas); color:var(--ink); font:13px/1.45 Inter, system-ui, sans-serif; overflow:hidden; }
+.mono { font-family:"JetBrains Mono", Menlo, monospace; font-size:12px; }
+
+/* Top bar: the app's nine tabs, Reviews ninth with its waiting count. */
+.top { height:var(--topbar); display:flex; align-items:center; gap:var(--xxs); padding:0 var(--md); border-bottom:1px solid var(--hair); background:var(--canvas); }
+.logo { width:24px; height:24px; border-radius:var(--rsm); background:var(--ink); color:#000; font-weight:600; display:grid; place-items:center; margin-right:var(--sm); font-size:12px; flex:none; }
+.tab { height:var(--control); padding:0 10px; display:flex; align-items:center; gap:6px; border-radius:var(--rsm); color:var(--subtle); white-space:nowrap; }
+.tab.on { color:var(--ink); background:var(--s3); }
+.tab .badge { min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:var(--primary); color:var(--onPrimary); font-size:11px; font-weight:600; display:grid; place-items:center; }
+.top.narrow .tab { padding:0 8px; }
+.top .grow { flex:1; }
+.status { display:flex; align-items:center; gap:6px; color:var(--subtle); font-size:12px; white-space:nowrap; }
+.dot { width:8px; height:8px; border-radius:50%; display:inline-block; flex:none; }
+.dot.ok { background:var(--success); } .dot.warn { background:var(--attention); } .dot.err { background:var(--error); } .dot.none { background:transparent; border:1px solid var(--hair3); }
+
+.btn { height:var(--control); padding:0 var(--sm); border-radius:var(--rmd); border:1px solid var(--hair2); background:var(--s2); color:var(--ink); display:inline-flex; align-items:center; gap:6px; font:500 13px Inter, sans-serif; white-space:nowrap; }
+.btn.primary { background:var(--ink); color:#000; border-color:var(--ink); }
+.btn.danger { color:var(--error); }
+.btn.ghost { background:transparent; border-color:transparent; color:var(--subtle); }
+.btn.sm { height:24px; padding:0 var(--xs); font-size:12px; border-radius:var(--rsm); }
+.btn.off { opacity:.4; }
+.focus { outline:2px solid var(--primary); outline-offset:2px; }
+
+.banner { border:1px solid var(--hair); background:var(--s1); border-radius:var(--rlg); padding:var(--sm) var(--md); display:flex; align-items:center; gap:var(--sm); color:var(--muted); }
+.banner.err { border-color:#4a1f21; background:var(--errorSoft); }
+.banner.warn { border-color:#4d3216; background:var(--attentionSoft); }
+.banner.quiet { color:var(--subtle); }
+.banner .grow { flex:1; min-width:0; }
+.chip { display:inline-flex; align-items:center; height:18px; padding:0 6px; border-radius:var(--rxs); border:1px solid var(--hair2); color:var(--subtle); font-size:11px; white-space:nowrap; }
+.chip.violet { color:#a78bfa; border-color:#3a2d5c; }
+.chip.warn { color:var(--attention); border-color:#4d3216; }
+.chip.err { color:var(--error); border-color:#4a1f21; }
+.chip.ok { color:var(--success); border-color:#1c4a2a; }
+
+/* Frame: header, summary strip, [panel column | diff], action bar. */
+.body { position:absolute; top:var(--topbar); left:0; right:0; bottom:0; display:flex; flex-direction:column; }
+.scroll { flex:1; min-height:0; overflow:auto; display:block; }
+.hdr { padding:var(--md) var(--lg) var(--sm); }
+.crumb { color:var(--subtle); font-size:12px; margin-bottom:var(--xxs); display:flex; gap:var(--xs); align-items:center; }
+.hrow { display:flex; align-items:flex-start; gap:var(--md); }
+.hrow .grow { flex:1; min-width:0; }
+.hdr h1 { font-size:20px; font-weight:600; margin:0 0 var(--xxs); letter-spacing:-0.01em; line-height:1.25; }
+.hdr h1 .no { color:var(--subtle); font-weight:400; }
+.meta { display:flex; flex-wrap:wrap; align-items:center; gap:6px var(--sm); color:var(--muted); font-size:12px; }
+.meta .sep { color:var(--tert); }
+.sel { height:24px; padding:0 var(--xs); border:1px solid var(--hair2); border-radius:var(--rsm); background:var(--s2); color:var(--muted); font-size:12px; display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
+
+.strip { margin:0 var(--lg) var(--sm); display:flex; flex-wrap:wrap; gap:var(--xs); padding:var(--xs); border:1px solid var(--hair); background:var(--s1); border-radius:var(--rlg); }
+.seg { height:28px; padding:0 var(--sm); border-radius:var(--rsm); border:1px solid transparent; background:var(--s2); color:var(--muted); display:inline-flex; align-items:center; gap:6px; font:500 12px Inter, sans-serif; white-space:nowrap; }
+.seg b { color:var(--ink); font-weight:600; }
+.seg .ic { font-size:12px; }
+.seg.err .ic, .seg.err { color:var(--error); } .seg.err b { color:var(--error); }
+.seg.warn .ic { color:var(--attention); } .seg.ok .ic { color:var(--success); }
+.seg.dim { color:var(--tert); }
+.note-r { margin-left:auto; color:var(--tert); font-size:11px; align-self:center; padding-right:var(--xs); }
+
+.main { padding:0 var(--lg) var(--lg); display:block; }
+.pcol { margin-bottom:var(--md); }
+.dpane { min-width:0; }
+@media (min-width:1280px) {
+  .scroll { display:flex; flex-direction:column; overflow:hidden; }
+  .main { flex:1; min-height:0; display:flex; gap:var(--md); padding-bottom:var(--md); }
+  .pcol { width:420px; flex:none; overflow:auto; margin:0; padding-right:2px; }
+  .dpane { flex:1; overflow:auto; }
+  .main.rail { flex-direction:row-reverse; }
+  .main.rail .pcol { width:380px; }
+}
+
+/* Panels */
+.panel { border:1px solid var(--hair); background:var(--s1); border-radius:var(--rlg); margin-bottom:var(--xs); overflow:hidden; }
+.ph-h { display:flex; align-items:center; gap:var(--xs); height:36px; padding:0 var(--sm); }
+.ph-h .chev { color:var(--subtle); width:10px; font-size:11px; }
+.ph-h .t { font-weight:600; }
+.ph-h .s { margin-left:auto; color:var(--subtle); font-size:12px; white-space:nowrap; }
+.pb { border-top:1px solid var(--hair); padding:var(--xs) var(--sm) var(--sm); }
+.pb .empty { color:var(--subtle); padding:var(--xs) 0; }
+.pb .skel { height:14px; width:62%; background:var(--s3); border-radius:var(--rxs); margin:var(--xs) 0; }
+.pb .perr { color:var(--error); padding:var(--xs) 0; display:flex; gap:6px; }
+.hc { display:inline-block; width:10px; height:10px; border-radius:50%; border:1.5px solid currentColor; background:linear-gradient(90deg, currentColor 50%, transparent 50%); vertical-align:-1px; }
+.sub { color:var(--subtle); font-size:11px; letter-spacing:.06em; text-transform:uppercase; margin:var(--xs) 0 var(--xxs); font-weight:500; }
+
+.crow { padding:var(--xs) 0; border-top:1px solid var(--hair); }
+.crow:first-child { border-top:none; }
+.crow .l1 { display:flex; gap:var(--xs); align-items:flex-start; }
+.st { flex:none; display:inline-flex; align-items:center; gap:4px; height:20px; padding:0 6px; border-radius:var(--rxs); border:1px solid var(--hair2); font-size:11px; font-weight:500; white-space:nowrap; }
+.st.pass { color:var(--success); border-color:#1c4a2a; } .st.fail { color:var(--error); border-color:#4a1f21; }
+.st.run { color:var(--attention); border-color:#4d3216; } .st.claim { color:var(--muted); border-style:dashed; } .st.tick { color:var(--muted); }
+.crow .t { flex:1; min-width:0; }
+.crow .r { color:var(--subtle); font-size:12px; margin:2px 0 0 0; }
+.crow .act { margin-top:6px; display:flex; gap:var(--xs); align-items:center; }
+.box { width:14px; height:14px; border:1px solid var(--hair3); border-radius:3px; display:inline-grid; place-items:center; font-size:10px; flex:none; background:var(--s2); }
+.box.on { background:var(--primary); border-color:var(--primary); color:var(--onPrimary); }
+
+.tree { font-size:12.5px; }
+.tr1 { display:flex; align-items:center; gap:6px; padding:3px 6px; border-radius:var(--rsm); }
+.tr1.mine { background:var(--primarySoft); }
+.tr1 .id { font-family:"JetBrains Mono", monospace; font-size:12px; color:var(--muted); min-width:48px; }
+.tr1 .tx { color:var(--muted); flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tr1.ind { margin-left:18px; }
+.tr1.ind2 { margin-left:36px; }
+.tr1 .tag { color:var(--subtle); font-size:11px; white-space:nowrap; }
+.tr1.unc .id { color:var(--attention); }
+
+.trow { display:flex; align-items:center; gap:var(--xs); padding:5px 0; border-top:1px solid var(--hair); }
+.trow:first-child { border-top:none; }
+.trow .id { font-family:"JetBrains Mono", monospace; font-size:12px; color:var(--muted); min-width:36px; }
+.trow .tx { flex:1; min-width:0; color:var(--muted); }
+.trow .tag { color:var(--subtle); font-size:11px; white-space:nowrap; }
+.kvl { display:flex; gap:var(--xs); padding:4px 0; border-top:1px solid var(--hair); align-items:baseline; }
+.kvl:first-of-type { border-top:none; }
+.kvl .k { color:var(--subtle); min-width:0; flex:none; }
+.kvl .v { color:var(--muted); flex:1; min-width:0; }
+.thread { padding:var(--xs) 0; border-top:1px solid var(--hair); }
+.thread:first-of-type { border-top:none; }
+.thread .w { color:var(--subtle); font-size:12px; }
+.thread .q { color:var(--muted); margin-top:2px; }
+
+/* Variant B: tabs rail */
+.tabs { display:flex; flex-wrap:wrap; gap:var(--xxs); padding:var(--xxs); border:1px solid var(--hair); background:var(--s1); border-radius:var(--rlg) var(--rlg) 0 0; border-bottom:none; }
+.tabs .tb { height:28px; padding:0 var(--xs); border-radius:var(--rsm); color:var(--subtle); display:inline-flex; align-items:center; gap:5px; font:500 12px Inter, sans-serif; white-space:nowrap; }
+.tabs .tb.on { background:var(--s3); color:var(--ink); }
+.tabs .tb .n { font-size:11px; }
+.tabs .tb .n.err { color:var(--error); } .tabs .tb .n.warn { color:var(--attention); } .tabs .tb .n.ok { color:var(--success); }
+.railbody { border:1px solid var(--hair); background:var(--s1); border-radius:0 0 var(--rlg) var(--rlg); padding:var(--xs) var(--sm) var(--sm); }
+.railbody .rh { display:flex; align-items:center; margin:2px 0 var(--xs); }
+.railbody .rh .t { font-weight:600; }
+.railbody .rh .s { margin-left:auto; color:var(--subtle); font-size:12px; }
+
+/* Diff pane */
+.dtop { display:flex; align-items:center; gap:var(--sm); height:36px; color:var(--muted); }
+.dtop .cnt { color:var(--subtle); font-size:12px; }
+.dtop .keys { margin-left:auto; color:var(--tert); font-size:11px; }
+.dwrap { display:flex; gap:var(--md); align-items:flex-start; }
+.flist { width:248px; flex:none; border:1px solid var(--hair); background:var(--s1); border-radius:var(--rlg); padding:var(--xs); }
+@media (min-width:1280px) { .flist { position:sticky; top:0; } }
+.gh { display:flex; align-items:center; gap:6px; height:26px; padding:0 6px; color:var(--subtle); font-size:11px; letter-spacing:.06em; text-transform:uppercase; font-weight:500; }
+.gh .n { color:var(--tert); margin-left:auto; letter-spacing:0; }
+.gh.fold { white-space:nowrap; height:28px; color:var(--muted); text-transform:none; letter-spacing:0; font-size:12.5px; font-weight:400; }
+.gh.fold .why { color:var(--tert); font-size:11px; margin-left:auto; }
+.fi { display:flex; align-items:center; gap:6px; height:24px; padding:0 6px; border-radius:var(--rxs); color:var(--muted); font-size:12px; }
+.fi.cur { background:var(--s3); }
+.fi .nm { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fi .stt { font-family:"JetBrains Mono", monospace; font-size:10.5px; width:14px; text-align:center; border-radius:3px; color:var(--subtle); border:1px solid var(--hair2); flex:none; line-height:14px; }
+.fi .stt.A { color:var(--success); } .fi .stt.D { color:var(--error); } .fi .stt.R { color:var(--attention); }
+.fi .rk { color:var(--attention); font-size:11px; }
+.fi.v .nm { color:var(--tert); }
+.dfiles { flex:1; min-width:0; }
+.file { border:1px solid var(--hair); background:var(--s1); border-radius:var(--rlg); margin-bottom:var(--sm); overflow:hidden; }
+.fh { display:flex; align-items:center; gap:var(--xs); padding:6px var(--sm); background:var(--s2); border-bottom:1px solid var(--hair); }
+.fh .p { font-family:"JetBrains Mono", monospace; font-size:12px; min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fh .ad { font-family:"JetBrains Mono", monospace; font-size:11px; color:var(--subtle); white-space:nowrap; }
+.fh .vw { display:inline-flex; align-items:center; gap:6px; color:var(--subtle); font-size:12px; }
+.fnote { padding:6px var(--sm); color:var(--muted); font-size:12px; border-bottom:1px solid var(--hair); display:flex; gap:var(--xs); align-items:center; }
+.fnote.risk { background:var(--attentionSoft); color:var(--attention); }
+.fnote.plain { background:transparent; color:var(--subtle); border-bottom:none; padding:var(--md) var(--sm); }
+.hunk { padding:3px var(--sm); background:var(--primarySoft); color:var(--subtle); font-family:"JetBrains Mono", monospace; font-size:11.5px; display:flex; gap:var(--sm); }
+.dl { display:grid; grid-template-columns:40px 40px 18px 1fr; font-family:"JetBrains Mono", monospace; font-size:12px; line-height:19px; white-space:pre; }
+.dl .no { color:var(--tert); text-align:right; padding-right:6px; user-select:none; }
+.dl .sg { text-align:center; color:var(--subtle); }
+.dl .tx { overflow:hidden; text-overflow:ellipsis; color:var(--muted); padding-right:var(--sm); }
+.dl.add { background:color-mix(in srgb, var(--success) 14%, transparent); } .dl.add .sg { color:var(--success); } .dl.add .tx { color:var(--ink); }
+.dl.del { background:color-mix(in srgb, var(--error) 14%, transparent); } .dl.del .sg { color:var(--error); } .dl.del .tx { color:var(--ink); }
+.dl.cur { outline:2px solid var(--primary); outline-offset:-2px; }
+
+.center { padding:var(--xl) var(--lg); max-width:620px; margin:48px auto 0; text-align:left; }
+.center h2 { font-size:18px; font-weight:600; margin:0 0 var(--xs); }
+.center p { color:var(--muted); margin:0 0 var(--md); }
+.center .acts { display:flex; gap:var(--xs); }
+.dstate { border:1px dashed var(--hair2); border-radius:var(--rlg); padding:var(--xl); color:var(--muted); text-align:center; }
+.dstate .skel { height:14px; background:var(--s3); border-radius:var(--rxs); margin:10px auto 0; width:50%; }
+
+.abar { flex:none; min-height:56px; border-top:1px solid var(--hair2); background:var(--s1); display:flex; align-items:center; gap:var(--sm); padding:var(--xs) var(--lg); }
+.abar .out { color:var(--subtle); font-size:12px; flex:1; min-width:0; }
+.abar .grp { display:flex; gap:var(--xs); }
+</style>
+</head>
+<body>
+<div class="top" id="top"></div>
+<div class="body" id="body"></div>
+<script>
+const q = new URLSearchParams(location.search);
+const V = q.get('v') || 'a', PANELS = q.get('panels') || 'ok', DIFF = q.get('diff') || 'ok', BANNER = q.get('banner'),
+      FOCUS = q.get('focus'), PAGE = q.get('page') || 'main', TAB = q.get('tab') || 'checks';
+const W = window.innerWidth, WIDE = W >= 1280;
+const SHA = 'a1b2c3d';
+
+// ---- Top bar: nine tabs. Below 1,100 px the labels shorten (never an overflow menu).
+const full = ['Home','Projects','Workflows','Work','Recipes','Context','Agents','System','Reviews'];
+const short = full;
+const labels = W < 1100 ? short : full;
+const topEl = document.getElementById('top');
+if (W < 1100) topEl.classList.add('narrow');
+topEl.innerHTML = `<div class="logo">S</div>` + labels.map(t => t === 'Reviews'
+  ? `<div class="tab on">Reviews<span class="badge" aria-label="Reviews, 3 waiting on you">3</span></div>` : `<div class="tab">${t}</div>`).join('') +
+  `<div class="grow"></div><div class="status"><span class="dot ok"></span>Running</div>`;
+
+// ---- Sample data (made up, app-agnostic).
+const PR = { title: 'Release expired booking holds on a schedule', repo: 'acme/harbor', no: 2071, author: 'sam-example', sha: SHA, branch: 'feat/hb-212-hold-expiry', issues: ['HB-212', 'HB-219'] };
+
+const checks = [
+  { s:'pass',  t:'Names the design doc it builds', r:'Covers: harbor-booking-tdd#Ph2, harbor-booking-tdd#REQ-E3 (both resolve)' },
+  { s:'pass',  t:'A csproj change commits its lock files', r:'2 .csproj files changed; 2 packages.lock.json files changed with them' },
+  { s:'fail',  t:'A recipe change shows the Ui tests ran', r:`ui-tests failed on ${SHA}`, fix:true },
+  { s:'run',   t:'A new env var is in .env.example', r:`check-env-example ran on 9f8e7d6, an older commit; waiting for the run on ${SHA}` },
+  { s:'claim', t:'Ideas reviewed it', r:'The PR body says "reviewed by ideas at 9f8e7d6". Anyone who can edit the body can write that line; check it yourself.' },
+  { s:'tick',  t:'I ran it myself', r:'Needs your tick on this head. A new head unticks it.', box:false },
+];
+const stLabel = { pass:['✓','pass'], fail:['✕','fail'], run:['<i class="hc"></i>','running'], claim:['✎','claimed in body'], tick:['☐','needs a tick'] };
+const openChecks = checks.filter(c => c.s !== 'pass').length;
+
+const docTree = [
+  { id:'Ph1', tx:'Hold model and expiry time', tag:'claimed by #2063', lv:0 },
+  { id:'Ph2', tx:'Release job for expired holds', tag:'this PR', mine:true, lv:0 },
+  { id:'REQ-E3', tx:'A hold older than 15 min is released', tag:'this PR', mine:true, lv:1 },
+  { id:'REQ-E5', tx:'A released hold tells the guest by email', tag:'unclaimed', unc:true, lv:1 },
+  { id:'TP-4', tx:'Hold expires after 15 min in the test clock', tag:'verifies REQ-E3', mine:true, lv:2 },
+  { id:'Ph3', tx:'Guest notices and receipts', tag:'claimed by #2074', lv:0 },
+];
+const tests = [
+  { id:'TP-4', tx:'Hold expires after 15 min in the test clock', tag:'verifies REQ-E3', on:false },
+  { id:'TP-5', tx:'Job is a no-op when no holds are expired', tag:'verifies Ph2', on:true },
+  { id:'TP-6', tx:'Two job runs release a hold once', tag:'verifies Ph2', on:false },
+];
+
+// ---- Panels: body per state (§6.3 table).
+const P = {
+  checks:   { title:'Required checks', short:'checks', sum:`${openChecks} of ${checks.length} open`, tabn:['✕',openChecks,'err'] },
+  docmap:   { title:'Design doc', short:'doc map', sum:'harbor-booking-tdd', tabn:['',2,''] },
+  tests:    { title:'Test plan', short:'tests', sum:'1 of 3 ticked', tabn:['','1/3',''] },
+  ci:       { title:'CI', short:'CI', sum:'1 failing, 1 running', tabn:['✕',1,'err'] },
+  evidence: { title:'Evidence', short:'evidence', sum:'2 sources', tabn:['',2,''] },
+  risk:     { title:'Risk', short:'risk', sum:'1 risky file', tabn:['<i class="hc"></i>',1,'warn'] },
+  threads:  { title:'Conversation', short:'threads', sum:'2 open, 1 resolved', tabn:['',2,''] },
+};
+const ORDERP = ['checks','docmap','tests','ci','evidence','risk','threads'];
+
+const emptyTx = { checks:'No required checks for this project', docmap:'This PR names no design doc. Docs in this project: harbor-booking-tdd, harbor-notices-tdd.', tests:'No test plan rows for the claimed items',
+  ci:`No CI runs on ${SHA} yet`, evidence:`No evidence found for ${SHA}`, risk:'No risky paths touched', threads:'No threads yet' };
+const errTx = { checks:'Couldn’t decide checks: ci failed: GitHub answered 502', docmap:'Couldn’t read the library: /home/joi/vault/harbor couldn’t be read: permission denied', tests:'Couldn’t read the library: /home/joi/vault/harbor couldn’t be read: permission denied',
+  ci:'Couldn’t read CI: GitHub answered 502', evidence:'Couldn’t read /home/joi/.agentic-workflow/acme-harbor/evidence/2071/summary.json: not valid JSON', threads:'Couldn’t read threads: GitHub answered 502' };
+const stripEmpty = { checks:'No required checks', docmap:'No doc named', ci:'No CI runs yet', risk:'No risky files' };
+
+const checkRow = c => {
+  const [ic, w] = stLabel[c.s];
+  return `<div class="crow"><div class="l1"><span class="st ${c.s}"><span>${ic}</span>${w}</span><div class="t">${c.t}</div></div>
+    <div class="r">${c.r}</div>
+    ${c.fix ? `<div class="act"><button class="btn sm">Send as fix task</button></div>` : ''}
+    ${c.s === 'tick' ? `<div class="act"><span class="box"></span><span>Tick when you have run it <span class="mono" style="color:var(--tert)">Space</span></span></div>` : ''}</div>`;
+};
+const treeRow = r => `<div class="tr1${r.mine ? ' mine' : ''}${r.unc ? ' unc' : ''}${r.lv === 1 ? ' ind' : r.lv === 2 ? ' ind2' : ''}"><span class="id">${r.id}</span><span class="tx">${r.tx}</span><span class="tag">${r.unc ? '⚠ ' : ''}${r.tag}</span></div>`;
+
+function content(k) {
+  if (PANELS === 'loading') return `<div class="skel"></div>`;
+  if (PANELS === 'empty') return `<div class="empty">${emptyTx[k]}</div>`;
+  if (PANELS === 'error' && errTx[k]) return `<div class="perr"><span>✕</span><span>${errTx[k]}</span></div>`;
+  switch (k) {
+    case 'checks': return checks.map(checkRow).join('');
+    case 'docmap': return `<div class="tree">${docTree.map(treeRow).join('')}</div>
+      <div class="crow" style="border-top:1px solid var(--hair);margin-top:6px"><div class="r" style="margin:0">REQ-E5 is in the doc and no open PR claims it.</div><div class="act"><button class="btn sm">Send as fix task</button></div></div>`;
+    case 'tests': return tests.map(t => `<div class="trow"><span class="box${t.on ? ' on' : ''}">${t.on ? '✓' : ''}</span><span class="id">${t.id}</span><span class="tx">${t.tx}</span><span class="tag">${t.tag}</span></div>`).join('');
+    case 'ci': return `<div class="sub">Check runs on ${SHA}</div>` + [
+      ['pass','build','1 m 52 s'], ['pass','unit','3 m 10 s'], ['fail','ui-tests','failed after 6 m'], ['run','check-env-example','last run on 9f8e7d6; waiting'],
+    ].map(([s,n,d]) => `<div class="trow"><span class="st ${s}">${stLabel[s][0]} ${stLabel[s][1]}</span><span class="tx">${n}</span><span class="tag">${d}</span></div>`).join('') +
+      `<div class="sub">Babysitter</div><div class="kvl"><span class="k">Instance</span><span class="v">watching; 2 threads fixed, 1 waiting on CI</span></div>`;
+    case 'evidence': return `<div class="kvl"><span class="k">ui-evidence</span><span class="v">run on ${SHA}: 6 screenshots, all checks passed</span></div>
+      <div class="kvl"><span class="k">Proof pack</span><span class="v">babysitter <span class="mono">proof-pack/</span>, matched by PR number (no head sha in it)</span></div>
+      <div class="kvl"><span class="k">PR body</span><span class="v">Evidence section: 2 links</span></div>`;
+    case 'risk': return `<div class="kvl"><span class="k">Path</span><span class="v"><span class="mono">.github/workflows/release.yml</span> is a workflow file (matches <span class="mono">.github/workflows/**</span>)</span></div>
+      <div class="kvl"><span class="k">PR body</span><span class="v">“Releasing a hold touches the payments queue; the job is idempotent.”</span></div>
+      <div class="kvl"><span class="k">Handoff note</span><span class="v">risks: schedule runs every 5 min in prod</span></div>`;
+    case 'threads': return `<div class="thread"><div class="w">kim-example · <span class="mono">BookingHold.cs:52</span> · open</div><div class="q">Should expiry use the hold’s own timezone, or UTC?</div></div>
+      <div class="thread"><div class="w">sindri · <span class="mono">ReleaseExpiredHoldsService.cs:31</span> · open · fix task</div><div class="q">Release job swallows the queue error; surface it.</div></div>
+      <div class="thread"><div class="w">sam-example · <span class="mono">HoldExpiry.cs:12</span> · resolved</div><div class="q">Renamed to ExpiryWindow.</div></div>`;
+  }
+}
+// What the strip / panel header says per state.
+function sumFor(k) {
+  if (PANELS === 'loading') return 'reading…';
+  if (PANELS === 'empty') return stripEmpty[k] || 'none';
+  if (PANELS === 'error' && errTx[k]) return 'couldn’t read';
+  return P[k].sum;
+}
+
+// ---- Variant A: panels stacked in a column; all open on wide, only checks open below 1,280.
+function panelA(k) {
+  const open = WIDE || k === 'checks';
+  return `<div class="panel" id="p-${k}"><div class="ph-h"><span class="chev">${open ? '▾' : '▸'}</span><span class="t">${P[k].title}</span><span class="s">${sumFor(k)}</span></div>${open ? `<div class="pb">${content(k)}</div>` : ''}</div>`;
+}
+
+// ---- Summary strip (A).
+function strip() {
+  const f = FOCUS === 'strip' ? ' focus' : '';
+  if (PANELS === 'loading') return `<div class="strip${f}"><span class="seg dim">Reading checks…</span><span class="seg dim">Reading the claim…</span><span class="seg dim">Reading risk…</span><span class="seg dim">Reading CI…</span></div>`;
+  if (PANELS === 'empty') return `<div class="strip${f}"><span class="seg dim">No required checks</span><span class="seg dim">No doc named</span><span class="seg dim">No risky files</span><span class="seg dim">No CI runs yet</span></div>`;
+  if (PANELS === 'error') return `<div class="strip${f}"><span class="seg err"><span class="ic">✕</span>Couldn’t decide checks</span><span class="seg err"><span class="ic">✕</span>Couldn’t read the library</span><span class="seg warn"><span class="ic"><i class="hc"></i></span><span><b>1</b> risky file</span></span><span class="seg err"><span class="ic">✕</span>Couldn’t read CI</span></div>`;
+  return `<div class="strip${f}" id="strip">
+    <button class="seg err"><span class="ic">✕</span><span><b>${openChecks}</b> of ${checks.length} required checks open</span></button>
+    <button class="seg"><span class="ic">✓</span><span>Covers <b>Ph2, REQ-E3</b></span></button>
+    <button class="seg warn"><span class="ic"><i class="hc"></i></span><span><b>1</b> risky file</span></button>
+    <button class="seg err"><span class="ic">✕</span><span>CI: <b>1</b> failing, 1 running</span></button>
+    <span class="note-r">Each part jumps to its panel</span></div>`;
+}
+
+// ---- Variant B: the strip becomes tabs on the right rail.
+function railB() {
+  const tabs = ORDERP.map(k => {
+    const n = P[k].tabn, on = k === TAB;
+    return `<span class="tb${on ? ' on' : ''}">${P[k].short}${PANELS === 'ok' && n[1] !== '' ? `<span class="n ${n[2]}">${n[0]}${n[0] ? '&nbsp;' : ''}${n[1]}</span>` : ''}</span>`;
+  }).join('');
+  return `<div class="tabs${FOCUS === 'strip' ? ' focus' : ''}">${tabs}</div><div class="railbody"><div class="rh"><span class="t">${P[TAB].title}</span><span class="s">${sumFor(TAB)}</span></div>${content(TAB)}</div>`;
+}
+
+// ---- Diff
+const FILES = [
+  { g:'Core', n:4, files:[['M','src/Booking/Aw.Booking.Core/BookingHold.cs',1,'cur'],['A','…Core/HoldExpiry.cs'],['M','…Core/BookingId.cs'],['M','…Core/PublicAPI.Unshipped.txt']] },
+  { g:'Features', n:8, files:[['A','…Features/ReleaseExpiredHolds/Service.cs'],['A','…ReleaseExpiredHolds/Request.cs'],['A','…ReleaseExpiredHolds/Response.cs'],['M','…Features/HoldsRegistration.cs'],['R','…Host/HoldExpiryJob.cs'],['D','…Host/LegacyReleaseWorker.cs'],['M','…Host/Program.cs'],['M','…Host/appsettings.json']] },
+  { g:'Tests', n:9, files:[['A','tests/…Tests/ReleaseExpiredHolds/ReleaseTests.cs'],['A','tests/…Tests/BookingHoldTests.cs'],['M','tests/…Testing/FakeClock.cs'],['M','tests/…Tests/PublicApiTests.cs'],['M','tests/…Tests/Aw.Booking.Tests.csproj'],['A','tests/…Tests/Golden/hold-expired.json'],['A','tests/…Tests/Golden/hold-active.json'],['M','tests/…Testing/Builders.cs'],['M','tests/…Tests/packages.lock.json']] },
+  { g:'Other', n:7, files:[['M','.github/workflows/release.yml',0,'',1],['A','docs/img/hold-flow.png'],['M','docs/booking.md'],['M','README.md'],['M','.env.example'],['M','Directory.Packages.props'],['M','CHANGELOG.md']] },
+];
+const fileList = (total) => `<div class="flist" aria-label="Files">${FILES.map(g => `<div class="gh">${g.g}<span class="n">${g.n}</span></div>${g.files.map(f => `<div class="fi${f[3] === 'cur' ? ' cur' : ''}${f[2] ? ' v' : ''}"><span class="box${f[2] ? ' on' : ''}">${f[2] ? '✓' : ''}</span><span class="stt ${f[0]}">${f[0]}</span><span class="nm">${f[1]}</span>${f[4] ? '<span class="rk">risky</span>' : ''}</div>`).join('')}`).join('')}
+  <div class="gh fold"><span>▸</span>Lockfiles, collapsed, 14 files</div></div>`;
+
+const dl = (a, b, sg, tx, cls) => `<div class="dl ${cls || ''}" role="listitem"><span class="no">${a}</span><span class="no">${b}</span><span class="sg">${sg}</span><span class="tx">${tx}</span></div>`;
+const fileCard = (path, ad, opts, body) => `<div class="file"><div class="fh"><span class="vw"><span class="box${opts.viewed ? ' on' : ''}">${opts.viewed ? '✓' : ''}</span>${opts.viewed ? 'Viewed' : 'Mark viewed'}</span><span class="p">${path}</span>${opts.badge || ''}<span class="ad">${ad}</span></div>${opts.note || ''}${body}</div>`;
+const hunk = (t, r) => `<div class="hunk"><span>${t}</span><span style="color:var(--tert)">${r}</span></div>`;
+
+function diffFiles() {
+  const f1 = fileCard('src/Booking/Aw.Booking.Core/BookingHold.cs', '+38 −6', { viewed:true, badge:'<span class="chip">modified</span>' },
+    hunk('@@ -38,10 +38,22 @@ public sealed record BookingHold', 'lines 38 to 59') + `<div role="list">` +
+    dl(38,38,' ','    public DateTimeOffset PlacedAt { get; }') +
+    dl(39,39,' ','    public BookingId Id { get; }') +
+    dl(40,'','−','    public bool IsActive => Status == HoldStatus.Active;','del') +
+    dl('',40,'+','    public ExpiryWindow Window { get; }','add') +
+    dl('',41,'+','    public bool IsExpired(DateTimeOffset now) => now - PlacedAt >= Window.Length;','add') +
+    dl('',42,'+','    public bool IsActive => Status == HoldStatus.Active && !IsExpired(Clock.Now);','add') +
+    dl(41,43,' ','') +
+    dl(42,44,' ','    public Result<BookingHold> Release(DateTimeOffset now)') +
+    dl(43,45,' ','    {') + `</div>`);
+  const f2 = fileCard('src/Booking/Aw.Booking.Host/HoldExpiryJob.cs', '+12 −9', { badge:'<span class="chip warn">renamed</span>',
+    note:'<div class="fnote">Renamed from <span class="mono">src/Booking/Aw.Booking.Host/ExpiryJob.cs</span>, 91% the same</div>' },
+    hunk('@@ -8,9 +8,12 @@ internal sealed class HoldExpiryJob', 'lines 8 to 19') + `<div role="list">` +
+    dl(8,8,' ','    private readonly IService<ReleaseRequest, ReleaseResponse> release;') +
+    dl(9,'','−','    public ExpiryJob(IService<ReleaseRequest, ReleaseResponse> release)','del') +
+    dl('',9,'+','    public HoldExpiryJob(IService<ReleaseRequest, ReleaseResponse> release)','add') +
+    dl(10,10,' ','        => this.release = release;') + `</div>`);
+  const f3 = fileCard('.github/workflows/release.yml', '+9 −2', { badge:'<span class="chip warn">⚠ risky</span>',
+    note:'<div class="fnote risk">⚠ Risky: a workflow file (matches <span class="mono">.github/workflows/**</span>). It can run with the repo’s secrets.</div>' },
+    hunk('@@ -21,6 +21,13 @@ jobs:', 'lines 21 to 33') + `<div role="list">` +
+    dl(21,21,' ','  release:') + dl(22,22,' ','    runs-on: ubuntu-latest') +
+    dl('',23,'+','    schedule:','add') + dl('',24,'+','      - cron: "*/5 * * * *"','add') +
+    dl(23,25,' ','    steps:') + dl(24,'','−','      - run: ./scripts/release.sh --all','del') + dl('',26,'+','      - run: ./scripts/release.sh --expired-holds','add') + `</div>`);
+  const f4 = fileCard('src/Booking/Aw.Booking.Host/LegacyReleaseWorker.cs', '−61', { badge:'<span class="chip err">deleted</span>' },
+    `<div class="fnote plain">Deleted file: 61 lines removed. Contents hidden.&nbsp;<span style="color:var(--ink)">Show</span></div>`);
+  const f5 = fileCard('docs/img/hold-flow.png', '18 KB', { badge:'<span class="chip ok">added</span>' },
+    `<div class="fnote plain">Binary file, not shown here.&nbsp;<span style="color:var(--ink)">Open on GitHub ↗</span></div>`);
+  return f1 + f2 + f3 + f4 + f5 + `<div class="dstate" style="padding:var(--md);color:var(--subtle)">37 more files below · Lockfiles stay folded (14)</div>`;
+}
+
+function diffPane() {
+  const cap = DIFF === 'cap';
+  const count = cap ? '3,000 files' : '42 files';
+  const top = `<div class="dtop"><b>Files changed</b><span class="cnt">${DIFF === 'ok' || cap || DIFF === 'offline' ? `${count} · +812 −143 · 4 viewed` : ''}</span><span class="keys">j/k file · n/p hunk · c fix task · o fold</span></div>`;
+  if (DIFF === 'loading') return top + `<div class="dstate"><div>Reading 42 files…</div><div class="skel"></div><div class="skel" style="width:35%"></div></div>`;
+  if (DIFF === 'none') return top + `<div class="dstate">This PR changes no files</div>`;
+  if (DIFF === 'error') return top + `<div class="banner err"><span class="dot err"></span><span class="grow">Couldn’t read the diff: GitHub answered 502 (bad gateway)</span><button class="btn sm">Try again</button></div>`;
+  let extra = '';
+  if (DIFF === 'offline') extra = `<div class="banner warn" style="margin-bottom:var(--sm)"><span class="dot warn"></span><span class="grow">Offline. This is the cached diff, as of 2 h ago, the PR may have moved.</span><button class="btn sm">Try again</button></div>`;
+  if (cap) extra = `<div class="banner quiet" style="margin-bottom:var(--sm)"><span class="dot none"></span><span class="grow">GitHub lists the first 3,000 files; open the rest on GitHub.</span><button class="btn sm">Open on GitHub ↗</button></div>`;
+  return top + extra + `<div class="dwrap">${fileList()}<div class="dfiles">${diffFiles()}</div></div>`;
+}
+
+// ---- Header, banner, action bar
+const chips = PR.issues.map(i => `<span class="chip">${i}</span>`).join(' ');
+const header = () => `<div class="hdr"><div class="crumb"><span>← Reviews</span><span>·</span><span>Waiting on you</span></div>
+  <div class="hrow"><div class="grow"><h1>${PR.title} <span class="no">#${PR.no}</span></h1>
+  <div class="meta"><span>${PR.repo}</span><span class="sep">·</span><span>#${PR.no}</span><span class="sep">·</span><span>by ${PR.author}</span><span class="sep">·</span><span class="mono">head ${PR.sha}</span><span class="sep">·</span>${chips}${V === 'b' ? `<span class="sep">·</span><span class="chip ok">Covers Ph2, REQ-E3</span>` : ''}</div></div>
+  <span class="sel">Settings: harbor ▾</span><button class="btn">Open on GitHub ↗</button></div></div>`;
+
+const moved = () => `<div class="banner warn" style="margin:0 var(--lg) var(--sm)"><span class="dot warn"></span><span class="grow">The PR moved to <span class="mono">e4f5a6b</span>. Reload to see the new commits. Reset: 2 ticks (I ran it myself, TP-4).</span><button class="btn primary sm">Reload</button></div>`;
+const roBanner = (w) => `<div class="banner quiet" style="margin:0 var(--lg) var(--sm)"><span class="dot none"></span><span class="grow">${w} This page is read-only; the checks shown are as of the last head.</span><button class="btn sm">Open on GitHub ↗</button></div>`;
+
+function abar(ro) {
+  return `<div class="abar"><div class="out" tabindex="0">${ro ? 'Read-only.' : 'Release 1: both buttons open this PR’s review box on GitHub. Your ticks are saved on this head.'}</div>
+    <div class="grp"><button class="btn${ro ? ' off' : ''}">Request changes on GitHub ↗</button><button class="btn primary${ro ? ' off' : ''}">Approve on GitHub ↗</button></div></div>`;
+}
+
+// ---- Whole-page states (§15 Ph6)
+function whole() {
+  const t = {
+    notfound:  ['Pull request not found', 'GitHub has no #2071 in acme/harbor, or it was deleted. Check the number, or go back to the list.', ['← Back to Reviews']],
+    notserved: ['Sindri doesn’t sync acme/harbor', 'Sindri doesn’t sync acme/harbor. Add it to <span class="mono">context.sources.github.repos</span>.<br><span class="mono" style="color:var(--subtle)">SND-REVIEW-004</span>', ['← Back to Reviews', 'Open Settings → Connections']],
+    offline:   ['You’re offline and this PR isn’t cached', 'Sindri can’t reach GitHub and has nothing stored for acme/harbor #2071. It shows up here once you’re back online.', ['Try again', '← Back to Reviews', 'Open on GitHub ↗']],
+  }[PAGE];
+  return `<div class="scroll"><div class="center"><div class="crumb"><span>← Reviews</span></div><h2>${t[0]}</h2><p>${t[1]}</p><div class="acts">${t[2].map((b, i) => `<button class="btn${i === 0 ? ' primary' : ''}">${b}</button>`).join('')}</div></div></div>`;
+}
+
+// ---- Compose
+const bodyEl = document.getElementById('body');
+if (['notfound','notserved','offline'].includes(PAGE)) {
+  bodyEl.innerHTML = whole();
+} else {
+  const ro = PAGE === 'merged' || PAGE === 'closed';
+  const pb = PAGE === 'merged' ? roBanner('Merged on Nov 4 by kim-example into main.') : PAGE === 'closed' ? roBanner('Closed on Nov 4 by sam-example without merging.') : '';
+  const cols = V === 'b'
+    ? `<div class="main rail"><div class="pcol">${railB()}</div><div class="dpane">${diffPane()}</div></div>`
+    : `<div class="main"><div class="pcol">${ORDERP.map(panelA).join('')}</div><div class="dpane">${diffPane()}</div></div>`;
+  bodyEl.innerHTML = `<div class="scroll">${header()}${V === 'a' ? strip() : ''}${BANNER === 'moved' ? moved() : ''}${pb}${cols}</div>${abar(ro)}`;
+}
+</script>
+</body>
+</html>
