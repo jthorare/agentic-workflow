@@ -243,17 +243,4 @@ public sealed class HookVerifiedDeliveryTests
     }
 
     private HookingDelay Hooking(Func<int, DateTimeOffset, ValueTask> afterWait) => new(_world.Delay, _world.Clock, afterWait);
-
-    // A delay that runs a hook after each wait, as the lane's own hook would while the meta waits.
-    private sealed class HookingDelay(InMemoryDelay inner, ManualClock clock, Func<int, DateTimeOffset, ValueTask> afterWait) : IDelay
-    {
-        private int _calls;
-
-        public async ValueTask Wait(TimeSpan duration, CancellationToken cancellationToken)
-        {
-            await inner.Wait(duration, cancellationToken);
-            _calls++;
-            await afterWait(_calls, clock.GetUtcNow());
-        }
-    }
 }
