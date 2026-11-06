@@ -149,7 +149,7 @@ One page, `docs/conventions/design-docs.md` (new, Ph0), and one schema of the pa
 | `repo:<name>` | each profile repo, through the existing `repo-docs` feed | Its doc globs, unchanged (`docs/**/*.md` covers `docs/superpowers/specs/`). Front-matter docs among them are itemized too |
 
 - A file's first 4 KiB decide whether it's read: no `aw-doc: 1` front matter means it is skipped before any text is stored.
-- **Near misses are counted, not stored.** A file whose first 4 KiB hold front matter with an `aw-doc:` key whose value isn't the number `1` (`"1"`, `1.0`, `yes`), or `aw-doc: 1` after a blank first line, is skipped the same way, but its path goes on the `library` doctor row ("3 files look like design docs but aren't read") and in `sindri library list --near-misses`. No text from it is stored. `sindri library validate` reports it as `SND-LIB-019` with the fix.
+- **Near misses are counted, not stored.** A file whose first 4 KiB hold front matter with an `aw-doc:` key whose value isn't a whole number (`"1"`, `1.0`, `yes`), or `aw-doc: 1` after a blank first line, is skipped the same way, but its path goes on the `library` doctor row ("3 files look like design docs but aren't read") and in `sindri library list --near-misses`. No text from it is stored. `sindri library validate` reports it as `SND-LIB-019` with the fix. A whole number other than 1 (`aw-doc: 2`) is not a near miss: it is a later convention version, stored with `SND-LIB-010` and no items (§9).
 - Symlinks are not followed.
 - A front-matter file over 1 MiB is stored as a doc with the error "too large" and no items.
 
