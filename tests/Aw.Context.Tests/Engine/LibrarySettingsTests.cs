@@ -15,7 +15,7 @@ public sealed class LibrarySettingsTests
     private static LibraryHost Host(string? sindriHome = "/home/harbor/.agentic-workflow/sindri-app", Func<string, string>? real = null) =>
         new() { Home = Home, SindriHome = sindriHome, StateDefault = Home + "/.agentic-workflow", RealPath = real ?? (static p => p) };
 
-    private static LibrarySource Source(string json) => Read(json).Value.Library!;
+    private static LibrarySettings Source(string json) => Read(json).Value.Library!;
 
     [Fact, Trait("Lane", "unit")]
     public void A_profile_with_no_library_key_has_no_library_and_no_model_roots()

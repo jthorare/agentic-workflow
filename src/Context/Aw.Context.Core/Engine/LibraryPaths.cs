@@ -12,7 +12,7 @@ public static class LibraryPaths
     /// <param name="source">The checked settings.</param>
     /// <param name="host">The machine's home folders.</param>
     /// <returns>The roots (the 'aw' root first, unless turned off), or SND-LIB-001 naming the key path.</returns>
-    public static Result<IReadOnlyList<LibraryRoot>> Resolve(LibrarySource source, LibraryHost host)
+    public static Result<IReadOnlyList<LibraryRoot>> Resolve(LibrarySettings source, LibraryHost host)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(host);

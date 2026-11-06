@@ -43,11 +43,11 @@ internal static partial class LibraryRules
     /// <summary>'context.sources.library' checked, or null success when the profile names none.</summary>
     /// <param name="section">The section as written.</param>
     /// <returns>The settings, or SND-LIB-001 naming the key path.</returns>
-    internal static Result<LibrarySource?> Library(LibrarySection? section)
+    internal static Result<LibrarySettings?> Library(LibrarySection? section)
     {
         if (section is null)
         {
-            return Kernel.Results.Success<LibrarySource?>(value: null);
+            return Kernel.Results.Success<LibrarySettings?>(value: null);
         }
 
         var vaults = new List<LibraryVault>();
@@ -60,13 +60,13 @@ internal static partial class LibraryRules
 
         return problem is not null
             ? problem
-            : Kernel.Results.Success<LibrarySource?>(new LibrarySource { StateDir = section.StateDir, Models = section.Models ?? false, Vaults = vaults });
+            : Kernel.Results.Success<LibrarySettings?>(new LibrarySettings { StateDir = section.StateDir, Models = section.Models ?? false, Vaults = vaults });
     }
 
     /// <summary>The root names whose docs may reach a model call.</summary>
     /// <param name="library">The checked entry, or null.</param>
     /// <returns>'aw' when its root is on and 'models' is true, then each vault with 'models: true'.</returns>
-    internal static IReadOnlyList<string> ModelRoots(LibrarySource? library) =>
+    internal static IReadOnlyList<string> ModelRoots(LibrarySettings? library) =>
         library is null ? [] : [.. library is { AwRootOn: true, Models: true } ? new[] { "aw" } : [], .. library.Vaults.Where(static v => v.Models).Select(static v => v.Name)];
 
     /// <summary>What is wrong with a root path as written, or null: an absolute path with no '..', or one that starts with '~/' (checked as it would be once expanded).</summary>
@@ -82,7 +82,7 @@ internal static partial class LibraryRules
         };
 
     private static Error? StateDir(string? stateDir) =>
-        stateDir is null || string.Equals(stateDir, LibrarySource.Off, StringComparison.Ordinal) || PathProblem(stateDir) is null
+        stateDir is null || string.Equals(stateDir, LibrarySettings.Off, StringComparison.Ordinal) || PathProblem(stateDir) is null
             ? null
             : Invalid(Prefix + ".stateDir", $"'{SettingsReader.Printable(stateDir)}' {PathProblem(stateDir)}; or off");
 

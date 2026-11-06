@@ -11534,7 +11534,7 @@ Aw.Context.Core.Library.ILibraryStore.Doc(Aw.Context.Core.Sources.RecordKey key,
 Aw.Context.Core.Library.ILibraryStore.Items(Aw.Context.Core.Sources.RecordKey doc, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryItem!>!>!>
 Aw.Context.Core.Library.ILibraryStore.ClaimsOf(Aw.Context.Core.Sources.RecordKey pr, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryClaimRow!>!>!>
 Aw.Context.Core.Library.ILibraryStore.ClaimsNaming(string! slug, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryClaimRow!>!>!>
-Aw.Context.Core.Engine.ContextSettings.Library.get -> Aw.Context.Core.Engine.LibrarySource?
+Aw.Context.Core.Engine.ContextSettings.Library.get -> Aw.Context.Core.Engine.LibrarySettings?
 Aw.Context.Core.Engine.ContextSettings.Library.init -> void
 Aw.Context.Core.Engine.ContextSettings.LibraryModelRoots.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Context.Core.Engine.ContextSettings.LibraryModelRoots.init -> void
@@ -11561,15 +11561,15 @@ Aw.Context.Core.Engine.LibraryRoot.Name.get -> string!
 Aw.Context.Core.Engine.LibraryRoot.Name.init -> void
 Aw.Context.Core.Engine.LibraryRoot.Path.get -> string!
 Aw.Context.Core.Engine.LibraryRoot.Path.init -> void
-Aw.Context.Core.Engine.LibrarySource
-Aw.Context.Core.Engine.LibrarySource.AwRootOn.get -> bool
-Aw.Context.Core.Engine.LibrarySource.LibrarySource() -> void
-Aw.Context.Core.Engine.LibrarySource.Models.get -> bool
-Aw.Context.Core.Engine.LibrarySource.Models.init -> void
-Aw.Context.Core.Engine.LibrarySource.StateDir.get -> string?
-Aw.Context.Core.Engine.LibrarySource.StateDir.init -> void
-Aw.Context.Core.Engine.LibrarySource.Vaults.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.LibraryVault!>!
-Aw.Context.Core.Engine.LibrarySource.Vaults.init -> void
+Aw.Context.Core.Engine.LibrarySettings
+Aw.Context.Core.Engine.LibrarySettings.AwRootOn.get -> bool
+Aw.Context.Core.Engine.LibrarySettings.LibrarySettings() -> void
+Aw.Context.Core.Engine.LibrarySettings.Models.get -> bool
+Aw.Context.Core.Engine.LibrarySettings.Models.init -> void
+Aw.Context.Core.Engine.LibrarySettings.StateDir.get -> string?
+Aw.Context.Core.Engine.LibrarySettings.StateDir.init -> void
+Aw.Context.Core.Engine.LibrarySettings.Vaults.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.LibraryVault!>!
+Aw.Context.Core.Engine.LibrarySettings.Vaults.init -> void
 Aw.Context.Core.Engine.LibraryVault
 Aw.Context.Core.Engine.LibraryVault.Deny.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Context.Core.Engine.LibraryVault.Deny.init -> void
@@ -11580,6 +11580,6 @@ Aw.Context.Core.Engine.LibraryVault.Name.get -> string!
 Aw.Context.Core.Engine.LibraryVault.Name.init -> void
 Aw.Context.Core.Engine.LibraryVault.Path.get -> string!
 Aw.Context.Core.Engine.LibraryVault.Path.init -> void
-const Aw.Context.Core.Engine.LibrarySource.Off = "off" -> string!
-static Aw.Context.Core.Engine.LibraryPaths.Resolve(Aw.Context.Core.Engine.LibrarySource! source, Aw.Context.Core.Engine.LibraryHost! host) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.LibraryRoot!>!>!
+const Aw.Context.Core.Engine.LibrarySettings.Off = "off" -> string!
+static Aw.Context.Core.Engine.LibraryPaths.Resolve(Aw.Context.Core.Engine.LibrarySettings! source, Aw.Context.Core.Engine.LibraryHost! host) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.LibraryRoot!>!>!
 static readonly Aw.Context.Core.ContextErrors.LibraryInvalid -> Aw.Kernel.ErrorDefinition!

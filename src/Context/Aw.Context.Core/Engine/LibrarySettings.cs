@@ -1,7 +1,7 @@
 namespace Aw.Context.Core.Engine;
 
 /// <summary>'context.sources.library', checked (review page spec §5.1): the state folder's docs and the vaults the library feed reads.</summary>
-public sealed class LibrarySource
+public sealed class LibrarySettings
 {
     /// <summary>The value of 'stateDir' that turns the 'aw' root off.</summary>
     public const string Off = "off";
