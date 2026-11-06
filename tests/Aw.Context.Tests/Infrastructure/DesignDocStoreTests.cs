@@ -16,7 +16,7 @@ public sealed class DesignDocStoreTests : IDisposable
 {
     private const string DocKey = "repo:aw/docs/harbor.md";
     private const string PrKey = "github:pr/acme/widgets/12";
-    private const string Body = "## Goals\n- **REQ-1** Book a ferry.\n- **REQ-2** Cancel a booking.\n| **TP-1** Booking works. Verifies REQ-1 |\n";
+    private const string Body = "## Goals\n- **REQ-1** Book a ferry.\n- **REQ-2** Cancel a booking.\n| **TP-1** | Booking works. Verifies REQ-1 |\n";
 
     private readonly RecordStoreWorld _world = new();
 
@@ -191,6 +191,7 @@ public sealed class DesignDocStoreTests : IDisposable
     [Fact, Trait("Lane", "integration")]
     public async Task A_batch_naming_a_side_row_writer_the_store_does_not_have_is_refused_and_writes_nothing()
     {
+        await _world.Migrate();   // the refusal happens before the store opens its file, so the tables are made first to count in
         var write = RecordSamples.Write(DocRecord(), "words") with { Side = new NobodysRows() };
 
         var result = await Commit(RepoDocs.Id, 1, write);
