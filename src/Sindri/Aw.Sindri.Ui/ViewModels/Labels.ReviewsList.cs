@@ -57,6 +57,39 @@ internal static partial class Labels
     /// <summary>The hint line under the list.</summary>
     internal const string ReviewsHint = "J K next / previous PR · Enter open · G V go to Reviews";
 
+    /// <summary>The first column's heading.</summary>
+    internal const string ReviewsColPr = "PULL REQUEST";
+
+    /// <summary>The author column's heading.</summary>
+    internal const string ReviewsColAuthor = "AUTHOR";
+
+    /// <summary>The age column's heading.</summary>
+    internal const string ReviewsColAge = "AGE";
+
+    /// <summary>The CI column's heading.</summary>
+    internal const string ReviewsColCi = "CI";
+
+    /// <summary>The required checks column's heading.</summary>
+    internal const string ReviewsColRequired = "REQUIRED CHECKS";
+
+    /// <summary>The design doc column's heading.</summary>
+    internal const string ReviewsColDoc = "DESIGN DOC";
+
+    /// <summary>The library errors sheet's title.</summary>
+    internal const string LibrarySheetTitle = "Library errors";
+
+    /// <summary>The sheet's first section: docs stored with errors.</summary>
+    internal const string LibraryBrokenTitle = "Docs with errors";
+
+    /// <summary>The sheet's second section: files that almost read as docs.</summary>
+    internal const string LibraryNearMissTitle = "Near misses";
+
+    /// <summary>The sheet's third section: folders that couldn't be read.</summary>
+    internal const string LibraryRootsTitle = "Folders that can't be read";
+
+    /// <summary>The sheet when the library has nothing to fix.</summary>
+    internal const string LibraryClean = "Nothing to fix.";
+
     /// <summary>The header's source part: "GitHub synced 14 min ago".</summary>
     internal static string ReviewsSource(string text) => "GitHub " + text;
 

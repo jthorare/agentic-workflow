@@ -81,6 +81,8 @@ public sealed class GoldenContractTests
         ["jobs-id-cancel"] = As<CommandAcceptedView>,   // POST /jobs/{id}/cancel's accepted answer; the refusals are ProblemDetails
         ["projects"] = As<ProjectList>,   // GET /projects: the Projects page's three groups (projects page spec §6.2)
         ["reviews"] = As<ReviewList>,   // GET /reviews: the Reviews tab, its badge and Home's waiting line (review page spec §6.1)
+        ["reviews-login"] = As<ReviewLoginSaved>,   // POST /reviews/login: the Reviews tab's login Save (review page spec §6.1); the refusals are ProblemDetails
+        ["library"] = As<LibraryView>,   // GET /library: the Reviews header's library errors sheet (review page spec §6.1)
         ["projects-linear"] = As<ProjectLinearList>,   // GET /projects/linear: the Add project sheet's From Linear rows (projects page spec §3.2)
         ["projects-id"] = As<ProjectOne>,   // GET /projects/{id}: one card with its hidden flag
         ["projects-attach"] = As<ProjectAcceptedView>,   // POST /projects' accepted answer: the new prj_ id at version 1 (hand-written until the route's scenario records it)

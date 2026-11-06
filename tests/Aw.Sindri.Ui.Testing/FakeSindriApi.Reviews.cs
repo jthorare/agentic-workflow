@@ -17,6 +17,37 @@ internal sealed partial class FakeSindriApi
     /// <summary>When set, the Reviews list read waits for it: the page stays loading until the test completes it.</summary>
     public TaskCompletionSource? ReviewsGate { get; set; }
 
+    private readonly List<ReviewLoginSave> _loginSaves = [];
+    private int _libraryCalls;
+
+    /// <summary>POST /sindri/reviews/login's answer: the "saved" golden by default.</summary>
+    public RouteAnswer ReviewLoginAnswer { get; set; } = RouteAnswer.Api("reviews-login", "saved");
+
+    /// <summary>GET /sindri/library's answer: the "ok" golden by default.</summary>
+    public RouteAnswer LibraryAnswer { get; set; } = RouteAnswer.Api("library", "ok");
+
+    /// <summary>The logins the page asked to save, in order.</summary>
+    public IReadOnlyList<ReviewLoginSave> ReviewLoginSaves { get { lock (_gate) { return [.. _loginSaves]; } } }
+
+    /// <summary>How many times the library was read.</summary>
+    public int LibraryCalls => Volatile.Read(ref _libraryCalls);
+
+    public Task<Result<ReviewLoginSaved>> SaveReviewLogin(Uri api, ReviewLoginSave save, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _loginSaves.Add(save);
+        }
+
+        return Task.FromResult(Answer<ReviewLoginSaved>(api, ReviewRoutes.Login, ReviewLoginAnswer));
+    }
+
+    public Task<Result<LibraryView>> Library(Uri api, CancellationToken cancellationToken)
+    {
+        _ = Interlocked.Increment(ref _libraryCalls);
+        return Task.FromResult(Answer<LibraryView>(api, ReviewRoutes.Library, LibraryAnswer));
+    }
+
     public async Task<Result<ReviewList>> Reviews(Uri api, CancellationToken cancellationToken)
     {
         _ = Interlocked.Increment(ref _reviewsCalls);

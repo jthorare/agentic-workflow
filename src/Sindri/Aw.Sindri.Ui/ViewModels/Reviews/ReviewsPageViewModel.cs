@@ -20,6 +20,7 @@ internal sealed class ReviewsPageViewModel : ObservableObject, IDisposable
     internal ReviewsPageViewModel(ISindriApi api, TimeProvider clock)
     {
         (_api, _clock) = (api, clock);
+        Library = new LibrarySheetViewModel(api);
     }
 
 #pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
@@ -78,6 +79,39 @@ internal sealed class ReviewsPageViewModel : ObservableObject, IDisposable
 
     /// <summary>The last read's failure line; empty when the last read worked.</summary>
     public string Error { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>The login prompt's failure under the field (the server's detail); empty when there is none.</summary>
+    public string LoginError { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>True when Save can be pressed: the field has text.</summary>
+    public bool CanSaveLogin => LoginField is null;   // red: Ph7 part 3
+
+    /// <summary>The column headings, in order.</summary>
+    public IReadOnlyList<string> Columns { get; } = [];   // red: Ph7 part 3 (Labels.ReviewsCol*)
+
+    /// <summary>True when the header's library button can be pressed.</summary>
+    public bool CanOpenLibrary => Library is null;   // red: Ph7 part 3
+
+    /// <summary>The library errors sheet.</summary>
+    public LibrarySheetViewModel Library { get; }
+
+    /// <summary>Saves the login in the field, then reads the list again.</summary>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>When the answer is shown.</returns>
+    internal Task SaveLogin(CancellationToken cancellationToken)
+    {
+        _ = (_api, cancellationToken);   // red: Ph7 part 3 fills it
+        return Task.CompletedTask;
+    }
+
+    /// <summary>The header's library button: opens the errors sheet and reads the library.</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>When the sheet shows the answer.</returns>
+    internal Task OpenLibrary(CancellationToken cancellationToken)
+    {
+        _ = (Library, cancellationToken);   // red: Ph7 part 3 fills it
+        return Task.CompletedTask;
+    }
 
     /// <summary>True while the page is the one shown.</summary>
     internal bool IsActive { get; private set; }

@@ -11,4 +11,17 @@ internal partial interface ISindriApi
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The list (the login prompt while review.login is unset), the API's refusal, or SND-UI-002/003.</returns>
     public Task<Result<ReviewList>> Reviews(Uri api, CancellationToken cancellationToken);
+
+    /// <summary>POST /sindri/reviews/login (review page spec §6.1): saves review.login from the Reviews tab's one field.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="save">The login.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The saved login, or SND-REVIEW-001 (a bad login), SND-AUTH-002 (a session), or SND-UI-002/003.</returns>
+    public Task<Result<ReviewLoginSaved>> SaveReviewLogin(Uri api, ReviewLoginSave save, CancellationToken cancellationToken);
+
+    /// <summary>GET /sindri/library (review page spec §6.1): the library errors sheet's read. A view read.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The library, the API's refusal, or SND-UI-002/003.</returns>
+    public Task<Result<LibraryView>> Library(Uri api, CancellationToken cancellationToken);
 }
