@@ -44,7 +44,7 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
 
             if (request.UntilMail && loop.Open > 0)
             {
-                await loop.Say(string.Create(CultureInfo.InvariantCulture, $"INBOX {loop.Open} unread message(s)")).ConfigureAwait(false);
+                await loop.Say(string.Create(CultureInfo.InvariantCulture, $"INBOX {loop.Open} open message(s)")).ConfigureAwait(false);
                 return new WatchResponse(polls, loop.Lines) { EndedOnMail = true };
             }
 

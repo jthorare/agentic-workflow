@@ -57,7 +57,7 @@ public sealed class WatchUntilMailTests
         var response = await Watch(untilMail: true);
 
         Assert.Equal((1, true), (response.Polls, response.EndedOnMail));
-        Assert.Contains("INBOX 1 unread message(s)", _lines, StringComparer.Ordinal);
+        Assert.Contains("INBOX 1 open message(s)", _lines, StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -68,7 +68,7 @@ public sealed class WatchUntilMailTests
         var response = await Watch(untilMail: true);
 
         Assert.Equal((3, true), (response.Polls, response.EndedOnMail));
-        Assert.Contains("INBOX 1 unread message(s)", _lines, StringComparer.Ordinal);
+        Assert.Contains("INBOX 1 open message(s)", _lines, StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
