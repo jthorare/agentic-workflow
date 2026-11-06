@@ -114,7 +114,7 @@ public sealed class SkillManifestLoaderTests
     {
         using var folder = new TempDirectory();
         Directory.CreateDirectory(Path.Combine(folder.Path, "broken"));
-        File.WriteAllText(Path.Combine(folder.Path, "broken", "block.yaml"), "schema: 1\nblocks:\n  - id: broken\n    inputs: {}\n    args: [\"{missing}\"]\n");
+        File.WriteAllText(Path.Combine(folder.Path, "broken", "block.yaml"), "schema: 1\nblocks:\n  - id: broken\n    sentence: Broken.\n    inputs: {}\n    args: [\"{missing}\"]\n");
         Directory.CreateDirectory(Path.Combine(folder.Path, "review"));
         File.Copy(Path.Combine(SkillFixtures.Folder, "review", "block.yaml"), Path.Combine(folder.Path, "review", "block.yaml"));
 

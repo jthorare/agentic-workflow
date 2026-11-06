@@ -29,7 +29,6 @@ using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Scoping;
 using Aw.Sindri.Core.Secrets;
 using Aw.Sindri.Core.Setup;
-using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow;
@@ -88,7 +87,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
     public static IServiceCollection AddSindriInfrastructure(this IServiceCollection services, Func<string, string?> environment)
     {
         var settings = SettingsFromEnvironment.Read(environment);
-        return services.AddSingleton(settings).AddSindriSessions(environment, settings).AddSindriLauncher(environment, settings).AddSindriAdapters(environment).AddAgentRuntimeAdapters(environment).AddSindriMcp(environment).AddSecretInfrastructure().AddProfileEditing(environment).AddLeftoverInfrastructure().AddScopingInfrastructure(environment).AddBugFixInfrastructure(environment).AddJudgeInfrastructure(environment).AddScopeWatch().AddSingleton<ISkillBlocks>(static _ => new SkillBlockRegistry(string.Empty));   // why: the folder order (spec §3.2) lands with the loader
+        return services.AddSingleton(settings).AddSindriSessions(environment, settings).AddSindriLauncher(environment, settings).AddSindriAdapters(environment).AddAgentRuntimeAdapters(environment).AddSindriMcp(environment).AddSecretInfrastructure().AddProfileEditing(environment).AddLeftoverInfrastructure().AddScopingInfrastructure(environment).AddBugFixInfrastructure(environment).AddJudgeInfrastructure(environment).AddScopeWatch().AddSkillBlocks(environment);
     }
 
     /// <summary>SB-3a: what 'session wrap --limits' watches a session's systemd scope through (systemctl --user and the cgroup files).</summary>
