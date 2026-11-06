@@ -4,7 +4,7 @@
       "id": "office-hours",
       "skill": "officeHours",
       "descriptor": "step.skill.office-hours",
-      "version": 1,
+      "version": 955718892,
       "sentence": "Shapes an idea into a plan folder with requirements and tasks.",
       "inputs": [
         {
@@ -28,7 +28,7 @@
       "id": "office-hours-revise",
       "skill": "officeHours",
       "descriptor": "step.skill.office-hours-revise",
-      "version": 1,
+      "version": 46452800,
       "sentence": "Revises a plan folder in place from a review report.",
       "inputs": [
         {
@@ -56,7 +56,7 @@
       "id": "review",
       "skill": "review",
       "descriptor": "step.skill.review",
-      "version": 1,
+      "version": 104696442,
       "sentence": "Reviews a pull request with domain reviewers and says pass or needs changes.",
       "inputs": [
         {
