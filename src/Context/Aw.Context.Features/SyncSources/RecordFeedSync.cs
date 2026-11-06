@@ -16,7 +16,7 @@ namespace Aw.Context.Features.SyncSources;
 /// <param name="feeds">The feeds, built per call.</param>
 /// <param name="store">The record store the pages commit into.</param>
 /// <param name="clock">The clock the ticks read.</param>
-internal sealed class RecordFeedSync(IRecordFeedCatalog feeds, IRecordStore store, TimeProvider clock)
+internal sealed class RecordFeedSync(IRecordFeedCatalog feeds, IRecordStore store, TimeProvider clock) : ISourcePurges
 {
     private readonly SyncLocks _locks = new();
 
@@ -75,6 +75,9 @@ internal sealed class RecordFeedSync(IRecordFeedCatalog feeds, IRecordStore stor
     /// <summary>True while the source's lock is held, by a tick or a purge.</summary>
     public bool IsRunning(SourceId source) => _locks.IsHeld(source.Value);
 
+    /// <inheritdoc />
+    public bool IsPurging(SourceId source) => _locks.IsExclusive(source.Value);
+
     /// <summary>The first line of an error message through the egress scrubber, cut to <see cref="ErrorLineLimit"/> characters; null for no message.</summary>
     internal static string? ErrorLine(string? message, Scrubbers scrubbers)
     {
@@ -106,6 +109,7 @@ internal sealed class RecordFeedSync(IRecordFeedCatalog feeds, IRecordStore stor
             return ContextErrors.SyncRunning.With($"a sync of {id.Value} is running, so it can't be changed now (fix: try again when it ends; sindri index status)");
         }
 
+        _locks.MarkExclusive(id.Value);
         try
         {
             return await run().ConfigureAwait(false);

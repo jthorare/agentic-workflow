@@ -33,11 +33,11 @@ internal sealed class LinearQueries(LinearStore store)
 
     private IEnumerable<JsonNode> Rows(string name) => name switch
     {
-        "teams" => store.Teams.Select(t => (JsonNode)LinearRender.Team(t)),
+        "teams" => store.Teams.Select(t => (JsonNode)LinearRender.TeamWithLookups(store, t)),
         "users" => store.Members.Select(m => (JsonNode)LinearRender.Member(m)),
         "issueLabels" => store.Labels.Select(l => (JsonNode)LinearRender.Label(store, l)),
         "workflowStates" => store.States.Select(x => (JsonNode)LinearRender.State(store, x)),
-        "cycles" => store.Cycles.Select(c => (JsonNode)LinearRender.Ref(c)),
+        "cycles" => store.Cycles.Select(c => (JsonNode)LinearRender.Cycle(store, c)),
         "projects" => store.Projects.Select(p => (JsonNode)LinearRender.Project(store, p)),
         "documents" or "projectUpdates" => [],
         _ => throw FakeRequestException.Invalid($"Cannot query field \"{name}\" on type \"Query\". The fake Linear answers only: {string.Join(", ", LinearSchema.Queries)}."),

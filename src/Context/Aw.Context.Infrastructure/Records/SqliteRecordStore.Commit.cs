@@ -1,6 +1,7 @@
 using System.Globalization;
 using Aw.Context.Core;
 using Aw.Context.Core.Records;
+using Aw.Context.Core.Sources;
 using Aw.Context.Infrastructure.Store;
 using Aw.Kernel;
 using Aw.Kernel.Data;
@@ -37,7 +38,7 @@ internal sealed partial class SqliteRecordStore
             }
 
             var (report, removedText) = written.Value;
-            var failure = await Exec(begun.Value, RecordSql.SavePosition, PositionBinder(batch), cancellationToken).ConfigureAwait(false)
+            var failure = (batch.Position is { } position ? await Exec(begun.Value, RecordSql.SavePosition, PositionBinder(batch.Source, batch.At, position), cancellationToken).ConfigureAwait(false) : null)
                 ?? (report.Written + report.Tombstoned > 0 ? await Exec(begun.Value, RecordSql.BumpRecordStamp, bind: null, cancellationToken: cancellationToken).ConfigureAwait(false) : null);
             if (failure is not null)
             {
@@ -49,13 +50,13 @@ internal sealed partial class SqliteRecordStore
         }
     }
 
-    private static Action<SqliteCommand> PositionBinder(RecordBatch batch) => c => c
-        .Bind("@source", batch.Source.Value)
-        .Bind("@cursor", batch.Position.Cursor?.Value)
-        .Bind("@at", batch.At)
-        .Bind("@phase", batch.Position.Phase is { } phase ? RecordWire.Of(phase) : null)
-        .Bind("@backfill", batch.Position.BackfillCursor?.Value)
-        .BindAt("@before", batch.Position.BackfillBefore);
+    private static Action<SqliteCommand> PositionBinder(SourceId source, DateTimeOffset at, SyncPosition position) => c => c
+        .Bind("@source", source.Value)
+        .Bind("@cursor", position.Cursor?.Value)
+        .Bind("@at", at)
+        .Bind("@phase", position.Phase is { } phase ? RecordWire.Of(phase) : null)
+        .Bind("@backfill", position.BackfillCursor?.Value)
+        .BindAt("@before", position.BackfillBefore);
 
     private async ValueTask<Result<(CommitReport Report, bool RemovedText)>> WritePage(SqliteUnitOfWork session, RecordBatch batch, CancellationToken cancellationToken)
     {
@@ -78,14 +79,19 @@ internal sealed partial class SqliteRecordStore
         var changedOld = false;
         foreach (var write in batch.Records)
         {
-            var key = write.Record.Key.Value;
-            var existing = await SqliteQueries.List(session, new SqlStatement(RecordSql.Existing, c => c.Bind("@key", key)), RecordMappers.Existing, cancellationToken).ConfigureAwait(false);
+            var existing = await StoredBefore(session, write.Record.Key, cancellationToken).ConfigureAwait(false);
             if (existing.IsError)
             {
-                return ContextDatabase.Translate(existing.Error);
+                return existing.Error;
             }
 
-            var before = existing.Value.Count == 0 ? null : existing.Value[0];
+            var before = existing.Value;
+            if (batch.Guard && Stale(before, write.Record))
+            {
+                unchanged++;   // a newer write is stored: this page read the record before it
+                continue;
+            }
+
             if (before is { Removed: false } && Same(before, write.Record))
             {
                 var side = await WriteChangedSide(session, write, cancellationToken).ConfigureAwait(false);
@@ -108,6 +114,12 @@ internal sealed partial class SqliteRecordStore
         }
 
         return (written, unchanged, changedOld);
+    }
+
+    private static async ValueTask<Result<ExistingRecord?>> StoredBefore(SqliteUnitOfWork session, RecordKey key, CancellationToken cancellationToken)
+    {
+        var existing = await SqliteQueries.List(session, new SqlStatement(RecordSql.Existing, c => c.Bind("@key", key.Value)), RecordMappers.Existing, cancellationToken).ConfigureAwait(false);
+        return existing.IsError ? ContextDatabase.Translate(existing.Error) : Results.Success(existing.Value.Count == 0 ? null : existing.Value[0]);
     }
 
     private async ValueTask<Result<int>> Tombstone(SqliteUnitOfWork session, RecordBatch batch, CancellationToken cancellationToken)
@@ -141,6 +153,10 @@ internal sealed partial class SqliteRecordStore
         return tombstoned;
     }
 
+    // The stored record is strictly newer than the incoming one; an equal time passes, and so does a record with no time on either side.
+    private static bool Stale(ExistingRecord? stored, StoredRecord record) =>
+        stored?.UpdatedAt is { } kept && record.UpdatedAt is { } incoming && incoming < kept;
+
     private static bool Same(ExistingRecord stored, StoredRecord record) =>
         string.Equals(stored.Version, record.Version.Value, StringComparison.Ordinal)
         && string.Equals(stored.TextHash, record.TextHash, StringComparison.Ordinal)
@@ -153,7 +169,7 @@ internal sealed partial class SqliteRecordStore
         var key = record.Key.Value;
         var failure = await Exec(session, RecordSql.UpsertRecord, c => BindRecord(c, record), cancellationToken).ConfigureAwait(false)
             ?? await Exec(session, RecordSql.DeleteLinks, c => c.Bind("@key", key), cancellationToken).ConfigureAwait(false)
-            ?? await WriteSide(session, write, cancellationToken).ConfigureAwait(false);
+            ?? await WriteSide(session, write, isNew, cancellationToken).ConfigureAwait(false);
         if (failure is not null)
         {
             return failure;

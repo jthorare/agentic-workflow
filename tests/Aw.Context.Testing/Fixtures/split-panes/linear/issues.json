@@ -10,12 +10,17 @@
           "description": "Every action should be a named command in one registry so keys and the palette can find it. Start with new-tab and close-tab; the split work adds its commands here.",
           "url": "https://linear.app/fixture-labs/issue/SPL-101",
           "priority": 2,
+          "estimate": null,
+          "dueDate": null,
+          "sortOrder": -1000.0,
+          "cycle": null,
           "createdAt": "2026-07-01T10:00:00.000Z",
           "updatedAt": "2026-07-06T10:05:00.000Z",
           "completedAt": "2026-07-06T10:05:00.000Z",
           "canceledAt": null,
           "parent": null,
           "state": {
+            "id": "0e5a1b00-0000-4000-8000-000000000503",
             "name": "Done",
             "type": "completed"
           },
@@ -40,6 +45,7 @@
           "labels": {
             "nodes": [
               {
+                "id": "0e5a1b00-0000-4000-8000-000000000670",
                 "name": "layout"
               }
             ]
@@ -80,12 +86,17 @@
           "description": "Add split-vertical and split-horizontal commands with default keys (ctrl+shift+d, ctrl+shift+e). The new pane takes focus and the width is shared evenly.",
           "url": "https://linear.app/fixture-labs/issue/SPL-102",
           "priority": 2,
+          "estimate": null,
+          "dueDate": null,
+          "sortOrder": -2000.0,
+          "cycle": null,
           "createdAt": "2026-07-02T10:00:00.000Z",
           "updatedAt": "2026-07-10T11:05:00.000Z",
           "completedAt": "2026-07-10T11:05:00.000Z",
           "canceledAt": null,
           "parent": { "id": "0e5a1b00-0000-4000-8000-000000000101", "identifier": "SPL-101", "title": "Command registry for pane commands" },
           "state": {
+            "id": "0e5a1b00-0000-4000-8000-000000000503",
             "name": "Done",
             "type": "completed"
           },
@@ -110,6 +121,7 @@
           "labels": {
             "nodes": [
               {
+                "id": "0e5a1b00-0000-4000-8000-000000000670",
                 "name": "layout"
               }
             ]
@@ -150,12 +162,17 @@
           "description": "A toggle-orientation command (ctrl+shift+o) flips the split between vertical and horizontal.",
           "url": "https://linear.app/fixture-labs/issue/SPL-103",
           "priority": 2,
+          "estimate": null,
+          "dueDate": null,
+          "sortOrder": -3000.0,
+          "cycle": null,
           "createdAt": "2026-07-02T11:00:00.000Z",
           "updatedAt": "2026-07-23T09:00:00.000Z",
           "completedAt": "2026-07-15T09:35:00.000Z",
           "canceledAt": null,
           "parent": null,
           "state": {
+            "id": "0e5a1b00-0000-4000-8000-000000000503",
             "name": "Done",
             "type": "completed"
           },
@@ -180,6 +197,7 @@
           "labels": {
             "nodes": [
               {
+                "id": "0e5a1b00-0000-4000-8000-000000000670",
                 "name": "layout"
               }
             ]
@@ -240,12 +258,17 @@
           "description": "Switching away from a tab and back should bring back its orientation, panes and focus. The tab manager reads the pane layout state when it restores a tab.",
           "url": "https://linear.app/fixture-labs/issue/SPL-104",
           "priority": 2,
+          "estimate": null,
+          "dueDate": null,
+          "sortOrder": -4000.0,
+          "cycle": null,
           "createdAt": "2026-07-11T09:00:00.000Z",
           "updatedAt": "2026-07-22T10:20:00.000Z",
           "completedAt": "2026-07-22T10:20:00.000Z",
           "canceledAt": null,
           "parent": null,
           "state": {
+            "id": "0e5a1b00-0000-4000-8000-000000000503",
             "name": "Done",
             "type": "completed"
           },
@@ -270,6 +293,7 @@
           "labels": {
             "nodes": [
               {
+                "id": "0e5a1b00-0000-4000-8000-000000000670",
                 "name": "layout"
               }
             ]
@@ -320,12 +344,17 @@
           "description": "resize-pane-left and resize-pane-right (ctrl+alt+left, ctrl+alt+right) move the focused pane's border by the paneResizeStep setting.",
           "url": "https://linear.app/fixture-labs/issue/SPL-105",
           "priority": 2,
+          "estimate": null,
+          "dueDate": null,
+          "sortOrder": -5000.0,
+          "cycle": null,
           "createdAt": "2026-07-16T09:00:00.000Z",
           "updatedAt": "2026-08-12T15:00:00.000Z",
           "completedAt": "2026-07-29T09:05:00.000Z",
           "canceledAt": null,
           "parent": null,
           "state": {
+            "id": "0e5a1b00-0000-4000-8000-000000000503",
             "name": "Done",
             "type": "completed"
           },
@@ -350,6 +379,7 @@
           "labels": {
             "nodes": [
               {
+                "id": "0e5a1b00-0000-4000-8000-000000000670",
                 "name": "layout"
               }
             ]
@@ -410,12 +440,17 @@
           "description": "Save each tab's layout to the settings directory on exit and restore it on start.",
           "url": "https://linear.app/fixture-labs/issue/SPL-106",
           "priority": 2,
+          "estimate": null,
+          "dueDate": null,
+          "sortOrder": -6000.0,
+          "cycle": null,
           "createdAt": "2026-08-01T09:00:00.000Z",
           "updatedAt": "2026-08-20T10:00:00.000Z",
           "completedAt": null,
           "canceledAt": "2026-08-20T10:00:00.000Z",
           "parent": null,
           "state": {
+            "id": "0e5a1b00-0000-4000-8000-000000000504",
             "name": "Canceled",
             "type": "canceled"
           },
@@ -440,6 +475,7 @@
           "labels": {
             "nodes": [
               {
+                "id": "0e5a1b00-0000-4000-8000-000000000670",
                 "name": "layout"
               }
             ]

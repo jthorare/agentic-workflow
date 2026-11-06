@@ -31,4 +31,15 @@ internal sealed class LinearSources(LinearSourceParts parts)
     /// <param name="settings">The checked 'context.sources.linear' settings.</param>
     /// <returns>The viewer.</returns>
     public ISourceViewer CreateViewer(LinearSettings settings) => new LinearViewer(new LinearClient(settings, parts), parts.CallDeadline);
+
+    /// <summary>The reader of the pickers' data: the profile's teams with their states, cycles, members and labels (linear hub spec 2026-11-04 §4.2).</summary>
+    /// <param name="settings">The checked 'context.sources.linear' settings.</param>
+    /// <returns>The reader.</returns>
+    public LinearLookupsReader CreateLookupsReader(LinearSettings settings) => new(new LinearClient(settings, parts), parts.CallDeadline, parts.Clock);
+
+    /// <summary>The reader of one issue, as the feed reads it (linear hub spec 2026-11-04 D4).</summary>
+    /// <param name="settings">The checked 'context.sources.linear' settings.</param>
+    /// <param name="githubRepos">'context.sources.github.repos' ('owner/name').</param>
+    /// <returns>The reader.</returns>
+    public LinearIssueReader CreateIssueReader(LinearSettings settings, IReadOnlyList<string> githubRepos) => new(new LinearClient(settings, parts), parts.CallDeadline, githubRepos);
 }
