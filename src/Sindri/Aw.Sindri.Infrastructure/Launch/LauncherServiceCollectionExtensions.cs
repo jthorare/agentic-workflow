@@ -76,6 +76,7 @@ internal static class LauncherServiceCollectionExtensions
             OtherHosts = [t3],
             BuiltinHash = builtinHash,
             Approved = Approved(sp),
+            ReviewCredentialVariable = ReviewCredential(sp),
             McpFor = McpTargetFor(sp),
             Config = () => catalog.Current,
             Models = sp.GetRequiredService<IModelCatalog>(),
@@ -144,6 +145,12 @@ internal static class LauncherServiceCollectionExtensions
     {
         var latest = await sp.GetRequiredService<IApprovedProfile>().Latest(ct).ConfigureAwait(false);
         return latest.IsError ? null : latest.Value?.Profile.Agents;
+    };
+
+    private static Func<CancellationToken, ValueTask<string?>> ReviewCredential(IServiceProvider sp) => async ct =>
+    {
+        var latest = await sp.GetRequiredService<IApprovedProfile>().Latest(ct).ConfigureAwait(false);
+        return latest.IsError ? null : PrReviewRules.CredentialVariable(latest.Value?.Profile.Review);   // null for a 'command:' pointer; the default variable is already in the fixed list
     };
 
     private static DetectionInputs Detection(IServiceProvider sp, Func<string, string?> environment) =>

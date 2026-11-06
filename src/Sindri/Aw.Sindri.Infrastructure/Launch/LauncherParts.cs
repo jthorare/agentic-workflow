@@ -19,6 +19,9 @@ internal sealed record LauncherParts(IAgentCatalog Catalog, Func<bool, ISessionH
     /// <summary>The approved profile's <c lang="text">agents:</c> block, read per Step launch.</summary>
     public Func<CancellationToken, ValueTask<AgentSettings?>> Approved { get; init; } = static _ => ValueTask.FromResult<AgentSettings?>(null);
 
+    /// <summary>The variable the approved profile's 'review.credential: env:NAME' reads, or null (a 'command:' pointer or none), emptied in a Step's environment beside the fixed credential variables.</summary>
+    public Func<CancellationToken, ValueTask<string?>> ReviewCredentialVariable { get; init; } = static _ => ValueTask.FromResult<string?>(null);
+
     /// <summary>The launcher.json as read now (problems, dropped entries), or null when nothing is checked.</summary>
     public Func<LauncherConfig>? Config { get; init; }
 
