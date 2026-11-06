@@ -1,0 +1,16 @@
+schema: 1
+blocks:
+  - id: bug-fix-orchestrator
+    sentence: Reproduces a bug with a failing check, fixes it until that check passes, and opens a draft PR.
+    inputs:  { bug: { type: text, label: The bug (a Linear id, a link or the report), required: true } }
+    args: ["{bug}"]
+    outputs:
+      pr:         { type: text, from: pr }
+      branch:     { type: text, from: branch }
+      resolution: { type: path, from: "artifacts[resolution.md]" }
+    outcomes:
+      from: status
+      map: { resolved: resolved, partial: partial, unresolved: unresolved }
+      success: resolved
+    pushes: true
+    maxDuration: 8h

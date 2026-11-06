@@ -1,0 +1,10 @@
+schema: 1
+blocks:
+  - id: address-review
+    sentence: Fixes a pull request's review findings, blocking ones first, and pushes to its branch.
+    inputs:  { pr: { type: text, label: Pull request, required: true } }
+    args: ["{pr}"]
+    outputs: {}
+    outcomes: { success: done }
+    pushes: true
+    maxDuration: 3h
