@@ -17,6 +17,8 @@ public static class SkillTrialRecipe
     /// <summary>The id prefix of every trial recipe.</summary>
     public const string IdPrefix = "workflow.skill-trial-";
 
+    private const string EndedPrefix = "ended-";
+
     /// <summary>The fact the trial's start carries when 'skill run --skills &lt;dir&gt;' sent a folder: the path the launch seeds the skill from.</summary>
     public const string SkillsFolderFact = "fact:skillTrialFolder";
 
@@ -100,7 +102,9 @@ public static class SkillTrialRecipe
         _ = text.Append(" } }, timeout: { after: ").Append(Duration(manifest.MaxDuration)).Append(", then: park }, next: ").Append(Q($"Run the {manifest.Name} skill.")).Append(" }\n");
         foreach (var outcome in outcomes)
         {
-            _ = text.Append("  ").Append(StateOf(outcome)).Append(": { kind: terminal, outcome: ").Append(outcome).Append(" }\n");
+            // why: a terminal's outcome is the recipe's closed set (RCP-OUTCOME-001); the block's own outcome lives in the state's name (OutcomeOf)
+            var ends = string.Equals(outcome, manifest.Outcomes.Success, StringComparison.Ordinal) ? "resolved" : "unresolved";
+            _ = text.Append("  ").Append(StateOf(outcome)).Append(": { kind: terminal, outcome: ").Append(ends).Append(" }\n");
         }
 
         _ = text.Append("  failed: { kind: terminal, outcome: failed }\ntransitions:\n");
@@ -119,11 +123,21 @@ public static class SkillTrialRecipe
     /// <summary>The block outcome a trial ended with, from its terminal state: 'ended-needs-changes' is 'needsChanges'.</summary>
     /// <param name="state">The instance's state.</param>
     /// <returns>The outcome; null for 'failed' or a state that isn't an outcome's.</returns>
-    public static string? OutcomeOf(string state) => throw new NotSupportedException();
+    public static string? OutcomeOf(string state)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        if (!state.StartsWith(EndedPrefix, StringComparison.Ordinal) || state.Length == EndedPrefix.Length)
+        {
+            return null;
+        }
+
+        var words = state[EndedPrefix.Length..].Split('-');
+        return words[0] + string.Concat(words.Skip(1).Where(static w => w.Length > 0).Select(static w => char.ToUpperInvariant(w[0]) + w[1..]));
+    }
 
     /// <summary>The terminal state of an outcome: 'needsChanges' ends in 'ended-needs-changes'.</summary>
     private static string StateOf(string outcome) =>
-        "ended-" + string.Concat(outcome.Select(static (c, i) => char.IsUpper(c) ? (i == 0 ? string.Empty : "-") + char.ToLowerInvariant(c) : c.ToString()));
+        EndedPrefix + string.Concat(outcome.Select(static (c, i) => char.IsUpper(c) ? (i == 0 ? string.Empty : "-") + char.ToLowerInvariant(c) : c.ToString()));
 
     private static string Duration(TimeSpan span) =>
         span.TotalHours >= 1 && span.TotalMinutes % 60 == 0 ? string.Create(CultureInfo.InvariantCulture, $"{(long)span.TotalHours}h") : string.Create(CultureInfo.InvariantCulture, $"{Math.Max(1, (long)Math.Ceiling(span.TotalMinutes))}m");

@@ -4,6 +4,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items.Vocabulary;
+using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Views;
 using Aw.Sindri.Features.CreateItem;
 using Aw.Sindri.Features.GetInstanceEvents;
@@ -148,7 +149,7 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
             error = events.Value.Value.Events.LastOrDefault(static e => e.Transition.Reason is not null)?.Transition.Reason;
         }
 
-        var outcome = failed ? null : ended.Outcome;
+        var outcome = failed ? null : SkillTrialRecipe.OutcomeOf(ended.State);
         var resultFile = await ResultFileOf(answer.Instance.Address.Value.Split('/')[0], ct).ConfigureAwait(false);
         return new SkillRunReport(answer.Skill, answer.ManifestHash, outcome, Succeeded: string.Equals(outcome, answer.Success, StringComparison.Ordinal), facts, resultFile, error);
     }
