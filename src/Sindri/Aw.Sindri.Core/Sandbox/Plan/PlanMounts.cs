@@ -40,6 +40,7 @@ internal static class PlanMounts
         AddInventory(m, c);
         AddLogin(m, c, inSindriHome: true);   // why: a separate-login agent home lives in Sindri's home, which AddInventory just emptied; it goes on top of the mask
         AddLaunchFiles(m, c);
+        AddSkillState(m, c);
         AddWritable(m, c);
         m.AddRange(c.OwnerDenied().Select(d => new PlanMount(d.Path, PlanMountKind.Deny, Reason: d.Reason)));
         return m;
@@ -169,6 +170,19 @@ internal static class PlanMounts
         m.Add(new PlanMount(c.RunArea + "/githooks", PlanMountKind.ReadOnly, Reason: "the refusing pre-push and the repo's own hooks"));
         m.Add(new PlanMount(c.RunArea + "/gitconfig.empty", PlanMountKind.ReadOnly, Reason: "an empty global git config"));
         m.Add(new PlanMount(c.RunArea + "/sandbox-plan.json", PlanMountKind.ReadOnly, Reason: "the value-free summary 'sandbox explain' reads"));
+    }
+
+    // A skill block's AW_DIR is the repo's folder of skill results and plans, and bugfix-state keeps its own folder for the same repo beside the others (S-0 item 7); both are made, never skipped.
+    private static void AddSkillState(List<PlanMount> m, PlanContext c)
+    {
+        if (c.Request.SkillEnvironment is not { } skill || !skill.TryGetValue("AW_DIR", out var awDir))
+        {
+            return;
+        }
+
+        var directory = awDir.TrimEnd('/');
+        m.Add(new PlanMount(directory, PlanMountKind.ReadWrite, Reason: "the skill's results and plans for this repo ($AW_DIR)"));
+        m.Add(new PlanMount($"{c.StateDir}/bugfix/{directory[(directory.LastIndexOf('/') + 1)..]}", PlanMountKind.ReadWrite, Reason: "bugfix-state's own folder for this repo"));
     }
 
     private static void AddWritable(List<PlanMount> m, PlanContext c)

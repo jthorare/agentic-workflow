@@ -22,9 +22,11 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="Attempt">The Step run's number ('{entry}.{n}' → n), or null.</param>
 /// <param name="Sandbox">The sandbox summary (sandbox spec §8); left out when the launch was not sandboxed.</param>
 /// <param name="Model">The model the launch asked for (model.picked says how it was chosen), or null when none was named and for events recorded before this field.</param>
+/// <param name="Skill">The skill block the launch ran (skill flows spec §7); left out for every other launch.</param>
 public sealed record LaunchStartedPublic(
     [property: JsonPropertyName("launchId")] LaunchId Launch, ItemId Item, LaunchMode Mode, AgentId Target, SessionId? SessionId, string TabTitle, LaunchViewerPublic Viewer,
     IReadOnlyList<string> Attach, CatalogSource CatalogSource, string ArgvHash,
     InstanceAddress? Instance = null, string? State = null, int? Attempt = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] SandboxSummary? Sandbox = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Model = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Model = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] LaunchSkill? Skill = null);

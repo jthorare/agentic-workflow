@@ -34,12 +34,24 @@ internal sealed class AgentLaunchRecorder(ILedgerStore ledger, HeldLease lease, 
         var chosen = started.ChosenSession is { } id && SessionId.TryFrom(id, out var session) ? session : (SessionId?)null;
         var viewer = LaunchViewer.Background(started.Viewer);
         var payload = new LaunchStarted(request.Launch, request.Item, request.Mode, request.Agent, chosen, "sindri " + request.Item.Value, viewer, started.Attach, started.CatalogSource, started.ArgvHash,
-            request.Instance, request.Step?.Ref.State, request.Run?.Number, Sandbox: started.Sandbox, Model: request.Step?.Model);
+            request.Instance, request.Step?.Ref.State, request.Run?.Number, Sandbox: started.Sandbox, Model: request.Step?.Model, Skill: SkillOf(request));
         var appended = await Append(events.Entry(EventTypes.LaunchStarted, payload, Key(request.Launch), request.Item.Value), cancellationToken).ConfigureAwait(false);
         if (!appended.AlreadyRecorded)
         {
             liveness.Beat(request.Launch, clock.GetUtcNow());
         }
+    }
+
+    // A trial is always scrubbed, so it never pushes whatever the block asked for (skill flows spec §7).
+    private static LaunchSkill? SkillOf(LaunchRequest request)
+    {
+        if (request.Skill is not { } skill)
+        {
+            return null;
+        }
+
+        var trial = skill.Trial || skill.TrialSkillsDirectory is not null;
+        return new LaunchSkill(skill.Skill, skill.DescriptorVersion, skill.ManifestPath, skill.SkillMdSha, Push: skill.Block.Pushes && !trial, trial);
     }
 
     /// <summary>Records the launch as failed.</summary>

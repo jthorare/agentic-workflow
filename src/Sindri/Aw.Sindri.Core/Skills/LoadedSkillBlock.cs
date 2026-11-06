@@ -12,4 +12,12 @@ public sealed record LoadedSkillBlock(string Skill, SkillBlockManifest Manifest,
 {
     /// <summary>The SHA-256 (lower-case hex) of the SKILL.md file beside block.yaml, set by the loader; null when there is none. The launch compares the agent home's copy against it (SND-SKILL-007), and 'launch.started' records it.</summary>
     public string? SkillMdSha { get; init; }
+
+    /// <summary>The launch of this block with these inputs: carries the descriptor version, manifest path and SKILL.md sha that 'launch.started' records.</summary>
+    /// <param name="target">Whose invocation form the seed takes.</param>
+    /// <param name="inputs">The input values, by key.</param>
+    /// <param name="trial">True for 'sindri skill run'.</param>
+    /// <returns>The launch.</returns>
+    public SkillLaunch LaunchWith(SkillTarget target, IReadOnlyDictionary<string, string> inputs, bool trial = false) =>
+        new(Skill, target, Manifest, inputs) { DescriptorVersion = Descriptor.Version, ManifestPath = Path, SkillMdSha = SkillMdSha, Trial = trial };
 }

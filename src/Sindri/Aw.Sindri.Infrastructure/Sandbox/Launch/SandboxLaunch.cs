@@ -91,7 +91,7 @@ internal sealed class SandboxLaunch(ISandbox sandbox, ISessionCap cap, ISandboxL
             return wrapped.Error;
         }
 
-        var limits = ScopeLimits.From(request.Settings?.Limits, options.Box, request.StepTimeout, request.LongMax ?? _fallbackLongMax, request.Attended);
+        var limits = ScopeLimits.From(request.Settings?.Limits, options.Box, request.StepTimeout, LongMaxOf(request), request.Attended);
         var written = WriteWrapLimits(plan, limits);
         if (written.IsError)
         {
@@ -177,4 +177,8 @@ internal sealed class SandboxLaunch(ISandbox sandbox, ISessionCap cap, ISandboxL
 
         await stages.Release(launch, cancellationToken).ConfigureAwait(false);
     }
+
+    // why: a skill launch has no longMax (null), so its state timeout is the bound and the fallback must not cap it back to 2 h (RCP-SKILL-001).
+    private static TimeSpan LongMaxOf(SandboxRequest request) =>
+        request.LongMax ?? (request.SkillEnvironment is not null ? request.StepTimeout ?? _fallbackLongMax : _fallbackLongMax);
 }

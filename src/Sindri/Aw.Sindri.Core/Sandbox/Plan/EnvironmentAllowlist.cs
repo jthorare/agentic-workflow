@@ -68,6 +68,10 @@ public static class EnvironmentAllowlist
         ["AW_SINDRI_LAUNCH"] = "the launch",
         ["AW_SINDRI_HOME"] = "the launch's session home, never the real home (rev 7)",
         ["GH_CONFIG_DIR"] = "the session home's empty gh-config/, so gh finds no login (rev 7)",
+        ["AW_RESULT"] = "a skill block's session writes its result file (skill flows spec §3.3)",
+        ["AW_RESULT_SKILL"] = "the skill whose result goes to AW_RESULT_FILE",
+        ["AW_RESULT_FILE"] = "the per-launch result file in the run directory",
+        ["AW_DIR"] = "the repo's folder of skill results and plans, computed by the host so a skill can't land in a second one",
         ["AW_SINDRI_LAUNCH_SECRET"] = "the launch secret, supplied by session wrap at start",
     };
 

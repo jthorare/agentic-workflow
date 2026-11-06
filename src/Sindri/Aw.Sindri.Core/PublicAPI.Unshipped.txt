@@ -741,6 +741,8 @@ Aw.Sindri.Core.Events.LaunchStarted.Attempt.get -> int?
 Aw.Sindri.Core.Events.LaunchStarted.Attempt.init -> void
 Aw.Sindri.Core.Events.LaunchStarted.Model.get -> string?
 Aw.Sindri.Core.Events.LaunchStarted.Model.init -> void
+Aw.Sindri.Core.Events.LaunchStarted.Skill.get -> Aw.Sindri.Core.Events.LaunchSkill?
+Aw.Sindri.Core.Events.LaunchStarted.Skill.init -> void
 Aw.Sindri.Core.Events.LaunchStarted.Instance.get -> Aw.Sindri.Core.Workflow.Engine.InstanceAddress?
 Aw.Sindri.Core.Events.LaunchStarted.Instance.init -> void
 Aw.Sindri.Core.Events.LaunchStarted.State.get -> string?
@@ -749,6 +751,8 @@ Aw.Sindri.Core.Events.LaunchStartedPublic.Attempt.get -> int?
 Aw.Sindri.Core.Events.LaunchStartedPublic.Attempt.init -> void
 Aw.Sindri.Core.Events.LaunchStartedPublic.Model.get -> string?
 Aw.Sindri.Core.Events.LaunchStartedPublic.Model.init -> void
+Aw.Sindri.Core.Events.LaunchStartedPublic.Skill.get -> Aw.Sindri.Core.Events.LaunchSkill?
+Aw.Sindri.Core.Events.LaunchStartedPublic.Skill.init -> void
 Aw.Sindri.Core.Events.LaunchStartedPublic.Instance.get -> Aw.Sindri.Core.Workflow.Engine.InstanceAddress?
 Aw.Sindri.Core.Events.LaunchStartedPublic.Instance.init -> void
 Aw.Sindri.Core.Events.LaunchStartedPublic.State.get -> string?
@@ -17266,10 +17270,10 @@ Aw.Sindri.Core.Workflow.Stats.RecipeStatsSource.Of(Aw.Sindri.Core.Workflow.Ids.R
 Aw.Sindri.Core.Workflow.Stats.RecipeStatsSource.RecipeStatsSource(Aw.Sindri.Core.Workflow.Stats.IWorkflowStatRows! rows, System.TimeProvider! clock, Aw.Sindri.Core.Workflow.Stats.IRecipeStatsCache? cache = null) -> void
 Aw.Sindri.Core.Events.LaunchFailed.LaunchFailed(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, string! Code, string! Message, Aw.Sindri.Core.Events.LaunchFailureDetail? Detail = null, Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Instance = null, string? State = null, int? Attempt = null) -> void
 Aw.Sindri.Core.Events.LaunchFailed.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out Aw.Sindri.Core.Ids.ItemId Item, out string! Code, out string! Message, out Aw.Sindri.Core.Events.LaunchFailureDetail? Detail, out Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Instance, out string? State, out int? Attempt) -> void
-Aw.Sindri.Core.Events.LaunchStarted.LaunchStarted(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Launch.LaunchMode Mode, Aw.Sindri.Core.Launch.AgentId Target, Aw.Sindri.Core.Ids.SessionId? SessionId, string! TabTitle, Aw.Sindri.Core.Events.LaunchViewer! Viewer, System.Collections.Generic.IReadOnlyList<string!>! Attach, Aw.Sindri.Core.Launch.CatalogSource CatalogSource, string! ArgvHash, Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Instance = null, string? State = null, int? Attempt = null, Aw.Sindri.Core.Sandbox.SandboxSummary? Sandbox = null, string? Model = null) -> void
-Aw.Sindri.Core.Events.LaunchStarted.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Launch.LaunchMode Mode, out Aw.Sindri.Core.Launch.AgentId Target, out Aw.Sindri.Core.Ids.SessionId? SessionId, out string! TabTitle, out Aw.Sindri.Core.Events.LaunchViewer! Viewer, out System.Collections.Generic.IReadOnlyList<string!>! Attach, out Aw.Sindri.Core.Launch.CatalogSource CatalogSource, out string! ArgvHash, out Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Instance, out string? State, out int? Attempt, out Aw.Sindri.Core.Sandbox.SandboxSummary? Sandbox, out string? Model) -> void
-Aw.Sindri.Core.Events.LaunchStartedPublic.LaunchStartedPublic(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Launch.LaunchMode Mode, Aw.Sindri.Core.Launch.AgentId Target, Aw.Sindri.Core.Ids.SessionId? SessionId, string! TabTitle, Aw.Sindri.Core.Events.LaunchViewerPublic! Viewer, System.Collections.Generic.IReadOnlyList<string!>! Attach, Aw.Sindri.Core.Launch.CatalogSource CatalogSource, string! ArgvHash, Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Instance = null, string? State = null, int? Attempt = null, Aw.Sindri.Core.Sandbox.SandboxSummary? Sandbox = null, string? Model = null) -> void
-Aw.Sindri.Core.Events.LaunchStartedPublic.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Launch.LaunchMode Mode, out Aw.Sindri.Core.Launch.AgentId Target, out Aw.Sindri.Core.Ids.SessionId? SessionId, out string! TabTitle, out Aw.Sindri.Core.Events.LaunchViewerPublic! Viewer, out System.Collections.Generic.IReadOnlyList<string!>! Attach, out Aw.Sindri.Core.Launch.CatalogSource CatalogSource, out string! ArgvHash, out Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Instance, out string? State, out int? Attempt, out Aw.Sindri.Core.Sandbox.SandboxSummary? Sandbox, out string? Model) -> void
+Aw.Sindri.Core.Events.LaunchStarted.LaunchStarted(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Launch.LaunchMode Mode, Aw.Sindri.Core.Launch.AgentId Target, Aw.Sindri.Core.Ids.SessionId? SessionId, string! TabTitle, Aw.Sindri.Core.Events.LaunchViewer! Viewer, System.Collections.Generic.IReadOnlyList<string!>! Attach, Aw.Sindri.Core.Launch.CatalogSource CatalogSource, string! ArgvHash, Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Instance = null, string? State = null, int? Attempt = null, Aw.Sindri.Core.Sandbox.SandboxSummary? Sandbox = null, string? Model = null, Aw.Sindri.Core.Events.LaunchSkill? Skill = null) -> void
+Aw.Sindri.Core.Events.LaunchStarted.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Launch.LaunchMode Mode, out Aw.Sindri.Core.Launch.AgentId Target, out Aw.Sindri.Core.Ids.SessionId? SessionId, out string! TabTitle, out Aw.Sindri.Core.Events.LaunchViewer! Viewer, out System.Collections.Generic.IReadOnlyList<string!>! Attach, out Aw.Sindri.Core.Launch.CatalogSource CatalogSource, out string! ArgvHash, out Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Instance, out string? State, out int? Attempt, out Aw.Sindri.Core.Sandbox.SandboxSummary? Sandbox, out string? Model, out Aw.Sindri.Core.Events.LaunchSkill? Skill) -> void
+Aw.Sindri.Core.Events.LaunchStartedPublic.LaunchStartedPublic(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Launch.LaunchMode Mode, Aw.Sindri.Core.Launch.AgentId Target, Aw.Sindri.Core.Ids.SessionId? SessionId, string! TabTitle, Aw.Sindri.Core.Events.LaunchViewerPublic! Viewer, System.Collections.Generic.IReadOnlyList<string!>! Attach, Aw.Sindri.Core.Launch.CatalogSource CatalogSource, string! ArgvHash, Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Instance = null, string? State = null, int? Attempt = null, Aw.Sindri.Core.Sandbox.SandboxSummary? Sandbox = null, string? Model = null, Aw.Sindri.Core.Events.LaunchSkill? Skill = null) -> void
+Aw.Sindri.Core.Events.LaunchStartedPublic.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Launch.LaunchMode Mode, out Aw.Sindri.Core.Launch.AgentId Target, out Aw.Sindri.Core.Ids.SessionId? SessionId, out string! TabTitle, out Aw.Sindri.Core.Events.LaunchViewerPublic! Viewer, out System.Collections.Generic.IReadOnlyList<string!>! Attach, out Aw.Sindri.Core.Launch.CatalogSource CatalogSource, out string! ArgvHash, out Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Instance, out string? State, out int? Attempt, out Aw.Sindri.Core.Sandbox.SandboxSummary? Sandbox, out string? Model, out Aw.Sindri.Core.Events.LaunchSkill? Skill) -> void
 Aw.Sindri.Core.Events.SessionEnded.SessionEnded(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, Aw.Sindri.Core.Events.SessionEndReason Reason, int? ExitCode, long? InputTokens = null, long? OutputTokens = null, Aw.Sindri.Core.Events.LimitKind? Kind = null, long? Limit = null, long? Peak = null, Aw.Sindri.Core.Events.LimitPeaks? Peaks = null) -> void
 Aw.Sindri.Core.Events.SessionEnded.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out Aw.Sindri.Core.Events.SessionEndReason Reason, out int? ExitCode, out long? InputTokens, out long? OutputTokens, out Aw.Sindri.Core.Events.LimitKind? Kind, out long? Limit, out long? Peak, out Aw.Sindri.Core.Events.LimitPeaks? Peaks) -> void
 Aw.Sindri.Core.Launch.StepPolicy.StepPolicy(System.Collections.Generic.IReadOnlyList<string!>! AllowedTools, Aw.Sindri.Core.Launch.StepPermissionMode Mode, string? WritablePath, System.Collections.Generic.IReadOnlyList<string!>? DeniedPaths = null, System.Collections.Generic.IReadOnlyList<string!>? ReadOnlyPaths = null, Aw.Sindri.Core.Sandbox.ModelLoginSource? LoginSource = null) -> void
@@ -22270,5 +22274,40 @@ Aw.Sindri.Core.Skills.SkillLaunch.TrialSkillsDirectory.init -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.SindriHome.get -> string?
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.SindriHome.init -> void
 static Aw.Sindri.Core.Launch.StepEnvironment.RunDirectoryAt(Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId workflow, string! state, Aw.Sindri.Core.Workflow.Engine.LaunchId launch, string! sindriHome) -> string!
+static Aw.Sindri.Core.Skills.SkillLaunchEnv.ResultOnly(string! skill, Aw.Sindri.Core.Workflow.Engine.LaunchId launch, string! runDirectory) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+static Aw.Sindri.Core.Skills.SkillLaunchEnv.RepoSlugOf(string? originUrl, string! repoPath) -> string!
+Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.SkillEnvironment.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.SkillEnvironment.init -> void
 Aw.Sindri.Core.Skills.LoadedSkillBlock.SkillMdSha.get -> string?
 Aw.Sindri.Core.Skills.LoadedSkillBlock.SkillMdSha.init -> void
+Aw.Sindri.Core.Skills.SkillLaunch.DescriptorVersion.get -> int
+Aw.Sindri.Core.Skills.SkillLaunch.DescriptorVersion.init -> void
+Aw.Sindri.Core.Skills.SkillLaunch.ManifestPath.get -> string?
+Aw.Sindri.Core.Skills.SkillLaunch.ManifestPath.init -> void
+Aw.Sindri.Core.Skills.SkillLaunch.SkillMdSha.get -> string?
+Aw.Sindri.Core.Skills.SkillLaunch.SkillMdSha.init -> void
+Aw.Sindri.Core.Skills.SkillLaunch.Trial.get -> bool
+Aw.Sindri.Core.Skills.SkillLaunch.Trial.init -> void
+Aw.Sindri.Core.Events.LaunchSkill
+Aw.Sindri.Core.Events.LaunchSkill.<Clone>$() -> Aw.Sindri.Core.Events.LaunchSkill!
+Aw.Sindri.Core.Events.LaunchSkill.Deconstruct(out string! Name, out int Version, out string? Manifest, out string? SkillMdSha, out bool Push, out bool Trial) -> void
+Aw.Sindri.Core.Events.LaunchSkill.Equals(Aw.Sindri.Core.Events.LaunchSkill? other) -> bool
+Aw.Sindri.Core.Events.LaunchSkill.LaunchSkill(string! Name, int Version, string? Manifest, string? SkillMdSha, bool Push, bool Trial) -> void
+Aw.Sindri.Core.Events.LaunchSkill.Manifest.get -> string?
+Aw.Sindri.Core.Events.LaunchSkill.Manifest.init -> void
+Aw.Sindri.Core.Events.LaunchSkill.Name.get -> string!
+Aw.Sindri.Core.Events.LaunchSkill.Name.init -> void
+Aw.Sindri.Core.Events.LaunchSkill.Push.get -> bool
+Aw.Sindri.Core.Events.LaunchSkill.Push.init -> void
+Aw.Sindri.Core.Events.LaunchSkill.SkillMdSha.get -> string?
+Aw.Sindri.Core.Events.LaunchSkill.SkillMdSha.init -> void
+Aw.Sindri.Core.Events.LaunchSkill.Trial.get -> bool
+Aw.Sindri.Core.Events.LaunchSkill.Trial.init -> void
+Aw.Sindri.Core.Events.LaunchSkill.Version.get -> int
+Aw.Sindri.Core.Events.LaunchSkill.Version.init -> void
+override Aw.Sindri.Core.Events.LaunchSkill.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.LaunchSkill.GetHashCode() -> int
+override Aw.Sindri.Core.Events.LaunchSkill.ToString() -> string!
+static Aw.Sindri.Core.Events.LaunchSkill.operator !=(Aw.Sindri.Core.Events.LaunchSkill? left, Aw.Sindri.Core.Events.LaunchSkill? right) -> bool
+static Aw.Sindri.Core.Events.LaunchSkill.operator ==(Aw.Sindri.Core.Events.LaunchSkill? left, Aw.Sindri.Core.Events.LaunchSkill? right) -> bool
+Aw.Sindri.Core.Skills.LoadedSkillBlock.LaunchWith(Aw.Sindri.Core.Skills.SkillTarget target, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! inputs, bool trial = false) -> Aw.Sindri.Core.Skills.SkillLaunch!

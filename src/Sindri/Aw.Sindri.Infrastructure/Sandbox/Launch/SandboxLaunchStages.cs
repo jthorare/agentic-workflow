@@ -7,6 +7,7 @@ using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
+using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Recipes;
 using Aw.Sindri.Infrastructure.Launch;
@@ -51,18 +52,26 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
         var history = await learn.Read(repo.Value, cancellationToken).ConfigureAwait(false);
         var common = await inputs.GitCommonDir(request.RepoPath, cancellationToken).ConfigureAwait(false);
         var run = RunDirectory(request);
+        var skill = await SkillEnvironment(request, run, cancellationToken).ConfigureAwait(false);
         return new SandboxRequest(
             request.Launch, request.Item, request.Agent, repo, request.Instance,
             new SandboxPaths(request.RepoPath, common, request.Worktree, run, inputs.RunAreaFor(request.Launch)),
             RunNamespace(request),
             request.Step?.Policy, request.Attended,
-            StepTimeout: null, LongMax: LongMax(loaded), SlotHeld: false,   // not on the launch request: the Step's own timeout and the heavy-slot fact
+            request.StepTimeout, LongMax: request.Skill is null ? LongMax(loaded) : null, SlotHeld: false,   // why: a skill launch skips the longMax cap, its state timeout is the only bound (RCP-SKILL-001); the heavy-slot fact is not on the launch request
             new SandboxNetFacts(inputs.NetDirFor(request.Launch), inputs.SindriPort(), inputs.ProxyPort()),
             inputs.Host(), settings, prepared.Value)
         {
             Learn = new LearnContext(history, clock.GetUtcNow()),
+            SkillEnvironment = skill,
         };
     }
+
+    // The skill block's variables: AW_DIR is computed here, once, from the repo's origin remote, the way skills/_shared/repo-slug.sh would (D8).
+    private async ValueTask<IReadOnlyDictionary<string, string>?> SkillEnvironment(LaunchRequest request, string run, CancellationToken cancellationToken) =>
+        request is { Attended: false, Skill: { } skill }
+            ? SkillLaunchEnv.For(skill.Skill, request.Launch, run, inputs.Host().StateDir, SkillLaunchEnv.RepoSlugOf(await inputs.OriginRemote(request.RepoPath, cancellationToken).ConfigureAwait(false), request.RepoPath))
+            : null;
 
     // The branch namespace the session may write refs in: an open's own, a Step's run, or none.
     private static string RunNamespace(LaunchRequest request) =>

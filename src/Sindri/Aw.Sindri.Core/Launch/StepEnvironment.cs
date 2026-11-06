@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Engine;
 
 namespace Aw.Sindri.Core.Launch;
@@ -54,6 +55,13 @@ public static class StepEnvironment
             if (RunDirectoryOf(request, sindriHome) is { } directory)
             {
                 env[RunDirectory] = directory;
+                if (request.Skill is { } skill)
+                {
+                    foreach (var (name, value) in SkillLaunchEnv.ResultOnly(skill.Skill, request.Launch, directory))
+                    {
+                        env[name] = value;   // why: the repo slug (AW_DIR) is the sandbox step's to compute; a launch with no plan gets the result variables alone
+                    }
+                }
             }
         }
 

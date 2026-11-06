@@ -107,6 +107,11 @@ internal static class PlanEnvironment
             yield return Var("AW_SANDBOX_SLOT_HELD", "1");
         }
 
+        foreach (var (name, value) in (r.SkillEnvironment ?? new Dictionary<string, string>(StringComparer.Ordinal)).OrderBy(e => e.Key, StringComparer.Ordinal))
+        {
+            yield return Var(name, value);
+        }
+
         yield return Var("AW_SINDRI_LAUNCH_SECRET", value: null);
     }
 }
