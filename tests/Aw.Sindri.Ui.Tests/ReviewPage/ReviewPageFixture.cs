@@ -30,7 +30,7 @@ internal sealed class ReviewPageFixture
     /// <summary>A refusal golden, served with the status it names.</summary>
     internal void Refuse(string scenario) => Server.ReviewPageAnswer = RouteAnswer.Problem("reviews-pr", scenario);
 
-    internal ReviewPageViewModel Page(bool wide = true) => new(Server, Clock, Memory) { IsWide = wide };
+    internal ReviewPageViewModel Page(bool wide = true) => new(Server, Memory) { IsWide = wide };
 
     /// <summary>A page that has read the PR once.</summary>
     internal async Task<ReviewPageViewModel> Opened(CancellationToken token, bool wide = true)

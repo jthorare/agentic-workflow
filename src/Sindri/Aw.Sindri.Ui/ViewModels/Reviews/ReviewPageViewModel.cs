@@ -10,13 +10,18 @@ namespace Aw.Sindri.Ui.ViewModels.Reviews;
 internal sealed partial class ReviewPageViewModel : ObservableObject
 {
     private readonly ISindriApi _api;
-    private readonly TimeProvider _clock;
     private readonly ReviewPanelMemory _memory;
+    private Uri? _url;
+    private string _repo = string.Empty;
+    private int _number;
+    private int _reads;
+    private string _settings = string.Empty;
 
-    internal ReviewPageViewModel(ISindriApi api, TimeProvider clock, ReviewPanelMemory? memory = null)
+    internal ReviewPageViewModel(ISindriApi api, ReviewPanelMemory? memory = null)
     {
-        (_api, _clock, _memory) = (api, clock, memory ?? new ReviewPanelMemory());
+        (_api, _memory) = (api, memory ?? new ReviewPanelMemory());
         Diff = new ReviewDiffViewModel();
+        ShowLoading();
     }
 
     /// <summary>What the page shows: loading, the page, or one of the whole-page refusals.</summary>
@@ -99,25 +104,123 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
     /// <returns>When the answer is shown.</returns>
     internal Task Open(Uri url, string repo, int number, CancellationToken cancellationToken)
     {
-        _ = (url, repo, number, cancellationToken, _api, _clock, _memory);
-        return Task.CompletedTask;
+        (_url, _repo, _number) = (url, repo, number);
+        ShowLoading();
+        return Read(cancellationToken);
     }
 
     /// <summary>Reads the page again (Try again, Reload); focus lands on the summary strip's first part.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>When the answer is shown.</returns>
-    internal Task Reload(CancellationToken cancellationToken)
+    internal async Task Reload(CancellationToken cancellationToken)
     {
-        _ = cancellationToken;
-        Focus = ReviewFocus.None;
-        return Task.CompletedTask;
+        await Read(cancellationToken).ConfigureAwait(true);
+        Focus = new ReviewFocus(ReviewFocusRegion.StripFirst);
     }
 
     /// <summary>A strip part was pressed: its panel opens and focus goes to it.</summary>
     /// <param name="panel">The panel id.</param>
     internal void Jump(string panel)
     {
-        _ = panel;
-        Focus = ReviewFocus.None;
+        if (Panels.FirstOrDefault(p => string.Equals(p.Id, panel, StringComparison.Ordinal)) is not { } target)
+        {
+            return;
+        }
+
+        target.IsCollapsed = false;
+        Focus = new ReviewFocus(ReviewFocusRegion.Panel, panel);
     }
+
+    private async Task Read(CancellationToken cancellationToken)
+    {
+        if (_url is not { } url)
+        {
+            return;
+        }
+
+        var read = ++_reads;
+        var answer = await _api.ReadReviewPage(url, _repo, _number, cancellationToken).ConfigureAwait(true);
+        if (read != _reads)
+        {
+            return;   // a newer read was asked for: its answer is the one to show
+        }
+
+        if (answer.IsSuccess)
+        {
+            Show(answer.Value);
+            return;
+        }
+
+        Fail(answer.Error);
+    }
+
+    private void Fail(Aw.Kernel.Error error)
+    {
+        Strip.Clear();
+        Panels.Clear();
+        (StateHeading, StateText) = error.Code switch
+        {
+            "SND-REVIEW-404" => (Labels.ReviewNotFoundHeading, error.Message),
+            "SND-REVIEW-004" => (Labels.ReviewNotSyncedHeading, error.Message),
+            "SND-REVIEW-007" => (Labels.ReviewLoginHeading, error.Message),
+            "SND-REVIEW-503" => (Labels.ReviewOfflineHeading, error.Message),
+            _ => (string.Empty, Labels.InstanceRefused(error)),
+        };
+        State = error.Code switch
+        {
+            "SND-REVIEW-404" => ReviewPageState.NotFound,
+            "SND-REVIEW-004" => ReviewPageState.NotSynced,
+            "SND-REVIEW-007" => ReviewPageState.LoginPrompt,
+            "SND-REVIEW-503" => ReviewPageState.OfflineUncached,
+            _ => ReviewPageState.Failed,
+        };
+    }
+
+    private void ShowLoading()
+    {
+        State = ReviewPageState.Loading;
+        (StateHeading, StateText) = (string.Empty, string.Empty);
+        Patch(Strip, [
+            new ReviewStripSegmentViewModel(string.Empty, Labels.ReviewStripReadingChecks, StateGlyph.None, isLoading: true),
+            new ReviewStripSegmentViewModel(string.Empty, Labels.ReviewStripReadingClaim, StateGlyph.None, isLoading: true),
+            new ReviewStripSegmentViewModel(string.Empty, Labels.ReviewStripReadingRisk, StateGlyph.None, isLoading: true),
+            new ReviewStripSegmentViewModel(string.Empty, Labels.ReviewStripReadingCi, StateGlyph.None, isLoading: true),
+        ]);
+        Patch(Panels, [.. _defaultOrder.Select(id => new ReviewPanelViewModel(id, ReviewPanelState.Loading, Labels.ReviewPanelReading, string.Empty, collapsed: false))]);
+        Diff.ShowLoading();
+    }
+
+    private static readonly string[] _defaultOrder = ["requiredChecks", "docMap", "testPlan", "ci", "evidence", "risk", "conversation"];
+
+    private static void Patch<T>(System.Collections.ObjectModel.ObservableCollection<T> to, IEnumerable<T> items)
+    {
+        to.Clear();
+        foreach (var item in items)
+        {
+            to.Add(item);
+        }
+    }
+
+    private void Show(Api.Reviews.ReviewPage page)
+    {
+        var pr = page.Pr;
+        State = ReviewPageState.Ready;
+        (StateHeading, StateText) = (string.Empty, string.Empty);
+        (Title, Author, HeadText, Branch, PrUrl) = (pr.Title, pr.Author, Labels.ReviewHead(pr.Head.Sha7), pr.Head.Branch, pr.Url);
+        Ref = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{pr.Repo}#{pr.Number}");
+        IssueKeys = [.. pr.Issues.Select(i => i.Key)];
+        (IsDraft, IsYours) = (pr.Draft, pr.Yours);
+        _settings = page.Settings?.Name ?? string.Empty;
+        SettingsText = page.Settings is { } settings ? Labels.ReviewSettings(settings.Name) : string.Empty;
+        (OfflineText, MovingText) = (page.Offline?.Text, page.Moving?.Text);
+        (ApproveEnabled, RequestChangesEnabled) = (!pr.Yours, !pr.Yours);
+        OwnPrText = pr.Yours ? Labels.ReviewOwnPr : string.Empty;
+        ReviewUrl = pr.Url + "/files";
+        FixTarget = new ReviewFixTarget(pr.Repo, pr.Number, pr.Head.Sha, pr.Head.Sha7, pr.Head.Branch, pr.Author, pr.PostsFixThreads, DocIdOf(page));
+        ShowPanels(page);
+        Diff.Show(page.Diff);
+    }
+
+    private static string DocIdOf(Api.Reviews.ReviewPage page) =>
+        page.Panels.FirstOrDefault(p => string.Equals(p.Id, "docMap", StringComparison.Ordinal))?.Data.Doc?.Id ?? string.Empty;
 }

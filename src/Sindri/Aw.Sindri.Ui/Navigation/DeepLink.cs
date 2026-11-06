@@ -147,10 +147,15 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
         DeepLinkKind.Recipe => IsRecipe(subject),
         DeepLinkKind.Session => IsSessionRef(subject),
         DeepLinkKind.Project => IsEscapedId(subject),
-        DeepLinkKind.Review => false,   // red until the review link's rule is written
+        DeepLinkKind.Review => IsPrRef(subject),
         DeepLinkKind.HomeNeedsYou or DeepLinkKind.NeedsYou or DeepLinkKind.Item or DeepLinkKind.Decision or DeepLinkKind.Service or DeepLinkKind.Job or DeepLinkKind.Node or DeepLinkKind.ContextItem or DeepLinkKind.System or DeepLinkKind.Setup or DeepLinkKind.Projects or DeepLinkKind.Reviews or DeepLinkKind.LibrarySheet or DeepLinkKind.FixTaskSheet or DeepLinkKind.ProjectAdd or DeepLinkKind.PageSheet or DeepLinkKind.AddSeveralPages or DeepLinkKind.PinSheet => IsSubject(subject),
         _ => false,
     };
+
+    // A review link names the PR as owner/repo/number: three segments, the first two subjects and no dot step, the number a positive integer.
+    private static bool IsPrRef(string s) =>
+        s.Length <= MaxSubject && s.Split('/') is [var owner, var repo, var number] && owner is not ("." or "..") && repo is not ("." or "..") && IsSubject(owner) && IsSubject(repo)
+        && number.All(char.IsAsciiDigit) && int.TryParse(number, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var n) && n > 0;
 
     // A workflow address is the instance's, whose tail may hold segments ('ITM-01JC8/step'): each is a subject, none a dot step.
     private static bool IsAddress(string s) =>

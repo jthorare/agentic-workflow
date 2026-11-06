@@ -24,11 +24,28 @@ internal sealed partial class ShellViewModel
 
     private bool ReviewPageOpen { get; set; }
 
+    // A review link opens one PR's page over the Reviews list, not a sheet.
+    private void OpenReviewPage(string repo, int number)
+    {
+        if (IsSheetOpen)
+        {
+            CloseSheet();
+        }
+
+        GoTo(PageId.Reviews);
+        ReviewPageOpen = true;
+        Changed(nameof(IsReviewPageShown), nameof(IsPagesShown));
+        if (Health.ApiUrl() is { } url)
+        {
+            _ = ReviewPage.Open(url, repo, number, CancellationToken.None);
+        }
+    }
+
     /// <summary>Closes the review page; the Reviews list shows again.</summary>
     internal void CloseReviewPage()
     {
         ReviewPageOpen = false;
-        Changed(nameof(IsReviewPageShown));
+        Changed(nameof(IsReviewPageShown), nameof(IsPagesShown));
     }
 
     /// <summary>True on Reviews.</summary>
@@ -56,13 +73,14 @@ internal sealed partial class ShellViewModel
     private void InitReviews()
     {
         Reviews = new ReviewsPageViewModel(_api, _clock);
-        ReviewPage = new ReviewPageViewModel(_api, _clock);
+        ReviewPage = new ReviewPageViewModel(_api);
         ReviewFix = new ReviewFixSheetViewModel(_api, _clock);
         Reviews.LibraryRequested += (_, _) =>
         {
             OpenSheet(DeepLink.LibrarySheet);
             OpenerLibrary = true;
         };
+        Reviews.OpenRequested += (_, e) => Navigate(e.Link);
         Health.Follow(Reviews.Refresh);   // every read, whichever page is shown: the badge and Home's line need the count
         PropertyChanged += (_, e) =>
         {

@@ -91,6 +91,12 @@ internal sealed partial class ShellViewModel
             return true;
         }
 
+        if (link.Kind == DeepLinkKind.Review && link.Subject?.Split('/') is [var owner, var repo, var number])
+        {
+            OpenReviewPage(owner + "/" + repo, int.Parse(number, System.Globalization.CultureInfo.InvariantCulture));
+            return true;
+        }
+
         if (link.Kind == DeepLinkKind.Workflow && IsLineRun(link.Subject))
         {
             OpenRunPage(link.Subject!);   // why: IsLineRun is true only for a subject
