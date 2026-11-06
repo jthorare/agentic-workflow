@@ -274,6 +274,48 @@ public sealed class LinearIssueReadsTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_new_issue_a_teammate_assigns_to_the_viewer_shows_in_since_after_the_first_sync()
+    {
+        var marker = _world.Clock.GetUtcNow();
+        _world.Clock.Advance(TimeSpan.FromHours(1));
+        await _world.Mutate(
+            "mutation M($input: IssueCreateInput!) { issueCreate(input: $input) { success } }",
+            new JsonObject { ["input"] = new JsonObject { ["title"] = "Harbor ferry booking", ["teamId"] = _world.Linear.TeamId("ENG"), ["assigneeId"] = _ada } });
+        _ = await _world.Tick();
+
+        var since = await Facade(i => i.IssueSince(marker, ExternalId.From(_ada), _world.Scope, Ct));
+
+        var change = Assert.Single(since.Changes);
+        Assert.Equal(("ENG-4", "assignee", "feed", null, _ada), (change.Identifier, change.Field, change.Via, change.Old?.Value, change.New?.Value));
+    }
+
+    [Fact]
+    public async Task The_first_sync_does_not_put_the_viewers_existing_issues_in_since()
+    {
+        var since = await Facade(i => i.IssueSince(_windowStart, ExternalId.From(_ada), _world.Scope, Ct));   // InitializeAsync's tick stored ENG-1 and ENG-3, both Ada's
+
+        Assert.Empty(since.Changes);
+    }
+
+    [Fact]
+    public async Task An_owners_own_assignment_to_themselves_is_not_in_since()
+    {
+        var marker = _world.Clock.GetUtcNow();
+        _world.Clock.Advance(TimeSpan.FromHours(1));
+        await _world.Update(Id("ENG-2"), new JsonObject { ["assigneeId"] = _ada });
+        await using (var scope = _world.Provider.CreateAsyncScope())
+        {
+            var service = scope.ServiceProvider.GetRequiredService<IService<LinearWriteThroughRequest, LinearWriteThroughResponse>>();
+            _ = await service.Handle(new LinearWriteThroughRequest(_world.Scope, ExternalId.From(Id("ENG-2")), LinearWrittenFields.Assignee), Ct);
+        }
+
+        var since = await Facade(i => i.IssueSince(marker, ExternalId.From(_ada), _world.Scope, Ct));
+
+        Assert.Empty(since.Changes);
+        Assert.Equal(1, _world.Count($"SELECT count(*) FROM linear_issue_change WHERE field = 'assignee' AND via = 'write-through' AND issue_key = '{Key(Id("ENG-2")).Value}'"));
+    }
+
+    [Fact]
     public async Task Since_derives_mentions_from_comments_after_the_marker_by_someone_else()
     {
         var marker = FakeNow();   // a comment's time is Linear's (here the fake's), so the marker is read off the same clock
