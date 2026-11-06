@@ -18,7 +18,7 @@ Every run ends with the [Result block](#result-block), whatever the outcome: don
 
 Only when the Result block's gate printed `AW_RESULT_SKILL=review`. The Step has no GitHub network, so:
 
-- **Read the PR from the local ref.** `$AW_SINDRI_PR_REF` is a ref the host already fetched. Replace Step 1 and Step 2's `gh` calls: with `BASE=$(git merge-base "$(git symbolic-ref -q --short refs/remotes/origin/HEAD || echo origin/main)" "$AW_SINDRI_PR_REF")`, the diff is `git diff $BASE $AW_SINDRI_PR_REF`, the changed files come from `git diff --name-only $BASE $AW_SINDRI_PR_REF`, the head commit is `git rev-parse $AW_SINDRI_PR_REF`, and the title and body come from the commit messages in `git log $BASE..$AW_SINDRI_PR_REF`. The PR number is the `pr` input (a number, or the number at the end of a link).
+- **Read the PR from the local ref.** `$AW_SINDRI_PR_REF` is a ref the host already fetched. Replace Step 1 and Step 2's `gh` calls: take `BASE` as the merge base of `$AW_SINDRI_PR_REF` and the default branch (`origin/HEAD` when set, else `main`, else `master`); the diff is `git diff $BASE $AW_SINDRI_PR_REF`, the changed files come from `git diff --name-only $BASE $AW_SINDRI_PR_REF`, the head commit is `git rev-parse $AW_SINDRI_PR_REF`, and the title and body come from the commit messages in `git log $BASE..$AW_SINDRI_PR_REF`. Make no `gh` call at all. The PR number is the `pr` input (a number, or the number at the end of a link).
 - **Never post.** No `gh pr review`, no comment; `/postReview` stays the owner's.
 - **Questions become `waiting`** (for example, several PRs match or the ref is missing), never AskUserQuestion.
 - Add `verdict` and `review_file` to the result.

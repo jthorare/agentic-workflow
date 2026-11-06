@@ -20,7 +20,7 @@
 #     config/agents/ files a chosen skill names, the chosen skills' evals/<skill>/<kind>/ and fixture.sh, _lib and mocks, and the stubs at the stage root (stubs/, outside the evals/ tree the agent is denied).
 #     The STAGED copy is rewritten, never the source: the shell default of AW_PREAMBLE goes from on to off (kept on, and the
 #     run passes AW_PREAMBLE=on, under --preamble on: the spec §8 5a baseline of the forced cases with the preamble), of AW_GIT_MODE
-#     from full to readonly, of AW_RESULT from 0 to 1, and the staged repo-slug.sh state default walks up from $PWD to the dir holding .aw-eval/ (the workspace root) and adds /.aw-state. The stubs get the same default rewrite.
+#     from full to readonly, of AW_RESULT from 0 to 1, of AW_RESULT_SKILL and AW_RESULT_FILE from empty to what the case's fixture left in .aw-eval/result-skill and result-file (nothing for a case that is not a Sindri block case), and the staged repo-slug.sh state default walks up from $PWD to the dir holding .aw-eval/ (the workspace root) and adds /.aw-state. The stubs get the same default rewrite.
 #     The toolkit copy reaches $HOME/.agentic-workflow/toolkit (the default of AW_TOOLKIT) inside each run's temp HOME
 #     through a scaffold script written into every staged case, which then runs the case's own scaffold.
 #   3 check and reserve the day's spend (spec §6.4): $60 per day across all lanes, under one flock on $EVAL_HOME/spend.jsonl;
@@ -731,6 +731,12 @@ rewrite_stage() { # STAGE: the staged copy only, never the source tree
   [ "$PREAMBLE" = on ] || rewrite_default "$S" AW_PREAMBLE on off
   rewrite_default "$S" AW_GIT_MODE full readonly
   rewrite_default "$S" AW_RESULT 0 1
+  # Sindri block mode (AW_RESULT_SKILL / AW_RESULT_FILE): the env cannot reach the agent, so the staged gate reads them from the
+  # workspace root's .aw-eval/result-skill and result-file, which only a Sindri case's fixture writes; every other case finds no
+  # file, gets an empty value and stays in the normal mode.
+  local walk='d=$PWD; while [ ! -d "$d/.aw-eval" ] && [ "$d" != / ]; do d=${d%/*}; [ -n "$d" ] || d=/; done'
+  rewrite_default "$S" AW_RESULT_SKILL "" "\$($walk; cat \"\$d/.aw-eval/result-skill\" 2>/dev/null)"
+  rewrite_default "$S" AW_RESULT_FILE "" "\$($walk; cat \"\$d/.aw-eval/result-file\" 2>/dev/null)"
   a="\${AW_STATE_DIR:-\$HOME/.agentic-workflow}"
   b='${AW_STATE_DIR:-$(d=$PWD; while [ ! -d "$d/.aw-eval" ] && [ "$d" != / ]; do d=${d%/*}; [ -n "$d" ] || d=/; done; [ -d "$d/.aw-eval" ] || d=$PWD; printf %s "$d")/.aw-state}'
   if [ -f "$S/skills/_shared/repo-slug.sh" ] && grep -qF -- "$a" "$S/skills/_shared/repo-slug.sh"; then
