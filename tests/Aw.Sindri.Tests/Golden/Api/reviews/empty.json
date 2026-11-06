@@ -1,0 +1,46 @@
+{
+  "asOf": {
+    "cursor": 5,
+    "ledgerHead": 5,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "login": "joi-example",
+  "loginPrompt": null,
+  "notice": null,
+  "freshness": [
+    {
+      "source": "github",
+      "state": "ok",
+      "text": "synced 14 min ago",
+      "at": "2025-12-31T23:45:36.0000000Z"
+    }
+  ],
+  "stale": null,
+  "library": {
+    "state": "ok",
+    "docs": 41,
+    "withErrors": 3,
+    "unreadableRoots": 0,
+    "text": "Library: 41 docs, 3 with errors"
+  },
+  "waitingCount": 0,
+  "groups": [
+    {
+      "kind": "waiting",
+      "title": "Waiting on you",
+      "sections": []
+    },
+    {
+      "kind": "yours",
+      "title": "Yours",
+      "sections": []
+    }
+  ],
+  "empty": {
+    "text": "Nothing waiting on you and no open PRs of yours.",
+    "hint": "Repos are set in Settings → Connections.",
+    "teams": "Reviews asked of a team don't show here yet."
+  }
+}

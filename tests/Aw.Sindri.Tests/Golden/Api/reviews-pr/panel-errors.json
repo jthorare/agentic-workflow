@@ -1,0 +1,139 @@
+{
+  "asOf": {
+    "cursor": 5,
+    "ledgerHead": 5,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "pr": {
+    "repo": "acme/api",
+    "number": 2071,
+    "title": "Add retry budget to the sync worker",
+    "author": "sam-dev",
+    "yours": false,
+    "draft": false,
+    "state": "open",
+    "head": {
+      "sha": "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678",
+      "sha7": "a1b2c3d",
+      "branch": "feat/retry-budget"
+    },
+    "base": "main",
+    "url": "https://github.com/acme/api/pull/2071",
+    "issues": [
+      {
+        "key": "ENG-12",
+        "href": "sindri://linear/ENG-12"
+      }
+    ]
+  },
+  "settings": {
+    "name": "sindri",
+    "from": "review.projects[0]"
+  },
+  "moving": null,
+  "offline": null,
+  "strip": [
+    {
+      "panel": "requiredChecks",
+      "text": "Couldn't decide checks"
+    },
+    {
+      "panel": "risk",
+      "text": "1 risky file"
+    }
+  ],
+  "panels": [
+    {
+      "id": "requiredChecks",
+      "state": "error",
+      "text": "Couldn't decide checks: github failed: SND-INDEX-401",
+      "data": {
+        "checks": []
+      }
+    },
+    {
+      "id": "docMap",
+      "state": "error",
+      "text": "Couldn't read the library: /home/joi/docs can't be read",
+      "data": {
+        "claims": [],
+        "doc": null,
+        "suggested": [],
+        "projectDocs": []
+      }
+    },
+    {
+      "id": "testPlan",
+      "state": "error",
+      "text": "Couldn't read the library: /home/joi/docs can't be read",
+      "data": {
+        "rows": []
+      }
+    },
+    {
+      "id": "ci",
+      "state": "error",
+      "text": "Couldn't read CI: github returned 502",
+      "data": {
+        "runs": [],
+        "babysitter": null
+      }
+    },
+    {
+      "id": "evidence",
+      "state": "ready",
+      "text": null,
+      "data": {
+        "items": [
+          {
+            "kind": "uiEvidence",
+            "label": "Reviews list, 1,440 px",
+            "path": "evidence/2071/reviews-list.png",
+            "url": "https://github.com/acme/api/pull/2071#issuecomment-1",
+            "matchedBy": "sha",
+            "at": "2025-12-31T22:00:00.0000000Z"
+          },
+          {
+            "kind": "prBody",
+            "label": "Proof in the PR body",
+            "path": "pr-body",
+            "url": "https://github.com/acme/api/pull/2071",
+            "matchedBy": "prNumber",
+            "at": "2025-12-31T20:00:00.0000000Z"
+          }
+        ]
+      }
+    },
+    {
+      "id": "risk",
+      "state": "ready",
+      "text": null,
+      "data": {
+        "hits": [
+          {
+            "path": "src/Api/Migrations/0042_retry.sql",
+            "why": "Migrations change stored data",
+            "source": "settings"
+          }
+        ]
+      }
+    },
+    {
+      "id": "conversation",
+      "state": "error",
+      "text": "Couldn't read threads: github returned 502",
+      "data": {
+        "threads": []
+      }
+    }
+  ],
+  "diff": {
+    "state": "error",
+    "text": "Couldn't read the diff: github returned 502",
+    "fileCount": 0,
+    "capped": false,
+    "groups": []
+  }
+}

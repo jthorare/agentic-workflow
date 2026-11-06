@@ -1,0 +1,91 @@
+{
+  "asOf": {
+    "cursor": 5,
+    "ledgerHead": 5,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "login": "joi-example",
+  "loginPrompt": null,
+  "notice": "Review requests show here once Sindri reads requested reviewers.",
+  "freshness": [
+    {
+      "source": "github",
+      "state": "ok",
+      "text": "synced 14 min ago",
+      "at": "2025-12-31T23:45:36.0000000Z"
+    }
+  ],
+  "stale": null,
+  "library": {
+    "state": "ok",
+    "docs": 41,
+    "withErrors": 3,
+    "unreadableRoots": 0,
+    "text": "Library: 41 docs, 3 with errors"
+  },
+  "waitingCount": 0,
+  "groups": [
+    {
+      "kind": "waiting",
+      "title": "Waiting on you",
+      "sections": []
+    },
+    {
+      "kind": "yours",
+      "title": "Yours",
+      "sections": [
+        {
+          "by": "repo",
+          "id": null,
+          "name": "acme/api",
+          "rows": [
+            {
+              "repo": "acme/api",
+              "number": 2064,
+              "title": "Cache the repo list between syncs",
+              "author": "joi-example",
+              "draft": false,
+              "openedAt": "2025-12-28T12:00:00.0000000Z",
+              "lastActivity": "2025-12-31T12:00:00.0000000Z",
+              "waiting": null,
+              "waitingText": null,
+              "newCommits": null,
+              "ci": "running",
+              "requiredOpen": 1,
+              "requiredText": "1 open",
+              "claimsDoc": true,
+              "href": "/reviews/acme/api/2064"
+            }
+          ]
+        },
+        {
+          "by": "repo",
+          "id": null,
+          "name": "acme/web",
+          "rows": [
+            {
+              "repo": "acme/web",
+              "number": 875,
+              "title": "Draft: new empty state for Work",
+              "author": "joi-example",
+              "draft": true,
+              "openedAt": "2025-12-30T12:00:00.0000000Z",
+              "lastActivity": "2025-12-30T12:00:00.0000000Z",
+              "waiting": null,
+              "waitingText": null,
+              "newCommits": null,
+              "ci": "none",
+              "requiredOpen": null,
+              "requiredText": null,
+              "claimsDoc": false,
+              "href": "/reviews/acme/web/875"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "empty": null
+}

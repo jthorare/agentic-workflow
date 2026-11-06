@@ -1,0 +1,2016 @@
+{
+  "asOf": {
+    "cursor": 5,
+    "ledgerHead": 5,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "docs": 300,
+  "withErrors": 250,
+  "broken": [
+    {
+      "doc": "draft-001",
+      "path": "~/notes/design/draft-001.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-001.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-002",
+      "path": "~/notes/design/draft-002.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-002.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-003",
+      "path": "~/notes/design/draft-003.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-003.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-004",
+      "path": "~/notes/design/draft-004.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-004.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-005",
+      "path": "~/notes/design/draft-005.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-005.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-006",
+      "path": "~/notes/design/draft-006.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-006.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-007",
+      "path": "~/notes/design/draft-007.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-007.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-008",
+      "path": "~/notes/design/draft-008.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-008.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-009",
+      "path": "~/notes/design/draft-009.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-009.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-010",
+      "path": "~/notes/design/draft-010.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-010.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-011",
+      "path": "~/notes/design/draft-011.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-011.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-012",
+      "path": "~/notes/design/draft-012.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-012.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-013",
+      "path": "~/notes/design/draft-013.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-013.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-014",
+      "path": "~/notes/design/draft-014.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-014.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-015",
+      "path": "~/notes/design/draft-015.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-015.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-016",
+      "path": "~/notes/design/draft-016.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-016.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-017",
+      "path": "~/notes/design/draft-017.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-017.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-018",
+      "path": "~/notes/design/draft-018.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-018.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-019",
+      "path": "~/notes/design/draft-019.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-019.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-020",
+      "path": "~/notes/design/draft-020.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-020.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-021",
+      "path": "~/notes/design/draft-021.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-021.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-022",
+      "path": "~/notes/design/draft-022.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-022.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-023",
+      "path": "~/notes/design/draft-023.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-023.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-024",
+      "path": "~/notes/design/draft-024.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-024.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-025",
+      "path": "~/notes/design/draft-025.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-025.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-026",
+      "path": "~/notes/design/draft-026.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-026.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-027",
+      "path": "~/notes/design/draft-027.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-027.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-028",
+      "path": "~/notes/design/draft-028.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-028.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-029",
+      "path": "~/notes/design/draft-029.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-029.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-030",
+      "path": "~/notes/design/draft-030.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-030.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-031",
+      "path": "~/notes/design/draft-031.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-031.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-032",
+      "path": "~/notes/design/draft-032.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-032.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-033",
+      "path": "~/notes/design/draft-033.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-033.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-034",
+      "path": "~/notes/design/draft-034.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-034.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-035",
+      "path": "~/notes/design/draft-035.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-035.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-036",
+      "path": "~/notes/design/draft-036.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-036.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-037",
+      "path": "~/notes/design/draft-037.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-037.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-038",
+      "path": "~/notes/design/draft-038.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-038.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-039",
+      "path": "~/notes/design/draft-039.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-039.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-040",
+      "path": "~/notes/design/draft-040.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-040.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-041",
+      "path": "~/notes/design/draft-041.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-041.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-042",
+      "path": "~/notes/design/draft-042.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-042.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-043",
+      "path": "~/notes/design/draft-043.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-043.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-044",
+      "path": "~/notes/design/draft-044.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-044.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-045",
+      "path": "~/notes/design/draft-045.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-045.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-046",
+      "path": "~/notes/design/draft-046.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-046.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-047",
+      "path": "~/notes/design/draft-047.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-047.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-048",
+      "path": "~/notes/design/draft-048.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-048.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-049",
+      "path": "~/notes/design/draft-049.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-049.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-050",
+      "path": "~/notes/design/draft-050.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-050.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-051",
+      "path": "~/notes/design/draft-051.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-051.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-052",
+      "path": "~/notes/design/draft-052.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-052.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-053",
+      "path": "~/notes/design/draft-053.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-053.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-054",
+      "path": "~/notes/design/draft-054.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-054.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-055",
+      "path": "~/notes/design/draft-055.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-055.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-056",
+      "path": "~/notes/design/draft-056.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-056.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-057",
+      "path": "~/notes/design/draft-057.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-057.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-058",
+      "path": "~/notes/design/draft-058.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-058.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-059",
+      "path": "~/notes/design/draft-059.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-059.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-060",
+      "path": "~/notes/design/draft-060.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-060.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-061",
+      "path": "~/notes/design/draft-061.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-061.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-062",
+      "path": "~/notes/design/draft-062.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-062.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-063",
+      "path": "~/notes/design/draft-063.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-063.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-064",
+      "path": "~/notes/design/draft-064.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-064.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-065",
+      "path": "~/notes/design/draft-065.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-065.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-066",
+      "path": "~/notes/design/draft-066.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-066.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-067",
+      "path": "~/notes/design/draft-067.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-067.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-068",
+      "path": "~/notes/design/draft-068.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-068.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-069",
+      "path": "~/notes/design/draft-069.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-069.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-070",
+      "path": "~/notes/design/draft-070.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-070.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-071",
+      "path": "~/notes/design/draft-071.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-071.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-072",
+      "path": "~/notes/design/draft-072.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-072.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-073",
+      "path": "~/notes/design/draft-073.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-073.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-074",
+      "path": "~/notes/design/draft-074.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-074.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-075",
+      "path": "~/notes/design/draft-075.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-075.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-076",
+      "path": "~/notes/design/draft-076.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-076.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-077",
+      "path": "~/notes/design/draft-077.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-077.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-078",
+      "path": "~/notes/design/draft-078.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-078.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-079",
+      "path": "~/notes/design/draft-079.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-079.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-080",
+      "path": "~/notes/design/draft-080.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-080.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-081",
+      "path": "~/notes/design/draft-081.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-081.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-082",
+      "path": "~/notes/design/draft-082.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-082.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-083",
+      "path": "~/notes/design/draft-083.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-083.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-084",
+      "path": "~/notes/design/draft-084.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-084.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-085",
+      "path": "~/notes/design/draft-085.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-085.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-086",
+      "path": "~/notes/design/draft-086.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-086.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-087",
+      "path": "~/notes/design/draft-087.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-087.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-088",
+      "path": "~/notes/design/draft-088.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-088.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-089",
+      "path": "~/notes/design/draft-089.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-089.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-090",
+      "path": "~/notes/design/draft-090.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-090.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-091",
+      "path": "~/notes/design/draft-091.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-091.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-092",
+      "path": "~/notes/design/draft-092.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-092.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-093",
+      "path": "~/notes/design/draft-093.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-093.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-094",
+      "path": "~/notes/design/draft-094.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-094.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-095",
+      "path": "~/notes/design/draft-095.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-095.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-096",
+      "path": "~/notes/design/draft-096.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-096.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-097",
+      "path": "~/notes/design/draft-097.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-097.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-098",
+      "path": "~/notes/design/draft-098.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-098.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-099",
+      "path": "~/notes/design/draft-099.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-099.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-100",
+      "path": "~/notes/design/draft-100.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-100.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-101",
+      "path": "~/notes/design/draft-101.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-101.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-102",
+      "path": "~/notes/design/draft-102.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-102.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-103",
+      "path": "~/notes/design/draft-103.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-103.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-104",
+      "path": "~/notes/design/draft-104.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-104.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-105",
+      "path": "~/notes/design/draft-105.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-105.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-106",
+      "path": "~/notes/design/draft-106.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-106.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-107",
+      "path": "~/notes/design/draft-107.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-107.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-108",
+      "path": "~/notes/design/draft-108.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-108.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-109",
+      "path": "~/notes/design/draft-109.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-109.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-110",
+      "path": "~/notes/design/draft-110.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-110.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-111",
+      "path": "~/notes/design/draft-111.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-111.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-112",
+      "path": "~/notes/design/draft-112.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-112.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-113",
+      "path": "~/notes/design/draft-113.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-113.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-114",
+      "path": "~/notes/design/draft-114.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-114.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-115",
+      "path": "~/notes/design/draft-115.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-115.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-116",
+      "path": "~/notes/design/draft-116.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-116.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-117",
+      "path": "~/notes/design/draft-117.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-117.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-118",
+      "path": "~/notes/design/draft-118.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-118.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-119",
+      "path": "~/notes/design/draft-119.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-119.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-120",
+      "path": "~/notes/design/draft-120.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-120.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-121",
+      "path": "~/notes/design/draft-121.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-121.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-122",
+      "path": "~/notes/design/draft-122.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-122.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-123",
+      "path": "~/notes/design/draft-123.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-123.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-124",
+      "path": "~/notes/design/draft-124.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-124.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-125",
+      "path": "~/notes/design/draft-125.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-125.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-126",
+      "path": "~/notes/design/draft-126.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-126.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-127",
+      "path": "~/notes/design/draft-127.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-127.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-128",
+      "path": "~/notes/design/draft-128.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-128.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-129",
+      "path": "~/notes/design/draft-129.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-129.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-130",
+      "path": "~/notes/design/draft-130.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-130.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-131",
+      "path": "~/notes/design/draft-131.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-131.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-132",
+      "path": "~/notes/design/draft-132.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-132.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-133",
+      "path": "~/notes/design/draft-133.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-133.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-134",
+      "path": "~/notes/design/draft-134.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-134.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-135",
+      "path": "~/notes/design/draft-135.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-135.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-136",
+      "path": "~/notes/design/draft-136.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-136.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-137",
+      "path": "~/notes/design/draft-137.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-137.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-138",
+      "path": "~/notes/design/draft-138.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-138.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-139",
+      "path": "~/notes/design/draft-139.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-139.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-140",
+      "path": "~/notes/design/draft-140.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-140.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-141",
+      "path": "~/notes/design/draft-141.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-141.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-142",
+      "path": "~/notes/design/draft-142.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-142.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-143",
+      "path": "~/notes/design/draft-143.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-143.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-144",
+      "path": "~/notes/design/draft-144.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-144.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-145",
+      "path": "~/notes/design/draft-145.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-145.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-146",
+      "path": "~/notes/design/draft-146.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-146.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-147",
+      "path": "~/notes/design/draft-147.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-147.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-148",
+      "path": "~/notes/design/draft-148.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-148.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-149",
+      "path": "~/notes/design/draft-149.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-149.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-150",
+      "path": "~/notes/design/draft-150.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-150.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-151",
+      "path": "~/notes/design/draft-151.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-151.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-152",
+      "path": "~/notes/design/draft-152.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-152.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-153",
+      "path": "~/notes/design/draft-153.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-153.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-154",
+      "path": "~/notes/design/draft-154.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-154.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-155",
+      "path": "~/notes/design/draft-155.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-155.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-156",
+      "path": "~/notes/design/draft-156.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-156.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-157",
+      "path": "~/notes/design/draft-157.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-157.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-158",
+      "path": "~/notes/design/draft-158.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-158.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-159",
+      "path": "~/notes/design/draft-159.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-159.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-160",
+      "path": "~/notes/design/draft-160.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-160.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-161",
+      "path": "~/notes/design/draft-161.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-161.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-162",
+      "path": "~/notes/design/draft-162.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-162.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-163",
+      "path": "~/notes/design/draft-163.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-163.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-164",
+      "path": "~/notes/design/draft-164.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-164.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-165",
+      "path": "~/notes/design/draft-165.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-165.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-166",
+      "path": "~/notes/design/draft-166.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-166.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-167",
+      "path": "~/notes/design/draft-167.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-167.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-168",
+      "path": "~/notes/design/draft-168.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-168.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-169",
+      "path": "~/notes/design/draft-169.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-169.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-170",
+      "path": "~/notes/design/draft-170.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-170.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-171",
+      "path": "~/notes/design/draft-171.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-171.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-172",
+      "path": "~/notes/design/draft-172.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-172.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-173",
+      "path": "~/notes/design/draft-173.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-173.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-174",
+      "path": "~/notes/design/draft-174.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-174.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-175",
+      "path": "~/notes/design/draft-175.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-175.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-176",
+      "path": "~/notes/design/draft-176.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-176.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-177",
+      "path": "~/notes/design/draft-177.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-177.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-178",
+      "path": "~/notes/design/draft-178.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-178.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-179",
+      "path": "~/notes/design/draft-179.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-179.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-180",
+      "path": "~/notes/design/draft-180.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-180.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-181",
+      "path": "~/notes/design/draft-181.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-181.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-182",
+      "path": "~/notes/design/draft-182.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-182.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-183",
+      "path": "~/notes/design/draft-183.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-183.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-184",
+      "path": "~/notes/design/draft-184.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-184.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-185",
+      "path": "~/notes/design/draft-185.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-185.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-186",
+      "path": "~/notes/design/draft-186.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-186.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-187",
+      "path": "~/notes/design/draft-187.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-187.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-188",
+      "path": "~/notes/design/draft-188.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-188.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-189",
+      "path": "~/notes/design/draft-189.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-189.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-190",
+      "path": "~/notes/design/draft-190.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-190.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-191",
+      "path": "~/notes/design/draft-191.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-191.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-192",
+      "path": "~/notes/design/draft-192.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-192.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-193",
+      "path": "~/notes/design/draft-193.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-193.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-194",
+      "path": "~/notes/design/draft-194.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-194.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-195",
+      "path": "~/notes/design/draft-195.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-195.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-196",
+      "path": "~/notes/design/draft-196.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-196.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-197",
+      "path": "~/notes/design/draft-197.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-197.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-198",
+      "path": "~/notes/design/draft-198.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-198.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-199",
+      "path": "~/notes/design/draft-199.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-199.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "draft-200",
+      "path": "~/notes/design/draft-200.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/draft-200.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says"
+        }
+      ]
+    }
+  ],
+  "nearMisses": [],
+  "unreadableRoots": [],
+  "cappedText": "Showing the first 200 of 250 docs with errors; run `sindri library validate` for the rest"
+}
