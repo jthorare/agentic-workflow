@@ -62,11 +62,11 @@ internal static class LinearSql
         "WHERE ch.at > @marker AND " + Visible + " " +
         "AND ((ch.field = 'assignee' AND ch.via = 'feed' AND ch.\"new\" = @viewer) OR (ch.field = 'state' AND ch.via = 'feed' AND i.assignee_id = @viewer)) ORDER BY ch.at ASC, ch.seq ASC";
 
-    /// <summary>Comments after a marker that someone else wrote, newest first and capped: the mention test runs on them in code.</summary>
+    /// <summary>Comments after a marker that someone else wrote and that hold an '@' or a profile path, newest first and capped: the mention test runs on them in code. The filter comes before the cap, so a run of plain comments cannot push a mention out.</summary>
     internal const string SinceComments =
         "SELECT c.id, c.author_id, c.created_at, c.body, c.sindri, c.issue_key, i.identifier FROM linear_comment c " +
         "JOIN linear_issue i ON i.key = c.issue_key JOIN source_record r ON r.key = c.issue_key " +
-        "WHERE c.created_at > @marker AND (c.author_id IS NULL OR c.author_id <> @viewer) AND c.sindri = 0 AND " + Visible + " ORDER BY c.created_at DESC, c.id ASC LIMIT @limit";
+        "WHERE c.created_at > @marker AND (c.author_id IS NULL OR c.author_id <> @viewer) AND c.sindri = 0 AND (c.body LIKE '%@%' OR c.body LIKE '%/profiles/%') AND " + Visible + " ORDER BY c.created_at DESC, c.id ASC LIMIT @limit";
 
     internal const string ViewerNames = "SELECT name, display_name FROM linear_member WHERE id = @viewer";
 }

@@ -30,7 +30,7 @@ public static class LinearMentions
             }
 
             var end = at + needle.Length;
-            if ((end == body.Length || !IsWordChar(body[end])) && (needle[0] != '@' || at == 0 || !IsWordChar(body[at - 1])))
+            if ((end == body.Length || !IsNameChar(body[end])) && (needle[0] != '@' || at == 0 || !IsWordChar(body[at - 1])))
             {
                 return true;
             }
@@ -42,4 +42,7 @@ public static class LinearMentions
     }
 
     private static bool IsWordChar(char c) => char.IsLetterOrDigit(c) || c == '_';
+
+    // why: Linear names can carry a hyphen ('Joi-Smith'), so '@Joi' must not match the start of '@Joi-Smith'
+    private static bool IsNameChar(char c) => IsWordChar(c) || c == '-';
 }
