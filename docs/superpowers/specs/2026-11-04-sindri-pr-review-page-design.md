@@ -105,11 +105,11 @@ What exists today (checked on main 94ff1714e):
 - **REQ-13** The page works by keyboard alone and with a screen reader (§6.4).
 
 **Success measure.**
-- **Baseline (Ph0).** Of the last 20 merged PRs in this repo, how many a doc would have mapped by issue or branch, counted twice: against today's docs, and as if their docs carried front matter. Plus how long the owner's reviews take today, by their own estimate.
+- **Baseline (Ph0).** Of the last 20 merged PRs in this repo, how many a doc would have mapped by issue or branch, counted twice: against today's docs, and as if their docs carried front matter.
 - **Go/no-go on the baseline.** If fewer than 5 of 20 would map even with front matter, Ph4a and the `Covers:` flow ship before Ph7, and the trial waits for them.
 - **Counts the app keeps** (a `review.opened` event per page open, plus the existing `review.fix-sent` and `review.posted`): PRs opened in Reviews against PRs reviewed in the window, the share of opened PRs with a resolved claim, fix tasks sent and closed, reviews posted (release 2). `sindri review stats [--since D]` (new) prints them.
 - **Trial.** Two weeks, starting once 5 open PRs in this repo carry `Covers:` (not on the release date), with the owner reviewing this repo's PRs from Reviews.
-- **Target.** For PRs with `Covers:`, the owner never opens the design doc by hand to find the phase (their word at the end, against the baseline). At least 80% of required checks are decided by Sindri, not by a manual tick, and the settings must hold at least one `covers:` or `ci:` check besides `changedWith:`.
+- **Target.** For PRs with `Covers:`, the owner never opens the design doc by hand to find the phase (their word at the end of the trial). At least 80% of required checks are decided by Sindri, not by a manual tick, and the settings must hold at least one `covers:` or `ci:` check besides `changedWith:`.
 - **Stop line.** The denominator is the PRs on the owner's list (authored or requested) that merged or got a review in the trial, from stored PR records; the numerator is those opened in Reviews (`review.opened`). `review stats` prints both. If fewer than half were opened in Reviews, Ph8 and Ph9 wait, and the owner decides what changes.
 
 **Non-goals**
@@ -765,4 +765,4 @@ Two more are one hop away: #2114 says `Part of #2112`, an issue under the model 
 
 **Go/no-go.** 3 of 20 map by issue or branch even with front matter, under §2's 5. So Ph4a and the `Covers:` flow ship before Ph7 and the trial waits for them. Ph4a merged (#2132), so the `Covers:` line is in every specToProvenPR PR from here, and the trial's own start rule (5 open PRs with `Covers:`) is the wait. Issue and branch suggestions stay a fallback, not the main path.
 
-**The owner's review time today**: asked (via meta), recorded here when answered.
+**The owner's review time today**: not measured (owner, 2026-11-06).
