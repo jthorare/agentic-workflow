@@ -82,3 +82,14 @@ something on to the fake's clock (one second per write, from 2026-01-01).
 - `attachmentLinkURL` is idempotent per issue and url.
 - There is no conditional update: `issueUpdate` applies whatever fields it is given.
 - Issues are served newest first by `orderBy`; `FakeServerOptions.LinearNewestFirst` is the replaying fake's switch for the same.
+
+## Not probed, unverified
+
+The probe (`scripts/linear-probe.sh`) never checks these, so the fake's behavior for them is a guess until someone checks it by hand:
+
+- `updatedAt` moving on `commentUpdate`, `issueArchive` and `issueLabelCreate` (the probe measures create, comment, attachment and update only).
+- The old identifier resolving after a team move (the probe makes no team move; it prints `team_move.old_key_resolves: not probed`).
+- The duplicate-id error shape: the probe records the real error code for a repeated client id, but the `validationErrors` shape in `LinearErrors.DuplicateId` is a guess until then.
+
+The probe does read two things the fake serves, so a mismatch shows in the paste block: `archived.hidden_by_default` (an archived issue is left out of `issues` unless
+`includeArchived: true`) and `pagination.after_cursor` (`first: 1` then `after: <endCursor>` returns the next issue).

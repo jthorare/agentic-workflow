@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Stub curl for linear-probe.test.sh: a small stateful Linear. Answers by the request's operation name. State lives in $STUB_STATE.
 # STUB_ID_MODE=accept|ignore|refuse (client ids), STUB_SHARED=1 (one rate budget for both keys), STUB_STRAY=1 (a pre-existing labelled
-# issue), STUB_BLOCK_WRITES=1 (write keys refused), STUB_FAIL_CREATE_N=N (the Nth issueCreate dies at transport), STUB_FAIL=Op.
+# issue), STUB_TEAM_EXTRA=1 (an unlabelled team issue, so paging has two), STUB_PAGE=repeat (page 2 repeats page 1),
+# STUB_ARCHIVE_VISIBLE=1 (archived issues show without includeArchived), STUB_SLEEP_OP=Op (that op sleeps 3 s, once), STUB_BLOCK_WRITES=1 (write keys refused), STUB_FAIL_CREATE_N=N (the Nth issueCreate dies at transport), STUB_FAIL=Op.
 fix="$STUB_FIX"; st="$STUB_STATE"; hdr="" out="" data="" cfg=""
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -10,12 +11,15 @@ while [ $# -gt 0 ]; do
   esac
 done
 mkdir -p "$st"; touch "$st/issues.ndjson" "$st/comments" "$st/attach"
+[ "${STUB_STRAY:-}" = 1 ] && touch "$st/label"   # a stray labelled issue means the label already existed
+if [ "${STUB_TEAM_EXTRA:-}" = 1 ] && [ ! -f "$st/extra" ]; then touch "$st/extra"; jq -nc '{id:"other-1",archived:false,labeled:false,updatedAt:1}' >> "$st/issues.ndjson"; fi
 q="$(jq -r .query "$data")"; vars="$(jq -c .variables "$data")"
 op="$(sed -n 's/^\(query\|mutation\) \([A-Za-z0-9]*\).*/\1 \2/p' <<<"$q" | head -n1)"
 echo "curl ran cfg=$(basename "$cfg") op=$op" >> "$STUB_LOG"
 case "$op" in mutation*) echo "MUTATION ${op#mutation }" >> "$STUB_LOG" ;; esac
 opname="${op#* }"
 [ "${STUB_FAIL:-}" = "$opname" ] && exit 22
+if [ "${STUB_SLEEP_OP:-}" = "$opname" ] && [ ! -f "$st/slept" ]; then touch "$st/slept"; sleep 3; fi
 
 bucket=read; [ "${STUB_SHARED:-}" = 1 ] && bucket=shared; [ "$(basename "$cfg")" = write.cfg ] && [ "${STUB_SHARED:-}" != 1 ] && bucket=write
 n=$(cat "$st/rl.$bucket" 2>/dev/null || echo 1500); echo $((n - 1)) > "$st/rl.$bucket"; n=$((n - 1))
@@ -76,6 +80,17 @@ case "$opname" in
   ProbeIssues)
     [ "${STUB_STRAY:-}" = 1 ] && [ ! -f "$st/stray" ] && { touch "$st/stray"; jq -nc '{id:"stray-1",archived:false,labeled:true,updatedAt:1}' >> "$st/issues.ndjson"; }
     reply "{\"data\":{\"issues\":{\"nodes\":$(jq -c 'select(.archived==false and .labeled==true) | {id}' "$st/issues.ndjson" | jq -sc .)}}}" ;;
+  ArchivedDefault|ArchivedIncluded)
+    iid="$(jq -r .f.id.eq <<<"$vars")"
+    if [ "$opname" = ArchivedIncluded ] || [ "${STUB_ARCHIVE_VISIBLE:-}" = 1 ]; then flt='true'; else flt='.archived==false'; fi
+    reply "{\"data\":{\"issues\":{\"nodes\":$(jq -c --arg id "$iid" "select(.id==\$id and $flt) | {id}" "$st/issues.ndjson" | jq -sc .)}}}" ;;
+  IssuePage)
+    after="$(jq -r '.after // empty' <<<"$vars")"
+    ids=($(jq -r 'select(.archived==false) | .id' "$st/issues.ndjson"))
+    pick=0; [ -n "$after" ] && for i in "${!ids[@]}"; do [ "${ids[$i]}" = "$after" ] && pick=$((i + 1)); done
+    [ "${STUB_PAGE:-}" = repeat ] && pick=0
+    id="${ids[$pick]:-}"; more=false; [ $((pick + 1)) -lt "${#ids[@]}" ] && more=true
+    reply "{\"data\":{\"issues\":{\"nodes\":[{\"id\":\"$id\"}],\"pageInfo\":{\"hasNextPage\":$more,\"endCursor\":\"$id\"}}}}" ;;
   IssueArchive)
     iid="$(jq -r .id <<<"$vars")"; [ "$(issue_field "$iid" .labeled)" = true ] || { echo "ARCHIVE unlabelled $iid" >> "$STUB_LOG"; err NOT_PROBE; }
     setissue "$iid" '.archived = true'; echo "ARCHIVED $iid" >> "$STUB_LOG"

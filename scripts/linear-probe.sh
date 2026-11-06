@@ -15,8 +15,9 @@
 #   pointers are accepted only with a loopback --url. A write key equal to the read key is refused (D2). Keys reach curl through a 0600
 #   config file, never an argument, and are never printed.
 # Write part guards: every issue it creates carries the team label `sindri-probe` (made when missing; the label stays); at the end (and
-#   from the EXIT trap on any failure) it archives every non-archived issue in that team carrying the label, then re-queries. It never
-#   touches an issue without the label. Output is counts, booleans, error codes and header numbers: no titles, descriptions, names,
+#   from the EXIT trap on any failure, a SIGINT too) it archives the labelled issues this run made, then re-queries. Before the first
+#   create it reads the labelled non-archived issues as a baseline; ones already there are left alone (a warning counts them), and
+#   a create whose answer was lost is still caught because it is not in the baseline. It never touches an issue without the label. Output is counts, booleans, error codes and header numbers: no titles, descriptions, names,
 #   emails or urls from Linear.
 # Exit 0 ok, 1 a probe call failed (the "failed:" lines say which; cleanup still ran), 2 usage, no key or a guard refused.
 set -uo pipefail
@@ -27,7 +28,7 @@ while [ $# -gt 0 ]; do
     --url) url="${2:?--url needs a value}"; shift 2 ;;
     --team) team_arg="${2:?--team needs a team key}"; shift 2 ;;
     --write) want_write=1; shift ;;
-    -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,24p' "$0"; exit 0 ;;
     *) echo "usage: $0 [--url URL] [--team KEY --write]" >&2; exit 2 ;;
   esac
 done
@@ -38,7 +39,19 @@ command -v jq >/dev/null || { echo "probe: jq is required" >&2; exit 2; }
 command -v curl >/dev/null || { echo "probe: curl is required" >&2; exit 2; }
 
 # The url guard: api.linear.app over https, or a loopback host (the fake).
-host="${url#*://}"; host="${host%%/*}"; host="${host%%:*}"
+# The authority is parsed, not sliced: no userinfo (`@`), a bracketed IPv6 host with an optional port, or host with an optional port.
+authority="${url#*://}"; authority="${authority%%[/?#]*}"
+case "$authority" in *@*) echo "probe: --url must not carry user info (an @ in the host part)" >&2; exit 2 ;; esac
+host="" port_ok=1
+case "$authority" in
+  \[*\]*)
+    host="${authority%%\]*}]"; rest="${authority#*\]}"
+    case "$rest" in '') ;; :*) case "${rest#:}" in ''|*[!0-9]*) port_ok=0 ;; esac ;; *) port_ok=0 ;; esac ;;
+  *:*:*) port_ok=0 ;;
+  *:*) host="${authority%%:*}"; case "${authority#*:}" in ''|*[!0-9]*) port_ok=0 ;; esac ;;
+  *) host="$authority" ;;
+esac
+[ "$port_ok" -eq 1 ] || { echo "probe: --url has a malformed host or port" >&2; exit 2; }
 loopback=0
 case "$host" in 127.0.0.1|localhost|'[::1]') loopback=1 ;; esac
 case "$url" in
@@ -52,6 +65,11 @@ sindri_home="${AW_SINDRI_HOME:-$state_dir/sindri-app}"
 profile="$sindri_home/profile/profile.yaml"
 
 work="$(mktemp -d)"; chmod 700 "$work"
+cleanup_armed=0 cleanup_done=0
+# The one trap: the write part's cleanup (when armed; defined further down) and the temp dir, on any exit, SIGINT and SIGTERM included.
+on_exit() { local rc=$?; if declare -F cleanup >/dev/null; then cleanup; fi; rm -rf "$work"; exit "$rc"; }
+trap on_exit EXIT
+trap 'exit 130' INT TERM
 
 # profile_get a.b.c: the scalar or list at that path, one value per line. A small indentation-based read for the documented block
 # shape (`key: value`, `key: [a, b]`, `key:` then `- item` lines); not a YAML parser.
@@ -108,8 +126,6 @@ resolve_pointer() {
   esac
 }
 
-
-trap 'rm -rf "$work"' EXIT
 
 # --- keys ---
 read_key="${AW_LINEAR_PROBE_KEY:-}"
@@ -214,10 +230,17 @@ if gql read PingRead1 "$ping" '{}'; then
   if [ -f "$work/write.cfg" ]; then
     if gql write PingWrite "$ping" '{}'; then
       emit_rl write "$work/PingWrite.h"
-      if gql read PingRead2 "$ping" '{}'; then
+      # Two rounds of read, write, read: a read-to-read drop of 2 means the write call spent the read key's budget, a drop of 1 means it
+      # did not. Other traffic on the workspace can add to a drop, so the answer is yes/no only when both rounds agree; the raw numbers print.
+      if gql read PingRead2 "$ping" '{}' && gql write PingWrite2 "$ping" '{}' && gql read PingRead3 "$ping" '{}'; then
         a="$(hdrnum "$work/PingRead1.h" x-ratelimit-requests-remaining)"; b="$(hdrnum "$work/PingRead2.h" x-ratelimit-requests-remaining)"
-        if [ -n "$a" ] && [ -n "$b" ]; then
-          if [ $((a - b)) -ge 2 ]; then shared=yes; elif [ $((a - b)) -eq 1 ]; then shared=no; fi
+        c="$(hdrnum "$work/PingRead3.h" x-ratelimit-requests-remaining)"
+        emit ratelimit.read.remaining_before "${a:-unknown} ${b:-unknown}"
+        emit ratelimit.read.remaining_after "${b:-unknown} ${c:-unknown}"
+        emit ratelimit.write.calls_between "1 1"
+        if [ -n "$a" ] && [ -n "$b" ] && [ -n "$c" ]; then
+          if [ $((a - b)) -ge 2 ] && [ $((b - c)) -ge 2 ]; then shared=yes
+          elif [ $((a - b)) -eq 1 ] && [ $((b - c)) -eq 1 ]; then shared=no; fi
         fi
       else failed "rate limit comparison"; fi
     else failed "rate limit (write key)"; fi
@@ -243,38 +266,64 @@ fi
 
 # --- 4. the write part ---
 label_name="sindri-probe"
-team_id="" label_id="" cleanup_armed=0 cleanup_done=0
+team_id="" label_id="" baseline_json="[]" archived_sample="" label_made=0
 cnt_query='query ProbeIssues($filter: IssueFilter, $first: Int) { issues(filter: $filter, first: $first, includeArchived: false) { nodes { id } } }'
 probe_filter() { jq -nc --arg t "$team_arg" --arg l "$label_name" '{team:{key:{eq:$t}},labels:{some:{name:{eq:$l}}}}'; }
 
-# cleanup: archive every non-archived issue in the team that carries the label (ours and strays), then re-query. Never touches an
-# issue without the label: the filter is the only way an id gets in. Runs once, from the main flow or the EXIT trap.
+# fresh_ids: the labelled non-archived issues of the last ProbeIssues answer that were not in the baseline, one id per line.
+fresh_ids() { jq -r --argjson b "$baseline_json" '.data.issues.nodes[]?.id | select(. as $i | ($b | index($i)) == null)' "$work/ProbeIssues.json"; }
+
+# baseline: the labelled non-archived issues that exist before this run's first create; cleanup leaves them alone.
+read_baseline() {
+  gql write ProbeIssues "$cnt_query" "$(jq -nc --argjson f "$(probe_filter)" '{filter:$f,first:250}')" || return 1
+  baseline_json="$(jq -c '[.data.issues.nodes[]?.id]' "$work/ProbeIssues.json")"
+  local n; n="$(jq 'length' <<<"$baseline_json")"
+  if [ "$n" -gt 0 ]; then echo "warning: $n $label_name issues existed before this run; left alone" >&2; fi
+}
+
+# cleanup: archive the labelled issues in the team that this run made (every labelled issue not in the baseline, so a create whose answer
+# was lost is caught too), then re-query. Never touches an issue without the label: the filter is the only way an id gets in, and a
+# baseline issue is never archived. Runs once, from the main flow or the EXIT trap.
 cleanup() {
   [ "$cleanup_armed" -eq 1 ] && [ "$cleanup_done" -eq 0 ] || return 0
   cleanup_done=1
   local found=0 done_n=0 round round_n id left
   for round in 1 2 3 4 5; do
     gql write ProbeIssues "$cnt_query" "$(jq -nc --argjson f "$(probe_filter)" '{filter:$f,first:250}')" || { failed "cleanup query"; break; }
-    [ "$(jq '[.data.issues.nodes[]?] | length' "$work/ProbeIssues.json")" -gt 0 ] || break
+    fresh_ids > "$work/fresh.txt"
+    [ -s "$work/fresh.txt" ] || break
     round_n=0
     while IFS= read -r id; do
       found=$((found + 1))
       if gql write IssueArchive 'mutation IssueArchive($id: String!) { issueArchive(id: $id) { success } }' "$(jq -nc --arg id "$id" '{id:$id}')" \
-         && jq -e '.data.issueArchive.success == true' "$work/IssueArchive.json" >/dev/null; then done_n=$((done_n + 1)); round_n=$((round_n + 1))
+         && jq -e '.data.issueArchive.success == true' "$work/IssueArchive.json" >/dev/null; then
+        done_n=$((done_n + 1)); round_n=$((round_n + 1)); [ -n "$archived_sample" ] || archived_sample="$id"
       else failed "cleanup archive"; fi
-    done < <(jq -r '.data.issues.nodes[]?.id' "$work/ProbeIssues.json")
+    done < "$work/fresh.txt"
     [ "$round_n" -gt 0 ] || break
   done
   emit cleanup "archived $done_n of $found"
   if gql write ProbeIssues "$cnt_query" "$(jq -nc --argjson f "$(probe_filter)" '{filter:$f,first:250}')"; then
-    left="$(jq '[.data.issues.nodes[]?] | length' "$work/ProbeIssues.json")"
+    left="$(fresh_ids | wc -l | tr -d ' ')"
     emit cleanup.left "$left"
     [ "$left" -eq 0 ] || failed "cleanup left $left labelled issue(s)"
   else emit cleanup.left unknown; failed "cleanup re-query"; fi
+  archive_visibility
 }
-on_exit() { local rc=$?; cleanup; rm -rf "$work"; exit "$rc"; }
-trap on_exit EXIT
-trap 'exit 130' INT TERM
+
+# archive_visibility: read-only, on an issue the cleanup just archived: is an archived issue hidden from `issues` unless includeArchived?
+archive_visibility() {
+  [ -n "$archived_sample" ] || return 0
+  local vars hidden shown
+  vars="$(jq -nc --arg id "$archived_sample" '{f:{id:{eq:$id}}}')"
+  if gql write ArchivedDefault 'query ArchivedDefault($f: IssueFilter) { issues(filter: $f, first: 1) { nodes { id } } }' "$vars" \
+     && gql write ArchivedIncluded 'query ArchivedIncluded($f: IssueFilter) { issues(filter: $f, first: 1, includeArchived: true) { nodes { id } } }' "$vars"; then
+    hidden="$(jq '[.data.issues.nodes[]?] | length' "$work/ArchivedDefault.json")"; shown="$(jq '[.data.issues.nodes[]?] | length' "$work/ArchivedIncluded.json")"
+    if [ "$hidden" -eq 0 ] && [ "$shown" -eq 1 ]; then emit archived.hidden_by_default yes
+    elif [ "$hidden" -eq 1 ]; then emit archived.hidden_by_default no
+    else emit archived.hidden_by_default unknown; fi
+  else failed "archive visibility probe"; fi
+}
 
 uuid() { python3 -I -c 'import uuid; print(uuid.uuid4())'; }
 create_issue() { # NAME TITLE DESCRIPTION [CLIENT_ID]
@@ -307,8 +356,10 @@ write_part() {
     [ "$rc" -eq 0 ] || { failed "label create"; return; }
     label_id="$(jq -r '.data.issueLabelCreate.issueLabel.id // empty' "$work/LabelCreate.json")"
     [ -n "$label_id" ] || { failed "label create (no id)"; return; }
-    emit label created
+    emit label created; label_made=1
   fi
+  # the baseline comes before the first create; a label made just now has no issues, so there is nothing to read
+  if [ "$label_made" -eq 0 ]; then read_baseline || { failed "baseline query"; return; }; fi
   cleanup_armed=1   # from here on the label exists and the cleanup has something to find
 
   # issue create with a client id
@@ -376,12 +427,25 @@ write_part() {
   t300="$(head -c 300 /dev/zero | tr '\0' 't')"; d70k="$(head -c 70000 /dev/zero | tr '\0' 'd')"
   create_issue CapTitle "$t300" "probe"; rc=$?
   if [ "$rc" -eq 0 ] && jq -e '.data.issueCreate.success == true' "$work/CapTitle.json" >/dev/null; then emit cap.title_300 ok
-  elif [ "$rc" -eq 3 ] || [ "$rc" -eq 0 ]; then emit cap.title_300 refused
+  elif [ "$rc" -eq 3 ] || [ "$rc" -eq 0 ]; then emit cap.title_300 rejected
   else failed "title cap probe"; fi
   gql write CapDesc "$issue_update" "$(jq -nc --arg i "$a_id" --arg d "$d70k" '{id:$i,input:{description:$d}}')"; rc=$?
   if [ "$rc" -eq 0 ] && jq -e '.data.issueUpdate.success == true' "$work/CapDesc.json" >/dev/null; then emit cap.description_70k ok
-  elif [ "$rc" -eq 3 ] || [ "$rc" -eq 0 ]; then emit cap.description_70k refused
+  elif [ "$rc" -eq 3 ] || [ "$rc" -eq 0 ]; then emit cap.description_70k rejected
   else failed "description cap probe"; fi
+
+  # paging: two pages of one issue in the team (read-only); the second must start after the first
+  local pq p1 p2 cursor
+  pq='query IssuePage($f: IssueFilter, $after: String) { issues(filter: $f, first: 1, after: $after) { nodes { id } pageInfo { hasNextPage endCursor } } }'
+  if gql write IssuePage1 "$pq" "$(jq -nc --arg t "$team_arg" '{f:{team:{key:{eq:$t}}}}')"; then
+    cursor="$(jq -r '.data.issues.pageInfo.endCursor // empty' "$work/IssuePage1.json")"; p1="$(jq -r '.data.issues.nodes[0].id // empty' "$work/IssuePage1.json")"
+    if [ "$(jq -r '.data.issues.pageInfo.hasNextPage' "$work/IssuePage1.json")" != true ]; then emit pagination.after_cursor "not probed (one issue in the team)"
+    elif [ -n "$cursor" ] && gql write IssuePage2 "$pq" "$(jq -nc --arg t "$team_arg" --arg a "$cursor" '{f:{team:{key:{eq:$t}}},after:$a}')"; then
+      p2="$(jq -r '.data.issues.nodes[0].id // empty' "$work/IssuePage2.json")"
+      if [ -n "$p2" ] && [ "$p2" != "$p1" ]; then emit pagination.after_cursor ok; else emit pagination.after_cursor failed; failed "pagination probe"; fi
+    else emit pagination.after_cursor failed; failed "pagination probe"; fi
+  else emit pagination.after_cursor failed; failed "pagination probe"; fi
+  emit team_move.old_key_resolves "not probed"   # a team move is not something the probe does
 }
 
 if [ "$want_write" -eq 1 ]; then write_part; fi

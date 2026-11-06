@@ -70,6 +70,7 @@ public sealed class LinearProbeOverFakeTests
             "label: created", "write.allowed: yes", "create.client_id: accepted", "create.repeat_client_id: INVALID_INPUT", "comment.client_id: accepted",
             "comment.repeat_client_id: INVALID_INPUT", "updatedAt.bumped_by.comment: yes", "attachment.repeat_url: one", "updatedAt.bumped_by.attachment: yes",
             "updatedAt.bumped_by.update: yes", "cap.title_300: ok", "cap.description_70k: ok", "cleanup.left: 0",
+            "archived.hidden_by_default: yes", "pagination.after_cursor: ok", "team_move.old_key_resolves: not probed",
         })
         {
             Assert.Contains(line + "\n", run.Stdout, StringComparison.Ordinal);
@@ -83,6 +84,23 @@ public sealed class LinearProbeOverFakeTests
         }
 
         Assert.Contains(linear.RequestBodies, IsMutation);
+        NothingSecretIn(run);
+    }
+
+    [Fact]
+    public async Task An_issue_with_the_probe_label_that_the_run_did_not_make_is_left_alone()
+    {
+        await using var linear = await Start(seed => seed
+            .Label(ProbeLabel, "ENG")
+            .Issue("ENG", "Someone's own probe-labelled issue", new FakeLinearIssueSeed { Labels = [ProbeLabel] }));
+
+        var run = await Probe(linear, "--url", linear.Url.ToString(), "--team", "ENG", "--write");
+
+        Assert.True(run.ExitCode == 0, run.Text);
+        Assert.Contains("warning: 1 sindri-probe issues existed before this run; left alone", run.Stderr, StringComparison.Ordinal);
+        var live = LiveProbeIssues(linear);
+        var kept = Assert.Single(live);
+        Assert.Contains("probe-labelled", kept.Title, StringComparison.Ordinal);
         NothingSecretIn(run);
     }
 
