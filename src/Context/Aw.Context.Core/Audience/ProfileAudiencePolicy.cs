@@ -34,6 +34,12 @@ public sealed class ProfileAudiencePolicy(ContextSettings settings, IReadOnlyCol
         return matches.Count == 1 && AudienceKey.TryFrom(matches[0], out var key) ? key : null;
     }
 
+    /// <summary>The audience of a doc of the library feed (PR review page spec 2026-11-04 §5.4): the one synced repo its 'repos:' names, else the owner alone.</summary>
+    /// <param name="docRepos">The doc's 'repos:' entries ('owner/name').</param>
+    /// <param name="githubRepos">The 'owner/name' entries of 'context.sources.github.repos'.</param>
+    /// <returns>The synced repo's audience when the doc names exactly one such repo, else 'owner:library'.</returns>
+    public static AudienceKey LibraryDoc(IReadOnlyList<string> docRepos, IReadOnlyList<string> githubRepos) => throw new NotSupportedException();
+
     /// <summary>
     /// The audiences only a human reads on top of the session rule (spec §4.4: a human caller is not scoped): the profile's Slack channels
     /// ('slack:&lt;channelId&gt;'). Taken from the profile, not from the store, so the mask stays a list the lexical and dense legs can apply.
