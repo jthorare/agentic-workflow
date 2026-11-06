@@ -136,3 +136,56 @@ erDiagram
 ```
 
 `design_doc` has `INDEX(scope, doc_id)`, not unique: who owns a shared doc id is decided on read. `design_doc_ref` has `INDEX(to_ref)` and `design_doc_claim` has `INDEX(ref)`. Claims carry no resolved columns: they resolve on read. Records are soft-deleted, so a foreign-key cascade never fires on removal: `Commit` deletes the rows itself in the transaction that sets `removed_at` (cascade covers only `Purge`). A doc record with no `aw-doc` front matter has no `design_doc` row. A doc the scrubber blocks has one, with the error "blocked" and no items. Itemized doc records (kind `doc` of `repo-docs` and `library`) store their scrub ruleset followed by `+aw-doc-p<parser version>`, so the repo-docs feed's per-doc check sees an old parse and re-emits the doc with no new commit. The migration also invalidates GitHub PR rows and resets the `github` record feed, as 0030 did, so every PR body is read for its `Covers:` line once.
+
+Migration 0032 (`linear_hub`) adds the Linear hub's tables (Linear hub spec 2026-11-04 §4.1, §4.2). An issue's fields, newest comments and assignee/state changes go through the same side-rows seam (`LinearSideRows`, the `linear` writer) in the transaction that stores the issue record; the pickers' lists are written by the issue feed's lookups tick step, one team at a time:
+
+```mermaid
+erDiagram
+    source_record ||--o| linear_issue : "key (cascade)"
+    linear_issue ||--o{ linear_comment : "issue_key (cascade)"
+    linear_issue ||--o{ linear_issue_change : "issue_key (cascade)"
+    linear_team ||--o{ linear_state : "team_id"
+    linear_team ||--o{ linear_cycle : "team_id"
+    linear_team ||--o{ linear_member : "team_id"
+    linear_team ||--o{ linear_label : "team_id"
+    linear_issue {
+        text key PK "the issue record's key: linear:issue/uuid"
+        text team_id
+        text identifier "ENG-12"
+        text state_id
+        text state_type "triage, backlog, unstarted, started, completed, canceled"
+        text assignee_id
+        int priority "0 to 4"
+        real estimate
+        text cycle_id
+        text project_id
+        text parent_id
+        text labels "json array of label ids"
+        text due_date
+        real sort_order
+        text updated_at "Linear's"
+    }
+    linear_comment {
+        text id PK "Linear's"
+        text issue_key FK
+        text author_id
+        text created_at
+        text body "scrubbed, at most 8000 characters"
+        int sindri "1: Sindri's marker line, written by the write key's user"
+    }
+    linear_issue_change {
+        int seq PK
+        text issue_key FK
+        text field "assignee or state"
+        text old "a user id or a state id"
+        text new
+        text at "when Sindri saw it"
+        text via "feed or write-through"
+    }
+    linear_team {
+        text id PK
+        text key "ENG"
+    }
+```
+
+`linear_issue` has `INDEX(assignee_id, state_type)`, `INDEX(project_id)` and `INDEX(cycle_id)`. The newest 50 comments per issue are kept. A replace logs a change row for the assignee and for the state when the new `linear_issue` row differs from the stored one; an issue with no stored row (the first `;f3` re-save, or one that came back after a tombstone) logs none, and `via` is `write-through` only for a field the write itself sent. Rows older than 30 days are deleted by the same commit. `Commit` removes an issue's rows in the transaction that tombstones it, and every read joins `source_record` with `removed_at IS NULL`, the record's audience and `blocked = 0`. `linear_state`, `linear_cycle`, `linear_member` and `linear_label` are keyed `(team_id, id)` (a member or label can belong to several teams) and replaced per team in one transaction. The migration resets the `linear` record feed's `source_cursor` row to phase `recent`, as 0020 did, so the feed's `;f3` format is read once.
