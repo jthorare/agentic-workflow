@@ -301,7 +301,7 @@ publish() {
   # 3. "Install didn't take": each binary answers its state-free call, in a scratch state dir and with no inherited environment.
   verify "$stage" "$revision" "$tree/scripts/heavy.sh" "$tree/scripts/meta-gate-reserve.sh"
 
-  # 4. The recipe evals, with the published binary over the staged set, before the build becomes a candidate.
+  # 4. The recipe evals, with the published binary over the staged set, before the build becomes a candidate. --skills: a recipe that names a skill block is checked against the manifests this checkout ships.
   local digest="" manifest evals staged_count embedded_count
   if [ -n "$recipes_tree" ]; then
     manifest="$(AW_STATE_DIR="$tree/.state" "$stage/sindri" recipe manifest "$tree/recipes/sindri" --json 2>> "$log" < /dev/null)" \
@@ -312,7 +312,7 @@ publish() {
       say "the shipped recipes are unchanged since the last publish; evals skipped"
     else
       say "running the shipped recipes' evals"
-      evals="$(AW_STATE_DIR="$tree/.state" "$stage/sindri" recipe eval --shipped --json 2>> "$log" < /dev/null)" \
+      evals="$(AW_STATE_DIR="$tree/.state" "$stage/sindri" recipe eval --shipped --skills "$root/skills" --json 2>> "$log" < /dev/null)" \
         || { printf '%s\n' "$evals" >&2; tail -20 "$log" >&2; die "recipe evals failed; no build was made (sindri recipe eval --shipped)"; }
       staged_count="$(find "$tree/recipes/sindri" -maxdepth 1 -name '*.yaml' | wc -l | tr -d ' ')"
       embedded_count="$(printf '%s' "$evals" | jq -r '.recipes | length' 2> /dev/null || true)"

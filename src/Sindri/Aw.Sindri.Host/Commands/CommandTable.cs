@@ -42,6 +42,14 @@ internal static partial class CommandTable
             return await SandboxShowVerb.Run(show, environment, Console.Out, Console.Error, CancellationToken.None).ConfigureAwait(false);
         }
 
+        var skills = SkillsFlag.Apply(args, environment, Directory.GetCurrentDirectory());   // 'recipe validate|eval --skills <dir>': the folder the in-process verbs read their blocks from
+        if (skills.IsError)
+        {
+            await Console.Error.WriteLineAsync($"{skills.Error.Code} {skills.Error.Message}").ConfigureAwait(false);
+            return 2;
+        }
+
+        (args, environment) = skills.Value;
         var services = Composition.Compose(new ServiceCollection(), environment, clock);
         configure?.Invoke(services);   // tests only: a test replaces a port with its fake; Program passes nothing
         var provider = services.BuildServiceProvider();

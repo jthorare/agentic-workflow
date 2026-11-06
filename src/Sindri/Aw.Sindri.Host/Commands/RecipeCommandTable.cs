@@ -15,8 +15,8 @@ namespace Aw.Sindri.Host.Commands;
 /// </summary>
 internal static partial class RecipeCommandTable
 {
-    private const string ValidateUsage = "usage: sindri recipe validate <file> [--json] [--against <manifest.json>]";
-    private const string EvalUsage = "usage: sindri recipe eval <file> [--json] | --shipped [--json] | --scaffold <file> [--out <dir>] | --record <address> --out <file>";
+    private const string ValidateUsage = "usage: sindri recipe validate <file> [--json] [--against <manifest.json>] [--skills <dir>]";
+    private const string EvalUsage = "usage: sindri recipe eval <file> [--json] [--skills <dir>] | --shipped [--json] [--skills <dir>] | --scaffold <file> [--out <dir>] | --record <address> --out <file>";
     private const string ApproveUsage = "usage: sindri recipe approve <file|id@hash>";
     private const string ApproveAllUsage = "usage: sindri recipe approve-all [--json]";
     private const string RevokeUsage = "usage: sindri recipe revoke <id@hash>";
