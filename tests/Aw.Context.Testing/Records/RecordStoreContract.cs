@@ -376,6 +376,22 @@ public abstract class RecordStoreContract<TStore>
         ContractCheck.That(_owner, rows.Select(r => r.Vector.Key).SequenceEqual([new ChunkKey(theirs.Key, 0).ToString()], StringComparer.Ordinal), "only the other source's vector stays");
     }
 
+    /// <summary>A record that only changed audience is rewritten: the stored audience is the new one.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_record_whose_audience_changed_is_rewritten()
+    {
+        var store = Create();
+        var repoDoc = RecordSamples.Record("doc:harbor/ferry-booking.md") with { Kind = RecordKind.Doc, Audience = AudienceKey.From("repo:harbor/ferry") };
+        var libraryDoc = repoDoc with { Audience = AudienceKey.From("owner:library") };
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Linear, 1, RecordSamples.Write(repoDoc, "Harbor ferry booking")), CancellationToken.None));
+        var report = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Linear, 2, RecordSamples.Write(libraryDoc, "Harbor ferry booking")), CancellationToken.None));
+
+        ContractCheck.That(_owner, report == new CommitReport(1, 0, 0), "the changed audience counts as a written record");
+        var read = ContractCheck.Ok(_owner, await store.Get(repoDoc.Key, CancellationToken.None));
+        ContractCheck.That(_owner, read?.Audience == AudienceKey.From("owner:library"), "the stored audience is the new one");
+    }
+
     private static StoredRecord BetaIssue(string id, RecordState state, string audience, params RecordLink[] more) => RecordSamples.Record("linear:issue/" + id) with
     {
         State = state,
