@@ -11095,3 +11095,178 @@ override Aw.Context.Core.Map.StoreUpkeep.ToString() -> string!
 static Aw.Context.Core.Map.StoreUpkeep.operator !=(Aw.Context.Core.Map.StoreUpkeep? left, Aw.Context.Core.Map.StoreUpkeep? right) -> bool
 static Aw.Context.Core.Map.StoreUpkeep.operator ==(Aw.Context.Core.Map.StoreUpkeep? left, Aw.Context.Core.Map.StoreUpkeep? right) -> bool
 const Aw.Context.Core.Map.StoreHealth.Name = "context:store" -> string!
+Aw.Context.Core.Library.DesignDocCodes
+Aw.Context.Core.Library.DesignDocError
+Aw.Context.Core.Library.DesignDocError.<Clone>$() -> Aw.Context.Core.Library.DesignDocError!
+Aw.Context.Core.Library.DesignDocError.Code.get -> string!
+Aw.Context.Core.Library.DesignDocError.Code.init -> void
+Aw.Context.Core.Library.DesignDocError.Deconstruct(out string! Code, out int? Line, out string! Message, out string! Fix) -> void
+Aw.Context.Core.Library.DesignDocError.DesignDocError(string! Code, int? Line, string! Message, string! Fix) -> void
+Aw.Context.Core.Library.DesignDocError.Equals(Aw.Context.Core.Library.DesignDocError? other) -> bool
+Aw.Context.Core.Library.DesignDocError.Fix.get -> string!
+Aw.Context.Core.Library.DesignDocError.Fix.init -> void
+Aw.Context.Core.Library.DesignDocError.Line.get -> int?
+Aw.Context.Core.Library.DesignDocError.Line.init -> void
+Aw.Context.Core.Library.DesignDocError.Message.get -> string!
+Aw.Context.Core.Library.DesignDocError.Message.init -> void
+Aw.Context.Core.Library.DesignDocFinding
+Aw.Context.Core.Library.DesignDocFinding.<Clone>$() -> Aw.Context.Core.Library.DesignDocFinding!
+Aw.Context.Core.Library.DesignDocFinding.Deconstruct(out string! Path, out Aw.Context.Core.Library.DesignDocError! Error) -> void
+Aw.Context.Core.Library.DesignDocFinding.DesignDocFinding(string! Path, Aw.Context.Core.Library.DesignDocError! Error) -> void
+Aw.Context.Core.Library.DesignDocFinding.Equals(Aw.Context.Core.Library.DesignDocFinding? other) -> bool
+Aw.Context.Core.Library.DesignDocFinding.Error.get -> Aw.Context.Core.Library.DesignDocError!
+Aw.Context.Core.Library.DesignDocFinding.Error.init -> void
+Aw.Context.Core.Library.DesignDocFinding.Path.get -> string!
+Aw.Context.Core.Library.DesignDocFinding.Path.init -> void
+Aw.Context.Core.Library.DesignDocFrontMatter
+Aw.Context.Core.Library.DesignDocFrontMatter.<Clone>$() -> Aw.Context.Core.Library.DesignDocFrontMatter!
+Aw.Context.Core.Library.DesignDocFrontMatter.AwDoc.get -> int
+Aw.Context.Core.Library.DesignDocFrontMatter.AwDoc.init -> void
+Aw.Context.Core.Library.DesignDocFrontMatter.Deconstruct(out int AwDoc, out string? Slug, out string? Kind, out string? Title, out string? Status, out string? Project, out System.Collections.Generic.IReadOnlyList<string!>? Repos, out System.Collections.Generic.IReadOnlyList<string!>? Issues, out string? Supersedes, out string? Parent, out string? Generated, out string? SourceSha256) -> void
+Aw.Context.Core.Library.DesignDocFrontMatter.DesignDocFrontMatter(int AwDoc, string? Slug, string? Kind, string? Title, string? Status, string? Project, System.Collections.Generic.IReadOnlyList<string!>? Repos, System.Collections.Generic.IReadOnlyList<string!>? Issues, string? Supersedes, string? Parent, string? Generated, string? SourceSha256) -> void
+Aw.Context.Core.Library.DesignDocFrontMatter.Equals(Aw.Context.Core.Library.DesignDocFrontMatter? other) -> bool
+Aw.Context.Core.Library.DesignDocFrontMatter.Generated.get -> string?
+Aw.Context.Core.Library.DesignDocFrontMatter.Generated.init -> void
+Aw.Context.Core.Library.DesignDocFrontMatter.Issues.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.Library.DesignDocFrontMatter.Issues.init -> void
+Aw.Context.Core.Library.DesignDocFrontMatter.KeyLines.get -> System.Collections.Generic.IReadOnlyDictionary<string!, int>!
+Aw.Context.Core.Library.DesignDocFrontMatter.KeyLines.init -> void
+Aw.Context.Core.Library.DesignDocFrontMatter.Kind.get -> string?
+Aw.Context.Core.Library.DesignDocFrontMatter.Kind.init -> void
+Aw.Context.Core.Library.DesignDocFrontMatter.Parent.get -> string?
+Aw.Context.Core.Library.DesignDocFrontMatter.Parent.init -> void
+Aw.Context.Core.Library.DesignDocFrontMatter.Project.get -> string?
+Aw.Context.Core.Library.DesignDocFrontMatter.Project.init -> void
+Aw.Context.Core.Library.DesignDocFrontMatter.Repos.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.Library.DesignDocFrontMatter.Repos.init -> void
+Aw.Context.Core.Library.DesignDocFrontMatter.Slug.get -> string?
+Aw.Context.Core.Library.DesignDocFrontMatter.Slug.init -> void
+Aw.Context.Core.Library.DesignDocFrontMatter.SourceSha256.get -> string?
+Aw.Context.Core.Library.DesignDocFrontMatter.SourceSha256.init -> void
+Aw.Context.Core.Library.DesignDocFrontMatter.Status.get -> string?
+Aw.Context.Core.Library.DesignDocFrontMatter.Status.init -> void
+Aw.Context.Core.Library.DesignDocFrontMatter.Supersedes.get -> string?
+Aw.Context.Core.Library.DesignDocFrontMatter.Supersedes.init -> void
+Aw.Context.Core.Library.DesignDocFrontMatter.Title.get -> string?
+Aw.Context.Core.Library.DesignDocFrontMatter.Title.init -> void
+Aw.Context.Core.Library.DesignDocParser
+Aw.Context.Core.Library.DesignDocScope
+Aw.Context.Core.Library.DesignItem
+Aw.Context.Core.Library.DesignItem.<Clone>$() -> Aw.Context.Core.Library.DesignItem!
+Aw.Context.Core.Library.DesignItem.Deconstruct(out string! Key, out Aw.Context.Core.Library.DesignItemKind Kind, out string? Parent, out int LineStart, out int LineEnd, out string! Text) -> void
+Aw.Context.Core.Library.DesignItem.DesignItem(string! Key, Aw.Context.Core.Library.DesignItemKind Kind, string? Parent, int LineStart, int LineEnd, string! Text) -> void
+Aw.Context.Core.Library.DesignItem.Equals(Aw.Context.Core.Library.DesignItem? other) -> bool
+Aw.Context.Core.Library.DesignItem.Key.get -> string!
+Aw.Context.Core.Library.DesignItem.Key.init -> void
+Aw.Context.Core.Library.DesignItem.Kind.get -> Aw.Context.Core.Library.DesignItemKind
+Aw.Context.Core.Library.DesignItem.Kind.init -> void
+Aw.Context.Core.Library.DesignItem.LineEnd.get -> int
+Aw.Context.Core.Library.DesignItem.LineEnd.init -> void
+Aw.Context.Core.Library.DesignItem.LineStart.get -> int
+Aw.Context.Core.Library.DesignItem.LineStart.init -> void
+Aw.Context.Core.Library.DesignItem.Parent.get -> string?
+Aw.Context.Core.Library.DesignItem.Parent.init -> void
+Aw.Context.Core.Library.DesignItem.Text.get -> string!
+Aw.Context.Core.Library.DesignItem.Text.init -> void
+Aw.Context.Core.Library.DesignItemKind
+Aw.Context.Core.Library.DesignItemKind.Acceptance = 3 -> Aw.Context.Core.Library.DesignItemKind
+Aw.Context.Core.Library.DesignItemKind.Phase = 1 -> Aw.Context.Core.Library.DesignItemKind
+Aw.Context.Core.Library.DesignItemKind.Requirement = 2 -> Aw.Context.Core.Library.DesignItemKind
+Aw.Context.Core.Library.DesignItemKind.Section = 0 -> Aw.Context.Core.Library.DesignItemKind
+Aw.Context.Core.Library.DesignItemKind.Task = 5 -> Aw.Context.Core.Library.DesignItemKind
+Aw.Context.Core.Library.DesignItemKind.TestPlan = 4 -> Aw.Context.Core.Library.DesignItemKind
+Aw.Context.Core.Library.DesignRef
+Aw.Context.Core.Library.DesignRef.<Clone>$() -> Aw.Context.Core.Library.DesignRef!
+Aw.Context.Core.Library.DesignRef.Deconstruct(out string? From, out string! To, out Aw.Context.Core.Library.DesignRefKind Kind, out int Line) -> void
+Aw.Context.Core.Library.DesignRef.DesignRef(string? From, string! To, Aw.Context.Core.Library.DesignRefKind Kind, int Line) -> void
+Aw.Context.Core.Library.DesignRef.Equals(Aw.Context.Core.Library.DesignRef? other) -> bool
+Aw.Context.Core.Library.DesignRef.From.get -> string?
+Aw.Context.Core.Library.DesignRef.From.init -> void
+Aw.Context.Core.Library.DesignRef.Kind.get -> Aw.Context.Core.Library.DesignRefKind
+Aw.Context.Core.Library.DesignRef.Kind.init -> void
+Aw.Context.Core.Library.DesignRef.Line.get -> int
+Aw.Context.Core.Library.DesignRef.Line.init -> void
+Aw.Context.Core.Library.DesignRef.To.get -> string!
+Aw.Context.Core.Library.DesignRef.To.init -> void
+Aw.Context.Core.Library.DesignRefKind
+Aw.Context.Core.Library.DesignRefKind.Blocks = 2 -> Aw.Context.Core.Library.DesignRefKind
+Aw.Context.Core.Library.DesignRefKind.Relates = 1 -> Aw.Context.Core.Library.DesignRefKind
+Aw.Context.Core.Library.DesignRefKind.Verifies = 0 -> Aw.Context.Core.Library.DesignRefKind
+Aw.Context.Core.Library.ParsedDesignDoc
+Aw.Context.Core.Library.ParsedDesignDoc.<Clone>$() -> Aw.Context.Core.Library.ParsedDesignDoc!
+Aw.Context.Core.Library.ParsedDesignDoc.Deconstruct(out int ParserVersion, out Aw.Context.Core.Library.DesignDocFrontMatter? FrontMatter, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignItem!>! Items, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignRef!>! Refs, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignDocError!>! Errors) -> void
+Aw.Context.Core.Library.ParsedDesignDoc.Equals(Aw.Context.Core.Library.ParsedDesignDoc? other) -> bool
+Aw.Context.Core.Library.ParsedDesignDoc.Errors.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignDocError!>!
+Aw.Context.Core.Library.ParsedDesignDoc.Errors.init -> void
+Aw.Context.Core.Library.ParsedDesignDoc.FrontMatter.get -> Aw.Context.Core.Library.DesignDocFrontMatter?
+Aw.Context.Core.Library.ParsedDesignDoc.FrontMatter.init -> void
+Aw.Context.Core.Library.ParsedDesignDoc.Items.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignItem!>!
+Aw.Context.Core.Library.ParsedDesignDoc.Items.init -> void
+Aw.Context.Core.Library.ParsedDesignDoc.ParsedDesignDoc(int ParserVersion, Aw.Context.Core.Library.DesignDocFrontMatter? FrontMatter, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignItem!>! Items, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignRef!>! Refs, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignDocError!>! Errors) -> void
+Aw.Context.Core.Library.ParsedDesignDoc.ParserVersion.get -> int
+Aw.Context.Core.Library.ParsedDesignDoc.ParserVersion.init -> void
+Aw.Context.Core.Library.ParsedDesignDoc.Refs.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignRef!>!
+Aw.Context.Core.Library.ParsedDesignDoc.Refs.init -> void
+Aw.Context.Core.Library.ScopedDesignDoc
+Aw.Context.Core.Library.ScopedDesignDoc.<Clone>$() -> Aw.Context.Core.Library.ScopedDesignDoc!
+Aw.Context.Core.Library.ScopedDesignDoc.Deconstruct(out string! Path, out string! Scope, out Aw.Context.Core.Library.ParsedDesignDoc! Doc) -> void
+Aw.Context.Core.Library.ScopedDesignDoc.Doc.get -> Aw.Context.Core.Library.ParsedDesignDoc!
+Aw.Context.Core.Library.ScopedDesignDoc.Doc.init -> void
+Aw.Context.Core.Library.ScopedDesignDoc.Equals(Aw.Context.Core.Library.ScopedDesignDoc? other) -> bool
+Aw.Context.Core.Library.ScopedDesignDoc.Path.get -> string!
+Aw.Context.Core.Library.ScopedDesignDoc.Path.init -> void
+Aw.Context.Core.Library.ScopedDesignDoc.Scope.get -> string!
+Aw.Context.Core.Library.ScopedDesignDoc.Scope.init -> void
+Aw.Context.Core.Library.ScopedDesignDoc.ScopedDesignDoc(string! Path, string! Scope, Aw.Context.Core.Library.ParsedDesignDoc! Doc) -> void
+const Aw.Context.Core.Library.DesignDocCodes.BadFrontMatter = "SND-LIB-010" -> string!
+const Aw.Context.Core.Library.DesignDocCodes.BadItemId = "SND-LIB-011" -> string!
+const Aw.Context.Core.Library.DesignDocCodes.BrokenRef = "SND-LIB-015" -> string!
+const Aw.Context.Core.Library.DesignDocCodes.DuplicateItem = "SND-LIB-013" -> string!
+const Aw.Context.Core.Library.DesignDocCodes.NearMiss = "SND-LIB-019" -> string!
+const Aw.Context.Core.Library.DesignDocCodes.OrphanAcceptance = "SND-LIB-014" -> string!
+const Aw.Context.Core.Library.DesignDocCodes.SharedDocId = "SND-LIB-012" -> string!
+const Aw.Context.Core.Library.DesignDocCodes.StaleGenerated = "SND-LIB-017" -> string!
+const Aw.Context.Core.Library.DesignDocCodes.TooLarge = "SND-LIB-018" -> string!
+const Aw.Context.Core.Library.DesignDocCodes.UnknownDocLink = "SND-LIB-016" -> string!
+const Aw.Context.Core.Library.DesignDocParser.MaxBytes = 1048576 -> int
+const Aw.Context.Core.Library.DesignDocParser.MaxItems = 2000 -> int
+const Aw.Context.Core.Library.DesignDocParser.MaxTextChars = 4000 -> int
+const Aw.Context.Core.Library.DesignDocParser.Version = 1 -> int
+override Aw.Context.Core.Library.DesignDocError.Equals(object? obj) -> bool
+override Aw.Context.Core.Library.DesignDocError.GetHashCode() -> int
+override Aw.Context.Core.Library.DesignDocError.ToString() -> string!
+override Aw.Context.Core.Library.DesignDocFinding.Equals(object? obj) -> bool
+override Aw.Context.Core.Library.DesignDocFinding.GetHashCode() -> int
+override Aw.Context.Core.Library.DesignDocFinding.ToString() -> string!
+override Aw.Context.Core.Library.DesignDocFrontMatter.Equals(object? obj) -> bool
+override Aw.Context.Core.Library.DesignDocFrontMatter.GetHashCode() -> int
+override Aw.Context.Core.Library.DesignDocFrontMatter.ToString() -> string!
+override Aw.Context.Core.Library.DesignItem.Equals(object? obj) -> bool
+override Aw.Context.Core.Library.DesignItem.GetHashCode() -> int
+override Aw.Context.Core.Library.DesignItem.ToString() -> string!
+override Aw.Context.Core.Library.DesignRef.Equals(object? obj) -> bool
+override Aw.Context.Core.Library.DesignRef.GetHashCode() -> int
+override Aw.Context.Core.Library.DesignRef.ToString() -> string!
+override Aw.Context.Core.Library.ParsedDesignDoc.Equals(object? obj) -> bool
+override Aw.Context.Core.Library.ParsedDesignDoc.GetHashCode() -> int
+override Aw.Context.Core.Library.ParsedDesignDoc.ToString() -> string!
+override Aw.Context.Core.Library.ScopedDesignDoc.Equals(object? obj) -> bool
+override Aw.Context.Core.Library.ScopedDesignDoc.GetHashCode() -> int
+override Aw.Context.Core.Library.ScopedDesignDoc.ToString() -> string!
+static Aw.Context.Core.Library.DesignDocCodes.IsScopeCode(string! code) -> bool
+static Aw.Context.Core.Library.DesignDocError.operator !=(Aw.Context.Core.Library.DesignDocError? left, Aw.Context.Core.Library.DesignDocError? right) -> bool
+static Aw.Context.Core.Library.DesignDocError.operator ==(Aw.Context.Core.Library.DesignDocError? left, Aw.Context.Core.Library.DesignDocError? right) -> bool
+static Aw.Context.Core.Library.DesignDocFinding.operator !=(Aw.Context.Core.Library.DesignDocFinding? left, Aw.Context.Core.Library.DesignDocFinding? right) -> bool
+static Aw.Context.Core.Library.DesignDocFinding.operator ==(Aw.Context.Core.Library.DesignDocFinding? left, Aw.Context.Core.Library.DesignDocFinding? right) -> bool
+static Aw.Context.Core.Library.DesignDocFrontMatter.operator !=(Aw.Context.Core.Library.DesignDocFrontMatter? left, Aw.Context.Core.Library.DesignDocFrontMatter? right) -> bool
+static Aw.Context.Core.Library.DesignDocFrontMatter.operator ==(Aw.Context.Core.Library.DesignDocFrontMatter? left, Aw.Context.Core.Library.DesignDocFrontMatter? right) -> bool
+static Aw.Context.Core.Library.DesignDocParser.Parse(string! path, string! text, string? actualSourceSha256 = null) -> Aw.Context.Core.Library.ParsedDesignDoc!
+static Aw.Context.Core.Library.DesignDocScope.Check(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.ScopedDesignDoc!>! docs) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignDocFinding!>!
+static Aw.Context.Core.Library.DesignItem.operator !=(Aw.Context.Core.Library.DesignItem? left, Aw.Context.Core.Library.DesignItem? right) -> bool
+static Aw.Context.Core.Library.DesignItem.operator ==(Aw.Context.Core.Library.DesignItem? left, Aw.Context.Core.Library.DesignItem? right) -> bool
+static Aw.Context.Core.Library.DesignRef.operator !=(Aw.Context.Core.Library.DesignRef? left, Aw.Context.Core.Library.DesignRef? right) -> bool
+static Aw.Context.Core.Library.DesignRef.operator ==(Aw.Context.Core.Library.DesignRef? left, Aw.Context.Core.Library.DesignRef? right) -> bool
+static Aw.Context.Core.Library.ParsedDesignDoc.operator !=(Aw.Context.Core.Library.ParsedDesignDoc? left, Aw.Context.Core.Library.ParsedDesignDoc? right) -> bool
+static Aw.Context.Core.Library.ParsedDesignDoc.operator ==(Aw.Context.Core.Library.ParsedDesignDoc? left, Aw.Context.Core.Library.ParsedDesignDoc? right) -> bool
+static Aw.Context.Core.Library.ScopedDesignDoc.operator !=(Aw.Context.Core.Library.ScopedDesignDoc? left, Aw.Context.Core.Library.ScopedDesignDoc? right) -> bool
+static Aw.Context.Core.Library.ScopedDesignDoc.operator ==(Aw.Context.Core.Library.ScopedDesignDoc? left, Aw.Context.Core.Library.ScopedDesignDoc? right) -> bool
