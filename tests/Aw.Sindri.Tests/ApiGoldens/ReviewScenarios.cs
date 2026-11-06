@@ -61,7 +61,7 @@ internal static class ReviewScenarios
         ];
         var synced = KnownInstants.Epoch.AddMinutes(-14.4);
         var github = new ProjectSourceFreshness("github", Usable: true, synced, scenario == "github-failing" ? "SND-INDEX-401" : null);
-        var library = scenario == "library-unreadable" ? new ReviewLibraryFacts(Reading: false, 33, WithErrors: 0, UnreadableRoots: 1) : new ReviewLibraryFacts(Reading: false, 41, WithErrors: 3, UnreadableRoots: 0);
+        var library = scenario == "library-unreadable" ? new ReviewLibraryFacts(Reading: false, 33, WithErrors: 0, [new ReviewUnreadableRoot("~/notes/vault", "permission denied")]) : new ReviewLibraryFacts(Reading: false, 41, WithErrors: 3, []);
         return new FakeReviewFacts().With(new ReviewFactsSnapshot(pulls, github, library));
     }
 

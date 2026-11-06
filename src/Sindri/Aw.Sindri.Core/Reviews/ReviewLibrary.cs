@@ -17,10 +17,10 @@ public sealed record ReviewLibrary(string State, int Docs, int WithErrors, int U
         var (state, text) = true switch
         {
             _ when facts.Reading => ("reading", "Library: reading…"),
-            _ when facts.UnreadableRoots > 0 => ("error", string.Create(System.Globalization.CultureInfo.InvariantCulture, $"Library: {facts.Docs} docs, {facts.UnreadableRoots} {(facts.UnreadableRoots == 1 ? "folder can't" : "folders can't")} be read")),
+            _ when facts.UnreadableRoots.Count > 0 => ("error", string.Create(System.Globalization.CultureInfo.InvariantCulture, $"Library: {facts.Docs} docs, {facts.UnreadableRoots.Count} {(facts.UnreadableRoots.Count == 1 ? "folder can't" : "folders can't")} be read")),
             _ when facts.Docs == 0 => ("empty", "Library: no design docs yet"),
             _ => ("ok", string.Create(System.Globalization.CultureInfo.InvariantCulture, $"Library: {facts.Docs} docs, {facts.WithErrors} with errors")),
         };
-        return new ReviewLibrary(state, facts.Docs, facts.WithErrors, facts.UnreadableRoots, text);
+        return new ReviewLibrary(state, facts.Docs, facts.WithErrors, facts.UnreadableRoots.Count, text);
     }
 }

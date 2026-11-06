@@ -63,8 +63,7 @@ public static class ReviewListBuilder
             }
         }
 
-        // why: the golden puts the owner's own PRs under their repo even when a project names it; projects group the PRs the owner reviews
-        ReviewListGroup[] groups = [new(ReviewGroupKind.Waiting, "Waiting on you", Sections(waiting, summaryOf, projectOf)), new(ReviewGroupKind.Yours, "Yours", Sections(yours, summaryOf, static _ => null))];
+        ReviewListGroup[] groups = [new(ReviewGroupKind.Waiting, "Waiting on you", Sections(waiting, summaryOf, projectOf)), new(ReviewGroupKind.Yours, "Yours", Sections(yours, summaryOf, projectOf))];
         var notice = pulls.Count > 0 && !pulls.Any(static p => p.ReviewersRead) ? BeforeReviewersNotice : null;
         return new ReviewListParts(groups, waiting.Count, notice, waiting.Count + yours.Count == 0 ? ReviewEmpty.Words : null);
     }

@@ -6,7 +6,7 @@ namespace Aw.Sindri.Testing;
 /// <summary>The Reviews list's facts, set by the test: what Context's stored PR records and sources would give.</summary>
 public sealed class FakeReviewFacts : IReviewFacts
 {
-    private Result<ReviewFactsSnapshot> _snapshot = new ReviewFactsSnapshot([], Github: null, new ReviewLibraryFacts(Reading: false, Docs: 0, WithErrors: 0, UnreadableRoots: 0));
+    private Result<ReviewFactsSnapshot> _snapshot = new ReviewFactsSnapshot([], Github: null, new ReviewLibraryFacts(Reading: false, Docs: 0, WithErrors: 0, UnreadableRoots: []));
 
     /// <summary>Gets how many times the facts were read.</summary>
     public int Reads { get; private set; }

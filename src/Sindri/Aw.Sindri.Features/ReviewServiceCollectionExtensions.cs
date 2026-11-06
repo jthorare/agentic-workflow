@@ -19,6 +19,7 @@ internal static class ReviewServiceCollectionExtensions
         return services
             .AddScoped<IValidator<ListReviewsRequest>, AcceptAllValidator<ListReviewsRequest>>().AddQuery<ListReviewsRequest, ListReviewsResponse, ListReviewsService>()
             .AddScoped<IReviewFacts, ContextReviewFacts>()
+            .AddScoped<IReviewLibraryState, ContextLibraryState>()
             .AddScoped<IReviewProjects, ProjectReviewNames>()
             .AddScoped<ReviewSummaryReader>();
     }

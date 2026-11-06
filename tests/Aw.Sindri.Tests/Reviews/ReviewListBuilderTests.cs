@@ -75,12 +75,12 @@ public sealed class ReviewListBuilderTests
     }
 
     [Fact]
-    public void The_owners_own_PRs_stay_under_their_repo_even_when_a_project_names_it()
+    public void A_Yours_PR_in_a_projects_repo_lands_in_the_project_section()
     {
         var parts = Build([Pull("acme/api", 1, author: Login)], static _ => new ReviewProjectName("prj_1", "Sindri"));
 
         var section = Assert.Single(parts.Groups[1].Sections);
-        Assert.Equal((ReviewSectionBy.Repo, "acme/api"), (section.By, section.Name));
+        Assert.Equal((ReviewSectionBy.Project, "Sindri"), (section.By, section.Name));
     }
 
     [Fact]
@@ -117,10 +117,10 @@ public sealed class ReviewListBuilderTests
     [Fact]
     public void The_library_line_has_four_states()
     {
-        Assert.Equal("Library: reading…", ReviewLibrary.From(new ReviewLibraryFacts(Reading: true, 0, 0, 0)).Text);
-        Assert.Equal("Library: no design docs yet", ReviewLibrary.From(new ReviewLibraryFacts(Reading: false, 0, 0, 0)).Text);
-        Assert.Equal("Library: 41 docs, 3 with errors", ReviewLibrary.From(new ReviewLibraryFacts(Reading: false, 41, 3, 0)).Text);
-        Assert.Equal("Library: 33 docs, 1 folder can't be read", ReviewLibrary.From(new ReviewLibraryFacts(Reading: false, 33, 0, 1)).Text);
-        Assert.Equal("Library: 33 docs, 2 folders can't be read", ReviewLibrary.From(new ReviewLibraryFacts(Reading: false, 33, 0, 2)).Text);
+        Assert.Equal("Library: reading…", ReviewLibrary.From(new ReviewLibraryFacts(Reading: true, 0, 0, [])).Text);
+        Assert.Equal("Library: no design docs yet", ReviewLibrary.From(new ReviewLibraryFacts(Reading: false, 0, 0, [])).Text);
+        Assert.Equal("Library: 41 docs, 3 with errors", ReviewLibrary.From(new ReviewLibraryFacts(Reading: false, 41, 3, [])).Text);
+        Assert.Equal("Library: 33 docs, 1 folder can't be read", ReviewLibrary.From(new ReviewLibraryFacts(Reading: false, 33, 0, [new ReviewUnreadableRoot("a", "x")])).Text);
+        Assert.Equal("Library: 33 docs, 2 folders can't be read", ReviewLibrary.From(new ReviewLibraryFacts(Reading: false, 33, 0, [new ReviewUnreadableRoot("a", "x"), new ReviewUnreadableRoot("b", "y")])).Text);
     }
 }
