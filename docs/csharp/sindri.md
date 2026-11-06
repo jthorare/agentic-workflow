@@ -696,6 +696,7 @@ There is no decision, desk, protected, job or step-report tool, and no `sindri_c
 | `SND-LEASE-001` | Another live process holds the lease |
 | `SND-LEASE-002` | This process lost the lease (another took it after expiry) |
 | `SND-LEASE-003` | A write carried a stale epoch |
+| `SND-LIB-001` | A bad `context.sources.library` key (the message names the key path and the allowed values), including a root at `/`, the home folder, or (for a vault) a folder holding `$AW_SINDRI_HOME`, or a root inside another |
 | `SND-PROFILE-001` | No profile file, or it can't be read |
 | `SND-PROFILE-002` | The profile doesn't parse or doesn't match the schema (file, key path, expected type, fix) |
 | `SND-MODEL-001` | A `workflow.agent` model key names an agent that isn't in the launcher catalog, a `pin` state that no embedded or approved recipe has, or a `models` default that isn't in its list; the message names the nearest id (`profile validate`, `profile approve`) |
