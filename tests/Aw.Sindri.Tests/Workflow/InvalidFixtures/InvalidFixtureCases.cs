@@ -276,7 +276,7 @@ internal static class InvalidFixtureCases
             []),
         ["RCP-TYPE-001"] = new(
             FixtureSetup.Shipped,
-            "RCP-TYPE-001: output 'fact:output' has type 'document', which isn't one of text, file, item, link, scope-map, packet, evidence, decision, payload at RCP-TYPE-001.yaml:5:25 (outputs[0].type); use one of them",
+            "RCP-TYPE-001: output 'fact:output' has type 'document', which isn't one of text, file, item, link, scope-map, packet, evidence, decision, payload, findings at RCP-TYPE-001.yaml:5:25 (outputs[0].type); use one of them",
             []),
         ["RCP-TYPE-002"] = new(
             FixtureSetup.Shipped,

@@ -9,6 +9,7 @@ namespace Aw.Meta.Testing;
 public sealed class InMemoryLaneFiles : ILaneFiles
 {
     private readonly Dictionary<string, LaneRecord> _records = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, LaneHookTrace> _traces = new(StringComparer.Ordinal);
 
     /// <summary>Puts a lane's record in place.</summary>
     /// <param name="record">The record.</param>
@@ -17,6 +18,15 @@ public sealed class InMemoryLaneFiles : ILaneFiles
         ArgumentNullException.ThrowIfNull(record);
         _records[record.Lane] = record;
     }
+
+    /// <summary>Puts a lane's hook trace in place.</summary>
+    /// <param name="lane">The lane.</param>
+    /// <param name="trace">The trace.</param>
+    public void PutTrace(string lane, LaneHookTrace trace) => _traces[lane] = trace;
+
+    /// <inheritdoc />
+    public ValueTask<Result<LaneHookTrace?>> HookTrace(string lane, CancellationToken cancellationToken) =>
+        Done.Of(_traces.GetValueOrDefault(lane));
 
     /// <inheritdoc />
     public ValueTask<Result<Unit>> RecordSession(string lane, Core.Ids.SessionId session, DateTimeOffset at, CancellationToken cancellationToken)

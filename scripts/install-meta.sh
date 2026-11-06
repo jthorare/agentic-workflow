@@ -30,7 +30,7 @@
 #      every session but the registered meta one.
 #    codex, cursor (the lane hooks for non-Claude Meta lanes, docs/csharp/meta.md "Non-Claude lanes"; user-wide, through the
 #      provider adapters in $AW_STATE_DIR/hooks): session-id-report.sh at SessionStart, meta-lane-gate.sh at UserPromptSubmit
-#      and Stop (Codex) or sessionStart, postToolUse and stop (Cursor). Both pass straight through for every session that is
+#      and Stop (Codex) or sessionStart, postToolUse, afterAgentResponse (the reply text) and stop (Cursor). Both pass straight through for every session that is
 #      not a lane (AW_META_TEAM and AW_META_LANE, set by scripts/meta-lane.sh). Codex records trust against each hook's hash:
 #      the install prints the /hooks step.
 # 3. Links aw-meta and aw-meta-launch (scripts/meta-launch.sh) into CLAUDE_LOCAL_BIN. aw-meta-launch points into the canonical
@@ -184,6 +184,7 @@ else
       lane_hook sessionStart aw:session-id-report session-id-report.sh 10
       lane_hook sessionStart aw:meta-lane-gate meta-lane-gate.sh 10
       lane_hook postToolUse aw:meta-lane-gate meta-lane-gate.sh 10
+      lane_hook afterAgentResponse aw:meta-lane-gate meta-lane-gate.sh 20
       lane_hook stop aw:meta-lane-gate meta-lane-gate.sh 20
     fi
     echo "  meta: lane hooks installed in $AW_HOOKS_CONFIG"

@@ -83,12 +83,27 @@ own_agent() {
   return 1
 }
 
-# Only the lane's own agent reports its id: not a nested instance (codex exec, cursor-agent -p), and never a Claude lane's.
-if [ "$lane_mode" = 1 ] && ! own_agent; then lane_mode=0; fi
 STATE="${AW_STATE_DIR:-$HOME/.agentic-workflow}"
+# trace <outcome>: lane-sessions/<lane>.hook, "<UTC time> session-id-report <event> <outcome>" (see meta-lane-gate.sh). Never fails the hook.
+EVENT=""
+trace() {
+  local d="${AW_META_DIR:-$STATE/meta}/lane-sessions"
+  # a nested agent (codex exec, cursor-agent -p) inherits the lane variables: its not-own-agent never replaces the lane's own trace
+  # from this session (a trace file newer than the session id file)
+  if [ "$1" = not-own-agent ] && [ "$d/$AW_META_LANE.hook" -nt "$d/$AW_META_LANE" ] 2> /dev/null; then return 0; fi
+  local event="$EVENT"; [ -n "$event" ] || event=unknown
+  { mkdir -p "$d" && printf '%s session-id-report %s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$event" "$1" > "$d/$AW_META_LANE.hook"; } 2> /dev/null || true
+}
+EVENT="$(printf '%s' "$INPUT" | jq -r '.hook_event_name // empty' 2>/dev/null)"
+# Only the lane's own agent reports its id: not a nested instance (codex exec, cursor-agent -p), and never a Claude lane's.
+if [ "$lane_mode" = 1 ] && ! own_agent; then
+  if safe_name "$AW_META_LANE"; then trace not-own-agent; fi
+  lane_mode=0
+fi
 if [ "$lane_mode" = 1 ]; then
   safe_name "$AW_META_LANE" || { failopen lane-name-invalid; exit 0; }
   write_id "${AW_META_DIR:-$STATE/meta}/lane-sessions" "$AW_META_LANE" || failopen write-failed
+  trace ran
   # a new session starts with no reply marker or owed checksum (meta-lane-gate.sh)
   unlink "${AW_META_DIR:-$STATE/meta}/lane-sessions/$AW_META_LANE.replied" 2> /dev/null; unlink "${AW_META_DIR:-$STATE/meta}/lane-sessions/$AW_META_LANE.owed" 2> /dev/null
   META_LANE=""   # unknown without the team config: no role is registered

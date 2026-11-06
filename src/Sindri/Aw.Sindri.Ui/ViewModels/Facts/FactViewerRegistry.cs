@@ -22,6 +22,7 @@ internal sealed class FactViewerRegistry
         registry.Register(FactType.Link, (row, context) => new LinkFactViewer(row, context.Launcher));
         registry.Register(FactType.Payload, (row, context) => new PayloadFactViewer(row, context));
         registry.Register(FactType.ScopeMap, (row, context) => new ScopeMapViewer(row, context));
+        registry.Register(FactType.Findings, (row, context) => new FindingsFactViewer(row, context));
         return registry;
     }
 

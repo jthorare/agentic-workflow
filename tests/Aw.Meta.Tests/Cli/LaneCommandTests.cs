@@ -41,6 +41,32 @@ public sealed class LaneCommandTests : IDisposable
         _cli.SetEnv("AW_META_LANE", lane);
     }
 
+    // What the lane's own hooks export; without it a lane-inbox is a hand-typed call and records no hook beat.
+    private void AsHook() => _cli.SetEnv("AW_META_HOOK", "UserPromptSubmit");
+
+    // A lane-send that wakes the lane waits for the lane's next hook beat. The fake clock only moves when told to, so this moves it while the
+    // send is pending and, once the wake's Enter is in the tmux log, lets the lane's stop hook answer (lane-stop-check records a hook beat).
+    private async Task<CliResult> SendAnswered(params string[] args)
+    {
+        var send = _cli.Run(args);
+        var answered = false;
+        while (!send.IsCompleted)
+        {
+            await Task.Delay(20, TestContext.Current.CancellationToken);
+            if (!answered && File.Exists(TmuxLog) && (await File.ReadAllTextAsync(TmuxLog, TestContext.Current.CancellationToken)).Contains("Enter", StringComparison.Ordinal))
+            {
+                _cli.Clock.Advance(TimeSpan.FromMilliseconds(500));
+                AsHook();
+                _ = await _cli.Run("lane-stop-check");
+                answered = true;
+            }
+
+            _cli.Clock.Advance(TimeSpan.FromMilliseconds(500));
+        }
+
+        return await send;
+    }
+
     private Task<CliResult> MetaStop() => _cli.Run("stop-check", "--session", "s-meta", "--transcript", Transcript);
 
     [Fact, Trait("Lane", "integration")]
@@ -48,6 +74,7 @@ public sealed class LaneCommandTests : IDisposable
     {
         await Ready();
         AsLane();
+        AsHook();
         var first = await _cli.Run("lane-send", "--lane", "api", "--text", "please rebase");
         var inbox = await _cli.Run("lane-inbox");
         var again = await _cli.Run("lane-inbox");
@@ -56,11 +83,11 @@ public sealed class LaneCommandTests : IDisposable
         var released = await _cli.Run("lane-stop-check");
         var owed = await MetaStop();
         _cli.Clock.Advance(TimeSpan.FromMinutes(1));
-        var answered = await _cli.Run("lane-send", "--lane", "api", "--text", "thanks. LANE MAP v1: api=t1-api");   // the lane map now has the Codex lane: its broadcast is owed too
+        var answered = await SendAnswered("lane-send", "--lane", "api", "--text", "thanks. LANE MAP v1: api=t1-api");   // the lane map now has the Codex lane: its broadcast is owed too
         var cleared = await MetaStop();
 
         Assert.Equal(1, first.Exit);
-        Assert.Contains("hooks not running", first.Out, StringComparison.Ordinal);
+        Assert.Contains("hooks never ran", first.Out, StringComparison.Ordinal);
         Assert.Equal(0, inbox.Exit);
         Assert.Contains("MESSAGE FROM THE META to lane api:", inbox.Out, StringComparison.Ordinal);
         Assert.Contains("- please rebase", inbox.Out, StringComparison.Ordinal);
@@ -82,6 +109,7 @@ public sealed class LaneCommandTests : IDisposable
     {
         await Ready();
         AsLane();
+        AsHook();
         _cli.SetEnv("AW_META_STOP_MAX", "2");
         _ = await _cli.Run("lane-send", "--lane", "api", "--text", "answer me");
         _ = await _cli.Run("lane-inbox");
@@ -116,13 +144,15 @@ public sealed class LaneCommandTests : IDisposable
     {
         await Ready();
         AsLane();
+        AsHook();
         _ = await _cli.Run("lane-inbox");   // the lane's hook has run
         _ = await _cli.Run("lane-stop-check");   // and the lane is idle
 
-        var sent = await _cli.Run("lane-send", "--lane", "api", "--text", "wake up");
+        var sent = await SendAnswered("lane-send", "--lane", "api", "--text", "wake up");
 
         Assert.Equal(0, sent.Exit);
-        Assert.Contains("woken", sent.Out, StringComparison.Ordinal);
+        Assert.Contains("; woken", sent.Out, StringComparison.Ordinal);
+        Assert.DoesNotContain("not woken", sent.Out, StringComparison.Ordinal);
         var log = await File.ReadAllLinesAsync(TmuxLog, TestContext.Current.CancellationToken);
         Assert.Contains(log, l => l.StartsWith("-L t1 send-keys -t =t1-api: -l ", StringComparison.Ordinal));
         Assert.Contains(log, l => string.Equals(l, "-L t1 send-keys -t =t1-api: Enter", StringComparison.Ordinal));
@@ -179,10 +209,11 @@ public sealed class LaneCommandTests : IDisposable
     {
         await Ready();
         AsLane();
+        AsHook();
         _ = await _cli.Run("lane-inbox");
         _ = await _cli.Run("lane-stop-check");
 
-        var sent = await _cli.Run("lane-send", "--lane", "api", "--text", "hi", "--json");
+        var sent = await SendAnswered("lane-send", "--lane", "api", "--text", "hi", "--json");
 
         using var document = JsonDocument.Parse(sent.Out);
         Assert.Equal("api", document.RootElement.GetProperty("lane").GetString());

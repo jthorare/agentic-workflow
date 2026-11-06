@@ -6,6 +6,10 @@ namespace Aw.Meta.Host.Commands;
 /// <summary>Reads a command's text from exactly one of --text, --file or (where the command allows it) --stdin.</summary>
 internal static class LaneInput
 {
+    /// <summary>The event of the hook making this call (AW_META_HOOK); null for a call typed by hand.</summary>
+    internal static string? HookEvent(CommandContext context) =>
+        context.Io.Env("AW_META_HOOK") is { } hook && !string.IsNullOrWhiteSpace(hook) ? hook.Trim() : null;
+
     internal static async Task<Result<string>> Read(CommandContext context, bool allowStdin)
     {
         var text = context.Line["text"];

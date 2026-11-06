@@ -77,6 +77,7 @@ internal static partial class Labels
         FactType.Evidence => "evidence",
         FactType.Decision => "decision",
         FactType.Payload => "payload",
+        FactType.Findings => "findings",
         _ => throw new ArgumentOutOfRangeException(nameof(type), type, message: null),
     };
 

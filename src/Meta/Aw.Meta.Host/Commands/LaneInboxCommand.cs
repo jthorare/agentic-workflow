@@ -17,7 +17,7 @@ internal static class LaneInboxCommand
         var identity = LaneIdentity.FromEnvironment(context.Io.Env);
         return identity.IsError
             ? Task.FromResult(CommandOutput.Fail(context, identity.Error))
-            : CommandOutput.Call<LaneInboxRequest, LaneInboxResponse>(context, new LaneInboxRequest(identity.Value), response => Text(identity.Value, response));
+            : CommandOutput.Call<LaneInboxRequest, LaneInboxResponse>(context, new LaneInboxRequest(identity.Value) { HookEvent = LaneInput.HookEvent(context) }, response => Text(identity.Value, response));
     }
 
     private static string Text(LaneIdentity lane, LaneInboxResponse response) =>
