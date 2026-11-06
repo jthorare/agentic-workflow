@@ -1,0 +1,6 @@
+version: 1
+context:
+  sources:
+    linear:
+      token: env:PROBE_TEST_LINEAR_KEY
+      teams: [ENG, APP]

@@ -193,6 +193,7 @@ bash scripts/tests/model-limit-check.test.sh   # scripts/model-limit-check.sh: r
 bash scripts/tests/repo-templates.test.sh
 bash scripts/tests/probe.test.sh
 bash scripts/tests/probe-linear-projects.test.sh   # scripts/probe-linear-projects.sh (the projects page Ph0 probe) with stub curl and gh: output, legacy state fallback, no key exit 2, a failed call exit 1, the key never printed
+bash scripts/tests/linear-probe.test.sh   # scripts/linear-probe.sh (the Linear hub Ph0 probe) with a stub stateful curl: every read-only fact line and zero mutations, the write part (labelled issues only, cleanup archives all incl. strays, left 0), a mid-write failure exit 1 with cleanup, the guards exit 2, keys and Linear text never printed
 bash scripts/tests/run-test-guard.test.sh   # scripts/run-test-guard.sh (the check wrapper for the TS bugfix-state, #1130): exit code passes through, a timeout exits 124 and the EXIT trap runs, a daemonized child is gone after a normal exit and after a timeout, usage errors exit 2 (Linux only)
 bash scripts/tests/heavy-reclaim-race.test.sh   # scripts/heavy.sh's dead-holder reclaim (#2058, #2065) on scratch lock dirs: two reclaimers of one dead owner never both hold the slot (TLC WrapperReclaimRace), and a slot left with only an owner.reclaim.<dead pid> is freed
 bash scripts/tests/heavy-mixed-reclaim-race.test.sh   # the real scripts/heavy.sh and config/lib/locks.sh acquire_any_lock racing for one dead holder's slot on scratch lock dirs: never two jobs on it (TLC MixedReclaimRace, #2058)
