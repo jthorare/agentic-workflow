@@ -64,4 +64,30 @@ public abstract class LaneFilesContract
         Expect.That(ui.Session?.Value == "s-3" && ui.Agent is null, "a lane with no record gets one with just the id");
         Expect.That(escaping.IsError && (await files.Record("../x", _none)).Value is null, "an escaping name is refused");
     }
+
+    /// <summary>A lane whose hooks left no trace has none.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_lane_with_no_hook_trace_has_none()
+    {
+        var (files, _) = await Create();
+
+        var trace = await files.HookTrace("api", _none);
+
+        Expect.That(trace.IsSuccess && trace.Value is null, "no trace");
+    }
+
+    /// <summary>A name that could escape the directory, or is not a lane name at all, has no trace.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_bad_lane_name_has_no_hook_trace()
+    {
+        var (files, _) = await Create();
+
+        var escaping = await files.HookTrace("../api", _none);
+        var dots = await files.HookTrace("..", _none);
+        var empty = await files.HookTrace(string.Empty, _none);
+
+        Expect.That(escaping.IsSuccess && escaping.Value is null && dots.IsSuccess && dots.Value is null && empty.IsSuccess && empty.Value is null, "no trace for a bad name");
+    }
 }

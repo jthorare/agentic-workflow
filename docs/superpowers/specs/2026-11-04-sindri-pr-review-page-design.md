@@ -105,11 +105,11 @@ What exists today (checked on main 94ff1714e):
 - **REQ-13** The page works by keyboard alone and with a screen reader (§6.4).
 
 **Success measure.**
-- **Baseline (Ph0).** Of the last 20 merged PRs in this repo, how many a doc would have mapped by issue or branch, counted twice: against today's docs, and as if their docs carried front matter. Plus how long the owner's reviews take today, by their own estimate.
+- **Baseline (Ph0).** Of the last 20 merged PRs in this repo, how many a doc would have mapped by issue or branch, counted twice: against today's docs, and as if their docs carried front matter.
 - **Go/no-go on the baseline.** If fewer than 5 of 20 would map even with front matter, Ph4a and the `Covers:` flow ship before Ph7, and the trial waits for them.
 - **Counts the app keeps** (a `review.opened` event per page open, plus the existing `review.fix-sent` and `review.posted`): PRs opened in Reviews against PRs reviewed in the window, the share of opened PRs with a resolved claim, fix tasks sent and closed, reviews posted (release 2). `sindri review stats [--since D]` (new) prints them.
 - **Trial.** Two weeks, starting once 5 open PRs in this repo carry `Covers:` (not on the release date), with the owner reviewing this repo's PRs from Reviews.
-- **Target.** For PRs with `Covers:`, the owner never opens the design doc by hand to find the phase (their word at the end, against the baseline). At least 80% of required checks are decided by Sindri, not by a manual tick, and the settings must hold at least one `covers:` or `ci:` check besides `changedWith:`.
+- **Target.** For PRs with `Covers:`, the owner never opens the design doc by hand to find the phase (their word at the end of the trial). At least 80% of required checks are decided by Sindri, not by a manual tick, and the settings must hold at least one `covers:` or `ci:` check besides `changedWith:`.
 - **Stop line.** The denominator is the PRs on the owner's list (authored or requested) that merged or got a review in the trial, from stored PR records; the numerator is those opened in Reviews (`review.opened`). `review stats` prints both. If fewer than half were opened in Reviews, Ph8 and Ph9 wait, and the owner decides what changes.
 
 **Non-goals**
@@ -149,7 +149,7 @@ One page, `docs/conventions/design-docs.md` (new, Ph0), and one schema of the pa
 | `repo:<name>` | each profile repo, through the existing `repo-docs` feed | Its doc globs, unchanged (`docs/**/*.md` covers `docs/superpowers/specs/`). Front-matter docs among them are itemized too |
 
 - A file's first 4 KiB decide whether it's read: no `aw-doc: 1` front matter means it is skipped before any text is stored.
-- **Near misses are counted, not stored.** A file whose first 4 KiB hold front matter with an `aw-doc:` key whose value isn't the number `1` (`"1"`, `1.0`, `yes`), or `aw-doc: 1` after a blank first line, is skipped the same way, but its path goes on the `library` doctor row ("3 files look like design docs but aren't read") and in `sindri library list --near-misses`. No text from it is stored. `sindri library validate` reports it as `SND-LIB-019` with the fix.
+- **Near misses are counted, not stored.** A file whose first 4 KiB hold front matter with an `aw-doc:` key whose value isn't a whole number (`"1"`, `1.0`, `yes`), or `aw-doc: 1` after a blank first line, is skipped the same way, but its path goes on the `library` doctor row ("3 files look like design docs but aren't read") and in `sindri library list --near-misses`. No text from it is stored. `sindri library validate` reports it as `SND-LIB-019` with the fix. A whole number other than 1 (`aw-doc: 2`) is not a near miss: it is a later convention version, stored with `SND-LIB-010` and no items (§9).
 - Symlinks are not followed.
 - A front-matter file over 1 MiB is stored as a doc with the error "too large" and no items.
 
@@ -750,3 +750,19 @@ The mockups are in `2026-11-04-sindri-pr-review-page-design/mockups/` (`README.m
 - The list: zero open required checks reads "none open"; project groups come before repo-name groups; the hint line shows `J`/`K`/`Enter` and `G V`.
 - Settings → Library is a section of the Settings page (titled cards, no left nav), beside Connections. Repo roots are listed read-only ("set by the repo list"); the `aw` root has Turn off, not Remove.
 
+## 17. Ph0 baseline (ideas, 2026-11-06)
+
+The last 20 merged PRs in this repo (#2101 to #2133, 2026-11-05 and 06), counted the §2 way: would a doc map the PR by issue (`Part of` / `Fixes #N` in the body against a doc's `issues:`) or by branch (the head branch holds a doc id)?
+
+| Count | Today | As if every doc had front matter |
+|---|---|---|
+| By issue | 0: no doc has `issues:` yet | 3: #2125 and #2126 (`Part of #2076`, this spec) and #2127 (`Part of #2077`, the Linear hub spec), with each spec's `issues:` holding the number lanes track it by |
+| By branch | 0 | 0: branches are named by phase (`feat/review-ph2b-reviewers`, `feat/linear-hub-ph0`), never by the doc id (`sindri-pr-review-page`) |
+| By `Covers:` (not part of the §2 count) | 2: #2124 and #2132, both written after Ph4a's convention | 2 |
+| Never | 13 bug fixes with no design doc behind them: "This PR names no design doc" is the right answer | 13 |
+
+Two more are one hop away: #2114 says `Part of #2112`, an issue under the model routing spec's #1567, and #2104 fixes #2095, a follow-up of the model check spec. They map only if a spec's `issues:` also lists the follow-up issues filed under it.
+
+**Go/no-go.** 3 of 20 map by issue or branch even with front matter, under §2's 5. So Ph4a and the `Covers:` flow ship before Ph7 and the trial waits for them. Ph4a merged (#2132), so the `Covers:` line is in every specToProvenPR PR from here, and the trial's own start rule (5 open PRs with `Covers:`) is the wait. Issue and branch suggestions stay a fallback, not the main path.
+
+**The owner's review time today**: not measured (owner, 2026-11-06).

@@ -11,12 +11,12 @@ namespace Aw.Meta.Features.Watch;
 /// <summary>Takes one snapshot: GitHub's pull requests, origin's main, the state disk and memory against the team's floors, and the inbox.</summary>
 /// <param name="repo">The gh and git calls.</param>
 /// <param name="resources">The disk and memory.</param>
-/// <param name="messages">The inbox.</param>
+/// <param name="inbox">Counts the inbox.</param>
 /// <param name="values">Keeps the pull requests seen merged or closed, which the merge queue drops.</param>
 /// <param name="sweeper">Sweeps the worktrees of the pull requests seen to end.</param>
 /// <param name="contexts">Measures the lanes' context windows.</param>
 /// <param name="reservation">Keeps the heavy-slot reservation in step with the merge queue on every poll.</param>
-internal sealed class WatchPoller(RepoCommands repo, IHostResources resources, IMessageStore messages, IKeyValueStore values, WatchSweeper sweeper, HeavyReservation reservation, LaneContextReader contexts)
+internal sealed class WatchPoller(RepoCommands repo, IHostResources resources, InboxCounts inbox, IKeyValueStore values, WatchSweeper sweeper, HeavyReservation reservation, LaneContextReader contexts)
 {
     internal async ValueTask<Result<Polled>> Poll(TeamConfig team, CancellationToken cancellationToken)
     {
@@ -24,10 +24,10 @@ internal sealed class WatchPoller(RepoCommands repo, IHostResources resources, I
         var prs = await repo.List(repoDirectory).ConfigureAwait(false);
         var main = prs.IsError ? Results.Failure<string>(prs.Error) : await repo.RemoteMain(repoDirectory).ConfigureAwait(false);
         var disk = await resources.Read(cancellationToken).ConfigureAwait(false);
-        var inbox = await messages.Messages(cancellationToken).ConfigureAwait(false);
-        if (prs.IsError || main.IsError || disk.IsError || inbox.IsError)
+        var counts = await inbox.Read(cancellationToken).ConfigureAwait(false);
+        if (prs.IsError || main.IsError || disk.IsError || counts.IsError)
         {
-            return prs.IsError ? prs.Error : main.IsError ? main.Error : disk.IsError ? disk.Error : inbox.Error;
+            return prs.IsError ? prs.Error : main.IsError ? main.Error : disk.IsError ? disk.Error : counts.Error;
         }
 
         var remembered = await Remember(prs.Value, cancellationToken).ConfigureAwait(false);
@@ -40,7 +40,7 @@ internal sealed class WatchPoller(RepoCommands repo, IHostResources resources, I
         _ = await reservation.Apply(team, cancellationToken).ConfigureAwait(false);
         var worktrees = await sweeper.Sweep(remembered.Value, cancellationToken).ConfigureAwait(false);
         // Advisory: a transcript that can't be read leaves the poll's context out instead of failing it.
-        return new Polled(new WatchSnapshot(prs.Value, main.Value, ResourceRules.DiskLow(disk.Value, team.Resources), ResourceRules.MemoryLow(disk.Value, team.Resources)), inbox.Value.Count, worktrees, await contexts.ReadOrNull(team, cancellationToken).ConfigureAwait(false));
+        return new Polled(new WatchSnapshot(prs.Value, main.Value, ResourceRules.DiskLow(disk.Value, team.Resources), ResourceRules.MemoryLow(disk.Value, team.Resources)), counts.Value.Total, worktrees, await contexts.ReadOrNull(team, cancellationToken).ConfigureAwait(false)) { Open = counts.Value.Open };
     }
 
     // Keeps the pull requests GitHub shows merged or closed, so the merge queue can drop them; returns the ones not seen ended before.

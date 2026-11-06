@@ -11,7 +11,7 @@ namespace Aw.Meta.Features.LaneStopCheck;
 /// The lane's stop hook question: does the lane owe the meta a reply? It blocks while one is owed, with the loop guard of the meta's
 /// own stop-check (a check that isn't a continuation starts a new turn; the identical owed set blocks at most MaxBlocks times in a
 /// row). A block shows the owed messages, so a message that arrived mid-turn reaches the lane through it. The call is the lane's
-/// heartbeat as a stop. With no team set up the lane may stop.
+/// heartbeat as a stop when the stop hook makes it (AW_META_HOOK set); a hand-typed check only notes the CLI was used. With no team set up the lane may stop.
 /// </summary>
 /// <param name="config">The team config.</param>
 /// <param name="mail">The lanes' inboxes.</param>
@@ -43,7 +43,10 @@ internal sealed class LaneStopCheckService(IMetaConfig config, ILaneMail mail, L
         }
 
         // The lane counts as stopped (idle, wakeable) only when this check lets it stop; a blocked agent keeps working.
-        var beat = await beats.Record(request.Identity.Lane, stopped: !outcome.Value.Block, now, cancellationToken).ConfigureAwait(false);
+        // Only the lane's own stop hook (AW_META_HOOK set) is a heartbeat; a check typed by hand just notes the CLI was used.
+        var beat = request.HookEvent is { Length: > 0 }
+            ? await beats.Record(request.Identity.Lane, stopped: !outcome.Value.Block, now, cancellationToken).ConfigureAwait(false)
+            : await beats.RecordCli(request.Identity.Lane, now, cancellationToken).ConfigureAwait(false);
         if (beat.IsError)
         {
             return beat.Error;

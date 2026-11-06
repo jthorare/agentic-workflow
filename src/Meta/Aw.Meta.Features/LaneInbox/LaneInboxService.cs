@@ -8,7 +8,7 @@ namespace Aw.Meta.Features.LaneInbox;
 
 /// <summary>
 /// What a lane's hook shows the lane: the messages the meta sent that it hasn't seen. They are marked delivered (they stay owed a reply
-/// until the lane replies), and the call is the lane's heartbeat. With no team set up it answers empty and records nothing.
+/// until the lane replies), and a call made by a hook (AW_META_HOOK set) is the lane's heartbeat; one typed by hand only notes that the CLI was used. With no team set up it answers empty and records nothing.
 /// </summary>
 /// <param name="config">The team config.</param>
 /// <param name="mail">The lanes' inboxes.</param>
@@ -26,7 +26,9 @@ internal sealed class LaneInboxService(IMetaConfig config, ILaneMail mail, LaneB
         }
 
         var now = clock.GetUtcNow();
-        var beat = await beats.Record(request.Identity.Lane, stopped: false, now, cancellationToken).ConfigureAwait(false);
+        var beat = request.HookEvent is { Length: > 0 }
+            ? await beats.Record(request.Identity.Lane, stopped: false, now, cancellationToken).ConfigureAwait(false)
+            : await beats.RecordCli(request.Identity.Lane, now, cancellationToken).ConfigureAwait(false);
         if (beat.IsError)
         {
             return beat.Error;

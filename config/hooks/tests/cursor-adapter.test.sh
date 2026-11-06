@@ -143,5 +143,65 @@ check "garbage stdin -> allow" "$OUT" '{"permission":"allow"}'
 OUT="$(bash "$ADAPTER" --event beforeSubmitPrompt < /dev/null 2>/dev/null)"; RC=$?
 check "no hook script argument -> default output" "$OUT" '{"continue":true}'
 
+# --- #2123: a Cursor lane's reply comes from afterAgentResponse (its stop payload carries no text) ---
+# The real adapter and the real meta-lane-gate.sh behind it, against a stub aw-meta (as config/hooks/tests/meta-hooks.test.sh).
+CALLS="$WORK/calls"; STDIN_SEEN="$WORK/stdin"; export CALLS STDIN_SEEN
+cat > "$WORK/aw-meta" <<'EOF'
+#!/usr/bin/env bash
+echo "$*" >> "$CALLS"
+[ "$1" = lane-reply ] && cat > "$STDIN_SEEN"
+exit 0
+EOF
+chmod +x "$WORK/aw-meta"
+GATE="$HOOKS/meta-lane-gate.sh"
+LS="$AW_STATE_DIR/meta/lane-sessions"
+reset_lane() { find "$LS" -mindepth 1 -delete 2> /dev/null; : > "$CALLS"; : > "$STDIN_SEEN"; }
+# this shell plays scripts/meta-lane.sh: the gate acts only for the lane's own agent
+lane_cursor() { # <payload-file> — through cursor.sh and meta-lane-gate.sh as lane api of team t1
+  OUT="$(AW_META_BIN="$WORK/aw-meta" AW_META_LANE_PID=$$ AW_META_LANE_AGENT=cursor AW_META_LANE_PROC=cursor-agent \
+    AW_META_TEAM=t1 AW_META_LANE=api bash "$ADAPTER" "$GATE" < "$1" 2> "$WORK/err")"; RC=$?
+}
+AAR_TEXT=$'Rebased.\nREPLY TO META: cursor reply\nsecond line'
+jq -nc --arg t "$AAR_TEXT" '{hook_event_name:"afterAgentResponse",conversation_id:"c-9",generation_id:"g-9",text:$t}' > "$WORK/aar.json"
+reset_lane
+lane_cursor "$WORK/aar.json"
+check "afterAgentResponse in a lane: exit 0 and the adapter prints {}" "$RC:$OUT" "0:{}"
+check "afterAgentResponse: lane-reply gets the reply text on stdin, lane-stop-check is not called" "$(paste -sd'|' "$CALLS"):$(cat "$STDIN_SEEN")" "lane-reply --stdin:cursor reply
+second line"
+CAPTURE_FILE="$WORK/c-aar.json" run "$WORK/aar.json" "$CAPTURE_HOOK"
+check "afterAgentResponse -> AfterAgentResponse" "$(jq -r '.hook_event_name' "$WORK/c-aar.json")" "AfterAgentResponse"
+check "afterAgentResponse: last_assistant_message is .text" "$(jq -r '.last_assistant_message' "$WORK/c-aar.json")" "$AAR_TEXT"
+check "afterAgentResponse: conversation_id -> session_id" "$(jq -r '.session_id' "$WORK/c-aar.json")" "c-9"
+check "afterAgentResponse: the adapter prints {}" "$OUT" "{}"
+# a transcript, even one with another reply, is not read for this event
+echo '{"role":"assistant","message":{"content":[{"type":"text","text":"REPLY TO META: from the transcript"}]}}' > "$WORK/aar-tr.jsonl"
+jq -nc --arg t "no marker" --arg tp "$WORK/aar-tr.jsonl" '{hook_event_name:"afterAgentResponse",conversation_id:"c-9",text:$t,transcript_path:$tp}' > "$WORK/aar2.json"
+CAPTURE_FILE="$WORK/c-aar2.json" run "$WORK/aar2.json" "$CAPTURE_HOOK"
+check "afterAgentResponse: no transcript read (last_assistant_message stays .text)" "$(jq -r '.last_assistant_message' "$WORK/c-aar2.json")" "no marker"
+
+# the stop that follows: its transcript's last assistant line carries text AND thinking parts; only the text is the reply
+printf '%s\n' '{"role":"assistant","message":{"content":[{"type":"text","text":"Done.\nREPLY TO META: only the text"},{"type":"thinking","thinking":"I considered Y"}]}}' > "$WORK/tr-think.jsonl"
+jq -nc --arg tp "$WORK/tr-think.jsonl" '{hook_event_name:"stop",conversation_id:"c-9",loop_count:0,transcript_path:$tp}' > "$WORK/stop-think.json"
+CAPTURE_FILE="$WORK/c-think.json" run "$WORK/stop-think.json" "$CAPTURE_HOOK"
+check "stop: a transcript line with text and thinking parts yields only the text" "$(jq -r '.last_assistant_message' "$WORK/c-think.json")" $'Done.\nREPLY TO META: only the text'
+printf '%s\n' '{"role":"assistant","message":{"content":[{"type":"text","text":"Done.\nREPLY TO META: only the text"},{"type":"thinking","thinking":"REPLY TO META: not this one"}]}}' > "$WORK/tr-think2.jsonl"
+jq -nc --arg tp "$WORK/tr-think2.jsonl" '{hook_event_name:"stop",conversation_id:"c-9",loop_count:0,transcript_path:$tp}' > "$WORK/stop-think2.json"
+reset_lane
+lane_cursor "$WORK/stop-think2.json"
+check "stop in a lane: only the text part is recorded, never the thinking" "$(paste -sd'|' "$CALLS"):$(cat "$STDIN_SEEN")" "lane-reply --stdin|lane-stop-check:only the text"
+
+# the existing path stays: a stop whose transcript's last assistant line has a REPLY TO META line still records
+printf '%s\n' '{"role":"assistant","message":{"content":[{"type":"text","text":"Done.\nREPLY TO META: via the transcript"}]}}' > "$WORK/tr-plain.jsonl"
+jq -nc --arg tp "$WORK/tr-plain.jsonl" '{hook_event_name:"stop",conversation_id:"c-9",loop_count:0,transcript_path:$tp}' > "$WORK/stop-plain.json"
+reset_lane
+lane_cursor "$WORK/stop-plain.json"
+check "stop with a REPLY TO META line in the transcript still records it" "$(paste -sd'|' "$CALLS"):$(cat "$STDIN_SEEN")" "lane-reply --stdin|lane-stop-check:via the transcript"
+# afterAgentResponse then stop with the same text: recorded once
+reset_lane
+jq -nc --arg t $'Done.\nREPLY TO META: via the transcript' '{hook_event_name:"afterAgentResponse",conversation_id:"c-9",text:$t}' > "$WORK/aar3.json"
+lane_cursor "$WORK/aar3.json"; lane_cursor "$WORK/stop-plain.json"
+check "afterAgentResponse then stop with the same text: the reply is recorded once" "$(grep -c '^lane-reply' "$CALLS")" "1"
+reset_lane
+
 check "never wrote into the real home" "$(ls -A "$HOME" | wc -l | tr -d ' ')" "0"
 exit $fail

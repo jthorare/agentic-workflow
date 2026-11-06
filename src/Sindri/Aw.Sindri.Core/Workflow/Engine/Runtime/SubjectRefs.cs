@@ -61,7 +61,7 @@ public static partial class SubjectRefs
             {
                 FactType.Text => Text(content),
                 FactType.Link => Link(content),
-                FactType.Item or FactType.File or FactType.ScopeMap or FactType.Packet or FactType.Evidence or FactType.Decision or FactType.Payload or _ => Payload(content, fact),
+                FactType.Item or FactType.File or FactType.ScopeMap or FactType.Packet or FactType.Evidence or FactType.Decision or FactType.Payload or FactType.Findings or _ => Payload(content, fact),
             };
     }
 

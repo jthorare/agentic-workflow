@@ -8,9 +8,11 @@ public sealed class TmuxLanePaneTests
 {
     private readonly InMemoryCommandRunner _runner = new();
 
+    private readonly InMemoryDelay _delay = new(new ManualClock(A.T0));
+
     private readonly InMemoryMetaConfig _config = new();
 
-    private TmuxLanePane Pane() => new(_runner, "tmux", socket: null, _config);
+    private TmuxLanePane Pane() => new(_runner, "tmux", socket: null, _config, _delay);
 
     private async Task<TmuxLanePane> TeamPane()
     {
@@ -110,13 +112,13 @@ public sealed class TmuxLanePaneTests
     public async Task Every_tmux_call_names_the_socket_the_override_gives_and_without_one_the_team_name()
     {
         _ = _runner.When("display-message", "codex\n").When("list-clients").When("send-keys");
-        var withSocket = new TmuxLanePane(_runner, "tmux", "t1-socket", _config);
+        var withSocket = new TmuxLanePane(_runner, "tmux", "t1-socket", _config, _delay);
 
         _ = await withSocket.Probe("t1-api", CancellationToken.None);
         _ = await withSocket.Wake("t1-api", "hi", CancellationToken.None);
         var team = new InMemoryCommandRunner().When("display-message", "codex\n").When("list-clients");
         _ = await _config.Save(new TeamConfig("t1", "/work", ["meta", "api"], "meta"), CancellationToken.None);
-        var plain = new TmuxLanePane(team, "tmux", socket: null, _config);
+        var plain = new TmuxLanePane(team, "tmux", socket: null, _config, _delay);
         _ = await plain.Probe("t1-api", CancellationToken.None);
 
         Assert.All(_runner.Lines, l => Assert.StartsWith("tmux -L t1-socket ", l, StringComparison.Ordinal));
