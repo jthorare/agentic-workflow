@@ -37,7 +37,7 @@ public sealed class CliSkillRunTests : IDisposable
         var item = A.FirstItemId.Value;
         var api = new RoutedApi().On("/sindri/status", HttpStatusCode.OK, RoutedApi.StatusAtHead7)
             .On("/sindri/items", HttpStatusCode.OK, new ItemCreatedResponse(new CommandAccepted(new SequentialIdGenerator().New<CommandId>(), Sequence: 4), A.FirstItemId))
-            .OnRaw("/sindri/skills/review/runs", HttpStatusCode.BadRequest, """{"title":"SND-CLI-003","detail":"block 'review' needs input 'pr'"}""")
+            .OnRaw("/sindri/skills/review/runs", HttpStatusCode.BadRequest, """{"title":"SND-CLI-003","status":400,"detail":"block 'review' needs input 'pr'"}""")
             .On("/sindri/items/" + item, HttpStatusCode.OK, View(version: 1))
             .On("/sindri/items/" + item + "/close", HttpStatusCode.OK, new CommandAccepted(new SequentialIdGenerator().New<CommandId>(), Sequence: 5));
 
