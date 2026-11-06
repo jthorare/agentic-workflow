@@ -14,7 +14,7 @@ namespace Aw.Sindri.Features.StartSkillRun;
 /// (the owner's request is the approval, and every start needs one: StartInstanceService), stores the inputs as start facts and starts the instance. The same block with the same inputs registers as the same recipe, so a second trial finds it
 /// approved already. The launch reads the recipe's id (<see cref="SkillTrialRecipe.IsTrial"/>) to run scrubbed and mark 'trial'.
 /// </summary>
-/// <param name="catalog">The loaded skill blocks, and the one-folder load of the author loop.</param>
+/// <param name="blocks">The loaded skill blocks, and the one-folder load of the author loop.</param>
 /// <param name="items">Resolves the item the trial runs on.</param>
 /// <param name="recipes">Registers the trial recipe and approves its hash.</param>
 /// <param name="facts">Where the input facts are stored.</param>
@@ -22,7 +22,7 @@ namespace Aw.Sindri.Features.StartSkillRun;
 /// <param name="clock">When it happened.</param>
 /// <param name="callers">The caller: the approver and the starter.</param>
 internal sealed class StartSkillRunService(
-    ISkillCatalog catalog,
+    ISkillBlocks blocks,
     IItems items,
     TrialRecipes recipes,
     IFactStore facts,
@@ -66,13 +66,13 @@ internal sealed class StartSkillRunService(
     /// <summary>The block: from the loaded set, or, for the author loop, from the one folder the request sent (the loaded set is not touched).</summary>
     private Result<LoadedSkillBlock> Block(StartSkillRunRequest request)
     {
-        var blocks = request.Skills is { } folder ? catalog.LoadFolder(folder) : catalog.Blocks;
-        if (blocks.Loaded.FirstOrDefault(b => string.Equals(b.Manifest.Name, request.Block, StringComparison.Ordinal)) is { } found)
+        var read = request.Skills is { } folder ? blocks.LoadFolder(folder) : new SkillBlocks(blocks.Loaded, blocks.Skipped);
+        if (read.Loaded.FirstOrDefault(b => string.Equals(b.Manifest.Name, request.Block, StringComparison.Ordinal)) is { } found)
         {
             return found;
         }
 
-        return blocks.Skipped.FirstOrDefault(s => string.Equals(s.Name, request.Block, StringComparison.Ordinal)) is { } skipped
+        return read.Skipped.FirstOrDefault(s => string.Equals(s.Name, request.Block, StringComparison.Ordinal)) is { } skipped
             ? SindriErrors.InvalidInput.With($"block '{request.Block}' is not loaded: {skipped.Reason} (fix: edit {skipped.Path}, then try again)")
             : SindriErrors.InvalidInput.With($"no skill block '{request.Block}' (fix: sindri skills lists them)");
     }

@@ -6,12 +6,11 @@ using Aw.Sindri.Core.Skills;
 namespace Aw.Sindri.Features.GetSkills;
 
 /// <summary>Lists the skill blocks serve loaded at start, with the path each came from and the reason for any that didn't load (skill flows spec §7).</summary>
-internal sealed class GetSkillsService(ISkillCatalog catalog) : IService<GetSkillsRequest, GetSkillsResponse>
+internal sealed class GetSkillsService(ISkillBlocks blocks) : IService<GetSkillsRequest, GetSkillsResponse>
 {
     public ValueTask<Result<GetSkillsResponse>> Handle(GetSkillsRequest request, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var blocks = catalog.Blocks;
         var skipped = blocks.Skipped.Select(s => new SkillNotLoadedView(s.Name, s.Path, s.Reason)).ToList();
         return ValueTask.FromResult<Result<GetSkillsResponse>>(new GetSkillsResponse([.. blocks.Loaded.Select(View)], skipped.Count == 0 ? null : skipped));
     }

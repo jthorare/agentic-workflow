@@ -8,8 +8,8 @@ namespace Aw.Sindri.Host.Skills;
 /// block whose block.yaml on disk now hashes differently (serve loads manifests once at start, so a recipe keeps running the old one until a restart). With every block loaded the one row says how many.
 /// The row for a live skill launch with no turn-end marker after 10 minutes waits on the engine's exposure of the last marker time, and is not here yet.
 /// </summary>
-/// <param name="catalog">The loaded skill blocks.</param>
-internal sealed class SkillsDoctorChecks(ISkillCatalog catalog) : IDoctorChecks
+/// <param name="blocks">The loaded skill blocks.</param>
+internal sealed class SkillsDoctorChecks(ISkillBlocks blocks) : IDoctorChecks
 {
     private const string Folder = "skills:folder";
     private const string Block = "skills:block";
@@ -17,15 +17,15 @@ internal sealed class SkillsDoctorChecks(ISkillCatalog catalog) : IDoctorChecks
     public ValueTask<IReadOnlyList<DoctorCheck>> Run(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        if (!Directory.Exists(catalog.Folder))
+        if (!Directory.Exists(blocks.Folder))
         {
             return Rows(new DoctorCheck(Folder, CheckState.Warn, "no skills folder", "set AW_SINDRI_SKILLS_DIR, or run ./setup.sh from the agentic-workflow checkout"));
         }
 
-        var loaded = catalog.Blocks;
+        var loaded = new SkillBlocks(blocks.Loaded, blocks.Skipped);
         var rows = new List<DoctorCheck>();
         rows.AddRange(loaded.Skipped.Select(static s => new DoctorCheck(Block, CheckState.Warn, $"{s.Name} is not loaded: {s.Reason}", $"edit {s.Path}, then restart sindri")));
-        var onDisk = catalog.LoadFolder(catalog.Folder).Loaded.ToDictionary(static b => b.Manifest.Name, static b => b.ManifestHash, StringComparer.Ordinal);
+        var onDisk = blocks.LoadFolder(blocks.Folder).Loaded.ToDictionary(static b => b.Manifest.Name, static b => b.ManifestHash, StringComparer.Ordinal);
         rows.AddRange(loaded.Loaded
             .Where(b => !onDisk.TryGetValue(b.Manifest.Name, out var hash) || !string.Equals(hash, b.ManifestHash, StringComparison.Ordinal))
             .Select(static b => new DoctorCheck(Block, CheckState.Warn, $"{b.Manifest.Name} changed on disk since sindri started", $"restart sindri to load it, then sindri recipe approve each recipe that uses it ({b.Path})")));
