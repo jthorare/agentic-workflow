@@ -24,4 +24,21 @@ internal partial interface ISindriApi
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The library, the API's refusal, or SND-UI-002/003.</returns>
     public Task<Result<LibraryView>> Library(Uri api, CancellationToken cancellationToken);
+
+    /// <summary>GET /sindri/reviews/{owner}/{repo}/{number} (review page spec §6.2): one PR's page model. A view read.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="repo">owner/name.</param>
+    /// <param name="number">The PR number.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The page, the API's refusal (SND-REVIEW-004, -007, -404), or SND-UI-002/003.</returns>
+    public Task<Result<ReviewPage>> ReadReviewPage(Uri api, string repo, int number, CancellationToken cancellationToken);
+
+    /// <summary>POST /sindri/reviews/{owner}/{repo}/{number}/fix (review page spec §8.2): sends a finding as a fix task.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="repo">owner/name.</param>
+    /// <param name="number">The PR number.</param>
+    /// <param name="send">The finding.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>Where the task went (a half-done send says so in the answer), or SND-UI-002/003.</returns>
+    public Task<Result<ReviewFixSent>> SendReviewFix(Uri api, string repo, int number, ReviewFixSend send, CancellationToken cancellationToken);
 }

@@ -36,6 +36,12 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
     /// <summary>The Pin sheet.</summary>
     internal static DeepLink PinSheet { get; } = new(DeepLinkKind.PinSheet, Subject: null);
 
+    /// <summary>One PR's review page.</summary>
+    /// <param name="repo">owner/name.</param>
+    /// <param name="number">The PR number.</param>
+    /// <returns>The link ('reviews/acme/api/2071').</returns>
+    internal static DeepLink ForReview(string repo, int number) => new(DeepLinkKind.Review, repo + "/" + number.ToString(System.Globalization.CultureInfo.InvariantCulture));
+
     /// <summary>Parses a deep link's text.</summary>
     /// <param name="text">The text (from a second launch, the tray or the palette).</param>
     /// <param name="link">The link, when the text is one.</param>
@@ -126,6 +132,7 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
         ("session", DeepLinkKind.Session),
         ("system", DeepLinkKind.System),
         ("project", DeepLinkKind.Project),
+        ("reviews", DeepLinkKind.Review),
     ];
 
     // Each kind's own rule for its subject.
@@ -135,6 +142,7 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
         DeepLinkKind.Recipe => IsRecipe(subject),
         DeepLinkKind.Session => IsSessionRef(subject),
         DeepLinkKind.Project => IsEscapedId(subject),
+        DeepLinkKind.Review => false,   // red until the review link's rule is written
         DeepLinkKind.HomeNeedsYou or DeepLinkKind.NeedsYou or DeepLinkKind.Item or DeepLinkKind.Decision or DeepLinkKind.Service or DeepLinkKind.Job or DeepLinkKind.Node or DeepLinkKind.ContextItem or DeepLinkKind.System or DeepLinkKind.Setup or DeepLinkKind.Projects or DeepLinkKind.Reviews or DeepLinkKind.LibrarySheet or DeepLinkKind.ProjectAdd or DeepLinkKind.PageSheet or DeepLinkKind.AddSeveralPages or DeepLinkKind.PinSheet => IsSubject(subject),
         _ => false,
     };

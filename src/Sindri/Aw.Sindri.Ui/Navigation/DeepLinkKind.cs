@@ -64,4 +64,7 @@ internal enum DeepLinkKind
 
     /// <summary>'reviews/library': the library errors sheet opened from the Reviews header; it has no subject.</summary>
     LibrarySheet,
+
+    /// <summary>'reviews/&lt;owner&gt;/&lt;repo&gt;/&lt;number&gt;': one PR's review page over the Reviews tab (review page spec §6.2); the subject is "owner/repo/number".</summary>
+    Review,
 }

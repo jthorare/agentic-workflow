@@ -10,6 +10,21 @@ internal sealed partial class ShellViewModel
     /// <summary>The Reviews list.</summary>
     public ReviewsPageViewModel Reviews { get; private set; }
 
+    /// <summary>One PR's review page, shown over the Reviews list while a 'reviews/&lt;owner&gt;/&lt;repo&gt;/&lt;number&gt;' link is open (review page spec §6.2).</summary>
+    public ReviewPageViewModel ReviewPage { get; private set; }
+
+    /// <summary>True while the review page shows over the Reviews list.</summary>
+    public bool IsReviewPageShown => ReviewPageOpen && IsReviews;
+
+    private bool ReviewPageOpen { get; set; }
+
+    /// <summary>Closes the review page; the Reviews list shows again.</summary>
+    internal void CloseReviewPage()
+    {
+        ReviewPageOpen = false;
+        Changed(nameof(IsReviewPageShown));
+    }
+
     /// <summary>True on Reviews.</summary>
     public bool IsReviews => CurrentPage == PageId.Reviews;
 
@@ -31,10 +46,11 @@ internal sealed partial class ShellViewModel
     /// <summary>Opens Reviews from Home's waiting line.</summary>
     internal void OpenReviews() => GoTo(PageId.Reviews);
 
-    [MemberNotNull(nameof(Reviews))]
+    [MemberNotNull(nameof(Reviews), nameof(ReviewPage))]
     private void InitReviews()
     {
         Reviews = new ReviewsPageViewModel(_api, _clock);
+        ReviewPage = new ReviewPageViewModel(_api, _clock);
         Reviews.LibraryRequested += (_, _) =>
         {
             OpenSheet(DeepLink.LibrarySheet);

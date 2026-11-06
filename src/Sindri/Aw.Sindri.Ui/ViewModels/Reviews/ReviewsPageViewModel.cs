@@ -144,6 +144,15 @@ internal sealed partial class ReviewsPageViewModel : ObservableObject, IDisposab
     /// <summary>The header's library button was pressed: the shell opens its sheet.</summary>
     internal event EventHandler? LibraryRequested;
 
+    /// <summary>Enter on a row (or a click): asks the shell to open the PR's review page.</summary>
+    /// <param name="row">The row.</param>
+    internal void OpenRow(ReviewRowViewModel row) => OnChanged(row.Ref);
+
+#pragma warning disable CS0067 // raised once the page opens from a row
+    /// <summary>A row asked for its review page: the link is 'reviews/&lt;owner&gt;/&lt;repo&gt;/&lt;number&gt;'.</summary>
+    internal event EventHandler<Workflows.OpenRequestedEventArgs>? OpenRequested;
+#pragma warning restore CS0067
+
     /// <summary>True while the page is the one shown.</summary>
     internal bool IsActive { get; private set; }
 

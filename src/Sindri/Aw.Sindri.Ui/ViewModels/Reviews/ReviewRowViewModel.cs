@@ -8,7 +8,7 @@ internal sealed class ReviewRowViewModel : ObservableObject
     internal ReviewRowViewModel(ReviewRowView row, string? login, DateTimeOffset now)
     {
         Ref = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{row.Repo}#{row.Number}");
-        Href = row.Href;
+        (Repo, Number, Href) = (row.Repo, row.Number, row.Href);
         Update(row, login, now);
     }
 
@@ -61,8 +61,14 @@ internal sealed class ReviewRowViewModel : ObservableObject
     /// <summary>The row's screen-reader name: title, ref, waiting, author, age, CI, required and doc in one line.</summary>
     public string AutomationName { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>The page model's path, for the page part 2 opens.</summary>
+    /// <summary>The page model's path ("/reviews/acme/api/2071").</summary>
     internal string Href { get; }
+
+    /// <summary>owner/name.</summary>
+    internal string Repo { get; }
+
+    /// <summary>The PR number.</summary>
+    internal int Number { get; }
 
     /// <summary>Shows the PR as last served.</summary>
     /// <param name="row">The served row.</param>
