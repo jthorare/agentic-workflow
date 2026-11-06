@@ -31,12 +31,14 @@ public sealed class LinearSideRowStoreTests : IDisposable
     private async Task<CommitReport> Remove(int page, string key = Key) =>
         (await _store.Commit(RecordSamples.Batch(RecordSamples.Linear, page) with { Removed = [RecordKey.From(key)] }, Ct)).Value;
 
-    // A page of a feed that has finished a pass: its cursor carries the watermark ('s='), which is what tells the writer a new issue is news and not the first sync.
-    private async Task<CommitReport> CommitAfterFirstPass(int page, params RecordWrite[] writes) =>
-        (await _store.Commit(RecordSamples.Batch(RecordSamples.Linear, page, writes) with
-        {
-            Position = new SyncPosition(SourceCursor.From("s=2026-11-06T00:00:00.0000000Z;a=;t="), SyncPhase.Incremental, BackfillCursor: null),
-        }, Ct)).Value;
+    // A page of a feed that has finished a pass: the STORED cursor carries the watermark ('s='), which is what tells the writer a new issue is news and not the first sync. The writer reads the cursor
+    // stored before this page's own, so an empty page with the watermark is committed first, the way a finished pass leaves it.
+    private async Task<CommitReport> CommitAfterFirstPass(int page, params RecordWrite[] writes)
+    {
+        var position = new SyncPosition(SourceCursor.From("s=2026-11-06T00:00:00.0000000Z;a=;t="), SyncPhase.Incremental, BackfillCursor: null);
+        _ = (await _store.Commit(RecordSamples.Batch(RecordSamples.Linear, page) with { Position = position }, Ct)).Value;
+        return (await _store.Commit(RecordSamples.Batch(RecordSamples.Linear, page, writes) with { Position = position }, Ct)).Value;
+    }
 
     // A page in the middle of the first pass: no watermark yet.
     private async Task<CommitReport> CommitDuringFirstPass(int page, params RecordWrite[] writes) =>
