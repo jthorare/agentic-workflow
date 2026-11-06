@@ -73,6 +73,17 @@ public sealed class TraitCheckCliTests : IDisposable
         Assert.StartsWith("trait-check: before you finish, this branch's changes likely break 1 project trait marked severity: block.", run.Stderr, StringComparison.Ordinal);
     }
 
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_session_id_goes_with_edit_and_stop()
+    {
+        var cli = Cli(CheckTraitsHarness.Violating());
+
+        var edit = await cli.Run("trait-check", "--edit", "--file", "src/app.ts", "--session", "0b7c-4f_1");
+        var stop = await cli.Run("trait-check", "--stop", "--session", "0b7c-4f_1");
+
+        Assert.Equal((2, 2), (edit.ExitCode, stop.ExitCode));
+    }
+
     [Theory, Trait("Lane", "integration")]
     [InlineData("--stop", "--file", "a.ts")]
     [InlineData("--edit", "--file", "a.ts", "--path", "src")]
@@ -83,6 +94,7 @@ public sealed class TraitCheckCliTests : IDisposable
     [InlineData("--scan", "--concurrency", "0")]
     [InlineData("--scan", "--stop")]
     [InlineData("--stop", "--base")]
+    [InlineData("--scan", "--session", "s1")]
     public async Task A_malformed_command_line_is_a_usage_error_before_the_check_runs(params string[] tail)
     {
         var jev = CheckTraitsHarness.Violating();

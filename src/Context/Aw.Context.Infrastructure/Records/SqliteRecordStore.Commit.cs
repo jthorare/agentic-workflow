@@ -254,29 +254,35 @@ internal sealed partial class SqliteRecordStore
 
     private static void BindRecord(SqliteCommand c, StoredRecord record)
     {
-        // A blocked record's row carries only its key, kind, state and times.
-        var blocked = record.Blocked;
         _ = c.Bind("@key", record.Key.Value)
             .Bind("@source", record.Source.Value)
             .Bind("@kind", RecordWire.Of(record.Kind))
             .Bind("@repo", record.Repo?.Value)
             .Bind("@audience", record.Audience?.Value)
-            .Bind("@title", blocked ? record.Key.Value : record.Title)
-            .Bind("@url", blocked ? null : record.Url)
-            .Bind("@author", blocked ? null : record.Author)
             .Bind("@state", record.State is { } state ? RecordWire.Of(state) : null)
-            .Bind("@stateRaw", blocked ? null : record.StateRaw)
             .BindAt("@created", record.CreatedAt)
             .BindAt("@updated", record.UpdatedAt)
             .BindAt("@closed", record.ClosedAt)
             .Bind("@version", record.Version.Value)
             .Bind("@hash", record.TextHash)
             .Bind("@ruleset", record.Ruleset)
-            .Bind("@blocked", blocked)
+            .Bind("@blocked", record.Blocked)
             .Bind("@synced", record.SyncedAt)
             .Bind("@health", record.Health)
-            .Bind("@dueAt", record.DueAt?.ToString(RecordMappers.DueFormat, CultureInfo.InvariantCulture))
-            .Bind("@description", blocked ? null : record.Description);
+            .Bind("@dueAt", record.DueAt?.ToString(RecordMappers.DueFormat, CultureInfo.InvariantCulture));
+        BindText(c, record);
+    }
+
+    // A blocked record's row carries only its key, kind, state and times.
+    private static void BindText(SqliteCommand c, StoredRecord record)
+    {
+        var blocked = record.Blocked;
+        _ = c.Bind("@title", blocked ? record.Key.Value : record.Title)
+            .Bind("@url", blocked ? null : record.Url)
+            .Bind("@author", blocked ? null : record.Author)
+            .Bind("@stateRaw", blocked ? null : record.StateRaw)
+            .Bind("@description", blocked ? null : record.Description)
+            .Bind("@pull", blocked ? null : PullFactsJson.Write(record.Pull));
     }
 
     // A statement whose row count doesn't matter: its error, or null.

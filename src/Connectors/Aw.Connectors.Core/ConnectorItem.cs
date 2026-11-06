@@ -15,6 +15,7 @@ namespace Aw.Connectors.Core;
 /// <param name="Version">The source's version of the record (its change time in round-trip form); the store replays a page by comparing it.</param>
 /// <param name="Links">References to other records.</param>
 /// <param name="Repo">The profile repo it belongs to, or null.</param>
+/// <param name="Pull">A pull request's reviewers and head, or null for anything else.</param>
 public sealed record ConnectorItem(
     string Key,
     string Kind,
@@ -29,4 +30,5 @@ public sealed record ConnectorItem(
     DateTimeOffset? ClosedAt,
     string Version,
     IReadOnlyList<ConnectorLink> Links,
-    string? Repo);
+    string? Repo,
+    ConnectorPullFacts? Pull = null);

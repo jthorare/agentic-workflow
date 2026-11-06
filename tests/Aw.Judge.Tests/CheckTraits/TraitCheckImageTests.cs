@@ -24,7 +24,8 @@ public sealed class TraitCheckImageTests
 
         var asked = Assert.Single(harness.Jev.Asked);
         var image = Assert.Single(asked.Images);
-        Assert.Equal(Path.GetFullPath(png), image.Path);
+        // git names the repo by its real path (/var is /private/var on macOS), and the image is read from there.
+        Assert.Equal(Path.Combine(repo.Git("rev-parse", "--show-toplevel").TrimEnd('\n'), "src", "logo.png"), image.Path);
         Assert.True(asked.ImagesBestEffort);
     }
 }

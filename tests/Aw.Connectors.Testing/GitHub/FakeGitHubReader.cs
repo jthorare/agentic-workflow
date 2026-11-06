@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Connectors.Core;
 using Aw.Connectors.Core.GitHub;
 using Aw.Kernel;
 
@@ -10,6 +11,7 @@ public sealed class FakeGitHubReader : IGitHubReader
     private readonly Dictionary<string, List<GitHubIssue>> _issues = new(StringComparer.Ordinal);
     private readonly Dictionary<string, List<GitHubComment>> _comments = new(StringComparer.Ordinal);
     private readonly Dictionary<(string Repo, int Number), GitHubPullDetail> _pulls = [];
+    private readonly Dictionary<(string Repo, int Number), IReadOnlyList<ConnectorReview>> _reviews = [];
     private readonly List<(string Repo, GitHubCursor After, int Limit)> _calls = [];
     private readonly List<string> _reads = [];
     private DateTimeOffset? _commentRateLimit;
@@ -20,7 +22,7 @@ public sealed class FakeGitHubReader : IGitHubReader
     /// <summary>The calls made, in order.</summary>
     public IReadOnlyList<(string Repo, GitHubCursor After, int Limit)> Calls => _calls;
 
-    /// <summary>The comment and pull request reads made, in order, as 'comments {repo}', 'comments {repo}#{n}' and 'pull {repo}#{n}'.</summary>
+    /// <summary>The comment and pull request reads made, in order, as 'comments {repo}', 'comments {repo}#{n}' and 'pull {repo}#{n}' and 'reviews {repo}#{n}'.</summary>
     public IReadOnlyList<string> Reads => _reads;
 
     /// <summary>Gets the page size the fake reads in.</summary>
@@ -66,6 +68,17 @@ public sealed class FakeGitHubReader : IGitHubReader
     public FakeGitHubReader AddPull(string repo, int number, GitHubPullDetail detail)
     {
         _pulls[(repo, number)] = detail;
+        return this;
+    }
+
+    /// <summary>Sets what the review read says about a pull request; one without it has no reviews.</summary>
+    /// <param name="repo">'owner/name'.</param>
+    /// <param name="number">The pull request number.</param>
+    /// <param name="reviews">Each reviewer's latest review with its new-commit count.</param>
+    /// <returns>This fake.</returns>
+    public FakeGitHubReader AddReviews(string repo, int number, params ConnectorReview[] reviews)
+    {
+        _reviews[(repo, number)] = reviews;
         return this;
     }
 
@@ -172,5 +185,17 @@ public sealed class FakeGitHubReader : IGitHubReader
 
         var detail = _pulls.TryGetValue((repo, number), out var found) ? found : new GitHubPullDetail(Merged: false, Draft: false, MergedAt: null, []);
         return ValueTask.FromResult<Result<GitHubPullDetailRead>>(new GitHubPullDetailRead(detail with { Paths = [.. detail.Paths.Take(PageSize * MaxFilePages)] }, RateLimitedUntil: null));
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<GitHubReviewRead>> PullReviews(string repo, int number, string head, CancellationToken cancellationToken)
+    {
+        _reads.Add(string.Create(CultureInfo.InvariantCulture, $"reviews {repo}#{number}"));
+        if (_failure is not null)
+        {
+            return ValueTask.FromResult<Result<GitHubReviewRead>>(_failure);
+        }
+
+        return ValueTask.FromResult<Result<GitHubReviewRead>>(new GitHubReviewRead(_reviews.TryGetValue((repo, number), out var found) ? found : [], RateLimitedUntil: null));
     }
 }

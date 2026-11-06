@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: paycode-picker-app-screen
+expected_outcome: |
+  Main and the PR are each run as local app stacks with seed data, and the paycode pickers are
+  opened the same way on both. The output has labelled main | PR images of the closed and open
+  pickers, a PR body draft whose affected pages are routes a reviewer can open, and "Not proven"
+  for anything the seed data could not show. Nothing is pushed or posted to GitHub.

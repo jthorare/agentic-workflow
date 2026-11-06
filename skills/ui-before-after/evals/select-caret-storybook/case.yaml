@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: select-caret-storybook
+expected_outcome: |
+  Main and the branch are each built locally and the same Select states are captured on both.
+  Each claim (12px gap, 20px caret, gray-500 / gray-400 disabled) has a labelled main | PR image
+  or is marked "Not proven". A PR body draft lists the affected pages and a before | after table
+  that points at those images. Nothing is pushed or posted to GitHub.

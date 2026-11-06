@@ -322,10 +322,10 @@ Aw.Judge.Features.CheckTraits.CheckTraitsRequest.BaseRef.get -> string?
 Aw.Judge.Features.CheckTraits.CheckTraitsRequest.BaseRef.init -> void
 Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Budget.get -> System.TimeSpan?
 Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Budget.init -> void
-Aw.Judge.Features.CheckTraits.CheckTraitsRequest.CheckTraitsRequest(Aw.Judge.Features.CheckTraits.TraitCheckMode Mode, System.Collections.Generic.IReadOnlyList<string!>! Files, string? BaseRef = null, System.Collections.Generic.IReadOnlyList<string!>? Paths = null, System.Collections.Generic.IReadOnlyList<string!>? Traits = null, System.TimeSpan? Budget = null, double? MinProbability = null, int? Concurrency = null, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Providers.ProviderName>? Providers = null) -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.CheckTraitsRequest(Aw.Judge.Features.CheckTraits.TraitCheckMode Mode, System.Collections.Generic.IReadOnlyList<string!>! Files, string? BaseRef = null, System.Collections.Generic.IReadOnlyList<string!>? Paths = null, System.Collections.Generic.IReadOnlyList<string!>? Traits = null, System.TimeSpan? Budget = null, double? MinProbability = null, int? Concurrency = null, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Providers.ProviderName>? Providers = null, Aw.Judge.Core.Ids.SessionId? SessionId = null) -> void
 Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Concurrency.get -> int?
 Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Concurrency.init -> void
-Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Deconstruct(out Aw.Judge.Features.CheckTraits.TraitCheckMode Mode, out System.Collections.Generic.IReadOnlyList<string!>! Files, out string? BaseRef, out System.Collections.Generic.IReadOnlyList<string!>? Paths, out System.Collections.Generic.IReadOnlyList<string!>? Traits, out System.TimeSpan? Budget, out double? MinProbability, out int? Concurrency, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Providers.ProviderName>? Providers) -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Deconstruct(out Aw.Judge.Features.CheckTraits.TraitCheckMode Mode, out System.Collections.Generic.IReadOnlyList<string!>! Files, out string? BaseRef, out System.Collections.Generic.IReadOnlyList<string!>? Paths, out System.Collections.Generic.IReadOnlyList<string!>? Traits, out System.TimeSpan? Budget, out double? MinProbability, out int? Concurrency, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Providers.ProviderName>? Providers, out Aw.Judge.Core.Ids.SessionId? SessionId) -> void
 Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Equals(Aw.Judge.Features.CheckTraits.CheckTraitsRequest? other) -> bool
 Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Files.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Files.init -> void
@@ -337,6 +337,8 @@ Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Paths.get -> System.Collections
 Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Paths.init -> void
 Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Providers.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Providers.ProviderName>?
 Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Providers.init -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.SessionId.get -> Aw.Judge.Core.Ids.SessionId?
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.SessionId.init -> void
 Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Traits.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Traits.init -> void
 Aw.Judge.Features.CheckTraits.TraitCheckMode
