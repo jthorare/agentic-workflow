@@ -55,12 +55,12 @@ internal static class LinearSql
         "SELECT c.id, c.author_id, c.created_at, c.body, c.sindri FROM linear_comment c JOIN source_record r ON r.key = c.issue_key " +
         "WHERE c.issue_key = @key AND " + Visible + " ORDER BY c.created_at DESC, c.id ASC";
 
-    /// <summary>Assignments to the viewer, and state moves a sync saw on issues assigned to them, after a marker.</summary>
+    /// <summary>Assignments to the viewer that a sync saw (the owner's own save is not news to them), and state moves a sync saw on issues assigned to them, after a marker.</summary>
     internal const string SinceChanges =
         "SELECT ch.issue_key, i.identifier, ch.field, ch.\"old\", ch.\"new\", ch.at, ch.via FROM linear_issue_change ch " +
         "JOIN linear_issue i ON i.key = ch.issue_key JOIN source_record r ON r.key = ch.issue_key " +
         "WHERE ch.at > @marker AND " + Visible + " " +
-        "AND ((ch.field = 'assignee' AND ch.\"new\" = @viewer) OR (ch.field = 'state' AND ch.via = 'feed' AND i.assignee_id = @viewer)) ORDER BY ch.at ASC, ch.seq ASC";
+        "AND ((ch.field = 'assignee' AND ch.via = 'feed' AND ch.\"new\" = @viewer) OR (ch.field = 'state' AND ch.via = 'feed' AND i.assignee_id = @viewer)) ORDER BY ch.at ASC, ch.seq ASC";
 
     /// <summary>Comments after a marker that someone else wrote, newest first and capped: the mention test runs on them in code.</summary>
     internal const string SinceComments =
