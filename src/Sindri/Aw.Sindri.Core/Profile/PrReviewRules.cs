@@ -66,7 +66,7 @@ public static class PrReviewRules
 
     private static Error? Login(string? login) =>
         login is not null && !IsLogin(login)
-            ? Invalid("review.login", "must be a GitHub login: 1 to 39 letters, digits or single hyphens, not starting or ending with a hyphen")
+            ? Invalid("review.login", $"'{login}' isn't a GitHub login (fix: use 1 to 39 letters, digits or single hyphens, not starting or ending with a hyphen)")
             : null;
 
     private static Error? Credential(string? credential) =>
