@@ -13879,7 +13879,7 @@ Aw.Sindri.Core.Profile.IndexSettings.Graph.get -> Aw.Sindri.Core.Profile.GraphSe
 Aw.Sindri.Core.Profile.IndexSettings.Graph.init -> void
 Aw.Sindri.Core.Profile.IndexSettings.Roles.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>?
 Aw.Sindri.Core.Profile.IndexSettings.Roles.init -> void
-Aw.Sindri.Core.Workflow.Blocks.BlockCatalog.BlockCatalog(System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor!>! blocks, System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Workflow.Blocks.EventDescriptor!>! events, Aw.Sindri.Core.Workflow.Blocks.IBlockSentences? sentences = null) -> void
+Aw.Sindri.Core.Workflow.Blocks.BlockCatalog.BlockCatalog(System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor!>! blocks, System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Workflow.Blocks.EventDescriptor!>! events, Aw.Sindri.Core.Workflow.Blocks.IBlockSentences? sentences = null, System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock!>? unloaded = null) -> void
 Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor.Sentence.get -> string?
 Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor.Sentence.init -> void
 Aw.Sindri.Core.Workflow.Blocks.IBlockSentences
@@ -22428,3 +22428,18 @@ Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.Skill.get -> Aw.Sindri.
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.Skill.init -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.SkillFailure.get -> string?
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.SkillFailure.init -> void
+Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock
+Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock.<Clone>$() -> Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock!
+Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock.Deconstruct(out Aw.Sindri.Core.Workflow.Ids.BlockId Id, out string! Reason) -> void
+Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock.Equals(Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock? other) -> bool
+Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock.Id.get -> Aw.Sindri.Core.Workflow.Ids.BlockId
+Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock.Id.init -> void
+Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock.Reason.get -> string!
+Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock.Reason.init -> void
+Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock.UnloadedBlock(Aw.Sindri.Core.Workflow.Ids.BlockId Id, string! Reason) -> void
+override Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock.GetHashCode() -> int
+override Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock.ToString() -> string!
+static Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock.operator !=(Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock? left, Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock? right) -> bool
+static Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock.operator ==(Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock? left, Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock? right) -> bool
+Aw.Sindri.Core.Workflow.Blocks.BlockCatalog.WhyUnloaded(Aw.Sindri.Core.Workflow.Ids.BlockId id) -> string?

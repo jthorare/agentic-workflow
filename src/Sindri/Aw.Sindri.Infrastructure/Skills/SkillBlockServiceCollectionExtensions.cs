@@ -1,5 +1,6 @@
 using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Blocks;
+using Aw.Sindri.Core.Workflow.Ids;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Infrastructure.Skills;
@@ -17,6 +18,14 @@ internal static class SkillBlockServiceCollectionExtensions
         foreach (var block in registry.Loaded)
         {
             _ = services.AddBlockDescriptor(block.Descriptor);
+        }
+
+        foreach (var skipped in registry.Skipped.Where(static s => !string.Equals(s.Reason, "no skills folder", StringComparison.Ordinal)))
+        {
+            if (BlockId.TryFrom("step.skill." + skipped.Name, out var id))
+            {
+                _ = services.AddSingleton(new UnloadedBlock(id, skipped.Reason));   // a recipe naming it fails with the reason (spec §3.2)
+            }
         }
 
         return services.AddSingleton<ISkillBlocks>(registry);
