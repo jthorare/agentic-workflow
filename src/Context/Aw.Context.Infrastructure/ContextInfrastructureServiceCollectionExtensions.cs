@@ -7,6 +7,7 @@ using Aw.Context.Core.Eval;
 using Aw.Context.Core.Eval.Backtest;
 using Aw.Context.Core.Extract;
 using Aw.Context.Core.History;
+using Aw.Context.Core.Library;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Proposals;
@@ -70,7 +71,7 @@ public static class ContextInfrastructureServiceCollectionExtensions
             .AddSingleton<IConceptSynthesisStore, SqliteConceptSynthesisStore>()
             .AddSingleton<IIntentStore, SqliteIntentStore>()
             .AddSingleton<IRecordStore, SqliteRecordStore>()
-            .AddSingleton<ISourceIdentityStore, SqliteSourceIdentityStore>()
+            .AddSingleton<ISourceIdentityStore, SqliteSourceIdentityStore>().AddSingleton<ILibraryStore, SqliteLibraryStore>()
             .AddSingleton<ISourceViewers, LinearViewers>()
             .AddSingleton<ILexicalLeg, SqliteLexicalLeg>()
             .AddSingleton<IRecordFeedCatalog, ContextRecordFeedCatalog>()

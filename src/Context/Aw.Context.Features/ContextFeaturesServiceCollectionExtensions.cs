@@ -124,7 +124,7 @@ public static class ContextFeaturesServiceCollectionExtensions
         services.TryAddSingleton<IMergeHistory>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IAsOfDocs>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IEvalStore>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
-        return services.AddMapHeads().AddRelinkPinAliases().AddProjectFacts().AddIndexSync().AddRecordSearch().AddEmbedRecords().AddContextSlices();
+        return services.AddMapHeads().AddRelinkPinAliases().AddProjectFacts().AddLibraryReads().AddIndexSync().AddRecordSearch().AddEmbedRecords().AddContextSlices();
     }
 
     private static IServiceCollection AddMapHealthChecks(this IServiceCollection services) => services
@@ -210,6 +210,9 @@ public static class ContextFeaturesServiceCollectionExtensions
     // The Projects page's reads (projects page spec §6.1).
     private static IServiceCollection AddProjectFacts(this IServiceCollection services) =>
         services.AddScoped<IService<GetProjectFactsRequest, ProjectFactsAnswer>, GetProjectFactsService>().AddScoped<ContextReads>();
+
+    // The design-doc library's reads (PR review page spec 2026-11-04 §5.5).
+    private static IServiceCollection AddLibraryReads(this IServiceCollection services) => services.AddScoped<IContextLibrary, ReadLibrary.ContextLibrary>();
 
     // The lenses and the code lens share the basis reader and the map reader's views.
     private static IServiceCollection AddLensSlices(this IServiceCollection services) => services
