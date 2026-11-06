@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace Aw.Context.Core.Library;
 
 /// <summary>
@@ -23,6 +25,45 @@ public static class DesignDocParser
     /// <param name="text">Its cleaned text.</param>
     /// <param name="actualSourceSha256">The sha256 of the source a generated doc was made from, when known; a mismatch with the doc's <c language="text">source-sha256</c> is SND-LIB-017.</param>
     /// <returns>The parsed doc.</returns>
-    public static ParsedDesignDoc Parse(string path, string text, string? actualSourceSha256 = null) =>
-        throw new NotSupportedException("red: DesignDocParser.Parse");
+    public static ParsedDesignDoc Parse(string path, string text, string? actualSourceSha256 = null)
+    {
+        var lines = text.TrimStart('﻿').ReplaceLineEndings("\n").Split('\n');
+        var head = FrontMatterBlock.Find(path, lines);
+        if (!head.Read || head.FrontMatter is null)
+        {
+            return new ParsedDesignDoc(Version, FrontMatter: null, Items: [], Refs: [], Errors: [.. head.Errors]);
+        }
+
+        var fm = head.FrontMatter;
+        var errors = new List<DesignDocError>(head.Errors);
+        if (fm.Generated is not null && fm.SourceSha256 is not null && actualSourceSha256 is not null
+            && !string.Equals(fm.SourceSha256, actualSourceSha256, StringComparison.OrdinalIgnoreCase))
+        {
+            errors.Add(FrontMatterBlock.Error(path, fm.KeyLines["source-sha256"], DesignDocCodes.StaleGenerated, "source-sha256 no longer matches the source: the generated file was edited by hand.", "Edit the source and regenerate the file."));
+        }
+
+        if (Encoding.UTF8.GetByteCount(text) > MaxBytes)
+        {
+            errors.Add(TooLarge(path, "the file is over 1 MiB."));
+            return new ParsedDesignDoc(Version, fm, Items: [], Refs: [], Errors: Sorted(errors));
+        }
+
+        var walker = new DesignDocWalker(path, lines, head.BodyStart, fm.Kind);
+        var (items, refs, bodyErrors) = walker.Walk();
+        errors.AddRange(bodyErrors);
+        if (walker.ItemCount > MaxItems)
+        {
+            errors.Add(TooLarge(path, $"the file has more than {MaxItems} items."));
+        }
+
+        return errors.Count > 0
+            ? new ParsedDesignDoc(Version, fm, Items: [], Refs: [], Errors: Sorted(errors))
+            : new ParsedDesignDoc(Version, fm, items, refs, Errors: []);
+    }
+
+    private static DesignDocError TooLarge(string path, string what) =>
+        FrontMatterBlock.Error(path, line: null, DesignDocCodes.TooLarge, "too large: " + what, "Split the doc.");
+
+    private static List<DesignDocError> Sorted(List<DesignDocError> errors) =>
+        [.. errors.OrderBy(static e => e.Line ?? int.MaxValue).ThenBy(static e => e.Code, StringComparer.Ordinal)];
 }
