@@ -22284,3 +22284,14 @@ static Aw.Sindri.Core.Profile.PrReviewSettings.operator !=(Aw.Sindri.Core.Profil
 static Aw.Sindri.Core.Profile.PrReviewSettings.operator ==(Aw.Sindri.Core.Profile.PrReviewSettings? left, Aw.Sindri.Core.Profile.PrReviewSettings? right) -> bool
 static Aw.Sindri.Core.Profile.PrReviewSettingsEntry.operator !=(Aw.Sindri.Core.Profile.PrReviewSettingsEntry? left, Aw.Sindri.Core.Profile.PrReviewSettingsEntry? right) -> bool
 static Aw.Sindri.Core.Profile.PrReviewSettingsEntry.operator ==(Aw.Sindri.Core.Profile.PrReviewSettingsEntry? left, Aw.Sindri.Core.Profile.PrReviewSettingsEntry? right) -> bool
+Aw.Sindri.Core.Profile.PrReviewRules
+const Aw.Sindri.Core.Profile.PrReviewRules.DefaultCredentialVariable = "AW_REVIEW_GITHUB_TOKEN" -> string!
+static Aw.Sindri.Core.Profile.PrReviewRules.CredentialVariable(Aw.Sindri.Core.Profile.PrReviewSettings? review) -> string?
+static Aw.Sindri.Core.Profile.PrReviewRules.IsLogin(string? login) -> bool
+static Aw.Sindri.Core.Profile.PrReviewRules.UnknownProject(Aw.Sindri.Core.Profile.PrReviewSettings? review, System.Collections.Generic.IReadOnlySet<string!>! known) -> Aw.Kernel.Error?
+static readonly Aw.Sindri.Core.SindriErrors.ReviewCommandCheck -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ReviewInvalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ReviewOfflineUncached -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ReviewProjectUnknown -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ReviewRepoUnsynced -> Aw.Kernel.ErrorDefinition!
+static Aw.Sindri.Core.Launch.LaunchEnvironment.Scrub(System.Collections.Generic.IReadOnlyDictionary<string!, string!>! env, string! worktree, string! ghConfigDir, System.Collections.Generic.IEnumerable<string!>! extra) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!

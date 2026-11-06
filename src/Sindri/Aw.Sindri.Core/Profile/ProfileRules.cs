@@ -47,7 +47,7 @@ public static class ProfileRules
     }
 
     private static Error? Sections(SindriProfile profile) =>
-        OnyxLeftover(profile.Context) ?? Services(profile.Services) ?? Workflow(profile) ?? ProfileGlobRules.Check(profile) ?? IndexRules.Check(profile) ?? LaunchKeys(profile.Launch) ?? AgentKeys(profile.Agents) ?? SetupKeys(profile.Setup) ?? SandboxRules.Check(profile.Sandbox);
+        OnyxLeftover(profile.Context) ?? Services(profile.Services) ?? Workflow(profile) ?? ProfileGlobRules.Check(profile) ?? IndexRules.Check(profile) ?? LaunchKeys(profile.Launch) ?? AgentKeys(profile.Agents) ?? SetupKeys(profile.Setup) ?? SandboxRules.Check(profile.Sandbox) ?? PrReviewRules.Check(profile);
 
     /// <summary>A 'context.sources.onyx' section left from before Onyx was removed is refused for one release, never ignored (owned-index spec Q15).</summary>
     private static Error? OnyxLeftover(JsonElement? context) =>
