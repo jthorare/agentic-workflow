@@ -11374,3 +11374,6 @@ virtual Aw.Context.Core.Records.SideRows.EqualityContract.get -> System.Type!
 virtual Aw.Context.Core.Records.SideRows.Equals(Aw.Context.Core.Records.SideRows? other) -> bool
 virtual Aw.Context.Core.Records.SideRows.PrintMembers(System.Text.StringBuilder! builder) -> bool
 static Aw.Context.Core.Audience.ProfileAudiencePolicy.LibraryDoc(System.Collections.Generic.IReadOnlyList<string!>! docRepos, System.Collections.Generic.IReadOnlyList<string!>! githubRepos) -> Aw.Context.Core.Records.AudienceKey
+const Aw.Context.Core.Audience.ProfileAudiencePolicy.OwnerLibrary = "owner:library" -> string!
+Aw.Context.Core.Records.AudienceKeyExtensions
+static Aw.Context.Core.Records.AudienceKeyExtensions.IsOwner(this Aw.Context.Core.Records.AudienceKey? audience) -> bool
