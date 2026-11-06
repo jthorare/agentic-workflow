@@ -16,15 +16,18 @@ internal static class LaneSendCommand
         var text = await LaneInput.Read(context, allowStdin: false).ConfigureAwait(false);
         return text.IsError
             ? CommandOutput.Fail(context, text.Error)
-            : await CommandOutput.Call<LaneSendRequest, LaneSendResponse>(context, new LaneSendRequest(context.Line.Value("lane"), text.Value), Text, static r => r.Attention is not null).ConfigureAwait(false);
+            : await CommandOutput.Call<LaneSendRequest, LaneSendResponse>(context, new LaneSendRequest(context.Line.Value("lane"), text.Value) { WakeConfirmSeconds = WakeConfirmSeconds(context) }, Text, static r => r.Attention is not null).ConfigureAwait(false);
     }
+
+    private static int WakeConfirmSeconds(CommandContext context) =>
+        int.TryParse(context.Io.Env("AW_META_WAKE_CONFIRM_SECONDS"), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var seconds) && seconds > 0 ? seconds : 10;
 
     private static string Text(LaneSendResponse response) =>
         string.Join(
             Environment.NewLine,
             new[]
             {
-                $"sent {response.Id.Value} to lane {response.Lane}; " + (response.Woken ? "woken" : "not woken: " + response.WakeSkipped),
+                $"sent {response.Id.Value} to lane {response.Lane}; " + (response.Woken ? "woken" + (response.ViewerAttached ? " (a viewer is attached)" : string.Empty) : "not woken: " + response.WakeSkipped),
                 response.Attention is { } attention ? $"attention: lane {response.Lane} is {attention}" : null,
             }.OfType<string>());
 }

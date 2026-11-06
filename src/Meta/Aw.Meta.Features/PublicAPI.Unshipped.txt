@@ -1077,3 +1077,15 @@ Aw.Meta.Features.Usage.UsageRow.Deconstruct(out string! Subject, out Aw.Meta.Cor
 Aw.Meta.Features.Usage.UsageRow.Kind.get -> Aw.Meta.Core.Usage.UsageKind?
 Aw.Meta.Features.Usage.UsageRow.State.get -> Aw.Meta.Core.Usage.UsageState
 Aw.Meta.Features.Usage.UsageRow.UsageRow(string! Subject, Aw.Meta.Core.Usage.UsageState State, Aw.Meta.Core.Usage.UsageKind? Kind, System.DateTimeOffset? ResetsAt, string? Source = null, string? Reason = null) -> void
+Aw.Meta.Features.LaneInbox.LaneInboxRequest.HookEvent.get -> string?
+Aw.Meta.Features.LaneInbox.LaneInboxRequest.HookEvent.init -> void
+Aw.Meta.Features.LaneSend.LaneSendRequest.WakeConfirmSeconds.get -> int
+Aw.Meta.Features.LaneSend.LaneSendRequest.WakeConfirmSeconds.init -> void
+Aw.Meta.Features.LaneSend.LaneSendResponse.ViewerAttached.get -> bool
+Aw.Meta.Features.LaneSend.LaneSendResponse.ViewerAttached.init -> void
+Aw.Meta.Features.Watch.WatchRequest.UntilMail.get -> bool
+Aw.Meta.Features.Watch.WatchRequest.UntilMail.init -> void
+Aw.Meta.Features.Watch.WatchResponse.EndedOnMail.get -> bool
+Aw.Meta.Features.Watch.WatchResponse.EndedOnMail.init -> void
+Aw.Meta.Features.LaneStopCheck.LaneStopCheckRequest.HookEvent.get -> string?
+Aw.Meta.Features.LaneStopCheck.LaneStopCheckRequest.HookEvent.init -> void

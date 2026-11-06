@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Ports;
 using Aw.Meta.Infrastructure.Build;
 using Aw.Meta.Infrastructure.Config;
@@ -29,6 +30,9 @@ public static class MetaInfrastructureServiceCollectionExtensions
             .AddSingleton(settings)
             .AddSingleton(settings.Paths)
             .AddSingleton(settings.Layout)
+            .AddSingleton(environment("AW_META_UNDELIVERED_MINUTES") is { } minutes && int.TryParse(minutes, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var limit) && limit > 0
+                ? new LaneHealthOptions(TimeSpan.FromMinutes(limit))
+                : LaneHealthOptions.Default)
             .AddSingleton(sp => new MetaDatabase(MetaDatabase.OptionsFor(settings.StateDirectory), sp.GetRequiredService<TimeProvider>()))
             .AddScoped<IMessageStore, SqliteMessageStore>()
             .AddScoped<ILaneStore, SqliteLaneStore>()
@@ -42,7 +46,7 @@ public static class MetaInfrastructureServiceCollectionExtensions
             .AddSingleton<IClaudeTranscripts>(new ClaudeProjectsTranscripts(Path.Combine(settings.Paths.Home, ".claude", "projects")))
             .AddSingleton<IDigestFiles, FileDigestFiles>()
             .AddSingleton<ILaneFiles>(new DirectoryLaneFiles(settings.LaneSessionsDirectory))
-            .AddScoped<ILanePane>(sp => new TmuxLanePane(sp.GetRequiredService<ICommandRunner>(), settings.Tmux, settings.TmuxSocket, sp.GetRequiredService<IMetaConfig>()))
+            .AddScoped<ILanePane>(sp => new TmuxLanePane(sp.GetRequiredService<ICommandRunner>(), settings.Tmux, settings.TmuxSocket, sp.GetRequiredService<IMetaConfig>(), sp.GetRequiredService<IDelay>()))
             .AddScoped<ISessionDirectory>(sp => new LaneSessionDirectory(
                 new DirectorySessionDirectory(settings.SessionsDirectory, sp.GetRequiredService<IProcessLiveness>()), sp.GetRequiredService<IMetaConfig>(), sp.GetRequiredService<ILaneFiles>(), sp.GetRequiredService<ILanePane>()))
             .AddScoped<ITeamCatalog>(sp => new FileTeamCatalog(settings.Layout, sp.GetRequiredService<ISessionDirectory>(), sp.GetRequiredService<JsonSerializerOptions>(), sp.GetRequiredService<TimeProvider>()))

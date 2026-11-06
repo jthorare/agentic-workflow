@@ -15,6 +15,8 @@
 #   sessionStart                            -> SessionStart
 #   stop {loop_count}                       -> Stop, stop_hook_active = loop_count > 0,
 #                                              last_assistant_message from the transcript
+#   afterAgentResponse {text}               -> AfterAgentResponse, last_assistant_message = text (no transcript read);
+#                                              Cursor ignores the output of this event, the adapter prints {}
 #   subagentStart {subagent_id, subagent_type, task, tool_call_id}
 #                                           -> SubagentStart + an Agent-shaped tool_input
 #   subagentStop                            -> SubagentStop
@@ -110,6 +112,10 @@ else
         .hook_event_name = "Stop"
         | .stop_hook_active = ((.loop_count // 0) > 0)
         | .last_assistant_message = (if $last == "" then null else $last end)
+        | .transcript_path = null
+      elif $ev == "afterAgentResponse" then
+        .hook_event_name = "AfterAgentResponse"
+        | .last_assistant_message = (.text // null)
         | .transcript_path = null
       elif $ev == "subagentStart" then
         .hook_event_name = "SubagentStart"

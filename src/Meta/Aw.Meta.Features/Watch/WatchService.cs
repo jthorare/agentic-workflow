@@ -2,6 +2,7 @@ using System.Globalization;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Meta.Core;
+using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Ports;
 using Aw.Meta.Core.Usage;
 using Aw.Meta.Core.Watch;
@@ -31,20 +32,7 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
         }
 
         var end = clock.GetUtcNow() + request.Duration;
-        var reported = await values.Get(KvKeys.WatchResources, cancellationToken).ConfigureAwait(false);
-        var high = await values.Get(KvKeys.WatchContext, cancellationToken).ConfigureAwait(false);
-        var loop = new WatchLoop(
-            team.Value,
-            poller,
-            request.Emit,
-            WatchResources.Parse(reported.IsSuccess ? reported.Value : null),
-            // Advisory: if this can't be kept, a re-armed watch announces a standing LOW again.
-            async resources => _ = await values.Set(KvKeys.WatchResources, resources.ToString(), cancellationToken).ConfigureAwait(false),
-            new ContextReported(
-                ContextWatch.Parse(high.IsSuccess ? high.Value : null),
-                async lanes => _ = await values.Set(KvKeys.WatchContext, ContextWatch.Format(lanes), cancellationToken).ConfigureAwait(false)),
-            // Advisory: a pane or transcript that can't be read leaves usage out of the poll.
-            async () => await usage.Check(team.Value, cancellationToken).ConfigureAwait(false));
+        var loop = await NewLoop(team.Value, request.Emit, cancellationToken).ConfigureAwait(false);
         for (var polls = 1; ; polls++)
         {
             await loop.Tick(cancellationToken).ConfigureAwait(false);
@@ -52,6 +40,12 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
             if (beat.IsError)
             {
                 return beat.Error;
+            }
+
+            if (request.UntilMail && loop.Open > 0)
+            {
+                await loop.Say(string.Create(CultureInfo.InvariantCulture, $"INBOX {loop.Open} open message(s)")).ConfigureAwait(false);
+                return new WatchResponse(polls, loop.Lines) { EndedOnMail = true };
             }
 
             if (clock.GetUtcNow() + request.Interval >= end)
@@ -62,6 +56,24 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
 
             await delay.Wait(request.Interval, cancellationToken).ConfigureAwait(false);
         }
+    }
+
+    private async ValueTask<WatchLoop> NewLoop(TeamConfig team, Func<string, ValueTask> emit, CancellationToken cancellationToken)
+    {
+        var reported = await values.Get(KvKeys.WatchResources, cancellationToken).ConfigureAwait(false);
+        var high = await values.Get(KvKeys.WatchContext, cancellationToken).ConfigureAwait(false);
+        return new WatchLoop(
+            team,
+            poller,
+            emit,
+            WatchResources.Parse(reported.IsSuccess ? reported.Value : null),
+            // Advisory: if this can't be kept, a re-armed watch announces a standing LOW again.
+            async resources => _ = await values.Set(KvKeys.WatchResources, resources.ToString(), cancellationToken).ConfigureAwait(false),
+            new ContextReported(
+                ContextWatch.Parse(high.IsSuccess ? high.Value : null),
+                async lanes => _ = await values.Set(KvKeys.WatchContext, ContextWatch.Format(lanes), cancellationToken).ConfigureAwait(false)),
+            // Advisory: a pane or transcript that can't be read leaves usage out of the poll.
+            async () => await usage.Check(team, cancellationToken).ConfigureAwait(false));
     }
 
     private async ValueTask<Result<Unit>> Beat(TimeSpan interval, CancellationToken cancellationToken)
