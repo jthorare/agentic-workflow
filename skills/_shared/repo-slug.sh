@@ -10,6 +10,8 @@ if [ -n "$REMOTE_URL" ]; then
 else
   REPO_SLUG=$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
 fi
-AW_DIR="${AW_STATE_DIR:-$HOME/.agentic-workflow}/$REPO_SLUG"
+# A preset AW_DIR wins: a Sindri Step gets the run's folder from the host (skill-flows spec D8) and the remotes of its checkout
+# must not move it.
+AW_DIR="${AW_DIR:-${AW_STATE_DIR:-$HOME/.agentic-workflow}/$REPO_SLUG}"
 mkdir -p "$AW_DIR"
 export REPO_SLUG AW_DIR
