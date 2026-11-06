@@ -64,6 +64,12 @@
       "to": "REQ-12",
       "kind": "verifies",
       "line": 680
+    },
+    {
+      "from": "TP-1",
+      "to": "doc:My Vault/harbor-booking-tdd#Ph2",
+      "kind": "relates",
+      "line": 680
     }
   ],
   "errors": []

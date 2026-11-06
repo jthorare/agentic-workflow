@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://agentic-workflow.local/schemas/library/design-doc.schema.json",
   "title": "A parsed design doc",
-  "description": "What the design-doc parser makes of one Markdown file with aw-doc front matter: its front matter, its items, the refs between items, and its errors. The convention is docs/conventions/design-docs.md; the spec is docs/superpowers/specs/2026-11-04-sindri-pr-review-page-design.md §4.",
+  "description": "What the design-doc parser makes of one Markdown file with aw-doc front matter: its front matter, its items, the refs between items, and its errors. The parser, not this schema, owns the rules that need the text or the scope: which doc kinds define which item ids, near misses from the raw line, and resolving refs. The convention is docs/conventions/design-docs.md; the spec is docs/superpowers/specs/2026-11-04-sindri-pr-review-page-design.md §4.",
   "type": "object",
   "required": ["parserVersion", "frontMatter", "items", "refs", "errors"],
   "additionalProperties": false,
@@ -58,9 +58,9 @@
       "pattern": "^[a-z0-9-]{3,64}$"
     },
     "fullDocRef": {
-      "description": "doc:<root>[/<slug>]/<doc id>: root aw (with the repo-slug), a vault name, or repo:<name>.",
+      "description": "doc:<root>[/<slug>]/<doc id>: root aw (with the repo-slug), a vault name (spaces allowed), or repo:<name>.",
       "type": "string",
-      "pattern": "^doc:[^/#\\s]+(/[^/#\\s]+)?/[a-z0-9-]{3,64}$"
+      "pattern": "^doc:[^/#]*[^/#\\s][^/#]*(/[^/#\\s]+)?/[a-z0-9-]{3,64}$"
     },
     "docLink": {
       "description": "A doc id in the same scope, or a full ref to a doc in another scope.",
@@ -83,13 +83,11 @@
         },
         "repos": {
           "type": "array",
-          "uniqueItems": true,
           "items": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" }
         },
         "issues": {
           "description": "GitHub issue numbers as plain numbers, or Linear keys.",
           "type": "array",
-          "uniqueItems": true,
           "items": {
             "anyOf": [
               { "type": "integer", "minimum": 1 },
@@ -103,8 +101,7 @@
         "source-sha256": { "description": "The sha256 of the generated file's source.", "type": "string", "pattern": "^[0-9a-f]{64}$" }
       },
       "dependentRequired": {
-        "generated": ["source-sha256"],
-        "source-sha256": ["generated"]
+        "generated": ["source-sha256"]
       }
     },
     "item": {
@@ -129,7 +126,7 @@
         },
         {
           "if": { "properties": { "kind": { "const": "phase" } } },
-          "then": { "properties": { "id": { "description": "Ph<n>, an optional letter or -<n>, no leading zeros (Ph01 is stored as Ph1).", "pattern": "^Ph(0|[1-9][0-9]*)([a-z]|-(0|[1-9][0-9]*))?$" } } }
+          "then": { "properties": { "id": { "description": "Ph<n>, an optional lowercase letter or -<n>, no leading zeros (Ph01 is stored as Ph1).", "pattern": "^Ph(0|[1-9][0-9]*)([a-z]|-(0|[1-9][0-9]*))?$" } } }
         },
         {
           "if": { "properties": { "kind": { "const": "requirement" } } },
@@ -159,7 +156,7 @@
         "to": {
           "description": "<item id> in this doc, <doc id>#<item id> in this scope, or doc:<root>[/<slug>]/<doc id>#<item id>.",
           "type": "string",
-          "pattern": "^(([a-z0-9-]{3,64}|doc:[^/#\\s]+(/[^/#\\s]+)?/[a-z0-9-]{3,64})#)?[^\\s#]+$"
+          "pattern": "^(([a-z0-9-]{3,64}|doc:[^/#]*[^/#\\s][^/#]*(/[^/#\\s]+)?/[a-z0-9-]{3,64})#)?[^\\s#]+$"
         },
         "kind": { "enum": ["verifies", "relates", "blocks"] },
         "line": { "type": "integer", "minimum": 1 }

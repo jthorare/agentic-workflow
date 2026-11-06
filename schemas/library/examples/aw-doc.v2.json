@@ -1,0 +1,23 @@
+{
+  "parserVersion": 1,
+  "frontMatter": {
+    "aw-doc": 2,
+    "id": "sindri-pr-review-page",
+    "kind": "spec",
+    "title": "Sindri's PR review page, configured per project, mapped against the design docs",
+    "status": "draft",
+    "repos": [
+      "jthorare/agentic-workflow"
+    ]
+  },
+  "items": [],
+  "refs": [],
+  "errors": [
+    {
+      "code": "SND-LIB-010",
+      "line": 2,
+      "message": "convention version 2 needs a newer Sindri",
+      "fix": "Update Sindri, or write aw-doc: 1."
+    }
+  ]
+}
