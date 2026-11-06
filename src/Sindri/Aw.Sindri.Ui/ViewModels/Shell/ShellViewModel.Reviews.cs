@@ -66,6 +66,29 @@ internal sealed partial class ShellViewModel
         Changed(nameof(IsLibrarySheet), nameof(SheetTitleIsMono));
     }
 
+    private void InitReviewFix()
+    {
+        ReviewPage.FixRequested += (_, e) =>
+        {
+            OpenSheet(DeepLink.FixTaskSheet);
+            if (Health.ApiUrl() is { } url)
+            {
+                ReviewFix.Open(url, e);
+            }
+        };
+        ReviewFix.Closed += (_, e) =>
+        {
+            if (IsSheetOpen)
+            {
+                CloseSheet();
+            }
+
+            ReviewPage.ReturnFromFix(e.Focus);
+        };
+    }
+
+    private void OnFixSheetOpened() => Changed(nameof(IsFixTaskSheet), nameof(SheetTitleIsMono));
+
     /// <summary>Opens Reviews from Home's waiting line.</summary>
     internal void OpenReviews() => GoTo(PageId.Reviews);
 
@@ -80,6 +103,7 @@ internal sealed partial class ShellViewModel
             OpenSheet(DeepLink.LibrarySheet);
             OpenerLibrary = true;
         };
+        InitReviewFix();
         Reviews.OpenRequested += (_, e) => Navigate(e.Link);
         Health.Follow(Reviews.Refresh);   // every read, whichever page is shown: the badge and Home's line need the count
         PropertyChanged += (_, e) =>

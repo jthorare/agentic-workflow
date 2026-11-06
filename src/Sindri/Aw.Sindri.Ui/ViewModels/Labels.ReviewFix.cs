@@ -68,4 +68,70 @@ internal static partial class Labels
     /// <param name="length">The text's length.</param>
     /// <returns>The count.</returns>
     internal static string ReviewFixCount(int length) => string.Create(CultureInfo.InvariantCulture, $"{length:N0} / 2,000");
+
+    /// <summary>The sub line: "acme/api #2071 · feat/retry-budget · a1b2c3d".</summary>
+    /// <param name="repo">owner/name.</param>
+    /// <param name="number">The PR number.</param>
+    /// <param name="branch">The head branch.</param>
+    /// <param name="sha7">The short head sha.</param>
+    /// <returns>The words.</returns>
+    internal static string ReviewFixSubLine(string repo, int number, string branch, string sha7) => string.Create(CultureInfo.InvariantCulture, $"{repo} #{number} · {branch} · {sha7}");
+
+    /// <summary>The PR thread line when Send posts a comment in the review body.</summary>
+    /// <param name="number">The PR number.</param>
+    /// <returns>The words.</returns>
+    internal static string ReviewFixBodyThread(int number) => string.Create(CultureInfo.InvariantCulture, $"Review comment on #{number} (the review body, no diff line), from Sindri, marker sindri.fix:<item id>");
+
+    /// <summary>The PR thread line when Send posts a line comment.</summary>
+    /// <param name="path">The file.</param>
+    /// <param name="line">The line.</param>
+    /// <returns>The words.</returns>
+    internal static string ReviewFixLineThread(string path, int line) => string.Create(CultureInfo.InvariantCulture, $"Line comment on {path}:{line}, from Sindri (verdict comment, marker sindri.fix:<item id>)");
+
+    /// <summary>The PR thread line on a PR Sindri does not post on.</summary>
+    /// <param name="author">The author.</param>
+    /// <returns>The words.</returns>
+    internal static string ReviewFixItemOnly(string author) => $"Item only: Sindri won't post on {author}'s PR";
+
+    /// <summary>The outcome when the babysitter took the thread.</summary>
+    /// <param name="number">The PR number.</param>
+    /// <returns>The words.</returns>
+    internal static string ReviewFixBabysitter(int number) => string.Create(CultureInfo.InvariantCulture, $"Fix task sent to the babysitter on #{number}. It takes the thread as work and closes the item when it's fixed.");
+
+    /// <summary>The outcome when a live session took it.</summary>
+    /// <param name="branch">The head branch.</param>
+    /// <param name="session">The session ("claude, ~/repos/aw-wt/x").</param>
+    /// <returns>The words.</returns>
+    internal static string ReviewFixSession(string branch, string session) => $"Fix task sent to the session on {branch} ({session}).";
+
+    /// <summary>The outcome when no session is on the branch.</summary>
+    /// <param name="branch">The head branch.</param>
+    /// <returns>The words.</returns>
+    internal static string ReviewFixWaiting(string branch) => $"No session is on {branch}. The item waits in Work as \"Waiting on {branch}\", and the first session on that branch is told.";
+
+    /// <summary>The outcome on a PR Sindri does not post on.</summary>
+    /// <param name="author">The author.</param>
+    /// <param name="branch">The head branch.</param>
+    /// <returns>The words.</returns>
+    internal static string ReviewFixItemOnlyOutcome(string author, string branch) => $"{ReviewFixItemOnly(author)}. The item waits in Work as \"Waiting on {branch}\".";
+
+    /// <summary>The posted thread's name: "#2071 · review comment" or "#2071 · X.cs:11".</summary>
+    /// <param name="number">The PR number.</param>
+    /// <param name="where">"review comment" or "file:line".</param>
+    /// <returns>The words.</returns>
+    internal static string ReviewFixThread(int number, string where) => string.Create(CultureInfo.InvariantCulture, $"#{number} · {where}");
+
+    /// <summary>The check's second From line.</summary>
+    /// <param name="detail">Why it failed.</param>
+    /// <returns>The words.</returns>
+    internal static string ReviewFixCheckDetail(string detail) => "Required check · " + detail;
+
+    /// <summary>The requirement's second From line.</summary>
+    /// <param name="doc">The doc's id.</param>
+    /// <returns>The words.</returns>
+    internal static string ReviewFixRequirementDetail(string doc) => $"Requirement · {doc} · no PR claims it";
+
+    internal const string ReviewFixAddedLine = "added line";
+
+    internal const string ReviewFixLine = "line";
 }

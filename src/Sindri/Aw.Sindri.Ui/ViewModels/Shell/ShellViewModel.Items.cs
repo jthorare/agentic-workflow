@@ -64,6 +64,7 @@ internal sealed partial class ShellViewModel
         OnAddSeveralPagesOpened();
         OnPinSheetOpened();
         OnLibrarySheetOpened();
+        OnFixSheetOpened();
         if (link.Kind != DeepLinkKind.Item || link.Subject is null)
         {
             return;

@@ -98,6 +98,7 @@ internal sealed partial class ShellViewModel
         DeepLinkKind.AddSeveralPages => false,
         DeepLinkKind.PinSheet => false,
         DeepLinkKind.LibrarySheet => false,
+        DeepLinkKind.FixTaskSheet => false,
         _ => true,
     };
 #pragma warning restore IDE0072
@@ -122,6 +123,11 @@ internal sealed partial class ShellViewModel
         if (IsLibrarySheet)
         {
             Reviews.Library.Close();
+        }
+
+        if (IsFixTaskSheet && ReviewFix.IsOpen)
+        {
+            ReviewFix.Close();
         }
 
         _ = NeedsYou.CloseSheet();

@@ -17,28 +17,115 @@ internal sealed partial class ReviewPageViewModel
     /// <returns>True when the key was the page's and was used.</returns>
     internal bool PressDiffKey(string key, bool focusInDiff, bool textBoxHasFocus)
     {
-        _ = (key, focusInDiff, textBoxHasFocus, Diff);
-        return false;
+        if (!focusInDiff || textBoxHasFocus)
+        {
+            return false;
+        }
+
+        return key switch
+        {
+            "o" => ToggleGroup(onlyIfFolded: false),
+            "Enter" => ToggleGroup(onlyIfFolded: true),
+            "c" => RequestLineFix(),
+            _ => Navigate(key),
+        };
     }
 
     /// <summary>Send as fix task on a failed required check: its thread is a comment in the review body.</summary>
     /// <param name="checkId">The check's id.</param>
-    internal void RequestCheckFix(string checkId) => OnChanged(checkId);
+    internal void RequestCheckFix(string checkId)
+    {
+        var check = Panels.SelectMany(p => p.Checks).FirstOrDefault(c => c.CanSendFix && string.Equals(c.Id, checkId, StringComparison.Ordinal));
+        if (check is not null)
+        {
+            Ask(new ReviewFixSource(ReviewFixKind.Check, check.Title, check.Id, check.Detail, string.Empty, Line: null, Added: false), "requiredChecks:" + checkId);
+        }
+    }
 
     /// <summary>Send as fix task on an unclaimed requirement of the doc map: its thread is a comment in the review body.</summary>
     /// <param name="itemId">The requirement's id.</param>
-    internal void RequestRequirementFix(string itemId) => OnChanged(itemId);
+    internal void RequestRequirementFix(string itemId)
+    {
+        var item = Panels.SelectMany(p => p.DocItems).SelectMany(Flatten).FirstOrDefault(i => i.CanSendFix && string.Equals(i.Id, itemId, StringComparison.Ordinal));
+        if (item is not null)
+        {
+            Ask(new ReviewFixSource(ReviewFixKind.Requirement, item.Title, item.Id, string.Empty, string.Empty, Line: null, Added: false), "docMap:" + itemId);
+        }
+    }
 
     /// <summary>The fix-task sheet closed (Esc, Cancel, Close): focus goes back to its source, or to the strip's first part when the source is gone after a reload.</summary>
     /// <param name="returnTo">Where the request came from.</param>
-    internal void ReturnFromFix(ReviewFocus returnTo)
-    {
-        _ = returnTo;
-        Focus = ReviewFocus.None;
-    }
+    internal void ReturnFromFix(ReviewFocus returnTo) => Focus = Exists(returnTo) ? returnTo : new ReviewFocus(ReviewFocusRegion.StripFirst);
 
-#pragma warning disable CS0067 // raised once a check, a requirement or a diff line asks for a fix task
     /// <summary>A check, a requirement or a diff line asked for a fix task: the shell opens the sheet.</summary>
     internal event EventHandler<ReviewFixRequestedEventArgs>? FixRequested;
-#pragma warning restore CS0067
+
+    // j, k, n and p move the diff's focus; focus then lands on the focused line.
+    private bool Navigate(string key)
+    {
+        switch (key)
+        {
+            case "j" or "k":
+                Diff.MoveFile(string.Equals(key, "j", StringComparison.Ordinal) ? 1 : -1);
+                break;
+            case "n" or "p":
+                Diff.MoveHunk(string.Equals(key, "n", StringComparison.Ordinal) ? 1 : -1);
+                break;
+            default:
+                return false;
+        }
+
+        Focus = Diff.FocusedLine is { } line ? new ReviewFocus(ReviewFocusRegion.DiffLine, Diff.KeyOf(line)) : ReviewFocus.None;
+        return true;
+    }
+
+    private static IEnumerable<ReviewDocItemViewModel> Flatten(ReviewDocItemViewModel item) => item.Children.SelectMany(Flatten).Prepend(item);
+
+    private void Ask(ReviewFixSource source, string row)
+    {
+        if (FixTarget is { } target)
+        {
+            FixRequested?.Invoke(this, new ReviewFixRequestedEventArgs(source, target, new ReviewFocus(ReviewFocusRegion.Panel, row)));
+        }
+    }
+
+    private bool RequestLineFix()
+    {
+        if (Diff.FocusedLine is not { } line || Diff.FocusedFile is not { } file || FixTarget is not { } target)
+        {
+            return false;
+        }
+
+        var source = new ReviewFixSource(ReviewFixKind.Line, line.Text, string.Empty, string.Empty, file.Path, line.Number, line.Kind == ReviewDiffLineKind.Added);
+        FixRequested?.Invoke(this, new ReviewFixRequestedEventArgs(source, target, new ReviewFocus(ReviewFocusRegion.DiffLine, Diff.KeyOf(line))));
+        return true;
+    }
+
+    // o folds or unfolds the group whose header has focus, else the focused file's; Enter only opens a folded header. Focus lands on the header.
+    private bool ToggleGroup(bool onlyIfFolded)
+    {
+        var group = Focus.Region == ReviewFocusRegion.GroupHeader
+            ? Diff.Groups.FirstOrDefault(g => string.Equals(g.Name, Focus.Key, StringComparison.Ordinal))
+            : onlyIfFolded ? null : Diff.Groups.FirstOrDefault(g => Diff.FocusedFile is { } file && g.Files.Contains(file));
+        if (group is null || (onlyIfFolded && !group.IsFolded))
+        {
+            return false;
+        }
+
+        group.IsFolded = !group.IsFolded;
+        Focus = new ReviewFocus(ReviewFocusRegion.GroupHeader, group.Name);
+        return true;
+    }
+
+    private bool Exists(ReviewFocus focus) => focus.Region switch
+    {
+        ReviewFocusRegion.Panel => focus.Key.Split(':') is [var panel, var row] ? RowExists(panel, row) : Panels.Any(p => string.Equals(p.Id, focus.Key, StringComparison.Ordinal)),
+        ReviewFocusRegion.DiffLine => Diff.VisibleFiles.Any(f => f.Hunks.Any(h => h.Lines.Any(l => string.Equals(f.Path + ":" + l.Sign + l.Number.ToString(System.Globalization.CultureInfo.InvariantCulture), focus.Key, StringComparison.Ordinal)))),
+        ReviewFocusRegion.GroupHeader => Diff.Groups.Any(g => string.Equals(g.Name, focus.Key, StringComparison.Ordinal)),
+        ReviewFocusRegion.None or ReviewFocusRegion.StripFirst or ReviewFocusRegion.FixText or ReviewFocusRegion.FixOutcome => true,
+        _ => false,
+    };
+
+    private bool RowExists(string panel, string row) =>
+        Panels.Any(p => string.Equals(p.Id, panel, StringComparison.Ordinal) && (p.Checks.Any(c => string.Equals(c.Id, row, StringComparison.Ordinal)) || p.DocItems.SelectMany(Flatten).Any(i => string.Equals(i.Id, row, StringComparison.Ordinal))));
 }

@@ -1,4 +1,6 @@
+using System.Globalization;
 using Aw.Sindri.Ui.Api;
+using Aw.Sindri.Ui.Api.Reviews;
 
 namespace Aw.Sindri.Ui.ViewModels.Reviews;
 
@@ -6,10 +8,16 @@ namespace Aw.Sindri.Ui.ViewModels.Reviews;
 /// The fix-task sheet (review page spec §8.2, §6.3, §6.4, §16): a text box pre-filled for a check or a requirement, exactly what Send will do, the Sending pattern,
 /// the outcomes (babysitter, session, waiting, item only), the half-done send with Retry, and where focus goes after.
 /// </summary>
-internal sealed class ReviewFixSheetViewModel : ObservableObject
+internal sealed partial class ReviewFixSheetViewModel : ObservableObject
 {
+    private const int Limit = 2000;
+    private static readonly TimeSpan _sendingAfter = TimeSpan.FromMilliseconds(300);
+
     private readonly ISindriApi _api;
     private readonly TimeProvider _clock;
+    private Uri? _url;
+    private ReviewFixRequestedEventArgs? _request;
+    private string? _item;
 
     internal ReviewFixSheetViewModel(ISindriApi api, TimeProvider clock)
     {
@@ -22,14 +30,31 @@ internal sealed class ReviewFixSheetViewModel : ObservableObject
     /// <summary>"acme/api #2071 · feat/retry-budget · a1b2c3d".</summary>
     public string SubLine { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>The From box's first line ("fail  Recipe change shows Ui tests ran", "src/Api/A/A.Core/X.cs:11").</summary>
+    /// <summary>The From box's first line.</summary>
     public string SourceTitle { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>The From box's second line ("Required check · ui-tests: failure on a1b2c3d").</summary>
+    /// <summary>The From box's second line.</summary>
     public string SourceDetail { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>What needs fixing (up to 2,000 characters): pre-filled for a check or a requirement, empty for a line.</summary>
-    public string Text { get; set => Set(ref field, value); } = string.Empty;
+    public string Text
+    {
+        get;
+        set
+        {
+            if (IsSending)
+            {
+                return;
+            }
+
+            var changed = !string.Equals(field, value, StringComparison.Ordinal);
+            Set(ref field, value);
+            if (changed)
+            {
+                Refresh();
+            }
+        }
+    } = string.Empty;
 
     /// <summary>"132 / 2,000".</summary>
     public string CountText { get; private set => Set(ref field, value); } = string.Empty;
@@ -70,43 +95,125 @@ internal sealed class ReviewFixSheetViewModel : ObservableObject
     /// <summary>True after a half-done send: Retry post reuses the item and the same marker.</summary>
     public bool CanRetry { get; private set => Set(ref field, value); }
 
+    /// <summary>True while the sheet is open.</summary>
+    public bool IsOpen { get; private set => Set(ref field, value); }
+
+    /// <summary>True when the sheet shows its outcome instead of the form.</summary>
+    public bool HasOutcome => Outcome is not (ReviewFixOutcome.None or ReviewFixOutcome.Failed);
+
     /// <summary>Where focus goes next: the text box on open, the outcome text after a send.</summary>
     public ReviewFocus Focus { get; private set => Set(ref field, value); } = ReviewFocus.None;
+
+    /// <summary>The sheet closed: focus goes back to the diff line or panel row it came from.</summary>
+    internal event EventHandler<ReviewFocusEventArgs>? Closed;
 
     /// <summary>Opens the sheet on a request from the page.</summary>
     /// <param name="url">The API's base URL.</param>
     /// <param name="request">The finding, the PR and where focus returns.</param>
     internal void Open(Uri url, ReviewFixRequestedEventArgs request)
     {
-        _ = (url, request, _api, _clock);
-        OnChanged(nameof(Heading));
+        (_url, _request, _item) = (url, request, null);
+        var (source, target) = (request.Source, request.Target);
+        Heading = Labels.ReviewFixHeading;
+        SubLine = Labels.ReviewFixSubLine(target.Repo, target.Number, target.Branch, target.Sha7);
+        (SourceTitle, SourceDetail) = source.Kind switch
+        {
+            ReviewFixKind.Check => (Labels.ReviewFixCheckTitle(Labels.ReviewCheckFail, source.Title), Labels.ReviewFixCheckDetail(source.Detail)),
+            ReviewFixKind.Requirement => ($"{source.SourceId}  {source.Title}", Labels.ReviewFixRequirementDetail(target.DocId)),
+            ReviewFixKind.Line => (LineName(source), source.Added ? Labels.ReviewFixAddedLine : Labels.ReviewFixLine),
+            _ => throw new ArgumentOutOfRangeException(nameof(request), source.Kind, message: null),
+        };
+        ThreadText = !target.PostsThreads ? Labels.ReviewFixItemOnly(target.Author) : source.Kind == ReviewFixKind.Line ? Labels.ReviewFixLineThread(source.Path, source.Line ?? 0) : Labels.ReviewFixBodyThread(target.Number);
+        GoesToText = Labels.ReviewFixGoesTo(target.Number, target.Branch);
+        (Outcome, OutcomeText, ItemId, ThreadResult, Code, CanRetry, IsSending, SendText, IsOpen) = (ReviewFixOutcome.None, string.Empty, string.Empty, string.Empty, string.Empty, false, false, Labels.ReviewFixSend, true);
+        OnChanged(nameof(HasOutcome));
+        Text = source.Kind switch
+        {
+            ReviewFixKind.Check => Labels.ReviewFixCheckText(source.Title, source.Detail),
+            ReviewFixKind.Requirement => Labels.ReviewFixRequirementText(source.SourceId, source.Title, target.DocId),
+            ReviewFixKind.Line => string.Empty,
+            _ => throw new ArgumentOutOfRangeException(nameof(request), source.Kind, message: null),
+        };
+        Refresh();
+        Focus = new ReviewFocus(ReviewFocusRegion.FixText);
     }
 
     /// <summary>Send: makes the item and, on the owner's or an agent's PR, posts the thread.</summary>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>When the outcome is shown.</returns>
-    internal Task Send(CancellationToken cancellationToken)
-    {
-        _ = cancellationToken;
-        OnChanged(nameof(Outcome));
-        return Task.CompletedTask;
-    }
+    internal Task Send(CancellationToken cancellationToken) => CanSend ? Run(cancellationToken) : Task.CompletedTask;
 
     /// <summary>Retry post after a half-done send: the same item and marker.</summary>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>When the outcome is shown.</returns>
-    internal Task Retry(CancellationToken cancellationToken)
-    {
-        _ = cancellationToken;
-        OnChanged(nameof(Outcome));
-        return Task.CompletedTask;
-    }
+    internal Task Retry(CancellationToken cancellationToken) => CanRetry && !IsSending ? Run(cancellationToken) : Task.CompletedTask;
 
     /// <summary>Esc, Cancel or Close: closes the sheet and returns focus to where the request came from.</summary>
-    internal void Close() => OnChanged(nameof(Focus));
+    internal void Close()
+    {
+        IsOpen = false;
+        Closed?.Invoke(this, new ReviewFocusEventArgs(_request?.ReturnTo ?? ReviewFocus.None));
+    }
 
-#pragma warning disable CS0067 // raised once the sheet closes
-    /// <summary>The sheet closed: focus goes back to the diff line or panel row it came from.</summary>
-    internal event EventHandler<ReviewFocusEventArgs>? Closed;
-#pragma warning restore CS0067
+    private static string LineName(ReviewFixSource source) => string.Create(CultureInfo.InvariantCulture, $"{source.Path}:{source.Line}");
+
+    private void Refresh()
+    {
+        var first = Text.Split('\n')[0];
+        (CountText, ItemTitle) = (Labels.ReviewFixCount(Text.Length), Labels.ReviewFixItemTitle(first));
+        CanSend = !IsSending && (Outcome is ReviewFixOutcome.None or ReviewFixOutcome.Failed) && !string.IsNullOrWhiteSpace(Text) && Text.Length <= Limit;
+    }
+
+    private async Task Run(CancellationToken cancellationToken)
+    {
+        if (_url is not { } url || _request is not { } request)
+        {
+            return;
+        }
+
+        var (source, target) = (request.Source, request.Target);
+        IsSending = true;
+        CanSend = false;
+        using var done = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        _ = ShowSending(done.Token);
+        var send = new ReviewFixSend(KindWord(source.Kind), Text, target.HeadSha, source.Kind == ReviewFixKind.Line ? null : source.SourceId, source.Kind == ReviewFixKind.Line ? source.Path : null, source.Line, _item);
+        var answer = await _api.SendReviewFix(url, target.Repo, target.Number, send, cancellationToken).ConfigureAwait(true);
+        await done.CancelAsync().ConfigureAwait(true);
+        IsSending = false;
+        SendText = Labels.ReviewFixSend;
+        if (answer.IsError)
+        {
+            (Outcome, OutcomeText) = (ReviewFixOutcome.Failed, answer.Error.Message);
+            ItemId = string.Empty;
+            Refresh();
+            OnChanged(nameof(HasOutcome));
+            return;
+        }
+
+        Show(answer.Value, request);
+    }
+
+    private async Task ShowSending(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(_sendingAfter, _clock, token).ConfigureAwait(true);
+            if (IsSending)
+            {
+                SendText = Labels.ReviewFixSending;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // the answer came first
+        }
+    }
+
+    private static string KindWord(ReviewFixKind kind) => kind switch
+    {
+        ReviewFixKind.Check => "check",
+        ReviewFixKind.Requirement => "requirement",
+        ReviewFixKind.Line => "line",
+        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, message: null),
+    };
 }
