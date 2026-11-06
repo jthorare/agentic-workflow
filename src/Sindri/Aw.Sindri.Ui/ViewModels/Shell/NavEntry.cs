@@ -31,11 +31,12 @@ internal sealed class NavEntry(PageId page, string label, string key, string cou
             field = value;
             OnChanged(nameof(Count));
             OnChanged(nameof(HasCount));
+            OnChanged(nameof(AccessibleName));
         }
     } = count;
 
     /// <summary>The segment's screen-reader name with its count ("Reviews, 2 waiting on you").</summary>
-    public string AccessibleName => Label;
+    public string AccessibleName => Page == PageId.Reviews && HasCount ? Labels.ReviewsBadgeName(Label, Count) : Label;
 
     /// <summary>True when there is a count to draw; an empty one takes no room (eight tabs must fit at 1,000 px).</summary>
     public bool HasCount => Count.Length > 0;

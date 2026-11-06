@@ -16,6 +16,38 @@ internal sealed partial class ShellViewModel
     /// <summary>Home's line under the Needs-you rows ("2 PRs waiting on you"); null when none wait. It opens Reviews.</summary>
     public string? ReviewsWaitingLine { get; private set; }
 
+    /// <summary>Opens Reviews from Home's waiting line.</summary>
+    internal void OpenReviews() => GoTo(PageId.Reviews);
+
     [MemberNotNull(nameof(Reviews))]
-    private void InitReviews() => Reviews = new ReviewsPageViewModel(_api, _clock);
+    private void InitReviews()
+    {
+        Reviews = new ReviewsPageViewModel(_api, _clock);
+        Health.Follow(Reviews.Refresh);   // every read, whichever page is shown: the badge and Home's line need the count
+        PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(IsReviews), StringComparison.Ordinal))
+            {
+                Reviews.SetShown(IsReviews);
+            }
+        };
+        Reviews.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(ReviewsPageViewModel.WaitingCount), StringComparison.Ordinal))
+            {
+                ShowWaiting(Reviews.WaitingCount);
+            }
+        };
+    }
+
+    // The tab's badge and Home's line follow the waiting count: empty and gone at 0.
+    private void ShowWaiting(int count)
+    {
+        Navigation.First(n => n.Page == PageId.Reviews).Count = count > 0 ? count.ToString(System.Globalization.CultureInfo.InvariantCulture) : string.Empty;
+        ReviewsWaitingLine = count > 0 ? Labels.ReviewsWaitingLine(count) : null;
+        Changed(nameof(ReviewsWaitingLine), nameof(HasReviewsWaitingLine));
+    }
+
+    /// <summary>True when Home draws the waiting line.</summary>
+    public bool HasReviewsWaitingLine => ReviewsWaitingLine is not null;
 }

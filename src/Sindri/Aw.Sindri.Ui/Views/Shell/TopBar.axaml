@@ -55,7 +55,7 @@
             </ListBox.ItemsPanel>
             <ListBox.Styles>
               <Style Selector="ListBoxItem" x:DataType="shell:NavEntry">
-                <Setter Property="AutomationProperties.Name" Value="{Binding Label}" />
+                <Setter Property="AutomationProperties.Name" Value="{Binding AccessibleName}" />
               </Style>
               <!-- A count shows when there is one, and not at all once the bar has stepped down to its last step (TopBar.Counts.cs). -->
               <Style Selector="TextBlock.nav-count">

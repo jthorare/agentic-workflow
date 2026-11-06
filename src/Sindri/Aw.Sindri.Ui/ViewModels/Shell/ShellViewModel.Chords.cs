@@ -117,6 +117,7 @@ internal sealed partial class ShellViewModel
         "C" => (PageId.Context, HomeFilter.All),
         "A" => (PageId.Agents, HomeFilter.All),
         "." or "S" => (PageId.System, HomeFilter.All),
+        "V" => (PageId.Reviews, HomeFilter.All),
         "J" => (PageId.Jobs, HomeFilter.All),
         "U" => (PageId.Settings, HomeFilter.All),   // Settings, at the setup checklist (ShowPage reveals it)
         _ => null,

@@ -79,7 +79,7 @@ internal sealed partial class ShellViewModel
 
     // The links that name a page and nothing else: the checklist is Settings' first section (ShowPage scrolls to it).
     private static PageId? PageOnly(DeepLinkKind kind) =>
-        kind == DeepLinkKind.Setup ? PageId.Settings : kind == DeepLinkKind.Projects ? PageId.Projects : null;
+        kind == DeepLinkKind.Setup ? PageId.Settings : kind == DeepLinkKind.Projects ? PageId.Projects : kind == DeepLinkKind.Reviews ? PageId.Reviews : null;
 
     // The links that open a whole page of their own, with no sheet: a line run's page, and the Context page for an item (its frozen scope is read as it opens).
     private bool OpenWholePage(DeepLink link)
