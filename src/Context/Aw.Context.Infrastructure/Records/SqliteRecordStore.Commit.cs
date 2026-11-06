@@ -12,7 +12,7 @@ internal sealed partial class SqliteRecordStore
 {
     /// <summary>
     /// One page in one 'BEGIN IMMEDIATE' transaction (spec §5.5): the records, their links and chunks (the full-text rows follow by trigger), the intent layer's queue rows, the tombstones and the moved
-    /// position. Any failure rolls all of it back, so a cursor never moves past a record that did not commit.
+    /// position, and a design doc's items and refs or a PR's claims (spec 2026-11-04 §5.3). Any failure rolls all of it back, so a cursor never moves past a record that did not commit.
     /// </summary>
     public async ValueTask<Result<CommitReport>> Commit(RecordBatch batch, CancellationToken cancellationToken)
     {
@@ -156,7 +156,8 @@ internal sealed partial class SqliteRecordStore
 
             var failure = await Exec(session, RecordSql.DeleteChunks, c => c.Bind("@key", removed.Value), cancellationToken).ConfigureAwait(false)
                 ?? await Exec(session, RecordSql.DeleteLinks, c => c.Bind("@key", removed.Value), cancellationToken).ConfigureAwait(false)
-                ?? await Exec(session, RecordSql.ClearInboundTitles, c => c.Bind("@key", removed.Value), cancellationToken).ConfigureAwait(false);
+                ?? await Exec(session, RecordSql.ClearInboundTitles, c => c.Bind("@key", removed.Value), cancellationToken).ConfigureAwait(false)
+                ?? await DeleteLibraryRows(session, removed.Value, cancellationToken).ConfigureAwait(false);
             if (failure is not null)
             {
                 return failure;
@@ -179,7 +180,8 @@ internal sealed partial class SqliteRecordStore
         var record = write.Record;
         var key = record.Key.Value;
         var failure = await Exec(session, RecordSql.UpsertRecord, c => BindRecord(c, record), cancellationToken).ConfigureAwait(false)
-            ?? await Exec(session, RecordSql.DeleteLinks, c => c.Bind("@key", key), cancellationToken).ConfigureAwait(false);
+            ?? await Exec(session, RecordSql.DeleteLinks, c => c.Bind("@key", key), cancellationToken).ConfigureAwait(false)
+            ?? await WriteLibraryRows(session, write, cancellationToken).ConfigureAwait(false);
         if (failure is not null)
         {
             return failure;

@@ -1,6 +1,8 @@
 using System.Security.Cryptography;
 using System.Text;
 using Aw.Context.Core.Chunking;
+using Aw.Context.Core.Docs;
+using Aw.Context.Core.Library;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Trust;
@@ -16,6 +18,9 @@ public static class RecordBatches
 {
     /// <summary>The most characters of a project's description a record keeps (the text's chunks hold the rest for search).</summary>
     public const int MaxDescription = 4000;
+
+    /// <summary>The id of the library record feed (spec 2026-11-04 §5.2), whose doc records are itemized like the repo-docs ones.</summary>
+    public const string LibrarySource = "library";
 
     /// <summary>Builds the batch for one page.</summary>
     /// <param name="source">The source the page came from.</param>
@@ -41,12 +46,38 @@ public static class RecordBatches
             item.Key, source, item.Kind, item.Repo, item.Audience,
             clean.Blocked || title.Blocked ? item.Key.Value : UntrustedFence.Cap(title.Text),
             item.Url, item.Author, item.State, item.StateRaw, item.CreatedAt, item.UpdatedAt, item.ClosedAt, item.Version,
-            Hash(clean.Text), scrubbers.Ruleset.Value, clean.Blocked, RemovedAt: null, at, item.Links, item.Health, item.DueAt, description, clean.Blocked || title.Blocked ? null : item.Pull);
+            Hash(clean.Text), Itemized(source, item.Kind) ? DesignDocParser.Stamp(scrubbers.Ruleset.Value) : scrubbers.Ruleset.Value, clean.Blocked, RemovedAt: null, at, item.Links, item.Health, item.DueAt, description, clean.Blocked || title.Blocked ? null : item.Pull);
         IReadOnlyList<RecordChunk> chunks = clean.Blocked
             ? []
             : [.. Chunker.Split(clean.Text).Select(c => new RecordChunk(c.Seq, c.Text, c.Tokens, Hash(c.Text), c.LineStart, c.LineEnd))];
-        return new RecordWrite(record, chunks);
+        return new RecordWrite(record, chunks, ParseDoc(source, item, clean.Text, clean.Blocked || title.Blocked), Claims(item, clean.Text, clean.Blocked || title.Blocked));
     }
+
+    // why: only doc records of the two doc feeds are itemized (spec 2026-11-04 §5.3); the library feed does not exist yet, its id is matched here so it works the day it lands
+    private static bool Itemized(SourceId source, RecordKind kind) =>
+        kind == RecordKind.Doc && (source == RepoDocs.Id || string.Equals(source.Value, LibrarySource, StringComparison.Ordinal));
+
+    // The cleaned text is parsed. A blocked doc has none: it is "blocked" when its raw text is a design doc (the raw parse is only asked that, nothing of it is kept), and nothing otherwise.
+    private static ParsedDesignDoc? ParseDoc(SourceId source, RecordItem item, string cleanText, bool blocked)
+    {
+        if (!Itemized(source, item.Kind))
+        {
+            return null;
+        }
+
+        var path = item.Key.Value;
+        if (blocked)
+        {
+            return DesignDocParser.IsDesignDoc(DesignDocParser.Parse(path, item.Text)) ? DesignDocParser.Blocked(path) : null;
+        }
+
+        var parsed = DesignDocParser.Parse(path, cleanText);
+        return DesignDocParser.IsDesignDoc(parsed) ? parsed : null;
+    }
+
+    // A PR's Covers: line (spec §4.4); a blocked PR claims nothing.
+    private static List<string>? Claims(RecordItem item, string cleanText, bool blocked) =>
+        item.Kind == RecordKind.Pr ? (blocked ? [] : [.. PrCovers.Parse(cleanText).Refs]) : null;
 
     // why: the description is free text from the source, so it takes the same ingest clean as the text; a blocked record, a blocked description or one that is empty once cleaned keeps none
     private static string? Description(string? raw, bool recordBlocked, Scrubbers scrubbers)

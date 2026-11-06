@@ -8758,11 +8758,9 @@ Aw.Context.Core.Records.RecordWrite
 Aw.Context.Core.Records.RecordWrite.<Clone>$() -> Aw.Context.Core.Records.RecordWrite!
 Aw.Context.Core.Records.RecordWrite.Chunks.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordChunk!>!
 Aw.Context.Core.Records.RecordWrite.Chunks.init -> void
-Aw.Context.Core.Records.RecordWrite.Deconstruct(out Aw.Context.Core.Records.StoredRecord! Record, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordChunk!>! Chunks) -> void
 Aw.Context.Core.Records.RecordWrite.Equals(Aw.Context.Core.Records.RecordWrite? other) -> bool
 Aw.Context.Core.Records.RecordWrite.Record.get -> Aw.Context.Core.Records.StoredRecord!
 Aw.Context.Core.Records.RecordWrite.Record.init -> void
-Aw.Context.Core.Records.RecordWrite.RecordWrite(Aw.Context.Core.Records.StoredRecord! Record, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordChunk!>! Chunks) -> void
 Aw.Context.Core.Records.StoreStamps
 Aw.Context.Core.Records.StoreStamps.<Clone>$() -> Aw.Context.Core.Records.StoreStamps!
 Aw.Context.Core.Records.StoreStamps.Deconstruct(out long RecordStamp, out long DeleteEpoch) -> void
@@ -11324,3 +11322,13 @@ static Aw.Context.Core.Library.PrCovers.None.get -> Aw.Context.Core.Library.PrCo
 static Aw.Context.Core.Library.PrCovers.Parse(string? body) -> Aw.Context.Core.Library.PrCovers!
 static Aw.Context.Core.Library.PrCovers.operator !=(Aw.Context.Core.Library.PrCovers? left, Aw.Context.Core.Library.PrCovers? right) -> bool
 static Aw.Context.Core.Library.PrCovers.operator ==(Aw.Context.Core.Library.PrCovers? left, Aw.Context.Core.Library.PrCovers? right) -> bool
+Aw.Context.Core.Records.RecordWrite.Claims.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.Records.RecordWrite.Claims.init -> void
+Aw.Context.Core.Records.RecordWrite.Deconstruct(out Aw.Context.Core.Records.StoredRecord! Record, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordChunk!>! Chunks, out Aw.Context.Core.Library.ParsedDesignDoc? Doc, out System.Collections.Generic.IReadOnlyList<string!>? Claims) -> void
+Aw.Context.Core.Records.RecordWrite.Doc.get -> Aw.Context.Core.Library.ParsedDesignDoc?
+Aw.Context.Core.Records.RecordWrite.Doc.init -> void
+Aw.Context.Core.Records.RecordWrite.RecordWrite(Aw.Context.Core.Records.StoredRecord! Record, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordChunk!>! Chunks, Aw.Context.Core.Library.ParsedDesignDoc? Doc = null, System.Collections.Generic.IReadOnlyList<string!>? Claims = null) -> void
+const Aw.Context.Core.Sync.RecordBatches.LibrarySource = "library" -> string!
+static Aw.Context.Core.Library.DesignDocParser.Blocked(string! path) -> Aw.Context.Core.Library.ParsedDesignDoc!
+static Aw.Context.Core.Library.DesignDocParser.IsDesignDoc(Aw.Context.Core.Library.ParsedDesignDoc! doc) -> bool
+static Aw.Context.Core.Library.DesignDocParser.Stamp(string! ruleset) -> string!
