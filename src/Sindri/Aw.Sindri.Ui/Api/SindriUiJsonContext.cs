@@ -104,6 +104,7 @@ namespace Aw.Sindri.Ui.Api;
 [JsonSerializable(typeof(Projects.ProjectDetach))]
 [JsonSerializable(typeof(Projects.ProjectHide))]
 [JsonSerializable(typeof(ProjectAcceptedView))]
+[JsonSerializable(typeof(Reviews.ReviewList))]
 [JsonSerializable(typeof(ProfileRead))]
 [JsonSerializable(typeof(Setup.SetupView))]
 [JsonSerializable(typeof(Context.PinConceptsBody))]

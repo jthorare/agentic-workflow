@@ -12,6 +12,7 @@ using Aw.Context.Core.Glossary;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Library;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Locks;
 using Aw.Context.Core.Map;
@@ -19,6 +20,7 @@ using Aw.Context.Core.Models;
 using Aw.Context.Core.Pages;
 using Aw.Context.Core.Projects;
 using Aw.Context.Core.Proposals;
+using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Review;
 using Aw.Context.Core.ScopeGraph;
@@ -62,6 +64,7 @@ using Aw.Context.Features.GetWholeMap;
 using Aw.Context.Features.HeldMap;
 using Aw.Context.Features.HoldMap;
 using Aw.Context.Features.ImportMap;
+using Aw.Context.Features.LinearWriteThrough;
 using Aw.Context.Features.ListNeighbors;
 using Aw.Context.Features.MapHeads;
 using Aw.Context.Features.PreviewMap;
@@ -70,6 +73,7 @@ using Aw.Context.Features.PromoteMap;
 using Aw.Context.Features.ProposeFromScope;
 using Aw.Context.Features.PurgeMap;
 using Aw.Context.Features.QueryContext;
+using Aw.Context.Features.ReadIssues;
 using Aw.Context.Features.RefreshDocs;
 using Aw.Context.Features.ReleaseMap;
 using Aw.Context.Features.RelinkPinAliases;
@@ -124,7 +128,7 @@ public static class ContextFeaturesServiceCollectionExtensions
         services.TryAddSingleton<IMergeHistory>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IAsOfDocs>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IEvalStore>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
-        return services.AddMapHeads().AddRelinkPinAliases().AddProjectFacts().AddIndexSync().AddRecordSearch().AddEmbedRecords().AddContextSlices();
+        return services.AddMapHeads().AddRelinkPinAliases().AddProjectFacts().AddLibraryReads().AddIssueReads().AddIndexSync().AddRecordSearch().AddEmbedRecords().AddContextSlices();
     }
 
     private static IServiceCollection AddMapHealthChecks(this IServiceCollection services) => services
@@ -135,7 +139,9 @@ public static class ContextFeaturesServiceCollectionExtensions
 
     private static IServiceCollection AddRecordSearch(this IServiceCollection services) => services.AddScoped<RecordSearch>();
 
-    private static IServiceCollection AddIndexSync(this IServiceCollection services) => services.AddScoped<FeedDecisions>().AddScoped<TickSteps>().AddScoped<ConceptSynthesisRun>().AddScoped<IIndexSync, IndexSync>();
+    private static IServiceCollection AddIndexSync(this IServiceCollection services) => services.AddScoped<FeedDecisions>().AddScoped<TickSteps>().AddScoped<ConceptSynthesisRun>().AddScoped<IIndexSync, IndexSync>()
+        .AddSingleton<ISourcePurges>(static sp => sp.GetRequiredService<RecordFeedSync>())
+        .AddScoped<IService<LinearWriteThroughRequest, LinearWriteThroughResponse>, LinearWriteThroughService>();
 
     private static IServiceCollection AddContextSlices(this IServiceCollection services) => services
         .AddBacktest()
@@ -210,6 +216,20 @@ public static class ContextFeaturesServiceCollectionExtensions
     // The Projects page's reads (projects page spec §6.1).
     private static IServiceCollection AddProjectFacts(this IServiceCollection services) =>
         services.AddScoped<IService<GetProjectFactsRequest, ProjectFactsAnswer>, GetProjectFactsService>().AddScoped<ContextReads>();
+
+    // The Linear hub's reads (Linear hub spec 2026-11-04 §4.3).
+    private static IServiceCollection AddIssueReads(this IServiceCollection services)
+    {
+        services.TryAddSingleton<ILinearIssueStore, UnconfiguredLinearIssueStore>();   // the host that wires Aw.Context.Infrastructure replaces it with the SQLite store
+        return services.AddScoped<IssueReads>();
+    }
+
+    // The design-doc library's reads (PR review page spec 2026-11-04 §5.5).
+    private static IServiceCollection AddLibraryReads(this IServiceCollection services)
+    {
+        services.TryAddSingleton<ILibraryStore, ReadLibrary.UnconfiguredLibraryStore>();   // the host that wires Aw.Context.Infrastructure replaces it with the SQLite store
+        return services.AddScoped<IContextLibrary, ReadLibrary.ContextLibrary>();
+    }
 
     // The lenses and the code lens share the basis reader and the map reader's views.
     private static IServiceCollection AddLensSlices(this IServiceCollection services) => services

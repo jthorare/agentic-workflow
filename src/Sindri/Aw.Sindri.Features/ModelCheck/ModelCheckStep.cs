@@ -129,7 +129,8 @@ internal sealed partial class ModelCheckStep(ISpecFolders folders, IBranchChange
 
     private static BlockStepResult Skipped(List<Spec> all) => StepFacts.Done(
         "skipped",
-        ("fact:modelCheck", new JsonObject { ["skipped"] = true, ["looked"] = Looked(all), ["specs"] = new JsonArray(), ["specFolders"] = all.Count }));
+        ("fact:modelCheck", new JsonObject { ["skipped"] = true, ["looked"] = Looked(all), ["specs"] = new JsonArray(), ["specFolders"] = all.Count }),
+        ("fact:findings", new JsonArray()));   // an earlier violation's findings must not outlive this outcome
 
     private static JsonArray Looked(List<Spec> all) => new([.. all.SelectMany(static s => s.Readme.Models ?? []).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).Select(static p => (JsonNode?)p)]);
 
@@ -220,7 +221,8 @@ internal sealed partial class ModelCheckStep(ISpecFolders folders, IBranchChange
         var specs = new JsonArray([.. runnable.Select(spec => SpecFact(spec, lines))]);
         return StepFacts.Done(
             "pass",
-            ("fact:modelCheck", new JsonObject { ["skipped"] = false, ["looked"] = Looked(runnable), ["specs"] = specs, ["warnings"] = RuleFinding.ToFact(warnings) }));
+            ("fact:modelCheck", new JsonObject { ["skipped"] = false, ["looked"] = Looked(runnable), ["specs"] = specs, ["warnings"] = RuleFinding.ToFact(warnings) }),
+            ("fact:findings", new JsonArray()));   // an earlier violation's findings must not outlive this pass
     }
 
     private static JsonObject SpecFact(Spec spec, List<TlcCheckLine> lines)

@@ -10,8 +10,11 @@ namespace Aw.Context.Infrastructure.Records;
 /// The record store in context.db (migration 0018_s4_record_store, spec §4): reads, vectors, the position and the purge are here, the page commit is in the other part of this class. Every write
 /// is one 'BEGIN IMMEDIATE' transaction on its own connection with 'secure_delete' on.
 /// </summary>
-internal sealed partial class SqliteRecordStore(ContextDatabase database) : IRecordStore
+internal sealed partial class SqliteRecordStore(ContextDatabase database, IReadOnlyList<ISideRowWriter>? sideRowWriters = null, TimeProvider? clock = null) : IRecordStore
 {
+    // The writers for rows a source keeps beside its records (RecordWrite.Side); a source adds its own here.
+    private readonly IReadOnlyList<ISideRowWriter> _sideRowWriters = sideRowWriters ?? [new DesignDocRowWriter(), new PrClaimRowWriter(), new LinearRowWriter(clock)];
+
     public async ValueTask<Result<StoredRecord?>> Get(RecordKey key, CancellationToken cancellationToken)
     {
         var read = await BeginRead(cancellationToken).ConfigureAwait(false);

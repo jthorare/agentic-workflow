@@ -186,7 +186,7 @@ public sealed class WorkflowViewRecipeShapeTests
     private static string FactTypeWord(FactType type) => type switch
     {
         FactType.ScopeMap => "scope-map",
-        FactType.Text or FactType.File or FactType.Item or FactType.Link or FactType.Packet or FactType.Evidence or FactType.Decision or FactType.Payload => type.ToString().ToLowerInvariant(),
+        FactType.Text or FactType.File or FactType.Item or FactType.Link or FactType.Packet or FactType.Evidence or FactType.Decision or FactType.Payload or FactType.Findings => type.ToString().ToLowerInvariant(),
         _ => throw new ArgumentOutOfRangeException(nameof(type), type, "no such fact type"),
     };
 

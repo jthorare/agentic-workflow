@@ -12,6 +12,12 @@ public interface ILaneFiles
     /// <returns>The record, or null when the launcher left nothing for the lane. A file that can't be read counts as absent.</returns>
     public ValueTask<Result<LaneRecord?>> Record(string lane, CancellationToken cancellationToken);
 
+    /// <summary>Reads the trace the lane's hooks left on their last run.</summary>
+    /// <param name="lane">The lane name.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The trace; null when the file is missing or unreadable.</returns>
+    public ValueTask<Result<LaneHookTrace?>> HookTrace(string lane, CancellationToken cancellationToken);
+
     /// <summary>Records the session id a lane now runs, the way the session-id hook does (atomically, owner-only), so a relaunch resumes it.</summary>
     /// <param name="lane">The lane name.</param>
     /// <param name="session">The session id.</param>

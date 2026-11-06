@@ -21,6 +21,9 @@ internal sealed partial class TopBar : UserControl
     private const double SearchMin = 184;
     private const double SearchMax = 324;
 
+    // The window width under which the long tab labels shorten.
+    private const double ShortLabelsBelow = 1100;
+
     // Growing back takes this much more room than shrinking did, so a ticking age ("9s" to "10s") can't make the bar flicker.
     private const double Slack = 8;
 
@@ -56,6 +59,7 @@ internal sealed partial class TopBar : UserControl
     protected override Size MeasureOverride(Size availableSize)
     {
         CapProblems(availableSize.Width);
+        UseShortLabels(availableSize.Width);
         var size = base.MeasureOverride(availableSize);
         Remember();
         var fit = Choose(availableSize.Width);
@@ -76,6 +80,7 @@ internal sealed partial class TopBar : UserControl
         Remember();
         var cap = PillProblems.MaxWidth;
         CapProblems(finalSize.Width);
+        UseShortLabels(finalSize.Width);
         if (Choose(finalSize.Width) != _fit || Math.Abs(PillProblems.MaxWidth - cap) > 0.5)
         {
             InvalidateMeasure();
@@ -88,6 +93,20 @@ internal sealed partial class TopBar : UserControl
         }
 
         return arranged;
+    }
+
+    // Below 1,100 px nine full labels don't fit at 130% text, so the tabs that have a short label draw it ("Flows", "PRs"); names for assistive tech stay full.
+    private void UseShortLabels(double width)
+    {
+        if (double.IsInfinity(width) || DataContext is not ShellViewModel shell)
+        {
+            return;
+        }
+
+        foreach (var entry in shell.Navigation)
+        {
+            entry.UseShort = width < ShortLabelsBelow;
+        }
     }
 
     // The widest step that fits: the bar's padding, the brand and the navigation are fixed; then the ⌘K field (full or

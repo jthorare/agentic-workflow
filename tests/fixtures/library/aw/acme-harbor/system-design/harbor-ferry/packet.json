@@ -1,0 +1,5 @@
+{
+  "slug": "harbor-ferry",
+  "title": "Harbor ferry booking",
+  "prs": ["prs/pr-01.md", "prs/pr-02.md"]
+}

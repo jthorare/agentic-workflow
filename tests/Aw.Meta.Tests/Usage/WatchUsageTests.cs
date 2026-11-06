@@ -19,7 +19,7 @@ public sealed class WatchUsageTests
             .When("git ls-remote origin main", _ => new CommandResult(0, "aaaaaaa1111111\trefs/heads/main\n", string.Empty, TimedOut: false));
         return new WatchService(
             w.Config,
-            new WatchPoller(w.Repo, w.Resources, w.Messages, w.Values, new WatchSweeper(w.Config, w.Sweeper, w.Values), Worlds.Reservation(w), w.Context),
+            new WatchPoller(w.Repo, w.Resources, w.InboxCounts, w.Values, new WatchSweeper(w.Config, w.Sweeper, w.Values), Worlds.Reservation(w), w.Context),
             w.Values,
             w.Delay,
             w.Clock,

@@ -7,9 +7,11 @@ namespace Aw.Meta.Core.Coordination;
 
 /// <summary>Keeps each non-Claude lane's hook heartbeat in the key-value store: when a hook last ran and whether it was the stop, so "idle" and "hooks not running" can be told.</summary>
 /// <param name="values">The key-value store.</param>
-public sealed class LaneBeats(IKeyValueStore values)
+/// <param name="delay">Waits between polls for a hook beat.</param>
+public sealed class LaneBeats(IKeyValueStore values, IDelay delay)
 {
     private const char Separator = '|';
+    private static readonly TimeSpan _pollEvery = TimeSpan.FromMilliseconds(500);
     private const string StopEvent = "stop";
     private const string ActiveEvent = "active";
 
@@ -39,6 +41,53 @@ public sealed class LaneBeats(IKeyValueStore values)
             ? Results.Success<LaneBeat?>(new LaneBeat(at, string.Equals(parts[1], StopEvent, StringComparison.Ordinal)))
             : Results.Success<LaneBeat?>(value: null);
     }
+
+    /// <summary>Reads when the lane last ran a lane command by hand (outside a hook).</summary>
+    /// <param name="lane">The lane.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>When; null when none was seen.</returns>
+    public async ValueTask<Result<DateTimeOffset?>> LastCli(string lane, CancellationToken cancellationToken)
+    {
+        var text = await values.Get("lane." + lane + ".cli", cancellationToken).ConfigureAwait(false);
+        return text.IsError
+            ? text.Error
+            : Results.Success<DateTimeOffset?>(DateTimeOffset.TryParse(text.Value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var at) ? at : null);
+    }
+
+    /// <summary>Waits for a hook beat newer than <paramref name="since"/>, polling every 500 ms.</summary>
+    /// <param name="lane">The lane.</param>
+    /// <param name="since">The time the wake line was typed.</param>
+    /// <param name="window">How long to wait.</param>
+    /// <param name="cancellationToken">Cancels the wait.</param>
+    /// <returns>True when a hook beat arrived inside the window.</returns>
+    public async ValueTask<Result<bool>> WaitForHook(string lane, DateTimeOffset since, TimeSpan window, CancellationToken cancellationToken)
+    {
+        var polls = (int)(window / _pollEvery);
+        for (var poll = 0; poll < polls; poll++)
+        {
+            await delay.Wait(_pollEvery, cancellationToken).ConfigureAwait(false);
+            var beat = await Last(lane, cancellationToken).ConfigureAwait(false);
+            if (beat.IsError)
+            {
+                return beat.Error;
+            }
+
+            if (beat.Value is { } last && last.At > since)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Records that the lane ran an aw-meta lane command by hand (no AW_META_HOOK): it is never hook proof.</summary>
+    /// <param name="lane">The lane.</param>
+    /// <param name="now">When.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>Success.</returns>
+    public ValueTask<Result<Unit>> RecordCli(string lane, DateTimeOffset now, CancellationToken cancellationToken) =>
+        values.Set("lane." + lane + ".cli", now.ToString("O", CultureInfo.InvariantCulture), cancellationToken);
 
     /// <summary>Records that the lane was woken, so a second send doesn't type into the pane again before the lane's hook answers.</summary>
     /// <param name="lane">The lane.</param>

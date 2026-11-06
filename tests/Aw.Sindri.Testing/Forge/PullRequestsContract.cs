@@ -286,6 +286,159 @@ public abstract class PullRequestsContract
         Expect.Equal("SND-FORGE-002", Failure(await run.Pulls.Digest(["not a link"], Ct)));
     }
 
+    /// <summary>Files lists what the forge was told, a rename with its old path and a binary file with no patch, and the cap flag stays off for a short list.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Files_round_trip_with_a_renamed_and_a_binary_file()
+    {
+        var (run, opened) = await Open();
+        PullFile[] files =
+        [
+            new("src/a.cs", PreviousPath: null, PullFileStatus.Modified, Additions: 3, Deletions: 1, "@@ -1,2 +1,4 @@\n+x"),
+            new("src/b.cs", "src/old-b.cs", PullFileStatus.Renamed, Additions: 0, Deletions: 0, Patch: null),
+            new("assets/logo.png", PreviousPath: null, PullFileStatus.Added, Additions: 0, Deletions: 0, Patch: null),
+        ];
+        run.SeedFiles(opened.Link, files, new Dictionary<string, string>(StringComparer.Ordinal) { ["src/a.cs"] = "class A;" });
+
+        var listed = Ok(await run.Pulls.Files(opened.Link, Ct), "Files");
+
+        Expect.Equal(3, listed.Files.Count);
+        Expect.True(!listed.CapReached);
+        Expect.Equal(files[0], listed.Files[0]);
+        Expect.Equal("src/old-b.cs", listed.Files[1].PreviousPath);
+        Expect.Equal(PullFileStatus.Renamed, listed.Files[1].Status);
+        Expect.True(listed.Files[2].Patch is null);
+    }
+
+    /// <summary>FileText reads a seeded file's text at the head and answers SND-FORGE-003 for a file with no text (binary, removed, unknown).</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task FileText_reads_a_file_at_the_head()
+    {
+        var (run, opened) = await Open();
+        run.SeedFiles(opened.Link, [new PullFile("src/a.cs", PreviousPath: null, PullFileStatus.Modified, 1, 0, "@@"), new PullFile("assets/logo.png", PreviousPath: null, PullFileStatus.Added, 0, 0, Patch: null)], new Dictionary<string, string>(StringComparer.Ordinal) { ["src/a.cs"] = "class A;" });
+
+        var text = Ok(await run.Pulls.FileText(opened.Link, "src/a.cs", Sha('a'), Ct), "FileText");
+
+        Expect.Equal("class A;", text);
+        Expect.Equal("SND-FORGE-003", Failure(await run.Pulls.FileText(opened.Link, "assets/logo.png", Sha('a'), Ct)));
+        Expect.Equal("SND-FORGE-003", Failure(await run.Pulls.FileText(opened.Link, "src/none.cs", Sha('a'), Ct)));
+    }
+
+    /// <summary>Get carries every check run on the head, with its app and conclusion.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Get_carries_the_check_runs()
+    {
+        var (run, opened) = await Open();
+        PullCheckRun[] runs = [new("build", "github-actions", "success", Sha('a')), new("lint", App: null, "failure", Sha('a'))];
+        run.SeedRuns(opened.Link, runs);
+
+        var view = Ok(await run.Pulls.Get(opened.Link, Ct), "Get");
+
+        Expect.True(view.Checks.Runs is not null);
+        Expect.Equal(2, view.Checks.Runs!.Count);
+        Expect.Equal(runs[0], view.Checks.Runs[0]);
+        Expect.Equal(runs[1], view.Checks.Runs[1]);
+    }
+
+    /// <summary>A review posts once per marker: Posted, then AlreadyDelivered, and the review shows in the conversation once.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task SubmitReview_posts_once_per_marker()
+    {
+        var (run, opened) = await Open();
+        run.SeedFiles(opened.Link, [new PullFile("src/a.cs", PreviousPath: null, PullFileStatus.Modified, 2, 0, "@@ -10,3 +10,5 @@\n+x")], new Dictionary<string, string>(StringComparer.Ordinal));
+        var review = new PullReview(opened.Link, Sha('a'), PullReviewVerdict.Comment, "Looks fine overall", [new PullReviewComment("src/a.cs", 12, "Nit here")], "owner-review:d1:1");
+
+        var first = Ok(await run.Pulls.SubmitReview(review, Ct), "SubmitReview");
+        var again = Ok(await run.Pulls.SubmitReview(review, Ct), "SubmitReview again");
+        var threads = Ok(await run.Pulls.Threads(opened.Link, Ct), "Threads");
+
+        Expect.Equal(PullReviewOutcome.Posted, first);
+        Expect.Equal(PullReviewOutcome.AlreadyDelivered, again);
+        Expect.Equal(1, threads.Count(t => t.Kind == PullCommentKind.Review && t.Markers.Contains("owner-review:d1:1", StringComparer.Ordinal)));
+    }
+
+    /// <summary>A review written against a head that has moved is HeadMoved and posts nothing.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task SubmitReview_with_a_moved_head_posts_nothing()
+    {
+        var (run, opened) = await Open();
+        var review = new PullReview(opened.Link, Sha('z'), PullReviewVerdict.RequestChanges, "Stale", [], "owner-review:d2:1");
+
+        var outcome = Ok(await run.Pulls.SubmitReview(review, Ct), "SubmitReview on a stale head");
+        var threads = Ok(await run.Pulls.Threads(opened.Link, Ct), "Threads");
+
+        Expect.Equal(PullReviewOutcome.HeadMoved, outcome);
+        Expect.Equal(0, threads.Count(t => t.Kind == PullCommentKind.Review));
+    }
+
+    /// <summary>A review that was posted stays delivered when the head moves afterwards: the marker is checked before the head.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task SubmitReview_with_a_posted_marker_is_delivered_even_after_the_head_moved()
+    {
+        var (run, opened) = await Open();
+        var review = new PullReview(opened.Link, Sha('a'), PullReviewVerdict.Comment, "Fine", [], "owner-review:d3:1");
+        Expect.Equal(PullReviewOutcome.Posted, Ok(await run.Pulls.SubmitReview(review, Ct), "SubmitReview"));
+
+        var moved = Ok(await run.Pulls.SubmitReview(review with { ExpectedHead = Sha('b') }, Ct), "SubmitReview after the head moved");
+
+        Expect.Equal(PullReviewOutcome.AlreadyDelivered, moved);
+    }
+
+    /// <summary>A line comment outside the diff (a line no hunk covers, a file the pull request doesn't change, or a file with no patch) is LineRejected and posts nothing.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task SubmitReview_with_a_comment_outside_the_diff_posts_nothing()
+    {
+        var (run, opened) = await Open();
+        run.SeedFiles(opened.Link, [new PullFile("src/a.cs", PreviousPath: null, PullFileStatus.Modified, 2, 0, "@@ -10,3 +10,5 @@\n+x"), new PullFile("assets/logo.png", PreviousPath: null, PullFileStatus.Added, 0, 0, Patch: null)], new Dictionary<string, string>(StringComparer.Ordinal));
+        var before = Ok(await run.Pulls.Threads(opened.Link, Ct), "Threads").Count;
+        var n = 0;
+
+        foreach (var comment in new[] { new PullReviewComment("src/a.cs", 40, "Outside the hunk"), new PullReviewComment("src/other.cs", 12, "Not in the pull request"), new PullReviewComment("assets/logo.png", 1, "Binary") })
+        {
+            var review = new PullReview(opened.Link, Sha('a'), PullReviewVerdict.Comment, "Body", [comment], "owner-review:d4:" + (++n).ToString(System.Globalization.CultureInfo.InvariantCulture));
+            Expect.Equal(PullReviewOutcome.LineRejected, Ok(await run.Pulls.SubmitReview(review, Ct), "SubmitReview on " + comment.Path));
+        }
+
+        Expect.Equal(before, Ok(await run.Pulls.Threads(opened.Link, Ct), "Threads after").Count);
+    }
+
+    /// <summary>A line comment on a seeded file with no patch (a binary file) is LineRejected and posts nothing.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task SubmitReview_with_a_comment_on_a_file_without_a_patch_posts_nothing()
+    {
+        var (run, opened) = await Open();
+        run.SeedFiles(opened.Link, [new PullFile("assets/logo.png", PreviousPath: null, PullFileStatus.Added, 0, 0, Patch: null)], new Dictionary<string, string>(StringComparer.Ordinal));
+        var review = new PullReview(opened.Link, Sha('a'), PullReviewVerdict.Comment, "Body", [new PullReviewComment("assets/logo.png", 1, "On a binary file")], "owner-review:d5:1");
+
+        var outcome = Ok(await run.Pulls.SubmitReview(review, Ct), "SubmitReview on a file without a patch");
+        var threads = Ok(await run.Pulls.Threads(opened.Link, Ct), "Threads");
+
+        Expect.Equal(PullReviewOutcome.LineRejected, outcome);
+        Expect.Equal(0, threads.Count(t => t.Kind == PullCommentKind.Review));
+    }
+
+    /// <summary>The review reads refuse a host outside the list and answer SND-FORGE-003 for a pull request that isn't there.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task The_review_members_refuse_a_foreign_host_and_a_missing_pull_request()
+    {
+        var run = Create();
+        var foreign = $"https://{run.ForeignHost}/{run.Repo.Owner}/{run.Repo.Name}/pull/1";
+
+        Expect.Equal("SND-FORGE-002", Failure(await run.Pulls.Files(foreign, Ct)));
+        Expect.Equal("SND-FORGE-002", Failure(await run.Pulls.FileText(foreign, "a", Sha('a'), Ct)));
+        Expect.Equal("SND-FORGE-002", Failure(await run.Pulls.SubmitReview(new PullReview(foreign, Sha('a'), PullReviewVerdict.Comment, "x", [], "m1"), Ct)));
+        Expect.Equal("SND-FORGE-003", Failure(await run.Pulls.Files(MissingLink(run), Ct)));
+        Expect.Equal("SND-FORGE-003", Failure(await run.Pulls.SubmitReview(new PullReview(MissingLink(run), Sha('a'), PullReviewVerdict.Comment, "x", [], "m1"), Ct)));
+    }
+
     private static string Sha(char c) => new(c, 40);
 
     private static OpenPull Request(PullRequestsUnderTest run, string? marker = null) =>

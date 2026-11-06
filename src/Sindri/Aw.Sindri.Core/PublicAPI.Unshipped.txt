@@ -5351,6 +5351,7 @@ Aw.Sindri.Core.Workflow.Views.FactType
 Aw.Sindri.Core.Workflow.Views.FactType.Decision = 8 -> Aw.Sindri.Core.Workflow.Views.FactType
 Aw.Sindri.Core.Workflow.Views.FactType.Evidence = 7 -> Aw.Sindri.Core.Workflow.Views.FactType
 Aw.Sindri.Core.Workflow.Views.FactType.File = 2 -> Aw.Sindri.Core.Workflow.Views.FactType
+Aw.Sindri.Core.Workflow.Views.FactType.Findings = 10 -> Aw.Sindri.Core.Workflow.Views.FactType
 Aw.Sindri.Core.Workflow.Views.FactType.Item = 3 -> Aw.Sindri.Core.Workflow.Views.FactType
 Aw.Sindri.Core.Workflow.Views.FactType.Link = 4 -> Aw.Sindri.Core.Workflow.Views.FactType
 Aw.Sindri.Core.Workflow.Views.FactType.Packet = 6 -> Aw.Sindri.Core.Workflow.Views.FactType
@@ -16194,9 +16195,7 @@ Aw.Sindri.Core.Forge.PullChecks.Passed.get -> int
 Aw.Sindri.Core.Forge.PullChecks.Passed.init -> void
 Aw.Sindri.Core.Forge.PullChecks.Pending.get -> int
 Aw.Sindri.Core.Forge.PullChecks.Pending.init -> void
-Aw.Sindri.Core.Forge.PullChecks.Deconstruct(out Aw.Sindri.Core.Forge.PullChecksState State, out string! Sha, out System.Collections.Generic.IReadOnlyList<string!>! Failing, out int Passed, out int Pending) -> void
 Aw.Sindri.Core.Forge.PullChecks.Equals(Aw.Sindri.Core.Forge.PullChecks? other) -> bool
-Aw.Sindri.Core.Forge.PullChecks.PullChecks(Aw.Sindri.Core.Forge.PullChecksState State, string! Sha, System.Collections.Generic.IReadOnlyList<string!>! Failing, int Passed, int Pending) -> void
 override Aw.Sindri.Core.Forge.PullChecks.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Forge.PullChecks.GetHashCode() -> int
 override Aw.Sindri.Core.Forge.PullChecks.ToString() -> string!
@@ -22483,3 +22482,119 @@ Aw.Sindri.Core.Events.LaunchSkill.ResultFile.get -> string?
 Aw.Sindri.Core.Events.LaunchSkill.ResultFile.init -> void
 Aw.Sindri.Core.Skills.ISkillBlocks.Folder.get -> string!
 static Aw.Sindri.Core.Skills.SkillTrialRecipe.IsTrial(Aw.Sindri.Core.Workflow.Engine.InstanceAddress instance) -> bool
+Aw.Sindri.Core.Forge.IPullRequests.FileText(string! link, string! path, string! sha, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Sindri.Core.Forge.IPullRequests.Files(string! link, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Forge.PullFiles!>!>
+Aw.Sindri.Core.Forge.IPullRequests.SubmitReview(Aw.Sindri.Core.Forge.PullReview! review, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Forge.PullReviewOutcome>!>
+Aw.Sindri.Core.Forge.PullCheckRun
+Aw.Sindri.Core.Forge.PullCheckRun.<Clone>$() -> Aw.Sindri.Core.Forge.PullCheckRun!
+Aw.Sindri.Core.Forge.PullCheckRun.App.get -> string?
+Aw.Sindri.Core.Forge.PullCheckRun.App.init -> void
+Aw.Sindri.Core.Forge.PullCheckRun.Conclusion.get -> string!
+Aw.Sindri.Core.Forge.PullCheckRun.Conclusion.init -> void
+Aw.Sindri.Core.Forge.PullCheckRun.Deconstruct(out string! Name, out string? App, out string! Conclusion, out string! Sha) -> void
+Aw.Sindri.Core.Forge.PullCheckRun.Equals(Aw.Sindri.Core.Forge.PullCheckRun? other) -> bool
+Aw.Sindri.Core.Forge.PullCheckRun.Name.get -> string!
+Aw.Sindri.Core.Forge.PullCheckRun.Name.init -> void
+Aw.Sindri.Core.Forge.PullCheckRun.PullCheckRun(string! Name, string? App, string! Conclusion, string! Sha) -> void
+Aw.Sindri.Core.Forge.PullCheckRun.Sha.get -> string!
+Aw.Sindri.Core.Forge.PullCheckRun.Sha.init -> void
+Aw.Sindri.Core.Forge.PullChecks.Deconstruct(out Aw.Sindri.Core.Forge.PullChecksState State, out string! Sha, out System.Collections.Generic.IReadOnlyList<string!>! Failing, out int Passed, out int Pending, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Forge.PullCheckRun!>? Runs) -> void
+Aw.Sindri.Core.Forge.PullChecks.PullChecks(Aw.Sindri.Core.Forge.PullChecksState State, string! Sha, System.Collections.Generic.IReadOnlyList<string!>! Failing, int Passed, int Pending, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Forge.PullCheckRun!>? Runs = null) -> void
+Aw.Sindri.Core.Forge.PullChecks.Runs.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Forge.PullCheckRun!>?
+Aw.Sindri.Core.Forge.PullChecks.Runs.init -> void
+Aw.Sindri.Core.Forge.PullFile
+Aw.Sindri.Core.Forge.PullFile.<Clone>$() -> Aw.Sindri.Core.Forge.PullFile!
+Aw.Sindri.Core.Forge.PullFile.Additions.get -> int
+Aw.Sindri.Core.Forge.PullFile.Additions.init -> void
+Aw.Sindri.Core.Forge.PullFile.Deconstruct(out string! Path, out string? PreviousPath, out Aw.Sindri.Core.Forge.PullFileStatus Status, out int Additions, out int Deletions, out string? Patch) -> void
+Aw.Sindri.Core.Forge.PullFile.Deletions.get -> int
+Aw.Sindri.Core.Forge.PullFile.Deletions.init -> void
+Aw.Sindri.Core.Forge.PullFile.Equals(Aw.Sindri.Core.Forge.PullFile? other) -> bool
+Aw.Sindri.Core.Forge.PullFile.Patch.get -> string?
+Aw.Sindri.Core.Forge.PullFile.Patch.init -> void
+Aw.Sindri.Core.Forge.PullFile.Path.get -> string!
+Aw.Sindri.Core.Forge.PullFile.Path.init -> void
+Aw.Sindri.Core.Forge.PullFile.PreviousPath.get -> string?
+Aw.Sindri.Core.Forge.PullFile.PreviousPath.init -> void
+Aw.Sindri.Core.Forge.PullFile.PullFile(string! Path, string? PreviousPath, Aw.Sindri.Core.Forge.PullFileStatus Status, int Additions, int Deletions, string? Patch) -> void
+Aw.Sindri.Core.Forge.PullFile.Status.get -> Aw.Sindri.Core.Forge.PullFileStatus
+Aw.Sindri.Core.Forge.PullFile.Status.init -> void
+Aw.Sindri.Core.Forge.PullFileStatus
+Aw.Sindri.Core.Forge.PullFileStatus.Added = 1 -> Aw.Sindri.Core.Forge.PullFileStatus
+Aw.Sindri.Core.Forge.PullFileStatus.Changed = 6 -> Aw.Sindri.Core.Forge.PullFileStatus
+Aw.Sindri.Core.Forge.PullFileStatus.Copied = 5 -> Aw.Sindri.Core.Forge.PullFileStatus
+Aw.Sindri.Core.Forge.PullFileStatus.Modified = 2 -> Aw.Sindri.Core.Forge.PullFileStatus
+Aw.Sindri.Core.Forge.PullFileStatus.Removed = 3 -> Aw.Sindri.Core.Forge.PullFileStatus
+Aw.Sindri.Core.Forge.PullFileStatus.Renamed = 4 -> Aw.Sindri.Core.Forge.PullFileStatus
+Aw.Sindri.Core.Forge.PullFileStatus.Unchanged = 7 -> Aw.Sindri.Core.Forge.PullFileStatus
+Aw.Sindri.Core.Forge.PullFiles
+Aw.Sindri.Core.Forge.PullFiles.<Clone>$() -> Aw.Sindri.Core.Forge.PullFiles!
+Aw.Sindri.Core.Forge.PullFiles.CapReached.get -> bool
+Aw.Sindri.Core.Forge.PullFiles.CapReached.init -> void
+Aw.Sindri.Core.Forge.PullFiles.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Forge.PullFile!>! Files, out bool CapReached) -> void
+Aw.Sindri.Core.Forge.PullFiles.Equals(Aw.Sindri.Core.Forge.PullFiles? other) -> bool
+Aw.Sindri.Core.Forge.PullFiles.Files.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Forge.PullFile!>!
+Aw.Sindri.Core.Forge.PullFiles.Files.init -> void
+Aw.Sindri.Core.Forge.PullFiles.PullFiles(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Forge.PullFile!>! Files, bool CapReached) -> void
+Aw.Sindri.Core.Forge.PullReview
+Aw.Sindri.Core.Forge.PullReview.<Clone>$() -> Aw.Sindri.Core.Forge.PullReview!
+Aw.Sindri.Core.Forge.PullReview.Body.get -> string!
+Aw.Sindri.Core.Forge.PullReview.Body.init -> void
+Aw.Sindri.Core.Forge.PullReview.Comments.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Forge.PullReviewComment!>!
+Aw.Sindri.Core.Forge.PullReview.Comments.init -> void
+Aw.Sindri.Core.Forge.PullReview.Deconstruct(out string! Link, out string! ExpectedHead, out Aw.Sindri.Core.Forge.PullReviewVerdict Verdict, out string! Body, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Forge.PullReviewComment!>! Comments, out string! Marker) -> void
+Aw.Sindri.Core.Forge.PullReview.Equals(Aw.Sindri.Core.Forge.PullReview? other) -> bool
+Aw.Sindri.Core.Forge.PullReview.ExpectedHead.get -> string!
+Aw.Sindri.Core.Forge.PullReview.ExpectedHead.init -> void
+Aw.Sindri.Core.Forge.PullReview.Link.get -> string!
+Aw.Sindri.Core.Forge.PullReview.Link.init -> void
+Aw.Sindri.Core.Forge.PullReview.Marker.get -> string!
+Aw.Sindri.Core.Forge.PullReview.Marker.init -> void
+Aw.Sindri.Core.Forge.PullReview.PullReview(string! Link, string! ExpectedHead, Aw.Sindri.Core.Forge.PullReviewVerdict Verdict, string! Body, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Forge.PullReviewComment!>! Comments, string! Marker) -> void
+Aw.Sindri.Core.Forge.PullReview.Verdict.get -> Aw.Sindri.Core.Forge.PullReviewVerdict
+Aw.Sindri.Core.Forge.PullReview.Verdict.init -> void
+Aw.Sindri.Core.Forge.PullReviewComment
+Aw.Sindri.Core.Forge.PullReviewComment.<Clone>$() -> Aw.Sindri.Core.Forge.PullReviewComment!
+Aw.Sindri.Core.Forge.PullReviewComment.Body.get -> string!
+Aw.Sindri.Core.Forge.PullReviewComment.Body.init -> void
+Aw.Sindri.Core.Forge.PullReviewComment.Deconstruct(out string! Path, out int Line, out string! Body) -> void
+Aw.Sindri.Core.Forge.PullReviewComment.Equals(Aw.Sindri.Core.Forge.PullReviewComment? other) -> bool
+Aw.Sindri.Core.Forge.PullReviewComment.Line.get -> int
+Aw.Sindri.Core.Forge.PullReviewComment.Line.init -> void
+Aw.Sindri.Core.Forge.PullReviewComment.Path.get -> string!
+Aw.Sindri.Core.Forge.PullReviewComment.Path.init -> void
+Aw.Sindri.Core.Forge.PullReviewComment.PullReviewComment(string! Path, int Line, string! Body) -> void
+Aw.Sindri.Core.Forge.PullReviewOutcome
+Aw.Sindri.Core.Forge.PullReviewOutcome.AlreadyDelivered = 2 -> Aw.Sindri.Core.Forge.PullReviewOutcome
+Aw.Sindri.Core.Forge.PullReviewOutcome.HeadMoved = 3 -> Aw.Sindri.Core.Forge.PullReviewOutcome
+Aw.Sindri.Core.Forge.PullReviewOutcome.LineRejected = 4 -> Aw.Sindri.Core.Forge.PullReviewOutcome
+Aw.Sindri.Core.Forge.PullReviewOutcome.Posted = 1 -> Aw.Sindri.Core.Forge.PullReviewOutcome
+Aw.Sindri.Core.Forge.PullReviewVerdict
+Aw.Sindri.Core.Forge.PullReviewVerdict.Approve = 2 -> Aw.Sindri.Core.Forge.PullReviewVerdict
+Aw.Sindri.Core.Forge.PullReviewVerdict.Comment = 1 -> Aw.Sindri.Core.Forge.PullReviewVerdict
+Aw.Sindri.Core.Forge.PullReviewVerdict.RequestChanges = 3 -> Aw.Sindri.Core.Forge.PullReviewVerdict
+override Aw.Sindri.Core.Forge.PullCheckRun.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Forge.PullCheckRun.GetHashCode() -> int
+override Aw.Sindri.Core.Forge.PullCheckRun.ToString() -> string!
+override Aw.Sindri.Core.Forge.PullFile.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Forge.PullFile.GetHashCode() -> int
+override Aw.Sindri.Core.Forge.PullFile.ToString() -> string!
+override Aw.Sindri.Core.Forge.PullFiles.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Forge.PullFiles.GetHashCode() -> int
+override Aw.Sindri.Core.Forge.PullFiles.ToString() -> string!
+override Aw.Sindri.Core.Forge.PullReview.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Forge.PullReview.GetHashCode() -> int
+override Aw.Sindri.Core.Forge.PullReview.ToString() -> string!
+override Aw.Sindri.Core.Forge.PullReviewComment.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Forge.PullReviewComment.GetHashCode() -> int
+override Aw.Sindri.Core.Forge.PullReviewComment.ToString() -> string!
+static Aw.Sindri.Core.Forge.PullCheckRun.operator !=(Aw.Sindri.Core.Forge.PullCheckRun? left, Aw.Sindri.Core.Forge.PullCheckRun? right) -> bool
+static Aw.Sindri.Core.Forge.PullCheckRun.operator ==(Aw.Sindri.Core.Forge.PullCheckRun? left, Aw.Sindri.Core.Forge.PullCheckRun? right) -> bool
+static Aw.Sindri.Core.Forge.PullFile.operator !=(Aw.Sindri.Core.Forge.PullFile? left, Aw.Sindri.Core.Forge.PullFile? right) -> bool
+static Aw.Sindri.Core.Forge.PullFile.operator ==(Aw.Sindri.Core.Forge.PullFile? left, Aw.Sindri.Core.Forge.PullFile? right) -> bool
+static Aw.Sindri.Core.Forge.PullFiles.operator !=(Aw.Sindri.Core.Forge.PullFiles? left, Aw.Sindri.Core.Forge.PullFiles? right) -> bool
+static Aw.Sindri.Core.Forge.PullFiles.operator ==(Aw.Sindri.Core.Forge.PullFiles? left, Aw.Sindri.Core.Forge.PullFiles? right) -> bool
+static Aw.Sindri.Core.Forge.PullReview.operator !=(Aw.Sindri.Core.Forge.PullReview? left, Aw.Sindri.Core.Forge.PullReview? right) -> bool
+static Aw.Sindri.Core.Forge.PullReview.operator ==(Aw.Sindri.Core.Forge.PullReview? left, Aw.Sindri.Core.Forge.PullReview? right) -> bool
+static Aw.Sindri.Core.Forge.PullReviewComment.operator !=(Aw.Sindri.Core.Forge.PullReviewComment? left, Aw.Sindri.Core.Forge.PullReviewComment? right) -> bool
+static Aw.Sindri.Core.Forge.PullReviewComment.operator ==(Aw.Sindri.Core.Forge.PullReviewComment? left, Aw.Sindri.Core.Forge.PullReviewComment? right) -> bool

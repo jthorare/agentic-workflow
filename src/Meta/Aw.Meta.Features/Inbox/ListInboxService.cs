@@ -34,17 +34,15 @@ internal sealed class ListInboxService(IMetaConfig config, IMessageStore message
         var owed = open.Value.Where(o => o.Kind == ObligationKind.Reply).Select(o => o.Key).ToHashSet(StringComparer.Ordinal);
         var items = inbound.Value
             .Select(m => Item(m, owed.Contains(m.Id.Value), now))
-            .Where(i => request.All || string.Equals(i.State, "open", StringComparison.Ordinal))
+            .Where(i => request.All || string.Equals(i.State, InboxState.Open, StringComparison.Ordinal))
             .ToList();
         return new ListInboxResponse(items);
     }
 
     private static InboxItem Item(InboxMessage message, bool owed, DateTimeOffset now)
     {
-        var deferred = message.Resolution is { Kind: MessageResolutionKind.Deferred, Until: { } until } && until > now;
-        var state = message.Resolution?.Kind == MessageResolutionKind.Dismissed
-            ? "dismissed"
-            : deferred ? "deferred" : owed ? "open" : "answered";
+        var deferred = InboxState.IsDeferred(message, now);
+        var state = InboxState.Of(message, owed, now);
         return new InboxItem(
             message.Id,
             message.FromName.Length > 0 ? message.FromName : message.From,

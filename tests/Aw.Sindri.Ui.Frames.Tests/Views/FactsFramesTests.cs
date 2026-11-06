@@ -1,13 +1,18 @@
+using System.Net;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Api.Workflow;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Facts;
 using Aw.Sindri.Ui.ViewModels.Shell;
+using Aw.Sindri.Ui.Views.Facts;
+using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
@@ -104,5 +109,28 @@ public sealed class FactsFramesTests : FrameHost
         Assert.Equal(pending.PendingCli, window.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "FactPendingCli" && t.IsEffectivelyVisible).Text);
         Assert.DoesNotContain(window.GetVisualDescendants().OfType<Button>(), b => b.Name == "FactView" && b.IsEffectivelyVisible && Avalonia.Automation.AutomationProperties.GetName(b) == pending.ViewName);
         Frame(window, "facts-pending-desk");
+    });
+
+    [Fact]
+    public Task A_violation_trace_is_mono_and_each_step_reads_its_own_text() => OnUi(async () =>
+    {
+        // The hand test's two bugs (#2135): TextBlock.mono missed the SelectableTextBlock trace, and the step items had no name.
+        const string detail = "1. Start: remaining = 3\n2. Elapse: remaining 3 -> 2\n\nFull trace:\nState 1: <Initial predicate>\n/\\ remaining = 3\n\nState 2: <Elapse>\n/\\ remaining = 2";
+        var body = new System.Text.Json.Nodes.JsonArray(new System.Text.Json.Nodes.JsonObject { ["rule"] = "MDL-VIOLATION-001", ["message"] = "The timer can run while paused", ["detail"] = detail });
+        Server.WorkflowAnswer = new RouteAnswer(HttpStatusCode.OK, $$"""{"key":"fact:project","type":"findings","body":{{body.ToJsonString()}},"truncated":false}""");
+        var row = FixtureInstances.Detail("project-build").Facts.Single(f => f.Key == "fact:project") with { Type = FactType.Findings };
+        var viewer = new FindingsFactViewer(row, new FactViewerContext(Server, new FakeClipboard(), new FakeTimeProvider(A.Noon), static () => new Uri("http://127.0.0.1:7410/"), row.Key, static _ => { }));
+        await viewer.Load(Token);
+        viewer.Findings[0].IsTraceOpen = true;
+        var window = new Window { Width = 900, Height = 700, Content = new FindingsFactView { DataContext = viewer } };
+        window.Show();
+        Settle(window);
+
+        var trace = window.GetVisualDescendants().OfType<SelectableTextBlock>().Single(t => t.Name == "FindingTrace");
+        var mono = (FontFamily)window.FindResource("Font.Mono")!;
+        string?[] names = [.. window.GetVisualDescendants().OfType<ListBoxItem>().Select(static i => Avalonia.Automation.AutomationProperties.GetName(i))];
+        Assert.Equal((mono, Labels.FullTrace), (trace.FontFamily, Avalonia.Automation.AutomationProperties.GetName(trace)));
+        Assert.Equal(["1. Start: remaining = 3", "2. Elapse: remaining 3 -> 2"], names, StringComparer.Ordinal);
+        window.Close();
     });
 }

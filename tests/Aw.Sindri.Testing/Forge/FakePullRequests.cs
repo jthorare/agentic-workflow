@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Forge;
@@ -350,6 +351,145 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
         }
 
         return Done(Results.Success<IReadOnlyList<PullDigest>>(digests));
+    }
+
+    /// <summary>Plays the forge: sets the changed files of the pull request at a link, with each file's text at the head by path.</summary>
+    /// <param name="link">The pull request's link.</param>
+    /// <param name="files">The files.</param>
+    /// <param name="texts">The text of each file at the head, by path.</param>
+    public void SeedFiles(string link, IReadOnlyList<PullFile> files, IReadOnlyDictionary<string, string> texts) =>
+        SeedFiles(link, files, texts, baseTexts: null, capReached: false);
+
+    /// <summary>Plays the forge: sets the changed files of the pull request at a link, with their texts at the head and at the base.</summary>
+    /// <param name="link">The pull request's link.</param>
+    /// <param name="files">The files.</param>
+    /// <param name="texts">The text of each file at the head, by path.</param>
+    /// <param name="baseTexts">The text of each file at the base, by the path the file had there; null for none.</param>
+    /// <param name="capReached">Whether the pull request has more files than the forge lists.</param>
+    public void SeedFiles(string link, IReadOnlyList<PullFile> files, IReadOnlyDictionary<string, string> texts, IReadOnlyDictionary<string, string>? baseTexts, bool capReached)
+    {
+        ArgumentNullException.ThrowIfNull(files);
+        ArgumentNullException.ThrowIfNull(texts);
+        var pull = Locate(link).Value;
+        pull.Files = files;
+        pull.FilesCapReached = capReached;
+        pull.FileTexts.Clear();
+        foreach (var (path, text) in texts)
+        {
+            pull.FileTexts[path] = text;
+        }
+
+        pull.BaseTexts.Clear();
+        foreach (var (path, text) in baseTexts ?? new Dictionary<string, string>(StringComparer.Ordinal))
+        {
+            pull.BaseTexts[path] = text;
+        }
+    }
+
+    /// <summary>Plays CI: sets the check runs Get reports on the pull request at a link.</summary>
+    /// <param name="link">The pull request's link.</param>
+    /// <param name="runs">The runs.</param>
+    public void SeedRuns(string link, IReadOnlyList<PullCheckRun> runs)
+    {
+        ArgumentNullException.ThrowIfNull(runs);
+        var pull = Locate(link).Value;
+        var failing = runs.Where(static r => _failingConclusions.Contains(r.Conclusion)).Select(static r => r.Name).ToList();
+        var pending = runs.Count(static r => r.Conclusion == "pending");
+        var passed = runs.Count(static r => _passingConclusions.Contains(r.Conclusion));
+        var state = runs.Count == 0 ? PullChecksState.None
+            : failing.Count > 0 ? PullChecksState.Failing
+            : pending > 0 ? PullChecksState.Pending
+            : PullChecksState.Passing;
+        pull.Checks = new PullChecks(state, pull.HeadSha, failing, passed, pending, runs);
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<PullFiles>> Files(string link, CancellationToken cancellationToken)
+    {
+        Calls.Add("Files");
+        return Done(Locate(link).Map(p => new PullFiles(p.Files, p.FilesCapReached)));
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<string>> FileText(string link, string path, string sha, CancellationToken cancellationToken)
+    {
+        Calls.Add("FileText");
+        return Done(Locate(link).Bind(p => FileTextOf(p, path, sha)));
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<PullReviewOutcome>> SubmitReview(PullReview review, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(review);
+        Calls.Add("SubmitReview");
+        return Done(Locate(review.Link).Map(p =>
+        {
+            if (p.Reviews.ContainsKey(review.Marker))
+            {
+                return PullReviewOutcome.AlreadyDelivered;
+            }
+
+            if (p.HeadSha != review.ExpectedHead)
+            {
+                return PullReviewOutcome.HeadMoved;
+            }
+
+            if (review.Comments.Any(c => !InDiff(p, c)))
+            {
+                return PullReviewOutcome.LineRejected;
+            }
+
+            p.Reviews[review.Marker] = review;
+            var key = string.Create(CultureInfo.InvariantCulture, $"review-{p.Reviews.Count}");
+            p.Threads.Add(new PullThread(key, PullCommentKind.Review, "sindri", "MEMBER", IsBot: false, Resolved: false, Outdated: false, Path: null, review.Body, [review.Marker], new DateTimeOffset(2026, 10, 1, 9, 0, 0, TimeSpan.Zero).AddMinutes(p.Threads.Count), Line: null, EditedAt: null, $"{p.Link}#{key}"));
+            return PullReviewOutcome.Posted;
+        }));
+    }
+
+    // why: the same sets the forge's check summary uses (GitHubForge.Summarise); Sindri's testing project can't reference the forge package, so they are repeated here.
+    private static readonly string[] _failingConclusions = ["failure", "timed_out", "cancelled", "action_required", "startup_failure"];
+
+    private static readonly string[] _passingConclusions = ["success", "neutral", "skipped"];
+
+    private static readonly Regex _hunk = new(@"^@@ -\d+(?:,\d+)? \+(?<start>\d+)(?:,(?<count>\d+))? @@", RegexOptions.Multiline | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
+
+    // why: the head's text is under the file's path; the base's text is under the path the file had before a rename. Any other sha reads as the head, like the world.
+    private static Result<string> FileTextOf(FakePull pull, string path, string sha)
+    {
+        var atBase = sha == pull.BaseSha && sha != pull.HeadSha;
+        if (atBase)
+        {
+            var file = pull.Files.FirstOrDefault(f => (f.PreviousPath ?? f.Path) == path);
+            return file is not null && pull.BaseTexts.TryGetValue(path, out var baseText)
+                ? baseText
+                : SindriErrors.ForgeNotFound.With($"no text for '{path}' at {sha}");
+        }
+
+        return pull.FileTexts.TryGetValue(path, out var text)
+            ? text
+            : SindriErrors.ForgeNotFound.With($"no text for '{path}' at {sha}");
+    }
+
+    // why: a line comment lands only on a new-side line a hunk of the file's patch covers: "@@ -a,b +c,d @@" covers c..c+d-1 (d missing is 1); a file with no patch takes none.
+    private static bool InDiff(FakePull pull, PullReviewComment comment)
+    {
+        var patch = pull.Files.FirstOrDefault(f => f.Path == comment.Path)?.Patch;
+        if (patch is null)
+        {
+            return false;
+        }
+
+        foreach (Match hunk in _hunk.Matches(patch))
+        {
+            var start = int.Parse(hunk.Groups["start"].Value, CultureInfo.InvariantCulture);
+            var count = hunk.Groups["count"].Success ? int.Parse(hunk.Groups["count"].Value, CultureInfo.InvariantCulture) : 1;
+            if (comment.Line >= start && comment.Line < start + count)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private PullDelivery Deliver(string key) => _delivered.Add(key) ? PullDelivery.Delivered : PullDelivery.AlreadyDelivered;

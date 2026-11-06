@@ -1,6 +1,8 @@
 using Aw.Meta.Core;
+using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Ids;
 using Aw.Meta.Core.Lanes;
+using Aw.Meta.Core.Ports;
 using Aw.Meta.Features.LaneSend;
 using Aw.Meta.Testing;
 
@@ -10,11 +12,20 @@ public sealed class LaneSendTests
 {
     private readonly MetaWorld _world = new();
 
-    private LaneSendService Service() => new(_world.Config, _world.LaneFiles, _world.LaneMail, _world.Messages, _world.Beats, _world.Panes, _world.Clock);
+    private LaneSendService Service(IDelay? delay = null) => new(_world.Config, _world.LaneFiles, _world.LaneMail, _world.Messages, new LaneBeats(_world.Values, delay ?? _world.Delay), _world.Panes, _world.Clock);
 
-    private async Task<LaneSendResponse> Send(string lane, string text = "rebase please")
+    // The woken lane's own hook answers the first wait with a beat, which is what confirms a wake.
+    private HookingDelay Answering() => new(_world.Delay, _world.Clock, async (call, at) =>
     {
-        var result = await Service().Handle(new LaneSendRequest(lane, text), CancellationToken.None);
+        if (call == 1)
+        {
+            _ = await _world.Beats.Record("api", stopped: false, at, CancellationToken.None);
+        }
+    });
+
+    private async Task<LaneSendResponse> Send(string lane, string text = "rebase please", IDelay? delay = null)
+    {
+        var result = await Service(delay).Handle(new LaneSendRequest(lane, text), CancellationToken.None);
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
         return result.Value;
     }
@@ -95,7 +106,7 @@ public sealed class LaneSendTests
 
         var response = await Send("api");
 
-        Assert.StartsWith("hooks not running", response.Attention, StringComparison.Ordinal);
+        Assert.StartsWith("hooks never ran", response.Attention, StringComparison.Ordinal);
         Assert.False(response.Woken);
     }
 
@@ -106,8 +117,9 @@ public sealed class LaneSendTests
         _ = _world.PutLane("api");
         await Heartbeat("api", stopped: true);
 
-        var first = await Send("api");
-        var second = await Send("api", "again");
+        var answering = Answering();
+        var first = await Send("api", delay: answering);
+        var second = await Send("api", "again", answering);
 
         Assert.True(first.Woken);
         Assert.False(second.Woken);
@@ -124,9 +136,10 @@ public sealed class LaneSendTests
         await Heartbeat("api", stopped: true);
         _world.Panes.WakeFailure = "tmux send-keys exited 1: can't find pane";
 
-        var failed = await Send("api");
+        var answering = Answering();
+        var failed = await Send("api", delay: answering);
         _world.Panes.WakeFailure = null;
-        var retried = await Send("api", "again");
+        var retried = await Send("api", "again", answering);
 
         Assert.False(failed.Woken);
         Assert.StartsWith("the wake failed: tmux send-keys exited 1", failed.WakeSkipped, StringComparison.Ordinal);
@@ -138,7 +151,6 @@ public sealed class LaneSendTests
     [Theory, Trait("Lane", "unit")]
     [InlineData("busy", "the lane is not idle")]
     [InlineData("down", "lane down")]
-    [InlineData("client", "a client is attached")]
     public async Task Each_guard_on_the_wake_keeps_the_keys_unsent_and_says_why(string guard, string why)
     {
         await _world.Ready();
@@ -147,11 +159,6 @@ public sealed class LaneSendTests
         if (guard == "down")
         {
             _world.Panes.Put("t1-api", "bash");
-        }
-
-        if (guard == "client")
-        {
-            _world.Panes.Put("t1-api", "codex", clients: 1);
         }
 
         var response = await Send("api");

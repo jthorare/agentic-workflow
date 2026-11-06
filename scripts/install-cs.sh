@@ -47,7 +47,7 @@
 #
 # The heavy-job wrapper: scripts/heavy.sh is copied into each build as <build>/heavy (mode 755; part of the stamp, checked by verify), and
 # --link points $AW_STATE_DIR/bin-r1b/heavy at bin/cs/current/heavy, so the link never resolves into a git working tree (a checkout of an
-# older commit or a swept worktree cannot take it away) and changes only on an install. --link refuses a build without a heavy. A real
+# older commit or a swept worktree cannot take it away) and changes only on an install. config/lib/heavy-config.sh rides along as <build>/heavy-config.sh (heavy sources it from its own folder). --link refuses a build without a heavy or its heavy-config.sh. A real
 # file already at bin-r1b/heavy is moved to heavy.pre-repo (never deleted; a later one gets a timestamp suffix). --publish alone does
 # not touch the link.
 #
@@ -107,7 +107,7 @@ commit="$(git -C "$root" rev-parse --verify -q HEAD 2> /dev/null || true)"
 recipes_tree="$(git -C "$root" rev-parse --verify -q HEAD:recipes/sindri 2> /dev/null || true)"
 # shellcheck source=lib/sindri-build-inputs.sh
 source "$here/lib/sindri-build-inputs.sh"
-PATHSPECS=("${SINDRI_BUILD_PATHSPECS[@]}" src/Evidence src/BugFix src/Readiness scripts/heavy.sh scripts/meta-gate-reserve.sh)
+PATHSPECS=("${SINDRI_BUILD_PATHSPECS[@]}" src/Evidence src/BugFix src/Readiness scripts/heavy.sh scripts/meta-gate-reserve.sh config/lib/heavy-config.sh)
 sha256() { shasum -a 256 2> /dev/null || sha256sum; }
 inputs="$(mktemp "${TMPDIR:-/tmp}/install-cs-inputs.XXXXXX")"
 # a tracked file deleted in the working tree is left out: it isn't part of the build, and tar would fail on it
@@ -296,6 +296,10 @@ publish() {
 
   # The heavy-job wrapper rides in the build, so bin-r1b/heavy can point at bin/cs/current/heavy and never into a git tree.
   install -m 755 "$tree/scripts/heavy.sh" "$stage/heavy" || die "staging scripts/heavy.sh failed"
+  # (a tree without it, such as a test fixture with a stub heavy, ships none; the real heavy exits 2 when it needs one)
+  if [ -f "$tree/config/lib/heavy-config.sh" ]; then
+    install -m 644 "$tree/config/lib/heavy-config.sh" "$stage/heavy-config.sh" || die "staging config/lib/heavy-config.sh failed"
+  fi
 
   install -m 755 "$tree/scripts/meta-gate-reserve.sh" "$stage/meta-gate-reserve" || die "staging scripts/meta-gate-reserve.sh failed"
 
@@ -353,6 +357,7 @@ verify() { # verify <dir> <revision> <heavy source> <meta-gate-reserve source>
   run() { env -i HOME="$scratch" PATH="/usr/bin:/bin" DOTNET_ROOT="$DOTNET_ROOT" AW_STATE_DIR="$scratch/state" AW_JUDGE_PROVIDERS=rules \
       AW_SESSION_ID=install-cs "$@" < /dev/null 2>&1; }
   { [ -x "$d/heavy" ] && cmp -s "$d/heavy" "$src"; } || { rm -rf "$scratch"; die "install didn't take: $d/heavy is missing, not executable or not scripts/heavy.sh"; }
+  if grep -q heavy-config "$d/heavy" && [ ! -f "$d/heavy-config.sh" ]; then rm -rf "$scratch"; die "install didn't take: $d/heavy-config.sh is missing"; fi
   { [ -x "$d/meta-gate-reserve" ] && cmp -s "$d/meta-gate-reserve" "$rsrc"; } || { rm -rf "$scratch"; die "install didn't take: $d/meta-gate-reserve is missing, not executable or not scripts/meta-gate-reserve.sh"; }
   mkdir -p "$scratch/state"
   rc=0; out="$(run "$d/sindri" help)" || rc=$?
@@ -429,6 +434,9 @@ link() {
   fi
   built "$stamp" || die "no build for this source (stamp $stamp); run scripts/install-cs.sh --publish first"
   [ -x "$base/$stamp/heavy" ] || die "build $stamp has no heavy; run scripts/install-cs.sh --publish --rebuild"
+  if grep -q heavy-config "$base/$stamp/heavy" && [ ! -f "$base/$stamp/heavy-config.sh" ]; then
+    die "build $stamp has no heavy-config.sh; run scripts/install-cs.sh --publish --rebuild"
+  fi
   [ -x "$base/$stamp/meta-gate-reserve" ] || die "build $stamp has no meta-gate-reserve; run scripts/install-cs.sh --publish --rebuild"
   if [ -z "${DOTNET_ROOT:-}" ]; then   # where the pinned SDK is found (the parent of its sdk dir), else ~/.dotnet
     sdk_dir="$(dotnet --list-sdks 2> /dev/null | grep "^$sdk " | head -1 | sed 's/^[^[]*\[\(.*\)\]$/\1/' || true)"

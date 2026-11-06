@@ -30,15 +30,24 @@ internal static class LinearRender
             ["team"] = Ref(team, key: true),
             ["creator"] = Ref(s.Viewer),
             ["assignee"] = assignee is null ? null : Ref(assignee),
-            ["project"] = project is null ? null : Ref(project),
+            ["project"] = project is null ? null : WithStatus(Ref(project)),
             ["cycle"] = cycle is null ? null : new JsonObject { ["id"] = cycle.Id, ["name"] = cycle.Name, ["number"] = s.Cycles.IndexOf(cycle) + 1 },
             ["parent"] = null,
+            ["dueDate"] = null,
+            ["sortOrder"] = -1000.0 * (s.Issues.IndexOf(i) + 1),
             ["labels"] = Nodes(i.Labels.Select(l => (JsonNode)Ref(LinearStore.FindRow(s.Labels, l)!))),
             ["comments"] = Nodes(s.Comments.Where(c => c.IssueId == i.Id).Select(c => Comment(s, c))),
             ["attachments"] = Nodes(s.Attachments.Where(a => a.IssueId == i.Id).Select(Attachment)),
             ["relations"] = Nodes([]),
             ["inverseRelations"] = Nodes([]),
         };
+    }
+
+    // why: the feed's first read filters on 'project: { status: { type } }', which the fake evaluates against the node, so an issue's project has one (every fake project is started)
+    private static JsonObject WithStatus(JsonObject project)
+    {
+        project["status"] = new JsonObject { ["name"] = "Started", ["type"] = "started" };
+        return project;
     }
 
     /// <summary>A label with its team (null for a workspace label), as 'issueLabels' filters it by team.</summary>
@@ -79,6 +88,20 @@ internal static class LinearRender
     };
 
     public static JsonObject Team(LinearRow t) => Ref(t, key: true);
+
+    /// <summary>A team with the lists the pickers read: its states, the cycles it has, every member and its labels (workspace labels too).</summary>
+    public static JsonObject TeamWithLookups(LinearStore s, LinearRow t)
+    {
+        var node = Ref(t, key: true);
+        node["states"] = Nodes(s.States.Where(x => x.TeamId == t.Id).Select((x, position) => (JsonNode)new JsonObject { ["id"] = x.Id, ["name"] = x.Name, ["type"] = x.Type, ["position"] = position }));
+        node["cycles"] = Nodes(s.Cycles.Where(c => c.TeamId is null || c.TeamId == t.Id).Select(c => (JsonNode)Cycle(s, c)));
+        node["members"] = Nodes(s.Members.Select(m => (JsonNode)Member(m)));
+        node["labels"] = Nodes(s.Labels.Where(l => l.TeamId is null || l.TeamId == t.Id).Select(l => (JsonNode)Ref(l)));
+        return node;
+    }
+
+    public static JsonObject Cycle(LinearStore s, LinearRow c) =>
+        new() { ["id"] = c.Id, ["name"] = c.Name, ["number"] = s.Cycles.IndexOf(c) + 1, ["startsAt"] = c.StartsAt, ["endsAt"] = c.EndsAt };
 
     public static JsonObject State(LinearStore s, LinearRow x) =>
         new() { ["id"] = x.Id, ["name"] = x.Name, ["type"] = x.Type, ["team"] = Ref(s.Teams.First(t => t.Id == x.TeamId), key: true) };

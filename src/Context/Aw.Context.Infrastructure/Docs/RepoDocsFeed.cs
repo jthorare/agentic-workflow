@@ -3,6 +3,7 @@ using System.Text;
 using Aw.Context.Core.Audience;
 using Aw.Context.Core.Docs;
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Library;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Sync;
@@ -17,7 +18,7 @@ namespace Aw.Context.Infrastructure.Docs;
 /// 'doc' record keyed 'repo:&lt;repo&gt;/&lt;path&gt;' whose version is the blob id. A path under the repo's deny globs, or one the ids
 /// can't carry, is never a record. The text is raw: the sync driver cleans and chunks it (<see cref="RecordBatches"/>), so
 /// a blocked document is decided there. A stored record with no document at the head is in <see cref="RecordPage.Removed"/>.
-/// The cursor is a fingerprint of the scrub ruleset and every repo's head, so a pull at the same heads is an empty page
+/// The cursor is a fingerprint of the scrub ruleset, the design-doc parser's version and every repo's head, so a pull at the same heads is an empty page
 /// (a replay writes nothing), a new head or ruleset is diffed against the store, and a page cut short by the limit answers
 /// a cursor that is not final, so the next pull carries on with what the store doesn't hold yet.
 /// </summary>
@@ -94,7 +95,7 @@ internal sealed class RepoDocsFeed(IReadOnlyList<ContextRepo> repos, IReadOnlyLi
 
     private string Fingerprint(List<RepoHead> heads) =>
         Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
-            scrubbers.Ruleset.Value + string.Concat(heads.Select(h => $"|{h.Repo.Name.Value}={h.Head}")))));
+            DesignDocParser.Stamp(scrubbers.Ruleset.Value) + string.Concat(heads.Select(h => $"|{h.Repo.Name.Value}={h.Head}")))));
 
     /// <summary>Diffs the repo's head against the store: documents new, changed or cleaned under another ruleset, and records whose document is gone.</summary>
     private async ValueTask<Result<RepoDocsPlan>> Plan(RepoHead head, CancellationToken cancellationToken)
@@ -106,7 +107,7 @@ internal sealed class RepoDocsFeed(IReadOnlyList<ContextRepo> repos, IReadOnlyLi
             return stored.Error;
         }
 
-        var ruleset = scrubbers.Ruleset.Value;
+        var ruleset = DesignDocParser.Stamp(scrubbers.Ruleset.Value);
         var changed = wanted.Where(w => !(stored.Value.TryGetValue(RepoDocs.Key(head.Repo.Name, w.Key), out var row)
                 && row.Version.Value == w.Value && string.Equals(row.Ruleset, ruleset, StringComparison.Ordinal)))
             .OrderBy(w => w.Key, StringComparer.Ordinal).ToList();
