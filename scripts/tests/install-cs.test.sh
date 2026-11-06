@@ -387,4 +387,25 @@ out="$(cd "$WORK" && GIT_CEILING_DIRECTORIES="$WORK" bash "$NG/scripts/install-c
 check "not a git checkout: exit 1" "$rc" "1"
 has "not a git checkout: the sentence" "$out" "can only be published from a git checkout"
 
+# --- every staged script runs from the build folder alone (#2145) ---
+# Expected: a script install-cs.sh stages into the build (<build>/heavy, <build>/meta-gate-reserve) runs from that folder with
+# nothing of the checkout beside it; heavy.sh sources ../config/lib/heavy-config.sh, which the build does not carry. The earlier
+# rows stage stubs, so this one stages the REAL scripts into the miniature checkout, publishes, and runs them from the build.
+mkdir -p "$REPO/config/lib"
+cp "$DIR/heavy.sh" "$REPO/scripts/heavy.sh"; cp "$DIR/meta-gate-reserve.sh" "$REPO/scripts/meta-gate-reserve.sh"
+cp "$DIR/../config/lib/"*.sh "$REPO/config/lib/"
+g add -A; ccommit -m "real heavy and meta-gate-reserve"
+bash "$INSTALL" --publish > /dev/null 2>&1; check "staged-scripts: the publish with the real scripts exits 0" "$?" "0"
+SB="$(find "$B" -mindepth 1 -maxdepth 1 -type d ! -name '.*' -printf '%T@ %p\n' | sort -rn | head -1 | cut -d" " -f2-)"   # the build just published is the newest
+SCR="$WORK/staged-state"; mkdir -p "$SCR"
+errf="$WORK/staged.err"
+(cd / && AW_STATE_DIR="$SCR" timeout 20 "$SB/heavy" --expensive true > /dev/null 2> "$errf"); rc=$?
+check "staged heavy runs from its build folder alone: exit 0" "$rc" "0"
+check "staged heavy runs from its build folder alone: no 'command not found' (heavy_cap)" "$(grep -c 'command not found' "$errf")" "0"
+check "staged heavy runs from its build folder alone: no 'No such file' (heavy-config.sh)" "$(grep -c 'No such file' "$errf")" "0"
+(cd / && AW_STATE_DIR="$SCR" timeout 20 "$SB/meta-gate-reserve" --show > /dev/null 2> "$errf"); rc=$?
+check "staged meta-gate-reserve runs from its build folder alone: exit 0" "$rc" "0"
+check "staged meta-gate-reserve runs from its build folder alone: no 'command not found'" "$(grep -c 'command not found' "$errf")" "0"
+check "staged meta-gate-reserve runs from its build folder alone: no 'No such file'" "$(grep -c 'No such file' "$errf")" "0"
+
 [ "$fail" = 0 ] && echo "all install-cs tests passed" || { echo "install-cs tests FAILED"; exit 1; }
