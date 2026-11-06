@@ -1,4 +1,7 @@
+using System.Security.Cryptography;
+using System.Text;
 using Aw.Context.Core.Docs;
+using Aw.Context.Core.Library;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Sync;
@@ -42,7 +45,7 @@ public sealed class RepoDocsFeedTests : IDisposable
         Assert.Equal("Alpha", record.Title);
         Assert.Equal(_git.Repo.Name, record.Repo);
         Assert.False(record.Blocked);
-        Assert.Equal(_scrubbers.Ruleset.Value, record.Ruleset);
+        Assert.Equal(DesignDocParser.Stamp(_scrubbers.Ruleset.Value), record.Ruleset);
         var chunk = Assert.Single(chunks);
         Assert.Equal(0, chunk.Seq);
         Assert.Equal((1, 3), (chunk.LineStart, chunk.LineEnd));
@@ -138,7 +141,37 @@ public sealed class RepoDocsFeedTests : IDisposable
         var run = await FeedRun.Once(new RepoDocsFeed([_git.Repo], _globs, [], _store, new GitCli(), other), _store, other);
 
         Assert.Equal(2, run.Page.Items.Count);
-        Assert.Equal(other.Ruleset.Value, (await _store.Get(RepoDocs.Key(_git.Repo.Name, "docs/a.md"), TestContext.Current.CancellationToken)).Value!.Ruleset);
+        Assert.Equal(DesignDocParser.Stamp(other.Ruleset.Value), (await _store.Get(RepoDocs.Key(_git.Repo.Name, "docs/a.md"), TestContext.Current.CancellationToken)).Value!.Ruleset);
+    }
+
+    [Fact]
+    public async Task A_cursor_from_before_the_parser_version_is_not_a_replay_so_the_docs_are_read_again_with_no_new_commit()
+    {
+        var oldFingerprint = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes($"{_scrubbers.Ruleset.Value}|{_git.Repo.Name.Value}={_git.Run("rev-parse", "HEAD")}")));
+
+        var page = (await Feed().Pull(new RecordPull(SourceCursor.From(oldFingerprint), 100, NotBefore: null), TestContext.Current.CancellationToken)).Value;
+
+        Assert.Equal(2, page.Items.Count);
+        Assert.False(string.Equals(oldFingerprint, page.Next.Value, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task A_doc_stored_under_the_ruleset_alone_is_read_again_and_stored_under_the_stamped_one()
+    {
+        var feed = Feed();
+        var first = await FeedRun.Once(feed, new FakeRecordStore(), _scrubbers);
+        var plain = RecordBatches.From(feed.Source, first.Page, SyncPhase.Incremental, _scrubbers, RecordSamples.Now).Records
+            .Select(write => write with { Record = write.Record with { Ruleset = _scrubbers.Ruleset.Value } }).ToArray();
+        _ = await _store.Commit(RecordSamples.Batch(feed.Source, 1, plain), TestContext.Current.CancellationToken);
+
+        var run = await FeedRun.Once(feed, _store, _scrubbers);
+
+        Assert.Equal(2, run.Page.Items.Count);
+        Assert.Equal(2, run.Report!.Written);
+        foreach (var item in run.Page.Items)
+        {
+            Assert.Equal(DesignDocParser.Stamp(_scrubbers.Ruleset.Value), (await _store.Get(item.Key, TestContext.Current.CancellationToken)).Value!.Ruleset);
+        }
     }
 
     private RepoDocsFeed Feed() => new([_git.Repo], _globs, [], _store, new GitCli(), _scrubbers);
