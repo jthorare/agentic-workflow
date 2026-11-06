@@ -47,10 +47,28 @@ Required keys:
 | `skill` | the skill's name, as in its frontmatter |
 | `artifacts` | absolute paths of every file the run produced or changed on purpose (reports, plans, mockups, state files); `[]` when nothing was written |
 | `summary` | one line, what happened |
+| `waiting` | only under `AW_RESULT_SKILL` ([Under Sindri](#under-sindri-aw_result_skill)): the one-line question the run is stopped on; absent otherwise |
 
 Everything else is the skill's own. The skill's Result block names its extra keys; the keys a skill already has keep their meaning and spelling (`rootCause`'s `status` enum, a lens's `verdict`). No shared `status` enum is forced on skills that already have one. Skills that only talk (`judge`, `prismStatus`) use `artifacts: []`.
 
 A lens or review skill adds `verdict`, copied from the last `verdict:` line of its report (or the verdict word the report prints, when the report has no such line).
+
+## Under Sindri (`AW_RESULT_SKILL`)
+
+A Sindri Step that runs a skill as a block sets `AW_RESULT=1`, `AW_RESULT_SKILL=<skill name>` and `AW_RESULT_FILE=<absolute path>`. Check them in the Result block's gate call, next to `AW_RESULT`:
+
+```bash
+echo "AW_RESULT_SKILL=${AW_RESULT_SKILL:-}"; echo "AW_RESULT_FILE=${AW_RESULT_FILE:-}"
+```
+
+When `AW_RESULT_SKILL` equals the skill's own name, and only then (the five lens skills autoplan runs in the same session still write their default files):
+
+- Write the result to `AW_RESULT_FILE` instead of `$AW_DIR/results/<skill>-<timestamp>.json`, with the Write tool. The file carries **the same keys** as the skill's `aw-result` block, `artifacts` and `summary` included; a file with fewer keys fails the block's outputs (SND-SKILL-004).
+- A question goes back in the result, never in a picker: write `"waiting": "<the question, one line>"` with the rest of the result as it stands, print it, and end the turn. Never call AskUserQuestion; a pending picker is invisible to Sindri and the session looks busy forever.
+- `waiting` is a non-empty string or the key is absent. `null` and `""` mean no question. Never put a `waiting` value in `status` or `verdict`; those keep their own enums.
+- Under `AW_RESULT_SKILL` a failing prism-mcp call is a one-line note, never a stop.
+
+When `AW_RESULT_SKILL` is unset or names another skill, nothing changes. Any reader of a result (an eval grader, a skill reading another's file) treats one that carries `waiting` as not finished.
 
 ## The reply
 
