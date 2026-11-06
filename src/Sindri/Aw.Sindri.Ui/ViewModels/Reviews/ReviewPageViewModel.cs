@@ -25,7 +25,22 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
     }
 
     /// <summary>What the page shows: loading, the page, or one of the whole-page refusals.</summary>
-    public ReviewPageState State { get; private set => Set(ref field, value); } = ReviewPageState.Loading;
+    public ReviewPageState State
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(ShowsPage));
+            OnChanged(nameof(ShowsState));
+        }
+    } = ReviewPageState.Loading;
+
+    /// <summary>True while the page (or its placeholders) shows: loading or ready.</summary>
+    public bool ShowsPage => State is ReviewPageState.Loading or ReviewPageState.Ready;
+
+    /// <summary>True when a whole-page refusal shows instead.</summary>
+    public bool ShowsState => !ShowsPage;
 
     /// <summary>The heading of a whole-page state ("Pull request not found"); empty for the page.</summary>
     public string StateHeading { get; private set => Set(ref field, value); } = string.Empty;
@@ -69,6 +84,11 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
     /// <summary>"The PR is moving; reload when it settles." when the head moved twice during the read; null otherwise.</summary>
     public string? MovingText { get; private set => Set(ref field, value); }
 
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    /// <summary>"Release 1: both buttons open this PR's review box on GitHub. Your ticks are saved on this head."</summary>
+    public string ActionNote => Labels.ReviewActionNote;
+#pragma warning restore CA1822, MA0041
+
     /// <summary>The summary strip: four placeholders while loading, then the served parts.</summary>
     public ObservableCollection<ReviewStripSegmentViewModel> Strip { get; } = [];
 
@@ -79,7 +99,25 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
     public ReviewDiffViewModel Diff { get; }
 
     /// <summary>True at 1,280 px and wider: the panel column beside the diff, every panel open. Below, the panels stack above the diff, collapsed except required checks.</summary>
-    public bool IsWide { get; set; }
+    public bool IsWide
+    {
+        get;
+        set
+        {
+            if (field == value)
+            {
+                return;
+            }
+
+            field = value;
+            foreach (var panel in Panels.Where(p => _memory.Chosen(_settings, p.Id) is null))
+            {
+                panel.SetDefaultCollapsed(!(value || string.Equals(panel.Id, "requiredChecks", StringComparison.Ordinal)));
+            }
+
+            OnChanged(nameof(IsWide));
+        }
+    }
 
     /// <summary>True when Approve on GitHub can be pressed (not on the owner's own PR).</summary>
     public bool ApproveEnabled { get; private set => Set(ref field, value); }
@@ -94,7 +132,15 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
     public string ReviewUrl { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>Where focus goes next (review page spec §6.4 "Focus after"); the view moves it there.</summary>
-    public ReviewFocus Focus { get; private set => Set(ref field, value); } = ReviewFocus.None;
+    public ReviewFocus Focus
+    {
+        get;
+        private set
+        {
+            field = value;
+            OnChanged(nameof(Focus));   // always: asking for the same place twice moves focus twice
+        }
+    } = ReviewFocus.None;
 
     /// <summary>Reads the PR's page; the page is loading until the answer.</summary>
     /// <param name="url">The API's base URL.</param>
@@ -117,6 +163,12 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
         await Read(cancellationToken).ConfigureAwait(true);
         Focus = new ReviewFocus(ReviewFocusRegion.StripFirst);
     }
+
+    /// <summary>The back button: the shell shows the Reviews list again.</summary>
+    internal void GoBack() => BackRequested?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>Back was pressed.</summary>
+    internal event EventHandler? BackRequested;
 
     /// <summary>A strip part was pressed: its panel opens and focus goes to it.</summary>
     /// <param name="panel">The panel id.</param>

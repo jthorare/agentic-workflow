@@ -1,0 +1,49 @@
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Threading;
+using Aw.Sindri.Ui.ViewModels.Reviews;
+
+namespace Aw.Sindri.Ui.Views.Reviews;
+
+/// <summary>The fix-task sheet's content: focus goes to its text box when it opens and to the outcome text after a send.</summary>
+internal sealed partial class ReviewFixSheetView : UserControl
+{
+    public ReviewFixSheetView()
+    {
+        InitializeComponent();
+        DataContextChanged += (_, _) =>
+        {
+            if (Sheet is { } sheet)
+            {
+                sheet.PropertyChanged += (_, e) =>
+                {
+                    if (string.Equals(e.PropertyName, nameof(ReviewFixSheetViewModel.Focus), StringComparison.Ordinal))
+                    {
+                        Dispatcher.UIThread.Post(MoveFocus, DispatcherPriority.Loaded);
+                    }
+                };
+            }
+        };
+    }
+
+    private ReviewFixSheetViewModel? Sheet => DataContext as ReviewFixSheetViewModel;
+
+    private void MoveFocus()
+    {
+        Control? target = Sheet?.Focus.Region switch
+        {
+            ReviewFocusRegion.FixText => this.FindControl<TextBox>("ReviewFixText"),
+            ReviewFocusRegion.FixOutcome => this.FindControl<TextBlock>("ReviewFixOutcome"),
+            ReviewFocusRegion.None or ReviewFocusRegion.StripFirst or ReviewFocusRegion.Panel or ReviewFocusRegion.DiffLine or ReviewFocusRegion.GroupHeader => null,
+            _ => null,
+        };
+        _ = target?.Focus(NavigationMethod.Tab);
+    }
+
+    private void OnSend(object? sender, RoutedEventArgs e) => _ = Sheet?.Send(CancellationToken.None);
+
+    private void OnRetry(object? sender, RoutedEventArgs e) => _ = Sheet?.Retry(CancellationToken.None);
+
+    private void OnClose(object? sender, RoutedEventArgs e) => Sheet?.Close();
+}

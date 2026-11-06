@@ -75,7 +75,7 @@ internal sealed partial class ReviewPageViewModel
                 return false;
         }
 
-        Focus = Diff.FocusedLine is { } line ? new ReviewFocus(ReviewFocusRegion.DiffLine, Diff.KeyOf(line)) : ReviewFocus.None;
+        Focus = Diff.FocusedLine is { } line ? new ReviewFocus(ReviewFocusRegion.DiffLine, ReviewDiffViewModel.KeyOf(line)) : ReviewFocus.None;
         return true;
     }
 
@@ -97,7 +97,7 @@ internal sealed partial class ReviewPageViewModel
         }
 
         var source = new ReviewFixSource(ReviewFixKind.Line, line.Text, string.Empty, string.Empty, file.Path, line.Number, line.Kind == ReviewDiffLineKind.Added);
-        FixRequested?.Invoke(this, new ReviewFixRequestedEventArgs(source, target, new ReviewFocus(ReviewFocusRegion.DiffLine, Diff.KeyOf(line))));
+        FixRequested?.Invoke(this, new ReviewFixRequestedEventArgs(source, target, new ReviewFocus(ReviewFocusRegion.DiffLine, ReviewDiffViewModel.KeyOf(line))));
         return true;
     }
 
@@ -120,7 +120,7 @@ internal sealed partial class ReviewPageViewModel
     private bool Exists(ReviewFocus focus) => focus.Region switch
     {
         ReviewFocusRegion.Panel => focus.Key.Split(':') is [var panel, var row] ? RowExists(panel, row) : Panels.Any(p => string.Equals(p.Id, focus.Key, StringComparison.Ordinal)),
-        ReviewFocusRegion.DiffLine => Diff.VisibleFiles.Any(f => f.Hunks.Any(h => h.Lines.Any(l => string.Equals(f.Path + ":" + l.Sign + l.Number.ToString(System.Globalization.CultureInfo.InvariantCulture), focus.Key, StringComparison.Ordinal)))),
+        ReviewFocusRegion.DiffLine => Diff.VisibleFiles.Any(f => f.Hunks.Any(h => h.Lines.Any(l => string.Equals(l.Key, focus.Key, StringComparison.Ordinal)))),
         ReviewFocusRegion.GroupHeader => Diff.Groups.Any(g => string.Equals(g.Name, focus.Key, StringComparison.Ordinal)),
         ReviewFocusRegion.None or ReviewFocusRegion.StripFirst or ReviewFocusRegion.FixText or ReviewFocusRegion.FixOutcome => true,
         _ => false,

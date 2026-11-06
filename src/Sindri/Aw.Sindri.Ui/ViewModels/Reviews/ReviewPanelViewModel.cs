@@ -4,7 +4,7 @@ namespace Aw.Sindri.Ui.ViewModels.Reviews;
 internal sealed class ReviewPanelViewModel : ObservableObject
 {
     private readonly Action<ReviewPanelViewModel, bool>? _chosen;
-    private readonly bool _tracking;
+    private bool _tracking;
 
     internal ReviewPanelViewModel(string id, ReviewPanelState state, string text, string summary, bool collapsed, Action<ReviewPanelViewModel, bool>? chosen = null)
     {
@@ -59,6 +59,9 @@ internal sealed class ReviewPanelViewModel : ObservableObject
     /// <summary>The doc map's items, for the docMap panel.</summary>
     public IReadOnlyList<ReviewDocItemViewModel> DocItems { get; internal init; } = [];
 
+    /// <summary>The doc map's items and their children in drawing order, each indented by its depth.</summary>
+    public IReadOnlyList<ReviewDocItemViewModel> DocRows => [.. DocItems.SelectMany(Flat)];
+
     /// <summary>The claim line of the docMap panel ("Covers Ph5, REQ-E3"); empty when none.</summary>
     public string ClaimsText { get; internal init; } = string.Empty;
 
@@ -67,6 +70,17 @@ internal sealed class ReviewPanelViewModel : ObservableObject
 
     /// <summary>True when the panel has rows to draw.</summary>
     public bool IsReady => State == ReviewPanelState.Ready;
+
+    /// <summary>Applies the layout's default without keeping it as the owner's choice.</summary>
+    /// <param name="collapsed">True collapsed.</param>
+    internal void SetDefaultCollapsed(bool collapsed)
+    {
+        _tracking = false;
+        IsCollapsed = collapsed;
+        _tracking = true;
+    }
+
+    private static IEnumerable<ReviewDocItemViewModel> Flat(ReviewDocItemViewModel item) => item.Children.SelectMany(Flat).Prepend(item);
 
     /// <summary>The panel's title by id.</summary>
     /// <param name="id">The panel id.</param>

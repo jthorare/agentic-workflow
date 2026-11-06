@@ -104,6 +104,7 @@ internal sealed partial class ShellViewModel
             OpenerLibrary = true;
         };
         InitReviewFix();
+        ReviewPage.BackRequested += (_, _) => CloseReviewPage();
         Reviews.OpenRequested += (_, e) => Navigate(e.Link);
         Health.Follow(Reviews.Refresh);   // every read, whichever page is shown: the badge and Home's line need the count
         PropertyChanged += (_, e) =>

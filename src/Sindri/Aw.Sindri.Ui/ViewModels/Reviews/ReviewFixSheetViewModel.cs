@@ -102,7 +102,15 @@ internal sealed partial class ReviewFixSheetViewModel : ObservableObject
     public bool HasOutcome => Outcome is not (ReviewFixOutcome.None or ReviewFixOutcome.Failed);
 
     /// <summary>Where focus goes next: the text box on open, the outcome text after a send.</summary>
-    public ReviewFocus Focus { get; private set => Set(ref field, value); } = ReviewFocus.None;
+    public ReviewFocus Focus
+    {
+        get;
+        private set
+        {
+            field = value;
+            OnChanged(nameof(Focus));
+        }
+    } = ReviewFocus.None;
 
     /// <summary>The sheet closed: focus goes back to the diff line or panel row it came from.</summary>
     internal event EventHandler<ReviewFocusEventArgs>? Closed;

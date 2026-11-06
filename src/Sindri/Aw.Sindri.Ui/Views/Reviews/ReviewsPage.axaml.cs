@@ -32,6 +32,13 @@ internal sealed partial class ReviewsPage : UserControl
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
+        if (e.Key == Key.Enter && e.KeyModifiers == KeyModifiers.None && e.Source is Border { DataContext: ReviewRowViewModel row } && Page is { } list)
+        {
+            list.OpenRow(row);   // Enter on a PR row opens its review page
+            e.Handled = true;
+            return;
+        }
+
         if (e.KeyModifiers != KeyModifiers.None || e.Key is not (Key.J or Key.K) || e.Source is TextBox)
         {
             return;

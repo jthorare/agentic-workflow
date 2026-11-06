@@ -101,7 +101,7 @@ internal sealed class ReviewDiffViewModel : ObservableObject
     /// <summary>The focus key of a line: "path:+11" added, "path:-11" removed, "path:10" unchanged.</summary>
     /// <param name="line">The focused line.</param>
     /// <returns>The key, or empty when no file has focus.</returns>
-    internal string KeyOf(ReviewDiffLineViewModel line) => FocusedFile is { } file ? file.Path + ":" + line.Sign + line.Number.ToString(System.Globalization.CultureInfo.InvariantCulture) : string.Empty;
+    internal static string KeyOf(ReviewDiffLineViewModel line) => line.Key;
 
     private void Focus(ReviewDiffFileViewModel file, ReviewDiffHunkViewModel? hunk) => (FocusedFile, FocusedHunk, FocusedLine) = (file, hunk, hunk is { Lines: [var line, ..] } ? line : null);
 

@@ -14,7 +14,7 @@ internal sealed class ReviewDiffFileViewModel : ObservableObject
         var deleted = string.Equals(file.Omitted, "deleted", StringComparison.Ordinal);
         (IsContentsHidden, HasShow) = (deleted, deleted);
         HasOpenOnGitHub = file.Omitted is { } omitted && !string.Equals(omitted, "deleted", StringComparison.Ordinal);
-        Hunks = IsContentsHidden || HasOpenOnGitHub || _patch is null ? [] : ReviewPatch.Hunks(_patch);
+        Hunks = IsContentsHidden || HasOpenOnGitHub || _patch is null ? [] : ReviewPatch.Hunks(_patch, Path);
     }
 
     /// <summary>The file's path.</summary>
@@ -49,6 +49,6 @@ internal sealed class ReviewDiffFileViewModel : ObservableObject
     {
         IsContentsHidden = false;
         HasShow = false;
-        Hunks = _patch is null ? [] : ReviewPatch.Hunks(_patch);
+        Hunks = _patch is null ? [] : ReviewPatch.Hunks(_patch, Path);
     }
 }

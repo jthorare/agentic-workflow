@@ -11,10 +11,11 @@ internal static partial class ReviewPatch
 
     /// <summary>The hunks of a patch; text before the first "@@" line is ignored.</summary>
     /// <param name="patch">The patch.</param>
+    /// <param name="path">The file's path, for the lines' focus keys.</param>
     /// <returns>The hunks.</returns>
-    internal static List<ReviewDiffHunkViewModel> Hunks(string patch)
+    internal static List<ReviewDiffHunkViewModel> Hunks(string patch, string path)
     {
-        var reader = new Reader();
+        var reader = new Reader(path);
         foreach (var text in patch.Split('\n'))
         {
             reader.Take(text);
@@ -26,7 +27,7 @@ internal static partial class ReviewPatch
 
     private static int Number(Match match, string group) => int.Parse(match.Groups[group].Value, CultureInfo.InvariantCulture);
 
-    private sealed class Reader
+    private sealed class Reader(string path)
     {
         private string? _header;
         private int _from;
@@ -67,13 +68,13 @@ internal static partial class ReviewPatch
             switch (text[0])
             {
                 case '+':
-                    _lines.Add(new ReviewDiffLineViewModel(ReviewDiffLineKind.Added, oldNumber: null, _new++, text[1..]));
+                    _lines.Add(new ReviewDiffLineViewModel(ReviewDiffLineKind.Added, oldNumber: null, _new++, text[1..], path));
                     break;
                 case '-':
-                    _lines.Add(new ReviewDiffLineViewModel(ReviewDiffLineKind.Removed, _old++, newNumber: null, text[1..]));
+                    _lines.Add(new ReviewDiffLineViewModel(ReviewDiffLineKind.Removed, _old++, newNumber: null, text[1..], path));
                     break;
                 case ' ':
-                    _lines.Add(new ReviewDiffLineViewModel(ReviewDiffLineKind.Context, _old++, _new++, text[1..]));
+                    _lines.Add(new ReviewDiffLineViewModel(ReviewDiffLineKind.Context, _old++, _new++, text[1..], path));
                     break;
                 default:
                     break;   // "\ No newline at end of file"

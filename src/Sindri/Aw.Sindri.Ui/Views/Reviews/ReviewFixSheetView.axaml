@@ -1,0 +1,35 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:rvm="using:Aw.Sindri.Ui.ViewModels.Reviews"
+             x:Class="Aw.Sindri.Ui.Views.Reviews.ReviewFixSheetView"
+             x:DataType="rvm:ReviewFixSheetViewModel">
+  <!-- The fix-task sheet's content (review page spec §8.2, §6.4; mockups sheet-fix-*): where it comes from, the text, what Send does, then the outcome. The shell's sheet layer draws its title and Close. -->
+  <StackPanel Spacing="{StaticResource Space.SM}">
+    <TextBlock Classes="caption subtle mono" Text="{Binding SubLine}" />
+    <StackPanel Spacing="2" IsVisible="{Binding !HasOutcome}">
+      <TextBlock Classes="eyebrow subtle" Text="From" />
+      <TextBlock Classes="body-strong" Text="{Binding SourceTitle}" TextWrapping="Wrap" />
+      <TextBlock Classes="caption subtle" Text="{Binding SourceDetail}" TextWrapping="Wrap" />
+      <TextBlock Classes="eyebrow subtle" Text="What needs fixing" Margin="0,8,0,0" />
+      <TextBox x:Name="ReviewFixText" Text="{Binding Text, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="96" MaxLength="4000" IsEnabled="{Binding !IsSending}" AutomationProperties.Name="What needs fixing" />
+      <TextBlock Classes="caption subtle" Text="{Binding CountText}" HorizontalAlignment="Right" />
+      <TextBlock Classes="eyebrow subtle" Text="What Send does" Margin="0,8,0,0" />
+      <TextBlock Classes="body" Text="{Binding ItemTitle}" TextWrapping="Wrap" />
+      <TextBlock Classes="caption" Text="{Binding ThreadText}" TextWrapping="Wrap" />
+      <TextBlock Classes="caption subtle" Text="{Binding GoesToText}" TextWrapping="Wrap" />
+    </StackPanel>
+    <TextBlock x:Name="ReviewFixOutcome" Classes="body" Focusable="True" Text="{Binding OutcomeText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding OutcomeText}"
+               IsVisible="{Binding OutcomeText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    <StackPanel Spacing="2" IsVisible="{Binding HasOutcome}">
+      <TextBlock Classes="caption subtle" Text="{Binding ItemId, StringFormat='Work item {0}'}" />
+      <TextBlock Classes="caption subtle" Text="{Binding ThreadResult, StringFormat='PR thread {0}'}" />
+      <TextBlock Classes="caption mono subtle" Text="{Binding Code}" IsVisible="{Binding Code, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    </StackPanel>
+    <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+      <Button x:Name="ReviewFixSend" Click="OnSend" Content="{Binding SendText}" IsEnabled="{Binding CanSend}" IsVisible="{Binding !HasOutcome}" AutomationProperties.Name="{Binding SendText}" />
+      <Button x:Name="ReviewFixCancel" Click="OnClose" Content="Cancel" IsVisible="{Binding !HasOutcome}" />
+      <Button x:Name="ReviewFixRetry" Click="OnRetry" Content="Retry post" IsVisible="{Binding CanRetry}" />
+      <Button x:Name="ReviewFixClose" Click="OnClose" Content="Close" IsVisible="{Binding HasOutcome}" />
+    </StackPanel>
+  </StackPanel>
+</UserControl>
