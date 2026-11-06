@@ -30,7 +30,7 @@ erDiagram
         text source "linear, github, slack, repo-docs"
         text kind "doc, issue, pr, project, message, comment, code"
         text repo "profile repo, or null"
-        text audience_key "repo:o/r, linear:team, slack:channel; null is visible to no session"
+        text audience_key "repo:o/r, linear:team, slack:channel, owner:library; null is visible to no session; an owner: record is read only by the owner, never through a link"
         text title "scrubbed; the key when blocked or removed"
         text url "allowed scheme and host, no query or fragment"
         text author "scrubbed display name"
@@ -136,3 +136,5 @@ erDiagram
 ```
 
 `design_doc` has `INDEX(scope, doc_id)`, not unique: who owns a shared doc id is decided on read. `design_doc_ref` has `INDEX(to_ref)` and `design_doc_claim` has `INDEX(ref)`. Claims carry no resolved columns: they resolve on read. Records are soft-deleted, so a foreign-key cascade never fires on removal: `Commit` deletes the rows itself in the transaction that sets `removed_at` (cascade covers only `Purge`). A doc record with no `aw-doc` front matter has no `design_doc` row. A doc the scrubber blocks has one, with the error "blocked" and no items. Itemized doc records (kind `doc` of `repo-docs` and `library`) store their scrub ruleset followed by `+aw-doc-p<parser version>`, so the repo-docs feed's per-doc check sees an old parse and re-emits the doc with no new commit. The migration also invalidates GitHub PR rows and resets the `github` record feed, as 0030 did, so every PR body is read for its `Covers:` line once.
+
+The rows are read through `ILibraryStore` (`SqliteLibraryStore`), which joins `design_doc`, `design_doc_item` and `design_doc_claim` to their live `source_record` (`removed_at IS NULL`) and returns the record's `audience_key` beside each row; `IContextLibrary` applies `AudienceScope.Allows` to it, so the audience rule lives in one place. A doc, its items and its refs are read through the doc record's audience; a claim needs its PR record's audience and the audience of the doc it resolves to. A doc that holds `owner:library` (a `library` doc whose `repos:` does not name exactly one synced repo) is visible only to the owner's scope, which always adds that key.
