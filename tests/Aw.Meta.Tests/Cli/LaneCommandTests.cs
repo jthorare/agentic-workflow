@@ -56,6 +56,7 @@ public sealed class LaneCommandTests : IDisposable
             if (!answered && File.Exists(TmuxLog) && (await File.ReadAllTextAsync(TmuxLog, TestContext.Current.CancellationToken)).Contains("Enter", StringComparison.Ordinal))
             {
                 _cli.Clock.Advance(TimeSpan.FromMilliseconds(500));
+                AsHook();
                 _ = await _cli.Run("lane-stop-check");
                 answered = true;
             }
@@ -73,6 +74,7 @@ public sealed class LaneCommandTests : IDisposable
     {
         await Ready();
         AsLane();
+        AsHook();
         var first = await _cli.Run("lane-send", "--lane", "api", "--text", "please rebase");
         var inbox = await _cli.Run("lane-inbox");
         var again = await _cli.Run("lane-inbox");
