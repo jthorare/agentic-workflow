@@ -112,7 +112,7 @@ public sealed class FindingsFactViewerTests
         var viewer = await Loaded(new JsonArray(Finding(Violation, "n goes past 5", detail: detail)));
 
         var row = viewer.Findings[0];
-        Assert.Equal(["1. Start: n = 0", "   ... 15 states left out ...", "6. Stop: n 5 -> 6"], row.Steps, StringComparer.Ordinal);
+        Assert.Equal(["1. Start: n = 0", "... 15 states left out ...", "6. Stop: n 5 -> 6"], row.Steps, StringComparer.Ordinal);
         Assert.Equal("Full trace, 2 states", row.TraceName);
     }
 
