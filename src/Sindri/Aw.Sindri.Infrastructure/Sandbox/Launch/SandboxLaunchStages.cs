@@ -95,9 +95,7 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
         }
 
         var host = inputs.Host();
-        var variable = skill.Target == SkillTarget.Codex ? "CODEX_HOME" : "CLAUDE_CONFIG_DIR";
-        var folder = login.Environment.TryGetValue(variable, out var separate) && separate.Length > 0 ? separate : Path.Combine(host.Home, skill.Target == SkillTarget.Codex ? ".codex" : ".claude");
-        return SkillLaunchGate.Check(skill, new FileAgentHome(folder, skill.Target, host.Home, host.Environment.GetValueOrDefault("PATH", string.Empty)));
+        return SkillLaunchGate.Check(skill, new FileAgentHome(AgentHomeFolder(login, skill.Target, host.Home), skill.Target, host.Home, host.Environment.GetValueOrDefault("PATH", string.Empty)));
     }
 
     /// <summary>The agent home a skill launch's checks read on the host: a separate login's own folder, else the owner's '~/.claude' or '~/.codex'.</summary>
@@ -105,7 +103,14 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
     /// <param name="target">The agent the launch runs.</param>
     /// <param name="home">The owner's home on the host.</param>
     /// <returns>The folder.</returns>
-    internal static string AgentHomeFolder(PreparedLogin login, SkillTarget target, string home) => throw new NotSupportedException();
+    internal static string AgentHomeFolder(PreparedLogin login, SkillTarget target, string home)
+    {
+        // why: only a separate login's folder is bound at its own path; the owner copy's ('~/.claude-run') exists inside the sandbox only, and holds the owner's agent home bound read-only
+        var variable = target == SkillTarget.Codex ? "CODEX_HOME" : "CLAUDE_CONFIG_DIR";
+        return login.Source == ModelLoginSource.SeparateLogin && login.Environment.TryGetValue(variable, out var separate) && separate.Length > 0
+            ? separate
+            : Path.Combine(home, target == SkillTarget.Codex ? ".codex" : ".claude");
+    }
 
     // The branch namespace the session may write refs in: an open's own, a Step's run, or none.
     private static string RunNamespace(LaunchRequest request) =>
