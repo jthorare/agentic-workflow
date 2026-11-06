@@ -48,7 +48,15 @@ internal sealed partial class ReviewsPageViewModel : ObservableObject, IDisposab
     public string SubLine { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>The library header's words; its button opens the library errors sheet.</summary>
-    public string LibraryText { get; private set => Set(ref field, value); } = string.Empty;
+    public string LibraryText
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(CanOpenLibrary));
+        }
+    } = string.Empty;
 
     /// <summary>True when the header shows a warning (docs with errors, or a folder that can't be read).</summary>
     public bool LibraryWarns { get; private set => Set(ref field, value); }

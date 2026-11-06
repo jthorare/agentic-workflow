@@ -84,6 +84,7 @@ public sealed class ReviewsPageViewTests : FrameHost
         shell.GoTo(PageId.Reviews);
         await Until(window, () => !shell.Reviews.IsLoading, "the Reviews page never read the list");
         var button = Named<Button>(window, "ReviewsLibrary");
+        Assert.True(button.IsEffectivelyEnabled);   // RaiseEvent below skips IsEnabled: a pointer press would not
 
         button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         await Until(window, () => shell.IsLibrarySheet && !shell.Reviews.Library.IsLoading && Visible(window, "ReviewsLibrarySummary"), "the library sheet never showed");
