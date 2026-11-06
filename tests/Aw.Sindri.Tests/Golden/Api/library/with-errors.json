@@ -1,0 +1,50 @@
+{
+  "asOf": {
+    "cursor": 5,
+    "ledgerHead": 5,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "docs": 41,
+  "withErrors": 3,
+  "broken": [
+    {
+      "doc": "booking-retry-tdd",
+      "path": "~/notes/design/booking-retry-tdd.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-010",
+          "text": "~/notes/design/booking-retry-tdd.md line 4: a missing or bad front-matter key: status 'draft2' isn't one of the allowed values. Write the key as the table above says"
+        }
+      ]
+    },
+    {
+      "doc": "queue-sizing-spec",
+      "path": "~/.agentic-workflow/acme-api/specs/queue-sizing-spec.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-012",
+          "text": "~/.agentic-workflow/acme-api/specs/queue-sizing-spec.md line 2: another doc in the scope has this doc id. Rename one of them"
+        }
+      ]
+    },
+    {
+      "doc": "export-plan",
+      "path": "~/notes/design/export-plan.md",
+      "errors": [
+        {
+          "rule": "SND-LIB-015",
+          "text": "~/notes/design/export-plan.md line 31: a ref to an item the scope doesn't have: queue-sizing-spec#REQ-9. Fix the ref, or add the item"
+        },
+        {
+          "rule": "SND-LIB-016",
+          "text": "~/notes/design/export-plan.md line 5: an unknown parent: booking-retry. Use an id in the scope, or the full ref"
+        }
+      ]
+    }
+  ],
+  "nearMisses": [],
+  "unreadableRoots": [],
+  "cappedText": null
+}

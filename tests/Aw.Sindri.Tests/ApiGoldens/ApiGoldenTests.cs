@@ -8,8 +8,8 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 /// </summary>
 public sealed class ApiGoldenTests
 {
-    // hand-written before their routes (#2076 Ph5); Ph5 registers ReviewScenarios in ApiScenarios and empties this list
-    private static readonly string[] _pendingGoldenFolders = ["reviews", "reviews-pr"];
+    // hand-written before their routes (#2076 Ph5); Ph5 registers ReviewScenarios, ReviewLoginScenarios and LibraryScenarios in ApiScenarios and empties this list
+    private static readonly string[] _pendingGoldenFolders = ["reviews", "reviews-pr", "reviews-login", "library"];
 
     [Fact, Trait("Lane", "integration")]
     public void Every_golden_file_has_a_scenario()
@@ -25,8 +25,8 @@ public sealed class ApiGoldenTests
 
         Assert.Equal(expected, files);
 
-        // the pending files are exactly the rows of the unregistered class
-        var pendingRows = ((IEnumerable<(string Slug, string Scenario)>)[.. ReviewScenarios.All]).Select(r => $"{r.Slug}/{r.Scenario}.json").Order(StringComparer.Ordinal);
+        // the pending files are exactly the rows of the three unregistered classes
+        var pendingRows = ((IEnumerable<(string Slug, string Scenario)>)[.. ReviewScenarios.All, .. ReviewLoginScenarios.All, .. LibraryScenarios.All]).Select(r => $"{r.Slug}/{r.Scenario}.json").Order(StringComparer.Ordinal);
         Assert.Equal(pendingRows, all.Where(f => _pendingGoldenFolders.Any(p => f.StartsWith(p + "/", StringComparison.Ordinal))).Order(StringComparer.Ordinal));
         Assert.DoesNotContain(ApiScenarios.All, r => _pendingGoldenFolders.Contains(r.Slug));
     }
