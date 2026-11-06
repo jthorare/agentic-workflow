@@ -129,7 +129,7 @@ public sealed class GoldenContractTests
         "items-id-scope",   // an item's scope: the Context page reads it once it lands (UI lane, with the lenses routes)
         "sandbox-status", "sandbox-check", "sandbox-denials", "sandbox-allow",   // SB-6a serves them; the app reads them in SB-6b (Health, Settings, the park card and the item sheet)
         "code-index-symbols", "code-index-callers", "code-index-callees",   // the code-index reads (CI-10a) are the CLI's; status is read below for the Health card (CI-10b)
-        "reviews-pr", "reviews-login", "library",   // Ph7 reads them (review page spec §6; the review page, the login Save and the library errors sheet)
+        "reviews-pr",   // Ph7 part 2 reads it (review page spec §6; the review page)
         "events-catalog",   // API P5 (E-15): the app reads each type's invalidates once it switches from re-querying every view on each event (UI lane)
     };
 
