@@ -24,7 +24,7 @@ public sealed class LinearHubMigrationTests : IDisposable
             Assert.Equal(1, _world.Count($"SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = '{table}'"));
         }
 
-        foreach (var index in new[] { "linear_issue_by_assignee_state", "linear_issue_by_project", "linear_issue_by_cycle" })
+        foreach (var index in new[] { "linear_issue_by_assignee_state", "linear_issue_by_project", "linear_issue_by_cycle", "linear_issue_by_updated" })
         {
             Assert.Equal(1, _world.Count($"SELECT count(*) FROM sqlite_master WHERE type = 'index' AND name = '{index}'"));
         }
