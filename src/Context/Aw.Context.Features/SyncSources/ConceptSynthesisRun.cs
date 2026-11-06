@@ -36,12 +36,14 @@ internal sealed class ConceptSynthesisRun(IRecordStore records, IVectorScan scan
     /// <param name="settings">The grouper's knobs and the prompt caps.</param>
     /// <param name="labeling">Its 'maxTokensPerSync' is the run's cap.</param>
     /// <param name="extraPatterns">The profile's extra scrub patterns.</param>
+    /// <param name="libraryModelRoots">The library roots whose records a model may read (<see cref="ContextSettings.LibraryModelRoots"/>).</param>
     /// <param name="cancellationToken">Cancels the run.</param>
     /// <returns>What the run did; a failure is the report's code.</returns>
-    public async ValueTask<ConceptSynthesisReport> Run(ConceptSynthesisSettings settings, LabelingSettings labeling, IReadOnlyList<ScrubPattern> extraPatterns, CancellationToken cancellationToken)
+    public async ValueTask<ConceptSynthesisReport> Run(ConceptSynthesisSettings settings, LabelingSettings labeling, IReadOnlyList<ScrubPattern> extraPatterns, IReadOnlyList<string> libraryModelRoots, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(labeling);
+        ArgumentNullException.ThrowIfNull(libraryModelRoots);
         var built = scrubbers.For(extraPatterns);
         if (built.IsError)
         {

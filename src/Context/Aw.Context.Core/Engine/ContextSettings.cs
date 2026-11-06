@@ -100,6 +100,9 @@ public sealed record ContextSettings
     /// <summary>'context.models': which harnesses and models each kind of model call uses (model routing spec §3).</summary>
     public ModelsSettings Models { get; init; } = new();
 
+    /// <summary>The library roots a model may read (PR review page spec 2026-11-04 D13): the roots whose feed settings say 'models: true'. Empty by default, so no model call sees a library record; the library feed fills it.</summary>
+    public IReadOnlyList<string> LibraryModelRoots { get; init; } = [];
+
     /// <summary>'context.conceptSynthesis': the pass that groups the whole record store by meaning and names each group (#1597).</summary>
     public ConceptSynthesisSettings ConceptSynthesis { get; init; } = new();
 

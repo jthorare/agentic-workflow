@@ -11327,7 +11327,11 @@ static Aw.Context.Core.Library.PrCovers.None.get -> Aw.Context.Core.Library.PrCo
 static Aw.Context.Core.Library.PrCovers.Parse(string? body) -> Aw.Context.Core.Library.PrCovers!
 static Aw.Context.Core.Library.PrCovers.operator !=(Aw.Context.Core.Library.PrCovers? left, Aw.Context.Core.Library.PrCovers? right) -> bool
 static Aw.Context.Core.Library.PrCovers.operator ==(Aw.Context.Core.Library.PrCovers? left, Aw.Context.Core.Library.PrCovers? right) -> bool
-const Aw.Context.Core.Sync.RecordBatches.LibrarySource = "library" -> string!
+Aw.Context.Core.Library.LibrarySource
+static Aw.Context.Core.Library.LibrarySource.Id.get -> Aw.Context.Core.Sources.SourceId
+static Aw.Context.Core.Library.LibrarySource.ModelMayRead(Aw.Context.Core.Sources.SourceId source, Aw.Context.Core.Sources.RecordKey key, System.Collections.Generic.IReadOnlyList<string!>! modelRoots) -> bool
+Aw.Context.Core.Engine.ContextSettings.LibraryModelRoots.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Engine.ContextSettings.LibraryModelRoots.init -> void
 static Aw.Context.Core.Library.DesignDocParser.Blocked(string! path) -> Aw.Context.Core.Library.ParsedDesignDoc!
 static Aw.Context.Core.Library.DesignDocParser.IsDesignDoc(Aw.Context.Core.Library.ParsedDesignDoc! doc) -> bool
 static Aw.Context.Core.Library.DesignDocParser.Stamp(string! ruleset) -> string!
