@@ -75,5 +75,31 @@ public sealed class DirectoryLaneFilesContractTests : LaneFilesContract, IDispos
         Assert.Null(record.Value);
     }
 
+    [Fact]
+    public async Task A_hook_trace_line_reads_back_with_its_four_fields()
+    {
+        await File.WriteAllTextAsync(Path.Combine(_dir.Path, "api.hook"), "2026-11-05T04:55:00.0000000+00:00 meta-lane-gate UserPromptSubmit not-own-agent\n", TestContext.Current.CancellationToken);
+
+        var trace = await new DirectoryLaneFiles(_dir.Path).HookTrace("api", CancellationToken.None);
+
+        Assert.Equal(new LaneHookTrace(new DateTimeOffset(2026, 11, 5, 4, 55, 0, TimeSpan.Zero), "meta-lane-gate", "UserPromptSubmit", "not-own-agent"), trace.Value);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("garbage")]
+    [InlineData("2026-11-05T04:55:00Z meta-lane-gate UserPromptSubmit")]
+    [InlineData("not-a-time meta-lane-gate UserPromptSubmit ran")]
+    [InlineData("2026-11-05T04:55:00Z meta-lane-gate UserPromptSubmit ran extra")]
+    public async Task A_garbage_or_partial_hook_trace_line_counts_as_none(string line)
+    {
+        await File.WriteAllTextAsync(Path.Combine(_dir.Path, "api.hook"), line + "\n", TestContext.Current.CancellationToken);
+
+        var trace = await new DirectoryLaneFiles(_dir.Path).HookTrace("api", CancellationToken.None);
+
+        Assert.True(trace.IsSuccess);
+        Assert.Null(trace.Value);
+    }
+
     public void Dispose() => _dir.Dispose();
 }
