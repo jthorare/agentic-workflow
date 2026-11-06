@@ -15,13 +15,8 @@ public sealed class DesignDocRealSpecTests
 
         Assert.Empty(doc.Errors);
         Assert.Equal("sindri-pr-review-page", doc.FrontMatter!.Slug);
-        var phases = doc.Items.Where(static i => i.Kind == DesignItemKind.Phase).Select(static i => i.Key).ToHashSet(StringComparer.Ordinal);
-        for (var n = 0; n <= 10; n++)
-        {
-            Assert.Contains("Ph" + n.ToString(System.Globalization.CultureInfo.InvariantCulture), phases);
-        }
-
-        Assert.Contains("Ph4a", phases);
+        string[] phases = [.. doc.Items.Where(static i => i.Kind == DesignItemKind.Phase).Select(static i => i.Key)];
+        Assert.Equal(["Ph0", "Ph1", "Ph2", "Ph2b", "Ph3", "Ph4a", "Ph4b", "Ph5", "Ph6", "Ph7", "Ph8", "Ph9", "Ph10"], phases);
         var tests = doc.Items.Where(static i => i.Kind == DesignItemKind.TestPlan).Select(static i => i.Key).ToHashSet(StringComparer.Ordinal);
         for (var n = 1; n <= 12; n++)
         {

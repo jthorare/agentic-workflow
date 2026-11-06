@@ -214,7 +214,7 @@ public sealed class DesignDocItemTests
     [Theory, Trait("Lane", "unit")]
     [InlineData("- **REQ-** no number\n", 1)]
     [InlineData("- **REQ-X3** bad letter\n", 1)]
-    [InlineData("## Phases\n### Ph1x Bad\n", 2)]
+    [InlineData("## Phases\n### Ph1ab Bad\n", 2)]
     [InlineData("| TP- | z |\n", 1)]
     public void An_item_id_of_a_bad_shape_is_011(string body, int line)
     {
