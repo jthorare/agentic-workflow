@@ -603,6 +603,7 @@ It's unproven whether GitHub itself refuses a review on an old `commit_id`. The 
 | `SND-LIB-022` | a short `Covers:` ref two docs match | "harbor-booking-tdd is in two places; write doc:<root>/harbor-booking-tdd#Ph2." |
 | `SND-REVIEW-006` | a fix task's item was created but its thread wasn't posted | §8.2's half-done text |
 | `SND-REVIEW-007` | a review route or verb before `review.login` is set | "Set your GitHub login on the Reviews tab first." |
+| `SND-REVIEW-404` | a review route for a PR the forge does not have | "PR not found" |
 | `SND-REVIEW-014` | a confirm token used twice or older than 10 minutes | "This confirmation expired. Open the sheet again." |
 
 Codes 008, 009 and `SND-LIB-020` are left free on purpose, for the next errors of the same kinds.
@@ -732,7 +733,7 @@ The mockups are in `2026-11-04-sindri-pr-review-page-design/mockups/` (`README.m
 5. **Home's line** "N PRs waiting on you" sits under the Needs-you rows and isn't counted in them; it opens Reviews.
 6. **Near misses** show in the library errors sheet as well as in `library validate` and the doctor row (§4.2 changes to match §6.1).
 
-**Measured.** Nine full tab labels fit at the 1,000 px minimum with 46 px spare (23 px at 130% text), so no label shortens (§3). Ph7's UI tests measure the bar at 1,000 px and 130%.
+**Measured.** Measured in Ph7: nine full labels don't fit at 1,000 px with 130% text (the pill overran by 30 px), so below 1,100 px "Reviews" shows as "PRs" and "Workflows" as "Flows"; their screen-reader names stay full (owner, 2026-11-06).
 
 **Wording the mockups set** (Ph7 uses it; §6.3 and §8.2 point here):
 - Fix-task outcomes: the babysitter took it, a live session on the branch took it, or "Waiting on <branch>": the item waits in Work. `SND-REVIEW-006` is the half-done text (§8.2), with Retry.

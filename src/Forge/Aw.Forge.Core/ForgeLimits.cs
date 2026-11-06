@@ -8,4 +8,10 @@ public static class ForgeLimits
 
     /// <summary>The longest idempotency marker.</summary>
     public const int MarkerCharacters = 128;
+
+    /// <summary>The most bytes of a file's text FileText returns; an adapter cuts the rest.</summary>
+    public const int FileTextBytes = 1024 * 1024;
+
+    /// <summary>The most files Files lists: GitHub's own cap on a pull request's file list.</summary>
+    public const int PullFileCap = 3000;
 }

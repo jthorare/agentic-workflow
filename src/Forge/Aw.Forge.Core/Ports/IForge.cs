@@ -112,4 +112,24 @@ public interface IForge
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>The branch name.</returns>
     public ValueTask<Result<string>> DefaultBranch(ForgeRepo repo, CancellationToken cancellationToken);
+
+    /// <summary>Lists the files a pull request changes, up to ForgeLimits.PullFileCap.</summary>
+    /// <param name="pull">The pull request.</param>
+    /// <param name="cancellationToken">Cancellation.</param>
+    /// <returns>The files, and whether the cap cut the list.</returns>
+    public ValueTask<Result<PullFiles>> Files(ForgeRef pull, CancellationToken cancellationToken);
+
+    /// <summary>Reads a file's text at a commit, capped to ForgeLimits.FileTextBytes. The text is untrusted.</summary>
+    /// <param name="pull">The pull request, which names the repository.</param>
+    /// <param name="path">The file's path.</param>
+    /// <param name="sha">The commit.</param>
+    /// <param name="cancellationToken">Cancellation.</param>
+    /// <returns>The text; not found for a missing, binary or removed file.</returns>
+    public ValueTask<Result<string>> FileText(ForgeRef pull, string path, string sha, CancellationToken cancellationToken);
+
+    /// <summary>Posts a review once per marker, only if the head is still the expected one. No credential argument: the adapter's own acts.</summary>
+    /// <param name="request">The review.</param>
+    /// <param name="cancellationToken">Cancellation.</param>
+    /// <returns>Posted, AlreadyDelivered, HeadMoved or LineRejected.</returns>
+    public ValueTask<Result<ReviewOutcome>> SubmitReview(SubmitReviewRequest request, CancellationToken cancellationToken);
 }

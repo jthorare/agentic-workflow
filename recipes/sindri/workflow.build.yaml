@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.build
-version: 8
+version: 9
 description: "Block recipe: one TDD builder for one phase in its own worktree: a failing test per acceptance item, then code in atomic commits inside the phase's allowed files."
 displayName: "Build one phase, tests first"
 inputs:
@@ -50,8 +50,8 @@ transitions:
   - { from: green, to: checks,     on: step.completed, when: { outcome: built },   produces: [fact:built] }
   - { from: green, to: scope-desk, on: step.completed, when: { outcome: blocked }, produces: [fact:findings] }
   - { from: checks, to: model,      on: step.completed, when: { outcome: pass },       produces: [fact:built, fact:change] }
-  - { from: model, to: built, on: step.completed, when: { outcome: pass },    produces: [fact:modelCheck] }
-  - { from: model, to: built, on: step.completed, when: { outcome: skipped }, produces: [fact:modelCheck] }
+  - { from: model, to: built, on: step.completed, when: { outcome: pass },    produces: [fact:modelCheck, fact:findings] }
+  - { from: model, to: built, on: step.completed, when: { outcome: skipped }, produces: [fact:modelCheck, fact:findings] }
   - { label: "the model found a hole: fix the code", from: model, to: green, on: step.completed, when: { outcome: violation }, produces: [fact:findings] }
   - { label: "the model checks nothing: fix the model", from: model, to: green, on: step.completed, when: { outcome: vacuous }, produces: [fact:findings] }
   - { label: "the model doesn't check: fix the model", from: model, to: green, on: step.completed, when: { outcome: specError }, produces: [fact:findings] }

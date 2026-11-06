@@ -68,6 +68,15 @@ internal sealed class ConfiguredPullRequests(IApprovedProfile approved, Func<str
     public ValueTask<Result<IReadOnlyList<PullDigest>>> Digest(IReadOnlyList<string> links, CancellationToken cancellationToken)
         => Call(pulls => pulls.Digest(links, cancellationToken), cancellationToken);
 
+    public ValueTask<Result<PullFiles>> Files(string link, CancellationToken cancellationToken)
+        => Call(pulls => pulls.Files(link, cancellationToken), cancellationToken);
+
+    public ValueTask<Result<string>> FileText(string link, string path, string sha, CancellationToken cancellationToken)
+        => Call(pulls => pulls.FileText(link, path, sha, cancellationToken), cancellationToken);
+
+    public ValueTask<Result<PullReviewOutcome>> SubmitReview(PullReview review, CancellationToken cancellationToken)
+        => Call(pulls => pulls.SubmitReview(review, cancellationToken), cancellationToken);
+
     private async ValueTask<Result<T>> Call<T>(Func<IPullRequests, ValueTask<Result<T>>> call, CancellationToken cancellationToken)
     {
         var pulls = await Resolve(cancellationToken).ConfigureAwait(false);

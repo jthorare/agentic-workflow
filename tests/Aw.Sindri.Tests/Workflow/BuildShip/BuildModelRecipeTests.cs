@@ -8,7 +8,7 @@ using Aw.Sindri.Tests.Workflow.Engine;
 namespace Aw.Sindri.Tests.Workflow.BuildShip;
 
 /// <summary>
-/// 'workflow.build' v8 (model-check design §4.1): after 'checks' passes the build runs 'step.model.check' on what the change touches, and routes each result: pass or skipped finish the build, a violation, a
+/// 'workflow.build' v9 (model-check design §4.1): after 'checks' passes the build runs 'step.model.check' on what the change touches, and routes each result: pass or skipped finish the build, a violation, a
 /// vacuous model, a spec error or a model too big go back to 'green' inside the revisions loop (cap 6), and a model check that can't run goes to 'model-desk', whose answers are Check again and Stop.
 /// The eval cases are the recipe's own (recipes/sindri/evals/workflow.build/model-*.jsonl).
 /// </summary>
@@ -27,11 +27,11 @@ public sealed class BuildModelRecipeTests
     private static Recipe Shipped() => RecipeComposition.ReadClean(ShippedRecipes.Read(Build), "workflow.build.yaml").Recipe;
 
     [Fact]
-    public void The_build_is_version_8_and_has_a_model_state_and_a_model_desk()
+    public void The_build_is_version_9_and_has_a_model_state_and_a_model_desk()
     {
         var recipe = Shipped();
 
-        Assert.Equal(8, recipe.Version);
+        Assert.Equal(9, recipe.Version);
         Assert.True(recipe.States.ContainsKey("model"));
         Assert.True(recipe.States.ContainsKey("model-desk"));
     }

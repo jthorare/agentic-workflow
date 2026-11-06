@@ -51,6 +51,12 @@ internal sealed class WorldPull
 
     public int PendingChecks { get; set; }
 
+    public List<WorldRun>? Runs { get; set; }
+
+    public List<WorldFile> Files { get; set; } = [];
+
+    public bool FilesCapReached { get; set; }
+
     public Dictionary<string, string> Logs { get; set; } = [];
 
     public List<WorldThread> Threads { get; set; } = [];
