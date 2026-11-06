@@ -7,7 +7,7 @@ using Aw.Connectors.Core.GitHub;
 namespace Aw.Connectors.Testing.GitHub;
 
 /// <summary>
-/// A fake GitHub REST server for 'GET /repos/{o}/{r}/issues', '.../issues/comments', '.../issues/{n}/comments', '.../pulls/{n}' and '.../pulls/{n}/files':
+/// A fake GitHub REST server for 'GET /repos/{o}/{r}/issues', '.../issues/comments', '.../issues/{n}/comments', '.../pulls/{n}', '.../pulls/{n}/files', '.../pulls/{n}/reviews' and '.../compare/{base}...{head}':
 /// an <see cref="HttpMessageHandler"/> that serves what was added to it the way GitHub does (since inclusive, oldest change first, per_page/page, a Link header with rel="next"),
 /// and that answers scripted responses first (a rate limit, a 401, a redirect). It records every request.
 /// </summary>
@@ -16,6 +16,8 @@ public sealed class FakeGitHubServer : HttpMessageHandler
     private readonly List<(string Repo, GitHubIssue Issue)> _issues = [];
     private readonly List<(string Repo, GitHubComment Comment)> _comments = [];
     private readonly Dictionary<(string Repo, int Number), GitHubPullDetail> _pulls = [];
+    private readonly List<(string Repo, int Number, string Login, string State, string? Commit, DateTimeOffset SubmittedAt)> _reviews = [];
+    private readonly Dictionary<(string Repo, string Base, string Head), int> _compares = [];
     private readonly Queue<Func<HttpRequestMessage, HttpResponseMessage?>> _script = new();
     private readonly List<RecordedRequest> _requests = [];
 
@@ -53,6 +55,32 @@ public sealed class FakeGitHubServer : HttpMessageHandler
     public FakeGitHubServer AddPull(string repo, int number, GitHubPullDetail detail)
     {
         _pulls[(repo, number)] = detail;
+        return this;
+    }
+
+    /// <summary>Adds a review to a pull request's review list.</summary>
+    /// <param name="repo">'owner/name'.</param>
+    /// <param name="number">The pull request number.</param>
+    /// <param name="login">The reviewer.</param>
+    /// <param name="state">'APPROVED', 'COMMENTED', 'CHANGES_REQUESTED', 'PENDING' and so on.</param>
+    /// <param name="commit">The reviewed commit.</param>
+    /// <param name="submittedAt">When it was submitted.</param>
+    /// <returns>This server.</returns>
+    public FakeGitHubServer AddReview(string repo, int number, string login, string state, string commit, DateTimeOffset submittedAt)
+    {
+        _reviews.Add((repo, number, login, state, commit, submittedAt));
+        return this;
+    }
+
+    /// <summary>Says how far <paramref name="head"/> is ahead of <paramref name="baseCommit"/>; a pair never added answers 404, as GitHub does for a commit a force-push dropped.</summary>
+    /// <param name="repo">'owner/name'.</param>
+    /// <param name="baseCommit">The older commit.</param>
+    /// <param name="head">The newer commit.</param>
+    /// <param name="aheadBy">The commits between them.</param>
+    /// <returns>This server.</returns>
+    public FakeGitHubServer AddCompare(string repo, string baseCommit, string head, int aheadBy)
+    {
+        _compares[(repo, baseCommit, head)] = aheadBy;
         return this;
     }
 
@@ -143,9 +171,21 @@ public sealed class FakeGitHubServer : HttpMessageHandler
             ["pulls", var n] when IsPull(repo, n, out var number) => Json(PullJson(repo, number)),
             ["pulls", var n, "files"] when IsPull(repo, n, out var number)
                 => Paged(uri, query, Detail(repo, number).Paths.Select(static p => (JsonNode)new JsonObject { ["filename"] = p })),
+            ["pulls", var n, "reviews"] when IsPull(repo, n, out var number)
+                => Paged(uri, query, _reviews.Where(r => r.Repo == repo && r.Number == number).Select(static r => ToJson(r.Login, r.State, r.Commit, r.SubmittedAt))),
+            ["compare", var span] when span.Split("...") is [var from, var to] && _compares.TryGetValue((repo, from, to), out var ahead)
+                => Json(new JsonObject { ["status"] = "ahead", ["ahead_by"] = ahead }),
             _ => new HttpResponseMessage(HttpStatusCode.NotFound),
         };
     }
+
+    private static JsonObject ToJson(string login, string state, string? commit, DateTimeOffset submittedAt) => new()
+    {
+        ["user"] = new JsonObject { ["login"] = login },
+        ["state"] = state,
+        ["commit_id"] = commit,
+        ["submitted_at"] = submittedAt.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture),
+    };
 
     private bool IsPull(string repo, string segment, out int number)
     {
@@ -170,6 +210,9 @@ public sealed class FakeGitHubServer : HttpMessageHandler
             ["merged"] = d.Merged,
             ["draft"] = d.Draft,
             ["merged_at"] = d.MergedAt?.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture),
+            ["requested_reviewers"] = new JsonArray([.. (d.RequestedReviewers ?? []).Select(static l => (JsonNode)new JsonObject { ["login"] = l })]),
+            ["requested_teams"] = new JsonArray(new JsonObject { ["slug"] = "core" }),
+            ["head"] = new JsonObject { ["sha"] = d.HeadSha },
         };
     }
 

@@ -62,6 +62,14 @@ internal static partial class GitHubWire
     public static GitHubPullDetail ReadPull(JsonElement e, IReadOnlyList<string> paths)
         => new(Flag(e, "merged"), Flag(e, "draft"), Date(e, "merged_at"), paths);
 
+    /// <summary>Reduces a pull request's review list to each login's latest review: the one with the newest 'submitted_at' (the later entry on a tie), pending reviews and ones without a login or commit skipped. Ordered by login.</summary>
+    public static IReadOnlyList<(string Login, string Commit)> LatestReviews(IEnumerable<JsonElement> reviews)
+        => throw new NotSupportedException();
+
+    /// <summary>Reads 'ahead_by' from a compare reply, or null when it has none.</summary>
+    public static int? AheadBy(JsonElement e)
+        => throw new NotSupportedException();
+
     private static bool Flag(JsonElement e, string name)
         => e.TryGetProperty(name, out var p) && p.ValueKind == JsonValueKind.True;
 

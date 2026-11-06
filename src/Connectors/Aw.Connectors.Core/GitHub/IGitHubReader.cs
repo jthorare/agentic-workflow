@@ -35,4 +35,12 @@ public interface IGitHubReader
     /// <param name="cancellationToken">The caller's cancellation.</param>
     /// <returns>The detail (a rate limit is a value in the result), or an error from the Connectors catalogue.</returns>
     public ValueTask<Result<GitHubPullDetailRead>> PullRequest(string repo, int number, CancellationToken cancellationToken);
+
+    /// <summary>Reads who reviewed a pull request and how far it has moved since: each reviewer's latest review (GET /pulls/{n}/reviews, pending ones skipped), then one compare against <paramref name="head"/> per distinct reviewed commit that is not the head.</summary>
+    /// <param name="repo">'owner/name'.</param>
+    /// <param name="number">The pull request number.</param>
+    /// <param name="head">The pull request's head commit.</param>
+    /// <param name="cancellationToken">The caller's cancellation.</param>
+    /// <returns>The reviews (a rate limit is a value in the result; a compare GitHub answers 404 gives an unknown count), or an error from the Connectors catalogue.</returns>
+    public ValueTask<Result<GitHubReviewRead>> PullReviews(string repo, int number, string head, CancellationToken cancellationToken);
 }
