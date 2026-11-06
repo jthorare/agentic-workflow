@@ -15,7 +15,8 @@ internal sealed class FindingRowViewModel : ObservableObject
     {
         Message = FactText.Scrub(message);
         Meta = MetaLine(rule, path, line);
-        var text = string.IsNullOrEmpty(detail) ? string.Empty : FactText.Scrub(detail);
+        // Line breaks first: Scrub shows a stray \r as a visible mark, and then no line would match "Full trace:".
+        var text = string.IsNullOrEmpty(detail) ? string.Empty : FactText.Scrub(detail.ReplaceLineEndings("\n"));
         if (string.Equals(rule, ViolationRule, StringComparison.Ordinal) && Trace(text) is { } trace)
         {
             (Steps, FullTrace) = (trace.Steps, trace.Full);

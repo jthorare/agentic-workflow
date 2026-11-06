@@ -18,24 +18,25 @@ public sealed class FindingsFactViewerTests
 {
     private const string Violation = "MDL-VIOLATION-001";
 
-    private const string Trace = """
-        1. Start: remaining = 3
-        2. Elapse: remaining 3 -> 2
-        3. Takeover: paused no -> yes
-        4. Then repeats from step 2 (Elapse)
-
-        Full trace:
-        State 1: <Initial predicate>
-        /\ remaining = 3
-
-        State 2: <Elapse line 10, col 5 to line 10, col 20 of module Takeover>
-        /\ remaining = 2
-
-        State 3: <Takeover line 14, col 5 to line 14, col 25 of module Takeover>
-        /\ paused = TRUE
-
-        Back to state 2: <Elapse line 10, col 5 to line 10, col 20 of module Takeover>
-        """;
+    // Joined with "\n" as TraceSteps.Detail writes it: a raw string would take the checkout's line endings (MA0136).
+    private static readonly string _trace = string.Join(
+        "\n",
+        "1. Start: remaining = 3",
+        "2. Elapse: remaining 3 -> 2",
+        "3. Takeover: paused no -> yes",
+        "4. Then repeats from step 2 (Elapse)",
+        "",
+        "Full trace:",
+        "State 1: <Initial predicate>",
+        "/\\ remaining = 3",
+        "",
+        "State 2: <Elapse line 10, col 5 to line 10, col 20 of module Takeover>",
+        "/\\ remaining = 2",
+        "",
+        "State 3: <Takeover line 14, col 5 to line 14, col 25 of module Takeover>",
+        "/\\ paused = TRUE",
+        "",
+        "Back to state 2: <Elapse line 10, col 5 to line 10, col 20 of module Takeover>");
 
     private readonly FakeSindriApi _server = new();
     private readonly FakeTimeProvider _clock = new(A.Noon);
@@ -90,7 +91,7 @@ public sealed class FindingsFactViewerTests
     [Fact]
     public async Task A_violation_is_a_list_of_its_steps_in_order_and_a_full_trace_behind_a_closed_button_named_for_its_states()
     {
-        var viewer = await Loaded(new JsonArray(Finding(Violation, "The timer can run while paused", detail: Trace.ReplaceLineEndings("\n"))));
+        var viewer = await Loaded(new JsonArray(Finding(Violation, "The timer can run while paused", detail: _trace.ReplaceLineEndings("\n"))));
 
         var row = Assert.Single(viewer.Findings);
         Assert.Equal(
@@ -138,7 +139,7 @@ public sealed class FindingsFactViewerTests
     [Fact]
     public async Task Windows_line_breaks_in_the_detail_read_the_same()
     {
-        var viewer = await Loaded(new JsonArray(Finding(Violation, "The timer can run while paused", detail: Trace.ReplaceLineEndings("\r\n"))));
+        var viewer = await Loaded(new JsonArray(Finding(Violation, "The timer can run while paused", detail: _trace.ReplaceLineEndings("\r\n"))));
 
         var row = viewer.Findings[0];
         Assert.Equal(4, row.Steps.Count);
@@ -149,7 +150,7 @@ public sealed class FindingsFactViewerTests
     [Fact]
     public async Task The_trace_button_toggles_and_tells_assistive_tech_through_a_property_change()
     {
-        var viewer = await Loaded(new JsonArray(Finding(Violation, "The timer can run while paused", detail: Trace.ReplaceLineEndings("\n"))));
+        var viewer = await Loaded(new JsonArray(Finding(Violation, "The timer can run while paused", detail: _trace.ReplaceLineEndings("\n"))));
         var row = viewer.Findings[0];
         var changed = new List<string?>();
         row.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
@@ -182,7 +183,7 @@ public sealed class FindingsFactViewerTests
     [Fact]
     public async Task Another_rule_is_never_parsed_for_steps_even_when_its_detail_looks_like_a_trace()
     {
-        var viewer = await Loaded(new JsonArray(Finding("BLD-CMD-001", "dotnet test failed", detail: Trace.ReplaceLineEndings("\n"))));
+        var viewer = await Loaded(new JsonArray(Finding("BLD-CMD-001", "dotnet test failed", detail: _trace.ReplaceLineEndings("\n"))));
 
         var row = viewer.Findings[0];
         Assert.Equal((false, true), (row.HasSteps, row.HasDetail));
