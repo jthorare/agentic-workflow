@@ -166,6 +166,7 @@ erDiagram
         text due_date
         real sort_order
         text updated_at "Linear's"
+        text description "scrubbed, at most 65536 characters; the withheld marker when the scrubber blocked it"
     }
     linear_comment {
         text id PK "Linear's"

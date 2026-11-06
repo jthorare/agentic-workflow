@@ -183,4 +183,28 @@ public sealed class LinearSideRowStoreTests : IDisposable
         Assert.False(committed.IsError);
         Assert.Equal(1, _world.Count("SELECT count(*) FROM linear_issue"));
     }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_description_is_stored_and_a_changed_one_is_rewritten_on_an_unchanged_record()
+    {
+        _ = await Commit(1, Write(Described(Rows(Fields(Ada, Todo)), "first words")));
+        Assert.Equal(1, _world.Count($"SELECT count(*) FROM linear_issue WHERE key = '{Key}' AND description = 'first words'"));
+
+        var same = await Commit(2, Write(Described(Rows(Fields(Ada, Todo)), "first words")));
+        var edited = await Commit(3, Write(Described(Rows(Fields(Ada, Todo)), "second words")));
+
+        Assert.Equal(1, same.Unchanged);
+        Assert.Equal(1, edited.Unchanged);
+        Assert.Equal(1, _world.Count($"SELECT count(*) FROM linear_issue WHERE key = '{Key}' AND description = 'second words'"));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task No_description_is_stored_as_null_and_a_dropped_one_is_cleared()
+    {
+        _ = await Commit(1, Write(Described(Rows(Fields(Ada, Todo)), "words")));
+
+        _ = await Commit(2, Write(Described(Rows(Fields(Ada, Todo)), description: null)));
+
+        Assert.Equal(1, _world.Count($"SELECT count(*) FROM linear_issue WHERE key = '{Key}' AND description IS NULL"));
+    }
 }

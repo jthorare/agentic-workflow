@@ -99,7 +99,7 @@ internal sealed class SqliteLinearIssueStore(ContextDatabase database) : ILinear
 
     private static IRowMapper<LinearIssueRow> IssueMapper { get; } = new Mapper<LinearIssueRow>(r => new LinearIssueRow(
         RecordKey.From(r.GetString(0)), r.GetString(1), LinearRowReads.Text(r, 2), LinearRowReads.Text(r, 3), LinearRowReads.Text(r, 4), LinearRowReads.At(r, 5), LinearRowReads.At(r, 6),
-        TeamOf(LinearRowReads.Text(r, 7)), LinearRowReads.ReadFields(r, 8)));
+        TeamOf(LinearRowReads.Text(r, 7)), LinearRowReads.ReadFields(r, 8), LinearRowReads.Text(r, 22)));
 
     private static IRowMapper<LinearSinceChange> ChangeMapper { get; } = new Mapper<LinearSinceChange>(r => new LinearSinceChange(
         RecordKey.From(r.GetString(0)), r.GetString(1), r.GetString(2), LinearRowReads.Id(r, 3), LinearRowReads.Id(r, 4), SqliteRead.GetTimestamp(r, 5), r.GetString(6)));

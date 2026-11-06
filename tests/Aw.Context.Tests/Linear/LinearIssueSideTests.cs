@@ -192,4 +192,11 @@ public sealed class LinearIssueSideTests
         Assert.Equal("hello", Assert.Single(side.Issue.Comments).Body);
         Assert.Equal(LinearWrittenFields.None, side.Written);
     }
+
+    [Fact]
+    public void The_description_travels_with_the_side_rows()
+    {
+        Assert.Equal("Body", LinearIssueItem.Side(Full()).Description);
+        Assert.Null(LinearIssueItem.Side(Bare()).Description);
+    }
 }

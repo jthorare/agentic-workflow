@@ -11357,11 +11357,9 @@ Aw.Context.Core.Linear.LinearIssueSide
 Aw.Context.Core.Linear.LinearIssueSide.<Clone>$() -> Aw.Context.Core.Linear.LinearIssueSide!
 Aw.Context.Core.Linear.LinearIssueSide.Comments.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>!
 Aw.Context.Core.Linear.LinearIssueSide.Comments.init -> void
-Aw.Context.Core.Linear.LinearIssueSide.Deconstruct(out Aw.Context.Core.Linear.LinearIssueFields! Fields, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>! Comments) -> void
 Aw.Context.Core.Linear.LinearIssueSide.Equals(Aw.Context.Core.Linear.LinearIssueSide? other) -> bool
 Aw.Context.Core.Linear.LinearIssueSide.Fields.get -> Aw.Context.Core.Linear.LinearIssueFields!
 Aw.Context.Core.Linear.LinearIssueSide.Fields.init -> void
-Aw.Context.Core.Linear.LinearIssueSide.LinearIssueSide(Aw.Context.Core.Linear.LinearIssueFields! Fields, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>! Comments) -> void
 Aw.Context.Core.Linear.LinearLookupCycle
 Aw.Context.Core.Linear.LinearLookupCycle.<Clone>$() -> Aw.Context.Core.Linear.LinearLookupCycle!
 Aw.Context.Core.Linear.LinearLookupCycle.Deconstruct(out Aw.Context.Core.Sources.ExternalId Id, out int Number, out string? Name, out System.DateTimeOffset StartsAt, out System.DateTimeOffset EndsAt) -> void
@@ -11640,13 +11638,11 @@ Aw.Context.Core.Linear.LinearIssueRow.ClosedAt.get -> System.DateTimeOffset?
 Aw.Context.Core.Linear.LinearIssueRow.ClosedAt.init -> void
 Aw.Context.Core.Linear.LinearIssueRow.CreatedAt.get -> System.DateTimeOffset?
 Aw.Context.Core.Linear.LinearIssueRow.CreatedAt.init -> void
-Aw.Context.Core.Linear.LinearIssueRow.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out string! Title, out string? Url, out string? StateRaw, out string? Author, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? ClosedAt, out string? TeamKey, out Aw.Context.Core.Linear.LinearIssueFields! Fields) -> void
 Aw.Context.Core.Linear.LinearIssueRow.Equals(Aw.Context.Core.Linear.LinearIssueRow? other) -> bool
 Aw.Context.Core.Linear.LinearIssueRow.Fields.get -> Aw.Context.Core.Linear.LinearIssueFields!
 Aw.Context.Core.Linear.LinearIssueRow.Fields.init -> void
 Aw.Context.Core.Linear.LinearIssueRow.Key.get -> Aw.Context.Core.Sources.RecordKey
 Aw.Context.Core.Linear.LinearIssueRow.Key.init -> void
-Aw.Context.Core.Linear.LinearIssueRow.LinearIssueRow(Aw.Context.Core.Sources.RecordKey Key, string! Title, string? Url, string? StateRaw, string? Author, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? ClosedAt, string? TeamKey, Aw.Context.Core.Linear.LinearIssueFields! Fields) -> void
 Aw.Context.Core.Linear.LinearIssueRow.StateRaw.get -> string?
 Aw.Context.Core.Linear.LinearIssueRow.StateRaw.init -> void
 Aw.Context.Core.Linear.LinearIssueRow.TeamKey.get -> string?
@@ -11886,3 +11882,12 @@ Aw.Context.Core.Library.ILibraryStore.Doc(Aw.Context.Core.Sources.RecordKey key,
 Aw.Context.Core.Library.ILibraryStore.Items(Aw.Context.Core.Sources.RecordKey doc, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryItem!>!>!>
 Aw.Context.Core.Library.ILibraryStore.ClaimsOf(Aw.Context.Core.Sources.RecordKey pr, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryClaimRow!>!>!>
 Aw.Context.Core.Library.ILibraryStore.ClaimsNaming(string! slug, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryClaimRow!>!>!>
+Aw.Context.Core.Linear.LinearIssueRow.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out string! Title, out string? Url, out string? StateRaw, out string? Author, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? ClosedAt, out string? TeamKey, out Aw.Context.Core.Linear.LinearIssueFields! Fields, out string? Description) -> void
+Aw.Context.Core.Linear.LinearIssueRow.Description.get -> string?
+Aw.Context.Core.Linear.LinearIssueRow.Description.init -> void
+Aw.Context.Core.Linear.LinearIssueRow.LinearIssueRow(Aw.Context.Core.Sources.RecordKey Key, string! Title, string? Url, string? StateRaw, string? Author, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? ClosedAt, string? TeamKey, Aw.Context.Core.Linear.LinearIssueFields! Fields, string? Description = null) -> void
+Aw.Context.Core.Linear.LinearIssueSide.Deconstruct(out Aw.Context.Core.Linear.LinearIssueFields! Fields, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>! Comments, out string? Description) -> void
+Aw.Context.Core.Linear.LinearIssueSide.Description.get -> string?
+Aw.Context.Core.Linear.LinearIssueSide.Description.init -> void
+Aw.Context.Core.Linear.LinearIssueSide.LinearIssueSide(Aw.Context.Core.Linear.LinearIssueFields! Fields, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>! Comments, string? Description = null) -> void
+const Aw.Context.Core.Sync.RecordBatches.MaxIssueDescription = 65536 -> int

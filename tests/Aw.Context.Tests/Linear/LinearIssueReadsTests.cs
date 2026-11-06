@@ -36,7 +36,7 @@ public sealed class LinearIssueReadsTests : IAsyncLifetime
             .Member("Ada Fixture").Member("Bo Fixture")
             .Project("Launch")
             .Cycle("C1", "ENG", _windowStart, _windowStart.AddDays(14))
-            .Issue("ENG", "First issue", new FakeLinearIssueSeed { State = "Todo", Assignee = "Ada Fixture", Project = "Launch", Cycle = "C1" })
+            .Issue("ENG", "First issue", new FakeLinearIssueSeed { State = "Todo", Assignee = "Ada Fixture", Project = "Launch", Cycle = "C1", Description = "Details of the first issue" })
             .Issue("ENG", "Second issue", new FakeLinearIssueSeed { State = "In Progress", Assignee = "Bo Fixture" })
             .Issue("ENG", "Third issue", new FakeLinearIssueSeed { State = "Done", Assignee = "Ada Fixture" })
             .Comment("ENG-1", "older comment"));
@@ -119,6 +119,9 @@ public sealed class LinearIssueReadsTests : IAsyncLifetime
         var issue = await Facade(i => i.IssueGet(Key(Id("ENG-2")), _world.Scope, Ct));
         var none = await Facade(i => i.IssueGet(RecordKey.From("linear:issue/nope"), _world.Scope, Ct));
 
+        var first = await Facade(i => i.IssueGet(Key(Id("ENG-1")), _world.Scope, Ct));
+        Assert.Equal("Details of the first issue", first?.Description);
+        Assert.Null(issue?.Description);
         Assert.Equal("Second issue", issue?.Title);
         Assert.Equal("started", issue?.Fields.StateType);
         Assert.Null(none);

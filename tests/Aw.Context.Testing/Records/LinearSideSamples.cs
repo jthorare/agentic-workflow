@@ -50,6 +50,13 @@ public static class LinearSideSamples
     public static LinearSideRows Rows(LinearIssueFields fields, LinearWrittenFields written = LinearWrittenFields.None, params LinearCommentRow[] comments) =>
         new(new LinearIssueSide(fields, comments), written);
 
+    /// <summary>The same rows with a description.</summary>
+    /// <param name="rows">The rows.</param>
+    /// <param name="description">The description, or null for none.</param>
+    /// <returns>The rows.</returns>
+    public static LinearSideRows Described(LinearSideRows rows, string? description) =>
+        rows with { Issue = rows.Issue with { Description = description } };
+
     /// <summary>A write of the sample issue's record at a version, carrying side rows.</summary>
     /// <param name="side">The side rows, or null for none.</param>
     /// <param name="version">The record's version.</param>

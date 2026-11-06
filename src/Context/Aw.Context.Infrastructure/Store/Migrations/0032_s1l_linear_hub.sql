@@ -15,7 +15,8 @@ CREATE TABLE linear_issue (
     labels      TEXT NOT NULL DEFAULT '[]',
     due_date    TEXT NULL,
     sort_order  REAL NULL,
-    updated_at  TEXT NOT NULL
+    updated_at  TEXT NOT NULL,
+    description TEXT NULL   -- scrubbed with the ingest scrubber, at most 65,536 characters; the issue sheet shows and edits it
 ) STRICT;
 
 CREATE INDEX linear_issue_by_assignee_state ON linear_issue (assignee_id, state_type);

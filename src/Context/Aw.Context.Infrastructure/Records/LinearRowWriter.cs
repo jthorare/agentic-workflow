@@ -4,6 +4,7 @@ using Aw.Context.Core.Sources;
 using Aw.Context.Infrastructure.Store;
 using Aw.Kernel;
 using Aw.Kernel.Data;
+using Microsoft.Data.Sqlite;
 
 namespace Aw.Context.Infrastructure.Records;
 
@@ -36,7 +37,15 @@ internal sealed class LinearRowWriter(TimeProvider? clock = null) : ISideRowWrit
         }
 
         var comments = await SqliteQueries.List(session, new SqlStatement(LinearSql.StoredComments, c => c.Bind("@key", key.Value)), LinearRowReads.Comment, cancellationToken).ConfigureAwait(false);
-        return comments.IsError ? ContextDatabase.Translate(comments.Error) : !CommentsEqual(comments.Value, wanted.Comments);
+        if (comments.IsError)
+        {
+            return ContextDatabase.Translate(comments.Error);
+        }
+
+        var description = await SqliteQueries.List(session, new SqlStatement(LinearSql.StoredDescription, c => c.Bind("@key", key.Value)), SideRowReads.Text, cancellationToken).ConfigureAwait(false);
+        return description.IsError
+            ? ContextDatabase.Translate(description.Error)
+            : !CommentsEqual(comments.Value, wanted.Comments) || !string.Equals(description.Value.Count > 0 ? description.Value[0] : string.Empty, wanted.Description ?? string.Empty, StringComparison.Ordinal);
     }
 
     public async ValueTask<Error?> Replace(ISqliteSession session, RecordKey key, SideRows rows, CancellationToken cancellationToken)
@@ -48,7 +57,7 @@ internal sealed class LinearRowWriter(TimeProvider? clock = null) : ISideRowWrit
             return stored.Error;
         }
 
-        return await UpsertIssue(session, key, side.Issue.Fields, cancellationToken).ConfigureAwait(false)
+        return await UpsertIssue(session, key, side.Issue, cancellationToken).ConfigureAwait(false)
             ?? await ReplaceComments(session, key, side.Issue.Comments, cancellationToken).ConfigureAwait(false)
             ?? await LogChanges(session, key, stored.Value, side, cancellationToken).ConfigureAwait(false)
             ?? await SqliteRecordStore.Exec(session, LinearSql.PruneChanges, c => c.Bind("@cutoff", _clock.GetUtcNow() - ChangeRetention), cancellationToken).ConfigureAwait(false);
@@ -59,9 +68,11 @@ internal sealed class LinearRowWriter(TimeProvider? clock = null) : ISideRowWrit
             ?? await SqliteRecordStore.Exec(session, LinearSql.DeleteChanges, c => c.Bind("@key", key.Value), cancellationToken).ConfigureAwait(false)
             ?? await SqliteRecordStore.Exec(session, LinearSql.DeleteIssue, c => c.Bind("@key", key.Value), cancellationToken).ConfigureAwait(false);
 
-    private static ValueTask<Error?> UpsertIssue(ISqliteSession session, RecordKey key, LinearIssueFields f, CancellationToken cancellationToken) =>
-        SqliteRecordStore.Exec(session, LinearSql.UpsertIssue, c => c
-            .Bind("@key", key.Value)
+    private static ValueTask<Error?> UpsertIssue(ISqliteSession session, RecordKey key, LinearIssueSide issue, CancellationToken cancellationToken) =>
+        SqliteRecordStore.Exec(session, LinearSql.UpsertIssue, c => Bind(c, issue.Fields, issue.Description)
+            .Bind("@key", key.Value), cancellationToken);
+
+    private static SqliteCommand Bind(SqliteCommand c, LinearIssueFields f, string? description) => c
             .Bind("@team", f.TeamId?.Value)
             .Bind("@identifier", f.Identifier)
             .Bind("@stateId", f.StateId?.Value)
@@ -75,7 +86,8 @@ internal sealed class LinearRowWriter(TimeProvider? clock = null) : ISideRowWrit
             .Bind("@labels", Labels(f.LabelIds))
             .Bind("@due", f.DueDate)
             .Bind("@sortOrder", f.SortOrder)
-            .Bind("@updated", f.UpdatedAt), cancellationToken);
+            .Bind("@updated", f.UpdatedAt)
+            .Bind("@description", description);
 
     private static async ValueTask<Error?> ReplaceComments(ISqliteSession session, RecordKey key, IReadOnlyList<LinearCommentRow> comments, CancellationToken cancellationToken)
     {

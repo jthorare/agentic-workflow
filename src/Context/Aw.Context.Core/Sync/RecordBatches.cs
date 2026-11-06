@@ -23,6 +23,9 @@ public static class RecordBatches
     /// <summary>The most characters a stored Linear comment keeps (the issue's text holds the newest 20 whole for search).</summary>
     public const int MaxCommentBody = 8000;
 
+    /// <summary>The most characters a stored Linear issue description keeps (Linear's input limit, 64 KiB).</summary>
+    public const int MaxIssueDescription = 65536;
+
     /// <summary>What a stored Linear comment says when the scrubber withheld its text.</summary>
     public const string WithheldComment = "[withheld by the scrubber]";
 
@@ -101,7 +104,14 @@ public static class RecordBatches
         var comments = blocked
             ? []
             : side.Issue.Comments.Select(c => c with { Body = CleanComment(c.Body, scrubbers) }).ToList();
-        return side with { Issue = side.Issue with { Comments = comments } };
+        var description = side.Issue.Description is { Length: > 0 } raw ? blocked ? WithheldComment : CleanDescription(raw, scrubbers) : null;
+        return side with { Issue = side.Issue with { Comments = comments, Description = description } };
+    }
+
+    private static string CleanDescription(string raw, Scrubbers scrubbers)
+    {
+        var cleaned = scrubbers.Ingest.Clean(raw, singleLine: false);
+        return cleaned.Blocked ? WithheldComment : UntrustedFence.Cap(cleaned.Text, MaxIssueDescription);
     }
 
     private static string CleanComment(string body, Scrubbers scrubbers)

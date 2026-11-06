@@ -41,7 +41,7 @@ internal static class LinearIssueItem
     public static LinearIssueSide Side(LinearIssue issue, ExternalId? writeUserId = null)
     {
         ArgumentNullException.ThrowIfNull(issue);
-        return new LinearIssueSide(Fields(issue), Comments(issue, writeUserId));
+        return new LinearIssueSide(Fields(issue), Comments(issue, writeUserId), issue.Description);
     }
 
     private static LinearIssueFields Fields(LinearIssue issue) => new(

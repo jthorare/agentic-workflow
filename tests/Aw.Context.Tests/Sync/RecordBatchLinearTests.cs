@@ -113,4 +113,38 @@ public sealed class RecordBatchLinearTests
         Assert.Equal(paged.Records.Single().Chunks, single.Records.Single().Chunks);
         Assert.Equal(paged.Records.Single().Side, single.Records.Single().Side);
     }
+
+    [Fact]
+    public void A_description_is_cleaned_like_the_text()
+    {
+        var write = Build(Described(Rows(Fields(Ada, Todo)), $"key {FakeScrubber.Secret} here"));
+
+        Assert.Equal("key [REDACTED:fake] here", Assert.IsType<LinearSideRows>(write.Side).Issue.Description);
+    }
+
+    [Fact]
+    public void A_description_the_scrubber_blocks_is_the_withheld_marker()
+    {
+        var write = Build(Described(Rows(Fields(Ada, Todo)), FakeScrubber.BlockMe));
+
+        Assert.Equal(RecordBatches.WithheldComment, Assert.IsType<LinearSideRows>(write.Side).Issue.Description);
+    }
+
+    [Fact]
+    public void A_description_over_64_KiB_is_cut_to_it()
+    {
+        var write = Build(Described(Rows(Fields(Ada, Todo)), new string('x', RecordBatches.MaxIssueDescription + 10)));
+
+        var description = Assert.IsType<LinearSideRows>(write.Side).Issue.Description;
+
+        Assert.Equal(65536, description?.Length);
+        Assert.EndsWith("…", description, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void An_empty_or_missing_description_is_null()
+    {
+        Assert.Null(Assert.IsType<LinearSideRows>(Build(Described(Rows(Fields(Ada, Todo)), "")).Side).Issue.Description);
+        Assert.Null(Assert.IsType<LinearSideRows>(Build(Described(Rows(Fields(Ada, Todo)), description: null)).Side).Issue.Description);
+    }
 }
