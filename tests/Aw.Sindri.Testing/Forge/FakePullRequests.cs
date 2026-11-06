@@ -57,6 +57,9 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
     /// <summary>Gets or sets the error <see cref="Self"/> answers, or null for the login.</summary>
     public Error? SelfError { get; set; }
 
+    /// <summary>Gets or sets the login <see cref="Self"/> answers.</summary>
+    public string SelfLogin { get; set; } = "sindri";
+
     /// <summary>Gets or sets a task <see cref="Self"/> awaits first (a test makes the forge hang with it).</summary>
     public Func<CancellationToken, Task>? BeforeSelf { get; set; }
 
@@ -165,7 +168,7 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
             await wait(cancellationToken).ConfigureAwait(false);
         }
 
-        return SelfError is { } error ? error : "sindri";
+        return SelfError is { } error ? error : SelfLogin;
     }
 
     /// <inheritdoc />
