@@ -19,4 +19,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-SKILL-005: the skill's requires.yaml names a bin, MCP server, skill or agent the agent home lacks (step.failed before any session starts; 'detail' names each one and its fix).</summary>
     public static readonly ErrorDefinition SkillRequirementMissing = new("SND-SKILL-005", ErrorKind.Unavailable, "The skill needs something this machine doesn't have");
+
+    /// <summary>SND-SKILL-007: the agent home's SKILL.md isn't the file Sindri loaded (step.failed before any session starts; 'detail' names both paths and both shas, and the fix).</summary>
+    public static readonly ErrorDefinition SkillAgentCopyDiffers = new("SND-SKILL-007", ErrorKind.Conflict, "The agent would run a different SKILL.md than the one Sindri loaded");
 }

@@ -22311,3 +22311,34 @@ override Aw.Sindri.Core.Events.LaunchSkill.ToString() -> string!
 static Aw.Sindri.Core.Events.LaunchSkill.operator !=(Aw.Sindri.Core.Events.LaunchSkill? left, Aw.Sindri.Core.Events.LaunchSkill? right) -> bool
 static Aw.Sindri.Core.Events.LaunchSkill.operator ==(Aw.Sindri.Core.Events.LaunchSkill? left, Aw.Sindri.Core.Events.LaunchSkill? right) -> bool
 Aw.Sindri.Core.Skills.LoadedSkillBlock.LaunchWith(Aw.Sindri.Core.Skills.SkillTarget target, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! inputs, bool trial = false) -> Aw.Sindri.Core.Skills.SkillLaunch!
+static readonly Aw.Sindri.Core.SindriErrors.SkillAgentCopyDiffers -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Skills.IAgentHome
+Aw.Sindri.Core.Skills.IAgentHome.Folder.get -> string!
+Aw.Sindri.Core.Skills.IAgentHome.HasAgent(string! agent) -> bool
+Aw.Sindri.Core.Skills.IAgentHome.HasBin(string! bin) -> bool
+Aw.Sindri.Core.Skills.IAgentHome.HasMcp(string! server) -> bool
+Aw.Sindri.Core.Skills.IAgentHome.HasSkill(string! skill) -> bool
+Aw.Sindri.Core.Skills.IAgentHome.SkillMarkdown(string! skill) -> (string! Path, string? Sha)
+Aw.Sindri.Core.Skills.SkillLaunchChecks
+static Aw.Sindri.Core.Skills.SkillLaunchChecks.AgentCopy(string! skill, string! loadedPath, string! loadedSha, Aw.Sindri.Core.Skills.IAgentHome! home) -> Aw.Kernel.Error?
+static Aw.Sindri.Core.Skills.SkillLaunchChecks.Requirements(string! skill, Aw.Sindri.Core.Skills.SkillRequires! requires, Aw.Sindri.Core.Skills.IAgentHome! home) -> Aw.Kernel.Error?
+Aw.Sindri.Core.Skills.SkillRequires
+Aw.Sindri.Core.Skills.SkillRequires.<Clone>$() -> Aw.Sindri.Core.Skills.SkillRequires!
+Aw.Sindri.Core.Skills.SkillRequires.Agents.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Skills.SkillRequires.Agents.init -> void
+Aw.Sindri.Core.Skills.SkillRequires.Bins.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Skills.SkillRequires.Bins.init -> void
+Aw.Sindri.Core.Skills.SkillRequires.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Bins, out System.Collections.Generic.IReadOnlyList<string!>! Agents, out System.Collections.Generic.IReadOnlyList<string!>! Mcp, out System.Collections.Generic.IReadOnlyList<string!>! Skills) -> void
+Aw.Sindri.Core.Skills.SkillRequires.Equals(Aw.Sindri.Core.Skills.SkillRequires? other) -> bool
+Aw.Sindri.Core.Skills.SkillRequires.Mcp.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Skills.SkillRequires.Mcp.init -> void
+Aw.Sindri.Core.Skills.SkillRequires.Skills.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Skills.SkillRequires.Skills.init -> void
+Aw.Sindri.Core.Skills.SkillRequires.SkillRequires(System.Collections.Generic.IReadOnlyList<string!>! Bins, System.Collections.Generic.IReadOnlyList<string!>! Agents, System.Collections.Generic.IReadOnlyList<string!>! Mcp, System.Collections.Generic.IReadOnlyList<string!>! Skills) -> void
+override Aw.Sindri.Core.Skills.SkillRequires.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Skills.SkillRequires.GetHashCode() -> int
+override Aw.Sindri.Core.Skills.SkillRequires.ToString() -> string!
+static Aw.Sindri.Core.Skills.SkillRequires.None.get -> Aw.Sindri.Core.Skills.SkillRequires!
+static Aw.Sindri.Core.Skills.SkillRequires.Parse(string! text, out string? problem) -> Aw.Sindri.Core.Skills.SkillRequires!
+static Aw.Sindri.Core.Skills.SkillRequires.operator !=(Aw.Sindri.Core.Skills.SkillRequires? left, Aw.Sindri.Core.Skills.SkillRequires? right) -> bool
+static Aw.Sindri.Core.Skills.SkillRequires.operator ==(Aw.Sindri.Core.Skills.SkillRequires? left, Aw.Sindri.Core.Skills.SkillRequires? right) -> bool

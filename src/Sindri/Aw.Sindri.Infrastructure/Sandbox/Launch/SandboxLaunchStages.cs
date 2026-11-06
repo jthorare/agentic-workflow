@@ -11,6 +11,7 @@ using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Recipes;
 using Aw.Sindri.Infrastructure.Launch;
+using Aw.Sindri.Infrastructure.Skills;
 
 namespace Aw.Sindri.Infrastructure.Sandbox.Launch;
 
@@ -37,16 +38,10 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
         var loaded = approved.Value?.Profile;
         var settings = loaded?.Sandbox;
         var repo = RepoNameOf(loaded, request.RepoPath);
-        var prepared = await Login(request, settings, repo, cancellationToken).ConfigureAwait(false);
+        var prepared = await Admit(request, settings, repo, cancellationToken).ConfigureAwait(false);
         if (prepared.IsError)
         {
             return prepared.Error;
-        }
-
-        var minted = await MintAgentToken(request, settings, repo, cancellationToken).ConfigureAwait(false);
-        if (minted.IsError)
-        {
-            return minted.Error;
         }
 
         var history = await learn.Read(repo.Value, cancellationToken).ConfigureAwait(false);
@@ -72,6 +67,38 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
         request is { Attended: false, Skill: { } skill }
             ? SkillLaunchEnv.For(skill.Skill, request.Launch, run, inputs.Host().StateDir, SkillLaunchEnv.RepoSlugOf(await inputs.OriginRemote(request.RepoPath, cancellationToken).ConfigureAwait(false), request.RepoPath))
             : null;
+
+    // What a launch needs before a plan is worth building: its login, a skill launch's two checks (SND-SKILL-005 and -007: the Step fails before any session starts), and the agent token.
+    private async ValueTask<Result<PreparedLogin>> Admit(LaunchRequest request, SandboxSettings? settings, RepoName repo, CancellationToken cancellationToken)
+    {
+        var prepared = await Login(request, settings, repo, cancellationToken).ConfigureAwait(false);
+        if (prepared.IsError)
+        {
+            return prepared.Error;
+        }
+
+        if (SkillGate(request, prepared.Value) is { } refused)
+        {
+            return refused;
+        }
+
+        var minted = await MintAgentToken(request, settings, repo, cancellationToken).ConfigureAwait(false);
+        return minted.IsError ? minted.Error : prepared.Value;
+    }
+
+    // A skill launch's two checks (requires.yaml, and the agent home's SKILL.md against the loaded one) read the agent home this launch uses: a separate login's own folder, else the owner's.
+    private Error? SkillGate(LaunchRequest request, PreparedLogin login)
+    {
+        if (request is not { Attended: false, Skill: { } skill })
+        {
+            return null;
+        }
+
+        var host = inputs.Host();
+        var variable = skill.Target == SkillTarget.Codex ? "CODEX_HOME" : "CLAUDE_CONFIG_DIR";
+        var folder = login.Environment.TryGetValue(variable, out var separate) && separate.Length > 0 ? separate : Path.Combine(host.Home, skill.Target == SkillTarget.Codex ? ".codex" : ".claude");
+        return SkillLaunchGate.Check(skill, new FileAgentHome(folder, skill.Target, host.Home, host.Environment.GetValueOrDefault("PATH", string.Empty)));
+    }
 
     // The branch namespace the session may write refs in: an open's own, a Step's run, or none.
     private static string RunNamespace(LaunchRequest request) =>
