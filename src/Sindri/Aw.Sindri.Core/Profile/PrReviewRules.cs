@@ -64,10 +64,15 @@ public static class PrReviewRules
     /// <summary>The variable the review credential reads when 'review.credential' is not set.</summary>
     public const string DefaultCredentialVariable = "AW_REVIEW_GITHUB_TOKEN";
 
-    private static Error? Login(string? login) =>
-        login is not null && !IsLogin(login)
+    /// <summary>SND-REVIEW-001 when <paramref name="login"/> is not a GitHub login, naming 'review.login' and the rule.</summary>
+    /// <param name="login">The text.</param>
+    /// <returns>The error, or null.</returns>
+    public static Error? LoginProblem(string? login) =>
+        !IsLogin(login)
             ? Invalid("review.login", $"'{login}' isn't a GitHub login (fix: use 1 to 39 letters, digits or single hyphens, not starting or ending with a hyphen)")
             : null;
+
+    private static Error? Login(string? login) => login is null ? null : LoginProblem(login);
 
     private static Error? Credential(string? credential) =>
         credential is not null && !ForgeRules.IsCredential(credential)

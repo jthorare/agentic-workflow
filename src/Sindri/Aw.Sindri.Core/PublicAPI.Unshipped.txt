@@ -22295,3 +22295,4 @@ static readonly Aw.Sindri.Core.SindriErrors.ReviewOfflineUncached -> Aw.Kernel.E
 static readonly Aw.Sindri.Core.SindriErrors.ReviewProjectUnknown -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ReviewRepoUnsynced -> Aw.Kernel.ErrorDefinition!
 static Aw.Sindri.Core.Launch.LaunchEnvironment.Scrub(System.Collections.Generic.IReadOnlyDictionary<string!, string!>! env, string! worktree, string! ghConfigDir, System.Collections.Generic.IEnumerable<string!>! extra) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+static Aw.Sindri.Core.Profile.PrReviewRules.LoginProblem(string? login) -> Aw.Kernel.Error?

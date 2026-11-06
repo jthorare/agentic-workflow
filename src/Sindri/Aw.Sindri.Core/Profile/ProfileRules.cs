@@ -153,6 +153,7 @@ public static class ProfileRules
             (profile.Services ?? SindriProfile.NoServices).ToDictionary(StringComparer.Ordinal), StringComparer.Ordinal),
         Api = profile.Api ?? new ApiSettings(),
         Launch = profile.Launch is { Repos: { } repos } launch ? launch with { Repos = new SortedDictionary<string, LaunchRepoSettings>(repos.ToDictionary(StringComparer.Ordinal), StringComparer.Ordinal) } : profile.Launch,
+        Review = profile.Review is { Settings: { } named } review ? review with { Settings = new SortedDictionary<string, PrReviewSettingsEntry>(named.ToDictionary(StringComparer.Ordinal), StringComparer.Ordinal) } : profile.Review,
         Agents = profile.Agents is { Targets: { } targets } agents ? agents with { Targets = new SortedDictionary<string, AgentLimits>(targets.ToDictionary(StringComparer.Ordinal), StringComparer.Ordinal) } : profile.Agents,
     };
 

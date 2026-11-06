@@ -5886,3 +5886,29 @@ override Aw.Sindri.Features.ContextCalls.IndexStoreView.GetHashCode() -> int
 override Aw.Sindri.Features.ContextCalls.IndexStoreView.ToString() -> string!
 static Aw.Sindri.Features.ContextCalls.IndexStoreView.operator !=(Aw.Sindri.Features.ContextCalls.IndexStoreView? left, Aw.Sindri.Features.ContextCalls.IndexStoreView? right) -> bool
 static Aw.Sindri.Features.ContextCalls.IndexStoreView.operator ==(Aw.Sindri.Features.ContextCalls.IndexStoreView? left, Aw.Sindri.Features.ContextCalls.IndexStoreView? right) -> bool
+Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest
+Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest.<Clone>$() -> Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest!
+Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest.Deconstruct(out string! Login) -> void
+Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest.Equals(Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest? other) -> bool
+Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest.Login.get -> string!
+Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest.Login.init -> void
+Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest.SetReviewLoginRequest(string! Login) -> void
+Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse
+Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse.<Clone>$() -> Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse!
+Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse.Approved.get -> bool
+Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse.Approved.init -> void
+Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse.Deconstruct(out string! Login, out bool Approved) -> void
+Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse.Equals(Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse? other) -> bool
+Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse.Login.get -> string!
+Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse.Login.init -> void
+Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse.SetReviewLoginResponse(string! Login, bool Approved) -> void
+override Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest.GetHashCode() -> int
+override Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest.ToString() -> string!
+override Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse.GetHashCode() -> int
+override Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse.ToString() -> string!
+static Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest.operator !=(Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest? left, Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest? right) -> bool
+static Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest.operator ==(Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest? left, Aw.Sindri.Features.SetReviewLogin.SetReviewLoginRequest? right) -> bool
+static Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse.operator !=(Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse? left, Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse? right) -> bool
+static Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse.operator ==(Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse? left, Aw.Sindri.Features.SetReviewLogin.SetReviewLoginResponse? right) -> bool

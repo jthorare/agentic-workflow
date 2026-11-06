@@ -147,6 +147,7 @@ internal static class EndpointTable
         _ = commands.MapEndLearnMode().MapAllowDenial();
         _ = commands.MapOpenItem();
         _ = commands.MapPauseService();
+        _ = commands.MapSetReviewLogin();
         _ = commands.MapResumeService();
         _ = commands.MapRunService();
         _ = commands.MapContextJobs();
