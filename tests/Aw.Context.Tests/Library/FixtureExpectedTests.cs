@@ -65,35 +65,19 @@ public sealed class FixtureExpectedTests
 
     private static class Fixture
     {
-        private static readonly Lazy<(IReadOnlyList<Entry> Entries, IReadOnlyDictionary<string, ParsedDesignDoc> Docs, IReadOnlyDictionary<string, string[]> ScopeCodes)> _loaded = new(Load);
+        private static readonly Lazy<(IReadOnlyList<Entry> Entries, IReadOnlyDictionary<string, ParsedDesignDoc> Docs, IReadOnlyDictionary<string, string[]> ScopeCodes, IReadOnlyDictionary<string, IReadOnlyList<DesignRef>> Refs)> _loaded = new(Load);
 
         internal static IReadOnlyList<Entry> Entries => _loaded.Value.Entries;
 
         internal static IReadOnlyDictionary<string, ParsedDesignDoc> Docs => _loaded.Value.Docs;
 
-        // The codes the parser gives, then the ones decided against the scope (012, 015, 016), in code order.
+        // The codes the parser gives, then the ones decided against the scope (012, 015, 016), in code order, one per error (a repeat is kept).
         internal static string[] CodesOf(string path) =>
-            [.. Docs[path].Errors.Select(static e => e.Code).Concat(_loaded.Value.ScopeCodes.GetValueOrDefault(path, [])).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
+            [.. Docs[path].Errors.Select(static e => e.Code).Concat(_loaded.Value.ScopeCodes.GetValueOrDefault(path, [])).Order(StringComparer.Ordinal)];
 
-        // A bare ref to an item another doc of the scope defines reads '<doc id>#<item>' after the scope step; anything else stays as written.
-        internal static IEnumerable<ExpectedRef> ScopedRefs(Entry entry)
-        {
-            var own = Docs[entry.Path].Items.Select(static i => i.Key).ToHashSet(StringComparer.Ordinal);
-            foreach (var r in Docs[entry.Path].Refs.DistinctBy(static r => (r.From, r.To, r.Line)))
-            {
-                var to = r.To.Contains('#', StringComparison.Ordinal) || own.Contains(r.To) ? r.To : DefinedElsewhere(entry, r.To) ?? r.To;
-                yield return new ExpectedRef(r.From, to, Kind(r.Kind), r.Line);
-            }
-        }
-
-        private static string? DefinedElsewhere(Entry entry, string item)
-        {
-            var owner = Entries
-                .Where(e => e.Parsed && e.Scope == entry.Scope && e.Path != entry.Path && Docs[e.Path].FrontMatter?.Slug is not null && Docs[e.Path].Items.Any(i => i.Key == item))
-                .OrderBy(static e => e.Path, StringComparer.Ordinal)
-                .FirstOrDefault();
-            return owner is null ? null : Docs[owner.Path].FrontMatter!.Slug + "#" + item;
-        }
+        // The refs after the scope step, as the product code reads them (DesignDocScope).
+        internal static IEnumerable<ExpectedRef> ScopedRefs(Entry entry) =>
+            (_loaded.Value.Refs.TryGetValue(entry.Path, out var refs) ? refs : Docs[entry.Path].Refs).Select(static r => new ExpectedRef(r.From, r.To, Kind(r.Kind), r.Line));
 
         private static string Kind(DesignRefKind kind) => kind switch
         {
@@ -103,15 +87,16 @@ public sealed class FixtureExpectedTests
             _ => throw new ArgumentOutOfRangeException(nameof(kind)),
         };
 
-        private static (IReadOnlyList<Entry>, IReadOnlyDictionary<string, ParsedDesignDoc>, IReadOnlyDictionary<string, string[]>) Load()
+        private static (IReadOnlyList<Entry>, IReadOnlyDictionary<string, ParsedDesignDoc>, IReadOnlyDictionary<string, string[]>, IReadOnlyDictionary<string, IReadOnlyList<DesignRef>>) Load()
         {
             var root = Path.Combine(RepoRoot(), "tests", "fixtures", "library");
             using var json = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "expected.json")));
             var entries = json.RootElement.GetProperty("files").EnumerateArray().Select(Read).Where(static e => e.Parsed).ToList();
             var docs = entries.ToDictionary(static e => e.Path, e => DesignDocParser.Parse(e.Path, File.ReadAllText(Path.Combine(root, e.Path)), e.Source is null ? null : Sha256(Path.Combine(root, e.Source))), StringComparer.Ordinal);
             var scoped = entries.Select(e => new ScopedDesignDoc(e.Path, e.Scope, docs[e.Path])).ToList();
-            var codes = DesignDocScope.Check(scoped).GroupBy(static f => f.Path, StringComparer.Ordinal).ToDictionary(static g => g.Key, static g => g.Select(static f => f.Error.Code).ToArray(), StringComparer.Ordinal);
-            return (entries, docs, codes);
+            var (findings, refs) = DesignDocScope.Run(scoped);
+            var codes = findings.GroupBy(static f => f.Path, StringComparer.Ordinal).ToDictionary(static g => g.Key, static g => g.Select(static f => f.Error.Code).ToArray(), StringComparer.Ordinal);
+            return (entries, docs, codes, refs);
         }
 
         private static Entry Read(JsonElement e)

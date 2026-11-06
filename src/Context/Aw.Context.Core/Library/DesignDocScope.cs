@@ -9,7 +9,12 @@ public static class DesignDocScope
     /// <summary>Checks a set of parsed docs.</summary>
     /// <param name="docs">The docs, each with its scope; docs in different scopes never share ids.</param>
     /// <returns>The findings, by path then line.</returns>
-    public static IReadOnlyList<DesignDocFinding> Check(IReadOnlyList<ScopedDesignDoc> docs)
+    public static IReadOnlyList<DesignDocFinding> Check(IReadOnlyList<ScopedDesignDoc> docs) => Run(docs).Findings;
+
+    /// <summary>Checks a set of parsed docs and also says what each doc's refs name: a bare ref to an item another doc of the scope defines reads <c language="text">&lt;doc id&gt;#&lt;item&gt;</c>, anything else stays as written.</summary>
+    /// <param name="docs">The docs, each with its scope.</param>
+    /// <returns>The findings, and each checked doc's distinct refs by path.</returns>
+    internal static (IReadOnlyList<DesignDocFinding> Findings, IReadOnlyDictionary<string, IReadOnlyList<DesignRef>> Refs) Run(IReadOnlyList<ScopedDesignDoc> docs)
     {
         // why: a doc is in the id namespace when its own id reads; a bad status or parent (010) does not take it out
         var entries = docs
@@ -18,14 +23,15 @@ public static class DesignDocScope
             .ToList();
         var findings = new List<DesignDocFinding>();
         var scopes = Index(entries, findings);
+        var resolved = new Dictionary<string, IReadOnlyList<DesignRef>>(StringComparer.Ordinal);
         foreach (var entry in entries)
         {
-            CheckRefs(entry, scopes, findings);
+            resolved[entry.Doc.Path] = CheckRefs(entry, scopes, findings);
             CheckLink(entry, "parent", entry.Fm.Parent, scopes, findings);
             CheckLink(entry, "supersedes", entry.Fm.Supersedes, scopes, findings);
         }
 
-        return [.. findings.OrderBy(static f => f.Path, StringComparer.Ordinal).ThenBy(static f => f.Error.Line ?? 0).ThenBy(static f => f.Error.Code, StringComparer.Ordinal)];
+        return ([.. findings.OrderBy(static f => f.Path, StringComparer.Ordinal).ThenBy(static f => f.Error.Line ?? 0).ThenBy(static f => f.Error.Code, StringComparer.Ordinal)], resolved);
     }
 
     private static Dictionary<string, ScopeIndex> Index(List<ScopeEntry> entries, List<DesignDocFinding> findings)
@@ -47,20 +53,30 @@ public static class DesignDocScope
                     "Rename one of them."))));
             }
 
+            foreach (var winner in index.Winners.Values.OrderBy(static w => w.Path, StringComparer.Ordinal))
+            {
+                foreach (var item in winner.Doc.Items)
+                {
+                    _ = index.Owners.TryAdd(item.Key, winner.Doc.FrontMatter!.Slug!);
+                }
+            }
+
             scopes[byScope.Key] = index;
         }
 
         return scopes;
     }
 
-    private static void CheckRefs(ScopeEntry entry, Dictionary<string, ScopeIndex> scopes, List<DesignDocFinding> findings)
+    private static List<DesignRef> CheckRefs(ScopeEntry entry, Dictionary<string, ScopeIndex> scopes, List<DesignDocFinding> findings)
     {
+        var resolved = new List<DesignRef>();
         var doc = entry.Doc;
         var own = doc.Doc.Items.Select(static i => i.Key).ToHashSet(StringComparer.Ordinal);
         var foreign = ForeignScopes(entry.Fm, doc.Scope);
         foreach (var r in doc.Doc.Refs.DistinctBy(static r => (r.To, r.Line)))
         {
             var ok = r.To.Contains('#', StringComparison.Ordinal) ? Qualified(r.To, doc.Scope, scopes) : own.Contains(r.To) || scopes[doc.Scope].Items.Contains(r.To) || InForeign(r.To, foreign, scopes);
+            resolved.Add(r.To.Contains('#', StringComparison.Ordinal) || own.Contains(r.To) || !scopes[doc.Scope].Owners.TryGetValue(r.To, out var owner) ? r : r with { To = owner + "#" + r.To });
             if (!ok)
             {
                 findings.Add(new DesignDocFinding(doc.Path, FrontMatterBlock.Error(
@@ -71,6 +87,8 @@ public static class DesignDocScope
                     $"Fix the ref, or add {r.To[(r.To.LastIndexOf('#') + 1)..]} to the doc it names.")));
             }
         }
+
+        return resolved;
     }
 
     private static void CheckLink(ScopeEntry entry, string key, string? value, Dictionary<string, ScopeIndex> scopes, List<DesignDocFinding> findings)
@@ -81,7 +99,8 @@ public static class DesignDocScope
         }
 
         var (scope, id) = value.StartsWith("doc:", StringComparison.Ordinal) ? SplitDoc(value[4..]) : (entry.Doc.Scope, value);
-        if (!scopes.TryGetValue(scope, out var index) || index.Winners.ContainsKey(id))
+        var self = string.Equals(scope, entry.Doc.Scope, StringComparison.Ordinal) && string.Equals(id, entry.DocId, StringComparison.Ordinal);
+        if (!self && (!scopes.TryGetValue(scope, out var index) || index.Winners.ContainsKey(id)))
         {
             return;
         }
@@ -90,7 +109,7 @@ public static class DesignDocScope
             entry.Doc.Path,
             Line(entry.Fm, key),
             DesignDocCodes.UnknownDocLink,
-            $"{key} \"{value}\" is not a doc in this scope.",
+            self ? $"{key} \"{value}\" is the doc itself." : $"{key} \"{value}\" is not a doc in this scope.",
             "Use the id of a doc in the scope, or the full doc:<root>[/<slug>]/<doc id> ref.")));
     }
 
@@ -129,5 +148,8 @@ public static class DesignDocScope
         internal Dictionary<string, ScopedDesignDoc> Winners { get; } = new(StringComparer.Ordinal);
 
         internal HashSet<string> Items { get; } = new(StringComparer.Ordinal);
+
+        // The doc id of the winner at the lowest path that defines each item.
+        internal Dictionary<string, string> Owners { get; } = new(StringComparer.Ordinal);
     }
 }

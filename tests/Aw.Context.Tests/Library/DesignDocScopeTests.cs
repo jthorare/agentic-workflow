@@ -176,4 +176,15 @@ public sealed class DesignDocScopeTests
         Assert.Contains("REQ-99", loaded.Error.Message, StringComparison.Ordinal);
         Assert.Empty(notLoaded);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_doc_that_is_its_own_parent_is_016()
+    {
+        var doc = Doc("/aw/a.md", Aw, "note", "harbor-notes", "## Goals\n", "parent: harbor-notes\n");
+
+        var finding = Assert.Single(DesignDocScope.Check([doc]));
+
+        Assert.Equal(DesignDocCodes.UnknownDocLink, finding.Error.Code);
+        Assert.Contains("the doc itself", finding.Error.Message, StringComparison.Ordinal);
+    }
 }
