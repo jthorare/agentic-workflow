@@ -7,7 +7,7 @@ namespace Aw.Connectors.Features.PullGitHub;
 
 /// <summary>
 /// Reads the issue list, then the comments of the entries (one repo-wide read from the cursor to the newest entry, and one read for an entry whose
-/// older comments the repo-wide read did not reach) and each pull request's detail. A rate limit in a later read cuts the run before the entry it hit, and the
+/// older comments the repo-wide read did not reach), each pull request's detail and, for an open one, who reviewed it and how far it has moved since (spec 5.6). Only the entries the cursor returns, the ones changed since the last read, are enriched, so an unchanged pull request costs no review or compare request. A rate limit in a later read cuts the run before the entry it hit, and the
 /// cursor stops there, so the entry comes again complete.
 /// </summary>
 internal sealed class PullGitHubService(IGitHubReader reader) : IService<PullGitHubRequest, PullGitHubResponse>
@@ -48,7 +48,7 @@ internal sealed class PullGitHubService(IGitHubReader reader) : IService<PullGit
             }
 
             done.Add(issue);
-            items.Add(GitHubRecords.From(request.Repo, issue, one.Value.Comments, one.Value.Detail));
+            items.Add(GitHubRecords.From(request.Repo, issue, one.Value.Comments, one.Value.Detail, one.Value.Reviews));
         }
 
         return new PullGitHubResponse(items, page.Value.Next, page.Value.RateLimitedUntil);
@@ -89,32 +89,47 @@ internal sealed class PullGitHubService(IGitHubReader reader) : IService<PullGit
 
             if (all.Value.RateLimitedUntil is { } limited)
             {
-                return new Enriched([], Detail: null, limited);
+                return new Enriched([], Detail: null, [], limited);
             }
 
             comments = [.. all.Value.Items];
         }
 
-        GitHubPullDetail? detail = null;
-        if (issue.IsPullRequest)
-        {
-            var pull = await reader.PullRequest(request.Repo, issue.Number, cancellationToken).ConfigureAwait(false);
-            if (pull.IsError)
-            {
-                return pull.Error;
-            }
-
-            if (pull.Value.RateLimitedUntil is { } limited)
-            {
-                return new Enriched([], Detail: null, limited);
-            }
-
-            detail = pull.Value.Detail;
-        }
-
         var newest = comments.OrderByDescending(static c => c.CreatedAt).ThenByDescending(static c => c.Id).Take(request.CommentCap);
-        return new Enriched([.. newest.OrderBy(static c => c.CreatedAt).ThenBy(static c => c.Id)], detail, Stopped: null);
+        var talk = new Enriched([.. newest.OrderBy(static c => c.CreatedAt).ThenBy(static c => c.Id)], Detail: null, [], Stopped: null);
+        return issue.IsPullRequest ? await PullFacts(request, issue, talk, cancellationToken).ConfigureAwait(false) : talk;
     }
 
-    private sealed record Enriched(IReadOnlyList<GitHubComment> Comments, GitHubPullDetail? Detail, DateTimeOffset? Stopped);
+    // The single-pull-request read, then for an open one with a head the review read; a rate limit in either cuts the entry (nothing of it is kept).
+    private async ValueTask<Result<Enriched>> PullFacts(PullGitHubRequest request, GitHubIssue issue, Enriched talk, CancellationToken cancellationToken)
+    {
+        var pull = await reader.PullRequest(request.Repo, issue.Number, cancellationToken).ConfigureAwait(false);
+        if (pull.IsError)
+        {
+            return pull.Error;
+        }
+
+        if (pull.Value.RateLimitedUntil is { } limited)
+        {
+            return new Enriched([], Detail: null, [], limited);
+        }
+
+        var detail = pull.Value.Detail;
+        if (detail is not { Merged: false, HeadSha: { Length: > 0 } head } || !string.Equals(issue.State, "open", StringComparison.Ordinal))
+        {
+            return talk with { Detail = detail };
+        }
+
+        var read = await reader.PullReviews(request.Repo, issue.Number, head, cancellationToken).ConfigureAwait(false);
+        if (read.IsError)
+        {
+            return read.Error;
+        }
+
+        return read.Value.RateLimitedUntil is { } stopped
+            ? new Enriched([], Detail: null, [], stopped)
+            : talk with { Detail = detail, Reviews = read.Value.Reviews };
+    }
+
+    private sealed record Enriched(IReadOnlyList<GitHubComment> Comments, GitHubPullDetail? Detail, IReadOnlyList<ConnectorReview> Reviews, DateTimeOffset? Stopped);
 }

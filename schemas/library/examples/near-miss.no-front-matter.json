@@ -1,0 +1,14 @@
+{
+  "parserVersion": 1,
+  "frontMatter": null,
+  "items": [],
+  "refs": [],
+  "errors": [
+    {
+      "code": "SND-LIB-019",
+      "line": 2,
+      "message": "aw-doc is \"1\", not the number 1, so the file isn't read.",
+      "fix": "Write aw-doc: 1 with no quotes."
+    }
+  ]
+}

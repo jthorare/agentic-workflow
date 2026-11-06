@@ -158,5 +158,7 @@ public sealed class GitHubConnectTests
         public ValueTask<Result<GitHubCommentPage>> IssueComments(string repo, int number, CancellationToken cancellationToken) => throw new NotSupportedException();
 
         public ValueTask<Result<GitHubPullDetailRead>> PullRequest(string repo, int number, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+        public ValueTask<Result<GitHubReviewRead>> PullReviews(string repo, int number, string head, CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 }

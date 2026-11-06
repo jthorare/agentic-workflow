@@ -1,0 +1,41 @@
+{
+  "parserVersion": 1,
+  "frontMatter": {
+    "aw-doc": 1,
+    "id": "harbor-booking-design",
+    "kind": "tdd",
+    "title": "Harbor ferry booking",
+    "status": "review",
+    "project": "prj_01JABCDEF",
+    "generated": "write_packet.py",
+    "supersedes": "doc:aw/acme-harbor/harbor-booking-v1"
+  },
+  "items": [
+    {
+      "id": "REQ-E3",
+      "kind": "requirement",
+      "parent": null,
+      "lineStart": 20,
+      "lineEnd": 20,
+      "text": "- **REQ-E3** When payment fails, the seat is released."
+    },
+    {
+      "id": "AC-1",
+      "kind": "acceptance",
+      "parent": "REQ-E3",
+      "lineStart": 21,
+      "lineEnd": 21,
+      "text": "- AC-1 The seat shows free within 10 s."
+    },
+    {
+      "id": "Ph2-1",
+      "kind": "phase",
+      "parent": null,
+      "lineStart": 30,
+      "lineEnd": 34,
+      "text": "## Ph2-1 Payments"
+    }
+  ],
+  "refs": [],
+  "errors": []
+}

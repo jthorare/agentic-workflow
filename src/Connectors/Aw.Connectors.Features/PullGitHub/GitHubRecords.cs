@@ -14,7 +14,7 @@ internal static partial class GitHubRecords
 {
     private const int MaxPaths = 300;
 
-    public static ConnectorItem From(string repo, GitHubIssue issue, IReadOnlyList<GitHubComment> comments, GitHubPullDetail? detail)
+    public static ConnectorItem From(string repo, GitHubIssue issue, IReadOnlyList<GitHubComment> comments, GitHubPullDetail? detail, IReadOnlyList<ConnectorReview> reviews)
     {
         var title = OneLine(TextCleaner.Clean(issue.Title));
         var body = TextCleaner.Clean(issue.Body);
@@ -34,7 +34,8 @@ internal static partial class GitHubRecords
             issue.ClosedAt,
             issue.UpdatedAt.UtcDateTime.ToString("O", CultureInfo.InvariantCulture),
             Links(repo, issue, body, comments, detail),
-            repo);
+            repo,
+            detail is null ? null : new ConnectorPullFacts(detail.RequestedReviewers ?? [], detail.HeadSha, reviews));
     }
 
     private static string State(GitHubIssue issue, GitHubPullDetail? detail)

@@ -77,7 +77,7 @@ public sealed class TraitCheckRoutingTests : IDisposable
 
         var run = await new JudgeCli(_state).Run(args);
 
-        Assert.Equal(new CliRun(64, "", "usage: judge trait-check --edit --file <path>… | --stop [--base <ref>] | --scan [--path <path>…] [--trait <name>…]\n"), run);
+        Assert.Equal(new CliRun(64, "", "usage: judge trait-check --edit --file <path>… [--session <id>] | --stop [--base <ref>] [--session <id>] | --scan [--path <path>…] [--trait <name>…]\n"), run);
     }
 
     public void Dispose() => _state.Dispose();

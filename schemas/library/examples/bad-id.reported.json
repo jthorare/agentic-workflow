@@ -1,0 +1,23 @@
+{
+  "parserVersion": 1,
+  "frontMatter": {
+    "aw-doc": 1,
+    "id": "Bad_ID",
+    "kind": "spec",
+    "title": "Sindri's PR review page, configured per project, mapped against the design docs",
+    "status": "draft",
+    "repos": [
+      "jthorare/agentic-workflow"
+    ]
+  },
+  "items": [],
+  "refs": [],
+  "errors": [
+    {
+      "code": "SND-LIB-010",
+      "line": 3,
+      "message": "id \"Bad_ID\" has capitals or '_'.",
+      "fix": "Use lowercase letters, digits and '-', 3 to 64 characters."
+    }
+  ]
+}

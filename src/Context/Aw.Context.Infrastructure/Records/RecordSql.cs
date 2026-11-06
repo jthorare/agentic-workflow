@@ -12,11 +12,11 @@ internal static class RecordSql
     internal const string Existing = "SELECT version, text_hash, ruleset, blocked, removed_at FROM source_record WHERE key = @key";
 
     internal const string UpsertRecord =
-        "INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at, health, due_at, description) " +
-        "VALUES (@key, @source, @kind, @repo, @audience, @title, @url, @author, @state, @stateRaw, @created, @updated, @closed, @version, @hash, @ruleset, @blocked, NULL, @synced, @health, @dueAt, @description) " +
+        "INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at, health, due_at, description, pull_facts) " +
+        "VALUES (@key, @source, @kind, @repo, @audience, @title, @url, @author, @state, @stateRaw, @created, @updated, @closed, @version, @hash, @ruleset, @blocked, NULL, @synced, @health, @dueAt, @description, @pull) " +
         "ON CONFLICT (key) DO UPDATE SET source = excluded.source, kind = excluded.kind, repo = excluded.repo, audience_key = excluded.audience_key, title = excluded.title, url = excluded.url, " +
         "author = excluded.author, state = excluded.state, state_raw = excluded.state_raw, created_at = excluded.created_at, updated_at = excluded.updated_at, closed_at = excluded.closed_at, " +
-        "version = excluded.version, text_hash = excluded.text_hash, ruleset = excluded.ruleset, blocked = excluded.blocked, removed_at = NULL, synced_at = excluded.synced_at, health = excluded.health, due_at = excluded.due_at, description = excluded.description";
+        "version = excluded.version, text_hash = excluded.text_hash, ruleset = excluded.ruleset, blocked = excluded.blocked, removed_at = NULL, synced_at = excluded.synced_at, health = excluded.health, due_at = excluded.due_at, description = excluded.description, pull_facts = excluded.pull_facts";
 
     internal const string DeleteLinks = "DELETE FROM record_link WHERE from_key = @key";
 
@@ -44,7 +44,7 @@ internal static class RecordSql
 
     /// <summary>A tombstone and a blocked row keep only key, kind, state and times: the title becomes the key and the free text goes.</summary>
     internal const string Tombstone =
-        "UPDATE source_record SET removed_at = @at, title = key, url = NULL, author = NULL, state_raw = NULL, description = NULL, synced_at = @at WHERE key = @key AND source = @source AND removed_at IS NULL";
+        "UPDATE source_record SET removed_at = @at, title = key, url = NULL, author = NULL, state_raw = NULL, description = NULL, pull_facts = NULL, synced_at = @at WHERE key = @key AND source = @source AND removed_at IS NULL";
 
     internal const string ClearInboundTitles = "UPDATE record_link SET title = NULL WHERE to_key = @key";
 
@@ -79,7 +79,7 @@ internal static class RecordSql
     internal const string OptimizeFts = "INSERT INTO chunk_fts (chunk_fts) VALUES ('optimize')";
 
     internal const string Columns =
-        "key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at, health, due_at, description";
+        "key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at, health, due_at, description, pull_facts";
 
     internal const string Get = "SELECT " + Columns + " FROM source_record WHERE key = @key";
 

@@ -390,7 +390,9 @@ write_wrapper() { # write_wrapper <name>
   {
     echo '#!/usr/bin/env bash'
     echo "# install-cs: C# wrapper for $name; scripts/install-cs.sh writes it, and publishing is its job, not this wrapper's"
-    echo "export DOTNET_ROOT=\"\${DOTNET_ROOT:-$(shq "$DOTNET_ROOT")}\""
+    # The default is its own assignment: inside "${DOTNET_ROOT:-...}" shq's single quotes would be kept as part of the value.
+    echo "[ -n \"\${DOTNET_ROOT:-}\" ] || DOTNET_ROOT=$(shq "$DOTNET_ROOT")"
+    echo 'export DOTNET_ROOT'
     echo "cur=\"\$(cd $(shq "$base/current") 2> /dev/null && pwd -P)\" || { echo \"$name: no C# build is linked (run scripts/install-cs.sh)\" >&2; exit 1; }"
     if [ "$name" = sindri ]; then
       echo 'export AW_SINDRI_JUDGE="${AW_SINDRI_JUDGE:-$cur/judge}"'

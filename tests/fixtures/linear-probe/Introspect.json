@@ -1,0 +1,7 @@
+{"data":{
+ "m":{"fields":[{"name":"issueCreate"},{"name":"issueUpdate"},{"name":"commentCreate"},{"name":"commentUpdate"},{"name":"attachmentLinkURL"},{"name":"issueArchive"},{"name":"issueLabelCreate"}]},
+ "ic":{"inputFields":[{"name":"id"},{"name":"title"},{"name":"teamId"},{"name":"labelIds"}]},
+ "cc":{"inputFields":[{"name":"id"},{"name":"body"},{"name":"issueId"}]},
+ "iu":{"inputFields":[{"name":"title"},{"name":"description"},{"name":"stateId"}]},
+ "q":{"fields":[{"name":"viewer"},{"name":"apiKeys"}]},
+ "ak":{"fields":[{"name":"id"},{"name":"label"},{"name":"scope"}]}}}

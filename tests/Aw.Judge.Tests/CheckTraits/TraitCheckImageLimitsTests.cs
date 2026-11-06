@@ -58,6 +58,7 @@ public sealed class TraitCheckImageLimitsTests
         files,
         new JevTraitJudge(jev, new FakeInputRedactor(), new InMemoryJudgeConfigStore()),
         new RecordingTraitLog(),
+        new FileTraitCheckSessions(Path.Combine(state.Path, "sessions"), TimeProvider.System),
         new FakeTimeProvider());
 
     private static void Commit(TraitRepo repo)
@@ -76,6 +77,8 @@ public sealed class TraitCheckImageLimitsTests
         public string WorkingDirectory => inner.WorkingDirectory;
 
         public string? ReadText(string path) => inner.ReadText(path);
+
+        public bool DirectoryExists(string path) => inner.DirectoryExists(path);
 
         public long? FileSize(string path) => inner.FileSize(path);
 
