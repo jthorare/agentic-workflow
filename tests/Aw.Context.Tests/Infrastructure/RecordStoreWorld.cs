@@ -12,9 +12,12 @@ internal sealed class RecordStoreWorld : IDisposable
     public RecordStoreWorld()
     {
         Store = new SqliteRecordStore(_home.Database);
+        Library = new SqliteLibraryStore(_home.Database);
     }
 
     public SqliteRecordStore Store { get; }
+
+    public SqliteLibraryStore Library { get; }
 
     public ContextDatabase Database => _home.Database;
 
