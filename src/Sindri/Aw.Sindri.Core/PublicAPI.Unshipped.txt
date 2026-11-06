@@ -5346,8 +5346,8 @@ Aw.Sindri.Core.Workflow.Views.FactStatus.Produced = 1 -> Aw.Sindri.Core.Workflow
 Aw.Sindri.Core.Workflow.Views.FactType
 Aw.Sindri.Core.Workflow.Views.FactType.Decision = 8 -> Aw.Sindri.Core.Workflow.Views.FactType
 Aw.Sindri.Core.Workflow.Views.FactType.Evidence = 7 -> Aw.Sindri.Core.Workflow.Views.FactType
-Aw.Sindri.Core.Workflow.Views.FactType.Findings = 10 -> Aw.Sindri.Core.Workflow.Views.FactType
 Aw.Sindri.Core.Workflow.Views.FactType.File = 2 -> Aw.Sindri.Core.Workflow.Views.FactType
+Aw.Sindri.Core.Workflow.Views.FactType.Findings = 10 -> Aw.Sindri.Core.Workflow.Views.FactType
 Aw.Sindri.Core.Workflow.Views.FactType.Item = 3 -> Aw.Sindri.Core.Workflow.Views.FactType
 Aw.Sindri.Core.Workflow.Views.FactType.Link = 4 -> Aw.Sindri.Core.Workflow.Views.FactType
 Aw.Sindri.Core.Workflow.Views.FactType.Packet = 6 -> Aw.Sindri.Core.Workflow.Views.FactType
