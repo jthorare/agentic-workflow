@@ -53,6 +53,14 @@ check "findings: judge's message reaches the agent" "$OUT" "trait-check: your la
 run '{"hook_event_name":"Stop","stop_hook_active":false}'
 check "Stop: branch check" "$(args)" "trait-check --stop"
 
+# --- the session id: edit records the repo it touched, Stop judges every repo the session edited in ---
+run '{"hook_event_name":"PostToolUse","session_id":"s1","tool_name":"Edit","tool_input":{"file_path":"/b/src/a.ts"}}'
+check "edit with a session id: passes --session" "$(args)" "trait-check --edit --file /b/src/a.ts --session s1"
+run '{"hook_event_name":"Stop","session_id":"s1","stop_hook_active":false}'
+check "Stop with a session id: passes --session" "$(args)" "trait-check --stop --session s1"
+run '{"hook_event_name":"Stop","session_id":"","stop_hook_active":false}'
+check "an empty session id: no --session" "$(args)" "trait-check --stop"
+
 run '{"hook_event_name":"Stop","stop_hook_active":true}'
 check "Stop re-entry: judge not called (no loop)" "$(args)" ""
 check "Stop re-entry: exits 0" "$RC" "0"
