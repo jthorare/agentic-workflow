@@ -11306,3 +11306,21 @@ Aw.Context.Core.Sync.RecordItem.RecordItem(Aw.Context.Core.Sources.RecordKey Key
 Aw.Context.Core.Records.StoredRecord.StoredRecord(Aw.Context.Core.Sources.RecordKey Key, Aw.Context.Core.Sources.SourceId Source, Aw.Context.Core.Sources.RecordKind Kind, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Records.AudienceKey? Audience, string! Title, string? Url, string? Author, Aw.Context.Core.Records.RecordState? State, string? StateRaw, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? ClosedAt, Aw.Context.Core.Sources.SourceVersion Version, string! TextHash, string! Ruleset, bool Blocked, System.DateTimeOffset? RemovedAt, System.DateTimeOffset SyncedAt, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, string? Health = null, System.DateOnly? DueAt = null, string? Description = null, Aw.Context.Core.Records.PullFacts? Pull = null) -> void
 Aw.Context.Core.Records.ReviewedCommit.ReviewedCommit(string! Login, string! Commit, int? NewCommits) -> void
 Aw.Context.Core.Records.PullFacts.PullFacts(System.Collections.Generic.IReadOnlyList<string!>! RequestedReviewers, string? HeadSha, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.ReviewedCommit!>! Reviews) -> void
+Aw.Context.Core.Library.PrCovers
+Aw.Context.Core.Library.PrCovers.<Clone>$() -> Aw.Context.Core.Library.PrCovers!
+Aw.Context.Core.Library.PrCovers.Declined.get -> bool
+Aw.Context.Core.Library.PrCovers.Declined.init -> void
+Aw.Context.Core.Library.PrCovers.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Refs, out bool Declined, out bool Doubled) -> void
+Aw.Context.Core.Library.PrCovers.Doubled.get -> bool
+Aw.Context.Core.Library.PrCovers.Doubled.init -> void
+Aw.Context.Core.Library.PrCovers.Equals(Aw.Context.Core.Library.PrCovers? other) -> bool
+Aw.Context.Core.Library.PrCovers.PrCovers(System.Collections.Generic.IReadOnlyList<string!>! Refs, bool Declined, bool Doubled) -> void
+Aw.Context.Core.Library.PrCovers.Refs.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Library.PrCovers.Refs.init -> void
+override Aw.Context.Core.Library.PrCovers.Equals(object? obj) -> bool
+override Aw.Context.Core.Library.PrCovers.GetHashCode() -> int
+override Aw.Context.Core.Library.PrCovers.ToString() -> string!
+static Aw.Context.Core.Library.PrCovers.None.get -> Aw.Context.Core.Library.PrCovers!
+static Aw.Context.Core.Library.PrCovers.Parse(string? body) -> Aw.Context.Core.Library.PrCovers!
+static Aw.Context.Core.Library.PrCovers.operator !=(Aw.Context.Core.Library.PrCovers? left, Aw.Context.Core.Library.PrCovers? right) -> bool
+static Aw.Context.Core.Library.PrCovers.operator ==(Aw.Context.Core.Library.PrCovers? left, Aw.Context.Core.Library.PrCovers? right) -> bool
