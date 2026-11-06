@@ -80,6 +80,8 @@ check "cursor: sessionStart has session-id-report and meta-lane-gate" "$(jq -r '
 check "cursor: postToolUse and stop run meta-lane-gate; the user's stop hook is kept" \
   "$(jq -r '[.hooks.postToolUse[].command] | map(sub(".*# ";"")) | join(",")' "$U"):$(jq -r '[.hooks.stop[].command] | map(sub(".*# ";"")) | join(",")' "$U")" "aw:meta-lane-gate:mine,aw:meta-lane-gate"
 check "cursor: the entries go through the cursor adapter" "$(jq -r '.hooks.stop[].command' "$U" | grep -c "^'$AW_STATE_DIR/hooks/adapters/cursor.sh' '$AW_STATE_DIR/hooks/meta-lane-gate.sh'")" "1"
+check "cursor: afterAgentResponse runs meta-lane-gate through the cursor adapter (the reply text comes with that event)" \
+  "$(jq -r '[.hooks.afterAgentResponse[]?.command] | map(sub(".*# ";"")) | join(",")' "$U"):$(jq -r '.hooks.afterAgentResponse[]?.command' "$U" | grep -c "^'$AW_STATE_DIR/hooks/adapters/cursor.sh' '$AW_STATE_DIR/hooks/meta-lane-gate.sh'")" "aw:meta-lane-gate:1"
 cp "$U" "$WORK/cursor-before"
 bash "$DIR/install-meta.sh" --provider cursor > /dev/null 2>&1
 check "cursor: rerun leaves hooks.json unchanged" "$(cmp -s "$U" "$WORK/cursor-before" && echo same)" "same"
