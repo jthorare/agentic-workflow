@@ -1,7 +1,7 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Blocks;
-using Aw.Sindri.Features.Skills;
+using Aw.Sindri.Infrastructure.Skills;
 using Aw.Sindri.Testing.Skills;
 using Aw.Sindri.Tests.Sandbox.Egress;
 

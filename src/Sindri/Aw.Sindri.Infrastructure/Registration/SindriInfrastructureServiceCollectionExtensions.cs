@@ -29,6 +29,7 @@ using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Scoping;
 using Aw.Sindri.Core.Secrets;
 using Aw.Sindri.Core.Setup;
+using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow;
@@ -68,6 +69,7 @@ using Aw.Sindri.Infrastructure.Secrets;
 using Aw.Sindri.Infrastructure.Sessions;
 using Aw.Sindri.Infrastructure.Setup;
 using Aw.Sindri.Infrastructure.Text;
+using Aw.Sindri.Infrastructure.Skills;
 using Aw.Sindri.Infrastructure.Views;
 using Aw.Sindri.Infrastructure.Workflow;
 using Aw.Sindri.Infrastructure.Worktrees;
@@ -86,7 +88,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
     public static IServiceCollection AddSindriInfrastructure(this IServiceCollection services, Func<string, string?> environment)
     {
         var settings = SettingsFromEnvironment.Read(environment);
-        return services.AddSingleton(settings).AddSindriSessions(environment, settings).AddSindriLauncher(environment, settings).AddSindriAdapters(environment).AddAgentRuntimeAdapters(environment).AddSindriMcp(environment).AddSecretInfrastructure().AddProfileEditing(environment).AddLeftoverInfrastructure().AddScopingInfrastructure(environment).AddBugFixInfrastructure(environment).AddJudgeInfrastructure(environment).AddScopeWatch();
+        return services.AddSingleton(settings).AddSindriSessions(environment, settings).AddSindriLauncher(environment, settings).AddSindriAdapters(environment).AddAgentRuntimeAdapters(environment).AddSindriMcp(environment).AddSecretInfrastructure().AddProfileEditing(environment).AddLeftoverInfrastructure().AddScopingInfrastructure(environment).AddBugFixInfrastructure(environment).AddJudgeInfrastructure(environment).AddScopeWatch().AddSingleton<ISkillBlocks>(static _ => new SkillBlockRegistry(string.Empty));   // why: the folder order (spec §3.2) lands with the loader
     }
 
     /// <summary>SB-3a: what 'session wrap --limits' watches a session's systemd scope through (systemctl --user and the cgroup files).</summary>

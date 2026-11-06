@@ -22259,3 +22259,7 @@ static readonly Aw.Sindri.Core.SindriErrors.SkillVerdictUnmapped -> Aw.Kernel.Er
 Aw.Sindri.Core.Skills.SkillResultInput.LastPrompt.get -> System.DateTimeOffset?
 Aw.Sindri.Core.Skills.SkillResultInput.LastPrompt.init -> void
 Aw.Sindri.Core.Skills.SkillResultKind.Working = 4 -> Aw.Sindri.Core.Skills.SkillResultKind
+Aw.Sindri.Core.Skills.ISkillBlocks
+Aw.Sindri.Core.Skills.ISkillBlocks.LoadFolder(string! folder) -> Aw.Sindri.Core.Skills.SkillBlocks!
+Aw.Sindri.Core.Skills.ISkillBlocks.Loaded.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Skills.LoadedSkillBlock!>!
+Aw.Sindri.Core.Skills.ISkillBlocks.Skipped.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Skills.SkippedSkillBlock!>!
