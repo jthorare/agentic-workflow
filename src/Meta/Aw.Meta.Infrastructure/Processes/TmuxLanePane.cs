@@ -18,6 +18,7 @@ namespace Aw.Meta.Infrastructure.Processes;
 internal sealed class TmuxLanePane(ICommandRunner runner, string tmux, string? socket, IMetaConfig config, IDelay delay) : ILanePane
 {
     private static readonly TimeSpan _timeout = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan _enterPause = TimeSpan.FromMilliseconds(300);
 
     public async ValueTask<Result<PaneState?>> Probe(string session, CancellationToken cancellationToken)
     {
@@ -96,9 +97,14 @@ internal sealed class TmuxLanePane(ICommandRunner runner, string tmux, string? s
             return name.Error;
         }
 
-        _ = delay;
         var target = Target(session);
         var typed = await Run(name.Value, ["send-keys", "-t", target, "-l", line], cancellationToken).ConfigureAwait(false);
+        if (typed.IsSuccess && typed.Value.ExitCode == 0)
+        {
+            // Codex's input box swallows an Enter that follows the typed characters at once (it reads the burst as a paste).
+            await delay.Wait(_enterPause, cancellationToken).ConfigureAwait(false);
+        }
+
         var entered = typed.IsError || typed.Value.ExitCode != 0 ? typed : await Run(name.Value, ["send-keys", "-t", target, "Enter"], cancellationToken).ConfigureAwait(false);
         return entered.IsError
             ? entered.Error

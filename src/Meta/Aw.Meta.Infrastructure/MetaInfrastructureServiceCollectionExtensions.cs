@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Ports;
 using Aw.Meta.Infrastructure.Build;
 using Aw.Meta.Infrastructure.Config;
@@ -29,6 +30,9 @@ public static class MetaInfrastructureServiceCollectionExtensions
             .AddSingleton(settings)
             .AddSingleton(settings.Paths)
             .AddSingleton(settings.Layout)
+            .AddSingleton(environment("AW_META_UNDELIVERED_MINUTES") is { } minutes && int.TryParse(minutes, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var limit) && limit > 0
+                ? new LaneHealthOptions(TimeSpan.FromMinutes(limit))
+                : LaneHealthOptions.Default)
             .AddSingleton(sp => new MetaDatabase(MetaDatabase.OptionsFor(settings.StateDirectory), sp.GetRequiredService<TimeProvider>()))
             .AddScoped<IMessageStore, SqliteMessageStore>()
             .AddScoped<ILaneStore, SqliteLaneStore>()

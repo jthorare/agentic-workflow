@@ -1079,3 +1079,7 @@ Aw.Meta.Features.Usage.UsageRow.State.get -> Aw.Meta.Core.Usage.UsageState
 Aw.Meta.Features.Usage.UsageRow.UsageRow(string! Subject, Aw.Meta.Core.Usage.UsageState State, Aw.Meta.Core.Usage.UsageKind? Kind, System.DateTimeOffset? ResetsAt, string? Source = null, string? Reason = null) -> void
 Aw.Meta.Features.LaneInbox.LaneInboxRequest.HookEvent.get -> string?
 Aw.Meta.Features.LaneInbox.LaneInboxRequest.HookEvent.init -> void
+Aw.Meta.Features.LaneSend.LaneSendRequest.WakeConfirmSeconds.get -> int
+Aw.Meta.Features.LaneSend.LaneSendRequest.WakeConfirmSeconds.init -> void
+Aw.Meta.Features.LaneSend.LaneSendResponse.ViewerAttached.get -> bool
+Aw.Meta.Features.LaneSend.LaneSendResponse.ViewerAttached.init -> void

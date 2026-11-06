@@ -11,6 +11,7 @@ namespace Aw.Meta.Core.Coordination;
 public sealed class LaneBeats(IKeyValueStore values, IDelay delay)
 {
     private const char Separator = '|';
+    private static readonly TimeSpan _pollEvery = TimeSpan.FromMilliseconds(500);
     private const string StopEvent = "stop";
     private const string ActiveEvent = "active";
 
@@ -59,11 +60,34 @@ public sealed class LaneBeats(IKeyValueStore values, IDelay delay)
     /// <param name="window">How long to wait.</param>
     /// <param name="cancellationToken">Cancels the wait.</param>
     /// <returns>True when a hook beat arrived inside the window.</returns>
-    public ValueTask<Result<bool>> WaitForHook(string lane, DateTimeOffset since, TimeSpan window, CancellationToken cancellationToken)
+    public async ValueTask<Result<bool>> WaitForHook(string lane, DateTimeOffset since, TimeSpan window, CancellationToken cancellationToken)
     {
-        _ = (delay, lane, since, window, cancellationToken);
-        return ValueTask.FromResult(Results.Success(value: false));
+        var polls = (int)(window / _pollEvery);
+        for (var poll = 0; poll < polls; poll++)
+        {
+            await delay.Wait(_pollEvery, cancellationToken).ConfigureAwait(false);
+            var beat = await Last(lane, cancellationToken).ConfigureAwait(false);
+            if (beat.IsError)
+            {
+                return beat.Error;
+            }
+
+            if (beat.Value is { } last && last.At > since)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
+
+    /// <summary>Records that the lane ran an aw-meta lane command by hand (no AW_META_HOOK): it is never hook proof.</summary>
+    /// <param name="lane">The lane.</param>
+    /// <param name="now">When.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>Success.</returns>
+    public ValueTask<Result<Unit>> RecordCli(string lane, DateTimeOffset now, CancellationToken cancellationToken) =>
+        values.Set("lane." + lane + ".cli", now.ToString("O", CultureInfo.InvariantCulture), cancellationToken);
 
     /// <summary>Records that the lane was woken, so a second send doesn't type into the pane again before the lane's hook answers.</summary>
     /// <param name="lane">The lane.</param>
