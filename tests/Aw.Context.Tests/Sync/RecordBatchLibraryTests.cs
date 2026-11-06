@@ -26,6 +26,10 @@ public sealed class RecordBatchLibraryTests
         return RecordBatches.From(SourceId.From(source), page, SyncPhase.Incremental, _scrubbers, RecordSamples.Now).Records.Single();
     }
 
+    private static ParsedDesignDoc? Doc(RecordWrite write) => (write.Side as DesignDocSideRows)?.Doc;
+
+    private static IReadOnlyList<string>? Claims(RecordWrite write) => (write.Side as PrClaimSideRows)?.Refs;
+
     [Theory]
     [InlineData("repo-docs", "repo:aw/docs/a.md")]
     [InlineData("library", "doc:work/a.md")]
@@ -33,17 +37,17 @@ public sealed class RecordBatchLibraryTests
     {
         var write = Build(source, RecordKind.Doc, key, Spec);
 
-        Assert.Equal(["goals", "REQ-1"], ADoc.Ids(write.Doc!));
-        Assert.Equal("harbor", write.Doc!.FrontMatter!.Slug);
-        Assert.Empty(write.Doc.Errors);
-        Assert.Null(write.Claims);
+        Assert.Equal(["goals", "REQ-1"], ADoc.Ids(Doc(write)!));
+        Assert.Equal("harbor", Doc(write)!.FrontMatter!.Slug);
+        Assert.Empty(Doc(write)!.Errors);
+        Assert.Null(Claims(write));
     }
 
     [Fact]
     public void A_doc_without_aw_doc_front_matter_gets_no_parse()
     {
-        Assert.Null(Build("repo-docs", RecordKind.Doc, "repo:aw/docs/a.md", "# Alpha\n\nNo front matter.\n").Doc);
-        Assert.Null(Build("repo-docs", RecordKind.Doc, "repo:aw/docs/b.md", "---\ntitle: x\n---\nBody\n").Doc);
+        Assert.Null(Doc(Build("repo-docs", RecordKind.Doc, "repo:aw/docs/a.md", "# Alpha\n\nNo front matter.\n")));
+        Assert.Null(Doc(Build("repo-docs", RecordKind.Doc, "repo:aw/docs/b.md", "---\ntitle: x\n---\nBody\n")));
     }
 
     [Fact]
@@ -52,21 +56,21 @@ public sealed class RecordBatchLibraryTests
         var write = Build("repo-docs", RecordKind.Doc, "repo:aw/docs/a.md", Spec + "- **REQ-2** " + FakeScrubber.BlockMe + "\n");
 
         Assert.True(write.Record.Blocked);
-        Assert.Empty(write.Doc!.Items);
+        Assert.Empty(Doc(write)!.Items);
         Assert.Empty(write.Chunks);
-        Assert.Contains("blocked", Assert.Single(write.Doc.Errors).Message, StringComparison.Ordinal);
+        Assert.Contains("blocked", Assert.Single(Doc(write)!.Errors).Message, StringComparison.Ordinal);
     }
 
     [Fact]
     public void A_blocked_file_that_is_not_a_design_doc_gets_no_parse() =>
-        Assert.Null(Build("repo-docs", RecordKind.Doc, "repo:aw/docs/a.md", "# Plain " + FakeScrubber.BlockMe).Doc);
+        Assert.Null(Doc(Build("repo-docs", RecordKind.Doc, "repo:aw/docs/a.md", "# Plain " + FakeScrubber.BlockMe)));
 
     [Fact]
     public void A_doc_of_another_source_is_not_itemized_and_keeps_the_plain_ruleset()
     {
         var write = Build("linear", RecordKind.Doc, "linear:doc/1", Spec);
 
-        Assert.Null(write.Doc);
+        Assert.Null(write.Side);
         Assert.Equal(_scrubbers.Ruleset.Value, write.Record.Ruleset);
     }
 
@@ -89,8 +93,8 @@ public sealed class RecordBatchLibraryTests
     {
         var write = Build("github", RecordKind.Pr, "github:pr/acme/widgets/12", body);
 
-        Assert.Equal(expected, write.Claims);
-        Assert.Null(write.Doc);
+        Assert.Equal(expected, Claims(write));
+        Assert.Null(Doc(write));
     }
 
     [Fact]
@@ -98,7 +102,7 @@ public sealed class RecordBatchLibraryTests
     {
         var write = Build("github", RecordKind.Pr, "github:pr/acme/widgets/12", "Covers: harbor#Ph2 " + FakeScrubber.BlockMe);
 
-        Assert.Empty(write.Claims!);
+        Assert.Empty(Claims(write)!);
     }
 
     [Fact]
@@ -106,7 +110,7 @@ public sealed class RecordBatchLibraryTests
     {
         var write = Build("github", RecordKind.Issue, "github:issue/acme/widgets/3", "Covers: harbor#Ph2");
 
-        Assert.Null(write.Claims);
-        Assert.Null(write.Doc);
+        Assert.Null(Claims(write));
+        Assert.Null(Doc(write));
     }
 }

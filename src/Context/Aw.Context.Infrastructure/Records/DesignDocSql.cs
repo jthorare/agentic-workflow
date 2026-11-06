@@ -3,6 +3,12 @@ namespace Aw.Context.Infrastructure.Records;
 /// <summary>The design-doc library's SQL (migration 0031_review_library). Values are always bound, never formatted in.</summary>
 internal static class DesignDocSql
 {
+    internal const string StoredVersion = "SELECT parser_version FROM design_doc WHERE doc_key = @key";
+
+    internal const string StoredItemCount = "SELECT count(*) FROM design_doc_item WHERE doc_key = @key";
+
+    internal const string StoredClaims = "SELECT ref FROM design_doc_claim WHERE pr_key = @key ORDER BY ref";
+
     internal const string DeleteRefs = "DELETE FROM design_doc_ref WHERE doc_key = @key";
 
     internal const string DeleteItems = "DELETE FROM design_doc_item WHERE doc_key = @key";

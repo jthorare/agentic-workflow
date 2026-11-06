@@ -11322,13 +11322,54 @@ static Aw.Context.Core.Library.PrCovers.None.get -> Aw.Context.Core.Library.PrCo
 static Aw.Context.Core.Library.PrCovers.Parse(string? body) -> Aw.Context.Core.Library.PrCovers!
 static Aw.Context.Core.Library.PrCovers.operator !=(Aw.Context.Core.Library.PrCovers? left, Aw.Context.Core.Library.PrCovers? right) -> bool
 static Aw.Context.Core.Library.PrCovers.operator ==(Aw.Context.Core.Library.PrCovers? left, Aw.Context.Core.Library.PrCovers? right) -> bool
-Aw.Context.Core.Records.RecordWrite.Claims.get -> System.Collections.Generic.IReadOnlyList<string!>?
-Aw.Context.Core.Records.RecordWrite.Claims.init -> void
-Aw.Context.Core.Records.RecordWrite.Deconstruct(out Aw.Context.Core.Records.StoredRecord! Record, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordChunk!>! Chunks, out Aw.Context.Core.Library.ParsedDesignDoc? Doc, out System.Collections.Generic.IReadOnlyList<string!>? Claims) -> void
-Aw.Context.Core.Records.RecordWrite.Doc.get -> Aw.Context.Core.Library.ParsedDesignDoc?
-Aw.Context.Core.Records.RecordWrite.Doc.init -> void
-Aw.Context.Core.Records.RecordWrite.RecordWrite(Aw.Context.Core.Records.StoredRecord! Record, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordChunk!>! Chunks, Aw.Context.Core.Library.ParsedDesignDoc? Doc = null, System.Collections.Generic.IReadOnlyList<string!>? Claims = null) -> void
 const Aw.Context.Core.Sync.RecordBatches.LibrarySource = "library" -> string!
 static Aw.Context.Core.Library.DesignDocParser.Blocked(string! path) -> Aw.Context.Core.Library.ParsedDesignDoc!
 static Aw.Context.Core.Library.DesignDocParser.IsDesignDoc(Aw.Context.Core.Library.ParsedDesignDoc! doc) -> bool
 static Aw.Context.Core.Library.DesignDocParser.Stamp(string! ruleset) -> string!
+Aw.Context.Core.Library.DesignDocSideRows
+Aw.Context.Core.Library.DesignDocSideRows.Deconstruct(out Aw.Context.Core.Library.ParsedDesignDoc? Doc) -> void
+Aw.Context.Core.Library.DesignDocSideRows.DesignDocSideRows(Aw.Context.Core.Library.ParsedDesignDoc? Doc) -> void
+Aw.Context.Core.Library.DesignDocSideRows.Doc.get -> Aw.Context.Core.Library.ParsedDesignDoc?
+Aw.Context.Core.Library.DesignDocSideRows.Doc.init -> void
+Aw.Context.Core.Library.DesignDocSideRows.Equals(Aw.Context.Core.Library.DesignDocSideRows? other) -> bool
+Aw.Context.Core.Library.PrClaimSideRows
+Aw.Context.Core.Library.PrClaimSideRows.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Refs) -> void
+Aw.Context.Core.Library.PrClaimSideRows.Equals(Aw.Context.Core.Library.PrClaimSideRows? other) -> bool
+Aw.Context.Core.Library.PrClaimSideRows.PrClaimSideRows(System.Collections.Generic.IReadOnlyList<string!>! Refs) -> void
+Aw.Context.Core.Library.PrClaimSideRows.Refs.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Library.PrClaimSideRows.Refs.init -> void
+Aw.Context.Core.Records.RecordWrite.Deconstruct(out Aw.Context.Core.Records.StoredRecord! Record, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordChunk!>! Chunks, out Aw.Context.Core.Records.SideRows? Side) -> void
+Aw.Context.Core.Records.RecordWrite.RecordWrite(Aw.Context.Core.Records.StoredRecord! Record, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordChunk!>! Chunks, Aw.Context.Core.Records.SideRows? Side = null) -> void
+Aw.Context.Core.Records.RecordWrite.Side.get -> Aw.Context.Core.Records.SideRows?
+Aw.Context.Core.Records.RecordWrite.Side.init -> void
+Aw.Context.Core.Records.SideRows
+Aw.Context.Core.Records.SideRows.Deconstruct(out string! Writer) -> void
+Aw.Context.Core.Records.SideRows.SideRows(Aw.Context.Core.Records.SideRows! original) -> void
+Aw.Context.Core.Records.SideRows.SideRows(string! Writer) -> void
+Aw.Context.Core.Records.SideRows.Writer.get -> string!
+Aw.Context.Core.Records.SideRows.Writer.init -> void
+abstract Aw.Context.Core.Records.SideRows.<Clone>$() -> Aw.Context.Core.Records.SideRows!
+const Aw.Context.Core.Library.DesignDocSideRows.WriterId = "design-doc" -> string!
+const Aw.Context.Core.Library.PrClaimSideRows.WriterId = "pr-claims" -> string!
+override Aw.Context.Core.Library.DesignDocSideRows.<Clone>$() -> Aw.Context.Core.Library.DesignDocSideRows!
+override Aw.Context.Core.Library.DesignDocSideRows.Equals(object? obj) -> bool
+override Aw.Context.Core.Library.DesignDocSideRows.GetHashCode() -> int
+override Aw.Context.Core.Library.DesignDocSideRows.ToString() -> string!
+override Aw.Context.Core.Library.PrClaimSideRows.<Clone>$() -> Aw.Context.Core.Library.PrClaimSideRows!
+override Aw.Context.Core.Library.PrClaimSideRows.Equals(object? obj) -> bool
+override Aw.Context.Core.Library.PrClaimSideRows.GetHashCode() -> int
+override Aw.Context.Core.Library.PrClaimSideRows.ToString() -> string!
+override Aw.Context.Core.Records.SideRows.Equals(object? obj) -> bool
+override Aw.Context.Core.Records.SideRows.GetHashCode() -> int
+override Aw.Context.Core.Records.SideRows.ToString() -> string!
+override sealed Aw.Context.Core.Library.DesignDocSideRows.Equals(Aw.Context.Core.Records.SideRows? other) -> bool
+override sealed Aw.Context.Core.Library.PrClaimSideRows.Equals(Aw.Context.Core.Records.SideRows? other) -> bool
+static Aw.Context.Core.Library.DesignDocSideRows.operator !=(Aw.Context.Core.Library.DesignDocSideRows? left, Aw.Context.Core.Library.DesignDocSideRows? right) -> bool
+static Aw.Context.Core.Library.DesignDocSideRows.operator ==(Aw.Context.Core.Library.DesignDocSideRows? left, Aw.Context.Core.Library.DesignDocSideRows? right) -> bool
+static Aw.Context.Core.Library.PrClaimSideRows.operator !=(Aw.Context.Core.Library.PrClaimSideRows? left, Aw.Context.Core.Library.PrClaimSideRows? right) -> bool
+static Aw.Context.Core.Library.PrClaimSideRows.operator ==(Aw.Context.Core.Library.PrClaimSideRows? left, Aw.Context.Core.Library.PrClaimSideRows? right) -> bool
+static Aw.Context.Core.Records.SideRows.operator !=(Aw.Context.Core.Records.SideRows? left, Aw.Context.Core.Records.SideRows? right) -> bool
+static Aw.Context.Core.Records.SideRows.operator ==(Aw.Context.Core.Records.SideRows? left, Aw.Context.Core.Records.SideRows? right) -> bool
+virtual Aw.Context.Core.Records.SideRows.EqualityContract.get -> System.Type!
+virtual Aw.Context.Core.Records.SideRows.Equals(Aw.Context.Core.Records.SideRows? other) -> bool
+virtual Aw.Context.Core.Records.SideRows.PrintMembers(System.Text.StringBuilder! builder) -> bool

@@ -28,10 +28,10 @@ public sealed class DesignDocStoreTests : IDisposable
         RecordSamples.Record(DocKey, version, RepoDocs.Id) with { Kind = RecordKind.Doc };
 
     private static RecordWrite DocWrite(ParsedDesignDoc? parsed, string version = "v1") =>
-        RecordSamples.Write(DocRecord(version), "words") with { Doc = parsed };
+        RecordSamples.Write(DocRecord(version), "words") with { Side = new DesignDocSideRows(parsed) };
 
     private static RecordWrite PrWrite(IReadOnlyList<string>? claims, string version = "v1") =>
-        RecordSamples.Write(RecordSamples.Record(PrKey, version, RecordSamples.Github) with { Kind = RecordKind.Pr }, "words") with { Claims = claims };
+        RecordSamples.Write(RecordSamples.Record(PrKey, version, RecordSamples.Github) with { Kind = RecordKind.Pr }, "words") with { Side = claims is null ? null : new PrClaimSideRows(claims) };
 
     private Task<Kernel.Result<CommitReport>> Commit(SourceId source, int page, params RecordWrite[] writes) =>
         _world.Store.Commit(RecordSamples.Batch(source, page, writes), Ct).AsTask();
@@ -138,7 +138,7 @@ public sealed class DesignDocStoreTests : IDisposable
         Assert.Equal(1, _world.Count($"SELECT count(*) FROM design_doc WHERE doc_key = '{DocKey}' AND errors LIKE '%SND-LIB-%'"));
         Assert.Equal(0, _world.Count("SELECT count(*) FROM design_doc_item"));
 
-        var blocked = RecordSamples.Write(DocRecord("v2") with { Blocked = true, Title = DocKey }) with { Doc = DesignDocParser.Blocked(DocKey) };
+        var blocked = RecordSamples.Write(DocRecord("v2") with { Blocked = true, Title = DocKey }) with { Side = new DesignDocSideRows(DesignDocParser.Blocked(DocKey)) };
         _ = await Commit(RepoDocs.Id, 2, blocked);
 
         Assert.Equal(1, _world.Count($"SELECT count(*) FROM design_doc WHERE doc_key = '{DocKey}' AND errors LIKE '%blocked%' AND doc_id IS NULL"));
@@ -154,7 +154,7 @@ public sealed class DesignDocStoreTests : IDisposable
         _ = await Commit(RecordSamples.Github, 2, PrWrite(["harbor#Ph3"], version: "v2"));
         Assert.Equal(["harbor#Ph3"], Claims());
 
-        _ = await Commit(RecordSamples.Github, 3, PrWrite(claims: null, version: "v3"));
+        _ = await Commit(RecordSamples.Github, 3, PrWrite(claims: [], version: "v3"));
         Assert.Empty(Claims());
 
         _ = await Commit(RecordSamples.Github, 4, PrWrite(["harbor#Ph2"], version: "v4"));
@@ -172,6 +172,34 @@ public sealed class DesignDocStoreTests : IDisposable
 
         Assert.Equal(["harbor-booking#REQ-1"], Claims());
     }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task An_unchanged_record_whose_side_rows_differ_from_the_stored_ones_has_them_rewritten()
+    {
+        var write = DocWrite(ADoc.Parse("spec", Body));
+        _ = await Commit(RepoDocs.Id, 1, write);
+        _world.Sql("UPDATE design_doc SET parser_version = 0");
+        _world.Sql("DELETE FROM design_doc_item WHERE item_id = 'REQ-2'");
+
+        var report = (await Commit(RepoDocs.Id, 2, write)).Value;
+
+        Assert.Equal((0, 1), (report.Written, report.Unchanged));
+        Assert.Equal(4, _world.Count("SELECT count(*) FROM design_doc_item"));
+        Assert.Equal(DesignDocParser.Version, _world.Count("SELECT parser_version FROM design_doc"));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_batch_naming_a_side_row_writer_the_store_does_not_have_is_refused_and_writes_nothing()
+    {
+        var write = RecordSamples.Write(DocRecord(), "words") with { Side = new NobodysRows() };
+
+        var result = await Commit(RepoDocs.Id, 1, write);
+
+        Assert.True(result.IsError);
+        Assert.Equal(0, _world.Count("SELECT count(*) FROM source_record"));
+    }
+
+    private sealed record NobodysRows() : SideRows("nobody");
 
     private string[] Items() => Texts($"SELECT item_id FROM design_doc_item WHERE doc_key = '{DocKey}' ORDER BY line_start");
 

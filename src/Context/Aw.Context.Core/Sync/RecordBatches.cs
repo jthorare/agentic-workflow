@@ -50,21 +50,27 @@ public static class RecordBatches
         IReadOnlyList<RecordChunk> chunks = clean.Blocked
             ? []
             : [.. Chunker.Split(clean.Text).Select(c => new RecordChunk(c.Seq, c.Text, c.Tokens, Hash(c.Text), c.LineStart, c.LineEnd))];
-        return new RecordWrite(record, chunks, ParseDoc(source, item, clean.Text, clean.Blocked || title.Blocked), Claims(item, clean.Text, clean.Blocked || title.Blocked));
+        return new RecordWrite(record, chunks, Side(source, item, clean.Text, clean.Blocked || title.Blocked));
     }
 
     // why: only doc records of the two doc feeds are itemized (spec 2026-11-04 §5.3); the library feed does not exist yet, its id is matched here so it works the day it lands
     private static bool Itemized(SourceId source, RecordKind kind) =>
         kind == RecordKind.Doc && (source == RepoDocs.Id || string.Equals(source.Value, LibrarySource, StringComparison.Ordinal));
 
-    // The cleaned text is parsed. A blocked doc has none: it is "blocked" when its raw text is a design doc (the raw parse is only asked that, nothing of it is kept), and nothing otherwise.
-    private static ParsedDesignDoc? ParseDoc(SourceId source, RecordItem item, string cleanText, bool blocked)
+    // The design-doc library's rows (spec 2026-11-04 §4.4, §5.3). An itemized doc record always sends its parse (null when it is no design doc, so rows it had go); a PR always sends its claims.
+    private static SideRows? Side(SourceId source, RecordItem item, string cleanText, bool blocked)
     {
-        if (!Itemized(source, item.Kind))
+        if (Itemized(source, item.Kind))
         {
-            return null;
+            return new DesignDocSideRows(ParseDoc(item, cleanText, blocked));
         }
 
+        return item.Kind == RecordKind.Pr ? new PrClaimSideRows(blocked ? [] : [.. PrCovers.Parse(cleanText).Refs]) : null;
+    }
+
+    // The cleaned text is parsed. A blocked doc has none: it is "blocked" when its raw text is a design doc (the raw parse is only asked that, nothing of it is kept), and nothing otherwise.
+    private static ParsedDesignDoc? ParseDoc(RecordItem item, string cleanText, bool blocked)
+    {
         var path = item.Key.Value;
         if (blocked)
         {
@@ -74,10 +80,6 @@ public static class RecordBatches
         var parsed = DesignDocParser.Parse(path, cleanText);
         return DesignDocParser.IsDesignDoc(parsed) ? parsed : null;
     }
-
-    // A PR's Covers: line (spec §4.4); a blocked PR claims nothing.
-    private static List<string>? Claims(RecordItem item, string cleanText, bool blocked) =>
-        item.Kind == RecordKind.Pr ? (blocked ? [] : [.. PrCovers.Parse(cleanText).Refs]) : null;
 
     // why: the description is free text from the source, so it takes the same ingest clean as the text; a blocked record, a blocked description or one that is empty once cleaned keeps none
     private static string? Description(string? raw, bool recordBlocked, Scrubbers scrubbers)
