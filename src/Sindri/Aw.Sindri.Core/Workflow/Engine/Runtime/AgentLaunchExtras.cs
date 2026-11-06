@@ -14,6 +14,9 @@ public sealed record AgentLaunchExtras(IReadOnlyList<string>? Instructions = nul
     /// <summary>Null, or the skill block this Step runs (skill flows spec D2): the launch gets its invocation as the whole seed instead of the Step brief.</summary>
     public Skills.SkillLaunch? Skill { get; init; }
 
+    /// <summary>Sindri's own home, for the run directory a skill launch's seed names (<see cref="Launch.StepEnvironment"/>); null names '$AW_SINDRI_RUN_DIR'.</summary>
+    public string? SindriHome { get; init; }
+
     /// <summary>Null, or the state's timeout, which goes to the launch request and from there to the sandbox plan's wall limit (skill flows spec D8).</summary>
     public TimeSpan? StepTimeout { get; init; }
 }

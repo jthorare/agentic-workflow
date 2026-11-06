@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json.Nodes;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Blocks;
@@ -62,22 +63,37 @@ public static class AgentLaunches
         var policy = new StepPolicy(tools, StepPermissionMode.Default, run.WriteScope ? worktree : null);
         return new LaunchRequest(
             LaunchIdFor(run), target.Item, target.Agent, LaunchMode.Open, Attended: false, target.RepoPath, run.Address, worktree,
-            StepArgsFor(run, descriptor, extras, policy), run.Run)
+            StepArgsFor(run, descriptor, extras, policy, LaunchIdFor(run)), run.Run)
         {
             BaseCommit = extras?.BaseCommit,
         };
     }
 
     // The Step's 'model' parameter (null runs the agent's default), its brief and the pack and facts it is given.
-    private static StepArgs StepArgsFor(AgentStepRun run, BlockDescriptor? descriptor, AgentLaunchExtras? extras, StepPolicy policy) =>
-        extras?.Skill is { } skill ? SkillStepArgs(run, extras, skill, policy) : new(Model: extras?.Model, policy, run.Step, AgentStepBrief.Render(run, descriptor, extras?.Instructions, extras?.Facts?.Keys), extras?.Bundle, extras?.Facts is { Count: > 0 } facts ? facts : null);
+    private static StepArgs StepArgsFor(AgentStepRun run, BlockDescriptor? descriptor, AgentLaunchExtras? extras, StepPolicy policy, LaunchId launch) =>
+        extras?.Skill is { } skill ? SkillStepArgs(run, extras, skill, policy, launch) : new(Model: extras?.Model, policy, run.Step, AgentStepBrief.Render(run, descriptor, extras?.Instructions, extras?.Facts?.Keys), extras?.Bundle, extras?.Facts is { Count: > 0 } facts ? facts : null);
 
     // A skill block's seed is the skill's invocation alone (skill flows spec D2), not the Step brief that tells the agent to call 'sindri workflow complete'.
-    private static StepArgs SkillStepArgs(AgentStepRun run, AgentLaunchExtras extras, SkillLaunch skill, StepPolicy policy) =>
-        new(Model: extras.Model, policy, run.Step, SkillSeed.Render(skill, SkillRunDirectory(run)), extras.Bundle, extras.Facts is { Count: > 0 } facts ? facts : null);
+    // Every input also goes into the run directory as '<key>.json', which is where a long or risky text's seed points.
+    private static StepArgs SkillStepArgs(AgentStepRun run, AgentLaunchExtras extras, SkillLaunch skill, StepPolicy policy, LaunchId launch)
+    {
+        Dictionary<string, string> files = new(StringComparer.Ordinal);
+        foreach (var (name, content) in extras.Facts ?? Enumerable.Empty<KeyValuePair<string, string>>())
+        {
+            files[name] = content;
+        }
 
-    // why: stub until F-1 goes green; the real run directory is the launcher's, '$AW_SINDRI_RUN_DIR'.
-    private static string SkillRunDirectory(AgentStepRun run) => throw new NotSupportedException();
+        foreach (var (key, value) in skill.Inputs)
+        {
+            files[key + ".json"] = JsonValue.Create(value).ToJsonString();
+        }
+
+        return new(Model: extras.Model, policy, run.Step, SkillSeed.Render(skill, SkillRunDirectory(run, extras.SindriHome, launch)), extras.Bundle, files);
+    }
+
+    // why: the run directory is the launcher's ('$AW_SINDRI_RUN_DIR', StepEnvironment.RunDirectoryOf); without Sindri's home (a test) the seed names the variable.
+    private static string SkillRunDirectory(AgentStepRun run, string? sindriHome, LaunchId launch) =>
+        sindriHome is null ? "$" + StepEnvironment.RunDirectory : StepEnvironment.RunDirectoryAt(run.Workflow, run.Step.State, launch, sindriHome);
 
     /// <summary>The holdout evaluator's request (LN-LCH2): it runs in a scratch checkout at the head sha, reads the holdout set and never writes it, can't touch the phase worktree, and may run the evidence CLIs.</summary>
     /// <param name="run">The run.</param>

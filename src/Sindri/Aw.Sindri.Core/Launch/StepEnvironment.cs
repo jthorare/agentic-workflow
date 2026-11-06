@@ -27,9 +27,18 @@ public static class StepEnvironment
         }
 
         return sindriHome is not null
-            ? $"{sindriHome.TrimEnd('/')}/workflow/runs/{WorkflowInstanceId.Of(instance).Value}/{step.Ref.State}/{request.Launch.Value}"
+            ? RunDirectoryAt(WorkflowInstanceId.Of(instance), step.Ref.State, request.Launch, sindriHome)
             : step.Policy?.WritablePath ?? request.Worktree;
     }
+
+    /// <summary>The same directory from its parts, for the caller that has no request yet (a skill launch's seed names it).</summary>
+    /// <param name="workflow">The instance.</param>
+    /// <param name="state">The Step's state name.</param>
+    /// <param name="launch">The launch.</param>
+    /// <param name="sindriHome">Sindri's own home.</param>
+    /// <returns>The absolute path.</returns>
+    public static string RunDirectoryAt(WorkflowInstanceId workflow, string state, LaunchId launch, string sindriHome)
+        => $"{sindriHome.TrimEnd('/')}/workflow/runs/{workflow.Value}/{state}/{launch.Value}";
 
     /// <summary>The variables for <paramref name="request"/>: the instance for an unattended Step, and its run directory when it has one (<see cref="RunDirectoryOf"/>), none for a human open.</summary>
     /// <param name="request">The launch.</param>

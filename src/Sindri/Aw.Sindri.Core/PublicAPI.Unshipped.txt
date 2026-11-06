@@ -22265,3 +22265,8 @@ Aw.Sindri.Core.Skills.ISkillBlocks.Loaded.get -> System.Collections.Generic.IRea
 Aw.Sindri.Core.Skills.ISkillBlocks.Skipped.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Skills.SkippedSkillBlock!>!
 Aw.Sindri.Core.Skills.SkillManifestParser
 static Aw.Sindri.Core.Skills.SkillManifestParser.Parse(string! skill, string! path, string! manifestJson, string? skillMarkdown) -> Aw.Sindri.Core.Skills.SkillBlocks!
+Aw.Sindri.Core.Skills.SkillLaunch.TrialSkillsDirectory.get -> string?
+Aw.Sindri.Core.Skills.SkillLaunch.TrialSkillsDirectory.init -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.SindriHome.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.SindriHome.init -> void
+static Aw.Sindri.Core.Launch.StepEnvironment.RunDirectoryAt(Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId workflow, string! state, Aw.Sindri.Core.Workflow.Engine.LaunchId launch, string! sindriHome) -> string!

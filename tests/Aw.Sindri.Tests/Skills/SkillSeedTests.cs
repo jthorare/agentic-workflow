@@ -73,4 +73,27 @@ public sealed class SkillSeedTests
         Assert.DoesNotContain("sindri workflow complete", brief, StringComparison.Ordinal);
         Assert.Equal(skill, request.Skill);
     }
+
+    [Theory]
+    [InlineData(SkillTarget.ClaudeCode, "seed-trial-claude-code")]
+    [InlineData(SkillTarget.Codex, "seed-trial-codex")]
+    public void A_trial_reads_the_skill_by_path_for_every_target(SkillTarget target, string golden)
+    {
+        var launch = new SkillLaunch("review", target, SkillFixtures.Review, new Dictionary<string, string>(StringComparer.Ordinal) { ["pr"] = "42" }) { TrialSkillsDirectory = "/home/u/skills-trial/" };
+
+        Match(SkillSeed.Render(launch, RunDirectory), golden);
+    }
+
+    [Fact]
+    public void Every_input_is_also_a_file_in_the_run_directory()
+    {
+        var address = InstanceAddress.From("T-3/step/1");
+        var run = new AgentStepRun(WorkflowInstanceId.Of(address), address, RunToken.From("2.1"), new StepRef("fix", "step.skill.review"), WriteScope: true);
+        var target = new AgentStepTarget(ItemId.From("ITM-" + new string('a', 32)), AgentId.From("claude-code"), "/work/web");
+        var skill = new SkillLaunch("review", SkillTarget.ClaudeCode, SkillFixtures.Review, new Dictionary<string, string>(StringComparer.Ordinal) { ["pr"] = "42" });
+
+        var request = AgentLaunches.RequestFor(run, target, descriptor: null, new AgentLaunchExtras { Skill = skill });
+
+        Assert.Equal("\"42\"", request.Step?.Facts?["pr.json"]);
+    }
 }
