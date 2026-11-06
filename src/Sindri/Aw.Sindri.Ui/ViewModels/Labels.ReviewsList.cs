@@ -9,6 +9,12 @@ internal static partial class Labels
     /// <summary>The ninth tab's label.</summary>
     internal const string ReviewsTab = "Reviews";
 
+    /// <summary>The Reviews tab's label below 1,100 px (the screen-reader name keeps "Reviews").</summary>
+    internal const string ReviewsTabShort = "PRs";
+
+    /// <summary>The Workflows tab's label below 1,100 px (the screen-reader name keeps "Workflows").</summary>
+    internal const string WorkflowsTabShort = "Flows";
+
     /// <summary>The page's name.</summary>
     internal const string ReviewsPageTitle = "Reviews";
 
