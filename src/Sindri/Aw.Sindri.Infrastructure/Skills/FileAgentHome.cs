@@ -44,15 +44,15 @@ internal sealed partial class FileAgentHome : IAgentHome
     public (string Path, string? Sha) SkillMarkdown(string skill)
     {
         var folder = Path.Combine(Folder, "skills", skill);
-        var resolved = Directory.ResolveLinkTarget(folder, returnFinalTarget: true)?.FullName ?? folder;
-        var file = Path.Combine(resolved, "SKILL.md");
         try
         {
+            var resolved = Directory.ResolveLinkTarget(folder, returnFinalTarget: true)?.FullName ?? folder;
+            var file = Path.Combine(resolved, "SKILL.md");
             return (file, File.Exists(file) ? Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(file))) : null);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            return (file, null);
+            return (Path.Combine(folder, "SKILL.md"), null);   // a home with no folder for the skill lacks it
         }
     }
 
