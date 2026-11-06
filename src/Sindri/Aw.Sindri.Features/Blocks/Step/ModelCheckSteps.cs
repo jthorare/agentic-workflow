@@ -11,7 +11,7 @@ internal static class ModelCheckSteps
     public static BlockDescriptor Check { get; } = BlockStep("step.model.check", Capability.Tools)
         .Takes(Text("specs"), Text("scope"), new ParameterSpec("witnesses", ParameterType.Flag, Required: false, IsCapabilityField: false))
         .Reads("fact:workspace", "fact:change", "fact:activePacket").Reports("pass", "skipped", "violation", "vacuous", "specError", "tooBig", "cantRun").Long(CommandStepLimits.ModelCheckMaxDuration)
-        .Writes(On("fact:modelCheck", "pass", "skipped"), On("fact:findings", "violation", "vacuous", "specError", "tooBig", "cantRun"));
+        .Writes(On("fact:modelCheck", "pass", "skipped"), On("fact:findings", "pass", "skipped", "violation", "vacuous", "specError", "tooBig", "cantRun"));
 
     /// <summary>
     /// 'step.model.desk': the build's call when the model check can't run, human-only: again or stop. RCP-OUTCOME-001 makes a
