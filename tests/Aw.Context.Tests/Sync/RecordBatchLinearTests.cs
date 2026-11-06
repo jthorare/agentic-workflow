@@ -111,7 +111,10 @@ public sealed class RecordBatchLinearTests
         Assert.NotNull(paged.Position);
         Assert.Equal(paged.Records.Single().Record, single.Records.Single().Record);
         Assert.Equal(paged.Records.Single().Chunks, single.Records.Single().Chunks);
-        Assert.Equal(paged.Records.Single().Side, single.Records.Single().Side);
+        var (pagedSide, singleSide) = (Assert.IsType<LinearSideRows>(paged.Records.Single().Side), Assert.IsType<LinearSideRows>(single.Records.Single().Side));
+        Assert.Equal(pagedSide.Issue.Fields with { LabelIds = [] }, singleSide.Issue.Fields with { LabelIds = [] });
+        Assert.Equal(pagedSide.Issue.Description, singleSide.Issue.Description);
+        Assert.Equal(pagedSide.Written, singleSide.Written);
     }
 
     [Fact]

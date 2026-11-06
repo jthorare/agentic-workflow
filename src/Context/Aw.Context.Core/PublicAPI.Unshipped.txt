@@ -11544,14 +11544,14 @@ static Aw.Context.Core.Records.SideRows.operator ==(Aw.Context.Core.Records.Side
 virtual Aw.Context.Core.Records.SideRows.EqualityContract.get -> System.Type!
 virtual Aw.Context.Core.Records.SideRows.Equals(Aw.Context.Core.Records.SideRows? other) -> bool
 virtual Aw.Context.Core.Records.SideRows.PrintMembers(System.Text.StringBuilder! builder) -> bool
-Aw.Context.Core.Linear.LinearSideRows
-Aw.Context.Core.Linear.LinearSideRows.Deconstruct(out Aw.Context.Core.Linear.LinearIssueSide! Issue, out Aw.Context.Core.Linear.LinearWrittenFields Written) -> void
-Aw.Context.Core.Linear.LinearSideRows.Equals(Aw.Context.Core.Linear.LinearSideRows? other) -> bool
-Aw.Context.Core.Linear.LinearSideRows.Issue.get -> Aw.Context.Core.Linear.LinearIssueSide!
-Aw.Context.Core.Linear.LinearSideRows.Issue.init -> void
-Aw.Context.Core.Linear.LinearSideRows.LinearSideRows(Aw.Context.Core.Linear.LinearIssueSide! Issue, Aw.Context.Core.Linear.LinearWrittenFields Written = Aw.Context.Core.Linear.LinearWrittenFields.None) -> void
-Aw.Context.Core.Linear.LinearSideRows.Written.get -> Aw.Context.Core.Linear.LinearWrittenFields
-Aw.Context.Core.Linear.LinearSideRows.Written.init -> void
+Aw.Context.Core.Records.LinearSideRows
+Aw.Context.Core.Records.LinearSideRows.Deconstruct(out Aw.Context.Core.Linear.LinearIssueSide! Issue, out Aw.Context.Core.Linear.LinearWrittenFields Written) -> void
+Aw.Context.Core.Records.LinearSideRows.Equals(Aw.Context.Core.Records.LinearSideRows? other) -> bool
+Aw.Context.Core.Records.LinearSideRows.Issue.get -> Aw.Context.Core.Linear.LinearIssueSide!
+Aw.Context.Core.Records.LinearSideRows.Issue.init -> void
+Aw.Context.Core.Records.LinearSideRows.LinearSideRows(Aw.Context.Core.Linear.LinearIssueSide! Issue, Aw.Context.Core.Linear.LinearWrittenFields Written = Aw.Context.Core.Linear.LinearWrittenFields.None) -> void
+Aw.Context.Core.Records.LinearSideRows.Written.get -> Aw.Context.Core.Linear.LinearWrittenFields
+Aw.Context.Core.Records.LinearSideRows.Written.init -> void
 Aw.Context.Core.Linear.LinearWrittenFields
 Aw.Context.Core.Linear.LinearWrittenFields.Assignee = 1 -> Aw.Context.Core.Linear.LinearWrittenFields
 Aw.Context.Core.Linear.LinearWrittenFields.None = 0 -> Aw.Context.Core.Linear.LinearWrittenFields
@@ -11560,16 +11560,16 @@ Aw.Context.Core.Sync.RecordItem.Deconstruct(out Aw.Context.Core.Sources.RecordKe
 Aw.Context.Core.Sync.RecordItem.RecordItem(Aw.Context.Core.Sources.RecordKey Key, Aw.Context.Core.Sources.RecordKind Kind, string! Title, string! Text, string? Author, string? Url, Aw.Context.Core.Records.RecordState? State, string? StateRaw, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? ClosedAt, Aw.Context.Core.Sources.SourceVersion Version, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Records.AudienceKey? Audience, string? Health = null, System.DateOnly? DueAt = null, string? Description = null, Aw.Context.Core.Records.PullFacts? Pull = null, Aw.Context.Core.Records.SideRows? Side = null) -> void
 Aw.Context.Core.Sync.RecordItem.Side.get -> Aw.Context.Core.Records.SideRows?
 Aw.Context.Core.Sync.RecordItem.Side.init -> void
-const Aw.Context.Core.Linear.LinearSideRows.WriterId = "linear" -> string!
+const Aw.Context.Core.Records.LinearSideRows.WriterId = "linear" -> string!
 const Aw.Context.Core.Sync.RecordBatches.MaxCommentBody = 8000 -> int
 const Aw.Context.Core.Sync.RecordBatches.WithheldComment = "[withheld by the scrubber]" -> string!
-override Aw.Context.Core.Linear.LinearSideRows.<Clone>$() -> Aw.Context.Core.Linear.LinearSideRows!
-override Aw.Context.Core.Linear.LinearSideRows.Equals(object? obj) -> bool
-override Aw.Context.Core.Linear.LinearSideRows.GetHashCode() -> int
-override Aw.Context.Core.Linear.LinearSideRows.ToString() -> string!
-override sealed Aw.Context.Core.Linear.LinearSideRows.Equals(Aw.Context.Core.Records.SideRows? other) -> bool
-static Aw.Context.Core.Linear.LinearSideRows.operator !=(Aw.Context.Core.Linear.LinearSideRows? left, Aw.Context.Core.Linear.LinearSideRows? right) -> bool
-static Aw.Context.Core.Linear.LinearSideRows.operator ==(Aw.Context.Core.Linear.LinearSideRows? left, Aw.Context.Core.Linear.LinearSideRows? right) -> bool
+override Aw.Context.Core.Records.LinearSideRows.<Clone>$() -> Aw.Context.Core.Records.LinearSideRows!
+override Aw.Context.Core.Records.LinearSideRows.Equals(object? obj) -> bool
+override Aw.Context.Core.Records.LinearSideRows.GetHashCode() -> int
+override Aw.Context.Core.Records.LinearSideRows.ToString() -> string!
+override sealed Aw.Context.Core.Records.LinearSideRows.Equals(Aw.Context.Core.Records.SideRows? other) -> bool
+static Aw.Context.Core.Records.LinearSideRows.operator !=(Aw.Context.Core.Records.LinearSideRows? left, Aw.Context.Core.Records.LinearSideRows? right) -> bool
+static Aw.Context.Core.Records.LinearSideRows.operator ==(Aw.Context.Core.Records.LinearSideRows? left, Aw.Context.Core.Records.LinearSideRows? right) -> bool
 Aw.Context.Core.Records.RecordBatch.Deconstruct(out Aw.Context.Core.Sources.SourceId Source, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordWrite!>! Records, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>! Removed, out Aw.Context.Core.Records.SyncPosition? Position, out System.DateTimeOffset At, out bool Guard) -> void
 Aw.Context.Core.Records.RecordBatch.Guard.get -> bool
 Aw.Context.Core.Records.RecordBatch.Guard.init -> void
@@ -11590,11 +11590,11 @@ Aw.Context.Core.Facade.IContextIssues.IssueGet(Aw.Context.Core.Sources.RecordKey
 Aw.Context.Core.Facade.IContextIssues.IssueList(Aw.Context.Core.Linear.LinearIssueFilter! filter, Aw.Context.Core.Linear.LinearIssueCursor? after, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssuePage!>!>
 Aw.Context.Core.Facade.IContextIssues.IssueLookups(string! team, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearTeamLookups?>!>
 Aw.Context.Core.Facade.IContextIssues.IssueSince(System.DateTimeOffset marker, Aw.Context.Core.Sources.ExternalId viewer, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearSince!>!>
-Aw.Context.Core.Linear.ILinearIssueStore
-Aw.Context.Core.Linear.ILinearIssueStore.Comments(Aw.Context.Core.Sources.RecordKey key, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>!>!>
-Aw.Context.Core.Linear.ILinearIssueStore.Get(Aw.Context.Core.Sources.RecordKey key, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueRow?>!>
-Aw.Context.Core.Linear.ILinearIssueStore.List(Aw.Context.Core.Linear.LinearIssueFilter! filter, Aw.Context.Core.Linear.LinearIssueCursor? after, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssuePage!>!>
-Aw.Context.Core.Linear.ILinearIssueStore.Since(System.DateTimeOffset marker, Aw.Context.Core.Sources.ExternalId viewer, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearSince!>!>
+Aw.Context.Core.Records.ILinearIssueStore
+Aw.Context.Core.Records.ILinearIssueStore.Comments(Aw.Context.Core.Sources.RecordKey key, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>!>!>
+Aw.Context.Core.Records.ILinearIssueStore.Get(Aw.Context.Core.Sources.RecordKey key, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueRow?>!>
+Aw.Context.Core.Records.ILinearIssueStore.List(Aw.Context.Core.Linear.LinearIssueFilter! filter, Aw.Context.Core.Linear.LinearIssueCursor? after, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssuePage!>!>
+Aw.Context.Core.Records.ILinearIssueStore.Since(System.DateTimeOffset marker, Aw.Context.Core.Sources.ExternalId viewer, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearSince!>!>
 Aw.Context.Core.Linear.LinearIssueCursor
 Aw.Context.Core.Linear.LinearIssueCursor.<Clone>$() -> Aw.Context.Core.Linear.LinearIssueCursor!
 Aw.Context.Core.Linear.LinearIssueCursor.Deconstruct(out System.DateTimeOffset UpdatedAt, out Aw.Context.Core.Sources.RecordKey Key) -> void

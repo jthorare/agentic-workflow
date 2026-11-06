@@ -50,11 +50,11 @@ public sealed class RecordSyncRunGuardTests
     public async Task A_guarded_feeds_equal_or_newer_page_replaces_the_stored_record()
     {
         await Store(Item("saved", RecordSamples.Now.AddHours(-1)));
-        var feed = new GuardedFeed(guard: true, Item("same time", RecordSamples.Now.AddHours(-1)));
+        var feed = new GuardedFeed(guard: true, Item("same-time", RecordSamples.Now.AddHours(-1)));
 
         _ = await Run(feed).Execute(Ct);
 
-        Assert.Equal("same time", (await _store.Get(RecordKey.From("linear:issue/a"), Ct)).Value!.Title);
+        Assert.Equal("same-time", (await _store.Get(RecordKey.From("linear:issue/a"), Ct)).Value!.Title);
     }
 
     [Fact]

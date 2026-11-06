@@ -1,8 +1,8 @@
-using Aw.Context.Core.Records;
+using Aw.Context.Core.Linear;
 using Aw.Context.Core.Sources;
 using Aw.Kernel;
 
-namespace Aw.Context.Core.Linear;
+namespace Aw.Context.Core.Records;
 
 /// <summary>
 /// Reads the stored Linear issues with their fields, comments and changes (Linear hub spec 2026-11-04 §4.3). Every read applies the caller's audience to the issue's record and hides tombstones and blocked records, and none calls Linear.

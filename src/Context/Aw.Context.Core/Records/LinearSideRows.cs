@@ -1,6 +1,6 @@
-using Aw.Context.Core.Records;
+using Aw.Context.Core.Linear;
 
-namespace Aw.Context.Core.Linear;
+namespace Aw.Context.Core.Records;
 
 /// <summary>An issue record's side rows (spec 2026-11-04 §4.1): the fields and newest comments the <see cref="WriterId"/> writer stores as <c language="text">linear_issue</c> and <c language="text">linear_comment</c> rows, and the assignee and state changes it logs as <c language="text">linear_issue_change</c> rows.</summary>
 /// <param name="Issue">The issue's fields and comments.</param>

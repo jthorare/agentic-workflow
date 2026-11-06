@@ -1,5 +1,6 @@
 using System.Globalization;
 using Aw.Context.Core.Linear;
+using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Infrastructure.Linear;
 
@@ -188,7 +189,9 @@ public sealed class LinearIssueSideTests
 
         var side = Assert.IsType<LinearSideRows>(item.Side);
 
-        Assert.Equal(LinearIssueItem.Side(WithComments(Comment("c1", "hello", 1)), _sindri).Fields, side.Issue.Fields);
+        var expected = LinearIssueItem.Side(WithComments(Comment("c1", "hello", 1)), _sindri).Fields;
+        Assert.Equal(expected with { LabelIds = [] }, side.Issue.Fields with { LabelIds = [] });
+        Assert.Equal(expected.LabelIds, side.Issue.Fields.LabelIds);
         Assert.Equal("hello", Assert.Single(side.Issue.Comments).Body);
         Assert.Equal(LinearWrittenFields.None, side.Written);
     }

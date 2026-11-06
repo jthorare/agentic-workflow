@@ -95,7 +95,8 @@ public sealed class PullFactsStoreTests : IDisposable
             _world.Sql($"INSERT INTO source_cursor (source, repo, cursor, last_sync, phase) VALUES ('{source}', 'records', 'mark', '2026-10-27T00:00:00Z', 'incremental')");
         }
 
-        _ = await runner.Migrate(ContextDatabase.Migrations, Ct);
+        // why: 0031 and 0032 reset the github and linear feeds again on purpose; this pins what 0030 alone leaves
+        _ = await runner.Migrate([.. ContextDatabase.Migrations.Take(30)], Ct);
 
         Assert.Equal(1, _world.Count("SELECT count(*) FROM source_record WHERE key = 'github:pr/acme/widgets/12' AND version = ''"));
         Assert.Equal(1, _world.Count("SELECT count(*) FROM source_record WHERE key = 'github:issue/acme/widgets/2' AND version = 'keep'"));

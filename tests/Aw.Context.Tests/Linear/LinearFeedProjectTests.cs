@@ -58,7 +58,7 @@ public sealed class LinearFeedProjectTests
     public async Task A_stored_issue_with_the_old_version_is_saved_again_once_and_then_skipped()
     {
         var store = new FakeRecordStore();
-        var old = RecordSamples.Record("linear:issue/a1", version: "2026-10-01T12:00:00.0000000Z", source: _source);
+        var old = RecordSamples.Record("linear:issue/a1", version: "2026-10-01T12:00:00.0000000Z", source: _source) with { UpdatedAt = _at };   // stored at the issue's own time: the guard only skips a page older than that
         _ = await store.Commit(RecordSamples.Batch(_source, 0, RecordSamples.Write(old, "Text a1")), Ct);
         RecordSyncRun Run() => new(LinearFeedContractTests.FeedOf([InProject("a1")]).Feed, store, (new FakeScrubberFactory().For([]).Value, new ContextIndexSettings()), new FakeTimeProvider(_at.AddDays(1)), RecordSyncRun.PageSize);
 

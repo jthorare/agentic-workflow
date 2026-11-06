@@ -3,7 +3,6 @@ using System.Text;
 using Aw.Context.Core.Chunking;
 using Aw.Context.Core.Docs;
 using Aw.Context.Core.Library;
-using Aw.Context.Core.Linear;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Trust;

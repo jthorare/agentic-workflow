@@ -30,7 +30,7 @@ internal static class LinearRender
             ["team"] = Ref(team, key: true),
             ["creator"] = Ref(s.Viewer),
             ["assignee"] = assignee is null ? null : Ref(assignee),
-            ["project"] = project is null ? null : Ref(project),
+            ["project"] = project is null ? null : WithStatus(Ref(project)),
             ["cycle"] = cycle is null ? null : new JsonObject { ["id"] = cycle.Id, ["name"] = cycle.Name, ["number"] = s.Cycles.IndexOf(cycle) + 1 },
             ["parent"] = null,
             ["dueDate"] = null,
@@ -41,6 +41,13 @@ internal static class LinearRender
             ["relations"] = Nodes([]),
             ["inverseRelations"] = Nodes([]),
         };
+    }
+
+    // why: the feed's first read filters on 'project: { status: { type } }', which the fake evaluates against the node, so an issue's project has one (every fake project is started)
+    private static JsonObject WithStatus(JsonObject project)
+    {
+        project["status"] = new JsonObject { ["name"] = "Started", ["type"] = "started" };
+        return project;
     }
 
     /// <summary>A label with its team (null for a workspace label), as 'issueLabels' filters it by team.</summary>
