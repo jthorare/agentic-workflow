@@ -1,0 +1,748 @@
+{
+  "note": "The contract for the design-doc parser (PR review page spec 2026-11-04 §4, §12 Ph0). Every .md here is listed once. Item ids are in document order; parents maps an AC to its requirement; refs are {from, to, kind} with from null for the doc itself. A ref's 'to' is the item or doc#item it resolves to in its scope.",
+  "roots": {
+    "aw": {
+      "dir": "aw",
+      "scopes": "aw/<repo-slug>"
+    },
+    "vault": {
+      "dir": "vault",
+      "name": "Dock Notes"
+    },
+    "vault:broken": {
+      "dir": "broken",
+      "name": "Broken Docs",
+      "note": "the broken docs; a second vault so each code's scope is its own"
+    },
+    "repo:harbor-web": {
+      "dir": "repo",
+      "docGlobs": [
+        "docs/**/*.md"
+      ]
+    }
+  },
+  "vault": {
+    "deny": [
+      "private/**"
+    ]
+  },
+  "supporting": [
+    "aw/acme-harbor/system-design/harbor-ferry/packet.json",
+    "vault/.obsidian/app.json",
+    "broken/017-packet.json"
+  ],
+  "codes": {
+    "SND-LIB-019": [
+      "aw/acme-harbor/plans/20261025-100000-near-misses/quoted.md",
+      "aw/acme-harbor/plans/20261025-100000-near-misses/float.md",
+      "aw/acme-harbor/plans/20261025-100000-near-misses/yes.md",
+      "aw/acme-harbor/plans/20261025-100000-near-misses/blank-first-line.md"
+    ],
+    "SND-LIB-010": [
+      "broken/010-bad-kind.md",
+      "broken/010-aw-doc-2.md",
+      "broken/010-bad-issue.md",
+      "broken/010-bad-id-shape.md"
+    ],
+    "SND-LIB-011": [
+      "broken/011-bad-item-id.md"
+    ],
+    "SND-LIB-012": [
+      "broken/012-shared-id-b.md"
+    ],
+    "SND-LIB-013": [
+      "broken/013-two-headings.md"
+    ],
+    "SND-LIB-014": [
+      "broken/014-orphan-ac.md"
+    ],
+    "SND-LIB-015": [
+      "broken/015-broken-ref.md"
+    ],
+    "SND-LIB-016": [
+      "broken/016-unknown-parent.md"
+    ],
+    "SND-LIB-017": [
+      "broken/017-edited-generated.md"
+    ],
+    "SND-LIB-018": [
+      "broken/018-too-many-items.md"
+    ]
+  },
+  "files": [
+    {
+      "path": "aw/acme-harbor/plans/20261001-100000-harbor-booking/plan.md",
+      "root": "aw",
+      "scope": "aw/acme-harbor",
+      "read": true,
+      "errors": [],
+      "keepsItems": true,
+      "items": [
+        "summary",
+        "handoff",
+        "next-steps"
+      ],
+      "why": "An officeHours plan.md in its real shape: kind plan, sections only. A plan defines no REQ, Ph or TASK."
+    },
+    {
+      "path": "aw/acme-harbor/plans/20261001-100000-harbor-booking/product.md",
+      "root": "aw",
+      "scope": "aw/acme-harbor",
+      "read": true,
+      "errors": [],
+      "keepsItems": true,
+      "items": [
+        "problem",
+        "requirements",
+        "ubiquitous",
+        "REQ-U1",
+        "event-driven",
+        "REQ-E1",
+        "unwanted",
+        "REQ-W1",
+        "acceptance-criteria",
+        "AC-1",
+        "AC-2",
+        "AC-3",
+        "success-metrics",
+        "traceability"
+      ],
+      "parents": {
+        "AC-1": "REQ-U1",
+        "AC-2": "REQ-E1",
+        "AC-3": "REQ-W1"
+      },
+      "refs": [
+        {
+          "from": null,
+          "to": "harbor-booking",
+          "kind": "parent"
+        },
+        {
+          "from": "REQ-U1",
+          "to": "AC-1",
+          "kind": "relates"
+        },
+        {
+          "from": "REQ-E1",
+          "to": "AC-2",
+          "kind": "relates"
+        },
+        {
+          "from": "REQ-W1",
+          "to": "AC-3",
+          "kind": "relates"
+        }
+      ],
+      "why": "officeHours product.md: REQ lines define the requirements, the ACs sit in their own section after all REQs, and each Traceability row repeats its REQ (a reference, not a second definition) and pairs it with an AC."
+    },
+    {
+      "path": "aw/acme-harbor/plans/20261001-100000-harbor-booking/engineering.md",
+      "root": "aw",
+      "scope": "aw/acme-harbor",
+      "read": true,
+      "errors": [],
+      "keepsItems": true,
+      "items": [
+        "approach",
+        "architecture-decisions",
+        "adr-1-hold-seats-in-the-booking-table",
+        "technical-requirements",
+        "requirement-coverage"
+      ],
+      "why": "REQ-U1, REQ-E1 and REQ-W1 start list items here, but kind engineering does not define requirements: they are references, so no item and no SND-LIB-013. TR-1 and TR-2 stay plain text; ADR-1 is only a section."
+    },
+    {
+      "path": "aw/acme-harbor/plans/20261001-100000-harbor-booking/design-brief.md",
+      "root": "aw",
+      "scope": "aw/acme-harbor",
+      "read": true,
+      "errors": [],
+      "keepsItems": true,
+      "items": [
+        "key-interactions",
+        "pick-a-seat",
+        "payment-failed"
+      ],
+      "why": "A REQ-W1 list item in a design doc is a reference, not a definition."
+    },
+    {
+      "path": "aw/acme-harbor/plans/20261001-100000-harbor-booking/TASKS.md",
+      "root": "aw",
+      "scope": "aw/acme-harbor",
+      "read": true,
+      "errors": [],
+      "keepsItems": true,
+      "items": [
+        "TASK-1",
+        "TASK-2",
+        "TASK-3",
+        "task-summary"
+      ],
+      "refs": [
+        {
+          "from": null,
+          "to": "harbor-booking",
+          "kind": "parent"
+        },
+        {
+          "from": "TASK-1",
+          "to": "harbor-booking-product#REQ-U1",
+          "kind": "relates"
+        },
+        {
+          "from": "TASK-2",
+          "to": "harbor-booking-product#REQ-E1",
+          "kind": "relates"
+        },
+        {
+          "from": "TASK-2",
+          "to": "harbor-booking-product#REQ-W1",
+          "kind": "relates"
+        },
+        {
+          "from": "TASK-2",
+          "to": "TASK-1",
+          "kind": "blocks"
+        },
+        {
+          "from": "TASK-3",
+          "to": "harbor-booking-product#REQ-W1",
+          "kind": "relates"
+        },
+        {
+          "from": "TASK-3",
+          "to": "TASK-1",
+          "kind": "blocks"
+        },
+        {
+          "from": "TASK-3",
+          "to": "TASK-2",
+          "kind": "blocks"
+        }
+      ],
+      "why": "TASKS.md with '- reqs:' and '- depends:' list items under each '## TASK-n' heading: reqs become relates refs to the product doc's requirements, depends become blocks refs ('none' makes none)."
+    },
+    {
+      "path": "aw/acme-harbor/plans/20261015-090000-harbor-booking/plan.md",
+      "root": "aw",
+      "scope": "aw/acme-harbor",
+      "read": true,
+      "errors": [],
+      "keepsItems": true,
+      "items": [
+        "summary"
+      ],
+      "refs": [
+        {
+          "from": null,
+          "to": "harbor-booking",
+          "kind": "supersedes"
+        }
+      ],
+      "why": "A rerun on the same slug: a new folder, id harbor-booking-2, supersedes the first run's plan. The old plan is not edited."
+    },
+    {
+      "path": "aw/acme-harbor/plans/20261020-120000-fenced-example/spec.md",
+      "root": "aw",
+      "scope": "aw/acme-harbor",
+      "read": true,
+      "errors": [],
+      "keepsItems": true,
+      "items": [
+        "Ph1",
+        "REQ-1",
+        "after-the-fence"
+      ],
+      "why": "A doc with a fenced example: ``` and ~~~ fences and a > quote hold Ph, REQ and TP lines that make no items."
+    },
+    {
+      "path": "aw/acme-harbor/plans/20261021-130000-phase-zeros/spec.md",
+      "root": "aw",
+      "scope": "aw/acme-harbor",
+      "read": true,
+      "errors": [],
+      "keepsItems": true,
+      "items": [
+        "Ph1",
+        "Ph2"
+      ],
+      "why": "Ph01 vs Ph1: '## Ph01' is accepted and stored as Ph1; a later '- Ph1' list item repeats it, so it is a reference (no SND-LIB-013)."
+    },
+    {
+      "path": "aw/acme-harbor/plans/20261025-100000-near-misses/quoted.md",
+      "root": "aw",
+      "scope": "aw/acme-harbor",
+      "read": false,
+      "skipReason": "near-miss",
+      "nearMiss": true,
+      "errors": [
+        "SND-LIB-019"
+      ],
+      "keepsItems": false,
+      "items": [],
+      "why": "aw-doc: \"1\" is a string, not the number 1."
+    },
+    {
+      "path": "aw/acme-harbor/plans/20261025-100000-near-misses/float.md",
+      "root": "aw",
+      "scope": "aw/acme-harbor",
+      "read": false,
+      "skipReason": "near-miss",
+      "nearMiss": true,
+      "errors": [
+        "SND-LIB-019"
+      ],
+      "keepsItems": false,
+      "items": [],
+      "why": "aw-doc: 1.0: YAML reads it as 1, but the line as written is not the number 1."
+    },
+    {
+      "path": "aw/acme-harbor/plans/20261025-100000-near-misses/yes.md",
+      "root": "aw",
+      "scope": "aw/acme-harbor",
+      "read": false,
+      "skipReason": "near-miss",
+      "nearMiss": true,
+      "errors": [
+        "SND-LIB-019"
+      ],
+      "keepsItems": false,
+      "items": [],
+      "why": "aw-doc: yes is not the number 1."
+    },
+    {
+      "path": "aw/acme-harbor/plans/20261025-100000-near-misses/blank-first-line.md",
+      "root": "aw",
+      "scope": "aw/acme-harbor",
+      "read": false,
+      "skipReason": "near-miss",
+      "nearMiss": true,
+      "errors": [
+        "SND-LIB-019"
+      ],
+      "keepsItems": false,
+      "items": [],
+      "why": "aw-doc: 1 after a blank first line: the front matter must start on line 1."
+    },
+    {
+      "path": "aw/acme-harbor/plans/harbor-epic/stages.md",
+      "root": "aw",
+      "scope": "aw/acme-harbor",
+      "read": true,
+      "errors": [],
+      "keepsItems": true,
+      "items": [
+        "Ph1",
+        "Ph2"
+      ],
+      "refs": [
+        {
+          "from": null,
+          "to": "doc:repo:harbor-web/harbor-spec",
+          "kind": "parent"
+        }
+      ],
+      "why": "A stage map: one Ph heading per stage, parent is a repo spec's full ref (doc:repo:<name>/<id>)."
+    },
+    {
+      "path": "aw/acme-harbor/proof/stage-booking/verification-plan.md",
+      "root": "aw",
+      "scope": "aw/acme-harbor",
+      "read": true,
+      "errors": [],
+      "keepsItems": true,
+      "items": [
+        "journeys",
+        "TP-1",
+        "TP-2",
+        "lenses",
+        "out-of-scope"
+      ],
+      "refs": [
+        {
+          "from": null,
+          "to": "harbor-epic-stages",
+          "kind": "parent"
+        },
+        {
+          "from": "TP-1",
+          "to": "harbor-epic-stages#Ph1",
+          "kind": "verifies"
+        },
+        {
+          "from": "TP-1",
+          "to": "doc:repo:harbor-web/harbor-spec#REQ-1",
+          "kind": "verifies"
+        },
+        {
+          "from": "TP-2",
+          "to": "harbor-epic-stages#Ph1",
+          "kind": "verifies"
+        },
+        {
+          "from": "TP-2",
+          "to": "doc:repo:harbor-web/harbor-spec#REQ-2",
+          "kind": "verifies"
+        }
+      ],
+      "why": "A verification plan: journey rows are TP-n and their verifies cell holds refs to the stage map's Ph1 and to repo spec items by full ref."
+    },
+    {
+      "path": "aw/acme-harbor/system-design/harbor-ferry/doc.md",
+      "root": "aw",
+      "scope": "aw/acme-harbor",
+      "read": true,
+      "errors": [],
+      "keepsItems": true,
+      "items": [
+        "overview",
+        "phases",
+        "Ph1",
+        "Ph2",
+        "requirements",
+        "REQ-1",
+        "REQ-2",
+        "test-plan",
+        "TP-1",
+        "TP-2"
+      ],
+      "refs": [
+        {
+          "from": "TP-1",
+          "to": "Ph1",
+          "kind": "verifies"
+        },
+        {
+          "from": "TP-2",
+          "to": "Ph2",
+          "kind": "verifies"
+        }
+      ],
+      "source": "aw/acme-harbor/system-design/harbor-ferry/packet.json",
+      "why": "A TDD generated by write_packet.py: source-sha256 is the sha256 of packet.json; a Ph per PR card, a REQ per EARS criterion, a TP per test row."
+    },
+    {
+      "path": "aw/acme-harbor/system-design/harbor-ferry/prs/pr-01.md",
+      "root": "aw",
+      "scope": "aw/acme-harbor",
+      "read": false,
+      "skipReason": "no-front-matter",
+      "errors": [],
+      "keepsItems": false,
+      "items": [],
+      "why": "A system-design PR card has no front matter, so it is not read."
+    },
+    {
+      "path": "aw/acme-harbor/system-design/harbor-ferry/prs/pr-02.md",
+      "root": "aw",
+      "scope": "aw/acme-harbor",
+      "read": false,
+      "skipReason": "no-front-matter",
+      "errors": [],
+      "keepsItems": false,
+      "items": [],
+      "why": "A system-design PR card has no front matter, so it is not read."
+    },
+    {
+      "path": "aw/acme-ledger/plans/20261003-080000-harbor-booking/plan.md",
+      "root": "aw",
+      "scope": "aw/acme-ledger",
+      "read": true,
+      "errors": [],
+      "keepsItems": true,
+      "items": [
+        "summary"
+      ],
+      "why": "Same doc id (harbor-booking) as acme-harbor's plan, in another repo-slug: ids are unique per scope, so no SND-LIB-012."
+    },
+    {
+      "path": "repo/docs/superpowers/specs/2026-10-01-harbor-design.md",
+      "root": "repo:harbor-web",
+      "scope": "repo:harbor-web",
+      "read": true,
+      "errors": [],
+      "keepsItems": true,
+      "items": [
+        "goals",
+        "REQ-1",
+        "REQ-2",
+        "REQ-3",
+        "AC-1",
+        "phases",
+        "Ph1",
+        "Ph2",
+        "proof",
+        "TP-1",
+        "TP-2"
+      ],
+      "parents": {
+        "AC-1": "REQ-3"
+      },
+      "refs": [
+        {
+          "from": "TP-1",
+          "to": "REQ-1",
+          "kind": "verifies"
+        },
+        {
+          "from": "TP-2",
+          "to": "REQ-3",
+          "kind": "verifies"
+        },
+        {
+          "from": "TP-2",
+          "to": "AC-1",
+          "kind": "verifies"
+        }
+      ],
+      "why": "The repo spec the stage map points at. Bold lead-ins in list items and table cells define items; AC-1 takes REQ-3 (the nearest requirement above it in its section)."
+    },
+    {
+      "path": "vault/ferry-ideas.md",
+      "root": "vault",
+      "scope": "vault",
+      "read": true,
+      "errors": [],
+      "keepsItems": true,
+      "items": [
+        "night-sailings"
+      ],
+      "why": "A vault note with an Obsidian tags key: kept and ignored."
+    },
+    {
+      "path": "vault/notes/dock-plan.md",
+      "root": "vault",
+      "scope": "vault",
+      "read": true,
+      "errors": [],
+      "keepsItems": true,
+      "items": [
+        "dock-layout"
+      ],
+      "why": "A vault doc in a sub folder; the symlink points here."
+    },
+    {
+      "path": "vault/linked-plan.md",
+      "root": "vault",
+      "scope": "vault",
+      "read": false,
+      "skipReason": "symlink",
+      "errors": [],
+      "keepsItems": false,
+      "items": [],
+      "why": "A symlink is not followed, so the doc it points at is read once, under its own path."
+    },
+    {
+      "path": "vault/note.md",
+      "root": "vault",
+      "scope": "vault",
+      "read": false,
+      "skipReason": "no-front-matter",
+      "errors": [],
+      "keepsItems": false,
+      "items": [],
+      "why": "A note without front matter is skipped before any text is stored."
+    },
+    {
+      "path": "vault/.trash/old-idea.md",
+      "root": "vault",
+      "scope": "vault",
+      "read": false,
+      "skipReason": "dot-folder",
+      "errors": [],
+      "keepsItems": false,
+      "items": [],
+      "why": "A dot folder (.trash) is never read."
+    },
+    {
+      "path": "vault/private/diary.md",
+      "root": "vault",
+      "scope": "vault",
+      "read": false,
+      "skipReason": "deny",
+      "errors": [],
+      "keepsItems": false,
+      "items": [],
+      "why": "Valid front matter, but private/** is one of the vault's deny globs."
+    },
+    {
+      "path": "broken/010-bad-kind.md",
+      "root": "vault",
+      "scope": "vault:broken",
+      "read": true,
+      "errors": [
+        "SND-LIB-010"
+      ],
+      "keepsItems": false,
+      "items": [],
+      "why": "kind: rfc is not a kind."
+    },
+    {
+      "path": "broken/010-aw-doc-2.md",
+      "root": "vault",
+      "scope": "vault:broken",
+      "read": true,
+      "errors": [
+        "SND-LIB-010"
+      ],
+      "keepsItems": false,
+      "items": [],
+      "why": "aw-doc: 2 is a number but not 1: a v1 reader stores it with 'convention version 2 needs a newer Sindri'."
+    },
+    {
+      "path": "broken/010-bad-issue.md",
+      "root": "vault",
+      "scope": "vault:broken",
+      "read": true,
+      "errors": [
+        "SND-LIB-010"
+      ],
+      "keepsItems": false,
+      "items": [],
+      "why": "issues: [\"412\"]: a GitHub issue is a plain number, not a string."
+    },
+    {
+      "path": "broken/010-bad-id-shape.md",
+      "root": "vault",
+      "scope": "vault:broken",
+      "read": true,
+      "errors": [
+        "SND-LIB-010"
+      ],
+      "keepsItems": false,
+      "items": [],
+      "why": "id: Bad_Id has capitals and an underscore."
+    },
+    {
+      "path": "broken/011-bad-item-id.md",
+      "root": "vault",
+      "scope": "vault:broken",
+      "read": true,
+      "errors": [
+        "SND-LIB-011"
+      ],
+      "keepsItems": false,
+      "items": [],
+      "why": "'**REQ-**' is a requirement id with no number."
+    },
+    {
+      "path": "broken/012-shared-id-a.md",
+      "root": "vault",
+      "scope": "vault:broken",
+      "read": true,
+      "errors": [],
+      "keepsItems": true,
+      "items": [
+        "section"
+      ],
+      "why": "Two docs in one scope share an id: the lowest path (this one) keeps it and has no error."
+    },
+    {
+      "path": "broken/012-shared-id-b.md",
+      "root": "vault",
+      "scope": "vault:broken",
+      "read": true,
+      "errors": [
+        "SND-LIB-012"
+      ],
+      "keepsItems": true,
+      "items": [
+        "other-section"
+      ],
+      "why": "The second doc with id shared-doc-id: SND-LIB-012, and its items stay."
+    },
+    {
+      "path": "broken/013-two-headings.md",
+      "root": "vault",
+      "scope": "vault:broken",
+      "read": true,
+      "errors": [
+        "SND-LIB-013"
+      ],
+      "keepsItems": false,
+      "items": [],
+      "why": "Two headings define Ph1."
+    },
+    {
+      "path": "broken/014-orphan-ac.md",
+      "root": "vault",
+      "scope": "vault:broken",
+      "read": true,
+      "errors": [
+        "SND-LIB-014"
+      ],
+      "keepsItems": false,
+      "items": [],
+      "why": "AC-1 has no Traceability row and no requirement above it in its own section (REQ-1 is in another section)."
+    },
+    {
+      "path": "broken/015-broken-ref.md",
+      "root": "vault",
+      "scope": "vault:broken",
+      "read": true,
+      "errors": [
+        "SND-LIB-015"
+      ],
+      "keepsItems": true,
+      "items": [
+        "proof",
+        "TP-1"
+      ],
+      "refs": [
+        {
+          "from": "TP-1",
+          "to": "REQ-99",
+          "kind": "verifies"
+        }
+      ],
+      "why": "A TP row verifies REQ-99, which nothing in the scope defines: the doc keeps its items."
+    },
+    {
+      "path": "broken/016-unknown-parent.md",
+      "root": "vault",
+      "scope": "vault:broken",
+      "read": true,
+      "errors": [
+        "SND-LIB-016"
+      ],
+      "keepsItems": true,
+      "items": [
+        "section"
+      ],
+      "refs": [
+        {
+          "from": null,
+          "to": "no-such-doc",
+          "kind": "parent"
+        }
+      ],
+      "why": "parent: no-such-doc names no doc in the scope: the doc keeps its items."
+    },
+    {
+      "path": "broken/017-edited-generated.md",
+      "root": "vault",
+      "scope": "vault:broken",
+      "read": true,
+      "errors": [
+        "SND-LIB-017"
+      ],
+      "keepsItems": false,
+      "items": [],
+      "source": "broken/017-packet.json",
+      "why": "Generated by write_packet.py, but 017-packet.json changed after: source-sha256 no longer matches."
+    },
+    {
+      "path": "broken/018-too-many-items.md",
+      "root": "vault",
+      "scope": "vault:broken",
+      "read": true,
+      "errors": [
+        "SND-LIB-018"
+      ],
+      "keepsItems": false,
+      "items": [],
+      "why": "2,001 sections: over the 2,000-item cap, stored as 'too large' with no items."
+    }
+  ]
+}

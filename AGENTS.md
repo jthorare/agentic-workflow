@@ -177,6 +177,7 @@ bash scripts/tests/check-fleet.test.sh      # fleet state schema, its valid and 
 bash scripts/tests/check-scoping-schemas.test.sh # schemas/scoping/: every schema compiles, its examples get their verdicts, seeds.json matches the recipe's intake (node scripts/check-scoping-schemas.mjs; Ajv as above)
 bash scripts/tests/check-line-schemas.test.sh    # schemas/line/ and schemas/pr/: every report schema compiles, its examples get their verdicts (node scripts/check-line-schemas.mjs; Ajv as above)
 bash scripts/tests/check-library-schemas.test.sh # schemas/library/design-doc.schema.json (the parsed design doc, docs/conventions/design-docs.md): it compiles, its examples get their verdicts, each invalid one fails at its own path (node scripts/check-library-schemas.mjs; Ajv as above)
+bash scripts/tests/check-library-fixtures.test.sh # tests/fixtures/library/ (made-up design docs) against its expected.json, the contract the C# parser's tests share: every .md listed, every SND-LIB-010..019 has a fixture, good front matter passes $defs/frontMatter, broken fails, generated shas match (node scripts/check-library-fixtures.mjs; Ajv as above)
 bash scripts/tests/check-profile-doc.test.sh # docs/csharp/sindri-profile.md names every SindriProfile key (node scripts/check-profile-doc.mjs)
 bash scripts/tests/scaffold.test.sh
 bash scripts/tests/check-env-example.test.sh
