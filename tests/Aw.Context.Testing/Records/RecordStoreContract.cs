@@ -68,6 +68,73 @@ public abstract class RecordStoreContract<TStore>
         ContractCheck.That(_owner, second.RecordStamp > first.RecordStamp, "the record stamp moved");
     }
 
+    /// <summary>A guarded batch skips a record older than the stored one, and an equal or newer one passes.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_guarded_batch_skips_a_record_strictly_older_than_the_stored_one()
+    {
+        var store = Create();
+        var key = "linear:issue/1";
+        var stored = RecordSamples.Record(key, "v2") with { UpdatedAt = RecordSamples.Now.AddMinutes(10), Title = "newer" };
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Linear, 1, RecordSamples.Write(stored, "newer words")), CancellationToken.None));
+
+        var older = RecordSamples.Record(key, "v1") with { UpdatedAt = RecordSamples.Now.AddMinutes(5), Title = "older" };
+        var skipped = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Linear, 2, RecordSamples.Write(older, "older words")) with { Guard = true }, CancellationToken.None));
+        ContractCheck.That(_owner, skipped == new CommitReport(0, 1, 0), "the older record is skipped and counted unchanged");
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.Get(stored.Key, CancellationToken.None))?.Title == "newer", "the stored record is untouched");
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.Chunks(stored.Key, CancellationToken.None)).Select(c => c.Text).SequenceEqual(["newer words"], StringComparer.Ordinal), "the stored chunks are untouched");
+
+        var equal = RecordSamples.Record(key, "v3") with { UpdatedAt = RecordSamples.Now.AddMinutes(10), Title = "equal" };
+        var passed = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Linear, 3, RecordSamples.Write(equal, "equal words")) with { Guard = true }, CancellationToken.None));
+        ContractCheck.That(_owner, passed.Written == 1 && ContractCheck.Ok(_owner, await store.Get(stored.Key, CancellationToken.None))?.Title == "equal", "a record with an equal time passes");
+
+        var newer = RecordSamples.Record(key, "v4") with { UpdatedAt = RecordSamples.Now.AddMinutes(11), Title = "newest" };
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Linear, 4, RecordSamples.Write(newer, "newest words")) with { Guard = true }, CancellationToken.None));
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.Get(stored.Key, CancellationToken.None))?.Title == "newest", "a newer record passes");
+    }
+
+    /// <summary>An unguarded batch writes an older record, as every batch did before the option.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task An_unguarded_batch_writes_an_older_record()
+    {
+        var store = Create();
+        var key = "linear:issue/1";
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Linear, 1, RecordSamples.Write(RecordSamples.Record(key, "v2") with { UpdatedAt = RecordSamples.Now.AddMinutes(10) }, "words")), CancellationToken.None));
+
+        var report = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Linear, 2, RecordSamples.Write(RecordSamples.Record(key, "v1") with { UpdatedAt = RecordSamples.Now.AddMinutes(5) }, "words")), CancellationToken.None));
+
+        ContractCheck.That(_owner, report.Written == 1, "the older record is written");
+    }
+
+    /// <summary>A batch with no position writes its records and leaves the stored position as it was.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_batch_with_no_position_leaves_the_stored_position_alone()
+    {
+        var store = Create();
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Linear, 7, RecordSamples.Write(RecordSamples.Record("linear:issue/1"), "words")), CancellationToken.None));
+        var before = ContractCheck.Ok(_owner, await store.Position(RecordSamples.Linear, CancellationToken.None));
+
+        var report = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Linear, 8, RecordSamples.Write(RecordSamples.Record("linear:issue/2"), "words")) with { Position = null }, CancellationToken.None));
+
+        ContractCheck.That(_owner, report.Written == 1, "the record is written");
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.Position(RecordSamples.Linear, CancellationToken.None)) == before, "the position did not move");
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.Position(RecordSamples.Github, CancellationToken.None)) == SyncPosition.Start, "another source is untouched");
+    }
+
+    /// <summary>A batch with no position on a source that never committed leaves it at its start.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_batch_with_no_position_on_a_new_source_leaves_it_at_start()
+    {
+        var store = Create();
+
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Linear, 1, RecordSamples.Write(RecordSamples.Record("linear:issue/1"), "words")) with { Position = null }, CancellationToken.None));
+
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.Position(RecordSamples.Linear, CancellationToken.None)) == SyncPosition.Start, "the source is still at its start");
+    }
+
     /// <summary>A changed text replaces the chunks and drops the vectors of the chunks that changed.</summary>
     /// <returns>A task.</returns>
     [Fact]

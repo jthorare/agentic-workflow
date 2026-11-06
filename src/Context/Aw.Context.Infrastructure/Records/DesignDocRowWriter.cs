@@ -34,7 +34,7 @@ internal sealed class DesignDocRowWriter : ISideRowWriter
         return items.IsError ? ContextDatabase.Translate(items.Error) : versions.Value[0] != doc.ParserVersion || items.Value[0] != doc.Items.Count;
     }
 
-    public async ValueTask<Error?> Replace(ISqliteSession session, RecordKey key, SideRows rows, CancellationToken cancellationToken)
+    public async ValueTask<Error?> Replace(ISqliteSession session, RecordKey key, SideRows rows, bool newRecord, CancellationToken cancellationToken)
     {
         var failure = await Delete(session, key, cancellationToken).ConfigureAwait(false);
         return failure is not null || ((DesignDocSideRows)rows).Doc is not { } doc
