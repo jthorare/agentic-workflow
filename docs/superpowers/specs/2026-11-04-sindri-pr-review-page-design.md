@@ -213,7 +213,7 @@ The full ref form is `doc:<root>[/<slug>]/<doc id>#<item id>`. A ref inside the 
 | `SND-LIB-018` | "too large" (over 1 MiB or 2,000 items), or "blocked" (the scrubber hit) |
 | `SND-LIB-019` | a near miss: `aw-doc:` present but not the number 1 (§4.1); only `validate` and the doctor row show it |
 
-A doc with errors other than `015` is stored with them and without items, so it shows as broken instead of vanishing. A broken ref (`015`) is listed on the doc, and the rest of its items stay.
+A doc with errors other than `012`, `015` and `016` is stored with them and without items, so it shows as broken instead of vanishing. Those three are decided against the rest of the scope when read (a shared id, a broken ref, an unknown `parent` or `supersedes`): they are listed on the doc, and its items stay.
 
 ### 4.3 What each skill writes (Ph4a)
 
@@ -280,7 +280,7 @@ A `RecordFeed` (`Aw.Context.Core/Sync/RecordFeed.cs:12`) with source id `library
 - **Text** goes through the same scrub and chunking as `repo-docs`.
 - **Timing**: it ticks with the other feeds, so a change shows within one tick (5 minutes, accepted by the owner 2026-11-04). `sindri library sync` (new) runs the tick now.
 
-### 5.3 Itemizing and tables (new, migration 0030)
+### 5.3 Itemizing and tables (new, migration 0031)
 
 `DesignDocParser` (new, `Aw.Context.Core`) is pure, with no store dependency, so `library validate` can run it outside serve. It turns a doc's cleaned text into `{front matter, items[], refs[], errors[]}`, the shape the schema defines. It runs in `RecordBatches.From`, the one place both doc feeds' text is cleaned. `RecordWrite` carries the parsed doc, and `IRecordStore.Commit` replaces the doc's rows in the same transaction:
 
@@ -594,8 +594,8 @@ It's unproven whether GitHub itself refuses a review on an old `commit_id`. The 
 | `SND-REVIEW-004` | a review route for a host or repo Sindri doesn't sync | "Sindri doesn't sync <owner/repo>. Add it to `context.sources.github.repos`." |
 | `SND-REVIEW-005` | a `review.projects[].repos` entry not in `context.sources.github.repos` | names the key path |
 | `SND-REVIEW-010` | posting a draft whose version changed since the sheet opened | "This review changed in another window. Reload it." |
-| `SND-REVIEW-011` | posting when the head moved | §8.3's text |
-| `SND-REVIEW-012` | posting with no `review.credential` | "Set `review.credential` to your own GitHub token to post from Sindri." |
+| `SND-REVIEW-011` | posting when the head moved | the head-moved banner's text (§6.3) |
+| `SND-REVIEW-012` | posting with no `review.credential` | "Set `review.credential` to your own GitHub token to post from Sindri." Shown when the confirm sheet opens, with Post disabled (§16) |
 | `SND-REVIEW-013` | GitHub refused a line comment (the line isn't in the diff it has) | "GitHub refused the comment on <file>:<line>. Move it to a line in the diff, or drop it." |
 | `SND-LIB-001` | a bad `context.sources.library` key, including a root at `/`, the home folder, or holding `$AW_SINDRI_HOME` | names the key path and the allowed values |
 | `SND-LIB-010`..`019` | §4.2's table, one code each | file, line and the fix |
@@ -629,7 +629,7 @@ Registered in `docs/csharp/sindri.md`'s error table; `SND-LIB-01x` are also list
 - **Profile and CLI**: `docs/csharp/sindri-profile.md` (`context.sources.library.*`, `review.*`); `docs/csharp/sindri.md` (the CLI table, the error table, the new hook's cli edge).
 - **UI**: `docs/csharp/sindri-ui.md` (the ninth tab, the minimum width, the review page).
 - **Forge and PR line**: `docs/csharp/forge.md` (`Files`, `Checks.Runs`, `SubmitReview`, `seed files`, the heavy contract's review); `docs/csharp/sindri-pr.md` (`sindri.fix:` threads are work for the comment loop, and closing the item on `fixed`; the owner's `owner-review:` marker).
-- **Index and data**: the owned index docs (the `library` feed, the four tables, the PR record's requested reviewers, the `owner:` audience key in the owned index spec §4.4's key list); `planning/ERD.md` (migration 0030; at Ph1's start, check no open PR has taken 0030, since main ends at `0029_s4_pr_link_reread`).
+- **Index and data**: the owned index docs (the `library` feed, the four tables, the PR record's requested reviewers, the `owner:` audience key in the owned index spec §4.4's key list); `planning/ERD.md` (migration 0031; Ph2b took 0030 for the PR record's requested reviewers and reviews; at Ph1's start, check no open PR has taken 0031).
 - **Hooks**: `.agents/rules/hooks.md` and the provider installers (`sindri-tasks.sh`, which providers get it).
 - **Launch**: `LaunchEnvironment.Credentials` gains the review token's variable; the line spec's LN-LCH1 list says so.
 - **Skills and conventions**: `skills/_shared/pr-body.md`; the three skills; `docs/conventions/design-docs.md` (new).
@@ -640,7 +640,7 @@ Registered in `docs/csharp/sindri.md`'s error table; `SND-LIB-01x` are also list
 | Phase | Release | Lane | What | Depends on | Proof |
 |---|---|---|---|---|---|
 | **Ph0** | — | ideas | The convention page (with a copy-paste first doc) and `schemas/library/design-doc.schema.json`. Made-up fixtures in `tests/fixtures/library/`: a TDD; an officeHours plan in its real shape, with REQ refs in its engineering and tasks docs, a Traceability table repeating each REQ, ACs in their own section, and TASKS.md's `- reqs:` / `- depends:` lines; near misses (`aw-doc: "1"`, `1.0`, a blank first line); a stage map whose `parent` is a repo spec's full ref; a stage map and verification plan; a doc with a fenced example; `Ph01` vs `Ph1`; a rerun pair; two repo-slugs sharing an id; one broken doc per `SND-LIB-01x`; a vault with `.obsidian/`, a private folder, a symlink and a note without front matter. Also the baseline count of this repo's last 20 merged PRs, both ways, and the go/no-go (§2) | — | a schema test over the fixtures: the good ones pass, and each broken one fails with its rule |
-| **Ph1** | 1 | context | `DesignDocParser`; itemizing in `RecordBatches.From` (doc records of `repo-docs` and `library` only); migration 0030 and the `IRecordStore.Commit` rows, deleted with the record's `removed_at`; claims from PR records, resolved on read; the parser version in the cursor fingerprint and the re-read check; the `owner:` audience key and its rules (§5.4); `IContextLibrary` with the caller's scope; the ERD | Ph0's draft schema | unit: the parser over every fixture; the three audience tests (§5.4). integration: **an existing `aw-doc` repo spec (this file) itemizes on the first tick after upgrade with no new commit**; a PR body's claims land, and one written before its doc resolves once the doc lands; a removed doc's rows go and its id passes to the next doc |
+| **Ph1** | 1 | context | `DesignDocParser`; itemizing in `RecordBatches.From` (doc records of `repo-docs` and `library` only); migration 0031 and the `IRecordStore.Commit` rows, deleted with the record's `removed_at`; claims from PR records, resolved on read; the parser version in the cursor fingerprint and the re-read check; the `owner:` audience key and its rules (§5.4); `IContextLibrary` with the caller's scope; the ERD | Ph0's draft schema | unit: the parser over every fixture; the three audience tests (§5.4). integration: **an existing `aw-doc` repo spec (this file) itemizes on the first tick after upgrade with no new commit**; a PR body's claims land, and one written before its doc resolves once the doc lands; a removed doc's rows go and its id passes to the next doc |
 | **Ph2** | 1 | context | The `library` feed (front-matter files only, near misses counted); `context.sources.library` keys and rules; the zero-repo catalog change; the doctor row; `library sync`; the decision-pass and reranker skips (D13) | Ph1 | unit: keys, `~/` expanded before the check, refused roots, built-in deny, symlinks, caps, skipping a file without front matter, near misses. integration: a tick over the fixture vault, a removed file, an unreadable root that removes nothing; no model call for the `library` source with `models: false`. aot-smoke `expected.txt` |
 | **Ph2b** | 1 | context | PR records gain requested reviewers (§5.6; the author is already stored), and the owner's latest reviewed commit with the new-commit count (D21) | — | unit: the mapping; the reviews read skipped when `updated_at` and head are unchanged; a 404 compare stores the count as unknown. integration: a GitHub fake PR with two reviewers; a PR reviewed by the owner then pushed to shows as "reviewed, 2 new commits" |
 | **Ph3** | 1 | api | `Files`, `Checks.Runs` (every page; conclusion and app) and `SubmitReview` (GitHub, file, fake; release 1 uses only verdict `comment`); `seed files` and `seed checks --runs`; the `IPullRequests` members | — | contract tests over the fake and file adapters; stubbed-HTTP unit tests, including a 422 line and a second page of check runs |
@@ -706,6 +706,8 @@ Decided (owner, 2026-11-05; raised by the reviews):
 9. **The fix-task hook**: the new per-prompt hook, `sindri-tasks.sh` (D20, §8.2).
 10. **PRs you already reviewed**: back in "Waiting on you" as "reviewed, N new commits" when new commits land (D21, §5.6, §6.1, Ph2b).
 
+Decided at Ph6 (owner, 2026-11-06): the layout, a check's fix task, and four smaller calls; §16.
+
 Open: none.
 
 ## 15. Left for the phases (autoplan round 3)
@@ -717,3 +719,34 @@ Round 3 passed in all five lenses (no critical or high findings; `plans/pr-revie
 - **Ph6** (mockups): the page's own width decides the layout, including when a side sheet is open; a whole-page state row (merged or closed, not found, not served, offline with no cache) and a composer row; the action bar's names ("Approve on GitHub" in release 1) and focus; a file list with viewed marks, and the binary, renamed and deleted texts; the Reviews list's row names and `J`/`K`/`Enter`; the summary strip's buttons, panel toggles and the tick's `Space`; ranges by `Shift+j`/`Shift+k` or a hunk header.
 - **Ph7**: whether Settings → Library waits for release 2, with release 1 keeping the header count and `sindri library list --errors`; the owner's pick at Ph6.
 - **Owner steps**: the final text adds restarting a running serve after `./setup.sh`, `sindri mcp register` for `sindri_review`, the first tick's up-to-5-minute wait, and a "worked" check (`sindri doctor`'s library row, `sindri review list`).
+
+## 16. Ph6 results (owner, 2026-11-06)
+
+The mockups are in `2026-11-04-sindri-pr-review-page-design/mockups/` (`README.md` lists every screen). Ph7 builds what they show.
+
+**The owner's picks.**
+1. **Layout A**: the panel column beside the diff, as §6.2 has it (`screens/review-a-1440.png`), not the diff-first tabbed rail.
+2. **A fix task from a failing check or a requirement** has no diff line, so its `sindri.fix:` thread is a comment in the review body. A fix task from a diff line stays a line comment (§8.2).
+3. **No `review.credential`**: the confirm sheet opens with Post disabled and `SND-REVIEW-012`'s text, never failing after the press.
+4. **The owner's own PR**: Approve and Request changes are shown disabled with "You can't approve or request changes on your own PR: GitHub takes a comment only", and Comment is the verdict (GitHub refuses both on the author's own PR; §8.3's "not offered").
+5. **Home's line** "N PRs waiting on you" sits under the Needs-you rows and isn't counted in them; it opens Reviews.
+6. **Near misses** show in the library errors sheet as well as in `library validate` and the doctor row (§4.2 changes to match §6.1).
+
+**Measured.** Nine full tab labels fit at the 1,000 px minimum with 46 px spare (23 px at 130% text), so no label shortens (§3). Ph7's UI tests measure the bar at 1,000 px and 130%.
+
+**Wording the mockups set** (Ph7 uses it; §6.3 and §8.2 point here):
+- Fix-task outcomes: the babysitter took it, a live session on the branch took it, or "Waiting on <branch>": the item waits in Work. `SND-REVIEW-006` is the half-done text (§8.2), with Retry.
+- "PR not found"; "Offline, and this PR isn't cached yet"; before `review.login` is set, the whole page shows the list's login prompt ("Set your GitHub login", one field, Save; `SND-REVIEW-007`).
+- The library header when a folder can't be read: "Library: 33 docs, 1 folder can't be read".
+- Files: "Renamed from <old path>, 91% the same"; "Deleted file: 61 lines removed. Contents hidden." with Show; "Binary file, not shown here." with Open on GitHub.
+
+**Spec fixes found while drawing.**
+- The summary strip has its own states: "Reading checks…", "No doc named", "Couldn't decide checks". Focus after Reload, and after a fix task whose source row is gone, lands on the strip's first segment.
+- `risk` reads stored data only, so it has no error state.
+- Release 1's head-moved banner drops "Kept: your N comments" (no comments until release 2); release 2's counts outdated comments with the kept ones.
+- §7.1 `groups[]` gains `folded: true|false` (default false), the flag behind "Lockfiles, collapsed, 14 files".
+- At GitHub's 3,000-file cap the header says "3,000 files" and the file list is what GitHub gave.
+- A "claimed in body" check counts as open in the strip's count; "Send as fix task" shows on failed checks and unclaimed requirements only.
+- The list: zero open required checks reads "none open"; project groups come before repo-name groups; the hint line shows `J`/`K`/`Enter` and `G V`.
+- Settings → Library is a section of the Settings page (titled cards, no left nav), beside Connections. Repo roots are listed read-only ("set by the repo list"); the `aw` root has Turn off, not Remove.
+

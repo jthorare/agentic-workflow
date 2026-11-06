@@ -14,6 +14,15 @@ Runs parallel domain-specific reviewers and saves findings locally. Does **not**
 
 Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
 
+## Under Sindri (`AW_RESULT_SKILL=review`)
+
+Only when the Result block's gate printed `AW_RESULT_SKILL=review`. The Step has no GitHub network, so:
+
+- **Read the PR from the local ref.** `$AW_SINDRI_PR_REF` is a ref the host already fetched. Replace Step 1 and Step 2's `gh` calls: take `BASE` as the merge base of `$AW_SINDRI_PR_REF` and the default branch (`origin/HEAD` when set, else `main`, else `master`); the diff is `git diff $BASE $AW_SINDRI_PR_REF`, the changed files come from `git diff --name-only $BASE $AW_SINDRI_PR_REF`, the head commit is `git rev-parse $AW_SINDRI_PR_REF`, and the title and body come from the commit messages in `git log $BASE..$AW_SINDRI_PR_REF`. Make no `gh` call at all. The PR number is the `pr` input (a number, or the number at the end of a link).
+- **Never post.** No `gh pr review`, no comment; `/postReview` stays the owner's.
+- **Questions become `waiting`** (for example, several PRs match or the ref is missing), never AskUserQuestion.
+- Add `verdict` and `review_file` to the result.
+
 ## Step 1: Resolve the PR
 
 **If an argument was provided**, use it directly:
@@ -156,13 +165,26 @@ Run /addressReview to start implementing fixes.
 
 ```bash
 [ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
-f="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/repo-slug.sh"; [ -f "$f" ] && . "$f" 2>/dev/null; echo "AW_DIR=${AW_DIR:-}"
+f="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/repo-slug.sh"; [ -f "$f" ] && . "$f" 2>/dev/null; echo "AW_DIR=${AW_DIR:-}"; echo "AW_RESULT_SKILL=${AW_RESULT_SKILL:-}"; echo "AW_RESULT_FILE=${AW_RESULT_FILE:-}"
 [ "${AW_RESULT:-0}" = 1 ] && [ -z "${AW_DIR:-}" ] && echo "AW_DIR is empty: source skills/_shared/repo-slug.sh, then write the result file; never skip it" || true
 ```
 
-`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/review-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) first, along with every other file the run writes; then open your final reply (the message after the last tool call) with the same JSON as a fenced `aw-result` block, before any prose and before `## Next steps`.
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write the result file with the Write tool, and every other file the run writes, first; then open your final reply (the message after the last tool call) with the same JSON as a fenced `aw-result` block, before any prose and before `## Next steps`. The file path is `$AW_DIR/results/review-<timestamp>.json` (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front), except when the gate printed `AW_RESULT_SKILL=review`: then the path is the `AW_RESULT_FILE` it printed, and the file carries the same keys as the block below, nothing dropped. In that mode a question for the person goes in `"waiting": "<the question, one line>"` (a non-empty string, never `null` or `""`), with the rest of the result as it stands; print it, end the turn, and never call AskUserQuestion. See [Under Sindri](../_shared/output-contract.md#under-sindri-aw_result_skill).
 
 Keys: `skill` (`review`), `artifacts` (absolute paths: the review state file `$AW_DIR/reviews/<pr>.json`), `summary` (one line),
-plus `pr` (PR number); `findings` (count of findings kept after triage); `blocking` (count of blocking findings).
+plus `pr` (PR number); `findings` (count of findings kept after triage); `blocking` (count of blocking findings); `verdict` (`PASS` when `blocking` is 0, else `NEEDS_CHANGES`); `review_file` (absolute path of `$AW_DIR/reviews/<pr>.json`, the same file as in `artifacts`).
+
+```aw-result
+{
+  "skill": "review",
+  "pr": 412,
+  "findings": 5,
+  "blocking": 1,
+  "verdict": "NEEDS_CHANGES",
+  "review_file": "/home/u/.agentic-workflow/acme-api/reviews/412.json",
+  "artifacts": ["/home/u/.agentic-workflow/acme-api/reviews/412.json"],
+  "summary": "5 findings, 1 blocking: JWT audience never checked."
+}
+```
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

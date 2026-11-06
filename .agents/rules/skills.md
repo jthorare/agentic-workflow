@@ -83,6 +83,15 @@ Rules:
 - Fixtures are made up: no real company, customer, work app, repo or person.
 - A new grader gets a pass and a fail reply in `graders/_selftest/` in the same commit.
 
+## Sindri blocks (`block.yaml`)
+
+A skill Sindri can chain has `skills/<name>/block.yaml` beside its `SKILL.md` (author guide: `docs/csharp/sindri-skills.md`; schema: `schemas/skill-block.schema.json`).
+
+- Its `## Result block` holds exactly one fenced `aw-result` block: a JSON example of the result. The manifest's outputs read its top-level keys (`from: verdict`) or an artifact by file name (`artifacts[resolution.md]`), so the example lists both.
+- Under `AW_RESULT_SKILL=<this skill>` the skill writes the result to `AW_RESULT_FILE` with the same keys as the block, and a question goes in `"waiting"` (a non-empty string), never AskUserQuestion; a failing prism-mcp call is a note, not a stop. `scripts/check-skill-requires.sh` checks that the Result block says so.
+- `node scripts/check-skill-blocks.mjs` checks every manifest against its SKILL.md (ids, args, outcomes, outputs, fact keys). Quote a flow-map label that has a comma.
+- Each block has two eval cases, `<skill>-sindri-done` and `<skill>-sindri-waiting`.
+
 ## Preamble
 
 The shared preamble lives in one file, `skills/_preamble.md`. Every SKILL.md references it instead of embedding a copy:
@@ -96,7 +105,7 @@ Design skills add a second reference to `skills/_design-preamble.md` (`<!-- desi
 
 The preamble points the agent at `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/capabilities.md` for the capability → tool map, then verifies:
 1. `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}` exists and the provider registry `$HOME/.agentic-workflow/providers` is non-empty
-2. All 57 native skills are present in every registered provider's skills dir (plus 14 skills from the 3 fetched external packs)
+2. All 58 native skills are present in every registered provider's skills dir (plus 14 skills from the 3 fetched external packs)
 3. Domain rules exist: `AGENTS.md` + `.agents/rules/` (or legacy `.claude/rules/`)
 4. The repo-slug output directory `$AW_DIR/` (set and created by `skills/_shared/repo-slug.sh`) is created
 

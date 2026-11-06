@@ -1,0 +1,157 @@
+{
+  "examples": [
+    {
+      "file": "spec.items.json",
+      "schema": "design-doc.schema.json",
+      "valid": true,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §4.2, this spec's own front matter"
+    },
+    {
+      "file": "tasks.refs.json",
+      "schema": "design-doc.schema.json",
+      "valid": true,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §4.2 Task row, §4.3 officeHours"
+    },
+    {
+      "file": "generated.ac-parent.json",
+      "schema": "design-doc.schema.json",
+      "valid": true,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §4.2 front matter (generated, source-sha256), AC row"
+    },
+    {
+      "file": "broken.no-items.json",
+      "schema": "design-doc.schema.json",
+      "valid": true,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §4.2 Errors: a doc with errors is stored without items"
+    },
+    {
+      "file": "near-miss.no-front-matter.json",
+      "schema": "design-doc.schema.json",
+      "valid": true,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §4.1 near misses, SND-LIB-019"
+    },
+    {
+      "file": "bad-id.reported.json",
+      "schema": "design-doc.schema.json",
+      "valid": true,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §4.2 SND-LIB-010"
+    },
+    {
+      "file": "broken-ref.keeps-items.json",
+      "schema": "design-doc.schema.json",
+      "valid": true,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §4.2 a broken ref (015) keeps the rest of the items"
+    },
+    {
+      "file": "aw-doc.v2.json",
+      "schema": "design-doc.schema.json",
+      "valid": true,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §9: aw-doc 2 is stored with SND-LIB-010 and no items"
+    },
+    {
+      "file": "bad-id.unreported.json",
+      "schema": "design-doc.schema.json",
+      "valid": false,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §4.2 id shape",
+      "failsAt": "/frontMatter/id"
+    },
+    {
+      "file": "kind.unknown.json",
+      "schema": "design-doc.schema.json",
+      "valid": false,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §4.2 kind list",
+      "failsAt": "/frontMatter/kind"
+    },
+    {
+      "file": "status.unknown.json",
+      "schema": "design-doc.schema.json",
+      "valid": false,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §4.2 status list",
+      "failsAt": "/frontMatter/status"
+    },
+    {
+      "file": "issues.bad-key.json",
+      "schema": "design-doc.schema.json",
+      "valid": false,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §4.2 issues: Linear keys ^[A-Z][A-Z0-9]{0,9}-\\d+$",
+      "failsAt": "/frontMatter/issues/0"
+    },
+    {
+      "file": "issues.number-as-string.json",
+      "schema": "design-doc.schema.json",
+      "valid": false,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §4.2 issues: plain numbers",
+      "failsAt": "/frontMatter/issues/0"
+    },
+    {
+      "file": "aw-doc.string.json",
+      "schema": "design-doc.schema.json",
+      "valid": false,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §4.1 near misses are not read",
+      "failsAt": "/frontMatter/aw-doc"
+    },
+    {
+      "file": "generated.no-sha.json",
+      "schema": "design-doc.schema.json",
+      "valid": false,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §4.2 generated goes with source-sha256",
+      "failsAt": "/frontMatter"
+    },
+    {
+      "file": "parent.bad-ref.json",
+      "schema": "design-doc.schema.json",
+      "valid": false,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §4.2 parent: a doc id or a full ref",
+      "failsAt": "/frontMatter/parent"
+    },
+    {
+      "file": "phase.leading-zero.json",
+      "schema": "design-doc.schema.json",
+      "valid": false,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §4.2 Phase: no leading zeros, Ph01 is stored as Ph1",
+      "failsAt": "/items/3/id"
+    },
+    {
+      "file": "req.no-number.json",
+      "schema": "design-doc.schema.json",
+      "valid": false,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §4.2 SND-LIB-011 REQ- with no number",
+      "failsAt": "/items/1/id"
+    },
+    {
+      "file": "ac.no-parent.json",
+      "schema": "design-doc.schema.json",
+      "valid": false,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §4.2 AC parent is its requirement (else SND-LIB-014)",
+      "failsAt": "/items/1/parent"
+    },
+    {
+      "file": "items.beside-error.json",
+      "schema": "design-doc.schema.json",
+      "valid": false,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §4.2 Errors: stored without items",
+      "failsAt": "/items"
+    },
+    {
+      "file": "error.unknown-code.json",
+      "schema": "design-doc.schema.json",
+      "valid": false,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §4.2 Errors table",
+      "failsAt": "/errors/0/code"
+    },
+    {
+      "file": "ref.unknown-kind.json",
+      "schema": "design-doc.schema.json",
+      "valid": false,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §5.3 design_doc_ref.kind",
+      "failsAt": "/refs/0/kind"
+    },
+    {
+      "file": "text.too-long.json",
+      "schema": "design-doc.schema.json",
+      "valid": false,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §5.3 text capped at 4,000",
+      "failsAt": "/items/0/text"
+    }
+  ]
+}

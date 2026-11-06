@@ -10,4 +10,6 @@ Output directory: `$AW_DIR`, default `${AW_STATE_DIR:-$HOME/.agentic-workflow}/<
 f="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/repo-slug.sh"; [ -f "$f" ] && . "$f"; echo "AW_DIR=${AW_DIR:-}"
 ```
 
+Under `AW_RESULT_SKILL` (a Sindri Step) a failing prism-mcp call is a one-line note, never a stop.
+
 Extended part (skill index, codebase navigation, prism session context, Session Close): `_preamble-extended.md`. A skill reads it unless `${AW_PREAMBLE:-on}` is `off`.

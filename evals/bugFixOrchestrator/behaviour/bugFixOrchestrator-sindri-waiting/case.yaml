@@ -1,0 +1,23 @@
+schema_version: '1.1'
+name: bugFixOrchestrator-sindri-waiting
+tags:
+- tier-b
+- behaviour
+- sindri
+source: "written for the eval"
+execution:
+  max_turns: 30
+  timeout_seconds: 480
+  allowed_tools:
+  - Read
+  - Glob
+  - Grep
+  - Skill
+  - Agent
+  - TodoWrite
+  - AskUserQuestion
+  - Bash
+  - Write
+context:
+  scaffold_script: fixture.sh
+# Phase 1's one ask (no clear expected behaviour) becomes `waiting`; no picker.

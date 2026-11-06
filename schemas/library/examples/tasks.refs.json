@@ -1,0 +1,57 @@
+{
+  "parserVersion": 1,
+  "frontMatter": {
+    "aw-doc": 1,
+    "id": "harbor-booking-tasks",
+    "kind": "tasks",
+    "title": "Harbor ferry booking: tasks",
+    "status": "approved",
+    "repos": [
+      "acme/harbor-web"
+    ],
+    "issues": [
+      412,
+      "ENG-12"
+    ],
+    "parent": "harbor-booking"
+  },
+  "items": [
+    {
+      "id": "TASK-1",
+      "kind": "task",
+      "parent": null,
+      "lineStart": 8,
+      "lineEnd": 11,
+      "text": "## TASK-1 Booking form\n- reqs: REQ-U1"
+    },
+    {
+      "id": "TASK-2",
+      "kind": "task",
+      "parent": null,
+      "lineStart": 13,
+      "lineEnd": 17,
+      "text": "## TASK-2 Payment\n- reqs: REQ-E3\n- depends: TASK-1"
+    }
+  ],
+  "refs": [
+    {
+      "from": "TASK-1",
+      "to": "harbor-booking-product#REQ-U1",
+      "kind": "relates",
+      "line": 9
+    },
+    {
+      "from": "TASK-2",
+      "to": "harbor-booking-product#REQ-E3",
+      "kind": "relates",
+      "line": 14
+    },
+    {
+      "from": "TASK-2",
+      "to": "TASK-1",
+      "kind": "blocks",
+      "line": 15
+    }
+  ],
+  "errors": []
+}

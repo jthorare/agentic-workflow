@@ -1,0 +1,7 @@
+version: 1
+context:
+  sources:
+    linear:
+      token: env:PROBE_TEST_LINEAR_KEY
+      writeToken: env:PROBE_TEST_LINEAR_WRITE_KEY
+      teams: [ENG, APP]

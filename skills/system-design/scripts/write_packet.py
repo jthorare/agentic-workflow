@@ -1,15 +1,17 @@
 """Write packet.json, the manifest /system-design-video reads. Re-runnable; reads what is on disk, invents nothing. Exit 0 on success; 1 with a message on bad arguments or a packet without tdd.html.
-Usage: write_packet.py <packet-dir> --slug <slug> --title "<title>"
+Usage: write_packet.py <packet-dir> --slug <slug> --title "<title>" [--repo owner/name]
 Layout (see SKILL.md): tdd.html, product-design.html (or <persona>.html), tdd-share.html + deck.html + share/story.json (build_share.py),
 diagrams/<key>.mmd + <key>.svg, status.md, prs/pr-NN.md.
+Also writes doc.md next to packet.json: the design-doc convention (docs/conventions/design-docs.md), id <slug>-tdd, generated from packet.json (front matter generated + source-sha256),
+with sections, a Ph<n> per PR card, a REQ-<n> per EARS criterion in tdd.html (an li/p/td/th that starts with When/While/Where/If/The and holds "shall") and a TP-<n> per list item or table row under a card's ## Tests / ## Test plan.
 Sections come from the TDD's <section id="..."> blocks, in document order, each with its heading and the diagram keys it embeds."""
-import json, os, re, sys
+import hashlib, json, os, re, sys
 
 def arg(name, default=None):
     a = sys.argv
     return a[a.index(name) + 1] if name in a else default
 
-pos = [x for i, x in enumerate(sys.argv[1:], 1) if not x.startswith("--") and sys.argv[i - 1] not in ("--slug", "--title")]
+pos = [x for i, x in enumerate(sys.argv[1:], 1) if not x.startswith("--") and sys.argv[i - 1] not in ("--slug", "--title", "--repo")]
 if len(pos) != 1:
     sys.exit(__doc__)
 root = os.path.abspath(pos[0])
@@ -42,9 +44,25 @@ for m in re.finditer(r'<section\b[^>]*\bid="([^"]+)"[^>]*>(.*?)</section>', tdd,
     keys = [k for k in re.findall(r'diagrams/([\w.-]+?)\.svg', m.group(2)) if k in diagrams]
     sections.append({"id": m.group(1), "title": title, "anchor": "#" + m.group(1), "diagrams": list(dict.fromkeys(keys))})
 
+def doc_id(slug, suffix="-tdd"):  # the TDD's id is <slug>-tdd, so it never collides with officeHours' <slug> plan
+    s = re.sub(r"-+", "-", re.sub(r"[^a-z0-9-]", "-", slug.lower())).strip("-")
+    room = 64 - len(suffix)
+    if len(s) > room:
+        cut = s[:room + 1].rfind("-")
+        s = (s[:cut] if cut >= 3 else s[:room]).strip("-")
+    return s + suffix if len(s) >= 3 else s
+
+slug = arg("--slug", os.path.basename(root))
+slug_id = doc_id(slug)
+if len(slug_id) < 3:
+    sys.exit(f"slug {slug!r} gives the doc id {slug_id!r}, under 3 characters; pass a longer --slug")
+repo = arg("--repo")
+if repo is not None and not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo):
+    sys.exit(f"--repo {repo!r}: expected owner/name")
+
 prs = sorted((f for f in os.listdir(os.path.join(root, "prs"))), key=lambda f: [int(t) if t.isdigit() else t for t in re.split(r"(\d+)", f)]) if os.path.isdir(os.path.join(root, "prs")) else []
 manifest = {
-    "slug": arg("--slug", os.path.basename(root)),
+    "slug": slug,
     "title": arg("--title", os.path.basename(root)),
     "personas": personas,
     "status": "status.md" if exists("status.md") else None,
@@ -58,3 +76,90 @@ manifest = {
 with open(os.path.join(root, "packet.json"), "w", encoding="utf-8") as fh:
     json.dump(manifest, fh, indent=2)
 print(f"packet.json: {len(personas)} pages, {len(diagrams)} diagrams, {len(sections)} sections, {len(manifest['prs'])} PRs")
+
+
+# ---- doc.md: the design-doc convention, generated from packet.json (docs/conventions/design-docs.md) ----
+def one_line(t):
+    return re.sub(r"\s+", " ", t).strip()
+
+def unescape(t):
+    return t.replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", '"').replace("&#39;", "'").replace("&amp;", "&")
+
+def heading(t):  # a section titled "Ph2 ..." or "REQ-3 ..." would define that item a second time (SND-LIB-013)
+    t = one_line(unescape(t))
+    return "Section " + t if re.match(r"(Ph\d|REQ-|AC-|TP-|TASK-)", t) else t
+
+def cell(t):
+    return one_line(t).replace("|", "\\|")
+
+def card(path):
+    md = open(os.path.join(root, path), encoding="utf-8").read()
+    title = None
+    m = re.match(r"\A---\n(.*?)\n---\n", md, re.S)
+    if m:
+        t = re.search(r"^title:\s*(.+?)\s*$", m.group(1), re.M)
+        if t:
+            title = re.sub(r"\s+#.*$", "", t.group(1)).strip("\"'")
+        md = md[m.end():]
+    if not title:
+        h = re.search(r"^#\s+(?:PR\s*\d+\s*:\s*)?(.+?)\s*$", md, re.M)
+        title = h.group(1) if h else os.path.basename(path)[:-3]
+    rows, intests, infence, intable = [], False, False, False
+    for ln in md.splitlines():
+        if ln.startswith("```"):
+            infence = not infence
+            continue
+        if infence:
+            continue
+        h = re.match(r"#{2,6}\s+(.*)", ln)
+        if h:
+            intests = bool(re.fullmatch(r"(tests?|test plan)", h.group(1).strip(), re.I))
+            continue
+        if not intests:
+            continue
+        li = re.match(r"\s*(?:[-*]|\d+\.)\s+(.*)", ln)
+        if li:
+            rows.append(li.group(1))
+        elif ln.startswith("|"):
+            if not intable:  # the header row of a pipe table is not a test row
+                intable = True
+            elif not re.match(r"\|[\s:|-]+\|?\s*$", ln):
+                cells = re.split(r"(?<!\\)\|", ln.strip().strip("|"))  # a \| inside a cell is text, not a cell break
+                rows.append(" - ".join(c.strip().replace("\\|", "|") for c in cells if c.strip()))
+            continue
+        intable = False
+    return one_line(title), [one_line(r) for r in rows if one_line(r)]
+
+ears = []
+for m in re.finditer(r"<(li|p|td|th)\b[^>]*>(.*?)</\1>", tdd, re.S):
+    t = one_line(re.sub(r"<[^>]+>", "", m.group(2)))
+    t = unescape(t)
+    if re.match(r"(When|While|Where|If|The)\b", t) and re.search(r"\bshall\b", t) and t not in ears:
+        ears.append(t)
+
+sha = hashlib.sha256(open(os.path.join(root, "packet.json"), "rb").read()).hexdigest()
+out = ["---", "aw-doc: 1", f"id: {slug_id}", "kind: tdd", f"title: {json.dumps(manifest['title'])}", "status: draft",
+       "generated: write_packet.py", f"source-sha256: {sha}"]
+if repo:
+    out.append(f"repos: [{repo}]")
+out += ["---", "", f"# {one_line(manifest['title'])}", "",
+        "Generated from packet.json by write_packet.py; edit the packet, not this file.", ""]
+for sec in sections:
+    out += [f"## {heading(sec['title'])}", "", f"See [tdd.html#{sec['id']}](tdd.html#{sec['id']}).", ""]
+cards = []
+for f in manifest["prs"]:
+    n = int(re.search(r"pr-(\d+)\.md", f).group(1))
+    cards.append((n,) + card(f))
+if cards:
+    out += ["## Phases", ""]
+    for n, title, _ in cards:
+        out += [f"### Ph{n} {title}", ""]
+if ears:
+    out += ["## Requirements", ""] + [f"- **REQ-{i}** {t}" for i, t in enumerate(ears, 1)] + [""]
+tp = [(n, r) for n, _, rows in cards for r in rows]
+if tp:
+    out += ["## Test plan", "", "| Row | Check | Verifies |", "|---|---|---|"]
+    out += [f"| TP-{i} | {cell(r)} | Ph{n} |" for i, (n, r) in enumerate(tp, 1)] + [""]
+with open(os.path.join(root, "doc.md"), "w", encoding="utf-8") as fh:
+    fh.write("\n".join(out).rstrip("\n") + "\n")
+print(f"doc.md: id {slug_id}, {len(cards)} phases, {len(ears)} requirements, {len(tp)} test rows")
