@@ -25,7 +25,7 @@ public static class RecordMask
                 return own.Error;
             }
 
-            allowed.UnionWith(own.Value.Allowed);
+            allowed.UnionWith(own.Value.WithoutOwner().Allowed);
         }
 
         if (caller != ContextCallerKind.Session)

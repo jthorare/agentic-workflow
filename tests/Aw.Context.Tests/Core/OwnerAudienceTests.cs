@@ -45,6 +45,21 @@ public sealed class OwnerAudienceTests
     }
 
     [Fact]
+    public void A_session_scope_built_from_a_set_holding_an_owner_key_drops_it_and_the_human_scope_keeps_it()
+    {
+        var ferry = AudienceKey.From("repo:harbor/ferry-booking");
+        var record = RecordKey.From("doc:harbor/slug/plans/a.md");
+        var built = new AudienceScope(new HashSet<AudienceKey> { ferry, _library }) { Records = new HashSet<RecordKey> { record } };
+
+        var session = built.WithoutOwner();
+
+        Assert.Equal([ferry], session.Allowed);
+        Assert.False(session.Allows(_library));
+        Assert.Equal([record], session.Records);   // rule (c) records are kept; an owner record is still refused through them
+        Assert.True(built.Allows(_library));       // the human's scope is not touched
+    }
+
+    [Fact]
     public async Task The_owner_reads_an_owner_library_record()
     {
         var human = await RecordMask.Allowed(Settings(), [new ContextRepo(_repo, "/work/split-panes")], ContextCallerKind.Human, TestContext.Current.CancellationToken);

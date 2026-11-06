@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Linear;
+using Aw.Context.Core.Library;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Models;
@@ -104,7 +105,7 @@ internal sealed partial class RecordDecisionRun(SourceId source, VisibleMap map,
 
     private async ValueTask<string?> Page(IReadOnlyList<StoredRecord> page, (Dictionary<string, string> Done, Dictionary<string, IntentRecord> Known) seen, CancellationToken cancellationToken)
     {
-        foreach (var stored in page.Where(r => r.RemovedAt is null && !r.Blocked))
+        foreach (var stored in page.Where(r => r.RemovedAt is null && !r.Blocked && LibrarySource.ModelMayRead(r.Source, r.Key, context.Settings.LibraryModelRoots)))   // why: a library root the profile did not opt in is never shown to a model (D13)
         {
             if (seen.Done.TryGetValue(stored.Key.Value, out var version) && string.Equals(version, stored.Version.Value, StringComparison.Ordinal))
             {
