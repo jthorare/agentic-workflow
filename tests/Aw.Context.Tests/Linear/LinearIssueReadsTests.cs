@@ -336,6 +336,23 @@ public sealed class LinearIssueReadsTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_mention_is_found_under_more_than_a_thousand_newer_comments_with_none()
+    {
+        var marker = FakeNow();
+        await PostComment("ENG-2", "ping @Ada Fixture please look");
+        _ = await _world.Tick();
+        var key = Key(Id("ENG-2")).Value;
+        _world.Sql(
+            "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 1001) " +
+            $"INSERT INTO linear_comment (id, issue_key, author_id, created_at, body, sindri) SELECT 'noise-' || i, '{key}', '{_bo}', '2099-01-01T00:00:00.0000000Z', 'ferry timetable update ' || i, 0 FROM n");
+
+        var since = await Facade(i => i.IssueSince(marker, ExternalId.From(_ada), _world.Scope, Ct));
+
+        var mention = Assert.Single(since.Mentions);
+        Assert.Equal("ping @Ada Fixture please look", mention.Comment.Body);
+    }
+
+    [Fact]
     public async Task A_viewer_the_pickers_do_not_know_has_no_mentions()
     {
         await PostComment("ENG-2", "ping @Ada Fixture please look");
