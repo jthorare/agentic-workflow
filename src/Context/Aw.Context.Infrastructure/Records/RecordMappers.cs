@@ -40,7 +40,8 @@ internal static class RecordMappers
         [],
         Text(r, 19),
         Text(r, 20) is { } due ? DateOnly.ParseExact(due, DueFormat, CultureInfo.InvariantCulture) : null,
-        Text(r, 21)));
+        Text(r, 21),
+        PullFactsJson.Read(Text(r, 22))));
 
     internal static IRowMapper<ProjectRow> Project { get; } = new Mapper<ProjectRow>(r => new ProjectRow(
         RecordKey.From(r.GetString(0)), r.GetString(1), Text(r, 2), Text(r, 3), Text(r, 4),

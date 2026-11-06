@@ -60,7 +60,42 @@ internal static partial class GitHubWire
 
     /// <summary>Reads the merge state of a single pull request.</summary>
     public static GitHubPullDetail ReadPull(JsonElement e, IReadOnlyList<string> paths)
-        => new(Flag(e, "merged"), Flag(e, "draft"), Date(e, "merged_at"), paths);
+        => new(Flag(e, "merged"), Flag(e, "draft"), Date(e, "merged_at"), paths, RequestedLogins(e), e.TryGetProperty("head", out var head) && head.ValueKind == JsonValueKind.Object ? Text(head, "sha") : null);
+
+    /// <summary>Reduces a pull request's review list to each login's latest review: the one with the newest 'submitted_at' (the later entry on a tie), pending and dismissed reviews (GitHub voided the latter) and ones without a login or commit skipped. A later COMMENTED review replaces an earlier APPROVED one: spec §5.6 counts the latest review whatever its state. Ordered by login.</summary>
+    public static IReadOnlyList<(string Login, string Commit)> LatestReviews(IEnumerable<JsonElement> reviews)
+    {
+        Dictionary<string, (string Commit, DateTimeOffset At)> latest = new(StringComparer.Ordinal);
+        foreach (var review in reviews)
+        {
+            if (review.ValueKind != JsonValueKind.Object || IsSkippedState(Text(review, "state"))
+                || Author(review) is not { Length: > 0 } login || Text(review, "commit_id") is not { Length: > 0 } commit)
+            {
+                continue;
+            }
+
+            var at = Date(review, "submitted_at") ?? DateTimeOffset.MinValue;
+            if (!latest.TryGetValue(login, out var seen) || at >= seen.At)
+            {
+                latest[login] = (commit, at);
+            }
+        }
+
+        return [.. latest.OrderBy(static kv => kv.Key, StringComparer.Ordinal).Select(static kv => (kv.Key, kv.Value.Commit))];
+    }
+
+    /// <summary>Reads 'ahead_by' from a compare reply, or null when it has none.</summary>
+    public static int? AheadBy(JsonElement e)
+        => e.ValueKind == JsonValueKind.Object && Long(e, "ahead_by") is { } n ? (int)Math.Clamp(n, 0, int.MaxValue) : null;
+
+    private static bool IsSkippedState(string? state)
+        => string.Equals(state, "PENDING", StringComparison.OrdinalIgnoreCase) || string.Equals(state, "DISMISSED", StringComparison.OrdinalIgnoreCase);
+
+    // A team request is a 'requested_teams' entry with no login; only people are listed here.
+    private static List<string> RequestedLogins(JsonElement e)
+        => e.TryGetProperty("requested_reviewers", out var people) && people.ValueKind == JsonValueKind.Array
+            ? [.. people.EnumerateArray().Select(static p => p.ValueKind == JsonValueKind.Object ? Text(p, "login") : null).OfType<string>().Where(static l => l.Length > 0)]
+            : [];
 
     private static bool Flag(JsonElement e, string name)
         => e.TryGetProperty(name, out var p) && p.ValueKind == JsonValueKind.True;

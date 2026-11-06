@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+# Stub curl for linear-probe.test.sh: a small stateful Linear. Answers by the request's operation name. State lives in $STUB_STATE.
+# STUB_ID_MODE=accept|ignore|refuse (client ids), STUB_SHARED=1 (one rate budget for both keys), STUB_STRAY=1 (a pre-existing labelled
+# issue), STUB_TEAM_EXTRA=1 (an unlabelled team issue, so paging has two), STUB_PAGE=repeat (page 2 repeats page 1),
+# STUB_ARCHIVE_VISIBLE=1 (archived issues show without includeArchived), STUB_SLEEP_OP=Op (that op sleeps 3 s, once), STUB_BLOCK_WRITES=1 (write keys refused), STUB_FAIL_CREATE_N=N (the Nth issueCreate dies at transport), STUB_FAIL=Op.
+fix="$STUB_FIX"; st="$STUB_STATE"; hdr="" out="" data="" cfg=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -D) hdr="$2"; shift 2 ;; -o) out="$2"; shift 2 ;; --data) data="${2#@}"; shift 2 ;;
+    -K) cfg="$2"; shift 2 ;; *) shift ;;
+  esac
+done
+mkdir -p "$st"; touch "$st/issues.ndjson" "$st/comments" "$st/attach"
+{ [ "${STUB_STRAY:-}" = 1 ] || [ -n "${STUB_STRAY_N:-}" ]; } && touch "$st/label"   # a stray labelled issue means the label already existed
+if [ "${STUB_TEAM_EXTRA:-}" = 1 ] && [ ! -f "$st/extra" ]; then touch "$st/extra"; jq -nc '{id:"other-1",archived:false,labeled:false,updatedAt:1}' >> "$st/issues.ndjson"; fi
+q="$(jq -r .query "$data")"; vars="$(jq -c .variables "$data")"
+op="$(sed -n 's/^\(query\|mutation\) \([A-Za-z0-9]*\).*/\1 \2/p' <<<"$q" | head -n1)"
+echo "curl ran cfg=$(basename "$cfg") op=$op" >> "$STUB_LOG"
+case "$op" in mutation*) echo "MUTATION ${op#mutation }" >> "$STUB_LOG" ;; esac
+opname="${op#* }"
+[ "${STUB_FAIL:-}" = "$opname" ] && exit 22
+if [ "${STUB_SLEEP_OP:-}" = "$opname" ] && [ ! -f "$st/slept" ]; then touch "$st/slept"; sleep 3; fi
+
+bucket=read; [ "${STUB_SHARED:-}" = 1 ] && bucket=shared; [ "$(basename "$cfg")" = write.cfg ] && [ "${STUB_SHARED:-}" != 1 ] && bucket=write
+n=$(cat "$st/rl.$bucket" 2>/dev/null || echo 1500); echo $((n - 1)) > "$st/rl.$bucket"; n=$((n - 1))
+printf 'HTTP/2 200\r\nx-ratelimit-requests-limit: 1500\r\nx-ratelimit-requests-remaining: %s\r\nx-ratelimit-requests-reset: 1770000000\r\nx-ratelimit-complexity-limit: 3000000\r\nx-ratelimit-complexity-remaining: 2999000\r\nx-ratelimit-complexity-reset: 1770000100\r\nx-complexity: 4\r\n\r\n' "$n" > "$hdr"
+
+tick() { c=$(cat "$st/clock" 2>/dev/null || echo 100); echo $((c + 1)) > "$st/clock"; echo "$c"; }
+issue_field() { jq -r --arg id "$1" "select(.id==\$id) | $2" "$st/issues.ndjson" | tail -n1; }
+setissue() { # id jq-update-expression
+  jq -c --arg id "$1" "(select(.id==\$id) | $2) // ." "$st/issues.ndjson" > "$st/issues.tmp" && mv "$st/issues.tmp" "$st/issues.ndjson"; }
+reply() { printf '%s' "$1" > "$out"; printf '200'; exit 0; }
+err() { reply "{\"errors\":[{\"message\":\"SECRET-TITLE refused\",\"extensions\":{\"code\":\"$1\"}}]}"; }
+bump() { setissue "$1" ".updatedAt = $(tick)"; }
+
+case "$opname" in
+  Introspect) cp "$fix/Introspect.json" "$out"; printf 200; exit 0 ;;
+  KeyScope) cp "$fix/KeyScope.json" "$out"; printf 200; exit 0 ;;
+  Comments) cp "$fix/Comments.json" "$out"; printf 200; exit 0 ;;
+  Ping) reply '{"data":{"viewer":{"id":"u1"}}}' ;;
+  TeamId) reply '{"data":{"teams":{"nodes":[{"id":"team-1"}]}}}' ;;
+  ProbeLabel) if [ -f "$st/label" ]; then reply '{"data":{"issueLabels":{"nodes":[{"id":"label-1"}]}}}'; else reply '{"data":{"issueLabels":{"nodes":[]}}}'; fi ;;
+  LabelCreate)
+    [ "${STUB_BLOCK_WRITES:-}" = 1 ] && err FORBIDDEN
+    touch "$st/label"; reply '{"data":{"issueLabelCreate":{"success":true,"issueLabel":{"id":"label-1"}}}}' ;;
+  IssueCreate)
+    k=$(( $(cat "$st/creates" 2>/dev/null || echo 0) + 1 )); echo "$k" > "$st/creates"
+    [ "${STUB_FAIL_CREATE_N:-}" = "$k" ] && exit 22
+    if ! jq -e '.input.labelIds | index("label-1")' <<<"$vars" >/dev/null; then echo "UNLABELLED create" >> "$STUB_LOG"; err UNLABELLED; fi
+    cid="$(jq -r '.input.id // empty' <<<"$vars")"
+    if [ -n "$cid" ]; then
+      [ "${STUB_ID_MODE:-accept}" = refuse ] && err INVALID_INPUT
+      if [ "${STUB_ID_MODE:-accept}" = accept ]; then
+        [ -n "$(issue_field "$cid" .id)" ] && err DUPLICATE_ID
+        id="$cid"
+      fi
+    fi
+    id="${id:-issue-$k}"
+    if [ "$(jq -r '.input.title | length' <<<"$vars")" -gt 255 ]; then err INVALID_INPUT; fi
+    jq -nc --arg id "$id" --argjson c "$(tick)" '{id:$id,archived:false,labeled:true,updatedAt:$c}' >> "$st/issues.ndjson"
+    reply "{\"data\":{\"issueCreate\":{\"success\":true,\"issue\":{\"id\":\"$id\"}}}}" ;;
+  CommentCreate)
+    iid="$(jq -r .input.issueId <<<"$vars")"; cid="$(jq -r '.input.id // empty' <<<"$vars")"
+    if [ -n "$cid" ]; then
+      [ "${STUB_ID_MODE:-accept}" = refuse ] && err INVALID_INPUT
+      if [ "${STUB_ID_MODE:-accept}" = accept ]; then grep -qx "$cid" "$st/comments" && err DUPLICATE_ID; echo "$cid" >> "$st/comments"; fi
+    fi
+    cid_out="$cid"; { [ "${STUB_ID_MODE:-accept}" = accept ] && [ -n "$cid" ]; } || cid_out="c-$RANDOM"
+    bump "$iid"
+    reply "{\"data\":{\"commentCreate\":{\"success\":true,\"comment\":{\"id\":\"${cid_out}\"}}}}" ;;
+  IssueRead)
+    iid="$(jq -r .id <<<"$vars")"
+    reply "{\"data\":{\"issue\":{\"updatedAt\":\"$(issue_field "$iid" .updatedAt)\",\"attachments\":{\"nodes\":$(grep "^$iid " "$st/attach" | sort -u | jq -R '{id:.}' | jq -sc .)}}}}" ;;
+  AttachLink)
+    echo "$(jq -r .issueId <<<"$vars") $(jq -r .url <<<"$vars")" >> "$st/attach"   # same url twice -> one line after sort -u
+    reply '{"data":{"attachmentLinkURL":{"success":true}}}' ;;
+  IssueUpdate)
+    iid="$(jq -r .id <<<"$vars")"; bump "$iid"
+    reply '{"data":{"issueUpdate":{"success":true}}}' ;;
+  ProbeIssues)
+    [ "${STUB_STRAY:-}" = 1 ] && [ ! -f "$st/stray" ] && { touch "$st/stray"; jq -nc '{id:"stray-1",archived:false,labeled:true,updatedAt:1}' >> "$st/issues.ndjson"; }
+    [ -n "${STUB_STRAY_N:-}" ] && [ ! -f "$st/stray" ] && { touch "$st/stray"; for i in $(seq 1 "$STUB_STRAY_N"); do jq -nc --arg id "stray-$i" '{id:$id,archived:false,labeled:true,updatedAt:1}'; done >> "$st/issues.ndjson"; }
+    reply "{\"data\":{\"issues\":{\"nodes\":$(jq -c 'select(.archived==false and .labeled==true) | {id}' "$st/issues.ndjson" | jq -sc .)}}}" ;;
+  ArchivedDefault|ArchivedIncluded)
+    iid="$(jq -r .f.id.eq <<<"$vars")"
+    if [ "$opname" = ArchivedIncluded ] || [ "${STUB_ARCHIVE_VISIBLE:-}" = 1 ]; then flt='true'; else flt='.archived==false'; fi
+    reply "{\"data\":{\"issues\":{\"nodes\":$(jq -c --arg id "$iid" "select(.id==\$id and $flt) | {id}" "$st/issues.ndjson" | jq -sc .)}}}" ;;
+  IssuePage)
+    after="$(jq -r '.after // empty' <<<"$vars")"
+    ids=($(jq -r 'select(.archived==false) | .id' "$st/issues.ndjson"))
+    pick=0; [ -n "$after" ] && for i in "${!ids[@]}"; do [ "${ids[$i]}" = "$after" ] && pick=$((i + 1)); done
+    [ "${STUB_PAGE:-}" = repeat ] && pick=0
+    id="${ids[$pick]:-}"; more=false; [ $((pick + 1)) -lt "${#ids[@]}" ] && more=true
+    reply "{\"data\":{\"issues\":{\"nodes\":[{\"id\":\"$id\"}],\"pageInfo\":{\"hasNextPage\":$more,\"endCursor\":\"$id\"}}}}" ;;
+  IssueArchive)
+    iid="$(jq -r .id <<<"$vars")"; [ "$(issue_field "$iid" .labeled)" = true ] || { echo "ARCHIVE unlabelled $iid" >> "$STUB_LOG"; err NOT_PROBE; }
+    setissue "$iid" '.archived = true'; echo "ARCHIVED $iid" >> "$STUB_LOG"
+    reply '{"data":{"issueArchive":{"success":true}}}' ;;
+esac
+echo "unhandled op: $op" >> "$STUB_LOG"; exit 22

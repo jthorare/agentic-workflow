@@ -93,6 +93,8 @@ n=0; [ -z "$recipes" ] || n="$(find "$recipes" -name '*.yaml' | wc -l | tr -d ' 
 printf '#!/usr/bin/env bash\nFAKE_SELF="$0" FAKE_NAME=%s FAKE_REV=%s FAKE_RECIPES=%s FAKE_CALLS="%s" FAKE_BAD_VERSION="%s" exec bash "%s" "$@"\n' "$name" "$rev" "$n" "$FAKE_CALLS" "${FAKE_BAD_VERSION:-}" "$FAKE_BIN" > "$out/$name"
 chmod +x "$out/$name"
 [ "$name" != judge ] || : > "$out/libe_sqlite3.so"
+# Microsoft.Playwright puts its driver (node + the playwright package) in a dot folder beside the binary.
+[ "$name" != ui-evidence ] || { mkdir -p "$out/.playwright/package"; echo driver > "$out/.playwright/package/cli.js"; }
 # The staged libSkiaSharp.so: sindri-ui's build needs fontconfig, judge's NoDependencies build does not (FAKE_NOFONT=1: sindri-ui's lacks it too).
 case "$name" in
   sindri-ui) if [ -n "${FAKE_NOFONT:-}" ]; then echo "NEEDED libc.so.6" > "$out/libSkiaSharp.so"; else printf 'NEEDED libfontconfig.so.1\nNEEDED libc.so.6\n' > "$out/libSkiaSharp.so"; fi ;;
@@ -157,6 +159,7 @@ check "one stamped build" "$(printf '%s' "$S1" | wc -c | tr -d ' ')" "16"
 for f in sindri sindri-ui judge aw-packets bugfix-state ui-evidence aw-readiness libe_sqlite3.so libSkiaSharp.so build-info; do
   check "build has $f" "$([ -e "$B/$S1/$f" ] && echo yes || echo no)" "yes"
 done
+check "the build keeps ui-evidence's Playwright driver (a dot folder)" "$(cat "$B/$S1/.playwright/package/cli.js" 2>/dev/null)" "driver"
 check "the model-check runner is copied at its repo layout" "$(cat "$B/$S1/tlc/scripts/tlc-check.sh" "$B/$S1/tlc/skills/formal-verify/scripts/tlc.sh" "$B/$S1/tlc/skills/formal-verify/tla2tools.lock" | tr '\n' ' ')" "runner tlc lock "
 check "seven publishes, each stamped with the commit" "$(grep -c "rev=$(g rev-parse HEAD)$" "$FAKE_LOG")" "7"
 check "the build carries heavy, executable" "$([ -x "$B/$S1/heavy" ] && echo yes || echo no)" "yes"

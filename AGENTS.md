@@ -57,7 +57,7 @@ agentic-workflow/
 ├── .agents/rules/ # Glob-scoped domain rules (.claude/rules and .cursor/rules link here)
 ├── .serena/       # Serena LSP project configuration
 ├── scripts/       # Utility scripts (sync-rules.sh, check-deps.mjs, serena-docker, probe.sh, install-cs.sh, cutover-clean-ts.sh)
-├── schemas/       # JSON Schemas for repo config (deps.schema.json, rule-record.schema.json)
+├── schemas/       # JSON Schemas for repo config (deps.schema.json, rule-record.schema.json) and the parsed design doc (library/, docs/conventions/design-docs.md)
 ├── rules/         # Rule records (factory addendum §17.6): rules/engineering/csharp/*.yaml, one per §4b rule
 ├── deps.yaml      # Declared package graph: tiers and every project/compose/cli/db/file edge (spec §4b.1a)
 └── setup.sh       # One-command setup for every installed provider
@@ -176,6 +176,7 @@ bash scripts/tests/check-launcher.test.sh   # launcher.json schema, fixtures, bu
 bash scripts/tests/check-fleet.test.sh      # fleet state schema, its valid and invalid fixtures, and the /proc-shaped sessions tree (node scripts/check-fleet.mjs; Ajv as above)
 bash scripts/tests/check-scoping-schemas.test.sh # schemas/scoping/: every schema compiles, its examples get their verdicts, seeds.json matches the recipe's intake (node scripts/check-scoping-schemas.mjs; Ajv as above)
 bash scripts/tests/check-line-schemas.test.sh    # schemas/line/ and schemas/pr/: every report schema compiles, its examples get their verdicts (node scripts/check-line-schemas.mjs; Ajv as above)
+bash scripts/tests/check-library-schemas.test.sh # schemas/library/design-doc.schema.json (the parsed design doc, docs/conventions/design-docs.md): it compiles, its examples get their verdicts, each invalid one fails at its own path (node scripts/check-library-schemas.mjs; Ajv as above)
 bash scripts/tests/check-profile-doc.test.sh # docs/csharp/sindri-profile.md names every SindriProfile key (node scripts/check-profile-doc.mjs)
 bash scripts/tests/scaffold.test.sh
 bash scripts/tests/check-env-example.test.sh
@@ -193,6 +194,7 @@ bash scripts/tests/model-limit-check.test.sh   # scripts/model-limit-check.sh: r
 bash scripts/tests/repo-templates.test.sh
 bash scripts/tests/probe.test.sh
 bash scripts/tests/probe-linear-projects.test.sh   # scripts/probe-linear-projects.sh (the projects page Ph0 probe) with stub curl and gh: output, legacy state fallback, no key exit 2, a failed call exit 1, the key never printed
+bash scripts/tests/linear-probe.test.sh   # scripts/linear-probe.sh (the Linear hub Ph0 probe) with a stub stateful curl: every read-only fact line and zero mutations, the write part (labelled issues only, cleanup archives all incl. strays, left 0), a mid-write failure exit 1 with cleanup, the guards exit 2, keys and Linear text never printed
 bash scripts/tests/run-test-guard.test.sh   # scripts/run-test-guard.sh (the check wrapper for the TS bugfix-state, #1130): exit code passes through, a timeout exits 124 and the EXIT trap runs, a daemonized child is gone after a normal exit and after a timeout, usage errors exit 2 (Linux only)
 bash scripts/tests/heavy-reclaim-race.test.sh   # scripts/heavy.sh's dead-holder reclaim (#2058, #2065) on scratch lock dirs: two reclaimers of one dead owner never both hold the slot (TLC WrapperReclaimRace), and a slot left with only an owner.reclaim.<dead pid> is freed
 bash scripts/tests/heavy-mixed-reclaim-race.test.sh   # the real scripts/heavy.sh and config/lib/locks.sh acquire_any_lock racing for one dead holder's slot on scratch lock dirs: never two jobs on it (TLC MixedReclaimRace, #2058)

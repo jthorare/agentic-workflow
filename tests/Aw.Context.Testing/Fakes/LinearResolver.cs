@@ -86,7 +86,7 @@ internal static class LinearResolver
         return nodes;
     }
 
-    private static JsonObject Page(GraphQlField field, List<JsonNode> nodes)
+    internal static JsonObject Page(GraphQlField field, List<JsonNode> nodes)
     {
         var after = Text(field, "after");
         var start = after is null ? 0 : nodes.FindIndex(n => (string?)n["id"] == after) + 1;
@@ -121,7 +121,7 @@ internal static class LinearResolver
         };
     }
 
-    private static string? Text(GraphQlField field, string name) =>
+    internal static string? Text(GraphQlField field, string name) =>
         field.Arguments.GetValueOrDefault(name) switch
         {
             null => null,
@@ -129,7 +129,7 @@ internal static class LinearResolver
             var other => throw FakeRequestException.Invalid($"Argument '{name}' on \"{field.Name}\" takes a string or enum value, got {other.ToJsonString()}."),
         };
 
-    private static void Known(GraphQlField field, HashSet<string> allowed)
+    internal static void Known(GraphQlField field, HashSet<string> allowed)
     {
         var unknown = field.Arguments.Keys.FirstOrDefault(a => !allowed.Contains(a));
         if (unknown is not null)

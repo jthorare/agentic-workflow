@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reviews list mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<!--
+  Sindri PR review page mockups, list builder's file (spec 2026-11-04-sindri-pr-review-page-design.md §3 "Nine tabs at the minimum width",
+  §6.1 the list, §6.3 rows 1-2 and last, §5.1 Settings -> Library, §5.6 before Ph2b, §4.1 near misses). Static: no production code.
+  Colors, sizes and radii are the app's tokens (src/Sindri/Aw.Sindri.Ui/Theme/Tokens.axaml); no new ones.
+  Query:  page=list|bars|settings|home      (default list)
+          state=main|loading|empty|nologin|error|pre2b                (the list, §6.3 row 1, §5.6)
+          sheet=errors  lib=main|loading|empty|rooterr                (the library errors sheet and the header count's four texts)
+          slib=main|loading|empty|add                                 (Settings -> Library)
+          ts=1.3                                                      (text scale, only the bars page uses it)
+  The top bar below is the shared one: copy `bar()` and the .seg rules into the other mockup files. It follows the real bar
+  (TopBar.axaml, ShellStyles.axaml): brand, the segmented nav, the Cmd-K field, the health pill, and the same step-down order.
+-->
+<style>
+:root {
+  --canvas:#010102; --s1:#0f1011; --s2:#141516; --s3:#18191a; --s4:#191a1b;
+  --hair:#23252a; --hair2:#34343a; --hair3:#3e3e44;
+  --ink:#f7f8f8; --muted:#d0d6e0; --subtle:#8a8f98; --tert:#62666d;
+  --primary:#5e6ad2; --primaryHover:#828fff; --primarySoft:#1d2036; --onPrimary:#fff;
+  --success:#27a644; --attention:#f2994a; --error:#eb5757;
+  --attentionSoft:#23160c; --errorSoft:#220d0e;
+  --xxs:4px; --xs:8px; --sm:12px; --md:16px; --lg:24px; --xl:32px;
+  --rxs:4px; --rsm:6px; --rmd:8px; --rlg:12px;
+  --topbar:48px; --sheet:520px; --control:30px;
+}
+* { box-sizing:border-box; }
+html, body { margin:0; height:100%; }
+body { background:var(--canvas); color:var(--ink); font:13px/1.45 Inter, system-ui, sans-serif; overflow:hidden; }
+.mono { font-family:"JetBrains Mono", Menlo, monospace; font-size:12px; }
+svg { flex:none; }
+
+/* ---------- Top bar: nine tabs (spec §3). Same structure as the real bar; the .step-* classes are its step-down. ---------- */
+.top { --ts:1; height:var(--topbar); display:flex; align-items:center; padding:0 var(--md); border-bottom:1px solid var(--hair); background:var(--canvas); position:relative; z-index:2; }
+.brand { display:flex; align-items:center; gap:8px; font-weight:600; font-size:calc(14px * var(--ts)); letter-spacing:-.2px; margin-right:20px; flex:none; }
+.brand-mark { width:20px; height:20px; border-radius:5px; background:var(--primary); color:var(--onPrimary); display:grid; place-items:center; }
+.top.nobrandword .brand { gap:0; }
+.top.nobrandword .brand-word { display:none; }
+.seg { display:flex; align-items:center; gap:2px; padding:2px; background:var(--s1); border:1px solid var(--hair); border-radius:var(--rmd); flex:none; }
+.seg .tab { display:flex; align-items:center; gap:6px; height:26px; padding:0 7px; border-radius:var(--rsm); color:var(--subtle); font-weight:500; font-size:calc(13px * var(--ts)); white-space:nowrap; }
+.top.tight .seg .tab { padding:0 2px; }
+.seg .tab.on { background:var(--primarySoft); color:var(--primaryHover); }
+.seg .tab.on::before { content:""; width:6px; height:6px; border-radius:50%; background:var(--primary); }
+.count { font-size:calc(12px * var(--ts)); font-weight:600; line-height:1.2; color:var(--attention); background:var(--attentionSoft); border-radius:var(--rxs); padding:1px 5px; }
+.cnum { font-size:calc(12px * var(--ts)); font-weight:500; color:var(--subtle); }
+.top.nocounts .count, .top.nocounts .cnum { display:none; }
+.grow { flex:1; min-width:0; }
+.search { margin:0 12px; height:var(--control); display:flex; align-items:center; gap:8px; padding:0 10px; border:1px solid var(--hair); border-radius:var(--rmd); background:var(--s1); color:var(--subtle); white-space:nowrap; flex:0 1 300px; min-width:160px; font-size:calc(13px * var(--ts)); }
+.search span { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; }
+.top.compact .search { flex:none; min-width:0; }
+.top.compact .search span, .top.compact .search kbd { display:none; }
+kbd { font:500 11px Inter, sans-serif; color:var(--subtle); border:1px solid var(--hair2); border-radius:var(--rxs); padding:1px 5px; background:var(--s2); }
+.pill { font-size:calc(13px * var(--ts)); display:flex; align-items:center; gap:6px; height:var(--control); padding:4px 12px; border:1px solid var(--hair2); border-radius:999px; background:var(--s1); white-space:nowrap; flex:none; }
+.pill .w { font-weight:600; display:flex; align-items:center; gap:6px; }
+.pill .age { color:var(--subtle); font-size:calc(12px * var(--ts)); }
+.top.noage .pill .age { display:none; }
+.bar-on { margin-left:6px; }
+
+/* ---------- Page ---------- */
+.body { position:absolute; top:var(--topbar); left:0; right:0; bottom:0; display:flex; }
+.page { flex:1; min-width:0; overflow:hidden; padding:var(--lg) var(--lg) var(--xl); }
+.head { display:flex; align-items:flex-start; gap:var(--md); margin-bottom:var(--md); }
+.head h1 { font-size:20px; font-weight:600; margin:0 0 var(--xxs); letter-spacing:-0.01em; }
+.fresh { color:var(--subtle); font-size:12px; }
+.head .grow { flex:1; min-width:0; }
+.btn { height:var(--control); padding:0 var(--sm); border-radius:var(--rmd); border:1px solid var(--hair2); background:var(--s2); color:var(--ink); display:inline-flex; align-items:center; gap:6px; font:500 13px Inter, sans-serif; white-space:nowrap; }
+.btn.primary { background:var(--ink); color:#000; border-color:var(--ink); }
+.btn.ghost { background:transparent; border-color:transparent; color:var(--subtle); }
+.btn.danger { color:var(--error); }
+.btn.sm { height:26px; padding:0 var(--xs); font-size:12px; }
+.btn[disabled], .btn.dis { color:var(--tert); background:var(--s1); border-color:var(--hair); }
+.focus { outline:2px solid var(--primary); outline-offset:2px; }
+.banner { border:1px solid var(--hair); background:var(--s1); border-radius:var(--rlg); padding:var(--sm) var(--md); margin-bottom:var(--md); display:flex; align-items:center; gap:var(--sm); color:var(--muted); }
+.banner.err { border-color:#4a1f21; background:var(--errorSoft); }
+.banner.att { border-color:#4a3017; background:var(--attentionSoft); }
+.banner.quiet { color:var(--subtle); }
+.banner .ico { white-space:normal; align-items:flex-start; }
+.ico { display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
+.ok { color:var(--success); } .att { color:var(--attention); } .err { color:var(--error); }
+.dot { width:8px; height:8px; border-radius:50%; display:inline-block; flex:none; }
+.dot.ok { background:var(--success); }
+
+/* ---------- The list ---------- */
+.libbtn { margin-left:auto; flex:none; }
+.group { margin-bottom:var(--lg); }
+.ghead { display:flex; align-items:center; gap:var(--xs); color:var(--subtle); font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:500; margin-bottom:var(--xs); }
+.ghead .n { color:var(--tert); }
+.ghead.wait { color:var(--attention); }
+.sub { display:flex; align-items:baseline; gap:var(--xs); padding:var(--xs) var(--md) var(--xxs); color:var(--muted); font-weight:500; font-size:13px; }
+.sub.repo { font-family:"JetBrains Mono", Menlo, monospace; font-size:12px; font-weight:400; color:var(--subtle); }
+.sub .tag { font-size:11px; font-weight:400; color:var(--tert); }
+.sub .n { color:var(--tert); font-weight:400; font-size:12px; }
+.list { border:1px solid var(--hair); border-radius:var(--rlg); background:var(--s1); overflow:hidden; }
+.list.wait { border-color:#4a3017; }
+.th, .row { display:grid; align-items:center; column-gap:var(--md); padding:0 var(--md); }
+.th { min-height:30px; color:var(--tert); font-size:11px; letter-spacing:.06em; text-transform:uppercase; background:var(--s2); border-bottom:1px solid var(--hair); }
+.row { min-height:52px; border-top:1px solid var(--hair); }
+.sub + .row, .th + .row { border-top:none; }
+.row + .sub { border-top:1px solid var(--hair); margin-top:0; }
+.row.focus { outline:2px solid var(--primary); outline-offset:-2px; background:var(--s3); }
+.row .t { min-width:0; display:flex; align-items:center; gap:var(--xs); }
+.row .title { font-weight:500; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+.row .m { color:var(--subtle); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.row .num { font-variant-numeric:tabular-nums; }
+.chip { display:inline-flex; align-items:center; gap:4px; height:18px; padding:0 6px; border-radius:var(--rxs); border:1px solid var(--hair2); color:var(--subtle); font-size:11px; white-space:nowrap; flex:none; }
+.chip.att { color:var(--attention); border-color:#4a3017; background:var(--attentionSoft); }
+.chip.draft { color:var(--subtle); }
+.mut { color:var(--tert); }
+.cell { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+.claim { color:var(--muted); }
+.hint { margin-top:var(--md); color:var(--tert); font-size:12px; display:flex; gap:var(--md); }
+.ph { background:var(--s1); border:1px solid var(--hair); border-radius:var(--rlg); }
+.skel { height:10px; border-radius:var(--rxs); background:var(--s3); }
+.empty { border:1px dashed var(--hair2); border-radius:var(--rlg); padding:var(--xl); text-align:center; color:var(--muted); }
+.empty p { margin:0 0 var(--xs); }
+.empty .q { color:var(--subtle); }
+.input { height:var(--control); border:1px solid var(--hair2); background:var(--s1); border-radius:var(--rmd); display:flex; align-items:center; padding:0 var(--sm); color:var(--subtle); }
+.input.on { border-color:var(--primary); color:var(--ink); }
+a.l { color:var(--primaryHover); text-decoration:none; }
+
+/* ---------- Sheet (§6.3 / app rule: 520 px beside the page at >= 1100, covering it below) ---------- */
+.sheet { width:var(--sheet); flex:none; background:var(--s2); border-left:1px solid var(--hair2); padding:var(--lg); overflow:hidden; display:flex; flex-direction:column; gap:var(--md); }
+.sheet.cover { position:absolute; right:0; left:0; width:auto; top:0; bottom:0; border-left:none; }
+.sheet h2 { font-size:18px; font-weight:600; margin:0; outline:2px solid var(--primary); outline-offset:4px; border-radius:2px; display:inline; }
+.sheet .hd { display:flex; align-items:center; gap:var(--sm); }
+.sheet .x { margin-left:auto; color:var(--subtle); font-size:12px; }
+.sheet .sum { color:var(--muted); }
+.sec { color:var(--subtle); font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:500; margin-bottom:var(--xs); display:flex; gap:var(--xs); }
+.sec .n { color:var(--tert); }
+.doc { padding:var(--sm) 0; border-top:1px solid var(--hair); display:flex; flex-direction:column; gap:3px; }
+.doc .p { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.doc .code { color:var(--muted); }
+.doc .code > .mono:first-child { margin-right:var(--xs); }
+.doc .fix { color:var(--subtle); }
+.cmdchip { display:flex; align-items:center; gap:var(--xs); border:1px solid var(--hair); background:var(--canvas); border-radius:var(--rsm); padding:4px var(--xs); color:var(--muted); }
+.cmdchip span:last-child { margin-left:auto; color:var(--subtle); font-family:Inter; font-size:12px; }
+
+/* ---------- Settings (the app's shape: one scrolling page of titled cards, SettingsView.axaml) ---------- */
+.set { max-width:760px; display:flex; flex-direction:column; gap:var(--md); }
+.set h1 { font-size:20px; font-weight:600; margin:0; letter-spacing:-0.01em; }
+.set h3 { font-size:15px; font-weight:500; margin:0 0 var(--xs); }
+.card { background:var(--s1); border:1px solid var(--hair); border-radius:var(--rlg); padding:var(--md); display:flex; flex-direction:column; gap:var(--sm); }
+.card .sep { height:1px; background:var(--hair); margin:0 calc(-1 * var(--md)); }
+.kv { display:flex; align-items:center; gap:var(--md); }
+.kv .grow b { font-weight:600; }
+.root { display:grid; grid-template-columns:minmax(0,1fr) auto; column-gap:var(--md); row-gap:2px; align-items:center; }
+.root .nm { font-weight:600; display:flex; gap:var(--xs); align-items:center; }
+.root .path { color:var(--subtle); grid-column:1; }
+.root .st { color:var(--muted); font-size:12px; grid-column:1; }
+.root .act { grid-row:1 / span 3; grid-column:2; display:flex; gap:var(--xs); align-items:center; }
+.field { display:grid; grid-template-columns:120px 1fr; column-gap:var(--md); align-items:center; row-gap:var(--xs); }
+.field .k { color:var(--subtle); }
+.switch { width:34px; height:18px; border-radius:9px; background:var(--primary); position:relative; flex:none; }
+.switch::after { content:""; position:absolute; right:2px; top:2px; width:14px; height:14px; border-radius:50%; background:#fff; }
+
+/* ---------- Home crop ---------- */
+.pagehead { display:flex; align-items:baseline; gap:var(--md); margin-bottom:var(--md); }
+.pagehead h1 { font-size:20px; font-weight:600; margin:0; letter-spacing:-0.01em; }
+.pagehead .ps { color:var(--subtle); display:flex; gap:var(--xs); }
+.pagehead .ps b { color:var(--attention); font-weight:500; }
+.hband { background:var(--attentionSoft); margin:0 calc(-1 * var(--lg)); padding:var(--lg); }
+.hband h2 { font-size:15px; font-weight:500; margin:0 0 var(--md); }
+.hrow { display:grid; grid-template-columns:90px minmax(0,1fr) 300px 40px; column-gap:var(--md); align-items:center; min-height:40px; padding:4px 0; border-top:1px solid var(--hair); }
+.hrow:first-of-type { border-top:none; }
+.hchip { display:inline-flex; font-size:11px; font-weight:500; letter-spacing:.04em; text-transform:uppercase; background:var(--s2); border-radius:var(--rxs); padding:2px 6px; justify-self:start; }
+.hrow .rt { font-weight:500; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hprs { display:flex; align-items:center; gap:var(--sm); min-height:44px; margin-top:var(--xs); padding:0 var(--sm); border:1px solid var(--hair2); border-radius:var(--rmd); background:var(--s1); }
+.hprs .big { font-weight:500; font-size:14px; }
+.hprs .grow { color:var(--subtle); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+/* ---------- The bars page ---------- */
+.bars { padding:var(--lg) 0 var(--lg); height:100%; overflow:hidden; }
+.bars h1, .bars .lead, .barbox .cap, table.meas { margin-left:var(--lg); }
+.bars h1 { font-size:18px; font-weight:600; margin:0 0 4px var(--lg); }
+.bars .lead { color:var(--subtle); margin-bottom:var(--md); max-width:1100px; }
+.barbox { margin-bottom:var(--md); }
+.barbox .cap { display:flex; gap:var(--md); align-items:baseline; margin-bottom:6px; color:var(--muted); }
+.barbox .cap b { font-weight:600; color:var(--ink); }
+.barbox .frame { border-right:1px solid var(--hair2); border-top:1px solid var(--hair2); border-bottom:1px solid var(--hair2); background:var(--canvas); overflow:hidden; }
+.barbox .frame .top { border-bottom:none; }
+table.meas { border-collapse:collapse; width:100%; max-width:1300px; font-variant-numeric:tabular-nums; }
+table.meas th { text-align:right; color:var(--tert); font-size:11px; letter-spacing:.05em; text-transform:uppercase; font-weight:500; padding:4px 10px; border-bottom:1px solid var(--hair2); }
+table.meas th:first-child, table.meas td:first-child { text-align:left; }
+table.meas td { text-align:right; padding:4px 10px; border-bottom:1px solid var(--hair); }
+table.meas td.stp { text-align:left; color:var(--muted); }
+table.meas tr.bad td { color:var(--attention); }
+.label { position:fixed; left:8px; bottom:8px; color:var(--tert); font-size:11px; background:var(--canvas); padding:0 4px; z-index:5; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const q = new URLSearchParams(location.search);
+const PAGE = q.get('page') || 'list', STATE = q.get('state') || 'main', SHEET = q.get('sheet'), LIB = q.get('lib') || 'main', SLIB = q.get('slib') || 'main';
+const TS = parseFloat(q.get('ts') || '1');
+const W = window.innerWidth;
+
+/* ---------- icons: always beside a word ---------- */
+const I = {
+  ok:   '<svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6.5 5 9.5 10 3" stroke="currentColor" fill="none" stroke-width="1.6"/></svg>',
+  fail: '<svg width="12" height="12" viewBox="0 0 12 12"><path d="M2.5 2.5 9.5 9.5M9.5 2.5 2.5 9.5" stroke="currentColor" fill="none" stroke-width="1.6"/></svg>',
+  run:  '<svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.2" stroke="currentColor" fill="none" stroke-width="1.5" stroke-dasharray="4.5 2.5"/></svg>',
+  warn: '<svg width="13" height="13" viewBox="0 0 13 13"><path d="M6.5 1.5 12 11H1z" stroke="currentColor" fill="none" stroke-width="1.4" stroke-linejoin="round"/><path d="M6.5 5v3M6.5 9.3v.4" stroke="currentColor" stroke-width="1.4"/></svg>',
+  doc:  '<svg width="12" height="12" viewBox="0 0 12 12"><path d="M2.5 1.5h5l2 2v7h-7z M4.5 6h3M4.5 8h3" stroke="currentColor" fill="none" stroke-width="1.2"/></svg>',
+  pr:   '<svg width="14" height="14" viewBox="0 0 14 14"><circle cx="3.5" cy="3" r="1.6" stroke="currentColor" fill="none" stroke-width="1.3"/><circle cx="3.5" cy="11" r="1.6" stroke="currentColor" fill="none" stroke-width="1.3"/><circle cx="10.5" cy="11" r="1.6" stroke="currentColor" fill="none" stroke-width="1.3"/><path d="M3.5 4.6v4.8M10.5 9.4V5.5a2 2 0 0 0-2-2H7" stroke="currentColor" fill="none" stroke-width="1.3"/></svg>',
+  open: '<svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4" stroke="currentColor" fill="none" stroke-width="1.5"/></svg>',
+  again:'<svg width="11" height="11" viewBox="0 0 12 12"><path d="M10 6a4 4 0 1 1-1.2-2.8M10 1.5v2.6H7.4" stroke="currentColor" fill="none" stroke-width="1.4"/></svg>',
+  glyph:'<svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 9.5 6 2l4 7.5H7.4L6 6.8 4.6 9.5z" fill="currentColor"/></svg>',
+  mag:  '<svg width="13" height="13" viewBox="0 0 14 14"><circle cx="6" cy="6" r="4.2" stroke="currentColor" fill="none" stroke-width="1.4"/><path d="m9.2 9.2 3 3" stroke="currentColor" stroke-width="1.4"/></svg>',
+  back: '<svg width="12" height="12" viewBox="0 0 12 12"><path d="M7.5 2 3.5 6l4 4" stroke="currentColor" fill="none" stroke-width="1.5"/></svg>',
+  folder:'<svg width="13" height="13" viewBox="0 0 14 14"><path d="M1.5 3.5h4l1.2 1.5h5.8v6h-11z" stroke="currentColor" fill="none" stroke-width="1.2"/></svg>',
+};
+const word = (cls, icon, text) => `<span class="ico ${cls}">${I[icon]}${text}</span>`;
+
+/* ---------- The shared top bar ---------- */
+const FULL  = ['Home','Projects','Workflows','Work','Recipes','Context','Agents','System','Reviews'];
+/* Short forms, used only below 1,100 px AND only once the bar has run out of its own step-downs (decided from the measurement; see `shorts`). */
+const SHORT = { Workflows:'Flows' };
+const CNT = { Workflows:'12', Work:'12', Recipes:'8', Agents:'4', Reviews:'3' };   // worst case: Home's mockup shows a count on these five
+const STEPS = ['full','compactSearch','noAge','tightNav','noBrandWord','noCounts'];
+const tl = (t, css) => { const s = document.createElement('span'); s.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;' + css; s.textContent = t; document.body.appendChild(s); const w = s.getBoundingClientRect().width; s.remove(); return w; };
+let M = null;   // measured pieces at text scale 1
+function measure() {
+  const lab = {}; [...FULL, ...Object.values(SHORT)].forEach(t => lab[t] = tl(t, 'font:500 13px Inter'));
+  const cw = {}; Object.entries(CNT).forEach(([k, v]) => cw[k] = k === 'Reviews' ? tl(v, 'font:600 12px Inter') + 10 : tl(v, 'font:500 12px Inter'));
+  M = { lab, cw, brandWord: tl('Sindri', 'font:600 14px Inter'), pillWord: tl('Running', 'font:600 13px Inter'), pillAge: tl('updated 4s ago', 'font:400 12px Inter') };
+}
+/* What a step needs, in px. Fixed parts (paddings, dot, icons, borders) don't scale with text; text does. `cn` maps tab -> count text. */
+const countsFor = waiting => ({ ...CNT, Reviews: String(waiting == null ? 3 : waiting) });
+function need(step, labels, s, cn) {
+  const i = STEPS.indexOf(step);
+  const padX = i >= 3 ? 2 : 7, search = i >= 1 ? 60 : 184, age = i < 2, word = i < 4, counts = i < 5;
+  const brand = 20 + (word ? 8 + M.brandWord * s : 0) + 20;
+  const tabs = labels.map((l, k) => { const key = FULL[k], c = cn[key]; return 2 * padX + M.lab[l] * s + (counts && c && c !== '0' ? 6 + (key === 'Reviews' ? tl(c, 'font:600 12px Inter') + 10 : tl(c, 'font:500 12px Inter')) * s : 0); });
+  const nav = 2 + 4 + tabs.reduce((a, b) => a + b, 0) + 2 * (labels.length - 1) + 12;    // + the selected tab's dot (6 + 6)
+  const pill = 26 + 16 + 6 + M.pillWord * s + (age ? 6 + M.pillAge * s : 0);
+  return { px: Math.round(32 + brand + nav + search + pill), brand, nav, search, pill };
+}
+function fit(w, labels, s, cn) {
+  for (const st of STEPS) { const n = need(st, labels, s, cn); if (n.px <= w) return { step: st, ...n }; }
+  return { step: 'overflow', ...need('noCounts', labels, s, cn) };
+}
+/* Labels: full at >= 1,100; below it, the short forms only if the full set no longer fits even at the bar's last step. */
+function barLabels(w, s, cn) {
+  if (w >= 1100) return FULL;
+  if (fit(w, FULL, s, cn).step !== 'overflow') return FULL;
+  return FULL.map(l => SHORT[l] || l);
+}
+function bar(w, active, o = {}) {
+  const s = o.ts || 1, cn = countsFor(o.waiting);
+  const labels = o.forceShort ? FULL.map(l => SHORT[l] || l) : barLabels(w, s, cn), f = fit(w, labels, s, cn), i = STEPS.indexOf(f.step);
+  const cls = ['top', i >= 1 ? 'compact' : '', i >= 2 ? 'noage' : '', i >= 3 ? 'tight' : '', i >= 4 ? 'nobrandword' : '', i >= 5 ? 'nocounts' : ''].join(' ');
+  const tabs = FULL.map((full, k) => {
+    const l = labels[k], c = cn[full];
+    const badge = !c || c === '0' ? '' : full === 'Reviews' ? `<span class="count" aria-label="${c} waiting on you">${c}</span>` : `<span class="cnum">${c}</span>`;
+    return `<div class="tab${full === active ? ' on' : ''}" ${l !== full ? `title="${full}"` : ''}>${l}${badge}</div>`;
+  }).join('');
+  return `<div class="${cls}" ${o.id ? `id="${o.id}"` : ''} style="${o.ts ? '--ts:' + o.ts : ''}"><div class="brand"><span class="brand-mark">${I.glyph}</span><span class="brand-word">Sindri</span></div>
+    <div class="seg">${tabs}</div><div class="grow"></div>
+    <div class="search">${I.mag}<span>Search or run a command</span><kbd>⌘K</kbd></div>
+    <div class="pill"><span class="w"><span class="dot ok"></span>Running</span><span class="age">updated 4s ago</span></div></div>`;
+}
+
+/* ---------- Sample data (made up; app-agnostic) ---------- */
+const ME = 'jthorare';
+/* group: 'wait' | 'yours';   why: how it waits on you */
+const PRS = [
+  { g:'wait',  proj:'Harbor booking', repo:'acme/harbor',     n:214, title:'Add booking hold expiry', by:'mira-k',    age:'2 h',  why:'reviewed, 2 new commits', ci:'pass', req:1, claim:'Ph2, REQ-E3' },
+  { g:'wait',  proj:'Harbor booking', repo:'acme/harbor',     n:219, title:'Retry payment capture on timeout', by:'dan-o', age:'5 h', why:'review requested', ci:'run',  req:3, claim:'REQ-E5' },
+  { g:'wait',  proj:null, repo:'jthorare/agentic-workflow',    n:2102, title:'Reviews list: row names and J / K keys', by:'sam-lee', age:'1 d', why:'reviewed, new commits', ci:'pass', req:0, claim:'' },
+  { g:'yours', proj:'Harbor booking', repo:'acme/harbor-web', n:221, title:'Seat map: keyboard selection', by:ME, age:'3 h', ci:'fail', req:2, claim:'TP-4' },
+  { g:'yours', proj:'Harbor booking', repo:'acme/harbor-web', n:223, title:'Waitlist email copy', by:ME, age:'1 d', draft:true, ci:'pass', req:0, claim:'' },
+  { g:'yours', proj:null, repo:'jthorare/agentic-workflow',    n:2071, title:'Library: front matter reader', by:ME, age:'6 h', ci:'pass', req:0, claim:'Ph1' },
+  { g:'yours', proj:null, repo:'jthorare/agentic-workflow',    n:2088, title:'PR records keep requested reviewers', by:ME, age:'2 d', ci:'run', req:1, claim:'Ph2b' },
+];
+const ciCell = c => c === 'pass' ? word('ok', 'ok', 'passing') : c === 'fail' ? word('err', 'fail', 'failing') : word('att', 'run', 'running');
+const reqCell = n => n ? word('att', 'open', `${n} required open`) : word('ok', 'ok', 'none open');
+const claimCell = c => c ? `<span class="ico claim">${I.doc}${c}</span>` : '<span class="mut">no doc named</span>';
+
+/* ---------- Library count: the header button's four texts (§6.1, §6.3 row 2) ---------- */
+const LIBTXT = {
+  main:    { t:'Library: 41 docs, 3 with errors', icon:'warn', cls:'att' },
+  loading: { t:'Library: reading…', icon:'run', cls:'' },
+  empty:   { t:'Library: no design docs yet', icon:'doc', cls:'' },
+  rooterr: { t:'Library: 33 docs, 1 folder can’t be read', icon:'warn', cls:'att' },
+};
+function libButton() {
+  const L = LIBTXT[STATE === 'loading' && !q.get('lib') ? 'loading' : LIB];
+  return `<button class="btn libbtn${SHEET === 'errors' ? ' focus' : ''}" aria-label="${L.t}, opens the list">${word(L.cls, L.icon, L.t)}</button>`;
+}
+
+/* ---------- The list ---------- */
+const pw = () => W - (SHEET === 'errors' && W >= 1100 ? 520 : 0) - 48;
+const wide = () => pw() >= 1100;
+function colsFor() { return wide() ? 'minmax(0,1fr) 110px 56px 108px 140px 150px' : 'minmax(0,1fr) 104px 140px 120px'; }
+function rowHtml(p, focus) {
+  const wideRow = wide();
+  const chips = (p.draft ? '<span class="chip draft">draft</span>' : '') + (p.why ? `<span class="chip att">${I.again}${p.why}</span>` : '');
+  const by = p.by === ME ? 'you' : p.by;
+  const sub = wideRow ? `<span class="mono">${p.repo}#${p.n}</span>` : `<span class="mono">${p.repo}#${p.n}</span> · ${by} · ${p.age}`;
+  const first = `<div class="t" style="flex-direction:column;align-items:flex-start;gap:2px;"><div style="display:flex;gap:8px;align-items:center;max-width:100%;"><span class="title">${p.title}</span>${chips}</div><div class="m" style="max-width:100%">${sub}</div></div>`;
+  const cells = wideRow
+    ? `<div class="cell">${by}</div><div class="cell num mut">${p.age}</div><div class="cell">${ciCell(p.ci)}</div><div class="cell">${reqCell(p.req)}</div><div class="cell">${claimCell(p.claim)}</div>`
+    : `<div class="cell">${ciCell(p.ci)}</div><div class="cell">${reqCell(p.req)}</div><div class="cell">${claimCell(p.claim)}</div>`;
+  return `<div class="row${focus ? ' focus' : ''}" style="grid-template-columns:${colsFor()}" aria-label="${p.title}, #${p.n}, ${by}, ${p.age}, CI ${p.ci}">${first}${cells}</div>`;
+}
+function thHtml() {
+  const h = wide() ? ['Pull request', 'Author', 'Age', 'CI', 'Required checks', 'Design doc'] : ['Pull request', 'CI', 'Required checks', 'Design doc'];
+  return `<div class="th" style="grid-template-columns:${colsFor()}">${h.map(x => `<div>${x}</div>`).join('')}</div>`;
+}
+let focusDone = false;
+function group(title, rows, cls, withTh) {
+  if (!rows.length) return '';
+  /* sub-groups: by project (the project's name), else by repo name; project groups first, then repos, each newest activity first */
+  const keys = []; rows.forEach(r => { const k = r.proj || r.repo; if (!keys.includes(k)) keys.push(k); });
+  let inner = '';
+  keys.forEach((k, ki) => {
+    const rs = rows.filter(r => (r.proj || r.repo) === k), isProj = !!rs[0].proj;
+    inner += `<div class="sub${isProj ? '' : ' repo'}">${k}${isProj ? '<span class="tag">project</span>' : ''}<span class="n">${rs.length}</span></div>`;
+    rs.forEach(r => { inner += rowHtml(r, !focusDone && (focusDone = true)); });
+  });
+  return `<div class="group"><div class="ghead ${cls || ''}">${title} <span class="n">${rows.length}</span></div><div class="list ${cls || ''}">${withTh ? thHtml() : ''}${inner}</div></div>`;
+}
+function headHtml(fresh) {
+  return `<div class="head"><div class="grow"><h1>Reviews</h1><div class="fresh">${fresh}</div></div>${libButton()}</div>`;
+}
+const FRESH = `GitHub synced 3 min ago · reviews as <span class="mono">${ME}</span> · 7 open PRs in 3 repos`;
+const hintLine = '<div class="hint"><span><kbd>J</kbd> <kbd>K</kbd> next / previous PR</span><span><kbd>Enter</kbd> open</span><span><kbd>G</kbd> <kbd>V</kbd> go to Reviews</span></div>';
+
+function listPage() {
+  const waiting = PRS.filter(p => p.g === 'wait'), yours = PRS.filter(p => p.g === 'yours');
+  const th = thHtml();
+  switch (STATE) {
+    case 'loading': {
+      const sk = n => Array.from({ length: n }, () => `<div class="row" style="grid-template-columns:${colsFor()}"><div><div class="skel" style="width:52%;margin-bottom:8px"></div><div class="skel" style="width:30%;height:8px"></div></div>${'<div><div class="skel" style="width:70%"></div></div>'.repeat(wide() ? 5 : 3)}</div>`).join('');
+      return headHtml('&nbsp;') + `<div class="group"><div class="ghead wait">Waiting on you</div><div class="list">${th}${sk(3)}</div></div><div class="group"><div class="ghead">Yours</div><div class="list">${sk(3)}</div></div>`;
+    }
+    case 'empty':
+      return headHtml(FRESH.replace('7 open PRs in 3 repos', '0 open PRs in 3 repos')) + `<div class="empty"><p><b>Nothing waiting on you and no open PRs of yours.</b></p>
+        <p>Repos are set in <a class="l">Settings → Connections</a>.</p><p class="q">Reviews asked of a team don’t show here yet.</p></div>`;
+    case 'nologin':
+      return headHtml('GitHub synced 3 min ago') + `<div class="empty" style="max-width:560px;margin:var(--xl) auto 0;text-align:left;padding:var(--lg)">
+        <p style="font-size:15px;font-weight:500;color:var(--ink)">Set your GitHub login</p>
+        <p class="q" style="margin-bottom:var(--md)">Sindri matches it against PR authors and requested reviewers to find what waits on you. You set it once; it is saved as <span class="mono">review.login</span> in your profile.</p>
+        <div style="display:flex;gap:var(--xs);align-items:center"><div class="input on focus" style="flex:1;outline-offset:1px">${ME}<span style="margin-left:1px;border-left:1px solid var(--ink);height:16px"></span></div><button class="btn primary">Save</button></div>
+</div>`;
+    case 'error':
+      return headHtml(FRESH) + `<div class="banner err" role="alert">${word('err', 'fail', 'PR list is from 13:52: GitHub failed: API rate limit exceeded, resets 14:41')}</div>` +
+        group('Waiting on you', waiting, 'wait', true) + group('Yours', yours);
+    case 'pre2b':
+      return headHtml('Review requests show here once Sindri reads requested reviewers.') + group('Yours', yours, '', true);
+    default:
+      return headHtml(FRESH) + group('Waiting on you', waiting, 'wait', true) + group('Yours', yours) + hintLine;
+  }
+}
+
+/* ---------- The library errors sheet ---------- */
+function sheetErrors() {
+  const cover = W < 1100;
+  const hd = cover ? `<div class="hd"><button class="btn sm">${I.back} Back</button><h2>Library</h2><span class="x">Esc</span></div>` : `<div class="hd"><h2>Library</h2><span class="x">Esc</span></div>`;
+  const doc = (p, code, txt, fix) => `<div class="doc"><div class="p mono">${p}</div><div class="code"><span class="mono" style="color:var(--error)">${code}</span>${txt}</div>${fix ? `<div class="fix">${fix}</div>` : ''}</div>`;
+  let body;
+  if (LIB === 'loading') {
+    body = `<div class="sum">Library: reading…</div>` + Array.from({ length: 4 }, () => '<div class="doc"><div class="skel" style="width:60%"></div><div class="skel" style="width:85%;height:8px"></div></div>').join('');
+  } else if (LIB === 'empty') {
+    body = `<div class="empty" style="margin-top:var(--md)"><p><b>Library: no design docs yet</b></p><p class="q">A doc is read when its front matter says <span class="mono">aw-doc: 1</span>.</p><p><a class="l">How design docs are marked</a></p><p class="mono" style="color:var(--subtle)">docs/conventions/design-docs.md</p></div>`;
+  } else {
+    const roots = LIB === 'rooterr' ? `<div><div class="sec">Folders</div>
+        <div class="banner err" style="margin:0">${word('err', 'fail', 'Library: work couldn’t be read: <span class="mono">~/Documents/WorkVault</span> isn’t there. Is the drive mounted?')}</div></div>` : '';
+    const nerr = LIB === 'rooterr' ? 1 : 3;
+    body = `<div class="sum">${LIB === 'rooterr' ? '33 docs read · 1 with errors · 1 near miss · scanned 3 min ago' : '41 docs read · 3 with errors · 2 near misses · scanned 3 min ago'}</div>${roots}
+      <div><div class="sec">Docs with errors <span class="n">${nerr}</span></div>
+        ${LIB === 'rooterr' ? '' : doc('work/Harbor/booking-tdd-copy.md:2', 'SND-LIB-012', 'The id <span class="mono">harbor-booking-tdd</span> is also in work/Harbor/booking-tdd.md.', 'Give this doc its own id.')}
+        ${doc('notes/seats.md:14', 'SND-LIB-013', '<span class="mono">REQ-E3</span> is defined twice (lines 14 and 31).', 'Keep the first; make the second a plain reference.')}
+        ${LIB === 'rooterr' ? '' : doc('work/Harbor/tasks.md:9', 'SND-LIB-010', 'The <span class="mono">issues:</span> entry <span class="mono">HB212</span> is not a GitHub number or a Linear key.', 'Write <span class="mono">HB-212</span>.')}
+      </div>
+      <div><div class="sec">Near misses <span class="n">${LIB === 'rooterr' ? 1 : 2}</span><span style="text-transform:none;letter-spacing:0;color:var(--tert)">looks like a design doc, not read</span></div>
+        ${doc('work/Drafts/ferry-notes.md', 'SND-LIB-019', '<span class="mono">aw-doc: "1"</span> is text, not the number 1.', 'Write <span class="mono">aw-doc: 1</span>.')}
+        ${LIB === 'rooterr' ? '' : doc('notes/old-plan.md', 'SND-LIB-019', '<span class="mono">aw-doc: 1.0</span> is not the number 1.', 'Write <span class="mono">aw-doc: 1</span>.')}
+      </div>
+      <div class="cmdchip"><span class="mono">$ sindri library validate</span><span>Copy command</span></div>`;
+  }
+  return `<div class="sheet${cover ? ' cover' : ''}">${hd}${body}</div>`;
+}
+
+/* ---------- Settings -> Library (§5.1, §6.3 last row) ---------- */
+function settingsPage() {
+  const roots = [
+    { nm:'aw', tag:'built in', path:'~/.agentic-workflow', st:'scanned 3 min ago, 9 docs, 0 errors' },
+    { nm:'work', tag:'vault', path:'~/Documents/WorkVault', st:'scanned 3 min ago, 16 docs, 2 errors', errs:2 },
+    { nm:'notes', tag:'vault', path:'~/Documents/Notes', st:'scanned 3 min ago, 4 docs, 1 error', errs:1 },
+    { nm:'archive', tag:'vault', path:'/mnt/archive/vault', bad:'can’t be read: the folder isn’t there. Is the drive mounted?' },
+    { nm:'repo:agentic-workflow', tag:'from your repos', path:'jthorare/agentic-workflow · docs/**', st:'scanned 3 min ago, 8 docs, 0 errors', ro:true },
+    { nm:'repo:harbor', tag:'from your repos', path:'acme/harbor · docs/**', st:'scanned 3 min ago, 4 docs, 0 errors', ro:true },
+  ];
+  const rootHtml = r => `<div class="root"><div class="nm">${r.nm}<span class="chip">${r.tag}</span></div><div class="path mono">${r.path}</div>
+      <div class="st">${r.bad ? word('err', 'fail', `${r.bad}`) : word('', 'ok', r.st)}</div>
+      <div class="act">${r.errs ? `<button class="btn sm">${I.warn} ${r.errs} error${r.errs > 1 ? 's' : ''}</button>` : ''}${r.ro ? '<span class="fresh">set by the repo list</span>' : `<button class="btn sm ghost">${r.nm === 'aw' ? 'Turn off' : 'Remove'}</button>`}</div></div>`;
+  let lib;
+  const intro = '<div class="fresh">Folders Sindri reads design docs from. Only files whose front matter says <span class="mono">aw-doc: 1</span> are read; notes, journals and secrets are skipped.</div>';
+  if (SLIB === 'loading') {
+    lib = intro + `<div class="card">${[0, 1, 2].map(() => '<div class="root"><div class="skel" style="width:30%;height:12px"></div><div></div><div class="skel" style="width:48%;margin-top:6px"></div><div class="fresh" style="margin-top:4px">Reading the folder…</div></div>').join('<div class="sep"></div>')}</div>`;
+  } else if (SLIB === 'empty') {
+    lib = intro + `<div class="empty"><p>No folders yet. Add a folder to index its design docs.</p><button class="btn primary">${I.folder} Add folder</button></div>`;
+  } else {
+    const add = SLIB === 'add' ? `<div class="card" style="border-color:var(--hair3)"><div style="font-weight:600">Add a folder</div>
+        <div class="field"><div class="k">Name</div><div class="input">harbor-notes</div>
+        <div class="k">Folder</div><div class="input on focus">~/Documents/Harbor</div>
+        <div class="k">Don’t read</div><div class="input">Private/**, Journal/**</div></div>
+        <div class="fresh">Name: lowercase letters, digits and “-”. The change asks for your approval; as the only waiting change it approves in one click.</div>
+        <div style="display:flex;gap:var(--xs)"><button class="btn primary">Add and approve</button><button class="btn ghost">Cancel</button></div></div>` : '';
+    lib = intro + `<div class="card">${roots.map(rootHtml).join('<div class="sep"></div>')}</div>${add}
+      ${SLIB === 'add' ? '' : `<div><button class="btn primary">${I.folder} Add folder</button></div>`}`;
+  }
+  return `<div class="set">
+    <h1>Settings</h1>
+    <div><h3>Connections</h3><div class="card"><div class="kv"><div class="grow"><b>GitHub</b><div class="fresh">Reads PRs of 3 repos · reviews as <span class="mono">${ME}</span></div></div>${word('ok', 'ok', 'connected')}</div>
+</div></div>
+    <div><h3>Library</h3><div style="display:flex;flex-direction:column;gap:var(--sm)">${lib}</div></div>
+    <div><h3>This app</h3><div class="card"><div class="kv"><div class="grow"><b>Reduce motion</b></div><div class="switch"></div></div></div></div></div>`;
+}
+
+/* ---------- Home crop ---------- */
+function homePage() {
+  const row = (chip, t, m, w) => `<div class="hrow"><span class="hchip">${chip}</span><span class="rt">${t}</span><span class="fresh">${m}</span><span class="fresh" style="text-align:right">${w}</span></div>`;
+  return `<div class="pagehead"><h1>Home</h1><div class="ps"><b>5 need you</b><span>·</span><span>4 running</span><span>·</span><span>1 with you</span><span>·</span><span>4 queued</span></div></div>
+    <div class="hband"><h2>Needs you</h2>
+      ${row('Parked', 'Retry storm in outbox dispatcher', 'checks failed twice with the same findings', '12m')}
+      ${row('Decision', 'Re-scope: drop the iOS head from this item', 'filed by a session', '26m')}
+      ${row('Escalated', 'Context map review for tabs.layout', 'judge 0.62, below 0.80', '2h')}
+      <div class="hprs focus" tabindex="0" style="outline-offset:2px"><span style="color:var(--muted);display:flex">${I.pr}</span><span class="big">3 PRs waiting on you</span><span class="grow">oldest: Retry payment capture on timeout (acme/harbor#219), 5 h</span><span class="btn ghost sm" style="color:var(--primaryHover)">Open Reviews →</span></div>
+    </div>
+    <div class="fresh" style="margin-top:var(--lg)">The PR line sits under the Needs-you rows, outside the “5 need you” count, and links to Reviews (<kbd>G</kbd> <kbd>V</kbd>). With none waiting the line is absent. Reviews’ tab badge shows the same 3.</div>`;
+}
+
+/* ---------- The measured bars (§3 "Nine tabs at the minimum width") ---------- */
+function barsPage() {
+  const rows = [];
+  const cases = [[1000, 1], [1099, 1], [1100, 1], [1440, 1], [1000, 1.3], [1099, 1.3], [1100, 1.3]];
+  cases.forEach(([w, s]) => {
+    const cn = countsFor(3), f = fit(w, FULL, s, cn), sh = fit(w, FULL.map(l => SHORT[l] || l), s, cn), lab = barLabels(w, s, cn);
+    rows.push({ w, s, f, sh, floor: need('noCounts', FULL, s, cn).px, shortUsed: lab !== FULL });
+  });
+  const frames = [[1000, 1], [1099, 1], [1100, 1], [1440, 1], [1000, 1.3]].map(([w, s]) => {
+    const cn = countsFor(3), f = fit(w, barLabels(w, s, cn), s, cn);
+    return `<div class="barbox"><div class="cap"><b>${w} px window${s !== 1 ? ', text 130%' : ''}</b><span>${barLabels(w, s, cn) === FULL ? 'full labels' : 'short labels'} · bar step: ${f.step} · needs ${f.px} of ${w} px</span></div>
+      <div class="frame" style="width:${w}px">${bar(w, 'Reviews', { ts: s })}</div></div>`;
+  }).join('') + (() => { const cn = countsFor(3), f = fit(1000, FULL.map(l => SHORT[l] || l), 1.3, cn);
+    return `<div class="barbox"><div class="cap"><b>Fallback, not needed: 1000 px, text 130%, “Workflows” as “Flows”</b><span>bar step: ${f.step} · needs ${f.px} of 1000 px (full labels: ${fit(1000, FULL, 1.3, cn).px}). Its accessible name and tooltip stay “Workflows”.</span></div>
+      <div class="frame" style="width:1000px">${bar(1000, 'Reviews', { ts: 1.3, forceShort: true })}</div></div>`; })();
+  const T = rows.map(r => `<tr class="${r.f.step === 'overflow' ? 'bad' : ''}"><td>${r.w}${r.s !== 1 ? ' @ text 130%' : ''}</td><td>${r.f.px}</td><td class="stp">${r.f.step}</td><td>${r.f.step === 'overflow' ? '<b>no fit</b>' : r.w - r.f.px}</td><td>${r.floor}</td><td>${r.sh.px}</td><td class="stp">${r.sh.step}</td></tr>`).join('');
+  const fullNeeds = STEPS.map(st => `${st} ${need(st, FULL, 1, countsFor(3)).px}`).join(' · ');
+  return `<div class="bars"><h1>Nine tabs, measured</h1>
+    <div class="lead">Model of the real bar (brand, segmented nav, ⌘K field, health pill) with Inter 13/500 widths measured in this page. It steps down in the app’s own order: ⌘K folds to its magnifier, the pill’s age drops, tab padding goes 7 → 2 px, the brand word drops, counts hide. Px needed per step with full labels at 100% text: ${fullNeeds}.</div>
+    ${frames}
+    <table class="meas"><tr><th>Window</th><th>Needs, full labels</th><th>Step it lands on</th><th>Spare px</th><th>Floor: every step taken</th><th>Needs with “Flows”</th><th>Step with “Flows”</th></tr>${T}</table></div>`;
+}
+
+/* ---------- Mount ---------- */
+function mount() {
+  measure();
+  const root = document.getElementById('root');
+  if (PAGE === 'bars') { root.innerHTML = barsPage(); return; }
+  const waiting = STATE === 'pre2b' || STATE === 'empty' || STATE === 'nologin' || STATE === 'loading' ? 0 : 3;
+  const active = PAGE === 'home' ? 'Home' : PAGE === 'settings' ? '' : 'Reviews';
+  const topHtml = bar(W, active, { waiting: PAGE === 'home' || PAGE === 'settings' ? 3 : waiting });
+  let page;
+  if (PAGE === 'settings') page = settingsPage();
+  else if (PAGE === 'home') page = homePage();
+  else page = listPage();
+  const sheet = PAGE === 'list' && SHEET === 'errors' ? sheetErrors() : '';
+  root.innerHTML = topHtml + `<div class="body"><div class="page">${page}</div>${sheet}</div>`;
+  const label = `${PAGE}${PAGE === 'list' ? ' · ' + STATE : ''}${PAGE === 'settings' ? ' · ' + SLIB : ''}${SHEET ? ' · sheet ' + SHEET + ' · ' + LIB : ''} · ${W}px`;
+  document.body.insertAdjacentHTML('beforeend', `<div class="label">mockup · ${label}</div>`);
+  if (PAGE === 'settings' && SLIB === 'add') document.querySelector('.page').scrollTop = 1e6;
+  window.__rendered = true;
+}
+(document.fonts && document.fonts.load ? Promise.all([document.fonts.load('500 13px Inter'), document.fonts.load('600 14px Inter'), document.fonts.load('400 12px Inter')]).catch(() => {}) : Promise.resolve()).then(() => document.fonts.ready).then(mount);
+</script>
+</body>
+</html>
