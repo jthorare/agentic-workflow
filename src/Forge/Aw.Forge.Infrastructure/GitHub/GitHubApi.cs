@@ -66,6 +66,42 @@ internal sealed class GitHubApi(HttpClient http, ICredentialSource credentials, 
         return items;
     }
 
+    /// <summary>
+    /// Reads the pages of a list endpoint from <paramref name="path"/> (used as given), one reply per page, stopping after
+    /// <paramref name="maxPages"/> or once <paramref name="enough"/> says so. the set's More is true when it stopped with a next page left.
+    /// </summary>
+    internal async ValueTask<Result<PageSet>> Pages(string host, string path, int maxPages, Func<IReadOnlyList<GitHubReply>, bool> enough, CancellationToken cancellationToken)
+    {
+        var replies = new List<GitHubReply>();
+        var url = Rest(host, path);
+        for (var page = 1; ; page++)
+        {
+            var reply = await Send(host, HttpMethod.Get, url, body: null, cancellationToken).ConfigureAwait(false);
+            if (reply.IsError)
+            {
+                return reply.Error;
+            }
+
+            if (!reply.Value.Ok)
+            {
+                return Fail(reply.Value);
+            }
+
+            replies.Add(reply.Value);
+            if (reply.Value.Next is not { } next || !SameOrigin(next, url))
+            {
+                return new PageSet(replies, More: false);
+            }
+
+            if (page >= maxPages || enough(replies))
+            {
+                return new PageSet(replies, More: true);
+            }
+
+            url = next;
+        }
+    }
+
     private static bool SameOrigin(Uri next, Uri current) =>
         string.Equals(next.Scheme, "https", StringComparison.Ordinal) && string.Equals(next.Host, current.Host, StringComparison.OrdinalIgnoreCase);
 

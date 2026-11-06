@@ -148,7 +148,7 @@ internal sealed partial class GitHubForge
         }
 
         var rerun = 0;
-        foreach (var run in runs.Value.Where(r => Summarise(sha, [r]).State == ChecksState.Failing))
+        foreach (var run in runs.Value.Where(r => Summarise(sha, [AsRun(r, sha)]).State == ChecksState.Failing))
         {
             var reply = await _api.Call(pull.Host, HttpMethod.Post, Inv.S($"{RepoPath(pull)}/check-runs/{run.Long("id")}/rerequest"), body: null, cancellationToken).ConfigureAwait(false);
             if (reply.IsError)

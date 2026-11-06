@@ -23,10 +23,33 @@ internal static class SeedChecksCommand
             ? parsed
             : ForgeErrors.Invalid.With("state: none, pending, passing or failing");
         var failing = (line["failing"] ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        var result = forge.Parse(line.Positionals[0]).Bind(pull => state.Bind(s => Count(line, "passed").Bind(passed => Count(line, "pending").Bind(pending =>
-            seed.SeedChecks(new SeedChecksRequest(pull, s, failing, new Dictionary<string, string>(StringComparer.Ordinal), passed, pending))))))
+        var result = forge.Parse(line.Positionals[0]).Bind(pull => state.Bind(s => Count(line, "passed").Bind(passed => Count(line, "pending").Bind(pending => Runs(line).Bind(runs =>
+            seed.SeedChecks(new SeedChecksRequest(pull, s, failing, new Dictionary<string, string>(StringComparer.Ordinal), passed, pending, runs)))))))
             .Map(_ => new Applied(Ok: true));
         return Task.FromResult(CommandOutput.Write(result, json));
+    }
+
+    // why: the runs carry no sha here; the forge fills in the pull request's head when it stores them.
+    private static Result<IReadOnlyList<CheckRun>?> Runs(CommandLine line)
+    {
+        if (line["runs"] is not { } text)
+        {
+            return Results.Success<IReadOnlyList<CheckRun>?>(value: null);
+        }
+
+        var runs = new List<CheckRun>();
+        foreach (var entry in text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var parts = entry.Split(':', 3, StringSplitOptions.TrimEntries);
+            if (parts.Length < 2 || parts[0].Length == 0 || parts[1].Length == 0)
+            {
+                return ForgeErrors.Invalid.With("runs: name:conclusion[:app],...");
+            }
+
+            runs.Add(new CheckRun(parts[0], parts.Length == 3 && parts[2].Length > 0 ? parts[2] : null, parts[1], string.Empty));
+        }
+
+        return Results.Success<IReadOnlyList<CheckRun>?>(runs);
     }
 
     private static Result<int> Count(CommandLine line, string option) =>
