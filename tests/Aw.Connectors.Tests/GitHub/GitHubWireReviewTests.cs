@@ -64,6 +64,30 @@ public sealed class GitHubWireReviewTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_dismissed_review_is_skipped_so_the_one_before_it_counts()
+    {
+        var latest = GitHubWire.LatestReviews(
+        [
+            Review("bob", "APPROVED", "c1", "2026-11-01T10:00:00Z"),
+            Review("bob", "DISMISSED", "c9", "2026-11-03T10:00:00Z"),
+        ]);
+
+        Assert.Equal([("bob", "c1")], latest);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_newer_review_wins_even_when_it_is_listed_before_the_older_one()
+    {
+        var latest = GitHubWire.LatestReviews(
+        [
+            Review("bob", "COMMENTED", "c3", "2026-11-02T10:00:00Z"),
+            Review("bob", "APPROVED", "c1", "2026-11-01T10:00:00Z"),
+        ]);
+
+        Assert.Equal([("bob", "c3")], latest);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void A_review_without_a_login_or_a_commit_is_skipped()
     {
         var latest = GitHubWire.LatestReviews(

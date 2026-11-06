@@ -67,6 +67,17 @@ public sealed class GitHubClientReviewTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_compare_answering_200_diverged_still_counts_ahead_by()
+    {
+        _ = _server.AddReview(Repo, 12, "bob", "APPROVED", "aaa", _t).ScriptThrough()
+            .Script(static _ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("""{"status":"diverged","ahead_by":4}""", System.Text.Encoding.UTF8, "application/json") });
+
+        var read = (await Client().PullReviews(Repo, 12, "ccc", Ct)).Value;
+
+        Assert.Equal([new ConnectorReview("bob", "aaa", 4)], read.Reviews);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_rate_limit_on_the_compare_stops_the_read_with_the_reset_time()
     {
         var reset = new DateTimeOffset(2026, 11, 5, 10, 0, 0, TimeSpan.Zero);

@@ -9,6 +9,7 @@ namespace Aw.Connectors.Infrastructure.GitHub;
 /// <summary>The review read of <see cref="GitHubClient"/>: GET /pulls/{n}/reviews, then one GET /compare per reviewed commit that is not the head.</summary>
 internal sealed partial class GitHubClient
 {
+    // 10 pages of 100: a pull request with more than 1000 reviews is cut off here without a sign.
     private const int MaxReviewPages = 10;
 
     /// <inheritdoc />

@@ -62,13 +62,13 @@ internal static partial class GitHubWire
     public static GitHubPullDetail ReadPull(JsonElement e, IReadOnlyList<string> paths)
         => new(Flag(e, "merged"), Flag(e, "draft"), Date(e, "merged_at"), paths, RequestedLogins(e), e.TryGetProperty("head", out var head) && head.ValueKind == JsonValueKind.Object ? Text(head, "sha") : null);
 
-    /// <summary>Reduces a pull request's review list to each login's latest review: the one with the newest 'submitted_at' (the later entry on a tie), pending reviews and ones without a login or commit skipped. Ordered by login.</summary>
+    /// <summary>Reduces a pull request's review list to each login's latest review: the one with the newest 'submitted_at' (the later entry on a tie), pending and dismissed reviews (GitHub voided the latter) and ones without a login or commit skipped. A later COMMENTED review replaces an earlier APPROVED one: spec §5.6 counts the latest review whatever its state. Ordered by login.</summary>
     public static IReadOnlyList<(string Login, string Commit)> LatestReviews(IEnumerable<JsonElement> reviews)
     {
         Dictionary<string, (string Commit, DateTimeOffset At)> latest = new(StringComparer.Ordinal);
         foreach (var review in reviews)
         {
-            if (review.ValueKind != JsonValueKind.Object || string.Equals(Text(review, "state"), "PENDING", StringComparison.OrdinalIgnoreCase)
+            if (review.ValueKind != JsonValueKind.Object || IsSkippedState(Text(review, "state"))
                 || Author(review) is not { Length: > 0 } login || Text(review, "commit_id") is not { Length: > 0 } commit)
             {
                 continue;
@@ -87,6 +87,9 @@ internal static partial class GitHubWire
     /// <summary>Reads 'ahead_by' from a compare reply, or null when it has none.</summary>
     public static int? AheadBy(JsonElement e)
         => e.ValueKind == JsonValueKind.Object && Long(e, "ahead_by") is { } n ? (int)Math.Clamp(n, 0, int.MaxValue) : null;
+
+    private static bool IsSkippedState(string? state)
+        => string.Equals(state, "PENDING", StringComparison.OrdinalIgnoreCase) || string.Equals(state, "DISMISSED", StringComparison.OrdinalIgnoreCase);
 
     // A team request is a 'requested_teams' entry with no login; only people are listed here.
     private static List<string> RequestedLogins(JsonElement e)

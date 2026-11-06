@@ -51,6 +51,18 @@ public sealed class PullGitHubReviewsTests : IDisposable
     }
 
     [Fact, Trait("Lane", "integration")]
+    public async Task A_pull_request_asked_of_a_team_alone_stores_no_reviewers()
+    {
+        // The fake server always lists a requested team beside the people.
+        _ = _server.Add(Repo, A.GitHubIssue(12).AsPullRequest().UpdatedAt(_t))
+            .AddPull(Repo, 12, new GitHubPullDetail(Merged: false, Draft: false, MergedAt: null, [], [], "head1"));
+
+        var item = Assert.Single((await Service().Handle(Request(), Ct)).Value.Items);
+
+        Assert.Empty(item.Pull!.RequestedReviewers);
+    }
+
+    [Fact, Trait("Lane", "integration")]
     public async Task A_pull_request_reviewed_at_one_commit_and_pushed_to_keeps_that_commit_and_how_many_commits_it_is_behind()
     {
         _ = _server.Add(Repo, A.GitHubIssue(12).AsPullRequest().UpdatedAt(_t))
