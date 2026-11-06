@@ -70,7 +70,7 @@ public sealed class LaneHealthReader(ILaneFiles files, LaneBeats beats, ILaneMai
 
         if (beat.Value is { } last && !(record.RecordedAt is { } recorded && last.At < recorded))
         {
-            return await Delivery(lane, agent, cancellationToken).ConfigureAwait(false);
+            return await Delivery(lane, record, agent, cancellationToken).ConfigureAwait(false);
         }
 
         var why = await WhyNoHooks(files, beats, record, agent, cancellationToken).ConfigureAwait(false);
@@ -103,7 +103,7 @@ public sealed class LaneHealthReader(ILaneFiles files, LaneBeats beats, ILaneMai
             : reason;
     }
 
-    private async ValueTask<Result<(string State, bool Attention)>> Delivery(string lane, LaneAgent agent, CancellationToken cancellationToken)
+    private async ValueTask<Result<(string State, bool Attention)>> Delivery(string lane, LaneRecord record, LaneAgent agent, CancellationToken cancellationToken)
     {
         var owed = await mail.Owed(lane, cancellationToken).ConfigureAwait(false);
         if (owed.IsError)
@@ -121,30 +121,38 @@ public sealed class LaneHealthReader(ILaneFiles files, LaneBeats beats, ILaneMai
         {
             { Capped: true } => ("obligation not delivered (stop cap)", true),
             { Blocks: >= CursorLoopLimit } when string.Equals(agent.Agent, "cursor", StringComparison.Ordinal) => ("obligation not delivered (Cursor loop_limit)", true),
-            _ => await Undelivered(lane, owed.Value, cancellationToken).ConfigureAwait(false),
+            _ => await Undelivered(record, owed.Value, cancellationToken).ConfigureAwait(false),
         };
     }
 
-    // A hook ran, yet the oldest message is still unseen after the limit: the lane is idle and nothing woke it.
-    private async ValueTask<Result<(string State, bool Attention)>> Undelivered(string lane, IReadOnlyList<LaneMessage> owed, CancellationToken cancellationToken)
+    // Hooks run. Mail unseen past the limit wins; then an answer without the marker; else the lane is taking part.
+    private async ValueTask<Result<(string State, bool Attention)>> Undelivered(LaneRecord record, IReadOnlyList<LaneMessage> owed, CancellationToken cancellationToken)
     {
-        var oldest = owed.Where(static m => !m.Delivered).MinBy(static m => m.At);
-        var age = oldest is null ? TimeSpan.Zero : clock.GetUtcNow() - oldest.At;
-        if (oldest is null || age < options.UndeliveredAfter)
-        {
-            return ("taking part", false);
-        }
-
-        var trace = await files.HookTrace(lane, cancellationToken).ConfigureAwait(false);
-        var beat = await beats.Last(lane, cancellationToken).ConfigureAwait(false);
+        var trace = await files.HookTrace(record.Lane, cancellationToken).ConfigureAwait(false);
+        var beat = await beats.Last(record.Lane, cancellationToken).ConfigureAwait(false);
         if (trace.IsError || beat.IsError)
         {
             return trace.IsError ? trace.Error : beat.Error;
         }
 
-        var last = trace.Value is { } t ? $"the lane's last hook was {t.Event} at {Clock(t.At)}" : $"the lane's last hook beat was at {Clock(beat.Value?.At ?? oldest.At)}";
-        var minutes = (int)age.TotalMinutes;
-        return (string.Create(System.Globalization.CultureInfo.InvariantCulture, $"mail not delivered for {minutes} min: {last}; lane-send wakes an idle lane"), true);
+        var current = NewerThanSession(trace.Value, record);
+        if (owed.Where(static m => !m.Delivered).MinBy(static m => m.At) is { } oldest && clock.GetUtcNow() - oldest.At >= options.UndeliveredAfter)
+        {
+            return (NotDelivered(clock.GetUtcNow() - oldest.At, trace.Value, beat.Value?.At ?? oldest.At), true);
+        }
+
+        return current is not null && string.Equals(current.Outcome, "reply-unmarked", StringComparison.Ordinal)
+            ? ($"answered without a REPLY TO META: line at {Clock(current.At)}: the reply was not captured (the stop gate asked again)", true)
+            : ("taking part", false);
+    }
+
+    private static LaneHookTrace? NewerThanSession(LaneHookTrace? trace, LaneRecord record) =>
+        trace is not null && !(record.RecordedAt is { } recorded && trace.At < recorded) ? trace : null;
+
+    private static string NotDelivered(TimeSpan age, LaneHookTrace? trace, DateTimeOffset lastBeat)
+    {
+        var last = trace is null ? $"the lane's last hook beat was at {Clock(lastBeat)}" : $"the lane's last hook was {trace.Event} at {Clock(trace.At)}";
+        return string.Create(System.Globalization.CultureInfo.InvariantCulture, $"mail not delivered for {(int)age.TotalMinutes} min: {last}; lane-send wakes an idle lane");
     }
 
     /// <summary>The line for a lane whose hooks left no heartbeat, by what its hook trace says.</summary>
