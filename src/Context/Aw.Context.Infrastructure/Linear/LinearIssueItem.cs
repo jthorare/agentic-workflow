@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Context.Core.Linear;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Sync;
@@ -15,20 +16,52 @@ internal static class LinearIssueItem
     private const string ProjectPrefix = "linear:project/";
     private const string KeyPrefix = "linear:issue-key/";
 
-    // why: a replay with the same version writes nothing, so issues stored before they carried a project link must change version to be re-saved once with it; bump this when the feed's output changes shape
-    private const string FeedFormat = ";f2";
+    // why: a replay with the same version writes nothing, so issues stored before they carried a project link (;f2) or their fields and comments (;f3) must change version to be re-saved once with them; bump this when the feed's output changes shape
+    private const string FeedFormat = ";f3";
 
     /// <summary>The item for an issue.</summary>
     /// <param name="issue">The issue.</param>
     /// <param name="githubRepos">The profile's GitHub repos ('owner/name'): only their pull request attachments become links.</param>
+    /// <param name="writeUserId">The write key's Linear user id; the comments it wrote that carry Sindri's marker line are left out of the text. Null (no write key yet): none are.</param>
     /// <returns>The item.</returns>
-    public static RecordItem Of(LinearIssue issue, IReadOnlyList<string> githubRepos)
+    public static RecordItem Of(LinearIssue issue, IReadOnlyList<string> githubRepos, ExternalId? writeUserId = null)
     {
         ArgumentNullException.ThrowIfNull(issue);
         return new RecordItem(
-            RecordKey.From(Prefix + issue.Id), RecordKind.Issue, issue.Title, LinearText.Of(issue), issue.Creator?.Name, issue.Url, State(issue.State?.Type), issue.State?.Name,
+            RecordKey.From(Prefix + issue.Id), RecordKind.Issue, issue.Title, LinearText.Of(issue, writeUserId), issue.Creator?.Name, issue.Url, State(issue.State?.Type), issue.State?.Name,
             issue.CreatedAt, issue.UpdatedAt, issue.CompletedAt ?? issue.CanceledAt, SourceVersion.From(issue.UpdatedAt.UtcDateTime.ToString("O", CultureInfo.InvariantCulture) + FeedFormat),
             Links(issue, githubRepos), Repo: null, issue.Team is { } team && AudienceKey.TryFrom("linear:" + team.Key, out var audience) ? audience : null);
+    }
+
+    /// <summary>The issue's fields and newest comments, for the side tables (spec 2026-11-04 §4.1).</summary>
+    /// <param name="issue">The issue.</param>
+    /// <param name="writeUserId">The write key's Linear user id; null (no write key yet): no comment is flagged as Sindri's.</param>
+    /// <returns>The fields, and at most <see cref="LinearIssueSide.MaxComments"/> comments, newest first.</returns>
+    public static LinearIssueSide Side(LinearIssue issue, ExternalId? writeUserId = null)
+    {
+        ArgumentNullException.ThrowIfNull(issue);
+        return new LinearIssueSide(Fields(issue), Comments(issue, writeUserId));
+    }
+
+    private static LinearIssueFields Fields(LinearIssue issue) => new(
+        LinearExternalIds.Of(issue.Team?.Id), issue.Identifier, LinearExternalIds.Of(issue.State?.Id), issue.State?.Type, LinearExternalIds.Of(issue.Assignee), issue.Priority ?? 0, issue.Estimate,
+        LinearExternalIds.Of(issue.Cycle), LinearExternalIds.Of(issue.Project), LinearExternalIds.Of(issue.Parent),
+        [.. (issue.Labels?.Nodes ?? []).Select(static l => LinearExternalIds.Of(l.Id)).OfType<ExternalId>()], issue.DueDate, issue.SortOrder, issue.UpdatedAt);
+
+    // why: a comment whose id isn't a usable id is dropped (Linear sends uuids, so none is); the rest are the newest first, as many as the side table keeps
+    private static List<LinearCommentRow> Comments(LinearIssue issue, ExternalId? writeUserId) =>
+    [
+        .. (issue.Comments?.Nodes ?? [])
+            .OrderByDescending(static c => c.CreatedAt).ThenBy(static c => c.Id, StringComparer.Ordinal)
+            .Select(c => LinearExternalIds.Of(c.Id) is { } id ? Row(c, id, writeUserId) : null)
+            .OfType<LinearCommentRow>()
+            .Take(LinearIssueSide.MaxComments),
+    ];
+
+    private static LinearCommentRow Row(LinearComment comment, ExternalId id, ExternalId? writeUserId)
+    {
+        var author = LinearExternalIds.Of(comment.User);
+        return new LinearCommentRow(id, author, comment.CreatedAt, comment.Body, LinearMarker.IsSindri(comment.Body, author, writeUserId));
     }
 
     private static RecordState? State(string? type) => type switch

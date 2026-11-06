@@ -135,7 +135,9 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
         {
             // why: its own cap fired; the pages committed so far stay with the stored cursor, so the next tick resumes
             await feeds.Note(feed.Source, ContextErrors.SyncCapped.Code, cancellationToken).ConfigureAwait(false);
-            return Failed(feed.Source, ContextErrors.SyncCapped.Code);
+            var cappedRow = Failed(feed.Source, ContextErrors.SyncCapped.Code);
+            // why: the steps that fill the pickers run on a capped tick too, so they fill during a long re-read; they take the call's own token, not the cap's, which has fired
+            return steps?.For(feed, context.Settings, cancellationToken) is { } after ? await after(cappedRow).ConfigureAwait(false) : cappedRow;
         }
         finally
         {

@@ -1,7 +1,12 @@
 query Issue($id: String!) {
   issue(id: $id) {
     id identifier title description url createdAt updatedAt
-    state { name type }
+    priority estimate dueDate sortOrder
+    state { id name type }
+    assignee { id }
+    cycle { id }
+    labels { nodes { id } }
+    parent { id identifier title }
     team { id key name }
     project { id name }
     creator { id name }

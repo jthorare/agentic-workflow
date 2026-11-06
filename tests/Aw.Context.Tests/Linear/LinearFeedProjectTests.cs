@@ -51,7 +51,7 @@ public sealed class LinearFeedProjectTests
     {
         var item = await One(Issue("a1", _at));
 
-        Assert.Equal("2026-10-01T12:00:00.0000000Z;f2", item.Version.Value);
+        Assert.Equal("2026-10-01T12:00:00.0000000Z;f3", item.Version.Value);
     }
 
     [Fact]

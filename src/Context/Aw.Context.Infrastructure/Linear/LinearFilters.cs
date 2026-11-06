@@ -50,6 +50,9 @@ internal static class LinearFilters
         return filter;
     }
 
+    /// <summary>The filter limited to teams with these keys.</summary>
+    public static JsonObject TeamKeys(IEnumerable<string> teams) => new() { ["key"] = new JsonObject { ["in"] = Strings(teams) } };
+
     /// <summary>The filter for a first read with no watermark: issues updated since the window's start, or open in a project that is not done or canceled however old they are (projects page spec §4.4).</summary>
     public static JsonObject UpdatedOrOpenInOpenProject(JsonObject filter, string windowStart)
     {
