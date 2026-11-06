@@ -29,12 +29,12 @@ public sealed record DesignDocFrontMatter(
     string? Generated,
     [property: JsonPropertyName("source-sha256")] string? SourceSha256)
 {
-    /// <summary>The line (from 1) each key is on, for errors decided later; not part of the parsed shape.</summary>
     /// <summary>Says whether a text is a doc id: 3 to 64 lowercase letters, digits or '-'.</summary>
-    /// <param name="id">The text.</param>
+    /// <param name="text">The text.</param>
     /// <returns>True for a doc id.</returns>
-    public static bool IsDocId(string? id) => id is not null && FrontMatterChecker.IsDocId(id);
+    public static bool IsDocId(string? text) => text is not null && FrontMatterChecker.IsDocId(text);
 
+    /// <summary>The line (from 1) each key is on, for errors decided later; not part of the parsed shape.</summary>
     [JsonIgnore]
     public IReadOnlyDictionary<string, int> KeyLines { get; init; } = new Dictionary<string, int>(StringComparer.Ordinal);
 }

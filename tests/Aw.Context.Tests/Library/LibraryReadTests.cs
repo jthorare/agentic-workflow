@@ -192,7 +192,7 @@ public sealed class LibraryReadTests : IDisposable
 
         var both = (await Library.Resolve(["harbor#Ph2-01", "harbor#Ph02-01"], "acme/widgets", Owner(), Ct)).Value;
 
-        Assert.Equal(["Ph2-1", "Ph2-1"], both.Select(static r => r.Item?.Key));
+        Assert.Equal(["Ph2-1", "Ph2-1"], both.Select(static r => r.Item?.Key), StringComparer.Ordinal);
         Assert.All(both, static r => Assert.Equal(LibraryRefStatus.Resolved, r.Status));
     }
 }

@@ -53,11 +53,11 @@ public static class DesignDocScope
                     "Rename one of them."))));
             }
 
-            foreach (var winner in index.Winners.Values.OrderBy(static w => w.Path, StringComparer.Ordinal))
+            foreach (var (docId, winner) in index.Winners.OrderBy(static w => w.Value.Path, StringComparer.Ordinal))
             {
                 foreach (var item in winner.Doc.Items)
                 {
-                    _ = index.Owners.TryAdd(item.Key, winner.Doc.FrontMatter!.Slug!);
+                    _ = index.Owners.TryAdd(item.Key, docId);
                 }
             }
 

@@ -11121,7 +11121,7 @@ Aw.Context.Core.Library.DesignDocFrontMatter.DesignDocFrontMatter(int AwDoc, str
 Aw.Context.Core.Library.DesignDocFrontMatter.Equals(Aw.Context.Core.Library.DesignDocFrontMatter? other) -> bool
 Aw.Context.Core.Library.DesignDocFrontMatter.Generated.get -> string?
 Aw.Context.Core.Library.DesignDocFrontMatter.Generated.init -> void
-static Aw.Context.Core.Library.DesignDocFrontMatter.IsDocId(string? id) -> bool
+static Aw.Context.Core.Library.DesignDocFrontMatter.IsDocId(string? text) -> bool
 Aw.Context.Core.Library.DesignDocFrontMatter.Issues.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Aw.Context.Core.Library.DesignDocFrontMatter.Issues.init -> void
 Aw.Context.Core.Library.DesignDocFrontMatter.KeyLines.get -> System.Collections.Generic.IReadOnlyDictionary<string!, int>!

@@ -91,19 +91,24 @@ public static class DesignDocParser
         var walker = new DesignDocWalker(path, lines, head.BodyStart, fm.Kind);
         var (items, refs, bodyErrors) = walker.Walk();
         errors.AddRange(bodyErrors);
-        if (walker.ItemCount > MaxItems)
-        {
-            errors.Add(TooLarge(path, $"the file has more than {MaxItems} items."));
-        }
-
-        if (walker.RefCount > MaxRefs)
-        {
-            errors.Add(TooLarge(path, $"the file has more than {MaxRefs} refs."));
-        }
+        errors.AddRange(Limits(path, walker));
 
         return errors.Count > 0
             ? new ParsedDesignDoc(Version, fm, Items: [], Refs: [], Errors: Sorted(errors))
             : new ParsedDesignDoc(Version, fm, items, refs, Errors: []);
+    }
+
+    private static IEnumerable<DesignDocError> Limits(string path, DesignDocWalker walker)
+    {
+        if (walker.ItemCount > MaxItems)
+        {
+            yield return TooLarge(path, $"the file has more than {MaxItems} items.");
+        }
+
+        if (walker.RefCount > MaxRefs)
+        {
+            yield return TooLarge(path, $"the file has more than {MaxRefs} refs.");
+        }
     }
 
     private static DesignDocError TooLarge(string path, string what) =>

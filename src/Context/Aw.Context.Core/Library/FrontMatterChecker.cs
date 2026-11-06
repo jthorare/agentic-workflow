@@ -37,7 +37,7 @@ internal sealed partial class FrontMatterChecker
         return (doc, checker._errors);
     }
 
-    internal static bool IsDocId(string id) => DocIdShape.IsMatch(id);
+    internal static bool IsDocId(string text) => DocIdShape.IsMatch(text);
 
     private DesignDocFrontMatter Run()
     {
