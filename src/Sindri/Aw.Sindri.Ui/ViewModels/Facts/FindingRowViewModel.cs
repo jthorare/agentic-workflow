@@ -60,6 +60,11 @@ internal sealed class FindingRowViewModel : ObservableObject
     /// <summary>The expander button's name: "Full trace, N states".</summary>
     public string TraceName { get; } = string.Empty;
 
+    /// <summary>The trace text's own name, "Full trace": the toggle carries the count.</summary>
+#pragma warning disable CA1822, MA0041 // a fixed sentence is a property because the view binds it
+    public string FullTraceName => Labels.FullTrace;
+#pragma warning restore CA1822, MA0041
+
     /// <summary>Everything after "Full trace:".</summary>
     public string FullTrace { get; } = string.Empty;
 
@@ -89,12 +94,22 @@ internal sealed class FindingRowViewModel : ObservableObject
         }
 
         var full = lines[(mark + 1)..];
-        var states = full.Count(IsStateHeader);
+        // TLC numbers its states, and a long trace keeps only its first 5 and last 20: the last "State N" is the real count. "Back to state N" repeats one.
+        var states = full.Select(StateNumber).DefaultIfEmpty(0).Max();
         return new ParsedTrace(steps, string.Join('\n', full).Trim(), states > 0 ? states : steps.Length);
     }
 
-    private static bool IsStateHeader(string line) =>
-        line.StartsWith("Back to state ", StringComparison.Ordinal) || (line.StartsWith("State ", StringComparison.Ordinal) && line.Length > 6 && char.IsAsciiDigit(line[6]));
+    private static int StateNumber(string line)
+    {
+        if (!line.StartsWith("State ", StringComparison.Ordinal))
+        {
+            return 0;
+        }
+
+        var digits = line.AsSpan(6);
+        var end = digits.IndexOfAnyExceptInRange('0', '9');
+        return int.TryParse(end < 0 ? digits : digits[..end], NumberStyles.None, CultureInfo.InvariantCulture, out var n) ? n : 0;
+    }
 
     private sealed record ParsedTrace(IReadOnlyList<string> Steps, string Full, int States);
 }

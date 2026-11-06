@@ -99,7 +99,7 @@ public sealed class FindingsFactViewerTests
             row.Steps,
             StringComparer.Ordinal);
         Assert.Equal((true, false, false), (row.HasSteps, row.HasDetail, row.IsTraceOpen));
-        Assert.Equal("Full trace, 4 states", row.TraceName);   // State 1, 2, 3 and Back to state 2
+        Assert.Equal("Full trace, 3 states", row.TraceName);   // State 1, 2, 3; Back to state 2 repeats one
         Assert.StartsWith("State 1: <Initial predicate>", row.FullTrace, StringComparison.Ordinal);
         Assert.EndsWith("Back to state 2: <Elapse line 10, col 5 to line 10, col 20 of module Takeover>", row.FullTrace, StringComparison.Ordinal);
         Assert.DoesNotContain("Full trace:", row.FullTrace, StringComparison.Ordinal);
@@ -107,14 +107,14 @@ public sealed class FindingsFactViewerTests
     }
 
     [Fact]
-    public async Task The_left_out_line_is_a_step_item_too_and_the_button_counts_the_states_kept()
+    public async Task The_left_out_line_is_a_step_item_too_and_the_button_counts_every_state_not_only_the_kept_ones()
     {
         const string detail = "1. Start: n = 0\n   ... 15 states left out ...\n6. Stop: n 5 -> 6\n\nFull trace:\nState 1: <Initial predicate>\n/\\ n = 0\n\nState 22: <Stop line 1, col 1 to line 1, col 9 of module M>\n/\\ n = 6";
         var viewer = await Loaded(new JsonArray(Finding(Violation, "n goes past 5", detail: detail)));
 
         var row = viewer.Findings[0];
         Assert.Equal(["1. Start: n = 0", "... 15 states left out ...", "6. Stop: n 5 -> 6"], row.Steps, StringComparer.Ordinal);
-        Assert.Equal("Full trace, 2 states", row.TraceName);
+        Assert.Equal("Full trace, 22 states", row.TraceName);   // the kept states end at State 22: the real count, not the 2 shown
     }
 
     [Fact]
@@ -144,7 +144,7 @@ public sealed class FindingsFactViewerTests
         var row = viewer.Findings[0];
         Assert.Equal(4, row.Steps.Count);
         Assert.DoesNotContain('\r', row.Steps[0]);
-        Assert.Equal("Full trace, 4 states", row.TraceName);
+        Assert.Equal("Full trace, 3 states", row.TraceName);
     }
 
     [Fact]

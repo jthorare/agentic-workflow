@@ -31,7 +31,7 @@
               </ListBox.ItemTemplate>
             </ListBox>
             <ToggleButton Name="FindingTraceToggle" HorizontalAlignment="Left" Content="{Binding TraceName}" IsChecked="{Binding IsTraceOpen, Mode=TwoWay}" IsVisible="{Binding HasSteps}" AutomationProperties.Name="{Binding TraceName}" />
-            <SelectableTextBlock Name="FindingTrace" Classes="caption mono" Text="{Binding FullTrace}" IsVisible="{Binding IsTraceOpen}" TextWrapping="Wrap" AutomationProperties.Name="{Binding TraceName}" />
+            <SelectableTextBlock Name="FindingTrace" Classes="caption mono" Text="{Binding FullTrace}" IsVisible="{Binding IsTraceOpen}" TextWrapping="Wrap" AutomationProperties.Name="{Binding FullTraceName}" />
           </StackPanel>
         </DataTemplate>
       </ItemsControl.ItemTemplate>

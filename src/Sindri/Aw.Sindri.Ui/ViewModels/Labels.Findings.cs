@@ -11,6 +11,9 @@ internal static partial class Labels
     /// <summary>The accessible name of a violation's list of steps.</summary>
     internal const string FindingSteps = "Steps";
 
+    /// <summary>The full trace text's own name; its button carries the count.</summary>
+    internal const string FullTrace = "Full trace";
+
     /// <summary>The Full trace button's name: the number of states in the trace behind it.</summary>
     /// <param name="states">The number of states.</param>
     /// <returns>"Full trace, 4 states" ("Full trace, 1 state").</returns>
