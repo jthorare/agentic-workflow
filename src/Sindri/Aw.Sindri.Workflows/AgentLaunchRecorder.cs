@@ -7,6 +7,7 @@ using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Sandbox;
+using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Engine;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
@@ -86,6 +87,22 @@ internal sealed class AgentLaunchRecorder(ILedgerStore ledger, HeldLease lease, 
 
         var payload = new LaunchWaiting(request.Launch, request.Item, running, cap, request.Instance, request.Step?.Ref.State, request.Run?.Number);
         _ = await Append(events.Entry(EventTypes.LaunchWaiting, payload, "launch.waiting:" + request.Launch.Value, request.Item.Value), cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Records that a skill block's session ended a turn needing the owner (skill flows spec §7): one 'launch.owner-waiting' per turn end, keyed by the turn end's time so a retried watch records nothing twice.</summary>
+    /// <param name="watch">The skill launch.</param>
+    /// <param name="row">Why the owner is needed, and what the reader looked at.</param>
+    /// <param name="cancellationToken">Cancels the append.</param>
+    /// <returns>Done; throws when the ledger refuses, so the activity retries.</returns>
+    public async Task OwnerWaiting(SkillWatch watch, OwnerWaitingRow row, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(watch);
+        ArgumentNullException.ThrowIfNull(row);
+        var launch = LaunchId.From(watch.Launch);
+        var payload = new LaunchOwnerWaiting(launch, watch.Item, row.Reason.Wire(), row.Text, row.ResultPath, row.Detail,
+            watch.Instance is { } instance ? InstanceAddress.From(instance) : null, watch.State, watch.Attempt);
+        var key = string.Create(CultureInfo.InvariantCulture, $"launch.owner-waiting:{launch.Value}:{row.TurnEnded.ToUnixTimeMilliseconds()}");
+        _ = await Append(events.Entry(EventTypes.LaunchOwnerWaiting, payload, key, watch.Item.Value), cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<LedgerAppend> Append(LedgerEntry entry, CancellationToken cancellationToken)

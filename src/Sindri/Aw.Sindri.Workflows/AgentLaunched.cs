@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
@@ -11,4 +12,5 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="Waiting">True when the session cap was still reached at the end of the activity's slice: nothing was started or recorded, and the workflow launches again.</param>
 /// <param name="Agent">The launcher agent the session runs on (#1269); the workflow copies it, with <paramref name="Model"/>, onto the Step's completion. Null when the launch failed and in a history recorded before the field.</param>
 /// <param name="RunDirectory">The Step's run directory the launcher made (StartedLaunch.RunDirectory, copied, never recomputed); recovery reads its outputs there. Null for a run launched before the field and for a launch with none: recovery then reads the worktree.</param>
-internal sealed record AgentLaunched(string? Worktree, string? StartHead, AgentLaunchFailure? Failure, string? Model = null, bool CanEscalate = false, bool Waiting = false, string? Agent = null, string? RunDirectory = null);
+/// <param name="Skill">What the watch of a skill block's session is given (skill flows spec §3.3); null for every other Step.</param>
+internal sealed record AgentLaunched(string? Worktree, string? StartHead, AgentLaunchFailure? Failure, string? Model = null, bool CanEscalate = false, bool Waiting = false, string? Agent = null, string? RunDirectory = null, SkillWatch? Skill = null);

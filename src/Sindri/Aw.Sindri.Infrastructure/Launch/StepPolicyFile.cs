@@ -51,8 +51,8 @@ internal static class StepPolicyFile
     }
 
     private static ClaudeSettingsDocument Document(ClaudePermissions permissions, StepPolicy policy, SandboxPolicyOverlay? sandbox) => sandbox is null
-        ? new ClaudeSettingsDocument(permissions, TurnHooks())
-        : new ClaudeSettingsDocument(SandboxPolicyFiles.Merge(permissions, policy.Mode, sandbox), TurnHooks())
+        ? new ClaudeSettingsDocument(permissions, TurnHooks(policy.TurnMarkers))
+        : new ClaudeSettingsDocument(SandboxPolicyFiles.Merge(permissions, policy.Mode, sandbox), TurnHooks(policy.TurnMarkers))
         {
             Sandbox = new ClaudeSandbox(sandbox.InnerSandboxOn),
         };
@@ -61,19 +61,21 @@ internal static class StepPolicyFile
     // (a prompt or a tool call deletes those files), so a session that ends its turn with no report can be ended as idle and one an API error stopped can be nudged first. A tool call in flight is marked (.tool-running,
     // from PreToolUse until PostToolUse, PostToolUseFailure or the turn's end), so a long build is never taken for an idle session. The commands never print, never fail the hook, and do nothing outside a launch
     // (no AW_SINDRI_LAUNCH or AW_SINDRI_HOME).
-    private static ClaudeHooks TurnHooks()
+    // A skill block's session (markers) also touches '.prompted' on every prompt: the result read decides a turn end by comparing the result file's time with the last prompt.
+    private static ClaudeHooks TurnHooks(bool markers)
     {
         const string Prefix = "\"$AW_SINDRI_HOME/" + LaunchFiles.Directory + "/$AW_SINDRI_LAUNCH";
         const string Ended = Prefix + LaunchFiles.TurnEndedSuffix + "\"";
         const string Failed = Prefix + LaunchFiles.TurnFailedSuffix + "\"";
         const string Tool = Prefix + LaunchFiles.ToolRunningSuffix + "\"";
+        const string Prompted = Prefix + LaunchFiles.PromptedSuffix + "\"";
         const string Guard = "if [ -n \"$AW_SINDRI_LAUNCH\" -a -n \"$AW_SINDRI_HOME\" ]; then ";
         const string MakeDirectory = "mkdir -p \"$AW_SINDRI_HOME/" + LaunchFiles.Directory + "\"; ";
         static ClaudeHookGroup[] Run(string commands) => [new ClaudeHookGroup([new ClaudeHookCommand("command", Guard + commands + "; fi; exit 0")])];
         return new ClaudeHooks(
             Stop: Run(MakeDirectory + "touch " + Ended + "; rm -f " + Tool),
             StopFailure: Run(MakeDirectory + "touch " + Failed + "; rm -f " + Tool),
-            UserPromptSubmit: Run("rm -f " + Ended + "; rm -f " + Failed),
+            UserPromptSubmit: Run(markers ? MakeDirectory + "rm -f " + Ended + "; rm -f " + Failed + "; touch " + Prompted : "rm -f " + Ended + "; rm -f " + Failed),
             PreToolUse: Run(MakeDirectory + "rm -f " + Ended + "; rm -f " + Failed + "; touch " + Tool),
             PostToolUse: Run("rm -f " + Tool),
             PostToolUseFailure: Run("rm -f " + Tool));

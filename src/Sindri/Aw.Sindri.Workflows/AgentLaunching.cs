@@ -3,6 +3,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Judge;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.LensPacks;
+using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
@@ -89,7 +90,7 @@ internal sealed class AgentLaunching(AgentLaunchWaiting launcher, AgentPlacing p
             case StartedLaunch started:
                 await recorder.Started(request, started, cancellationToken).ConfigureAwait(false);
                 var head = await diff.Head(request.Worktree!, cancellationToken).ConfigureAwait(false);   // why: RequestFor always names the worktree
-                return new AgentLaunched(request.Worktree, head.IsError ? null : head.Value, Failure: null, request.Step?.Model, canEscalate, Agent: request.Agent.Value, RunDirectory: started.RunDirectory);   // a worktree with no HEAD leaves the diff signal unmeasured
+                return new AgentLaunched(request.Worktree, head.IsError ? null : head.Value, Failure: null, request.Step?.Model, canEscalate, Agent: request.Agent.Value, RunDirectory: started.RunDirectory, Skill: SkillWatchOf(request, started));   // a worktree with no HEAD leaves the diff signal unmeasured
             case FailedLaunch failed:
                 await recorder.Failed(request, failed, cancellationToken).ConfigureAwait(false);
                 return new AgentLaunched(Worktree: null, StartHead: null, AgentLaunchFailures.Of(failed));
@@ -97,6 +98,12 @@ internal sealed class AgentLaunching(AgentLaunchWaiting launcher, AgentPlacing p
                 throw new InvalidOperationException($"the launcher answered {result.GetType().Name}");
         }
     }
+
+    // What the watch of a skill block's session is given: the launch, the block to read its result against and the run directory the result file sits in; null for every other Step.
+    private SkillWatch? SkillWatchOf(LaunchRequest request, StartedLaunch started) =>
+        request.Skill is { } skill
+            ? new SkillWatch(request.Launch.Value, request.Item, skill.Skill, skill.Block, started.RunDirectory ?? request.Worktree ?? request.RepoPath, inputs.Clock.GetUtcNow(), request.Instance?.Value, request.Step?.Ref.State, request.Run?.Number)
+            : null;
 
     // The launcher's request: the Step's brief and policy, its pack, and its declared read facts as files (read and scrubbed here); the failure when a fact can't be read.
     private async ValueTask<Result<PreparedLaunch>> Request(AgentLaunchRun run, AgentStepTarget target, string? workspace, PackBundle? bundle, CancellationToken cancellationToken)
@@ -110,7 +117,13 @@ internal sealed class AgentLaunching(AgentLaunchWaiting launcher, AgentPlacing p
         }
 
         var seed = workspace is null ? null : await SeedOf(run, cancellationToken).ConfigureAwait(false);
-        var extras = new AgentLaunchExtras(PayloadFacts.WithShapes(Told(block), run.Payloads), workspace, bundle, facts.Value, run.Model, seed);
+        var skill = await SkillLaunches.Of(run, block, target.Agent, inputs, cancellationToken).ConfigureAwait(false);
+        if (skill.IsError)
+        {
+            return skill.Error;
+        }
+
+        var extras = new AgentLaunchExtras(PayloadFacts.WithShapes(Told(block), run.Payloads), workspace, bundle, facts.Value, run.Model, seed) { Skill = skill.Value, StepTimeout = run.StepTimeout };
         return new PreparedLaunch(AgentLaunches.RequestFor(run.Run, target, descriptor, extras), Files(bundle, facts.Value), model => AgentLaunches.RequestFor(run.Run, target, descriptor, extras with { Model = model }));
     }
 

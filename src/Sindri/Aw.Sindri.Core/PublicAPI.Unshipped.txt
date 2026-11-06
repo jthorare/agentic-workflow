@@ -17276,8 +17276,8 @@ Aw.Sindri.Core.Events.LaunchStartedPublic.LaunchStartedPublic(Aw.Sindri.Core.Wor
 Aw.Sindri.Core.Events.LaunchStartedPublic.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Launch.LaunchMode Mode, out Aw.Sindri.Core.Launch.AgentId Target, out Aw.Sindri.Core.Ids.SessionId? SessionId, out string! TabTitle, out Aw.Sindri.Core.Events.LaunchViewerPublic! Viewer, out System.Collections.Generic.IReadOnlyList<string!>! Attach, out Aw.Sindri.Core.Launch.CatalogSource CatalogSource, out string! ArgvHash, out Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Instance, out string? State, out int? Attempt, out Aw.Sindri.Core.Sandbox.SandboxSummary? Sandbox, out string? Model, out Aw.Sindri.Core.Events.LaunchSkill? Skill) -> void
 Aw.Sindri.Core.Events.SessionEnded.SessionEnded(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, Aw.Sindri.Core.Events.SessionEndReason Reason, int? ExitCode, long? InputTokens = null, long? OutputTokens = null, Aw.Sindri.Core.Events.LimitKind? Kind = null, long? Limit = null, long? Peak = null, Aw.Sindri.Core.Events.LimitPeaks? Peaks = null) -> void
 Aw.Sindri.Core.Events.SessionEnded.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out Aw.Sindri.Core.Events.SessionEndReason Reason, out int? ExitCode, out long? InputTokens, out long? OutputTokens, out Aw.Sindri.Core.Events.LimitKind? Kind, out long? Limit, out long? Peak, out Aw.Sindri.Core.Events.LimitPeaks? Peaks) -> void
-Aw.Sindri.Core.Launch.StepPolicy.StepPolicy(System.Collections.Generic.IReadOnlyList<string!>! AllowedTools, Aw.Sindri.Core.Launch.StepPermissionMode Mode, string? WritablePath, System.Collections.Generic.IReadOnlyList<string!>? DeniedPaths = null, System.Collections.Generic.IReadOnlyList<string!>? ReadOnlyPaths = null, Aw.Sindri.Core.Sandbox.ModelLoginSource? LoginSource = null) -> void
-Aw.Sindri.Core.Launch.StepPolicy.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! AllowedTools, out Aw.Sindri.Core.Launch.StepPermissionMode Mode, out string? WritablePath, out System.Collections.Generic.IReadOnlyList<string!>? DeniedPaths, out System.Collections.Generic.IReadOnlyList<string!>? ReadOnlyPaths, out Aw.Sindri.Core.Sandbox.ModelLoginSource? LoginSource) -> void
+Aw.Sindri.Core.Launch.StepPolicy.StepPolicy(System.Collections.Generic.IReadOnlyList<string!>! AllowedTools, Aw.Sindri.Core.Launch.StepPermissionMode Mode, string? WritablePath, System.Collections.Generic.IReadOnlyList<string!>? DeniedPaths = null, System.Collections.Generic.IReadOnlyList<string!>? ReadOnlyPaths = null, Aw.Sindri.Core.Sandbox.ModelLoginSource? LoginSource = null, bool TurnMarkers = false) -> void
+Aw.Sindri.Core.Launch.StepPolicy.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! AllowedTools, out Aw.Sindri.Core.Launch.StepPermissionMode Mode, out string? WritablePath, out System.Collections.Generic.IReadOnlyList<string!>? DeniedPaths, out System.Collections.Generic.IReadOnlyList<string!>? ReadOnlyPaths, out Aw.Sindri.Core.Sandbox.ModelLoginSource? LoginSource, out bool TurnMarkers) -> void
 Aw.Sindri.Core.Profile.SindriProfile.SindriProfile(int SchemaVersion, string! User, string! Tenant = "local", System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.RepoEntry!>? Repos = null, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.ServiceSettings!>? Services = null, Aw.Sindri.Core.Profile.ApiSettings? Api = null, Aw.Sindri.Core.Profile.WorkflowSettings? Workflow = null, System.Text.Json.JsonElement? Context = null, Aw.Sindri.Core.Profile.IndexSettings? Index = null, Aw.Sindri.Core.Profile.LaunchSettings? Launch = null, Aw.Sindri.Core.Profile.AgentSettings? Agents = null, Aw.Sindri.Core.Profile.SetupSettings? Setup = null, Aw.Sindri.Core.Profile.SandboxSettings? Sandbox = null) -> void
 Aw.Sindri.Core.Profile.SindriProfile.Deconstruct(out int SchemaVersion, out string! User, out string! Tenant, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.RepoEntry!>? Repos, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.ServiceSettings!>? Services, out Aw.Sindri.Core.Profile.ApiSettings? Api, out Aw.Sindri.Core.Profile.WorkflowSettings? Workflow, out System.Text.Json.JsonElement? Context, out Aw.Sindri.Core.Profile.IndexSettings? Index, out Aw.Sindri.Core.Profile.LaunchSettings? Launch, out Aw.Sindri.Core.Profile.AgentSettings? Agents, out Aw.Sindri.Core.Profile.SetupSettings? Setup, out Aw.Sindri.Core.Profile.SandboxSettings? Sandbox) -> void
 Aw.Sindri.Core.Launches.LaunchRow.LaunchRow(Aw.Sindri.Core.Workflow.Engine.LaunchId Id, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Ids.RepoName? Repo, Aw.Sindri.Core.Launch.LaunchMode Mode, Aw.Sindri.Core.Launch.AgentId Target, string! ChosenBy, Aw.Sindri.Core.Launches.LaunchState State, System.DateTimeOffset RequestedAt, System.DateTimeOffset? OutcomeAt, string? Code, string? Message, Aw.Sindri.Core.Launch.LaunchStage? Stage, Aw.Sindri.Core.Ids.SessionId? SessionId, Aw.Sindri.Core.Ids.SessionId? ReportedSessionId, string? TabTitle, Aw.Sindri.Core.Events.LaunchViewer? Viewer, bool Late, System.Collections.Generic.IReadOnlyList<string!>? Attach, Aw.Sindri.Core.Launch.CatalogSource? CatalogSource, string? ArgvHash, Aw.Sindri.Core.Launches.LaunchEnd? Ended, Aw.Sindri.Core.Launch.LaunchStep! Step, long Sequence) -> void
@@ -19892,8 +19892,8 @@ Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.Limit.get -> long
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.Limit.init -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.Peak.get -> long
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.Peak.init -> void
-Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.AgentSessionState(Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd? EndedAs = null, int? ExitCode = null, string? Detail = null, bool Refused = false, Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit? Limit = null, bool FoundEnded = false) -> void
-Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd? EndedAs, out int? ExitCode, out string? Detail, out bool Refused, out Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit? Limit, out bool FoundEnded) -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.AgentSessionState(Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd? EndedAs = null, int? ExitCode = null, string? Detail = null, bool Refused = false, Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit? Limit = null, bool FoundEnded = false, Aw.Sindri.Core.Skills.SkillFinished? Skill = null, string? SkillFailure = null) -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd? EndedAs, out int? ExitCode, out string? Detail, out bool Refused, out Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit? Limit, out bool FoundEnded, out Aw.Sindri.Core.Skills.SkillFinished? Skill, out string? SkillFailure) -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.FoundEnded.get -> bool
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.FoundEnded.init -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.Limit.get -> Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit?
@@ -22342,3 +22342,89 @@ static Aw.Sindri.Core.Skills.SkillRequires.None.get -> Aw.Sindri.Core.Skills.Ski
 static Aw.Sindri.Core.Skills.SkillRequires.Parse(string! text, out string? problem) -> Aw.Sindri.Core.Skills.SkillRequires!
 static Aw.Sindri.Core.Skills.SkillRequires.operator !=(Aw.Sindri.Core.Skills.SkillRequires? left, Aw.Sindri.Core.Skills.SkillRequires? right) -> bool
 static Aw.Sindri.Core.Skills.SkillRequires.operator ==(Aw.Sindri.Core.Skills.SkillRequires? left, Aw.Sindri.Core.Skills.SkillRequires? right) -> bool
+Aw.Sindri.Core.Skills.SkillFinished
+Aw.Sindri.Core.Skills.SkillFinished.<Clone>$() -> Aw.Sindri.Core.Skills.SkillFinished!
+Aw.Sindri.Core.Skills.SkillFinished.Equals(Aw.Sindri.Core.Skills.SkillFinished? other) -> bool
+override Aw.Sindri.Core.Skills.SkillFinished.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Skills.SkillFinished.GetHashCode() -> int
+override Aw.Sindri.Core.Skills.SkillFinished.ToString() -> string!
+static Aw.Sindri.Core.Skills.SkillFinished.operator !=(Aw.Sindri.Core.Skills.SkillFinished? left, Aw.Sindri.Core.Skills.SkillFinished? right) -> bool
+static Aw.Sindri.Core.Skills.SkillFinished.operator ==(Aw.Sindri.Core.Skills.SkillFinished? left, Aw.Sindri.Core.Skills.SkillFinished? right) -> bool
+Aw.Sindri.Core.Skills.SkillFinished.SkillFinished(string! Outcome, System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Engine.FactValue!>! Outputs, string! ReportSha256, string! ResultFileSha256) -> void
+Aw.Sindri.Core.Skills.SkillFinished.Deconstruct(out string! Outcome, out System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Engine.FactValue!>! Outputs, out string! ReportSha256, out string! ResultFileSha256) -> void
+Aw.Sindri.Core.Skills.SkillFinished.Outcome.get -> string!
+Aw.Sindri.Core.Skills.SkillFinished.Outcome.init -> void
+Aw.Sindri.Core.Skills.SkillFinished.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Engine.FactValue!>!
+Aw.Sindri.Core.Skills.SkillFinished.Outputs.init -> void
+Aw.Sindri.Core.Skills.SkillFinished.ReportSha256.get -> string!
+Aw.Sindri.Core.Skills.SkillFinished.ReportSha256.init -> void
+Aw.Sindri.Core.Skills.SkillFinished.ResultFileSha256.get -> string!
+Aw.Sindri.Core.Skills.SkillFinished.ResultFileSha256.init -> void
+Aw.Sindri.Core.Skills.SkillWatch
+Aw.Sindri.Core.Skills.SkillWatch.<Clone>$() -> Aw.Sindri.Core.Skills.SkillWatch!
+Aw.Sindri.Core.Skills.SkillWatch.Equals(Aw.Sindri.Core.Skills.SkillWatch? other) -> bool
+override Aw.Sindri.Core.Skills.SkillWatch.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Skills.SkillWatch.GetHashCode() -> int
+override Aw.Sindri.Core.Skills.SkillWatch.ToString() -> string!
+static Aw.Sindri.Core.Skills.SkillWatch.operator !=(Aw.Sindri.Core.Skills.SkillWatch? left, Aw.Sindri.Core.Skills.SkillWatch? right) -> bool
+static Aw.Sindri.Core.Skills.SkillWatch.operator ==(Aw.Sindri.Core.Skills.SkillWatch? left, Aw.Sindri.Core.Skills.SkillWatch? right) -> bool
+Aw.Sindri.Core.Skills.SkillWatch.SkillWatch(string! Launch, Aw.Sindri.Core.Ids.ItemId Item, string! Skill, Aw.Sindri.Core.Skills.SkillBlockManifest! Block, string! RunDirectory, System.DateTimeOffset Started, string? Instance = null, string? State = null, int? Attempt = null) -> void
+Aw.Sindri.Core.Skills.SkillWatch.Deconstruct(out string! Launch, out Aw.Sindri.Core.Ids.ItemId Item, out string! Skill, out Aw.Sindri.Core.Skills.SkillBlockManifest! Block, out string! RunDirectory, out System.DateTimeOffset Started, out string? Instance, out string? State, out int? Attempt) -> void
+Aw.Sindri.Core.Skills.SkillWatch.Launch.get -> string!
+Aw.Sindri.Core.Skills.SkillWatch.Launch.init -> void
+Aw.Sindri.Core.Skills.SkillWatch.Item.get -> Aw.Sindri.Core.Ids.ItemId
+Aw.Sindri.Core.Skills.SkillWatch.Item.init -> void
+Aw.Sindri.Core.Skills.SkillWatch.Skill.get -> string!
+Aw.Sindri.Core.Skills.SkillWatch.Skill.init -> void
+Aw.Sindri.Core.Skills.SkillWatch.Block.get -> Aw.Sindri.Core.Skills.SkillBlockManifest!
+Aw.Sindri.Core.Skills.SkillWatch.Block.init -> void
+Aw.Sindri.Core.Skills.SkillWatch.RunDirectory.get -> string!
+Aw.Sindri.Core.Skills.SkillWatch.RunDirectory.init -> void
+Aw.Sindri.Core.Skills.SkillWatch.Started.get -> System.DateTimeOffset
+Aw.Sindri.Core.Skills.SkillWatch.Started.init -> void
+Aw.Sindri.Core.Skills.SkillWatch.Instance.get -> string?
+Aw.Sindri.Core.Skills.SkillWatch.Instance.init -> void
+Aw.Sindri.Core.Skills.SkillWatch.State.get -> string?
+Aw.Sindri.Core.Skills.SkillWatch.State.init -> void
+Aw.Sindri.Core.Skills.SkillWatch.Attempt.get -> int?
+Aw.Sindri.Core.Skills.SkillWatch.Attempt.init -> void
+Aw.Sindri.Core.Events.LaunchOwnerWaiting
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.<Clone>$() -> Aw.Sindri.Core.Events.LaunchOwnerWaiting!
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.Equals(Aw.Sindri.Core.Events.LaunchOwnerWaiting? other) -> bool
+override Aw.Sindri.Core.Events.LaunchOwnerWaiting.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.LaunchOwnerWaiting.GetHashCode() -> int
+override Aw.Sindri.Core.Events.LaunchOwnerWaiting.ToString() -> string!
+static Aw.Sindri.Core.Events.LaunchOwnerWaiting.operator !=(Aw.Sindri.Core.Events.LaunchOwnerWaiting? left, Aw.Sindri.Core.Events.LaunchOwnerWaiting? right) -> bool
+static Aw.Sindri.Core.Events.LaunchOwnerWaiting.operator ==(Aw.Sindri.Core.Events.LaunchOwnerWaiting? left, Aw.Sindri.Core.Events.LaunchOwnerWaiting? right) -> bool
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.LaunchOwnerWaiting(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, string! Reason, string? Text, string! ResultPath, string? Detail = null, Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Instance = null, string? State = null, int? Attempt = null) -> void
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out Aw.Sindri.Core.Ids.ItemId Item, out string! Reason, out string? Text, out string! ResultPath, out string? Detail, out Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Instance, out string? State, out int? Attempt) -> void
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.Launch.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.Launch.init -> void
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.Item.get -> Aw.Sindri.Core.Ids.ItemId
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.Item.init -> void
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.Reason.get -> string!
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.Reason.init -> void
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.Text.get -> string?
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.Text.init -> void
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.ResultPath.get -> string!
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.ResultPath.init -> void
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.Detail.get -> string?
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.Detail.init -> void
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.Instance.get -> Aw.Sindri.Core.Workflow.Engine.InstanceAddress?
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.Instance.init -> void
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.State.get -> string?
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.State.init -> void
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.Attempt.get -> int?
+Aw.Sindri.Core.Events.LaunchOwnerWaiting.Attempt.init -> void
+const Aw.Sindri.Core.Events.EventTypes.LaunchOwnerWaiting = "launch.owner-waiting" -> string!
+Aw.Sindri.Core.Skills.SkillWaitReasons
+static Aw.Sindri.Core.Skills.SkillWaitReasons.Wire(this Aw.Sindri.Core.Skills.SkillWaitReason reason) -> string!
+const Aw.Sindri.Core.Launch.LaunchFiles.PromptedSuffix = ".prompted" -> string!
+static Aw.Sindri.Core.Launch.LaunchFiles.PromptedName(Aw.Sindri.Core.Workflow.Engine.LaunchId launch) -> string!
+Aw.Sindri.Core.Launches.ILaunchFiles.PromptedAt(Aw.Sindri.Core.Workflow.Engine.LaunchId launch) -> System.DateTimeOffset?
+Aw.Sindri.Core.Launch.StepPolicy.TurnMarkers.get -> bool
+Aw.Sindri.Core.Launch.StepPolicy.TurnMarkers.init -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.Skill.get -> Aw.Sindri.Core.Skills.SkillFinished?
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.Skill.init -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.SkillFailure.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.SkillFailure.init -> void
