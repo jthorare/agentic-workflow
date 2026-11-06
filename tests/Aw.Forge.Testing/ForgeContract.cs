@@ -419,6 +419,24 @@ public abstract class ForgeContract : ForgeReadContract
         Expect.That(inside == ReviewOutcome.Posted, "a line inside the hunk posts (10 to 13)");
     }
 
+    /// <summary>A comment on a seeded file with no patch (a binary file) is LineRejected, on any line, and nothing is posted.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_comment_on_a_file_without_a_patch_is_rejected_and_nothing_is_posted()
+    {
+        var (run, pull) = await Open();
+        SeedFile[] files = [new(new PullFile("assets/logo.png", PreviousPath: null, PullFileStatus.Added, 0, 0, Patch: null), Text: null)];
+        _ = Expect.Ok(run.Seed!.SeedFiles(new SeedFilesRequest(pull, files)), "SeedFiles");
+        var before = Expect.Ok(await run.Forge.ListThreads(pull, Ct), "ListThreads before").Count;
+        var request = new SubmitReviewRequest(pull, Sha('a'), ReviewVerdict.Comment, "Body", [new ReviewComment("assets/logo.png", 1, "Nit")], "owner-review:d6:1");
+
+        var outcome = Expect.Ok(await run.Forge.SubmitReview(request, Ct), "SubmitReview on a binary file");
+        var after = Expect.Ok(await run.Forge.ListThreads(pull, Ct), "ListThreads after").Count;
+
+        Expect.That(outcome == ReviewOutcome.LineRejected, "a file with no patch rejects every line");
+        Expect.That(after == before, "nothing was posted");
+    }
+
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private static PushRequest Push(string sha, string? lease) => new("/unused", sha, "https://forge.test/acme/widgets.git", Feature, lease);
