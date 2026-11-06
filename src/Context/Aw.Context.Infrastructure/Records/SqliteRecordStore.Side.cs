@@ -8,8 +8,8 @@ namespace Aw.Context.Infrastructure.Records;
 internal sealed partial class SqliteRecordStore
 {
     // The side rows (RecordWrite.Side) go in the record's transaction; every writer drops a removed record's rows.
-    private async ValueTask<Error?> WriteSide(SqliteUnitOfWork session, RecordWrite write, CancellationToken cancellationToken) =>
-        write.Side is { } side ? await Writer(side).Replace(session, write.Record.Key, side, cancellationToken).ConfigureAwait(false) : null;
+    private async ValueTask<Error?> WriteSide(SqliteUnitOfWork session, RecordWrite write, bool newRecord, CancellationToken cancellationToken) =>
+        write.Side is { } side ? await Writer(side).Replace(session, write.Record.Key, side, newRecord, cancellationToken).ConfigureAwait(false) : null;
 
     // An unchanged record still gets its side rows rewritten when they differ from the stored ones: a new parser or a new field backfills with no new commit.
     private async ValueTask<Result<bool>> WriteChangedSide(SqliteUnitOfWork session, RecordWrite write, CancellationToken cancellationToken)
@@ -26,7 +26,7 @@ internal sealed partial class SqliteRecordStore
             return differs;
         }
 
-        var failure = await writer.Replace(session, write.Record.Key, side, cancellationToken).ConfigureAwait(false);
+        var failure = await writer.Replace(session, write.Record.Key, side, newRecord: false, cancellationToken).ConfigureAwait(false);
         if (failure is not null)
         {
             return failure;

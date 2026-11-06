@@ -1,13 +1,18 @@
 query Issue($id: String!) {
   issue(id: $id) {
-    id identifier title description url createdAt updatedAt
-    state { name type }
+    id identifier title description url createdAt updatedAt completedAt canceledAt
+    priority estimate dueDate sortOrder
+    state { id name type }
+    assignee { id }
+    cycle { id }
+    labels { nodes { id } }
     team { id key name }
-    project { id name }
     creator { id name }
-    comments(first: 50) { nodes { id body createdAt updatedAt user { id name } } pageInfo { hasNextPage } }
-    relations(first: 50) { nodes { type relatedIssue { identifier title } } }
-    inverseRelations(first: 50) { nodes { type issue { identifier title } } }
-    attachments(first: 50) { nodes { id title url sourceType createdAt } pageInfo { hasNextPage } }
+    project { id name }
+    parent { id identifier title }
+    attachments(first: 10) { nodes { id title url sourceType } pageInfo { hasNextPage } }
+    comments(first: 50, orderBy: updatedAt) { nodes { id body createdAt user { id name } } pageInfo { hasNextPage } }
+    relations(first: 25) { nodes { type relatedIssue { id identifier title } } }
+    inverseRelations(first: 25) { nodes { type issue { id identifier title } } }
   }
 }

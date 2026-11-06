@@ -7,6 +7,7 @@ using Aw.Context.Core.Eval;
 using Aw.Context.Core.Extract;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.History;
+using Aw.Context.Core.Linear;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Locks;
 using Aw.Context.Core.Map;
@@ -100,7 +101,7 @@ internal sealed class MapWorld : IDisposable
             .AddSingleton(codeSearch ?? new FakeCodeSearch(Repos[0], Head, BuildFiles))
             .AddSingleton(symbols ?? new NoCodeSymbolSource())
             .AddSingleton<IIntentStore>(Intents).AddRecordFakes().AddSingleton(records ?? Records).AddSingleton(lexical ?? new FakeLexicalLeg())
-            .AddSingleton<ISourceIdentityStore>(Identities).AddSingleton<ISourceViewers>(Viewers).AddSingleton<IStoreFiles>(StoreFiles).AddSingleton<IStoreUpkeep>(new FakeStoreUpkeep())
+            .AddSingleton<ISourceIdentityStore>(Identities).AddSingleton<ISourceViewers>(Viewers).AddSingleton<ILinearLookups>(Lookups).AddSingleton<ILinearLookupStore>(LookupStore).AddSingleton<IStoreFiles>(StoreFiles).AddSingleton<IStoreUpkeep>(new FakeStoreUpkeep())
             .AddSingleton(history ?? new FakeFileHistory(Repos[0], new HistoryWorld(Head, [])))
             .AddSingleton<IModelPort>(Model)
             .AddSingleton<IClusterSource>(Clusters)
@@ -161,6 +162,12 @@ internal sealed class MapWorld : IDisposable
 
     /// <summary>The Linear viewer the tick asks (answers only for settings that configure Linear).</summary>
     public FakeSourceViewers Viewers { get; } = new();
+
+    /// <summary>The Linear pickers' lists the issue tick asks for (an empty answer unless a test sets one).</summary>
+    public FakeLinearLookups Lookups { get; } = new();
+
+    /// <summary>Where the issue tick keeps the pickers' lists.</summary>
+    public FakeLinearLookupStore LookupStore { get; } = new();
 
     public FakeIntentStore Intents { get; } = new();
 

@@ -89,7 +89,7 @@ internal sealed class RecordSyncRun(RecordFeed feed, IRecordStore store, (Scrubb
         }
 
         var after = ended ? Following(phase, position, RecentStart()) : Advance(phase, position, page);
-        var batch = RecordBatches.From(feed.Source, page, phase, context.Scrubbers, clock.GetUtcNow()) with { Position = after };
+        var batch = RecordBatches.From(feed.Source, page, phase, context.Scrubbers, clock.GetUtcNow()) with { Position = after, Guard = feed.Guard };
         var committed = await store.Commit(batch, cancellationToken).ConfigureAwait(false);
         if (committed.IsError)
         {
