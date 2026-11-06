@@ -457,4 +457,21 @@ mid-line after a quote mark is not a reply|> see REPLY TO META: x|
 ROWS
 done
 
+# An answer that owes a reply but has no REPLY TO META: line is visible: trace reply-unmarked and a line in front of the block text
+UNMARKED_LINE='Your last answer has no line starting REPLY TO META:, so meta did not get it. End the turn with REPLY TO META: <reply>.'
+UNM='{"hook_event_name":"Stop","session_id":"s-5","last_assistant_message":"Rebased, all green."}'
+clear_lane; STUB_RC=1 STUB_OUT="owes the meta a reply" lane "$UNM"; RC=$?
+check "unmarked answer, lane owes a reply: exit 2, the line then the block text on stderr" "$RC:$(cat "$WORK/err")" "2:$UNMARKED_LINE
+owes the meta a reply"
+check "unmarked answer, lane owes a reply: trace reply-unmarked" "$(trace)" "meta-lane-gate Stop reply-unmarked"
+printf '%s\n' '{"role":"assistant","message":{"content":[{"type":"text","text":"Rebased, all green."}]}}' > "$WORK/tr-unm.jsonl"
+clear_lane
+OUT="$(jq -nc --arg tp "$WORK/tr-unm.jsonl" '{hook_event_name:"stop",conversation_id:"c-1",loop_count:0,transcript_path:$tp}' | STUB_RC=1 STUB_OUT="owes the meta a reply" AW_META_TEAM=t1 AW_META_LANE=api bash "$CURSOR" "$HOOKS/meta-lane-gate.sh" 2> /dev/null)"
+check "unmarked answer through the Cursor adapter: followup_message starts with the line" "$(jq -r .followup_message <<< "$OUT")" "$UNMARKED_LINE
+owes the meta a reply"
+clear_lane; lane "$UNM"; RC=$?
+check "unmarked answer, nothing owed: allowed, no extra line, trace ran" "$RC:$(cat "$WORK/err"):$(trace)" "0::meta-lane-gate Stop ran"
+clear_lane; STUB_REPLY_RC=0 STUB_RC=1 STUB_OUT="owes the meta a reply" lane "$STOPR"; RC=$?
+check "marked reply, lane still owes (mail arrived mid-turn): no unmarked line, trace ran" "$RC:$(cat "$WORK/err"):$(trace)" "2:owes the meta a reply:meta-lane-gate Stop ran"
+
 exit $fail
