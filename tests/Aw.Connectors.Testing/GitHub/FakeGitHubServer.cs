@@ -171,7 +171,7 @@ public sealed class FakeGitHubServer : HttpMessageHandler
             ["pulls", var n] when IsPull(repo, n, out var number) => Json(PullJson(repo, number)),
             ["pulls", var n, "files"] when IsPull(repo, n, out var number)
                 => Paged(uri, query, Detail(repo, number).Paths.Select(static p => (JsonNode)new JsonObject { ["filename"] = p })),
-            ["pulls", var n, "reviews"] when IsPull(repo, n, out var number)
+            ["pulls", var n, "reviews"] when int.TryParse(n, NumberStyles.None, CultureInfo.InvariantCulture, out var number)
                 => Paged(uri, query, _reviews.Where(r => r.Repo == repo && r.Number == number).Select(static r => ToJson(r.Login, r.State, r.Commit, r.SubmittedAt))),
             ["compare", var span] when span.Split("...") is [var from, var to] && _compares.TryGetValue((repo, from, to), out var ahead)
                 => Json(new JsonObject { ["status"] = "ahead", ["ahead_by"] = ahead }),

@@ -60,15 +60,39 @@ internal static partial class GitHubWire
 
     /// <summary>Reads the merge state of a single pull request.</summary>
     public static GitHubPullDetail ReadPull(JsonElement e, IReadOnlyList<string> paths)
-        => new(Flag(e, "merged"), Flag(e, "draft"), Date(e, "merged_at"), paths);
+        => new(Flag(e, "merged"), Flag(e, "draft"), Date(e, "merged_at"), paths, RequestedLogins(e), e.TryGetProperty("head", out var head) && head.ValueKind == JsonValueKind.Object ? Text(head, "sha") : null);
 
     /// <summary>Reduces a pull request's review list to each login's latest review: the one with the newest 'submitted_at' (the later entry on a tie), pending reviews and ones without a login or commit skipped. Ordered by login.</summary>
     public static IReadOnlyList<(string Login, string Commit)> LatestReviews(IEnumerable<JsonElement> reviews)
-        => throw new NotSupportedException();
+    {
+        Dictionary<string, (string Commit, DateTimeOffset At)> latest = new(StringComparer.Ordinal);
+        foreach (var review in reviews)
+        {
+            if (review.ValueKind != JsonValueKind.Object || string.Equals(Text(review, "state"), "PENDING", StringComparison.OrdinalIgnoreCase)
+                || Author(review) is not { Length: > 0 } login || Text(review, "commit_id") is not { Length: > 0 } commit)
+            {
+                continue;
+            }
+
+            var at = Date(review, "submitted_at") ?? DateTimeOffset.MinValue;
+            if (!latest.TryGetValue(login, out var seen) || at >= seen.At)
+            {
+                latest[login] = (commit, at);
+            }
+        }
+
+        return [.. latest.OrderBy(static kv => kv.Key, StringComparer.Ordinal).Select(static kv => (kv.Key, kv.Value.Commit))];
+    }
 
     /// <summary>Reads 'ahead_by' from a compare reply, or null when it has none.</summary>
     public static int? AheadBy(JsonElement e)
-        => throw new NotSupportedException();
+        => e.ValueKind == JsonValueKind.Object && Long(e, "ahead_by") is { } n ? (int)Math.Clamp(n, 0, int.MaxValue) : null;
+
+    // A team request is a 'requested_teams' entry with no login; only people are listed here.
+    private static List<string> RequestedLogins(JsonElement e)
+        => e.TryGetProperty("requested_reviewers", out var people) && people.ValueKind == JsonValueKind.Array
+            ? [.. people.EnumerateArray().Select(static p => p.ValueKind == JsonValueKind.Object ? Text(p, "login") : null).OfType<string>().Where(static l => l.Length > 0)]
+            : [];
 
     private static bool Flag(JsonElement e, string name)
         => e.TryGetProperty(name, out var p) && p.ValueKind == JsonValueKind.True;
