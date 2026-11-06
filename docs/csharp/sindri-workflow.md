@@ -303,7 +303,7 @@ needs re-approval.
 
 ### Fact types and subject kinds
 
-Fact type: `text`, `file`, `item`, `link`, `scope-map`, `packet`, `evidence`, `decision`, `payload` (`FactTypes`). It picks a viewer in
+Fact type: `text`, `file`, `item`, `link`, `scope-map`, `packet`, `evidence`, `decision`, `payload`, `findings` (`FactTypes`). It picks a viewer in
 the app and nothing else. Subject kind: `item`, `linear-project`, `webhook`, `file`, `text`, `link`, `packet`, `payload` (`SubjectKinds`); `item`, `file`, `text`, `link` and `packet`
 pair with the type of the same name, `linear-project`, `webhook` and `payload` with `payload` (owner decision 2026-10-16: a packet or a plain payload as a subject); an input with no `type` has its kind's. Both are strings in the long form, so a bad value
 reaches its rule (`RCP-TYPE-001` to `-003`, `RCP-INPUT-001`/`-002`, `RCP-NAME-002` to `-006`, `RCP-OUT-001` to `-003`, `RCP-URG-001`) instead of a reader error. Those rules
@@ -481,7 +481,7 @@ and a test that pins its exact line (the P2 rows have none yet). All are errors 
 | `RCP-OUT-001` | An output's `from` names a state of the recipe | Name one of its states |
 | `RCP-OUT-002` | An output's `from` isn't a terminal or engine-owned state, and the state's Step, its leaving transitions' `produces` or its wait records the output's key. For a state that waits on a child, the child's declared outputs | Record the fact there, or name the state that does |
 | `RCP-OUT-003` | Output keys are unique and none is also an input key | Give each output its own key |
-| `RCP-TYPE-001` | An input's or output's `type` is a fact type | Use one of the nine types |
+| `RCP-TYPE-001` | An input's or output's `type` is a fact type | Use one of the ten types |
 | `RCP-TYPE-002` | An input's `kind` is a subject kind | Use one of the eight kinds |
 | `RCP-TYPE-003` | An input's `kind` pairs with its `type` (an absent `type` takes its kind's); not reported for an entry with a bad type or kind | Set `type` to the kind's, or change `kind` |
 | `RCP-INPUT-001` | Every input declares a `kind` | Add `kind: item \| link \| linear-project \| webhook \| file \| text \| packet \| payload`, paired with its type |

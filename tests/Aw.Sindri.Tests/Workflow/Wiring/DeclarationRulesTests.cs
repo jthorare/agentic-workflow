@@ -189,8 +189,8 @@ public sealed class DeclarationRulesTests
 
         Assert.Equal(
             [
-                "RCP-TYPE-001: input 'fact:item' has type 'ticket', which isn't one of text, file, item, link, scope-map, packet, evidence, decision, payload at r.yaml:4:30 (inputs[0].type); use one of them",
-                "RCP-TYPE-001: output 'fact:output' has type 'document', which isn't one of text, file, item, link, scope-map, packet, evidence, decision, payload at r.yaml:6:30 (outputs[0].type); use one of them",
+                "RCP-TYPE-001: input 'fact:item' has type 'ticket', which isn't one of text, file, item, link, scope-map, packet, evidence, decision, payload, findings at r.yaml:4:30 (inputs[0].type); use one of them",
+                "RCP-TYPE-001: output 'fact:output' has type 'document', which isn't one of text, file, item, link, scope-map, packet, evidence, decision, payload, findings at r.yaml:6:30 (outputs[0].type); use one of them",
             ],
             CheckDeclarations(recipe, At(("inputs[0].type", 4, 30), ("outputs[0].type", 6, 30))).Lines());
     }

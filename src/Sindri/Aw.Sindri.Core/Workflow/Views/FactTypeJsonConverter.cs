@@ -10,7 +10,7 @@ public sealed class FactTypeJsonConverter : JsonConverter<FactType>
     [
         (FactType.Text, "text"), (FactType.File, "file"), (FactType.Item, "item"), (FactType.Link, "link"),
         (FactType.ScopeMap, "scope-map"), (FactType.Packet, "packet"), (FactType.Evidence, "evidence"),
-        (FactType.Decision, "decision"), (FactType.Payload, "payload"),
+        (FactType.Decision, "decision"), (FactType.Payload, "payload"), (FactType.Findings, "findings"),
     ];
 
     /// <summary>The word the wire and the CLI use for <paramref name="type"/> ('scope-map', 'text', ...).</summary>
