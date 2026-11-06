@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Commands;
@@ -7,7 +8,9 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items.Vocabulary;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.CreateItem;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Features.GetItem;
+using Aw.Sindri.Features.ReadLedger;
 using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Testing;
 
@@ -45,6 +48,36 @@ public sealed class CliSkillRunTests : IDisposable
         Assert.Equal("""{"reason":"cancelled","itemVersion":1}""", api.Calls[^1].Body);
         Assert.Equal("/sindri/items/" + item + "/close", api.Calls[^1].Path);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_result_line_is_the_newest_skill_launchs_result_file()
+    {
+        var api = new RoutedApi().On("/sindri/ledger", HttpStatusCode.OK, new LedgerPage(
+        [
+            Started(1, """{"launchId":"LCH-1","skill":{"name":"review","resultFile":"/run/old/result-LCH-1.json"}}"""),
+            Started(2, """{"launchId":"LCH-2"}"""),
+            Started(3, """{"launchId":"LCH-3","skill":{"name":"review","resultFile":"/run/new/result-LCH-3.json"}}"""),
+        ], Next: null));
+
+        var path = await Verb(api).ResultFileOf(A.FirstItemId.Value, Token);
+
+        Assert.Equal("/run/new/result-LCH-3.json", path);
+        Assert.Equal("?item=" + A.FirstItemId.Value + "&type=launch.started", api.Calls[^1].Query);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task No_launch_with_a_result_file_or_an_unreadable_ledger_leaves_the_line_out()
+    {
+        var none = new RoutedApi().On("/sindri/ledger", HttpStatusCode.OK, new LedgerPage([Started(1, """{"launchId":"LCH-1"}""")], Next: null));
+        var down = new RoutedApi().OnRaw("/sindri/ledger", HttpStatusCode.ServiceUnavailable, """{"title":"SND-API-011","detail":"views are behind"}""");
+
+        Assert.Equal(string.Empty, await Verb(none).ResultFileOf(A.FirstItemId.Value, Token));
+        Assert.Equal(string.Empty, await Verb(down).ResultFileOf(A.FirstItemId.Value, Token));
+    }
+
+    private static PublicEvent Started(long sequence, string payload) =>
+        new(sequence, EventId.From(new Guid((int)sequence, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)), "launch.started", 1, KnownInstants.Epoch, "service:host", "local", 0, A.FirstItemId,
+            CorrelationId.From(new Guid(9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)), CausationId: null, TraceId: null, JsonDocument.Parse(payload).RootElement);
 
     private static ItemView View(long version) =>
         new(A.FirstItemId, "Try the review block", Repo: null, ItemState.New, Step: null, KnownInstants.Epoch, PrimaryAction: null, Actions: [], Owner: null,

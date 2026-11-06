@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
@@ -6,6 +7,7 @@ using Aw.Sindri.Core.Items.Vocabulary;
 using Aw.Sindri.Core.Workflow.Views;
 using Aw.Sindri.Features.CreateItem;
 using Aw.Sindri.Features.GetItem;
+using Aw.Sindri.Features.ReadLedger;
 using Aw.Sindri.Features.GetInstanceEvents;
 using Aw.Sindri.Features.StartSkillRun;
 using Aw.Sindri.Host.Endpoints;
@@ -147,6 +149,31 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
         }
 
         var outcome = failed ? null : ended.Outcome;
-        return new SkillRunReport(answer.Skill, answer.ManifestHash, outcome, Succeeded: string.Equals(outcome, answer.Success, StringComparison.Ordinal), facts, ResultPath: string.Empty, error);
+        var resultFile = await ResultFileOf(answer.Instance.Address.Value.Split('/')[0], ct).ConfigureAwait(false);
+        return new SkillRunReport(answer.Skill, answer.ManifestHash, outcome, Succeeded: string.Equals(outcome, answer.Success, StringComparison.Ordinal), facts, resultFile, error);
+    }
+
+    /// <summary>The result file of the item's latest skill launch: <c lang="text">skill.resultFile</c> of its newest 'launch.started', read from the ledger; empty when the ledger has none or can't be read (the report then leaves the line out).</summary>
+    /// <param name="item">The item the trial ran on.</param>
+    /// <param name="ct">Cancels the read.</param>
+    /// <returns>The path, or empty.</returns>
+    internal async Task<string> ResultFileOf(string item, CancellationToken ct)
+    {
+        var page = await client.Get<LedgerPage>($"/sindri/ledger?item={Uri.EscapeDataString(item)}&type=launch.started", ct).ConfigureAwait(false);
+        if (page.IsError)
+        {
+            return string.Empty;
+        }
+
+        foreach (var started in page.Value.Value.Events.Reverse())
+        {
+            if (started.Payload.ValueKind == JsonValueKind.Object && started.Payload.TryGetProperty("skill", out var skill) && skill.ValueKind == JsonValueKind.Object
+                && skill.TryGetProperty("resultFile", out var file) && file.ValueKind == JsonValueKind.String && file.GetString() is { Length: > 0 } path)
+            {
+                return path;
+            }
+        }
+
+        return string.Empty;
     }
 }
