@@ -6,12 +6,14 @@ using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
+using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Infrastructure.Sandbox;
 using Aw.Sindri.Infrastructure.Sandbox.Launch;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Sandbox;
+using Aw.Sindri.Testing.Skills;
 using Aw.Sindri.Tests.Sandbox.Egress;
 using Microsoft.Extensions.Time.Testing;
 
@@ -70,6 +72,32 @@ public sealed class SandboxLaunchStagesTests : IDisposable
         Expect.Equal("sindri/" + WorkflowInstanceId.Of(InstanceAddress.From("ITM-1/spec/1")).Value + "/1", r.RunNamespace);   // the instance id, never the address with its slashes
         Expect.True(r.Learn is { } learn && learn.Now == _clock.GetUtcNow());
         Expect.Equal("web", r.Repo.Value);   // no profile repo: the directory's name
+    }
+
+    [Fact]
+    public async Task Request_passes_the_Steps_timeout_and_a_plain_Step_keeps_the_longMax_cap()
+    {
+        var request = Step() with { StepTimeout = TimeSpan.FromHours(48) };
+
+        var built = await MakeWith(GithubCredentials.None).Request(request, chosenSession: null, CancellationToken.None);
+
+        Expect.True(built.IsSuccess);
+        Expect.Equal(TimeSpan.FromHours(48), built.Value.StepTimeout);
+        Expect.Equal(TimeSpan.FromHours(2), built.Value.LongMax);   // workflow.steps.longMax, default 2h
+    }
+
+    [Fact]
+    public async Task A_skill_launch_skips_the_longMax_cap_so_a_48h_state_timeout_plans_a_48h_wall_plus_grace()
+    {
+        var request = Step() with { StepTimeout = TimeSpan.FromHours(48), Skill = new SkillLaunch("review", SkillTarget.ClaudeCode, SkillFixtures.Review, new Dictionary<string, string>(StringComparer.Ordinal) { ["pr"] = "42" }) };
+
+        var built = await MakeWith(GithubCredentials.None).Request(request, chosenSession: null, CancellationToken.None);
+
+        Expect.True(built.IsSuccess);
+        Expect.Equal(TimeSpan.FromHours(48), built.Value.StepTimeout);
+        Expect.True(built.Value.LongMax is null);   // the state timeout is the only bound (RCP-SKILL-001)
+        var limits = LimitsResolver.Resolve(new LimitsInput(Limits: null, AttendedSettings: null, Attended: false, built.Value.StepTimeout, built.Value.LongMax, RamBytes: 32L * 1024 * 1024 * 1024, Cores: 8));
+        Expect.Equal(TimeSpan.FromHours(48) + limits.WallGrace, limits.Wall);
     }
 
     [Fact]

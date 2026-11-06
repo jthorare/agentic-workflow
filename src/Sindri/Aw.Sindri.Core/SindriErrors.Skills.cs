@@ -1,0 +1,22 @@
+using Aw.Kernel;
+
+namespace Aw.Sindri.Core;
+
+// The skill block codes (skill flows spec §3.3): what a skill's result file can get wrong, and the requires.yaml check before launch.
+public static partial class SindriErrors
+{
+    /// <summary>SND-SKILL-001: the skill's result file isn't valid JSON (waiting on you, with the parse error as 'detail').</summary>
+    public static readonly ErrorDefinition SkillResultUnreadable = new("SND-SKILL-001", ErrorKind.Invalid, "The skill's result file can't be read");
+
+    /// <summary>SND-SKILL-002: the result's 'skill' names another skill (waiting on you; 'detail' is the other skill's name).</summary>
+    public static readonly ErrorDefinition SkillResultWrongSkill = new("SND-SKILL-002", ErrorKind.Conflict, "The result came from another skill");
+
+    /// <summary>SND-SKILL-003: the result's verdict isn't in the block's outcome map (step.failed: a block-author bug).</summary>
+    public static readonly ErrorDefinition SkillVerdictUnmapped = new("SND-SKILL-003", ErrorKind.Invalid, "The skill's verdict isn't mapped by its block.yaml");
+
+    /// <summary>SND-SKILL-004: a mapped output is missing from the result, or a path output is relative, missing on disk or holds a newline (step.failed: a block-author bug).</summary>
+    public static readonly ErrorDefinition SkillOutputInvalid = new("SND-SKILL-004", ErrorKind.Invalid, "The skill's result doesn't hold what its block.yaml declares");
+
+    /// <summary>SND-SKILL-005: the skill's requires.yaml names a bin, MCP server, skill or agent the agent home lacks (step.failed before any session starts; 'detail' names each one and its fix).</summary>
+    public static readonly ErrorDefinition SkillRequirementMissing = new("SND-SKILL-005", ErrorKind.Unavailable, "The skill needs something this machine doesn't have");
+}

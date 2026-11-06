@@ -72,6 +72,7 @@ internal static class EndpointTable
     {
         _ = queries.MapCheckSandbox();
         _ = queries.MapGetSandboxStatus();
+        _ = queries.MapGetSkills();
         _ = queries.MapListDenials();
         return queries;
     }

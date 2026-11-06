@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Blocks;
 
 namespace Aw.Sindri.Core.Workflow.Engine.Runtime;
@@ -69,7 +70,14 @@ public static class AgentLaunches
 
     // The Step's 'model' parameter (null runs the agent's default), its brief and the pack and facts it is given.
     private static StepArgs StepArgsFor(AgentStepRun run, BlockDescriptor? descriptor, AgentLaunchExtras? extras, StepPolicy policy) =>
-        new(Model: extras?.Model, policy, run.Step, AgentStepBrief.Render(run, descriptor, extras?.Instructions, extras?.Facts?.Keys), extras?.Bundle, extras?.Facts is { Count: > 0 } facts ? facts : null);
+        extras?.Skill is { } skill ? SkillStepArgs(run, extras, skill, policy) : new(Model: extras?.Model, policy, run.Step, AgentStepBrief.Render(run, descriptor, extras?.Instructions, extras?.Facts?.Keys), extras?.Bundle, extras?.Facts is { Count: > 0 } facts ? facts : null);
+
+    // A skill block's seed is the skill's invocation alone (skill flows spec D2), not the Step brief that tells the agent to call 'sindri workflow complete'.
+    private static StepArgs SkillStepArgs(AgentStepRun run, AgentLaunchExtras extras, SkillLaunch skill, StepPolicy policy) =>
+        new(Model: extras.Model, policy, run.Step, SkillSeed.Render(skill, SkillRunDirectory(run)), extras.Bundle, extras.Facts is { Count: > 0 } facts ? facts : null);
+
+    // why: stub until F-1 goes green; the real run directory is the launcher's, '$AW_SINDRI_RUN_DIR'.
+    private static string SkillRunDirectory(AgentStepRun run) => throw new NotSupportedException();
 
     /// <summary>The holdout evaluator's request (LN-LCH2): it runs in a scratch checkout at the head sha, reads the holdout set and never writes it, can't touch the phase worktree, and may run the evidence CLIs.</summary>
     /// <param name="run">The run.</param>

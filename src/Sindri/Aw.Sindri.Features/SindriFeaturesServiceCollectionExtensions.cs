@@ -124,7 +124,7 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddRecordServiceRun()
             .AddScoped<IService<CheckProfileRequest, CheckProfileResponse>, CheckProfileService>()
             .AddScoped<IService<ValidateProfileRequest, ValidateProfileResponse>, ValidateProfileService>()
-            .AddPlanSandbox().AddRecordLimitHit().AddEndLearnMode().AddListDenials().AddAllowDenial().AddCheckSandbox().AddWorkspacePrepare()
+            .AddPlanSandbox().AddRecordLimitHit().AddEndLearnMode().AddListDenials().AddAllowDenial().AddCheckSandbox().AddWorkspacePrepare().AddGetSkills()
             .AddScoped<IService<InitProfileRequest, InitProfileResponse>, InitProfileService>()
             .AddScoped<IService<SetProfileKeyRequest, SetProfileKeyResponse>, SetProfileKeyService>()
             .AddScoped<IService<ScrubRequest, ScrubResponse>, ScrubService>()

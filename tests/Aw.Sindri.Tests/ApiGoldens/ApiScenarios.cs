@@ -42,6 +42,7 @@ internal static class ApiScenarios
         ["CodeIndex"] = CodeIndexScenarios.All,
         ["Sandbox"] = SandboxScenarios.All,
         ["Projects"] = ProjectScenarios.All,
+        ["Skills"] = SkillScenarios.All,
     };
 
     /// <summary>Every (route slug, scenario) pair, group by group.</summary>
@@ -66,7 +67,9 @@ internal static class ApiScenarios
 
     /// <summary>The last hosts of <see cref="Start"/>: the launch, approve-all, item-scope and wrapped-session ones, else the plain golden host.</summary>
     private static async Task<GoldenHost> StartLaunchOrLater(string slug, string scenario, CancellationToken ct) =>
-        ProjectScenarios.Handles(slug, scenario)
+        SkillScenarios.Handles(slug, scenario)
+            ? await SkillScenarios.Start(ct)
+            : ProjectScenarios.Handles(slug, scenario)
             ? await ProjectScenarios.Start(slug, scenario, ct)
             : SandboxScenarios.Handles(slug, scenario)
             ? await SandboxScenarios.Start(slug, scenario, ct)
@@ -153,6 +156,7 @@ internal static class ApiScenarios
         : WrapSessionScenarios.Handles(slug, scenario) ? () => WrapSessionScenarios.Body(host, slug, scenario, ct)
         : SandboxScenarios.Handles(slug, scenario) ? () => SandboxScenarios.Body(host, slug, scenario, ct)
         : ProjectScenarios.Handles(slug, scenario) ? () => ProjectScenarios.Body(host, slug, scenario, ct)
+        : SkillScenarios.Handles(slug, scenario) ? () => SkillScenarios.Body(host, ct)
         : null;
 
 

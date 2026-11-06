@@ -9,4 +9,11 @@ namespace Aw.Sindri.Core.Workflow.Engine.Runtime;
 /// <param name="Facts">The Step's declared read facts as files for its run directory, file name to content (written by the launcher); null for none.</param>
 /// <param name="Model">The model the Step's 'model' parameter asked for; null runs the agent's default.</param>
 /// <param name="BaseCommit">The commit the workspace started from (a phase workspace's seed), for the host-side prepare; null when the launcher should record the repo's HEAD at the run's first launch.</param>
-public sealed record AgentLaunchExtras(IReadOnlyList<string>? Instructions = null, string? Workspace = null, PackBundle? Bundle = null, IReadOnlyDictionary<string, string>? Facts = null, string? Model = null, string? BaseCommit = null);
+public sealed record AgentLaunchExtras(IReadOnlyList<string>? Instructions = null, string? Workspace = null, PackBundle? Bundle = null, IReadOnlyDictionary<string, string>? Facts = null, string? Model = null, string? BaseCommit = null)
+{
+    /// <summary>Null, or the skill block this Step runs (skill flows spec D2): the launch gets its invocation as the whole seed instead of the Step brief.</summary>
+    public Skills.SkillLaunch? Skill { get; init; }
+
+    /// <summary>Null, or the state's timeout, which goes to the launch request and from there to the sandbox plan's wall limit (skill flows spec D8).</summary>
+    public TimeSpan? StepTimeout { get; init; }
+}

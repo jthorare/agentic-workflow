@@ -54,6 +54,12 @@ internal static class ApiGoldenRows
             return;
         }
 
+        if (string.Equals(slug, "skills", StringComparison.Ordinal))
+        {
+            ApiGolden.Match(body, host.Home, slug, scenario, [new NormalizationRule("skills-folder", System.Text.RegularExpressions.Regex.Escape(SkillScenarios.FolderMask), "<skills>")]);   // the fixture folder sits in the test output
+            return;
+        }
+
         ApiGolden.Match(body, host.Home, slug, scenario);
     }
 }

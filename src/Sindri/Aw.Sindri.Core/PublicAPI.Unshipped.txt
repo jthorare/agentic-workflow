@@ -21994,3 +21994,265 @@ Aw.Sindri.Core.ModelCheck.ISpecFolders.Exists(string! workspace, string! path, S
 Aw.Sindri.Core.Views.ViewsStatus.Starting.get -> bool
 Aw.Sindri.Core.Views.ViewsStatus.Starting.init -> void
 static Aw.Sindri.Core.Views.EmptyText.Starting() -> string!
+Aw.Sindri.Core.Launch.LaunchRequest.Skill.get -> Aw.Sindri.Core.Skills.SkillLaunch?
+Aw.Sindri.Core.Launch.LaunchRequest.Skill.init -> void
+Aw.Sindri.Core.Launch.LaunchRequest.StepTimeout.get -> System.TimeSpan?
+Aw.Sindri.Core.Launch.LaunchRequest.StepTimeout.init -> void
+Aw.Sindri.Core.Skills.LoadedSkillBlock
+Aw.Sindri.Core.Skills.LoadedSkillBlock.<Clone>$() -> Aw.Sindri.Core.Skills.LoadedSkillBlock!
+Aw.Sindri.Core.Skills.LoadedSkillBlock.Deconstruct(out string! Skill, out Aw.Sindri.Core.Skills.SkillBlockManifest! Manifest, out Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor! Descriptor, out string! Path, out string! ManifestHash) -> void
+Aw.Sindri.Core.Skills.LoadedSkillBlock.Descriptor.get -> Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor!
+Aw.Sindri.Core.Skills.LoadedSkillBlock.Descriptor.init -> void
+Aw.Sindri.Core.Skills.LoadedSkillBlock.Equals(Aw.Sindri.Core.Skills.LoadedSkillBlock? other) -> bool
+Aw.Sindri.Core.Skills.LoadedSkillBlock.LoadedSkillBlock(string! Skill, Aw.Sindri.Core.Skills.SkillBlockManifest! Manifest, Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor! Descriptor, string! Path, string! ManifestHash) -> void
+Aw.Sindri.Core.Skills.LoadedSkillBlock.Manifest.get -> Aw.Sindri.Core.Skills.SkillBlockManifest!
+Aw.Sindri.Core.Skills.LoadedSkillBlock.Manifest.init -> void
+Aw.Sindri.Core.Skills.LoadedSkillBlock.ManifestHash.get -> string!
+Aw.Sindri.Core.Skills.LoadedSkillBlock.ManifestHash.init -> void
+Aw.Sindri.Core.Skills.LoadedSkillBlock.Path.get -> string!
+Aw.Sindri.Core.Skills.LoadedSkillBlock.Path.init -> void
+Aw.Sindri.Core.Skills.LoadedSkillBlock.Skill.get -> string!
+Aw.Sindri.Core.Skills.LoadedSkillBlock.Skill.init -> void
+Aw.Sindri.Core.Skills.SkillArg
+Aw.Sindri.Core.Skills.SkillArg.<Clone>$() -> Aw.Sindri.Core.Skills.SkillArg!
+Aw.Sindri.Core.Skills.SkillArg.Deconstruct(out string? Text, out string? Flag, out string? Input) -> void
+Aw.Sindri.Core.Skills.SkillArg.Equals(Aw.Sindri.Core.Skills.SkillArg? other) -> bool
+Aw.Sindri.Core.Skills.SkillArg.Flag.get -> string?
+Aw.Sindri.Core.Skills.SkillArg.Flag.init -> void
+Aw.Sindri.Core.Skills.SkillArg.Input.get -> string?
+Aw.Sindri.Core.Skills.SkillArg.Input.init -> void
+Aw.Sindri.Core.Skills.SkillArg.SkillArg(string? Text, string? Flag = null, string? Input = null) -> void
+Aw.Sindri.Core.Skills.SkillArg.Text.get -> string?
+Aw.Sindri.Core.Skills.SkillArg.Text.init -> void
+Aw.Sindri.Core.Skills.SkillBlockManifest
+Aw.Sindri.Core.Skills.SkillBlockManifest.<Clone>$() -> Aw.Sindri.Core.Skills.SkillBlockManifest!
+Aw.Sindri.Core.Skills.SkillBlockManifest.Args.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Skills.SkillArg!>!
+Aw.Sindri.Core.Skills.SkillBlockManifest.Args.init -> void
+Aw.Sindri.Core.Skills.SkillBlockManifest.Deconstruct(out string! Name, out string! Sentence, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Skills.SkillInput!>! Inputs, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Skills.SkillArg!>! Args, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Skills.SkillOutput!>! Outputs, out Aw.Sindri.Core.Skills.SkillOutcomes! Outcomes, out bool Pushes, out System.TimeSpan MaxDuration) -> void
+Aw.Sindri.Core.Skills.SkillBlockManifest.Equals(Aw.Sindri.Core.Skills.SkillBlockManifest? other) -> bool
+Aw.Sindri.Core.Skills.SkillBlockManifest.Inputs.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Skills.SkillInput!>!
+Aw.Sindri.Core.Skills.SkillBlockManifest.Inputs.init -> void
+Aw.Sindri.Core.Skills.SkillBlockManifest.MaxDuration.get -> System.TimeSpan
+Aw.Sindri.Core.Skills.SkillBlockManifest.MaxDuration.init -> void
+Aw.Sindri.Core.Skills.SkillBlockManifest.Name.get -> string!
+Aw.Sindri.Core.Skills.SkillBlockManifest.Name.init -> void
+Aw.Sindri.Core.Skills.SkillBlockManifest.Outcomes.get -> Aw.Sindri.Core.Skills.SkillOutcomes!
+Aw.Sindri.Core.Skills.SkillBlockManifest.Outcomes.init -> void
+Aw.Sindri.Core.Skills.SkillBlockManifest.Outputs.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Skills.SkillOutput!>!
+Aw.Sindri.Core.Skills.SkillBlockManifest.Outputs.init -> void
+Aw.Sindri.Core.Skills.SkillBlockManifest.Pushes.get -> bool
+Aw.Sindri.Core.Skills.SkillBlockManifest.Pushes.init -> void
+Aw.Sindri.Core.Skills.SkillBlockManifest.Sentence.get -> string!
+Aw.Sindri.Core.Skills.SkillBlockManifest.Sentence.init -> void
+Aw.Sindri.Core.Skills.SkillBlockManifest.SkillBlockManifest(string! Name, string! Sentence, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Skills.SkillInput!>! Inputs, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Skills.SkillArg!>! Args, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Skills.SkillOutput!>! Outputs, Aw.Sindri.Core.Skills.SkillOutcomes! Outcomes, bool Pushes, System.TimeSpan MaxDuration) -> void
+Aw.Sindri.Core.Skills.SkillBlocks
+Aw.Sindri.Core.Skills.SkillBlocks.<Clone>$() -> Aw.Sindri.Core.Skills.SkillBlocks!
+Aw.Sindri.Core.Skills.SkillBlocks.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Skills.LoadedSkillBlock!>! Loaded, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Skills.SkippedSkillBlock!>! Skipped) -> void
+Aw.Sindri.Core.Skills.SkillBlocks.Equals(Aw.Sindri.Core.Skills.SkillBlocks? other) -> bool
+Aw.Sindri.Core.Skills.SkillBlocks.Loaded.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Skills.LoadedSkillBlock!>!
+Aw.Sindri.Core.Skills.SkillBlocks.Loaded.init -> void
+Aw.Sindri.Core.Skills.SkillBlocks.SkillBlocks(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Skills.LoadedSkillBlock!>! Loaded, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Skills.SkippedSkillBlock!>! Skipped) -> void
+Aw.Sindri.Core.Skills.SkillBlocks.Skipped.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Skills.SkippedSkillBlock!>!
+Aw.Sindri.Core.Skills.SkillBlocks.Skipped.init -> void
+Aw.Sindri.Core.Skills.SkillDescriptors
+Aw.Sindri.Core.Skills.SkillInput
+Aw.Sindri.Core.Skills.SkillInput.<Clone>$() -> Aw.Sindri.Core.Skills.SkillInput!
+Aw.Sindri.Core.Skills.SkillInput.Deconstruct(out string! Key, out Aw.Sindri.Core.Skills.SkillValueType Type, out string! Label, out bool Required, out System.Collections.Generic.IReadOnlyList<string!>? Values) -> void
+Aw.Sindri.Core.Skills.SkillInput.Equals(Aw.Sindri.Core.Skills.SkillInput? other) -> bool
+Aw.Sindri.Core.Skills.SkillInput.Key.get -> string!
+Aw.Sindri.Core.Skills.SkillInput.Key.init -> void
+Aw.Sindri.Core.Skills.SkillInput.Label.get -> string!
+Aw.Sindri.Core.Skills.SkillInput.Label.init -> void
+Aw.Sindri.Core.Skills.SkillInput.Required.get -> bool
+Aw.Sindri.Core.Skills.SkillInput.Required.init -> void
+Aw.Sindri.Core.Skills.SkillInput.SkillInput(string! Key, Aw.Sindri.Core.Skills.SkillValueType Type, string! Label, bool Required, System.Collections.Generic.IReadOnlyList<string!>? Values = null) -> void
+Aw.Sindri.Core.Skills.SkillInput.Type.get -> Aw.Sindri.Core.Skills.SkillValueType
+Aw.Sindri.Core.Skills.SkillInput.Type.init -> void
+Aw.Sindri.Core.Skills.SkillInput.Values.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Skills.SkillInput.Values.init -> void
+Aw.Sindri.Core.Skills.SkillLaunch
+Aw.Sindri.Core.Skills.SkillLaunch.<Clone>$() -> Aw.Sindri.Core.Skills.SkillLaunch!
+Aw.Sindri.Core.Skills.SkillLaunch.Block.get -> Aw.Sindri.Core.Skills.SkillBlockManifest!
+Aw.Sindri.Core.Skills.SkillLaunch.Block.init -> void
+Aw.Sindri.Core.Skills.SkillLaunch.Deconstruct(out string! Skill, out Aw.Sindri.Core.Skills.SkillTarget Target, out Aw.Sindri.Core.Skills.SkillBlockManifest! Block, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Inputs) -> void
+Aw.Sindri.Core.Skills.SkillLaunch.Equals(Aw.Sindri.Core.Skills.SkillLaunch? other) -> bool
+Aw.Sindri.Core.Skills.SkillLaunch.Inputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Skills.SkillLaunch.Inputs.init -> void
+Aw.Sindri.Core.Skills.SkillLaunch.Skill.get -> string!
+Aw.Sindri.Core.Skills.SkillLaunch.Skill.init -> void
+Aw.Sindri.Core.Skills.SkillLaunch.SkillLaunch(string! Skill, Aw.Sindri.Core.Skills.SkillTarget Target, Aw.Sindri.Core.Skills.SkillBlockManifest! Block, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Inputs) -> void
+Aw.Sindri.Core.Skills.SkillLaunch.Target.get -> Aw.Sindri.Core.Skills.SkillTarget
+Aw.Sindri.Core.Skills.SkillLaunch.Target.init -> void
+Aw.Sindri.Core.Skills.SkillLaunchEnv
+Aw.Sindri.Core.Skills.SkillOutcomes
+Aw.Sindri.Core.Skills.SkillOutcomes.<Clone>$() -> Aw.Sindri.Core.Skills.SkillOutcomes!
+Aw.Sindri.Core.Skills.SkillOutcomes.Deconstruct(out string? From, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Map, out string! Success) -> void
+Aw.Sindri.Core.Skills.SkillOutcomes.Equals(Aw.Sindri.Core.Skills.SkillOutcomes? other) -> bool
+Aw.Sindri.Core.Skills.SkillOutcomes.From.get -> string?
+Aw.Sindri.Core.Skills.SkillOutcomes.From.init -> void
+Aw.Sindri.Core.Skills.SkillOutcomes.Map.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Skills.SkillOutcomes.Map.init -> void
+Aw.Sindri.Core.Skills.SkillOutcomes.SkillOutcomes(string? From, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Map, string! Success) -> void
+Aw.Sindri.Core.Skills.SkillOutcomes.Success.get -> string!
+Aw.Sindri.Core.Skills.SkillOutcomes.Success.init -> void
+Aw.Sindri.Core.Skills.SkillOutput
+Aw.Sindri.Core.Skills.SkillOutput.<Clone>$() -> Aw.Sindri.Core.Skills.SkillOutput!
+Aw.Sindri.Core.Skills.SkillOutput.Deconstruct(out string! Key, out Aw.Sindri.Core.Skills.SkillValueType Type, out string! From) -> void
+Aw.Sindri.Core.Skills.SkillOutput.Equals(Aw.Sindri.Core.Skills.SkillOutput? other) -> bool
+Aw.Sindri.Core.Skills.SkillOutput.From.get -> string!
+Aw.Sindri.Core.Skills.SkillOutput.From.init -> void
+Aw.Sindri.Core.Skills.SkillOutput.Key.get -> string!
+Aw.Sindri.Core.Skills.SkillOutput.Key.init -> void
+Aw.Sindri.Core.Skills.SkillOutput.SkillOutput(string! Key, Aw.Sindri.Core.Skills.SkillValueType Type, string! From) -> void
+Aw.Sindri.Core.Skills.SkillOutput.Type.get -> Aw.Sindri.Core.Skills.SkillValueType
+Aw.Sindri.Core.Skills.SkillOutput.Type.init -> void
+Aw.Sindri.Core.Skills.SkillResultDecision
+Aw.Sindri.Core.Skills.SkillResultDecision.<Clone>$() -> Aw.Sindri.Core.Skills.SkillResultDecision!
+Aw.Sindri.Core.Skills.SkillResultDecision.Deconstruct(out Aw.Sindri.Core.Skills.SkillResultKind Kind, out Aw.Sindri.Core.Skills.SkillWaitReason? Reason, out string? Outcome, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Facts, out string? Text, out Aw.Kernel.ErrorDefinition? Error, out string? Detail) -> void
+Aw.Sindri.Core.Skills.SkillResultDecision.Detail.get -> string?
+Aw.Sindri.Core.Skills.SkillResultDecision.Detail.init -> void
+Aw.Sindri.Core.Skills.SkillResultDecision.Equals(Aw.Sindri.Core.Skills.SkillResultDecision? other) -> bool
+Aw.Sindri.Core.Skills.SkillResultDecision.Error.get -> Aw.Kernel.ErrorDefinition?
+Aw.Sindri.Core.Skills.SkillResultDecision.Error.init -> void
+Aw.Sindri.Core.Skills.SkillResultDecision.Facts.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Skills.SkillResultDecision.Facts.init -> void
+Aw.Sindri.Core.Skills.SkillResultDecision.Kind.get -> Aw.Sindri.Core.Skills.SkillResultKind
+Aw.Sindri.Core.Skills.SkillResultDecision.Kind.init -> void
+Aw.Sindri.Core.Skills.SkillResultDecision.Outcome.get -> string?
+Aw.Sindri.Core.Skills.SkillResultDecision.Outcome.init -> void
+Aw.Sindri.Core.Skills.SkillResultDecision.Reason.get -> Aw.Sindri.Core.Skills.SkillWaitReason?
+Aw.Sindri.Core.Skills.SkillResultDecision.Reason.init -> void
+Aw.Sindri.Core.Skills.SkillResultDecision.SkillResultDecision(Aw.Sindri.Core.Skills.SkillResultKind Kind, Aw.Sindri.Core.Skills.SkillWaitReason? Reason, string? Outcome, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Facts, string? Text, Aw.Kernel.ErrorDefinition? Error, string? Detail) -> void
+Aw.Sindri.Core.Skills.SkillResultDecision.Text.get -> string?
+Aw.Sindri.Core.Skills.SkillResultDecision.Text.init -> void
+Aw.Sindri.Core.Skills.SkillResultFile
+Aw.Sindri.Core.Skills.SkillResultFile.<Clone>$() -> Aw.Sindri.Core.Skills.SkillResultFile!
+Aw.Sindri.Core.Skills.SkillResultFile.Bytes.get -> System.ReadOnlyMemory<byte>
+Aw.Sindri.Core.Skills.SkillResultFile.Bytes.init -> void
+Aw.Sindri.Core.Skills.SkillResultFile.Deconstruct(out System.ReadOnlyMemory<byte> Bytes, out System.DateTimeOffset Modified) -> void
+Aw.Sindri.Core.Skills.SkillResultFile.Equals(Aw.Sindri.Core.Skills.SkillResultFile? other) -> bool
+Aw.Sindri.Core.Skills.SkillResultFile.Modified.get -> System.DateTimeOffset
+Aw.Sindri.Core.Skills.SkillResultFile.Modified.init -> void
+Aw.Sindri.Core.Skills.SkillResultFile.SkillResultFile(System.ReadOnlyMemory<byte> Bytes, System.DateTimeOffset Modified) -> void
+Aw.Sindri.Core.Skills.SkillResultInput
+Aw.Sindri.Core.Skills.SkillResultInput.<Clone>$() -> Aw.Sindri.Core.Skills.SkillResultInput!
+Aw.Sindri.Core.Skills.SkillResultInput.Block.get -> Aw.Sindri.Core.Skills.SkillBlockManifest!
+Aw.Sindri.Core.Skills.SkillResultInput.Block.init -> void
+Aw.Sindri.Core.Skills.SkillResultInput.Deconstruct(out Aw.Sindri.Core.Skills.SkillResultFile? File, out string! Skill, out Aw.Sindri.Core.Skills.SkillBlockManifest! Block, out System.DateTimeOffset LaunchStarted, out System.DateTimeOffset? LastHandledTurnEnd, out System.Func<string!, bool>! PathExists) -> void
+Aw.Sindri.Core.Skills.SkillResultInput.Equals(Aw.Sindri.Core.Skills.SkillResultInput? other) -> bool
+Aw.Sindri.Core.Skills.SkillResultInput.File.get -> Aw.Sindri.Core.Skills.SkillResultFile?
+Aw.Sindri.Core.Skills.SkillResultInput.File.init -> void
+Aw.Sindri.Core.Skills.SkillResultInput.LastHandledTurnEnd.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Skills.SkillResultInput.LastHandledTurnEnd.init -> void
+Aw.Sindri.Core.Skills.SkillResultInput.LaunchStarted.get -> System.DateTimeOffset
+Aw.Sindri.Core.Skills.SkillResultInput.LaunchStarted.init -> void
+Aw.Sindri.Core.Skills.SkillResultInput.PathExists.get -> System.Func<string!, bool>!
+Aw.Sindri.Core.Skills.SkillResultInput.PathExists.init -> void
+Aw.Sindri.Core.Skills.SkillResultInput.Skill.get -> string!
+Aw.Sindri.Core.Skills.SkillResultInput.Skill.init -> void
+Aw.Sindri.Core.Skills.SkillResultInput.SkillResultInput(Aw.Sindri.Core.Skills.SkillResultFile? File, string! Skill, Aw.Sindri.Core.Skills.SkillBlockManifest! Block, System.DateTimeOffset LaunchStarted, System.DateTimeOffset? LastHandledTurnEnd, System.Func<string!, bool>! PathExists) -> void
+Aw.Sindri.Core.Skills.SkillResultKind
+Aw.Sindri.Core.Skills.SkillResultKind.Complete = 0 -> Aw.Sindri.Core.Skills.SkillResultKind
+Aw.Sindri.Core.Skills.SkillResultKind.OwnerWaiting = 1 -> Aw.Sindri.Core.Skills.SkillResultKind
+Aw.Sindri.Core.Skills.SkillResultKind.StepFailed = 3 -> Aw.Sindri.Core.Skills.SkillResultKind
+Aw.Sindri.Core.Skills.SkillResultKind.StillWaiting = 2 -> Aw.Sindri.Core.Skills.SkillResultKind
+Aw.Sindri.Core.Skills.SkillResultReader
+Aw.Sindri.Core.Skills.SkillSeed
+Aw.Sindri.Core.Skills.SkillTarget
+Aw.Sindri.Core.Skills.SkillTarget.ClaudeCode = 0 -> Aw.Sindri.Core.Skills.SkillTarget
+Aw.Sindri.Core.Skills.SkillTarget.Codex = 1 -> Aw.Sindri.Core.Skills.SkillTarget
+Aw.Sindri.Core.Skills.SkillValueType
+Aw.Sindri.Core.Skills.SkillValueType.Path = 1 -> Aw.Sindri.Core.Skills.SkillValueType
+Aw.Sindri.Core.Skills.SkillValueType.Text = 0 -> Aw.Sindri.Core.Skills.SkillValueType
+Aw.Sindri.Core.Skills.SkillWaitReason
+Aw.Sindri.Core.Skills.SkillWaitReason.NoResult = 1 -> Aw.Sindri.Core.Skills.SkillWaitReason
+Aw.Sindri.Core.Skills.SkillWaitReason.Question = 0 -> Aw.Sindri.Core.Skills.SkillWaitReason
+Aw.Sindri.Core.Skills.SkillWaitReason.SkillUpdated = 3 -> Aw.Sindri.Core.Skills.SkillWaitReason
+Aw.Sindri.Core.Skills.SkillWaitReason.Unreadable = 2 -> Aw.Sindri.Core.Skills.SkillWaitReason
+Aw.Sindri.Core.Skills.SkippedSkillBlock
+Aw.Sindri.Core.Skills.SkippedSkillBlock.<Clone>$() -> Aw.Sindri.Core.Skills.SkippedSkillBlock!
+Aw.Sindri.Core.Skills.SkippedSkillBlock.Deconstruct(out string! Name, out string! Path, out string! Reason) -> void
+Aw.Sindri.Core.Skills.SkippedSkillBlock.Equals(Aw.Sindri.Core.Skills.SkippedSkillBlock? other) -> bool
+Aw.Sindri.Core.Skills.SkippedSkillBlock.Name.get -> string!
+Aw.Sindri.Core.Skills.SkippedSkillBlock.Name.init -> void
+Aw.Sindri.Core.Skills.SkippedSkillBlock.Path.get -> string!
+Aw.Sindri.Core.Skills.SkippedSkillBlock.Path.init -> void
+Aw.Sindri.Core.Skills.SkippedSkillBlock.Reason.get -> string!
+Aw.Sindri.Core.Skills.SkippedSkillBlock.Reason.init -> void
+Aw.Sindri.Core.Skills.SkippedSkillBlock.SkippedSkillBlock(string! Name, string! Path, string! Reason) -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.Skill.get -> Aw.Sindri.Core.Skills.SkillLaunch?
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.Skill.init -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.StepTimeout.get -> System.TimeSpan?
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.StepTimeout.init -> void
+override Aw.Sindri.Core.Skills.LoadedSkillBlock.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Skills.LoadedSkillBlock.GetHashCode() -> int
+override Aw.Sindri.Core.Skills.LoadedSkillBlock.ToString() -> string!
+override Aw.Sindri.Core.Skills.SkillArg.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Skills.SkillArg.GetHashCode() -> int
+override Aw.Sindri.Core.Skills.SkillArg.ToString() -> string!
+override Aw.Sindri.Core.Skills.SkillBlockManifest.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Skills.SkillBlockManifest.GetHashCode() -> int
+override Aw.Sindri.Core.Skills.SkillBlockManifest.ToString() -> string!
+override Aw.Sindri.Core.Skills.SkillBlocks.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Skills.SkillBlocks.GetHashCode() -> int
+override Aw.Sindri.Core.Skills.SkillBlocks.ToString() -> string!
+override Aw.Sindri.Core.Skills.SkillInput.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Skills.SkillInput.GetHashCode() -> int
+override Aw.Sindri.Core.Skills.SkillInput.ToString() -> string!
+override Aw.Sindri.Core.Skills.SkillLaunch.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Skills.SkillLaunch.GetHashCode() -> int
+override Aw.Sindri.Core.Skills.SkillLaunch.ToString() -> string!
+override Aw.Sindri.Core.Skills.SkillOutcomes.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Skills.SkillOutcomes.GetHashCode() -> int
+override Aw.Sindri.Core.Skills.SkillOutcomes.ToString() -> string!
+override Aw.Sindri.Core.Skills.SkillOutput.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Skills.SkillOutput.GetHashCode() -> int
+override Aw.Sindri.Core.Skills.SkillOutput.ToString() -> string!
+override Aw.Sindri.Core.Skills.SkillResultDecision.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Skills.SkillResultDecision.GetHashCode() -> int
+override Aw.Sindri.Core.Skills.SkillResultDecision.ToString() -> string!
+override Aw.Sindri.Core.Skills.SkillResultFile.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Skills.SkillResultFile.GetHashCode() -> int
+override Aw.Sindri.Core.Skills.SkillResultFile.ToString() -> string!
+override Aw.Sindri.Core.Skills.SkillResultInput.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Skills.SkillResultInput.GetHashCode() -> int
+override Aw.Sindri.Core.Skills.SkillResultInput.ToString() -> string!
+override Aw.Sindri.Core.Skills.SkippedSkillBlock.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Skills.SkippedSkillBlock.GetHashCode() -> int
+override Aw.Sindri.Core.Skills.SkippedSkillBlock.ToString() -> string!
+static Aw.Sindri.Core.Skills.LoadedSkillBlock.operator !=(Aw.Sindri.Core.Skills.LoadedSkillBlock? left, Aw.Sindri.Core.Skills.LoadedSkillBlock? right) -> bool
+static Aw.Sindri.Core.Skills.LoadedSkillBlock.operator ==(Aw.Sindri.Core.Skills.LoadedSkillBlock? left, Aw.Sindri.Core.Skills.LoadedSkillBlock? right) -> bool
+static Aw.Sindri.Core.Skills.SkillArg.operator !=(Aw.Sindri.Core.Skills.SkillArg? left, Aw.Sindri.Core.Skills.SkillArg? right) -> bool
+static Aw.Sindri.Core.Skills.SkillArg.operator ==(Aw.Sindri.Core.Skills.SkillArg? left, Aw.Sindri.Core.Skills.SkillArg? right) -> bool
+static Aw.Sindri.Core.Skills.SkillBlockManifest.operator !=(Aw.Sindri.Core.Skills.SkillBlockManifest? left, Aw.Sindri.Core.Skills.SkillBlockManifest? right) -> bool
+static Aw.Sindri.Core.Skills.SkillBlockManifest.operator ==(Aw.Sindri.Core.Skills.SkillBlockManifest? left, Aw.Sindri.Core.Skills.SkillBlockManifest? right) -> bool
+static Aw.Sindri.Core.Skills.SkillBlocks.operator !=(Aw.Sindri.Core.Skills.SkillBlocks? left, Aw.Sindri.Core.Skills.SkillBlocks? right) -> bool
+static Aw.Sindri.Core.Skills.SkillBlocks.operator ==(Aw.Sindri.Core.Skills.SkillBlocks? left, Aw.Sindri.Core.Skills.SkillBlocks? right) -> bool
+static Aw.Sindri.Core.Skills.SkillDescriptors.Build(Aw.Sindri.Core.Skills.SkillBlockManifest! manifest) -> Aw.Kernel.Result<Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor!>!
+static Aw.Sindri.Core.Skills.SkillDescriptors.FactKeyOf(string! blockName, string! output) -> Aw.Kernel.Result<string!>!
+static Aw.Sindri.Core.Skills.SkillDescriptors.HashOf(Aw.Sindri.Core.Skills.SkillBlockManifest! manifest) -> string!
+static Aw.Sindri.Core.Skills.SkillInput.operator !=(Aw.Sindri.Core.Skills.SkillInput? left, Aw.Sindri.Core.Skills.SkillInput? right) -> bool
+static Aw.Sindri.Core.Skills.SkillInput.operator ==(Aw.Sindri.Core.Skills.SkillInput? left, Aw.Sindri.Core.Skills.SkillInput? right) -> bool
+static Aw.Sindri.Core.Skills.SkillLaunch.operator !=(Aw.Sindri.Core.Skills.SkillLaunch? left, Aw.Sindri.Core.Skills.SkillLaunch? right) -> bool
+static Aw.Sindri.Core.Skills.SkillLaunch.operator ==(Aw.Sindri.Core.Skills.SkillLaunch? left, Aw.Sindri.Core.Skills.SkillLaunch? right) -> bool
+static Aw.Sindri.Core.Skills.SkillLaunchEnv.For(string! skill, Aw.Sindri.Core.Workflow.Engine.LaunchId launch, string! runDirectory, string! stateDirectory, string! repoSlug) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+static Aw.Sindri.Core.Skills.SkillLaunchEnv.ResultFileOf(string! runDirectory, Aw.Sindri.Core.Workflow.Engine.LaunchId launch) -> string!
+static Aw.Sindri.Core.Skills.SkillOutcomes.operator !=(Aw.Sindri.Core.Skills.SkillOutcomes? left, Aw.Sindri.Core.Skills.SkillOutcomes? right) -> bool
+static Aw.Sindri.Core.Skills.SkillOutcomes.operator ==(Aw.Sindri.Core.Skills.SkillOutcomes? left, Aw.Sindri.Core.Skills.SkillOutcomes? right) -> bool
+static Aw.Sindri.Core.Skills.SkillOutput.operator !=(Aw.Sindri.Core.Skills.SkillOutput? left, Aw.Sindri.Core.Skills.SkillOutput? right) -> bool
+static Aw.Sindri.Core.Skills.SkillOutput.operator ==(Aw.Sindri.Core.Skills.SkillOutput? left, Aw.Sindri.Core.Skills.SkillOutput? right) -> bool
+static Aw.Sindri.Core.Skills.SkillResultDecision.operator !=(Aw.Sindri.Core.Skills.SkillResultDecision? left, Aw.Sindri.Core.Skills.SkillResultDecision? right) -> bool
+static Aw.Sindri.Core.Skills.SkillResultDecision.operator ==(Aw.Sindri.Core.Skills.SkillResultDecision? left, Aw.Sindri.Core.Skills.SkillResultDecision? right) -> bool
+static Aw.Sindri.Core.Skills.SkillResultFile.operator !=(Aw.Sindri.Core.Skills.SkillResultFile? left, Aw.Sindri.Core.Skills.SkillResultFile? right) -> bool
+static Aw.Sindri.Core.Skills.SkillResultFile.operator ==(Aw.Sindri.Core.Skills.SkillResultFile? left, Aw.Sindri.Core.Skills.SkillResultFile? right) -> bool
+static Aw.Sindri.Core.Skills.SkillResultInput.operator !=(Aw.Sindri.Core.Skills.SkillResultInput? left, Aw.Sindri.Core.Skills.SkillResultInput? right) -> bool
+static Aw.Sindri.Core.Skills.SkillResultInput.operator ==(Aw.Sindri.Core.Skills.SkillResultInput? left, Aw.Sindri.Core.Skills.SkillResultInput? right) -> bool
+static Aw.Sindri.Core.Skills.SkillResultReader.Decide(Aw.Sindri.Core.Skills.SkillResultInput! input) -> Aw.Sindri.Core.Skills.SkillResultDecision!
+static Aw.Sindri.Core.Skills.SkillSeed.Render(Aw.Sindri.Core.Skills.SkillLaunch! launch, string! runDirectory) -> string!
+static Aw.Sindri.Core.Skills.SkippedSkillBlock.operator !=(Aw.Sindri.Core.Skills.SkippedSkillBlock? left, Aw.Sindri.Core.Skills.SkippedSkillBlock? right) -> bool
+static Aw.Sindri.Core.Skills.SkippedSkillBlock.operator ==(Aw.Sindri.Core.Skills.SkippedSkillBlock? left, Aw.Sindri.Core.Skills.SkippedSkillBlock? right) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.SkillOutputInvalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.SkillRequirementMissing -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.SkillResultUnreadable -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.SkillResultWrongSkill -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.SkillVerdictUnmapped -> Aw.Kernel.ErrorDefinition!
