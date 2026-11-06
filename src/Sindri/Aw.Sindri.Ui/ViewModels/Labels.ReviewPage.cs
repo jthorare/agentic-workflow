@@ -1,5 +1,4 @@
 using System.Globalization;
-using Aw.Sindri.Ui.ViewModels.Reviews;
 
 namespace Aw.Sindri.Ui.ViewModels;
 

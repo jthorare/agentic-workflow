@@ -1,4 +1,5 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Reviews;
 
 namespace Aw.Sindri.Ui.Tests.ReviewPage;

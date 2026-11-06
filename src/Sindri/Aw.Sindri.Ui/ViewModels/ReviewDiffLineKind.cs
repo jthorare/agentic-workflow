@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Ui.ViewModels.Reviews;
+namespace Aw.Sindri.Ui.ViewModels;
 
 /// <summary>What a diff line is.</summary>
 internal enum ReviewDiffLineKind
