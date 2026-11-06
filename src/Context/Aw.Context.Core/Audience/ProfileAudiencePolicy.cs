@@ -91,6 +91,6 @@ public sealed class ProfileAudiencePolicy(ContextSettings settings, IReadOnlyCol
             }
         }
 
-        return ValueTask.FromResult<Result<AudienceScope>>(new AudienceScope(allowed));
+        return ValueTask.FromResult<Result<AudienceScope>>(new AudienceScope(allowed).WithoutOwner());
     }
 }
