@@ -5,6 +5,9 @@ namespace Aw.Context.Core.Library;
 
 internal sealed partial class DesignDocWalker
 {
+    // why: the line regexes are quadratic on a long run of one character; a line this long is not an item, so it is not read
+    private const int MaxLineChars = 8 * 1024;
+
     private static readonly string[] _noCells = [];
 
     private enum BlockKind
@@ -52,7 +55,7 @@ internal sealed partial class DesignDocWalker
         var fence = new FenceState();
         for (var i = bodyStart; i < lines.Count; i++)
         {
-            if (fence.Skips(lines[i]))
+            if (lines[i].Length > MaxLineChars || fence.Skips(lines[i]))
             {
                 continue;
             }

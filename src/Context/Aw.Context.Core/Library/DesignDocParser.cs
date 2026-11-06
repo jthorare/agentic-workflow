@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Aw.Context.Core.Library;
 
@@ -42,7 +43,26 @@ public static class DesignDocParser
     /// <param name="text">Its cleaned text.</param>
     /// <param name="actualSourceSha256">The sha256 of the source a generated doc was made from, when known; a mismatch with the doc's <c language="text">source-sha256</c> is SND-LIB-017.</param>
     /// <returns>The parsed doc.</returns>
-    public static ParsedDesignDoc Parse(string path, string text, string? actualSourceSha256 = null)
+    public static ParsedDesignDoc Parse(string path, string text, string? actualSourceSha256 = null) =>
+        Guard(path, () => ParseText(path, text, actualSourceSha256));
+
+    /// <summary>Runs a parse; a regex timeout (a pathological line) is a doc with the error "too large" (SND-LIB-018) and no items, so one doc cannot fail a repo's sync (#1769).</summary>
+    /// <param name="path">The doc's path, for the message.</param>
+    /// <param name="parse">The parse.</param>
+    /// <returns>The parse, or the timed-out doc.</returns>
+    internal static ParsedDesignDoc Guard(string path, Func<ParsedDesignDoc> parse)
+    {
+        try
+        {
+            return parse();
+        }
+        catch (RegexMatchTimeoutException)   // boundary: one pathological doc must not fail the sync of its repo
+        {
+            return new ParsedDesignDoc(Version, FrontMatter: null, Items: [], Refs: [], Errors: [TooLarge(path, "a line took too long to read.")]);
+        }
+    }
+
+    private static ParsedDesignDoc ParseText(string path, string text, string? actualSourceSha256)
     {
         var lines = text.TrimStart('﻿').ReplaceLineEndings("\n").Split('\n');
         var head = FrontMatterBlock.Find(path, lines);
