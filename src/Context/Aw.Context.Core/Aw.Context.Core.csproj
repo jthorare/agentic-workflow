@@ -18,5 +18,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Aw.Context.Tests" />
     <InternalsVisibleTo Include="Aw.Context.Testing" />
+    <InternalsVisibleTo Include="Aw.Context.Features" />
+    <InternalsVisibleTo Include="Aw.Context.Infrastructure" />
   </ItemGroup>
 </Project>
