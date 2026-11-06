@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.build
-version: 7
+version: 8
 description: "Block recipe: one TDD builder for one phase in its own worktree: a failing test per acceptance item, then code in atomic commits inside the phase's allowed files."
 displayName: "Build one phase, tests first"
 inputs:
@@ -12,6 +12,7 @@ outputs:
   - { key: fact:built,        label: "Built head",  type: payload, from: checks }
   - { key: fact:change,       label: "Change under review", type: payload, from: checks }
   - { key: fact:modelCheck,   label: "Design model check result", type: payload, from: model }
+  - { key: fact:findings,     label: "Findings",    type: findings, from: model }
   - { key: fact:redTests,     label: "Red tests",   type: payload, from: red }
   - { key: fact:activePacket, label: "Phase packet in force", type: packet, from: amend }
 initial: prepare

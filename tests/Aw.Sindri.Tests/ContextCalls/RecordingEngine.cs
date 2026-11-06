@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using Aw.Context.Core.Audience;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptScan;
@@ -10,6 +11,7 @@ using Aw.Context.Core.Facade;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Library;
 using Aw.Context.Core.Linear;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
@@ -80,6 +82,18 @@ internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller 
     public ValueTask<Result<SyncReport>> Sync(string? source, ContextScope scope, CancellationToken cancellationToken) => inner.Sync(source, scope, cancellationToken);
 
     public ValueTask<Result<ProjectFactsAnswer>> Projects(ProjectFactsRequest request, ContextScope scope, CancellationToken cancellationToken) => inner.Projects(request, scope, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<LibraryDoc>>> ListDocs(LibraryDocFilter filter, AudienceScope audience, CancellationToken cancellationToken) => inner.ListDocs(filter, audience, cancellationToken);
+
+    public ValueTask<Result<LibraryDoc?>> GetDoc(RecordKey key, AudienceScope audience, CancellationToken cancellationToken) => inner.GetDoc(key, audience, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<LibraryItem>>> Items(RecordKey docKey, AudienceScope audience, CancellationToken cancellationToken) => inner.Items(docKey, audience, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<LibraryRefResolution>>> Resolve(IReadOnlyList<string> refs, string? repo, AudienceScope audience, CancellationToken cancellationToken) => inner.Resolve(refs, repo, audience, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<LibraryClaim>>> Claims(RecordKey prKey, AudienceScope audience, CancellationToken cancellationToken) => inner.Claims(prKey, audience, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<LibraryClaim>>> ClaimsOn(RecordKey docKey, AudienceScope audience, CancellationToken cancellationToken) => inner.ClaimsOn(docKey, audience, cancellationToken);
 
     public ValueTask<Result<LinearIssuePage>> IssueList(LinearIssueFilter filter, LinearIssueCursor? after, ContextScope scope, CancellationToken cancellationToken) => inner.IssueList(filter, after, scope, cancellationToken);
 

@@ -12,6 +12,8 @@ using Aw.Context.Core.Glossary;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Library;
+using Aw.Context.Core.Linear;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Locks;
 using Aw.Context.Core.Map;
@@ -126,7 +128,7 @@ public static class ContextFeaturesServiceCollectionExtensions
         services.TryAddSingleton<IMergeHistory>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IAsOfDocs>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IEvalStore>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
-        return services.AddMapHeads().AddRelinkPinAliases().AddProjectFacts().AddScoped<IssueReads>().AddIndexSync().AddRecordSearch().AddEmbedRecords().AddContextSlices();
+        return services.AddMapHeads().AddRelinkPinAliases().AddProjectFacts().AddLibraryReads().AddIssueReads().AddIndexSync().AddRecordSearch().AddEmbedRecords().AddContextSlices();
     }
 
     private static IServiceCollection AddMapHealthChecks(this IServiceCollection services) => services
@@ -214,6 +216,20 @@ public static class ContextFeaturesServiceCollectionExtensions
     // The Projects page's reads (projects page spec §6.1).
     private static IServiceCollection AddProjectFacts(this IServiceCollection services) =>
         services.AddScoped<IService<GetProjectFactsRequest, ProjectFactsAnswer>, GetProjectFactsService>().AddScoped<ContextReads>();
+
+    // The Linear hub's reads (Linear hub spec 2026-11-04 §4.3).
+    private static IServiceCollection AddIssueReads(this IServiceCollection services)
+    {
+        services.TryAddSingleton<ILinearIssueStore, UnconfiguredLinearIssueStore>();   // the host that wires Aw.Context.Infrastructure replaces it with the SQLite store
+        return services.AddScoped<IssueReads>();
+    }
+
+    // The design-doc library's reads (PR review page spec 2026-11-04 §5.5).
+    private static IServiceCollection AddLibraryReads(this IServiceCollection services)
+    {
+        services.TryAddSingleton<ILibraryStore, ReadLibrary.UnconfiguredLibraryStore>();   // the host that wires Aw.Context.Infrastructure replaces it with the SQLite store
+        return services.AddScoped<IContextLibrary, ReadLibrary.ContextLibrary>();
+    }
 
     // The lenses and the code lens share the basis reader and the map reader's views.
     private static IServiceCollection AddLensSlices(this IServiceCollection services) => services

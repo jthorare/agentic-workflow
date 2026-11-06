@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Aw.Context.Core.Audience;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptScan;
@@ -11,6 +12,7 @@ using Aw.Context.Core.Facade;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Library;
 using Aw.Context.Core.Linear;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
@@ -67,6 +69,19 @@ internal sealed class ContextEngine(
 
     public ValueTask<Result<LinearSince>> IssueSince(DateTimeOffset marker, ExternalId viewer, ContextScope scope, CancellationToken cancellationToken) =>
         reads.IssueSince(marker, viewer, scope, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<LibraryDoc>>> ListDocs(LibraryDocFilter filter, AudienceScope audience, CancellationToken cancellationToken) => reads.Library.ListDocs(filter, audience, cancellationToken);
+
+    public ValueTask<Result<LibraryDoc?>> GetDoc(RecordKey key, AudienceScope audience, CancellationToken cancellationToken) => reads.Library.GetDoc(key, audience, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<LibraryItem>>> Items(RecordKey docKey, AudienceScope audience, CancellationToken cancellationToken) => reads.Library.Items(docKey, audience, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<LibraryRefResolution>>> Resolve(IReadOnlyList<string> refs, string? repo, AudienceScope audience, CancellationToken cancellationToken) =>
+        reads.Library.Resolve(refs, repo, audience, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<LibraryClaim>>> Claims(RecordKey prKey, AudienceScope audience, CancellationToken cancellationToken) => reads.Library.Claims(prKey, audience, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<LibraryClaim>>> ClaimsOn(RecordKey docKey, AudienceScope audience, CancellationToken cancellationToken) => reads.Library.ClaimsOn(docKey, audience, cancellationToken);
 
     public ValueTask<Result<ContextResult>> Query(ContextQuery query1, ContextScope scope, CancellationToken cancellationToken) =>
         query.Handle(new QueryContextRequest(query1, scope), cancellationToken);

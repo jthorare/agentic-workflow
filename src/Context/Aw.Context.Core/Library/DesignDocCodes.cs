@@ -30,7 +30,7 @@ public static class DesignDocCodes
     /// <summary>Too large (over 1 MiB or 2,000 items).</summary>
     public const string TooLarge = "SND-LIB-018";
 
-    /// <summary>A near miss: <c language="text">aw-doc:</c> present but not the number 1.</summary>
+    /// <summary>A near miss: <c language="text">aw-doc:</c> present but not a whole number (<c language="text">"1"</c>, <c language="text">1.0</c>, <c language="text">yes</c>); a whole number other than 1 is <see cref="BadFrontMatter"/>.</summary>
     public const string NearMiss = "SND-LIB-019";
 
     /// <summary>The codes decided against the scope when read: a doc that has only these keeps its items.</summary>

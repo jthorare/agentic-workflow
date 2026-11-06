@@ -121,6 +121,13 @@ internal static class FrontMatterBlock
             return null;
         }
 
+        if (aw.Scalar is { Quoted: false } whole && whole.Value.Length > 0 && whole.Value.All(char.IsAsciiDigit))
+        {
+            // why: a whole number other than 1 is a convention version this build doesn't know, a bad key (010) the owner can fix; 019 is for what isn't a whole number
+            var bad = Error(path, aw.Line, DesignDocCodes.BadFrontMatter, $"aw-doc is {whole.Value}, and this reader knows convention version 1.", "Write aw-doc: 1, or update the reader for the newer convention.");
+            return new Outcome(Read: true, FrontMatter: null, Errors: [bad], BodyStart: 0);
+        }
+
         var shown = aw.Scalar switch
         {
             null => "a list",

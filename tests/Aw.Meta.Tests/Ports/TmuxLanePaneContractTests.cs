@@ -31,7 +31,7 @@ public sealed class TmuxLanePaneContractTests : LanePaneContract
             .When("capture-pane", r => Live(r, sessions) ? Ok("output\n") : Failed())
             .When("list-clients", r => Session(r) is { } s && sessions.TryGetValue(s, out var found) ? Ok(string.Concat(Enumerable.Repeat("x\n", found.Clients))) : Failed())
             .When("send-keys", r => Live(r, sessions) ? Ok(string.Empty) : Failed());
-        return (new TmuxLanePane(runner, "tmux-never-started", "t1", config), (session, command, clients) => sessions[session] = (command, clients));
+        return (new TmuxLanePane(runner, "tmux-never-started", "t1", config, new InMemoryDelay(new ManualClock(A.T0))), (session, command, clients) => sessions[session] = (command, clients));
     }
 
     // display-message answers the pane's pid for #{pane_pid} and the command otherwise.

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Aw.Kernel;
 using Aw.Meta.Core;
@@ -15,6 +16,35 @@ namespace Aw.Meta.Infrastructure.Files;
 /// <param name="directory">The lane-sessions directory.</param>
 internal sealed class DirectoryLaneFiles(string directory) : ILaneFiles
 {
+    public async ValueTask<Result<LaneHookTrace?>> HookTrace(string lane, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(lane);
+        if (!IsLaneName(lane))
+        {
+            return Results.Success<LaneHookTrace?>(value: null);
+        }
+
+        try
+        {
+            var path = Path.Combine(directory, lane + ".hook");
+            if (!File.Exists(path))
+            {
+                return Results.Success<LaneHookTrace?>(value: null);
+            }
+
+            var text = await File.ReadAllTextAsync(path, cancellationToken).ConfigureAwait(false);
+            var fields = text.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            return Results.Success(
+                fields.Length == 4 && DateTimeOffset.TryParse(fields[0], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var at)
+                    ? new LaneHookTrace(at, fields[1], fields[2], fields[3])
+                    : null);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            return Results.Success<LaneHookTrace?>(value: null);
+        }
+    }
+
     public async ValueTask<Result<LaneRecord?>> Record(string lane, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(lane);

@@ -49,11 +49,24 @@ public sealed class DesignDocFrontMatterTests
     }
 
     [Theory, Trait("Lane", "unit")]
+    [InlineData("aw-doc: 2")]
+    [InlineData("aw-doc: 0")]
+    public void An_aw_doc_that_is_a_whole_number_other_than_1_is_a_bad_key_not_a_near_miss(string line)
+    {
+        var doc = DesignDocParser.Parse(ADoc.Path, $"---\n{line}\nid: harbor-booking\nkind: spec\ntitle: T\nstatus: draft\n---\n## Goals\n");
+
+        Assert.Null(doc.FrontMatter);
+        Assert.Empty(doc.Items);
+        var error = Assert.Single(doc.Errors);
+        Assert.Equal(DesignDocCodes.BadFrontMatter, error.Code);
+        Assert.Equal(2, error.Line);
+    }
+
+    [Theory, Trait("Lane", "unit")]
     [InlineData("aw-doc: \"1\"")]
     [InlineData("aw-doc: '1'")]
     [InlineData("aw-doc: 1.0")]
     [InlineData("aw-doc: yes")]
-    [InlineData("aw-doc: 2")]
     [InlineData("aw-doc:")]
     public void An_aw_doc_that_is_not_the_number_1_is_a_near_miss_decided_on_the_raw_line(string line)
     {

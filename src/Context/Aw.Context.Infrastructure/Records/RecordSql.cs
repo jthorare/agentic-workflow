@@ -115,12 +115,12 @@ internal static class RecordSql
         "reach AS (SELECT s.project, a.to_key AS pr FROM issue s JOIN record_link a ON a.from_key = s.key AND a.kind = 'relates' WHERE a.to_key IS NOT NULL " +
         "UNION SELECT s.project, b.from_key FROM issue s JOIN record_link k ON k.from_key = s.key AND k.kind = 'known-as' JOIN record_link b ON b.to_ref = k.to_ref AND b.kind = 'relates') " +
         "SELECT r.project, pr.key, pr.state, COALESCE(pr.updated_at, pr.synced_at) FROM reach r JOIN source_record pr ON pr.key = r.pr " +
-        "WHERE pr.kind = 'pr' AND pr.removed_at IS NULL AND pr.blocked = 0 AND (pr.audience_key IN (SELECT value FROM json_each(@audiences)) OR pr.key IN (SELECT value FROM json_each(@records))) " +
+        "WHERE pr.kind = 'pr' AND pr.removed_at IS NULL AND pr.blocked = 0 AND (pr.audience_key IN (SELECT value FROM json_each(@audiences)) OR (pr.key IN (SELECT value FROM json_each(@records)) AND coalesce(pr.audience_key, '') NOT LIKE 'owner:%')) " +
         "ORDER BY r.project, pr.key";
 
-    private const string VisibleProject = "(p.audience_key IN (SELECT value FROM json_each(@audiences)) OR p.key IN (SELECT value FROM json_each(@records)))";
+    private const string VisibleProject = "(p.audience_key IN (SELECT value FROM json_each(@audiences)) OR (p.key IN (SELECT value FROM json_each(@records)) AND coalesce(p.audience_key, '') NOT LIKE 'owner:%'))";
 
-    private const string VisibleIssue = "(i.audience_key IN (SELECT value FROM json_each(@audiences)) OR i.key IN (SELECT value FROM json_each(@records)))";
+    private const string VisibleIssue = "(i.audience_key IN (SELECT value FROM json_each(@audiences)) OR (i.key IN (SELECT value FROM json_each(@records)) AND coalesce(i.audience_key, '') NOT LIKE 'owner:%'))";
 
     internal const string ReadPosition = "SELECT cursor, phase, backfill_cursor, backfill_before FROM source_cursor WHERE source = @source AND repo = 'records'";
 
@@ -192,7 +192,7 @@ internal static class RecordSql
         "FROM chunk_fts " +
         "JOIN chunk c ON c.id = chunk_fts.rowid " +
         "JOIN source_record r ON r.key = c.record " +
-        "WHERE chunk_fts MATCH @match AND r.removed_at IS NULL AND r.blocked = 0 AND (r.audience_key IN (SELECT value FROM json_each(@audiences)) OR r.key IN (SELECT value FROM json_each(@records))) " +
+        "WHERE chunk_fts MATCH @match AND r.removed_at IS NULL AND r.blocked = 0 AND (r.audience_key IN (SELECT value FROM json_each(@audiences)) OR (r.key IN (SELECT value FROM json_each(@records)) AND coalesce(r.audience_key, '') NOT LIKE 'owner:%')) " +
         "ORDER BY bm25(chunk_fts), c.id " +
         "LIMIT @limit";
 

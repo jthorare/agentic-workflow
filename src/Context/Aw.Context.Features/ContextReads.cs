@@ -1,4 +1,5 @@
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Facade;
 using Aw.Context.Core.Linear;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Projects;
@@ -17,8 +18,12 @@ internal sealed class ContextReads(
     IService<MapHeadsRequest, IReadOnlyList<RepoHead>> heads,
     IService<GetProjectFactsRequest, ProjectFactsAnswer> projects,
     IService<RelinkPinAliasesRequest, RelinkPinAliasesResult> relink,
+    IContextLibrary library,
     IssueReads issues)
 {
+    /// <summary>The design-doc library's reads.</summary>
+    public IContextLibrary Library { get; } = library;
+
     public ValueTask<Result<IReadOnlyList<RepoHead>>> Heads(ContextScope scope, CancellationToken cancellationToken) => heads.Handle(new MapHeadsRequest(scope), cancellationToken);
 
     public ValueTask<Result<RelinkPinAliasesResult>> RelinkPinAliases(ContextScope scope, CancellationToken cancellationToken) => relink.Handle(new RelinkPinAliasesRequest(scope), cancellationToken);

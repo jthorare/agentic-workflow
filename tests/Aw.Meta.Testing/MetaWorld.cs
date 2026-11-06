@@ -116,7 +116,7 @@ public sealed class MetaWorld
     }
 
     /// <summary>The lane hook heartbeats.</summary>
-    public LaneBeats Beats => new(Values);
+    public LaneBeats Beats => new(Values, Delay);
 
     /// <summary>The lane stop gate's loop guard.</summary>
     public LaneStopGuard LaneGuard => new(Values, Log);
@@ -126,20 +126,23 @@ public sealed class MetaWorld
     public static LaneHealthReader NoNonClaudeLanes()
     {
         var values = new InMemoryKeyValueStore();
-        return new LaneHealthReader(new InMemoryLaneFiles(), new LaneBeats(values), new InMemoryLaneMail(new InMemoryMessageStore()), new LaneStopGuard(values, new InMemoryRunningLog()));
+        return new LaneHealthReader(new InMemoryLaneFiles(), new LaneBeats(values, new InMemoryDelay(new ManualClock(A.T0))), new InMemoryLaneMail(new InMemoryMessageStore()), new LaneStopGuard(values, new InMemoryRunningLog()), new ManualClock(A.T0), LaneHealthOptions.Default);
     }
 
     /// <summary>The lanes' context sizes.</summary>
     public LaneContextReader Context => new(LaneFiles, LaneSessions, ClaudeTranscripts);
 
     /// <summary>The non-Claude lanes' standing.</summary>
-    public LaneHealthReader LaneHealth => new(LaneFiles, Beats, LaneMail, LaneGuard);
+    public LaneHealthReader LaneHealth => new(LaneFiles, Beats, LaneMail, LaneGuard, Clock, LaneHealthOptions.Default);
 
     /// <summary>The inbox sync.</summary>
     public InboxSync Sync => new(Transcripts, Messages, Owner, Clock);
 
     /// <summary>The lane refresher.</summary>
     public LaneRefresher Refresher => new(Sessions, Messages, Lanes);
+
+    /// <summary>The inbox counts the watch polls.</summary>
+    public InboxCounts InboxCounts => new(Config, Messages, Reader, Clock);
 
     /// <summary>The obligation reader.</summary>
     public ObligationReader Reader => new(Messages, Lanes, Owner, Gates, Values);

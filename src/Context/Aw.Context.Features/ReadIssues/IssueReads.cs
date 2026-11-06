@@ -13,8 +13,8 @@ namespace Aw.Context.Features.ReadIssues;
 /// (a session sees only its own repo's audiences, a human every repo of the profile), and the side tables take it from the issue's record. The pickers and the strip are the owner's: a session is refused (SND-CONTEXT-020).
 /// </summary>
 /// <param name="issues">The stored issues, comments and changes.</param>
-/// <param name="lookups">The pickers' lists.</param>
-internal sealed class IssueReads(ILinearIssueStore issues, ILinearLookupStore lookups)
+/// <param name="lookups">The pickers' lists; a host that wired none has none to read.</param>
+internal sealed class IssueReads(ILinearIssueStore issues, ILinearLookupStore? lookups = null)
 {
     public async ValueTask<Result<LinearIssuePage>> List(LinearIssueFilter filter, LinearIssueCursor? after, ContextScope scope, CancellationToken cancellationToken)
     {
@@ -49,7 +49,7 @@ internal sealed class IssueReads(ILinearIssueStore issues, ILinearLookupStore lo
 
         // why: a team's lists are readable when its issues are: the feed gives them the audience 'linear:<team key>'
         return AudienceKey.TryFrom("linear:" + team, out var key) && audience.Value.Allows(key, RecordKey.From("linear:team/" + team))
-            ? await lookups.Team(team, cancellationToken).ConfigureAwait(false)
+            ? lookups is null ? Results.Success<LinearTeamLookups?>(value: null) : await lookups.Team(team, cancellationToken).ConfigureAwait(false)
             : Results.Success<LinearTeamLookups?>(value: null);
     }
 

@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace Aw.Context.Core.Library;
 
 /// <summary>A design doc's front matter as read. Values are kept as written, so a bad one (SND-LIB-010) can still be shown; keys the convention doesn't name are dropped.</summary>
-/// <param name="AwDoc">The convention version; always 1 (anything else is a near miss with no front matter).</param>
+/// <param name="AwDoc">The convention version; always 1 (a whole number other than 1 is SND-LIB-010 with no front matter, anything that is not a whole number a near miss).</param>
 /// <param name="Slug">The doc id (named Slug because a raw string called Id is a typed-id violation, AW1001; it is the "id" key in JSON).</param>
 /// <param name="Kind">The doc kind.</param>
 /// <param name="Title">The title.</param>

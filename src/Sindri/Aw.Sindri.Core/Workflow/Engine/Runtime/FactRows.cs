@@ -84,7 +84,7 @@ public static class FactRows
             FactType.File => new FactRef(name, Size: null, StatusText.Prefixed(value.Sha256), Path: null, ItemId: null, Url: null, Host: null, Title: null, FactKey: null),
             FactType.Item => new FactRef(Name: null, Size: null, Hash: null, Path: null, item, Url: null, Host: null, Title: null, FactKey: null),
             FactType.Link when content is not null => LinkRef(fact.Key, content),
-            FactType.Link or FactType.ScopeMap or FactType.Packet or FactType.Evidence or FactType.Decision or FactType.Payload or _ =>
+            FactType.Link or FactType.ScopeMap or FactType.Packet or FactType.Evidence or FactType.Decision or FactType.Payload or FactType.Findings or _ =>
                 new FactRef(Name: null, Size: null, Hash: null, Path: null, ItemId: null, Url: null, Host: null, Title: null, fact.Key.Value),
         };
     }

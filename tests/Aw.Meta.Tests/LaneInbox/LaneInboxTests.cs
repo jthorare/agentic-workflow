@@ -32,7 +32,7 @@ public sealed class LaneInboxTests
         var lane = _world.PutLane("api");
         _ = await _world.Beats.Record("api", stopped: true, A.At(5), CancellationToken.None);
 
-        _ = await Service().Handle(new LaneInboxRequest(lane), CancellationToken.None);
+        _ = await Service().Handle(new LaneInboxRequest(lane) { HookEvent = "UserPromptSubmit" }, CancellationToken.None);
 
         var beat = (await _world.Beats.Last("api", CancellationToken.None)).Value;
         Assert.False(beat!.Stopped);

@@ -11728,3 +11728,156 @@ static Aw.Context.Core.Linear.LinearSinceChange.operator !=(Aw.Context.Core.Line
 static Aw.Context.Core.Linear.LinearSinceChange.operator ==(Aw.Context.Core.Linear.LinearSinceChange? left, Aw.Context.Core.Linear.LinearSinceChange? right) -> bool
 static Aw.Context.Core.Linear.LinearSinceMention.operator !=(Aw.Context.Core.Linear.LinearSinceMention? left, Aw.Context.Core.Linear.LinearSinceMention? right) -> bool
 static Aw.Context.Core.Linear.LinearSinceMention.operator ==(Aw.Context.Core.Linear.LinearSinceMention? left, Aw.Context.Core.Linear.LinearSinceMention? right) -> bool
+static Aw.Context.Core.Audience.ProfileAudiencePolicy.LibraryDoc(System.Collections.Generic.IReadOnlyList<string!>! docRepos, System.Collections.Generic.IReadOnlyList<string!>! githubRepos) -> Aw.Context.Core.Records.AudienceKey
+const Aw.Context.Core.Audience.ProfileAudiencePolicy.OwnerLibrary = "owner:library" -> string!
+Aw.Context.Core.Records.AudienceKeyExtensions
+static Aw.Context.Core.Records.AudienceKeyExtensions.IsOwner(this Aw.Context.Core.Records.AudienceKey? audience) -> bool
+Aw.Context.Core.Facade.IContextLibrary
+Aw.Context.Core.Library.LibraryItem.DocKey.get -> Aw.Context.Core.Sources.RecordKey
+Aw.Context.Core.Library.LibraryItem
+Aw.Context.Core.Library.ILibraryStore
+override Aw.Context.Core.Library.LibraryItem.ToString() -> string!
+Aw.Context.Core.Library.LibraryItem.DocKey.init -> void
+Aw.Context.Core.Library.LibraryItem.Key.get -> string!
+static Aw.Context.Core.Library.LibraryItem.operator !=(Aw.Context.Core.Library.LibraryItem? left, Aw.Context.Core.Library.LibraryItem? right) -> bool
+Aw.Context.Core.Library.LibraryItem.Parent.get -> string?
+Aw.Context.Core.Library.LibraryItem.Kind.get -> Aw.Context.Core.Library.DesignItemKind
+Aw.Context.Core.Library.LibraryItem.Key.init -> void
+Aw.Context.Core.Library.LibraryItem.Parent.init -> void
+Aw.Context.Core.Library.LibraryItem.Kind.init -> void
+Aw.Context.Core.Library.LibraryItem.LineEnd.get -> int
+static Aw.Context.Core.Library.LibraryItem.operator ==(Aw.Context.Core.Library.LibraryItem? left, Aw.Context.Core.Library.LibraryItem? right) -> bool
+Aw.Context.Core.Library.LibraryItem.Text.get -> string!
+Aw.Context.Core.Library.LibraryItem.LineEnd.init -> void
+Aw.Context.Core.Library.LibraryItem.LineStart.get -> int
+override Aw.Context.Core.Library.LibraryItem.GetHashCode() -> int
+Aw.Context.Core.Library.LibraryItem.Text.init -> void
+Aw.Context.Core.Library.LibraryClaim
+Aw.Context.Core.Library.LibraryItem.LineStart.init -> void
+override Aw.Context.Core.Library.LibraryItem.Equals(object? obj) -> bool
+override Aw.Context.Core.Library.LibraryClaim.ToString() -> string!
+Aw.Context.Core.Library.LibraryClaim.Pr.get -> Aw.Context.Core.Sources.RecordKey
+static Aw.Context.Core.Library.LibraryClaim.operator !=(Aw.Context.Core.Library.LibraryClaim? left, Aw.Context.Core.Library.LibraryClaim? right) -> bool
+static Aw.Context.Core.Library.LibraryClaim.operator ==(Aw.Context.Core.Library.LibraryClaim? left, Aw.Context.Core.Library.LibraryClaim? right) -> bool
+Aw.Context.Core.Library.LibraryClaim.Pr.init -> void
+Aw.Context.Core.Library.LibraryItem.Equals(Aw.Context.Core.Library.LibraryItem? other) -> bool
+Aw.Context.Core.Library.LibraryClaim.PrState.get -> Aw.Context.Core.Records.RecordState?
+override Aw.Context.Core.Library.LibraryClaim.GetHashCode() -> int
+Aw.Context.Core.Library.LibraryItem.<Clone>$() -> Aw.Context.Core.Library.LibraryItem!
+Aw.Context.Core.Library.LibraryClaim.Resolution.get -> Aw.Context.Core.Library.LibraryRefResolution!
+Aw.Context.Core.Library.LibraryClaim.PrState.init -> void
+override Aw.Context.Core.Library.LibraryClaim.Equals(object? obj) -> bool
+Aw.Context.Core.Library.LibraryItem.Deconstruct(out Aw.Context.Core.Sources.RecordKey DocKey, out string! Key, out Aw.Context.Core.Library.DesignItemKind Kind, out string? Parent, out int LineStart, out int LineEnd, out string! Text) -> void
+Aw.Context.Core.Library.LibraryClaim.Equals(Aw.Context.Core.Library.LibraryClaim? other) -> bool
+Aw.Context.Core.Library.LibraryClaim.Resolution.init -> void
+Aw.Context.Core.Library.LibraryRefResolution.Status.get -> Aw.Context.Core.Library.LibraryRefStatus
+Aw.Context.Core.Library.LibraryRefResolution.Ref.get -> string!
+Aw.Context.Core.Library.LibraryRefResolution.Status.init -> void
+Aw.Context.Core.Library.LibraryRefResolution
+Aw.Context.Core.Library.LibraryClaim.<Clone>$() -> Aw.Context.Core.Library.LibraryClaim!
+Aw.Context.Core.Library.LibraryRefResolution.Ref.init -> void
+override Aw.Context.Core.Library.LibraryRefResolution.ToString() -> string!
+Aw.Context.Core.Library.LibraryRefResolution.Doc.get -> Aw.Context.Core.Sources.RecordKey?
+Aw.Context.Core.Library.LibraryRefResolution.Item.get -> Aw.Context.Core.Library.LibraryItem?
+Aw.Context.Core.Library.LibraryRefResolution.Doc.init -> void
+static Aw.Context.Core.Library.LibraryRefResolution.operator !=(Aw.Context.Core.Library.LibraryRefResolution? left, Aw.Context.Core.Library.LibraryRefResolution? right) -> bool
+Aw.Context.Core.Library.LibraryRefResolution.Item.init -> void
+Aw.Context.Core.Library.LibraryClaim.Deconstruct(out Aw.Context.Core.Sources.RecordKey Pr, out Aw.Context.Core.Records.RecordState? PrState, out Aw.Context.Core.Library.LibraryRefResolution! Resolution) -> void
+static Aw.Context.Core.Library.LibraryRefResolution.operator ==(Aw.Context.Core.Library.LibraryRefResolution? left, Aw.Context.Core.Library.LibraryRefResolution? right) -> bool
+Aw.Context.Core.Library.LibraryClaimRow.Pr.get -> Aw.Context.Core.Sources.RecordKey
+Aw.Context.Core.Library.LibraryClaimRow.PrAudience.get -> Aw.Context.Core.Records.AudienceKey?
+Aw.Context.Core.Library.LibraryClaimRow.Pr.init -> void
+Aw.Context.Core.Library.LibraryClaimRow
+Aw.Context.Core.Library.LibraryClaimRow.PrState.get -> Aw.Context.Core.Records.RecordState?
+override Aw.Context.Core.Library.LibraryClaimRow.ToString() -> string!
+Aw.Context.Core.Library.LibraryClaimRow.PrAudience.init -> void
+static Aw.Context.Core.Library.LibraryClaimRow.operator !=(Aw.Context.Core.Library.LibraryClaimRow? left, Aw.Context.Core.Library.LibraryClaimRow? right) -> bool
+static Aw.Context.Core.Library.LibraryClaimRow.operator ==(Aw.Context.Core.Library.LibraryClaimRow? left, Aw.Context.Core.Library.LibraryClaimRow? right) -> bool
+Aw.Context.Core.Library.LibraryClaimRow.PrState.init -> void
+override Aw.Context.Core.Library.LibraryRefResolution.GetHashCode() -> int
+Aw.Context.Core.Library.LibraryClaimRow.Ref.get -> string!
+override Aw.Context.Core.Library.LibraryClaimRow.GetHashCode() -> int
+Aw.Context.Core.Library.LibraryClaimRow.Ref.init -> void
+override Aw.Context.Core.Library.LibraryClaimRow.Equals(object? obj) -> bool
+override Aw.Context.Core.Library.LibraryRefResolution.Equals(object? obj) -> bool
+Aw.Context.Core.Library.LibraryClaimRow.Equals(Aw.Context.Core.Library.LibraryClaimRow? other) -> bool
+Aw.Context.Core.Library.LibraryClaimRow.<Clone>$() -> Aw.Context.Core.Library.LibraryClaimRow!
+Aw.Context.Core.Library.LibraryRefResolution.Equals(Aw.Context.Core.Library.LibraryRefResolution? other) -> bool
+Aw.Context.Core.Library.LibraryClaimRow.Deconstruct(out Aw.Context.Core.Sources.RecordKey Pr, out Aw.Context.Core.Records.AudienceKey? PrAudience, out Aw.Context.Core.Records.RecordState? PrState, out string! Ref) -> void
+Aw.Context.Core.Library.LibraryRefStatus.Missing = 1 -> Aw.Context.Core.Library.LibraryRefStatus
+Aw.Context.Core.Library.LibraryRefStatus
+Aw.Context.Core.Library.LibraryRefStatus.Resolved = 0 -> Aw.Context.Core.Library.LibraryRefStatus
+Aw.Context.Core.Library.LibraryRefResolution.<Clone>$() -> Aw.Context.Core.Library.LibraryRefResolution!
+Aw.Context.Core.Library.LibraryRefStatus.Ambiguous = 2 -> Aw.Context.Core.Library.LibraryRefStatus
+Aw.Context.Core.Library.LibraryRefResolution.Deconstruct(out string! Ref, out Aw.Context.Core.Library.LibraryRefStatus Status, out Aw.Context.Core.Sources.RecordKey? Doc, out Aw.Context.Core.Library.LibraryItem? Item) -> void
+Aw.Context.Core.Library.LibraryDoc.Key.get -> Aw.Context.Core.Sources.RecordKey
+Aw.Context.Core.Library.LibraryDoc.Scope.get -> string!
+Aw.Context.Core.Library.LibraryDoc.Root.get -> string!
+Aw.Context.Core.Library.LibraryDoc.Scope.init -> void
+Aw.Context.Core.Library.LibraryDoc.Root.init -> void
+Aw.Context.Core.Library.LibraryDoc
+Aw.Context.Core.Library.LibraryDoc.Key.init -> void
+override Aw.Context.Core.Library.LibraryDoc.ToString() -> string!
+Aw.Context.Core.Library.LibraryDoc.Slug.get -> string?
+Aw.Context.Core.Library.LibraryDoc.Status.get -> string?
+static Aw.Context.Core.Library.LibraryDoc.operator !=(Aw.Context.Core.Library.LibraryDoc? left, Aw.Context.Core.Library.LibraryDoc? right) -> bool
+Aw.Context.Core.Library.LibraryDoc.Slug.init -> void
+Aw.Context.Core.Library.LibraryDoc.Status.init -> void
+Aw.Context.Core.Library.LibraryDoc.Project.get -> string?
+Aw.Context.Core.Library.LibraryDoc.Repos.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Library.LibraryDoc.Project.init -> void
+Aw.Context.Core.Library.LibraryDoc.Kind.get -> string?
+Aw.Context.Core.Library.LibraryDoc.Repos.init -> void
+static Aw.Context.Core.Library.LibraryDoc.operator ==(Aw.Context.Core.Library.LibraryDoc? left, Aw.Context.Core.Library.LibraryDoc? right) -> bool
+Aw.Context.Core.Library.LibraryDoc.Issues.get -> System.Collections.Generic.IReadOnlyList<string!>!
+override Aw.Context.Core.Library.LibraryDoc.GetHashCode() -> int
+Aw.Context.Core.Library.LibraryDoc.ParserVersion.get -> int
+Aw.Context.Core.Library.LibraryDoc.Issues.init -> void
+Aw.Context.Core.Library.LibraryDoc.ParserVersion.init -> void
+Aw.Context.Core.Library.LibraryDoc.Errors.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignDocError!>!
+override Aw.Context.Core.Library.LibraryDoc.Equals(object? obj) -> bool
+Aw.Context.Core.Library.LibraryDoc.Errors.init -> void
+Aw.Context.Core.Library.LibraryDoc.Title.get -> string!
+Aw.Context.Core.Library.LibraryDoc.Kind.init -> void
+Aw.Context.Core.Library.LibraryDoc.Title.init -> void
+Aw.Context.Core.Library.LibraryDoc.Equals(Aw.Context.Core.Library.LibraryDoc? other) -> bool
+Aw.Context.Core.Library.LibraryDoc.Url.get -> string?
+Aw.Context.Core.Library.LibraryDoc.Audience.get -> Aw.Context.Core.Records.AudienceKey?
+Aw.Context.Core.Library.LibraryDoc.Url.init -> void
+Aw.Context.Core.Library.LibraryDoc.Audience.init -> void
+Aw.Context.Core.Library.LibraryDoc.<Clone>$() -> Aw.Context.Core.Library.LibraryDoc!
+Aw.Context.Core.Library.LibraryDoc.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out string! Root, out string! Scope, out string? Slug, out string? Kind, out string? Status, out string? Project, out System.Collections.Generic.IReadOnlyList<string!>! Repos, out System.Collections.Generic.IReadOnlyList<string!>! Issues, out int ParserVersion, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignDocError!>! Errors, out string! Title, out string? Url, out Aw.Context.Core.Records.AudienceKey? Audience) -> void
+Aw.Context.Core.Library.LibraryDocFilter
+Aw.Context.Core.Library.LibraryDocFilter.Root.get -> string?
+override Aw.Context.Core.Library.LibraryDocFilter.ToString() -> string!
+static Aw.Context.Core.Library.LibraryDocFilter.operator !=(Aw.Context.Core.Library.LibraryDocFilter? left, Aw.Context.Core.Library.LibraryDocFilter? right) -> bool
+static Aw.Context.Core.Library.LibraryDocFilter.operator ==(Aw.Context.Core.Library.LibraryDocFilter? left, Aw.Context.Core.Library.LibraryDocFilter? right) -> bool
+override Aw.Context.Core.Library.LibraryDocFilter.GetHashCode() -> int
+Aw.Context.Core.Library.LibraryDocFilter.Project.get -> string?
+Aw.Context.Core.Library.LibraryDocFilter.Root.init -> void
+Aw.Context.Core.Library.LibraryDocFilter.Project.init -> void
+override Aw.Context.Core.Library.LibraryDocFilter.Equals(object? obj) -> bool
+Aw.Context.Core.Library.LibraryDocFilter.Equals(Aw.Context.Core.Library.LibraryDocFilter? other) -> bool
+Aw.Context.Core.Library.LibraryDocFilter.<Clone>$() -> Aw.Context.Core.Library.LibraryDocFilter!
+Aw.Context.Core.Library.LibraryDocFilter.Repo.get -> string?
+Aw.Context.Core.Library.LibraryDocFilter.Repo.init -> void
+Aw.Context.Core.Library.LibraryDocFilter.Deconstruct(out string? Root, out string? Project, out string? Repo, out bool ErrorsOnly) -> void
+Aw.Context.Core.Library.LibraryDocFilter.ErrorsOnly.get -> bool
+Aw.Context.Core.Library.LibraryDocFilter.ErrorsOnly.init -> void
+Aw.Context.Core.Facade.IContextLibrary.GetDoc(Aw.Context.Core.Sources.RecordKey key, Aw.Context.Core.Audience.AudienceScope! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Library.LibraryDoc?>!>
+Aw.Context.Core.Facade.IContextLibrary.ListDocs(Aw.Context.Core.Library.LibraryDocFilter! filter, Aw.Context.Core.Audience.AudienceScope! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryDoc!>!>!>
+Aw.Context.Core.Facade.IContextLibrary.Items(Aw.Context.Core.Sources.RecordKey docKey, Aw.Context.Core.Audience.AudienceScope! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryItem!>!>!>
+Aw.Context.Core.Facade.IContextLibrary.Resolve(System.Collections.Generic.IReadOnlyList<string!>! refs, string? repo, Aw.Context.Core.Audience.AudienceScope! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryRefResolution!>!>!>
+Aw.Context.Core.Facade.IContextLibrary.Claims(Aw.Context.Core.Sources.RecordKey prKey, Aw.Context.Core.Audience.AudienceScope! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryClaim!>!>!>
+Aw.Context.Core.Facade.IContextLibrary.ClaimsOn(Aw.Context.Core.Sources.RecordKey docKey, Aw.Context.Core.Audience.AudienceScope! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryClaim!>!>!>
+Aw.Context.Core.Library.LibraryRefResolution.LibraryRefResolution(string! Ref, Aw.Context.Core.Library.LibraryRefStatus Status, Aw.Context.Core.Sources.RecordKey? Doc, Aw.Context.Core.Library.LibraryItem? Item) -> void
+Aw.Context.Core.Library.LibraryItem.LibraryItem(Aw.Context.Core.Sources.RecordKey DocKey, string! Key, Aw.Context.Core.Library.DesignItemKind Kind, string? Parent, int LineStart, int LineEnd, string! Text) -> void
+Aw.Context.Core.Library.LibraryDocFilter.LibraryDocFilter(string? Root = null, string? Project = null, string? Repo = null, bool ErrorsOnly = false) -> void
+Aw.Context.Core.Library.LibraryDoc.LibraryDoc(Aw.Context.Core.Sources.RecordKey Key, string! Root, string! Scope, string? Slug, string? Kind, string? Status, string? Project, System.Collections.Generic.IReadOnlyList<string!>! Repos, System.Collections.Generic.IReadOnlyList<string!>! Issues, int ParserVersion, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignDocError!>! Errors, string! Title, string? Url, Aw.Context.Core.Records.AudienceKey? Audience) -> void
+Aw.Context.Core.Library.LibraryClaimRow.LibraryClaimRow(Aw.Context.Core.Sources.RecordKey Pr, Aw.Context.Core.Records.AudienceKey? PrAudience, Aw.Context.Core.Records.RecordState? PrState, string! Ref) -> void
+Aw.Context.Core.Library.LibraryClaim.LibraryClaim(Aw.Context.Core.Sources.RecordKey Pr, Aw.Context.Core.Records.RecordState? PrState, Aw.Context.Core.Library.LibraryRefResolution! Resolution) -> void
+Aw.Context.Core.Library.ILibraryStore.Docs(Aw.Context.Core.Records.RecordAudience! mask, string? slug, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryDoc!>!>!>
+Aw.Context.Core.Library.ILibraryStore.Doc(Aw.Context.Core.Sources.RecordKey key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Library.LibraryDoc?>!>
+Aw.Context.Core.Library.ILibraryStore.Items(Aw.Context.Core.Sources.RecordKey doc, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryItem!>!>!>
+Aw.Context.Core.Library.ILibraryStore.ClaimsOf(Aw.Context.Core.Sources.RecordKey pr, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryClaimRow!>!>!>
+Aw.Context.Core.Library.ILibraryStore.ClaimsNaming(string! slug, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryClaimRow!>!>!>

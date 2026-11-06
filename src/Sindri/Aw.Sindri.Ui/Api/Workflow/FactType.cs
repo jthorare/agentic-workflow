@@ -32,4 +32,7 @@ internal enum FactType
 
     /// <summary>A structured payload; also what an unknown kind reads as.</summary>
     Payload = 9,
+
+    /// <summary>A list of rule findings, drawn as rows.</summary>
+    Findings = 10,
 }
