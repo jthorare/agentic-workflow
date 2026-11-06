@@ -66,6 +66,8 @@ public static class AgentLaunches
             StepArgsFor(run, descriptor, extras, policy, LaunchIdFor(run)), run.Run)
         {
             BaseCommit = extras?.BaseCommit,
+            Skill = extras?.Skill,
+            StepTimeout = extras?.StepTimeout,
         };
     }
 
