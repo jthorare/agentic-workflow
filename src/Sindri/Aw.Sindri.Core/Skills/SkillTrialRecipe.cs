@@ -116,6 +116,11 @@ public static class SkillTrialRecipe
         return text.ToString();
     }
 
+    /// <summary>The block outcome a trial ended with, from its terminal state: 'ended-needs-changes' is 'needsChanges'.</summary>
+    /// <param name="state">The instance's state.</param>
+    /// <returns>The outcome; null for 'failed' or a state that isn't an outcome's.</returns>
+    public static string? OutcomeOf(string state) => throw new NotSupportedException();
+
     /// <summary>The terminal state of an outcome: 'needsChanges' ends in 'ended-needs-changes'.</summary>
     private static string StateOf(string outcome) =>
         "ended-" + string.Concat(outcome.Select(static (c, i) => char.IsUpper(c) ? (i == 0 ? string.Empty : "-") + char.ToLowerInvariant(c) : c.ToString()));

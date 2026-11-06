@@ -22285,6 +22285,7 @@ const Aw.Sindri.Core.Skills.SkillTrialRecipe.SkillsFolderFact = "fact:skillTrial
 static Aw.Sindri.Core.Skills.SkillTrialRecipe.Build(Aw.Sindri.Core.Skills.LoadedSkillBlock! block, System.Collections.Generic.IReadOnlyCollection<string!>! provided, bool foldered = false) -> Aw.Kernel.Result<Aw.Sindri.Core.Skills.SkillTrialPlan!>!
 static Aw.Sindri.Core.Skills.SkillTrialRecipe.FactOf(string! inputKey) -> Aw.Kernel.Result<Aw.Sindri.Core.Workflow.Ids.FactKey>!
 static Aw.Sindri.Core.Skills.SkillTrialRecipe.IsTrial(Aw.Sindri.Core.Workflow.Ids.RecipeId recipe) -> bool
+static Aw.Sindri.Core.Skills.SkillTrialRecipe.OutcomeOf(string! state) -> string?
 static readonly Aw.Sindri.Core.SindriErrors.SkillPrInputInvalid -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Events.LaunchStarted.PrHead.get -> string?
 Aw.Sindri.Core.Events.LaunchStarted.PrHead.init -> void
