@@ -5,6 +5,6 @@ internal sealed class FactTypeJsonConverter() : WordEnumJsonConverter<FactType>(
     [
         (FactType.Text, "text"), (FactType.File, "file"), (FactType.Item, "item"), (FactType.Link, "link"),
         (FactType.ScopeMap, "scope-map"), (FactType.Packet, "packet"), (FactType.Evidence, "evidence"),
-        (FactType.Decision, "decision"), (FactType.Payload, "payload"),
+        (FactType.Decision, "decision"), (FactType.Payload, "payload"), (FactType.Findings, "findings"),
     ],
     FactType.Payload);
