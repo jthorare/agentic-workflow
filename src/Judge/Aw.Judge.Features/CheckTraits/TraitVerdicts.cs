@@ -22,8 +22,8 @@ internal sealed class TraitVerdicts(ITraitCheckLog log)
             // An image Jev was not sent: its answer on the file's name alone is never used. The file is skipped, on its own row.
             if (plan.Tasks[i].Images.Count > 0 && answers[i].ImageNotes is { Count: > 0 } notes)
             {
-                skipped[plan.Tasks[i].Source.Path] = CheckTraitsResponse.ImageNotSent;
-                log.Append(new JsonObject { ["event"] = "image-not-sent", ["mode"] = mode, ["path"] = plan.Tasks[i].Source.Path, ["reason"] = string.Join("; ", notes) });
+                skipped[plan.Display(plan.Tasks[i])] = CheckTraitsResponse.ImageNotSent;
+                log.Append(new JsonObject { ["event"] = "image-not-sent", ["mode"] = mode, ["repo"] = plan.Tasks[i].Root, ["path"] = plan.Tasks[i].Source.Path, ["reason"] = string.Join("; ", notes) });
                 left++;
                 continue;
             }
@@ -35,7 +35,7 @@ internal sealed class TraitVerdicts(ITraitCheckLog log)
                 continue;
             }
 
-            findings.AddRange(Assess(request.Mode, minimum, plan.Tasks[i], decided, plan.Root));
+            findings.AddRange(Assess(request.Mode, minimum, plan, plan.Tasks[i], decided));
         }
 
         return failures.Count > 0 && failures.Count == answers.Count - left
@@ -43,7 +43,7 @@ internal sealed class TraitVerdicts(ITraitCheckLog log)
             : new CheckTraitsResponse([.. findings.OrderByDescending(finding => finding.Probability)], Requests: answers.Count) { Skipped = skipped.Count == 0 ? CheckTraitsResponse.NoSkips : skipped };
     }
 
-    private IEnumerable<TraitFinding> Assess(TraitCheckMode mode, double minimum, TraitTask task, BatchDecided decided, string root)
+    private IEnumerable<TraitFinding> Assess(TraitCheckMode mode, double minimum, TraitPlan plan, TraitTask task, BatchDecided decided)
     {
         foreach (var trait in task.Batch)
         {
@@ -63,6 +63,7 @@ internal sealed class TraitVerdicts(ITraitCheckLog log)
                     ["event"] = "assessment",
                     ["mode"] = mode.ToString().ToLowerInvariant(),
                     ["trait"] = trait.Name,
+                    ["repo"] = task.Root,
                     ["path"] = task.Source.Path,
                     ["lines"] = new JsonArray(task.Source.StartLine, task.Source.EndLine),
                     ["choice"] = choice.Choice,
@@ -73,7 +74,7 @@ internal sealed class TraitVerdicts(ITraitCheckLog log)
 
             if (reported)
             {
-                yield return Finding(trait, task.Source, p, root);
+                yield return Finding(trait, plan, task, p);
             }
         }
     }
@@ -84,14 +85,15 @@ internal sealed class TraitVerdicts(ITraitCheckLog log)
             ? probability
             : string.Equals(choice.Choice, TraitQuestions.Violation, StringComparison.Ordinal) ? choice.Confidence : 0;
 
-    private static TraitFinding Finding(Trait trait, DiffSource source, double p, string root) => new(
+    // The file and the trait file are named for the agent: relative in the working directory's repo, absolute in another.
+    private static TraitFinding Finding(Trait trait, TraitPlan plan, TraitTask task, double p) => new(
         trait.Name,
         trait.Severity == TraitSeverity.Block ? "block" : "warn",
-        source.Path,
+        plan.Display(task),
         p,
         trait.Requirement.Trim(),
-        source.StartLine,
-        source.EndLine,
+        task.Source.StartLine,
+        task.Source.EndLine,
         trait.Guidance?.Trim(),
-        trait.File.StartsWith(root, StringComparison.Ordinal) ? Path.GetRelativePath(root, trait.File) : trait.File);
+        string.Equals(task.Root, plan.Home, StringComparison.Ordinal) && trait.File.StartsWith(task.Root, StringComparison.Ordinal) ? Path.GetRelativePath(task.Root, trait.File) : trait.File);
 }
