@@ -22,7 +22,7 @@ await using var linear = await FakeLinear.Start(seed => seed
 
 - Queries (answered from state): `viewer`, `issues` (filter, first, after, orderBy, includeArchived; newest first, archived
   issues hidden unless `includeArchived: true`), `issue(id:)` (by id, identifier, or an identifier the issue had before a team
-  move), `comments` (newest first; filter by `issue: { team: { key } }`), `teams`, `users`, `issueLabels` (each with its `team`, null for a workspace label), `workflowStates`, `cycles`, `projects`, empty `documents` and `projectUpdates`.
+  move), `comments` (newest first; filter by `issue: { team: { key } }`), `teams` (each with `states`, `cycles`, `members` and `labels` connections, for the lookups step), `users`, `issueLabels` (each with its `team`, null for a workspace label), `workflowStates`, `cycles`, `projects`, empty `documents` and `projectUpdates`.
   A field the fake doesn't have is a 400 that names it.
 - Mutations: `issueCreate`, `issueUpdate`, `commentCreate`, `commentUpdate`, `attachmentLinkURL`, `issueArchive`,
   `issueLabelCreate`. Each answers `{ success, lastSyncId, <entity> }`: `issue`, `comment`, `attachment`, `issueLabel`, and
@@ -82,6 +82,13 @@ something on to the fake's clock (one second per write, from 2026-01-01).
 - `attachmentLinkURL` is idempotent per issue and url.
 - There is no conditional update: `issueUpdate` applies whatever fields it is given.
 - Issues are served newest first by `orderBy`; `FakeServerOptions.LinearNewestFirst` is the replaying fake's switch for the same.
+
+## Lookups (Ph1, assumed; Ph0's probe doesn't check them)
+
+- `teams(filter: { key: { in: [...] } })` is a real filter, and a team has `states`, `cycles`, `members` and `labels` connections (`LinearRender.TeamWithLookups`; the query is `Lookups.graphql` in the adapter).
+- The fake gives every team all members, its own states, and its own labels plus the workspace ones; a cycle seeded without a team belongs to every team. Whether `team.labels` includes workspace labels, and `team.members` includes users who left (`active: false`), is unverified.
+- A cycle has `number`, `name`, `startsAt` and `endsAt`; the adapter picks the current, the next and the last three by those times. The fake seeds two-week cycles from 2026-01-01 unless given times.
+- An issue also serves `dueDate` (null) and `sortOrder` (-1000 per position); the feed asks for `state.id`, `assignee.id`, `cycle.id` and `labels.nodes.id` too.
 
 ## Not probed, unverified
 
