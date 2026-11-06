@@ -41,10 +41,13 @@ internal static class SkillManifestLoader
     {
         string text;
         string? markdown;
+        string? sha;
         try
         {
             text = File.ReadAllText(manifest);
-            markdown = File.Exists(markdownPath) ? File.ReadAllText(markdownPath) : null;
+            var bytes = File.Exists(markdownPath) ? File.ReadAllBytes(markdownPath) : null;
+            markdown = bytes is null ? null : System.Text.Encoding.UTF8.GetString(bytes);
+            sha = bytes is null ? null : Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(bytes));   // why: the bytes on disk, so the agent home's copy compares equal
         }
         catch (IOException e)
         {
@@ -54,8 +57,11 @@ internal static class SkillManifestLoader
         var problem = YamlToJson.TryConvert(text, out var json);
         return problem is not null
             ? new SkillBlocks([], [new SkippedSkillBlock(skill, manifest, "it isn't valid YAML: " + problem)])
-            : SkillManifestParser.Parse(skill, manifest, System.Text.Encoding.UTF8.GetString(json), markdown);
+            : WithSha(SkillManifestParser.Parse(skill, manifest, System.Text.Encoding.UTF8.GetString(json), markdown), sha);
     }
+
+    private static SkillBlocks WithSha(SkillBlocks parsed, string? sha) =>
+        new([.. parsed.Loaded.Select(b => b with { SkillMdSha = sha })], parsed.Skipped);
 
     // Ids and derived fact keys are unique across all manifests (spec §3.1 Checks); the later duplicate is skipped.
     private static SkillBlocks Unique(List<LoadedSkillBlock> loaded, List<SkippedSkillBlock> skipped)

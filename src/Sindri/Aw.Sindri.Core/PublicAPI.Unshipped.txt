@@ -22270,3 +22270,5 @@ Aw.Sindri.Core.Skills.SkillLaunch.TrialSkillsDirectory.init -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.SindriHome.get -> string?
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.SindriHome.init -> void
 static Aw.Sindri.Core.Launch.StepEnvironment.RunDirectoryAt(Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId workflow, string! state, Aw.Sindri.Core.Workflow.Engine.LaunchId launch, string! sindriHome) -> string!
+Aw.Sindri.Core.Skills.LoadedSkillBlock.SkillMdSha.get -> string?
+Aw.Sindri.Core.Skills.LoadedSkillBlock.SkillMdSha.init -> void
