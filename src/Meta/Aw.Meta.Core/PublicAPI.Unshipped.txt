@@ -190,7 +190,8 @@ Aw.Meta.Core.Coordination.InboxSync.InboxSync(Aw.Meta.Core.Ports.ITranscriptRead
 Aw.Meta.Core.Coordination.InboxSync.Run(string! transcript, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Ids.MessageId>!>!>
 Aw.Meta.Core.Coordination.LaneBeats
 Aw.Meta.Core.Coordination.LaneBeats.IsIdle(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
-Aw.Meta.Core.Coordination.LaneBeats.LaneBeats(Aw.Meta.Core.Ports.IKeyValueStore! values) -> void
+Aw.Meta.Core.Coordination.LaneBeats.LaneBeats(Aw.Meta.Core.Ports.IKeyValueStore! values, Aw.Meta.Core.Ports.IDelay! delay) -> void
+Aw.Meta.Core.Coordination.LaneBeats.WaitForHook(string! lane, System.DateTimeOffset since, System.TimeSpan window, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
 Aw.Meta.Core.Coordination.LaneBeats.Last(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Lanes.LaneBeat?>!>
 Aw.Meta.Core.Coordination.LaneBeats.Record(string! lane, bool stopped, System.DateTimeOffset now, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Coordination.LaneBeats.Woke(string! lane, System.DateTimeOffset now, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
@@ -2165,3 +2166,23 @@ override Aw.Meta.Core.Ports.BugfixCandidate.ToString() -> string!
 static Aw.Meta.Core.Ports.BugfixCandidate.operator !=(Aw.Meta.Core.Ports.BugfixCandidate? left, Aw.Meta.Core.Ports.BugfixCandidate? right) -> bool
 static Aw.Meta.Core.Ports.BugfixCandidate.operator ==(Aw.Meta.Core.Ports.BugfixCandidate? left, Aw.Meta.Core.Ports.BugfixCandidate? right) -> bool
 static Aw.Meta.Core.Worktrees.WorktreeScope.ForPath(string! path, bool discarded) -> Aw.Meta.Core.Worktrees.WorktreeScope!
+Aw.Meta.Core.Coordination.LaneBeats.LastCli(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.DateTimeOffset?>!>
+Aw.Meta.Core.Lanes.LaneHookTrace
+Aw.Meta.Core.Lanes.LaneHookTrace.At.get -> System.DateTimeOffset
+Aw.Meta.Core.Lanes.LaneHookTrace.At.init -> void
+Aw.Meta.Core.Lanes.LaneHookTrace.<Clone>$() -> Aw.Meta.Core.Lanes.LaneHookTrace!
+Aw.Meta.Core.Lanes.LaneHookTrace.Deconstruct(out System.DateTimeOffset At, out string! Hook, out string! Event, out string! Outcome) -> void
+Aw.Meta.Core.Lanes.LaneHookTrace.Equals(Aw.Meta.Core.Lanes.LaneHookTrace? other) -> bool
+Aw.Meta.Core.Lanes.LaneHookTrace.Event.get -> string!
+Aw.Meta.Core.Lanes.LaneHookTrace.Event.init -> void
+Aw.Meta.Core.Lanes.LaneHookTrace.Hook.get -> string!
+Aw.Meta.Core.Lanes.LaneHookTrace.Hook.init -> void
+Aw.Meta.Core.Lanes.LaneHookTrace.LaneHookTrace(System.DateTimeOffset At, string! Hook, string! Event, string! Outcome) -> void
+Aw.Meta.Core.Lanes.LaneHookTrace.Outcome.get -> string!
+Aw.Meta.Core.Lanes.LaneHookTrace.Outcome.init -> void
+Aw.Meta.Core.Ports.ILaneFiles.HookTrace(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Lanes.LaneHookTrace?>!>
+override Aw.Meta.Core.Lanes.LaneHookTrace.Equals(object? obj) -> bool
+override Aw.Meta.Core.Lanes.LaneHookTrace.GetHashCode() -> int
+override Aw.Meta.Core.Lanes.LaneHookTrace.ToString() -> string!
+static Aw.Meta.Core.Lanes.LaneHookTrace.operator !=(Aw.Meta.Core.Lanes.LaneHookTrace? left, Aw.Meta.Core.Lanes.LaneHookTrace? right) -> bool
+static Aw.Meta.Core.Lanes.LaneHookTrace.operator ==(Aw.Meta.Core.Lanes.LaneHookTrace? left, Aw.Meta.Core.Lanes.LaneHookTrace? right) -> bool

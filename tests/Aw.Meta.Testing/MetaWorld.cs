@@ -116,7 +116,7 @@ public sealed class MetaWorld
     }
 
     /// <summary>The lane hook heartbeats.</summary>
-    public LaneBeats Beats => new(Values);
+    public LaneBeats Beats => new(Values, Delay);
 
     /// <summary>The lane stop gate's loop guard.</summary>
     public LaneStopGuard LaneGuard => new(Values, Log);
@@ -126,7 +126,7 @@ public sealed class MetaWorld
     public static LaneHealthReader NoNonClaudeLanes()
     {
         var values = new InMemoryKeyValueStore();
-        return new LaneHealthReader(new InMemoryLaneFiles(), new LaneBeats(values), new InMemoryLaneMail(new InMemoryMessageStore()), new LaneStopGuard(values, new InMemoryRunningLog()));
+        return new LaneHealthReader(new InMemoryLaneFiles(), new LaneBeats(values, new InMemoryDelay(new ManualClock(A.T0))), new InMemoryLaneMail(new InMemoryMessageStore()), new LaneStopGuard(values, new InMemoryRunningLog()));
     }
 
     /// <summary>The lanes' context sizes.</summary>

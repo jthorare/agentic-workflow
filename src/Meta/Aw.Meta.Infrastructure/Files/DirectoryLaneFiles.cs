@@ -15,6 +15,9 @@ namespace Aw.Meta.Infrastructure.Files;
 /// <param name="directory">The lane-sessions directory.</param>
 internal sealed class DirectoryLaneFiles(string directory) : ILaneFiles
 {
+    public ValueTask<Result<LaneHookTrace?>> HookTrace(string lane, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success<LaneHookTrace?>(value: null));
+
     public async ValueTask<Result<LaneRecord?>> Record(string lane, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(lane);

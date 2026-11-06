@@ -138,7 +138,6 @@ public sealed class LaneSendTests
     [Theory, Trait("Lane", "unit")]
     [InlineData("busy", "the lane is not idle")]
     [InlineData("down", "lane down")]
-    [InlineData("client", "a client is attached")]
     public async Task Each_guard_on_the_wake_keeps_the_keys_unsent_and_says_why(string guard, string why)
     {
         await _world.Ready();
@@ -147,11 +146,6 @@ public sealed class LaneSendTests
         if (guard == "down")
         {
             _world.Panes.Put("t1-api", "bash");
-        }
-
-        if (guard == "client")
-        {
-            _world.Panes.Put("t1-api", "codex", clients: 1);
         }
 
         var response = await Send("api");

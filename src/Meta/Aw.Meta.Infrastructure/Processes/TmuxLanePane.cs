@@ -14,7 +14,8 @@ namespace Aw.Meta.Infrastructure.Processes;
 /// <param name="tmux">The tmux program (AW_TMUX, default tmux).</param>
 /// <param name="socket">The tmux socket name (AW_META_TMUX_SOCKET), passed as "-L"; null means the team's own socket, "-L" plus the team name, where the launcher starts every lane.</param>
 /// <param name="config">The team config, read for the team name when no socket is set.</param>
-internal sealed class TmuxLanePane(ICommandRunner runner, string tmux, string? socket, IMetaConfig config) : ILanePane
+/// <param name="delay">Waits between the wake line and its Enter.</param>
+internal sealed class TmuxLanePane(ICommandRunner runner, string tmux, string? socket, IMetaConfig config, IDelay delay) : ILanePane
 {
     private static readonly TimeSpan _timeout = TimeSpan.FromSeconds(5);
 
@@ -95,6 +96,7 @@ internal sealed class TmuxLanePane(ICommandRunner runner, string tmux, string? s
             return name.Error;
         }
 
+        _ = delay;
         var target = Target(session);
         var typed = await Run(name.Value, ["send-keys", "-t", target, "-l", line], cancellationToken).ConfigureAwait(false);
         var entered = typed.IsError || typed.Value.ExitCode != 0 ? typed : await Run(name.Value, ["send-keys", "-t", target, "Enter"], cancellationToken).ConfigureAwait(false);
