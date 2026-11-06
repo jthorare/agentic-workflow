@@ -11,12 +11,12 @@ public sealed class PrReviewDefaultsTests
     [Fact, Trait("Lane", "unit")]
     public void Default_has_the_documented_panel_order_no_risky_and_no_checks()
     {
-        var resolved = PrReviewDefaults.Resolve(null, "default")!;
+        var resolved = PrReviewDefaults.Resolve(review: null, "default")!;
 
         Assert.Equal(["requiredChecks", "docMap", "testPlan", "ci", "evidence", "risk", "conversation"], resolved.Panels);
         Assert.Empty(resolved.Risky);
         Assert.Empty(resolved.Checks);
-        Assert.Contains("**/packages.lock.json", resolved.Collapse);
+        Assert.Contains("**/packages.lock.json", resolved.Collapse, StringComparer.Ordinal);
         Assert.All(PrReviewDefaults.Keys, k => Assert.Equal("default", resolved.Sources[k]));
     }
 
@@ -76,7 +76,7 @@ public sealed class PrReviewDefaultsTests
 
         Assert.True(pick.Ambiguous);
         Assert.Null(pick.Settings);
-        Assert.Equal(["prj_1", "prj_2"], pick.Choices.Select(static c => c.Project));
+        Assert.True(pick.Choices.Select(static c => c.Project).SequenceEqual(["prj_1", "prj_2"], StringComparer.Ordinal));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -86,6 +86,6 @@ public sealed class PrReviewDefaultsTests
 
         Assert.Equal("default", pick.Settings!.Name);
         Assert.Empty(pick.Choices);
-        Assert.Equal("default", PrReviewDefaults.For(null, "o/a").Settings!.Name);
+        Assert.Equal("default", PrReviewDefaults.For(review: null, "o/a").Settings!.Name);
     }
 }

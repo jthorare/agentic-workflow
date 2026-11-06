@@ -8,6 +8,8 @@ public sealed class PrReviewRulesTests
 {
     private static readonly SindriProfile _valid = new(1, "thor");
 
+    private static readonly string[] _codes = ["SND-REVIEW-001", "SND-REVIEW-002", "SND-REVIEW-003", "SND-REVIEW-005", "SND-REVIEW-503"];
+
     private static SindriProfile With(PrReviewSettings review) => _valid with { Review = review };
 
     private static PrReviewSettings Entry(PrReviewSettingsEntry entry) => new(Settings: new Dictionary<string, PrReviewSettingsEntry>(StringComparer.Ordinal) { ["sindri"] = entry });
@@ -91,7 +93,7 @@ public sealed class PrReviewRulesTests
     [Fact, Trait("Lane", "unit")]
     public void The_credential_variable_is_the_env_name_the_default_or_none_for_a_command()
     {
-        Assert.Equal("AW_REVIEW_GITHUB_TOKEN", PrReviewRules.CredentialVariable(null));
+        Assert.Equal("AW_REVIEW_GITHUB_TOKEN", PrReviewRules.CredentialVariable(review: null));
         Assert.Equal("AW_REVIEW_GITHUB_TOKEN", PrReviewRules.CredentialVariable(new PrReviewSettings()));
         Assert.Equal("MY_TOKEN", PrReviewRules.CredentialVariable(new PrReviewSettings(Credential: "env:MY_TOKEN")));
         Assert.Null(PrReviewRules.CredentialVariable(new PrReviewSettings(Credential: "command:gh auth token")));
@@ -232,6 +234,6 @@ public sealed class PrReviewRulesTests
     {
         var codes = SindriErrors.All.Select(static e => e.Code).ToList();
 
-        Assert.All(new[] { "SND-REVIEW-001", "SND-REVIEW-002", "SND-REVIEW-003", "SND-REVIEW-005", "SND-REVIEW-503" }, c => Assert.Contains(c, codes));
+        Assert.All(_codes, c => Assert.Contains(c, codes, StringComparer.Ordinal));
     }
 }
