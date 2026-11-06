@@ -1,4 +1,6 @@
 using Aw.Meta.Core.Commands;
+using Aw.Meta.Core.Ids;
+using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Usage;
 using Aw.Meta.Features.Watch;
@@ -35,6 +37,20 @@ public sealed class WatchUntilMailTests
                     _world.Receive("m1", "t1-api", "can you look at this").GetAwaiter().GetResult();
                 }
 
+                return new CommandResult(0, "[]", string.Empty, TimedOut: false);
+            })
+            .When("git ls-remote origin main", _ => new CommandResult(0, "aaaaaaa1111111\trefs/heads/main\n", string.Empty, TimedOut: false));
+    }
+
+    // The message arrives with poll `mailAtPoll` and is dismissed at once, so the inbox never holds an open one.
+    private void ScriptResolved()
+    {
+        _ = _world.Runner
+            .When("gh pr list", _ =>
+            {
+                _world.Receive("m1", "t1-api", "fyi only").GetAwaiter().GetResult();
+                var resolved = _world.Messages.Resolve(MessageId.From("m1"), new MessageResolution(MessageResolutionKind.Dismissed, "fyi"), CancellationToken.None).AsTask().GetAwaiter().GetResult();
+                Assert.True(resolved.IsSuccess);
                 return new CommandResult(0, "[]", string.Empty, TimedOut: false);
             })
             .When("git ls-remote origin main", _ => new CommandResult(0, "aaaaaaa1111111\trefs/heads/main\n", string.Empty, TimedOut: false));
@@ -92,5 +108,16 @@ public sealed class WatchUntilMailTests
 
         Assert.False(response.EndedOnMail);
         Assert.True(response.Polls > 1);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Mail_that_is_already_resolved_never_ends_the_watch()
+    {
+        ScriptResolved();
+
+        var response = await Watch(untilMail: true);
+
+        Assert.False(response.EndedOnMail);
+        Assert.DoesNotContain(_lines, l => l.StartsWith("INBOX", StringComparison.Ordinal) && l.Contains("open", StringComparison.Ordinal));
     }
 }
