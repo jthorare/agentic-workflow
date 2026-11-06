@@ -7,4 +7,5 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="SkillMdSha">The SHA-256 of the SKILL.md; null when unknown.</param>
 /// <param name="Push">True when the block asked to push (a trial never pushes).</param>
 /// <param name="Trial">True for 'sindri skill run'.</param>
-public sealed record LaunchSkill(string Name, int Version, string? Manifest, string? SkillMdSha, bool Push, bool Trial);
+/// <param name="ResultFile">The per-launch result file the skill writes (run dir, .sindri-out, result-LAUNCH.json); 'skill run --follow' prints it.</param>
+public sealed record LaunchSkill(string Name, int Version, string? Manifest, string? SkillMdSha, bool Push, bool Trial, string? ResultFile = null);

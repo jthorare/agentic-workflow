@@ -35,7 +35,7 @@ internal sealed class AgentLaunchRecorder(ILedgerStore ledger, HeldLease lease, 
         var chosen = started.ChosenSession is { } id && SessionId.TryFrom(id, out var session) ? session : (SessionId?)null;
         var viewer = LaunchViewer.Background(started.Viewer);
         var payload = new LaunchStarted(request.Launch, request.Item, request.Mode, request.Agent, chosen, "sindri " + request.Item.Value, viewer, started.Attach, started.CatalogSource, started.ArgvHash,
-            request.Instance, request.Step?.Ref.State, request.Run?.Number, Sandbox: started.Sandbox, Model: request.Step?.Model, Skill: SkillOf(request));
+            request.Instance, request.Step?.Ref.State, request.Run?.Number, Sandbox: started.Sandbox, Model: request.Step?.Model, Skill: SkillOf(request, started));
         var appended = await Append(events.Entry(EventTypes.LaunchStarted, payload, Key(request.Launch), request.Item.Value), cancellationToken).ConfigureAwait(false);
         if (!appended.AlreadyRecorded)
         {
@@ -44,7 +44,7 @@ internal sealed class AgentLaunchRecorder(ILedgerStore ledger, HeldLease lease, 
     }
 
     // A trial is always scrubbed, so it never pushes whatever the block asked for (skill flows spec §7).
-    private static LaunchSkill? SkillOf(LaunchRequest request)
+    private static LaunchSkill? SkillOf(LaunchRequest request, StartedLaunch started)
     {
         if (request.Skill is not { } skill)
         {
@@ -52,7 +52,7 @@ internal sealed class AgentLaunchRecorder(ILedgerStore ledger, HeldLease lease, 
         }
 
         var trial = skill.Trial || skill.TrialSkillsDirectory is not null;
-        return new LaunchSkill(skill.Skill, skill.DescriptorVersion, skill.ManifestPath, skill.SkillMdSha, Push: skill.Block.Pushes && !trial, trial);
+        return new LaunchSkill(skill.Skill, skill.DescriptorVersion, skill.ManifestPath, skill.SkillMdSha, Push: skill.Block.Pushes && !trial, trial, started.RunDirectory is { } run ? SkillLaunchEnv.ResultFileOf(run, request.Launch) : null);
     }
 
     /// <summary>Records the launch as failed.</summary>

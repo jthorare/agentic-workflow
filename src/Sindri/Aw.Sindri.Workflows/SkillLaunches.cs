@@ -10,8 +10,10 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <summary>Makes the <see cref="SkillLaunch"/> of a Step that runs a skill block (skill flows spec §3.3): the loaded block, its inputs from the Step's 'with:' values, and whose invocation form the seed takes.</summary>
 internal static class SkillLaunches
 {
-    /// <summary>The instance fact a trial run ('sindri skill run') stores: <c lang="text">{ "skills": "&lt;dir&gt;" }</c> when it was given '--skills', else <c lang="text">{}</c>. It makes the launch a trial that reads the skill from that folder.</summary>
-    internal static readonly FactKey TrialFact = FactKey.From("fact:skillTrial");
+    /// <summary>The instance fact a trial run ('sindri skill run') stores: the folder given to '--skills'. A trial is a run of a \'workflow.skill-trial-*\' recipe; with the fact set it reads the skill from that folder by path.</summary>
+    internal static readonly FactKey TrialFact = FactKey.From("fact:skillTrialFolder");   // why: fc's SkillTrialRecipe.SkillsFolderFact; swap for the constant once both branches merge
+
+    private const string TrialRecipePrefix = "workflow.skill-trial-";   // fc's SkillTrialRecipe id prefix; swap for SkillTrialRecipe.IsTrial after the merge
 
     /// <summary>The launch of the Step's skill block.</summary>
     /// <param name="run">The run the launch is for; one with no 'with:' values runs no skill block.</param>
@@ -91,25 +93,13 @@ internal static class SkillLaunches
 
     private static async ValueTask<(bool Trial, string? Folder)> TrialDirectory(AgentLaunchRun run, AgentLaunchInputs inputs, CancellationToken cancellationToken)
     {
-        if (run.Facts is null || !run.Facts.TryGetValue(TrialFact, out var stored))
+        var trial = run.Recipe is { } recipe && recipe.Value.StartsWith(TrialRecipePrefix, StringComparison.Ordinal);
+        if (!trial || run.Facts is null || !run.Facts.TryGetValue(TrialFact, out var stored))
         {
-            return (false, null);
+            return (trial, null);
         }
 
         var read = await inputs.Contents.Read(stored, cancellationToken).ConfigureAwait(false);
-        if (read.IsError)
-        {
-            return (true, null);
-        }
-
-        try
-        {
-            using var document = JsonDocument.Parse(read.Value);
-            return (true, document.RootElement.ValueKind == JsonValueKind.Object && document.RootElement.TryGetProperty("skills", out var skills) && skills.ValueKind == JsonValueKind.String ? skills.GetString() : null);
-        }
-        catch (JsonException)
-        {
-            return (true, null);
-        }
+        return read.IsError || Unwrapped(System.Text.Encoding.UTF8.GetString(read.Value.Span)) is not { Length: > 0 } folder ? (trial, null) : (trial, folder);
     }
 }

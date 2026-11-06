@@ -22290,9 +22290,9 @@ Aw.Sindri.Core.Skills.SkillLaunch.Trial.get -> bool
 Aw.Sindri.Core.Skills.SkillLaunch.Trial.init -> void
 Aw.Sindri.Core.Events.LaunchSkill
 Aw.Sindri.Core.Events.LaunchSkill.<Clone>$() -> Aw.Sindri.Core.Events.LaunchSkill!
-Aw.Sindri.Core.Events.LaunchSkill.Deconstruct(out string! Name, out int Version, out string? Manifest, out string? SkillMdSha, out bool Push, out bool Trial) -> void
+Aw.Sindri.Core.Events.LaunchSkill.Deconstruct(out string! Name, out int Version, out string? Manifest, out string? SkillMdSha, out bool Push, out bool Trial, out string? ResultFile) -> void
 Aw.Sindri.Core.Events.LaunchSkill.Equals(Aw.Sindri.Core.Events.LaunchSkill? other) -> bool
-Aw.Sindri.Core.Events.LaunchSkill.LaunchSkill(string! Name, int Version, string? Manifest, string? SkillMdSha, bool Push, bool Trial) -> void
+Aw.Sindri.Core.Events.LaunchSkill.LaunchSkill(string! Name, int Version, string? Manifest, string? SkillMdSha, bool Push, bool Trial, string? ResultFile = null) -> void
 Aw.Sindri.Core.Events.LaunchSkill.Manifest.get -> string?
 Aw.Sindri.Core.Events.LaunchSkill.Manifest.init -> void
 Aw.Sindri.Core.Events.LaunchSkill.Name.get -> string!
@@ -22443,3 +22443,5 @@ override Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock.ToString() -> string!
 static Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock.operator !=(Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock? left, Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock? right) -> bool
 static Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock.operator ==(Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock? left, Aw.Sindri.Core.Workflow.Blocks.UnloadedBlock? right) -> bool
 Aw.Sindri.Core.Workflow.Blocks.BlockCatalog.WhyUnloaded(Aw.Sindri.Core.Workflow.Ids.BlockId id) -> string?
+Aw.Sindri.Core.Events.LaunchSkill.ResultFile.get -> string?
+Aw.Sindri.Core.Events.LaunchSkill.ResultFile.init -> void
