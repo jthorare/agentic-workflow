@@ -153,8 +153,8 @@ public sealed class DesignDocScopeTests
     [Fact, Trait("Lane", "unit")]
     public void A_doc_with_a_bad_status_keeps_its_id_so_a_parent_naming_it_and_refs_to_it_resolve()
     {
-        var a = Doc("/aw/a.md", Aw, "tasks", "harbor-parent", "## Goals\n", "status: nope\n");
-        var b = Doc("/aw/b.md", Aw, "tasks", "harbor-child", "## TASK-1 Form\n- reqs: harbor-parent#Goals\n", "parent: harbor-parent\n");
+        var a = Doc("/aw/a.md", Aw, "tasks", "harbor-parent", "## TASK-5 Thing\n", "status: nope\n");
+        var b = Doc("/aw/b.md", Aw, "tasks", "harbor-child", "## TASK-1 Form\n- reqs: harbor-parent#TASK-5\n", "parent: harbor-parent\n");
 
         var findings = DesignDocScope.Check([a, b]);
 
