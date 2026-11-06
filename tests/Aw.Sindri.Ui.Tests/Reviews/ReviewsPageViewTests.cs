@@ -64,17 +64,17 @@ public sealed class ReviewsPageViewTests : FrameHost
     {
         Server.LibraryAnswer = RouteAnswer.Api("library", "with-errors");
         var (window, shell) = await OnReviews();
-        Assert.False(Visible(window, "ReviewsLibrarySheet"));
+        Assert.False(Visible(window, "ReviewsLibrarySummary"));
 
         Named<Button>(window, "ReviewsLibrary").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        await Until(window, () => shell.Reviews.Library.IsOpen && !shell.Reviews.Library.IsLoading && Visible(window, "ReviewsLibrarySheet"), "the library sheet never showed");
+        await Until(window, () => shell.IsLibrarySheet && shell.IsSheetOpen && !shell.Reviews.Library.IsLoading && Visible(window, "ReviewsLibrarySummary"), "the library sheet never showed");
 
         var titles = window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name == "ReviewsLibrarySectionTitle" && t.IsEffectivelyVisible).Select(t => t.Text);
         Assert.Equal(["Docs with errors"], titles, StringComparer.Ordinal);
         Assert.Equal("41 docs, 3 with errors", Named<TextBlock>(window, "ReviewsLibrarySummary").Text);
 
-        Named<Button>(window, "ReviewsLibraryClose").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        await Until(window, () => !Visible(window, "ReviewsLibrarySheet"), "the library sheet never closed");
+        shell.CloseSheet();
+        await Until(window, () => !Visible(window, "ReviewsLibrarySummary") && !shell.Reviews.Library.IsOpen, "the library sheet never closed");
     });
 
     [Fact]

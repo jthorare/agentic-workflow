@@ -127,8 +127,14 @@ internal sealed partial class ReviewsPageViewModel : ObservableObject, IDisposab
     /// <summary>The header's library button: opens the errors sheet and reads the library.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>When the sheet shows the answer.</returns>
-    internal Task OpenLibrary(CancellationToken cancellationToken) =>
-        _url is { } url ? Library.Open(url, cancellationToken) : Task.CompletedTask;
+    internal Task OpenLibrary(CancellationToken cancellationToken)
+    {
+        LibraryRequested?.Invoke(this, EventArgs.Empty);
+        return _url is { } url ? Library.Open(url, cancellationToken) : Task.CompletedTask;
+    }
+
+    /// <summary>The header's library button was pressed: the shell opens its sheet.</summary>
+    internal event EventHandler? LibraryRequested;
 
     /// <summary>True while the page is the one shown.</summary>
     internal bool IsActive { get; private set; }

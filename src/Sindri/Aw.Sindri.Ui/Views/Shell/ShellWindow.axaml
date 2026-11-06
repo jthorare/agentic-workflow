@@ -407,6 +407,9 @@
                     </controls:Deferred.Template>
                   </controls:Deferred>
                 </ScrollViewer>
+                <ScrollViewer x:Name="LibrarySheetScroll" IsVisible="{Binding IsLibrarySheet}">
+                  <rwv:LibrarySheetView x:Name="LibrarySheetContent" DataContext="{Binding Reviews.Library}" />
+                </ScrollViewer>
                 <ScrollViewer x:Name="PinSheetScroll" IsVisible="{Binding IsPinSheet}">
                   <ContentControl x:Name="PinSheetSlot" Content="{Binding PinSheetContent}">
                     <ContentControl.DataTemplates>

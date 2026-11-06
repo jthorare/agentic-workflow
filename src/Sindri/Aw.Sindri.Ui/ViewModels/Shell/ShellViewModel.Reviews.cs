@@ -16,6 +16,11 @@ internal sealed partial class ShellViewModel
     /// <summary>Home's line under the Needs-you rows ("2 PRs waiting on you"); null when none wait. It opens Reviews.</summary>
     public string? ReviewsWaitingLine { get; private set; }
 
+    /// <summary>True when the sheet is the library errors sheet.</summary>
+    public bool IsLibrarySheet => SheetLink?.Kind == DeepLinkKind.LibrarySheet;
+
+    private void OnLibrarySheetOpened() => Changed(nameof(IsLibrarySheet), nameof(SheetTitleIsMono));
+
     /// <summary>Opens Reviews from Home's waiting line.</summary>
     internal void OpenReviews() => GoTo(PageId.Reviews);
 
@@ -23,6 +28,7 @@ internal sealed partial class ShellViewModel
     private void InitReviews()
     {
         Reviews = new ReviewsPageViewModel(_api, _clock);
+        Reviews.LibraryRequested += (_, _) => OpenSheet(DeepLink.LibrarySheet);
         Health.Follow(Reviews.Refresh);   // every read, whichever page is shown: the badge and Home's line need the count
         PropertyChanged += (_, e) =>
         {

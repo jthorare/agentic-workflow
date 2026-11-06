@@ -12,7 +12,6 @@
     <Style Selector="TextBlock.warns"><Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" /></Style>
     <Style Selector="Border.review-row:focus-within, Border.review-row:focus"><Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" /></Style>
   </UserControl.Styles>
-  <Panel>
   <StackPanel x:Name="ReviewsRoot" Spacing="{StaticResource Size.PanelGap}">
     <Grid ColumnDefinitions="*,Auto">
       <StackPanel>
@@ -134,52 +133,4 @@
     <TextBlock x:Name="ReviewsHint" Classes="caption subtle" Text="{Binding HintText}" IsVisible="{Binding !IsLoading}" />
   </StackPanel>
 
-  <!-- The library errors sheet (review page spec §6.1): docked at the right of the page, over the list; Esc or Close closes it. -->
-  <Border x:Name="ReviewsLibrarySheet" Classes="panel" HorizontalAlignment="Right" VerticalAlignment="Top" Width="420" MaxHeight="640"
-          DataContext="{Binding Library}" x:DataType="rvm:LibrarySheetViewModel" IsVisible="{Binding IsOpen}"
-          AutomationProperties.Name="{Binding Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
-    <ScrollViewer>
-      <StackPanel Margin="16" Spacing="{StaticResource Space.SM}">
-        <Grid ColumnDefinitions="*,Auto">
-          <StackPanel>
-            <TextBlock x:Name="ReviewsLibraryTitle" Classes="body-strong" Focusable="True" Text="{Binding Title}" AutomationProperties.Name="{Binding Title}" />
-            <TextBlock x:Name="ReviewsLibrarySummary" Classes="caption subtle" Text="{Binding Summary}" />
-          </StackPanel>
-          <Button x:Name="ReviewsLibraryClose" Grid.Column="1" Content="{Binding CloseText}" Click="OnCloseLibrary" AutomationProperties.Name="{Binding CloseText}" />
-        </Grid>
-        <TextBlock Classes="caption subtle" Text="{Binding ReadingText}" IsVisible="{Binding IsLoading}" />
-        <TextBlock x:Name="ReviewsLibraryError" Classes="caption" Text="{Binding Error}" TextWrapping="Wrap" IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-        <TextBlock x:Name="ReviewsLibraryClean" Classes="body muted" Text="{Binding CleanText}" IsVisible="{Binding IsClean}" />
-        <ItemsControl x:Name="ReviewsLibrarySections" ItemsSource="{Binding Sections}">
-          <ItemsControl.ItemTemplate>
-            <DataTemplate x:DataType="rvm:LibrarySectionViewModel">
-              <StackPanel Spacing="{StaticResource Space.XS}" Margin="0,8,0,0">
-                <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
-                  <TextBlock x:Name="ReviewsLibrarySectionTitle" Classes="eyebrow subtle" Text="{Binding Title}" />
-                  <TextBlock Classes="eyebrow" Foreground="{DynamicResource Brush.InkSubtle}" Text="{Binding Count}" />
-                </StackPanel>
-                <ItemsControl ItemsSource="{Binding Items}">
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="rvm:LibraryItemViewModel">
-                      <StackPanel Margin="0,4">
-                        <TextBlock Classes="body-strong mono" Text="{Binding Name}" TextWrapping="Wrap" />
-                        <TextBlock Classes="caption mono subtle" Text="{Binding Path}" TextWrapping="Wrap" IsVisible="{Binding Path, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                        <ItemsControl ItemsSource="{Binding Lines}">
-                          <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="x:String"><TextBlock Classes="caption" Text="{Binding}" TextWrapping="Wrap" /></DataTemplate>
-                          </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                      </StackPanel>
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
-              </StackPanel>
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-        <TextBlock x:Name="ReviewsLibraryCapped" Classes="caption subtle" Text="{Binding CappedText}" TextWrapping="Wrap" IsVisible="{Binding CappedText, Converter={x:Static ObjectConverters.IsNotNull}}" />
-      </StackPanel>
-    </ScrollViewer>
-  </Border>
-  </Panel>
 </UserControl>
