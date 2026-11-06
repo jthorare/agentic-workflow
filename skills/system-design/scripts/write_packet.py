@@ -2,7 +2,7 @@
 Usage: write_packet.py <packet-dir> --slug <slug> --title "<title>" [--repo owner/name]
 Layout (see SKILL.md): tdd.html, product-design.html (or <persona>.html), tdd-share.html + deck.html + share/story.json (build_share.py),
 diagrams/<key>.mmd + <key>.svg, status.md, prs/pr-NN.md.
-Also writes doc.md next to packet.json: the design-doc convention (docs/conventions/design-docs.md), generated from packet.json (front matter generated + source-sha256),
+Also writes doc.md next to packet.json: the design-doc convention (docs/conventions/design-docs.md), id <slug>-tdd, generated from packet.json (front matter generated + source-sha256),
 with sections, a Ph<n> per PR card, a REQ-<n> per EARS criterion in tdd.html (an li/p/td/th that starts with When/While/Where/If/The and holds "shall") and a TP-<n> per list item or table row under a card's ## Tests / ## Test plan.
 Sections come from the TDD's <section id="..."> blocks, in document order, each with its heading and the diagram keys it embeds."""
 import hashlib, json, os, re, sys
@@ -44,9 +44,25 @@ for m in re.finditer(r'<section\b[^>]*\bid="([^"]+)"[^>]*>(.*?)</section>', tdd,
     keys = [k for k in re.findall(r'diagrams/([\w.-]+?)\.svg', m.group(2)) if k in diagrams]
     sections.append({"id": m.group(1), "title": title, "anchor": "#" + m.group(1), "diagrams": list(dict.fromkeys(keys))})
 
+def doc_id(slug, suffix="-tdd"):  # the TDD's id is <slug>-tdd, so it never collides with officeHours' <slug> plan
+    s = re.sub(r"-+", "-", re.sub(r"[^a-z0-9-]", "-", slug.lower())).strip("-")
+    room = 64 - len(suffix)
+    if len(s) > room:
+        cut = s[:room + 1].rfind("-")
+        s = (s[:cut] if cut >= 3 else s[:room]).strip("-")
+    return s + suffix if len(s) >= 3 else s
+
+slug = arg("--slug", os.path.basename(root))
+slug_id = doc_id(slug)
+if len(slug_id) < 3:
+    sys.exit(f"slug {slug!r} gives the doc id {slug_id!r}, under 3 characters; pass a longer --slug")
+repo = arg("--repo")
+if repo is not None and not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo):
+    sys.exit(f"--repo {repo!r}: expected owner/name")
+
 prs = sorted((f for f in os.listdir(os.path.join(root, "prs"))), key=lambda f: [int(t) if t.isdigit() else t for t in re.split(r"(\d+)", f)]) if os.path.isdir(os.path.join(root, "prs")) else []
 manifest = {
-    "slug": arg("--slug", os.path.basename(root)),
+    "slug": slug,
     "title": arg("--title", os.path.basename(root)),
     "personas": personas,
     "status": "status.md" if exists("status.md") else None,
@@ -63,15 +79,15 @@ print(f"packet.json: {len(personas)} pages, {len(diagrams)} diagrams, {len(secti
 
 
 # ---- doc.md: the design-doc convention, generated from packet.json (docs/conventions/design-docs.md) ----
-def doc_id(slug):
-    s = re.sub(r"-+", "-", re.sub(r"[^a-z0-9-]", "-", slug.lower())).strip("-")
-    if len(s) > 64:
-        cut = s[:65].rfind("-")
-        s = (s[:cut] if cut >= 3 else s[:64]).strip("-")
-    return s
-
 def one_line(t):
     return re.sub(r"\s+", " ", t).strip()
+
+def unescape(t):
+    return t.replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", '"').replace("&#39;", "'").replace("&amp;", "&")
+
+def heading(t):  # a section titled "Ph2 ..." or "REQ-3 ..." would define that item a second time (SND-LIB-013)
+    t = one_line(unescape(t))
+    return "Section " + t if re.match(r"(Ph\d|REQ-|AC-|TP-|TASK-)", t) else t
 
 def cell(t):
     return one_line(t).replace("|", "\\|")
@@ -108,7 +124,8 @@ def card(path):
             if not intable:  # the header row of a pipe table is not a test row
                 intable = True
             elif not re.match(r"\|[\s:|-]+\|?\s*$", ln):
-                rows.append(" - ".join(c.strip() for c in ln.strip().strip("|").split("|") if c.strip()))
+                cells = re.split(r"(?<!\\)\|", ln.strip().strip("|"))  # a \| inside a cell is text, not a cell break
+                rows.append(" - ".join(c.strip().replace("\\|", "|") for c in cells if c.strip()))
             continue
         intable = False
     return one_line(title), [one_line(r) for r in rows if one_line(r)]
@@ -116,16 +133,10 @@ def card(path):
 ears = []
 for m in re.finditer(r"<(li|p|td|th)\b[^>]*>(.*?)</\1>", tdd, re.S):
     t = one_line(re.sub(r"<[^>]+>", "", m.group(2)))
-    t = t.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", '"').replace("&#39;", "'")
+    t = unescape(t)
     if re.match(r"(When|While|Where|If|The)\b", t) and re.search(r"\bshall\b", t) and t not in ears:
         ears.append(t)
 
-slug_id = doc_id(manifest["slug"])
-if len(slug_id) < 3:
-    sys.exit(f"slug {manifest['slug']!r} gives the doc id {slug_id!r}, under 3 characters; pass a longer --slug")
-repo = arg("--repo")
-if repo is not None and not re.fullmatch(r"[\w.-]+/[\w.-]+", repo):
-    sys.exit(f"--repo {repo!r}: expected owner/name")
 sha = hashlib.sha256(open(os.path.join(root, "packet.json"), "rb").read()).hexdigest()
 out = ["---", "aw-doc: 1", f"id: {slug_id}", "kind: tdd", f"title: {json.dumps(manifest['title'])}", "status: draft",
        "generated: write_packet.py", f"source-sha256: {sha}"]
@@ -134,7 +145,7 @@ if repo:
 out += ["---", "", f"# {one_line(manifest['title'])}", "",
         "Generated from packet.json by write_packet.py; edit the packet, not this file.", ""]
 for sec in sections:
-    out += [f"## {one_line(sec['title'])}", "", f"See [tdd.html#{sec['id']}](tdd.html#{sec['id']}).", ""]
+    out += [f"## {heading(sec['title'])}", "", f"See [tdd.html#{sec['id']}](tdd.html#{sec['id']}).", ""]
 cards = []
 for f in manifest["prs"]:
     n = int(re.search(r"pr-(\d+)\.md", f).group(1))

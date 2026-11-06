@@ -7,7 +7,7 @@ Referenced via: SHARED_DIR pattern (CD2).
 ## Summary
 <what changed + why>
 
-Covers: <doc id>#<item>, <doc id>#<item>
+Covers: <the doc items this PR builds, comma-separated (harbor-booking-tdd#Ph2, harbor-booking-tdd#REQ-E3), or the literal `none (<reason>)`>
 
 ## Key decisions
 | decision | why |

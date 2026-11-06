@@ -559,13 +559,13 @@ TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 mkdir -p "$AW_DIR/plans/${TIMESTAMP}-{slug}"
 ```
 
-**Front matter.** Every file officeHours writes starts with the design-doc front matter (`_shared/design-doc-front-matter.md`), as the templates show: `plan.md` is kind `plan` with id `{doc-id}`; `product.md`, `engineering.md`, `design-brief.md` and `TASKS.md` are kinds `product`, `engineering`, `design` and `tasks`, with ids `{doc-id}-product`, `-engineering`, `-design`, `-tasks` and `parent: {doc-id}`. `{doc-id}` is the folder's `{slug}` (lowercase, `[a-z0-9-]`, cut so `{doc-id}-engineering` fits in 64 characters). `{owner/name}` is the repo the skill runs in; leave the `repos` line out when it can't be read.
+**Front matter.** Every file officeHours writes starts with the design-doc front matter (`_shared/design-doc-front-matter.md`), as the templates show: `plan.md` is kind `plan` with id `{doc-id}`; `product.md`, `engineering.md`, `design-brief.md` and `TASKS.md` are kinds `product`, `engineering`, `design` and `tasks`, with ids `{doc-id}-product`, `-engineering`, `-design`, `-tasks` and `parent: {doc-id}`. `{doc-id}` is the folder's `{slug}` (lowercase, `[a-z0-9-]`). Keep `{slug}` to 49 characters, cut on a `-` boundary, so a rerun's `{slug}-<n>-engineering` still fits in 64. `{owner/name}` is the repo the skill runs in; leave the `repos` line out when it can't be read.
 
-**A rerun on the same slug.** When `$AW_DIR/plans/*-{slug}/plan.md` already exists, never write into that folder. The new folder's `{doc-id}` is `{slug}-<n>`, where `<n>` is one more than the highest suffix among the existing plans' ids (`{slug}` alone counts as 1, so the first rerun is `{slug}-2`). Each new doc gets `supersedes:` naming its counterpart in the newest earlier run (`plan.md` → that run's `{doc-id}`, `product.md` → its `{doc-id}-product`, and so on), so the old docs read as superseded:
+**A rerun on the same slug.** When a plan folder for exactly this `{slug}` (`<YYYYMMDD>-<HHMMSS>-{slug}`, not one that merely ends in it: `booking` is not `harbor-booking`) already exists, never write into it. The new folder's `{doc-id}` is `{slug}-<n>`, where `<n>` is one more than the highest suffix among the existing plans' `id:` lines (`{slug}` alone counts as 1, so the first rerun is `{slug}-2`). Folders whose `plan.md` has no `id:` line were written before the convention: skip them, and when none has one this is a first run (`{doc-id}` is `{slug}`, no `supersedes`). Each new doc gets `supersedes:` naming its counterpart in the newest earlier run (`plan.md` → that run's `{doc-id}`, `product.md` → its `{doc-id}-product`, and so on), so the old docs read as superseded:
 
 ```bash
-PREV=$(ls -1dt "$AW_DIR/plans/"*-"{slug}"/plan.md 2>/dev/null | head -1)
-# PREV set: read its `id:` line; the new {doc-id} is {slug}-<highest suffix + 1>, and each doc's supersedes names PREV's ids
+PREVS=$(ls -1dt "$AW_DIR/plans/"*/plan.md 2>/dev/null | grep -E "/plans/[0-9]{8}-[0-9]{6}-{slug}/plan\.md$" | xargs -r grep -l '^id: ')
+# newest first; read each one's `id:` line: the new {doc-id} is {slug}-<highest suffix + 1>, and each doc's supersedes names the first (newest) one's ids
 ```
 
 Write the four files to `$AW_DIR/plans/{timestamp}-{slug}/`: `product.md`, `engineering.md`, `design-brief.md`, `TASKS.md`. These filenames are the canonical manifest in `_shared/plan-layout.md` — downstream lenses resolve them via its reader matrix, so never rename them.

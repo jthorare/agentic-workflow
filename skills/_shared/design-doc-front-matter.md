@@ -20,7 +20,7 @@ repos: [acme/harbor-web]
 - `aw-doc: 1`: unquoted, exactly this.
 - `id`: lowercase letters, digits and `-`. Make it from the slug, never the title: lowercase, anything else becomes `-`, repeated `-` squeezed, cut on a `-` boundary so the id plus any suffix the skill adds (`-product`, `-stages`, `-2`) stays within 64 characters. At least 3 characters.
 - `kind`: the skill says which (`plan`, `product`, `engineering`, `design`, `tasks`, `tdd`, `stages`, `verification`).
-- `title`: always in double quotes, with any `"` inside escaped as `\"`.
+- `title`: always in double quotes, with any `\` inside written as `\\` and any `"` as `\"`.
 - `status: draft`.
 - `repos`: the repo the skill runs in, from `gh repo view --json nameWithOwner -q .nameWithOwner`. When that fails (no `gh`, no GitHub remote), leave the key out; never guess.
 - `issues`: only when the user named GitHub issues (plain numbers, `[412]`) or Linear keys (`[ENG-12]`). Otherwise leave it out.
