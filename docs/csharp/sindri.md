@@ -738,6 +738,11 @@ There is no decision, desk, protected, job or step-report tool, and no `sindri_c
 | `SND-PROJECT-004` | A project field is invalid; the message starts with the field (`name`, `linear`, `state`, `links`, `notes`, `target`, `change`) (400) |
 | `SND-PROJECT-404` | No project has that id (404) |
 | `SND-PROJECT-409` | The project changed since the caller read it, or another command won the version key (409) |
+| `SND-REVIEW-001` | A bad `review` profile key: a login, panel, glob or regex, a duplicate check id, an unknown `settings` or `extends`, a cycle, `when: []`, or a `need` with other than one key (names the key path and the allowed values) |
+| `SND-REVIEW-002` | A `review.projects[].project` that isn't on the Projects page: "No project <id>. `sindri projects` lists them." (checked at approve) |
+| `SND-REVIEW-003` | A `command:` need: "Command checks wait for the sandbox. Use `ci:` with the CI job that runs it." |
+| `SND-REVIEW-005` | A `review.projects[].repos` entry that `context.sources.github.repos` doesn't list (names the key path) |
+| `SND-REVIEW-503` | Offline, and this PR isn't cached yet: "Offline, and this PR isn't cached yet" (ProblemDetails, HTTP 503) |
 | `SND-REQ-001` | A request has an unknown kind, no text, or more than 65,536 characters (400; API P4) |
 | `SND-REQ-002` | Too many open requests: 200 in the repo or 500 in all, counted for a `session` caller (429; API P4) |
 | `SND-DEC-404` | No decision has that id (404; API P4) |

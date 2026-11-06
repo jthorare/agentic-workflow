@@ -27,6 +27,7 @@ not in the profile: they live in `launcher.json` (`docs/csharp/sindri-launcher.m
 | `agents` | `AgentSettings` | no | none | Per-agent budgets and the argv hashes unattended Steps may run (screens spec E-28, launcher L-11). Left out of the canonical JSON when absent |
 | `setup` | `SetupSettings` | no | none | What Sindri does on its own while the owner sets it up once (setup-once spec §7.1). Left out of the canonical JSON when absent, so a profile without it keeps its approved hash |
 | `sandbox` | `SandboxSettings` | no | built-in defaults | How a Step's session is confined (sandbox spec §9, `docs/csharp/sindri-sandbox.md`). An approved profile with no `sandbox:` section is valid and gets the defaults below. Left out of the canonical JSON when absent, so a profile without it keeps its approved hash |
+| `review` | `PrReviewSettings` | no | none | The PR review page's settings (PR review page spec `2026-11-04-sindri-pr-review-page-design.md` §7): your GitHub login, a posting credential, named settings and which repos belong to which project. Not `workflow.review` (the review lens models). Left out of the canonical JSON when absent, so a profile without it keeps its approved hash. An older Sindri refuses a profile with a `review` key as unknown, so downgrading means removing it first |
 
 ### `repos[]`
 
@@ -175,6 +176,49 @@ What the router stub does with an item it routes (workflow engine spec §12). Re
 | Key | Type | Required | Default | Meaning |
 |---|---|---|---|---|
 | `mcp` | `auto` or `off` | no | `auto` | `auto` lets Sindri register its MCP server in each repo of the approved profile on its own (local scope, once consent is given); `off` stops that, and the "Connect your agents" button and `sindri mcp register --apply` still work. Any other value is refused before approval (`setup.mcp`) |
+
+### `review`
+
+The PR review page's block (spec §7). A change to any key is a profile change you approve again. The spec's examples are in `docs/superpowers/specs/2026-11-04-sindri-pr-review-page-design.md`; a bad key is `SND-REVIEW-001` naming the key path and the allowed values.
+
+| Key | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `login` | string | no | none | Your GitHub login (GitHub's name rules: 1 to 39 letters, digits or single hyphens, not starting or ending with a hyphen): which PRs are "yours" and "waiting on you". The Reviews tab's first-run field sets it (`POST /sindri/reviews/login`) |
+| `credential` | `env:NAME` or `command:<argv>` | no | `env:AW_REVIEW_GITHUB_TOKEN` | Your own GitHub token, used only to post (spec §8.3), never a value. Same forms as `workflow.forge.credential`. The documented pointer is `command:` (a keychain or `gh auth token` call), which puts nothing in any environment; `env:` is for CI, and only the Steps Sindri launches get its variable emptied (`LaunchEnvironment.Credentials`), not a lane you start by hand from a shell that exports it |
+| `settings` | map of name to settings entry | no | none | Named settings; `default` is built in and can't be redefined |
+| `projects` | list | no | none | Which repos belong to which project, and the named settings their PRs get |
+
+`review.settings.<name>`:
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `extends` | `default` or another entry's name | `default` | Every key left out is taken from it. No cycles; an unknown name is `SND-REVIEW-001` |
+| `panels` | list | `requiredChecks, docMap, testPlan, ci, evidence, risk, conversation` | The panels shown, in this order. Each at most once; leaving one out hides it. A list set here replaces the inherited one |
+| `groups` | list of `{ name, globs }` | by the first two path segments | File groups; the first match wins and unmatched files go to "Other". `name` is the heading, `globs` the paths in it |
+| `collapse` | globs | lock files, `*.min.js`, `*.g.cs`, `**/generated/**` | Files the diff folds by default |
+| `risky` | list of `{ globs, why }` | none | Paths a reviewer looks at twice, each with the reason shown beside them |
+| `checks` | list | none | The required checks (spec §7.3) |
+
+Globs follow the `index.denyPaths` rules (relative, `/` separators, no `..`). A `risky` entry is `globs` (the paths) and `why` (the reason shown beside them, required); a `groups` entry is `name` and `globs`.
+
+`review.settings.<name>.checks[]`:
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `id` | string | none | The check's id, unique within the entry. (The record's field is `key`: the analyzer bans a string named `Id`; the YAML key stays `id`) |
+| `title` | string | none | What the page shows |
+| `when` | globs | always applies | The check applies when any changed file matches any glob. An empty list is refused (it reads as "never") |
+| `need` | object | none | Exactly one of the keys below |
+
+`need` holds exactly one of: `ci` (the name of the CI check run that must succeed on the head sha; with the optional `app`, the GitHub App slug it must come from), `changedWith` (globs; some changed file matches each), `covers` (`true`: the body has a `Covers:` line and every ref resolves), `body` (a .NET regex a body line must match, multiline, at most 512 characters, 1 s timeout; it shows "claimed in body", never "pass") or `manual` (`true`: you tick it on this head). `command` is read only to be refused: `SND-REVIEW-003` "Command checks wait for the sandbox. Use `ci:` with the CI job that runs it."
+
+`review.projects[]`:
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `project` | `prj_…` id or `linear:project/<id>` | none | A project on the Projects page; one that isn't is `SND-REVIEW-002` ("No project <id>. `sindri projects` lists them."), checked when you approve |
+| `repos` | list of `owner/name` | none | The repos of the project. One that `context.sources.github.repos` doesn't list is `SND-REVIEW-005` (no PR records would come from it) |
+| `settings` | `default` or a name in `review.settings` | `default` | The settings those repos' PRs get. A PR gets the settings of the one entry naming its repo; with several entries naming it, the page asks you to pick; with none, `default` |
 
 ### `index`
 

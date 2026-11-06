@@ -605,6 +605,7 @@ It's unproven whether GitHub itself refuses a review on an old `commit_id`. The 
 | `SND-REVIEW-007` | a review route or verb before `review.login` is set | "Set your GitHub login on the Reviews tab first." |
 | `SND-REVIEW-404` | a review route for a PR the forge does not have | "PR not found" |
 | `SND-REVIEW-014` | a confirm token used twice or older than 10 minutes | "This confirmation expired. Open the sheet again." |
+| `SND-REVIEW-503` | offline, and the PR is not in the cache (ProblemDetails, HTTP 503) | "Offline, and this PR isn't cached yet" |
 
 Codes 008, 009 and `SND-LIB-020` are left free on purpose, for the next errors of the same kinds.
 
