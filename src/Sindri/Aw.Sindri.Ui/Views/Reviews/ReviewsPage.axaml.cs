@@ -1,4 +1,6 @@
 using Avalonia.Controls;
+using Avalonia.Interactivity;
+using Aw.Sindri.Ui.ViewModels.Reviews;
 using Avalonia.Input;
 using Avalonia.VisualTree;
 
@@ -13,8 +15,47 @@ internal sealed partial class ReviewsPage : UserControl
         AddHandler(KeyDownEvent, OnKeyDown);
     }
 
+    private ReviewsPageViewModel? Page => DataContext as ReviewsPageViewModel;
+
+    private void OnSaveLogin(object? sender, RoutedEventArgs e) => _ = Page?.SaveLogin(CancellationToken.None);
+
+    private void OnLoginKey(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter && Page is { CanSaveLogin: true } page)
+        {
+            _ = page.SaveLogin(CancellationToken.None);
+            e.Handled = true;
+        }
+    }
+
+    private void OnOpenLibrary(object? sender, RoutedEventArgs e) => _ = OpenLibrary();
+
+    private async Task OpenLibrary()
+    {
+        if (Page is { } page)
+        {
+            await page.OpenLibrary(CancellationToken.None).ConfigureAwait(true);
+            _ = this.FindControl<TextBlock>("ReviewsLibraryTitle")?.Focus(NavigationMethod.Tab);
+        }
+    }
+
+    private void OnCloseLibrary(object? sender, RoutedEventArgs e) => CloseLibrary();
+
+    private void CloseLibrary()
+    {
+        Page?.Library.Close();
+        _ = this.FindControl<Button>("ReviewsLibrary")?.Focus(NavigationMethod.Tab);
+    }
+
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
+        if (e.Key == Key.Escape && Page is { Library.IsOpen: true })
+        {
+            CloseLibrary();
+            e.Handled = true;
+            return;
+        }
+
         if (e.KeyModifiers != KeyModifiers.None || e.Key is not (Key.J or Key.K) || e.Source is TextBox)
         {
             return;

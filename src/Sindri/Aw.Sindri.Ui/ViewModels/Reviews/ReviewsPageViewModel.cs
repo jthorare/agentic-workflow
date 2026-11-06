@@ -9,7 +9,7 @@ namespace Aw.Sindri.Ui.ViewModels.Reviews;
 /// The Reviews tab (review page spec §6.1, §6.3, §16): Waiting on you, then Yours, the library header, the login prompt and the waiting count behind the tab's badge and Home's line.
 /// It reads on every event even when it isn't the page shown, since the badge and Home's line need the count from any page.
 /// </summary>
-internal sealed class ReviewsPageViewModel : ObservableObject, IDisposable
+internal sealed partial class ReviewsPageViewModel : ObservableObject, IDisposable
 {
     private readonly ISindriApi _api;
     private readonly TimeProvider _clock;
@@ -66,7 +66,15 @@ internal sealed class ReviewsPageViewModel : ObservableObject, IDisposable
     public string LoginHeading { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>The login field, pre-filled with the served suggestion.</summary>
-    public string LoginField { get; set => Set(ref field, value); } = string.Empty;
+    public string LoginField
+    {
+        get;
+        set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(CanSaveLogin));
+        }
+    } = string.Empty;
 
     /// <summary>The empty state's lines (text, hint, teams); null when there are rows.</summary>
     public IReadOnlyList<string>? EmptyLines { get; private set => Set(ref field, value); }
@@ -84,13 +92,13 @@ internal sealed class ReviewsPageViewModel : ObservableObject, IDisposable
     public string LoginError { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>True when Save can be pressed: the field has text.</summary>
-    public bool CanSaveLogin => LoginField is null;   // red: Ph7 part 3
+    public bool CanSaveLogin => !string.IsNullOrWhiteSpace(LoginField);
 
     /// <summary>The column headings, in order.</summary>
-    public IReadOnlyList<string> Columns { get; } = [];   // red: Ph7 part 3 (Labels.ReviewsCol*)
+    public IReadOnlyList<string> Columns { get; } = [Labels.ReviewsColPr, Labels.ReviewsColAuthor, Labels.ReviewsColAge, Labels.ReviewsColCi, Labels.ReviewsColRequired, Labels.ReviewsColDoc];
 
     /// <summary>True when the header's library button can be pressed.</summary>
-    public bool CanOpenLibrary => Library is null;   // red: Ph7 part 3
+    public bool CanOpenLibrary => LibraryText.Length > 0;
 
     /// <summary>The library errors sheet.</summary>
     public LibrarySheetViewModel Library { get; }
@@ -98,20 +106,29 @@ internal sealed class ReviewsPageViewModel : ObservableObject, IDisposable
     /// <summary>Saves the login in the field, then reads the list again.</summary>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>When the answer is shown.</returns>
-    internal Task SaveLogin(CancellationToken cancellationToken)
+    internal async Task SaveLogin(CancellationToken cancellationToken)
     {
-        _ = (_api, cancellationToken);   // red: Ph7 part 3 fills it
-        return Task.CompletedTask;
+        if (_url is not { } url || !CanSaveLogin)
+        {
+            return;
+        }
+
+        var saved = await _api.SaveReviewLogin(url, new ReviewLoginSave(LoginField.Trim()), cancellationToken).ConfigureAwait(true);
+        if (saved.IsError)
+        {
+            LoginError = Labels.InstanceRefused(saved.Error);
+            return;
+        }
+
+        LoginError = string.Empty;
+        await Read(url, cancellationToken).ConfigureAwait(true);
     }
 
     /// <summary>The header's library button: opens the errors sheet and reads the library.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>When the sheet shows the answer.</returns>
-    internal Task OpenLibrary(CancellationToken cancellationToken)
-    {
-        _ = (Library, cancellationToken);   // red: Ph7 part 3 fills it
-        return Task.CompletedTask;
-    }
+    internal Task OpenLibrary(CancellationToken cancellationToken) =>
+        _url is { } url ? Library.Open(url, cancellationToken) : Task.CompletedTask;
 
     /// <summary>True while the page is the one shown.</summary>
     internal bool IsActive { get; private set; }
@@ -199,26 +216,22 @@ internal sealed class ReviewsPageViewModel : ObservableObject, IDisposable
     {
         (IsLoading, Error) = (false, string.Empty);
         var now = _clock.GetUtcNow();
-        var groups = list.Groups.Select(g => new ReviewGroupViewModel(g, list.Login, now)).Where(g => g.Count > 0).ToList();
-        ShowHeader(list, groups);
+        var shown = ShowGroups(list, now);
+        ShowHeader(list, shown.Count);
         (Notice, StaleText, LibraryText, WaitingCount) = (list.Notice, list.Stale?.Text, list.Library.Text, list.WaitingCount);
         LibraryWarns = list.Library.WithErrors > 0 || list.Library.UnreadableRoots > 0;
         (IsLoginPrompt, LoginHeading) = (list.LoginPrompt is not null, list.LoginPrompt?.Text ?? string.Empty);
-        if (list.LoginPrompt is { } prompt)
+        if (list.LoginPrompt is { } prompt && string.IsNullOrEmpty(LoginField))
         {
-            LoginField = prompt.Suggested ?? string.Empty;
+            LoginField = prompt.Suggested ?? string.Empty;   // only into an empty field: what the owner typed stays
         }
 
         EmptyLines = list.Empty is { } empty ? [empty.Text, empty.Hint, empty.Teams] : null;
-        Groups.Clear();
-        foreach (var group in groups)
-        {
-            Groups.Add(group);
-        }
+        Patch.To(Groups, shown);
     }
 
     // "GitHub synced 14 min ago · reviews as joi-example · 4 open PRs in 2 repos": the parts that exist.
-    private void ShowHeader(ReviewList list, List<ReviewGroupViewModel> groups)
+    private void ShowHeader(ReviewList list, int groupCount)
     {
         var rows = list.Groups.SelectMany(g => g.Sections).SelectMany(s => s.Rows).ToList();
         var parts = new List<string>();
@@ -230,7 +243,7 @@ internal sealed class ReviewsPageViewModel : ObservableObject, IDisposable
         if (list.Login is { } login)
         {
             parts.Add(Labels.ReviewsAs(login));
-            if (groups.Count > 0)
+            if (groupCount > 0)
             {
                 parts.Add(Labels.ReviewsOpenIn(rows.Select(r => (r.Repo, r.Number)).Distinct().Count(), rows.Select(r => r.Repo).Distinct(StringComparer.Ordinal).Count()));
             }

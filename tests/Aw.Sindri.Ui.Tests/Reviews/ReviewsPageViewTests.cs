@@ -1,4 +1,6 @@
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
@@ -55,5 +57,52 @@ public sealed class ReviewsPageViewTests : FrameHost
 
         Assert.True(Visible(window, "ReviewsEmpty"));
         Assert.False(Visible(window, "ReviewsLogin"));
+    });
+
+    [Fact]
+    public Task The_header_button_opens_the_library_sheet_with_its_sections() => OnUi(async () =>
+    {
+        Server.LibraryAnswer = RouteAnswer.Api("library", "with-errors");
+        var (window, shell) = await OnReviews();
+        Assert.False(Visible(window, "ReviewsLibrarySheet"));
+
+        Named<Button>(window, "ReviewsLibrary").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        await Until(window, () => shell.Reviews.Library.IsOpen && !shell.Reviews.Library.IsLoading && Visible(window, "ReviewsLibrarySheet"), "the library sheet never showed");
+
+        var titles = window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name == "ReviewsLibrarySectionTitle" && t.IsEffectivelyVisible).Select(t => t.Text);
+        Assert.Equal(["Docs with errors"], titles, StringComparer.Ordinal);
+        Assert.Equal("41 docs, 3 with errors", Named<TextBlock>(window, "ReviewsLibrarySummary").Text);
+
+        Named<Button>(window, "ReviewsLibraryClose").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        await Until(window, () => !Visible(window, "ReviewsLibrarySheet"), "the library sheet never closed");
+    });
+
+    [Fact]
+    public Task J_and_K_move_the_row_focus_and_a_refresh_leaves_it_on_the_same_PR() => OnUi(async () =>
+    {
+        var (window, shell) = await OnReviews();
+        List<Border> Rows() => [.. window.GetVisualDescendants().OfType<Border>().Where(b => b.Name == "ReviewRowFrame" && b.IsEffectivelyVisible)];
+        _ = Rows()[0].Focus(NavigationMethod.Tab);
+        Rows()[0].RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.J, Source = Rows()[0] });
+        var focused = Rows().Single(r => r.IsKeyboardFocusWithin);
+        var pr = ((ViewModels.Reviews.ReviewRowViewModel)focused.DataContext!).Ref;
+        Assert.Equal(Rows()[1], focused);
+
+        await shell.Reviews.Refresh(new Uri("http://127.0.0.1:7410/"), TestContext.Current.CancellationToken);
+        await Task.Yield();
+
+        var after = Rows().Single(r => r.IsKeyboardFocusWithin);
+        Assert.Equal(pr, ((ViewModels.Reviews.ReviewRowViewModel)after.DataContext!).Ref);
+        Assert.Same(focused, after);
+    });
+
+    [Fact]
+    public Task The_column_headings_read_the_labels() => OnUi(async () =>
+    {
+        var (window, _) = await OnReviews();
+
+        var texts = window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible).Select(t => t.Text).ToList();
+        string[] heads = [ViewModels.Labels.ReviewsColPr, ViewModels.Labels.ReviewsColAuthor, ViewModels.Labels.ReviewsColAge, ViewModels.Labels.ReviewsColCi, ViewModels.Labels.ReviewsColRequired, ViewModels.Labels.ReviewsColDoc];
+        Assert.Equal(heads, texts.Where(t => heads.Contains(t, StringComparer.Ordinal)).Take(6), StringComparer.Ordinal);
     });
 }
