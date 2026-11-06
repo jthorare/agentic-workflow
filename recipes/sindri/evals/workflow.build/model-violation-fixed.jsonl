@@ -8,4 +8,4 @@
 {"trigger":{"kind":"step.completed","outcome":"violation","outputs":{"fact:findings":[{"rule":"MDL-VIOLATION-001","message":"NoTimeGained 1"}]}},"expect":{"state":"green"}}
 {"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h2"}}},"expect":{"state":"checks"}}
 {"trigger":{"kind":"step.completed","outcome":"pass","outputs":{"fact:built":{"head":"h2"},"fact:change":{"repo":"r","branch":"b","base":"m","head":"h2"}}},"expect":{"state":"model"}}
-{"trigger":{"kind":"step.completed","outcome":"pass","outputs":{"fact:modelCheck":{"skipped":false,"looked":["src/a.cs"],"specs":[{"name":"Takeover","bounds":"up to 2 takeovers","constants":[],"cfgs":[{"cfg":"Takeover","distinct":1204,"depth":14}],"witnesses":[]}],"warnings":[]}}},"expect":{"state":"built","outcome":"resolved"}}
+{"trigger":{"kind":"step.completed","outcome":"pass","outputs":{"fact:modelCheck":{"skipped":false,"looked":["src/a.cs"],"specs":[{"name":"Takeover","bounds":"up to 2 takeovers","constants":[],"cfgs":[{"cfg":"Takeover","distinct":1204,"depth":14}],"witnesses":[]}],"warnings":[]},"fact:findings":[]}},"expect":{"state":"built","outcome":"resolved"}}
