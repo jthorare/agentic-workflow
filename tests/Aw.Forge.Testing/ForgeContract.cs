@@ -347,6 +347,7 @@ public abstract class ForgeContract : ForgeReadContract
     {
         var (run, pull) = await Open();
         var request = new SubmitReviewRequest(pull, Sha('a'), ReviewVerdict.Comment, "Looks fine", [new ReviewComment("src/a.cs", 12, "Nit")], "owner-review:d1:1");
+        _ = Expect.Ok(run.Seed!.SeedFiles(new SeedFilesRequest(pull, [new SeedFile(new PullFile("src/a.cs", PreviousPath: null, PullFileStatus.Modified, 3, 0, "@@ -10,2 +10,4 @@\n+x"), "class A;")])), "SeedFiles");
 
         var first = Expect.Ok(await run.Forge.SubmitReview(request, Ct), "SubmitReview");
         var again = Expect.Ok(await run.Forge.SubmitReview(request, Ct), "SubmitReview again");
@@ -373,6 +374,49 @@ public abstract class ForgeContract : ForgeReadContract
 
         Expect.That(outcome == ReviewOutcome.HeadMoved && !threads.Any(t => t.Kind == CommentKind.Review), "nothing was posted on a stale head");
         Expect.That(onNewHead == ReviewOutcome.Posted, "the same marker posts once the head is right: HeadMoved did not use it up");
+    }
+
+    /// <summary>A review whose marker was posted stays delivered after the head moves: the marker is checked before the head.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_posted_review_is_delivered_not_head_moved_after_the_head_advances()
+    {
+        var (run, pull) = await Open();
+        var request = new SubmitReviewRequest(pull, Sha('a'), ReviewVerdict.Comment, "Looks fine", [], "owner-review:d3:1");
+        _ = Expect.Ok(await run.Forge.SubmitReview(request, Ct), "SubmitReview");
+        _ = Expect.Ok(run.Seed!.AdvanceHead(pull, Sha('c')), "AdvanceHead");
+
+        var again = Expect.Ok(await run.Forge.SubmitReview(request, Ct), "SubmitReview again after the head moved");
+
+        Expect.That(again == ReviewOutcome.AlreadyDelivered, "the same marker is AlreadyDelivered, not HeadMoved");
+    }
+
+    /// <summary>A line comment on a path or line the diff does not have is LineRejected and nothing is posted; a line inside a hunk posts.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_comment_outside_the_seeded_patch_is_rejected_and_nothing_is_posted()
+    {
+        var (run, pull) = await Open();
+        SeedFile[] files =
+        [
+            new(new PullFile("src/a.cs", PreviousPath: null, PullFileStatus.Modified, 3, 0, "@@ -10,2 +10,4 @@\n+x"), "class A;"),
+            new(new PullFile("assets/logo.png", PreviousPath: null, PullFileStatus.Added, 0, 0, Patch: null), Text: null),
+        ];
+        _ = Expect.Ok(run.Seed!.SeedFiles(new SeedFilesRequest(pull, files)), "SeedFiles");
+        var before = Expect.Ok(await run.Forge.ListThreads(pull, Ct), "ListThreads before").Count;
+        SubmitReviewRequest Review(string marker, string path, int line) =>
+            new(pull, Sha('a'), ReviewVerdict.Comment, "Body", [new ReviewComment(path, line, "Nit")], marker);
+
+        var outside = Expect.Ok(await run.Forge.SubmitReview(Review("owner-review:d4:1", "src/a.cs", 9), Ct), "line before the hunk");
+        var past = Expect.Ok(await run.Forge.SubmitReview(Review("owner-review:d4:2", "src/a.cs", 14), Ct), "line past the hunk");
+        var unknown = Expect.Ok(await run.Forge.SubmitReview(Review("owner-review:d4:3", "src/none.cs", 10), Ct), "unknown path");
+        var binary = Expect.Ok(await run.Forge.SubmitReview(Review("owner-review:d4:4", "assets/logo.png", 1), Ct), "binary file");
+        var after = Expect.Ok(await run.Forge.ListThreads(pull, Ct), "ListThreads after").Count;
+        var inside = Expect.Ok(await run.Forge.SubmitReview(Review("owner-review:d4:5", "src/a.cs", 13), Ct), "last line of the hunk");
+
+        Expect.That(new[] { outside, past, unknown, binary }.All(o => o == ReviewOutcome.LineRejected), "each line the diff lacks is LineRejected");
+        Expect.That(after == before, "nothing was posted by the rejected reviews");
+        Expect.That(inside == ReviewOutcome.Posted, "a line inside the hunk posts (10 to 13)");
     }
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;

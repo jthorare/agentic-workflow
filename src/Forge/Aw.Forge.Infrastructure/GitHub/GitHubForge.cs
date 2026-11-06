@@ -174,15 +174,13 @@ internal sealed partial class GitHubForge(GitHubApi api, ICredentialSource crede
     // why: a repo with no commit statuses (or a pull request whose commit the status API does not know) answers 404; that is no statuses, not a failure.
     private async ValueTask<Result<IReadOnlyList<JsonElement>>> CommitStatuses(ForgeRef pull, string sha, CancellationToken cancellationToken)
     {
-        var reply = await _api.Call(pull.Host, HttpMethod.Get, $"{RepoPath(pull)}/commits/{Uri.EscapeDataString(sha)}/status", body: null, cancellationToken).ConfigureAwait(false);
-        if (reply.IsError)
+        var pages = await _api.Pages(pull.Host, $"{RepoPath(pull)}/commits/{Uri.EscapeDataString(sha)}/status?per_page=100", MaxCheckPages, _ => false, cancellationToken).ConfigureAwait(false);
+        if (pages.IsError)
         {
-            return reply.Error;
+            return pages.Error.Code == ForgeErrors.NotFound.Code ? Results.Success<IReadOnlyList<JsonElement>>([]) : pages.Error;
         }
 
-        return reply.Value.Ok
-            ? Results.Success<IReadOnlyList<JsonElement>>([.. (reply.Value.Body.At("statuses") ?? default).Items()])
-            : reply.Value.Status == 404 ? Results.Success<IReadOnlyList<JsonElement>>([]) : GitHubApi.Fail(reply.Value);
+        return Results.Success<IReadOnlyList<JsonElement>>([.. pages.Value.Replies.SelectMany(r => (r.Body.At("statuses") ?? default).Items())]);
     }
 
     private async ValueTask<Result<ChecksSummary>> Checks(ForgeRef pull, string sha, CancellationToken cancellationToken)

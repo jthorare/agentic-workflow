@@ -10,6 +10,8 @@ namespace Aw.Forge.Infrastructure.GitHub;
 
 internal sealed partial class GitHubForge
 {
+    private static readonly UTF8Encoding _strictUtf8 = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+
     public async ValueTask<Result<PullFiles>> Files(ForgeRef pull, CancellationToken cancellationToken)
     {
         if (_api.Guard(pull.Host) is { } refused)
@@ -30,7 +32,21 @@ internal sealed partial class GitHubForge
 
         var all = pages.Value.Replies.SelectMany(r => r.Body.Items()).ToList();
         var files = all.Take(ForgeLimits.PullFileCap).Select(ToFile).ToList();
-        return new PullFiles(files, CapReached: all.Count > ForgeLimits.PullFileCap || (pages.Value.More && all.Count >= ForgeLimits.PullFileCap));
+        var capped = all.Count >= ForgeLimits.PullFileCap;
+        var more = pages.Value.More || all.Count > ForgeLimits.PullFileCap;
+        if (capped && !more)
+        {
+            // why: exactly 3000 files listed and no next page; the pull's own count says whether GitHub holds more than it lists.
+            var state = await ReadPull(pull, cancellationToken).ConfigureAwait(false);
+            if (state.IsError)
+            {
+                return state.Error;
+            }
+
+            more = state.Value.Long("changed_files") > ForgeLimits.PullFileCap;
+        }
+
+        return new PullFiles(files, CapReached: capped && more);
     }
 
     public async ValueTask<Result<string>> FileText(ForgeRef pull, string path, string sha, CancellationToken cancellationToken)
@@ -41,7 +57,7 @@ internal sealed partial class GitHubForge
         }
 
         var escaped = string.Join('/', path.Split('/').Select(Uri.EscapeDataString));
-        var reply = await _api.Call(pull.Host, HttpMethod.Get, $"{RepoPath(pull)}/contents/{escaped}?ref={Uri.EscapeDataString(sha)}", body: null, cancellationToken).ConfigureAwait(false);
+        var reply = await _api.CallRaw(pull.Host, $"{RepoPath(pull)}/contents/{escaped}?ref={Uri.EscapeDataString(sha)}", cancellationToken).ConfigureAwait(false);
         if (reply.IsError)
         {
             return reply.Error;
@@ -52,19 +68,37 @@ internal sealed partial class GitHubForge
             return GitHubApi.Fail(reply.Value);
         }
 
-        var body = reply.Value.Body;
-        if (body.Str("type") != "file" || body.Str("encoding") != "base64")
+        return Decode(reply.Value, path, sha);
+    }
+
+    // why: a file comes back as raw bytes; a JSON answer that is a file object (base64) is read too. Text that is not UTF-8 (a binary file) is not text: not found, as in the world.
+    private static Result<string> Decode(GitHubReply reply, string path, string sha)
+    {
+        var bytes = reply.Raw;
+        if (bytes is null)
         {
-            return ForgeErrors.NotFound.With($"'{path}' at {sha} is not a file with text");
+            if (reply.Body.Str("type") != "file" || reply.Body.Str("encoding") != "base64")
+            {
+                return ForgeErrors.NotFound.With($"'{path}' at {sha} is not a file with text");
+            }
+
+            try
+            {
+                bytes = Convert.FromBase64String(reply.Body.Str("content"));
+            }
+            catch (FormatException)
+            {
+                return ForgeErrors.NotFound.With($"'{path}' at {sha} has no readable text");
+            }
         }
 
         try
         {
-            return TextCap.Cut(Encoding.UTF8.GetString(Convert.FromBase64String(body.Str("content"))));
+            return TextCap.Cut(_strictUtf8.GetString(bytes));
         }
-        catch (FormatException)
+        catch (DecoderFallbackException)
         {
-            return ForgeErrors.NotFound.With($"'{path}' at {sha} has no readable text");
+            return ForgeErrors.NotFound.With($"'{path}' at {sha} is not UTF-8 text");
         }
     }
 
@@ -82,25 +116,25 @@ internal sealed partial class GitHubForge
             return valid.Error;
         }
 
-        var state = await ReadPull(pull, cancellationToken).ConfigureAwait(false);
-        if (state.IsError)
-        {
-            return state.Error;
-        }
-
-        if (state.Value.At("head")?.Str("sha") != request.ExpectedHead)
-        {
-            return ReviewOutcome.HeadMoved;
-        }
-
         var reviews = await _api.All(pull.Host, Inv.S($"{RepoPath(pull)}/pulls/{pull.Number}/reviews"), cancellationToken).ConfigureAwait(false);
         if (reviews.IsError)
         {
             return reviews.Error;
         }
 
-        return reviews.Value.Any(r => ForgeMarker.IsIn(r.Str("body"), request.Marker))
-            ? ReviewOutcome.AlreadyDelivered
+        if (reviews.Value.Any(r => ForgeMarker.IsIn(r.Str("body"), request.Marker)))
+        {
+            return ReviewOutcome.AlreadyDelivered;
+        }
+
+        var state = await ReadPull(pull, cancellationToken).ConfigureAwait(false);
+        if (state.IsError)
+        {
+            return state.Error;
+        }
+
+        return state.Value.At("head")?.Str("sha") != request.ExpectedHead
+            ? ReviewOutcome.HeadMoved
             : await PostReview(request, cancellationToken).ConfigureAwait(false);
     }
 
@@ -114,8 +148,16 @@ internal sealed partial class GitHubForge
         }
 
         return posted.Value.Ok ? ReviewOutcome.Posted
-            : posted.Value.Status == 422 ? ReviewOutcome.LineRejected
+            : posted.Value.Status == 422 && request.Comments.Count > 0 && NamesALine(posted.Value.Body) ? ReviewOutcome.LineRejected
             : GitHubApi.Fail(posted.Value);
+    }
+
+    // why: a 422 on a review has many causes (approving your own pull request, a stale commit_id, an empty body on REQUEST_CHANGES); only the ones about a comment's line or path mean "re-anchor the comments".
+    private static bool NamesALine(JsonElement body)
+    {
+        string[] markers = ["could not be resolved", "must be part of the diff", "pull_request_review_thread.line", "path"];
+        var text = body.Str("message") + " " + (body.At("errors") is { } errors ? errors.GetRawText() : string.Empty);
+        return markers.Any(m => text.Contains(m, StringComparison.OrdinalIgnoreCase));
     }
 
     private static byte[] ReviewBody(SubmitReviewRequest request) =>

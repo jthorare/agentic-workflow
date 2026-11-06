@@ -25,6 +25,15 @@ internal sealed class StubHandler : HttpMessageHandler
         return this;
     }
 
+    /// <summary>Answers requests whose path and query start with <paramref name="pathPrefix"/> with raw bytes and a non-JSON content type, as GitHub does for the raw media type.</summary>
+    internal StubHandler OnRaw(HttpMethod method, string pathPrefix, byte[] body)
+    {
+        _routes.Add(request => request.Method == method && request.RequestUri!.PathAndQuery.StartsWith(pathPrefix, StringComparison.Ordinal)
+            ? new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(body) { Headers = { ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/vnd.github.raw") } } }
+            : null);
+        return this;
+    }
+
     /// <summary>Answers each matching request from the queue, in order, repeating the last.</summary>
     internal StubHandler Sequence(HttpMethod method, string pathPrefix, params (HttpStatusCode Status, string Body)[] replies)
     {

@@ -57,16 +57,28 @@ internal partial class WorldForge
 
     private Result<ReviewOutcome> Post(WorldPull p, SubmitReviewRequest request)
     {
-        if (request.ExpectedHead != p.HeadSha)
-        {
-            return ReviewOutcome.HeadMoved;
-        }
-
         if (p.Threads.Exists(t => t.Kind == CommentKind.Review && ForgeMarker.IsIn(t.Body, request.Marker)))
         {
             return ReviewOutcome.AlreadyDelivered;
         }
 
+        if (request.ExpectedHead != p.HeadSha)
+        {
+            return ReviewOutcome.HeadMoved;
+        }
+
+        // why: GitHub refuses a line comment the diff does not have; so does the world, the same way (the new side of a hunk in the file's patch).
+        if (request.Comments.Any(c => !PatchLines.Covers(p.Files.FirstOrDefault(f => f.Path == c.Path)?.Patch, c.Line)))
+        {
+            return ReviewOutcome.LineRejected;
+        }
+
+        Add(p, request);
+        return ReviewOutcome.Posted;
+    }
+
+    private void Add(WorldPull p, SubmitReviewRequest request)
+    {
         var now = _clock.GetUtcNow();
         p.Threads.Add(new WorldThread
         {
@@ -91,7 +103,5 @@ internal partial class WorldForge
                 CreatedAt = now,
             });
         }
-
-        return ReviewOutcome.Posted;
     }
 }

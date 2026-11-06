@@ -146,7 +146,7 @@ public sealed class GitHubForgeReviewTests
     [Fact]
     public async Task SubmitReview_reads_the_head_first_and_posts_nothing_when_it_moved()
     {
-        var http = new StubHandler().On(HttpMethod.Get, "/repos/acme/widgets/pulls/7", HttpStatusCode.OK, PullJson);
+        var http = ReviewStub();
 
         var outcome = await Build(http).SubmitReview(Review() with { ExpectedHead = "old999" }, Ct);
 
@@ -208,6 +208,101 @@ public sealed class GitHubForgeReviewTests
         var outcome = await Build(http).SubmitReview(Review(), Ct);
 
         Assert.Equal(ForgeErrors.Unavailable.Code, outcome.Error.Code);
+    }
+
+    [Fact]
+    public async Task SubmitReview_with_a_marker_already_on_a_review_is_delivered_even_when_the_head_moved()
+    {
+        var http = new StubHandler()
+            .On(HttpMethod.Get, "/repos/acme/widgets/pulls/7/reviews", HttpStatusCode.OK, """[{"id":9,"state":"COMMENTED","body":"Looks fine\n\n<!-- aw-marker:owner-review:d1:1 -->","user":{"login":"me"}}]""")
+            .On(HttpMethod.Get, "/repos/acme/widgets/pulls/7", HttpStatusCode.OK, PullJson);
+
+        var outcome = await Build(http).SubmitReview(Review() with { ExpectedHead = "old999" }, Ct);
+
+        Assert.Equal(ReviewOutcome.AlreadyDelivered, outcome.Value);
+    }
+
+    [Fact]
+    public async Task SubmitReview_maps_a_422_that_is_not_about_a_line_to_an_error()
+    {
+        var http = ReviewStub().On(HttpMethod.Post, "/repos/acme/widgets/pulls/7/reviews", HttpStatusCode.UnprocessableEntity, """{"message":"Unprocessable Entity","errors":["Can not approve your own pull request"]}""");
+        var forge = Build(http);
+
+        var noComments = await forge.SubmitReview(Review() with { Verdict = ReviewVerdict.Approve, Comments = [] }, Ct);
+        var withComments = await forge.SubmitReview(Review() with { Verdict = ReviewVerdict.Approve }, Ct);
+
+        Assert.Equal(ForgeErrors.Rejected.Code, noComments.Error.Code);
+        Assert.Equal(ForgeErrors.Rejected.Code, withComments.Error.Code);
+        Assert.Contains("Can not approve", noComments.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task SubmitReview_with_no_comments_does_not_read_a_422_about_a_path_as_a_line()
+    {
+        var http = ReviewStub().On(HttpMethod.Post, "/repos/acme/widgets/pulls/7/reviews", HttpStatusCode.UnprocessableEntity, """{"message":"Unprocessable Entity","errors":["Path could not be resolved"]}""");
+
+        var outcome = await Build(http).SubmitReview(Review() with { Comments = [] }, Ct);
+
+        Assert.Equal(ForgeErrors.Rejected.Code, outcome.Error.Code);
+    }
+
+    [Fact]
+    public async Task Get_reads_every_page_of_commit_statuses()
+    {
+        string Page(int from, int count, string state = "success") =>
+            $$"""{"state":"failure","statuses":[{{string.Join(',', Enumerable.Range(from, count).Select(i => Inv.S($$"""{"context":"ci/{{i}}","state":"{{(i == 31 ? "failure" : state)}}"}""")))}}]}""";
+        var http = StubGet()
+            .On(HttpMethod.Get, "/repos/acme/widgets/commits/abc123/status?per_page=100&page=2", HttpStatusCode.OK, Page(30, 2))
+            .On(HttpMethod.Get, "/repos/acme/widgets/commits/abc123/status", HttpStatusCode.OK, Page(0, 30), Next("/repos/acme/widgets/commits/abc123/status", 2))
+            .On(HttpMethod.Get, "/repos/acme/widgets/commits/abc123/check-runs", HttpStatusCode.OK, """{"check_runs":[]}""");
+
+        var checks = (await Build(http).GetPull(_pull, Ct)).Value.Checks;
+
+        Assert.Equal(32, checks.Runs!.Count);
+        Assert.Equal(["ci/31"], checks.Failing);
+        Assert.Equal(ChecksState.Failing, checks.State);
+    }
+
+    [Fact]
+    public async Task FileText_asks_for_the_raw_media_type_and_caps_a_file_over_1_MiB()
+    {
+        var http = new StubHandler().OnRaw(HttpMethod.Get, "/repos/acme/widgets/contents/big.txt", Encoding.UTF8.GetBytes(new string('x', ForgeLimits.FileTextBytes + 5000)));
+
+        var text = (await Build(http).FileText(_pull, "big.txt", Head, Ct)).Value;
+
+        Assert.Equal(ForgeLimits.FileTextBytes, Encoding.UTF8.GetByteCount(text));
+    }
+
+    [Fact]
+    public async Task FileText_of_bytes_that_are_not_UTF8_is_not_found()
+    {
+        var http = new StubHandler().OnRaw(HttpMethod.Get, "/repos/acme/widgets/contents/logo.png", [0x89, 0x50, 0xFF, 0xFE, 0x00, 0xC3, 0x28]);
+
+        var text = await Build(http).FileText(_pull, "logo.png", Head, Ct);
+
+        Assert.Equal(ForgeErrors.NotFound.Code, text.Error.Code);
+    }
+
+    [Fact]
+    public async Task Files_says_the_cap_was_hit_when_the_pull_has_more_changed_files_than_it_lists()
+    {
+        var pageTwo = "/repos/acme/widgets/pulls/7/files?per_page=100&page=";
+        var http = new StubHandler();
+        for (var page = 30; page >= 2; page--)
+        {
+            _ = page == 30
+                ? http.On(HttpMethod.Get, Inv.S($"{pageTwo}{page}"), HttpStatusCode.OK, FilesPage((page - 1) * 100, 100))
+                : http.On(HttpMethod.Get, Inv.S($"{pageTwo}{page}"), HttpStatusCode.OK, FilesPage((page - 1) * 100, 100), Next("/repos/acme/widgets/pulls/7/files", page + 1));
+        }
+
+        _ = http
+            .On(HttpMethod.Get, "/repos/acme/widgets/pulls/7/files", HttpStatusCode.OK, FilesPage(0, 100), Next("/repos/acme/widgets/pulls/7/files", 2))
+            .On(HttpMethod.Get, "/repos/acme/widgets/pulls/7", HttpStatusCode.OK, PullJson.Replace("\"draft\":false", "\"draft\":false,\"changed_files\":4000", StringComparison.Ordinal));
+
+        var files = (await Build(http).Files(_pull, Ct)).Value;
+
+        Assert.Equal(ForgeLimits.PullFileCap, files.Files.Count);
+        Assert.True(files.CapReached);
     }
 
     private static StubHandler StubGet() => new StubHandler()
