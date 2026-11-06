@@ -1,6 +1,6 @@
 namespace Aw.Context.Infrastructure.Records;
 
-/// <summary>The design-doc library's SQL (migration 0031_review_library). Values are always bound, never formatted in.</summary>
+/// <summary>The design-doc library's SQL (migration 0031_s1_review_library). Values are always bound, never formatted in.</summary>
 internal static class DesignDocSql
 {
     internal const string StoredVersion = "SELECT parser_version FROM design_doc WHERE doc_key = @key";

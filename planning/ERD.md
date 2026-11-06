@@ -93,7 +93,7 @@ erDiagram
 
 Migration 0030 (`s2b_pull_facts`) adds `source_record.pull_facts`: one JSON text on a GitHub PR's row with its requested reviewer logins (people only, never a team), its head sha and, for an open PR, each reviewer's latest reviewed commit with the number of commits the head is ahead of it (`newCommits` is null when a force-push dropped the commit). It is NULL for every other record, for a blocked record and for a tombstone, and `Text` and search don't see it. It is a column and not a table because the facts are one-to-one with the row and always read and written with it. The migration also invalidates GitHub PR rows (version `''`) and resets the `github` record feed's `source_cursor` row (`repo = 'records'`) to phase `recent`, so the next sync re-reads every PR once, the way 0029 did.
 
-Migration 0031 (`review_library`) adds the design-doc library's four tables (PR review page spec 2026-11-04 §5.3). They are written through the generic side-rows seam (`RecordWrite.Side`, one `ISideRowWriter` per source; the design-doc and PR-claim writers are the first) by `IRecordStore.Commit` in the same transaction as the record they hang off, and rewritten when they differ even if the record is unchanged, so no reader sees a doc without its items:
+Migration 0031 (`s1_review_library`) adds the design-doc library's four tables (PR review page spec 2026-11-04 §5.3). They are written through the generic side-rows seam (`RecordWrite.Side`, one `ISideRowWriter` per source; the design-doc and PR-claim writers are the first) by `IRecordStore.Commit` in the same transaction as the record they hang off, and rewritten when they differ even if the record is unchanged, so no reader sees a doc without its items:
 
 ```mermaid
 erDiagram

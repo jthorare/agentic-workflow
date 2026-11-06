@@ -8,7 +8,7 @@ using Microsoft.Data.Sqlite;
 
 namespace Aw.Context.Infrastructure.Records;
 
-/// <summary>The library's rows in context.db (migration 0031_review_library), read through the live records they belong to.</summary>
+/// <summary>The library's rows in context.db (migration 0031_s1_review_library), read through the live records they belong to.</summary>
 internal sealed class SqliteLibraryStore(ContextDatabase database) : ILibraryStore
 {
     private static readonly string[] _itemKinds = ["section", "phase", "requirement", "acceptance", "testPlan", "task"];

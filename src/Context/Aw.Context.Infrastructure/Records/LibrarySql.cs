@@ -1,6 +1,6 @@
 namespace Aw.Context.Infrastructure.Records;
 
-/// <summary>The design-doc library's read SQL (migration 0031_review_library). Values are always bound, never formatted in.</summary>
+/// <summary>The design-doc library's read SQL (migration 0031_s1_review_library). Values are always bound, never formatted in.</summary>
 internal static class LibrarySql
 {
     private const string DocColumns =
