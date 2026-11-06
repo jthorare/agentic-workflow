@@ -168,6 +168,7 @@ bash scripts/ci/bash-tests.sh   # each suite runs with its own fresh temp HOME a
 bash providers/tests/install.test.sh
 bash providers/tests/voice.test.sh       # the aw:voice block in ~/.claude/CLAUDE.md and ~/.codex/AGENTS.md: created, appended, replaced in place, an unclosed block refused, dry run, joi.md <= 4000 bytes
 bash providers/tests/install-hooks-target.test.sh   # --target-dir on providers/{claude,codex}/install-hooks.sh: files and hook command paths rooted at DIR, the real home untouched, usage exit 2, idempotent (SB-8)
+bash providers/tests/install-skills-target.test.sh  # providers/install-skills.sh --target-dir DIR: DIR/skills/<name> links into the toolkit (the managed set from setup.sh, plus bootstrap), the real home untouched, usage exit 2, idempotent, dry run links nothing (SB-8)
 bash scripts/tests/sync-rules.test.sh
 bash scripts/tests/test-grep.test.sh
 bash scripts/tests/check-deps.test.sh

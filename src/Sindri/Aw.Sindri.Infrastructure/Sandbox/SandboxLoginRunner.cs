@@ -8,7 +8,7 @@ using Aw.Sindri.Infrastructure.Processes;
 namespace Aw.Sindri.Infrastructure.Sandbox;
 
 /// <summary>
-/// 'sindri sandbox login' (sandbox spec SB-8): makes the target's agent home 0700, runs the toolkit's hook installer into it (--target-dir), then the target's own interactive sign-in
+/// 'sindri sandbox login' (sandbox spec SB-8): makes the target's agent home 0700, runs the toolkit's hook installer and its skills installer into it (--target-dir; the skills so a skill Step finds /review and the rest there), then the target's own interactive sign-in
 /// on this terminal with CLAUDE_CONFIG_DIR or CODEX_HOME pointing at the home. The toolkit checkout is TOOLKIT_DIR, else '&lt;AW_STATE_DIR or ~/.agentic-workflow&gt;/toolkit'.
 /// </summary>
 /// <param name="sindriHome">Sindri's own home.</param>
@@ -35,16 +35,11 @@ internal sealed class SandboxLoginRunner(string sindriHome, Func<string, string?
         OwnerOnly.EnsureDirectory(home);
 
         var toolkit = ToolkitDirectory();
-        var installer = Path.Combine(toolkit, "providers", provider, "install-hooks.sh");
-        if (!File.Exists(installer))
+        var hooks = await LinkHooks(provider, toolkit, home, cancellationToken).ConfigureAwait(false);
+        var skills = hooks.IsError || hooks.Value != 0 ? hooks : await LinkSkills(toolkit, home, cancellationToken).ConfigureAwait(false);
+        if (skills.IsError || skills.Value != 0)
         {
-            return SindriErrors.LaunchLoginUnavailable.With($"the hook installer {installer} isn't there (fix: set TOOLKIT_DIR to the agentic-workflow checkout)");
-        }
-
-        var hooks = await RunOnTerminal("bash", [installer, "--target-dir", home], new Dictionary<string, string?>(StringComparer.Ordinal) { ["TOOLKIT_DIR"] = toolkit }, cancellationToken).ConfigureAwait(false);
-        if (hooks.IsError || hooks.Value != 0)
-        {
-            return hooks.IsError ? hooks.Error : SindriErrors.LaunchLoginUnavailable.With($"{installer} exited {hooks.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}, so {home} has no hooks");
+            return skills;
         }
 
         if (RemoveStaleLogin(provider, home) is { } failed)
@@ -55,6 +50,36 @@ internal sealed class SandboxLoginRunner(string sindriHome, Func<string, string?
         var signed = await RunOnTerminal(binDirectory is null ? signIn[0] : Path.Combine(binDirectory, signIn[0]), signIn[1..], new Dictionary<string, string?>(StringComparer.Ordinal) { [variable] = home }, cancellationToken).ConfigureAwait(false);
         await PrintNextStep(provider, home, signed).ConfigureAwait(false);
         return signed;
+    }
+
+    /// <summary>Runs the provider's hook installer into the home; the result is its exit code, 0 when the hooks are there.</summary>
+    private static async Task<Result<int>> LinkHooks(string provider, string toolkit, string home, CancellationToken cancellationToken)
+    {
+        var installer = Path.Combine(toolkit, "providers", provider, "install-hooks.sh");
+        if (!File.Exists(installer))
+        {
+            return SindriErrors.LaunchLoginUnavailable.With($"the hook installer {installer} isn't there (fix: set TOOLKIT_DIR to the agentic-workflow checkout)");
+        }
+
+        var hooks = await RunOnTerminal("bash", [installer, "--target-dir", home], new Dictionary<string, string?>(StringComparer.Ordinal) { ["TOOLKIT_DIR"] = toolkit }, cancellationToken).ConfigureAwait(false);
+        return hooks.IsError || hooks.Value == 0
+            ? hooks
+            : SindriErrors.LaunchLoginUnavailable.With($"{installer} exited {hooks.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}, so {home} has no hooks");
+    }
+
+    /// <summary>Links the toolkit's skills into the home ('providers/install-skills.sh --target-dir'); the result is the installer's exit code, 0 when the skills are there.</summary>
+    private static async Task<Result<int>> LinkSkills(string toolkit, string home, CancellationToken cancellationToken)
+    {
+        var installer = Path.Combine(toolkit, "providers", "install-skills.sh");
+        if (!File.Exists(installer))
+        {
+            return SindriErrors.LaunchLoginUnavailable.With($"the skills installer {installer} isn't there (fix: update the toolkit checkout, or set TOOLKIT_DIR to a current one)");
+        }
+
+        var linked = await RunOnTerminal("bash", [installer, "--target-dir", home], new Dictionary<string, string?>(StringComparer.Ordinal) { ["TOOLKIT_DIR"] = toolkit }, cancellationToken).ConfigureAwait(false);
+        return linked.IsError || linked.Value == 0
+            ? linked
+            : SindriErrors.LaunchLoginUnavailable.With($"{installer} exited {linked.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}, so {home} has no skills");
     }
 
     private static async Task PrintNextStep(string provider, string home, Result<int> signed)
