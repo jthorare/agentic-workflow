@@ -72,7 +72,7 @@ public static class ContextInfrastructureServiceCollectionExtensions
             .AddSingleton<IIntentStore, SqliteIntentStore>()
             .AddSingleton<IRecordStore, SqliteRecordStore>()
             .AddSingleton<ISourceIdentityStore, SqliteSourceIdentityStore>()
-            .AddSingleton<ISourceViewers, LinearViewers>().AddSingleton<ILinearLookups, LinearLookups>().AddSingleton<ILinearLookupStore, SqliteLinearLookupStore>().AddSingleton<ILinearIssueReads, LinearIssueReads>()
+            .AddSingleton<ISourceViewers, LinearViewers>().AddSingleton<ILinearLookups, LinearLookups>().AddSingleton<ILinearLookupStore, SqliteLinearLookupStore>().AddSingleton<ILinearIssueStore, SqliteLinearIssueStore>().AddSingleton<ILinearIssueReads, LinearIssueReads>()
             .AddSingleton<ILexicalLeg, SqliteLexicalLeg>()
             .AddSingleton<IRecordFeedCatalog, ContextRecordFeedCatalog>()
             .AddSingleton<IVectorMatrixCache, VectorMatrixCache>()

@@ -29,4 +29,39 @@ internal static class LinearSql
     internal const string DeleteChanges = "DELETE FROM linear_issue_change WHERE issue_key = @key";
 
     internal const string DeleteIssue = "DELETE FROM linear_issue WHERE key = @key";
+
+    private const string Visible = "r.removed_at IS NULL AND r.blocked = 0 AND (r.audience_key IN (SELECT value FROM json_each(@audiences)) OR r.key IN (SELECT value FROM json_each(@records)))";
+
+    private const string IssueColumns =
+        "i.key, r.title, r.url, r.state_raw, r.author, r.created_at, r.closed_at, r.audience_key, " +
+        "i.team_id, i.identifier, i.state_id, i.state_type, i.assignee_id, i.priority, i.estimate, i.cycle_id, i.project_id, i.parent_id, i.labels, i.due_date, i.sort_order, i.updated_at";
+
+    /// <summary>Issues newest first by Linear's update time, then key; a page continues after (@afterAt, @afterKey). A filter that is NULL does not narrow.</summary>
+    internal const string ListIssues =
+        "SELECT " + IssueColumns + " FROM linear_issue i JOIN source_record r ON r.key = i.key WHERE " + Visible + " " +
+        "AND (@team IS NULL OR r.audience_key = 'linear:' || @team) AND (@assignee IS NULL OR i.assignee_id = @assignee) " +
+        "AND (@states IS NULL OR i.state_type IN (SELECT value FROM json_each(@states))) AND (@project IS NULL OR i.project_id = @project) AND (@cycle IS NULL OR i.cycle_id = @cycle) " +
+        "AND (@afterAt IS NULL OR i.updated_at < @afterAt OR (i.updated_at = @afterAt AND i.key > @afterKey)) " +
+        "ORDER BY i.updated_at DESC, i.key ASC LIMIT @limit";
+
+    internal const string GetIssue = "SELECT " + IssueColumns + " FROM linear_issue i JOIN source_record r ON r.key = i.key WHERE i.key = @key AND " + Visible;
+
+    internal const string IssueComments =
+        "SELECT c.id, c.author_id, c.created_at, c.body, c.sindri FROM linear_comment c JOIN source_record r ON r.key = c.issue_key " +
+        "WHERE c.issue_key = @key AND " + Visible + " ORDER BY c.created_at DESC, c.id ASC";
+
+    /// <summary>Assignments to the viewer, and state moves a sync saw on issues assigned to them, after a marker.</summary>
+    internal const string SinceChanges =
+        "SELECT ch.issue_key, i.identifier, ch.field, ch.\"old\", ch.\"new\", ch.at, ch.via FROM linear_issue_change ch " +
+        "JOIN linear_issue i ON i.key = ch.issue_key JOIN source_record r ON r.key = ch.issue_key " +
+        "WHERE ch.at > @marker AND " + Visible + " " +
+        "AND ((ch.field = 'assignee' AND ch.\"new\" = @viewer) OR (ch.field = 'state' AND ch.via = 'feed' AND i.assignee_id = @viewer)) ORDER BY ch.at ASC, ch.seq ASC";
+
+    /// <summary>Comments after a marker that someone else wrote, newest first and capped: the mention test runs on them in code.</summary>
+    internal const string SinceComments =
+        "SELECT c.id, c.author_id, c.created_at, c.body, c.sindri, c.issue_key, i.identifier FROM linear_comment c " +
+        "JOIN linear_issue i ON i.key = c.issue_key JOIN source_record r ON r.key = c.issue_key " +
+        "WHERE c.created_at > @marker AND (c.author_id IS NULL OR c.author_id <> @viewer) AND c.sindri = 0 AND " + Visible + " ORDER BY c.created_at DESC, c.id ASC LIMIT @limit";
+
+    internal const string ViewerNames = "SELECT name, display_name FROM linear_member WHERE id = @viewer";
 }

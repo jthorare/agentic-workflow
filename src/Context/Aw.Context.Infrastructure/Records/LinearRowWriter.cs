@@ -1,12 +1,9 @@
-using System.Text;
 using Aw.Context.Core.Linear;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Infrastructure.Store;
 using Aw.Kernel;
 using Aw.Kernel.Data;
-using Aw.Kernel.Json;
-using Microsoft.Data.Sqlite;
 
 namespace Aw.Context.Infrastructure.Records;
 
@@ -38,7 +35,7 @@ internal sealed class LinearRowWriter(TimeProvider? clock = null) : ISideRowWrit
             return true;
         }
 
-        var comments = await SqliteQueries.List(session, new SqlStatement(LinearSql.StoredComments, c => c.Bind("@key", key.Value)), CommentMapper, cancellationToken).ConfigureAwait(false);
+        var comments = await SqliteQueries.List(session, new SqlStatement(LinearSql.StoredComments, c => c.Bind("@key", key.Value)), LinearRowReads.Comment, cancellationToken).ConfigureAwait(false);
         return comments.IsError ? ContextDatabase.Translate(comments.Error) : !CommentsEqual(comments.Value, wanted.Comments);
     }
 
@@ -134,7 +131,7 @@ internal sealed class LinearRowWriter(TimeProvider? clock = null) : ISideRowWrit
 
     private static async ValueTask<Result<LinearIssueFields?>> StoredFields(ISqliteSession session, RecordKey key, CancellationToken cancellationToken)
     {
-        var rows = await SqliteQueries.List(session, new SqlStatement(LinearSql.StoredIssue, c => c.Bind("@key", key.Value)), FieldsMapper, cancellationToken).ConfigureAwait(false);
+        var rows = await SqliteQueries.List(session, new SqlStatement(LinearSql.StoredIssue, c => c.Bind("@key", key.Value)), LinearRowReads.Fields, cancellationToken).ConfigureAwait(false);
         if (rows.IsError)
         {
             return ContextDatabase.Translate(rows.Error);
@@ -162,22 +159,5 @@ internal sealed class LinearRowWriter(TimeProvider? clock = null) : ISideRowWrit
 
     private static string Labels(IReadOnlyList<ExternalId> ids) => DesignDocJson.Strings([.. ids.Select(static i => i.Value)]);
 
-    private static ExternalId? ReadId(SqliteDataReader r, int ordinal) => r.IsDBNull(ordinal) ? null : ExternalId.From(r.GetString(ordinal));
-
-    private static IReadOnlyList<ExternalId> ReadLabels(string json) =>
-        AwJson.Deserialize<string[]>(Encoding.UTF8.GetBytes(json), DesignDocJson.Options) is { IsError: false } read ? [.. read.Value.Select(ExternalId.From)] : [];
-
-    private static IRowMapper<LinearIssueFields> FieldsMapper { get; } = new Mapper<LinearIssueFields>(r => new LinearIssueFields(
-        ReadId(r, 0), r.GetString(1), ReadId(r, 2), r.IsDBNull(3) ? null : r.GetString(3), ReadId(r, 4), r.GetInt32(5), r.IsDBNull(6) ? null : r.GetDouble(6), ReadId(r, 7), ReadId(r, 8), ReadId(r, 9),
-        ReadLabels(r.GetString(10)), r.IsDBNull(11) ? null : r.GetString(11), r.IsDBNull(12) ? null : r.GetDouble(12), SqliteRead.GetTimestamp(r, 13)));
-
-    private static IRowMapper<LinearCommentRow> CommentMapper { get; } = new Mapper<LinearCommentRow>(r =>
-        new LinearCommentRow(ExternalId.From(r.GetString(0)), ReadId(r, 1), SqliteRead.GetTimestamp(r, 2), r.GetString(3), r.GetInt64(4) == 1));
-
     private sealed record Change(string Field, ExternalId? Old, ExternalId? New, bool Written);
-
-    private sealed class Mapper<T>(Func<SqliteDataReader, T> map) : IRowMapper<T>
-    {
-        public T Map(SqliteDataReader reader) => map(reader);
-    }
 }

@@ -11581,3 +11581,150 @@ static readonly Aw.Context.Core.Linear.LinearHubErrors.NotStored -> Aw.Kernel.Er
 Aw.Context.Core.Sync.ISourcePurges
 Aw.Context.Core.Sync.ISourcePurges.IsPurging(Aw.Context.Core.Sources.SourceId source) -> bool
 Aw.Context.Core.Linear.ILinearLookupStore.Team(string! teamKey, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearTeamLookups?>!>
+Aw.Context.Core.Facade.IContextIssues
+Aw.Context.Core.Facade.IContextIssues.IssueComments(Aw.Context.Core.Sources.RecordKey key, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>!>!>
+Aw.Context.Core.Facade.IContextIssues.IssueGet(Aw.Context.Core.Sources.RecordKey key, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueRow?>!>
+Aw.Context.Core.Facade.IContextIssues.IssueList(Aw.Context.Core.Linear.LinearIssueFilter! filter, Aw.Context.Core.Linear.LinearIssueCursor? after, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssuePage!>!>
+Aw.Context.Core.Facade.IContextIssues.IssueLookups(string! team, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearTeamLookups?>!>
+Aw.Context.Core.Facade.IContextIssues.IssueSince(System.DateTimeOffset marker, Aw.Context.Core.Sources.ExternalId viewer, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearSince!>!>
+Aw.Context.Core.Linear.ILinearIssueStore
+Aw.Context.Core.Linear.ILinearIssueStore.Comments(Aw.Context.Core.Sources.RecordKey key, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>!>!>
+Aw.Context.Core.Linear.ILinearIssueStore.Get(Aw.Context.Core.Sources.RecordKey key, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueRow?>!>
+Aw.Context.Core.Linear.ILinearIssueStore.List(Aw.Context.Core.Linear.LinearIssueFilter! filter, Aw.Context.Core.Linear.LinearIssueCursor? after, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssuePage!>!>
+Aw.Context.Core.Linear.ILinearIssueStore.Since(System.DateTimeOffset marker, Aw.Context.Core.Sources.ExternalId viewer, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearSince!>!>
+Aw.Context.Core.Linear.LinearIssueCursor
+Aw.Context.Core.Linear.LinearIssueCursor.<Clone>$() -> Aw.Context.Core.Linear.LinearIssueCursor!
+Aw.Context.Core.Linear.LinearIssueCursor.Deconstruct(out System.DateTimeOffset UpdatedAt, out Aw.Context.Core.Sources.RecordKey Key) -> void
+Aw.Context.Core.Linear.LinearIssueCursor.Equals(Aw.Context.Core.Linear.LinearIssueCursor? other) -> bool
+Aw.Context.Core.Linear.LinearIssueCursor.Key.get -> Aw.Context.Core.Sources.RecordKey
+Aw.Context.Core.Linear.LinearIssueCursor.Key.init -> void
+Aw.Context.Core.Linear.LinearIssueCursor.LinearIssueCursor(System.DateTimeOffset UpdatedAt, Aw.Context.Core.Sources.RecordKey Key) -> void
+Aw.Context.Core.Linear.LinearIssueCursor.UpdatedAt.get -> System.DateTimeOffset
+Aw.Context.Core.Linear.LinearIssueCursor.UpdatedAt.init -> void
+Aw.Context.Core.Linear.LinearIssueFilter
+Aw.Context.Core.Linear.LinearIssueFilter.<Clone>$() -> Aw.Context.Core.Linear.LinearIssueFilter!
+Aw.Context.Core.Linear.LinearIssueFilter.Assignee.get -> Aw.Context.Core.Sources.ExternalId?
+Aw.Context.Core.Linear.LinearIssueFilter.Assignee.init -> void
+Aw.Context.Core.Linear.LinearIssueFilter.Cycle.get -> Aw.Context.Core.Sources.ExternalId?
+Aw.Context.Core.Linear.LinearIssueFilter.Cycle.init -> void
+Aw.Context.Core.Linear.LinearIssueFilter.Deconstruct(out string? Team, out Aw.Context.Core.Sources.ExternalId? Assignee, out System.Collections.Generic.IReadOnlyList<string!>? StateTypes, out Aw.Context.Core.Sources.ExternalId? Project, out Aw.Context.Core.Sources.ExternalId? Cycle, out int Limit) -> void
+Aw.Context.Core.Linear.LinearIssueFilter.Equals(Aw.Context.Core.Linear.LinearIssueFilter? other) -> bool
+Aw.Context.Core.Linear.LinearIssueFilter.Limit.get -> int
+Aw.Context.Core.Linear.LinearIssueFilter.Limit.init -> void
+Aw.Context.Core.Linear.LinearIssueFilter.LinearIssueFilter(string? Team = null, Aw.Context.Core.Sources.ExternalId? Assignee = null, System.Collections.Generic.IReadOnlyList<string!>? StateTypes = null, Aw.Context.Core.Sources.ExternalId? Project = null, Aw.Context.Core.Sources.ExternalId? Cycle = null, int Limit = 50) -> void
+Aw.Context.Core.Linear.LinearIssueFilter.Project.get -> Aw.Context.Core.Sources.ExternalId?
+Aw.Context.Core.Linear.LinearIssueFilter.Project.init -> void
+Aw.Context.Core.Linear.LinearIssueFilter.StateTypes.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.Linear.LinearIssueFilter.StateTypes.init -> void
+Aw.Context.Core.Linear.LinearIssueFilter.Team.get -> string?
+Aw.Context.Core.Linear.LinearIssueFilter.Team.init -> void
+Aw.Context.Core.Linear.LinearIssuePage
+Aw.Context.Core.Linear.LinearIssuePage.<Clone>$() -> Aw.Context.Core.Linear.LinearIssuePage!
+Aw.Context.Core.Linear.LinearIssuePage.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearIssueRow!>! Issues, out Aw.Context.Core.Linear.LinearIssueCursor? Next) -> void
+Aw.Context.Core.Linear.LinearIssuePage.Equals(Aw.Context.Core.Linear.LinearIssuePage? other) -> bool
+Aw.Context.Core.Linear.LinearIssuePage.Issues.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearIssueRow!>!
+Aw.Context.Core.Linear.LinearIssuePage.Issues.init -> void
+Aw.Context.Core.Linear.LinearIssuePage.LinearIssuePage(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearIssueRow!>! Issues, Aw.Context.Core.Linear.LinearIssueCursor? Next) -> void
+Aw.Context.Core.Linear.LinearIssuePage.Next.get -> Aw.Context.Core.Linear.LinearIssueCursor?
+Aw.Context.Core.Linear.LinearIssuePage.Next.init -> void
+Aw.Context.Core.Linear.LinearIssueRow
+Aw.Context.Core.Linear.LinearIssueRow.<Clone>$() -> Aw.Context.Core.Linear.LinearIssueRow!
+Aw.Context.Core.Linear.LinearIssueRow.Author.get -> string?
+Aw.Context.Core.Linear.LinearIssueRow.Author.init -> void
+Aw.Context.Core.Linear.LinearIssueRow.ClosedAt.get -> System.DateTimeOffset?
+Aw.Context.Core.Linear.LinearIssueRow.ClosedAt.init -> void
+Aw.Context.Core.Linear.LinearIssueRow.CreatedAt.get -> System.DateTimeOffset?
+Aw.Context.Core.Linear.LinearIssueRow.CreatedAt.init -> void
+Aw.Context.Core.Linear.LinearIssueRow.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out string! Title, out string? Url, out string? StateRaw, out string? Author, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? ClosedAt, out string? TeamKey, out Aw.Context.Core.Linear.LinearIssueFields! Fields) -> void
+Aw.Context.Core.Linear.LinearIssueRow.Equals(Aw.Context.Core.Linear.LinearIssueRow? other) -> bool
+Aw.Context.Core.Linear.LinearIssueRow.Fields.get -> Aw.Context.Core.Linear.LinearIssueFields!
+Aw.Context.Core.Linear.LinearIssueRow.Fields.init -> void
+Aw.Context.Core.Linear.LinearIssueRow.Key.get -> Aw.Context.Core.Sources.RecordKey
+Aw.Context.Core.Linear.LinearIssueRow.Key.init -> void
+Aw.Context.Core.Linear.LinearIssueRow.LinearIssueRow(Aw.Context.Core.Sources.RecordKey Key, string! Title, string? Url, string? StateRaw, string? Author, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? ClosedAt, string? TeamKey, Aw.Context.Core.Linear.LinearIssueFields! Fields) -> void
+Aw.Context.Core.Linear.LinearIssueRow.StateRaw.get -> string?
+Aw.Context.Core.Linear.LinearIssueRow.StateRaw.init -> void
+Aw.Context.Core.Linear.LinearIssueRow.TeamKey.get -> string?
+Aw.Context.Core.Linear.LinearIssueRow.TeamKey.init -> void
+Aw.Context.Core.Linear.LinearIssueRow.Title.get -> string!
+Aw.Context.Core.Linear.LinearIssueRow.Title.init -> void
+Aw.Context.Core.Linear.LinearIssueRow.Url.get -> string?
+Aw.Context.Core.Linear.LinearIssueRow.Url.init -> void
+Aw.Context.Core.Linear.LinearMentions
+Aw.Context.Core.Linear.LinearSince
+Aw.Context.Core.Linear.LinearSince.<Clone>$() -> Aw.Context.Core.Linear.LinearSince!
+Aw.Context.Core.Linear.LinearSince.Changes.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearSinceChange!>!
+Aw.Context.Core.Linear.LinearSince.Changes.init -> void
+Aw.Context.Core.Linear.LinearSince.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearSinceChange!>! Changes, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearSinceMention!>! Mentions) -> void
+Aw.Context.Core.Linear.LinearSince.Equals(Aw.Context.Core.Linear.LinearSince? other) -> bool
+Aw.Context.Core.Linear.LinearSince.LinearSince(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearSinceChange!>! Changes, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearSinceMention!>! Mentions) -> void
+Aw.Context.Core.Linear.LinearSince.Mentions.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearSinceMention!>!
+Aw.Context.Core.Linear.LinearSince.Mentions.init -> void
+Aw.Context.Core.Linear.LinearSinceChange
+Aw.Context.Core.Linear.LinearSinceChange.<Clone>$() -> Aw.Context.Core.Linear.LinearSinceChange!
+Aw.Context.Core.Linear.LinearSinceChange.At.get -> System.DateTimeOffset
+Aw.Context.Core.Linear.LinearSinceChange.At.init -> void
+Aw.Context.Core.Linear.LinearSinceChange.Deconstruct(out Aw.Context.Core.Sources.RecordKey Issue, out string! Identifier, out string! Field, out Aw.Context.Core.Sources.ExternalId? Old, out Aw.Context.Core.Sources.ExternalId? New, out System.DateTimeOffset At, out string! Via) -> void
+Aw.Context.Core.Linear.LinearSinceChange.Equals(Aw.Context.Core.Linear.LinearSinceChange? other) -> bool
+Aw.Context.Core.Linear.LinearSinceChange.Field.get -> string!
+Aw.Context.Core.Linear.LinearSinceChange.Field.init -> void
+Aw.Context.Core.Linear.LinearSinceChange.Identifier.get -> string!
+Aw.Context.Core.Linear.LinearSinceChange.Identifier.init -> void
+Aw.Context.Core.Linear.LinearSinceChange.Issue.get -> Aw.Context.Core.Sources.RecordKey
+Aw.Context.Core.Linear.LinearSinceChange.Issue.init -> void
+Aw.Context.Core.Linear.LinearSinceChange.LinearSinceChange(Aw.Context.Core.Sources.RecordKey Issue, string! Identifier, string! Field, Aw.Context.Core.Sources.ExternalId? Old, Aw.Context.Core.Sources.ExternalId? New, System.DateTimeOffset At, string! Via) -> void
+Aw.Context.Core.Linear.LinearSinceChange.New.get -> Aw.Context.Core.Sources.ExternalId?
+Aw.Context.Core.Linear.LinearSinceChange.New.init -> void
+Aw.Context.Core.Linear.LinearSinceChange.Old.get -> Aw.Context.Core.Sources.ExternalId?
+Aw.Context.Core.Linear.LinearSinceChange.Old.init -> void
+Aw.Context.Core.Linear.LinearSinceChange.Via.get -> string!
+Aw.Context.Core.Linear.LinearSinceChange.Via.init -> void
+Aw.Context.Core.Linear.LinearSinceMention
+Aw.Context.Core.Linear.LinearSinceMention.<Clone>$() -> Aw.Context.Core.Linear.LinearSinceMention!
+Aw.Context.Core.Linear.LinearSinceMention.Comment.get -> Aw.Context.Core.Linear.LinearCommentRow!
+Aw.Context.Core.Linear.LinearSinceMention.Comment.init -> void
+Aw.Context.Core.Linear.LinearSinceMention.Deconstruct(out Aw.Context.Core.Sources.RecordKey Issue, out string! Identifier, out Aw.Context.Core.Linear.LinearCommentRow! Comment) -> void
+Aw.Context.Core.Linear.LinearSinceMention.Equals(Aw.Context.Core.Linear.LinearSinceMention? other) -> bool
+Aw.Context.Core.Linear.LinearSinceMention.Identifier.get -> string!
+Aw.Context.Core.Linear.LinearSinceMention.Identifier.init -> void
+Aw.Context.Core.Linear.LinearSinceMention.Issue.get -> Aw.Context.Core.Sources.RecordKey
+Aw.Context.Core.Linear.LinearSinceMention.Issue.init -> void
+Aw.Context.Core.Linear.LinearSinceMention.LinearSinceMention(Aw.Context.Core.Sources.RecordKey Issue, string! Identifier, Aw.Context.Core.Linear.LinearCommentRow! Comment) -> void
+const Aw.Context.Core.Linear.LinearIssueFilter.DefaultLimit = 50 -> int
+const Aw.Context.Core.Linear.LinearIssueFilter.MaxLimit = 200 -> int
+override Aw.Context.Core.Linear.LinearIssueCursor.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearIssueCursor.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearIssueCursor.ToString() -> string!
+override Aw.Context.Core.Linear.LinearIssueFilter.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearIssueFilter.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearIssueFilter.ToString() -> string!
+override Aw.Context.Core.Linear.LinearIssuePage.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearIssuePage.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearIssuePage.ToString() -> string!
+override Aw.Context.Core.Linear.LinearIssueRow.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearIssueRow.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearIssueRow.ToString() -> string!
+override Aw.Context.Core.Linear.LinearSince.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearSince.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearSince.ToString() -> string!
+override Aw.Context.Core.Linear.LinearSinceChange.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearSinceChange.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearSinceChange.ToString() -> string!
+override Aw.Context.Core.Linear.LinearSinceMention.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearSinceMention.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearSinceMention.ToString() -> string!
+static Aw.Context.Core.Linear.LinearIssueCursor.operator !=(Aw.Context.Core.Linear.LinearIssueCursor? left, Aw.Context.Core.Linear.LinearIssueCursor? right) -> bool
+static Aw.Context.Core.Linear.LinearIssueCursor.operator ==(Aw.Context.Core.Linear.LinearIssueCursor? left, Aw.Context.Core.Linear.LinearIssueCursor? right) -> bool
+static Aw.Context.Core.Linear.LinearIssueFilter.operator !=(Aw.Context.Core.Linear.LinearIssueFilter? left, Aw.Context.Core.Linear.LinearIssueFilter? right) -> bool
+static Aw.Context.Core.Linear.LinearIssueFilter.operator ==(Aw.Context.Core.Linear.LinearIssueFilter? left, Aw.Context.Core.Linear.LinearIssueFilter? right) -> bool
+static Aw.Context.Core.Linear.LinearIssuePage.operator !=(Aw.Context.Core.Linear.LinearIssuePage? left, Aw.Context.Core.Linear.LinearIssuePage? right) -> bool
+static Aw.Context.Core.Linear.LinearIssuePage.operator ==(Aw.Context.Core.Linear.LinearIssuePage? left, Aw.Context.Core.Linear.LinearIssuePage? right) -> bool
+static Aw.Context.Core.Linear.LinearIssueRow.operator !=(Aw.Context.Core.Linear.LinearIssueRow? left, Aw.Context.Core.Linear.LinearIssueRow? right) -> bool
+static Aw.Context.Core.Linear.LinearIssueRow.operator ==(Aw.Context.Core.Linear.LinearIssueRow? left, Aw.Context.Core.Linear.LinearIssueRow? right) -> bool
+static Aw.Context.Core.Linear.LinearMentions.Mentions(string! body, System.Collections.Generic.IEnumerable<string?>! names) -> bool
+static Aw.Context.Core.Linear.LinearSince.operator !=(Aw.Context.Core.Linear.LinearSince? left, Aw.Context.Core.Linear.LinearSince? right) -> bool
+static Aw.Context.Core.Linear.LinearSince.operator ==(Aw.Context.Core.Linear.LinearSince? left, Aw.Context.Core.Linear.LinearSince? right) -> bool
+static Aw.Context.Core.Linear.LinearSinceChange.operator !=(Aw.Context.Core.Linear.LinearSinceChange? left, Aw.Context.Core.Linear.LinearSinceChange? right) -> bool
+static Aw.Context.Core.Linear.LinearSinceChange.operator ==(Aw.Context.Core.Linear.LinearSinceChange? left, Aw.Context.Core.Linear.LinearSinceChange? right) -> bool
+static Aw.Context.Core.Linear.LinearSinceMention.operator !=(Aw.Context.Core.Linear.LinearSinceMention? left, Aw.Context.Core.Linear.LinearSinceMention? right) -> bool
+static Aw.Context.Core.Linear.LinearSinceMention.operator ==(Aw.Context.Core.Linear.LinearSinceMention? left, Aw.Context.Core.Linear.LinearSinceMention? right) -> bool

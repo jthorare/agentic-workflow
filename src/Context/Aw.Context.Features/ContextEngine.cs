@@ -11,6 +11,7 @@ using Aw.Context.Core.Facade;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Linear;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Pages;
@@ -51,6 +52,21 @@ internal sealed class ContextEngine(
 
     public ValueTask<Result<ProjectFactsAnswer>> Projects(ProjectFactsRequest request, ContextScope scope, CancellationToken cancellationToken) =>
         reads.Projects(request, scope, cancellationToken);
+
+    public ValueTask<Result<LinearIssuePage>> IssueList(LinearIssueFilter filter, LinearIssueCursor? after, ContextScope scope, CancellationToken cancellationToken) =>
+        reads.IssueList(filter, after, scope, cancellationToken);
+
+    public ValueTask<Result<LinearIssueRow?>> IssueGet(RecordKey key, ContextScope scope, CancellationToken cancellationToken) =>
+        reads.IssueGet(key, scope, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<LinearCommentRow>>> IssueComments(RecordKey key, ContextScope scope, CancellationToken cancellationToken) =>
+        reads.IssueComments(key, scope, cancellationToken);
+
+    public ValueTask<Result<LinearTeamLookups?>> IssueLookups(string team, ContextScope scope, CancellationToken cancellationToken) =>
+        reads.IssueLookups(team, scope, cancellationToken);
+
+    public ValueTask<Result<LinearSince>> IssueSince(DateTimeOffset marker, ExternalId viewer, ContextScope scope, CancellationToken cancellationToken) =>
+        reads.IssueSince(marker, viewer, scope, cancellationToken);
 
     public ValueTask<Result<ContextResult>> Query(ContextQuery query1, ContextScope scope, CancellationToken cancellationToken) =>
         query.Handle(new QueryContextRequest(query1, scope), cancellationToken);

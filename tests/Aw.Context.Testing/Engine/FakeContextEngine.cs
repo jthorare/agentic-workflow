@@ -12,6 +12,7 @@ using Aw.Context.Core.Facade;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Linear;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Pages;
@@ -99,6 +100,26 @@ public sealed class FakeContextEngine : IContextEngine
     /// <summary>The fake keeps no records: a project read answers like every query (all sources unavailable).</summary>
     public ValueTask<Result<ProjectFactsAnswer>> Projects(ProjectFactsRequest request, ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<ProjectFactsAnswer>>(Down());
+
+    /// <summary>The fake keeps no records: the Linear issue reads answer like every query (all sources unavailable).</summary>
+    public ValueTask<Result<LinearIssuePage>> IssueList(LinearIssueFilter filter, LinearIssueCursor? after, ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<LinearIssuePage>>(Down());
+
+    /// <inheritdoc cref="IssueList"/>
+    public ValueTask<Result<LinearIssueRow?>> IssueGet(RecordKey key, ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<LinearIssueRow?>>(Down());
+
+    /// <inheritdoc cref="IssueList"/>
+    public ValueTask<Result<IReadOnlyList<LinearCommentRow>>> IssueComments(RecordKey key, ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<IReadOnlyList<LinearCommentRow>>>(Down());
+
+    /// <inheritdoc cref="IssueList"/>
+    public ValueTask<Result<LinearTeamLookups?>> IssueLookups(string team, ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<LinearTeamLookups?>>(Down());
+
+    /// <inheritdoc cref="IssueList"/>
+    public ValueTask<Result<LinearSince>> IssueSince(DateTimeOffset marker, ExternalId viewer, ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<LinearSince>>(Down());
 
     /// <summary>An embed run answers like every query (all sources unavailable) unless the engine came from <see cref="WithEmbed"/>.</summary>
     public ValueTask<Result<EmbedRecordsReport>> Embed(EmbedRecordsRequest request, ContextScope scope, CancellationToken cancellationToken) =>
