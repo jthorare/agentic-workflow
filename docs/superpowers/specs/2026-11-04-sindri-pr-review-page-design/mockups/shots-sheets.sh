@@ -16,6 +16,7 @@ done
 for w in 1440 1000; do
   shot "composer=1" "sheet-composer-$w" $w
   shot "sheet=confirm" "sheet-confirm-$w" $w
+  shot "sheet=confirm&state=own" "sheet-confirm-own-$w" $w
   shot "sheet=confirm&state=posting" "sheet-posting-$w" $w
   for e in e010 e011 e012 e013; do shot "sheet=confirm&state=$e" "sheet-$e-$w" $w; done
 done

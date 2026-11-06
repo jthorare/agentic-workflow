@@ -9,6 +9,8 @@ draws its screens from URL parameters listed in its header comment.
 
 ## The pick: the review page's layout
 
+**The owner picked A** (2026-11-06), with the five smaller calls below decided as recommended (spec §16). The page is built as A.
+
 | | A: the spec as written | B: diff first, panels as a tabbed rail |
 |---|---|---|
 | 1440 | `screens/review-a-1440.png` (whole scroll: `review-a-1440-full.png`) | `screens/review-b-1440.png` (`review-b-1440-full.png`, other tabs: `review-b-1440-docmap.png`) |
@@ -56,7 +58,7 @@ It's a model of the real bar, and the 130% margin is 23 px, so Ph7 adds a UI tes
 
 With a side sheet open at 1440 the page behind is 920 px, so it stacks (§15: the page's own width decides).
 
-## Found while drawing (for the owner, then folded into the spec)
+## Found while drawing (folded into the spec's §16 on 2026-11-06)
 
 Wording the spec doesn't give; the mockups show a first draft of each:
 1. The three fix-task outcomes (babysitter takes it, a live session takes it, waiting on the branch); §8.2 has only the half-done and
@@ -67,10 +69,11 @@ Wording the spec doesn't give; the mockups show a first draft of each:
    removed. Contents hidden. Show", "Binary file, not shown here. Open on GitHub").
 
 Decisions:
-4. **Fix task from a check or a requirement**: there's no diff line to put the thread on. Drawn as a line comment on the first changed
-   line; options: that, the review body only, or no post (item only).
+4. **Fix task from a check or a requirement**: there's no diff line to put the thread on. Owner: a comment in the review body
+   (`sheet-fix-check-1440.png`, `sheet-fix-req-1440.png`).
 5. **No `review.credential`** (`SND-REVIEW-012`): disable Post and say why when the confirm sheet opens, instead of failing on Post.
-6. **Approve on your own PR**: hidden or shown disabled with a reason (§8.3 says only "not offered").
+6. **Approve on your own PR**: owner: shown disabled with the reason; Request changes too, since GitHub takes only a comment from
+   the author (`sheet-confirm-own-*.png`).
 7. **Release 1's head-moved banner**: drop "Kept: your N comments" (no comments until release 2).
 8. **Near misses**: §4.2 says only `validate` and the doctor row show them, §6.1 says the errors sheet lists them. Drawn per §6.1.
 9. **Home's line**: drawn under the Needs-you rows, outside their count, linking to Reviews.

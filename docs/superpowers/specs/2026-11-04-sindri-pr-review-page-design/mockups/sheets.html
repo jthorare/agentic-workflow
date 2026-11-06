@@ -11,7 +11,7 @@
   Static: no production code. Colors, sizes and radii are the app's tokens (src/Sindri/Aw.Sindri.Ui/Theme/Tokens.axaml), no new ones.
   Query:
     sheet=fix     src=line|check|req  state=open|sending|o1|o2|o3|contrib|half      (release 1, §8.2)
-    sheet=confirm state=open|posting|e010|e011|e012|e013                             (release 2, §8.3)
+    sheet=confirm state=open|posting|own|e010|e011|e012|e013                             (release 2, §8.3)
     composer=1 [suggest=1]                                                           (release 2, §8.1: inline under the diff line, no sheet)
 -->
 <style>
@@ -140,7 +140,7 @@ const W = window.innerWidth;
 const sideSheet = SHEET && W >= 1100;
 const pageW = W - (sideSheet ? 520 : 0);
 const wide = pageW >= 1280;              // §6.2: the page's own width decides panels-beside-diff vs stacked
-const contrib = (SHEET === 'confirm') || STATE === 'contrib';
+const contrib = (SHEET === 'confirm' && STATE !== 'own') || STATE === 'contrib';
 const PR = contrib ? { n:324, title:'Expire abandoned slot holds', author:'maya-ortiz', branch:'fix/hold-expiry', sha:'a1b2c3d' }
                    : { n:318, title:'Hold booking slots for 10 minutes', author:'jthorare', branch:'feat/slot-hold', sha:'a1b2c3d' };
 const ITEM = '01J9Z3T7KQ';
@@ -231,7 +231,9 @@ function fixSheet() {
       <div class="w"><span class="k">Work item</span><span><b style="font-weight:500">${title}</b><br><span style="color:var(--subtle)">acme/harbor · links PR #${PR.n}</span></span></div>
       <div class="w"><span class="k">PR thread</span>${contrib
         ? `<span class="skip">Item only: Sindri won't post on ${PR.author}'s PR</span>`
-        : `<span>${SRC === 'line' ? 'Line comment on src/Harbor.Booking/SlotHold.cs:42' : 'Comment on #' + PR.n + ', first changed line of the file'}, from Sindri (verdict comment, marker <span class="mono">sindri.fix:&lt;item id&gt;</span>)</span>`}</div>
+        : SRC === 'line'
+          ? `<span>Line comment on src/Harbor.Booking/SlotHold.cs:42, from Sindri (verdict comment, marker <span class="mono">sindri.fix:&lt;item id&gt;</span>)</span>`
+          : `<span>Review comment on #${PR.n} (the review body, no diff line), from Sindri, marker <span class="mono">sindri.fix:&lt;item id&gt;</span></span>`}</div>
       <div class="w"><span class="k">Goes to</span><span>The babysitter watching #${PR.n}, else a live session on <span class="mono">${where}</span>, else the item waits in Work</span></div></div></div>`;
   if (STATE === 'open' || STATE === 'sending' || (STATE === 'contrib' && false)) {
     const busy = STATE === 'sending';
@@ -242,10 +244,11 @@ function fixSheet() {
       ${will}${sendRow(busy)}`;
   }
   // after Send
+  const THREAD = SRC === 'line' ? `#${PR.n} · SlotHold.cs:42` : `#${PR.n} · review comment`;
   const sent = {
-    o1: { t:`Fix task sent to the babysitter on #${PR.n}. It takes the thread as work and closes the item when it's fixed.`, to:`Babysitter watching #${PR.n}`, thread:`#${PR.n} · SlotHold.cs:42` },
-    o2: { t:`Fix task sent to the session on ${PR.branch} (claude, ~/repos/aw-wt/harbor-slot-hold).`, to:`Session on ${PR.branch}`, thread:`#${PR.n} · SlotHold.cs:42` },
-    o3: { t:`No session is on ${PR.branch}. The item waits in Work as "Waiting on ${PR.branch}", and the first session on that branch is told.`, to:`Waiting on ${PR.branch}`, thread:`#${PR.n} · SlotHold.cs:42` },
+    o1: { t:`Fix task sent to the babysitter on #${PR.n}. It takes the thread as work and closes the item when it's fixed.`, to:`Babysitter watching #${PR.n}`, thread:THREAD },
+    o2: { t:`Fix task sent to the session on ${PR.branch} (claude, ~/repos/aw-wt/harbor-slot-hold).`, to:`Session on ${PR.branch}`, thread:THREAD },
+    o3: { t:`No session is on ${PR.branch}. The item waits in Work as "Waiting on ${PR.branch}", and the first session on that branch is told.`, to:`Waiting on ${PR.branch}`, thread:THREAD },
     contrib: { t:`Item only: Sindri won't post on ${PR.author}'s PR. The item waits in Work as "Waiting on ${PR.branch}".`, to:`Waiting on ${PR.branch}`, thread:'not posted (not your PR)' },
   };
   if (STATE === 'half') {
@@ -273,20 +276,21 @@ function confirmSheet() {
     e013:['SND-REVIEW-013','GitHub refused the comment on src/Harbor.Booking/SlotHold.cs:42. Move it to a line in the diff, or drop it.','Show the comment'],
   }[STATE];
   const refused = STATE === 'e013';
-  const login = STATE === 'e012' ? '<span class="wait">no credential set</span>' : '<b style="font-weight:500">@jthorare</b>';
+  const nocred = STATE === 'e012', own = STATE === 'own';
   const cm = (f, l, tx, extra, cls) => `<div class="c ${cls||''}"><div class="fl"><span class="mono">${f}:${l}</span>${extra||''}</div>${tx}</div>`;
   return `<h2 class="f">Post review</h2>
     <div class="sub"><span class="mono">acme/harbor #${PR.n}</span><span style="color:var(--subtle)">· ${PR.author} · ${PR.sha}</span></div>
-    <div class="sub">Posting as ${login}${STATE === 'e012' ? '' : '<span style="color:var(--tert)">· from GitHub, for your credential</span>'}</div>
+    ${nocred ? '' : '<div class="sub">Posting as <b style="font-weight:500">@jthorare</b><span style="color:var(--tert)">· from GitHub, for your credential</span></div>'}
+    ${nocred ? `<div class="banner err"><span class="bad">✕</span><span>${err[1]}<div class="code mono">${err[0]} · Post stays disabled until a credential is set</div></span></div>` : ''}
     <div class="banner att"><span class="wait">✕</span><span><b style="font-weight:500;color:var(--ink)">Checked again just now.</b> One required check went from pass to fail since you opened this page: <i style="font-style:normal;color:var(--ink)">A new env var is in .env.example</i>, check-env-example failed on ${PR.sha}.</span></div>
-    <div><div class="sec">Verdict</div><div class="seg"><div>Comment</div><div>Approve</div><div class="on">✓ Request changes</div></div></div>
+    <div><div class="sec">Verdict</div><div class="seg">${own ? '<div class="on">✓ Comment</div><div class="off" style="text-decoration:none">Approve</div><div class="off" style="text-decoration:none">Request changes</div>' : '<div>Comment</div><div>Approve</div><div class="on">✓ Request changes</div>'}</div>${own ? '<div style="color:var(--attention);font-size:12px;margin-top:6px">○ You can\'t approve or request changes on your own PR: GitHub takes a comment only</div>' : ''}</div>
     <div><div class="sec">Review text</div><div class="ta" style="min-height:0;color:var(--muted)">Two things before this lands: the hold needs releasing on cancel, and REQ-E5 isn't covered yet.</div></div>
     <div><div class="sec">3 line comments</div><div class="clist">
       ${cm('SlotHold.cs',42,'Release the hold when the booking is cancelled, not only when it expires.', refused ? '<span class="bad">✕ refused by GitHub</span>' : '', refused ? 'refused' : '')}
       ${cm('SlotHold.cs',51,'Take() should reject a slot that\'s already held.')}
       ${cm('SlotHold.cs',43,'Release should also clear the timer.', '<span class="chip violet">Suggested by lane-booking</span>')}</div></div>
-    ${err ? `<div class="banner err"><span class="bad">✕</span><span>${err[1]}<div class="code mono">${err[0]} · your draft is kept</div></span></div>` : ''}
-    <div class="actions">${err ? `<span class="btn primary">${err[2]}</span><span class="btn">Close</span>` : `<span class="btn primary${busy ? ' off' : ''}">${busy ? 'Posting…' : 'Post review'}</span><span class="btn">Cancel</span>`}<span style="margin-left:auto;color:var(--tert);font-size:11px">${busy ? 'Posting as one review' : 'Esc returns to Post'}</span></div>`;
+    ${err && !nocred ? `<div class="banner err"><span class="bad">✕</span><span>${err[1]}<div class="code mono">${err[0]} · your draft is kept</div></span></div>` : ''}
+    <div class="actions">${nocred ? `<span class="btn primary off">Post review</span><span class="btn">Open Settings</span><span class="btn">Cancel</span>` : err ? `<span class="btn primary">${err[2]}</span><span class="btn">Close</span>` : `<span class="btn primary${busy ? ' off' : ''}">${busy ? 'Posting…' : 'Post review'}</span><span class="btn">Cancel</span>`}<span style="margin-left:auto;color:var(--tert);font-size:11px">${busy ? 'Posting as one review' : 'Esc returns to Post'}</span></div>`;
 }
 
 const sheetHtml = SHEET ? `<div class="sheet${sideSheet ? '' : ' cover'}">${SHEET === 'fix' ? fixSheet() : confirmSheet()}</div>` : '';
