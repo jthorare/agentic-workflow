@@ -1,7 +1,7 @@
 using System.Text;
 using Aw.Forge.Core;
 
-namespace Aw.Forge.Infrastructure;
+namespace Aw.Forge.Infrastructure.Text;
 
 /// <summary>Cuts a file's text to <see cref="ForgeLimits.FileTextBytes"/> bytes of UTF-8, never inside a character.</summary>
 internal static class TextCap
