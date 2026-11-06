@@ -47,6 +47,7 @@ erDiagram
         text synced_at
         text health "project health word (migration 0020), or null"
         text due_at "project due day, yyyy-MM-dd (migration 0020), or null"
+        text pull_facts "a GitHub PR's JSON {requestedReviewers, headSha, reviews[{login, commit, newCommits}]} (migration 0030), or null"
     }
     source_identity {
         text source PK "linear"
@@ -89,3 +90,5 @@ erDiagram
 ```
 
 `chunk_fts` is an FTS5 table over `chunk.text` (external content, `unicode61`), kept by the triggers `chunk_fts_ai`, `chunk_fts_ad` and `chunk_fts_au`. `chunk_ad` and `chunk_au` delete a chunk's vector when the chunk goes or its text changes; `embedding_ad` moves `store_epoch.delete_epoch` on every vector removal. Migration 0020 (`project_fields`) adds `source_record.health` and `due_at`, the `source_identity` table (the owner's user per source, one row each), and resets the `linear` record feed's `source_cursor` row (`repo = 'records'`) to phase `recent` with no cursor, backfill cursor or backfill bound. `source_cursor` gains `phase` and `backfill_cursor`; a source's one position is its row with `repo = '*'`.
+
+Migration 0030 (`s2b_pull_facts`) adds `source_record.pull_facts`: one JSON text on a GitHub PR's row with its requested reviewer logins (people only, never a team), its head sha and, for an open PR, each reviewer's latest reviewed commit with the number of commits the head is ahead of it (`newCommits` is null when a force-push dropped the commit). It is NULL for every other record, for a blocked record and for a tombstone, and `Text` and search don't see it. It is a column and not a table because the facts are one-to-one with the row and always read and written with it. The migration also invalidates GitHub PR rows (version `''`) and resets the `github` record feed's `source_cursor` row (`repo = 'records'`) to phase `recent`, so the next sync re-reads every PR once, the way 0029 did.

@@ -61,4 +61,9 @@ internal sealed class GitHubResumeUpstream : ResumeUpstream, IGitHubReader
         Admit(string.Create(CultureInfo.InvariantCulture, $"pull {repo}#{number}"))
             ? _inner.PullRequest(repo, number, cancellationToken)
             : ValueTask.FromResult<Result<GitHubPullDetailRead>>(new GitHubPullDetailRead(Detail: null, _resetsAt));
+
+    public ValueTask<Result<GitHubReviewRead>> PullReviews(string repo, int number, string head, CancellationToken cancellationToken) =>
+        Admit(string.Create(CultureInfo.InvariantCulture, $"reviews {repo}#{number}"))
+            ? _inner.PullReviews(repo, number, head, cancellationToken)
+            : ValueTask.FromResult<Result<GitHubReviewRead>>(new GitHubReviewRead([], _resetsAt));
 }
