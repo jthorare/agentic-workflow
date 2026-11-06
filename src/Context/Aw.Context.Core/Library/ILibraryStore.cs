@@ -6,7 +6,7 @@ namespace Aw.Context.Core.Library;
 
 /// <summary>
 /// The design-doc library's stored rows (migration 0031, spec 2026-11-04 §5.3), read without the audience rule's last word: a read returns the live rows a superset mask lets through, and the service applies
-/// <see cref="Aw.Context.Core.Audience.AudienceScope.Allows(AudienceKey?, RecordKey)"/> to each, so the rule lives in one place. Only live records count (<c language="text">removed_at IS NULL</c>).
+/// <see cref="Audience.AudienceScope.Allows(AudienceKey?, RecordKey)"/> to each, so the rule lives in one place. Only live records count (<c language="text">removed_at IS NULL</c>).
 /// Every method answers an error, never throws, for a store that can't be read ('SND-CONTEXT-004').
 /// </summary>
 public interface ILibraryStore

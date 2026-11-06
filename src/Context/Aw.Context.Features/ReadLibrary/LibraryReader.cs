@@ -21,7 +21,7 @@ internal sealed class LibraryReader(ILibraryStore store, AudienceScope audience)
     {
         if (slug is null ? _all is { } all : _byId.TryGetValue(slug, out all))
         {
-            return Results.Success<IReadOnlyList<LibraryDoc>>(all);
+            return Results.Success(all);
         }
 
         var rows = await store.Docs(new RecordAudience(audience.Allowed, audience.Records), slug, cancellationToken).ConfigureAwait(false);
