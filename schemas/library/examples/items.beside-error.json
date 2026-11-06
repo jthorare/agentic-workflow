@@ -1,0 +1,32 @@
+{
+  "parserVersion": 1,
+  "frontMatter": {
+    "aw-doc": 1,
+    "id": "sindri-pr-review-page",
+    "kind": "spec",
+    "title": "Sindri's PR review page, configured per project, mapped against the design docs",
+    "status": "draft",
+    "repos": [
+      "jthorare/agentic-workflow"
+    ]
+  },
+  "items": [
+    {
+      "id": "2-goals-and-non-goals",
+      "kind": "section",
+      "parent": null,
+      "lineStart": 89,
+      "lineEnd": 123,
+      "text": "## 2. Goals and non-goals"
+    }
+  ],
+  "refs": [],
+  "errors": [
+    {
+      "code": "SND-LIB-013",
+      "line": 40,
+      "message": "REQ-3 is defined twice (lines 12 and 40).",
+      "fix": "Rename one, or turn the second into a reference."
+    }
+  ]
+}
