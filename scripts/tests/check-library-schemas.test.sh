@@ -39,6 +39,9 @@ E=schemas/library/examples
 echo "repo"
 run "$REPO"; expect_rc "the repo's design-doc schema passes" 0; expect_out "prints ok" "check-library-schemas: ok"
 
+set +e; OUT="$(node "$CHECK" --root 2>&1)"; RC=$?; set -e
+expect_rc "--root with no value is a usage error" 2; expect_out "prints usage" "usage: node scripts/check-library-schemas.mjs"
+
 echo "drift"
 d="$(copy verdict)"; edit "$d/$E/spec.items.json" '.frontMatter.kind = "rfc"'
 run "$d"; expect_rc "a valid example the schema refuses fails" 1; expect_out "names the example" "spec.items.json"
@@ -57,6 +60,9 @@ run "$d"; expect_rc "an invalid example that fails somewhere else fails" 1; expe
 
 d="$(copy no-path)"; edit "$d/$E/manifest.json" '(.examples[] | select(.file == "kind.unknown.json")) |= del(.failsAt)'
 run "$d"; expect_rc "an invalid example with no failsAt fails" 1; expect_out "names the requirement" "names no failsAt"
+
+d="$(copy vault-space)"; edit "$d/schemas/library/$S" '.["$defs"].ref.properties.to.pattern = "^[^\\s]+$"'
+run "$d"; expect_rc "a ref pattern that refuses a vault name with a space fails" 1; expect_out "names the example" "spec.items.json"
 
 d="$(copy unlisted)"; echo '{}' > "$d/$E/extra.json"
 run "$d"; expect_rc "an example missing from the manifest fails" 1; expect_out "names the file" "extra.json"

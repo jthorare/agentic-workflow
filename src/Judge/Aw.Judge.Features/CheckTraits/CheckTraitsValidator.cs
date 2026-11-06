@@ -15,6 +15,7 @@ internal sealed class CheckTraitsValidator : IValidator<CheckTraitsRequest>
     private static string? Problem(CheckTraitsRequest value) =>
         FilesMismatch(value) ? "--file goes with --edit, and --edit needs a file"
         : value.Mode != TraitCheckMode.Scan && (value.Paths is { Count: > 0 } || value.Traits is { Count: > 0 } || value.Concurrency is not null) ? "--path, --trait and --concurrency go with --scan"
+        : value.Mode == TraitCheckMode.Scan && value.SessionId is not null ? "--session goes with --edit and --stop"
         : NumberProblem(value);
 
     private static bool FilesMismatch(CheckTraitsRequest value)

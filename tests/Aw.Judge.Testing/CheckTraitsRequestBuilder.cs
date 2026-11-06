@@ -44,6 +44,15 @@ public sealed class CheckTraitsRequestBuilder
         return this;
     }
 
+    /// <summary>Runs the check for an agent session (--session).</summary>
+    /// <param name="sessionId">The session's id.</param>
+    /// <returns>This builder.</returns>
+    public CheckTraitsRequestBuilder InSession(string sessionId)
+    {
+        _request = _request with { SessionId = Core.Ids.SessionId.From(sessionId) };
+        return this;
+    }
+
     /// <summary>Builds the request.</summary>
     /// <returns>The request.</returns>
     public CheckTraitsRequest Build() => _request;

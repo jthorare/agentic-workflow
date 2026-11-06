@@ -27,6 +27,7 @@ namespace Aw.Context.Core.Records;
 /// <param name="Health">A project's latest health word as the source gave it ('onTrack', 'atRisk', 'offTrack'), or null.</param>
 /// <param name="DueAt">The day a project is due, or null.</param>
 /// <param name="Description">A project's scrubbed, capped description, or null (none, blocked, empty once cleaned, or a tombstone).</param>
+/// <param name="Pull">A pull request's reviewers, head and reviewed commits, or null (not a pull request, a source that doesn't send them, blocked, or a tombstone).</param>
 public sealed record StoredRecord(
     RecordKey Key,
     SourceId Source,
@@ -50,4 +51,5 @@ public sealed record StoredRecord(
     IReadOnlyList<RecordLink> Links,
     string? Health = null,
     DateOnly? DueAt = null,
-    string? Description = null);
+    string? Description = null,
+    PullFacts? Pull = null);

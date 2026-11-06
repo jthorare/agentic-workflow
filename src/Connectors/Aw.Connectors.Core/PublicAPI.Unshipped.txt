@@ -14,10 +14,8 @@ Aw.Connectors.Core.ConnectorItem.Author.get -> string?
 Aw.Connectors.Core.ConnectorItem.Author.init -> void
 Aw.Connectors.Core.ConnectorItem.ClosedAt.get -> System.DateTimeOffset?
 Aw.Connectors.Core.ConnectorItem.ClosedAt.init -> void
-Aw.Connectors.Core.ConnectorItem.ConnectorItem(string! Key, string! Kind, string! Title, string! Text, string? Author, string? Url, string! State, string! StateRaw, System.DateTimeOffset CreatedAt, System.DateTimeOffset UpdatedAt, System.DateTimeOffset? ClosedAt, string! Version, System.Collections.Generic.IReadOnlyList<Aw.Connectors.Core.ConnectorLink!>! Links, string? Repo) -> void
 Aw.Connectors.Core.ConnectorItem.CreatedAt.get -> System.DateTimeOffset
 Aw.Connectors.Core.ConnectorItem.CreatedAt.init -> void
-Aw.Connectors.Core.ConnectorItem.Deconstruct(out string! Key, out string! Kind, out string! Title, out string! Text, out string? Author, out string? Url, out string! State, out string! StateRaw, out System.DateTimeOffset CreatedAt, out System.DateTimeOffset UpdatedAt, out System.DateTimeOffset? ClosedAt, out string! Version, out System.Collections.Generic.IReadOnlyList<Aw.Connectors.Core.ConnectorLink!>! Links, out string? Repo) -> void
 Aw.Connectors.Core.ConnectorItem.Equals(Aw.Connectors.Core.ConnectorItem? other) -> bool
 Aw.Connectors.Core.ConnectorItem.Key.get -> string!
 Aw.Connectors.Core.ConnectorItem.Key.init -> void
@@ -234,9 +232,7 @@ override Aw.Connectors.Core.GitHub.GitHubCommentPage.GetHashCode() -> int
 override Aw.Connectors.Core.GitHub.GitHubCommentPage.ToString() -> string!
 Aw.Connectors.Core.GitHub.GitHubPullDetail
 Aw.Connectors.Core.GitHub.GitHubPullDetail.<Clone>$() -> Aw.Connectors.Core.GitHub.GitHubPullDetail!
-Aw.Connectors.Core.GitHub.GitHubPullDetail.Deconstruct(out bool Merged, out bool Draft, out System.DateTimeOffset? MergedAt, out System.Collections.Generic.IReadOnlyList<string!>! Paths) -> void
 Aw.Connectors.Core.GitHub.GitHubPullDetail.Equals(Aw.Connectors.Core.GitHub.GitHubPullDetail? other) -> bool
-Aw.Connectors.Core.GitHub.GitHubPullDetail.GitHubPullDetail(bool Merged, bool Draft, System.DateTimeOffset? MergedAt, System.Collections.Generic.IReadOnlyList<string!>! Paths) -> void
 Aw.Connectors.Core.GitHub.GitHubPullDetail.Merged.get -> bool
 Aw.Connectors.Core.GitHub.GitHubPullDetail.Merged.init -> void
 Aw.Connectors.Core.GitHub.GitHubPullDetail.Draft.get -> bool
@@ -387,3 +383,60 @@ override Aw.Connectors.Core.Slack.SlackPass.GetHashCode() -> int
 override Aw.Connectors.Core.Slack.SlackPass.ToString() -> string!
 static Aw.Connectors.Core.Slack.SlackPass.operator !=(Aw.Connectors.Core.Slack.SlackPass? left, Aw.Connectors.Core.Slack.SlackPass? right) -> bool
 static Aw.Connectors.Core.Slack.SlackPass.operator ==(Aw.Connectors.Core.Slack.SlackPass? left, Aw.Connectors.Core.Slack.SlackPass? right) -> bool
+Aw.Connectors.Core.ConnectorItem.Deconstruct(out string! Key, out string! Kind, out string! Title, out string! Text, out string? Author, out string? Url, out string! State, out string! StateRaw, out System.DateTimeOffset CreatedAt, out System.DateTimeOffset UpdatedAt, out System.DateTimeOffset? ClosedAt, out string! Version, out System.Collections.Generic.IReadOnlyList<Aw.Connectors.Core.ConnectorLink!>! Links, out string? Repo, out Aw.Connectors.Core.ConnectorPullFacts? Pull) -> void
+Aw.Connectors.Core.ConnectorItem.Pull.get -> Aw.Connectors.Core.ConnectorPullFacts?
+Aw.Connectors.Core.ConnectorItem.Pull.init -> void
+Aw.Connectors.Core.ConnectorPullFacts
+override Aw.Connectors.Core.ConnectorPullFacts.ToString() -> string!
+static Aw.Connectors.Core.ConnectorPullFacts.operator !=(Aw.Connectors.Core.ConnectorPullFacts? left, Aw.Connectors.Core.ConnectorPullFacts? right) -> bool
+static Aw.Connectors.Core.ConnectorPullFacts.operator ==(Aw.Connectors.Core.ConnectorPullFacts? left, Aw.Connectors.Core.ConnectorPullFacts? right) -> bool
+override Aw.Connectors.Core.ConnectorPullFacts.GetHashCode() -> int
+override Aw.Connectors.Core.ConnectorPullFacts.Equals(object? obj) -> bool
+Aw.Connectors.Core.ConnectorPullFacts.Equals(Aw.Connectors.Core.ConnectorPullFacts? other) -> bool
+Aw.Connectors.Core.ConnectorPullFacts.<Clone>$() -> Aw.Connectors.Core.ConnectorPullFacts!
+Aw.Connectors.Core.ConnectorPullFacts.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! RequestedReviewers, out string? HeadSha, out System.Collections.Generic.IReadOnlyList<Aw.Connectors.Core.ConnectorReview!>! Reviews) -> void
+Aw.Connectors.Core.ConnectorPullFacts.RequestedReviewers.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Connectors.Core.ConnectorPullFacts.RequestedReviewers.init -> void
+Aw.Connectors.Core.ConnectorPullFacts.HeadSha.get -> string?
+Aw.Connectors.Core.ConnectorPullFacts.HeadSha.init -> void
+Aw.Connectors.Core.ConnectorPullFacts.Reviews.get -> System.Collections.Generic.IReadOnlyList<Aw.Connectors.Core.ConnectorReview!>!
+Aw.Connectors.Core.ConnectorPullFacts.Reviews.init -> void
+Aw.Connectors.Core.ConnectorReview
+override Aw.Connectors.Core.ConnectorReview.ToString() -> string!
+static Aw.Connectors.Core.ConnectorReview.operator !=(Aw.Connectors.Core.ConnectorReview? left, Aw.Connectors.Core.ConnectorReview? right) -> bool
+static Aw.Connectors.Core.ConnectorReview.operator ==(Aw.Connectors.Core.ConnectorReview? left, Aw.Connectors.Core.ConnectorReview? right) -> bool
+override Aw.Connectors.Core.ConnectorReview.GetHashCode() -> int
+override Aw.Connectors.Core.ConnectorReview.Equals(object? obj) -> bool
+Aw.Connectors.Core.ConnectorReview.Equals(Aw.Connectors.Core.ConnectorReview? other) -> bool
+Aw.Connectors.Core.ConnectorReview.<Clone>$() -> Aw.Connectors.Core.ConnectorReview!
+Aw.Connectors.Core.ConnectorReview.Deconstruct(out string! Login, out string! Commit, out int? NewCommits) -> void
+Aw.Connectors.Core.ConnectorReview.Login.get -> string!
+Aw.Connectors.Core.ConnectorReview.Login.init -> void
+Aw.Connectors.Core.ConnectorReview.Commit.get -> string!
+Aw.Connectors.Core.ConnectorReview.Commit.init -> void
+Aw.Connectors.Core.ConnectorReview.NewCommits.get -> int?
+Aw.Connectors.Core.ConnectorReview.NewCommits.init -> void
+Aw.Connectors.Core.GitHub.GitHubPullDetail.Deconstruct(out bool Merged, out bool Draft, out System.DateTimeOffset? MergedAt, out System.Collections.Generic.IReadOnlyList<string!>! Paths, out System.Collections.Generic.IReadOnlyList<string!>? RequestedReviewers, out string? HeadSha) -> void
+Aw.Connectors.Core.GitHub.GitHubPullDetail.RequestedReviewers.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Connectors.Core.GitHub.GitHubPullDetail.RequestedReviewers.init -> void
+Aw.Connectors.Core.GitHub.GitHubPullDetail.HeadSha.get -> string?
+Aw.Connectors.Core.GitHub.GitHubPullDetail.HeadSha.init -> void
+Aw.Connectors.Core.GitHub.GitHubReviewRead
+override Aw.Connectors.Core.GitHub.GitHubReviewRead.ToString() -> string!
+static Aw.Connectors.Core.GitHub.GitHubReviewRead.operator !=(Aw.Connectors.Core.GitHub.GitHubReviewRead? left, Aw.Connectors.Core.GitHub.GitHubReviewRead? right) -> bool
+static Aw.Connectors.Core.GitHub.GitHubReviewRead.operator ==(Aw.Connectors.Core.GitHub.GitHubReviewRead? left, Aw.Connectors.Core.GitHub.GitHubReviewRead? right) -> bool
+override Aw.Connectors.Core.GitHub.GitHubReviewRead.GetHashCode() -> int
+override Aw.Connectors.Core.GitHub.GitHubReviewRead.Equals(object? obj) -> bool
+Aw.Connectors.Core.GitHub.GitHubReviewRead.Equals(Aw.Connectors.Core.GitHub.GitHubReviewRead? other) -> bool
+Aw.Connectors.Core.GitHub.GitHubReviewRead.<Clone>$() -> Aw.Connectors.Core.GitHub.GitHubReviewRead!
+Aw.Connectors.Core.GitHub.GitHubReviewRead.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Connectors.Core.ConnectorReview!>! Reviews, out System.DateTimeOffset? RateLimitedUntil) -> void
+Aw.Connectors.Core.GitHub.GitHubReviewRead.Reviews.get -> System.Collections.Generic.IReadOnlyList<Aw.Connectors.Core.ConnectorReview!>!
+Aw.Connectors.Core.GitHub.GitHubReviewRead.Reviews.init -> void
+Aw.Connectors.Core.GitHub.GitHubReviewRead.RateLimitedUntil.get -> System.DateTimeOffset?
+Aw.Connectors.Core.GitHub.GitHubReviewRead.RateLimitedUntil.init -> void
+Aw.Connectors.Core.GitHub.IGitHubReader.PullReviews(string! repo, int number, string! head, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Connectors.Core.GitHub.GitHubReviewRead!>!>
+Aw.Connectors.Core.ConnectorReview.ConnectorReview(string! Login, string! Commit, int? NewCommits) -> void
+Aw.Connectors.Core.ConnectorPullFacts.ConnectorPullFacts(System.Collections.Generic.IReadOnlyList<string!>! RequestedReviewers, string? HeadSha, System.Collections.Generic.IReadOnlyList<Aw.Connectors.Core.ConnectorReview!>! Reviews) -> void
+Aw.Connectors.Core.ConnectorItem.ConnectorItem(string! Key, string! Kind, string! Title, string! Text, string? Author, string? Url, string! State, string! StateRaw, System.DateTimeOffset CreatedAt, System.DateTimeOffset UpdatedAt, System.DateTimeOffset? ClosedAt, string! Version, System.Collections.Generic.IReadOnlyList<Aw.Connectors.Core.ConnectorLink!>! Links, string? Repo, Aw.Connectors.Core.ConnectorPullFacts? Pull = null) -> void
+Aw.Connectors.Core.GitHub.GitHubReviewRead.GitHubReviewRead(System.Collections.Generic.IReadOnlyList<Aw.Connectors.Core.ConnectorReview!>! Reviews, System.DateTimeOffset? RateLimitedUntil) -> void
+Aw.Connectors.Core.GitHub.GitHubPullDetail.GitHubPullDetail(bool Merged, bool Draft, System.DateTimeOffset? MergedAt, System.Collections.Generic.IReadOnlyList<string!>! Paths, System.Collections.Generic.IReadOnlyList<string!>? RequestedReviewers = null, string? HeadSha = null) -> void

@@ -13,5 +13,6 @@ internal static class TraitCheckPorts
         .AddSingleton<ITraitStore>(new FileTraitStore(Path.Combine(Path.GetTempPath(), "aw-judge-no-traits")))
         .AddSingleton<ITraitFiles>(new FileTraitFiles(Environment.CurrentDirectory))
         .AddSingleton<ITraitJudge>(new JevTraitJudge(FakeBatchClassifier.Unavailable(), new FakeInputRedactor(), new InMemoryJudgeConfigStore()))
-        .AddSingleton<ITraitCheckLog>(new RecordingTraitLog());
+        .AddSingleton<ITraitCheckLog>(new RecordingTraitLog())
+        .AddSingleton<ITraitCheckSessions>(new FileTraitCheckSessions(Path.Combine(Path.GetTempPath(), "aw-judge-no-sessions"), TimeProvider.System));
 }

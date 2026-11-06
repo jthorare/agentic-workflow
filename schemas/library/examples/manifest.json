@@ -43,6 +43,12 @@
       "source": "spec 2026-11-04-sindri-pr-review-page-design.md §4.2 a broken ref (015) keeps the rest of the items"
     },
     {
+      "file": "aw-doc.v2.json",
+      "schema": "design-doc.schema.json",
+      "valid": true,
+      "source": "spec 2026-11-04-sindri-pr-review-page-design.md §9: aw-doc 2 is stored with SND-LIB-010 and no items"
+    },
+    {
       "file": "bad-id.unreported.json",
       "schema": "design-doc.schema.json",
       "valid": false,

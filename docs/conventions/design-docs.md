@@ -104,7 +104,7 @@ A bold lead-in (`**REQ-3**`) works inside those, never on a bare paragraph. Noth
 | Item | Id | Defined in kinds |
 |---|---|---|
 | Section | a heading with no id; its id is its anchor, by GitHub's slug rule (lowercase, spaces to `-`, punctuation dropped, `-1`, `-2` on repeats) | all |
-| Phase | `Ph<n>`, with an optional letter or `-<n>`: `Ph0`, `Ph3b`, `Ph2-1`. No leading zeros: `Ph01` is read as `Ph1` | `spec`, `tdd`, `stages` |
+| Phase | `Ph<n>`, with an optional lowercase letter or `-<n>`: `Ph0`, `Ph3b`, `Ph2-1`. No leading zeros: `Ph01` is read as `Ph1` | `spec`, `tdd`, `stages` |
 | Requirement | `REQ-<n>`, or `REQ-` with `U`, `E`, `S`, `O` or `W` and a number (`REQ-E3`) | `spec`, `tdd`, `product` |
 | Acceptance criterion | `AC-<n>`. Its requirement is the one a table row pairs it with; with no such row, the nearest requirement above it in the same section | `spec`, `tdd`, `product` |
 | Test-plan row | `TP-<n>`. The row's other cells that hold ids become "verifies" links | `spec`, `tdd`, `verification` |
@@ -127,7 +127,7 @@ Each error names the file, the line and the fix. A doc with an error is stored w
 
 | Code | Error | Fix |
 |---|---|---|
-| `SND-LIB-010` | a missing or bad front-matter key (id shape, kind, status, an `issues:` entry) | write the key as the table above says |
+| `SND-LIB-010` | a missing or bad front-matter key (id shape, kind, status, an `issues:` entry), or `aw-doc: 2` ("convention version 2 needs a newer Sindri") | write the key as the table above says |
 | `SND-LIB-011` | an item id of a bad shape (`REQ-` with no number) | give it a number; `Ph01` is fine and reads as `Ph1` |
 | `SND-LIB-012` | another doc in the scope has this doc id | rename one of them |
 | `SND-LIB-013` | two headings, or two list items, define one item id | rename one, or turn the second into a reference |
@@ -136,7 +136,7 @@ Each error names the file, the line and the fix. A doc with an error is stored w
 | `SND-LIB-016` | an unknown `parent` or `supersedes` | use an id in the scope, or the full ref |
 | `SND-LIB-017` | a hand-edited generated file (its `source-sha256` no longer matches its source) | edit the source and regenerate |
 | `SND-LIB-018` | "too large" (over 1 MiB or 2,000 items), or "blocked" (the scrubber hit) | split the doc, or remove the secret |
-| `SND-LIB-019` | a near miss: `aw-doc:` present but not the number 1 | write `aw-doc: 1`, unquoted, on the line after the first `---` |
+| `SND-LIB-019` | a near miss: `aw-doc:` present but not the number 1 | write `aw-doc: 1` unquoted in the front matter, and make `---` the file's first line |
 | `SND-LIB-021` | a broken `Covers:` claim, or a second `Covers:` line | fix the ref; keep one line |
 | `SND-LIB-022` | a short `Covers:` ref matches two docs | write the full ref |
 

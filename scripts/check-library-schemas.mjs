@@ -17,6 +17,10 @@ import { fileURLToPath } from "node:url";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
 const rootArg = args.indexOf("--root");
+if (rootArg >= 0 && !args[rootArg + 1]) {
+  console.error("usage: node scripts/check-library-schemas.mjs [--root DIR]");
+  process.exit(2);
+}
 const ROOT = rootArg >= 0 ? path.resolve(args[rootArg + 1]) : path.join(HERE, "..");
 const DIR = "schemas/library";
 

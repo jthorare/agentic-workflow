@@ -1,4 +1,5 @@
 using Aw.Judge.Core.Batching;
+using Aw.Judge.Core.Ports;
 using Aw.Judge.Features.CheckTraits;
 using Aw.Judge.Infrastructure.Processes;
 using Aw.Judge.Infrastructure.Traits;
@@ -12,16 +13,21 @@ internal sealed class CheckTraitsHarness : IDisposable
 {
     private readonly TempStateDirectory _state = new();
 
-    public CheckTraitsHarness(TraitRepo repo, FakeBatchClassifier jev)
+    /// <param name="repo">The repo the traits and the overlay are named for.</param>
+    /// <param name="jev">The stub Jev.</param>
+    /// <param name="workingDirectory">The directory the check runs in (the agent session's); the repo's root when null.</param>
+    public CheckTraitsHarness(TraitRepo repo, FakeBatchClassifier jev, string? workingDirectory = null)
     {
         Repo = repo;
         Jev = jev;
+        Sessions = new FileTraitCheckSessions(Path.Combine(_state.Path, "judge", "trait-check", "sessions"), TimeProvider.System);
         Service = new CheckTraitsService(
             new SystemProcessRunner(Environment.GetEnvironmentVariable),
             new FileTraitStore(Path.Combine(_state.Path, "traits")),
-            new FileTraitFiles(repo.Root),
+            new FileTraitFiles(workingDirectory ?? repo.Root),
             new JevTraitJudge(jev, new FakeInputRedactor(), new InMemoryJudgeConfigStore()),
             Log,
+            Sessions,
             new FakeTimeProvider());
     }
 
@@ -30,6 +36,9 @@ internal sealed class CheckTraitsHarness : IDisposable
     public FakeBatchClassifier Jev { get; }
 
     public RecordingTraitLog Log { get; } = new();
+
+    /// <summary>The repos each session edited files in (the real file store, under the harness's state directory).</summary>
+    public ITraitCheckSessions Sessions { get; }
 
     public CheckTraitsService Service { get; }
 

@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Judge.Core.Ids;
 using Aw.Judge.Core.Providers;
 using Aw.Judge.Features.CheckTraits;
 
@@ -6,16 +7,18 @@ namespace Aw.Judge.Host.Commands;
 
 /// <summary>
 /// The arguments of 'judge trait-check' as a request, or null for a usage error: exactly one mode; --file with --edit
-/// only (and --edit needs one); --path, --trait and --concurrency with --scan only; every value flag has a value; the
-/// numbers are valid. The last --base, --budget-ms, --min-p and --concurrency win.
+/// only (and --edit needs one); --path, --trait and --concurrency with --scan only; --session with --edit or --stop only;
+/// every value flag has a value; the numbers are valid. The last --base, --budget-ms, --min-p, --concurrency and
+/// --session win.
 /// </summary>
 internal static class TraitCheckArguments
 {
-    private static readonly string[] _valueFlags = ["--file", "--base", "--budget-ms", "--min-p", "--path", "--trait", "--concurrency"];
+    private static readonly string[] _valueFlags = ["--file", "--base", "--budget-ms", "--min-p", "--path", "--trait", "--concurrency", "--session"];
 
     internal static CheckTraitsRequest? Parse(IReadOnlyList<string> args, IReadOnlyCollection<ProviderName>? allowed)
     {
-        if (Split(args) is not var (mode, values) || mode is not { } given || !Consistent(given, values) || Numbers(values) is not { } numbers)
+        if (Split(args) is not var (mode, values) || mode is not { } given || !Consistent(given, values) || Numbers(values) is not { } numbers
+            || Session(values["--session"]) is not (true, var session))
         {
             return null;
         }
@@ -29,19 +32,27 @@ internal static class TraitCheckArguments
             numbers.BudgetMs is { } ms ? TimeSpan.FromMilliseconds(ms) : null,
             numbers.Minimum,
             numbers.Concurrency,
-            allowed?.ToArray());
+            allowed?.ToArray(),
+            session);
     }
 
     private sealed record Counts(int? BudgetMs, int? Concurrency, double? Minimum);
 
-    // --file goes with --edit (which needs one); --path, --trait and --concurrency go with --scan.
+    // --file goes with --edit (which needs one); --path, --trait and --concurrency go with --scan; --session doesn't.
     private static bool Consistent(TraitCheckMode mode, Dictionary<string, List<string>> values)
     {
         var edit = mode == TraitCheckMode.Edit;
         var files = values["--file"].Count > 0;
         var scanFlags = values["--path"].Count > 0 || values["--trait"].Count > 0 || values["--concurrency"].Count > 0;
-        return edit == files && (mode == TraitCheckMode.Scan || !scanFlags);
+        var scan = mode == TraitCheckMode.Scan;
+        return edit == files && (scan || !scanFlags) && !(scan && values["--session"].Count > 0);
     }
+
+    // The session the hook names (any string a SessionId takes), or none; false when the id is over SessionId's cap.
+    private static (bool Ok, SessionId? Id) Session(List<string> given) =>
+        given.Count == 0 ? (true, null)
+        : SessionId.TryFrom(given[^1], out var id) ? (true, id)
+        : (false, null);
 
     // The numbers, or null when one is malformed or out of range (a budget and a concurrency above 0, a probability from 0 to 1).
     private static Counts? Numbers(Dictionary<string, List<string>> values)
