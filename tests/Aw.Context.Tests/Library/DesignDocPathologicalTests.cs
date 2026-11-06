@@ -39,4 +39,15 @@ public sealed class DesignDocPathologicalTests
         Assert.Empty(doc.Refs);
         Assert.True(DesignDocParser.IsDesignDoc(doc));
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_doc_with_more_refs_than_the_cap_is_018_with_no_items()
+    {
+        var lines = Enumerable.Range(1, DesignDocParser.MaxRefs + 1).Select(static n => $"- reqs: REQ-{n}");
+        var doc = ADoc.Parse("tasks", "## TASK-1 Many\n" + string.Join('\n', lines) + "\n");
+
+        Assert.Equal([DesignDocCodes.TooLarge], ADoc.Codes(doc));
+        Assert.Empty(doc.Items);
+        Assert.Empty(doc.Refs);
+    }
 }

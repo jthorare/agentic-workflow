@@ -11225,6 +11225,7 @@ const Aw.Context.Core.Library.DesignDocCodes.TooLarge = "SND-LIB-018" -> string!
 const Aw.Context.Core.Library.DesignDocCodes.UnknownDocLink = "SND-LIB-016" -> string!
 const Aw.Context.Core.Library.DesignDocParser.MaxBytes = 1048576 -> int
 const Aw.Context.Core.Library.DesignDocParser.MaxItems = 2000 -> int
+const Aw.Context.Core.Library.DesignDocParser.MaxRefs = 5000 -> int
 const Aw.Context.Core.Library.DesignDocParser.MaxTextChars = 4000 -> int
 const Aw.Context.Core.Library.DesignDocParser.Version = 1 -> int
 override Aw.Context.Core.Library.DesignDocError.Equals(object? obj) -> bool
@@ -11307,6 +11308,9 @@ Aw.Context.Core.Records.ReviewedCommit.ReviewedCommit(string! Login, string! Com
 Aw.Context.Core.Records.PullFacts.PullFacts(System.Collections.Generic.IReadOnlyList<string!>! RequestedReviewers, string? HeadSha, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.ReviewedCommit!>! Reviews) -> void
 Aw.Context.Core.Library.PrCovers
 Aw.Context.Core.Library.PrCovers.<Clone>$() -> Aw.Context.Core.Library.PrCovers!
+Aw.Context.Core.Library.PrCovers.Capped.get -> bool
+Aw.Context.Core.Library.PrCovers.Capped.init -> void
+const Aw.Context.Core.Library.PrCovers.MaxRefs = 200 -> int
 Aw.Context.Core.Library.PrCovers.Declined.get -> bool
 Aw.Context.Core.Library.PrCovers.Declined.init -> void
 Aw.Context.Core.Library.PrCovers.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Refs, out bool Declined, out bool Doubled) -> void

@@ -64,4 +64,16 @@ public sealed class PrCoversTests
     [InlineData("Summary only. Discovers: x#y")]
     public void A_body_without_the_line_claims_nothing(string? body) =>
         Assert.Equal(PrCovers.None, PrCovers.Parse(body));
+
+    [Fact]
+    public void More_than_the_cap_of_refs_keeps_the_first_ones_and_says_so()
+    {
+        var refs = Enumerable.Range(1, PrCovers.MaxRefs + 50).Select(static n => $"harbor#REQ-{n}").ToList();
+
+        var covers = PrCovers.Parse("Covers: " + string.Join(", ", refs));
+
+        Assert.Equal(refs.Take(PrCovers.MaxRefs), covers.Refs);
+        Assert.True(covers.Capped);
+        Assert.False(PrCovers.Parse("Covers: harbor#REQ-1").Capped);
+    }
 }

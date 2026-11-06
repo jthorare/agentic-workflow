@@ -19,6 +19,9 @@ public static class DesignDocParser
     /// <summary>The most items one doc holds.</summary>
     public const int MaxItems = 2000;
 
+    /// <summary>The most distinct refs one doc holds.</summary>
+    public const int MaxRefs = 5000;
+
     /// <summary>The most characters an item's text keeps.</summary>
     public const int MaxTextChars = 4000;
 
@@ -91,6 +94,11 @@ public static class DesignDocParser
         if (walker.ItemCount > MaxItems)
         {
             errors.Add(TooLarge(path, $"the file has more than {MaxItems} items."));
+        }
+
+        if (walker.RefCount > MaxRefs)
+        {
+            errors.Add(TooLarge(path, $"the file has more than {MaxRefs} refs."));
         }
 
         return errors.Count > 0
