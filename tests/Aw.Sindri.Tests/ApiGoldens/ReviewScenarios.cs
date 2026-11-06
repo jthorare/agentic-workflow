@@ -15,7 +15,7 @@ internal static class ReviewScenarios
     [
         ("reviews", "some"), ("reviews", "empty"), ("reviews", "no-login"), ("reviews", "github-failing"), ("reviews", "before-reviewers"), ("reviews", "library-unreadable"),
         ("reviews-pr", "full"), ("reviews-pr", "empty-panels"), ("reviews-pr", "panel-errors"), ("reviews-pr", "moving"), ("reviews-pr", "offline-cached"),
-        ("reviews-pr", "own-pr"), ("reviews-pr", "not-synced"), ("reviews-pr", "no-login"), ("reviews-pr", "not-found"),
+        ("reviews-pr", "own-pr"), ("reviews-pr", "capped"), ("reviews-pr", "not-synced"), ("reviews-pr", "no-login"), ("reviews-pr", "not-found"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -34,6 +34,7 @@ internal static class ReviewScenarios
         // seeded in Ph5: list rows ('some': acme/api#2071 requested, acme/web#880 reviewed with 2 new commits, acme/api#2064 and draft acme/web#875 by joi-example; 'empty': none;
         // 'github-failing': the last rows plus a failing github freshness; 'before-reviewers': PR records without reviewers), the library (41 docs, 3 with errors; 'library-unreadable': 33 docs and one unreadable root)
         // and, for 'reviews-pr', the PR record, forge fakes for Files, CI runs, threads and evidence ('moving', 'offline-cached', 'own-pr' variants), all at the epoch clock
+        // seeded in Ph5: for 'capped', 3,000 forge files (the cap) with one file over the size limit (patch withheld, omitted tooLarge)
         var path = slug == "reviews" ? "/sindri/reviews" : scenario switch
         {
             "not-synced" => "/sindri/reviews/acme/other/12",

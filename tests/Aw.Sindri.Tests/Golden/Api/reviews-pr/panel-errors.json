@@ -60,7 +60,8 @@
       "data": {
         "claims": [],
         "doc": null,
-        "suggested": []
+        "suggested": [],
+        "projectDocs": []
       }
     },
     {

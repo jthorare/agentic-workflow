@@ -1,0 +1,321 @@
+{
+  "asOf": {
+    "cursor": 5,
+    "ledgerHead": 5,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "pr": {
+    "repo": "acme/api",
+    "number": 2071,
+    "title": "Add retry budget to the sync worker",
+    "author": "sam-dev",
+    "yours": false,
+    "draft": false,
+    "state": "open",
+    "head": {
+      "sha": "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678",
+      "sha7": "a1b2c3d",
+      "branch": "feat/retry-budget"
+    },
+    "base": "main",
+    "url": "https://github.com/acme/api/pull/2071",
+    "issues": [
+      {
+        "key": "ENG-12",
+        "href": "sindri://linear/ENG-12"
+      }
+    ]
+  },
+  "settings": {
+    "name": "sindri",
+    "from": "review.projects[0]"
+  },
+  "moving": null,
+  "offline": null,
+  "strip": [
+    {
+      "panel": "requiredChecks",
+      "text": "3 open"
+    },
+    {
+      "panel": "docMap",
+      "text": "Covers Ph5, REQ-E3"
+    },
+    {
+      "panel": "risk",
+      "text": "1 risky file"
+    },
+    {
+      "panel": "ci",
+      "text": "1 failing"
+    }
+  ],
+  "panels": [
+    {
+      "id": "requiredChecks",
+      "state": "ready",
+      "text": null,
+      "data": {
+        "checks": [
+          {
+            "id": "ci-ui",
+            "title": "Recipe change shows Ui tests ran",
+            "need": "ci",
+            "status": "fail",
+            "detail": "ui-tests: failure on a1b2c3d",
+            "fixTask": true
+          },
+          {
+            "id": "doc-covers",
+            "title": "Names the design doc",
+            "need": "covers",
+            "status": "needsTick",
+            "detail": null,
+            "fixTask": false
+          },
+          {
+            "id": "changelog",
+            "title": "Changelog entry",
+            "need": "changedWith",
+            "status": "running",
+            "detail": "waiting on CI",
+            "fixTask": false
+          },
+          {
+            "id": "body-proof",
+            "title": "Proof is in the PR body",
+            "need": "body",
+            "status": "claimed",
+            "detail": "claimed in body",
+            "fixTask": false
+          },
+          {
+            "id": "lint",
+            "title": "Lint passes",
+            "need": "ci",
+            "status": "pass",
+            "detail": "lint: success on a1b2c3d",
+            "fixTask": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "docMap",
+      "state": "ready",
+      "text": null,
+      "data": {
+        "claims": [
+          {
+            "ref": "sindri-pr-review#Ph5",
+            "state": "resolved",
+            "error": null
+          },
+          {
+            "ref": "sindri-pr-review#REQ-E3",
+            "state": "resolved",
+            "error": null
+          }
+        ],
+        "doc": {
+          "id": "sindri-pr-review",
+          "title": "Sindri PR review page",
+          "path": "docs/superpowers/specs/2026-11-04-sindri-pr-review-page-design.md",
+          "items": [
+            {
+              "id": "Ph4",
+              "title": "The review settings and library",
+              "kind": "phase",
+              "claimedHere": false,
+              "claimedBy": [
+                {
+                  "number": 2060,
+                  "merged": true,
+                  "text": "claimed by #2060, merged"
+                }
+              ],
+              "unclaimed": false,
+              "fixTask": false,
+              "items": []
+            },
+            {
+              "id": "Ph5",
+              "title": "The review routes",
+              "kind": "phase",
+              "claimedHere": true,
+              "claimedBy": [],
+              "unclaimed": false,
+              "fixTask": false,
+              "items": [
+                {
+                  "id": "REQ-E3",
+                  "title": "Every PR route answers with its panels",
+                  "kind": "req",
+                  "claimedHere": true,
+                  "claimedBy": [],
+                  "unclaimed": false,
+                  "fixTask": false,
+                  "items": []
+                },
+                {
+                  "id": "REQ-E4",
+                  "title": "Offline PRs answer from the cache",
+                  "kind": "req",
+                  "claimedHere": false,
+                  "claimedBy": [],
+                  "unclaimed": true,
+                  "fixTask": true,
+                  "items": []
+                }
+              ]
+            }
+          ]
+        },
+        "suggested": [],
+        "projectDocs": []
+      }
+    },
+    {
+      "id": "testPlan",
+      "state": "ready",
+      "text": null,
+      "data": {
+        "rows": [
+          {
+            "id": "TP3",
+            "text": "GET /reviews/acme/api/2071 answers every panel",
+            "verifies": [
+              "REQ-E3"
+            ],
+            "ticked": false
+          },
+          {
+            "id": "TP4",
+            "text": "An offline PR answers from the cache",
+            "verifies": [
+              "REQ-E4"
+            ],
+            "ticked": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "ci",
+      "state": "ready",
+      "text": null,
+      "data": {
+        "runs": [
+          {
+            "name": "ui-tests",
+            "app": "github-actions",
+            "status": "completed",
+            "conclusion": "failure",
+            "sha7": "a1b2c3d",
+            "url": "https://github.com/acme/api/actions/runs/101"
+          },
+          {
+            "name": "lint",
+            "app": "github-actions",
+            "status": "completed",
+            "conclusion": "success",
+            "sha7": "a1b2c3d",
+            "url": "https://github.com/acme/api/actions/runs/102"
+          }
+        ],
+        "babysitter": null
+      }
+    },
+    {
+      "id": "evidence",
+      "state": "ready",
+      "text": null,
+      "data": {
+        "items": [
+          {
+            "kind": "uiEvidence",
+            "label": "Reviews list, 1,440 px",
+            "path": "evidence/2071/reviews-list.png",
+            "url": "https://github.com/acme/api/pull/2071#issuecomment-1",
+            "matchedBy": "sha",
+            "at": "2025-12-31T22:00:00.0000000Z"
+          },
+          {
+            "kind": "prBody",
+            "label": "Proof in the PR body",
+            "path": "pr-body",
+            "url": "https://github.com/acme/api/pull/2071",
+            "matchedBy": "prNumber",
+            "at": "2025-12-31T20:00:00.0000000Z"
+          }
+        ]
+      }
+    },
+    {
+      "id": "risk",
+      "state": "ready",
+      "text": null,
+      "data": {
+        "hits": [
+          {
+            "path": "src/Api/Migrations/0042_retry.sql",
+            "why": "Migrations change stored data",
+            "source": "settings"
+          }
+        ]
+      }
+    },
+    {
+      "id": "conversation",
+      "state": "ready",
+      "text": null,
+      "data": {
+        "threads": [
+          {
+            "id": "thr_1",
+            "path": "src/Api/A/A.Core/X.cs",
+            "line": 12,
+            "resolved": false,
+            "outdated": false,
+            "comments": [
+              {
+                "author": "kim-dev",
+                "body": "Should this cap at 5 retries?",
+                "at": "2025-12-31T21:00:00.0000000Z"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "diff": {
+    "state": "ready",
+    "text": null,
+    "fileCount": 3000,
+    "capped": true,
+    "cappedText": "GitHub lists the first 3,000 files; open the rest on GitHub",
+    "groups": [
+      {
+        "name": "Core",
+        "folded": false,
+        "files": [
+          {
+            "path": "src/Api/Generated/Schema.g.cs",
+            "status": "modified",
+            "previousPath": null,
+            "similarity": null,
+            "additions": 12000,
+            "deletions": 3,
+            "patch": null,
+            "omitted": "tooLarge",
+            "note": "Too large to show here",
+            "url": "https://github.com/acme/api/pull/2071/files#diff-5"
+          }
+        ]
+      }
+    ]
+  }
+}
