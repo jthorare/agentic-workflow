@@ -70,6 +70,9 @@ public abstract class ForgeReadContract
         _ = Expect.Fails(await run.Forge.FindPull(new FindPullQuery(repo, "feature", Author: null, Marker: null), ct), "AW-FORGE-002", "FindPull");
         _ = Expect.Fails(await run.Forge.OpenPull(new OpenPullRequest(repo, "feature", "main", Sha('a'), "t", "b", Draft: false), ct), "AW-FORGE-002", "OpenPull");
         _ = Expect.Fails(await run.Forge.Merge(new MergeRequest(pull, MergeMethod.Squash, Sha('a')), ct), "AW-FORGE-002", "Merge");
+        _ = Expect.Fails(await run.Forge.Files(pull, ct), "AW-FORGE-002", "Files");
+        _ = Expect.Fails(await run.Forge.FileText(pull, "a.cs", Sha('a'), ct), "AW-FORGE-002", "FileText");
+        _ = Expect.Fails(await run.Forge.SubmitReview(new SubmitReviewRequest(pull, Sha('a'), ReviewVerdict.Comment, "x", [], "m1"), ct), "AW-FORGE-002", "SubmitReview");
         Expect.That(run.Requests is null || run.Requests() == before, "no request was counted for a refused host");
     }
 
@@ -85,6 +88,7 @@ public abstract class ForgeReadContract
         _ = Expect.Fails(await run.Forge.GetPull(pull, ct), "AW-FORGE-004", "GetPull of a missing pull");
         _ = Expect.Fails(await run.Forge.ListThreads(pull, ct), "AW-FORGE-004", "ListThreads of a missing pull");
         _ = Expect.Fails(await run.Forge.CheckLog(pull, "build", ct), "AW-FORGE-004", "CheckLog of a missing pull");
+        _ = Expect.Fails(await run.Forge.Files(pull, ct), "AW-FORGE-004", "Files of a missing pull");
     }
 
     /// <summary>The default branch is a non-empty name.</summary>

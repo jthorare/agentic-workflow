@@ -12,6 +12,7 @@ namespace Aw.Forge.Host;
 [JsonSerializable(typeof(ForgeRef))]
 [JsonSerializable(typeof(PullSnapshot))]
 [JsonSerializable(typeof(IReadOnlyList<ForgeThread>))]
+[JsonSerializable(typeof(IReadOnlyList<SeedFile>))]
 [JsonSerializable(typeof(SeedResult))]
 [JsonSerializable(typeof(Applied))]
 internal sealed partial class ForgeJsonContext : JsonSerializerContext;

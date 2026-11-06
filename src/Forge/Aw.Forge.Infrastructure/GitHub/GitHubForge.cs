@@ -143,6 +143,8 @@ internal sealed partial class GitHubForge(GitHubApi api, ICredentialSource crede
             : await git.Push(request, GitPusher.BasicHeader(token.Value), cancellationToken).ConfigureAwait(false);
     }
 
+    private const int MaxCheckPages = 50;
+
     private static bool IsDecision(string state) =>
         string.Equals(state, "APPROVED", StringComparison.Ordinal)
         || string.Equals(state, "CHANGES_REQUESTED", StringComparison.Ordinal)
@@ -163,33 +165,63 @@ internal sealed partial class GitHubForge(GitHubApi api, ICredentialSource crede
 
     private async ValueTask<Result<IReadOnlyList<JsonElement>>> CheckRuns(ForgeRef pull, string sha, CancellationToken cancellationToken)
     {
-        var reply = await _api.Call(pull.Host, HttpMethod.Get, $"{RepoPath(pull)}/commits/{Uri.EscapeDataString(sha)}/check-runs?per_page=100&filter=latest", body: null, cancellationToken).ConfigureAwait(false);
-        if (reply.IsError)
+        var pages = await _api.Pages(pull.Host, $"{RepoPath(pull)}/commits/{Uri.EscapeDataString(sha)}/check-runs?per_page=100&filter=latest", MaxCheckPages, _ => false, cancellationToken).ConfigureAwait(false);
+        return pages.IsError
+            ? pages.Error
+            : Results.Success<IReadOnlyList<JsonElement>>([.. pages.Value.Replies.SelectMany(r => (r.Body.At("check_runs") ?? default).Items())]);
+    }
+
+    // why: a repo with no commit statuses (or a pull request whose commit the status API does not know) answers 404; that is no statuses, not a failure.
+    private async ValueTask<Result<IReadOnlyList<JsonElement>>> CommitStatuses(ForgeRef pull, string sha, CancellationToken cancellationToken)
+    {
+        var pages = await _api.Pages(pull.Host, $"{RepoPath(pull)}/commits/{Uri.EscapeDataString(sha)}/status?per_page=100", MaxCheckPages, _ => false, cancellationToken).ConfigureAwait(false);
+        if (pages.IsError)
         {
-            return reply.Error;
+            return pages.Error.Code == ForgeErrors.NotFound.Code ? Results.Success<IReadOnlyList<JsonElement>>([]) : pages.Error;
         }
 
-        return reply.Value.Ok ? Results.Success<IReadOnlyList<JsonElement>>([.. (reply.Value.Body.At("check_runs") ?? default).Items()]) : GitHubApi.Fail(reply.Value);
+        return Results.Success<IReadOnlyList<JsonElement>>([.. pages.Value.Replies.SelectMany(r => (r.Body.At("statuses") ?? default).Items())]);
     }
 
     private async ValueTask<Result<ChecksSummary>> Checks(ForgeRef pull, string sha, CancellationToken cancellationToken)
     {
         var runs = await CheckRuns(pull, sha, cancellationToken).ConfigureAwait(false);
-        return runs.IsError ? runs.Error : Summarise(sha, runs.Value);
+        if (runs.IsError)
+        {
+            return runs.Error;
+        }
+
+        var statuses = await CommitStatuses(pull, sha, cancellationToken).ConfigureAwait(false);
+        return statuses.IsError ? statuses.Error : Summarise(sha, [.. runs.Value.Select(r => AsRun(r, sha)), .. statuses.Value.Select(s => AsRun(s, sha, isStatus: true))]);
     }
 
-    private static ChecksSummary Summarise(string sha, IReadOnlyList<JsonElement> runs)
+    private static CheckRun AsRun(JsonElement json, string sha, bool isStatus = false)
+    {
+        if (isStatus)
+        {
+            var state = json.Str("state");
+            return new CheckRun(json.Str("context"), App: null, state == "error" ? "failure" : state, sha);
+        }
+
+        var app = json.Str("app", "slug");
+        return new CheckRun(
+            json.Str("name"),
+            app.Length > 0 ? app : null,
+            json.Str("status") != "completed" ? "pending" : json.Str("conclusion"),
+            json.Str("head_sha") is { Length: > 0 } head ? head : sha);
+    }
+
+    private static ChecksSummary Summarise(string sha, IReadOnlyList<CheckRun> runs)
     {
         string[] bad = ["failure", "timed_out", "cancelled", "action_required", "startup_failure"];
         string[] passes = ["success", "neutral", "skipped"];
-        var failing = runs.Where(r => bad.Contains(r.Str("conclusion"))).Select(r => r.Str("name")).ToList();
+        var failing = runs.Where(r => bad.Contains(r.Conclusion)).Select(r => r.Name).ToList();
+        var pending = runs.Count(r => r.Conclusion == "pending");
         var state = runs.Count == 0 ? ChecksState.None
             : failing.Count > 0 ? ChecksState.Failing
-            : runs.Any(r => r.Str("status") != "completed") ? ChecksState.Pending
+            : pending > 0 ? ChecksState.Pending
             : ChecksState.Passing;
-        var passed = runs.Count(r => passes.Contains(r.Str("conclusion")));
-        var pending = runs.Count(r => r.Str("status") != "completed");
-        return new ChecksSummary(state, sha, failing, passed, pending);
+        return new ChecksSummary(state, sha, failing, runs.Count(r => passes.Contains(r.Conclusion)), pending, runs);
     }
 
     private async ValueTask<Result<string?>> ReviewDecision(ForgeRef pull, CancellationToken cancellationToken)

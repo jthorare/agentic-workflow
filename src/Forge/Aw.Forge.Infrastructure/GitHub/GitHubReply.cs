@@ -6,7 +6,8 @@ namespace Aw.Forge.Infrastructure.GitHub;
 /// <param name="Status">The HTTP status.</param>
 /// <param name="Body">The JSON body, or a null-kind element when there was none.</param>
 /// <param name="Next">The next page's URL from the Link header.</param>
-internal sealed record GitHubReply(int Status, JsonElement Body, Uri? Next)
+/// <param name="Raw">The body's bytes when a raw (non-JSON) answer was asked for and given; otherwise null.</param>
+internal sealed record GitHubReply(int Status, JsonElement Body, Uri? Next, byte[]? Raw = null)
 {
     internal bool Ok => Status is >= 200 and < 300;
 }

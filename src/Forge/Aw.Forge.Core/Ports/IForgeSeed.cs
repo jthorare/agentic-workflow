@@ -25,4 +25,9 @@ public interface IForgeSeed
     /// <param name="sha">The new head.</param>
     /// <returns>Success or the error.</returns>
     public Result<Unit> AdvanceHead(ForgeRef pull, string sha);
+
+    /// <summary>Sets the changed files of a pull request, with their texts.</summary>
+    /// <param name="request">The files.</param>
+    /// <returns>Success or the error.</returns>
+    public Result<Unit> SeedFiles(SeedFilesRequest request);
 }

@@ -9,13 +9,27 @@ internal sealed class StubHandler : HttpMessageHandler
     private readonly List<Func<HttpRequestMessage, HttpResponseMessage?>> _routes = [];
     private readonly List<(HttpMethod Method, Uri Url, string? Authorization)> _seen = [];
 
+    private readonly List<(HttpMethod Method, string PathAndQuery, string Body)> _sent = [];
+
     internal IReadOnlyList<(HttpMethod Method, Uri Url, string? Authorization)> Seen => _seen;
+
+    /// <summary>Every request with the body it carried (empty for none), in order.</summary>
+    internal IReadOnlyList<(HttpMethod Method, string PathAndQuery, string Body)> Sent => _sent;
 
     /// <summary>Answers requests whose path and query start with <paramref name="pathPrefix"/>.</summary>
     internal StubHandler On(HttpMethod method, string pathPrefix, HttpStatusCode status, string body = "", params (string Name, string Value)[] headers)
     {
         _routes.Add(request => request.Method == method && request.RequestUri!.PathAndQuery.StartsWith(pathPrefix, StringComparison.Ordinal)
             ? Reply(status, body, headers)
+            : null);
+        return this;
+    }
+
+    /// <summary>Answers requests whose path and query start with <paramref name="pathPrefix"/> with raw bytes and a non-JSON content type, as GitHub does for the raw media type.</summary>
+    internal StubHandler OnRaw(HttpMethod method, string pathPrefix, byte[] body)
+    {
+        _routes.Add(request => request.Method == method && request.RequestUri!.PathAndQuery.StartsWith(pathPrefix, StringComparison.Ordinal)
+            ? new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(body) { Headers = { ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/vnd.github.raw") } } }
             : null);
         return this;
     }
@@ -46,18 +60,19 @@ internal sealed class StubHandler : HttpMessageHandler
         return this;
     }
 
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         _seen.Add((request.Method, request.RequestUri!, request.Headers.Authorization?.ToString()));
+        _sent.Add((request.Method, request.RequestUri!.PathAndQuery, request.Content is null ? string.Empty : await request.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false)));
         foreach (var route in _routes)
         {
             if (route(request) is { } response)
             {
-                return Task.FromResult(response);
+                return response;
             }
         }
 
-        return Task.FromResult(Reply(HttpStatusCode.NotFound, "{\"message\":\"Not Found\"}", []));
+        return Reply(HttpStatusCode.NotFound, "{\"message\":\"Not Found\"}", []);
     }
 
     private static HttpResponseMessage Reply(HttpStatusCode status, string body, (string Name, string Value)[] headers)
