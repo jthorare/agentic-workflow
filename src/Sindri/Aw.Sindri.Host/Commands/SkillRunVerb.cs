@@ -146,7 +146,8 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
                 return InstanceReads.NotRunning(events.Error);
             }
 
-            error = events.Value.Value.Events.LastOrDefault(static e => e.Transition.Reason is not null)?.Transition.Reason;
+            error = await LaunchRefusalOf(answer.Instance.Address.Value.Split('/')[0], ct).ConfigureAwait(false)
+                ?? events.Value.Value.Events.LastOrDefault(static e => e.Transition.Reason is not null)?.Transition.Reason;
         }
 
         var outcome = failed ? null : SkillTrialRecipe.OutcomeOf(ended.State);
@@ -158,7 +159,25 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
     /// <param name="item">The item the trial ran on.</param>
     /// <param name="ct">Cancels the read.</param>
     /// <returns>The line, or null.</returns>
-    internal Task<string?> LaunchRefusalOf(string item, CancellationToken ct) => throw new NotSupportedException();
+    internal async Task<string?> LaunchRefusalOf(string item, CancellationToken ct)
+    {
+        var page = await client.Get<LedgerPage>($"/sindri/ledger?item={Uri.EscapeDataString(item)}&type=launch.failed", ct).ConfigureAwait(false);
+        if (page.IsError)
+        {
+            return null;
+        }
+
+        foreach (var failed in page.Value.Value.Events.Reverse())
+        {
+            if (failed.Payload.ValueKind == JsonValueKind.Object && failed.Payload.TryGetProperty("code", out var code) && code.ValueKind == JsonValueKind.String
+                && failed.Payload.TryGetProperty("message", out var message) && message.ValueKind == JsonValueKind.String)
+            {
+                return code.GetString() + " " + message.GetString();
+            }
+        }
+
+        return null;
+    }
 
     /// <summary>The result file of the item's latest skill launch: <c lang="text">skill.resultFile</c> of its newest 'launch.started', read from the ledger; empty when the ledger has none or can't be read (the report then leaves the line out).</summary>
     /// <param name="item">The item the trial ran on.</param>
