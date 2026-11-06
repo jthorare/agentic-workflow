@@ -17273,8 +17273,6 @@ Aw.Sindri.Core.Events.SessionEnded.SessionEnded(Aw.Sindri.Core.Workflow.Engine.L
 Aw.Sindri.Core.Events.SessionEnded.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out Aw.Sindri.Core.Events.SessionEndReason Reason, out int? ExitCode, out long? InputTokens, out long? OutputTokens, out Aw.Sindri.Core.Events.LimitKind? Kind, out long? Limit, out long? Peak, out Aw.Sindri.Core.Events.LimitPeaks? Peaks) -> void
 Aw.Sindri.Core.Launch.StepPolicy.StepPolicy(System.Collections.Generic.IReadOnlyList<string!>! AllowedTools, Aw.Sindri.Core.Launch.StepPermissionMode Mode, string? WritablePath, System.Collections.Generic.IReadOnlyList<string!>? DeniedPaths = null, System.Collections.Generic.IReadOnlyList<string!>? ReadOnlyPaths = null, Aw.Sindri.Core.Sandbox.ModelLoginSource? LoginSource = null) -> void
 Aw.Sindri.Core.Launch.StepPolicy.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! AllowedTools, out Aw.Sindri.Core.Launch.StepPermissionMode Mode, out string? WritablePath, out System.Collections.Generic.IReadOnlyList<string!>? DeniedPaths, out System.Collections.Generic.IReadOnlyList<string!>? ReadOnlyPaths, out Aw.Sindri.Core.Sandbox.ModelLoginSource? LoginSource) -> void
-Aw.Sindri.Core.Profile.SindriProfile.SindriProfile(int SchemaVersion, string! User, string! Tenant = "local", System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.RepoEntry!>? Repos = null, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.ServiceSettings!>? Services = null, Aw.Sindri.Core.Profile.ApiSettings? Api = null, Aw.Sindri.Core.Profile.WorkflowSettings? Workflow = null, System.Text.Json.JsonElement? Context = null, Aw.Sindri.Core.Profile.IndexSettings? Index = null, Aw.Sindri.Core.Profile.LaunchSettings? Launch = null, Aw.Sindri.Core.Profile.AgentSettings? Agents = null, Aw.Sindri.Core.Profile.SetupSettings? Setup = null, Aw.Sindri.Core.Profile.SandboxSettings? Sandbox = null) -> void
-Aw.Sindri.Core.Profile.SindriProfile.Deconstruct(out int SchemaVersion, out string! User, out string! Tenant, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.RepoEntry!>? Repos, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.ServiceSettings!>? Services, out Aw.Sindri.Core.Profile.ApiSettings? Api, out Aw.Sindri.Core.Profile.WorkflowSettings? Workflow, out System.Text.Json.JsonElement? Context, out Aw.Sindri.Core.Profile.IndexSettings? Index, out Aw.Sindri.Core.Profile.LaunchSettings? Launch, out Aw.Sindri.Core.Profile.AgentSettings? Agents, out Aw.Sindri.Core.Profile.SetupSettings? Setup, out Aw.Sindri.Core.Profile.SandboxSettings? Sandbox) -> void
 Aw.Sindri.Core.Launches.LaunchRow.LaunchRow(Aw.Sindri.Core.Workflow.Engine.LaunchId Id, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Ids.RepoName? Repo, Aw.Sindri.Core.Launch.LaunchMode Mode, Aw.Sindri.Core.Launch.AgentId Target, string! ChosenBy, Aw.Sindri.Core.Launches.LaunchState State, System.DateTimeOffset RequestedAt, System.DateTimeOffset? OutcomeAt, string? Code, string? Message, Aw.Sindri.Core.Launch.LaunchStage? Stage, Aw.Sindri.Core.Ids.SessionId? SessionId, Aw.Sindri.Core.Ids.SessionId? ReportedSessionId, string? TabTitle, Aw.Sindri.Core.Events.LaunchViewer? Viewer, bool Late, System.Collections.Generic.IReadOnlyList<string!>? Attach, Aw.Sindri.Core.Launch.CatalogSource? CatalogSource, string? ArgvHash, Aw.Sindri.Core.Launches.LaunchEnd? Ended, Aw.Sindri.Core.Launch.LaunchStep! Step, long Sequence) -> void
 Aw.Sindri.Core.Launches.LaunchRow.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Id, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Ids.RepoName? Repo, out Aw.Sindri.Core.Launch.LaunchMode Mode, out Aw.Sindri.Core.Launch.AgentId Target, out string! ChosenBy, out Aw.Sindri.Core.Launches.LaunchState State, out System.DateTimeOffset RequestedAt, out System.DateTimeOffset? OutcomeAt, out string? Code, out string? Message, out Aw.Sindri.Core.Launch.LaunchStage? Stage, out Aw.Sindri.Core.Ids.SessionId? SessionId, out Aw.Sindri.Core.Ids.SessionId? ReportedSessionId, out string? TabTitle, out Aw.Sindri.Core.Events.LaunchViewer? Viewer, out bool Late, out System.Collections.Generic.IReadOnlyList<string!>? Attach, out Aw.Sindri.Core.Launch.CatalogSource? CatalogSource, out string? ArgvHash, out Aw.Sindri.Core.Launches.LaunchEnd? Ended, out Aw.Sindri.Core.Launch.LaunchStep! Step, out long Sequence) -> void
 Aw.Sindri.Core.EngineReads.EngineServer
@@ -22109,3 +22107,180 @@ static Aw.Sindri.Core.Forge.PullReview.operator !=(Aw.Sindri.Core.Forge.PullRevi
 static Aw.Sindri.Core.Forge.PullReview.operator ==(Aw.Sindri.Core.Forge.PullReview? left, Aw.Sindri.Core.Forge.PullReview? right) -> bool
 static Aw.Sindri.Core.Forge.PullReviewComment.operator !=(Aw.Sindri.Core.Forge.PullReviewComment? left, Aw.Sindri.Core.Forge.PullReviewComment? right) -> bool
 static Aw.Sindri.Core.Forge.PullReviewComment.operator ==(Aw.Sindri.Core.Forge.PullReviewComment? left, Aw.Sindri.Core.Forge.PullReviewComment? right) -> bool
+Aw.Sindri.Core.Profile.PrReviewCheck
+Aw.Sindri.Core.Profile.PrReviewCheck.<Clone>$() -> Aw.Sindri.Core.Profile.PrReviewCheck!
+Aw.Sindri.Core.Profile.PrReviewCheck.Deconstruct(out string! Key, out string! Title, out System.Collections.Generic.IReadOnlyList<string!>? When, out Aw.Sindri.Core.Profile.PrReviewNeed? Need) -> void
+Aw.Sindri.Core.Profile.PrReviewCheck.Equals(Aw.Sindri.Core.Profile.PrReviewCheck? other) -> bool
+Aw.Sindri.Core.Profile.PrReviewCheck.Key.get -> string!
+Aw.Sindri.Core.Profile.PrReviewCheck.Key.init -> void
+Aw.Sindri.Core.Profile.PrReviewCheck.Need.get -> Aw.Sindri.Core.Profile.PrReviewNeed?
+Aw.Sindri.Core.Profile.PrReviewCheck.Need.init -> void
+Aw.Sindri.Core.Profile.PrReviewCheck.PrReviewCheck(string! Key, string! Title, System.Collections.Generic.IReadOnlyList<string!>? When = null, Aw.Sindri.Core.Profile.PrReviewNeed? Need = null) -> void
+Aw.Sindri.Core.Profile.PrReviewCheck.Title.get -> string!
+Aw.Sindri.Core.Profile.PrReviewCheck.Title.init -> void
+Aw.Sindri.Core.Profile.PrReviewCheck.When.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Profile.PrReviewCheck.When.init -> void
+Aw.Sindri.Core.Profile.PrReviewDefaults
+Aw.Sindri.Core.Profile.PrReviewGroup
+Aw.Sindri.Core.Profile.PrReviewGroup.<Clone>$() -> Aw.Sindri.Core.Profile.PrReviewGroup!
+Aw.Sindri.Core.Profile.PrReviewGroup.Deconstruct(out string! Name, out System.Collections.Generic.IReadOnlyList<string!>! Globs) -> void
+Aw.Sindri.Core.Profile.PrReviewGroup.Equals(Aw.Sindri.Core.Profile.PrReviewGroup? other) -> bool
+Aw.Sindri.Core.Profile.PrReviewGroup.Globs.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Profile.PrReviewGroup.Globs.init -> void
+Aw.Sindri.Core.Profile.PrReviewGroup.Name.get -> string!
+Aw.Sindri.Core.Profile.PrReviewGroup.Name.init -> void
+Aw.Sindri.Core.Profile.PrReviewGroup.PrReviewGroup(string! Name, System.Collections.Generic.IReadOnlyList<string!>! Globs) -> void
+Aw.Sindri.Core.Profile.PrReviewNeed
+Aw.Sindri.Core.Profile.PrReviewNeed.<Clone>$() -> Aw.Sindri.Core.Profile.PrReviewNeed!
+Aw.Sindri.Core.Profile.PrReviewNeed.App.get -> string?
+Aw.Sindri.Core.Profile.PrReviewNeed.App.init -> void
+Aw.Sindri.Core.Profile.PrReviewNeed.Body.get -> string?
+Aw.Sindri.Core.Profile.PrReviewNeed.Body.init -> void
+Aw.Sindri.Core.Profile.PrReviewNeed.ChangedWith.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Profile.PrReviewNeed.ChangedWith.init -> void
+Aw.Sindri.Core.Profile.PrReviewNeed.Ci.get -> string?
+Aw.Sindri.Core.Profile.PrReviewNeed.Ci.init -> void
+Aw.Sindri.Core.Profile.PrReviewNeed.Command.get -> string?
+Aw.Sindri.Core.Profile.PrReviewNeed.Command.init -> void
+Aw.Sindri.Core.Profile.PrReviewNeed.Covers.get -> bool?
+Aw.Sindri.Core.Profile.PrReviewNeed.Covers.init -> void
+Aw.Sindri.Core.Profile.PrReviewNeed.Deconstruct(out string? Ci, out string? App, out System.Collections.Generic.IReadOnlyList<string!>? ChangedWith, out bool? Covers, out string? Body, out bool? Manual, out string? Command) -> void
+Aw.Sindri.Core.Profile.PrReviewNeed.Equals(Aw.Sindri.Core.Profile.PrReviewNeed? other) -> bool
+Aw.Sindri.Core.Profile.PrReviewNeed.Manual.get -> bool?
+Aw.Sindri.Core.Profile.PrReviewNeed.Manual.init -> void
+Aw.Sindri.Core.Profile.PrReviewNeed.PrReviewNeed(string? Ci = null, string? App = null, System.Collections.Generic.IReadOnlyList<string!>? ChangedWith = null, bool? Covers = null, string? Body = null, bool? Manual = null, string? Command = null) -> void
+Aw.Sindri.Core.Profile.PrReviewPick
+Aw.Sindri.Core.Profile.PrReviewPick.<Clone>$() -> Aw.Sindri.Core.Profile.PrReviewPick!
+Aw.Sindri.Core.Profile.PrReviewPick.Ambiguous.get -> bool
+Aw.Sindri.Core.Profile.PrReviewPick.Choices.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewProject!>!
+Aw.Sindri.Core.Profile.PrReviewPick.Choices.init -> void
+Aw.Sindri.Core.Profile.PrReviewPick.Deconstruct(out Aw.Sindri.Core.Profile.PrReviewResolved? Settings, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewProject!>! Choices) -> void
+Aw.Sindri.Core.Profile.PrReviewPick.Equals(Aw.Sindri.Core.Profile.PrReviewPick? other) -> bool
+Aw.Sindri.Core.Profile.PrReviewPick.PrReviewPick(Aw.Sindri.Core.Profile.PrReviewResolved? Settings, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewProject!>! Choices) -> void
+Aw.Sindri.Core.Profile.PrReviewPick.Settings.get -> Aw.Sindri.Core.Profile.PrReviewResolved?
+Aw.Sindri.Core.Profile.PrReviewPick.Settings.init -> void
+Aw.Sindri.Core.Profile.PrReviewProject
+Aw.Sindri.Core.Profile.PrReviewProject.<Clone>$() -> Aw.Sindri.Core.Profile.PrReviewProject!
+Aw.Sindri.Core.Profile.PrReviewProject.Deconstruct(out string! Project, out System.Collections.Generic.IReadOnlyList<string!>? Repos, out string? Settings) -> void
+Aw.Sindri.Core.Profile.PrReviewProject.Equals(Aw.Sindri.Core.Profile.PrReviewProject? other) -> bool
+Aw.Sindri.Core.Profile.PrReviewProject.PrReviewProject(string! Project, System.Collections.Generic.IReadOnlyList<string!>? Repos = null, string? Settings = null) -> void
+Aw.Sindri.Core.Profile.PrReviewProject.Project.get -> string!
+Aw.Sindri.Core.Profile.PrReviewProject.Project.init -> void
+Aw.Sindri.Core.Profile.PrReviewProject.Repos.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Profile.PrReviewProject.Repos.init -> void
+Aw.Sindri.Core.Profile.PrReviewProject.Settings.get -> string?
+Aw.Sindri.Core.Profile.PrReviewProject.Settings.init -> void
+Aw.Sindri.Core.Profile.PrReviewResolved
+Aw.Sindri.Core.Profile.PrReviewResolved.<Clone>$() -> Aw.Sindri.Core.Profile.PrReviewResolved!
+Aw.Sindri.Core.Profile.PrReviewResolved.Checks.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewCheck!>!
+Aw.Sindri.Core.Profile.PrReviewResolved.Checks.init -> void
+Aw.Sindri.Core.Profile.PrReviewResolved.Collapse.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Profile.PrReviewResolved.Collapse.init -> void
+Aw.Sindri.Core.Profile.PrReviewResolved.Deconstruct(out string! Name, out System.Collections.Generic.IReadOnlyList<string!>! Panels, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewGroup!>! Groups, out System.Collections.Generic.IReadOnlyList<string!>! Collapse, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewRisky!>! Risky, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewCheck!>! Checks, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Sources) -> void
+Aw.Sindri.Core.Profile.PrReviewResolved.Equals(Aw.Sindri.Core.Profile.PrReviewResolved? other) -> bool
+Aw.Sindri.Core.Profile.PrReviewResolved.Groups.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewGroup!>!
+Aw.Sindri.Core.Profile.PrReviewResolved.Groups.init -> void
+Aw.Sindri.Core.Profile.PrReviewResolved.Name.get -> string!
+Aw.Sindri.Core.Profile.PrReviewResolved.Name.init -> void
+Aw.Sindri.Core.Profile.PrReviewResolved.Panels.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Profile.PrReviewResolved.Panels.init -> void
+Aw.Sindri.Core.Profile.PrReviewResolved.PrReviewResolved(string! Name, System.Collections.Generic.IReadOnlyList<string!>! Panels, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewGroup!>! Groups, System.Collections.Generic.IReadOnlyList<string!>! Collapse, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewRisky!>! Risky, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewCheck!>! Checks, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Sources) -> void
+Aw.Sindri.Core.Profile.PrReviewResolved.Risky.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewRisky!>!
+Aw.Sindri.Core.Profile.PrReviewResolved.Risky.init -> void
+Aw.Sindri.Core.Profile.PrReviewResolved.Sources.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Profile.PrReviewResolved.Sources.init -> void
+Aw.Sindri.Core.Profile.PrReviewRisky
+Aw.Sindri.Core.Profile.PrReviewRisky.<Clone>$() -> Aw.Sindri.Core.Profile.PrReviewRisky!
+Aw.Sindri.Core.Profile.PrReviewRisky.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Globs, out string! Why) -> void
+Aw.Sindri.Core.Profile.PrReviewRisky.Equals(Aw.Sindri.Core.Profile.PrReviewRisky? other) -> bool
+Aw.Sindri.Core.Profile.PrReviewRisky.Globs.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Profile.PrReviewRisky.Globs.init -> void
+Aw.Sindri.Core.Profile.PrReviewRisky.PrReviewRisky(System.Collections.Generic.IReadOnlyList<string!>! Globs, string! Why) -> void
+Aw.Sindri.Core.Profile.PrReviewRisky.Why.get -> string!
+Aw.Sindri.Core.Profile.PrReviewRisky.Why.init -> void
+Aw.Sindri.Core.Profile.PrReviewSettings
+Aw.Sindri.Core.Profile.PrReviewSettings.<Clone>$() -> Aw.Sindri.Core.Profile.PrReviewSettings!
+Aw.Sindri.Core.Profile.PrReviewSettings.Credential.get -> string?
+Aw.Sindri.Core.Profile.PrReviewSettings.Credential.init -> void
+Aw.Sindri.Core.Profile.PrReviewSettings.Deconstruct(out string? Login, out string? Credential, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.PrReviewSettingsEntry!>? Settings, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewProject!>? Projects) -> void
+Aw.Sindri.Core.Profile.PrReviewSettings.Equals(Aw.Sindri.Core.Profile.PrReviewSettings? other) -> bool
+Aw.Sindri.Core.Profile.PrReviewSettings.Login.get -> string?
+Aw.Sindri.Core.Profile.PrReviewSettings.Login.init -> void
+Aw.Sindri.Core.Profile.PrReviewSettings.PrReviewSettings(string? Login = null, string? Credential = null, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.PrReviewSettingsEntry!>? Settings = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewProject!>? Projects = null) -> void
+Aw.Sindri.Core.Profile.PrReviewSettings.Projects.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewProject!>?
+Aw.Sindri.Core.Profile.PrReviewSettings.Projects.init -> void
+Aw.Sindri.Core.Profile.PrReviewSettings.Settings.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.PrReviewSettingsEntry!>?
+Aw.Sindri.Core.Profile.PrReviewSettings.Settings.init -> void
+Aw.Sindri.Core.Profile.PrReviewSettingsEntry
+Aw.Sindri.Core.Profile.PrReviewSettingsEntry.<Clone>$() -> Aw.Sindri.Core.Profile.PrReviewSettingsEntry!
+Aw.Sindri.Core.Profile.PrReviewSettingsEntry.Checks.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewCheck!>?
+Aw.Sindri.Core.Profile.PrReviewSettingsEntry.Checks.init -> void
+Aw.Sindri.Core.Profile.PrReviewSettingsEntry.Collapse.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Profile.PrReviewSettingsEntry.Collapse.init -> void
+Aw.Sindri.Core.Profile.PrReviewSettingsEntry.Deconstruct(out string? Extends, out System.Collections.Generic.IReadOnlyList<string!>? Panels, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewGroup!>? Groups, out System.Collections.Generic.IReadOnlyList<string!>? Collapse, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewRisky!>? Risky, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewCheck!>? Checks) -> void
+Aw.Sindri.Core.Profile.PrReviewSettingsEntry.Equals(Aw.Sindri.Core.Profile.PrReviewSettingsEntry? other) -> bool
+Aw.Sindri.Core.Profile.PrReviewSettingsEntry.Extends.get -> string?
+Aw.Sindri.Core.Profile.PrReviewSettingsEntry.Extends.init -> void
+Aw.Sindri.Core.Profile.PrReviewSettingsEntry.Groups.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewGroup!>?
+Aw.Sindri.Core.Profile.PrReviewSettingsEntry.Groups.init -> void
+Aw.Sindri.Core.Profile.PrReviewSettingsEntry.Panels.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Profile.PrReviewSettingsEntry.Panels.init -> void
+Aw.Sindri.Core.Profile.PrReviewSettingsEntry.PrReviewSettingsEntry(string? Extends = null, System.Collections.Generic.IReadOnlyList<string!>? Panels = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewGroup!>? Groups = null, System.Collections.Generic.IReadOnlyList<string!>? Collapse = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewRisky!>? Risky = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewCheck!>? Checks = null) -> void
+Aw.Sindri.Core.Profile.PrReviewSettingsEntry.Risky.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewRisky!>?
+Aw.Sindri.Core.Profile.PrReviewSettingsEntry.Risky.init -> void
+Aw.Sindri.Core.Profile.SindriProfile.Deconstruct(out int SchemaVersion, out string! User, out string! Tenant, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.RepoEntry!>? Repos, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.ServiceSettings!>? Services, out Aw.Sindri.Core.Profile.ApiSettings? Api, out Aw.Sindri.Core.Profile.WorkflowSettings? Workflow, out System.Text.Json.JsonElement? Context, out Aw.Sindri.Core.Profile.IndexSettings? Index, out Aw.Sindri.Core.Profile.LaunchSettings? Launch, out Aw.Sindri.Core.Profile.AgentSettings? Agents, out Aw.Sindri.Core.Profile.SetupSettings? Setup, out Aw.Sindri.Core.Profile.SandboxSettings? Sandbox, out Aw.Sindri.Core.Profile.PrReviewSettings? Review) -> void
+Aw.Sindri.Core.Profile.SindriProfile.Review.get -> Aw.Sindri.Core.Profile.PrReviewSettings?
+Aw.Sindri.Core.Profile.SindriProfile.Review.init -> void
+Aw.Sindri.Core.Profile.SindriProfile.SindriProfile(int SchemaVersion, string! User, string! Tenant = "local", System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.RepoEntry!>? Repos = null, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.ServiceSettings!>? Services = null, Aw.Sindri.Core.Profile.ApiSettings? Api = null, Aw.Sindri.Core.Profile.WorkflowSettings? Workflow = null, System.Text.Json.JsonElement? Context = null, Aw.Sindri.Core.Profile.IndexSettings? Index = null, Aw.Sindri.Core.Profile.LaunchSettings? Launch = null, Aw.Sindri.Core.Profile.AgentSettings? Agents = null, Aw.Sindri.Core.Profile.SetupSettings? Setup = null, Aw.Sindri.Core.Profile.SandboxSettings? Sandbox = null, Aw.Sindri.Core.Profile.PrReviewSettings? Review = null) -> void
+const Aw.Sindri.Core.Profile.PrReviewDefaults.DefaultName = "default" -> string!
+override Aw.Sindri.Core.Profile.PrReviewCheck.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.PrReviewCheck.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.PrReviewCheck.ToString() -> string!
+override Aw.Sindri.Core.Profile.PrReviewGroup.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.PrReviewGroup.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.PrReviewGroup.ToString() -> string!
+override Aw.Sindri.Core.Profile.PrReviewNeed.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.PrReviewNeed.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.PrReviewNeed.ToString() -> string!
+override Aw.Sindri.Core.Profile.PrReviewPick.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.PrReviewPick.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.PrReviewPick.ToString() -> string!
+override Aw.Sindri.Core.Profile.PrReviewProject.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.PrReviewProject.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.PrReviewProject.ToString() -> string!
+override Aw.Sindri.Core.Profile.PrReviewResolved.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.PrReviewResolved.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.PrReviewResolved.ToString() -> string!
+override Aw.Sindri.Core.Profile.PrReviewRisky.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.PrReviewRisky.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.PrReviewRisky.ToString() -> string!
+override Aw.Sindri.Core.Profile.PrReviewSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.PrReviewSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.PrReviewSettings.ToString() -> string!
+override Aw.Sindri.Core.Profile.PrReviewSettingsEntry.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.PrReviewSettingsEntry.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.PrReviewSettingsEntry.ToString() -> string!
+static Aw.Sindri.Core.Profile.PrReviewCheck.operator !=(Aw.Sindri.Core.Profile.PrReviewCheck? left, Aw.Sindri.Core.Profile.PrReviewCheck? right) -> bool
+static Aw.Sindri.Core.Profile.PrReviewCheck.operator ==(Aw.Sindri.Core.Profile.PrReviewCheck? left, Aw.Sindri.Core.Profile.PrReviewCheck? right) -> bool
+static Aw.Sindri.Core.Profile.PrReviewDefaults.Chain(Aw.Sindri.Core.Profile.PrReviewSettings? review, string! name) -> System.Collections.Generic.IReadOnlyList<(string! Name, Aw.Sindri.Core.Profile.PrReviewSettingsEntry! Entry)>?
+static Aw.Sindri.Core.Profile.PrReviewDefaults.Entry.get -> Aw.Sindri.Core.Profile.PrReviewSettingsEntry!
+static Aw.Sindri.Core.Profile.PrReviewDefaults.For(Aw.Sindri.Core.Profile.PrReviewSettings? review, string! repo) -> Aw.Sindri.Core.Profile.PrReviewPick!
+static Aw.Sindri.Core.Profile.PrReviewDefaults.Keys.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Sindri.Core.Profile.PrReviewDefaults.Panels.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Sindri.Core.Profile.PrReviewDefaults.Resolve(Aw.Sindri.Core.Profile.PrReviewSettings? review, string! name) -> Aw.Sindri.Core.Profile.PrReviewResolved?
+static Aw.Sindri.Core.Profile.PrReviewGroup.operator !=(Aw.Sindri.Core.Profile.PrReviewGroup? left, Aw.Sindri.Core.Profile.PrReviewGroup? right) -> bool
+static Aw.Sindri.Core.Profile.PrReviewGroup.operator ==(Aw.Sindri.Core.Profile.PrReviewGroup? left, Aw.Sindri.Core.Profile.PrReviewGroup? right) -> bool
+static Aw.Sindri.Core.Profile.PrReviewNeed.operator !=(Aw.Sindri.Core.Profile.PrReviewNeed? left, Aw.Sindri.Core.Profile.PrReviewNeed? right) -> bool
+static Aw.Sindri.Core.Profile.PrReviewNeed.operator ==(Aw.Sindri.Core.Profile.PrReviewNeed? left, Aw.Sindri.Core.Profile.PrReviewNeed? right) -> bool
+static Aw.Sindri.Core.Profile.PrReviewPick.operator !=(Aw.Sindri.Core.Profile.PrReviewPick? left, Aw.Sindri.Core.Profile.PrReviewPick? right) -> bool
+static Aw.Sindri.Core.Profile.PrReviewPick.operator ==(Aw.Sindri.Core.Profile.PrReviewPick? left, Aw.Sindri.Core.Profile.PrReviewPick? right) -> bool
+static Aw.Sindri.Core.Profile.PrReviewProject.operator !=(Aw.Sindri.Core.Profile.PrReviewProject? left, Aw.Sindri.Core.Profile.PrReviewProject? right) -> bool
+static Aw.Sindri.Core.Profile.PrReviewProject.operator ==(Aw.Sindri.Core.Profile.PrReviewProject? left, Aw.Sindri.Core.Profile.PrReviewProject? right) -> bool
+static Aw.Sindri.Core.Profile.PrReviewResolved.operator !=(Aw.Sindri.Core.Profile.PrReviewResolved? left, Aw.Sindri.Core.Profile.PrReviewResolved? right) -> bool
+static Aw.Sindri.Core.Profile.PrReviewResolved.operator ==(Aw.Sindri.Core.Profile.PrReviewResolved? left, Aw.Sindri.Core.Profile.PrReviewResolved? right) -> bool
+static Aw.Sindri.Core.Profile.PrReviewRisky.operator !=(Aw.Sindri.Core.Profile.PrReviewRisky? left, Aw.Sindri.Core.Profile.PrReviewRisky? right) -> bool
+static Aw.Sindri.Core.Profile.PrReviewRisky.operator ==(Aw.Sindri.Core.Profile.PrReviewRisky? left, Aw.Sindri.Core.Profile.PrReviewRisky? right) -> bool
+static Aw.Sindri.Core.Profile.PrReviewSettings.operator !=(Aw.Sindri.Core.Profile.PrReviewSettings? left, Aw.Sindri.Core.Profile.PrReviewSettings? right) -> bool
+static Aw.Sindri.Core.Profile.PrReviewSettings.operator ==(Aw.Sindri.Core.Profile.PrReviewSettings? left, Aw.Sindri.Core.Profile.PrReviewSettings? right) -> bool
+static Aw.Sindri.Core.Profile.PrReviewSettingsEntry.operator !=(Aw.Sindri.Core.Profile.PrReviewSettingsEntry? left, Aw.Sindri.Core.Profile.PrReviewSettingsEntry? right) -> bool
+static Aw.Sindri.Core.Profile.PrReviewSettingsEntry.operator ==(Aw.Sindri.Core.Profile.PrReviewSettingsEntry? left, Aw.Sindri.Core.Profile.PrReviewSettingsEntry? right) -> bool
