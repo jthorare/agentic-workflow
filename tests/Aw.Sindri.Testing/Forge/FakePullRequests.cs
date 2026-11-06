@@ -381,13 +381,52 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
     }
 
     /// <inheritdoc />
-    public ValueTask<Result<PullFiles>> Files(string link, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public ValueTask<Result<PullFiles>> Files(string link, CancellationToken cancellationToken)
+    {
+        Calls.Add("Files");
+        return Done(Locate(link).Map(p => new PullFiles(p.Files, CapReached: false)));
+    }
 
     /// <inheritdoc />
-    public ValueTask<Result<string>> FileText(string link, string path, string sha, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public ValueTask<Result<string>> FileText(string link, string path, string sha, CancellationToken cancellationToken)
+    {
+        Calls.Add("FileText");
+        return Done(Locate(link).Bind(p => FileTextOf(p, path)));
+    }
 
     /// <inheritdoc />
-    public ValueTask<Result<PullReviewOutcome>> SubmitReview(PullReview review, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public ValueTask<Result<PullReviewOutcome>> SubmitReview(PullReview review, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(review);
+        Calls.Add("SubmitReview");
+        return Done(Locate(review.Link).Map(p =>
+        {
+            if (p.HeadSha != review.ExpectedHead)
+            {
+                return PullReviewOutcome.HeadMoved;
+            }
+
+            if (p.Reviews.ContainsKey(review.Marker))
+            {
+                return PullReviewOutcome.AlreadyDelivered;
+            }
+
+            p.Reviews[review.Marker] = review;
+            var key = string.Create(CultureInfo.InvariantCulture, $"review-{p.Reviews.Count}");
+            p.Threads.Add(new PullThread(key, PullCommentKind.Review, "sindri", "MEMBER", IsBot: false, Resolved: false, Outdated: false, Path: null, review.Body, [review.Marker], new DateTimeOffset(2026, 10, 1, 9, 0, 0, TimeSpan.Zero).AddMinutes(p.Threads.Count), Line: null, EditedAt: null, $"{p.Link}#{key}"));
+            return PullReviewOutcome.Posted;
+        }));
+    }
+
+    private static Result<string> FileTextOf(FakePull pull, string path)
+    {
+        if (pull.FileTexts.TryGetValue(path, out var text))
+        {
+            return text;
+        }
+
+        return SindriErrors.ForgeNotFound.With($"no text for '{path}'");
+    }
 
     private PullDelivery Deliver(string key) => _delivered.Add(key) ? PullDelivery.Delivered : PullDelivery.AlreadyDelivered;
 

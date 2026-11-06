@@ -12,6 +12,14 @@ internal sealed class RecordingPulls : IPullRequests
 
     public List<PullReaction> Reactions { get; } = [];
 
+    public List<PullReview> Reviews { get; } = [];
+
+    public PullFiles FilesAnswer { get; set; } = new([], CapReached: false);
+
+    public string TextAnswer { get; set; } = string.Empty;
+
+    public PullReviewOutcome ReviewAnswer { get; set; } = PullReviewOutcome.Posted;
+
     public Result<PullMergeOutcome> MergeAnswer { get; set; } = new PullMergeOutcome(PullMergeStatus.Merged, "abc123", Reason: null);
 
     public PullDelivery Delivery { get; set; } = PullDelivery.Delivered;
@@ -60,9 +68,13 @@ internal sealed class RecordingPulls : IPullRequests
 
     public ValueTask<Result<IReadOnlyList<PullDigest>>> Digest(IReadOnlyList<string> links, CancellationToken cancellationToken) => throw new NotSupportedException();
 
-    public ValueTask<Result<PullFiles>> Files(string link, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public ValueTask<Result<PullFiles>> Files(string link, CancellationToken cancellationToken) => ValueTask.FromResult<Result<PullFiles>>(FilesAnswer);
 
-    public ValueTask<Result<string>> FileText(string link, string path, string sha, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public ValueTask<Result<string>> FileText(string link, string path, string sha, CancellationToken cancellationToken) => ValueTask.FromResult<Result<string>>(TextAnswer);
 
-    public ValueTask<Result<PullReviewOutcome>> SubmitReview(PullReview review, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public ValueTask<Result<PullReviewOutcome>> SubmitReview(PullReview review, CancellationToken cancellationToken)
+    {
+        Reviews.Add(review);
+        return ValueTask.FromResult<Result<PullReviewOutcome>>(ReviewAnswer);
+    }
 }
