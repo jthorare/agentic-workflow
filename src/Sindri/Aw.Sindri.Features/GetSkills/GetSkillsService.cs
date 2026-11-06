@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Skills;
@@ -23,13 +22,6 @@ internal sealed class GetSkillsService(ISkillBlocks blocks) : IService<GetSkills
             manifest.Name, block.Skill, descriptor.Id.Value, descriptor.Version, manifest.Sentence,
             [.. manifest.Inputs.Select(i => new SkillInputView(i.Key, i.Type == SkillValueType.Path ? "path" : "text", i.Label, i.Required))],
             [.. descriptor.Outputs.Select(o => o.Fact.Value)], [.. descriptor.Outcomes.Select(o => o.Value)],
-            manifest.Pushes, SkillSha(block.Path), block.Path);
-    }
-
-    /// <summary>The SKILL.md sha256 next to the block.yaml; empty when the file is gone since the load.</summary>
-    private static string SkillSha(string blockYaml)
-    {
-        var skillFile = Path.Combine(Path.GetDirectoryName(blockYaml) ?? string.Empty, "SKILL.md");
-        return File.Exists(skillFile) ? Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(skillFile))) : string.Empty;
+            manifest.Pushes, block.SkillMdSha ?? string.Empty, block.Path);
     }
 }

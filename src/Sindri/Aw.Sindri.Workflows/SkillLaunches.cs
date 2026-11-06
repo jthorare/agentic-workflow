@@ -11,9 +11,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 internal static class SkillLaunches
 {
     /// <summary>The instance fact a trial run ('sindri skill run') stores: the folder given to '--skills'. A trial is a run of a \'workflow.skill-trial-*\' recipe; with the fact set it reads the skill from that folder by path.</summary>
-    internal static readonly FactKey TrialFact = FactKey.From("fact:skillTrialFolder");   // why: fc's SkillTrialRecipe.SkillsFolderFact; swap for the constant once both branches merge
-
-    private const string TrialRecipePrefix = "workflow.skill-trial-";   // fc's SkillTrialRecipe id prefix; swap for SkillTrialRecipe.IsTrial after the merge
+    internal static readonly FactKey TrialFact = FactKey.From(SkillTrialRecipe.SkillsFolderFact);
 
     /// <summary>The launch of the Step's skill block.</summary>
     /// <param name="run">The run the launch is for; one with no 'with:' values runs no skill block.</param>
@@ -93,7 +91,7 @@ internal static class SkillLaunches
 
     private static async ValueTask<(bool Trial, string? Folder)> TrialDirectory(AgentLaunchRun run, AgentLaunchInputs inputs, CancellationToken cancellationToken)
     {
-        var trial = run.Recipe is { } recipe && recipe.Value.StartsWith(TrialRecipePrefix, StringComparison.Ordinal);
+        var trial = run.Recipe is { } recipe && SkillTrialRecipe.IsTrial(recipe);
         if (!trial || run.Facts is null || !run.Facts.TryGetValue(TrialFact, out var stored))
         {
             return (trial, null);
