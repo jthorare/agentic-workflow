@@ -1,4 +1,5 @@
 using Aw.Kernel;
+using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Obligations;
 using Aw.Meta.Core.Ports;
 
@@ -24,6 +25,13 @@ public sealed class InboxCounts(IMetaConfig config, IMessageStore messages, Obli
         }
 
         var open = await reader.Open(team.Value.MetaLane, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false);
-        return open.IsError ? open.Error : (inbound.Value.Count, open.Value.Count(static o => o.Kind == ObligationKind.Reply));
+        if (open.IsError)
+        {
+            return open.Error;
+        }
+
+        var now = clock.GetUtcNow();
+        var owed = open.Value.Where(static o => o.Kind == ObligationKind.Reply).Select(static o => o.Key).ToHashSet(StringComparer.Ordinal);
+        return (inbound.Value.Count, inbound.Value.Count(m => string.Equals(InboxState.Of(m, owed.Contains(m.Id.Value), now), InboxState.Open, StringComparison.Ordinal)));
     }
 }

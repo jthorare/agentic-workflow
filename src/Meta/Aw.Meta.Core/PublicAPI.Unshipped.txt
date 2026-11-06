@@ -2204,3 +2204,7 @@ static Aw.Meta.Core.Coordination.LaneHealthOptions.operator ==(Aw.Meta.Core.Coor
 Aw.Meta.Core.Coordination.InboxCounts
 Aw.Meta.Core.Coordination.InboxCounts.InboxCounts(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Coordination.ObligationReader! reader, System.TimeProvider! clock) -> void
 Aw.Meta.Core.Coordination.InboxCounts.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<(int Total, int Open)>!>
+const Aw.Meta.Core.Messages.InboxState.Open = "open" -> string!
+static Aw.Meta.Core.Messages.InboxState.IsDeferred(Aw.Meta.Core.Messages.InboxMessage! message, System.DateTimeOffset now) -> bool
+static Aw.Meta.Core.Messages.InboxState.Of(Aw.Meta.Core.Messages.InboxMessage! message, bool owed, System.DateTimeOffset now) -> string!
+Aw.Meta.Core.Messages.InboxState
