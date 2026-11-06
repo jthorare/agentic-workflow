@@ -17,6 +17,7 @@ internal static class SkillServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         return services
             .AddSingleton<Func<string, SkillBlocks>>(static _ => SkillManifestLoader.Load)
+            .AddSingleton<ISkillCatalog, SkillCatalog>()   // the folder is the Host's: SkillsFolder.Resolve over the environment
             .AddScoped<IValidator<GetSkillsRequest>, AcceptAllValidator<GetSkillsRequest>>().AddQuery<GetSkillsRequest, GetSkillsResponse, GetSkillsService>();
     }
 }

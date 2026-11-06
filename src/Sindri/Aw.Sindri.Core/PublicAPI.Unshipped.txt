@@ -22259,3 +22259,7 @@ static readonly Aw.Sindri.Core.SindriErrors.SkillVerdictUnmapped -> Aw.Kernel.Er
 Aw.Sindri.Core.Skills.SkillResultInput.LastPrompt.get -> System.DateTimeOffset?
 Aw.Sindri.Core.Skills.SkillResultInput.LastPrompt.init -> void
 Aw.Sindri.Core.Skills.SkillResultKind.Working = 4 -> Aw.Sindri.Core.Skills.SkillResultKind
+Aw.Sindri.Core.Skills.ISkillCatalog
+Aw.Sindri.Core.Skills.ISkillCatalog.Blocks.get -> Aw.Sindri.Core.Skills.SkillBlocks!
+Aw.Sindri.Core.Skills.ISkillCatalog.Folder.get -> string!
+Aw.Sindri.Core.Skills.ISkillCatalog.LoadFolder(string! directory) -> Aw.Sindri.Core.Skills.SkillBlocks!

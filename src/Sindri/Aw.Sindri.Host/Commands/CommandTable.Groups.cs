@@ -24,7 +24,7 @@ internal static partial class CommandTable
         _ => null,
     };
 
-    /// <summary>'sindri agents|setup|code-index|index …': the verbs that only call the control plane (the reads never start it; 'index sync' may).</summary>
+    /// <summary>'sindri agents|skills|setup|code-index|index …': the verbs that only call the control plane (the reads never start it; 'index sync' may).</summary>
     private static async Task<int> ReadVerbs(string[] args, (ControlPlaneClient Client, Output Output) api, (IServiceProvider Services, StartCommand Start) host, (CancellationToken Interrupt, CancellationToken Again) signals)
     {
         var (client, output) = api;
@@ -32,6 +32,7 @@ internal static partial class CommandTable
         return args switch
         {
             ["agents", .. var rest] => await new AgentsVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
+            ["skills", .. var rest] => await new SkillsVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
             ["setup", .. var rest] => await new SetupVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
             ["code-index", .. var rest] => await new CodeIndexVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
             ["index", .. var rest] => await new IndexVerbs(client, output, new JobFollower(client, output, host.Services.GetRequiredService<TimeProvider>()), Interactive(), Console.In, host.Start.EnsureRunning)
