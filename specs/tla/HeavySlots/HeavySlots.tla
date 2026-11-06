@@ -5,17 +5,18 @@
 (*                                                                         *)
 (* Models:                                                                 *)
 (*   scripts/heavy.sh  (the `heavy` wrapper)  acquire box-wide: the cap   *)
-(*       file read once per job, the meta reserve re-read every pass,      *)
+(*       file and the meta reserve re-read every pass (heavy-config.sh),   *)
 (*       mkdir, then the owner write; reclaim moves owner aside first,     *)
 (*       like locks.sh                                                     *)
-(*   config/lib/locks.sh  acquire_any_lock: AW_HEAVY_SLOTS (default 2),    *)
-(*       never the cap file or the reserve; <dir>/pid; reclaim moves the   *)
+(*   config/lib/locks.sh  acquire_any_lock on the heavy-job lock: the cap  *)
+(*       file and the reserve re-read every pass (heavy-config.sh; a       *)
+(*       non-meta taker skips the reserve); <dir>/pid; reclaim moves the   *)
 (*       record aside first (_lock_reclaim_dead)                           *)
 (*   src/Sindri/Aw.Sindri.Infrastructure/Locks/DirectoryHeavySlots.cs      *)
-(*       the cap read once at serve start (HeavyLockSettings singleton),   *)
-(*       never the reserve; <dir>/owner; reclaim renames the record aside  *)
-(*       (Claim), then a non-recursive delete; HeavySlotLease leaves a     *)
-(*       slot whose owner names someone else                               *)
+(*       the cap and the reserve re-read every pass (HeavyLockSettings,    *)
+(*       HeavyCap); a Sindri job is never meta; <dir>/owner; reclaim       *)
+(*       renames the record aside (Claim), then a non-recursive delete;    *)
+(*       HeavySlotLease leaves a slot whose owner names someone else       *)
 (*                                                                         *)
 (* Each syscall (mkdir, rmdir, unlink, a write, a rename) is one step.     *)
 (* A slot holds at most one record file (rec); "pid" is locks.sh's,        *)
@@ -23,10 +24,11 @@
 (* moved aside (<file>.reclaim.<its pid>...; by = that reclaimer).  The    *)
 (* move and the compare are two steps: a reclaimer SIGKILLed between      *)
 (* them leaves the moved record, which any taker frees once its mover is  *)
-(* dead (#2065).  A process dies by SIGKILL at any step: its folder and    *)
+(* dead (#2065).  A folder with no record is freed by any taker once its  *)
+(* mkdir-er is dead (#2059; the code waits a minute).  A process dies by SIGKILL at any step: its folder and    *)
 (* record stay, and its pid is never reused.  Not modelled: the per-session*)
 (* heavy-session/<pid>.lock (taken first, a separate pool), the memory     *)
-(* guard (it only skips slots), timeouts, the 6 h no-record grace of       *)
+(* guard (it only skips slots), timeouts, the 6 h held-too-long grace of  *)
 (* DirectoryHeavySlots and the TS holder.json.                             *)
 (***************************************************************************)
 EXTENDS Naturals, FiniteSets
@@ -48,6 +50,9 @@ Procs == Heavy \cup Locksh \cup Sindri
 Slot == 1..CapMax
 None == "none"
 NoRec == [file |-> "none", who |-> None, ofile |-> "none", by |-> None]
+\* A folder with no record that was made or emptied within the last minute: a holder may be mid-write, or a
+\* reclaimer mid-rmdir. Only the folder's mtime tells; Age is the minute passing. The empty-folder rule skips it.
+YoungNone == [file |-> "none", who |-> None, ofile |-> "none", by |-> "young"]
 
 ASSUME /\ Meta \subseteq Heavy
        /\ Heavy \cap Locksh = {} /\ Heavy \cap Sindri = {} /\ Locksh \cap Sindri = {}
@@ -59,8 +64,6 @@ VARIABLES
     pc,       \* each process's step
     at,       \* the slot a process is trying (or holds, after its mkdir)
     seen,     \* the dead record a reclaimer read
-    myCap,    \* the slot count each process loops over
-    myRes,    \* the reserve the wrapper read this pass
     holds,    \* the slot a process believes it holds (0: none), set by its winning mkdir
     alive,
     cap,      \* the heavy-slots-cap file
@@ -69,12 +72,12 @@ VARIABLES
     capBreak, \* history: some process took a slot above the cap file at that moment
     resBreak  \* history: a non-meta process took a slot inside the reserve it should honour
 
-vars == <<dir, rec, pc, at, seen, myCap, myRes, holds, alive, cap, reserve, deaths, capBreak, resBreak>>
+vars == <<dir, rec, pc, at, seen, holds, alive, cap, reserve, deaths, capBreak, resBreak>>
 
 Min(a, b) == IF a < b THEN a ELSE b
 FileOf(p) == IF p \in Locksh THEN "pid" ELSE "owner"
 \* ofile: the record's own name before a move (its file otherwise); by: who moved it aside.
-Rec == [file: {"none", "pid", "owner", "reclaim"}, who: Procs \cup {None}, ofile: {"none", "pid", "owner"}, by: Procs \cup {None}]
+Rec == [file: {"none", "pid", "owner", "reclaim"}, who: Procs \cup {None}, ofile: {"none", "pid", "owner"}, by: Procs \cup {None, "young"}]
 RecOf(p) == [file |-> FileOf(p), who |-> p, ofile |-> FileOf(p), by |-> None]
 PCs == {"idle", "try", "claim", "c_check", "c_rmdir", "mkdir2", "write", "run", "rel1", "rel2"}
 
@@ -94,8 +97,6 @@ Init ==
     /\ pc = [p \in Procs |-> "idle"]
     /\ at = [p \in Procs |-> 1]
     /\ seen = [p \in Procs |-> NoRec]
-    /\ myCap = [p \in Procs |-> IF p \in Locksh THEN LockshSlots ELSE CapInit]
-    /\ myRes = [p \in Procs |-> 0]
     /\ holds = [p \in Procs |-> 0]
     /\ alive = [p \in Procs |-> TRUE]
     /\ cap = CapInit
@@ -104,8 +105,12 @@ Init ==
     /\ capBreak = FALSE
     /\ resBreak = FALSE
 
-\* The reserve a process honours when it takes slot k: the wrapper's per-pass read; locks.sh and Sindri never read it.
-Honours(p) == IF p \in Heavy THEN myRes[p] ELSE reserve
+\* The cap and the reserve every taker works to (#2061): the files as they read now, re-read on each pass (the read and the
+\* mkdir after it are one step, and the retry mkdir after a reclaim re-checks them; the code reads once per pass and then
+\* tries every slot, a reclaim included, so its window is one pass, milliseconds). The reserve
+\* is at most the cap minus one, so a non-meta job always has a slot (#2060). Only a Meta job (a wrapper job with AW_HEAVY_PRIORITY=meta) may take the reserved slots.
+CapNow == cap
+ResNow == Min(reserve, cap - 1)
 
 \* p's mkdir of slot k succeeded.
 Take(p, k) ==
@@ -114,32 +119,29 @@ Take(p, k) ==
     /\ at' = [at EXCEPT ![p] = k]
     /\ pc' = [pc EXCEPT ![p] = "write"]
     /\ capBreak' = (capBreak \/ k > cap)
-    /\ resBreak' = (resBreak \/ (p \notin Meta /\ k <= Honours(p)))
+    /\ resBreak' = (resBreak \/ (p \notin Meta /\ k <= ResNow))
 
 Next1(p) == /\ at' = [at EXCEPT ![p] = at[p] + 1]
             /\ pc' = [pc EXCEPT ![p] = "try"]
             /\ UNCHANGED <<dir, holds, capBreak, resBreak>>
 
-Same == UNCHANGED <<cap, reserve, deaths, alive, myCap>>
+Same == UNCHANGED <<cap, reserve, deaths, alive>>
 
-\* A job starts: the wrapper reads the cap file and the reserve; the others keep what they have.
+\* A job starts its first pass.
 Start(p) ==
     /\ pc[p] = "idle"
     /\ pc' = [pc EXCEPT ![p] = "try"]
     /\ at' = [at EXCEPT ![p] = 1]
-    /\ myCap' = IF p \in Heavy THEN [myCap EXCEPT ![p] = cap] ELSE myCap
-    /\ myRes' = IF p \in Heavy THEN [myRes EXCEPT ![p] = Min(reserve, cap)] ELSE myRes
     /\ UNCHANGED <<dir, rec, seen, holds, alive, cap, reserve, deaths, capBreak, resBreak>>
 
-\* Every slot tried and busy: sleep 1 and start over (the wrapper re-reads the reserve, not the cap).
+\* Every slot up to the cap tried and busy: sleep 1 and start over, reading the cap and the reserve again.
 Poll(p) ==
-    /\ pc[p] = "try" /\ at[p] > myCap[p]
+    /\ pc[p] = "try" /\ at[p] > CapNow
     /\ at' = [at EXCEPT ![p] = 1]
-    /\ myRes' = IF p \in Heavy THEN [myRes EXCEPT ![p] = Min(reserve, myCap[p])] ELSE myRes
     /\ UNCHANGED <<dir, rec, pc, seen, holds, capBreak, resBreak>> /\ Same
 
-\* Which record a taker reads as proof of a dead holder.
-Reads(p, r) == IF p \in Locksh THEN r.file \in {"pid", "owner"} ELSE r.file = "owner"
+\* Which record a taker reads as proof of a dead holder: every taker reads both (#2059).
+Reads(p, r) == r.file \in {"pid", "owner"}
 
 \* A dead holder's record, or a record moved aside by a reclaimer that was SIGKILLed before it finished (#2065). A moved
 \* record whose mover lives is left alone: the mover is mid-reclaim.
@@ -148,16 +150,25 @@ Dead(p, r) == \/ Reads(p, r) /\ ~alive[r.who]
 
 Try(p) ==
     LET k == at[p] IN
-    /\ pc[p] = "try" /\ k <= myCap[p]
-    /\ IF p \in Heavy /\ p \notin Meta /\ k <= myRes[p]
-          THEN Next1(p) /\ UNCHANGED <<rec, seen, myRes>>                        \* reserved for meta: skip
+    /\ pc[p] = "try" /\ k <= CapNow
+    /\ IF p \notin Meta /\ k <= ResNow
+          THEN Next1(p) /\ UNCHANGED <<rec, seen>>                        \* reserved for meta: skip
        ELSE IF ~dir[k]
-          THEN Take(p, k) /\ UNCHANGED <<rec, seen, myRes>>
+          THEN Take(p, k) /\ rec' = [rec EXCEPT ![k] = YoungNone] /\ UNCHANGED <<seen>>
+       ELSE IF rec[k] = NoRec
+          \* An empty folder over two minutes old (not YoungNone): its mkdir-er is dead, or it would have written by
+          \* now (Age's assumption). The code is `find -mmin +1` then rmdir (fails if a holder wrote meanwhile); modelled as one
+          \* step, so a folder re-made between the two can't be removed. The code leaves that window open for
+          \* a few microseconds.
+          THEN /\ dir' = [dir EXCEPT ![k] = FALSE]
+               /\ pc' = [pc EXCEPT ![p] = "mkdir2"]
+               /\ rec' = [rec EXCEPT ![k] = YoungNone]
+               /\ UNCHANGED <<at, seen, holds, capBreak, resBreak>>
        ELSE IF Dead(p, rec[k])
           THEN /\ seen' = [seen EXCEPT ![p] = rec[k]]
                /\ pc' = [pc EXCEPT ![p] = "claim"]
-               /\ UNCHANGED <<dir, rec, at, holds, myRes, capBreak, resBreak>>
-       ELSE Next1(p) /\ UNCHANGED <<rec, seen, myRes>>
+               /\ UNCHANGED <<dir, rec, at, holds, capBreak, resBreak>>
+       ELSE Next1(p) /\ UNCHANGED <<rec, seen>>
     /\ Same
 
 \* All three takers: move the record aside to a name of their own (mv/File.Move: only one mover of a name wins). A
@@ -172,7 +183,7 @@ Claim(p) ==
                /\ pc' = [pc EXCEPT ![p] = "c_check"]
                /\ UNCHANGED <<dir, at, holds, capBreak, resBreak>>
           ELSE Next1(p) /\ UNCHANGED rec
-    /\ UNCHANGED <<seen, myRes>> /\ Same
+    /\ UNCHANGED <<seen>> /\ Same
 
 \* Re-read what was moved: the record judged dead is deleted; anything else (the slot changed hands) goes back.
 CCheck(p) ==
@@ -181,12 +192,12 @@ CCheck(p) ==
     IN
     /\ pc[p] = "c_check"
     /\ IF r.who = seen[p].who /\ r.ofile = seen[p].ofile
-          THEN /\ rec' = [rec EXCEPT ![k] = NoRec]
+          THEN /\ rec' = [rec EXCEPT ![k] = YoungNone]
                /\ pc' = [pc EXCEPT ![p] = "c_rmdir"]
                /\ UNCHANGED <<dir, at, holds, capBreak, resBreak>>
           ELSE /\ rec' = [rec EXCEPT ![k] = [file |-> r.ofile, who |-> r.who, ofile |-> r.ofile, by |-> None]]
                /\ Next1(p)
-    /\ UNCHANGED <<seen, myRes>> /\ Same
+    /\ UNCHANGED <<seen>> /\ Same
 
 \* rmdir (non-recursive delete): on failure the slot is skipped.
 CRmdir(p) ==
@@ -197,25 +208,26 @@ CRmdir(p) ==
                /\ pc' = [pc EXCEPT ![p] = "mkdir2"]
                /\ UNCHANGED <<at, holds, capBreak, resBreak>>
           ELSE Next1(p)
-    /\ UNCHANGED <<rec, seen, myRes>> /\ Same
+    /\ UNCHANGED <<rec, seen>> /\ Same
 
 Mkdir2(p) ==
     LET k == at[p] IN
     /\ pc[p] = "mkdir2"
-    /\ IF ~dir[k] THEN Take(p, k) ELSE Next1(p)
-    /\ UNCHANGED <<rec, seen, myRes>> /\ Same
+    \* the retry mkdir after a reclaim looks at the files again (see CapNow): a cap lowered since the check keeps it off
+    /\ IF ~dir[k] /\ k <= CapNow /\ ~(p \notin Meta /\ k <= ResNow) THEN Take(p, k) /\ rec' = [rec EXCEPT ![k] = YoungNone] ELSE Next1(p) /\ UNCHANGED rec
+    /\ UNCHANGED <<seen>> /\ Same
 
 \* The record write, a separate step after the mkdir.
 Write(p) ==
     /\ pc[p] = "write"
     /\ rec' = [rec EXCEPT ![holds[p]] = RecOf(p)]
     /\ pc' = [pc EXCEPT ![p] = "run"]
-    /\ UNCHANGED <<dir, at, seen, myRes, holds, capBreak, resBreak>> /\ Same
+    /\ UNCHANGED <<dir, at, seen, holds, capBreak, resBreak>> /\ Same
 
 Run(p) ==
     /\ pc[p] = "run"
     /\ pc' = [pc EXCEPT ![p] = "rel1"]
-    /\ UNCHANGED <<dir, rec, at, seen, myRes, holds, capBreak, resBreak>> /\ Same
+    /\ UNCHANGED <<dir, rec, at, seen, holds, capBreak, resBreak>> /\ Same
 
 \* Release: remove the record file (the wrapper's unlink and locks.sh's rm -f take whatever is there; Sindri leaves another's owner), then rmdir.
 Rel1(p) ==
@@ -223,9 +235,9 @@ Rel1(p) ==
     /\ pc[p] = "rel1"
     /\ IF p \in Sindri /\ rec[k].file = "owner" /\ rec[k].who # p
           THEN /\ pc' = [pc EXCEPT ![p] = "idle"] /\ holds' = [holds EXCEPT ![p] = 0] /\ UNCHANGED rec
-          ELSE /\ rec' = IF rec[k].file = FileOf(p) THEN [rec EXCEPT ![k] = NoRec] ELSE rec
+          ELSE /\ rec' = IF rec[k].file = FileOf(p) THEN [rec EXCEPT ![k] = YoungNone] ELSE rec
                /\ pc' = [pc EXCEPT ![p] = "rel2"] /\ UNCHANGED holds
-    /\ UNCHANGED <<dir, at, seen, myRes, capBreak, resBreak>> /\ Same
+    /\ UNCHANGED <<dir, at, seen, capBreak, resBreak>> /\ Same
 
 Rel2(p) ==
     LET k == holds[p] IN
@@ -233,7 +245,18 @@ Rel2(p) ==
     /\ dir' = IF dir[k] /\ rec[k].file = "none" THEN [dir EXCEPT ![k] = FALSE] ELSE dir
     /\ holds' = [holds EXCEPT ![p] = 0]
     /\ pc' = [pc EXCEPT ![p] = "idle"]
-    /\ UNCHANGED <<rec, at, seen, myRes, capBreak, resBreak>> /\ Same
+    /\ UNCHANGED <<rec, at, seen, capBreak, resBreak>> /\ Same
+
+\* A minute passes on a slot folder with no record.
+\* Assumptions (a process stalled longer is not modelled: the code would free its folder under it): a live
+\* reclaimer finishes its rmdir within the minute, and a live holder's folder is empty for under a minute: between
+\* its mkdir and its record write, and between its release's unlink and its rmdir.
+Age(k) ==
+    /\ rec[k] = YoungNone
+    /\ \A q \in Procs : ~(alive[q] /\ pc[q] = "c_rmdir" /\ at[q] = k)
+    /\ \A q \in Procs : ~(alive[q] /\ pc[q] \in {"write", "rel2"} /\ holds[q] = k)
+    /\ rec' = [rec EXCEPT ![k] = NoRec]
+    /\ UNCHANGED <<dir, pc, at, seen, holds, alive, cap, reserve, deaths, capBreak, resBreak>>
 
 Step(p) == alive[p] /\ (Start(p) \/ Poll(p) \/ Try(p) \/ Claim(p) \/ CCheck(p) \/ CRmdir(p)
                         \/ Mkdir2(p) \/ Write(p) \/ Run(p) \/ Rel1(p) \/ Rel2(p))
@@ -243,18 +266,19 @@ Die(p) ==
     /\ alive[p] /\ deaths < MaxDeaths
     /\ alive' = [alive EXCEPT ![p] = FALSE]
     /\ deaths' = deaths + 1
-    /\ UNCHANGED <<dir, rec, pc, at, seen, myCap, myRes, holds, cap, reserve, capBreak, resBreak>>
+    /\ UNCHANGED <<dir, rec, pc, at, seen, holds, cap, reserve, capBreak, resBreak>>
 
 SetCap == /\ CanSetCap /\ cap' \in Slot \ {cap}
-          /\ UNCHANGED <<dir, rec, pc, at, seen, myCap, myRes, holds, alive, reserve, deaths, capBreak, resBreak>>
+          /\ UNCHANGED <<dir, rec, pc, at, seen, holds, alive, reserve, deaths, capBreak, resBreak>>
 
 SetReserve == /\ CanSetReserve /\ reserve' \in (0..CapMax) \ {reserve}
-              /\ UNCHANGED <<dir, rec, pc, at, seen, myCap, myRes, holds, alive, cap, deaths, capBreak, resBreak>>
+              /\ UNCHANGED <<dir, rec, pc, at, seen, holds, alive, cap, deaths, capBreak, resBreak>>
 
-Next == (\E p \in Procs : Step(p) \/ Die(p)) \/ SetCap \/ SetReserve
+Next == (\E p \in Procs : Step(p) \/ Die(p)) \/ (\E k \in Slot : Age(k)) \/ SetCap \/ SetReserve
 
 \* Polling, no queue: each process keeps stepping (weak fairness) ...
 Spec == Init /\ [][Next]_vars /\ \A p \in Procs : WF_vars(Step(p))
+             /\ \A k \in Slot : WF_vars(Age(k))
 
 \* ... and, stronger than any poll loop promises, a process whose mkdir would win infinitely often eventually wins.
 TakeStep(p) == Step(p) /\ holds[p] = 0 /\ holds'[p] # 0

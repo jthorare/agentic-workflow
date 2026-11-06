@@ -22,6 +22,9 @@ public class RefreshEngineProxy : DispatchProxy
     /// <summary>What <see cref="IContextMap.BuildMap"/> answers first, one per call, before it falls back to <see cref="Built"/>.</summary>
     public Queue<Result<MapBuildReport>> BuiltFirst { get; } = new();
 
+    /// <summary>What <see cref="IContextMap.BuildMap"/> runs instead of answering from <see cref="Built"/>, when set: it gets the call's progress and cancellation token (a build that hangs, or writes lines first).</summary>
+    public Func<IProgress<string>?, CancellationToken, Task<Result<MapBuildReport>>>? BuildWith { get; set; }
+
     /// <summary>What <see cref="IContextMap.ReviewQueue"/> answers.</summary>
     public Result<ReviewQueueView> Queue { get; set; } = new ReviewQueueView("v2@abc123", ReviewVersion.None, [], 0, 0, new QueueCounts(3, 0, 0), new Dictionary<string, int>(StringComparer.Ordinal), ReviewTruncated.None);
 
@@ -81,7 +84,9 @@ public class RefreshEngineProxy : DispatchProxy
         return name switch
         {
             nameof(IContextEngine.MapHeads) => new ValueTask<Result<IReadOnlyList<RepoHead>>>(Heads),
-            nameof(IContextEngine.BuildMap) => new ValueTask<Result<MapBuildReport>>(BuiltFirst.Count > 0 ? BuiltFirst.Dequeue() : Built),
+            nameof(IContextEngine.BuildMap) => BuildWith is { } buildWith
+                ? new ValueTask<Result<MapBuildReport>>(buildWith((IProgress<string>?)args![0], (CancellationToken)args[2]!))
+                : new ValueTask<Result<MapBuildReport>>(BuiltFirst.Count > 0 ? BuiltFirst.Dequeue() : Built),
             nameof(IContextEngine.ReviewQueue) => new ValueTask<Result<ReviewQueueView>>(Queue),
             nameof(IContextEngine.CleanDraft) => new ValueTask<Result<CleanupReport>>(Expect(args, Cleaned)),
             nameof(IContextEngine.Promote) => new ValueTask<Result<MapPromoted>>(Expect(args, Promoted)),

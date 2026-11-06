@@ -1,10 +1,13 @@
+using System.Globalization;
 using Aw.Meta.Core;
 using Aw.Meta.Core.Commands;
 using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Gate;
 using Aw.Meta.Features.GateRun;
+using Aw.Meta.Infrastructure.Files;
 using Aw.Meta.Testing;
+using Aw.Meta.Tests.Adapters;
 using Aw.Meta.Tests.Reserve;
 
 namespace Aw.Meta.Tests.GateRun;
@@ -16,7 +19,7 @@ public sealed class GateRunTests
 
     private GateRunService Service() => new(
         _world.Config,
-        new GateWorkspace(_world.Repo, _world.Trees, _world.Paths),
+        new GateWorkspace(_world.Repo, _world.Trees, _world.Paths, _world.LogFiles),
         new GateStepRunner(_world.Runner, _world.Paths),
         _world.Gates,
         Worlds.Reservation(_world),
@@ -186,6 +189,104 @@ public sealed class GateRunTests
         Assert.Equal(GateVerdict.Pass, first.Gate.Verdict);
         Assert.Equal((2, "/state/meta/gates/190/2/unit.log"), (second.Gate.Run, second.Gate.Steps[2].Log));
         Assert.Equal(2, (await _world.Gates.Latest(190, CancellationToken.None)).Value!.Run);
+    }
+
+    private GateRunService ServiceAt(MetaPaths paths) => new(
+        _world.Config,
+        new GateWorkspace(_world.Repo, _world.Trees, paths, new FileLogFiles()),
+        new GateStepRunner(_world.Runner, paths),
+        _world.Gates,
+        Worlds.Reservation(_world),
+        _world.Clock);
+
+    private static void Leave(string gates, int run, string text)
+    {
+        var dir = Path.Combine(gates, "190", run.ToString(CultureInfo.InvariantCulture));
+        _ = Directory.CreateDirectory(dir);
+        File.WriteAllText(Path.Combine(dir, "check.log"), text);
+    }
+
+    private async Task<GateRunResponse> RunOnDisk(string gates)
+    {
+        await SaveParallelGate(parallel: null, new StepConfig("check", ["scripts/check.sh"]));
+        ScriptGit();
+        _ = _world.Runner.When("scripts/check.sh", request =>
+        {
+            _ = Directory.CreateDirectory(Path.GetDirectoryName(request.LogFile!)!);
+            File.AppendAllText(request.LogFile!, "new pass\n");
+            return new CommandResult(0, string.Empty, string.Empty, TimedOut: false);
+        });
+        var paths = new MetaPaths("/state/meta", gates, "/bin/heavy", "gh");
+        var result = await ServiceAt(paths).Handle(new GateRunRequest(190, []), CancellationToken.None);
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        return result.Value;
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_run_after_a_cancelled_run_gets_its_own_run_number_and_directory()
+    {
+        using var disk = new TempDirectory();
+        Leave(disk.Path, 1, "cancelled pass\n");
+
+        var response = await RunOnDisk(disk.Path);
+
+        Assert.Equal(2, response.Gate.Run);
+        Assert.Equal(2, (await _world.Gates.Latest(190, CancellationToken.None)).Value!.Run);
+        Assert.Equal(Path.Combine(disk.Path, "190", "2", "check.log"), response.Gate.Steps[0].Log);
+        Assert.Equal("new pass\n", await File.ReadAllTextAsync(Path.Combine(disk.Path, "190", "2", "check.log"), TestContext.Current.CancellationToken));
+        Assert.Equal("cancelled pass\n", await File.ReadAllTextAsync(Path.Combine(disk.Path, "190", "1", "check.log"), TestContext.Current.CancellationToken));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_cancelled_run_after_a_recorded_run_is_skipped_by_the_next_run()
+    {
+        using var disk = new TempDirectory();
+        _ = await _world.Gates.Save(new GateRecord(190, "old", "mainsha", ["repo"], [], GateVerdict.Pass, A.At(1)), CancellationToken.None);
+        Leave(disk.Path, 1, "recorded pass\n");
+        Leave(disk.Path, 2, "cancelled pass\n");
+
+        var response = await RunOnDisk(disk.Path);
+
+        Assert.Equal(3, response.Gate.Run);
+        Assert.Equal("new pass\n", await File.ReadAllTextAsync(Path.Combine(disk.Path, "190", "3", "check.log"), TestContext.Current.CancellationToken));
+        Assert.Equal("cancelled pass\n", await File.ReadAllTextAsync(Path.Combine(disk.Path, "190", "2", "check.log"), TestContext.Current.CancellationToken));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Two_passes_planned_before_either_records_get_their_own_run_and_directory()
+    {
+        using var disk = new TempDirectory();
+        await SaveParallelGate(parallel: null, new StepConfig("check", ["scripts/check.sh"]));
+        ScriptGit();
+        var firstStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var firstMayWrite = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var calls = 0;
+        _ = _world.Runner.When("scripts/check.sh", async request =>
+        {
+            if (Interlocked.Increment(ref calls) == 1)
+            {
+                // The first pass is planned and its step has started, but nothing is on disk yet: the second pass plans now.
+                firstStarted.SetResult();
+                await firstMayWrite.Task.WaitAsync(TimeSpan.FromSeconds(10), TimeProvider.System, TestContext.Current.CancellationToken);
+            }
+
+            _ = Directory.CreateDirectory(Path.GetDirectoryName(request.LogFile!)!);
+            await File.AppendAllTextAsync(request.LogFile!, "pass\n", TestContext.Current.CancellationToken);
+            _ = firstMayWrite.TrySetResult();
+            return new CommandResult(0, string.Empty, string.Empty, TimedOut: false);
+        });
+        var service = ServiceAt(new MetaPaths("/state/meta", disk.Path, "/bin/heavy", "gh"));
+
+        var first = Task.Run(async () => await service.Handle(new GateRunRequest(190, []), CancellationToken.None), TestContext.Current.CancellationToken);
+        await firstStarted.Task.WaitAsync(TimeSpan.FromSeconds(10), TimeProvider.System, TestContext.Current.CancellationToken);
+        var second = await service.Handle(new GateRunRequest(190, []), CancellationToken.None);
+        var firstResult = await first;
+
+        Assert.True(firstResult.IsSuccess && second.IsSuccess);
+        var passes = new[] { firstResult.Value.Gate, second.Value.Gate };
+        Assert.Equal(2, passes.Select(g => g.Run).Distinct().Count());
+        Assert.All(passes, g => Assert.Equal(Path.Combine(disk.Path, "190", g.Run.ToString(CultureInfo.InvariantCulture), "check.log"), g.Steps[0].Log));
+        Assert.All(passes, g => Assert.Equal("pass\n", File.ReadAllText(g.Steps[0].Log)));
     }
 
     [Fact, Trait("Lane", "unit")]

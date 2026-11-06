@@ -90,15 +90,51 @@ public sealed class DirectoryHeavySlotsTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_slot_with_no_owner_record_stays_held_before_the_six_hour_last_resort_because_locks_sh_and_ui_evidence_write_none()
+    public async Task An_empty_slot_under_a_minute_old_is_a_holder_between_its_mkdir_and_its_record_and_stays_held()
     {
         Directory.CreateDirectory(Lock);
-        Directory.SetLastWriteTimeUtc(Lock, RealTime.NowDateTime.AddHours(-6).AddMinutes(1));   // just under the boundary
+        Directory.SetLastWriteTimeUtc(Lock, RealTime.NowDateTime.AddSeconds(-30));
 
         var taken = (await Slots(slots: 1).Take("x", TimeSpan.Zero, waiting: null, TestContext.Current.CancellationToken)).Value;
 
         Assert.Null(taken.Lease);
         Assert.Contains("an unknown holder", taken.Busy, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_empty_slot_over_a_minute_old_is_a_holder_killed_before_its_record_and_is_freed_like_the_heavy_wrapper_does()
+    {
+        Directory.CreateDirectory(Lock);
+        Directory.SetLastWriteTimeUtc(Lock, RealTime.NowDateTime.AddMinutes(-2));
+
+        await using var lease = await Taken(Slots(slots: 1));
+
+        Assert.Contains(Pid, await File.ReadAllTextAsync(Path.Combine(Lock, "owner"), TestContext.Current.CancellationToken), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_slot_whose_locks_sh_pid_file_names_a_dead_process_is_reclaimed()
+    {
+        Directory.CreateDirectory(Lock);
+        await File.WriteAllTextAsync(Path.Combine(Lock, "pid"), "2147483646\n", TestContext.Current.CancellationToken);
+
+        await using var lease = await Taken(Slots(slots: 1));
+
+        Assert.False(File.Exists(Path.Combine(Lock, "pid")));
+        Assert.Contains(Pid, await File.ReadAllTextAsync(Path.Combine(Lock, "owner"), TestContext.Current.CancellationToken), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_slot_whose_locks_sh_pid_file_names_a_live_process_stays_held_past_the_empty_slot_minute()
+    {
+        Directory.CreateDirectory(Lock);
+        await File.WriteAllTextAsync(Path.Combine(Lock, "pid"), Pid + "\n", TestContext.Current.CancellationToken);
+        Directory.SetLastWriteTimeUtc(Lock, RealTime.NowDateTime.AddMinutes(-2));
+
+        var taken = (await Slots(slots: 1).Take("x", TimeSpan.Zero, waiting: null, TestContext.Current.CancellationToken)).Value;
+
+        Assert.Null(taken.Lease);
+        Assert.True(File.Exists(Path.Combine(Lock, "pid")));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -499,6 +535,58 @@ public sealed class DirectoryHeavySlotsTests : IDisposable
         Assert.Equal(("/x/lock", 3, true), (set.Lock, set.Slots, set.Held));
     }
 
+    private HeavyLockSettings SettingsOverStateRoot() =>
+        HeavyLockSettings.Read(name => name == "AW_HEAVY_JOB_LOCK" ? Lock : null, _root);
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Take_counts_slots_by_the_cap_file_as_it_reads_now()
+    {
+        await File.WriteAllTextAsync(Path.Combine(_root, "heavy-slots-cap"), "2\n", TestContext.Current.CancellationToken);
+        var slots = new DirectoryHeavySlots(SettingsOverStateRoot(), TimeProvider.System);
+        await using var first = await Taken(slots, "first job");
+
+        await File.WriteAllTextAsync(Path.Combine(_root, "heavy-slots-cap"), "1\n", TestContext.Current.CancellationToken);
+        var second = (await slots.Take("second job", TimeSpan.Zero, waiting: null, TestContext.Current.CancellationToken)).Value;
+        if (second.Lease is { } lease)
+        {
+            await lease.DisposeAsync();
+        }
+
+        Assert.False(Directory.Exists(Lock + ".2"), "the cap was lowered to 1 after construction, yet Take handed out slot 2");
+        Assert.Null(second.Lease);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Take_skips_slots_inside_the_meta_reserve()
+    {
+        await File.WriteAllTextAsync(Path.Combine(_root, "heavy-slots-cap"), "2\n", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(Path.Combine(_root, "heavy-meta-reserve"), "1\n", TestContext.Current.CancellationToken);
+        var slots = new DirectoryHeavySlots(SettingsOverStateRoot(), TimeProvider.System);
+
+        await using var lease = await Taken(slots, "sindri job");
+
+        Assert.False(Directory.Exists(Lock), "slot 1 is reserved for meta (heavy-meta-reserve=1) and a Sindri job is not meta");
+        Assert.True(Directory.Exists(Lock + ".2"));
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("2", "2", ".2")]
+    [InlineData("2", "9", ".2")]
+    [InlineData("1", "1", "")]
+    [InlineData("3", "3", ".3")]
+    public async Task Take_always_finds_a_slot_because_the_reserve_is_capped_at_the_slot_count_minus_one(string cap, string reserve, string slot)
+    {
+        await File.WriteAllTextAsync(Path.Combine(_root, "heavy-slots-cap"), cap + "\n", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(Path.Combine(_root, "heavy-meta-reserve"), reserve + "\n", TestContext.Current.CancellationToken);
+        var slots = new DirectoryHeavySlots(SettingsOverStateRoot(), TimeProvider.System);
+
+        var taken = (await slots.Take("sindri job", TimeSpan.Zero, waiting: null, TestContext.Current.CancellationToken)).Value;
+        await using var lease = taken.Lease;
+
+        Assert.True(lease is not null, $"cap {cap}, reserve {reserve}: a Sindri job found no slot (busy: {taken.Busy})");
+        Assert.True(Directory.Exists(Lock + slot), $"cap {cap}, reserve {reserve}: the slot above the capped reserve is taken");
+    }
+
     [Theory, Trait("Lane", "unit")]
     [InlineData(null, 1)]
     [InlineData("", 1)]
@@ -540,18 +628,24 @@ public sealed class DirectoryHeavySlotsTests : IDisposable
         var script = Path.Combine(FindRepoRoot(), "config", "lib", "locks.sh");
         var slots = Slots();
         await using var ours = await Taken(slots);
-        var bash = Run($". '{script}'; slot=\"$(acquire_any_lock '{Lock}' 2 0)\" && echo \"$slot\"");
+        // The holder stays alive (exec keeps its pid): a locks.sh pid naming a dead process is reclaimed (#2059).
+        using var bash = Run($". '{script}'; slot=\"$(acquire_any_lock '{Lock}' 2 0)\" && echo \"$slot\" && exec sleep 60 >/dev/null");
+        try
+        {
+            var bashSlot = ((await bash.StandardOutput.ReadLineAsync(ct)) ?? string.Empty).Trim();
+            var busy = (await slots.Take("third", TimeSpan.Zero, waiting: null, ct)).Value;
 
-        var bashSlot = (await bash.StandardOutput.ReadToEndAsync(ct)).Trim();
-        await bash.WaitForExitAsync(ct);
-        var busy = (await slots.Take("third", TimeSpan.Zero, waiting: null, ct)).Value;
-
-        Assert.Equal(Lock + ".2", bashSlot);   // slot 1 was ours, so the shell took slot 2
-        Assert.Null(busy.Lease);
-        await ours.DisposeAsync();
-        var again = await Taken(slots);   // slot 1 is free again, the shell's slot 2 still stands
-        await again.DisposeAsync();
-        Assert.True(Directory.Exists(Lock + ".2"));
+            Assert.Equal(Lock + ".2", bashSlot);   // slot 1 was ours, so the shell took slot 2
+            Assert.Null(busy.Lease);
+            await ours.DisposeAsync();
+            var again = await Taken(slots);   // slot 1 is free again, the shell's slot 2 still stands
+            await again.DisposeAsync();
+            Assert.True(Directory.Exists(Lock + ".2"));
+        }
+        finally
+        {
+            bash.Kill();
+        }
     }
 
     private static Process Run(string script)

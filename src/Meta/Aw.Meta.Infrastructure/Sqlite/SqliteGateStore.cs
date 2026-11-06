@@ -18,7 +18,7 @@ internal sealed class SqliteGateStore(MetaDatabase database) : IGateStore
         return database.Write(
             async work =>
             {
-                var next = await SqliteQueries.One(work, GateSql.NextRun(gate.Pr), new RowMap<int>(r => checked((int)r.GetInt64(0))), cancellationToken).ConfigureAwait(false);
+                var next = await SqliteQueries.One(work, GateSql.NextRun(gate.Pr, gate.Run), new RowMap<int>(r => checked((int)r.GetInt64(0))), cancellationToken).ConfigureAwait(false);
                 if (next.IsError)
                 {
                     return next.Error;

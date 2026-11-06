@@ -117,9 +117,15 @@ internal sealed class QueueGateService(TrainSelection queue, GateWorkspace works
         var scopes = ScopePlanner.Plan(prepared.Changed, team.Gate);
         var graph = GateGraphs.Build(scopes, team.Gate);
         var latest = await gates.Latest(pr, cancellationToken).ConfigureAwait(false);
-        return graph.IsError || latest.IsError
-            ? graph.IsError ? graph.Error : latest.Error
-            : new Planned(stack.Count + 1, pr, prepared.Pr.Head, stack, prepared, scopes, graph.Value, (latest.Value?.Run ?? 0) + 1);
+        if (graph.IsError || latest.IsError)
+        {
+            return graph.IsError ? graph.Error : latest.Error;
+        }
+
+        var run = await workspace.NextRun(pr, latest.Value?.Run ?? 0, cancellationToken).ConfigureAwait(false);
+        return run.IsError
+            ? run.Error
+            : new Planned(stack.Count + 1, pr, prepared.Pr.Head, stack, prepared, scopes, graph.Value, run.Value);
     }
 
     private async Task<GateRecord?[]> Run(TeamConfig team, Built built, TrainBoard board, CancellationToken cancellationToken)
@@ -180,7 +186,7 @@ internal sealed class QueueGateService(TrainSelection queue, GateWorkspace works
     {
         var @base = TrainText.BaseOf(gate.Stack);
         var verdict = ran.All(s => s.Verdict == GateVerdict.Pass) ? GateVerdict.Pass : GateVerdict.Fail;
-        var record = new GateRecord(gate.Pr, gate.Head, gate.Prepared.Main, gate.Scopes, ran, verdict, clock.GetUtcNow()) { Tree = gate.Prepared.TreeSha, Stack = gate.Stack };
+        var record = new GateRecord(gate.Pr, gate.Head, gate.Prepared.Main, gate.Scopes, ran, verdict, clock.GetUtcNow()) { Run = gate.Run, Tree = gate.Prepared.TreeSha, Stack = gate.Stack };
         var saved = await gates.Save(record, CancellationToken.None).ConfigureAwait(false);
         await board.Set(saved.IsError
             ? new TrainEntry(gate.Position, gate.Pr, @base, TrainState.Error, saved.Error.Message.ReplaceLineEndings(" "))

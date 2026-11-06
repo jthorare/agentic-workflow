@@ -17,7 +17,8 @@ public sealed class InMemoryGateStore : IGateStore
     public ValueTask<Result<GateRecord>> Save(GateRecord gate, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(gate);
-        var stored = gate with { Run = _gates.Count(g => g.Pr == gate.Pr) + 1 };
+        var taken = _gates.Where(g => g.Pr == gate.Pr).Select(g => g.Run).ToList();
+        var stored = gate with { Run = gate.Run > 0 && !taken.Contains(gate.Run) ? gate.Run : taken.DefaultIfEmpty(0).Max() + 1 };
         _gates.Add(stored);
         return Done.Of(stored);
     }

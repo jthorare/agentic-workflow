@@ -14,7 +14,7 @@ internal static class ShipSteps
     public static BlockDescriptor Green { get; } = BlockStep("step.ship.green", Capability.Tools).Reads("fact:phasePacket", "fact:workspace").Reports("green", "red").Long(CommandStepLimits.GreenMaxDuration).Writes(On("fact:green", "green"), On("fact:findings", "red"));
 
     /// <summary>'step.ship.pack': assembles the hand-off draft, the evidence pack as the PR body; it reads the worktree (the head it packs on) and the GREEN gate's commands.</summary>
-    public static BlockDescriptor Pack { get; } = BlockStep("step.ship.pack", Capability.Tools).Reads("fact:phasePacket", "fact:proofPack", "fact:review", "fact:lineContext", "fact:workspace", "fact:green").Reports("packed").Writes(On("fact:handoffDraft", "packed"));
+    public static BlockDescriptor Pack { get; } = BlockStep("step.ship.pack", Capability.Tools).Reads("fact:phasePacket", "fact:proofPack", "fact:review", "fact:lineContext", "fact:workspace", "fact:green", "fact:modelCheck").Reports("packed").Writes(On("fact:handoffDraft", "packed"));
 
     /// <summary>'step.ship.freeze': proof, review and hand-off agree on one head; 'frozen' or 'stale' (with 'fact:findings').</summary>
     public static BlockDescriptor Freeze { get; } = BlockStep("step.ship.freeze", Capability.Tools).Reads("fact:handoffDraft", "fact:proofPack", "fact:review").Reports("frozen", "stale").Writes(On("fact:handoff", "frozen"), On("fact:findings", "stale"));

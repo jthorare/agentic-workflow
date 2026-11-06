@@ -8,15 +8,15 @@ internal static class PlanMounts
 {
     private const long MaskBytes = 1024 * 1024;
 
-    private static readonly (string Path, PlanMountKind Kind, string Reason)[] _homeDefaults =
+    private static readonly PlanMount[] _homeDefaults =
     [
-        (".dotnet", PlanMountKind.ReadOnly, "the .NET SDK"),
-        (".dotnet/corefx", PlanMountKind.Tmpfs, "the .NET runtime's lock files; private to the run"),   // why: the runtime mkdirs corefx/Runtime (0700) for its named mutexes, and .dotnet is read-only
-        (".cargo", PlanMountKind.ReadOnly, "Rust tools"),
-        (".rustup", PlanMountKind.ReadOnly, "Rust toolchains"),
-        (".local/bin", PlanMountKind.ReadOnly, "tools, and the sindri and judge wrappers"),
-        (".nuget/packages", PlanMountKind.ReadWrite, "a restore writes new packages; shared with the owner's builds"),
-        (".npm/_cacache", PlanMountKind.ReadWrite, "the npm cache; shared with the owner's builds"),
+        new(".dotnet", PlanMountKind.ReadOnly, Reason: "the .NET SDK"),
+        new(".dotnet/corefx", PlanMountKind.Tmpfs, Size: CorefxTmpfsBytes, Reason: "the .NET runtime's lock files; private to the run", PrivateScratch: true),   // why: the runtime mkdirs corefx/Runtime (0700) for its named mutexes, and .dotnet is read-only
+        new(".cargo", PlanMountKind.ReadOnly, Reason: "Rust tools"),
+        new(".rustup", PlanMountKind.ReadOnly, Reason: "Rust toolchains"),
+        new(".local/bin", PlanMountKind.ReadOnly, Reason: "tools, and the sindri and judge wrappers"),
+        new(".nuget/packages", PlanMountKind.ReadWrite, Reason: "a restore writes new packages; shared with the owner's builds"),
+        new(".npm/_cacache", PlanMountKind.ReadWrite, Reason: "the npm cache; shared with the owner's builds"),
     ];
 
     private const long RunTmpfsBytes = 16L * 1024 * 1024;
@@ -47,7 +47,7 @@ internal static class PlanMounts
 
     private static void AddHomeAllow(List<PlanMount> m, PlanContext c)
     {
-        m.AddRange(_homeDefaults.Select(d => new PlanMount($"{c.Home}/{d.Path}", d.Kind, Size: d.Kind == PlanMountKind.Tmpfs ? CorefxTmpfsBytes : null, Reason: d.Reason, Optional: true)));
+        m.AddRange(_homeDefaults.Select(d => d with { Path = $"{c.Home}/{d.Path}", Optional = true }));
         IEnumerable<HomeAllowEntry> declared = [.. c.Request.Settings?.Fs?.HomeAllow ?? [], .. c.Repo.HomeAllow ?? []];
         m.AddRange(declared.Select(e => new PlanMount($"{c.Home}/{e.Path}", e.Mode == MountMode.ReadWrite ? PlanMountKind.ReadWrite : PlanMountKind.ReadOnly, Reason: "allowed by the profile", Optional: true)));
         m.AddRange((c.Repo.CachePaths ?? []).Select(p => new PlanMount($"{c.Home}/{p}", PlanMountKind.ReadWrite, Reason: "a cache path this repo declares", Optional: true)));

@@ -5,6 +5,7 @@ using Aw.Context.Core.Map;
 using Aw.Context.Core.Review;
 using Aw.Kernel;
 using Aw.Kernel.Services;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Scheduling;
 
@@ -15,7 +16,8 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// <see cref="MapPublishDecision"/> whether the draft goes ahead. On publish it promotes through the engine (not the protected command: the owner decided the service promotes, as the job's caller) and records
 /// 'context.map.built', 'context.map.promoted' and 'context.map.published'; on wait it stores a hold next to the draft and records 'context.map.held'. Either way it ends with 'context.map.refreshed'.
 /// Any step's error fails the job with the later steps not run; a built draft stays. A transient error (see <see cref="MapRefreshRetry"/>: Unavailable, Timeout, RateLimited) runs the whole
-/// job again after 30 s, 2 min and 10 min (four attempts), saying so in the job's progress; any other error, and the last attempt's error, fails the job.
+/// job again after 30 s, 2 min and 10 min (four attempts), saying so in the job's progress; any other error, and the last attempt's error, fails the job. A job that writes no progress line for 30 min
+/// (<see cref="RefreshStallWatch"/>) is cancelled and fails as <see cref="SindriErrors.JobStalled"/>, never retried (#2106); a job that keeps writing lines has no other time limit.
 /// </summary>
 /// <param name="scopes">The profile's scope and the caller.</param>
 /// <param name="engine">The context engine.</param>
@@ -29,20 +31,46 @@ internal sealed class RefreshContextMapService(ContextScopes scopes, IContextEng
     public async ValueTask<Result<RefreshContextMapResult>> Handle(RefreshContextMapRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        using var watch = new RefreshStallWatch(jobs.Current?.Progress, clock, cancellationToken);
+        try
+        {
+            return await Retrying(watch).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (watch.Stalled && !cancellationToken.IsCancellationRequested)
+        {
+            return Stalled(watch);
+        }
+    }
+
+    private async ValueTask<Result<RefreshContextMapResult>> Retrying(RefreshStallWatch watch)
+    {
         for (var attempt = 1; ; attempt++)
         {
-            var result = await Attempt(cancellationToken).ConfigureAwait(false);
-            if (result.IsSuccess || MapRefreshRetry.WaitBefore(attempt + 1, result.Error) is not { } wait)
+            var result = await Attempt(watch, watch.Token).ConfigureAwait(false);
+            if (result.IsSuccess)
             {
                 return result;
             }
 
-            jobs.Current?.Progress.Report(MapRefreshRetry.Line(attempt + 1, wait, result.Error));
-            await Task.Delay(wait, clock, cancellationToken).ConfigureAwait(false);
+            if (watch.Stalled)
+            {
+                return Stalled(watch);   // why: a stall is never retried, whatever error the cancelled step answered with
+            }
+
+            if (MapRefreshRetry.WaitBefore(attempt + 1, result.Error) is not { } wait)
+            {
+                return result;
+            }
+
+            watch.Report(MapRefreshRetry.Line(attempt + 1, wait, result.Error));
+            await Task.Delay(wait, clock, watch.Token).ConfigureAwait(false);
         }
     }
 
-    private async ValueTask<Result<RefreshContextMapResult>> Attempt(CancellationToken cancellationToken)
+    private static Error Stalled(RefreshStallWatch watch) =>
+        SindriErrors.JobStalled.With(string.Create(CultureInfo.InvariantCulture, $"The job wrote no progress line for {RefreshStallWatch.Limit.TotalMinutes:0} min (last line at {watch.LastLine:O}); it was ended and is not retried"));
+
+    private async ValueTask<Result<RefreshContextMapResult>> Attempt(IProgress<string> progress, CancellationToken cancellationToken)
     {
         var opened = source.Open();
         if (opened.IsError)
@@ -56,7 +84,6 @@ internal sealed class RefreshContextMapService(ContextScopes scopes, IContextEng
             return scope.Error;
         }
 
-        var progress = jobs.Current?.Progress;
         var jobScope = scope.Value with { Job = jobs.Current?.Job.Value };   // why: a build waiting behind another names this job
         var heads = await engine.MapHeads(jobScope, cancellationToken).ConfigureAwait(false);
         if (heads.IsError)

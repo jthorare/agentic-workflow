@@ -87,6 +87,14 @@ want="profile init|profile validate|--headless |status --json|code-index status|
 if [ "$cmds" = "$want" ]; then ok "the commands come in the documented order"; else fail "the commands come in the documented order (got: $cmds)"; fi
 OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_REPO_PATH="$REPO" "$SCRIPT" up --dry-run 2>&1)"; CODE=$?
 expect "the dry run prints the approval commands for the owner and keeps going" 0 "profile approve <hash>" "recipe approve-all" "workflow start workflow.scoping"
+OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_REPO_PATH="$REPO" FIRST_RUN_CONTEXT_EXTRA="  models: { default: { harnesses: [codex] } }" "$SCRIPT" up --dry-run --stop-after 5 2>&1)"; CODE=$?
+expect "--stop-after 5 ends after the index build, and FIRST_RUN_CONTEXT_EXTRA lands in the context: section (exit 0)" 0 "stopped after step 5" "|   publish: { waitForIndexMinutes: 15 }
+    |   models: { default: { harnesses: [codex] } }"
+case "$OUT" in *"== 6."*) fail "--stop-after 5 runs nothing past step 5" ;; *) ok "--stop-after 5 runs nothing past step 5" ;; esac
+OUT="$(AW_STATE_DIR="$STATE" "$SCRIPT" up --stop-after x 2>&1)"; CODE=$?
+expect "--stop-after takes a step number" 2 "step number 0 to 9"
+OUT="$(AW_STATE_DIR="$STATE" "$SCRIPT" down --stop-after 5 2>&1)"; CODE=$?
+expect "--stop-after belongs to up only" 2
 run down --dry-run
 expect "down --dry-run prints stop and delete, runs nothing" 0 "sindri-app-firstrun" " stop" "rm -rf"
 run status --dry-run

@@ -22,6 +22,12 @@ public sealed class FakeClusterSource : IClusterSource
     /// <summary>When set, every call waits for it before answering (a build held mid-way).</summary>
     public Task? Hold { get; set; }
 
+    /// <summary>When above zero, every call takes this long on <see cref="Clock"/> before answering (a graphify run that is slow but alive).</summary>
+    public TimeSpan Takes { get; set; }
+
+    /// <summary>The clock <see cref="Takes"/> runs on (the system clock when null).</summary>
+    public TimeProvider? Clock { get; set; }
+
     /// <summary>How many calls are inside right now.</summary>
     public int Active { get; private set; }
 
@@ -42,6 +48,11 @@ public sealed class FakeClusterSource : IClusterSource
             if (Hold is { } hold)
             {
                 await hold.WaitAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            if (Takes > TimeSpan.Zero)
+            {
+                await Task.Delay(Takes, Clock ?? TimeProvider.System, cancellationToken).ConfigureAwait(false);
             }
 
             return Failure is { } failure ? failure : Set;

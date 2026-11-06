@@ -51,6 +51,10 @@
 # file already at bin-r1b/heavy is moved to heavy.pre-repo (never deleted; a later one gets a timestamp suffix). --publish alone does
 # not touch the link.
 #
+# The meta gate's slot reserve works the same way: scripts/meta-gate-reserve.sh is copied into each build as <build>/meta-gate-reserve
+# (mode 755, part of the stamp, checked by verify), --link points $AW_STATE_DIR/bin-r1b/meta-gate-reserve at
+# bin/cs/current/meta-gate-reserve, refuses a build without it, and moves a real file there to meta-gate-reserve.pre-repo.
+#
 # Environment: AW_STATE_DIR (default ~/.agentic-workflow), CLAUDE_LOCAL_BIN (default ~/.local/bin), DOTNET_ROOT,
 #   AW_SINDRI_HOME (control.json for the running-serve guard; default $AW_STATE_DIR/sindri-app),
 #   AW_CS_SKIP_DOWNLOADS=1 skip the network steps (SDK install, temporal fetch, Chromium); the test's seam.
@@ -81,6 +85,7 @@ state="${AW_STATE_DIR:-$HOME/.agentic-workflow}"
 base="$state/bin/cs"
 cache="$state/cache/install-cs"
 heavy="$state/bin-r1b/heavy"
+reserve="$state/bin-r1b/meta-gate-reserve"
 link_dir="${CLAUDE_LOCAL_BIN:-$HOME/.local/bin}"
 skip_dl="${AW_CS_SKIP_DOWNLOADS:-0}"
 BINARIES=(sindri judge bugfix-state ui-evidence aw-packets aw-readiness)
@@ -102,7 +107,7 @@ commit="$(git -C "$root" rev-parse --verify -q HEAD 2> /dev/null || true)"
 recipes_tree="$(git -C "$root" rev-parse --verify -q HEAD:recipes/sindri 2> /dev/null || true)"
 # shellcheck source=lib/sindri-build-inputs.sh
 source "$here/lib/sindri-build-inputs.sh"
-PATHSPECS=("${SINDRI_BUILD_PATHSPECS[@]}" src/Evidence src/BugFix src/Readiness scripts/heavy.sh)
+PATHSPECS=("${SINDRI_BUILD_PATHSPECS[@]}" src/Evidence src/BugFix src/Readiness scripts/heavy.sh scripts/meta-gate-reserve.sh)
 sha256() { shasum -a 256 2> /dev/null || sha256sum; }
 inputs="$(mktemp "${TMPDIR:-/tmp}/install-cs-inputs.XXXXXX")"
 # a tracked file deleted in the working tree is left out: it isn't part of the build, and tar would fail on it
@@ -291,8 +296,10 @@ publish() {
   # The heavy-job wrapper rides in the build, so bin-r1b/heavy can point at bin/cs/current/heavy and never into a git tree.
   install -m 755 "$tree/scripts/heavy.sh" "$stage/heavy" || die "staging scripts/heavy.sh failed"
 
+  install -m 755 "$tree/scripts/meta-gate-reserve.sh" "$stage/meta-gate-reserve" || die "staging scripts/meta-gate-reserve.sh failed"
+
   # 3. "Install didn't take": each binary answers its state-free call, in a scratch state dir and with no inherited environment.
-  verify "$stage" "$revision" "$tree/scripts/heavy.sh"
+  verify "$stage" "$revision" "$tree/scripts/heavy.sh" "$tree/scripts/meta-gate-reserve.sh"
 
   # 4. The recipe evals, with the published binary over the staged set, before the build becomes a candidate.
   local digest="" manifest evals staged_count embedded_count
@@ -336,8 +343,8 @@ check_skia_fontconfig() { # check_skia_fontconfig <dir>
     || die "install didn't take: the staged libSkiaSharp.so does not need libfontconfig, so it is not sindri-ui's build (judge's NoDependencies one won the stage: keep sindri-ui before judge in the pub lines)"
 }
 
-verify() { # verify <dir> <revision> <heavy source>
-  local d="$1" rev="$2" src="$3" scratch b out rc
+verify() { # verify <dir> <revision> <heavy source> <meta-gate-reserve source>
+  local d="$1" rev="$2" src="$3" rsrc="$4" scratch b out rc
   scratch="$(mktemp -d "$cache/verify.XXXXXX")"
   for b in "${BINARIES[@]}" sindri-ui; do
     [ -x "$d/$b" ] || { rm -rf "$scratch"; die "install didn't take: $d/$b is missing or not executable"; }
@@ -345,6 +352,7 @@ verify() { # verify <dir> <revision> <heavy source>
   run() { env -i HOME="$scratch" PATH="/usr/bin:/bin" DOTNET_ROOT="$DOTNET_ROOT" AW_STATE_DIR="$scratch/state" AW_JUDGE_PROVIDERS=rules \
       AW_SESSION_ID=install-cs "$@" < /dev/null 2>&1; }
   { [ -x "$d/heavy" ] && cmp -s "$d/heavy" "$src"; } || { rm -rf "$scratch"; die "install didn't take: $d/heavy is missing, not executable or not scripts/heavy.sh"; }
+  { [ -x "$d/meta-gate-reserve" ] && cmp -s "$d/meta-gate-reserve" "$rsrc"; } || { rm -rf "$scratch"; die "install didn't take: $d/meta-gate-reserve is missing, not executable or not scripts/meta-gate-reserve.sh"; }
   mkdir -p "$scratch/state"
   rc=0; out="$(run "$d/sindri" help)" || rc=$?
   [ "$rc" = 0 ] || { rm -rf "$scratch"; die "install didn't take: sindri help exited $rc"; }
@@ -412,11 +420,13 @@ link() {
   local b sdk_dir
   if [ "$dry" = 1 ]; then
     say "[dry-run] would link $heavy -> $base/current/heavy"
+    say "[dry-run] would link $reserve -> $base/current/meta-gate-reserve"
     say "[dry-run] would point $base/current at $stamp, write wrappers for ${BINARIES[*]} into $link_dir, and run ui-evidence install-browser"
     return 0
   fi
   built "$stamp" || die "no build for this source (stamp $stamp); run scripts/install-cs.sh --publish first"
   [ -x "$base/$stamp/heavy" ] || die "build $stamp has no heavy; run scripts/install-cs.sh --publish --rebuild"
+  [ -x "$base/$stamp/meta-gate-reserve" ] || die "build $stamp has no meta-gate-reserve; run scripts/install-cs.sh --publish --rebuild"
   if [ -z "${DOTNET_ROOT:-}" ]; then   # where the pinned SDK is found (the parent of its sdk dir), else ~/.dotnet
     sdk_dir="$(dotnet --list-sdks 2> /dev/null | grep "^$sdk " | head -1 | sed 's/^[^[]*\[\(.*\)\]$/\1/' || true)"
     DOTNET_ROOT="${sdk_dir:+$(dirname "$sdk_dir")}"
@@ -426,7 +436,8 @@ link() {
   ln -s "$stamp" "$base/.current.$$"
   rename_over "$base/.current.$$" "$base/current"
   say "current -> $stamp"
-  link_heavy
+  link_through_current heavy "$heavy"
+  link_through_current meta-gate-reserve "$reserve"
   for b in "${BINARIES[@]}"; do write_wrapper "$b"; done
   say "wrappers in $link_dir: ${BINARIES[*]}"
   case ":$PATH:" in *":$link_dir:"*) ;; *) warn "$link_dir is not on your PATH" ;; esac
@@ -443,16 +454,16 @@ link() {
   fi
 }
 
-link_heavy() { # through current, so it changes only on an install
-  local want="$base/current/heavy"
-  if [ -L "$heavy" ] && [ "$(readlink "$heavy")" = "$want" ]; then return 0; fi
-  mkdir -p "$(dirname "$heavy")"
-  if [ -e "$heavy" ] && [ ! -L "$heavy" ]; then
-    if [ -e "$heavy.pre-repo" ]; then mv "$heavy" "$heavy.pre-repo.$(date +%s)"; else mv "$heavy" "$heavy.pre-repo"; fi
+link_through_current() { # link_through_current <name> <target path>; through current, so it changes only on an install
+  local name="$1" target="$2" want="$base/current/$1"
+  if [ -L "$target" ] && [ "$(readlink "$target")" = "$want" ]; then return 0; fi
+  mkdir -p "$(dirname "$target")"
+  if [ -e "$target" ] && [ ! -L "$target" ]; then
+    if [ -e "$target.pre-repo" ]; then mv "$target" "$target.pre-repo.$(date +%s)"; else mv "$target" "$target.pre-repo"; fi
   fi
-  ln -s "$want" "$heavy.$$"
-  rename_over "$heavy.$$" "$heavy"
-  say "heavy -> $want"
+  ln -s "$want" "$target.$$"
+  rename_over "$target.$$" "$target"
+  say "$name -> $want"
 }
 
 if [ "$do_publish" = 1 ]; then publish; fi

@@ -6,6 +6,7 @@ using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Features.ModelCheck;
 using Aw.Sindri.Infrastructure.ModelCheck;
+using Aw.Sindri.Testing.Packets;
 using Aw.Sindri.Tests.Workflow.BuildShip;
 
 namespace Aw.Sindri.Tests.Workflow.ModelCheck;
@@ -174,6 +175,67 @@ public sealed class ModelCheckStepTests
 
     // More than the step's 256 KiB of TLC output under one check.
     private static string Trace() => string.Concat(Enumerable.Repeat("  | a line of TLC output that goes on for a while, xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n", 6000));
+
+    // ---- the models: path check and the scoping model's move (design §3 "What M-3 found", §4.1)
+
+    [Fact]
+    public async Task A_models_path_that_does_not_exist_is_an_MDL_SPEC_002_warning_on_the_pass_not_an_outcome()
+    {
+        var h = new Harness().Folder(Folders.Spec("Takeover"));
+        _ = h.Specs.Missing("src/Timers.cs");
+        h.Prints(0, "tlc-check: Takeover/Takeover.cfg: PASS distinct=5 depth=3", "tlc-check: Takeover/gaps/PlantedBug.cfg: WITNESS-CAUGHT NoTimeGained");
+
+        var result = await h.Step().Run(Harness.Context(), Token);
+
+        Assert.Equal("pass", result.Result!.Outcome.Value);   // a stale path shows on the page, it doesn't send the build back
+        var warning = StepRig.Out(result, "modelCheck")["warnings"]!.AsArray().Single(static w => (string?)w!["rule"] == "MDL-SPEC-002")!;
+        Assert.Contains("src/Timers.cs", (string?)warning["message"], StringComparison.Ordinal);
+        Assert.DoesNotContain("src/dir/", (string?)warning["message"], StringComparison.Ordinal);   // the other path exists
+    }
+
+    [Fact]
+    public async Task A_scoping_model_the_head_does_not_have_under_specs_tla_is_MDL_SPEC_003_and_a_specError()
+    {
+        var h = new Harness().Folder(Folders.Spec("Takeover"));
+        _ = h.Packets.Put("/packets/p1", new Dictionary<string, string>(StringComparer.Ordinal) { ["model/Retry/Retry.tla"] = "x", ["model/Takeover/Takeover.tla"] = "x" });
+
+        var result = await h.Step().Run(Harness.Context(activePacket: "/packets/p1"), Token);
+
+        Assert.Equal("specError", result.Result!.Outcome.Value);
+        var finding = StepRig.Out(result, "findings").AsArray().Single()!;
+        Assert.Equal("MDL-SPEC-003", (string?)finding["rule"]);
+        Assert.Contains("Retry", (string?)finding["message"], StringComparison.Ordinal);   // Takeover was moved, Retry was not
+        Assert.Contains("specs/tla/Retry/", (string?)finding["message"], StringComparison.Ordinal);
+        Assert.Empty(h.Rig.Commands.Calls);
+    }
+
+    [Fact]
+    public async Task A_moved_README_whose_models_line_names_no_path_that_exists_is_MDL_SPEC_003()
+    {
+        var h = new Harness().Folder(Folders.Spec("Takeover"));
+        _ = h.Specs.Missing("src/Timers.cs", "src/dir/");
+        _ = h.Packets.Put("/packets/p1", new Dictionary<string, string>(StringComparer.Ordinal) { ["model/Takeover/Takeover.tla"] = "x" });
+
+        var result = await h.Step().Run(Harness.Context(activePacket: "/packets/p1"), Token);
+
+        Assert.Equal("specError", result.Result!.Outcome.Value);   // a scoping model's paths can't be real before the code; at the move the build agent fills them in
+        var finding = StepRig.Out(result, "findings").AsArray().Single()!;
+        Assert.Equal("MDL-SPEC-003", (string?)finding["rule"]);
+        Assert.Contains("Takeover", (string?)finding["message"], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_moved_model_whose_models_line_names_one_existing_path_passes_the_move_check()
+    {
+        var h = new Harness().Folder(Folders.Spec("Takeover"));
+        _ = h.Specs.Missing("src/Timers.cs");   // src/dir/ exists
+        _ = h.Packets.Put("/packets/p1", new Dictionary<string, string>(StringComparer.Ordinal) { ["model/Takeover/Takeover.tla"] = "x" });
+        h.Prints(0, "tlc-check: Takeover/Takeover.cfg: PASS distinct=5 depth=3", "tlc-check: Takeover/gaps/PlantedBug.cfg: WITNESS-CAUGHT NoTimeGained");
+
+        var result = await h.Step().Run(Harness.Context(activePacket: "/packets/p1"), Token);
+
+        Assert.Equal("pass", result.Result!.Outcome.Value);
+    }
 
     [Fact]
     public async Task A_missed_or_wrong_witness_is_vacuous()
@@ -536,12 +598,17 @@ public sealed class ModelCheckStepTests
         internal FakeSpecFolders Specs { get; } = new();
 
         /// <summary>The Step's context: the workspace, the change b0..h1 and the 'with'.</summary>
-        internal static StepContext Context(string scope = "all", bool witnesses = true, bool workspace = true)
+        internal static StepContext Context(string scope = "all", bool witnesses = true, bool workspace = true, string? activePacket = null)
         {
             var facts = new Dictionary<string, string>(StringComparer.Ordinal) { ["change"] = $$"""{"repo":"{{StepRig.Tree}}","base":"b0","head":"h1"}""" };
             if (workspace)
             {
                 facts["workspace"] = $"\"{StepRig.Tree}\"";
+            }
+
+            if (activePacket is not null)
+            {
+                facts["activePacket"] = $$"""{"hash":"sha256:x","dir":"{{activePacket}}"}""";
             }
 
             return StepRig.Context("step.model.check", facts) with
@@ -579,7 +646,9 @@ public sealed class ModelCheckStepTests
         internal void RunnerKilled(params string[] lines) =>
             Rig.Commands.Answer("model-check", CheckRun.Of(143, timedOut: true, TimeSpan.FromMinutes(9), string.Join('\n', lines)));
 
-        internal ModelCheckStep Step() => new(Specs, Rig.Changes, Rig.Runner, new Mask(), setup ?? _setup, new DiskScratchDirectories());
+        internal InMemoryPacketDirectory Packets { get; } = new();
+
+        internal ModelCheckStep Step() => new(Specs, Rig.Changes, Rig.Runner, new Mask(), setup ?? _setup, Packets, new DiskScratchDirectories());
     }
 
     private sealed class Mask : ITextScrubber

@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.ship
-version: 5
+version: 6
 description: "Block recipe: the GREEN gate on a reviewed, proven head, then the PR opens with its evidence pack as the body. No owner stop."
 displayName: "Open the pull request with its proof"
 inputs:
@@ -9,6 +9,7 @@ inputs:
   - { key: fact:review, label: "Review result", type: packet, kind: packet }
   - { key: fact:workspace, label: "Workspace", type: text, kind: text }
   - { key: fact:lineContext, label: "Line context", type: payload, kind: payload }
+  - { key: fact:modelCheck, label: "Model check", type: payload, kind: payload }
 outputs:
   - { key: fact:pr, label: "Pull request", type: link, from: opening }
   - { key: fact:handoff, label: "PR hand-off", type: packet, from: freeze }
