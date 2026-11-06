@@ -408,6 +408,22 @@ public abstract class PullRequestsContract
         Expect.Equal(before, Ok(await run.Pulls.Threads(opened.Link, Ct), "Threads after").Count);
     }
 
+    /// <summary>A line comment on a seeded file with no patch (a binary file) is LineRejected and posts nothing.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task SubmitReview_with_a_comment_on_a_file_without_a_patch_posts_nothing()
+    {
+        var (run, opened) = await Open();
+        run.SeedFiles(opened.Link, [new PullFile("assets/logo.png", PreviousPath: null, PullFileStatus.Added, 0, 0, Patch: null)], new Dictionary<string, string>(StringComparer.Ordinal));
+        var review = new PullReview(opened.Link, Sha('a'), PullReviewVerdict.Comment, "Body", [new PullReviewComment("assets/logo.png", 1, "On a binary file")], "owner-review:d5:1");
+
+        var outcome = Ok(await run.Pulls.SubmitReview(review, Ct), "SubmitReview on a file without a patch");
+        var threads = Ok(await run.Pulls.Threads(opened.Link, Ct), "Threads");
+
+        Expect.Equal(PullReviewOutcome.LineRejected, outcome);
+        Expect.Equal(0, threads.Count(t => t.Kind == PullCommentKind.Review));
+    }
+
     /// <summary>The review reads refuse a host outside the list and answer SND-FORGE-003 for a pull request that isn't there.</summary>
     /// <returns>A task.</returns>
     [Fact]
