@@ -270,7 +270,8 @@ publish() {
     (cd "$tree" && ${pre[@]+"${pre[@]}"} dotnet publish "$proj" -c Release "${stampargs[@]}" "$@" -o "$out") < /dev/null >> "$log" 2>&1 \
       || { tail -20 "$log" >&2; die "publishing $name failed (log: $log)"; }
     [ -e "$out/$name" ] || die "the publish left no $name in $out (log: $log)"
-    for f in "$out"/*; do [ -e "$stage/$(basename "$f")" ] || cp -R "$f" "$stage/"; done
+    # Dot entries too: ui-evidence's Playwright driver is .playwright/, and without it every browser call fails.
+    for f in "$out"/* "$out"/.[!.]*; do [ -e "$f" ] || continue; [ -e "$stage/$(basename "$f")" ] || cp -R "$f" "$stage/"; done
     rm -rf "$out"
   }
   local aot=(-r "$platform" -p:RestoreLockedMode=false)
