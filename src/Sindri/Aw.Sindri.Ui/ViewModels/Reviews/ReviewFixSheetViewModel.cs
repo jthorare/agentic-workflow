@@ -144,8 +144,7 @@ internal sealed partial class ReviewFixSheetViewModel : ObservableObject
         {
             ReviewFixKind.Check => (Labels.ReviewFixCheckTitle(Labels.ReviewCheckFail, source.Title), Labels.ReviewFixCheckDetail(source.Detail)),
             ReviewFixKind.Requirement => ($"{source.SourceId}  {source.Title}", Labels.ReviewFixRequirementDetail(target.DocId)),
-            ReviewFixKind.Line => (LineName(source), source.Added ? Labels.ReviewFixAddedLine : Labels.ReviewFixLine),
-            ReviewFixKind.RemovedLine => (LineName(source), Labels.ReviewFixRemovedLine),
+            ReviewFixKind.Line => (LineName(source), source.Added ? Labels.ReviewFixAddedLine : source.Removed ? Labels.ReviewFixRemovedLine : Labels.ReviewFixLine),
             _ => throw new ArgumentOutOfRangeException(nameof(request), source.Kind, message: null),
         };
         ThreadText = ThreadOf(source, target);
@@ -156,7 +155,7 @@ internal sealed partial class ReviewFixSheetViewModel : ObservableObject
         {
             ReviewFixKind.Check => Labels.ReviewFixCheckText(source.Title, source.Detail),
             ReviewFixKind.Requirement => Labels.ReviewFixRequirementText(source.SourceId, source.Title, target.DocId),
-            ReviewFixKind.Line or ReviewFixKind.RemovedLine => string.Empty,
+            ReviewFixKind.Line => string.Empty,
             _ => throw new ArgumentOutOfRangeException(nameof(request), source.Kind, message: null),
         };
         Refresh();
@@ -241,12 +240,11 @@ internal sealed partial class ReviewFixSheetViewModel : ObservableObject
         }
     }
 
-    // a line comment goes on the new side only: a removed line is sent as a review-body comment that starts by naming it
+    // a removed line goes on the old side with its old-file number; the server decides how an old-side comment posts
     private ReviewFixSend SendOf(ReviewFixSource source, ReviewFixTarget target) => source.Kind switch
     {
-        ReviewFixKind.Line => new ReviewFixSend(KindWord(source.Kind), Text, target.HeadSha, SourceId: null, source.Path, source.Line, _item),
-        ReviewFixKind.RemovedLine => new ReviewFixSend(KindWord(source.Kind), Labels.ReviewFixRemovedPrefix(source.Path, source.Line ?? 0) + " " + Text, target.HeadSha, SourceId: null, Path: null, Line: null, _item),
-        ReviewFixKind.Check or ReviewFixKind.Requirement => new ReviewFixSend(KindWord(source.Kind), Text, target.HeadSha, source.SourceId, Path: null, Line: null, _item),
+        ReviewFixKind.Line => new ReviewFixSend(KindWord(source.Kind), Text, target.HeadSha, SourceId: null, source.Path, source.Line, source.Removed ? "old" : "new", _item),
+        ReviewFixKind.Check or ReviewFixKind.Requirement => new ReviewFixSend(KindWord(source.Kind), Text, target.HeadSha, source.SourceId, Path: null, Line: null, Side: null, _item),
         _ => throw new ArgumentOutOfRangeException(nameof(source), source.Kind, message: null),
     };
 
@@ -254,8 +252,8 @@ internal sealed partial class ReviewFixSheetViewModel : ObservableObject
         ? Labels.ReviewFixItemOnly(target.Author)
         : source.Kind switch
         {
+            ReviewFixKind.Line when source.Removed => Labels.ReviewFixRemovedThread(target.Number, source.Path, source.Line ?? 0),
             ReviewFixKind.Line => Labels.ReviewFixLineThread(source.Path, source.Line ?? 0),
-            ReviewFixKind.RemovedLine => Labels.ReviewFixRemovedThread(target.Number, source.Path, source.Line ?? 0),
             ReviewFixKind.Check or ReviewFixKind.Requirement => Labels.ReviewFixBodyThread(target.Number),
             _ => throw new ArgumentOutOfRangeException(nameof(source), source.Kind, message: null),
         };
@@ -265,7 +263,6 @@ internal sealed partial class ReviewFixSheetViewModel : ObservableObject
         ReviewFixKind.Check => "check",
         ReviewFixKind.Requirement => "requirement",
         ReviewFixKind.Line => "line",
-        ReviewFixKind.RemovedLine => "comment",
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, message: null),
     };
 }

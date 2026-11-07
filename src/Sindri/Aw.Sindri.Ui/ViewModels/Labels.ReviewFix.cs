@@ -151,5 +151,5 @@ internal static partial class Labels
     /// <param name="path">The file.</param>
     /// <param name="line">The line's number in the old file.</param>
     /// <returns>The words.</returns>
-    internal static string ReviewFixRemovedThread(int number, string path, int line) => string.Create(CultureInfo.InvariantCulture, $"Review comment on #{number} (the review body, a removed line has no new-side line), starting {ReviewFixRemovedPrefix(path, line)}, from Sindri, marker sindri.fix:<item id>");
+    internal static string ReviewFixRemovedThread(int number, string path, int line) => string.Create(CultureInfo.InvariantCulture, $"Review comment on #{number} (the review body, GitHub takes line comments on the new side only), naming {ReviewFixRemovedPrefix(path, line)}, from Sindri, marker sindri.fix:<item id>");
 }

@@ -8,4 +8,5 @@ namespace Aw.Sindri.Ui.ViewModels.Reviews;
 /// <param name="Path">The file of a line; empty otherwise.</param>
 /// <param name="Line">The line number of a line; null otherwise.</param>
 /// <param name="Added">True when the line is an added one ("added line" chip).</param>
-internal sealed record ReviewFixSource(ReviewFixKind Kind, string Title, string SourceId, string Detail, string Path, int? Line, bool Added);
+/// <param name="Removed">True when the line is a removed one: its Line is the old file's number and it is sent on the old side.</param>
+internal sealed record ReviewFixSource(ReviewFixKind Kind, string Title, string SourceId, string Detail, string Path, int? Line, bool Added, bool Removed = false);

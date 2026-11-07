@@ -14,7 +14,7 @@ public sealed class ReviewFixSheetTests
     private static readonly ReviewFixTarget _theirs = _mine with { Author = "sam-dev", PostsThreads = false };
     private static readonly ReviewFixSource _check = new(ReviewFixKind.Check, "Recipe change shows Ui tests ran", "ci-ui", "ui-tests: failure on a1b2c3d", string.Empty, Line: null, Added: false);
     private static readonly ReviewFixSource _requirement = new(ReviewFixKind.Requirement, "Offline PRs answer from the cache", "REQ-E4", string.Empty, string.Empty, Line: null, Added: false);
-    private static readonly ReviewFixSource _removed = new(ReviewFixKind.RemovedLine, "var b = 2;", string.Empty, string.Empty, X, Line: 11, Added: false);
+    private static readonly ReviewFixSource _removed = new(ReviewFixKind.Line, "var b = 2;", string.Empty, string.Empty, X, Line: 11, Added: false, Removed: true);
     private static readonly ReviewFixSource _line = new(ReviewFixKind.Line, "var b = 3;", string.Empty, string.Empty, X, Line: 11, Added: true);
     private static readonly ReviewFocus _checkRow = new(ReviewFocusRegion.Panel, "requiredChecks:ci-ui");
 
@@ -113,11 +113,11 @@ public sealed class ReviewFixSheetTests
         var removed = Opened(_removed);
 
         Assert.Equal(("src/Api/A/A.Core/X.cs:11", "removed line"), (removed.SourceTitle, removed.SourceDetail));
-        Assert.Equal("Review comment on #2071 (the review body, a removed line has no new-side line), starting src/Api/A/A.Core/X.cs:11 (removed line), from Sindri, marker sindri.fix:<item id>", removed.ThreadText);
+        Assert.Equal("Review comment on #2071 (the review body, GitHub takes line comments on the new side only), naming src/Api/A/A.Core/X.cs:11 (removed line), from Sindri, marker sindri.fix:<item id>", removed.ThreadText);
     }
 
     [Fact]
-    public async Task A_removed_line_is_sent_without_a_path_or_line_and_its_text_starts_with_the_old_line()
+    public async Task A_removed_line_is_sent_on_the_old_side_with_its_old_line_and_the_text_as_typed()
     {
         var removed = Opened(_removed);
         removed.Text = "Why drop this?";
@@ -125,8 +125,50 @@ public sealed class ReviewFixSheetTests
         await removed.Send(Token);
 
         Assert.Equal(
-            [new Ui.Api.Reviews.ReviewFixSend("comment", "src/Api/A/A.Core/X.cs:11 (removed line) Why drop this?", "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678", SourceId: null, Path: null, Line: null, Item: null)],
+            [new Ui.Api.Reviews.ReviewFixSend("line", "Why drop this?", "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678", SourceId: null, X, 11, Side: "old", Item: null)],
             _f.Server.ReviewFixSends);
+    }
+
+    [Fact]
+    public async Task C_on_a_removed_line_then_Send_records_an_old_side_line_send_and_an_added_line_a_new_side_one()
+    {
+        var page = await _f.Opened(Token);
+        _ = page.PressDiffKey("j", focusInDiff: true, textBoxHasFocus: false);
+        var asked = new List<ReviewFixRequestedEventArgs>();
+        page.FixRequested += (_, e) => asked.Add(e);
+        page.Diff.FocusLine(page.Diff.FocusedFile!.Hunks[0].Lines[1]);   // "-var b = 2;", old line 11
+        _ = page.PressDiffKey("c", focusInDiff: true, textBoxHasFocus: false);
+        page.Diff.FocusLine(page.Diff.FocusedFile!.Hunks[0].Lines[2]);   // "+var b = 3;", new line 11
+        _ = page.PressDiffKey("c", focusInDiff: true, textBoxHasFocus: false);
+
+        foreach (var request in asked)
+        {
+            var sheet = Sheet();
+            sheet.Open(ReviewPageFixture.Url, request);
+            sheet.Text = "Look at this.";
+            await sheet.Send(Token);
+        }
+
+        Assert.Equal([("line", X, 11, "old"), ("line", X, 11, "new")], _f.Server.ReviewFixSends.Select(s => (s.Kind, s.Path!, s.Line!.Value, s.Side!)));
+    }
+
+    [Theory]
+    [InlineData(false, "Item only: Sindri won't post on kim-dev's PR")]
+    [InlineData(true, "Review comment on #2071 (the review body, no diff line), from Sindri, marker sindri.fix:<item id>")]
+    public async Task The_sheet_says_item_only_or_thread_posted_from_the_pages_postsFixThreads_and_the_send_still_makes_the_item(bool posts, string expected)
+    {
+        var page = await _f.Opened("full", json => json["pr"]!["postsFixThreads"] = posts, Token);
+        ReviewFixRequestedEventArgs? asked = null;
+        page.FixRequested += (_, e) => asked = e;
+        page.RequestCheckFix("ci-ui");
+        var sheet = Sheet();
+        sheet.Open(ReviewPageFixture.Url, asked!);
+
+        await sheet.Send(Token);
+
+        Assert.Equal(expected, sheet.ThreadText);
+        _ = Assert.Single(_f.Server.ReviewFixSends);
+        Assert.NotEmpty(sheet.ItemId);
     }
 
     [Fact]
@@ -167,9 +209,9 @@ public sealed class ReviewFixSheetTests
         const string head = "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678";
         Assert.Equal(
             [
-                new Ui.Api.Reviews.ReviewFixSend("check", check.Text, head, "ci-ui", Path: null, Line: null, Item: null),
-                new Ui.Api.Reviews.ReviewFixSend("requirement", requirement.Text, head, "REQ-E4", Path: null, Line: null, Item: null),
-                new Ui.Api.Reviews.ReviewFixSend("line", "Release on cancel too.", head, SourceId: null, X, 11, Item: null),
+                new Ui.Api.Reviews.ReviewFixSend("check", check.Text, head, "ci-ui", Path: null, Line: null, Side: null, Item: null),
+                new Ui.Api.Reviews.ReviewFixSend("requirement", requirement.Text, head, "REQ-E4", Path: null, Line: null, Side: null, Item: null),
+                new Ui.Api.Reviews.ReviewFixSend("line", "Release on cancel too.", head, SourceId: null, X, 11, Side: "new", Item: null),
             ],
             _f.Server.ReviewFixSends);
     }

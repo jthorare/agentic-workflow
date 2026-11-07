@@ -18,7 +18,7 @@ internal sealed partial class ReviewFixSheetViewModel
         }
         else
         {
-            var where = source.Kind == ReviewFixKind.Line ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{Path.GetFileName(source.Path)}:{source.Line}") : Labels.ReviewFixReviewComment;
+            var where = source.Kind == ReviewFixKind.Line && !source.Removed ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{Path.GetFileName(source.Path)}:{source.Line}") : Labels.ReviewFixReviewComment;
             var (outcome, text) = sent.Went switch
             {
                 "babysitter" => (ReviewFixOutcome.Babysitter, Labels.ReviewFixBabysitter(target.Number)),

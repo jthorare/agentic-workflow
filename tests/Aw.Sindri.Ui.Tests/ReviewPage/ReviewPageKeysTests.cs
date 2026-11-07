@@ -166,7 +166,7 @@ public sealed class ReviewPageKeysTests
     }
 
     [Fact]
-    public async Task C_on_a_removed_line_asks_for_a_removed_line_fix_that_names_its_old_line()
+    public async Task C_on_a_removed_line_asks_for_a_removed_line_fix_with_its_old_line_number()
     {
         var page = await _f.Opened(Token);
         _ = Press(page, "j");
@@ -174,7 +174,7 @@ public sealed class ReviewPageKeysTests
 
         var asked = Asked(page, () => Assert.True(Press(page, "c")));
 
-        Assert.Equal(new ReviewFixSource(ReviewFixKind.RemovedLine, "var b = 2;", string.Empty, string.Empty, X, Line: 11, Added: false), asked?.Source);
+        Assert.Equal(new ReviewFixSource(ReviewFixKind.Line, "var b = 2;", string.Empty, string.Empty, X, Line: 11, Added: false, Removed: true), asked?.Source);
         Assert.Equal(new ReviewFocus(ReviewFocusRegion.DiffLine, X + ":-11"), asked?.ReturnTo);
     }
 
