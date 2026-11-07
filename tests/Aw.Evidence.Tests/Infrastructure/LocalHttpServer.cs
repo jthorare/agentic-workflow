@@ -48,6 +48,20 @@ internal sealed class LocalHttpServer : IDisposable
         return ((IPEndPoint)probe.LocalEndpoint).Port;
     }
 
+    /// <summary>
+    /// Binds a loopback port without Listen(), so it stays ours and a connect is refused until the socket is disposed. A freed
+    /// <see cref="FreePort"/> number can be taken by a parallel test in between (#2254).
+    /// </summary>
+    /// <param name="port">The port the socket holds.</param>
+    /// <returns>The socket that holds the port; the caller disposes it.</returns>
+    internal static Socket ClosedPort(out int port)
+    {
+        var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        socket.Bind(new IPEndPoint(IPAddress.Loopback, 0));
+        port = ((IPEndPoint)socket.LocalEndPoint!).Port;
+        return socket;
+    }
+
     private async Task ServeAsync()
     {
         while (_listener.IsListening)

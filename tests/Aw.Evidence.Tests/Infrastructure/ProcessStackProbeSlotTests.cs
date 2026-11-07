@@ -48,7 +48,8 @@ public sealed class ProcessStackProbeSlotTests : IDisposable
         var port = ((IPEndPoint)listener.LocalEndpoint).Port;
 
         var found = await probe.ListenerDirectoryAsync(port, TestContext.Current.CancellationToken);
-        var free = await probe.ListenerDirectoryAsync(LocalHttpServer.FreePort(), TestContext.Current.CancellationToken);
+        using var closed = LocalHttpServer.ClosedPort(out var closedPort);
+        var free = await probe.ListenerDirectoryAsync(closedPort, TestContext.Current.CancellationToken);
 
         Assert.Equal(Directory.GetCurrentDirectory(), found.Value);
         Assert.Null(free.Value);
