@@ -20,8 +20,8 @@ internal sealed class LibraryRootReader(IReadOnlyList<string> githubRepos, IReco
 {
     private const int ListPage = 1000;
 
-    // A generated doc is stored as <doc sha>+<packet.json sha> (the second part empty when none is beside it); a plain doc as its sha.
-    private const string GeneratedMark = "+";
+    // A generated doc's version is 'g' + the sha256 of "<doc sha>:<packet.json sha>" (65 characters, inside SourceVersion's 128; the packet part is empty when none is beside it); a plain doc's is its sha. Hex has no 'g', so the marker tells them apart.
+    private const char GeneratedMark = 'g';
 
     private readonly string _stamp = DesignDocParser.Stamp(scrubbers.Ruleset.Value);
 
@@ -180,7 +180,7 @@ internal sealed class LibraryRootReader(IReadOnlyList<string> githubRepos, IReco
         }
 
         var packetSha = file.Packet?.Sha256() ?? string.Empty;
-        return (sha + GeneratedMark + packetSha, packetSha.Length == 0 ? null : packetSha);
+        return (GeneratedMark + Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(sha + ":" + packetSha))), packetSha.Length == 0 ? null : packetSha);
     }
 
     private bool Current(StoredRecord row, string version, AudienceKey audience) =>
@@ -188,7 +188,7 @@ internal sealed class LibraryRootReader(IReadOnlyList<string> githubRepos, IReco
 
     // why: a generated doc's version also holds its packet.json, whose edit leaves the doc's time alone, so the doc's time alone never settles it
     private bool Unchanged(StoredRecord? row, LibraryFile file) =>
-        row is not null && !row.Version.Value.Contains(GeneratedMark, StringComparison.Ordinal) && row.UpdatedAt is { } at && at.ToUnixTimeMilliseconds() == file.Modified.ToUnixTimeMilliseconds() && string.Equals(row.Ruleset, _stamp, StringComparison.Ordinal);
+        row is not null && !row.Version.Value.StartsWith(GeneratedMark) && row.UpdatedAt is { } at && at.ToUnixTimeMilliseconds() == file.Modified.ToUnixTimeMilliseconds() && string.Equals(row.Ruleset, _stamp, StringComparison.Ordinal);
 
     private static RecordItem Item(LibraryFile file, string key, string text, (string Version, AudienceKey Audience) read, string? packetSha) =>
         new(RecordKey.From(key), RecordKind.Doc, DocChunker.Title(text, file.Relative), text, Author: null, Url: null, State: null, StateRaw: null,
