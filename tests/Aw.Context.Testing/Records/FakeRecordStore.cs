@@ -369,7 +369,9 @@ public sealed class FakeRecordStore : IRecordStore
     private static ValueTask<Result<T>> Fail<T>(Error error) => ValueTask.FromResult<Result<T>>(error);
 
     private static bool Matches(RecordFilter filter, StoredRecord r) =>
-        (filter.IncludeRemoved || r.RemovedAt is null) && (filter.Source is not { } s || r.Source == s) && (filter.Repo is not { } repo || r.Repo == repo) && (filter.Kind is not { } kind || r.Kind == kind);
+        (filter.IncludeRemoved || r.RemovedAt is null) && (filter.Source is not { } s || r.Source == s) && (filter.Repo is not { } repo || r.Repo == repo) && (filter.Kind is not { } kind || r.Kind == kind) && InStates(filter, r);
+
+    private static bool InStates(RecordFilter filter, StoredRecord r) => filter.States is not { } states || (r.State is { } state && states.Contains(state));
 
     private static Error? Validate(RecordBatch batch)
     {

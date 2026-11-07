@@ -48,6 +48,13 @@ public interface IContextLibrary
     /// <returns>The claims in ref order; none when the PR is unknown or the caller may not read it. A claim on a doc the caller may not read is missing.</returns>
     public ValueTask<Result<IReadOnlyList<LibraryClaim>>> Claims(RecordKey prKey, AudienceScope audience, CancellationToken cancellationToken);
 
+    /// <summary>Reads the claims of many PRs in one store read, each through the same audience rules as <see cref="Claims(RecordKey, AudienceScope, CancellationToken)"/>.</summary>
+    /// <param name="prKeys">The PR records' keys.</param>
+    /// <param name="audience">The caller's audiences.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>Per asked PR its claims in ref order, an empty list for a PR with none. A PR that has claims the caller may not read has no entry; an empty ask returns an empty map without a store read.</returns>
+    public ValueTask<Result<IReadOnlyDictionary<RecordKey, IReadOnlyList<LibraryClaim>>>> Claims(IReadOnlyList<RecordKey> prKeys, AudienceScope audience, CancellationToken cancellationToken);
+
     /// <summary>Reads the claims on a doc's items: from open and merged PRs only (a closed PR's claim is not shown).</summary>
     /// <param name="docKey">The doc record's key.</param>
     /// <param name="audience">The caller's audiences.</param>
