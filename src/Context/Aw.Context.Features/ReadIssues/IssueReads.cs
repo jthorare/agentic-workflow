@@ -80,9 +80,9 @@ internal sealed class IssueReads(ILinearIssueStore issues, ILinearLookupStore? l
     private static string Spelled(ContextScope scope, string team) =>
         SettingsReader.Read(scope.Settings) is { IsSuccess: true, Value: { } settings } && settings.LinearTeams.FirstOrDefault(t => t.Equals(team, StringComparison.OrdinalIgnoreCase)) is { } spelled ? spelled : team;
 
-    // why: 'context.sources.linear.teams' names the teams Sindri reads; a profile that names none reads every team the key sees
+    // why: 'context.sources.linear.teams' names the teams Sindri reads; a profile that names none has no team to tell from a typo, so none is picked
     private static bool Picked(ContextScope scope, string team) =>
-        SettingsReader.Read(scope.Settings) is { IsSuccess: true, Value: { Linear: not null } settings } && (settings.LinearTeams.Count == 0 || settings.LinearTeams.Contains(team, StringComparer.Ordinal));
+        SettingsReader.Read(scope.Settings) is { IsSuccess: true, Value: { Linear: not null } settings } && settings.LinearTeams.Contains(team, StringComparer.Ordinal);
 
     public async ValueTask<Result<LinearSince>> Since(DateTimeOffset marker, ExternalId viewer, ContextScope scope, CancellationToken cancellationToken)
     {

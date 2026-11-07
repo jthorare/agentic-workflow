@@ -55,6 +55,17 @@ public sealed class TickLookupsTests
     }
 
     [Fact]
+    public async Task With_no_teams_named_an_unsynced_key_reads_as_null()
+    {
+        using var world = Rig();
+
+        var read = await world.Engine.IssueLookups("ENGG", MapWorld.HumanWith("""{"sources":{"linear":{"token":"env:LINEAR_KEY"}}}"""), Ct);
+
+        Assert.True(read.IsSuccess, read.IsError ? read.Error.Message : null);
+        Assert.Null(read.Value);
+    }
+
+    [Fact]
     public async Task A_team_is_stamped_with_the_time_of_its_replace()
     {
         using var world = Rig();
