@@ -74,7 +74,7 @@ public sealed class ShellLinearTests
         shell.GoTo(PageId.Work);
         await Until(() => !shell.Linear.IsLoading);
 
-        Assert.Equal(["mine", "teams"], _server.LinearQueries.Select(q => q.Group).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["mine", "teams"], _server.LinearQueries.Select(q => q.Group).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }, Token);
 
     [Fact]

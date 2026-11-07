@@ -57,6 +57,7 @@ internal sealed partial class ShellViewModel
         Queue.PageShown(RowScopeOf(CurrentPage));
         OpenPage(CurrentPage);   // a restored page was not navigated to, but it is entered all the same
         await NeedsYou.Restore(cancellationToken).ConfigureAwait(true);
+        await Linear.Restore(cancellationToken).ConfigureAwait(true);
         Changed(_pageProperties);
         Changed(nameof(Window), nameof(SheetWidth));
     }
