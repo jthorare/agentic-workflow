@@ -50,7 +50,7 @@ public sealed class BubblewrapSecretsTests
     {
         using var area = new TempRunArea("AW_SINDRI_LAUNCH_SECRET");
 
-        var argv = Sandbox(new FakeProcesses(), new LaunchSecretRegistry()).Wrap(area.Plan, ["claude", "--x"]).Value;
+        var argv = Sandbox(new FakeProcesses(), Registry(area)).Wrap(area.Plan, ["claude", "--x"]).Value;
 
         var agent = argv.ToList().IndexOf("--") + 1;
         Assert.Equal(["/bin/sh", "-c", EgressInit.Render(area.Plan.Network, "socat", EgressInit.InsideLog), EgressInit.Name, "claude", "--x"], argv.Skip(agent), StringComparer.Ordinal);
@@ -70,9 +70,9 @@ public sealed class BubblewrapSecretsTests
     }
 
     [Fact]
-    public void A_launch_without_values_gets_the_plain_command_and_no_secrets_directory()
+    public void A_launch_without_values_for_optional_variables_gets_the_plain_command_and_no_secrets_directory()
     {
-        using var area = new TempRunArea("AW_SINDRI_LAUNCH_SECRET");
+        using var area = new TempRunArea("ANTHROPIC_API_KEY");
 
         var argv = Sandbox(new FakeProcesses(), new LaunchSecretRegistry()).Wrap(area.Plan, ["claude"]).Value;
 
