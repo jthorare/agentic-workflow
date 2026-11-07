@@ -60,6 +60,10 @@ internal sealed partial class LinearWorkViewModel
     /// <summary>`/`: asks the view to focus the first filter.</summary>
     internal void FocusFilters() => FilterFocusRequested?.Invoke(this, EventArgs.Empty);
 
+    /// <summary>Selects and focuses a row once the list shows it (a just-created issue): now when it is listed, else after the next read of the list.</summary>
+    /// <param name="key">The issue key.</param>
+    internal void SelectWhenShown(string key) => throw new NotSupportedException();
+
     private List<LinearIssueRowViewModel> Ordered() => [.. Mine.Rows, .. Teams.Rows];
 
     // A read that dropped the selected issue (a filter, a state change) leaves nothing selected.

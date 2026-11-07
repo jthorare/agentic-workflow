@@ -10,12 +10,17 @@ internal sealed partial class ShellViewModel
     /// <summary>The Work page's Linear view: its switch, list and since-you-looked strip.</summary>
     public LinearWorkViewModel Linear { get; private set; }
 
+    /// <summary>The Linear "New issue" dialog (`C` on the Linear view).</summary>
+    public NewLinearIssueViewModel NewIssue { get; private set; }
+
     private static readonly string[] _linearSwallowed = ["C", "Y"];
 
-    [MemberNotNull(nameof(Linear))]
+    [MemberNotNull(nameof(Linear), nameof(NewIssue))]
     private void InitLinear()
     {
         Linear = new LinearWorkViewModel(_api, _store, _clock);
+        NewIssue = new NewLinearIssueViewModel(_api, Health.ApiUrl, _clock);
+        NewIssue.Created += (_, created) => Linear.SelectWhenShown(created.Value);
         Health.Follow(Linear.Refresh);
         PropertyChanged += (_, e) =>
         {
