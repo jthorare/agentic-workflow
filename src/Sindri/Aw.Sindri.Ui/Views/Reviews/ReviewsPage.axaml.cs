@@ -30,8 +30,26 @@ internal sealed partial class ReviewsPage : UserControl
 
     private void OnOpenLibrary(object? sender, RoutedEventArgs e) => _ = Page?.OpenLibrary(CancellationToken.None);
 
+    // Enter on a PR row opens its review page.
+    private bool OpenRowOnEnter(KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter || e.KeyModifiers != KeyModifiers.None || e.Source is not Border { DataContext: ReviewRowViewModel row } || Page is not { } list)
+        {
+            return false;
+        }
+
+        list.OpenRow(row);
+        e.Handled = true;
+        return true;
+    }
+
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
+        if (OpenRowOnEnter(e))
+        {
+            return;
+        }
+
         if (e.KeyModifiers != KeyModifiers.None || e.Key is not (Key.J or Key.K) || e.Source is TextBox)
         {
             return;

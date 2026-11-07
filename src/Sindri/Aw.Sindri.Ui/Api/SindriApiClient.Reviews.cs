@@ -18,4 +18,12 @@ internal sealed partial class SindriApiClient
     /// <inheritdoc />
     public Task<Result<LibraryView>> Library(Uri api, CancellationToken cancellationToken) =>
         Get<LibraryView>(api, ReviewRoutes.Library, cancellationToken, view: true);
+
+    /// <inheritdoc />
+    public Task<Result<ReviewPage>> ReadReviewPage(Uri api, string repo, int number, CancellationToken cancellationToken) =>
+        Get<ReviewPage>(api, ReviewRoutes.Page(repo, number), cancellationToken, view: true);
+
+    /// <inheritdoc />
+    public Task<Result<ReviewFixSent>> SendReviewFix(Uri api, string repo, int number, ReviewFixSend send, CancellationToken cancellationToken) =>
+        Call<ReviewFixSent>(api, HttpMethod.Post, ReviewRoutes.Fix(repo, number), cancellationToken, new CallOptions(Content: AwJson.Serialize(send, Json)));
 }

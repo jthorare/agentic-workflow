@@ -58,6 +58,12 @@ internal sealed partial class ShellWindow
     // Esc on the run page clears the selection, then leaves the run for the Workflows list.
     private static bool EscapeRunPage(ShellViewModel shell)
     {
+        if (shell.IsReviewPageShown && !shell.IsSheetOpen)
+        {
+            shell.CloseReviewPage();   // Esc leaves a review page for the Reviews list
+            return true;
+        }
+
         if (!shell.IsRunPageShown || shell.IsSheetOpen)
         {
             return false;
