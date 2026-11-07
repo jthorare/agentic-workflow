@@ -19,7 +19,7 @@ public sealed partial record LinearIssueKey
     /// <summary>The issue's number in its team, 1 to 999,999,999.</summary>
     public int Number { get; }
 
-    [GeneratedRegex("^([A-Z][A-Z0-9]{0,9})-([1-9][0-9]{0,8})\\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex("^(?<team>[A-Z][A-Z0-9]{0,9})-(?<number>[1-9][0-9]{0,8})\\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }
 
     /// <summary>Reads a key from text.</summary>
@@ -29,7 +29,7 @@ public sealed partial record LinearIssueKey
     {
         var match = text is null ? null : Shape.Match(text);
         return match is { Success: true }
-            ? new LinearIssueKey(match.Groups[1].Value, int.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture))
+            ? new LinearIssueKey(match.Groups["team"].Value, int.Parse(match.Groups["number"].Value, CultureInfo.InvariantCulture))
             : ContextErrors.QueryInvalid.With($"'{text}' isn't an issue key (a team key, a dash and a number: ENG-12)");
     }
 
