@@ -59,6 +59,17 @@ public sealed class ReviewSummaryReaderTests : IDisposable
     }
 
     [Fact]
+    public async Task A_stored_running_summary_is_rebuilt_from_the_forge()
+    {
+        var pull = Seed(1, Head, new PullCheckRun("ui-tests", "github-actions", "success", Head));
+        _ = await _cache.Write(new ReviewPullRef("acme", "api", 1), new ReviewSummary(Head, ReviewCi.Running, 1, KnownInstants.Epoch.AddMinutes(-1)), Token);
+
+        var read = await _reader.Read([Pull(number: 1, url: pull.Link)], Strict(), Token);
+
+        Assert.Equal(ReviewCi.Pass, read[("acme/api", 1)].Ci);
+    }
+
+    [Fact]
     public async Task A_head_with_none_is_read_decided_and_stored()
     {
         var pull = Seed(1, Head, new PullCheckRun("ui-tests", "github-actions", "success", Head));
