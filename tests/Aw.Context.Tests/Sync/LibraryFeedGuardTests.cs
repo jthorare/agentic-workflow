@@ -103,7 +103,7 @@ public sealed class LibraryFeedGuardTests
         using var home = new TempHome();
         using var rig = new LibraryFeedRig(home, copyFixture: false);
         _ = rig.Write(string.Join('/', Enumerable.Repeat("a", 40)) + "/b.md", Front);
-        var root = new Aw.Context.Core.Engine.LibraryRoot { Name = LibraryFeedRig.Harbor, Path = rig.VaultPath, Deny = [string.Join('/', Enumerable.Repeat("**", 10)) + "/zzz"] };
+        var root = new Context.Core.Engine.LibraryRoot { Name = LibraryFeedRig.Harbor, Path = rig.VaultPath, Deny = [string.Join('/', Enumerable.Repeat("**", 10)) + "/zzz"] };
 
         var pulled = await rig.Feed(root).Pull(new RecordPull(After: null, 100, NotBefore: null), Ct);
 

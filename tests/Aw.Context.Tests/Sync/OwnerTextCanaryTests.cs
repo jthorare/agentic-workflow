@@ -77,7 +77,8 @@ public sealed class OwnerTextCanaryTests
     private static async Task<(List<string> Prompts, string Concepts)> Synthesize(AudienceKey noteAudience)
     {
         var rig = new SynthesisRig();
-        rig.Model.Responder = request => SynthesisRig.Json("Harbor echo", JsonSerializer.Serialize(request.Prompt)[1..^1]);   // the model echoes what it was shown
+        // why: the model writes the canary into its summary whenever it was shown it (a whole-prompt echo is cut at the summary length before the canary)
+        rig.Model.Responder = static request => SynthesisRig.Json("Harbor echo", request.Prompt.Contains(Canary, StringComparison.Ordinal) ? "Pane layout " + Canary : "Harbor plans");
         await rig.Add("linear", "linear:issue/ENG-1", 0);
         await rig.Add("github", "github:pr/acme/shop/2", 5);
         await rig.Add("library", "doc:harbor/plans/owner-note.md", 3, text: "Pane layout " + Canary, audience: noteAudience.Value);
