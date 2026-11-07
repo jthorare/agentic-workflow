@@ -53,6 +53,7 @@ internal sealed class IssueReads(ILinearIssueStore issues, ILinearLookupStore? l
             return refused;
         }
 
+        team = Spelled(scope, team);
         var audience = await AudienceOf(scope, cancellationToken).ConfigureAwait(false);
         if (audience.IsError)
         {
@@ -74,6 +75,10 @@ internal sealed class IssueReads(ILinearIssueStore issues, ILinearLookupStore? l
         // why: a team the profile reads but no tick has synced yet still has a page to show, empty; a team the profile doesn't read has none
         return Picked(scope, team) ? Results.Success<LinearTeamLookups?>(new LinearTeamLookups(TeamId: null, team, [], [], [], [], Name: null, SyncedAt: null)) : Results.Success<LinearTeamLookups?>(value: null);
     }
+
+    // why: the profile spells a team key as Linear does ('ENG'); a caller's 'eng' is answered under that spelling
+    private static string Spelled(ContextScope scope, string team) =>
+        SettingsReader.Read(scope.Settings) is { IsSuccess: true, Value: { } settings } && settings.LinearTeams.FirstOrDefault(t => t.Equals(team, StringComparison.OrdinalIgnoreCase)) is { } spelled ? spelled : team;
 
     // why: 'context.sources.linear.teams' names the teams Sindri reads; a profile that names none reads every team the key sees
     private static bool Picked(ContextScope scope, string team) =>

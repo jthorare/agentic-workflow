@@ -42,7 +42,7 @@ internal sealed class LinearLookupsReader(LinearClient client, TimeSpan deadline
     // A team whose id isn't usable is left out; so is any row that has none (Linear sends uuids, so neither happens against Linear itself)
     private static LinearTeamLookups? Team(LinearLookupsTeam team, DateTimeOffset now) => LinearExternalIds.Of(team.Id) is not { } id
         ? null
-        : new LinearTeamLookups(id, team.Key, States(team), LinearCycles.Pick(Cycles(team), now), Members(team), Labels(team), team.Name is { Length: > 0 } name ? name : team.Key, now);
+        : new LinearTeamLookups(id, team.Key, States(team), LinearCycles.Pick(Cycles(team), now), Members(team), Labels(team), team.Name, now);
 
     private static List<LinearLookupState> States(LinearLookupsTeam team) =>
         [.. (team.States?.Nodes ?? []).Select(static s => Row(s.Id, i => new LinearLookupState(i, s.Name, s.Type, s.Position))).OfType<LinearLookupState>().OrderBy(static s => s.Position)];
