@@ -8,8 +8,9 @@ answers by MODE: ok -> 201 with a canned token; err -> 401 with a body that
 carries a token-shaped string the script must not echo; errmsg -> 401 whose
 message itself holds token shapes and terminal control characters; slow ->
 writes <dir>/inflight, then holds the request for $FAKE_HOLD seconds (default
-10) before answering ok, and writes <dir>/answered once the reply was attempted
-(whether or not the client was still there).
+10) before answering ok; it writes <dir>/replying just before the reply goes out
+and <dir>/answered once the reply was attempted (whether or not the client was
+still there).
 Usage: fake-github.py <dir> <public.pem> <mode>
 """
 import base64, json, os, socketserver, subprocess, sys, tempfile, time
@@ -72,6 +73,9 @@ class H(BaseHTTPRequestHandler):
             code, out = 401, {"message": "Bad credentials", "token": LEAK,
                               "documentation_url": "https://docs.github.com/rest"}
         payload = json.dumps(out).encode()
+        if MODE == "slow":
+            # before the first byte, so a client that exits after this file appears could have read the reply
+            open(os.path.join(DIR, "replying"), "w").close()
         try:
             self.send_response(code)
             self.send_header("Content-Type", "application/json")
