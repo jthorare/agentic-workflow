@@ -10,7 +10,8 @@ namespace Aw.Sindri.Features.LinearConnection;
 /// <param name="approval">Approves the profile when the removal is the only waiting change.</param>
 /// <param name="live">The live profile, for its hash.</param>
 /// <param name="callers">The current caller.</param>
-internal sealed class RemoveLinearWriteKeyService(ILinearConnectionStore store, ILinearConnectionApproval approval, IProfileSource live, ICallerContextAccessor callers)
+/// <param name="log">Keeps the result and time of the last check.</param>
+internal sealed class RemoveLinearWriteKeyService(ILinearConnectionStore store, ILinearConnectionApproval approval, IProfileSource live, ICallerContextAccessor callers, ILinearCheckStore log)
     : IService<RemoveLinearWriteKeyRequest, RemoveLinearWriteKeyResponse>
 {
     public async ValueTask<Result<RemoveLinearWriteKeyResponse>> Handle(RemoveLinearWriteKeyRequest request, CancellationToken cancellationToken)
@@ -26,6 +27,7 @@ internal sealed class RemoveLinearWriteKeyService(ILinearConnectionStore store, 
             return removed.Error;
         }
 
+        _ = await log.ClearWrite(cancellationToken).ConfigureAwait(false);   // why: the pointer is gone, so a check of it must not outlive it
         var approved = await approval.Settle(cancellationToken).ConfigureAwait(false);
         var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
         if (approved.IsError || loaded.IsError)

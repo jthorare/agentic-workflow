@@ -15,7 +15,9 @@ namespace Aw.Sindri.Features.LinearConnection;
 /// <param name="approval">Approves the profile when the key is the only waiting change.</param>
 /// <param name="live">The live profile, for its hash.</param>
 /// <param name="callers">The current caller.</param>
-internal sealed class SaveLinearConnectionService(ILinearKeyChecks checks, ILinearConnectionStore store, ILinearConnectionApproval approval, IProfileSource live, ICallerContextAccessor callers)
+/// <param name="log">Keeps the result and time of the check.</param>
+/// <param name="clock">The clock.</param>
+internal sealed class SaveLinearConnectionService(ILinearKeyChecks checks, ILinearConnectionStore store, ILinearConnectionApproval approval, IProfileSource live, ICallerContextAccessor callers, ILinearCheckStore log, TimeProvider clock)
     : IService<SaveLinearConnectionRequest, SaveLinearConnectionResponse>
 {
     public async ValueTask<Result<SaveLinearConnectionResponse>> Handle(SaveLinearConnectionRequest request, CancellationToken cancellationToken)
@@ -61,7 +63,13 @@ internal sealed class SaveLinearConnectionService(ILinearKeyChecks checks, ILine
         }
 
         var stored = await store.SaveRead(key, teams, cancellationToken).ConfigureAwait(false);
-        return stored.IsError ? stored.Error : (LinearSavedWriteView?)null;
+        if (stored.IsError)
+        {
+            return stored.Error;
+        }
+
+        _ = await log.RecordRead(new LinearStoredCheck(stored.Value, "resolves", clock.GetUtcNow()), cancellationToken).ConfigureAwait(false);   // why: the key is saved by now, so a check that can't be kept only leaves the page at 'unchecked'
+        return (LinearSavedWriteView?)null;
     }
 
     private async ValueTask<Result<LinearSavedWriteView?>> SaveWrite(string key, CancellationToken cancellationToken)
@@ -78,7 +86,14 @@ internal sealed class SaveLinearConnectionService(ILinearKeyChecks checks, ILine
         }
 
         var stored = await store.SaveWrite(key, cancellationToken).ConfigureAwait(false);
-        return stored.IsError ? stored.Error : new LinearSavedWriteView(scope.Value == LinearKeyScope.Writable ? "resolves" : "scopeUnknown");
+        if (stored.IsError)
+        {
+            return stored.Error;
+        }
+
+        var state = scope.Value == LinearKeyScope.Writable ? "resolves" : "scopeUnknown";
+        _ = await log.RecordWrite(new LinearStoredCheck(stored.Value, state, clock.GetUtcNow()), cancellationToken).ConfigureAwait(false);
+        return new LinearSavedWriteView(state);
     }
 
     private async ValueTask<Result<SaveLinearConnectionResponse>> Settled(LinearSavedWriteView? write, CancellationToken cancellationToken)

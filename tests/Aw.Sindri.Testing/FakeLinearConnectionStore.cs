@@ -20,6 +20,12 @@ internal sealed class FakeLinearConnectionStore : ILinearConnectionStore
     /// <summary>Gets how many times the write key was removed.</summary>
     public int Removals { get; private set; }
 
+    /// <summary>Gets or sets the pointer a read save answers with, as the profile would hold it.</summary>
+    public string ReadPointer { get; set; } = "keychain:sindri-index/linear";
+
+    /// <summary>Gets or sets the pointer a write save answers with, as the profile would hold it.</summary>
+    public string WritePointer { get; set; } = "keychain:sindri-index/linear-write";
+
     /// <summary>Makes <paramref name="key"/> the stored read key.</summary>
     /// <param name="key">The key.</param>
     /// <returns>The same instance.</returns>
@@ -42,27 +48,27 @@ internal sealed class FakeLinearConnectionStore : ILinearConnectionStore
     public ValueTask<bool> IsReadKey(string key, CancellationToken cancellationToken) => ValueTask.FromResult(string.Equals(_readKey, key, StringComparison.Ordinal));
 
     /// <inheritdoc/>
-    public ValueTask<Result<Unit>> SaveRead(string key, IReadOnlyList<string> teams, CancellationToken cancellationToken)
+    public ValueTask<Result<string>> SaveRead(string key, IReadOnlyList<string> teams, CancellationToken cancellationToken)
     {
         if (_failing is { } error)
         {
-            return ValueTask.FromResult<Result<Unit>>(error);
+            return ValueTask.FromResult<Result<string>>(error);
         }
 
         ReadSaves.Add((key, teams));
-        return ValueTask.FromResult<Result<Unit>>(Unit.Value);
+        return ValueTask.FromResult<Result<string>>(ReadPointer);
     }
 
     /// <inheritdoc/>
-    public ValueTask<Result<Unit>> SaveWrite(string key, CancellationToken cancellationToken)
+    public ValueTask<Result<string>> SaveWrite(string key, CancellationToken cancellationToken)
     {
         if (_failing is { } error)
         {
-            return ValueTask.FromResult<Result<Unit>>(error);
+            return ValueTask.FromResult<Result<string>>(error);
         }
 
         WriteSaves.Add(key);
-        return ValueTask.FromResult<Result<Unit>>(Unit.Value);
+        return ValueTask.FromResult<Result<string>>(WritePointer);
     }
 
     /// <inheritdoc/>

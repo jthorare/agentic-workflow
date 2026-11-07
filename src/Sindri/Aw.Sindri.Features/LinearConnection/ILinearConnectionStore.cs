@@ -15,14 +15,14 @@ internal interface ILinearConnectionStore
     /// <param name="key">The pasted key.</param>
     /// <param name="teams">The team keys to read.</param>
     /// <param name="cancellationToken">Cancels the write.</param>
-    /// <returns>Success; SND-SECRET-004 when no store took it; SND-INDEX-011 when the profile has no `context.sources.linear` entry.</returns>
-    public ValueTask<Result<Unit>> SaveRead(string key, IReadOnlyList<string> teams, CancellationToken cancellationToken);
+    /// <returns>The pointer now in the profile; SND-SECRET-004 when no store took it; SND-INDEX-011 when the profile has no `context.sources.linear` entry.</returns>
+    public ValueTask<Result<string>> SaveRead(string key, IReadOnlyList<string> teams, CancellationToken cancellationToken);
 
     /// <summary>Stores the write key in the OS keychain and writes its pointer into the live profile.</summary>
     /// <param name="key">The pasted key.</param>
     /// <param name="cancellationToken">Cancels the write.</param>
-    /// <returns>Success; SND-LINEAR-014 when no keychain took it (nothing is saved, and no file holds the key).</returns>
-    public ValueTask<Result<Unit>> SaveWrite(string key, CancellationToken cancellationToken);
+    /// <returns>The pointer now in the profile; SND-LINEAR-014 when no keychain took it (nothing is saved, and no file holds the key).</returns>
+    public ValueTask<Result<string>> SaveWrite(string key, CancellationToken cancellationToken);
 
     /// <summary>Removes the write key's pointer from the live profile (the stored keychain entry stays: Sindri has no way to delete one yet).</summary>
     /// <param name="cancellationToken">Cancels the write.</param>

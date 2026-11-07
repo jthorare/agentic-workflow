@@ -31,13 +31,13 @@ internal sealed class CoreLinearConnectionStore(IProfileSource live, IContextEng
             && string.Equals(stored.Value, key, StringComparison.Ordinal);
     }
 
-    public ValueTask<Result<Unit>> SaveRead(string key, IReadOnlyList<string> teams, CancellationToken cancellationToken)
+    public ValueTask<Result<string>> SaveRead(string key, IReadOnlyList<string> teams, CancellationToken cancellationToken)
     {
         var stored = writer.Store(Service, "linear", key);
         return ValueTask.FromResult(stored.IsError ? stored.Error : Point(stored.Value, teams));
     }
 
-    private Result<Unit> Point(SecretPointer stored, IReadOnlyList<string> teams)
+    private Result<string> Point(SecretPointer stored, IReadOnlyList<string> teams)
     {
         var resolved = pointers.Resolve(stored);
         if (resolved.IsError)
@@ -47,10 +47,10 @@ internal sealed class CoreLinearConnectionStore(IProfileSource live, IContextEng
 
         var written = tokens.SetToken(Source, stored.ToString());
         var listed = written.IsError ? written : tokens.SetTeams(Source, teams);
-        return listed.IsError ? listed.Error : Unit.Value;
+        return listed.IsError ? listed.Error : stored.ToString();
     }
 
-    public async ValueTask<Result<Unit>> SaveWrite(string key, CancellationToken cancellationToken)
+    public async ValueTask<Result<string>> SaveWrite(string key, CancellationToken cancellationToken)
     {
         var settings = await Settings(cancellationToken).ConfigureAwait(false);
         var loopback = settings is { IsSuccess: true, Value.Linear.Url.IsLoopback: true };
@@ -60,8 +60,9 @@ internal sealed class CoreLinearConnectionStore(IProfileSource live, IContextEng
             return SindriErrors.LinearNoKeychain.With("No keychain to keep the write key in (fix: unlock your login keyring, or put the key in 1Password and set writeToken to op://…)");
         }
 
-        var written = writeTokens.SetWriteToken(Source, stored.Value.ToString());
-        return written.IsError ? written.Error : Unit.Value;
+        var pointer = stored.Value.ToString();
+        var written = writeTokens.SetWriteToken(Source, pointer);
+        return written.IsError ? written.Error : pointer;
     }
 
     // why: the keychain entry goes first, so a keychain that refuses leaves the pointer as it was (no half-removed key); a key never set, or kept somewhere else (a loopback fixture's file), has no entry to delete

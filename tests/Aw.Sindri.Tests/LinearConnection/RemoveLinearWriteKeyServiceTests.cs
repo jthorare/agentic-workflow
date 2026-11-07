@@ -16,7 +16,7 @@ public sealed class RemoveLinearWriteKeyServiceTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private RemoveLinearWriteKeyService Service() => new(_store, _approval, _profiles, _slice.Callers);
+    private RemoveLinearWriteKeyService Service() => new(_store, _approval, _profiles, _slice.Callers, new FakeLinearCheckStore());
 
     [Fact]
     public async Task A_session_is_refused_SND_AUTH_002_and_nothing_is_removed()

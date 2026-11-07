@@ -4,25 +4,28 @@ using Aw.Context.Core.Linear;
 using Aw.Kernel;
 using Aw.Sindri.Core.Linear;
 using Aw.Sindri.Core.Profile;
-using Aw.Sindri.Core.Secrets;
 
 namespace Aw.Sindri.Features.LinearConnection;
 
 /// <summary>
-/// The connection's facts over the live profile (not the approved one: a key just pasted shows at once, with `pending` saying it still waits for an approval). The read key is judged as doctor's
-/// 'context:index-linear' row does, the write key by Context's own status, and the teams are the live profile's, named from what Context has stored. Nothing is sent to Linear.
+/// The connection's facts over the live profile (not the approved one: a key just pasted shows at once, with `pending` saying it still waits for an approval). A read of the connection resolves no key and sends nothing to Linear: it runs on
+/// every app event while Settings is open, and a resolve spawns a keychain or 1Password process. Each key's state is what the last save found (kept in <see cref="ILinearCheckStore"/>), trusted only while the profile still holds the pointer
+/// that was checked; the checks that need no process (no pointer, the write pointer equals the read pointer, an env or file write pointer against a non-loopback Linear) are made on the profile at once. The teams are the live profile's,
+/// named from what Context has stored.
 /// </summary>
 /// <param name="live">The live profile.</param>
 /// <param name="approvals">The approved profiles.</param>
 /// <param name="engine">Checks the context settings.</param>
-/// <param name="writes">Context's Linear writes, for the write key's status.</param>
-/// <param name="secrets">Resolves the read key's pointer.</param>
 /// <param name="side">The stored teams.</param>
-/// <param name="clock">The clock.</param>
-internal sealed class ContextLinearConnectionFacts(IProfileSource live, IApprovedProfile approvals, IContextEngine engine, IContextLinearWrites writes, ISecretPointers secrets, ILinearSideFacts side, TimeProvider clock)
+/// <param name="log">The last save-time check of each key.</param>
+internal sealed class ContextLinearConnectionFacts(IProfileSource live, IApprovedProfile approvals, IContextEngine engine, ILinearSideFacts side, ILinearCheckStore log)
     : ILinearConnectionFacts
 {
     private const string Linear = "context.sources.linear";
+    private const string Unchecked = "unchecked";
+
+    private static readonly LinearKeyStateView _notSet = new("notSet", CheckedAt: null);
+    private static readonly LinearKeyStateView _unchecked = new(Unchecked, CheckedAt: null);
 
     public async ValueTask<Result<LinearConnectionView>> Read(CancellationToken cancellationToken)
     {
@@ -36,38 +39,42 @@ internal sealed class ContextLinearConnectionFacts(IProfileSource live, IApprove
         var profile = loaded.Value.Profile;
         ProfileRepoEntry[] entries = [.. (profile.Repos ?? []).Select(static r => new ProfileRepoEntry(r.Name, r.Path))];
         var settings = engine.CheckSettings(profile.Context, entries);
-        if (settings.IsError)
+        var stored = await log.Read(cancellationToken).ConfigureAwait(false);
+        if (settings.IsError || stored.IsError)
         {
-            return settings.Error;
+            return settings.IsError ? settings.Error : stored.Error;
         }
 
-        var scope = new ContextScope(profile.Context, ScopeRules.Usable(entries), new ContextCaller(ContextCallerKind.Human, Repo: null, ContextClient.Http));
-        var status = await writes.WriteKeyStatus(scope, cancellationToken).ConfigureAwait(false);
-        if (status.IsError)
-        {
-            return status.Error;
-        }
-
-        var now = clock.GetUtcNow();
         return new LinearConnectionView(
-            Stamp(ReadState(settings.Value), now),
-            Stamp(WriteState(status.Value), now),
+            ReadState(settings.Value.Linear, stored.Value.Read),
+            WriteState(settings.Value.Linear, stored.Value.Write),
             await Teams(settings.Value.LinearTeams, cancellationToken).ConfigureAwait(false),
             ProfileDiff.Between(latest.Value?.Profile, profile).Any(static k => k == Linear || k.StartsWith(Linear + ".", StringComparison.Ordinal)));
     }
 
-    private static LinearKeyStateView Stamp(string state, DateTimeOffset now) => new(state, state == "notSet" ? null : now);
+    private static LinearKeyStateView ReadState(LinearSettings? linear, LinearStoredCheck? stored) =>
+        linear is null ? _notSet : Checked(linear.Token, stored);
 
-    private string ReadState(ContextSettings settings) =>
-        settings.Linear is not { } linear || SourceTokens.Look(linear.Token, secrets) is not { } resolved ? "notSet" : resolved.IsError ? "refused" : "resolves";
-
-    private static string WriteState(LinearWriteKeyStatus status) => status switch
+    private static LinearKeyStateView WriteState(LinearSettings? linear, LinearStoredCheck? stored)
     {
-        LinearWriteKeyResolves => "resolves",
-        LinearWriteKeySameAsReadKey => "sameAsRead",
-        LinearWriteKeyRefused => "refused",
-        _ => "notSet",
-    };
+        if (linear?.WriteToken is not { } pointer)
+        {
+            return _notSet;
+        }
+
+        if (string.Equals(pointer, linear.Token, StringComparison.Ordinal))
+        {
+            return new LinearKeyStateView("sameAsRead", CheckedAt: null);
+        }
+
+        // why: an env or file pointer is readable by agent sessions, so the write key may not be one on a real Linear (the loopback fixture's is a file)
+        var local = pointer.StartsWith("env:", StringComparison.Ordinal) || pointer.StartsWith("file:", StringComparison.Ordinal);
+        return local && !linear.Url.IsLoopback ? new LinearKeyStateView("refused", CheckedAt: null) : Checked(pointer, stored);
+    }
+
+    // why: a check of another pointer (the profile was edited by hand since the save) says nothing about this one
+    private static LinearKeyStateView Checked(string pointer, LinearStoredCheck? stored) =>
+        stored is not null && string.Equals(stored.Pointer, pointer, StringComparison.Ordinal) ? new LinearKeyStateView(stored.State, stored.At) : _unchecked;
 
     // why: a picked team Context has not stored yet still shows, by key alone
     private async ValueTask<IReadOnlyList<LinearConnectionTeamView>> Teams(IReadOnlyList<string> picked, CancellationToken cancellationToken)
