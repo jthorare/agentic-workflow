@@ -175,6 +175,31 @@ public sealed class GetReviewPageServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task A_forge_that_refuses_the_credential_still_serves_the_cache_and_names_the_refusal()
+    {
+        await Approve();
+        _ = (await Read()).Value;
+        _forge.GetFailure = SindriErrors.ForgeRefused.With("bad credentials");
+
+        var page = (await Read()).Value;
+
+        Assert.Equal(Head, page.Pr.Head.Sha);
+        Assert.Contains("GitHub refused: SND-FORGE-002", page.Offline?.Text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_forge_that_refuses_the_credential_with_nothing_cached_names_the_refusal_in_the_503()
+    {
+        await Approve();
+        _forge.GetFailure = SindriErrors.ForgeRefused.With("bad credentials");
+
+        var error = (await Read()).Error;
+
+        Assert.Equal((SindriErrors.ReviewOfflineUncached.Code, ErrorKind.Unavailable), (error.Code, error.Kind));
+        Assert.Contains("GitHub refused: SND-FORGE-002", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task A_failed_files_read_makes_error_panels_not_a_failed_page()
     {
         await Approve();

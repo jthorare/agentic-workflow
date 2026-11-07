@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Reviews;
 using Aw.Sindri.Infrastructure.Reviews;
 using Aw.Sindri.Testing;
@@ -70,5 +71,28 @@ public sealed class FixTaskFilesTests : FixTaskFilesContract, IDisposable
         _ = (await Files.Remove(Id('a'), Token)).Value;
 
         Assert.False(File.Exists(Path.Combine(Folder, FixHead.FileName("acme/api:feat/x"))));
+    }
+
+    [Fact]
+    public async Task A_task_row_with_the_wrong_value_types_is_skipped_not_thrown_on()
+    {
+        const string head = "acme/api:feat/x";
+        Directory.CreateDirectory(Folder);
+        await File.WriteAllTextAsync(Path.Combine(Folder, FixHead.FileName(head)), $$"""{"version":1,"head":"{{head}}","tasks":[{"item":5,"pr":1},{"item":"{{Id('a').Value}}","pr":"x"},{"item":"{{Id('b').Value}}","pr":7}]}""", Token);
+
+        var added = await Files.Add(head, Id('c'), 2071, Token);
+
+        Assert.True(added.IsSuccess);
+        Assert.Equal([(Id('b').Value, 7), (Id('c').Value, 2071)], Open(head).OrderBy(static t => t.Key, StringComparer.Ordinal).Select(static t => (t.Key, t.Value)));
+    }
+
+    [Fact]
+    public async Task The_file_bytes_equal_the_golden_the_hook_test_reads()
+    {
+        _ = (await Files.Add("acme/api:feat/x", ItemId.From("ITM-0192a1b2c3d4e5f6a7b8c9d0e1f2a301"), 2071, Token)).Value;
+
+        var written = await File.ReadAllBytesAsync(Path.Combine(Folder, FixHead.FileName("acme/api:feat/x")), Token);
+
+        Assert.Equal(await File.ReadAllBytesAsync(Golden.SourcePath(typeof(FixTaskFilesTests).Assembly, "Golden/FixTasks/acme-api-feat-x.json"), Token), written);
     }
 }

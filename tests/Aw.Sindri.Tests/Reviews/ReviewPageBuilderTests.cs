@@ -256,4 +256,13 @@ public sealed class ReviewPageBuilderTests
         Assert.Equal(("PR body", "The migration rewrites retry rows.", "body"), (hit.Path, hit.Why, hit.Source));
         Assert.Empty(Assert.IsType<EvidenceData>(Panel(ReviewPageBuilder.Build(Facts(body: "## Evidenced elsewhere")), "evidence").Data).Items);
     }
+
+    [Fact]
+    public void A_risks_section_with_windows_line_endings_gives_the_first_line_not_an_empty_row()
+    {
+        var page = ReviewPageBuilder.Build(Facts(body: "intro\r\n\r\n## Risks\r\n\r\n- db lock\r\nMore."));
+
+        var hit = Assert.Single(Assert.IsType<RiskData>(Panel(page, "risk").Data).Hits);
+        Assert.Equal(("PR body", "- db lock", "body"), (hit.Path, hit.Why, hit.Source));
+    }
 }

@@ -53,7 +53,7 @@ internal sealed class SendReviewFixService(ICallerContextAccessor callers, FixTa
         }
 
         var recorded = await recorder.Record(caller, new ReviewFixSent(caller.CommandId, item, request.Number, posted.Thread, went, posted.Code), cancellationToken).ConfigureAwait(false);
-        return recorded.IsError ? recorded.Error : new SendReviewFixResponse(item, posted.Posted, posted.Code, posted.Error, went, session);
+        return recorded.IsError ? recorded.Error : new SendReviewFixResponse(item, posted.Posted, posted.Code, posted.Error, went, session, FileError: null);
     }
 
     private static string? Head(FixTarget target) => target.HeadRepo is { } repo && target.Branch is { } branch ? FixHead.Of(repo, branch) : null;

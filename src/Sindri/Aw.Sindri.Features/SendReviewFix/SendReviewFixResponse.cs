@@ -9,4 +9,5 @@ namespace Aw.Sindri.Features.SendReviewFix;
 /// <param name="PostError">The half-done text; null otherwise.</param>
 /// <param name="Went">babysitter, session or waiting.</param>
 /// <param name="Session">"&lt;provider&gt;, &lt;working directory&gt;" when <paramref name="Went"/> is session; null otherwise.</param>
-public sealed record SendReviewFixResponse(ItemId ItemId, bool Posted, string? PostCode, string? PostError, string Went, string? Session);
+/// <param name="FileError">The text when the fix-task file couldn't be written, so a session on the head won't hear of the task until a retry writes it; null otherwise.</param>
+public sealed record SendReviewFixResponse(ItemId ItemId, bool Posted, string? PostCode, string? PostError, string Went, string? Session, string? FileError);
