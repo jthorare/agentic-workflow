@@ -51,7 +51,7 @@ public sealed class LinearLookupsReaderTests : IAsyncLifetime
 
         Assert.Equal("ENG", team.TeamKey);
         Assert.Equal([("Backlog", "backlog"), ("Todo", "unstarted"), ("In Progress", "started"), ("Done", "completed"), ("Canceled", "canceled")], team.States.Select(static s => (s.Name, s.Type)));
-        Assert.Equal(_linear.TeamId("ENG"), team.TeamId.Value);
+        Assert.Equal(_linear.TeamId("ENG"), team.TeamId?.Value);
         Assert.Equal(_linear.StateId("ENG", "Done"), team.States.Single(static s => s.Name == "Done").Id.Value);
     }
 

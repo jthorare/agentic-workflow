@@ -64,7 +64,7 @@ public sealed class FakeLinearLookupStore : ILinearLookupStore
         ArgumentNullException.ThrowIfNull(team);
         lock (_gate)
         {
-            _teams[team.TeamId] = team;
+            _teams[team.TeamId ?? throw new ArgumentException("A team is stored under its Linear id.", nameof(team))] = team;
         }
 
         _ = Interlocked.Increment(ref _replaces);

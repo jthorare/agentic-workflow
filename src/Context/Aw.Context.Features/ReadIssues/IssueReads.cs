@@ -60,10 +60,24 @@ internal sealed class IssueReads(ILinearIssueStore issues, ILinearLookupStore? l
         }
 
         // why: a team's lists are readable when its issues are: the feed gives them the audience 'linear:<team key>'
-        return AudienceKey.TryFrom("linear:" + team, out var key) && audience.Value.Allows(key, RecordKey.From("linear:team/" + team))
-            ? lookups is null ? Results.Success<LinearTeamLookups?>(value: null) : await lookups.Team(team, cancellationToken).ConfigureAwait(false)
-            : Results.Success<LinearTeamLookups?>(value: null);
+        if (!AudienceKey.TryFrom("linear:" + team, out var key) || !audience.Value.Allows(key, RecordKey.From("linear:team/" + team)) || lookups is null)
+        {
+            return Results.Success<LinearTeamLookups?>(value: null);
+        }
+
+        var stored = await lookups.Team(team, cancellationToken).ConfigureAwait(false);
+        if (stored.IsError || stored.Value is not null)
+        {
+            return stored;
+        }
+
+        // why: a team the profile reads but no tick has synced yet still has a page to show, empty; a team the profile doesn't read has none
+        return Picked(scope, team) ? Results.Success<LinearTeamLookups?>(new LinearTeamLookups(TeamId: null, team, [], [], [], [], Name: null, SyncedAt: null)) : Results.Success<LinearTeamLookups?>(value: null);
     }
+
+    // why: 'context.sources.linear.teams' names the teams Sindri reads; a profile that names none reads every team the key sees
+    private static bool Picked(ContextScope scope, string team) =>
+        SettingsReader.Read(scope.Settings) is { IsSuccess: true, Value: { Linear: not null } settings } && (settings.LinearTeams.Count == 0 || settings.LinearTeams.Contains(team, StringComparer.Ordinal));
 
     public async ValueTask<Result<LinearSince>> Since(DateTimeOffset marker, ExternalId viewer, ContextScope scope, CancellationToken cancellationToken)
     {

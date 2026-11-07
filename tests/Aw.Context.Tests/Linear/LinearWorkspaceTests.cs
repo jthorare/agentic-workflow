@@ -40,6 +40,24 @@ public sealed class LinearWorkspaceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_picked_team_no_tick_has_synced_reads_as_empty_lists_and_an_unpicked_team_as_null()
+    {
+        var picked = (await Call((i, s) => i.IssueLookups("ENG", s, TestContext.Current.CancellationToken))).Value;
+        var unpicked = (await Call((i, s) => i.IssueLookups("OPS", s, TestContext.Current.CancellationToken))).Value;
+
+        Assert.NotNull(picked);
+        Assert.Equal("ENG", picked.TeamKey);
+        Assert.Null(picked.TeamId);
+        Assert.Null(picked.Name);
+        Assert.Null(picked.SyncedAt);
+        Assert.Empty(picked.States);
+        Assert.Empty(picked.Cycles);
+        Assert.Empty(picked.Members);
+        Assert.Empty(picked.Labels);
+        Assert.Null(unpicked);
+    }
+
+    [Fact]
     public async Task A_member_who_left_is_kept_with_active_false()
     {
         _ = await _world.Tick();
