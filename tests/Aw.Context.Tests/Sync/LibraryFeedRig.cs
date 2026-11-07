@@ -54,10 +54,7 @@ internal sealed class LibraryFeedRig : IDisposable
     public async Task<IReadOnlyList<StoredRecord>> Stored(bool includeRemoved = false) =>
         (await Store.List(new RecordFilter(LibrarySource.Id, IncludeRemoved: includeRemoved), after: null, 100, TestContext.Current.CancellationToken)).Value;
 
-    public void Dispose()
-    {
-        Directory.Delete(_folder, recursive: true);
-    }
+    public void Dispose() => Directory.Delete(_folder, recursive: true);
 
     private static string RepoRoot()
     {
