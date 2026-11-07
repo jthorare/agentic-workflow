@@ -9,7 +9,7 @@ internal sealed partial class GitCli
     private const int UsageExit = 129;
 
     /// <summary>
-    /// A blob as a checkout of <paramref name="path"/> writes it ('git --attr-source=&lt;commit&gt; cat-file --filters --path=&lt;path&gt; &lt;blob&gt;'): attributes from the commit, core.autocrlf from the repo's config.
+    /// A blob as a checkout of <paramref name="path"/> writes it ('git --attr-source=&lt;commit&gt; cat-file --filters --path=&lt;path&gt; &lt;blob&gt;'): attributes from the commit, core.autocrlf from git's config.
     /// A git without --attr-source (exit 129) is asked again without it, so the working tree's attributes decide; the result says so.
     /// </summary>
     /// <param name="repo">The repo's checkout.</param>

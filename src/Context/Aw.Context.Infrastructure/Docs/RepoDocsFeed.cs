@@ -22,7 +22,7 @@ namespace Aw.Context.Infrastructure.Docs;
 /// The cursor is a fingerprint of the scrub ruleset, the design-doc parser's version and every repo's head, so a pull at the same heads is an empty page
 /// (a replay writes nothing), a new head or ruleset is diffed against the store, and a page cut short by the limit answers
 /// a cursor that is not final, so the next pull carries on with what the store doesn't hold yet. A generated document's packet.json is hashed as a checkout writes it
-/// (attributes from the head commit, core.autocrlf from the repo's config; git before 2.42 falls back to the working tree's attributes and the pull logs one warning), the bytes write_packet.py hashed.
+/// (attributes from the head commit, core.autocrlf from git's config; git before 2.42 falls back to the working tree's attributes and the pull logs one warning), the bytes write_packet.py hashed.
 /// </summary>
 internal sealed partial class RepoDocsFeed(IReadOnlyList<ContextRepo> repos, IReadOnlyList<string> globs, IReadOnlyList<string> githubRepos, IRecordStore store, GitCli git, Scrubbers scrubbers, ILogger<RepoDocsFeed>? logger = null)
     : RecordFeed(RepoDocs.Id)
