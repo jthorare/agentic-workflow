@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Aw.Kernel.Data;
 using Aw.Kernel.Data.Processes;
 
 namespace Aw.CodeIndex.Infrastructure.Graph;
@@ -51,7 +52,7 @@ internal sealed record GraphHost(bool IsLinux, bool IsMac, string Home, string? 
     // stat's owner column through the system's own /usr/bin/stat: .NET has no uid API.
     private static bool RootOwnedExecutable(string path)
     {
-        if (OperatingSystem.IsWindows() || !File.Exists(path) || !File.GetUnixFileMode(path).HasFlag(UnixFileMode.OtherExecute))
+        if (!ExecutableFiles.IsExecutableByOthers(path))
         {
             return false;
         }

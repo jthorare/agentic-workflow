@@ -1,5 +1,6 @@
 using System.Text;
 using Aw.Kernel;
+using Aw.Kernel.Data;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Sandbox;
@@ -98,7 +99,7 @@ internal static class RunAreaPreparer
         var real = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var tool in SandboxShims.Tools)
         {
-            if (hostDirectories.Select(d => Path.Combine(d, tool)).FirstOrDefault(IsExecutable) is { } found)
+            if (hostDirectories.Select(d => Path.Combine(d, tool)).FirstOrDefault(ExecutableFiles.IsExecutable) is { } found)
             {
                 real[tool] = found;
             }
@@ -116,7 +117,7 @@ internal static class RunAreaPreparer
             return;
         }
 
-        var realGh = HostDirectories(plan, shimsDirectory).Select(d => Path.Combine(d, "gh")).FirstOrDefault(IsExecutable);
+        var realGh = HostDirectories(plan, shimsDirectory).Select(d => Path.Combine(d, "gh")).FirstOrDefault(ExecutableFiles.IsExecutable);
         SandboxShims.WriteGithub(shimsDirectory, realGh, SessionHomePaths.GhTokenFile(sessionHome));
     }
 
@@ -136,10 +137,7 @@ internal static class RunAreaPreparer
 
     // The planner's own bin-r1b entry, which the plan binds; a host PATH may carry another bin-r1b the box can't see.
     private static string? HeavyOf(string[] entries) =>
-        entries.Length > 1 && entries[1].EndsWith("/bin-r1b", StringComparison.Ordinal) && IsExecutable(entries[1] + "/heavy") ? entries[1] + "/heavy" : null;
-
-    private static bool IsExecutable(string path) =>
-        File.Exists(path) && (OperatingSystem.IsWindows() || File.GetUnixFileMode(path).HasFlag(UnixFileMode.UserExecute));
+        entries.Length > 1 && entries[1].EndsWith("/bin-r1b", StringComparison.Ordinal) && ExecutableFiles.IsExecutable(entries[1] + "/heavy") ? entries[1] + "/heavy" : null;
 
     // The plan file sits in the run area, and AW_SANDBOX_PLAN names it.
     private static string? RunArea(SandboxPlan plan) =>
