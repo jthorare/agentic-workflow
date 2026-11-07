@@ -24,7 +24,7 @@ internal static partial class CommandTable
         _ => null,
     };
 
-    /// <summary>'sindri agents|setup|code-index|index …': the verbs that only call the control plane (the reads never start it; 'index sync' may).</summary>
+    /// <summary>'sindri agents|setup|code-index|index|library …': the verbs that only call the control plane (the reads never start it; 'index sync' and 'library sync' may).</summary>
     private static async Task<int> ReadVerbs(string[] args, (ControlPlaneClient Client, Output Output) api, (IServiceProvider Services, StartCommand Start) host, (CancellationToken Interrupt, CancellationToken Again) signals)
     {
         var (client, output) = api;
@@ -34,11 +34,14 @@ internal static partial class CommandTable
             ["agents", .. var rest] => await new AgentsVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
             ["setup", .. var rest] => await new SetupVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
             ["code-index", .. var rest] => await new CodeIndexVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
-            ["index", .. var rest] => await new IndexVerbs(client, output, new JobFollower(client, output, host.Services.GetRequiredService<TimeProvider>()), Interactive(), Console.In, host.Start.EnsureRunning)
-                .Run(rest, ct, signals.Again).ConfigureAwait(false),
+            ["index", .. var rest] => await Index(client, output, host).Run(rest, ct, signals.Again).ConfigureAwait(false),
+            ["library", .. var rest] => await new LibraryVerbs(Index(client, output, host), output).Run(rest, ct, signals.Again).ConfigureAwait(false),
             _ => await UnknownVerb(args, output).ConfigureAwait(false),
         };
     }
+
+    private static IndexVerbs Index(ControlPlaneClient client, Output output, (IServiceProvider Services, StartCommand Start) host) =>
+        new(client, output, new JobFollower(client, output, host.Services.GetRequiredService<TimeProvider>()), Interactive(), Console.In, host.Start.EnsureRunning);
 
     /// <summary>'sindri pr babysit &lt;url&gt; …': the hand start of the PR babysitter (API16).</summary>
     private static async Task<int> Pr(string[] args, IServiceProvider services, Output output, RecipeDesk desk, CancellationToken ct) => args switch
