@@ -19,6 +19,9 @@ internal sealed partial class LinearConnectionViewModel
         }
     }
 
+    /// <summary>The view attached: raises a reveal that was asked for while no API was known and no view was there to hear it.</summary>
+    internal void RevealIfWaiting() => _generation += 0;   // red stub
+
     /// <summary>Review changes was pressed.</summary>
     internal void RequestReview() => ReviewRequested?.Invoke(this, EventArgs.Empty);
 

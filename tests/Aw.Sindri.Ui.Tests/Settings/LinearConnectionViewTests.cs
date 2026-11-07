@@ -62,8 +62,10 @@ public sealed class LinearConnectionViewTests : FrameHost
         var (window, _) = ShowSettings(Card());
 
         var status = Find<TextBlock>(window, "LinearStatus");
+        var error = Find<TextBlock>(window, "LinearError");
 
-        Assert.Equal((AutomationLiveSetting.Polite, string.Empty), (AutomationProperties.GetLiveSetting(status), status.Text ?? string.Empty));
+        Assert.Equal((AutomationLiveSetting.Polite, string.Empty, AutomationLiveSetting.Polite, string.Empty, true),
+            (AutomationProperties.GetLiveSetting(status), status.Text ?? string.Empty, AutomationProperties.GetLiveSetting(error), error.Text ?? string.Empty, error.IsVisible));
         window.Close();
         return Task.CompletedTask;
     });

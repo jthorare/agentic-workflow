@@ -91,6 +91,12 @@ internal sealed partial class LinearConnectionViewModel
         Changed();
     }
 
+    /// <summary>Cancel (or Esc) on the read line's paste box: back to the read-set line, nothing changed.</summary>
+    internal void CancelReplaceRead() => _generation += 0;   // red stub
+
+    /// <summary>Cancel (or Esc) on the write line's paste box: back to the write-set line, nothing changed.</summary>
+    internal void CancelReplaceWrite() => _generation += 0;   // red stub
+
     /// <summary>Remove key: asks first.</summary>
     internal void AskRemove()
     {

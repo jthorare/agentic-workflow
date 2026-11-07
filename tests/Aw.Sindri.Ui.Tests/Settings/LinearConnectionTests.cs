@@ -299,4 +299,101 @@ public sealed class LinearConnectionTests
 
         Assert.Equal(1, revealed);
     }
+
+    // A connection answer built by hand: the read and write states, and the profile's team keys.
+    private static RouteAnswer Connection(string read, string write, bool pending, params string[] teams) =>
+        new(HttpStatusCode.OK,
+            $$"""{"read":{"state":"{{read}}","checkedAt":"2026-01-01T09:58:00.0000000Z"},"write":{"state":"{{write}}","checkedAt":"2026-01-01T09:58:00.0000000Z"},"teams":[{{string.Join(',', teams.Select(k => $$"""{"id":"00000000-0000-4000-8000-0000000000e1","key":"{{k}}","name":"{{k}}"}"""))}}],"pending":{{(pending ? "true" : "false")}}}""");
+
+    [Fact]
+    public async Task A_first_read_that_is_pending_with_no_save_here_says_the_change_waits_not_that_it_was_saved()
+    {
+        var card = await Shown("pending");
+
+        Assert.Equal((true, Labels.LinearConnPending), (card.HasWaiting, card.AttentionText));
+    }
+
+    [Fact]
+    public async Task A_save_that_waits_keeps_its_own_line_through_the_refresh_its_own_profile_event_causes()
+    {
+        var card = await Listed();
+        card.Teams[0].IsTicked = true;
+        _server.LinearConnectAnswer = RouteAnswer.Api("linear-connect", "read-saved-waiting");
+        _server.LinearConnectionAnswer = RouteAnswer.Api("linear-connection", "pending");
+        await card.SaveRead(Token);
+
+        await card.Refresh(_api, Token);
+
+        Assert.Equal((true, Labels.LinearConnWaitingRead), (card.HasWaiting, card.AttentionText));
+    }
+
+    [Fact]
+    public async Task Listing_after_Replace_key_ticks_the_teams_already_stored()
+    {
+        _server.LinearConnectionAnswer = Connection("resolves", "notSet", pending: false, "OPS");
+        var card = Card();
+        await card.Refresh(_api, Token);
+        card.ReplaceRead();
+        card.ReadKey = "lin_api_new";
+
+        await card.ListTeams(Token);
+
+        Assert.Equal([false, true], [.. card.Teams.Select(t => t.IsTicked)]);
+    }
+
+    [Fact]
+    public async Task Cancel_on_the_read_line_goes_back_to_the_set_line_and_calls_nothing()
+    {
+        var card = await Shown("read-only");
+        card.ReplaceRead();
+        card.ReadKey = "lin_api_half_typed";
+
+        card.CancelReplaceRead();
+
+        Assert.Equal((true, false, string.Empty, 0, 0), (card.ShowReadSet, card.ShowReadPaste, card.ReadKey, _server.LinearTeamKeys.Count, _server.LinearConnects.Count));
+    }
+
+    [Fact]
+    public async Task Cancel_on_the_write_line_goes_back_to_the_set_line_and_calls_nothing()
+    {
+        var card = await Shown("connected");
+        card.ReplaceWrite();
+        card.WriteKey = "lin_api_half_typed";
+
+        card.CancelReplaceWrite();
+
+        Assert.Equal((true, false, string.Empty, 0), (card.ShowWriteSet, card.ShowWritePaste, card.WriteKey, _server.LinearConnects.Count));
+    }
+
+    [Fact]
+    public async Task A_refused_read_key_with_a_write_key_stored_still_draws_the_write_line_with_Remove()
+    {
+        _server.LinearConnectionAnswer = Connection("refused", "resolves", pending: false, "ENG");
+        var card = Card();
+
+        await card.Refresh(_api, Token);
+
+        Assert.Equal((false, true, true, false), (card.ReadIsSet, card.ShowWrite, card.ShowWriteSet, card.ShowWritePaste));
+    }
+
+    [Fact]
+    public async Task A_stored_write_key_of_unknown_scope_loses_the_Saved_prefix_on_a_later_read()
+    {
+        var card = await Shown("scope-unknown");
+
+        Assert.Equal(Labels.LinearConnScopeUnknownRead, card.AttentionText);
+    }
+
+    [Fact]
+    public void Reveal_with_no_API_known_waits_for_the_view_to_attach_and_is_raised_then()
+    {
+        var card = new LinearConnectionViewModel(() => null, _server);
+        card.Reveal();
+        var revealed = 0;
+        card.RevealRequested += (_, _) => revealed++;
+
+        card.RevealIfWaiting();
+
+        Assert.Equal(1, revealed);
+    }
 }

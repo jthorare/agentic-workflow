@@ -84,6 +84,15 @@ internal static partial class Labels
     /// <summary>After a save or a removal the profile's other changes hold back.</summary>
     internal const string LinearConnWaiting = "Saved. Other profile changes are waiting, so this one wasn't approved on its own. Review them together.";
 
+    /// <summary>Read from the API with no save in this card: the profile's Linear keys differ from the approved ones.</summary>
+    internal const string LinearConnPending = "Your Linear change waits for approval.";
+
+    /// <summary>A stored write key whose scope Linear does not say, on a later open (not the click's own answer).</summary>
+    internal const string LinearConnScopeUnknownRead = "Linear doesn't say if this key can write. Your first Save will tell.";
+
+    /// <summary>The button that leaves a Replace key box with nothing changed.</summary>
+    internal const string LinearConnCancel = "Cancel";
+
     /// <summary>After a read key was saved while other profile changes wait.</summary>
     internal const string LinearConnWaitingRead = "Saved the key and teams. Other profile changes are waiting, so this one wasn't approved on its own. Review them together.";
 
