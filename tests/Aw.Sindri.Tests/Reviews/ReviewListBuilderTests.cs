@@ -24,7 +24,7 @@ public sealed class ReviewListBuilderTests
     [Fact]
     public void A_review_on_an_older_commit_waits_with_the_count_of_new_commits()
     {
-        var wait = ReviewListBuilder.Classify(Login, Pull(reviews: [new ReviewedAt("Joi-Example", ReviewPulls.Old, NewCommits: 2)]));
+        var wait = ReviewListBuilder.Classify(Login, Pull(reviews: [new ReviewedAt("Joi-Example", Old, NewCommits: 2)]));
 
         Assert.Equal(((ReviewWaitingKind?)ReviewWaitingKind.NewCommits, "reviewed, 2 new commits", 2), (wait?.Kind, wait?.Text, wait?.NewCommits));
     }
@@ -32,22 +32,22 @@ public sealed class ReviewListBuilderTests
     [Fact]
     public void A_review_on_an_older_commit_with_an_unknown_count_says_new_commits_without_a_number()
     {
-        var wait = ReviewListBuilder.Classify(Login, Pull(reviews: [new ReviewedAt(Login, ReviewPulls.Old, NewCommits: null)]));
+        var wait = ReviewListBuilder.Classify(Login, Pull(reviews: [new ReviewedAt(Login, Old, NewCommits: null)]));
 
         Assert.Equal(("reviewed, new commits", null), (wait?.Text, wait?.NewCommits));
     }
 
     [Fact]
     public void One_new_commit_is_singular() =>
-        Assert.Equal("reviewed, 1 new commit", ReviewListBuilder.Classify(Login, Pull(reviews: [new ReviewedAt(Login, ReviewPulls.Old, NewCommits: 1)]))?.Text);
+        Assert.Equal("reviewed, 1 new commit", ReviewListBuilder.Classify(Login, Pull(reviews: [new ReviewedAt(Login, Old, NewCommits: 1)]))?.Text);
 
     [Fact]
     public void A_review_of_the_head_a_request_for_a_team_and_a_review_by_someone_else_do_not_wait()
     {
         Assert.Null(ReviewListBuilder.Classify(Login, Pull(reviews: [new ReviewedAt(Login, Head, NewCommits: 0)])));
         Assert.Null(ReviewListBuilder.Classify(Login, Pull(requested: [], reviews: [])));
-        Assert.Null(ReviewListBuilder.Classify(Login, Pull(requested: ["someone-else"], reviews: [new ReviewedAt("someone-else", ReviewPulls.Old, NewCommits: 3)])));
-        Assert.Null(ReviewListBuilder.Classify(Login, Pull(reviews: [new ReviewedAt(Login, ReviewPulls.Old, NewCommits: 3)], head: null)));
+        Assert.Null(ReviewListBuilder.Classify(Login, Pull(requested: ["someone-else"], reviews: [new ReviewedAt("someone-else", Old, NewCommits: 3)])));
+        Assert.Null(ReviewListBuilder.Classify(Login, Pull(reviews: [new ReviewedAt(Login, Old, NewCommits: 3)], head: null)));
     }
 
     [Fact]
