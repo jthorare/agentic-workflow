@@ -89,6 +89,7 @@ using Aw.Context.Features.ShowNode;
 using Aw.Context.Features.ShowPublishStatus;
 using Aw.Context.Features.SourcesStatus;
 using Aw.Context.Features.SyncSources;
+using Aw.Context.Features.WriteLinear;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -128,6 +129,7 @@ public static class ContextFeaturesServiceCollectionExtensions
         services.TryAddSingleton<IMergeHistory>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IAsOfDocs>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IEvalStore>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
+        services.TryAddSingleton<IContextLinearWrites, UnconfiguredContextLinearWrites>();   // Linear hub Ph2: the host that wires the write client replaces it; not part of IContextEngine, so a caller asks the container for it
         return services.AddMapHeads().AddRelinkPinAliases().AddProjectFacts().AddLibraryReads().AddIssueReads().AddIndexSync().AddRecordSearch().AddEmbedRecords().AddContextSlices();
     }
 
