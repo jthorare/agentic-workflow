@@ -7,7 +7,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Profile;
 
-namespace Aw.Sindri.Features.ReviewListFacts;
+namespace Aw.Sindri.Features;
 
 /// <summary>What the PR review page reads Context with: the approved profile's checked settings, the scope of the current caller and the audiences that caller may read.</summary>
 internal static class ReviewScopes

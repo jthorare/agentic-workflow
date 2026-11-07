@@ -1,4 +1,5 @@
 using Aw.Sindri.Core;
+using Aw.Sindri.Features.GetLibrary;
 using Aw.Sindri.Features.GetLibraryDoc;
 
 namespace Aw.Sindri.Host.Commands;
@@ -41,7 +42,7 @@ internal sealed class LibraryVerbs(IndexVerbs index, ControlPlaneClient client, 
             return await output.Error(SindriErrors.InvalidInput.With("library list takes --json and one of --errors or --near-misses: library list [--errors|--near-misses] [--json]")).ConfigureAwait(false);
         }
 
-        var answer = await client.Get<LibraryListAnswer>("/sindri/library", ct).ConfigureAwait(false);
+        var answer = await client.Get<GetLibraryResponse>("/sindri/library", ct).ConfigureAwait(false);
         if (answer.IsError)
         {
             return await output.Error(answer.Error).ConfigureAwait(false);

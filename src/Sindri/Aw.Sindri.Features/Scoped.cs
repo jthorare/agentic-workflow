@@ -1,7 +1,7 @@
 using Aw.Context.Core.Audience;
 using Aw.Context.Core.Engine;
 
-namespace Aw.Sindri.Features.ReviewListFacts;
+namespace Aw.Sindri.Features;
 
 /// <summary>The settings, scope and audiences of one read.</summary>
 /// <param name="Settings">The checked settings.</param>

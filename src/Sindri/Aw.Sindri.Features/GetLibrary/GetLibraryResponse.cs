@@ -11,4 +11,5 @@ namespace Aw.Sindri.Features.GetLibrary;
 /// <param name="NearMisses">The first <see cref="LibraryPage.Cap"/> files that almost read as docs.</param>
 /// <param name="UnreadableRoots">The folders that couldn't be read.</param>
 /// <param name="CappedText">Sindri's words when a list was cut; null otherwise.</param>
-public sealed record GetLibraryResponse(AsOf AsOf, int Docs, int WithErrors, IReadOnlyList<LibraryBrokenDoc> Broken, IReadOnlyList<LibraryNearMiss> NearMisses, IReadOnlyList<ReviewUnreadableRoot> UnreadableRoots, string? CappedText);
+/// <param name="Roots">Every root with its state and counts (Settings → Library); empty for a session.</param>
+public sealed record GetLibraryResponse(AsOf AsOf, int Docs, int WithErrors, IReadOnlyList<LibraryBrokenDoc> Broken, IReadOnlyList<LibraryNearMiss> NearMisses, IReadOnlyList<ReviewUnreadableRoot> UnreadableRoots, string? CappedText, IReadOnlyList<LibraryRootRow> Roots);

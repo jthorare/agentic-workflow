@@ -1,15 +1,17 @@
 using Aw.Context.Core.Engine;
 
-namespace Aw.Sindri.Features.ReviewListFacts;
+namespace Aw.Sindri.Features;
 
 /// <summary>Where the library's folders are, as the PR review page shows them: the absolute path with the home folder written <c language="text">~</c>.</summary>
 internal sealed class LibraryFolders
 {
     private readonly Dictionary<string, string> _shown;
+    private readonly string _home;
 
-    private LibraryFolders(Dictionary<string, string> shown)
+    private LibraryFolders(Dictionary<string, string> shown, string home)
     {
         _shown = shown;
+        _home = home;
     }
 
     /// <summary>Reads the folders of the checked library settings.</summary>
@@ -29,7 +31,7 @@ internal sealed class LibraryFolders
             }
         }
 
-        return new LibraryFolders(shown);
+        return new LibraryFolders(shown, host.Home);
     }
 
     /// <summary>Names a root's folder.</summary>
@@ -50,6 +52,11 @@ internal sealed class LibraryFolders
 
         return _shown.TryGetValue(key[Prefix.Length..slash], out var folder) ? folder + key[slash..] : key;
     }
+
+    /// <summary>Writes any absolute path with the home folder as <c language="text">~</c>.</summary>
+    /// <param name="path">The path.</param>
+    /// <returns>The path as shown.</returns>
+    internal string Show(string path) => Fold(path, _home);
 
     private static string Fold(string path, string home)
     {

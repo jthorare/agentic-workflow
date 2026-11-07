@@ -1,6 +1,6 @@
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Library;
-using Aw.Sindri.Features.ReviewListFacts;
+using Aw.Sindri.Features;
 
 namespace Aw.Sindri.Tests.Reviews;
 
@@ -37,8 +37,39 @@ public sealed class LibraryPageFactsTextTests
     {
         var error = new DesignDocError("SND-LIB-010", Line: 3, "doc:vault/design/export.md line 3: a missing or bad front-matter key: kind is missing.", "Write the key as the table above says.");
 
-        var text = ContextLibraryPageFacts.Text(error, "doc:vault/design/export.md", "~/notes/vault/design/export.md");
+        var text = LibraryErrorText.Of(error, "doc:vault/design/export.md", "~/notes/vault/design/export.md");
 
         Assert.Equal("~/notes/vault/design/export.md line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says", text);
     }
+
+    [Fact]
+    public void A_finding_Context_wrote_on_a_line_reads_path_line_n()
+    {
+        const string Key = "doc:aw/acme-api/plans/booking-retry-tdd.md";
+        var error = new DesignDocError("SND-LIB-010", Line: 4, Key + ":4: status 'draft2' isn't allowed.", "Use draft.");
+
+        Assert.Equal("~/.agentic-workflow/acme-api/plans/booking-retry-tdd.md line 4: status 'draft2' isn't allowed. Use draft", LibraryErrorText.Of(error, Key, "~/.agentic-workflow/acme-api/plans/booking-retry-tdd.md"));
+    }
+
+    [Fact]
+    public void A_finding_with_no_line_keeps_its_message_and_no_fix_adds_nothing()
+    {
+        var error = new DesignDocError("SND-LIB-018", Line: null, "doc:vault/p.md: too large: the file is over 1 MiB.", Fix: "");
+
+        Assert.Equal("~/p.md: too large: the file is over 1 MiB.", LibraryErrorText.Of(error, "doc:vault/p.md", "~/p.md"));
+    }
+
+    [Fact]
+    public void A_finding_with_no_line_and_a_fix_joins_them_and_replaces_the_key_wherever_it_stands()
+    {
+        var error = new DesignDocError("SND-LIB-012", Line: null, "doc id \"a\" is also used by doc:vault/b.md.", "Rename one of them.");
+
+        Assert.Equal("doc id \"a\" is also used by ~/v/b.md. Rename one of them", LibraryErrorText.Of(error, "doc:vault/b.md", "~/v/b.md"));
+    }
+
+    [Theory]
+    [InlineData("/home/joi/a.md", "~/a.md")]
+    [InlineData("/home/joiner/a.md", "/home/joiner/a.md")]
+    public void The_home_folder_is_written_as_a_tilde_only_at_a_folder_boundary(string path, string shown) =>
+        Assert.Equal(shown, Folders().Show(path));
 }

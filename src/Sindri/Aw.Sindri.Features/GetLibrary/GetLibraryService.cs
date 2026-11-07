@@ -20,6 +20,6 @@ internal sealed class GetLibraryService(ILibraryPageFacts facts, IProjectorStatu
         }
 
         var page = LibraryPage.From(read.Value);
-        return new GetLibraryResponse(status.Current.AsOf, page.Docs, page.WithErrors, page.Broken, page.NearMisses, page.UnreadableRoots, page.CappedText);
+        return new GetLibraryResponse(status.Current.AsOf, page.Docs, page.WithErrors, page.Broken, page.NearMisses, page.UnreadableRoots, page.CappedText, page.Roots);
     }
 }

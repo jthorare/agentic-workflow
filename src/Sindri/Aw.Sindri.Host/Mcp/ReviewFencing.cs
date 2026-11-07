@@ -18,8 +18,8 @@ internal sealed class ReviewFencing(JsonSerializerOptions json) : IReviewFencing
 
     public IResult Library(GetLibraryResponse library)
     {
-        // why: a folder's path and why it can't be read are the owner's machine; a session reads the docs it may, never the folders
-        using var document = JsonDocument.Parse(AwJson.Serialize(library with { UnreadableRoots = [] }, json));
+        // why: a folder's path and why it can't be read are the owner's machine; a session reads the docs it may, never the folders or their state
+        using var document = JsonDocument.Parse(AwJson.Serialize(library with { UnreadableRoots = [], Roots = [] }, json));
         return TypedResults.Text(McpFencing.Apply(document.RootElement, FencePlan.Library).GetRawText(), "application/json", System.Text.Encoding.UTF8);
     }
 }

@@ -17,7 +17,7 @@ public sealed class LibraryPageTests
     private static LibraryNearMiss Miss(int n) => new($"~/notes/{MissName(n)}.md", "SND-LIB-019", "y");
 
     private static LibraryPage Page(int broken, int misses) =>
-        LibraryPage.From(new LibraryPageFacts(Docs: 500, [.. Enumerable.Range(1, broken).Select(Broken)], [.. Enumerable.Range(1, misses).Select(Miss)], []));
+        LibraryPage.From(new LibraryPageFacts(Docs: 500, [.. Enumerable.Range(1, broken).Select(Broken)], [.. Enumerable.Range(1, misses).Select(Miss)], [], []));
 
     [Theory]
     [InlineData(199, 199, false)]
@@ -68,7 +68,7 @@ public sealed class LibraryPageTests
     [Fact]
     public void An_empty_library_is_all_zeros_with_no_text()
     {
-        var page = LibraryPage.From(new LibraryPageFacts(Docs: 0, [], [], []));
+        var page = LibraryPage.From(new LibraryPageFacts(Docs: 0, [], [], [], []));
 
         Assert.Equal((0, 0, 0, 0, null), (page.Docs, page.WithErrors, page.NearMisses.Count, page.UnreadableRoots.Count, page.CappedText));
     }
@@ -78,8 +78,19 @@ public sealed class LibraryPageTests
     {
         var root = new ReviewUnreadableRoot("~/notes/vault", "permission denied");
 
-        var page = LibraryPage.From(new LibraryPageFacts(Docs: 33, [], [], [root]));
+        var page = LibraryPage.From(new LibraryPageFacts(Docs: 33, [], [], [root], []));
 
         Assert.Equal([root], page.UnreadableRoots);
+    }
+
+    [Fact]
+    public void The_roots_are_ordered_for_the_page()
+    {
+        var vault = new LibraryRootFacts("work", LibraryRootKind.Vault, "~/work", Repo: null, Deny: [], Off: false, ScannedAt: null, Docs: 1, Errors: 0, Unreadable: null);
+        var aw = new LibraryRootFacts("aw", LibraryRootKind.Aw, "~/.agentic-workflow", Repo: null, Deny: [], Off: false, ScannedAt: null, Docs: 1, Errors: 0, Unreadable: null);
+
+        var page = LibraryPage.From(new LibraryPageFacts(Docs: 2, [], [], [], [vault, aw]));
+
+        Assert.Equal(["aw", "work"], page.Roots.Select(static r => r.Name), StringComparer.Ordinal);
     }
 }

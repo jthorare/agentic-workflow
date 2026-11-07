@@ -6,7 +6,7 @@ namespace Aw.Sindri.Testing;
 /// <summary>The library page's facts, set by the test: what Context's stored docs and root states would give.</summary>
 public sealed class FakeLibraryPageFacts : ILibraryPageFacts
 {
-    private Result<LibraryPageFacts> _facts = new LibraryPageFacts(Docs: 0, Broken: [], NearMisses: [], UnreadableRoots: []);
+    private Result<LibraryPageFacts> _facts = new LibraryPageFacts(Docs: 0, Broken: [], NearMisses: [], UnreadableRoots: [], Roots: []);
 
     /// <summary>Gets how many times the facts were read.</summary>
     public int Reads { get; private set; }

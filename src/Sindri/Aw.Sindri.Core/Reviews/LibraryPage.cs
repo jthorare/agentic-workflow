@@ -9,7 +9,8 @@ namespace Aw.Sindri.Core.Reviews;
 /// <param name="NearMisses">The first <see cref="Cap"/> near misses.</param>
 /// <param name="UnreadableRoots">The folders that couldn't be read.</param>
 /// <param name="CappedText">Sindri's words when a list was cut; null otherwise.</param>
-public sealed record LibraryPage(int Docs, int WithErrors, IReadOnlyList<LibraryBrokenDoc> Broken, IReadOnlyList<LibraryNearMiss> NearMisses, IReadOnlyList<ReviewUnreadableRoot> UnreadableRoots, string? CappedText)
+/// <param name="Roots">The roots in the page's order.</param>
+public sealed record LibraryPage(int Docs, int WithErrors, IReadOnlyList<LibraryBrokenDoc> Broken, IReadOnlyList<LibraryNearMiss> NearMisses, IReadOnlyList<ReviewUnreadableRoot> UnreadableRoots, string? CappedText, IReadOnlyList<LibraryRootRow> Roots)
 {
     /// <summary>The most docs with errors (and the most near misses) a page lists.</summary>
     public const int Cap = 200;
@@ -31,6 +32,6 @@ public sealed record LibraryPage(int Docs, int WithErrors, IReadOnlyList<Library
             notes.Add(string.Create(CultureInfo.InvariantCulture, $"Showing the first {Cap} of {facts.NearMisses.Count} near misses; run `sindri library validate` for the rest"));
         }
 
-        return new LibraryPage(facts.Docs, facts.Broken.Count, [.. facts.Broken.Take(Cap)], [.. facts.NearMisses.Take(Cap)], facts.UnreadableRoots, notes.Count == 0 ? null : string.Join(". ", notes));
+        return new LibraryPage(facts.Docs, facts.Broken.Count, [.. facts.Broken.Take(Cap)], [.. facts.NearMisses.Take(Cap)], facts.UnreadableRoots, notes.Count == 0 ? null : string.Join(". ", notes), LibraryRoots.Assemble(facts.Roots));
     }
 }
