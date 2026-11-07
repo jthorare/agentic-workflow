@@ -149,7 +149,7 @@ internal sealed class SqliteIndexStore(string directory, TimeProvider time, IRep
                 return await reader.QuickCheck(cancellationToken).ConfigureAwait(false) ? new LiveIndex(path, reader.Header) : null;
             }
         }
-        catch (Exception exception) when (exception is SqliteException or InvalidDataException or StoredRowException)
+        catch (Exception exception) when (exception is SqliteException or InvalidDataException)
         {
             return null;
         }

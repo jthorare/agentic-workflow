@@ -29,7 +29,7 @@ internal static class SqliteFailure
         {
             return error;
         }
-        catch (Exception exception) when (exception is InvalidDataException or StoredRowException)   // a mapper's InvalidDataException leaves SqliteQueries as a StoredRowException
+        catch (InvalidDataException exception)
         {
             return CodeIndexErrors.IndexDamaged.With($"{what}: {exception.Message}");
         }

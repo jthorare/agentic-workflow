@@ -63,6 +63,19 @@ public sealed class StoredRowTests
     }
 
     [Fact]
+    public async Task A_mappers_InvalidDataException_passes_through_with_its_own_message()
+    {
+        using var db = new TempDatabase();
+        await using var work = await Seeded(db);
+        var own = new InvalidDataException("Column ts holds String 'x', not a time.");
+
+        var thrown = await Assert.ThrowsAsync<InvalidDataException>(async () =>
+            _ = await SqliteQueries.One(work, _select, new Throwing<Item>(() => own), Ct));
+
+        Assert.Same(own, thrown);   // judge shows this message for an unreadable decision; a wrap would hide the column
+    }
+
+    [Fact]
     public async Task The_column_helper_names_the_table_the_column_and_the_key_but_not_the_value()
     {
         using var db = new TempDatabase();

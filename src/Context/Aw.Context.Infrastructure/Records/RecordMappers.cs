@@ -70,7 +70,7 @@ internal static class RecordMappers
         new RecordChunk(r.GetInt32(0), r.GetString(1), r.GetInt32(2), r.GetString(3), r.IsDBNull(4) ? null : r.GetInt32(4), r.IsDBNull(5) ? null : r.GetInt32(5)));
 
     internal static IRowMapper<SyncPosition> Position { get; } = new Mapper<SyncPosition>(r =>
-        new SyncPosition(Text(r, 0) is { } cursor ? SourceCursor.From(cursor) : null, Text(r, 1) is { } phase ? RecordWire.Phase(phase) : null, Text(r, 2) is { } backfill ? SourceCursor.From(backfill) : null, At(r, 3)));
+        new SyncPosition(Text(r, 0) is { } cursor ? SourceCursor.From(cursor) : null, r.IsDBNull(1) ? null : SqliteRead.Parse(r, 1, RecordWire.Phase, "source_cursor"), Text(r, 2) is { } backfill ? SourceCursor.From(backfill) : null, At(r, 3)));
 
     internal static IRowMapper<SyncOutcome> Outcome { get; } = new Mapper<SyncOutcome>(r => new SyncOutcome(SqliteRead.GetTimestamp(r, 0), Text(r, 1)));
 

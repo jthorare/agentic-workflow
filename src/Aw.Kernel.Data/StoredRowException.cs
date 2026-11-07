@@ -2,7 +2,8 @@ namespace Aw.Kernel.Data;
 
 /// <summary>
 /// A stored row a mapper can't read (#2229): the store holds a value its type refuses. It is a store fault, not a request fault, so a host answers it 5xx. The message names the table, the column and the row's key when
-/// known, and the statement; it never holds the stored value. <see cref="SqliteQueries"/> wraps what a row mapper throws in it, so a caller that caught a mapper's <see cref="InvalidDataException"/> catches this too.
+/// known, and the statement; it never holds the stored value. <see cref="SqliteQueries"/> wraps what a row mapper throws in it, except an <see cref="InvalidDataException"/>, which already says the row can't be
+/// read and keeps the message its callers show (judge's unreadable decision, the code index's store fault).
 /// </summary>
 public sealed class StoredRowException : Exception
 {

@@ -119,14 +119,15 @@ public static class SqliteQueries
     }
 
     // why: a mapper that throws on a stored value (a Vogen id parse, a bad enum word) would leave the store as that bare exception, and a host would classify it by type: Vogen reads as a bad request id (#2229). Every such
-    // failure leaves the store as a StoredRowException instead; a SqliteException keeps its own mapping.
+    // failure leaves the store as a StoredRowException instead; a SqliteException keeps its own mapping, and an InvalidDataException (SqliteRead's own refusals, judge's and the code index's mappers) already says
+    // the row can't be read and keeps the message its callers show.
     private static T MapRow<T>(IRowMapper<T> mapper, SqliteDataReader reader, SqlStatement statement)
     {
         try
         {
             return mapper.Map(reader);
         }
-        catch (Exception exception) when (exception is not (SqliteException or OperationCanceledException or StoredRowException))   // boundary: see the why above
+        catch (Exception exception) when (exception is not (SqliteException or OperationCanceledException or StoredRowException or InvalidDataException))   // boundary: see the why above
         {
             throw new StoredRowException(table: null, column: null, rowKey: null, statement.Describe(), exception);
         }
