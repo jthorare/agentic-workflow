@@ -1,6 +1,6 @@
 using Aw.Context.Core.Engine;
 
-namespace Aw.Sindri.Features;
+namespace Aw.Sindri.Features.ReviewListFacts;
 
 /// <summary>Where the library's folders are, as the PR review page shows them: the absolute path with the home folder written <c language="text">~</c>.</summary>
 internal sealed class LibraryFolders

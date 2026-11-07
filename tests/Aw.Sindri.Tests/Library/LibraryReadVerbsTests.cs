@@ -12,9 +12,9 @@ public sealed class LibraryReadVerbsTests : IDisposable
     private const string AsOf = """{"cursor":5,"ledgerHead":5,"projectedAt":"2026-01-01T00:00:00.0000000Z","rebuilding":false,"stalled":false}""";
 
     private const string Broken =
-        """{"asOf":ASOF,"docs":41,"withErrors":1,"broken":[{"doc":"booking-retry-tdd","path":"~/notes/design/booking-retry-tdd.md","errors":[{"rule":"SND-LIB-010","text":"line 4: status 'draft2' isn't allowed. Fix it"},{"rule":"SND-LIB-015","text":"line 31: REQ-9 is not in this scope"}]}],"nearMisses":[{"path":"~/notes/design/retry-notes.md","rule":"SND-LIB-019","text":"line 1: the first line is blank"}],"unreadableRoots":[{"root":"~/notes/vault","reason":"permission denied"}],"cappedText":"Showing the first 200 of 250 docs with errors; run `sindri library validate` for the rest"}""";
+        """{"asOf":ASOF,"docs":41,"withErrors":1,"broken":[{"doc":"booking-retry-tdd","path":"~/notes/design/booking-retry-tdd.md","errors":[{"rule":"SND-LIB-010","text":"line 4: status 'draft2' isn't allowed. Fix it"},{"rule":"SND-LIB-015","text":"line 31: REQ-9 is not in this scope"}]}],"nearMisses":[{"path":"~/notes/design/retry-notes.md","rule":"SND-LIB-019","text":"line 1: the first line is blank"}],"unreadableRoots":[{"root":"~/notes/vault","reason":"permission denied"}],"cappedText":"Showing the first 200 of 250 docs with errors; run `sindri library validate` for the rest","roots":[]}""";
 
-    private const string Empty = """{"asOf":ASOF,"docs":0,"withErrors":0,"broken":[],"nearMisses":[],"unreadableRoots":[],"cappedText":null}""";
+    private const string Empty = """{"asOf":ASOF,"docs":0,"withErrors":0,"broken":[],"nearMisses":[],"unreadableRoots":[],"cappedText":null,"roots":[]}""";
 
     private const string Doc =
         """{"asOf":ASOF,"doc":{"id":"booking-retry-tdd","root":"aw","scope":"aw/acme-api","kind":"tdd","status":"draft","project":null,"repos":["acme/api"],"issues":["412"],"title":"Booking retry TDD","path":"~/.agentic-workflow/acme-api/plans/booking-retry-tdd.md","errors":[{"rule":"SND-LIB-015","text":"line 31: REQ-9 is not in this scope"}]}}""";

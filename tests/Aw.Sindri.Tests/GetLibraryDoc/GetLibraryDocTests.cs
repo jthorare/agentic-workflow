@@ -2,6 +2,7 @@ using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.GetLibraryDoc;
+using Aw.Sindri.Core.Reviews;
 
 namespace Aw.Sindri.Tests.GetLibraryDoc;
 
@@ -51,6 +52,6 @@ public sealed class GetLibraryDocTests
         {
         }
 
-        public ValueTask<Result<LibraryDocView?>> Find(string id, CancellationToken cancellationToken) => ValueTask.FromResult(answer);
+        public ValueTask<Result<LibraryDocView?>> Find(string doc, CancellationToken cancellationToken) => ValueTask.FromResult(answer);
     }
 }

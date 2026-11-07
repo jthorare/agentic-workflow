@@ -45,7 +45,7 @@ public sealed class ContextLibraryPageFactsTests
         new(RecordKey.From($"doc:{root}/{file}"), root, root, Slug: file, Kind: null, Status: null, Project: null, [], [], ParserVersion: 1,
             [.. Enumerable.Range(0, errors).Select(static _ => new DesignDocError("SND-LIB-010", Line: 3, "m", "f"))], file, Url: null, Audience: null);
 
-    private static LibraryRootStatus Status(string root, LibraryRootState state, string? reason, int docs) => new(root, state, reason, docs, NearMisses: 0, _at);
+    private static LibraryRootStatus Status(string root, LibraryRootState state, string? reason, int docs) => new(root, state, reason, docs, NearMisses: 0, _at, Path: null, NearMissFindings: []);
 
     [Fact]
     public async Task A_human_gets_the_aw_root_then_the_vaults_then_a_repo_root_for_each_profile_repo_with_its_counts()

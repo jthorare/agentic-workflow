@@ -4,8 +4,9 @@ using Aw.Context.Core.Library;
 using Aw.Kernel;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Reviews;
 
-namespace Aw.Sindri.Features.GetLibraryDoc;
+namespace Aw.Sindri.Features.ReviewListFacts;
 
 /// <summary>
 /// One design doc over Context (PR review page spec §6.1). The audience rule is the Reviews list's (<see cref="ReviewScopes"/>): a human reads the docs of every repo of the profile, a session its own repo's.
@@ -17,9 +18,9 @@ namespace Aw.Sindri.Features.GetLibraryDoc;
 /// <param name="host">The machine's home folders, to write a path with <c language="text">~</c>.</param>
 internal sealed class ContextLibraryDocFacts(IApprovedProfile approvals, ICallerContextAccessor callers, IContextEngine engine, LibraryHost host) : ILibraryDocFacts
 {
-    public async ValueTask<Result<LibraryDocView?>> Find(string id, CancellationToken cancellationToken)
+    public async ValueTask<Result<LibraryDocView?>> Find(string doc, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(id);
+        ArgumentNullException.ThrowIfNull(doc);
         var read = await ReviewScopes.Read(approvals, callers, engine, cancellationToken).ConfigureAwait(false);
         if (read.IsError)
         {
@@ -33,8 +34,8 @@ internal sealed class ContextLibraryDocFacts(IApprovedProfile approvals, ICaller
             return docs.Error;
         }
 
-        var doc = docs.Value.Where(d => string.Equals(d.Slug, id, StringComparison.Ordinal)).OrderBy(static d => d.Key.Value, StringComparer.Ordinal).FirstOrDefault();
-        return Results.Success(doc is null ? null : View(doc, LibraryFolders.Of(settings.Library, host)));
+        var found = docs.Value.Where(d => string.Equals(d.Slug, doc, StringComparison.Ordinal)).OrderBy(static d => d.Key.Value, StringComparer.Ordinal).FirstOrDefault();
+        return Results.Success(found is null ? null : View(found, LibraryFolders.Of(settings.Library, host)));
     }
 
     private static LibraryDocView View(LibraryDoc doc, LibraryFolders folders)

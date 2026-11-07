@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Aw.Sindri.Features.GetLibraryDoc;
+namespace Aw.Sindri.Core.Reviews;
 
 /// <summary>A design doc as the library stores it.</summary>
 /// <param name="Slug">The front matter's <c language="text">id</c>, which the JSON calls <c language="text">id</c>.</param>

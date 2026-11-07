@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Features.GetLibraryDoc;
+namespace Aw.Sindri.Core.Reviews;
 
 /// <summary>One finding about a doc.</summary>
 /// <param name="Rule">The <c language="text">SND-LIB-nnn</c> code.</param>

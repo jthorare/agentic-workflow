@@ -8,7 +8,7 @@ namespace Aw.Sindri.Tests.Library;
 /// <summary>'sindri library validate' (PR review page spec 2026-11-04 §5.5): the design-doc rules over a file or folder, in process, without Sindri running.</summary>
 public sealed class LibraryValidateTests : IDisposable
 {
-    private const string Good = "---\naw-doc: 1\nid: queue-sizing-spec\nkind: spec\nstatus: draft\n---\n# Queue sizing\n\n## REQ-1 Size the queue\n";
+    private const string Good = "---\naw-doc: 1\nid: queue-sizing-spec\ntitle: Queue sizing\nkind: spec\nstatus: draft\n---\n# Queue sizing\n\n## REQ-1 Size the queue\n";
 
     private readonly StringWriter _out = new();
     private readonly StringWriter _error = new();
@@ -56,7 +56,7 @@ public sealed class LibraryValidateTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task A_bad_key_a_near_miss_and_a_shared_id_are_findings_with_exit_1_and_json_names_each()
     {
-        var bad = Write("bad.md", "---\naw-doc: 1\nid: bad-one\nkind: spec\nstatus: draft2\n---\n# Bad\n");
+        var bad = Write("bad.md", "---\naw-doc: 1\nid: bad-one\ntitle: Bad\nkind: spec\nstatus: draft2\n---\n# Bad\n");
         var miss = Write("miss.md", "---\naw-doc: \"1\"\nid: miss\n---\n# Miss\n");
         _ = Write("one.md", Good);
         var two = Write("two.md", Good);
@@ -77,7 +77,7 @@ public sealed class LibraryValidateTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task A_single_file_is_checked_and_text_output_leads_with_the_rule()
     {
-        var path = Write("bad.md", "---\naw-doc: 1\nid: bad-one\nkind: spec\nstatus: draft2\n---\n# Bad\n");
+        var path = Write("bad.md", "---\naw-doc: 1\nid: bad-one\ntitle: Bad\nkind: spec\nstatus: draft2\n---\n# Bad\n");
 
         var exit = await Run(new ScriptedApi(), path);
 

@@ -23,14 +23,14 @@ public sealed class ContextLibraryStateTests
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private async Task<Aw.Sindri.Core.Reviews.ReviewLibraryFacts> Read(SourceProgress? source = null) =>
+    private async Task<Core.Reviews.ReviewLibraryFacts> Read(SourceProgress? source = null) =>
         await new ContextLibraryState(EngineProxy.Of(_library), _host).Read(_settings, _scope, new AudienceScope(new HashSet<AudienceKey>()), source, Ct);
 
     private static LibraryDoc Doc(string path, int errors) =>
         new(RecordKey.From("doc:vault/" + path), "vault", "vault", Slug: path, Kind: null, Status: null, Project: null, [], [], ParserVersion: 1,
             [.. Enumerable.Range(0, errors).Select(static _ => new DesignDocError("SND-LIB-010", Line: 3, "m", "f"))], path, Url: null, Audience: null);
 
-    private static LibraryRootStatus Root(LibraryRootState state, string? reason = null) => new("vault", state, reason, Docs: 0, NearMisses: 0, LastRead: null);
+    private static LibraryRootStatus Root(LibraryRootState state, string? reason = null) => new("vault", state, reason, Docs: 0, NearMisses: 0, LastRead: null, Path: null, NearMissFindings: []);
 
     [Fact]
     public async Task The_docs_and_the_docs_with_errors_are_counted()
@@ -49,7 +49,7 @@ public sealed class ContextLibraryStateTests
 
         var facts = await Read();
 
-        Assert.Equal([new Aw.Sindri.Core.Reviews.ReviewUnreadableRoot("~/notes/vault", "permission denied")], facts.UnreadableRoots);
+        Assert.Equal([new Core.Reviews.ReviewUnreadableRoot("~/notes/vault", "permission denied")], facts.UnreadableRoots);
     }
 
     [Fact]

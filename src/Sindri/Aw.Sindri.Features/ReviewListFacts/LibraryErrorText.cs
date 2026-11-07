@@ -1,7 +1,7 @@
 using System.Globalization;
 using Aw.Context.Core.Library;
 
-namespace Aw.Sindri.Features;
+namespace Aw.Sindri.Features.ReviewListFacts;
 
 /// <summary>How the library routes write one design-doc finding (PR review page spec §6.1): the message, then the fix, with the record key in the message replaced by the file.</summary>
 internal static class LibraryErrorText

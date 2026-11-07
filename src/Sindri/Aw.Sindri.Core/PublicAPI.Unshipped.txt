@@ -22894,3 +22894,51 @@ Aw.Sindri.Core.Reviews.LibraryRootRow.Scope.init -> void
 Aw.Sindri.Core.Reviews.LibraryRootRow.Unreadable.get -> string?
 Aw.Sindri.Core.Reviews.LibraryRootRow.Unreadable.init -> void
 Aw.Sindri.Core.Reviews.LibraryRoots
+Aw.Sindri.Core.Reviews.LibraryDocView
+override Aw.Sindri.Core.Reviews.LibraryDocView.ToString() -> string!
+static Aw.Sindri.Core.Reviews.LibraryDocView.operator !=(Aw.Sindri.Core.Reviews.LibraryDocView? left, Aw.Sindri.Core.Reviews.LibraryDocView? right) -> bool
+static Aw.Sindri.Core.Reviews.LibraryDocView.operator ==(Aw.Sindri.Core.Reviews.LibraryDocView? left, Aw.Sindri.Core.Reviews.LibraryDocView? right) -> bool
+override Aw.Sindri.Core.Reviews.LibraryDocView.GetHashCode() -> int
+override Aw.Sindri.Core.Reviews.LibraryDocView.Equals(object? obj) -> bool
+Aw.Sindri.Core.Reviews.LibraryDocView.Equals(Aw.Sindri.Core.Reviews.LibraryDocView? other) -> bool
+Aw.Sindri.Core.Reviews.LibraryDocView.<Clone>$() -> Aw.Sindri.Core.Reviews.LibraryDocView!
+Aw.Sindri.Core.Reviews.LibraryDocView.Root.get -> string!
+Aw.Sindri.Core.Reviews.LibraryDocView.Root.init -> void
+Aw.Sindri.Core.Reviews.LibraryDocView.Scope.get -> string!
+Aw.Sindri.Core.Reviews.LibraryDocView.Scope.init -> void
+Aw.Sindri.Core.Reviews.LibraryDocView.Kind.get -> string?
+Aw.Sindri.Core.Reviews.LibraryDocView.Kind.init -> void
+Aw.Sindri.Core.Reviews.LibraryDocView.Status.get -> string?
+Aw.Sindri.Core.Reviews.LibraryDocView.Status.init -> void
+Aw.Sindri.Core.Reviews.LibraryDocView.Project.get -> string?
+Aw.Sindri.Core.Reviews.LibraryDocView.Repos.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Reviews.LibraryDocView.Project.init -> void
+Aw.Sindri.Core.Reviews.LibraryDocView.Repos.init -> void
+Aw.Sindri.Core.Reviews.LibraryDocView.Issues.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Reviews.LibraryDocView.Title.get -> string!
+Aw.Sindri.Core.Reviews.LibraryDocView.Issues.init -> void
+Aw.Sindri.Core.Reviews.LibraryDocView.Title.init -> void
+Aw.Sindri.Core.Reviews.LibraryDocView.Path.get -> string!
+Aw.Sindri.Core.Reviews.LibraryDocView.Path.init -> void
+Aw.Sindri.Core.Reviews.LibraryDocView.Errors.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryDocErrorView!>!
+Aw.Sindri.Core.Reviews.LibraryDocView.Errors.init -> void
+Aw.Sindri.Core.Reviews.LibraryDocErrorView
+override Aw.Sindri.Core.Reviews.LibraryDocErrorView.ToString() -> string!
+static Aw.Sindri.Core.Reviews.LibraryDocErrorView.operator !=(Aw.Sindri.Core.Reviews.LibraryDocErrorView? left, Aw.Sindri.Core.Reviews.LibraryDocErrorView? right) -> bool
+Aw.Sindri.Core.Reviews.LibraryDocErrorView.Rule.get -> string!
+static Aw.Sindri.Core.Reviews.LibraryDocErrorView.operator ==(Aw.Sindri.Core.Reviews.LibraryDocErrorView? left, Aw.Sindri.Core.Reviews.LibraryDocErrorView? right) -> bool
+Aw.Sindri.Core.Reviews.LibraryDocErrorView.Rule.init -> void
+override Aw.Sindri.Core.Reviews.LibraryDocErrorView.GetHashCode() -> int
+override Aw.Sindri.Core.Reviews.LibraryDocErrorView.Equals(object? obj) -> bool
+Aw.Sindri.Core.Reviews.LibraryDocErrorView.Equals(Aw.Sindri.Core.Reviews.LibraryDocErrorView? other) -> bool
+Aw.Sindri.Core.Reviews.LibraryDocErrorView.Text.get -> string!
+Aw.Sindri.Core.Reviews.LibraryDocErrorView.<Clone>$() -> Aw.Sindri.Core.Reviews.LibraryDocErrorView!
+Aw.Sindri.Core.Reviews.LibraryDocErrorView.Text.init -> void
+Aw.Sindri.Core.Reviews.LibraryDocErrorView.Deconstruct(out string! Rule, out string! Text) -> void
+Aw.Sindri.Core.Reviews.LibraryDocErrorView.LibraryDocErrorView(string! Rule, string! Text) -> void
+Aw.Sindri.Core.Reviews.LibraryDocView.Slug.get -> string!
+Aw.Sindri.Core.Reviews.LibraryDocView.Slug.init -> void
+Aw.Sindri.Core.Reviews.LibraryDocView.Deconstruct(out string! Slug, out string! Root, out string! Scope, out string? Kind, out string? Status, out string? Project, out System.Collections.Generic.IReadOnlyList<string!>! Repos, out System.Collections.Generic.IReadOnlyList<string!>! Issues, out string! Title, out string! Path, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryDocErrorView!>! Errors) -> void
+Aw.Sindri.Core.Reviews.LibraryDocView.LibraryDocView(string! Slug, string! Root, string! Scope, string? Kind, string? Status, string? Project, System.Collections.Generic.IReadOnlyList<string!>! Repos, System.Collections.Generic.IReadOnlyList<string!>! Issues, string! Title, string! Path, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryDocErrorView!>! Errors) -> void
+Aw.Sindri.Core.Reviews.ILibraryDocFacts
+Aw.Sindri.Core.Reviews.ILibraryDocFacts.Find(string! doc, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Reviews.LibraryDocView?>!>

@@ -1,8 +1,8 @@
 using Aw.Kernel;
-using Aw.Sindri.Features.GetLibraryDoc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using static Aw.Sindri.Tests.Callers.CallerRequests;
+using Aw.Sindri.Core.Reviews;
 
 namespace Aw.Sindri.Tests.ApiGoldens;
 
@@ -35,7 +35,7 @@ internal static class LibraryDocScenarios
             "booking-retry-tdd", "aw", "aw/acme-api", "tdd", "draft", Project: null, ["acme/api"], ["412", "ENG-12"], "Booking retry TDD", "~/.agentic-workflow/acme-api/plans/booking-retry-tdd.md",
             [new LibraryDocErrorView("SND-LIB-015", "~/.agentic-workflow/acme-api/plans/booking-retry-tdd.md line 31: queue-sizing-spec#REQ-9 is not in this scope. Fix the ref, or add REQ-9 to the doc it names.")]);
 
-        public ValueTask<Result<LibraryDocView?>> Find(string id, CancellationToken cancellationToken) =>
-            ValueTask.FromResult(Results.Success<LibraryDocView?>(string.Equals(id, _doc.Slug, StringComparison.Ordinal) ? _doc : null));
+        public ValueTask<Result<LibraryDocView?>> Find(string doc, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(Results.Success(string.Equals(doc, _doc.Slug, StringComparison.Ordinal) ? _doc : null));
     }
 }
