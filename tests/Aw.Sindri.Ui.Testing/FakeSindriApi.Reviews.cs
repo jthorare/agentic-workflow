@@ -58,4 +58,55 @@ internal sealed partial class FakeSindriApi
 
         return Answer<ReviewList>(api, ReviewRoutes.List, ReviewsAnswer);
     }
+
+    private readonly List<(string Repo, int Number)> _pageReads = [];
+    private readonly List<ReviewFixSend> _fixSends = [];
+
+    /// <summary>GET /sindri/reviews/{owner}/{repo}/{number}'s answer: the "full" golden by default.</summary>
+    public RouteAnswer ReviewPageAnswer { get; set; } = RouteAnswer.Api("reviews-pr", "full");
+
+    /// <summary>When set, the page read waits for it: the page stays loading until the test completes it.</summary>
+    public TaskCompletionSource? ReviewPageGate { get; set; }
+
+    /// <summary>The PRs whose page was read, in order.</summary>
+    public IReadOnlyList<(string Repo, int Number)> ReviewPageReads { get { lock (_gate) { return [.. _pageReads]; } } }
+
+    /// <summary>POST .../fix's answer: a ReviewFixSent body; the babysitter took it by default.</summary>
+    public RouteAnswer ReviewFixAnswer { get; set; } = new(System.Net.HttpStatusCode.OK, ReviewFixBodies.Babysitter);
+
+    /// <summary>When set, the fix send waits for it: the sheet stays on Sending until the test completes it.</summary>
+    public TaskCompletionSource? ReviewFixGate { get; set; }
+
+    /// <summary>The fix tasks the page asked to send, in order.</summary>
+    public IReadOnlyList<ReviewFixSend> ReviewFixSends { get { lock (_gate) { return [.. _fixSends]; } } }
+
+    public async Task<Result<ReviewPage>> ReadReviewPage(Uri api, string repo, int number, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _pageReads.Add((repo, number));
+        }
+
+        if (ReviewPageGate is { } gate)
+        {
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return Answer<ReviewPage>(api, ReviewRoutes.Page(repo, number), ReviewPageAnswer);
+    }
+
+    public async Task<Result<ReviewFixSent>> SendReviewFix(Uri api, string repo, int number, ReviewFixSend send, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _fixSends.Add(send);
+        }
+
+        if (ReviewFixGate is { } gate)
+        {
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return Answer<ReviewFixSent>(api, ReviewRoutes.Fix(repo, number), ReviewFixAnswer);
+    }
 }

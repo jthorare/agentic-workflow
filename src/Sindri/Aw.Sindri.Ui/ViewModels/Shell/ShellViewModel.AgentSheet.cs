@@ -22,6 +22,7 @@ internal sealed partial class ShellViewModel
         DeepLinkKind.PageSheet => ActivePageSheet?.Title ?? string.Empty,
         DeepLinkKind.AddSeveralPages => ActiveAddSeveralPages?.Title ?? string.Empty,
         DeepLinkKind.LibrarySheet => Labels.LibrarySheetTitle,
+        DeepLinkKind.FixTaskSheet => Labels.ReviewFixHeading,
         DeepLinkKind.PinSheet => ActivePinSheet?.Heading ?? (PinSheetContent as Context.Concepts.PinSeveralViewModel)?.Title ?? string.Empty,
         DeepLinkKind.Item => Item.Title,
         DeepLinkKind.Workflow => Instance.Title,

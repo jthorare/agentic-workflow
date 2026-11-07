@@ -1,0 +1,226 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:rvm="using:Aw.Sindri.Ui.ViewModels.Reviews"
+             xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
+             x:Class="Aw.Sindri.Ui.Views.Reviews.ReviewPageView"
+             x:DataType="rvm:ReviewPageViewModel">
+  <!-- One PR's review page (review page spec §6.2-6.4, §16; mockups review-a-1440, review-a-1000, review-a-page-*): the header, the summary strip, the panels in a column beside the diff
+       (420 px at 1,280 px and wider, else stacked above it), and the action bar whose buttons open GitHub. Release 1 posts nothing. -->
+  <UserControl.Styles>
+    <Style Selector="Border.diff-line:focus-within, Border.diff-line:focus"><Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" /></Style>
+    <Style Selector="Border.diff-line.added"><Setter Property="Background" Value="{DynamicResource Brush.SuccessSoft}" /></Style>
+    <Style Selector="Border.diff-line.removed"><Setter Property="Background" Value="{DynamicResource Brush.ErrorSoft}" /></Style>
+    <Style Selector="Border.panel-row:focus-within, Border.panel-row:focus"><Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" /></Style>
+  </UserControl.Styles>
+  <StackPanel x:Name="ReviewPageRoot" Spacing="{StaticResource Size.PanelGap}">
+    <!-- A whole-page refusal: not found, not synced, the login prompt, offline and not cached, or a failure. -->
+    <StackPanel x:Name="ReviewPageState" IsVisible="{Binding ShowsState}" Spacing="{StaticResource Space.SM}" MaxWidth="560" Margin="0,48,0,0">
+      <Button x:Name="ReviewBackFromState" Click="OnBack" AutomationProperties.Name="{Binding BackName}" HorizontalAlignment="Left"><TextBlock Text="{Binding BackText}" /></Button>
+      <TextBlock x:Name="ReviewStateHeading" Classes="page-title" Focusable="True" Text="{Binding StateHeading}" AutomationProperties.Name="{Binding StateHeading}" TextWrapping="Wrap" />
+      <TextBlock x:Name="ReviewStateText" Classes="body muted" Text="{Binding StateText}" TextWrapping="Wrap" />
+      <StackPanel x:Name="ReviewLogin" IsVisible="{Binding IsLoginPrompt}"><StackPanel Spacing="{StaticResource Space.SM}" DataContext="{Binding Login}" x:DataType="rvm:ReviewLoginViewModel">
+        <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
+          <TextBox x:Name="ReviewLoginField" Width="260" Text="{Binding Field, Mode=TwoWay}" KeyDown="OnLoginKey" AutomationProperties.Name="{Binding FieldName}" />
+          <Button x:Name="ReviewLoginSave" Content="{Binding SaveText}" IsEnabled="{Binding CanSave}" Click="OnSaveLogin" AutomationProperties.Name="{Binding SaveText}" />
+        </StackPanel>
+        <TextBlock x:Name="ReviewLoginError" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding Error}" TextWrapping="Wrap"
+                   IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Error}" />
+        <TextBlock x:Name="ReviewLoginNote" Classes="caption subtle" Text="{Binding Note}" TextWrapping="Wrap"
+                   IsVisible="{Binding Note, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Note}" />
+      </StackPanel></StackPanel>
+      <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+        <Button x:Name="ReviewTryAgain" Click="OnTryAgain" Content="{Binding TryAgainText}" />
+        <Button x:Name="ReviewOpenFromState" Click="OnOpenGitHub" Content="{Binding OpenOnGitHubText}" />
+      </StackPanel>
+    </StackPanel>
+
+    <StackPanel IsVisible="{Binding ShowsPage}" Spacing="{StaticResource Size.PanelGap}">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Spacing="4">
+          <Button x:Name="ReviewBack" Click="OnBack" AutomationProperties.Name="{Binding BackName}" HorizontalAlignment="Left"><TextBlock Classes="caption subtle" Text="{Binding BackText}" /></Button>
+          <TextBlock x:Name="ReviewTitle" Classes="page-title" Focusable="True" Text="{Binding Title}" AutomationProperties.Name="{Binding Title}" TextWrapping="Wrap" />
+          <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
+            <TextBlock Classes="caption subtle" Text="{Binding Ref}" />
+            <TextBlock Classes="caption subtle" Text="{Binding Author}" />
+            <TextBlock Classes="caption subtle mono" Text="{Binding HeadText}" />
+            <TextBlock Classes="caption subtle mono" Text="{Binding Branch}" />
+            <ItemsControl ItemsSource="{Binding IssueKeys}">
+              <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate><DataTemplate x:DataType="x:String"><Border BorderBrush="{DynamicResource Brush.HairlineStrong}" BorderThickness="1" CornerRadius="4" Padding="6,0"><TextBlock Classes="caption" Text="{Binding}" /></Border></DataTemplate></ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+          <TextBlock x:Name="ReviewOffline" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding OfflineText}" IsVisible="{Binding OfflineText, Converter={x:Static ObjectConverters.IsNotNull}}" />
+          <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}" IsVisible="{Binding MovingText, Converter={x:Static ObjectConverters.IsNotNull}}">
+            <TextBlock x:Name="ReviewMoving" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding MovingText}" VerticalAlignment="Center" />
+            <Button x:Name="ReviewReload" Click="OnTryAgain" Content="{Binding ReloadText}" AutomationProperties.Name="{Binding ReloadText}" />
+          </StackPanel>
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{StaticResource Space.XS}" VerticalAlignment="Top">
+          <TextBlock Classes="caption subtle" VerticalAlignment="Center" Text="{Binding SettingsText}" />
+          <Button x:Name="ReviewOpenGitHub" Click="OnOpenGitHub" Content="{Binding OpenOnGitHubArrowText}" AutomationProperties.Name="{Binding OpenOnGitHubText}" />
+        </StackPanel>
+      </Grid>
+
+      <!-- The summary strip: each part jumps to its panel. -->
+      <ItemsControl x:Name="ReviewStrip" ItemsSource="{Binding Strip}">
+        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="rvm:ReviewStripSegmentViewModel">
+            <Button x:Name="ReviewStripSegment" Click="OnStripSegment" Margin="0,0,8,4" AutomationProperties.Name="{Binding AutomationName}" IsEnabled="{Binding !IsLoading}">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <icons:StateIcon Glyph="{Binding Glyph}" VerticalAlignment="Center" IsVisible="{Binding !IsLoading}" />
+                <TextBlock Classes="caption" Text="{Binding Text}" />
+              </StackPanel>
+            </Button>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <Grid x:Name="ReviewBody">
+        <StackPanel x:Name="ReviewPanelColumn" Spacing="{StaticResource Space.SM}" HorizontalAlignment="Stretch">
+          <ItemsControl ItemsSource="{Binding Panels}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="rvm:ReviewPanelViewModel">
+                <Border BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="6" Margin="0,0,0,8" Padding="12,8">
+                  <StackPanel Spacing="{StaticResource Space.XS}">
+                    <Button x:Name="ReviewPanelHeader" Tag="{Binding Id}" Click="OnTogglePanel" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Title}">
+                      <Grid ColumnDefinitions="Auto,*,Auto">
+                        <TextBlock Classes="body-strong" Text="{Binding Title}" />
+                        <TextBlock Grid.Column="2" Classes="caption subtle" Text="{Binding Summary}" />
+                      </Grid>
+                    </Button>
+                    <StackPanel x:Name="ReviewPanelBody" IsVisible="{Binding IsOpen}" Spacing="{StaticResource Space.XS}">
+                      <TextBlock Classes="caption muted" Text="{Binding Text}" TextWrapping="Wrap" IsVisible="{Binding Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                      <TextBlock Classes="caption" Text="{Binding ClaimsText}" IsVisible="{Binding ClaimsText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                      <ItemsControl ItemsSource="{Binding Checks}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="rvm:ReviewCheckRowViewModel">
+                            <Border x:Name="ReviewCheckRow" Classes="panel-row" Tag="{Binding Id}" Focusable="True" BorderThickness="1" Padding="4" AutomationProperties.Name="{Binding AutomationName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+                              <Grid ColumnDefinitions="Auto,*,Auto" AutomationProperties.AccessibilityView="Raw">
+                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Top">
+                                  <icons:StateIcon Glyph="{Binding Glyph}" VerticalAlignment="Center" />
+                                  <TextBlock Classes="caption" Text="{Binding StatusWord}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Margin="8,0">
+                                  <TextBlock Classes="body" Text="{Binding Title}" TextWrapping="Wrap" />
+                                  <TextBlock Classes="caption subtle" Text="{Binding Detail}" TextWrapping="Wrap" IsVisible="{Binding Detail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                </StackPanel>
+                                <Button x:Name="ReviewCheckFix" Grid.Column="2" Click="OnCheckFix" IsVisible="{Binding CanSendFix}" Content="{Binding FixText}" AutomationProperties.Name="{Binding FixName}" />
+                              </Grid>
+                            </Border>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                      <ItemsControl ItemsSource="{Binding DocRows}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="rvm:ReviewDocItemViewModel">
+                            <Border x:Name="ReviewDocRow" Classes="panel-row" Tag="{Binding Id}" Focusable="True" BorderThickness="1" Padding="4" AutomationProperties.Name="{Binding AutomationName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+                              <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" AutomationProperties.AccessibilityView="Raw">
+                                <TextBlock Classes="caption mono" Text="{Binding Indent}" />
+                                <TextBlock Grid.Column="1" Classes="caption mono" Text="{Binding Id}" Margin="0,0,8,0" />
+                                <TextBlock Grid.Column="2" Classes="body" Text="{Binding Title}" TextWrapping="Wrap" />
+                                <TextBlock Grid.Column="3" Classes="caption subtle" Text="{Binding Mark}" Margin="8,0" />
+                                <Button x:Name="ReviewDocFix" Grid.Column="4" Click="OnRequirementFix" IsVisible="{Binding CanSendFix}" Content="{Binding FixText}" AutomationProperties.Name="{Binding FixName}" />
+                              </Grid>
+                            </Border>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                      <ItemsControl ItemsSource="{Binding Lines}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="rvm:ReviewPanelLine">
+                            <StackPanel Margin="0,2">
+                              <StackPanel Orientation="Horizontal" Spacing="6">
+                                <icons:StateIcon Glyph="{Binding Glyph}" VerticalAlignment="Center" />
+                                <TextBlock Classes="body" Text="{Binding Primary}" TextWrapping="Wrap" />
+                              </StackPanel>
+                              <TextBlock Classes="caption subtle" Text="{Binding Secondary}" TextWrapping="Wrap" />
+                            </StackPanel>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </StackPanel>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+
+        <StackPanel x:Name="ReviewDiffPane" Spacing="{StaticResource Space.XS}" DataContext="{Binding Diff}" x:DataType="rvm:ReviewDiffViewModel">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <TextBlock Classes="body-strong" Text="{Binding TitleText}" />
+            <TextBlock Grid.Column="1" Classes="caption subtle" Margin="8,0" Text="{Binding CountText}" />
+            <TextBlock Grid.Column="2" Classes="caption subtle" Text="{Binding KeysText}" />
+          </Grid>
+          <TextBlock x:Name="ReviewDiffText" Classes="caption muted" Text="{Binding Text}" TextWrapping="Wrap" IsVisible="{Binding Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          <TextBlock x:Name="ReviewDiffCapped" Classes="caption subtle" Text="{Binding CappedText}" TextWrapping="Wrap" IsVisible="{Binding CappedText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          <ItemsControl ItemsSource="{Binding Groups}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="rvm:ReviewDiffGroupViewModel">
+                <StackPanel Spacing="4">
+                  <Button x:Name="ReviewDiffGroupHeader" Tag="{Binding Name}" Click="OnToggleGroup" GotFocus="OnGroupHeaderFocused" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding AutomationName}">
+                    <TextBlock Classes="eyebrow subtle" Text="{Binding Name}" />
+                  </Button>
+                  <ItemsControl ItemsSource="{Binding Files}" IsVisible="{Binding IsOpen}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="rvm:ReviewDiffFileViewModel">
+                        <Border BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="6" Margin="0,0,0,8">
+                          <StackPanel>
+                            <Grid ColumnDefinitions="*,Auto,Auto" Margin="8,4">
+                              <TextBlock x:Name="ReviewDiffFile" Classes="caption mono" Focusable="True" Tag="{Binding Path}" Text="{Binding Path}" TextTrimming="CharacterEllipsis" />
+                              <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding Status}" Margin="8,0" />
+                              <TextBlock Grid.Column="2" Classes="caption subtle" Text="{Binding Stat}" />
+                            </Grid>
+                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="8,2" IsVisible="{Binding Note, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                              <TextBlock Classes="caption" Text="{Binding Note}" TextWrapping="Wrap" />
+                              <Button x:Name="ReviewDiffShow" Click="OnShowFile" IsVisible="{Binding HasShow}" Content="{Binding ShowText}" AutomationProperties.Name="{Binding ShowName}" />
+                              <Button x:Name="ReviewDiffOpenFile" Click="OnOpenFile" IsVisible="{Binding HasOpenOnGitHub}" Content="{Binding OpenText}" AutomationProperties.Name="{Binding OpenName}" />
+                            </StackPanel>
+                            <ItemsControl ItemsSource="{Binding Hunks}">
+                              <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="rvm:ReviewDiffHunkViewModel">
+                                  <StackPanel>
+                                    <TextBlock Classes="caption mono subtle" Text="{Binding Header}" Margin="8,2" AutomationProperties.Name="{Binding AutomationName}" />
+                                    <ItemsControl ItemsSource="{Binding Lines}">
+                                      <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="rvm:ReviewDiffLineViewModel">
+                                          <Border x:Name="ReviewDiffLine" Classes="diff-line" Classes.added="{Binding IsAdded}" Classes.removed="{Binding IsRemoved}" Tag="{Binding Key}" Focusable="True" BorderThickness="1" Padding="8,0"
+                                                  GotFocus="OnLineFocused" AutomationProperties.Name="{Binding AutomationName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+                                            <Grid ColumnDefinitions="40,40,16,*" AutomationProperties.AccessibilityView="Raw">
+                                              <TextBlock Classes="caption mono subtle" Text="{Binding OldNumber}" />
+                                              <TextBlock Grid.Column="1" Classes="caption mono subtle" Text="{Binding NewNumber}" />
+                                              <TextBlock Grid.Column="2" Classes="caption mono" Text="{Binding Sign}" />
+                                              <TextBlock Grid.Column="3" Classes="caption mono" Text="{Binding Text}" />
+                                            </Grid>
+                                          </Border>
+                                        </DataTemplate>
+                                      </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                  </StackPanel>
+                                </DataTemplate>
+                              </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                          </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Grid>
+
+      <Border BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0" Padding="0,8">
+        <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+          <TextBlock x:Name="ReviewActionNote" Classes="caption subtle" TextWrapping="Wrap" Text="{Binding ActionNote}" />
+          <TextBlock x:Name="ReviewOwnPr" Grid.Column="1" Classes="caption" Margin="8,0" Text="{Binding OwnPrText}" IsVisible="{Binding OwnPrText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          <Button x:Name="ReviewRequestChanges" Grid.Column="2" Margin="4,0" Click="OnOpenReviewBox" IsEnabled="{Binding RequestChangesEnabled}" Content="Request changes on GitHub ↗" AutomationProperties.Name="Request changes on GitHub" />
+          <Button x:Name="ReviewApprove" Grid.Column="3" Click="OnOpenReviewBox" IsEnabled="{Binding ApproveEnabled}" Content="Approve on GitHub ↗" AutomationProperties.Name="Approve on GitHub" />
+        </Grid>
+      </Border>
+    </StackPanel>
+  </StackPanel>
+</UserControl>
