@@ -12153,6 +12153,8 @@ Aw.Context.Core.Linear.LinearIssueView.UpdatedAt.init -> void
 Aw.Context.Core.Linear.LinearWriteApplied
 Aw.Context.Core.Linear.LinearWriteApplied.Deconstruct(out Aw.Context.Core.Linear.LinearIssueView! Stored) -> void
 Aw.Context.Core.Linear.LinearWriteApplied.Equals(Aw.Context.Core.Linear.LinearWriteApplied? other) -> bool
+Aw.Context.Core.Linear.LinearWriteApplied.FoundOnReread.get -> bool
+Aw.Context.Core.Linear.LinearWriteApplied.FoundOnReread.init -> void
 Aw.Context.Core.Linear.LinearWriteApplied.LinearWriteApplied(Aw.Context.Core.Linear.LinearIssueView! Stored) -> void
 Aw.Context.Core.Linear.LinearWriteApplied.Stored.get -> Aw.Context.Core.Linear.LinearIssueView!
 Aw.Context.Core.Linear.LinearWriteApplied.Stored.init -> void

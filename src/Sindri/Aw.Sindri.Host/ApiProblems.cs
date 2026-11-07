@@ -1,11 +1,12 @@
 using Aw.Kernel;
+using Aw.Kernel.Data;
 using Aw.Sindri.Core;
 
 namespace Aw.Sindri.Host;
 
 /// <summary>
 /// Gives the API's own failures a ProblemDetails body with a catalogue code, so the CLI never reads one as 'not running':
-/// an unhandled exception (a bug in a handler) is logged and answered 500 with SND-API-005, and a request the request
+/// an unhandled exception (a bug in a handler, or a stored row the store can't read, whose detail names its table, column and key) is logged and answered 500 with SND-API-005, and a request the request
 /// delegate refused before any handler ran (a body that isn't JSON of the request's shape, answered 400 with no body) is
 /// answered with SND-CLI-003. It runs after the loopback guard, whose refusals stay bodiless.
 /// </summary>
@@ -24,7 +25,9 @@ internal static partial class ApiProblems
                 LogUnhandled(context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(ApiProblems)), e,
                     context.Request.Method, context.Request.Path.Value ?? string.Empty);
                 await Write(context, SindriErrors.ApiInternal.Code, StatusCodes.Status500InternalServerError,
-                    $"{context.Request.Method} {context.Request.Path} failed with {e.GetType().Name}; the control plane logged it").ConfigureAwait(false);
+                    e is StoredRowException
+                        ? $"{context.Request.Method} {context.Request.Path} failed: {e.Message}"
+                        : $"{context.Request.Method} {context.Request.Path} failed with {e.GetType().Name}; the control plane logged it").ConfigureAwait(false);
                 return;
             }
 

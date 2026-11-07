@@ -55,4 +55,46 @@ public static class SqliteRead
         throw new InvalidDataException(
             $"Column {reader.GetName(ordinal)} holds {value.GetType().Name} '{value}', not a UTC ISO-8601 timestamp.");
     }
+
+    /// <summary>
+    /// Reads TEXT at <paramref name="ordinal"/> and parses it. Any failure (the column isn't text, or <paramref name="parse"/> refuses the value, a Vogen id included) is a <see cref="StoredRowException"/> naming the table,
+    /// the column and the row key, never the value, so a bad stored value is a store fault and not a request one (#2229).
+    /// </summary>
+    /// <param name="reader">A reader on a row.</param>
+    /// <param name="ordinal">The column.</param>
+    /// <param name="parse">Parses the text.</param>
+    /// <param name="table">The table the column belongs to, for the message.</param>
+    /// <param name="rowKey">The row's key when the mapper already read it, for the message.</param>
+    /// <typeparam name="T">The parsed type.</typeparam>
+    /// <returns>The parsed value.</returns>
+    /// <exception cref="StoredRowException">The column can't be read as <typeparamref name="T"/>.</exception>
+    public static T Parse<T>(SqliteDataReader reader, int ordinal, Func<string, T> parse, string? table = null, string? rowKey = null)
+    {
+        ArgumentNullException.ThrowIfNull(reader);
+        ArgumentNullException.ThrowIfNull(parse);
+        try
+        {
+            return parse(reader.GetString(ordinal));
+        }
+        catch (Exception exception) when (exception is not (OperationCanceledException or StoredRowException))   // boundary: whatever a parser throws on a stored value is the store's fault
+        {
+            throw new StoredRowException(table, reader.GetName(ordinal), rowKey, statement: null, exception);
+        }
+    }
+
+    /// <summary>Like <see cref="Parse{T}"/> for a nullable TEXT column: NULL reads as null.</summary>
+    /// <param name="reader">A reader on a row.</param>
+    /// <param name="ordinal">The column.</param>
+    /// <param name="parse">Parses the text.</param>
+    /// <param name="table">The table the column belongs to, for the message.</param>
+    /// <param name="rowKey">The row's key when the mapper already read it, for the message.</param>
+    /// <typeparam name="T">The parsed type.</typeparam>
+    /// <returns>The parsed value, or null for NULL.</returns>
+    /// <exception cref="StoredRowException">The column can't be read as <typeparamref name="T"/>.</exception>
+    public static T? ParseOrNull<T>(SqliteDataReader reader, int ordinal, Func<string, T> parse, string? table = null, string? rowKey = null)
+        where T : struct
+    {
+        ArgumentNullException.ThrowIfNull(reader);
+        return reader.IsDBNull(ordinal) ? null : Parse(reader, ordinal, parse, table, rowKey);
+    }
 }

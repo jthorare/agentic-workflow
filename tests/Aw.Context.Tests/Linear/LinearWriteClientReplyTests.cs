@@ -95,6 +95,30 @@ public sealed class LinearWriteClientReplyTests : IDisposable
     }
 
     [Fact]
+    public async Task A_rate_limit_with_a_reset_header_carries_retry_after_in_round_trip_utc_form()
+    {
+        _handler.Reply(HttpStatusCode.TooManyRequests, "{}");
+        _handler.ResetHeader = "1767261960000";
+
+        var error = (await Update()).Error;
+
+        Assert.Equal("SND-LINEAR-012", error.Code);
+        var extension = Assert.Single(error.Extensions!);
+        Assert.Equal("retryAfter", extension.Key);
+        Assert.Equal("2026-01-01T10:06:00.0000000Z", extension.Value.GetString());
+    }
+
+    [Fact]
+    public async Task A_rate_limit_without_a_reset_header_has_no_retry_after()
+    {
+        _handler.Reply(HttpStatusCode.TooManyRequests, "{}");
+
+        var error = (await Update()).Error;
+
+        Assert.True(error.Extensions is null || error.Extensions.Count == 0);
+    }
+
+    [Fact]
     public async Task Success_false_is_015_even_in_a_200()
     {
         _handler.Reply(HttpStatusCode.OK, """{"data":{"issueUpdate":{"success":false,"issue":null}}}""");
@@ -174,6 +198,8 @@ public sealed class LinearWriteClientReplyTests : IDisposable
 
         public string Body { get; private set; } = "";
 
+        public string? ResetHeader { get; set; }
+
         public void Reply(HttpStatusCode status, string body)
         {
             _status = status;
@@ -184,7 +210,13 @@ public sealed class LinearWriteClientReplyTests : IDisposable
         {
             Authorization = request.Headers.TryGetValues("Authorization", out var values) ? values.Single() : null;
             Body = request.Content is { } content ? await content.ReadAsStringAsync(cancellationToken) : "";
-            return new HttpResponseMessage(_status) { Content = new StringContent(_reply, Encoding.UTF8, "application/json") };
+            var response = new HttpResponseMessage(_status) { Content = new StringContent(_reply, Encoding.UTF8, "application/json") };
+            if (ResetHeader is not null)
+            {
+                response.Headers.Add("x-ratelimit-requests-reset", ResetHeader);
+            }
+
+            return response;
         }
     }
 }
