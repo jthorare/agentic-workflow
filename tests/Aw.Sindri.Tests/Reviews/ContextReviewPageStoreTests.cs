@@ -142,5 +142,7 @@ public sealed class ContextReviewPageStoreTests
         public ValueTask<Result<IReadOnlyList<LibraryRefResolution>>> Resolve(IReadOnlyList<string> refs, string? repo, AudienceScope audience, CancellationToken cancellationToken) => FakeContextEngine.Instance.Resolve(refs, repo, audience, cancellationToken);
 
         public ValueTask<Result<IReadOnlyList<LibraryRootStatus>>> Roots(ContextScope scope, CancellationToken cancellationToken) => FakeContextEngine.Instance.Roots(scope, cancellationToken);
+
+        public ValueTask<Result<IReadOnlyDictionary<string, IReadOnlyList<LibraryDoc>>>> DocsNaming(IReadOnlyList<string> issueKeys, AudienceScope audience, CancellationToken cancellationToken) => FakeContextEngine.Instance.DocsNaming(issueKeys, audience, cancellationToken);
     }
 }
