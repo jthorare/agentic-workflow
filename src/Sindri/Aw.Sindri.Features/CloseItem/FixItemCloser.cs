@@ -18,14 +18,14 @@ internal sealed partial class FixItemCloser(IItemResolver items, IService<CloseI
 {
     public async ValueTask<bool> Close(string item, CancellationToken cancellationToken)
     {
-        if (!ItemRef.TryParse(item, out var reference) || reference.Id is not { } id)
+        if (!ItemRef.TryParse(item, out var reference) || reference.Id is null)
         {
             NotAnItem(item);
             return false;
         }
 
         var closed = await CloseDone(reference, cancellationToken).ConfigureAwait(false);
-        var removed = await files.Remove(id, cancellationToken).ConfigureAwait(false);   // a task whose item can't be closed is stale too
+        var removed = await files.Remove(item, cancellationToken).ConfigureAwait(false);   // a task whose item can't be closed is stale too
         if (removed.IsError)
         {
             TaskNotRemoved(item, removed.Error.Code, removed.Error.Message);
