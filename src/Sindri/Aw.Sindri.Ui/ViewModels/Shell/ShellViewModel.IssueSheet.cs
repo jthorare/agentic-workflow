@@ -11,7 +11,7 @@ internal sealed partial class ShellViewModel
     /// <summary>The Linear issue sheet.</summary>
     public LinearIssueSheetViewModel IssueSheet { get; private set; }
 
-    /// <summary>The write-access banner's Connect asked for Settings → Connections → Linear (the page itself is not built yet; whoever builds it maps this to opening it).</summary>
+    /// <summary>The write-access banner's Connect asked for Settings → Connections → Linear (raised as Settings opens on it).</summary>
     internal event EventHandler? LinearConnectRequested;
 
     /// <summary>True when the sheet's subject is a Linear issue.</summary>
@@ -47,8 +47,7 @@ internal sealed partial class ShellViewModel
         IssueSheet.ConnectRequested += (_, _) =>
         {
             LinearConnectRequested?.Invoke(this, EventArgs.Empty);
-            // Settings has no Connections → Linear row yet (the write-access PR adds it, with the key paste and team ticks); until then Connect opens Settings at the top.
-            GoTo(PageId.Settings);
+            OpenLinearConnection();
         };
         IssueSheet.LeaveConfirmed += (_, _) => CloseSheet();
         Linear.PropertyChanged += (_, e) =>

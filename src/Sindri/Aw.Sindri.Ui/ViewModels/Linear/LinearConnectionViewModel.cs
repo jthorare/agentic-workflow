@@ -1,4 +1,5 @@
 using Aw.Sindri.Ui.Api;
+using Aw.Sindri.Ui.Api.Linear;
 
 namespace Aw.Sindri.Ui.ViewModels.Linear;
 
@@ -6,10 +7,36 @@ namespace Aw.Sindri.Ui.ViewModels.Linear;
 /// Settings → Connections → Linear (Linear hub spec §3, §5.1): the read key and the teams to tick, the write key, and the words for each state of them. A key is held in memory
 /// for one call and cleared once it is sent; it is never put in a log, a summary or an error. An agent session is refused the connection (SND-AUTH-002) and gets no card.
 /// </summary>
-internal sealed class LinearConnectionViewModel : ObservableObject
+internal sealed partial class LinearConnectionViewModel : ObservableObject
 {
+    private const string Resolves = "resolves";
+    private const string ScopeUnknown = "scopeUnknown";
+    private const string Refused = "refused";
+    private const string SessionRefusal = "SND-AUTH-002";
+
+    private static readonly string[] _all =
+    [
+        nameof(IsAvailable), nameof(Summary), nameof(ReadIsSet), nameof(ShowReadPaste), nameof(ShowReadSet), nameof(ReadAccessText), nameof(CanListTeams), nameof(Teams), nameof(ShowTeams),
+        nameof(CanSaveRead), nameof(SaveHint), nameof(ShowWrite), nameof(ShowWritePaste), nameof(ShowWriteSet), nameof(WriteAccessText), nameof(CanCheckWrite), nameof(IsConfirmingRemove),
+        nameof(StatusText), nameof(ErrorText), nameof(HasError), nameof(AttentionText), nameof(HasAttention), nameof(HasWaiting),
+    ];
+
     private readonly Func<Uri?> _url;
     private readonly ISindriApi _api;
+    private LinearConnection? _connection;
+    private string _readKey = string.Empty;
+    private string _writeKey = string.Empty;
+    private string _error = string.Empty;
+    private string _readError = string.Empty;
+    private string _waiting = string.Empty;
+    private bool _replacingRead;
+    private bool _replacingWrite;
+    private bool _lookingUp;
+    private bool _saving;
+    private bool _checkingWrite;
+    private bool _removing;
+    private bool _revealPending;
+    private int _generation;
 
     /// <summary>The card over the API.</summary>
     /// <param name="url">The API's base URL, or null while it isn't known.</param>
@@ -19,138 +46,120 @@ internal sealed class LinearConnectionViewModel : ObservableObject
         (_url, _api) = (url, api);
     }
 
-#pragma warning disable CA1822, MA0041 // why: the view binds these as instance properties; the stubs read no state yet
     /// <summary>The card's copy.</summary>
     public LinearConnectionText Text { get; } = LinearConnectionText.Instance;
 
     /// <summary>False once the API refused this caller the connection (an agent session): the card is not drawn.</summary>
-    public bool IsAvailable => throw new NotSupportedException();
+    public bool IsAvailable { get; private set; } = true;
 
     /// <summary>The line after the card's name: "Not connected", "Reading ENG · read-only" or "Reading ENG · writing ENG".</summary>
-    public string Summary => throw new NotSupportedException();
+    public string Summary => ReadIsSet ? Labels.LinearConnSummary([.. TeamKeys], WriteIsSet) : Labels.LinearConnNotConnected;
 
-    /// <summary>True when a read key is stored and Sindri is not asking for a new one.</summary>
-    public bool ReadIsSet => throw new NotSupportedException();
+    /// <summary>True when a read key is stored and works.</summary>
+    public bool ReadIsSet => string.Equals(_connection?.Read.State, Resolves, StringComparison.Ordinal);
 
-    /// <summary>True when the read key box is drawn.</summary>
-    public bool ShowReadPaste => throw new NotSupportedException();
+    /// <summary>True when the read key box is drawn: no read key works yet, or Replace key was pressed.</summary>
+    public bool ShowReadPaste => !ReadIsSet || _replacingRead;
 
     /// <summary>True when the "Read access: connected" line is drawn.</summary>
-    public bool ShowReadSet => throw new NotSupportedException();
+    public bool ShowReadSet => ReadIsSet && !_replacingRead;
 
     /// <summary>"Read access: connected · checked 10:05".</summary>
-    public string ReadAccessText => throw new NotSupportedException();
+    public string ReadAccessText => Labels.LinearConnAccess("Read", _connection?.Read.CheckedAt);
 
     /// <summary>The pasted read key; empty after it is sent.</summary>
-    public string ReadKey { get; set; } = string.Empty;
+    public string ReadKey
+    {
+        get => _readKey;
+        set
+        {
+            _readKey = value ?? string.Empty;
+            Changed();
+        }
+    }
 
     /// <summary>True when List my teams can be pressed: a key is typed and no call is running.</summary>
-    public bool CanListTeams => throw new NotSupportedException();
+    public bool CanListTeams => _readKey.Length > 0 && !IsBusy;
 
     /// <summary>The team boxes of the last list.</summary>
-    public IReadOnlyList<LinearTeamTickViewModel> Teams => throw new NotSupportedException();
+    public IReadOnlyList<LinearTeamTickViewModel> Teams { get; private set; } = [];
 
     /// <summary>True when the team boxes are drawn.</summary>
-    public bool ShowTeams => throw new NotSupportedException();
+    public bool ShowTeams => Teams.Count > 0;
 
     /// <summary>True when Check and save can be pressed for the read key: a key, at least one team ticked, no call running.</summary>
-    public bool CanSaveRead => throw new NotSupportedException();
+    public bool CanSaveRead => ShowTeams && _readKey.Length > 0 && Teams.Any(t => t.IsTicked) && !IsBusy;
 
     /// <summary>The line beside Check and save.</summary>
-    public string SaveHint => throw new NotSupportedException();
+    public string SaveHint => Teams.Any(t => t.IsTicked) ? Labels.LinearConnSaveHint : Labels.LinearConnTickOne;
 
     /// <summary>True when the write key part is drawn (read access is set).</summary>
-    public bool ShowWrite => throw new NotSupportedException();
+    public bool ShowWrite => ReadIsSet;
 
     /// <summary>True when the write key box is drawn.</summary>
-    public bool ShowWritePaste => throw new NotSupportedException();
+    public bool ShowWritePaste => ReadIsSet && (!WriteIsSet || _replacingWrite);
 
     /// <summary>True when the "Write access: connected" line is drawn.</summary>
-    public bool ShowWriteSet => throw new NotSupportedException();
+    public bool ShowWriteSet => ReadIsSet && WriteIsSet && !_replacingWrite;
 
     /// <summary>"Write access: connected · checked 10:05".</summary>
-    public string WriteAccessText => throw new NotSupportedException();
+    public string WriteAccessText => Labels.LinearConnAccess("Write", _connection?.Write.CheckedAt);
 
     /// <summary>The pasted write key; empty after it is sent.</summary>
-    public string WriteKey { get; set; } = string.Empty;
+    public string WriteKey
+    {
+        get => _writeKey;
+        set
+        {
+            _writeKey = value ?? string.Empty;
+            Changed();
+        }
+    }
 
     /// <summary>True when Check and save can be pressed for the write key.</summary>
-    public bool CanCheckWrite => throw new NotSupportedException();
+    public bool CanCheckWrite => _writeKey.Length > 0 && !IsBusy;
 
     /// <summary>True while Remove key's question is shown.</summary>
-    public bool IsConfirmingRemove => throw new NotSupportedException();
+    public bool IsConfirmingRemove { get; private set; }
 
     /// <summary>The progress line ("Looking up your teams…", "Checking…"); empty otherwise. Its region is always in the tree.</summary>
-    public string StatusText => throw new NotSupportedException();
+    public string StatusText =>
+        _lookingUp ? Labels.LinearConnLookingUp
+        : _checkingWrite ? Labels.LinearConnCheckingWrite([.. TeamKeys])
+        : _removing ? Labels.LinearConnRemoving
+        : _saving ? Labels.LinearConnChecking
+        : string.Empty;
 
     /// <summary>The last refusal or failure; empty otherwise.</summary>
-    public string ErrorText => throw new NotSupportedException();
+    public string ErrorText => _error.Length > 0 ? _error : _readError;
 
     /// <summary>True when there is a refusal to show.</summary>
-    public bool HasError => throw new NotSupportedException();
+    public bool HasError => ErrorText.Length > 0;
 
-    /// <summary>The note that needs a look but is not a refusal (scope unknown, other changes waiting); empty otherwise.</summary>
-    public string AttentionText => throw new NotSupportedException();
+    /// <summary>The note that needs a look but is not a refusal (scope unknown, other changes waiting, a stored key Linear now refuses); empty otherwise.</summary>
+    public string AttentionText =>
+        _waiting.Length > 0 ? _waiting
+        : string.Equals(_connection?.Write.State, ScopeUnknown, StringComparison.Ordinal) ? Labels.LinearConnScopeUnknown
+        : _connection?.Pending == true ? Labels.LinearConnWaiting
+        : string.Equals(_connection?.Read.State, Refused, StringComparison.Ordinal) ? Labels.LinearConnReadStale
+        : string.Equals(_connection?.Write.State, Refused, StringComparison.Ordinal) ? Labels.LinearConnWriteStale
+        : string.Empty;
 
     /// <summary>True when there is a note to show.</summary>
-    public bool HasAttention => throw new NotSupportedException();
+    public bool HasAttention => AttentionText.Length > 0;
 
-    /// <summary>True when the last change waits for the profile approval, so Review changes is drawn.</summary>
-    public bool HasWaiting => throw new NotSupportedException();
+    /// <summary>True when a change waits for the profile approval, so Review changes is drawn.</summary>
+    public bool HasWaiting => _waiting.Length > 0 || _connection?.Pending == true;
+
+    private bool IsBusy => _lookingUp || _saving;
+
+    private bool WriteIsSet => _connection is { } c && (string.Equals(c.Write.State, Resolves, StringComparison.Ordinal) || string.Equals(c.Write.State, ScopeUnknown, StringComparison.Ordinal));
+
+    private IEnumerable<string> TeamKeys => (_connection?.Teams ?? []).Select(t => t.Key);
 
     /// <summary>Raised when the card should be brought into view and given focus, once it has been read.</summary>
     internal event EventHandler? RevealRequested;
 
     /// <summary>Raised when Review changes is pressed.</summary>
     internal event EventHandler? ReviewRequested;
-
-    /// <summary>Reads the connection.</summary>
-    /// <param name="url">The API's base URL.</param>
-    /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>A task that completes when the card is up to date.</returns>
-    internal Task Refresh(Uri url, CancellationToken cancellationToken) =>
-        Task.FromException(new NotSupportedException(_url()?.ToString() + _api + url + cancellationToken.CanBeCanceled));
-
-    /// <summary>Asks for the card to be shown and focused; done as soon as the next read is in (at once when the API is not known).</summary>
-    internal void Reveal()
-    {
-        RevealRequested?.Invoke(this, EventArgs.Empty);
-        throw new NotSupportedException();
-    }
-
-    /// <summary>Review changes was pressed.</summary>
-    internal void RequestReview() => ReviewRequested?.Invoke(this, EventArgs.Empty);
-
-    /// <summary>Reads the teams the pasted read key can see.</summary>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>A task that completes when the answer is shown.</returns>
-    internal Task ListTeams(CancellationToken cancellationToken) => throw new NotSupportedException();
-
-    /// <summary>Stores the read key with the ticked teams.</summary>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>A task that completes when the answer is shown.</returns>
-    internal Task SaveRead(CancellationToken cancellationToken) => throw new NotSupportedException();
-
-    /// <summary>Stores the write key.</summary>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>A task that completes when the answer is shown.</returns>
-    internal Task CheckWrite(CancellationToken cancellationToken) => throw new NotSupportedException();
-
-    /// <summary>Replace key on the read line: the paste box comes back.</summary>
-    internal void ReplaceRead() => throw new NotSupportedException();
-
-    /// <summary>Replace key on the write line: the paste box comes back.</summary>
-    internal void ReplaceWrite() => throw new NotSupportedException();
-
-    /// <summary>Remove key: asks first.</summary>
-    internal void AskRemove() => throw new NotSupportedException();
-
-    /// <summary>Keep it: the question goes away.</summary>
-    internal void KeepWrite() => throw new NotSupportedException();
-
-    /// <summary>Remove, after the question: deletes the write key.</summary>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>A task that completes when the answer is shown.</returns>
-    internal Task RemoveWrite(CancellationToken cancellationToken) => throw new NotSupportedException();
-#pragma warning restore CA1822, MA0041
 }

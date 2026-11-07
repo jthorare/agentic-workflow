@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.ViewModels.Linear;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
@@ -27,7 +26,7 @@ internal sealed partial class ShellViewModel
                 Linear.SetShown(IsWork);
             }
         };
-        Linear.ConnectRequested += (_, _) => GoTo(PageId.Settings);
+        Linear.ConnectRequested += (_, _) => OpenLinearConnection();
     }
 
     // L switches Work between Sindri and Linear from anywhere on the page; C creates an item, and on the Linear view opens the New issue dialog.

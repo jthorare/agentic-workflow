@@ -156,6 +156,7 @@ public sealed partial class SindriApp : Application, IDisposable
         }, shell.Setup, shell.Health.ModelChoice, new ViewModels.Sandbox.SandboxSettingsViewModel(shell.Health.Sandbox), new PickLines(shell.Health.LabelChoice, shell.Health.SurfaceChoice))
         {
             Library = shell.LibraryRoots,
+            LinearConnection = shell.LinearConnection,
         };
         try
         {

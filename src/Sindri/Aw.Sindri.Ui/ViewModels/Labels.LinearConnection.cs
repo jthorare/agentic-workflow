@@ -99,6 +99,15 @@ internal static partial class Labels
     /// <summary>A stored read key that Linear now refuses.</summary>
     internal const string LinearConnReadStale = "Linear refused the stored read key. Paste a new one.";
 
+    /// <summary>A stored write key that Linear now refuses.</summary>
+    internal const string LinearConnWriteStale = "Linear refused the stored write key. Paste a new one.";
+
+    /// <summary>While a read key is stored.</summary>
+    internal const string LinearConnChecking = "Checking…";
+
+    /// <summary>While the write key is removed.</summary>
+    internal const string LinearConnRemoving = "Removing the write key…";
+
     /// <summary>SND-LINEAR-001: the write key is the read key.</summary>
     internal const string LinearConnSameAsRead = "The write key must differ from the read key. Paste a separate one, made with write permission.";
 

@@ -1,0 +1,91 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:lvm="using:Aw.Sindri.Ui.ViewModels.Linear"
+             x:Class="Aw.Sindri.Ui.Views.Linear.LinearConnectionSection"
+             x:DataType="lvm:LinearConnectionViewModel">
+  <!-- Settings → Connections → Linear (Linear hub spec §3, §5.1; owner's mockup Settings.dc.html): one card with the summary after its name, a progress line that is always in the tree (a polite
+       live region, its flag set before any text), the refusals, then the read key with the teams to tick, then the write key once read access is set. Both key boxes are masked. -->
+  <Border x:Name="LinearConnectionCard" AutomationProperties.Name="{Binding Text.Name}" Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}"
+          BorderThickness="1" CornerRadius="{StaticResource Radius.LG}" Padding="{StaticResource Space.MD.Thickness}">
+    <StackPanel Spacing="{StaticResource Space.MD}">
+      <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
+        <TextBlock x:Name="LinearName" Classes="body-strong" Text="{Binding Text.Name}" AutomationProperties.AccessibilityView="Raw" />
+        <TextBlock x:Name="LinearSummary" Classes="caption subtle" Text="{Binding Summary}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Summary}" />
+      </StackPanel>
+
+      <TextBlock x:Name="LinearStatus" Classes="caption" AutomationProperties.LiveSetting="Polite" Text="{Binding StatusText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding StatusText}" />
+      <TextBlock x:Name="LinearError" Classes="caption" AutomationProperties.LiveSetting="Polite" Foreground="{DynamicResource Brush.Error}" Text="{Binding ErrorText}" TextWrapping="Wrap"
+                 IsVisible="{Binding HasError}" AutomationProperties.Name="{Binding ErrorText}" />
+      <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}" IsVisible="{Binding HasAttention}">
+        <TextBlock x:Name="LinearAttention" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding AttentionText}" TextWrapping="Wrap" VerticalAlignment="Center"
+                   AutomationProperties.Name="{Binding AttentionText}" />
+        <Button x:Name="LinearReview" Classes="command-control" Content="{Binding Text.Review}" IsVisible="{Binding HasWaiting}" Click="OnReview" AutomationProperties.Name="{Binding Text.Review}" />
+      </StackPanel>
+
+      <StackPanel Spacing="{StaticResource Space.XS}">
+        <TextBlock Classes="caption subtle" Text="{Binding Text.ReadHeading}" AutomationProperties.AccessibilityView="Raw" />
+        <StackPanel x:Name="LinearReadPaste" Spacing="{StaticResource Space.XS}" IsVisible="{Binding ShowReadPaste}">
+          <TextBlock Classes="caption subtle" Text="{Binding Text.ReadIntro}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text.ReadIntro}" />
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space.SM}">
+            <TextBox x:Name="LinearReadKey" PasswordChar="●" Text="{Binding ReadKey, Mode=TwoWay}" PlaceholderText="{Binding Text.KeyPlaceholder}" KeyDown="OnReadKey"
+                     AutomationProperties.Name="{Binding Text.ReadKeyName}" />
+            <Button x:Name="LinearListTeams" Grid.Column="1" Classes="command-control" Content="{Binding Text.ListTeams}" IsEnabled="{Binding CanListTeams}" Click="OnListTeams"
+                    AutomationProperties.Name="{Binding Text.ListTeams}" />
+          </Grid>
+          <TextBlock Classes="caption subtle" Text="{Binding Text.ReadWhere}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text.ReadWhere}" />
+        </StackPanel>
+        <Grid x:Name="LinearReadSet" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space.SM}" IsVisible="{Binding ShowReadSet}">
+          <TextBlock x:Name="LinearReadAccess" Classes="body" Text="{Binding ReadAccessText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding ReadAccessText}" />
+          <Button x:Name="LinearReadReplace" Grid.Column="1" Classes="command-control" Content="{Binding Text.Replace}" Click="OnReplaceRead" AutomationProperties.Name="{Binding Text.Replace}" />
+        </Grid>
+      </StackPanel>
+
+      <StackPanel x:Name="LinearTeams" Spacing="{StaticResource Space.XS}" IsVisible="{Binding ShowTeams}" AutomationProperties.Name="{Binding Text.TeamsLegend}">
+        <TextBlock Classes="caption subtle" Text="{Binding Text.TeamsLegend}" AutomationProperties.AccessibilityView="Raw" />
+        <ItemsControl ItemsSource="{Binding Teams}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <WrapPanel />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="lvm:LinearTeamTickViewModel">
+              <CheckBox Content="{Binding Name}" IsChecked="{Binding IsTicked, Mode=TwoWay}" Margin="0,0,12,0" AutomationProperties.Name="{Binding AutomationName}" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
+          <Button x:Name="LinearReadSave" Classes="command-control primary" Content="{Binding Text.CheckAndSave}" IsEnabled="{Binding CanSaveRead}" Click="OnSaveRead"
+                  AutomationProperties.Name="{Binding Text.CheckAndSave}" />
+          <TextBlock x:Name="LinearSaveHint" Classes="caption subtle" Text="{Binding SaveHint}" VerticalAlignment="Center" TextWrapping="Wrap" AutomationProperties.Name="{Binding SaveHint}" />
+        </StackPanel>
+      </StackPanel>
+
+      <StackPanel x:Name="LinearWrite" Spacing="{StaticResource Space.XS}" IsVisible="{Binding ShowWrite}">
+        <Border Height="1" Background="{DynamicResource Brush.Hairline}" />
+        <TextBlock Classes="caption subtle" Text="{Binding Text.WriteHeading}" AutomationProperties.AccessibilityView="Raw" />
+        <StackPanel x:Name="LinearWritePaste" Spacing="{StaticResource Space.XS}" IsVisible="{Binding ShowWritePaste}">
+          <TextBlock Classes="caption subtle" Text="{Binding Text.WriteIntro}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text.WriteIntro}" />
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space.SM}">
+            <TextBox x:Name="LinearWriteKey" PasswordChar="●" Text="{Binding WriteKey, Mode=TwoWay}" PlaceholderText="{Binding Text.KeyPlaceholder}" KeyDown="OnWriteKey"
+                     AutomationProperties.Name="{Binding Text.WriteKeyName}" />
+            <Button x:Name="LinearWriteSave" Grid.Column="1" Classes="command-control primary" Content="{Binding Text.CheckAndSave}" IsEnabled="{Binding CanCheckWrite}" Click="OnCheckWrite"
+                    AutomationProperties.Name="{Binding Text.CheckAndSave}" />
+          </Grid>
+        </StackPanel>
+        <Grid x:Name="LinearWriteSet" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space.SM}" IsVisible="{Binding ShowWriteSet}">
+          <TextBlock x:Name="LinearWriteAccess" Classes="body" Text="{Binding WriteAccessText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding WriteAccessText}" />
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+            <Button x:Name="LinearWriteReplace" Classes="command-control" Content="{Binding Text.Replace}" Click="OnReplaceWrite" AutomationProperties.Name="{Binding Text.Replace}" />
+            <Button x:Name="LinearWriteRemove" Classes="command-control" Content="{Binding Text.Remove}" Click="OnAskRemove" AutomationProperties.Name="{Binding Text.Remove}" />
+          </StackPanel>
+        </Grid>
+        <StackPanel x:Name="LinearRemoveAsk" Orientation="Horizontal" Spacing="{StaticResource Space.SM}" IsVisible="{Binding IsConfirmingRemove}" AutomationProperties.Name="{Binding Text.RemoveName}">
+          <TextBlock Classes="caption" Text="{Binding Text.RemoveAsk}" VerticalAlignment="Center" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text.RemoveAsk}" />
+          <Button x:Name="LinearRemoveKeep" Classes="command-control" Content="{Binding Text.Keep}" Click="OnKeepWrite" AutomationProperties.Name="{Binding Text.Keep}" />
+          <Button x:Name="LinearRemoveConfirm" Classes="command-control destructive" Content="{Binding Text.RemoveIt}" Click="OnRemoveWrite" AutomationProperties.Name="{Binding Text.RemoveIt}" />
+        </StackPanel>
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</UserControl>
