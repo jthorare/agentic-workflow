@@ -1,0 +1,175 @@
+{
+  "project": "prj_0000000000000000000000000H",
+  "repos": [
+    "jthorare/agentic-workflow"
+  ],
+  "settings": "sindri",
+  "sharedWith": [
+    "prj_0000000000000000000000000K"
+  ],
+  "entry": {
+    "extends": "default",
+    "panels": [
+      "requiredChecks",
+      "docMap",
+      "ci",
+      "risk",
+      "conversation"
+    ],
+    "groups": [
+      {
+        "name": "Core",
+        "globs": [
+          "src/*/*.Core/**"
+        ]
+      },
+      {
+        "name": "Features",
+        "globs": [
+          "src/*/*.Features/**"
+        ]
+      },
+      {
+        "name": "Tests",
+        "globs": [
+          "tests/**"
+        ]
+      },
+      {
+        "name": "Lockfiles",
+        "globs": [
+          "**/packages.lock.json"
+        ]
+      }
+    ],
+    "collapse": [
+      "**/packages.lock.json",
+      "**/*.g.cs",
+      "**/PublicAPI.*.txt"
+    ],
+    "risky": [
+      {
+        "globs": [
+          ".github/workflows/**"
+        ],
+        "why": "CI definition: runs with repo secrets"
+      },
+      {
+        "globs": [
+          "config/hooks/**"
+        ],
+        "why": "Safety hooks: every session runs them"
+      }
+    ],
+    "checks": [
+      {
+        "id": "recipe-ui-tests",
+        "title": "A recipe change shows the Ui tests ran",
+        "when": [
+          "recipes/**/*.yaml"
+        ],
+        "need": {
+          "ci": "ui-tests"
+        }
+      },
+      {
+        "id": "owner-ran-it",
+        "title": "I ran it myself",
+        "need": {
+          "manual": true
+        }
+      }
+    ]
+  },
+  "resolved": {
+    "name": "sindri",
+    "panels": [
+      "requiredChecks",
+      "docMap",
+      "ci",
+      "risk",
+      "conversation"
+    ],
+    "groups": [
+      {
+        "name": "Core",
+        "globs": [
+          "src/*/*.Core/**"
+        ]
+      },
+      {
+        "name": "Features",
+        "globs": [
+          "src/*/*.Features/**"
+        ]
+      },
+      {
+        "name": "Tests",
+        "globs": [
+          "tests/**"
+        ]
+      },
+      {
+        "name": "Lockfiles",
+        "globs": [
+          "**/packages.lock.json"
+        ]
+      }
+    ],
+    "collapse": [
+      "**/packages.lock.json",
+      "**/*.g.cs",
+      "**/PublicAPI.*.txt"
+    ],
+    "risky": [
+      {
+        "globs": [
+          ".github/workflows/**"
+        ],
+        "why": "CI definition: runs with repo secrets"
+      },
+      {
+        "globs": [
+          "config/hooks/**"
+        ],
+        "why": "Safety hooks: every session runs them"
+      }
+    ],
+    "checks": [
+      {
+        "id": "recipe-ui-tests",
+        "title": "A recipe change shows the Ui tests ran",
+        "when": [
+          "recipes/**/*.yaml"
+        ],
+        "need": {
+          "ci": "ui-tests"
+        }
+      },
+      {
+        "id": "owner-ran-it",
+        "title": "I ran it myself",
+        "need": {
+          "manual": true
+        }
+      }
+    ],
+    "sources": {
+      "panels": "sindri",
+      "groups": "sindri",
+      "collapse": "sindri",
+      "risky": "sindri",
+      "checks": "sindri"
+    }
+  },
+  "hash": "221c8f3e6a76b02c68be447e853eae6439aa46a53e13a7939d313d95bd4817bd",
+  "allPanels": [
+    "requiredChecks",
+    "docMap",
+    "testPlan",
+    "ci",
+    "evidence",
+    "risk",
+    "conversation"
+  ]
+}

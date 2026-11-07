@@ -1,0 +1,8 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-REVIEW-001",
+  "status": 400,
+  "detail": "review.projects[0].settings: 'my settings' isn't a settings name (fix: use letters, digits, '-' and '_')",
+  "field": "settings",
+  "traceId": "<trace>"
+}

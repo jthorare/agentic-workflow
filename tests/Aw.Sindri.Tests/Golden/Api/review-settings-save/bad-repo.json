@@ -1,0 +1,8 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-REVIEW-001",
+  "status": 400,
+  "detail": "review.projects[0].repos[0]: 'agentic-workflow' isn't owner/name (fix: write it as owner/name)",
+  "field": "repos[0]",
+  "traceId": "<trace>"
+}
