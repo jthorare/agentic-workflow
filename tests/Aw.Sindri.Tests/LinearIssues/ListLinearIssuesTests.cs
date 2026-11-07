@@ -393,7 +393,7 @@ public sealed class ListLinearIssuesTests
         var response = await Ask(new ListLinearIssuesRequest(Group: "teams", Team: "eng"));
 
         Expect.Sequence(["ENG-1"], Keys(response));
-        Expect.Equal("ENG", Expect.Only(_facts.Asked).Filter.Team!);
+        Expect.Equal("ENG", Expect.Only(_facts.Asked).Filter.Team);
     }
 
     [Fact]
