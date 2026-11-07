@@ -10,24 +10,28 @@ namespace Aw.Sindri.Ui.ViewModels.Instance;
 /// </summary>
 internal sealed class SkillCardViewModel : ObservableObject
 {
-    internal SkillCardViewModel(SkillCardInput input)
+    /// <param name="input">What the card is drawn from.</param>
+    /// <param name="announced">The headline an earlier card of this state already said; this card keeps quiet about the same words.</param>
+    internal SkillCardViewModel(SkillCardInput input, string announced = "")
     {
         Input = input;
         Voice = new LiveAnnouncer(Labels.SkillCardResting);
+        Announced = Headline.Length > 0 && string.Equals(Headline, announced, StringComparison.Ordinal) ? announced : string.Empty;
     }
 
-    private string _announced = string.Empty;
+    /// <summary>The headline this card has said, or empty.</summary>
+    internal string Announced { get; private set; }
 
     /// <summary>Says the waiting row, once per question. The view calls it after the card is in the tree, so the live region changes text while a reader is watching it; a second call with the same words says nothing.</summary>
     internal void Announce()
     {
         var headline = Headline;
-        if (headline.Length == 0 || string.Equals(headline, _announced, StringComparison.Ordinal))
+        if (headline.Length == 0 || string.Equals(headline, Announced, StringComparison.Ordinal))
         {
             return;
         }
 
-        _announced = headline;
+        Announced = headline;
         Voice.Say(headline);
     }
 
@@ -39,10 +43,10 @@ internal sealed class SkillCardViewModel : ObservableObject
     /// <returns>True for a skill block.</returns>
     internal static bool IsSkillStep(StepDeclaration? step) => step is not null && step.Ref.StartsWith("step.skill.", StringComparison.Ordinal);
 
-    /// <summary>True when the state runs a skill block (the cell names one).</summary>
+    /// <summary>True when the state runs a skill block (the cell names a `step.skill.*` block; an agent step names its own block too).</summary>
     /// <param name="cell">The state's cell.</param>
     /// <returns>True for a skill state.</returns>
-    internal static bool IsSkillState(StateCell cell) => !string.IsNullOrEmpty(cell.Block);
+    internal static bool IsSkillState(StateCell cell) => cell.Block is { } block && block.StartsWith("step.skill.", StringComparison.Ordinal);
 
     private SkillBlockView? Block => Input.Skills.Blocks.FirstOrDefault(b => string.Equals(b.Descriptor, Input.Cell.Block, StringComparison.Ordinal) || string.Equals(b.Id, Input.Cell.Block, StringComparison.Ordinal));
 
@@ -59,12 +63,22 @@ internal sealed class SkillCardViewModel : ObservableObject
             return Input.NeedsYou
                 .Where(r => string.Equals(r.Kind, "skillWaiting", StringComparison.Ordinal))
                 .Select(r => r.OwnerWaiting)
-                .LastOrDefault(w => w is not null
-                    && string.Equals(w.Instance, Input.Address, StringComparison.Ordinal)
-                    && string.Equals(w.State, Input.Cell.State, StringComparison.Ordinal)
-                    && (w.Attempt is null || Input.Run is null || w.Attempt == Input.Run.Attempt));
+                .OfType<OwnerWaitingView>()
+                .Where(IsOfThisRun)
+                .Select((w, index) => (Row: w, Index: index))
+                .OrderBy(x => x.Row.Attempt is { } attempt && attempt == Input.Run?.Attempt ? 1 : 0)   // several rows can match (a stale attempt next to the live one): the latest run's own first,
+                .ThenBy(x => x.Row.Attempt ?? -1)   // else the highest attempt,
+                .ThenBy(x => x.Index)   // else the latest in the feed
+                .Select(x => x.Row)
+                .LastOrDefault();
         }
     }
+
+    // The row names this instance and state, and the run being drawn when both sides have an attempt.
+    private bool IsOfThisRun(OwnerWaitingView w) =>
+        string.Equals(w.Instance, Input.Address, StringComparison.Ordinal)
+        && string.Equals(w.State, Input.Cell.State, StringComparison.Ordinal)
+        && (w.Attempt is null || Input.Run is null || w.Attempt == Input.Run.Attempt);
 
     // A run's state in the card's words: running and passed are themselves, and refused, cancelled and abandoned read as failed (the run's state wins over the glyph).
     private static SkillCardState Ended(string run) =>
@@ -118,7 +132,7 @@ internal sealed class SkillCardViewModel : ObservableObject
     public string Question => Waiting is { } w && Is(w, "question") ? w.Text ?? string.Empty : string.Empty;
 
     /// <summary>What Details shows: the result path and, for a broken file, the parse error; empty when nothing waits.</summary>
-    public string Details => Waiting is { } w ? (w.Detail is { Length: > 0 } detail ? $"{w.ResultPath}\n{detail}" : w.ResultPath) : string.Empty;
+    public string Details => Waiting is { } w && !Is(w, "noResult") ? (w.Detail is { Length: > 0 } detail ? $"{w.ResultPath}\n{detail}" : w.ResultPath) : string.Empty;
 
     /// <summary>The state cell's outcome in words ("needs work"); empty until it has one.</summary>
     public string Outcome => Input.Cell.Outcome is { Length: > 0 } outcome ? SkillWords.Outcome(outcome) : string.Empty;
@@ -131,7 +145,7 @@ internal sealed class SkillCardViewModel : ObservableObject
 
     // The path is the ref's; a produced fact with none but a summary that is an absolute path on one line falls back to the summary (a finished skill's path output is always absolute, spec §3.3).
     private static string PathOf(FactRow fact) =>
-        fact.Ref?.Path ?? (fact.Status == FactStatus.Produced && Path.IsPathRooted(fact.Summary) && !fact.Summary.Contains('\n', StringComparison.Ordinal) ? fact.Summary : string.Empty);
+        fact.Ref?.Path is { } path && Path.IsPathRooted(path) ? path : (fact.Status == FactStatus.Produced && Path.IsPathRooted(fact.Summary) && !fact.Summary.Contains('\n', StringComparison.Ordinal) ? fact.Summary : string.Empty);
 
     /// <summary>"round 2 of 2" when the state is in a loop; empty otherwise.</summary>
     public string RoundLine => Input.Cell.Round is { } round ? Labels.SkillRound(round.N, round.Max) : string.Empty;
@@ -139,13 +153,7 @@ internal sealed class SkillCardViewModel : ObservableObject
     /// <summary>"cost: $0.42", or "cost: not reported".</summary>
     public string CostLine => Input.Cost is { } cost ? Labels.SkillCost(cost) : Labels.SkillCostNotReported;
 
-    /// <summary>True while Take over applies: the block runs or waits on the owner.</summary>
-    public bool CanTakeOver => State is SkillCardState.Running or SkillCardState.WaitingOnYou;
-
 #pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
-    /// <summary>Take over, on a running or waiting block.</summary>
-    public string TakeOverText => Labels.TakeOver;
-
     /// <summary>The heading of the closed details.</summary>
     public string DetailsHeading => Labels.SkillDetails;
 
@@ -179,9 +187,9 @@ internal sealed class SkillCardViewModel : ObservableObject
     internal void Update(SkillCardInput input)
     {
         Input = input;
-        if (Headline.Length == 0 && _announced.Length > 0)
+        if (Headline.Length == 0 && Announced.Length > 0)
         {
-            _announced = string.Empty;
+            Announced = string.Empty;
             Voice.Quiet();   // the question cleared: the next one is announced again
         }
 

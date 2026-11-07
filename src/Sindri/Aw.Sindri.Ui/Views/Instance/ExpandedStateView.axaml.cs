@@ -74,8 +74,6 @@ internal sealed partial class ExpandedStateView : UserControl
         }
     }
 
-    private void OnSkillTakeOver(object? sender, RoutedEventArgs e) => _ = _state?.TakeOverAsync();
-
     private void OnOpenSkillOutput(object? sender, RoutedEventArgs e)
     {
         if (sender is Button { DataContext: SkillOutput output })

@@ -52,7 +52,6 @@
             </ItemsControl>
             <TextBlock x:Name="SkillCardRound" Classes="caption mono" Text="{Binding RoundLine}" IsVisible="{Binding HasRound}" />
             <TextBlock x:Name="SkillCardCost" Classes="caption mono" Text="{Binding CostLine}" />
-            <Button x:Name="SkillCardTakeOver" HorizontalAlignment="Left" Content="{Binding TakeOverText}" IsVisible="{Binding CanTakeOver}" Click="OnSkillTakeOver" />
           </StackPanel>
         </Border>
       </Panel>

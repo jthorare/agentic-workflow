@@ -58,7 +58,7 @@ internal static partial class Labels
     /// <summary>The waiting row's text when the skill changed under a running block.</summary>
     /// <param name="skill">The skill in words.</param>
     /// <returns>The sentence.</returns>
-    internal static string SkillUpdated(string skill) => $"The {skill} skill changed since this run started. Approve again to continue.";
+    internal static string SkillUpdated(string skill) => $"The {skill} skill changed since this run started, so it waits for your approval again.";
 
     /// <summary>The loop round line.</summary>
     /// <param name="n">The round.</param>

@@ -19,7 +19,7 @@ internal sealed partial class ExpandedStateViewModel
             return;
         }
 
-        var card = new SkillCardViewModel(input);
+        var card = new SkillCardViewModel(input, SkillCard?.Announced ?? _announcedBefore);
         if (SkillCard is { } current && string.Equals(current.Headline, card.Headline, StringComparison.Ordinal) && current.State == card.State)
         {
             current.Update(input);
@@ -29,7 +29,9 @@ internal sealed partial class ExpandedStateViewModel
         SkillCard = card;
     }
 
+    private string _announcedBefore = string.Empty;
+
     /// <summary>Carries what the previous expanded state already said, so a swap for a new view model does not announce the same question again.</summary>
-    /// <param name="previous">The expanded state this one replaces.</param>
-    internal void CarrySkillCard(ExpandedStateViewModel previous) => _ = (SkillCard, previous.SkillCard);   // stub: the red row fails until this carries the announced question
+    /// <param name="previous">The expanded state this one replaces, or null when there is none.</param>
+    internal void CarrySkillCard(ExpandedStateViewModel? previous) => _announcedBefore = previous?.SkillCard?.Announced ?? previous?._announcedBefore ?? string.Empty;
 }

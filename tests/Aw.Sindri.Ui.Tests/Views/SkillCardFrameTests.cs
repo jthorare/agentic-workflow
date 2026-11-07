@@ -96,20 +96,6 @@ public sealed class SkillCardFrameTests : FrameHost
     });
 
     [Fact]
-    public Task Take_over_on_the_card_is_the_sheets_own_takeover() => OnUi(async () =>
-    {
-        var detail = FixtureInstances.Detail("incident-loop");
-        var (window, shell) = await Connected();
-        Serve(waiting: true);
-        shell.OpenInstance(detail.Address, detail.Id);
-        await Until(window, () => shell.Instance.Expanded?.HasSkillCard == true);
-
-        Named<Button>(window, "SkillCardTakeOver").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-
-        await Until(window, () => shell.Instance.Expanded!.AttachOutcomeLine.Length > 0);
-    });
-
-    [Fact]
     public Task A_state_that_runs_no_skill_block_draws_no_card() => OnUi(async () =>
     {
         var detail = FixtureInstances.Detail("incident-loop");

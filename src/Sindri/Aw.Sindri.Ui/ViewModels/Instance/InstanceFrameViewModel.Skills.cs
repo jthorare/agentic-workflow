@@ -7,6 +7,7 @@ namespace Aw.Sindri.Ui.ViewModels.Instance;
 internal sealed partial class InstanceFrameViewModel
 {
     private SkillsView? _skills;
+    private IReadOnlyList<NeedsYouRowView> _needsRows = [];
 
     private async Task ReadSkillCard(InstanceDetail detail, int generation, CancellationToken cancellationToken)
     {
@@ -23,14 +24,15 @@ internal sealed partial class InstanceFrameViewModel
         }
 
         var rows = await ReadSkillRows(url, cancellationToken).ConfigureAwait(true);
-        if (generation == _generation && _skills is { } skills)
+        if (generation == _generation)
         {
+            var skills = _skills ?? new SkillsView([]);   // the list failed to read: the card still draws (no sentence) and the next read tries again
             var run = detail.StepRuns?.LastOrDefault(r => string.Equals(r.Step, cell.State, StringComparison.Ordinal));
             expanded.ShowSkillCard(new SkillCardInput(skills, detail.Address, NameOf(cell.State), cell, run, rows, detail.Facts, Cost: null, _launcher, clipboard, clock));
         }
     }
 
-    // The block list is read once (it changes only with a restart); the needs-you rows on every read, so a waiting row shows and clears with the events.
+    // The block list is read until it succeeds once (it changes only with a restart); the needs-you rows on every read, so a waiting row shows and clears with the events.
     private async Task<IReadOnlyList<NeedsYouRowView>> ReadSkillRows(Uri url, CancellationToken cancellationToken)
     {
         if (_skills is null && await api.Skills(url, cancellationToken).ConfigureAwait(true) is { IsSuccess: true, Value: var skills })
@@ -39,6 +41,11 @@ internal sealed partial class InstanceFrameViewModel
         }
 
         var needsYou = await api.NeedsYou(url, cancellationToken).ConfigureAwait(true);
-        return needsYou.IsSuccess ? needsYou.Value.Rows : [];
+        if (needsYou.IsSuccess)
+        {
+            _needsRows = needsYou.Value.Rows;
+        }
+
+        return _needsRows;   // a failed read keeps the last rows, so a waiting card does not flip to running and back
     }
 }

@@ -237,18 +237,6 @@ public sealed class SkillCardViewModelTests
         Assert.Equal(("waiting on you", "The office hours skill changed since this run started, so it waits for your approval again."), (card.StateWord, card.Headline));
     }
 
-    [Theory]
-    [InlineData("Pending", null, false)]
-    [InlineData("Active", "running", true)]
-    [InlineData("Done", "passed", false)]
-    [InlineData("Active", "failed", false)]
-    public void SkillCard_offers_Take_over_while_the_block_runs(string glyph, string? run, bool offered) =>
-        Assert.Equal(offered, new SkillCardViewModel(new SkillCardInput(new SkillsView([Block()]), Address, "Shape the idea", Cell(Enum.Parse<StateGlyph>(glyph)), run is null ? null : Run(run), [], [], Cost: null, _launcher, _clipboard, _clock)).CanTakeOver);
-
-    [Fact]
-    public void SkillCard_offers_Take_over_while_it_waits_on_you() =>
-        Assert.True(Card(waiting: [Waiting()]).CanTakeOver);
-
     [Fact]
     public void SkillCard_says_nothing_until_the_view_announces_and_then_says_the_question_once()
     {
