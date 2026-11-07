@@ -32,7 +32,7 @@ public sealed class SandboxLaunchAttendedCapTests : IDisposable
 
         return new SandboxLaunch(
             new PassThroughSandbox(), new FileSessionCap(Path.Combine(_dir, "sessions.lock"), _scopes), new FixedStages(request),
-            new SandboxLaunchOptions("systemd-run", new BoxFacts(32L * 1024 * 1024 * 1024, 8), _dir, _dir, static () => null));
+            new SandboxLaunchOptions("systemd-run", new BoxFacts(32L * 1024 * 1024 * 1024, 8), _dir, _dir, static () => null), new LaunchSecretRegistry());
     }
 
     [Fact]

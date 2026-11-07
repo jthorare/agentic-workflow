@@ -73,7 +73,8 @@ internal sealed class BubblewrapSandbox(BubblewrapOptions options, ISandboxProce
         ArgumentNullException.ThrowIfNull(plan);
         ArgumentNullException.ThrowIfNull(argv);
         IReadOnlyList<string> init = ["/bin/sh", "-c", EgressInit.Render(plan.Network, options.Socat, EgressInit.InsideLog), EgressInit.Name, .. argv];   // the agent reaches Sindri and the proxy only through the inside forwarders (§3.2)
-        return WrapWith(plan, init, secrets.For(plan.Launch), prepare: true);
+        var values = secrets.For(plan.Launch);
+        return RequiredLaunchSecret.Check(plan, values) is { } missing ? missing : WrapWith(plan, init, values, prepare: true);
     }
 
     /// <inheritdoc />

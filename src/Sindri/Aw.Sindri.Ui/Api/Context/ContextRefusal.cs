@@ -5,7 +5,7 @@ namespace Aw.Sindri.Ui.Api.Context;
 
 /// <summary>
 /// The extra members of a context refusal (RFC 9457 §3.2): SND-CONTEXT-003 lists <c language="text">suggestedAnchors</c> and -037
-/// lists <c language="text">candidates</c>. They ride on the error as extensions, as the API wrote them.
+/// lists <c language="text">candidates</c>; a library refusal (SND-LIB-001) names its <c language="text">field</c>. They ride on the error as extensions, as the API wrote them.
 /// </summary>
 internal static class ContextRefusal
 {
@@ -16,8 +16,8 @@ internal static class ContextRefusal
     internal static Error Extend(Error error, byte[] body)
     {
         ArgumentNullException.ThrowIfNull(error);
-        // a job conflict carries the running job; a review settings refusal carries the request key it is about (field)
-        if (!error.Code.StartsWith("SND-CONTEXT-", StringComparison.Ordinal) && !error.Code.StartsWith("SND-REVIEW-", StringComparison.Ordinal) && !string.Equals(error.Code, "SND-JOB-409", StringComparison.Ordinal))
+        // a job conflict carries the running job; a review settings or library refusal carries the request key it is about (field)
+        if (!error.Code.StartsWith("SND-CONTEXT-", StringComparison.Ordinal) && !error.Code.StartsWith("SND-REVIEW-", StringComparison.Ordinal) && !string.Equals(error.Code, "SND-JOB-409", StringComparison.Ordinal) && !string.Equals(error.Code, "SND-LIB-001", StringComparison.Ordinal))
         {
             return error;
         }

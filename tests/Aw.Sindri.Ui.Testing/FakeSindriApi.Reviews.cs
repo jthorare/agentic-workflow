@@ -42,10 +42,34 @@ internal sealed partial class FakeSindriApi
         return Task.FromResult(Answer<ReviewLoginSaved>(api, ReviewRoutes.Login, ReviewLoginAnswer));
     }
 
-    public Task<Result<LibraryView>> Library(Uri api, CancellationToken cancellationToken)
+    private readonly Queue<TaskCompletionSource> _libraryGates = new();
+
+    /// <summary>Makes the next library read wait for <paramref name="gate"/> (one gate per read, in call order); the read answers what <see cref="LibraryAnswer"/> was when it started.</summary>
+    /// <param name="gate">What the read waits for.</param>
+    public void GateNextLibraryRead(TaskCompletionSource gate)
+    {
+        lock (_gate)
+        {
+            _libraryGates.Enqueue(gate);
+        }
+    }
+
+    public async Task<Result<LibraryView>> Library(Uri api, CancellationToken cancellationToken)
     {
         _ = Interlocked.Increment(ref _libraryCalls);
-        return Task.FromResult(Answer<LibraryView>(api, ReviewRoutes.Library, LibraryAnswer));
+        var answer = LibraryAnswer;
+        TaskCompletionSource? gate;
+        lock (_gate)
+        {
+            _ = _libraryGates.TryDequeue(out gate);
+        }
+
+        if (gate is not null)
+        {
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return Answer<LibraryView>(api, ReviewRoutes.Library, answer);
     }
 
     public async Task<Result<ReviewList>> Reviews(Uri api, CancellationToken cancellationToken)
@@ -57,6 +81,65 @@ internal sealed partial class FakeSindriApi
         }
 
         return Answer<ReviewList>(api, ReviewRoutes.List, ReviewsAnswer);
+    }
+
+    private readonly List<LibraryRootAdd> _rootAdds = [];
+    private readonly List<(string Name, bool Approve)> _rootRemoves = [];
+    private readonly List<LibraryAwSwitch> _awSwitches = [];
+
+    /// <summary>The answer of the three Library writes (add a root, remove one, turn aw on or off): the "added" golden by default.</summary>
+    public RouteAnswer LibraryRootAnswer { get; set; } = RouteAnswer.Api("library-roots", "added");
+
+    /// <summary>When set, a Library write waits for it: the section stays on Sending until the test completes it.</summary>
+    public TaskCompletionSource? LibraryRootGate { get; set; }
+
+    /// <summary>The roots the section asked to add, in order.</summary>
+    public IReadOnlyList<LibraryRootAdd> LibraryRootAdds { get { lock (_gate) { return [.. _rootAdds]; } } }
+
+    /// <summary>The vaults the section asked to remove (name and approve flag), in order.</summary>
+    public IReadOnlyList<(string Name, bool Approve)> LibraryRootRemoves { get { lock (_gate) { return [.. _rootRemoves]; } } }
+
+    /// <summary>The aw on/off switches the section asked for, in order.</summary>
+    public IReadOnlyList<LibraryAwSwitch> LibraryAwSwitches { get { lock (_gate) { return [.. _awSwitches]; } } }
+
+    public async Task<Result<LibraryRootChanged>> AddLibraryRoot(Uri api, LibraryRootAdd add, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _rootAdds.Add(add);
+        }
+
+        return await LibraryWrite(api, ReviewRoutes.LibraryRoots, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<Result<LibraryRootChanged>> RemoveLibraryRoot(Uri api, string name, bool approve, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _rootRemoves.Add((name, approve));
+        }
+
+        return await LibraryWrite(api, ReviewRoutes.LibraryRoot(name, approve), cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<Result<LibraryRootChanged>> SetLibraryAw(Uri api, LibraryAwSwitch change, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _awSwitches.Add(change);
+        }
+
+        return await LibraryWrite(api, ReviewRoutes.LibraryAw, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<Result<LibraryRootChanged>> LibraryWrite(Uri api, string route, CancellationToken cancellationToken)
+    {
+        if (LibraryRootGate is { } gate)
+        {
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return Answer<LibraryRootChanged>(api, route, LibraryRootAnswer);
     }
 
     private readonly List<(string Repo, int Number)> _pageReads = [];

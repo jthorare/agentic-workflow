@@ -17,6 +17,15 @@ internal static class ReviewRoutes
     /// <summary>GET: the design library's state and errors.</summary>
     internal const string Library = "/sindri/library";
 
+    /// <summary>POST: add a vault to the library.</summary>
+    internal const string LibraryRoots = "/sindri/library/roots";
+
+    /// <summary>POST: turn the aw folder on or off.</summary>
+    internal const string LibraryAw = "/sindri/library/aw";
+
+    /// <summary>DELETE: remove the vault <paramref name="name"/>, approving the profile change when <paramref name="approve"/>.</summary>
+    internal static string LibraryRoot(string name, bool approve) => LibraryRoots + "/" + Uri.EscapeDataString(name) + (approve ? "?approve=true" : "?approve=false");
+
     /// <summary>GET: the review page model of one PR (<paramref name="repo"/> is owner/name).</summary>
     internal static string Page(string repo, int number) => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"/sindri/reviews/{repo}/{number}");
 

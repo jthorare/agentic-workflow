@@ -55,4 +55,26 @@ internal partial interface ISindriApi
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>Whether it took effect, SND-REVIEW-001/002 (400, the offending key in the error's <c language="text">field</c>), SND-AUTH-002 (a session), or SND-UI-002/003.</returns>
     public Task<Result<ReviewSettingsSaved>> SaveReviewSettings(Uri api, ReviewSettingsSave request, CancellationToken cancellationToken);
+
+    /// <summary>POST /sindri/library/roots (review page spec §6.3): adds a vault to the library.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="add">The vault.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>Whether it took effect, or SND-LIB-001 (a 400 whose "field" extension names name, path or deny), SND-AUTH-002 (a session), or SND-UI-002/003.</returns>
+    public Task<Result<LibraryRootChanged>> AddLibraryRoot(Uri api, LibraryRootAdd add, CancellationToken cancellationToken);
+
+    /// <summary>DELETE /sindri/library/roots/{name} (review page spec §6.3): removes a vault.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="name">The vault's name.</param>
+    /// <param name="approve">True to approve the profile change when it is the only waiting one.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>Whether it took effect, or SND-LIB-001 (not a vault), a not-found, SND-AUTH-002 (a session), or SND-UI-002/003.</returns>
+    public Task<Result<LibraryRootChanged>> RemoveLibraryRoot(Uri api, string name, bool approve, CancellationToken cancellationToken);
+
+    /// <summary>POST /sindri/library/aw (review page spec §6.3): turns the built-in aw folder on or off.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="change">On or off.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>Whether it took effect, SND-AUTH-002 (a session), or SND-UI-002/003.</returns>
+    public Task<Result<LibraryRootChanged>> SetLibraryAw(Uri api, LibraryAwSwitch change, CancellationToken cancellationToken);
 }
