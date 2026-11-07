@@ -73,4 +73,15 @@ public sealed class SandboxPlanDenyCarveTests
         Assert.Contains(unlisted.Policy.Rules, r => r.Tool == "Read" && r.Pattern == Req.SindriHome + "/**");
         Assert.Contains(outside.Policy.Rules, r => r.Tool == "Read" && r.Pattern == Req.SindriHome + "/**");
     }
+
+    // why: the carve is for the agent CLI's rules only; the sandbox still hides the whole home, so a file made after the listing stays hidden too.
+    [Fact, Trait("Lane", "unit")]
+    public void The_carve_leaves_the_sandbox_mounts_as_they_were()
+    {
+        var unlisted = SandboxPlannerTests.Build(Req.WriteScope);
+        var listed = SandboxPlannerTests.Build(WithListing(Req.WriteScope));
+
+        Assert.Equal(unlisted.Mounts, listed.Mounts);
+        Assert.Contains(listed.Mounts, m => m.Kind == PlanMountKind.Deny && IsInside(Req.SindriHome, m.Path));
+    }
 }
