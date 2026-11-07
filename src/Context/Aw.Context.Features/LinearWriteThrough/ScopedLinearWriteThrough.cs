@@ -1,4 +1,3 @@
-using System.Data.Common;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Linear;
@@ -20,7 +19,7 @@ internal sealed class ScopedLinearWriteThrough(Func<LinearWriteThroughRequest, C
             var stored = await handle(new LinearWriteThroughRequest(scope, issueId, written), CancellationToken.None).ConfigureAwait(false);
             return stored.IsSuccess && stored.Value.Key is not null;
         }
-        catch (Exception e) when (e is DbException or IOException or InvalidOperationException or TimeoutException)   // the write already landed in Linear; the next tick syncs it
+        catch (Exception e) when (e is IOException or InvalidOperationException or TimeoutException)   // the write already landed in Linear; the next tick syncs it
         {
             return false;
         }
