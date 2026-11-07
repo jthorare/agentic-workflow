@@ -26,15 +26,15 @@ internal sealed partial class SindriApiClient
 
     /// <inheritdoc />
     public async Task<Result<LinearWriteOutcome>> LinearChange(Uri api, string key, JsonObject opened, JsonObject set, CancellationToken cancellationToken) =>
-        LinearWriteOutcomes.Of(await Post<LinearChangeApplied>(api, LinearRoutes.Change(key), AwJson.Serialize(new LinearChangeBody(opened, set), Json), cancellationToken).ConfigureAwait(false));
+        LinearWriteOutcomes.Of(await Post<LinearChangeApplied>(api, LinearRoutes.Change(key), AwJson.Serialize(new LinearChangeBody(opened, set), Json), cancellationToken).ConfigureAwait(false), Json);
 
     /// <inheritdoc />
     public async Task<Result<LinearWriteOutcome>> LinearComment(Uri api, string key, string clientId, string body, CancellationToken cancellationToken) =>
-        LinearWriteOutcomes.Of(await Post<LinearCommentPosted>(api, LinearRoutes.Comments(key), AwJson.Serialize(new LinearCommentBody(clientId, body), Json), cancellationToken).ConfigureAwait(false));
+        LinearWriteOutcomes.Of(await Post<LinearCommentPosted>(api, LinearRoutes.Comments(key), AwJson.Serialize(new LinearCommentBody(clientId, body), Json), cancellationToken).ConfigureAwait(false), Json);
 
     /// <inheritdoc />
     public async Task<Result<LinearWriteOutcome>> LinearCreate(Uri api, LinearCreateBody body, CancellationToken cancellationToken) =>
-        LinearWriteOutcomes.Of(await Post<LinearCreated>(api, LinearRoutes.Issues, AwJson.Serialize(body, Json), cancellationToken).ConfigureAwait(false));
+        LinearWriteOutcomes.Of(await Post<LinearCreated>(api, LinearRoutes.Issues, AwJson.Serialize(body, Json), cancellationToken).ConfigureAwait(false), Json);
 
     /// <inheritdoc />
     public Task<Result<LinearConnection>> LinearConnection(Uri api, CancellationToken cancellationToken) =>

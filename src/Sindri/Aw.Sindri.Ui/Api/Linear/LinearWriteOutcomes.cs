@@ -16,16 +16,17 @@ internal static class LinearWriteOutcomes
 
     /// <summary>The applied record, or the outcome the error stands for, or the error.</summary>
     /// <param name="answer">The route's answer read as its applied record.</param>
+    /// <param name="json">The options a 409's conflict members are read with.</param>
     /// <typeparam name="T">The applied record.</typeparam>
     /// <returns>The outcome, or the error that is none.</returns>
-    internal static Result<LinearWriteOutcome> Of<T>(Result<T> answer)
+    internal static Result<LinearWriteOutcome> Of<T>(Result<T> answer, JsonSerializerOptions json)
         where T : LinearWriteOutcome
     {
         ArgumentNullException.ThrowIfNull(answer);
-        return answer.IsSuccess ? answer.Value : OfError(answer.Error);
+        return answer.IsSuccess ? answer.Value : OfError(answer.Error, json);
     }
 
-    private static Result<LinearWriteOutcome> OfError(Error error)
+    private static Result<LinearWriteOutcome> OfError(Error error, JsonSerializerOptions json)
     {
         switch (error.Code)
         {
@@ -45,7 +46,7 @@ internal static class LinearWriteOutcomes
                     members[name] = JsonNode.Parse(value.GetRawText());
                 }
 
-                var conflict = AwJson.Deserialize<LinearChangeConflict>(Encoding.UTF8.GetBytes(members.ToJsonString()), SindriApiClient.Json);
+                var conflict = AwJson.Deserialize<LinearChangeConflict>(Encoding.UTF8.GetBytes(members.ToJsonString()), json);
                 return conflict.IsSuccess ? conflict.Value : error;
             default:
                 return error;

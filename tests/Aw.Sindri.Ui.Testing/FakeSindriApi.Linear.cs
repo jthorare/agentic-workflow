@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using Aw.Kernel;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Linear;
 
 namespace Aw.Sindri.Ui.Testing;
@@ -161,7 +162,7 @@ internal sealed partial class FakeSindriApi
 
         var answer = Next(_linearChangeQueue, LinearChangeAnswer);
         await WaitFor(LinearChangeGate, cancellationToken).ConfigureAwait(false);
-        return LinearWriteOutcomes.Of(Answer<LinearChangeApplied>(api, LinearRoutes.Change(key), answer));
+        return LinearWriteOutcomes.Of(Answer<LinearChangeApplied>(api, LinearRoutes.Change(key), answer), SindriApiClient.Json);
     }
 
     public async Task<Result<LinearWriteOutcome>> LinearComment(Uri api, string key, string clientId, string body, CancellationToken cancellationToken)
@@ -173,7 +174,7 @@ internal sealed partial class FakeSindriApi
 
         var answer = Next(_linearCommentQueue, LinearCommentAnswer);
         await WaitFor(LinearCommentGate, cancellationToken).ConfigureAwait(false);
-        return LinearWriteOutcomes.Of(Answer<LinearCommentPosted>(api, LinearRoutes.Comments(key), answer));
+        return LinearWriteOutcomes.Of(Answer<LinearCommentPosted>(api, LinearRoutes.Comments(key), answer), SindriApiClient.Json);
     }
 
     public async Task<Result<LinearWriteOutcome>> LinearCreate(Uri api, LinearCreateBody body, CancellationToken cancellationToken)
@@ -185,7 +186,7 @@ internal sealed partial class FakeSindriApi
 
         var answer = Next(_linearCreateQueue, LinearCreateAnswer);
         await WaitFor(LinearCreateGate, cancellationToken).ConfigureAwait(false);
-        return LinearWriteOutcomes.Of(Answer<LinearCreated>(api, LinearRoutes.Issues, answer));
+        return LinearWriteOutcomes.Of(Answer<LinearCreated>(api, LinearRoutes.Issues, answer), SindriApiClient.Json);
     }
 
     public Task<Result<LinearConnection>> LinearConnection(Uri api, CancellationToken cancellationToken) =>
