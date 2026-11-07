@@ -23,8 +23,6 @@ internal sealed class SaveLinearConnectionService(ILinearKeyChecks checks, ILine
     public async ValueTask<Result<SaveLinearConnectionResponse>> Handle(SaveLinearConnectionRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(log);
-        ArgumentNullException.ThrowIfNull(clock);
         if (!LinearConnectionRules.IsOwner(callers))
         {
             return LinearConnectionRules.Refused(LinearConnectionRules.ChangeRefusal);
@@ -65,7 +63,13 @@ internal sealed class SaveLinearConnectionService(ILinearKeyChecks checks, ILine
         }
 
         var stored = await store.SaveRead(key, teams, cancellationToken).ConfigureAwait(false);
-        return stored.IsError ? stored.Error : (LinearSavedWriteView?)null;
+        if (stored.IsError)
+        {
+            return stored.Error;
+        }
+
+        _ = await log.RecordRead(new LinearStoredCheck(stored.Value, "resolves", clock.GetUtcNow()), cancellationToken).ConfigureAwait(false);   // why: the key is saved by now, so a check that can't be kept only leaves the page at 'unchecked'
+        return (LinearSavedWriteView?)null;
     }
 
     private async ValueTask<Result<LinearSavedWriteView?>> SaveWrite(string key, CancellationToken cancellationToken)
@@ -82,7 +86,14 @@ internal sealed class SaveLinearConnectionService(ILinearKeyChecks checks, ILine
         }
 
         var stored = await store.SaveWrite(key, cancellationToken).ConfigureAwait(false);
-        return stored.IsError ? stored.Error : new LinearSavedWriteView(scope.Value == LinearKeyScope.Writable ? "resolves" : "scopeUnknown");
+        if (stored.IsError)
+        {
+            return stored.Error;
+        }
+
+        var state = scope.Value == LinearKeyScope.Writable ? "resolves" : "scopeUnknown";
+        _ = await log.RecordWrite(new LinearStoredCheck(stored.Value, state, clock.GetUtcNow()), cancellationToken).ConfigureAwait(false);
+        return new LinearSavedWriteView(state);
     }
 
     private async ValueTask<Result<SaveLinearConnectionResponse>> Settled(LinearSavedWriteView? write, CancellationToken cancellationToken)

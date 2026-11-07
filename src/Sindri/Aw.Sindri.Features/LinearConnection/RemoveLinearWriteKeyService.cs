@@ -16,7 +16,6 @@ internal sealed class RemoveLinearWriteKeyService(ILinearConnectionStore store, 
 {
     public async ValueTask<Result<RemoveLinearWriteKeyResponse>> Handle(RemoveLinearWriteKeyRequest request, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(log);
         if (!LinearConnectionRules.IsOwner(callers))
         {
             return LinearConnectionRules.Refused(LinearConnectionRules.ChangeRefusal);
@@ -28,6 +27,7 @@ internal sealed class RemoveLinearWriteKeyService(ILinearConnectionStore store, 
             return removed.Error;
         }
 
+        _ = await log.ClearWrite(cancellationToken).ConfigureAwait(false);   // why: the pointer is gone, so a check of it must not outlive it
         var approved = await approval.Settle(cancellationToken).ConfigureAwait(false);
         var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
         if (approved.IsError || loaded.IsError)

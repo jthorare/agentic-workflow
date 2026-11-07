@@ -1,14 +1,8 @@
 using System.Text.Json;
-using Aw.Context.Core.Engine;
-using Aw.Context.Core.Facade;
-using Aw.Context.Core.Linear;
-using Aw.Context.Core.Sources;
 using Aw.Context.Testing.Engine;
-using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Profile;
-using Aw.Sindri.Core.Secrets;
 using Aw.Sindri.Features.LinearConnection;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.LinearReads;
@@ -31,8 +25,6 @@ public sealed class LinearConnectionCheckedTests
     private readonly RigClock _clock = new();
     private readonly FakeLinearCheckStore _log = new();
     private readonly FakeLinearConnectionStore _store = new();
-    private readonly CountingSecrets _secrets = new();
-    private readonly CountingWrites _writes = new();
     private readonly InMemoryProfiles _profiles = new();
 
     public LinearConnectionCheckedTests()
@@ -49,7 +41,7 @@ public sealed class LinearConnectionCheckedTests
         return new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), "/home/profile.yaml");
     }
 
-    private ContextLinearConnectionFacts Facts() => new(_profiles, _profiles, FakeContextEngine.Instance, _writes, _secrets, new FakeLinearSideFacts(), _log);
+    private ContextLinearConnectionFacts Facts() => new(_profiles, _profiles, FakeContextEngine.Instance, new FakeLinearSideFacts(), _log);
 
     private SaveLinearConnectionService Save() => new(new FakeLinearKeyChecks().Reading(new LinearConnectionTeamView("e1", "ENG", "Engineering")), _store, new FakeLinearConnectionApproval(), _profiles, _slice.Callers, _log, _clock);
 
@@ -69,8 +61,6 @@ public sealed class LinearConnectionCheckedTests
         _clock.Advance(TimeSpan.FromHours(3));
         var second = (await Facts().Read(Token)).Value;
 
-        Expect.Equal(0, _secrets.Resolves);
-        Expect.Equal(0, _writes.KeyStatusReads);
         Expect.Equal(new LinearKeyStateView("resolves", _savedAt), first.Write);
         Expect.Equal(new LinearKeyStateView("resolves", _savedAt), first.Read);
         Expect.Equal(first, second);
@@ -81,8 +71,6 @@ public sealed class LinearConnectionCheckedTests
     {
         var view = (await Facts().Read(Token)).Value;
 
-        Expect.Equal(0, _secrets.Resolves);
-        Expect.Equal(0, _writes.KeyStatusReads);
         Expect.Equal(new LinearKeyStateView("unchecked", CheckedAt: null), view.Read);
         Expect.Equal(new LinearKeyStateView("unchecked", CheckedAt: null), view.Write);
     }
@@ -109,39 +97,5 @@ public sealed class LinearConnectionCheckedTests
         var stored = (await _log.Read(Token)).Value;
         Expect.True(stored.Write is null);
         Expect.True(stored.Read is not null);
-    }
-
-    private sealed class CountingSecrets : ISecretPointers
-    {
-        public int Resolves { get; private set; }
-
-        public Result<string> Resolve(SecretPointer secretPointer)
-        {
-            Resolves++;
-            return "lin_api_key";
-        }
-    }
-
-    private sealed class CountingWrites : IContextLinearWrites
-    {
-        public int KeyStatusReads { get; private set; }
-
-        public ValueTask<Result<LinearWriteKeyStatus>> WriteKeyStatus(ContextScope scope, CancellationToken cancellationToken)
-        {
-            KeyStatusReads++;
-            return ValueTask.FromResult<Result<LinearWriteKeyStatus>>(new LinearWriteKeyResolves());
-        }
-
-        public ValueTask<Result<LinearIssueView>> Live(LinearIssueKey key, ContextScope scope, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask<Result<LinearWriteOutcome>> Create(LinearIssueDraft draft, LinearClientId clientId, ContextScope scope, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask<Result<LinearWriteOutcome>> Change(LinearIssueKey key, LinearIssueChange change, ContextScope scope, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask<Result<LinearWriteOutcome>> Comment(LinearIssueKey key, string body, LinearClientId clientId, ContextScope scope, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask<Result<LinearWriteOutcome>> EditComment(LinearIssueKey key, ExternalId commentId, string body, ContextScope scope, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask<Result<LinearWriteOutcome>> Attach(LinearIssueKey key, Uri url, string title, ContextScope scope, CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 }
