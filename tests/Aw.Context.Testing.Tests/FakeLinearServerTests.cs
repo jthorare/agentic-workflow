@@ -177,7 +177,7 @@ public sealed class FakeLinearServerTests
     }
 
     [Theory]
-    [InlineData("{ issues { nodes { identifier estimate } } }", "estimate")]
+    [InlineData("{ issues { nodes { identifier branchName } } }", "branchName")]
     [InlineData("{ issues { nodes { identifier team } } }", "team")]
     [InlineData("{ issues { nodes { identifier { id } } } }", "scalar")]
     [InlineData("{ issues }", "subfields")]
