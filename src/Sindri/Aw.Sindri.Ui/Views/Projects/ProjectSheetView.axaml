@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:pvm="using:Aw.Sindri.Ui.ViewModels.Projects"
              xmlns:wf="using:Aw.Sindri.Ui.Api.Workflow"
+             xmlns:views="using:Aw.Sindri.Ui.Views.Projects"
              x:Class="Aw.Sindri.Ui.Views.Projects.ProjectSheetView"
              x:DataType="pvm:ProjectSheetViewModel">
   <!-- A project card's sheet (projects page spec §3.2) inside the shell's sheet: every field of the card, its links, then the actions its origin allows. Remove asks inline
@@ -98,6 +99,8 @@
           </ItemsControl.ItemTemplate>
         </ItemsControl>
       </StackPanel>
+
+      <views:ReviewSettingsSection x:Name="ProjectReviewSettings" DataContext="{Binding ReviewSettings}" />
 
       <SelectableTextBlock x:Name="ProjectLinkLaunchFailed" Classes="caption" Text="{Binding LinkLaunch.FailedText}" IsVisible="{Binding LinkLaunch.Failed}" TextWrapping="Wrap" AutomationProperties.Name="{Binding LinkLaunch.FailedText}" />
 

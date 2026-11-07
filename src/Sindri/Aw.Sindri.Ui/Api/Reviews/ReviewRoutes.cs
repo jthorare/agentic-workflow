@@ -8,6 +8,12 @@ internal static class ReviewRoutes
     /// <summary>POST: save review.login.</summary>
     internal const string Login = "/sindri/reviews/login";
 
+    /// <summary>GET (?project=) and PUT: one project's review settings (Ph9).</summary>
+    internal const string Settings = "/sindri/reviews/settings";
+
+    /// <summary>GET: the settings of <paramref name="project"/> (an id, url-escaped into the query).</summary>
+    internal static string SettingsOf(string project) => Settings + "?project=" + Uri.EscapeDataString(project);
+
     /// <summary>GET: the design library's state and errors.</summary>
     internal const string Library = "/sindri/library";
 

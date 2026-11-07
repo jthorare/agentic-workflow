@@ -190,6 +190,7 @@ internal sealed partial class ProjectSheetViewModel(ISindriApi api, ILauncher la
 
         _generation++;
         Clear();
+        ReviewSettings.Clear();
         Id = id;
         Phase = FramePhase.Loading;
     }
@@ -273,6 +274,9 @@ internal sealed partial class ProjectSheetViewModel(ISindriApi api, ILauncher la
     }
 
     private ISindriApi Api { get; } = api;
+
+    /// <summary>The project's Review settings (review page spec §7, Ph9): read with the card, edited and approved in place.</summary>
+    public ReviewSettingsViewModel ReviewSettings { get; } = new(api);
 
     /// <summary>Opens a link of the sheet and keeps the system's answer; <see cref="LinkLaunch.FailedText"/> is the line the sheet shows.</summary>
     public LinkLaunch LinkLaunch { get; } = new LinkLaunch(launcher);

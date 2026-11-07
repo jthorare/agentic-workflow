@@ -1,0 +1,8 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-REVIEW-001",
+  "status": 400,
+  "detail": "review.settings.sindri.groups[2].globs: '[' isn't a glob (fix: close the bracket or escape it)",
+  "field": "entry.groups[2].globs",
+  "traceId": "<trace>"
+}

@@ -26,6 +26,7 @@ internal sealed partial class ProjectSheetViewModel
         if (answer.IsSuccess)
         {
             Draw(answer.Value);
+            await ReviewSettings.Open(url, answer.Value.Project.Id, cancellationToken).ConfigureAwait(true);
         }
         else
         {

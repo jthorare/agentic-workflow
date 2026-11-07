@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
+  "title": "SND-AUTH-002",
+  "status": 403,
+  "detail": "review settings are the owner's to change; a session can't save them (fix: edit them on the project sheet)",
+  "traceId": "<trace>"
+}
