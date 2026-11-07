@@ -121,9 +121,9 @@ public sealed class LinearIssueEditOutcomeTests
         await sheet.Save(Token);
 
         sheet.UseLinearsForAll();
+        Assert.Equal(("Medium", false), (_f.Field("Priority").Selected?.Name, sheet.HasConflict));
         await sheet.Save(Token);
 
-        Assert.Equal(("Medium", false), (_f.Field("Priority").Selected?.Name, sheet.HasConflict));
         Assert.Equal(2, _f.Server.LinearChanges.Count);
         Assert.Equal("""{"assigneeId":"00000000-0000-4000-8000-0000000000a2"}""", _f.Server.LinearChanges[1].Body.Set.ToJsonString());
         Assert.False(_f.Server.LinearChanges[1].Body.Set.ContainsKey("stateId") || _f.Server.LinearChanges[1].Body.Opened.ContainsKey("stateId"));

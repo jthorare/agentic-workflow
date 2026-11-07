@@ -111,6 +111,7 @@ public sealed class LinearIssueEditTests
         await sheet.Save(Token);
         Assert.Equal("""{"labelIds":["00000000-0000-4000-8000-0000000000d1"]}""", _f.Sent.Body.Set.ToJsonString());
 
+        _f.Tick("api", on: false);
         _f.Tick("bug", on: false);
         await sheet.Save(Token);
         Assert.Equal("""{"labelIds":[]}""", _f.Server.LinearChanges[^1].Body.Set.ToJsonString());

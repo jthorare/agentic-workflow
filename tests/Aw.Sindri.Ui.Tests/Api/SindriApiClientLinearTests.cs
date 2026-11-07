@@ -207,7 +207,7 @@ public sealed class SindriApiClientLinearTests
     {
         var issue = (await Client(Ok("linear-issue", scenario)).LinearIssue(_api, "ENG-12", Token)).Value;
 
-        Assert.Equal((allowed, code), (issue.Write.Allowed, issue.Write.Code));
+        Assert.Equal((allowed, code), (issue.Write?.Allowed, issue.Write?.Code));
     }
 
     [Fact]
@@ -233,7 +233,7 @@ public sealed class SindriApiClientLinearTests
 
         var applied = Assert.IsType<LinearChangeApplied>(result.Value);
         Assert.Equal(("applied", warning, already, "ENG-12", "In Review"), (applied.Outcome, applied.Warning, applied.AlreadyApplied, applied.Issue.Key, applied.Issue.State.Name));
-        Assert.True(applied.Issue.Write.Allowed);
+        Assert.Equal(true, applied.Issue.Write?.Allowed);
     }
 
     [Fact]

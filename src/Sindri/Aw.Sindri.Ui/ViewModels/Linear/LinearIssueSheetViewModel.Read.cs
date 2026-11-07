@@ -25,7 +25,13 @@ internal sealed partial class LinearIssueSheetViewModel
 
         if (answer.IsSuccess)
         {
-            Draw(answer.Value);
+            // The owner's edits, a save out or a 409 on screen stay as they are: a refresh must not replace what they are typing.
+            if (!(IsShown && (HasChanges || IsLocked || HasConflict)))
+            {
+                Draw(answer.Value, keepEdits: false);
+            }
+
+            await LoadLookups(answer.Value, cancellationToken).ConfigureAwait(true);
         }
         else
         {
@@ -33,7 +39,7 @@ internal sealed partial class LinearIssueSheetViewModel
         }
     }
 
-    private void Draw(LinearIssueOne issue)
+    private void Draw(LinearIssueOne issue, bool keepEdits)
     {
         Title = issue.Title;
         Fields =
@@ -52,6 +58,7 @@ internal sealed partial class LinearIssueSheetViewModel
         Comments = [.. issue.Comments.Select(c => new LinearCommentViewModel(c.Author.Name, Labels.AgoWords(now - c.CreatedAt), LinearText.Lines(c.Body, Open), c.Sindri))];
         RemovedNote = issue.Removed ? Labels.LinearIssueRemoved(issue.Key) : string.Empty;
         (ProblemText, Note) = (string.Empty, string.Empty);
+        DrawEdit(issue, keepEdits);
         Phase = FramePhase.Shown;
     }
 
@@ -88,6 +95,7 @@ internal sealed partial class LinearIssueSheetViewModel
         (Title, ProblemText, Note, RemovedNote, PrText) = (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
         (Fields, Description, Comments, _pr, CanOpenPr) = ([], [], [], null, false);
         _linearAddress = null;
+        ClearEdit();
     }
 
     // The 404's url (Ph3 reads contract (e)): https on linear.app or a subdomain of it, judged by the punycode host so a
