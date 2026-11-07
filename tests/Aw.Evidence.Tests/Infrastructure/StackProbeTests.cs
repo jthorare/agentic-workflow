@@ -33,8 +33,9 @@ public sealed class StackProbeTests : IDisposable
     public async Task A_page_nobody_serves_is_a_probe_failure()
     {
         using var probe = new ProcessStackProbe("docker", _db);
+        using var closed = LocalHttpServer.ClosedPort(out var port);
 
-        var title = await probe.PageTitleAsync(new Uri("http://127.0.0.1:" + LocalHttpServer.FreePort().ToString(CultureInfo.InvariantCulture) + "/"), TestContext.Current.CancellationToken);
+        var title = await probe.PageTitleAsync(new Uri("http://127.0.0.1:" + port.ToString(CultureInfo.InvariantCulture) + "/"), TestContext.Current.CancellationToken);
 
         Assert.Equal(EvidenceErrors.ProbeFailed.Code, title.Error.Code);
     }
