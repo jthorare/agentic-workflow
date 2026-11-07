@@ -159,6 +159,11 @@ internal static partial class Labels
     internal static string LinearConnAccess(string kind, DateTimeOffset? checkedAt) =>
         checkedAt is { } at ? $"{kind} access: connected · checked {at.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture)}" : $"{kind} access: connected";
 
+    /// <summary>A key line when a pointer is set but no save has checked the key.</summary>
+    /// <param name="kind">"Read" or "Write".</param>
+    /// <returns>"Read access: Not checked yet. Save to check.".</returns>
+    internal static string LinearConnNotChecked(string kind) => kind[..0];
+
     /// <summary>While a write key is checked.</summary>
     /// <param name="teams">The team keys it has to read.</param>
     /// <returns>"Checking… (can this key read ENG and OPS, and can it write?)".</returns>
