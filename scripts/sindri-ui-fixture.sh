@@ -934,7 +934,7 @@ projects_issues() {
 projects_pr() {
   local key="github:pr/$1/$2"
   projects_sql+="INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at)
-      VALUES ('$key', 'github', 'pr', '$1', '$PROJECTS_AUDIENCE', '$4', 'https://github.com/$1/pull/$2', '$PROJECTS_VIEWER_NAME', 'open', 'open', $(projects_ts '-3 days'), $(projects_ts '-1 days'), NULL, 'fixture', 'fixture-pr-$2', 'fixture', 0, NULL, $(projects_ts '+0 seconds'));
+      VALUES ('$key', 'github', 'pr', NULL, '$PROJECTS_AUDIENCE', '$4', 'https://github.com/$1/pull/$2', '$PROJECTS_VIEWER_NAME', 'open', 'open', $(projects_ts '-3 days'), $(projects_ts '-1 days'), NULL, 'fixture', 'fixture-pr-$2', 'fixture', 0, NULL, $(projects_ts '+0 seconds'));
 INSERT INTO record_link (from_key, to_ref, to_key, kind, title) VALUES ('linear:issue/fx-checkout-$3', '$key', '$key', 'relates', '$4');
 "
 }
@@ -1103,7 +1103,7 @@ reviews_up() {
   key="github:pr/$REVIEWS_SLUG/$number"
   sql_on "$db" "DELETE FROM source_record WHERE text_hash LIKE 'fixture-review-%';
 INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at, pull_facts)
-  VALUES ('$key', 'github', 'pr', '$REVIEWS_SLUG', '$PROJECTS_AUDIENCE', 'Add a retry budget to sync', '$link', '$PROJECTS_VIEWER', 'open', 'open', $(projects_ts '-2 days'), $(projects_ts '-3 hours'), NULL, 'fixture', 'fixture-review-$number', 'fixture', 0, NULL, $(projects_ts '+0 seconds'),
+  VALUES ('$key', 'github', 'pr', NULL, '$PROJECTS_AUDIENCE', 'Add a retry budget to sync', '$link', '$PROJECTS_VIEWER', 'open', 'open', $(projects_ts '-2 days'), $(projects_ts '-3 hours'), NULL, 'fixture', 'fixture-review-$number', 'fixture', 0, NULL, $(projects_ts '+0 seconds'),
     '{\"requestedReviewers\":[\"reviewer-kai\"],\"headSha\":\"$REVIEWS_HEAD_SHA\",\"reviews\":[]}');
 INSERT OR REPLACE INTO source_cursor (source, repo, cursor, last_sync, last_error, phase) VALUES ('github', 'records', NULL, $(projects_ts '-3 minutes'), NULL, 'incremental');
 UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;" >/dev/null || die "reviews: can't write the PR record to $db"

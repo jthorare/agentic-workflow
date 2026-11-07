@@ -119,6 +119,8 @@ check "one open GitHub PR record with the forge's number" "$(sqlq "$PJDB" "SELEC
   "github:pr/acme/api/7 https://github.com/acme/api/pull/7 fx-viewer open linear:SPL"
 check "the record carries its pull facts (head sha)" "$(sqlq "$PJDB" "SELECT pull_facts FROM source_record WHERE key = 'github:pr/acme/api/7'")" \
   '{"requestedReviewers":["reviewer-kai"],"headSha":"1f2e3d4c5b6a79880011223344556677889900aa","reviews":[]}'
+# why: source_record.repo is a profile repo name (ContextRepoName) or NULL; the slug 'acme/api' made every read of the row throw (SND-CLI-003 on the page)
+check "the record has no profile repo (repo is NULL, as GitHub sync stores it)" "$(sqlq "$PJDB" "SELECT COUNT(*) FROM source_record WHERE key = 'github:pr/acme/api/7' AND repo IS NULL")" "1"
 check "a github cursor row exists" "$(sqlq "$PJDB" "SELECT phase FROM source_cursor WHERE source = 'github' AND repo = 'records'")" "incremental"
 check "the store epoch moved" "$(sqlq "$PJDB" "SELECT record_stamp FROM store_epoch WHERE id = 1")" "1"
 
