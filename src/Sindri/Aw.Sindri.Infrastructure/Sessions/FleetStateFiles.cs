@@ -1,4 +1,5 @@
 using Aw.Kernel;
+using Aw.Kernel.Data;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
@@ -66,7 +67,7 @@ internal sealed class FleetStateFiles(string root, IReadOnlyList<AgentId> provid
 
     private static bool Safe(string directory) =>
         File.Exists(Path.Combine(directory, Marker))
-        && (OperatingSystem.IsWindows() || File.GetUnixFileMode(directory) == (UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute));
+        && (OperatingSystem.IsWindows() || FileModes.TryRead(directory) == (UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute));
 
     private static bool InsideGitWorkTree(string path)
     {
