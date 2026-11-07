@@ -87,7 +87,7 @@ public sealed class ContextReviewFactsTests
         var snapshot = (await Facts().Read(Ct)).Value;
 
         Assert.Equal(4, snapshot.Pulls.Count);
-        Assert.True(_context.ClaimsCalls <= 1, $"#2154: the claims of 4 open PRs took {_context.ClaimsCalls.ToString(System.Globalization.CultureInfo.InvariantCulture)} library calls, expected one batched call");
+        Assert.True(_context.ClaimsCalls == 1, $"#2154: the claims of 4 open PRs took {_context.ClaimsCalls.ToString(System.Globalization.CultureInfo.InvariantCulture)} library calls, expected one batched call");
     }
 
     [Fact]
@@ -162,8 +162,11 @@ public sealed class ContextReviewFactsTests
         /// <summary>How many times the facts asked for a PR's claims (#2154).</summary>
         public int ClaimsCalls { get; private set; }
 
-        public ValueTask<Result<IReadOnlyDictionary<RecordKey, IReadOnlyList<LibraryClaim>>>> Claims(IReadOnlyList<RecordKey> prKeys, AudienceScope audience, CancellationToken cancellationToken) =>
-            ValueTask.FromResult(Results.Success<IReadOnlyDictionary<RecordKey, IReadOnlyList<LibraryClaim>>>(new Dictionary<RecordKey, IReadOnlyList<LibraryClaim>>()));
+        public ValueTask<Result<IReadOnlyDictionary<RecordKey, IReadOnlyList<LibraryClaim>>>> Claims(IReadOnlyList<RecordKey> prKeys, AudienceScope audience, CancellationToken cancellationToken)
+        {
+            ClaimsCalls++;
+            return ValueTask.FromResult(Results.Success<IReadOnlyDictionary<RecordKey, IReadOnlyList<LibraryClaim>>>(new Dictionary<RecordKey, IReadOnlyList<LibraryClaim>>()));
+        }
 
         public ValueTask<Result<IReadOnlyList<LibraryClaim>>> Claims(RecordKey prKey, AudienceScope audience, CancellationToken cancellationToken)
         {
