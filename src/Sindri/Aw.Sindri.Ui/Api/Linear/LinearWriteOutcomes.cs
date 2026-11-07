@@ -1,7 +1,5 @@
 using System.Globalization;
-using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Kernel.Json;
 
@@ -28,29 +26,39 @@ internal static class LinearWriteOutcomes
 
     private static Result<LinearWriteOutcome> OfError(Error error, JsonSerializerOptions json)
     {
-        switch (error.Code)
+        // why: a 429 whose retryAfter is missing or doesn't parse has no time to show, so it stays the plain error (its own banner text) instead of an outcome
+        return error.Code switch
         {
-            case Unknown:
-                return new LinearWriteUnknown(Text(error, "clientId"));
-            case RateLimited when Text(error, "retryAfter") is { } at && DateTimeOffset.TryParse(at, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var retryAfter):
-                return new LinearWriteRateLimited(retryAfter);
-            case Conflict:
-                if (error.Extensions is null)
-                {
-                    return error;
-                }
+            Unknown => new LinearWriteUnknown(Text(error, "clientId")),
+            RateLimited when Text(error, "retryAfter") is { } at && DateTimeOffset.TryParse(at, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var retryAfter) => new LinearWriteRateLimited(retryAfter),
+            Conflict => ConflictOf(error, json),
+            _ => error,
+        };
+    }
 
-                var members = new JsonObject();
-                foreach (var (name, value) in error.Extensions)
-                {
-                    members[name] = JsonNode.Parse(value.GetRawText());
-                }
-
-                var conflict = AwJson.Deserialize<LinearChangeConflict>(Encoding.UTF8.GetBytes(members.ToJsonString()), json);
-                return conflict.IsSuccess ? conflict.Value : error;
-            default:
-                return error;
+    private static Result<LinearWriteOutcome> ConflictOf(Error error, JsonSerializerOptions json)
+    {
+        if (error.Extensions is null)
+        {
+            return error;
         }
+
+        // The members are written straight from their elements (no node is parsed and printed again).
+        using var members = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(members))
+        {
+            writer.WriteStartObject();
+            foreach (var (name, value) in error.Extensions)
+            {
+                writer.WritePropertyName(name);
+                value.WriteTo(writer);
+            }
+
+            writer.WriteEndObject();
+        }
+
+        var conflict = AwJson.Deserialize<LinearChangeConflict>(members.ToArray(), json);
+        return conflict.IsSuccess ? conflict.Value : error;
     }
 
     private static string? Text(Error error, string name) =>

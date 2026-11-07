@@ -1,3 +1,4 @@
+using Aw.Context.Core;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Pages;
 using Aw.Kernel;
@@ -39,5 +40,5 @@ internal sealed class CheckPagesService(IGraphStore store) : IService<CheckPages
     }
 
     private static MapHealth Fail(Error error) =>
-        new(PageHealth.Name, MapHealthState.Fail, $"{error.Code}: {error.Message}", "check $AW_SINDRI_HOME/context permissions; never delete context.db");
+        new(PageHealth.Name, MapHealthState.Fail, ContextErrors.DoctorDetail(error), "check $AW_SINDRI_HOME/context permissions; never delete context.db");
 }

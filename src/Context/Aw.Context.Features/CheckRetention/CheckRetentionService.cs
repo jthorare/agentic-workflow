@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Context.Core;
 using Aw.Context.Core.Eval.Backtest;
 using Aw.Context.Core.Map;
 using Aw.Kernel;
@@ -18,7 +19,7 @@ internal sealed class CheckRetentionService(IGraphStore store, IExportStore expo
         if (files.IsError || versions.IsError)
         {
             var error = files.IsError ? files.Error : versions.Error;
-            return new MapHealth(Name, MapHealthState.Fail, $"{error.Code}: {error.Message}", "check $AW_SINDRI_HOME/context permissions");
+            return new MapHealth(Name, MapHealthState.Fail, ContextErrors.DoctorDetail(error), "check $AW_SINDRI_HOME/context permissions");
         }
 
         var expired = MapRetention.ExpiredExports(files.Value, clock.GetUtcNow()).Count;
