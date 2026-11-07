@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+  "title": "SND-LINEAR-005",
+  "status": 404,
+  "detail": "OPS-40 isn't stored: it isn't synced yet, or it's outside the teams Sindri reads (fix: Open in Linear, or wait for the next sync)",
+  "traceId": "<trace>"
+}

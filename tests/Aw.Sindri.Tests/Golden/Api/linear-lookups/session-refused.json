@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
+  "title": "SND-AUTH-002",
+  "status": 403,
+  "detail": "Linear's teams, states and members are the owner's to read; a session reads issues through context_* (fix: use the app)",
+  "traceId": "<trace>"
+}

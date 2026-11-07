@@ -1,0 +1,17 @@
+{
+  "connected": true,
+  "viewer": {
+    "id": "00000000-0000-4000-8000-0000000000a1",
+    "name": "Joi Example"
+  },
+  "feed": {
+    "state": "ok",
+    "lastSyncedAt": "2025-12-31T23:58:00.0000000Z",
+    "code": null,
+    "reread": null
+  },
+  "group": "mine",
+  "rows": [],
+  "next": null,
+  "total": 0
+}
