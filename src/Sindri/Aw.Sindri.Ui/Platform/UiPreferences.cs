@@ -14,6 +14,8 @@ namespace Aw.Sindri.Ui.Platform;
 /// <param name="TextScale">The type ramp's scale (<see cref="MinTextScale"/>–<see cref="MaxTextScale"/>).</param>
 /// <param name="ReduceMotion">The in-app Reduce motion switch: forces the reduced path whatever the OS says.</param>
 /// <param name="SeenPages">Per concept ("&lt;repo&gt;/&lt;concept id&gt;"), the suggested page keys already seen (pages spec §3.5), at most <see cref="MaxSeenConcepts"/> concepts of <see cref="MaxSeenPagesPerConcept"/> keys.</param>
+/// <param name="WorkView">The Work page's last pick on the Sindri / Linear switch: <see cref="SindriView"/> or <see cref="LinearView"/> (Linear hub spec §3).</param>
+/// <param name="LinearSince">The marker the since-you-looked strip last dismissed; null before the first Dismiss (Linear hub spec §3).</param>
 internal sealed record UiPreferences(
     int Version,
     WindowBounds? Window,
@@ -23,8 +25,16 @@ internal sealed record UiPreferences(
     IReadOnlyList<string> PaletteHistory,
     double TextScale,
     bool ReduceMotion,
-    IReadOnlyDictionary<string, IReadOnlyList<string>> SeenPages)
+    IReadOnlyDictionary<string, IReadOnlyList<string>> SeenPages,
+    string WorkView = UiPreferences.SindriView,
+    string? LinearSince = null)
 {
+    /// <summary>The Work page's own view: the queue.</summary>
+    internal const string SindriView = "Sindri";
+
+    /// <summary>The Work page's Linear view.</summary>
+    internal const string LinearView = "Linear";
+
     /// <summary>The format this build writes and reads.</summary>
     internal const int CurrentVersion = 1;
 
@@ -87,7 +97,9 @@ internal sealed record UiPreferences(
         Newest(PaletteHistory, MaxPaletteHistory),
         double.IsFinite(TextScale) ? Math.Clamp(TextScale, MinTextScale, MaxTextScale) : Defaults.TextScale,
         ReduceMotion,
-        ClampSeenPages(SeenPages));
+        ClampSeenPages(SeenPages),
+        ClampView(WorkView),
+        NonBlank(LinearSince));
 
     // The non-blank concept keys with their non-blank page keys (each once, the newest 200); the newest 2000 concepts.
     private static Dictionary<string, IReadOnlyList<string>> ClampSeenPages(IReadOnlyDictionary<string, IReadOnlyList<string>>? seen)
@@ -130,7 +142,14 @@ internal sealed record UiPreferences(
         && PaletteHistory.SequenceEqual(other.PaletteHistory, StringComparer.Ordinal)
         && TextScale.Equals(other.TextScale)
         && ReduceMotion == other.ReduceMotion
-        && SameSeenPages(SeenPages, other.SeenPages);
+        && SameRest(other);
+
+    private bool SameRest(UiPreferences other) =>
+        SameSeenPages(SeenPages, other.SeenPages) && string.Equals(WorkView, other.WorkView, StringComparison.Ordinal) && string.Equals(LinearSince, other.LinearSince, StringComparison.Ordinal);
+
+    private static string ClampView(string view) => string.Equals(view, LinearView, StringComparison.Ordinal) ? LinearView : SindriView;
+
+    private static string? NonBlank(string? text) => string.IsNullOrWhiteSpace(text) ? null : text;
 
     private static bool SameSeenPages(IReadOnlyDictionary<string, IReadOnlyList<string>> a, IReadOnlyDictionary<string, IReadOnlyList<string>> b) =>
         a.Count == b.Count && a.All(e => b.TryGetValue(e.Key, out var keys) && e.Value.SequenceEqual(keys, StringComparer.Ordinal));
