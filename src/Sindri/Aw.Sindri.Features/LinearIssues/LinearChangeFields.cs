@@ -162,18 +162,24 @@ internal static class LinearChangeFields
         {
             Title or StateId => text is null ? Bad("must be text") : Ok(text),
             Description => text is not null ? Ok(text) : isNull ? Ok(string.Empty) : Bad("must be text or null"),
-            Priority => element.ValueKind == JsonValueKind.Number && element.TryGetInt32(out var level) && level is >= 0 and <= 4 ? Ok(level) : Bad("must be a number from 0 to 4"),
+            Priority => Level(element),
             LabelIds => Labels(element),
-            ParentKey => text is not null ? Ok(text.Trim().ToUpperInvariant()) : isNull ? Ok(value: null) : Bad("must be an issue key or null"),
-            _ => text is not null || isNull ? Ok(text) : Bad("must be an id or null"),
+            _ => Reference(name, text, isNull),
         };
     }
+
+    private static Result<object?> Reference(string name, string? text, bool isNull) =>
+        text is null && !isNull ? Bad(name == ParentKey ? "must be an issue key or null" : "must be an id or null")
+        : Ok(name == ParentKey ? text?.Trim().ToUpperInvariant() : text);
+
+    private static Result<object?> Level(JsonElement element) =>
+        element.ValueKind == JsonValueKind.Number && element.TryGetInt32(out var level) && level is >= 0 and <= 4 ? Ok(level) : Bad("must be a number from 0 to 4");
 
     private static Result<object?> Ok(object? value) => Results.Success(value);
 
     private static Result<object?> Labels(JsonElement element)
     {
         var ids = element.ValueKind == JsonValueKind.Array ? element.EnumerateArray().Select(static e => e.ValueKind == JsonValueKind.String ? e.GetString() : null).ToList() : null;
-        return ids is null || ids.Any(static id => id is null) ? Bad("must be a list of label ids") : Ok(Sorted(ids.OfType<string>()));
+        return ids is null || ids.Exists(static id => id is null) ? Bad("must be a list of label ids") : Ok(Sorted(ids.OfType<string>()));
     }
 }

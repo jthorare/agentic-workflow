@@ -41,24 +41,22 @@ internal sealed class ChangeLinearIssueService(
         }
 
         var key = parsed.Value;
-        var edit = await Prepare(request, key, cancellationToken).ConfigureAwait(false);
-        var owner = edit.IsError ? default : await scope.Owner(cancellationToken).ConfigureAwait(false);
-        var live = edit.IsError || owner.IsError ? default : await writes.Live(key, owner.Value, cancellationToken).ConfigureAwait(false);
-        if (edit.IsError || owner.IsError || live.IsError)
+        var prepared = await Prepare(request, key, cancellationToken).ConfigureAwait(false);
+        if (prepared.IsError)
         {
-            return edit.IsError ? edit.Error : owner.IsError ? owner.Error : live.Error;
+            return prepared.Error;
         }
 
-        var (set, opened, parent) = edit.Value;
-        if (set.All(f => Holds(live.Value, f, parent)))
+        var (set, opened, parent, live, owner) = prepared.Value;
+        if (set.All(f => Holds(live, f, parent)))
         {
             return await Applied(key, warning: null, alreadyApplied: true, cancellationToken).ConfigureAwait(false);
         }
 
-        var differing = Conflicts(live.Value, opened);
+        var differing = Conflicts(live, opened);
         return differing.Count > 0
-            ? await Conflict(key, live.Value, differing, cancellationToken).ConfigureAwait(false)
-            : await Send(key, LinearChangeFields.ToChange(set, parent), owner.Value, cancellationToken).ConfigureAwait(false);
+            ? await Conflict(key, live, differing, cancellationToken).ConfigureAwait(false)
+            : await Send(key, LinearChangeFields.ToChange(set, parent), owner, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<LinearChangeResult>> Send(LinearIssueKey key, LinearIssueChange change, ContextScope owner, CancellationToken cancellationToken)
@@ -92,10 +90,22 @@ internal sealed class ChangeLinearIssueService(
         }
 
         var parent = await Checked(key, fields.Value.Set, cancellationToken).ConfigureAwait(false);
-        return parent.IsError ? parent.Error : new Edit(fields.Value.Set, fields.Value.Opened, parent.Value);
+        if (parent.IsError)
+        {
+            return parent.Error;
+        }
+
+        var owner = await scope.Owner(cancellationToken).ConfigureAwait(false);
+        if (owner.IsError)
+        {
+            return owner.Error;
+        }
+
+        var live = await writes.Live(key, owner.Value, cancellationToken).ConfigureAwait(false);
+        return live.IsError ? live.Error : new Edit(fields.Value.Set, fields.Value.Opened, parent.Value, live.Value, owner.Value);
     }
 
-    private sealed record Edit(IReadOnlyList<KeyValuePair<string, object?>> Set, IReadOnlyList<KeyValuePair<string, object?>> Opened, ExternalId? Parent);
+    private sealed record Edit(IReadOnlyList<KeyValuePair<string, object?>> Set, IReadOnlyList<KeyValuePair<string, object?>> Opened, ExternalId? Parent, LinearIssueView Live, ContextScope Owner);
 
     private static Result<(IReadOnlyList<KeyValuePair<string, object?>> Set, IReadOnlyList<KeyValuePair<string, object?>> Opened)> Fields(ChangeLinearIssueRequest request)
     {
@@ -189,12 +199,18 @@ internal sealed class ChangeLinearIssueService(
         Description = live.Description ?? string.Empty,
         State = StateOf(stored, live, team),
         Priority = live.Priority,
-        Assignee = live.AssigneeId is { } who ? new LinearPersonView(who.Value, team?.Members.FirstOrDefault(m => m.Uuid == who.Value)?.Name ?? who.Value) : null,
-        Project = live.ProjectId is { } project ? stored.Project is { } known && known.Id == project.Value ? known : new LinearNamedView(project.Value, project.Value) : null,
+        Assignee = AssigneeOf(live, team),
+        Project = ProjectOf(stored, live),
         Cycle = live.CycleId is { } cycle && team?.Cycles.FirstOrDefault(c => c.Uuid == cycle.Value) is { } found ? new LinearCycleView(found.Uuid, found.Number, found.Name) : null,
         Labels = [.. live.LabelIds.Select(id => LabelOf(stored, id.Value, team))],
         UpdatedAt = live.UpdatedAt,
     };
+
+    private static LinearPersonView? AssigneeOf(LinearIssueView live, LinearLookupsResponse? team) =>
+        live.AssigneeId is { } who ? new LinearPersonView(who.Value, team?.Members.FirstOrDefault(m => m.Uuid == who.Value)?.Name ?? who.Value) : null;
+
+    private static LinearNamedView? ProjectOf(GetLinearIssueResponse stored, LinearIssueView live) =>
+        live.ProjectId is not { } project ? null : stored.Project is { } known && known.Id == project.Value ? known : new LinearNamedView(project.Value, project.Value);
 
     private static LinearStateView StateOf(GetLinearIssueResponse stored, LinearIssueView live, LinearLookupsResponse? team) =>
         team?.States.FirstOrDefault(s => s.Uuid == live.StateId.Value) is { } state ? new LinearStateView(state.Uuid, state.Name, state.Type) : new LinearStateView(live.StateId.Value, live.StateName, stored.State.Type);

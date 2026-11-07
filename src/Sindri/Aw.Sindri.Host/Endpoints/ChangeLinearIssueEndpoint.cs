@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using Aw.Kernel.Services;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Aw.Sindri.Features.LinearIssues;
 
 namespace Aw.Sindri.Host.Endpoints;
@@ -24,14 +25,14 @@ internal static class ChangeLinearIssueEndpoint
         return group;
     }
 
-    private static IResult Conflict(LinearChangeConflict conflict) => TypedResults.Problem(
+    private static ProblemHttpResult Conflict(LinearChangeConflict conflict) => TypedResults.Problem(
         title: "SND-LINEAR-409",
         detail: $"{conflict.Issue.Key} changed in Linear at {conflict.ChangedAt.UtcDateTime.ToString("HH:mm", CultureInfo.InvariantCulture)}; nothing was sent (fix: review the fields below, then save yours anyway or take Linear's)",
         statusCode: StatusCodes.Status409Conflict,
         extensions: new Dictionary<string, object?>(StringComparer.Ordinal)
         {
             ["changedAt"] = conflict.ChangedAt.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss.fffffff'Z'", CultureInfo.InvariantCulture),
-            ["fields"] = JsonSerializer.SerializeToElement(conflict.Fields.ToArray(), SindriJsonContext.Default.LinearFieldConflictArray),
+            ["fields"] = JsonSerializer.SerializeToElement([.. conflict.Fields], SindriJsonContext.Default.LinearFieldConflictArray),
             ["issue"] = JsonSerializer.SerializeToElement(conflict.Issue, SindriJsonContext.Default.GetLinearIssueResponse),
         });
 }
