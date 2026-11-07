@@ -38,6 +38,14 @@ public sealed class ReviewListBuilderTests
     }
 
     [Fact]
+    public void The_owners_own_PR_is_not_waiting_on_them_after_they_reviewed_an_older_commit()
+    {
+        var parts = ReviewListBuilder.Build(Login, [Pull(author: Login, reviews: [new ReviewedAt(Login, Old, NewCommits: 1)])], _ => null, _ => null);
+
+        Assert.Equal(0, parts.WaitingCount);
+    }
+
+    [Fact]
     public void One_new_commit_is_singular() =>
         Assert.Equal("reviewed, 1 new commit", ReviewListBuilder.Classify(Login, Pull(reviews: [new ReviewedAt(Login, Old, NewCommits: 1)]))?.Text);
 

@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Aw.Kernel;
 using Aw.Sindri.Core.Forge;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Reviews;
@@ -8,7 +9,8 @@ namespace Aw.Sindri.Features.ListReviews;
 /// <summary>
 /// The per-head summary behind a row's CI and open required checks (PR review page spec §6.1, §6.2 "Cache"). A head with a stored summary costs nothing; one without is read from the forge
 /// (<see cref="IPullRequests.Get"/> for the check runs, <see cref="IPullRequests.Files"/> for the changed paths), at most <see cref="MaxHeadsAtOnce"/> at a time, decided and stored. A forge failure
-/// of any kind (a 403 or 429 rate limit too) stops reading new heads for this call; each row then keeps its newest stored summary, even of an older head, or none.
+/// stops reading new heads for this call (a rate limit, a refusal or an unreachable forge), except a PR the forge doesn't have, which skips only itself; a stored summary whose CI is still running is read again;
+/// the open count leaves out the body: and manual: checks, which only the PR page can decide; each row then keeps its newest stored summary, even of an older head, or none.
 /// </summary>
 /// <param name="cache">The stored summaries.</param>
 /// <param name="forge">The forge port.</param>
@@ -53,8 +55,7 @@ internal sealed class ReviewSummaryReader(IReviewSummaries cache, IPullRequests 
 
     private async ValueTask<ReviewSummary?> ForHead(ReviewPull pull, ReviewPullRef reference, string head, Pass pass, CancellationToken cancellationToken)
     {
-        var stored = await cache.Read(reference, head, cancellationToken).ConfigureAwait(false);
-        if (stored.IsSuccess && stored.Value is { } hit)
+        if (await Settled(reference, head, cancellationToken).ConfigureAwait(false) is { } hit)
         {
             return hit;
         }
@@ -67,15 +68,19 @@ internal sealed class ReviewSummaryReader(IReviewSummaries cache, IPullRequests 
         var view = await forge.Get(link, cancellationToken).ConfigureAwait(false);
         if (view.IsError)
         {
-            pass.Stop();
-            return null;
+            return pass.Failed(view.Error);
+        }
+
+        // why: the stored record's head can lag the forge's; the summary is saved under the forge's head, so look there before reading the files
+        if (!string.Equals(view.Value.HeadSha, head, StringComparison.OrdinalIgnoreCase) && await Settled(reference, view.Value.HeadSha, cancellationToken).ConfigureAwait(false) is { } current)
+        {
+            return current;
         }
 
         var files = await forge.Files(link, cancellationToken).ConfigureAwait(false);
         if (files.IsError)
         {
-            pass.Stop();
-            return null;
+            return pass.Failed(files.Error);
         }
 
         var summary = Decide(pull, view.Value, files.Value, pass.Review);
@@ -83,10 +88,23 @@ internal sealed class ReviewSummaryReader(IReviewSummaries cache, IPullRequests 
         return summary;
     }
 
+    // why: a summary taken while CI was still running would show "running" until the next push, so only a finished one is a hit
+    private async ValueTask<ReviewSummary?> Settled(ReviewPullRef reference, string head, CancellationToken cancellationToken)
+    {
+        var stored = await cache.Read(reference, head, cancellationToken).ConfigureAwait(false);
+        return stored.IsSuccess && stored.Value is { Ci: not ReviewCi.Running } hit ? hit : null;
+    }
+
+    // why: the page owns the body: and manual: checks (the list has no PR body and no ticks), so the list's count leaves them out rather than freezing them as open per head
+    private static List<PrReviewCheck> ListChecks(PrReviewSettings? review, string repo)
+    {
+        var settings = PrReviewDefaults.For(review, repo).Settings ?? PrReviewDefaults.Resolve(review, PrReviewDefaults.DefaultName);
+        return [.. (settings?.Checks ?? []).Where(static c => c.Need?.Body is null && c.Need?.Manual != true)];
+    }
+
     private ReviewSummary Decide(ReviewPull pull, PullView view, PullFiles files, PrReviewSettings? review)
     {
-        var settings = PrReviewDefaults.For(review, pull.Repo).Settings ?? PrReviewDefaults.Resolve(review, PrReviewDefaults.DefaultName);
-        var checks = settings?.Checks ?? [];
+        var checks = ListChecks(review, pull.Repo);
         var runs = view.Checks.Runs ?? [];
         var inputs = new RequiredCheckInputs(
             checks, [.. files.Files.Select(static f => f.Path)], view.HeadSha, runs, Body: null, new HashSet<string>(StringComparer.Ordinal),
@@ -113,6 +131,15 @@ internal sealed class ReviewSummaryReader(IReviewSummaries cache, IPullRequests 
 
         internal bool MayRead => Volatile.Read(ref _stopped) == 0;
 
-        internal void Stop() => Volatile.Write(ref _stopped, 1);
+        // why: a missing PR is only that PR's problem; a refusal, a rate limit or an unreachable forge would hit every later PR too
+        internal ReviewSummary? Failed(Error error)
+        {
+            if (error.Kind != ErrorKind.NotFound)
+            {
+                Volatile.Write(ref _stopped, 1);
+            }
+
+            return null;
+        }
     }
 }
