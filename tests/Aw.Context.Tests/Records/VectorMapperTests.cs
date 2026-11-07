@@ -24,7 +24,7 @@ public sealed class VectorMapperTests : IDisposable
         connection.Open();
         using var command = connection.CreateCommand();
 #pragma warning disable CA2100 // test-only literals
-        command.CommandText = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"SELECT 1, 'feature:billing', 'm', 'h', {dim}, {vecLiteral}");
+        command.CommandText = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"SELECT 1 AS seq, 'feature:billing' AS key, 'm' AS model, 'h' AS text_hash, {dim} AS dim, {vecLiteral} AS vec");
 #pragma warning restore CA2100
         using var reader = command.ExecuteReader();
         Assert.True(reader.Read());
