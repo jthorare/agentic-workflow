@@ -115,7 +115,7 @@ internal sealed class ContextLinearIssueFacts(LinearScopes scopes, IContextEngin
         return new LinearCommentView(comment.Id.Value, author, comment.CreatedAt, comment.Body, comment.Sindri);
     }
 
-    private static LinearFeedView Feed(Aw.Context.Core.Sync.SourceProgress row)
+    private static LinearFeedView Feed(Context.Core.Sync.SourceProgress row)
     {
         var failing = row.LastCode is { } code && !string.Equals(code, TimeCap, StringComparison.Ordinal);
         return failing

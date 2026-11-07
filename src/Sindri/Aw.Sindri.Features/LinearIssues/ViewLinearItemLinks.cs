@@ -2,11 +2,11 @@ using System.Globalization;
 using System.Text.Json;
 using Aw.Kernel;
 using Aw.Sindri.Core.Items.Vocabulary;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Reviews;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
-using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Features.LinearIssues;
 

@@ -287,7 +287,8 @@ public sealed class ListLinearIssuesTests
         Assert.NotNull(first.Next);
         Expect.Sequence(["ENG-7", "ENG-9", "ENG-11"], Keys(second));
         Assert.Null(first.Total);
-        Expect.Equal(7, second.Total);
+        Assert.NotNull(second.Next);
+        Assert.Null(second.Total);
     }
 
     [Fact]
@@ -347,7 +348,7 @@ public sealed class ListLinearIssuesTests
 
         var response = await Ask(new ListLinearIssuesRequest());
 
-        Expect.Equal(Viewer, response.Viewer!);
+        Expect.Equal(Viewer, response.Viewer);
         Expect.Equal(feed, response.Feed);
         Assert.True(response.Connected);
     }

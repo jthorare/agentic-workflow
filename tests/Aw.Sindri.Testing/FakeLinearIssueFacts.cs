@@ -109,7 +109,7 @@ internal sealed class FakeLinearIssueFacts : ILinearIssueFacts
         }
 
         var found = _details.FirstOrDefault(d => string.Equals(d.Row.Key, key, StringComparison.OrdinalIgnoreCase) && Visible(d.Row));
-        return ValueTask.FromResult(Results.Success<LinearIssueDetailFacts?>(found));
+        return ValueTask.FromResult(Results.Success(found));
     }
 
     private bool Visible(LinearIssueRowView issue) => _visibleTeams is null || _visibleTeams.Contains(issue.Team.Key, StringComparer.Ordinal);

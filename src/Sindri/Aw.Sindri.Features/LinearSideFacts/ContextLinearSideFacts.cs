@@ -2,7 +2,7 @@ using System.Globalization;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Linear;
-using Aw.Context.Core.Records;
+using Aw.Context.Core.Projects;
 using Aw.Context.Core.Sources;
 using Aw.Kernel;
 using Aw.Sindri.Core;
@@ -14,17 +14,14 @@ namespace Aw.Sindri.Features.LinearSideFacts;
 
 /// <summary>
 /// The side-facts port over Context's IContextIssues (Linear hub spec 2026-11-04 §4.2, §4.3), under the current caller's scope (mapped as ContextProjectFacts maps it; slices don't share types). Reads stored data only.
-/// The strip's viewer is the owner's stored Linear identity ('linear:user/&lt;id&gt;'); actor and state names come from the team's stored lookups, the title from the stored issue.
+/// The strip's viewer is the owner of the Linear key, as Context's project facts name it; actor and state names come from the team's stored lookups, the title from the stored issue.
 /// </summary>
 /// <param name="approvals">The approved profiles.</param>
 /// <param name="callers">The current caller.</param>
 /// <param name="engine">Context's facade.</param>
-/// <param name="identities">Who the owner is in Linear.</param>
 /// <param name="clock">Decides which cycle is running.</param>
-internal sealed class ContextLinearSideFacts(IApprovedProfile approvals, ICallerContextAccessor callers, IContextEngine engine, ISourceIdentityStore identities, TimeProvider clock) : ILinearSideFacts
+internal sealed class ContextLinearSideFacts(IApprovedProfile approvals, ICallerContextAccessor callers, IContextEngine engine, TimeProvider clock) : ILinearSideFacts
 {
-    private const string UserPrefix = "linear:user/";
-
     public async ValueTask<Result<LinearLookupsResponse?>> Lookups(string team, CancellationToken cancellationToken)
     {
         var scope = await Scope(cancellationToken).ConfigureAwait(false);
@@ -76,18 +73,19 @@ internal sealed class ContextLinearSideFacts(IApprovedProfile approvals, ICaller
             return scope.Error;
         }
 
-        var identity = await identities.Read(LinearSourceIds.Identity, cancellationToken).ConfigureAwait(false);
-        if (identity.IsError)
+        // why: Sindri reads Context through its facade only, so the viewer is the project facts' owner, as the issue list finds it
+        var facts = await engine.Projects(new ProjectFactsRequest([]), scope.Value, cancellationToken).ConfigureAwait(false);
+        if (facts.IsError)
         {
-            return identity.Error;
+            return facts.Error;
         }
 
-        if (identity.Value is not { } who || !who.UserRef.StartsWith(UserPrefix, StringComparison.Ordinal) || !ExternalId.TryFrom(who.UserRef[UserPrefix.Length..], out var viewer))
+        if (facts.Value.Owner is not { } who)
         {
             return Results.Success<IReadOnlyList<LinearSinceItem>?>(value: null);
         }
 
-        var since = await engine.IssueSince(after, viewer, scope.Value, cancellationToken).ConfigureAwait(false);
+        var since = await engine.IssueSince(after, who.Id, scope.Value, cancellationToken).ConfigureAwait(false);
         return since.IsError ? since.Error : await Items(since.Value, scope.Value, cancellationToken).ConfigureAwait(false);
     }
 

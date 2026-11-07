@@ -39,7 +39,7 @@ public sealed class GetLinearIssueTests
         Expect.Equal("Title of ENG-12", one.Title);
         Expect.Equal("The description of ENG-12", one.Description);
         Expect.Equal(comment, Expect.Only(one.Comments));
-        Expect.Equal(Viewer, one.Viewer!);
+        Expect.Equal(Viewer, one.Viewer);
         Assert.False(one.Removed);
         Assert.True(one.Write.Allowed);
     }
@@ -113,7 +113,7 @@ public sealed class GetLinearIssueTests
     public async Task A_link_read_that_fails_leaves_the_sheet_without_links()
     {
         _ = _facts.WithDetails(Detail("ENG-12"));
-        _ = _links.Failing(Aw.Sindri.Core.SindriErrors.InvalidQuery.With("views are down"));
+        _ = _links.Failing(Core.SindriErrors.InvalidQuery.With("views are down"));
 
         Assert.Null((await Ask("ENG-12")).Link);
     }
@@ -129,7 +129,7 @@ public sealed class GetLinearIssueTests
     [Fact]
     public async Task A_failing_store_is_the_answers_error()
     {
-        var error = Aw.Sindri.Core.SindriErrors.InvalidQuery.With("context is down");
+        var error = Core.SindriErrors.InvalidQuery.With("context is down");
         _ = _facts.Failing(error);
 
         var result = await Service().Handle(new GetLinearIssueRequest("ENG-12"), Token);

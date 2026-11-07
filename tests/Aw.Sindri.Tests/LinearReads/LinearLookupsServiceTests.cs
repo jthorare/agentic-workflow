@@ -83,7 +83,7 @@ public sealed class LinearLookupsServiceTests
         var result = await Service().Handle(new GetLinearLookupsRequest("OPS"), Token);
 
         Expect.Equal("SND-LINEAR-003", result.Error.Code);
-        Expect.Equal(Aw.Kernel.ErrorKind.Forbidden, result.Error.Kind);
+        Expect.Equal(Kernel.ErrorKind.Forbidden, result.Error.Kind);
         Expect.Equal("Sindri only reads teams you picked; OPS isn't one (fix: Settings, Connections, Linear, add OPS)", result.Error.Message);
     }
 
@@ -96,7 +96,7 @@ public sealed class LinearLookupsServiceTests
         var result = await Service().Handle(new GetLinearLookupsRequest("OPS"), Token);
 
         Expect.Equal("SND-LINEAR-404", result.Error.Code);
-        Expect.Equal(Aw.Kernel.ErrorKind.NotFound, result.Error.Kind);
+        Expect.Equal(Kernel.ErrorKind.NotFound, result.Error.Kind);
         Expect.Equal("Sindri has nothing stored for OPS yet", result.Error.Message);
     }
 
@@ -111,6 +111,6 @@ public sealed class LinearLookupsServiceTests
         var result = await Service().Handle(new GetLinearLookupsRequest("ENG"), Token);
 
         Assert.False(Expect.Only(result.Value.Members).Active);
-        Expect.Equal("#eb5757", Expect.Only(result.Value.Labels).Color!);
+        Expect.Equal("#eb5757", Expect.Only(result.Value.Labels).Color);
     }
 }

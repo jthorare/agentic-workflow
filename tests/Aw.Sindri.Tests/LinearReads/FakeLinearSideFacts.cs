@@ -51,7 +51,7 @@ internal sealed class FakeLinearSideFacts : ILinearSideFacts
         AskedTeams.Add(team);
         var answer = _failure is { } failure
             ? failure
-            : Results.Success<LinearLookupsResponse?>(_teams.GetValueOrDefault(team));
+            : Results.Success(_teams.GetValueOrDefault(team));
         return ValueTask.FromResult(answer);
     }
 
