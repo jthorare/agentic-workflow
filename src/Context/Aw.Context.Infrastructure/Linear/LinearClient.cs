@@ -1,12 +1,10 @@
 using System.Globalization;
-using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json.Nodes;
 using Aw.Context.Core;
 using Aw.Context.Core.Linear;
 using Aw.Kernel;
 using Aw.Kernel.Json;
-using Microsoft.Extensions.Logging;
 
 namespace Aw.Context.Infrastructure.Linear;
 
@@ -19,11 +17,12 @@ namespace Aw.Context.Infrastructure.Linear;
 /// </summary>
 /// <param name="settings">The checked settings.</param>
 /// <param name="parts">The client, environment, clock and log every linear source shares.</param>
-internal sealed partial class LinearClient(LinearSettings settings, LinearSourceParts parts)
+internal sealed class LinearClient(LinearSettings settings, LinearSourceParts parts)
 {
     private const string TokenKey = "context.sources.linear.token";
     private const int PageSize = 250;
     private readonly Lock _keyLock = new();
+    private readonly LinearCalls _calls = new(settings, parts.Logger, $"Create a read-only personal API key, store it behind {TokenKey} and approve the profile again (spec §8.8).");
     private Task<string?>? _key;
 
     /// <summary>The checked settings.</summary>
@@ -42,7 +41,7 @@ internal sealed partial class LinearClient(LinearSettings settings, LinearSource
         cancellationToken.ThrowIfCancellationRequested();
         if (deadline <= TimeSpan.Zero)
         {
-            return Failed(operation, Unavailable($"wasn't called: the query's deadline was spent before {operation}"), status: null);
+            return _calls.Failed(operation, _calls.Unavailable($"wasn't called: the query's deadline was spent before {operation}"), status: null);
         }
 
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -52,7 +51,7 @@ internal sealed partial class LinearClient(LinearSettings settings, LinearSource
             var key = await Key(timeout.Token).ConfigureAwait(false);
             if (string.IsNullOrEmpty(key) || key.Any(c => char.IsControl(c) || char.IsWhiteSpace(c)))
             {
-                return Failed(operation, ContextErrors.SourceNotConfigured.With(
+                return _calls.Failed(operation, ContextErrors.SourceNotConfigured.With(
                     $"{TokenKey}: the {Scheme(Settings.Token)}: secret pointer doesn't resolve to a usable Linear key (none, or one with spaces or control characters); "
                     + "'sindri doctor' shows why (its SND-SECRET code names the target and the fix). Point it at a read-only personal API key (spec §8.8)."), status: null);
             }
@@ -63,18 +62,18 @@ internal sealed partial class LinearClient(LinearSettings settings, LinearSource
             _ = request.Headers.TryAddWithoutValidation("Authorization", key);
             using var response = await parts.Http.SendAsync(request, timeout.Token).ConfigureAwait(false);
             var reply = await response.Content.ReadAsByteArrayAsync(timeout.Token).ConfigureAwait(false);
-            return Read<T>(operation, response.StatusCode, reply);
+            return _calls.Read<T>(operation, response.StatusCode, reply);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
             var what = _key is { IsCompleted: true }
                 ? $"didn't answer {operation}"
                 : $"wasn't called: the {TokenKey} pointer didn't resolve (a locked keychain, or op waiting for a sign-in?)";
-            return Failed(operation, Unavailable(string.Create(CultureInfo.InvariantCulture, $"{what} within {deadline.TotalSeconds:0.###} s")), status: null);
+            return _calls.Failed(operation, _calls.Unavailable(string.Create(CultureInfo.InvariantCulture, $"{what} within {deadline.TotalSeconds:0.###} s")), status: null);
         }
         catch (HttpRequestException e)
         {
-            return Failed(operation, Unavailable($"isn't reachable ({e.HttpRequestError}); start the fixture or check context.sources.linear.url"), status: null);
+            return _calls.Failed(operation, _calls.Unavailable($"isn't reachable ({e.HttpRequestError}); start the fixture or check context.sources.linear.url"), status: null);
         }
     }
 
@@ -153,80 +152,4 @@ internal sealed partial class LinearClient(LinearSettings settings, LinearSource
     }
 
     private static string Scheme(string pointer) => pointer[..pointer.IndexOf(':', StringComparison.Ordinal)];
-
-    private Result<T> Read<T>(string operation, HttpStatusCode status, byte[] body)
-    {
-        var code = (int)status;
-        if (status is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
-        {
-            return Failed(operation, KeyRefused(), code);
-        }
-
-        if (status == HttpStatusCode.TooManyRequests)
-        {
-            return Failed(operation, Unavailable("is rate limited, retry later"), code);
-        }
-
-        if (code >= 500)
-        {
-            return Failed(operation, Unavailable(string.Create(CultureInfo.InvariantCulture, $"answered HTTP {code} on {operation}")), code);
-        }
-
-        var reply = AwJson.Deserialize<LinearReply<T>>(body, LinearWire.Options);
-        if (reply.IsError)
-        {
-            return Failed(operation, Unexpected(string.Create(CultureInfo.InvariantCulture, $"answered {operation} (HTTP {code}) with a body")), code);
-        }
-
-        if (reply.Value.Errors is { Count: > 0 } errors)
-        {
-            return Failed(operation, Classify(errors), code);
-        }
-
-        return reply.Value.Data is { } data && code is >= 200 and < 300
-            ? data
-            : Failed(operation, Unexpected(string.Create(CultureInfo.InvariantCulture, $"answered {operation} with HTTP {code} and no data")), code);
-    }
-
-    private Error Classify(IReadOnlyList<LinearGraphQlError> errors)
-    {
-        if (errors.Any(e => IsAuthCode(e.Extensions?.Code)))
-        {
-            return KeyRefused();
-        }
-
-        if (errors.Any(static e => string.Equals(e.Extensions?.Code, "RATELIMITED", StringComparison.Ordinal)))
-        {
-            return Unavailable("is rate limited, retry later");
-        }
-
-        return errors.All(e => e.Message.StartsWith("Entity not found", StringComparison.Ordinal))
-            ? ContextErrors.LinearRecordNotFound.With($"Linear at {Settings.Address} has no such record.")
-            : Unexpected($"answered with GraphQL errors ({string.Join("; ", errors.Take(2).Select(e => Shown(e.Message)))})");
-    }
-
-    private static bool IsAuthCode(string? code) => string.Equals(code, "AUTHENTICATION_ERROR", StringComparison.Ordinal) || string.Equals(code, "FORBIDDEN", StringComparison.Ordinal);
-
-    private Error KeyRefused() => ContextErrors.LinearKeyRefused.With(
-        $"Linear at {Settings.Address} refused the key: it is missing, wrong or revoked, or can't read. Create a read-only personal API key, "
-        + $"store it behind {TokenKey} and approve the profile again (spec §8.8).");
-
-    private Error Unavailable(string what) => ContextErrors.SourceUnavailable.With($"Linear at {Settings.Address} {what}.");
-
-    private Error Unexpected(string what) => ContextErrors.LinearUnexpectedReply.With($"Linear at {Settings.Address} {what}; the adapter's queries (D18) may need updating.");
-
-    private static string Shown(string text)
-    {
-        var line = new string([.. text.Select(c => char.IsControl(c) ? ' ' : c)]);
-        return line.Length <= 120 ? line : line[..120] + "…";
-    }
-
-    private Error Failed(string operation, Error error, int? status)
-    {
-        LogFailed(parts.Logger, operation, status, error.Code, error.Message);
-        return error;
-    }
-
-    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Linear operation {Operation} failed (HTTP {Status}): {Code} {Reason}")]
-    private static partial void LogFailed(ILogger logger, string operation, int? status, string code, string reason);
 }

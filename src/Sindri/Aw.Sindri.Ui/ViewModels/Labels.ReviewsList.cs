@@ -51,6 +51,9 @@ internal static partial class Labels
     /// <summary>The login prompt's Save button.</summary>
     internal const string ReviewsLoginSave = "Save";
 
+    /// <summary>Under the field after a save that waits for the profile approval (the answer's approved: false).</summary>
+    internal const string ReviewsLoginPending = "Saved. It takes effect once you approve the waiting profile change: sindri profile approve";
+
     /// <summary>The login field's name.</summary>
     internal const string ReviewsLoginFieldName = "GitHub login";
 

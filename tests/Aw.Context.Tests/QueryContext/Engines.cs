@@ -101,7 +101,8 @@ internal static class Engines
             new ContextReads(new Features.MapHeads.MapHeadsService(repos, new FakeDefaultBranch()),
                 new Features.GetProjects.GetProjectFactsService(recordStore, new FakeSourceIdentityStore(), (IIndexSync?)indexSync ?? new FakeIndexSync()),
                 new Features.RelinkPinAliases.RelinkPinAliasesService(graphs, intents, recordStore, clock),
-                new Features.ReadLibrary.ContextLibrary(new EmptyLibraryStore())));
+                new Features.ReadLibrary.ContextLibrary(new EmptyLibraryStore()),
+                new Features.ReadIssues.IssueReads(new EmptyLinearIssueStore(), new FakeLinearLookupStore())));
     }
 
     /// <summary>The probe runner over no probe file (the query tests never run probes).</summary>

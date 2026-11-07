@@ -1,3 +1,4 @@
+using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Kernel;
 
@@ -13,6 +14,9 @@ public abstract class RecordFeed(SourceId source)
 {
     /// <summary>The source this feed reads; the keys it returns belong to it.</summary>
     public SourceId Source { get; } = source;
+
+    /// <summary>Whether the driver commits this feed's pages with <see cref="RecordBatch.Guard"/>: true for a feed whose records are also rewritten by a write-through, so a page fetched before a save cannot revert it.</summary>
+    public virtual bool Guard => false;
 
     /// <summary>Pulls one page.</summary>
     /// <param name="pull">Where to continue, how much and how far back.</param>

@@ -1,8 +1,8 @@
 using Avalonia.Controls;
-using Avalonia.Interactivity;
-using Aw.Sindri.Ui.ViewModels.Reviews;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.VisualTree;
+using Aw.Sindri.Ui.ViewModels.Reviews;
 
 namespace Aw.Sindri.Ui.Views.Reviews;
 

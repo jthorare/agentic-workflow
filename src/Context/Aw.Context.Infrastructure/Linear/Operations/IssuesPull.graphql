@@ -2,13 +2,17 @@ query IssuesPull($filter: IssueFilter, $first: Int, $after: String) {
   issues(filter: $filter, first: $first, after: $after, orderBy: updatedAt) {
     nodes {
       id identifier title description url createdAt updatedAt completedAt canceledAt
-      state { name type }
+      priority estimate dueDate sortOrder
+      state { id name type }
+      assignee { id }
+      cycle { id }
+      labels { nodes { id } }
       team { id key name }
       creator { id name }
       project { id name }
       parent { id identifier title }
       attachments(first: 10) { nodes { id title url sourceType } pageInfo { hasNextPage } }
-      comments(first: 20, orderBy: updatedAt) { nodes { id body createdAt user { id name } } pageInfo { hasNextPage } }
+      comments(first: 50, orderBy: updatedAt) { nodes { id body createdAt user { id name } } pageInfo { hasNextPage } }
       relations(first: 25) { nodes { type relatedIssue { id identifier title } } }
       inverseRelations(first: 25) { nodes { type issue { id identifier title } } }
     }

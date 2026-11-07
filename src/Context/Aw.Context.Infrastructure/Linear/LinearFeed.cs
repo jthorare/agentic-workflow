@@ -15,7 +15,10 @@ namespace Aw.Context.Infrastructure.Linear;
 /// <param name="githubRepos">The profile's GitHub repos ('owner/name'), whose pull request attachments become links.</param>
 internal sealed class LinearFeed(LinearClient client, TimeSpan deadline, IReadOnlyList<string> githubRepos) : RecordFeed(SourceId.From("linear"))
 {
-    private const int MaxPage = 25;   // why: each issue brings its newest 20 comments and its relations, and Linear caps the cost of one query
+    private const int MaxPage = 20;   // why: each issue brings its newest 50 comments and its relations, and Linear caps the cost of one query (it was 25 with 20 comments)
+
+    /// <summary>True: a write-through rewrites issues too (linear hub spec 2026-11-04 D4), so a page that was fetched before a save must not put the old value back.</summary>
+    public override bool Guard => true;
 
     /// <inheritdoc />
     public override async ValueTask<Result<RecordPage>> Pull(RecordPull pull, CancellationToken cancellationToken)

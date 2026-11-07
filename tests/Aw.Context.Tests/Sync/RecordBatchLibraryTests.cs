@@ -9,7 +9,7 @@ using Aw.Context.Tests.Library;
 
 namespace Aw.Context.Tests.Sync;
 
-/// <summary>What <see cref="RecordBatches.From"/> hands the store for the design-doc library (spec 2026-11-04 §4.4, §5.3): a parse for doc records of the doc feeds, claims for PR records.</summary>
+/// <summary>What <see cref="RecordBatches"/> hands the store for the design-doc library (spec 2026-11-04 §4.4, §5.3): a parse for doc records of the doc feeds, claims for PR records.</summary>
 [Trait("Lane", "unit")]
 public sealed class RecordBatchLibraryTests
 {
