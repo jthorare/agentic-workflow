@@ -23451,6 +23451,176 @@ Aw.Sindri.Core.Workflow.Blocks.BlockCatalog.Overlaid(System.Collections.Generic.
 Aw.Sindri.Core.Workflow.Registry.RecipeApprovalPlanner.Approve(Aw.Sindri.Core.Workflow.Ids.RecipeId id, Aw.Sindri.Core.Workflow.Ids.RecipeHash hash, Aw.Sindri.Core.Workflow.Blocks.BlockCatalog! against, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Workflow.Registry.ApprovalPlan!>!>
 Aw.Sindri.Core.Workflow.Registry.RecipeRegistryReader.Validation(Aw.Sindri.Core.Workflow.Recipes.Recipe! recipe, Aw.Sindri.Core.Workflow.Blocks.BlockCatalog? against, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Workflow.Validation.ValidationContext!>!>
 Aw.Sindri.Core.Workflow.RegistryWrites.RecipeRegistrar.Register(string! text, string! file, Aw.Sindri.Core.Workflow.Blocks.BlockCatalog? against, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Workflow.Registry.RegistrarOutcome!>!>
+Aw.Sindri.Core.Linear.LinearTeamRef
+Aw.Sindri.Core.Linear.LinearTeamRef.<Clone>$() -> Aw.Sindri.Core.Linear.LinearTeamRef!
+Aw.Sindri.Core.Linear.LinearTeamRef.Deconstruct(out string? Uuid, out string! Key, out string? Name) -> void
+Aw.Sindri.Core.Linear.LinearTeamRef.Equals(Aw.Sindri.Core.Linear.LinearTeamRef? other) -> bool
+Aw.Sindri.Core.Linear.LinearTeamRef.Uuid.get -> string?
+Aw.Sindri.Core.Linear.LinearTeamRef.Uuid.init -> void
+Aw.Sindri.Core.Linear.LinearTeamRef.Key.get -> string!
+Aw.Sindri.Core.Linear.LinearTeamRef.Key.init -> void
+Aw.Sindri.Core.Linear.LinearTeamRef.Name.get -> string?
+Aw.Sindri.Core.Linear.LinearTeamRef.Name.init -> void
+Aw.Sindri.Core.Linear.LinearTeamRef.LinearTeamRef(string? Uuid, string! Key, string? Name) -> void
+override Aw.Sindri.Core.Linear.LinearTeamRef.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Linear.LinearTeamRef.GetHashCode() -> int
+override Aw.Sindri.Core.Linear.LinearTeamRef.ToString() -> string!
+static Aw.Sindri.Core.Linear.LinearTeamRef.operator !=(Aw.Sindri.Core.Linear.LinearTeamRef? left, Aw.Sindri.Core.Linear.LinearTeamRef? right) -> bool
+static Aw.Sindri.Core.Linear.LinearTeamRef.operator ==(Aw.Sindri.Core.Linear.LinearTeamRef? left, Aw.Sindri.Core.Linear.LinearTeamRef? right) -> bool
+Aw.Sindri.Core.Linear.LinearStateOption
+Aw.Sindri.Core.Linear.LinearStateOption.<Clone>$() -> Aw.Sindri.Core.Linear.LinearStateOption!
+Aw.Sindri.Core.Linear.LinearStateOption.Deconstruct(out string! Uuid, out string! Name, out string! Type, out double Position) -> void
+Aw.Sindri.Core.Linear.LinearStateOption.Equals(Aw.Sindri.Core.Linear.LinearStateOption? other) -> bool
+Aw.Sindri.Core.Linear.LinearStateOption.Uuid.get -> string!
+Aw.Sindri.Core.Linear.LinearStateOption.Uuid.init -> void
+Aw.Sindri.Core.Linear.LinearStateOption.Name.get -> string!
+Aw.Sindri.Core.Linear.LinearStateOption.Name.init -> void
+Aw.Sindri.Core.Linear.LinearStateOption.Type.get -> string!
+Aw.Sindri.Core.Linear.LinearStateOption.Type.init -> void
+Aw.Sindri.Core.Linear.LinearStateOption.Position.get -> double
+Aw.Sindri.Core.Linear.LinearStateOption.Position.init -> void
+Aw.Sindri.Core.Linear.LinearStateOption.LinearStateOption(string! Uuid, string! Name, string! Type, double Position) -> void
+override Aw.Sindri.Core.Linear.LinearStateOption.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Linear.LinearStateOption.GetHashCode() -> int
+override Aw.Sindri.Core.Linear.LinearStateOption.ToString() -> string!
+static Aw.Sindri.Core.Linear.LinearStateOption.operator !=(Aw.Sindri.Core.Linear.LinearStateOption? left, Aw.Sindri.Core.Linear.LinearStateOption? right) -> bool
+static Aw.Sindri.Core.Linear.LinearStateOption.operator ==(Aw.Sindri.Core.Linear.LinearStateOption? left, Aw.Sindri.Core.Linear.LinearStateOption? right) -> bool
+Aw.Sindri.Core.Linear.LinearMemberOption
+Aw.Sindri.Core.Linear.LinearMemberOption.<Clone>$() -> Aw.Sindri.Core.Linear.LinearMemberOption!
+Aw.Sindri.Core.Linear.LinearMemberOption.Deconstruct(out string! Uuid, out string! Name, out bool Active) -> void
+Aw.Sindri.Core.Linear.LinearMemberOption.Equals(Aw.Sindri.Core.Linear.LinearMemberOption? other) -> bool
+Aw.Sindri.Core.Linear.LinearMemberOption.Uuid.get -> string!
+Aw.Sindri.Core.Linear.LinearMemberOption.Uuid.init -> void
+Aw.Sindri.Core.Linear.LinearMemberOption.Name.get -> string!
+Aw.Sindri.Core.Linear.LinearMemberOption.Name.init -> void
+Aw.Sindri.Core.Linear.LinearMemberOption.Active.get -> bool
+Aw.Sindri.Core.Linear.LinearMemberOption.Active.init -> void
+Aw.Sindri.Core.Linear.LinearMemberOption.LinearMemberOption(string! Uuid, string! Name, bool Active) -> void
+override Aw.Sindri.Core.Linear.LinearMemberOption.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Linear.LinearMemberOption.GetHashCode() -> int
+override Aw.Sindri.Core.Linear.LinearMemberOption.ToString() -> string!
+static Aw.Sindri.Core.Linear.LinearMemberOption.operator !=(Aw.Sindri.Core.Linear.LinearMemberOption? left, Aw.Sindri.Core.Linear.LinearMemberOption? right) -> bool
+static Aw.Sindri.Core.Linear.LinearMemberOption.operator ==(Aw.Sindri.Core.Linear.LinearMemberOption? left, Aw.Sindri.Core.Linear.LinearMemberOption? right) -> bool
+Aw.Sindri.Core.Linear.LinearLabelOption
+Aw.Sindri.Core.Linear.LinearLabelOption.<Clone>$() -> Aw.Sindri.Core.Linear.LinearLabelOption!
+Aw.Sindri.Core.Linear.LinearLabelOption.Deconstruct(out string! Uuid, out string! Name, out string? Color) -> void
+Aw.Sindri.Core.Linear.LinearLabelOption.Equals(Aw.Sindri.Core.Linear.LinearLabelOption? other) -> bool
+Aw.Sindri.Core.Linear.LinearLabelOption.Uuid.get -> string!
+Aw.Sindri.Core.Linear.LinearLabelOption.Uuid.init -> void
+Aw.Sindri.Core.Linear.LinearLabelOption.Name.get -> string!
+Aw.Sindri.Core.Linear.LinearLabelOption.Name.init -> void
+Aw.Sindri.Core.Linear.LinearLabelOption.Color.get -> string?
+Aw.Sindri.Core.Linear.LinearLabelOption.Color.init -> void
+Aw.Sindri.Core.Linear.LinearLabelOption.LinearLabelOption(string! Uuid, string! Name, string? Color) -> void
+override Aw.Sindri.Core.Linear.LinearLabelOption.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Linear.LinearLabelOption.GetHashCode() -> int
+override Aw.Sindri.Core.Linear.LinearLabelOption.ToString() -> string!
+static Aw.Sindri.Core.Linear.LinearLabelOption.operator !=(Aw.Sindri.Core.Linear.LinearLabelOption? left, Aw.Sindri.Core.Linear.LinearLabelOption? right) -> bool
+static Aw.Sindri.Core.Linear.LinearLabelOption.operator ==(Aw.Sindri.Core.Linear.LinearLabelOption? left, Aw.Sindri.Core.Linear.LinearLabelOption? right) -> bool
+Aw.Sindri.Core.Linear.LinearCycleOption
+Aw.Sindri.Core.Linear.LinearCycleOption.<Clone>$() -> Aw.Sindri.Core.Linear.LinearCycleOption!
+Aw.Sindri.Core.Linear.LinearCycleOption.Deconstruct(out string! Uuid, out int Number, out string! Name, out System.DateTimeOffset StartsAt, out System.DateTimeOffset EndsAt, out bool Current) -> void
+Aw.Sindri.Core.Linear.LinearCycleOption.Equals(Aw.Sindri.Core.Linear.LinearCycleOption? other) -> bool
+Aw.Sindri.Core.Linear.LinearCycleOption.Uuid.get -> string!
+Aw.Sindri.Core.Linear.LinearCycleOption.Uuid.init -> void
+Aw.Sindri.Core.Linear.LinearCycleOption.Number.get -> int
+Aw.Sindri.Core.Linear.LinearCycleOption.Number.init -> void
+Aw.Sindri.Core.Linear.LinearCycleOption.Name.get -> string!
+Aw.Sindri.Core.Linear.LinearCycleOption.Name.init -> void
+Aw.Sindri.Core.Linear.LinearCycleOption.StartsAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Linear.LinearCycleOption.StartsAt.init -> void
+Aw.Sindri.Core.Linear.LinearCycleOption.EndsAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Linear.LinearCycleOption.EndsAt.init -> void
+Aw.Sindri.Core.Linear.LinearCycleOption.Current.get -> bool
+Aw.Sindri.Core.Linear.LinearCycleOption.Current.init -> void
+Aw.Sindri.Core.Linear.LinearCycleOption.LinearCycleOption(string! Uuid, int Number, string! Name, System.DateTimeOffset StartsAt, System.DateTimeOffset EndsAt, bool Current) -> void
+override Aw.Sindri.Core.Linear.LinearCycleOption.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Linear.LinearCycleOption.GetHashCode() -> int
+override Aw.Sindri.Core.Linear.LinearCycleOption.ToString() -> string!
+static Aw.Sindri.Core.Linear.LinearCycleOption.operator !=(Aw.Sindri.Core.Linear.LinearCycleOption? left, Aw.Sindri.Core.Linear.LinearCycleOption? right) -> bool
+static Aw.Sindri.Core.Linear.LinearCycleOption.operator ==(Aw.Sindri.Core.Linear.LinearCycleOption? left, Aw.Sindri.Core.Linear.LinearCycleOption? right) -> bool
+Aw.Sindri.Core.Linear.LinearPerson
+Aw.Sindri.Core.Linear.LinearPerson.<Clone>$() -> Aw.Sindri.Core.Linear.LinearPerson!
+Aw.Sindri.Core.Linear.LinearPerson.Deconstruct(out string! Uuid, out string! Name) -> void
+Aw.Sindri.Core.Linear.LinearPerson.Equals(Aw.Sindri.Core.Linear.LinearPerson? other) -> bool
+Aw.Sindri.Core.Linear.LinearPerson.Uuid.get -> string!
+Aw.Sindri.Core.Linear.LinearPerson.Uuid.init -> void
+Aw.Sindri.Core.Linear.LinearPerson.Name.get -> string!
+Aw.Sindri.Core.Linear.LinearPerson.Name.init -> void
+Aw.Sindri.Core.Linear.LinearPerson.LinearPerson(string! Uuid, string! Name) -> void
+override Aw.Sindri.Core.Linear.LinearPerson.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Linear.LinearPerson.GetHashCode() -> int
+override Aw.Sindri.Core.Linear.LinearPerson.ToString() -> string!
+static Aw.Sindri.Core.Linear.LinearPerson.operator !=(Aw.Sindri.Core.Linear.LinearPerson? left, Aw.Sindri.Core.Linear.LinearPerson? right) -> bool
+static Aw.Sindri.Core.Linear.LinearPerson.operator ==(Aw.Sindri.Core.Linear.LinearPerson? left, Aw.Sindri.Core.Linear.LinearPerson? right) -> bool
+Aw.Sindri.Core.Linear.LinearLookupsResponse
+Aw.Sindri.Core.Linear.LinearLookupsResponse.<Clone>$() -> Aw.Sindri.Core.Linear.LinearLookupsResponse!
+Aw.Sindri.Core.Linear.LinearLookupsResponse.Deconstruct(out Aw.Sindri.Core.Linear.LinearTeamRef! Team, out System.DateTimeOffset? SyncedAt, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Linear.LinearStateOption!>! States, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Linear.LinearMemberOption!>! Members, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Linear.LinearLabelOption!>! Labels, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Linear.LinearCycleOption!>! Cycles) -> void
+Aw.Sindri.Core.Linear.LinearLookupsResponse.Equals(Aw.Sindri.Core.Linear.LinearLookupsResponse? other) -> bool
+Aw.Sindri.Core.Linear.LinearLookupsResponse.Team.get -> Aw.Sindri.Core.Linear.LinearTeamRef!
+Aw.Sindri.Core.Linear.LinearLookupsResponse.Team.init -> void
+Aw.Sindri.Core.Linear.LinearLookupsResponse.SyncedAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Linear.LinearLookupsResponse.SyncedAt.init -> void
+Aw.Sindri.Core.Linear.LinearLookupsResponse.States.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Linear.LinearStateOption!>!
+Aw.Sindri.Core.Linear.LinearLookupsResponse.States.init -> void
+Aw.Sindri.Core.Linear.LinearLookupsResponse.Members.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Linear.LinearMemberOption!>!
+Aw.Sindri.Core.Linear.LinearLookupsResponse.Members.init -> void
+Aw.Sindri.Core.Linear.LinearLookupsResponse.Labels.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Linear.LinearLabelOption!>!
+Aw.Sindri.Core.Linear.LinearLookupsResponse.Labels.init -> void
+Aw.Sindri.Core.Linear.LinearLookupsResponse.Cycles.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Linear.LinearCycleOption!>!
+Aw.Sindri.Core.Linear.LinearLookupsResponse.Cycles.init -> void
+Aw.Sindri.Core.Linear.LinearLookupsResponse.LinearLookupsResponse(Aw.Sindri.Core.Linear.LinearTeamRef! Team, System.DateTimeOffset? SyncedAt, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Linear.LinearStateOption!>! States, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Linear.LinearMemberOption!>! Members, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Linear.LinearLabelOption!>! Labels, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Linear.LinearCycleOption!>! Cycles) -> void
+override Aw.Sindri.Core.Linear.LinearLookupsResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Linear.LinearLookupsResponse.GetHashCode() -> int
+override Aw.Sindri.Core.Linear.LinearLookupsResponse.ToString() -> string!
+static Aw.Sindri.Core.Linear.LinearLookupsResponse.operator !=(Aw.Sindri.Core.Linear.LinearLookupsResponse? left, Aw.Sindri.Core.Linear.LinearLookupsResponse? right) -> bool
+static Aw.Sindri.Core.Linear.LinearLookupsResponse.operator ==(Aw.Sindri.Core.Linear.LinearLookupsResponse? left, Aw.Sindri.Core.Linear.LinearLookupsResponse? right) -> bool
+Aw.Sindri.Core.Linear.LinearSinceItem
+Aw.Sindri.Core.Linear.LinearSinceItem.<Clone>$() -> Aw.Sindri.Core.Linear.LinearSinceItem!
+Aw.Sindri.Core.Linear.LinearSinceItem.Deconstruct(out string! Kind, out string! Key, out string! Title, out Aw.Sindri.Core.Linear.LinearPerson? Actor, out System.DateTimeOffset At, out string? From, out string? To) -> void
+Aw.Sindri.Core.Linear.LinearSinceItem.Equals(Aw.Sindri.Core.Linear.LinearSinceItem? other) -> bool
+Aw.Sindri.Core.Linear.LinearSinceItem.Kind.get -> string!
+Aw.Sindri.Core.Linear.LinearSinceItem.Kind.init -> void
+Aw.Sindri.Core.Linear.LinearSinceItem.Key.get -> string!
+Aw.Sindri.Core.Linear.LinearSinceItem.Key.init -> void
+Aw.Sindri.Core.Linear.LinearSinceItem.Title.get -> string!
+Aw.Sindri.Core.Linear.LinearSinceItem.Title.init -> void
+Aw.Sindri.Core.Linear.LinearSinceItem.Actor.get -> Aw.Sindri.Core.Linear.LinearPerson?
+Aw.Sindri.Core.Linear.LinearSinceItem.Actor.init -> void
+Aw.Sindri.Core.Linear.LinearSinceItem.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Linear.LinearSinceItem.At.init -> void
+Aw.Sindri.Core.Linear.LinearSinceItem.From.get -> string?
+Aw.Sindri.Core.Linear.LinearSinceItem.From.init -> void
+Aw.Sindri.Core.Linear.LinearSinceItem.To.get -> string?
+Aw.Sindri.Core.Linear.LinearSinceItem.To.init -> void
+Aw.Sindri.Core.Linear.LinearSinceItem.LinearSinceItem(string! Kind, string! Key, string! Title, Aw.Sindri.Core.Linear.LinearPerson? Actor, System.DateTimeOffset At, string? From, string? To) -> void
+override Aw.Sindri.Core.Linear.LinearSinceItem.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Linear.LinearSinceItem.GetHashCode() -> int
+override Aw.Sindri.Core.Linear.LinearSinceItem.ToString() -> string!
+static Aw.Sindri.Core.Linear.LinearSinceItem.operator !=(Aw.Sindri.Core.Linear.LinearSinceItem? left, Aw.Sindri.Core.Linear.LinearSinceItem? right) -> bool
+static Aw.Sindri.Core.Linear.LinearSinceItem.operator ==(Aw.Sindri.Core.Linear.LinearSinceItem? left, Aw.Sindri.Core.Linear.LinearSinceItem? right) -> bool
+Aw.Sindri.Core.Linear.LinearSinceResponse
+Aw.Sindri.Core.Linear.LinearSinceResponse.<Clone>$() -> Aw.Sindri.Core.Linear.LinearSinceResponse!
+Aw.Sindri.Core.Linear.LinearSinceResponse.Deconstruct(out string! Marker, out int Count, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Linear.LinearSinceItem!>! Items) -> void
+Aw.Sindri.Core.Linear.LinearSinceResponse.Equals(Aw.Sindri.Core.Linear.LinearSinceResponse? other) -> bool
+Aw.Sindri.Core.Linear.LinearSinceResponse.Marker.get -> string!
+Aw.Sindri.Core.Linear.LinearSinceResponse.Marker.init -> void
+Aw.Sindri.Core.Linear.LinearSinceResponse.Count.get -> int
+Aw.Sindri.Core.Linear.LinearSinceResponse.Count.init -> void
+Aw.Sindri.Core.Linear.LinearSinceResponse.Items.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Linear.LinearSinceItem!>!
+Aw.Sindri.Core.Linear.LinearSinceResponse.Items.init -> void
+Aw.Sindri.Core.Linear.LinearSinceResponse.LinearSinceResponse(string! Marker, int Count, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Linear.LinearSinceItem!>! Items) -> void
+override Aw.Sindri.Core.Linear.LinearSinceResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Linear.LinearSinceResponse.GetHashCode() -> int
+override Aw.Sindri.Core.Linear.LinearSinceResponse.ToString() -> string!
+static Aw.Sindri.Core.Linear.LinearSinceResponse.operator !=(Aw.Sindri.Core.Linear.LinearSinceResponse? left, Aw.Sindri.Core.Linear.LinearSinceResponse? right) -> bool
+static Aw.Sindri.Core.Linear.LinearSinceResponse.operator ==(Aw.Sindri.Core.Linear.LinearSinceResponse? left, Aw.Sindri.Core.Linear.LinearSinceResponse? right) -> bool
+Aw.Sindri.Core.Linear.ILinearSideFacts
+Aw.Sindri.Core.Linear.ILinearSideFacts.Lookups(string! team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Linear.LinearLookupsResponse?>!>
+Aw.Sindri.Core.Linear.ILinearSideFacts.TeamsPicked(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+Aw.Sindri.Core.Linear.ILinearSideFacts.Since(System.DateTimeOffset after, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Linear.LinearSinceItem!>?>!>
+static readonly Aw.Sindri.Core.SindriErrors.LinearNothingStored -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.LinearTeamNotPicked -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Reviews.IFixTaskFiles
 Aw.Sindri.Core.Reviews.IFixTaskFiles.Add(string! head, Aw.Sindri.Core.Ids.ItemId item, int pr, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
 Aw.Sindri.Core.Reviews.IFixTaskFiles.Remove(Aw.Sindri.Core.Ids.ItemId item, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>

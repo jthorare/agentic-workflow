@@ -43,7 +43,9 @@ internal static class ApiScenarios
         ["Sandbox"] = SandboxScenarios.All,
         ["Projects"] = ProjectScenarios.All,
         ["Skills"] = SkillScenarios.All,
+        ["LinearIssues"] = LinearIssueScenarios.All,
         ["Reviews"] = [.. ReviewScenarios.All, .. ReviewLoginScenarios.All, .. ReviewFixScenarios.All, .. LibraryScenarios.All, .. LibraryDocScenarios.All],
+        ["LinearReads"] = LinearReadScenarios.All,
     };
 
     /// <summary>Every (route slug, scenario) pair, group by group.</summary>
@@ -70,6 +72,8 @@ internal static class ApiScenarios
     private static async Task<GoldenHost> StartLaunchOrLater(string slug, string scenario, CancellationToken ct) =>
         SkillScenarios.Handles(slug, scenario)
             ? await SkillScenarios.Start(ct)
+        : IsLinear(slug, scenario)
+            ? await StartLinear(slug, scenario, ct)
         : IsReviews(slug, scenario)
             ? await StartReviews(slug, scenario, ct)
             : ProjectScenarios.Handles(slug, scenario)
@@ -87,6 +91,13 @@ internal static class ApiScenarios
             : SessionScenarios.NeedsCgroup(slug, scenario)
             ? await SessionScenarios.Start(ct)
             : await GoldenHost.Start(temporary: !NeedsNonTemporaryHome(slug, scenario), ct, ProfileYaml(slug, scenario));
+
+    /// <summary>Whether the scenario belongs to the Linear hub's reads (the issue list and sheet, the lookups and the strip).</summary>
+    private static bool IsLinear(string slug, string scenario) => LinearIssueScenarios.Handles(slug, scenario) || LinearReadScenarios.Handles(slug, scenario);
+
+    /// <summary>The host of a Linear read scenario.</summary>
+    private static Task<GoldenHost> StartLinear(string slug, string scenario, CancellationToken ct) =>
+        LinearIssueScenarios.Handles(slug, scenario) ? LinearIssueScenarios.Start(slug, scenario, ct) : LinearReadScenarios.Start(slug, scenario, ct);
 
     /// <summary>Whether the scenario belongs to the Reviews group (the pages, the login save, the library and one doc of it).</summary>
     private static bool IsReviews(string slug, string scenario) =>
@@ -171,6 +182,8 @@ internal static class ApiScenarios
         : SandboxScenarios.Handles(slug, scenario) ? () => SandboxScenarios.Body(host, slug, scenario, ct)
         : ProjectScenarios.Handles(slug, scenario) ? () => ProjectScenarios.Body(host, slug, scenario, ct)
         : SkillScenarios.Handles(slug, scenario) ? () => SkillScenarios.Body(host, ct)
+        : LinearIssueScenarios.Handles(slug, scenario) ? () => LinearIssueScenarios.Body(host, slug, scenario, ct)
+        : LinearReadScenarios.Handles(slug, scenario) ? () => LinearReadScenarios.Body(host, slug, scenario)
         : ReviewBody(host, slug, scenario, ct);
 
     /// <summary>The body of a Reviews-group scenario (the pages, the login save, the library), else null.</summary>

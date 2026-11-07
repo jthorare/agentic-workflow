@@ -26,6 +26,7 @@ using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Line;
+using Aw.Sindri.Core.Linear;
 using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Profile;
@@ -81,6 +82,8 @@ using Aw.Sindri.Features.GetLaunchPicks;
 using Aw.Sindri.Features.GetLaunchTargets;
 using Aw.Sindri.Features.GetLibrary;
 using Aw.Sindri.Features.GetLibraryDoc;
+using Aw.Sindri.Features.GetLinearLookups;
+using Aw.Sindri.Features.GetLinearSince;
 using Aw.Sindri.Features.GetNeedsYou;
 using Aw.Sindri.Features.GetProfile;
 using Aw.Sindri.Features.GetProject;
@@ -95,6 +98,7 @@ using Aw.Sindri.Features.HideProject;
 using Aw.Sindri.Features.InitProfile;
 using Aw.Sindri.Features.IssueChallenge;
 using Aw.Sindri.Features.IssueNonce;
+using Aw.Sindri.Features.LinearIssues;
 using Aw.Sindri.Features.LineDoctor;
 using Aw.Sindri.Features.LineHoldout;
 using Aw.Sindri.Features.ListCommands;
@@ -179,6 +183,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(RequiredChecksData)), JsonSerializable(typeof(DocMapData)), JsonSerializable(typeof(TestPlanData)), JsonSerializable(typeof(CiData)), JsonSerializable(typeof(EvidenceData)), JsonSerializable(typeof(RiskData)), JsonSerializable(typeof(ConversationData))]   // the panels' rows, picked by ReviewPagePanelConverter
 [JsonSerializable(typeof(GetLibraryRequest)), JsonSerializable(typeof(GetLibraryResponse))]   // Ph5b: the library page
 [JsonSerializable(typeof(GetLibraryDocRequest)), JsonSerializable(typeof(GetLibraryDocResponse)), JsonSerializable(typeof(LibraryDocView)), JsonSerializable(typeof(LibraryDocErrorView))]   // PR review page Ph5b: one design doc
+[JsonSerializable(typeof(ListLinearIssuesRequest)), JsonSerializable(typeof(ListLinearIssuesResponse)), JsonSerializable(typeof(GetLinearIssueRequest)), JsonSerializable(typeof(GetLinearIssueResponse))]   // Linear hub Ph3 1a: the Work page's Linear list
 [JsonSerializable(typeof(Commands.Library.LibraryValidateReport)), JsonSerializable(typeof(Commands.Library.LibraryFindingRow))]   // PR review page Ph5b: 'sindri library list' and 'validate'
 [JsonSerializable(typeof(ListProjectsRequest)), JsonSerializable(typeof(ListProjectsResponse)), JsonSerializable(typeof(GetProjectRequest)), JsonSerializable(typeof(GetProjectResponse)), JsonSerializable(typeof(ProjectCard)), JsonSerializable(typeof(ListLinearProjectsRequest)), JsonSerializable(typeof(ListLinearProjectsResponse)), JsonSerializable(typeof(LinearProjectChoice))]
 [JsonSerializable(typeof(ProjectLead)), JsonSerializable(typeof(ProjectLink)), JsonSerializable(typeof(ProjectFreshnessRow))]
@@ -277,4 +282,5 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(Features.PinConcepts.PinConceptsRequest)), JsonSerializable(typeof(Features.PinConcepts.PinConceptsResult)), JsonSerializable(typeof(Features.PinConcepts.PinSet)), JsonSerializable(typeof(Features.PinConcepts.PinWritten)), JsonSerializable(typeof(Commands.Pins.PinList)), JsonSerializable(typeof(Commands.Pins.PinListEntry))]   // concept pins: the PinConcepts job
 [JsonSerializable(typeof(Features.SetPages.SetPagesRequest)), JsonSerializable(typeof(Features.SetPages.SetPagesResult)), JsonSerializable(typeof(Features.SetPages.PageWritten))]   // pages: the SetPages job
 [JsonSerializable(typeof(RunContextBacktestRequest)), JsonSerializable(typeof(RunContextBacktestResult)), JsonSerializable(typeof(BacktestArmLine))]
+[JsonSerializable(typeof(GetLinearLookupsRequest)), JsonSerializable(typeof(LinearLookupsResponse)), JsonSerializable(typeof(GetLinearSinceRequest)), JsonSerializable(typeof(LinearSinceResponse)), JsonSerializable(typeof(LinearSinceItem))]   // Linear hub Ph3 1a: the lookups and the strip
 internal sealed partial class SindriJsonContext : JsonSerializerContext;
