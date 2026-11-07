@@ -11,6 +11,9 @@ namespace Aw.Sindri.Infrastructure.Sandbox.Launch;
 /// <param name="Control">The running control plane's endpoint record (control.json's content), or null when it is not known.</param>
 internal sealed record SandboxLaunchOptions(string SystemdRun, BoxFacts Box, string SindriHome, string LaunchSecretsDirectory, Func<ControlEndpoint?> Control)
 {
+    /// <summary>Gets the launcher's <c lang="text">launch/</c> directory, where it stages the launch's MCP config until the session home exists (default: the folder of <c lang="text">LaunchSecretsDirectory</c>).</summary>
+    public string LaunchDirectory { get; init; } = Path.GetDirectoryName(LaunchSecretsDirectory) ?? LaunchSecretsDirectory;
+
     /// <summary>Gets the scope wrapper; null is the systemd scope.</summary>
     public Func<LaunchId, ScopeLimits, IReadOnlyList<string>, IReadOnlyList<string>>? Scope { get; init; }
 
