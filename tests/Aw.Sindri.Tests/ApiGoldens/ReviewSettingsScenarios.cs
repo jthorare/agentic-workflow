@@ -54,6 +54,6 @@ internal static class ReviewSettingsScenarios
         _ => Save(Project, "jthorare/agentic-workflow", "sindri", """{"panels":["requiredChecks","ci"]}"""),
     };
 
-    private static string Save(string project, string repo, string settings, string entry, string ifHash = "sha256:4f1c0b7e9a52d3") =>
+    private static string Save(string project, string repo, string settings, string entry, string ifHash = "221c8f3e6a76b02c68be447e853eae6439aa46a53e13a7939d313d95bd4817bd") =>
         $$"""{"project":"{{project}}","repos":["{{repo}}"],"settings":"{{settings}}","entry":{{entry}},"approve":true,"ifHash":"{{ifHash}}"}""";
 }

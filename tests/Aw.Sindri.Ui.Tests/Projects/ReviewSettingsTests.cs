@@ -368,7 +368,7 @@ public sealed class ReviewSettingsTests
 
         await settings.Save(Token);
 
-        Assert.Equal("sha256:4f1c0b7e9a52d3", OnlySave().IfHash);
+        Assert.Equal("221c8f3e6a76b02c68be447e853eae6439aa46a53e13a7939d313d95bd4817bd", OnlySave().IfHash);
     }
 
     [Fact]
@@ -464,7 +464,7 @@ public sealed class ReviewSettingsTests
 
         var body = Encoding.UTF8.GetString(AwJson.Serialize(OnlySave(), SindriApiClient.Json));
         Assert.Equal(
-            """{"project":"prj_0000000000000000000000000H","repos":["jthorare/agentic-workflow"],"settings":"default","entry":{"collapse":["a/**"]},"approve":true,"ifHash":"sha256:4f1c0b7e9a52d3"}""",
+            """{"project":"prj_0000000000000000000000000H","repos":["jthorare/agentic-workflow"],"settings":"default","entry":{"collapse":["a/**"]},"approve":true,"ifHash":"221c8f3e6a76b02c68be447e853eae6439aa46a53e13a7939d313d95bd4817bd"}""",
             body);
     }
 
