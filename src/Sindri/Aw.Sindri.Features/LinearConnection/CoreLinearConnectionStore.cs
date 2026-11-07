@@ -64,7 +64,21 @@ internal sealed class CoreLinearConnectionStore(IProfileSource live, IContextEng
         return written.IsError ? written.Error : Unit.Value;
     }
 
-    public ValueTask<Result<bool>> RemoveWrite(CancellationToken cancellationToken) => ValueTask.FromResult(writeTokens.RemoveWriteToken(Source));
+    // why: the keychain entry goes first, so a keychain that refuses leaves the pointer as it was (no half-removed key); a key never set, or kept somewhere else (a loopback fixture's file), has no entry to delete
+    public async ValueTask<Result<bool>> RemoveWrite(CancellationToken cancellationToken)
+    {
+        var settings = await Settings(cancellationToken).ConfigureAwait(false);
+        if (settings is { IsSuccess: true, Value.Linear.WriteToken: { } pointer } && pointer.StartsWith("keychain:", StringComparison.Ordinal))
+        {
+            var deleted = writer.DeleteFromKeychain(Service, "linear-write");
+            if (deleted.IsError)
+            {
+                return deleted.Error;
+            }
+        }
+
+        return writeTokens.RemoveWriteToken(Source);
+    }
 
     private async ValueTask<Result<ContextSettings>> Settings(CancellationToken cancellationToken)
     {

@@ -25,4 +25,10 @@ public interface ISecretWriter
     /// <param name="secret">The secret.</param>
     /// <returns>The `keychain:` pointer, or SND-SECRET-004 when no keychain took the secret (none installed, locked, or it did not read back).</returns>
     public Result<SecretPointer> StoreInKeychain(string service, string account, string secret);
+
+    /// <summary>Deletes a secret from the OS keychain (never a file): the removal of a key stored with <see cref="StoreInKeychain"/>.</summary>
+    /// <param name="service">The keychain service (`sindri-index`).</param>
+    /// <param name="account">The keychain account (`linear-write`).</param>
+    /// <returns>Success when the entry is gone (also when there was none); SND-SECRET-004 when the keychain could not be asked or refused.</returns>
+    public Result<Unit> DeleteFromKeychain(string service, string account);
 }
