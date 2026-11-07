@@ -2,6 +2,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
+using Aw.Sindri.Ui.ViewModels.Queue;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Microsoft.Extensions.Time.Testing;
 
@@ -107,12 +108,9 @@ public sealed class ShellLinearTests
     }, Token);
 
     [Theory]
-    [InlineData("J")]
-    [InlineData("K")]
-    [InlineData("Enter")]
-    [InlineData("/")]
     [InlineData("Y")]
-    public Task The_queue_row_keys_do_nothing_on_the_Linear_view(string key) => UiThread.Run(async () =>
+    [InlineData("C")]
+    public Task Y_and_C_do_nothing_on_the_Linear_view(string key) => UiThread.Run(async () =>
     {
         _server.QueueView = WithCopyableRow();
         var shell = await Shell();
@@ -124,6 +122,168 @@ public sealed class ShellLinearTests
         var handled = shell.Press(key);
 
         Assert.Equal((true, QueueRow, false, false, null), (handled, shell.Queue.SelectedId, shell.Queue.IsFiltering, shell.IsSheetOpen, _clipboard.Text));
+    }, Token);
+
+    private async Task<ShellViewModel> LinearShell()
+    {
+        _server.LinearIssuesFor = query => string.Equals(query.Group, "teams", StringComparison.Ordinal) ? RouteAnswer.Api("linear-issues", "teams-page2") : RouteAnswer.Api("linear-issues", "mine");
+        _server.QueueView = WithCopyableRow();
+        var shell = await Shell();
+        await Until(() => shell.Queue.RunningRows.Count + shell.Queue.QueuedRows.Count > 0);
+        shell.GoTo(PageId.Work);
+        shell.Linear.Choose(linear: true);
+        await Until(() => shell.Linear.Mine.Rows.Count > 0 && shell.Linear.Teams.Rows.Count > 0);
+        return shell;
+    }
+
+    [Fact]
+    public Task J_selects_the_first_row_and_then_moves_down_across_the_group_boundary() => UiThread.Run(async () =>
+    {
+        var shell = await LinearShell();
+
+        var first = shell.Press("J");
+        var afterFirst = shell.Linear.SelectedKey;
+        _ = shell.Press("J");
+        _ = shell.Press("J");
+        var last = shell.Linear.SelectedKey;
+        _ = shell.Press("J");
+        var across = shell.Linear.SelectedKey;
+
+        Assert.Equal((true, "ENG-12", "OPS-40", "ENG-57"), (first, afterFirst, last, across));
+    }, Token);
+
+    [Fact]
+    public Task K_moves_up_across_the_group_boundary_and_stops_at_the_first_row() => UiThread.Run(async () =>
+    {
+        var shell = await LinearShell();
+        for (var i = 0; i < 4; i++)
+        {
+            _ = shell.Press("J");
+        }
+
+        _ = shell.Press("K");
+        var up = shell.Linear.SelectedKey;
+        for (var i = 0; i < 10; i++)
+        {
+            _ = shell.Press("K");
+        }
+
+        Assert.Equal(("OPS-40", "ENG-12"), (up, shell.Linear.SelectedKey));   // J x4 lands on ENG-57 (the first J selects ENG-12), so K crosses back to OPS-40
+    }, Token);
+
+    [Fact]
+    public Task J_stops_at_the_last_row() => UiThread.Run(async () =>
+    {
+        var shell = await LinearShell();
+
+        for (var i = 0; i < 12; i++)
+        {
+            _ = shell.Press("J");
+        }
+
+        Assert.Equal("ENG-44", shell.Linear.SelectedKey);
+    }, Token);
+
+    [Fact]
+    public Task The_selected_row_is_marked_and_the_one_it_left_is_not() => UiThread.Run(async () =>
+    {
+        var shell = await LinearShell();
+
+        _ = shell.Press("J");
+        _ = shell.Press("J");
+
+        Assert.Equal([false, true, false], shell.Linear.Mine.Rows.Select(r => r.IsSelected));
+    }, Token);
+
+    [Fact]
+    public Task J_asks_the_view_to_focus_the_selected_row() => UiThread.Run(async () =>
+    {
+        var shell = await LinearShell();
+        var asked = new List<string>();
+        shell.Linear.FocusRequested += (_, e) => asked.Add(e.ItemId);
+
+        _ = shell.Press("J");
+
+        Assert.Equal(["ENG-12"], asked, StringComparer.Ordinal);
+    }, Token);
+
+    [Fact]
+    public Task Enter_raises_IssueRequested_with_the_selected_issue() => UiThread.Run(async () =>
+    {
+        var shell = await LinearShell();
+        var asked = new List<string>();
+        shell.Linear.IssueRequested += (_, e) => asked.Add(e.Key);
+        _ = shell.Press("J");
+        _ = shell.Press("J");
+
+        var handled = shell.Press("Enter");
+
+        Assert.Equal((true, "ENG-31"), (handled, Assert.Single(asked)));
+    }, Token);
+
+    [Fact]
+    public Task Enter_with_nothing_selected_opens_nothing() => UiThread.Run(async () =>
+    {
+        var shell = await LinearShell();
+        var asked = 0;
+        shell.Linear.IssueRequested += (_, _) => asked++;
+
+        var handled = shell.Press("Enter");
+
+        Assert.Equal((true, 0), (handled, asked));
+    }, Token);
+
+    [Fact]
+    public Task Slash_asks_the_view_to_focus_the_filter_bar_and_leaves_the_Sindri_filter_closed() => UiThread.Run(async () =>
+    {
+        var shell = await LinearShell();
+        var asked = 0;
+        shell.Linear.FilterFocusRequested += (_, _) => asked++;
+
+        var handled = shell.Press("/");
+
+        Assert.Equal((true, 1, false), (handled, asked, shell.Queue.IsFiltering));
+    }, Token);
+
+    [Theory]
+    [InlineData("J")]
+    [InlineData("K")]
+    [InlineData("Enter")]
+    public Task The_row_keys_on_the_Linear_view_never_touch_the_Sindri_queue(string key) => UiThread.Run(async () =>
+    {
+        var shell = await LinearShell();
+        shell.SelectQueueRow(QueueRow, QueueScope.Page);
+
+        _ = shell.Press(key);
+
+        Assert.Equal((QueueRow, false), (shell.Queue.SelectedId, shell.IsSheetOpen));
+    }, Token);
+
+    [Theory]
+    [InlineData("J")]
+    [InlineData("K")]
+    [InlineData("Enter")]
+    public Task The_row_keys_inside_a_sheet_do_not_move_the_Linear_selection(string key) => UiThread.Run(async () =>
+    {
+        var shell = await LinearShell();
+        _ = shell.Press("J");
+        var asked = 0;
+        shell.Linear.IssueRequested += (_, _) => asked++;
+
+        var handled = shell.Press(key, inSheet: true);
+
+        Assert.Equal((false, "ENG-12", 0), (handled, shell.Linear.SelectedKey, asked));
+    }, Token);
+
+    [Fact]
+    public Task J_and_Enter_on_the_Sindri_view_still_walk_the_queue() => UiThread.Run(async () =>
+    {
+        var shell = await LinearShell();
+        shell.Linear.Choose(linear: false);
+
+        _ = shell.Press("J");
+
+        Assert.NotNull(shell.Queue.SelectedId);
     }, Token);
 
     [Fact]
