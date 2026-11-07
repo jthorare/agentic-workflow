@@ -69,7 +69,7 @@ internal sealed partial class ShellViewModel
 
     // A link that would replace or close the open issue sheet while it has unsaved edits asks first; Discard follows the link.
     private bool AskBeforeLeavingFor(DeepLink link, bool rowSheet) =>
-        IsIssueSheet && IsSheetOpen && IssueSheet.HasChanges
+        IsIssueSheet && IsSheetOpen && IssueSheet.HasUnsaved
         && !(link.Kind == DeepLinkKind.Issue && string.Equals(link.Subject, IssueSheet.Key, StringComparison.Ordinal))
         && !(PageOnly(link.Kind) is not null && link.Kind != DeepLinkKind.ProjectAdd)
         && IssueSheet.Leaving(then: () => Navigate(link, rowSheet));

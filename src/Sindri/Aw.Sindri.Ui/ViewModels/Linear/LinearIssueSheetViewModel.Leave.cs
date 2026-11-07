@@ -23,7 +23,7 @@ internal sealed partial class LinearIssueSheetViewModel
     /// <returns>True when the question is showing and the sheet must wait for the answer.</returns>
     internal bool Leaving(Action? then = null)
     {
-        if (!HasChanges)
+        if (!HasUnsaved)
         {
             return false;
         }
@@ -50,7 +50,7 @@ internal sealed partial class LinearIssueSheetViewModel
     /// <summary>Drops the edits and lets the leaving go ahead.</summary>
     internal void Discard()
     {
-        if (!IsConfirmingDiscard || IsSaving)
+        if (!IsConfirmingDiscard || IsSaving || IsPosting)
         {
             return;   // no question, or a save is out: its answer decides what is left to drop (an unknown outcome can still be dropped)
         }
@@ -63,6 +63,7 @@ internal sealed partial class LinearIssueSheetViewModel
             field.Revert();
         }
 
+        ClearComment();
         (ConflictRows, HasConflict, IsConfirmingDiscard) = ([], false, false);
         if (then is not null)
         {
@@ -77,7 +78,7 @@ internal sealed partial class LinearIssueSheetViewModel
     // Nothing is left to lose (a save applied, or the edits were put back): the question and its pending way on go.
     private void SettleQuestion()
     {
-        if (!HasChanges)
+        if (!HasUnsaved)
         {
             (IsConfirmingDiscard, _then) = (false, null);
         }
