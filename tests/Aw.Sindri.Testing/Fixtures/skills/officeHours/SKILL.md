@@ -1,6 +1,6 @@
 # officeHours (fixture)
 
-## Result
+## Result block
 
 ```aw-result
 {

@@ -1,6 +1,6 @@
 # review (fixture)
 
-## Result
+## Result block
 
 ```aw-result
 {
