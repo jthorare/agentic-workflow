@@ -413,8 +413,8 @@ public sealed class SindriApiClientLinearTests
     [Fact]
     public void The_write_event_and_the_unknown_outcome_row_read_through_the_apps_json_context()
     {
-        var evt = Aw.Kernel.Json.AwJson.Deserialize<LinearWriteEvent>(Encoding.UTF8.GetBytes("""{"key":"ENG-12","team":"ENG","clientId":null,"attempt":2,"write":"edit","outcome":"failed","code":"SND-LINEAR-011"}"""), SindriApiClient.Json).Value;
-        var row = Aw.Kernel.Json.AwJson.Deserialize<LinearWriteUnknownRow>(Encoding.UTF8.GetBytes("""{"kind":"linear.write.unknown","key":null,"team":"ENG","clientId":"c-1","write":"create","at":"2026-01-01T10:05:00.0000000Z","text":"A new ENG issue from 10:05 may have been created"}"""), SindriApiClient.Json).Value;
+        var evt = Kernel.Json.AwJson.Deserialize<LinearWriteEvent>(Encoding.UTF8.GetBytes("""{"key":"ENG-12","team":"ENG","clientId":null,"attempt":2,"write":"edit","outcome":"failed","code":"SND-LINEAR-011"}"""), SindriApiClient.Json).Value;
+        var row = Kernel.Json.AwJson.Deserialize<LinearWriteUnknownRow>(Encoding.UTF8.GetBytes("""{"kind":"linear.write.unknown","key":null,"team":"ENG","clientId":"c-1","write":"create","at":"2026-01-01T10:05:00.0000000Z","text":"A new ENG issue from 10:05 may have been created"}"""), SindriApiClient.Json).Value;
 
         Assert.Equal(("ENG-12", null, 2, "edit", "failed", "SND-LINEAR-011"), (evt.Key, evt.ClientId, evt.Attempt, evt.Write, evt.Outcome, evt.Code));
         Assert.Equal((null, "create"), (row.Key, row.Write));
