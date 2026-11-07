@@ -104,6 +104,7 @@ internal sealed partial class LinearIssueSheetViewModel(ISindriApi api, ILaunche
         {
             Set(ref field, value);
             OnChanged(nameof(HasDescription));
+            OnChanged(nameof(ShowsNoDescription));
         }
     } = [];
 

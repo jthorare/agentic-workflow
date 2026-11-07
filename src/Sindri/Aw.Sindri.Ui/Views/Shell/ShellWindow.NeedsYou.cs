@@ -129,6 +129,11 @@ internal sealed partial class ShellWindow
     // The Context page's sheets that ask before they go: a question answers first, changes ask before the sheet goes. Null when the open sheet isn't one of them.
     private static bool? EscapeSheetWithQuestion(ShellViewModel shell)
     {
+        if (shell.IsIssueSheet)
+        {
+            return shell.IssueSheet.Escape() ? true : null;   // unsaved edits ask first; none: the sheet closes
+        }
+
         if (shell.IsPageSheet && shell.ActivePageSheet is { } pageSheet)
         {
             return pageSheet.Escape();
