@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow;
@@ -23,14 +24,12 @@ internal sealed class TrialRecipes(IRecipeStore store, IRecipeReader reader, Rec
     /// <param name="cancellationToken">Cancels the reads and writes.</param>
     internal async ValueTask<Result<RecipeVersion>> Approve(RecipeId id, Func<int, SkillTrialPlan> at, string actor, CancellationToken cancellationToken)
     {
-        var versions = await store.Versions(id, cancellationToken).ConfigureAwait(false);
-        if (versions.IsError)
+        var registered = await Register(id, at, cancellationToken).ConfigureAwait(false);
+        if (registered.IsError && registered.Error.Code == WorkflowErrors.RecipeVersionTaken.Code)
         {
-            return versions.Error;
+            registered = await Register(id, at, cancellationToken).ConfigureAwait(false);   // why: another trial took max+1 between our read and our write; read again and go one higher, once
         }
 
-        var plan = at(SkillTrialRecipe.VersionFor(versions.Value.ToDictionary(static r => r.Version, static r => r.Hash), version => reader.Read(at(version).Text, id.Value + ".yaml").Document?.Hash));
-        var registered = await registrar.Register(plan.Text, plan.Id.Value + ".yaml", cancellationToken).ConfigureAwait(false);
         if (registered.IsError)
         {
             return registered.Error;
@@ -52,5 +51,24 @@ internal sealed class TrialRecipes(IRecipeStore store, IRecipeReader reader, Rec
         }
 
         return new RecipeVersion(registered.Value.Id, registered.Value.Version, registered.Value.Hash);
+    }
+
+    private async ValueTask<Result<RegistrarOutcome>> Register(RecipeId id, Func<int, SkillTrialPlan> at, CancellationToken cancellationToken)
+    {
+        var versions = await store.Versions(id, cancellationToken).ConfigureAwait(false);
+        if (versions.IsError)
+        {
+            return versions.Error;
+        }
+
+        var registered = versions.Value.ToDictionary(static r => r.Version, static r => r.Hash);
+        RecipeHash? HashAt(int version) => reader.Read(at(version).Text, id.Value + ".yaml").Document?.Hash;
+        if (registered.Count > 0 && registered.Keys.Max() == int.MaxValue && !registered.Any(r => HashAt(r.Key) == r.Value))
+        {
+            return WorkflowErrors.RecipeVersionTaken.With($"{id.Value} is already at version {int.MaxValue.ToString(CultureInfo.InvariantCulture)}, so a changed trial has no version to take (fix: remove the old trial recipe versions of {id.Value})");
+        }
+
+        var plan = at(SkillTrialRecipe.VersionFor(registered, HashAt));
+        return await registrar.Register(plan.Text, plan.Id.Value + ".yaml", cancellationToken).ConfigureAwait(false);
     }
 }

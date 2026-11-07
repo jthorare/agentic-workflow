@@ -140,7 +140,7 @@ public static class SkillTrialRecipe
     /// </summary>
     /// <param name="registered">The registered versions of the trial's id, each with its hash.</param>
     /// <param name="hashAt">The hash of the trial's text at a version.</param>
-    /// <returns>The version.</returns>
+    /// <returns>The version; an <see cref="OverflowException"/> when the highest registered is <see cref="int.MaxValue"/> and none matches (the caller refuses that case first).</returns>
     public static int VersionFor(IReadOnlyDictionary<int, RecipeHash> registered, Func<int, RecipeHash?> hashAt)
     {
         ArgumentNullException.ThrowIfNull(registered);
@@ -153,7 +153,7 @@ public static class SkillTrialRecipe
             }
         }
 
-        return registered.Count == 0 ? 1 : registered.Keys.Max() + 1;
+        return registered.Count == 0 ? 1 : checked(registered.Keys.Max() + 1);
     }
 
     /// <summary>The block outcome a trial ended with, from its terminal state: 'ended-needs-changes' is 'needsChanges'.</summary>
