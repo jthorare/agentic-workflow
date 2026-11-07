@@ -12,7 +12,7 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 /// <summary>
 /// Settings, Connections, Linear (#2077 Ph3 1b; Linear hub spec 2026-11-04 §3; contract AGREED by api and ui): 'GET /linear/connection', 'POST /linear/connection/teams', 'POST /linear/connection' and
 /// 'DELETE /linear/connection/write'. The ports behind them are fakes seeded per scenario (<see cref="FakeLinearConnectionFacts"/>, <see cref="FakeLinearKeyChecks"/>, <see cref="FakeLinearConnectionStore"/>,
-/// <see cref="FakeLinearConnectionApproval"/>): nothing reaches Linear, a keychain or the profile file, so the profile hash is the item profile's. The state was last checked at 09:58, two minutes before the clock.
+/// <see cref="FakeLinearConnectionApproval"/>): nothing reaches Linear, a keychain or the profile file, so the profile hash is the item profile's. CheckedAt is the time of the last save, which the scenarios put two minutes before the clock (the epoch is midnight, so it reads 23:58 the day before).
 /// </summary>
 internal static class LinearConnectionScenarios
 {
@@ -68,7 +68,7 @@ internal static class LinearConnectionScenarios
         _ => $$"""{"kind":"read","key":"{{ReadKey}}","teams":["ENG","OPS"]}""",
     };
 
-    // 'connected' has both keys resolved at 09:58; 'pending' has a live profile that differs from the approved one; the others are one key short or unsure of the write key's scope
+    // 'connected' has both keys resolved, last saved at 23:58 the day before; 'pending' has a live profile that differs from the approved one; the others are one key short or unsure of the write key's scope
     private static FakeLinearConnectionFacts Facts(string scenario)
     {
         var resolves = new LinearKeyStateView("resolves", _checked);
