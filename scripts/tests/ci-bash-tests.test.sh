@@ -59,7 +59,8 @@ test_the_timing_sensitive_suites_are_serial() {
   for s in scripts/tests/agent-token.test.sh config/hooks/tests/failopen.test.sh config/lib/tests/failopen.test.sh \
            config/lib/tests/statusline.test.sh config/hooks/tests/sindri-nudge.test.sh config/lib/tests/prompt-sort.test.sh \
            scripts/tests/readiness-baseline.test.sh config/lib/tests/aw-state-dir-isolation.test.sh \
-           config/lib/tests/installed-hooks-smoke.test.sh config/lib/tests/install-wake-gating.test.sh; do
+           config/lib/tests/installed-hooks-smoke.test.sh config/lib/tests/install-wake-gating.test.sh \
+           scripts/tests/formal-verify-tlc.test.sh scripts/tests/meta-launch.test.sh; do
     printf '%s\n' "$serial" | has -xF "$s" || fail "timing-sensitive or shared-state suite is not serial: $s"
   done
   echo "PASS: test_the_timing_sensitive_suites_are_serial"

@@ -46,13 +46,17 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
         new("library.unreadable[].root"), new("library.unreadable[].reason"),
     ]);
 
-    /// <summary>GET /sindri/library for a session: each broken doc's file and findings, and each near miss's file and text (they name the owner's folders and the docs' own words).</summary>
+    /// <summary>GET /sindri/library for a session: each broken doc's id, file and findings, and each near miss's file and text (they name the owner's folders and the docs' own words; a broken doc's id is whatever its front matter says).</summary>
     internal static FencePlan Library { get; } = new("sindri:library",
     [
-        new("broken[].path"), new("broken[].errors[].text"),
+        new("broken[].doc"), new("broken[].path"), new("broken[].errors[].text"),
         new("nearMisses[].path"), new("nearMisses[].text"),
     ]);
 
-    /// <summary>GET /sindri/library/{doc} for a session: the doc's title, its file path and what its errors say (all of it text from a file somebody wrote).</summary>
-    internal static FencePlan LibraryDoc { get; } = new("sindri:library", [new("doc.title"), new("doc.path"), new("doc.errors[].text")]);
+    /// <summary>GET /sindri/library/{doc} for a session: every front-matter string, the title, the file path and what its errors say (all of it text from a file somebody wrote; a broken doc keeps a field of the wrong shape as written).</summary>
+    internal static FencePlan LibraryDoc { get; } = new("sindri:library",
+    [
+        new("doc.id"), new("doc.kind"), new("doc.status"), new("doc.project"), new("doc.repos[]"), new("doc.issues[]"),
+        new("doc.title"), new("doc.path"), new("doc.errors[].text"),
+    ]);
 }
