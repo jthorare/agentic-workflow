@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
+using Aw.Kernel.Data;
 using Aw.Sindri.Core.Mcp;
 using Aw.Sindri.Infrastructure.Processes;
 
@@ -94,10 +95,7 @@ internal sealed class ProcessClaudeCli(McpSettings settings) : IClaudeCli
     /// </summary>
     private static string? Executable(string name, IReadOnlyList<string> searchPath) =>
         name.Contains('/', StringComparison.Ordinal)
-            ? (IsExecutable(name) ? name : null)
-            : searchPath.Where(Path.IsPathRooted).Select(directory => Path.Combine(directory, name)).FirstOrDefault(IsExecutable);
-
-    private static bool IsExecutable(string path) =>
-        File.Exists(path) && (OperatingSystem.IsWindows() || (File.GetUnixFileMode(path) & (UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute)) != UnixFileMode.None);
+            ? (ExecutableFiles.IsExecutable(name) ? name : null)
+            : searchPath.Where(Path.IsPathRooted).Select(directory => Path.Combine(directory, name)).FirstOrDefault(ExecutableFiles.IsExecutable);
 
 }
