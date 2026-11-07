@@ -7,7 +7,7 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Forge;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items;
-using Aw.Sindri.Core.Reviews;
+using Aw.Sindri.Core.Items.Vocabulary;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Features.CloseItem;
@@ -79,6 +79,8 @@ public sealed class SindriFixThreadTests
     [InlineData("sindri.fix-sent")]
     [InlineData("sindri.fix:ITM-0123")]
     [InlineData("sindri.fix:0123456789abcdefghjkmnpqrs")]
+    [InlineData("sindri.fix:01ARZ3NDEKTSV4RRFFQ69G5FAV")]
+    [InlineData("sindri.fix:ITM-0123456789ABCDEF0123456789ABCDEF")]
     [InlineData("sindri.fix:01ARZ3NDEKTSV4RRFFQ69G5FA")]
     [InlineData("sindri.fix:01ARZ3NDEKTSV4RRFFQ69G5FAVX")]
     public async Task A_marker_that_only_looks_like_a_fix_marker_is_not_work(string marker)
@@ -89,11 +91,9 @@ public sealed class SindriFixThreadTests
         Assert.Null(SindriFixMarker.Item([marker]));
     }
 
-    [Theory]
-    [InlineData(Item)]
-    [InlineData("01ARZ3NDEKTSV4RRFFQ69G5FAV")]
-    public void The_marker_names_an_item_by_id_or_ulid(string item) =>
-        Assert.Equal(item, SindriFixMarker.Item(["sindri:reply:1", "sindri.fix:" + item]));
+    [Fact]
+    public void The_marker_names_an_item_by_id() =>
+        Assert.Equal(Item, SindriFixMarker.Item(["sindri:reply:1", "sindri.fix:" + Item]));
 
     [Fact]
     public async Task The_fact_carries_the_item_so_the_fixed_mark_can_close_it()
@@ -128,30 +128,70 @@ public sealed class SindriFixThreadTests
     {
         var row = A.Item().WithId(ItemId.From(Item)).AtVersion(4).Build();
         var service = new RecordingClose();
-        var files = new RecordingFixFiles();
+        var files = new FakeFixTaskFiles();
 
         var closed = await Closer(new FixedItems(row), service, files).Close(Item, Token);
 
         Assert.True(closed);
-        Assert.Equal(new CloseItemRequest(new ItemRef(ItemId.From(Item), Alias: null), Aw.Sindri.Core.Items.Vocabulary.CloseReason.Done, ItemVersion: 4), Assert.Single(service.Requests));
+        Assert.Equal(new CloseItemRequest(new ItemRef(ItemId.From(Item), Alias: null), CloseReason.Done, ItemVersion: 4), Assert.Single(service.Requests));
         Assert.Equal([ItemId.From(Item)], files.Removed);
     }
 
     [Fact]
-    public async Task FixItemCloser_treats_an_unknown_or_already_closed_item_as_not_an_error()
+    public async Task FixItemCloser_removes_the_task_of_an_unknown_or_already_closed_item_without_failing()
     {
-        var files = new RecordingFixFiles();
+        var files = new FakeFixTaskFiles();
+        var closedRow = A.Item().WithId(ItemId.From(Item)).InState(ItemState.Done, KnownInstants.Epoch).Build();
         var unknown = await Closer(new FixedItems(row: null), new RecordingClose(), files).Close(Item, Token);
-        var conflict = await Closer(new FixedItems(A.Item().WithId(ItemId.From(Item)).Build()), new RecordingClose { Answer = SindriErrors.ItemConflict.With("already done") }, files).Close(Item, Token);
+        var closedAlready = await Closer(new FixedItems(closedRow), new RecordingClose(), files).Close(Item, Token);
         var junk = await Closer(new FixedItems(row: null), new RecordingClose(), files).Close("not-an-item", Token);
 
         Assert.False(unknown);
-        Assert.False(conflict);
+        Assert.False(closedAlready);
         Assert.False(junk);
-        Assert.Equal([ItemId.From(Item), ItemId.From(Item)], files.Removed);   // a stale task goes even when the item can't be closed
+        Assert.Equal([ItemId.From(Item), ItemId.From(Item)], files.Removed);
     }
 
-    private static FixItemCloser Closer(IItemResolver items, RecordingClose service, RecordingFixFiles files)
+    [Fact]
+    public async Task FixItemCloser_retries_a_version_conflict_once_and_removes_the_task_when_that_closes()
+    {
+        var files = new FakeFixTaskFiles();
+        var service = new RecordingClose(SindriErrors.ItemConflict.With("changed since you looked"));
+
+        var closed = await Closer(new FixedItems(A.Item().WithId(ItemId.From(Item)).Build()), service, files).Close(Item, Token);
+
+        Assert.True(closed);
+        Assert.Equal(2, service.Requests.Count);
+        Assert.Equal([ItemId.From(Item)], files.Removed);
+    }
+
+    [Fact]
+    public async Task FixItemCloser_keeps_the_task_when_the_conflict_comes_twice()
+    {
+        var files = new FakeFixTaskFiles();
+        var service = new RecordingClose(SindriErrors.ItemConflict.With("changed"), SindriErrors.ItemConflict.With("changed again"));
+
+        var closed = await Closer(new FixedItems(A.Item().WithId(ItemId.From(Item)).Build()), service, files).Close(Item, Token);
+
+        Assert.False(closed);
+        Assert.Equal(2, service.Requests.Count);
+        Assert.Empty(files.Removed);
+    }
+
+    [Fact]
+    public async Task FixItemCloser_keeps_the_task_on_an_error_that_is_not_a_conflict()
+    {
+        var files = new FakeFixTaskFiles();
+        var service = new RecordingClose(SindriErrors.NotRunning.With("no lease"));
+
+        var closed = await Closer(new FixedItems(A.Item().WithId(ItemId.From(Item)).Build()), service, files).Close(Item, Token);
+
+        Assert.False(closed);
+        _ = Assert.Single(service.Requests);
+        Assert.Empty(files.Removed);
+    }
+
+    private static FixItemCloser Closer(IItemResolver items, RecordingClose service, FakeFixTaskFiles files)
     {
         var callers = new FixedCallers();
         return new FixItemCloser(items, service, files, callers, Microsoft.Extensions.Logging.Abstractions.NullLogger<FixItemCloser>.Instance);
@@ -163,29 +203,17 @@ public sealed class SindriFixThreadTests
             ValueTask.FromResult(row is null ? (Result<ItemRow>)SindriErrors.ItemNotFound.With("none") : row);
     }
 
-    private sealed class RecordingClose : IService<CloseItemRequest, CommandAccepted>
+    private sealed class RecordingClose(params Error[] answers) : IService<CloseItemRequest, CommandAccepted>
     {
-        public List<CloseItemRequest> Requests { get; } = [];
+        private int _next;
 
-        public Error? Answer { get; init; }
+        public List<CloseItemRequest> Requests { get; } = [];
 
         public ValueTask<Result<CommandAccepted>> Handle(CloseItemRequest request, CancellationToken cancellationToken)
         {
             Requests.Add(request);
-            return ValueTask.FromResult(Answer is { } error ? (Result<CommandAccepted>)error : new CommandAccepted(A.Caller().Build().CommandId, 1));
-        }
-    }
-
-    private sealed class RecordingFixFiles : IFixTaskFiles
-    {
-        public List<ItemId> Removed { get; } = [];
-
-        public ValueTask<Result<bool>> Add(string head, ItemId item, int pr, CancellationToken cancellationToken) => ValueTask.FromResult<Result<bool>>(true);
-
-        public ValueTask<Result<bool>> Remove(ItemId item, CancellationToken cancellationToken)
-        {
-            Removed.Add(item);
-            return ValueTask.FromResult<Result<bool>>(true);
+            var answer = _next < answers.Length ? answers[_next++] : null;
+            return ValueTask.FromResult(answer is { } error ? (Result<CommandAccepted>)error : new CommandAccepted(A.Caller().Build().CommandId, 1));
         }
     }
 

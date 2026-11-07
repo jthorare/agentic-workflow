@@ -1,3 +1,4 @@
+using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
@@ -24,38 +25,60 @@ internal sealed partial class FixItemCloser(IItemResolver items, IService<CloseI
             return false;
         }
 
-        var closed = await CloseDone(reference, cancellationToken).ConfigureAwait(false);
-        var removed = await files.Remove(id, cancellationToken).ConfigureAwait(false);   // a task whose item can't be closed is stale too
-        if (removed.IsError)
-        {
-            TaskNotRemoved(item, removed.Error.Code, removed.Error.Message);
-        }
-
-        return closed;
-    }
-
-    private async ValueTask<bool> CloseDone(ItemRef reference, CancellationToken cancellationToken)
-    {
         using var entered = callers.EnterService("pr-fix");
         if (callers.Current is not { } caller)
         {
             return false;
         }
 
+        var outcome = await Attempt(reference, caller, cancellationToken).ConfigureAwait(false);
+        if (outcome == Outcome.Conflict)
+        {
+            outcome = await Attempt(reference, caller, cancellationToken).ConfigureAwait(false);   // the item moved under us: read it again and try once more
+        }
+
+        if (outcome is Outcome.Closed or Outcome.Gone)
+        {
+            var removed = await files.Remove(id, cancellationToken).ConfigureAwait(false);   // closed, unknown or already closed: the task is stale; a failed close keeps it
+            if (removed.IsError)
+            {
+                TaskNotRemoved(item, removed.Error.Code, removed.Error.Message);
+            }
+        }
+
+        return outcome == Outcome.Closed;
+    }
+
+    private async ValueTask<Outcome> Attempt(ItemRef reference, CallerContext caller, CancellationToken cancellationToken)
+    {
         var row = await items.Resolve(reference, caller, cancellationToken).ConfigureAwait(false);
         if (row.IsError)
         {
             NotClosed(reference, row.Error.Code, row.Error.Message);
-            return false;
+            return row.Error.Kind == ErrorKind.NotFound ? Outcome.Gone : Outcome.Failed;
+        }
+
+        if (ItemStates.IsClosed(row.Value.State))
+        {
+            return Outcome.Gone;
         }
 
         var done = await close.Handle(new CloseItemRequest(reference, CloseReason.Done, row.Value.Version), cancellationToken).ConfigureAwait(false);
-        if (done.IsError)
+        if (done.IsSuccess)
         {
-            NotClosed(reference, done.Error.Code, done.Error.Message);
+            return Outcome.Closed;
         }
 
-        return done.IsSuccess;
+        NotClosed(reference, done.Error.Code, done.Error.Message);
+        return done.Error.Kind == ErrorKind.Conflict ? Outcome.Conflict : Outcome.Failed;
+    }
+
+    private enum Outcome
+    {
+        Closed,
+        Gone,
+        Conflict,
+        Failed,
     }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "The fix marker names {Item}, which is not an item id; nothing to close")]
