@@ -148,7 +148,7 @@ public sealed class LinearWorkRefreshTests
         var asked = 0;
         work.IssueRequested += (_, _) => asked++;
 
-        Assert.Equal(((string?)null, false, 0, false), (work.SelectedKey, work.OpenSelected(), asked, work.Mine.Rows.Concat(work.Teams.Rows).Any(r => r.IsSelected)));
+        Assert.Equal((null, false, 0, false), (work.SelectedKey, work.OpenSelected(), asked, work.Mine.Rows.Concat(work.Teams.Rows).Any(r => r.IsSelected)));
         work.Move(1);
         Assert.Equal(work.Mine.Rows[0].Key, work.SelectedKey);
     }
