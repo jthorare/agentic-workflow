@@ -196,6 +196,38 @@ public sealed class SandboxLaunchSecretTests : IDisposable
         Assert.True(wrong.IsError);
     }
 
+    [Fact]
+    public async Task Releasing_the_sandbox_forgets_the_secret()
+    {
+        var launch = MakeLaunch(hideLaunchDirectory: false);
+        var request = A.LaunchRequest().Unattended(new StepArgs(Model: null, Policy: null, new StepRef("build", "agent"))).Build();
+        var secrets = Directory.CreateDirectory(new LauncherOptions(LauncherHome).SecretsDirectory).FullName;
+        await File.WriteAllTextAsync(LaunchSecrets.SecretPathFor(secrets, request.Launch), "secret", TestContext.Current.CancellationToken);
+        var prepared = await launch.Prepare(request, ["claude"], chosenSession: null, TestContext.Current.CancellationToken);
+        Assert.True(prepared.IsSuccess, prepared.IsError ? prepared.Error.Message : null);
+        Assert.True(Registry.For(request.Launch).ContainsKey(SecretVariable));
+
+        await launch.Release(request.Launch, TestContext.Current.CancellationToken);
+
+        Assert.Empty(Registry.For(request.Launch));
+    }
+
+    [Fact]
+    public async Task After_the_start_the_parent_holds_no_descriptor_on_the_secrets_file_and_the_file_waits_for_the_wrapper_to_delete_it()
+    {
+        Assert.SkipUnless(Directory.Exists("/proc/self/fd"), "needs /proc");
+        var (launcher, host, request) = Step();
+
+        _ = await launcher.Launch(request, TestContext.Current.CancellationToken);
+
+        // The parent never opens the file: the wrapper's own shell opens it as fd 3 and removes it ('exec 3<"$f" && rm -f "$f"'), so there is no parent descriptor to close.
+        var argv = host.Started[0].Argv.ToList();
+        var secretsFile = argv[argv.FindIndex(a => string.Equals(a, "sh", StringComparison.Ordinal)) + 1];
+        Assert.True(File.Exists(secretsFile));
+        var open = Directory.EnumerateFileSystemEntries("/proc/self/fd").Select(static p => new FileInfo(p).LinkTarget).OfType<string>();
+        Assert.DoesNotContain(open, target => target.StartsWith(Path.GetDirectoryName(secretsFile)!, StringComparison.Ordinal));
+    }
+
     /// <summary>The real bubblewrap Wrap over a plan whose host side is the temp run area (no probe, no self-check: they run bwrap).</summary>
     private sealed class HostlessBox(ISandbox real, string launchDirectory, bool hideLaunchDirectory) : ISandbox
     {
