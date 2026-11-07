@@ -18,7 +18,7 @@ internal sealed partial class LinearConnectionViewModel : ObservableObject
     [
         nameof(IsAvailable), nameof(Summary), nameof(ReadIsSet), nameof(ShowReadPaste), nameof(ShowReadSet), nameof(ReadAccessText), nameof(CanListTeams), nameof(Teams), nameof(ShowTeams),
         nameof(CanSaveRead), nameof(SaveHint), nameof(ShowWrite), nameof(ShowWritePaste), nameof(ShowWriteSet), nameof(WriteAccessText), nameof(CanCheckWrite), nameof(IsConfirmingRemove),
-        nameof(StatusText), nameof(ErrorText), nameof(HasError), nameof(AttentionText), nameof(HasAttention), nameof(HasWaiting),
+        nameof(StatusText), nameof(ErrorText), nameof(HasError), nameof(AttentionText), nameof(HasAttention), nameof(HasWaiting), nameof(CanCancelRead), nameof(CanCancelWrite),
     ];
 
     private readonly Func<Uri?> _url;
@@ -29,6 +29,7 @@ internal sealed partial class LinearConnectionViewModel : ObservableObject
     private string _error = string.Empty;
     private string _readError = string.Empty;
     private string _waiting = string.Empty;
+    private bool _fresh;
     private bool _replacingRead;
     private bool _replacingWrite;
     private bool _lookingUp;
@@ -93,14 +94,20 @@ internal sealed partial class LinearConnectionViewModel : ObservableObject
     /// <summary>The line beside Check and save.</summary>
     public string SaveHint => Teams.Any(t => t.IsTicked) ? Labels.LinearConnSaveHint : Labels.LinearConnTickOne;
 
-    /// <summary>True when the write key part is drawn (read access is set).</summary>
-    public bool ShowWrite => ReadIsSet;
+    /// <summary>True when the write key part is drawn: read access is set, or a write key is stored whatever the read key's state (so Remove key stays reachable).</summary>
+    public bool ShowWrite => ReadIsSet || WriteIsSet;
 
     /// <summary>True when the write key box is drawn.</summary>
-    public bool ShowWritePaste => ReadIsSet && (!WriteIsSet || _replacingWrite);
+    public bool ShowWritePaste => WriteIsSet ? _replacingWrite : ReadIsSet;
 
     /// <summary>True when the "Write access: connected" line is drawn.</summary>
-    public bool ShowWriteSet => ReadIsSet && WriteIsSet && !_replacingWrite;
+    public bool ShowWriteSet => WriteIsSet && !_replacingWrite;
+
+    /// <summary>True when Cancel is drawn beside the read key box (Replace key was pressed on a working key).</summary>
+    public bool CanCancelRead => ReadIsSet && _replacingRead;
+
+    /// <summary>True when Cancel is drawn beside the write key box (Replace key was pressed on a stored key).</summary>
+    public bool CanCancelWrite => WriteIsSet && _replacingWrite;
 
     /// <summary>"Write access: connected · checked 10:05".</summary>
     public string WriteAccessText => Labels.LinearConnAccess("Write", _connection?.Write.CheckedAt);
@@ -136,20 +143,25 @@ internal sealed partial class LinearConnectionViewModel : ObservableObject
     /// <summary>True when there is a refusal to show.</summary>
     public bool HasError => ErrorText.Length > 0;
 
-    /// <summary>The note that needs a look but is not a refusal (scope unknown, other changes waiting, a stored key Linear now refuses); empty otherwise.</summary>
+    /// <summary>The note that needs a look but is not a refusal (the click's own answer, scope unknown, a change waiting for approval, a stored key Linear now refuses); empty otherwise.</summary>
     public string AttentionText =>
         _waiting.Length > 0 ? _waiting
-        : string.Equals(_connection?.Write.State, ScopeUnknown, StringComparison.Ordinal) ? Labels.LinearConnScopeUnknown
-        : _connection?.Pending == true ? Labels.LinearConnWaiting
-        : string.Equals(_connection?.Read.State, Refused, StringComparison.Ordinal) ? Labels.LinearConnReadStale
-        : string.Equals(_connection?.Write.State, Refused, StringComparison.Ordinal) ? Labels.LinearConnWriteStale
-        : string.Empty;
+        : WriteIs(ScopeUnknown) ? (_fresh ? Labels.LinearConnScopeUnknown : Labels.LinearConnScopeUnknownRead)
+        : _connection?.Pending == true ? Labels.LinearConnPending
+        : StaleText;
 
     /// <summary>True when there is a note to show.</summary>
     public bool HasAttention => AttentionText.Length > 0;
 
     /// <summary>True when a change waits for the profile approval, so Review changes is drawn.</summary>
     public bool HasWaiting => _waiting.Length > 0 || _connection?.Pending == true;
+
+    private string StaleText =>
+        string.Equals(_connection?.Read.State, Refused, StringComparison.Ordinal) ? Labels.LinearConnReadStale
+        : WriteIs(Refused) ? Labels.LinearConnWriteStale
+        : string.Empty;
+
+    private bool WriteIs(string state) => string.Equals(_connection?.Write.State, state, StringComparison.Ordinal);
 
     private bool IsBusy => _lookingUp || _saving;
 

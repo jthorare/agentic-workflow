@@ -23,6 +23,7 @@ internal sealed partial class LinearConnectionSection : UserControl
         _card?.RevealRequested -= OnRevealRequested;
         _card = DataContext as LinearConnectionViewModel;
         _card?.RevealRequested += OnRevealRequested;
+        _card?.RevealIfWaiting();   // a reveal asked for before this view had its card
     }
 
     // Opened by Connect: once the layout has run the card is scrolled into view, and focus goes to the key the owner has to paste next: the read key, else the write key,
@@ -41,6 +42,10 @@ internal sealed partial class LinearConnectionSection : UserControl
         }, DispatcherPriority.Loaded);
 
     private void OnReview(object? sender, RoutedEventArgs e) => _card?.RequestReview();
+
+    private void OnCancelRead(object? sender, RoutedEventArgs e) => _card?.CancelReplaceRead();
+
+    private void OnCancelWrite(object? sender, RoutedEventArgs e) => _card?.CancelReplaceWrite();
 
     private void OnReplaceRead(object? sender, RoutedEventArgs e) => _card?.ReplaceRead();
 
@@ -85,7 +90,12 @@ internal sealed partial class LinearConnectionSection : UserControl
 
     private async void OnReadKey(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Enter && _card is { CanListTeams: true })
+        if (e.Key == Key.Escape && _card is { CanCancelRead: true })
+        {
+            e.Handled = true;
+            _card.CancelReplaceRead();
+        }
+        else if (e.Key == Key.Enter && _card is { CanListTeams: true })
         {
             e.Handled = true;
             await _card.ListTeams(CancellationToken.None).ConfigureAwait(true);
@@ -94,7 +104,12 @@ internal sealed partial class LinearConnectionSection : UserControl
 
     private async void OnWriteKey(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Enter && _card is { CanCheckWrite: true })
+        if (e.Key == Key.Escape && _card is { CanCancelWrite: true })
+        {
+            e.Handled = true;
+            _card.CancelReplaceWrite();
+        }
+        else if (e.Key == Key.Enter && _card is { CanCheckWrite: true })
         {
             e.Handled = true;
             await _card.CheckWrite(CancellationToken.None).ConfigureAwait(true);

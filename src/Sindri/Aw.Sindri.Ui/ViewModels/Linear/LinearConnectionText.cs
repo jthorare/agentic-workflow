@@ -51,6 +51,9 @@ internal sealed class LinearConnectionText
     /// <summary><see cref="Labels.LinearConnReplace"/>.</summary>
     public string Replace { get; } = Labels.LinearConnReplace;
 
+    /// <summary><see cref="Labels.LinearConnCancel"/>.</summary>
+    public string Cancel { get; } = Labels.LinearConnCancel;
+
     /// <summary><see cref="Labels.LinearConnRemove"/>.</summary>
     public string Remove { get; } = Labels.LinearConnRemove;
 

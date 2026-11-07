@@ -15,7 +15,7 @@
 
       <TextBlock x:Name="LinearStatus" Classes="caption" AutomationProperties.LiveSetting="Polite" Text="{Binding StatusText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding StatusText}" />
       <TextBlock x:Name="LinearError" Classes="caption" AutomationProperties.LiveSetting="Polite" Foreground="{DynamicResource Brush.Error}" Text="{Binding ErrorText}" TextWrapping="Wrap"
-                 IsVisible="{Binding HasError}" AutomationProperties.Name="{Binding ErrorText}" />
+                 AutomationProperties.Name="{Binding ErrorText}" />
       <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}" IsVisible="{Binding HasAttention}">
         <TextBlock x:Name="LinearAttention" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding AttentionText}" TextWrapping="Wrap" VerticalAlignment="Center"
                    AutomationProperties.Name="{Binding AttentionText}" />
@@ -26,11 +26,13 @@
         <TextBlock Classes="caption subtle" Text="{Binding Text.ReadHeading}" AutomationProperties.AccessibilityView="Raw" />
         <StackPanel x:Name="LinearReadPaste" Spacing="{StaticResource Space.XS}" IsVisible="{Binding ShowReadPaste}">
           <TextBlock Classes="caption subtle" Text="{Binding Text.ReadIntro}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text.ReadIntro}" />
-          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space.SM}">
+          <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource Space.SM}">
             <TextBox x:Name="LinearReadKey" PasswordChar="●" Text="{Binding ReadKey, Mode=TwoWay}" PlaceholderText="{Binding Text.KeyPlaceholder}" KeyDown="OnReadKey"
                      AutomationProperties.Name="{Binding Text.ReadKeyName}" />
             <Button x:Name="LinearListTeams" Grid.Column="1" Classes="command-control" Content="{Binding Text.ListTeams}" IsEnabled="{Binding CanListTeams}" Click="OnListTeams"
                     AutomationProperties.Name="{Binding Text.ListTeams}" />
+            <Button x:Name="LinearReadCancel" Grid.Column="2" Classes="command-control" Content="{Binding Text.Cancel}" IsVisible="{Binding CanCancelRead}" Click="OnCancelRead"
+                    AutomationProperties.Name="{Binding Text.Cancel}" />
           </Grid>
           <TextBlock Classes="caption subtle" Text="{Binding Text.ReadWhere}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text.ReadWhere}" />
         </StackPanel>
@@ -66,11 +68,13 @@
         <TextBlock Classes="caption subtle" Text="{Binding Text.WriteHeading}" AutomationProperties.AccessibilityView="Raw" />
         <StackPanel x:Name="LinearWritePaste" Spacing="{StaticResource Space.XS}" IsVisible="{Binding ShowWritePaste}">
           <TextBlock Classes="caption subtle" Text="{Binding Text.WriteIntro}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text.WriteIntro}" />
-          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space.SM}">
+          <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource Space.SM}">
             <TextBox x:Name="LinearWriteKey" PasswordChar="●" Text="{Binding WriteKey, Mode=TwoWay}" PlaceholderText="{Binding Text.KeyPlaceholder}" KeyDown="OnWriteKey"
                      AutomationProperties.Name="{Binding Text.WriteKeyName}" />
             <Button x:Name="LinearWriteSave" Grid.Column="1" Classes="command-control primary" Content="{Binding Text.CheckAndSave}" IsEnabled="{Binding CanCheckWrite}" Click="OnCheckWrite"
                     AutomationProperties.Name="{Binding Text.CheckAndSave}" />
+            <Button x:Name="LinearWriteCancel" Grid.Column="2" Classes="command-control" Content="{Binding Text.Cancel}" IsVisible="{Binding CanCancelWrite}" Click="OnCancelWrite"
+                    AutomationProperties.Name="{Binding Text.Cancel}" />
           </Grid>
         </StackPanel>
         <Grid x:Name="LinearWriteSet" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space.SM}" IsVisible="{Binding ShowWriteSet}">

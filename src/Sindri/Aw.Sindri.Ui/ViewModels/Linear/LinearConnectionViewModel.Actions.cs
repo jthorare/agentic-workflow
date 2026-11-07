@@ -16,7 +16,8 @@ internal sealed partial class LinearConnectionViewModel
             return;
         }
 
-        (_error, _waiting, _lookingUp) = (string.Empty, string.Empty, true);
+        (_error, _lookingUp) = (string.Empty, true);
+        ForgetAnswer();
         Changed();
         Result<LinearTeamChoices> read;
         try
@@ -34,7 +35,8 @@ internal sealed partial class LinearConnectionViewModel
         }
         else
         {
-            Teams = [.. read.Value.Teams.DistinctBy(t => t.Key, StringComparer.Ordinal).Select(t => new LinearTeamTickViewModel(t, Changed))];
+            var stored = TeamKeys.ToHashSet(StringComparer.Ordinal);   // a replaced key keeps the teams already chosen
+            Teams = [.. read.Value.Teams.DistinctBy(t => t.Key, StringComparer.Ordinal).Select(t => new LinearTeamTickViewModel(t, Changed) { IsTicked = stored.Contains(t.Key) })];
         }
 
         Changed();
@@ -92,10 +94,18 @@ internal sealed partial class LinearConnectionViewModel
     }
 
     /// <summary>Cancel (or Esc) on the read line's paste box: back to the read-set line, nothing changed.</summary>
-    internal void CancelReplaceRead() => _generation += 0;   // red stub
+    internal void CancelReplaceRead()
+    {
+        (_replacingRead, _readKey, Teams, _error) = (false, string.Empty, [], string.Empty);
+        Changed();
+    }
 
     /// <summary>Cancel (or Esc) on the write line's paste box: back to the write-set line, nothing changed.</summary>
-    internal void CancelReplaceWrite() => _generation += 0;   // red stub
+    internal void CancelReplaceWrite()
+    {
+        (_replacingWrite, _writeKey, _error) = (false, string.Empty, string.Empty);
+        Changed();
+    }
 
     /// <summary>Remove key: asks first.</summary>
     internal void AskRemove()
@@ -121,7 +131,8 @@ internal sealed partial class LinearConnectionViewModel
             return;
         }
 
-        (IsConfirmingRemove, _removing, _saving, _error, _waiting) = (false, true, true, string.Empty, string.Empty);
+        (IsConfirmingRemove, _removing, _saving, _error) = (false, true, true, string.Empty);
+        ForgetAnswer();
         Changed();
         Result<LinearDisconnected> removed;
         try
@@ -147,7 +158,8 @@ internal sealed partial class LinearConnectionViewModel
     // One save of a key: the key is dropped from the box as it goes, and kept nowhere. Null when Sindri refused it (the refusal is shown, nothing was stored).
     private async Task<LinearConnected?> Send(Uri url, string kind, string key, IReadOnlyList<string>? teams, CancellationToken cancellationToken)
     {
-        (_saving, _checkingWrite, _error, _waiting) = (true, kind == "write", string.Empty, string.Empty);
+        (_saving, _checkingWrite, _error) = (true, kind == "write", string.Empty);
+        ForgetAnswer();
         Changed();
         Result<LinearConnected> saved;
         try
@@ -173,9 +185,19 @@ internal sealed partial class LinearConnectionViewModel
     // A change Sindri took: said when it waits for the approval, and the connection is read again.
     private Task Settled(Uri url, string waiting, CancellationToken cancellationToken)
     {
-        _waiting = waiting;
+        (_waiting, _fresh) = (waiting, true);
         Changed();
-        return Read(url, keepWaiting: true, cancellationToken);
+        return Read(url, settled: true, cancellationToken);
+    }
+
+    // The click's own answer is dropped by the next button press, not by a refresh.
+    private void ForgetAnswer() => (_waiting, _fresh) = (string.Empty, false);
+
+    /// <summary>The Settings page was left: the click's own answer ("Saved.") is dropped, so the next open reads what is true then.</summary>
+    internal void Leave()
+    {
+        ForgetAnswer();
+        Changed();
     }
 
     private static string ErrorOf(Error error, bool write) => error.Code switch
