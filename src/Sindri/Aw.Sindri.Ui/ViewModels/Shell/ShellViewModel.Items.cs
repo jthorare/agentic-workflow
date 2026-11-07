@@ -60,6 +60,7 @@ internal sealed partial class ShellViewModel
         OnAgentSheetOpened(link);
         OnJobSheetOpened(link);
         OnProjectSheetOpened(link);
+        OnIssueSheetOpened(link);
         OnPageSheetOpened();
         OnAddSeveralPagesOpened();
         OnPinSheetOpened();

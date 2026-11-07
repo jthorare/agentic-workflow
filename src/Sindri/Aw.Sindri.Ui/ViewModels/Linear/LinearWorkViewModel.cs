@@ -6,7 +6,7 @@ namespace Aw.Sindri.Ui.ViewModels.Linear;
 /// <summary>
 /// The Work page's Linear view (Linear hub spec §3): the Sindri / Linear switch and its remembered pick, the owner's issues in two groups
 /// (Assigned to you, then Your teams) with the filter bar and "Show more", and the since-you-looked strip. The switch and the strip's count
-/// are read while Work is shown on either view; the list only on the Linear one. Everything the page says about the feed (not connected,
+/// are read on every refresh, whichever page is shown (Home and the tray carry the count); the list only while Work is shown on the Linear view. Everything the page says about the feed (not connected,
 /// finding the viewer, re-reading, failing, Sindri not answering) is a state of the last read, and the rows stay through a failing one.
 /// </summary>
 internal sealed partial class LinearWorkViewModel : ObservableObject, IDisposable
@@ -222,14 +222,14 @@ internal sealed partial class LinearWorkViewModel : ObservableObject, IDisposabl
         }
     }
 
-    /// <summary>Re-reads on connect and on every event while Work is shown; otherwise it only remembers where the API is.</summary>
+    /// <summary>Re-reads on connect and on every event: the strip's count whichever page is shown (Home and the tray carry it), the list only while Work is.</summary>
     /// <param name="url">The API's base URL.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>A task that completes when the reads are done.</returns>
     internal Task Refresh(Uri url, CancellationToken cancellationToken)
     {
         _url = url;
-        return IsActive ? Reading = ReadAll(url, cancellationToken) : Task.CompletedTask;
+        return IsActive ? Reading = ReadAll(url, cancellationToken) : ReadSince(url, cancellationToken);   // the count feeds Home and the tray, so it is read whichever page is shown
     }
 
     private async Task CatchUpRead(Uri url, CancellationToken cancellationToken)
