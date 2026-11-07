@@ -61,7 +61,8 @@ public sealed class LibraryPageTests
     {
         var page = Page(broken: 205, misses: 205);
 
-        Assert.Equal((Enumerable.Range(1, 200).Select(Draft), Enumerable.Range(1, 200).Select(n => $"~/notes/{MissName(n)}.md")), (page.Broken.Select(b => b.Doc), page.NearMisses.Select(m => m.Path)));
+        Assert.Equal(Enumerable.Range(1, 200).Select(Draft), page.Broken.Select(b => b.Doc), StringComparer.Ordinal);
+        Assert.Equal(Enumerable.Range(1, 200).Select(n => $"~/notes/{MissName(n)}.md"), page.NearMisses.Select(m => m.Path), StringComparer.Ordinal);
     }
 
     [Fact]
