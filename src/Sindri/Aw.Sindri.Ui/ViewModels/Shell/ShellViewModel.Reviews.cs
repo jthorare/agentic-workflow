@@ -10,6 +10,44 @@ internal sealed partial class ShellViewModel
     /// <summary>The Reviews list.</summary>
     public ReviewsPageViewModel Reviews { get; private set; }
 
+    /// <summary>One PR's review page, shown over the Reviews list while a 'reviews/&lt;owner&gt;/&lt;repo&gt;/&lt;number&gt;' link is open (review page spec §6.2).</summary>
+    public ReviewPageViewModel ReviewPage { get; private set; }
+
+    /// <summary>The fix-task sheet's content.</summary>
+    public ReviewFixSheetViewModel ReviewFix { get; private set; }
+
+    /// <summary>True when the sheet is the fix-task sheet.</summary>
+    public bool IsFixTaskSheet => SheetLink?.Kind == DeepLinkKind.FixTaskSheet;
+
+    /// <summary>True while the review page shows over the Reviews list.</summary>
+    public bool IsReviewPageShown => ReviewPageOpen && IsReviews;
+
+    private bool ReviewPageOpen { get; set; }
+
+    // A review link opens one PR's page over the Reviews list, not a sheet.
+    private void OpenReviewPage(string repo, int number)
+    {
+        if (IsSheetOpen)
+        {
+            CloseSheet();
+        }
+
+        GoTo(PageId.Reviews);
+        ReviewPageOpen = true;
+        Changed(nameof(IsReviewPageShown), nameof(IsPagesShown));
+        if (Health.ApiUrl() is { } url)
+        {
+            _ = ReviewPage.Open(url, repo, number, CancellationToken.None);
+        }
+    }
+
+    /// <summary>Closes the review page; the Reviews list shows again.</summary>
+    internal void CloseReviewPage()
+    {
+        ReviewPageOpen = false;
+        Changed(nameof(IsReviewPageShown), nameof(IsPagesShown));
+    }
+
     /// <summary>True on Reviews.</summary>
     public bool IsReviews => CurrentPage == PageId.Reviews;
 
@@ -28,18 +66,46 @@ internal sealed partial class ShellViewModel
         Changed(nameof(IsLibrarySheet), nameof(SheetTitleIsMono));
     }
 
+    private void InitReviewFix()
+    {
+        ReviewPage.FixRequested += (_, e) =>
+        {
+            OpenSheet(DeepLink.FixTaskSheet);
+            if (Health.ApiUrl() is { } url)
+            {
+                ReviewFix.Open(url, e);
+            }
+        };
+        ReviewFix.Closed += (_, e) =>
+        {
+            if (IsSheetOpen)
+            {
+                CloseSheet();
+            }
+
+            ReviewPage.ReturnFromFix(e.Focus);
+        };
+    }
+
+    private void OnFixSheetOpened() => Changed(nameof(IsFixTaskSheet), nameof(SheetTitleIsMono));
+
     /// <summary>Opens Reviews from Home's waiting line.</summary>
     internal void OpenReviews() => GoTo(PageId.Reviews);
 
-    [MemberNotNull(nameof(Reviews))]
+    [MemberNotNull(nameof(Reviews), nameof(ReviewPage), nameof(ReviewFix))]
     private void InitReviews()
     {
         Reviews = new ReviewsPageViewModel(_api, _clock);
+        ReviewPage = new ReviewPageViewModel(_api);
+        ReviewFix = new ReviewFixSheetViewModel(_api, _clock);
         Reviews.LibraryRequested += (_, _) =>
         {
             OpenSheet(DeepLink.LibrarySheet);
             OpenerLibrary = true;
         };
+        InitReviewFix();
+        ReviewPage.BackRequested += (_, _) => CloseReviewPage();
+        Reviews.OpenRequested += (_, e) => Navigate(e.Link);
         Health.Follow(Reviews.Refresh);   // every read, whichever page is shown: the badge and Home's line need the count
         PropertyChanged += (_, e) =>
         {
