@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launch.Argv;
 using Aw.Sindri.Core.Sandbox;
+using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Core.Workflow.Engine;
 
 namespace Aw.Sindri.Infrastructure.Launch;
@@ -130,7 +131,8 @@ internal sealed partial class Launcher
         var policyPath = policyFile.Value;
         var session = request.Mode == LaunchMode.Resume && request.Resume is { } resumed ? resumed : PreChosen(entry);
         var seed = ArgvBuilder.Seed(request.Item) + StepSeed(step);
-        var (mcpPath, mcpArguments) = McpLaunchConfig.Prepare(entry.McpForm, entry.McpForm == McpForm.None ? null : ForStep(await parts.McpFor(request.RepoPath, cancellationToken).ConfigureAwait(false), request), parts.Options.LaunchDirectory, request.Launch);
+        var (staged, stagedArguments) = McpLaunchConfig.Prepare(entry.McpForm, entry.McpForm == McpForm.None ? null : ForStep(await parts.McpFor(request.RepoPath, cancellationToken).ConfigureAwait(false), request), parts.Options.LaunchDirectory, request.Launch);
+        var (mcpPath, mcpArguments) = InSessionHome(staged, stagedArguments, request.Launch);
         var built = ArgvBuilder.Build(entry, request.Mode, new ArgvInputs(request.Item, workDir, SessionName(request.Launch), seed, session, mcpPath, step, policyPath));
         if (built.IsError)
         {
@@ -139,6 +141,19 @@ internal sealed partial class Launcher
 
         IReadOnlyList<string> argv = [.. built.Value, .. mcpArguments];
         return (argv, session, seed);
+    }
+
+    // #2151: a sandboxed agent is given the config's final place, in its read-only session home (the sandbox moves the staged file there once it has made the home, as it does a policy file);
+    // the Sindri-home mask hides launch/, where the file is staged.
+    private (string? Path, IReadOnlyList<string> Arguments) InSessionHome(string? staged, IReadOnlyList<string> arguments, LaunchId launch)
+    {
+        if (staged is null || parts.Sandbox is null || parts.Options.SindriHome is not { } home)
+        {
+            return (staged, arguments);
+        }
+
+        var inside = McpLaunchConfig.PathFor(SessionHomePaths.For(home, launch), launch);
+        return (inside, [.. arguments.Select(a => string.Equals(a, staged, StringComparison.Ordinal) ? inside : a)]);
     }
 
     /// <summary>The Step with its denied paths added: the other worktrees and the holdout store. Only a form that can express a denied read gets them, since a codex entry would refuse the whole Step with SND-LAUNCH-013.</summary>

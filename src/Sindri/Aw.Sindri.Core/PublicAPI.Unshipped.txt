@@ -19133,10 +19133,12 @@ Aw.Sindri.Core.Sandbox.Plan.HookTreatment.Drop = 1 -> Aw.Sindri.Core.Sandbox.Pla
 Aw.Sindri.Core.Sandbox.Plan.PlanHooks.Notes.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Sindri.Core.Sandbox.Plan.PlanHooks.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Kept, out System.Collections.Generic.IReadOnlyList<string!>! Omitted, out System.Collections.Generic.IReadOnlyList<string!>! Notes) -> void
 Aw.Sindri.Core.Sandbox.Plan.PlanHooks.Notes.init -> void
-Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts.Deconstruct(out string! Home, out string! StateDir, out string! SindriHome, out string! CsBinDir, out int Uid, out long TotalMemoryBytes, out int CpuCores, out bool IsMacOs, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Environment, out System.Collections.Generic.IReadOnlyList<string!>! OtherHomes, out System.Collections.Generic.IReadOnlyList<string!>? InstalledHooks) -> void
+Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts.Deconstruct(out string! Home, out string! StateDir, out string! SindriHome, out string! CsBinDir, out int Uid, out long TotalMemoryBytes, out int CpuCores, out bool IsMacOs, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Environment, out System.Collections.Generic.IReadOnlyList<string!>! OtherHomes, out System.Collections.Generic.IReadOnlyList<string!>? InstalledHooks, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>? BinaryLinks) -> void
+Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts.BinaryLinks.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts.BinaryLinks.init -> void
 Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts.InstalledHooks.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts.InstalledHooks.init -> void
-Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts.SandboxHostFacts(string! Home, string! StateDir, string! SindriHome, string! CsBinDir, int Uid, long TotalMemoryBytes, int CpuCores, bool IsMacOs, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Environment, System.Collections.Generic.IReadOnlyList<string!>! OtherHomes, System.Collections.Generic.IReadOnlyList<string!>? InstalledHooks = null) -> void
+Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts.SandboxHostFacts(string! Home, string! StateDir, string! SindriHome, string! CsBinDir, int Uid, long TotalMemoryBytes, int CpuCores, bool IsMacOs, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Environment, System.Collections.Generic.IReadOnlyList<string!>! OtherHomes, System.Collections.Generic.IReadOnlyList<string!>? InstalledHooks = null, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? BinaryLinks = null) -> void
 Aw.Sindri.Core.Sandbox.Plan.PlanHooks.PlanHooks(System.Collections.Generic.IReadOnlyList<string!>! Kept, System.Collections.Generic.IReadOnlyList<string!>! Omitted, System.Collections.Generic.IReadOnlyList<string!>! Notes) -> void
 Aw.Sindri.Core.Sandbox.Plan.HookScript.HookScript(string! Name, string! Source, string! Events, bool AnswersPermissions, bool RewritesInput, Aw.Sindri.Core.Sandbox.Plan.HookTreatment Treatment, string! Why, string? RewritePrefix = null) -> void
 static Aw.Sindri.Core.Sandbox.Plan.HookPermissionPolicy.TreatmentOf(string! hook) -> Aw.Sindri.Core.Sandbox.Plan.HookTreatment
@@ -19444,6 +19446,8 @@ override Aw.Sindri.Core.ModelHistory.StateOrder.ToString() -> string!
 static Aw.Sindri.Core.ModelHistory.StateOrder.operator !=(Aw.Sindri.Core.ModelHistory.StateOrder? left, Aw.Sindri.Core.ModelHistory.StateOrder? right) -> bool
 static Aw.Sindri.Core.ModelHistory.StateOrder.operator ==(Aw.Sindri.Core.ModelHistory.StateOrder? left, Aw.Sindri.Core.ModelHistory.StateOrder? right) -> bool
 static Aw.Sindri.Core.Sandbox.SandboxRefusal.SourceTextOf(Aw.Kernel.Error! error) -> string?
+Aw.Sindri.Core.Sandbox.Plan.PlanArgvPaths
+static Aw.Sindri.Core.Sandbox.Plan.PlanArgvPaths.Check(Aw.Sindri.Core.Sandbox.Plan.SandboxPlan! plan, System.Collections.Generic.IReadOnlyList<string!>! argv) -> Aw.Kernel.Error?
 Aw.Sindri.Core.Sandbox.Plan.SessionHomePaths
 static Aw.Sindri.Core.Sandbox.Plan.SessionHomePaths.For(string! sindriHome, Aw.Sindri.Core.Workflow.Engine.LaunchId launch) -> string!
 static Aw.Sindri.Core.Sandbox.Plan.SessionHomePaths.GhTokenDirectory(string! sessionHome) -> string!
