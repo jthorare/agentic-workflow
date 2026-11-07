@@ -16,6 +16,9 @@ public static class SkillTrialRecipe
     /// <summary>The id prefix of every trial recipe.</summary>
     public const string IdPrefix = "workflow.skill-trial-";
 
+    // why: outputs ride every result the skill finished with (pass, needsChanges, partial); a run that failed, waited or blocked has none
+    private static readonly HashSet<string> _noOutputs = new(["failed", "waiting", "blocked"], StringComparer.Ordinal);
+
     private const string EndedPrefix = "ended-";
 
     /// <summary>The fact the trial's start carries when 'skill run --skills &lt;dir&gt;' sent a folder: the path the launch seeds the skill from.</summary>
@@ -105,7 +108,7 @@ public static class SkillTrialRecipe
         var produced = string.Join(", ", block.Descriptor.Outputs.Select(static o => o.Fact.Value));
         foreach (var outcome in outcomes)
         {
-            var produces = string.Equals(outcome, manifest.Outcomes.Success, StringComparison.Ordinal) && produced.Length > 0 ? $", produces: [{produced}]" : string.Empty;
+            var produces = !_noOutputs.Contains(outcome) && produced.Length > 0 ? $", produces: [{produced}]" : string.Empty;
             _ = text.Append("  - { from: run, to: ").Append(StateOf(outcome)).Append(", on: step.completed, when: { outcome: ").Append(outcome).Append(" }").Append(produces).Append(" }\n");
         }
 
