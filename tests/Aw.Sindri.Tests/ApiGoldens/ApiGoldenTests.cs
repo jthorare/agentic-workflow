@@ -10,7 +10,12 @@ public sealed class ApiGoldenTests
 {
     // hand-written before their routes (#2076): the PR page lands in Ph5c, the Library roots writes in their own slot and the review settings in Ph9's api slot, each registering its rows and leaving this list;
     // the Linear hub's reads (#2077 Ph3 1a) and writes (1b) leave it when api serves them
-    private static readonly string[] _pendingGoldenFolders = ["reviews-pr", "library-roots", "review-settings", "review-settings-save", "linear-issues", "linear-issue", "linear-lookups", "linear-since", "linear-change", "linear-comment", "linear-create", "linear-connection", "linear-connection-teams", "linear-connect", "linear-disconnect-write"];
+    private static readonly string[] _pendingGoldenFolders = ["reviews-pr", "library-roots", "review-settings", "review-settings-save", "linear-issues", "linear-issue", "linear-change", "linear-comment", "linear-create", "linear-connection", "linear-connection-teams", "linear-connect", "linear-disconnect-write"];
+
+    // single files waiting on Context's wider lookups (team name, synced_at, member active, label color): the route is served, these two rows are not
+    private static readonly string[] _pendingGoldenFiles = ["linear-lookups/eng.json", "linear-lookups/not-synced.json"];
+
+    private static bool IsPending(string file) => _pendingGoldenFiles.Contains(file) || _pendingGoldenFolders.Any(p => file.StartsWith(p + "/", StringComparison.Ordinal));
 
     [Fact, Trait("Lane", "integration")]
     public void Every_golden_file_has_a_scenario()
@@ -20,7 +25,7 @@ public sealed class ApiGoldenTests
             .Select(f => Path.GetRelativePath(root, f).Replace(Path.DirectorySeparatorChar, '/'))
             .ToList();
         var files = all
-            .Where(f => !_pendingGoldenFolders.Any(p => f.StartsWith(p + "/", StringComparison.Ordinal)))
+            .Where(f => !IsPending(f))
             .Order(StringComparer.Ordinal);
         var expected = ApiScenarios.All.Concat(WorkflowViewGoldenTests.All).Concat(ServedWorkflowRoutesTests.Goldens).Select(r => $"{r.Slug}/{r.Scenario}.json").Order(StringComparer.Ordinal);
 
@@ -28,7 +33,7 @@ public sealed class ApiGoldenTests
 
         // the pending files are exactly the rows not yet registered
         var pendingRows = ((IEnumerable<(string Slug, string Scenario)>)[.. ReviewScenarios.All.Where(r => r.Slug == "reviews-pr"), .. LibraryRootScenarios.All, .. ReviewSettingsScenarios.All, .. LinearScenarios.All]).Select(r => $"{r.Slug}/{r.Scenario}.json").Order(StringComparer.Ordinal);
-        Assert.Equal(pendingRows, all.Where(f => _pendingGoldenFolders.Any(p => f.StartsWith(p + "/", StringComparison.Ordinal))).Order(StringComparer.Ordinal));
+        Assert.Equal(pendingRows, all.Where(IsPending).Order(StringComparer.Ordinal));
         Assert.DoesNotContain(ApiScenarios.All, r => _pendingGoldenFolders.Contains(r.Slug));
     }
 

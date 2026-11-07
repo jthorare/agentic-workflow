@@ -43,6 +43,7 @@ internal static class ApiScenarios
         ["Sandbox"] = SandboxScenarios.All,
         ["Projects"] = ProjectScenarios.All,
         ["Reviews"] = [.. ReviewScenarios.All.Where(r => r.Slug == "reviews"), .. ReviewLoginScenarios.All, .. LibraryScenarios.All, .. LibraryDocScenarios.All],
+        ["LinearReads"] = LinearReadScenarios.All,
     };
 
     /// <summary>Every (route slug, scenario) pair, group by group.</summary>
@@ -67,7 +68,9 @@ internal static class ApiScenarios
 
     /// <summary>The last hosts of <see cref="Start"/>: the launch, approve-all, item-scope and wrapped-session ones, else the plain golden host.</summary>
     private static async Task<GoldenHost> StartLaunchOrLater(string slug, string scenario, CancellationToken ct) =>
-        IsReviews(slug, scenario)
+        LinearReadScenarios.Handles(slug, scenario)
+            ? await LinearReadScenarios.Start(slug, scenario, ct)
+            : IsReviews(slug, scenario)
             ? await StartReviews(slug, scenario, ct)
             : ProjectScenarios.Handles(slug, scenario)
             ? await ProjectScenarios.Start(slug, scenario, ct)
@@ -166,6 +169,7 @@ internal static class ApiScenarios
         : WrapSessionScenarios.Handles(slug, scenario) ? () => WrapSessionScenarios.Body(host, slug, scenario, ct)
         : SandboxScenarios.Handles(slug, scenario) ? () => SandboxScenarios.Body(host, slug, scenario, ct)
         : ProjectScenarios.Handles(slug, scenario) ? () => ProjectScenarios.Body(host, slug, scenario, ct)
+        : LinearReadScenarios.Handles(slug, scenario) ? () => LinearReadScenarios.Body(host, slug, scenario)
         : ReviewBody(host, slug, scenario, ct);
 
     /// <summary>The body of a Reviews-group scenario (the pages, the login save, the library), else null.</summary>
