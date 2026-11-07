@@ -7,12 +7,15 @@ using Aw.Sindri.Core.Workflow.Engine.Decisions;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Engine.Triggers;
 using Aw.Sindri.Core.Workflow.Ids;
+using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Registry;
 using Aw.Sindri.Core.Workflow.RegistryWrites;
 using Aw.Sindri.Features.StartSkillRun;
 using Aw.Sindri.Infrastructure.Skills;
 using Aw.Sindri.Testing.Skills;
 using Aw.Sindri.Testing.Workflow;
+using Aw.Sindri.Testing.Workflow.Registry;
+using Aw.Sindri.Tests.Workflow;
 using Aw.Sindri.Tests.ApproveRecipe;
 using Aw.Sindri.Tests.Sandbox.Egress;
 using Microsoft.Extensions.DependencyInjection;
@@ -107,6 +110,94 @@ public sealed class StartSkillRunFolderTests
         Assert.Contains("missing", run.Result.Error.Message, StringComparison.Ordinal);
         Assert.NotEqual(WorkflowErrors.RecipeInvalid.Code, run.Result.Error.Code, StringComparer.Ordinal);
         Assert.Null(run.Runtime.Started);
+    }
+
+    [Fact]
+    public async Task A_narrowed_map_trial_still_holds_when_the_running_approval_is_checked()
+    {
+        using var folder = Folder("review", Narrowed);
+        await using var r = await Started();
+
+        var trial = await Run(r, "review", folder.Path);
+
+        Assert.True(trial.Result.IsSuccess, Why(trial.Result));
+        Assert.Equal(ApprovalCheck.Holds, (await r.Check(await Registered(r, trial.Runtime.Started!.Recipe))).Value);
+    }
+
+    [Fact]
+    public async Task A_folder_only_block_trial_still_holds_when_the_running_approval_is_checked()
+    {
+        using var folder = Folder("extra", Only);
+        await using var r = await Started();
+
+        var trial = await Run(r, "extra", folder.Path);
+
+        Assert.True(trial.Result.IsSuccess, Why(trial.Result));
+        Assert.Equal(ApprovalCheck.Holds, (await r.Check(await Registered(r, trial.Runtime.Started!.Recipe))).Value);
+    }
+
+    [Fact]
+    public async Task A_trial_whose_block_only_moved_its_hash_is_not_renewed_to_serves_block()
+    {
+        using var folder = Folder("review", (await File.ReadAllTextAsync(Path.Combine(SkillFixtures.Folder, "review", "block.yaml"), Token)).Replace("args: [\"{pr}\"]", "args: [\"--strict\", \"{pr}\"]", StringComparison.Ordinal));
+        await using var r = await Started();
+        var trial = await Run(r, "review", folder.Path);
+        var version = trial.Runtime.Started!.Recipe;
+        var before = await Pinned(r, version);
+
+        var check = await r.Check(await Registered(r, version));
+
+        Assert.True(trial.Result.IsSuccess, Why(trial.Result));
+        Assert.NotEqual(LoadedHash(r, "review"), Assert.Single(before.Pins.Blocks).Hash);   // the fixture's hash moved: the folder's args differ, its interface does not
+        Assert.Equal(ApprovalCheck.Holds, check.Value);
+        var after = await Pinned(r, version);
+        Assert.Equal(before.Pins, after.Pins);
+        Assert.Equal(before.ApprovedAt, after.ApprovedAt);
+        Assert.DoesNotContain(r.Events("recipe.approved"), static e => e.Envelope.Actor.EndsWith("pin-drift", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task A_revoked_folder_trial_reads_revoked()
+    {
+        using var folder = Folder("review", Narrowed);
+        await using var r = await Started();
+        var trial = await Run(r, "review", folder.Path);
+        var recipe = await Registered(r, trial.Runtime.Started!.Recipe);
+        _ = await r.Approvals.Revoke(RegistryData.Revocation(recipe), Token);
+
+        Assert.Equal(ApprovalCheck.Revoked, (await r.Check(recipe)).Value);
+    }
+
+    [Fact]
+    public async Task A_plain_recipe_whose_block_only_moved_its_hash_is_still_renewed()
+    {
+        await using var r = await Started();
+        var (recipe, pin) = await PlainWithPin(r);
+        _ = await r.Approvals.Approve(RegistryData.Approval(recipe, new RecipePins([pin with { Hash = DescriptorHash.From("sha256:" + new string('a', 64)) }], [])), Token);
+
+        var check = await r.Check(recipe);
+
+        Assert.Equal(ApprovalCheck.Holds, check.Value);
+        Assert.Equal(pin, Assert.Single((await r.Approvals.Latest(recipe.Id, recipe.Version, recipe.Hash, Token)).Value!.Pins.Blocks));
+    }
+
+    [Fact]
+    public async Task A_plain_recipe_whose_block_interface_changed_is_still_drifted()
+    {
+        await using var r = await Started();
+        var (recipe, pin) = await PlainWithPin(r);
+        _ = await r.Approvals.Approve(RegistryData.Approval(recipe, new RecipePins([pin with { Hash = DescriptorHash.From("sha256:" + new string('a', 64)), Interface = DescriptorHash.From("sha256:" + new string('b', 64)) }], [])), Token);
+
+        Assert.Equal(ApprovalCheck.Drifted, (await r.Check(recipe)).Value);
+    }
+
+    // A recipe that is not a trial and names the loaded 'review' block (the trial's text under another id), with the pin this build makes for it.
+    private static async Task<(RegisteredRecipe Recipe, BlockPin Pin)> PlainWithPin(RegistryHarness r)
+    {
+        var loaded = SkillManifestLoader.Load(SkillFixtures.Folder).Loaded.Single(static b => string.Equals(b.Manifest.Name, "review", StringComparison.Ordinal));
+        var text = SkillTrialRecipe.Build(loaded, ["pr"]).Value.Text.Replace("workflow.skill-trial-review", "workflow.review-plain", StringComparison.Ordinal);
+        var recipe = await r.Register(RecipeReaderTests.Reader.Read(text, "plain.yaml").Document!);
+        return (recipe, Assert.Single(PinRules.Blocks(RegistryHarness.Parse(recipe), r.Services.GetRequiredService<BlockCatalog>(), SliceHarness.Json)));
     }
 
     private static string Why(Result<StartSkillRunResponse> result) => result.IsError ? result.Error.ToString() : string.Empty;

@@ -1,10 +1,12 @@
 using System.Globalization;
 using System.Text.Json;
 using Aw.Kernel;
+using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine.Decisions;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Ids;
+using Aw.Sindri.Core.Workflow.Recipes;
 
 namespace Aw.Sindri.Core.Workflow.Registry;
 
@@ -70,11 +72,18 @@ internal sealed class RegistryApprovedRecipes(IRecipeStore store, IRecipeApprova
             return parsed.Error;
         }
 
-        var blocks = parsed is null ? [] : PinRules.Blocks(parsed.Value.Recipe, catalog, json);
+        var blocks = parsed is null ? [] : BlocksToCheck(recipe.Id, parsed.Value.Recipe, latest.Value);
         return PinRules.Check(latest.Value, revoked.Value, blocks) is { } check
             ? await Settle(check, latest.Value, blocks, cancellationToken).ConfigureAwait(false)
             : WorkflowErrors.RecipeNotApproved.With($"{recipe.Id.Value}@{recipe.Hash.Display} was never approved (fix: sindri recipe approve {recipe.Id.Value}@{recipe.Hash.Display})");
     }
+
+    /// <summary>
+    /// The block pins the approval is checked against. A trial was pinned at its start against the block it runs (the --skills folder's, not serve's), and the owner's run request is its approval; so it holds on
+    /// its own pins while an approval stands: never drifted against serve's catalog, never renewed to serve's block. Every other recipe is checked against this build.
+    /// </summary>
+    private IReadOnlyList<BlockPin> BlocksToCheck(RecipeId id, Recipe recipe, RecipeApproval? approval) =>
+        SkillTrialRecipe.IsTrial(id) ? approval?.Pins.Blocks ?? [] : PinRules.Blocks(recipe, catalog, json);
 
     /// <summary>
     /// Owner q93 (2026-10-23): a block that only moved its version keeps its interface, so the approval is renewed (and logged) instead of
