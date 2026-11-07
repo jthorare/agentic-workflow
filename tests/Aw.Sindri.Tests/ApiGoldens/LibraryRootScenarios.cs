@@ -19,7 +19,8 @@ internal static class LibraryRootScenarios
         ("library-roots", "added"), ("library-roots", "added-pending-others"), ("library-roots", "removed"), ("library-roots", "aw-off"),
         ("library-roots", "bad-name"), ("library-roots", "duplicate-name"), ("library-roots", "path-not-absolute"), ("library-roots", "path-too-wide"),
         ("library-roots", "too-many-vaults"), ("library-roots", "inside-another"), ("library-roots", "bad-deny"),
-        ("library-roots", "remove-not-vault"), ("library-roots", "remove-unknown"), ("library-roots", "session-refused"),
+        ("library-roots", "remove-not-vault"), ("library-roots", "remove-unknown"), ("library-roots", "remove-repo-root"), ("library-roots", "remove-escaped-unknown"),
+        ("library-roots", "session-refused"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -48,6 +49,8 @@ internal static class LibraryRootScenarios
             "bad-deny" => (await host.Http.Ask(Post(Roots, """{"name":"notes","path":"~/Documents/Notes","deny":["/etc/**"],"approve":true}""", human))).Body,
             "remove-not-vault" => (await host.Http.Ask(Delete(Roots + "/aw?approve=true", human))).Body,
             "remove-unknown" => (await host.Http.Ask(Delete(Roots + "/old-notes?approve=true", human))).Body,
+            "remove-repo-root" => (await host.Http.Ask(Delete(Roots + "/repo%3Aacme%2Fapi?approve=true", human))).Body,
+            "remove-escaped-unknown" => (await host.Http.Ask(Delete(Roots + "/no%2Fsuch?approve=true", human))).Body,
             _ => (await host.Http.Ask(Post(Roots, """{"name":"harbor-notes","path":"~/Documents/Harbor","deny":[],"approve":true}""", ItemScenarios.Session("demo")))).Body,
         };
     }

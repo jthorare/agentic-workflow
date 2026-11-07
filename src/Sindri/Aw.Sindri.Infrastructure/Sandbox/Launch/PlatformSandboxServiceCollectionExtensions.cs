@@ -56,7 +56,7 @@ public static class PlatformSandboxServiceCollectionExtensions
             .AddSingleton<ISandboxLaunchStages>(StagesFor)
             .AddSingleton<ISandboxLaunchInputs>(sp => InputsFor(sp, environment))
             .AddSandboxVerbs(environment)
-            .AddSingleton<ISandboxLaunch>(sp => new SandboxLaunch(sp.GetRequiredService<ISandbox>(), sp.GetRequiredService<ISessionCap>(), sp.GetRequiredService<ISandboxLaunchStages>(), LaunchOptions(sp, environment)));
+            .AddSingleton<ISandboxLaunch>(sp => new SandboxLaunch(sp.GetRequiredService<ISandbox>(), sp.GetRequiredService<ISessionCap>(), sp.GetRequiredService<ISandboxLaunchStages>(), LaunchOptions(sp, environment), sp.GetRequiredService<LaunchSecretRegistry>()));
     }
 
     private static SandboxLaunchStages StagesFor(IServiceProvider sp) =>
@@ -113,7 +113,7 @@ public static class PlatformSandboxServiceCollectionExtensions
                 {
                     Scope = (launch, _, inner) => ProcessGroupScopeArgv.Prepare(pgroups, launch.Value, inner),
                     UnitFor = static launch => launch.Value,
-                });
+                }, sp.GetRequiredService<LaunchSecretRegistry>());
             });
     }
 

@@ -21,9 +21,8 @@ internal sealed class LinearClient(LinearSettings settings, LinearSourceParts pa
 {
     private const string TokenKey = "context.sources.linear.token";
     private const int PageSize = 250;
-    private readonly Lock _keyLock = new();
+    private readonly LinearReadKey _key = new(settings.Token, parts.Environment);
     private readonly LinearCalls _calls = new(settings, parts.Logger, $"Create a read-only personal API key, store it behind {TokenKey} and approve the profile again (spec §8.8).");
-    private Task<string?>? _key;
 
     /// <summary>The checked settings.</summary>
     public LinearSettings Settings { get; } = settings;
@@ -48,7 +47,7 @@ internal sealed class LinearClient(LinearSettings settings, LinearSourceParts pa
         timeout.CancelAfter(deadline);
         try
         {
-            var key = await Key(timeout.Token).ConfigureAwait(false);
+            var key = await _key.Get(timeout.Token).ConfigureAwait(false);
             if (string.IsNullOrEmpty(key) || key.Any(c => char.IsControl(c) || char.IsWhiteSpace(c)))
             {
                 return _calls.Failed(operation, ContextErrors.SourceNotConfigured.With(
@@ -66,7 +65,7 @@ internal sealed class LinearClient(LinearSettings settings, LinearSourceParts pa
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            var what = _key is { IsCompleted: true }
+            var what = _key.Settled
                 ? $"didn't answer {operation}"
                 : $"wasn't called: the {TokenKey} pointer didn't resolve (a locked keychain, or op waiting for a sign-in?)";
             return _calls.Failed(operation, _calls.Unavailable(string.Create(CultureInfo.InvariantCulture, $"{what} within {deadline.TotalSeconds:0.###} s")), status: null);
@@ -110,44 +109,6 @@ internal sealed class LinearClient(LinearSettings settings, LinearSourceParts pa
             }
 
             after = cursor;
-        }
-    }
-
-    /// <summary>The resolved key, or null when the resolution failed; a resolution that throws counts as not resolved (002), never as an exception. A failed resolution is asked again on the next call.</summary>
-    private async Task<string?> Key(CancellationToken cancellationToken)
-    {
-        Task<string?> resolving;
-        lock (_keyLock)
-        {
-            resolving = _key ??= Task.Run(() => parts.Environment(Settings.Token), CancellationToken.None);
-        }
-
-        try
-        {
-            var key = await resolving.WaitAsync(cancellationToken).ConfigureAwait(false);
-            if (string.IsNullOrEmpty(key))
-            {
-                Forget(resolving);
-            }
-
-            return key;
-        }
-        catch (Exception e) when (e is not OperationCanceledException)
-        {
-            Forget(resolving);
-            return null;
-        }
-    }
-
-    // A resolution that gave nothing is not kept, so a keychain that was locked a moment ago is asked again.
-    private void Forget(Task<string?> resolving)
-    {
-        lock (_keyLock)
-        {
-            if (ReferenceEquals(_key, resolving))
-            {
-                _key = null;
-            }
         }
     }
 

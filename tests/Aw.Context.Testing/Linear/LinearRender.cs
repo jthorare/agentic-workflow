@@ -5,7 +5,8 @@ namespace Aw.Context.Testing.Linear;
 /// <summary>Turns the state into the JSON nodes the queries select from. Every field the feed's operations ask for is here, so a query that asks for another one is a 400 and not a silent null.</summary>
 internal static class LinearRender
 {
-    public static JsonObject Issue(LinearStore s, FakeLinearIssue i)
+    /// <summary>An issue. A comment or attachment carries its issue without the comments and attachments (<paramref name="withChildren"/> false), so rendering one doesn't render the other.</summary>
+    public static JsonObject Issue(LinearStore s, FakeLinearIssue i, bool withChildren = true)
     {
         var team = s.Teams.First(t => t.Key == i.Team);
         var state = s.States.First(x => x.TeamId == team.Id && x.Name == i.State);
@@ -36,8 +37,8 @@ internal static class LinearRender
             ["dueDate"] = null,
             ["sortOrder"] = -1000.0 * (s.Issues.IndexOf(i) + 1),
             ["labels"] = Nodes(i.Labels.Select(l => (JsonNode)Ref(LinearStore.FindRow(s.Labels, l)!))),
-            ["comments"] = Nodes(s.Comments.Where(c => c.IssueId == i.Id).Select(c => Comment(s, c))),
-            ["attachments"] = Nodes(s.Attachments.Where(a => a.IssueId == i.Id).Select(Attachment)),
+            ["comments"] = Nodes(withChildren ? s.Comments.Where(c => c.IssueId == i.Id).Select(c => Comment(s, c)) : []),
+            ["attachments"] = Nodes(withChildren ? s.Attachments.Where(a => a.IssueId == i.Id).Select(a => Attachment(s, a)) : []),
             ["relations"] = Nodes([]),
             ["inverseRelations"] = Nodes([]),
         };
@@ -69,22 +70,18 @@ internal static class LinearRender
         ["issue"] = Commented(s, c.IssueId),
     };
 
-    // why: Linear filters comments by 'issue: { team: { key: ... } }', so the issue carries its team
-    private static JsonObject Commented(LinearStore s, string issueId)
-    {
-        var issue = s.Issues.Find(i => i.Id == issueId);
-        var team = issue is null ? null : s.Teams.Find(t => t.Key == issue.Team);
-        return new JsonObject { ["id"] = issueId, ["identifier"] = issue?.Identifier, ["team"] = team is null ? null : Ref(team, key: true) };
-    }
+    // why: Linear filters comments by 'issue: { team: { key } }', and a write answers with the comment's issue as it is after the write, so a comment carries its whole issue
+    private static JsonObject Commented(LinearStore s, string issueId) =>
+        s.Issues.Find(i => i.Id == issueId) is { } issue ? Issue(s, issue, withChildren: false) : new JsonObject { ["id"] = issueId, ["identifier"] = null, ["team"] = null };
 
-    public static JsonObject Attachment(FakeLinearAttachment a) => new()
+    public static JsonObject Attachment(LinearStore s, FakeLinearAttachment a) => new()
     {
         ["id"] = a.Id,
         ["title"] = a.Title,
         ["url"] = a.Url,
         ["sourceType"] = null,
         ["createdAt"] = a.CreatedAt,
-        ["issue"] = new JsonObject { ["id"] = a.IssueId },
+        ["issue"] = s.Issues.Find(i => i.Id == a.IssueId) is { } issue ? Issue(s, issue, withChildren: false) : new JsonObject { ["id"] = a.IssueId },
     };
 
     public static JsonObject Team(LinearRow t) => Ref(t, key: true);

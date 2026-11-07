@@ -8,27 +8,27 @@ internal sealed class LinearQueries(LinearStore store)
 {
     private static readonly HashSet<string> _connection = new(StringComparer.Ordinal) { "filter", "first", "after", "orderBy", "includeArchived" };
 
-    public (JsonNode? Value, string? Error) Resolve(GraphQlField field)
+    public (JsonNode? Value, string? Error) Resolve(GraphQlField field) => field.Name switch
     {
-        switch (field.Name)
+        "__type" or "__schema" => (Introspect(field), null),
+        "viewer" => (LinearShape.Select(LinearRender.Member(store.Viewer), field, field.Name), null),
+        "issue" => Issue(field),
+        "comment" => Comment(field),
+        "issues" => (Select(field, Issues(field), newestFirst: true), null),
+        "comments" => (Select(field, store.Comments.Select(c => (JsonNode)LinearRender.Comment(store, c)), newestFirst: true), null),
+        _ => (Select(field, Rows(field.Name), newestFirst: false), null),
+    };
+
+    private static JsonNode? Introspect(GraphQlField field)
+    {
+        if (field.Name == "__schema")
         {
-            case "__type":
-                LinearResolver.Known(field, new HashSet<string>(["name"], StringComparer.Ordinal));
-                var type = LinearSchema.Type(LinearResolver.Text(field, "name") ?? "");
-                return (type is null ? null : LinearShape.Select(type, field, field.Name), null);
-            case "__schema":
-                return (LinearShape.Select(LinearSchema.Schema(), field, field.Name), null);
-            case "viewer":
-                return (LinearShape.Select(LinearRender.Member(store.Viewer), field, field.Name), null);
-            case "issue":
-                return Issue(field);
-            case "issues":
-                return (Select(field, Issues(field), newestFirst: true), null);
-            case "comments":
-                return (Select(field, store.Comments.Select(c => (JsonNode)LinearRender.Comment(store, c)), newestFirst: true), null);
-            default:
-                return (Select(field, Rows(field.Name), newestFirst: false), null);
+            return LinearShape.Select(LinearSchema.Schema(), field, field.Name);
         }
+
+        LinearResolver.Known(field, new HashSet<string>(["name"], StringComparer.Ordinal));
+        var type = LinearSchema.Type(LinearResolver.Text(field, "name") ?? "");
+        return type is null ? null : LinearShape.Select(type, field, field.Name);
     }
 
     private IEnumerable<JsonNode> Rows(string name) => name switch
@@ -51,6 +51,16 @@ internal sealed class LinearQueries(LinearStore store)
         return issue is null
             ? (null, $"Entity not found: Issue - Could not find referenced Issue '{id}'.")
             : (LinearShape.Select(LinearRender.Issue(store, issue), field, field.Name), null);
+    }
+
+    private (JsonNode? Value, string? Error) Comment(GraphQlField field)
+    {
+        LinearResolver.Known(field, new HashSet<string>(["id"], StringComparer.Ordinal));
+        var id = LinearResolver.Text(field, "id") ?? throw FakeRequestException.Invalid("Field \"comment\" needs a string 'id' argument.");
+        var comment = store.Comments.Find(c => c.Id == id);
+        return comment is null
+            ? (null, $"Entity not found: Comment - Could not find referenced Comment '{id}'.")
+            : (LinearShape.Select(LinearRender.Comment(store, comment), field, field.Name), null);
     }
 
     private IEnumerable<JsonNode> Issues(GraphQlField field)

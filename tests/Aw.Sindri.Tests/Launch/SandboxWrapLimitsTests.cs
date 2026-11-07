@@ -43,7 +43,7 @@ public sealed class SandboxWrapLimitsTests : IDisposable
         var control = new ControlEndpoint(new Uri("http://127.0.0.1:7480"), Environment.ProcessId, Epoch: 0);
         var launch = new SandboxLaunch(
             new PassThroughSandbox(), new FileSessionCap(Path.Combine(_dir, "sessions.lock"), new FakeSliceScopes()), new FixedStages(request),
-            new SandboxLaunchOptions("systemd-run", new BoxFacts(32L * 1024 * 1024 * 1024, 8), sindriHome, secrets, () => control));
+            new SandboxLaunchOptions("systemd-run", new BoxFacts(32L * 1024 * 1024 * 1024, 8), sindriHome, secrets, () => control), new LaunchSecretRegistry());
 
         var prepared = await launch.Prepare(A.LaunchRequest().Unattended(new StepArgs(Model: null, Policy: null, new StepRef("build", "agent"))).Build(), ["claude"], chosenSession: null, TestContext.Current.CancellationToken);
 

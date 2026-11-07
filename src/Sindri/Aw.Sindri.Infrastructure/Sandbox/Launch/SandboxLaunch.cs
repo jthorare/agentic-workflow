@@ -16,9 +16,10 @@ namespace Aw.Sindri.Infrastructure.Sandbox.Launch;
 /// The launcher's sandbox step (sandbox spec §12 SB-5a) for one unattended launch: probe, then, under the session cap, request, plan, session home, egress, self-check and wrap,
 /// inside a systemd scope. A failure after the plan discards what the wrap left and releases the launch's parts; <see cref="Release"/> does the same at the end of a session.
 /// </summary>
-internal sealed class SandboxLaunch(ISandbox sandbox, ISessionCap cap, ISandboxLaunchStages stages, SandboxLaunchOptions options) : ISandboxLaunch
+internal sealed class SandboxLaunch(ISandbox sandbox, ISessionCap cap, ISandboxLaunchStages stages, SandboxLaunchOptions options, LaunchSecretRegistry secrets) : ISandboxLaunch
 {
     private static readonly TimeSpan _fallbackLongMax = TimeSpan.FromHours(2);   // workflow.steps.longMax's default when no profile is approved
+    private const string LaunchSecretVariable = "AW_SINDRI_LAUNCH_SECRET";
     private readonly ConcurrentDictionary<LaunchId, SandboxPlan> _plans = new();
 
     /// <inheritdoc/>
@@ -166,8 +167,10 @@ internal sealed class SandboxLaunch(ISandbox sandbox, ISessionCap cap, ISandboxL
         var file = LaunchSecrets.SecretPathFor(options.LaunchSecretsDirectory, plan.Launch);
         try
         {
-            var home = SessionHome.Create(options.SindriHome, plan.Launch, File.ReadAllText(file), control);
+            var secret = File.ReadAllText(file);
+            var home = SessionHome.Create(options.SindriHome, plan.Launch, secret, control);
             File.Delete(file);
+            secrets.Put(plan.Launch, new Dictionary<string, string>(StringComparer.Ordinal) { [LaunchSecretVariable] = secret });   // #2163: before the wrap, which hands it to the agent on descriptor 3 only; Undo forgets it
             return home;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -197,6 +200,7 @@ internal sealed class SandboxLaunch(ISandbox sandbox, ISessionCap cap, ISandboxL
 
     private async ValueTask Undo(LaunchId launch, CancellationToken cancellationToken)
     {
+        secrets.Forget(launch);
         if (_plans.TryRemove(launch, out var plan))
         {
             sandbox.Discard(plan);

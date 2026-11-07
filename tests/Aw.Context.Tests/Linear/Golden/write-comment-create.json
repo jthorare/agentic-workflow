@@ -1,0 +1,10 @@
+{
+  "query": "mutation CommentCreate($input: CommentCreateInput!) {\n  commentCreate(input: $input) {\n    success\n    comment {\n      id\n      issue {\n        id identifier title description updatedAt priority estimate\n        state { id name type }\n        team { id key }\n        assignee { id }\n        cycle { id }\n        project { id }\n        parent { id identifier }\n        labels { nodes { id } }\n      }\n    }\n  }\n}\n",
+  "variables": {
+    "input": {
+      "id": "0e5a1b00-0000-4000-8000-000000000003",
+      "issueId": "issue-1",
+      "body": "Looks right to me"
+    }
+  }
+}
