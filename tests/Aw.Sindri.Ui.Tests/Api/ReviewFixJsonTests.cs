@@ -17,7 +17,7 @@ public sealed class ReviewFixJsonTests
         var json = AwJson.Serialize(new ReviewFixSend("line", "t", "abc", SourceId: null, "X.cs", 11, "old", "01J9"), SindriApiClient.Json);
 
         var text = System.Text.Encoding.UTF8.GetString(json);
-        Assert.All(_names, name => Assert.Contains(name, text, StringComparison.Ordinal));//"\"kind\":\"line\"", "\"text\":\"t\"", "\"head\":\"abc\"", "\"path\":\"X.cs\"", "\"line\":11", "\"side\":\"old\"", "\"item\":\"01J9\"" }, name => Assert.Contains(name, text, StringComparison.Ordinal));
+        Assert.All(_names, name => Assert.Contains(name, text, StringComparison.Ordinal));
         Assert.DoesNotContain("\"SourceId\"", text, StringComparison.Ordinal);
     }
 

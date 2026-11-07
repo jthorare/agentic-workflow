@@ -122,7 +122,7 @@ public sealed class ReviewPageKeysTests
         page.FocusedFrom(ReviewFocusRegion.GroupHeader, "Assets");   // the owner clicked the Assets header
         Assert.True(Press(page, "o"));
 
-        Assert.Equal((false, true), (page.Diff.Groups[0].IsFolded, page.Diff.Groups[1].IsFolded));
+        Assert.Equal((false, false), (page.Diff.Groups[0].IsFolded, page.Diff.Groups[1].IsFolded));   // Assets starts folded and opens; o on Core would have folded it (true, true)
     }
 
     [Fact]

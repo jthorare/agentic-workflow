@@ -153,7 +153,7 @@ public sealed class ReviewFixSheetTests
     }
 
     [Theory]
-    [InlineData(false, "Item only: Sindri won't post on kim-dev's PR")]
+    [InlineData(false, "Item only: Sindri won't post on sam-dev's PR")]   // the PR's author in reviews-pr/full.json
     [InlineData(true, "Review comment on #2071 (the review body, no diff line), from Sindri, marker sindri.fix:<item id>")]
     public async Task The_sheet_says_item_only_or_thread_posted_from_the_pages_postsFixThreads_and_the_send_still_makes_the_item(bool posts, string expected)
     {
