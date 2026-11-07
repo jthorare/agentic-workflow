@@ -14,7 +14,6 @@ namespace Aw.Context.Infrastructure.Docs;
 /// (<see cref="LibraryRootReader"/>). A root that can't be listed fails nothing but itself: its stored docs stay and its report says why; the pull fails only when no root could be listed. What each pass found is left
 /// in <see cref="ILibraryStatus"/> for the doctor row and <see cref="Core.Facade.IContextLibrary.Roots"/>.
 /// </summary>
-#pragma warning disable MA0182 // why: the catalog builds it in the next commit
 internal sealed class LibraryFeed(LibrarySetup setup, IRecordStore store, Scrubbers scrubbers, ILibraryStatus status, TimeProvider clock) : RecordFeed(LibrarySource.Id)
 {
     private const string Format = "lib1";

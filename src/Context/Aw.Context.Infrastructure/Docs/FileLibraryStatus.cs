@@ -7,7 +7,6 @@ namespace Aw.Context.Infrastructure.Docs;
 
 /// <summary>The library status as one small JSON file in the context home, written by temp file and rename at 0600. An unreadable or damaged file reads as no report; a failed write is dropped (the next pass writes it again).</summary>
 /// <param name="settings">Where the context home is.</param>
-#pragma warning disable MA0182 // why: the library feed's registration builds it in the next commit
 internal sealed class FileLibraryStatus(ContextStoreSettings settings) : ILibraryStatus
 {
     private static readonly JsonSerializerOptions _options = AwJson.CreateOptions(LibraryStatusJsonContext.Default);
