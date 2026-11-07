@@ -175,7 +175,7 @@ internal static class EndpointTable
         _ = commands.MapRegisterRecipe();
         _ = commands.MapStartInstance();
         _ = commands.MapIssueNonce();
-        _ = commands.MapApplyCommand();
+        _ = commands.MapApplyCommand().MapLinearCommentCreate();
         _ = commands.MapCompleteStep();
         _ = commands.MapSessionHeartbeat();
         _ = commands.MapSessionExit().MapRecordLimitHit();   // the wrap's calls, proven by the launch secret

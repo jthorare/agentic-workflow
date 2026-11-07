@@ -1,6 +1,6 @@
 namespace Aw.Sindri.Tests.ApiGoldens;
 
-/// <summary>The Linear hub's write routes group of API goldens (<see cref="ApiScenarios.Groups"/>: 'LinearWrite'), a class of its own so it runs in parallel with the other groups.</summary>
+/// <summary>The Linear hub's write routes group of API goldens, a class of its own so it runs in parallel with the other groups.</summary>
 public sealed class LinearWriteApiGoldenTests
 {
     public static TheoryData<string, string> Rows() => ApiGoldenRows.Of("LinearWrite");

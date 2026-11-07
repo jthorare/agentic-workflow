@@ -15,4 +15,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-LINEAR-006: a write named an id that is not in the issue's team's stored lookups (a state, member, label, cycle or parent the team doesn't have). Nothing was sent.</summary>
     public static readonly ErrorDefinition LinearBadValue = new("SND-LINEAR-006", ErrorKind.Invalid, "Not one of the team's Linear values");
+
+    /// <summary>SND-LINEAR-011: a Linear write was sent and Linear never confirmed it, and the one re-read did not find it either (Linear hub spec 2026-11-04 §5.1, §8). The answer carries outcome 'unknown' and the client id; a retry sends the same one.</summary>
+    public static readonly ErrorDefinition LinearNoAnswer = new("SND-LINEAR-011", ErrorKind.Timeout, "Linear didn't confirm it");
 }

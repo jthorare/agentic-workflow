@@ -17,8 +17,6 @@ internal static class LinearScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("linear-comment", "applied"), ("linear-comment", "applied-slow"), ("linear-comment", "unknown"), ("linear-comment", "session-refused"),
-        ("linear-create", "applied"), ("linear-create", "unknown"), ("linear-create", "bad-value"), ("linear-create", "session-refused"),
         ("linear-connection", "connected"), ("linear-connection", "not-connected"), ("linear-connection", "read-only"), ("linear-connection", "scope-unknown"),
         ("linear-connection", "pending"), ("linear-connection", "session-refused"),
         ("linear-connection-teams", "two-teams"), ("linear-connection-teams", "refused"), ("linear-connection-teams", "unreachable"),
@@ -46,7 +44,6 @@ internal static class LinearScenarios
 
         var path = (slug, scenario) switch
         {
-            ("linear-issue", _) => "/sindri/linear/issues/ENG-12",
             ("linear-connection", _) => "/sindri/linear/connection",
             _ => throw new ArgumentOutOfRangeException(nameof(slug), slug, "no such linear scenario"),
         };
@@ -57,15 +54,8 @@ internal static class LinearScenarios
     // 'no-keychain' has none; 'no-teams' saves a read key with teams: [].
     private static HttpRequestMessage? WriteRequest(string slug, string scenario, (string Name, string Value)[] caller)
     {
-        const string clientId = "5d0a4f6e-3b1c-4c0e-9a57-2f1d8c9b7e01";
         return slug switch
         {
-            "linear-comment" => Post("/sindri/linear/issues/ENG-12/comments", $$"""{"clientId":"{{clientId}}","body":"Budget resets at midnight UTC: agreed."}""", caller),
-            "linear-create" => Post("/sindri/linear/issues",
-                scenario == "bad-value"
-                    ? $$"""{"clientId":"{{clientId}}","team":"ENG","title":"Document the retry budget","assigneeId":"00000000-0000-4000-8000-0000000000ff"}"""
-                    : $$"""{"clientId":"{{clientId}}","team":"ENG","title":"Document the retry budget"}""",
-                caller),
             "linear-connection-teams" => Post("/sindri/linear/connection/teams", """{"key":"lin_api_read"}""", caller),
             "linear-connect" => Post("/sindri/linear/connection", scenario switch
             {
