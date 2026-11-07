@@ -12,7 +12,7 @@ namespace Aw.Sindri.Ui.Tests.Api;
 public sealed class LibraryRootsGoldenTests
 {
     private static LibraryView Library(string scenario) =>
-        Aw.Kernel.Json.AwJson.Deserialize<LibraryView>(System.Text.Encoding.UTF8.GetBytes(GoldenFiles.Api("library", scenario)), SindriApiClient.Json).Value;
+        Kernel.Json.AwJson.Deserialize<LibraryView>(System.Text.Encoding.UTF8.GetBytes(GoldenFiles.Api("library", scenario)), SindriApiClient.Json).Value;
 
     [Fact]
     public void Every_library_golden_carries_roots_and_the_session_form_has_none()
@@ -54,7 +54,7 @@ public sealed class LibraryRootsGoldenTests
     [InlineData("aw-off", true, 0)]
     public void Each_write_answers_approved_and_how_many_changes_still_wait(string scenario, bool approved, int pending)
     {
-        var read = Aw.Kernel.Json.AwJson.Deserialize<LibraryRootChanged>(System.Text.Encoding.UTF8.GetBytes(GoldenFiles.Api("library-roots", scenario)), SindriApiClient.Json).Value;
+        var read = Kernel.Json.AwJson.Deserialize<LibraryRootChanged>(System.Text.Encoding.UTF8.GetBytes(GoldenFiles.Api("library-roots", scenario)), SindriApiClient.Json).Value;
 
         Assert.Equal((approved, pending), (read.Approved, read.PendingCount));
     }
