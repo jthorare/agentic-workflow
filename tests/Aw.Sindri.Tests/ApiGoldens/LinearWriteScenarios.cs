@@ -17,7 +17,7 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 /// The Linear hub's write routes (Linear hub spec 2026-11-04 §3, §5.3, D6; Ph3 1b; contract ~/.agentic-workflow/digests/api-scripts/contract-2077-1b-linear-writes.md): 'POST /linear/issues/{key}/change' in each ending.
 /// Context is a scripted fake (<see cref="FakeContextLinearWrites"/>): its live read of ENG-12 is what Linear says, its next write is what Linear answers. The stored issue the re-read serves is a fake too, already at
 /// the state the scenario ends in (In Review at 10:05 after an edit; Done at 10:01 for the conflict). ENG's lookups hold the five states 51 to 55, Joi Example and Sam Lee, two labels and one cycle. 'team-not-picked' reads
-/// ENG as a team the profile didn't pick (the gate is a fake, as in <see cref="LinearIssueScenarios"/>). Rows are added to the group 'LinearWrites' by each write route.
+/// ENG as a team the profile didn't pick (the gate is a fake, as in <see cref="LinearIssueScenarios"/>). Rows are added to the group 'LinearWrite' by each write route.
 /// </summary>
 internal static class LinearWriteScenarios
 {

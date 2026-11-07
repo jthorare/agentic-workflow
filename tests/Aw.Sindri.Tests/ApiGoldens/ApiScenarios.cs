@@ -45,7 +45,7 @@ internal static class ApiScenarios
         ["LinearIssues"] = LinearIssueScenarios.All,
         ["Reviews"] = [.. ReviewScenarios.All, .. ReviewLoginScenarios.All, .. ReviewFixScenarios.All, .. LibraryScenarios.All, .. LibraryDocScenarios.All],
         ["LinearReads"] = LinearReadScenarios.All,
-        ["LinearWrites"] = LinearWriteScenarios.All,
+        ["LinearWrite"] = LinearWriteScenarios.All,
     };
 
     /// <summary>Every (route slug, scenario) pair, group by group.</summary>

@@ -3,7 +3,9 @@ using Aw.Context.Core.Linear;
 using Aw.Context.Core.Sources;
 using Aw.Context.Testing.Linear;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Linear;
 using Aw.Sindri.Features.LinearIssues;
+using Aw.Sindri.Tests.LinearReads;
 using Aw.Sindri.Testing;
 using static Aw.Sindri.Tests.LinearIssues.LinearIssueRows;
 
@@ -24,6 +26,8 @@ public sealed class ChangeLinearIssueTests
 
     private readonly FakeContextLinearWrites _writes = new();
     private readonly FakeLinearWriteGate _gate = new();
+    private readonly FakeLinearSideFacts _side = new FakeLinearSideFacts().WithTeam(Lookups()).WithTeamsPicked(picked: true);
+    private readonly FakeLinearIssueFacts _facts = new FakeLinearIssueFacts().WithSource(Connected(Viewer)).WithDetails(new LinearIssueDetailFacts(Row("ENG-12", Viewer), "The description", Removed: false, []));
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -31,7 +35,14 @@ public sealed class ChangeLinearIssueTests
 
     private static string? Member(Kernel.Error error, string name) => error.Extensions!.First(m => m.Key == name).Value.GetString();
 
-    private static ChangeLinearIssueService Service() => new();
+    private ChangeLinearIssueService Service() => new(_gate, new FakeLinearWriteScope(), _side, _facts, _writes, new GetLinearIssueService(_facts, new FakeLinearItemLinks(), _gate));
+
+    private static LinearLookupsResponse Lookups() => new(
+        new LinearTeamRef(EngId, "ENG", "Engineering"), KnownInstants.Epoch,
+        [new("00000000-0000-4000-8000-000000000051", "Todo", "unstarted", 1), new(Progress, "In Progress", "started", 2), new(Review, "In Review", "started", 3), new(Done, "Done", "completed", 4)],
+        [new(ViewerId, "Joi Example", Active: true), new(SamId, "Sam Lee", Active: true)],
+        [new(Bug, "bug", "#eb5757"), new(Api, "api", "#5e6ad2")],
+        [new("00000000-0000-4000-8000-0000000000c1", 14, "Cycle 14", KnownInstants.Epoch.AddDays(-7), KnownInstants.Epoch.AddDays(7), Current: true)]);
 
     private static LinearIssueView Live(string stateId = Progress, string title = "Title of ENG-12", string? description = "The description", IReadOnlyList<string>? labels = null, double updatedMinutesAgo = 30) => new(
         ExternalId.From("00000000-0000-4000-8000-00000000010c"), Key, "ENG", title, description, ExternalId.From(stateId), "State", ExternalId.From(ViewerId), Priority: 2, Estimate: null,
@@ -43,7 +54,7 @@ public sealed class ChangeLinearIssueTests
 
     private static ChangeLinearIssueRequest ToReview() => Edit("ENG-12", $$"""{"stateId":"{{Progress}}"}""", $$"""{"stateId":"{{Review}}"}""");
 
-    private static async Task<LinearChangeResult> Ok(ChangeLinearIssueRequest request)
+    private async Task<LinearChangeResult> Ok(ChangeLinearIssueRequest request)
     {
         var result = await Service().Handle(request, Token);
         Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);

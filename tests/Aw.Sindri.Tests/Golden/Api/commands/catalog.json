@@ -367,6 +367,24 @@
       "confirm": null
     },
     {
+      "action": "ChangeLinearIssue",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/linear/issues/{key}/change",
+      "cli": "sindri linear edit <issue> [--title <text>] [--state <state>] [--assignee <person>] [--priority <level>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "ChangeProject",
       "class": "desk",
       "allowedCallers": [
