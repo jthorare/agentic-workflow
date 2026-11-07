@@ -18,7 +18,7 @@ public sealed class LibraryDoctorChecksTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static LibraryRootStatus Ok(string root, int docs, int nearMisses = 0) => new(root, LibraryRootState.Ok, Reason: null, docs, nearMisses, _at);
+    private static LibraryRootStatus Ok(string root, int docs, int nearMisses = 0) => new(root, LibraryRootState.Ok, Reason: null, docs, nearMisses, _at, Path: null, NearMissFindings: []);
 
     private async Task<DoctorCheck> Row(params LibraryRootStatus[] roots)
     {
@@ -62,7 +62,7 @@ public sealed class LibraryDoctorChecksTests
     [Fact, Trait("Lane", "unit")]
     public async Task Before_the_first_pass_the_row_is_ok_and_says_the_read_hasnt_finished()
     {
-        var row = await Row(new LibraryRootStatus("aw", LibraryRootState.Reading, Reason: null, 0, 0, LastRead: null));
+        var row = await Row(new LibraryRootStatus("aw", LibraryRootState.Reading, Reason: null, 0, 0, LastRead: null, Path: null, NearMissFindings: []));
 
         Assert.Equal((CheckState.Ok, "the first read of aw hasn't finished yet (sindri library sync reads now)"), (row.State, row.Detail));
     }
@@ -70,7 +70,7 @@ public sealed class LibraryDoctorChecksTests
     [Fact, Trait("Lane", "unit")]
     public async Task An_unreadable_root_warns_with_its_path_and_reason_and_the_fix()
     {
-        var row = await Row(Ok("aw", 2), new LibraryRootStatus("work", LibraryRootState.Unreadable, "/srv/work is not a folder that exists", 0, 0, _at));
+        var row = await Row(Ok("aw", 2), new LibraryRootStatus("work", LibraryRootState.Unreadable, "/srv/work is not a folder that exists", 0, 0, _at, "/srv/work", NearMissFindings: []));
 
         Assert.Equal(CheckState.Warn, row.State);
         Assert.Equal("work can't be read: /srv/work is not a folder that exists", row.Detail);
@@ -98,7 +98,7 @@ public sealed class LibraryDoctorChecksTests
     [Fact, Trait("Lane", "unit")]
     public async Task Every_root_off_is_ok_and_says_how_to_turn_it_on()
     {
-        var row = await Row(new LibraryRootStatus("aw", LibraryRootState.Off, Reason: null, 0, 0, LastRead: null));
+        var row = await Row(new LibraryRootStatus("aw", LibraryRootState.Off, Reason: null, 0, 0, LastRead: null, Path: null, NearMissFindings: []));
 
         Assert.Equal((CheckState.Ok, "off: context.sources.library.stateDir is off and no vault is named"), (row.State, row.Detail));
     }

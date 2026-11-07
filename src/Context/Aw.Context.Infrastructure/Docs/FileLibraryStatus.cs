@@ -9,7 +9,7 @@ namespace Aw.Context.Infrastructure.Docs;
 /// <param name="settings">Where the context home is.</param>
 internal sealed class FileLibraryStatus(ContextStoreSettings settings) : ILibraryStatus
 {
-    private static readonly JsonSerializerOptions _options = AwJson.CreateOptions(LibraryStatusJsonContext.Default);
+    private static readonly JsonSerializerOptions _options = Options();
 
     private readonly string _path = Path.Combine(settings.Home, "library-status.json");
 
@@ -37,5 +37,14 @@ internal sealed class FileLibraryStatus(ContextStoreSettings settings) : ILibrar
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)   // boundary: the report is a courtesy for the doctor row; the next pass writes it again
         {
         }
+    }
+
+    // why: a status file written before near misses carried their findings holds bare paths; it still reads, so an unchanged root keeps its docs and near misses
+    private static JsonSerializerOptions Options()
+    {
+        var options = new JsonSerializerOptions(AwJson.CreateOptions(LibraryStatusJsonContext.Default));
+        options.Converters.Add(new LibraryNearMissConverter());
+        options.MakeReadOnly();
+        return options;
     }
 }

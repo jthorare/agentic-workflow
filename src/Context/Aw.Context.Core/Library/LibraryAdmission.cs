@@ -12,10 +12,25 @@ public static class LibraryAdmission
     /// <returns>Skip, near miss or read.</returns>
     public static LibraryAdmissionKind Classify(string path, string head)
     {
+        var outcome = Find(path, head);
+        return outcome.Read ? LibraryAdmissionKind.Read : outcome.Errors.Count > 0 ? LibraryAdmissionKind.NearMiss : LibraryAdmissionKind.Skip;
+    }
+
+    /// <summary>The SND-LIB-019 error of a file <see cref="Classify"/> calls a near miss: its line, what is wrong and the fix.</summary>
+    /// <param name="path">The file's path, for the message.</param>
+    /// <param name="head">The first <see cref="HeadBytes"/> bytes of the file, as text.</param>
+    /// <returns>The error, or null when the file is read or skipped.</returns>
+    public static DesignDocError? NearMiss(string path, string head)
+    {
+        var outcome = Find(path, head);
+        return outcome.Read || outcome.Errors.Count == 0 ? null : outcome.Errors[0];
+    }
+
+    private static FrontMatterBlock.Outcome Find(string path, string head)
+    {
         ArgumentNullException.ThrowIfNull(path);
         ArgumentNullException.ThrowIfNull(head);
         var lines = head.TrimStart('\uFEFF').Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n').Split('\n');
-        var outcome = FrontMatterBlock.Find(path, lines);
-        return outcome.Read ? LibraryAdmissionKind.Read : outcome.Errors.Count > 0 ? LibraryAdmissionKind.NearMiss : LibraryAdmissionKind.Skip;
+        return FrontMatterBlock.Find(path, lines);
     }
 }
