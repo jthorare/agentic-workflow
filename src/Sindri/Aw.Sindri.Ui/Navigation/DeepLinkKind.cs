@@ -61,4 +61,7 @@ internal enum DeepLinkKind
     AddSeveralPages,
     /// <summary>'context/pin': the Pin sheet (Pin this, Edit pin, New pin) opened from the Context page's concept layer; it has no subject.</summary>
     PinSheet,
+
+    /// <summary>'reviews/library': the library errors sheet opened from the Reviews header; it has no subject.</summary>
+    LibrarySheet,
 }

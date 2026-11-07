@@ -198,6 +198,13 @@ internal sealed partial class ShellWindow
     // region, not into the sheet): focus returns to the opener's frame. Focus on a control of the page or in the sheet follows KeepFocus.
     private void KeepFocusAfterClose()
     {
+        if (_rowRequests == 0 && Shell is { IsSheetShown: false, IsLibrarySheet: true, OpenerLibrary: true } && FocusLeftWithSheet() && OpenerLibraryButton() is { } library)
+        {
+            _sheetOpener = null;
+            _ = library.Focus(Method());   // the sheet may still be fading out, so its title still counts as usable focus: KeepFocus would leave it there
+            return;
+        }
+
         if (_rowRequests == 0 && Shell is { IsSheetShown: false } && ReferenceEquals(FocusManager?.GetFocusedElement(), PagePanel) && SheetOpenerFrame() is { } opener)
         {
             _sheetOpener = null;
@@ -207,6 +214,10 @@ internal sealed partial class ShellWindow
 
         KeepFocus();
     }
+
+    // True when nothing has focus, the page region has it, or it is still inside the closed sheet.
+    private bool FocusLeftWithSheet() =>
+        FocusManager?.GetFocusedElement() is not Visual focused || ReferenceEquals(focused, PagePanel) || SheetPanel.IsVisualAncestorOf(focused) || ReferenceEquals(focused, SheetPanel);
 
     // The sheet's opener (the row it was opened from, by id, or the edge tab), else the row the selection moved to when the opener cleared, else the page region for the sheet; the health pill for the top bar; the page
     // region, or the sheet's heading while the sheet covers the page.

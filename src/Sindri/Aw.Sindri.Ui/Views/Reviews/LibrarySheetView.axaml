@@ -1,0 +1,42 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:rvm="using:Aw.Sindri.Ui.ViewModels.Reviews"
+             x:Class="Aw.Sindri.Ui.Views.Reviews.LibrarySheetView"
+             x:DataType="rvm:LibrarySheetViewModel">
+  <!-- The library errors sheet's content (review page spec §6.1): the counts, then docs with errors, near misses and unreadable folders, then the served cap line.
+       The shell's sheet layer draws its title and Close. -->
+  <StackPanel Spacing="{StaticResource Space.SM}">
+    <TextBlock x:Name="ReviewsLibrarySummary" Classes="caption subtle" Focusable="True" Text="{Binding Summary}" AutomationProperties.Name="{Binding Summary}" />
+    <TextBlock Classes="caption subtle" Text="{Binding ReadingText}" IsVisible="{Binding IsLoading}" />
+    <TextBlock x:Name="ReviewsLibraryError" Classes="caption" Text="{Binding Error}" TextWrapping="Wrap" IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    <TextBlock x:Name="ReviewsLibraryClean" Classes="body muted" Text="{Binding CleanText}" IsVisible="{Binding IsClean}" />
+    <ItemsControl x:Name="ReviewsLibrarySections" ItemsSource="{Binding Sections}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="rvm:LibrarySectionViewModel">
+          <StackPanel Spacing="{StaticResource Space.XS}" Margin="0,8,0,0">
+            <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+              <TextBlock x:Name="ReviewsLibrarySectionTitle" Classes="eyebrow subtle" Text="{Binding Title}" />
+              <TextBlock Classes="eyebrow" Foreground="{DynamicResource Brush.InkSubtle}" Text="{Binding Count}" />
+            </StackPanel>
+            <ItemsControl ItemsSource="{Binding Items}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="rvm:LibraryItemViewModel">
+                  <StackPanel Margin="0,4">
+                    <TextBlock Classes="body-strong mono" Text="{Binding Name}" TextWrapping="Wrap" />
+                    <TextBlock Classes="caption mono subtle" Text="{Binding Path}" TextWrapping="Wrap" IsVisible="{Binding Path, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    <ItemsControl ItemsSource="{Binding Lines}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="x:String"><TextBlock Classes="caption" Text="{Binding}" TextWrapping="Wrap" /></DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+    <TextBlock x:Name="ReviewsLibraryCapped" Classes="caption subtle" Text="{Binding CappedText}" TextWrapping="Wrap" IsVisible="{Binding CappedText, Converter={x:Static ObjectConverters.IsNotNull}}" />
+  </StackPanel>
+</UserControl>

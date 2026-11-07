@@ -47,7 +47,7 @@ internal static partial class Labels
         DeepLinkKind.Service => "Service",
         DeepLinkKind.Job => "Job",
         DeepLinkKind.Project => "Project",
-        DeepLinkKind.HomeNeedsYou or DeepLinkKind.NeedsYou or DeepLinkKind.ContextItem or DeepLinkKind.Item or DeepLinkKind.Decision or DeepLinkKind.Setup or DeepLinkKind.Projects or DeepLinkKind.Reviews or DeepLinkKind.ProjectAdd or DeepLinkKind.PageSheet or DeepLinkKind.AddSeveralPages or DeepLinkKind.PinSheet => string.Empty,
+        DeepLinkKind.HomeNeedsYou or DeepLinkKind.NeedsYou or DeepLinkKind.ContextItem or DeepLinkKind.Item or DeepLinkKind.Decision or DeepLinkKind.Setup or DeepLinkKind.Projects or DeepLinkKind.Reviews or DeepLinkKind.LibrarySheet or DeepLinkKind.ProjectAdd or DeepLinkKind.PageSheet or DeepLinkKind.AddSeveralPages or DeepLinkKind.PinSheet => string.Empty,
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, message: null),
     };
 
