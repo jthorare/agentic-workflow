@@ -42,7 +42,7 @@ internal static class ForgeRules
             ? Invalid("workflow.forge.credential", "must be env:NAME (capitals, digits and '_') or command:<program and arguments>")
             : null;
 
-    private static bool IsCredential(string value) =>
+    internal static bool IsCredential(string value) =>
         value.StartsWith("env:", StringComparison.Ordinal)
             ? value.Length > 4 && value[4..].All(static c => char.IsAsciiLetterUpper(c) || char.IsAsciiDigit(c) || c == '_')
             : value.StartsWith("command:", StringComparison.Ordinal) && value[8..].Trim().Length > 0;

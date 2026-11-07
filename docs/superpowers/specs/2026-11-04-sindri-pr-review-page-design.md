@@ -345,6 +345,7 @@ Rows are stored PR records (kind `pr`, open or draft) of the repos in `context.s
 - **Which PRs**: the author is `review.login`, or `review.login` is among the requested reviewers (owner, 2026-11-04, §14 Q3).
 - **Order**: two groups, **Waiting on you** first, then **Yours**. A PR waits on the owner when `review.login` is a requested reviewer, or when the owner's latest review is on an older commit than the head (§5.6); that row reads "reviewed, N new commits" ("reviewed, new commits" when the count is unknown). Inside each, rows are grouped by the project whose `review.projects[]` names the repo, else by the repo's name, newest activity first.
 - **A row** shows the title, number, author, age, CI state, open required checks, and whether the PR claims a doc.
+  The row's groups, waiting state and doc claim come from the stored PR records; its **CI state and open required checks come from the per-head summary** in the review cache (§6.2 "Cache"): the list reads the summary of the head it holds, builds and stores one for a head that has none (at most 4 heads at once), and on a forge failure or rate limit keeps the PR's newest stored summary, or shows CI "none" and no required count.
 - **The header** shows the library's state, e.g. "Library: 41 docs, 3 with errors"; the count opens a sheet listing the broken docs and their errors, and the near misses (§4.1).
 - **The waiting count** ("N PRs waiting on you") is the "Waiting on you" group's size, read from the same stored records. It shows on Home and as the Reviews tab's badge, with the badge's accessible name "Reviews, N waiting on you".
 
@@ -605,6 +606,7 @@ It's unproven whether GitHub itself refuses a review on an old `commit_id`. The 
 | `SND-REVIEW-007` | a review route or verb before `review.login` is set | "Set your GitHub login on the Reviews tab first." |
 | `SND-REVIEW-404` | a review route for a PR the forge does not have | "PR not found" |
 | `SND-REVIEW-014` | a confirm token used twice or older than 10 minutes | "This confirmation expired. Open the sheet again." |
+| `SND-REVIEW-503` | offline, and the PR is not in the cache (ProblemDetails, HTTP 503) | "Offline, and this PR isn't cached yet" |
 
 Codes 008, 009 and `SND-LIB-020` are left free on purpose, for the next errors of the same kinds.
 
