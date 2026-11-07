@@ -57,6 +57,7 @@ internal sealed partial class LinearIssueSheetView : UserControl
             LinearIssueFocus.Title => this.FindControl<TextBox>("IssueTitleBox"),
             LinearIssueFocus.Banner => this.FindControl<Border>("IssueConflict"),
             LinearIssueFocus.KeepEditing => this.FindControl<Button>("IssueKeepEditing"),
+            LinearIssueFocus.CommentBox => this.FindControl<TextBox>("IssueCommentBox"),
             _ => null,
         };
         _ = target?.Focus();
