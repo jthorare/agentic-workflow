@@ -22,7 +22,8 @@ internal static class ConceptPlan
         var resolved = PinIds.Resolve(pins);
         var taken = new HashSet<string>(StringComparer.Ordinal) { ConceptKeys.Other["concept:".Length..] };
         taken.UnionWith(resolved.Select(p => p.Id));
-        var pinned = resolved.Select(p => new PlannedConcept(p.Id, "", p.Pin, Pinned(graph, features, p))).Select(WithSeed).Select(c => WithTerms(c, glossary)).ToList();
+        var pinConcepts = resolved.Select(p => "concept:" + p.Id).ToHashSet(StringComparer.Ordinal);
+        var pinned = resolved.Select(p => new PlannedConcept(p.Id, "", p.Pin, Pinned(graph, features, p, pinConcepts))).Select(WithSeed).Select(c => WithTerms(c, glossary)).ToList();
         var left = features.Except(pinned.SelectMany(p => p.Features), StringComparer.Ordinal).ToList();
         var areas = Groups(graph, left);
         var (shaped, hinted, hintNames) = hints is { Count: > 0 } ? ConceptHintGroups.Apply(areas, hints) : (areas, new HashSet<string>(StringComparer.Ordinal), new Dictionary<string, string>(StringComparer.Ordinal));
@@ -36,15 +37,18 @@ internal static class ConceptPlan
     private static PlannedConcept WithSeed(PlannedConcept pin) => pin with { Seed = pin.Features.Count > 0 ? pin.Features[0] : "" };
 
     // The features a pin names by key or key glob, those implemented by a code file under one of its path globs, and the home leaves the build made for it (spec 2026-10-27 §10.1).
-    private static List<string> Pinned(GraphSnapshot graph, List<string> features, ResolvedPin resolved)
+    // A feature the build made home to another pin stays there: a model tag on a file under this pin doesn't pull it across (#1372).
+    private static List<string> Pinned(GraphSnapshot graph, List<string> features, ResolvedPin resolved, HashSet<string> pinConcepts)
     {
         var (id, pin) = (resolved.Id, resolved.Pin);
         var concept = "concept:" + id;
-        var byHome = graph.Edges.Where(e => e is { Type: EdgeType.BelongsTo, Provenance: Provenance.Deterministic, From.Kind: NodeKind.Feature } && e.To.Value == concept).Select(e => e.From.Value);
+        var homes = graph.Edges.Where(e => e is { Type: EdgeType.BelongsTo, Provenance: Provenance.Deterministic, From.Kind: NodeKind.Feature } && pinConcepts.Contains(e.To.Value)).ToList();
+        var byHome = homes.Where(e => e.To.Value == concept).Select(e => e.From.Value);
+        var homedElsewhere = homes.Where(e => e.To.Value != concept).Select(e => e.From.Value).ToHashSet(StringComparer.Ordinal);
         var byKey = features.Where(f => PathDenylist.MatchesExactCase(f, pin.Features));
         var byPath = pin.Paths.Count == 0
             ? []
-            : graph.Edges.Where(e => e.Type == EdgeType.Implements && e.From.Kind == NodeKind.Code && e.To.Kind == NodeKind.Feature && PathDenylist.MatchesExactCase(e.From.Name, pin.Paths)).Select(e => e.To.Value);
+            : graph.Edges.Where(e => e.Type == EdgeType.Implements && e.From.Kind == NodeKind.Code && e.To.Kind == NodeKind.Feature && PathDenylist.MatchesExactCase(e.From.Name, pin.Paths) && !homedElsewhere.Contains(e.To.Value)).Select(e => e.To.Value);
         return [.. byKey.Concat(byPath).Concat(byHome.Where(features.Contains)).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
     }
 
