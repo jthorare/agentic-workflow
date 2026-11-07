@@ -28,8 +28,8 @@ internal sealed partial class RecipeWorkflow
         }
 
         var failure = ended.SkillFailure ?? string.Empty;
-        var split = failure.IndexOf(": ", StringComparison.Ordinal);
-        var failed = AgentFailed(open, step, split < 0 ? failure : failure[(split + 2)..], closed.Tokens) with { Code = split < 0 ? null : failure[..split] };
+        var (code, reason) = SkillFailureText.Split(failure);
+        var failed = AgentFailed(open, step, reason, closed.Tokens) with { Code = code };
         return await Decided(instance, open, failed, reportId: null, context).ConfigureAwait(true);
     }
 }

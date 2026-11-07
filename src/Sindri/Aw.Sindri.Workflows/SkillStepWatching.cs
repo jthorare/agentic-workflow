@@ -25,6 +25,14 @@ internal sealed class SkillStepWatching(IAgentSessions sessions, ILaunchFiles fi
     /// <summary>How long the turn-end marker must have stood, with no tool running, before the result is read.</summary>
     internal static readonly TimeSpan Settle = TimeSpan.FromSeconds(30);
 
+    // The scrubbed detail of each launch's result that was unreadable at its last turn end; a later turn end that reads fine (or finishes) clears it. Memory only: a restarted worker reads it again at the next turn end.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> _unreadable = new(StringComparer.Ordinal);
+
+    /// <summary>Why the launch's result file was unreadable at the last turn end the watch read, or null when it was not.</summary>
+    /// <param name="launch">The launch id.</param>
+    /// <returns>The scrubbed detail; null for none.</returns>
+    internal string? UnreadableOf(string launch) => _unreadable.TryGetValue(launch, out var detail) ? detail : null;
+
     /// <summary>Waits for the session to end or for a finished result.</summary>
     /// <param name="watch">The skill launch.</param>
     /// <param name="heartbeat">Tells Temporal the watch is alive.</param>
@@ -88,6 +96,7 @@ internal sealed class SkillStepWatching(IAgentSessions sessions, ILaunchFiles fi
         var prompt = handled is null ? null : files.PromptedAt(LaunchId.From(watch.Launch));
         var file = ReadFile(resultFile);
         var decision = SkillResultReader.Decide(Input(watch, file, handled, prompt));
+        Remember(watch.Launch, decision);
         if (decision.Kind == SkillResultKind.OwnerWaiting && decision.Reason is { } reason)
         {
             var text = decision.Text is { } question ? Redactor.Default.Scrub(question).Text : null;
@@ -102,6 +111,18 @@ internal sealed class SkillStepWatching(IAgentSessions sessions, ILaunchFiles fi
             SkillResultKind.Complete or SkillResultKind.OwnerWaiting or SkillResultKind.StillWaiting or SkillResultKind.Working => null,
             _ => throw new ArgumentOutOfRangeException(nameof(watch), decision.Kind, "not a result kind"),
         };
+    }
+
+    private void Remember(string launch, SkillResultDecision decision)
+    {
+        if (decision is { Kind: SkillResultKind.OwnerWaiting, Reason: SkillWaitReason.Unreadable, Detail: { } detail })
+        {
+            _unreadable[launch] = Redactor.Default.Scrub(detail).Text;
+        }
+        else if (decision.Kind != SkillResultKind.StillWaiting)
+        {
+            _ = _unreadable.TryRemove(launch, out _);   // why: a turn end already handled says nothing new, so what the last one said stands
+        }
     }
 
     private static SkillResultInput Input(SkillWatch watch, SkillResultFile? file, DateTimeOffset? lastHandled, DateTimeOffset? lastPrompt) =>

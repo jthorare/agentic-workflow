@@ -13,6 +13,9 @@ namespace Aw.Sindri.Core.Workflow.Engine.Triggers;
 /// <param name="Kind">Which timer.</param>
 public sealed record DeadlineFired(string Actor, int Entry, DeadlineKind Kind) : Trigger(Actor)
 {
+    /// <summary>For a skill Step whose result file was unreadable at its last turn end: why (scrubbed), so the timeout's park or escalation says so; null for every other timer.</summary>
+    public string? Detail { get; init; }
+
     /// <inheritdoc/>
     public override string Name => Kind == DeadlineKind.TakeoverIdle ? TriggerNames.TakeoverIdle : TriggerNames.Deadline;
 

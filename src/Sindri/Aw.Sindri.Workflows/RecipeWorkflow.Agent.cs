@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Decisions;
@@ -97,7 +98,7 @@ internal sealed partial class RecipeWorkflow
         var watching = skill is not null
             ? Workflow.ExecuteActivityAsync((AgentStepActivities a) => a.WatchSkillAsync(skill), AgentOptions(_watchCall, open, state, cancel.Token))   // a skill block's result file is read at each turn end (skill flows spec §3.3)
             : Workflow.ExecuteActivityAsync((AgentStepActivities a) => a.WatchAsync(launch), AgentOptions(_watchCall, open, state, cancel.Token));
-        var (applied, end) = await AwaitAgent(instance, open, new Awaited(watching, cancel, Reports: true), context).ConfigureAwait(true);
+        var (applied, end) = await AwaitAgent(instance, open, new Awaited(watching, cancel, Reports: true) { Skill = skill }, context).ConfigureAwait(true);
         if (end == AgentEnd.Over)
         {
             _suspendedRun = SuspendedRun(applied, open);
@@ -209,7 +210,7 @@ internal sealed partial class RecipeWorkflow
 
             if (_submitted.Count > 0 || _timers.Fired)
             {
-                instance = await ApplyMeanwhile(instance, context).ConfigureAwait(true);
+                instance = await ApplyMeanwhileAgent(instance, waiting.Skill, context).ConfigureAwait(true);
                 if (RunOver(instance, open))
                 {
                     await Abandon(waiting.Running, waiting.Cancel).ConfigureAwait(true);
@@ -226,6 +227,25 @@ internal sealed partial class RecipeWorkflow
 
             await WaitForAgent(waiting).ConfigureAwait(true);
         }
+    }
+
+    // What an Update or a timer delivered meanwhile; a skill Step's timer also carries why its result file was unreadable at the watch's last turn end.
+    private async Task<WorkflowInstance> ApplyMeanwhileAgent(WorkflowInstance instance, SkillWatch? skill, Interpreting context)
+    {
+        if (_submitted.Count > 0 || skill is null || !_namesUnreadable)
+        {
+            return await ApplyMeanwhile(instance, context).ConfigureAwait(true);
+        }
+
+        var fired = await Unreadable(skill, _timers.Take()!).ConfigureAwait(true);   // why: the caller saw no submission, so a timer fired
+        return await Apply(instance, new Submission(Ticket: 0, fired), context).ConfigureAwait(true);
+    }
+
+    // A skill Step's timer that ran out, with why the result file was unreadable at the watch's last turn end (a local activity: the watch holds it in memory).
+    private static async Task<DeadlineFired> Unreadable(SkillWatch skill, DeadlineFired fired)
+    {
+        var detail = await Workflow.ExecuteLocalActivityAsync((AgentStepActivities a) => a.SkillUnreadableAsync(skill), new LocalActivityOptions { StartToCloseTimeout = TimeSpan.FromSeconds(10), CancellationToken = CancellationToken.None }).ConfigureAwait(true);
+        return detail is null ? fired : fired with { Detail = detail };
     }
 
     private async Task WaitForAgent(Awaited waiting)
@@ -249,7 +269,12 @@ internal sealed partial class RecipeWorkflow
         }
     }
 
+    private bool _namesUnreadable;   // the 'skill-timeout-names-unreadable-v1' marker is in this history
+
     private sealed record AgentCall(string Kind, TimeSpan Limit, TimeSpan? Heartbeat, RetryPolicy Retry);
 
-    private sealed record Awaited(Task Running, CancellationTokenSource Cancel, bool Reports);
+    private sealed record Awaited(Task Running, CancellationTokenSource Cancel, bool Reports)
+    {
+        public SkillWatch? Skill { get; init; }
+    }
 }

@@ -24492,3 +24492,5 @@ virtual Aw.Sindri.Core.Reviews.ReviewPanelData.Equals(Aw.Sindri.Core.Reviews.Rev
 virtual Aw.Sindri.Core.Reviews.ReviewPanelData.PrintMembers(System.Text.StringBuilder! builder) -> bool
 Aw.Sindri.Core.Reviews.IFixItemCloser
 Aw.Sindri.Core.Reviews.IFixItemCloser.Close(string! item, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
+Aw.Sindri.Core.Workflow.Engine.Triggers.DeadlineFired.Detail.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Triggers.DeadlineFired.Detail.init -> void

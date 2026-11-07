@@ -109,6 +109,7 @@ internal sealed partial class RecipeWorkflow
         var perRound = Workflow.Patched("token-budget-per-round-v1"); _heavy = Workflow.Patched("ln-wf3-heavy-slot");   // LN-WF3: the heavy allocator; a history without it never takes or grants a slot
         var storesLiterals = Workflow.Patched("child-literal-facts-v1");   // a child's literal inputs go into the fact store at its start; a history without it never stored them
         var retriesBeforePark = Workflow.Patched("timeout-retries-before-park-v1");   // owner q93: a state timeout retries once before it parks; a history without the marker parks at the first expiry as it did
+        _namesUnreadable = Workflow.Patched("skill-timeout-names-unreadable-v1");   // a skill Step's timeout says its result was unreadable; a history without the marker never asked, so its timeout says only what it ran past
         var loaded = await LoadRecipe(start, storesLiterals).ConfigureAwait(true);
         var pins = await LoadChildPins(loaded).ConfigureAwait(true);   // engine P7: the children the approval pinned
         var catalog = new BlockCatalog(loaded.Blocks, []);
