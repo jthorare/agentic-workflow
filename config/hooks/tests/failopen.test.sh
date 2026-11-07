@@ -257,6 +257,11 @@ run_case "session-id-report: a lane name that is a path" session-id-report.sh '{
 run_case "session-id-report: a recorded id logs nothing" session-id-report.sh '{"session_id":"abc-123"}' "-" $LANE
 run_case "session-id-report: outside a lane logs nothing" session-id-report.sh "$SECRET" "-"
 
+# --- sindri-tasks.sh (UserPromptSubmit): logs nothing, so its baseline is itself ---
+WANT_RC=0 run_case "sindri-tasks: unparsable stdin" sindri-tasks.sh "$SECRET {" "-"
+WANT_RC=0 run_case "sindri-tasks: empty stdin" sindri-tasks.sh "" "-"
+WANT_RC=0 run_case "sindri-tasks: no session id" sindri-tasks.sh '{"prompt":"hi"}' "-"
+
 # --- Bash safety hooks (PreToolUse Bash) ---
 NO_CAT="$(path_without cat)"
 for h in block-destructive block-push-main detect-secrets; do

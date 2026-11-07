@@ -46,6 +46,19 @@ internal static class ReviewScopes
         return audience.IsError ? audience.Error : new Scoped(settings.Value, scope, audience.Value);
     }
 
+    /// <summary>What a human would read of the same scope: the audiences a session's claims are compared with, to count the docs it may not read.</summary>
+    /// <param name="settings">The checked settings.</param>
+    /// <param name="scope">The scope of the current caller.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The human's audiences, or the error.</returns>
+    internal static async ValueTask<Result<AudienceScope>> HumanAudience(ContextSettings settings, ContextScope scope, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(scope);
+        var allowed = await RecordMask.Allowed(settings, scope.Repos, ContextCallerKind.Human, cancellationToken).ConfigureAwait(false);
+        return allowed.IsError ? allowed.Error : new AudienceScope(allowed.Value);
+    }
+
     // why: Context's own query reads with RecordMask, which adds a human's extras (owner:library, the Slack channels); a hand-built union
     // of each repo's audience drops them, so the owner saw no vault docs (#2176)
     private static async ValueTask<Result<AudienceScope>> AudienceOf(ContextSettings settings, ContextScope scope, CancellationToken cancellationToken)

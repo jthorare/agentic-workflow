@@ -7,7 +7,7 @@
   <!-- A Linear issue's sheet (Linear hub spec §3, owner's pick A): the key and title, a two-column field grid (State, Priority, Assignee, Cycle, Labels, Project), the description,
        then the comments newest first. State and priority are words. Description and comments are plain text: web links open in the browser with their host shown, images are
        placeholders. When the server says the owner may write, the grid and the title and description become one form with a Save footer pinned under the scrolling part (the shell
-       gives this sheet a fixed height, so the footer stays in view at 520 px); otherwise the sheet reads as text. Comments and New issue come later. Every named line is a Border
+       gives this sheet a fixed height, so the footer stays in view at 520 px); otherwise the sheet reads as text. Comments are in: a box above the list posts one. Every named line is a Border
        the screen reader reads as one text. -->
   <Grid x:Name="IssueSheet" RowDefinitions="*,Auto">
    <ScrollViewer x:Name="IssueFormScroll" Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -167,6 +167,19 @@
             <DataTemplate x:DataType="lvm:LinearTextLine"><lv:LinearLineView Line="{Binding}" /></DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
+      </StackPanel>
+
+      <StackPanel Spacing="8">
+        <TextBox x:Name="IssueCommentBox" Text="{Binding CommentText}" IsEnabled="{Binding CanComment}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" PlaceholderText="{Binding CommentPlaceholder}" AutomationProperties.Name="{Binding CommentName}" />
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <Button x:Name="IssueCommentPost" Content="{Binding PostText}" IsEnabled="{Binding CanPost}" Click="OnPostComment" AutomationProperties.Name="{Binding PostText}" />
+          <Button x:Name="IssueCommentRetry" Content="{Binding RetryText}" IsVisible="{Binding CanRetryComment}" Click="OnRetryComment" AutomationProperties.Name="{Binding RetryText}" />
+        </StackPanel>
+        <TextBlock x:Name="IssueCommentStatus" Classes="caption" Text="{Binding CommentStatus}" TextWrapping="Wrap" AutomationProperties.Name="{Binding CommentStatus}" AutomationProperties.LiveSetting="Polite" />
+        <Border x:Name="IssueCommentError" Classes="card" IsVisible="{Binding HasCommentError}" AutomationProperties.Name="{Binding CommentError}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.LiveSetting="Polite">
+          <TextBlock Classes="body" Foreground="{DynamicResource Brush.Attention}" Text="{Binding CommentError}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <TextBlock x:Name="IssueCommentNote" Classes="caption" Text="{Binding CommentNote}" IsVisible="{Binding HasCommentNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding CommentNote}" />
       </StackPanel>
 
       <StackPanel Spacing="8" IsVisible="{Binding HasComments}">

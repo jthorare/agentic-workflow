@@ -77,9 +77,9 @@ internal sealed partial class LinearIssueSheetViewModel
     private void Failed(Error error)
     {
         var notSynced = string.Equals(error.Code, NotSyncedCode, StringComparison.Ordinal);
-        if (IsShown && (!notSynced || HasChanges || IsLocked))
+        if (IsShown && (!notSynced || HasUnsaved || IsLocked || IsCommentLocked))
         {
-            // The fields stay: they are the last read's. A not-synced answer only says Sindri lost the issue; typed edits or a save out are not thrown away for it.
+            // The fields stay: they are the last read's. A not-synced answer only says Sindri lost the issue; typed edits, a typed comment or a write out are not thrown away for it.
             Note = notSynced ? string.Empty : Labels.LinearSindriDown;
             return;
         }

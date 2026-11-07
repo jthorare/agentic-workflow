@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
@@ -122,5 +123,31 @@ public sealed class LinearIssueEditFramesTests : FrameHost
         var controls = sheet.GetVisualDescendants().OfType<Control>().Where(c => c is Button or TextBox or ComboBox or CheckBox && c.IsEffectivelyVisible).ToList();
         Assert.NotEmpty(controls);
         Assert.All(controls, c => Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetName(c)), c.Name));
+    });
+
+    [Fact]
+    public Task The_comment_status_line_is_in_the_tree_and_polite_before_anything_is_posted() => OnUi(async () =>
+    {
+        var (window, _) = await Opened();
+
+        var status = Named<TextBlock>(window, "IssueCommentStatus");
+        Assert.Equal(AutomationLiveSetting.Polite, AutomationProperties.GetLiveSetting(status));
+        Assert.True(Visible(window, "IssueCommentBox"));
+    });
+
+    [Fact]
+    public Task Command_Enter_in_the_comment_box_posts_the_comment() => OnUi(async () =>
+    {
+        var (window, shell) = await Opened();
+        await Until(window, () => shell.IssueSheet.CanComment && Visible(window, "IssueCommentBox"));
+        var box = Named<TextBox>(window, "IssueCommentBox");
+        shell.IssueSheet.CommentText = "Budget resets at midnight UTC: agreed.";
+        _ = box.Focus();
+        Settle(window);
+
+        window.KeyPressQwerty(PhysicalKey.Enter, OperatingSystem.IsMacOS() ? RawInputModifiers.Meta : RawInputModifiers.Control);
+
+        await Until(window, () => Server.LinearComments.Count == 1, "the comment was never posted");
+        Assert.Equal("Budget resets at midnight UTC: agreed.", Server.LinearComments[0].Body);
     });
 }

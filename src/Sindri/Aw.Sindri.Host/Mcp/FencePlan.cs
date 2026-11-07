@@ -46,6 +46,20 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
         new("library.unreadable[].root"), new("library.unreadable[].reason"),
     ]);
 
+    /// <summary>GET /sindri/reviews/{owner}/{repo}/{number} for a session: the PR's forge text (title, author, branch, patches, thread bodies, run names) and the docs' own words (item titles, claim errors, test rows, evidence labels).</summary>
+    internal static FencePlan ReviewPage { get; } = new("sindri:review",
+    [
+        new("pr.title"), new("pr.author"), new("pr.head.branch"),
+        new("panels[].data.checks[].title"), new("panels[].data.checks[].detail"),
+        new("panels[].data.claims[].error"), new("panels[].data.doc.title"), new("panels[].data.doc.path"), new("panels[].data.doc.items[].title"),
+        new("panels[].data.projectDocs[].title"), new("panels[].data.projectDocs[].path"),
+        new("panels[].data.rows[].text"), new("panels[].data.runs[].name"),
+        new("panels[].data.items[].label"), new("panels[].data.hits[].path"), new("panels[].data.hits[].why"),
+        new("panels[].data.threads[].path"), new("panels[].data.threads[].comments[].author"), new("panels[].data.threads[].comments[].body"),
+        new("panels[].text"), new("diff.text"), new("diff.groups[].name"), new("diff.groups[].files[].path"), new("diff.groups[].files[].previousPath"),
+        new("diff.groups[].files[].patch"), new("diff.groups[].files[].note"),
+    ]);
+
     /// <summary>GET /sindri/library for a session: each broken doc's id, file and findings, and each near miss's file and text (they name the owner's folders and the docs' own words; a broken doc's id is whatever its front matter says).</summary>
     internal static FencePlan Library { get; } = new("sindri:library",
     [

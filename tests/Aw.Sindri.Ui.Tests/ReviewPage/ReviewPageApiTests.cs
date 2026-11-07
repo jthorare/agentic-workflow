@@ -25,7 +25,7 @@ public sealed class ReviewPageApiTests
         Assert.Equal(["requiredChecks", "docMap", "testPlan", "ci", "evidence", "risk", "conversation"], page.Panels.Select(p => p.Id), StringComparer.Ordinal);
         Assert.Equal(5, page.Panels[0].Data.Checks!.Count);
         Assert.Equal(["Ph4", "Ph5"], page.Panels[1].Data.Doc!.Items.Select(i => i.Id), StringComparer.Ordinal);
-        Assert.Equal((2, 4), (page.Diff.Groups.Count, page.Diff.FileCount));
+        Assert.Equal((2, 5), (page.Diff.Groups.Count, page.Diff.FileCount));
     }
 
     [Fact]
@@ -35,7 +35,7 @@ public sealed class ReviewPageApiTests
 
         var diff = (await Read()).Value.Diff;
 
-        var file = diff.Groups.SelectMany(g => g.Files).Single();
+        var file = diff.Groups.SelectMany(g => g.Files).Single(f => string.Equals(f.Omitted, "tooLarge", StringComparison.Ordinal));
         Assert.Equal((true, 3000, "GitHub lists the first 3,000 files; open the rest on GitHub"), (diff.Capped, diff.FileCount, diff.CappedText));
         Assert.Equal((null, "tooLarge", "Too large to show here"), (file.Patch, file.Omitted, file.Note));
     }

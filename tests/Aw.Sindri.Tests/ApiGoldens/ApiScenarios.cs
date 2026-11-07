@@ -43,7 +43,7 @@ internal static class ApiScenarios
         ["Sandbox"] = SandboxScenarios.All,
         ["Projects"] = ProjectScenarios.All,
         ["LinearIssues"] = LinearIssueScenarios.All,
-        ["Reviews"] = [.. ReviewScenarios.All.Where(r => r.Slug == "reviews"), .. ReviewLoginScenarios.All, .. LibraryScenarios.All, .. LibraryDocScenarios.All],
+        ["Reviews"] = [.. ReviewScenarios.All, .. ReviewLoginScenarios.All, .. ReviewFixScenarios.All, .. LibraryScenarios.All, .. LibraryDocScenarios.All],
         ["LinearReads"] = LinearReadScenarios.All,
     };
 
@@ -98,11 +98,12 @@ internal static class ApiScenarios
 
     /// <summary>Whether the scenario belongs to the Reviews group (the pages, the login save, the library and one doc of it).</summary>
     private static bool IsReviews(string slug, string scenario) =>
-        ReviewScenarios.Handles(slug, scenario) || ReviewLoginScenarios.Handles(slug, scenario) || LibraryScenarios.Handles(slug, scenario) || LibraryDocScenarios.Handles(slug, scenario);
+        ReviewScenarios.Handles(slug, scenario) || ReviewLoginScenarios.Handles(slug, scenario) || ReviewFixScenarios.Handles(slug, scenario) || LibraryScenarios.Handles(slug, scenario) || LibraryDocScenarios.Handles(slug, scenario);
 
     /// <summary>The host of a Reviews-group scenario.</summary>
     private static Task<GoldenHost> StartReviews(string slug, string scenario, CancellationToken ct) =>
-        LibraryScenarios.Handles(slug, scenario) ? LibraryScenarios.Start(scenario, ct)
+        ReviewFixScenarios.Handles(slug, scenario) ? ReviewFixScenarios.Start(scenario, ct)
+        : LibraryScenarios.Handles(slug, scenario) ? LibraryScenarios.Start(scenario, ct)
         : LibraryDocScenarios.Handles(slug, scenario) ? LibraryDocScenarios.Start(ct)
         : ReviewScenarios.Start(slug, scenario, ct);
 
@@ -185,6 +186,7 @@ internal static class ApiScenarios
     private static Func<Task<string>>? ReviewBody(GoldenHost host, string slug, string scenario, CancellationToken ct) =>
         ReviewScenarios.Handles(slug, scenario) ? () => ReviewScenarios.Body(host, slug, scenario, ct)
         : ReviewLoginScenarios.Handles(slug, scenario) ? () => ReviewLoginScenarios.Body(host, scenario, ct)
+        : ReviewFixScenarios.Handles(slug, scenario) ? () => ReviewFixScenarios.Body(host, scenario, ct)
         : LibraryScenarios.Handles(slug, scenario) ? () => LibraryScenarios.Body(host, scenario, ct)
         : LibraryDocScenarios.Handles(slug, scenario) ? () => LibraryDocScenarios.Body(host, scenario, ct)
         : null;

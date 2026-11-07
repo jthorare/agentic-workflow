@@ -290,9 +290,9 @@ internal sealed class PrSnapshotStep(IPullRequests pulls, IPrCommentMarks marks,
         ["markers"] = new JsonArray([.. thread.Markers.Select(static m => JsonValue.Create(m))]),
     };
 
-    // Sindri's replies never come back as work: a marker it wrote.
+    // Sindri's replies never come back as work: a marker it wrote, except a 'sindri.fix:' one, which is a task for the comment loop.
     internal static bool Own(PullThread thread) =>
-        thread.Markers.Any(static m => m.StartsWith("sindri", StringComparison.Ordinal));
+        thread.Markers.Any(static m => m.StartsWith("sindri", StringComparison.Ordinal)) && SindriFixMarker.Item(thread.Markers) is null;
 
     private sealed record DocsRead(PullView View, bool Skipped);
 

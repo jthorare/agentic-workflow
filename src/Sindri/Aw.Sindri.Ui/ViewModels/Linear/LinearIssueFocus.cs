@@ -11,4 +11,7 @@ internal enum LinearIssueFocus
 
     /// <summary>The Keep editing button of the discard question.</summary>
     KeepEditing,
+
+    /// <summary>The comment box (after a comment is posted).</summary>
+    CommentBox,
 }

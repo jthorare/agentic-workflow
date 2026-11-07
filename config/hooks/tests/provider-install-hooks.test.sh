@@ -149,6 +149,24 @@ check "lever uninstall (cursor) removes every owned entry" "$(jq -c . "$CURSOR_F
 bash "$ROOT/scripts/install-done-gate.sh" --provider bogus > /dev/null 2>&1; rc=$?
 check "unknown provider is rejected" "$rc" "1"
 
+# ---------------- sindri-tasks (UserPromptSubmit fix-task hook) ----------------
+: > /dev/null
+echo '{"hooks":{}}' > "$CODEX_FILE"
+q bash "$ROOT/scripts/install-sindri-hooks.sh" --provider codex
+check "sindri-tasks codex: UserPromptSubmit through the adapter, timeout 1" "$(jq -c '[.hooks.UserPromptSubmit[].hooks[] | select(.command | endswith("# aw:sindri-tasks")) | [(.command | contains("adapters/codex.sh")), .timeout]]' "$CODEX_FILE")" "[[true,1]]"
+check "sindri-tasks codex: nudge still on SessionStart" "$(jq '[.hooks.SessionStart[].hooks[].command | select(endswith("# aw:sindri-nudge"))] | length' "$CODEX_FILE")" "1"
+check "sindri-tasks codex: script staged" "$([ -x "$AWH/sindri-tasks.sh" ] && echo y)" "y"
+q bash "$ROOT/scripts/install-sindri-hooks.sh" --provider codex
+check "sindri-tasks codex: idempotent" "$(jq '[.hooks.UserPromptSubmit[].hooks[] | select(.command | endswith("# aw:sindri-tasks"))] | length' "$CODEX_FILE")" "1"
+q bash "$ROOT/scripts/install-sindri-hooks.sh" --provider cursor
+check "sindri-tasks cursor: none (beforeSubmitPrompt cannot add context)" "$(jq -r '[.hooks.beforeSubmitPrompt[]?.command | select(endswith("# aw:sindri-tasks"))] | length' "$CURSOR_FILE")" "0"
+check "sindri-tasks cursor: nudge installed" "$(jq -r '[.hooks.sessionStart[]?.command | select(endswith("# aw:sindri-nudge"))] | length' "$CURSOR_FILE")" "1"
+CDS="$WORK/claude-sindri"; mkdir -p "$CDS"; echo '{}' > "$CDS/settings.json"
+q env CLAUDE_SETTINGS_FILE="$CDS/settings.json" CLAUDE_HOOKS_DIR="$CDS/hooks" bash "$ROOT/scripts/install-sindri-hooks.sh"
+check "sindri-tasks claude: UserPromptSubmit entry, timeout 1" "$(jq -c '[.hooks.UserPromptSubmit[].hooks[] | select(.command | endswith("# aw:sindri-tasks")) | .timeout]' "$CDS/settings.json")" "[1]"
+check "sindri-tasks claude: script copied" "$([ -x "$CDS/hooks/sindri-tasks.sh" ] && echo y)" "y"
+check "sindri-tasks dry run names the hook" "$(AW_DRY_RUN=1 bash "$ROOT/scripts/install-sindri-hooks.sh" --provider codex | grep -c 'sindri-tasks')" "1"
+
 # ---------------- probe --provider ----------------
 rm -f "$CODEX_FILE" "$CURSOR_FILE"
 q bash "$ROOT/scripts/probe.sh" --provider codex on

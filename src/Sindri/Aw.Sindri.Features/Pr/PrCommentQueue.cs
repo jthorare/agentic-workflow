@@ -67,13 +67,18 @@ internal sealed class PrCommentQueue
     /// <returns>The entry, or null when none is held.</returns>
     public JsonObject? NextHeld() => _entries.Find(e => !Resolved(e) && !Own(e) && Mark(e) is { } mark && string.Equals(Str(mark["outcome"]), "held", StringComparison.Ordinal) && BeforeWalk(mark));
 
-    /// <summary>Authorship first (§5.2): 'untrusted', then 'bot', else 'comment'. A bot outside the allowlist is untrusted.</summary>
+    /// <summary>Authorship first (§5.2): 'untrusted', then 'bot', else 'comment'. A bot outside the allowlist is untrusted. Sindri's own login is a 'comment' on its 'sindri.fix:' threads, nowhere else.</summary>
     /// <param name="entry">The entry.</param>
     /// <param name="bots">The allowlisted bot logins.</param>
     /// <returns>The outcome name.</returns>
-    public static string Classify(JsonObject entry, HashSet<string> bots)
+    public string Classify(JsonObject entry, HashSet<string> bots)
     {
         var login = Str(entry["author"]) ?? string.Empty;
+        if (FixItem(entry) is not null && IsSelf(login))
+        {
+            return "comment";   // Sindri's own login is trusted for its 'sindri.fix:' threads only
+        }
+
         if (entry["isBot"] is JsonValue b && b.TryGetValue<bool>(out var isBot) && isBot)
         {
             return bots.Contains(login) ? "bot" : "untrusted";
@@ -102,6 +107,11 @@ internal sealed class PrCommentQueue
         if (Str(entry["path"]) is { } path)
         {
             fact["path"] = path;
+        }
+
+        if (FixItem(entry) is { } fixItem)
+        {
+            fact["fixItem"] = fixItem;   // the fixed mark closes this item
         }
 
         if (entry["line"] is JsonValue line && line.TryGetValue<int>(out var number))
@@ -138,10 +148,15 @@ internal sealed class PrCommentQueue
 
     private static bool Resolved(JsonObject entry) => entry["resolved"] is JsonValue v && v.TryGetValue<bool>(out var resolved) && resolved;
 
-    // Sindri's replies never come back as work: its forge account, or a marker it wrote.
+    // Sindri's replies never come back as work: its forge account, or a marker it wrote. A 'sindri.fix:' thread is the exception: it is a task for the loop.
     private bool Own(JsonObject entry) =>
-        (_self is not null && string.Equals(Str(entry["author"]), _self, StringComparison.OrdinalIgnoreCase))
-        || (entry["markers"] as JsonArray ?? []).Select(Str).Any(static m => m is not null && m.StartsWith("sindri", StringComparison.Ordinal));
+        FixItem(entry) is null
+        && (IsSelf(Str(entry["author"]))
+            || (entry["markers"] as JsonArray ?? []).Select(Str).Any(static m => m is not null && m.StartsWith("sindri", StringComparison.Ordinal)));
+
+    private bool IsSelf(string? login) => _self is not null && string.Equals(login, _self, StringComparison.OrdinalIgnoreCase);
+
+    private static string? FixItem(JsonObject entry) => SindriFixMarker.Item((entry["markers"] as JsonArray ?? []).Select(Str));
 
     // The mark that still counts: an edited comment is unhandled again (§5.4); a thread without editedAt (the forge shape today) matches any mark.
     private static JsonObject? Mark(JsonObject entry) =>

@@ -26,7 +26,8 @@
         "key": "ENG-12",
         "href": "sindri://linear/ENG-12"
       }
-    ]
+    ],
+    "postsFixThreads": false
   },
   "settings": {
     "name": "sindri",
