@@ -34,6 +34,7 @@ public sealed class RemoveLinearWriteKeyStoreTests : IDisposable
 
     private readonly string _home = Directory.CreateTempSubdirectory("linear-remove-").FullName;
     private readonly ServiceProvider _provider;
+    private readonly AsyncServiceScope _scope;
     private readonly FakeSecretWriter _keychain = new();
 
     public RemoveLinearWriteKeyStoreTests()
@@ -53,6 +54,7 @@ public sealed class RemoveLinearWriteKeyStoreTests : IDisposable
             .AddContextFeatures()
             .AddContextInfrastructure(name => name == "AW_SINDRI_HOME" ? _home : null)
             .BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = false, ValidateScopes = true });
+        _scope = _provider.CreateAsyncScope();
         Directory.CreateDirectory(Path.GetDirectoryName(ProfilePath)!);
         File.WriteAllText(ProfilePath, $"schemaVersion: 1\nuser: me\ncontext:\n  sources:\n    linear:\n      teams: [ENG]\n      token: \"{ReadPointer}\"\n      writeToken: \"{WritePointer}\"\n");
     }
@@ -61,6 +63,7 @@ public sealed class RemoveLinearWriteKeyStoreTests : IDisposable
 
     public void Dispose()
     {
+        _scope.Dispose();
         _provider.Dispose();
         Directory.Delete(_home, recursive: true);
     }
@@ -70,7 +73,7 @@ public sealed class RemoveLinearWriteKeyStoreTests : IDisposable
         var profile = new SindriProfile(1, "me", Context: JsonDocument.Parse(ContextJson).RootElement.Clone());
         var profiles = new InMemoryProfiles { Live = new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), ProfilePath) };
         var yaml = new YamlSourceTokenProfileWriter(new SindriSettings(_home, ProfilePath));
-        return new CoreLinearConnectionStore(profiles, _provider.GetRequiredService<IContextEngine>(), _keychain, _keychain, yaml, yaml);
+        return new CoreLinearConnectionStore(profiles, _scope.ServiceProvider.GetRequiredService<IContextEngine>(), _keychain, _keychain, yaml, yaml);
     }
 
     [Fact]
