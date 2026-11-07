@@ -90,11 +90,11 @@ public sealed class CompleteAsAgentCliTests : IDisposable
         return secret;
     }
 
-    /// <summary>Runs the verb as the session would: its environment holds the secret, if any.</summary>
+    /// <summary>Runs the verb as the session would: its environment holds the launch the launcher set and the secret, if any.</summary>
     private async Task Complete(string? secret) =>
         _ = await CommandTable.Run(
             ["workflow", "complete", _address.Value, "--run", "1.1", "--outcome", "done", "--nonce", new string('c', 32)],
-            name => name switch { "AW_SINDRI_HOME" => _home.Path, "AW_SINDRI_LAUNCH_SECRET" => secret, _ => null },
+            name => name switch { "AW_SINDRI_HOME" => _home.Path, "AW_SINDRI_LAUNCH" => _launch.Value, "AW_SINDRI_LAUNCH_SECRET" => secret, _ => null },
             TimeProvider.System);
 
     private string Output() => _out + _error.ToString();
