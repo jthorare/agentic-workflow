@@ -292,7 +292,7 @@ signal_mid_request() {
   t0="$(ms)"
   for sig in $sigs; do kill "-$sig" "$tpid" 2>/dev/null || true; done
   rc=0; wait "$tpid" || rc=$?
-  answered_at_exit=$([ -e "$SRV/answered" ] && echo yes || echo no)
+  answered_at_exit=$([ -e "$SRV/replying" ] && echo yes || echo no)
   elapsed=$(( $(ms) - t0 ))
   if [ "$want" = nonzero ]; then
     check "$name: exits non-zero" "$([ "$rc" -ne 0 ] && echo yes || echo no)" "yes"
