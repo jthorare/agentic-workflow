@@ -9,6 +9,30 @@ internal static partial class Labels
     /// <summary>The Save button.</summary>
     internal const string LinearSave = "Save";
 
+    /// <summary>The comment box's Post button.</summary>
+    internal const string LinearPost = "Post";
+
+    /// <summary>The line after a posted comment.</summary>
+    internal const string LinearPosted = "Posted";
+
+    /// <summary>The line after a posted comment Linear was slow to answer.</summary>
+    internal const string LinearPostedSlow = "Posted (Linear was slow to answer)";
+
+    /// <summary>The line after a comment with no answer; Retry sits beside it.</summary>
+    internal const string LinearCommentUnknown = "Linear didn't confirm the comment. Retry?";
+
+    /// <summary>The line under a comment over the cap.</summary>
+    internal const string LinearCommentCap = "Comments can be up to 65,536 characters.";
+
+    /// <summary>The discard question's line for a typed comment.</summary>
+    internal const string LinearCommentNotPosted = "Your comment isn't posted yet.";
+
+    /// <summary>The comment box's accessible name.</summary>
+    internal const string LinearCommentName = "Comment";
+
+    /// <summary>The comment box's placeholder.</summary>
+    internal const string LinearCommentPlaceholder = "Write a comment";
+
     /// <summary>The Save button while the request runs.</summary>
     internal const string LinearSending = "Sending…";
 
@@ -99,9 +123,13 @@ internal static partial class Labels
 
     /// <summary>The discard question's body.</summary>
     /// <param name="fields">The names of the changed fields.</param>
-    /// <returns>"Your edits to State and Priority aren't saved yet."</returns>
-    internal static string LinearDiscardBody(IReadOnlyList<string> fields) =>
-        "Your edits to " + (fields.Count <= 1 ? string.Concat(fields) : string.Join(", ", fields.Take(fields.Count - 1)) + " and " + fields[^1]) + " aren't saved yet.";
+    /// <param name="comment">True when a typed comment is not posted.</param>
+    /// <returns>"Your edits to State and Priority aren't saved yet.", "Your comment isn't posted yet." or both, the edits first.</returns>
+    internal static string LinearDiscardBody(IReadOnlyList<string> fields, bool comment)
+    {
+        var edits = fields.Count == 0 ? string.Empty : "Your edits to " + (fields.Count == 1 ? fields[0] : string.Join(", ", fields.Take(fields.Count - 1)) + " and " + fields[^1]) + " aren't saved yet.";
+        return comment ? (edits.Length == 0 ? LinearCommentNotPosted : edits + " " + LinearCommentNotPosted) : edits;
+    }
 
     /// <summary>A picker that cannot offer choices yet.</summary>
     /// <param name="team">The team key.</param>
