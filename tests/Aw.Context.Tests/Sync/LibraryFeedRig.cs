@@ -1,6 +1,7 @@
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Library;
 using Aw.Context.Core.Records;
+using Aw.Context.Core.Sync;
 using Aw.Context.Infrastructure.Docs;
 using Aw.Context.Infrastructure.Records;
 using Aw.Context.Testing.Records;
@@ -40,6 +41,17 @@ internal sealed class LibraryFeedRig : IDisposable
     public static string Sha256(string path) => Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(path)));
 
     public LibraryFeed Feed(params LibraryRoot[] roots) => new(new LibrarySetup(roots, ["acme/harbor-web"]), Store, Home.Scrubbers, Status, Home.Clock);
+
+    public LibraryFeed FeedSyncing(IReadOnlyList<string> githubRepos, params LibraryRoot[] roots) => new(new LibrarySetup(roots, githubRepos), Store, Home.Scrubbers, Status, Home.Clock);
+
+    public static string Doc(int number, string body = "first") =>
+        string.Create(System.Globalization.CultureInfo.InvariantCulture, $"---\naw-doc: 1\nid: doc-{number}\nkind: note\ntitle: \"Doc {number}\"\nstatus: draft\n---\n\n# Doc {number}\n\n{body}\n");
+
+    public async Task<RecordPage> PullNow(RecordFeed feed, int limit = 100)
+    {
+        var position = (await Store.Position(feed.Source, TestContext.Current.CancellationToken)).Value;
+        return (await feed.Pull(new RecordPull(position.Cursor, limit, NotBefore: null), TestContext.Current.CancellationToken)).Value;
+    }
 
     public LibraryRoot Vault() => new() { Name = Harbor, Path = VaultPath, Deny = ["drafts/**"] };
 
