@@ -1,0 +1,85 @@
+using Aw.Context.Core;
+using Aw.Context.Core.Engine;
+using Aw.Context.Core.Facade;
+using Aw.Kernel;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Aw.Context.Tests.Linear;
+
+/// <summary>What an index tick over the stateful fake Linear keeps for the Linear hub's pickers beyond the lists themselves: a team's name and sync time, the members who left, a label's colour, and the workspace's URL key.</summary>
+[Trait("Lane", "integration")]
+public sealed class LinearWorkspaceTests : IAsyncLifetime
+{
+    private LinearHubWorld _world = null!;
+
+    public async ValueTask InitializeAsync() =>
+        _world = await LinearHubWorld.Start(seed => seed
+            .Team("ENG", "Engineering")
+            .Member("Ada Fixture").Member("Former Member", active: false)
+            .Label("bug", "ENG", "#eb5757"));
+
+    public ValueTask DisposeAsync() => _world.DisposeAsync();
+
+    private ContextScope Session() => _world.Scope with { Caller = new ContextCaller(ContextCallerKind.Session, ContextRepoName.From("split-panes"), ContextClient.Mcp) };
+
+    private async Task<Result<T>> Call<T>(Func<IContextIssues, ContextScope, ValueTask<Result<T>>> call, ContextScope? scope = null)
+    {
+        await using var provider = _world.Provider.CreateAsyncScope();
+        return await call(provider.ServiceProvider.GetRequiredService<IContextEngine>(), scope ?? _world.Scope);
+    }
+
+    [Fact]
+    public async Task A_teams_name_and_the_time_of_its_sync_read_back()
+    {
+        _ = await _world.Tick();
+
+        var lookups = (await Call((i, s) => i.IssueLookups("ENG", s, TestContext.Current.CancellationToken))).Value;
+
+        Assert.Equal("Engineering", lookups?.Name);
+        Assert.Equal(LinearHubWorld.Now, lookups?.SyncedAt);
+    }
+
+    [Fact]
+    public async Task A_member_who_left_is_kept_with_active_false()
+    {
+        _ = await _world.Tick();
+
+        var members = (await Call((i, s) => i.IssueLookups("ENG", s, TestContext.Current.CancellationToken))).Value?.Members ?? [];
+
+        Assert.False(members.Single(static m => string.Equals(m.Name, "Former Member", StringComparison.Ordinal)).Active);
+        Assert.True(members.Single(static m => string.Equals(m.Name, "Ada Fixture", StringComparison.Ordinal)).Active);
+    }
+
+    [Fact]
+    public async Task A_labels_colour_reads_back()
+    {
+        _ = await _world.Tick();
+
+        var labels = (await Call((i, s) => i.IssueLookups("ENG", s, TestContext.Current.CancellationToken))).Value?.Labels ?? [];
+
+        Assert.Equal("#eb5757", Assert.Single(labels).Color);
+    }
+
+    [Fact]
+    public async Task The_workspace_url_key_is_null_before_the_first_tick_and_the_workspaces_after_it()
+    {
+        var before = await Call((i, s) => i.WorkspaceUrlKey(s, TestContext.Current.CancellationToken));
+        _ = await _world.Tick();
+        var after = await Call((i, s) => i.WorkspaceUrlKey(s, TestContext.Current.CancellationToken));
+
+        Assert.True(before.IsSuccess);
+        Assert.Null(before.Value);
+        Assert.Equal("fixture", after.Value);
+    }
+
+    [Fact]
+    public async Task The_workspace_url_key_is_closed_to_a_session()
+    {
+        _ = await _world.Tick();
+
+        var refused = await Call((i, s) => i.WorkspaceUrlKey(s, TestContext.Current.CancellationToken), Session());
+
+        Assert.True(refused.IsError);
+        Assert.Equal(ContextErrors.SessionsDisabled.Code, refused.Error.Code);
+    }
+}

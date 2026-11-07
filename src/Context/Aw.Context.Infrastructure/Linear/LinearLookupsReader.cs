@@ -33,7 +33,7 @@ internal sealed class LinearLookupsReader(LinearClient client, TimeSpan deadline
     // A team whose id isn't usable is left out; so is any row that has none (Linear sends uuids, so neither happens against Linear itself)
     private static LinearTeamLookups? Team(LinearLookupsTeam team, DateTimeOffset now) => LinearExternalIds.Of(team.Id) is not { } id
         ? null
-        : new LinearTeamLookups(id, team.Key, States(team), LinearCycles.Pick(Cycles(team), now), Members(team), Labels(team));
+        : new LinearTeamLookups(id, team.Key, States(team), LinearCycles.Pick(Cycles(team), now), Members(team), Labels(team), Name: team.Key, SyncedAt: now);
 
     private static List<LinearLookupState> States(LinearLookupsTeam team) =>
         [.. (team.States?.Nodes ?? []).Select(static s => Row(s.Id, i => new LinearLookupState(i, s.Name, s.Type, s.Position))).OfType<LinearLookupState>().OrderBy(static s => s.Position)];
@@ -42,10 +42,10 @@ internal sealed class LinearLookupsReader(LinearClient client, TimeSpan deadline
         (team.Cycles?.Nodes ?? []).Select(static c => Row(c.Id, i => new LinearLookupCycle(i, c.Number, c.Name, c.StartsAt, c.EndsAt))).OfType<LinearLookupCycle>();
 
     private static List<LinearLookupMember> Members(LinearLookupsTeam team) =>
-        [.. (team.Members?.Nodes ?? []).Where(static m => m.Active).Select(static m => Row(m.Id, i => new LinearLookupMember(i, m.Name, m.DisplayName))).OfType<LinearLookupMember>()];
+        [.. (team.Members?.Nodes ?? []).Where(static m => m.Active).Select(static m => Row(m.Id, i => new LinearLookupMember(i, m.Name, m.DisplayName, Active: true))).OfType<LinearLookupMember>()];
 
     private static List<LinearLookupLabel> Labels(LinearLookupsTeam team) =>
-        [.. (team.Labels?.Nodes ?? []).Where(static l => !string.IsNullOrEmpty(l.Name)).Select(static l => Row(l.Id, i => new LinearLookupLabel(i, l.Name ?? string.Empty))).OfType<LinearLookupLabel>()];
+        [.. (team.Labels?.Nodes ?? []).Where(static l => !string.IsNullOrEmpty(l.Name)).Select(static l => Row(l.Id, i => new LinearLookupLabel(i, l.Name ?? string.Empty, Color: string.Empty))).OfType<LinearLookupLabel>()];
 
     private static T? Row<T>(string id, Func<ExternalId, T> make)
         where T : class => LinearExternalIds.Of(id) is { } typed ? make(typed) : null;

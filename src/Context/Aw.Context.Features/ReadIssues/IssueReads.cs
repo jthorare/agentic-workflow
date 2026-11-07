@@ -76,6 +76,8 @@ internal sealed class IssueReads(ILinearIssueStore issues, ILinearLookupStore? l
         return audience.IsError ? audience.Error : await issues.Since(marker, viewer, audience.Value, cancellationToken).ConfigureAwait(false);
     }
 
+    public ValueTask<Result<string?>> WorkspaceUrlKey(ContextScope scope, CancellationToken cancellationToken) => throw new NotSupportedException();
+
     private static Error? OwnerOnly(ContextScope scope, string what) =>
         scope.Caller.Kind == ContextCallerKind.Session ? ContextErrors.SessionsDisabled.With($"{what} are the owner's, not an agent session's") : null;
 

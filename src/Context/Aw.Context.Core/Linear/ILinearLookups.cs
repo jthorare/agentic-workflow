@@ -10,4 +10,10 @@ public interface ILinearLookups
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>One entry per team, or the source's error (down, refused key).</returns>
     public ValueTask<Result<IReadOnlyList<LinearTeamLookups>>> Fetch(LinearSettings settings, CancellationToken cancellationToken);
+
+    /// <summary>Reads the workspace's URL key ('organization { urlKey }') with the same read key.</summary>
+    /// <param name="settings">The checked 'context.sources.linear' settings.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The key, or null when Linear sends none; the source's error.</returns>
+    public ValueTask<Result<string?>> FetchWorkspaceUrlKey(LinearSettings settings, CancellationToken cancellationToken);
 }

@@ -9,10 +9,14 @@ namespace Aw.Context.Core.Linear;
 /// <param name="Cycles">Its current cycle, the next one and the last three.</param>
 /// <param name="Members">Its members.</param>
 /// <param name="Labels">Its labels.</param>
+/// <param name="Name">The team's display name ('Engineering').</param>
+/// <param name="SyncedAt">When this team's lists were last replaced.</param>
 public sealed record LinearTeamLookups(
     ExternalId TeamId,
     string TeamKey,
     IReadOnlyList<LinearLookupState> States,
     IReadOnlyList<LinearLookupCycle> Cycles,
     IReadOnlyList<LinearLookupMember> Members,
-    IReadOnlyList<LinearLookupLabel> Labels);
+    IReadOnlyList<LinearLookupLabel> Labels,
+    string Name,
+    DateTimeOffset SyncedAt);

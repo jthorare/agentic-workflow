@@ -32,8 +32,10 @@ public sealed class TickLookupsTests
         _eng, "ENG",
         [new LinearLookupState(ExternalId.From("state-1"), state, "started", 0)],
         [new LinearLookupCycle(ExternalId.From("cycle-1"), 1, "C1", RecordSamples.Now, RecordSamples.Now.AddDays(14))],
-        [new LinearLookupMember(ExternalId.From("user-1"), "Ada", DisplayName: null)],
-        [new LinearLookupLabel(ExternalId.From("label-1"), "bug")]);
+        [new LinearLookupMember(ExternalId.From("user-1"), "Ada", DisplayName: null, Active: true)],
+        [new LinearLookupLabel(ExternalId.From("label-1"), "bug", "#eb5757")],
+        "Engineering",
+        RecordSamples.Now);
 
     private static MapWorld Rig(RecordFeed? feed = null, SourceId? source = null) => new(feeds: new FakeRecordFeedCatalog(feed ?? new FakeRecordFeed(source ?? _issues, [Item()])));
 
@@ -50,6 +52,28 @@ public sealed class TickLookupsTests
         Assert.True(report.IsSuccess, report.IsError ? report.Error.Message : null);
         Assert.Equal(["In Progress"], world.LookupStore.Team(_eng)?.States.Select(static s => s.Name), StringComparer.Ordinal);
         Assert.Equal(1, world.Lookups.Calls);
+    }
+
+    [Fact]
+    public async Task A_team_is_stamped_with_the_time_of_its_replace()
+    {
+        using var world = Rig();
+        world.Lookups.Answer = new[] { Team("In Progress") with { SyncedAt = default } };
+
+        _ = await Tick(world);
+
+        Assert.Equal(world.Clock.GetUtcNow(), world.LookupStore.Team(_eng)?.SyncedAt);
+    }
+
+    [Fact]
+    public async Task A_tick_stores_the_workspace_url_key()
+    {
+        using var world = Rig();
+        world.Lookups.UrlKeyAnswer = Results.Success<string?>("acme");
+
+        _ = await Tick(world);
+
+        Assert.Equal("acme", (await world.LookupStore.WorkspaceUrlKey(Ct)).Value);
     }
 
     [Fact]

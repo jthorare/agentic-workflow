@@ -12,6 +12,7 @@ internal sealed class LinearQueries(LinearStore store)
     {
         "__type" or "__schema" => (Introspect(field), null),
         "viewer" => (LinearShape.Select(LinearRender.Member(store.Viewer), field, field.Name), null),
+        "organization" => (LinearShape.Select(LinearRender.Organization(store), field, field.Name), null),
         "issue" => Issue(field),
         "comment" => Comment(field),
         "issues" => (Select(field, Issues(field), newestFirst: true), null),

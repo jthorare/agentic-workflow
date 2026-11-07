@@ -39,6 +39,10 @@ internal sealed class SqliteLinearLookupStore(ContextDatabase database) : ILinea
         }
     }
 
+    public ValueTask<Result<Unit>> ReplaceWorkspaceUrlKey(string urlKey, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    public ValueTask<Result<string?>> WorkspaceUrlKey(CancellationToken cancellationToken) => throw new NotSupportedException();
+
     public async ValueTask<Result<LinearTeamLookups?>> Team(string teamKey, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(teamKey);
@@ -78,7 +82,7 @@ internal sealed class SqliteLinearLookupStore(ContextDatabase database) : ILinea
         var cycles = states.IsError ? states.Error : await List(session, LinearLookupSql.Cycles, id, CycleMapper, cancellationToken).ConfigureAwait(false);
         var members = cycles.IsError ? cycles.Error : await List(session, LinearLookupSql.Members, id, MemberMapper, cancellationToken).ConfigureAwait(false);
         var labels = members.IsError ? members.Error : await List(session, LinearLookupSql.Labels, id, LabelMapper, cancellationToken).ConfigureAwait(false);
-        return labels.IsError ? labels.Error : Results.Success<LinearTeamLookups?>(new LinearTeamLookups(id, key, states.Value, cycles.Value, members.Value, labels.Value));
+        return labels.IsError ? labels.Error : Results.Success<LinearTeamLookups?>(new LinearTeamLookups(id, key, states.Value, cycles.Value, members.Value, labels.Value, Name: key, SyncedAt: default));
     }
 
     private static async ValueTask<Result<IReadOnlyList<T>>> List<T>(ISqliteSession session, string sql, ExternalId team, IRowMapper<T> mapper, CancellationToken cancellationToken)
@@ -159,9 +163,9 @@ internal sealed class SqliteLinearLookupStore(ContextDatabase database) : ILinea
     private static IRowMapper<LinearLookupCycle> CycleMapper { get; } = new Mapper<LinearLookupCycle>(r =>
         new LinearLookupCycle(ExternalId.From(r.GetString(0)), r.GetInt32(1), Text(r, 2), SqliteRead.GetTimestamp(r, 3), SqliteRead.GetTimestamp(r, 4)));
 
-    private static IRowMapper<LinearLookupMember> MemberMapper { get; } = new Mapper<LinearLookupMember>(r => new LinearLookupMember(ExternalId.From(r.GetString(0)), r.GetString(1), Text(r, 2)));
+    private static IRowMapper<LinearLookupMember> MemberMapper { get; } = new Mapper<LinearLookupMember>(r => new LinearLookupMember(ExternalId.From(r.GetString(0)), r.GetString(1), Text(r, 2), Active: true));
 
-    private static IRowMapper<LinearLookupLabel> LabelMapper { get; } = new Mapper<LinearLookupLabel>(r => new LinearLookupLabel(ExternalId.From(r.GetString(0)), r.GetString(1)));
+    private static IRowMapper<LinearLookupLabel> LabelMapper { get; } = new Mapper<LinearLookupLabel>(r => new LinearLookupLabel(ExternalId.From(r.GetString(0)), r.GetString(1), Color: string.Empty));
 
     private sealed class Mapper<T>(Func<SqliteDataReader, T> map) : IRowMapper<T>
     {

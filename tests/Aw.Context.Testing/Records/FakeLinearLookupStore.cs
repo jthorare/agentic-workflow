@@ -10,6 +10,7 @@ public sealed class FakeLinearLookupStore : ILinearLookupStore
     private readonly Lock _gate = new();
     private readonly Dictionary<ExternalId, LinearTeamLookups> _teams = [];
     private int _replaces;
+    private string? _urlKey;
 
     /// <summary>How many times a team was replaced.</summary>
     public int Replaces => Volatile.Read(ref _replaces);
@@ -33,6 +34,27 @@ public sealed class FakeLinearLookupStore : ILinearLookupStore
         {
             var team = _teams.Values.FirstOrDefault(t => string.Equals(t.TeamKey, teamKey, StringComparison.Ordinal));
             return ValueTask.FromResult(Results.Success(team is null ? null : Sorted(team)));
+        }
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<Unit>> ReplaceWorkspaceUrlKey(string urlKey, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(urlKey);
+        lock (_gate)
+        {
+            _urlKey = urlKey;
+        }
+
+        return ValueTask.FromResult<Result<Unit>>(Unit.Value);
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<string?>> WorkspaceUrlKey(CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            return ValueTask.FromResult(Results.Success<string?>(_urlKey));
         }
     }
 
