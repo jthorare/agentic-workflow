@@ -1,4 +1,5 @@
 using Aw.Sindri.Ui.Api.Workflow;
+using Aw.Sindri.Ui.ViewModels.Components;
 
 namespace Aw.Sindri.Ui.ViewModels.Instance;
 
@@ -44,6 +45,12 @@ internal sealed class SkillCardViewModel(SkillCardInput input)
 
     /// <summary>"round 2 of 2" when the state is in a loop; empty otherwise.</summary>
     public string RoundLine => throw new NotSupportedException();
+
+    /// <summary>True while Take over applies: the block runs or waits on the owner.</summary>
+    public bool CanTakeOver => throw new NotSupportedException();
+
+    /// <summary>The polite live region that says the waiting row once when it appears.</summary>
+    public LiveAnnouncer Voice => throw new NotSupportedException();
 
     /// <summary>"cost: $0.42", or "cost: not reported".</summary>
     public string CostLine => throw new NotSupportedException();

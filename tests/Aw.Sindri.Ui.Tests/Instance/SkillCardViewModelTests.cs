@@ -102,6 +102,9 @@ public sealed class SkillCardViewModelTests
     [InlineData("Active", "running", "running")]
     [InlineData("Done", "passed", "done")]
     [InlineData("Active", "failed", "failed")]
+    [InlineData("Active", "cancelled", "failed")]
+    [InlineData("Active", "refused", "failed")]
+    [InlineData("Done", "abandoned", "failed")]
     public void SkillCard_names_its_state_in_a_word(string glyph, string? run, string word) =>
         Assert.Equal(word, new SkillCardViewModel(new SkillCardInput(new SkillsView([Block()]), Address, "Shape the idea", Cell(Enum.Parse<StateGlyph>(glyph)), run is null ? null : Run(run), [], [], Cost: null, _launcher, _clipboard, _clock)).StateWord);
 
@@ -162,5 +165,36 @@ public sealed class SkillCardViewModelTests
     {
         Assert.Equal("round 2 of 2", Card(cell: Cell(round: new Round(2, 2))).RoundLine);
         Assert.Equal(string.Empty, Card().RoundLine);
+    }
+
+    [Fact]
+    public void SkillCard_skillUpdated_asks_to_approve_again()
+    {
+        var card = Card(waiting: [Waiting("skillUpdated", text: null)]);
+
+        Assert.Equal(("waiting on you", "The office hours skill changed since this run started. Approve again to continue."), (card.StateWord, card.Headline));
+    }
+
+    [Theory]
+    [InlineData("Pending", null, false)]
+    [InlineData("Active", "running", true)]
+    [InlineData("Done", "passed", false)]
+    [InlineData("Active", "failed", false)]
+    public void SkillCard_offers_Take_over_while_the_block_runs(string glyph, string? run, bool offered) =>
+        Assert.Equal(offered, new SkillCardViewModel(new SkillCardInput(new SkillsView([Block()]), Address, "Shape the idea", Cell(Enum.Parse<StateGlyph>(glyph)), run is null ? null : Run(run), [], [], Cost: null, _launcher, _clipboard, _clock)).CanTakeOver);
+
+    [Fact]
+    public void SkillCard_offers_Take_over_while_it_waits_on_you() =>
+        Assert.True(Card(waiting: [Waiting()]).CanTakeOver);
+
+    [Fact]
+    public void SkillCard_announces_the_waiting_row_once_and_a_quiet_card_says_nothing()
+    {
+        var waiting = Card(waiting: [Waiting()]).Voice;
+        var quiet = Card().Voice;
+
+        Assert.Equal((true, "Shape the idea is waiting on you: Which repo should this plan cover?"), (waiting.IsAnnouncing, waiting.Announcement));
+        Assert.False(quiet.IsAnnouncing);
+        Assert.NotEmpty(quiet.Announcement);
     }
 }
