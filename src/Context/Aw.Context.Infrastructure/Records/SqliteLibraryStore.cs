@@ -24,14 +24,14 @@ internal sealed class SqliteLibraryStore(ContextDatabase database) : ILibrarySto
 
     private static readonly IRowMapper<ScopeLink> _scopeLink = new Mapper<ScopeLink>(r => new ScopeLink(RecordKey.From(r.GetString(0)), Text(r, 1), Text(r, 2)));
 
-    // Lines and text are not stored for the scope checks: a read-time finding has no line.
+    // Item lines and text are not stored for the scope checks; a ref stores its line (0 for a row written before migration 0034).
     private static readonly IRowMapper<ScopeItem> _scopeItem = new Mapper<ScopeItem>(r => new ScopeItem(
         RecordKey.From(r.GetString(0)),
         new DesignItem(r.GetString(1), (DesignItemKind)Math.Max(0, Array.IndexOf(_itemKinds, r.GetString(2))), Text(r, 3), LineStart: 0, LineEnd: 0, Text: string.Empty)));
 
     private static readonly IRowMapper<ScopeRef> _scopeRef = new Mapper<ScopeRef>(r => new ScopeRef(
         RecordKey.From(r.GetString(0)),
-        new DesignRef(Text(r, 1), r.GetString(2), (DesignRefKind)Math.Max(0, Array.IndexOf(_refKinds, r.GetString(3))), Line: 0)));
+        new DesignRef(Text(r, 1), r.GetString(2), (DesignRefKind)Math.Max(0, Array.IndexOf(_refKinds, r.GetString(3))), Line: (int)r.GetInt64(4))));
 
     private static readonly IRowMapper<LibraryClaimRow> _claim = new Mapper<LibraryClaimRow>(r => new LibraryClaimRow(
         RecordKey.From(r.GetString(0)), Text(r, 1) is { } audience ? AudienceKey.From(audience) : null, Text(r, 2) is { } state ? RecordWire.State(state) : null, r.GetString(3)));

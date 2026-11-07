@@ -10,8 +10,8 @@ namespace Aw.Context.Core.Library;
 /// </summary>
 public static class DesignDocParser
 {
-    /// <summary>The parser's version; a new one re-reads every doc.</summary>
-    public const int Version = 2;
+    /// <summary>The parser's version; a new one re-reads every doc. 3: stored refs carry their line (migration 0034, #2189), so every stored doc is rewritten.</summary>
+    public const int Version = 3;
 
     /// <summary>The largest doc read, in bytes of UTF-8.</summary>
     public const int MaxBytes = 1024 * 1024;
