@@ -76,7 +76,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         Strip = new WorkflowsStripViewModel(clipboard, clock);
         InitStrip();
         window ??= WindowPorts.None;
-        Setup = new SetupViewModel(api, Health.Catalog, clock, OpensInApp, window.Folders, () => Health.LiveProfile);
+        (Setup, LibraryRoots) = (new SetupViewModel(api, Health.Catalog, clock, OpensInApp, window.Folders, () => Health.LiveProfile), InitLibraryRoots(api, window));
         InitSetup();
         Workflows = new WorkflowsViewModel(api, clipboard, clock);
         InitWorkflows();
@@ -241,6 +241,7 @@ internal sealed partial class ShellViewModel : ObservableObject
     {
         if (page == PageId.Settings)
         {
+            ReadLibraryRoots();
             Setup.RevealChecklist();   // every way into Settings (the rail, ⌘,, G U, the setup link, Home's line) shows the checklist, its first section
         }
 

@@ -171,7 +171,7 @@ public sealed class LibraryRootsTests
         var card = await Shown();
         card.Form.Open();
         card.Form.Path = "~/typed";
-        _picker.Queue(null);
+        _picker.Queue(folder: null);
         await card.Form.Browse(Token);
         Assert.Equal("~/typed", card.Form.Path);
 
@@ -261,10 +261,10 @@ public sealed class LibraryRootsTests
         var card = await Filled();
         _server.LibraryRootAnswer = RouteAnswer.Problem("library-roots", "bad-name");
         await card.Form.Save(Token);
-        Assert.NotEqual(string.Empty, card.Form.NameError);
+        Assert.True(card.Form.HasNameError);
 
         card.Form.Path = "~/Documents/Elsewhere";
-        Assert.NotEqual(string.Empty, card.Form.NameError);
+        Assert.True(card.Form.HasNameError);
 
         card.Form.Name = "harbor";
         Assert.Equal((string.Empty, false), (card.Form.NameError, card.Form.HasNameError));
@@ -295,7 +295,7 @@ public sealed class LibraryRootsTests
         _server.LibraryRootGate.SetResult();
         await first;
 
-        Assert.Single(_server.LibraryRootAdds);
+        _ = Assert.Single(_server.LibraryRootAdds);
         Assert.Equal((false, Labels.LibraryFoldersSave), (card.Form.IsSending, card.Form.SaveText));
     }
 

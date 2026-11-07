@@ -1,0 +1,101 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:rvm="using:Aw.Sindri.Ui.ViewModels.Reviews"
+             x:Class="Aw.Sindri.Ui.Views.Reviews.LibraryRootsSection"
+             x:DataType="rvm:LibraryRootsViewModel">
+  <!-- Settings' Library card (review page spec 6.3, 16): the folders the design library reads. Titled card, no left nav; the aw folder has Turn off, a vault has Remove
+       (asked first), a repo's folder is read-only, and Add folder opens the form. An agent session is served no folders and sees nothing editable. -->
+  <StackPanel x:Name="LibrarySection" Spacing="{StaticResource Space.XS}">
+    <Border AutomationProperties.Name="{Binding Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="2">
+      <TextBlock x:Name="LibraryTitle" Classes="detail-title" Text="{Binding Title}" AutomationProperties.AccessibilityView="Raw" />
+    </Border>
+    <Border AutomationProperties.Name="{Binding IntroText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+      <TextBlock x:Name="LibraryIntro" Classes="caption subtle" Text="{Binding IntroText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+    </Border>
+
+    <TextBlock x:Name="LibraryReading" Classes="caption subtle" Text="{Binding ReadingText}" IsVisible="{Binding IsLoading}" AutomationProperties.Name="{Binding ReadingText}" />
+    <TextBlock x:Name="LibraryError" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding Error}" TextWrapping="Wrap" IsVisible="{Binding HasError}"
+               AutomationProperties.Name="{Binding Error}" />
+
+    <Border x:Name="LibraryEmptyCard" IsVisible="{Binding IsEmpty}" Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}"
+            BorderThickness="1" CornerRadius="{StaticResource Radius.LG}" Padding="{StaticResource Space.MD.Thickness}">
+      <TextBlock x:Name="LibraryEmpty" Classes="body" HorizontalAlignment="Center" Text="{Binding EmptyText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding EmptyText}" />
+    </Border>
+
+    <Border x:Name="LibraryFoldersCard" IsVisible="{Binding HasRows}" Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}"
+            BorderThickness="1" CornerRadius="{StaticResource Radius.LG}" Padding="{StaticResource Space.MD.Thickness}">
+      <ItemsControl x:Name="LibraryFolders" ItemsSource="{Binding Rows}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="rvm:LibraryFolderViewModel">
+            <StackPanel Spacing="{StaticResource Space.XS}" Margin="0,6">
+              <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space.MD}" AutomationProperties.Name="{Binding AutomationName}">
+                <StackPanel Spacing="{StaticResource Space.XXS}">
+                  <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+                    <TextBlock Classes="body-strong" Text="{Binding Name}" AutomationProperties.AccessibilityView="Raw" />
+                    <TextBlock Classes="caption subtle" Text="{Binding KindText}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+                  </StackPanel>
+                  <TextBlock Classes="caption mono subtle" Text="{Binding PathText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                  <TextBlock Classes="caption" Text="{Binding StatusText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+                  <Button Classes="command-control" Content="{Binding RemoveText}" IsVisible="{Binding CanRemove}" IsEnabled="{Binding !IsConfirmingRemove}" Click="OnRemoveAsk"
+                          AutomationProperties.Name="{Binding RemoveName}" />
+                  <Button Classes="command-control" Content="{Binding TurnOffText}" IsVisible="{Binding CanTurnOff}" Click="OnTurnOff" AutomationProperties.Name="{Binding AwName}" />
+                  <Button Classes="command-control" Content="{Binding TurnOnText}" IsVisible="{Binding CanTurnOn}" Click="OnTurnOn" AutomationProperties.Name="{Binding AwName}" />
+                  <TextBlock Classes="caption subtle" Text="{Binding ReadOnlyText}" IsVisible="{Binding IsReadOnly}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+                </StackPanel>
+              </Grid>
+              <StackPanel IsVisible="{Binding IsConfirmingRemove}" Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
+                <TextBlock Classes="caption" Text="{Binding ConfirmText}" VerticalAlignment="Center" TextWrapping="Wrap" AutomationProperties.Name="{Binding ConfirmText}" />
+                <Button Classes="command-control destructive" Content="{Binding RemoveText}" Click="OnRemoveConfirm" AutomationProperties.Name="{Binding RemoveName}" />
+                <Button Classes="command-control" Content="{Binding CancelText}" Click="OnRemoveCancel" AutomationProperties.Name="{Binding CancelText}" />
+              </StackPanel>
+            </StackPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </Border>
+
+    <TextBlock x:Name="LibraryNote" Classes="caption subtle" Text="{Binding Note}" TextWrapping="Wrap" IsVisible="{Binding HasNote}" AutomationProperties.Name="{Binding Note}" />
+    <Button x:Name="LibraryAdd" Classes="command-control primary" HorizontalAlignment="Left" Content="{Binding AddText}" IsVisible="{Binding CanAdd}" Click="OnAdd"
+            AutomationProperties.Name="{Binding AddText}" />
+
+    <Border x:Name="LibraryForm" IsVisible="{Binding Form.IsOpen}" Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}"
+            BorderThickness="1" CornerRadius="{StaticResource Radius.LG}" Padding="{StaticResource Space.MD.Thickness}">
+      <StackPanel Spacing="{StaticResource Space.SM}" DataContext="{Binding Form}" x:DataType="rvm:LibraryRootFormViewModel">
+        <Border AutomationProperties.Name="{Binding Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="3">
+          <TextBlock Classes="body-strong" Text="{Binding Title}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <StackPanel Spacing="{StaticResource Space.XXS}">
+          <TextBlock Classes="caption subtle" Text="{Binding NameLabel}" AutomationProperties.AccessibilityView="Raw" />
+          <TextBox x:Name="LibraryFormName" Text="{Binding Name, Mode=TwoWay}" KeyDown="OnFieldKey" AutomationProperties.Name="{Binding NameLabel}" />
+          <TextBlock x:Name="LibraryFormNameError" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding NameError}" TextWrapping="Wrap" IsVisible="{Binding HasNameError}"
+                     AutomationProperties.Name="{Binding NameError}" />
+        </StackPanel>
+        <StackPanel Spacing="{StaticResource Space.XXS}">
+          <TextBlock Classes="caption subtle" Text="{Binding PathLabel}" AutomationProperties.AccessibilityView="Raw" />
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space.SM}">
+            <TextBox x:Name="LibraryFormPath" Text="{Binding Path, Mode=TwoWay}" KeyDown="OnFieldKey" AutomationProperties.Name="{Binding PathLabel}" />
+            <Button x:Name="LibraryFormBrowse" Grid.Column="1" Classes="command-control" Content="{Binding BrowseText}" IsVisible="{Binding CanBrowse}" Click="OnBrowse"
+                    AutomationProperties.Name="{Binding BrowseText}" />
+          </Grid>
+          <TextBlock x:Name="LibraryFormPathError" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding PathError}" TextWrapping="Wrap" IsVisible="{Binding HasPathError}"
+                     AutomationProperties.Name="{Binding PathError}" />
+        </StackPanel>
+        <StackPanel Spacing="{StaticResource Space.XXS}">
+          <TextBlock Classes="caption subtle" Text="{Binding DenyLabel}" AutomationProperties.AccessibilityView="Raw" />
+          <TextBox x:Name="LibraryFormDeny" Text="{Binding Deny, Mode=TwoWay}" PlaceholderText="{Binding DenyPlaceholder}" KeyDown="OnFieldKey" AutomationProperties.Name="{Binding DenyLabel}" />
+          <TextBlock x:Name="LibraryFormDenyError" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding DenyError}" TextWrapping="Wrap" IsVisible="{Binding HasDenyError}"
+                     AutomationProperties.Name="{Binding DenyError}" />
+        </StackPanel>
+        <TextBlock x:Name="LibraryFormError" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding FormError}" TextWrapping="Wrap" IsVisible="{Binding HasFormError}"
+                   AutomationProperties.Name="{Binding FormError}" />
+        <TextBlock Classes="caption subtle" Text="{Binding NoteText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding NoteText}" />
+        <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
+          <Button x:Name="LibraryFormSave" Classes="command-control primary" Content="{Binding SaveText}" IsEnabled="{Binding CanSave}" Click="OnSave" AutomationProperties.Name="{Binding SaveText}" />
+          <Button x:Name="LibraryFormCancel" Classes="command-control" Content="{Binding CancelText}" Click="OnCancel" AutomationProperties.Name="{Binding CancelText}" />
+        </StackPanel>
+      </StackPanel>
+    </Border>
+  </StackPanel>
+</UserControl>

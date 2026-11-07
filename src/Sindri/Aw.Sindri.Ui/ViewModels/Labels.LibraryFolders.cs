@@ -33,6 +33,9 @@ internal static partial class Labels
     /// <summary>The deny field's label.</summary>
     internal const string LibraryFoldersDenyLabel = "Don't read";
 
+    /// <summary>The deny field's example.</summary>
+    internal const string LibraryFoldersDenyPlaceholder = "Private/**, Journal/**";
+
     /// <summary>The chooser button.</summary>
     internal const string LibraryFoldersBrowse = "Browse";
 
