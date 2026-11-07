@@ -22944,3 +22944,6 @@ Aw.Sindri.Core.Reviews.ILibraryDocFacts
 Aw.Sindri.Core.Reviews.ILibraryDocFacts.Find(string! doc, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Reviews.LibraryDocView?>!>
 Aw.Sindri.Core.Reviews.IFixItemCloser
 Aw.Sindri.Core.Reviews.IFixItemCloser.Close(string! item, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
+Aw.Sindri.Core.Reviews.IFixTaskFiles
+Aw.Sindri.Core.Reviews.IFixTaskFiles.Add(string! head, string! item, int pr, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Reviews.IFixTaskFiles.Remove(string! item, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
