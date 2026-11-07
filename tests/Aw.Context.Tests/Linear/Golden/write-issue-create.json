@@ -1,0 +1,22 @@
+{
+  "query": "mutation IssueCreate($input: IssueCreateInput!) {\n  issueCreate(input: $input) {\n    success\n    issue {\n      id identifier title description updatedAt priority estimate\n      state { id name type }\n      team { id key }\n      assignee { id }\n      cycle { id }\n      project { id }\n      parent { id identifier }\n      labels { nodes { id } }\n    }\n  }\n}\n",
+  "variables": {
+    "input": {
+      "id": "0e5a1b00-0000-4000-8000-000000000001",
+      "teamId": "team-1",
+      "title": "Fix the login timeout",
+      "description": "Why it times out",
+      "stateId": "state-1",
+      "assigneeId": "user-1",
+      "priority": 2,
+      "estimate": 3,
+      "cycleId": "cycle-1",
+      "projectId": "project-1",
+      "parentId": "issue-0",
+      "labelIds": [
+        "label-1",
+        "label-2"
+      ]
+    }
+  }
+}
