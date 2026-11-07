@@ -76,7 +76,7 @@ internal static class RecordMappers
     internal static IRowMapper<StoreStamps> Stamps { get; } = new Mapper<StoreStamps>(r => new StoreStamps(r.GetInt64(0), r.GetInt64(1)));
 
     internal static IRowMapper<ExistingRecord> Existing { get; } = new Mapper<ExistingRecord>(r =>
-        new ExistingRecord(r.GetString(0), r.GetString(1), r.GetString(2), r.GetInt64(3) == 1, !r.IsDBNull(4), At(r, 5)));
+        new ExistingRecord(r.GetString(0), r.GetString(1), r.GetString(2), r.GetInt64(3) == 1, !r.IsDBNull(4), r.IsDBNull(5) ? null : r.GetString(5), At(r, 6)));
 
     /// <summary>A vector row of one space (the space is the query's, not a column).</summary>
     /// <param name="space">The space the query asked for.</param>

@@ -1,9 +1,11 @@
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
+using Aw.Context.Core.Library;
 using Aw.Context.Core.Models;
 using Aw.Context.Core.Ranking;
 using Aw.Context.Core.Results;
+using Aw.Context.Core.Sources;
 using Aw.Context.Features.QueryContext;
 using Aw.Context.Testing.Engine;
 using Microsoft.Extensions.Time.Testing;
@@ -121,5 +123,30 @@ public sealed class RankerStageTests
         Assert.Equal(["repo:a"], Keys(ranked));
         Assert.Empty(_model.Requests);
         Assert.Null(ranked.Degraded);
+    }
+
+    private static IReadOnlyList<FusedItem> LibraryAndDocs()
+    {
+        static SourceHit Hit(SourceId source, string key, string title, int rank) =>
+            new(new SourceRef(source, ExternalId.From(key), SourceVersion.From("v1"), Permalink: null, RecordKey.From(key)), title, rank, DateTimeOffset.UnixEpoch, Leaky: false);
+        return RankFusion.Fuse(
+        [
+            new SourceAnswer(LibrarySource.Id, [Hit(LibrarySource.Id, "doc:harbor/plans/ferry.md", "Harbor ferry booking plan", 1)]),
+            new SourceAnswer(SourceId.From("docs"), [Hit(SourceId.From("docs"), "repo:ferry", "Ferry timetable", 1)]),
+        ]);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_rerank_prompt_leaves_a_library_title_out_unless_its_root_opted_in()
+    {
+        _model.Answer = "[1,2]";
+
+        _ = await Run(Plan(rerank: true) with { LibraryModelRoots = [] }, LibraryAndDocs());
+        _ = await Run(Plan(rerank: true) with { LibraryModelRoots = ["harbor"] }, LibraryAndDocs());
+
+        Assert.Equal(2, _model.Requests.Count);
+        Assert.DoesNotContain("Harbor ferry booking plan", _model.Requests[0].Prompt, StringComparison.Ordinal);
+        Assert.Contains("Ferry timetable", _model.Requests[0].Prompt, StringComparison.Ordinal);
+        Assert.Contains("Harbor ferry booking plan", _model.Requests[1].Prompt, StringComparison.Ordinal);
     }
 }

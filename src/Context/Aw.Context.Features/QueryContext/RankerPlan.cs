@@ -11,6 +11,9 @@ namespace Aw.Context.Features.QueryContext;
 /// <param name="Top">How many items the rerank orders.</param>
 internal sealed record RankerPlan(bool Features, FeatureWeights Weights, bool PinLeg, bool Rerank, int Top)
 {
+    /// <summary>The library roots whose titles the rerank prompt may carry (<see cref="ContextSettings.LibraryModelRoots"/>); none by default.</summary>
+    internal IReadOnlyList<string> LibraryModelRoots { get; init; } = [];
+
     /// <summary>The plan of <paramref name="settings"/>, or of <paramref name="mode"/> when a backtest arm names one (the weights and the list size stay the profile's).</summary>
     /// <param name="settings">The profile's ranker settings.</param>
     /// <param name="mode">The arm's mode, or null.</param>
