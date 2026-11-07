@@ -72,6 +72,27 @@ internal sealed partial class LinearWorkViewModel
     /// <summary>A row or a strip row asked for its issue: the shell opens its sheet.</summary>
     internal event EventHandler<LinearIssueRequestedEventArgs>? IssueRequested;
 
+    /// <summary>The key of the selected row (J / K); null with none.</summary>
+    internal string? SelectedKey { get; private set; }
+
+    /// <summary>The `/` key asked for focus in the filter bar.</summary>
+    internal event EventHandler? FilterFocusRequested;
+
+    /// <summary>J / K: the next or previous row in display order, stopping at the ends; focus follows.</summary>
+    /// <param name="by">+1 for next, -1 for previous.</param>
+    internal void Move(int by) => throw new NotSupportedException();
+
+    /// <summary>Enter: asks for the selected row's issue; nothing with no selection.</summary>
+    /// <returns>True when a row was selected.</returns>
+    internal bool OpenSelected() => throw new NotSupportedException();
+
+    /// <summary>`/`: asks the view to focus the first filter.</summary>
+    internal void FocusFilters()
+    {
+        FilterFocusRequested?.Invoke(this, EventArgs.Empty);
+        throw new NotSupportedException();
+    }
+
     /// <summary>Asks the shell to open Settings, where the key and the teams are set.</summary>
     internal void RequestConnect() => ConnectRequested?.Invoke(this, EventArgs.Empty);
 
