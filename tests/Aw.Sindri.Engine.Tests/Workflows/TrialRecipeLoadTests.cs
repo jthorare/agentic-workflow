@@ -65,6 +65,32 @@ public sealed class TrialRecipeLoadTests
     }
 
     [Fact]
+    public async Task A_pinned_block_deleted_from_the_folder_ends_the_trial_instead_of_running_serves_block()
+    {
+        using var approved = Folder("review", Widened);
+        using var emptied = new TempDirectory();
+
+        var refused = await Assert.ThrowsAsync<ApplicationFailureException>(() => Trial("review", emptied.Path, approvedFolder: approved.Path));
+
+        Assert.True(refused.NonRetryable);
+        Assert.Contains("step.skill.review", refused.Message, StringComparison.Ordinal);
+        Assert.Contains("the skills folder changed since this trial started (fix: start the trial again)", refused.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_pinned_block_whose_file_no_longer_parses_ends_the_trial_instead_of_running_serves_block()
+    {
+        using var approved = Folder("review", Widened);
+        using var broken = Folder("review", "schema: 1\nblocks:\n  - id: review\n    outcomes: [not, a, map]\n");
+
+        var refused = await Assert.ThrowsAsync<ApplicationFailureException>(() => Trial("review", broken.Path, approvedFolder: approved.Path));
+
+        Assert.True(refused.NonRetryable);
+        Assert.Contains("step.skill.review", refused.Message, StringComparison.Ordinal);
+        Assert.Contains("the skills folder changed since this trial started (fix: start the trial again)", refused.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task A_plain_recipe_still_loads_serves_descriptors()
     {
         var facts = new InMemoryFactStore();
