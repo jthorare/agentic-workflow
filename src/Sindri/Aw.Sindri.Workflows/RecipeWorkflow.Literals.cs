@@ -12,7 +12,8 @@ internal sealed partial class RecipeWorkflow
     /// A store read that fails (busy, I/O) may pass next time, so 'LoadRecipe' retries: 10 attempts, 1 s doubling to 1 min, about 4 minutes in all.
     /// Then the last failure ends the instance, with the read's message, instead of leaving it at 'starting' (#2191).
     /// </summary>
-    private static readonly RetryPolicy _loadRetries = new() { MaximumAttempts = 10, InitialInterval = TimeSpan.FromSeconds(1), BackoffCoefficient = 2, MaximumInterval = TimeSpan.FromMinutes(1) };
+    /// <remarks>Settable for tests only: a local activity's backoff under 1 minute sleeps in the worker in real time, which the time-skipping server can't skip. The retry policy is not part of the replayed history.</remarks>
+    internal static RetryPolicy LoadRetries { get; set; } = new() { MaximumAttempts = 10, InitialInterval = TimeSpan.FromSeconds(1), BackoffCoefficient = 2, MaximumInterval = TimeSpan.FromMinutes(1) };
 
     /// <summary>Loads the instance's pinned recipe, then stores its literal inputs.</summary>
     /// <param name="start">The instance's start.</param>
@@ -22,7 +23,7 @@ internal sealed partial class RecipeWorkflow
     {
         var loaded = await Workflow.ExecuteLocalActivityAsync(
             (RunStepActivities a) => a.LoadRecipeAsync(start.Recipe, TrialFolder(start)),
-            new LocalActivityOptions { StartToCloseTimeout = ActivityBounds.Long, RetryPolicy = _loadRetries }).ConfigureAwait(true);
+            new LocalActivityOptions { StartToCloseTimeout = ActivityBounds.Long, RetryPolicy = LoadRetries }).ConfigureAwait(true);
         await StoreLiterals(start, storesLiterals).ConfigureAwait(true);
         return loaded;
     }
