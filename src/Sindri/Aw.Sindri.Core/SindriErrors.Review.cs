@@ -19,6 +19,9 @@ public static partial class SindriErrors
     /// <summary>SND-REVIEW-005: a 'review.projects[].repos' entry that 'context.sources.github.repos' does not sync.</summary>
     public static readonly ErrorDefinition ReviewRepoUnsynced = new("SND-REVIEW-005", ErrorKind.Invalid, "Sindri doesn't sync that repo");
 
+    /// <summary>SND-REVIEW-006: a fix task's item was created but its thread wasn't posted.</summary>
+    public static readonly ErrorDefinition ReviewFixNotPosted = new("SND-REVIEW-006", ErrorKind.Unavailable, "The fix task's item was created but its thread wasn't posted");
+
     /// <summary>SND-REVIEW-007: a review route before 'review.login' is set.</summary>
     public static readonly ErrorDefinition ReviewNoLogin = new("SND-REVIEW-007", ErrorKind.Conflict, "Set your GitHub login on the Reviews tab first.");
 

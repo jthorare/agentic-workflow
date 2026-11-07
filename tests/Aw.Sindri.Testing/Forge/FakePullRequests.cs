@@ -142,7 +142,7 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
             located.Value.HeadSha = HeadScript.Dequeue();
         }
 
-        return Done(Locate(link).Map(p => new PullView(p.Link, p.State, p.HeadSha, p.Mergeable, p.ReviewDecision, p.Threads.Count(static t => t.Kind == PullCommentKind.Thread && !t.Resolved), p.Checks ?? new PullChecks(p.FailingChecks.Count > 0 ? PullChecksState.Failing : p.ChecksState, p.ChecksSha ?? p.HeadSha, [.. p.FailingChecks], Passed: 0, Pending: 0), p.Labels, p.Base, p.BaseSha, p.Title, p.Author, p.Draft, p.Head, p.Body)));
+        return Done(Locate(link).Map(p => new PullView(p.Link, p.State, p.HeadSha, p.Mergeable, p.ReviewDecision, p.Threads.Count(static t => t.Kind == PullCommentKind.Thread && !t.Resolved), p.Checks ?? new PullChecks(p.FailingChecks.Count > 0 ? PullChecksState.Failing : p.ChecksState, p.ChecksSha ?? p.HeadSha, [.. p.FailingChecks], Passed: 0, Pending: 0), p.Labels, p.Base, p.BaseSha, p.Title, p.Author, p.Draft, p.HeadUnknown ? string.Empty : p.Head, p.Body, p.HeadUnknown ? null : (p.HeadRepo ?? (p.Repo.Owner + "/" + p.Repo.Name)))));
     }
 
     /// <inheritdoc />

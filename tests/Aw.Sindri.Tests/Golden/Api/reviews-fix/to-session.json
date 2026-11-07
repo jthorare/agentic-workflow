@@ -1,0 +1,8 @@
+{
+  "itemId": "ITM-0000000000000000000000000000000f",
+  "posted": true,
+  "postCode": null,
+  "postError": null,
+  "went": "session",
+  "session": "claude-code, ~/repos/aw-wt/api-retry"
+}

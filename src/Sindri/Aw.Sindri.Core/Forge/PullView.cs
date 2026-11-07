@@ -16,4 +16,5 @@ namespace Aw.Sindri.Core.Forge;
 /// <param name="Draft">Whether it is a draft.</param>
 /// <param name="HeadRef">The head branch's name; empty where the port does not read it. Untrusted text.</param>
 /// <param name="Body">The body, or null where the port does not read it. Untrusted text.</param>
-public sealed record PullView(string Link, PullState State, string HeadSha, bool? Mergeable, string? ReviewDecision, int UnresolvedThreads, PullChecks Checks, IReadOnlyList<string> Labels, string Base, string? BaseSha = null, string Title = "", string Author = "", bool Draft = false, string HeadRef = "", string? Body = null);
+/// <param name="HeadRepo">The repository the head branch lives in as "owner/name"; null when the forge does not say (a fork it can't name).</param>
+public sealed record PullView(string Link, PullState State, string HeadSha, bool? Mergeable, string? ReviewDecision, int UnresolvedThreads, PullChecks Checks, IReadOnlyList<string> Labels, string Base, string? BaseSha = null, string Title = "", string Author = "", bool Draft = false, string HeadRef = "", string? Body = null, string? HeadRepo = null);

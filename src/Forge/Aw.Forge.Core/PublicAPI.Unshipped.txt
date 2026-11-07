@@ -114,12 +114,14 @@ Aw.Forge.Core.Pulls.ForgeThread.Resolved.get -> bool
 Aw.Forge.Core.Pulls.ForgeThread.Resolved.init -> void
 Aw.Forge.Core.Pulls.HeadBranch
 Aw.Forge.Core.Pulls.HeadBranch.<Clone>$() -> Aw.Forge.Core.Pulls.HeadBranch!
-Aw.Forge.Core.Pulls.HeadBranch.Deconstruct(out string! Ref, out string! Sha, out bool Fork) -> void
+Aw.Forge.Core.Pulls.HeadBranch.Deconstruct(out string! Ref, out string! Sha, out bool Fork, out string? Repo) -> void
 Aw.Forge.Core.Pulls.HeadBranch.Equals(Aw.Forge.Core.Pulls.HeadBranch? other) -> bool
 Aw.Forge.Core.Pulls.HeadBranch.Fork.get -> bool
 Aw.Forge.Core.Pulls.HeadBranch.Fork.init -> void
-Aw.Forge.Core.Pulls.HeadBranch.HeadBranch(string! Ref, string! Sha, bool Fork) -> void
+Aw.Forge.Core.Pulls.HeadBranch.HeadBranch(string! Ref, string! Sha, bool Fork, string? Repo = null) -> void
 Aw.Forge.Core.Pulls.HeadBranch.Ref.get -> string!
+Aw.Forge.Core.Pulls.HeadBranch.Repo.get -> string?
+Aw.Forge.Core.Pulls.HeadBranch.Repo.init -> void
 Aw.Forge.Core.Pulls.HeadBranch.Ref.init -> void
 Aw.Forge.Core.Pulls.HeadBranch.Sha.get -> string!
 Aw.Forge.Core.Pulls.HeadBranch.Sha.init -> void

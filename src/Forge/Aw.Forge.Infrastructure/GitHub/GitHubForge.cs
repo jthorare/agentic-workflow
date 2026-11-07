@@ -258,13 +258,16 @@ internal sealed partial class GitHubForge(GitHubApi api, ICredentialSource crede
             status,
             json.Flag("draft"),
             new BaseBranch(baseBranch.Str("ref"), baseBranch.Str("sha"), isDefault),
-            new HeadBranch(head.Str("ref"), head.Str("sha"), fork),
+            new HeadBranch(head.Str("ref"), head.Str("sha"), fork, HeadRepoName(head)),
             json.NullableFlag("mergeable"),
             decision,
             checks,
             [.. (json.At("labels") ?? default).Items().Select(l => l.Str("name")).Where(n => n.Length > 0)],
             json.Str("body"));
     }
+
+    private static string? HeadRepoName(JsonElement head) =>
+        head.At("repo") is { } repo && repo.Str("full_name") is { Length: > 0 } name ? name : null;
 
     private static PullDigest Digest(ForgeRef pull, JsonElement json, ChecksSummary checks)
     {
