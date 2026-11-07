@@ -1,3 +1,5 @@
+using Aw.Kernel.Data;
+
 namespace Aw.Sindri.Infrastructure.Launch;
 
 /// <summary>The file may run commands as the user, like a shell rc (launcher spec, permissions): doctor warns when it, or the directory it sits in, can be written by others.</summary>
@@ -16,13 +18,18 @@ internal static class LauncherFilePermissions
         }
 
         var warnings = new List<string>();
-        if ((File.GetUnixFileMode(path) & Others) != UnixFileMode.None)
+        var mode = FileModes.TryRead(path);
+        if (mode is null)
+        {
+            warnings.Add($"{path} can't be read (a broken link, or no permission to look at it) (fix: remove it or point it at a real file)");
+        }
+        else if ((mode.Value & Others) != UnixFileMode.None)
         {
             warnings.Add($"{path} is group- or world-writable (fix: chmod go-w)");
         }
 
         var parent = Path.GetDirectoryName(Path.GetFullPath(path));
-        if (parent is not null && (File.GetUnixFileMode(parent) & Others) != UnixFileMode.None)
+        if (parent is not null && ((FileModes.TryRead(parent) ?? UnixFileMode.None) & Others) != UnixFileMode.None)
         {
             warnings.Add($"{parent} is group- or world-writable (fix: chmod go-w)");
         }
