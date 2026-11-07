@@ -87,7 +87,10 @@ internal static class McpFencing
         else if (child is JsonValue value && value.TryGetValue<string>(out var text))
         {
             owner[name] = UntrustedFence.Wrap(source, author, text);
-            owner[TrustMember] = Untrusted;
+            if (field.Mark)
+            {
+                owner[TrustMember] = Untrusted;
+            }
         }
     }
 
