@@ -12270,3 +12270,30 @@ const Aw.Context.Core.Linear.LinearWriteLimits.TextMax = 65536 -> int
 const Aw.Context.Core.Linear.LinearWriteLimits.TitleMax = 255 -> int
 static Aw.Context.Core.Linear.LinearWriteLimits.Text(string! what, string? text, bool required) -> Aw.Kernel.Error?
 static Aw.Context.Core.Linear.LinearWriteLimits.Title(string? title) -> Aw.Kernel.Error?
+Aw.Context.Core.Linear.ILinearLiveReads
+Aw.Context.Core.Linear.ILinearLiveReads.Comment(Aw.Context.Core.Linear.LinearSettings! settings, Aw.Context.Core.Sources.ExternalId commentId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearCommentView?>!>
+Aw.Context.Core.Linear.ILinearLiveReads.HasAttachment(Aw.Context.Core.Linear.LinearSettings! settings, Aw.Context.Core.Sources.ExternalId issueId, System.Uri! url, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+Aw.Context.Core.Linear.ILinearLiveReads.Issue(Aw.Context.Core.Linear.LinearSettings! settings, string! idOrKey, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueView?>!>
+Aw.Context.Core.Linear.ILinearWrites
+Aw.Context.Core.Linear.ILinearWrites.CreateComment(Aw.Context.Core.Linear.LinearSettings! settings, Aw.Context.Core.Sources.ExternalId issueId, string! body, Aw.Context.Core.Linear.LinearClientId! clientId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Sources.ExternalId>!>
+Aw.Context.Core.Linear.ILinearWrites.CreateIssue(Aw.Context.Core.Linear.LinearSettings! settings, Aw.Context.Core.Linear.LinearIssueDraft! draft, Aw.Context.Core.Linear.LinearClientId! clientId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Sources.ExternalId>!>
+Aw.Context.Core.Linear.ILinearWrites.KeyStatus(Aw.Context.Core.Linear.LinearSettings! settings, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Context.Core.Linear.LinearWriteKeyStatus!>
+Aw.Context.Core.Linear.ILinearWrites.LinkUrl(Aw.Context.Core.Linear.LinearSettings! settings, Aw.Context.Core.Sources.ExternalId issueId, System.Uri! url, string! title, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Sources.ExternalId>!>
+Aw.Context.Core.Linear.ILinearWrites.UpdateComment(Aw.Context.Core.Linear.LinearSettings! settings, Aw.Context.Core.Sources.ExternalId commentId, string! body, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Sources.ExternalId>!>
+Aw.Context.Core.Linear.ILinearWrites.UpdateIssue(Aw.Context.Core.Linear.LinearSettings! settings, Aw.Context.Core.Sources.ExternalId issueId, Aw.Context.Core.Linear.LinearIssueChange! change, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Sources.ExternalId>!>
+Aw.Context.Core.Linear.LinearCommentView
+Aw.Context.Core.Linear.LinearCommentView.Body.get -> string!
+Aw.Context.Core.Linear.LinearCommentView.Body.init -> void
+Aw.Context.Core.Linear.LinearCommentView.<Clone>$() -> Aw.Context.Core.Linear.LinearCommentView!
+Aw.Context.Core.Linear.LinearCommentView.Deconstruct(out Aw.Context.Core.Sources.ExternalId Id, out Aw.Context.Core.Sources.ExternalId IssueId, out string! Body) -> void
+Aw.Context.Core.Linear.LinearCommentView.Equals(Aw.Context.Core.Linear.LinearCommentView? other) -> bool
+Aw.Context.Core.Linear.LinearCommentView.Id.get -> Aw.Context.Core.Sources.ExternalId
+Aw.Context.Core.Linear.LinearCommentView.Id.init -> void
+Aw.Context.Core.Linear.LinearCommentView.IssueId.get -> Aw.Context.Core.Sources.ExternalId
+Aw.Context.Core.Linear.LinearCommentView.IssueId.init -> void
+Aw.Context.Core.Linear.LinearCommentView.LinearCommentView(Aw.Context.Core.Sources.ExternalId Id, Aw.Context.Core.Sources.ExternalId IssueId, string! Body) -> void
+override Aw.Context.Core.Linear.LinearCommentView.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearCommentView.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearCommentView.ToString() -> string!
+static Aw.Context.Core.Linear.LinearCommentView.operator !=(Aw.Context.Core.Linear.LinearCommentView? left, Aw.Context.Core.Linear.LinearCommentView? right) -> bool
+static Aw.Context.Core.Linear.LinearCommentView.operator ==(Aw.Context.Core.Linear.LinearCommentView? left, Aw.Context.Core.Linear.LinearCommentView? right) -> bool
