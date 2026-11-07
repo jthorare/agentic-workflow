@@ -46,7 +46,7 @@
           </Border>
           <StackPanel Orientation="Horizontal" Spacing="8">
             <Button x:Name="IssueKeepEditing" Classes="accent" Content="{Binding KeepEditingText}" Click="OnKeepEditing" AutomationProperties.Name="{Binding KeepEditingText}" />
-            <Button x:Name="IssueDiscardButton" Content="{Binding DiscardText}" Click="OnDiscard" AutomationProperties.Name="{Binding DiscardText}" />
+            <Button x:Name="IssueDiscardButton" Content="{Binding DiscardText}" IsEnabled="{Binding !IsSaving}" Click="OnDiscard" AutomationProperties.Name="{Binding DiscardText}" />
           </StackPanel>
         </StackPanel>
       </Border>

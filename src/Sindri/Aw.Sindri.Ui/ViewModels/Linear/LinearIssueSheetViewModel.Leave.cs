@@ -50,9 +50,9 @@ internal sealed partial class LinearIssueSheetViewModel
     /// <summary>Drops the edits and lets the leaving go ahead.</summary>
     internal void Discard()
     {
-        if (!IsConfirmingDiscard || IsLocked)
+        if (!IsConfirmingDiscard || IsSaving)
         {
-            return;   // no question, or a save is out: its answer decides what is left to drop
+            return;   // no question, or a save is out: its answer decides what is left to drop (an unknown outcome can still be dropped)
         }
 
         // Taken before the revert: putting the last field back settles the question, which drops the pending way on.
