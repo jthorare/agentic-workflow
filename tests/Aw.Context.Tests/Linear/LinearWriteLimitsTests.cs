@@ -34,7 +34,7 @@ public sealed class LinearWriteLimitsTests
     {
         AssertNotSent(LinearWriteLimits.Change(new LinearIssueChange(Title: LinearFieldChange.Set(" "))));
         AssertNotSent(LinearWriteLimits.Change(new LinearIssueChange(Description: LinearFieldChange.Set<string?>(new string('x', 65_537)))));
-        Assert.Null(LinearWriteLimits.Change(new LinearIssueChange(Description: LinearFieldChange.Set<string?>(null))));
+        Assert.Null(LinearWriteLimits.Change(new LinearIssueChange(Description: LinearFieldChange.Set<string?>(value: null))));
         Assert.Null(LinearWriteLimits.Change(new LinearIssueChange(Priority: LinearFieldChange.Set(0))));
     }
 
@@ -60,10 +60,7 @@ public sealed class LinearWriteLimitsTests
     }
 
     [Fact]
-    public void A_link_that_is_not_absolute_is_refused()
-    {
-        AssertNotSent(LinearWriteLimits.Attachment(new Uri("/acme/app/pull/7", UriKind.Relative), "PR 7"));
-    }
+    public void A_link_that_is_not_absolute_is_refused() => AssertNotSent(LinearWriteLimits.Attachment(new Uri("/acme/app/pull/7", UriKind.Relative), "PR 7"));
 
     [Theory]
     [InlineData("")]

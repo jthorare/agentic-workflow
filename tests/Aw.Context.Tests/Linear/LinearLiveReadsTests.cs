@@ -1,6 +1,5 @@
 using Aw.Context.Core.Linear;
 using Aw.Context.Core.Sources;
-using Aw.Context.Infrastructure.Linear;
 using Aw.Context.Testing.Linear;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -50,7 +49,7 @@ public sealed class LinearLiveReadsTests : IAsyncLifetime
         Assert.Equal(_world.Linear.MemberId("Ada Fixture"), view.AssigneeId?.Value);
         Assert.Equal(2, view.Priority);
         Assert.Equal(3, view.Estimate);
-        Assert.Equal([_world.Linear.LabelId("bug")], view.LabelIds.Select(static l => l.Value));
+        Assert.Equal([_world.Linear.LabelId("bug")], view.LabelIds.Select(static l => l.Value), StringComparer.Ordinal);
         Assert.Null(view.CycleId);
         Assert.Null(view.ProjectId);
         Assert.Null(view.ParentId);

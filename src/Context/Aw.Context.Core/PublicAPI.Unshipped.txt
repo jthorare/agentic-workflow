@@ -12272,6 +12272,8 @@ static Aw.Context.Core.Linear.LinearWriteLimits.Attachment(System.Uri! url, stri
 static Aw.Context.Core.Linear.LinearWriteLimits.Change(Aw.Context.Core.Linear.LinearIssueChange! change) -> Aw.Kernel.Error?
 static Aw.Context.Core.Linear.LinearWriteLimits.Text(string! what, string? text, bool required) -> Aw.Kernel.Error?
 static Aw.Context.Core.Linear.LinearWriteLimits.Title(string? title) -> Aw.Kernel.Error?
+Aw.Context.Core.Linear.ILinearWriteThrough
+Aw.Context.Core.Linear.ILinearWriteThrough.Store(Aw.Context.Core.Engine.ContextScope! scope, Aw.Context.Core.Sources.ExternalId issueId, Aw.Context.Core.Linear.LinearWrittenFields written, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
 Aw.Context.Core.Linear.ILinearLiveReads
 Aw.Context.Core.Linear.ILinearLiveReads.Comment(Aw.Context.Core.Linear.LinearSettings! settings, Aw.Context.Core.Sources.ExternalId commentId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearCommentView?>!>
 Aw.Context.Core.Linear.ILinearLiveReads.HasAttachment(Aw.Context.Core.Linear.LinearSettings! settings, Aw.Context.Core.Sources.ExternalId issueId, System.Uri! url, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
