@@ -355,7 +355,9 @@ public sealed class GetContextPinsServiceTests
 
         var row = await Billing(42, 42, [Move("billing", 2, 3, new PinMoveTo(ConceptId.From("refunds"), "Refunds", 3))]);
 
-        Assert.Equal(new ContextPinMoved("v41", "v42", 2, 3, [new ContextPinMovedTo("refunds", "Refunds", 3)], RecordsLinked: null), row.Moved);
+        var expected = new ContextPinMoved("v41", "v42", 2, 3, [new ContextPinMovedTo("refunds", "Refunds", 3)], RecordsLinked: null);
+        Assert.Equal(expected.To, row.Moved!.To);   // the list compares by reference inside the record
+        Assert.Equal(expected, row.Moved with { To = expected.To });
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -433,7 +435,9 @@ public sealed class GetContextPinsServiceTests
     {
         var row = await Billing(42, 42, [Move("refunds", 5, 5)]);
 
-        Assert.Equal(new ContextPinMoved("v41", "v42", 0, 0, [], RecordsLinked: null), row.Moved);
+        var expected = new ContextPinMoved("v41", "v42", 0, 0, [], RecordsLinked: null);
+        Assert.Equal(expected.To, row.Moved!.To);   // the list compares by reference inside the record
+        Assert.Equal(expected, row.Moved with { To = expected.To });
     }
 
     [Fact, Trait("Lane", "unit")]
