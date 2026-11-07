@@ -11,6 +11,12 @@ public interface IProfileKeyWriter
     /// <returns>The file, the edited text and whether it differs; SND-CLI-003 for a key that isn't a dotted path; SND-PROFILE-002 for a layout Sindri won't edit (a flow-style parent, a map or list at the key); SND-PROFILE-001 when the file can't be read.</returns>
     public Result<ProfileKeyEdit> Plan(string keyPath, string value);
 
+    /// <summary>Plans the edit like <see cref="Plan"/>, but the value is always written as a quoted string (a login of digits stays a string, not a number).</summary>
+    /// <param name="keyPath">The dotted key.</param>
+    /// <param name="value">The string value.</param>
+    /// <returns>As <see cref="Plan"/>.</returns>
+    public Result<ProfileKeyEdit> PlanText(string keyPath, string value);
+
     /// <summary>Writes a planned edit atomically (a temporary file renamed over the profile), keeping the file's mode. Nothing is written when the edit is unchanged.</summary>
     /// <param name="edit">The plan from <see cref="Plan"/>.</param>
     /// <returns>The profile file's path; SND-PROFILE-001 when it can't be written.</returns>

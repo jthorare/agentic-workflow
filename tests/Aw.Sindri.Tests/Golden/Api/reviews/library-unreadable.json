@@ -23,7 +23,13 @@
     "docs": 33,
     "withErrors": 0,
     "unreadableRoots": 1,
-    "text": "Library: 33 docs, 1 folder can't be read"
+    "text": "Library: 33 docs, 1 folder can't be read",
+    "unreadable": [
+      {
+        "root": "~/notes/vault",
+        "reason": "permission denied"
+      }
+    ]
   },
   "waitingCount": 2,
   "groups": [
@@ -86,9 +92,9 @@
       "title": "Yours",
       "sections": [
         {
-          "by": "repo",
-          "id": null,
-          "name": "acme/api",
+          "by": "project",
+          "id": "prj_0000000000000000000000000A",
+          "name": "Sindri",
           "rows": [
             {
               "repo": "acme/api",

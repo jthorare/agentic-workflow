@@ -47,7 +47,7 @@ public static class ProfileRules
     }
 
     private static Error? Sections(SindriProfile profile) =>
-        OnyxLeftover(profile.Context) ?? Services(profile.Services) ?? Workflow(profile) ?? ProfileGlobRules.Check(profile) ?? IndexRules.Check(profile) ?? LaunchKeys(profile.Launch) ?? AgentKeys(profile.Agents) ?? SetupKeys(profile.Setup) ?? SandboxRules.Check(profile.Sandbox);
+        OnyxLeftover(profile.Context) ?? Services(profile.Services) ?? Workflow(profile) ?? ProfileGlobRules.Check(profile) ?? IndexRules.Check(profile) ?? LaunchKeys(profile.Launch) ?? AgentKeys(profile.Agents) ?? SetupKeys(profile.Setup) ?? SandboxRules.Check(profile.Sandbox) ?? PrReviewRules.Check(profile);
 
     /// <summary>A 'context.sources.onyx' section left from before Onyx was removed is refused for one release, never ignored (owned-index spec Q15).</summary>
     private static Error? OnyxLeftover(JsonElement? context) =>
@@ -153,6 +153,7 @@ public static class ProfileRules
             (profile.Services ?? SindriProfile.NoServices).ToDictionary(StringComparer.Ordinal), StringComparer.Ordinal),
         Api = profile.Api ?? new ApiSettings(),
         Launch = profile.Launch is { Repos: { } repos } launch ? launch with { Repos = new SortedDictionary<string, LaunchRepoSettings>(repos.ToDictionary(StringComparer.Ordinal), StringComparer.Ordinal) } : profile.Launch,
+        Review = profile.Review is { Settings: { } named } review ? review with { Settings = new SortedDictionary<string, PrReviewSettingsEntry>(named.ToDictionary(StringComparer.Ordinal), StringComparer.Ordinal) } : profile.Review,
         Agents = profile.Agents is { Targets: { } targets } agents ? agents with { Targets = new SortedDictionary<string, AgentLimits>(targets.ToDictionary(StringComparer.Ordinal), StringComparer.Ordinal) } : profile.Agents,
     };
 

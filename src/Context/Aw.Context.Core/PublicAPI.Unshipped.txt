@@ -11936,6 +11936,8 @@ Aw.Context.Core.Linear.LinearIssueSide.Description.get -> string?
 Aw.Context.Core.Linear.LinearIssueSide.Description.init -> void
 Aw.Context.Core.Linear.LinearIssueSide.LinearIssueSide(Aw.Context.Core.Linear.LinearIssueFields! Fields, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>! Comments, string? Description = null) -> void
 const Aw.Context.Core.Sync.RecordBatches.MaxIssueDescription = 65536 -> int
+Aw.Context.Core.Facade.IContextPulls
+Aw.Context.Core.Facade.IContextPulls.OpenPulls(Aw.Context.Core.Audience.AudienceScope! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.StoredRecord!>!>!>
 Aw.Context.Core.Facade.IContextLibrary.Roots(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryRootStatus!>!>!>
 Aw.Context.Core.Library.ILibraryStatus
 Aw.Context.Core.Library.ILibraryStatus.Read() -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryRootReport!>!

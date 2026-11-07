@@ -24,7 +24,9 @@ d="$TMPROOT/new-key"
 mkdir -p "$d/src/Sindri/Aw.Sindri.Core" "$d/docs/csharp"
 cp -R "$REPO/src/Sindri/Aw.Sindri.Core/Profile" "$d/src/Sindri/Aw.Sindri.Core/"
 cp "$REPO/docs/csharp/sindri-profile.md" "$d/docs/csharp/"
-perl -pi -e 's/SandboxSettings\? Sandbox = null\)$/SandboxSettings? Sandbox = null,\n    string? Drift = null)/' "$d/src/Sindri/Aw.Sindri.Core/Profile/SindriProfile.cs"
+# Plant a new last parameter before SindriProfile's closing ')', whatever its current last parameter is; a plant that no-ops fails here.
+perl -0pi -e 's/(public sealed record SindriProfile\(.*?= null)\)/$1,\n    string? Drift = null)/s' "$d/src/Sindri/Aw.Sindri.Core/Profile/SindriProfile.cs"
+if has -F 'string? Drift = null)' "$d/src/Sindri/Aw.Sindri.Core/Profile/SindriProfile.cs"; then ok "the Drift key is planted"; else fail "the Drift key is planted: SindriProfile's shape changed, fix the perl pattern"; fi
 run "$d"; expect_rc "a new profile key the doc lacks fails" 1
 expect_out "names the key and the fix" "add drift to docs/csharp/sindri-profile.md"
 
