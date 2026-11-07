@@ -36,6 +36,12 @@ internal sealed record AttentionSummary(string Title, int Badge, TrayView Tray, 
             feed is null ? "" : Labels.Summary(listed ?? rows.Count, counts.Running, counts.WithYou, counts.Queued));
     }
 
+    /// <summary>Adds the Linear strip's count to the tray's tooltip as a line, the way the session counts do; the badge and the title stay.</summary>
+    /// <param name="count">How many changes the strip holds; 0 adds nothing.</param>
+    /// <returns>The summary with the line.</returns>
+    internal AttentionSummary WithLinearNew(int count) =>
+        count > 0 && Tray.State is not (TrayState.NotRunning or TrayState.Stale) ? this with { Tray = Tray with { Tooltip = $"{Tray.Tooltip}\n{Labels.LinearNewLine(count)}" } } : this;
+
     /// <summary>True when the state shows the list's rows (a running Sindri, fresh or not); else the count is 0 because there is no list to count.</summary>
     /// <param name="state">The shell's state.</param>
     /// <returns>True when the rows count.</returns>

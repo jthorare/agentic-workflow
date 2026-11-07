@@ -98,6 +98,12 @@
           <TextBlock Classes="caption" Text="{Binding ReviewsWaitingLine}" Foreground="{DynamicResource Brush.Attention}" />
         </Button>
 
+        <!-- Linear hub spec §3, "With #2076": one more line under the PRs line; it opens Work on the Linear view. -->
+        <Button x:Name="LinearNewLink" Classes="copy" HorizontalAlignment="Left" Click="OnOpenLinear" IsVisible="{Binding HasLinearNewLine}"
+                AutomationProperties.Name="{Binding LinearNewLine}">
+          <TextBlock Classes="caption" Text="{Binding LinearNewLine}" Foreground="{DynamicResource Brush.Attention}" />
+        </Button>
+
       </StackPanel>
       <StackPanel x:Name="HomeRight" Grid.Column="2" Spacing="{StaticResource Size.PanelGap}">
         <!-- The Workflows strip (screens spec §4.1): the open root instances as the API serves them, between Needs you and the columns. -->

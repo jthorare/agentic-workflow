@@ -58,6 +58,16 @@ public sealed class LinearSinceStripTests
     }
 
     [Fact]
+    public async Task The_count_is_read_on_every_refresh_even_while_Work_is_not_the_page_shown()
+    {
+        var work = _f.Work();
+
+        await work.Refresh(LinearFixture.Url, Token);
+
+        Assert.Equal((3, 0), (work.NewCount, _f.Server.LinearQueries.Count));
+    }
+
+    [Fact]
     public async Task Dismiss_stores_the_marker_and_hides_the_strip()
     {
         var work = await _f.Shown(Token);

@@ -1,0 +1,101 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:lvm="using:Aw.Sindri.Ui.ViewModels.Linear"
+             xmlns:lv="using:Aw.Sindri.Ui.Views.Linear"
+             x:Class="Aw.Sindri.Ui.Views.Linear.LinearIssueSheetView"
+             x:DataType="lvm:LinearIssueSheetViewModel">
+  <!-- A Linear issue's read-only sheet (Linear hub spec §3, owner's pick A): the key and title, a two-column field grid, the description, then the comments newest first.
+       State and priority are words. Description and comments are plain text: web links open in the browser with their host shown, images are placeholders. Editing, comments
+       and New issue come with the write contract. Every named line is a Border the screen reader reads as one text. -->
+  <StackPanel x:Name="IssueSheet" Spacing="{StaticResource Space.MD}">
+    <TextBlock x:Name="IssueLoading" Classes="body muted" Text="{Binding LoadingText}" IsVisible="{Binding IsLoading}" AutomationProperties.Name="{Binding LoadingText}" />
+
+    <StackPanel x:Name="IssueProblem" Spacing="8" IsVisible="{Binding IsProblem}">
+      <Border x:Name="IssueProblemText" AutomationProperties.Name="{Binding ProblemText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="body" Text="{Binding ProblemText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <Button x:Name="IssueOpenInLinear" Content="{Binding OpenInLinearText}" IsVisible="{Binding CanOpenInLinear}" HorizontalAlignment="Left" Click="OnOpenInLinear" AutomationProperties.Name="{Binding OpenInLinearText}" />
+    </StackPanel>
+
+    <Border x:Name="IssueNote" IsVisible="{Binding Note, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+            AutomationProperties.Name="{Binding Note}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+      <TextBlock Classes="body muted" Text="{Binding Note}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+    </Border>
+
+    <StackPanel x:Name="IssueBody" Spacing="{StaticResource Space.MD}" IsVisible="{Binding IsShown}">
+      <Border x:Name="IssueRemoved" IsVisible="{Binding RemovedNote, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+              AutomationProperties.Name="{Binding RemovedNote}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="body" Foreground="{DynamicResource Brush.Attention}" Text="{Binding RemovedNote}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+
+      <Border x:Name="IssueTitle" AutomationProperties.Name="{Binding Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="body-strong" Text="{Binding Title}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+
+      <ItemsControl x:Name="IssueFields" ItemsSource="{Binding Fields}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate><UniformGrid Columns="2" /></ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="lvm:LinearIssueFieldViewModel">
+            <Border Name="IssueField" Margin="0,0,12,4" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+              <StackPanel Spacing="2" AutomationProperties.AccessibilityView="Raw">
+                <TextBlock Classes="eyebrow" Text="{Binding Label}" />
+                <TextBlock Classes="body" Text="{Binding Value}" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <Panel IsVisible="{Binding HasPr}">
+        <Button x:Name="IssuePrChip" HorizontalAlignment="Left" Click="OnOpenPr" IsVisible="{Binding CanOpenPr}" AutomationProperties.Name="{Binding PrName}">
+          <TextBlock Classes="caption" Text="{Binding PrText}" />
+        </Button>
+        <Border x:Name="IssuePrText" HorizontalAlignment="Left" IsVisible="{Binding !CanOpenPr}" BorderThickness="1" BorderBrush="{DynamicResource Brush.HairlineStrong}"
+                CornerRadius="{StaticResource Radius.XS}" Padding="6,1" AutomationProperties.Name="{Binding PrText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption" Text="{Binding PrText}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+      </Panel>
+
+      <StackPanel Spacing="4">
+        <TextBlock Classes="eyebrow" Text="{Binding DescriptionHeading}" AutomationProperties.AccessibilityView="Raw" />
+        <TextBlock x:Name="IssueNoDescription" Classes="body muted" Text="{Binding NoDescriptionText}" IsVisible="{Binding !HasDescription}" />
+        <ItemsControl x:Name="IssueDescription" ItemsSource="{Binding Description}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="lvm:LinearTextLine"><lv:LinearLineView Line="{Binding}" /></DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
+      <StackPanel Spacing="8" IsVisible="{Binding HasComments}">
+        <TextBlock Classes="eyebrow" Text="{Binding CommentsHeading}" AutomationProperties.AccessibilityView="Raw" />
+        <ItemsControl x:Name="IssueComments" ItemsSource="{Binding Comments}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="lvm:LinearCommentViewModel">
+              <Border Name="IssueComment" Classes="card" Margin="0,0,0,8">
+                <StackPanel Spacing="4">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Border AutomationProperties.Name="{Binding Heading}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                      <TextBlock Classes="caption subtle" Text="{Binding Heading}" AutomationProperties.AccessibilityView="Raw" />
+                    </Border>
+                    <Border BorderThickness="1" BorderBrush="{DynamicResource Brush.HairlineStrong}" CornerRadius="{StaticResource Radius.XS}" Padding="6,1" IsVisible="{Binding FromSindri}">
+                      <TextBlock Classes="caption subtle" Text="Sindri" />
+                    </Border>
+                  </StackPanel>
+                  <ItemsControl ItemsSource="{Binding Lines}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="lvm:LinearTextLine"><lv:LinearLineView Line="{Binding}" /></DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
+      <SelectableTextBlock x:Name="IssueLinkLaunchFailed" Classes="caption" Text="{Binding LinkLaunch.FailedText}" IsVisible="{Binding LinkLaunch.Failed}" TextWrapping="Wrap" AutomationProperties.Name="{Binding LinkLaunch.FailedText}" />
+    </StackPanel>
+  </StackPanel>
+</UserControl>
