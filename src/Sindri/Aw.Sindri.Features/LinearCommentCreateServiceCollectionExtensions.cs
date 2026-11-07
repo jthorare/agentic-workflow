@@ -15,6 +15,7 @@ internal static class LinearCommentCreateServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         return services
+            .AddScoped<LinearTeamGate>()
             .AddScoped<IValidator<CommentLinearIssueRequest>, AcceptAllValidator<CommentLinearIssueRequest>>().AddCommand<CommentLinearIssueRequest, CommentLinearIssueResponse, CommentLinearIssueService>()
             .AddScoped<IValidator<CreateLinearIssueRequest>, AcceptAllValidator<CreateLinearIssueRequest>>().AddCommand<CreateLinearIssueRequest, CreateLinearIssueResponse, CreateLinearIssueService>();
     }

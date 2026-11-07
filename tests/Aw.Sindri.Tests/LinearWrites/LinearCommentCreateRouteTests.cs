@@ -36,7 +36,7 @@ public sealed class LinearCommentCreateRouteTests
     [Theory, Trait("Lane", "integration")]
     [InlineData("stateId", "00000000-0000-4000-8000-0000000000ff", "stateId isn't a state of ENG")]
     [InlineData("cycleId", "00000000-0000-4000-8000-0000000000ff", "cycleId isn't a cycle of ENG")]
-    [InlineData("labelIds", "[\"00000000-0000-4000-8000-0000000000ff\"]", "labelIds has a label that isn't one of ENG's")]
+    [InlineData("labelIds", "[\"00000000-0000-4000-8000-0000000000ff\"]", "labelIds has an id that isn't a label of ENG")]
     public async Task Create_refuses_an_id_that_is_not_in_the_teams_lookups_and_sends_nothing(string field, string value, string detail)
     {
         var ct = TestContext.Current.CancellationToken;
