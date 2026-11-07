@@ -354,6 +354,38 @@ public sealed class LinearConnectionTests
     }
 
     [Fact]
+    public async Task Cancel_on_the_read_line_is_off_while_the_replacement_key_is_saved()
+    {
+        var card = await Shown("read-only");
+        card.ReplaceRead();
+        card.ReadKey = "lin_api_new";
+        await card.ListTeams(Token);
+        card.Teams[0].IsTicked = true;
+        _server.LinearConnectGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var running = card.SaveRead(Token);
+
+        Assert.False(card.CanCancelRead);
+        _server.LinearConnectGate.SetResult();
+        await running;
+    }
+
+    [Fact]
+    public async Task Cancel_on_the_write_line_is_off_while_the_replacement_key_is_checked()
+    {
+        var card = await Shown("connected");
+        card.ReplaceWrite();
+        card.WriteKey = "lin_api_new_write";
+        _server.LinearConnectGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var running = card.CheckWrite(Token);
+
+        Assert.False(card.CanCancelWrite);
+        _server.LinearConnectGate.SetResult();
+        await running;
+    }
+
+    [Fact]
     public async Task Cancel_on_the_write_line_goes_back_to_the_set_line_and_calls_nothing()
     {
         var card = await Shown("connected");
