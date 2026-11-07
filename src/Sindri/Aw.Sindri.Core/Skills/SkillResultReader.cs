@@ -61,13 +61,20 @@ public static partial class SkillResultReader
             return unmapped;
         }
 
+        // why: a block's outputs are promised on its success outcome only (bugFixOrchestrator has no pr when it ends partial); any other outcome keeps the ones that are there
+        var onSuccess = input.Block.Outcomes.From is null || string.Equals(outcome, input.Block.Outcomes.Success, StringComparison.Ordinal);
         var facts = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var output in input.Block.Outputs)
         {
             var (value, failed) = Output(root, input, output);
             if (failed is not null)
             {
-                return failed;
+                if (onSuccess)
+                {
+                    return failed;
+                }
+
+                continue;
             }
 
             facts[SkillDescriptors.FactKeyOf(input.Block.Name, output.Key).Value] = value;
