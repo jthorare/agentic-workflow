@@ -59,7 +59,7 @@ run "$d"; expect_rc "a 010 fixture that passes fails" 1; expect_out "names the d
 d="$(copy shadrift)"; printf '{"slug":"harbor-ferry","title":"Edited"}\n' > "$d/aw/acme-harbor/system-design/harbor-ferry/packet.json"
 run "$d"; expect_rc "sha drift on a good generated doc fails" 1; expect_out "names the doc" "harbor-ferry/doc.md: source-sha256"
 
-d="$(copy shafixed)"; subst "$d/broken/017-edited-generated.md" -e "s/^source-sha256: .*/source-sha256: $(sha256sum "$d/broken/017-packet.json" | cut -d' ' -f1)/"
+d="$(copy shafixed)"; subst "$d/broken/017-edited-generated/doc.md" -e "s/^source-sha256: .*/source-sha256: $(sha256sum "$d/broken/017-edited-generated/packet.json" | cut -d' ' -f1)/"
 run "$d"; expect_rc "a 017 fixture whose sha matches fails" 1; expect_out "names the doc" "SND-LIB-017 fixture: source-sha256 still matches"
 
 d="$(copy nearmiss)"; subst "$d/aw/acme-harbor/plans/20261025-100000-near-misses/quoted.md" -e 's/^aw-doc: "1"$/aw-doc: 1/'

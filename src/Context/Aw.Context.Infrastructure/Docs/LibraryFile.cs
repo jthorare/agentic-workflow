@@ -5,4 +5,5 @@ namespace Aw.Context.Infrastructure.Docs;
 /// <param name="FullPath">The absolute path.</param>
 /// <param name="Size">The size in bytes.</param>
 /// <param name="Modified">The last write time, to the millisecond.</param>
-internal sealed record LibraryFile(string Relative, string FullPath, long Size, DateTimeOffset Modified);
+/// <param name="Packet">The packet.json in the same folder, or null.</param>
+internal sealed record LibraryFile(string Relative, string FullPath, long Size, DateTimeOffset Modified, LibraryPacket? Packet = null);

@@ -213,4 +213,19 @@ public sealed class LibraryFeedTests
             (await rig.Stored()).Select(static r => r.Key.Value).Order(StringComparer.Ordinal),
             StringComparer.Ordinal);
     }
+
+    [Fact]
+    public async Task A_generated_doc_with_a_packet_json_is_stored_with_a_version_the_store_accepts()
+    {
+        using var home = new TempHome();
+        using var rig = new LibraryFeedRig(home, copyFixture: false);
+        var packet = rig.Write("gen/packet.json", """{"n":1}""");
+        _ = rig.Write("gen/doc.md", $"---\naw-doc: 1\nid: gen-doc\nkind: tdd\ntitle: \"Gen\"\nstatus: draft\ngenerated: write_packet.py\nsource-sha256: {LibraryFeedRig.Sha256(packet)}\n---\n\n# Gen\n\n## Overview\n");
+
+        _ = await FeedRun.Once(rig.Feed(rig.Vault()), rig.Store, home.Scrubbers);
+
+        var stored = Assert.Single(await rig.Stored());
+        Assert.Equal(65, stored.Version.Value.Length);
+        Assert.StartsWith("g", stored.Version.Value, StringComparison.Ordinal);
+    }
 }

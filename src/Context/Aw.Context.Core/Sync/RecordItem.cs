@@ -24,6 +24,7 @@ namespace Aw.Context.Core.Sync;
 /// <param name="DueAt">The day a project is due, or null.</param>
 /// <param name="Description">A project's description as the source gave it (free text), or null; the driver scrubs and caps it.</param>
 /// <param name="Pull">A pull request's reviewers, head and reviewed commits, or null for any other record.</param>
+/// <param name="SourceSha256">For a generated design doc, the sha256 of the packet.json beside it (<see cref="Library.GeneratedSource"/>), so the parse can decide SND-LIB-017; null when it has none or the feed does not know it.</param>
 /// <param name="Side">Rows the source's writer keeps beside the record (the Linear issue's fields and comments), raw: the driver cleans their text. Null: the driver builds the side rows it knows from the item, or none.</param>
 public sealed record RecordItem(
     RecordKey Key,
@@ -45,4 +46,5 @@ public sealed record RecordItem(
     DateOnly? DueAt = null,
     string? Description = null,
     PullFacts? Pull = null,
-    SideRows? Side = null);
+    SideRows? Side = null,
+    string? SourceSha256 = null);
