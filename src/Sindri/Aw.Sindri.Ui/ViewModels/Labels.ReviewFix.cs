@@ -133,5 +133,8 @@ internal static partial class Labels
 
     internal const string ReviewFixAddedLine = "added line";
 
+    /// <summary>Where a fix task from a check or a requirement is posted: the PR's review body.</summary>
+    internal const string ReviewFixReviewComment = "review comment";
+
     internal const string ReviewFixLine = "line";
 }
