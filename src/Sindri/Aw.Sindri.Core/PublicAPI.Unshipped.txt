@@ -22301,7 +22301,7 @@ Aw.Sindri.Core.Launch.StartedLaunch.PrHead.init -> void
 Aw.Sindri.Core.Skills.PrReference
 const Aw.Sindri.Core.Skills.PrReference.BranchVariable = "AW_SINDRI_PR_REF" -> string!
 const Aw.Sindri.Core.Skills.PrReference.InputKey = "pr" -> string!
-static Aw.Sindri.Core.Skills.PrReference.BranchFor(Aw.Sindri.Core.Launch.LaunchRequest! request) -> string?
+static Aw.Sindri.Core.Launch.StepEnvironment.PrBranchOf(Aw.Sindri.Core.Launch.LaunchRequest! request) -> string?
 static Aw.Sindri.Core.Skills.PrReference.BranchOf(Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId instance, int runNumber) -> string!
 static Aw.Sindri.Core.Skills.PrReference.Number(string! input) -> Aw.Kernel.Result<int>!
 static Aw.Sindri.Core.Skills.PrReference.Refspec(int number, string! branch) -> string!
