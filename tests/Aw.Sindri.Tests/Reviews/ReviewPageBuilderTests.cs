@@ -265,4 +265,14 @@ public sealed class ReviewPageBuilderTests
         var hit = Assert.Single(Assert.IsType<RiskData>(Panel(page, "risk").Data).Hits);
         Assert.Equal(("PR body", "- db lock", "body"), (hit.Path, hit.Why, hit.Source));
     }
+
+    [Fact]
+    public void Unread_files_make_the_risk_panel_an_error_with_no_strip_part_not_an_all_clear()
+    {
+        var page = ReviewPageBuilder.Build(Facts(filesError: "github returned 502"));
+
+        var risk = Panel(page, "risk");
+        Assert.Equal(("error", "Couldn't read the files: github returned 502"), (risk.State, risk.Text));
+        Assert.DoesNotContain(page.Strip, static p => p.Panel == "risk");
+    }
 }
