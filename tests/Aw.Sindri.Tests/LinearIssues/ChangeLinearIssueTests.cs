@@ -122,7 +122,7 @@ public sealed class ChangeLinearIssueTests
     {
         _writes.SetLive(Live());
 
-        var applied = await Ok(Edit("ENG-12", "{}", """{"assigneeId":null,"cycleId":null,"projectId":null}"""));
+        var applied = await Ok(Edit("ENG-12", $$"""{"assigneeId":"{{ViewerId}}","cycleId":null,"projectId":null}""", """{"assigneeId":null,"cycleId":null,"projectId":null}"""));
 
         Assert.NotNull(applied.Applied);
         var change = Expect.Only(_writes.Calls.Where(static c => c.Method == "Change").ToArray()).Change!;
