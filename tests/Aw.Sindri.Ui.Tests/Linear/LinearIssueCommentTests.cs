@@ -228,6 +228,18 @@ public sealed class LinearIssueCommentTests
     }
 
     [Fact]
+    public async Task A_not_synced_refresh_keeps_a_typed_comment()
+    {
+        var sheet = await _f.Opened(Token);
+        sheet.CommentText = Note;
+        _f.Server.LinearIssueAnswer = RouteAnswer.Problem("linear-issue", "not-found");
+
+        await sheet.Refresh(LinearIssueEditFixture.Url, Token);
+
+        Assert.Equal((true, Note, true), (sheet.IsShown, sheet.CommentText, sheet.CanPost));
+    }
+
+    [Fact]
     public async Task Leaving_with_only_a_typed_comment_asks_and_says_the_comment_is_not_posted()
     {
         var sheet = await _f.Opened(Token);
