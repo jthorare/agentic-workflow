@@ -14,17 +14,20 @@ internal static class LibraryErrorText
     internal static string Of(DesignDocError error, string key, string path)
     {
         ArgumentNullException.ThrowIfNull(error);
-        var message = error.Message;
+        var head = "";
+        var rest = error.Message;
         if (error.Line is { } line)
         {
             var at = key + ":" + line.ToString(CultureInfo.InvariantCulture) + ":";
-            if (message.StartsWith(at, StringComparison.Ordinal))
+            if (rest.StartsWith(at, StringComparison.Ordinal))
             {
-                message = $"{path} line {line.ToString(CultureInfo.InvariantCulture)}:" + message[at.Length..];
+                head = $"{path} line {line.ToString(CultureInfo.InvariantCulture)}:";
+                rest = rest[at.Length..];
             }
         }
 
-        message = message.Replace(key, path, StringComparison.Ordinal);
+        // why: a near miss's key is the file relative to its folder, so it is the tail of the path; replacing inside the rewritten head would write the folder twice
+        var message = head + rest.Replace(key, path, StringComparison.Ordinal);
         return error.Fix.Length == 0 ? message : message.TrimEnd('.') + ". " + error.Fix.TrimEnd('.');
     }
 }

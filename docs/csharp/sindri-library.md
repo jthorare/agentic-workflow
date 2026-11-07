@@ -23,7 +23,7 @@ A query (`GetLibrary` in `Aw.Sindri.Features/GetLibrary/`). It reads stored data
 - `broken[].doc` is the doc's front-matter `id`, or its file name when the front matter has none. `path` is the file with the home folder written `~`.
 - An error's `text` is context's message, then its fix, joined by `. ` (a trailing `.` of either is dropped), with the record key in the message (`doc:<root>/<path>`) replaced by the file.
 - `unreadableRoots[].root` is the folder as the profile names it, home folded to `~`; `reason` is the one context's root status holds.
-- `nearMisses` lists files that look like design docs but are not read (`SND-LIB-019`). Context does not hand out the finding yet (it keeps only a count on the root's status), so the list is empty until context adds the finding to `LibraryRootStatus`.
+- `nearMisses` lists files that look like design docs but are not read (`SND-LIB-019`), sorted by `path`: the file under the folder the last pass read (home written `~`), the rule, and `text` built like an error's (`<path> line <n>: <message>. <fix>`, without ` line <n>` when there is no line). A near miss stored before Context kept the finding's text reads as its message alone, `a near miss (read again on the next pass)`, until the next pass. A session gets `[]`.
 
 ## The cap
 
@@ -38,8 +38,8 @@ At most **200** docs with errors and **200** near misses are listed. Past that, 
 
 A session caller reads the same body with two differences:
 
-- every `broken[].path`, `broken[].errors[].text`, `nearMisses[].path` and `nearMisses[].text` is inside the untrusted fence (source `sindri:library`; spec §10): a design doc's words are not Sindri's;
-- `unreadableRoots` is `[]`: a folder's path and why it can't be read belong to the owner. (Context also refuses a session the root states, `SND-CONTEXT-020`; the Reviews header treats that as no folders, not as an error.)
+- every `broken[].doc`, `broken[].path`, `broken[].errors[].text`, `nearMisses[].path` and `nearMisses[].text` is inside the untrusted fence (source `sindri:library`; spec §10): a design doc's words are not Sindri's, and a broken doc's id is whatever its front matter says;
+- `unreadableRoots`, `roots` and `nearMisses` are `[]`: a folder's path, why it can't be read and the files it holds that aren't read belong to the owner. (Context also refuses a session the root states, `SND-CONTEXT-020`; the Reviews header treats that as no folders, not as an error.)
 
 A session reads only the docs its audiences allow, so its counts can be smaller than the owner's.
 
@@ -51,7 +51,7 @@ A session reads only the docs its audiences allow, so its counts can be smaller 
 
 One doc by its front-matter `id`: `{asOf, doc: {id, root, scope, kind, status, project, repos, issues, title, path, errors: [{rule, text}]}}`. `path` has the home folder written `~`. `errors[].rule` is the `SND-LIB-nnn` code, `text` is the finding's message with the file and line written `<path> line <n>:`, then the fix. Two scopes can share an id (the `aw` root keeps one scope per repo-slug): the doc at the lowest path answers, which is the one that keeps the id (spec §4.2), and the other shows `SND-LIB-012` in its list entry
 
-A session caller gets the same body with `doc.title`, `doc.path` and each `doc.errors[].text` inside the untrusted fence (source `sindri:library`); the rest stays plain. A doc the caller's audience may not read is as good as missing.
+A session caller gets the same body with `doc.id`, `doc.kind`, `doc.status`, `doc.project`, each of `doc.repos` and `doc.issues`, `doc.title`, `doc.path` and each `doc.errors[].text` inside the untrusted fence (source `sindri:library`): a broken doc keeps a front-matter value of the wrong shape as written. `doc.root`, `doc.scope` and `errors[].rule` stay plain. A doc the caller's audience may not read is as good as missing.
 
 ## Verbs
 
