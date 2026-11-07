@@ -165,6 +165,19 @@ public sealed class ReviewSummaryReaderTests : IDisposable
     }
 
     [Fact]
+    public async Task A_stored_running_summary_is_kept_once_the_pass_has_stopped()   // the first 20 are refused by the host check; the 21st has a running summary stored
+    {
+        var running = new ReviewSummary(Head, ReviewCi.Running, 1, KnownInstants.Epoch.AddMinutes(-1));
+        _ = await _cache.Write(new ReviewPullRef("acme", "api", 21), running, Token);
+        var pulls = Enumerable.Range(1, 21).Select(n => Pull(number: n, url: string.Create(System.Globalization.CultureInfo.InvariantCulture, $"https://other.example/acme/api/pull/{n}"))).ToList();
+
+        var read = await _reader.Read(pulls, Strict(), Token);
+
+        Assert.Equal(running, read[("acme/api", 21)]);
+        Assert.InRange(_forge.Calls.Count(static c => c == "Get"), 1, ReviewSummaryReader.MaxHeadsAtOnce);
+    }
+
+    [Fact]
     public async Task A_PR_with_no_head_or_link_uses_only_what_is_stored()
     {
         var read = await _reader.Read([Pull(number: 1, head: null), Pull(number: 2, url: null)], Strict(), Token);
