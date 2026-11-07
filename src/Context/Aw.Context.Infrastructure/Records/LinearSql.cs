@@ -67,10 +67,10 @@ internal static class LinearSql
         "SELECT " + IssueColumns + ", r.removed_at IS NOT NULL FROM linear_issue i JOIN source_record r ON r.key = i.key WHERE i.identifier = @identifier AND " + VisibleEvenIfRemoved +
         " ORDER BY r.removed_at IS NOT NULL ASC, i.updated_at DESC, i.key ASC LIMIT 1";
 
-    /// <summary>An issue's comments past a tombstone, newest first.</summary>
+    /// <summary>An issue's newest @limit comments past a tombstone, newest first.</summary>
     internal const string IssueCommentsEvenIfRemoved =
         "SELECT c.id, c.author_id, c.created_at, c.body, c.sindri FROM linear_comment c JOIN source_record r ON r.key = c.issue_key " +
-        "WHERE c.issue_key = @key AND " + VisibleEvenIfRemoved + " ORDER BY c.created_at DESC, c.id ASC";
+        "WHERE c.issue_key = @key AND " + VisibleEvenIfRemoved + " ORDER BY c.created_at DESC, c.id ASC LIMIT @limit";
 
     internal const string GetIssue = "SELECT " + IssueColumns + " FROM linear_issue i JOIN source_record r ON r.key = i.key WHERE i.key = @key AND " + Visible;
 

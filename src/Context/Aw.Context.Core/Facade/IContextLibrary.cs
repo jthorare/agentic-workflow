@@ -23,7 +23,7 @@ public interface IContextLibrary
     /// <param name="issueKeys">Up to <see cref="DocsNamingMaxKeys"/> Linear keys ('ENG-12'); case is ignored.</param>
     /// <param name="audience">The caller's audiences.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>Per key (upper case) the docs that name it, newest first; a key no readable doc names is absent. SND-CONTEXT-006 for more than the maximum keys, SND-CONTEXT-004.</returns>
+    /// <returns>Per key, upper-cased whatever case was asked ('eng-12' answers under 'ENG-12'), the docs that name it, newest first; a key no readable doc names is absent. SND-CONTEXT-006 for more than the maximum keys, SND-CONTEXT-004.</returns>
     public ValueTask<Result<IReadOnlyDictionary<string, IReadOnlyList<LibraryDoc>>>> DocsNaming(IReadOnlyList<string> issueKeys, AudienceScope audience, CancellationToken cancellationToken);
 
     /// <summary>The most keys one <see cref="DocsNaming"/> call takes.</summary>

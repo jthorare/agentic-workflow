@@ -55,7 +55,7 @@ internal sealed class SqliteLinearIssueStore(ContextDatabase database) : ILinear
         }
 
         var (issue, removed) = rows.Value[0];
-        var comments = await Read(new SqlStatement(LinearSql.IssueCommentsEvenIfRemoved, c => Audience(c, audience).Bind("@key", issue.Key.Value)), LinearRowReads.Comment, cancellationToken).ConfigureAwait(false);
+        var comments = await Read(new SqlStatement(LinearSql.IssueCommentsEvenIfRemoved, c => Audience(c, audience).Bind("@key", issue.Key.Value).Bind("@limit", LinearIssueSide.MaxComments)), LinearRowReads.Comment, cancellationToken).ConfigureAwait(false);
         if (comments.IsError)
         {
             return comments.Error;
