@@ -1,8 +1,8 @@
 using Aw.Kernel;
+using Aw.Sindri.Core.Reviews;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using static Aw.Sindri.Tests.Callers.CallerRequests;
-using Aw.Sindri.Core.Reviews;
 
 namespace Aw.Sindri.Tests.ApiGoldens;
 
