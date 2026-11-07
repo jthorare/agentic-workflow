@@ -98,7 +98,7 @@
                 <ItemsControl ItemsSource="{Binding Rows}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="lvm:LinearIssueRowViewModel">
-                      <Border x:Name="LinearRowFrame" Classes="item-row" Focusable="True" AutomationProperties.Name="{Binding Name}"
+                      <Border x:Name="LinearRowFrame" Classes="item-row" Classes.selected="{Binding IsSelected}" Focusable="True" GotFocus="OnRowFocused" AutomationProperties.Name="{Binding Name}"
                               AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
                         <Grid ColumnDefinitions="*,130,130,100,Auto,Auto" VerticalAlignment="Center">
                           <Button x:Name="LinearRowTitle" Classes="row-title" Margin="0,0,8,0" ClipToBounds="True" Click="OnOpenIssue" AutomationProperties.Name="{Binding Title}">

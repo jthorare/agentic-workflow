@@ -203,7 +203,9 @@ public sealed class SettingsViewTests
 
             Assert.Contains(named, c => c is ToggleSwitch);
             Assert.Contains(named, c => c is Slider);
-            Assert.All(named.Where(c => c.IsEffectivelyVisible), c => Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetName(c)), c.Name));
+            // A control under a hidden slot (the Library card without a Library) is never laid out, so it stays out of the window's visual tree,
+            // and a detached control reports IsEffectivelyVisible true: only what is in the window counts.
+            Assert.All(named.Where(c => c.IsEffectivelyVisible && TopLevel.GetTopLevel(c) == window), c => Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetName(c)), c.Name));
             Assert.Equal(Labels.ReduceMotion, AutomationProperties.GetName(Find<ToggleSwitch>(window, "ReduceMotionSwitch")));
             Assert.Equal(Labels.TextSize, AutomationProperties.GetName(Find<Slider>(window, "TextScaleSlider")));
         }

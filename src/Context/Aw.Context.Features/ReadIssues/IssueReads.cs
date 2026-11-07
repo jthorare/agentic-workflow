@@ -76,21 +76,8 @@ internal sealed class IssueReads(ILinearIssueStore issues, ILinearLookupStore? l
             return settings.Error;
         }
 
-        var names = scope.Repos.Select(static r => r.Name).ToList();
-        var policy = new ProfileAudiencePolicy(settings.Value, names);
-        IEnumerable<ContextRepoName> asked = scope.Caller.Kind == ContextCallerKind.Session ? (scope.Caller.Repo is { } own ? [own] : []) : names;
-        var allowed = new HashSet<AudienceKey>();
-        foreach (var repo in asked)
-        {
-            var one = await policy.For(repo, cancellationToken).ConfigureAwait(false);
-            if (one.IsError)
-            {
-                return one.Error;
-            }
-
-            allowed.UnionWith(one.Value.Allowed);
-        }
-
-        return new RecordAudience(allowed, new HashSet<RecordKey>());
+        var asked = scope.Repos.Where(r => scope.Caller.Kind != ContextCallerKind.Session || (scope.Caller.Repo is { } own && r.Name.Equals(own))).ToList();
+        var allowed = await RecordMask.Allowed(settings.Value, asked, scope.Caller.Kind, cancellationToken).ConfigureAwait(false);
+        return allowed.IsError ? allowed.Error : new RecordAudience(allowed.Value, new HashSet<RecordKey>());
     }
 }
