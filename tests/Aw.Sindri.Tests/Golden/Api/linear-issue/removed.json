@@ -29,5 +29,9 @@
   },
   "description": "Moved to the OPS team.",
   "comments": [],
-  "removed": true
+  "removed": true,
+  "write": {
+    "allowed": false,
+    "code": null
+  }
 }

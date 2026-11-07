@@ -1,0 +1,9 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.5",
+  "title": "SND-LINEAR-011",
+  "status": 504,
+  "detail": "Linear didn't confirm the new ENG issue (fix: retry; the same client id never creates it twice)",
+  "traceId": "<trace>",
+  "outcome": "unknown",
+  "clientId": "5d0a4f6e-3b1c-4c0e-9a57-2f1d8c9b7e01"
+}

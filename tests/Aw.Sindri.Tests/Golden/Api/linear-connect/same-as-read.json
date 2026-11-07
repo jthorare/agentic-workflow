@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-LINEAR-001",
+  "status": 400,
+  "detail": "The write key is the same as the read key (fix: make a second key with write access and paste that)",
+  "traceId": "<trace>"
+}

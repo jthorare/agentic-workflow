@@ -1,0 +1,27 @@
+{
+  "outcome": "applied",
+  "clientId": "5d0a4f6e-3b1c-4c0e-9a57-2f1d8c9b7e01",
+  "issue": {
+    "key": "ENG-58",
+    "record": "linear:issue/00000000-0000-4000-8000-00000000013a",
+    "url": "https://linear.app/acme/issue/ENG-58",
+    "title": "Document the retry budget",
+    "team": {
+      "id": "00000000-0000-4000-8000-0000000000e1",
+      "key": "ENG"
+    },
+    "state": {
+      "id": "00000000-0000-4000-8000-000000000051",
+      "name": "Todo",
+      "type": "unstarted"
+    },
+    "priority": 0,
+    "assignee": null,
+    "project": null,
+    "cycle": null,
+    "labels": [],
+    "updatedAt": "2026-01-01T10:05:00.0000000Z",
+    "link": null,
+    "pr": null
+  }
+}

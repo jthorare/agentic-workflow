@@ -9,8 +9,8 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 public sealed class ApiGoldenTests
 {
     // hand-written before their routes (#2076): the PR page lands in Ph5c, the Library roots writes in their own slot and the review settings in Ph9's api slot, each registering its rows and leaving this list;
-    // the Linear hub's reads (#2077 Ph3 1a) leave it when api serves them
-    private static readonly string[] _pendingGoldenFolders = ["reviews-pr", "library-roots", "review-settings", "review-settings-save", "linear-issues", "linear-issue", "linear-lookups", "linear-since"];
+    // the Linear hub's reads (#2077 Ph3 1a) and writes (1b) leave it when api serves them
+    private static readonly string[] _pendingGoldenFolders = ["reviews-pr", "library-roots", "review-settings", "review-settings-save", "linear-issues", "linear-issue", "linear-lookups", "linear-since", "linear-change", "linear-comment", "linear-create", "linear-connection", "linear-connection-teams", "linear-connect", "linear-disconnect-write"];
 
     [Fact, Trait("Lane", "integration")]
     public void Every_golden_file_has_a_scenario()
