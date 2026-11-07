@@ -22,6 +22,8 @@ internal sealed class LinearQueries(LinearStore store)
                 return (LinearShape.Select(LinearRender.Member(store.Viewer), field, field.Name), null);
             case "issue":
                 return Issue(field);
+            case "comment":
+                return Comment(field);
             case "issues":
                 return (Select(field, Issues(field), newestFirst: true), null);
             case "comments":
@@ -51,6 +53,16 @@ internal sealed class LinearQueries(LinearStore store)
         return issue is null
             ? (null, $"Entity not found: Issue - Could not find referenced Issue '{id}'.")
             : (LinearShape.Select(LinearRender.Issue(store, issue), field, field.Name), null);
+    }
+
+    private (JsonNode? Value, string? Error) Comment(GraphQlField field)
+    {
+        LinearResolver.Known(field, new HashSet<string>(["id"], StringComparer.Ordinal));
+        var id = LinearResolver.Text(field, "id") ?? throw FakeRequestException.Invalid("Field \"comment\" needs a string 'id' argument.");
+        var comment = store.Comments.Find(c => c.Id == id);
+        return comment is null
+            ? (null, $"Entity not found: Comment - Could not find referenced Comment '{id}'.")
+            : (LinearShape.Select(LinearRender.Comment(store, comment), field, field.Name), null);
     }
 
     private IEnumerable<JsonNode> Issues(GraphQlField field)

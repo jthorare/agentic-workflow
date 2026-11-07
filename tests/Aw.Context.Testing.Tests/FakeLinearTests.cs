@@ -242,6 +242,36 @@ public sealed class FakeLinearTests
     }
 
     [Fact]
+    public async Task A_comment_is_read_by_id_with_its_issue_and_a_missing_one_is_entity_not_found()
+    {
+        await using var linear = await FakeLinear.Start(seed => seed.Team("ENG").Issue("ENG", "Needs a note").Comment("ENG-1", "first"));
+        var comment = linear.Comments.Single();
+        const string Read = "query Q($id: String!) { comment(id: $id) { id body issue { id } } }";
+
+        var found = await Gql(linear, Read, new JsonObject { ["id"] = comment.Id });
+        var missing = await Gql(linear, Read, new JsonObject { ["id"] = "99999999-9999-4999-8999-999999999999" });
+
+        Assert.Equal("first", (string?)found["data"]!["comment"]!["body"]);
+        Assert.Equal(linear.Issues.Single().Id, (string?)found["data"]!["comment"]!["issue"]!["id"]);
+        Assert.Null(missing["data"]!["comment"]);
+        Assert.StartsWith("Entity not found", (string?)missing["errors"]![0]!["message"], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task DropBeforeApplying_drops_the_next_mutation_without_applying_it()
+    {
+        await using var linear = await FakeLinear.Start();
+        linear.Switches.DropBeforeApplying = true;
+
+        _ = await Assert.ThrowsAnyAsync<HttpRequestException>(() => Gql(linear, Create, NewIssue(linear, "Never applied")));
+        var next = await Gql(linear, List, []);
+
+        Assert.Empty(linear.Issues);
+        Assert.Empty(Identifiers(next));
+        Assert.False(linear.Switches.DropBeforeApplying);
+    }
+
+    [Fact]
     public async Task MoveTeam_renumbers_the_issue_written_last_and_the_old_identifier_still_resolves()
     {
         await using var linear = await FakeLinear.Start(seed => seed.Team("ENG").Team("OPS"));

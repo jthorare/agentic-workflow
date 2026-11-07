@@ -21,7 +21,7 @@ await using var linear = await FakeLinear.Start(seed => seed
 ## What it serves
 
 - Queries (answered from state): `viewer`, `issues` (filter, first, after, orderBy, includeArchived; newest first, archived
-  issues hidden unless `includeArchived: true`), `issue(id:)` (by id, identifier, or an identifier the issue had before a team
+  issues hidden unless `includeArchived: true`), `comment(id:)` (by id; null-and-error "Entity not found" when there is none), `issue(id:)` (by id, identifier, or an identifier the issue had before a team
   move), `comments` (newest first; filter by `issue: { team: { key } }`), `teams` (each with `states`, `cycles`, `members` and `labels` connections, for the lookups step), `users`, `issueLabels` (each with its `team`, null for a workspace label), `workflowStates`, `cycles`, `projects`, empty `documents` and `projectUpdates`.
   A field the fake doesn't have is a 400 that names it.
 - Mutations: `issueCreate`, `issueUpdate`, `commentCreate`, `commentUpdate`, `attachmentLinkURL`, `issueArchive`,
@@ -74,6 +74,7 @@ something on to the fake's clock (one second per write, from 2026-01-01).
 | `RevokeKey` | `linear.Switches.RevokeKey = true;` | Every request is a 401 `AUTHENTICATION_ERROR` from now on. |
 | `RepeatClientId` (sticky) | `linear.Switches.RepeatClientId = true;` then `issueCreate` with a fresh `id` | The create is refused with the duplicate-id error above and nothing is created. |
 | `NoAnswer` (one-shot) | `linear.Switches.NoAnswer = true;` then any mutation | The mutation is applied, then the connection is aborted with no reply: the client sees a transport error and can't know the outcome. |
+| `DropBeforeApplying` (one-shot) | `linear.Switches.DropBeforeApplying = true;` then any mutation | The connection is aborted with no reply and the mutation is NOT applied: the client can't know the outcome, and a re-read finds nothing (a real client's `Unknown`). |
 | `MoveTeam` (one-shot) | `linear.Switches.MoveTeam = "OPS";` (team seeded) then read | The issue written last moves to `OPS` on the next read: a new identifier (`OPS-1`), the same id, a moved `updatedAt`; the old identifier (`ENG-1`) still resolves. (Ph0 checks: that Linear keeps resolving it.) |
 
 ## Other assumptions (Ph0 checks)
