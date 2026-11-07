@@ -57,11 +57,14 @@ public sealed class ExpandedStateSkillCardTests
         var expanded = Expanded();
         expanded.ShowSkillCard(Input("Which repo?"));
         var first = expanded.SkillCard;
+        first!.Announce();
+        first.Voice.Quiet();
 
         expanded.ShowSkillCard(Input("Which repo?"));
 
+        expanded.SkillCard!.Announce();
         Assert.Same(first, expanded.SkillCard);
-        Assert.True(expanded.SkillCard!.Voice.IsAnnouncing);
+        Assert.False(expanded.SkillCard.Voice.IsAnnouncing);   // announced once: the second Announce, after the re-read, says nothing
     }
 
     [Fact]
@@ -71,6 +74,7 @@ public sealed class ExpandedStateSkillCardTests
         expanded.ShowSkillCard(Input("Which repo?"));
 
         expanded.ShowSkillCard(Input("Which branch?"));
+        expanded.SkillCard!.Announce();
 
         Assert.Equal("Mitigate is waiting on you: Which branch?", expanded.SkillCard!.Voice.Announcement);
     }

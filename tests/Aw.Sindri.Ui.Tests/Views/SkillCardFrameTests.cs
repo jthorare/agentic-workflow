@@ -89,8 +89,9 @@ public sealed class SkillCardFrameTests : FrameHost
 
         shell.OpenInstance(detail.Address, detail.Id);
         await Until(window, () => shell.Instance.Expanded?.HasSkillCard == true);
-
         var region = Named<TextBlock>(window, "SkillCardAnnouncement");
+        await Until(window, () => region.Text != "Skill status", "the waiting text was never said after the card attached");
+
         Assert.Equal((0d, "Mitigate is waiting on you: " + Question), (region.Width, region.Text));
     });
 

@@ -198,13 +198,29 @@ public sealed class SkillCardViewModelTests
         Assert.True(Card(waiting: [Waiting()]).CanTakeOver);
 
     [Fact]
-    public void SkillCard_announces_the_waiting_row_once_and_a_quiet_card_says_nothing()
+    public void SkillCard_says_nothing_until_the_view_announces_and_then_says_the_question_once()
     {
-        var waiting = Card(waiting: [Waiting()]).Voice;
-        var quiet = Card().Voice;
+        var card = Card(waiting: [Waiting()]);
+        var before = (card.Voice.IsAnnouncing, card.Voice.Announcement);
 
-        Assert.Equal((true, "Shape the idea is waiting on you: Which repo should this plan cover?"), (waiting.IsAnnouncing, waiting.Announcement));
-        Assert.False(quiet.IsAnnouncing);
-        Assert.NotEmpty(quiet.Announcement);
+        card.Announce();
+        var said = (card.Voice.IsAnnouncing, card.Voice.Announcement);
+        card.Voice.Quiet();
+        card.Announce();
+
+        Assert.Equal((false, "Skill status"), before);
+        Assert.Equal((true, "Shape the idea is waiting on you: Which repo should this plan cover?"), said);
+        Assert.False(card.Voice.IsAnnouncing);
+    }
+
+    [Fact]
+    public void SkillCard_that_waits_on_nothing_announces_nothing()
+    {
+        var card = Card();
+
+        card.Announce();
+
+        Assert.False(card.Voice.IsAnnouncing);
+        Assert.NotEmpty(card.Voice.Announcement);
     }
 }

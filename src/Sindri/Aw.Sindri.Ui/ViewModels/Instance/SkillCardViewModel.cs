@@ -14,10 +14,21 @@ internal sealed class SkillCardViewModel : ObservableObject
     {
         Input = input;
         Voice = new LiveAnnouncer(Labels.SkillCardResting);
-        if (Waiting is not null)
+    }
+
+    private string _announced = string.Empty;
+
+    /// <summary>Says the waiting row, once per question. The view calls it after the card is in the tree, so the live region changes text while a reader is watching it; a second call with the same words says nothing.</summary>
+    internal void Announce()
+    {
+        var headline = Headline;
+        if (headline.Length == 0 || string.Equals(headline, _announced, StringComparison.Ordinal))
         {
-            Voice.Say(Headline);
+            return;
         }
+
+        _announced = headline;
+        Voice.Say(headline);
     }
 
     /// <summary>What the card was drawn from.</summary>
@@ -168,6 +179,12 @@ internal sealed class SkillCardViewModel : ObservableObject
     internal void Update(SkillCardInput input)
     {
         Input = input;
+        if (Headline.Length == 0 && _announced.Length > 0)
+        {
+            _announced = string.Empty;
+            Voice.Quiet();   // the question cleared: the next one is announced again
+        }
+
         OnChanged(string.Empty);
     }
 
