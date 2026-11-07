@@ -49,6 +49,14 @@ public sealed class SourcesSettingsTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_linear_writeback_key_is_accepted_without_a_value_check_because_the_profile_check_owns_it()
+    {
+        var read = Read("""{"sources":{"linear":{"token":"keychain:linear/work-read","writeback":"on","teams":["SPL"]}}}""");
+
+        Assert.True(read.IsSuccess, read.IsError ? read.Error.Message : "");
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void A_linear_write_token_is_read_beside_the_token()
     {
         var native = Read("""{"sources":{"linear":{"token":"keychain:linear/work-read","writeToken":"keychain:linear/work-write","teams":["SPL"]}}}""").Value;

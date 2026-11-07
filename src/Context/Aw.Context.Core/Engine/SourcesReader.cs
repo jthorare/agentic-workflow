@@ -12,7 +12,7 @@ namespace Aw.Context.Core.Engine;
 internal static partial class SourcesReader
 {
     private static readonly string[] _sources = ["linear", "github", "slack", "library"];
-    private static readonly string[] _linear = ["teams", "url", "token", "writeToken"];
+    private static readonly string[] _linear = ["teams", "url", "token", "writeToken", "writeback"];
     private static readonly string[] _github = ["repos", "host", "allowPrivateHost", "token"];
     private static readonly string[] _slack = ["channels", "retainDays", "token", "workspace"];
 
