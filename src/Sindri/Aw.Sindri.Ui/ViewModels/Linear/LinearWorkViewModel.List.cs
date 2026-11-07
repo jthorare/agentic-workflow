@@ -88,6 +88,7 @@ internal sealed partial class LinearWorkViewModel
         }
 
         OnChanged(nameof(HasFilters));
+        _selectWhenShown = null;
         Reload();
     }
 
@@ -136,6 +137,7 @@ internal sealed partial class LinearWorkViewModel
     private void OnFilterPicked(object? sender, EventArgs e)
     {
         OnChanged(nameof(HasFilters));
+        _selectWhenShown = null;   // the person chose what the list shows: a created issue is no longer owed a place in it
         Reload();
     }
 
@@ -179,6 +181,7 @@ internal sealed partial class LinearWorkViewModel
         if (mine.IsError || teams.IsError)
         {
             SindriNotAnswering();
+            Missed();
             return;
         }
 
@@ -206,6 +209,10 @@ internal sealed partial class LinearWorkViewModel
         Mine.Show(mineRows, mine.Total, MineEmpty(mine));
         Teams.Show(teamRows, teams.Total, string.Empty);
         KeepSelection();
+        if (!SelectPending())
+        {
+            Missed();
+        }
         (_mineNext, _teamsNext) = (mine.Next, teams.Next);
         foreach (var row in mine.Rows.Concat(teams.Rows))
         {

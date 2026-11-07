@@ -2,6 +2,7 @@ using System.Globalization;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Ids;
 
 namespace Aw.Sindri.Features.LinearIssues;
 
@@ -9,7 +10,8 @@ namespace Aw.Sindri.Features.LinearIssues;
 /// The Work page's Linear list (Linear hub spec §3; contract with the app, 2026-11-06). Open means a state type other than completed and canceled. <b>mine</b> reads the viewer's open issues in one go
 /// (Context's largest page, 200), filters priority, label and state in Sindri, orders them by priority (urgent first, none last) then newest update and pages them by offset; over 200 assigned open
 /// issues the rest are not listed. <b>teams</b> keeps Context's newest-first order, passes team, project, cycle and the state types through, drops the viewer's own issues and the priority, label and
-/// state misses in Sindri, and reads pages until the page is full; its cursor names the last row returned and how many rows came before it, which is all its total only on the last page.
+/// state misses in Sindri, and reads pages until the page is full; its cursor is <c language="text">t&lt;rows before&gt;.&lt;updated ticks&gt;.&lt;record&gt;</c>: the rows returned so far and the store position to read on after. That position is the last row returned, or, when 50 store pages went by
+/// without filling the page, the last row scanned (the page may then be short or empty, and the total stays null). Its total is known only on the last page.
 /// </summary>
 /// <param name="facts">The stored issues, source and feed.</param>
 /// <param name="links">The items and pull requests linked to the rows.</param>
@@ -60,16 +62,16 @@ internal sealed class ListLinearIssuesService(ILinearIssueFacts facts, ILinearIt
 
     private async ValueTask<Result<Found>> ReadMine(Query q, LinearPersonView? viewer, CancellationToken cancellationToken)
     {
-        // why: until the viewer step has run nobody's issues are "mine", so the group is empty rather than wrong
-        if (viewer is null || (q.Assignee is not null && !string.Equals(q.Assignee, viewer.Id, StringComparison.Ordinal)))
-        {
-            return new Found([], Next: null, Total: 0);
-        }
-
         var offset = q.After is null ? 0 : MineOffset(q.After);
         if (offset is null)
         {
             return SindriErrors.InvalidQuery.With($"after '{q.After}' is not a cursor of the mine group");
+        }
+
+        // why: until the viewer step has run nobody's issues are "mine", so the group is empty rather than wrong
+        if (viewer is null || (q.Assignee is not null && !string.Equals(q.Assignee, viewer.Id, StringComparison.Ordinal)))
+        {
+            return new Found([], Next: null, Total: 0);
         }
 
         var page = await facts.Issues(new LinearIssueFactsFilter(q.Team, viewer.Id, q.StateTypes, q.Project, q.Cycle, ContextPage), after: null, cancellationToken).ConfigureAwait(false);
@@ -97,23 +99,31 @@ internal sealed class ListLinearIssuesService(ILinearIssueFacts facts, ILinearIt
             return SindriErrors.InvalidQuery.With($"after '{q.After}' is not a cursor of the teams group");
         }
 
+        // why: the viewer's own issues are left out of teams, so asking for them can only be empty
+        if (viewer is not null && string.Equals(q.Assignee, viewer.Id, StringComparison.Ordinal))
+        {
+            return new Found([], Next: null, Total: 0);
+        }
+
         var scan = await Scan(q, viewer, start.Position, cancellationToken).ConfigureAwait(false);
         if (scan.IsError)
         {
             return scan.Error;
         }
 
-        var (rows, more) = scan.Value;
+        var (rows, more, resume) = scan.Value;
         var count = start.Skipped + rows.Count;
-        return new Found(rows, more && rows.Count > 0 ? TeamsCursor(count, rows[^1]) : null, more ? null : count);
+        var next = more && rows.Count > 0 ? TeamsCursor(count, rows[^1].UpdatedAt, rows[^1].Record) : resume is not null ? TeamsCursor(count, resume.UpdatedAt, resume.Record) : null;
+        return new Found(rows, next, next is null ? count : null);
     }
 
     // Reads store pages from position until the page is full; the flag says there may be more after it.
-    private async ValueTask<Result<(List<LinearIssueRowView> Rows, bool More)>> Scan(Query q, LinearPersonView? viewer, LinearIssuePosition? position, CancellationToken cancellationToken)
+    private async ValueTask<Result<(List<LinearIssueRowView> Rows, bool More, LinearIssuePosition? Resume)>> Scan(Query q, LinearPersonView? viewer, LinearIssuePosition? position, CancellationToken cancellationToken)
     {
         var filter = new LinearIssueFactsFilter(q.Team, q.Assignee, q.StateTypes, q.Project, q.Cycle, ContextPage);
         List<LinearIssueRowView> rows = [];
         var more = false;
+        var pageMore = false;
         for (var pages = 0; pages < MaxPages && !more; pages++)
         {
             var page = await facts.Issues(filter, position, cancellationToken).ConfigureAwait(false);
@@ -122,11 +132,12 @@ internal sealed class ListLinearIssuesService(ILinearIssueFacts facts, ILinearIt
                 return page.Error;
             }
 
-            more = Fill(rows, page.Value.Issues.Where(i => (viewer is null || i.Assignee?.Id != viewer.Id) && q.Matches(i)), q.Limit);
+            more = Fill(rows, Others(q, viewer, page.Value.Issues), q.Limit);
 
             // why: a full page that ends the store's page may still have matches after it; Sindri can't know without reading on, so it offers the next page
             more |= rows.Count == q.Limit && page.Value.More;
-            if (page.Value.Issues.Count == 0 || !page.Value.More)
+            pageMore = page.Value.More && page.Value.Issues.Count > 0;
+            if (!pageMore)
             {
                 break;
             }
@@ -134,8 +145,12 @@ internal sealed class ListLinearIssuesService(ILinearIssueFacts facts, ILinearIt
             position = Position(page.Value.Issues[^1]);
         }
 
-        return (rows, more);
+        // why: the page cap ended the scan with the store still holding rows; the caller gets a cursor at the last row scanned, as rows after the cap would otherwise never be reachable
+        return (rows, more, !more && pageMore ? position : null);
     }
+
+    private static IEnumerable<LinearIssueRowView> Others(Query q, LinearPersonView? viewer, IEnumerable<LinearIssueRowView> issues) =>
+        issues.Where(i => (viewer is null || i.Assignee?.Id != viewer.Id) && q.Matches(i));
 
     // Adds matches until the page is full; true when one more match was left over.
     private static bool Fill(List<LinearIssueRowView> rows, IEnumerable<LinearIssueRowView> matches, int limit)
@@ -167,8 +182,8 @@ internal sealed class ListLinearIssuesService(ILinearIssueFacts facts, ILinearIt
 
     private static LinearIssuePosition Position(LinearIssueRowView row) => new(row.UpdatedAt, row.Record);
 
-    private static string TeamsCursor(int count, LinearIssueRowView last) =>
-        string.Create(CultureInfo.InvariantCulture, $"t{count}.{last.UpdatedAt.UtcTicks}.{last.Record}");
+    private static string TeamsCursor(int count, DateTimeOffset updatedAt, string record) =>
+        string.Create(CultureInfo.InvariantCulture, $"t{count}.{updatedAt.UtcTicks}.{record}");
 
     // why: an unreadable cursor is reported as a negative count, so the caller has one check
     private static (int Skipped, LinearIssuePosition? Position) TeamsStart(string after)
@@ -177,7 +192,7 @@ internal sealed class ListLinearIssuesService(ILinearIssueFacts facts, ILinearIt
         return parts.Length == 3
             && int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var count)
             && long.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out var ticks) && ticks <= DateTimeOffset.MaxValue.UtcTicks
-            && parts[2].Length > 0
+            && RecordKey.TryFrom(parts[2], out _)
                 ? (count, new LinearIssuePosition(new DateTimeOffset(ticks, TimeSpan.Zero), parts[2]))
                 : (-1, null);
     }
@@ -202,12 +217,15 @@ internal sealed class ListLinearIssuesService(ILinearIssueFacts facts, ILinearIt
 
         var state = Text(r.State);
         var open = state is null || string.Equals(state, "open", StringComparison.Ordinal);
-        return new Query(group, Text(r.Team), Text(r.Project), Text(r.Cycle), open ? null : state, open ? _open : null, Text(r.Assignee), priority, Text(r.Label), Text(r.After), limit.Value);
+        return new Query(group, Team(r.Team), Text(r.Project), Text(r.Cycle), open ? null : state, open ? _open : null, Text(r.Assignee), priority, Text(r.Label), Text(r.After), limit.Value);
     }
 
     // The number in the text if it is whole and within the range, the fallback when there is no text, else null.
     private static int? Number(string? text, int? fallback, int min, int max) =>
         Text(text) is not { } t ? fallback : int.TryParse(t, NumberStyles.None, CultureInfo.InvariantCulture, out var n) && n >= min && n <= max ? n : null;
+
+    // why: the store matches a team key exactly and keys are upper case, as /issues/{key} reads them
+    private static string? Team(string? value) => Text(value)?.ToUpperInvariant();
 
     private static string? Text(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 

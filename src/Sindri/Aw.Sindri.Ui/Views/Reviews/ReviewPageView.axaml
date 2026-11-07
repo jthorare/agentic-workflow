@@ -173,7 +173,7 @@
                               <TextBlock Grid.Column="2" Classes="caption subtle" Text="{Binding Stat}" />
                             </Grid>
                             <Grid ColumnDefinitions="*,Auto,Auto" Margin="8,2" IsVisible="{Binding Note, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                              <TextBlock Classes="caption" Text="{Binding Note}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                              <TextBlock Classes="caption" Text="{Binding Note}" TextWrapping="Wrap" VerticalAlignment="Top" />
                               <Button x:Name="ReviewDiffShow" Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Top" Click="OnShowFile" IsVisible="{Binding HasShow}" Content="{Binding ShowText}" AutomationProperties.Name="{Binding ShowName}" />
                               <Button x:Name="ReviewDiffOpenFile" Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Top" Click="OnOpenFile" IsVisible="{Binding HasOpenOnGitHub}" Content="{Binding OpenText}" AutomationProperties.Name="{Binding OpenName}" />
                             </Grid>

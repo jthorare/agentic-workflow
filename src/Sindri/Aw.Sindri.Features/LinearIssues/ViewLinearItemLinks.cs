@@ -13,7 +13,7 @@ namespace Aw.Sindri.Features.LinearIssues;
 /// <summary>
 /// The items and pull requests of a list's issues. An item is linked to a record in the 'items' view (its Link); its pull request is the <c language="text">pr</c> fact of the item's workflow instance, when it has one,
 /// shown with the Reviews list's word for it: <b>waiting</b> when the stored PR record waits on the owner (the 'Waiting on you' group's rule), <b>open</b> for any other stored open PR, <b>closed</b> when the stored
-/// open PRs no longer hold it. Anything that can't be read leaves that issue without a PR; nothing here fails the list.
+/// open PRs no longer hold it, <b>unknown</b> when the stored PRs can't be read. Anything that can't be read leaves that issue without a PR; nothing here fails the list.
 /// </summary>
 /// <param name="views">The 'items' view.</param>
 /// <param name="instances">The workflow instances.</param>
@@ -43,7 +43,7 @@ internal sealed class ViewLinearItemLinks(IViewReader views, IInstanceReader ins
             static l => l.Key,
             l => new LinearIssueLinks(
                 new LinearItemLinkView(l.Value.Id.Value, ItemStateNames.Of(l.Value.State)),
-                prs.TryGetValue(l.Key, out var p) ? new LinearPrView(p.Number, p.Url, words?.Word(p.Repo, p.Number) ?? "open") : null),
+                prs.TryGetValue(l.Key, out var p) ? new LinearPrView(p.Number, p.Url, words?.Word(p.Repo, p.Number) ?? "unknown") : null),
             StringComparer.Ordinal);
     }
 

@@ -1,0 +1,123 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:lvm="using:Aw.Sindri.Ui.ViewModels.Linear"
+             x:Class="Aw.Sindri.Ui.Views.Linear.NewLinearIssueDialog"
+             x:DataType="lvm:NewLinearIssueViewModel">
+  <!-- Linear "New issue" (Linear hub spec §3; `C` on the Linear view): a modal form over a scrim like Create item. Team first (focus lands there),
+       then the title, the description and the pickers the team's lookups fill. Esc, Cancel and the scrim close it and keep the draft; Enter in the
+       title creates. The polite line is the shell's NewIssueLive region, which is in the tree whether or not this dialog is. -->
+  <UserControl.Styles>
+    <Style Selector="Border.scrim">
+      <Setter Property="Background" Value="{DynamicResource Brush.Overlay}" />
+      <Setter Property="Opacity" Value="0.6" />
+    </Style>
+    <Style Selector="Border.dialog">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="{StaticResource Radius.LG}" />
+      <Setter Property="Padding" Value="{StaticResource Space.LG.Thickness}" />
+    </Style>
+  </UserControl.Styles>
+  <Panel>
+    <Border Classes="scrim" PointerPressed="OnScrim" />
+    <Border x:Name="NewIssueCard" Classes="dialog" Width="520" MaxHeight="640" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,64,0,0"
+            KeyboardNavigation.TabNavigation="Cycle" AutomationProperties.ControlTypeOverride="Window" AutomationProperties.AccessibilityView="Control"
+            AutomationProperties.Name="{Binding Text.Heading}">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="8" Margin="0,0,12,0">
+          <TextBlock Classes="detail-title" Text="{Binding Text.Heading}" />
+          <StackPanel x:Name="DraftLine" Orientation="Horizontal" Spacing="12" IsVisible="{Binding ShowsDraft}">
+            <TextBlock Classes="caption muted" Text="{Binding Text.ResumeDraft}" VerticalAlignment="Center" />
+            <Button x:Name="DiscardDraft" Click="OnDiscard" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="{Binding Text.DiscardDraft}">
+              <TextBlock Classes="button" Text="{Binding Text.DiscardDraft}" />
+            </Button>
+          </StackPanel>
+          <Border x:Name="NewIssueBanner" IsVisible="{Binding HasErrorBanner}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text"
+                  AutomationProperties.Name="{Binding ErrorBanner}">
+            <TextBlock Classes="caption error" Text="{Binding ErrorBanner}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          </Border>
+
+          <TextBlock Classes="caption subtle" Text="{Binding Text.Team}" AutomationProperties.AccessibilityView="Raw" />
+          <ComboBox x:Name="TeamField" ItemsSource="{Binding TeamChoices}" SelectedItem="{Binding Team, Mode=TwoWay}" IsEnabled="{Binding CanEdit}" HorizontalAlignment="Stretch"
+                    AutomationProperties.Name="{Binding Text.Team}" AutomationProperties.HelpText="{Binding TeamError}">
+            <ComboBox.ItemTemplate>
+              <DataTemplate x:DataType="lvm:LinearChoiceViewModel"><TextBlock Text="{Binding Name}" /></DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+          <TextBlock x:Name="TeamError" Classes="caption error" Text="{Binding TeamErrorLine}" AutomationProperties.AccessibilityView="Raw" />
+
+          <TextBlock Classes="caption subtle" Text="{Binding Text.Title}" AutomationProperties.AccessibilityView="Raw" />
+          <TextBox x:Name="TitleField" Text="{Binding Title}" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="{Binding Text.Title}" AutomationProperties.HelpText="{Binding TitleError}" />
+          <TextBlock x:Name="TitleError" Classes="caption error" Text="{Binding TitleErrorLine}" AutomationProperties.AccessibilityView="Raw" />
+
+          <TextBlock Classes="caption subtle" Text="{Binding Text.Description}" AutomationProperties.AccessibilityView="Raw" />
+          <TextBox x:Name="DescriptionField" Text="{Binding Description}" IsEnabled="{Binding CanEdit}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72"
+                   AutomationProperties.Name="{Binding Text.Description}" />
+
+          <TextBlock x:Name="NotSyncedNote" Classes="caption muted" Text="{Binding NotSyncedNote}" IsVisible="{Binding HasNote}" TextWrapping="Wrap" />
+          <UniformGrid Columns="2">
+            <StackPanel Spacing="2" Margin="0,0,12,8">
+              <TextBlock Classes="caption subtle" Text="{Binding Text.State}" AutomationProperties.AccessibilityView="Raw" />
+              <ComboBox x:Name="StateField" ItemsSource="{Binding States}" SelectedItem="{Binding State, Mode=TwoWay}" IsEnabled="{Binding CanPick}" HorizontalAlignment="Stretch"
+                        AutomationProperties.Name="{Binding Text.State}">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate x:DataType="lvm:LinearChoiceViewModel"><TextBlock Text="{Binding Name}" /></DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Spacing="2" Margin="0,0,0,8">
+              <TextBlock Classes="caption subtle" Text="{Binding Text.Assignee}" AutomationProperties.AccessibilityView="Raw" />
+              <ComboBox x:Name="AssigneeField" ItemsSource="{Binding Assignees}" SelectedItem="{Binding Assignee, Mode=TwoWay}" IsEnabled="{Binding CanPick}" HorizontalAlignment="Stretch"
+                        AutomationProperties.Name="{Binding Text.Assignee}">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate x:DataType="lvm:LinearChoiceViewModel"><TextBlock Text="{Binding Name}" /></DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Spacing="2" Margin="0,0,12,8">
+              <TextBlock Classes="caption subtle" Text="{Binding Text.Priority}" AutomationProperties.AccessibilityView="Raw" />
+              <ComboBox x:Name="PriorityField" ItemsSource="{Binding Priorities}" SelectedItem="{Binding Priority, Mode=TwoWay}" IsEnabled="{Binding CanEdit}" HorizontalAlignment="Stretch"
+                        AutomationProperties.Name="{Binding Text.Priority}">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate x:DataType="lvm:LinearChoiceViewModel"><TextBlock Text="{Binding Name}" /></DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Spacing="2" Margin="0,0,0,8">
+              <TextBlock Classes="caption subtle" Text="{Binding Text.Cycle}" AutomationProperties.AccessibilityView="Raw" />
+              <ComboBox x:Name="CycleField" ItemsSource="{Binding Cycles}" SelectedItem="{Binding Cycle, Mode=TwoWay}" IsEnabled="{Binding CanPick}" HorizontalAlignment="Stretch"
+                        AutomationProperties.Name="{Binding Text.Cycle}">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate x:DataType="lvm:LinearChoiceViewModel"><TextBlock Text="{Binding Name}" /></DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+            </StackPanel>
+          </UniformGrid>
+          <TextBlock Classes="caption subtle" Text="{Binding Text.TickLabels}" AutomationProperties.AccessibilityView="Raw" />
+          <ItemsControl x:Name="LabelsField" ItemsSource="{Binding LabelChoices}" IsEnabled="{Binding CanPick}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="lvm:LinearChoiceViewModel">
+                <CheckBox Content="{Binding Name}" IsChecked="{Binding IsTicked, Mode=TwoWay}" AutomationProperties.Name="{Binding Name}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <TextBlock x:Name="NewIssueStatus" Classes="caption muted" Text="{Binding StatusLine}" IsVisible="{Binding HasStatusLine}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="8">
+            <Button x:Name="CreateIssue" Classes="command-control" Click="OnCreate" IsVisible="{Binding ShowsCreate}" IsEnabled="{Binding CanCreate}"
+                    AutomationProperties.Name="{Binding CreateText}">
+              <TextBlock Classes="button" Text="{Binding CreateText}" VerticalAlignment="Center" />
+            </Button>
+            <Button x:Name="RetryCreate" Classes="command-control" Click="OnRetry" IsVisible="{Binding IsUnknown}" AutomationProperties.Name="{Binding Text.Retry}">
+              <TextBlock Classes="button" Text="{Binding Text.Retry}" VerticalAlignment="Center" />
+            </Button>
+            <Button x:Name="CancelNewIssue" Grid.Column="3" Classes="command-control" Click="OnCancel" AutomationProperties.Name="{Binding Text.Cancel}">
+              <TextBlock Classes="button" Text="{Binding Text.Cancel}" />
+            </Button>
+          </Grid>
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+  </Panel>
+</UserControl>
