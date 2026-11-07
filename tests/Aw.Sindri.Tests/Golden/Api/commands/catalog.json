@@ -1557,6 +1557,24 @@
       "confirm": null
     },
     {
+      "action": "StartSkillRun",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/skills/{id}/runs",
+      "cli": "sindri skill run <block> [--input <input>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": true,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "StopProcess",
       "class": "desk",
       "allowedCallers": [

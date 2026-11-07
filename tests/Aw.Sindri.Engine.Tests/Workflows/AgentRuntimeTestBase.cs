@@ -391,7 +391,7 @@ public abstract class AgentRuntimeTestBase : IDisposable
             return start with { Inputs = inputs };
         }
 
-        private static async Task ApproveTarget(IServiceProvider sindri, CancellationToken ct)
+        internal static async Task ApproveTarget(IServiceProvider sindri, CancellationToken ct)
         {
             var declared = new SindriProfile(SindriProfile.CurrentSchemaVersion, "tester", Repos: [new RepoEntry(_item.Repo, Repo)],
                 Workflow: new WorkflowSettings(Agent: new WorkflowAgentSettings(AgentId.From("claude-code"))));

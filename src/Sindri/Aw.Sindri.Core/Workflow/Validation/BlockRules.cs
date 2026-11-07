@@ -93,7 +93,16 @@ internal sealed partial class BlockRules : IRecipeRules
 
         return catalog.Find(reference.Id) is { } descriptor
             ? Parameters(reference, descriptor, source).Concat(ProviderLists(reference, descriptor, source)).Concat(CallWidths(reference, descriptor, source)).Concat(Bundles(reference, descriptor, source))
-            : [source.Finding("RCP-BLOCK-001", $"{reference.Path}.use", $"block '{id}' isn't registered", $"name a registered {Word(kind)} block, or fix the id")];
+            : [NotRegistered(reference, catalog, source)];
+    }
+
+    // A skill block that failed its manifest checks says why (skill flows spec §3.2); any other unknown block is the plain finding.
+    private static RecipeFinding NotRegistered(BlockReference reference, BlockCatalog catalog, RecipeSource source)
+    {
+        var id = reference.Id.Value;
+        return catalog.WhyUnloaded(reference.Id) is { } reason
+            ? source.Finding("RCP-BLOCK-001", $"{reference.Path}.use", $"block '{id}' isn't registered: skills:block {id["step.skill.".Length..]} is not loaded: {reason}", "fix the manifest named above and restart serve; 'sindri skills' lists every block that did not load")
+            : source.Finding("RCP-BLOCK-001", $"{reference.Path}.use", $"block '{id}' isn't registered", $"name a registered {Word(BlockKinds.Of(reference.Id))} block, or fix the id");
     }
 
     private static IEnumerable<RecipeFinding> Evidence(Recipe recipe, BlockCatalog catalog, RecipeSource source) =>

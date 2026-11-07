@@ -63,6 +63,7 @@ public static class EventCatalog
         new(EventTypes.ItemOpenRequested, Public: true, typeof(ItemOpenRequested), "item.open-requested:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.Item, ApiViews.Items, ApiViews.Timeline] },
         new(EventTypes.LaunchStarted, Public: true, typeof(LaunchStartedPublic), "launch.outcome:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.LaunchPicks, ApiViews.Item, ApiViews.Items, ApiViews.Timeline, ApiViews.NeedsYou] },
         new(EventTypes.LaunchWaiting, Public: true, typeof(LaunchWaiting), "launch.waiting:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.Item] },
+        new(EventTypes.LaunchOwnerWaiting, Public: true, typeof(LaunchOwnerWaiting), "launch.owner-waiting:<launchId>:<turnEndedAtMs>") { Invalidates = [ApiViews.Launch, ApiViews.Item, ApiViews.Timeline, ApiViews.NeedsYou] },
         new(EventTypes.ModelPicked, Public: true, typeof(ModelPicked), "model.pick:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.LaunchPicks, ApiViews.Timeline] },
         new(EventTypes.ContextModelCalled, Public: true, typeof(ContextModelCalled), "context.model.called:<callId>") { Invalidates = [ApiViews.Jobs] },
         new(EventTypes.ModelPicking, Public: true, typeof(ModelPicking), "model.picking:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.LaunchPicks, ApiViews.Timeline] },

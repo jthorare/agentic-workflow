@@ -44,6 +44,8 @@ internal sealed partial class LaunchFileStore(LauncherOptions options, StaleSwee
 
     public DateTimeOffset? TurnFailedAt(LaunchId launch) => MarkAt(Core.Launch.LaunchFiles.TurnFailedName(launch));
 
+    public DateTimeOffset? PromptedAt(LaunchId launch) => MarkAt(Core.Launch.LaunchFiles.PromptedName(launch));
+
     public bool ToolRunning(LaunchId launch) => MarkAt(Core.Launch.LaunchFiles.ToolRunningName(launch)) is not null;
 
     public DateTimeOffset? NudgedAt(LaunchId launch) => MarkAt(Core.Launch.LaunchFiles.NudgedName(launch));
@@ -227,6 +229,7 @@ internal sealed partial class LaunchFileStore(LauncherOptions options, StaleSwee
         _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, Core.Launch.LaunchFiles.TurnFailedName(launch)));
         _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, Core.Launch.LaunchFiles.ToolRunningName(launch)));
         _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, Core.Launch.LaunchFiles.NudgedName(launch)));
+        _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, Core.Launch.LaunchFiles.PromptedName(launch)));
     }
 
     /// <summary>Deletes <paramref name="file"/> when its <paramref name="directory"/> exists; whatever is gone is fine.</summary>
@@ -240,6 +243,6 @@ internal sealed partial class LaunchFileStore(LauncherOptions options, StaleSwee
         }
     }
 
-    [GeneratedRegex("^(?<launch>LCH-[0-9a-f]{32})\\.(?:capture\\.json|session-id|turn-ended|turn-failed|tool-running|nudged)\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex("^(?<launch>LCH-[0-9a-f]{32})\\.(?:capture\\.json|session-id|turn-ended|turn-failed|tool-running|nudged|prompted)\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex PerLaunch { get; }
 }

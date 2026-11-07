@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentic-workflow.local/schemas/skill-block.schema.json",
+  "title": "skills/<name>/block.yaml",
+  "description": "A skill's Sindri block manifest (spec 2026-11-05-sindri-skill-flows-design.md section 3.1). Cross-file and cross-field rules (ids, args slots, aw-result keys, fact keys) are checked by scripts/check-skill-blocks.mjs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "blocks"],
+  "properties": {
+    "schema": { "const": 1 },
+    "blocks": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/block" } }
+  },
+  "$defs": {
+    "name": { "type": "string", "pattern": "^[a-z][A-Za-z0-9]*$" },
+    "block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "sentence", "inputs", "args", "outputs", "outcomes", "pushes", "maxDuration"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
+        "sentence": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "inputs": { "type": "object", "propertyNames": { "$ref": "#/$defs/name" }, "additionalProperties": { "$ref": "#/$defs/input" } },
+        "args": { "type": "array", "items": { "oneOf": [ { "type": "string" }, { "$ref": "#/$defs/flagArg" } ] } },
+        "outputs": { "type": "object", "propertyNames": { "$ref": "#/$defs/name" }, "additionalProperties": { "$ref": "#/$defs/output" } },
+        "outcomes": { "$ref": "#/$defs/outcomes" },
+        "pushes": { "type": "boolean" },
+        "maxDuration": { "type": "string", "pattern": "^[1-9][0-9]*[mhd]$" }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "label", "required"],
+      "properties": {
+        "type": { "enum": ["text", "path"] },
+        "label": { "type": "string", "minLength": 1 },
+        "required": { "type": "boolean" },
+        "values": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "flagArg": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["flag", "input"],
+      "properties": {
+        "flag": { "type": "string", "pattern": "^--?[A-Za-z][A-Za-z0-9-]*$" },
+        "input": { "$ref": "#/$defs/name" }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "from"],
+      "properties": {
+        "type": { "enum": ["text", "path"] },
+        "from": { "type": "string", "minLength": 1 }
+      }
+    },
+    "outcomes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["success"],
+      "properties": {
+        "from": { "type": "string", "minLength": 1 },
+        "map": { "type": "object", "minProperties": 1, "additionalProperties": { "$ref": "#/$defs/name" } },
+        "success": { "$ref": "#/$defs/name" }
+      },
+      "dependentRequired": { "from": ["map"], "map": ["from"] }
+    }
+  }
+}

@@ -27,9 +27,9 @@ public sealed class RunStepActivitiesLoadTests
         var profiles = new InMemoryProfiles();
         var facts = new InMemoryFactStore();
         var runner = new BlockStepRunner(new BlockStepRuntimes([]), catalog, static (_, _, _) => throw new NotSupportedException(), facts, facts, profiles, new StepContexts(new MemoryInjectionTexts(), new Inputs.NoRunner()));
-        var activities = new RunStepActivities(new Approved(new ApprovedRecipe(version, recipe)), catalog, new ProfileWorkflowTimes(profiles, profiles), runner, new AgentStepSelection(profiles, []), NullLogger<RunStepActivities>.Instance);
+        var activities = new RunStepActivities(new Approved(new ApprovedRecipe(version, recipe)), catalog, new ProfileWorkflowTimes(profiles, profiles), runner, new AgentStepSelection(profiles, []), new TrialBlocks([], new InMemoryRecipeApprovals(), facts, SliceHarness.Json), NullLogger<RunStepActivities>.Instance);
 
-        var loaded = await new ActivityEnvironment().RunAsync(() => activities.LoadRecipeAsync(version));
+        var loaded = await new ActivityEnvironment().RunAsync(() => activities.LoadRecipeAsync(version, folder: null));
 
         Assert.Equal(["input.test.echo", "step.produce"], loaded.Blocks.Select(b => b.Id.Value).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }

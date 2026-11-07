@@ -18,10 +18,12 @@ namespace Aw.Sindri.Core.Launch;
 /// The model login source the Step asks for (sandbox spec SB18, owner note 4): a stricter one than the profile gives, never a looser.
 /// Null means no ask and is left out of the JSON. The launcher takes the stricter of the ask and the profile, repo and target value (SB-1/SB-5a).
 /// </param>
+/// <param name="TurnMarkers">True for a skill block's session (skill flows spec §3.3): its prompt hook also touches the launch's '.prompted' file, so the result read can tell a turn that began after the result file was written.</param>
 public sealed record StepPolicy(
     IReadOnlyList<string> AllowedTools,
     StepPermissionMode Mode,
     string? WritablePath,
     IReadOnlyList<string>? DeniedPaths = null,
     IReadOnlyList<string>? ReadOnlyPaths = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ModelLoginSource? LoginSource = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ModelLoginSource? LoginSource = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool TurnMarkers = false);

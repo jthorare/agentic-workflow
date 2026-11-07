@@ -42,6 +42,7 @@ internal static class ApiScenarios
         ["CodeIndex"] = CodeIndexScenarios.All,
         ["Sandbox"] = SandboxScenarios.All,
         ["Projects"] = ProjectScenarios.All,
+        ["Skills"] = SkillScenarios.All,
         ["LinearIssues"] = LinearIssueScenarios.All,
         ["Reviews"] = [.. ReviewScenarios.All, .. ReviewLoginScenarios.All, .. ReviewFixScenarios.All, .. LibraryScenarios.All, .. LibraryDocScenarios.All],
         ["LinearReads"] = LinearReadScenarios.All,
@@ -69,8 +70,8 @@ internal static class ApiScenarios
 
     /// <summary>The last hosts of <see cref="Start"/>: the launch, approve-all, item-scope and wrapped-session ones, else the plain golden host.</summary>
     private static async Task<GoldenHost> StartLaunchOrLater(string slug, string scenario, CancellationToken ct) =>
-        IsLinear(slug, scenario)
-            ? await StartLinear(slug, scenario, ct)
+        IsSkillOrLinear(slug, scenario)
+            ? await StartSkillOrLinear(slug, scenario, ct)
             : IsReviews(slug, scenario)
             ? await StartReviews(slug, scenario, ct)
             : ProjectScenarios.Handles(slug, scenario)
@@ -91,6 +92,13 @@ internal static class ApiScenarios
 
     /// <summary>Whether the scenario belongs to the Linear hub's reads (the issue list and sheet, the lookups and the strip).</summary>
     private static bool IsLinear(string slug, string scenario) => LinearIssueScenarios.Handles(slug, scenario) || LinearReadScenarios.Handles(slug, scenario);
+
+    /// <summary>Whether the scenario belongs to the Skills group or the Linear hub's reads.</summary>
+    private static bool IsSkillOrLinear(string slug, string scenario) => SkillScenarios.Handles(slug, scenario) || IsLinear(slug, scenario);
+
+    /// <summary>The host of a Skills scenario, else of a Linear read scenario.</summary>
+    private static Task<GoldenHost> StartSkillOrLinear(string slug, string scenario, CancellationToken ct) =>
+        SkillScenarios.Handles(slug, scenario) ? SkillScenarios.Start(ct) : StartLinear(slug, scenario, ct);
 
     /// <summary>The host of a Linear read scenario.</summary>
     private static Task<GoldenHost> StartLinear(string slug, string scenario, CancellationToken ct) =>
@@ -178,7 +186,12 @@ internal static class ApiScenarios
         : WrapSessionScenarios.Handles(slug, scenario) ? () => WrapSessionScenarios.Body(host, slug, scenario, ct)
         : SandboxScenarios.Handles(slug, scenario) ? () => SandboxScenarios.Body(host, slug, scenario, ct)
         : ProjectScenarios.Handles(slug, scenario) ? () => ProjectScenarios.Body(host, slug, scenario, ct)
-        : LinearIssueScenarios.Handles(slug, scenario) ? () => LinearIssueScenarios.Body(host, slug, scenario, ct)
+        : SkillScenarios.Handles(slug, scenario) ? () => SkillScenarios.Body(host, ct)
+        : LinearBody(host, slug, scenario, ct);
+
+    /// <summary>The body of a Linear read scenario (the issue list and sheet, the lookups and the strip), else of a Reviews-group one.</summary>
+    private static Func<Task<string>>? LinearBody(GoldenHost host, string slug, string scenario, CancellationToken ct) =>
+        LinearIssueScenarios.Handles(slug, scenario) ? () => LinearIssueScenarios.Body(host, slug, scenario, ct)
         : LinearReadScenarios.Handles(slug, scenario) ? () => LinearReadScenarios.Body(host, slug, scenario)
         : ReviewBody(host, slug, scenario, ct);
 

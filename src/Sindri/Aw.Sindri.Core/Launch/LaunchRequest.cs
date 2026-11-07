@@ -38,4 +38,12 @@ public sealed record LaunchRequest(
     /// for any other Step the launcher records the repo's HEAD at the run's first launch and passes the same commit on every re-launch. Null when none is known, and the prepare is then skipped.
     /// </summary>
     public string? BaseCommit { get; init; }
+
+    /// <summary>Null, or the skill block this Step runs (skill flows spec §3.3): its seed is the skill's invocation alone, and its session gets AW_RESULT, AW_RESULT_SKILL, AW_RESULT_FILE and AW_DIR. Never serialized.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public Skills.SkillLaunch? Skill { get; init; }
+
+    /// <summary>Null, or the state's timeout, which the sandbox plan uses as the Step's wall limit instead of the 4 h default (skill flows spec D8). Never serialized.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public TimeSpan? StepTimeout { get; init; }
 }

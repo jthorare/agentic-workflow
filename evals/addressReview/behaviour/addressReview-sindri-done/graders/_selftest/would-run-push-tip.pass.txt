@@ -1,0 +1,2 @@
+Would run:
+  git push origin HEAD:refs/heads/sindri/inst-1/1/work

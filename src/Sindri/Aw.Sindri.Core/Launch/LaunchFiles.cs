@@ -49,4 +49,12 @@ public static class LaunchFiles
     /// <param name="launch">The launch.</param>
     /// <returns>'&lt;id&gt;.nudged'.</returns>
     public static string NudgedName(LaunchId launch) => launch.Value + NudgedSuffix;
+
+    /// <summary>The end of the name of the file a skill launch's prompt hook touches when a prompt starts a turn (a background task's notice is a prompt too).</summary>
+    public const string PromptedSuffix = ".prompted";
+
+    /// <summary>The file the prompt hook touches for <paramref name="launch"/>.</summary>
+    /// <param name="launch">The launch.</param>
+    /// <returns>'&lt;id&gt;.prompted'.</returns>
+    public static string PromptedName(LaunchId launch) => launch.Value + PromptedSuffix;
 }

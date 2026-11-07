@@ -1,0 +1,4 @@
+autoplan  manifest sha256:9f2c4be1a07d58a3c1e6b4d9027f83aa5c61d0e4b7f29a8c3d5e1f60b2a47c98
+step failed
+result: /home/u/.agentic-workflow/sindri-app/workflow/runs/WFI-1/review/LCH-2/.sindri-out/result-LCH-2.json
+SND-SKILL-003 autoplan said 'MAYBE', which its block.yaml doesn't map

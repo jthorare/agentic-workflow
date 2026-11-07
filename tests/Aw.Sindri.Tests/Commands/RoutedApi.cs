@@ -23,6 +23,7 @@ internal sealed class RoutedApi : HttpMessageHandler
         ["/sindri/status"] = (HttpStatusCode.OK, Encoding.UTF8.GetString(AwJson.Serialize(StatusAtHead7, SliceHarness.Json))),   // every view read asks for the head first
     };
     private readonly Dictionary<string, (HttpStatusCode Status, string Body)> _posts = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Dictionary<long, string>> _pages = new(StringComparer.Ordinal);
     private long? _cursor;
     public List<Call> Calls { get; } = [];
 
@@ -46,6 +47,13 @@ internal sealed class RoutedApi : HttpMessageHandler
         return this;
     }
 
+    /// <summary>Answers a GET of <paramref name="path"/> by its 'after' query value (absent = 0), one page each, as a paged read of the ledger does; an 'after' no page names falls back to the plain route.</summary>
+    public RoutedApi OnPages<T>(string path, IEnumerable<(long After, T Page)> pages)
+    {
+        _pages[path] = pages.ToDictionary(p => p.After, p => Encoding.UTF8.GetString(AwJson.Serialize(p.Page, SliceHarness.Json)));
+        return this;
+    }
+
     public RoutedApi OnRaw(string path, HttpStatusCode status, string body)
     {
         _routes[path] = (status, body);
@@ -56,6 +64,12 @@ internal sealed class RoutedApi : HttpMessageHandler
     private static Dictionary<string, string> Sent(HttpRequestMessage request) =>
         request.Headers.Concat(request.Content?.Headers ?? Enumerable.Empty<KeyValuePair<string, IEnumerable<string>>>())
             .ToDictionary(h => h.Key, h => string.Join(',', h.Value), StringComparer.OrdinalIgnoreCase);
+
+    private string? PageFor(HttpMethod method, Uri uri) =>
+        method == HttpMethod.Get && _pages.TryGetValue(uri.AbsolutePath, out var pages) && pages.TryGetValue(AfterOf(uri.Query), out var page) ? page : null;
+
+    private static long AfterOf(string query) =>
+        query.TrimStart('?').Split('&').Select(static p => p.Split('=', 2)).Where(static p => p is ["after", _]).Select(static p => long.Parse(p[1], System.Globalization.CultureInfo.InvariantCulture)).FirstOrDefault();
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
@@ -68,6 +82,11 @@ internal sealed class RoutedApi : HttpMessageHandler
             {
                 Content = new StringContent("""{"type":"about:blank","title":"SND-API-011","status":503,"detail":"views are behind"}""", Encoding.UTF8, "application/problem+json"),
             };
+        }
+
+        if (PageFor(request.Method, uri) is { } page)
+        {
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(page, Encoding.UTF8, "application/json") };
         }
 
         var (status, text) = request.Method == HttpMethod.Post && _posts.TryGetValue(uri.AbsolutePath, out var posted) ? posted

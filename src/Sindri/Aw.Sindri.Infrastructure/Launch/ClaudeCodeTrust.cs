@@ -4,6 +4,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
+using Aw.Kernel.Data;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
 
@@ -235,7 +236,7 @@ internal sealed class ClaudeCodeTrust(string configPath) : IAgentTrust
 
     /// <summary>The file's mode, kept across the rewrite; a new file is owner-only (it holds the user's login state).</summary>
     private static UnixFileMode ModeOf(string path) =>
-        !OperatingSystem.IsWindows() && File.Exists(path) ? File.GetUnixFileMode(path) : UnixFileMode.UserRead | UnixFileMode.UserWrite;
+        FileModes.TryRead(path) ?? (UnixFileMode.UserRead | UnixFileMode.UserWrite);
 
     private async ValueTask<FileStream?> Lock(CancellationToken cancellationToken)
     {

@@ -41,6 +41,7 @@ internal static class PlanMounts
         AddInventory(m, c);
         AddLogin(m, c, inSindriHome: true);   // why: a separate-login agent home lives in Sindri's home, which AddInventory just emptied; it goes on top of the mask
         AddLaunchFiles(m, c);
+        AddSkillState(m, c);
         AddWritable(m, c);
         m.AddRange(c.OwnerDenied().Select(d => new PlanMount(d.Path, PlanMountKind.Deny, Reason: d.Reason)));
         return m;
@@ -182,6 +183,32 @@ internal static class PlanMounts
         m.Add(new PlanMount(c.RunArea + "/githooks", PlanMountKind.ReadOnly, Reason: "the refusing pre-push and the repo's own hooks"));
         m.Add(new PlanMount(c.RunArea + "/gitconfig.empty", PlanMountKind.ReadOnly, Reason: "an empty global git config"));
         m.Add(new PlanMount(c.RunArea + "/sandbox-plan.json", PlanMountKind.ReadOnly, Reason: "the value-free summary 'sandbox explain' reads"));
+    }
+
+    // A skill block's AW_DIR is the repo's folder of skill results and plans, and bugfix-state keeps its own folder for the same repo beside the others (S-0 item 7); both are made, never skipped.
+    private static void AddSkillState(List<PlanMount> m, PlanContext c)
+    {
+        if (c.Request.SkillTrialDirectory is { } trial)
+        {
+            Beneath(m, new PlanMount(trial.TrimEnd('/'), PlanMountKind.ReadOnly, Reason: "the trial's --skills folder"));   // why: the home is an empty tmpfs, so a folder under it is invisible until it is mounted
+        }
+
+        if (c.SkillDirectory is not { } directory)
+        {
+            return;
+        }
+
+        Beneath(m, new PlanMount(directory, PlanMountKind.ReadWrite, Reason: "the skill's results and plans for this repo ($AW_DIR)"));
+        Beneath(m, new PlanMount($"{c.StateDir}/bugfix/{directory[(directory.LastIndexOf('/') + 1)..]}", PlanMountKind.ReadWrite, Reason: "bugfix-state's own folder for this repo"));
+    }
+
+    // A later mount wins, so a bind appended last would bring back whatever an earlier mask or deny hides inside it (a Sindri home under AW_DIR, found in F-1's
+    // hand test). It goes above the last mount over it and below the first one inside it.
+    private static void Beneath(List<PlanMount> m, PlanMount mount)
+    {
+        var above = m.FindLastIndex(x => string.Equals(x.Path, "/", StringComparison.Ordinal) || string.Equals(x.Path, mount.Path, StringComparison.Ordinal) || mount.Path.StartsWith(x.Path + "/", StringComparison.Ordinal)) + 1;
+        var inside = m.FindIndex(above, x => x.Path.StartsWith(mount.Path + "/", StringComparison.Ordinal));
+        m.Insert(inside < 0 ? m.Count : inside, mount);
     }
 
     private static void AddWritable(List<PlanMount> m, PlanContext c)

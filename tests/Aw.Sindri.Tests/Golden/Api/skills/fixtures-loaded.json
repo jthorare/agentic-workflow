@@ -1,0 +1,81 @@
+{
+  "blocks": [
+    {
+      "id": "office-hours",
+      "skill": "officeHours",
+      "descriptor": "step.skill.office-hours",
+      "version": 955718892,
+      "sentence": "Shapes an idea into a plan folder with requirements and tasks.",
+      "inputs": [
+        {
+          "key": "idea",
+          "type": "text",
+          "label": "What do you want built?",
+          "required": true
+        }
+      ],
+      "outputs": [
+        "fact:officeHoursFeatureDir"
+      ],
+      "outcomes": [
+        "done"
+      ],
+      "pushes": false,
+      "skillSha": "234a44b243718bf8afeb7b76154c5396ac0e4431accfc181bd52faa24c23449b",
+      "path": "<skills>/officeHours/block.yaml"
+    },
+    {
+      "id": "office-hours-revise",
+      "skill": "officeHours",
+      "descriptor": "step.skill.office-hours-revise",
+      "version": 46452800,
+      "sentence": "Revises a plan folder in place from a review report.",
+      "inputs": [
+        {
+          "key": "plan",
+          "type": "path",
+          "label": "Plan folder",
+          "required": true
+        },
+        {
+          "key": "review",
+          "type": "path",
+          "label": "Review report",
+          "required": true
+        }
+      ],
+      "outputs": [],
+      "outcomes": [
+        "done"
+      ],
+      "pushes": false,
+      "skillSha": "234a44b243718bf8afeb7b76154c5396ac0e4431accfc181bd52faa24c23449b",
+      "path": "<skills>/officeHours/block.yaml"
+    },
+    {
+      "id": "review",
+      "skill": "review",
+      "descriptor": "step.skill.review",
+      "version": 104696442,
+      "sentence": "Reviews a pull request with domain reviewers and says pass or needs changes.",
+      "inputs": [
+        {
+          "key": "pr",
+          "type": "text",
+          "label": "Pull request (number or link)",
+          "required": true
+        }
+      ],
+      "outputs": [
+        "fact:reviewFindings"
+      ],
+      "outcomes": [
+        "pass",
+        "needsChanges"
+      ],
+      "pushes": false,
+      "skillSha": "43fa2d1935ce12f4c253b1656a5b5a49be110f54a619979ef7f4a0fecde50667",
+      "path": "<skills>/review/block.yaml"
+    }
+  ]
+}

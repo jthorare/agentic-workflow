@@ -51,6 +51,14 @@ public sealed class TempGitRepo : IDisposable
         Assert.True(exit == 0, $"git {string.Join(' ', args)}: {error}");
     }
 
+    /// <summary>Runs git in <paramref name="directory"/>, asserts it exits 0 and returns its trimmed output.</summary>
+    public static async Task<string> GitOut(string directory, params string[] args)
+    {
+        var (exit, output, error) = await RunIn(directory, args);
+        Assert.True(exit == 0, $"git {string.Join(' ', args)}: {error}");
+        return output;
+    }
+
     private static async Task<(int Exit, string Output, string Error)> RunIn(string directory, string[] args)
     {
         var start = new ProcessStartInfo("git", ["-C", directory, .. args]) { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };

@@ -149,7 +149,14 @@ public sealed class RecipeRegistryReader(IRecipeStore store, IRecipeApprovals ap
     /// <param name="recipe">The recipe about to be registered.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>The context.</returns>
-    public async ValueTask<Result<ValidationContext>> Validation(Recipe recipe, CancellationToken cancellationToken)
+    public ValueTask<Result<ValidationContext>> Validation(Recipe recipe, CancellationToken cancellationToken) => Validation(recipe, against: null, cancellationToken);
+
+    /// <summary>The same view, with the blocks checked against <paramref name="against"/> instead of this build's catalog.</summary>
+    /// <param name="recipe">The recipe about to be registered.</param>
+    /// <param name="against">The catalog to check the blocks against; null for this build's.</param>
+    /// <param name="cancellationToken">Cancels the reads.</param>
+    /// <returns>The context.</returns>
+    public async ValueTask<Result<ValidationContext>> Validation(Recipe recipe, BlockCatalog? against, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(recipe);
         var facts = await profile.Current(cancellationToken).ConfigureAwait(false);
@@ -160,7 +167,7 @@ public sealed class RecipeRegistryReader(IRecipeStore store, IRecipeApprovals ap
             : await Recipe(named.Hash, cancellationToken).ConfigureAwait(false);
         return baseRecipe.IsError
             ? baseRecipe.Error
-            : new ValidationContext(catalog, facts.Value, children.Value, baseRecipe.Value) { Registry = view.Value };
+            : new ValidationContext(against ?? catalog, facts.Value, children.Value, baseRecipe.Value) { Registry = view.Value };
     }
 
     /// <summary>The recipe registered under <paramref name="hash"/>, read back (a generated recipe's base).</summary>

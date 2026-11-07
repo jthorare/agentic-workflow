@@ -167,6 +167,9 @@ public static class EventTypes
     /// <summary>An engine launch found the session cap full and waits for a free slot (sandbox spec §6); 'launch.outcome' ends the wait.</summary>
     public const string LaunchWaiting = "launch.waiting";
 
+    /// <summary>A skill block's session ended a turn without finishing: it asks the owner a question, left no result or an unreadable one (skill flows spec §7). One per turn end.</summary>
+    public const string LaunchOwnerWaiting = "launch.owner-waiting";
+
     /// <summary>The model an engine launch was given, and how it was chosen (model-pick spec §6).</summary>
     public const string ModelPicked = "model.picked";
 

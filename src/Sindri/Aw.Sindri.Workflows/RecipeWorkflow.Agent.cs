@@ -93,7 +93,10 @@ internal sealed partial class RecipeWorkflow
         var resumed = string.Equals(_suspendedRun, open.Token.Value, StringComparison.Ordinal);
         _suspendedRun = null;
         using var cancel = new CancellationTokenSource();
-        var watching = Workflow.ExecuteActivityAsync((AgentStepActivities a) => a.WatchAsync(launch), AgentOptions(_watchCall, open, state, cancel.Token));
+        var skill = running.Launched?.Skill;   // why: the activity lambda is an expression tree, which takes no '?.'
+        var watching = skill is not null
+            ? Workflow.ExecuteActivityAsync((AgentStepActivities a) => a.WatchSkillAsync(skill), AgentOptions(_watchCall, open, state, cancel.Token))   // a skill block's result file is read at each turn end (skill flows spec §3.3)
+            : Workflow.ExecuteActivityAsync((AgentStepActivities a) => a.WatchAsync(launch), AgentOptions(_watchCall, open, state, cancel.Token));
         var (applied, end) = await AwaitAgent(instance, open, new Awaited(watching, cancel, Reports: true), context).ConfigureAwait(true);
         if (end == AgentEnd.Over)
         {
@@ -108,6 +111,11 @@ internal sealed partial class RecipeWorkflow
         }
 
         var ended = await watching.ConfigureAwait(true);
+        if (ended.Skill is not null || ended.SkillFailure is not null)
+        {
+            return await SkillEnded(applied, running, step, ended, context).ConfigureAwait(true);
+        }
+
         return await Ended(applied, running, step, resumed ? ended : ended with { FoundEnded = false }, context).ConfigureAwait(true);   // a session found ended means 'ended during the suspension' only for a watch that resumed one
     }
 

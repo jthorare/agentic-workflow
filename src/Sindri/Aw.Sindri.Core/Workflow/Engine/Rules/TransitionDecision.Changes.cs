@@ -57,6 +57,7 @@ public static partial class TransitionDecision
                     Tokens = Trigger is StepCompleted { Via: StepRuntime.Agent } agent ? agent.Tokens : null,
                     Agent = Trigger is StepCompleted { Via: StepRuntime.Agent } ran ? ran.Agent : null,
                     Model = Trigger is StepCompleted { Via: StepRuntime.Agent } asked ? asked.Model : null,
+                    ResultSha256 = Trigger is StepCompleted { Via: StepRuntime.Agent } skill ? skill.ResultSha256 : null,
                     ImageCount = (Trigger as StepCompleted)?.ImageCount,
                     ImagesDropped = (Trigger as StepCompleted)?.ImagesDropped,
                 };

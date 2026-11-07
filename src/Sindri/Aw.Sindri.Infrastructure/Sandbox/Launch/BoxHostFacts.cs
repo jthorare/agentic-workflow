@@ -18,7 +18,25 @@ internal static class BoxHostFacts
         ArgumentNullException.ThrowIfNull(machine);
         var home = environment("HOME") is { Length: > 0 } configured ? configured : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var state = StateDir(environment, home);
-        return new SandboxHostFacts(home, state, sindriHome, CsBinDir(state), OwnUid.Read(), machine.RamBytes, machine.Cores, IsMacOs: OperatingSystem.IsMacOS(), ProcessEnvironment(), OtherHomes(Path.GetDirectoryName(home) ?? "/home", home), BinaryLinks: AgentBinaryLinks(environment("PATH") ?? string.Empty));
+        return new SandboxHostFacts(home, state, sindriHome, CsBinDir(state), OwnUid.Read(), machine.RamBytes, machine.Cores, IsMacOs: OperatingSystem.IsMacOS(), ProcessEnvironment(), OtherHomes(Path.GetDirectoryName(home) ?? "/home", home), BinaryLinks: AgentBinaryLinks(environment("PATH") ?? string.Empty))
+        {
+            DirectoryEntries = EntriesOf,
+        };
+    }
+
+    /// <summary>Lists a directory's entry names, sorted; empty when it is missing or can't be read.</summary>
+    /// <param name="directory">The directory.</param>
+    /// <returns>The names.</returns>
+    internal static IReadOnlyList<string> EntriesOf(string directory)
+    {
+        try
+        {
+            return [.. Directory.EnumerateFileSystemEntries(directory).Select(e => Path.GetFileName(e)).Order(StringComparer.Ordinal)];
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return [];
+        }
     }
 
     /// <summary>Gets AW_STATE_DIR, or ~/.agentic-workflow.</summary>

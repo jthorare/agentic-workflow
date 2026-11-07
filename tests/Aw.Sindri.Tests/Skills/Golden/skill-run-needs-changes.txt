@@ -1,0 +1,4 @@
+review  manifest sha256:9f2c4be1a07d58a3c1e6b4d9027f83aa5c61d0e4b7f29a8c3d5e1f60b2a47c98
+outcome: needsChanges
+fact:reviewFindings = /home/u/.agentic-workflow/acme-api/reviews/42.json
+result: /home/u/.agentic-workflow/sindri-app/workflow/runs/WFI-1/review/LCH-1/.sindri-out/result-LCH-1.json

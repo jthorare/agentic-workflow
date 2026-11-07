@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Engine;
 
 namespace Aw.Sindri.Core.Launch;
@@ -27,9 +28,29 @@ public static class StepEnvironment
         }
 
         return sindriHome is not null
-            ? $"{sindriHome.TrimEnd('/')}/workflow/runs/{WorkflowInstanceId.Of(instance).Value}/{step.Ref.State}/{request.Launch.Value}"
+            ? RunDirectoryAt(WorkflowInstanceId.Of(instance), step.Ref.State, request.Launch, sindriHome)
             : step.Policy?.WritablePath ?? request.Worktree;
     }
+
+    /// <summary>The branch a launch's PR head is fetched to: set for an unattended skill Step with a 'pr' input, null for any other launch. The one condition the fetch and the sandbox environment share.</summary>
+    /// <param name="request">The launch.</param>
+    /// <returns>The branch, or null.</returns>
+    public static string? PrBranchOf(LaunchRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return request is { Attended: false, Skill: { } skill, Instance: { } instance, Run: { } run } && skill.Inputs.ContainsKey(PrReference.InputKey)
+            ? PrReference.BranchOf(WorkflowInstanceId.Of(instance), run.Number)
+            : null;
+    }
+
+    /// <summary>The same directory from its parts, for the caller that has no request yet (a skill launch's seed names it).</summary>
+    /// <param name="workflow">The instance.</param>
+    /// <param name="state">The Step's state name.</param>
+    /// <param name="launch">The launch.</param>
+    /// <param name="sindriHome">Sindri's own home.</param>
+    /// <returns>The absolute path.</returns>
+    public static string RunDirectoryAt(WorkflowInstanceId workflow, string state, LaunchId launch, string sindriHome)
+        => $"{sindriHome.TrimEnd('/')}/workflow/runs/{workflow.Value}/{state}/{launch.Value}";
 
     /// <summary>The variables for <paramref name="request"/>: the instance for an unattended Step, and its run directory when it has one (<see cref="RunDirectoryOf"/>), none for a human open.</summary>
     /// <param name="request">The launch.</param>
@@ -45,6 +66,13 @@ public static class StepEnvironment
             if (RunDirectoryOf(request, sindriHome) is { } directory)
             {
                 env[RunDirectory] = directory;
+                if (request.Skill is { } skill)
+                {
+                    foreach (var (name, value) in SkillLaunchEnv.ResultOnly(skill.Skill, request.Launch, directory))
+                    {
+                        env[name] = value;   // why: the repo slug (AW_DIR) is the sandbox step's to compute; a launch with no plan gets the result variables alone
+                    }
+                }
             }
         }
 

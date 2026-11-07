@@ -25,4 +25,8 @@ public sealed record SandboxHostFacts(
     IReadOnlyDictionary<string, string> Environment,
     IReadOnlyList<string> OtherHomes,
     IReadOnlyList<string>? InstalledHooks = null,
-    IReadOnlyDictionary<string, string>? BinaryLinks = null);
+    IReadOnlyDictionary<string, string>? BinaryLinks = null)
+{
+    /// <summary>Null, or the host's listing of a directory (the names of its entries, empty when it can't be read), which the builder walks to keep a Step's writable paths out of a denied Sindri home; null keeps every denied path denied whole.</summary>
+    public Func<string, IReadOnlyList<string>>? DirectoryEntries { get; init; }
+}
