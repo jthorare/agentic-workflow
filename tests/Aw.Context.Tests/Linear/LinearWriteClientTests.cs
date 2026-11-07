@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Net;
+using System.Net.Sockets;
 using System.Text.Json.Nodes;
 using Aw.Context.Core.Linear;
 using Aw.Context.Core.Sources;
@@ -227,9 +229,10 @@ public sealed class LinearWriteClientTests : IAsyncLifetime
     [Fact]
     public async Task A_linear_nobody_listens_at_is_010_so_nothing_was_changed()
     {
-        await using var gone = await FakeLinear.Start();
-        var url = gone.Url;
-        await gone.DisposeAsync();
+        // why: a socket bound without Listen() keeps the port ours for the whole test, so a call to it is refused; a freed port can be taken by another test's fake in between (#2239)
+        using var bound = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        bound.Bind(new IPEndPoint(IPAddress.Loopback, 0));
+        var url = new Uri(string.Create(CultureInfo.InvariantCulture, $"http://127.0.0.1:{((IPEndPoint)bound.LocalEndPoint!).Port}/graphql"));
 
         var result = await _client.CreateIssue(SettingsFor(url, WritePointer), new LinearIssueDraft(ExternalId.From("team"), "x"), NewClientId(), Ct);
 
