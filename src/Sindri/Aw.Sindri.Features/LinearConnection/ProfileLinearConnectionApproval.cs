@@ -13,8 +13,9 @@ internal sealed class ProfileLinearConnectionApproval(IProfileSource live, Profi
 {
     private const string Linear = "context.sources.linear";
 
-    public async ValueTask<Result<bool>> Settle(CancellationToken cancellationToken)
+    public async ValueTask<Result<bool>> Settle(LinearConnectionChange change, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(change);
         var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
         return loaded.IsError
             ? loaded.Error

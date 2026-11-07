@@ -29,7 +29,7 @@ internal sealed class RemoveLinearWriteKeyService(ILinearConnectionStore store, 
         }
 
         _ = await log.ClearWrite(cancellationToken).ConfigureAwait(false);   // why: the pointer is gone, so a check of it must not outlive it
-        var approved = await approval.Settle(cancellationToken).ConfigureAwait(false);
+        var approved = await approval.Settle(LinearConnectionChange.WriteRemoved(), cancellationToken).ConfigureAwait(false);
         var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
         if (approved.IsError || loaded.IsError)
         {
