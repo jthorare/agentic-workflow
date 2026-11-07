@@ -5,24 +5,43 @@
              xmlns:rows="using:Aw.Sindri.Ui.Views.Queue"
              xmlns:controls="using:Aw.Sindri.Ui.Views.Controls"
              xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
+             xmlns:linear="using:Aw.Sindri.Ui.Views.Linear"
              x:Class="Aw.Sindri.Ui.Views.Queue.QueuePage"
              x:DataType="shell:ShellViewModel">
   <!-- The Queue page (UI spec §4.5, queue.html): the API's groups in its order, each a collapsible section with its
        count; empty groups hidden (a filtered one shows its own sentence, E-18); the view's own sentence when every group
-       is empty; skeleton rows on the first load only (§4.1). Create item (C) sits at the right of the title. -->
+       is empty; skeleton rows on the first load only (§4.1). Create item (C) sits at the right of the title. Under the title the Sindri / Linear switch
+       (Linear hub spec §3; the Add project sheet's underline tabs) picks this queue or the Linear view; the Create button names the active view's C. -->
   <StackPanel Spacing="{StaticResource Size.PanelGap}">
     <Grid ColumnDefinitions="Auto,*,Auto">
       <TextBlock Classes="page-title" Text="{Binding Text.Work}" AutomationProperties.Name="{Binding Text.Work}" VerticalAlignment="Center" />
       <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-        <Button x:Name="CreateButton" Classes="command-control" Click="OnCreate" AutomationProperties.Name="{Binding Text.Items.CreateItem}">
+        <Button x:Name="CreateButton" Classes="command-control" Click="OnCreate" IsEnabled="{Binding !Linear.IsLinear}" AutomationProperties.Name="{Binding Linear.CreateText}">
           <StackPanel Orientation="Horizontal" Spacing="6">
-            <TextBlock Classes="button" Text="{Binding Text.Items.CreateItem}" VerticalAlignment="Center" />
+            <TextBlock Classes="button" Text="{Binding Linear.CreateText}" VerticalAlignment="Center" />
             <Border Classes="kbd" VerticalAlignment="Center"><TextBlock Classes="kbd" Text="C" /></Border>
           </StackPanel>
         </Button>
       </StackPanel>
     </Grid>
 
+    <Border BorderThickness="0,0,0,1" BorderBrush="{DynamicResource Brush.Hairline}">
+      <StackPanel x:Name="WorkSwitch" Orientation="Horizontal" Spacing="16" KeyDown="OnSwitchKey" AutomationProperties.Name="{Binding Linear.SwitchName}"
+                  AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Tab">
+        <Border Classes="add-tab" Classes.on="{Binding Linear.IsSindri}">
+          <ToggleButton x:Name="WorkTabSindri" Classes="add-tab-button" Content="{Binding Linear.SindriTabText}" IsChecked="{Binding Linear.IsSindri, Mode=OneWay}" Click="OnSindriTab"
+                        AutomationProperties.Name="{Binding Linear.SindriTabText}" AutomationProperties.ControlTypeOverride="TabItem" />
+        </Border>
+        <Border Classes="add-tab" Classes.on="{Binding Linear.IsLinear}">
+          <ToggleButton x:Name="WorkTabLinear" Classes="add-tab-button" Content="{Binding Linear.LinearTabText}" IsChecked="{Binding Linear.IsLinear, Mode=OneWay}" Click="OnLinearTab"
+                        AutomationProperties.Name="{Binding Linear.LinearTabName}" AutomationProperties.ControlTypeOverride="TabItem" />
+        </Border>
+      </StackPanel>
+    </Border>
+
+    <linear:LinearWorkView x:Name="LinearWork" DataContext="{Binding Linear}" IsVisible="{Binding IsLinear}" />
+
+    <StackPanel x:Name="SindriWork" Spacing="{StaticResource Size.PanelGap}" IsVisible="{Binding !Linear.IsLinear}">
     <!-- F3 spec work §2: the toolbar: All and Running with counts, the repo chip, then the text filter below. -->
     <StackPanel x:Name="QueueToolbar" Orientation="Horizontal" Spacing="8">
       <Button x:Name="SegmentAll" Classes="segment" Classes.selected="{Binding !Queue.IsRunningSegment}" Content="{Binding Queue.AllSegment}" Click="OnSegmentAll" AutomationProperties.Name="{Binding Queue.AllSegment}" />
@@ -125,5 +144,6 @@
       </StackPanel>
     </Border>
     <TextBlock x:Name="QueueFooter" Classes="caption subtle" Text="{Binding Queue.FooterText}" AutomationProperties.Name="{Binding Queue.FooterText}" />
+    </StackPanel>
   </StackPanel>
 </UserControl>

@@ -60,6 +60,42 @@ internal sealed partial class LinearWorkViewModel : ObservableObject, IDisposabl
 
     /// <summary>The switch's accessible name.</summary>
     public string SwitchName => Labels.WorkViewSwitch;
+
+    /// <summary>The strip's button that moves the marker.</summary>
+    public string DismissText => Labels.LinearDismiss;
+
+    /// <summary>The strip's line when the changes cannot be read.</summary>
+    public string StripFailedText => Labels.LinearStripFailed;
+
+    /// <summary>The strip's button that reads them again.</summary>
+    public string RetryText => Labels.LinearStripRetry;
+
+    /// <summary>The Connect Linear card's title.</summary>
+    public string ConnectTitle => Labels.LinearConnectTitle;
+
+    /// <summary>The Connect Linear card's sentence.</summary>
+    public string ConnectBody => Labels.LinearConnectBody;
+
+    /// <summary>The Connect Linear card's button.</summary>
+    public string ConnectText => Labels.LinearConnect;
+
+    /// <summary>The box when the filters match nothing.</summary>
+    public string NoMatchText => Labels.LinearNoMatch;
+
+    /// <summary>The button that turns every filter off.</summary>
+    public string ClearFiltersText => Labels.LinearClearFilters;
+
+    /// <summary>The line when the API cannot be reached.</summary>
+    public string UnreachableText => Labels.LinearUnreachable;
+
+    /// <summary>The button that loads the next page.</summary>
+    public string ShowMoreText => Labels.LinearShowMore;
+
+    /// <summary>The list's accessible name.</summary>
+    public string ListName => Labels.LinearListName;
+
+    /// <summary>The filter bar's accessible name.</summary>
+    public string FilterBarName => Labels.LinearFilterBar;
 #pragma warning restore CA1822, MA0041
 
     /// <summary>The Linear tab's text: "Linear · 3 new" when the strip has changes.</summary>
@@ -166,11 +202,14 @@ internal sealed partial class LinearWorkViewModel : ObservableObject, IDisposabl
     {
         var was = IsActive;
         IsActive = shown;
-        if (shown && !was && _url is { } url)
+        if (shown && !was)
         {
             _shown?.Dispose();
-            _shown = new CancellationTokenSource();
-            CatchUp = Reading = Observed(CatchUpRead(url, _shown.Token));
+            _shown = new CancellationTokenSource();   // the reads this showing starts (a key, a pick) end when Work is left
+            if (_url is { } url)
+            {
+                CatchUp = Reading = Observed(CatchUpRead(url, _shown.Token));
+            }
         }
         else if (!shown)
         {

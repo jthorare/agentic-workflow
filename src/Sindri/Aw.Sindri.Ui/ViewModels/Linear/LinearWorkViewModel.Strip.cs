@@ -17,6 +17,9 @@ internal sealed partial class LinearWorkViewModel
     /// <summary>How many changes the strip holds (the tab carries it).</summary>
     public int NewCount => _since?.Count ?? 0;
 
+    /// <summary>True when the strip holds changes (Dismiss shows).</summary>
+    public bool HasNew => NewCount > 0;
+
     /// <summary>True when the strip shows: on the Linear view, with changes or with a failed read.</summary>
     public bool ShowsStrip => IsLinear && (NewCount > 0 || StripFailed);
 
@@ -84,7 +87,7 @@ internal sealed partial class LinearWorkViewModel
 
     private void Notify()
     {
-        foreach (var name in new[] { nameof(NewCount), nameof(ShowsStrip), nameof(StripName), nameof(StripFailed), nameof(LinearTabText), nameof(LinearTabName) })
+        foreach (var name in new[] { nameof(NewCount), nameof(HasNew), nameof(ShowsStrip), nameof(StripName), nameof(StripFailed), nameof(LinearTabText), nameof(LinearTabName) })
         {
             OnChanged(name);
         }

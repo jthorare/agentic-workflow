@@ -5,27 +5,8 @@
              x:DataType="pvm:ProjectAddViewModel">
   <!-- The Add project sheet (projects page spec §3.2) inside the shell's sheet, whose title says "Add project": two underline tabs, From Linear (the default) and By hand. From Linear is a search box, then one row per project (name, "Lead · state · open issues" and an Attach button) and a footnote; By hand is
        the name (Save waits for one), the state, the links one per line, the notes and the target date; Save shows "Saving…" and disables itself, and its error shows under
-       the button with every field kept. The tabs are toggle buttons so a screen reader hears which one is on. -->
+       the button with every field kept. The tabs are toggle buttons so a screen reader hears which one is on; their underline look is QueueStyles.axaml's (the Work page's switch wears it too). -->
   <UserControl.Styles>
-    <Style Selector="Border.add-tab">
-      <Setter Property="BorderThickness" Value="0,0,0,2" />
-      <Setter Property="BorderBrush" Value="Transparent" />
-    </Style>
-    <Style Selector="Border.add-tab.on">
-      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
-    </Style>
-    <Style Selector="ToggleButton.add-tab-button">
-      <Setter Property="Background" Value="Transparent" />
-      <Setter Property="BorderThickness" Value="0" />
-    </Style>
-    <Style Selector="ToggleButton.add-tab-button /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
-    </Style>
-    <!-- Fluent fills a checked or hovered toggle; an underline tab keeps its ground and says which one is on by its ink and the underline. -->
-    <Style Selector="ToggleButton.add-tab-button:checked /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.add-tab-button:pointerover /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.add-tab-button:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Background" Value="Transparent" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-    </Style>
     <Style Selector="Border.add-row">
       <Setter Property="BorderThickness" Value="0,1,0,0" />
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
