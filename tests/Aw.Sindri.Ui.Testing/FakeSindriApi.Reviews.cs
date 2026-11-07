@@ -42,10 +42,34 @@ internal sealed partial class FakeSindriApi
         return Task.FromResult(Answer<ReviewLoginSaved>(api, ReviewRoutes.Login, ReviewLoginAnswer));
     }
 
-    public Task<Result<LibraryView>> Library(Uri api, CancellationToken cancellationToken)
+    private readonly Queue<TaskCompletionSource> _libraryGates = new();
+
+    /// <summary>Makes the next library read wait for <paramref name="gate"/> (one gate per read, in call order); the read answers what <see cref="LibraryAnswer"/> was when it started.</summary>
+    /// <param name="gate">What the read waits for.</param>
+    public void GateNextLibraryRead(TaskCompletionSource gate)
+    {
+        lock (_gate)
+        {
+            _libraryGates.Enqueue(gate);
+        }
+    }
+
+    public async Task<Result<LibraryView>> Library(Uri api, CancellationToken cancellationToken)
     {
         _ = Interlocked.Increment(ref _libraryCalls);
-        return Task.FromResult(Answer<LibraryView>(api, ReviewRoutes.Library, LibraryAnswer));
+        var answer = LibraryAnswer;
+        TaskCompletionSource? gate;
+        lock (_gate)
+        {
+            _ = _libraryGates.TryDequeue(out gate);
+        }
+
+        if (gate is not null)
+        {
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return Answer<LibraryView>(api, ReviewRoutes.Library, answer);
     }
 
     public async Task<Result<ReviewList>> Reviews(Uri api, CancellationToken cancellationToken)

@@ -56,7 +56,7 @@ internal sealed class LibraryRootFormViewModel : ObservableObject
         set
         {
             Set(ref field, value);
-            NameError = string.Empty;
+            (NameError, FormError) = (string.Empty, string.Empty);
             OnChanged(nameof(CanSave));
         }
     } = string.Empty;
@@ -68,7 +68,7 @@ internal sealed class LibraryRootFormViewModel : ObservableObject
         set
         {
             Set(ref field, value);
-            PathError = string.Empty;
+            (PathError, FormError) = (string.Empty, string.Empty);
             OnChanged(nameof(CanSave));
         }
     } = string.Empty;
@@ -80,7 +80,7 @@ internal sealed class LibraryRootFormViewModel : ObservableObject
         set
         {
             Set(ref field, value);
-            DenyError = string.Empty;
+            (DenyError, FormError) = (string.Empty, string.Empty);
         }
     } = string.Empty;
 
@@ -151,12 +151,16 @@ internal sealed class LibraryRootFormViewModel : ObservableObject
         {
             Set(ref field, value);
             OnChanged(nameof(CanSave));
+            OnChanged(nameof(CanCancel));
             OnChanged(nameof(SaveText));
         }
     }
 
     /// <summary>True when Save and approve can be pressed: a name and a folder, and no save in flight.</summary>
     public bool CanSave => !IsSending && Name.Trim().Length > 0 && Path.Trim().Length > 0;
+
+    /// <summary>True when Cancel can be pressed: not while the save is on its way, so its answer can't land on a closed or new form.</summary>
+    public bool CanCancel => !IsSending;
 
     /// <summary>The save button's words.</summary>
     public string SaveText => IsSending ? Labels.LibraryFoldersSaving : Labels.LibraryFoldersSave;
@@ -171,6 +175,11 @@ internal sealed class LibraryRootFormViewModel : ObservableObject
     /// <summary>Closes the form and forgets what was typed.</summary>
     internal void Cancel()
     {
+        if (IsSending)
+        {
+            return;
+        }
+
         IsOpen = false;
         Clear();
     }
@@ -249,5 +258,5 @@ internal sealed class LibraryRootFormViewModel : ObservableObject
     }
 
     private static string? FieldOf(Error error) =>
-        error.Extensions?.Where(e => string.Equals(e.Key, "field", StringComparison.Ordinal)).Select(e => e.Value.GetString()).FirstOrDefault();
+        error.Extensions?.Where(e => string.Equals(e.Key, "field", StringComparison.Ordinal)).Select(e => e.Value.ValueKind == System.Text.Json.JsonValueKind.String ? e.Value.GetString() : null).FirstOrDefault();
 }

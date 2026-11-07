@@ -16,6 +16,7 @@ internal sealed class LibraryRootsViewModel : ObservableObject
     private readonly ISindriApi _api;
     private readonly TimeProvider _clock;
     private bool _loaded;
+    private int _generation;
 
     /// <summary>The card over the API and the folder chooser.</summary>
     /// <param name="url">The API's base URL, or null while it isn't known.</param>
@@ -39,7 +40,7 @@ internal sealed class LibraryRootsViewModel : ObservableObject
     public string ReadingText => Labels.LibraryFoldersReading;
 
     /// <summary>The words when there are no folders.</summary>
-    public string EmptyText => Labels.LibraryFoldersEmpty;
+    public string EmptyText => CanAdd ? Labels.LibraryFoldersEmpty : Labels.LibraryFoldersNone;
 
     /// <summary>The button that opens the form.</summary>
     public string AddText => Labels.LibraryFoldersAdd;
@@ -58,7 +59,7 @@ internal sealed class LibraryRootsViewModel : ObservableObject
     public IReadOnlyList<LibraryFolderViewModel> Rows { get; private set => Set(ref field, value); } = [];
 
     /// <summary>True until the first answer.</summary>
-    public bool IsLoading => !_loaded && Error.Length == 0;
+    public bool IsLoading => !_loaded && ReadError.Length == 0;
 
     /// <summary>True when the first answer holds no folders (an agent session's).</summary>
     public bool IsEmpty => _loaded && Rows.Count == 0;
@@ -70,7 +71,18 @@ internal sealed class LibraryRootsViewModel : ObservableObject
     public bool CanAdd => HasRows && !Form.IsOpen;
 
     /// <summary>True while a remove or a turn-off is on its way, so a second press does nothing.</summary>
-    public bool IsBusy { get; private set => Set(ref field, value); }
+    public bool IsBusy
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            foreach (var row in Rows)
+            {
+                row.SetBusy(value);
+            }
+        }
+    }
 
     /// <summary>The line after a change that waits for the profile approval; empty otherwise.</summary>
     public string Note
@@ -86,17 +98,30 @@ internal sealed class LibraryRootsViewModel : ObservableObject
     /// <summary>True when a change waits for the approval.</summary>
     public bool HasNote => Note.Length > 0;
 
-    /// <summary>The refusal of a remove or turn-off, or the failure of the first read; empty otherwise.</summary>
-    public string Error
+    /// <summary>The failure of the first read; empty otherwise. A later read clears only this one.</summary>
+    public string ReadError
     {
         get;
         private set
         {
             Set(ref field, value);
-            OnChanged(nameof(HasError));
-            OnChanged(nameof(IsLoading));
+            ErrorChanged();
         }
     } = string.Empty;
+
+    /// <summary>The refusal of the last remove or turn-off; stays until the next change.</summary>
+    public string ChangeError
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            ErrorChanged();
+        }
+    } = string.Empty;
+
+    /// <summary>The error to show: a change's refusal first, else the read's failure.</summary>
+    public string Error => ChangeError.Length > 0 ? ChangeError : ReadError;
 
     /// <summary>True when there is an error to show.</summary>
     public bool HasError => Error.Length > 0;
@@ -107,25 +132,54 @@ internal sealed class LibraryRootsViewModel : ObservableObject
     /// <returns>A task that completes when the card is up to date.</returns>
     internal async Task Refresh(Uri url, CancellationToken cancellationToken)
     {
+        var generation = ++_generation;
         var read = await _api.Library(url, cancellationToken).ConfigureAwait(true);
+        if (generation != _generation)
+        {
+            return;   // a newer read started meanwhile; this older answer must not bring back what the newer one dropped
+        }
+
         if (read.IsError)
         {
             if (!_loaded)
             {
-                Error = Labels.LibraryFoldersReadFailed(read.Error);
+                ReadError = Labels.LibraryFoldersReadFailed(read.Error);
             }
 
             return;
         }
 
         var now = _clock.GetUtcNow();
-        Rows = [.. read.Value.Roots.Select(r => new LibraryFolderViewModel(r, now))];
+        var kept = Rows.ToDictionary(r => r.Name, StringComparer.Ordinal);
+        Rows = [.. read.Value.Roots.Select(r => Kept(kept, r, now))];
         _loaded = true;
-        Error = string.Empty;
+        ReadError = string.Empty;
         OnChanged(nameof(IsLoading));
         OnChanged(nameof(IsEmpty));
         OnChanged(nameof(HasRows));
         OnChanged(nameof(CanAdd));
+        OnChanged(nameof(EmptyText));
+    }
+
+    // A folder already shown keeps its row (an open Remove question and the busy state stay); a new one gets a row.
+    private LibraryFolderViewModel Kept(Dictionary<string, LibraryFolderViewModel> kept, LibraryFolderView folder, DateTimeOffset now)
+    {
+        if (kept.TryGetValue(folder.Name, out var row))
+        {
+            row.Update(folder, now);
+            return row;
+        }
+
+        var added = new LibraryFolderViewModel(folder, now);
+        added.SetBusy(IsBusy);
+        return added;
+    }
+
+    private void ErrorChanged()
+    {
+        OnChanged(nameof(Error));
+        OnChanged(nameof(HasError));
+        OnChanged(nameof(IsLoading));
     }
 
     /// <summary>Removes a vault (the row has asked and been confirmed), approving the change.</summary>
@@ -135,6 +189,11 @@ internal sealed class LibraryRootsViewModel : ObservableObject
     internal Task Remove(LibraryFolderViewModel row, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(row);
+        if (IsBusy)
+        {
+            return Task.CompletedTask;   // the buttons are disabled meanwhile; a call that still gets here leaves the question up rather than dropping the remove
+        }
+
         row.CancelRemove();
         return Change(url => _api.RemoveLibraryRoot(url, row.Name, approve: true, cancellationToken), cancellationToken);
     }
@@ -145,6 +204,12 @@ internal sealed class LibraryRootsViewModel : ObservableObject
     /// <returns>A task that completes when the answer is shown.</returns>
     internal Task TurnAw(bool on, CancellationToken cancellationToken) =>
         Change(url => _api.SetLibraryAw(url, new LibraryAwSwitch(on, Approve: true), cancellationToken), cancellationToken);
+
+    /// <summary>A row's errors chip was pressed: the shell opens the library errors sheet.</summary>
+    internal event EventHandler? ErrorsRequested;
+
+    /// <summary>Asks for the library errors sheet.</summary>
+    internal void OpenErrors() => ErrorsRequested?.Invoke(this, EventArgs.Empty);
 
     /// <summary>Opens the Add a folder form.</summary>
     internal void OpenForm()
@@ -180,11 +245,12 @@ internal sealed class LibraryRootsViewModel : ObservableObject
 
         if (changed.IsError)
         {
-            Error = Labels.LibraryFoldersFailed(changed.Error);
+            ChangeError = Labels.LibraryFoldersFailed(changed.Error);
+            await Refresh(url, cancellationToken).ConfigureAwait(true);   // a 404 on a vault removed elsewhere drops its row
             return;
         }
 
-        Error = string.Empty;
+        ChangeError = string.Empty;
         await Applied(changed.Value, cancellationToken).ConfigureAwait(true);
     }
 

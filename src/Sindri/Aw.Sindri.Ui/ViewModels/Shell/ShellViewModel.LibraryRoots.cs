@@ -15,6 +15,11 @@ internal sealed partial class ShellViewModel
     {
         var card = new LibraryRootsViewModel(Health.ApiUrl, api, window.Folders, _clock);
         Health.Follow((url, token) => CurrentPage == PageId.Settings ? card.Refresh(url, token) : Task.CompletedTask);
+        card.ErrorsRequested += (_, _) =>
+        {
+            _ = Reviews.OpenLibrary(CancellationToken.None);   // the sheet the Reviews header opens
+            OpenerLibrary = false;   // Esc and Close have no Reviews button to return to from Settings
+        };
         return card;
     }
 

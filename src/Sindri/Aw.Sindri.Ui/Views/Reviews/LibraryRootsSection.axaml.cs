@@ -48,6 +48,8 @@ internal sealed partial class LibraryRootsSection : UserControl
 
     private void OnAdd(object? sender, RoutedEventArgs e) => Card?.OpenForm();
 
+    private void OnErrors(object? sender, RoutedEventArgs e) => Card?.OpenErrors();
+
     private void OnCancel(object? sender, RoutedEventArgs e) => Card?.CloseForm();
 
     private void OnRemoveAsk(object? sender, RoutedEventArgs e) => RowOf(sender)?.AskRemove();

@@ -106,7 +106,7 @@ public sealed class LibraryRootsViewTests
     {
         var window = ShowSettings(await Read("session"));
 
-        Assert.Equal((true, Labels.LibraryFoldersEmpty, false), (Find<Border>(window, "LibraryEmptyCard").IsEffectivelyVisible, Find<TextBlock>(window, "LibraryEmpty").Text, Find<Button>(window, "LibraryAdd").IsEffectivelyVisible));
+        Assert.Equal((true, Labels.LibraryFoldersNone, false), (Find<Border>(window, "LibraryEmptyCard").IsEffectivelyVisible, Find<TextBlock>(window, "LibraryEmpty").Text, Find<Button>(window, "LibraryAdd").IsEffectivelyVisible));
         Assert.False(Find<Border>(window, "LibraryForm").IsEffectivelyVisible);
     });
 

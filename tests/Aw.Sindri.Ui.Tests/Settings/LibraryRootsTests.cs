@@ -109,7 +109,7 @@ public sealed class LibraryRootsTests
     {
         var card = await Shown("session");
 
-        Assert.Equal((true, false, false, Labels.LibraryFoldersEmpty), (card.IsEmpty, card.HasRows, card.CanAdd, card.EmptyText));
+        Assert.Equal((true, false, false, Labels.LibraryFoldersNone), (card.IsEmpty, card.HasRows, card.CanAdd, card.EmptyText));
         Assert.False(card.Form.IsOpen);
     }
 
@@ -398,5 +398,163 @@ public sealed class LibraryRootsTests
             [("aw", false), ("work", true), ("inbox", true), ("repo:agentic-workflow", false), ("repo:harbor", false)],
             card.Rows.Select(r => (r.Name, r.HasVaultNote)));
         Assert.Equal(Labels.LibraryFoldersVaultNote, Row(card, "work").VaultNoteText);
+    }
+
+    [Fact]
+    public async Task An_event_refresh_keeps_the_row_objects_so_an_open_Remove_question_stays_up()
+    {
+        var card = await Shown();
+        var work = Row(card, "work");
+        work.AskRemove();
+
+        await card.Refresh(_api, Token);
+
+        Assert.Same(work, Row(card, "work"));
+        Assert.True(Row(card, "work").IsConfirmingRemove);
+    }
+
+    [Fact]
+    public async Task A_refresh_updates_a_kept_row_and_drops_a_vault_that_is_gone()
+    {
+        var card = await Shown("ok");
+        var work = Row(card, "work");
+
+        _server.LibraryAnswer = RouteAnswer.Api("library", "with-errors");
+        await card.Refresh(_api, Token);
+        Assert.Equal((work, "2 errors", true), (Row(card, "work"), Row(card, "work").ErrorsText, Row(card, "work").HasErrors));
+
+        _server.LibraryAnswer = RouteAnswer.Api("library", "near-misses-only");
+        await card.Refresh(_api, Token);
+        Assert.DoesNotContain(card.Rows, r => string.Equals(r.Name, "inbox", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task While_a_change_is_in_flight_every_button_is_disabled_and_a_confirmed_Remove_stays_asked_instead_of_vanishing()
+    {
+        var card = await Shown();
+        var work = Row(card, "work");
+        work.AskRemove();
+        _server.LibraryRootGate = new TaskCompletionSource();
+
+        var turning = card.TurnAw(on: false, Token);
+        Assert.Equal((false, false, false), (Row(card, "aw").IsIdle, work.IsIdle, work.CanAsk));
+        await card.Remove(work, Token);
+
+        Assert.Equal((true, 0), (work.IsConfirmingRemove, _server.LibraryRootRemoves.Count));
+        _server.LibraryRootGate.SetResult();
+        await turning;
+        Assert.Equal((true, true), (Row(card, "aw").IsIdle, Row(card, "work").IsIdle));
+
+        await card.Remove(Row(card, "work"), Token);
+
+        Assert.Equal([("work", true)], _server.LibraryRootRemoves);
+    }
+
+    [Fact]
+    public async Task An_older_read_that_lands_last_does_not_bring_back_a_dropped_folder()
+    {
+        var card = Card();
+        var (first, second) = (new TaskCompletionSource(), new TaskCompletionSource());
+        _server.GateNextLibraryRead(first);
+        _server.GateNextLibraryRead(second);
+        _server.LibraryAnswer = RouteAnswer.Api("library", "ok");
+        var older = card.Refresh(_api, Token);
+        _server.LibraryAnswer = RouteAnswer.Api("library", "empty");
+        var newer = card.Refresh(_api, Token);
+
+        second.SetResult();
+        await newer;
+        Assert.Equal(["aw", "repo:agentic-workflow", "repo:harbor"], card.Rows.Select(r => r.Name), StringComparer.Ordinal);
+        first.SetResult();
+        await older;
+
+        Assert.Equal(["aw", "repo:agentic-workflow", "repo:harbor"], card.Rows.Select(r => r.Name), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task Cancel_is_disabled_while_the_save_is_on_its_way_so_its_answer_cannot_land_on_a_closed_form()
+    {
+        var card = await Filled();
+        _server.LibraryRootGate = new TaskCompletionSource();
+
+        var saving = card.Form.Save(Token);
+        Assert.False(card.Form.CanCancel);
+        card.Form.Cancel();
+        card.CloseForm();
+        Assert.Equal((true, "harbor-notes"), (card.Form.IsOpen, card.Form.Name));
+
+        _server.LibraryRootGate.SetResult();
+        await saving;
+
+        Assert.Equal((false, true), (card.Form.IsOpen, card.Form.CanCancel));
+    }
+
+    [Fact]
+    public async Task A_failed_change_reads_again_so_a_vault_removed_elsewhere_drops_its_row()
+    {
+        var card = await Shown("ok");
+        var reads = _server.LibraryCalls;
+        _server.LibraryRootAnswer = RouteAnswer.Problem("library-roots", "remove-unknown");
+        _server.LibraryAnswer = RouteAnswer.Api("library", "near-misses-only");
+
+        await card.Remove(Row(card, "inbox"), Token);
+
+        Assert.Equal(reads + 1, _server.LibraryCalls);
+        Assert.DoesNotContain(card.Rows, r => string.Equals(r.Name, "inbox", StringComparison.Ordinal));
+        Assert.True(card.HasError);
+    }
+
+    [Fact]
+    public async Task A_refresh_after_a_failed_change_keeps_the_failure_text_and_a_later_change_clears_it()
+    {
+        var card = await Shown();
+        _server.LibraryRootAnswer = RouteAnswer.Problem("library-roots", "remove-not-vault");
+        await card.Remove(Row(card, "aw"), Token);
+        var failure = card.Error;
+        Assert.NotEqual(0, failure.Length);
+
+        await card.Refresh(_api, Token);
+
+        Assert.Equal((failure, failure), (card.Error, card.ChangeError));
+
+        _server.LibraryRootAnswer = RouteAnswer.Api("library-roots", "removed");
+        await card.Remove(Row(card, "work"), Token);
+        Assert.Equal((string.Empty, false), (card.Error, card.HasError));
+    }
+
+    [Fact]
+    public async Task The_errors_chip_asks_for_the_library_errors_sheet()
+    {
+        var card = await Shown("with-errors");
+        var asked = 0;
+        card.ErrorsRequested += (_, _) => asked++;
+
+        card.OpenErrors();
+
+        Assert.Equal(1, asked);
+    }
+
+    [Fact]
+    public async Task Editing_the_form_clears_its_own_refusal_line()
+    {
+        var card = await Filled();
+        _server.LibraryRootAnswer = RouteAnswer.Problem("library-roots", "session-refused");
+        await card.Form.Save(Token);
+        Assert.True(card.Form.HasFormError);
+
+        card.Form.Name = "harbor";
+
+        Assert.Equal((string.Empty, false), (card.Form.FormError, card.Form.HasFormError));
+    }
+
+    [Fact]
+    public async Task A_field_member_that_is_not_a_string_means_no_field_so_the_line_is_the_forms_own()
+    {
+        var card = await Filled();
+        _server.LibraryRootAnswer = new RouteAnswer(System.Net.HttpStatusCode.BadRequest, """{"type":"about:blank","title":"SND-LIB-001","status":400,"detail":"nope (fix: x)","field":5,"traceId":"<trace>"}""");
+
+        await card.Form.Save(Token);
+
+        Assert.Equal((true, string.Empty, string.Empty, string.Empty), (card.Form.HasFormError, card.Form.NameError, card.Form.PathError, card.Form.DenyError));
     }
 }

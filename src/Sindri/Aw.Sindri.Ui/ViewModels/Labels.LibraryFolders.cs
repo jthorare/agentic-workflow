@@ -18,6 +18,9 @@ internal static partial class Labels
     /// <summary>No folders at all (an agent session gets none).</summary>
     internal const string LibraryFoldersEmpty = "No folders yet. Add a folder to index its design docs.";
 
+    /// <summary>No folders and nothing to add (an agent session's).</summary>
+    internal const string LibraryFoldersNone = "No folders yet.";
+
     /// <summary>The button that opens the form.</summary>
     internal const string LibraryFoldersAdd = "Add folder";
 

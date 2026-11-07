@@ -39,20 +39,19 @@
                   <TextBlock Classes="caption subtle" Text="{Binding VaultNoteText}" IsVisible="{Binding HasVaultNote}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
-                  <Border Classes="errors-chip" IsVisible="{Binding HasErrors}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.LG}"
-                          Padding="8,2" VerticalAlignment="Center" AutomationProperties.Name="{Binding ErrorsName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                  <Button Classes="command-control" IsVisible="{Binding HasErrors}" Click="OnErrors" AutomationProperties.Name="{Binding ErrorsName}">
                     <TextBlock Classes="caption" Text="{Binding ErrorsText}" AutomationProperties.AccessibilityView="Raw" />
-                  </Border>
-                  <Button Classes="command-control" Content="{Binding RemoveText}" IsVisible="{Binding CanRemove}" IsEnabled="{Binding !IsConfirmingRemove}" Click="OnRemoveAsk"
+                  </Button>
+                  <Button Classes="command-control" Content="{Binding RemoveText}" IsVisible="{Binding CanRemove}" IsEnabled="{Binding CanAsk}" Click="OnRemoveAsk"
                           AutomationProperties.Name="{Binding RemoveName}" />
-                  <Button Classes="command-control" Content="{Binding TurnOffText}" IsVisible="{Binding CanTurnOff}" Click="OnTurnOff" AutomationProperties.Name="{Binding AwName}" />
-                  <Button Classes="command-control" Content="{Binding TurnOnText}" IsVisible="{Binding CanTurnOn}" Click="OnTurnOn" AutomationProperties.Name="{Binding AwName}" />
+                  <Button Classes="command-control" Content="{Binding TurnOffText}" IsVisible="{Binding CanTurnOff}" IsEnabled="{Binding IsIdle}" Click="OnTurnOff" AutomationProperties.Name="{Binding AwName}" />
+                  <Button Classes="command-control" Content="{Binding TurnOnText}" IsVisible="{Binding CanTurnOn}" IsEnabled="{Binding IsIdle}" Click="OnTurnOn" AutomationProperties.Name="{Binding AwName}" />
                   <TextBlock Classes="caption subtle" Text="{Binding ReadOnlyText}" IsVisible="{Binding IsReadOnly}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
                 </StackPanel>
               </Grid>
               <StackPanel IsVisible="{Binding IsConfirmingRemove}" Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
                 <TextBlock Classes="caption" Text="{Binding ConfirmText}" VerticalAlignment="Center" TextWrapping="Wrap" AutomationProperties.Name="{Binding ConfirmText}" />
-                <Button Classes="command-control destructive" Content="{Binding RemoveText}" Click="OnRemoveConfirm" AutomationProperties.Name="{Binding RemoveName}" />
+                <Button Classes="command-control destructive" Content="{Binding RemoveText}" IsEnabled="{Binding IsIdle}" Click="OnRemoveConfirm" AutomationProperties.Name="{Binding RemoveName}" />
                 <Button Classes="command-control" Content="{Binding CancelText}" Click="OnRemoveCancel" AutomationProperties.Name="{Binding CancelText}" />
               </StackPanel>
             </StackPanel>
@@ -98,7 +97,7 @@
         <TextBlock Classes="caption subtle" Text="{Binding NoteText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding NoteText}" />
         <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
           <Button x:Name="LibraryFormSave" Classes="command-control primary" Content="{Binding SaveText}" IsEnabled="{Binding CanSave}" Click="OnSave" AutomationProperties.Name="{Binding SaveText}" />
-          <Button x:Name="LibraryFormCancel" Classes="command-control" Content="{Binding CancelText}" Click="OnCancel" AutomationProperties.Name="{Binding CancelText}" />
+          <Button x:Name="LibraryFormCancel" Classes="command-control" Content="{Binding CancelText}" IsEnabled="{Binding CanCancel}" Click="OnCancel" AutomationProperties.Name="{Binding CancelText}" />
         </StackPanel>
       </StackPanel>
     </Border>
