@@ -13,8 +13,17 @@ public static partial class SindriErrors
     /// <summary>SND-REVIEW-003: a 'command:' need, which waits for the sandbox.</summary>
     public static readonly ErrorDefinition ReviewCommandCheck = new("SND-REVIEW-003", ErrorKind.Invalid, "Command checks wait for the sandbox");
 
+    /// <summary>SND-REVIEW-004: a review route for a repo Sindri doesn't sync (PR review page spec §9).</summary>
+    public static readonly ErrorDefinition ReviewNotSynced = new("SND-REVIEW-004", ErrorKind.Conflict, "Sindri doesn't sync that repo");
+
     /// <summary>SND-REVIEW-005: a 'review.projects[].repos' entry that 'context.sources.github.repos' does not sync.</summary>
     public static readonly ErrorDefinition ReviewRepoUnsynced = new("SND-REVIEW-005", ErrorKind.Invalid, "Sindri doesn't sync that repo");
+
+    /// <summary>SND-REVIEW-007: a review route before 'review.login' is set.</summary>
+    public static readonly ErrorDefinition ReviewNoLogin = new("SND-REVIEW-007", ErrorKind.Conflict, "Set your GitHub login on the Reviews tab first.");
+
+    /// <summary>SND-REVIEW-404: a review route for a PR the forge does not have.</summary>
+    public static readonly ErrorDefinition ReviewPrNotFound = new("SND-REVIEW-404", ErrorKind.NotFound, "PR not found");
 
     /// <summary>SND-REVIEW-503: offline, and the PR is not cached yet.</summary>
     public static readonly ErrorDefinition ReviewOfflineUncached = new("SND-REVIEW-503", ErrorKind.Unavailable, "Offline, and this PR isn't cached yet");

@@ -262,7 +262,8 @@ internal sealed partial class GitHubForge(GitHubApi api, ICredentialSource crede
             json.NullableFlag("mergeable"),
             decision,
             checks,
-            [.. (json.At("labels") ?? default).Items().Select(l => l.Str("name")).Where(n => n.Length > 0)]);
+            [.. (json.At("labels") ?? default).Items().Select(l => l.Str("name")).Where(n => n.Length > 0)],
+            json.Str("body"));
     }
 
     private static PullDigest Digest(ForgeRef pull, JsonElement json, ChecksSummary checks)
