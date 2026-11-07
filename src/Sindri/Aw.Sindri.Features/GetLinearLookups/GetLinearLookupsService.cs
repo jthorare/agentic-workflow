@@ -1,5 +1,7 @@
+using Aw.Context.Core;
 using Aw.Kernel;
 using Aw.Kernel.Services;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Linear;
 
@@ -15,9 +17,19 @@ internal sealed class GetLinearLookupsService(ILinearSideFacts facts, ICallerCon
 {
     internal const string Refusal = "Linear's teams, states and members are the owner's to read; a session reads issues through context_* (fix: use the app)";
 
-    public ValueTask<Result<LinearLookupsResponse>> Handle(GetLinearLookupsRequest request, CancellationToken cancellationToken)
+    public async ValueTask<Result<LinearLookupsResponse>> Handle(GetLinearLookupsRequest request, CancellationToken cancellationToken)
     {
-        _ = (facts, callers, request, cancellationToken);
-        throw new NotSupportedException("red: the lookups read is not written yet");
+        ArgumentNullException.ThrowIfNull(request);
+        if (callers.Current?.Class is not (CallerClass.Human or CallerClass.Service))
+        {
+            return SindriErrors.AuthRefused.With(Refusal);
+        }
+
+        var read = await facts.Lookups(request.Team, cancellationToken).ConfigureAwait(false);
+        return read.IsError ? Refused(read.Error) : read.Value;
     }
+
+    // why: Context refuses a session with SND-CONTEXT-020; on this owner-only route that is SND-AUTH-002, as the caller check above
+    private static Error Refused(Error error) =>
+        string.Equals(error.Code, ContextErrors.SessionsDisabled.Code, StringComparison.Ordinal) ? SindriErrors.AuthRefused.With(Refusal) : error;
 }

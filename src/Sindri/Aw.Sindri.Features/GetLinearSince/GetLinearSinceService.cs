@@ -1,5 +1,7 @@
+using Aw.Context.Core;
 using Aw.Kernel;
 using Aw.Kernel.Services;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Linear;
 
@@ -14,10 +16,49 @@ namespace Aw.Sindri.Features.GetLinearSince;
 internal sealed class GetLinearSinceService(ILinearSideFacts facts, ICallerContextAccessor callers) : IService<GetLinearSinceRequest, LinearSinceResponse>
 {
     internal const string Refusal = "what changed on the owner's Linear issues is the owner's to read (fix: use the app)";
+    private const int Shown = 40;
 
-    public ValueTask<Result<LinearSinceResponse>> Handle(GetLinearSinceRequest request, CancellationToken cancellationToken)
+    public async ValueTask<Result<LinearSinceResponse>> Handle(GetLinearSinceRequest request, CancellationToken cancellationToken)
     {
-        _ = (facts, callers, request, cancellationToken, LinearSinceMarkers.Format(default));
-        throw new NotSupportedException("red: the since read is not written yet");
+        ArgumentNullException.ThrowIfNull(request);
+        if (callers.Current?.Class is not (CallerClass.Human or CallerClass.Service))
+        {
+            return SindriErrors.AuthRefused.With(Refusal);
+        }
+
+        var after = Marker(request.After);
+        if (after.IsError)
+        {
+            return after.Error;
+        }
+
+        var read = await facts.Since(after.Value, cancellationToken).ConfigureAwait(false);
+        if (read.IsError)
+        {
+            return Refused(read.Error);
+        }
+
+        var items = read.Value ?? [];
+        return new LinearSinceResponse(LinearSinceMarkers.Format(items.Count == 0 ? after.Value : items.Max(static i => i.At)), items.Count, items);
     }
+
+    private static Result<DateTimeOffset> Marker(string? asked)
+    {
+        if (string.IsNullOrEmpty(asked))
+        {
+            return DateTimeOffset.MinValue;
+        }
+
+        if (LinearSinceMarkers.TryParse(asked, out var at))
+        {
+            return at;
+        }
+
+        var text = asked.Length > Shown ? asked[..Shown] + "…" : asked;
+        return SindriErrors.InvalidQuery.With($"after is a marker this route gave ('lin_' and 16 hex digits), not '{text}'");
+    }
+
+    // why: Context refuses a session with SND-CONTEXT-020; on this owner-only route that is SND-AUTH-002, as the caller check above
+    private static Error Refused(Error error) =>
+        string.Equals(error.Code, ContextErrors.SessionsDisabled.Code, StringComparison.Ordinal) ? SindriErrors.AuthRefused.With(Refusal) : error;
 }
