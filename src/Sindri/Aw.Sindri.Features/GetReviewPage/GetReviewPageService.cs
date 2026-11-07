@@ -54,7 +54,10 @@ internal sealed class GetReviewPageService(IApprovedProfile approvals, IReviewPa
         var read = await reader.Read(ask.Link, cancellationToken).ConfigureAwait(false);
         if (read.IsError)
         {
-            return read.Error.Kind == ErrorKind.NotFound ? SindriErrors.ReviewPrNotFound.With("PR not found") : await cache.Offline(ask.Pull, cancellationToken).ConfigureAwait(false);
+            // why: a refused credential or host still serves the cache, but says so; "offline" alone would send the owner looking at their network
+            return read.Error.Kind == ErrorKind.NotFound
+                ? SindriErrors.ReviewPrNotFound.With("PR not found")
+                : await cache.Offline(ask.Pull, read.Error.Kind == ErrorKind.Forbidden ? read.Error.Code : null, cancellationToken).ConfigureAwait(false);
         }
 
         var made = await facts.Read(ask, read.Value, cancellationToken).ConfigureAwait(false);

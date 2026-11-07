@@ -6057,8 +6057,10 @@ Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Text.get -> string!
 Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Text.init -> void
 Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse
 Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.<Clone>$() -> Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse!
-Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.Deconstruct(out Aw.Sindri.Core.Ids.ItemId ItemId, out bool Posted, out string? PostCode, out string? PostError, out string! Went, out string? Session) -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.Deconstruct(out Aw.Sindri.Core.Ids.ItemId ItemId, out bool Posted, out string? PostCode, out string? PostError, out string! Went, out string? Session, out string? FileError) -> void
 Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.Equals(Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse? other) -> bool
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.FileError.get -> string?
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.FileError.init -> void
 Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.ItemId.get -> Aw.Sindri.Core.Ids.ItemId
 Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.ItemId.init -> void
 Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.PostCode.get -> string?
@@ -6067,7 +6069,7 @@ Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.PostError.get -> string?
 Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.PostError.init -> void
 Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.Posted.get -> bool
 Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.Posted.init -> void
-Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.SendReviewFixResponse(Aw.Sindri.Core.Ids.ItemId ItemId, bool Posted, string? PostCode, string? PostError, string! Went, string? Session) -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.SendReviewFixResponse(Aw.Sindri.Core.Ids.ItemId ItemId, bool Posted, string? PostCode, string? PostError, string! Went, string? Session, string? FileError) -> void
 Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.Session.get -> string?
 Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.Session.init -> void
 Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.Went.get -> string!

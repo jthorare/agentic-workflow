@@ -256,4 +256,23 @@ public sealed class ReviewPageBuilderTests
         Assert.Equal(("PR body", "The migration rewrites retry rows.", "body"), (hit.Path, hit.Why, hit.Source));
         Assert.Empty(Assert.IsType<EvidenceData>(Panel(ReviewPageBuilder.Build(Facts(body: "## Evidenced elsewhere")), "evidence").Data).Items);
     }
+
+    [Fact]
+    public void A_risks_section_with_windows_line_endings_gives_the_first_line_not_an_empty_row()
+    {
+        var page = ReviewPageBuilder.Build(Facts(body: "intro\r\n\r\n## Risks\r\n\r\n- db lock\r\nMore."));
+
+        var hit = Assert.Single(Assert.IsType<RiskData>(Panel(page, "risk").Data).Hits);
+        Assert.Equal(("PR body", "- db lock", "body"), (hit.Path, hit.Why, hit.Source));
+    }
+
+    [Fact]
+    public void Unread_files_make_the_risk_panel_an_error_with_no_strip_part_not_an_all_clear()
+    {
+        var page = ReviewPageBuilder.Build(Facts(filesError: "github returned 502"));
+
+        var risk = Panel(page, "risk");
+        Assert.Equal(("error", "Couldn't read the files: github returned 502"), (risk.State, risk.Text));
+        Assert.DoesNotContain(page.Strip, static p => p.Panel == "risk");
+    }
 }
