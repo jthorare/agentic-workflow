@@ -147,7 +147,7 @@ public sealed class LibraryReadTests : IDisposable
         var session = (await Library.Claims(asked, Session(), Ct)).Value;
         var owner = (await Library.Claims(asked, Owner(), Ct)).Value;
 
-        Assert.Equal([Bare, Pr], session.Keys.Select(static k => k.Value).Order(StringComparer.Ordinal), StringComparer.Ordinal);   // the owner-only PR has no entry
+        Assert.Equal([Pr, Bare], session.Keys.Select(static k => k.Value).Order(StringComparer.Ordinal), StringComparer.Ordinal);   // the owner-only PR has no entry
         Assert.Equal(LibraryRefStatus.Resolved, Assert.Single(session[RecordKey.From(Pr)]).Resolution.Status);
         Assert.Empty(session[RecordKey.From(Bare)]);
         Assert.Equal(3, owner.Count);

@@ -121,7 +121,8 @@ internal sealed class ContextLibrary(ILibraryStore store, ILibraryStatus? status
             }
         }
 
-        foreach (var key in prKeys)
+        var withRows = rows.Value.Select(static row => row.Pr).ToHashSet();
+        foreach (var key in prKeys.Where(k => !withRows.Contains(k)))
         {
             _ = map.TryAdd(key, []);
         }
