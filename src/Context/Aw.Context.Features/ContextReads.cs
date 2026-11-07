@@ -64,7 +64,7 @@ internal sealed class ContextReads(
     public ValueTask<Result<LinearIssueRow?>> IssueGet(RecordKey key, ContextScope scope, CancellationToken cancellationToken) =>
         issues.Get(key, scope, cancellationToken);
 
-    public ValueTask<Result<LinearIssueRow?>> IssueGet(LinearIssueKey key, ContextScope scope, CancellationToken cancellationToken) =>
+    public ValueTask<Result<LinearIssueDetail?>> IssueGet(LinearIssueKey key, ContextScope scope, CancellationToken cancellationToken) =>
         issues.Get(key, scope, cancellationToken);
 
     public ValueTask<Result<LinearIssueCounts>> IssueCounts(LinearIssueFilter filter, ContextScope scope, CancellationToken cancellationToken) =>

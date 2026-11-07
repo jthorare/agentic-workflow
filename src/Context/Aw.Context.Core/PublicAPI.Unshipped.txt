@@ -12322,9 +12322,9 @@ static Aw.Context.Core.Library.GeneratedSource.IsGenerated(Aw.Context.Core.Libra
 static Aw.Context.Core.Library.GeneratedSource.PathBeside(string! docPath) -> string!
 static Aw.Context.Core.Library.GeneratedSource.Sha256(System.ReadOnlySpan<byte> source) -> string!
 static Aw.Context.Core.Library.GeneratedSource.Version(string! docVersion, string? packetVersion) -> string!
-Aw.Context.Core.Facade.IContextIssues.IssueGet(Aw.Context.Core.Linear.LinearIssueKey! key, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueRow?>!>
+Aw.Context.Core.Facade.IContextIssues.IssueGet(Aw.Context.Core.Linear.LinearIssueKey! key, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueDetail?>!>
 Aw.Context.Core.Facade.IContextIssues.IssueCounts(Aw.Context.Core.Linear.LinearIssueFilter! filter, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueCounts!>!>
-Aw.Context.Core.Records.ILinearIssueStore.Get(Aw.Context.Core.Linear.LinearIssueKey! key, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueRow?>!>
+Aw.Context.Core.Records.ILinearIssueStore.Get(Aw.Context.Core.Linear.LinearIssueKey! key, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueDetail?>!>
 Aw.Context.Core.Records.ILinearIssueStore.Count(Aw.Context.Core.Linear.LinearIssueFilter! filter, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueCounts!>!>
 Aw.Context.Core.Facade.IContextLibrary.DocsNaming(System.Collections.Generic.IReadOnlyList<string!>! issueKeys, Aw.Context.Core.Audience.AudienceScope! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryDoc!>!>!>!>
 const Aw.Context.Core.Facade.IContextLibrary.DocsNamingMaxKeys = 200 -> int
@@ -12344,3 +12344,35 @@ static Aw.Context.Core.Linear.LinearIssueCounts.operator !=(Aw.Context.Core.Line
 static Aw.Context.Core.Linear.LinearIssueCounts.operator ==(Aw.Context.Core.Linear.LinearIssueCounts? left, Aw.Context.Core.Linear.LinearIssueCounts? right) -> bool
 Aw.Context.Core.Library.LibraryDoc.UpdatedAt.get -> System.DateTimeOffset?
 Aw.Context.Core.Library.LibraryDoc.UpdatedAt.init -> void
+Aw.Context.Core.Linear.LinearIssueDetail
+Aw.Context.Core.Linear.LinearIssueDetail.<Clone>$() -> Aw.Context.Core.Linear.LinearIssueDetail!
+Aw.Context.Core.Linear.LinearIssueDetail.Issue.get -> Aw.Context.Core.Linear.LinearIssueRow!
+Aw.Context.Core.Linear.LinearIssueDetail.Issue.init -> void
+Aw.Context.Core.Linear.LinearIssueDetail.Removed.get -> bool
+Aw.Context.Core.Linear.LinearIssueDetail.Removed.init -> void
+Aw.Context.Core.Linear.LinearIssueDetail.Parent.get -> Aw.Context.Core.Linear.LinearIssueParent?
+Aw.Context.Core.Linear.LinearIssueDetail.Parent.init -> void
+Aw.Context.Core.Linear.LinearIssueDetail.Comments.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>!
+Aw.Context.Core.Linear.LinearIssueDetail.Comments.init -> void
+Aw.Context.Core.Linear.LinearIssueDetail.Deconstruct(out Aw.Context.Core.Linear.LinearIssueRow! Issue, out bool Removed, out Aw.Context.Core.Linear.LinearIssueParent? Parent, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>! Comments) -> void
+Aw.Context.Core.Linear.LinearIssueDetail.Equals(Aw.Context.Core.Linear.LinearIssueDetail? other) -> bool
+Aw.Context.Core.Linear.LinearIssueDetail.LinearIssueDetail(Aw.Context.Core.Linear.LinearIssueRow! Issue, bool Removed, Aw.Context.Core.Linear.LinearIssueParent? Parent, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>! Comments) -> void
+override Aw.Context.Core.Linear.LinearIssueDetail.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearIssueDetail.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearIssueDetail.ToString() -> string!
+static Aw.Context.Core.Linear.LinearIssueDetail.operator !=(Aw.Context.Core.Linear.LinearIssueDetail? left, Aw.Context.Core.Linear.LinearIssueDetail? right) -> bool
+static Aw.Context.Core.Linear.LinearIssueDetail.operator ==(Aw.Context.Core.Linear.LinearIssueDetail? left, Aw.Context.Core.Linear.LinearIssueDetail? right) -> bool
+Aw.Context.Core.Linear.LinearIssueParent
+Aw.Context.Core.Linear.LinearIssueParent.<Clone>$() -> Aw.Context.Core.Linear.LinearIssueParent!
+Aw.Context.Core.Linear.LinearIssueParent.Key.get -> Aw.Context.Core.Linear.LinearIssueKey!
+Aw.Context.Core.Linear.LinearIssueParent.Key.init -> void
+Aw.Context.Core.Linear.LinearIssueParent.Title.get -> string!
+Aw.Context.Core.Linear.LinearIssueParent.Title.init -> void
+Aw.Context.Core.Linear.LinearIssueParent.Deconstruct(out Aw.Context.Core.Linear.LinearIssueKey! Key, out string! Title) -> void
+Aw.Context.Core.Linear.LinearIssueParent.Equals(Aw.Context.Core.Linear.LinearIssueParent? other) -> bool
+Aw.Context.Core.Linear.LinearIssueParent.LinearIssueParent(Aw.Context.Core.Linear.LinearIssueKey! Key, string! Title) -> void
+override Aw.Context.Core.Linear.LinearIssueParent.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearIssueParent.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearIssueParent.ToString() -> string!
+static Aw.Context.Core.Linear.LinearIssueParent.operator !=(Aw.Context.Core.Linear.LinearIssueParent? left, Aw.Context.Core.Linear.LinearIssueParent? right) -> bool
+static Aw.Context.Core.Linear.LinearIssueParent.operator ==(Aw.Context.Core.Linear.LinearIssueParent? left, Aw.Context.Core.Linear.LinearIssueParent? right) -> bool

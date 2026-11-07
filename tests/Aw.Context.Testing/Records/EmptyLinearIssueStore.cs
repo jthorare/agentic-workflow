@@ -17,8 +17,8 @@ public sealed class EmptyLinearIssueStore : ILinearIssueStore
         ValueTask.FromResult(Results.Success<LinearIssueRow?>(value: null));
 
     /// <inheritdoc />
-    public ValueTask<Result<LinearIssueRow?>> Get(LinearIssueKey key, RecordAudience audience, CancellationToken cancellationToken) =>
-        ValueTask.FromResult(Results.Success<LinearIssueRow?>(value: null));
+    public ValueTask<Result<LinearIssueDetail?>> Get(LinearIssueKey key, RecordAudience audience, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success<LinearIssueDetail?>(value: null));
 
     /// <inheritdoc />
     public ValueTask<Result<LinearIssueCounts>> Count(LinearIssueFilter filter, RecordAudience audience, CancellationToken cancellationToken) =>

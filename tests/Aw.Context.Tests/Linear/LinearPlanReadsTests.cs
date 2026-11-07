@@ -32,7 +32,8 @@ public sealed class LinearPlanReadsTests : IAsyncLifetime
             .Issue("ENG", "Three", new FakeLinearIssueSeed { State = "Done", Assignee = "Ada Fixture", Project = "Launch" })
             .Issue("ENG", "Four", new FakeLinearIssueSeed { State = "Canceled", Assignee = "Bo Fixture", Cycle = "C1" })
             .Issue("ENG", "Five", new FakeLinearIssueSeed { State = "Backlog", Assignee = "Ada Fixture" })
-            .Issue("ENG", "Six", new FakeLinearIssueSeed { State = "Todo", Assignee = "Bo Fixture", Project = "Launch" }));
+            .Issue("ENG", "Six", new FakeLinearIssueSeed { State = "Todo", Assignee = "Bo Fixture", Project = "Launch" })
+            .Comment("ENG-1", "a comment"));
         _ada = _world.Linear.MemberId("Ada Fixture");
         _ = await _world.Tick();
     }
@@ -51,7 +52,7 @@ public sealed class LinearPlanReadsTests : IAsyncLifetime
         return result.Value;
     }
 
-    private Task<LinearIssueRow?> ByKey(string key, ContextScope? scope = null) =>
+    private Task<LinearIssueDetail?> ByKey(string key, ContextScope? scope = null) =>
         Facade(i => i.IssueGet(LinearIssueKey.Parse(key).Value, scope ?? _world.Scope, Ct));
 
     private Task<LinearIssueCounts> Counts(LinearIssueFilter? filter = null, ContextScope? scope = null) =>
@@ -72,14 +73,19 @@ public sealed class LinearPlanReadsTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task An_issue_reads_by_its_key_to_the_same_row_as_by_its_record_key()
+    public async Task An_issue_reads_by_its_key_to_the_same_row_as_by_its_record_key_with_its_comments()
     {
         var byKey = await ByKey("ENG-1");
         var byRecord = await Facade(i => i.IssueGet(RecordKey.From("linear:issue/" + Id("ENG-1")), _world.Scope, Ct));
+        var comments = await Facade(i => i.IssueComments(RecordKey.From("linear:issue/" + Id("ENG-1")), _world.Scope, Ct));
 
         Assert.NotNull(byKey);
-        Assert.Equal("Details of one", byKey.Description);
-        Assert.Equal(byRecord, byKey);
+        Assert.Equal("Details of one", byKey.Issue.Description);
+        Assert.Equal(byRecord, byKey.Issue);
+        Assert.False(byKey.Removed);
+        Assert.Null(byKey.Parent);
+        Assert.Equal(["a comment"], byKey.Comments.Select(static c => c.Body), StringComparer.Ordinal);
+        Assert.Equal(comments, byKey.Comments);
     }
 
     [Fact]
@@ -87,7 +93,7 @@ public sealed class LinearPlanReadsTests : IAsyncLifetime
     {
         var issue = await ByKey("eng-2");
 
-        Assert.Equal("ENG-2", issue?.Fields.Identifier);
+        Assert.Equal("ENG-2", issue?.Issue.Fields.Identifier);
     }
 
     [Fact]
@@ -98,12 +104,33 @@ public sealed class LinearPlanReadsTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task A_tombstoned_issue_reads_as_null_by_key()
+    public async Task A_tombstoned_issue_reads_by_key_as_its_last_copy_marked_removed_while_the_record_key_read_still_hides_it()
     {
-        _world.Sql($"UPDATE source_record SET removed_at = '2026-01-02T08:00:00.0000000Z' WHERE key = 'linear:issue/{Id("ENG-2")}'");
+        var recordKey = RecordKey.From("linear:issue/" + Id("ENG-2"));
+        _world.Sql($"UPDATE source_record SET removed_at = '2026-01-02T08:00:00.0000000Z' WHERE key = '{recordKey.Value}'");
 
-        Assert.Null(await ByKey("ENG-2"));
-        Assert.NotNull(await ByKey("ENG-1"));
+        var gone = await ByKey("ENG-2");
+
+        Assert.NotNull(gone);
+        Assert.True(gone.Removed);
+        Assert.Equal("Two", gone.Issue.Title);
+        Assert.False((await ByKey("ENG-1"))!.Removed);
+        Assert.Null(await Facade(i => i.IssueGet(recordKey, _world.Scope, Ct)));
+    }
+
+    [Fact]
+    public async Task A_child_issue_names_its_stored_parent_and_a_parent_that_is_not_stored_reads_as_null()
+    {
+        _world.Sql($"UPDATE linear_issue SET parent_id = '{Id("ENG-1")}' WHERE key = 'linear:issue/{Id("ENG-2")}'");
+        _world.Sql($"UPDATE linear_issue SET parent_id = 'not-stored' WHERE key = 'linear:issue/{Id("ENG-3")}'");
+
+        var child = await ByKey("ENG-2");
+        var orphan = await ByKey("ENG-3");
+
+        Assert.Equal("ENG-1", child?.Parent?.Key.ToString());
+        Assert.Equal("One", child?.Parent?.Title);
+        Assert.NotNull(orphan);
+        Assert.Null(orphan.Parent);
     }
 
     [Fact]

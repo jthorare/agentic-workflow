@@ -28,7 +28,7 @@ internal sealed class IssueReads(ILinearIssueStore issues, ILinearLookupStore? l
         return audience.IsError ? audience.Error : await issues.Get(key, audience.Value, cancellationToken).ConfigureAwait(false);
     }
 
-    public async ValueTask<Result<LinearIssueRow?>> Get(LinearIssueKey key, ContextScope scope, CancellationToken cancellationToken)
+    public async ValueTask<Result<LinearIssueDetail?>> Get(LinearIssueKey key, ContextScope scope, CancellationToken cancellationToken)
     {
         var audience = await AudienceOf(scope, cancellationToken).ConfigureAwait(false);
         return audience.IsError ? audience.Error : await issues.Get(key, audience.Value, cancellationToken).ConfigureAwait(false);

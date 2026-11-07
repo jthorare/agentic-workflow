@@ -35,7 +35,9 @@ internal static class LinearSql
 
     internal const string DeleteIssue = "DELETE FROM linear_issue WHERE key = @key";
 
-    private const string Visible = "r.removed_at IS NULL AND r.blocked = 0 AND (r.audience_key IN (SELECT value FROM json_each(@audiences)) OR r.key IN (SELECT value FROM json_each(@records)))";
+    private const string VisibleEvenIfRemoved = "r.blocked = 0 AND (r.audience_key IN (SELECT value FROM json_each(@audiences)) OR r.key IN (SELECT value FROM json_each(@records)))";
+
+    private const string Visible = "r.removed_at IS NULL AND " + VisibleEvenIfRemoved;
 
     private const string IssueColumns =
         "i.key, r.title, r.url, r.state_raw, r.author, r.created_at, r.closed_at, r.audience_key, " +
@@ -59,6 +61,16 @@ internal static class LinearSql
     /// <summary>The issue whose identifier is @identifier ('ENG-12'); if a moved issue left two rows with it, the newest.</summary>
     internal const string GetIssueByIdentifier =
         "SELECT " + IssueColumns + " FROM linear_issue i JOIN source_record r ON r.key = i.key WHERE i.identifier = @identifier AND " + Visible + " ORDER BY i.updated_at DESC, i.key ASC LIMIT 1";
+
+    /// <summary>Like <see cref="GetIssueByIdentifier"/> but reads past a tombstone; column 23 says whether the record is removed. A live row wins over a removed one with the same identifier.</summary>
+    internal const string GetIssueDetailByIdentifier =
+        "SELECT " + IssueColumns + ", r.removed_at IS NOT NULL FROM linear_issue i JOIN source_record r ON r.key = i.key WHERE i.identifier = @identifier AND " + VisibleEvenIfRemoved +
+        " ORDER BY r.removed_at IS NOT NULL ASC, i.updated_at DESC, i.key ASC LIMIT 1";
+
+    /// <summary>An issue's comments past a tombstone, newest first.</summary>
+    internal const string IssueCommentsEvenIfRemoved =
+        "SELECT c.id, c.author_id, c.created_at, c.body, c.sindri FROM linear_comment c JOIN source_record r ON r.key = c.issue_key " +
+        "WHERE c.issue_key = @key AND " + VisibleEvenIfRemoved + " ORDER BY c.created_at DESC, c.id ASC";
 
     internal const string GetIssue = "SELECT " + IssueColumns + " FROM linear_issue i JOIN source_record r ON r.key = i.key WHERE i.key = @key AND " + Visible;
 

@@ -13,7 +13,7 @@ internal sealed class UnconfiguredLinearIssueStore : ILinearIssueStore
 
     public ValueTask<Result<LinearIssueRow?>> Get(RecordKey key, RecordAudience audience, CancellationToken cancellationToken) => ValueTask.FromResult(Unwired<LinearIssueRow?>());
 
-    public ValueTask<Result<LinearIssueRow?>> Get(LinearIssueKey key, RecordAudience audience, CancellationToken cancellationToken) => ValueTask.FromResult(Unwired<LinearIssueRow?>());
+    public ValueTask<Result<LinearIssueDetail?>> Get(LinearIssueKey key, RecordAudience audience, CancellationToken cancellationToken) => ValueTask.FromResult(Unwired<LinearIssueDetail?>());
 
     public ValueTask<Result<LinearIssueCounts>> Count(LinearIssueFilter filter, RecordAudience audience, CancellationToken cancellationToken) => ValueTask.FromResult(Unwired<LinearIssueCounts>());
 

@@ -159,8 +159,8 @@ public sealed class FakeContextEngine : IContextEngine
         ValueTask.FromResult<Result<LinearIssuePage>>(Down());
 
     /// <inheritdoc cref="IssueList"/>
-    public ValueTask<Result<LinearIssueRow?>> IssueGet(LinearIssueKey key, ContextScope scope, CancellationToken cancellationToken) =>
-        ValueTask.FromResult<Result<LinearIssueRow?>>(Down());
+    public ValueTask<Result<LinearIssueDetail?>> IssueGet(LinearIssueKey key, ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<LinearIssueDetail?>>(Down());
 
     /// <inheritdoc cref="IssueList"/>
     public ValueTask<Result<LinearIssueCounts>> IssueCounts(LinearIssueFilter filter, ContextScope scope, CancellationToken cancellationToken) =>

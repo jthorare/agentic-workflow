@@ -44,12 +44,31 @@ internal sealed class SqliteLinearIssueStore(ContextDatabase database) : ILinear
         return rows.IsError ? rows.Error : Results.Success(rows.Value.Count == 0 ? null : rows.Value[0]);
     }
 
-    public async ValueTask<Result<LinearIssueRow?>> Get(LinearIssueKey key, RecordAudience audience, CancellationToken cancellationToken)
+    public async ValueTask<Result<LinearIssueDetail?>> Get(LinearIssueKey key, RecordAudience audience, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(key);
         ArgumentNullException.ThrowIfNull(audience);
-        var rows = await Read(new SqlStatement(LinearSql.GetIssueByIdentifier, c => Audience(c, audience).Bind("@identifier", key.ToString())), IssueMapper, cancellationToken).ConfigureAwait(false);
-        return rows.IsError ? rows.Error : Results.Success(rows.Value.Count == 0 ? null : rows.Value[0]);
+        var rows = await Read(new SqlStatement(LinearSql.GetIssueDetailByIdentifier, c => Audience(c, audience).Bind("@identifier", key.ToString())), DetailMapper, cancellationToken).ConfigureAwait(false);
+        if (rows.IsError || rows.Value.Count == 0)
+        {
+            return rows.IsError ? rows.Error : Results.Success<LinearIssueDetail?>(value: null);
+        }
+
+        var (issue, removed) = rows.Value[0];
+        var comments = await Read(new SqlStatement(LinearSql.IssueCommentsEvenIfRemoved, c => Audience(c, audience).Bind("@key", issue.Key.Value)), LinearRowReads.Comment, cancellationToken).ConfigureAwait(false);
+        if (comments.IsError)
+        {
+            return comments.Error;
+        }
+
+        var parent = issue.Fields.ParentId is { } parentId ? await Get(RecordKey.From("linear:issue/" + parentId.Value), audience, cancellationToken).ConfigureAwait(false) : Results.Success<LinearIssueRow?>(value: null);
+        if (parent.IsError)
+        {
+            return parent.Error;
+        }
+
+        var named = parent.Value is { } found && LinearIssueKey.Parse(found.Fields.Identifier) is { IsSuccess: true } parsed ? new LinearIssueParent(parsed.Value, found.Title) : null;
+        return new LinearIssueDetail(issue, removed, named, comments.Value);
     }
 
     public async ValueTask<Result<LinearIssueCounts>> Count(LinearIssueFilter filter, RecordAudience audience, CancellationToken cancellationToken)
@@ -114,9 +133,11 @@ internal sealed class SqliteLinearIssueStore(ContextDatabase database) : ILinear
         }
     }
 
-    private static IRowMapper<LinearIssueRow> IssueMapper { get; } = new Mapper<LinearIssueRow>(r => new LinearIssueRow(
+    private static Mapper<LinearIssueRow> IssueMapper { get; } = new Mapper<LinearIssueRow>(r => new LinearIssueRow(
         RecordKey.From(r.GetString(0)), r.GetString(1), LinearRowReads.Text(r, 2), LinearRowReads.Text(r, 3), LinearRowReads.Text(r, 4), LinearRowReads.At(r, 5), LinearRowReads.At(r, 6),
         TeamOf(LinearRowReads.Text(r, 7)), LinearRowReads.ReadFields(r, 8), LinearRowReads.Text(r, 22)));
+
+    private static IRowMapper<(LinearIssueRow Issue, bool Removed)> DetailMapper { get; } = new Mapper<(LinearIssueRow Issue, bool Removed)>(r => (IssueMapper.Map(r), r.GetInt64(23) == 1));
 
     private static IRowMapper<KeyValuePair<string, int>> CountMapper { get; } = new Mapper<KeyValuePair<string, int>>(r => new KeyValuePair<string, int>(r.GetString(0), r.GetInt32(1)));
 
