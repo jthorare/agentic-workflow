@@ -42,6 +42,20 @@ public sealed class LinearNewLineTests
     }, Token);
 
     [Fact]
+    public Task Home_has_the_line_without_Work_ever_being_opened() => UiThread.Run(async () =>
+    {
+        var shell = await ShellOnWork();
+        shell.GoTo(PageId.Home);
+        var fresh = new ShellViewModel(_records, _server, new FakeTimeProvider(A.Noon), new Preferences(new InMemoryPreferencesStore()), new FakeClipboard());
+        await fresh.Restore(Token);
+        _ = fresh.Run(Token);
+
+        await ShellWait.Until(fresh, () => fresh.LinearNewLine is not null, Token);
+
+        Assert.Equal(("3 new on your Linear issues", PageId.Home), (fresh.LinearNewLine, fresh.CurrentPage));
+    }, Token);
+
+    [Fact]
     public Task Home_hides_the_line_at_zero() => UiThread.Run(async () =>
     {
         _server.LinearSinceAnswer = RouteAnswer.Api("linear-since", "empty");
