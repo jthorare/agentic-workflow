@@ -1015,11 +1015,21 @@ reviews_need_tmp_home() {
 }
 
 # review.login and workflow.forge (the file adapter on github.com) in the live profile, once each; approved afterwards when it isn't.
+# What 'reviews up' added (one word per line: review, forge, cursor), so 'reviews down' removes only that and never a block that was there before.
+reviews_marker() { printf '%s\n' "$AW_SINDRI_HOME/ui-fixture-reviews-added"; }
+reviews_mark() { grep -qx "$1" "$(reviews_marker)" 2>/dev/null || printf '%s\n' "$1" >> "$(reviews_marker)"; }
+reviews_marked() { grep -qx "$1" "$(reviews_marker)" 2>/dev/null; }
+
 reviews_profile() {
   local profile
   profile="$(profile_path)"
+  # why: a forge another verb set (line-run writes hosts [forge.test]) can't reach https://github.com/acme/api/pull/N, so the fix route would fail
+  if grep -q '^  forge:' "$profile" && ! grep -q '^  forge:.*github\.com' "$profile"; then
+    die "reviews: the profile already has a workflow.forge without github.com ($(grep -m1 '^  forge:' "$profile" | sed 's/^ *//'); 'line-run' writes one): run 'down' and 'up' for a fresh home first"
+  fi
   if ! grep -q '^review:' "$profile"; then
     printf 'review:\n  login: %s\n' "$PROJECTS_VIEWER" >> "$profile" || die "reviews: can't add review.login to $profile"
+    reviews_mark review
   fi
   if ! grep -q '^  forge:' "$profile"; then
     if grep -q '^workflow:' "$profile"; then
@@ -1027,6 +1037,7 @@ reviews_profile() {
     else
       awk '{print} /^user:/ {print "workflow:\n  forge: { adapter: file, hosts: [github.com] }"}' "$profile" > "$profile.new"
     fi && mv "$profile.new" "$profile" || die "reviews: can't add workflow.forge to $profile"
+    reviews_mark forge
   fi
   if needs_approval; then approve >&2 || return; fi
 }
@@ -1101,6 +1112,7 @@ reviews_up() {
     --body "What stops this from waiting forever when budget.Next keeps returning a delay?" >/dev/null || die "reviews: seed thread failed"
 
   key="github:pr/$REVIEWS_SLUG/$number"
+  [ -n "$(sql_on "$db" "SELECT 1 FROM source_cursor WHERE source = 'github' AND repo = 'records'")" ] || reviews_mark cursor
   sql_on "$db" "DELETE FROM source_record WHERE text_hash LIKE 'fixture-review-%';
 INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at, pull_facts)
   VALUES ('$key', 'github', 'pr', NULL, '$PROJECTS_AUDIENCE', 'Add a retry budget to sync', '$link', '$PROJECTS_VIEWER', 'open', 'open', $(projects_ts '-2 days'), $(projects_ts '-3 hours'), NULL, 'fixture', 'fixture-review-$number', 'fixture', 0, NULL, $(projects_ts '+0 seconds'),
@@ -1117,18 +1129,23 @@ reviews_down() {
   local db dir profile
   db="$(context_db)"
   if [ -f "$db" ]; then
+    if reviews_marked cursor; then sql_on "$db" "DELETE FROM source_cursor WHERE source = 'github' AND repo = 'records';" >/dev/null || die "reviews: can't remove the github cursor row from $db"; fi
     sql_on "$db" "DELETE FROM source_record WHERE text_hash LIKE 'fixture-review-%'; UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;" >/dev/null || die "reviews: can't remove the PR record from $db"
   fi
   dir="$(reviews_dir)"
   case "$dir" in */"$REVIEWS_DIRNAME") [ ! -e "$dir" ] || rm -rf -- "$dir" ;; *) die "reviews: refusing to delete $dir" ;; esac
   profile="$(profile_path)"
-  if [ -f "$profile" ] && grep -Eq '^review:|^  forge: \{ adapter: file' "$profile"; then
-    grep -Ev "^review:\$|^  login: $PROJECTS_VIEWER\$|^  forge: \\{ adapter: file, hosts: \\[github.com\\] \\}\$" "$profile" \
+  local drop=""
+  reviews_marked review && drop="^review:\$|^  login: $PROJECTS_VIEWER\$"
+  reviews_marked forge && drop="${drop:+$drop|}^  forge: \\{ adapter: file, hosts: \\[github.com\\] \\}\$"
+  if [ -f "$profile" ] && [ -n "$drop" ]; then
+    grep -Ev "$drop" "$profile" \
       | awk '{l[NR]=$0} END {for (i=1;i<=NR;i++) if (!(l[i]=="workflow:" && (i==NR || l[i+1] !~ /^  /))) print l[i]}' > "$profile.new" && mv "$profile.new" "$profile" || die "reviews: can't edit $profile"
   fi
   if [ -f "$profile" ] && needs_approval; then
     (approve >&2) || echo "reviews: the profile is not approved; run 'reviews down' again or approve it (sindri profile approve)" >&2
   fi
+  rm -f -- "$(reviews_marker)"
   # The dir is gone, so the restart no longer points AW_STATE_DIR at it.
   if [ -f "$AW_SINDRI_HOME/control.json" ]; then sessions_restart >&2 || return; fi
 }

@@ -157,6 +157,23 @@ lacks "down removes review.login" "$profile" "review:"
 lacks "down removes workflow.forge and the empty workflow:" "$profile" "workflow:"
 check "down leaves the real state's cache/bin alone" "$([ -d "$AW_STATE_DIR/cache/bin" ] && echo present || echo gone)" "present"
 contains "down restarts serve on the real state dir" "$(cat "$STUB_LOG")" "--headless [state=$AW_STATE_DIR]"
+check "down removes the github cursor row up added" "$(sqlq "$PJDB" "SELECT COUNT(*) FROM source_cursor WHERE source = 'github' AND repo = 'records'")" "0"
+check "down removes its marker" "$([ -e "$PJ/ui-fixture-reviews-added" ] && echo present || echo gone)" "gone"
+
+# A review: block that was there before up stays after down (down removes only what up added).
+printf 'schemaVersion: 1\nuser: fixture\nservices:\n  heartbeat: { every: 5s }\nreview:\n  login: fx-viewer\n' > "$PJ/profile/profile.yaml"
+rev up >/dev/null 2>&1; check "up with a review: block already there exits 0" "$?" "0"
+rev down >/dev/null 2>&1; check "down after that exits 0" "$?" "0"
+contains "down keeps the review: block up did not add" "$(cat "$PJ/profile/profile.yaml")" "login: fx-viewer"
+lacks "down still removes the forge up added" "$(cat "$PJ/profile/profile.yaml")" "forge:"
+
+# After line-run the profile has a forge.test-only forge, which can't reach the github.com PR: up refuses and says why.
+printf 'schemaVersion: 1\nuser: fixture\nservices:\n  heartbeat: { every: 5s }\nworkflow:\n  forge: { adapter: file, hosts: [forge.test] }\n' > "$PJ/profile/profile.yaml"
+: > "$FORGE_LOG"
+rev up >/dev/null 2>"$WORK/err-forge"; check "up after line-run's forge.test forge exits 2" "$?" "2"
+contains "the refusal names line-run" "$(cat "$WORK/err-forge")" "line-run"
+check "the refusal opens no forge PR" "$(grep -c '^open ' "$FORGE_LOG")" "0"
+contains "the refusal leaves line-run's forge in place" "$(cat "$PJ/profile/profile.yaml")" "hosts: [forge.test]"
 
 if [ "$fail" -eq 0 ]; then echo "all checks passed"; else echo "some checks FAILED"; fi
 exit "$fail"
