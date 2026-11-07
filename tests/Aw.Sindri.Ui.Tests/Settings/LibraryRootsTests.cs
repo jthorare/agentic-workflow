@@ -566,12 +566,14 @@ public sealed class LibraryRootsTests
         var roots = served["roots"]!.AsArray();
         var twin = System.Text.Json.Nodes.JsonNode.Parse(roots[1]!.ToJsonString())!;
         twin["docs"] = 99;
+        twin["path"] = "~/Documents/Other";
         roots.Add(twin);
         _server.LibraryAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, served.ToJsonString());
 
         await card.Refresh(_api, Token);
 
         Assert.Equal(["aw", "work", "inbox", "repo:jthorare/agentic-workflow", "repo:acme/harbor"], card.Rows.Select(r => r.Name), StringComparer.Ordinal);
-        Assert.Equal("scanned 3 min ago, 20 docs, 0 errors", Row(card, "work").StatusText);
+        Assert.Equal(("~/Documents/WorkVault", "scanned 3 min ago, 20 docs, 0 errors"), (Row(card, "work").PathText, Row(card, "work").StatusText));
+        _ = Assert.Single(card.Rows, r => string.Equals(r.Name, "work", StringComparison.Ordinal));
     }
 }
