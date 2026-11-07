@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Overrides;
@@ -71,5 +72,5 @@ internal sealed class CheckMapService(IGraphStore store) : IService<CheckMapRequ
         MapRuleset.Running(scope) is { } running && !string.Equals(version.Ruleset, running, StringComparison.Ordinal);
 
     private static MapHealth Fail(Error error) =>
-        new(Name, MapHealthState.Fail, $"{error.Code}: {error.Message}", "check $AW_SINDRI_HOME/context permissions; never delete context.db");
+        new(Name, MapHealthState.Fail, ContextErrors.DoctorDetail(error), "check $AW_SINDRI_HOME/context permissions; never delete context.db");
 }

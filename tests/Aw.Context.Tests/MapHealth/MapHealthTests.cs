@@ -59,6 +59,22 @@ public sealed class MapHealthTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Doctor_rows_over_a_failed_store_never_say_run_sindri_doctor()
+    {
+        _world.Store.Failure = ContextErrors.StoreUnavailable.With("AW-DATA-001: locked" + ContextErrors.StoreHint);
+
+        var map = (await _world.Map.CheckMap(scope: null, MapWorld.None)).Value;
+        var retention = (await _world.Map.CheckRetention(MapWorld.None)).Value;
+
+        Assert.All([map, retention], check =>
+        {
+            Assert.Equal(MapHealthState.Fail, check.State);
+            Assert.EndsWith("SND-CONTEXT-004: AW-DATA-001: locked", check.Detail, StringComparison.Ordinal);
+            Assert.DoesNotContain("run sindri doctor", check.Detail, StringComparison.Ordinal);
+        });
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Context_retention_is_ok_when_nothing_is_overdue()
     {
         _ = await _world.ImportFixture();
