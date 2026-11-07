@@ -62,6 +62,21 @@ public sealed class BlockCatalog
     /// <summary>Every event descriptor.</summary>
     public IReadOnlyCollection<EventDescriptor> Events => _events.Values;
 
+    /// <summary>This catalog with <paramref name="overlay"/> laid over it: a descriptor replaces the one of its id, or adds one. This catalog is not changed, so the overlay lasts as long as the caller keeps the result (a trial's one registration, skill flows spec §7).</summary>
+    /// <param name="overlay">The descriptors to lay over.</param>
+    /// <returns>A new catalog; the events and the reasons other blocks did not load stay as they were.</returns>
+    public BlockCatalog Overlaid(IEnumerable<BlockDescriptor> overlay)
+    {
+        ArgumentNullException.ThrowIfNull(overlay);
+        var laid = overlay.ToList();
+        var ids = laid.Select(static d => d.Id).ToHashSet();
+        return new BlockCatalog(
+            [.. _blocks.Values.Where(b => !ids.Contains(b.Id)), .. laid],
+            _events.Values,
+            sentences: null,
+            _unloaded.Where(u => !ids.Contains(u.Key)).Select(static u => new UnloadedBlock(u.Key, u.Value)));
+    }
+
     /// <summary>The descriptor of <paramref name="id"/>.</summary>
     /// <param name="id">A block id.</param>
     /// <returns>The descriptor, or null when no block has that id (RCP-BLOCK-001).</returns>

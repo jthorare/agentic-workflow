@@ -53,8 +53,8 @@ public sealed class TrialRecipesTests
         using var entered = r.H.Callers.Enter(RegistryHarness.Human);
         await using var scope = r.Services.CreateAsyncScope();
         var sp = scope.ServiceProvider;
-        var recipes = new TrialRecipes(store, RecipeReaderTests.Reader, sp.GetRequiredService<RecipeRegistrar>(), sp.GetRequiredService<RecipeApprovalPlanner>(), sp.GetRequiredService<RecipeApprovalRecorder>());
-        return await recipes.Approve(At(1).Id, At, "tester", Token);
+        var recipes = new TrialRecipes(store, RecipeReaderTests.Reader, sp.GetRequiredService<RecipeRegistrar>(), sp.GetRequiredService<RecipeApprovalPlanner>(), sp.GetRequiredService<RecipeApprovalRecorder>(), sp.GetRequiredService<BlockCatalog>());
+        return await recipes.Approve(At(1).Id, At, _review.Descriptor, "tester", Token);
     }
 
     [Fact]

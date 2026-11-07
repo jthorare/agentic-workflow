@@ -99,7 +99,7 @@ public sealed class RecipeApprovalPlanner(IRecipeStore store, IRecipeApprovals a
 
         var pins = PinRules.Pins(parsed.Value, catalog, current.Value, json);
         var drift = latest.Value is { } before && before.Pins != pins ? before : null;
-        var plan = await Plan(recipe, (parsed.Value, current.Value), pins, drift, cancellationToken).ConfigureAwait(false);
+        var plan = await Plan(recipe, (parsed.Value, current.Value), (pins, catalog), drift, cancellationToken).ConfigureAwait(false);
         return plan.IsError ? plan.Error : plan.Value.Preview;
     }
 
@@ -108,8 +108,17 @@ public sealed class RecipeApprovalPlanner(IRecipeStore store, IRecipeApprovals a
     /// <param name="hash">The hash.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>The plan, or SND-RECIPE-002, or the plan's refusal.</returns>
-    public async ValueTask<Result<ApprovalPlan>> Approve(RecipeId id, RecipeHash hash, CancellationToken cancellationToken)
+    public ValueTask<Result<ApprovalPlan>> Approve(RecipeId id, RecipeHash hash, CancellationToken cancellationToken) => Approve(id, hash, catalog, cancellationToken);
+
+    /// <summary>The plan for approving <paramref name="hash"/>, pinned and previewed against <paramref name="against"/> instead of this build's catalog.</summary>
+    /// <param name="id">The recipe id.</param>
+    /// <param name="hash">The hash.</param>
+    /// <param name="against">The catalog the pins and the preview are made from.</param>
+    /// <param name="cancellationToken">Cancels the reads.</param>
+    /// <returns>The plan, or SND-RECIPE-002, or the plan's refusal.</returns>
+    public async ValueTask<Result<ApprovalPlan>> Approve(RecipeId id, RecipeHash hash, BlockCatalog against, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(against);
         var found = await store.Find(hash, cancellationToken).ConfigureAwait(false);
         if (found.IsError)
         {
@@ -117,7 +126,7 @@ public sealed class RecipeApprovalPlanner(IRecipeStore store, IRecipeApprovals a
         }
 
         return found.Value is { } recipe && recipe.Id == id
-            ? await Approve(recipe, cancellationToken).ConfigureAwait(false)
+            ? await Approve(recipe, against, cancellationToken).ConfigureAwait(false)
             : WorkflowErrors.RecipeNotFound.With($"no recipe {id.Value}@{hash.Display} is registered; sindri recipe list shows what is");
     }
 
@@ -130,7 +139,9 @@ public sealed class RecipeApprovalPlanner(IRecipeStore store, IRecipeApprovals a
     /// <param name="recipe">The registered recipe.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>The plan, or the refusal.</returns>
-    public async ValueTask<Result<ApprovalPlan>> Approve(RegisteredRecipe recipe, CancellationToken cancellationToken)
+    public ValueTask<Result<ApprovalPlan>> Approve(RegisteredRecipe recipe, CancellationToken cancellationToken) => Approve(recipe, catalog, cancellationToken);
+
+    private async ValueTask<Result<ApprovalPlan>> Approve(RegisteredRecipe recipe, BlockCatalog against, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(recipe);
         var standing = await Standing(recipe, cancellationToken).ConfigureAwait(false);
@@ -140,7 +151,7 @@ public sealed class RecipeApprovalPlanner(IRecipeStore store, IRecipeApprovals a
         }
 
         var (parsed, current) = standing.Value;
-        var pins = Pins(recipe, parsed, current);
+        var pins = Pins(recipe, parsed, current, against);
         if (pins.IsError)
         {
             return pins.Error;
@@ -152,10 +163,10 @@ public sealed class RecipeApprovalPlanner(IRecipeStore store, IRecipeApprovals a
             return latest.Error;
         }
 
-        return await Plan(recipe, standing.Value, pins.Value, latest.Value, cancellationToken).ConfigureAwait(false);
+        return await Plan(recipe, standing.Value, (pins.Value, against), latest.Value, cancellationToken).ConfigureAwait(false);
     }
 
-    private async ValueTask<Result<ApprovalPlan>> Plan(RegisteredRecipe recipe, (Recipe Parsed, IReadOnlyList<RecipeApproval> Current) standing, RecipePins pins,
+    private async ValueTask<Result<ApprovalPlan>> Plan(RegisteredRecipe recipe, (Recipe Parsed, IReadOnlyList<RecipeApproval> Current) standing, (RecipePins Pins, BlockCatalog Catalog) basis,
         RecipeApproval? latest, CancellationToken cancellationToken)
     {
         var diff = await Diff(recipe, standing.Current, cancellationToken).ConfigureAwait(false);
@@ -166,10 +177,10 @@ public sealed class RecipeApprovalPlanner(IRecipeStore store, IRecipeApprovals a
             return diff.IsError ? diff.Error : resumes.IsError ? resumes.Error : facts.Error;
         }
 
-        var preview = ApprovalPreviews.Approve(standing.Parsed, recipe.Hash, pins, catalog, latest) with { Diff = diff.Value, Resumes = resumes.Value, Effects = ApprovalPreviews.Effects(standing.Parsed, facts.Value.EffectAllowlist) };
+        var preview = ApprovalPreviews.Approve(standing.Parsed, recipe.Hash, basis.Pins, basis.Catalog, latest) with { Diff = diff.Value, Resumes = resumes.Value, Effects = ApprovalPreviews.Effects(standing.Parsed, facts.Value.EffectAllowlist) };
         // The pins are bound on every approval, not only a drift one: a child approved while the human reads the preview
         // would otherwise be pinned without being seen.
-        var subject = ChallengeSubject.ForRecipe(recipe.Hash, recipe.Version, PinRules.Digest(pins, json));
+        var subject = ChallengeSubject.ForRecipe(recipe.Hash, recipe.Version, PinRules.Digest(basis.Pins, json));
         return new ApprovalPlan(recipe, preview, latest, ChallengeAction.Approve(recipe.Id, recipe.Version), subject);
     }
 
@@ -239,7 +250,7 @@ public sealed class RecipeApprovalPlanner(IRecipeStore store, IRecipeApprovals a
     /// The block pins from this build, and each child's latest approved hash (PinRules.Pins; spec §4.1: a child is created
     /// from the hash its parent pinned). A child with no approved version refuses the approval.
     /// </summary>
-    private Result<RecipePins> Pins(RegisteredRecipe recipe, Recipe parsed, IReadOnlyList<RecipeApproval> current)
+    private Result<RecipePins> Pins(RegisteredRecipe recipe, Recipe parsed, IReadOnlyList<RecipeApproval> current, BlockCatalog against)
     {
         var unpinned = RecipeChildren.Of(parsed)
             .Where(child => !current.Any(a => a.Id == child))
@@ -248,7 +259,7 @@ public sealed class RecipeApprovalPlanner(IRecipeStore store, IRecipeApprovals a
             .FirstOrDefault();
         return unpinned is { } child
             ? WorkflowErrors.RecipeNotApproved.With($"{Name(recipe)} starts child {child.Value}, which has no approved version to pin; approve {child.Value} first")
-            : PinRules.Pins(parsed, catalog, current, json);
+            : PinRules.Pins(parsed, against, current, json);
     }
 
     /// <summary>The diff against the last approved version of the same id (another hash), or null when there is none.</summary>

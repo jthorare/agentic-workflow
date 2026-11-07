@@ -2,6 +2,7 @@ using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow;
+using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Core.Workflow.Registry;
@@ -15,19 +16,22 @@ namespace Aw.Sindri.Features.StartSkillRun;
 /// <param name="registrar">Registers recipe text.</param>
 /// <param name="planner">Plans the approval.</param>
 /// <param name="recorder">Records the approval.</param>
-internal sealed class TrialRecipes(IRecipeStore store, IRecipeReader reader, RecipeRegistrar registrar, RecipeApprovalPlanner planner, RecipeApprovalRecorder recorder)
+/// <param name="catalog">Serve's block catalog, which the trial's own block is laid over for the one registration and approval.</param>
+internal sealed class TrialRecipes(IRecipeStore store, IRecipeReader reader, RecipeRegistrar registrar, RecipeApprovalPlanner planner, RecipeApprovalRecorder recorder, BlockCatalog catalog)
 {
     /// <summary>Registers the trial recipe at its version (<see cref="SkillTrialRecipe.VersionFor"/>) and approves its hash as the caller; an approval that already stands is reused.</summary>
     /// <param name="id">The trial's recipe id.</param>
     /// <param name="at">The trial's recipe at a version.</param>
+    /// <param name="block">The block the trial runs: the folder's when the run has one. The recipe is checked and pinned against serve's catalog with this laid over it, so serve's own registration is not touched and a plain run keeps the pins it had.</param>
     /// <param name="actor">The approver.</param>
     /// <param name="cancellationToken">Cancels the reads and writes.</param>
-    internal async ValueTask<Result<RecipeVersion>> Approve(RecipeId id, Func<int, SkillTrialPlan> at, string actor, CancellationToken cancellationToken)
+    internal async ValueTask<Result<RecipeVersion>> Approve(RecipeId id, Func<int, SkillTrialPlan> at, BlockDescriptor block, string actor, CancellationToken cancellationToken)
     {
-        var registered = await Register(id, at, cancellationToken).ConfigureAwait(false);
+        var against = catalog.Overlaid([block]);
+        var registered = await Register(id, at, against, cancellationToken).ConfigureAwait(false);
         if (registered.IsError && registered.Error.Code == WorkflowErrors.RecipeVersionTaken.Code)
         {
-            registered = await Register(id, at, cancellationToken).ConfigureAwait(false);   // why: another trial took max+1 between our read and our write; read again and go one higher, once
+            registered = await Register(id, at, against, cancellationToken).ConfigureAwait(false);   // why: another trial took max+1 between our read and our write; read again and go one higher, once
         }
 
         if (registered.IsError)
@@ -35,7 +39,7 @@ internal sealed class TrialRecipes(IRecipeStore store, IRecipeReader reader, Rec
             return registered.Error;
         }
 
-        var made = await planner.Approve(registered.Value.Id, registered.Value.Hash, cancellationToken).ConfigureAwait(false);
+        var made = await planner.Approve(registered.Value.Id, registered.Value.Hash, against, cancellationToken).ConfigureAwait(false);
         if (made.IsError)
         {
             return made.Error;
@@ -53,7 +57,7 @@ internal sealed class TrialRecipes(IRecipeStore store, IRecipeReader reader, Rec
         return new RecipeVersion(registered.Value.Id, registered.Value.Version, registered.Value.Hash);
     }
 
-    private async ValueTask<Result<RegistrarOutcome>> Register(RecipeId id, Func<int, SkillTrialPlan> at, CancellationToken cancellationToken)
+    private async ValueTask<Result<RegistrarOutcome>> Register(RecipeId id, Func<int, SkillTrialPlan> at, BlockCatalog against, CancellationToken cancellationToken)
     {
         var versions = await store.Versions(id, cancellationToken).ConfigureAwait(false);
         if (versions.IsError)
@@ -69,6 +73,6 @@ internal sealed class TrialRecipes(IRecipeStore store, IRecipeReader reader, Rec
         }
 
         var plan = at(SkillTrialRecipe.VersionFor(registered, HashAt));
-        return await registrar.Register(plan.Text, plan.Id.Value + ".yaml", cancellationToken).ConfigureAwait(false);
+        return await registrar.Register(plan.Text, plan.Id.Value + ".yaml", against, cancellationToken).ConfigureAwait(false);
     }
 }
