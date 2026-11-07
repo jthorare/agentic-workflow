@@ -58,4 +58,10 @@ public interface IContextIssues
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The changes and mentions, oldest first; SND-CONTEXT-020 for a session, 001/004.</returns>
     public ValueTask<Result<LinearSince>> IssueSince(DateTimeOffset marker, ExternalId viewer, ContextScope scope, CancellationToken cancellationToken);
+
+    /// <summary>Reads the Linear workspace's URL key ('acme' in linear.app/acme), as the last Linear issue tick stored it. Owner-only: a session is refused.</summary>
+    /// <param name="scope">The profile's settings and repos, and the caller.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The key, or null until the first tick has stored it; SND-CONTEXT-020 for a session, 001/004.</returns>
+    public ValueTask<Result<string?>> WorkspaceUrlKey(ContextScope scope, CancellationToken cancellationToken);
 }

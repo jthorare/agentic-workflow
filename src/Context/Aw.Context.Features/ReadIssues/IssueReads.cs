@@ -53,6 +53,7 @@ internal sealed class IssueReads(ILinearIssueStore issues, ILinearLookupStore? l
             return refused;
         }
 
+        team = Spelled(scope, team);
         var audience = await AudienceOf(scope, cancellationToken).ConfigureAwait(false);
         if (audience.IsError)
         {
@@ -60,10 +61,28 @@ internal sealed class IssueReads(ILinearIssueStore issues, ILinearLookupStore? l
         }
 
         // why: a team's lists are readable when its issues are: the feed gives them the audience 'linear:<team key>'
-        return AudienceKey.TryFrom("linear:" + team, out var key) && audience.Value.Allows(key, RecordKey.From("linear:team/" + team))
-            ? lookups is null ? Results.Success<LinearTeamLookups?>(value: null) : await lookups.Team(team, cancellationToken).ConfigureAwait(false)
-            : Results.Success<LinearTeamLookups?>(value: null);
+        if (!AudienceKey.TryFrom("linear:" + team, out var key) || !audience.Value.Allows(key, RecordKey.From("linear:team/" + team)) || lookups is null)
+        {
+            return Results.Success<LinearTeamLookups?>(value: null);
+        }
+
+        var stored = await lookups.Team(team, cancellationToken).ConfigureAwait(false);
+        if (stored.IsError || stored.Value is not null)
+        {
+            return stored;
+        }
+
+        // why: a team the profile reads but no tick has synced yet still has a page to show, empty; a team the profile doesn't read has none
+        return Picked(scope, team) ? Results.Success<LinearTeamLookups?>(new LinearTeamLookups(TeamId: null, team, [], [], [], [], Name: null, SyncedAt: null)) : Results.Success<LinearTeamLookups?>(value: null);
     }
+
+    // why: the profile spells a team key as Linear does ('ENG'); a caller's 'eng' is answered under that spelling
+    private static string Spelled(ContextScope scope, string team) =>
+        SettingsReader.Read(scope.Settings) is { IsSuccess: true, Value: { } settings } && settings.LinearTeams.FirstOrDefault(t => t.Equals(team, StringComparison.OrdinalIgnoreCase)) is { } spelled ? spelled : team;
+
+    // why: 'context.sources.linear.teams' names the teams Sindri reads; a profile that names none has no team to tell from a typo, so none is picked
+    private static bool Picked(ContextScope scope, string team) =>
+        SettingsReader.Read(scope.Settings) is { IsSuccess: true, Value: { Linear: not null } settings } && settings.LinearTeams.Contains(team, StringComparer.Ordinal);
 
     public async ValueTask<Result<LinearSince>> Since(DateTimeOffset marker, ExternalId viewer, ContextScope scope, CancellationToken cancellationToken)
     {
@@ -74,6 +93,16 @@ internal sealed class IssueReads(ILinearIssueStore issues, ILinearLookupStore? l
 
         var audience = await AudienceOf(scope, cancellationToken).ConfigureAwait(false);
         return audience.IsError ? audience.Error : await issues.Since(marker, viewer, audience.Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async ValueTask<Result<string?>> WorkspaceUrlKey(ContextScope scope, CancellationToken cancellationToken)
+    {
+        if (OwnerOnly(scope, "the workspace's URL key") is { } refused)
+        {
+            return refused;
+        }
+
+        return lookups is null ? Results.Success<string?>(value: null) : await lookups.WorkspaceUrlKey(cancellationToken).ConfigureAwait(false);
     }
 
     private static Error? OwnerOnly(ContextScope scope, string what) =>
