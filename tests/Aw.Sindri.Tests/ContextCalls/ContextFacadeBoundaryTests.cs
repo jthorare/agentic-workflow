@@ -3,7 +3,7 @@ using Aw.Context.Core.Facade;
 
 namespace Aw.Sindri.Tests.ContextCalls;
 
-/// <summary>Sindri reaches the context engine through IContextEngine only (context spec §4): never its store or file ports.</summary>
+/// <summary>Sindri reaches the context engine through IContextEngine only (context spec §4): never its store or file ports. IScopeProposals and IContextLinearWrites (the Linear hub's owner-only writes, spec 2026-11-04 §5.1) are the two facades kept apart from it.</summary>
 public sealed class ContextFacadeBoundaryTests
 {
     private static readonly Assembly[] _sindri =
@@ -22,7 +22,7 @@ public sealed class ContextFacadeBoundaryTests
             .SelectMany(a => a.GetTypes())
             .SelectMany(t => t.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                 .SelectMany(c => c.GetParameters())
-                .Where(p => Types(p.ParameterType).Any(t => t.IsInterface && t.Assembly == contextCore && t != typeof(IContextEngine) && t != typeof(IScopeProposals)))
+                .Where(p => Types(p.ParameterType).Any(t => t.IsInterface && t.Assembly == contextCore && t != typeof(IContextEngine) && t != typeof(IScopeProposals) && t != typeof(IContextLinearWrites)))
                 .Select(p => $"{t.FullName}({p.ParameterType.Name} {p.Name})"))
             .ToList();
 
