@@ -12,6 +12,9 @@ internal sealed partial class NewLinearIssueViewModel
     private static readonly TimeSpan _sendingAfter = TimeSpan.FromMilliseconds(300);
     private static readonly TimeSpan _checkAfter = TimeSpan.FromSeconds(15);
 
+    /// <summary>True when the last create was answered while the dialog was still open; false when Esc closed it mid-send, so the new row must not take focus from where the person is now.</summary>
+    internal bool CreatedWhileOpen { get; private set; }
+
     private LinearCreateBody? _sent;
     private bool _inFlight;
 
@@ -235,7 +238,7 @@ internal sealed partial class NewLinearIssueViewModel
     {
         (IsUnknown, IsLocked, _sent) = (false, false, null);
         ClearDraft();
-        JustCreated = true;
+        (JustCreated, CreatedWhileOpen) = (true, IsOpen);
         IsOpen = false;
         Say(Labels.LinearNewCreated(key));
         Created?.Invoke(this, new ValueEventArgs<string>(key));

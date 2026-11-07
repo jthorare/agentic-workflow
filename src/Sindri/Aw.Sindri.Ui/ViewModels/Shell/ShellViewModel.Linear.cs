@@ -18,7 +18,7 @@ internal sealed partial class ShellViewModel
     {
         Linear = new LinearWorkViewModel(_api, _store, _clock);
         NewIssue = new NewLinearIssueViewModel(_api, Health.ApiUrl, _clock);
-        NewIssue.Created += (_, created) => Linear.SelectWhenShown(created.Value);
+        NewIssue.Created += (_, created) => Linear.SelectWhenShown(created.Value, NewIssue.CreatedWhileOpen);
         Health.Follow(Linear.Refresh);
         PropertyChanged += (_, e) =>
         {
@@ -73,5 +73,11 @@ internal sealed partial class ShellViewModel
     }
 
     /// <summary>Opens the New issue dialog (`C` on the Linear view, or its header button); the draft a close left is offered again.</summary>
-    internal void OpenNewIssue() => _ = NewIssue.Open(CancellationToken.None);
+    internal void OpenNewIssue()
+    {
+        if (!NewIssue.IsOpen)
+        {
+            _ = NewIssue.Open(CancellationToken.None);
+        }
+    }
 }

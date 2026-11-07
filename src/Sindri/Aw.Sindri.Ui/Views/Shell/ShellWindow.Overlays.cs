@@ -162,6 +162,30 @@ internal sealed partial class ShellWindow
         return false;
     }
 
+    private void ListenLinear(ShellViewModel shell, bool on)
+    {
+        if (on)
+        {
+            shell.Linear.SelectMissed += OnSelectMissed;
+        }
+        else
+        {
+            shell.Linear.SelectMissed -= OnSelectMissed;
+        }
+    }
+
+    // A created issue the list's filters hide has no row to take focus: the page's Create button does, as it would after the dialog closed without a create.
+    private void OnSelectMissed(object? sender, EventArgs e) =>
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                if (Shell is { } shell)
+                {
+                    _ = Usable(FallbackAfter(shell.NewIssue, shell))?.Focus(Method());
+                }
+            },
+            DispatcherPriority.Loaded);
+
     private static bool IsOpen(object? sender, ShellViewModel shell) =>
         sender == shell.Palette ? shell.Palette.IsOpen : sender == shell.Create ? shell.Create.IsOpen : sender == shell.NewIssue ? shell.NewIssue.IsOpen : sender == shell.Start ? shell.Start.IsOpen : sender == shell.ApproveAll ? shell.ApproveAll.IsOpen : shell.Shortcuts.IsOpen;
 

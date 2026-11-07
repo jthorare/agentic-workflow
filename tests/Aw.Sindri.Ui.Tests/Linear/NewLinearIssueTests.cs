@@ -322,4 +322,29 @@ public sealed class NewLinearIssueTests
 
         _ = Assert.Single(f.Server.LinearCreates);
     }, Token);
+
+    [Fact]
+    public Task A_create_answered_after_Esc_closed_the_dialog_says_it_was_not_open() => NewLinearIssueFixture.Run(async f =>
+    {
+        var vm = await f.OpenedOnEng(Token);
+        var gate = f.Server.LinearCreateGate = new TaskCompletionSource();
+        vm.Title = "Document the retry budget";
+        var sending = vm.Submit(Token);
+
+        vm.Close();
+        await NewLinearIssueFixture.Release(gate, sending);
+
+        Assert.Equal((false, false), (vm.CreatedWhileOpen, vm.IsOpen));
+    }, Token);
+
+    [Fact]
+    public Task A_create_answered_while_the_dialog_is_open_says_it_was_open() => NewLinearIssueFixture.Run(async f =>
+    {
+        var vm = await f.OpenedOnEng(Token);
+        vm.Title = "Document the retry budget";
+
+        await vm.Submit(Token);
+
+        Assert.True(vm.CreatedWhileOpen);
+    }, Token);
 }

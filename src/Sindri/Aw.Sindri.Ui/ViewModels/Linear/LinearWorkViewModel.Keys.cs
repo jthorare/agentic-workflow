@@ -9,6 +9,10 @@ internal sealed partial class LinearWorkViewModel
     internal string? SelectedKey { get; private set; }
 
     private string? _selectWhenShown;
+    private bool _selectTakesFocus;
+
+    /// <summary>The issue <see cref="SelectWhenShown"/> waited for did not come (the filters hide it, or the read failed): the pending pick is dropped and the view puts focus on the page's Create button.</summary>
+    internal event EventHandler? SelectMissed;
 
     /// <summary>The `/` key asked for focus in the filter bar.</summary>
     internal event EventHandler? FilterFocusRequested;
@@ -62,14 +66,48 @@ internal sealed partial class LinearWorkViewModel
     /// <summary>`/`: asks the view to focus the first filter.</summary>
     internal void FocusFilters() => FilterFocusRequested?.Invoke(this, EventArgs.Empty);
 
-    /// <summary>Selects and focuses a row once the list shows it (a just-created issue): now when it is listed, else after the next read of the list.</summary>
+    /// <summary>Selects and focuses a row once the list shows it (a just-created issue): now when it is listed, else after the next read of the list. When that read does not bring it, the wait ends.</summary>
     /// <param name="key">The issue key.</param>
-    internal void SelectWhenShown(string key)
+    /// <param name="takeFocus">False when the dialog was closed before the answer came: the row is selected, but focus moves only if it is lost.</param>
+    internal void SelectWhenShown(string key, bool takeFocus = true)
     {
-        _selectWhenShown = key;
-        if (!SelectPending() && IsLinear && IsActive && _url is { } url)
+        (_selectWhenShown, _selectTakesFocus) = (key, takeFocus);
+        if (SelectPending())
         {
-            Reading = Observed(ReadList(url, _shown?.Token ?? CancellationToken.None));
+            return;
+        }
+
+        if (IsLinear && IsActive && _url is { } url)
+        {
+            Reading = Observed(Settle(key, ReadList(url, _shown?.Token ?? CancellationToken.None), _reads + 1));
+        }
+        else
+        {
+            Missed(key);
+        }
+    }
+
+    // The read SelectWhenShown started is over: a row not shown by now will not be by this wait. A read that replaced it settles the wait itself.
+    private async Task Settle(string key, Task read, int number)
+    {
+        await read.ConfigureAwait(true);
+        if (_reads == number)
+        {
+            Missed(key);
+        }
+    }
+
+    private void Missed(string key)
+    {
+        if (!string.Equals(_selectWhenShown, key, StringComparison.Ordinal))
+        {
+            return;   // shown meanwhile, or a filter change ended the wait
+        }
+
+        _selectWhenShown = null;
+        if (_selectTakesFocus)
+        {
+            SelectMissed?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -83,7 +121,7 @@ internal sealed partial class LinearWorkViewModel
 
         _selectWhenShown = null;
         Select(key);
-        FocusRequested?.Invoke(this, new FocusRequestedEventArgs(key, onlyIfLost: false));
+        FocusRequested?.Invoke(this, new FocusRequestedEventArgs(key, onlyIfLost: !_selectTakesFocus));
         return true;
     }
 

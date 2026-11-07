@@ -88,6 +88,7 @@ internal sealed partial class LinearWorkViewModel
         }
 
         OnChanged(nameof(HasFilters));
+        _selectWhenShown = null;
         Reload();
     }
 
@@ -136,6 +137,7 @@ internal sealed partial class LinearWorkViewModel
     private void OnFilterPicked(object? sender, EventArgs e)
     {
         OnChanged(nameof(HasFilters));
+        _selectWhenShown = null;   // the person chose what the list shows: a created issue is no longer owed a place in it
         Reload();
     }
 
