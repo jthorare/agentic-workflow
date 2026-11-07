@@ -1,0 +1,378 @@
+using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels;
+using Aw.Sindri.Ui.ViewModels.Reviews;
+using Microsoft.Extensions.Time.Testing;
+
+namespace Aw.Sindri.Ui.Tests.Settings;
+
+/// <summary>Settings' Library card (review page spec §6.3, §16): the folders per kind, the loading and empty words, the Add a folder form with its field errors, Remove on vaults, Turn off on aw.</summary>
+[Lane(TestLane.Unit)]
+public sealed class LibraryRootsTests
+{
+    private static readonly Uri _api = new("http://127.0.0.1:7410/");
+
+    private readonly FakeSindriApi _server = new();
+    private readonly FakeFolderPicker _picker = new();
+    private readonly FakeTimeProvider _clock = new(DateTimeOffset.Parse("2026-01-01T00:00:00Z", System.Globalization.CultureInfo.InvariantCulture));
+
+    private static CancellationToken Token => TestContext.Current.CancellationToken;
+
+    private LibraryRootsViewModel Card() => new(() => _api, _server, _picker, _clock);
+
+    private async Task<LibraryRootsViewModel> Shown(string scenario = "ok")
+    {
+        _server.LibraryAnswer = RouteAnswer.Api("library", scenario);
+        var card = Card();
+        await card.Refresh(_api, Token);
+        return card;
+    }
+
+    private static LibraryFolderViewModel Row(LibraryRootsViewModel card, string name) => card.Rows.Single(r => string.Equals(r.Name, name, StringComparison.Ordinal));
+
+    private async Task<LibraryRootsViewModel> Filled(string name = "harbor-notes", string path = "~/Documents/Harbor", string deny = "Private/**, Journal/**")
+    {
+        var card = await Shown();
+        card.Form.Open();
+        (card.Form.Name, card.Form.Path, card.Form.Deny) = (name, path, deny);
+        return card;
+    }
+
+    [Fact]
+    public void Before_the_first_answer_the_card_says_it_is_reading_and_offers_no_add()
+    {
+        var card = Card();
+
+        Assert.Equal((true, false, false, false, Labels.LibraryFoldersReading), (card.IsLoading, card.IsEmpty, card.HasRows, card.CanAdd, card.ReadingText));
+    }
+
+    [Fact]
+    public async Task The_folders_come_in_served_order_with_a_path_line_and_the_scope_for_a_repo()
+    {
+        var card = await Shown();
+
+        Assert.Equal(["aw", "work", "inbox", "repo:agentic-workflow", "repo:harbor"], card.Rows.Select(r => r.Name), StringComparer.Ordinal);
+        Assert.Equal(
+            ["~/.agentic-workflow", "~/Documents/WorkVault", "~/Documents/Inbox", "jthorare/agentic-workflow · docs/**", "acme/harbor · docs/**"],
+            card.Rows.Select(r => r.PathText),
+            StringComparer.Ordinal);
+        Assert.Equal(
+            [Labels.LibraryFoldersBuiltIn, Labels.LibraryFoldersVault, Labels.LibraryFoldersVault, Labels.LibraryFoldersFromRepos, Labels.LibraryFoldersFromRepos],
+            card.Rows.Select(r => r.KindText),
+            StringComparer.Ordinal);
+        Assert.Equal((false, false, true, true), (card.IsLoading, card.IsEmpty, card.HasRows, card.CanAdd));
+    }
+
+    [Fact]
+    public async Task A_read_folder_says_when_and_how_many_docs_and_errors_and_an_unread_one_says_reading()
+    {
+        var card = await Shown("with-errors");
+
+        Assert.Equal("scanned 3 min ago, 9 docs, 0 errors", Row(card, "aw").StatusText);
+        Assert.Equal("scanned 3 min ago, 20 docs, 2 errors", Row(card, "work").StatusText);
+        Assert.Equal("scanned 3 min ago, 8 docs, 1 error", Row(card, "repo:agentic-workflow").StatusText);
+        Assert.Equal((Labels.LibraryFoldersReading, true), (Row(card, "inbox").StatusText, Row(card, "inbox").IsReading));
+        Assert.False(Row(card, "work").IsReading);
+    }
+
+    [Fact]
+    public async Task An_unreadable_folder_says_why()
+    {
+        var card = await Shown("root-unreadable");
+
+        var notes = Row(card, "notes");
+        Assert.Equal(("can't be read: permission denied", true, false), (notes.StatusText, notes.IsUnreadable, notes.IsReading));
+    }
+
+    [Fact]
+    public async Task Each_kind_gets_its_own_control_Remove_on_vaults_Turn_off_on_aw_and_repo_roots_are_read_only()
+    {
+        var card = await Shown();
+
+        Assert.Equal((false, true, false, false), (Row(card, "aw").CanRemove, Row(card, "aw").CanTurnOff, Row(card, "aw").CanTurnOn, Row(card, "aw").IsReadOnly));
+        Assert.Equal((true, false, false, false), (Row(card, "work").CanRemove, Row(card, "work").CanTurnOff, Row(card, "work").CanTurnOn, Row(card, "work").IsReadOnly));
+        var repo = Row(card, "repo:harbor");
+        Assert.Equal((false, false, false, true, Labels.LibraryFoldersReadOnly), (repo.CanRemove, repo.CanTurnOff, repo.CanTurnOn, repo.IsReadOnly, repo.ReadOnlyText));
+    }
+
+    [Fact]
+    public async Task A_turned_off_aw_folder_says_so_and_offers_Turn_on()
+    {
+        var card = await Shown("empty");
+
+        var aw = Row(card, "aw");
+        Assert.Equal((Labels.LibraryFoldersOff, true, false, true), (aw.StatusText, aw.IsOff, aw.CanTurnOff, aw.CanTurnOn));
+    }
+
+    [Fact]
+    public async Task A_session_gets_no_folders_so_the_card_shows_the_empty_words_and_nothing_to_edit()
+    {
+        var card = await Shown("session");
+
+        Assert.Equal((true, false, false, Labels.LibraryFoldersEmpty), (card.IsEmpty, card.HasRows, card.CanAdd, card.EmptyText));
+        Assert.False(card.Form.IsOpen);
+    }
+
+    [Fact]
+    public async Task A_failed_first_read_says_why_and_a_failed_later_read_keeps_the_folders()
+    {
+        _server.LibraryAnswer = RouteAnswer.Problem(System.Net.HttpStatusCode.ServiceUnavailable, "SND-API-503", "Sindri is busy (fix: wait)");
+        var card = Card();
+        await card.Refresh(_api, Token);
+        Assert.Contains("Sindri is busy", card.Error, StringComparison.Ordinal);
+
+        _server.LibraryAnswer = RouteAnswer.Api("library", "ok");
+        await card.Refresh(_api, Token);
+        Assert.Equal((5, string.Empty), (card.Rows.Count, card.Error));
+
+        _server.LibraryAnswer = RouteAnswer.Problem(System.Net.HttpStatusCode.ServiceUnavailable, "SND-API-503", "Sindri is busy (fix: wait)");
+        await card.Refresh(_api, Token);
+        Assert.Equal((5, string.Empty), (card.Rows.Count, card.Error));
+    }
+
+    // The Add a folder form
+
+    [Fact]
+    public async Task Add_folder_opens_the_form_and_Cancel_closes_it_and_clears_what_was_typed()
+    {
+        var card = await Shown();
+        Assert.True(card.CanAdd);
+
+        card.Form.Open();
+        Assert.Equal((true, false), (card.Form.IsOpen, card.Form.CanSave));
+        (card.Form.Name, card.Form.Path) = ("harbor-notes", "~/Documents/Harbor");
+        Assert.True(card.Form.CanSave);
+
+        card.Form.Cancel();
+
+        Assert.Equal((false, string.Empty, string.Empty), (card.Form.IsOpen, card.Form.Name, card.Form.Path));
+        Assert.Empty(_server.LibraryRootAdds);
+    }
+
+    [Fact]
+    public async Task Save_needs_a_name_and_a_folder()
+    {
+        var card = await Shown();
+        card.Form.Open();
+
+        card.Form.Name = "harbor-notes";
+        Assert.False(card.Form.CanSave);
+
+        card.Form.Path = "  ";
+        Assert.False(card.Form.CanSave);
+
+        card.Form.Path = "~/Documents/Harbor";
+        Assert.True(card.Form.CanSave);
+    }
+
+    [Fact]
+    public async Task Browse_puts_the_chosen_folder_in_the_field_and_no_choice_keeps_what_was_typed()
+    {
+        var card = await Shown();
+        card.Form.Open();
+        card.Form.Path = "~/typed";
+        _picker.Queue(null);
+        await card.Form.Browse(Token);
+        Assert.Equal("~/typed", card.Form.Path);
+
+        _picker.Queue("/home/joi/Documents/Harbor");
+        await card.Form.Browse(Token);
+
+        Assert.Equal(("/home/joi/Documents/Harbor", true), (card.Form.Path, card.Form.CanBrowse));
+        Assert.Equal([Labels.LibraryFoldersBrowseTitle, Labels.LibraryFoldersBrowseTitle], _picker.Asked, StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task Save_and_approve_sends_the_name_folder_and_deny_globs_with_approve_true_then_closes_and_reads_again()
+    {
+        var card = await Filled();
+        var reads = _server.LibraryCalls;
+
+        await card.Form.Save(Token);
+
+        var sent = Assert.Single(_server.LibraryRootAdds);
+        Assert.Equal(("harbor-notes", "~/Documents/Harbor", true), (sent.Name, sent.Path, sent.Approve));
+        Assert.Equal(["Private/**", "Journal/**"], sent.Deny, StringComparer.Ordinal);
+        Assert.Equal((false, string.Empty, reads + 1), (card.Form.IsOpen, card.Note, _server.LibraryCalls));
+        Assert.Equal((string.Empty, string.Empty), (card.Form.Name, card.Form.Path));
+    }
+
+    [Fact]
+    public async Task An_empty_deny_field_sends_no_globs()
+    {
+        var card = await Filled(deny: "  ");
+
+        await card.Form.Save(Token);
+
+        Assert.Empty(Assert.Single(_server.LibraryRootAdds).Deny);
+    }
+
+    [Fact]
+    public async Task A_save_that_waits_for_the_profile_approval_says_so_and_closes_the_form()
+    {
+        var card = await Filled();
+        _server.LibraryRootAnswer = RouteAnswer.Api("library-roots", "added-pending-others");
+
+        await card.Form.Save(Token);
+
+        Assert.Equal((Labels.ReviewsLoginPending, true, false), (card.Note, card.HasNote, card.Form.IsOpen));
+    }
+
+    [Fact]
+    public async Task A_later_approved_change_clears_the_waiting_line()
+    {
+        var card = await Filled();
+        _server.LibraryRootAnswer = RouteAnswer.Api("library-roots", "added-pending-others");
+        await card.Form.Save(Token);
+        _server.LibraryRootAnswer = RouteAnswer.Api("library-roots", "removed");
+
+        await card.Remove(Row(card, "work"), Token);
+
+        Assert.Equal((string.Empty, false), (card.Note, card.HasNote));
+    }
+
+    [Theory]
+    [InlineData("bad-name", "name")]
+    [InlineData("duplicate-name", "name")]
+    [InlineData("path-not-absolute", "path")]
+    [InlineData("path-too-wide", "path")]
+    [InlineData("too-many-vaults", "path")]
+    [InlineData("inside-another", "path")]
+    [InlineData("bad-deny", "deny")]
+    public async Task A_400_puts_its_detail_under_the_field_it_names_and_keeps_the_form_open(string scenario, string field)
+    {
+        var card = await Filled();
+        _server.LibraryRootAnswer = RouteAnswer.Problem("library-roots", scenario);
+        var detail = System.Text.Json.JsonDocument.Parse(GoldenFiles.Api("library-roots", scenario)).RootElement.GetProperty("detail").GetString();
+
+        await card.Form.Save(Token);
+
+        var form = card.Form;
+        var shown = new Dictionary<string, string>(StringComparer.Ordinal) { ["name"] = form.NameError, ["path"] = form.PathError, ["deny"] = form.DenyError };
+        Assert.Equal(detail, shown[field]);
+        Assert.All(shown.Where(s => !string.Equals(s.Key, field, StringComparison.Ordinal)), s => Assert.Equal(string.Empty, s.Value));
+        Assert.Equal((true, string.Empty, "harbor-notes", "~/Documents/Harbor"), (form.IsOpen, form.FormError, form.Name, form.Path));
+        Assert.False(card.HasNote);
+    }
+
+    [Fact]
+    public async Task Editing_a_field_clears_its_error()
+    {
+        var card = await Filled();
+        _server.LibraryRootAnswer = RouteAnswer.Problem("library-roots", "bad-name");
+        await card.Form.Save(Token);
+        Assert.NotEqual(string.Empty, card.Form.NameError);
+
+        card.Form.Path = "~/Documents/Elsewhere";
+        Assert.NotEqual(string.Empty, card.Form.NameError);
+
+        card.Form.Name = "harbor";
+        Assert.Equal((string.Empty, false), (card.Form.NameError, card.Form.HasNameError));
+    }
+
+    [Fact]
+    public async Task A_403_shows_the_refusal_with_its_code_and_keeps_the_form_open()
+    {
+        var card = await Filled();
+        _server.LibraryRootAnswer = RouteAnswer.Problem("library-roots", "session-refused");
+
+        await card.Form.Save(Token);
+
+        Assert.Contains("a session can't change them", card.Form.FormError, StringComparison.Ordinal);
+        Assert.Contains("SND-AUTH-002", card.Form.FormError, StringComparison.Ordinal);
+        Assert.Equal((true, true, string.Empty), (card.Form.IsOpen, card.Form.HasFormError, card.Form.NameError));
+    }
+
+    [Fact]
+    public async Task While_a_save_is_on_its_way_it_says_so_and_a_second_press_sends_nothing()
+    {
+        var card = await Filled();
+        _server.LibraryRootGate = new TaskCompletionSource();
+
+        var first = card.Form.Save(Token);
+        Assert.Equal((true, false, Labels.LibraryFoldersSaving), (card.Form.IsSending, card.Form.CanSave, card.Form.SaveText));
+        await card.Form.Save(Token);
+        _server.LibraryRootGate.SetResult();
+        await first;
+
+        Assert.Single(_server.LibraryRootAdds);
+        Assert.Equal((false, Labels.LibraryFoldersSave), (card.Form.IsSending, card.Form.SaveText));
+    }
+
+    // Remove and Turn off
+
+    [Fact]
+    public async Task Remove_asks_first_and_Cancel_sends_nothing()
+    {
+        var card = await Shown();
+        var work = Row(card, "work");
+
+        work.AskRemove();
+        Assert.Equal((true, Labels.LibraryFoldersRemoveAsk("work")), (work.IsConfirmingRemove, work.ConfirmText));
+
+        work.CancelRemove();
+
+        Assert.False(work.IsConfirmingRemove);
+        Assert.Empty(_server.LibraryRootRemoves);
+    }
+
+    [Fact]
+    public async Task Confirmed_Remove_sends_the_vaults_name_with_approve_true_and_reads_again()
+    {
+        var card = await Shown();
+        var reads = _server.LibraryCalls;
+        _server.LibraryRootAnswer = RouteAnswer.Api("library-roots", "removed");
+
+        await card.Remove(Row(card, "work"), Token);
+
+        Assert.Equal([("work", true)], _server.LibraryRootRemoves);
+        Assert.Equal((reads + 1, string.Empty), (_server.LibraryCalls, card.Error));
+    }
+
+    [Fact]
+    public async Task A_refused_Remove_shows_the_refusal_under_the_list()
+    {
+        var card = await Shown();
+        _server.LibraryRootAnswer = RouteAnswer.Problem("library-roots", "remove-not-vault");
+
+        await card.Remove(Row(card, "aw"), Token);
+
+        Assert.Contains("isn't a vault", card.Error, StringComparison.Ordinal);
+        Assert.Contains("SND-LIB-001", card.Error, StringComparison.Ordinal);
+        Assert.True(card.HasError);
+    }
+
+    [Fact]
+    public async Task Turn_off_and_Turn_on_send_the_aw_switch_with_approve_true()
+    {
+        var card = await Shown();
+        _server.LibraryRootAnswer = RouteAnswer.Api("library-roots", "aw-off");
+
+        await card.TurnAw(on: false, Token);
+        await card.TurnAw(on: true, Token);
+
+        Assert.Equal([(false, true), (true, true)], _server.LibraryAwSwitches.Select(s => (s.On, s.Approve)));
+    }
+
+    [Fact]
+    public async Task A_turn_off_that_waits_for_the_approval_says_so()
+    {
+        var card = await Shown();
+        _server.LibraryRootAnswer = RouteAnswer.Api("library-roots", "added-pending-others");
+
+        await card.TurnAw(on: false, Token);
+
+        Assert.Equal(Labels.ReviewsLoginPending, card.Note);
+    }
+
+    [Fact]
+    public async Task The_rows_and_buttons_carry_screen_reader_names()
+    {
+        var card = await Shown();
+
+        Assert.Equal("Turn off aw", Row(card, "aw").AwName);
+        Assert.Equal("Remove work", Row(card, "work").RemoveName);
+        Assert.Equal("work, vault, ~/Documents/WorkVault, scanned 3 min ago, 20 docs, 0 errors", Row(card, "work").AutomationName);
+        Assert.Equal("repo:harbor, from your repos, acme/harbor · docs/**, scanned 3 min ago, 4 docs, 0 errors, set by the repo list", Row(card, "repo:harbor").AutomationName);
+    }
+}

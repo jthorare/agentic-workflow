@@ -59,6 +59,65 @@ internal sealed partial class FakeSindriApi
         return Answer<ReviewList>(api, ReviewRoutes.List, ReviewsAnswer);
     }
 
+    private readonly List<LibraryRootAdd> _rootAdds = [];
+    private readonly List<(string Name, bool Approve)> _rootRemoves = [];
+    private readonly List<LibraryAwSwitch> _awSwitches = [];
+
+    /// <summary>The answer of the three Library writes (add a root, remove one, turn aw on or off): the "added" golden by default.</summary>
+    public RouteAnswer LibraryRootAnswer { get; set; } = RouteAnswer.Api("library-roots", "added");
+
+    /// <summary>When set, a Library write waits for it: the section stays on Sending until the test completes it.</summary>
+    public TaskCompletionSource? LibraryRootGate { get; set; }
+
+    /// <summary>The roots the section asked to add, in order.</summary>
+    public IReadOnlyList<LibraryRootAdd> LibraryRootAdds { get { lock (_gate) { return [.. _rootAdds]; } } }
+
+    /// <summary>The vaults the section asked to remove (name and approve flag), in order.</summary>
+    public IReadOnlyList<(string Name, bool Approve)> LibraryRootRemoves { get { lock (_gate) { return [.. _rootRemoves]; } } }
+
+    /// <summary>The aw on/off switches the section asked for, in order.</summary>
+    public IReadOnlyList<LibraryAwSwitch> LibraryAwSwitches { get { lock (_gate) { return [.. _awSwitches]; } } }
+
+    public async Task<Result<LibraryRootChanged>> AddLibraryRoot(Uri api, LibraryRootAdd add, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _rootAdds.Add(add);
+        }
+
+        return await LibraryWrite(api, ReviewRoutes.LibraryRoots, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<Result<LibraryRootChanged>> RemoveLibraryRoot(Uri api, string name, bool approve, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _rootRemoves.Add((name, approve));
+        }
+
+        return await LibraryWrite(api, ReviewRoutes.LibraryRoot(name, approve), cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<Result<LibraryRootChanged>> SetLibraryAw(Uri api, LibraryAwSwitch change, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _awSwitches.Add(change);
+        }
+
+        return await LibraryWrite(api, ReviewRoutes.LibraryAw, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<Result<LibraryRootChanged>> LibraryWrite(Uri api, string route, CancellationToken cancellationToken)
+    {
+        if (LibraryRootGate is { } gate)
+        {
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return Answer<LibraryRootChanged>(api, route, LibraryRootAnswer);
+    }
+
     private readonly List<(string Repo, int Number)> _pageReads = [];
     private readonly List<ReviewFixSend> _fixSends = [];
 
