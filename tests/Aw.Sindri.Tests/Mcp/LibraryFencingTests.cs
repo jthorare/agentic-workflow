@@ -22,7 +22,8 @@ public sealed class LibraryFencingTests
         new(new AsOf(5, 5, ProjectedAt: null, Rebuilding: false, Stalled: false), Docs: 41, WithErrors: 1,
             [new LibraryBrokenDoc("export-plan", "~/notes/export-plan.md", [new LibraryDocError("SND-LIB-010", Attack)])],
             [new LibraryNearMiss("~/notes/retry.md", "SND-LIB-019", Attack)],
-            [new ReviewUnreadableRoot("~/notes/vault", "permission denied")], CappedText: null);
+            [new ReviewUnreadableRoot("~/notes/vault", "permission denied")], CappedText: null,
+            [new LibraryRootRow("work", "vault", "~/notes/vault", Scope: null, On: true, Deny: [], ScannedAt: null, Docs: 3, Errors: 0, Unreadable: "permission denied")]);
 
     private static async Task<JsonElement> Answer(IResult result)
     {
@@ -35,7 +36,7 @@ public sealed class LibraryFencingTests
     }
 
     [Fact]
-    public async Task A_session_reads_files_and_findings_fenced_and_no_unreadable_folders()
+    public async Task A_session_reads_files_and_findings_fenced_and_no_folders()
     {
         var answer = await Answer(new ReviewFencing(_json).Library(Library()));
 
@@ -47,7 +48,7 @@ public sealed class LibraryFencingTests
         Assert.Contains(Attack, error.GetProperty("text").GetString(), StringComparison.Ordinal);
         Assert.StartsWith("<untrusted ", miss.GetProperty("path").GetString(), StringComparison.Ordinal);
         Assert.StartsWith("<untrusted ", miss.GetProperty("text").GetString(), StringComparison.Ordinal);
-        Assert.Equal(0, answer.GetProperty("unreadableRoots").GetArrayLength());
+        Assert.Equal((0, 0), (answer.GetProperty("unreadableRoots").GetArrayLength(), answer.GetProperty("roots").GetArrayLength()));
         Assert.Equal(("export-plan", "SND-LIB-010", 41), (broken.GetProperty("doc").GetString(), error.GetProperty("rule").GetString(), answer.GetProperty("docs").GetInt32()));
     }
 }

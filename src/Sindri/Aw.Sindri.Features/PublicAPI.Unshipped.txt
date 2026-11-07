@@ -5963,17 +5963,19 @@ Aw.Sindri.Features.GetLibrary.GetLibraryResponse.Broken.get -> System.Collection
 Aw.Sindri.Features.GetLibrary.GetLibraryResponse.Broken.init -> void
 Aw.Sindri.Features.GetLibrary.GetLibraryResponse.CappedText.get -> string?
 Aw.Sindri.Features.GetLibrary.GetLibraryResponse.CappedText.init -> void
-Aw.Sindri.Features.GetLibrary.GetLibraryResponse.Deconstruct(out Aw.Sindri.Core.Views.AsOf! AsOf, out int Docs, out int WithErrors, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryBrokenDoc!>! Broken, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryNearMiss!>! NearMisses, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewUnreadableRoot!>! UnreadableRoots, out string? CappedText) -> void
 Aw.Sindri.Features.GetLibrary.GetLibraryResponse.Docs.get -> int
 Aw.Sindri.Features.GetLibrary.GetLibraryResponse.Docs.init -> void
 Aw.Sindri.Features.GetLibrary.GetLibraryResponse.Equals(Aw.Sindri.Features.GetLibrary.GetLibraryResponse? other) -> bool
-Aw.Sindri.Features.GetLibrary.GetLibraryResponse.GetLibraryResponse(Aw.Sindri.Core.Views.AsOf! AsOf, int Docs, int WithErrors, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryBrokenDoc!>! Broken, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryNearMiss!>! NearMisses, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewUnreadableRoot!>! UnreadableRoots, string? CappedText) -> void
 Aw.Sindri.Features.GetLibrary.GetLibraryResponse.NearMisses.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryNearMiss!>!
 Aw.Sindri.Features.GetLibrary.GetLibraryResponse.NearMisses.init -> void
 Aw.Sindri.Features.GetLibrary.GetLibraryResponse.UnreadableRoots.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewUnreadableRoot!>!
 Aw.Sindri.Features.GetLibrary.GetLibraryResponse.UnreadableRoots.init -> void
 Aw.Sindri.Features.GetLibrary.GetLibraryResponse.WithErrors.get -> int
 Aw.Sindri.Features.GetLibrary.GetLibraryResponse.WithErrors.init -> void
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.Deconstruct(out Aw.Sindri.Core.Views.AsOf! AsOf, out int Docs, out int WithErrors, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryBrokenDoc!>! Broken, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryNearMiss!>! NearMisses, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewUnreadableRoot!>! UnreadableRoots, out string? CappedText, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryRootRow!>! Roots) -> void
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.GetLibraryResponse(Aw.Sindri.Core.Views.AsOf! AsOf, int Docs, int WithErrors, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryBrokenDoc!>! Broken, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryNearMiss!>! NearMisses, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewUnreadableRoot!>! UnreadableRoots, string? CappedText, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryRootRow!>! Roots) -> void
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.Roots.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryRootRow!>!
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.Roots.init -> void
 override Aw.Sindri.Features.GetLibrary.GetLibraryRequest.Equals(object? obj) -> bool
 override Aw.Sindri.Features.GetLibrary.GetLibraryRequest.GetHashCode() -> int
 override Aw.Sindri.Features.GetLibrary.GetLibraryRequest.ToString() -> string!

@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using Aw.Sindri.Features.GetLibrary;
 using Aw.Sindri.Features.GetLibraryDoc;
 
 namespace Aw.Sindri.Host.Commands;
@@ -11,7 +12,7 @@ internal static class LibraryText
     /// <param name="list">The answer.</param>
     /// <param name="only">Which part to print alone; <see cref="Part.All"/> prints the head line and everything.</param>
     /// <returns>The lines, ending with a newline.</returns>
-    internal static string List(LibraryListAnswer list, Part only)
+    internal static string List(GetLibraryResponse list, Part only)
     {
         var text = new StringBuilder();
         if (only == Part.Errors)
@@ -41,7 +42,7 @@ internal static class LibraryText
         return text.ToString();
     }
 
-    private static void Broken(StringBuilder text, LibraryListAnswer list, bool alone)
+    private static void Broken(StringBuilder text, GetLibraryResponse list, bool alone)
     {
         if (alone && list.Broken.Count == 0)
         {
@@ -58,7 +59,7 @@ internal static class LibraryText
         }
     }
 
-    private static void Misses(StringBuilder text, LibraryListAnswer list, bool alone)
+    private static void Misses(StringBuilder text, GetLibraryResponse list, bool alone)
     {
         if (alone && list.NearMisses.Count == 0)
         {
@@ -103,7 +104,7 @@ internal static class LibraryText
         return text.ToString();
     }
 
-    private static string Head(LibraryListAnswer list)
+    private static string Head(GetLibraryResponse list)
     {
         if (list.Docs == 0)
         {

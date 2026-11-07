@@ -67,12 +67,8 @@ internal static class ApiScenarios
 
     /// <summary>The last hosts of <see cref="Start"/>: the launch, approve-all, item-scope and wrapped-session ones, else the plain golden host.</summary>
     private static async Task<GoldenHost> StartLaunchOrLater(string slug, string scenario, CancellationToken ct) =>
-        LibraryScenarios.Handles(slug, scenario)
-            ? await LibraryScenarios.Start(scenario, ct)
-            : LibraryDocScenarios.Handles(slug, scenario)
-            ? await LibraryDocScenarios.Start(ct)
-            : IsReviews(slug, scenario)
-            ? await ReviewScenarios.Start(slug, scenario, ct)
+        IsReviews(slug, scenario)
+            ? await StartReviews(slug, scenario, ct)
             : ProjectScenarios.Handles(slug, scenario)
             ? await ProjectScenarios.Start(slug, scenario, ct)
             : SandboxScenarios.Handles(slug, scenario)
@@ -89,9 +85,15 @@ internal static class ApiScenarios
             ? await SessionScenarios.Start(ct)
             : await GoldenHost.Start(temporary: !NeedsNonTemporaryHome(slug, scenario), ct, ProfileYaml(slug, scenario));
 
-    /// <summary>Whether the scenario belongs to the Reviews group (the pages, the login save, the library).</summary>
+    /// <summary>Whether the scenario belongs to the Reviews group (the pages, the login save, the library and one doc of it).</summary>
     private static bool IsReviews(string slug, string scenario) =>
-        ReviewScenarios.Handles(slug, scenario) || ReviewLoginScenarios.Handles(slug, scenario) || LibraryScenarios.Handles(slug, scenario);
+        ReviewScenarios.Handles(slug, scenario) || ReviewLoginScenarios.Handles(slug, scenario) || LibraryScenarios.Handles(slug, scenario) || LibraryDocScenarios.Handles(slug, scenario);
+
+    /// <summary>The host of a Reviews-group scenario.</summary>
+    private static Task<GoldenHost> StartReviews(string slug, string scenario, CancellationToken ct) =>
+        LibraryScenarios.Handles(slug, scenario) ? LibraryScenarios.Start(scenario, ct)
+        : LibraryDocScenarios.Handles(slug, scenario) ? LibraryDocScenarios.Start(ct)
+        : ReviewScenarios.Start(slug, scenario, ct);
 
     /// <summary>Whether the scenario is a setup one (the steps, or adding a repo).</summary>
     private static bool IsSetup(string slug, string scenario) =>

@@ -1,4 +1,3 @@
-using Aw.Context.Core.Library;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Views;
@@ -10,8 +9,6 @@ namespace Aw.Sindri.Tests.GetLibraryDoc;
 [Trait("Lane", "unit")]
 public sealed class GetLibraryDocTests
 {
-    private const string Key = "/home/thor/.agentic-workflow/acme-api/plans/booking-retry-tdd.md";
-
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
@@ -45,32 +42,6 @@ public sealed class GetLibraryDocTests
         var answer = await new GetLibraryDocService(new Facts(Results.Failure<LibraryDocView?>(SindriErrors.ServiceFailed.With("store"))), status).Handle(new GetLibraryDocRequest("x"), Ct);
 
         Assert.Equal(SindriErrors.ServiceFailed.Code, answer.Error.Code);
-    }
-
-    [Theory]
-    [InlineData("/home/thor/a.md", "/home/thor", "~/a.md")]
-    [InlineData("/home/thor/a.md", "/home/thor/", "~/a.md")]
-    [InlineData("/home/thorn/a.md", "/home/thor", "/home/thorn/a.md")]
-    [InlineData("/srv/a.md", "", "/srv/a.md")]
-    public void The_home_folder_is_written_as_a_tilde_only_at_a_folder_boundary(string path, string home, string shown) =>
-        Assert.Equal(shown, ContextLibraryDocFacts.Fold(path, home));
-
-    [Fact]
-    public void An_error_reads_as_path_line_message_then_the_fix()
-    {
-        var error = new DesignDocError("SND-LIB-010", 4, Key + ":4: status 'draft2' isn't allowed.", "Use draft.");
-
-        var text = ContextLibraryDocFacts.Text(error, Key, "~/.agentic-workflow/acme-api/plans/booking-retry-tdd.md");
-
-        Assert.Equal("~/.agentic-workflow/acme-api/plans/booking-retry-tdd.md line 4: status 'draft2' isn't allowed. Use draft.", text);
-    }
-
-    [Fact]
-    public void A_whole_file_error_keeps_its_message_with_the_path_shown_and_no_fix_adds_nothing()
-    {
-        var error = new DesignDocError("SND-LIB-018", Line: null, Key + ": too large: the file is over 1 MiB.", "");
-
-        Assert.Equal("~/p.md: too large: the file is over 1 MiB.", ContextLibraryDocFacts.Text(error, Key, "~/p.md"));
     }
 
     private sealed class Facts(Result<LibraryDocView?> answer) : ILibraryDocFacts
