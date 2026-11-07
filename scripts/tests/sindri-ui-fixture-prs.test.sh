@@ -79,6 +79,7 @@ check "each PR has a relates link from a Checkout rewrite issue" "$(sqlq "$PJDB"
   "github:pr/acme/api/41,github:pr/acme/api/42,github:pr/acme/web/17"
 check "those links start at three distinct Checkout rewrite issues" "$(sqlq "$PJDB" "SELECT COUNT(DISTINCT from_key) FROM record_link WHERE kind = 'relates' AND to_key LIKE 'github:pr/%' AND from_key LIKE 'linear:issue/fx-checkout-%'")" "3"
 
+check "the PR rows have no profile repo (repo is NULL, as GitHub sync stores it)" "$(sqlq "$PJDB" "SELECT COUNT(*) FROM source_record WHERE source = 'github' AND kind = 'pr' AND repo IS NULL")" "3"
 before="$(sqlq "$PJDB" "SELECT COUNT(*) FROM source_record") $(sqlq "$PJDB" "SELECT COUNT(*) FROM record_link")"
 proj >/dev/null 2>&1; check "a second projects exits 0" "$?" "0"
 check "a second projects adds no row" "$(sqlq "$PJDB" "SELECT COUNT(*) FROM source_record") $(sqlq "$PJDB" "SELECT COUNT(*) FROM record_link")" "$before"
