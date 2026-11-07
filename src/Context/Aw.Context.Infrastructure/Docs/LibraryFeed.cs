@@ -31,7 +31,9 @@ internal sealed class LibraryFeed(LibrarySetup setup, IRecordStore store, Scrubb
         var reports = new List<LibraryRootReport>();
         foreach (var root in setup.Roots)
         {
-            var pass = await _reader.Run(root, known.GetValueOrDefault(root.Name), Math.Max(pull.Limit, 1) - items.Count, cancellationToken).ConfigureAwait(false);
+            var last = before.GetValueOrDefault(root.Name);
+            var trusted = last is { Problem: null } ? known.GetValueOrDefault(root.Name) : null;   // the "nothing changed" shortcut needs a good last report to copy: after a failed pass or a lost status file the root is diffed again
+            var pass = await _reader.Run(root, trusted, Math.Max(pull.Limit, 1) - items.Count, cancellationToken).ConfigureAwait(false);
             if (pass.IsError)
             {
                 return pass.Error;
@@ -45,7 +47,7 @@ internal sealed class LibraryFeed(LibrarySetup setup, IRecordStore store, Scrubb
                 cursor[root.Name] = fingerprint;
             }
 
-            reports.Add(Report(pass.Value, before.GetValueOrDefault(root.Name)));
+            reports.Add(Report(pass.Value, last));
         }
 
         status.Write(reports);
