@@ -90,10 +90,7 @@ internal static class PlanEnvironment
         }
 
         yield return Var("AW_SINDRI_RUN_DIR", r.Paths.RunDirectory);
-        if (c.Worktree is { } worktree)
-        {
-            yield return Var("AW_SINDRI_WORKTREE", worktree);
-        }
+        yield return Var("AW_SINDRI_WORKTREE", c.Worktree ?? r.Paths.RunDirectory);   // why: the Step's working directory (bubblewrap's --chdir), so the pre-push guard refuses in every sandboxed Step, as the launcher's own env does
 
         yield return Var("AW_SINDRI_BRANCH", r.RunNamespace + "/work");
         yield return Var("AW_SINDRI_CHILD", "1");
