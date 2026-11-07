@@ -1,24 +1,23 @@
 using System.Globalization;
 using Aw.Context.Core;
 using Aw.Context.Core.Extract;
-using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Context.Tests.BuildMap;
 
 /// <summary>#2106: a caller waiting for the map build slot gives up with SND-CONTEXT-260 only when the holder has written no line for 30 min, keeps waiting while the holder writes through its turn's progress, says every 5 min that it still waits, takes the slot when its holder leaves, and still throws when its own token is cancelled.</summary>
 public sealed class MapBuildGateWaitTests
 {
-    private readonly FakeTimeProvider _clock = new();
+    private readonly SliceClock _clock = new();
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    // Moves the fake clock in 1-min steps, up to the given minutes or until the task completes.
+    // Moves the fake clock in 1-min steps, up to the given minutes or until the task completes; each step waits for the waiter to catch up.
     private async Task Drive(Task task, int minutes)
     {
         for (var i = 0; i < minutes && !task.IsCompleted; i++)
         {
             _clock.Advance(TimeSpan.FromMinutes(1));
-            await Task.Delay(TimeSpan.FromMilliseconds(1), TimeProvider.System, Ct);
+            await _clock.Settle(task, Ct);
         }
     }
 
@@ -84,7 +83,7 @@ public sealed class MapBuildGateWaitTests
             }
 
             _clock.Advance(TimeSpan.FromMinutes(1));
-            await Task.Delay(TimeSpan.FromMilliseconds(10), TimeProvider.System, Ct);
+            await _clock.Settle(second, Ct);
             Assert.False(second.IsCompleted, "the waiter gave up at minute " + minute.ToString(CultureInfo.InvariantCulture) + " although the holder wrote a line in the last 10 min");
         }
 
