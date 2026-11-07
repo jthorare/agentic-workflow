@@ -34,5 +34,5 @@ internal sealed class LinearTeamGate(ILinearSideFacts facts)
     /// <param name="what">What the id should have been, with its article: 'a state', 'a member', 'a cycle'.</param>
     /// <returns>SND-LINEAR-006.</returns>
     internal static Error NotInTeam(string field, string team, string what) =>
-        SindriErrors.LinearIdNotInTeam.With($"{field} isn't {what} of {team} (fix: read the lookups again and pick {what} from them)");
+        SindriErrors.LinearBadValue.With($"{field} isn't {what} of {team} (fix: read the lookups again and pick {what} from them)");
 }

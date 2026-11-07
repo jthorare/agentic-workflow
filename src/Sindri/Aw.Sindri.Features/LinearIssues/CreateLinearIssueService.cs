@@ -110,7 +110,7 @@ internal sealed class CreateLinearIssueService(LinearScopes scopes, IContextLine
 
         if (lookups.Team.Uuid is not { } teamId || !ExternalId.TryFrom(teamId, out var team))
         {
-            return SindriErrors.LinearIdNotInTeam.With($"{lookups.Team.Key} hasn't synced yet, so Sindri has no id for it (fix: wait for the next sync)");
+            return SindriErrors.LinearBadValue.With($"{lookups.Team.Key} hasn't synced yet, so Sindri has no id for it (fix: wait for the next sync)");
         }
 
         var parent = await Parent(request.ParentKey, cancellationToken).ConfigureAwait(false);
@@ -136,7 +136,7 @@ internal sealed class CreateLinearIssueService(LinearScopes scopes, IContextLine
 
     private static Error? CheckLabels(CreateLinearIssueRequest r, LinearLookupsResponse l) =>
         r.Priority is < 0 or > 4 ? SindriErrors.InvalidInput.With("priority is 0 (none) to 4 (low)")
-        : r.LabelIds?.FirstOrDefault(id => !l.Labels.Any(x => x.Uuid == id)) is not null ? SindriErrors.LinearIdNotInTeam.With($"labelIds has an id that isn't a label of {l.Team.Key} (fix: read the lookups again and pick labels from them)")
+        : r.LabelIds?.FirstOrDefault(id => !l.Labels.Any(x => x.Uuid == id)) is not null ? SindriErrors.LinearBadValue.With($"labelIds has an id that isn't a label of {l.Team.Key} (fix: read the lookups again and pick labels from them)")
         : null;
 
     private async ValueTask<Result<ExternalId?>> Parent(string? parentKey, CancellationToken cancellationToken)
@@ -160,7 +160,7 @@ internal sealed class CreateLinearIssueService(LinearScopes scopes, IContextLine
 
         return found.Value?.Row.Record is { } record && record.StartsWith(IssueRecord, StringComparison.Ordinal) && ExternalId.TryFrom(record[IssueRecord.Length..], out var id)
             ? Results.Success<ExternalId?>(id)
-            : SindriErrors.LinearIdNotInTeam.With($"parentKey isn't an issue Sindri has stored: {key.Value} (fix: pick the parent from the Linear list)");
+            : SindriErrors.LinearBadValue.With($"parentKey isn't an issue Sindri has stored: {key.Value} (fix: pick the parent from the Linear list)");
     }
 
     private static ExternalId? Id(string? id) => id is not null && ExternalId.TryFrom(id, out var parsed) ? parsed : null;

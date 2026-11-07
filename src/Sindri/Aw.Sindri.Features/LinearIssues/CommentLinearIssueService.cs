@@ -52,22 +52,23 @@ internal sealed class CommentLinearIssueService(LinearScopes scopes, IContextLin
         return sent.Value switch
         {
             LinearWriteUnknown => Unconfirmed(key.Value, client.Value),
-            LinearWriteAppliedNotStored => await Applied(key.Value, client.Value, request.Body, NotStored, cancellationToken).ConfigureAwait(false),
-            _ => await Applied(key.Value, client.Value, request.Body, warning: null, cancellationToken).ConfigureAwait(false),
+            LinearWriteAppliedNotStored => await Applied(request, client.Value, NotStored, slow: false, cancellationToken).ConfigureAwait(false),
+            LinearWriteApplied applied => await Applied(request, client.Value, warning: null, applied.FoundOnReread, cancellationToken).ConfigureAwait(false),
+            _ => Unconfirmed(key.Value, client.Value),
         };
     }
 
     private static Error Unconfirmed(LinearIssueKey key, LinearClientId client) =>
         LinearWriteFailures.NoAnswer($"Linear didn't confirm the comment on {key} (fix: retry; the same client id is never posted twice)", client.Value);
 
-    // why: Slow is false until Context's outcome says whether the comment landed only on its one re-read; it doesn't yet
-    private async ValueTask<CommentLinearIssueResponse> Applied(LinearIssueKey key, LinearClientId client, string body, string? warning, CancellationToken cancellationToken)
+    // why: slow is Context's FoundOnReread: Linear gave no answer and only the one re-read found the comment
+    private async ValueTask<CommentLinearIssueResponse> Applied(CommentLinearIssueRequest request, LinearClientId client, string? warning, bool slow, CancellationToken cancellationToken)
     {
-        var read = await issues.Handle(new GetLinearIssueRequest(key.ToString()), cancellationToken).ConfigureAwait(false);
+        var read = await issues.Handle(new GetLinearIssueRequest(request.Key), cancellationToken).ConfigureAwait(false);
         var sheet = read.IsSuccess ? read.Value : null;
         var held = sheet?.Comments.FirstOrDefault(c => string.Equals(c.Id, client.Value, StringComparison.Ordinal))
-            ?? sheet?.Comments.FirstOrDefault(c => c.Sindri && string.Equals(c.Body, body, StringComparison.Ordinal));
-        var comment = held ?? new LinearCommentView(client.Value, sheet?.Viewer ?? new LinearPersonView(string.Empty, "You"), clock.GetUtcNow(), body, Sindri: true);
-        return new CommentLinearIssueResponse("applied", client.Value, comment, Slow: false, warning);
+            ?? sheet?.Comments.FirstOrDefault(c => c.Sindri && string.Equals(c.Body, request.Body, StringComparison.Ordinal));
+        var comment = held ?? new LinearCommentView(client.Value, sheet?.Viewer ?? new LinearPersonView(string.Empty, "You"), clock.GetUtcNow(), request.Body, Sindri: true);
+        return new CommentLinearIssueResponse("applied", client.Value, comment, Slow: slow, warning);
     }
 }

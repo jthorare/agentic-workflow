@@ -21,7 +21,7 @@ internal static class LinearWriteFailures
         return error.Code switch
         {
             var code when string.Equals(code, ContextErrors.SessionsDisabled.Code, StringComparison.Ordinal) => SindriErrors.AuthRefused.With(Refusal),
-            var code when string.Equals(code, LinearHubErrors.NoWriteKey.Code, StringComparison.Ordinal) => SindriErrors.LinearWriteKeyMissing.With("Sindri has no Linear write key (fix: Settings, Connections, Linear, add a write key)"),
+            var code when string.Equals(code, LinearHubErrors.NoWriteKey.Code, StringComparison.Ordinal) => SindriErrors.LinearNoWriteKey.With("Sindri has no Linear write key (fix: Settings, Connections, Linear, add a write key)"),
             _ => error,
         };
     }

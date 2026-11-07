@@ -15,8 +15,7 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 /// <summary>
 /// The Linear hub's writes (#2077 Ph3 1b; Linear hub spec 2026-11-04 §5.2, §5.3; contract ~/.agentic-workflow/digests/api-scripts/contract-2077-1b-linear-writes.md): 'POST /linear/issues/{key}/comments' and 'POST /linear/issues'.
 /// Context's write facade is a <see cref="FakeContextLinearWrites"/> scripted per scenario, the team's lookups are ENG's from <see cref="LinearReadScenarios"/>, and the stored issues the route re-reads afterwards are a
-/// <see cref="FakeLinearIssueFacts"/>. The edit rows ('linear-change') join this group from their own branch. 'linear-comment/applied-slow' waits in <see cref="LinearScenarios"/>: Context's write outcome doesn't say whether the comment
-/// landed only on the re-read.
+/// <see cref="FakeLinearIssueFacts"/>. The edit rows ('linear-change') join this group from their own branch. 'linear-comment/applied-slow' is a write that only Context's re-read found (the fake's NextFoundOnReread).
 /// </summary>
 internal static class LinearWriteScenarios
 {
@@ -31,7 +30,7 @@ internal static class LinearWriteScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("linear-comment", "applied"), ("linear-comment", "unknown"), ("linear-comment", "session-refused"),
+        ("linear-comment", "applied"), ("linear-comment", "applied-slow"), ("linear-comment", "unknown"), ("linear-comment", "session-refused"),
         ("linear-create", "applied"), ("linear-create", "unknown"), ("linear-create", "bad-value"), ("linear-create", "session-refused"),
     ];
 
@@ -77,6 +76,10 @@ internal static class LinearWriteScenarios
         if (scenario == "unknown")
         {
             writes.Next(new LinearWriteUnknown());
+        }
+        else if ((slug, scenario) is ("linear-comment", "applied-slow"))
+        {
+            writes.NextFoundOnReread(Created());
         }
         else if ((slug, scenario) is ("linear-create", "applied"))
         {

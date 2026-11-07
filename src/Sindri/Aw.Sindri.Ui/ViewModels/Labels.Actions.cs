@@ -26,6 +26,8 @@ internal static partial class Labels
         ["SetProfileKey"] = "Set a profile key",
         ["SetReviewLogin"] = "Set review login",
         ["SendReviewFix"] = "Send review fix",
+        ["CommentLinearIssue"] = "Comment on Linear issue",
+        ["CreateLinearIssue"] = "Create Linear issue",
         ["ApproveProfile"] = "Approve profile",
         ["ApproveAllRecipes"] = ApproveAllTitle,
         ["ApproveRecipe"] = "Approve recipe",

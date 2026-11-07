@@ -13,7 +13,7 @@ public sealed class ApiGoldenTests
     private static readonly string[] _pendingGoldenFolders = ["library-roots", "review-settings", "review-settings-save", "linear-change", "linear-connection", "linear-connection-teams", "linear-connect", "linear-disconnect-write"];
 
     // the folder linear-issue is served for the reads; its write-gate rows wait for the writes (1b)
-    private static readonly string[] _pendingGoldenFiles = ["linear-issue/writable.json", "linear-issue/no-write-key.json", "linear-issue/team-not-picked.json", "linear-issue/session-write-refused.json", "linear-comment/applied-slow.json"];
+    private static readonly string[] _pendingGoldenFiles = ["linear-issue/writable.json", "linear-issue/no-write-key.json", "linear-issue/team-not-picked.json", "linear-issue/session-write-refused.json"];
 
     private static bool IsPending(string file) =>
         _pendingGoldenFiles.Contains(file, StringComparer.Ordinal) || _pendingGoldenFolders.Any(p => file.StartsWith(p + "/", StringComparison.Ordinal));
