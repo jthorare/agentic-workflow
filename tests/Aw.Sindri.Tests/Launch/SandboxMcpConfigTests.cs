@@ -101,7 +101,7 @@ public sealed class SandboxMcpConfigTests : IDisposable
         var control = new ControlEndpoint(new Uri("http://127.0.0.1:7480"), Environment.ProcessId, Epoch: 0);
         var launch = new SandboxLaunch(
             new PassThroughSandbox(), new FileSessionCap(Path.Combine(_dir, "sessions.lock"), new FakeSliceScopes()), new FixedStages(request),
-            new SandboxLaunchOptions("systemd-run", new BoxFacts(32L * 1024 * 1024 * 1024, 8), SindriHome, secrets, () => control));
+            new SandboxLaunchOptions("systemd-run", new BoxFacts(32L * 1024 * 1024 * 1024, 8), SindriHome, secrets, () => control), new LaunchSecretRegistry());
         return (launch, request, McpLaunchConfig.PathFor(launchDirectory, request.Launch));
     }
 
