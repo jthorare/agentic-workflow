@@ -50,7 +50,7 @@ public sealed class FixTaskFilesTests : FixTaskFilesContract, IDisposable
     [Fact]
     public async Task The_file_holds_version_head_and_tasks_and_is_owner_only()
     {
-        _ = (await Files.Add("acme/api:feat/x", "ITM-a", 2071, Token)).Value;
+        _ = (await Files.Add("acme/api:feat/x", Id('a'), 2071, Token)).Value;
 
         var path = Path.Combine(Folder, FixHead.FileName("acme/api:feat/x"));
         var body = JsonNode.Parse(await File.ReadAllTextAsync(path, Token))!;
@@ -65,9 +65,9 @@ public sealed class FixTaskFilesTests : FixTaskFilesContract, IDisposable
     [Fact]
     public async Task The_last_remove_deletes_the_file()
     {
-        _ = (await Files.Add("acme/api:feat/x", "ITM-a", 2071, Token)).Value;
+        _ = (await Files.Add("acme/api:feat/x", Id('a'), 2071, Token)).Value;
 
-        _ = (await Files.Remove("ITM-a", Token)).Value;
+        _ = (await Files.Remove(Id('a'), Token)).Value;
 
         Assert.False(File.Exists(Path.Combine(Folder, FixHead.FileName("acme/api:feat/x"))));
     }

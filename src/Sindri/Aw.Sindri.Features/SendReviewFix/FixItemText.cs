@@ -30,9 +30,9 @@ internal static class FixItemText
     /// <param name="request">The request.</param>
     /// <param name="slug">The PR's repository as "owner/name".</param>
     /// <param name="link">The PR's link.</param>
-    /// <param name="head">The head string, "owner/repo:branch".</param>
+    /// <param name="head">The head string, "owner/repo:branch", or null when the forge does not name it.</param>
     /// <returns>The body.</returns>
-    internal static string Body(SendReviewFixRequest request, string slug, string link, string head)
+    internal static string Body(SendReviewFixRequest request, string slug, string link, string? head)
     {
         var tail = new StringBuilder();
         if (!string.IsNullOrEmpty(request.Path))
@@ -43,7 +43,7 @@ internal static class FixItemText
         _ = tail.Append("head: ").Append(request.Head).Append('\n')
             .Append("pr: ").Append(slug).Append('#').Append(request.Number.ToString(CultureInfo.InvariantCulture)).Append('\n')
             .Append("link: ").Append(link).Append('\n')
-            .Append("branch: ").Append(head);
+            .Append("branch: ").Append(head ?? "unknown");
         var quoted = string.Join('\n', request.Text.Trim().ReplaceLineEndings("\n").Split('\n').Select(static line => "> " + line));
         var room = MaxBody - tail.Length - 2;
         return (quoted.Length > room ? quoted[..room] : quoted) + "\n\n" + tail;

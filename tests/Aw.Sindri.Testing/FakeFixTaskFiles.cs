@@ -1,4 +1,5 @@
 using Aw.Kernel;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Reviews;
 
 namespace Aw.Sindri.Testing;
@@ -12,33 +13,32 @@ public sealed class FakeFixTaskFiles : IFixTaskFiles
     public IReadOnlyDictionary<string, IReadOnlyDictionary<string, int>> Heads => _heads.ToDictionary(static h => h.Key, static h => (IReadOnlyDictionary<string, int>)h.Value, StringComparer.Ordinal);
 
     /// <inheritdoc />
-    public ValueTask<Result<Unit>> Add(string head, string item, int pr, CancellationToken cancellationToken)
+    public ValueTask<Result<bool>> Add(string head, ItemId item, int pr, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(head);
-        ArgumentNullException.ThrowIfNull(item);
         if (!_heads.TryGetValue(head, out var tasks))
         {
             tasks = new SortedDictionary<string, int>(StringComparer.Ordinal);
             _heads[head] = tasks;
         }
 
-        tasks[item] = pr;
-        return ValueTask.FromResult(Results.Success(Unit.Value));
+        var added = tasks.TryAdd(item.Value, pr);
+        return ValueTask.FromResult(Results.Success(added));
     }
 
     /// <inheritdoc />
-    public ValueTask<Result<Unit>> Remove(string item, CancellationToken cancellationToken)
+    public ValueTask<Result<bool>> Remove(ItemId item, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(item);
-        foreach (var head in _heads.Where(h => h.Value.ContainsKey(item)).Select(static h => h.Key).ToList())
+        var removed = false;
+        foreach (var head in _heads.Where(h => h.Value.ContainsKey(item.Value)).Select(static h => h.Key).ToList())
         {
-            _ = _heads[head].Remove(item);
+            removed |= _heads[head].Remove(item.Value);
             if (_heads[head].Count == 0)
             {
                 _ = _heads.Remove(head);
             }
         }
 
-        return ValueTask.FromResult(Results.Success(Unit.Value));
+        return ValueTask.FromResult(Results.Success(removed));
     }
 }

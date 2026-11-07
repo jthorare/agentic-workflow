@@ -54,4 +54,8 @@ public sealed class FixItemTextTests
         Assert.StartsWith("src/Sync.cs:42 (removed line)\n\n", review.Body, StringComparison.Ordinal);
         Expect.Equal("sindri.fix:ITM-1", review.Marker);
     }
+
+    [Fact]
+    public void An_unknown_head_reads_branch_unknown()
+        => Assert.EndsWith("branch: unknown", FixItemText.Body(Line(), "acme/api", "https://github.com/acme/api/pull/2071", head: null), StringComparison.Ordinal);
 }

@@ -47,8 +47,7 @@ internal sealed class SendReviewFixService(ICallerContextAccessor callers, FixTa
         var (item, created) = made.Value;
         var posted = target.PostsThread ? await poster.Post(FixItemText.Review(request, target.Link, item.Value), item.Value, request.Number, cancellationToken).ConfigureAwait(false) : FixPosted.Skipped;
         var (went, session) = await route.Find(target.Link, target.HeadRepo, target.Branch, cancellationToken).ConfigureAwait(false);
-        var filed = created ? await files.Add(FixHead.Of(target.HeadRepo, target.Branch), item.Value, request.Number, cancellationToken).ConfigureAwait(false) : Unit.Value;
-        if (filed.IsError)
+        if (created && Head(target) is { } head && (await files.Add(head, item, request.Number, cancellationToken).ConfigureAwait(false)) is { IsError: true } filed)
         {
             return filed.Error;
         }
@@ -56,6 +55,8 @@ internal sealed class SendReviewFixService(ICallerContextAccessor callers, FixTa
         var recorded = await recorder.Record(caller, new ReviewFixSent(caller.CommandId, item, request.Number, posted.Thread, went, posted.Code), cancellationToken).ConfigureAwait(false);
         return recorded.IsError ? recorded.Error : new SendReviewFixResponse(item, posted.Posted, posted.Code, posted.Error, went, session);
     }
+
+    private static string? Head(FixTarget target) => target.HeadRepo is { } repo && target.Branch is { } branch ? FixHead.Of(repo, branch) : null;
 
     private async ValueTask<Result<(ItemId Item, bool Created)>> ItemFor(SendReviewFixRequest request, FixTarget target, CancellationToken cancellationToken)
     {
@@ -66,8 +67,7 @@ internal sealed class SendReviewFixService(ICallerContextAccessor callers, FixTa
                 : SindriErrors.InvalidInput.With("the item is not an item id (fix: the id the first send answered with)");
         }
 
-        var head = FixHead.Of(target.HeadRepo, target.Branch);
-        var made = await items.Create(FixItemText.Title(request.Text), target.Repo, FixItemText.Body(request, target.Slug, target.Link, head), cancellationToken).ConfigureAwait(false);
+        var made = await items.Create(FixItemText.Title(request.Text), target.Repo, FixItemText.Body(request, target.Slug, target.Link, Head(target)), cancellationToken).ConfigureAwait(false);
         return made.IsError ? made.Error : (made.Value, true);
     }
 }

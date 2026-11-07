@@ -37,6 +37,13 @@ public sealed class FixRouteTests
         Expect.Equal(("waiting", null), await route.Find(Link, "sam-dev/api", "feat/retry", Token));
     }
 
+    [Fact]
+    public async Task An_unknown_head_still_goes_to_a_babysitter_but_matches_no_session()
+    {
+        Expect.Equal(("babysitter", null), await new FixRoute(new Babysitters(watching: true), new Sessions("claude-code, ~/x")).Find(Link, headRepo: null, branch: null, Token));
+        Expect.Equal(("waiting", null), await new FixRoute(new Babysitters(watching: false), new Sessions("claude-code, ~/x")).Find(Link, headRepo: null, branch: null, Token));
+    }
+
     private sealed class Babysitters(bool watching) : IFixBabysitters
     {
         public ValueTask<bool> Watching(string link, CancellationToken cancellationToken) => ValueTask.FromResult(watching);

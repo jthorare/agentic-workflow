@@ -286,7 +286,7 @@ public static partial class SindriErrors
         NoForge, ForgeRefused, ForgeNotFound, ForgeUnavailable, EngineUnavailable, EngineNotFound, InvalidQuery,
         ScrubStagedSecrets, ScrubForeignHook, ScrubNotARepo, ScrubGitFailed,
         ProjectAlreadyOnPage, ProjectFactsUnavailable, ProjectNotSynced, ProjectInvalid, ProjectNotFound, ProjectConflict,
-        ReviewInvalid, ReviewProjectUnknown, ReviewCommandCheck, ReviewRepoUnsynced, ReviewOfflineUncached, ReviewRepoNotSynced, ReviewFixNotPosted, ReviewLoginUnset, ReviewPullNotFound,
+        ReviewInvalid, ReviewProjectUnknown, ReviewCommandCheck, ReviewNotSynced, ReviewFixNotPosted, ReviewRepoUnsynced, ReviewNoLogin, ReviewPrNotFound, ReviewOfflineUncached,
         LibraryDocNotFound,
     ];
 }

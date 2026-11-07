@@ -749,7 +749,7 @@ There is no decision, desk, protected, job or step-report tool, and no `sindri_c
 | `SND-REVIEW-001` | A bad `review` profile key: a login, panel, glob or regex, a duplicate check id, an unknown `settings` or `extends`, a cycle, `when: []`, or a `need` with other than one key (names the key path and the allowed values) |
 | `SND-REVIEW-002` | A `review.projects[].project` that isn't on the Projects page: "No project <id>. `sindri projects` lists them." (checked at approve) |
 | `SND-REVIEW-003` | A `command:` need: "Command checks wait for the sandbox. Use `ci:` with the CI job that runs it." |
-| `SND-REVIEW-004` | A review route for a repo Sindri doesn't sync, or for a PR whose head branch the forge can't name: "Sindri doesn't sync <owner/repo>. Add it to `context.sources.github.repos`." (409) |
+| `SND-REVIEW-004` | A review route for a repo Sindri doesn't sync: "Sindri doesn't sync <owner/repo>. Add it to `context.sources.github.repos`." (409) |
 | `SND-REVIEW-005` | A `review.projects[].repos` entry that `context.sources.github.repos` doesn't list (names the key path) |
 | `SND-REVIEW-006` | A fix task's item was created but its thread wasn't posted; answered inside the 200 body as `postCode`, never as an error status |
 | `SND-REVIEW-007` | A review route before `review.login` is set: "Set your GitHub login on the Reviews tab first." (409) |

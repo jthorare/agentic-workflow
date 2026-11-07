@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Control;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Reviews;
 
 namespace Aw.Sindri.Infrastructure.Reviews;
@@ -18,48 +19,55 @@ internal sealed class FixTaskFiles(ISindriHome home) : IFixTaskFiles
     // why: Add and Remove are read-modify-write on the same files, and one serve process is their only writer
     private static readonly SemaphoreSlim _gate = new(1, 1);
 
-    public async ValueTask<Result<Unit>> Add(string head, string item, int pr, CancellationToken cancellationToken)
+    public async ValueTask<Result<bool>> Add(string head, ItemId item, int pr, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(head);
-        ArgumentNullException.ThrowIfNull(item);
         return await Locked(() =>
         {
             var path = Path.Combine(FolderPath(), FixHead.FileName(head));
-            var tasks = Tasks(path).Where(t => !string.Equals(t.Item, item, StringComparison.Ordinal)).Append((item, pr));
-            Save(path, head, tasks);
+            var tasks = Tasks(path);
+            if (tasks.Exists(t => string.Equals(t.Item, item.Value, StringComparison.Ordinal)))
+            {
+                return false;
+            }
+
+            Save(path, head, tasks.Append((item.Value, pr)));
+            return true;
         }, cancellationToken).ConfigureAwait(false);
     }
 
-    public async ValueTask<Result<Unit>> Remove(string item, CancellationToken cancellationToken)
+    public async ValueTask<Result<bool>> Remove(ItemId item, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(item);
         return await Locked(() =>
         {
+            var removed = false;
             if (!Directory.Exists(FolderPath()))
             {
-                return;
+                return removed;
             }
 
             foreach (var path in Directory.EnumerateFiles(FolderPath(), "*.json"))
             {
                 var tasks = Tasks(path);
-                if (tasks.Exists(t => string.Equals(t.Item, item, StringComparison.Ordinal)))
+                if (tasks.Exists(t => string.Equals(t.Item, item.Value, StringComparison.Ordinal)))
                 {
-                    Save(path, HeadOf(path), tasks.Where(t => !string.Equals(t.Item, item, StringComparison.Ordinal)));
+                    Save(path, HeadOf(path), tasks.Where(t => !string.Equals(t.Item, item.Value, StringComparison.Ordinal)));
+                    removed = true;
                 }
             }
+
+            return removed;
         }, cancellationToken).ConfigureAwait(false);
     }
 
     private string FolderPath() => Path.Combine(home.Path, "fix-tasks");
 
-    private static async ValueTask<Result<Unit>> Locked(Action work, CancellationToken cancellationToken)
+    private static async ValueTask<Result<bool>> Locked(Func<bool> work, CancellationToken cancellationToken)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            work();
-            return Unit.Value;
+            return work();
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {

@@ -5,18 +5,20 @@ using Aw.Sindri.Core.Forge;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Reviews;
+using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Features.SendReviewFix;
 
 /// <summary>
 /// Checks the PR a fix task names (PR review page spec §8.2, §9): <c language="text">review.login</c> is set, the repo is synced (SND-REVIEW-004), Context holds the PR (SND-REVIEW-404), and the forge names its head
-/// branch and repository (SND-REVIEW-004 when it can't, since the task couldn't be routed).
+/// branch and repository (when it doesn't, the task is still made and posted, with "branch: unknown", and has no task file).
 /// </summary>
 /// <param name="approvals">The approved profile.</param>
 /// <param name="repos">The synced repos.</param>
 /// <param name="facts">The stored PR records.</param>
 /// <param name="pulls">The forge port: the PR's head and the credential's own login.</param>
-internal sealed class FixTargets(IApprovedProfile approvals, IReviewRepos repos, IReviewFacts facts, IPullRequests pulls)
+/// <param name="logger">Where an unnamed head is reported.</param>
+internal sealed partial class FixTargets(IApprovedProfile approvals, IReviewRepos repos, IReviewFacts facts, IPullRequests pulls, ILogger<FixTargets> logger)
 {
     /// <summary>Resolves the PR.</summary>
     /// <param name="request">The request.</param>
@@ -34,7 +36,7 @@ internal sealed class FixTargets(IApprovedProfile approvals, IReviewRepos repos,
         var profile = approved.Value?.Profile;
         if (profile?.Review?.Login is not { Length: > 0 } login)
         {
-            return SindriErrors.ReviewLoginUnset.With("Set your GitHub login on the Reviews tab first.");
+            return SindriErrors.ReviewNoLogin.With("Set your GitHub login on the Reviews tab first.");
         }
 
         var synced = await repos.Synced(cancellationToken).ConfigureAwait(false);
@@ -45,7 +47,7 @@ internal sealed class FixTargets(IApprovedProfile approvals, IReviewRepos repos,
 
         return synced.Value.Contains(slug, StringComparer.OrdinalIgnoreCase)
             ? await Pull(request, slug, login, RepoOf(profile, request.Repo), cancellationToken).ConfigureAwait(false)
-            : SindriErrors.ReviewRepoNotSynced.With($"Sindri doesn't sync {slug}. Add it to context.sources.github.repos.");
+            : SindriErrors.ReviewNotSynced.With($"Sindri doesn't sync {slug}. Add it to context.sources.github.repos.");
     }
 
     private async ValueTask<Result<FixTarget>> Pull(SendReviewFixRequest request, string slug, string login, RepoName? repo, CancellationToken cancellationToken)
@@ -68,12 +70,19 @@ internal sealed class FixTargets(IApprovedProfile approvals, IReviewRepos repos,
             return view.Error.Code == SindriErrors.ForgeNotFound.Code ? NotFound(slug, request.Number) : view.Error;
         }
 
-        return view.Value is { HeadRef: { Length: > 0 } branch, HeadRepo: { Length: > 0 } headRepo }
-            ? new FixTarget(slug, link, headRepo, branch, await PostsThread(record.Author, login, cancellationToken).ConfigureAwait(false), repo)
-            : SindriErrors.ReviewRepoNotSynced.With($"{slug}#{request.Number.ToString(CultureInfo.InvariantCulture)}: the forge doesn't name the head branch, so the task can't be routed");
+        var known = view.Value is { HeadRef.Length: > 0, HeadRepo.Length: > 0 };
+        if (!known)
+        {
+            LogHeadUnknown(logger, slug, request.Number);
+        }
+
+        return new FixTarget(slug, link, known ? view.Value.HeadRepo : null, known ? view.Value.HeadRef : null, await PostsThread(record.Author, login, cancellationToken).ConfigureAwait(false), repo);
     }
 
-    private static Error NotFound(string slug, int number) => SindriErrors.ReviewPullNotFound.With($"{slug}#{number.ToString(CultureInfo.InvariantCulture)}: PR not found");
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The forge names no head branch or repository for {Repo}#{Number}; the fix task has no task file and goes to a babysitter or waits")]
+    private static partial void LogHeadUnknown(ILogger logger, string repo, int number);
+
+    private static Error NotFound(string slug, int number) => SindriErrors.ReviewPrNotFound.With($"{slug}#{number.ToString(CultureInfo.InvariantCulture)}: PR not found");
 
     // why: a thread is Sindri's note on the owner's own PR or an agent's (the forge credential's login); on a contributor's PR the task is the item only
     private async ValueTask<bool> PostsThread(string author, string login, CancellationToken cancellationToken)
