@@ -108,6 +108,7 @@ Store the returned `expected_version` — you will need it at Session Close.
   Use this to inform your approach before continuing.
 - If prism-mcp returns an error, surface it and stop:
   > "prism-mcp unavailable: {error}. Ensure prism-mcp is running and registered."
+- Under `AW_RESULT_SKILL` (a Sindri Step) prism-mcp is unreachable by design: a failure here is one line in your reply ("prism-mcp unavailable, no prior context"), never a stop and never a `waiting`. Skip the ledger and handoff saves in Session Close the same way.
 
 ## Session Close
 

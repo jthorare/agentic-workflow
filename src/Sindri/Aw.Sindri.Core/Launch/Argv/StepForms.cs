@@ -61,7 +61,7 @@ public static class StepForms
                 : SindriErrors.RequestInvalid.With("a claude-settings-file policy needs the settings file's absolute path"),
             PolicyForm.CodexOverrides => policy.DeniedPaths is { Count: > 0 }
                 ? Unsupported(entry, "policy", "codex-overrides can't deny reads of paths")
-                : Results.Success(CodexOverrides(policy)),
+                : Results.Success(CodexOverrides(policy, trustHooks: policy.TurnMarkers)),
             PolicyForm.CursorConfig => workDir is not null && Placeholders.IsAbsolute(workDir)
                 ? Results.Success<IReadOnlyList<string>>(CursorFlags(policy, workDir))
                 : SindriErrors.RequestInvalid.With("a cursor-config policy needs the Step worktree's absolute path"),
@@ -83,6 +83,12 @@ public static class StepForms
     }
 
     /// <summary>The typed '-c key=value' overrides for codex. ReadOnly allows writes to the one path only; Plan allows none; Default leaves codex's own mode.</summary>
+    private static IReadOnlyList<string> CodexOverrides(StepPolicy policy, bool trustHooks) =>
+        trustHooks ? [.. CodexOverrides(policy), TrustFlag] : CodexOverrides(policy);
+
+    // The Step's own turn hooks (the worktree's .codex/hooks.json) run without a persisted trust (skill flows S-0); they are ours, written by the launcher just before.
+    private const string TrustFlag = "--dangerously-bypass-hook-trust";
+
     private static IReadOnlyList<string> CodexOverrides(StepPolicy policy) => policy.Mode switch
     {
         StepPermissionMode.Plan => ["-c", "sandbox_mode=\"read-only\""],

@@ -33,6 +33,13 @@ internal sealed class LinuxSandboxLaunchInputs(LauncherOptions Launcher, IAgentC
     }
 
     /// <inheritdoc/>
+    public ValueTask<string?> OriginRemote(string repoPath, CancellationToken cancellationToken)
+    {
+        var ran = Processes.Run("git", ["-C", repoPath, "remote", "get-url", "origin"], _gitTimeout);
+        return ValueTask.FromResult(ran.Succeeded && ran.Output.Trim() is { Length: > 0 } url ? url : null);
+    }
+
+    /// <inheritdoc/>
     public string RunAreaFor(LaunchId launch) => LaunchPaths.RunArea(Launcher.LaunchDirectory, launch);
 
     /// <inheritdoc/>

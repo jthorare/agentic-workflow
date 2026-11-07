@@ -1,0 +1,20 @@
+schema: 1
+blocks:
+  - id: office-hours
+    sentence: Shapes an idea into a plan folder with requirements and tasks.
+    inputs:  { idea: { type: text, label: What do you want built?, required: true } }
+    args: ["{idea}"]
+    outputs: { featureDir: { type: path, from: feature_dir } }
+    outcomes: { success: done }
+    pushes: false
+    maxDuration: 3h
+  - id: office-hours-revise
+    sentence: Revises a plan folder in place from a review report.
+    inputs:
+      plan:   { type: path, label: Plan folder, required: true }
+      review: { type: path, label: Review report, required: true }
+    args: [{ flag: --revise, input: plan }, { flag: --review, input: review }]
+    outputs: {}
+    outcomes: { success: done }
+    pushes: false
+    maxDuration: 2h

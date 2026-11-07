@@ -17,6 +17,12 @@ internal interface ISandboxLaunchInputs
     /// <returns>The path.</returns>
     public ValueTask<string> GitCommonDir(string repoPath, CancellationToken cancellationToken);
 
+    /// <summary>The repo's origin remote URL (<c lang="text">git remote get-url origin</c>), which a skill launch's repo slug is made from.</summary>
+    /// <param name="repoPath">The repo checkout.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The URL, or null when the repo has no origin (or the inputs can't tell).</returns>
+    public ValueTask<string?> OriginRemote(string repoPath, CancellationToken cancellationToken) => ValueTask.FromResult<string?>(null);
+
     /// <summary>The launcher's per-run area for the launch (scratch, shims, hook spool, plan file, wrap limits).</summary>
     /// <param name="launch">The launch.</param>
     /// <returns>The path.</returns>

@@ -155,6 +155,7 @@ if [ -z "${DOTNET_ROOT:-}" ]; then
 fi
 
 export AW_SINDRI_HOME="$work/home" AW_SINDRI_PORT=0 AW_SINDRI_APP_NO_MCP=1   # no automatic MCP registration: it would write a local-scope entry for the temp repo into the real ~/.claude.json
+export AW_SINDRI_SKILLS_DIR="$work/no-skills"   # a folder that does not exist: the doctor's skills row says so the same way wherever the smoke runs, not by the checkout or toolkit it happens to find
 mkdir -p "$AW_SINDRI_HOME/profile"
 : >"$AW_SINDRI_HOME/.prover-scratch"   # the smoke runs as the prover in a home it created (setup-once spec §4 item 6): the marker lets it confirm, as sindri-prove.sh does
 mkdir -p "$work/repo"   # the repo 'smoke' the mcp() helper names in X-Sindri-Repo (sindri_request files against an approved profile's repo)

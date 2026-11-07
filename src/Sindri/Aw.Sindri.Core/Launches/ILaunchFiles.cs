@@ -25,6 +25,11 @@ public interface ILaunchFiles
     /// <returns>When the turn failed, or null.</returns>
     public DateTimeOffset? TurnFailedAt(LaunchId launch);
 
+    /// <summary>When the launch's session last started a turn from a prompt (a skill launch's UserPromptSubmit hook touches the file). Null for a launch that has none, which is every launch but a skill block's.</summary>
+    /// <param name="launch">The launch.</param>
+    /// <returns>When it was touched, or null.</returns>
+    public DateTimeOffset? PromptedAt(LaunchId launch) => null;
+
     /// <summary>Whether a tool call is running in the launch's session: the PreToolUse hook's file, deleted when the call returns or fails and when the turn ends.</summary>
     /// <param name="launch">The launch.</param>
     /// <returns>True while the marker exists.</returns>

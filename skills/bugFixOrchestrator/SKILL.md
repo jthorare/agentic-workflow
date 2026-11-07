@@ -285,6 +285,17 @@ Deferred: {follow-ups with links | none}
 Report: {STATE}/resolution.md
 ```
 
+## Under Sindri (`AW_RESULT_SKILL=bugFixOrchestrator`)
+
+Only when the Result block's gate printed `AW_RESULT_SKILL=bugFixOrchestrator`; a person's run is unchanged. A Sindri Step runs in one worktree, in a sandbox where `git worktree add`, `git fetch`, `git branch -D` and any branch outside the run's prefix are refused, so:
+
+- **Prefix.** `PREFIX="${AW_SINDRI_BRANCH%/work}"`. Name the working branch `$PREFIX/fix`, each candidate `$PREFIX/a<attempt>` (mode B: `$PREFIX/a<attempt>-h<hypothesis#>`). Never `bugfix/<ticket-slug>`.
+- **One implementer at a time, in this worktree.** No `git worktree add`: create each candidate with `git checkout -b $PREFIX/a<attempt> <baseline-commit>` and run the implementers one after the other (mode B's two implementers run in sequence, each from the baseline commit). Skip the worktree removals; the Step's worktree goes with the run.
+- **Push.** After Phase 6, with `status` `resolved`: `git push origin <winning branch>:refs/heads/$AW_SINDRI_BRANCH`, open it as a **draft** PR (`gh pr create --draft`, body from `resolution.md`), and put its URL in `pr`. Any other status: push and open nothing, leave `pr` out. Then `git checkout --detach` so the next Step (addressReview) can check the branch out in its own worktree.
+- **No Linear offer.** Skip Phase 6 step 3 and say in `summary` that nothing was posted to Linear.
+- **Questions become `waiting`.** The three asks (no clear expected behaviour in Phase 1, the check passed so the bug is not reproduced in Phase 3, the check script is broken after one repair) go in `waiting` as the output contract describes, in place of AskUserQuestion. The dirty-tree preflight in Phase 3 is not an ask here: the Step's tree is clean, and if it is not, stop as `unresolved` and say why in `summary`.
+- **No `/shipRelease` suggestion**: the push and PR above are that step.
+
 ## Git mode
 
 `AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
@@ -302,13 +313,26 @@ Report: {STATE}/resolution.md
 
 ```bash
 [ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
-f="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/repo-slug.sh"; [ -f "$f" ] && . "$f" 2>/dev/null; echo "AW_DIR=${AW_DIR:-}"
+f="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/repo-slug.sh"; [ -f "$f" ] && . "$f" 2>/dev/null; echo "AW_DIR=${AW_DIR:-}"; echo "AW_RESULT_SKILL=${AW_RESULT_SKILL:-}"; echo "AW_RESULT_FILE=${AW_RESULT_FILE:-}"
 [ "${AW_RESULT:-0}" = 1 ] && [ -z "${AW_DIR:-}" ] && echo "AW_DIR is empty: source skills/_shared/repo-slug.sh, then write the result file; never skip it" || true
 ```
 
-`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/bugFixOrchestrator-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) first, along with every other file the run writes; then open your final reply (the message after the last tool call) with the same JSON as a fenced `aw-result` block, before any prose and before `## Next steps`.
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write the result file with the Write tool, and every other file the run writes, first; then open your final reply (the message after the last tool call) with the same JSON as a fenced `aw-result` block, before any prose and before `## Next steps`. The file path is `$AW_DIR/results/bugFixOrchestrator-<timestamp>.json` (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front), except when the gate printed `AW_RESULT_SKILL=bugFixOrchestrator`: then the path is the `AW_RESULT_FILE` it printed, and the file carries the same keys as the block below, nothing dropped. In that mode a question for the person goes in `"waiting": "<the question, one line>"` (a non-empty string, never `null` or `""`), with the rest of the result as it stands; print it, end the turn, and never call AskUserQuestion. See [Under Sindri](../_shared/output-contract.md#under-sindri-aw_result_skill).
 
 Keys: `skill` (`bugFixOrchestrator`), `artifacts` (absolute paths: `<state>/resolution.md` and the fix branch's changed files), `summary` (one line),
-plus `status` (`resolved | partial | unresolved`, the judge's recorded decision); `branch` (fix branch); `commit` (fix commit sha); `judge_decision` (the judge's decision id).
+plus `status` (`resolved | partial | unresolved`, the judge's recorded decision); `branch` (fix branch); `commit` (fix commit sha); `judge_decision` (the judge's decision id); `pr` (the draft PR's URL, only under `AW_RESULT_SKILL` and only when `status` is `resolved`; otherwise absent).
+
+```aw-result
+{
+  "skill": "bugFixOrchestrator",
+  "status": "resolved",
+  "branch": "sindri/inst-7/1/work",
+  "commit": "9e4a184bfe0c2d1f6a3b7c5d8e9f001122334455",
+  "judge_decision": "jd_01HZX3",
+  "pr": "https://github.com/acme/api/pull/412",
+  "artifacts": ["/home/u/.agentic-workflow/bugfix/acme-api/eng-123/resolution.md"],
+  "summary": "Fixed average() dividing by len+1; the regression test fails before and passes after, judge resolved."
+}
+```
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

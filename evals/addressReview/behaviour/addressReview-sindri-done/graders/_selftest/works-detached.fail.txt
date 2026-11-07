@@ -1,0 +1,2 @@
+Would run:
+  gh pr checkout 77

@@ -28,6 +28,9 @@ internal sealed class TemporalLikeRuntime : IInstanceDirectory, IInstanceRuntime
     private bool _loseNextResponse;
     private bool _refuseNext;
 
+    /// <summary>The recipe the instance runs; the default is a plain 'workflow.step'.</summary>
+    public RecipeVersion Recipe { get; set; } = _recipe;
+
     public InstanceAddress Address { get; } = InstanceAddress.From("T-1/step/1");
 
     /// <summary>The child the parent's open park mirrors; null when it mirrors none.</summary>
@@ -162,7 +165,7 @@ internal sealed class TemporalLikeRuntime : IInstanceDirectory, IInstanceRuntime
 
     private InstanceView View(InstanceAddress address, int version) => new(
         address,
-        _recipe,
+        Recipe,
         "parked",
         Detail: null,
         DateTimeOffset.FromUnixTimeMilliseconds(1_000),

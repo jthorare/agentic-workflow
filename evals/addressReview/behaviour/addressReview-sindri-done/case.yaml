@@ -1,0 +1,23 @@
+schema_version: '1.1'
+name: addressReview-sindri-done
+tags:
+- tier-b
+- behaviour
+- sindri
+source: "written for the eval"
+execution:
+  max_turns: 30
+  timeout_seconds: 480
+  allowed_tools:
+  - Read
+  - Glob
+  - Grep
+  - Skill
+  - TodoWrite
+  - AskUserQuestion
+  - Bash
+  - Write
+  - Edit
+context:
+  scaffold_script: fixture.sh
+# Sindri mode: works detached at the PR branch tip, would push HEAD:refs/heads/$AW_SINDRI_BRANCH, result in .aw-state/sindri-result.json.

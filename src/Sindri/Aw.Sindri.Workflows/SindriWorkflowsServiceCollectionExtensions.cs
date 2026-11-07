@@ -82,7 +82,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
 
     /// <summary>The activities the interpreter runs (RunStep, RecordEvent, ReadItemRepo, the effect activities, EvaluateGates) and the Step, effect and gate dispatchers they run blocks through.</summary>
     private static IServiceCollection AddInterpreterActivities(this IServiceCollection services) => services
-        .AddSingleton<RunStepActivities>()
+        .AddSingleton<RunStepActivities>().AddSingleton<TrialBlocks>()
         .AddSingleton<RecordEventActivities>()
         .AddScoped<ScopingApprovals>()                             // BS-1b: the scoping.approved row after step.scope.freeze reports frozen
         .AddSingleton<FactReadActivities>()
@@ -123,7 +123,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
         services.TryAddSingleton<IModelPickHistory, NoModelPickHistory>();   // one instance with the CompleteStep check that records into it (Features registers it the same way)
         return services
         .AddSingleton<AgentStepActivities>().AddSingleton<AgentLaunching>().AddSingleton<AgentLaunchWaiting>().AddSingleton<ModelPicker>().AddSingleton<ModelPickStore>().AddSingleton<ChallengerPick>().AddSingleton<AgentPlacing>().AddSingleton<AgentLaunchInputs>().AddSingleton<AgentClosing>()
-        .AddSingleton<AgentRecovering>().AddSingleton<IStepOutputs, DiskStepOutputs>()
+        .AddSingleton<AgentRecovering>().AddSingleton<SkillStepWatching>().AddSingleton<IStepOutputs, DiskStepOutputs>()
         .AddSingleton<UsageFlush>(static provider => (launch, ct) => FlushScoped(provider, launch, ct))
         .AddSingleton<AgentTargetResolver>().AddSingleton<AgentLaunchRecorder>().AddSingleton(AgentRuntimeOptions.Default)
         .AddSingleton<WorkerActivities>();

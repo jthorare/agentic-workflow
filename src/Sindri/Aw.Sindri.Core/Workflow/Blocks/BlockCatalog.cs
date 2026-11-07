@@ -10,12 +10,14 @@ public sealed class BlockCatalog
 {
     private readonly Dictionary<BlockId, BlockDescriptor> _blocks = [];
     private readonly Dictionary<EventKind, EventDescriptor> _events = [];
+    private readonly Dictionary<BlockId, string> _unloaded = [];
 
     /// <summary>Builds the catalog. A duplicate id or kind, or a descriptor whose kind isn't its id's prefix, is a registration bug and throws.</summary>
     /// <param name="blocks">Every registered block descriptor.</param>
     /// <param name="events">Every registered event descriptor.</param>
     /// <param name="sentences">The plain sentences; each descriptor without one of its own takes the sentence of its id. Null leaves every sentence as the descriptor has it.</param>
-    public BlockCatalog(IEnumerable<BlockDescriptor> blocks, IEnumerable<EventDescriptor> events, IBlockSentences? sentences = null)
+    /// <param name="unloaded">The blocks that did not load, with the reason (skill flows spec §3.2); null for none. An id that is also registered keeps its descriptor.</param>
+    public BlockCatalog(IEnumerable<BlockDescriptor> blocks, IEnumerable<EventDescriptor> events, IBlockSentences? sentences = null, IEnumerable<UnloadedBlock>? unloaded = null)
     {
         ArgumentNullException.ThrowIfNull(blocks);
         ArgumentNullException.ThrowIfNull(events);
@@ -33,12 +35,21 @@ public sealed class BlockCatalog
             }
         }
 
+        Remember(unloaded);
         foreach (var e in events)
         {
             if (!_events.TryAdd(e.Kind, e))
             {
                 throw new InvalidOperationException($"Event {e.Kind.Value} is registered more than once.");
             }
+        }
+    }
+
+    private void Remember(IEnumerable<UnloadedBlock>? unloaded)
+    {
+        foreach (var gone in unloaded ?? [])
+        {
+            _ = _unloaded.TryAdd(gone.Id, gone.Reason);
         }
     }
 
@@ -51,10 +62,30 @@ public sealed class BlockCatalog
     /// <summary>Every event descriptor.</summary>
     public IReadOnlyCollection<EventDescriptor> Events => _events.Values;
 
+    /// <summary>This catalog with <paramref name="overlay"/> laid over it: a descriptor replaces the one of its id, or adds one. This catalog is not changed, so the overlay lasts as long as the caller keeps the result (a trial's one registration, skill flows spec §7).</summary>
+    /// <param name="overlay">The descriptors to lay over.</param>
+    /// <returns>A new catalog; the events and the reasons other blocks did not load stay as they were.</returns>
+    public BlockCatalog Overlaid(IEnumerable<BlockDescriptor> overlay)
+    {
+        ArgumentNullException.ThrowIfNull(overlay);
+        var laid = overlay.ToList();
+        var ids = laid.Select(static d => d.Id).ToHashSet();
+        return new BlockCatalog(
+            [.. _blocks.Values.Where(b => !ids.Contains(b.Id)), .. laid],
+            _events.Values,
+            sentences: null,
+            _unloaded.Where(u => !ids.Contains(u.Key)).Select(static u => new UnloadedBlock(u.Key, u.Value)));
+    }
+
     /// <summary>The descriptor of <paramref name="id"/>.</summary>
     /// <param name="id">A block id.</param>
     /// <returns>The descriptor, or null when no block has that id (RCP-BLOCK-001).</returns>
     public BlockDescriptor? Find(BlockId id) => _blocks.GetValueOrDefault(id);
+
+    /// <summary>Why <paramref name="id"/> did not load.</summary>
+    /// <param name="id">A block id.</param>
+    /// <returns>The reason, or null when the block is not one that failed to load.</returns>
+    public string? WhyUnloaded(BlockId id) => _unloaded.GetValueOrDefault(id);
 
     /// <summary>The descriptor of the event kind <paramref name="kind"/>.</summary>
     /// <param name="kind">An event kind.</param>
