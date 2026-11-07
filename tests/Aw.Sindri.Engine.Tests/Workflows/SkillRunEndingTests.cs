@@ -111,7 +111,7 @@ public sealed class SkillRunEndingTests : AgentRuntimeTestBase
             var waiting = await Rows(sindri, EventTypes.LaunchOwnerWaiting, static r => r.Exists(static p => p.Contains("unreadable", StringComparison.Ordinal)), ct);
             Assert.Contains(waiting, static p => p.Contains("unreadable", StringComparison.Ordinal));   // the watch saw it and kept watching
 
-            await server.Environment.DelayAsync(TimeSpan.FromHours(2) + TimeSpan.FromMinutes(5), ct);
+            await WorkflowsHarness.Skip(server.Environment, TimeSpan.FromHours(2) + TimeSpan.FromMinutes(5), ct);   // why: DelayAsync gives up after 30 s of wall clock
             var escalated = await WorkflowsHarness.Until(handle, static v => v.State == "escalated");
 
             Assert.Contains("unreadable", escalated.Question?.Question, StringComparison.OrdinalIgnoreCase);
