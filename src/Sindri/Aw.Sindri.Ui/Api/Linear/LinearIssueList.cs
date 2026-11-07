@@ -7,5 +7,5 @@ namespace Aw.Sindri.Ui.Api.Linear;
 /// <param name="Group">mine or teams.</param>
 /// <param name="Rows">The page's issues.</param>
 /// <param name="Next">The cursor of the next page, or null on the last.</param>
-/// <param name="Total">All matching issues, not only this page.</param>
-internal sealed record LinearIssueList(bool Connected, LinearPerson? Viewer, LinearFeed Feed, string Group, IReadOnlyList<LinearIssueRow> Rows, string? Next, int Total);
+/// <param name="Total">All matching issues, not only this page; null while a next page exists and Sindri has no count.</param>
+internal sealed record LinearIssueList(bool Connected, LinearPerson? Viewer, LinearFeed Feed, string Group, IReadOnlyList<LinearIssueRow> Rows, string? Next, int? Total);

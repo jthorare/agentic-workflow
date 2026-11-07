@@ -35,9 +35,11 @@ internal static partial class Labels
     internal const string LinearTeams = "Your teams";
 
     /// <summary>A group's heading with its size.</summary>
-    /// <param name="total">How many issues match, not only the loaded ones.</param>
-    /// <returns>"52" with a thousands separator.</returns>
-    internal static string LinearGroupCount(int total) => total.ToString("N0", CultureInfo.InvariantCulture);
+    /// <param name="total">How many issues match, not only the loaded ones; null while a next page exists and Sindri has no count.</param>
+    /// <param name="shown">How many rows are loaded, said with a plus when the total is unknown.</param>
+    /// <returns>"52" with a thousands separator, or "50+".</returns>
+    internal static string LinearGroupCount(int? total, int shown) =>
+        total is { } all ? all.ToString("N0", CultureInfo.InvariantCulture) : shown.ToString("N0", CultureInfo.InvariantCulture) + "+";
 
     /// <summary>The button that loads the next 50.</summary>
     internal const string LinearShowMore = "Show more";
@@ -71,9 +73,14 @@ internal static partial class Labels
 
     /// <summary>The line while the feed re-reads every issue.</summary>
     /// <param name="reread">How far it has got; null when the answer does not say.</param>
-    /// <returns>"Updating issues… 412 of 1,000".</returns>
+    /// <returns>"Updating issues… 412 of 1,000", or "Updating issues… 412 so far" when the total is unknown.</returns>
     internal static string LinearUpdating(LinearReread? reread) =>
-        reread is { } r ? string.Create(CultureInfo.InvariantCulture, $"Updating issues… {r.Done:N0} of {r.Total:N0}") : "Updating issues…";
+        reread switch
+        {
+            { Total: { } total } r => string.Create(CultureInfo.InvariantCulture, $"Updating issues… {r.Done:N0} of {total:N0}"),
+            { } r => string.Create(CultureInfo.InvariantCulture, $"Updating issues… {r.Done:N0} so far"),
+            null => "Updating issues…",
+        };
 
     /// <summary>The banner while the feed fails; the rows stay.</summary>
     /// <param name="lastSynced">When it last worked, as HH:mm; empty when it never did.</param>
@@ -148,14 +155,19 @@ internal static partial class Labels
 
     /// <summary>One change in the strip.</summary>
     /// <param name="item">The change.</param>
-    /// <returns>"ENG-12 assigned to you by Sam Lee", "Sam Lee mentioned you on ENG-12" or "Sam Lee moved ENG-12 from Todo to In Progress".</returns>
-    internal static string LinearSinceRow(LinearSinceItem item) => item.Kind switch
+    /// <returns>"ENG-12 assigned to you", "Sam Lee mentioned you on ENG-12" or "ENG-12 moved from Todo to In Progress"; a row whose actor is known names them ("ENG-12 assigned to you by Sam Lee").</returns>
+    internal static string LinearSinceRow(LinearSinceItem item)
     {
-        "assigned" => $"{item.Key} assigned to you by {item.Actor.Name}",
-        "mentioned" => $"{item.Actor.Name} mentioned you on {item.Key}",
-        "state" => $"{item.Actor.Name} moved {item.Key} from {item.From} to {item.To}",
-        _ => $"{item.Actor.Name} changed {item.Key}",
-    };
+        var by = item.Actor is { } actor ? " by " + actor.Name : string.Empty;
+        return item.Kind switch
+        {
+            "assigned" => $"{item.Key} assigned to you{by}",
+            "mentioned" when item.Actor is { } author => $"{author.Name} mentioned you on {item.Key}",
+            "mentioned" => $"You were mentioned on {item.Key}",
+            "state" => $"{item.Key} moved from {item.From} to {item.To}{by}",
+            _ => $"{item.Key} changed{by}",
+        };
+    }
 
     /// <summary>The strip's button that moves the marker.</summary>
     internal const string LinearDismiss = "Dismiss";
