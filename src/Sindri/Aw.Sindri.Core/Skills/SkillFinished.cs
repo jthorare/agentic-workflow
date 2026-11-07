@@ -7,5 +7,5 @@ namespace Aw.Sindri.Core.Skills;
 /// <param name="Outcome">The mapped outcome name.</param>
 /// <param name="Outputs">The stored outputs, by fact key.</param>
 /// <param name="ReportSha256">The digest of the report: the outcome, each output's sha256 and the result file's sha256.</param>
-/// <param name="ResultFileSha256">The SHA-256 of the result file; the 'workflow.transition' carries it.</param>
+/// <param name="ResultFileSha256">The SHA-256 of the result file; the 'workflow.transition' carries it as 'resultSha256'; ReportSha256 is a separate digest over the outcome, this and the outputs.</param>
 public sealed record SkillFinished(string Outcome, IReadOnlyDictionary<FactKey, FactValue> Outputs, string ReportSha256, string ResultFileSha256);

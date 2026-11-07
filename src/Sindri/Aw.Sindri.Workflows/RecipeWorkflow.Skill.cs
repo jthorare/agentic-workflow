@@ -11,7 +11,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 internal sealed partial class RecipeWorkflow
 {
     // The watch returned a skill's result. Closing is as for a report: usage, diff signal, stop the session. A finished result completes the run as 'agent:result' (outputs to facts, the verdict to the outcome,
-    // the result file's and each path's sha256 in the digest the transition carries); an unmapped verdict or a missing or bad output fails the Step with its SND-SKILL code.
+    // the transition carries the result file's sha256 as 'resultSha256'; the report digest also covers each output path's sha256); an unmapped verdict or a missing or bad output fails the Step with its SND-SKILL code.
     private async Task<WorkflowInstance> SkillEnded(WorkflowInstance instance, AgentRunning running, StepUse step, AgentSessionState ended, Interpreting context)
     {
         var open = running.Open;
@@ -22,6 +22,7 @@ internal sealed partial class RecipeWorkflow
             {
                 Agent = running.Launched?.Agent,
                 Model = running.Launched?.Model,
+                ResultSha256 = finished.ResultFileSha256,
             };
             return await Decided(instance, open, completed, reportId: null, context).ConfigureAwait(true);
         }
