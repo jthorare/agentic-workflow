@@ -15,7 +15,7 @@ namespace Aw.Sindri.Ui.Frames.Tests.Views;
 [Lane(TestLane.Integration)]
 public sealed class LinearIssueEditFramesTests : FrameHost
 {
-    private async Task<(Aw.Sindri.Ui.Views.Shell.ShellWindow Window, Aw.Sindri.Ui.ViewModels.Shell.ShellViewModel Shell)> Opened()
+    private async Task<(Ui.Views.Shell.ShellWindow Window, ViewModels.Shell.ShellViewModel Shell)> Opened()
     {
         var (window, shell) = await Connected(width: 1200, height: 560);
         shell.ResizeSheet(520);

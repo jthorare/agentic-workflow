@@ -163,7 +163,7 @@ public sealed class LinearIssueEditTests
     [Fact]
     public async Task Lookups_that_have_not_synced_disable_the_pickers_with_a_line_and_leave_priority_and_text_open()
     {
-        _f.Server.LinearLookupsAnswer = Aw.Sindri.Ui.Testing.RouteAnswer.Api("linear-lookups", "not-synced");
+        _f.Server.LinearLookupsAnswer = Testing.RouteAnswer.Api("linear-lookups", "not-synced");
 
         _ = await _f.Opened(Token);
 
