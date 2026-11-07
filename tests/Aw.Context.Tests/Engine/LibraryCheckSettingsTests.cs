@@ -12,7 +12,7 @@ public sealed class LibraryCheckSettingsTests
 {
     private static readonly LibraryHost _host = new() { Home = "/home/harbor", SindriHome = "/home/harbor/.agentic-workflow/sindri-app", StateDefault = "/home/harbor/.agentic-workflow" };
 
-    private static Aw.Kernel.Result<ContextSettings> Check(string library, LibraryHost? host)
+    private static Kernel.Result<ContextSettings> Check(string library, LibraryHost? host)
     {
         using var world = new MapWorld(configure: services =>
         {

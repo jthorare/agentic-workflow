@@ -146,7 +146,7 @@ public sealed class LibraryFeedTests
     {
         using var home = new TempHome();
         using var rig = new LibraryFeedRig(home);
-        var gone = new Aw.Context.Core.Engine.LibraryRoot { Name = "mounted", Path = Path.Combine(Path.GetTempPath(), "aw-library-not-here-" + RealTime.NewGuid().ToString("N")) };
+        var gone = new Context.Core.Engine.LibraryRoot { Name = "mounted", Path = Path.Combine(Path.GetTempPath(), "aw-library-not-here-" + RealTime.NewGuid().ToString("N")) };
 
         var run = await FeedRun.Once(rig.Feed(rig.Vault(), gone), rig.Store, home.Scrubbers);
 
@@ -197,7 +197,7 @@ public sealed class LibraryFeedTests
             _ = rig.Write(path, Doc);
         }
 
-        var aw = new Aw.Context.Core.Engine.LibraryRoot { Name = "aw", Path = rig.VaultPath, IsAw = true };
+        var aw = new Context.Core.Engine.LibraryRoot { Name = "aw", Path = rig.VaultPath, IsAw = true };
         _ = await FeedRun.Once(rig.Feed(aw), rig.Store, home.Scrubbers);
 
         Assert.Equal(

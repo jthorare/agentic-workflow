@@ -36,7 +36,7 @@ public static class LibraryPaths
             }
         }
 
-        return Kernel.Results.Success<IReadOnlyList<LibraryRoot>>(roster.Roots);
+        return Kernel.Results.Success(roster.Roots);
     }
 
     /// <summary>The roots admitted so far, with the machine's folders they are compared against.</summary>
