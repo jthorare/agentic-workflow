@@ -46,5 +46,69 @@
   ],
   "nearMisses": [],
   "unreadableRoots": [],
-  "cappedText": null
+  "cappedText": null,
+  "roots": [
+    {
+      "name": "aw",
+      "kind": "aw",
+      "path": "~/.agentic-workflow",
+      "scope": null,
+      "on": true,
+      "deny": [],
+      "scannedAt": "2025-12-31T23:57:00.0000000Z",
+      "docs": 9,
+      "errors": 0,
+      "unreadable": null
+    },
+    {
+      "name": "work",
+      "kind": "vault",
+      "path": "~/Documents/WorkVault",
+      "scope": null,
+      "on": true,
+      "deny": [
+        "Private/**"
+      ],
+      "scannedAt": "2025-12-31T23:57:00.0000000Z",
+      "docs": 20,
+      "errors": 2,
+      "unreadable": null
+    },
+    {
+      "name": "inbox",
+      "kind": "vault",
+      "path": "~/Documents/Inbox",
+      "scope": null,
+      "on": true,
+      "deny": [],
+      "scannedAt": null,
+      "docs": 0,
+      "errors": 0,
+      "unreadable": null
+    },
+    {
+      "name": "repo:agentic-workflow",
+      "kind": "repo",
+      "path": "~/repos/agentic-workflow",
+      "scope": "jthorare/agentic-workflow · docs/**",
+      "on": true,
+      "deny": [],
+      "scannedAt": "2025-12-31T23:57:00.0000000Z",
+      "docs": 8,
+      "errors": 1,
+      "unreadable": null
+    },
+    {
+      "name": "repo:harbor",
+      "kind": "repo",
+      "path": "~/repos/harbor",
+      "scope": "acme/harbor · docs/**",
+      "on": true,
+      "deny": [],
+      "scannedAt": "2025-12-31T23:57:00.0000000Z",
+      "docs": 4,
+      "errors": 0,
+      "unreadable": null
+    }
+  ]
 }
