@@ -1,5 +1,7 @@
+using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Forge;
+using Aw.Sindri.Core.Projects.Cards;
 using Aw.Sindri.Core.Projects.Facts;
 using Aw.Sindri.Core.Reviews;
 using Aw.Sindri.Testing;
@@ -45,6 +47,7 @@ internal static class ReviewScenarios
             {
                 _ = services.Replace(ServiceDescriptor.Singleton<IReviewFacts>(Facts(scenario)));
                 _ = services.Replace(ServiceDescriptor.Singleton<IReviewProjects>(new FakeReviewProjects().With(SindriProject, "Sindri")));
+                _ = services.Replace(ServiceDescriptor.Singleton<IProjectPages>(new OneProjectPage()));   // the setup approval checks 'review.projects' against the Projects page (SND-REVIEW-002)
                 _ = services.Replace(ServiceDescriptor.Singleton<IPullRequests>(new FakePullRequests(["github.com"]) { SelfLogin = "joi-example" }));
             });
 
@@ -102,5 +105,15 @@ internal static class ReviewScenarios
             _ => Pr,
         };
         return (await host.Http.Ask(Get(path, ItemScenarios.Human(host)))).Body;
+    }
+
+    /// <summary>A Projects page holding only the card the review block names, so the setup approval passes SND-REVIEW-002.</summary>
+    private sealed class OneProjectPage : IProjectPages
+    {
+        public ValueTask<Result<ProjectsPage>> Read(bool all, CancellationToken cancellationToken) =>
+            ValueTask.FromResult<Result<ProjectsPage>>(new ProjectsPage(Empty: null, Viewer: null, Freshness: [],
+                [new ProjectCard(SindriProject, ProjectOrigin.HandMade, "Sindri", Description: null, State: null, StateSetByOwner: false, Health: null, Lead: null, Target: null, OpenIssues: null,
+                    Counting: false, OpenPrs: null, PrScope: null, LastActivity: null, FinishedAt: null, Repos: [], Links: [], Notes: null, Synced: true, Version: 1)],
+                Finished: [], Hidden: []));
     }
 }
