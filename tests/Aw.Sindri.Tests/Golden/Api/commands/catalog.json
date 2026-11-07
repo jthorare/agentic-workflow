@@ -439,6 +439,24 @@
       "confirm": null
     },
     {
+      "action": "CommentLinearIssue",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/linear/issues/{key}/comments",
+      "cli": "sindri linear comment <key> <text>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "CompleteStep",
       "class": "desk",
       "allowedCallers": [
@@ -498,6 +516,24 @@
       "method": "POST",
       "route": "/sindri/items",
       "cli": "sindri item add <title> [--repo <repo>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "CreateLinearIssue",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/linear/issues",
+      "cli": "sindri linear create <team> <title>",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
