@@ -8,6 +8,12 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 
 internal sealed partial class RecipeWorkflow
 {
+    /// <summary>
+    /// A store read that fails (busy, I/O) may pass next time, so 'LoadRecipe' retries: 10 attempts, 1 s doubling to 1 min, about 4 minutes in all.
+    /// Then the last failure ends the instance, with the read's message, instead of leaving it at 'starting' (#2191).
+    /// </summary>
+    private static readonly RetryPolicy _loadRetries = new() { MaximumAttempts = 10, InitialInterval = TimeSpan.FromSeconds(1), BackoffCoefficient = 2, MaximumInterval = TimeSpan.FromMinutes(1) };
+
     /// <summary>Loads the instance's pinned recipe, then stores its literal inputs.</summary>
     /// <param name="start">The instance's start.</param>
     /// <param name="storesLiterals">Whether this history has the 'child-literal-facts-v1' marker.</param>
@@ -16,7 +22,7 @@ internal sealed partial class RecipeWorkflow
     {
         var loaded = await Workflow.ExecuteLocalActivityAsync(
             (RunStepActivities a) => a.LoadRecipeAsync(start.Recipe, TrialFolder(start)),
-            new LocalActivityOptions { StartToCloseTimeout = ActivityBounds.Long }).ConfigureAwait(true);
+            new LocalActivityOptions { StartToCloseTimeout = ActivityBounds.Long, RetryPolicy = _loadRetries }).ConfigureAwait(true);
         await StoreLiterals(start, storesLiterals).ConfigureAwait(true);
         return loaded;
     }
