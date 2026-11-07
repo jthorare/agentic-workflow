@@ -12,7 +12,7 @@ namespace Aw.Context.Core.Engine;
 internal static partial class SourcesReader
 {
     private static readonly string[] _sources = ["linear", "github", "slack", "library"];
-    private static readonly string[] _linear = ["teams", "url", "token"];
+    private static readonly string[] _linear = ["teams", "url", "token", "writeToken"];
     private static readonly string[] _github = ["repos", "host", "allowPrivateHost", "token"];
     private static readonly string[] _slack = ["channels", "retainDays", "token", "workspace"];
 
@@ -71,12 +71,12 @@ internal static partial class SourcesReader
     /// <summary>The native adapter's settings when the entry names a token or a url; null for teams alone.</summary>
     private static Result<LinearSettings?> NativeLinear(LinearSection? linear, IReadOnlyList<string> teams)
     {
-        if (linear is not ({ Token: not null } or { Url: not null }))
+        if (linear is not ({ Token: not null } or { Url: not null } or { WriteToken: not null }))
         {
             return Kernel.Results.Success<LinearSettings?>(value: null);
         }
 
-        var created = LinearSettings.Create(linear.Url, linear.Token, teams);
+        var created = LinearSettings.Create(linear.Url, linear.Token, teams, linear.WriteToken);
         return created.IsError ? created.Error : Kernel.Results.Success<LinearSettings?>(created.Value);
     }
 

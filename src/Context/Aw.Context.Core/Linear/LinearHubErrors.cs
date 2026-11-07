@@ -2,11 +2,14 @@ using Aw.Kernel;
 
 namespace Aw.Context.Core.Linear;
 
-/// <summary>The Linear hub's errors that Context itself raises (spec 2026-11-04 §8): the write-through's and the write path's. The rest of the SND-LINEAR codes (001 to 003, 006, 007, 409, 014) belong to Sindri's write commands. SND-LINEAR-002 is Sindri's too (a write with no write key): a text over a limit is 015, as if Linear had refused it.</summary>
+/// <summary>The Linear hub's errors that Context itself raises (spec 2026-11-04 §8): the write-through's and the write path's. The rest of the SND-LINEAR codes (001, 003, 006, 007, 409, 014) belong to Sindri's write commands. SND-LINEAR-002 (a write with no usable write key) is raised here too, by the write adapter, which is the one that finds out: a text over a limit is 015, as if Linear had refused it.</summary>
 public static class LinearHubErrors
 {
     /// <summary>SND-LINEAR-013: Linear applied the change, but the answer was not stored (a purge of the linear source was running, or the re-read or the commit failed). Nothing is lost: the next sync stores it.</summary>
     public static readonly ErrorDefinition NotStored = new("SND-LINEAR-013", ErrorKind.Unavailable, "Saved in Linear; Sindri shows it after the next sync");
+
+    /// <summary>SND-LINEAR-002: the settings name no write key, or the pointer doesn't resolve to a usable one. Nothing was sent.</summary>
+    public static readonly ErrorDefinition NoWriteKey = new("SND-LINEAR-002", ErrorKind.Invalid, "No write key is set up, so Sindri can't write to Linear");
 
     /// <summary>SND-LINEAR-004: Linear refused the write key (revoked, or read-only).</summary>
     public static readonly ErrorDefinition WriteKeyRefused = new("SND-LINEAR-004", ErrorKind.Unavailable, "Linear refused the write key. Make a new one with write permission");
