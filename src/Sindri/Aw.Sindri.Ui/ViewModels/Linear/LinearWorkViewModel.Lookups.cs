@@ -31,31 +31,34 @@ internal sealed partial class LinearWorkViewModel
         }
     }
 
-    // The lookups of each team in the rows, once per team: states, active members, labels and cycles.
-    private async Task Lookups(Uri url, int read, CancellationToken cancellationToken)
+    // The lookups of each team in the rows, once per team: states, active members, labels and cycles. They are not per-read data, so an answer
+    // is used even when a newer list read has started; a team whose lookups failed is asked again by the next read.
+    private async Task Lookups(Uri url, CancellationToken cancellationToken)
     {
-        var teams = Filter("team").Choices.Select(c => c.Value).OfType<string>().Where(t => !_lookedUp.Contains(t)).ToList();
+        var teams = Filter("team").Choices.Select(c => c.Value).OfType<string>().Where(t => !_lookedUp.Contains(t) && _asking.Add(t)).ToList();
         foreach (var team in teams)
         {
-            _ = _lookedUp.Add(team);   // a team whose lookups failed is not asked again on every tick
-            var answer = await _api.LinearLookups(url, team, cancellationToken).ConfigureAwait(true);
-            if (read != _reads)
+            try
             {
-                return;
+                var answer = await _api.LinearLookups(url, team, cancellationToken).ConfigureAwait(true);
+                if (answer.IsSuccess)
+                {
+                    _ = _lookedUp.Add(team);
+                    OfferLookups(answer.Value);
+                }
             }
-
-            if (answer.IsSuccess)
+            finally
             {
-                OfferLookups(answer.Value);
+                _ = _asking.Remove(team);
             }
         }
     }
 
     private void OfferLookups(LinearLookups lookups)
     {
-        foreach (var state in lookups.States.OrderBy(s => s.Position))
+        foreach (var state in lookups.States)
         {
-            Filter("state").Offer(state.Id, state.Name);
+            Filter("state").Offer(state.Id, state.Name, state.Position);
         }
 
         foreach (var member in lookups.Members.Where(m => m.Active))

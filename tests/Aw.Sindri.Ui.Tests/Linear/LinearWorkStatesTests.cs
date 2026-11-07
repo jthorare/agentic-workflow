@@ -89,7 +89,7 @@ public sealed class LinearWorkStatesTests
 
         var work = await _f.Shown(Token);
 
-        Assert.Equal("Linear sync failing since 22:05 (SND-LINEAR-010)", work.FeedText);
+        Assert.Equal(("Linear sync failing since 22:05 (SND-LINEAR-010)", false), (work.FeedText, work.IsSindriDown));
         Assert.Equal(3, work.Mine.Rows.Count);
     }
 
@@ -112,7 +112,7 @@ public sealed class LinearWorkStatesTests
     }
 
     [Fact]
-    public async Task When_the_API_cannot_be_reached_the_rows_stay_as_of_the_last_good_read()
+    public async Task When_Sindri_does_not_answer_the_rows_stay_as_of_the_last_good_read()
     {
         var work = await _f.Shown(Token);
         _f.Clock.Advance(TimeSpan.FromMinutes(7));
@@ -120,32 +120,33 @@ public sealed class LinearWorkStatesTests
 
         await work.Refresh(LinearFixture.Url, Token);
 
-        Assert.Equal((true, "as of 00:00", 3), (work.IsUnreachable, work.AsOfText, work.Mine.Rows.Count));
-        Assert.Equal("Linear unreachable", ViewModels.Labels.LinearUnreachable);
+        Assert.Equal((true, "as of 00:00", 3), (work.IsSindriDown, work.AsOfText, work.Mine.Rows.Count));
+        Assert.Equal("Sindri isn't answering", ViewModels.Labels.LinearSindriDown);
+        Assert.Equal(string.Empty, work.FeedText);
     }
 
     [Fact]
-    public async Task A_first_read_that_fails_ends_the_skeleton_and_says_unreachable_without_a_time()
+    public async Task A_first_read_that_fails_ends_the_skeleton_and_says_Sindri_is_not_answering_without_a_time()
     {
         _f.Server.GoDown();
 
         var work = await _f.Shown(Token);
 
-        Assert.Equal((false, true, string.Empty), (work.IsLoading, work.IsUnreachable, work.AsOfText));
+        Assert.Equal((false, true, string.Empty), (work.IsLoading, work.IsSindriDown, work.AsOfText));
     }
 
     [Fact]
-    public async Task A_read_that_works_again_clears_the_unreachable_line()
+    public async Task A_read_that_works_again_clears_the_not_answering_line()
     {
         var work = await _f.Shown(Token);
         _f.Server.GoDown();
         await work.Refresh(LinearFixture.Url, Token);
-        Assert.True(work.IsUnreachable);
+        Assert.True(work.IsSindriDown);
         _f.Server.ComeUp();
 
         await work.Refresh(LinearFixture.Url, Token);
 
-        Assert.Equal((false, string.Empty), (work.IsUnreachable, work.AsOfText));
+        Assert.Equal((false, string.Empty), (work.IsSindriDown, work.AsOfText));
     }
 
     [Fact]

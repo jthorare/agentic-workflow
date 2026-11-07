@@ -28,7 +28,7 @@ internal sealed partial class ShellViewModel
             return true;
         }
 
-        return LinearKeyPressed(key) || PageKeyPressed(key, inSheet) || Single(key, inSheet) || RowKey(key, inSheet);
+        return LinearKeyPressed(key, inSheet) || PageKeyPressed(key, inSheet) || Single(key, inSheet) || RowKey(key, inSheet);
     }
 
     // The keys of the pages that have their own (Home's strip, Needs you, a run, Workflows, Agents, Recipes).

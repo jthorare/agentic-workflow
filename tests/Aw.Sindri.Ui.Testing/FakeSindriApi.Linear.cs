@@ -25,6 +25,12 @@ internal sealed partial class FakeSindriApi
     /// <summary>GET /sindri/linear/since's answer: the "three" golden by default.</summary>
     public RouteAnswer LinearSinceAnswer { get; set; } = RouteAnswer.Api("linear-since", "three");
 
+    /// <summary>When set, the lookups read waits for it.</summary>
+    public TaskCompletionSource? LinearLookupsGate { get; set; }
+
+    /// <summary>When set, the since read waits for it (after it has recorded its marker).</summary>
+    public TaskCompletionSource? LinearSinceGate { get; set; }
+
     /// <summary>The list queries the app sent, in order.</summary>
     public IReadOnlyList<LinearIssueQuery> LinearQueries { get { lock (_gate) { return [.. _linearQueries]; } } }
 
@@ -47,23 +53,26 @@ internal sealed partial class FakeSindriApi
     public Task<Result<LinearIssueOne>> LinearIssue(Uri api, string key, CancellationToken cancellationToken) =>
         Task.FromResult(Answer<LinearIssueOne>(api, LinearRoutes.Issue(key), LinearIssueAnswer));
 
-    public Task<Result<LinearLookups>> LinearLookups(Uri api, string team, CancellationToken cancellationToken)
+    public async Task<Result<LinearLookups>> LinearLookups(Uri api, string team, CancellationToken cancellationToken)
     {
         lock (_gate)
         {
             _linearLookups.Add(team);
         }
 
-        return Task.FromResult(Answer<LinearLookups>(api, LinearRoutes.Lookups(team), LinearLookupsAnswer));
+        await WaitFor(LinearLookupsGate, cancellationToken).ConfigureAwait(false);
+        return Answer<LinearLookups>(api, LinearRoutes.Lookups(team), LinearLookupsAnswer);
     }
 
-    public Task<Result<LinearSince>> LinearSince(Uri api, string? after, CancellationToken cancellationToken)
+    public async Task<Result<LinearSince>> LinearSince(Uri api, string? after, CancellationToken cancellationToken)
     {
         lock (_gate)
         {
             _linearSinceAfters.Add(after);
         }
 
-        return Task.FromResult(Answer<LinearSince>(api, LinearRoutes.Since(after), LinearSinceAnswer));
+        var answer = LinearSinceAnswer;   // what was served when the read was asked
+        await WaitFor(LinearSinceGate, cancellationToken).ConfigureAwait(false);
+        return Answer<LinearSince>(api, LinearRoutes.Since(after), answer);
     }
 }

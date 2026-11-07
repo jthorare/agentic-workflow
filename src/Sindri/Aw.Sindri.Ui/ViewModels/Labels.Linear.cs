@@ -86,7 +86,7 @@ internal static partial class Labels
     }
 
     /// <summary>The line when the API cannot be reached.</summary>
-    internal const string LinearUnreachable = "Linear unreachable";
+    internal const string LinearSindriDown = "Sindri isn't answering";
 
     /// <summary>When the rows shown were read.</summary>
     /// <param name="time">HH:mm.</param>

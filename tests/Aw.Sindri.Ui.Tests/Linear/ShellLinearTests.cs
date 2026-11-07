@@ -13,13 +13,28 @@ public sealed class ShellLinearTests
 {
     private readonly InMemoryEndpointRecords _records = new();
     private readonly FakeSindriApi _server = new() { Catalog = RouteAnswer.Api("commands", "catalog"), NeedsYouView = RouteAnswer.Api("needs-you", "empty") };
+    private readonly FakeClipboard _clipboard = new();
+
+    private const string QueueRow = "ITM-0192a1b2c3d4e5f6a7b8c9d0e1f2a301";
+
+    // The golden queue with one row's primary action set to Decide, so Y has a command to copy.
+    private static RouteAnswer WithCopyableRow()
+    {
+        var root = System.Text.Json.Nodes.JsonNode.Parse(GoldenFiles.SpecShaped("queue", "extra-p4-waiting"))!;
+        foreach (var item in root["groups"]!.AsArray().SelectMany(g => g!["items"]!.AsArray()).Where(i => string.Equals(i!["id"]!.GetValue<string>(), QueueRow, StringComparison.Ordinal)))
+        {
+            item!["primaryAction"] = "Decide";
+        }
+
+        return new RouteAnswer(System.Net.HttpStatusCode.OK, root.ToJsonString());
+    }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     private async Task<ShellViewModel> Shell()
     {
         _records.Write(A.Record());
-        var shell = new ShellViewModel(_records, _server, new FakeTimeProvider(A.Noon), new Preferences(new InMemoryPreferencesStore()), new FakeClipboard());
+        var shell = new ShellViewModel(_records, _server, new FakeTimeProvider(A.Noon), new Preferences(new InMemoryPreferencesStore()), _clipboard);
         await shell.Restore(Token);
         _ = shell.Run(Token);
         await Until(() => shell.State == ShellState.Normal);
@@ -89,5 +104,54 @@ public sealed class ShellLinearTests
         shell.Linear.RequestConnect();
 
         Assert.True(shell.IsSettings);
+    }, Token);
+
+    [Theory]
+    [InlineData("J")]
+    [InlineData("K")]
+    [InlineData("Enter")]
+    [InlineData("/")]
+    [InlineData("Y")]
+    public Task The_queue_row_keys_do_nothing_on_the_Linear_view(string key) => UiThread.Run(async () =>
+    {
+        _server.QueueView = WithCopyableRow();
+        var shell = await Shell();
+        await Until(() => shell.Queue.RunningRows.Count + shell.Queue.QueuedRows.Count > 0);
+        shell.GoTo(PageId.Work);
+        shell.SelectQueueRow(QueueRow);
+        shell.Linear.Choose(linear: true);
+
+        var handled = shell.Press(key);
+
+        Assert.Equal((true, QueueRow, false, false, null), (handled, shell.Queue.SelectedId, shell.Queue.IsFiltering, shell.IsSheetOpen, _clipboard.Text));
+    }, Token);
+
+    [Fact]
+    public Task The_row_keys_still_work_on_the_Sindri_view_of_Work() => UiThread.Run(async () =>
+    {
+        _server.QueueView = WithCopyableRow();
+        var shell = await Shell();
+        await Until(() => shell.Queue.RunningRows.Count + shell.Queue.QueuedRows.Count > 0);
+        shell.GoTo(PageId.Work);
+
+        Assert.True(shell.Press("/"));
+
+        Assert.True(shell.Queue.IsFiltering);
+    }, Token);
+
+    [Fact]
+    public Task The_stored_marker_is_restored_before_the_first_catch_up_read() => UiThread.Run(async () =>
+    {
+        var store = new InMemoryPreferencesStore();
+        var preferences = new Preferences(store);
+        await preferences.Update(p => p with { LastPage = "Work", WorkView = "Linear", LinearSince = "lin_marker" });
+        _records.Write(A.Record());
+        var shell = new ShellViewModel(_records, _server, new FakeTimeProvider(A.Noon), preferences, _clipboard);
+
+        await shell.Restore(Token);
+        _ = shell.Run(Token);
+        await Until(() => _server.LinearSinceAfters.Count > 0);
+
+        Assert.All(_server.LinearSinceAfters, after => Assert.Equal("lin_marker", after));
     }, Token);
 }

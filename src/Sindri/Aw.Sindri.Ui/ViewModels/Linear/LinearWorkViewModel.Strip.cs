@@ -42,6 +42,7 @@ internal sealed partial class LinearWorkViewModel
         }
 
         var marker = _marker = since.Marker;
+        _sinceReads++;   // a read still on its way asked after the old marker: its answer would show the dismissed rows again
         Show(since: null);
         await _preferences.Update(p => p with { LinearSince = marker }).ConfigureAwait(true);
     }

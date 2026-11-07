@@ -10,6 +10,9 @@ internal sealed partial class ShellViewModel
     /// <summary>The Work page's Linear view: its switch, list and since-you-looked strip.</summary>
     public LinearWorkViewModel Linear { get; private set; }
 
+    private static readonly string[] _linearSwallowed = ["C", "/", "Y"];
+    private static readonly string[] _linearRowKeys = ["J", "K", "Enter"];
+
     [MemberNotNull(nameof(Linear))]
     private void InitLinear()
     {
@@ -26,7 +29,8 @@ internal sealed partial class ShellViewModel
     }
 
     // L switches Work between Sindri and Linear from anywhere on the page; C creates an item, and on the Linear view does nothing yet (New issue is not built).
-    private bool LinearKeyPressed(string key)
+    // The row keys (J, K, Enter, / and Y) belong to the queue, which is hidden on the Linear view: they are handled there and do nothing until the Linear rows take them (#2187).
+    private bool LinearKeyPressed(string key, bool inSheet)
     {
         if (!IsWork)
         {
@@ -39,6 +43,6 @@ internal sealed partial class ShellViewModel
             return true;
         }
 
-        return string.Equals(key, "C", StringComparison.Ordinal) && Linear.IsLinear;
+        return Linear.IsLinear && (_linearSwallowed.Contains(key, StringComparer.Ordinal) || (!inSheet && _linearRowKeys.Contains(key, StringComparer.Ordinal)));
     }
 }

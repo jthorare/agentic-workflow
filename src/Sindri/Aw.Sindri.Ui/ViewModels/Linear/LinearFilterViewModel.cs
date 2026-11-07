@@ -6,6 +6,7 @@ namespace Aw.Sindri.Ui.ViewModels.Linear;
 internal sealed class LinearFilterViewModel : ObservableObject
 {
     private readonly Dictionary<string, LinearFilterChoice> _byValue = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, int> _rank = new(StringComparer.Ordinal);
     private bool _quiet;
 
     internal LinearFilterViewModel(string key)
@@ -74,18 +75,28 @@ internal sealed class LinearFilterViewModel : ObservableObject
         _quiet = false;
     }
 
-    /// <summary>Adds a choice unless one with the value exists.</summary>
+    /// <summary>Adds a choice unless one with the value exists; choices with a rank come first, in rank order, then the rest by name (A to Z).</summary>
     /// <param name="value">The value.</param>
     /// <param name="text">The words.</param>
-    internal void Offer(string value, string text)
+    /// <param name="rank">Where the source puts it (a state's board position, a priority's order); null when it has none.</param>
+    internal void Offer(string value, string text, int? rank = null)
     {
-        if (_byValue.ContainsKey(value))
+        var known = _byValue.ContainsKey(value);
+        if (!known)
+        {
+            _byValue[value] = new LinearFilterChoice(value, text);
+        }
+
+        if (rank is { } r && !_rank.ContainsKey(value))
+        {
+            _rank[value] = r;
+        }
+        else if (known)
         {
             return;
         }
 
-        var choice = _byValue[value] = new LinearFilterChoice(value, text);
-        Choices.Add(choice);
+        Patch.To(Choices, [Off, .. _byValue.Values.OrderBy(c => _rank.GetValueOrDefault(c.Value ?? string.Empty, int.MaxValue)).ThenBy(c => c.Text, StringComparer.OrdinalIgnoreCase)]);
     }
 
     private LinearFilterChoice Off { get; }

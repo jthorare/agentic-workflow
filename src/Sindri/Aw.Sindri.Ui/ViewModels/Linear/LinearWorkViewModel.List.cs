@@ -58,9 +58,9 @@ internal sealed partial class LinearWorkViewModel
         : string.Empty;
 
     /// <summary>True when the last read could not reach the API (the rows shown are the last good ones).</summary>
-    public bool IsUnreachable { get; private set => Set(ref field, value); }
+    public bool IsSindriDown { get; private set => Set(ref field, value); }
 
-    /// <summary>"as of 10:05" while unreachable and rows are shown; empty otherwise.</summary>
+    /// <summary>"as of 10:05" while Sindri is not answering and rows are shown; empty otherwise.</summary>
     public string AsOfText { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>Focus should move to a row (Show more: the first new one).</summary>
@@ -110,7 +110,7 @@ internal sealed partial class LinearWorkViewModel
 
         if (page.IsError)
         {
-            Unreachable();
+            SindriNotAnswering();
             return;
         }
 
@@ -144,11 +144,14 @@ internal sealed partial class LinearWorkViewModel
     {
         if (IsLinear && IsActive && _url is { } url)
         {
-            Reading = Observed(ReadList(url, _shown?.Token ?? CancellationToken.None));
+            Reading = Observed(ReadList(url, _shown?.Token ?? CancellationToken.None, keepLoaded: false));
         }
     }
 
-    private LinearIssueQuery Query(string group, string? after) => new(
+    // The most rows a refresh asks for per group, so it keeps what "Show more" loaded without growing without bound.
+    private const int RefreshCap = 200;
+
+    private LinearIssueQuery Query(string group, string? after, int limit = PageSize) => new(
         group,
         Team: Filter("team").Value,
         Project: Filter("project").Value,
@@ -158,13 +161,15 @@ internal sealed partial class LinearWorkViewModel
         Priority: int.TryParse(Filter("priority").Value, NumberStyles.None, CultureInfo.InvariantCulture, out var priority) ? priority : null,
         Label: Filter("label").Value,
         After: after,
-        Limit: PageSize);
+        Limit: limit);
 
-    private async Task ReadList(Uri url, CancellationToken cancellationToken)
+    // A refresh asks for as many rows as the group shows (up to the cap), so an event never folds "Show more" back to the first page and the cursor stays right;
+    // a filter change starts from the first page.
+    private async Task ReadList(Uri url, CancellationToken cancellationToken, bool keepLoaded = true)
     {
         var read = ++_reads;
-        var mineRead = _api.LinearIssues(url, Query("mine", after: null), cancellationToken);
-        var teamsRead = _api.LinearIssues(url, Query("teams", after: null), cancellationToken);
+        var mineRead = _api.LinearIssues(url, Query("mine", after: null, Loaded(Mine, keepLoaded)), cancellationToken);
+        var teamsRead = _api.LinearIssues(url, Query("teams", after: null, Loaded(Teams, keepLoaded)), cancellationToken);
         var (mine, teams) = (await mineRead.ConfigureAwait(true), await teamsRead.ConfigureAwait(true));
         if (read != _reads)
         {
@@ -173,20 +178,22 @@ internal sealed partial class LinearWorkViewModel
 
         if (mine.IsError || teams.IsError)
         {
-            Unreachable();
+            SindriNotAnswering();
             return;
         }
 
         Show(mine.Value, teams.Value);
-        await Lookups(url, read, cancellationToken).ConfigureAwait(true);
+        await Lookups(url, cancellationToken).ConfigureAwait(true);
     }
+
+    private static int Loaded(LinearGroupViewModel group, bool keep) => keep ? Math.Clamp(group.Rows.Count, PageSize, RefreshCap) : PageSize;
 
     // Both groups from one pair of answers; the rows already shown are updated in place.
     private void Show(LinearIssueList mine, LinearIssueList teams)
     {
         _list = mine;
         _lastGood = _clock.GetUtcNow();
-        (IsUnreachable, AsOfText) = (false, string.Empty);
+        (IsSindriDown, AsOfText) = (false, string.Empty);
         var kept = new Dictionary<string, LinearIssueRowViewModel>(StringComparer.Ordinal);
         var mineRows = mine.Rows.Select(r => Row(r, kept)).ToList();
         var teamRows = teams.Rows.Select(r => Row(r, kept)).ToList();
@@ -233,10 +240,10 @@ internal sealed partial class LinearWorkViewModel
     }
 
     // The last read failed: the rows stay, marked with the time of the last good read.
-    private void Unreachable()
+    private void SindriNotAnswering()
     {
         IsLoading = false;
-        IsUnreachable = true;
+        IsSindriDown = true;
         AsOfText = _list is not null && _lastGood is { } at ? Labels.LinearAsOf(Clock(at)) : string.Empty;
         OnChanged(nameof(IsLoading));
     }

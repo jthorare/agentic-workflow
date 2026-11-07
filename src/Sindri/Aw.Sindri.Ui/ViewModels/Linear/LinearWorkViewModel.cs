@@ -7,7 +7,7 @@ namespace Aw.Sindri.Ui.ViewModels.Linear;
 /// The Work page's Linear view (Linear hub spec §3): the Sindri / Linear switch and its remembered pick, the owner's issues in two groups
 /// (Assigned to you, then Your teams) with the filter bar and "Show more", and the since-you-looked strip. The switch and the strip's count
 /// are read while Work is shown on either view; the list only on the Linear one. Everything the page says about the feed (not connected,
-/// finding the viewer, re-reading, failing, unreachable) is a state of the last read, and the rows stay through a failing one.
+/// finding the viewer, re-reading, failing, Sindri not answering) is a state of the last read, and the rows stay through a failing one.
 /// </summary>
 internal sealed partial class LinearWorkViewModel : ObservableObject, IDisposable
 {
@@ -16,9 +16,11 @@ internal sealed partial class LinearWorkViewModel : ObservableObject, IDisposabl
 
     private static readonly string[] _filterKeys = ["team", "project", "cycle", "state", "assignee", "priority", "label"];
 
+    private static readonly int[] _priorityOrder = [1, 2, 3, 4, 0];
+
     private static readonly string[] _derived =
     [
-        nameof(IsLoading), nameof(ShowsConnect), nameof(ShowsFinding), nameof(ShowsNoMatch), nameof(UpdatingText), nameof(FeedText), nameof(IsUnreachable), nameof(AsOfText),
+        nameof(IsLoading), nameof(ShowsConnect), nameof(ShowsFinding), nameof(ShowsNoMatch), nameof(UpdatingText), nameof(FeedText), nameof(IsSindriDown), nameof(AsOfText),
         nameof(HasMore), nameof(HasFilters),
     ];
 
@@ -27,6 +29,7 @@ internal sealed partial class LinearWorkViewModel : ObservableObject, IDisposabl
     private readonly TimeProvider _clock;
     private readonly Dictionary<string, LinearIssueRowViewModel> _rows = new(StringComparer.Ordinal);
     private readonly HashSet<string> _lookedUp = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _asking = new(StringComparer.Ordinal);   // teams whose lookups are on their way
     private CancellationTokenSource? _shown;
     private Uri? _url;
 
@@ -42,9 +45,9 @@ internal sealed partial class LinearWorkViewModel : ObservableObject, IDisposabl
             filter.Picked += OnFilterPicked;
         }
 
-        foreach (var priority in new[] { 1, 2, 3, 4, 0 })
+        foreach (var priority in _priorityOrder)
         {
-            Filter("priority").Offer(priority.ToString(System.Globalization.CultureInfo.InvariantCulture), Labels.LinearPriority(priority));
+            Filter("priority").Offer(priority.ToString(System.Globalization.CultureInfo.InvariantCulture), Labels.LinearPriority(priority), rank: Array.IndexOf(_priorityOrder, priority));
         }
     }
 
@@ -86,7 +89,7 @@ internal sealed partial class LinearWorkViewModel : ObservableObject, IDisposabl
     public string ClearFiltersText => Labels.LinearClearFilters;
 
     /// <summary>The line when the API cannot be reached.</summary>
-    public string UnreachableText => Labels.LinearUnreachable;
+    public string SindriDownText => Labels.LinearSindriDown;
 
     /// <summary>The button that loads the next page.</summary>
     public string ShowMoreText => Labels.LinearShowMore;

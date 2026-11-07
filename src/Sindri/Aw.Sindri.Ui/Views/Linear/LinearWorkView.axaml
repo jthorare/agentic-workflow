@@ -63,9 +63,9 @@
       <icons:StateIcon Glyph="Down" Classes="error" VerticalAlignment="Top" />
       <TextBlock Classes="caption error" Text="{Binding FeedText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding FeedText}" />
     </StackPanel>
-    <StackPanel x:Name="LinearUnreachable" Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsUnreachable}">
+    <StackPanel x:Name="LinearSindriDown" Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsSindriDown}">
       <icons:StateIcon Glyph="Stale" VerticalAlignment="Center" />
-      <TextBlock Classes="caption subtle" Text="{Binding UnreachableText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding UnreachableText}" />
+      <TextBlock Classes="caption subtle" Text="{Binding SindriDownText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding SindriDownText}" />
       <TextBlock x:Name="LinearAsOf" Classes="caption subtle" Text="{Binding AsOfText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding AsOfText}" />
     </StackPanel>
 
