@@ -23810,3 +23810,5 @@ static readonly Aw.Sindri.Core.SindriErrors.ReviewPrNotFound -> Aw.Kernel.ErrorD
 virtual Aw.Sindri.Core.Reviews.ReviewPanelData.EqualityContract.get -> System.Type!
 virtual Aw.Sindri.Core.Reviews.ReviewPanelData.Equals(Aw.Sindri.Core.Reviews.ReviewPanelData? other) -> bool
 virtual Aw.Sindri.Core.Reviews.ReviewPanelData.PrintMembers(System.Text.StringBuilder! builder) -> bool
+Aw.Sindri.Core.Reviews.IFixItemCloser
+Aw.Sindri.Core.Reviews.IFixItemCloser.Close(string! item, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
