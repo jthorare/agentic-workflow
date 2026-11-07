@@ -11493,7 +11493,11 @@ static Aw.Context.Core.Library.PrCovers.None.get -> Aw.Context.Core.Library.PrCo
 static Aw.Context.Core.Library.PrCovers.Parse(string? body) -> Aw.Context.Core.Library.PrCovers!
 static Aw.Context.Core.Library.PrCovers.operator !=(Aw.Context.Core.Library.PrCovers? left, Aw.Context.Core.Library.PrCovers? right) -> bool
 static Aw.Context.Core.Library.PrCovers.operator ==(Aw.Context.Core.Library.PrCovers? left, Aw.Context.Core.Library.PrCovers? right) -> bool
-const Aw.Context.Core.Sync.RecordBatches.LibrarySource = "library" -> string!
+Aw.Context.Core.Library.LibrarySource
+static Aw.Context.Core.Library.LibrarySource.Id.get -> Aw.Context.Core.Sources.SourceId
+static Aw.Context.Core.Library.LibrarySource.ModelMayRead(Aw.Context.Core.Sources.SourceId source, Aw.Context.Core.Sources.RecordKey key, System.Collections.Generic.IReadOnlyList<string!>! modelRoots) -> bool
+Aw.Context.Core.Engine.ContextSettings.LibraryModelRoots.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Engine.ContextSettings.LibraryModelRoots.init -> void
 static Aw.Context.Core.Library.DesignDocParser.Blocked(string! path) -> Aw.Context.Core.Library.ParsedDesignDoc!
 static Aw.Context.Core.Library.DesignDocParser.IsDesignDoc(Aw.Context.Core.Library.ParsedDesignDoc! doc) -> bool
 static Aw.Context.Core.Library.DesignDocParser.Stamp(string! ruleset) -> string!
@@ -11736,7 +11740,6 @@ static Aw.Context.Core.Records.AudienceKeyExtensions.IsOwner(this Aw.Context.Cor
 Aw.Context.Core.Facade.IContextLibrary
 Aw.Context.Core.Library.LibraryItem.DocKey.get -> Aw.Context.Core.Sources.RecordKey
 Aw.Context.Core.Library.LibraryItem
-Aw.Context.Core.Library.ILibraryStore
 override Aw.Context.Core.Library.LibraryItem.ToString() -> string!
 Aw.Context.Core.Library.LibraryItem.DocKey.init -> void
 Aw.Context.Core.Library.LibraryItem.Key.get -> string!
@@ -11877,11 +11880,53 @@ Aw.Context.Core.Library.LibraryDocFilter.LibraryDocFilter(string? Root = null, s
 Aw.Context.Core.Library.LibraryDoc.LibraryDoc(Aw.Context.Core.Sources.RecordKey Key, string! Root, string! Scope, string? Slug, string? Kind, string? Status, string? Project, System.Collections.Generic.IReadOnlyList<string!>! Repos, System.Collections.Generic.IReadOnlyList<string!>! Issues, int ParserVersion, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignDocError!>! Errors, string! Title, string? Url, Aw.Context.Core.Records.AudienceKey? Audience) -> void
 Aw.Context.Core.Library.LibraryClaimRow.LibraryClaimRow(Aw.Context.Core.Sources.RecordKey Pr, Aw.Context.Core.Records.AudienceKey? PrAudience, Aw.Context.Core.Records.RecordState? PrState, string! Ref) -> void
 Aw.Context.Core.Library.LibraryClaim.LibraryClaim(Aw.Context.Core.Sources.RecordKey Pr, Aw.Context.Core.Records.RecordState? PrState, Aw.Context.Core.Library.LibraryRefResolution! Resolution) -> void
-Aw.Context.Core.Library.ILibraryStore.Docs(Aw.Context.Core.Records.RecordAudience! mask, string? slug, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryDoc!>!>!>
-Aw.Context.Core.Library.ILibraryStore.Doc(Aw.Context.Core.Sources.RecordKey key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Library.LibraryDoc?>!>
-Aw.Context.Core.Library.ILibraryStore.Items(Aw.Context.Core.Sources.RecordKey doc, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryItem!>!>!>
-Aw.Context.Core.Library.ILibraryStore.ClaimsOf(Aw.Context.Core.Sources.RecordKey pr, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryClaimRow!>!>!>
-Aw.Context.Core.Library.ILibraryStore.ClaimsNaming(string! slug, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryClaimRow!>!>!>
+Aw.Context.Core.Engine.ContextSettings.Library.get -> Aw.Context.Core.Engine.LibrarySettings?
+Aw.Context.Core.Engine.ContextSettings.Library.init -> void
+Aw.Context.Core.Engine.LibraryHost
+Aw.Context.Core.Engine.LibraryHost.Home.get -> string!
+Aw.Context.Core.Engine.LibraryHost.Home.init -> void
+Aw.Context.Core.Engine.LibraryHost.LibraryHost() -> void
+Aw.Context.Core.Engine.LibraryHost.RealPath.get -> System.Func<string!, string!>!
+Aw.Context.Core.Engine.LibraryHost.RealPath.init -> void
+Aw.Context.Core.Engine.LibraryHost.SindriHome.get -> string?
+Aw.Context.Core.Engine.LibraryHost.SindriHome.init -> void
+Aw.Context.Core.Engine.LibraryHost.StateDefault.get -> string!
+Aw.Context.Core.Engine.LibraryHost.StateDefault.init -> void
+Aw.Context.Core.Engine.LibraryPaths
+Aw.Context.Core.Engine.LibraryRoot
+Aw.Context.Core.Engine.LibraryRoot.Deny.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Engine.LibraryRoot.Deny.init -> void
+Aw.Context.Core.Engine.LibraryRoot.IsAw.get -> bool
+Aw.Context.Core.Engine.LibraryRoot.IsAw.init -> void
+Aw.Context.Core.Engine.LibraryRoot.LibraryRoot() -> void
+Aw.Context.Core.Engine.LibraryRoot.Models.get -> bool
+Aw.Context.Core.Engine.LibraryRoot.Models.init -> void
+Aw.Context.Core.Engine.LibraryRoot.Name.get -> string!
+Aw.Context.Core.Engine.LibraryRoot.Name.init -> void
+Aw.Context.Core.Engine.LibraryRoot.Path.get -> string!
+Aw.Context.Core.Engine.LibraryRoot.Path.init -> void
+Aw.Context.Core.Engine.LibrarySettings
+Aw.Context.Core.Engine.LibrarySettings.AwRootOn.get -> bool
+Aw.Context.Core.Engine.LibrarySettings.LibrarySettings() -> void
+Aw.Context.Core.Engine.LibrarySettings.Models.get -> bool
+Aw.Context.Core.Engine.LibrarySettings.Models.init -> void
+Aw.Context.Core.Engine.LibrarySettings.StateDir.get -> string?
+Aw.Context.Core.Engine.LibrarySettings.StateDir.init -> void
+Aw.Context.Core.Engine.LibrarySettings.Vaults.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.LibraryVault!>!
+Aw.Context.Core.Engine.LibrarySettings.Vaults.init -> void
+Aw.Context.Core.Engine.LibraryVault
+Aw.Context.Core.Engine.LibraryVault.Deny.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Engine.LibraryVault.Deny.init -> void
+Aw.Context.Core.Engine.LibraryVault.LibraryVault() -> void
+Aw.Context.Core.Engine.LibraryVault.Models.get -> bool
+Aw.Context.Core.Engine.LibraryVault.Models.init -> void
+Aw.Context.Core.Engine.LibraryVault.Name.get -> string!
+Aw.Context.Core.Engine.LibraryVault.Name.init -> void
+Aw.Context.Core.Engine.LibraryVault.Path.get -> string!
+Aw.Context.Core.Engine.LibraryVault.Path.init -> void
+const Aw.Context.Core.Engine.LibrarySettings.Off = "off" -> string!
+static Aw.Context.Core.Engine.LibraryPaths.Resolve(Aw.Context.Core.Engine.LibrarySettings! source, Aw.Context.Core.Engine.LibraryHost! host) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.LibraryRoot!>!>!
+static readonly Aw.Context.Core.ContextErrors.LibraryInvalid -> Aw.Kernel.ErrorDefinition!
 Aw.Context.Core.Linear.LinearIssueRow.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out string! Title, out string? Url, out string? StateRaw, out string? Author, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? ClosedAt, out string? TeamKey, out Aw.Context.Core.Linear.LinearIssueFields! Fields, out string? Description) -> void
 Aw.Context.Core.Linear.LinearIssueRow.Description.get -> string?
 Aw.Context.Core.Linear.LinearIssueRow.Description.init -> void
@@ -11891,3 +11936,337 @@ Aw.Context.Core.Linear.LinearIssueSide.Description.get -> string?
 Aw.Context.Core.Linear.LinearIssueSide.Description.init -> void
 Aw.Context.Core.Linear.LinearIssueSide.LinearIssueSide(Aw.Context.Core.Linear.LinearIssueFields! Fields, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>! Comments, string? Description = null) -> void
 const Aw.Context.Core.Sync.RecordBatches.MaxIssueDescription = 65536 -> int
+Aw.Context.Core.Facade.IContextLibrary.Roots(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryRootStatus!>!>!>
+Aw.Context.Core.Library.ILibraryStatus
+Aw.Context.Core.Library.ILibraryStatus.Read() -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryRootReport!>!
+Aw.Context.Core.Library.ILibraryStatus.Write(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryRootReport!>! reports) -> void
+Aw.Context.Core.Library.LibraryAdmission
+Aw.Context.Core.Library.LibraryAdmissionKind
+Aw.Context.Core.Library.LibraryAdmissionKind.NearMiss = 1 -> Aw.Context.Core.Library.LibraryAdmissionKind
+Aw.Context.Core.Library.LibraryAdmissionKind.Read = 2 -> Aw.Context.Core.Library.LibraryAdmissionKind
+Aw.Context.Core.Library.LibraryAdmissionKind.Skip = 0 -> Aw.Context.Core.Library.LibraryAdmissionKind
+Aw.Context.Core.Library.LibraryRootReport
+Aw.Context.Core.Library.LibraryRootReport.<Clone>$() -> Aw.Context.Core.Library.LibraryRootReport!
+Aw.Context.Core.Library.LibraryRootReport.Deconstruct(out string! Root, out string! Path, out string? Problem, out int Docs, out System.Collections.Generic.IReadOnlyList<string!>! NearMisses, out System.DateTimeOffset LastRead) -> void
+Aw.Context.Core.Library.LibraryRootReport.Docs.get -> int
+Aw.Context.Core.Library.LibraryRootReport.Docs.init -> void
+Aw.Context.Core.Library.LibraryRootReport.Equals(Aw.Context.Core.Library.LibraryRootReport? other) -> bool
+Aw.Context.Core.Library.LibraryRootReport.LastRead.get -> System.DateTimeOffset
+Aw.Context.Core.Library.LibraryRootReport.LastRead.init -> void
+Aw.Context.Core.Library.LibraryRootReport.LibraryRootReport(string! Root, string! Path, string? Problem, int Docs, System.Collections.Generic.IReadOnlyList<string!>! NearMisses, System.DateTimeOffset LastRead) -> void
+Aw.Context.Core.Library.LibraryRootReport.NearMisses.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Library.LibraryRootReport.NearMisses.init -> void
+Aw.Context.Core.Library.LibraryRootReport.Path.get -> string!
+Aw.Context.Core.Library.LibraryRootReport.Path.init -> void
+Aw.Context.Core.Library.LibraryRootReport.Problem.get -> string?
+Aw.Context.Core.Library.LibraryRootReport.Problem.init -> void
+Aw.Context.Core.Library.LibraryRootReport.Root.get -> string!
+Aw.Context.Core.Library.LibraryRootReport.Root.init -> void
+Aw.Context.Core.Library.LibraryRootState
+Aw.Context.Core.Library.LibraryRootState.Off = 3 -> Aw.Context.Core.Library.LibraryRootState
+Aw.Context.Core.Library.LibraryRootState.Ok = 1 -> Aw.Context.Core.Library.LibraryRootState
+Aw.Context.Core.Library.LibraryRootState.Reading = 0 -> Aw.Context.Core.Library.LibraryRootState
+Aw.Context.Core.Library.LibraryRootState.Unreadable = 2 -> Aw.Context.Core.Library.LibraryRootState
+Aw.Context.Core.Library.LibraryRootStatus
+Aw.Context.Core.Library.LibraryRootStatus.<Clone>$() -> Aw.Context.Core.Library.LibraryRootStatus!
+Aw.Context.Core.Library.LibraryRootStatus.Deconstruct(out string! Root, out Aw.Context.Core.Library.LibraryRootState State, out string? Reason, out int Docs, out int NearMisses, out System.DateTimeOffset? LastRead) -> void
+Aw.Context.Core.Library.LibraryRootStatus.Docs.get -> int
+Aw.Context.Core.Library.LibraryRootStatus.Docs.init -> void
+Aw.Context.Core.Library.LibraryRootStatus.Equals(Aw.Context.Core.Library.LibraryRootStatus? other) -> bool
+Aw.Context.Core.Library.LibraryRootStatus.LastRead.get -> System.DateTimeOffset?
+Aw.Context.Core.Library.LibraryRootStatus.LastRead.init -> void
+Aw.Context.Core.Library.LibraryRootStatus.LibraryRootStatus(string! Root, Aw.Context.Core.Library.LibraryRootState State, string? Reason, int Docs, int NearMisses, System.DateTimeOffset? LastRead) -> void
+Aw.Context.Core.Library.LibraryRootStatus.NearMisses.get -> int
+Aw.Context.Core.Library.LibraryRootStatus.NearMisses.init -> void
+Aw.Context.Core.Library.LibraryRootStatus.Reason.get -> string?
+Aw.Context.Core.Library.LibraryRootStatus.Reason.init -> void
+Aw.Context.Core.Library.LibraryRootStatus.Root.get -> string!
+Aw.Context.Core.Library.LibraryRootStatus.Root.init -> void
+Aw.Context.Core.Library.LibraryRootStatus.State.get -> Aw.Context.Core.Library.LibraryRootState
+Aw.Context.Core.Library.LibraryRootStatus.State.init -> void
+Aw.Context.Core.Library.LibrarySetup
+Aw.Context.Core.Library.LibrarySetup.<Clone>$() -> Aw.Context.Core.Library.LibrarySetup!
+Aw.Context.Core.Library.LibrarySetup.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.LibraryRoot!>! Roots, out System.Collections.Generic.IReadOnlyList<string!>! GithubRepos) -> void
+Aw.Context.Core.Library.LibrarySetup.Equals(Aw.Context.Core.Library.LibrarySetup? other) -> bool
+Aw.Context.Core.Library.LibrarySetup.GithubRepos.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Library.LibrarySetup.GithubRepos.init -> void
+Aw.Context.Core.Library.LibrarySetup.LibrarySetup(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.LibraryRoot!>! Roots, System.Collections.Generic.IReadOnlyList<string!>! GithubRepos) -> void
+Aw.Context.Core.Library.LibrarySetup.Roots.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.LibraryRoot!>!
+Aw.Context.Core.Library.LibrarySetup.Roots.init -> void
+const Aw.Context.Core.Library.LibraryAdmission.HeadBytes = 4096 -> int
+override Aw.Context.Core.Library.LibraryRootReport.Equals(object? obj) -> bool
+override Aw.Context.Core.Library.LibraryRootReport.GetHashCode() -> int
+override Aw.Context.Core.Library.LibraryRootReport.ToString() -> string!
+override Aw.Context.Core.Library.LibraryRootStatus.Equals(object? obj) -> bool
+override Aw.Context.Core.Library.LibraryRootStatus.GetHashCode() -> int
+override Aw.Context.Core.Library.LibraryRootStatus.ToString() -> string!
+override Aw.Context.Core.Library.LibrarySetup.Equals(object? obj) -> bool
+override Aw.Context.Core.Library.LibrarySetup.GetHashCode() -> int
+override Aw.Context.Core.Library.LibrarySetup.ToString() -> string!
+static Aw.Context.Core.Library.LibraryAdmission.Classify(string! path, string! head) -> Aw.Context.Core.Library.LibraryAdmissionKind
+static Aw.Context.Core.Library.LibraryRootReport.operator !=(Aw.Context.Core.Library.LibraryRootReport? left, Aw.Context.Core.Library.LibraryRootReport? right) -> bool
+static Aw.Context.Core.Library.LibraryRootReport.operator ==(Aw.Context.Core.Library.LibraryRootReport? left, Aw.Context.Core.Library.LibraryRootReport? right) -> bool
+static Aw.Context.Core.Library.LibraryRootStatus.operator !=(Aw.Context.Core.Library.LibraryRootStatus? left, Aw.Context.Core.Library.LibraryRootStatus? right) -> bool
+static Aw.Context.Core.Library.LibraryRootStatus.operator ==(Aw.Context.Core.Library.LibraryRootStatus? left, Aw.Context.Core.Library.LibraryRootStatus? right) -> bool
+static Aw.Context.Core.Library.LibrarySetup.operator !=(Aw.Context.Core.Library.LibrarySetup? left, Aw.Context.Core.Library.LibrarySetup? right) -> bool
+static Aw.Context.Core.Library.LibrarySetup.operator ==(Aw.Context.Core.Library.LibrarySetup? left, Aw.Context.Core.Library.LibrarySetup? right) -> bool
+Aw.Context.Core.Facade.IContextLinearWrites
+Aw.Context.Core.Facade.IContextLinearWrites.Attach(Aw.Context.Core.Linear.LinearIssueKey! key, System.Uri! url, string! title, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearWriteOutcome!>!>
+Aw.Context.Core.Facade.IContextLinearWrites.Change(Aw.Context.Core.Linear.LinearIssueKey! key, Aw.Context.Core.Linear.LinearIssueChange! change, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearWriteOutcome!>!>
+Aw.Context.Core.Facade.IContextLinearWrites.Comment(Aw.Context.Core.Linear.LinearIssueKey! key, string! body, Aw.Context.Core.Linear.LinearClientId! clientId, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearWriteOutcome!>!>
+Aw.Context.Core.Facade.IContextLinearWrites.Create(Aw.Context.Core.Linear.LinearIssueDraft! draft, Aw.Context.Core.Linear.LinearClientId! clientId, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearWriteOutcome!>!>
+Aw.Context.Core.Facade.IContextLinearWrites.EditComment(Aw.Context.Core.Linear.LinearIssueKey! key, Aw.Context.Core.Sources.ExternalId commentId, string! body, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearWriteOutcome!>!>
+Aw.Context.Core.Facade.IContextLinearWrites.Live(Aw.Context.Core.Linear.LinearIssueKey! key, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueView!>!>
+Aw.Context.Core.Facade.IContextLinearWrites.WriteKeyStatus(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearWriteKeyStatus!>!>
+Aw.Context.Core.Linear.LinearClientId
+Aw.Context.Core.Linear.LinearClientId.<Clone>$() -> Aw.Context.Core.Linear.LinearClientId!
+Aw.Context.Core.Linear.LinearClientId.Equals(Aw.Context.Core.Linear.LinearClientId? other) -> bool
+Aw.Context.Core.Linear.LinearClientId.Value.get -> string!
+Aw.Context.Core.Linear.LinearFieldChange
+Aw.Context.Core.Linear.LinearFieldChange<T>
+Aw.Context.Core.Linear.LinearFieldChange<T>.Deconstruct(out bool IsSet, out T? Value) -> void
+Aw.Context.Core.Linear.LinearFieldChange<T>.Equals(Aw.Context.Core.Linear.LinearFieldChange<T> other) -> bool
+Aw.Context.Core.Linear.LinearFieldChange<T>.IsSet.get -> bool
+Aw.Context.Core.Linear.LinearFieldChange<T>.IsSet.init -> void
+Aw.Context.Core.Linear.LinearFieldChange<T>.LinearFieldChange() -> void
+Aw.Context.Core.Linear.LinearFieldChange<T>.LinearFieldChange(bool IsSet, T? Value) -> void
+Aw.Context.Core.Linear.LinearFieldChange<T>.Value.get -> T?
+Aw.Context.Core.Linear.LinearFieldChange<T>.Value.init -> void
+Aw.Context.Core.Linear.LinearIssueChange
+Aw.Context.Core.Linear.LinearIssueChange.<Clone>$() -> Aw.Context.Core.Linear.LinearIssueChange!
+Aw.Context.Core.Linear.LinearIssueChange.AssigneeId.get -> Aw.Context.Core.Linear.LinearFieldChange<Aw.Context.Core.Sources.ExternalId?>
+Aw.Context.Core.Linear.LinearIssueChange.AssigneeId.init -> void
+Aw.Context.Core.Linear.LinearIssueChange.CycleId.get -> Aw.Context.Core.Linear.LinearFieldChange<Aw.Context.Core.Sources.ExternalId?>
+Aw.Context.Core.Linear.LinearIssueChange.CycleId.init -> void
+Aw.Context.Core.Linear.LinearIssueChange.Deconstruct(out Aw.Context.Core.Linear.LinearFieldChange<string!> Title, out Aw.Context.Core.Linear.LinearFieldChange<string?> Description, out Aw.Context.Core.Linear.LinearFieldChange<Aw.Context.Core.Sources.ExternalId> StateId, out Aw.Context.Core.Linear.LinearFieldChange<Aw.Context.Core.Sources.ExternalId?> AssigneeId, out Aw.Context.Core.Linear.LinearFieldChange<int> Priority, out Aw.Context.Core.Linear.LinearFieldChange<double?> Estimate, out Aw.Context.Core.Linear.LinearFieldChange<Aw.Context.Core.Sources.ExternalId?> CycleId, out Aw.Context.Core.Linear.LinearFieldChange<Aw.Context.Core.Sources.ExternalId?> ProjectId, out Aw.Context.Core.Linear.LinearFieldChange<Aw.Context.Core.Sources.ExternalId?> ParentId, out Aw.Context.Core.Linear.LinearFieldChange<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.ExternalId>!> LabelIds) -> void
+Aw.Context.Core.Linear.LinearIssueChange.Description.get -> Aw.Context.Core.Linear.LinearFieldChange<string?>
+Aw.Context.Core.Linear.LinearIssueChange.Description.init -> void
+Aw.Context.Core.Linear.LinearIssueChange.Equals(Aw.Context.Core.Linear.LinearIssueChange? other) -> bool
+Aw.Context.Core.Linear.LinearIssueChange.Estimate.get -> Aw.Context.Core.Linear.LinearFieldChange<double?>
+Aw.Context.Core.Linear.LinearIssueChange.Estimate.init -> void
+Aw.Context.Core.Linear.LinearIssueChange.IsEmpty.get -> bool
+Aw.Context.Core.Linear.LinearIssueChange.LabelIds.get -> Aw.Context.Core.Linear.LinearFieldChange<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.ExternalId>!>
+Aw.Context.Core.Linear.LinearIssueChange.LabelIds.init -> void
+Aw.Context.Core.Linear.LinearIssueChange.LinearIssueChange(Aw.Context.Core.Linear.LinearFieldChange<string!> Title = default(Aw.Context.Core.Linear.LinearFieldChange<string!>), Aw.Context.Core.Linear.LinearFieldChange<string?> Description = default(Aw.Context.Core.Linear.LinearFieldChange<string?>), Aw.Context.Core.Linear.LinearFieldChange<Aw.Context.Core.Sources.ExternalId> StateId = default(Aw.Context.Core.Linear.LinearFieldChange<Aw.Context.Core.Sources.ExternalId>), Aw.Context.Core.Linear.LinearFieldChange<Aw.Context.Core.Sources.ExternalId?> AssigneeId = default(Aw.Context.Core.Linear.LinearFieldChange<Aw.Context.Core.Sources.ExternalId?>), Aw.Context.Core.Linear.LinearFieldChange<int> Priority = default(Aw.Context.Core.Linear.LinearFieldChange<int>), Aw.Context.Core.Linear.LinearFieldChange<double?> Estimate = default(Aw.Context.Core.Linear.LinearFieldChange<double?>), Aw.Context.Core.Linear.LinearFieldChange<Aw.Context.Core.Sources.ExternalId?> CycleId = default(Aw.Context.Core.Linear.LinearFieldChange<Aw.Context.Core.Sources.ExternalId?>), Aw.Context.Core.Linear.LinearFieldChange<Aw.Context.Core.Sources.ExternalId?> ProjectId = default(Aw.Context.Core.Linear.LinearFieldChange<Aw.Context.Core.Sources.ExternalId?>), Aw.Context.Core.Linear.LinearFieldChange<Aw.Context.Core.Sources.ExternalId?> ParentId = default(Aw.Context.Core.Linear.LinearFieldChange<Aw.Context.Core.Sources.ExternalId?>), Aw.Context.Core.Linear.LinearFieldChange<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.ExternalId>!> LabelIds = default(Aw.Context.Core.Linear.LinearFieldChange<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.ExternalId>!>)) -> void
+Aw.Context.Core.Linear.LinearIssueChange.ParentId.get -> Aw.Context.Core.Linear.LinearFieldChange<Aw.Context.Core.Sources.ExternalId?>
+Aw.Context.Core.Linear.LinearIssueChange.ParentId.init -> void
+Aw.Context.Core.Linear.LinearIssueChange.Priority.get -> Aw.Context.Core.Linear.LinearFieldChange<int>
+Aw.Context.Core.Linear.LinearIssueChange.Priority.init -> void
+Aw.Context.Core.Linear.LinearIssueChange.ProjectId.get -> Aw.Context.Core.Linear.LinearFieldChange<Aw.Context.Core.Sources.ExternalId?>
+Aw.Context.Core.Linear.LinearIssueChange.ProjectId.init -> void
+Aw.Context.Core.Linear.LinearIssueChange.StateId.get -> Aw.Context.Core.Linear.LinearFieldChange<Aw.Context.Core.Sources.ExternalId>
+Aw.Context.Core.Linear.LinearIssueChange.StateId.init -> void
+Aw.Context.Core.Linear.LinearIssueChange.Title.get -> Aw.Context.Core.Linear.LinearFieldChange<string!>
+Aw.Context.Core.Linear.LinearIssueChange.Title.init -> void
+Aw.Context.Core.Linear.LinearIssueDraft
+Aw.Context.Core.Linear.LinearIssueDraft.<Clone>$() -> Aw.Context.Core.Linear.LinearIssueDraft!
+Aw.Context.Core.Linear.LinearIssueDraft.AssigneeId.get -> Aw.Context.Core.Sources.ExternalId?
+Aw.Context.Core.Linear.LinearIssueDraft.AssigneeId.init -> void
+Aw.Context.Core.Linear.LinearIssueDraft.CycleId.get -> Aw.Context.Core.Sources.ExternalId?
+Aw.Context.Core.Linear.LinearIssueDraft.CycleId.init -> void
+Aw.Context.Core.Linear.LinearIssueDraft.Deconstruct(out Aw.Context.Core.Sources.ExternalId TeamId, out string! Title, out string? Description, out Aw.Context.Core.Sources.ExternalId? StateId, out Aw.Context.Core.Sources.ExternalId? AssigneeId, out int? Priority, out double? Estimate, out Aw.Context.Core.Sources.ExternalId? CycleId, out Aw.Context.Core.Sources.ExternalId? ProjectId, out Aw.Context.Core.Sources.ExternalId? ParentId, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.ExternalId>? LabelIds) -> void
+Aw.Context.Core.Linear.LinearIssueDraft.Description.get -> string?
+Aw.Context.Core.Linear.LinearIssueDraft.Description.init -> void
+Aw.Context.Core.Linear.LinearIssueDraft.Equals(Aw.Context.Core.Linear.LinearIssueDraft? other) -> bool
+Aw.Context.Core.Linear.LinearIssueDraft.Estimate.get -> double?
+Aw.Context.Core.Linear.LinearIssueDraft.Estimate.init -> void
+Aw.Context.Core.Linear.LinearIssueDraft.LabelIds.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.ExternalId>?
+Aw.Context.Core.Linear.LinearIssueDraft.LabelIds.init -> void
+Aw.Context.Core.Linear.LinearIssueDraft.LinearIssueDraft(Aw.Context.Core.Sources.ExternalId TeamId, string! Title, string? Description = null, Aw.Context.Core.Sources.ExternalId? StateId = null, Aw.Context.Core.Sources.ExternalId? AssigneeId = null, int? Priority = null, double? Estimate = null, Aw.Context.Core.Sources.ExternalId? CycleId = null, Aw.Context.Core.Sources.ExternalId? ProjectId = null, Aw.Context.Core.Sources.ExternalId? ParentId = null, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.ExternalId>? LabelIds = null) -> void
+Aw.Context.Core.Linear.LinearIssueDraft.ParentId.get -> Aw.Context.Core.Sources.ExternalId?
+Aw.Context.Core.Linear.LinearIssueDraft.ParentId.init -> void
+Aw.Context.Core.Linear.LinearIssueDraft.Priority.get -> int?
+Aw.Context.Core.Linear.LinearIssueDraft.Priority.init -> void
+Aw.Context.Core.Linear.LinearIssueDraft.ProjectId.get -> Aw.Context.Core.Sources.ExternalId?
+Aw.Context.Core.Linear.LinearIssueDraft.ProjectId.init -> void
+Aw.Context.Core.Linear.LinearIssueDraft.StateId.get -> Aw.Context.Core.Sources.ExternalId?
+Aw.Context.Core.Linear.LinearIssueDraft.StateId.init -> void
+Aw.Context.Core.Linear.LinearIssueDraft.TeamId.get -> Aw.Context.Core.Sources.ExternalId
+Aw.Context.Core.Linear.LinearIssueDraft.TeamId.init -> void
+Aw.Context.Core.Linear.LinearIssueDraft.Title.get -> string!
+Aw.Context.Core.Linear.LinearIssueDraft.Title.init -> void
+Aw.Context.Core.Linear.LinearIssueKey
+Aw.Context.Core.Linear.LinearIssueKey.<Clone>$() -> Aw.Context.Core.Linear.LinearIssueKey!
+Aw.Context.Core.Linear.LinearIssueKey.Equals(Aw.Context.Core.Linear.LinearIssueKey? other) -> bool
+Aw.Context.Core.Linear.LinearIssueKey.Number.get -> int
+Aw.Context.Core.Linear.LinearIssueKey.Team.get -> string!
+Aw.Context.Core.Linear.LinearIssueView
+Aw.Context.Core.Linear.LinearIssueView.<Clone>$() -> Aw.Context.Core.Linear.LinearIssueView!
+Aw.Context.Core.Linear.LinearIssueView.AssigneeId.get -> Aw.Context.Core.Sources.ExternalId?
+Aw.Context.Core.Linear.LinearIssueView.AssigneeId.init -> void
+Aw.Context.Core.Linear.LinearIssueView.CycleId.get -> Aw.Context.Core.Sources.ExternalId?
+Aw.Context.Core.Linear.LinearIssueView.CycleId.init -> void
+Aw.Context.Core.Linear.LinearIssueView.Deconstruct(out Aw.Context.Core.Sources.ExternalId Id, out Aw.Context.Core.Linear.LinearIssueKey! Key, out string! TeamKey, out string! Title, out string? Description, out Aw.Context.Core.Sources.ExternalId StateId, out string! StateName, out Aw.Context.Core.Sources.ExternalId? AssigneeId, out int Priority, out double? Estimate, out Aw.Context.Core.Sources.ExternalId? CycleId, out Aw.Context.Core.Sources.ExternalId? ProjectId, out Aw.Context.Core.Sources.ExternalId? ParentId, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.ExternalId>! LabelIds, out System.DateTimeOffset UpdatedAt) -> void
+Aw.Context.Core.Linear.LinearIssueView.Description.get -> string?
+Aw.Context.Core.Linear.LinearIssueView.Description.init -> void
+Aw.Context.Core.Linear.LinearIssueView.Equals(Aw.Context.Core.Linear.LinearIssueView? other) -> bool
+Aw.Context.Core.Linear.LinearIssueView.Estimate.get -> double?
+Aw.Context.Core.Linear.LinearIssueView.Estimate.init -> void
+Aw.Context.Core.Linear.LinearIssueView.Id.get -> Aw.Context.Core.Sources.ExternalId
+Aw.Context.Core.Linear.LinearIssueView.Id.init -> void
+Aw.Context.Core.Linear.LinearIssueView.Key.get -> Aw.Context.Core.Linear.LinearIssueKey!
+Aw.Context.Core.Linear.LinearIssueView.Key.init -> void
+Aw.Context.Core.Linear.LinearIssueView.LabelIds.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.ExternalId>!
+Aw.Context.Core.Linear.LinearIssueView.LabelIds.init -> void
+Aw.Context.Core.Linear.LinearIssueView.LinearIssueView(Aw.Context.Core.Sources.ExternalId Id, Aw.Context.Core.Linear.LinearIssueKey! Key, string! TeamKey, string! Title, string? Description, Aw.Context.Core.Sources.ExternalId StateId, string! StateName, Aw.Context.Core.Sources.ExternalId? AssigneeId, int Priority, double? Estimate, Aw.Context.Core.Sources.ExternalId? CycleId, Aw.Context.Core.Sources.ExternalId? ProjectId, Aw.Context.Core.Sources.ExternalId? ParentId, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.ExternalId>! LabelIds, System.DateTimeOffset UpdatedAt) -> void
+Aw.Context.Core.Linear.LinearIssueView.ParentId.get -> Aw.Context.Core.Sources.ExternalId?
+Aw.Context.Core.Linear.LinearIssueView.ParentId.init -> void
+Aw.Context.Core.Linear.LinearIssueView.Priority.get -> int
+Aw.Context.Core.Linear.LinearIssueView.Priority.init -> void
+Aw.Context.Core.Linear.LinearIssueView.ProjectId.get -> Aw.Context.Core.Sources.ExternalId?
+Aw.Context.Core.Linear.LinearIssueView.ProjectId.init -> void
+Aw.Context.Core.Linear.LinearIssueView.StateId.get -> Aw.Context.Core.Sources.ExternalId
+Aw.Context.Core.Linear.LinearIssueView.StateId.init -> void
+Aw.Context.Core.Linear.LinearIssueView.StateName.get -> string!
+Aw.Context.Core.Linear.LinearIssueView.StateName.init -> void
+Aw.Context.Core.Linear.LinearIssueView.TeamKey.get -> string!
+Aw.Context.Core.Linear.LinearIssueView.TeamKey.init -> void
+Aw.Context.Core.Linear.LinearIssueView.Title.get -> string!
+Aw.Context.Core.Linear.LinearIssueView.Title.init -> void
+Aw.Context.Core.Linear.LinearIssueView.UpdatedAt.get -> System.DateTimeOffset
+Aw.Context.Core.Linear.LinearIssueView.UpdatedAt.init -> void
+Aw.Context.Core.Linear.LinearWriteApplied
+Aw.Context.Core.Linear.LinearWriteApplied.Deconstruct(out Aw.Context.Core.Linear.LinearIssueView! Stored) -> void
+Aw.Context.Core.Linear.LinearWriteApplied.Equals(Aw.Context.Core.Linear.LinearWriteApplied? other) -> bool
+Aw.Context.Core.Linear.LinearWriteApplied.LinearWriteApplied(Aw.Context.Core.Linear.LinearIssueView! Stored) -> void
+Aw.Context.Core.Linear.LinearWriteApplied.Stored.get -> Aw.Context.Core.Linear.LinearIssueView!
+Aw.Context.Core.Linear.LinearWriteApplied.Stored.init -> void
+Aw.Context.Core.Linear.LinearWriteAppliedNotStored
+Aw.Context.Core.Linear.LinearWriteAppliedNotStored.Deconstruct(out Aw.Context.Core.Linear.LinearIssueView? Live) -> void
+Aw.Context.Core.Linear.LinearWriteAppliedNotStored.Equals(Aw.Context.Core.Linear.LinearWriteAppliedNotStored? other) -> bool
+Aw.Context.Core.Linear.LinearWriteAppliedNotStored.LinearWriteAppliedNotStored(Aw.Context.Core.Linear.LinearIssueView? Live) -> void
+Aw.Context.Core.Linear.LinearWriteAppliedNotStored.Live.get -> Aw.Context.Core.Linear.LinearIssueView?
+Aw.Context.Core.Linear.LinearWriteAppliedNotStored.Live.init -> void
+Aw.Context.Core.Linear.LinearWriteKeyNotSet
+Aw.Context.Core.Linear.LinearWriteKeyNotSet.Equals(Aw.Context.Core.Linear.LinearWriteKeyNotSet? other) -> bool
+Aw.Context.Core.Linear.LinearWriteKeyNotSet.LinearWriteKeyNotSet() -> void
+Aw.Context.Core.Linear.LinearWriteKeyRefused
+Aw.Context.Core.Linear.LinearWriteKeyRefused.Deconstruct(out string! Reason) -> void
+Aw.Context.Core.Linear.LinearWriteKeyRefused.Equals(Aw.Context.Core.Linear.LinearWriteKeyRefused? other) -> bool
+Aw.Context.Core.Linear.LinearWriteKeyRefused.LinearWriteKeyRefused(string! Reason) -> void
+Aw.Context.Core.Linear.LinearWriteKeyRefused.Reason.get -> string!
+Aw.Context.Core.Linear.LinearWriteKeyRefused.Reason.init -> void
+Aw.Context.Core.Linear.LinearWriteKeyResolves
+Aw.Context.Core.Linear.LinearWriteKeyResolves.Equals(Aw.Context.Core.Linear.LinearWriteKeyResolves? other) -> bool
+Aw.Context.Core.Linear.LinearWriteKeyResolves.LinearWriteKeyResolves() -> void
+Aw.Context.Core.Linear.LinearWriteKeySameAsReadKey
+Aw.Context.Core.Linear.LinearWriteKeySameAsReadKey.Equals(Aw.Context.Core.Linear.LinearWriteKeySameAsReadKey? other) -> bool
+Aw.Context.Core.Linear.LinearWriteKeySameAsReadKey.LinearWriteKeySameAsReadKey() -> void
+Aw.Context.Core.Linear.LinearWriteKeyStatus
+Aw.Context.Core.Linear.LinearWriteKeyStatus.LinearWriteKeyStatus(Aw.Context.Core.Linear.LinearWriteKeyStatus! original) -> void
+Aw.Context.Core.Linear.LinearWriteOutcome
+Aw.Context.Core.Linear.LinearWriteOutcome.LinearWriteOutcome(Aw.Context.Core.Linear.LinearWriteOutcome! original) -> void
+Aw.Context.Core.Linear.LinearWriteUnknown
+Aw.Context.Core.Linear.LinearWriteUnknown.Equals(Aw.Context.Core.Linear.LinearWriteUnknown? other) -> bool
+Aw.Context.Core.Linear.LinearWriteUnknown.LinearWriteUnknown() -> void
+abstract Aw.Context.Core.Linear.LinearWriteKeyStatus.<Clone>$() -> Aw.Context.Core.Linear.LinearWriteKeyStatus!
+abstract Aw.Context.Core.Linear.LinearWriteOutcome.<Clone>$() -> Aw.Context.Core.Linear.LinearWriteOutcome!
+override Aw.Context.Core.Linear.LinearClientId.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearClientId.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearClientId.ToString() -> string!
+~override Aw.Context.Core.Linear.LinearFieldChange<T>.Equals(object obj) -> bool
+override Aw.Context.Core.Linear.LinearFieldChange<T>.GetHashCode() -> int
+~override Aw.Context.Core.Linear.LinearFieldChange<T>.ToString() -> string
+override Aw.Context.Core.Linear.LinearIssueChange.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearIssueChange.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearIssueChange.ToString() -> string!
+override Aw.Context.Core.Linear.LinearIssueDraft.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearIssueDraft.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearIssueDraft.ToString() -> string!
+override Aw.Context.Core.Linear.LinearIssueKey.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearIssueKey.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearIssueKey.ToString() -> string!
+override Aw.Context.Core.Linear.LinearIssueView.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearIssueView.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearIssueView.ToString() -> string!
+override Aw.Context.Core.Linear.LinearWriteApplied.<Clone>$() -> Aw.Context.Core.Linear.LinearWriteApplied!
+override Aw.Context.Core.Linear.LinearWriteApplied.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearWriteApplied.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearWriteApplied.ToString() -> string!
+override Aw.Context.Core.Linear.LinearWriteAppliedNotStored.<Clone>$() -> Aw.Context.Core.Linear.LinearWriteAppliedNotStored!
+override Aw.Context.Core.Linear.LinearWriteAppliedNotStored.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearWriteAppliedNotStored.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearWriteAppliedNotStored.ToString() -> string!
+override Aw.Context.Core.Linear.LinearWriteKeyNotSet.<Clone>$() -> Aw.Context.Core.Linear.LinearWriteKeyNotSet!
+override Aw.Context.Core.Linear.LinearWriteKeyNotSet.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearWriteKeyNotSet.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearWriteKeyNotSet.ToString() -> string!
+override Aw.Context.Core.Linear.LinearWriteKeyRefused.<Clone>$() -> Aw.Context.Core.Linear.LinearWriteKeyRefused!
+override Aw.Context.Core.Linear.LinearWriteKeyRefused.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearWriteKeyRefused.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearWriteKeyRefused.ToString() -> string!
+override Aw.Context.Core.Linear.LinearWriteKeyResolves.<Clone>$() -> Aw.Context.Core.Linear.LinearWriteKeyResolves!
+override Aw.Context.Core.Linear.LinearWriteKeyResolves.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearWriteKeyResolves.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearWriteKeyResolves.ToString() -> string!
+override Aw.Context.Core.Linear.LinearWriteKeySameAsReadKey.<Clone>$() -> Aw.Context.Core.Linear.LinearWriteKeySameAsReadKey!
+override Aw.Context.Core.Linear.LinearWriteKeySameAsReadKey.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearWriteKeySameAsReadKey.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearWriteKeySameAsReadKey.ToString() -> string!
+override Aw.Context.Core.Linear.LinearWriteKeyStatus.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearWriteKeyStatus.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearWriteKeyStatus.ToString() -> string!
+override Aw.Context.Core.Linear.LinearWriteOutcome.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearWriteOutcome.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearWriteOutcome.ToString() -> string!
+override Aw.Context.Core.Linear.LinearWriteUnknown.<Clone>$() -> Aw.Context.Core.Linear.LinearWriteUnknown!
+override Aw.Context.Core.Linear.LinearWriteUnknown.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearWriteUnknown.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearWriteUnknown.ToString() -> string!
+override sealed Aw.Context.Core.Linear.LinearWriteApplied.Equals(Aw.Context.Core.Linear.LinearWriteOutcome? other) -> bool
+override sealed Aw.Context.Core.Linear.LinearWriteAppliedNotStored.Equals(Aw.Context.Core.Linear.LinearWriteOutcome? other) -> bool
+override sealed Aw.Context.Core.Linear.LinearWriteKeyNotSet.Equals(Aw.Context.Core.Linear.LinearWriteKeyStatus? other) -> bool
+override sealed Aw.Context.Core.Linear.LinearWriteKeyRefused.Equals(Aw.Context.Core.Linear.LinearWriteKeyStatus? other) -> bool
+override sealed Aw.Context.Core.Linear.LinearWriteKeyResolves.Equals(Aw.Context.Core.Linear.LinearWriteKeyStatus? other) -> bool
+override sealed Aw.Context.Core.Linear.LinearWriteKeySameAsReadKey.Equals(Aw.Context.Core.Linear.LinearWriteKeyStatus? other) -> bool
+override sealed Aw.Context.Core.Linear.LinearWriteUnknown.Equals(Aw.Context.Core.Linear.LinearWriteOutcome? other) -> bool
+static Aw.Context.Core.Linear.LinearClientId.Parse(string? text) -> Aw.Kernel.Result<Aw.Context.Core.Linear.LinearClientId!>!
+static Aw.Context.Core.Linear.LinearClientId.operator !=(Aw.Context.Core.Linear.LinearClientId? left, Aw.Context.Core.Linear.LinearClientId? right) -> bool
+static Aw.Context.Core.Linear.LinearClientId.operator ==(Aw.Context.Core.Linear.LinearClientId? left, Aw.Context.Core.Linear.LinearClientId? right) -> bool
+static Aw.Context.Core.Linear.LinearFieldChange.Set<T>(T? value) -> Aw.Context.Core.Linear.LinearFieldChange<T>
+static Aw.Context.Core.Linear.LinearFieldChange<T>.operator !=(Aw.Context.Core.Linear.LinearFieldChange<T> left, Aw.Context.Core.Linear.LinearFieldChange<T> right) -> bool
+static Aw.Context.Core.Linear.LinearFieldChange<T>.operator ==(Aw.Context.Core.Linear.LinearFieldChange<T> left, Aw.Context.Core.Linear.LinearFieldChange<T> right) -> bool
+static Aw.Context.Core.Linear.LinearIssueChange.operator !=(Aw.Context.Core.Linear.LinearIssueChange? left, Aw.Context.Core.Linear.LinearIssueChange? right) -> bool
+static Aw.Context.Core.Linear.LinearIssueChange.operator ==(Aw.Context.Core.Linear.LinearIssueChange? left, Aw.Context.Core.Linear.LinearIssueChange? right) -> bool
+static Aw.Context.Core.Linear.LinearIssueDraft.operator !=(Aw.Context.Core.Linear.LinearIssueDraft? left, Aw.Context.Core.Linear.LinearIssueDraft? right) -> bool
+static Aw.Context.Core.Linear.LinearIssueDraft.operator ==(Aw.Context.Core.Linear.LinearIssueDraft? left, Aw.Context.Core.Linear.LinearIssueDraft? right) -> bool
+static Aw.Context.Core.Linear.LinearIssueKey.Parse(string? text) -> Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueKey!>!
+static Aw.Context.Core.Linear.LinearIssueKey.operator !=(Aw.Context.Core.Linear.LinearIssueKey? left, Aw.Context.Core.Linear.LinearIssueKey? right) -> bool
+static Aw.Context.Core.Linear.LinearIssueKey.operator ==(Aw.Context.Core.Linear.LinearIssueKey? left, Aw.Context.Core.Linear.LinearIssueKey? right) -> bool
+static Aw.Context.Core.Linear.LinearIssueView.operator !=(Aw.Context.Core.Linear.LinearIssueView? left, Aw.Context.Core.Linear.LinearIssueView? right) -> bool
+static Aw.Context.Core.Linear.LinearIssueView.operator ==(Aw.Context.Core.Linear.LinearIssueView? left, Aw.Context.Core.Linear.LinearIssueView? right) -> bool
+static Aw.Context.Core.Linear.LinearWriteApplied.operator !=(Aw.Context.Core.Linear.LinearWriteApplied? left, Aw.Context.Core.Linear.LinearWriteApplied? right) -> bool
+static Aw.Context.Core.Linear.LinearWriteApplied.operator ==(Aw.Context.Core.Linear.LinearWriteApplied? left, Aw.Context.Core.Linear.LinearWriteApplied? right) -> bool
+static Aw.Context.Core.Linear.LinearWriteAppliedNotStored.operator !=(Aw.Context.Core.Linear.LinearWriteAppliedNotStored? left, Aw.Context.Core.Linear.LinearWriteAppliedNotStored? right) -> bool
+static Aw.Context.Core.Linear.LinearWriteAppliedNotStored.operator ==(Aw.Context.Core.Linear.LinearWriteAppliedNotStored? left, Aw.Context.Core.Linear.LinearWriteAppliedNotStored? right) -> bool
+static Aw.Context.Core.Linear.LinearWriteKeyNotSet.operator !=(Aw.Context.Core.Linear.LinearWriteKeyNotSet? left, Aw.Context.Core.Linear.LinearWriteKeyNotSet? right) -> bool
+static Aw.Context.Core.Linear.LinearWriteKeyNotSet.operator ==(Aw.Context.Core.Linear.LinearWriteKeyNotSet? left, Aw.Context.Core.Linear.LinearWriteKeyNotSet? right) -> bool
+static Aw.Context.Core.Linear.LinearWriteKeyRefused.operator !=(Aw.Context.Core.Linear.LinearWriteKeyRefused? left, Aw.Context.Core.Linear.LinearWriteKeyRefused? right) -> bool
+static Aw.Context.Core.Linear.LinearWriteKeyRefused.operator ==(Aw.Context.Core.Linear.LinearWriteKeyRefused? left, Aw.Context.Core.Linear.LinearWriteKeyRefused? right) -> bool
+static Aw.Context.Core.Linear.LinearWriteKeyResolves.operator !=(Aw.Context.Core.Linear.LinearWriteKeyResolves? left, Aw.Context.Core.Linear.LinearWriteKeyResolves? right) -> bool
+static Aw.Context.Core.Linear.LinearWriteKeyResolves.operator ==(Aw.Context.Core.Linear.LinearWriteKeyResolves? left, Aw.Context.Core.Linear.LinearWriteKeyResolves? right) -> bool
+static Aw.Context.Core.Linear.LinearWriteKeySameAsReadKey.operator !=(Aw.Context.Core.Linear.LinearWriteKeySameAsReadKey? left, Aw.Context.Core.Linear.LinearWriteKeySameAsReadKey? right) -> bool
+static Aw.Context.Core.Linear.LinearWriteKeySameAsReadKey.operator ==(Aw.Context.Core.Linear.LinearWriteKeySameAsReadKey? left, Aw.Context.Core.Linear.LinearWriteKeySameAsReadKey? right) -> bool
+static Aw.Context.Core.Linear.LinearWriteKeyStatus.operator !=(Aw.Context.Core.Linear.LinearWriteKeyStatus? left, Aw.Context.Core.Linear.LinearWriteKeyStatus? right) -> bool
+static Aw.Context.Core.Linear.LinearWriteKeyStatus.operator ==(Aw.Context.Core.Linear.LinearWriteKeyStatus? left, Aw.Context.Core.Linear.LinearWriteKeyStatus? right) -> bool
+static Aw.Context.Core.Linear.LinearWriteOutcome.operator !=(Aw.Context.Core.Linear.LinearWriteOutcome? left, Aw.Context.Core.Linear.LinearWriteOutcome? right) -> bool
+static Aw.Context.Core.Linear.LinearWriteOutcome.operator ==(Aw.Context.Core.Linear.LinearWriteOutcome? left, Aw.Context.Core.Linear.LinearWriteOutcome? right) -> bool
+static Aw.Context.Core.Linear.LinearWriteUnknown.operator !=(Aw.Context.Core.Linear.LinearWriteUnknown? left, Aw.Context.Core.Linear.LinearWriteUnknown? right) -> bool
+static Aw.Context.Core.Linear.LinearWriteUnknown.operator ==(Aw.Context.Core.Linear.LinearWriteUnknown? left, Aw.Context.Core.Linear.LinearWriteUnknown? right) -> bool
+static readonly Aw.Context.Core.Linear.LinearHubErrors.IssueNotFound -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.Linear.LinearHubErrors.NoAnswer -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.Linear.LinearHubErrors.RateLimited -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.Linear.LinearHubErrors.Rejected -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.Linear.LinearHubErrors.Unreachable -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.Linear.LinearHubErrors.WriteKeyRefused -> Aw.Kernel.ErrorDefinition!
+virtual Aw.Context.Core.Linear.LinearWriteKeyStatus.EqualityContract.get -> System.Type!
+virtual Aw.Context.Core.Linear.LinearWriteKeyStatus.Equals(Aw.Context.Core.Linear.LinearWriteKeyStatus? other) -> bool
+virtual Aw.Context.Core.Linear.LinearWriteKeyStatus.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual Aw.Context.Core.Linear.LinearWriteOutcome.EqualityContract.get -> System.Type!
+virtual Aw.Context.Core.Linear.LinearWriteOutcome.Equals(Aw.Context.Core.Linear.LinearWriteOutcome? other) -> bool
+virtual Aw.Context.Core.Linear.LinearWriteOutcome.PrintMembers(System.Text.StringBuilder! builder) -> bool
+Aw.Context.Core.Linear.LinearWriteLimits
+const Aw.Context.Core.Linear.LinearWriteLimits.TextMax = 65536 -> int
+const Aw.Context.Core.Linear.LinearWriteLimits.TitleMax = 255 -> int
+static Aw.Context.Core.Linear.LinearWriteLimits.Text(string! what, string? text, bool required) -> Aw.Kernel.Error?
+static Aw.Context.Core.Linear.LinearWriteLimits.Title(string? title) -> Aw.Kernel.Error?

@@ -1,4 +1,5 @@
 using Aw.Context.Core.Audience;
+using Aw.Context.Core.Engine;
 using Aw.Context.Core.Library;
 using Aw.Context.Core.Sources;
 using Aw.Kernel;
@@ -53,4 +54,10 @@ public interface IContextLibrary
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The claims in PR then ref order; none when the doc is unknown or the caller may not read it. A PR the caller may not read is left out.</returns>
     public ValueTask<Result<IReadOnlyList<LibraryClaim>>> ClaimsOn(RecordKey docKey, AudienceScope audience, CancellationToken cancellationToken);
+
+    /// <summary>Reads where each library root stands: the owner's page and the doctor row show it. A session is refused (SND-CONTEXT-020).</summary>
+    /// <param name="scope">The profile's settings and repos, and the caller.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>One status per configured root ('aw' first), in settings order; none when the profile names no library.</returns>
+    public ValueTask<Result<IReadOnlyList<LibraryRootStatus>>> Roots(ContextScope scope, CancellationToken cancellationToken);
 }

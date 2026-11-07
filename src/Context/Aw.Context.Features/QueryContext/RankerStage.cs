@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Aw.Context.Core;
+using Aw.Context.Core.Library;
 using Aw.Context.Core.Models;
 using Aw.Context.Core.Ranking;
 using Aw.Context.Core.Results;
@@ -38,7 +39,7 @@ internal sealed class RankerStage(IModelPort model, TimeProvider clock)
             return new RankedItems(items, Degraded: null);   // one item has nothing to order: no model call
         }
 
-        var answer = await model.Ask(new ModelRequest(ModelPurpose.Rerank, Prompt(items, top, egress), (top * AnswerTokensPerItem) + 16, _budget), cancellationToken).ConfigureAwait(false);
+        var answer = await model.Ask(new ModelRequest(ModelPurpose.Rerank, Prompt(items, top, (egress, plan.LibraryModelRoots)), (top * AnswerTokensPerItem) + 16, _budget), cancellationToken).ConfigureAwait(false);
         var order = answer.IsSuccess ? RerankOrder.Parse(answer.Value.Text, top) : null;
         return order is null
             ? new RankedItems(items, new DegradedSource(SourceId.From("rerank"), ContextErrors.RerankUnavailable.Code,
@@ -47,7 +48,7 @@ internal sealed class RankerStage(IModelPort model, TimeProvider clock)
     }
 
     // The titles are data the model only orders: scrubbed, one line, fenced as untrusted.
-    private static string Prompt(IReadOnlyList<FusedItem> items, int top, IEgressScrubber egress)
+    private static string Prompt(IReadOnlyList<FusedItem> items, int top, (IEgressScrubber Egress, IReadOnlyList<string> LibraryRoots) scrub)
     {
         var text = new StringBuilder()
             .AppendLine("Order these search results by how useful each is for the question's topic, most useful first.")
@@ -55,8 +56,11 @@ internal sealed class RankerStage(IModelPort model, TimeProvider clock)
             .AppendLine("Results:");
         for (var i = 0; i < top; i++)
         {
-            var title = string.Join(' ', items[i].Hits[0].Title.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
-            _ = text.Append((i + 1).ToString(CultureInfo.InvariantCulture)).Append(": ").AppendLine(UntrustedFence.Wrap("result-title", author: null, egress.Scrub(title).Text));
+            // why: a library title of a root that did not opt in is not shown; the item keeps its number so the answer can still order it
+            var title = LibrarySource.ModelMayRead(items[i].Hits[0].Ref.Source, items[i].Key, scrub.LibraryRoots)
+                ? string.Join(' ', items[i].Hits[0].Title.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
+                : "(title withheld)";
+            _ = text.Append((i + 1).ToString(CultureInfo.InvariantCulture)).Append(": ").AppendLine(UntrustedFence.Wrap("result-title", author: null, scrub.Egress.Scrub(title).Text));
         }
 
         return text.ToString();
