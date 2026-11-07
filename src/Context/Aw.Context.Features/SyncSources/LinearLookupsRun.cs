@@ -12,7 +12,8 @@ namespace Aw.Context.Features.SyncSources;
 /// <param name="lookups">Reads the lists from Linear.</param>
 /// <param name="store">Keeps them.</param>
 /// <param name="settings">The checked 'context.sources.linear' settings.</param>
-internal sealed class LinearLookupsRun(ILinearLookups lookups, ILinearLookupStore store, LinearSettings settings)
+/// <param name="clock">Stamps each team with the time its lists were replaced.</param>
+internal sealed class LinearLookupsRun(ILinearLookups lookups, ILinearLookupStore store, LinearSettings settings, TimeProvider clock)
 {
     /// <summary>Runs the step on the tick's row.</summary>
     /// <param name="row">The feed's row.</param>
@@ -34,7 +35,14 @@ internal sealed class LinearLookupsRun(ILinearLookups lookups, ILinearLookupStor
 
         foreach (var team in fetched.Value)
         {
-            _ = await store.ReplaceTeam(team, cancellationToken).ConfigureAwait(false);
+            _ = await store.ReplaceTeam(team with { SyncedAt = clock.GetUtcNow() }, cancellationToken).ConfigureAwait(false);
+        }
+
+        // why: the workspace key is one more read with the same key; a failed or empty one leaves the stored key as it was
+        var urlKey = await lookups.FetchWorkspaceUrlKey(settings, cancellationToken).ConfigureAwait(false);
+        if (urlKey is { IsSuccess: true, Value: { } key })
+        {
+            _ = await store.ReplaceWorkspaceUrlKey(key, cancellationToken).ConfigureAwait(false);
         }
 
         return row;

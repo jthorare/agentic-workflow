@@ -27,21 +27,23 @@ public sealed class FakeLinearSeed
 
     /// <summary>Adds a member.</summary>
     /// <param name="name">The member's name.</param>
+    /// <param name="active">False for a member who left (Linear still lists them).</param>
     /// <returns>This seed.</returns>
-    public FakeLinearSeed Member(string name)
+    public FakeLinearSeed Member(string name, bool active = true)
     {
-        Store.Members.Add(new LinearRow(Store.NewId(), name));
+        Store.Members.Add(new LinearRow(Store.NewId(), name, Active: active));
         return this;
     }
 
     /// <summary>Adds a label.</summary>
     /// <param name="name">The label name.</param>
     /// <param name="teamKey">The team the label belongs to; null makes a workspace label.</param>
+    /// <param name="color">The label's colour; null gives Linear's default grey.</param>
     /// <returns>This seed.</returns>
-    public FakeLinearSeed Label(string name, string? teamKey = null)
+    public FakeLinearSeed Label(string name, string? teamKey = null, string? color = null)
     {
         var team = teamKey is null ? null : Store.Teams.Find(t => t.Key == teamKey) ?? throw new ArgumentException($"Seed the team '{teamKey}' before its labels.", nameof(teamKey));
-        Store.Labels.Add(new LinearRow(Store.NewId(), name, TeamId: team?.Id));
+        Store.Labels.Add(new LinearRow(Store.NewId(), name, TeamId: team?.Id, Color: color));
         return this;
     }
 

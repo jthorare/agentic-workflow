@@ -16,4 +16,15 @@ public interface ILinearLookupStore
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The team's lists, or null when none was ever stored for that key; the store's error.</returns>
     public ValueTask<Result<LinearTeamLookups?>> Team(string teamKey, CancellationToken cancellationToken);
+
+    /// <summary>Keeps the workspace's URL key, replacing any earlier one.</summary>
+    /// <param name="urlKey">The key, 'acme'.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>Unit, or the store's error.</returns>
+    public ValueTask<Result<Unit>> ReplaceWorkspaceUrlKey(string urlKey, CancellationToken cancellationToken);
+
+    /// <summary>Reads the workspace's URL key.</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The key, or null when none was ever stored; the store's error.</returns>
+    public ValueTask<Result<string?>> WorkspaceUrlKey(CancellationToken cancellationToken);
 }

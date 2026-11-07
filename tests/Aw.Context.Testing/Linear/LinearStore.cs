@@ -33,6 +33,9 @@ internal sealed class LinearStore
 
     public string? LastWrittenIssue { get; set; }
 
+    /// <summary>The workspace's URL key, 'linear.app/&lt;key&gt;'.</summary>
+    public string UrlKey { get; set; } = "fixture";
+
     public LinearRow Viewer => Members[0];
 
     public string NewId() => new Guid(++_ids, 0, 0x4000, [0x80, 0, 0, 0, 0, 0, 0, 1]).ToString();

@@ -179,6 +179,10 @@ public sealed class FakeContextEngine : IContextEngine
         ValueTask.FromResult<Result<LinearTeamLookups?>>(Down());
 
     /// <inheritdoc cref="IssueList"/>
+    public ValueTask<Result<string?>> WorkspaceUrlKey(ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<string?>>(Down());
+
+    /// <inheritdoc cref="IssueList"/>
     public ValueTask<Result<LinearSince>> IssueSince(DateTimeOffset marker, ExternalId viewer, ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<LinearSince>>(Down());
 

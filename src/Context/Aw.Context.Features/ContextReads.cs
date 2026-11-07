@@ -76,6 +76,9 @@ internal sealed class ContextReads(
     public ValueTask<Result<LinearTeamLookups?>> IssueLookups(string team, ContextScope scope, CancellationToken cancellationToken) =>
         issues.Lookups(team, scope, cancellationToken);
 
+    public ValueTask<Result<string?>> WorkspaceUrlKey(ContextScope scope, CancellationToken cancellationToken) =>
+        issues.WorkspaceUrlKey(scope, cancellationToken);
+
     public ValueTask<Result<LinearSince>> IssueSince(DateTimeOffset marker, ExternalId viewer, ContextScope scope, CancellationToken cancellationToken) =>
         issues.Since(marker, viewer, scope, cancellationToken);
 

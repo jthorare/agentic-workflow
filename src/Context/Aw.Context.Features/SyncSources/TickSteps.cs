@@ -56,7 +56,7 @@ internal sealed class TickSteps(TimeProvider clock, ISourceViewers? viewers = nu
 
         if (lookups is not null && lookupStore is not null && feed.Source == LinearSourceIds.Issues && settings.Linear is { } linear)
         {
-            var run = new LinearLookupsRun(lookups, lookupStore, linear);
+            var run = new LinearLookupsRun(lookups, lookupStore, linear, clock);
             steps.Add(row => run.Execute(row, cancellationToken));
         }
 
