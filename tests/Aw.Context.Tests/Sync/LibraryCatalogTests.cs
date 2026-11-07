@@ -48,11 +48,11 @@ public sealed class LibraryCatalogTests
         Assert.Empty(Sources(Catalog(withLibrary: false), new ContextSettings(), []));
 
     [Fact]
-    public void A_profile_that_turns_the_aw_root_off_and_names_no_vault_has_no_library_feed()
+    public void A_profile_that_turns_the_aw_root_off_and_names_no_vault_still_has_the_feed_so_it_can_remove_what_the_root_left()
     {
         var settings = new ContextSettings { Library = new LibrarySettings { StateDir = LibrarySettings.Off } };
 
-        Assert.Empty(Sources(Catalog(), settings, []));
+        Assert.Equal([LibrarySource.Id.Value], Sources(Catalog(), settings, []));
     }
 
     [Fact]
