@@ -347,4 +347,32 @@ public sealed class NewLinearIssueTests
 
         Assert.True(vm.CreatedWhileOpen);
     }, Token);
+
+    [Fact]
+    public Task Discard_after_an_unknown_answer_unlocks_the_form_clears_the_draft_and_sends_nothing() => NewLinearIssueFixture.Run(async f =>
+    {
+        var vm = await f.OpenedOnEng(Token);
+        f.Server.QueueLinearCreate(NewLinearIssueFixture.Create("unknown"));
+        vm.Title = "Document the retry budget";
+        await vm.Submit(Token);
+
+        vm.Discard();
+
+        Assert.Equal((false, false, string.Empty, null, string.Empty, 1), (vm.IsUnknown, vm.IsLocked, vm.Title, vm.ClientId, vm.StatusLine, f.Server.LinearCreates.Count));
+    }, Token);
+
+    [Fact]
+    public Task Discard_while_a_create_is_in_flight_does_nothing() => NewLinearIssueFixture.Run(async f =>
+    {
+        var vm = await f.OpenedOnEng(Token);
+        var gate = f.Server.LinearCreateGate = new TaskCompletionSource();
+        vm.Title = "Document the retry budget";
+        var sending = vm.Submit(Token);
+
+        vm.Discard();
+        var kept = (vm.Title, vm.IsLocked);
+        await NewLinearIssueFixture.Release(gate, sending);
+
+        Assert.Equal(("Document the retry budget", true), kept);
+    }, Token);
 }

@@ -192,14 +192,16 @@ internal sealed partial class NewLinearIssueViewModel(ISindriApi api, Func<Uri?>
     /// <summary>Closes the dialog; the draft stays.</summary>
     internal void Close() => IsOpen = false;
 
-    /// <summary>Throws the draft away: the fields, the ticks and the client id. Nothing happens while a create is in flight or unanswered.</summary>
+    /// <summary>Throws the draft away: the fields, the ticks and the client id. Nothing happens while a create is in flight; an unanswered one is let go, with no Retry sent.</summary>
     internal void Discard()
     {
-        if (IsLocked)
+        if (_inFlight)
         {
             return;
         }
 
+        (IsUnknown, IsLocked, _sent) = (false, false, null);
+        StatusLine = string.Empty;
         ClearDraft();
         ErrorBanner = string.Empty;
         ClearTitleError();
