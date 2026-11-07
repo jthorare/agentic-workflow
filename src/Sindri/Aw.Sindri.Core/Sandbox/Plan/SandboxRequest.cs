@@ -49,4 +49,7 @@ public sealed record SandboxRequest(
 {
     /// <summary>Null, or a skill block's launch environment (AW_RESULT, AW_RESULT_SKILL, AW_RESULT_FILE, AW_DIR; skill flows spec §3.3, D8): the plan sets them and binds AW_DIR and the skill's bugfix state folder read-write. A skill launch is also not capped by longMax.</summary>
     public IReadOnlyDictionary<string, string>? SkillEnvironment { get; init; }
+
+    /// <summary>Null, or a trial skill launch's --skills folder: the plan mounts it read-only, because the session's home is an empty tmpfs.</summary>
+    public string? SkillTrialDirectory { get; init; }
 }

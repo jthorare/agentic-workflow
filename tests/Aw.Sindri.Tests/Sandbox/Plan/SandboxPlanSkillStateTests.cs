@@ -31,6 +31,26 @@ public sealed class SandboxPlanSkillStateTests
         Assert.Equal(PlanMountKind.ReadWrite, KindAt(plan, home + "/launches/LCH-1"));
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public void A_trial_skills_folder_under_home_is_mounted_read_only_after_the_home_tmpfs()
+    {
+        const string trial = Req.Home + "/.agentic-workflow/trial/skills";
+        var plan = SandboxPlannerTests.Build(Skill(Req.WriteScope) with { SkillTrialDirectory = trial });
+
+        var mount = Assert.Single(plan.Mounts, m => string.Equals(m.Path, trial, StringComparison.Ordinal));
+        Assert.Equal(PlanMountKind.ReadOnly, mount.Kind);
+        Assert.True(plan.Mounts.ToList().IndexOf(mount) > plan.Mounts.ToList().FindIndex(m => string.Equals(m.Path, Req.Home, StringComparison.Ordinal)));
+        Assert.Equal(PlanMountKind.ReadOnly, KindAt(plan, trial + "/review/SKILL.md"));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void No_trial_folder_means_no_extra_mount()
+    {
+        var plan = SandboxPlannerTests.Build(Skill(Req.WriteScope));
+
+        Assert.DoesNotContain(plan.Mounts, m => m.Path.Contains("/trial/", StringComparison.Ordinal));
+    }
+
     private static SandboxRequest Skill(SandboxRequest request) => request with
     {
         SkillEnvironment = new Dictionary<string, string>(StringComparer.Ordinal) { ["AW_DIR"] = AwDir + "/" },

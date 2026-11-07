@@ -22598,3 +22598,5 @@ static Aw.Sindri.Core.Forge.PullReview.operator !=(Aw.Sindri.Core.Forge.PullRevi
 static Aw.Sindri.Core.Forge.PullReview.operator ==(Aw.Sindri.Core.Forge.PullReview? left, Aw.Sindri.Core.Forge.PullReview? right) -> bool
 static Aw.Sindri.Core.Forge.PullReviewComment.operator !=(Aw.Sindri.Core.Forge.PullReviewComment? left, Aw.Sindri.Core.Forge.PullReviewComment? right) -> bool
 static Aw.Sindri.Core.Forge.PullReviewComment.operator ==(Aw.Sindri.Core.Forge.PullReviewComment? left, Aw.Sindri.Core.Forge.PullReviewComment? right) -> bool
+Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.SkillTrialDirectory.get -> string?
+Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.SkillTrialDirectory.init -> void
