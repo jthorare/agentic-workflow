@@ -26,23 +26,44 @@ public sealed class LinearIssueEditFramesTests : FrameHost
     }
 
     [Fact]
-    public Task The_editable_sheet_keeps_Save_in_view_at_520_px_while_the_form_scrolls() => OnUi(async () =>
+    public Task The_editable_sheet_keeps_Save_fully_in_view_at_520_px_at_the_top_and_at_the_end_of_a_form_that_scrolls() => OnUi(async () =>
     {
+        var issue = System.Text.Json.Nodes.JsonNode.Parse(GoldenFiles.Api("linear-issue", "writable"))!.AsObject();   // why: the golden is a JSON object
+        issue["description"] = string.Join("\n\n", Enumerable.Range(1, 40).Select(n => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"Paragraph {n}: the sync worker retries forever on a 500, so cap it at 5 tries per hour and say so in the log.")));
+        Server.LinearIssueAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, issue.ToJsonString());
         var (window, shell) = await Opened();
         await Until(window, () => shell.IssueSheet.CanEdit && Visible(window, "IssueSave"));
         shell.IssueSheet.TitleField.Text = "A title long enough to need a second look";
         Settle(window);
 
+        var form = Named<ScrollViewer>(window, "IssueFormScroll");
+        Assert.True(form.Extent.Height > form.Viewport.Height, "the form must be taller than its viewport, so it scrolls");
+        Assert.Equal("1 change: Title", AutomationProperties.GetName(Named<Border>(window, "IssueDirty")));
+
+        form.Offset = default;
+        Settle(window);
+        AssertSaveInView(window);
+        Frame(window, "linear-issue-edit-520-top", "l1c-");
+
+        form.ScrollToEnd();
+        Settle(window);
+        Assert.True(form.Offset.Y > 0, "the form scrolled");
+        AssertSaveInView(window);
+        Frame(window, "linear-issue-edit-520-end", "l1c-");
+    });
+
+    private static void AssertSaveInView(Window window)
+    {
         var viewport = Named<ScrollViewer>(window, "IssueSheetScroll");
         var save = Named<Button>(window, "IssueSave");
-        var bottomRight = save.TranslatePoint(new Point(save.Bounds.Width, save.Bounds.Height), viewport)!.Value;   // why: the button is in the tree
+        var topLeft = save.TranslatePoint(default, viewport)!.Value;   // why: the button is in the tree
+        var bottomRight = save.TranslatePoint(new Point(save.Bounds.Width, save.Bounds.Height), viewport)!.Value;
+        Assert.True(save.IsEnabled && save.IsEffectivelyVisible);
+        Assert.InRange(topLeft.Y, 0, viewport.Bounds.Height);
         Assert.InRange(bottomRight.Y, 0, viewport.Bounds.Height);
+        Assert.InRange(topLeft.X, 0, viewport.Bounds.Width);
         Assert.InRange(bottomRight.X, 0, viewport.Bounds.Width);
-        Assert.True(save.IsEnabled);
-        Assert.True(Named<ScrollViewer>(window, "IssueFormScroll").Extent.Height > 0);
-        Assert.Equal("1 change: Title", AutomationProperties.GetName(Named<Border>(window, "IssueDirty")));
-        Frame(window, "linear-issue-edit", "l1c-");
-    });
+    }
 
     [Fact]
     public Task The_grid_runs_state_priority_assignee_cycle_labels_project_in_two_columns_above_the_description() => OnUi(async () =>
