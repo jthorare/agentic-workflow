@@ -14,9 +14,28 @@ internal static class SearchPath
             .Select(directory => Path.Combine(directory, name))
             .FirstOrDefault(IsExecutable);
 
-    /// <summary>Whether a file is a regular file the user may execute.</summary>
+    /// <summary>Whether a file is a regular file the user may execute. A file it can't stat (a dangling link, no permission) is not executable.</summary>
     /// <param name="file">The file.</param>
     /// <returns>True when it is.</returns>
-    internal static bool IsExecutable(string file) =>
-        File.Exists(file) && (OperatingSystem.IsWindows() || (File.GetUnixFileMode(file) & AnyExecute) != UnixFileMode.None);
+    internal static bool IsExecutable(string file)
+    {
+        if (!File.Exists(file))
+        {
+            return false;
+        }
+
+        if (OperatingSystem.IsWindows())
+        {
+            return true;
+        }
+
+        try
+        {
+            return (File.GetUnixFileMode(file) & AnyExecute) != UnixFileMode.None;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
 }
