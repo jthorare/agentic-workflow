@@ -99,6 +99,7 @@ internal sealed partial class ShellViewModel
         DeepLinkKind.PinSheet => false,
         DeepLinkKind.LibrarySheet => false,
         DeepLinkKind.FixTaskSheet => false,
+        DeepLinkKind.Issue => false,
         _ => true,
     };
 #pragma warning restore IDE0072

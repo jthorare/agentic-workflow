@@ -77,6 +77,8 @@ internal sealed partial class HomePage : UserControl
 
     private void OnOpenReviews(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.OpenReviews();
 
+    private void OnOpenLinear(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.OpenLinear();
+
     private void OnShowNeedsYouHeld(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.NeedsYou.ShowHeld();
 
     // Focus arriving on a Needs-you row selects it, and the Queue's selection gives way: one selection on Home.
