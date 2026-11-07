@@ -38,7 +38,12 @@ internal static class Sql
     internal static async Task<long> Count(SqliteConnection connection, string sql, CancellationToken cancellationToken)
         => Convert.ToInt64(await Scalar(connection, sql, cancellationToken).ConfigureAwait(false), CultureInfo.InvariantCulture);
 
-    internal static byte[]? Blob(SqliteDataReader reader, int ordinal) => reader.IsDBNull(ordinal) ? null : (byte[])reader.GetValue(ordinal);
+    internal static byte[]? Blob(SqliteDataReader reader, int ordinal) => reader.IsDBNull(ordinal) ? null : Bytes(reader, ordinal);
+
+    /// <summary>A blob column's bytes; any other stored value is damage the store guard reports (#2242).</summary>
+    internal static byte[] Bytes(SqliteDataReader reader, int ordinal)
+        => reader.GetValue(ordinal) as byte[]
+            ?? throw new InvalidDataException($"the stored {reader.GetName(ordinal)} is not a blob");
 
     internal static string? Text(SqliteDataReader reader, int ordinal) => reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
 
