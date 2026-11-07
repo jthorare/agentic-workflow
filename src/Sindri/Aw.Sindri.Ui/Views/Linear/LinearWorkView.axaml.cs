@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -31,12 +32,27 @@ internal sealed partial class LinearWorkView : UserControl
         }
 
         _subscribed?.FocusRequested -= OnFocusRequested;
+        _subscribed?.FilterFocusRequested -= OnFilterFocusRequested;
         _subscribed = Work;
         _subscribed?.FocusRequested += OnFocusRequested;
+        _subscribed?.FilterFocusRequested += OnFilterFocusRequested;
     }
 
     private void OnFocusRequested(object? sender, FocusRequestedEventArgs e) =>
         Dispatcher.UIThread.Post(() => FocusRow(e.ItemId), DispatcherPriority.Loaded);
+
+    // `/`: the first filter takes focus.
+    private void OnFilterFocusRequested(object? sender, EventArgs e) =>
+        Dispatcher.UIThread.Post(() => LinearFilterBar.GetVisualDescendants().OfType<ComboBox>().FirstOrDefault()?.Focus(NavigationMethod.Tab), DispatcherPriority.Input);
+
+    // Focus arriving on a row (a click, Tab) selects it, as in the queue.
+    private void OnRowFocused(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: LinearIssueRowViewModel row })
+        {
+            Work?.Select(row.Key);
+        }
+    }
 
     // The row's title button takes focus: it is the row's first control.
     private void FocusRow(string key) =>
