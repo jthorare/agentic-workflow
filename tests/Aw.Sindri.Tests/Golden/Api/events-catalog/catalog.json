@@ -218,6 +218,16 @@
       ]
     },
     {
+      "type": "launch.turn-started",
+      "keyShape": "launch.turn-started:<launchId>:<promptedAtMs>",
+      "invalidates": [
+        "launch",
+        "item",
+        "timeline",
+        "needs-you"
+      ]
+    },
+    {
       "type": "launch.viewer-attached",
       "keyShape": "launch.viewer-attached:<launch>",
       "invalidates": [

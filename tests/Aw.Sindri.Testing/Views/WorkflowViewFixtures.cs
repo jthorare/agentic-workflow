@@ -864,6 +864,22 @@ public static class WorkflowViewFixtures
         return detail with { Address = address, Id = WorkflowInstanceId.Of(address), ItemId = ItemKey.From("ITM-01JK9"), States = states };
     }
 
+    /// <summary>
+    /// The state band of a skill flow (skill flows spec §5.2, F-2a): the same instance as <see cref="F5StateTimes"/> under its own address, with the step block id on two of its cells ('assess' runs a skill block, 'mitigate' a plain agent Step).
+    /// </summary>
+    public static InstanceDetail SkillStep()
+    {
+        var detail = F5StateTimes();
+        var address = InstanceAddress.From("ITM-01JK9/skill-flow/1");   // its own instance, so no lookup by id finds two
+        var states = detail.States.Select(static cell => cell.State switch
+        {
+            "assess" => cell with { Block = "step.skill.review" },
+            "mitigate" => cell with { Block = "step.agent" },
+            _ => cell,
+        }).ToList();
+        return detail with { Address = address, Id = WorkflowInstanceId.Of(address), States = states };
+    }
+
     // ---- the facts route (GetInstanceFact) ---------------------------------------------------------------------------
 
     /// <summary>The body behind one fact row, by scenario: scope-map, packet, text, payload or truncated (see <see cref="FactFixtures"/>).</summary>

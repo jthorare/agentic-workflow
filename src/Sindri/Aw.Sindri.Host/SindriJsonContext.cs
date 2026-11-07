@@ -254,7 +254,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(ContextMapProposed)), JsonSerializable(typeof(ContextMapBuilt))]
 [JsonSerializable(typeof(FleetChanged))]
 [JsonSerializable(typeof(ItemOpenRequested)), JsonSerializable(typeof(LaunchStarted)), JsonSerializable(typeof(LaunchStartedPublic)), JsonSerializable(typeof(LaunchFailed)), JsonSerializable(typeof(LaunchWaiting)), JsonSerializable(typeof(ModelPicked)), JsonSerializable(typeof(ModelPicking)), JsonSerializable(typeof(PickedFile)), JsonSerializable(typeof(OmittedFile))]   // API P10a (U0)
-[JsonSerializable(typeof(LaunchOwnerWaiting))]   // skill flows spec §7: launch.owner-waiting
+[JsonSerializable(typeof(LaunchOwnerWaiting)), JsonSerializable(typeof(LaunchTurnStarted)), JsonSerializable(typeof(NeedsYouOwnerWaiting))]   // skill flows spec §7: launch.owner-waiting, launch.turn-started
 [JsonSerializable(typeof(LaunchShowReport)), JsonSerializable(typeof(LaunchProbed)), JsonSerializable(typeof(SessionEnded)), JsonSerializable(typeof(SessionUsage)), JsonSerializable(typeof(LaunchSessionReported))]
 [JsonSerializable(typeof(Core.Sandbox.Denials.DenialFile)), JsonSerializable(typeof(SandboxDenied)), JsonSerializable(typeof(SandboxLimitHit)), JsonSerializable(typeof(SandboxLearnEnded)), JsonSerializable(typeof(SandboxSummary)), JsonSerializable(typeof(StepPolicy)), JsonSerializable(typeof(ModelLoginSource)), JsonSerializable(typeof(PreparedLogin)), JsonSerializable(typeof(LoginStatus))]   // Sandbox SB-0
 [JsonSerializable(typeof(LaunchViewerAttached)), JsonSerializable(typeof(LaunchTakeoverOpened))]   // issue 1004

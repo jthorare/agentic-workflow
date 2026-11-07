@@ -29,4 +29,14 @@ internal sealed class StepTakeovers(ILaunchViews views, IInstanceReader instance
         var instance = await instances.Get(address, cancellationToken).ConfigureAwait(false);
         return instance.IsError || instance.Value.TakenOverBy is not null;
     }
+
+    /// <summary>Whether the launch is a skill block's session (skill flows spec §3.3 item 4): it waits on the owner for as long as the Step's timeout allows, so it is never idle or stalled.</summary>
+    /// <param name="launch">The launch.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>True for a skill launch.</returns>
+    public async ValueTask<bool> SkillBlock(LaunchId launch, CancellationToken cancellationToken)
+    {
+        _ = await views.Get(launch, cancellationToken).ConfigureAwait(false);   // F-2a: the row's skill is not read yet
+        return false;
+    }
 }

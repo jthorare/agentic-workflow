@@ -29,7 +29,7 @@ internal sealed class IdleSessions(LaunchLiveness liveness, LaunchSessionEvents 
         foreach (var launch in liveness.Active())
         {
             var action = IdleRules.Decide(reads.Read(launch, now), LaunchRules.StalledAfter);
-            if (action == IdleAction.None || await takeovers.Held(launch, cancellationToken).ConfigureAwait(false))
+            if (action == IdleAction.None || await takeovers.Held(launch, cancellationToken).ConfigureAwait(false) || await takeovers.SkillBlock(launch, cancellationToken).ConfigureAwait(false))
             {
                 continue;
             }

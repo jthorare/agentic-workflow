@@ -56,4 +56,8 @@ public sealed record NeedsYouRow(
     /// <summary>On a 'park:' row for a sandbox refusal, the refusal in the owner's words (sandbox spec §8); null (omitted) otherwise.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public StatusSandbox? Sandbox { get; init; }
+
+    /// <summary>On a 'skillWaiting' row, why the skill waits and what the reader saw (skill flows spec §7); null (omitted) otherwise.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public NeedsYouOwnerWaiting? OwnerWaiting { get; init; }
 }

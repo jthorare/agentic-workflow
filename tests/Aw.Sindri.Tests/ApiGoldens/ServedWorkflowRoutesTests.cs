@@ -39,6 +39,7 @@ public sealed class ServedWorkflowRoutesTests : IDisposable
         ("workflow-instance-scoping", "expiry-stop"),   // recorded by ScopingShowTests (API2 serves that view as is)
         ("needs-you", "desk-with-stop"), ("needs-you", "park-with-timeout"),   // recorded by NeedsYouJoinsTests (the read-time joins of GetNeedsYou)
         ("needs-you", "owner-stop"),   // recorded by NeedsYouOwnerStopsTests (the read-time owner-stop rows)
+        ("needs-you", "skill-waiting"),   // recorded by GetNeedsYouTests (the live skill-waiting row, skill flows F-2a)
         ("workflow-instance-design-stop", "gold-stop"),   // recorded by DesignStopViewTests (LN-API2 serves that view as is)
         ("workflow-instance-line", "gold-line"),   // recorded by GetInstanceLineServiceTests (LN-API1 serves that view as is)
     ];

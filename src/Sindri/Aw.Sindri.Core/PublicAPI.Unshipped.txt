@@ -17751,12 +17751,10 @@ Aw.Sindri.Core.Workflow.Views.RecipeView.Transitions.get -> System.Collections.G
 Aw.Sindri.Core.Workflow.Views.RecipeView.Transitions.init -> void
 Aw.Sindri.Core.Workflow.Views.RecipeView.Why.get -> string?
 Aw.Sindri.Core.Workflow.Views.RecipeView.Why.init -> void
-Aw.Sindri.Core.Workflow.Views.StateCell.Deconstruct(out string! State, out int? Order, out string? BranchOf, out Aw.Sindri.Core.Workflow.Views.StateGlyph Glyph, out Aw.Sindri.Core.Workflow.Views.EngineOwnedBadge? Badge, out Aw.Sindri.Core.Workflow.Views.Round? Round, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.LoopPair!>! Loops, out bool Desk, out bool Child, out Aw.Sindri.Core.Workflow.Views.Progress? Children, out string? Outcome, out bool Terminal, out System.DateTimeOffset? EnteredAt, out System.DateTimeOffset? LeftAt) -> void
 Aw.Sindri.Core.Workflow.Views.StateCell.EnteredAt.get -> System.DateTimeOffset?
 Aw.Sindri.Core.Workflow.Views.StateCell.EnteredAt.init -> void
 Aw.Sindri.Core.Workflow.Views.StateCell.LeftAt.get -> System.DateTimeOffset?
 Aw.Sindri.Core.Workflow.Views.StateCell.LeftAt.init -> void
-Aw.Sindri.Core.Workflow.Views.StateCell.StateCell(string! State, int? Order, string? BranchOf, Aw.Sindri.Core.Workflow.Views.StateGlyph Glyph, Aw.Sindri.Core.Workflow.Views.EngineOwnedBadge? Badge, Aw.Sindri.Core.Workflow.Views.Round? Round, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.LoopPair!>! Loops, bool Desk, bool Child, Aw.Sindri.Core.Workflow.Views.Progress? Children, string? Outcome, bool Terminal, System.DateTimeOffset? EnteredAt = null, System.DateTimeOffset? LeftAt = null) -> void
 override Aw.Sindri.Core.Workflow.Blocks.MergeRecordRows.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Workflow.Engine.Runtime.StateVisit.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Workflow.Engine.Runtime.StateVisit.GetHashCode() -> int
@@ -24492,3 +24490,91 @@ virtual Aw.Sindri.Core.Reviews.ReviewPanelData.Equals(Aw.Sindri.Core.Reviews.Rev
 virtual Aw.Sindri.Core.Reviews.ReviewPanelData.PrintMembers(System.Text.StringBuilder! builder) -> bool
 Aw.Sindri.Core.Reviews.IFixItemCloser
 Aw.Sindri.Core.Reviews.IFixItemCloser.Close(string! item, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
+Aw.Sindri.Core.Events.LaunchTurnStarted
+Aw.Sindri.Core.Events.LaunchTurnStarted.<Clone>$() -> Aw.Sindri.Core.Events.LaunchTurnStarted!
+Aw.Sindri.Core.Events.LaunchTurnStarted.Attempt.get -> int?
+Aw.Sindri.Core.Events.LaunchTurnStarted.Attempt.init -> void
+Aw.Sindri.Core.Events.LaunchTurnStarted.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Instance, out string? State, out int? Attempt) -> void
+Aw.Sindri.Core.Events.LaunchTurnStarted.Equals(Aw.Sindri.Core.Events.LaunchTurnStarted? other) -> bool
+Aw.Sindri.Core.Events.LaunchTurnStarted.Instance.get -> Aw.Sindri.Core.Workflow.Engine.InstanceAddress?
+Aw.Sindri.Core.Events.LaunchTurnStarted.Instance.init -> void
+Aw.Sindri.Core.Events.LaunchTurnStarted.Item.get -> Aw.Sindri.Core.Ids.ItemId
+Aw.Sindri.Core.Events.LaunchTurnStarted.Item.init -> void
+Aw.Sindri.Core.Events.LaunchTurnStarted.Launch.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId
+Aw.Sindri.Core.Events.LaunchTurnStarted.Launch.init -> void
+Aw.Sindri.Core.Events.LaunchTurnStarted.LaunchTurnStarted(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Instance = null, string? State = null, int? Attempt = null) -> void
+Aw.Sindri.Core.Events.LaunchTurnStarted.State.get -> string?
+Aw.Sindri.Core.Events.LaunchTurnStarted.State.init -> void
+Aw.Sindri.Core.Launches.ISkillWaitingRuns
+Aw.Sindri.Core.Launches.ISkillWaitingRuns.Find(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launches.SkillWaitingRun!>!>
+Aw.Sindri.Core.Launches.LaunchRow.OwnerWaiting.get -> Aw.Sindri.Core.Events.LaunchOwnerWaiting?
+Aw.Sindri.Core.Launches.LaunchRow.OwnerWaiting.init -> void
+Aw.Sindri.Core.Launches.LaunchRow.OwnerWaitingAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Launches.LaunchRow.OwnerWaitingAt.init -> void
+Aw.Sindri.Core.Launches.LaunchRow.Skill.get -> string?
+Aw.Sindri.Core.Launches.LaunchRow.Skill.init -> void
+Aw.Sindri.Core.Launches.SkillWaitingRun
+Aw.Sindri.Core.Launches.SkillWaitingRun.<Clone>$() -> Aw.Sindri.Core.Launches.SkillWaitingRun!
+Aw.Sindri.Core.Launches.SkillWaitingRun.Equals(Aw.Sindri.Core.Launches.SkillWaitingRun? other) -> bool
+Aw.Sindri.Core.Launches.SkillWaitingRun.Instance.get -> Aw.Sindri.Core.Workflow.Engine.InstanceAddress
+Aw.Sindri.Core.Launches.SkillWaitingRun.Instance.init -> void
+Aw.Sindri.Core.Launches.SkillWaitingRun.Item.get -> Aw.Sindri.Core.Ids.ItemId
+Aw.Sindri.Core.Launches.SkillWaitingRun.Item.init -> void
+Aw.Sindri.Core.Launches.SkillWaitingRun.Launch.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId
+Aw.Sindri.Core.Launches.SkillWaitingRun.Launch.init -> void
+Aw.Sindri.Core.Launches.SkillWaitingRun.Since.get -> System.DateTimeOffset
+Aw.Sindri.Core.Launches.SkillWaitingRun.Since.init -> void
+Aw.Sindri.Core.Launches.SkillWaitingRun.StateName.get -> string!
+Aw.Sindri.Core.Launches.SkillWaitingRun.StateName.init -> void
+Aw.Sindri.Core.Launches.SkillWaitingRun.Waiting.get -> Aw.Sindri.Core.Events.LaunchOwnerWaiting!
+Aw.Sindri.Core.Launches.SkillWaitingRun.Waiting.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouKind.SkillWaiting = 6 -> Aw.Sindri.Core.NeedsYou.NeedsYouKind
+Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting
+Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.<Clone>$() -> Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting!
+Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.Attempt.get -> int?
+Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.Attempt.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out string! Reason, out string? Text, out string! ResultPath, out string? Detail, out Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Instance, out string? State, out int? Attempt) -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.Detail.get -> string?
+Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.Detail.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.Equals(Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting? other) -> bool
+Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.Instance.get -> Aw.Sindri.Core.Workflow.Engine.InstanceAddress?
+Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.Instance.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.Launch.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId
+Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.Launch.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.NeedsYouOwnerWaiting(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, string! Reason, string? Text, string! ResultPath, string? Detail = null, Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Instance = null, string? State = null, int? Attempt = null) -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.Reason.get -> string!
+Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.Reason.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.ResultPath.get -> string!
+Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.ResultPath.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.State.get -> string?
+Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.State.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.Text.get -> string?
+Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.Text.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouRow.OwnerWaiting.get -> Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting?
+Aw.Sindri.Core.NeedsYou.NeedsYouRow.OwnerWaiting.init -> void
+Aw.Sindri.Core.Workflow.Views.StateCell.Block.get -> string?
+Aw.Sindri.Core.Workflow.Views.StateCell.Block.init -> void
+Aw.Sindri.Core.Workflow.Views.StateCell.Deconstruct(out string! State, out int? Order, out string? BranchOf, out Aw.Sindri.Core.Workflow.Views.StateGlyph Glyph, out Aw.Sindri.Core.Workflow.Views.EngineOwnedBadge? Badge, out Aw.Sindri.Core.Workflow.Views.Round? Round, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.LoopPair!>! Loops, out bool Desk, out bool Child, out Aw.Sindri.Core.Workflow.Views.Progress? Children, out string? Outcome, out bool Terminal, out System.DateTimeOffset? EnteredAt, out System.DateTimeOffset? LeftAt, out string? Block) -> void
+Aw.Sindri.Core.Workflow.Views.StateCell.StateCell(string! State, int? Order, string? BranchOf, Aw.Sindri.Core.Workflow.Views.StateGlyph Glyph, Aw.Sindri.Core.Workflow.Views.EngineOwnedBadge? Badge, Aw.Sindri.Core.Workflow.Views.Round? Round, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.LoopPair!>! Loops, bool Desk, bool Child, Aw.Sindri.Core.Workflow.Views.Progress? Children, string? Outcome, bool Terminal, System.DateTimeOffset? EnteredAt = null, System.DateTimeOffset? LeftAt = null, string? Block = null) -> void
+const Aw.Sindri.Core.Events.EventTypes.LaunchTurnStarted = "launch.turn-started" -> string!
+override Aw.Sindri.Core.Events.LaunchTurnStarted.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.LaunchTurnStarted.GetHashCode() -> int
+override Aw.Sindri.Core.Events.LaunchTurnStarted.ToString() -> string!
+override Aw.Sindri.Core.Launches.SkillWaitingRun.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Launches.SkillWaitingRun.GetHashCode() -> int
+override Aw.Sindri.Core.Launches.SkillWaitingRun.ToString() -> string!
+override Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.Equals(object? obj) -> bool
+override Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.GetHashCode() -> int
+override Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.ToString() -> string!
+static Aw.Sindri.Core.Events.LaunchTurnStarted.operator !=(Aw.Sindri.Core.Events.LaunchTurnStarted? left, Aw.Sindri.Core.Events.LaunchTurnStarted? right) -> bool
+static Aw.Sindri.Core.Events.LaunchTurnStarted.operator ==(Aw.Sindri.Core.Events.LaunchTurnStarted? left, Aw.Sindri.Core.Events.LaunchTurnStarted? right) -> bool
+static Aw.Sindri.Core.Launches.SkillWaitingRun.operator !=(Aw.Sindri.Core.Launches.SkillWaitingRun? left, Aw.Sindri.Core.Launches.SkillWaitingRun? right) -> bool
+static Aw.Sindri.Core.Launches.SkillWaitingRun.operator ==(Aw.Sindri.Core.Launches.SkillWaitingRun? left, Aw.Sindri.Core.Launches.SkillWaitingRun? right) -> bool
+static Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.operator !=(Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting? left, Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting? right) -> bool
+static Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting.operator ==(Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting? left, Aw.Sindri.Core.NeedsYou.NeedsYouOwnerWaiting? right) -> bool
+static Aw.Sindri.Core.NeedsYou.NeedsYouRowIds.SkillWaiting(Aw.Sindri.Core.Workflow.Engine.InstanceAddress address) -> Aw.Sindri.Core.Ids.NeedsYouRowId
+static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForSkillWaiting(Aw.Sindri.Core.Views.ItemRow! item, Aw.Sindri.Core.Launches.SkillWaitingRun! run, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Sindri.Core.NeedsYou.NeedsYouRow!
+Aw.Sindri.Core.Launches.SkillWaitingRun.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Workflow.Engine.InstanceAddress Instance, out string! StateName, out string! Skill, out Aw.Sindri.Core.Events.LaunchOwnerWaiting! Waiting, out System.DateTimeOffset Since) -> void
+Aw.Sindri.Core.Launches.SkillWaitingRun.Skill.get -> string!
+Aw.Sindri.Core.Launches.SkillWaitingRun.Skill.init -> void
+Aw.Sindri.Core.Launches.SkillWaitingRun.SkillWaitingRun(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Workflow.Engine.InstanceAddress Instance, string! StateName, string! Skill, Aw.Sindri.Core.Events.LaunchOwnerWaiting! Waiting, System.DateTimeOffset Since) -> void

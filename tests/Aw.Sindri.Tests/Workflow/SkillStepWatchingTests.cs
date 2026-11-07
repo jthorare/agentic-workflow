@@ -83,6 +83,20 @@ public sealed class SkillStepWatchingTests : IDisposable
     private List<string> OwnerWaitingRows() =>
         [.. _slice.Store.Events.Where(static e => e.Envelope.Type == EventTypes.LaunchOwnerWaiting).Select(static e => e.Envelope.Payload)];
 
+    private List<string> TurnStartedRows() =>
+        [.. _slice.Store.Events.Where(static e => e.Envelope.Type == EventTypes.LaunchTurnStarted).Select(static e => e.Envelope.Payload)];
+
+    // Watches a live session across a few polls with <paramref name="between"/> run once the first poll has had time to record, then idles it so the watch returns.
+    private async Task WatchedWith(Action between)
+    {
+        var watched = Watched();
+        await Task.Delay(TimeSpan.FromMilliseconds(300), TimeProvider.System, Token);
+        between();
+        await Task.Delay(TimeSpan.FromMilliseconds(300), TimeProvider.System, Token);
+        _sessions.End(Launch, SessionEndReason.Idle);
+        _ = await watched;
+    }
+
     private void SettledTurnEnd() => _files.EndTurn(Launch, _clock.GetUtcNow() - SkillStepWatching.Settle - TimeSpan.FromSeconds(1));
 
     private string Review(string verdict) => $$"""{"skill":"review","verdict":"{{verdict}}","review_file":"{{Findings}}"}""";
@@ -224,5 +238,44 @@ public sealed class SkillStepWatchingTests : IDisposable
         var row = Assert.Single(OwnerWaitingRows());
         Assert.DoesNotContain(secret, row, StringComparison.Ordinal);
         Assert.Contains("for the push?", row, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_new_prompt_after_a_recorded_owner_waiting_records_one_turn_started_across_polls()
+    {
+        Result("""{"skill":"review","waiting":"Which branch is the base?"}""");
+        SettledTurnEnd();
+
+        await WatchedWith(() =>
+        {
+            _files.Prompt(Launch, _clock.GetUtcNow() - TimeSpan.FromSeconds(5));
+            _files.StartTurn(Launch);
+        });
+
+        var row = Assert.Single(TurnStartedRows());
+        Assert.Contains(Launch.Value, row, StringComparison.Ordinal);
+        _ = Assert.Single(OwnerWaitingRows());
+    }
+
+    [Fact]
+    public async Task A_prompt_with_no_owner_waiting_recorded_before_it_records_no_turn_started()
+    {
+        Result(Review("NEEDS_CHANGES"));   // not waiting: nothing for a new turn to clear
+
+        await WatchedWith(() => _files.Prompt(Launch, _clock.GetUtcNow() - TimeSpan.FromSeconds(5)));
+
+        Assert.Empty(TurnStartedRows());
+    }
+
+    [Fact]
+    public async Task A_prompt_older_than_the_turn_end_that_was_recorded_records_no_turn_started()
+    {
+        Result("""{"skill":"review","waiting":"Which branch is the base?"}""");
+        SettledTurnEnd();
+
+        await WatchedWith(() => _files.Prompt(Launch, _clock.GetUtcNow() - SkillStepWatching.Settle - TimeSpan.FromMinutes(1)));
+
+        Assert.Empty(TurnStartedRows());
+        _ = Assert.Single(OwnerWaitingRows());
     }
 }

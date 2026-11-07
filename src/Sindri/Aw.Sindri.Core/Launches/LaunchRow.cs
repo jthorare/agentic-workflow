@@ -84,4 +84,16 @@ public sealed record LaunchRow(
     /// <summary>The sandbox summary from 'launch.started' (sandbox spec §8); null when the launch was not sandboxed and for launches recorded before the field.</summary>
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public Sandbox.SandboxSummary? Sandbox { get; init; }
+
+    /// <summary>The skill block the launch ran, from 'launch.started' (skill flows spec §7); null for every other launch. The idle sweeps and Needs you tell a skill launch by it.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Skill { get; init; }
+
+    /// <summary>The last 'launch.owner-waiting' a skill launch recorded that no 'launch.turn-started' has answered; null otherwise (F-2a).</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public LaunchOwnerWaiting? OwnerWaiting { get; init; }
+
+    /// <summary>When <see cref="OwnerWaiting"/> was recorded; null with it.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public DateTimeOffset? OwnerWaitingAt { get; init; }
 }

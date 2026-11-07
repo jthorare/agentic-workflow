@@ -30,4 +30,8 @@ public enum NeedsYouKind
     /// <summary>A changed workflow that waits for its own approval (setup-once spec §5.3, §7.3).</summary>
     [JsonStringEnumMemberName("recipe")]
     Recipe,
+
+    /// <summary>A skill block's session ended a turn and waits for the owner (skill flows spec §5.4, §7).</summary>
+    [JsonStringEnumMemberName("skillWaiting")]
+    SkillWaiting,
 }

@@ -15,6 +15,7 @@ public sealed class FakeLaunchFiles : ILaunchFiles
     private readonly Dictionary<LaunchId, DateTimeOffset> _turns = [];
     private readonly Dictionary<LaunchId, DateTimeOffset> _failed = [];
     private readonly Dictionary<LaunchId, DateTimeOffset> _nudged = [];
+    private readonly Dictionary<LaunchId, DateTimeOffset> _prompted = [];
     private readonly HashSet<LaunchId> _tools = [];
     private readonly List<LaunchId> _forgotten = [];
     private readonly List<LaunchId> _swept = [];
@@ -50,6 +51,11 @@ public sealed class FakeLaunchFiles : ILaunchFiles
     /// <param name="running">Whether a tool call is in flight.</param>
     public void SetToolRunning(LaunchId launch, bool running) => _ = running ? _tools.Add(launch) : _tools.Remove(launch);
 
+    /// <summary>Says a prompt started a turn on <paramref name="launch"/> at <paramref name="at"/> (a skill launch's UserPromptSubmit hook touched its file).</summary>
+    /// <param name="launch">The launch.</param>
+    /// <param name="at">When.</param>
+    public void Prompt(LaunchId launch, DateTimeOffset at) => _prompted[launch] = at;
+
     /// <summary>Says a new turn started on <paramref name="launch"/> (the prompt hook deleted the files).</summary>
     /// <param name="launch">The launch.</param>
     public void StartTurn(LaunchId launch)
@@ -63,6 +69,9 @@ public sealed class FakeLaunchFiles : ILaunchFiles
 
     /// <inheritdoc/>
     public DateTimeOffset? TurnFailedAt(LaunchId launch) => _failed.TryGetValue(launch, out var at) ? at : null;
+
+    /// <inheritdoc/>
+    public DateTimeOffset? PromptedAt(LaunchId launch) => _prompted.TryGetValue(launch, out var at) ? at : null;
 
     /// <inheritdoc/>
     public bool ToolRunning(LaunchId launch) => _tools.Contains(launch);

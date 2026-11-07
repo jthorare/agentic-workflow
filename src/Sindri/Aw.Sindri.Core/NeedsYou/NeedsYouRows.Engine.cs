@@ -1,5 +1,6 @@
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.OpenTargets;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Views;
@@ -121,6 +122,14 @@ public static partial class NeedsYouRows
     public static NeedsYouRow ForStalledAgent(ItemRow item, InstanceAddress address, DateTimeOffset since, ITextScrubber scrubber) =>
         Row(item, address, new EngineRow(NeedsYouRowIds.Park(address), "agent · no progress", $"the agent ended its turn without reporting ({address.Value})", Urgency.Pulse, AnswerKind: null, _cancel, [_cancel], Status(address),
             new NeedsYouOpen(NeedsYouRoutes.Workflow(address), "Open the workflow")), since, scrubber);
+
+    /// <summary>The 'skill' row of a skill block's session that waits on the owner (skill flows spec §5.4): the sentence by the reason, the instance's take over as the main action, and the launch's own fields in <see cref="NeedsYouRow.OwnerWaiting"/>.</summary>
+    /// <param name="item">The item's row.</param>
+    /// <param name="run">The waiting run.</param>
+    /// <param name="scrubber">Scrubs the text the row stores.</param>
+    /// <returns>The row.</returns>
+    public static NeedsYouRow ForSkillWaiting(ItemRow item, SkillWaitingRun run, ITextScrubber scrubber) =>
+        throw new NotSupportedException("F-2a: the skillWaiting row is not built yet");
 
     // The complete command, with the run and the outcome left for the person (the row does not carry the open run's token; 'workflow status' prints the filled line).
     private static string Complete(InstanceAddress address) => $"sindri workflow complete {address.Value} --run <run> --outcome <outcome>";
