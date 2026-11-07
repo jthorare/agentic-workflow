@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Aw.Kernel.Data;
 using Aw.Sindri.Core.Skills;
 
 namespace Aw.Sindri.Infrastructure.Skills;
@@ -29,11 +30,7 @@ internal sealed partial class FileAgentHome : IAgentHome
     public string Folder { get; }
 
     /// <inheritdoc/>
-    public bool HasBin(string bin) => _path.Any(dir => IsExecutable(Path.Combine(dir, bin)));
-
-    // What a shell's PATH lookup takes: a file with an execute bit (any execute bit off Windows, where there are none).
-    private static bool IsExecutable(string file) =>
-        File.Exists(file) && (OperatingSystem.IsWindows() || (File.GetUnixFileMode(file) & (UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute)) != UnixFileMode.None);
+    public bool HasBin(string bin) => _path.Any(dir => ExecutableFiles.IsExecutable(Path.Combine(dir, bin)));
 
     /// <inheritdoc/>
     public bool HasAgent(string agent) => File.Exists(Path.Combine(Folder, "agents", agent + (_target == SkillTarget.Codex ? ".toml" : ".md")));
