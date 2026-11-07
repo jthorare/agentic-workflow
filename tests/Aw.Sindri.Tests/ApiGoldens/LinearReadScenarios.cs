@@ -23,8 +23,8 @@ internal static class LinearReadScenarios
     public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario));
 
     /// <summary>Starts the scenario's host: the item profile over the scenario's facts.</summary>
-    public static Task<GoldenHost> Start(CancellationToken ct) =>
-        GoldenHost.Start(temporary: true, ct, ItemScenarios.ProfileYaml, extra: services => services.Replace(ServiceDescriptor.Singleton<ILinearSideFacts>(new FakeLinearSideFacts())));
+    public static Task<GoldenHost> Start(string slug, string scenario, CancellationToken ct) =>
+        GoldenHost.Start(temporary: true, ct, ItemScenarios.ProfileYaml, extra: services => services.Replace(ServiceDescriptor.Singleton<ILinearSideFacts>(Facts(slug, scenario))));
 
     /// <summary>Runs the scenario against <paramref name="host"/> and returns the body to compare.</summary>
     public static async Task<string> Body(GoldenHost host, string slug, string scenario)
@@ -39,4 +39,21 @@ internal static class LinearReadScenarios
         };
         return (await host.Http.Ask(Get(path, caller))).Body;
     }
+
+    /// <summary>
+    /// The facts a scenario's host answers with. 'linear-since/three' (still pending in <see cref="LinearScenarios"/> until its golden is re-recorded with the real marker) is Sam Lee's assignment of ENG-31, a mention
+    /// on ENG-12 and ENG-12's move from Todo to In Progress; Context keeps no actor for an assignment or a state move, so only the mention has one, as the real adapter answers.
+    /// </summary>
+    internal static FakeLinearSideFacts Facts(string slug, string scenario)
+    {
+        var sam = new LinearPerson("00000000-0000-4000-8000-0000000000a2", "Sam Lee");
+        return (slug, scenario) is ("linear-since", "three")
+            ? new FakeLinearSideFacts().WithItems(
+                new LinearSinceItem("assigned", "ENG-31", "Export limits: cap the CSV at 50k rows", Actor: null, At(22, 10), From: null, To: null),
+                new LinearSinceItem("mentioned", "ENG-12", "Retry budget for the sync worker", sam, At(23, 30), From: null, To: null),
+                new LinearSinceItem("state", "ENG-12", "Retry budget for the sync worker", Actor: null, At(23, 40), From: "Todo", To: "In Progress"))
+            : new FakeLinearSideFacts();
+    }
+
+    private static DateTimeOffset At(int hour, int minute) => new(2025, 12, 31, hour, minute, 0, TimeSpan.Zero);
 }
