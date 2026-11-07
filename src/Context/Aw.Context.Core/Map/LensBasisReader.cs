@@ -1,6 +1,7 @@
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Extract;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Library;
 using Aw.Context.Core.Sync;
 
 namespace Aw.Context.Core.Map;
@@ -22,7 +23,7 @@ public sealed class LensBasisReader(IRepoReader repos, TimeProvider clock, IInde
     public async ValueTask<LensBasis> For(VisibleMap map, ContextSettings settings, ContextScope scope, bool draft, CancellationToken cancellationToken)
     {
         var version = map.Snapshot.Version;
-        var sources = await IntentSources(scope, cancellationToken).ConfigureAwait(false);
+        var sources = await IntentSources(settings, scope, cancellationToken).ConfigureAwait(false);
         return new LensBasis(map.Snapshot.Tag, draft, clock.GetUtcNow())
         {
             MapCreated = version.Created,
@@ -34,17 +35,20 @@ public sealed class LensBasisReader(IRepoReader repos, TimeProvider clock, IInde
     }
 
     // The owned index's sources with their sync state. A progress read that fails (or no index sync) adds no index rows.
-    private async ValueTask<IReadOnlyList<SearchedSource>> IntentSources(ContextScope scope, CancellationToken cancellationToken)
+    private async ValueTask<IReadOnlyList<SearchedSource>> IntentSources(ContextSettings settings, ContextScope scope, CancellationToken cancellationToken)
     {
-        var rows = new List<SearchedSource>();
         var progress = sync is null ? null : await sync.Progress(scope, cancellationToken).ConfigureAwait(false);
-        if (progress is { IsError: false })
-        {
-            rows.AddRange(progress.Value.Select(SearchedSources.Index));
-        }
-
-        return rows;
+        return progress is { IsError: false } ? IndexRows(progress.Value, settings.Library, scope.Caller.Kind) : [];
     }
+
+    /// <summary>
+    /// The index sources' rows for one caller. The library is the owner's (review spec D13): only a human caller's answer searches it, so a session or service gets no row. It reads the 'aw' root
+    /// by default, so a profile that names no library still has it (not-synced before its first pass); it is not-configured only when stateDir is off and there are no vaults.
+    /// </summary>
+    internal static IReadOnlyList<SearchedSource> IndexRows(IEnumerable<SourceProgress> progress, LibrarySettings? library, ContextCallerKind caller) =>
+        [.. progress
+            .Where(p => p.Source != LibrarySource.Id || caller == ContextCallerKind.Human)
+            .Select(p => p.Source == LibrarySource.Id && library is { AwRootOn: false, Vaults.Count: 0 } ? SearchedSources.Intent(p.Source, configured: false, state: null) : SearchedSources.Index(p))];
 
     /// <summary>The commit as 'mapCommit' shows it: exactly 7 lowercase hex characters, or null when there is no commit or it isn't a sha of 7 or more hex characters.</summary>
     public static string? ShortCommit(string? commit) =>
