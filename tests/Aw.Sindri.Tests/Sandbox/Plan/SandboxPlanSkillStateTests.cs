@@ -51,6 +51,35 @@ public sealed class SandboxPlanSkillStateTests
         Assert.DoesNotContain(plan.Mounts, m => m.Path.Contains("/trial/", StringComparison.Ordinal));
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public void A_write_under_the_skill_folder_is_allowed_and_not_read_denied()
+    {
+        var plan = SandboxPlannerTests.Build(Listed(Skill(Req.WriteScope)));
+
+        Assert.Contains(plan.Policy.Rules, r => r.Effect == InnerRuleEffect.Allow && r.Tool == "Write" && r.Pattern == AwDir + "/**");
+        Assert.False(ReadDenied(plan, AwDir + "/reviews/2148.json"));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_path_elsewhere_under_the_denied_state_dir_stays_read_denied()
+    {
+        var plan = SandboxPlannerTests.Build(Listed(Skill(Req.WriteScope)));
+
+        Assert.True(ReadDenied(plan, Req.StateDir + "/locks/heavy"));
+        Assert.True(ReadDenied(plan, Req.StateDir + "/other-repo/reviews/1.json"));
+        Assert.DoesNotContain(plan.Policy.Rules, r => r.Effect == InnerRuleEffect.Allow && r.Tool == "Write" && r.Pattern == Req.StateDir + "/**");
+    }
+
+    private static SandboxRequest Listed(SandboxRequest request)
+    {
+        Dictionary<string, string[]> tree = new(StringComparer.Ordinal) { [Req.StateDir] = ["web", "other-repo", "locks", "sindri-app"] };
+        return request with { Host = request.Host with { DirectoryEntries = dir => tree.GetValueOrDefault(dir) ?? [] } };
+    }
+
+    private static bool ReadDenied(SandboxPlan plan, string path) =>
+        plan.Policy.Rules.Any(r => r.Effect == InnerRuleEffect.Deny && r.Tool == "Read" && r.Pattern.EndsWith("/**", StringComparison.Ordinal)
+            && (string.Equals(path, r.Pattern[..^3], StringComparison.Ordinal) || path.StartsWith(r.Pattern[..^2], StringComparison.Ordinal)));
+
     private static SandboxRequest Skill(SandboxRequest request) => request with
     {
         SkillEnvironment = new Dictionary<string, string>(StringComparer.Ordinal) { ["AW_DIR"] = AwDir + "/" },
