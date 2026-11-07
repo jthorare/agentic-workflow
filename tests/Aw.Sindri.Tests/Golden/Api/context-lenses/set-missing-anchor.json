@@ -516,9 +516,9 @@
       },
       {
         "id": "library",
-        "state": "not-configured",
-        "reason": "not-configured",
-        "code": null,
+        "state": "unavailable",
+        "reason": "not-synced",
+        "code": "SND-CONTEXT-161",
         "asOf": null
       },
       {
