@@ -18,4 +18,11 @@ public interface ISecretWriter
     /// <param name="secret">The secret.</param>
     /// <returns>The `file:` pointer to put in the profile, or SND-SECRET-004.</returns>
     public Result<SecretPointer> StoreInFile(string service, string account, string secret);
+
+    /// <summary>Stores a secret in the OS keychain only, never the file fallback: for a key whose rules forbid a file an agent session could read (the Linear write key).</summary>
+    /// <param name="service">The keychain service (`sindri-index`).</param>
+    /// <param name="account">The keychain account (`linear-write`).</param>
+    /// <param name="secret">The secret.</param>
+    /// <returns>The `keychain:` pointer, or SND-SECRET-004 when no keychain took the secret (none installed, locked, or it did not read back).</returns>
+    public Result<SecretPointer> StoreInKeychain(string service, string account, string secret);
 }

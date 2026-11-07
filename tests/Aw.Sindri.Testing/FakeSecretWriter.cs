@@ -27,6 +27,9 @@ public sealed class FakeSecretWriter : ISecretWriter, ISecretPointers
     }
 
     /// <inheritdoc />
+    public Result<SecretPointer> StoreInKeychain(string service, string account, string secret) => Store(service, account, secret);
+
+    /// <inheritdoc />
     public Result<SecretPointer> StoreInFile(string service, string account, string secret)
     {
         if (Fails)

@@ -83,6 +83,7 @@ using Aw.Sindri.Features.GetLaunchTargets;
 using Aw.Sindri.Features.GetLibrary;
 using Aw.Sindri.Features.GetLibraryDoc;
 using Aw.Sindri.Features.GetLinearLookups;
+using Aw.Sindri.Features.LinearConnection;
 using Aw.Sindri.Features.GetLinearSince;
 using Aw.Sindri.Features.GetNeedsYou;
 using Aw.Sindri.Features.GetProfile;
@@ -174,6 +175,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(StreamErrorFrame)), JsonSerializable(typeof(InstanceChanged)), JsonSerializable(typeof(ListCommandsRequest)), JsonSerializable(typeof(ListCommandsResponse)), JsonSerializable(typeof(CommandListRow))]
 [JsonSerializable(typeof(ListServicesRequest)), JsonSerializable(typeof(ListServicesResponse)), JsonSerializable(typeof(ServiceView)), JsonSerializable(typeof(GetProfileRequest))]
 [JsonSerializable(typeof(SetReviewLoginRequest)), JsonSerializable(typeof(SetReviewLoginResponse))]
+[JsonSerializable(typeof(GetLinearConnectionRequest)), JsonSerializable(typeof(LinearConnectionView)), JsonSerializable(typeof(LinearKeyStateView)), JsonSerializable(typeof(LinearConnectionTeamView)), JsonSerializable(typeof(ListLinearTeamsRequest)), JsonSerializable(typeof(ListLinearTeamsResponse)), JsonSerializable(typeof(SaveLinearConnectionRequest)), JsonSerializable(typeof(SaveLinearConnectionResponse)), JsonSerializable(typeof(LinearSavedWriteView)), JsonSerializable(typeof(RemoveLinearWriteKeyRequest)), JsonSerializable(typeof(RemoveLinearWriteKeyResponse))]   // Linear hub 1b: Settings, Connections, Linear
 [JsonSerializable(typeof(SendReviewFixRequest)), JsonSerializable(typeof(SendReviewFixResponse)), JsonSerializable(typeof(ReviewFixBody)), JsonSerializable(typeof(ReviewFixSent))]
 [JsonSerializable(typeof(GetSetupRequest)), JsonSerializable(typeof(GetSetupResponse)), JsonSerializable(typeof(GetRepoStatusResponse)), JsonSerializable(typeof(RepoStatus))]
 [JsonSerializable(typeof(GetProfileResponse)), JsonSerializable(typeof(ProfilePack)), JsonSerializable(typeof(ProfileSummary)), JsonSerializable(typeof(RepoPreview)), JsonSerializable(typeof(RebuildViewsRequest)), JsonSerializable(typeof(CreateItemRequest)), JsonSerializable(typeof(ItemCreatedResponse))]

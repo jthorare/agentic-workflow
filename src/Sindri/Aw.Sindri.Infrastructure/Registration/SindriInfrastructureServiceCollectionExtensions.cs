@@ -237,7 +237,9 @@ public static class SindriInfrastructureServiceCollectionExtensions
         => services
             .AddSingleton<ISindriHome, SettingsSindriHome>()
             .AddSingleton<ISecretWriter>(static sp => new KeychainSecretWriter(new ProcessToolRunner(), sp.GetRequiredService<ISindriHome>()))   // the key into the OS store, else an owner-only file
-            .AddSingleton<ISourceTokenProfileWriter, YamlSourceTokenProfileWriter>()
+            .AddSingleton<YamlSourceTokenProfileWriter>()
+            .AddSingleton<ISourceTokenProfileWriter>(static sp => sp.GetRequiredService<YamlSourceTokenProfileWriter>())
+            .AddSingleton<ILinearWriteTokenWriter>(static sp => sp.GetRequiredService<YamlSourceTokenProfileWriter>())
             .AddSingleton<ISecretPrompts, TerminalSecretPrompts>();                                       // the owner at the terminal, no echo for the token                      // the source pointer line in the live profile
 
     /// <summary>

@@ -22,12 +22,6 @@ internal static class LinearScenarios
         ("linear-change", "rate-limited"), ("linear-change", "no-write-key"), ("linear-change", "team-not-picked"), ("linear-change", "bad-value"), ("linear-change", "session-refused"),
         ("linear-comment", "applied"), ("linear-comment", "applied-slow"), ("linear-comment", "unknown"), ("linear-comment", "session-refused"),
         ("linear-create", "applied"), ("linear-create", "unknown"), ("linear-create", "bad-value"), ("linear-create", "session-refused"),
-        ("linear-connection", "connected"), ("linear-connection", "not-connected"), ("linear-connection", "read-only"), ("linear-connection", "scope-unknown"),
-        ("linear-connection", "pending"), ("linear-connection", "session-refused"),
-        ("linear-connection-teams", "two-teams"), ("linear-connection-teams", "refused"), ("linear-connection-teams", "unreachable"),
-        ("linear-connect", "read-saved-approved"), ("linear-connect", "read-saved-waiting"), ("linear-connect", "write-saved"), ("linear-connect", "write-scope-unknown"),
-        ("linear-connect", "same-as-read"), ("linear-connect", "no-keychain"), ("linear-connect", "no-teams"), ("linear-connect", "session-refused"),
-        ("linear-disconnect-write", "removed"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -50,7 +44,6 @@ internal static class LinearScenarios
         var path = (slug, scenario) switch
         {
             ("linear-issue", _) => "/sindri/linear/issues/ENG-12",
-            ("linear-connection", _) => "/sindri/linear/connection",
             _ => throw new ArgumentOutOfRangeException(nameof(slug), slug, "no such linear scenario"),
         };
         return (await host.Http.Ask(Get(path, caller))).Body;
@@ -59,8 +52,6 @@ internal static class LinearScenarios
     // seeded by api, writes: ENG is a picked team, OPS is not; 'no-write-key' has no write key stored and 'team-not-picked' sends an issue of OPS (OPS-40). 'applied' moves ENG-12 to In Review
     // (fake Linear answers with the re-read at 10:05); 'conflict' has Linear's state at Done since 10:01; 'unknown' and 'rate-limited' come from a fake Linear that times out / answers 429 with a 10:06 retry.
     // 'applied-store-failed' fails the store write after Linear took it; 'already-applied' is the same body sent twice; 'bad-value' sends a stateId that isn't one of ENG's.
-    // Connection: 'connected' has both keys resolved at 09:58; 'pending' has a live profile that differs from the approved one; 'same-as-read' sends the read key as the write key;
-    // 'no-keychain' has none; 'no-teams' saves a read key with teams: [].
     private static HttpRequestMessage? WriteRequest(string slug, string scenario, (string Name, string Value)[] caller)
     {
         const string clientId = "5d0a4f6e-3b1c-4c0e-9a57-2f1d8c9b7e01";
@@ -82,15 +73,6 @@ internal static class LinearScenarios
                     ? $$"""{"clientId":"{{clientId}}","team":"ENG","title":"Document the retry budget","assigneeId":"00000000-0000-4000-8000-0000000000ff"}"""
                     : $$"""{"clientId":"{{clientId}}","team":"ENG","title":"Document the retry budget"}""",
                 caller),
-            "linear-connection-teams" => Post("/sindri/linear/connection/teams", """{"key":"lin_api_read"}""", caller),
-            "linear-connect" => Post("/sindri/linear/connection", scenario switch
-            {
-                "write-saved" or "write-scope-unknown" or "no-keychain" => """{"kind":"write","key":"lin_api_write"}""",
-                "same-as-read" => """{"kind":"write","key":"lin_api_read"}""",
-                "no-teams" => """{"kind":"read","key":"lin_api_read","teams":[]}""",
-                _ => """{"kind":"read","key":"lin_api_read","teams":["ENG","OPS"]}""",
-            }, caller),
-            "linear-disconnect-write" => Delete("/sindri/linear/connection/write", caller),
             _ => null,
         };
     }

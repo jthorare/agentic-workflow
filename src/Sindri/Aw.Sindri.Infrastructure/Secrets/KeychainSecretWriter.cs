@@ -44,6 +44,21 @@ internal sealed class KeychainSecretWriter(IToolRunner runner, ISindriHome home,
         return ToFile(service, account, secret);
     }
 
+    /// <inheritdoc />
+    public Result<SecretPointer> StoreInKeychain(string service, string account, string secret)
+    {
+        ArgumentNullException.ThrowIfNull(secret);
+        var pointer = SecretPointer.Parse($"keychain:{service}/{account}");
+        if (pointer.IsError)
+        {
+            return SindriErrors.SecretNotStored.With("the key's store name is malformed");   // unreachable for the fixed names Sindri passes
+        }
+
+        return IsPlain(secret) && StoredInKeychain(service, account, secret) && ReadsBack(pointer.Value, secret)
+            ? pointer
+            : SindriErrors.SecretNotStored.With("no OS keychain took the key (none installed, locked, or it did not read back)");
+    }
+
     // The secret goes into a command line parsed by `security -i`, so only a plain token (what a source token is) is sent that way; anything else takes the file.
     private static bool IsPlain(string secret) => secret.Length > 0 && secret.All(static c => char.IsAsciiLetterOrDigit(c) || c is '.' or '_' or '~' or '+' or '/' or '=' or '-');
 
