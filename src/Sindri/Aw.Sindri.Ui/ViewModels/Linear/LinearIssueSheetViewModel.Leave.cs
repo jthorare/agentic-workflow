@@ -55,14 +55,15 @@ internal sealed partial class LinearIssueSheetViewModel
             return;   // no question, or a save is out: its answer decides what is left to drop
         }
 
+        // Taken before the revert: putting the last field back settles the question, which drops the pending way on.
+        var then = _then;
+        _then = null;
         foreach (var field in Editable)
         {
             field.Revert();
         }
 
         (ConflictRows, HasConflict, IsConfirmingDiscard) = ([], false, false);
-        var then = _then;
-        _then = null;
         if (then is not null)
         {
             then();
