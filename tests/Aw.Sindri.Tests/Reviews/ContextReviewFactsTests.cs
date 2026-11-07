@@ -73,7 +73,7 @@ public sealed class ContextReviewFactsTests
         Assert.True(web.Draft);
         Assert.False(web.ReviewersRead);
         Assert.Equal(("github", true, null), (snapshot.Github!.Source, snapshot.Github.Usable, snapshot.Github.LastCode));
-        Assert.Equal(["repo:acme/api", "repo:acme/web"], _context.AskedAudience!.Allowed.Select(static k => k.Value).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["owner:library", "repo:acme/api", "repo:acme/web"], _context.AskedAudience!.Allowed.Select(static k => k.Value).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }
 
     [Fact]
