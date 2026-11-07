@@ -108,7 +108,19 @@ internal sealed partial class QueuePage : UserControl
     private void OnCreate(object? sender, RoutedEventArgs e)
     {
         OpenerNote.Raise(this, sender);
-        (DataContext as ShellViewModel)?.Create.Open();
+        if (DataContext is not ShellViewModel shell)
+        {
+            return;
+        }
+
+        if (shell.Linear.IsLinear)
+        {
+            shell.OpenNewIssue();   // the button reads "New issue" on the Linear view
+        }
+        else
+        {
+            shell.Create.Open();
+        }
     }
 
     private void OnShowHeld(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.Queue.ShowHeld(ViewModels.Queue.QueueScope.Page);

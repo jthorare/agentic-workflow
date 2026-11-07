@@ -16,7 +16,7 @@
     <Grid ColumnDefinitions="Auto,*,Auto">
       <TextBlock Classes="page-title" Text="{Binding Text.Work}" AutomationProperties.Name="{Binding Text.Work}" VerticalAlignment="Center" />
       <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-        <Button x:Name="CreateButton" Classes="command-control" Click="OnCreate" IsEnabled="{Binding !Linear.IsLinear}" AutomationProperties.Name="{Binding Linear.CreateText}">
+        <Button x:Name="CreateButton" Classes="command-control" Click="OnCreate" AutomationProperties.Name="{Binding Linear.CreateText}">
           <StackPanel Orientation="Horizontal" Spacing="6">
             <TextBlock Classes="button" Text="{Binding Linear.CreateText}" VerticalAlignment="Center" />
             <Border Classes="kbd" VerticalAlignment="Center"><TextBlock Classes="kbd" Text="C" /></Border>

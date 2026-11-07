@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Sindri.Ui.Views.Item;
+using Aw.Sindri.Ui.Views.Linear;
 
 namespace Aw.Sindri.Ui.Views.Shell;
 
@@ -46,7 +47,7 @@ internal sealed partial class ShellWindow
 
     private static bool KeysBlocked(ViewModels.Shell.ShellViewModel shell, KeyEventArgs e) =>
         shell is not { IsChromeVisible: true, IsNavigationEnabled: true } || e.Source is TextBox
-        || shell.Palette.IsOpen || shell.Shortcuts.IsOpen || shell.Create.IsOpen || shell.Start.IsOpen || shell.ApproveAll.IsOpen
+        || shell.Palette.IsOpen || shell.Shortcuts.IsOpen || shell.Create.IsOpen || shell.NewIssue.IsOpen || shell.Start.IsOpen || shell.ApproveAll.IsOpen
         || (e.KeyModifiers & ~KeyModifiers.Shift) != KeyModifiers.None;
 
     // §11.2: with the sheet beside the page and open on the selected row's item (the row drawn on this page), Enter again moves into its first action
@@ -104,7 +105,7 @@ internal sealed partial class ShellWindow
     private static bool IsLastStopOf(Border frame, Visual focused) =>
         frame.GetVisualDescendants().OfType<InputElement>().LastOrDefault(c => c.Focusable && c.IsTabStop && c.IsEffectivelyVisible && c.IsEffectivelyEnabled) is not { } last || ReferenceEquals(last, focused);
 
-    private static bool AnyLayerOpen(ViewModels.Shell.ShellViewModel shell) => shell.Palette.IsOpen || shell.Shortcuts.IsOpen || shell.Create.IsOpen || shell.Start.IsOpen || shell.ApproveAll.IsOpen;
+    private static bool AnyLayerOpen(ViewModels.Shell.ShellViewModel shell) => shell.Palette.IsOpen || shell.Shortcuts.IsOpen || shell.Create.IsOpen || shell.NewIssue.IsOpen || shell.Start.IsOpen || shell.ApproveAll.IsOpen;
 
     // The frame of the row that the focused control is in, when that row is the one the sheet shows.
     private Border? OpenRowFrame(Visual focused) =>
@@ -128,6 +129,10 @@ internal sealed partial class ShellWindow
         if (shell.Create.IsOpen)
         {
             Dispatcher.UIThread.Post(() => Built<CreateItemDialog>("CreateItemDialog")?.FocusTitle(), DispatcherPriority.Loaded);
+        }
+        else if (shell.NewIssue.IsOpen)
+        {
+            Dispatcher.UIThread.Post(() => Built<NewLinearIssueDialog>("NewLinearIssueDialog")?.FocusTeam(), DispatcherPriority.Loaded);
         }
         else if (key == "/" && shell.Queue.IsFiltering)
         {
@@ -168,6 +173,12 @@ internal sealed partial class ShellWindow
         if (shell.Start.IsOpen)
         {
             shell.Start.Close();
+            return true;
+        }
+
+        if (shell.NewIssue.IsOpen)
+        {
+            shell.NewIssue.Close();
             return true;
         }
 
