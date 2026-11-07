@@ -136,11 +136,34 @@ public sealed class SkillResultReaderTests
     [Fact]
     public void A_mapped_artifact_the_result_lacks_fails_the_Step_and_lists_what_it_has_SND_SKILL_004()
     {
-        var decision = SkillResultReader.Decide(Input(SkillFixtures.Autoplan, Autoplan("\"/p/arch-review.md\",\"/p/devex-review.md\""), skill: "autoplan"));
+        var decision = SkillResultReader.Decide(Input(SkillFixtures.Autoplan, Autoplan("\"/p/arch-review.md\",\"/p/devex-review.md\"", verdict: "PASS"), skill: "autoplan"));
 
         Assert.Equal(SkillResultKind.StepFailed, decision.Kind);
         Assert.Equal(SindriErrors.SkillOutputInvalid.Code, decision.Error?.Code);
         Assert.Contains("autoplan's result has no artifact 'consolidated-review.md' (it has: arch-review.md, devex-review.md)", decision.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_partial_result_without_the_success_only_outputs_ends_on_its_outcome_and_keeps_the_ones_it_has()
+    {
+        var input = Input(SkillFixtures.BugFixOrchestrator, """{"skill":"bugFixOrchestrator","status":"partial","branch":"fix/x"}""", skill: "bugFixOrchestrator");
+
+        var decision = SkillResultReader.Decide(input);
+
+        Assert.Equal((SkillResultKind.Complete, "partial"), (decision.Kind, decision.Outcome));
+        Assert.Equal("fix/x", decision.Facts["fact:bugFixOrchestratorBranch"]);
+        Assert.False(decision.Facts.ContainsKey("fact:bugFixOrchestratorPr"));
+        Assert.False(decision.Facts.ContainsKey("fact:bugFixOrchestratorResolution"));
+    }
+
+    [Fact]
+    public void A_resolved_result_without_the_pr_still_fails_the_Step_SND_SKILL_004()
+    {
+        var input = Input(SkillFixtures.BugFixOrchestrator, """{"skill":"bugFixOrchestrator","status":"resolved","branch":"fix/x"}""", skill: "bugFixOrchestrator");
+
+        var decision = SkillResultReader.Decide(input);
+
+        Assert.Equal((SkillResultKind.StepFailed, SindriErrors.SkillOutputInvalid.Code), (decision.Kind, decision.Error?.Code));
     }
 
     [Fact]
