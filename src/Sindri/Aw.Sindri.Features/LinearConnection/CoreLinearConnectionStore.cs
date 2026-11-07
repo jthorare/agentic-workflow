@@ -73,7 +73,7 @@ internal sealed class CoreLinearConnectionStore(IProfileSource live, IContextEng
             var deleted = writer.DeleteFromKeychain(Service, "linear-write");
             if (deleted.IsError)
             {
-                return deleted.Error;
+                return SindriErrors.LinearNoKeychain.With($"Couldn't remove the write key from your keychain ({deleted.Error.Message}); nothing changed (fix: unlock your keychain and press Remove again)");
             }
         }
 

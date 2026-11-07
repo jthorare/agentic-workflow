@@ -54,4 +54,16 @@ public sealed class RemoveLinearWriteKeyServiceTests
         Assert.True(result.Value.Removed);
         Assert.False(result.Value.Approved);
     }
+
+    [Fact]
+    public async Task A_keychain_that_refuses_the_delete_is_that_error_and_nothing_is_approved()
+    {
+        using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
+        _ = _store.Failing(SindriErrors.LinearNoKeychain.With("Couldn't remove the write key from your keychain"));
+
+        var result = await Service().Handle(new RemoveLinearWriteKeyRequest(), Token);
+
+        Expect.Equal(SindriErrors.LinearNoKeychain.Code, result.Error.Code);
+        Expect.Equal(0, _approval.Settles);
+    }
 }

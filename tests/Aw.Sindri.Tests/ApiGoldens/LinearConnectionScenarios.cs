@@ -28,7 +28,7 @@ internal static class LinearConnectionScenarios
         ("linear-connection-teams", "two-teams"), ("linear-connection-teams", "refused"), ("linear-connection-teams", "unreachable"),
         ("linear-connect", "read-saved-approved"), ("linear-connect", "read-saved-waiting"), ("linear-connect", "write-saved"), ("linear-connect", "write-scope-unknown"),
         ("linear-connect", "same-as-read"), ("linear-connect", "no-keychain"), ("linear-connect", "no-teams"), ("linear-connect", "session-refused"),
-        ("linear-disconnect-write", "removed"),
+        ("linear-disconnect-write", "removed"), ("linear-disconnect-write", "keychain-failed"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -101,6 +101,7 @@ internal static class LinearConnectionScenarios
     {
         "same-as-read" => new FakeLinearConnectionStore().WithReadKey(ReadKey),
         "no-keychain" => new FakeLinearConnectionStore().Failing(SindriErrors.LinearNoKeychain.With("No keychain to keep the write key in (fix: unlock your login keyring, or put the key in 1Password and set writeToken to op://…)")),
+        "keychain-failed" => new FakeLinearConnectionStore().Failing(SindriErrors.LinearNoKeychain.With("Couldn't remove the write key from your keychain (the OS keychain would not delete the key); nothing changed (fix: unlock your keychain and press Remove again)")),
         _ => new FakeLinearConnectionStore(),
     };
 }

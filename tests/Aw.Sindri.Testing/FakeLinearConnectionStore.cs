@@ -68,6 +68,11 @@ internal sealed class FakeLinearConnectionStore : ILinearConnectionStore
     /// <inheritdoc/>
     public ValueTask<Result<bool>> RemoveWrite(CancellationToken cancellationToken)
     {
+        if (_failing is { } error)
+        {
+            return ValueTask.FromResult<Result<bool>>(error);
+        }
+
         Removals++;
         return ValueTask.FromResult<Result<bool>>(true);
     }
