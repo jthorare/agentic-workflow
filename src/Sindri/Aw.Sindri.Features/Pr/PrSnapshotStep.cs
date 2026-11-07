@@ -292,7 +292,7 @@ internal sealed class PrSnapshotStep(IPullRequests pulls, IPrCommentMarks marks,
 
     // Sindri's replies never come back as work: a marker it wrote.
     internal static bool Own(PullThread thread) =>
-        thread.Markers.Any(static m => m.StartsWith("sindri", StringComparison.Ordinal));
+        thread.Markers.Any(static m => m.StartsWith("sindri", StringComparison.Ordinal)) && SindriFixMarker.Item(thread.Markers) is null;
 
     private sealed record DocsRead(PullView View, bool Skipped);
 

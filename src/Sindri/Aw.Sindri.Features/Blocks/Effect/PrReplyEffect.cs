@@ -7,6 +7,7 @@ using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Effects;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
+using Aw.Sindri.Core.Reviews;
 
 namespace Aw.Sindri.Features.Blocks.Effect;
 
@@ -23,7 +24,8 @@ namespace Aw.Sindri.Features.Blocks.Effect;
 /// <param name="clock">Stamps a mark.</param>
 /// <param name="scrubber">Takes secrets out of a reply's text before the forge gets it.</param>
 /// <param name="record">The merge record, where the comment rows go.</param>
-internal sealed class PrReplyEffect(IPullRequests pulls, IFactContents facts, IPrCommentMarks marks, TimeProvider clock, ITextScrubber scrubber, IMergeRecord record) : IEffectKind, IDescribedBlock
+/// <param name="fixes">Closes the fix item a 'sindri.fix:' thread names once its comment is marked fixed.</param>
+internal sealed class PrReplyEffect(IPullRequests pulls, IFactContents facts, IPrCommentMarks marks, TimeProvider clock, ITextScrubber scrubber, IMergeRecord record, IFixItemCloser fixes) : IEffectKind, IDescribedBlock
 {
     private const int MarkerLimit = 128;
 
@@ -114,7 +116,21 @@ internal sealed class PrReplyEffect(IPullRequests pulls, IFactContents facts, IP
         var outcome = form == "hold" ? "held" : form;   // spec 5.3: the form is 'hold', the mark's outcome 'held'
         var written = await Record(target.Value, outcome, detail, cancellationToken).ConfigureAwait(false);
         var row = written.IsError ? written : await Comment(context, new CommentRow(context.Identity, target.Value.Comment.Value, form == "none" ? "skipped" : outcome, detail.Commit, WithType: true), cancellationToken).ConfigureAwait(false);
+        if (!row.IsError)
+        {
+            await CloseFixItem(form, comment.Value, cancellationToken).ConfigureAwait(false);
+        }
+
         return row.IsError ? row.Error : new EffectDone(Reply: null, Existed: !written.Value);
+    }
+
+    // A 'sindri.fix:' thread marked fixed: its item is done with the thread. An item that won't close never fails the loop.
+    private async ValueTask CloseFixItem(string form, System.Text.Json.JsonElement comment, CancellationToken cancellationToken)
+    {
+        if (form == "fixed" && PrReplyFacts.Text(comment, "fixItem") is { Length: > 0 } fixItem)
+        {
+            _ = await fixes.Close(fixItem, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     /// <summary>The 'fixedReplies' form: answers each comment whose latest mark is 'fixed' with a commit the push carried, then marks it 'thread'.</summary>
