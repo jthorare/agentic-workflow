@@ -114,6 +114,18 @@ public sealed class ReviewPageKeysTests
     }
 
     [Fact]
+    public async Task O_acts_on_the_group_whose_header_really_has_focus_not_the_last_one_the_page_asked_for()
+    {
+        var page = await _f.Opened(Token);
+        _ = Press(page, "j");   // the page asked for a line in Core
+
+        page.FocusedFrom(ReviewFocusRegion.GroupHeader, "Assets");   // the owner clicked the Assets header
+        Assert.True(Press(page, "o"));
+
+        Assert.Equal((false, true), (page.Diff.Groups[0].IsFolded, page.Diff.Groups[1].IsFolded));
+    }
+
+    [Fact]
     public async Task Enter_does_nothing_when_no_group_header_has_focus()
     {
         var page = await _f.Opened(Token);

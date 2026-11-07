@@ -57,6 +57,11 @@ internal sealed partial class ReviewPageViewModel
     /// <param name="returnTo">Where the request came from.</param>
     internal void ReturnFromFix(ReviewFocus returnTo) => Focus = Exists(returnTo) ? returnTo : new ReviewFocus(ReviewFocusRegion.StripFirst);
 
+    /// <summary>The view reports where focus really is (a click or Tab put it there): o and Enter act on it. Raises no move.</summary>
+    /// <param name="region">A diff line or a group header.</param>
+    /// <param name="key">The line's or the header's key.</param>
+    internal void FocusedFrom(ReviewFocusRegion region, string key) => _seen = new ReviewFocus(region, key);
+
     /// <summary>A check, a requirement or a diff line asked for a fix task: the shell opens the sheet.</summary>
     internal event EventHandler<ReviewFixRequestedEventArgs>? FixRequested;
 
@@ -105,8 +110,8 @@ internal sealed partial class ReviewPageViewModel
     // o folds or unfolds the group whose header has focus, else the focused file's; Enter only opens a folded header. Focus lands on the header.
     private bool ToggleGroup(bool onlyIfFolded)
     {
-        var group = Focus.Region == ReviewFocusRegion.GroupHeader
-            ? Diff.Groups.FirstOrDefault(g => string.Equals(g.Name, Focus.Key, StringComparison.Ordinal))
+        var group = _seen.Region == ReviewFocusRegion.GroupHeader
+            ? Diff.Groups.FirstOrDefault(g => string.Equals(g.Name, _seen.Key, StringComparison.Ordinal))
             : onlyIfFolded ? null : Diff.Groups.FirstOrDefault(g => Diff.FocusedFile is { } file && g.Files.Contains(file));
         if (group is null || (onlyIfFolded && !group.IsFolded))
         {

@@ -234,6 +234,15 @@ internal sealed partial class ReviewPageView : UserControl
         if (sender is Control { DataContext: ReviewDiffLineViewModel line })
         {
             Page?.Diff.FocusLine(line);
+            Page?.FocusedFrom(ReviewFocusRegion.DiffLine, line.Key);
+        }
+    }
+
+    private void OnGroupHeaderFocused(object? sender, FocusChangedEventArgs e)
+    {
+        if (sender is Control { DataContext: ReviewDiffGroupViewModel group })
+        {
+            Page?.FocusedFrom(ReviewFocusRegion.GroupHeader, group.Name);
         }
     }
 }

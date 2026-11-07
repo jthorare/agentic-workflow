@@ -16,6 +16,7 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
     private int _number;
     private int _reads;
     private string _settings = string.Empty;
+    private ReviewFocus _seen = ReviewFocus.None;   // where focus really is: o and Enter act on it, not on the last place the page asked for
 
     internal ReviewPageViewModel(ISindriApi api, ReviewPanelMemory? memory = null)
     {
@@ -149,6 +150,7 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
         private set
         {
             field = value;
+            _seen = value;
             OnChanged(nameof(Focus));   // always: asking for the same place twice moves focus twice
         }
     } = ReviewFocus.None;

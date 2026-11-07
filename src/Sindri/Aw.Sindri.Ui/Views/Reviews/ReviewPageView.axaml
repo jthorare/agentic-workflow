@@ -159,7 +159,7 @@
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="rvm:ReviewDiffGroupViewModel">
                 <StackPanel Spacing="4">
-                  <Button x:Name="ReviewDiffGroupHeader" Tag="{Binding Name}" Click="OnToggleGroup" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding AutomationName}">
+                  <Button x:Name="ReviewDiffGroupHeader" Tag="{Binding Name}" Click="OnToggleGroup" GotFocus="OnGroupHeaderFocused" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding AutomationName}">
                     <TextBlock Classes="eyebrow subtle" Text="{Binding Name}" />
                   </Button>
                   <ItemsControl ItemsSource="{Binding Files}" IsVisible="{Binding IsOpen}">
