@@ -15,9 +15,6 @@ namespace Aw.Context.Tests.Sync;
 [Trait("Lane", "integration")]
 public sealed class LibraryFeedFixtureParityTests
 {
-    // SND-LIB-017 needs the source's sha256 passed to the parser and no feed caller does (#2184); drop it from this list when that lands.
-    private static readonly string[] _notYetFed = [DesignDocCodes.StaleGenerated];
-
     private static readonly AudienceScope _owner = new(new HashSet<AudienceKey> { ProfileAudiencePolicy.LibraryDoc([], ["acme/harbor-web"]) });
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
@@ -28,26 +25,30 @@ public sealed class LibraryFeedFixtureParityTests
         var folder = Path.Combine(LibraryFeedRig.RepoRoot(), "tests", "fixtures", "library");
         using var contract = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(folder, "expected.json"), Ct));
         var expected = contract.RootElement.GetProperty("files").EnumerateArray()
-            .Select(static f => (Path: f.GetProperty("path").GetString()!, Codes: f.GetProperty("errors").EnumerateArray().Select(static e => e.GetString()!).ToList()))
+            .Select(static f => (Path: f.GetProperty("path").GetString()!, Codes: f.GetProperty("errors").EnumerateArray().Select(static e => e.GetString()!).ToList(), Source: f.TryGetProperty("source", out var source) ? source.GetString() : null))
             .Where(static f => f.Path.StartsWith("broken/", StringComparison.Ordinal) && f.Path.EndsWith(".md", StringComparison.Ordinal))
             .ToList();
         Assert.NotEmpty(expected);
 
         using var home = new TempHome();
         using var rig = new LibraryFeedRig(home, copyFixture: false);
-        foreach (var (path, _) in expected)
+        foreach (var (path, _, source) in expected)
         {
-            _ = rig.Write(Path.GetFileName(path), await File.ReadAllTextAsync(Path.Combine(folder, path), Ct));
+            _ = rig.Write(path, await File.ReadAllTextAsync(Path.Combine(folder, path), Ct));
+            if (source is not null)
+            {
+                _ = rig.Write(source, await File.ReadAllTextAsync(Path.Combine(folder, source), Ct));   // the generated doc's packet.json, beside it
+            }
         }
 
         _ = await FeedRun.Once(rig.Feed(rig.Vault()), rig.Store, home.Scrubbers);
         var docs = (await new ContextLibrary(new SqliteLibraryStore(home.Database)).ListDocs(new LibraryDocFilter(), _owner, Ct)).Value;
 
-        foreach (var (path, codes) in expected)
+        foreach (var (path, codes, _) in expected)
         {
-            var shown = docs.SingleOrDefault(d => d.Key.Value.EndsWith("/" + Path.GetFileName(path), StringComparison.Ordinal));
+            var shown = docs.SingleOrDefault(d => d.Key.Value.EndsWith("/" + path, StringComparison.Ordinal));
             Assert.True(shown is not null, $"{path} is not in the library read");
-            foreach (var code in codes.Except(_notYetFed, StringComparer.Ordinal))
+            foreach (var code in codes)
             {
                 Assert.True(shown.Errors.Any(e => e.Code == code), $"{path}: {code} is not on the doc (shown: {string.Join(", ", shown.Errors.Select(static e => e.Code))})");
             }

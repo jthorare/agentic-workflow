@@ -119,7 +119,13 @@ internal sealed class LibraryValidate(Output output)
         var findings = new List<LibraryFindingRow>();
         foreach (var file in files)
         {
-            var parsed = DesignDocParser.Parse(file, await File.ReadAllTextAsync(file, ct).ConfigureAwait(false));
+            var text = await File.ReadAllTextAsync(file, ct).ConfigureAwait(false);
+            var parsed = DesignDocParser.Parse(file, text);
+            if (GeneratedSource.IsGenerated(parsed.FrontMatter) && await SourceSha(file, ct).ConfigureAwait(false) is { } sourceSha)
+            {
+                parsed = DesignDocParser.Parse(file, text, sourceSha);
+            }
+
             if (!DesignDocParser.IsDesignDoc(parsed))
             {
                 continue;
@@ -131,6 +137,13 @@ internal sealed class LibraryValidate(Output output)
 
         findings.AddRange(DesignDocScope.Check(scoped).Select(f => Row(f.Path, f.Error)));
         return (scoped.Count, [.. findings.OrderBy(static f => f.File, StringComparer.Ordinal).ThenBy(static f => f.Line ?? 0).ThenBy(static f => f.Rule, StringComparer.Ordinal)]);
+    }
+
+    // The sha256 of the packet.json beside a generated doc; null when there is none (nothing to compare, no finding).
+    private static async Task<string?> SourceSha(string docPath, CancellationToken ct)
+    {
+        var packet = GeneratedSource.PathBeside(docPath);
+        return File.Exists(packet) ? GeneratedSource.Sha256(await File.ReadAllBytesAsync(packet, ct).ConfigureAwait(false)) : null;
     }
 
     private static LibraryFindingRow Row(string file, DesignDocError error) => new(error.Code, file, error.Line, error.Message, error.Fix);
