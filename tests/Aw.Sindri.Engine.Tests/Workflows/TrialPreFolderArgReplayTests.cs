@@ -22,6 +22,10 @@ public sealed class TrialPreFolderArgReplayTests
         var result = await replayer.ReplayWorkflowAsync(history, throwOnReplayFailure: false, TestContext.Current.CancellationToken);
 
         Assert.Null(result.ReplayFailure);
-        Assert.Contains("skillTrialFolder", json, StringComparison.Ordinal);   // the recorded start carried the folder fact: the case the new argument is read from
+        Assert.Contains("skillTrialFolder", StartedInput(history), StringComparison.Ordinal);   // the recorded start carried the folder fact: the case the new argument is read from
     }
+
+    // why: Temporal stores payloads base64, so the folder fact is in the decoded input of the WorkflowExecutionStarted event, never in the history's JSON text
+    private static string StartedInput(WorkflowHistory history) =>
+        string.Concat(history.Events.Single(static e => e.WorkflowExecutionStartedEventAttributes is not null).WorkflowExecutionStartedEventAttributes.Input.Payloads_.Select(static p => p.Data.ToStringUtf8()));
 }
