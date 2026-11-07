@@ -276,7 +276,7 @@ os.execvp(sys.argv[1], sys.argv[1:])'
 # "nonzero". With "kill" (SIGKILL: nothing can clean up) the request job
 # survives the script, so only "nothing printed, no file left" is checked.
 signal_mid_request() {
-  local sigs="$1" want="$2" mode="${3:-}" name tpid rc elapsed alive sig t0
+  local sigs="$1" want="$2" mode="${3:-}" name tpid rc elapsed alive sig t0 answered_at_exit
   name="SIG${sigs// /+SIG}"
   export FAKE_HOLD=3; start_server slow; unset FAKE_HOLD
   : >"$WORK/curl.pid"
@@ -292,13 +292,14 @@ signal_mid_request() {
   t0="$(ms)"
   for sig in $sigs; do kill "-$sig" "$tpid" 2>/dev/null || true; done
   rc=0; wait "$tpid" || rc=$?
+  answered_at_exit=$([ -e "$SRV/answered" ] && echo yes || echo no)
   elapsed=$(( $(ms) - t0 ))
   if [ "$want" = nonzero ]; then
     check "$name: exits non-zero" "$([ "$rc" -ne 0 ] && echo yes || echo no)" "yes"
   else
     check "$name: exit $want" "$rc" "$want"
   fi
-  check "$name: exits within 2 s while the request is held (took ${elapsed} ms)" "$([ "$elapsed" -le 2000 ] && echo yes || echo no)" "yes"
+  check "$name: exits before the fake answers (took ${elapsed} ms)" "$answered_at_exit" "no"
   if [ "$mode" != kill ]; then
     alive=yes
     for _ in $(seq 1 10); do kill -0 "$(cat "$WORK/curl.pid")" 2>/dev/null || { alive=no; break; }; sleep 0.1; done
