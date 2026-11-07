@@ -138,9 +138,14 @@ internal static partial class Labels
     /// <summary>The PR chip on a row.</summary>
     /// <param name="number">The PR's number.</param>
     /// <param name="review">The review state in the Reviews badge's words.</param>
-    /// <returns>"PR #2071 waiting on you".</returns>
+    /// <returns>"PR #2071 waiting on you"; "PR #2071 (state unknown)" when Sindri couldn't read the pull request.</returns>
     internal static string LinearPrChip(int number, string review) =>
-        string.Create(CultureInfo.InvariantCulture, $"PR #{number} ") + (string.Equals(review, "waiting", StringComparison.Ordinal) ? "waiting on you" : review);
+        string.Create(CultureInfo.InvariantCulture, $"PR #{number} ") + review switch
+        {
+            "waiting" => "waiting on you",
+            "unknown" => "(state unknown)",
+            _ => review,
+        };
 
     /// <summary>A row's accessible name.</summary>
     /// <param name="row">The issue.</param>

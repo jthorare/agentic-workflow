@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Queue;
 
 namespace Aw.Sindri.Ui.Tests.Linear;
@@ -143,6 +144,10 @@ public sealed class LinearWorkListTests
         Assert.Contains("Unassigned, No priority", row.Name, StringComparison.Ordinal);
         Assert.Equal("PR #2080 approved", work.Teams.Rows[0].PrText);
     }
+
+    [Fact]
+    public void A_PR_whose_state_Sindri_could_not_read_says_state_unknown() =>
+        Assert.Equal("PR #12 (state unknown)", Labels.LinearPrChip(12, "unknown"));
 
     [Fact]
     public async Task A_row_asks_for_its_issue()
