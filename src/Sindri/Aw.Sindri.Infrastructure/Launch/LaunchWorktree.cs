@@ -64,8 +64,19 @@ internal static class LaunchWorktree
     /// <param name="warn">Where the one warning line goes.</param>
     internal static async ValueTask Remove(string repoPath, string worktree, Action<string> warn)
     {
-        if (await ViewerProcess.Output("git", ["-C", worktree, "rev-list", "--count", "HEAD", "--not", "--branches", "--remotes"], _gitBudget, CancellationToken.None).ConfigureAwait(false) is { } count
-            && int.TryParse(count.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var commits) && commits > 0)
+        var count = await ViewerProcess.Output("git", ["-C", worktree, "rev-list", "--count", "HEAD", "--not", "--branches", "--remotes"], _gitBudget, CancellationToken.None).ConfigureAwait(false);
+        if (count is null)
+        {
+            // why: a git error must not drop the commit guard; nothing on disk means nothing to keep
+            if (Directory.Exists(worktree))
+            {
+                warn($"warn: the skill trial's worktree {worktree} was kept: git could not check it for commits on no branch; remove it by hand with git worktree remove --force when you have looked");
+            }
+
+            return;
+        }
+
+        if (int.TryParse(count.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var commits) && commits > 0)
         {
             warn($"warn: the skill trial's worktree {worktree} was kept: it holds {commits.ToString(System.Globalization.CultureInfo.InvariantCulture)} commit{(commits == 1 ? string.Empty : "s")} that are on no branch; branch them or remove it by hand with git worktree remove --force when you have looked");   // why: the trial worktree is detached, so removing it would drop them
             return;

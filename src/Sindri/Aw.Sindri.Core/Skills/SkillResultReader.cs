@@ -61,26 +61,33 @@ public static partial class SkillResultReader
             return unmapped;
         }
 
-        // why: a block's outputs are promised on its success outcome only (bugFixOrchestrator has no pr when it ends partial); any other outcome keeps the ones that are there
+        return Outputs(root, input, outcome);
+    }
+
+    // why: a block's outputs are promised on its success outcome only (bugFixOrchestrator has no pr when it ends partial); off it a bad output is left out, not fatal, but the detail says which and why
+    private static SkillResultDecision Outputs(JsonElement root, SkillResultInput input, string outcome)
+    {
         var onSuccess = input.Block.Outcomes.From is null || string.Equals(outcome, input.Block.Outcomes.Success, StringComparison.Ordinal);
         var facts = new Dictionary<string, string>(StringComparer.Ordinal);
+        var skipped = new List<string>();
         foreach (var output in input.Block.Outputs)
         {
             var (value, failed) = Output(root, input, output);
-            if (failed is not null)
+            if (failed is null)
             {
-                if (onSuccess)
-                {
-                    return failed;
-                }
-
-                continue;
+                facts[SkillDescriptors.FactKeyOf(input.Block.Name, output.Key).Value] = value;
             }
-
-            facts[SkillDescriptors.FactKeyOf(input.Block.Name, output.Key).Value] = value;
+            else if (onSuccess)
+            {
+                return failed;
+            }
+            else
+            {
+                skipped.Add(failed.Detail ?? output.Key);
+            }
         }
 
-        return new SkillResultDecision(SkillResultKind.Complete, Reason: null, outcome, facts, Text: null, Error: null, Detail: null);
+        return new SkillResultDecision(SkillResultKind.Complete, Reason: null, outcome, facts, Text: null, Error: null, skipped.Count == 0 ? null : "skipped: " + string.Join("; ", skipped));
     }
 
     // why: only a non-empty string is a question; "waiting": false is not one
