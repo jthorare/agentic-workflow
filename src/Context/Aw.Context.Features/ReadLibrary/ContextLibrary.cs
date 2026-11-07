@@ -49,6 +49,42 @@ internal sealed class ContextLibrary(ILibraryStore store, ILibraryStatus? status
         return docs.IsError ? docs.Error : Results.Success<IReadOnlyList<LibraryDoc>>([.. docs.Value.Where(d => Matches(d, filter))]);
     }
 
+    public async ValueTask<Result<IReadOnlyDictionary<string, IReadOnlyList<LibraryDoc>>>> DocsNaming(IReadOnlyList<string> issueKeys, AudienceScope audience, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(issueKeys);
+        ArgumentNullException.ThrowIfNull(audience);
+        if (issueKeys.Count > IContextLibrary.DocsNamingMaxKeys)
+        {
+            return ContextErrors.QueryInvalid.With($"{issueKeys.Count} issue keys asked; one call takes at most {IContextLibrary.DocsNamingMaxKeys}");
+        }
+
+        var asked = issueKeys.Select(static k => k.ToUpperInvariant()).ToHashSet(StringComparer.Ordinal);
+        var named = new Dictionary<string, IReadOnlyList<LibraryDoc>>(StringComparer.Ordinal);
+        if (asked.Count == 0)
+        {
+            return named;
+        }
+
+        // why: the 200-key cap makes a filter after the audience as cheap as a SQL one, and it keeps the shared-doc-id errors the reader decides
+        var docs = await new LibraryReader(store, audience).Docs(slug: null, cancellationToken).ConfigureAwait(false);
+        if (docs.IsError)
+        {
+            return docs.Error;
+        }
+
+        var newestFirst = docs.Value.OrderByDescending(static d => d.UpdatedAt ?? DateTimeOffset.MinValue).ThenBy(static d => d.Key.Value, StringComparer.Ordinal).ToList();
+        foreach (var key in asked)
+        {
+            var naming = newestFirst.Where(d => d.Issues.Any(i => string.Equals(i, key, StringComparison.OrdinalIgnoreCase))).ToList();
+            if (naming.Count > 0)
+            {
+                named[key] = naming;
+            }
+        }
+
+        return named;
+    }
+
     public ValueTask<Result<LibraryDoc?>> GetDoc(RecordKey key, AudienceScope audience, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(audience);
