@@ -19,13 +19,13 @@ internal static class ReviewPageDiffs
     {
         if (!f.Files.Ok)
         {
-            return new ReviewPageDiff("error", "Couldn't read the diff: " + f.Files.Error, 0, Capped: false, CappedText: null, []);
+            return new ReviewPageDiff("error", "Couldn't read the diff: " + f.Files.Error, 0, Capped: false, []);
         }
 
         var files = f.Files.Value.Files;
         if (files.Count == 0)
         {
-            return new ReviewPageDiff("empty", "This PR changes no files", 0, Capped: false, CappedText: null, []);
+            return new ReviewPageDiff("empty", "This PR changes no files", 0, Capped: false, []);
         }
 
         var settings = f.Settings.Resolved;
@@ -37,7 +37,7 @@ internal static class ReviewPageDiffs
             return (Name: name, Files: inGroup);
         }).Where(static g => g.Files.Count > 0).Select(g => new ReviewPageGroup(g.Name, g.Files.TrueForAll(x => settings.Collapse.Any(c => ScopeGlobs.Allows([c], x.Path))), [.. g.Files.Select(x => File(x, f.Pr.Url))])).ToList();
         var capped = f.Files.Value.CapReached;
-        return new ReviewPageDiff("ready", Text: null, capped ? FileCap : files.Count, capped, capped ? CappedText : null, groups);
+        return new ReviewPageDiff("ready", Text: null, capped ? FileCap : files.Count, capped, groups, capped ? CappedText : null);
     }
 
     private static string GroupOf(IReadOnlyList<PrReviewGroup> groups, string path)

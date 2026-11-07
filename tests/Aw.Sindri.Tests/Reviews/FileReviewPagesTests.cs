@@ -39,7 +39,7 @@ public sealed class FileReviewPagesTests : IDisposable
                 new ReviewPagePanel("ci", "ready", Text: null, new CiData([new ReviewPageRun("ui", "actions", "completed", "failure", sha[..7], "https://github.com/acme/api/pull/7/checks")], Babysitter: null)),
                 new ReviewPagePanel("risk", "empty", "No risky paths touched", new RiskData([])),
             ],
-            new ReviewPageDiff("empty", "This PR changes no files", 0, Capped: false, CappedText: null, []));
+            new ReviewPageDiff("empty", "This PR changes no files", 0, Capped: false, []));
 
     [Fact]
     public async Task A_written_page_reads_back_as_the_newest_with_its_panels_and_the_time_it_was_cached()

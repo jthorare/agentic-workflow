@@ -49,5 +49,5 @@ public abstract class FixTaskFilesContract
 
     [Fact]
     public async Task Remove_of_an_item_no_file_lists_is_fine()
-        => Assert.False((await Files.Remove(Id('z'), Token)).Value);
+        => Assert.False((await Files.Remove(Id('f'), Token)).Value);
 }

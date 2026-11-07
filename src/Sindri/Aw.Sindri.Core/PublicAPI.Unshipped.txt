@@ -22409,7 +22409,7 @@ Aw.Sindri.Core.Reviews.ReviewLibrary.Deconstruct(out string! State, out int Docs
 Aw.Sindri.Core.Reviews.ReviewLibrary.Docs.get -> int
 Aw.Sindri.Core.Reviews.ReviewLibrary.Docs.init -> void
 Aw.Sindri.Core.Reviews.ReviewLibrary.Equals(Aw.Sindri.Core.Reviews.ReviewLibrary? other) -> bool
-Aw.Sindri.Core.Reviews.ReviewLibrary.ReviewLibrary(string! State, int Docs, int WithErrors, int UnreadableRoots, string! Text, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewUnreadableRoot!>? Unreadable) -> void
+Aw.Sindri.Core.Reviews.ReviewLibrary.ReviewLibrary(string! State, int Docs, int WithErrors, int UnreadableRoots, string! Text, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewUnreadableRoot!>? Unreadable = null) -> void
 Aw.Sindri.Core.Reviews.ReviewLibrary.State.get -> string!
 Aw.Sindri.Core.Reviews.ReviewLibrary.State.init -> void
 Aw.Sindri.Core.Reviews.ReviewLibrary.Text.get -> string!
@@ -23112,13 +23112,13 @@ Aw.Sindri.Core.Reviews.ReviewPageDiff.Capped.get -> bool
 Aw.Sindri.Core.Reviews.ReviewPageDiff.Capped.init -> void
 Aw.Sindri.Core.Reviews.ReviewPageDiff.CappedText.get -> string?
 Aw.Sindri.Core.Reviews.ReviewPageDiff.CappedText.init -> void
-Aw.Sindri.Core.Reviews.ReviewPageDiff.Deconstruct(out string! State, out string? Text, out int FileCount, out bool Capped, out string? CappedText, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPageGroup!>! Groups) -> void
+Aw.Sindri.Core.Reviews.ReviewPageDiff.Deconstruct(out string! State, out string? Text, out int FileCount, out bool Capped, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPageGroup!>! Groups, out string? CappedText) -> void
 Aw.Sindri.Core.Reviews.ReviewPageDiff.Equals(Aw.Sindri.Core.Reviews.ReviewPageDiff? other) -> bool
 Aw.Sindri.Core.Reviews.ReviewPageDiff.FileCount.get -> int
 Aw.Sindri.Core.Reviews.ReviewPageDiff.FileCount.init -> void
 Aw.Sindri.Core.Reviews.ReviewPageDiff.Groups.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPageGroup!>!
 Aw.Sindri.Core.Reviews.ReviewPageDiff.Groups.init -> void
-Aw.Sindri.Core.Reviews.ReviewPageDiff.ReviewPageDiff(string! State, string? Text, int FileCount, bool Capped, string? CappedText, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPageGroup!>! Groups) -> void
+Aw.Sindri.Core.Reviews.ReviewPageDiff.ReviewPageDiff(string! State, string? Text, int FileCount, bool Capped, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPageGroup!>! Groups, string? CappedText = null) -> void
 Aw.Sindri.Core.Reviews.ReviewPageDiff.State.get -> string!
 Aw.Sindri.Core.Reviews.ReviewPageDiff.State.init -> void
 Aw.Sindri.Core.Reviews.ReviewPageDiff.Text.get -> string?
@@ -23484,7 +23484,7 @@ Aw.Sindri.Core.Reviews.ReviewPageSettings.Name.get -> string!
 Aw.Sindri.Core.Reviews.ReviewPageSettings.Name.init -> void
 Aw.Sindri.Core.Reviews.ReviewPageSettings.Pick.get -> Aw.Sindri.Core.Reviews.ReviewPagePick?
 Aw.Sindri.Core.Reviews.ReviewPageSettings.Pick.init -> void
-Aw.Sindri.Core.Reviews.ReviewPageSettings.ReviewPageSettings(string! Name, string! From, Aw.Sindri.Core.Reviews.ReviewPagePick? Pick) -> void
+Aw.Sindri.Core.Reviews.ReviewPageSettings.ReviewPageSettings(string! Name, string! From, Aw.Sindri.Core.Reviews.ReviewPagePick? Pick = null) -> void
 Aw.Sindri.Core.Reviews.ReviewPageSettingsFacts
 Aw.Sindri.Core.Reviews.ReviewPageSettingsFacts.<Clone>$() -> Aw.Sindri.Core.Reviews.ReviewPageSettingsFacts!
 Aw.Sindri.Core.Reviews.ReviewPageSettingsFacts.Choices.get -> System.Collections.Generic.IReadOnlyList<string!>!

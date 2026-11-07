@@ -9,4 +9,4 @@ namespace Aw.Sindri.Core.Reviews;
 public sealed record ReviewPageSettings(
     string Name,
     string From,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ReviewPagePick? Pick);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ReviewPagePick? Pick = null);
