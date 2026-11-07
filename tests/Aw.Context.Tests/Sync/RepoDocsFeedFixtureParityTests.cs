@@ -44,10 +44,11 @@ public sealed class RepoDocsFeedFixtureParityTests
         using var home = new TempHome();
         using var git = new TempGitRepo(files);
         var store = new SqliteRecordStore(home.Database);
-        var feed = new RepoDocsFeed([git.Repo], _globs, [], store, home.Git, home.Scrubbers);
+        string[] github = ["acme/" + git.Repo.Name.Value];   // the profile's synced repo, so the docs carry the repo's audience
+        var feed = new RepoDocsFeed([git.Repo], _globs, github, store, home.Git, home.Scrubbers);
         _ = await FeedRun.Once(feed, store, home.Scrubbers);
 
-        var own = ProfileAudiencePolicy.OwnRepo(git.Repo.Name, ["acme/" + git.Repo.Name.Value]);
+        var own = ProfileAudiencePolicy.OwnRepo(git.Repo.Name, github);
         Assert.True(own is not null, "the repo has no audience");
         var docs = (await new ContextLibrary(new SqliteLibraryStore(home.Database)).ListDocs(new LibraryDocFilter(), new AudienceScope(new HashSet<AudienceKey> { own.Value }), Ct)).Value;
 
