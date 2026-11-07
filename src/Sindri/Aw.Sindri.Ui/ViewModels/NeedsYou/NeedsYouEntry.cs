@@ -85,6 +85,9 @@ internal sealed record NeedsYouEntry(string Id, NeedsYouUrgency Urgency)
     /// <summary>The served recorded-only sentence; empty for none.</summary>
     internal string Notice { get; init; } = "";
 
+    /// <summary>On a `skillWaiting` row, what the skill block waits on (skill flows spec §5.4); null for any other row.</summary>
+    internal OwnerWaitingView? OwnerWaiting { get; init; }
+
     /// <summary>Value equality, the action list by its contents: a re-read serves new records for rows that did not change, and the row must see that.</summary>
     /// <param name="other">The other entry.</param>
     /// <returns>True when every field is equal.</returns>

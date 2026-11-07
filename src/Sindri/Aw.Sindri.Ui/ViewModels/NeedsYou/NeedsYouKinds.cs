@@ -23,6 +23,9 @@ internal static class NeedsYouKinds
     /// <summary>A changed workflow (a recipe awaiting its own approval): a subject's kind; its id is the recipe's.</summary>
     internal const string Recipe = "recipe";
 
+    /// <summary>A skill block's session that needs the owner (skill flows spec §5.4): a row's kind.</summary>
+    internal const string SkillWaiting = "skillWaiting";
+
     /// <summary>A failure: a row's kind.</summary>
     internal const string Failure = "failure";
 

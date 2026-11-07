@@ -14,37 +14,19 @@ public sealed class SkillCardFrameTests : FrameHost
 {
     private const string Question = "Which repo should this plan cover?";
 
-    private static JsonObject WaitingRow(string address) =>
-        new()
-        {
-            ["id"] = "skill:" + address + ":mitigate",
-            ["kind"] = "skillWaiting",
-            ["label"] = "skill",
-            ["subject"] = null,
-            ["item"] = null,
-            ["title"] = "Mitigate",
-            ["reason"] = "waiting",
-            ["repo"] = null,
-            ["urgency"] = "calm",
-            ["since"] = "2026-01-01T00:00:00.0000000Z",
-            ["recordedOnly"] = false,
-            ["notice"] = null,
-            ["answerKind"] = null,
-            ["primaryAction"] = null,
-            ["actions"] = new JsonArray(),
-            ["cli"] = "sindri workflow status",
-            ["ownerWaiting"] = new JsonObject
-            {
-                ["launchId"] = "LCH-1",
-                ["reason"] = "question",
-                ["text"] = Question,
-                ["resultPath"] = "/r.json",
-                ["detail"] = null,
-                ["instance"] = address,
-                ["state"] = "mitigate",
-                ["attempt"] = 1,
-            },
-        };
+    // The row the server serves (the skill-waiting golden), moved onto this instance and state and given this test's question.
+    private static JsonObject WaitingRow(string address)
+    {
+        var row = GoldenFiles.Node("needs-you", "skill-waiting")["rows"]!.AsArray()[0]!.AsObject();
+        row["id"] = "skill:" + address + ":mitigate";
+        row["title"] = "Mitigate";
+        row["subject"] = new JsonObject { ["kind"] = "instance", ["id"] = address };
+        var waiting = row["ownerWaiting"]!.AsObject();
+        waiting["text"] = Question;
+        waiting["instance"] = address;
+        waiting["state"] = "mitigate";
+        return row;
+    }
 
     // incident-loop's current state ('mitigate') runs the office-hours block, and the server lists a skillWaiting row for it.
     private void Serve(bool waiting)
