@@ -55,20 +55,23 @@ public abstract class TemporalWorkerContract : IAsyncLifetime
         var (worker, _) = await Create();
         using var stop = CancellationTokenSource.CreateLinkedTokenSource(Token);
 
-        var run = worker.Run(new TemporalEndpoint(Pid: 1, Port: ClosedPort(), UiPort: ClosedPort()), stop.Token);
+        using var frontend = ClosedPort();
+        using var ui = ClosedPort();
+
+        var run = worker.Run(new TemporalEndpoint(Pid: 1, Port: PortOf(frontend), UiPort: PortOf(ui)), stop.Token);
         await Task.Delay(300, Token);
         await stop.CancelAsync();
 
         await run.WaitAsync(_stopWithin, TimeProvider.System, Token);   // why: serve runs on without a worker; its stop must not fault
     }
 
-    /// <summary>A loopback port nothing listens on (bound, then released).</summary>
-    private static int ClosedPort()
+    /// <summary>A loopback port nothing listens on: bound without Listen(), so it stays ours and a connect is refused until the socket is disposed (#2249).</summary>
+    private static Socket ClosedPort()
     {
-        using var listener = new TcpListener(IPAddress.Loopback, 0);
-        listener.Start();
-        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
-        listener.Stop();
-        return port;
+        var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        socket.Bind(new IPEndPoint(IPAddress.Loopback, 0));
+        return socket;
     }
+
+    private static int PortOf(Socket socket) => ((IPEndPoint)socket.LocalEndPoint!).Port;
 }

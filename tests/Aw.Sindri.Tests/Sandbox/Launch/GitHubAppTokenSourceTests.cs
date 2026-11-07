@@ -108,7 +108,8 @@ public sealed class GitHubAppTokenSourceTests : IDisposable
     [Fact]
     public async Task A_closed_port_refuses_with_no_network()
     {
-        _env["AGENT_APP_API_URL"] = FakeGitHubApi.ClosedUrl();
+        using var closed = FakeGitHubApi.ClosedPort(out var url);
+        _env["AGENT_APP_API_URL"] = url;
 
         var minted = await Source().Mint(Launch(), _repo, CancellationToken.None);
 
