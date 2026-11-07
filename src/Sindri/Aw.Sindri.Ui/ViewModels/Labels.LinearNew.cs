@@ -39,6 +39,9 @@ internal static partial class Labels
     /// <summary>The line under the Title field after a blank submit.</summary>
     internal const string LinearNewTitleRequired = "Title is required";
 
+    /// <summary>The line under the Title field after a title over 255 characters.</summary>
+    internal const string LinearNewTitleTooLong = "Title is too long (255 characters at most)";
+
     /// <summary>The line under the Team field after a submit with no team.</summary>
     internal const string LinearNewTeamRequired = "Team is required";
 

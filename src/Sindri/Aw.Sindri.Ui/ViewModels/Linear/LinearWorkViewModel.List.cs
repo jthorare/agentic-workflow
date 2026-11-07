@@ -206,6 +206,7 @@ internal sealed partial class LinearWorkViewModel
         Mine.Show(mineRows, mine.Total, MineEmpty(mine));
         Teams.Show(teamRows, teams.Total, string.Empty);
         KeepSelection();
+        _ = SelectPending();
         (_mineNext, _teamsNext) = (mine.Next, teams.Next);
         foreach (var row in mine.Rows.Concat(teams.Rows))
         {
