@@ -33,11 +33,18 @@ internal sealed partial class ExpandedStateView : UserControl
         {
             // why: the wait is said once the live region is in the tree, so it is a change a screen reader hears.
             Dispatcher.UIThread.Post(state.AnnounceWaiting, DispatcherPriority.Loaded);
+            Dispatcher.UIThread.Post(() => state.SkillCard?.Announce(), DispatcherPriority.Loaded);
         }
     }
 
     private void OnStateChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (string.Equals(e.PropertyName, nameof(ExpandedStateViewModel.SkillCard), StringComparison.Ordinal))
+        {
+            // why: a new card's question is said once its live region is in the tree.
+            Dispatcher.UIThread.Post(() => _state?.SkillCard?.Announce(), DispatcherPriority.Loaded);
+        }
+
         if (string.Equals(e.PropertyName, nameof(ExpandedStateViewModel.IsConfirmingCancel), StringComparison.Ordinal))
         {
             Dispatcher.UIThread.Post(MoveFocus, DispatcherPriority.Loaded);
@@ -64,6 +71,22 @@ internal sealed partial class ExpandedStateView : UserControl
         if (sender is Control { DataContext: ExpandedCommandViewModel command })
         {
             _ = command.Copy(CancellationToken.None);
+        }
+    }
+
+    private void OnOpenSkillOutput(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: SkillOutput output })
+        {
+            _ = _state?.SkillCard?.Open(output, CancellationToken.None);
+        }
+    }
+
+    private void OnCopySkillOutput(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: SkillOutput output })
+        {
+            _ = _state?.SkillCard?.CopyPath(output, CancellationToken.None);
         }
     }
 
