@@ -24,8 +24,9 @@ public sealed class SkillsApiTests
 
         var first = read.Value.Blocks[0];
         Assert.Equal("/sindri/skills", canned.Path);
-        Assert.Equal(("office-hours", "step.skill.office-hours", "Shapes an idea into a plan folder with requirements and tasks.", ["fact:officeHoursFeatureDir"], false),
-            (first.Id, first.Descriptor, first.Sentence, first.Outputs, first.Pushes));
+        Assert.Equal(("office-hours", "step.skill.office-hours", "Shapes an idea into a plan folder with requirements and tasks.", false),
+            (first.Id, first.Descriptor, first.Sentence, first.Pushes));
+        Assert.Equal(["fact:officeHoursFeatureDir"], first.Outputs);   // a list compares by content only on its own, never inside a tuple
         Assert.Equal(("idea", "text", true), (first.Inputs[0].Key, first.Inputs[0].Type, first.Inputs[0].Required));
     }
 
