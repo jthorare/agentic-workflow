@@ -76,7 +76,15 @@ internal sealed class IssueReads(ILinearIssueStore issues, ILinearLookupStore? l
         return audience.IsError ? audience.Error : await issues.Since(marker, viewer, audience.Value, cancellationToken).ConfigureAwait(false);
     }
 
-    public ValueTask<Result<string?>> WorkspaceUrlKey(ContextScope scope, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public async ValueTask<Result<string?>> WorkspaceUrlKey(ContextScope scope, CancellationToken cancellationToken)
+    {
+        if (OwnerOnly(scope, "the workspace's URL key") is { } refused)
+        {
+            return refused;
+        }
+
+        return lookups is null ? Results.Success<string?>(value: null) : await lookups.WorkspaceUrlKey(cancellationToken).ConfigureAwait(false);
+    }
 
     private static Error? OwnerOnly(ContextScope scope, string what) =>
         scope.Caller.Kind == ContextCallerKind.Session ? ContextErrors.SessionsDisabled.With($"{what} are the owner's, not an agent session's") : null;

@@ -15,5 +15,9 @@ internal sealed class LinearLookups(LinearSources linear) : ILinearLookups
     }
 
     /// <inheritdoc />
-    public ValueTask<Result<string?>> FetchWorkspaceUrlKey(LinearSettings settings, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public ValueTask<Result<string?>> FetchWorkspaceUrlKey(LinearSettings settings, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        return linear.CreateLookupsReader(settings).ReadUrlKey(cancellationToken);
+    }
 }

@@ -15,4 +15,4 @@ internal sealed record LinearLookupsTeam(
     LinearConnection<LinearLookupsState>? States = null,
     LinearConnection<LinearLookupsCycle>? Cycles = null,
     LinearConnection<LinearLookupsMember>? Members = null,
-    LinearConnection<LinearNamed>? Labels = null);
+    LinearConnection<LinearLookupsLabel>? Labels = null);

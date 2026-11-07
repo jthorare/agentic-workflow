@@ -39,9 +39,54 @@ internal sealed class SqliteLinearLookupStore(ContextDatabase database) : ILinea
         }
     }
 
-    public ValueTask<Result<Unit>> ReplaceWorkspaceUrlKey(string urlKey, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public async ValueTask<Result<Unit>> ReplaceWorkspaceUrlKey(string urlKey, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(urlKey);
+        var writable = await database.Writable(cancellationToken).ConfigureAwait(false);
+        if (writable.IsError)
+        {
+            return writable.Error;
+        }
 
-    public ValueTask<Result<string?>> WorkspaceUrlKey(CancellationToken cancellationToken) => throw new NotSupportedException();
+        var begun = await writable.Value.BeginSession(cancellationToken).ConfigureAwait(false);
+        if (begun.IsError)
+        {
+            return ContextDatabase.Translate(begun.Error);
+        }
+
+        await using (begun.Value.ConfigureAwait(false))
+        {
+            if (await Exec(begun.Value, LinearLookupSql.ReplaceWorkspace, c => c.Bind("@key", urlKey), cancellationToken).ConfigureAwait(false) is { } failure)
+            {
+                return failure;
+            }
+
+            var committed = await begun.Value.Commit(cancellationToken).ConfigureAwait(false);
+            database.RestrictFiles();
+            return committed.IsError ? ContextDatabase.Translate(committed.Error) : Unit.Value;
+        }
+    }
+
+    public async ValueTask<Result<string?>> WorkspaceUrlKey(CancellationToken cancellationToken)
+    {
+        var readable = await database.Readable(cancellationToken).ConfigureAwait(false);
+        if (readable.IsError || readable.Value is not { } sessions)
+        {
+            return readable.IsError ? readable.Error : Results.Success<string?>(value: null);
+        }
+
+        var read = await sessions.BeginRead(cancellationToken).ConfigureAwait(false);
+        if (read.IsError)
+        {
+            return ContextDatabase.Translate(read.Error);
+        }
+
+        await using (read.Value.ConfigureAwait(false))
+        {
+            var keys = await SqliteQueries.List(read.Value, new SqlStatement(LinearLookupSql.Workspace), KeyMapper, cancellationToken).ConfigureAwait(false);
+            return keys.IsError ? ContextDatabase.Translate(keys.Error) : Results.Success<string?>(keys.Value.Count == 0 ? null : keys.Value[0]);
+        }
+    }
 
     public async ValueTask<Result<LinearTeamLookups?>> Team(string teamKey, CancellationToken cancellationToken)
     {
@@ -77,12 +122,12 @@ internal sealed class SqliteLinearLookupStore(ContextDatabase database) : ILinea
             return Results.Success<LinearTeamLookups?>(value: null);
         }
 
-        var (id, key) = teams.Value[0];
+        var (id, key, name, syncedAt) = teams.Value[0];
         var states = await List(session, LinearLookupSql.States, id, StateMapper, cancellationToken).ConfigureAwait(false);
         var cycles = states.IsError ? states.Error : await List(session, LinearLookupSql.Cycles, id, CycleMapper, cancellationToken).ConfigureAwait(false);
         var members = cycles.IsError ? cycles.Error : await List(session, LinearLookupSql.Members, id, MemberMapper, cancellationToken).ConfigureAwait(false);
         var labels = members.IsError ? members.Error : await List(session, LinearLookupSql.Labels, id, LabelMapper, cancellationToken).ConfigureAwait(false);
-        return labels.IsError ? labels.Error : Results.Success<LinearTeamLookups?>(new LinearTeamLookups(id, key, states.Value, cycles.Value, members.Value, labels.Value, Name: key, SyncedAt: default));
+        return labels.IsError ? labels.Error : Results.Success<LinearTeamLookups?>(new LinearTeamLookups(id, key, states.Value, cycles.Value, members.Value, labels.Value, name, syncedAt));
     }
 
     private static async ValueTask<Result<IReadOnlyList<T>>> List<T>(ISqliteSession session, string sql, ExternalId team, IRowMapper<T> mapper, CancellationToken cancellationToken)
@@ -99,7 +144,7 @@ internal sealed class SqliteLinearLookupStore(ContextDatabase database) : ILinea
             ?? await Exec(session, LinearLookupSql.DeleteCycles, c => c.Bind("@team", team.TeamId.Value), cancellationToken).ConfigureAwait(false)
             ?? await Exec(session, LinearLookupSql.DeleteMembers, c => c.Bind("@team", team.TeamId.Value), cancellationToken).ConfigureAwait(false)
             ?? await Exec(session, LinearLookupSql.DeleteLabels, c => c.Bind("@team", team.TeamId.Value), cancellationToken).ConfigureAwait(false)
-            ?? await Exec(session, LinearLookupSql.InsertTeam, c => c.Bind("@team", team.TeamId.Value).Bind("@key", team.TeamKey), cancellationToken).ConfigureAwait(false);
+            ?? await Exec(session, LinearLookupSql.InsertTeam, c => c.Bind("@team", team.TeamId.Value).Bind("@key", team.TeamKey).Bind("@name", team.Name).Bind("@synced", team.SyncedAt), cancellationToken).ConfigureAwait(false);
         return failure ?? await Insert(session, team, cancellationToken).ConfigureAwait(false);
     }
 
@@ -132,7 +177,7 @@ internal sealed class SqliteLinearLookupStore(ContextDatabase database) : ILinea
         var id = team.TeamId.Value;
         foreach (var member in team.Members)
         {
-            var failure = await Exec(session, LinearLookupSql.InsertMember, c => c.Bind("@team", id).Bind("@id", member.Id.Value).Bind("@name", member.Name).Bind("@display", member.DisplayName), cancellationToken).ConfigureAwait(false);
+            var failure = await Exec(session, LinearLookupSql.InsertMember, c => c.Bind("@team", id).Bind("@id", member.Id.Value).Bind("@name", member.Name).Bind("@display", member.DisplayName).Bind("@active", member.Active), cancellationToken).ConfigureAwait(false);
             if (failure is not null)
             {
                 return failure;
@@ -141,7 +186,7 @@ internal sealed class SqliteLinearLookupStore(ContextDatabase database) : ILinea
 
         foreach (var label in team.Labels)
         {
-            var failure = await Exec(session, LinearLookupSql.InsertLabel, c => c.Bind("@team", id).Bind("@id", label.Id.Value).Bind("@name", label.Name), cancellationToken).ConfigureAwait(false);
+            var failure = await Exec(session, LinearLookupSql.InsertLabel, c => c.Bind("@team", id).Bind("@id", label.Id.Value).Bind("@name", label.Name).Bind("@color", label.Color), cancellationToken).ConfigureAwait(false);
             if (failure is not null)
             {
                 return failure;
@@ -156,16 +201,19 @@ internal sealed class SqliteLinearLookupStore(ContextDatabase database) : ILinea
 
     private static string? Text(SqliteDataReader r, int ordinal) => r.IsDBNull(ordinal) ? null : r.GetString(ordinal);
 
-    private static IRowMapper<(ExternalId Id, string Key)> TeamMapper { get; } = new Mapper<(ExternalId, string)>(r => (ExternalId.From(r.GetString(0)), r.GetString(1)));
+    private static IRowMapper<(ExternalId Id, string Key, string Name, DateTimeOffset SyncedAt)> TeamMapper { get; } =
+        new Mapper<(ExternalId, string, string, DateTimeOffset)>(r => (ExternalId.From(r.GetString(0)), r.GetString(1), r.GetString(2), r.IsDBNull(3) ? default : SqliteRead.GetTimestamp(r, 3)));
+
+    private static IRowMapper<string> KeyMapper { get; } = new Mapper<string>(r => r.GetString(0));
 
     private static IRowMapper<LinearLookupState> StateMapper { get; } = new Mapper<LinearLookupState>(r => new LinearLookupState(ExternalId.From(r.GetString(0)), r.GetString(1), r.GetString(2), r.GetDouble(3)));
 
     private static IRowMapper<LinearLookupCycle> CycleMapper { get; } = new Mapper<LinearLookupCycle>(r =>
         new LinearLookupCycle(ExternalId.From(r.GetString(0)), r.GetInt32(1), Text(r, 2), SqliteRead.GetTimestamp(r, 3), SqliteRead.GetTimestamp(r, 4)));
 
-    private static IRowMapper<LinearLookupMember> MemberMapper { get; } = new Mapper<LinearLookupMember>(r => new LinearLookupMember(ExternalId.From(r.GetString(0)), r.GetString(1), Text(r, 2), Active: true));
+    private static IRowMapper<LinearLookupMember> MemberMapper { get; } = new Mapper<LinearLookupMember>(r => new LinearLookupMember(ExternalId.From(r.GetString(0)), r.GetString(1), Text(r, 2), r.GetInt64(3) != 0));
 
-    private static IRowMapper<LinearLookupLabel> LabelMapper { get; } = new Mapper<LinearLookupLabel>(r => new LinearLookupLabel(ExternalId.From(r.GetString(0)), r.GetString(1), Color: string.Empty));
+    private static IRowMapper<LinearLookupLabel> LabelMapper { get; } = new Mapper<LinearLookupLabel>(r => new LinearLookupLabel(ExternalId.From(r.GetString(0)), r.GetString(1), r.GetString(2)));
 
     private sealed class Mapper<T>(Func<SqliteDataReader, T> map) : IRowMapper<T>
     {
