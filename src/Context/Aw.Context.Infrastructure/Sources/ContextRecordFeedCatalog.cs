@@ -6,11 +6,12 @@ using Aw.Context.Core.Trust;
 using Aw.Context.Infrastructure.Docs;
 using Aw.Context.Infrastructure.Git;
 using Aw.Context.Infrastructure.Linear;
+using Microsoft.Extensions.Logging;
 
 namespace Aw.Context.Infrastructure.Sources;
 
 /// <summary>The feeds of the sources inside Context, in a stable order: repo docs over the repos in scope, then the design-doc library (the 'aw' root and the vaults; it runs with no repo in scope), then Linear when the profile names a 'context.sources.linear' token, then the external feeds the Host adds (GitHub). No repo in scope gives only the library, as <see cref="ContextSourceCatalog"/> gives none.</summary>
-internal sealed class ContextRecordFeedCatalog(IRecordStore store, GitCli git, LinearSources linear, IEnumerable<IExternalRecordFeeds>? external = null, LibraryParts? library = null) : IRecordFeedCatalog
+internal sealed class ContextRecordFeedCatalog(IRecordStore store, GitCli git, LinearSources linear, IEnumerable<IExternalRecordFeeds>? external = null, LibraryParts? library = null, ILogger<RepoDocsFeed>? repoDocsLog = null) : IRecordFeedCatalog
 {
     public IReadOnlyList<RecordFeed> For(ContextSettings settings, IReadOnlyList<ContextRepo> repos, Scrubbers scrubbers)
     {
@@ -20,7 +21,7 @@ internal sealed class ContextRecordFeedCatalog(IRecordStore store, GitCli git, L
         var feeds = new List<RecordFeed>(3);
         if (repos.Count > 0)
         {
-            feeds.Add(new RepoDocsFeed(repos, settings.IndexedDocGlobs, settings.GitHub?.Repos ?? [], store, git, scrubbers));
+            feeds.Add(new RepoDocsFeed(repos, settings.IndexedDocGlobs, settings.GitHub?.Repos ?? [], store, git, scrubbers, repoDocsLog));
         }
 
         if (LibraryFeedFor(settings, scrubbers) is { } libraryFeed)

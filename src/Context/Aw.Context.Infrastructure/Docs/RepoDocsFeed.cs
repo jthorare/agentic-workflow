@@ -10,6 +10,7 @@ using Aw.Context.Core.Sync;
 using Aw.Context.Core.Trust;
 using Aw.Context.Infrastructure.Git;
 using Aw.Kernel;
+using Microsoft.Extensions.Logging;
 
 namespace Aw.Context.Infrastructure.Docs;
 
@@ -20,9 +21,10 @@ namespace Aw.Context.Infrastructure.Docs;
 /// a blocked document is decided there. A stored record with no document at the head is in <see cref="RecordPage.Removed"/>.
 /// The cursor is a fingerprint of the scrub ruleset, the design-doc parser's version and every repo's head, so a pull at the same heads is an empty page
 /// (a replay writes nothing), a new head or ruleset is diffed against the store, and a page cut short by the limit answers
-/// a cursor that is not final, so the next pull carries on with what the store doesn't hold yet.
+/// a cursor that is not final, so the next pull carries on with what the store doesn't hold yet. A generated document's packet.json is hashed as a checkout writes it
+/// (attributes from the head commit, core.autocrlf from the repo's config; git before 2.42 falls back to the working tree's attributes and the pull logs one warning), the bytes write_packet.py hashed.
 /// </summary>
-internal sealed class RepoDocsFeed(IReadOnlyList<ContextRepo> repos, IReadOnlyList<string> globs, IReadOnlyList<string> githubRepos, IRecordStore store, GitCli git, Scrubbers scrubbers)
+internal sealed partial class RepoDocsFeed(IReadOnlyList<ContextRepo> repos, IReadOnlyList<string> globs, IReadOnlyList<string> githubRepos, IRecordStore store, GitCli git, Scrubbers scrubbers, ILogger<RepoDocsFeed>? logger = null)
     : RecordFeed(RepoDocs.Id)
 {
     private const int ListPage = 1000;
@@ -61,6 +63,7 @@ internal sealed class RepoDocsFeed(IReadOnlyList<ContextRepo> repos, IReadOnlyLi
         var items = new List<RecordItem>();
         var removed = new List<RecordKey>();
         var complete = true;
+        var notes = new PullNotes();
         foreach (var head in heads)
         {
             var plan = await Plan(head, cancellationToken).ConfigureAwait(false);
@@ -72,7 +75,7 @@ internal sealed class RepoDocsFeed(IReadOnlyList<ContextRepo> repos, IReadOnlyLi
             removed.AddRange(plan.Value.Removed);
             foreach (var change in plan.Value.Changed)
             {
-                var item = items.Count < limit ? await Item(head.Repo, change, cancellationToken).ConfigureAwait(false) : null;
+                var item = items.Count < limit ? await Item(head.Repo, change, notes, cancellationToken).ConfigureAwait(false) : null;
                 if (item is null)
                 {
                     complete = false;   // over the limit, or git can't read the blob this run: the next pull carries on
@@ -81,6 +84,11 @@ internal sealed class RepoDocsFeed(IReadOnlyList<ContextRepo> repos, IReadOnlyLi
 
                 items.Add(item);
             }
+        }
+
+        if (notes.WorkingTreeAttributes && logger is not null)
+        {
+            LogNoAttrSource(logger);
         }
 
         return (items, removed, complete);
@@ -122,7 +130,7 @@ internal sealed class RepoDocsFeed(IReadOnlyList<ContextRepo> repos, IReadOnlyLi
     {
         var beside = GeneratedSource.PathBeside(path);
         var packet = head.Tree.TryGetValue(beside, out var packetBlob) && !head.Symlinks.Contains(beside) ? packetBlob : null;
-        return new RepoDocChange(path, blob, packet, packet is null ? blob : GeneratedSource.Version(blob, packet));
+        return new RepoDocChange(path, blob, head.Head, beside, packet, packet is null ? blob : GeneratedSource.Version(blob, packet));
     }
 
     private async ValueTask<Result<Dictionary<RecordKey, StoredRecord>>> Stored(ContextRepo repo, CancellationToken cancellationToken)
@@ -152,7 +160,7 @@ internal sealed class RepoDocsFeed(IReadOnlyList<ContextRepo> repos, IReadOnlyLi
     }
 
     /// <summary>The document as a raw item, or null when git can't read its blob (or its packet's) this run (its stored record stays).</summary>
-    private async ValueTask<RecordItem?> Item(ContextRepo repo, RepoDocChange change, CancellationToken cancellationToken)
+    private async ValueTask<RecordItem?> Item(ContextRepo repo, RepoDocChange change, PullNotes notes, CancellationToken cancellationToken)
     {
         var text = await git.Blob(repo.Path, change.Blob, cancellationToken).ConfigureAwait(false);
         if (text.IsError)
@@ -163,13 +171,14 @@ internal sealed class RepoDocsFeed(IReadOnlyList<ContextRepo> repos, IReadOnlyLi
         string? sourceSha = null;
         if (change.PacketBlob is { } packet && GeneratedSource.IsGenerated(DesignDocParser.Parse(change.Path, text.Value).FrontMatter))
         {
-            var bytes = await git.BlobBytes(repo.Path, packet, cancellationToken).ConfigureAwait(false);
-            if (bytes.IsError)
+            var read = await git.CheckoutBytes(repo.Path, change.Head, change.PacketPath, packet, cancellationToken).ConfigureAwait(false);
+            if (read.IsError)
             {
                 return null;
             }
 
-            sourceSha = GeneratedSource.Sha256(bytes.Value);
+            notes.WorkingTreeAttributes |= read.Value.WorkingTreeAttributes;
+            sourceSha = GeneratedSource.Sha256(read.Value.Bytes);
         }
 
         return new RecordItem(RepoDocs.Key(repo.Name, change.Path), RecordKind.Doc, DocChunker.Title(text.Value, change.Path), text.Value, Author: null, Url: null, State: null,
@@ -182,4 +191,13 @@ internal sealed class RepoDocsFeed(IReadOnlyList<ContextRepo> repos, IReadOnlyLi
     /// <summary>True when the path fits a chunk id and a record key (no control or format characters, not too long), and no deny glob names it.</summary>
     private static bool Citable(ContextRepo repo, string path) =>
         !repo.Denies(path) && RepoDocs.TryChunkId(repo.Name, path, DocChunker.MaxLine, DocChunker.MaxLine, out _) && RepoDocs.TryKey(repo.Name, path, out _);
+
+    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "git lacks --attr-source (before 2.42): packet.json is hashed with the working tree's attributes, not the head commit's")]
+    private static partial void LogNoAttrSource(ILogger logger);
+
+    /// <summary>What one pull saw along the way.</summary>
+    private sealed class PullNotes
+    {
+        public bool WorkingTreeAttributes { get; set; }
+    }
 }
