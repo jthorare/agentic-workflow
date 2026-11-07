@@ -1,5 +1,7 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Api.Linear;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels;
 
 namespace Aw.Sindri.Ui.Tests.Linear;
 
@@ -14,13 +16,15 @@ public sealed class LinearSinceStripTests
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     [Fact]
+    // Sindri finds assigned and state changes by comparing what each sync stored, so it can't say who made them (actor null);
+    // only a mention names its author.
     public async Task The_strip_names_its_region_by_the_count_and_says_each_change_in_words()
     {
         var work = await _f.Shown(Token);
 
         Assert.Equal((true, "Since you last looked, 3 items"), (work.ShowsStrip, work.StripName));
         Assert.Equal(
-            ["ENG-31 assigned to you by Sam Lee", "Sam Lee mentioned you on ENG-12", "Sam Lee moved ENG-12 from Todo to In Progress"],
+            ["ENG-31 assigned to you", "Sam Lee mentioned you on ENG-12", "ENG-12 moved from Todo to In Progress"],
             work.StripRows.Select(r => r.Text),
             StringComparer.Ordinal);
     }
@@ -119,7 +123,7 @@ public sealed class LinearSinceStripTests
         var work = await _f.Shown(Token);
 
         Assert.Equal((true, true, 3), (work.ShowsStrip, work.StripFailed, work.Mine.Rows.Count));
-        Assert.Equal(("Couldn't load what changed", "Retry"), (ViewModels.Labels.LinearStripFailed, ViewModels.Labels.LinearStripRetry));
+        Assert.Equal(("Couldn't load what changed", "Retry"), (Labels.LinearStripFailed, Labels.LinearStripRetry));
     }
 
     [Fact]
@@ -132,5 +136,18 @@ public sealed class LinearSinceStripTests
         await work.RetryStrip();
 
         Assert.Equal((false, 3), (work.StripFailed, work.StripRows.Count));
+    }
+
+    [Fact]
+    public void A_row_whose_actor_is_known_names_them_and_a_mention_without_one_still_reads()
+    {
+        var sam = new LinearPerson("00000000-0000-4000-8000-0000000000a2", "Sam Lee");
+        static LinearSinceItem Item(string kind, LinearPerson? actor) =>
+            new(kind, "ENG-12", "Retry budget for the sync worker", actor, DateTimeOffset.UnixEpoch, From: kind == "state" ? "Todo" : null, To: kind == "state" ? "In Progress" : null);
+
+        Assert.Equal(
+            ["ENG-12 assigned to you by Sam Lee", "ENG-12 moved from Todo to In Progress by Sam Lee", "You were mentioned on ENG-12", "ENG-12 changed"],
+            [Labels.LinearSinceRow(Item("assigned", sam)), Labels.LinearSinceRow(Item("state", sam)), Labels.LinearSinceRow(Item("mentioned", actor: null)), Labels.LinearSinceRow(Item("priority", actor: null))],
+            StringComparer.Ordinal);
     }
 }

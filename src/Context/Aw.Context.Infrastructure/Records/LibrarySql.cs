@@ -4,7 +4,7 @@ namespace Aw.Context.Infrastructure.Records;
 internal static class LibrarySql
 {
     private const string DocColumns =
-        "d.doc_key, d.root, d.scope, d.doc_id, d.kind, d.status, d.project, d.repos, d.issues, d.parser_version, d.errors, r.title, r.url, r.audience_key";
+        "d.doc_key, d.root, d.scope, d.doc_id, d.kind, d.status, d.project, d.repos, d.issues, d.parser_version, d.errors, r.title, r.url, r.audience_key, r.updated_at";
 
     // The superset mask (the lexical leg's): the record's audience is allowed, or the record is listed and is not an 'owner:' one. The service applies AudienceScope.Allows to what comes back.
     internal const string Docs =

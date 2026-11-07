@@ -24,6 +24,20 @@ public interface ILinearIssueStore
     /// <returns>The issue, or null when it isn't stored, is removed, or the caller may not see it.</returns>
     public ValueTask<Result<LinearIssueRow?>> Get(RecordKey key, RecordAudience audience, CancellationToken cancellationToken);
 
+    /// <summary>Reads one issue by its human key, with its parent and comments, past a removal (the copy is marked removed).</summary>
+    /// <param name="key">The issue's key, 'ENG-12'.</param>
+    /// <param name="audience">What the caller may see.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The issue, or null when none has that identifier or the caller may not see it.</returns>
+    public ValueTask<Result<LinearIssueDetail?>> Get(LinearIssueKey key, RecordAudience audience, CancellationToken cancellationToken);
+
+    /// <summary>Counts the issues a list with this filter would page through, by state type.</summary>
+    /// <param name="filter">Which issues; its limit is ignored.</param>
+    /// <param name="audience">What the caller may see.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The counts.</returns>
+    public ValueTask<Result<LinearIssueCounts>> Count(LinearIssueFilter filter, RecordAudience audience, CancellationToken cancellationToken);
+
     /// <summary>Reads an issue's stored comments, newest first.</summary>
     /// <param name="key">The record key.</param>
     /// <param name="audience">What the caller may see.</param>

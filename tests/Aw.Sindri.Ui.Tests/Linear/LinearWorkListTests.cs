@@ -1,5 +1,7 @@
+using System.Net;
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels.Queue;
 
 namespace Aw.Sindri.Ui.Tests.Linear;
@@ -30,6 +32,19 @@ public sealed class LinearWorkListTests
         Assert.Equal(["ENG-57", "ENG-44"], work.Teams.Rows.Select(r => r.Key), StringComparer.Ordinal);
         Assert.Equal(("52", "3"), (work.Teams.Count, work.Mine.Count));
         Assert.Equal([("mine", 50), ("teams", 50)], _f.Server.LinearQueries.Select(q => (q.Group, q.Limit ?? 0)).Order());
+    }
+
+    [Fact]
+    public async Task A_group_with_a_next_page_and_no_total_counts_what_it_shows_with_a_plus()
+    {
+        // Context gives no count while a next page exists; the total is a number only on the last page.
+        var body = JsonNode.Parse(GoldenFiles.Api("linear-issues", "teams-page2"))!;
+        (body["next"], body["total"]) = ("cur_page3", null);
+        _f.Teams = new RouteAnswer(HttpStatusCode.OK, body.ToJsonString());
+
+        var work = await _f.Shown(Token);
+
+        Assert.Equal(("2+", "3"), (work.Teams.Count, work.Mine.Count));
     }
 
     [Fact]

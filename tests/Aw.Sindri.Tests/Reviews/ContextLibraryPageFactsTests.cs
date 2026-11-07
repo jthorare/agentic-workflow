@@ -153,6 +153,8 @@ public sealed class ContextLibraryPageFactsTests
 
         public IReadOnlyList<SourceProgress> Progress { get; set; } = [];
 
+        public ValueTask<Result<IReadOnlyDictionary<string, IReadOnlyList<LibraryDoc>>>> DocsNaming(IReadOnlyList<string> issueKeys, AudienceScope audience, CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success<IReadOnlyDictionary<string, IReadOnlyList<LibraryDoc>>>(new Dictionary<string, IReadOnlyList<LibraryDoc>>(StringComparer.Ordinal)));
+
         public ValueTask<Result<IReadOnlyList<LibraryDoc>>> ListDocs(LibraryDocFilter filter, AudienceScope audience, CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success(Docs));
 
         ValueTask<Result<IReadOnlyList<LibraryRootStatus>>> IContextLibrary.Roots(ContextScope scope, CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success(Statuses));

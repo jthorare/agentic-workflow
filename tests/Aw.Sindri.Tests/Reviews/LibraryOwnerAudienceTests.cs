@@ -74,6 +74,8 @@ public sealed class LibraryOwnerAudienceTests
     {
         public IReadOnlyList<LibraryDoc> Docs { get; set; } = [];
 
+        public ValueTask<Result<IReadOnlyDictionary<string, IReadOnlyList<LibraryDoc>>>> DocsNaming(IReadOnlyList<string> issueKeys, AudienceScope audience, CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success<IReadOnlyDictionary<string, IReadOnlyList<LibraryDoc>>>(new Dictionary<string, IReadOnlyList<LibraryDoc>>(StringComparer.Ordinal)));
+
         public ValueTask<Result<IReadOnlyList<LibraryDoc>>> ListDocs(LibraryDocFilter filter, AudienceScope audience, CancellationToken cancellationToken) =>
             ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryDoc>>([.. Docs.Where(d => audience.Allows(d.Audience, d.Key))]));
 
