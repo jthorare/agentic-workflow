@@ -8,4 +8,6 @@ namespace Aw.Context.Testing.Linear;
 /// <param name="TeamId">The team a workflow state, label or cycle belongs to (null for a workspace label or a cycle every team has).</param>
 /// <param name="StartsAt">A cycle's start (ISO 8601).</param>
 /// <param name="EndsAt">A cycle's end (ISO 8601).</param>
-internal sealed record LinearRow(string Id, string Name, string? Key = null, string? Type = null, string? TeamId = null, string? StartsAt = null, string? EndsAt = null);
+/// <param name="Color">A label's colour ('#eb5757').</param>
+/// <param name="Active">False for a member who left.</param>
+internal sealed record LinearRow(string Id, string Name, string? Key = null, string? Type = null, string? TeamId = null, string? StartsAt = null, string? EndsAt = null, string? Color = null, bool Active = true);

@@ -70,6 +70,9 @@ internal sealed class ContextEngine(
     public ValueTask<Result<IReadOnlyList<LinearCommentRow>>> IssueComments(RecordKey key, ContextScope scope, CancellationToken cancellationToken) =>
         reads.IssueComments(key, scope, cancellationToken);
 
+    public ValueTask<Result<string?>> WorkspaceUrlKey(ContextScope scope, CancellationToken cancellationToken) =>
+        reads.WorkspaceUrlKey(scope, cancellationToken);
+
     public ValueTask<Result<LinearTeamLookups?>> IssueLookups(string team, ContextScope scope, CancellationToken cancellationToken) =>
         reads.IssueLookups(team, scope, cancellationToken);
 

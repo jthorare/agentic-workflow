@@ -161,26 +161,10 @@ internal sealed partial class GitCli
 
     private async ValueTask<Result<(int Exit, string Stdout)>> Run(string repo, string[] args, CancellationToken cancellationToken, string? locale = null)
     {
-        var start = new ProcessStartInfo(_command[0])
-        {
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            StandardOutputEncoding = Encoding.UTF8,
-        };
-        foreach (var name in start.Environment.Keys.Where(k => k.StartsWith("GIT_", StringComparison.Ordinal)).ToList())
-        {
-            _ = start.Environment.Remove(name);
-        }
-
+        var start = CleanGit(["-C", repo, "-c", "core.quotepath=off", .. args]);
         if (locale is not null)
         {
             start.Environment["LC_ALL"] = locale;   // case folding of 'grep -i' follows the locale
-        }
-
-        foreach (var arg in (string[])[.. _command.Skip(1), "-C", repo, "-c", "core.quotepath=off", .. args])
-        {
-            start.ArgumentList.Add(arg);
         }
 
         return await Execute(start, args[0], static (stdout, token) => stdout.ReadToEndAsync(token), cancellationToken).ConfigureAwait(false);
@@ -236,7 +220,7 @@ internal sealed partial class GitCli
 
     private ProcessStartInfo CleanGit(string[] args)
     {
-        var start = new ProcessStartInfo(_command[0], [.. _command.Skip(1), .. args]) { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false };
+        var start = new ProcessStartInfo(_command[0], [.. _command.Skip(1), .. args]) { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, StandardOutputEncoding = Encoding.UTF8 };
         foreach (var name in start.Environment.Keys.Where(k => k.StartsWith("GIT_", StringComparison.Ordinal)).ToList())
         {
             _ = start.Environment.Remove(name);

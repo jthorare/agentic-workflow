@@ -391,7 +391,7 @@
                     </controls:Deferred.Template>
                   </controls:Deferred>
                 </ScrollViewer>
-                <ScrollViewer x:Name="IssueSheetScroll" IsVisible="{Binding IsIssueSheet}">
+                <ScrollViewer x:Name="IssueSheetScroll" IsVisible="{Binding IsIssueSheet}" VerticalScrollBarVisibility="Disabled">
                   <controls:Deferred DataContext="{Binding IssueSheet}">
                     <controls:Deferred.Template>
                       <DataTemplate><lnv:LinearIssueSheetView x:Name="IssueSheetContent" /></DataTemplate>
