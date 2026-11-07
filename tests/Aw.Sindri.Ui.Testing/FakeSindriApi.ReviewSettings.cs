@@ -18,20 +18,24 @@ internal sealed partial class FakeSindriApi
     /// <summary>When set, the save waits for it: the sheet stays on Saving until the test completes it.</summary>
     public TaskCompletionSource? ReviewSettingsSaveGate { get; set; }
 
+    /// <summary>When set, the settings read waits for it: the section keeps what it has until the test completes it.</summary>
+    public TaskCompletionSource? ReviewSettingsGate { get; set; }
+
     /// <summary>The projects whose settings were read, in order.</summary>
     public IReadOnlyList<string> ReviewSettingsReads { get { lock (_gate) { return [.. _settingsReads]; } } }
 
     /// <summary>The saves the sheet asked for, in order.</summary>
     public IReadOnlyList<ReviewSettingsSave> ReviewSettingsSaves { get { lock (_gate) { return [.. _settingsSaves]; } } }
 
-    public Task<Result<ReviewSettingsRead>> GetReviewSettings(Uri api, string project, CancellationToken cancellationToken)
+    public async Task<Result<ReviewSettingsRead>> GetReviewSettings(Uri api, string project, CancellationToken cancellationToken)
     {
         lock (_gate)
         {
             _settingsReads.Add(project);
         }
 
-        return Task.FromResult(Answer<ReviewSettingsRead>(api, ReviewRoutes.SettingsOf(project), ReviewSettingsAnswer));
+        await WaitFor(ReviewSettingsGate, cancellationToken).ConfigureAwait(false);
+        return Answer<ReviewSettingsRead>(api, ReviewRoutes.SettingsOf(project), ReviewSettingsAnswer);
     }
 
     public async Task<Result<ReviewSettingsSaved>> SaveReviewSettings(Uri api, ReviewSettingsSave request, CancellationToken cancellationToken)

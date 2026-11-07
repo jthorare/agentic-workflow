@@ -102,6 +102,7 @@ internal sealed partial class ReviewSettingsViewModel(ISindriApi api) : Observab
             Set(ref field, value);
             OnChanged(nameof(IsReadOnly));
             OnChanged(nameof(CanEdit));
+            OnChanged(nameof(CanSave));
         }
     } = true;
 
@@ -126,8 +127,22 @@ internal sealed partial class ReviewSettingsViewModel(ISindriApi api) : Observab
     /// <summary>"Save and approve", or "Saving…" while the write is in flight.</summary>
     public string SaveText => IsSaving ? Labels.ProjectSaving : Labels.ReviewSettingsSaveApprove;
 
-    /// <summary>True when the last save found the profile changed since the settings were read: the stale line with Reload shows.</summary>
-    public bool IsStale { get; private set => Set(ref field, value); }
+    /// <summary>True when the settings on screen can't be trusted until Reload: the profile changed since they were read, or a save went through but the read-back failed. Save is off meanwhile.</summary>
+    public bool IsStale
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(CanSave));
+        }
+    }
+
+    /// <summary>The line above Reload: why the settings need reading again.</summary>
+    public string StaleText { get; private set => Set(ref field, value); } = Labels.ReviewSettingsStale;
+
+    /// <summary>True while Save can be pressed: the settings are the owner's to change and none is stale.</summary>
+    public bool CanSave => CanChange && !IsStale;
 
     /// <summary>The line after a save that waits for a profile approval; empty otherwise.</summary>
     public string Note { get; private set => Set(ref field, value); } = string.Empty;
@@ -154,14 +169,14 @@ internal sealed partial class ReviewSettingsViewModel(ISindriApi api) : Observab
             return;
         }
 
-        await Read(project, cancellationToken).ConfigureAwait(true);
+        _ = await Read(project, discard: false, cancellationToken).ConfigureAwait(true);
     }
 
     /// <summary>Drops every edit and reads the settings again.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>A task that ends when the read has been drawn.</returns>
     internal Task Discard(CancellationToken cancellationToken) =>
-        _read is { } read && !IsSaving ? Read(read.Project, cancellationToken) : Task.CompletedTask;
+        _read is { } read && !IsSaving ? Read(read.Project, discard: true, cancellationToken) : Task.CompletedTask;
 
     /// <summary>Forgets the project: another sheet is opening.</summary>
     internal void Clear()
@@ -172,21 +187,33 @@ internal sealed partial class ReviewSettingsViewModel(ISindriApi api) : Observab
         (Note, SaveError, Announcement) = (string.Empty, string.Empty, string.Empty);
     }
 
-    private async Task Read(string project, CancellationToken cancellationToken)
+    // Reads and draws; false when the settings can't be read. Unless the owner asked to discard, a read never draws over text typed while it was out.
+    private async Task<bool> Read(string project, bool discard, CancellationToken cancellationToken)
     {
         if (_url is not { } url)
         {
-            return;
+            return false;
         }
 
         var generation = ++_generation;
+        var before = _snapshot is null ? null : Snapshot();
         var answer = await api.GetReviewSettings(url, project, cancellationToken).ConfigureAwait(true);
-        if (generation != _generation || answer.IsError)
+        if (generation != _generation)
         {
-            return;   // another project took over, or the settings can't be read: the section stays as it was
+            return true;   // another project took over
         }
 
-        Draw(answer.Value);
+        if (answer.IsError)
+        {
+            return false;   // the section stays as it was
+        }
+
+        if (discard || before is null || string.Equals(before, Snapshot(), StringComparison.Ordinal))
+        {
+            Draw(answer.Value);
+        }
+
+        return true;
     }
 
     private void Draw(ReviewSettingsRead read)
@@ -245,11 +272,18 @@ internal sealed partial class ReviewSettingsViewModel(ISindriApi api) : Observab
     private string Signature(string id) => id switch
     {
         PanelsKeyId => string.Join('|', PanelRows.Where(p => p.Visible).Select(p => p.Id)),
-        GroupsKeyId => string.Join('|', GroupRows.Select(g => $"{g.Name}\u001f{g.GlobsText}")),
+        GroupsKeyId => string.Join('|', GroupRows.Where(Filled).Select(g => $"{g.Name}\u001f{g.GlobsText}")),
         CollapseKeyId => CollapseText,
-        RiskyKeyId => string.Join('|', RiskRows.Select(r => $"{r.GlobsText}\u001f{r.Why}")),
-        _ => string.Join('|', CheckRows.Select(c => $"{c.Id}\u001f{c.Title}\u001f{c.WhenText}\u001f{c.NeedText}")),
+        RiskyKeyId => string.Join('|', RiskRows.Where(Filled).Select(r => $"{r.GlobsText}\u001f{r.Why}")),
+        _ => string.Join('|', CheckRows.Where(Filled).Select(c => $"{c.Id}\u001f{c.Title}\u001f{c.WhenText}\u001f{c.NeedText}")),
     };
+
+    // A row the owner added and left empty is dropped when sending, so it is not a change either.
+    internal static bool Filled(SettingsGroupRow row) => row.Name.Trim().Length > 0 || row.GlobsText.Trim().Length > 0;
+
+    internal static bool Filled(SettingsRiskRow row) => row.GlobsText.Trim().Length > 0 || row.Why.Trim().Length > 0;
+
+    internal static bool Filled(SettingsCheckRow row) => row.Id.Trim().Length > 0 || row.Title.Trim().Length > 0 || row.NeedText.Trim().Length > 0;
 
     private string Snapshot() =>
         string.Join('\u001e', [Name, Extends, ReposText, .. Keys.Select(k => k.IsReset + Signature(k.Id))]);

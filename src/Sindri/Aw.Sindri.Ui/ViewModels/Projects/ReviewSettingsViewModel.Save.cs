@@ -12,7 +12,7 @@ internal sealed partial class ReviewSettingsViewModel
     /// <returns>A task that ends when the answer is drawn.</returns>
     internal async Task Save(CancellationToken cancellationToken)
     {
-        if (_read is not { } read || _url is not { } url || IsSaving || !CanChange)
+        if (_read is not { } read || _url is not { } url || IsSaving || !CanSave)
         {
             return;
         }
@@ -24,31 +24,11 @@ internal sealed partial class ReviewSettingsViewModel
             return;
         }
 
-        if (await Send(new ReviewSettingsSave(read.Project, Lines(ReposText), Name.Trim(), entry, Approve: true, read.Hash), url, cancellationToken).ConfigureAwait(true) is not { } answer)
-        {
-            return;   // the sheet moved to another project while the save was out: its answer belongs to nobody here
-        }
-
-        if (answer.IsError)
-        {
-            Refused(answer.Error);
-            return;
-        }
-
-        (Note, Announcement) = answer.Value.Approved ? (string.Empty, Labels.ReviewSettingsSavedApproved) : (Labels.ReviewSettingsPending(answer.Value.PendingCount), string.Empty);
-        _snapshot = null;   // saved: the read below replaces every edit
-        await Read(read.Project, cancellationToken).ConfigureAwait(true);
-    }
-
-    // Sends the save; null when the sheet switched projects meanwhile (the answer is dropped, and the new project's saving state is left alone).
-    private async Task<Result<ReviewSettingsSaved>?> Send(ReviewSettingsSave request, Uri url, CancellationToken cancellationToken)
-    {
         var generation = _generation;
-        IsSaving = true;
+        IsSaving = true;   // fields stay locked through the read-back, so it cannot wipe typing
         try
         {
-            var answer = await api.SaveReviewSettings(url, request, cancellationToken).ConfigureAwait(true);
-            return generation == _generation ? answer : null;
+            await Send(new ReviewSettingsSave(read.Project, Lines(ReposText), Name.Trim(), entry, Approve: true, read.Hash), url, generation, cancellationToken).ConfigureAwait(true);
         }
         finally
         {
@@ -59,12 +39,36 @@ internal sealed partial class ReviewSettingsViewModel
         }
     }
 
+    // Sends the save and reads the settings back. An answer that comes after the sheet moved to another project belongs to nobody here and is dropped.
+    private async Task Send(ReviewSettingsSave request, Uri url, int generation, CancellationToken cancellationToken)
+    {
+        var answer = await api.SaveReviewSettings(url, request, cancellationToken).ConfigureAwait(true);
+        if (generation != _generation)
+        {
+            return;
+        }
+
+        if (answer.IsError)
+        {
+            Refused(answer.Error);
+            return;
+        }
+
+        (Note, Announcement) = answer.Value.Approved ? (string.Empty, Labels.ReviewSettingsSavedApproved) : (Labels.ReviewSettingsPending(answer.Value.PendingCount), string.Empty);
+        _snapshot = null;   // saved: the read below replaces every edit
+        if (!await Read(request.Project, discard: true, cancellationToken).ConfigureAwait(true))
+        {
+            (StaleText, IsStale) = (Labels.ReviewSettingsReadBack, true);   // saved, but the hash on screen is old: no second save until Reload
+        }
+    }
+
     // Only a key the entry already sets, or the owner changed, goes out; a reset key or one left at its inherited value stays out.
     private ReviewSettingsEntry? Entry()
     {
-        if (Checks() is not { } checks)
+        List<ReviewSettingsCheck>? checks = null;
+        if (Sent(ChecksKey) && (checks = Checks()) is null)
         {
-            return null;
+            return null;   // a bad rule under a reset key is not sent and does not block the save
         }
 
         return new ReviewSettingsEntry(
@@ -73,14 +77,14 @@ internal sealed partial class ReviewSettingsViewModel
             Groups: Sent(GroupsKey) ? Groups() : null,
             Collapse: Sent(CollapseKey) ? Lines(CollapseText) : null,
             Risky: Sent(RiskyKey) ? Risky() : null,
-            Checks: Sent(ChecksKey) ? checks : null);
+            Checks: checks);
     }
 
     private List<ReviewSettingsGroup> Groups() =>
-        [.. GroupRows.Where(g => g.Name.Trim().Length > 0 || g.GlobsText.Trim().Length > 0).Select(g => new ReviewSettingsGroup(g.Name.Trim(), Lines(g.GlobsText)))];
+        [.. GroupRows.Where(Filled).Select(g => new ReviewSettingsGroup(g.Name.Trim(), Lines(g.GlobsText)))];
 
     private List<ReviewSettingsRisk> Risky() =>
-        [.. RiskRows.Where(r => r.GlobsText.Trim().Length > 0 || r.Why.Trim().Length > 0).Select(r => new ReviewSettingsRisk(Lines(r.GlobsText), r.Why.Trim()))];
+        [.. RiskRows.Where(Filled).Select(r => new ReviewSettingsRisk(Lines(r.GlobsText), r.Why.Trim()))];
 
     private bool Sent(ReviewSettingsKey key) => !key.IsReset && (key.WasOwn || !string.Equals(Signature(key.Id), key.Baseline, StringComparison.Ordinal));
 
@@ -88,7 +92,7 @@ internal sealed partial class ReviewSettingsViewModel
     private List<ReviewSettingsCheck>? Checks()
     {
         List<ReviewSettingsCheck> checks = [];
-        foreach (var row in CheckRows.Where(c => c.Id.Trim().Length > 0 || c.Title.Trim().Length > 0 || c.NeedText.Trim().Length > 0))
+        foreach (var row in CheckRows.Where(Filled))
         {
             var need = string.Equals(row.NeedText, row.OriginalNeedText, StringComparison.Ordinal) && row.Need is not null ? row.Need : ReviewSettingsNeed.Parse(row.NeedText);
             if (need is null)
@@ -114,7 +118,7 @@ internal sealed partial class ReviewSettingsViewModel
         }
         else if (string.Equals(error.Code, StaleHash, StringComparison.Ordinal))
         {
-            IsStale = true;
+            (StaleText, IsStale) = (Labels.ReviewSettingsStale, true);
         }
         else if (FieldOf(error) is { } field)
         {

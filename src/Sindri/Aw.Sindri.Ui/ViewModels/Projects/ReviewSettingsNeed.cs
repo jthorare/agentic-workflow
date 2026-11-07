@@ -46,6 +46,10 @@ internal static partial class ReviewSettingsNeed
         if (string.Equals(key, "ci", StringComparison.Ordinal) && AppSuffix.Match(value) is { Success: true } suffix)
         {
             (value, app) = (suffix.Groups["ci"].Value.Trim(), suffix.Groups["app"].Value.Trim());
+            if (app.Length == 0)
+            {
+                return null;   // "ci: x (app:)" names no app
+            }
         }
 
         using var stream = new MemoryStream();
@@ -69,7 +73,7 @@ internal static partial class ReviewSettingsNeed
         return document.RootElement.Clone();
     }
 
-    [GeneratedRegex(@"^(?<ci>.*?)\s*\(app:\s*(?<app>.+?)\)$", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex(@"^(?<ci>.*?)\s*\(app:\s*(?<app>.*?)\)$", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex AppSuffix { get; }
 
     private static bool Member(Utf8JsonWriter writer, string key, string value)
@@ -97,13 +101,32 @@ internal static partial class ReviewSettingsNeed
         }
 
         writer.WriteStartArray(key);
-        foreach (var glob in value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        foreach (var glob in SplitGlobs(value))
         {
             writer.WriteStringValue(glob);
         }
 
         writer.WriteEndArray();
         return true;
+    }
+
+    // Commas separate globs, except inside braces: src/{a,b}/** is one glob.
+    private static List<string> SplitGlobs(string value)
+    {
+        List<string> globs = [];
+        var (depth, start) = (0, 0);
+        for (var i = 0; i < value.Length; i++)
+        {
+            depth += value[i] switch { '{' => 1, '}' when depth > 0 => -1, _ => 0 };
+            if (value[i] == ',' && depth == 0)
+            {
+                globs.Add(value[start..i]);
+                start = i + 1;
+            }
+        }
+
+        globs.Add(value[start..]);
+        return [.. globs.Select(g => g.Trim()).Where(g => g.Length > 0)];
     }
 
     private static string Value(JsonElement value) =>

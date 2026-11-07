@@ -9,7 +9,8 @@ namespace Aw.Sindri.Ui.ViewModels.Projects;
 /// <param name="whenText">The globs, one per line; empty means always.</param>
 /// <param name="needText">What decides it.</param>
 /// <param name="need">The need as the API wrote it, kept while the text is left as it was.</param>
-internal sealed class SettingsCheckRow(int index, string id, string title, string whenText, string needText, JsonElement? need) : ObservableObject
+/// <param name="originalNeedText">The need text as it was read, when this row is a copy of an edited one; null means <paramref name="needText"/>.</param>
+internal sealed class SettingsCheckRow(int index, string id, string title, string whenText, string needText, JsonElement? need, string? originalNeedText = null) : ObservableObject
 {
     /// <summary>The row's place, from 1.</summary>
     public int Index { get; } = index;
@@ -33,7 +34,7 @@ internal sealed class SettingsCheckRow(int index, string id, string title, strin
     public bool NeedReadOnly { get; } = ReviewSettingsNeed.IsCommand(need);
 
     /// <summary>The need text as it was when the row was read.</summary>
-    internal string OriginalNeedText { get; } = needText;
+    internal string OriginalNeedText { get; } = originalNeedText ?? needText;
 
     /// <summary>The id field's name.</summary>
     public string IdName => Labels.ReviewSettingsRowField(Labels.ReviewSettingsCheckRow, Index, Labels.ReviewSettingsFieldId);
@@ -58,5 +59,5 @@ internal sealed class SettingsCheckRow(int index, string id, string title, strin
     /// <summary>The same row at another place.</summary>
     /// <param name="place">The new place, from 1.</param>
     /// <returns>The copy.</returns>
-    internal SettingsCheckRow At(int place) => new(place, Id, Title, WhenText, NeedText, Need);
+    internal SettingsCheckRow At(int place) => new(place, Id, Title, WhenText, NeedText, Need, OriginalNeedText);
 }

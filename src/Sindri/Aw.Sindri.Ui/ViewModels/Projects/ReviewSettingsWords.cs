@@ -31,9 +31,6 @@ internal sealed class ReviewSettingsWords
     /// <summary>The add-check button.</summary>
     public string AddCheck => Labels.ReviewSettingsAddCheck;
 
-    /// <summary>The stale-profile line.</summary>
-    public string Stale => Labels.ReviewSettingsStale;
-
     /// <summary>The Reload button.</summary>
     public string Reload => Labels.ReviewSettingsReload;
 

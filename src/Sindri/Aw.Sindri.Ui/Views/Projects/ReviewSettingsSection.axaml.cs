@@ -65,8 +65,22 @@ internal sealed partial class ReviewSettingsSection : UserControl
         }
     }
 
-    private void OnSave(object? sender, RoutedEventArgs e) => _ = Settings?.Save(CancellationToken.None);
+#pragma warning disable MA0155 // why: an Avalonia RoutedEvent handler returns void, so it can only be async void
+    private async void OnSave(object? sender, RoutedEventArgs e)
+    {
+        if (Settings is { } settings)
+        {
+            await settings.Save(CancellationToken.None).ConfigureAwait(true);
+        }
+    }
 
-    private void OnDiscard(object? sender, RoutedEventArgs e) => _ = Settings?.Discard(CancellationToken.None);
+    private async void OnDiscard(object? sender, RoutedEventArgs e)
+    {
+        if (Settings is { } settings)
+        {
+            await settings.Discard(CancellationToken.None).ConfigureAwait(true);
+        }
+    }
+#pragma warning restore MA0155
 }
 #pragma warning restore MA0182

@@ -486,6 +486,106 @@ public sealed class ReviewSettingsTests
     }
 
     [Fact]
+    public async Task A_removed_row_keeps_the_need_it_was_read_with_so_an_edit_of_a_later_row_is_not_lost()
+    {
+        var settings = await Opened("shared-entry");
+        settings.CheckRows[1].NeedText = "ci: b";
+
+        settings.RemoveCheck(settings.CheckRows[0]);
+        await settings.Save(Token);
+
+        Assert.Equal("""{"ci":"b"}""", OnlySave().Entry.Checks!.Single().Need!.Value.GetRawText());
+    }
+
+    [Fact]
+    public async Task A_read_in_flight_does_not_draw_over_text_typed_meanwhile()
+    {
+        var settings = await Opened();
+        _f.Server.ReviewSettingsGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var reading = settings.Open(ProjectsFixture.Url, ProjectSheetFixture.Attached, Token);
+
+        settings.CollapseText = "typed/**";
+        _f.Server.ReviewSettingsGate.SetResult();
+        await reading;
+
+        Assert.Equal(("typed/**", true), (settings.CollapseText, settings.HasChanges));
+    }
+
+    [Fact]
+    public async Task After_a_good_save_the_fields_stay_locked_until_the_read_back_is_drawn()
+    {
+        var settings = await Opened();
+        _f.Server.ReviewSettingsGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var saving = settings.Save(Token);
+        for (var i = 0; i < 400 && _f.Server.ReviewSettingsReads.Count < 2; i++)
+        {
+            await Task.Delay(5, Token);
+        }
+
+        Assert.Equal((2, false), (_f.Server.ReviewSettingsReads.Count, settings.CanEdit));
+
+        _f.Server.ReviewSettingsGate.SetResult();
+        await saving;
+        Assert.True(settings.CanEdit);
+    }
+
+    [Fact]
+    public async Task A_failed_read_back_says_so_and_keeps_Save_off_until_Reload()
+    {
+        var settings = await Opened();
+        _f.Server.ReviewSettingsAnswer = RouteAnswer.Problem(HttpStatusCode.BadRequest, "SND-REVIEW-002", "gone");
+
+        await settings.Save(Token);
+        await settings.Save(Token);
+
+        Assert.Equal((true, Labels.ReviewSettingsReadBack, false, 1), (settings.IsStale, settings.StaleText, settings.CanSave, _f.Server.ReviewSettingsSaves.Count));
+
+        _f.Server.ReviewSettingsAnswer = RouteAnswer.Api("review-settings", "default-only");
+        await settings.Discard(Token);
+
+        Assert.Equal((false, true), (settings.IsStale, settings.CanSave));
+    }
+
+    [Fact]
+    public async Task An_added_row_left_empty_is_not_a_change_and_does_not_wipe_what_is_inherited()
+    {
+        var settings = await Opened();
+
+        settings.AddGroup();
+        settings.AddRisk();
+        settings.AddCheck();
+        await settings.Save(Token);
+
+        Assert.Equal((false, null, null, null), (settings.HasChanges, OnlySave().Entry.Groups, OnlySave().Entry.Risky, OnlySave().Entry.Checks));
+    }
+
+    [Fact]
+    public async Task A_bad_rule_under_a_reset_checks_key_does_not_block_the_save()
+    {
+        var settings = await Opened("shared-entry");
+        settings.AddCheck();
+        settings.CheckRows[2].Id = "bad";
+        settings.CheckRows[2].NeedText = "make test";
+
+        settings.Reset(settings.ChecksKey);
+        await settings.Save(Token);
+
+        Assert.Null(OnlySave().Entry.Checks);
+        Assert.Equal(string.Empty, settings.ChecksKey.Error);
+    }
+
+    [Fact]
+    public void A_brace_glob_in_changedWith_is_not_split_at_its_comma()
+    {
+        var need = ReviewSettingsNeed.Parse("changedWith: src/{a,b}/**, c/**");
+
+        Assert.Equal("""{"changedWith":["src/{a,b}/**","c/**"]}""", need!.Value.GetRawText());
+    }
+
+    [Fact]
+    public void A_ci_need_with_an_empty_app_is_not_read() => Assert.Null(ReviewSettingsNeed.Parse("ci: x (app:)"));
+
+    [Fact]
     public async Task Discard_drops_the_edits_and_reads_again()
     {
         var settings = await Opened();

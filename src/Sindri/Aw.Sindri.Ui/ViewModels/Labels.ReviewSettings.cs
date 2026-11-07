@@ -50,6 +50,9 @@ internal static partial class Labels
     /// <summary>Said when the profile changed since the settings were read.</summary>
     internal const string ReviewSettingsStale = "The profile changed since you opened this.";
 
+    /// <summary>Said when a save went through but reading the settings back failed.</summary>
+    internal const string ReviewSettingsReadBack = "Saved, but couldn't read the settings back. Reload.";
+
     /// <summary>Reads the settings again, dropping the edits.</summary>
     internal const string ReviewSettingsReload = "Reload";
 
