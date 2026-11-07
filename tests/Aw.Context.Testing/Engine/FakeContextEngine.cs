@@ -122,11 +122,11 @@ public sealed class FakeContextEngine : IContextEngine
     public ValueTask<Result<IReadOnlyList<LibraryDoc>>> ListDocs(LibraryDocFilter filter, AudienceScope audience, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryDoc>>([]));
 
-    /// <inheritdoc cref="ListDocs" />
+    /// <summary>The fake keeps no library: it returns no doc.</summary>
     public ValueTask<Result<LibraryDoc?>> GetDoc(RecordKey key, AudienceScope audience, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<LibraryDoc?>>((LibraryDoc?)null);
 
-    /// <inheritdoc cref="ListDocs" />
+    /// <summary>The fake keeps no library: it returns no items.</summary>
     public ValueTask<Result<IReadOnlyList<LibraryItem>>> Items(RecordKey docKey, AudienceScope audience, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryItem>>([]));
 
@@ -134,11 +134,11 @@ public sealed class FakeContextEngine : IContextEngine
     public ValueTask<Result<IReadOnlyList<LibraryRefResolution>>> Resolve(IReadOnlyList<string> refs, string? repo, AudienceScope audience, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryRefResolution>>([.. refs.Select(static r => new LibraryRefResolution(r, LibraryRefStatus.Missing, Doc: null, Item: null))]));
 
-    /// <inheritdoc cref="ListDocs" />
+    /// <summary>The fake keeps no library: it returns no claims.</summary>
     public ValueTask<Result<IReadOnlyList<LibraryClaim>>> Claims(RecordKey prKey, AudienceScope audience, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryClaim>>([]));
 
-    /// <inheritdoc cref="ListDocs" />
+    /// <summary>The fake keeps no library: it returns an empty map.</summary>
     public ValueTask<Result<IReadOnlyDictionary<RecordKey, IReadOnlyList<LibraryClaim>>>> Claims(IReadOnlyList<RecordKey> prKeys, AudienceScope audience, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success<IReadOnlyDictionary<RecordKey, IReadOnlyList<LibraryClaim>>>(new Dictionary<RecordKey, IReadOnlyList<LibraryClaim>>()));
 
@@ -146,7 +146,7 @@ public sealed class FakeContextEngine : IContextEngine
     public ValueTask<Result<IReadOnlyList<LibraryRootStatus>>> Roots(ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult(_roots ?? Results.Success<IReadOnlyList<LibraryRootStatus>>([]));
 
-    /// <inheritdoc cref="ListDocs" />
+    /// <summary>The fake keeps no library: it returns no claims.</summary>
     public ValueTask<Result<IReadOnlyList<LibraryClaim>>> ClaimsOn(RecordKey docKey, AudienceScope audience, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryClaim>>([]));
 
