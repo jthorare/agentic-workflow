@@ -166,7 +166,7 @@ internal sealed class LibraryReader(ILibraryStore store, AudienceScope audience)
         DesignDocFrontMatter.IsDocId(doc.Slug) && !doc.Errors.Any(static e => string.Equals(e.Code, DesignDocCodes.SharedDocId, StringComparison.Ordinal));
 
     // The live doc at the lowest key keeps a shared id and the others show SND-LIB-012; a doc removed later hands the id to the next one on the next read. SND-LIB-015 and -016 come from the same
-    // DesignDocScope `library validate` runs, over the stored rows; read-time findings carry no line.
+    // DesignDocScope `library validate` runs, over the stored rows; a ref keeps the line it was written at, so 015 names it (016 has none, and a row stored before migration 0034 has line 0, which reads as none).
     private static List<LibraryDoc> Mark(List<LibraryDoc> docs, IReadOnlyList<LibraryScopeFacts> facts)
     {
         var added = new Dictionary<RecordKey, List<DesignDocError>>();
@@ -183,7 +183,7 @@ internal sealed class LibraryReader(ILibraryStore store, AudienceScope audience)
         var scoped = docs.Select(d => new ScopedDesignDoc(d.Key.Value, d.Scope, Parsed(d, byKey.GetValueOrDefault(d.Key)))).ToList();
         foreach (var finding in DesignDocScope.Check(scoped).Where(static f => string.Equals(f.Error.Code, DesignDocCodes.BrokenRef, StringComparison.Ordinal) || string.Equals(f.Error.Code, DesignDocCodes.UnknownDocLink, StringComparison.Ordinal)))
         {
-            Add(added, RecordKey.From(finding.Path), finding.Error with { Line = null });
+            Add(added, RecordKey.From(finding.Path), finding.Error);
         }
 
         return [.. docs.Select(d => added.TryGetValue(d.Key, out var errors) ? d with { Errors = [.. d.Errors, .. errors] } : d)];
