@@ -9,7 +9,7 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 public sealed class ApiGoldenTests
 {
     // hand-written before their routes (#2076): the PR page lands in Ph5c and the library in Ph5b, each registering its rows and leaving this list
-    private static readonly string[] _pendingGoldenFolders = ["reviews-pr", "library"];
+    private static readonly string[] _pendingGoldenFolders = ["reviews-pr"];
 
     [Fact, Trait("Lane", "integration")]
     public void Every_golden_file_has_a_scenario()
