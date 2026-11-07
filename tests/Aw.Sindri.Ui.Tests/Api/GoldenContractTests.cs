@@ -93,6 +93,13 @@ public sealed class GoldenContractTests
         ["linear-issue"] = As<LinearIssueOne>,   // GET /linear/issues/{key}: one issue with its comments (hand-written until api serves it)
         ["linear-lookups"] = As<LinearLookups>,   // GET /linear/lookups/{team}: a team's states, members, labels and cycles (hand-written until api serves it)
         ["linear-since"] = As<LinearSince>,   // GET /linear/since: the changes strip above the filter bar (hand-written until api serves it)
+        ["linear-change"] = As<LinearChangeApplied>,   // POST /linear/issues/{key}/change's 200 (Linear hub 1b); the 409, 504, 429 and refusals are ProblemDetails with extras (read in SindriApiClientLinearTests)
+        ["linear-comment"] = As<LinearCommentPosted>,   // POST /linear/issues/{key}/comments' 200
+        ["linear-create"] = As<LinearCreated>,   // POST /linear/issues' 201
+        ["linear-connection"] = As<LinearConnection>,   // GET /linear/connection: Settings, Connections, Linear
+        ["linear-connection-teams"] = As<LinearTeamChoices>,   // POST /linear/connection/teams
+        ["linear-connect"] = As<LinearConnected>,   // POST /linear/connection's saved answers
+        ["linear-disconnect-write"] = As<LinearDisconnected>,   // DELETE /linear/connection/write
         ["projects-id"] = As<ProjectOne>,   // GET /projects/{id}: one card with its hidden flag
         ["projects-attach"] = As<ProjectAcceptedView>,   // POST /projects' accepted answer: the new prj_ id at version 1 (hand-written until the route's scenario records it)
         ["projects-id-change"] = As<ProjectAcceptedView>,   // POST /projects/{id}/change's accepted answers (a prj_ id, or a led project's key for its notes); the stale 409 is ProblemDetails

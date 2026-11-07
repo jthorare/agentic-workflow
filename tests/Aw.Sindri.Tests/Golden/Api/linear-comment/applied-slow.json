@@ -1,0 +1,15 @@
+{
+  "outcome": "applied",
+  "clientId": "5d0a4f6e-3b1c-4c0e-9a57-2f1d8c9b7e01",
+  "comment": {
+    "id": "00000000-0000-4000-8000-0000000000f3",
+    "author": {
+      "id": "00000000-0000-4000-8000-0000000000a1",
+      "name": "Joi Example"
+    },
+    "createdAt": "2026-01-01T10:05:00.0000000Z",
+    "body": "Budget resets at midnight UTC: agreed.",
+    "sindri": true
+  },
+  "slow": true
+}

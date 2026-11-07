@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-LINEAR-006",
+  "status": 400,
+  "detail": "assigneeId isn't a member of ENG (fix: read the lookups again and pick a member from them)",
+  "traceId": "<trace>"
+}

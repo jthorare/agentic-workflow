@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.3",
+  "title": "SND-LINEAR-004",
+  "status": 502,
+  "detail": "Linear refused this key (fix: make a new key at linear.app/settings/api and paste it)",
+  "traceId": "<trace>"
+}

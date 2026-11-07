@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
+  "title": "SND-LINEAR-002",
+  "status": 403,
+  "detail": "Sindri has no Linear write key (fix: Settings, Connections, Linear, add a write key)",
+  "traceId": "<trace>"
+}

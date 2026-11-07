@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-LINEAR-006",
+  "status": 400,
+  "detail": "stateId isn't one of ENG's states (fix: read the lookups again and pick a state from them)",
+  "traceId": "<trace>"
+}

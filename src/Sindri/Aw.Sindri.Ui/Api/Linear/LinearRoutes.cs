@@ -32,6 +32,21 @@ internal static class LinearRoutes
     /// <summary>GET: what changed since the marker <paramref name="after"/>, or since the first watermark when null.</summary>
     internal static string Since(string? after) => "/sindri/linear/since" + (after is null ? string.Empty : "?after=" + Uri.EscapeDataString(after));
 
+    /// <summary>POST: an edit of one issue.</summary>
+    internal static string Change(string key) => Issue(key) + "/change";
+
+    /// <summary>POST: a comment on one issue.</summary>
+    internal static string Comments(string key) => Issue(key) + "/comments";
+
+    /// <summary>GET the connection, POST a key to save.</summary>
+    internal const string Connection = "/sindri/linear/connection";
+
+    /// <summary>POST: the teams a pasted read key can see.</summary>
+    internal const string ConnectionTeams = Connection + "/teams";
+
+    /// <summary>DELETE: the write key.</summary>
+    internal const string ConnectionWrite = Connection + "/write";
+
     private static void Add(List<string> parts, string name, string? value)
     {
         if (value is not null)
