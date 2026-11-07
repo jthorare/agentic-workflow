@@ -602,6 +602,7 @@ It's unproven whether GitHub itself refuses a review on an old `commit_id`. The 
 | `SND-LIB-010`..`019` | §4.2's table, one code each | file, line and the fix |
 | `SND-LIB-021` | a `Covers:` ref that doesn't resolve, or a second `Covers:` line | "#2071 claims harbor-booking-tdd#Ph9, and that doc has no Ph9." |
 | `SND-LIB-022` | a short `Covers:` ref two docs match | "harbor-booking-tdd is in two places; write doc:<root>/harbor-booking-tdd#Ph2." |
+| `SND-LIB-404` | `GET /library/{doc}` (and `sindri library show`) names a doc the library doesn't have, or one the caller may not read | "No design doc 'harbor-booking-tdd'; `sindri library list` names them." |
 | `SND-REVIEW-006` | a fix task's item was created but its thread wasn't posted | §8.2's half-done text |
 | `SND-REVIEW-007` | a review route or verb before `review.login` is set | "Set your GitHub login on the Reviews tab first." |
 | `SND-REVIEW-404` | a review route for a PR the forge does not have | "PR not found" |

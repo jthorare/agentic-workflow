@@ -5951,3 +5951,64 @@ static Aw.Sindri.Features.ListReviews.ListReviewsResponse.operator ==(Aw.Sindri.
 Aw.Sindri.Features.ListReviews.ListReviewsResponse.Deconstruct(out Aw.Sindri.Core.Views.AsOf! AsOf, out string? Login, out Aw.Sindri.Core.Reviews.ReviewLoginPrompt? LoginPrompt, out string? Notice, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectFreshnessRow!>! Freshness, out Aw.Sindri.Core.Reviews.ReviewStale? Stale, out Aw.Sindri.Core.Reviews.ReviewLibrary! Library, out int WaitingCount, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewListGroup!>! Groups, out Aw.Sindri.Core.Reviews.ReviewEmpty? Empty) -> void
 Aw.Sindri.Features.ListReviews.ListReviewsResponse.Groups.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewListGroup!>!
 Aw.Sindri.Features.ListReviews.ListReviewsResponse.ListReviewsResponse(Aw.Sindri.Core.Views.AsOf! AsOf, string? Login, Aw.Sindri.Core.Reviews.ReviewLoginPrompt? LoginPrompt, string? Notice, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectFreshnessRow!>! Freshness, Aw.Sindri.Core.Reviews.ReviewStale? Stale, Aw.Sindri.Core.Reviews.ReviewLibrary! Library, int WaitingCount, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewListGroup!>! Groups, Aw.Sindri.Core.Reviews.ReviewEmpty? Empty) -> void
+Aw.Sindri.Features.GetLibrary.GetLibraryRequest
+Aw.Sindri.Features.GetLibrary.GetLibraryRequest.<Clone>$() -> Aw.Sindri.Features.GetLibrary.GetLibraryRequest!
+Aw.Sindri.Features.GetLibrary.GetLibraryRequest.Equals(Aw.Sindri.Features.GetLibrary.GetLibraryRequest? other) -> bool
+Aw.Sindri.Features.GetLibrary.GetLibraryRequest.GetLibraryRequest() -> void
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.<Clone>$() -> Aw.Sindri.Features.GetLibrary.GetLibraryResponse!
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.AsOf.get -> Aw.Sindri.Core.Views.AsOf!
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.AsOf.init -> void
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.Broken.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryBrokenDoc!>!
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.Broken.init -> void
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.CappedText.get -> string?
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.CappedText.init -> void
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.Docs.get -> int
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.Docs.init -> void
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.Equals(Aw.Sindri.Features.GetLibrary.GetLibraryResponse? other) -> bool
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.NearMisses.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryNearMiss!>!
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.NearMisses.init -> void
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.UnreadableRoots.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewUnreadableRoot!>!
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.UnreadableRoots.init -> void
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.WithErrors.get -> int
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.WithErrors.init -> void
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.Deconstruct(out Aw.Sindri.Core.Views.AsOf! AsOf, out int Docs, out int WithErrors, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryBrokenDoc!>! Broken, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryNearMiss!>! NearMisses, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewUnreadableRoot!>! UnreadableRoots, out string? CappedText, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryRootRow!>! Roots) -> void
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.GetLibraryResponse(Aw.Sindri.Core.Views.AsOf! AsOf, int Docs, int WithErrors, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryBrokenDoc!>! Broken, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryNearMiss!>! NearMisses, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewUnreadableRoot!>! UnreadableRoots, string? CappedText, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryRootRow!>! Roots) -> void
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.Roots.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryRootRow!>!
+Aw.Sindri.Features.GetLibrary.GetLibraryResponse.Roots.init -> void
+override Aw.Sindri.Features.GetLibrary.GetLibraryRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetLibrary.GetLibraryRequest.GetHashCode() -> int
+override Aw.Sindri.Features.GetLibrary.GetLibraryRequest.ToString() -> string!
+override Aw.Sindri.Features.GetLibrary.GetLibraryResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetLibrary.GetLibraryResponse.GetHashCode() -> int
+override Aw.Sindri.Features.GetLibrary.GetLibraryResponse.ToString() -> string!
+static Aw.Sindri.Features.GetLibrary.GetLibraryRequest.operator !=(Aw.Sindri.Features.GetLibrary.GetLibraryRequest? left, Aw.Sindri.Features.GetLibrary.GetLibraryRequest? right) -> bool
+static Aw.Sindri.Features.GetLibrary.GetLibraryRequest.operator ==(Aw.Sindri.Features.GetLibrary.GetLibraryRequest? left, Aw.Sindri.Features.GetLibrary.GetLibraryRequest? right) -> bool
+static Aw.Sindri.Features.GetLibrary.GetLibraryResponse.operator !=(Aw.Sindri.Features.GetLibrary.GetLibraryResponse? left, Aw.Sindri.Features.GetLibrary.GetLibraryResponse? right) -> bool
+static Aw.Sindri.Features.GetLibrary.GetLibraryResponse.operator ==(Aw.Sindri.Features.GetLibrary.GetLibraryResponse? left, Aw.Sindri.Features.GetLibrary.GetLibraryResponse? right) -> bool
+Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocRequest
+override Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocRequest.ToString() -> string!
+static Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocRequest.operator !=(Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocRequest? left, Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocRequest? right) -> bool
+static Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocRequest.operator ==(Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocRequest? left, Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocRequest? right) -> bool
+override Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocRequest.GetHashCode() -> int
+override Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocRequest.Equals(object? obj) -> bool
+Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocRequest.Equals(Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocRequest? other) -> bool
+Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocRequest.<Clone>$() -> Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocRequest!
+Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocRequest.Deconstruct(out string! Doc) -> void
+Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocRequest.Doc.get -> string!
+Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocRequest.Doc.init -> void
+Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse
+override Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse.ToString() -> string!
+static Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse.operator !=(Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse? left, Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse? right) -> bool
+static Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse.operator ==(Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse? left, Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse? right) -> bool
+override Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse.GetHashCode() -> int
+override Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse.Equals(object? obj) -> bool
+Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse.Equals(Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse? other) -> bool
+Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse.<Clone>$() -> Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse!
+Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse.Deconstruct(out Aw.Sindri.Core.Views.AsOf! AsOf, out Aw.Sindri.Core.Reviews.LibraryDocView! Doc) -> void
+Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse.AsOf.get -> Aw.Sindri.Core.Views.AsOf!
+Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse.AsOf.init -> void
+Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse.Doc.get -> Aw.Sindri.Core.Reviews.LibraryDocView!
+Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse.Doc.init -> void
+Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse.GetLibraryDocResponse(Aw.Sindri.Core.Views.AsOf! AsOf, Aw.Sindri.Core.Reviews.LibraryDocView! Doc) -> void
+Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocRequest.GetLibraryDocRequest(string! Doc) -> void

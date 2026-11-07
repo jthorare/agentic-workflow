@@ -28,7 +28,7 @@ public sealed class LibraryVerbsTests : IDisposable
         using var client = new ControlPlaneClient(_probe, SliceHarness.Json, handler: api);
         var output = new Output(_out, _error, SliceHarness.Json);
         using var input = new StringReader(string.Empty);
-        return await new LibraryVerbs(new IndexVerbs(client, output, new JobFollower(client, output, TimeProvider.System), terminal: false, input), output).Run(args, Token, Token);
+        return await new LibraryVerbs(new IndexVerbs(client, output, new JobFollower(client, output, TimeProvider.System), terminal: false, input), client, output).Run(args, Token, Token);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -60,8 +60,8 @@ public sealed class LibraryVerbsTests : IDisposable
     [InlineData()]
     [InlineData("sync", "harbor")]
     [InlineData("sync", "--force")]
-    [InlineData("list")]
-    public async Task Anything_but_sync_and_its_flags_is_a_usage_error_that_calls_nothing(params string[] args)
+    [InlineData("frobnicate")]
+    public async Task Anything_but_a_library_verb_or_sync_with_its_flags_is_a_usage_error_that_calls_nothing(params string[] args)
     {
         var api = new ScriptedApi();
 
