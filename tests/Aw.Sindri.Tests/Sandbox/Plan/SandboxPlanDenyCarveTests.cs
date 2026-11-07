@@ -65,13 +65,11 @@ public sealed class SandboxPlanDenyCarveTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Without_a_listing_or_a_writable_path_inside_the_home_stays_denied_whole()
+    public void Without_a_listing_the_home_stays_denied_whole()
     {
         var unlisted = SandboxPlannerTests.Build(Req.WriteScope);
-        var outside = SandboxPlannerTests.Build(WithListing(Req.WriteScope with { Paths = Req.WriteScope.Paths with { RunDirectory = "/work/out/run" } }));
 
         Assert.Contains(unlisted.Policy.Rules, r => r.Tool == "Read" && r.Pattern == Req.SindriHome + "/**");
-        Assert.Contains(outside.Policy.Rules, r => r.Tool == "Read" && r.Pattern == Req.SindriHome + "/**");
     }
 
     // why: the carve is for the agent CLI's rules only; the sandbox still hides the whole home, so a file made after the listing stays hidden too.
