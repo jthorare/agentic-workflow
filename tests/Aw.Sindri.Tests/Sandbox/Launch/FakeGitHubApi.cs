@@ -87,9 +87,16 @@ internal sealed class FakeGitHubApi : IDisposable
         }
     }
 
-    /// <summary>Gets a URL on a port nothing listens on.</summary>
-    /// <returns>The URL.</returns>
-    internal static string ClosedUrl() => "http://127.0.0.1:" + FreePort().ToString(CultureInfo.InvariantCulture);
+    /// <summary>Binds a loopback port without Listen(), so it stays ours and a connect is refused until the socket is disposed (#2249).</summary>
+    /// <param name="url">The URL on that port.</param>
+    /// <returns>The socket that holds the port; the caller disposes it.</returns>
+    internal static System.Net.Sockets.Socket ClosedPort(out string url)
+    {
+        var socket = new System.Net.Sockets.Socket(System.Net.Sockets.AddressFamily.InterNetwork, System.Net.Sockets.SocketType.Stream, System.Net.Sockets.ProtocolType.Tcp);
+        socket.Bind(new IPEndPoint(IPAddress.Loopback, 0));
+        url = "http://127.0.0.1:" + ((IPEndPoint)socket.LocalEndPoint!).Port.ToString(CultureInfo.InvariantCulture);
+        return socket;
+    }
 
     public void Dispose()
     {
