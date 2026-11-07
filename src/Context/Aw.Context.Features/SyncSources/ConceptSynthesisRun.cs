@@ -1,6 +1,7 @@
 using System.Text;
 using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Library;
 using Aw.Context.Core.Models;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
@@ -36,19 +37,21 @@ internal sealed class ConceptSynthesisRun(IRecordStore records, IVectorScan scan
     /// <param name="settings">The grouper's knobs and the prompt caps.</param>
     /// <param name="labeling">Its 'maxTokensPerSync' is the run's cap.</param>
     /// <param name="extraPatterns">The profile's extra scrub patterns.</param>
+    /// <param name="libraryModelRoots">The library roots whose records a model may read (<see cref="ContextSettings.LibraryModelRoots"/>).</param>
     /// <param name="cancellationToken">Cancels the run.</param>
     /// <returns>What the run did; a failure is the report's code.</returns>
-    public async ValueTask<ConceptSynthesisReport> Run(ConceptSynthesisSettings settings, LabelingSettings labeling, IReadOnlyList<ScrubPattern> extraPatterns, CancellationToken cancellationToken)
+    public async ValueTask<ConceptSynthesisReport> Run(ConceptSynthesisSettings settings, LabelingSettings labeling, IReadOnlyList<ScrubPattern> extraPatterns, IReadOnlyList<string> libraryModelRoots, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(labeling);
+        ArgumentNullException.ThrowIfNull(libraryModelRoots);
         var built = scrubbers.For(extraPatterns);
         if (built.IsError)
         {
             return ConceptSynthesisReport.Failed(built.Error.Code);
         }
 
-        var live = await Live(cancellationToken).ConfigureAwait(false);
+        var live = await Live(libraryModelRoots, cancellationToken).ConfigureAwait(false);
         var read = live.IsError ? live.Error : await Embeddings(live.Value, cancellationToken).ConfigureAwait(false);
         var grouped = read.IsError ? read.Error : ConceptGrouper.Group(read.Value.Vectors, settings.Grouping, scan);
         var stored = grouped.IsError ? grouped.Error : await concepts.All(cancellationToken).ConfigureAwait(false);
@@ -70,8 +73,8 @@ internal sealed class ConceptSynthesisRun(IRecordStore records, IVectorScan scan
         return pass.Report(plans.Count, read.Value.Vectors.Count, grouped.Value.EdgeCosines);
     }
 
-    /// <summary>The records that are not removed and not blocked, by key.</summary>
-    private async ValueTask<Result<Dictionary<string, StoredRecord>>> Live(CancellationToken cancellationToken)
+    /// <summary>The records that are not removed and not blocked, by key, without those a model may not read: an 'owner:' audience, or a library root that did not opt in.</summary>
+    private async ValueTask<Result<Dictionary<string, StoredRecord>>> Live(IReadOnlyList<string> libraryModelRoots, CancellationToken cancellationToken)
     {
         var live = new Dictionary<string, StoredRecord>(StringComparer.Ordinal);
         RecordKey? after = null;
@@ -88,7 +91,7 @@ internal sealed class ConceptSynthesisRun(IRecordStore records, IVectorScan scan
                 return live;
             }
 
-            foreach (var record in page.Value.Where(r => !r.Blocked && r.RemovedAt is null))
+            foreach (var record in page.Value.Where(r => !r.Blocked && r.RemovedAt is null && !r.Audience.IsOwner() && LibrarySource.ModelMayRead(r.Source, r.Key, libraryModelRoots)))
             {
                 live[record.Key.Value] = record;
             }

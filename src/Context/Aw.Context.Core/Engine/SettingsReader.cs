@@ -99,15 +99,12 @@ public static partial class SettingsReader
                     CheckLimits = ChecksRules.Limits(section.Checks),
                 },
                 section.Code,
-                codeDeadline.Value), sources.Value.GitHub, sources.Value.Slack, index.Value, models.Value),
+                codeDeadline.Value), sources.Value, index.Value, models.Value),
         };
     }
 
     private static Error? FirstFailure(Result<ContextIndexSettings> index, Result<ModelsSettings> models) =>
         index.IsError ? index.Error : models.IsError ? models.Error : null;
-
-    private static ContextSettings WithOwnedIndex(ContextSettings settings, GitHubSource? github, SlackSource? slack, ContextIndexSettings index, ModelsSettings models) =>
-        settings with { GitHub = github, Slack = slack, Index = index, Models = models };
 
     private const int MaxCodeGlobs = 500;
     private const int MaxCodeGlobLength = 2_000;

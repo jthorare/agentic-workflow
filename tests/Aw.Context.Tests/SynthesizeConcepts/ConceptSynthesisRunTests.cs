@@ -202,4 +202,33 @@ public sealed class ConceptSynthesisRunTests
         await rig.Add("docs", "docs:doc/b2", 95);
         return rig;
     }
+
+    [Fact]
+    public async Task An_owner_audience_record_is_not_grouped_or_sent_to_the_model()
+    {
+        var rig = await Checkout();
+        await rig.Add("library", "doc:harbor/plans/ferry.md", 7, "Harbor ferry booking owner-only plan", audience: "owner:library");
+
+        _ = await rig.Run(libraryRoots: ["harbor"]);   // even a root that opted in: the owner audience decides
+
+        var concept = Assert.Single((await rig.Concepts.All(Ct)).Value);
+        Assert.DoesNotContain(concept.Members, m => m.Source == "library");
+        Assert.DoesNotContain(rig.Model.Requests, r => r.Prompt.Contains("owner-only plan", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task A_library_record_joins_a_group_only_when_its_root_opted_in()
+    {
+        var closed = await Checkout();
+        await closed.Add("library", "doc:harbor/plans/ferry.md", 7, "Harbor ferry booking plan", audience: "repo:acme/shop");
+        var opened = await Checkout();
+        await opened.Add("library", "doc:harbor/plans/ferry.md", 7, "Harbor ferry booking plan", audience: "repo:acme/shop");
+
+        _ = await closed.Run();
+        _ = await opened.Run(libraryRoots: ["harbor"]);
+
+        Assert.DoesNotContain(Assert.Single((await closed.Concepts.All(Ct)).Value).Members, m => m.Source == "library");
+        Assert.DoesNotContain(closed.Model.Requests, r => r.Prompt.Contains("ferry booking plan", StringComparison.Ordinal));
+        Assert.Contains(Assert.Single((await opened.Concepts.All(Ct)).Value).Members, m => m.Source == "library");
+    }
 }
