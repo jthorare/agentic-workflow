@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Encodings.Web;
 using Aw.Kernel;
 using Aw.Sindri.Core.Workflow.Ids;
-using Aw.Sindri.Core.Workflow.Registry;
 
 namespace Aw.Sindri.Core.Skills;
 
@@ -139,19 +138,22 @@ public static class SkillTrialRecipe
     /// The version a trial registers at: the registered version whose text the trial would write again (same hash), else one above the highest registered, else 1. Recipe versions only go up
     /// (RCP-VERSION-002), and the text changes with the manifest, the inputs given and this builder, so a hash of those can't be the version (found in F-1's hand test).
     /// </summary>
-    /// <param name="registered">The registered versions of the trial's id.</param>
+    /// <param name="registered">The registered versions of the trial's id, each with its hash.</param>
     /// <param name="hashAt">The hash of the trial's text at a version.</param>
     /// <returns>The version.</returns>
-    public static int VersionFor(IReadOnlyList<RegisteredRecipe> registered, Func<int, RecipeHash?> hashAt)
+    public static int VersionFor(IReadOnlyDictionary<int, RecipeHash> registered, Func<int, RecipeHash?> hashAt)
     {
         ArgumentNullException.ThrowIfNull(registered);
         ArgumentNullException.ThrowIfNull(hashAt);
-        if (registered.OrderByDescending(static r => r.Version).FirstOrDefault(r => hashAt(r.Version) == r.Hash) is { } same)
+        foreach (var (version, hash) in registered.OrderByDescending(static r => r.Key))
         {
-            return same.Version;
+            if (hashAt(version) == hash)
+            {
+                return version;
+            }
         }
 
-        return registered.Count == 0 ? 1 : registered.Max(static r => r.Version) + 1;
+        return registered.Count == 0 ? 1 : registered.Keys.Max() + 1;
     }
 
     /// <summary>The block outcome a trial ended with, from its terminal state: 'ended-needs-changes' is 'needsChanges'.</summary>

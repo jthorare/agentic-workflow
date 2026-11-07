@@ -2,7 +2,6 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Ids;
-using Aw.Sindri.Core.Workflow.Registry;
 using Aw.Sindri.Core.Workflow.Validation;
 using Aw.Sindri.Infrastructure.Skills;
 using Aw.Sindri.Testing.Skills;
@@ -53,14 +52,14 @@ public sealed class SkillTrialRecipeTests
 
     [Fact]
     public void A_first_trial_registers_at_version_1() =>
-        Assert.Equal(1, SkillTrialRecipe.VersionFor([], HashAt(foldered: false)));
+        Assert.Equal(1, SkillTrialRecipe.VersionFor(Versions(), HashAt(foldered: false)));
 
     [Fact]
     public void A_trial_whose_text_is_registered_reuses_that_version()
     {
         var hashAt = HashAt(foldered: false);
 
-        Assert.Equal(5, SkillTrialRecipe.VersionFor([Registered(3, HashAt(foldered: true)(3)), Registered(5, hashAt(5)), Registered(9, HashAt(foldered: true)(9))], hashAt));
+        Assert.Equal(5, SkillTrialRecipe.VersionFor(Versions(Registered(3, HashAt(foldered: true)(3)), Registered(5, hashAt(5)), Registered(9, HashAt(foldered: true)(9))), hashAt));
     }
 
     // why: the version came from a hash of the manifest, so an edited block.yaml or a changed builder could land below the highest registered: RCP-VERSION-002 in F-1's hand test
@@ -69,7 +68,7 @@ public sealed class SkillTrialRecipeTests
     {
         var other = HashAt(foldered: true);
 
-        Assert.Equal(2006301274, SkillTrialRecipe.VersionFor([Registered(7, other(7)), Registered(2006301273, other(2006301273))], HashAt(foldered: false)));
+        Assert.Equal(2006301274, SkillTrialRecipe.VersionFor(Versions(Registered(7, other(7)), Registered(2006301273, other(2006301273))), HashAt(foldered: false)));
     }
 
     private static Func<int, RecipeHash?> HashAt(bool foldered)
@@ -78,8 +77,9 @@ public sealed class SkillTrialRecipeTests
         return version => Assert.IsType<RecipeDocument>(RecipeComposition.Read(SkillTrialRecipe.Build(loaded, ["pr"], foldered, version).Value.Text, "trial.yaml").Document).Hash;
     }
 
-    private static RegisteredRecipe Registered(int version, RecipeHash? hash) =>
-        new(RecipeId.From(SkillTrialRecipe.IdPrefix + "review"), version, Assert.NotNull(hash), Text: "{}", Base: null, DateTimeOffset.UnixEpoch);
+    private static Dictionary<int, RecipeHash> Versions(params KeyValuePair<int, RecipeHash>[] registered) => new(registered);
+
+    private static KeyValuePair<int, RecipeHash> Registered(int version, RecipeHash? hash) => new(version, Assert.NotNull(hash));
 
     [Theory]
     [InlineData("ended-pass", "pass")]

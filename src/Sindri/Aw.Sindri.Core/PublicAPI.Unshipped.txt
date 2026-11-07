@@ -22286,7 +22286,7 @@ Aw.Sindri.Core.Skills.SkillTrialRecipe
 const Aw.Sindri.Core.Skills.SkillTrialRecipe.IdPrefix = "workflow.skill-trial-" -> string!
 const Aw.Sindri.Core.Skills.SkillTrialRecipe.SkillsFolderFact = "fact:skillTrialFolder" -> string!
 static Aw.Sindri.Core.Skills.SkillTrialRecipe.Build(Aw.Sindri.Core.Skills.LoadedSkillBlock! block, System.Collections.Generic.IReadOnlyCollection<string!>! provided, bool foldered = false, int version = 1) -> Aw.Kernel.Result<Aw.Sindri.Core.Skills.SkillTrialPlan!>!
-static Aw.Sindri.Core.Skills.SkillTrialRecipe.VersionFor(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Registry.RegisteredRecipe!>! registered, System.Func<int, Aw.Sindri.Core.Workflow.Ids.RecipeHash?>! hashAt) -> int
+static Aw.Sindri.Core.Skills.SkillTrialRecipe.VersionFor(System.Collections.Generic.IReadOnlyDictionary<int, Aw.Sindri.Core.Workflow.Ids.RecipeHash>! registered, System.Func<int, Aw.Sindri.Core.Workflow.Ids.RecipeHash?>! hashAt) -> int
 static Aw.Sindri.Core.Skills.SkillTrialRecipe.FactOf(string! inputKey) -> Aw.Kernel.Result<Aw.Sindri.Core.Workflow.Ids.FactKey>!
 static Aw.Sindri.Core.Skills.SkillTrialRecipe.IsTrial(Aw.Sindri.Core.Workflow.Ids.RecipeId recipe) -> bool
 static Aw.Sindri.Core.Skills.SkillTrialRecipe.OutcomeOf(string! state) -> string?

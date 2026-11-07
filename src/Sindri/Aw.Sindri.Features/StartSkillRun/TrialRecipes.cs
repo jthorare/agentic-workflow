@@ -29,7 +29,7 @@ internal sealed class TrialRecipes(IRecipeStore store, IRecipeReader reader, Rec
             return versions.Error;
         }
 
-        var plan = at(SkillTrialRecipe.VersionFor(versions.Value, version => reader.Read(at(version).Text, id.Value + ".yaml").Document?.Hash));
+        var plan = at(SkillTrialRecipe.VersionFor(versions.Value.ToDictionary(static r => r.Version, static r => r.Hash), version => reader.Read(at(version).Text, id.Value + ".yaml").Document?.Hash));
         var registered = await registrar.Register(plan.Text, plan.Id.Value + ".yaml", cancellationToken).ConfigureAwait(false);
         if (registered.IsError)
         {
