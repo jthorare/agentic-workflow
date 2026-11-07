@@ -8,7 +8,7 @@ using Aw.Sindri.Ui.ViewModels.Reviews;
 
 namespace Aw.Sindri.Ui.Tests.ReviewPage;
 
-/// <summary>The text layout check of #2228 over the diff pane header of the review page with the fix sheet open (scoped to the header: the rest of the page has other cut-off texts, the long diff lines and the Show button), and the check's own proof that it rejects the bad one-row grid.</summary>
+/// <summary>The text layout check of #2228 over the diff pane of the review page with the fix sheet open: the gap check on the pane header (diff line gutters touch by design) and the right-edge check on every text and button of the pane, and the check's own proof that it rejects the bad one-row grid.</summary>
 [Lane(TestLane.Integration)]
 [Collection(HeadlessWindows.Name)]
 public sealed class ReviewPageTextLayoutTests : FrameHost
