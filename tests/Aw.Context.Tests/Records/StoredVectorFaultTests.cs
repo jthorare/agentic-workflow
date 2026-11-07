@@ -2,10 +2,11 @@ using Aw.Context.Core.Records;
 using Aw.Context.Testing.Records;
 using Aw.Context.Tests.Infrastructure;
 using Aw.Kernel.Data;
+using Microsoft.Data.Sqlite;
 
 namespace Aw.Context.Tests.Records;
 
-/// <summary>A stored record vector that is text, a ragged blob or off its dim is damage the store refuses on read, never garbage floats (#2253).</summary>
+/// <summary>A stored record vector that is a ragged blob or off its dim is damage the store refuses on read, never garbage floats; text never gets in, the column refuses it (#2253).</summary>
 [Trait("Lane", "integration")]
 public sealed class StoredVectorFaultTests : IDisposable
 {
@@ -15,7 +16,7 @@ public sealed class StoredVectorFaultTests : IDisposable
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    // why: two floats are 8 bytes and dim 2, so the length of an 8-byte text cell looks valid and only the cell's type can give it away.
+    // why: two floats are 8 bytes and dim 2, so the stored vector is valid until a test damages it.
     private async Task StoreOne()
     {
         var stored = await _world.Store.PutVectors([new VectorWrite(VectorSpace.Node, "feature:billing", "fake-model@1", RecordSamples.Hash("billing"), new float[] { 1, 0 })], Ct);
@@ -30,12 +31,13 @@ public sealed class StoredVectorFaultTests : IDisposable
     }
 
     [Fact]
-    public async Task A_vector_stored_as_text_is_damage_not_garbage_floats()
+    public async Task The_vector_column_refuses_text_so_no_text_can_be_read_back()
     {
         await StoreOne();
-        _world.Sql("UPDATE embedding SET vec = 'abcdefgh'");
 
-        await AssertRefused();
+        var refused = Assert.Throws<SqliteException>(() => _world.Sql("UPDATE embedding SET vec = 'abcdefgh'"));
+
+        Assert.Equal(19, refused.SqliteErrorCode);
     }
 
     [Fact]
