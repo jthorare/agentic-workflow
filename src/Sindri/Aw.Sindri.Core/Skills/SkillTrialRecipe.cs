@@ -142,7 +142,17 @@ public static class SkillTrialRecipe
     /// <param name="registered">The registered versions of the trial's id.</param>
     /// <param name="hashAt">The hash of the trial's text at a version.</param>
     /// <returns>The version.</returns>
-    public static int VersionFor(IReadOnlyList<RegisteredRecipe> registered, Func<int, RecipeHash> hashAt) => throw new NotSupportedException();
+    public static int VersionFor(IReadOnlyList<RegisteredRecipe> registered, Func<int, RecipeHash?> hashAt)
+    {
+        ArgumentNullException.ThrowIfNull(registered);
+        ArgumentNullException.ThrowIfNull(hashAt);
+        if (registered.OrderByDescending(static r => r.Version).FirstOrDefault(r => hashAt(r.Version) == r.Hash) is { } same)
+        {
+            return same.Version;
+        }
+
+        return registered.Count == 0 ? 1 : registered.Max(static r => r.Version) + 1;
+    }
 
     /// <summary>The block outcome a trial ended with, from its terminal state: 'ended-needs-changes' is 'needsChanges'.</summary>
     /// <param name="state">The instance's state.</param>

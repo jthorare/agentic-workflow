@@ -50,8 +50,12 @@ internal sealed class StartSkillRunService(
         }
 
         var item = await items.Resolve(request.Item, cancellationToken).ConfigureAwait(false);
-        var plan = item.IsError ? item.Error : SkillTrialRecipe.Build(block.Value, [.. request.Inputs.Keys], foldered: request.Skills is not null);
-        var approved = plan.IsError ? plan.Error : await recipes.Approve(plan.Value, caller.Actor, cancellationToken).ConfigureAwait(false);
+        var keys = request.Inputs.Keys.ToList();
+        var foldered = request.Skills is not null;
+        var plan = item.IsError ? item.Error : SkillTrialRecipe.Build(block.Value, keys, foldered);
+        var approved = plan.IsError   // why: Build refuses only the block's id and the input keys, never a version, so a build that passed once passes at every version
+            ? plan.Error
+            : await recipes.Approve(plan.Value.Id, version => SkillTrialRecipe.Build(block.Value, keys, foldered, version).Value, caller.Actor, cancellationToken).ConfigureAwait(false);
         var inputs = approved.IsError ? approved.Error : await Store(request, cancellationToken).ConfigureAwait(false);
         if (inputs.IsError)
         {

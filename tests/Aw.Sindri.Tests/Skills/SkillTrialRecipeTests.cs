@@ -72,14 +72,14 @@ public sealed class SkillTrialRecipeTests
         Assert.Equal(2006301274, SkillTrialRecipe.VersionFor([Registered(7, other(7)), Registered(2006301273, other(2006301273))], HashAt(foldered: false)));
     }
 
-    private static Func<int, RecipeHash> HashAt(bool foldered)
+    private static Func<int, RecipeHash?> HashAt(bool foldered)
     {
         var loaded = _blocks.Single(static b => string.Equals(b.Manifest.Name, "review", StringComparison.Ordinal));
         return version => Assert.IsType<RecipeDocument>(RecipeComposition.Read(SkillTrialRecipe.Build(loaded, ["pr"], foldered, version).Value.Text, "trial.yaml").Document).Hash;
     }
 
-    private static RegisteredRecipe Registered(int version, RecipeHash hash) =>
-        new(RecipeId.From(SkillTrialRecipe.IdPrefix + "review"), version, hash, Text: "{}", Base: null, DateTimeOffset.UnixEpoch);
+    private static RegisteredRecipe Registered(int version, RecipeHash? hash) =>
+        new(RecipeId.From(SkillTrialRecipe.IdPrefix + "review"), version, Assert.NotNull(hash), Text: "{}", Base: null, DateTimeOffset.UnixEpoch);
 
     [Theory]
     [InlineData("ended-pass", "pass")]
