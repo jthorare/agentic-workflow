@@ -71,8 +71,8 @@
     </StackPanel>
 
     <!-- The Library card: the folders the design library reads (review page spec 6.3); an agent session sees no folders and nothing to edit. -->
-    <StackPanel x:Name="LibrarySettingsSlot" IsVisible="{Binding HasLibrary}">
-      <reviews:LibraryRootsSection x:Name="LibraryRoots" DataContext="{Binding Library}" />
+    <StackPanel x:Name="LibrarySettingsSlot" IsVisible="{Binding HasLibrary}" AutomationProperties.Name="{Binding Library.Title}">
+      <reviews:LibraryRootsSection x:Name="LibraryRoots" DataContext="{Binding Library}" AutomationProperties.Name="{Binding Title}" />
     </StackPanel>
 
     <Border x:Name="ThisAppName" AutomationProperties.Name="{Binding ThisAppLabel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="2">
