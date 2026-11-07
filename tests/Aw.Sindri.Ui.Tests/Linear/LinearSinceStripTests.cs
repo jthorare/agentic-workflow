@@ -123,7 +123,7 @@ public sealed class LinearSinceStripTests
         var work = await _f.Shown(Token);
 
         Assert.Equal((true, true, 3), (work.ShowsStrip, work.StripFailed, work.Mine.Rows.Count));
-        Assert.Equal(("Couldn't load what changed", "Retry"), (ViewModels.Labels.LinearStripFailed, ViewModels.Labels.LinearStripRetry));
+        Assert.Equal(("Couldn't load what changed", "Retry"), (Labels.LinearStripFailed, Labels.LinearStripRetry));
     }
 
     [Fact]
@@ -147,7 +147,7 @@ public sealed class LinearSinceStripTests
 
         Assert.Equal(
             ["ENG-12 assigned to you by Sam Lee", "ENG-12 moved from Todo to In Progress by Sam Lee", "You were mentioned on ENG-12", "ENG-12 changed"],
-            [Labels.LinearSinceRow(Item("assigned", sam)), Labels.LinearSinceRow(Item("state", sam)), Labels.LinearSinceRow(Item("mentioned", null)), Labels.LinearSinceRow(Item("priority", null))],
+            [Labels.LinearSinceRow(Item("assigned", sam)), Labels.LinearSinceRow(Item("state", sam)), Labels.LinearSinceRow(Item("mentioned", actor: null)), Labels.LinearSinceRow(Item("priority", actor: null))],
             StringComparer.Ordinal);
     }
 }

@@ -9,7 +9,7 @@ internal sealed class LinearGroupViewModel(string heading) : ObservableObject
     public string Heading { get; } = heading;
 
     /// <summary>How many issues match, not only the loaded ones.</summary>
-    public string Count { get; private set => Set(ref field, value); } = Labels.LinearGroupCount(0);
+    public string Count { get; private set => Set(ref field, value); } = Labels.LinearGroupCount(0, shown: 0);
 
     /// <summary>The loaded rows.</summary>
     public ObservableCollection<LinearIssueRowViewModel> Rows { get; } = [];
