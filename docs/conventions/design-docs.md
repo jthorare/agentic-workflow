@@ -85,7 +85,7 @@ Nothing else is needed: Sindri reads the doc where it lives (below), and `sindri
 | `supersedes` | no | the doc this one replaces: a doc id in the same scope, or a full ref for another scope |
 | `parent` | no | the doc this one belongs to, by the same rule (a stage map names its repo spec as `doc:repo:<name>/<id>`) |
 | `generated` | only on generated files | the tool that wrote the file, always with `source-sha256` |
-| `source-sha256` | with `generated` | the sha256 of the file it was generated from; hand-editing the generated file is `SND-LIB-017` |
+| `source-sha256` | with `generated` | the sha256 of the file it was generated from; `packet.json` changing after the doc was generated is `SND-LIB-017` (editing the doc itself isn't caught: the hash covers only the packet). The source is the `packet.json` in the same folder as the doc (`write_packet.py` writes the doc from it); a doc with no `packet.json` beside it is not checked, so there is no `SND-LIB-017` for it |
 
 Keys not in this table (an Obsidian note's `tags`, say) are kept and ignored.
 
@@ -134,7 +134,7 @@ Each error names the file, the line and the fix. A doc with an error is stored w
 | `SND-LIB-014` | an `AC` no table row pairs and no requirement precedes in its section | put it under its requirement, or add a Traceability row |
 | `SND-LIB-015` | a ref to an item the scope doesn't have | fix the ref, or add the item |
 | `SND-LIB-016` | an unknown `parent` or `supersedes` | use an id in the scope, or the full ref |
-| `SND-LIB-017` | a hand-edited generated file (its `source-sha256` no longer matches its source) | edit the source and regenerate |
+| `SND-LIB-017` | a stale generated file: `packet.json` changed since the doc was generated, so editing the doc itself isn't caught (its `source-sha256` no longer matches the sha256 of the `packet.json` beside it; no `packet.json` there means no finding) | edit the source and regenerate |
 | `SND-LIB-018` | "too large" (over 1 MiB or 2,000 items), or "blocked" (the scrubber hit) | split the doc, or remove the secret |
 | `SND-LIB-019` | a near miss: `aw-doc:` present but not the number 1 | write `aw-doc: 1` unquoted in the front matter, and make `---` the file's first line |
 | `SND-LIB-021` | a broken `Covers:` claim, or a second `Covers:` line | fix the ref; keep one line |

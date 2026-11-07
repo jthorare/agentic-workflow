@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Library;
 
 namespace Aw.Context.Infrastructure.Docs;
 
@@ -44,6 +45,7 @@ internal static class LibraryWalker
 
     private static void Walk(DirectoryInfo folder, string relative, bool awRoot, LibraryDeny deny, List<LibraryFile> files)
     {
+        var packet = PacketIn(folder);
         foreach (var entry in folder.EnumerateFileSystemInfos())
         {
             if (entry.LinkTarget is not null || entry.Attributes.HasFlag(FileAttributes.ReparsePoint))
@@ -61,9 +63,18 @@ internal static class LibraryWalker
             }
             else if (Wanted((FileInfo)entry, path, awRoot, deny))
             {
-                files.Add(new LibraryFile(path, entry.FullName, ((FileInfo)entry).Length, Millisecond(entry.LastWriteTimeUtc)));
+                files.Add(new LibraryFile(path, entry.FullName, ((FileInfo)entry).Length, Millisecond(entry.LastWriteTimeUtc), packet));
             }
         }
+    }
+
+    // The source of a generated doc, beside it; a symlink is never followed.
+    private static LibraryPacket? PacketIn(DirectoryInfo folder)
+    {
+        var file = new FileInfo(Path.Combine(folder.FullName, GeneratedSource.FileName));
+        return file.Exists && file.LinkTarget is null && !file.Attributes.HasFlag(FileAttributes.ReparsePoint)
+            ? new LibraryPacket(file.FullName, file.Length, Millisecond(file.LastWriteTimeUtc))
+            : null;
     }
 
     private static bool Wanted(FileInfo file, string path, bool awRoot, LibraryDeny deny) =>

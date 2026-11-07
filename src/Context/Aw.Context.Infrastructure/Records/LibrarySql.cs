@@ -45,6 +45,6 @@ internal static class LibrarySql
         "WHERE r.removed_at IS NULL AND i.doc_key IN (SELECT value FROM json_each(@keys)) ORDER BY i.doc_key, i.rowid";
 
     internal const string ScopeRefs =
-        "SELECT f.doc_key, f.from_item, f.to_ref, f.kind FROM design_doc_ref f JOIN source_record r ON r.key = f.doc_key " +
+        "SELECT f.doc_key, f.from_item, f.to_ref, f.kind, f.line FROM design_doc_ref f JOIN source_record r ON r.key = f.doc_key " +
         "WHERE r.removed_at IS NULL AND f.doc_key IN (SELECT value FROM json_each(@keys)) ORDER BY f.doc_key, f.rowid";
 }

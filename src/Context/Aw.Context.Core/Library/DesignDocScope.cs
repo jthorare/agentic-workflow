@@ -81,7 +81,7 @@ public static class DesignDocScope
             {
                 findings.Add(new DesignDocFinding(doc.Path, FrontMatterBlock.Error(
                     doc.Path,
-                    r.Line,
+                    r.Line > 0 ? r.Line : null,
                     DesignDocCodes.BrokenRef,
                     $"{r.To} is not in this scope.",
                     $"Fix the ref, or add {r.To[(r.To.LastIndexOf('#') + 1)..]} to the doc it names.")));

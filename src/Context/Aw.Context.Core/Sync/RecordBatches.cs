@@ -122,10 +122,10 @@ public static class RecordBatches
         var path = item.Key.Value;
         if (blocked)
         {
-            return DesignDocParser.IsDesignDoc(DesignDocParser.Parse(path, item.Text)) ? DesignDocParser.Blocked(path) : null;
+            return DesignDocParser.IsDesignDoc(DesignDocParser.Parse(path, item.Text, item.SourceSha256)) ? DesignDocParser.Blocked(path) : null;
         }
 
-        var parsed = DesignDocParser.Parse(path, cleanText);
+        var parsed = DesignDocParser.Parse(path, cleanText, item.SourceSha256);
         return DesignDocParser.IsDesignDoc(parsed) ? parsed : null;
     }
 
