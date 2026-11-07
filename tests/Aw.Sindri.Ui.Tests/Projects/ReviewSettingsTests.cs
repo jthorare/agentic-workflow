@@ -172,10 +172,10 @@ public sealed class ReviewSettingsTests
         settings.CollapseText = "changed/**";
 
         settings.Reset(settings.CollapseKey);
+        Assert.True(settings.CollapseKey.IsReset);
         await settings.Save(Token);
 
         var entry = OnlySave().Entry;
-        Assert.True(settings.CollapseKey.IsReset);
         Assert.Null(entry.Collapse);
         Assert.NotNull(entry.Panels);
     }
@@ -239,7 +239,8 @@ public sealed class ReviewSettingsTests
 
         await settings.Save(Token);
 
-        Assert.Equal(["{\"ci\":\"ui-tests\"}", "{\"manual\":true}"], OnlySave().Entry.Checks!.Select(c => c.Need!.Value.GetRawText()), StringComparer.Ordinal);
+        // the golden is pretty-printed, so the raw text keeps its layout: compare the JSON, not the bytes
+        Assert.Equal(["{\"ci\":\"ui-tests\"}", "{\"manual\":true}"], OnlySave().Entry.Checks!.Select(c => System.Text.Json.Nodes.JsonNode.Parse(c.Need!.Value.GetRawText())!.ToJsonString()), StringComparer.Ordinal);
     }
 
     [Theory]
@@ -448,6 +449,40 @@ public sealed class ReviewSettingsTests
 
         Assert.Equal("mine/**", settings.CollapseText);
         _ = Assert.Single(_f.Server.ReviewSettingsReads);
+    }
+
+    [Fact]
+    public async Task While_a_save_is_out_nothing_can_be_edited()
+    {
+        var settings = await Opened();
+        _f.Server.ReviewSettingsSaveGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var saving = settings.Save(Token);
+
+        settings.AddGroup();
+        Assert.Equal((false, true, 0), (settings.CanEdit, settings.CanChange, settings.GroupRows.Count));
+
+        _f.Server.ReviewSettingsSaveGate.SetResult();
+        await saving;
+        Assert.True(settings.CanEdit);
+    }
+
+    [Fact]
+    public async Task A_save_that_finishes_after_the_sheet_moved_on_touches_nothing_of_the_new_project()
+    {
+        var settings = await Opened("extends-sindri");
+        settings.CollapseText = "mine/**";
+        _f.Server.ReviewSettingsSaveGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var saving = settings.Save(Token);
+        _f.Serve(ProjectSheetFixture.Led, c => c["origin"] = "led");
+        _f.Server.ReviewSettingsAnswer = RouteAnswer.Api("review-settings", "default-only");
+
+        await _f.Sheet.Open(ProjectsFixture.Url, ProjectSheetFixture.Subject(ProjectSheetFixture.Led), Token);
+        _f.Server.ReviewSettingsSaveGate.SetResult();
+        await saving;
+
+        Assert.Equal((Labels.ReviewSettingsEntryLine("default"), string.Empty, string.Empty, string.Empty), (settings.EntryLine, settings.Note, settings.Announcement, settings.SaveError));
+        Assert.Equal(2, _f.Server.ReviewSettingsReads.Count);
+        Assert.True(settings.CanEdit);
     }
 
     [Fact]

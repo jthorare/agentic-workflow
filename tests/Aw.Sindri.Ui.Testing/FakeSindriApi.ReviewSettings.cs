@@ -15,6 +15,9 @@ internal sealed partial class FakeSindriApi
     /// <summary>PUT /sindri/reviews/settings's answer: the "approved" golden by default.</summary>
     public RouteAnswer ReviewSettingsSaveAnswer { get; set; } = RouteAnswer.Api("review-settings-save", "approved");
 
+    /// <summary>When set, the save waits for it: the sheet stays on Saving until the test completes it.</summary>
+    public TaskCompletionSource? ReviewSettingsSaveGate { get; set; }
+
     /// <summary>The projects whose settings were read, in order.</summary>
     public IReadOnlyList<string> ReviewSettingsReads { get { lock (_gate) { return [.. _settingsReads]; } } }
 
@@ -31,13 +34,14 @@ internal sealed partial class FakeSindriApi
         return Task.FromResult(Answer<ReviewSettingsRead>(api, ReviewRoutes.SettingsOf(project), ReviewSettingsAnswer));
     }
 
-    public Task<Result<ReviewSettingsSaved>> SaveReviewSettings(Uri api, ReviewSettingsSave request, CancellationToken cancellationToken)
+    public async Task<Result<ReviewSettingsSaved>> SaveReviewSettings(Uri api, ReviewSettingsSave request, CancellationToken cancellationToken)
     {
         lock (_gate)
         {
             _settingsSaves.Add(request);
         }
 
-        return Task.FromResult(Answer<ReviewSettingsSaved>(api, ReviewRoutes.Settings, ReviewSettingsSaveAnswer));
+        await WaitFor(ReviewSettingsSaveGate, cancellationToken).ConfigureAwait(false);
+        return Answer<ReviewSettingsSaved>(api, ReviewRoutes.Settings, ReviewSettingsSaveAnswer);
     }
 }

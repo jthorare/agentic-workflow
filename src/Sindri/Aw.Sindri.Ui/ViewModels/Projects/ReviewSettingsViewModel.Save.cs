@@ -24,15 +24,9 @@ internal sealed partial class ReviewSettingsViewModel
             return;
         }
 
-        IsSaving = true;
-        Result<ReviewSettingsSaved> answer;
-        try
+        if (await Send(new ReviewSettingsSave(read.Project, Lines(ReposText), Name.Trim(), entry, Approve: true, read.Hash), url, cancellationToken).ConfigureAwait(true) is not { } answer)
         {
-            answer = await api.SaveReviewSettings(url, new ReviewSettingsSave(read.Project, Lines(ReposText), Name.Trim(), entry, Approve: true, read.Hash), cancellationToken).ConfigureAwait(true);
-        }
-        finally
-        {
-            IsSaving = false;
+            return;   // the sheet moved to another project while the save was out: its answer belongs to nobody here
         }
 
         if (answer.IsError)
@@ -44,6 +38,25 @@ internal sealed partial class ReviewSettingsViewModel
         (Note, Announcement) = answer.Value.Approved ? (string.Empty, Labels.ReviewSettingsSavedApproved) : (Labels.ReviewSettingsPending(answer.Value.PendingCount), string.Empty);
         _snapshot = null;   // saved: the read below replaces every edit
         await Read(read.Project, cancellationToken).ConfigureAwait(true);
+    }
+
+    // Sends the save; null when the sheet switched projects meanwhile (the answer is dropped, and the new project's saving state is left alone).
+    private async Task<Result<ReviewSettingsSaved>?> Send(ReviewSettingsSave request, Uri url, CancellationToken cancellationToken)
+    {
+        var generation = _generation;
+        IsSaving = true;
+        try
+        {
+            var answer = await api.SaveReviewSettings(url, request, cancellationToken).ConfigureAwait(true);
+            return generation == _generation ? answer : null;
+        }
+        finally
+        {
+            if (generation == _generation)
+            {
+                IsSaving = false;
+            }
+        }
     }
 
     // Only a key the entry already sets, or the owner changed, goes out; a reset key or one left at its inherited value stays out.

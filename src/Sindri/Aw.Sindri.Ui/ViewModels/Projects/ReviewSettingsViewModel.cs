@@ -101,8 +101,12 @@ internal sealed partial class ReviewSettingsViewModel(ISindriApi api) : Observab
         {
             Set(ref field, value);
             OnChanged(nameof(IsReadOnly));
+            OnChanged(nameof(CanEdit));
         }
     } = true;
+
+    /// <summary>True while the fields, rows and buttons take input: the settings are the owner's to change and no save is in flight (a save's re-read would wipe an edit made meanwhile).</summary>
+    public bool CanEdit => CanChange && !IsSaving;
 
     /// <summary>True after the server refused the owner's write: the settings show but don't edit.</summary>
     public bool IsReadOnly => !CanChange;
@@ -115,6 +119,7 @@ internal sealed partial class ReviewSettingsViewModel(ISindriApi api) : Observab
         {
             Set(ref field, value);
             OnChanged(nameof(SaveText));
+            OnChanged(nameof(CanEdit));
         }
     }
 
@@ -163,7 +168,7 @@ internal sealed partial class ReviewSettingsViewModel(ISindriApi api) : Observab
     {
         _generation++;
         (_read, _snapshot) = (null, null);
-        (IsShown, CanChange) = (false, true);
+        (IsShown, CanChange, IsSaving) = (false, true, false);
         (Note, SaveError, Announcement) = (string.Empty, string.Empty, string.Empty);
     }
 

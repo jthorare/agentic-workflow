@@ -11,7 +11,7 @@ internal sealed partial class ReviewSettingsViewModel
         var rows = PanelRows.ToList();
         var from = rows.IndexOf(row);
         var to = from + by;
-        if (!CanChange || from < 0 || to < 0 || to >= rows.Count)
+        if (!CanEdit || from < 0 || to < 0 || to >= rows.Count)
         {
             return;
         }
@@ -24,7 +24,7 @@ internal sealed partial class ReviewSettingsViewModel
     /// <summary>Adds an empty group at the end.</summary>
     internal void AddGroup()
     {
-        if (CanChange)
+        if (CanEdit)
         {
             GroupRows = [.. GroupRows, new SettingsGroupRow(GroupRows.Count + 1, string.Empty, string.Empty)];
         }
@@ -34,7 +34,7 @@ internal sealed partial class ReviewSettingsViewModel
     /// <param name="row">The group.</param>
     internal void RemoveGroup(SettingsGroupRow row)
     {
-        if (CanChange)
+        if (CanEdit)
         {
             GroupRows = [.. GroupRows.Where(g => g != row).Select((g, i) => g.At(i + 1))];
         }
@@ -43,7 +43,7 @@ internal sealed partial class ReviewSettingsViewModel
     /// <summary>Adds an empty risky path at the end.</summary>
     internal void AddRisk()
     {
-        if (CanChange)
+        if (CanEdit)
         {
             RiskRows = [.. RiskRows, new SettingsRiskRow(RiskRows.Count + 1, string.Empty, string.Empty)];
         }
@@ -53,7 +53,7 @@ internal sealed partial class ReviewSettingsViewModel
     /// <param name="row">The risky path.</param>
     internal void RemoveRisk(SettingsRiskRow row)
     {
-        if (CanChange)
+        if (CanEdit)
         {
             RiskRows = [.. RiskRows.Where(r => r != row).Select((r, i) => r.At(i + 1))];
         }
@@ -62,7 +62,7 @@ internal sealed partial class ReviewSettingsViewModel
     /// <summary>Adds an empty check at the end.</summary>
     internal void AddCheck()
     {
-        if (CanChange)
+        if (CanEdit)
         {
             CheckRows = [.. CheckRows, new SettingsCheckRow(CheckRows.Count + 1, string.Empty, string.Empty, string.Empty, string.Empty, need: null)];
         }
@@ -72,7 +72,7 @@ internal sealed partial class ReviewSettingsViewModel
     /// <param name="row">The check.</param>
     internal void RemoveCheck(SettingsCheckRow row)
     {
-        if (CanChange)
+        if (CanEdit)
         {
             CheckRows = [.. CheckRows.Where(c => c != row).Select((c, i) => c.At(i + 1))];
         }
@@ -82,7 +82,7 @@ internal sealed partial class ReviewSettingsViewModel
     /// <param name="key">The key.</param>
     internal void Reset(ReviewSettingsKey key)
     {
-        if (!CanChange || _read is not { } read)
+        if (!CanEdit || _read is not { } read)
         {
             return;
         }

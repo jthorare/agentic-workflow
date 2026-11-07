@@ -19,21 +19,21 @@
 
     <StackPanel Spacing="2">
       <TextBlock Classes="caption subtle" Text="{Binding Words.NameField}" AutomationProperties.AccessibilityView="Raw" />
-      <TextBox x:Name="ReviewSettingsName" Text="{Binding Name, Mode=TwoWay}" IsEnabled="{Binding CanChange}" AutomationProperties.Name="{Binding Words.NameField}" />
+      <TextBox x:Name="ReviewSettingsName" Text="{Binding Name, Mode=TwoWay}" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="{Binding Words.NameField}" />
       <Border x:Name="ReviewSettingsNameError" IsVisible="{Binding NameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding NameError}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding NameError}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
     </StackPanel>
     <StackPanel Spacing="2">
       <TextBlock Classes="caption subtle" Text="{Binding Words.ExtendsField}" AutomationProperties.AccessibilityView="Raw" />
-      <TextBox x:Name="ReviewSettingsExtends" Text="{Binding Extends, Mode=TwoWay}" IsEnabled="{Binding CanChange}" AutomationProperties.Name="{Binding Words.ExtendsField}" />
+      <TextBox x:Name="ReviewSettingsExtends" Text="{Binding Extends, Mode=TwoWay}" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="{Binding Words.ExtendsField}" />
       <Border x:Name="ReviewSettingsExtendsError" IsVisible="{Binding ExtendsError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding ExtendsError}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding ExtendsError}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
     </StackPanel>
     <StackPanel Spacing="2">
       <TextBlock Classes="caption subtle" Text="{Binding Words.ReposField}" AutomationProperties.AccessibilityView="Raw" />
-      <TextBox x:Name="ReviewSettingsRepos" Text="{Binding ReposText, Mode=TwoWay}" IsEnabled="{Binding CanChange}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48" AutomationProperties.Name="{Binding Words.ReposField}" />
+      <TextBox x:Name="ReviewSettingsRepos" Text="{Binding ReposText, Mode=TwoWay}" IsEnabled="{Binding CanEdit}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48" AutomationProperties.Name="{Binding Words.ReposField}" />
       <Border x:Name="ReviewSettingsReposError" IsVisible="{Binding ReposError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding ReposError}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding ReposError}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
@@ -44,7 +44,7 @@
         <Border x:Name="ReviewSettingsPanelsHead" AutomationProperties.Name="{Binding PanelsKey.HeaderText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" VerticalAlignment="Center">
           <TextBlock Classes="body-strong" Text="{Binding PanelsKey.HeaderText}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
-        <Button x:Name="ReviewSettingsPanelsReset" Tag="{Binding PanelsKey}" Content="{Binding PanelsKey.ResetText}" IsVisible="{Binding PanelsKey.ShowEditor}" IsEnabled="{Binding CanChange}" Click="OnReset" AutomationProperties.Name="{Binding PanelsKey.ResetText}" />
+        <Button x:Name="ReviewSettingsPanelsReset" Tag="{Binding PanelsKey}" Content="{Binding PanelsKey.ResetText}" IsVisible="{Binding PanelsKey.ShowEditor}" IsEnabled="{Binding CanEdit}" Click="OnReset" AutomationProperties.Name="{Binding PanelsKey.ResetText}" />
       </StackPanel>
       <Border x:Name="ReviewSettingsPanelsResetNote" IsVisible="{Binding PanelsKey.IsReset}" AutomationProperties.Name="{Binding PanelsKey.ResetNote}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body muted" Text="{Binding PanelsKey.ResetNote}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
@@ -52,7 +52,7 @@
       <Border x:Name="ReviewSettingsPanelsError" IsVisible="{Binding PanelsKey.Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding PanelsKey.Error}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding PanelsKey.Error}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
-      <ItemsControl x:Name="ReviewSettingsPanelList" IsEnabled="{Binding CanChange}" ItemsSource="{Binding PanelRows}" IsVisible="{Binding PanelsKey.ShowEditor}">
+      <ItemsControl x:Name="ReviewSettingsPanelList" IsEnabled="{Binding CanEdit}" ItemsSource="{Binding PanelRows}" IsVisible="{Binding PanelsKey.ShowEditor}">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="pvm:SettingsPanelRow">
             <StackPanel Orientation="Horizontal" Spacing="8">
@@ -70,7 +70,7 @@
         <Border x:Name="ReviewSettingsGroupsHead" AutomationProperties.Name="{Binding GroupsKey.HeaderText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" VerticalAlignment="Center">
           <TextBlock Classes="body-strong" Text="{Binding GroupsKey.HeaderText}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
-        <Button x:Name="ReviewSettingsGroupsReset" Tag="{Binding GroupsKey}" Content="{Binding GroupsKey.ResetText}" IsVisible="{Binding GroupsKey.ShowEditor}" IsEnabled="{Binding CanChange}" Click="OnReset" AutomationProperties.Name="{Binding GroupsKey.ResetText}" />
+        <Button x:Name="ReviewSettingsGroupsReset" Tag="{Binding GroupsKey}" Content="{Binding GroupsKey.ResetText}" IsVisible="{Binding GroupsKey.ShowEditor}" IsEnabled="{Binding CanEdit}" Click="OnReset" AutomationProperties.Name="{Binding GroupsKey.ResetText}" />
       </StackPanel>
       <Border x:Name="ReviewSettingsGroupsResetNote" IsVisible="{Binding GroupsKey.IsReset}" AutomationProperties.Name="{Binding GroupsKey.ResetNote}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body muted" Text="{Binding GroupsKey.ResetNote}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
@@ -82,7 +82,7 @@
         <Border x:Name="ReviewSettingsGroupsByFolder" IsVisible="{Binding ShowGroupsByFolder}" AutomationProperties.Name="{Binding Words.GroupsByFolder}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body muted" Text="{Binding Words.GroupsByFolder}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
-        <ItemsControl x:Name="ReviewSettingsGroupList" IsEnabled="{Binding CanChange}" ItemsSource="{Binding GroupRows}">
+        <ItemsControl x:Name="ReviewSettingsGroupList" IsEnabled="{Binding CanEdit}" ItemsSource="{Binding GroupRows}">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="pvm:SettingsGroupRow">
               <StackPanel Spacing="4" Margin="0,0,0,8">
@@ -95,7 +95,7 @@
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
-        <Button x:Name="ReviewSettingsAddGroup" Content="{Binding Words.AddGroup}" IsEnabled="{Binding CanChange}" Click="OnAddGroup" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Words.AddGroup}" />
+        <Button x:Name="ReviewSettingsAddGroup" Content="{Binding Words.AddGroup}" IsEnabled="{Binding CanEdit}" Click="OnAddGroup" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Words.AddGroup}" />
       </StackPanel>
     </StackPanel>
 
@@ -104,7 +104,7 @@
         <Border x:Name="ReviewSettingsCollapseHead" AutomationProperties.Name="{Binding CollapseKey.HeaderText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" VerticalAlignment="Center">
           <TextBlock Classes="body-strong" Text="{Binding CollapseKey.HeaderText}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
-        <Button x:Name="ReviewSettingsCollapseReset" Tag="{Binding CollapseKey}" Content="{Binding CollapseKey.ResetText}" IsVisible="{Binding CollapseKey.ShowEditor}" IsEnabled="{Binding CanChange}" Click="OnReset" AutomationProperties.Name="{Binding CollapseKey.ResetText}" />
+        <Button x:Name="ReviewSettingsCollapseReset" Tag="{Binding CollapseKey}" Content="{Binding CollapseKey.ResetText}" IsVisible="{Binding CollapseKey.ShowEditor}" IsEnabled="{Binding CanEdit}" Click="OnReset" AutomationProperties.Name="{Binding CollapseKey.ResetText}" />
       </StackPanel>
       <Border x:Name="ReviewSettingsCollapseResetNote" IsVisible="{Binding CollapseKey.IsReset}" AutomationProperties.Name="{Binding CollapseKey.ResetNote}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body muted" Text="{Binding CollapseKey.ResetNote}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
@@ -112,7 +112,7 @@
       <Border x:Name="ReviewSettingsCollapseError" IsVisible="{Binding CollapseKey.Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding CollapseKey.Error}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding CollapseKey.Error}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
-      <TextBox x:Name="ReviewSettingsCollapseText" Text="{Binding CollapseText, Mode=TwoWay}" IsVisible="{Binding CollapseKey.ShowEditor}" IsEnabled="{Binding CanChange}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding Words.CollapseField}" />
+      <TextBox x:Name="ReviewSettingsCollapseText" Text="{Binding CollapseText, Mode=TwoWay}" IsVisible="{Binding CollapseKey.ShowEditor}" IsEnabled="{Binding CanEdit}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding Words.CollapseField}" />
     </StackPanel>
 
     <StackPanel x:Name="ReviewSettingsRiskyKey" Spacing="4">
@@ -120,7 +120,7 @@
         <Border x:Name="ReviewSettingsRiskyHead" AutomationProperties.Name="{Binding RiskyKey.HeaderText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" VerticalAlignment="Center">
           <TextBlock Classes="body-strong" Text="{Binding RiskyKey.HeaderText}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
-        <Button x:Name="ReviewSettingsRiskyReset" Tag="{Binding RiskyKey}" Content="{Binding RiskyKey.ResetText}" IsVisible="{Binding RiskyKey.ShowEditor}" IsEnabled="{Binding CanChange}" Click="OnReset" AutomationProperties.Name="{Binding RiskyKey.ResetText}" />
+        <Button x:Name="ReviewSettingsRiskyReset" Tag="{Binding RiskyKey}" Content="{Binding RiskyKey.ResetText}" IsVisible="{Binding RiskyKey.ShowEditor}" IsEnabled="{Binding CanEdit}" Click="OnReset" AutomationProperties.Name="{Binding RiskyKey.ResetText}" />
       </StackPanel>
       <Border x:Name="ReviewSettingsRiskyResetNote" IsVisible="{Binding RiskyKey.IsReset}" AutomationProperties.Name="{Binding RiskyKey.ResetNote}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body muted" Text="{Binding RiskyKey.ResetNote}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
@@ -129,7 +129,7 @@
         <TextBlock Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding RiskyKey.Error}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
       <StackPanel Spacing="6" IsVisible="{Binding RiskyKey.ShowEditor}">
-        <ItemsControl x:Name="ReviewSettingsRiskList" IsEnabled="{Binding CanChange}" ItemsSource="{Binding RiskRows}">
+        <ItemsControl x:Name="ReviewSettingsRiskList" IsEnabled="{Binding CanEdit}" ItemsSource="{Binding RiskRows}">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="pvm:SettingsRiskRow">
               <StackPanel Spacing="4" Margin="0,0,0,8">
@@ -140,7 +140,7 @@
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
-        <Button x:Name="ReviewSettingsAddRisk" Content="{Binding Words.AddRisk}" IsEnabled="{Binding CanChange}" Click="OnAddRisk" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Words.AddRisk}" />
+        <Button x:Name="ReviewSettingsAddRisk" Content="{Binding Words.AddRisk}" IsEnabled="{Binding CanEdit}" Click="OnAddRisk" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Words.AddRisk}" />
       </StackPanel>
     </StackPanel>
 
@@ -149,7 +149,7 @@
         <Border x:Name="ReviewSettingsChecksHead" AutomationProperties.Name="{Binding ChecksKey.HeaderText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" VerticalAlignment="Center">
           <TextBlock Classes="body-strong" Text="{Binding ChecksKey.HeaderText}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
-        <Button x:Name="ReviewSettingsChecksReset" Tag="{Binding ChecksKey}" Content="{Binding ChecksKey.ResetText}" IsVisible="{Binding ChecksKey.ShowEditor}" IsEnabled="{Binding CanChange}" Click="OnReset" AutomationProperties.Name="{Binding ChecksKey.ResetText}" />
+        <Button x:Name="ReviewSettingsChecksReset" Tag="{Binding ChecksKey}" Content="{Binding ChecksKey.ResetText}" IsVisible="{Binding ChecksKey.ShowEditor}" IsEnabled="{Binding CanEdit}" Click="OnReset" AutomationProperties.Name="{Binding ChecksKey.ResetText}" />
       </StackPanel>
       <Border x:Name="ReviewSettingsChecksResetNote" IsVisible="{Binding ChecksKey.IsReset}" AutomationProperties.Name="{Binding ChecksKey.ResetNote}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body muted" Text="{Binding ChecksKey.ResetNote}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
@@ -158,7 +158,7 @@
         <TextBlock Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding ChecksKey.Error}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
       <StackPanel Spacing="6" IsVisible="{Binding ChecksKey.ShowEditor}">
-        <ItemsControl x:Name="ReviewSettingsCheckList" IsEnabled="{Binding CanChange}" ItemsSource="{Binding CheckRows}">
+        <ItemsControl x:Name="ReviewSettingsCheckList" IsEnabled="{Binding CanEdit}" ItemsSource="{Binding CheckRows}">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="pvm:SettingsCheckRow">
               <StackPanel Spacing="4" Margin="0,0,0,8">
@@ -171,7 +171,7 @@
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
-        <Button x:Name="ReviewSettingsAddCheck" Content="{Binding Words.AddCheck}" IsEnabled="{Binding CanChange}" Click="OnAddCheck" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Words.AddCheck}" />
+        <Button x:Name="ReviewSettingsAddCheck" Content="{Binding Words.AddCheck}" IsEnabled="{Binding CanEdit}" Click="OnAddCheck" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Words.AddCheck}" />
       </StackPanel>
     </StackPanel>
 
@@ -186,7 +186,7 @@
       <Border x:Name="ReviewSettingsStale" AutomationProperties.Name="{Binding Words.Stale}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding Words.Stale}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
-      <Button x:Name="ReviewSettingsReload" Content="{Binding Words.Reload}" Click="OnDiscard" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Words.Reload}" />
+      <Button x:Name="ReviewSettingsReload" Content="{Binding Words.Reload}" IsEnabled="{Binding !IsSaving}" Click="OnDiscard" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Words.Reload}" />
     </StackPanel>
     <Border x:Name="ReviewSettingsNote" IsVisible="{Binding Note, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Note}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body muted" Text="{Binding Note}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
