@@ -16,7 +16,7 @@ internal sealed partial class SqliteRecordStore
         }
         catch (Microsoft.Data.Sqlite.SqliteException e) when (!cancellationToken.IsCancellationRequested)
         {
-            return ContextErrors.StoreUnavailable.With($"{what}: SQLite {e.SqliteErrorCode.ToString(CultureInfo.InvariantCulture)} (extended {e.SqliteExtendedErrorCode.ToString(CultureInfo.InvariantCulture)}): {e.Message} (fix: run sindri doctor; never delete context.db)");
+            return ContextErrors.StoreUnavailable.With($"{what}: SQLite {e.SqliteErrorCode.ToString(CultureInfo.InvariantCulture)} (extended {e.SqliteExtendedErrorCode.ToString(CultureInfo.InvariantCulture)}): {e.Message}{ContextErrors.StoreHint}");
         }
     }
 }

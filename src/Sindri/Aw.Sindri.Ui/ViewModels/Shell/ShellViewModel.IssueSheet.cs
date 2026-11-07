@@ -11,6 +11,9 @@ internal sealed partial class ShellViewModel
     /// <summary>The Linear issue sheet.</summary>
     public LinearIssueSheetViewModel IssueSheet { get; private set; }
 
+    /// <summary>The write-access banner's Connect asked for Settings → Connections → Linear (the page itself is not built yet; whoever builds it maps this to opening it).</summary>
+    internal event EventHandler? LinearConnectRequested;
+
     /// <summary>True when the sheet's subject is a Linear issue.</summary>
     public bool IsIssueSheet => SheetLink?.Kind == DeepLinkKind.Issue;
 
@@ -34,7 +37,20 @@ internal sealed partial class ShellViewModel
         Health.Follow((url, token) => IsIssueSheet && IsSheetOpen ? IssueSheet.Refresh(url, token) : Task.CompletedTask);
         Linear.IssueRequested += (_, e) => OpenIssue(e.Key);
         ReviewPage.IssueRequested += (_, e) => OpenIssue(e.Key);
-        IssueSheet.PrRequested += (_, e) => OpenReviewPage(e.Repo, e.Number);
+        IssueSheet.PrRequested += (_, e) =>
+        {
+            if (!IssueSheet.Leaving(then: () => OpenReviewPage(e.Repo, e.Number)))
+            {
+                OpenReviewPage(e.Repo, e.Number);
+            }
+        };
+        IssueSheet.ConnectRequested += (_, _) =>
+        {
+            LinearConnectRequested?.Invoke(this, EventArgs.Empty);
+            // Settings has no Connections → Linear row yet (the write-access PR adds it, with the key paste and team ticks); until then Connect opens Settings at the top.
+            GoTo(PageId.Settings);
+        };
+        IssueSheet.LeaveConfirmed += (_, _) => CloseSheet();
         Linear.PropertyChanged += (_, e) =>
         {
             if (string.Equals(e.PropertyName, nameof(LinearWorkViewModel.NewCount), StringComparison.Ordinal))
@@ -45,7 +61,18 @@ internal sealed partial class ShellViewModel
         };
     }
 
+    /// <summary>The sheet's close button and Back: unsaved edits on an open issue sheet ask before they go.</summary>
+    /// <returns>True when the question is showing and the sheet stays open.</returns>
+    internal bool AskBeforeClosingIssue() => IsIssueSheet && IsSheetOpen && IssueSheet.Leaving();
+
     private void OpenIssue(string key) => Navigate(new DeepLink(DeepLinkKind.Issue, key));
+
+    // A link that would replace or close the open issue sheet while it has unsaved edits asks first; Discard follows the link.
+    private bool AskBeforeLeavingFor(DeepLink link, bool rowSheet) =>
+        IsIssueSheet && IsSheetOpen && IssueSheet.HasChanges
+        && !(link.Kind == DeepLinkKind.Issue && string.Equals(link.Subject, IssueSheet.Key, StringComparison.Ordinal))
+        && !(PageOnly(link.Kind) is not null && link.Kind != DeepLinkKind.ProjectAdd)
+        && IssueSheet.Leaving(then: () => Navigate(link, rowSheet));
 
     // The issue part of opening the sheet (OnSheetOpened): the sheet names its issue at once and reads it.
     private void OnIssueSheetOpened(DeepLink link)

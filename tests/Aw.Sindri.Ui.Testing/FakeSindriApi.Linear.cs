@@ -61,8 +61,15 @@ internal sealed partial class FakeSindriApi
         return Task.FromResult(Answer<LinearIssueList>(api, LinearRoutes.IssueList(query), LinearIssuesFor?.Invoke(query) ?? LinearIssuesAnswer));
     }
 
-    public Task<Result<LinearIssueOne>> LinearIssue(Uri api, string key, CancellationToken cancellationToken) =>
-        Task.FromResult(Answer<LinearIssueOne>(api, LinearRoutes.Issue(key), LinearIssueAnswer));
+    /// <summary>When set, the issue read waits for it (after it has taken the answer served when it was asked).</summary>
+    public TaskCompletionSource? LinearIssueGate { get; set; }
+
+    public async Task<Result<LinearIssueOne>> LinearIssue(Uri api, string key, CancellationToken cancellationToken)
+    {
+        var answer = LinearIssueAnswer;   // what was served when the read was asked
+        await WaitFor(LinearIssueGate, cancellationToken).ConfigureAwait(false);
+        return Answer<LinearIssueOne>(api, LinearRoutes.Issue(key), answer);
+    }
 
     public async Task<Result<LinearLookups>> LinearLookups(Uri api, string team, CancellationToken cancellationToken)
     {

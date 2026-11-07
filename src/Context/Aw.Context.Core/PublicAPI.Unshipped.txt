@@ -12388,3 +12388,5 @@ override Aw.Context.Core.Linear.LinearIssueParent.GetHashCode() -> int
 override Aw.Context.Core.Linear.LinearIssueParent.ToString() -> string!
 static Aw.Context.Core.Linear.LinearIssueParent.operator !=(Aw.Context.Core.Linear.LinearIssueParent? left, Aw.Context.Core.Linear.LinearIssueParent? right) -> bool
 static Aw.Context.Core.Linear.LinearIssueParent.operator ==(Aw.Context.Core.Linear.LinearIssueParent? left, Aw.Context.Core.Linear.LinearIssueParent? right) -> bool
+const Aw.Context.Core.ContextErrors.StoreHint = " (fix: run sindri doctor; never delete context.db)" -> string!
+static Aw.Context.Core.ContextErrors.DoctorDetail(Aw.Kernel.Error! error) -> string!

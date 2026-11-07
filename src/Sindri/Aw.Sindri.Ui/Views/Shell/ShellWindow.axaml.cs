@@ -269,7 +269,13 @@ internal sealed partial class ShellWindow : Window
 
     private void OnSheetDragged(object? sender, VectorEventArgs e) => Shell?.ResizeSheet(SheetPanel.Bounds.Width);
 
-    private void OnCloseSheet(object? sender, RoutedEventArgs e) => Shell?.CloseSheet();
+    private void OnCloseSheet(object? sender, RoutedEventArgs e)
+    {
+        if (Shell is { } shell && !shell.AskBeforeClosingIssue())
+        {
+            shell.CloseSheet();
+        }
+    }
 
     private void OnEdgeTab(object? sender, RoutedEventArgs e)
     {
