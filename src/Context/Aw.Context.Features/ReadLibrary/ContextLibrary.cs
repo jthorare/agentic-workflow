@@ -1,4 +1,5 @@
 using Aw.Context.Core.Audience;
+using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Library;
 using Aw.Context.Core.Records;
@@ -8,8 +9,14 @@ using Aw.Kernel;
 namespace Aw.Context.Features.ReadLibrary;
 
 /// <summary>The design-doc library's reads (PR review page spec 2026-11-04 §5.5): <see cref="ILibraryStore"/> rows, the caller's audience applied to each, claims resolved when read.</summary>
-internal sealed class ContextLibrary(ILibraryStore store) : IContextLibrary
+internal sealed class ContextLibrary(ILibraryStore store, ILibraryStatus? status = null) : IContextLibrary
 {
+    public ValueTask<Result<IReadOnlyList<LibraryRootStatus>>> Roots(ContextScope scope, CancellationToken cancellationToken)
+    {
+        _ = status;
+        throw new NotSupportedException();
+    }
+
     public async ValueTask<Result<IReadOnlyList<LibraryDoc>>> ListDocs(LibraryDocFilter filter, AudienceScope audience, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(filter);

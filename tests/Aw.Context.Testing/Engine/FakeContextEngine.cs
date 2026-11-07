@@ -123,6 +123,10 @@ public sealed class FakeContextEngine : IContextEngine
     public ValueTask<Result<IReadOnlyList<LibraryClaim>>> Claims(RecordKey prKey, AudienceScope audience, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryClaim>>([]));
 
+    /// <summary>The fake reads no library: no roots.</summary>
+    public ValueTask<Result<IReadOnlyList<LibraryRootStatus>>> Roots(ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryRootStatus>>([]));
+
     /// <inheritdoc cref="ListDocs" />
     public ValueTask<Result<IReadOnlyList<LibraryClaim>>> ClaimsOn(RecordKey docKey, AudienceScope audience, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryClaim>>([]));
