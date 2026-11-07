@@ -96,26 +96,33 @@ public sealed class SkillRunEndingTests : AgentRuntimeTestBase
         }
     }
 
-    // RED until the timeout says why (#2191 comment): the watch records 'launch.owner-waiting' reason 'unreadable' and goes on, and when the Step's own timeout then fires the escalation says only '<state> ran past 2h'.
-    [Fact(Timeout = 240_000)]
+    // RED until the timeout says why (#2191 comment): the watch records 'launch.owner-waiting' reason 'unreadable' and goes on, and when the Step's own timeout then fires the escalation says only '<state> ran past 1m'.
+    // Real time: the time-skipping server never finishes a skip while the skill watch (a long activity) is in flight, and a recipe duration is at least 1m.
+    [Fact(Timeout = 180_000)]
     public async Task A_result_that_stays_unreadable_until_the_timeout_is_named_in_what_the_timeout_says()
     {
         var ct = TestContext.Current.CancellationToken;
         _fakeFiles = true;
-        await using var server = new SindriTimeSkippingServer();
-        await server.InitializeAsync();
-        await Trial(server.Environment, static text => text.Replace("then: park", "then: escalate", StringComparison.Ordinal), async (sindri, handle, launch) =>
+        var environment = await WorkflowsHarness.StartDevServer(ct: ct);
+        try
         {
-            _files.EndTurn(launch, RealTime.NowOffset - TimeSpan.FromMinutes(10));   // why: settled long ago on the host's clock, so the watch reads the result at once
-            Result(launch, Encoding.UTF8.GetBytes("{\"skill\":\"review\",\"verdict\":"));   // cut off mid-write: not JSON
-            var waiting = await Rows(sindri, EventTypes.LaunchOwnerWaiting, static r => r.Exists(static p => p.Contains("unreadable", StringComparison.Ordinal)), ct);
-            Assert.Contains(waiting, static p => p.Contains("unreadable", StringComparison.Ordinal));   // the watch saw it and kept watching
+            await Trial(environment, static text => ShortEscalation(text), async (sindri, handle, launch) =>
+            {
+                _files.EndTurn(launch, RealTime.NowOffset - TimeSpan.FromMinutes(10));   // why: settled long ago on the host's clock, so the watch reads the result at once
+                Result(launch, Encoding.UTF8.GetBytes("{\"skill\":\"review\",\"verdict\":"));   // cut off mid-write: not JSON
+                var waiting = await Rows(sindri, EventTypes.LaunchOwnerWaiting, static r => r.Exists(static p => p.Contains("unreadable", StringComparison.Ordinal)), ct);
+                Assert.Contains(waiting, static p => p.Contains("unreadable", StringComparison.Ordinal));   // the watch saw it and kept watching
 
-            await WorkflowsHarness.Skip(server.Environment, TimeSpan.FromHours(2) + TimeSpan.FromMinutes(5), ct);   // why: DelayAsync gives up after 30 s of wall clock
-            var escalated = await WorkflowsHarness.Until(handle, static v => v.State == "escalated");
+                await Task.Delay(TimeSpan.FromSeconds(50), TimeProvider.System, ct);   // why: Until waits only 20 s, and the 1m timeout is due in about that long
+                var escalated = await WorkflowsHarness.Until(handle, static v => v.State == "escalated");
 
-            Assert.Contains("unreadable", escalated.Question?.Question, StringComparison.OrdinalIgnoreCase);
-        }, ct);
+                Assert.Contains("unreadable", escalated.Question?.Question, StringComparison.OrdinalIgnoreCase);
+            }, ct);
+        }
+        finally
+        {
+            await environment.ShutdownAsync();
+        }
     }
 
     protected override void Dispose(bool disposing)
@@ -181,6 +188,14 @@ public sealed class SkillRunEndingTests : AgentRuntimeTestBase
         var path = SkillLaunchEnv.ResultFileOf(_runs, launch);
         _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         File.WriteAllBytes(path, bytes);
+    }
+
+    // The skill state's timeout cut to the shortest a recipe allows, and escalating at once instead of retrying first.
+    private static string ShortEscalation(string text)
+    {
+        var shorter = text.Replace("timeout: { after: 2h, then: park }", "timeout: { after: 1m, then: escalate }", StringComparison.Ordinal);
+        Assert.False(string.Equals(text, shorter, StringComparison.Ordinal), "the trial recipe has no 2h park timeout to shorten");
+        return shorter;
     }
 
     // The trial recipe with no 'failed' end, so a failed Step is not taken by a transition.
