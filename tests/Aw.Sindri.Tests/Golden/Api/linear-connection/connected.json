@@ -1,0 +1,23 @@
+{
+  "read": {
+    "state": "resolves",
+    "checkedAt": "2026-01-01T09:58:00.0000000Z"
+  },
+  "write": {
+    "state": "resolves",
+    "checkedAt": "2026-01-01T09:58:00.0000000Z"
+  },
+  "teams": [
+    {
+      "id": "00000000-0000-4000-8000-0000000000e1",
+      "key": "ENG",
+      "name": "Engineering"
+    },
+    {
+      "id": "00000000-0000-4000-8000-0000000000e2",
+      "key": "OPS",
+      "name": "Operations"
+    }
+  ],
+  "pending": false
+}

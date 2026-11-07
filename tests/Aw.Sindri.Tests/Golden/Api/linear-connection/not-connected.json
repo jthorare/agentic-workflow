@@ -1,0 +1,12 @@
+{
+  "read": {
+    "state": "notSet",
+    "checkedAt": null
+  },
+  "write": {
+    "state": "notSet",
+    "checkedAt": null
+  },
+  "teams": [],
+  "pending": false
+}
