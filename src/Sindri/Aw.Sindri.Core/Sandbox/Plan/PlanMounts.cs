@@ -193,12 +193,11 @@ internal static class PlanMounts
             Beneath(m, new PlanMount(trial.TrimEnd('/'), PlanMountKind.ReadOnly, Reason: "the trial's --skills folder"));   // why: the home is an empty tmpfs, so a folder under it is invisible until it is mounted
         }
 
-        if (c.Request.SkillEnvironment is not { } skill || !skill.TryGetValue("AW_DIR", out var awDir))
+        if (c.SkillDirectory is not { } directory)
         {
             return;
         }
 
-        var directory = awDir.TrimEnd('/');
         Beneath(m, new PlanMount(directory, PlanMountKind.ReadWrite, Reason: "the skill's results and plans for this repo ($AW_DIR)"));
         Beneath(m, new PlanMount($"{c.StateDir}/bugfix/{directory[(directory.LastIndexOf('/') + 1)..]}", PlanMountKind.ReadWrite, Reason: "bugfix-state's own folder for this repo"));
     }
