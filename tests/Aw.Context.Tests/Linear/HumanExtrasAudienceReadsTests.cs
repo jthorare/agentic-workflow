@@ -46,7 +46,7 @@ public sealed class HumanExtrasAudienceReadsTests : IAsyncLifetime
     private async Task<LinearIssueRow?> Issue(RecordKey key, ContextScope scope)
     {
         await using var provider = _world.Provider.CreateAsyncScope();
-        var result = await provider.ServiceProvider.GetRequiredService<IContextIssues>().IssueGet(key, scope, Ct);
+        var result = await provider.ServiceProvider.GetRequiredService<IContextEngine>().IssueGet(key, scope, Ct);
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : "");
         return result.Value;
     }
