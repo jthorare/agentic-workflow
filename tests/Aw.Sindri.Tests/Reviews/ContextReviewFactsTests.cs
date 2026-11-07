@@ -174,6 +174,8 @@ public sealed class ContextReviewFactsTests
             return ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryClaim>>([]));
         }
 
+        public ValueTask<Result<IReadOnlyDictionary<string, IReadOnlyList<LibraryDoc>>>> DocsNaming(IReadOnlyList<string> issueKeys, AudienceScope audience, CancellationToken cancellationToken) => FakeContextEngine.Instance.DocsNaming(issueKeys, audience, cancellationToken);
+
         public ValueTask<Result<IReadOnlyList<LibraryDoc>>> ListDocs(LibraryDocFilter filter, AudienceScope audience, CancellationToken cancellationToken) => FakeContextEngine.Instance.ListDocs(filter, audience, cancellationToken);
 
         public ValueTask<Result<LibraryDoc?>> GetDoc(RecordKey key, AudienceScope audience, CancellationToken cancellationToken) => FakeContextEngine.Instance.GetDoc(key, audience, cancellationToken);
