@@ -30,7 +30,9 @@ public sealed class ContextLinearWritesContractTests : ContextLinearWritesContra
             .Team("ENG")
             .Member("Ada Fixture")
             .Issue("ENG", "Fix the login timeout", new FakeLinearIssueSeed { State = "In Progress", Assignee = "Ada Fixture" })
-            .Comment("ENG-1", "first comment"));
+            .Comment("ENG-1", "first comment")
+            .Issue("ENG", "Another issue")
+            .Comment("ENG-2", "a comment on another issue"));
 
     public ValueTask DisposeAsync() => _world.DisposeAsync();
 
@@ -44,6 +46,8 @@ public sealed class ContextLinearWritesContractTests : ContextLinearWritesContra
         [.. _world.Linear.RequestBodies.Select(Creating).OfType<JsonObject>().Select(static m => (string?)m["variables"]?["input"]?["id"]).OfType<string>().Select(static id => LinearClientId.Parse(id).Value)];
 
     protected override void MakeNextWriteUnknown(IContextLinearWrites writes) => _world.Linear.Switches.DropBeforeApplying = true;
+
+    protected override ExternalId CommentOnAnotherIssue(IContextLinearWrites writes) => ExternalId.From(_world.Linear.Comments[1].Id);
 
     // the request when it is a create mutation, else null
     private static JsonObject? Creating(string body)

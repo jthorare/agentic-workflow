@@ -25,9 +25,10 @@ internal sealed partial class LinearCalls(LinearSettings settings, ILogger logge
     /// <param name="status">The HTTP status.</param>
     /// <param name="body">The reply's bytes.</param>
     /// <param name="rateLimitReset">The reply's 'x-ratelimit-requests-reset' header, when it had one.</param>
+    /// <param name="landed">For a write: the error to answer when the reply carries GraphQL errors next to data that says the mutation landed (SND-LINEAR-011, so a re-read decides), or null to classify the errors as usual.</param>
     /// <typeparam name="T">The data record of the operation.</typeparam>
     /// <returns>The data or the error.</returns>
-    public Result<T> Read<T>(string operation, HttpStatusCode status, byte[] body, string? rateLimitReset = null)
+    public Result<T> Read<T>(string operation, HttpStatusCode status, byte[] body, string? rateLimitReset = null, Func<T, Error?>? landed = null)
     {
         var code = (int)status;
         if (status is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
@@ -53,13 +54,15 @@ internal sealed partial class LinearCalls(LinearSettings settings, ILogger logge
 
         if (reply.Value.Errors is { Count: > 0 } errors)
         {
-            return Failed(operation, Classify(errors, rateLimitReset), code);
+            return Failed(operation, Landed(reply.Value.Data, landed) ?? Classify(errors, rateLimitReset), code);
         }
 
         return reply.Value.Data is { } data && code is >= 200 and < 300
             ? data
             : Failed(operation, Unexpected(string.Create(CultureInfo.InvariantCulture, $"answered {operation} with HTTP {code} and no data")), code);
     }
+
+    private static Error? Landed<T>(T? data, Func<T, Error?>? landed) => data is not null && landed is not null ? landed(data) : null;
 
     private Error Classify(IReadOnlyList<LinearGraphQlError> graphQlErrors, string? rateLimitReset)
     {

@@ -8,7 +8,7 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Context.Tests.Linear;
 
-/// <summary>How the write client reads Linear's replies that the fake can't be made to give (a 5xx, success: false, errors next to data, a body of the wrong shape), and what it puts on the wire. A canned reply stands in for Linear.</summary>
+/// <summary>How the write client reads Linear's replies that the fake can't be made to give (a 5xx, success: false, errors with or without a landed payload, a body of the wrong shape), and what it puts on the wire. A canned reply stands in for Linear.</summary>
 [Trait("Lane", "unit")]
 public sealed class LinearWriteClientReplyTests : IDisposable
 {
@@ -106,14 +106,25 @@ public sealed class LinearWriteClientReplyTests : IDisposable
     }
 
     [Fact]
-    public async Task Errors_next_to_data_are_015_and_a_user_presentable_message_beats_the_plain_one()
+    public async Task Errors_without_a_landed_payload_are_015_and_a_user_presentable_message_beats_the_plain_one()
     {
-        _handler.Reply(HttpStatusCode.OK, Applied(IssueJson, ""","errors":[{"message":"plain","extensions":{"code":"INVALID_INPUT","userPresentableMessage":"The title is too long."}}]"""));
+        _handler.Reply(HttpStatusCode.OK, """{"data":{"issueUpdate":null},"errors":[{"message":"plain","extensions":{"code":"INVALID_INPUT","userPresentableMessage":"The title is too long."}}]}""");
 
         var error = (await Update()).Error;
 
         Assert.Equal("SND-LINEAR-015", error.Code);
         Assert.Equal("Linear said no: The title is too long. Nothing was changed.", error.Message);
+    }
+
+    [Fact]
+    public async Task Errors_next_to_success_true_are_011_because_the_write_may_have_landed()
+    {
+        _handler.Reply(HttpStatusCode.OK, Applied(IssueJson, ""","errors":[{"message":"Cannot return null for non-nullable field Issue.cycle","path":["issueUpdate","issue","cycle"]}]"""));
+
+        var error = (await Update()).Error;
+
+        Assert.Equal("SND-LINEAR-011", error.Code);
+        Assert.Contains("may or may not have been applied", error.Message, StringComparison.Ordinal);
     }
 
     [Fact]

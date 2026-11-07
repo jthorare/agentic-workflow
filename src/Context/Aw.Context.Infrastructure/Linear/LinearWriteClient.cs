@@ -145,7 +145,9 @@ internal sealed class LinearWriteClient(LinearSourceParts parts) : ILinearWrites
                 return calls.Failed(operation, Unresolved(pointer), status: null);
             }
 
-            var read = await Post<TData>(new Outgoing(calls, settings.Url, operation, request), key, secret, timeout.Token).ConfigureAwait(false);
+            // why: success: true next to GraphQL errors (say on a nested field of the returned issue) may have landed, so it is 011 and the one re-read decides, never 015
+            Error? Landed(TData data) => pick(data) is { Success: true } ? NoAnswer(settings, operation, "answered success: true together with GraphQL errors") : null;
+            var read = await Post<TData>(new Outgoing(calls, settings.Url, operation, request), key, secret, Landed, timeout.Token).ConfigureAwait(false);
             return read.IsError ? read.Error : View(calls, operation, settings, pick(read.Value));
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
@@ -158,7 +160,7 @@ internal sealed class LinearWriteClient(LinearSourceParts parts) : ILinearWrites
         }
     }
 
-    private async Task<Result<TData>> Post<TData>(Outgoing call, LinearWriteKey key, string secret, CancellationToken cancellationToken)
+    private async Task<Result<TData>> Post<TData>(Outgoing call, LinearWriteKey key, string secret, Func<TData, Error?> landed, CancellationToken cancellationToken)
     {
         using var message = new HttpRequestMessage(HttpMethod.Post, call.Url) { Content = new ByteArrayContent(AwJson.Serialize(call.Request, LinearWire.Options)) };
         message.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
@@ -166,7 +168,7 @@ internal sealed class LinearWriteClient(LinearSourceParts parts) : ILinearWrites
         using var response = await parts.Http.SendAsync(message, cancellationToken).ConfigureAwait(false);
         var reply = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
         var reset = response.Headers.TryGetValues(RateLimitResetHeader, out var values) ? values.FirstOrDefault() : null;
-        var read = call.Calls.Read<TData>(call.Operation, response.StatusCode, reply, reset);
+        var read = call.Calls.Read(call.Operation, response.StatusCode, reply, reset, landed);
         if (read.IsError && string.Equals(read.Error.Code, LinearHubErrors.WriteKeyRefused.Code, StringComparison.Ordinal))
         {
             key.Forget();

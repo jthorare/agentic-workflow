@@ -12,7 +12,7 @@ namespace Aw.Context.Testing.Linear;
 /// A scripted <see cref="IContextLinearWrites"/> for the tests of whatever calls it. A test scripts the next write's outcome with <see cref="Next"/> or <see cref="NextError(ErrorDefinition, string)"/>, and a live read per key with <see cref="SetLive"/>;
 /// every call that gets past the session and text-limit checks is recorded in <see cref="Calls"/> with its arguments, client ids included.
 /// An unscripted write answers Applied with a view built from the input: Create makes 'ENG-1', 'ENG-2'... (see <see cref="DefaultTeamKey"/>) with the draft's fields and an id derived from the client id; Change applies the sent fields to the key's live view
-/// (or a plain one); Comment, EditComment and Attach answer the key's live view unchanged. A view a Create or Change made becomes that key's live view. An unscripted <see cref="Live"/> answers SND-LINEAR-005.
+/// (or a plain one); Comment, EditComment and Attach answer the key's live view unchanged, and EditComment of a comment <see cref="SetComment"/> put on another issue answers SND-LINEAR-005. A view a Create or Change made becomes that key's live view. An unscripted <see cref="Live"/> answers SND-LINEAR-005.
 /// </summary>
 public sealed class FakeContextLinearWrites : IContextLinearWrites
 {
@@ -21,6 +21,7 @@ public sealed class FakeContextLinearWrites : IContextLinearWrites
     private readonly List<FakeLinearWriteCall> _calls = [];
     private readonly Queue<Result<LinearWriteOutcome>> _scripts = new();
     private readonly Dictionary<LinearIssueKey, Result<LinearIssueView>> _live = [];
+    private readonly Dictionary<ExternalId, LinearIssueKey> _comments = [];
     private LinearWriteKeyStatus _keyStatus = new LinearWriteKeyResolves();
     private int _created;
 
@@ -36,6 +37,18 @@ public sealed class FakeContextLinearWrites : IContextLinearWrites
             {
                 return [.. _calls];
             }
+        }
+    }
+
+    /// <summary>Says which issue a comment is on. EditComment of a comment set here on another issue answers SND-LINEAR-005 and sends nothing; a comment never set is taken to be on the issue the call names.</summary>
+    /// <param name="commentId">The comment's id.</param>
+    /// <param name="issue">The issue it is on.</param>
+    public void SetComment(ExternalId commentId, LinearIssueKey issue)
+    {
+        ArgumentNullException.ThrowIfNull(issue);
+        lock (_gate)
+        {
+            _comments[commentId] = issue;
         }
     }
 
@@ -169,6 +182,14 @@ public sealed class FakeContextLinearWrites : IContextLinearWrites
     public ValueTask<Result<LinearWriteOutcome>> EditComment(LinearIssueKey key, ExternalId commentId, string body, ContextScope scope, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(key);
+        lock (_gate)
+        {
+            if (Refuse(scope) is null && LinearWriteLimits.Text("comment", body, required: true) is null && _comments.TryGetValue(commentId, out var on) && on != key)
+            {
+                return ValueTask.FromResult<Result<LinearWriteOutcome>>(LinearHubErrors.IssueNotFound.With($"No comment {commentId.Value} on {key}, so nothing was sent."));
+            }
+        }
+
         return Write(scope, LinearWriteLimits.Text("comment", body, required: true), new FakeLinearWriteCall("EditComment", key, Body: body, CommentId: commentId), () => ViewOf(key));
     }
 

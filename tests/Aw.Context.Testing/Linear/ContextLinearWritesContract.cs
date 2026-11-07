@@ -61,6 +61,11 @@ public abstract class ContextLinearWritesContract<TWrites>
     /// <param name="writes">The implementation.</param>
     protected abstract void MakeNextWriteUnknown(TWrites writes);
 
+    /// <summary>The id of a comment that exists, but on another issue than <see cref="IssueKey"/>.</summary>
+    /// <param name="writes">The implementation.</param>
+    /// <returns>The comment's id.</returns>
+    protected abstract ExternalId CommentOnAnotherIssue(TWrites writes);
+
     // why: a session's scope carries no settings, so a session refused first proves the check comes before the settings are read
     private ContextScope Scope(ContextCallerKind kind) =>
         new(kind == ContextCallerKind.Human ? HumanSettings : null, [], new ContextCaller(kind, kind == ContextCallerKind.Session ? ContextRepoName.From("split-panes") : null, ContextClient.Cli));
@@ -208,5 +213,18 @@ public abstract class ContextLinearWritesContract<TWrites>
         ContractCheck.Fails(_owner, result, "SND-LINEAR-015");
         ContractCheck.That(_owner, result.Error.Message == "Not sent: the change sets no field. Nothing was changed.", "the message says the change sets no field");
         ContractCheck.That(_owner, Sent(writes) == 0, "an empty change sent nothing");
+    }
+
+    /// <summary>An edit of a comment that isn't on the issue is refused with 005, and no write goes out.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task An_edit_of_a_comment_on_another_issue_is_refused_with_005_and_nothing_is_sent()
+    {
+        var writes = Create();
+
+        var result = await writes.EditComment(IssueKey, CommentOnAnotherIssue(writes), "hello", Scope(ContextCallerKind.Human), CancellationToken.None);
+
+        ContractCheck.Fails(_owner, result, "SND-LINEAR-005");
+        ContractCheck.That(_owner, WritesSent(writes) == 0, "an edit of a comment on another issue sent no write");
     }
 }

@@ -4,6 +4,7 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Linear;
 using Aw.Context.Core.Sources;
+using Aw.Context.Features.LinearWriteThrough;
 using Aw.Context.Features.WriteLinear;
 using Aw.Kernel;
 
@@ -298,6 +299,50 @@ public sealed class ContextLinearWritesTests
 
         _ = Assert.IsType<LinearWriteApplied>(applied.Value);
         _ = Assert.IsType<LinearWriteUnknown>(unknown.Value);
+    }
+
+    [Fact]
+    public async Task An_edit_of_a_comment_on_another_issue_or_of_no_comment_is_005_and_nothing_is_sent()
+    {
+        _reads.Issues["ENG-12"] = Results.Success<LinearIssueView?>(View());
+        var elsewhere = ExternalId.From("comment-on-ops-3");
+        _reads.Comments[elsewhere.Value] = Results.Success<LinearCommentView?>(new LinearCommentView(elsewhere, ExternalId.From("issue-ops-3"), "theirs"));
+
+        AssertFails(await Facade().EditComment(_key, elsewhere, "x", Human(), Ct), "SND-LINEAR-005");
+        AssertFails(await Facade().EditComment(_key, ExternalId.From("comment-gone"), "x", Human(), Ct), "SND-LINEAR-005");
+        Assert.Empty(_writes.Calls);
+        Assert.Empty(_through.Stored);
+    }
+
+    [Fact]
+    public async Task A_write_through_that_throws_after_the_mutation_landed_is_applied_not_stored()
+    {
+        _reads.Issues["ENG-12"] = Results.Success<LinearIssueView?>(View());
+        _writes.Answer = View("New title");
+        var facade = new ContextLinearWrites(_writes, _reads, new ScopedLinearWriteThrough(static (_, _) => throw new InvalidOperationException("the store is gone")));
+
+        var result = await facade.Change(_key, Title("New title"), Human(), Ct);
+
+        _ = Assert.IsType<LinearWriteAppliedNotStored>(result.Value);
+    }
+
+    [Fact]
+    public async Task The_write_through_runs_on_its_own_token_so_a_cancel_after_the_mutation_landed_does_not_stop_it()
+    {
+        _reads.Issues["ENG-12"] = Results.Success<LinearIssueView?>(View());
+        _writes.Answer = View("New title");
+        using var cancel = new CancellationTokenSource();
+        CancellationToken seen = default;
+        var facade = new ContextLinearWrites(_writes, _reads, new ScopedLinearWriteThrough((_, token) =>
+        {
+            seen = token;
+            return ValueTask.FromResult(Results.Success(new LinearWriteThroughResponse(Key: null, Written: false)));
+        }));
+
+        await cancel.CancelAsync();
+        _ = await facade.Change(_key, Title("New title"), Human(), cancel.Token);
+
+        Assert.False(seen.CanBeCanceled);
     }
 
     [Fact]

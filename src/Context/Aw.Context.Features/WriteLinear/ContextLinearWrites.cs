@@ -11,7 +11,8 @@ namespace Aw.Context.Features.WriteLinear;
 /// The Linear hub's writes (spec 2026-11-04 §5.1-§5.5). Each write goes in this order: the caller (a session is refused, SND-CONTEXT-020, before anything else), the profile's Linear settings (SND-CONTEXT-002 when none), the local checks (SND-LINEAR-015,
 /// before anything is sent), one live read of the issue (SND-LINEAR-005 when Linear has none, 010 when it can't be reached), the mutation, and on its answer the write-through into the store (<see cref="LinearWriteApplied"/>; the store failing after
 /// the mutation landed is <see cref="LinearWriteAppliedNotStored"/>, never an error). When the mutation was sent and got no answer (SND-LINEAR-011) the issue, comment or attachment is read once more: found counts as applied, not found or unreadable is
-/// <see cref="LinearWriteUnknown"/>. 
+/// <see cref="LinearWriteUnknown"/>. EditComment also reads the comment live before sending and refuses one that isn't on the issue (SND-LINEAR-005). Which teams a write may touch (SND-LINEAR-003: Create's team id, an empty
+/// teams list) and a write key that equals the read key (SND-LINEAR-001) are refused before this facade is called, by the caller's LinearWrite.Begin (api) and the profile check.
 /// </summary>
 /// <param name="writes">The mutations, sent with the write key.</param>
 /// <param name="reads">The live reads, sent with the read key.</param>
@@ -97,6 +98,12 @@ internal sealed class ContextLinearWrites(ILinearWrites writes, ILinearLiveReads
         }
 
         var (settings, issue) = prepared.Value;
+        var owned = await OwnComment(settings, issue, commentId, cancellationToken).ConfigureAwait(false);
+        if (owned is not null)
+        {
+            return owned;
+        }
+
         var sent = await writes.UpdateComment(settings, commentId, body, cancellationToken).ConfigureAwait(false);
         return await Finish(scope, sent, LinearWrittenFields.None, async () =>
         {
@@ -171,6 +178,20 @@ internal sealed class ContextLinearWrites(ILinearWrites writes, ILinearLiveReads
         }
 
         return read.Value ?? (Result<LinearIssueView>)LinearHubErrors.IssueNotFound.With($"No issue {key} in your teams (deleted, moved, or not synced yet: `sindri linear show` after the next tick).");
+    }
+
+    // why: the team check passed on the issue, so the comment has to be on that issue: an id from an issue outside the teams is never sent
+    private async ValueTask<Error?> OwnComment(LinearSettings settings, LinearIssueView issue, ExternalId commentId, CancellationToken cancellationToken)
+    {
+        var read = await reads.Comment(settings, commentId, cancellationToken).ConfigureAwait(false);
+        if (read.IsError)
+        {
+            return read.Error.Code == ContextErrors.SourceUnavailable.Code ? LinearHubErrors.Unreachable.With(read.Error.Message) : read.Error;
+        }
+
+        return read.Value is { } found && found.IssueId == issue.Id
+            ? null
+            : LinearHubErrors.IssueNotFound.With($"No comment {commentId.Value} on {issue.Key}, so nothing was sent.");
     }
 
     // why: a re-read that fails is no answer either, so the caller hears Unknown, never an error for a write that may have landed
