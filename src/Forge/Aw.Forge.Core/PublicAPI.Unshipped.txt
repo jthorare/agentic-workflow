@@ -114,12 +114,14 @@ Aw.Forge.Core.Pulls.ForgeThread.Resolved.get -> bool
 Aw.Forge.Core.Pulls.ForgeThread.Resolved.init -> void
 Aw.Forge.Core.Pulls.HeadBranch
 Aw.Forge.Core.Pulls.HeadBranch.<Clone>$() -> Aw.Forge.Core.Pulls.HeadBranch!
-Aw.Forge.Core.Pulls.HeadBranch.Deconstruct(out string! Ref, out string! Sha, out bool Fork) -> void
+Aw.Forge.Core.Pulls.HeadBranch.Deconstruct(out string! Ref, out string! Sha, out bool Fork, out string? Repo) -> void
 Aw.Forge.Core.Pulls.HeadBranch.Equals(Aw.Forge.Core.Pulls.HeadBranch? other) -> bool
 Aw.Forge.Core.Pulls.HeadBranch.Fork.get -> bool
 Aw.Forge.Core.Pulls.HeadBranch.Fork.init -> void
-Aw.Forge.Core.Pulls.HeadBranch.HeadBranch(string! Ref, string! Sha, bool Fork) -> void
+Aw.Forge.Core.Pulls.HeadBranch.HeadBranch(string! Ref, string! Sha, bool Fork, string? Repo = null) -> void
 Aw.Forge.Core.Pulls.HeadBranch.Ref.get -> string!
+Aw.Forge.Core.Pulls.HeadBranch.Repo.get -> string?
+Aw.Forge.Core.Pulls.HeadBranch.Repo.init -> void
 Aw.Forge.Core.Pulls.HeadBranch.Ref.init -> void
 Aw.Forge.Core.Pulls.HeadBranch.Sha.get -> string!
 Aw.Forge.Core.Pulls.HeadBranch.Sha.init -> void
@@ -197,7 +199,6 @@ Aw.Forge.Core.Pulls.PullSnapshot.Base.init -> void
 Aw.Forge.Core.Pulls.PullSnapshot.Checks.get -> Aw.Forge.Core.Pulls.ChecksSummary!
 Aw.Forge.Core.Pulls.PullSnapshot.Checks.init -> void
 Aw.Forge.Core.Pulls.PullSnapshot.<Clone>$() -> Aw.Forge.Core.Pulls.PullSnapshot!
-Aw.Forge.Core.Pulls.PullSnapshot.Deconstruct(out Aw.Forge.Core.Refs.ForgeRef! Ref, out string! Url, out string! Title, out string! Author, out Aw.Forge.Core.Pulls.PullStatus Status, out bool Draft, out Aw.Forge.Core.Pulls.BaseBranch! Base, out Aw.Forge.Core.Pulls.HeadBranch! Head, out bool? Mergeable, out string? ReviewDecision, out Aw.Forge.Core.Pulls.ChecksSummary! Checks, out System.Collections.Generic.IReadOnlyList<string!>! Labels) -> void
 Aw.Forge.Core.Pulls.PullSnapshot.Draft.get -> bool
 Aw.Forge.Core.Pulls.PullSnapshot.Draft.init -> void
 Aw.Forge.Core.Pulls.PullSnapshot.Equals(Aw.Forge.Core.Pulls.PullSnapshot? other) -> bool
@@ -205,7 +206,6 @@ Aw.Forge.Core.Pulls.PullSnapshot.Head.get -> Aw.Forge.Core.Pulls.HeadBranch!
 Aw.Forge.Core.Pulls.PullSnapshot.Head.init -> void
 Aw.Forge.Core.Pulls.PullSnapshot.Mergeable.get -> bool?
 Aw.Forge.Core.Pulls.PullSnapshot.Mergeable.init -> void
-Aw.Forge.Core.Pulls.PullSnapshot.PullSnapshot(Aw.Forge.Core.Refs.ForgeRef! Ref, string! Url, string! Title, string! Author, Aw.Forge.Core.Pulls.PullStatus Status, bool Draft, Aw.Forge.Core.Pulls.BaseBranch! Base, Aw.Forge.Core.Pulls.HeadBranch! Head, bool? Mergeable, string? ReviewDecision, Aw.Forge.Core.Pulls.ChecksSummary! Checks, System.Collections.Generic.IReadOnlyList<string!>! Labels) -> void
 Aw.Forge.Core.Pulls.PullSnapshot.Ref.get -> Aw.Forge.Core.Refs.ForgeRef!
 Aw.Forge.Core.Pulls.PullSnapshot.Ref.init -> void
 Aw.Forge.Core.Pulls.PullSnapshot.ReviewDecision.get -> string?
@@ -634,3 +634,7 @@ static Aw.Forge.Core.Pulls.SeedFilesRequest.operator !=(Aw.Forge.Core.Pulls.Seed
 static Aw.Forge.Core.Pulls.SeedFilesRequest.operator ==(Aw.Forge.Core.Pulls.SeedFilesRequest? left, Aw.Forge.Core.Pulls.SeedFilesRequest? right) -> bool
 static Aw.Forge.Core.Pulls.SubmitReviewRequest.operator !=(Aw.Forge.Core.Pulls.SubmitReviewRequest? left, Aw.Forge.Core.Pulls.SubmitReviewRequest? right) -> bool
 static Aw.Forge.Core.Pulls.SubmitReviewRequest.operator ==(Aw.Forge.Core.Pulls.SubmitReviewRequest? left, Aw.Forge.Core.Pulls.SubmitReviewRequest? right) -> bool
+Aw.Forge.Core.Pulls.PullSnapshot.Body.get -> string?
+Aw.Forge.Core.Pulls.PullSnapshot.Body.init -> void
+Aw.Forge.Core.Pulls.PullSnapshot.Deconstruct(out Aw.Forge.Core.Refs.ForgeRef! Ref, out string! Url, out string! Title, out string! Author, out Aw.Forge.Core.Pulls.PullStatus Status, out bool Draft, out Aw.Forge.Core.Pulls.BaseBranch! Base, out Aw.Forge.Core.Pulls.HeadBranch! Head, out bool? Mergeable, out string? ReviewDecision, out Aw.Forge.Core.Pulls.ChecksSummary! Checks, out System.Collections.Generic.IReadOnlyList<string!>! Labels, out string? Body) -> void
+Aw.Forge.Core.Pulls.PullSnapshot.PullSnapshot(Aw.Forge.Core.Refs.ForgeRef! Ref, string! Url, string! Title, string! Author, Aw.Forge.Core.Pulls.PullStatus Status, bool Draft, Aw.Forge.Core.Pulls.BaseBranch! Base, Aw.Forge.Core.Pulls.HeadBranch! Head, bool? Mergeable, string? ReviewDecision, Aw.Forge.Core.Pulls.ChecksSummary! Checks, System.Collections.Generic.IReadOnlyList<string!>! Labels, string? Body = null) -> void

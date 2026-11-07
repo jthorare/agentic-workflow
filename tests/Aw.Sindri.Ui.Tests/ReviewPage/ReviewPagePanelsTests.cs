@@ -20,7 +20,7 @@ public sealed class ReviewPagePanelsTests
         var page = await _f.Opened(Token);
 
         Assert.Equal(
-            [("requiredChecks", "Required checks", "3 open"), ("docMap", "Design doc", "Covers Ph5, REQ-E3"), ("testPlan", "Test plan", ""), ("ci", "CI", "1 failing"), ("evidence", "Evidence", ""), ("risk", "Risk", "1 risky file"), ("conversation", "Conversation", "")],
+            [("requiredChecks", "Required checks", "4 open"), ("docMap", "Design doc", "Covers Ph5, REQ-E3"), ("testPlan", "Test plan", ""), ("ci", "CI", "1 failing"), ("evidence", "Evidence", ""), ("risk", "Risk", "1 risky file"), ("conversation", "Conversation", "")],
             page.Panels.Select(p => (p.Id, p.Title, p.Summary)));
         Assert.All(page.Panels, p => Assert.Equal(ReviewPanelState.Ready, p.State));
     }
@@ -47,12 +47,12 @@ public sealed class ReviewPagePanelsTests
 
         var checks = Panel(page, "requiredChecks").Checks;
         Assert.Equal(
-            [("Recipe change shows Ui tests ran", "fail", "ui-tests: failure on a1b2c3d"), ("Names the design doc", "needs a tick", ""), ("Changelog entry", "running", "waiting on CI"), ("Proof is in the PR body", "claimed in body", "claimed in body"), ("Lint passes", "pass", "lint: success on a1b2c3d")],
+            [("Recipe change shows Ui tests ran", "fail", "ui-tests: failure on a1b2c3d"), ("I ran it myself", "needs a tick", ""), ("Build passes", "running", "build: no run on a1b2c3d yet"), ("Proof is in the PR body", "claimed in body", "claimed in body"), ("Lint passes", "pass", "lint: success on a1b2c3d")],
             checks.Select(c => (c.Title, c.StatusWord, c.Detail)));
         Assert.Equal((StateGlyph.Down, StateGlyph.Ok), (checks[0].Glyph, checks[4].Glyph));
         Assert.All(checks, c => Assert.NotEqual(StateGlyph.None, c.Glyph));
         Assert.Equal("Recipe change shows Ui tests ran: fail, ui-tests: failure on a1b2c3d", checks[0].AutomationName);
-        Assert.Equal("Names the design doc: needs a tick", checks[1].AutomationName);
+        Assert.Equal("I ran it myself: needs a tick", checks[1].AutomationName);
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public sealed class ReviewPagePanelsTests
         var rows = Panel(page, "testPlan").Lines;
         Assert.Equal(["GET /reviews/acme/api/2071 answers every panel", "An offline PR answers from the cache"], rows.Select(r => r.Primary), StringComparer.Ordinal);
         Assert.Equal(["TP3, verifies REQ-E3", "TP4, verifies REQ-E4"], rows.Select(r => r.Secondary), StringComparer.Ordinal);   // GUESS: the second words are the row id and what it verifies
-        Assert.Equal([StateGlyph.None, StateGlyph.Ok], rows.Select(r => r.Glyph));
+        Assert.Equal([StateGlyph.None, StateGlyph.None], rows.Select(r => r.Glyph));
     }
 
     [Fact]
@@ -93,7 +93,7 @@ public sealed class ReviewPagePanelsTests
 
         var runs = Panel(page, "ci").Lines;
         Assert.Equal([("ui-tests", "failure on a1b2c3d", StateGlyph.Down), ("lint", "success on a1b2c3d", StateGlyph.Ok)], runs.Select(r => (r.Primary, r.Secondary, r.Glyph)));
-        Assert.Equal("https://github.com/acme/api/actions/runs/101", runs[0].Url);
+        Assert.Equal("https://github.com/acme/api/pull/2071/checks", runs[0].Url);
     }
 
     [Theory]
@@ -162,10 +162,10 @@ public sealed class ReviewPagePanelsTests
         var page = await _f.Opened(Token);
 
         Assert.Equal(
-            [("requiredChecks", ReviewPanelState.Error, "Couldn't decide checks: github failed: SND-INDEX-401"), ("ci", ReviewPanelState.Error, "Couldn't read CI: github returned 502"), ("evidence", ReviewPanelState.Ready, ""), ("risk", ReviewPanelState.Ready, "")],
+            [("requiredChecks", ReviewPanelState.Error, "Couldn't decide checks: github failed: github returned 502"), ("ci", ReviewPanelState.Error, "Couldn't read CI: github sent no check runs for a1b2c3d"), ("evidence", ReviewPanelState.Ready, ""), ("risk", ReviewPanelState.Error, "Couldn't read the files: github returned 502")],
             page.Panels.Where(p => new[] { "requiredChecks", "ci", "evidence", "risk" }.Contains(p.Id, StringComparer.Ordinal)).Select(p => (p.Id, p.State, p.Text)));
         Assert.Equal(ReviewPanelState.Error, Panel(page, "conversation").State);
-        Assert.NotEmpty(Panel(page, "risk").Lines);
+        Assert.NotEmpty(Panel(page, "evidence").Lines);
     }
 
     [Fact]

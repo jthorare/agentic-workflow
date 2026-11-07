@@ -29,6 +29,6 @@ internal sealed class PrNextCommentStep : IBlockStep, IBlockStepId
         }
 
         var bots = context.Arguments.TryGetValue("bots", out var argument) ? PrCommentQueue.Bots(JsonNode.Parse(argument.GetRawText())) : [];
-        return ValueTask.FromResult(StepFacts.Done(PrCommentQueue.Classify(entry, bots), ("fact:comment", PrCommentQueue.ToFact(entry))));
+        return ValueTask.FromResult(StepFacts.Done(queue.Classify(entry, bots), ("fact:comment", PrCommentQueue.ToFact(entry))));
     }
 }

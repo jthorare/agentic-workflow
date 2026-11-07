@@ -1,4 +1,4 @@
-Sandbox 0d6f8edf25a4 (pass-through) for a session you opened
+Sandbox f80b9becf0eb (pass-through) for a session you opened
 Launch: LCH-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 Files, bottom to top (a later line wins):
@@ -75,5 +75,5 @@ Limits:
 
 Credentials: GitHub none, model login owner-copy
 The agent's own policy: asks, 65 rules; its own sandbox: auto
-Hooks kept: block-destructive, block-push-main, context-guard, detect-secrets, done-gate, done-gate-annotate, fleet-state, git-context, judge-health, meta-lane-gate, meta-outbox, meta-stop-gate, outbox-flush, prism-context, probe-log, prompt-sort, rtk-rewrite, session-id-report, sindri-nudge, subagent-start-map, trait-check, turn-origin, winch
+Hooks kept: block-destructive, block-push-main, context-guard, detect-secrets, done-gate, done-gate-annotate, fleet-state, git-context, judge-health, meta-lane-gate, meta-outbox, meta-stop-gate, outbox-flush, prism-context, probe-log, prompt-sort, rtk-rewrite, session-id-report, sindri-nudge, sindri-tasks, subagent-start-map, trait-check, turn-origin, winch
 Hooks left out: external-write-guard, record-teammate-name, scope-gate, send-gate

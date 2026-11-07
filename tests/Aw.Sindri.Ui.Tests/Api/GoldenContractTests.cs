@@ -83,6 +83,7 @@ public sealed class GoldenContractTests
         ["projects"] = As<ProjectList>,   // GET /projects: the Projects page's three groups (projects page spec §6.2)
         ["reviews"] = As<ReviewList>,   // GET /reviews: the Reviews tab, its badge and Home's waiting line (review page spec §6.1)
         ["reviews-login"] = As<ReviewLoginSaved>,   // POST /reviews/login: the Reviews tab's login Save (review page spec §6.1); the refusals are ProblemDetails
+        ["reviews-fix"] = As<ReviewFixSent>,   // POST /reviews/{owner}/{repo}/{number}/fix: Send as fix task (review page spec §8.2); the 403, 404, 409 refusals are ProblemDetails
         ["reviews-pr"] = As<Ui.Api.Reviews.ReviewPage>,   // GET /reviews/{owner}/{repo}/{number}: the review page (review page spec §6.2); the 404, 409 refusals are ProblemDetails
         ["review-settings"] = As<ReviewSettingsRead>,   // GET /reviews/settings?project=: the project sheet's Review settings (Ph9, hand-written until the route lands)
         ["review-settings-save"] = As<ReviewSettingsSaved>,   // PUT /reviews/settings: Save and approve (Ph9); the 400 SND-REVIEW-001/002 and 403 refusals are ProblemDetails
