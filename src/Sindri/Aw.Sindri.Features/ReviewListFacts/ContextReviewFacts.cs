@@ -84,16 +84,19 @@ internal sealed class ContextReviewFacts(IApprovedProfile approvals, ICallerCont
             return records.Error;
         }
 
-        var pulls = new List<ReviewPull>();
+        var parsed = new List<(RecordKey Key, ReviewPull Pull)>();
         foreach (var record in records.Value)
         {
             if (Parse(record, repos) is { } pull)
             {
-                pulls.Add(pull with { Claims = await Claims(record.Key, audience, cancellationToken).ConfigureAwait(false) });
+                parsed.Add((record.Key, pull));
             }
         }
 
-        return pulls;
+        // why: one batched read for all the kept PRs, not one library call per PR (#2154)
+        var claims = await Claims([.. parsed.Select(static p => p.Key)], audience, cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<ReviewPull> pulls = [.. parsed.Select(p => p.Pull with { Claims = claims.TryGetValue(p.Key, out var own) ? own : [] })];
+        return Results.Success(pulls);
     }
 
     // why: the record key is github:pr/<owner>/<repo>/<number>, which names the GitHub repo even when the record's own repo is the profile's name for the checkout
@@ -126,10 +129,12 @@ internal sealed class ContextReviewFacts(IApprovedProfile approvals, ICallerCont
         return int.TryParse(last, NumberStyles.None, CultureInfo.InvariantCulture, out number);
     }
 
-    private async ValueTask<IReadOnlyList<ReviewClaim>> Claims(RecordKey pr, AudienceScope audience, CancellationToken cancellationToken)
+    // why: a failed read leaves every PR with no claims and the list still loads; a PR with no entry in the map is one the library could not read
+    private async ValueTask<IReadOnlyDictionary<RecordKey, IReadOnlyList<ReviewClaim>>> Claims(IReadOnlyList<RecordKey> prs, AudienceScope audience, CancellationToken cancellationToken)
     {
-        var claims = await engine.Claims(pr, audience, cancellationToken).ConfigureAwait(false);
-        return claims.IsError ? [] : [.. claims.Value.Select(static c => new ReviewClaim(c.Resolution.Ref, c.Resolution.Status == LibraryRefStatus.Resolved))];
+        var claims = await engine.Claims(prs, audience, cancellationToken).ConfigureAwait(false);
+        IEnumerable<KeyValuePair<RecordKey, IReadOnlyList<LibraryClaim>>> read = claims.IsError ? [] : claims.Value;
+        return read.ToDictionary(static e => e.Key, static e => (IReadOnlyList<ReviewClaim>)[.. e.Value.Select(static c => new ReviewClaim(c.Resolution.Ref, c.Resolution.Status == LibraryRefStatus.Resolved))]);
     }
 
     private static async ValueTask<Result<AudienceScope>> AudienceOf(ContextSettings settings, ContextScope scope, CancellationToken cancellationToken)
