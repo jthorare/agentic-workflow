@@ -162,7 +162,7 @@ public sealed class ReviewPagePanelsTests
         var page = await _f.Opened(Token);
 
         Assert.Equal(
-            [("requiredChecks", ReviewPanelState.Error, "Couldn't decide checks: github failed: github returned 502"), ("ci", ReviewPanelState.Error, "Couldn't read CI: github sent no check runs for a1b2c3d"), ("evidence", ReviewPanelState.Ready, ""), ("risk", ReviewPanelState.Empty, "No risky paths touched")],
+            [("requiredChecks", ReviewPanelState.Error, "Couldn't decide checks: github failed: github returned 502"), ("ci", ReviewPanelState.Error, "Couldn't read CI: github sent no check runs for a1b2c3d"), ("evidence", ReviewPanelState.Ready, ""), ("risk", ReviewPanelState.Error, "Couldn't read the files: github returned 502")],
             page.Panels.Where(p => new[] { "requiredChecks", "ci", "evidence", "risk" }.Contains(p.Id, StringComparer.Ordinal)).Select(p => (p.Id, p.State, p.Text)));
         Assert.Equal(ReviewPanelState.Error, Panel(page, "conversation").State);
         Assert.NotEmpty(Panel(page, "evidence").Lines);
