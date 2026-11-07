@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
 
 namespace Aw.Sindri.Core.Events;
@@ -7,4 +8,5 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="Item">The item.</param>
 /// <param name="Record">The tracker record.</param>
 /// <param name="Alias">The record's human key ('ENG-142'), or null.</param>
-public sealed record ItemLinked(CommandId CommandId, ItemId Item, RecordKey Record, ItemAlias? Alias);
+/// <param name="By">Who linked it (Linear hub spec 2026-11-04 §6.1). An event written before the field replays with null, which counts as not the owner.</param>
+public sealed record ItemLinked(CommandId CommandId, ItemId Item, RecordKey Record, ItemAlias? Alias, CallerClass? By = null);

@@ -602,13 +602,17 @@ Aw.Sindri.Core.Events.ItemCreated
 Aw.Sindri.Core.Events.ItemCreated.<Clone>$() -> Aw.Sindri.Core.Events.ItemCreated!
 Aw.Sindri.Core.Events.ItemCreated.Body.get -> string?
 Aw.Sindri.Core.Events.ItemCreated.Body.init -> void
+Aw.Sindri.Core.Events.ItemCreated.By.get -> Aw.Sindri.Core.Commands.CallerClass?
+Aw.Sindri.Core.Events.ItemCreated.By.init -> void
+Aw.Sindri.Core.Events.ItemCreated.LinkAlias.get -> Aw.Sindri.Core.Ids.ItemAlias?
+Aw.Sindri.Core.Events.ItemCreated.LinkAlias.init -> void
 Aw.Sindri.Core.Events.ItemCreated.CommandId.get -> Aw.Sindri.Core.Ids.CommandId
 Aw.Sindri.Core.Events.ItemCreated.CommandId.init -> void
-Aw.Sindri.Core.Events.ItemCreated.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out Aw.Sindri.Core.Ids.ItemId Item, out string! Title, out Aw.Sindri.Core.Ids.RepoName? Repo, out Aw.Sindri.Core.Ids.RecordKey? Link, out string? Body, out string? Owner) -> void
+Aw.Sindri.Core.Events.ItemCreated.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out Aw.Sindri.Core.Ids.ItemId Item, out string! Title, out Aw.Sindri.Core.Ids.RepoName? Repo, out Aw.Sindri.Core.Ids.RecordKey? Link, out string? Body, out string? Owner, out Aw.Sindri.Core.Commands.CallerClass? By, out Aw.Sindri.Core.Ids.ItemAlias? LinkAlias) -> void
 Aw.Sindri.Core.Events.ItemCreated.Equals(Aw.Sindri.Core.Events.ItemCreated? other) -> bool
 Aw.Sindri.Core.Events.ItemCreated.Item.get -> Aw.Sindri.Core.Ids.ItemId
 Aw.Sindri.Core.Events.ItemCreated.Item.init -> void
-Aw.Sindri.Core.Events.ItemCreated.ItemCreated(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Ids.ItemId Item, string! Title, Aw.Sindri.Core.Ids.RepoName? Repo, Aw.Sindri.Core.Ids.RecordKey? Link, string? Body, string? Owner) -> void
+Aw.Sindri.Core.Events.ItemCreated.ItemCreated(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Ids.ItemId Item, string! Title, Aw.Sindri.Core.Ids.RepoName? Repo, Aw.Sindri.Core.Ids.RecordKey? Link, string? Body, string? Owner, Aw.Sindri.Core.Commands.CallerClass? By = null, Aw.Sindri.Core.Ids.ItemAlias? LinkAlias = null) -> void
 Aw.Sindri.Core.Events.ItemCreated.Link.get -> Aw.Sindri.Core.Ids.RecordKey?
 Aw.Sindri.Core.Events.ItemCreated.Link.init -> void
 Aw.Sindri.Core.Events.ItemCreated.Owner.get -> string?
@@ -638,13 +642,15 @@ Aw.Sindri.Core.Events.ItemLinked
 Aw.Sindri.Core.Events.ItemLinked.<Clone>$() -> Aw.Sindri.Core.Events.ItemLinked!
 Aw.Sindri.Core.Events.ItemLinked.Alias.get -> Aw.Sindri.Core.Ids.ItemAlias?
 Aw.Sindri.Core.Events.ItemLinked.Alias.init -> void
+Aw.Sindri.Core.Events.ItemLinked.By.get -> Aw.Sindri.Core.Commands.CallerClass?
+Aw.Sindri.Core.Events.ItemLinked.By.init -> void
 Aw.Sindri.Core.Events.ItemLinked.CommandId.get -> Aw.Sindri.Core.Ids.CommandId
 Aw.Sindri.Core.Events.ItemLinked.CommandId.init -> void
-Aw.Sindri.Core.Events.ItemLinked.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Ids.RecordKey Record, out Aw.Sindri.Core.Ids.ItemAlias? Alias) -> void
+Aw.Sindri.Core.Events.ItemLinked.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Ids.RecordKey Record, out Aw.Sindri.Core.Ids.ItemAlias? Alias, out Aw.Sindri.Core.Commands.CallerClass? By) -> void
 Aw.Sindri.Core.Events.ItemLinked.Equals(Aw.Sindri.Core.Events.ItemLinked? other) -> bool
 Aw.Sindri.Core.Events.ItemLinked.Item.get -> Aw.Sindri.Core.Ids.ItemId
 Aw.Sindri.Core.Events.ItemLinked.Item.init -> void
-Aw.Sindri.Core.Events.ItemLinked.ItemLinked(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Ids.RecordKey Record, Aw.Sindri.Core.Ids.ItemAlias? Alias) -> void
+Aw.Sindri.Core.Events.ItemLinked.ItemLinked(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Ids.RecordKey Record, Aw.Sindri.Core.Ids.ItemAlias? Alias, Aw.Sindri.Core.Commands.CallerClass? By = null) -> void
 Aw.Sindri.Core.Events.ItemLinked.Record.get -> Aw.Sindri.Core.Ids.RecordKey
 Aw.Sindri.Core.Events.ItemLinked.Record.init -> void
 Aw.Sindri.Core.Events.ItemStateChanged
@@ -23982,3 +23988,23 @@ virtual Aw.Sindri.Core.Reviews.ReviewPanelData.Equals(Aw.Sindri.Core.Reviews.Rev
 virtual Aw.Sindri.Core.Reviews.ReviewPanelData.PrintMembers(System.Text.StringBuilder! builder) -> bool
 Aw.Sindri.Core.Reviews.IFixItemCloser
 Aw.Sindri.Core.Reviews.IFixItemCloser.Close(string! item, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
+Aw.Sindri.Core.Events.ItemUnlinked
+Aw.Sindri.Core.Events.ItemUnlinked.<Clone>$() -> Aw.Sindri.Core.Events.ItemUnlinked!
+Aw.Sindri.Core.Events.ItemUnlinked.Alias.get -> Aw.Sindri.Core.Ids.ItemAlias?
+Aw.Sindri.Core.Events.ItemUnlinked.Alias.init -> void
+Aw.Sindri.Core.Events.ItemUnlinked.CommandId.get -> Aw.Sindri.Core.Ids.CommandId
+Aw.Sindri.Core.Events.ItemUnlinked.CommandId.init -> void
+Aw.Sindri.Core.Events.ItemUnlinked.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Ids.RecordKey Record, out Aw.Sindri.Core.Ids.ItemAlias? Alias, out Aw.Sindri.Core.Commands.CallerClass By) -> void
+Aw.Sindri.Core.Events.ItemUnlinked.Equals(Aw.Sindri.Core.Events.ItemUnlinked? other) -> bool
+Aw.Sindri.Core.Events.ItemUnlinked.Item.get -> Aw.Sindri.Core.Ids.ItemId
+Aw.Sindri.Core.Events.ItemUnlinked.Item.init -> void
+Aw.Sindri.Core.Events.ItemUnlinked.ItemUnlinked(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Ids.RecordKey Record, Aw.Sindri.Core.Ids.ItemAlias? Alias, Aw.Sindri.Core.Commands.CallerClass By) -> void
+Aw.Sindri.Core.Events.ItemUnlinked.Record.get -> Aw.Sindri.Core.Ids.RecordKey
+Aw.Sindri.Core.Events.ItemUnlinked.Record.init -> void
+override Aw.Sindri.Core.Events.ItemUnlinked.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.ItemUnlinked.GetHashCode() -> int
+override Aw.Sindri.Core.Events.ItemUnlinked.ToString() -> string!
+static Aw.Sindri.Core.Events.ItemUnlinked.operator !=(Aw.Sindri.Core.Events.ItemUnlinked? left, Aw.Sindri.Core.Events.ItemUnlinked? right) -> bool
+static Aw.Sindri.Core.Events.ItemUnlinked.operator ==(Aw.Sindri.Core.Events.ItemUnlinked? left, Aw.Sindri.Core.Events.ItemUnlinked? right) -> bool
+Aw.Sindri.Core.Events.ItemUnlinked.By.get -> Aw.Sindri.Core.Commands.CallerClass
+Aw.Sindri.Core.Events.ItemUnlinked.By.init -> void
