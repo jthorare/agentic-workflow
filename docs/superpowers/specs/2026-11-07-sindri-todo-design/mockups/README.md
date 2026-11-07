@@ -1,50 +1,40 @@
-# Todo page mockups (Ph0)
+# Todo mockups (Ph0, rev 5)
 
-Spec: `../../2026-11-07-sindri-todo-design.md` (§3.1 the page, §3.2 quick-add, §3.4 states, §6 errors, §11 / TP-7 the ten-tab bar). Static mockups,
-no production code. Colors, sizes and radii are the app's tokens (`src/Sindri/Aw.Sindri.Ui/Theme/Tokens.axaml`); no new tokens. The top bar is the
-one from the PR review list mockup with a tenth tab. Sample date: Sat 2026-11-07; data is made up.
+Spec: `../../2026-11-07-sindri-todo-design.md` (§3.1 the panel, §3.2 quick-add, §3.3 keys, §3.4 states, D6, D11, D13, §4.5 the Settings card). Static mockups,
+no production code. Colors, sizes and radii are the app's tokens (`src/Sindri/Aw.Sindri.Ui/Theme/Tokens.axaml`); no new tokens (the attention border is
+`Color.AttentionFill`, the focus ring and the accent heading `Color.PrimaryHover`). The top bar is the app's nine tabs (no Todo tab). Sample date: Sat 2026-11-07;
+data is made up.
 
-`todo.html` draws every screen from URL parameters (`page=todo|reviews|home|bars`, `state=`, `sel=1`, `edit=1`, `conflict=1`, `toast=1`,
-`done=1`, `quick=parsed|pr|fail`, `v=home`, `ts=1.3`). `bash shots.sh` renders `screens/*.png` with headless Chrome (Google Fonts are fetched).
+`todo.html?s=<screen>` draws every screen. `bash shots.sh [screen...]` renders `screens/<screen>-1000.png` (1000 × 600, the window minimum) and
+`screens/<screen>-1440.png` (1440 × 900) with headless Chrome (Google Fonts are fetched). The rev 1 ten-tab "Todo page" files are in `old/` (superseded).
 
-| Screen | File |
-|---|---|
-| The page, 1440 and the 1000 px minimum | `screens/page-1440.png`, `screens/page-1000.png` |
-| The page tall (From elsewhere whole, Linear capped at 5 with "Show all 9 in Work") | `screens/page-full-1440.png` |
-| A row selected (focus ring) | `screens/page-selected-1440.png` |
-| Done today open | `screens/done-expanded-1440.png` |
-| Empty: "Nothing on your list. Press N to add one." | `screens/empty-1440.png` |
-| Sindri not running (card, pill, `N` says so) | `screens/notrunning-1440.png` |
-| Quick-add over Reviews, "check flaky test fri" -> "Due Fri 11-13" | `screens/quickadd-1440.png`, `screens/quickadd-1000.png` |
-| Quick-add with a pasted PR url: "Links PR #2071" | `screens/quickadd-pr-1440.png` |
-| Quick-add save failed, text kept, reason shown | `screens/quickadd-failed-1440.png` |
-| A row in edit (text, date, link) | `screens/edit-1440.png` |
-| The 409 row: "Changed somewhere else. Here's the latest" | `screens/conflict-409-1440.png` |
-| Undo toast after check-off (tab count drops to 1) | `screens/undo-toast-1440.png` |
-| From elsewhere, Linear failing: "Couldn't load Linear" + Retry | `screens/elsewhere-failing-1440.png` |
-| Home with the new line | `screens/home-1440.png` |
-| Ten tabs measured (TP-7) | `screens/bars.png` |
-| Fallback (not needed): Todo as a button in Home's header, nine tabs, 1000 px | `screens/fallback-home-1000.png` |
+The owner picks from five screens:
 
-## Ten tabs at 1000 px (TP-7)
-
-`screens/bars.png` runs the Reviews list mockup's bar model with the real Inter widths (it waits for the font to load before measuring) and
-also reads the drawn bar's overflow from the DOM. Worst-case counts on Todo 2, Workflows 12, Work 12, Recipes 8, Agents 4, Reviews 3.
-
-- **Fits, nothing clipped.** 1000 px at 100% text needs 924 px at the `tightNav` step (76 px spare). Drawn overflow: 0 px.
-- **What it costs.** Nine tabs at 1000 px land one step earlier (`noAge`, 954 px, needs no padding squeeze). Todo is what pushes the bar into the
-  `tightNav` step: ⌘K folds to its magnifier, the pill drops its age, and tab padding goes 7 -> 2 px, so tab labels sit close together.
-  "Todo" has no short label, so §11's label fallback doesn't apply; "Workflows" -> "Flows" is not needed.
-- **At text 130%** it fits only at the last step (`noCounts`, 918 px, 82 spare): the counts disappear, **including Todo's "2"**, and the brand shows
-  its mark only. TP-7's "nothing is cut" holds, but the count is the point of the tab at that size.
-- The `v=home` fallback is drawn anyway (`screens/fallback-home-1000.png`); it is not needed.
+| # | Screen | `s=` | Files (add `-1000.png` or `-1440.png`) |
+|---|---|---|---|
+| 1 | Home, panel collapsed: five rows (Overdue first, an "agent" tag, 3 chips + "+7"), "Show all 11", From elsewhere, Needs you's first rows below | `home-collapsed` | `screens/home-collapsed-*` |
+| 1 | Home, panel expanded, scrolled to the end: Show done open, a Done group and a "Removed" label with one todo | `home-expanded` | `screens/home-expanded-*` |
+| 1 | Same panel, top of its scroll: Overdue / Today / Upcoming (the 1440 shot shows the rest) | `home-expanded-top` | `screens/home-expanded-top-*` |
+| 2a | One conflict, the default one-line row: "Changed in Sindri and in Obsidian: reply to Sam. Enter to sort it out", four todo rows below | `attn-a` | `screens/attn-a-*` |
+| 2b | Three conflicts: the oldest on one line, "Sort out 2 more: reply to Sam…, rotate…" in the next slot, three todo rows | `attn-b` | `screens/attn-b-*` |
+| 2c | Three conflicts and a hold: same two lines, "Sort out 3 more" names the hold, sync line "Paused: the note changed 14 todos" | `attn-c` | `screens/attn-c-*` |
+| 2c | A hold alone: "The note changed 14 todos. Enter to look" | `attn-c-hold` | `screens/attn-c-hold-*` |
+| 2d | Removal, default line: "Changed in Sindri, removed in Obsidian: rotate the staging key" | `attn-d` | `screens/attn-d-*` |
+| 2a, after Enter | The conflict open: edit vs edit, 278-character text clamped to 3 lines, "changed" marks, `1 Keep Sindri's` / `2 Keep Obsidian's` | `attn-open-a` | `screens/attn-open-a-*` |
+| 2d, after Enter | The removal open: Obsidian's column says "Removed", its button "Keep it removed" | `attn-open-d` | `screens/attn-open-d-*` |
+| 2c, after Enter | The hold open: `1 Put them back in the note` / `2 Apply in Sindri too` | `attn-open-hold` | `screens/attn-open-hold-*` |
+| 2e, after a pick | Toast "Kept Obsidian's version. Undo (6 s)" counting down, sync line "Saving your pick to Obsidian in 6 s" | `attn-e` | `screens/attn-e-*` |
+| 3 | Panel focused: ring around the region, heading in the accent colour, a row selected, key hints with `X` = Done | `focus-panel` | `screens/focus-panel-*` |
+| 3 | Needs you focused: same treatment, key hints with `X` = Reject | `focus-needs` | `screens/focus-needs-*` |
+| 4 | Quick-add over Reviews: "check flaky test fri", "Due Fri 11-13" | `quickadd` | `screens/quickadd-*` |
+| 4 | Workflows: `N` starts a workflow, `Ctrl+Shift+N` opens the todo box (the dashed note is a mockup annotation, not app text) | `workflows` | `screens/workflows-*` |
+| 5a | Settings → Connections, Obsidian card not set up: vault, note "Todo.md", Check note; Linear card beside it | `settings-a` | `screens/settings-a-*` |
+| 5b | After Check note: "Import adds ids to 42 lines…", "3 lines can't be imported (lines 4, 17, 30)…", Import and start syncing / Cancel, and the line that the button saves and approves in one step | `settings-b` | `screens/settings-b-*` |
+| 5c | Syncing: "Syncing with Notes/Todo.md · last synced 10:05", Change, Stop syncing | `settings-c` | `screens/settings-c-*` |
+| 5d | One way: "Sindri can't write to Todo.md on this disk…", Import off, Start syncing (one way) | `settings-d` | `screens/settings-d-*` |
 
 ## Found while drawing
 
-- **Dates in the brief and the spec.** Today is Sat 11-07, so "Fri" is 11-13, not 11-14. The parsed line shows "Due Fri 11-13"; the "11-14"
-  upcoming row is a Saturday, shown as a date because it is 7 days out (§REQ-O2: relative word for the next 6 days).
-- **Home line vs the tab count.** Tab count = overdue + today = 2 means "1 todo due today · 1 overdue", drawn that way (the brief said 2 · 1).
-- **From elsewhere cap.** Linear shows 5 rows and "Show all 9 in Work" (the brief said 4 issues, which would never reach the cap).
-- **409 text.** §3.4 says "Changed somewhere else. Here's the latest"; §6 says "That todo changed somewhere else. Reload and try again." The row
-  uses the §3.4 text and shows the latest values under it; §6's is the API message.
-- **Save-failed reasons.** §3.4 points at "§8" for the reasons, but §8 is Docs to update; the reasons are §6's (drawn: Sindri unreachable).
+- **Opened rows push Needs you down.** After Enter the panel is 346 px (removal), 318 px (hold) or 385 px (conflict) against 286 px, so at 1000 x 600 Needs you shows one row or none; the default one-line screens keep Needs you above the fold.
+- **Expanded at 1000 × 600.** The half-page cap leaves 200 px of scroll. "Show done" with its Done group (3 rows) and the Removed label and row needs 234 px, so
+  34 px short: `home-expanded` is scrolled to the end and the toggle row is just above the top edge. The 1440 shot shows all of it.

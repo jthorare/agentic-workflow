@@ -3,20 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Todo page mockup</title>
+<title>Todo panel mockups</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 <!--
-  Sindri Todo page mockups (spec 2026-11-07-sindri-todo-design.md §3.1 page, §3.2 quick-add, §3.4 states, §6 errors, §11 TP-7; Ph0).
-  Static: no production code. Colors, sizes and radii are the app's tokens (src/Sindri/Aw.Sindri.Ui/Theme/Tokens.axaml); no new ones.
-  The top bar is the shared one from the PR review list mockup, with a tenth tab (Todo) after Home, measured by the same model.
-  Query:  page=todo|reviews|home|bars                    (default todo)
-          state=main|empty|notrunning|elsefail          (the Todo page)
-          sel=1  edit=1  conflict=1  toast=1  done=1     (a selected row, a row in edit, the 409 row, the Undo toast, Done today open)
-          quick=parsed|pr|fail                           (the quick-add box over the page; page=reviews for the "N on any page" shot)
-          v=home                                         (the fallback: nine tabs and a "Todo 2" button in Home's header)
-          ts=1.3                                         (text scale, bars page only)
-  Today in the sample is Sat 2026-11-07.
+  Sindri todo mockups, rev 5 (spec 2026-11-07-sindri-todo-design.md §3.1 panel, §3.2 quick-add, §3.3 keys, §3.4 states, D13; Ph0).
+  Static: no production code. Colors, sizes and radii are the app's tokens (src/Sindri/Aw.Sindri.Ui/Theme/Tokens.axaml); no new tokens.
+  Query:  s=<screen>   home-collapsed | home-expanded | home-expanded-top
+                       attn-a | attn-b | attn-c | attn-c-hold | attn-d | attn-e
+                       focus-panel | focus-needs | quickadd | workflows
+                       settings-a | settings-b | settings-c | settings-d
+  Today in the sample is Sat 2026-11-07. Data is made up.
 -->
 <style>
 :root {
@@ -25,7 +22,7 @@
   --ink:#f7f8f8; --muted:#d0d6e0; --subtle:#8a8f98; --tert:#62666d;
   --primary:#5e6ad2; --primaryHover:#828fff; --primarySoft:#1d2036; --onPrimary:#fff;
   --success:#27a644; --attention:#f2994a; --error:#eb5757;
-  --attentionSoft:#23160c; --errorSoft:#220d0e;
+  --attentionSoft:#23160c; --errorSoft:#220d0e; --attentionFill:#624328;
   --xxs:4px; --xs:8px; --sm:12px; --md:16px; --lg:24px; --xl:32px;
   --rxs:4px; --rsm:6px; --rmd:8px; --rlg:12px;
   --topbar:48px; --sheet:520px; --control:30px;
@@ -76,105 +73,129 @@ kbd { font:500 11px Inter, sans-serif; color:var(--subtle); border:1px solid var
 .dot.ok { background:var(--success); } .dot.err { background:var(--error); }
 .ico { display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
 .chip { display:inline-flex; align-items:center; gap:4px; height:18px; padding:0 6px; border-radius:var(--rxs); border:1px solid var(--hair2); color:var(--subtle); font-size:11px; white-space:nowrap; flex:none; }
-.chip.link { color:var(--primaryHover); border-color:#2a2f55; background:var(--primarySoft); }
-.chip.att { color:var(--attention); border-color:#4a3017; background:var(--attentionSoft); }
+.chip.link { color:var(--primaryHover); border-color:var(--hair2); background:var(--primarySoft); }
+.chip.att { color:var(--attention); border-color:var(--attentionFill); background:var(--attentionSoft); }
+.ok { color:var(--success); }
+.hide { display:none; }
+.over { color:var(--error); } .today { color:var(--attention); }
+a.l { color:var(--primaryHover); }
+.page { position:absolute; top:var(--topbar); left:0; right:0; bottom:0; padding:var(--md) var(--lg) 0; overflow:hidden; }
+.col { max-width:820px; margin:0 auto; }
+.homehead { display:flex; align-items:baseline; gap:var(--sm); height:36px; }
+.homehead h1 { font-size:20px; line-height:24px; font-weight:600; margin:0; letter-spacing:-.01em; }
+.cnt { color:var(--subtle); font-size:12px; } .cnt b { color:var(--ink); font-weight:500; }
 
-/* Header */
-.pagehead { display:flex; align-items:flex-start; gap:var(--md); margin-bottom:var(--md); }
-.pagehead h1 { font-size:20px; font-weight:600; margin:0 0 var(--xxs); letter-spacing:-0.01em; }
-.pagehead .grow { flex:1; min-width:0; }
-.cnt { color:var(--subtle); font-size:12px; } .cnt b { color:var(--error); font-weight:500; }
-.newhint { display:inline-flex; align-items:center; gap:8px; height:var(--control); padding:0 var(--sm) 0 6px; border:1px solid var(--hair2); border-radius:var(--rmd); background:var(--s2); color:var(--ink); font-weight:500; }
-
-/* Groups and rows (spec §3.1) */
-.group { margin-bottom:var(--md); }
-.ghead { display:flex; align-items:center; gap:var(--xs); color:var(--subtle); font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:500; margin:0 0 6px var(--xs); }
-.ghead .n { color:var(--tert); }
-.ghead.over { color:var(--error); }
-.ghead .chev { width:10px; color:var(--subtle); letter-spacing:0; }
-.list { border:1px solid var(--hair); border-radius:var(--rlg); background:var(--s1); overflow:hidden; }
-.row { display:flex; align-items:center; gap:var(--sm); min-height:36px; padding:0 var(--md) 0 var(--sm); border-top:1px solid var(--hair); }
-.row:first-child { border-top:none; }
-.row.sel { outline:2px solid var(--primary); outline-offset:-2px; background:var(--s3); }
+/* ---- the todo panel (spec §3.1) ---- */
+.panel { border:1px solid var(--hair); border-radius:var(--rlg); background:var(--s1); display:flex; flex-direction:column; overflow:hidden; }
+.region { position:relative; margin-bottom:var(--md); }
+.region.focus::after { content:""; position:absolute; inset:-4px -4px -4px -4px; border:2px solid var(--primaryHover); border-radius:calc(var(--rlg) + 4px); pointer-events:none; }
+.region.needs.focus::after { inset:-8px -8px -4px -8px; }
+.panel.x { height:calc((100vh - var(--topbar)) / 2); }
+.ph { display:flex; align-items:center; gap:var(--sm); height:40px; padding:0 var(--sm) 0 var(--md); border-bottom:1px solid var(--hair); flex:none; }
+.ph h2, .nh { margin:0; font-size:14px; font-weight:600; color:var(--ink); }
+.focus .ph h2, .focus .nh { color:var(--primaryHover); }
+.ph .cnt { white-space:nowrap; }
+.sync { font-size:12px; color:var(--subtle); white-space:nowrap; }
+.sync.warn { color:var(--attention); }
+.newhint { display:inline-flex; align-items:center; gap:8px; height:26px; padding:0 var(--sm) 0 5px; border:1px solid var(--hair2); border-radius:var(--rmd); background:var(--s2); color:var(--ink); font-weight:500; font-size:12px; white-space:nowrap; }
+.pwrap { position:relative; flex:1; min-height:0; display:flex; flex-direction:column; }
+.pbody { overflow:auto; flex:1; min-height:0; scrollbar-width:thin; scrollbar-color:var(--hair3) transparent; }
+.row { display:flex; align-items:center; gap:var(--sm); height:36px; flex:none; padding:0 var(--md) 0 var(--sm); border-top:1px solid var(--hair); }
+.pbody > .row:first-child, .gh + .row, .pbody > .first { border-top:none; }
+.row.sel { background:var(--s3); box-shadow:inset 3px 0 0 var(--primaryHover); }
 .cb { width:16px; height:16px; border:1.5px solid var(--hair3); border-radius:4px; flex:none; display:grid; place-items:center; }
 .cb.on { background:var(--primary); border-color:var(--primary); color:#fff; }
-.row .tx { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:14px; }
+.cb.rm { border-style:dashed; }
+.row .tx { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:13px; }
 .row.done .tx { color:var(--subtle); text-decoration:line-through; text-decoration-color:var(--tert); }
-.due { color:var(--subtle); font-size:12px; white-space:nowrap; font-variant-numeric:tabular-nums; }
-.due.over { color:var(--error); } .due.today { color:var(--attention); }
-.keys { display:inline-flex; gap:4px; margin-left:4px; }
-.divider { display:flex; align-items:center; gap:var(--sm); margin:var(--lg) 0 var(--md); color:var(--tert); font-size:11px; letter-spacing:.1em; text-transform:uppercase; }
-.divider::before, .divider::after { content:""; flex:1; border-top:1px solid var(--hair); }
-.go { color:var(--tert); flex:none; }
-.erow .tx { font-size:13px; } .erow .m { color:var(--subtle); font-size:12px; white-space:nowrap; }
-.erow .tag { min-width:64px; justify-content:center; font-size:11px; color:var(--muted); border:1px solid var(--hair2); border-radius:var(--rxs); padding:0 6px; height:18px; display:inline-flex; align-items:center; flex:none; }
-.erow .tag.f { color:var(--error); border-color:#4a1f21; background:var(--errorSoft); }
-.showall { padding:6px var(--md); border-top:1px solid var(--hair); color:var(--primaryHover); font-size:12px; }
-.gerr { display:flex; align-items:center; gap:var(--sm); padding:10px var(--md); color:var(--muted); }
-.gerr .btn { margin-left:auto; }
-.foot { margin-top:var(--lg); color:var(--tert); font-size:12px; display:flex; flex-wrap:wrap; gap:6px 16px; }
-kbd { font:500 11px Inter, sans-serif; color:var(--subtle); border:1px solid var(--hair2); border-radius:var(--rxs); padding:1px 5px; background:var(--s2); }
+.due { color:var(--subtle); font-size:12px; white-space:nowrap; min-width:96px; text-align:right; font-variant-numeric:tabular-nums; flex:none; }
+.chip.more { color:var(--subtle); }
+.chip.agent { color:var(--muted); background:var(--s3); }
+.gh { display:flex; align-items:center; gap:var(--xs); padding:10px var(--md) 4px; color:var(--subtle); font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:500; background:var(--s1); border-top:1px solid var(--hair); }
+.gh:first-child { border-top:none; }
+.gh .n { color:var(--tert); } .gh.o { color:var(--error); } .gh .sub { text-transform:none; letter-spacing:0; color:var(--tert); }
+.sd { display:flex; align-items:center; gap:var(--xs); height:34px; padding:0 var(--md); border-top:1px solid var(--hair); color:var(--muted); font-size:12px; font-weight:500; flex:none; }
+.sd .n { color:var(--subtle); }
+.showall { display:flex; align-items:center; height:30px; padding:0 var(--md); border-top:1px solid var(--hair); font-size:12px; color:var(--primaryHover); flex:none; }
+.pf { display:flex; align-items:center; gap:6px; min-height:34px; padding:0 var(--md); border-top:1px solid var(--hair); color:var(--muted); font-size:12px; flex:none; }
+.pf .sep { color:var(--tert); }
+.hints { display:flex; flex-wrap:wrap; align-items:center; gap:4px 14px; min-height:30px; padding:4px var(--md); border-top:1px solid var(--hair); background:var(--s2); color:var(--subtle); font-size:12px; flex:none; }
+.hints span { display:inline-flex; align-items:center; gap:4px; } .hints b { color:var(--ink); font-weight:500; }
 
-/* Row in edit (spec §3.3 Enter) */
-.edit { border-top:1px solid var(--hair); padding:var(--sm); background:var(--s3); outline:2px solid var(--primary); outline-offset:-2px; display:flex; flex-direction:column; gap:var(--xs); }
-.edit .f { display:grid; grid-template-columns:60px 1fr; align-items:center; gap:var(--xs); }
-.edit .f .k { color:var(--tert); font-size:11px; letter-spacing:.06em; text-transform:uppercase; }
-.fld { height:var(--control); border:1px solid var(--hair2); background:var(--s1); border-radius:var(--rmd); display:flex; align-items:center; padding:0 var(--sm); gap:8px; }
-.fld.on { border-color:var(--primary); } .fld .caret { width:1px; height:16px; background:var(--ink); }
-.edit .bar { display:flex; align-items:center; gap:var(--sm); color:var(--tert); font-size:12px; }
-.msg { font-size:12px; display:flex; gap:8px; align-items:baseline; }
-.msg .code { font-family:"JetBrains Mono", Menlo, monospace; color:var(--tert); }
-.latest { padding:6px var(--sm) 6px 36px; font-size:12px; color:var(--subtle); border-top:1px solid var(--hair); background:var(--attentionSoft); }
+/* ---- attention rows (D13) ---- */
+.attn { flex:none; padding:var(--xs) var(--md) var(--sm); background:var(--attentionSoft); border-top:1px solid var(--attentionFill); box-shadow:inset 3px 0 0 var(--attention); }
+.pbody > .attn:first-child { border-top:none; }
+.at { display:flex; align-items:center; gap:var(--xs); height:24px; font-size:13px; }
+.at b { font-weight:600; } .at .att { display:flex; color:var(--attention); }
+.at .same { margin-left:auto; color:var(--subtle); font-size:12px; white-space:nowrap; }
+.cols { display:grid; grid-template-columns:1fr 1fr; gap:var(--sm); margin-top:var(--xs); }
+.cc { display:flex; flex-direction:column; gap:var(--xs); min-width:0; padding:var(--xs) var(--sm) var(--sm); border:1px solid var(--hair2); border-radius:var(--rmd); background:var(--s1); }
+.who { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--subtle); font-weight:500; }
+.fk { font-size:11px; color:var(--subtle); display:flex; gap:6px; align-items:center; }
+.fk em { font-style:normal; color:var(--attention); border:1px solid var(--attentionFill); border-radius:var(--rxs); padding:0 5px; font-size:11px; line-height:15px; }
+.fv { font-size:13px; line-height:19.5px; } .fv.ch { color:var(--attention); }
+.fv.clamp { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.fv.gone { font-weight:600; }
+.cc .btn { margin-top:auto; align-self:flex-start; }
+.btn kbd { margin-right:2px; }
+.btn.hold { background:var(--attentionFill); border-color:var(--attentionFill); color:var(--ink); }
+.holdtx { font-size:13px; line-height:19.5px; margin:2px 0 var(--xs); }
+.holdbtns { display:flex; gap:var(--xs); flex-wrap:wrap; }
+.holdsub { color:var(--subtle); font-size:12px; margin-top:var(--xs); }
+.fold { display:flex; align-items:center; gap:var(--xs); height:36px; flex:none; padding:0 var(--md); background:var(--attentionSoft); border-top:1px solid var(--attentionFill); box-shadow:inset 3px 0 0 var(--attention); font-size:13px; }
+.fold .att { display:flex; color:var(--attention); } .fold .tx { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fold .fresh { color:var(--subtle); font-size:12px; white-space:nowrap; }
 
-/* Quick-add (spec §3.2): 560 px under the top bar, over the page */
-.scrim { position:absolute; inset:var(--topbar) 0 0 0; background:rgba(1,1,2,.35); z-index:4; }
-.qa { position:absolute; top:calc(var(--topbar) + 12px); left:50%; transform:translateX(-50%); width:560px; max-width:calc(100% - 32px); z-index:5; background:var(--s2); border:1px solid var(--hair3); border-radius:var(--rlg); padding:var(--sm); box-shadow:0 12px 40px rgba(0,0,0,.6); display:flex; flex-direction:column; gap:var(--xs); }
-.qa .in { height:38px; border:1px solid var(--primary); background:var(--s1); border-radius:var(--rmd); display:flex; align-items:center; padding:0 var(--sm); font-size:14px; gap:8px; }
-.qa .in .ph { color:var(--tert); }
-.qa .caret { width:1px; height:18px; background:var(--ink); }
+/* ---- Needs you (existing list) ---- */
+.nh { margin:0 0 6px; }
+.nlist { border:1px solid var(--hair); border-radius:var(--rlg); background:var(--s1); overflow:hidden; }
+.hrow { display:grid; grid-template-columns:78px 1fr 1fr 40px; gap:var(--md); align-items:center; padding:0 var(--md); height:38px; border-top:1px solid var(--hair); font-size:13px; }
+.hrow:first-child { border-top:none; } .hrow.sel { background:var(--s3); box-shadow:inset 3px 0 0 var(--primaryHover); }
+.hrow .m { color:var(--subtle); font-size:12px; } .hrow .a { color:var(--subtle); font-size:12px; text-align:right; }
+.hchip { font-size:11px; color:var(--attention); border:1px solid var(--attentionFill); background:var(--attentionSoft); border-radius:var(--rxs); padding:0 6px; height:18px; display:inline-flex; align-items:center; width:fit-content; }
+
+/* ---- quick-add (spec §3.2), toast ---- */
+.scrim { position:absolute; inset:var(--topbar) 0 0 0; background:rgba(0,0,0,.6); z-index:4; }
+.qa { position:absolute; top:calc(var(--topbar) + 12px); left:50%; transform:translateX(-50%); width:560px; max-width:calc(100% - 32px); z-index:5; background:var(--s3); border:1px solid var(--hair3); border-radius:var(--rlg); padding:var(--sm); box-shadow:0 12px 40px rgba(0,0,0,.6); display:flex; flex-direction:column; gap:var(--xs); }
+.qa .in { height:38px; border:1px solid var(--primaryHover); background:var(--s1); border-radius:var(--rmd); display:flex; align-items:center; padding:0 var(--sm); font-size:14px; }
+.qa .caret { width:1px; height:18px; background:var(--ink); margin-left:1px; }
 .qa .parse { font-size:12px; color:var(--muted); display:flex; gap:var(--sm); align-items:center; min-height:20px; padding-left:2px; }
-.qa .foot2 { display:flex; gap:var(--md); color:var(--tert); font-size:11px; padding-left:2px; }
-.qa .fail { color:var(--error); font-size:12px; display:flex; gap:8px; align-items:baseline; padding-left:2px; }
-
-/* Toast */
-.toast { position:absolute; left:50%; bottom:28px; transform:translateX(-50%); z-index:6; background:var(--s4); border:1px solid var(--hair3); border-radius:var(--rmd); padding:0 var(--sm); height:40px; display:flex; align-items:center; gap:var(--md); box-shadow:0 8px 28px rgba(0,0,0,.6); }
+.qa .foot2 { display:flex; gap:var(--md); color:var(--subtle); font-size:11px; padding-left:2px; }
+.toast { position:absolute; left:50%; bottom:28px; transform:translateX(-50%); z-index:6; background:var(--s4); border:1px solid var(--hair3); border-radius:var(--rmd); padding:0 var(--sm); height:40px; display:flex; align-items:center; gap:var(--md); box-shadow:0 8px 28px rgba(0,0,0,.6); white-space:nowrap; }
 .toast .undo { color:var(--primaryHover); font-weight:600; }
-.toast .tm { width:60px; height:3px; background:var(--hair2); border-radius:2px; overflow:hidden; } .toast .tm i { display:block; width:72%; height:100%; background:var(--primary); }
+.toast .tm { width:60px; height:3px; background:var(--hair2); border-radius:2px; overflow:hidden; } .toast .tm i { display:block; width:60%; height:100%; background:var(--primary); }
 
-/* Not running card, Home */
-.card { border:1px solid var(--hair); background:var(--s1); border-radius:var(--rlg); padding:var(--lg); display:flex; flex-direction:column; gap:var(--sm); align-items:flex-start; }
-.card h3 { margin:0; font-size:16px; display:flex; gap:8px; align-items:center; }
-.card code { font-family:"JetBrains Mono", Menlo, monospace; font-size:12px; background:var(--s3); padding:1px 6px; border-radius:var(--rxs); }
-.empty { border:1px dashed var(--hair2); border-radius:var(--rlg); padding:var(--xl); text-align:center; color:var(--muted); margin-bottom:var(--md); }
-.hband { margin-bottom:var(--md); } .hband h2 { font-size:13px; margin:0 0 6px; color:var(--muted); font-weight:600; }
-.hrow { display:grid; grid-template-columns:78px 1fr 1fr 40px; gap:var(--md); align-items:center; padding:0 var(--md); min-height:38px; border:1px solid var(--hair); border-top:none; background:var(--s1); }
-.hrow:first-of-type { border-top:1px solid var(--hair); border-radius:var(--rlg) var(--rlg) 0 0; } .hrow:last-of-type { border-radius:0 0 var(--rlg) var(--rlg); }
-.hline { display:flex; align-items:center; gap:var(--sm); padding:0 var(--md); min-height:40px; border:1px solid var(--hair); border-radius:var(--rlg); background:var(--s1); margin-bottom:var(--xs); }
-.hline .big { font-weight:600; } .hline .grow { flex:1; color:var(--subtle); font-size:12px; }
-.hchip { font-size:11px; color:var(--attention); border:1px solid #4a3017; background:var(--attentionSoft); border-radius:var(--rxs); padding:0 6px; height:18px; display:inline-flex; align-items:center; width:fit-content; }
+/* ---- Workflows page ---- */
+.pagehead { display:flex; align-items:flex-start; gap:var(--md); margin-bottom:var(--md); }
+.pagehead h1 { font-size:20px; line-height:24px; font-weight:600; margin:0 0 var(--xxs); letter-spacing:-.01em; } .pagehead .grow { flex:1; }
+.list { border:1px solid var(--hair); border-radius:var(--rlg); background:var(--s1); overflow:hidden; }
+.list .row .m { color:var(--subtle); font-size:12px; white-space:nowrap; }
+.pillst { font-size:11px; border-radius:var(--rxs); padding:0 6px; height:18px; display:inline-flex; align-items:center; min-width:70px; justify-content:center; flex:none; border:1px solid var(--hair2); color:var(--muted); }
+.pillst.run { color:var(--primaryHover); background:var(--primarySoft); } .pillst.you { color:var(--attention); background:var(--attentionSoft); border-color:var(--attentionFill); }
+.note { margin-top:var(--md); border:1px dashed var(--hair3); border-radius:var(--rmd); padding:var(--sm) var(--md); color:var(--muted); font-size:13px; display:flex; flex-direction:column; gap:6px; }
+.note .tag { color:var(--tert); font-size:11px; letter-spacing:.08em; text-transform:uppercase; }
+.note .k { display:flex; align-items:center; gap:8px; }
+.btn.pr { background:var(--primary); border-color:var(--primary); color:var(--onPrimary); }
+.btn.pr:disabled, .btn.off { background:transparent; border-color:var(--hair2); color:var(--tert); }
+
+/* ---- Settings → Connections ---- */
+.cards { display:grid; grid-template-columns:1fr 1fr; gap:var(--md); align-items:start; }
+.scard { border:1px solid var(--hair); background:var(--s1); border-radius:var(--rlg); padding:var(--md); display:flex; flex-direction:column; gap:var(--sm); min-width:0; }
+.scard h3 { margin:0; font-size:14px; font-weight:600; display:flex; align-items:center; gap:8px; }
+.scard h3 .st { margin-left:auto; font-size:12px; font-weight:500; color:var(--subtle); display:flex; align-items:center; gap:6px; }
+.scard p { margin:0; color:var(--muted); font-size:13px; line-height:19.5px; }
+.scard code { font-family:"JetBrains Mono", Menlo, monospace; font-size:12px; background:var(--s3); padding:1px 6px; border-radius:var(--rxs); }
+.scard .sub { color:var(--subtle); font-size:12px; line-height:16.8px; }
+.fl { display:grid; grid-template-columns:52px 1fr; align-items:center; gap:var(--xs); }
+.fl .k { color:var(--subtle); font-size:12px; }
+.fld { height:var(--control); border:1px solid var(--hair2); background:var(--s1); border-radius:var(--rmd); display:flex; align-items:center; padding:0 var(--sm); gap:8px; font-size:13px; min-width:0; }
+.fld .m { color:var(--subtle); font-size:12px; margin-left:auto; white-space:nowrap; } .fld .chev { color:var(--subtle); font-size:10px; }
+.btns { display:flex; gap:var(--xs); flex-wrap:wrap; align-items:center; }
+.res { border:1px solid var(--hair2); background:var(--s2); border-radius:var(--rmd); padding:var(--sm); display:flex; flex-direction:column; gap:var(--xs); }
+.res .w { display:flex; gap:8px; color:var(--attention); font-size:13px; line-height:19.5px; } .res .w svg { margin-top:3px; }
+.res p { color:var(--ink); }
 .label { position:fixed; right:8px; bottom:6px; z-index:20; font-size:10px; color:var(--tert); }
-
-/* Bars page */
-.bars { padding:var(--lg) 0; overflow:auto; height:100%; } .bars h1, .bars .lead, .barbox .cap, .bars .verdict, table.meas { margin-left:var(--lg); margin-right:var(--lg); }
-.bars h1 { font-size:20px; margin:0 var(--lg) var(--xs); } .bars .lead { color:var(--subtle); margin-bottom:var(--md); max-width:1100px; }
-.barbox { margin-bottom:var(--md); } .barbox .cap { display:flex; gap:var(--md); color:var(--muted); margin-bottom:6px; } .barbox .cap span { color:var(--subtle); }
-.frame { border:1px solid var(--hair2); } .frame.overflow-x { overflow:hidden; }
-.verdict { border:1px solid var(--hair2); background:var(--s1); border-radius:var(--rlg); padding:var(--sm) var(--md); margin-bottom:var(--md); max-width:1100px; }
-table.meas { border-collapse:collapse; font-variant-numeric:tabular-nums; margin-bottom:var(--md); }
-table.meas th { text-align:right; color:var(--tert); font-size:11px; letter-spacing:.05em; text-transform:uppercase; font-weight:500; padding:4px 10px; border-bottom:1px solid var(--hair2); }
-table.meas th:first-child, table.meas td:first-child { text-align:left; }
-table.meas td { text-align:right; padding:4px 10px; border-bottom:1px solid var(--hair); }
-table.meas td.stp { text-align:left; color:var(--muted); } table.meas tr.bad td { color:var(--attention); }
-</style>
-</head>
-<body>
-<div id="root"></div>
-<script>
-const q = new URLSearchParams(location.search);
-const PAGE = q.get('page') || 'todo', STATE = q.get('state') || 'main', QUICK = q.get('quick'), V = q.get('v');
-const TS = parseFloat(q.get('ts') || '1');
-const W = window.innerWidth;
-
+</style></head><body><div id="root"></div><script>
 const I = {
   glyph:'<svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 9.5 6 2l4 7.5H7.4L6 6.8 4.6 9.5z" fill="currentColor"/></svg>',
   mag:  '<svg width="13" height="13" viewBox="0 0 14 14"><circle cx="6" cy="6" r="4.2" stroke="currentColor" fill="none" stroke-width="1.4"/><path d="m9.2 9.2 3 3" stroke="currentColor" stroke-width="1.4"/></svg>',
@@ -186,11 +207,11 @@ const I = {
 };
 
 /* ---------- Top bar: ten tabs (Todo after Home), or nine with v=home. Same model as the PR review list mockup. ---------- */
-const FULL10 = ['Home','Todo','Projects','Workflows','Work','Recipes','Context','Agents','System','Reviews'];
+const FULL10 = ['Home','Projects','Workflows','Work','Recipes','Context','Agents','System','Reviews'];
 const FULL9 = FULL10.filter(t => t !== 'Todo');
 const SHORT = { Workflows:'Flows' };
-const CNT = { Todo:'2', Workflows:'12', Work:'12', Recipes:'8', Agents:'4', Reviews:'3' };   // worst case, as in the Reviews list mockup; Todo = overdue 1 + due today 1
-const BOLD = { Todo:1, Reviews:1 };                                                          // drawn as the attention count
+const CNT = { Workflows:'12', Work:'12', Recipes:'8', Agents:'4', Reviews:'3' };   // worst case, as in the Reviews list mockup; Todo = overdue 1 + due today 1
+const BOLD = { Reviews:1 };                                                          // drawn as the attention count
 const STEPS = ['full','compactSearch','noAge','tightNav','noBrandWord','noCounts'];
 const tl = (t, css) => { const s = document.createElement('span'); s.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;' + css; s.textContent = t; document.body.appendChild(s); const w = s.getBoundingClientRect().width; s.remove(); return w; };
 let M = null;
@@ -219,7 +240,7 @@ function bar(w, active, o = {}) {
   const cls = ['top', i >= 1 ? 'compact' : '', i >= 2 ? 'noage' : '', i >= 3 ? 'tight' : '', i >= 4 ? 'nobrandword' : '', i >= 5 ? 'nocounts' : ''].join(' ');
   const tabs = names.map((full, k) => {
     const l = labels[k], c = CNT[full];
-    const badge = !c ? '' : BOLD[full] ? `<span class="count" aria-label="${c} ${full === 'Todo' ? 'due or overdue' : 'waiting on you'}">${c}</span>` : `<span class="cnum">${c}</span>`;
+    const badge = !c ? '' : BOLD[full] ? `<span class="count" aria-label="${c} waiting on you">${c}</span>` : `<span class="cnum">${c}</span>`;
     return `<div class="tab${full === active ? ' on' : ''}" ${l !== full ? `title="${full}"` : ''}>${l}${badge}</div>`;
   }).join('');
   const pill = o.off ? `<div class="pill"><span class="w">${I.off}Not running</span></div>` : `<div class="pill"><span class="w"><span class="dot ok"></span>Running</span><span class="age">updated 4s ago</span></div>`;
@@ -229,144 +250,181 @@ function bar(w, active, o = {}) {
 }
 
 /* ---------- Sample data (made up). Today is Sat 2026-11-07. ---------- */
-const TODOS = {
-  over:   [{ t:'Renew the staging TLS cert', due:'Mon', cls:'over' }],
-  today:  [{ t:'Check flaky test in Aw.Sindri.Tests', due:'Today', cls:'today', link:'PR #2071', lk:'pr' }],
-  up:     [{ t:'Reply to Sam about the offsite', due:'Fri' }, { t:'Order the team lunch for the demo', due:'11-14' }],
-  some:   [{ t:'Read the model-check spec', link:'ENG-142', lk:'lin' }, { t:'Book dentist' }],
+const TX = {
+  renew:  { t:'Renew the staging TLS cert', due:'Overdue · Mon 11-02', cls:'over' },
+  flaky:  { t:'Check flaky test in Aw.Sindri.Tests', due:'Today', cls:'today', chips:[['pr','PR #2071']] },
+  rotate: { t:'Rotate the staging key', due:'Today', cls:'today', agent:'agent' },
+  prep:   { t:'Prep the demo script for Tuesday', due:'Mon', chips:[['pr','PR #2102'], ['lin','ENG-142'], ['lin','ENG-151']], more:7 },
+  budget: { t:'Send the budget note to Kim', due:'Tue' },
+  reply:  { t:'Reply to Sam about the offsite', due:'Fri' },
+  lunch:  { t:'Order the team lunch for the demo', due:'11-14' },
+  parking:{ t:'Pay the parking invoice', due:'11-20' },
+  model:  { t:'Read the model-check spec', chips:[['lin','ENG-143']] },
+  dentist:{ t:'Book dentist' },
+  trees:  { t:'Clean up old worktrees' },
 };
-const DONE = [{ t:'Send the invoice to Kim', at:'9:12' }, { t:'Merge the docs PR', at:'8:40', link:'PR #2066', lk:'pr' }];
-const chipOf = r => r.link ? `<span class="chip link">${I[r.lk]}${r.link}</span>` : '';
-const dueOf = r => r.due ? `<span class="due ${r.cls || ''}">${r.due}</span>` : '';
+const DONE = [{ t:'Send the invoice to Kim', due:'Done 9:12' }, { t:'Merge the docs PR', due:'Done 8:40', chips:[['pr','PR #2066']] }, { t:'Update the runbook', due:'Done Fri 17:20' }];
+const REMOVED = [{ t:'Cancel the old standup invite', due:'Removed 8:15' }];
 const tick = on => `<span class="cb${on ? ' on' : ''}">${on ? I.check : ''}</span>`;
-const todoRow = (r, o = {}) => `<div class="row${o.sel ? ' sel' : ''}${o.done ? ' done' : ''}">${tick(o.done)}<span class="tx">${r.t}</span>${chipOf(r)}${o.done ? `<span class="due">${r.at}</span>` : dueOf(r)}</div>`;
-const group = (name, n, rows, cls = '') => `<div class="group"><div class="ghead ${cls}">${name} <span class="n">${n}</span></div><div class="list">${rows}</div></div>`;
-
-/* ---------- From elsewhere (spec §3.1: three groups, at most 5 rows each, then "Show all N in ...") ---------- */
-const NEEDS = [{ tag:'Decision', t:'Pick the backfill window for the nightly index', m:'filed by a session · 26 m' }, { tag:'Failed', f:1, t:'Service library-feed stopped: exit 1', m:'retry from System · 2 h' }];
-const PRS = [{ t:'Retry payment capture on timeout', m:'acme/harbor#219 · review requested · 5 h' }, { t:'Add booking hold expiry', m:'acme/harbor#214 · reviewed, 2 new commits · 2 h' }, { t:'Reviews list: row names and J / K keys', m:'jthorare/agentic-workflow#2102 · 1 d' }];
-const LIN = [['ENG-142','Model-check the lease renewal','In progress'], ['ENG-151','Docs sync rules fail on empty folders','Todo'], ['ENG-155','Tray tooltip loses the unread count','Todo'], ['ENG-160','Rename the queue groups in the CLI','Backlog'], ['ENG-163','Frames tests flake on the first paint','In progress']];
-const erow = (tag, t, m, f) => `<div class="row erow">${tag ? `<span class="tag${f ? ' f' : ''}">${tag}</span>` : ''}<span class="tx">${t}</span><span class="m">${m}</span><span class="go">→</span></div>`;
-const showall = t => `<div class="showall">${t}</div>`;
-function elsewhere() {
-  const fail = STATE === 'elsefail';
-  const linBody = fail
-    ? `<div class="gerr"><span class="att" style="display:flex">${I.warn}</span><span>Couldn’t load Linear</span><span class="fresh">The other two are fine.</span><span class="btn sm">Retry</span></div>`
-    : LIN.map(([k, t, s]) => erow(k, t, s)).join('') + showall('Show all 9 in Work →');
-  return `<div class="divider">From elsewhere</div>
-    ${group('Needs you', 2, NEEDS.map(n => erow(n.tag, n.t, n.m, n.f)).join(''))}
-    ${group('Reviews waiting on you', 3, PRS.map(p => erow('', p.t, p.m)).join('') + showall('Show all 3 in Reviews →'))}
-    ${group('Linear assigned to you', fail ? '' : 9, linBody)}`;
+function trow(r, o = {}) {
+  const chips = (r.chips || []).map(([k, t]) => `<span class="chip link">${I[k]}${t}</span>`).join('') + (r.more ? `<span class="chip more">+${r.more}</span>` : '');
+  const ag = r.agent ? `<span class="chip agent">${r.agent}</span>` : '';
+  const cb = o.removed ? '<span class="cb rm"></span>' : tick(o.done);
+  return `<div class="row${o.sel ? ' sel' : ''}${o.done ? ' done' : ''}">${cb}<span class="tx">${r.t}</span>${ag}${chips}<span class="due ${r.cls || ''}">${r.due || ''}</span></div>`;
 }
+const kb = (...k) => k.map(x => `<kbd>${x}</kbd>`).join('');
 
-/* ---------- The Todo page ---------- */
-const head = (cnt) => `<div class="pagehead"><div class="grow"><h1>Todo</h1><div class="cnt">${cnt}</div></div><div class="newhint"><kbd>N</kbd>New todo</div></div>`;
-function editRow(conflict) {
-  const r = TODOS.up[0];
-  return `<div class="edit"><div class="f"><span class="k">Todo</span><div class="fld on"><span>${conflict ? 'Reply to Sam about the offsite and the venue' : r.t}</span><span class="caret"></span></div></div>
-    <div class="f"><span class="k">Due</span><div class="fld">${conflict ? 'Fri 11-13' : 'Fri 11-13'}</div></div>
-    <div class="f"><span class="k">Link</span><div class="fld" style="color:var(--tert)">${conflict ? 'none' : 'none · paste a PR url, ENG-12 or ITM-…'}</div></div>
-    ${conflict ? `<div class="msg err"><span>Changed somewhere else. Here’s the latest</span><span class="code">SND-TODO-409</span></div>`
-               : `<div class="bar"><span><kbd>Enter</kbd> Save</span><span><kbd>Tab</kbd> Next field</span><span><kbd>Esc</kbd> Cancel</span></div>`}</div>
-    ${conflict ? `<div class="latest">Latest: due <b style="color:var(--attention)">Mon 11-09</b> (was Fri 11-13), set from <span class="mono" style="font-family:'JetBrains Mono',monospace">sindri todo edit</span>. Your typed text is kept above; Enter saves it on top of the latest.</div>` : ''}`;
+/* ---------- Attention rows (D13) ---------- */
+const ST = 'Reply to Sam about the offsite: confirm the headcount (14, not 12), ask whether the venue has a projector, check the Friday shuttle times with the hotel before the 3 pm call, then send the final agenda to Kim and Priya so they can book travel before the fares go up this weekend';
+const OT = 'Reply to Sam about the offsite: confirm the headcount is 14, ask the venue for a projector and a second mic, check the Friday shuttle times with the hotel before the 3 pm call, then send the final agenda to Kim, Priya and Dan so they can book travel before the fares go up soon';
+const CHARS = [ST.length, OT.length];
+/* c = { s:{text,due,done,gone}, o:{...} }: a field that is equal on both sides is drawn once, dimmed (spec §3.1); a different one is marked "changed". */
+function conflict(c) {
+  const F = [['text', 'Text'], ['due', 'Due'], ['done', 'State']];
+  const same = [], diff = [];
+  const gone = c.s.gone || c.o.gone;
+  F.forEach(([k, n]) => { const a = c.s[k], b = c.o[k]; (a === b || (gone && k !== 'text') ? same : diff).push([k, n]); });
+  const col = (side, name, btn, n) => {
+    const v = c[side];
+    const fields = v.gone ? `<div><div class="fk">State <em>changed</em></div><div class="fv gone ch">Removed</div></div>`
+      : diff.filter(([k]) => !(gone && k === 'done')).map(([k, nm]) => `<div><div class="fk">${nm} <em>changed</em></div><div class="fv ch${k === 'text' ? ' clamp' : ''}">${v[k] ?? ''}</div></div>`).join('');
+    return `<div class="cc"><div class="who">${name}</div>${fields}<button class="btn sm">${kb(n)}${btn}</button></div>`;
+  };
+  const sameTxt = same.filter(([k]) => !(gone && k === 'done') && (gone ? (c.s.gone ? c.o : c.s) : c.s)[k]).map(([k, nm]) => k === 'due' ? `due ${(gone ? (c.s.gone ? c.o : c.s) : c.s)[k]}` : (gone ? (c.s.gone ? c.o : c.s) : c.s)[k]).join(' · ');
+  return `<div class="attn" data-k="attn"><div class="at"><span class="att">${I.warn}</span><b>Changed in Sindri and in Obsidian</b><span class="same">${sameTxt ? sameTxt + (gone ? '' : ', same in both') : ''}</span></div>
+    <div class="cols">${col('s', 'Sindri', 'Keep Sindri’s', 1)}${col('o', 'Obsidian', c.o.gone ? 'Keep it removed' : 'Keep Obsidian’s', 2)}</div></div>`;
 }
-function todoPage() {
-  if (STATE === 'notrunning') return `<div class="col">${head('')}<div class="card"><h3>${I.off} Sindri isn’t running</h3><div class="fresh">Todos live in Sindri’s ledger, so there’s nothing to show or save until it’s up. <kbd>N</kbd> says the same instead of opening a box.</div><div class="fresh">Start it with <code>sindri</code> in a terminal.</div></div></div>`;
-  if (STATE === 'empty') return `<div class="col">${head('0 open')}<div class="empty"><p style="font-size:15px;color:var(--ink);margin:0 0 6px">Nothing on your list.</p><p style="margin:0">Press <kbd>N</kbd> to add one.</p></div>${elsewhere().replace(/<div class="divider">[\s\S]*$/, '') ? '' : ''}${elsewhere()}</div>`;
-  const sel = q.get('sel') === '1', ed = q.get('edit') === '1', cf = q.get('conflict') === '1', toast = q.get('toast') === '1', done = q.get('done') === '1';
-  const up = TODOS.up.map((r, k) => k === 0 && (ed || cf) ? editRow(cf) : todoRow(r, { sel: sel && k === 0 })).join('');
-  const over = toast ? '' : todoRow(TODOS.over[0], { sel: false });
-  const doneRows = done ? DONE.map(r => todoRow(r, { done: true })).join('') : '';
-  const nDone = toast ? 3 : 2;
-  const toastRow = toast ? todoRow({ t:'Renew the staging TLS cert', at:'now' }, { done: true }) : '';
-  const overBlock = toast ? '' : group('Overdue', 1, over, 'over');
-  const doneBlock = `<div class="group"><div class="ghead"><span class="chev">${done || toast ? '▾' : '▸'}</span>Done today <span class="n">${nDone}</span></div>${done || toast ? `<div class="list">${toastRow}${doneRows}</div>` : ''}</div>`;
-  const doneOpenNote = '';
-  return `<div class="col">${head(toast ? '5 open · none overdue' : '6 open · <b>1 overdue</b>')}
-    ${overBlock}${group('Today', 1, todoRow(TODOS.today[0]), '')}${group('Upcoming', 2, up)}${group('Someday', 2, TODOS.some.map(r => todoRow(r)).join(''))}${doneBlock}
-    ${elsewhere()}
-    <div class="foot"><span><kbd>J</kbd><kbd>K</kbd> move</span><span><kbd>X</kbd> done</span><span><kbd>Enter</kbd> edit</span><span><kbd>D</kbd> date</span><span><kbd>O</kbd> open link</span><span><kbd>Delete</kbd> remove</span><span><kbd>G</kbd><kbd>T</kbd> open Todo</span></div></div>`;
+function hold() {
+  return `<div class="attn" data-k="attn"><div class="at"><span class="att">${I.warn}</span><b>Changed only in the note</b><span class="same">Held until you pick. Nothing is written or applied before then.</span></div>
+    <div class="holdtx">The note changed 14 todos: removed ‘reply to Sam’, edited ‘rotate the staging key’, un-ticked ‘renew the cert’ and 11 more</div>
+    <div class="holdbtns"><button class="btn hold">${kb(1)}Put them back in the note</button><button class="btn hold">${kb(2)}Apply in Sindri too</button></div></div>`;
 }
+const line = (t, k) => `<div class="fold" data-k="attn"><span class="att">${I.warn}</span><span class="tx"><b style="font-weight:600">${t}</b></span><span class="fresh">${kb('Enter')} ${k.replace('Enter ', '')}</span></div>`;
+const fold = (n, what) => `<div class="fold" data-k="fold"><span class="att">${I.warn}</span><span class="tx"><b style="font-weight:600">Sort out ${n} more:</b> ${what}</span><span class="fresh">${kb('Enter')} opens the next</span></div>`;
 
-/* ---------- Other pages the shots need ---------- */
+const C_RENEW = { s:{ text:'Renew the staging TLS cert', due:'Mon 11-02', done:'Done 9:40' }, o:{ text:'Renew the staging TLS cert and the wildcard one', due:'Mon 11-02', done:'Not done' } };
+const C_LONG  = { s:{ text:ST, due:'Fri 11-13', done:'Not done' }, o:{ text:OT, due:'Fri 11-13', done:'Not done' } };
+const C_DUE   = { s:{ text:'Reply to Sam about the offsite', due:'Fri 11-13', done:'Not done' }, o:{ text:'Reply to Sam about the offsite', due:'Mon 11-09', done:'Not done' } };
+const C_GONE  = { s:{ text:'Rotate the staging key, then tell the on-call', due:'Today', done:'Not done' }, o:{ gone:1, text:'', due:'', done:'' } };
+
+/* ---------- The panel ---------- */
+const ELSE = `<a class="l">2 PRs waiting on your review</a><span class="sep">·</span><a class="l">1 Linear issue assigned</a><span class="sep">·</span><a class="l">3 need you, below</a>`;
+const HINT_P = `<span>${kb('J', 'K')} move</span><span>${kb('X')} <b>Done</b></span><span>${kb('Space')} Done</span><span>${kb('Enter')} edit</span><span>${kb('Delete')} remove</span><span>${kb('O')} open link</span><span>${kb('Tab')} to Needs you</span>`;
+const HINT_N = `<span>${kb('J', 'K')} move</span><span>${kb('A')} primary action</span><span>${kb('X')} <b>Reject</b></span><span>${kb('Y')} copy</span><span>${kb('Enter')} open</span><span>${kb('Tab')} to Todo</span>`;
+function panel(o) {
+  const x = o.mode === 'x', sort = o.sort || 0;
+  const cnt = `<span class="cnt">11 open · <span class="over">1 overdue</span>${sort ? ` · <span class="today">${sort} to sort out</span>` : ''}</span>`;
+  const sync = o.sync || ['Synced with Obsidian 10:05', 0];
+  let body;
+  if (!x) {
+    body = (o.attn || '') + (o.fold || '') + o.rows.map((k, i) => trow(TX[k], { sel: o.sel === i })).join('') + `<div class="showall">Show all 11</div>`;
+  } else {
+    const g = (name, n, keys, cls = '') => `<div class="gh ${cls}">${name} <span class="n">${n}</span></div>` + keys.map(k => trow(TX[k])).join('');
+    body = g('Overdue', 1, ['renew'], 'o') + g('Today', 2, ['flaky', 'rotate']) + g('Upcoming', 5, ['prep', 'budget', 'reply', 'lunch', 'parking']) + g('No date', 3, ['model', 'dentist', 'trees'])
+      + `<div class="sd">${o.done ? '▾' : '▸'} Show done <span class="n">4</span><span style="margin-left:auto;color:var(--tert)">${kb('Enter')}</span></div>`
+      + (o.done ? `<div class="gh">Done <span class="sub">last 7 days</span></div>${DONE.map(r => trow(r, { done: true })).join('')}<div class="gh">Removed <span class="sub">last 24 hours · X restores</span></div>${REMOVED.map(r => trow(r, { removed: true })).join('')}` : '');
+  }
+  const foot = x ? `<div class="pf">${ELSE}<span style="margin-left:auto" class="sync">Show less ${kb('Esc')}</span></div>` : `<div class="pf">${ELSE}</div>`;
+  return `<div class="region${o.focus ? ' focus' : ''}"><section class="panel${x ? ' x' : ''}" aria-label="Todo" data-k="panel">
+    <div class="ph"><h2>Todo</h2>${cnt}<span class="grow"></span><span class="sync${sync[1] ? ' warn' : ''}">${sync[0]}</span><span class="newhint">${kb('N')}New todo</span></div>
+    <div class="pwrap"><div class="pbody" id="pbody">${body}</div></div>${foot}${o.focus ? `<div class="hints">${HINT_P}</div>` : ''}</section></div>`;
+}
+function needs(o = {}) {
+  const R = [['Parked', 'Retry storm in outbox dispatcher', 'checks failed twice', '12m'], ['Decision', 'Re-scope: drop the iOS head from this item', 'filed by a session', '26m'], ['Escalated', 'Context map review for tabs.layout', 'judge 0.62, below 0.80', '2h']];
+  return `<section class="needs region${o.focus ? ' focus' : ''}" aria-label="Needs you"><h2 class="nh">Needs you <span style="color:var(--tert);font-weight:500">3</span></h2>
+    <div class="nlist">${R.map((r, i) => `<div class="hrow${o.focus && i === 0 ? ' sel' : ''}"><span class="hchip">${r[0]}</span><span>${r[1]}</span><span class="m">${r[2]}</span><span class="a">${r[3]}</span></div>`).join('')}${o.focus ? `<div class="hints">${HINT_N}</div>` : ''}</div></section>`;
+}
+const homeHead = `<div class="homehead"><h1>Home</h1><span class="cnt"><b>3 need you</b> · 4 running · 1 with you · 4 queued</span></div>`;
+const home = (p, n = {}) => `<div class="col">${homeHead}${p}${needs(n)}</div>`;
+
+/* ---------- Other pages ---------- */
 function reviewsPage() {
-  const r = (t, m, w) => `<div class="row erow"><span class="tx" style="font-size:14px;font-weight:500">${t}</span><span class="m">${m}</span><span class="due">${w}</span></div>`;
+  const r = (t, m, w) => `<div class="row"><span class="tx" style="font-weight:500">${t}</span><span class="m">${m}</span><span class="due">${w}</span></div>`;
   return `<div class="col"><div class="pagehead"><div class="grow"><h1>Reviews</h1><div class="cnt">3 waiting on you</div></div></div>
-    <div class="ghead att" style="color:var(--attention)">Waiting on you <span class="n">3</span></div><div class="list">
-    ${r('Retry payment capture on timeout','acme/harbor#219 · dan-o · review requested','5 h')}${r('Add booking hold expiry','acme/harbor#214 · mira-k · 2 new commits','2 h')}${r('Reviews list: row names and J / K keys','jthorare/agentic-workflow#2102 · sam-lee','1 d')}</div>
-    <div class="ghead" style="margin-top:20px">Yours <span class="n">3</span></div><div class="list">
-    ${r('Library: front matter reader','jthorare/agentic-workflow#2071 · passing','6 h')}${r('PR records keep requested reviewers','jthorare/agentic-workflow#2088 · running','2 d')}</div></div>`;
+    <div class="list">${r('Retry payment capture on timeout', 'acme/harbor#219 · dan-o · review requested', '5 h')}${r('Add booking hold expiry', 'acme/harbor#214 · mira-k · 2 new commits', '2 h')}${r('Reviews list: row names and J / K keys', 'jthorare/agentic-workflow#2102 · sam-lee', '1 d')}</div>
+    <div class="list" style="margin-top:20px">${r('Library: front matter reader', 'jthorare/agentic-workflow#2071 · passing', '6 h')}${r('PR records keep requested reviewers', 'jthorare/agentic-workflow#2088 · running', '2 d')}</div></div>`;
 }
-function homePage() {
-  const row = (chip, t, m, w) => `<div class="hrow"><span class="hchip">${chip}</span><span>${t}</span><span class="fresh">${m}</span><span class="fresh" style="text-align:right">${w}</span></div>`;
-  const nine = V === 'home';
-  const todoBtn = nine ? `<span class="btn">Todo <span class="count">2</span></span>` : '';
-  return `<div class="col"><div class="pagehead"><div class="grow"><h1>Home</h1><div class="cnt"><b style="color:var(--ink);font-weight:500">5 need you</b> · 4 running · 1 with you · 4 queued</div></div>${todoBtn}</div>
-    <div class="hband"><h2>Needs you</h2>${row('Parked','Retry storm in outbox dispatcher','checks failed twice','12m')}${row('Decision','Re-scope: drop the iOS head from this item','filed by a session','26m')}${row('Escalated','Context map review for tabs.layout','judge 0.62, below 0.80','2h')}</div>
-    <div class="hline">${I.pr}<span class="big">3 PRs waiting on you</span><span class="grow">oldest: Retry payment capture on timeout (acme/harbor#219), 5 h</span><span class="btn ghost sm" style="color:var(--primaryHover)">Open Reviews →</span></div>
-    <div class="hline focus" style="outline-offset:2px"><span style="display:flex;color:var(--muted)">${I.check}</span><span class="big">1 todo due today · 1 overdue</span><span class="grow">next: Renew the staging TLS cert, Mon</span><span class="btn ghost sm" style="color:var(--primaryHover)">Open Todo →</span></div>
-    <div class="fresh" style="margin-top:var(--md)">New line (spec §3). It sits with the PR line, outside “5 need you”, and opens Todo (<kbd>G</kbd> <kbd>T</kbd>). With nothing due or overdue it is absent. ${nine ? 'Fallback drawn: Todo is the button in this header, not a tab.' : 'The Todo tab’s badge shows the same two.'}</div></div>`;
+function workflowsPage() {
+  const r = (st, c, t, m, w) => `<div class="row"><span class="pillst ${c}">${st}</span><span class="tx" style="font-weight:500">${t}</span><span class="m">${m}</span><span class="due">${w}</span></div>`;
+  return `<div class="col"><div class="pagehead"><div class="grow"><h1>Workflows</h1><div class="cnt">12 open · 1 needs you</div></div><button class="btn pr">${kb('N')}Start workflow</button></div>
+    <div class="list">${r('Needs you', 'you', 'Pick the backfill window', 'index-rebuild · decision', '26 m')}${r('Running', 'run', 'Fix the retry storm in the outbox', 'bugfix · implement', '12 m')}${r('Running', 'run', 'Docs sync for the Reviews page', 'docs · review loop', '41 m')}${r('Queued', '', 'Rename the queue groups in the CLI', 'feature · plan', '2 h')}${r('Queued', '', 'Tray tooltip keeps the unread count', 'bugfix · reproduce', '3 h')}</div>
+    <div class="note"><span class="tag">Mockup note</span><span class="k">${kb('N')} starts a workflow on this page, as today.</span><span class="k">${kb('Ctrl', 'Shift', 'N')} opens the todo box here, as on every page. Everywhere else ${kb('N')} opens the todo box.</span></div></div>`;
+}
+function settings(st) {
+  const linear = `<div class="scard"><h3>Linear<span class="st"><span class="dot ok"></span>Connected</span></h3>
+    <p>Read key saved in the keychain. Teams: ENG, OPS.</p><div class="sub">Write access: connected · checked 10:05</div><div class="btns"><button class="btn sm">Replace key</button><button class="btn sm">Remove key</button></div></div>`;
+  const fields = (dis) => `<div class="fl"><span class="k">Vault</span><div class="fld">Notes<span class="m">~/Documents/Notes</span><span class="chev">▾</span></div></div>
+    <div class="fl"><span class="k">Note</span><div class="fld">Todo.md</div></div>`;
+  const nosep = `<div class="sub">This one button saves the setting and approves it. There is no separate approve step, and nothing is written to Todo.md before you press it.</div>`;
+  let h = `<h3>Obsidian todo note`, b = '';
+  if (st === 'a') {
+    b = `<p>Keep your todos in one note in your vault. Sindri writes them as <code>- [ ]</code> lines and reads back what you change there.</p>${fields()}
+      <div class="btns"><button class="btn pr">Check note</button><span class="sub">Reads the note, changes nothing.</span></div>`;
+  } else if (st === 'b') {
+    b = `${fields()}<div class="res"><p>Import adds ids to 42 lines in Todo.md and adds your 6 Sindri todos after them.</p>
+      <div class="w">${I.warn}<span>3 lines can’t be imported (lines 4, 17, 30): they have a markdown link or a 📅 inside the text.</span></div></div>
+      <div class="btns"><button class="btn pr">Import and start syncing</button><button class="btn">Cancel</button></div>${nosep}`;
+  } else if (st === 'c') {
+    h += `<span class="st"><span class="dot ok"></span>Syncing</span>`;
+    b = `<p>Syncing with Notes/Todo.md · last synced 10:05</p><div class="sub">While Sindri is running it writes your todos into the note and reads back what you change there. Phone changes arrive about a minute after Obsidian Sync brings them to this laptop.</div>
+      <div class="btns"><button class="btn">Change</button><button class="btn">Stop syncing</button></div>`;
+  } else {
+    b = `${fields()}<div class="res"><div class="w">${I.warn}<span>Sindri can’t write to Todo.md on this disk. It can bring in ticks and edits of lines that already have an id, and can’t add new ones.</span></div></div>
+      <div class="btns"><button class="btn off" disabled>Import</button><button class="btn pr">Start syncing (one way)</button><button class="btn">Cancel</button></div>${nosep}`;
+  }
+  return `<div class="col" style="max-width:952px"><div class="pagehead" style="margin-bottom:var(--sm)"><div class="grow"><h1>Settings</h1><div class="cnt">Connections</div></div></div><div class="cards">${linear}<div class="scard">${h}</h3>${b}</div></div></div>`;
 }
 
 /* ---------- Quick-add (spec §3.2) ---------- */
 function quickAdd() {
-  const hint = `<div class="foot2"><span><kbd>Enter</kbd> Save</span><span><kbd>Shift</kbd><kbd>Enter</kbd> Save and add another</span><span><kbd>Esc</kbd> Close</span></div>`;
-  let inp, parse, fail = '';
-  if (QUICK === 'pr') {
-    inp = `<span>check flaky test</span><span class="chip link">${I.pr}PR #2071 ×</span><span class="caret"></span>`;
-    parse = `<span>Links PR #2071</span><span class="fresh">· No date</span><span class="fresh" style="margin-left:auto">The url left the text</span>`;
-  } else if (QUICK === 'fail') {
-    inp = `<span>check flaky test fri</span><span class="caret"></span>`;
-    parse = `<span>Due Fri 11-13</span>`;
-    fail = `<div class="fail"><span>Couldn’t save: Sindri stopped answering. Your text is still here, Enter tries again.</span></div>`;
-  } else {
-    inp = `<span>check flaky test fri</span><span class="caret"></span>`;
-    parse = `<span><b style="font-weight:600">Due Fri 11-13</b></span><span class="fresh">· “fri” read as a date, the rest is the todo</span>`;
-  }
-  return `<div class="scrim"></div><div class="qa" role="dialog" aria-label="New todo"><div class="in">${inp}</div><div class="parse" aria-live="polite">${parse}</div>${fail}${hint}</div>`;
+  return `<div class="scrim"></div><div class="qa" role="dialog" aria-label="New todo"><div class="in"><span>check flaky test fri</span><span class="caret"></span></div>
+    <div class="parse" aria-live="polite"><b style="font-weight:600">Due Fri 11-13</b><span class="cnt">· “fri” read as a date, the rest is the todo</span></div>
+    <div class="foot2"><span>${kb('Enter')} Save</span><span>${kb('Esc')} Close</span></div></div>`;
 }
+const toast = `<div class="toast" role="status"><span>Kept Obsidian’s version.</span><span class="undo">Undo (6 s)</span>${kb('Ctrl', 'Z')}<span class="tm"><i></i></span></div>`;
 
-/* ---------- Measured bars (TP-7) ---------- */
-function barsPage() {
-  const cases = [[1000, 1], [1099, 1], [1100, 1], [1440, 1], [1000, 1.3]];
-  const rows = cases.map(([w, s]) => {
-    const t = fit(w, FULL10, barLabels(w, FULL10, s), s), tf = fit(w, FULL10, FULL10, s), n = fit(w, FULL9, barLabels(w, FULL9, s), s), fl = need('noCounts', FULL10, FULL10, s).px, flS = need('noCounts', FULL10, FULL10.map(l => SHORT[l] || l), s).px, fl9 = need('noCounts', FULL9, FULL9, s).px;
-    return { w, s, t, tf, n, fl, flS, fl9 };
-  });
-  const frames = [[1000, 1], [1000, 1.3], [1440, 1]].map(([w, s]) => {
-    const l = barLabels(w, FULL10, s), f = fit(w, FULL10, l, s);
-    return `<div class="barbox"><div class="cap"><b>Ten tabs, ${w} px window${s !== 1 ? ', text 130%' : ''}</b><span>${l === FULL10 ? 'full labels' : 'short labels'} · bar step: ${f.step} · needs ${f.px} of ${w} px${f.px > w ? ` · <b class="att">${f.px - w} px too wide</b>` : ''}</span></div>
-      <div class="frame" style="width:${w}px;overflow:hidden">${bar(w, 'Todo', { ts: s })}</div></div>`;
-  }).join('') + `<div class="barbox"><div class="cap"><b>Fallback v=home, 1000 px (not needed: ten tabs fit)</b><span>nine tabs · needs ${fit(1000, FULL9, barLabels(1000, FULL9, 1), 1).px} of 1000 px</span></div><div class="frame" style="width:1000px">${bar(1000, 'Home', { nine: true })}</div></div>`;
-  const T = rows.map(r => `<tr class="${r.t.step === 'overflow' ? 'bad' : ''}"><td>${r.w}${r.s !== 1 ? ' @ text 130%' : ''}</td><td>${r.tf.px}</td><td class="stp">${r.t.step}</td><td>${r.t.step === 'overflow' ? `<b>${r.t.px - r.w} px over</b>` : r.w - r.t.px}</td><td>${r.fl}</td><td>${r.flS}</td><td>${r.fl9}</td><td class="stp">${r.n.step}</td></tr>`).join('');
-  const r1000 = rows[0], r13 = rows[4];
-  const verdict = `<div class="verdict" id="verdict" data-fits1000="${r1000.t.step !== 'overflow'}" data-step1000="${r1000.t.step}" data-need1000="${r1000.t.px}" data-spare1000="${1000 - r1000.t.px}" data-step13="${r13.t.step}" data-need13="${r13.t.px}" data-spare13="${1000 - r13.t.px}" data-floor="${r1000.fl}" data-floor13="${r13.fl}">
-    <b>TP-7, 1000 px at 100% text: ${r1000.t.step === 'overflow' ? `does NOT fit, ${r1000.t.px - 1000} px too wide` : `fits at step “${r1000.t.step}”, ${1000 - r1000.t.px} px spare`}.</b>
-    At text 130%: ${r13.t.step === 'overflow' ? `does NOT fit, ${r13.t.px - 1000} px too wide (with “Flows”: ${r13.flS} at the last step)` : `fits at step “${r13.t.step}”, ${1000 - r13.t.px} px spare`}.</div>`;
-  setTimeout(() => { const o = []; document.querySelectorAll('.frame').forEach(f => { const t = f.querySelector('.top'); o.push(Math.max(0, t.scrollWidth - t.clientWidth)); const c = f.previousElementSibling.querySelector('span'); c.insertAdjacentHTML('beforeend', ` · drawn bar overflows by <b class="${o[o.length-1] ? 'att' : 'ok'}">${o[o.length-1]} px</b>`); }); document.getElementById('verdict').dataset.drawn = o.join(','); }, 0);
-  return `<div class="bars"><h1>Ten tabs, measured</h1>
-    <div class="lead">Same model as the Reviews list mockup (brand, segmented nav, ⌘K field, health pill; Inter 13/500 widths measured in this page) with Todo added after Home and a worst-case count on each of Todo 2, Workflows 12, Work 12, Recipes 8, Agents 4, Reviews 3. Step-down order: ⌘K folds to its magnifier, the pill’s age drops, tab padding 7 → 2 px, the brand word drops, counts hide.</div>
-    ${verdict}${frames}
-    <table class="meas"><tr><th>Window</th><th>Needs, ten tabs, full labels</th><th>Step it lands on</th><th>Spare px</th><th>Floor (every step taken)</th><th>Floor with “Flows”</th><th>Floor, nine tabs</th><th>Nine tabs: step</th></tr>${T}</table></div>`;
-}
+/* ---------- Screens ---------- */
+const R5 = ['renew', 'flaky', 'rotate', 'prep', 'budget'];
+const SCR = {
+  'home-collapsed': { page: () => home(panel({ mode: 'c', rows: R5 })) },
+  'home-expanded': { page: () => home(panel({ mode: 'x', done: true })), scroll: 'end' },
+  'home-expanded-top': { page: () => home(panel({ mode: 'x' })) },
+  'attn-a': { page: () => home(panel({ mode: 'c', sort: 1, attn: line('Changed in Sindri and in Obsidian: reply to Sam.', 'Enter to sort it out'), rows: R5.slice(0, 4) })) },
+  'attn-b': { page: () => home(panel({ mode: 'c', sort: 3, attn: line('Changed in Sindri and in Obsidian: renew the cert.', 'Enter to sort it out'), fold: fold(2, 'reply to Sam…, rotate…'), rows: R5.slice(1, 4) })) },
+  'attn-c': { page: () => home(panel({ mode: 'c', sort: 4, attn: line('Changed in Sindri and in Obsidian: renew the cert.', 'Enter to sort it out'), fold: fold(3, 'reply to Sam…, rotate…, the note’s 14 changes'), rows: R5.slice(1, 4), sync: ['Paused: the note changed 14 todos', 1] })) },
+  'attn-c-hold': { page: () => home(panel({ mode: 'c', sort: 1, attn: line('The note changed 14 todos.', 'Enter to look'), rows: R5.slice(0, 4), sync: ['Paused: the note changed 14 todos', 1] })) },
+  'attn-d': { page: () => home(panel({ mode: 'c', sort: 1, attn: line('Changed in Sindri, removed in Obsidian: rotate the staging key.', 'Enter to sort it out'), rows: R5.slice(0, 4) })) },
+  'attn-open-a': { page: () => home(panel({ mode: 'c', sort: 1, attn: conflict(C_LONG), rows: ['renew', 'flaky'] })) },
+  'attn-open-d': { page: () => home(panel({ mode: 'c', sort: 1, attn: conflict(C_GONE), rows: ['renew', 'flaky'] })) },
+  'attn-open-hold': { page: () => home(panel({ mode: 'c', sort: 1, attn: hold(), rows: ['renew', 'flaky'], sync: ['Paused: the note changed 14 todos', 1] })) },
+  'attn-e': { page: () => home(panel({ mode: 'c', rows: R5, sync: ['Saving your pick to Obsidian in 6 s', 0] })), extra: toast },
+  'focus-panel': { page: () => home(panel({ mode: 'c', rows: R5, focus: true, sel: 1 })) },
+  'focus-needs': { page: () => home(panel({ mode: 'c', rows: R5 }), { focus: true }) },
+  quickadd: { active: 'Reviews', page: reviewsPage, extra: quickAdd() },
+  workflows: { active: 'Workflows', page: workflowsPage },
+  'settings-a': { active: '', page: () => settings('a') }, 'settings-b': { active: '', page: () => settings('b') },
+  'settings-c': { active: '', page: () => settings('c') }, 'settings-d': { active: '', page: () => settings('d') },
+};
 
-/* ---------- Mount ---------- */
 function mount() {
   measure();
-  if (q.get("toast") === "1") CNT.Todo = "1";   // the overdue one was just checked off: 0 overdue + 1 today
-  const root = document.getElementById('root');
-  if (PAGE === 'bars') { root.innerHTML = barsPage(); return; }
-  const active = PAGE === 'reviews' ? 'Reviews' : PAGE === 'home' ? 'Home' : 'Todo';
-  const body = PAGE === 'reviews' ? reviewsPage() : PAGE === 'home' ? homePage() : todoPage();
-  const nine = V === 'home';
-  let extra = '';
-  if (QUICK) extra += quickAdd();
-  if (q.get('toast') === '1') extra += `<div class="toast" role="status"><span>Done.</span><span class="undo">Undo</span><kbd>⌘Z</kbd><span class="tm"><i></i></span></div>`;
-  root.innerHTML = bar(W, active, { nine, off: STATE === 'notrunning' }) + `<div class="body"><div class="page">${body}</div></div>` + extra;
-  document.body.insertAdjacentHTML('beforeend', `<div class="label">mockup · ${PAGE}${STATE !== 'main' ? ' · ' + STATE : ''}${QUICK ? ' · quick ' + QUICK : ''} · ${W}px</div>`);
+  const sc = SCR[S]; if (!sc) { document.body.textContent = 'unknown s=' + S; return; }
+  const act = sc.active ?? 'Home';
+  document.getElementById('root').innerHTML = bar(W, act) + `<div class="page">${sc.page()}</div>` + (sc.extra || '');
+  setTimeout(() => {
+  const pb = document.getElementById('pbody');
+  if (pb && pb.closest('.x')) {
+    if (sc.scroll === 'end') pb.scrollTop = pb.scrollHeight;
+  }
+  }, 900);
+  const h = k => { const e = document.querySelector(`[data-k="${k}"]`); return e ? Math.round(e.getBoundingClientRect().height) : 0; };
+  const pan = document.querySelector('.panel');
+  document.body.dataset.meas = JSON.stringify({ s: S, w: W, chars: CHARS, attn: h('attn'), fold: h('fold'), panel: pan ? h('panel') : 0, rows: pan ? pan.querySelectorAll('.pbody > .row').length : 0,
+    pageBottom: Math.round(document.querySelector('.col').getBoundingClientRect().bottom), bodyOverflow: document.querySelector('.page').scrollHeight - document.querySelector('.page').clientHeight, over: [...document.querySelectorAll('.row,.cc,.res,.scard,.hrow')].filter(e => e.scrollWidth > e.clientWidth + 1).length });
+  document.title = document.body.dataset.meas;
 }
-/* The text model needs Inter's real widths: load each face used before measuring (fonts.ready alone resolves before first use). */
-const faces = ['400 12px Inter','400 13px Inter','500 13px Inter','600 12px Inter','600 13px Inter','600 14px Inter'];
+const q = new URLSearchParams(location.search), S = q.get('s') || 'home-collapsed', W = innerWidth;
+const faces = ['400 12px Inter', '400 13px Inter', '500 13px Inter', '600 12px Inter', '600 13px Inter', '600 14px Inter'];
 (document.fonts && document.fonts.load ? Promise.all(faces.map(f => document.fonts.load(f).catch(() => 0))) : Promise.resolve()).then(mount);
 </script>
 </body>
