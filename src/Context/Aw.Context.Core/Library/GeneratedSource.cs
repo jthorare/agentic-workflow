@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text;
 
 namespace Aw.Context.Core.Library;
 
@@ -30,4 +31,17 @@ public static class GeneratedSource
     /// <param name="source">The source file's bytes.</param>
     /// <returns>Their sha256, lower-case hex.</returns>
     public static string Sha256(ReadOnlySpan<byte> source) => Convert.ToHexStringLower(SHA256.HashData(source));
+
+    /// <summary>The first character of a version <see cref="Version"/> made, so a stored version tells a folded one from a plain doc id.</summary>
+    public const char Mark = 'g';
+
+    /// <summary>The version of a doc read with the packet.json beside it: one rule for every feed, so a change to either file is a new version.</summary>
+    /// <param name="docVersion">The doc's own version (its sha256 or blob id).</param>
+    /// <param name="packetVersion">The packet.json's sha256 or blob id, or null when there is none beside the doc.</param>
+    /// <returns>The mark and the sha256 of the two joined.</returns>
+    public static string Version(string docVersion, string? packetVersion)
+    {
+        ArgumentNullException.ThrowIfNull(docVersion);
+        return Mark + Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(docVersion + ":" + packetVersion)));
+    }
 }
