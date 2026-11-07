@@ -1,4 +1,3 @@
-using Aw.Context.Core.Engine;
 using Aw.Context.Core.Library;
 using Aw.Context.Infrastructure.Docs;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,5 +11,5 @@ internal static class LibrarySourceRegistration
         services
             .AddSingleton(LibraryHostFromEnvironment.Read(environment))
             .AddSingleton<ILibraryStatus, FileLibraryStatus>()
-            .AddSingleton(sp => new LibraryParts(sp.GetRequiredService<LibraryHost>(), sp.GetRequiredService<ILibraryStatus>(), sp.GetRequiredService<TimeProvider>()));
+            .AddSingleton<LibraryParts>();
 }
