@@ -1,6 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.VisualTree;
+using Aw.Sindri.Ui.ViewModels.Reviews;
 
 namespace Aw.Sindri.Ui.Views.Reviews;
 
@@ -12,6 +14,21 @@ internal sealed partial class ReviewsPage : UserControl
         InitializeComponent();
         AddHandler(KeyDownEvent, OnKeyDown);
     }
+
+    private ReviewsPageViewModel? Page => DataContext as ReviewsPageViewModel;
+
+    private void OnSaveLogin(object? sender, RoutedEventArgs e) => _ = Page?.SaveLogin(CancellationToken.None);
+
+    private void OnLoginKey(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter && Page is { CanSaveLogin: true } page)
+        {
+            _ = page.SaveLogin(CancellationToken.None);
+            e.Handled = true;
+        }
+    }
+
+    private void OnOpenLibrary(object? sender, RoutedEventArgs e) => _ = Page?.OpenLibrary(CancellationToken.None);
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {

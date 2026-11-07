@@ -51,11 +51,73 @@ internal static partial class Labels
     /// <summary>The login prompt's Save button.</summary>
     internal const string ReviewsLoginSave = "Save";
 
+    /// <summary>Under the field after a save that waits for the profile approval (the answer's approved: false).</summary>
+    internal const string ReviewsLoginPending = "Saved. It takes effect once you approve the waiting profile change: sindri profile approve";
+
     /// <summary>The login field's name.</summary>
     internal const string ReviewsLoginFieldName = "GitHub login";
 
     /// <summary>The hint line under the list.</summary>
     internal const string ReviewsHint = "J K next / previous PR · Enter open · G V go to Reviews";
+
+    /// <summary>The first column's heading.</summary>
+    internal const string ReviewsColPr = "PULL REQUEST";
+
+    /// <summary>The author column's heading.</summary>
+    internal const string ReviewsColAuthor = "AUTHOR";
+
+    /// <summary>The age column's heading.</summary>
+    internal const string ReviewsColAge = "AGE";
+
+    /// <summary>The CI column's heading.</summary>
+    internal const string ReviewsColCi = "CI";
+
+    /// <summary>The required checks column's heading.</summary>
+    internal const string ReviewsColRequired = "REQUIRED CHECKS";
+
+    /// <summary>The design doc column's heading.</summary>
+    internal const string ReviewsColDoc = "DESIGN DOC";
+
+    /// <summary>The library errors sheet's title.</summary>
+    internal const string LibrarySheetTitle = "Library errors";
+
+    /// <summary>The sheet's first section: docs stored with errors.</summary>
+    internal const string LibraryBrokenTitle = "Docs with errors";
+
+    /// <summary>The sheet's second section: files that almost read as docs.</summary>
+    internal const string LibraryNearMissTitle = "Near misses";
+
+    /// <summary>The sheet's third section: folders that couldn't be read.</summary>
+    internal const string LibraryRootsTitle = "Folders that can't be read";
+
+    /// <summary>The sheet when the library has nothing to fix.</summary>
+    internal const string LibraryClean = "Nothing to fix.";
+
+    /// <summary>The library sheet when its read failed: the reason follows.</summary>
+    internal static string LibraryFailed(Error error) => "Couldn't read the library just now. " + InstanceRefused(error);
+
+    /// <summary>The sheet's counts: "41 docs, 3 with errors", "33 docs, 1 folder can't be read".</summary>
+    internal static string LibrarySummary(int docs, int withErrors, int unreadableRoots)
+    {
+        var parts = new List<string> { string.Create(CultureInfo.InvariantCulture, $"{docs} {(docs == 1 ? "doc" : "docs")}") };
+        if (withErrors > 0)
+        {
+            parts.Add(string.Create(CultureInfo.InvariantCulture, $"{withErrors} with errors"));
+        }
+
+        if (unreadableRoots > 0)
+        {
+            parts.Add(string.Create(CultureInfo.InvariantCulture, $"{unreadableRoots} {(unreadableRoots == 1 ? "folder" : "folders")} can't be read"));
+        }
+
+        return string.Join(", ", parts);
+    }
+
+    /// <summary>The sheet while its read is out.</summary>
+    internal const string ReadingLibrary = "Reading the library…";
+
+    /// <summary>The sheet's close button.</summary>
+    internal const string LibraryClose = "Close";
 
     /// <summary>The header's source part: "GitHub synced 14 min ago".</summary>
     internal static string ReviewsSource(string text) => "GitHub " + text;
