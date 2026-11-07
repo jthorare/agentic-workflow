@@ -117,4 +117,63 @@ public sealed class LibraryValidateTests : IDisposable
 
         Assert.Equal(0, exit);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Every_code_the_fixture_contract_names_for_a_broken_doc_is_a_finding_on_that_doc()
+    {
+        var fixtures = Path.Combine(RepoRoot(), "tests", "fixtures", "library");
+        using var contract = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(fixtures, "expected.json"), Token));
+        var expected = contract.RootElement.GetProperty("files").EnumerateArray()
+            .Select(static f => (Path: f.GetProperty("path").GetString()!, Codes: f.GetProperty("errors").EnumerateArray().Select(static e => e.GetString()!).ToList()))
+            .Where(static f => f.Path.StartsWith("broken/", StringComparison.Ordinal) && f.Path.EndsWith(".md", StringComparison.Ordinal))
+            .ToList();
+        Assert.NotEmpty(expected);
+
+        var exit = await Run(new ScriptedApi(), Path.Combine(fixtures, "broken"), "--json");
+
+        Assert.Equal(1, exit);
+        using var report = JsonDocument.Parse(_out.ToString());
+        var found = report.RootElement.GetProperty("findings").EnumerateArray().Select(static f => (Rule: f.GetProperty("rule").GetString()!, File: f.GetProperty("file").GetString()!)).ToList();
+        foreach (var (path, codes) in expected)
+        {
+            var inside = path["broken/".Length..];
+            foreach (var code in codes)
+            {
+                Assert.True(found.Exists(f => f.Rule == code && f.File.EndsWith("/" + inside, StringComparison.Ordinal)), $"{path}: {code} is not a finding (found: {string.Join(", ", found.Where(f => f.File.EndsWith("/" + inside, StringComparison.Ordinal)).Select(static f => f.Rule))})");
+            }
+        }
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_generated_doc_is_checked_against_the_packet_json_beside_it_and_is_silent_without_one()
+    {
+        var packet = Write("gen/packet.json", """{"n":1}""");
+        _ = Write("gen/doc.md", Generated("gen-doc", Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(await File.ReadAllBytesAsync(packet, Token)))));
+
+        Assert.Equal(0, await Run(new ScriptedApi(), _dir));
+
+        _ = Write("gen/packet.json", """{"n":2}""");
+        Assert.Equal(1, await Run(new ScriptedApi(), _dir));
+        Assert.Contains("SND-LIB-017 ", _out.ToString(), StringComparison.Ordinal);
+
+        File.Delete(packet);
+        _out.GetStringBuilder().Clear();
+        Assert.Equal(0, await Run(new ScriptedApi(), _dir));
+    }
+
+    private static string Generated(string id, string sourceSha) =>
+        $"---\naw-doc: 1\nid: {id}\ntitle: Generated\nkind: spec\nstatus: draft\ngenerated: write_packet.py\nsource-sha256: {sourceSha}\n---\n# Generated\n\n## REQ-1 Size the queue\n";
+
+    private static string RepoRoot()
+    {
+        for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "AgenticWorkflow.slnx")))
+            {
+                return directory.FullName;
+            }
+        }
+
+        throw new InvalidOperationException("AgenticWorkflow.slnx not found above the test assembly");
+    }
 }

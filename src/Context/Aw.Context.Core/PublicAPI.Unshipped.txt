@@ -11227,7 +11227,7 @@ const Aw.Context.Core.Library.DesignDocParser.MaxBytes = 1048576 -> int
 const Aw.Context.Core.Library.DesignDocParser.MaxItems = 2000 -> int
 const Aw.Context.Core.Library.DesignDocParser.MaxRefs = 5000 -> int
 const Aw.Context.Core.Library.DesignDocParser.MaxTextChars = 4000 -> int
-const Aw.Context.Core.Library.DesignDocParser.Version = 2 -> int
+const Aw.Context.Core.Library.DesignDocParser.Version = 4 -> int
 override Aw.Context.Core.Library.DesignDocError.Equals(object? obj) -> bool
 override Aw.Context.Core.Library.DesignDocError.GetHashCode() -> int
 override Aw.Context.Core.Library.DesignDocError.ToString() -> string!
@@ -11563,10 +11563,12 @@ Aw.Context.Core.Linear.LinearWrittenFields
 Aw.Context.Core.Linear.LinearWrittenFields.Assignee = 1 -> Aw.Context.Core.Linear.LinearWrittenFields
 Aw.Context.Core.Linear.LinearWrittenFields.None = 0 -> Aw.Context.Core.Linear.LinearWrittenFields
 Aw.Context.Core.Linear.LinearWrittenFields.State = 2 -> Aw.Context.Core.Linear.LinearWrittenFields
-Aw.Context.Core.Sync.RecordItem.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out Aw.Context.Core.Sources.RecordKind Kind, out string! Title, out string! Text, out string? Author, out string? Url, out Aw.Context.Core.Records.RecordState? State, out string? StateRaw, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? UpdatedAt, out System.DateTimeOffset? ClosedAt, out Aw.Context.Core.Sources.SourceVersion Version, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Records.AudienceKey? Audience, out string? Health, out System.DateOnly? DueAt, out string? Description, out Aw.Context.Core.Records.PullFacts? Pull, out Aw.Context.Core.Records.SideRows? Side) -> void
-Aw.Context.Core.Sync.RecordItem.RecordItem(Aw.Context.Core.Sources.RecordKey Key, Aw.Context.Core.Sources.RecordKind Kind, string! Title, string! Text, string? Author, string? Url, Aw.Context.Core.Records.RecordState? State, string? StateRaw, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? ClosedAt, Aw.Context.Core.Sources.SourceVersion Version, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Records.AudienceKey? Audience, string? Health = null, System.DateOnly? DueAt = null, string? Description = null, Aw.Context.Core.Records.PullFacts? Pull = null, Aw.Context.Core.Records.SideRows? Side = null) -> void
+Aw.Context.Core.Sync.RecordItem.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out Aw.Context.Core.Sources.RecordKind Kind, out string! Title, out string! Text, out string? Author, out string? Url, out Aw.Context.Core.Records.RecordState? State, out string? StateRaw, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? UpdatedAt, out System.DateTimeOffset? ClosedAt, out Aw.Context.Core.Sources.SourceVersion Version, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Records.AudienceKey? Audience, out string? Health, out System.DateOnly? DueAt, out string? Description, out Aw.Context.Core.Records.PullFacts? Pull, out Aw.Context.Core.Records.SideRows? Side, out string? SourceSha256) -> void
+Aw.Context.Core.Sync.RecordItem.RecordItem(Aw.Context.Core.Sources.RecordKey Key, Aw.Context.Core.Sources.RecordKind Kind, string! Title, string! Text, string? Author, string? Url, Aw.Context.Core.Records.RecordState? State, string? StateRaw, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? ClosedAt, Aw.Context.Core.Sources.SourceVersion Version, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Records.AudienceKey? Audience, string? Health = null, System.DateOnly? DueAt = null, string? Description = null, Aw.Context.Core.Records.PullFacts? Pull = null, Aw.Context.Core.Records.SideRows? Side = null, string? SourceSha256 = null) -> void
 Aw.Context.Core.Sync.RecordItem.Side.get -> Aw.Context.Core.Records.SideRows?
 Aw.Context.Core.Sync.RecordItem.Side.init -> void
+Aw.Context.Core.Sync.RecordItem.SourceSha256.get -> string?
+Aw.Context.Core.Sync.RecordItem.SourceSha256.init -> void
 const Aw.Context.Core.Records.LinearSideRows.WriterId = "linear" -> string!
 const Aw.Context.Core.Sync.RecordBatches.MaxCommentBody = 8000 -> int
 const Aw.Context.Core.Sync.RecordBatches.WithheldComment = "[withheld by the scrubber]" -> string!
@@ -12313,3 +12315,8 @@ override Aw.Context.Core.Linear.LinearCommentView.GetHashCode() -> int
 override Aw.Context.Core.Linear.LinearCommentView.ToString() -> string!
 static Aw.Context.Core.Linear.LinearCommentView.operator !=(Aw.Context.Core.Linear.LinearCommentView? left, Aw.Context.Core.Linear.LinearCommentView? right) -> bool
 static Aw.Context.Core.Linear.LinearCommentView.operator ==(Aw.Context.Core.Linear.LinearCommentView? left, Aw.Context.Core.Linear.LinearCommentView? right) -> bool
+Aw.Context.Core.Library.GeneratedSource
+const Aw.Context.Core.Library.GeneratedSource.FileName = "packet.json" -> string!
+static Aw.Context.Core.Library.GeneratedSource.IsGenerated(Aw.Context.Core.Library.DesignDocFrontMatter? frontMatter) -> bool
+static Aw.Context.Core.Library.GeneratedSource.PathBeside(string! docPath) -> string!
+static Aw.Context.Core.Library.GeneratedSource.Sha256(System.ReadOnlySpan<byte> source) -> string!

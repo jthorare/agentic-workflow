@@ -23,7 +23,7 @@ internal sealed partial class SqliteRecordStore
             return ContextErrors.RecordBatchInvalid.With(problem);
         }
 
-        return await Guarded(() => CommitPage(batch, cancellationToken), "commit").ConfigureAwait(false);
+        return await Guarded(() => CommitPage(batch, cancellationToken), "commit", cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<CommitReport>> CommitPage(RecordBatch batch, CancellationToken cancellationToken)

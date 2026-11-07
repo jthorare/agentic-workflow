@@ -7,7 +7,7 @@ using Aw.Kernel.Data;
 
 namespace Aw.Context.Infrastructure.Records;
 
-/// <summary>The writer of <see cref="DesignDocSideRows"/> (spec 2026-11-04 §5.3): <c language="text">design_doc</c>, its items and its refs, migration 0031, and its parent and supersedes, migration 0033.</summary>
+/// <summary>The writer of <see cref="DesignDocSideRows"/> (spec 2026-11-04 §5.3): <c language="text">design_doc</c>, its items and its refs, migration 0031, its parent and supersedes, migration 0033, and its refs' lines, migration 0034.</summary>
 internal sealed class DesignDocRowWriter : ISideRowWriter
 {
     private static readonly string[] _itemKinds = ["section", "phase", "requirement", "acceptance", "testPlan", "task"];
@@ -98,7 +98,8 @@ internal sealed class DesignDocRowWriter : ISideRowWriter
                 .Bind("@key", key)
                 .Bind("@from", link.From)
                 .Bind("@to", link.To)
-                .Bind("@kind", _refKinds[(int)link.Kind]), cancellationToken).ConfigureAwait(false);
+                .Bind("@kind", _refKinds[(int)link.Kind])
+                .Bind("@line", link.Line), cancellationToken).ConfigureAwait(false);
             if (written is not null)
             {
                 return written;

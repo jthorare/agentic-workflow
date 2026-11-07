@@ -70,4 +70,42 @@ public sealed class RecordStoreUnmappedFailureTests : IDisposable
         Assert.Equal(ContextErrors.StoreUnavailable.Code, purged.Error.Code);
         Assert.Equal(1, _world.Count("SELECT count(*) FROM source_record"));
     }
+
+    private static VectorWrite NodeVector { get; } = new(VectorSpace.Node, "feature:billing", "fake-model@1", RecordSamples.Hash("billing"), new float[] { 1, 0 });
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task PutVectors_returns_an_unmapped_sqlite_failure_as_an_error_and_stores_nothing()
+    {
+        await Plant("INSERT ON embedding");
+
+        var stored = await _world.Store.PutVectors([NodeVector], Ct);
+
+        Assert.True(stored.IsError);
+        Assert.Equal(ContextErrors.StoreUnavailable.Code, stored.Error.Code);
+        Assert.Equal(0, _world.Count("SELECT count(*) FROM embedding"));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task DeleteVectors_returns_an_unmapped_sqlite_failure_as_an_error_and_keeps_the_vector()
+    {
+        _ = await _world.Store.PutVectors([NodeVector], Ct);
+        await Plant("DELETE ON embedding");
+
+        var removed = await _world.Store.DeleteVectors(VectorSpace.Node, [NodeVector.Key], Ct);
+
+        Assert.True(removed.IsError);
+        Assert.Equal(ContextErrors.StoreUnavailable.Code, removed.Error.Code);
+        Assert.Equal(1, _world.Count("SELECT count(*) FROM embedding"));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_cancelled_write_surfaces_as_the_cancellation_not_as_a_store_failure()
+    {
+        await Plant("INSERT ON embedding");
+        using var cancelled = new CancellationTokenSource();
+        await cancelled.CancelAsync();
+
+        _ = await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await _world.Store.PutVectors([NodeVector], cancelled.Token));
+        Assert.Equal(0, _world.Count("SELECT count(*) FROM embedding"));
+    }
 }

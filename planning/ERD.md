@@ -128,6 +128,7 @@ erDiagram
         text from_item "null when the ref starts at the doc"
         text to_ref "item id, doc id#item, or doc:root/id#item"
         text kind "verifies, relates, blocks"
+        int line "the ref's line in the doc, migration 0034; 0 = stored before it, read as no line"
     }
     design_doc_claim {
         text pr_key PK "the PR record's key"
@@ -138,6 +139,8 @@ erDiagram
 `design_doc` has `INDEX(scope, doc_id)`, not unique: who owns a shared doc id is decided on read. `design_doc_ref` has `INDEX(to_ref)` and `design_doc_claim` has `INDEX(ref)`. Claims carry no resolved columns: they resolve on read. Records are soft-deleted, so a foreign-key cascade never fires on removal: `Commit` deletes the rows itself in the transaction that sets `removed_at` (cascade covers only `Purge`). A doc record with no `aw-doc` front matter has no `design_doc` row. A doc the scrubber blocks has one, with the error "blocked" and no items. Itemized doc records (kind `doc` of `repo-docs` and `library`) store their scrub ruleset followed by `+aw-doc-p<parser version>`, so the repo-docs feed's per-doc check sees an old parse and re-emits the doc with no new commit. The migration also invalidates GitHub PR rows and resets the `github` record feed, as 0030 did, so every PR body is read for its `Covers:` line once.
 
 The rows are read through `ILibraryStore` (`SqliteLibraryStore`), which joins `design_doc`, `design_doc_item` and `design_doc_claim` to their live `source_record` (`removed_at IS NULL`) and returns the record's `audience_key` beside each row; `IContextLibrary` applies `AudienceScope.Allows` to it, so the audience rule lives in one place. A doc, its items and its refs are read through the doc record's audience; a claim needs its PR record's audience and the audience of the doc it resolves to. A doc that holds `owner:library` (a `library` doc whose `repos:` does not name exactly one synced repo) is visible only to the owner's scope, which always adds that key.
+
+Migration 0034 (`s1_library_ref_line`) adds `design_doc_ref.line`, so SND-LIB-015 from the stored read names the ref's real line (#2189).
 
 Migration 0033 (`s1_library_links`) adds `design_doc.parent` and `design_doc.supersedes` (the front matter's values as written). The library read decides SND-LIB-015 and -016 from them, the items and the refs of the docs the caller may read, with the same `DesignDocScope` that `library validate` runs; nothing about the result is stored (#2181).
 
