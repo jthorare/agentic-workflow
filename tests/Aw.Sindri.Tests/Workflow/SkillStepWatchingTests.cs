@@ -1,6 +1,6 @@
+using System.Security.Cryptography;
 using System.Text;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launches;
@@ -57,6 +57,20 @@ public sealed class SkillStepWatchingTests : IDisposable
         return await watching.Watch(Watch(), static () => { }, Token);
     }
 
+    // Watches a live session for a few polls (the interval is 10 ms), then idles it so the watch returns.
+    private async Task<AgentSessionState> WatchedForAWhile()
+    {
+        var watched = Watched();
+        await Task.Delay(TimeSpan.FromMilliseconds(300), TimeProvider.System, Token);
+        _sessions.End(Launch, SessionEndReason.Idle);
+        return await watched;
+    }
+
+    private List<string> OwnerWaitingRows() =>
+        [.. _slice.Store.Events.Where(static e => e.Envelope.Type == EventTypes.LaunchOwnerWaiting).Select(static e => e.Envelope.Payload)];
+
+    private void SettledTurnEnd() => _files.EndTurn(Launch, _clock.GetUtcNow() - SkillStepWatching.Settle - TimeSpan.FromSeconds(1));
+
     private static string Review(string verdict) => $$"""{"skill":"review","verdict":"{{verdict}}","review_file":"{{Findings}}"}""";
 
     [Fact]
@@ -97,6 +111,7 @@ public sealed class SkillStepWatchingTests : IDisposable
         Assert.Equal("fact:reviewFindings", stored.Key.Value);
         Assert.Equal(Findings, Encoding.UTF8.GetString(_facts.Stored[stored.Value.Sha256]));
         Assert.True(state.FoundEnded);
+        Assert.Equal(Convert.ToHexStringLower(SHA256.HashData(await File.ReadAllBytesAsync(SkillLaunchEnv.ResultFileOf(_directory, Launch), Token))), finished.ResultFileSha256);
     }
 
     [Fact]
@@ -108,14 +123,14 @@ public sealed class SkillStepWatchingTests : IDisposable
         var state = await Watched();
 
         Assert.Null(state.Skill);
-        Assert.StartsWith(SindriErrors.SkillVerdictUnmapped.Code, state.SkillFailure, StringComparison.Ordinal);
+        Assert.StartsWith("SND-SKILL-003: ", state.SkillFailure, StringComparison.Ordinal);
     }
 
     [Fact]
     public async Task A_result_read_at_a_settled_turn_end_returns_while_the_session_is_still_live()
     {
         Result(Review("PASS"));
-        _files.EndTurn(Launch, _clock.GetUtcNow() - SkillStepWatching.Settle - TimeSpan.FromSeconds(1));
+        SettledTurnEnd();
 
         var state = await Watched();
 
@@ -127,11 +142,59 @@ public sealed class SkillStepWatchingTests : IDisposable
     public async Task A_verdict_the_block_does_not_map_at_a_settled_turn_end_fails_the_step_with_its_code()
     {
         Result(Review("MAYBE"));
-        _files.EndTurn(Launch, _clock.GetUtcNow() - SkillStepWatching.Settle - TimeSpan.FromSeconds(1));
+        SettledTurnEnd();
 
         var state = await Watched();
 
         Assert.Null(state.Skill);
-        Assert.StartsWith(SindriErrors.SkillVerdictUnmapped.Code, state.SkillFailure, StringComparison.Ordinal);
+        Assert.StartsWith("SND-SKILL-003: ", state.SkillFailure, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_settled_turn_end_with_a_waiting_result_records_one_owner_waiting_across_polls()
+    {
+        Result("""{"skill":"review","waiting":"Which branch is the base?"}""");
+        SettledTurnEnd();
+
+        _ = await WatchedForAWhile();
+
+        Assert.Contains("Which branch is the base?", Assert.Single(OwnerWaitingRows()), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_turn_end_that_has_not_settled_records_nothing()
+    {
+        Result("""{"skill":"review","waiting":"Which branch is the base?"}""");
+        _files.EndTurn(Launch, _clock.GetUtcNow() - SkillStepWatching.Settle + TimeSpan.FromSeconds(5));
+
+        _ = await WatchedForAWhile();
+
+        Assert.Empty(OwnerWaitingRows());
+    }
+
+    [Fact]
+    public async Task A_turn_end_with_a_tool_still_running_records_nothing()
+    {
+        Result("""{"skill":"review","waiting":"Which branch is the base?"}""");
+        SettledTurnEnd();
+        _files.SetToolRunning(Launch, running: true);
+
+        _ = await WatchedForAWhile();
+
+        Assert.Empty(OwnerWaitingRows());
+    }
+
+    [Fact]
+    public async Task A_question_holding_a_token_is_recorded_scrubbed()
+    {
+        var secret = "gh" + "p_" + new string('a', 36);
+        Result($$"""{"skill":"review","waiting":"Use {{secret}} for the push?"}""");
+        SettledTurnEnd();
+
+        _ = await WatchedForAWhile();
+
+        var row = Assert.Single(OwnerWaitingRows());
+        Assert.DoesNotContain(secret, row, StringComparison.Ordinal);
+        Assert.Contains("for the push?", row, StringComparison.Ordinal);
     }
 }
