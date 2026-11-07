@@ -22,18 +22,6 @@ public static class ExecutableFiles
             return false;
         }
 
-        if (OperatingSystem.IsWindows())
-        {
-            return true;
-        }
-
-        try
-        {
-            return (File.GetUnixFileMode(path) & bits) != UnixFileMode.None;
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            return false;
-        }
+        return OperatingSystem.IsWindows() || ((FileModes.TryRead(path) ?? UnixFileMode.None) & bits) != UnixFileMode.None;
     }
 }

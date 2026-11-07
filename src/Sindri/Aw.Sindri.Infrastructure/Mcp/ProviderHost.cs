@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using Aw.Kernel.Data;
 using Aw.Sindri.Core.Mcp;
 using Aw.Sindri.Infrastructure.Processes;
 
@@ -40,7 +41,7 @@ internal sealed class ProviderHost(McpSettings settings) : IProviderHost
             var options = new FileStreamOptions { Mode = FileMode.CreateNew, Access = FileAccess.Write };
             if (!OperatingSystem.IsWindows())
             {
-                options.UnixCreateMode = File.Exists(target) ? File.GetUnixFileMode(target) : UnixFileMode.UserRead | UnixFileMode.UserWrite;
+                options.UnixCreateMode = FileModes.TryRead(target) ?? (UnixFileMode.UserRead | UnixFileMode.UserWrite);
             }
 
             var stream = new FileStream(temporary, options);
@@ -53,9 +54,9 @@ internal sealed class ProviderHost(McpSettings settings) : IProviderHost
                 }
             }
 
-            if (!OperatingSystem.IsWindows() && File.Exists(target))
+            if (!OperatingSystem.IsWindows() && FileModes.TryRead(target) is { } targetMode)
             {
-                File.SetUnixFileMode(temporary, File.GetUnixFileMode(target));   // the umask may have narrowed the create mode
+                File.SetUnixFileMode(temporary, targetMode);   // the umask may have narrowed the create mode
             }
 
             File.Move(temporary, target, overwrite: true);

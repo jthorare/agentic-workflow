@@ -54,4 +54,19 @@ public sealed class TokenFileDoctorChecksTests : IDisposable
     [UnsupportedOSPlatform("windows")]
     [Fact, Trait("Lane", "integration")]
     public async Task No_token_file_means_no_row() => Assert.Empty(await Run(mode: null));
+
+    [UnsupportedOSPlatform("windows")]
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_dangling_token_link_is_a_warning_to_remove_it()
+    {
+        var settings = new SindriSettings(_home.Path, Path.Combine(_home.Path, "profile", "profile.yaml"));
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(settings.TokenPath)!);
+        _ = File.CreateSymbolicLink(settings.TokenPath, Path.Combine(_home.Path, "nowhere"));
+
+        var check = Assert.Single(await new TokenFileDoctorChecks(settings).Run(Token));
+
+        Assert.Equal((CheckState.Warn, "setup:token"), (check.State, check.Name));
+        Assert.Equal($"{settings.TokenPath} can't be read (a broken link, or no permission to look at it)", check.Detail);
+        Assert.Equal($"rm {settings.TokenPath}; the next sindri serve writes a new one", check.Fix);
+    }
 }
