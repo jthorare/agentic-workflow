@@ -210,6 +210,18 @@ public sealed class SkillResultReaderTests
         Assert.Equal((SkillResultKind.Complete, "pass"), (decision.Kind, decision.Outcome));
     }
 
+    [Theory]
+    [InlineData("false")]
+    [InlineData("true")]
+    [InlineData("3")]
+    [InlineData("{\"q\":1}")]
+    public void A_waiting_that_is_not_a_string_is_not_a_question_the_rest_of_the_result_decides(string waiting)
+    {
+        var decision = SkillResultReader.Decide(Review($$"""{"skill":"review","waiting":{{waiting}},"verdict":"PASS","review_file":"{{Findings}}"}"""));
+
+        Assert.Equal((SkillResultKind.Complete, "pass"), (decision.Kind, decision.Outcome));
+    }
+
     [Fact]
     public void Waiting_is_checked_before_the_outcome_map_so_an_unmapped_status_is_never_SND_SKILL_003()
     {
