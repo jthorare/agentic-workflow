@@ -37,10 +37,10 @@ public static partial class TransitionDecision
         return then switch
         {
             TimeoutAction.Escalate => d.Changed(d.Rules.Suspend(instance, new Suspension(
-                SuspensionKind.Escalation, Reason: null, ParkKind: null, EscalationKind.Timeout, DeskTimeouts.RanPast(instance.Frame.State, after),
+                SuspensionKind.Escalation, Reason: null, ParkKind: null, EscalationKind.Timeout, DeskTimeouts.RanPast(instance.Frame.State, after, fired.Detail),
                 fired.Actor, Mirrors: null, new ResumeAction(ResumeKind.Rearm, Withheld: null, Gate: null, Effects: [])))),
             TimeoutAction.Retry => Retry(d, instance),
-            TimeoutAction.Park or _ => d.Changed(d.Rules.Suspend(instance, DeskTimeouts.TimeoutPark(instance.Frame.State, after, fired.Actor))),
+            TimeoutAction.Park or _ => d.Changed(d.Rules.Suspend(instance, DeskTimeouts.TimeoutPark(instance.Frame.State, after, fired.Actor, fired.Detail))),
         };
     }
 

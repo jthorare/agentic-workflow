@@ -68,6 +68,12 @@ internal sealed class AgentStepActivities(AgentLaunching launching, AgentClosing
         return state.EndedAs is not null && refusals.Take(LaunchId.From(watch.Launch)) is { } refusal ? state with { Detail = Redactor.Default.Scrub(refusal).Text, Refused = true } : state;
     }
 
+    /// <summary>Why a skill's result was unreadable at the last turn end the watch read; read when the Step's timeout fires, so the timeout can say so.</summary>
+    /// <param name="watch">The skill launch.</param>
+    /// <returns>The scrubbed detail; null when the result was not unreadable.</returns>
+    [Activity("SkillUnreadable")]
+    public Task<string?> SkillUnreadableAsync(SkillWatch watch) => Task.FromResult(skills.UnreadableOf(watch.Launch));
+
     /// <summary>Reads the output folder of a session that ended without a report: the result it proves, or why it parks (issue #1000).</summary>
     /// <param name="run">The run.</param>
     /// <returns>The report to complete with, the reason to park with, or nothing.</returns>

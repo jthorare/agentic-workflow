@@ -26,13 +26,15 @@ public static class DeskTimeouts
     /// <param name="state">The state that ran past its timeout.</param>
     /// <param name="after">How long it had.</param>
     /// <param name="actor">The timer's actor.</param>
+    /// <param name="unreadable">Why a skill's result was unreadable at its last turn end; null for no such result.</param>
     /// <returns>The park.</returns>
-    internal static Suspension TimeoutPark(string state, TimeSpan after, string actor) => new(
-        SuspensionKind.Park, ParkReason.Timeout, ParkKind: null, Escalation: null, RanPast(state, after), actor, Mirrors: null,
+    internal static Suspension TimeoutPark(string state, TimeSpan after, string actor, string? unreadable = null) => new(
+        SuspensionKind.Park, ParkReason.Timeout, ParkKind: null, Escalation: null, RanPast(state, after, unreadable), actor, Mirrors: null,
         new ResumeAction(ResumeKind.Rearm, Withheld: null, Gate: null, Effects: []));
 
-    /// <summary>What a timeout park or escalation says (spec §3.8): '{state} ran past {after}'.</summary>
-    internal static string RanPast(string state, TimeSpan after) => $"{state} ran past {Text(after)}";
+    /// <summary>What a timeout park or escalation says (spec §3.8): '{state} ran past {after}'; for a skill whose result stayed unreadable, '; the skill's result is unreadable ({detail})' after it.</summary>
+    internal static string RanPast(string state, TimeSpan after, string? unreadable = null) =>
+        unreadable is null ? $"{state} ran past {Text(after)}" : $"{state} ran past {Text(after)}; the skill's result is unreadable ({unreadable})";
 
     /// <summary>A duration as status writes it (spec §6.4): '2d', '2d 1h', '4h 30m', or '40s' under a minute.</summary>
     private static string Text(TimeSpan span)
