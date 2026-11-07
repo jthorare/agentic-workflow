@@ -18,6 +18,7 @@ internal sealed partial class LinearIssueSheetViewModel(ISindriApi api, ILaunche
     private Uri? _url;
     private int _generation;
     private (string Repo, int Number)? _pr;
+    private Uri? _linearAddress;
 
     /// <summary>The issue's PR chip asked for its review page.</summary>
     internal event EventHandler<LinearPrRequestedEventArgs>? PrRequested;
@@ -126,8 +127,8 @@ internal sealed partial class LinearIssueSheetViewModel(ISindriApi api, ILaunche
     public string OpenInLinearText => Labels.LinearOpenIn;
 #pragma warning restore CA1822, MA0041
 
-    /// <summary>True when the sheet offers Open in Linear (a key Sindri has not synced).</summary>
-    public bool CanOpenInLinear => Phase == FramePhase.NotFound;
+    /// <summary>True when the sheet offers Open in Linear: a key Sindri has not synced, and the 404 named its Linear address.</summary>
+    public bool CanOpenInLinear => Phase == FramePhase.NotFound && _linearAddress is not null;
 
     /// <summary>The heading over the description.</summary>
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
@@ -199,14 +200,14 @@ internal sealed partial class LinearIssueSheetViewModel(ISindriApi api, ILaunche
         }
     }
 
-    /// <summary>Opens the issue in Linear, in the browser: Linear's own address for the key, which sends the owner to the issue's workspace.</summary>
+    /// <summary>Opens the issue in Linear, in the browser, at the address the 404 named (the workspace's own issue address).</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>A task that completes when the system has taken it.</returns>
     internal async Task OpenInLinear(CancellationToken cancellationToken)
     {
-        if (CanOpenInLinear)
+        if (CanOpenInLinear && _linearAddress is { } address)
         {
-            _ = await LinkLaunch.Open(new Uri("https://linear.app/issue/" + Uri.EscapeDataString(Key)), cancellationToken).ConfigureAwait(true);
+            _ = await LinkLaunch.Open(address, cancellationToken).ConfigureAwait(true);
         }
     }
 }

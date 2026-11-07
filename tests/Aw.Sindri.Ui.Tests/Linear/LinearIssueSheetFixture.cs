@@ -31,6 +31,14 @@ internal sealed class LinearIssueSheetFixture
     /// <summary>The not-found golden as the 404 the API serves.</summary>
     internal static RouteAnswer NotFound() => new(HttpStatusCode.NotFound, GoldenFiles.Api("linear-issue", "not-found"));
 
+    /// <summary>The 404 with the issue's Linear address (Ph3 reads contract (e)); the golden has none until api writes it.</summary>
+    internal static RouteAnswer NotFound(string url)
+    {
+        var body = JsonNode.Parse(GoldenFiles.Api("linear-issue", "not-found"))!;
+        body["url"] = url;
+        return new(HttpStatusCode.NotFound, body.ToJsonString());
+    }
+
     /// <summary>Opens the sheet on a key and reads it.</summary>
     internal async Task<LinearIssueSheetViewModel> Opened(string key, CancellationToken token)
     {

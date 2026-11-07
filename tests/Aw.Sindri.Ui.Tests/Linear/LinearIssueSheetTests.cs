@@ -89,16 +89,39 @@ public sealed class LinearIssueSheetTests
         Assert.Equal((true, false), (sheet.HasPr, sheet.CanOpenPr));
     }
 
-    [Fact]
-    public async Task An_issue_that_is_not_synced_says_so_and_offers_Open_in_Linear()
+    [Theory]
+    [InlineData("https://linear.app/acme/issue/ENG-99")]
+    [InlineData("https://eu.linear.app/acme/issue/ENG-99")]
+    public async Task An_issue_that_is_not_synced_says_so_and_offers_Open_in_Linear_at_the_address_the_404_names(string url)
     {
-        _f.Server.LinearIssueAnswer = LinearIssueSheetFixture.NotFound();
+        _f.Server.LinearIssueAnswer = LinearIssueSheetFixture.NotFound(url);
 
         var sheet = await _f.Opened("ENG-99", Token);
         await sheet.OpenInLinear(Token);
 
         Assert.Equal((FramePhase.NotFound, "ENG-99 isn't synced yet", true, "Open in Linear"), (sheet.Phase, sheet.ProblemText, sheet.CanOpenInLinear, sheet.OpenInLinearText));
-        Assert.Equal(["https://linear.app/issue/ENG-99"], _f.Launcher.Opened);
+        Assert.Equal([url], _f.Launcher.Opened);
+    }
+
+    // No address, or one that isn't https on linear.app: no button, and no guessed address is ever opened.
+    [Theory]
+    [InlineData(null)]
+    [InlineData("https://evil.example/acme/issue/ENG-99")]
+    [InlineData("http://linear.app/acme/issue/ENG-99")]
+    [InlineData("https://me@linear.app/acme/issue/ENG-99")]
+    [InlineData("https://lin\u0435ar.app/acme/issue/ENG-99")]
+    [InlineData("https://linear.app.evil.example/acme/issue/ENG-99")]
+    [InlineData("https://evillinear.app/acme/issue/ENG-99")]
+    [InlineData("linear.app/acme/issue/ENG-99")]
+    public async Task A_404_without_a_Linear_address_offers_no_Open_in_Linear(string? url)
+    {
+        _f.Server.LinearIssueAnswer = url is null ? LinearIssueSheetFixture.NotFound() : LinearIssueSheetFixture.NotFound(url);
+
+        var sheet = await _f.Opened("ENG-99", Token);
+        await sheet.OpenInLinear(Token);
+
+        Assert.Equal((FramePhase.NotFound, "ENG-99 isn't synced yet", false), (sheet.Phase, sheet.ProblemText, sheet.CanOpenInLinear));
+        Assert.Empty(_f.Launcher.Opened);
     }
 
     [Fact]

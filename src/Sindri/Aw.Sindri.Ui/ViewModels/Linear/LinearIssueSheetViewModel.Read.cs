@@ -77,6 +77,7 @@ internal sealed partial class LinearIssueSheetViewModel
         }
 
         Clear();
+        _linearAddress = notSynced ? LinearAddress(error) : null;
         ProblemText = notSynced ? Labels.LinearIssueNotSynced(Key) : Labels.LinearSindriDown;
         Phase = notSynced ? FramePhase.NotFound : FramePhase.Refused;
         OnChanged(nameof(CanOpenInLinear));
@@ -86,5 +87,16 @@ internal sealed partial class LinearIssueSheetViewModel
     {
         (Title, ProblemText, Note, RemovedNote, PrText) = (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
         (Fields, Description, Comments, _pr, CanOpenPr) = ([], [], [], null, false);
+        _linearAddress = null;
     }
+
+    // The 404's url (Ph3 reads contract (e)): https on linear.app or a subdomain of it, judged by the punycode host so a
+    // lookalike can't pass, and no user name; anything else, or none, offers no button.
+    private static Uri? LinearAddress(Error error) =>
+        error.Extensions?.FirstOrDefault(m => string.Equals(m.Key, "url", StringComparison.Ordinal)).Value is { ValueKind: System.Text.Json.JsonValueKind.String } url
+        && Uri.TryCreate(url.GetString(), UriKind.Absolute, out var uri)
+        && string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.Ordinal) && uri.UserInfo.Length == 0
+        && (string.Equals(uri.IdnHost, "linear.app", StringComparison.OrdinalIgnoreCase) || uri.IdnHost.EndsWith(".linear.app", StringComparison.OrdinalIgnoreCase))
+            ? uri
+            : null;
 }
