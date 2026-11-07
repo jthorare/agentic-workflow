@@ -15,6 +15,8 @@ namespace Aw.Sindri.Ui.Api;
 /// <param name="TextScale">The text scale.</param>
 /// <param name="ReduceMotion">The in-app Reduce motion switch.</param>
 /// <param name="SeenPages">Seen suggested page keys per concept.</param>
+/// <param name="WorkView">The Work page's last switch pick.</param>
+/// <param name="LinearSince">The strip's dismissed marker.</param>
 internal sealed record PreferencesFile(
     int Version,
     WindowBounds? Window = null,
@@ -24,4 +26,6 @@ internal sealed record PreferencesFile(
     IReadOnlyList<string>? PaletteHistory = null,
     double? TextScale = null,
     bool? ReduceMotion = null,
-    IReadOnlyDictionary<string, IReadOnlyList<string>>? SeenPages = null);
+    IReadOnlyDictionary<string, IReadOnlyList<string>>? SeenPages = null,
+    string? WorkView = null,
+    string? LinearSince = null);

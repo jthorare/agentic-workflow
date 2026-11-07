@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Platform;
@@ -66,8 +67,8 @@ internal sealed partial class ShellViewModel : ObservableObject
         Queue.PageShown(RowScopeOf(CurrentPage));
         var decisions = new DecisionSender(api);
         Item = new ItemSheetViewModel(api, Health.Catalog, clock, decisions);
-        FollowViews();
         _api = api;
+        FollowViews();
         NeedsYou = new NeedsYouViewModel(preferences, motion ?? new StillMotion(), clock);
         ApproveAll = new ApproveAllViewModel(Health.Catalog, () => Health.ApiUrl(), api, clock);
         Decision = new DecisionSheetViewModel(api, () => Health.ApiUrl(), clock, decisions, clipboard);
@@ -95,8 +96,10 @@ internal sealed partial class ShellViewModel : ObservableObject
     }
 
     // The views the control plane's follower re-reads on connect and after every event.
+    [MemberNotNull(nameof(Linear))]
     private void FollowViews()
     {
+        InitLinear();
         Health.Follow(Queue.Refresh);
         Health.Follow(Item.Refresh);
         Health.FollowCards();
