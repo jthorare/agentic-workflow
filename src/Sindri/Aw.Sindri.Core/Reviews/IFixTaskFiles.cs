@@ -2,7 +2,7 @@ using Aw.Kernel;
 
 namespace Aw.Sindri.Core.Reviews;
 
-/// <summary>The per-head fix-task files the SessionStart hook reads: one file per PR head branch, listing the open fix items.</summary>
+/// <summary>The per-head fix-task files the sindri-tasks.sh hook (UserPromptSubmit) reads: one file per PR head branch, listing the open fix items.</summary>
 public interface IFixTaskFiles
 {
     /// <summary>Adds a fix item to the file of its PR's head branch (the file is created when missing).</summary>

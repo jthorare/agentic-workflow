@@ -7,6 +7,7 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.Reviews;
 
 namespace Aw.Sindri.Features.CloseItem;
 
@@ -20,7 +21,8 @@ namespace Aw.Sindri.Features.CloseItem;
 /// <param name="held">The lease this process holds.</param>
 /// <param name="events">Builds the entry.</param>
 /// <param name="callers">The caller: the command id.</param>
-internal sealed class CloseItemService(IItemResolver items, ILedgerStore ledger, HeldLease held, EventFactory events, ICallerContextAccessor callers)
+/// <param name="fixTasks">The fix-task files: a closed item leaves its head's file; null where the files aren't kept.</param>
+internal sealed class CloseItemService(IItemResolver items, ILedgerStore ledger, HeldLease held, EventFactory events, ICallerContextAccessor callers, IFixTaskFiles? fixTasks = null)
     : IService<CloseItemRequest, CommandAccepted>
 {
     public async ValueTask<Result<CommandAccepted>> Handle(CloseItemRequest request, CancellationToken cancellationToken)
@@ -62,6 +64,16 @@ internal sealed class CloseItemService(IItemResolver items, ILedgerStore ledger,
             return SindriErrors.ItemConflict.With($"{change.Item.Value} changed since you looked");   // another command already moved it to this version; a retried call has a new command id, so this is never a replay
         }
 
+        await ForgetFixTask(change.Item.Value, cancellationToken).ConfigureAwait(false);
         return new CommandAccepted(caller.CommandId, appended.Value.Sequence);
+    }
+
+    // why: the file only tells the hook which tasks are open, so a failed removal must not fail a close that is already in the ledger
+    private async ValueTask ForgetFixTask(string item, CancellationToken cancellationToken)
+    {
+        if (fixTasks is not null)
+        {
+            _ = await fixTasks.Remove(item, cancellationToken).ConfigureAwait(false);
+        }
     }
 }

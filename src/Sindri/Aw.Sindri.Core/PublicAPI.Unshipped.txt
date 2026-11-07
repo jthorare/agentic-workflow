@@ -16224,6 +16224,10 @@ Aw.Sindri.Core.Forge.PullView.State.get -> Aw.Sindri.Core.Forge.PullState
 Aw.Sindri.Core.Forge.PullView.State.init -> void
 Aw.Sindri.Core.Forge.PullView.HeadSha.get -> string!
 Aw.Sindri.Core.Forge.PullView.HeadSha.init -> void
+Aw.Sindri.Core.Forge.PullView.HeadRef.get -> string?
+Aw.Sindri.Core.Forge.PullView.HeadRef.init -> void
+Aw.Sindri.Core.Forge.PullView.HeadRepo.get -> string?
+Aw.Sindri.Core.Forge.PullView.HeadRepo.init -> void
 Aw.Sindri.Core.Forge.PullView.Mergeable.get -> bool?
 Aw.Sindri.Core.Forge.PullView.Mergeable.init -> void
 Aw.Sindri.Core.Forge.PullView.ReviewDecision.get -> string?
@@ -16232,9 +16236,9 @@ Aw.Sindri.Core.Forge.PullView.UnresolvedThreads.get -> int
 Aw.Sindri.Core.Forge.PullView.UnresolvedThreads.init -> void
 Aw.Sindri.Core.Forge.PullView.Checks.get -> Aw.Sindri.Core.Forge.PullChecks!
 Aw.Sindri.Core.Forge.PullView.Checks.init -> void
-Aw.Sindri.Core.Forge.PullView.Deconstruct(out string! Link, out Aw.Sindri.Core.Forge.PullState State, out string! HeadSha, out bool? Mergeable, out string? ReviewDecision, out int UnresolvedThreads, out Aw.Sindri.Core.Forge.PullChecks! Checks, out System.Collections.Generic.IReadOnlyList<string!>! Labels, out string! Base, out string? BaseSha) -> void
+Aw.Sindri.Core.Forge.PullView.Deconstruct(out string! Link, out Aw.Sindri.Core.Forge.PullState State, out string! HeadSha, out bool? Mergeable, out string? ReviewDecision, out int UnresolvedThreads, out Aw.Sindri.Core.Forge.PullChecks! Checks, out System.Collections.Generic.IReadOnlyList<string!>! Labels, out string! Base, out string? BaseSha, out string? HeadRef, out string? HeadRepo) -> void
 Aw.Sindri.Core.Forge.PullView.Equals(Aw.Sindri.Core.Forge.PullView? other) -> bool
-Aw.Sindri.Core.Forge.PullView.PullView(string! Link, Aw.Sindri.Core.Forge.PullState State, string! HeadSha, bool? Mergeable, string? ReviewDecision, int UnresolvedThreads, Aw.Sindri.Core.Forge.PullChecks! Checks, System.Collections.Generic.IReadOnlyList<string!>! Labels, string! Base, string? BaseSha = null) -> void
+Aw.Sindri.Core.Forge.PullView.PullView(string! Link, Aw.Sindri.Core.Forge.PullState State, string! HeadSha, bool? Mergeable, string? ReviewDecision, int UnresolvedThreads, Aw.Sindri.Core.Forge.PullChecks! Checks, System.Collections.Generic.IReadOnlyList<string!>! Labels, string! Base, string? BaseSha = null, string? HeadRef = null, string? HeadRepo = null) -> void
 Aw.Sindri.Core.Workflow.Blocks.MergeRecordRows.MergeRecordRows(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Blocks.MergeRowRead!>! Rows, int Errors) -> void
 Aw.Sindri.Core.Workflow.Stats.BabysitterDocsStats.WithMerge.init -> void
 Aw.Sindri.Core.Workflow.Stats.CommentTypeStats.Replied.get -> int
@@ -22298,7 +22302,11 @@ static Aw.Sindri.Core.Profile.PrReviewRules.IsLogin(string? login) -> bool
 static Aw.Sindri.Core.Profile.PrReviewRules.UnknownProject(Aw.Sindri.Core.Profile.PrReviewSettings? review, System.Collections.Generic.IReadOnlySet<string!>! known) -> Aw.Kernel.Error?
 static readonly Aw.Sindri.Core.SindriErrors.ReviewCommandCheck -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ReviewInvalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ReviewFixNotPosted -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ReviewLoginUnset -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ReviewOfflineUncached -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ReviewPullNotFound -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ReviewRepoNotSynced -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ReviewProjectUnknown -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ReviewRepoUnsynced -> Aw.Kernel.ErrorDefinition!
 static Aw.Sindri.Core.Launch.LaunchEnvironment.Scrub(System.Collections.Generic.IReadOnlyDictionary<string!, string!>! env, string! worktree, string! ghConfigDir, System.Collections.Generic.IEnumerable<string!>! extra) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
@@ -22945,3 +22953,37 @@ Aw.Sindri.Core.Reviews.ILibraryDocFacts.Find(string! doc, System.Threading.Cance
 Aw.Sindri.Core.Reviews.IFixTaskFiles
 Aw.Sindri.Core.Reviews.IFixTaskFiles.Add(string! head, string! item, int pr, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Reviews.IFixTaskFiles.Remove(string! item, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Events.ReviewFixSent
+Aw.Sindri.Core.Events.ReviewFixSent.<Clone>$() -> Aw.Sindri.Core.Events.ReviewFixSent!
+Aw.Sindri.Core.Events.ReviewFixSent.CommandId.get -> Aw.Sindri.Core.Ids.CommandId
+Aw.Sindri.Core.Events.ReviewFixSent.CommandId.init -> void
+Aw.Sindri.Core.Events.ReviewFixSent.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out Aw.Sindri.Core.Ids.ItemId Item, out int Pr, out string? Thread, out string! Went, out string? Failure) -> void
+Aw.Sindri.Core.Events.ReviewFixSent.Equals(Aw.Sindri.Core.Events.ReviewFixSent? other) -> bool
+Aw.Sindri.Core.Events.ReviewFixSent.Failure.get -> string?
+Aw.Sindri.Core.Events.ReviewFixSent.Failure.init -> void
+Aw.Sindri.Core.Events.ReviewFixSent.Item.get -> Aw.Sindri.Core.Ids.ItemId
+Aw.Sindri.Core.Events.ReviewFixSent.Item.init -> void
+Aw.Sindri.Core.Events.ReviewFixSent.Pr.get -> int
+Aw.Sindri.Core.Events.ReviewFixSent.Pr.init -> void
+Aw.Sindri.Core.Events.ReviewFixSent.ReviewFixSent(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Ids.ItemId Item, int Pr, string? Thread, string! Went, string? Failure) -> void
+Aw.Sindri.Core.Events.ReviewFixSent.Thread.get -> string?
+Aw.Sindri.Core.Events.ReviewFixSent.Thread.init -> void
+Aw.Sindri.Core.Events.ReviewFixSent.Went.get -> string!
+Aw.Sindri.Core.Events.ReviewFixSent.Went.init -> void
+Aw.Sindri.Core.Reviews.FixHead
+Aw.Sindri.Core.Reviews.IFixBabysitters
+Aw.Sindri.Core.Reviews.IFixBabysitters.Watching(string! link, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
+Aw.Sindri.Core.Reviews.IFixSessions
+Aw.Sindri.Core.Reviews.IFixSessions.OnBranch(string! headRepo, string! branch, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
+override Aw.Sindri.Core.Events.ReviewFixSent.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.ReviewFixSent.GetHashCode() -> int
+override Aw.Sindri.Core.Events.ReviewFixSent.ToString() -> string!
+static Aw.Sindri.Core.Events.ReviewFixSent.operator !=(Aw.Sindri.Core.Events.ReviewFixSent? left, Aw.Sindri.Core.Events.ReviewFixSent? right) -> bool
+static Aw.Sindri.Core.Events.ReviewFixSent.operator ==(Aw.Sindri.Core.Events.ReviewFixSent? left, Aw.Sindri.Core.Events.ReviewFixSent? right) -> bool
+static Aw.Sindri.Core.Reviews.FixHead.FileName(string! head) -> string!
+static Aw.Sindri.Core.Reviews.FixHead.Of(string! repo, string! branch) -> string!
+const Aw.Sindri.Core.Events.EventTypes.ReviewFixSent = "review.fix-sent" -> string!
+Aw.Sindri.Core.Reviews.IFixItems
+Aw.Sindri.Core.Reviews.IFixItems.Create(string! title, Aw.Sindri.Core.Ids.RepoName? repo, string! body, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Ids.ItemId>!>
+Aw.Sindri.Core.Reviews.IReviewRepos
+Aw.Sindri.Core.Reviews.IReviewRepos.Synced(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>

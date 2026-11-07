@@ -40,7 +40,7 @@ internal sealed partial class ForgePullRequests(IForge forge) : IPullRequests
 
         var s = snapshot.Value;
         var open = threads.Value.Count(static t => t.Kind == CommentKind.Thread && !t.Resolved);
-        return new PullView(pull.Link, State(s.Status), s.Head.Sha, s.Mergeable, s.ReviewDecision, open, new PullChecks(Checks(s.Checks.State), s.Checks.Sha, s.Checks.Failing, s.Checks.Passed, s.Checks.Pending, s.Checks.Runs?.Select(static r => new PullCheckRun(r.Name, r.App, r.Conclusion, r.Sha)).ToList()), s.Labels, s.Base.Ref, s.Base.Sha);
+        return new PullView(pull.Link, State(s.Status), s.Head.Sha, s.Mergeable, s.ReviewDecision, open, new PullChecks(Checks(s.Checks.State), s.Checks.Sha, s.Checks.Failing, s.Checks.Passed, s.Checks.Pending, s.Checks.Runs?.Select(static r => new PullCheckRun(r.Name, r.App, r.Conclusion, r.Sha)).ToList()), s.Labels, s.Base.Ref, s.Base.Sha, s.Head.Ref, s.Head.Repo ?? (s.Head.Fork ? null : $"{pull.Owner}/{pull.Repo}"));
     }
 
     public async ValueTask<Result<string>> CheckLog(string link, string check, CancellationToken cancellationToken)

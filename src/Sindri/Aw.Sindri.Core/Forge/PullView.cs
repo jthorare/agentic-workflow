@@ -11,4 +11,6 @@ namespace Aw.Sindri.Core.Forge;
 /// <param name="Labels">The labels on it, by name.</param>
 /// <param name="Base">The base branch it targets, by name.</param>
 /// <param name="BaseSha">The base branch's tip now, or null when the forge does not say.</param>
-public sealed record PullView(string Link, PullState State, string HeadSha, bool? Mergeable, string? ReviewDecision, int UnresolvedThreads, PullChecks Checks, IReadOnlyList<string> Labels, string Base, string? BaseSha = null);
+/// <param name="HeadRef">The head branch's name, or null when the forge does not say.</param>
+/// <param name="HeadRepo">The repository the head branch lives in as "owner/name", or null when the forge does not say (a fork it can't name).</param>
+public sealed record PullView(string Link, PullState State, string HeadSha, bool? Mergeable, string? ReviewDecision, int UnresolvedThreads, PullChecks Checks, IReadOnlyList<string> Labels, string Base, string? BaseSha = null, string? HeadRef = null, string? HeadRepo = null);

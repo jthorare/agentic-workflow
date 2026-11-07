@@ -19,6 +19,12 @@ public sealed class FakePull(PullRepo repo, int number, string head, string head
     /// <summary>Gets the head branch.</summary>
     public string Head { get; } = head;
 
+    /// <summary>Gets or sets the repository ("owner/name") the head branch lives in; null means the pull request's own repository.</summary>
+    public string? HeadRepo { get; set; }
+
+    /// <summary>Gets or sets whether the forge names no head branch or repository at all (a fork it can't name).</summary>
+    public bool HeadUnknown { get; set; }
+
     /// <summary>Gets or sets the head's tip.</summary>
     public string HeadSha { get; set; } = headSha;
 
