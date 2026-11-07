@@ -115,8 +115,8 @@ internal sealed partial class GitCli
     public async ValueTask<Result<byte[]>> BlobBytes(string repo, string blob, CancellationToken cancellationToken)
     {
         var exists = await Exists(repo, blob, cancellationToken).ConfigureAwait(false);
-        var run = exists.IsError ? exists.Error : await Run(repo, ["cat-file", "blob", blob], cancellationToken, encoding: Encoding.Latin1).ConfigureAwait(false);
-        return run.Bind<byte[]>(r => r.Exit == 0 ? Encoding.Latin1.GetBytes(r.Stdout) : Failed("cat-file", r.Exit));   // Latin-1 maps each byte to one char, so the text round-trips exactly
+        var run = exists.IsError ? exists.Error : await RunBytes(repo, ["cat-file", "blob", blob], cancellationToken).ConfigureAwait(false);
+        return run.Bind<byte[]>(r => r.Exit == 0 ? r.Stdout : Failed("cat-file", r.Exit));
     }
 
     /// <summary>A file's text at a commit ('cat-file blob &lt;commit&gt;:&lt;path&gt;'). The caller has checked <paramref name="path"/> (relative, no '..').</summary>
@@ -159,14 +159,14 @@ internal sealed partial class GitCli
         return run.IsError ? run.Error : run.Value.Exit == 0 ? run.Value.Stdout : Failed(args[0], run.Value.Exit);
     }
 
-    private async ValueTask<Result<(int Exit, string Stdout)>> Run(string repo, string[] args, CancellationToken cancellationToken, string? locale = null, Encoding? encoding = null)
+    private async ValueTask<Result<(int Exit, string Stdout)>> Run(string repo, string[] args, CancellationToken cancellationToken, string? locale = null)
     {
         var start = new ProcessStartInfo(_command[0])
         {
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
-            StandardOutputEncoding = encoding ?? Encoding.UTF8,
+            StandardOutputEncoding = Encoding.UTF8,
         };
         foreach (var name in start.Environment.Keys.Where(k => k.StartsWith("GIT_", StringComparison.Ordinal)).ToList())
         {
@@ -183,10 +183,24 @@ internal sealed partial class GitCli
             start.ArgumentList.Add(arg);
         }
 
-        return await Execute(start, args[0], cancellationToken).ConfigureAwait(false);
+        return await Execute(start, args[0], static (stdout, token) => stdout.ReadToEndAsync(token), cancellationToken).ConfigureAwait(false);
     }
 
-    private async ValueTask<Result<(int Exit, string Stdout)>> Execute(ProcessStartInfo start, string verb, CancellationToken cancellationToken)
+    /// <summary>Like <see cref="Run"/> but stdout is git's bytes, copied from the raw stream: no StreamReader, so no BOM sniffing or decoding.</summary>
+    private async ValueTask<Result<(int Exit, byte[] Stdout)>> RunBytes(string repo, string[] args, CancellationToken cancellationToken)
+    {
+        var start = CleanGit(["-C", repo, "-c", "core.quotepath=off", .. args]);
+        return await Execute(start, args[0], CopyBytes, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task<byte[]> CopyBytes(StreamReader stdout, CancellationToken token)
+    {
+        using var copy = new MemoryStream();
+        await stdout.BaseStream.CopyToAsync(copy, token).ConfigureAwait(false);
+        return copy.ToArray();
+    }
+
+    private async ValueTask<Result<(int Exit, T Stdout)>> Execute<T>(ProcessStartInfo start, string verb, Func<StreamReader, CancellationToken, Task<T>> readStdout, CancellationToken cancellationToken)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(_timeout);
@@ -194,7 +208,7 @@ internal sealed partial class GitCli
         try
         {
             git = Process.Start(start) ?? throw new InvalidOperationException("git didn't start");
-            var stdout = git.StandardOutput.ReadToEndAsync(timeout.Token);
+            var stdout = readStdout(git.StandardOutput, timeout.Token);
             var stderr = git.StandardError.ReadToEndAsync(timeout.Token);
             await git.WaitForExitAsync(timeout.Token).ConfigureAwait(false);
             _ = await stderr.ConfigureAwait(false);   // drained, never logged: it may name repo content
