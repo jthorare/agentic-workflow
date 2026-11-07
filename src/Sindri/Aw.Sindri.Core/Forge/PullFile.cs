@@ -7,4 +7,5 @@ namespace Aw.Sindri.Core.Forge;
 /// <param name="Additions">Lines added.</param>
 /// <param name="Deletions">Lines deleted.</param>
 /// <param name="Patch">The file's diff; null for a binary file or one the forge left out as too large. Untrusted text.</param>
-public sealed record PullFile(string Path, string? PreviousPath, PullFileStatus Status, int Additions, int Deletions, string? Patch);
+/// <param name="Similarity">A rename's or copy's percent of the same content when the forge says; null otherwise.</param>
+public sealed record PullFile(string Path, string? PreviousPath, PullFileStatus Status, int Additions, int Deletions, string? Patch, int? Similarity = null);

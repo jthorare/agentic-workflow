@@ -30,6 +30,7 @@ public sealed class HookPermissionPolicyTests
     [InlineData("send-gate", HookTreatment.Drop)]
     [InlineData("session-id-report", HookTreatment.Keep)]
     [InlineData("sindri-nudge", HookTreatment.Keep)]
+    [InlineData("sindri-tasks", HookTreatment.Keep)]
     [InlineData("subagent-start-map", HookTreatment.Keep)]
     [InlineData("trait-check", HookTreatment.Keep)]
     [InlineData("turn-origin", HookTreatment.Keep)]

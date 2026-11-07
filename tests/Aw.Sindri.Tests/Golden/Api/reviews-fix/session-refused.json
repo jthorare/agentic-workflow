@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
+  "title": "SND-AUTH-002",
+  "status": 403,
+  "detail": "sending a fix task is the owner's; a session can't (fix: use the Send button on the review page)",
+  "traceId": "<trace>"
+}

@@ -164,9 +164,10 @@ public sealed class SandboxPlannerTests
             Assert.True(IndexOf(plan, path, kindOf[entry.Kind]) > denyAt, path);
         }
 
+        // why: an absent path is denied, or an empty tmpfs (Sindri's own home: only the entries mounted below it exist)
         foreach (var entry in HookInventory.StatePaths.Where(e => e.Kind == StatePathKind.Absent))
         {
-            Assert.DoesNotContain(plan.Mounts, m => string.Equals(m.Path, $"{Req.StateDir}/{entry.Path}", StringComparison.Ordinal) && m.Kind != PlanMountKind.Deny);
+            Assert.DoesNotContain(plan.Mounts, m => string.Equals(m.Path, $"{Req.StateDir}/{entry.Path}", StringComparison.Ordinal) && m.Kind is not (PlanMountKind.Deny or PlanMountKind.Tmpfs));
         }
 
         Assert.Equal(PlanMountKind.ReadOnly, Last(plan, Req.StateDir + "/judge/config.json")!.Kind);
