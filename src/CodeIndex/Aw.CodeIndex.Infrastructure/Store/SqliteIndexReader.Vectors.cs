@@ -64,5 +64,5 @@ internal sealed partial class SqliteIndexReader
             reader.GetString(3),
             reader.GetString(2),
             StoredNames.SymbolKindOf(reader.GetString(1)),
-            VectorCodec.Decode((byte[])reader.GetValue(4)));
+            VectorCodec.Decode(Sql.Bytes(reader, 4)));
 }

@@ -80,7 +80,7 @@ internal sealed partial class SqliteIndexReader
         {
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
-                found.Add(new MinHashCandidate(ReadHit(reader, 0), (byte[])reader.GetValue(9)));
+                found.Add(new MinHashCandidate(ReadHit(reader, 0), Sql.Bytes(reader, 9)));
             }
         }
 
@@ -101,7 +101,7 @@ internal sealed partial class SqliteIndexReader
                 {
                     while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                     {
-                        Keep(best, take, (reader.GetInt64(0), VectorCodec.Cosine(vector.Span, VectorCodec.Decode((byte[])reader.GetValue(1)))));
+                        Keep(best, take, (reader.GetInt64(0), VectorCodec.Cosine(vector.Span, VectorCodec.Decode(Sql.Bytes(reader, 1)))));
                     }
                 }
             }
