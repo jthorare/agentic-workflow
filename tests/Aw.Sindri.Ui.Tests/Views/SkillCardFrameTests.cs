@@ -17,7 +17,7 @@ public sealed class SkillCardFrameTests : FrameHost
     // The row the server serves (the skill-waiting golden), moved onto this instance and state and given this test's question.
     private static JsonObject WaitingRow(string address)
     {
-        var row = GoldenFiles.Node("needs-you", "skill-waiting")["rows"]!.AsArray()[0]!.AsObject();
+        var row = GoldenFiles.Node("needs-you", "skill-waiting")["rows"]!.AsArray()[0]!.DeepClone().AsObject();
         row["id"] = "skill:" + address + ":mitigate";
         row["title"] = "Mitigate";
         row["subject"] = new JsonObject { ["kind"] = "instance", ["id"] = address };

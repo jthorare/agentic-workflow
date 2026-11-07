@@ -38,7 +38,7 @@ public sealed class SkillWaitingRowTests
         var entry = Entry();
 
         Assert.Equal(new StateChip("SKILL", ChipTone.Attn), entry.Chip);
-        Assert.Equal(new OwnerWaitingView("LCH-00000000000000000000000000000001", "question", "Who calls this API?", "/run/.sindri-out/result-1.json", Detail: null, "ITM-1/step/1", "review", Attempt: 1), entry.OwnerWaiting);
+        Assert.Equal(new OwnerWaitingView("LCH-00000000000000000000000000000001", "question", "/run/.sindri-out/result-1.json", "ITM-1/step/1", "review", "Who calls this API?", Attempt: 1), entry.OwnerWaiting);
     }
 
     [Fact]
