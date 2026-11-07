@@ -20,12 +20,14 @@ public sealed class LibraryModelOptInTests
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private static async Task<int> Extractions(IReadOnlyList<string> modelRoots, string audience = "repo:acme/shop")
+    private static async Task<int> Extractions(IReadOnlyList<string> modelRoots, string audience = "repo:acme/shop") =>
+        (await Prompts(modelRoots, audience, $"Pane resize: we agreed {Quote}, anything narrower is clamped.")).Count;
+
+    private static async Task<List<string>> Prompts(IReadOnlyList<string> modelRoots, string audience, string text)
     {
         using var world = new MapWorld();
         _ = await world.ImportFixture();
         world.Model.Answer = $$"""{"decisions":[{"quote":"{{Quote}}","wording":"Panes are at least 20 columns wide","decides":["{{Resize}}"]}]}""";
-        var text = $"Pane resize: we agreed {Quote}, anything narrower is clamped.";
         var record = RecordSamples.Record("doc:harbor/plans/pane-resize.md", source: LibrarySource.Id) with
         {
             Kind = RecordKind.Doc,
@@ -44,7 +46,7 @@ public sealed class LibraryModelOptInTests
             _ = await step(new SourceSync(LibrarySource.Id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, Code: null));
         }
 
-        return world.Model.Requests.Count(r => r.Purpose == ModelPurpose.DecisionExtraction);
+        return [.. world.Model.Requests.Where(r => r.Purpose == ModelPurpose.DecisionExtraction).Select(static r => r.Prompt)];
     }
 
     [Fact]
@@ -62,4 +64,17 @@ public sealed class LibraryModelOptInTests
     [Fact]
     public async Task An_owner_library_doc_is_withheld_from_the_decision_model_even_when_its_root_opted_in() =>
         Assert.Equal(0, await Extractions(["harbor"], audience: "owner:library"));   // a decision carries a verbatim quote that a session's scoped map would show
+
+    [Fact]
+    public async Task Owner_only_text_never_reaches_a_model_prompt_with_models_true_while_a_repo_doc_in_the_same_vault_does()
+    {
+        const string Canary = "CANARY-7f3a91c2-harbor-owner-only";
+        var text = $"Pane resize: we agreed {Quote}. {Canary}";
+
+        var owner = await Prompts(["harbor"], "owner:library", text);
+        var repo = await Prompts(["harbor"], "repo:acme/shop", text);
+
+        Assert.DoesNotContain(owner, static p => p.Contains(Canary, StringComparison.Ordinal));   // the decisions a model writes are quoted verbatim into a session's scoped map
+        Assert.Contains(repo, static p => p.Contains(Canary, StringComparison.Ordinal));
+    }
 }
