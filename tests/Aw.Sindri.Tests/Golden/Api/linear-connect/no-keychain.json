@@ -1,7 +1,7 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.4",
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.21",
   "title": "SND-LINEAR-014",
-  "status": 503,
-  "detail": "There is no keychain to keep the key in (fix: unlock the keychain, or set the key in the environment)",
+  "status": 422,
+  "detail": "No keychain to keep the write key in (fix: unlock your login keyring, or put the key in 1Password and set writeToken to op://…)",
   "traceId": "<trace>"
 }
