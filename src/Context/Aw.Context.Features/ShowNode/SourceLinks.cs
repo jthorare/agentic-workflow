@@ -63,20 +63,8 @@ internal sealed class SourceLinks(ContextScope scope, VisibleMap map, IEgressScr
             return null;
         }
 
-        var policy = new ProfileAudiencePolicy(settings.Value, [.. scope.Repos.Select(r => r.Name)]);
-        var allowed = new HashSet<AudienceKey>();
-        foreach (var repo in scope.Repos)
-        {
-            var own = await policy.For(repo.Name, cancellationToken).ConfigureAwait(false);
-            if (own.IsError)
-            {
-                return null;
-            }
-
-            allowed.UnionWith(own.Value.Allowed);
-        }
-
-        return new AudienceScope(allowed) { Records = _mapRecords };
+        var allowed = await RecordMask.Allowed(settings.Value, scope.Repos, ContextCallerKind.Session, cancellationToken).ConfigureAwait(false);
+        return allowed.IsError ? null : new AudienceScope(allowed.Value) { Records = _mapRecords };
     }
 
     private async ValueTask<Uri?> ForFile(SourceTarget target, CancellationToken cancellationToken)
