@@ -83,6 +83,8 @@ internal sealed class ContextEngine(
 
     public ValueTask<Result<IReadOnlyList<LibraryClaim>>> Claims(RecordKey prKey, AudienceScope audience, CancellationToken cancellationToken) => reads.Library.Claims(prKey, audience, cancellationToken);
 
+    public ValueTask<Result<IReadOnlyDictionary<RecordKey, IReadOnlyList<LibraryClaim>>>> Claims(IReadOnlyList<RecordKey> prKeys, AudienceScope audience, CancellationToken cancellationToken) => reads.Library.Claims(prKeys, audience, cancellationToken);
+
     public ValueTask<Result<IReadOnlyList<LibraryClaim>>> ClaimsOn(RecordKey docKey, AudienceScope audience, CancellationToken cancellationToken) => reads.Library.ClaimsOn(docKey, audience, cancellationToken);
 
     public ValueTask<Result<IReadOnlyList<LibraryRootStatus>>> Roots(ContextScope scope, CancellationToken cancellationToken) => reads.Library.Roots(scope, cancellationToken);

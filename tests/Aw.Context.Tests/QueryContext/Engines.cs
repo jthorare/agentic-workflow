@@ -5,6 +5,7 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Extract;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Records;
 using Aw.Context.Core.Search;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Symbols;
@@ -73,7 +74,7 @@ internal static class Engines
 {
     internal static readonly ContextRepo[] Repos = [new(ContextRepoName.From("split-panes"), "/repos/split-panes"), new(ContextRepoName.From("other"), "/repos/other")];
 
-    internal static IContextEngine Over(FixedSourceCatalog catalog, FakeDocIndex? index = null, FakeTimeProvider? time = null, FakeIntentStore? intentStore = null, FakeLexicalLeg? lexical = null, FakeRecordStore? records = null, FakeQueryEmbedder? embedder = null, FakeIndexSync? indexSync = null)
+    internal static IContextEngine Over(FixedSourceCatalog catalog, FakeDocIndex? index = null, FakeTimeProvider? time = null, FakeIntentStore? intentStore = null, FakeLexicalLeg? lexical = null, IRecordStore? records = null, FakeQueryEmbedder? embedder = null, FakeIndexSync? indexSync = null)
     {
         var clock = time ?? new FakeTimeProvider(new DateTimeOffset(2026, 10, 12, 9, 0, 0, TimeSpan.Zero));
         var scrubbers = new FakeScrubberFactory();

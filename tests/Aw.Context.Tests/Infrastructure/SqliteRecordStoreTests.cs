@@ -1,4 +1,5 @@
 using Aw.Context.Core.Records;
+using Aw.Context.Core.Sources;
 using Aw.Context.Testing.Records;
 
 namespace Aw.Context.Tests.Infrastructure;
@@ -91,6 +92,23 @@ public sealed class SqliteRecordStoreTests : IDisposable
         Assert.Equal(new CommitReport(1, 0, 0), back.Value);
         Assert.Null((await _world.Store.Get(record.Key, TestContext.Current.CancellationToken)).Value!.RemovedAt);
         _ = Assert.Single((await _world.Store.Chunks(record.Key, TestContext.Current.CancellationToken)).Value);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_listing_with_states_returns_only_records_in_those_states_and_null_returns_all()
+    {
+        RecordState[] states = [RecordState.Open, RecordState.Draft, RecordState.Closed, RecordState.Merged];
+        var writes = states.Select((state, i) => RecordSamples.Write(RecordSamples.Record(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"github:pr/acme/api/{i + 1}"), source: RecordSamples.Github) with { Kind = RecordKind.Pr, State = state }, "body")).ToArray();
+        _ = await _world.Store.Commit(RecordSamples.Batch(RecordSamples.Github, 1, writes), TestContext.Current.CancellationToken);
+
+        async Task<RecordState?[]> Listed(IReadOnlyList<RecordState>? asked) =>
+            [.. (await _world.Store.List(new RecordFilter(RecordSamples.Github, Kind: RecordKind.Pr, States: asked), after: null, limit: 100, TestContext.Current.CancellationToken)).Value.Select(static r => r.State).Order()];
+
+        Assert.Equal([RecordState.Open, RecordState.Draft], await Listed([RecordState.Open, RecordState.Draft]));
+        Assert.Equal([RecordState.Closed, RecordState.Merged], await Listed([RecordState.Merged, RecordState.Closed]));
+        Assert.Equal([RecordState.Open], await Listed([RecordState.Open]));
+        Assert.Empty(await Listed([]));
+        Assert.Equal(4, (await Listed(asked: null)).Length);
     }
 
     [Fact, Trait("Lane", "integration")]
