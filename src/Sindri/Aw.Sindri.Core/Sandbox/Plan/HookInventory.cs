@@ -20,7 +20,7 @@ public static class HookInventory
         new("bin-r1b", StatePathKind.ReadOnly, "the heavy wrapper"),
         new("meta", StatePathKind.Absent, "meta-outbox, meta-stop-gate and meta-lane-gate do nothing without it, by design"),
         new("bin/aw-meta", StatePathKind.Absent, "meta hooks exit at once when aw-meta is not executable"),
-        new("sindri-app", StatePathKind.Absent, "sindri-tasks exits at once in a Step (AW_SINDRI_CHILD), so it never reads fix-tasks there"),
+        new("sindri-app", StatePathKind.Absent, "sindri-tasks exits at once in a Step (AW_SINDRI_CHILD), and Sindri's home there is an empty tmpfs, so no fix-tasks are read"),
     ];
 
     /// <summary>

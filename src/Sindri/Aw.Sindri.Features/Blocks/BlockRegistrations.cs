@@ -1,5 +1,4 @@
 using Aw.Sindri.Core.Reviews;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Features.Blocks.Effect;
 using Aw.Sindri.Features.Blocks.Evidence;
@@ -7,6 +6,7 @@ using Aw.Sindri.Features.Blocks.Gate;
 using Aw.Sindri.Features.Blocks.Input;
 using Aw.Sindri.Features.Blocks.Step;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Aw.Sindri.Features.Blocks;
 
