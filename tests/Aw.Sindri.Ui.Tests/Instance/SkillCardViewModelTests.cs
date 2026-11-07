@@ -146,7 +146,8 @@ public sealed class SkillCardViewModelTests
         var copied = await card.CopyPath(output, Token);
 
         Assert.Equal((new SkillOutput("Plan folder", Plan), true, true), (output, opened, copied));
-        Assert.Equal(([Plan], Plan), (_launcher.Opened.ToArray(), _clipboard.Text));
+        Assert.Equal([Plan], _launcher.Opened);
+        Assert.Equal(Plan, _clipboard.Text);
     }
 
     [Fact]

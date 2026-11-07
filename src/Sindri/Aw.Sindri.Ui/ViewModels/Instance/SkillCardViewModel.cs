@@ -192,7 +192,7 @@ internal sealed class SkillCardViewModel : ObservableObject
     /// <param name="output">The output.</param>
     /// <param name="cancellationToken">Cancels the open.</param>
     /// <returns>True when the system opened it.</returns>
-    internal Task<bool> Open(SkillOutput output, CancellationToken cancellationToken) => Input.Launcher.OpenFile(output.Path, cancellationToken);
+    internal Task<bool> Open(SkillOutput output, CancellationToken cancellationToken) => new LinkLaunch(Input.Launcher).OpenPath(output.Path, cancellationToken);
 
     /// <summary>Puts an output's path on the clipboard.</summary>
     /// <param name="output">The output.</param>

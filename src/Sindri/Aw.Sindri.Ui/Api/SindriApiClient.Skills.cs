@@ -10,5 +10,5 @@ internal sealed partial class SindriApiClient
 
     /// <inheritdoc />
     public Task<Result<SkillsView>> Skills(Uri api, CancellationToken cancellationToken) =>
-        throw new NotSupportedException();
+        Get<SkillsView>(api, SkillsPath, cancellationToken);
 }

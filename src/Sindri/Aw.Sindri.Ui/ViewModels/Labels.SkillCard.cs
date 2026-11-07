@@ -36,21 +36,24 @@ internal static partial class Labels
     /// <summary>The card's heading for its outputs.</summary>
     internal const string SkillOutputsHeading = "Outputs";
 
+    /// <summary>A state name that starts a sentence: the id as served ("mitigate") gets its first letter capitalised.</summary>
+    private static string Sentence(string name) => name.Length == 0 ? name : char.ToUpperInvariant(name[0]) + name[1..];
+
     /// <summary>The waiting row's text: the question.</summary>
     /// <param name="name">The state in the recipe's words.</param>
     /// <param name="question">The skill's question.</param>
     /// <returns>The sentence.</returns>
-    internal static string SkillWaitingQuestion(string name, string question) => $"{name} is waiting on you: {question}";
+    internal static string SkillWaitingQuestion(string name, string question) => $"{Sentence(name)} is waiting on you: {question}";
 
     /// <summary>The waiting row's text when the session ended a turn without an answer.</summary>
     /// <param name="name">The state in the recipe's words.</param>
     /// <returns>The sentence.</returns>
-    internal static string SkillNoResult(string name) => $"{name} stopped without giving an answer. Open the session to see why.";
+    internal static string SkillNoResult(string name) => $"{Sentence(name)} stopped without giving an answer. Open the session to see why.";
 
     /// <summary>The waiting row's text when the answer file could not be read.</summary>
     /// <param name="name">The state in the recipe's words.</param>
     /// <returns>The sentence.</returns>
-    internal static string SkillUnreadable(string name) => $"{name} finished, but its answer file is broken. Open the session and ask it to write the answer again.";
+    internal static string SkillUnreadable(string name) => $"{Sentence(name)} finished, but its answer file is broken. Open the session and ask it to write the answer again.";
 
     /// <summary>The waiting row's text when the skill changed under a running block.</summary>
     /// <param name="skill">The skill in words.</param>
