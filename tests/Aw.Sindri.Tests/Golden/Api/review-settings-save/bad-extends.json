@@ -1,0 +1,8 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-REVIEW-001",
+  "status": 400,
+  "detail": "review.settings.sindri.extends: 'sindri' extends itself (fix: extend 'default' or an entry that doesn't extend this one)",
+  "field": "entry.extends",
+  "traceId": "<trace>"
+}

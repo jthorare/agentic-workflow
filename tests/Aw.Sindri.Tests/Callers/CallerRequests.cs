@@ -11,6 +11,9 @@ internal static class CallerRequests
     public static HttpRequestMessage Post(string path, string? json, params (string Name, string Value)[] headers) =>
         With(new HttpRequestMessage(HttpMethod.Post, path) { Content = json is null ? null : new StringContent(json, System.Text.Encoding.UTF8, "application/json") }, headers);
 
+    public static HttpRequestMessage Put(string path, string? json, params (string Name, string Value)[] headers) =>
+        With(new HttpRequestMessage(HttpMethod.Put, path) { Content = json is null ? null : new StringContent(json, System.Text.Encoding.UTF8, "application/json") }, headers);
+
     public static HttpRequestMessage Delete(string path, params (string Name, string Value)[] headers) => With(new HttpRequestMessage(HttpMethod.Delete, path), headers);
 
     /// <summary>An HTTP QUERY (the IETF safe method with a body, draft): what the subgraph route takes when its keys don't fit a URL.</summary>

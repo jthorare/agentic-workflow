@@ -4,6 +4,7 @@ using System.Text;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Api.Jobs;
+using Aw.Sindri.Ui.Api.Reviews;
 using Aw.Sindri.Ui.Api.Sessions;
 using Aw.Sindri.Ui.Api.Workflow;
 
@@ -109,6 +110,7 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
             // LANE ANCHOR U11a: the session reads, as arms above the workflow-read arm. Insert immediately below this marker, never between the markers.
             { } path when request.Method == HttpMethod.Get && (path == "/sindri/sessions" || path.StartsWith("/sindri/sessions/", StringComparison.Ordinal)) => await Sessions(uri, cancellationToken),
             { } path when IsJobsOrSandbox(path) => await JobsOrSandbox(request, path, cancellationToken),
+            ReviewRoutes.Settings when request.Method == HttpMethod.Get || request.Method == HttpMethod.Put => await ReviewSettingsRoute(request, cancellationToken),
             "/sindri/code-index/status" when request.Method == HttpMethod.Get => Answer(Counted(await server.CodeIndexStatus(uri, cancellationToken), server.CodeIndexStatusAnswer)),
             "/sindri/index/status" when request.Method == HttpMethod.Get => Answer(Counted(await server.IndexStatus(uri, cancellationToken), server.IndexStatusAnswer)),
             "/sindri/setup" when request.Method == HttpMethod.Get => Answer(Counted(await server.Setup(uri, cancellationToken), server.SetupAnswer)),
