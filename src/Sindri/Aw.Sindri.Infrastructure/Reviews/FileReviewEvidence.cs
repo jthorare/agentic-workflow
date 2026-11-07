@@ -25,7 +25,7 @@ internal sealed partial class FileReviewEvidence(Func<string, string?> environme
     {
         ArgumentNullException.ThrowIfNull(pull);
         ArgumentNullException.ThrowIfNull(headSha);
-        var runs = System.IO.Path.Combine(SettingsFromEnvironment.StateRoot(environment), "ui-evidence", "runs");
+        var runs = Path.Combine(SettingsFromEnvironment.StateRoot(environment), "ui-evidence", "runs");
         if (!Directory.Exists(runs))
         {
             return ValueTask.FromResult(Results.Success<IReadOnlyList<ReviewPageEvidenceItem>>([]));
@@ -53,7 +53,7 @@ internal sealed partial class FileReviewEvidence(Func<string, string?> environme
 
     private static ReviewPageEvidenceItem? Read(string dir, ReviewPullRef pull, string headSha)
     {
-        var path = System.IO.Path.Combine(dir, "summary.json");
+        var path = Path.Combine(dir, "summary.json");
         try
         {
             var info = new FileInfo(path);
@@ -73,7 +73,7 @@ internal sealed partial class FileReviewEvidence(Func<string, string?> environme
             }
 
             var finished = Text(root, "finishedAt") is { } at && DateTimeOffset.TryParse(at, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var parsed) ? parsed : new DateTimeOffset(info.LastWriteTimeUtc, TimeSpan.Zero);
-            return new ReviewPageEvidenceItem("uiEvidence", Text(root, "route") ?? System.IO.Path.GetFileName(dir), System.IO.Path.Combine("ui-evidence", "runs", System.IO.Path.GetFileName(dir), "summary.json"), Url: null, by, finished);
+            return new ReviewPageEvidenceItem("uiEvidence", Text(root, "route") ?? Path.GetFileName(dir), Path.Combine("ui-evidence", "runs", Path.GetFileName(dir), "summary.json"), Url: null, by, finished);
         }
         catch (Exception e) when (e is JsonException or IOException or UnauthorizedAccessException)
         {

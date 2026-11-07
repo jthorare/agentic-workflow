@@ -1,6 +1,6 @@
-using Aw.Sindri.Testing;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Reviews;
+using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.ReviewFix;
 
@@ -28,7 +28,7 @@ public abstract class FixTaskFilesContract
         _ = (await Files.Add(Head, Id('a'), 2071, Token)).Value;
         Assert.False((await Files.Add(Head, Id('b'), 2071, Token)).Value);
 
-        Assert.Equal<string>([Id('a').Value, Id('b').Value], [.. Open(Head).Keys.Order(StringComparer.Ordinal)]);
+        Assert.Equal([Id('a').Value, Id('b').Value], [.. Open(Head).Keys.Order(StringComparer.Ordinal)]);
         Expect.Equal(2, Open(Head).Count);
     }
 
@@ -40,11 +40,11 @@ public abstract class FixTaskFilesContract
         _ = (await Files.Add("acme/web:main", Id('c'), 880, Token)).Value;
 
         Assert.True((await Files.Remove(Id('a'), Token)).Value);
-        Assert.Equal<string>([Id('b').Value], [.. Open(Head).Keys]);
+        Assert.Equal([Id('b').Value], [.. Open(Head).Keys]);
 
         _ = (await Files.Remove(Id('b'), Token)).Value;
         Expect.Equal(0, Open(Head).Count);
-        Assert.Equal<string>([Id('c').Value], [.. Open("acme/web:main").Keys]);
+        Assert.Equal([Id('c').Value], [.. Open("acme/web:main").Keys]);
     }
 
     [Fact]

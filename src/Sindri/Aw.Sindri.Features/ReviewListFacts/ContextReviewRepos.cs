@@ -15,6 +15,6 @@ internal sealed class ContextReviewRepos(IApprovedProfile approvals, ICallerCont
     public async ValueTask<Result<IReadOnlyList<string>>> Synced(CancellationToken cancellationToken)
     {
         var read = await ReviewScopes.Read(approvals, callers, engine, cancellationToken).ConfigureAwait(false);
-        return read.IsError ? read.Error : Results.Success<IReadOnlyList<string>>(read.Value.Settings.GitHub?.Repos ?? []);
+        return read.IsError ? read.Error : Results.Success(read.Value.Settings.GitHub?.Repos ?? []);
     }
 }

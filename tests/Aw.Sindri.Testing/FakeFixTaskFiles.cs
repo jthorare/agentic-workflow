@@ -13,6 +13,10 @@ public sealed class FakeFixTaskFiles : IFixTaskFiles
     /// <summary>The open tasks.</summary>
     public IReadOnlyList<(string Head, ItemId Item, int Pr)> Tasks => _tasks;
 
+    /// <summary>The open tasks by head, then item id to PR number; a head with no open task is absent.</summary>
+    public IReadOnlyDictionary<string, IReadOnlyDictionary<string, int>> Heads =>
+        _tasks.GroupBy(static t => t.Head, StringComparer.Ordinal).ToDictionary(static g => g.Key, static g => (IReadOnlyDictionary<string, int>)g.ToDictionary(static t => t.Item.Value, static t => t.Pr, StringComparer.Ordinal), StringComparer.Ordinal);
+
     /// <summary>The items passed to Remove, in order, whether or not a task held them.</summary>
     public IReadOnlyList<ItemId> Removed => _removed;
 

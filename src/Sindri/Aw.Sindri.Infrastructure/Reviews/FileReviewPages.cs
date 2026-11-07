@@ -33,7 +33,7 @@ internal sealed class FileReviewPages(ISindriHome home, TimeProvider clock) : IR
 
         var folder = PullFolder(pull);
         var found = Directory.Exists(folder)
-            ? Directory.EnumerateDirectories(folder).Where(static d => ReviewPullRef.IsSha(System.IO.Path.GetFileName(d))).Select(static d => Load(System.IO.Path.Combine(d, FileName))).OfType<CachedReviewPage>().ToList()
+            ? Directory.EnumerateDirectories(folder).Where(static d => ReviewPullRef.IsSha(Path.GetFileName(d))).Select(static d => Load(Path.Combine(d, FileName))).OfType<CachedReviewPage>().ToList()
             : [];
         return ValueTask.FromResult(Results.Success(found.MaxBy(static c => c.CachedAt)));
     }
@@ -49,9 +49,9 @@ internal sealed class FileReviewPages(ISindriHome home, TimeProvider clock) : IR
 
         try
         {
-            var head = System.IO.Path.Combine(PullFolder(pull), page.Pr.Head.Sha.ToLowerInvariant());
+            var head = Path.Combine(PullFolder(pull), page.Pr.Head.Sha.ToLowerInvariant());
             EnsureFolders(head);
-            OwnerOnly.WriteAtomically(System.IO.Path.Combine(head, FileName), AwJson.Serialize(new CachedReviewPage(page, clock.GetUtcNow()), _json));
+            OwnerOnly.WriteAtomically(Path.Combine(head, FileName), AwJson.Serialize(new CachedReviewPage(page, clock.GetUtcNow()), _json));
             Prune(PullFolder(pull));
             return ValueTask.FromResult(Results.Success(Unit.Value));
         }
@@ -66,7 +66,7 @@ internal sealed class FileReviewPages(ISindriHome home, TimeProvider clock) : IR
     private static Error BadName(string what) => SindriErrors.InvalidInput.With("not a GitHub pull request name: " + what);
 
     private string PullFolder(ReviewPullRef pull) =>
-        System.IO.Path.Combine(home.Path, "reviews", "cache", pull.Owner, pull.Repo, pull.Number.ToString(CultureInfo.InvariantCulture));
+        Path.Combine(home.Path, "reviews", "cache", pull.Owner, pull.Repo, pull.Number.ToString(CultureInfo.InvariantCulture));
 
     private static CachedReviewPage? Load(string path)
     {
@@ -89,8 +89,8 @@ internal sealed class FileReviewPages(ISindriHome home, TimeProvider clock) : IR
     // why: the cache keeps the newest heads only (a head is as new as its page, else as its newest file), so a long-lived PR does not pile up folders
     private static void Prune(string pullFolder)
     {
-        var heads = Directory.EnumerateDirectories(pullFolder).Where(static d => ReviewPullRef.IsSha(System.IO.Path.GetFileName(d)))
-            .OrderByDescending(static d => Load(System.IO.Path.Combine(d, FileName))?.CachedAt ?? new DateTimeOffset(Directory.EnumerateFiles(d).Select(File.GetLastWriteTimeUtc).DefaultIfEmpty(DateTime.MinValue).Max(), TimeSpan.Zero)).ToList();
+        var heads = Directory.EnumerateDirectories(pullFolder).Where(static d => ReviewPullRef.IsSha(Path.GetFileName(d)))
+            .OrderByDescending(static d => Load(Path.Combine(d, FileName))?.CachedAt ?? new DateTimeOffset(Directory.EnumerateFiles(d).Select(File.GetLastWriteTimeUtc).DefaultIfEmpty(DateTime.MinValue).Max(), TimeSpan.Zero)).ToList();
         foreach (var old in heads.Skip(KeepHeads))
         {
             Directory.Delete(old, recursive: true);
@@ -100,13 +100,13 @@ internal sealed class FileReviewPages(ISindriHome home, TimeProvider clock) : IR
     // why: every folder from the cache root down is made 0700, not only the last, since OwnerOnly.EnsureDirectory leaves parents it creates to the umask
     private void EnsureFolders(string head)
     {
-        var root = System.IO.Path.Combine(home.Path, "reviews");
-        var relative = System.IO.Path.GetRelativePath(root, head).Split(System.IO.Path.DirectorySeparatorChar);
+        var root = Path.Combine(home.Path, "reviews");
+        var relative = Path.GetRelativePath(root, head).Split(Path.DirectorySeparatorChar);
         var current = root;
         OwnerOnly.EnsureDirectory(current);
         foreach (var part in relative)
         {
-            current = System.IO.Path.Combine(current, part);
+            current = Path.Combine(current, part);
             OwnerOnly.EnsureDirectory(current);
         }
     }

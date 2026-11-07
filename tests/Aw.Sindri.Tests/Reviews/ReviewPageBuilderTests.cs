@@ -77,7 +77,7 @@ public sealed class ReviewPageBuilderTests
                 ("requiredChecks", "empty", "No required checks for this project"), ("docMap", "empty", "This PR names no design doc"), ("testPlan", "empty", "No test plan rows for the claimed items"),
                 ("ci", "empty", "No CI runs on a1b2c3d yet"), ("evidence", "empty", "No evidence found for a1b2c3d"), ("risk", "empty", "No risky paths touched"), ("conversation", "empty", "No threads yet"),
             ],
-            page.Panels.Select(static p => (p.Key, p.State, p.Text!)));
+            page.Panels.Select(static p => (p.Key, p.State, p.Text)));
         Assert.Equal(("empty", "This PR changes no files"), (page.Diff.State, page.Diff.Text));
     }
 
@@ -99,7 +99,7 @@ public sealed class ReviewPageBuilderTests
                 ("requiredChecks", "error", "Couldn't decide checks: github failed: github returned 502"), ("docMap", "error", "Couldn't read the library: /home/joi/docs can't be read"),
                 ("testPlan", "error", "Couldn't read the library: /home/joi/docs can't be read"), ("ci", "error", "Couldn't read CI: github sent no check runs"), ("conversation", "error", "Couldn't read threads: github returned 502"),
             ],
-            page.Panels.Where(static p => p.State == "error").Select(static p => (p.Key, p.State, p.Text!)));
+            page.Panels.Where(static p => p.State == "error").Select(static p => (p.Key, p.State, p.Text)));
         Assert.Equal(("error", "Couldn't read the diff: github returned 502"), (page.Diff.State, page.Diff.Text));
     }
 
