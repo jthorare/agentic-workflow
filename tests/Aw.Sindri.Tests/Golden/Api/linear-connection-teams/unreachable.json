@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.4",
+  "title": "SND-LINEAR-010",
+  "status": 503,
+  "detail": "Linear can't be reached right now (fix: check the network, then try again)",
+  "traceId": "<trace>"
+}

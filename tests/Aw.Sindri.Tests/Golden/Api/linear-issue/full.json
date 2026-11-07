@@ -75,5 +75,9 @@
       "sindri": true
     }
   ],
-  "removed": false
+  "removed": false,
+  "write": {
+    "allowed": true,
+    "code": null
+  }
 }

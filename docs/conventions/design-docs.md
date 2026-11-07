@@ -85,7 +85,7 @@ Nothing else is needed: Sindri reads the doc where it lives (below), and `sindri
 | `supersedes` | no | the doc this one replaces: a doc id in the same scope, or a full ref for another scope |
 | `parent` | no | the doc this one belongs to, by the same rule (a stage map names its repo spec as `doc:repo:<name>/<id>`) |
 | `generated` | only on generated files | the tool that wrote the file, always with `source-sha256` |
-| `source-sha256` | with `generated` | the sha256 of the file it was generated from; `packet.json` changing after the doc was generated is `SND-LIB-017` (editing the doc itself isn't caught: the hash covers only the packet). The source is the `packet.json` in the same folder as the doc (`write_packet.py` writes the doc from it); a doc with no `packet.json` beside it is not checked, so there is no `SND-LIB-017` for it |
+| `source-sha256` | with `generated` | the sha256 of the file it was generated from; `packet.json` changing after the doc was generated is `SND-LIB-017` (editing the doc itself isn't caught: the hash covers only the packet). The source is the `packet.json` in the same folder as the doc (`write_packet.py` writes the doc from it; the repo docs feed hashes it as a checkout writes it, with attributes from the commit, and git before 2.42 falls back to the working tree's attributes); a doc with no `packet.json` beside it is not checked, so there is no `SND-LIB-017` for it |
 
 Keys not in this table (an Obsidian note's `tags`, say) are kept and ignored.
 

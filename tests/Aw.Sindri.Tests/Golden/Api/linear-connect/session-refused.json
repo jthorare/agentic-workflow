@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
+  "title": "SND-AUTH-002",
+  "status": 403,
+  "detail": "Linear's connection is the owner's to change; a session can't (fix: use the app)",
+  "traceId": "<trace>"
+}
