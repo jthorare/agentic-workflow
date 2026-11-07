@@ -90,11 +90,20 @@ internal static class RecordMappers
     /// <returns>The mapper.</returns>
     internal static IRowMapper<VectorRow> Vector(VectorSpace space) => new Mapper<VectorRow>(r =>
     {
+        var key = r.GetString(1);
         var dim = r.GetInt32(4);
-        var bytes = SqliteRead.GetBlob(r, 5);
-        if (dim < 1 || bytes.Length != dim * sizeof(float))
+        byte[] bytes;
+        try
         {
-            throw new InvalidDataException(string.Create(CultureInfo.InvariantCulture, $"Column embedding.vec holds {bytes.Length} bytes, not dim {dim} floats ({dim} x {sizeof(float)} bytes)."));
+            bytes = SqliteRead.GetBlob(r, 5);
+            if (dim < 1 || bytes.Length != (long)dim * sizeof(float))
+            {
+                throw new InvalidDataException(string.Create(CultureInfo.InvariantCulture, $"Column embedding.vec holds {bytes.Length} bytes, not dim {dim} floats ({dim} x {sizeof(float)} bytes)."));
+            }
+        }
+        catch (InvalidDataException exception)   // why: a vector that isn't dim floats is a store fault naming the read, not a bare InvalidDataException (#2253)
+        {
+            throw new StoredRowException(table: "embedding", column: "vec", rowKey: key, statement: "read vectors", innerException: exception);
         }
 
         var floats = new float[dim];
@@ -103,7 +112,7 @@ internal static class RecordMappers
             floats[i] = BinaryPrimitives.ReadSingleLittleEndian(bytes.AsSpan(i * sizeof(float), sizeof(float)));
         }
 
-        return new VectorRow(r.GetInt64(0), new VectorWrite(space, r.GetString(1), r.GetString(2), r.GetString(3), floats));
+        return new VectorRow(r.GetInt64(0), new VectorWrite(space, key, r.GetString(2), r.GetString(3), floats));
     });
 
     /// <summary>A vector's float32 little-endian bytes (the column's format, spec §4.2).</summary>
