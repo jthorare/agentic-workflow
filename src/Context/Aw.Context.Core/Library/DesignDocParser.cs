@@ -11,7 +11,7 @@ namespace Aw.Context.Core.Library;
 public static class DesignDocParser
 {
     /// <summary>The parser's version; a new one re-reads every doc.</summary>
-    public const int Version = 1;
+    public const int Version = 2;
 
     /// <summary>The largest doc read, in bytes of UTF-8.</summary>
     public const int MaxBytes = 1024 * 1024;

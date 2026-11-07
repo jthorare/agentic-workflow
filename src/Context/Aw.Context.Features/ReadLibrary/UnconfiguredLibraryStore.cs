@@ -15,6 +15,8 @@ internal sealed class UnconfiguredLibraryStore : ILibraryStore
 
     public ValueTask<Result<IReadOnlyList<LibraryItem>>> Items(RecordKey doc, CancellationToken cancellationToken) => ValueTask.FromResult(Unwired<IReadOnlyList<LibraryItem>>());
 
+    public ValueTask<Result<IReadOnlyList<LibraryScopeFacts>>> ScopeFacts(IReadOnlyList<RecordKey> docs, CancellationToken cancellationToken) => ValueTask.FromResult(Unwired<IReadOnlyList<LibraryScopeFacts>>());
+
     public ValueTask<Result<IReadOnlyList<LibraryClaimRow>>> ClaimsOfMany(IReadOnlyList<RecordKey> prs, CancellationToken cancellationToken) => ValueTask.FromResult(Unwired<IReadOnlyList<LibraryClaimRow>>());
 
     public ValueTask<Result<IReadOnlyList<LibraryClaimRow>>> ClaimsOf(RecordKey pr, CancellationToken cancellationToken) => ValueTask.FromResult(Unwired<IReadOnlyList<LibraryClaimRow>>());
