@@ -16,5 +16,69 @@
       "reason": "permission denied"
     }
   ],
-  "cappedText": null
+  "cappedText": null,
+  "roots": [
+    {
+      "name": "aw",
+      "kind": "aw",
+      "path": "~/.agentic-workflow",
+      "scope": null,
+      "on": true,
+      "deny": [],
+      "scannedAt": "2025-12-31T23:57:00.0000000Z",
+      "docs": 9,
+      "errors": 0,
+      "unreadable": null
+    },
+    {
+      "name": "work",
+      "kind": "vault",
+      "path": "~/Documents/WorkVault",
+      "scope": null,
+      "on": true,
+      "deny": [
+        "Private/**"
+      ],
+      "scannedAt": "2025-12-31T23:57:00.0000000Z",
+      "docs": 12,
+      "errors": 0,
+      "unreadable": null
+    },
+    {
+      "name": "notes",
+      "kind": "vault",
+      "path": "~/notes/vault",
+      "scope": null,
+      "on": true,
+      "deny": [],
+      "scannedAt": null,
+      "docs": 0,
+      "errors": 0,
+      "unreadable": "permission denied"
+    },
+    {
+      "name": "repo:jthorare/agentic-workflow",
+      "kind": "repo",
+      "path": "~/repos/agentic-workflow",
+      "scope": "jthorare/agentic-workflow · docs/**",
+      "on": true,
+      "deny": [],
+      "scannedAt": "2025-12-31T23:57:00.0000000Z",
+      "docs": 8,
+      "errors": 0,
+      "unreadable": null
+    },
+    {
+      "name": "repo:acme/harbor",
+      "kind": "repo",
+      "path": "~/repos/harbor",
+      "scope": "acme/harbor · docs/**",
+      "on": true,
+      "deny": [],
+      "scannedAt": "2025-12-31T23:57:00.0000000Z",
+      "docs": 4,
+      "errors": 0,
+      "unreadable": null
+    }
+  ]
 }

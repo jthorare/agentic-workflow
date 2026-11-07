@@ -1,0 +1,8 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-LIB-001",
+  "status": 400,
+  "detail": "a library holds at most 10 vaults (fix: remove one before adding another)",
+  "field": "path",
+  "traceId": "<trace>"
+}

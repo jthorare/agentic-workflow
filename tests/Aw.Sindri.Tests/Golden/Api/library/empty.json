@@ -11,5 +11,43 @@
   "broken": [],
   "nearMisses": [],
   "unreadableRoots": [],
-  "cappedText": null
+  "cappedText": null,
+  "roots": [
+    {
+      "name": "aw",
+      "kind": "aw",
+      "path": "~/.agentic-workflow",
+      "scope": null,
+      "on": false,
+      "deny": [],
+      "scannedAt": "2025-12-31T23:57:00.0000000Z",
+      "docs": 0,
+      "errors": 0,
+      "unreadable": null
+    },
+    {
+      "name": "repo:jthorare/agentic-workflow",
+      "kind": "repo",
+      "path": "~/repos/agentic-workflow",
+      "scope": "jthorare/agentic-workflow · docs/**",
+      "on": true,
+      "deny": [],
+      "scannedAt": "2025-12-31T23:57:00.0000000Z",
+      "docs": 0,
+      "errors": 0,
+      "unreadable": null
+    },
+    {
+      "name": "repo:acme/harbor",
+      "kind": "repo",
+      "path": "~/repos/harbor",
+      "scope": "acme/harbor · docs/**",
+      "on": true,
+      "deny": [],
+      "scannedAt": "2025-12-31T23:57:00.0000000Z",
+      "docs": 0,
+      "errors": 0,
+      "unreadable": null
+    }
+  ]
 }

@@ -26,4 +26,16 @@ internal sealed partial class SindriApiClient
     /// <inheritdoc />
     public Task<Result<ReviewFixSent>> SendReviewFix(Uri api, string repo, int number, ReviewFixSend send, CancellationToken cancellationToken) =>
         Call<ReviewFixSent>(api, HttpMethod.Post, ReviewRoutes.Fix(repo, number), cancellationToken, new CallOptions(Content: AwJson.Serialize(send, Json)));
+
+    /// <inheritdoc />
+    public Task<Result<LibraryRootChanged>> AddLibraryRoot(Uri api, LibraryRootAdd add, CancellationToken cancellationToken) =>
+        Call<LibraryRootChanged>(api, HttpMethod.Post, ReviewRoutes.LibraryRoots, cancellationToken, new CallOptions(Content: AwJson.Serialize(add, Json)));
+
+    /// <inheritdoc />
+    public Task<Result<LibraryRootChanged>> RemoveLibraryRoot(Uri api, string name, bool approve, CancellationToken cancellationToken) =>
+        Call<LibraryRootChanged>(api, HttpMethod.Delete, ReviewRoutes.LibraryRoot(name, approve), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<LibraryRootChanged>> SetLibraryAw(Uri api, LibraryAwSwitch change, CancellationToken cancellationToken) =>
+        Call<LibraryRootChanged>(api, HttpMethod.Post, ReviewRoutes.LibraryAw, cancellationToken, new CallOptions(Content: AwJson.Serialize(change, Json)));
 }

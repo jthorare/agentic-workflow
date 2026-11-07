@@ -1,0 +1,8 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-LIB-001",
+  "status": 400,
+  "detail": "library root path '~' is your home folder (fix: pick the folder that holds the notes, not the folder above it)",
+  "field": "path",
+  "traceId": "<trace>"
+}

@@ -1,0 +1,8 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-LIB-001",
+  "status": 400,
+  "detail": "library root name 'work' is taken (fix: pick another name, or remove the vault 'work' first)",
+  "field": "name",
+  "traceId": "<trace>"
+}
