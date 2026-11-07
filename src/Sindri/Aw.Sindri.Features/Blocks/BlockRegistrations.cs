@@ -1,3 +1,5 @@
+using Aw.Sindri.Core.Reviews;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Features.Blocks.Effect;
 using Aw.Sindri.Features.Blocks.Evidence;
@@ -79,13 +81,20 @@ internal static class BlockRegistrations
         .AddEffect<PrRecordEffect>()      // PB-E: the merge record's recheck and docs rows
         .AddEffect<PrRerunChecksEffect>() // PB-E: re-run a flaky check
         .AddEffect<PrMergeEffect>()       // PB-E: the merge, expected-head checked
-        .AddEffect<PrReplyEffect>()       // PB-E: replies, reactions and marks
+        .AddEffect<PrReplyEffect>()       // PB-E: replies, reactions and marks; the commands' FixItemCloser replaces the no-op closer
         .AddEffect<PrPurgeMarksEffect>()  // PB-E: W26's terminal cleanup of a PR's marks
         .AddEffect<PrOpenEffect>()          // PB-O (BD1)
         .AddEffect<PrCreateStackedEffect>() // PB-E: the stacked docs PR
         .AddEffect<PrMergeDocsEffect>()     // PB-E: the docs PR after the click
         .AddEffect<PrRestackEffect>()       // PB-E: rebase onto the new base, scan, lease push
-        .AddSingleton<RebasedRangeScan>();
+        .AddSingleton<RebasedRangeScan>()
+        .TryAddScopedFixItemCloser();
+
+    private static IServiceCollection TryAddScopedFixItemCloser(this IServiceCollection services)
+    {
+        services.TryAddScoped<IFixItemCloser, NoFixItemCloser>();
+        return services;
+    }
 
     /// <summary>Registers the gates that have runtimes in this build.</summary>
     /// <param name="services">The service collection.</param>

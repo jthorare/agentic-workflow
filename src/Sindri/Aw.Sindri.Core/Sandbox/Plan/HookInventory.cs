@@ -20,6 +20,7 @@ public static class HookInventory
         new("bin-r1b", StatePathKind.ReadOnly, "the heavy wrapper"),
         new("meta", StatePathKind.Absent, "meta-outbox, meta-stop-gate and meta-lane-gate do nothing without it, by design"),
         new("bin/aw-meta", StatePathKind.Absent, "meta hooks exit at once when aw-meta is not executable"),
+        new("sindri-app", StatePathKind.Absent, "sindri-tasks exits at once in a Step (AW_SINDRI_CHILD), so it never reads fix-tasks there"),
     ];
 
     /// <summary>
@@ -58,6 +59,7 @@ public static class HookInventory
             "answers 'allow' to SendMessage (and rewrites the message), so messages would pass 'dontAsk'"),
         Keep("session-id-report", "SessionStart (Codex and Cursor)", "reports the session id to Sindri's launcher; answers nothing"),
         Keep("sindri-nudge", "SessionStart", "prints a reminder; answers nothing"),
+        Keep("sindri-tasks", "UserPromptSubmit", "prints the open fix tasks of the session's head once each; silent in a Step; answers nothing"),
         Keep("subagent-start-map", "SubagentStart", "maps a subagent to its brief; answers nothing"),
         Keep("trait-check", "PostToolUse Edit/Write, Stop", "feeds trait violations back (exit 2) or blocks a stop once; answers no permission"),
         Keep("turn-origin", "UserPromptSubmit", "marks the turn's origin; answers nothing"),
