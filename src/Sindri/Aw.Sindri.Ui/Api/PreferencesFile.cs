@@ -17,6 +17,7 @@ namespace Aw.Sindri.Ui.Api;
 /// <param name="SeenPages">Seen suggested page keys per concept.</param>
 /// <param name="WorkView">The Work page's last switch pick.</param>
 /// <param name="LinearSince">The strip's dismissed marker.</param>
+/// <param name="TakeoverHintRow">The waiting-skill row that showed the takeover hint.</param>
 internal sealed record PreferencesFile(
     int Version,
     WindowBounds? Window = null,
@@ -28,4 +29,5 @@ internal sealed record PreferencesFile(
     bool? ReduceMotion = null,
     IReadOnlyDictionary<string, IReadOnlyList<string>>? SeenPages = null,
     string? WorkView = null,
-    string? LinearSince = null);
+    string? LinearSince = null,
+    string? TakeoverHintRow = null);

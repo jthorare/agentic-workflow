@@ -16,6 +16,7 @@ namespace Aw.Sindri.Ui.Platform;
 /// <param name="SeenPages">Per concept ("&lt;repo&gt;/&lt;concept id&gt;"), the suggested page keys already seen (pages spec §3.5), at most <see cref="MaxSeenConcepts"/> concepts of <see cref="MaxSeenPagesPerConcept"/> keys.</param>
 /// <param name="WorkView">The Work page's last pick on the Sindri / Linear switch: <see cref="SindriView"/> or <see cref="LinearView"/> (Linear hub spec §3).</param>
 /// <param name="LinearSince">The marker the since-you-looked strip last dismissed; null before the first Dismiss (Linear hub spec §3).</param>
+/// <param name="TakeoverHintRow">The id of the first waiting-skill row the owner met, the one that showed the takeover hint; null before then (skill flows spec §5.4).</param>
 internal sealed record UiPreferences(
     int Version,
     WindowBounds? Window,
@@ -27,7 +28,8 @@ internal sealed record UiPreferences(
     bool ReduceMotion,
     IReadOnlyDictionary<string, IReadOnlyList<string>> SeenPages,
     string WorkView = UiPreferences.SindriView,
-    string? LinearSince = null)
+    string? LinearSince = null,
+    string? TakeoverHintRow = null)
 {
     /// <summary>The Work page's own view: the queue.</summary>
     internal const string SindriView = "Sindri";
@@ -99,7 +101,8 @@ internal sealed record UiPreferences(
         ReduceMotion,
         ClampSeenPages(SeenPages),
         ClampView(WorkView),
-        NonBlank(LinearSince));
+        NonBlank(LinearSince),
+        NonBlank(TakeoverHintRow));
 
     // The non-blank concept keys with their non-blank page keys (each once, the newest 200); the newest 2000 concepts.
     private static Dictionary<string, IReadOnlyList<string>> ClampSeenPages(IReadOnlyDictionary<string, IReadOnlyList<string>>? seen)
@@ -145,7 +148,7 @@ internal sealed record UiPreferences(
         && SameRest(other);
 
     private bool SameRest(UiPreferences other) =>
-        SameSeenPages(SeenPages, other.SeenPages) && string.Equals(WorkView, other.WorkView, StringComparison.Ordinal) && string.Equals(LinearSince, other.LinearSince, StringComparison.Ordinal);
+        SameSeenPages(SeenPages, other.SeenPages) && string.Equals(WorkView, other.WorkView, StringComparison.Ordinal) && string.Equals(LinearSince, other.LinearSince, StringComparison.Ordinal) && string.Equals(TakeoverHintRow, other.TakeoverHintRow, StringComparison.Ordinal);
 
     private static string ClampView(string view) => string.Equals(view, LinearView, StringComparison.Ordinal) ? LinearView : SindriView;
 

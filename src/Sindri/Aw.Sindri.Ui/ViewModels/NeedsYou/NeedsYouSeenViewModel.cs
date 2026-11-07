@@ -17,6 +17,8 @@ internal sealed class NeedsYouSeenViewModel : ObservableObject
     private List<NeedsYouEntry> _entries = [];
     private HashSet<string> _arrivals = new(StringComparer.Ordinal);
     private bool _shown;
+    private bool _restored;
+    private string? _hintRow;
 
     private bool InApp { get; set; }
 
@@ -78,8 +80,19 @@ internal sealed class NeedsYouSeenViewModel : ObservableObject
             InApp = false;
         }
 
+        try
+        {
+            _hintRow = (await _preferences.Load(cancellationToken).ConfigureAwait(true)).TakeoverHintRow;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            _hintRow = null;
+        }
+
+        _restored = true;
         OnChanged(nameof(ReducedMotion));
         Reapply();
+        PlaceTakeoverHint();
     }
 
     /// <summary>Follows Settings' in-app Reduce motion switch.</summary>
@@ -126,6 +139,7 @@ internal sealed class NeedsYouSeenViewModel : ObservableObject
 
         Rows = [.. _entries.Select(e => _byId[e.Id])];
         Reapply();
+        PlaceTakeoverHint();
         OnChanged(nameof(Rows));
         if (fresh.Count > 0 && !reduced)
         {
@@ -160,6 +174,27 @@ internal sealed class NeedsYouSeenViewModel : ObservableObject
         foreach (var row in Rows)
         {
             row.Apply(_tracker.IsSeen(row.Id), reduced, _arrivals.Contains(row.Id));
+        }
+    }
+
+    // The takeover hint goes under the first waiting-skill row the owner ever meets and stays under that row, whatever comes later: its id
+    // is remembered in the preferences. Nothing is claimed before the stored one is read.
+    private void PlaceTakeoverHint()
+    {
+        if (!_restored)
+        {
+            return;
+        }
+
+        if (_hintRow is null && Rows.FirstOrDefault(r => r.IsSkillWaiting) is { } first)
+        {
+            var id = _hintRow = first.Id;
+            _ = _preferences.Update(p => p with { TakeoverHintRow = p.TakeoverHintRow ?? id });
+        }
+
+        foreach (var row in Rows)
+        {
+            row.ShowsTakeoverHint = string.Equals(row.Id, _hintRow, StringComparison.Ordinal);
         }
     }
 }

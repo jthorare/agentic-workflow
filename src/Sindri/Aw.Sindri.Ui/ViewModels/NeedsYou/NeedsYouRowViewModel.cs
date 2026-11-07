@@ -163,6 +163,7 @@ internal sealed partial class NeedsYouRowViewModel : ObservableObject
     [
         nameof(Chip), nameof(Details), nameof(PrimaryDetails), nameof(MoreDetails), nameof(HasMoreDetails), nameof(ShowsCliUpFront), nameof(ShownId), nameof(Title), nameof(Repo), nameof(Label), nameof(Reason), nameof(HasReasonLine), nameof(Cli), nameof(Age), nameof(AccessibleName),
         nameof(CanOpenItem), nameof(ItemLink), nameof(OpenLabel), nameof(HasPr), nameof(OpenPrText), nameof(ChildAnswer), nameof(Notice), nameof(HasNotice), nameof(InboxLine), nameof(InboxName),
+        nameof(IsSkillWaiting), nameof(SkillLine), nameof(CanShowSkillDetails), nameof(SkillDetailsOpen), nameof(SkillDetailsButtonText), nameof(SkillQuestion), nameof(SkillResultPath), nameof(SkillDetail),
     ];
 
     private bool _rebuilding;

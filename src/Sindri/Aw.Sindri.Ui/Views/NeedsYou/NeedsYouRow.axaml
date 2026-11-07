@@ -45,6 +45,14 @@
           <TextBlock Classes="caption subtle mono" Text="{Binding Repo}" IsVisible="{Binding Repo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Repo}" />
         </StackPanel>
       </DockPanel>
+      <TextBlock x:Name="SkillRowLine" Classes="caption" Text="{Binding SkillLine}" IsVisible="{Binding IsSkillWaiting}" MaxLines="1" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SkillLine}" AutomationProperties.Name="{Binding SkillLine}" />
+      <Button x:Name="SkillDetailsButton" Classes="command-control" HorizontalAlignment="Left" IsVisible="{Binding CanShowSkillDetails}" Content="{Binding SkillDetailsButtonText}" Click="OnSkillDetails" />
+      <StackPanel x:Name="SkillDetailsPanel" Spacing="2" IsVisible="{Binding SkillDetailsOpen}">
+        <TextBlock x:Name="SkillDetailsQuestion" Classes="caption" Text="{Binding SkillQuestion}" TextWrapping="Wrap" IsVisible="{Binding SkillQuestion, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        <TextBlock x:Name="SkillDetailsPath" Classes="caption subtle mono" Text="{Binding SkillResultPath}" TextWrapping="Wrap" IsVisible="{Binding SkillResultPath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        <TextBlock x:Name="SkillDetailsDetail" Classes="caption subtle" Text="{Binding SkillDetail}" TextWrapping="Wrap" IsVisible="{Binding SkillDetail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+      </StackPanel>
+      <TextBlock x:Name="TakeoverHint" Classes="caption subtle" Text="{Binding TakeoverHint}" IsVisible="{Binding ShowsTakeoverHint}" TextWrapping="Wrap" />
       <TextBlock x:Name="NeedsYouNotice" Classes="caption" Text="{Binding Notice}" IsVisible="{Binding HasNotice}" TextWrapping="Wrap" ToolTip.Tip="{Binding Notice}" AutomationProperties.Name="{Binding Notice}" />
     </StackPanel>
   </Border>

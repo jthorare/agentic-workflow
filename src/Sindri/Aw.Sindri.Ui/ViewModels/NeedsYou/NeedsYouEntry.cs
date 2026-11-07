@@ -94,7 +94,7 @@ internal sealed record NeedsYouEntry(string Id, NeedsYouUrgency Urgency)
     public bool Equals(NeedsYouEntry? other) =>
         other is not null
         && ((Id, Urgency, Kind, Chip, ShownId, Title, Repo, Label, Reason) == (other.Id, other.Urgency, other.Kind, other.Chip, other.ShownId, other.Title, other.Repo, other.Label, other.Reason))
-        && ((Since, PrimaryAction, Subject, ItemId, Cli, Question, RecordedOnly, Notice, Via, Child, Timeout, Stop, Open) == (other.Since, other.PrimaryAction, other.Subject, other.ItemId, other.Cli, other.Question, other.RecordedOnly, other.Notice, other.Via, other.Child, other.Timeout, other.Stop, other.Open))
+        && ((Since, PrimaryAction, Subject, ItemId, Cli, Question, RecordedOnly, Notice, Via, Child, Timeout, Stop, Open, OwnerWaiting) == (other.Since, other.PrimaryAction, other.Subject, other.ItemId, other.Cli, other.Question, other.RecordedOnly, other.Notice, other.Via, other.Child, other.Timeout, other.Stop, other.Open, other.OwnerWaiting))
         && Actions.SequenceEqual(other.Actions);
 
     /// <inheritdoc />

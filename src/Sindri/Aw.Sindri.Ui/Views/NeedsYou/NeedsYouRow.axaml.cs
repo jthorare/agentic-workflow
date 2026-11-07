@@ -32,6 +32,8 @@ internal sealed partial class NeedsYouRow : UserControl
 
     private void OnOpen(object? sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(OpenEvent, this));
 
+    private void OnSkillDetails(object? sender, RoutedEventArgs e) => (DataContext as NeedsYouRowViewModel)?.ToggleSkillDetails();
+
     private void OnAction(object? sender, RoutedEventArgs e)
     {
         // RaiseEvent makes the row the event's source, so the pressed control's action travels in the args.

@@ -58,6 +58,7 @@ internal static class NeedsYouMapper
             Stop = row.Stop,
             Open = row.Open,
             Sandbox = row.Sandbox,
+            OwnerWaiting = row.OwnerWaiting,
             Question = Text(pending?.Question),
             FiledBy = Text(pending?.FiledBy),
         };
@@ -117,6 +118,7 @@ internal static class NeedsYouMapper
         NeedsYouKinds.Failure => new StateChip("FAILED", ChipTone.Fail),
         NeedsYouKinds.Profile => new StateChip("PROFILE", ChipTone.Attn),
         NeedsYouKinds.Park => new StateChip("PARKED", ChipTone.Attn),
+        NeedsYouKinds.SkillWaiting => new StateChip("SKILL", ChipTone.Attn),
         _ => new StateChip(kind.ToUpperInvariant(), ChipTone.Attn),
     };
 }
