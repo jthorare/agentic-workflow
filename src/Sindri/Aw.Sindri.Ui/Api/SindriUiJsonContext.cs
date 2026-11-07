@@ -40,6 +40,7 @@ namespace Aw.Sindri.Ui.Api;
 // LANE ANCHOR U3': one [JsonSerializable] per Needs you record. Insert immediately above this marker, never between the markers.
 // LANE ANCHOR U8: one [JsonSerializable] per command send body and reply. Insert immediately below this marker, never between the markers.
 [JsonSerializable(typeof(LaunchPicksView))]   // model-pick spec §6.1: GET /sindri/launch/picks
+[JsonSerializable(typeof(SkillsView))]   // skill flows spec §8.1: GET /sindri/skills
 [JsonSerializable(typeof(Workflow.RecipeList))]
 [JsonSerializable(typeof(Workflow.RecipeStatsView))]
 [JsonSerializable(typeof(Workflow.StartInstanceRequest))]
