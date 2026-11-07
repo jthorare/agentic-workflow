@@ -46,7 +46,7 @@ public sealed class FixtureExpectedTests
     [Fact, Trait("Lane", "unit")]
     public void A_generated_file_whose_source_changed_is_stale_and_an_aw_doc_of_2_is_a_bad_key_not_a_near_miss()
     {
-        Assert.Contains(DesignDocCodes.StaleGenerated, Fixture.CodesOf("broken/017-edited-generated.md"), StringComparer.Ordinal);
+        Assert.Contains(DesignDocCodes.StaleGenerated, Fixture.CodesOf("broken/017-edited-generated/doc.md"), StringComparer.Ordinal);
         Assert.Equal([DesignDocCodes.BadFrontMatter], Fixture.CodesOf("broken/010-aw-doc-2.md"));
         Assert.Equal([DesignDocCodes.NearMiss], Fixture.CodesOf("aw/acme-harbor/plans/20261025-100000-near-misses/float.md"));
     }
