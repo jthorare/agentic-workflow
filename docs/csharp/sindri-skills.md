@@ -87,7 +87,7 @@ skill that also wrote an unmapped `status` is still a waiting row.
 
 | What it finds | What happens | Code |
 |---|---|---|
-| No `waiting`, `skill` matching, verdict mapped, every output present | Completes: outputs to facts, verdict to outcome, each path output's sha256 on the run | - |
+| No `waiting`, `skill` matching, verdict mapped, every output present | Completes: outputs to facts, verdict to outcome, each path output's sha256 on the run; the step's `workflow.transition` row carries the result file's own sha256 as `resultSha256` (next to `agent` and `model`) | - |
 | `waiting` (a non-empty string) | Waiting on you; the row shows the question | - |
 | No file, or one written before this launch started | Waiting on you: "stopped without a result" | - |
 | The file is older than the last prompt (`UserPromptSubmit`) | Working, no row: a background subagent's notice is not a new turn needing you. The settle rule: a turn end counts after the marker has stood about 30 s with no tool running | - |
