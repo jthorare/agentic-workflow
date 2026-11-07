@@ -5,12 +5,12 @@
              x:DataType="rvm:LibraryRootsViewModel">
   <!-- Settings' Library card (review page spec 6.3, 16): the folders the design library reads. Titled card, no left nav; the aw folder has Turn off, a vault has Remove
        (asked first), a repo's folder is read-only, and Add folder opens the form. An agent session is served no folders and sees nothing editable. -->
-  <StackPanel x:Name="LibrarySection" Spacing="{StaticResource Space.XS}">
+  <StackPanel x:Name="LibrarySection" AutomationProperties.Name="{Binding Title}" Spacing="{StaticResource Space.XS}">
     <Border AutomationProperties.Name="{Binding Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="2">
-      <TextBlock x:Name="LibraryTitle" Classes="detail-title" Text="{Binding Title}" AutomationProperties.AccessibilityView="Raw" />
+      <TextBlock x:Name="LibraryTitle" Classes="detail-title" Text="{Binding Title}" AutomationProperties.Name="{Binding Title}" AutomationProperties.AccessibilityView="Raw" />
     </Border>
     <Border AutomationProperties.Name="{Binding IntroText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-      <TextBlock x:Name="LibraryIntro" Classes="caption subtle" Text="{Binding IntroText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      <TextBlock x:Name="LibraryIntro" Classes="caption subtle" Text="{Binding IntroText}" AutomationProperties.Name="{Binding IntroText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
     </Border>
 
     <TextBlock x:Name="LibraryReading" Classes="caption subtle" Text="{Binding ReadingText}" IsVisible="{Binding IsLoading}" AutomationProperties.Name="{Binding ReadingText}" />
@@ -22,9 +22,9 @@
       <TextBlock x:Name="LibraryEmpty" Classes="body" HorizontalAlignment="Center" Text="{Binding EmptyText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding EmptyText}" />
     </Border>
 
-    <Border x:Name="LibraryFoldersCard" IsVisible="{Binding HasRows}" Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}"
+    <Border x:Name="LibraryFoldersCard" AutomationProperties.Name="{Binding Title}" IsVisible="{Binding HasRows}" Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}"
             BorderThickness="1" CornerRadius="{StaticResource Radius.LG}" Padding="{StaticResource Space.MD.Thickness}">
-      <ItemsControl x:Name="LibraryFolders" ItemsSource="{Binding Rows}">
+      <ItemsControl x:Name="LibraryFolders" AutomationProperties.Name="{Binding Title}" ItemsSource="{Binding Rows}">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="rvm:LibraryFolderViewModel">
             <StackPanel Spacing="{StaticResource Space.XS}" Margin="0,6">
@@ -64,7 +64,7 @@
     <Button x:Name="LibraryAdd" Classes="command-control primary" HorizontalAlignment="Left" Content="{Binding AddText}" IsVisible="{Binding CanAdd}" Click="OnAdd"
             AutomationProperties.Name="{Binding AddText}" />
 
-    <Border x:Name="LibraryForm" IsVisible="{Binding Form.IsOpen}" Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}"
+    <Border x:Name="LibraryForm" AutomationProperties.Name="{Binding Form.Title}" IsVisible="{Binding Form.IsOpen}" Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}"
             BorderThickness="1" CornerRadius="{StaticResource Radius.LG}" Padding="{StaticResource Space.MD.Thickness}">
       <StackPanel Spacing="{StaticResource Space.SM}" DataContext="{Binding Form}" x:DataType="rvm:LibraryRootFormViewModel">
         <Border AutomationProperties.Name="{Binding Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="3">
