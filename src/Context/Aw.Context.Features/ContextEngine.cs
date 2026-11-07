@@ -61,6 +61,12 @@ internal sealed class ContextEngine(
     public ValueTask<Result<LinearIssueRow?>> IssueGet(RecordKey key, ContextScope scope, CancellationToken cancellationToken) =>
         reads.IssueGet(key, scope, cancellationToken);
 
+    public ValueTask<Result<LinearIssueDetail?>> IssueGet(LinearIssueKey key, ContextScope scope, CancellationToken cancellationToken) =>
+        reads.IssueGet(key, scope, cancellationToken);
+
+    public ValueTask<Result<LinearIssueCounts>> IssueCounts(LinearIssueFilter filter, ContextScope scope, CancellationToken cancellationToken) =>
+        reads.IssueCounts(filter, scope, cancellationToken);
+
     public ValueTask<Result<IReadOnlyList<LinearCommentRow>>> IssueComments(RecordKey key, ContextScope scope, CancellationToken cancellationToken) =>
         reads.IssueComments(key, scope, cancellationToken);
 
@@ -73,6 +79,9 @@ internal sealed class ContextEngine(
     public ValueTask<Result<IReadOnlyList<StoredRecord>>> OpenPulls(AudienceScope audience, CancellationToken cancellationToken) => reads.OpenPulls(audience, cancellationToken);
 
     public ValueTask<Result<IReadOnlyList<LibraryDoc>>> ListDocs(LibraryDocFilter filter, AudienceScope audience, CancellationToken cancellationToken) => reads.Library.ListDocs(filter, audience, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyDictionary<string, IReadOnlyList<LibraryDoc>>>> DocsNaming(IReadOnlyList<string> issueKeys, AudienceScope audience, CancellationToken cancellationToken) =>
+        reads.Library.DocsNaming(issueKeys, audience, cancellationToken);
 
     public ValueTask<Result<LibraryDoc?>> GetDoc(RecordKey key, AudienceScope audience, CancellationToken cancellationToken) => reads.Library.GetDoc(key, audience, cancellationToken);
 
