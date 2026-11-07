@@ -15,7 +15,7 @@ internal static class SkillRunText
         ArgumentNullException.ThrowIfNull(report);
         var text = new StringBuilder();
         _ = text.Append(report.Skill).Append("  manifest sha256:").AppendLine(report.ManifestHash)
-            .AppendLine(report.Outcome is { } outcome ? "outcome: " + outcome : "step failed");
+            .AppendLine(report.Outcome is { } outcome ? "outcome: " + outcome : report.Cancelled ? "cancelled" : "step failed");
         foreach (var fact in report.Facts)
         {
             _ = text.Append(fact.Key).Append(" = ").AppendLine(fact.Value);
@@ -40,7 +40,7 @@ internal static class SkillRunText
     internal static int ExitCode(SkillRunReport report)
     {
         ArgumentNullException.ThrowIfNull(report);
-        return report.ErrorLine is not null || report.Outcome is null ? 4 : report.Succeeded ? 0 : 3;
+        return report.ErrorLine is not null || report.Outcome is null || report.Cancelled ? 4 : report.Succeeded ? 0 : 3;
     }
 
     /// <summary>The line '--follow' prints when the run parks: why, and the command that answers it; null when the run is not parked.</summary>
@@ -63,5 +63,11 @@ internal static class SkillRunText
     /// <param name="owned">The instance's engine-owned badge.</param>
     /// <param name="status">The instance's status fields.</param>
     /// <returns>The line, or null.</returns>
-    internal static string? Notice(EngineOwnedBadge? owned, StatusFields status) => Parked(owned, status);
+    internal static string? Notice(EngineOwnedBadge? owned, StatusFields status) => owned?.Kind switch
+    {
+        EngineOwnedKind.Escalated => "escalated: " + owned.Reason,
+        EngineOwnedKind.TakenOver => "taken over: " + owned.Reason,
+        EngineOwnedKind.Parked or null => Parked(owned, status),
+        _ => null,
+    };
 }

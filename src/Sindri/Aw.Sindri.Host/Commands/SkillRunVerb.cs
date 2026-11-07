@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items.Vocabulary;
 using Aw.Sindri.Core.Skills;
+using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Views;
 using Aw.Sindri.Features.CreateItem;
 using Aw.Sindri.Features.GetInstanceEvents;
@@ -123,13 +124,18 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
             }
 
             var detail = got.Value.Value;
+            if (string.Equals(detail.State, EngineStates.Cancelled, StringComparison.Ordinal))
+            {
+                return new SkillRunReport(answer.Skill, answer.ManifestHash, Outcome: null, Succeeded: false, [], await ResultFileOf(answer.Instance.Address.Value.Split('/')[0], ct).ConfigureAwait(false), ErrorLine: null, Cancelled: true);   // why: a cancel moves the instance to the engine's 'cancelled' state, which no recipe state names, so the terminal check below never sees it
+            }
+
             if (detail.States.FirstOrDefault(s => string.Equals(s.State, detail.State, StringComparison.Ordinal) && s.Terminal) is { } ended)
             {
                 return await Report(answer, detail, ended, route, ct).ConfigureAwait(false);
             }
 
-            // A park waits for an answer or a resume, which the follow then sees through; it says why once, so the run never sits silent (found in F-1's hand test).
-            if (SkillRunText.Parked(detail.EngineOwned, detail.Current.Status) is { } park && !string.Equals(park, shown, StringComparison.Ordinal))
+            // A park, an escalation or a takeover waits for an answer, a resume or a handback, which the follow then sees through; it says why once, so the run never sits silent (found in F-1's hand test).
+            if (SkillRunText.Notice(detail.EngineOwned, detail.Current.Status) is { } park && !string.Equals(park, shown, StringComparison.Ordinal))
             {
                 await output.Notice(park).ConfigureAwait(false);
                 shown = park;
@@ -154,7 +160,9 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
                 return InstanceReads.NotRunning(events.Error);
             }
 
-            error = await LaunchRefusalOf(answer.Instance.Address.Value.Split('/')[0], ct).ConfigureAwait(false)
+            var item = answer.Instance.Address.Value.Split('/')[0];
+            error = await LaunchRefusalOf(item, ct).ConfigureAwait(false)
+                ?? await SessionEndOf(item, ct).ConfigureAwait(false)
                 ?? events.Value.Value.Events.LastOrDefault(static e => e.Transition.Reason is not null)?.Transition.Reason;
         }
 
@@ -193,7 +201,20 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
     /// <returns>The line, or null.</returns>
     internal async Task<string?> SessionEndOf(string item, CancellationToken ct)
     {
-        _ = await client.Get<LedgerPage>($"/sindri/ledger?item={Uri.EscapeDataString(item)}&type=session.ended", ct).ConfigureAwait(false);
+        var page = await client.Get<LedgerPage>($"/sindri/ledger?item={Uri.EscapeDataString(item)}&type=session.ended", ct).ConfigureAwait(false);
+        if (page.IsError)
+        {
+            return null;
+        }
+
+        foreach (var ended in page.Value.Value.Events.Reverse())
+        {
+            if (ended.Payload.ValueKind == JsonValueKind.Object && ended.Payload.TryGetProperty("exitCode", out var code) && code.ValueKind == JsonValueKind.Number && code.TryGetInt32(out var exit))
+            {
+                return "session exited " + exit.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+        }
+
         return null;
     }
 
