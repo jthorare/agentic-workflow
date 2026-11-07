@@ -81,7 +81,10 @@ public sealed class LinearPlanReadsTests : IAsyncLifetime
 
         Assert.NotNull(byKey);
         Assert.Equal("Details of one", byKey.Issue.Description);
-        Assert.Equal(byRecord, byKey.Issue);
+        Assert.NotNull(byRecord);
+        // why: record equality compares LabelIds by reference, so the lists are compared apart and the rows without them
+        Assert.Equal(byRecord.Fields.LabelIds, byKey.Issue.Fields.LabelIds);
+        Assert.Equal(byRecord with { Fields = byRecord.Fields with { LabelIds = [] } }, byKey.Issue with { Fields = byKey.Issue.Fields with { LabelIds = [] } });
         Assert.False(byKey.Removed);
         Assert.Null(byKey.Parent);
         Assert.Equal(["a comment"], byKey.Comments.Select(static c => c.Body), StringComparer.Ordinal);
