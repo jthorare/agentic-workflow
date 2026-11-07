@@ -40,6 +40,7 @@ public sealed class ReviewSettingsViewTests : FrameHost
 
         Assert.Equal(Labels.ReviewSettingsEntryLine("sindri"), Heard.Wrapper(Visible<Border>(window, "ReviewSettingsEntryLine")!));
         Assert.Equal(Labels.ReviewSettingsSharedWith("prj_0000000000000000000000000K"), Heard.Wrapper(Visible<Border>(window, "ReviewSettingsShared")!));
+        Assert.Equal(Labels.ReviewSettingsSharedWith("prj_0000000000000000000000000K"), Heard.Wrapper(Visible<Border>(window, "ReviewSettingsSharedAtSave")!));
         Assert.Equal(Labels.ReviewSettingsKeyLine(Labels.ReviewSettingsPanels, Labels.ReviewSettingsFromEntry), Heard.Wrapper(Visible<Border>(window, "ReviewSettingsPanelsHead")!));
         Assert.Equal(Labels.ReviewSettingsKeyLine(Labels.ReviewSettingsChecks, Labels.ReviewSettingsFromEntry), Heard.Wrapper(Visible<Border>(window, "ReviewSettingsChecksHead")!));
     });
@@ -54,7 +55,7 @@ public sealed class ReviewSettingsViewTests : FrameHost
         Assert.Equal(Labels.ReviewSettingsMoveUp("Design doc map"), Heard.Name(All<Button>(window, "PanelUp")[1]));
         Assert.Equal(Labels.ReviewSettingsShowPanel("Test plan"), Heard.Name(All<CheckBox>(window, "PanelVisible")[5]));
         Assert.Equal(["Group 1, name", "Group 2, name", "Group 3, name", "Group 4, name"], All<TextBox>(window, "GroupName").Select(Heard.Name), StringComparer.Ordinal);
-        Assert.Equal("Group 4, folded", Heard.Name(All<CheckBox>(window, "GroupFolded")[3]));
+        Assert.Equal("Remove Group 4", Heard.Name(All<Button>(window, "GroupRemove")[3]));
         Assert.Equal("Risky path 2, why it is risky", Heard.Name(All<TextBox>(window, "RiskWhy")[1]));
         Assert.Equal(["Check 1, id", "Check 2, id"], All<TextBox>(window, "CheckId").Select(Heard.Name), StringComparer.Ordinal);
         Assert.Equal("Remove Check 2", Heard.Name(All<Button>(window, "CheckRemove")[1]));
@@ -98,5 +99,19 @@ public sealed class ReviewSettingsViewTests : FrameHost
         Assert.Equal(Labels.ReviewSettingsReadOnly, Heard.Wrapper(Visible<Border>(window, "ReviewSettingsReadOnly")!));
         Assert.Null(Visible<Button>(window, "ReviewSettingsSave"));
         Assert.False(Visible<TextBox>(window, "ReviewSettingsName")!.IsEnabled);
+    });
+
+    [Fact]
+    public Task A_stale_profile_shows_its_line_with_a_Reload_that_reads_again() => OnUi(async () =>
+    {
+        Server.ReviewSettingsSaveAnswer = RouteAnswer.Problem("review-settings-save", "stale-hash");
+        var (window, shell) = await Sheet();
+        shell.ProjectSheet.ReviewSettings.CollapseText = "mine/**";
+
+        await shell.ProjectSheet.ReviewSettings.Save(Token);
+        await Until(window, () => Visible<Border>(window, "ReviewSettingsStale") is not null, "the stale line never showed");
+
+        Assert.Equal(Labels.ReviewSettingsStale, Heard.Wrapper(Visible<Border>(window, "ReviewSettingsStale")!));
+        Assert.Equal(Labels.ReviewSettingsReload, Heard.Name(Visible<Button>(window, "ReviewSettingsReload")!));
     });
 }

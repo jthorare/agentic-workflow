@@ -6,4 +6,5 @@ namespace Aw.Sindri.Ui.Api.Reviews;
 /// <param name="Settings">The entry's name.</param>
 /// <param name="Entry">The entry: only the keys the owner set or changed.</param>
 /// <param name="Approve">True to approve the profile change in the same click (it takes effect only when nothing else waits).</param>
-internal sealed record ReviewSettingsSave(string Project, IReadOnlyList<string> Repos, string Settings, ReviewSettingsEntry Entry, bool Approve);
+/// <param name="IfHash">The hash the settings were read at; a changed profile is a 409 SND-PROFILE-003.</param>
+internal sealed record ReviewSettingsSave(string Project, IReadOnlyList<string> Repos, string Settings, ReviewSettingsEntry Entry, bool Approve, string IfHash);

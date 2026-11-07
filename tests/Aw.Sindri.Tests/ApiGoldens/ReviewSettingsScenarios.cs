@@ -18,7 +18,7 @@ internal static class ReviewSettingsScenarios
         ("review-settings", "default-only"), ("review-settings", "extends-sindri"), ("review-settings", "shared-entry"), ("review-settings", "session"),
         ("review-settings-save", "approved"), ("review-settings-save", "pending-others"), ("review-settings-save", "bad-panels"), ("review-settings-save", "bad-group-globs"),
         ("review-settings-save", "bad-extends"), ("review-settings-save", "bad-repo"), ("review-settings-save", "bad-settings-name"), ("review-settings-save", "unknown-project"),
-        ("review-settings-save", "session-refused"),
+        ("review-settings-save", "session-refused"), ("review-settings-save", "stale-hash"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -50,9 +50,10 @@ internal static class ReviewSettingsScenarios
         "bad-repo" => Save(Project, "agentic-workflow", "sindri", "{}"),
         "bad-settings-name" => Save(Project, "jthorare/agentic-workflow", "my settings", "{}"),
         "unknown-project" => Save("prj_00000000000000000000000099", "jthorare/agentic-workflow", "sindri", "{}"),
+        "stale-hash" => Save(Project, "jthorare/agentic-workflow", "sindri", "{}", ifHash: "sha256:00"),
         _ => Save(Project, "jthorare/agentic-workflow", "sindri", """{"panels":["requiredChecks","ci"]}"""),
     };
 
-    private static string Save(string project, string repo, string settings, string entry) =>
-        $$"""{"project":"{{project}}","repos":["{{repo}}"],"settings":"{{settings}}","entry":{{entry}},"approve":true}""";
+    private static string Save(string project, string repo, string settings, string entry, string ifHash = "sha256:4f1c0b7e9a52d3") =>
+        $$"""{"project":"{{project}}","repos":["{{repo}}"],"settings":"{{settings}}","entry":{{entry}},"approve":true,"ifHash":"{{ifHash}}"}""";
 }

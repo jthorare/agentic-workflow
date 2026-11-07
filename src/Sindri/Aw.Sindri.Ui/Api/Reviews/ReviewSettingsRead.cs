@@ -10,6 +10,7 @@ namespace Aw.Sindri.Ui.Api.Reviews;
 /// <param name="SharedWith">The other projects that use the same entry.</param>
 /// <param name="Entry">The entry as written in the profile (only the keys the owner set).</param>
 /// <param name="Resolved">What a PR gets: every key with <c language="text">extends</c> and the built-in default applied.</param>
+/// <param name="Hash">The live profile's hash; the save sends it back as <c language="text">ifHash</c>.</param>
 /// <param name="AllPanels">Every panel name there is, for the order and visibility editor.</param>
 internal sealed record ReviewSettingsRead(
     string Project,
@@ -18,4 +19,5 @@ internal sealed record ReviewSettingsRead(
     IReadOnlyList<string> SharedWith,
     ReviewSettingsEntry Entry,
     ReviewSettingsResolved Resolved,
+    string Hash,
     IReadOnlyList<string> AllPanels);

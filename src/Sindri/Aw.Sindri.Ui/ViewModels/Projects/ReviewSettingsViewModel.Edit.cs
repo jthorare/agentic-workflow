@@ -26,7 +26,7 @@ internal sealed partial class ReviewSettingsViewModel
     {
         if (CanChange)
         {
-            GroupRows = [.. GroupRows, new SettingsGroupRow(GroupRows.Count + 1, string.Empty, string.Empty, folded: false)];
+            GroupRows = [.. GroupRows, new SettingsGroupRow(GroupRows.Count + 1, string.Empty, string.Empty)];
         }
     }
 
@@ -101,7 +101,7 @@ internal sealed partial class ReviewSettingsViewModel
                 PanelRows = [.. resolved.Panels.Concat(read.AllPanels.Except(resolved.Panels, StringComparer.Ordinal)).Select(id => new SettingsPanelRow(id, resolved.Panels.Contains(id, StringComparer.Ordinal)))];
                 break;
             case GroupsKeyId:
-                GroupRows = [.. resolved.Groups.Select((g, i) => new SettingsGroupRow(i + 1, g.Name, Join(g.Globs), g.Folded == true))];
+                GroupRows = [.. resolved.Groups.Select((g, i) => new SettingsGroupRow(i + 1, g.Name, Join(g.Globs)))];
                 break;
             case CollapseKeyId:
                 CollapseText = Join(resolved.Collapse);

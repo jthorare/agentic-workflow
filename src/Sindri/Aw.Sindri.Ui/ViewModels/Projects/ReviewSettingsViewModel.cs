@@ -121,6 +121,9 @@ internal sealed partial class ReviewSettingsViewModel(ISindriApi api) : Observab
     /// <summary>"Save and approve", or "Saving…" while the write is in flight.</summary>
     public string SaveText => IsSaving ? Labels.ProjectSaving : Labels.ReviewSettingsSaveApprove;
 
+    /// <summary>True when the last save found the profile changed since the settings were read: the stale line with Reload shows.</summary>
+    public bool IsStale { get; private set => Set(ref field, value); }
+
     /// <summary>The line after a save that waits for a profile approval; empty otherwise.</summary>
     public string Note { get; private set => Set(ref field, value); } = string.Empty;
 
@@ -191,7 +194,7 @@ internal sealed partial class ReviewSettingsViewModel(ISindriApi api) : Observab
         Extends = read.Entry.Extends ?? string.Empty;
         ReposText = Join(read.Repos);
         PanelRows = [.. resolved.Panels.Concat(read.AllPanels.Except(resolved.Panels, StringComparer.Ordinal)).Select(id => new SettingsPanelRow(id, resolved.Panels.Contains(id, StringComparer.Ordinal)))];
-        GroupRows = [.. resolved.Groups.Select((g, i) => new SettingsGroupRow(i + 1, g.Name, Join(g.Globs), g.Folded == true))];
+        GroupRows = [.. resolved.Groups.Select((g, i) => new SettingsGroupRow(i + 1, g.Name, Join(g.Globs)))];
         CollapseText = Join(resolved.Collapse);
         RiskRows = [.. resolved.Risky.Select((r, i) => new SettingsRiskRow(i + 1, Join(r.Globs), r.Why))];
         CheckRows = [.. resolved.Checks.Select((c, i) => new SettingsCheckRow(i + 1, c.Id, c.Title, Join(c.When ?? []), ReviewSettingsNeed.Text(c.Need), c.Need))];
@@ -211,7 +214,7 @@ internal sealed partial class ReviewSettingsViewModel(ISindriApi api) : Observab
     {
         key.WasOwn = own;
         key.IsReset = false;
-        var from = _read!.Resolved.From.TryGetValue(key.Id, out var name) ? name : "default";   // why: Draw sets _read first
+        var from = _read!.Resolved.Sources.TryGetValue(key.Id, out var name) ? name : "default";   // why: Draw sets _read first
         key.FromText = string.Equals(from, "default", StringComparison.Ordinal) ? Labels.ReviewSettingsFromDefault
             : string.Equals(from, _read.Settings, StringComparison.Ordinal) ? Labels.ReviewSettingsFromEntry : Labels.ReviewSettingsFromOther(from);
         key.Baseline = Signature(key.Id);
@@ -220,6 +223,7 @@ internal sealed partial class ReviewSettingsViewModel(ISindriApi api) : Observab
     private void ClearErrors()
     {
         (NameError, ExtendsError, ReposError, SaveError) = (string.Empty, string.Empty, string.Empty, string.Empty);
+        IsStale = false;
         foreach (var key in Keys)
         {
             key.Error = string.Empty;
@@ -236,7 +240,7 @@ internal sealed partial class ReviewSettingsViewModel(ISindriApi api) : Observab
     private string Signature(string id) => id switch
     {
         PanelsKeyId => string.Join('|', PanelRows.Where(p => p.Visible).Select(p => p.Id)),
-        GroupsKeyId => string.Join('|', GroupRows.Select(g => $"{g.Name}\u001f{g.GlobsText}\u001f{g.Folded}")),
+        GroupsKeyId => string.Join('|', GroupRows.Select(g => $"{g.Name}\u001f{g.GlobsText}")),
         CollapseKeyId => CollapseText,
         RiskyKeyId => string.Join('|', RiskRows.Select(r => $"{r.GlobsText}\u001f{r.Why}")),
         _ => string.Join('|', CheckRows.Select(c => $"{c.Id}\u001f{c.Title}\u001f{c.WhenText}\u001f{c.NeedText}")),

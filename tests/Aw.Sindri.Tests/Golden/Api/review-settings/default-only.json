@@ -7,7 +7,16 @@
   "sharedWith": [],
   "entry": {},
   "resolved": {
-    "panels": ["requiredChecks", "docMap", "testPlan", "ci", "evidence", "risk", "conversation"],
+    "name": "default",
+    "panels": [
+      "requiredChecks",
+      "docMap",
+      "testPlan",
+      "ci",
+      "evidence",
+      "risk",
+      "conversation"
+    ],
     "groups": [],
     "collapse": [
       "package-lock.json",
@@ -23,7 +32,7 @@
     ],
     "risky": [],
     "checks": [],
-    "from": {
+    "sources": {
       "panels": "default",
       "groups": "default",
       "collapse": "default",
@@ -31,5 +40,14 @@
       "checks": "default"
     }
   },
-  "allPanels": ["requiredChecks", "docMap", "testPlan", "ci", "evidence", "risk", "conversation"]
+  "hash": "sha256:4f1c0b7e9a52d3",
+  "allPanels": [
+    "requiredChecks",
+    "docMap",
+    "testPlan",
+    "ci",
+    "evidence",
+    "risk",
+    "conversation"
+  ]
 }

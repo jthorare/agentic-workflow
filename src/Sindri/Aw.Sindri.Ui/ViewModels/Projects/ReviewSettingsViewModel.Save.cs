@@ -28,7 +28,7 @@ internal sealed partial class ReviewSettingsViewModel
         Result<ReviewSettingsSaved> answer;
         try
         {
-            answer = await api.SaveReviewSettings(url, new ReviewSettingsSave(read.Project, Lines(ReposText), Name.Trim(), entry, Approve: true), cancellationToken).ConfigureAwait(true);
+            answer = await api.SaveReviewSettings(url, new ReviewSettingsSave(read.Project, Lines(ReposText), Name.Trim(), entry, Approve: true, read.Hash), cancellationToken).ConfigureAwait(true);
         }
         finally
         {
@@ -64,7 +64,7 @@ internal sealed partial class ReviewSettingsViewModel
     }
 
     private List<ReviewSettingsGroup> Groups() =>
-        [.. GroupRows.Where(g => g.Name.Trim().Length > 0 || g.GlobsText.Trim().Length > 0).Select(g => new ReviewSettingsGroup(g.Name.Trim(), Lines(g.GlobsText), g.Folded ? true : null))];
+        [.. GroupRows.Where(g => g.Name.Trim().Length > 0 || g.GlobsText.Trim().Length > 0).Select(g => new ReviewSettingsGroup(g.Name.Trim(), Lines(g.GlobsText)))];
 
     private List<ReviewSettingsRisk> Risky() =>
         [.. RiskRows.Where(r => r.GlobsText.Trim().Length > 0 || r.Why.Trim().Length > 0).Select(r => new ReviewSettingsRisk(Lines(r.GlobsText), r.Why.Trim()))];
@@ -91,11 +91,17 @@ internal sealed partial class ReviewSettingsViewModel
         return checks;
     }
 
+    private const string StaleHash = "SND-PROFILE-003";
+
     private void Refused(Error error)
     {
         if (error.Kind == ErrorKind.Forbidden)
         {
             (CanChange, SaveError) = (false, Labels.InstanceRefused(error));
+        }
+        else if (string.Equals(error.Code, StaleHash, StringComparison.Ordinal))
+        {
+            IsStale = true;
         }
         else if (FieldOf(error) is { } field)
         {

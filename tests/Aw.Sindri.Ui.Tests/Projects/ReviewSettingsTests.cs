@@ -163,7 +163,6 @@ public sealed class ReviewSettingsTests
 
         var entry = OnlySave().Entry;
         Assert.Equal(("default", 5, 4, 3, 2, null), (entry.Extends, entry.Panels!.Count, entry.Groups!.Count, entry.Collapse!.Count, entry.Risky!.Count, entry.Checks?.Count));
-        Assert.Equal([null, null, null, true], entry.Groups!.Select(g => g.Folded));
     }
 
     [Fact]
@@ -202,7 +201,6 @@ public sealed class ReviewSettingsTests
         settings.AddGroup();
         settings.GroupRows[0].Name = "Docs";
         settings.GroupRows[0].GlobsText = "docs/**\n**/*.md";
-        settings.GroupRows[0].Folded = true;
         settings.AddGroup();
         settings.AddRisk();
         settings.RiskRows[0].GlobsText = ".github/workflows/**";
@@ -216,7 +214,7 @@ public sealed class ReviewSettingsTests
         await settings.Save(Token);
 
         var entry = OnlySave().Entry;
-        Assert.Equal(("Docs", true), (entry.Groups!.Single().Name, entry.Groups!.Single().Folded));
+        Assert.Equal("Docs", entry.Groups!.Single().Name);
         Assert.Equal(["docs/**", "**/*.md"], entry.Groups!.Single().Globs, StringComparer.Ordinal);
         Assert.Equal(("CI definition", 1), (entry.Risky!.Single().Why, entry.Risky!.Count));
         Assert.Equal(("ran-it", "{\"manual\":true}"), (entry.Checks!.Single().Id, entry.Checks!.Single().Need!.Value.GetRawText()));
@@ -329,6 +327,35 @@ public sealed class ReviewSettingsTests
     }
 
     [Fact]
+    public async Task The_save_sends_the_hash_the_settings_were_read_at()
+    {
+        var settings = await Opened();
+
+        await settings.Save(Token);
+
+        Assert.Equal("sha256:4f1c0b7e9a52d3", OnlySave().IfHash);
+    }
+
+    [Fact]
+    public async Task A_409_says_the_profile_changed_with_no_field_and_Reload_drops_the_edits()
+    {
+        _f.Server.ReviewSettingsSaveAnswer = RouteAnswer.Problem("review-settings-save", "stale-hash");
+        var settings = await Opened();
+        var read = settings.CollapseText;
+        settings.CollapseText = "mine/**";
+
+        await settings.Save(Token);
+
+        Assert.Equal((true, string.Empty, true, "mine/**"), (settings.IsStale, settings.SaveError, settings.CanChange, settings.CollapseText));
+        Assert.Equal(string.Empty, settings.CollapseKey.Error);
+
+        await settings.Discard(Token);
+
+        Assert.Equal((false, read, false), (settings.IsStale, settings.CollapseText, settings.HasChanges));
+        Assert.Equal(2, _f.Server.ReviewSettingsReads.Count);
+    }
+
+    [Fact]
     public async Task An_unknown_project_is_said_under_the_buttons()
     {
         _f.Server.ReviewSettingsSaveAnswer = RouteAnswer.Problem("review-settings-save", "unknown-project");
@@ -402,19 +429,19 @@ public sealed class ReviewSettingsTests
 
         var body = Encoding.UTF8.GetString(AwJson.Serialize(OnlySave(), SindriApiClient.Json));
         Assert.Equal(
-            """{"project":"prj_0000000000000000000000000H","repos":["jthorare/agentic-workflow"],"settings":"default","entry":{"collapse":["a/**"]},"approve":true}""",
+            """{"project":"prj_0000000000000000000000000H","repos":["jthorare/agentic-workflow"],"settings":"default","entry":{"collapse":["a/**"]},"approve":true,"ifHash":"sha256:4f1c0b7e9a52d3"}""",
             body);
     }
 
     [Fact]
-    public async Task An_entry_with_groups_and_checks_writes_folded_and_need_as_the_api_reads_them()
+    public async Task An_entry_with_groups_and_checks_writes_groups_and_need_as_the_api_reads_them()
     {
         var settings = await Opened("shared-entry");
 
         await settings.Save(Token);
 
         var body = Encoding.UTF8.GetString(AwJson.Serialize(OnlySave().Entry, SindriApiClient.Json));
-        Assert.Contains("""{"name":"Lockfiles","globs":["**/packages.lock.json"],"folded":true}""", body, StringComparison.Ordinal);
+        Assert.Contains("""{"name":"Lockfiles","globs":["**/packages.lock.json"]}""", body, StringComparison.Ordinal);
         Assert.Contains("""{"id":"owner-ran-it","title":"I ran it myself","need":{"manual":true}}""", body, StringComparison.Ordinal);
     }
 }

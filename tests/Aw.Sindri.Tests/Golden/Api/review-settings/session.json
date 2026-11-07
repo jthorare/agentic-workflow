@@ -7,34 +7,115 @@
   "sharedWith": [],
   "entry": {
     "extends": "default",
-    "panels": ["requiredChecks", "docMap", "ci", "risk", "conversation"],
-    "groups": [
-      { "name": "Core", "globs": ["src/*/*.Core/**"] },
-      { "name": "Features", "globs": ["src/*/*.Features/**"] },
-      { "name": "Tests", "globs": ["tests/**"] },
-      { "name": "Lockfiles", "globs": ["**/packages.lock.json"], "folded": true }
+    "panels": [
+      "requiredChecks",
+      "docMap",
+      "ci",
+      "risk",
+      "conversation"
     ],
-    "collapse": ["**/packages.lock.json", "**/*.g.cs", "**/PublicAPI.*.txt"],
+    "groups": [
+      {
+        "name": "Core",
+        "globs": [
+          "src/*/*.Core/**"
+        ]
+      },
+      {
+        "name": "Features",
+        "globs": [
+          "src/*/*.Features/**"
+        ]
+      },
+      {
+        "name": "Tests",
+        "globs": [
+          "tests/**"
+        ]
+      },
+      {
+        "name": "Lockfiles",
+        "globs": [
+          "**/packages.lock.json"
+        ]
+      }
+    ],
+    "collapse": [
+      "**/packages.lock.json",
+      "**/*.g.cs",
+      "**/PublicAPI.*.txt"
+    ],
     "risky": [
-      { "globs": [".github/workflows/**"], "why": "CI definition: runs with repo secrets" },
-      { "globs": ["config/hooks/**"], "why": "Safety hooks: every session runs them" }
+      {
+        "globs": [
+          ".github/workflows/**"
+        ],
+        "why": "CI definition: runs with repo secrets"
+      },
+      {
+        "globs": [
+          "config/hooks/**"
+        ],
+        "why": "Safety hooks: every session runs them"
+      }
     ]
   },
   "resolved": {
-    "panels": ["requiredChecks", "docMap", "ci", "risk", "conversation"],
-    "groups": [
-      { "name": "Core", "globs": ["src/*/*.Core/**"] },
-      { "name": "Features", "globs": ["src/*/*.Features/**"] },
-      { "name": "Tests", "globs": ["tests/**"] },
-      { "name": "Lockfiles", "globs": ["**/packages.lock.json"], "folded": true }
+    "name": "sindri",
+    "panels": [
+      "requiredChecks",
+      "docMap",
+      "ci",
+      "risk",
+      "conversation"
     ],
-    "collapse": ["**/packages.lock.json", "**/*.g.cs", "**/PublicAPI.*.txt"],
+    "groups": [
+      {
+        "name": "Core",
+        "globs": [
+          "src/*/*.Core/**"
+        ]
+      },
+      {
+        "name": "Features",
+        "globs": [
+          "src/*/*.Features/**"
+        ]
+      },
+      {
+        "name": "Tests",
+        "globs": [
+          "tests/**"
+        ]
+      },
+      {
+        "name": "Lockfiles",
+        "globs": [
+          "**/packages.lock.json"
+        ]
+      }
+    ],
+    "collapse": [
+      "**/packages.lock.json",
+      "**/*.g.cs",
+      "**/PublicAPI.*.txt"
+    ],
     "risky": [
-      { "globs": [".github/workflows/**"], "why": "CI definition: runs with repo secrets" },
-      { "globs": ["config/hooks/**"], "why": "Safety hooks: every session runs them" }
+      {
+        "globs": [
+          ".github/workflows/**"
+        ],
+        "why": "CI definition: runs with repo secrets"
+      },
+      {
+        "globs": [
+          "config/hooks/**"
+        ],
+        "why": "Safety hooks: every session runs them"
+      }
     ],
     "checks": [],
-    "from": {
+    "sources": {
       "panels": "sindri",
       "groups": "sindri",
       "collapse": "sindri",
@@ -42,5 +123,14 @@
       "checks": "default"
     }
   },
-  "allPanels": ["requiredChecks", "docMap", "testPlan", "ci", "evidence", "risk", "conversation"]
+  "hash": "sha256:4f1c0b7e9a52d3",
+  "allPanels": [
+    "requiredChecks",
+    "docMap",
+    "testPlan",
+    "ci",
+    "evidence",
+    "risk",
+    "conversation"
+  ]
 }

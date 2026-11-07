@@ -47,6 +47,12 @@ internal static partial class Labels
     /// <summary>Under a key that was reset.</summary>
     internal const string ReviewSettingsResetNote = "Goes back to the default once you save.";
 
+    /// <summary>Said when the profile changed since the settings were read.</summary>
+    internal const string ReviewSettingsStale = "The profile changed since you opened this.";
+
+    /// <summary>Reads the settings again, dropping the edits.</summary>
+    internal const string ReviewSettingsReload = "Reload";
+
     /// <summary>Drops every edit and reads the settings again.</summary>
     internal const string ReviewSettingsDiscard = "Discard changes";
 
@@ -124,9 +130,6 @@ internal static partial class Labels
 
     /// <summary>A globs field.</summary>
     internal const string ReviewSettingsFieldGlobs = "globs, one per line";
-
-    /// <summary>A folded box.</summary>
-    internal const string ReviewSettingsFieldFolded = "folded";
 
     /// <summary>A reason field.</summary>
     internal const string ReviewSettingsFieldWhy = "why it is risky";
