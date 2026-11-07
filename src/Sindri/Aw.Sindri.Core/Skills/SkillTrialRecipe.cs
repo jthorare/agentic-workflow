@@ -19,6 +19,9 @@ public static class SkillTrialRecipe
 
     private const string EndedPrefix = "ended-";
 
+    // why: bump it when Text writes a different recipe for the same block and inputs, so a home holding the old text registers a new version, never SND-RECIPE-007 (2: the 'outputs:' block)
+    private const int Shape = 2;
+
     /// <summary>The fact the trial's start carries when 'skill run --skills &lt;dir&gt;' sent a folder: the path the launch seeds the skill from.</summary>
     public const string SkillsFolderFact = "fact:skillTrialFolder";
 
@@ -73,7 +76,7 @@ public static class SkillTrialRecipe
 
     private static int VersionOf(string manifestHash, IEnumerable<string> keys)
     {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(manifestHash + "|" + string.Join(',', keys.Order(StringComparer.Ordinal))));
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(manifestHash + "|" + string.Join(',', keys.Order(StringComparer.Ordinal)) + "|" + Shape.ToString(CultureInfo.InvariantCulture)));
         return (int)(BitConverter.ToUInt32(bytes, 0) & 0x7fffffff) | 1;   // positive, and never 0
     }
 
@@ -97,7 +100,7 @@ public static class SkillTrialRecipe
             _ = text.Append("  - { key: ").Append(SkillsFolderFact).Append(", label: \"Skills folder\", type: text, kind: text }\n");
         }
 
-        _ = text.Append("initial: run\nstates:\n  run: { kind: active, step: { use: step.skill.").Append(manifest.Name).Append(", with: {");
+        _ = Outputs(text, block).Append("initial: run\nstates:\n  run: { kind: active, step: { use: step.skill.").Append(manifest.Name).Append(", with: {");
         _ = text.AppendJoin(',', given.Select(static i => $" {i.Key}: {{ fact: fact:{i.Key} }}"));
         _ = text.Append(" } }, timeout: { after: ").Append(Duration(manifest.MaxDuration)).Append(", then: park }, next: ").Append(Q($"Run the {manifest.Name} skill.")).Append(" }\n");
         foreach (var outcome in outcomes)
@@ -118,6 +121,26 @@ public static class SkillTrialRecipe
         _ = text.Append("  - { from: run, to: failed, on: step.failed }\n")
             .Append("evals: [evals/workflow.skill-trial/trial.jsonl]\n");   // why: approving needs a declared eval (SND-RECIPE-008); a trial is the owner's own request, so the file is a name only
         return text.ToString();
+    }
+
+    /// <summary>
+    /// The 'outputs:' block: each block output placed under the run state. The instance's fact rows list only declared outputs, so without it the run's facts never show (F-1's hand test).
+    /// The descriptor's outputs are the manifest's, in order.
+    /// </summary>
+    private static StringBuilder Outputs(StringBuilder text, LoadedSkillBlock block)
+    {
+        if (block.Descriptor.Outputs.Count == 0)
+        {
+            return text;
+        }
+
+        _ = text.Append("outputs:\n");
+        foreach (var (spec, output) in block.Descriptor.Outputs.Zip(block.Manifest.Outputs))
+        {
+            _ = text.Append("  - { key: ").Append(spec.Fact.Value).Append(", type: ").Append(output.Type == SkillValueType.Path ? "file" : "text").Append(", from: run }\n");
+        }
+
+        return text;
     }
 
     /// <summary>The block outcome a trial ended with, from its terminal state: 'ended-needs-changes' is 'needsChanges'.</summary>
