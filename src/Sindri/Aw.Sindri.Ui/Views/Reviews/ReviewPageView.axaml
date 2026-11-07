@@ -46,7 +46,7 @@
             <TextBlock Classes="caption subtle mono" Text="{Binding Branch}" />
             <ItemsControl ItemsSource="{Binding IssueKeys}">
               <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-              <ItemsControl.ItemTemplate><DataTemplate x:DataType="x:String"><Border BorderBrush="{DynamicResource Brush.HairlineStrong}" BorderThickness="1" CornerRadius="4" Padding="6,0"><TextBlock Classes="caption" Text="{Binding}" /></Border></DataTemplate></ItemsControl.ItemTemplate>
+              <ItemsControl.ItemTemplate><DataTemplate x:DataType="x:String"><Button Name="ReviewIssueChip" Click="OnOpenIssue" BorderBrush="{DynamicResource Brush.HairlineStrong}" BorderThickness="1" CornerRadius="4" Padding="6,0" AutomationProperties.Name="{Binding}"><TextBlock Classes="caption" Text="{Binding}" /></Button></DataTemplate></ItemsControl.ItemTemplate>
             </ItemsControl>
           </StackPanel>
           <TextBlock x:Name="ReviewOffline" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding OfflineText}" IsVisible="{Binding OfflineText, Converter={x:Static ObjectConverters.IsNotNull}}" />

@@ -13,6 +13,7 @@
         xmlns:agv="using:Aw.Sindri.Ui.Views.Agents"
         xmlns:jv="using:Aw.Sindri.Ui.Views.Jobs"
         xmlns:pv="using:Aw.Sindri.Ui.Views.Projects"
+        xmlns:lnv="using:Aw.Sindri.Ui.Views.Linear"
         xmlns:rwv="using:Aw.Sindri.Ui.Views.Reviews"
         xmlns:cwv="using:Aw.Sindri.Ui.Views.Context.Whole"
         xmlns:cnv="using:Aw.Sindri.Ui.Views.Context.Concepts"
@@ -387,6 +388,13 @@
                   <controls:Deferred DataContext="{Binding ProjectSheet}">
                     <controls:Deferred.Template>
                       <DataTemplate><pv:ProjectSheetView x:Name="ProjectSheetContent" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
+                </ScrollViewer>
+                <ScrollViewer x:Name="IssueSheetScroll" IsVisible="{Binding IsIssueSheet}">
+                  <controls:Deferred DataContext="{Binding IssueSheet}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><lnv:LinearIssueSheetView x:Name="IssueSheetContent" /></DataTemplate>
                     </controls:Deferred.Template>
                   </controls:Deferred>
                 </ScrollViewer>
