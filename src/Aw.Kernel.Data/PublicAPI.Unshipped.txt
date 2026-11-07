@@ -146,3 +146,13 @@ Aw.Kernel.Data.Processes.PinnedProcess.Dispose() -> void
 Aw.Kernel.Data.Processes.PinnedProcess.Process.get -> System.Diagnostics.Process!
 static Aw.Kernel.Data.Processes.PinnedProcess.Start(System.Diagnostics.ProcessStartInfo! start) -> Aw.Kernel.Data.Processes.PinnedProcess!
 static Aw.Kernel.Data.Processes.PinnedProcess.StartAsync(System.Diagnostics.ProcessStartInfo! start) -> System.Threading.Tasks.Task<Aw.Kernel.Data.Processes.PinnedProcess!>!
+Aw.Kernel.Data.StoredRowException
+Aw.Kernel.Data.StoredRowException.Column.get -> string?
+Aw.Kernel.Data.StoredRowException.RowKey.get -> string?
+Aw.Kernel.Data.StoredRowException.StoredRowException() -> void
+Aw.Kernel.Data.StoredRowException.StoredRowException(string! message) -> void
+Aw.Kernel.Data.StoredRowException.StoredRowException(string! message, System.Exception! innerException) -> void
+Aw.Kernel.Data.StoredRowException.StoredRowException(string? table, string? column, string? rowKey, string? statement, System.Exception! innerException) -> void
+Aw.Kernel.Data.StoredRowException.Table.get -> string?
+static Aw.Kernel.Data.SqliteRead.Parse<T>(Microsoft.Data.Sqlite.SqliteDataReader! reader, int ordinal, System.Func<string!, T>! parse, string? table = null, string? rowKey = null) -> T
+static Aw.Kernel.Data.SqliteRead.ParseOrNull<T>(Microsoft.Data.Sqlite.SqliteDataReader! reader, int ordinal, System.Func<string!, T>! parse, string? table = null, string? rowKey = null) -> T?
