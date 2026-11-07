@@ -38,7 +38,7 @@ work() {
   fi
   [ -f "$ft/$hash.json" ] || return 0
   while IFS=$'\t' read -r item pr; do
-    [[ "$item" =~ ^[0-9A-HJKMNP-TV-Z]{26}$ ]] || continue
+    [[ "$item" =~ ^ITM-[0-9a-f]{32}$ ]] || continue
     [[ "$pr" =~ ^[0-9]+$ ]] || continue
     [ -f "$ft/seen/$SID" ] && grep -qxF "$item" "$ft/seen/$SID" 2> /dev/null && continue
     printf 'Fix task %s on #%s is waiting. `sindri review tasks` shows it.\n' "$item" "$pr" >> "$OUT_FILE"
