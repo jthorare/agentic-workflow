@@ -9,7 +9,7 @@ namespace Aw.Sindri.Core.Reviews;
 /// <param name="UnreadableRoots">The folders that couldn't be read.</param>
 /// <param name="Text">Sindri's words for it.</param>
 /// <param name="Unreadable">Null when every folder reads; else each folder that couldn't be read, with why ("&lt;root&gt; couldn't be read: &lt;reason&gt;", §6.3).</param>
-public sealed record ReviewLibrary(string State, int Docs, int WithErrors, int UnreadableRoots, string Text, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<ReviewUnreadableRoot>? Unreadable)
+public sealed record ReviewLibrary(string State, int Docs, int WithErrors, int UnreadableRoots, string Text, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<ReviewUnreadableRoot>? Unreadable = null)
 {
     /// <summary>Decides the state and its words.</summary>
     /// <param name="facts">What the library holds.</param>

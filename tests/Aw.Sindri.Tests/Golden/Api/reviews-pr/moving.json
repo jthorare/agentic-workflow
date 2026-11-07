@@ -26,7 +26,8 @@
         "key": "ENG-12",
         "href": "sindri://linear/ENG-12"
       }
-    ]
+    ],
+    "postsFixThreads": false
   },
   "settings": {
     "name": "sindri",
@@ -39,7 +40,7 @@
   "strip": [
     {
       "panel": "requiredChecks",
-      "text": "3 open"
+      "text": "4 open"
     },
     {
       "panel": "docMap",
@@ -70,19 +71,19 @@
             "fixTask": true
           },
           {
-            "id": "doc-covers",
-            "title": "Names the design doc",
-            "need": "covers",
+            "id": "owner-ran-it",
+            "title": "I ran it myself",
+            "need": "manual",
             "status": "needsTick",
             "detail": null,
             "fixTask": false
           },
           {
-            "id": "changelog",
-            "title": "Changelog entry",
-            "need": "changedWith",
+            "id": "build",
+            "title": "Build passes",
+            "need": "ci",
             "status": "running",
-            "detail": "waiting on CI",
+            "detail": "build: no run on a1b2c3d yet",
             "fixTask": false
           },
           {
@@ -199,7 +200,7 @@
             "verifies": [
               "REQ-E4"
             ],
-            "ticked": true
+            "ticked": false
           }
         ]
       }
@@ -216,7 +217,7 @@
             "status": "completed",
             "conclusion": "failure",
             "sha7": "a1b2c3d",
-            "url": "https://github.com/acme/api/actions/runs/101"
+            "url": "https://github.com/acme/api/pull/2071/checks"
           },
           {
             "name": "lint",
@@ -224,7 +225,7 @@
             "status": "completed",
             "conclusion": "success",
             "sha7": "a1b2c3d",
-            "url": "https://github.com/acme/api/actions/runs/102"
+            "url": "https://github.com/acme/api/pull/2071/checks"
           }
         ],
         "babysitter": null
@@ -296,7 +297,7 @@
   "diff": {
     "state": "ready",
     "text": null,
-    "fileCount": 4,
+    "fileCount": 5,
     "capped": false,
     "groups": [
       {
@@ -313,7 +314,7 @@
             "patch": "@@ -10,3 +10,6 @@\n var a = 1;\n-var b = 2;\n+var b = 3;\n+var c = 4;\n+var d = 5;\n+var e = 6;",
             "omitted": null,
             "note": null,
-            "url": "https://github.com/acme/api/pull/2071/files#diff-1"
+            "url": "https://github.com/acme/api/pull/2071/files#diff-c9caa46e897ebd959356e3de000b36b256a0456caca9dae07644c61fbd5030b8"
           },
           {
             "path": "src/Api/A/A.Core/Budget.cs",
@@ -325,7 +326,7 @@
             "patch": "@@ -1,2 +1,2 @@\n-class Limit {}\n+class Budget {}",
             "omitted": null,
             "note": "Renamed from src/Api/A/A.Core/Limit.cs, 91% the same",
-            "url": "https://github.com/acme/api/pull/2071/files#diff-2"
+            "url": "https://github.com/acme/api/pull/2071/files#diff-d32153a3d4805fbd2ac49606df96c56852d82fa3736a8cebb934ad95e41bbc2e"
           },
           {
             "path": "src/Api/A/A.Core/Old.cs",
@@ -337,7 +338,19 @@
             "patch": "@@ -1,3 +0,0 @@\n-class Old {}\n-// legacy\n-// removed",
             "omitted": "deleted",
             "note": "Deleted file: 61 lines removed. Contents hidden.",
-            "url": "https://github.com/acme/api/pull/2071/files#diff-4"
+            "url": "https://github.com/acme/api/pull/2071/files#diff-60055ef17e223461bb68806bf7e5fd98866ec343796d4e545616cc4ba8ef209b"
+          },
+          {
+            "path": "src/Api/Migrations/0042_retry.sql",
+            "status": "added",
+            "previousPath": null,
+            "similarity": null,
+            "additions": 2,
+            "deletions": 0,
+            "patch": "@@ -0,0 +1,2 @@\n+alter table retry add column budget int;\n+update retry set budget = 5;",
+            "omitted": null,
+            "note": null,
+            "url": "https://github.com/acme/api/pull/2071/files#diff-454bc01b4be1ea9b13a18e04dcda382e6466d7db577d58ab46d541a56a98d27a"
           }
         ]
       },
@@ -355,7 +368,7 @@
             "patch": null,
             "omitted": "binary",
             "note": "Binary file, not shown here.",
-            "url": "https://github.com/acme/api/pull/2071/files#diff-3"
+            "url": "https://github.com/acme/api/pull/2071/files#diff-2bec3859d529737e3b3b4a89205ed35e5db67851c7ee4c723c9aa102b9b02854"
           }
         ]
       }

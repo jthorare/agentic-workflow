@@ -23,6 +23,6 @@ public sealed class PrReplyEffectContract : BlockContract
     protected override IServiceProvider Compose() => ShippedComposition.Compose();
 
     protected override async Task InvokeAsync(CancellationToken cancellationToken) =>
-        _ = await new PrReplyEffect(new RecordingPulls(), new InMemoryFactStore(), new InMemoryPrCommentMarks(), TimeProvider.System, new IdentityScrubber(), new MergeRecord(new InMemoryRunArea(), TimeProvider.System))
+        _ = await new PrReplyEffect(new RecordingPulls(), new InMemoryFactStore(), new InMemoryPrCommentMarks(), TimeProvider.System, new IdentityScrubber(), new MergeRecord(new InMemoryRunArea(), TimeProvider.System), new Pr.RecordingFixItemCloser())
             .Dispatch(ShippedComposition.Effect("effect.pr.reply"), cancellationToken);
 }

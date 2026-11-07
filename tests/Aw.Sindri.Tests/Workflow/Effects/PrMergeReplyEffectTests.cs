@@ -30,6 +30,7 @@ public sealed class PrMergeReplyEffectTests
     private readonly InMemoryProfiles _profiles = new();
     private readonly InMemoryRunArea _area = new();
     private readonly InMemoryPrCommentMarks _marks = new();
+    private readonly Pr.RecordingFixItemCloser _closer = new();
     private readonly FakeTimeProvider _clock = new(KnownInstants.Epoch);
     private readonly PrRef _pr = new("forge.example", "acme/web", 7);
 
@@ -183,6 +184,48 @@ public sealed class PrMergeReplyEffectTests
         _ = await Reply().Dispatch(context, Token);
 
         Assert.Equal("none", Assert.Single((await _marks.Latest(_pr, Token)).Value).Outcome);
+    }
+
+    [Fact]
+    public async Task Fixed_on_a_sindri_fix_thread_closes_the_item_named_in_the_marker()
+    {
+        var context = await Context("effect.pr.reply", new Dictionary<string, string>(StringComparer.Ordinal) { ["form"] = "fixed", ["comment"] = """{"id":"c1","key":"t9","fixItem":"ITM-0123456789abcdef0123456789abcdef"}""", ["fix"] = """{"thread":"t9","commit":"abc1234"}""" });
+
+        _ = await Reply().Dispatch(context, Token);
+
+        Assert.Equal(["ITM-0123456789abcdef0123456789abcdef"], _closer.Closed);
+    }
+
+    [Fact]
+    public async Task Fixed_on_an_ordinary_thread_closes_nothing()
+    {
+        var context = await Context("effect.pr.reply", new Dictionary<string, string>(StringComparer.Ordinal) { ["form"] = "fixed", ["comment"] = """{"id":"c1","key":"t9"}""", ["fix"] = """{"thread":"t9","commit":"abc1234"}""" });
+
+        _ = await Reply().Dispatch(context, Token);
+
+        Assert.Empty(_closer.Closed);
+    }
+
+    [Fact]
+    public async Task A_fix_item_that_will_not_close_does_not_fail_the_loop()
+    {
+        _closer.Answer = false;
+        var context = await Context("effect.pr.reply", new Dictionary<string, string>(StringComparer.Ordinal) { ["form"] = "fixed", ["comment"] = """{"id":"c1","key":"t9","fixItem":"ITM-0123456789abcdef0123456789abcdef"}""", ["fix"] = """{"thread":"t9","commit":"abc1234"}""" });
+
+        var done = await Reply().Dispatch(context, Token);
+
+        Assert.True(done.IsSuccess);
+        Assert.Equal("fixed", Assert.Single((await _marks.Latest(_pr, Token)).Value).Outcome);
+    }
+
+    [Fact]
+    public async Task Hold_on_a_sindri_fix_thread_leaves_the_item_open()
+    {
+        var context = await Context("effect.pr.reply", new Dictionary<string, string>(StringComparer.Ordinal) { ["form"] = "hold", ["comment"] = """{"id":"c1","key":"t9","fixItem":"ITM-0123456789abcdef0123456789abcdef"}""", ["reason"] = """{"reason":"waiting"}""" });
+
+        _ = await Reply().Dispatch(context, Token);
+
+        Assert.Empty(_closer.Closed);
     }
 
     [Fact]
@@ -341,7 +384,7 @@ public sealed class PrMergeReplyEffectTests
         public string Scrub(string text) => text.Replace(Hidden, "[masked]", StringComparison.Ordinal);
     }
 
-    private PrReplyEffect Reply() => new(_pulls, _facts, _marks, _clock, new Mask(), Record);
+    private PrReplyEffect Reply() => new(_pulls, _facts, _marks, _clock, new Mask(), Record, _closer);
 
     private PrCommentMark Marked(string comment, string outcome, string commit, string effect) =>
         new(_pr, PrCommentId.From(comment), EditedAt: null, InstanceAddress.From("T-4/pr/1"), outcome, Reason: null, commit, KnownInstants.Epoch, effect);
