@@ -143,7 +143,7 @@ public sealed class ChangeLinearIssueTests
         Assert.Null(answer.Conflict);
         Expect.Equal(("applied", null, null), (applied.Outcome, applied.Warning, applied.AlreadyApplied));
         Expect.Equal("ENG-12", applied.Issue.Key);
-        Expect.Equal(["Live", "Change"], _writes.Calls.Select(static c => c.Method).ToArray());
+        Expect.Sequence(["Live", "Change"], _writes.Calls.Select(static c => c.Method));
         var change = _writes.Calls[1].Change!;
         Expect.Equal(Review, change.StateId.Value.Value);
         Assert.False(change.Title.IsSet || change.Description.IsSet || change.LabelIds.IsSet);
@@ -191,7 +191,7 @@ public sealed class ChangeLinearIssueTests
     [Fact]
     public async Task Fields_linear_still_has_as_the_sheet_opened_them_are_no_conflict_whatever_the_label_order()
     {
-        _writes.SetLive(Live(labels: [Api, Bug]));
+        _writes.SetLive(Live(description: null, labels: [Api, Bug]));
 
         var answer = await Ok(Edit("ENG-12", $$"""{"labelIds":["{{Bug}}","{{Api}}"],"description":""}""", $$"""{"labelIds":["{{Bug}}"],"description":"New text"}"""));
 
