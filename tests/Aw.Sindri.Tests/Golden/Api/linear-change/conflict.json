@@ -3,7 +3,6 @@
   "title": "SND-LINEAR-409",
   "status": 409,
   "detail": "ENG-12 changed in Linear at 10:01; nothing was sent (fix: review the fields below, then save yours anyway or take Linear's)",
-  "traceId": "<trace>",
   "changedAt": "2026-01-01T10:01:00.0000000Z",
   "fields": [
     {
@@ -66,7 +65,7 @@
       "id": "00000000-0000-4000-8000-0000000000a1",
       "name": "Joi Example"
     },
-    "description": "The sync worker retries forever on a 500. Cap it at 5 tries per hour.\n\nSee https://example.com/runbooks/sync and the graph ![p95](https://example.com/p95.png).\nOld link: sindri://items/ITM-0192a1b2c3d4e5f6a7b8c9d0e1f2a301",
+    "description": "The sync worker retries forever on a 500. Cap it at 5 tries per hour.",
     "comments": [
       {
         "id": "00000000-0000-4000-8000-0000000000f2",
@@ -94,5 +93,6 @@
       "allowed": true,
       "code": null
     }
-  }
+  },
+  "traceId": "<trace>"
 }

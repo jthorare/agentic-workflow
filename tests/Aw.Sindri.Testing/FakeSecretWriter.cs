@@ -27,6 +27,21 @@ public sealed class FakeSecretWriter : ISecretWriter, ISecretPointers
     }
 
     /// <inheritdoc />
+    public Result<SecretPointer> StoreInKeychain(string service, string account, string secret) => Store(service, account, secret);
+
+    /// <inheritdoc />
+    public Result<Unit> DeleteFromKeychain(string service, string account)
+    {
+        if (Fails)
+        {
+            return SindriErrors.SecretNotStored.With("the keychain would not delete the key");
+        }
+
+        _ = Stored.Remove($"keychain:{service}/{account}");
+        return Unit.Value;
+    }
+
+    /// <inheritdoc />
     public Result<SecretPointer> StoreInFile(string service, string account, string secret)
     {
         if (Fails)

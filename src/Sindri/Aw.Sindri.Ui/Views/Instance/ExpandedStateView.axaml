@@ -26,6 +26,35 @@
                    IsHitTestVisible="False" Text="{Binding StatusCopy.Announcement}" />
       </Grid>
       <comp:TakeoverBannerView x:Name="ExpandedTakeoverBanner" DataContext="{Binding TakeoverBanner}" />
+      <!-- A skill block's card (skill flows spec 5.2): the block's sentence, its state as a word, the question wrapped, the outcome in words, outputs as paths, the loop round and the cost.
+           The waiting text is said once through a zero-width polite live region; Take over is the sheet's own. -->
+      <Panel x:Name="SkillCardPanel" IsVisible="{Binding HasSkillCard}">
+        <Border x:Name="SkillCard" Classes="frame-panel" DataContext="{Binding SkillCard}" x:DataType="inst:SkillCardViewModel">
+          <StackPanel Spacing="6">
+            <TextBlock x:Name="SkillCardAnnouncement" Classes="caption live-region" Classes.live="{Binding Voice.IsAnnouncing}" Width="0" Opacity="0" IsHitTestVisible="False" Text="{Binding Voice.Announcement}" />
+            <TextBlock x:Name="SkillCardSentence" Classes="body" Text="{Binding Sentence}" TextWrapping="Wrap" />
+            <TextBlock x:Name="SkillCardState" Classes="body-strong" Text="{Binding StateWord}" />
+            <SelectableTextBlock x:Name="SkillCardHeadline" Classes="body" Text="{Binding Headline}" IsVisible="{Binding HasHeadline}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Headline}" />
+            <Expander x:Name="SkillCardDetails" Header="{Binding DetailsHeading}" IsVisible="{Binding HasDetails}">
+              <SelectableTextBlock x:Name="SkillCardDetailsText" Classes="caption mono" Text="{Binding Details}" TextWrapping="Wrap" />
+            </Expander>
+            <TextBlock x:Name="SkillCardOutcome" Classes="body" Text="{Binding Outcome}" IsVisible="{Binding HasOutcome}" TextWrapping="Wrap" />
+            <ItemsControl x:Name="SkillCardOutputs" ItemsSource="{Binding Outputs}" IsVisible="{Binding HasOutputs}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="inst:SkillOutput">
+                  <WrapPanel Orientation="Horizontal" Margin="0,0,0,4">
+                    <TextBlock Name="SkillOutputPath" Classes="caption mono" Text="{Binding Path}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <Button Name="SkillOutputOpen" Content="Open" Click="OnOpenSkillOutput" Margin="0,0,8,0" AutomationProperties.Name="{Binding Path, StringFormat='Open {0}'}" />
+                    <Button Name="SkillOutputCopy" Classes="copy" Content="Copy path" Click="OnCopySkillOutput" AutomationProperties.Name="{Binding Path, StringFormat='Copy path {0}'}" />
+                  </WrapPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock x:Name="SkillCardRound" Classes="caption mono" Text="{Binding RoundLine}" IsVisible="{Binding HasRound}" />
+            <TextBlock x:Name="SkillCardCost" Classes="caption mono" Text="{Binding CostLine}" />
+          </StackPanel>
+        </Border>
+      </Panel>
       <TextBlock x:Name="ExpandedNext" Classes="body" Text="{Binding Next}" IsVisible="{Binding HasNext}" TextWrapping="Wrap" />
       <TextBlock x:Name="ExpandedPaused" Classes="caption mono" Text="{Binding PausedLine}" IsVisible="{Binding IsPaused}" TextWrapping="Wrap" />
       <TextBlock x:Name="ExpandedDrift" Classes="caption mono" Text="{Binding DriftLine}" IsVisible="{Binding HasDrift}" TextWrapping="Wrap" />

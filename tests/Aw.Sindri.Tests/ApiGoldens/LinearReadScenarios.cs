@@ -42,7 +42,7 @@ internal static class LinearReadScenarios
     }
 
     /// <summary>
-    /// The facts a scenario's host answers with. 'linear-since/three' (still pending in <see cref="LinearScenarios"/> until its golden is re-recorded with the real marker) is Sam Lee's assignment of ENG-31, a mention
+    /// The facts a scenario's host answers with. 'linear-since/three' is Sam Lee's assignment of ENG-31, a mention
     /// on ENG-12 and ENG-12's move from Todo to In Progress; Context keeps no actor for an assignment or a state move, so only the mention has one, as the real adapter answers.
     /// </summary>
     internal static FakeLinearSideFacts Facts(string slug, string scenario)
