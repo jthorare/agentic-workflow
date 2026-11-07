@@ -11,6 +11,9 @@ public sealed class FakeLinearLookups : ILinearLookups
     /// <summary>What the lookups answer.</summary>
     public Result<IReadOnlyList<LinearTeamLookups>> Answer { get; set; } = Array.Empty<LinearTeamLookups>();
 
+    /// <summary>What the workspace URL key read answers.</summary>
+    public Result<string?> UrlKeyAnswer { get; set; } = Results.Success<string?>(value: null);
+
     /// <summary>Runs at the start of every fetch, before it answers (a test looks at what the tick had done by then).</summary>
     public Action? OnFetch { get; set; }
 
@@ -24,5 +27,12 @@ public sealed class FakeLinearLookups : ILinearLookups
         _ = Interlocked.Increment(ref _calls);
         OnFetch?.Invoke();
         return ValueTask.FromResult(Answer);
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<string?>> FetchWorkspaceUrlKey(LinearSettings settings, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        return ValueTask.FromResult(UrlKeyAnswer);
     }
 }

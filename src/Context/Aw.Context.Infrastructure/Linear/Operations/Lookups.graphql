@@ -4,8 +4,8 @@ query Lookups($filter: TeamFilter, $first: Int, $after: String) {
       id key name
       states(first: 100) { nodes { id name type position } }
       cycles(first: 50) { nodes { id number name startsAt endsAt } }
-      members(first: 250) { nodes { id name displayName active } }
-      labels(first: 250) { nodes { id name } }
+      members(first: 250, includeDisabled: true) { nodes { id name displayName active } }
+      labels(first: 250) { nodes { id name color } }
     }
     pageInfo { hasNextPage endCursor }
   }

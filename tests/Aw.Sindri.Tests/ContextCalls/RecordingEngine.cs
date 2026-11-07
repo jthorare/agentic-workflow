@@ -113,6 +113,8 @@ internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller 
 
     public ValueTask<Result<IReadOnlyList<LinearCommentRow>>> IssueComments(RecordKey key, ContextScope scope, CancellationToken cancellationToken) => inner.IssueComments(key, scope, cancellationToken);
 
+    public ValueTask<Result<string?>> WorkspaceUrlKey(ContextScope scope, CancellationToken cancellationToken) => inner.WorkspaceUrlKey(scope, cancellationToken);
+
     public ValueTask<Result<LinearTeamLookups?>> IssueLookups(string team, ContextScope scope, CancellationToken cancellationToken) => inner.IssueLookups(team, scope, cancellationToken);
 
     public ValueTask<Result<LinearSince>> IssueSince(DateTimeOffset marker, ExternalId viewer, ContextScope scope, CancellationToken cancellationToken) => inner.IssueSince(marker, viewer, scope, cancellationToken);

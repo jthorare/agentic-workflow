@@ -20,7 +20,7 @@ await using var linear = await FakeLinear.Start(seed => seed
 
 ## What it serves
 
-- Queries (answered from state): `viewer`, `issues` (filter, first, after, orderBy, includeArchived; newest first, archived
+- Queries (answered from state): `viewer`, `organization` (`urlKey` "fixture"), `issues` (filter, first, after, orderBy, includeArchived; newest first, archived
   issues hidden unless `includeArchived: true`), `comment(id:)` (by id; null-and-error "Entity not found" when there is none), `issue(id:)` (by id, identifier, or an identifier the issue had before a team
   move), `comments` (newest first; filter by `issue: { team: { key } }`), `teams` (each with `states`, `cycles`, `members` and `labels` connections, for the lookups step), `users`, `issueLabels` (each with its `team`, null for a workspace label), `workflowStates`, `cycles`, `projects`, empty `documents` and `projectUpdates`.
   A field the fake doesn't have is a 400 that names it.

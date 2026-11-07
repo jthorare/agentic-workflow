@@ -9,7 +9,7 @@ namespace Aw.Sindri.Ui.Tests.Linear;
 [Lane(TestLane.Unit)]
 public sealed class LinearSinceStripTests
 {
-    private const string Marker = "lin_000000000000003f";
+    private static readonly string _marker = (string)GoldenFiles.Node("linear-since", "three")["marker"]!;   // why: api re-records the marker as an opaque value
 
     private readonly LinearFixture _f = new();
 
@@ -78,7 +78,7 @@ public sealed class LinearSinceStripTests
 
         await work.Dismiss();
 
-        Assert.Equal((Marker, false, 0), ((await _f.Prefs.Load(Token)).LinearSince, work.ShowsStrip, work.NewCount));
+        Assert.Equal((_marker, false, 0), ((await _f.Prefs.Load(Token)).LinearSince, work.ShowsStrip, work.NewCount));
     }
 
     [Fact]
@@ -112,7 +112,7 @@ public sealed class LinearSinceStripTests
         next.SetShown(shown: true);
         await next.Refresh(LinearFixture.Url, Token);
 
-        Assert.Equal([null, Marker, Marker], _f.Server.LinearSinceAfters);
+        Assert.Equal([null, _marker, _marker], _f.Server.LinearSinceAfters);
     }
 
     [Fact]
