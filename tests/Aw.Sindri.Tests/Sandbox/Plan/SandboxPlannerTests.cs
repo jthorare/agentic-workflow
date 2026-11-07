@@ -226,6 +226,19 @@ public sealed class SandboxPlannerTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void An_approved_GitHub_ask_changes_the_plan_hash_and_an_unapproved_one_does_not()
+    {
+        var asking = Req.WriteScope with { Policy = new StepPolicy([], StepPermissionMode.Default, Req.Worktree, Github: GithubCredentials.AgentApp) };
+
+        var none = PlanHasher.Hash(Build(Req.WriteScope), []);
+        var approved = PlanHasher.Hash(Build(asking with { GithubPushApproved = true }), []);
+        var unapproved = PlanHasher.Hash(Build(asking), []);
+
+        Assert.NotEqual(none, approved, StringComparer.Ordinal);
+        Assert.Equal(none, unapproved, StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void Missing_sandbox_section_uses_defaults()
     {
         var plan = Build(Req.WriteScope);
