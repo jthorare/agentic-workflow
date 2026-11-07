@@ -23,6 +23,10 @@ internal sealed partial class ReviewFixSheetView : UserControl
                         Dispatcher.UIThread.Post(MoveFocus, DispatcherPriority.Loaded);
                     }
                 };
+                if (sheet.IsOpen)
+                {
+                    Dispatcher.UIThread.Post(MoveFocus, DispatcherPriority.Loaded);   // the first open builds this view after Open set Focus: that change came before the handler
+                }
             }
         };
     }
