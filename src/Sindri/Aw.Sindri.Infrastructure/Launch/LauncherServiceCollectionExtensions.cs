@@ -76,7 +76,7 @@ internal static class LauncherServiceCollectionExtensions
             OtherHosts = [t3],
             BuiltinHash = builtinHash,
             Approved = Approved(sp),
-            ReviewCredentialVariable = ReviewCredential(sp),
+            ReviewCredentialVariables = ReviewCredentials(sp),
             McpFor = McpTargetFor(sp),
             Config = () => catalog.Current,
             Models = sp.GetRequiredService<IModelCatalog>(),
@@ -147,13 +147,40 @@ internal static class LauncherServiceCollectionExtensions
         return latest.IsError ? null : latest.Value?.Profile.Agents;
     };
 
-    internal static Func<CancellationToken, ValueTask<string?>> ReviewCredential(IServiceProvider sp) => async ct =>
+    // Both profiles: an unapproved live 'review.credential: env:X' must not reach a Step either. A profile that can't be read is warned about and the other one still scrubs.
+    internal static Func<CancellationToken, ValueTask<IReadOnlyList<string>>> ReviewCredentials(IServiceProvider sp) => async ct =>
     {
-        var latest = await sp.GetRequiredService<IApprovedProfile>().Latest(ct).ConfigureAwait(false);
-        return latest.IsError || latest.Value?.Profile.Review is not { Credential: { } pointer } review || !pointer.StartsWith("env:", StringComparison.Ordinal)
-            ? null
-            : PrReviewRules.CredentialVariable(review);   // null for a 'command:' pointer, no block or an unreadable profile; the default variable is already in the fixed list
+        var names = new List<string>();
+        var approved = await sp.GetRequiredService<IApprovedProfile>().Latest(ct).ConfigureAwait(false);
+        if (approved.IsError)
+        {
+            WarnUnreadable("approved", approved.Error.Message);
+        }
+        else if (CredentialName(approved.Value?.Profile) is { } fromApproved)
+        {
+            names.Add(fromApproved);
+        }
+
+        var live = await sp.GetRequiredService<IProfileSource>().Load(ct).ConfigureAwait(false);
+        if (live.IsError)
+        {
+            WarnUnreadable("live", live.Error.Message);
+        }
+        else if (CredentialName(live.Value.Profile) is { } fromLive && !names.Contains(fromLive, StringComparer.Ordinal))
+        {
+            names.Add(fromLive);
+        }
+
+        return names;
     };
+
+    // null for a 'command:' pointer or no block; the default variable is already in the fixed list.
+    private static string? CredentialName(SindriProfile? profile) =>
+        profile?.Review is { Credential: { } pointer } review && pointer.StartsWith("env:", StringComparison.Ordinal) ? PrReviewRules.CredentialVariable(review) : null;
+
+    private static void WarnUnreadable(string which, string message) =>
+        Console.Error.WriteLine("{\"level\":\"warn\",\"source\":\"sindri.launch\",\"message\":\"" + System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(
+            $"the {which} profile can't be read, so its review.credential variable isn't scrubbed from the Step's environment: {message}") + "\"}");
 
     private static DetectionInputs Detection(IServiceProvider sp, Func<string, string?> environment) =>
         new(environment, ViewerProcess.OnLoginPath, async ct => (await Create(sp, environment, new ViewerSection("warp")).Probe(ct).ConfigureAwait(false)).Present, TerminalTemplates.Load());

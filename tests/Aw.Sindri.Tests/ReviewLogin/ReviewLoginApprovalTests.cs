@@ -29,4 +29,19 @@ public sealed class ReviewLoginApprovalTests
         Assert.Equal(["review.login"], ProfileDiff.Between(approved.Profile, live.Profile));   // the diff alone would have passed it
         Assert.Equal(approvedBefore, approved.Hash);
     }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task An_all_digit_login_is_saved_quoted_and_read_back_as_the_same_string()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var host = await GoldenHost.Start(temporary: true, ct);
+        await ViewScenarios.Approve(host, ct);
+
+        var answer = await host.Http.Ask(Post(Route, """{"login":"12345"}""", ItemScenarios.Human(host)));
+
+        Assert.Contains("\"approved\":true", answer.Body, StringComparison.Ordinal);
+        Assert.Contains("login: \"12345\"", await File.ReadAllTextAsync(Path.Combine(host.Home, "profile", "profile.yaml"), ct), StringComparison.Ordinal);
+        var live = (await host.App.Services.GetRequiredService<IProfileSource>().Load(ct)).Value;
+        Assert.Equal("12345", live.Profile.Review?.Login);
+    }
 }
