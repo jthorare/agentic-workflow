@@ -56,11 +56,6 @@ internal sealed class LibraryFeedRig : IDisposable
 
     public void Dispose()
     {
-        foreach (var file in Directory.EnumerateFiles(_folder, "*", SearchOption.AllDirectories))
-        {
-            File.SetAttributes(file, FileAttributes.Normal);
-        }
-
         Directory.Delete(_folder, recursive: true);
     }
 
