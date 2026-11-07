@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launch.Argv;
 using Aw.Sindri.Core.Sandbox.Plan;
+using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Engine;
 
 namespace Aw.Sindri.Infrastructure.Launch;
@@ -250,7 +251,7 @@ internal sealed partial class Launcher
 
         if (prBranch is not null)
         {
-            env[PrHeadFetch.BranchVariable] = prBranch;   // the branch the host fetched the PR head to; the session reads it with git
+            env[PrReference.BranchVariable] = prBranch;   // the branch the host fetched the PR head to; the session reads it with git
         }
 
         if (request.Attended || request.Step is null)

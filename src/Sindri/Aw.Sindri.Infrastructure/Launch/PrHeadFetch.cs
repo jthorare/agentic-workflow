@@ -4,7 +4,6 @@ using Aw.Redaction;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Skills;
-using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Infrastructure.Workflow;
 
 namespace Aw.Sindri.Infrastructure.Launch;
@@ -15,9 +14,6 @@ namespace Aw.Sindri.Infrastructure.Launch;
 /// </summary>
 internal static class PrHeadFetch
 {
-    /// <summary>The environment variable that names the fetched branch for the session.</summary>
-    internal const string BranchVariable = "AW_SINDRI_PR_REF";
-
     /// <summary>Fetches the PR head the request names.</summary>
     /// <param name="request">The launch.</param>
     /// <param name="cancellationToken">Cancels the fetch.</param>
@@ -25,7 +21,7 @@ internal static class PrHeadFetch
     internal static async ValueTask<Result<FetchedPr?>> For(LaunchRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (request is not { Attended: false, Skill: { } skill, Instance: { } instance, Run: { } run } || !skill.Inputs.TryGetValue(PrReference.InputKey, out var input))
+        if (PrReference.BranchFor(request) is not { } branch || request.Skill?.Inputs.GetValueOrDefault(PrReference.InputKey) is not { } input)
         {
             return Results.Success<FetchedPr?>(value: null);
         }
@@ -36,7 +32,6 @@ internal static class PrHeadFetch
             return number.Error;
         }
 
-        var branch = PrReference.BranchOf(WorkflowInstanceId.Of(instance), run.Number);
         var fetched = await GitProcess.Run(request.RepoPath, ["fetch", "--quiet", "origin", PrReference.Refspec(number.Value, branch)], cancellationToken).ConfigureAwait(false);
         if (fetched.Exit != 0)
         {

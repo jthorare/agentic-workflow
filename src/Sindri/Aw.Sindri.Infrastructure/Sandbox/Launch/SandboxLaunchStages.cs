@@ -63,11 +63,22 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
         };
     }
 
-    // The skill block's variables: AW_DIR is computed here, once, from the repo's origin remote, the way skills/_shared/repo-slug.sh would (D8).
-    private async ValueTask<IReadOnlyDictionary<string, string>?> SkillEnvironment(LaunchRequest request, string run, CancellationToken cancellationToken) =>
-        request is { Attended: false, Skill: { } skill }
-            ? SkillLaunchEnv.For(skill.Skill, request.Launch, run, inputs.Host().StateDir, SkillLaunchEnv.RepoSlugOf(await inputs.OriginRemote(request.RepoPath, cancellationToken).ConfigureAwait(false), request.RepoPath))
-            : null;
+    // The skill block's variables: AW_DIR is computed here, once, from the repo's origin remote, the way skills/_shared/repo-slug.sh would (D8). A 'pr' input adds the branch PrHeadFetch fetched the PR head to, which the cleared sandbox environment would otherwise lose.
+    private async ValueTask<IReadOnlyDictionary<string, string>?> SkillEnvironment(LaunchRequest request, string run, CancellationToken cancellationToken)
+    {
+        if (request is not { Attended: false, Skill: { } skill })
+        {
+            return null;
+        }
+
+        var env = new Dictionary<string, string>(SkillLaunchEnv.For(skill.Skill, request.Launch, run, inputs.Host().StateDir, SkillLaunchEnv.RepoSlugOf(await inputs.OriginRemote(request.RepoPath, cancellationToken).ConfigureAwait(false), request.RepoPath)), StringComparer.Ordinal);
+        if (PrReference.BranchFor(request) is { } branch)
+        {
+            env[PrReference.BranchVariable] = branch;
+        }
+
+        return env;
+    }
 
     // What a launch needs before a plan is worth building: its login, a skill launch's two checks (SND-SKILL-005 and -007: the Step fails before any session starts), and the agent token.
     private async ValueTask<Result<PreparedLogin>> Admit(LaunchRequest request, SandboxSettings? settings, RepoName repo, CancellationToken cancellationToken)

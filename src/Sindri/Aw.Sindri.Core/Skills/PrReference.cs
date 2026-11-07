@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Aw.Kernel;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Workflow.Engine;
 
 namespace Aw.Sindri.Core.Skills;
@@ -35,6 +36,17 @@ public static partial class PrReference
     /// <param name="runNumber">The Step run's number.</param>
     /// <returns>The branch name, without 'refs/heads/'.</returns>
     public static string BranchOf(WorkflowInstanceId instance, int runNumber) => string.Create(CultureInfo.InvariantCulture, $"sindri/{instance.Value}/{runNumber}/pr");
+
+    /// <summary>The branch a launch's PR head is fetched to: set for an unattended skill Step with a 'pr' input, null for any other launch. The one condition the fetch and the sandbox environment share.</summary>
+    /// <param name="request">The launch.</param>
+    /// <returns>The branch, or null.</returns>
+    public static string? BranchFor(LaunchRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return request is { Attended: false, Skill: { } skill, Instance: { } instance, Run: { } run } && skill.Inputs.ContainsKey(InputKey)
+            ? BranchOf(WorkflowInstanceId.Of(instance), run.Number)
+            : null;
+    }
 
     /// <summary>The fetch refspec: the PR's head on origin to <paramref name="branch"/>, forced, so a second run of the same namespace re-reads a force-pushed PR.</summary>
     /// <param name="number">The PR number.</param>
