@@ -1,0 +1,18 @@
+mutation AttachmentLinkUrl($issueId: String!, $url: String!, $title: String) {
+  attachmentLinkURL(issueId: $issueId, url: $url, title: $title) {
+    success
+    attachment {
+      id
+      issue {
+        id identifier title description updatedAt priority estimate
+        state { id name type }
+        team { id key }
+        assignee { id }
+        cycle { id }
+        project { id }
+        parent { id identifier }
+        labels { nodes { id } }
+      }
+    }
+  }
+}

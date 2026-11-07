@@ -1,0 +1,18 @@
+mutation CommentCreate($input: CommentCreateInput!) {
+  commentCreate(input: $input) {
+    success
+    comment {
+      id
+      issue {
+        id identifier title description updatedAt priority estimate
+        state { id name type }
+        team { id key }
+        assignee { id }
+        cycle { id }
+        project { id }
+        parent { id identifier }
+        labels { nodes { id } }
+      }
+    }
+  }
+}
