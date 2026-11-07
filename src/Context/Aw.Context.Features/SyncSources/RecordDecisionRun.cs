@@ -103,9 +103,13 @@ internal sealed partial class RecordDecisionRun(SourceId source, VisibleMap map,
         }
     }
 
+    // why: a library root the profile did not opt in is never shown to a model (D13), and an owner-only doc is never turned into decisions a session's scoped map would quote
+    private bool MayDecide(StoredRecord r) =>
+        r.RemovedAt is null && !r.Blocked && !r.Audience.IsOwner() && LibrarySource.ModelMayRead(r.Source, r.Key, context.Settings.LibraryModelRoots);
+
     private async ValueTask<string?> Page(IReadOnlyList<StoredRecord> page, (Dictionary<string, string> Done, Dictionary<string, IntentRecord> Known) seen, CancellationToken cancellationToken)
     {
-        foreach (var stored in page.Where(r => r.RemovedAt is null && !r.Blocked && LibrarySource.ModelMayRead(r.Source, r.Key, context.Settings.LibraryModelRoots)))   // why: a library root the profile did not opt in is never shown to a model (D13)
+        foreach (var stored in page.Where(MayDecide))
         {
             if (seen.Done.TryGetValue(stored.Key.Value, out var version) && string.Equals(version, stored.Version.Value, StringComparison.Ordinal))
             {
