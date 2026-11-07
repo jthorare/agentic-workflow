@@ -801,6 +801,24 @@
       "confirm": null
     },
     {
+      "action": "ListLinearTeams",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/linear/connection/teams",
+      "cli": "sindri index connect linear",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "OnboardRepo",
       "class": "job",
       "allowedCallers": [
@@ -1108,6 +1126,24 @@
       "cli": "sindri services run context-map-refresh",
       "ui": "ready",
       "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "RemoveLinearWriteKey",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "DELETE",
+      "route": "/sindri/linear/connection/write",
+      "cli": "sindri profile set context.sources.linear.writeToken <pointer>",
+      "ui": "ready",
+      "destructive": true,
       "readsViews": false,
       "shortcut": null,
       "confirm": null
@@ -1446,6 +1482,24 @@
       "method": "POST",
       "route": "/sindri/services/{name}/run",
       "cli": "sindri services run <name>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "SaveLinearConnection",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/linear/connection",
+      "cli": "sindri index connect linear",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,

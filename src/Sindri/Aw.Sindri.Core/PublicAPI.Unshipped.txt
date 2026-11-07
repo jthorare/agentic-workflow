@@ -23115,8 +23115,6 @@ static readonly Aw.Sindri.Core.SindriErrors.LinearNothingStored -> Aw.Kernel.Err
 static readonly Aw.Sindri.Core.SindriErrors.LinearTeamNotPicked -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.LinearNoAnswer -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.LinearNoKeychain -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Sindri.Core.SindriErrors.LinearNothingStored -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Sindri.Core.SindriErrors.LinearTeamNotPicked -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.LinearWriteKeySameAsRead -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Reviews.IFixTaskFiles
 Aw.Sindri.Core.Reviews.IFixTaskFiles.Add(string! head, Aw.Sindri.Core.Ids.ItemId item, int pr, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
