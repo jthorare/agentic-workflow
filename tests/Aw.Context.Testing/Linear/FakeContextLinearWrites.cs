@@ -52,7 +52,7 @@ public sealed class FakeContextLinearWrites : IContextLinearWrites
         }
     }
 
-    /// <summary>Scripts the next write (Create, Change, Comment, EditComment or Attach) to end this way. Scripts are used in order, one per write.</summary>
+    /// <summary>Scripts the next write (Create, Change, Comment, EditComment or Attach) to end this way. Scripts are used in order, one per write. To answer an applied write that only the re-read found, script <see cref="NextFoundOnReread"/>.</summary>
     /// <param name="outcome">How the write ends.</param>
     public void Next(LinearWriteOutcome outcome)
     {
@@ -61,6 +61,14 @@ public sealed class FakeContextLinearWrites : IContextLinearWrites
         {
             _scripts.Enqueue(outcome);
         }
+    }
+
+    /// <summary>Scripts the next write to end Applied with this view and <see cref="LinearWriteApplied.FoundOnReread"/> true: Linear gave no answer and the re-read found the write.</summary>
+    /// <param name="stored">The issue as the re-read found and stored it.</param>
+    public void NextFoundOnReread(LinearIssueView stored)
+    {
+        ArgumentNullException.ThrowIfNull(stored);
+        Next(new LinearWriteApplied(stored) { FoundOnReread = true });
     }
 
     /// <summary>Scripts the next write to be refused with this error.</summary>
