@@ -21,6 +21,9 @@ internal sealed class LibraryRootReader(IReadOnlyList<string> githubRepos, IReco
 
     private readonly string _stamp = DesignDocParser.Stamp(scrubbers.Ruleset.Value);
 
+    // A doc's audience comes from the synced repos, so they are part of what a pass compared with: the cursor part is the listing's hash (16 characters), then this hash of the sorted repos (8).
+    private readonly string _repos = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join('\n', githubRepos.Select(static r => r.ToLowerInvariant()).Order(StringComparer.Ordinal)))))[..8];
+
     internal async ValueTask<Result<LibraryRootPass>> Run(LibraryRoot root, string? known, int room, CancellationToken cancellationToken)
     {
         var listing = LibraryWalker.List(root);
@@ -29,19 +32,19 @@ internal sealed class LibraryRootReader(IReadOnlyList<string> githubRepos, IReco
             return LibraryRootPass.Failed(root.Name, root.Path, problem);
         }
 
-        var fingerprint = Fingerprint(listing.Files);
+        var fingerprint = Fingerprint(listing.Files) + _repos;
         if (string.Equals(fingerprint, known, StringComparison.Ordinal))
         {
             return LibraryRootPass.Same(root.Name, root.Path, fingerprint);
         }
 
         var stored = await Stored(root.Name, cancellationToken).ConfigureAwait(false);
-        return stored.IsError ? stored.Error : Diff(root, listing.Files, stored.Value, fingerprint, room);
+        var reaudience = known is null || !known.EndsWith(_repos, StringComparison.Ordinal);   // the synced repos changed: every doc's audience is worked out again
+        return stored.IsError ? stored.Error : Diff(root, listing.Files, stored.Value, new Tally(room, reaudience), fingerprint);
     }
 
-    private LibraryRootPass Diff(LibraryRoot root, IReadOnlyList<LibraryFile> files, Dictionary<string, StoredRecord> stored, string fingerprint, int room)
+    private LibraryRootPass Diff(LibraryRoot root, IReadOnlyList<LibraryFile> files, Dictionary<string, StoredRecord> stored, Tally tally, string fingerprint)
     {
-        var tally = new Tally(room);
         foreach (var file in files)
         {
             Consider(root.Name, file, stored, tally);
@@ -60,7 +63,7 @@ internal sealed class LibraryRootReader(IReadOnlyList<string> githubRepos, IReco
         }
 
         var held = stored.TryGetValue(key, out var row);
-        if (held && Unchanged(row, file))
+        if (held && !tally.Reaudience && Unchanged(row, file))
         {
             _ = tally.Live.Add(key);
             return;
@@ -85,39 +88,46 @@ internal sealed class LibraryRootReader(IReadOnlyList<string> githubRepos, IReco
         else if (kind == LibraryAdmissionKind.Read)
         {
             _ = tally.Live.Add(key);
-            Admit(file, key, tally);
+            Admit(file, key, row, tally);
         }
     }
 
-    private void Admit(LibraryFile file, string key, Tally tally)
-    {
-        if (tally.Items.Count >= tally.Room)
-        {
-            tally.Cut = true;   // over the limit: the next pull carries on with what the store doesn't hold yet
-        }
-        else if (Item(file, key) is { } item)
-        {
-            tally.Items.Add(item);
-        }
-    }
-
-    private bool Unchanged(StoredRecord? row, LibraryFile file) =>
-        row?.UpdatedAt is { } at && at.ToUnixTimeMilliseconds() == file.Modified.ToUnixTimeMilliseconds() && string.Equals(row.Ruleset, _stamp, StringComparison.Ordinal);
-
-    private RecordItem? Item(LibraryFile file, string key)
+    // A file whose stored doc already holds its bytes, ruleset and audience is not emitted again, whatever its time says (rsync, a sync tool or a checkout touches files without editing them).
+    private void Admit(LibraryFile file, string key, StoredRecord? row, Tally tally)
     {
         var bytes = ReadUpTo(file.FullPath, DesignDocParser.MaxBytes + 1);
         if (bytes is null)
         {
-            return null;
+            return;   // vanished mid-pass: it is live if it was stored, and the next pass settles it
         }
 
         var text = Encoding.UTF8.GetString(bytes);
-        var repos = DesignDocParser.Parse(key, text).FrontMatter?.Repos ?? [];
-        return new RecordItem(
-            RecordKey.From(key), RecordKind.Doc, DocChunker.Title(text, file.Relative), text, Author: null, Url: null, State: null, StateRaw: null,
-            CreatedAt: null, file.Modified, ClosedAt: null, SourceVersion.From(Convert.ToHexStringLower(SHA256.HashData(bytes))), Links: [], Repo: null, ProfileAudiencePolicy.LibraryDoc(repos, githubRepos));
+        var sha = Convert.ToHexStringLower(SHA256.HashData(bytes));
+        var audience = ProfileAudiencePolicy.LibraryDoc(DesignDocParser.Parse(key, text).FrontMatter?.Repos ?? [], githubRepos);
+        if (row is not null && Current(row, sha, audience))
+        {
+            return;
+        }
+
+        if (tally.Items.Count >= tally.Room)
+        {
+            tally.Cut = true;   // over the limit: the next pull carries on with what the store doesn't hold yet
+        }
+        else
+        {
+            tally.Items.Add(Item(file, key, text, (sha, audience)));
+        }
     }
+
+    private bool Current(StoredRecord row, string sha, AudienceKey audience) =>
+        string.Equals(row.Version.Value, sha, StringComparison.Ordinal) && string.Equals(row.Ruleset, _stamp, StringComparison.Ordinal) && Equals(row.Audience, audience);
+
+    private bool Unchanged(StoredRecord? row, LibraryFile file) =>
+        row?.UpdatedAt is { } at && at.ToUnixTimeMilliseconds() == file.Modified.ToUnixTimeMilliseconds() && string.Equals(row.Ruleset, _stamp, StringComparison.Ordinal);
+
+    private static RecordItem Item(LibraryFile file, string key, string text, (string Sha, AudienceKey Audience) read) =>
+        new(RecordKey.From(key), RecordKind.Doc, DocChunker.Title(text, file.Relative), text, Author: null, Url: null, State: null, StateRaw: null,
+            CreatedAt: null, file.Modified, ClosedAt: null, SourceVersion.From(read.Sha), Links: [], Repo: null, read.Audience);
 
     private static string? Head(LibraryFile file)
     {
@@ -196,9 +206,11 @@ internal sealed class LibraryRootReader(IReadOnlyList<string> githubRepos, IReco
         }
     }
 
-    private sealed class Tally(int room)
+    private sealed class Tally(int room, bool reaudience)
     {
         internal int Room { get; } = room;
+
+        internal bool Reaudience { get; } = reaudience;
 
         internal HashSet<string> Live { get; } = new(StringComparer.Ordinal);
 
