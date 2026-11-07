@@ -48,10 +48,28 @@ public sealed class SourcesSettingsTests
         Assert.Equal(["SPL"], teamsOnly.LinearTeams, StringComparer.Ordinal);
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public void A_linear_writeback_key_is_accepted_without_a_value_check_because_the_profile_check_owns_it()
+    {
+        var read = Read("""{"sources":{"linear":{"token":"keychain:linear/work-read","writeback":"on","teams":["SPL"]}}}""");
+
+        Assert.True(read.IsSuccess, read.IsError ? read.Error.Message : "");
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_linear_write_token_is_read_beside_the_token()
+    {
+        var native = Read("""{"sources":{"linear":{"token":"keychain:linear/work-read","writeToken":"keychain:linear/work-write","teams":["SPL"]}}}""").Value;
+
+        Assert.Equal("keychain:linear/work-write", native.Linear!.WriteToken);
+    }
+
     [Theory, Trait("Lane", "unit")]
     [InlineData("""{"sources":{"linear":{"teams":["SPL"],"apiKey":"x"}}}""", "SND-CONTEXT-001", "context.sources.linear.apiKey:")]
     [InlineData("""{"sources":{"linear":{"teams":["SPL"],"url":"https://evil.example/graphql","token":"env:K"}}}""", "SND-CONTEXT-070", "context.sources.linear.url:")]
     [InlineData("""{"sources":{"linear":{"teams":["SPL"],"url":"https://api.linear.app/graphql"}}}""", "SND-CONTEXT-002", "context.sources.linear.token:")]
+    [InlineData("""{"sources":{"linear":{"teams":["SPL"],"token":"env:K","writeToken":"a-key-written-into-the-profile"}}}""", "SND-CONTEXT-002", "context.sources.linear.writeToken:")]
+    [InlineData("""{"sources":{"linear":{"teams":["SPL"],"writeToken":"keychain:linear/write"}}}""", "SND-CONTEXT-002", "context.sources.linear.token:")]
     [InlineData("""{"sources":[]}""", "SND-CONTEXT-001", "context.sources:")]
     [InlineData("""{"sources":{"linear":{"teams":["eng team"]}}}""", "SND-CONTEXT-001", "context.sources.linear.teams:")]
     [InlineData("""{"sources":{"linear":{"teams":["E"]}}}""", "SND-CONTEXT-001", "context.sources.linear.teams:")]   // one letter can't prefix an alias
