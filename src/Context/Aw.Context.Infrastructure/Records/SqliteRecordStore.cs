@@ -98,7 +98,7 @@ internal sealed partial class SqliteRecordStore(ContextDatabase database, IReadO
     public async ValueTask<Result<int>> RecordOutcome(SourceId source, SyncOutcome outcome, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(outcome);
-        return await Guarded(() => SaveOutcome(source, outcome, cancellationToken), "record the sync outcome").ConfigureAwait(false);
+        return await Guarded(() => SaveOutcome(source, outcome, cancellationToken), "record the sync outcome", cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<int>> SaveOutcome(SourceId source, SyncOutcome outcome, CancellationToken cancellationToken)
@@ -162,7 +162,7 @@ internal sealed partial class SqliteRecordStore(ContextDatabase database, IReadO
     }
 
     public async ValueTask<Result<int>> Purge(SourceId source, CancellationToken cancellationToken) =>
-        await Guarded(() => PurgeSource(source, cancellationToken), "purge").ConfigureAwait(false);
+        await Guarded(() => PurgeSource(source, cancellationToken), "purge", cancellationToken).ConfigureAwait(false);
 
     private async ValueTask<Result<int>> PurgeSource(SourceId source, CancellationToken cancellationToken)
     {

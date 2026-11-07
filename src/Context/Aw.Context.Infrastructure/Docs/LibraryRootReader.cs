@@ -20,6 +20,9 @@ internal sealed class LibraryRootReader(IReadOnlyList<string> githubRepos, IReco
 {
     private const int ListPage = 1000;
 
+    // A generated doc's version is 'g' + the sha256 of "<doc sha>:<packet.json sha>" (65 characters, inside SourceVersion's 128; the packet part is empty when none is beside it); a plain doc's is its sha. Hex has no 'g', so the marker tells them apart.
+    private const char GeneratedMark = 'g';
+
     private readonly string _stamp = DesignDocParser.Stamp(scrubbers.Ruleset.Value);
 
     // A doc's audience comes from the synced repos, so they are part of what a pass compared with: the cursor part is the listing's hash (16 characters), then this hash of the sorted repos (8).
@@ -150,8 +153,10 @@ internal sealed class LibraryRootReader(IReadOnlyList<string> githubRepos, IReco
 
         var text = Encoding.UTF8.GetString(bytes);
         var sha = Convert.ToHexStringLower(SHA256.HashData(bytes));
-        var audience = ProfileAudiencePolicy.LibraryDoc(DesignDocParser.Parse(key, text).FrontMatter?.Repos ?? [], githubRepos);
-        if (row is not null && Current(row, sha, audience))
+        var frontMatter = DesignDocParser.Parse(key, text).FrontMatter;
+        var audience = ProfileAudiencePolicy.LibraryDoc(frontMatter?.Repos ?? [], githubRepos);
+        var (version, packetSha) = Versioned(file, sha, frontMatter);
+        if (row is not null && Current(row, version, audience))
         {
             return;
         }
@@ -162,19 +167,32 @@ internal sealed class LibraryRootReader(IReadOnlyList<string> githubRepos, IReco
         }
         else
         {
-            tally.Items.Add(Item(file, key, text, (sha, audience)));
+            tally.Items.Add(Item(file, key, text, (version, audience), packetSha));
         }
     }
 
-    private bool Current(StoredRecord row, string sha, AudienceKey audience) =>
-        string.Equals(row.Version.Value, sha, StringComparison.Ordinal) && string.Equals(row.Ruleset, _stamp, StringComparison.Ordinal) && Equals(row.Audience, audience);
+    // A plain doc's version is its sha; a generated doc's also holds the sha of the packet.json beside it (empty when there is none), so a change to either is a new version.
+    private static (string Version, string? PacketSha) Versioned(LibraryFile file, string sha, DesignDocFrontMatter? frontMatter)
+    {
+        if (!GeneratedSource.IsGenerated(frontMatter))
+        {
+            return (sha, null);
+        }
 
+        var packetSha = file.Packet?.Sha256() ?? string.Empty;
+        return (GeneratedMark + Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(sha + ":" + packetSha))), packetSha.Length == 0 ? null : packetSha);
+    }
+
+    private bool Current(StoredRecord row, string version, AudienceKey audience) =>
+        string.Equals(row.Version.Value, version, StringComparison.Ordinal) && string.Equals(row.Ruleset, _stamp, StringComparison.Ordinal) && Equals(row.Audience, audience);
+
+    // why: a generated doc's version also holds its packet.json, whose edit leaves the doc's time alone, so the doc's time alone never settles it
     private bool Unchanged(StoredRecord? row, LibraryFile file) =>
-        row?.UpdatedAt is { } at && at.ToUnixTimeMilliseconds() == file.Modified.ToUnixTimeMilliseconds() && string.Equals(row.Ruleset, _stamp, StringComparison.Ordinal);
+        row is not null && !row.Version.Value.StartsWith(GeneratedMark) && row.UpdatedAt is { } at && at.ToUnixTimeMilliseconds() == file.Modified.ToUnixTimeMilliseconds() && string.Equals(row.Ruleset, _stamp, StringComparison.Ordinal);
 
-    private static RecordItem Item(LibraryFile file, string key, string text, (string Sha, AudienceKey Audience) read) =>
+    private static RecordItem Item(LibraryFile file, string key, string text, (string Version, AudienceKey Audience) read, string? packetSha) =>
         new(RecordKey.From(key), RecordKind.Doc, DocChunker.Title(text, file.Relative), text, Author: null, Url: null, State: null, StateRaw: null,
-            CreatedAt: null, file.Modified, ClosedAt: null, SourceVersion.From(read.Sha), Links: [], Repo: null, read.Audience);
+            CreatedAt: null, file.Modified, ClosedAt: null, SourceVersion.From(read.Version), Links: [], Repo: null, read.Audience, SourceSha256: packetSha);
 
     private static string? Head(LibraryFile file)
     {
@@ -220,6 +238,10 @@ internal sealed class LibraryRootReader(IReadOnlyList<string> githubRepos, IReco
         foreach (var file in files)
         {
             _ = text.Append('\n').Append(file.Relative).Append('|').Append(file.Size).Append('|').Append(file.Modified.ToUnixTimeMilliseconds());
+            if (file.Packet is { } packet)
+            {
+                _ = text.Append("|packet|").Append(packet.Size).Append('|').Append(packet.Modified.ToUnixTimeMilliseconds());
+            }
         }
 
         return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text.ToString())))[..16];
