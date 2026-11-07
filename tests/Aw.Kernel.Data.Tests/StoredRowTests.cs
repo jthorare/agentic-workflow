@@ -80,7 +80,7 @@ public sealed class StoredRowTests
     {
         using var db = new TempDatabase();
         await using var work = await Seeded(db);
-        var mapper = new Parsing(reader => SqliteRead.Parse<int>(reader, 1, int.Parse, table: "items", rowKey: reader.GetString(0)));
+        var mapper = new Parsing(reader => SqliteRead.Parse(reader, 1, int.Parse, table: "items", rowKey: reader.GetString(0)));
 
         var thrown = await Assert.ThrowsAsync<StoredRowException>(async () => await SqliteQueries.One(work, _select, mapper, Ct));
 
@@ -96,11 +96,11 @@ public sealed class StoredRowTests
     {
         using var db = new TempDatabase();
         await using var work = await Seeded(db);
-        var nulls = new Parsing(reader => SqliteRead.ParseOrNull<int>(reader, 0, int.Parse, "items"));
+        var nulls = new Parsing(reader => SqliteRead.ParseOrNull(reader, 0, int.Parse, "items"));
         var statement = new SqlStatement("SELECT NULL, '7'");
 
         var none = (await SqliteQueries.One(work, statement, nulls, Ct)).Value;
-        var seven = (await SqliteQueries.One(work, statement, new Parsing(reader => SqliteRead.ParseOrNull<int>(reader, 1, int.Parse, "items")), Ct)).Value;
+        var seven = (await SqliteQueries.One(work, statement, new Parsing(reader => SqliteRead.ParseOrNull(reader, 1, int.Parse, "items")), Ct)).Value;
 
         Assert.Null(none);
         Assert.Equal(7, seven);
