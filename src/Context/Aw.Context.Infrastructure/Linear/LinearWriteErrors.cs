@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using Aw.Context.Core.Linear;
 using Aw.Kernel;
 
@@ -13,8 +14,14 @@ internal sealed class LinearWriteErrors : LinearErrorSet
     public override Error KeyRefused(string address, string fix) => LinearHubErrors.WriteKeyRefused.With($"Linear at {address} refused the write key: it is missing, wrong, revoked or read-only. {fix}");
 
     /// <inheritdoc />
-    public override Error RateLimited(string address, string? resetHeader) =>
-        LinearHubErrors.RateLimited.With($"Linear's rate limit: try again after {Reset(resetHeader)}. Nothing was changed.");
+    public override Error RateLimited(string address, string? resetHeader)
+    {
+        var error = LinearHubErrors.RateLimited.With($"Linear's rate limit: try again after {Reset(resetHeader)}. Nothing was changed.");
+        return ResetAt(resetHeader) is { } at
+            // why: the round-trip form holds only digits and -:.Z, so the string literal needs no escaping
+            ? error.WithExtension("retryAfter", JsonDocument.Parse($"\"{at.UtcDateTime.ToString("O", CultureInfo.InvariantCulture)}\"").RootElement.Clone())
+            : error;
+    }
 
     /// <inheritdoc />
     public override Error ServerFailed(string address, string operation, int status) =>
@@ -45,8 +52,10 @@ internal sealed class LinearWriteErrors : LinearErrorSet
     }
 
     // The header is the time the window resets, in epoch milliseconds (UTC).
-    private static string Reset(string? header) =>
+    private static DateTimeOffset? ResetAt(string? header) =>
         long.TryParse(header, NumberStyles.None, CultureInfo.InvariantCulture, out var ms) && ms is > 0 and < 253_402_300_799_999
-            ? DateTimeOffset.FromUnixTimeMilliseconds(ms).ToString("HH:mm 'UTC'", CultureInfo.InvariantCulture)
-            : "a minute";
+            ? DateTimeOffset.FromUnixTimeMilliseconds(ms).ToUniversalTime()
+            : null;
+
+    private static string Reset(string? header) => ResetAt(header)?.ToString("HH:mm 'UTC'", CultureInfo.InvariantCulture) ?? "a minute";
 }

@@ -205,7 +205,7 @@ internal sealed class ContextLinearWrites(ILinearWrites writes, ILinearLiveReads
     {
         if (sent.IsSuccess)
         {
-            return await Store(scope, sent.Value, written, cancellationToken).ConfigureAwait(false);
+            return await Store(scope, sent.Value, written, foundOnReread: false, cancellationToken).ConfigureAwait(false);
         }
 
         if (sent.Error.Code != LinearHubErrors.NoAnswer.Code)
@@ -214,10 +214,10 @@ internal sealed class ContextLinearWrites(ILinearWrites writes, ILinearLiveReads
         }
 
         return await reread().ConfigureAwait(false) is { } found
-            ? await Store(scope, found, written, cancellationToken).ConfigureAwait(false)
+            ? await Store(scope, found, written, foundOnReread: true, cancellationToken).ConfigureAwait(false)
             : new LinearWriteUnknown();
     }
 
-    private async ValueTask<Result<LinearWriteOutcome>> Store(ContextScope scope, LinearIssueView issue, LinearWrittenFields written, CancellationToken cancellationToken) =>
-        await through.Store(scope, issue.Id, written, cancellationToken).ConfigureAwait(false) ? new LinearWriteApplied(issue) : new LinearWriteAppliedNotStored(issue);
+    private async ValueTask<Result<LinearWriteOutcome>> Store(ContextScope scope, LinearIssueView issue, LinearWrittenFields written, bool foundOnReread, CancellationToken cancellationToken) =>
+        await through.Store(scope, issue.Id, written, cancellationToken).ConfigureAwait(false) ? new LinearWriteApplied(issue) { FoundOnReread = foundOnReread } : new LinearWriteAppliedNotStored(issue);
 }

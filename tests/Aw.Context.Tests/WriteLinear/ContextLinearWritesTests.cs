@@ -214,9 +214,19 @@ public sealed class ContextLinearWritesTests
 
         var result = await Facade().Create(new LinearIssueDraft(ExternalId.From("team"), "A"), _clientId, Human(), Ct);
 
-        _ = Assert.IsType<LinearWriteApplied>(result.Value);
+        Assert.True(Assert.IsType<LinearWriteApplied>(result.Value).FoundOnReread);
         Assert.Equal([_clientId.Value], _reads.Calls);
         _ = Assert.Single(_through.Stored);
+    }
+
+    [Fact]
+    public async Task A_create_the_send_answered_is_not_marked_found_on_the_reread()
+    {
+        _writes.Answer = View();
+
+        var result = await Facade().Create(new LinearIssueDraft(ExternalId.From("team"), "A"), _clientId, Human(), Ct);
+
+        Assert.False(Assert.IsType<LinearWriteApplied>(result.Value).FoundOnReread);
     }
 
     [Fact]
