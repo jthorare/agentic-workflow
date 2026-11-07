@@ -33,7 +33,7 @@ public sealed class SkillCardViewModelTests
     // The needs-you row the server serves for a waiting skill block (kind skillWaiting).
     private static NeedsYouRowView Waiting(string reason = "question", string? text = "Which repo should this plan cover?", string? detail = null, int? attempt = 1, string state = "shape", string instance = Address) =>
         new("skill:" + instance + ":" + state, "skillWaiting", "skill", Subject: null, Item: null, "Shape the idea", "waiting", Repo: null, "calm", A.Noon, RecordedOnly: false, Notice: null, AnswerKind: null, PrimaryAction: null, [], "sindri workflow status " + instance,
-            OwnerWaiting: new OwnerWaitingView("LCH-1", reason, text, "/work/.sindri/shape/result.json", detail, instance, state, attempt));
+            OwnerWaiting: new OwnerWaitingView("LCH-1", reason, "/work/.sindri/shape/result.json", instance, state, text, detail, attempt));
 
     private static FactRow PlanFact() =>
         new("fact:officeHoursFeatureDir", "Plan folder", FactType.File, FactDirection.Output, From: null, FactStatus.Produced, Plan, A.Noon, By: null, new FactRef(Name: null, Size: null, Hash: null, Plan, ItemId: null, Url: null, Host: null, Title: null, FactKey: null), Progress: null, Pending: null);

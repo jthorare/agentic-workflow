@@ -26,7 +26,7 @@ public sealed class ExpandedStateSkillCardTests
         var cell = new StateCell("mitigate", Order: 1, BranchOf: null, StateGlyph.Active, Badge: null, Round: null, [], Desk: false, Child: false, Children: null, Outcome: null, Terminal: false, Block: "step.skill.office-hours");
         var run = new StepRun("mitigate.1", "mitigate", 1, MaxAttempts: null, "running", "agent", A.Noon, EndedAt: null, DurationMs: null, Outcome: null, Tokens: null, Actor: null);
         var row = question is null ? null : new NeedsYouRowView("skill:T-1:mitigate", "skillWaiting", "skill", Subject: null, Item: null, "Mitigate", "waiting", Repo: null, "calm", A.Noon, RecordedOnly: false, Notice: null, AnswerKind: null, PrimaryAction: null, [], "cli",
-            OwnerWaiting: new OwnerWaitingView("LCH-1", "question", question, "/r.json", Detail: null, "T-1", "mitigate", Attempt: 1));
+            OwnerWaiting: new OwnerWaitingView("LCH-1", "question", "/r.json", "T-1", "mitigate", question, Attempt: 1));
         return new SkillCardInput(new SkillsView([block]), "T-1", "Mitigate", cell, run, row is null ? [] : [row], [], Cost: null, new FakeLauncher(), _clipboard, _clock);
     }
 
