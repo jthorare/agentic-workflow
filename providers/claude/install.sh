@@ -188,9 +188,9 @@ claude_install_hooks() {
   else
     bash "$TOOLKIT_DIR/scripts/install-judge-hooks.sh"
   fi
-  # sindri's SessionStart nudge.
+  # sindri's SessionStart nudge and per-prompt fix-task hook.
   if aw_dry; then
-    echo "  [dry-run] would run scripts/install-sindri-hooks.sh (sindri-nudge)"
+    echo "  [dry-run] would run scripts/install-sindri-hooks.sh (sindri-nudge, sindri-tasks)"
   else
     bash "$TOOLKIT_DIR/scripts/install-sindri-hooks.sh"
   fi
