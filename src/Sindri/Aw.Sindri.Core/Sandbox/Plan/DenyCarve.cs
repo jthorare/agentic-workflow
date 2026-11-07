@@ -12,7 +12,7 @@ internal static class DenyCarve
     // now or appears later is hidden from the session whether or not the agent CLI's rule names it; the carve only stops the CLI's deny from blocking its own Write tool.
     internal static IReadOnlyList<string> Around(string denied, IReadOnlyList<string> writable, Func<string, IReadOnlyList<string>>? entries)
     {
-        var inside = writable.Where(w => w.StartsWith(denied.TrimEnd('/') + "/", StringComparison.Ordinal)).ToList();
+        var inside = writable.Select(w => w.TrimEnd('/')).Where(w => w.StartsWith(denied.TrimEnd('/') + "/", StringComparison.Ordinal)).ToList();
         if (inside.Count == 0 || entries is null || entries(denied).Count == 0)
         {
             return [denied];
@@ -32,7 +32,7 @@ internal static class DenyCarve
         {
             var child = prefix + name;
             var below = inside.Where(w => w.StartsWith(child + "/", StringComparison.Ordinal)).ToList();
-            if (below.Count > 0)
+            if (below.Count > 0 && !inside.Contains(child, StringComparer.Ordinal))   // why: a writable child is left whole; walking it would deny its own entries around a deeper writable path
             {
                 Walk(child, below, entries, paths);
             }
