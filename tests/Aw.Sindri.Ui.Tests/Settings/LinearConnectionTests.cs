@@ -365,7 +365,7 @@ public sealed class LinearConnectionTests
 
         var running = card.SaveRead(Token);
 
-        Assert.False(card.CanCancelRead);
+        Assert.Equal((true, false), (card.ShowCancelRead, card.CanCancelRead));   // still drawn, just not pressable
         _server.LinearConnectGate.SetResult();
         await running;
     }
@@ -380,7 +380,7 @@ public sealed class LinearConnectionTests
 
         var running = card.CheckWrite(Token);
 
-        Assert.False(card.CanCancelWrite);
+        Assert.Equal((true, false), (card.ShowCancelWrite, card.CanCancelWrite));
         _server.LinearConnectGate.SetResult();
         await running;
     }

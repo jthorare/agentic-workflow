@@ -18,7 +18,7 @@ internal sealed partial class LinearConnectionViewModel : ObservableObject
     [
         nameof(IsAvailable), nameof(Summary), nameof(ReadIsSet), nameof(ShowReadPaste), nameof(ShowReadSet), nameof(ReadAccessText), nameof(CanListTeams), nameof(Teams), nameof(ShowTeams),
         nameof(CanSaveRead), nameof(SaveHint), nameof(ShowWrite), nameof(ShowWritePaste), nameof(ShowWriteSet), nameof(WriteAccessText), nameof(CanCheckWrite), nameof(IsConfirmingRemove),
-        nameof(StatusText), nameof(ErrorText), nameof(HasError), nameof(AttentionText), nameof(HasAttention), nameof(HasWaiting), nameof(CanCancelRead), nameof(CanCancelWrite),
+        nameof(StatusText), nameof(ErrorText), nameof(HasError), nameof(AttentionText), nameof(HasAttention), nameof(HasWaiting), nameof(ShowCancelRead), nameof(CanCancelRead), nameof(ShowCancelWrite), nameof(CanCancelWrite),
     ];
 
     private readonly Func<Uri?> _url;
@@ -104,10 +104,16 @@ internal sealed partial class LinearConnectionViewModel : ObservableObject
     public bool ShowWriteSet => WriteIsSet && !_replacingWrite;
 
     /// <summary>True when Cancel is drawn beside the read key box (Replace key was pressed on a working key).</summary>
-    public bool CanCancelRead => ReadIsSet && _replacingRead;
+    public bool ShowCancelRead => ReadIsSet && _replacingRead;
+
+    /// <summary>True when that Cancel can be pressed: not while a lookup or save runs, whose answer would land anyway.</summary>
+    public bool CanCancelRead => ShowCancelRead && !IsBusy;
 
     /// <summary>True when Cancel is drawn beside the write key box (Replace key was pressed on a stored key).</summary>
-    public bool CanCancelWrite => WriteIsSet && _replacingWrite;
+    public bool ShowCancelWrite => WriteIsSet && _replacingWrite;
+
+    /// <summary>True when that Cancel can be pressed: not while the key is checked and stored.</summary>
+    public bool CanCancelWrite => ShowCancelWrite && !IsBusy;
 
     /// <summary>"Write access: connected · checked 10:05".</summary>
     public string WriteAccessText => Labels.LinearConnAccess("Write", _connection?.Write.CheckedAt);
