@@ -153,7 +153,10 @@ internal static class ReviewPageScenarios
             "panel-errors" => new ReviewPageLibraryFacts("/home/joi/docs can't be read", [], Doc: null, [], [], Hidden: 0),
             _ => FullLibrary(),
         };
-        return new ReviewPageStored("Add retry budget to the sync worker", "sam-dev", Draft: false, Link, At(12, 31, 20), ["ENG-12"], library);
+        // why: the store holds acme/api#2071 only, so the read of #9999 finds no stored record and the forge is asked for #9999's own link
+        return scenario == "not-found"
+            ? new ReviewPageStored(Title: null, Author: null, Draft: false, Url: null, UpdatedAt: null, [], library)
+            : new ReviewPageStored("Add retry budget to the sync worker", "sam-dev", Draft: false, Link, At(12, 31, 20), ["ENG-12"], library);
     }
 
     private static ReviewPageLibraryFacts FullLibrary()

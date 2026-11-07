@@ -349,18 +349,6 @@
             "omitted": null,
             "note": null,
             "url": "https://github.com/acme/api/pull/2071/files#diff-454bc01b4be1ea9b13a18e04dcda382e6466d7db577d58ab46d541a56a98d27a"
-          },
-          {
-            "path": "src/Api/Migrations/0042_retry.sql",
-            "status": "added",
-            "previousPath": null,
-            "similarity": null,
-            "additions": 2,
-            "deletions": 0,
-            "patch": "@@ -0,0 +1,2 @@\n+alter table retry add column budget int;\n+update retry set budget = 5;",
-            "omitted": null,
-            "note": null,
-            "url": "https://github.com/acme/api/pull/2071/files#diff-454bc01b4be1ea9b13a18e04dcda382e6466d7db577d58ab46d541a56a98d27a"
           }
         ]
       },

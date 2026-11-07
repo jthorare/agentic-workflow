@@ -245,4 +245,15 @@ public sealed class ReviewPageBuilderTests
         Assert.Equal(("thr_1", "src/A.cs", 12, "kim-dev"), (first.Key, first.Path, first.Line, Assert.Single(first.Comments).Author));
         Assert.Equal([("ui", "completed", "failure"), ("lint", "in_progress", null)], runs.Select(static r => (r.Name, r.Status, r.Conclusion)));
     }
+
+    [Fact]
+    public void An_evidence_heading_in_the_body_adds_the_body_row_and_a_risks_section_adds_its_first_line()
+    {
+        var page = ReviewPageBuilder.Build(Facts(body: "proof: ran it\n\n## Evidence\nSee below.\n\n### Risks\n\nThe migration rewrites retry rows.\nMore."));
+
+        Assert.Equal("prBody", Assert.Single(Assert.IsType<EvidenceData>(Panel(page, "evidence").Data).Items).Kind);
+        var hit = Assert.Single(Assert.IsType<RiskData>(Panel(page, "risk").Data).Hits);
+        Assert.Equal(("PR body", "The migration rewrites retry rows.", "body"), (hit.Path, hit.Why, hit.Source));
+        Assert.Empty(Assert.IsType<EvidenceData>(Panel(ReviewPageBuilder.Build(Facts(body: "## Evidenced elsewhere")), "evidence").Data).Items);
+    }
 }

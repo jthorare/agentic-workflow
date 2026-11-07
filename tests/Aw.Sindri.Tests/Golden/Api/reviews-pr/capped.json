@@ -297,7 +297,6 @@
     "text": null,
     "fileCount": 3000,
     "capped": true,
-    "cappedText": "GitHub lists the first 3,000 files; open the rest on GitHub",
     "groups": [
       {
         "name": "Core",
@@ -329,6 +328,7 @@
           }
         ]
       }
-    ]
+    ],
+    "cappedText": "GitHub lists the first 3,000 files; open the rest on GitHub"
   }
 }

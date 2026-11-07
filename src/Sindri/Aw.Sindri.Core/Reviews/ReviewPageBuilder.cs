@@ -188,14 +188,10 @@ public static partial class ReviewPageBuilder
         return (items.Count == 0 ? Empty(id, $"No evidence found for {Short(f.Pr.HeadSha)}", new EvidenceData([])) : Ready(id, new EvidenceData(items)), null);
     }
 
-    [GeneratedRegex(@"^#{1,6}[ 	]+Evidence", RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex(@"^#{1,6}[ \t]+Evidence\b", RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex EvidenceHeading { get; }
 
-    [GeneratedRegex(@"^#{1,6}[ 	]+Risks?[^
-]*
-+(?<first>[^
-#][^
-]*)", RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex(@"^#{1,6}[ \t]+Risks?\b[^\n]*\n+(?<first>[^\n#][^\n]*)", RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex RisksSection { get; }
 
     // ---- risk
