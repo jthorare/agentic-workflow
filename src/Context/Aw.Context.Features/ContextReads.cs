@@ -35,13 +35,13 @@ internal sealed class ContextReads(
         RecordKey? after = null;
         while (true)
         {
-            var page = await records.List(new RecordFilter(SourceId.From("github"), Repo: null, RecordKind.Pr), after, pageSize, cancellationToken).ConfigureAwait(false);
+            var page = await records.List(new RecordFilter(SourceId.From("github"), Repo: null, RecordKind.Pr, States: [RecordState.Open, RecordState.Draft]), after, pageSize, cancellationToken).ConfigureAwait(false);
             if (page.IsError)
             {
                 return page.Error;
             }
 
-            pulls.AddRange(page.Value.Where(r => r.State is RecordState.Open or RecordState.Draft && audience.Allows(r.Audience, r.Key)));
+            pulls.AddRange(page.Value.Where(r => audience.Allows(r.Audience, r.Key)));
             if (page.Value.Count < pageSize)
             {
                 return pulls;

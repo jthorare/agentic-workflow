@@ -90,7 +90,7 @@ internal static class RecordSql
     /// <summary>The list page: every filter is optional (a NULL parameter matches all), the keys come in ordinal order.</summary>
     internal const string List =
         "SELECT " + Columns + " FROM source_record WHERE (@source IS NULL OR source = @source) AND (@repo IS NULL OR repo = @repo) AND (@kind IS NULL OR kind = @kind) " +
-        "AND (@removed = 1 OR removed_at IS NULL) AND (@after IS NULL OR key > @after) ORDER BY key LIMIT @limit";
+        "AND (@states IS NULL OR state IN (SELECT value FROM json_each(@states))) AND (@removed = 1 OR removed_at IS NULL) AND (@after IS NULL OR key > @after) ORDER BY key LIMIT @limit";
 
     /// <summary>
     /// A source's projects with their lead and issue counts (projects page spec §6.1): the projects by 'source_record_by_source', each issue count a probe of 'record_link_by_to_key' joined to the issue by its key.
