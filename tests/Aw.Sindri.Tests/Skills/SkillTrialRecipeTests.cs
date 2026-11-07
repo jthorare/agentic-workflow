@@ -88,4 +88,12 @@ public sealed class SkillTrialRecipeTests
     [InlineData("run", null)]
     public void The_block_outcome_comes_back_from_the_terminal_state(string state, string? outcome) =>
         Assert.Equal(outcome, SkillTrialRecipe.OutcomeOf(state));
+
+    [Fact]
+    public void A_trial_above_the_last_version_is_refused()
+    {
+        var registered = Versions(Registered(int.MaxValue, HashAt(foldered: true)(int.MaxValue)));
+
+        _ = Assert.Throws<OverflowException>(() => SkillTrialRecipe.VersionFor(registered, HashAt(foldered: false)));
+    }
 }
