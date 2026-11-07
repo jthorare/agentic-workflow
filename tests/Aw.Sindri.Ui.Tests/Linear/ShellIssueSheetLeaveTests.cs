@@ -73,6 +73,19 @@ public sealed class ShellIssueSheetLeaveTests
     }, Token);
 
     [Fact]
+    public Task A_link_with_only_a_typed_comment_asks_first() => UiThread.Run(async () =>
+    {
+        var shell = await Shell();
+        shell.Navigate(Link("linear/ENG-12"));
+        await ShellWait.Until(shell, () => shell.IssueSheet.CanEdit, Token);
+        shell.IssueSheet.CommentText = "Budget resets at midnight UTC: agreed.";
+
+        shell.Navigate(Link("linear/ENG-13"));
+
+        Assert.Equal((true, "ENG-12"), (shell.IssueSheet.IsConfirmingDiscard, shell.SheetSubject));
+    }, Token);
+
+    [Fact]
     public Task A_link_with_nothing_unsaved_goes_straight_there() => UiThread.Run(async () =>
     {
         var shell = await Shell();

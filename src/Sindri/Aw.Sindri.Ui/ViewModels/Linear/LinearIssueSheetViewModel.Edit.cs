@@ -41,6 +41,8 @@ internal sealed partial class LinearIssueSheetViewModel
             Set(ref field, value);
             OnChanged(nameof(ShowsNoDescription));
             OnChanged(nameof(CanSave));
+            OnChanged(nameof(CanComment));
+            OnChanged(nameof(CanPost));
         }
     }
 
@@ -165,7 +167,7 @@ internal sealed partial class LinearIssueSheetViewModel
     public string DiscardHeading => Labels.LinearDiscardHeading(Key);
 
     /// <summary>"Your edits to State and Priority aren't saved yet."</summary>
-    public string DiscardBody => Labels.LinearDiscardBody(ChangedNames());
+    public string DiscardBody => Labels.LinearDiscardBody(ChangedNames(), HasCommentText);
 
     private bool IsUnknown { get; set; }
 
@@ -228,6 +230,7 @@ internal sealed partial class LinearIssueSheetViewModel
         OnChanged(nameof(DirtyLine));
         OnChanged(nameof(CanSave));
         OnChanged(nameof(DiscardBody));
+        OnChanged(nameof(HasUnsaved));
         SettleQuestion();
     }
 
