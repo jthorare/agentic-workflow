@@ -8,7 +8,11 @@ namespace Aw.Sindri.Infrastructure.Profile;
 /// <param name="settings">Where the profile is.</param>
 internal sealed class YamlProfileKeyWriter(SindriSettings settings) : IProfileKeyWriter
 {
-    public Result<ProfileKeyEdit> Plan(string keyPath, string value)
+    public Result<ProfileKeyEdit> Plan(string keyPath, string value) => Plan(keyPath, value, asString: false);
+
+    public Result<ProfileKeyEdit> PlanText(string keyPath, string value) => Plan(keyPath, value, asString: true);
+
+    private Result<ProfileKeyEdit> Plan(string keyPath, string value, bool asString)
     {
         ArgumentNullException.ThrowIfNull(keyPath);
         ArgumentNullException.ThrowIfNull(value);
@@ -23,7 +27,7 @@ internal sealed class YamlProfileKeyWriter(SindriSettings settings) : IProfileKe
             return SindriErrors.ProfileMissing.With($"{path} can't be read: {e.Message} (fix: run 'sindri profile init' when there is no profile)");
         }
 
-        var edited = ProfileKeyText.Edit(before, keyPath, value);
+        var edited = ProfileKeyText.Edit(before, keyPath, value, asString);
         return edited.IsError ? edited.Error : new ProfileKeyEdit(path, edited.Value, !string.Equals(before, edited.Value, StringComparison.Ordinal));
     }
 

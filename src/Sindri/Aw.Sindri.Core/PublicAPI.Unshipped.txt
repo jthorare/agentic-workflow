@@ -21539,9 +21539,11 @@ static Aw.Sindri.Core.Setup.ProfileKeyEdit.operator !=(Aw.Sindri.Core.Setup.Prof
 static Aw.Sindri.Core.Setup.ProfileKeyEdit.operator ==(Aw.Sindri.Core.Setup.ProfileKeyEdit? left, Aw.Sindri.Core.Setup.ProfileKeyEdit? right) -> bool
 Aw.Sindri.Core.Setup.IProfileKeyWriter
 Aw.Sindri.Core.Setup.IProfileKeyWriter.Plan(string! keyPath, string! value) -> Aw.Kernel.Result<Aw.Sindri.Core.Setup.ProfileKeyEdit!>!
+Aw.Sindri.Core.Setup.IProfileKeyWriter.PlanText(string! keyPath, string! value) -> Aw.Kernel.Result<Aw.Sindri.Core.Setup.ProfileKeyEdit!>!
 Aw.Sindri.Core.Setup.IProfileKeyWriter.Save(Aw.Sindri.Core.Setup.ProfileKeyEdit! edit) -> Aw.Kernel.Result<string!>!
 Aw.Sindri.Core.Profile.IProfileTextParser
 Aw.Sindri.Core.Profile.IProfileTextParser.Parse(string! yaml, string! source) -> Aw.Kernel.Result<Aw.Sindri.Core.Profile.LoadedProfile!>!
+Aw.Sindri.Core.Profile.IProfileTextParser.Recheck(Aw.Sindri.Core.Profile.SindriProfile! profile, string! source) -> Aw.Kernel.Result<Aw.Sindri.Core.Profile.LoadedProfile!>!
 Aw.Sindri.Core.Profile.LinearToken
 const Aw.Sindri.Core.Profile.LinearToken.Connect = "sindri index connect linear" -> string!
 const Aw.Sindri.Core.Profile.LinearToken.Missing = "Linear needs a token" -> string!

@@ -51,14 +51,14 @@ internal sealed class SetReviewLoginService(ICallerContextAccessor callers, IPro
             return loaded.Error;
         }
 
-        var approved = await approval.Settle(loaded.Value, cancellationToken).ConfigureAwait(false);
+        var approved = await approval.Settle(loaded.Value, request.Login, cancellationToken).ConfigureAwait(false);
         return approved.IsError ? approved.Error : new SetReviewLoginResponse(request.Login, approved.Value);
     }
 
     // Plans the edit, has the edited text read and checked (nothing is written on a refusal), then saves it atomically.
     private Error? Write(string login)
     {
-        var plan = writer.Plan(Key, login);
+        var plan = writer.PlanText(Key, login);
         if (plan.IsError)
         {
             return plan.Error;

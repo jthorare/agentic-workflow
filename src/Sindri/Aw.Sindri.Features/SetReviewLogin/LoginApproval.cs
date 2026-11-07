@@ -17,15 +17,15 @@ namespace Aw.Sindri.Features.SetReviewLogin;
 /// <param name="ledger">The ledger the approval event goes to.</param>
 /// <param name="events">Builds the event.</param>
 /// <param name="held">The lease this process holds.</param>
-internal sealed class LoginApproval(IApprovals approvals, ILedgerStore ledger, EventFactory events, HeldLease held)
+/// <param name="parser">Checks and hashes the approved profile with the login set.</param>
+internal sealed class LoginApproval(IApprovals approvals, ILedgerStore ledger, EventFactory events, HeldLease held, IProfileTextParser parser)
 {
-    private const string Key = "review.login";
-
     /// <summary>Approves <paramref name="live"/> when its only difference from the latest approval is the login.</summary>
     /// <param name="live">The live profile after the write.</param>
+    /// <param name="login">The login just saved.</param>
     /// <param name="cancellationToken">Cancels the work.</param>
     /// <returns>True when the live profile is approved now; false when other changes wait; the error when an approval can't be read or written.</returns>
-    public async ValueTask<Result<bool>> Settle(LoadedProfile live, CancellationToken cancellationToken)
+    public async ValueTask<Result<bool>> Settle(LoadedProfile live, string login, CancellationToken cancellationToken)
     {
         var latest = await approvals.Latest(cancellationToken).ConfigureAwait(false);
         var recorded = RecordedApproval.From(await ledger.Latest(EventTypes.ProfileApproved, cancellationToken).ConfigureAwait(false), events);
@@ -39,12 +39,21 @@ internal sealed class LoginApproval(IApprovals approvals, ILedgerStore ledger, E
             return true;
         }
 
-        if (latest.Value is not { } previous || !ProfileDiff.Between(previous.Profile, live.Profile).SequenceEqual([Key], StringComparer.Ordinal))
+        if (latest.Value is not { } previous || !IsApprovedPlusLogin(previous, live, login))
         {
             return false;
         }
 
         return await Approve(live, previous, recorded.Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    // The profile diff lists key paths and can miss a real change (an empty settings entry, a list value that joins to the same text), so the check is on the hash: the approved
+    // profile with the login set must be exactly the live profile. The approval is a canonical snapshot with no YAML text, so the edit is made on the typed profile.
+    private bool IsApprovedPlusLogin(LoadedProfile previous, LoadedProfile live, string login)
+    {
+        var expected = previous.Profile with { Review = (previous.Profile.Review ?? new PrReviewSettings()) with { Login = login } };
+        var rechecked = parser.Recheck(expected, previous.Source);
+        return rechecked.IsSuccess && rechecked.Value.Hash == live.Hash;
     }
 
     private async ValueTask<Result<bool>> Approve(LoadedProfile live, LoadedProfile previous, RecordedApproval? recorded, CancellationToken cancellationToken)

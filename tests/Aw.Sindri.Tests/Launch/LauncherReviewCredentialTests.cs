@@ -26,7 +26,7 @@ public sealed class LauncherReviewCredentialTests : IDisposable
         new(new LauncherParts(new AgentCatalog([AgentEntries.ClaudeCode]), _ => _host, _viewer, new LauncherOptions(_home), _clock)
         {
             ResolveBin = static (_, _) => ValueTask.FromResult<string?>(null),
-            ReviewCredentialVariable = _ => ValueTask.FromResult(PrReviewRules.CredentialVariable(review)),
+            ReviewCredentialVariables = _ => ValueTask.FromResult<IReadOnlyList<string>>(PrReviewRules.CredentialVariable(review) is { } name ? [name] : []),
         });
 
     private async Task<IReadOnlyDictionary<string, string>> EnvOf(PrReviewSettings? review, LaunchRequestBuilder request)
