@@ -139,11 +139,14 @@ internal sealed class LibraryValidate(Output output)
         return (scoped.Count, [.. findings.OrderBy(static f => f.File, StringComparer.Ordinal).ThenBy(static f => f.Line ?? 0).ThenBy(static f => f.Rule, StringComparer.Ordinal)]);
     }
 
-    // The sha256 of the packet.json beside a generated doc; null when there is none (nothing to compare, no finding).
+    // The sha256 of the packet.json beside a generated doc; null when there is none or a symlink (nothing to compare, no finding).
     private static async Task<string?> SourceSha(string docPath, CancellationToken ct)
     {
         var packet = GeneratedSource.PathBeside(docPath);
-        return File.Exists(packet) ? GeneratedSource.Sha256(await File.ReadAllBytesAsync(packet, ct).ConfigureAwait(false)) : null;
+        var info = new FileInfo(packet);
+        return info.Exists && info.LinkTarget is null && !info.Attributes.HasFlag(FileAttributes.ReparsePoint)   // a symlink is never a source, as in the library walker
+            ? GeneratedSource.Sha256(await File.ReadAllBytesAsync(packet, ct).ConfigureAwait(false))
+            : null;
     }
 
     private static LibraryFindingRow Row(string file, DesignDocError error) => new(error.Code, file, error.Line, error.Message, error.Fix);

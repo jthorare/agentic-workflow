@@ -70,9 +70,9 @@ internal sealed class RepoDocsFeed(IReadOnlyList<ContextRepo> repos, IReadOnlyLi
             }
 
             removed.AddRange(plan.Value.Removed);
-            foreach (var (path, blob) in plan.Value.Changed)
+            foreach (var change in plan.Value.Changed)
             {
-                var item = items.Count < limit ? await Item(head.Repo, path, blob, cancellationToken).ConfigureAwait(false) : null;
+                var item = items.Count < limit ? await Item(head.Repo, change, cancellationToken).ConfigureAwait(false) : null;
                 if (item is null)
                 {
                     complete = false;   // over the limit, or git can't read the blob this run: the next pull carries on
@@ -89,8 +89,8 @@ internal sealed class RepoDocsFeed(IReadOnlyList<ContextRepo> repos, IReadOnlyLi
     private async ValueTask<Result<RepoHead>> Head(ContextRepo repo, CancellationToken cancellationToken)
     {
         var head = await git.Head(repo.Path, cancellationToken).ConfigureAwait(false);
-        var tree = head.IsError ? head.Error : await git.Tree(repo.Path, head.Value, cancellationToken).ConfigureAwait(false);
-        return tree.IsError ? tree.Error : new RepoHead(repo, head.Value, tree.Value);
+        var tree = head.IsError ? head.Error : await git.TreeWithLinks(repo.Path, head.Value, cancellationToken).ConfigureAwait(false);
+        return tree.IsError ? tree.Error : new RepoHead(repo, head.Value, tree.Value.Blobs, tree.Value.Symlinks);
     }
 
     private string Fingerprint(List<RepoHead> heads) =>
@@ -108,12 +108,21 @@ internal sealed class RepoDocsFeed(IReadOnlyList<ContextRepo> repos, IReadOnlyLi
         }
 
         var ruleset = DesignDocParser.Stamp(scrubbers.Ruleset.Value);
-        var changed = wanted.Where(w => !(stored.Value.TryGetValue(RepoDocs.Key(head.Repo.Name, w.Key), out var row)
-                && row.Version.Value == w.Value && string.Equals(row.Ruleset, ruleset, StringComparison.Ordinal)))
-            .OrderBy(w => w.Key, StringComparer.Ordinal).ToList();
+        var changed = wanted.Select(w => Change(head, w.Key, w.Value))
+            .Where(c => !(stored.Value.TryGetValue(RepoDocs.Key(head.Repo.Name, c.Path), out var row)
+                && row.Version.Value == c.Version && string.Equals(row.Ruleset, ruleset, StringComparison.Ordinal)))
+            .OrderBy(c => c.Path, StringComparer.Ordinal).ToList();
         var live = wanted.Keys.Select(path => RepoDocs.Key(head.Repo.Name, path)).ToHashSet();
         var removed = stored.Value.Keys.Where(k => !live.Contains(k)).OrderBy(k => k.Value, StringComparer.Ordinal).ToList();
         return new RepoDocsPlan(changed, removed);
+    }
+
+    // A packet.json beside the doc folds into its version (one rule with the library read, GeneratedSource.Version), so a commit that changes only the packet decides the doc again.
+    private static RepoDocChange Change(RepoHead head, string path, string blob)
+    {
+        var beside = GeneratedSource.PathBeside(path);
+        var packet = head.Tree.TryGetValue(beside, out var packetBlob) && !head.Symlinks.Contains(beside) ? packetBlob : null;
+        return new RepoDocChange(path, blob, packet, packet is null ? blob : GeneratedSource.Version(blob, packet));
     }
 
     private async ValueTask<Result<Dictionary<RecordKey, StoredRecord>>> Stored(ContextRepo repo, CancellationToken cancellationToken)
@@ -142,14 +151,32 @@ internal sealed class RepoDocsFeed(IReadOnlyList<ContextRepo> repos, IReadOnlyLi
         }
     }
 
-    /// <summary>The document as a raw item, or null when git can't read its blob this run (its stored record stays).</summary>
-    private async ValueTask<RecordItem?> Item(ContextRepo repo, string path, string blob, CancellationToken cancellationToken)
+    /// <summary>The document as a raw item, or null when git can't read its blob (or its packet's) this run (its stored record stays).</summary>
+    private async ValueTask<RecordItem?> Item(ContextRepo repo, RepoDocChange change, CancellationToken cancellationToken)
     {
-        var text = await git.Blob(repo.Path, blob, cancellationToken).ConfigureAwait(false);
-        return text.IsError
-            ? null
-            : new RecordItem(RepoDocs.Key(repo.Name, path), RecordKind.Doc, DocChunker.Title(text.Value, path), text.Value, Author: null, Url: null, State: null,
-                StateRaw: null, CreatedAt: null, UpdatedAt: null, ClosedAt: null, SourceVersion.From(blob), Links: [], repo.Name, ProfileAudiencePolicy.OwnRepo(repo.Name, githubRepos));
+        var text = await git.Blob(repo.Path, change.Blob, cancellationToken).ConfigureAwait(false);
+        if (text.IsError)
+        {
+            return null;
+        }
+
+        string? sourceSha = null;
+        if (change.PacketBlob is { } packet && GeneratedSource.IsGenerated(DesignDocParser.Parse(change.Path, text.Value).FrontMatter))
+        {
+            var bytes = await git.BlobBytes(repo.Path, packet, cancellationToken).ConfigureAwait(false);
+            if (bytes.IsError)
+            {
+                return null;
+            }
+
+            sourceSha = GeneratedSource.Sha256(bytes.Value);
+        }
+
+        return new RecordItem(RepoDocs.Key(repo.Name, change.Path), RecordKind.Doc, DocChunker.Title(text.Value, change.Path), text.Value, Author: null, Url: null, State: null,
+            StateRaw: null, CreatedAt: null, UpdatedAt: null, ClosedAt: null, SourceVersion.From(change.Version), Links: [], repo.Name, ProfileAudiencePolicy.OwnRepo(repo.Name, githubRepos))
+        {
+            SourceSha256 = sourceSha,
+        };
     }
 
     /// <summary>True when the path fits a chunk id and a record key (no control or format characters, not too long), and no deny glob names it.</summary>
