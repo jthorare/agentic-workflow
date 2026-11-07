@@ -168,7 +168,7 @@ public sealed class ShellLinearTests
             _ = shell.Press("K");
         }
 
-        Assert.Equal(("ENG-57", "ENG-12"), (up, shell.Linear.SelectedKey));
+        Assert.Equal(("OPS-40", "ENG-12"), (up, shell.Linear.SelectedKey));   // J x4 lands on ENG-57 (the first J selects ENG-12), so K crosses back to OPS-40
     }, Token);
 
     [Fact]
