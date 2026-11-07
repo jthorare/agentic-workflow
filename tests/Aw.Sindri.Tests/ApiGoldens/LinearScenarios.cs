@@ -6,7 +6,7 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 /// Not registered in ApiScenarios until the Linear hub's read routes land (the rows answer 404 until then). 'GET /linear/issues' has landed: its rows are <see cref="LinearIssueScenarios"/>.
 /// Work → Linear, the strip, the issue sheet and New issue's lookups (Linear hub spec §3, §4.3, Ph3 1a; contract AGREED by api and ui,
 /// ~/.agentic-workflow/digests/api-scripts/contract-2077-ph3-linear-reads.md): 'GET /linear/issues', 'GET /linear/issues/{key}',
-/// 'GET /linear/lookups/{team}' and 'GET /linear/since'. Hand-written first: the routes don't exist yet. The api slot seeds what each
+/// 'GET /linear/lookups/{team}' and 'GET /linear/since' (served now, see <see cref="LinearReadScenarios"/>). Hand-written first: the routes don't exist yet. The api slot seeds what each
 /// row's `// seeded by api:` note names.
 /// The 1b writes follow the same way (contract ~/.agentic-workflow/digests/api-scripts/contract-2077-1b-linear-writes.md, AGREED by api and ui): the edit, comment and create
 /// routes and Settings, Connections, Linear (`linear-change`, `linear-comment`, `linear-create`, `linear-connection`, `linear-connection-teams`, `linear-connect`, `linear-disconnect-write`),
@@ -17,8 +17,6 @@ internal static class LinearScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("linear-lookups", "eng"), ("linear-lookups", "not-synced"), ("linear-lookups", "session-refused"),
-        ("linear-since", "three"), ("linear-since", "empty"), ("linear-since", "session-refused"),
         ("linear-issue", "writable"), ("linear-issue", "no-write-key"), ("linear-issue", "team-not-picked"), ("linear-issue", "session-write-refused"),
         ("linear-change", "applied"), ("linear-change", "applied-store-failed"), ("linear-change", "already-applied"), ("linear-change", "conflict"), ("linear-change", "unknown"),
         ("linear-change", "rate-limited"), ("linear-change", "no-write-key"), ("linear-change", "team-not-picked"), ("linear-change", "bad-value"), ("linear-change", "session-refused"),
@@ -59,9 +57,9 @@ internal static class LinearScenarios
             ("linear-issue", _) => "/sindri/linear/issues/ENG-12",
             ("linear-lookups", "not-synced") => "/sindri/linear/lookups/OPS",
             ("linear-lookups", _) => "/sindri/linear/lookups/ENG",
-            ("linear-since", "empty") => "/sindri/linear/since?after=lin_000000000000003f",
+            ("linear-since", _) => "/sindri/linear/since",
             ("linear-connection", _) => "/sindri/linear/connection",
-            _ => "/sindri/linear/since",
+            _ => throw new ArgumentOutOfRangeException(nameof(slug), slug, "no such linear scenario"),
         };
         return (await host.Http.Ask(Get(path, caller))).Body;
     }

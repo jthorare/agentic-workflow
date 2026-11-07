@@ -26,6 +26,7 @@ using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Line;
+using Aw.Sindri.Core.Linear;
 using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Profile;
@@ -81,6 +82,8 @@ using Aw.Sindri.Features.GetLaunchPicks;
 using Aw.Sindri.Features.GetLaunchTargets;
 using Aw.Sindri.Features.GetLibrary;
 using Aw.Sindri.Features.GetLibraryDoc;
+using Aw.Sindri.Features.GetLinearLookups;
+using Aw.Sindri.Features.GetLinearSince;
 using Aw.Sindri.Features.GetNeedsYou;
 using Aw.Sindri.Features.GetProfile;
 using Aw.Sindri.Features.GetProject;
@@ -272,4 +275,5 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(Features.PinConcepts.PinConceptsRequest)), JsonSerializable(typeof(Features.PinConcepts.PinConceptsResult)), JsonSerializable(typeof(Features.PinConcepts.PinSet)), JsonSerializable(typeof(Features.PinConcepts.PinWritten)), JsonSerializable(typeof(Commands.Pins.PinList)), JsonSerializable(typeof(Commands.Pins.PinListEntry))]   // concept pins: the PinConcepts job
 [JsonSerializable(typeof(Features.SetPages.SetPagesRequest)), JsonSerializable(typeof(Features.SetPages.SetPagesResult)), JsonSerializable(typeof(Features.SetPages.PageWritten))]   // pages: the SetPages job
 [JsonSerializable(typeof(RunContextBacktestRequest)), JsonSerializable(typeof(RunContextBacktestResult)), JsonSerializable(typeof(BacktestArmLine))]
+[JsonSerializable(typeof(GetLinearLookupsRequest)), JsonSerializable(typeof(LinearLookupsResponse)), JsonSerializable(typeof(GetLinearSinceRequest)), JsonSerializable(typeof(LinearSinceResponse)), JsonSerializable(typeof(LinearSinceItem))]   // Linear hub Ph3 1a: the lookups and the strip
 internal sealed partial class SindriJsonContext : JsonSerializerContext;
