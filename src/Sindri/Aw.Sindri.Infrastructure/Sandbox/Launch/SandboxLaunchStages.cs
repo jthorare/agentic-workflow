@@ -59,6 +59,7 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
         {
             Learn = new LearnContext(history, clock.GetUtcNow()),
             SkillEnvironment = skill,
+            SkillTrialDirectory = request.Skill?.TrialSkillsDirectory,
         };
     }
 

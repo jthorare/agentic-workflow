@@ -175,6 +175,11 @@ internal static class PlanMounts
     // A skill block's AW_DIR is the repo's folder of skill results and plans, and bugfix-state keeps its own folder for the same repo beside the others (S-0 item 7); both are made, never skipped.
     private static void AddSkillState(List<PlanMount> m, PlanContext c)
     {
+        if (c.Request.SkillTrialDirectory is { } trial)
+        {
+            Beneath(m, new PlanMount(trial.TrimEnd('/'), PlanMountKind.ReadOnly, Reason: "the trial's --skills folder"));   // why: the home is an empty tmpfs, so a folder under it is invisible until it is mounted
+        }
+
         if (c.Request.SkillEnvironment is not { } skill || !skill.TryGetValue("AW_DIR", out var awDir))
         {
             return;
