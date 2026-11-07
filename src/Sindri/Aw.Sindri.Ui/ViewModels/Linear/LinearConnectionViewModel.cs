@@ -10,6 +10,7 @@ namespace Aw.Sindri.Ui.ViewModels.Linear;
 internal sealed partial class LinearConnectionViewModel : ObservableObject
 {
     private const string Resolves = "resolves";
+    private const string Unchecked = "unchecked";
     private const string ScopeUnknown = "scopeUnknown";
     private const string Refused = "refused";
     private const string SessionRefusal = "SND-AUTH-002";
@@ -59,14 +60,14 @@ internal sealed partial class LinearConnectionViewModel : ObservableObject
     /// <summary>True when a read key is stored and works.</summary>
     public bool ReadIsSet => string.Equals(_connection?.Read.State, Resolves, StringComparison.Ordinal);
 
-    /// <summary>True when the read key box is drawn: no read key works yet, or Replace key was pressed.</summary>
-    public bool ShowReadPaste => !ReadIsSet || _replacingRead;
+    /// <summary>True when the read key box is drawn: no read key is stored (a working one, or one no save has checked yet), or Replace key was pressed.</summary>
+    public bool ShowReadPaste => !ReadHasKey || _replacingRead;
 
-    /// <summary>True when the "Read access: connected" line is drawn.</summary>
-    public bool ShowReadSet => ReadIsSet && !_replacingRead;
+    /// <summary>True when the "Read access: connected" line (or its "Not checked yet" form) is drawn.</summary>
+    public bool ShowReadSet => ReadHasKey && !_replacingRead;
 
-    /// <summary>"Read access: connected · checked 10:05".</summary>
-    public string ReadAccessText => Labels.LinearConnAccess("Read", _connection?.Read.CheckedAt);
+    /// <summary>"Read access: connected · checked 10:05", or "Read access: Not checked yet. Save to check." for a key no save has checked.</summary>
+    public string ReadAccessText => ReadIs(Unchecked) ? Labels.LinearConnNotChecked("Read") : Labels.LinearConnAccess("Read", _connection?.Read.CheckedAt);
 
     /// <summary>The pasted read key; empty after it is sent.</summary>
     public string ReadKey
@@ -94,29 +95,29 @@ internal sealed partial class LinearConnectionViewModel : ObservableObject
     /// <summary>The line beside Check and save.</summary>
     public string SaveHint => Teams.Any(t => t.IsTicked) ? Labels.LinearConnSaveHint : Labels.LinearConnTickOne;
 
-    /// <summary>True when the write key part is drawn: read access is set, or a write key is stored whatever the read key's state (so Remove key stays reachable).</summary>
-    public bool ShowWrite => ReadIsSet || WriteIsSet;
+    /// <summary>True when the write key part is drawn: read access works, or a write key is stored whatever the read key's state (so Remove key stays reachable).</summary>
+    public bool ShowWrite => ReadIsSet || WriteHasKey;
 
-    /// <summary>True when the write key box is drawn.</summary>
-    public bool ShowWritePaste => WriteIsSet ? _replacingWrite : ReadIsSet;
+    /// <summary>True when the write key box is drawn. A new write key is only asked for while the read key works: checking it reads the teams with that key.</summary>
+    public bool ShowWritePaste => WriteHasKey ? _replacingWrite : ReadIsSet;
 
-    /// <summary>True when the "Write access: connected" line is drawn.</summary>
-    public bool ShowWriteSet => WriteIsSet && !_replacingWrite;
+    /// <summary>True when the "Write access: connected" line (or its "Not checked yet" form) is drawn.</summary>
+    public bool ShowWriteSet => WriteHasKey && !_replacingWrite;
 
     /// <summary>True when Cancel is drawn beside the read key box (Replace key was pressed on a working key).</summary>
-    public bool ShowCancelRead => ReadIsSet && _replacingRead;
+    public bool ShowCancelRead => ReadHasKey && _replacingRead;
 
     /// <summary>True when that Cancel can be pressed: not while a lookup or save runs, whose answer would land anyway.</summary>
     public bool CanCancelRead => ShowCancelRead && !IsBusy;
 
     /// <summary>True when Cancel is drawn beside the write key box (Replace key was pressed on a stored key).</summary>
-    public bool ShowCancelWrite => WriteIsSet && _replacingWrite;
+    public bool ShowCancelWrite => WriteHasKey && _replacingWrite;
 
     /// <summary>True when that Cancel can be pressed: not while the key is checked and stored.</summary>
     public bool CanCancelWrite => ShowCancelWrite && !IsBusy;
 
-    /// <summary>"Write access: connected · checked 10:05".</summary>
-    public string WriteAccessText => Labels.LinearConnAccess("Write", _connection?.Write.CheckedAt);
+    /// <summary>"Write access: connected · checked 10:05", or "Write access: Not checked yet. Save to check." for a key no save has checked.</summary>
+    public string WriteAccessText => WriteIs(Unchecked) ? Labels.LinearConnNotChecked("Write") : Labels.LinearConnAccess("Write", _connection?.Write.CheckedAt);
 
     /// <summary>The pasted write key; empty after it is sent.</summary>
     public string WriteKey
@@ -168,6 +169,13 @@ internal sealed partial class LinearConnectionViewModel : ObservableObject
         : string.Empty;
 
     private bool WriteIs(string state) => string.Equals(_connection?.Write.State, state, StringComparison.Ordinal);
+
+    private bool ReadIs(string state) => string.Equals(_connection?.Read.State, state, StringComparison.Ordinal);
+
+    // A key is held (its line is drawn) when it works or when a pointer is set that no save has checked yet.
+    private bool ReadHasKey => ReadIsSet || ReadIs(Unchecked);
+
+    private bool WriteHasKey => WriteIsSet || WriteIs(Unchecked);
 
     private bool IsBusy => _lookingUp || _saving;
 

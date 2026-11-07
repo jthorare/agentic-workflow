@@ -162,7 +162,7 @@ internal static partial class Labels
     /// <summary>A key line when a pointer is set but no save has checked the key.</summary>
     /// <param name="kind">"Read" or "Write".</param>
     /// <returns>"Read access: Not checked yet. Save to check.".</returns>
-    internal static string LinearConnNotChecked(string kind) => kind[..0];
+    internal static string LinearConnNotChecked(string kind) => $"{kind} access: Not checked yet. Save to check.";
 
     /// <summary>While a write key is checked.</summary>
     /// <param name="teams">The team keys it has to read.</param>
