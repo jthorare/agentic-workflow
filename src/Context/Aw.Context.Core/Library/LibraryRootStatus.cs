@@ -7,4 +7,6 @@ namespace Aw.Context.Core.Library;
 /// <param name="Docs">The design docs the last pass found in it.</param>
 /// <param name="NearMisses">The files that look like design docs but aren't read.</param>
 /// <param name="LastRead">When the last pass finished, or null before the first.</param>
-public sealed record LibraryRootStatus(string Root, LibraryRootState State, string? Reason, int Docs, int NearMisses, DateTimeOffset? LastRead);
+/// <param name="Path">The root's folder as the last pass read it (absolute, as written), or null before the first pass and for a root that is off.</param>
+/// <param name="NearMissFindings">The near misses with their root-relative paths and what to fix; as many as <paramref name="NearMisses"/>.</param>
+public sealed record LibraryRootStatus(string Root, LibraryRootState State, string? Reason, int Docs, int NearMisses, DateTimeOffset? LastRead, string? Path, IReadOnlyList<DesignDocFinding> NearMissFindings);

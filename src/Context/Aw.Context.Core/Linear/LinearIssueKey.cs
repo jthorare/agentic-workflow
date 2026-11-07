@@ -22,12 +22,12 @@ public sealed partial record LinearIssueKey
     [GeneratedRegex("^(?<team>[A-Z][A-Z0-9]{0,9})-(?<number>[1-9][0-9]{0,8})\\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }
 
-    /// <summary>Reads a key from text.</summary>
-    /// <param name="text">The key, 'ENG-12'.</param>
+    /// <summary>Reads a key from text. The text is upper-cased (invariant culture) before it is matched, so what the owner typed as 'eng-12' is ENG-12.</summary>
+    /// <param name="text">The key, 'ENG-12' or 'eng-12'.</param>
     /// <returns>The key, or SND-CONTEXT-006 when the text isn't a team key, a dash and a number.</returns>
     public static Result<LinearIssueKey> Parse(string? text)
     {
-        var match = text is null ? null : Shape.Match(text);
+        var match = text is null ? null : Shape.Match(text.ToUpperInvariant());
         return match is { Success: true }
             ? new LinearIssueKey(match.Groups["team"].Value, int.Parse(match.Groups["number"].Value, CultureInfo.InvariantCulture))
             : ContextErrors.QueryInvalid.With($"'{text}' isn't an issue key (a team key, a dash and a number: ENG-12)");

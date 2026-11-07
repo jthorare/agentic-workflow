@@ -23,6 +23,9 @@ public sealed class FakeLinearSwitches
     /// <summary>One-shot. The next mutation is applied, then the connection is dropped without a reply: the client can't know the outcome.</summary>
     public bool NoAnswer { get; set; }
 
+    /// <summary>One-shot. The next mutation is dropped without a reply and WITHOUT being applied (unlike <see cref="NoAnswer"/>): the client can't know the outcome, and a re-read finds nothing.</summary>
+    public bool DropBeforeApplying { get; set; }
+
     /// <summary>One-shot. The key of a team the issue written last moves to on the next read (new identifier, same id; the old identifier still resolves). Null leaves it.</summary>
     public string? MoveTeam { get; set; }
 }

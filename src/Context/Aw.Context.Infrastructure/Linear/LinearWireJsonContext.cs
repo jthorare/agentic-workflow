@@ -14,4 +14,8 @@ namespace Aw.Context.Infrastructure.Linear;
 [JsonSerializable(typeof(LinearReply<LinearProbeData>))]
 [JsonSerializable(typeof(LinearReply<LinearViewerData>))]
 [JsonSerializable(typeof(LinearReply<LinearLookupsData>))]
+[JsonSerializable(typeof(LinearReply<LinearIssueWriteData>))]
+[JsonSerializable(typeof(LinearReply<LinearCommentWriteData>))]
+[JsonSerializable(typeof(LinearReply<LinearAttachmentWriteData>))]
+[JsonSerializable(typeof(LinearReply<LinearCommentData>))]
 internal sealed partial class LinearWireJsonContext : JsonSerializerContext;

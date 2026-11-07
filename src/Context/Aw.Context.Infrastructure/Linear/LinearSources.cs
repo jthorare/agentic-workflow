@@ -42,4 +42,17 @@ internal sealed class LinearSources(LinearSourceParts parts)
     /// <param name="githubRepos">'context.sources.github.repos' ('owner/name').</param>
     /// <returns>The reader.</returns>
     public LinearIssueReader CreateIssueReader(LinearSettings settings, IReadOnlyList<string> githubRepos) => new(new LinearClient(settings, parts), parts.CallDeadline, githubRepos);
+
+    /// <summary>How long every call to Linear gets to answer.</summary>
+    /// <returns>The deadline.</returns>
+    public TimeSpan Deadline() => parts.CallDeadline;
+
+    /// <summary>A client for the profile's Linear (one key resolution per client), for a reader that sends its own operations.</summary>
+    /// <param name="settings">The checked 'context.sources.linear' settings.</param>
+    /// <returns>The client.</returns>
+    public LinearClient CreateClient(LinearSettings settings) => new(settings, parts);
+
+    /// <summary>The Linear hub's write client: the five mutations with the write key.</summary>
+    /// <returns>The client.</returns>
+    public ILinearWrites CreateWrites() => new LinearWriteClient(parts);
 }
