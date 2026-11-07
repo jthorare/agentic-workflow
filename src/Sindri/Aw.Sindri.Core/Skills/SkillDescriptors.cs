@@ -51,7 +51,38 @@ public static class SkillDescriptors
     public static Result<BlockDescriptor> Build(SkillBlockManifest manifest)
     {
         ArgumentNullException.ThrowIfNull(manifest);
-        var success = OutcomeName.From(manifest.Outcomes.Success);
+        if (!OutcomeName.TryFrom(manifest.Outcomes.Success, out var success))
+        {
+            return SindriErrors.InvalidInput.With($"the success outcome '{manifest.Outcomes.Success}' is not an outcome name (a camelCase word, at most 40 characters)");
+        }
+
+        if (!BlockId.TryFrom("step.skill." + manifest.Name, out var id))
+        {
+            return SindriErrors.InvalidInput.With($"the block id '{manifest.Name}' is too long or not kebab-case (the block id 'step.skill.{manifest.Name}' is at most 64 characters)");
+        }
+
+        var outputs = Outputs(manifest, success);
+        if (outputs.IsError)
+        {
+            return outputs.Error;
+        }
+
+        var outcomes = Outcomes(manifest, success);
+        if (outcomes.IsError)
+        {
+            return outcomes.Error;
+        }
+
+        var capabilities = Capability.Tools | Capability.WriteScope | (manifest.Pushes ? Capability.Effects : Capability.None);
+        return new BlockDescriptor(
+            id, BlockKind.Step, VersionOf(manifest),
+            [], outputs.Value, outcomes.Value, capabilities,
+            [.. manifest.Inputs.Select(static i => new ParameterSpec(i.Key, ParameterType.Text, i.Required, IsCapabilityField: false))],
+            Rung: null, DeskCapable: false, Runtime: BlockRuntime.Agent, MaxDuration: manifest.MaxDuration, Sentence: manifest.Sentence);
+    }
+
+    private static Result<List<OutputSpec>> Outputs(SkillBlockManifest manifest, OutcomeName success)
+    {
         var outputs = new List<OutputSpec>();
         foreach (var output in manifest.Outputs)
         {
@@ -61,16 +92,31 @@ public static class SkillDescriptors
                 return key.Error;
             }
 
-            outputs.Add(new OutputSpec(FactKey.From(key.Value), [success]));
+            if (!FactKey.TryFrom(key.Value, out var factKey))
+            {
+                return SindriErrors.InvalidInput.With($"'{key.Value}' is not a fact key");
+            }
+
+            outputs.Add(new OutputSpec(factKey, [success]));
         }
 
-        var outcomes = manifest.Outcomes.Map.Count == 0 ? [success] : manifest.Outcomes.Map.Values.Distinct(StringComparer.Ordinal).Select(OutcomeName.From).ToList();
-        var capabilities = Capability.Tools | Capability.WriteScope | (manifest.Pushes ? Capability.Effects : Capability.None);
-        return new BlockDescriptor(
-            BlockId.From("step.skill." + manifest.Name), BlockKind.Step, VersionOf(manifest),
-            [], outputs, outcomes, capabilities,
-            [.. manifest.Inputs.Select(static i => new ParameterSpec(i.Key, ParameterType.Text, i.Required, IsCapabilityField: false))],
-            Rung: null, DeskCapable: false, Runtime: BlockRuntime.Agent, MaxDuration: manifest.MaxDuration, Sentence: manifest.Sentence);
+        return outputs;
+    }
+
+    private static Result<List<OutcomeName>> Outcomes(SkillBlockManifest manifest, OutcomeName success)
+    {
+        var outcomes = new List<OutcomeName>();
+        foreach (var name in manifest.Outcomes.Map.Values.Distinct(StringComparer.Ordinal))
+        {
+            if (!OutcomeName.TryFrom(name, out var outcome))
+            {
+                return SindriErrors.InvalidInput.With($"the outcome '{name}' is not an outcome name (a camelCase word, at most 40 characters)");
+            }
+
+            outcomes.Add(outcome);
+        }
+
+        return outcomes.Count == 0 ? [success] : outcomes;
     }
 
     /// <summary>The canonical hash of a manifest entry, args, 'from' and 'values' included; the sentence is not part of it, like every sentence.</summary>
