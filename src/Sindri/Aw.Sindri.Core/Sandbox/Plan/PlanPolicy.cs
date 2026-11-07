@@ -42,7 +42,7 @@ internal static class PlanPolicy
     private static List<string> Writable(PlanContext c)
     {
         List<string> roots = c.WritablePath is { } worktree ? [worktree, c.Request.Paths.RunDirectory] : [c.Request.Paths.RunDirectory];
-        if (c.Request.SkillEnvironment is { } skill && skill.TryGetValue("AW_DIR", out var awDir) && awDir.TrimEnd('/') is { Length: > 0 } skillDirectory)
+        if (c.SkillDirectory is { } skillDirectory)
         {
             roots.Add(skillDirectory);   // why: the skill's results go to $AW_DIR, which PlanMounts binds read-write under the state dir's deny
         }

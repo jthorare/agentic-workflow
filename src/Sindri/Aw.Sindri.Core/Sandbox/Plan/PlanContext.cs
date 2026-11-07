@@ -27,6 +27,9 @@ internal sealed record PlanContext(
 
     internal string? Worktree => Request.Paths.Worktree;
 
+    /// <summary>The skill block's AW_DIR without its trailing slash: the one path the mounts bind read-write and the policy carves out; null for any other launch.</summary>
+    internal string? SkillDirectory => Request.SkillEnvironment is { } skill && skill.TryGetValue("AW_DIR", out var awDir) && awDir.TrimEnd('/') is { Length: > 0 } directory ? directory : null;
+
     internal static PlanContext From(SandboxRequest request)
     {
         var settings = request.Settings;
