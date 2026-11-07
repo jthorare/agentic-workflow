@@ -1,6 +1,5 @@
 using System.Text.Json;
-using Aw.Kernel;
-using Aw.Sindri.Core;
+using Aw.Kernel.Json;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Testing;
 

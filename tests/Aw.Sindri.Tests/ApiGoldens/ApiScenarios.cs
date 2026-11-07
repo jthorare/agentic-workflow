@@ -96,7 +96,7 @@ internal static class ApiScenarios
     /// <summary>The host of a Linear read scenario.</summary>
     private static Task<GoldenHost> StartLinear(string slug, string scenario, CancellationToken ct) =>
         LinearIssueScenarios.Handles(slug, scenario) ? LinearIssueScenarios.Start(slug, scenario, ct)
-        : LinearConnectionScenarios.Handles(slug, scenario) ? LinearConnectionScenarios.Start(slug, scenario, ct)
+        : LinearConnectionScenarios.Handles(slug, scenario) ? LinearConnectionScenarios.Start(scenario, ct)
         : LinearReadScenarios.Start(slug, scenario, ct);
 
     /// <summary>Whether the scenario belongs to the Reviews group (the pages, the login save, the library and one doc of it).</summary>
@@ -181,7 +181,11 @@ internal static class ApiScenarios
         : WrapSessionScenarios.Handles(slug, scenario) ? () => WrapSessionScenarios.Body(host, slug, scenario, ct)
         : SandboxScenarios.Handles(slug, scenario) ? () => SandboxScenarios.Body(host, slug, scenario, ct)
         : ProjectScenarios.Handles(slug, scenario) ? () => ProjectScenarios.Body(host, slug, scenario, ct)
-        : LinearIssueScenarios.Handles(slug, scenario) ? () => LinearIssueScenarios.Body(host, slug, scenario, ct)
+        : LinearBody(host, slug, scenario, ct);
+
+    /// <summary>The body of a Linear hub scenario (the issues, the side reads, Settings, Connections), else the Reviews group's or null.</summary>
+    private static Func<Task<string>>? LinearBody(GoldenHost host, string slug, string scenario, CancellationToken ct) =>
+        LinearIssueScenarios.Handles(slug, scenario) ? () => LinearIssueScenarios.Body(host, slug, scenario, ct)
         : LinearReadScenarios.Handles(slug, scenario) ? () => LinearReadScenarios.Body(host, slug, scenario)
         : LinearConnectionScenarios.Handles(slug, scenario) ? () => LinearConnectionScenarios.Body(host, slug, scenario, ct)
         : ReviewBody(host, slug, scenario, ct);

@@ -79,9 +79,9 @@ public sealed class SaveLinearConnectionServiceTests
         Assert.True(result.Value.Approved);
         Assert.Null(result.Value.Write);
         Expect.Equal(_profiles.Live.Value.Hash.Value, result.Value.ProfileHash);
-        var saved = Expect.Only([.. _store.ReadSaves]);
-        Expect.Equal(ReadKey, saved.Key);
-        Expect.Sequence(["ENG", "OPS"], saved.Teams);
+        var (key, teams) = Expect.Only([.. _store.ReadSaves]);
+        Expect.Equal(ReadKey, key);
+        Expect.Sequence(["ENG", "OPS"], teams);
     }
 
     [Fact]
@@ -173,8 +173,6 @@ public sealed class SaveLinearConnectionServiceTests
     }
 
     [Fact]
-    public void The_request_prints_without_the_key()
-    {
+    public void The_request_prints_without_the_key() =>
         Assert.DoesNotContain(ReadKey, Read("ENG").ToString(), StringComparison.Ordinal);
-    }
 }

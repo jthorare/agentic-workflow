@@ -35,7 +35,7 @@ internal static class LinearConnectionScenarios
     public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario));
 
     /// <summary>Starts the scenario's host: the item profile over the scenario's fakes.</summary>
-    public static Task<GoldenHost> Start(string slug, string scenario, CancellationToken ct) =>
+    public static Task<GoldenHost> Start(string scenario, CancellationToken ct) =>
         GoldenHost.Start(temporary: true, ct, ItemScenarios.ProfileYaml, extra: services =>
         {
             _ = services.Replace(ServiceDescriptor.Singleton<ILinearConnectionFacts>(Facts(scenario)));

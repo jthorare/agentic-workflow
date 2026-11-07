@@ -66,7 +66,8 @@ internal sealed class KeychainSecretWriter(IToolRunner runner, ISindriHome home,
         {
             KeychainPlatform.MacOS => runner.Run("security", ["delete-generic-password", "-s", service, "-a", account], _timeout),
             KeychainPlatform.Linux => runner.Run("secret-tool", ["clear", "service", service, "account", account], _timeout),
-            _ => ToolRun.Missing,
+            KeychainPlatform.Unsupported => ToolRun.Missing,
+            _ => throw new ArgumentOutOfRangeException(nameof(service), _platform, "unknown platform"),
         };
 
         // why: `security` exits 44 for an entry that is not there, which is the state asked for; `secret-tool clear` exits 0 either way

@@ -90,8 +90,6 @@ public sealed class ListLinearTeamsServiceTests
     }
 
     [Fact]
-    public void The_request_prints_without_the_key()
-    {
+    public void The_request_prints_without_the_key() =>
         Assert.DoesNotContain(Key, new ListLinearTeamsRequest(Key).ToString(), StringComparison.Ordinal);
-    }
 }

@@ -75,15 +75,18 @@ internal static partial class EndpointCqrsRules
             var problem = request is null ? "resolves no IService<TRequest, _>; bind one service and call it"
                 : route.StartsWith("GET ", StringComparison.Ordinal) ? (Is(request, typeof(IQuery<>)) ? null : $"serves {request.Name}, which isn't an IQuery<>; a GET is a query")
                 : route.StartsWith("POST ", StringComparison.Ordinal) ? Post(route, request, catalog)
-                : route.StartsWith("QUERY ", StringComparison.Ordinal) ? (Is(request, typeof(IQuery<>)) ? null : $"serves {request.Name}, which isn't an IQuery<>; a QUERY is a query")
-                : route.StartsWith("DELETE ", StringComparison.Ordinal) ? (Is(request, typeof(ICommand<>)) ? null : $"serves {request.Name}, which isn't an ICommand<>; a DELETE is a command")
-                : "is neither a GET or QUERY (query) nor a POST or DELETE (command)";
+                : OtherMethod(route, request);
             if (problem is not null)
             {
                 yield return $"{Rule}: {route} {problem}";
             }
         }
     }
+
+    private static string? OtherMethod(string route, Type request) =>
+        route.StartsWith("QUERY ", StringComparison.Ordinal) ? (Is(request, typeof(IQuery<>)) ? null : $"serves {request.Name}, which isn't an IQuery<>; a QUERY is a query")
+        : route.StartsWith("DELETE ", StringComparison.Ordinal) ? (Is(request, typeof(ICommand<>)) ? null : $"serves {request.Name}, which isn't an ICommand<>; a DELETE is a command")
+        : "is neither a GET or QUERY (query) nor a POST or DELETE (command)";
 
     private static string? Post(string route, Type request, ICommandCatalog catalog)
     {
