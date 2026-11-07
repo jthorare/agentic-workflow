@@ -131,4 +131,25 @@ public sealed class LinearWorkRefreshTests
         Assert.Equal(["Open", "Backlog", "Todo", "In Progress", "In Review", "Done"], work.Filter("state").Choices.Select(c => c.Text).Take(6), StringComparer.Ordinal);
         Assert.Equal(["Any label", "api", "bug"], work.Filter("label").Choices.Select(c => c.Text), StringComparer.Ordinal);
     }
+
+    // KeepSelection: a read that no longer serves the selected issue clears the selection, so Enter can't open an issue that isn't shown.
+    [Fact]
+    public async Task A_read_that_drops_the_selected_issue_clears_the_selection()
+    {
+        var work = await _f.Shown(Token);
+        work.Move(1);
+        Assert.Equal("ENG-12", work.SelectedKey);
+
+        var without = LinearFixture.Golden("mine");
+        var kept = new JsonArray([.. without["rows"]!.AsArray().Where(r => !string.Equals((string?)r!["key"], "ENG-12", StringComparison.Ordinal)).Select(r => r!.DeepClone())]);
+        without["rows"] = kept;
+        _f.Server.LinearIssuesFor = q => string.Equals(q.Group, "teams", StringComparison.Ordinal) ? _f.Teams : LinearFixture.Served(without);
+        await work.Refresh(LinearFixture.Url, Token);
+        var asked = 0;
+        work.IssueRequested += (_, _) => asked++;
+
+        Assert.Equal(((string?)null, false, 0, false), (work.SelectedKey, work.OpenSelected(), asked, work.Mine.Rows.Concat(work.Teams.Rows).Any(r => r.IsSelected)));
+        work.Move(1);
+        Assert.Equal(work.Mine.Rows[0].Key, work.SelectedKey);
+    }
 }
