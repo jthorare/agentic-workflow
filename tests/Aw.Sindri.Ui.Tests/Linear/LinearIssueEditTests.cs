@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Linear;
@@ -171,5 +172,26 @@ public sealed class LinearIssueEditTests
         Assert.Equal((false, false), (_f.Field("Assignee").IsEnabled, _f.Field("Labels").IsEnabled));
         Assert.Equal((true, string.Empty), (_f.Field("Priority").IsEnabled, _f.Field("Priority").UnavailableText));
         Assert.True(_f.Sheet.TitleField.IsEnabled);
+    }
+
+    [Fact]
+    public async Task The_assignee_picker_offers_only_active_members_after_Unassigned()
+    {
+        _ = await _f.Opened(Token);
+
+        Assert.Equal(["Unassigned", "Joi Example", "Sam Lee"], _f.Field("Assignee").Options.Select(o => o.Name), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task An_issue_assigned_to_someone_who_left_keeps_them_as_its_one_inactive_choice()
+    {
+        var issue = LinearIssueEditFixture.Issue("writable");
+        issue["assignee"] = new JsonObject { ["id"] = "00000000-0000-4000-8000-0000000000a3", ["name"] = "Former Member" };
+        _f.Serve(issue);
+        _ = await _f.Opened(Token);
+
+        var field = _f.Field("Assignee");
+        Assert.Equal(["Unassigned", "Joi Example", "Sam Lee", "Former Member"], field.Options.Select(o => o.Name), StringComparer.Ordinal);
+        Assert.Equal("Former Member", field.Selected?.Name);
     }
 }
