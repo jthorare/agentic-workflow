@@ -11855,7 +11855,7 @@ Aw.Context.Core.Library.LibraryDoc.Audience.get -> Aw.Context.Core.Records.Audie
 Aw.Context.Core.Library.LibraryDoc.Url.init -> void
 Aw.Context.Core.Library.LibraryDoc.Audience.init -> void
 Aw.Context.Core.Library.LibraryDoc.<Clone>$() -> Aw.Context.Core.Library.LibraryDoc!
-Aw.Context.Core.Library.LibraryDoc.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out string! Root, out string! Scope, out string? Slug, out string? Kind, out string? Status, out string? Project, out System.Collections.Generic.IReadOnlyList<string!>! Repos, out System.Collections.Generic.IReadOnlyList<string!>! Issues, out int ParserVersion, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignDocError!>! Errors, out string! Title, out string? Url, out Aw.Context.Core.Records.AudienceKey? Audience) -> void
+Aw.Context.Core.Library.LibraryDoc.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out string! Root, out string! Scope, out string? Slug, out string? Kind, out string? Status, out string? Project, out System.Collections.Generic.IReadOnlyList<string!>! Repos, out System.Collections.Generic.IReadOnlyList<string!>! Issues, out int ParserVersion, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignDocError!>! Errors, out string! Title, out string? Url, out Aw.Context.Core.Records.AudienceKey? Audience, out System.DateTimeOffset? UpdatedAt) -> void
 Aw.Context.Core.Library.LibraryDocFilter
 Aw.Context.Core.Library.LibraryDocFilter.Root.get -> string?
 override Aw.Context.Core.Library.LibraryDocFilter.ToString() -> string!
@@ -11883,7 +11883,7 @@ Aw.Context.Core.Facade.IContextLibrary.ClaimsOn(Aw.Context.Core.Sources.RecordKe
 Aw.Context.Core.Library.LibraryRefResolution.LibraryRefResolution(string! Ref, Aw.Context.Core.Library.LibraryRefStatus Status, Aw.Context.Core.Sources.RecordKey? Doc, Aw.Context.Core.Library.LibraryItem? Item) -> void
 Aw.Context.Core.Library.LibraryItem.LibraryItem(Aw.Context.Core.Sources.RecordKey DocKey, string! Key, Aw.Context.Core.Library.DesignItemKind Kind, string? Parent, int LineStart, int LineEnd, string! Text) -> void
 Aw.Context.Core.Library.LibraryDocFilter.LibraryDocFilter(string? Root = null, string? Project = null, string? Repo = null, bool ErrorsOnly = false) -> void
-Aw.Context.Core.Library.LibraryDoc.LibraryDoc(Aw.Context.Core.Sources.RecordKey Key, string! Root, string! Scope, string? Slug, string? Kind, string? Status, string? Project, System.Collections.Generic.IReadOnlyList<string!>! Repos, System.Collections.Generic.IReadOnlyList<string!>! Issues, int ParserVersion, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignDocError!>! Errors, string! Title, string? Url, Aw.Context.Core.Records.AudienceKey? Audience) -> void
+Aw.Context.Core.Library.LibraryDoc.LibraryDoc(Aw.Context.Core.Sources.RecordKey Key, string! Root, string! Scope, string? Slug, string? Kind, string? Status, string? Project, System.Collections.Generic.IReadOnlyList<string!>! Repos, System.Collections.Generic.IReadOnlyList<string!>! Issues, int ParserVersion, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignDocError!>! Errors, string! Title, string? Url, Aw.Context.Core.Records.AudienceKey? Audience, System.DateTimeOffset? UpdatedAt = null) -> void
 Aw.Context.Core.Library.LibraryClaimRow.LibraryClaimRow(Aw.Context.Core.Sources.RecordKey Pr, Aw.Context.Core.Records.AudienceKey? PrAudience, Aw.Context.Core.Records.RecordState? PrState, string! Ref) -> void
 Aw.Context.Core.Library.LibraryClaim.LibraryClaim(Aw.Context.Core.Sources.RecordKey Pr, Aw.Context.Core.Records.RecordState? PrState, Aw.Context.Core.Library.LibraryRefResolution! Resolution) -> void
 Aw.Context.Core.Engine.ContextSettings.Library.get -> Aw.Context.Core.Engine.LibrarySettings?
@@ -12342,3 +12342,5 @@ override Aw.Context.Core.Linear.LinearIssueCounts.GetHashCode() -> int
 override Aw.Context.Core.Linear.LinearIssueCounts.ToString() -> string!
 static Aw.Context.Core.Linear.LinearIssueCounts.operator !=(Aw.Context.Core.Linear.LinearIssueCounts? left, Aw.Context.Core.Linear.LinearIssueCounts? right) -> bool
 static Aw.Context.Core.Linear.LinearIssueCounts.operator ==(Aw.Context.Core.Linear.LinearIssueCounts? left, Aw.Context.Core.Linear.LinearIssueCounts? right) -> bool
+Aw.Context.Core.Library.LibraryDoc.UpdatedAt.get -> System.DateTimeOffset?
+Aw.Context.Core.Library.LibraryDoc.UpdatedAt.init -> void

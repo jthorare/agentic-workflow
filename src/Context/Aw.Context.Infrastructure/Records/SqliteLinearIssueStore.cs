@@ -22,13 +22,7 @@ internal sealed class SqliteLinearIssueStore(ContextDatabase database) : ILinear
         ArgumentNullException.ThrowIfNull(filter);
         ArgumentNullException.ThrowIfNull(audience);
         var limit = Math.Clamp(filter.Limit, 1, LinearIssueFilter.MaxLimit);
-        var states = filter.StateTypes is { Count: > 0 } types ? SqliteLexicalLeg.JsonArray(types) : null;
-        var statement = new SqlStatement(LinearSql.ListIssues, c => Audience(c, audience)
-            .Bind("@team", filter.Team)
-            .Bind("@assignee", filter.Assignee?.Value)
-            .Bind("@states", states)
-            .Bind("@project", filter.Project?.Value)
-            .Bind("@cycle", filter.Cycle?.Value)
+        var statement = new SqlStatement(LinearSql.ListIssues, c => Filter(Audience(c, audience), filter)
             .BindAt("@afterAt", after?.UpdatedAt)
             .Bind("@afterKey", after?.Key.Value)
             .Bind("@limit", limit + 1));
@@ -50,9 +44,21 @@ internal sealed class SqliteLinearIssueStore(ContextDatabase database) : ILinear
         return rows.IsError ? rows.Error : Results.Success(rows.Value.Count == 0 ? null : rows.Value[0]);
     }
 
-    public ValueTask<Result<LinearIssueRow?>> Get(LinearIssueKey key, RecordAudience audience, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public async ValueTask<Result<LinearIssueRow?>> Get(LinearIssueKey key, RecordAudience audience, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(audience);
+        var rows = await Read(new SqlStatement(LinearSql.GetIssueByIdentifier, c => Audience(c, audience).Bind("@identifier", key.ToString())), IssueMapper, cancellationToken).ConfigureAwait(false);
+        return rows.IsError ? rows.Error : Results.Success(rows.Value.Count == 0 ? null : rows.Value[0]);
+    }
 
-    public ValueTask<Result<LinearIssueCounts>> Count(LinearIssueFilter filter, RecordAudience audience, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public async ValueTask<Result<LinearIssueCounts>> Count(LinearIssueFilter filter, RecordAudience audience, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(filter);
+        ArgumentNullException.ThrowIfNull(audience);
+        var rows = await Read(new SqlStatement(LinearSql.CountIssues, c => Filter(Audience(c, audience), filter)), CountMapper, cancellationToken).ConfigureAwait(false);
+        return rows.IsError ? rows.Error : new LinearIssueCounts(rows.Value.ToDictionary(static r => r.Key, static r => r.Value, StringComparer.Ordinal), rows.Value.Sum(static r => r.Value));
+    }
 
     public async ValueTask<Result<IReadOnlyList<LinearCommentRow>>> Comments(RecordKey key, RecordAudience audience, CancellationToken cancellationToken)
     {
@@ -75,6 +81,13 @@ internal sealed class SqliteLinearIssueStore(ContextDatabase database) : ILinear
         var mentions = comments.Value.Where(m => LinearMentions.Mentions(m.Comment.Body, spellings)).OrderBy(static m => m.Comment.CreatedAt).ThenBy(static m => m.Comment.Id.Value, StringComparer.Ordinal).ToList();
         return new LinearSince(changes.Value, mentions);
     }
+
+    private static SqliteCommand Filter(SqliteCommand command, LinearIssueFilter filter) => command
+        .Bind("@team", filter.Team)
+        .Bind("@assignee", filter.Assignee?.Value)
+        .Bind("@states", filter.StateTypes is { Count: > 0 } types ? SqliteLexicalLeg.JsonArray(types) : null)
+        .Bind("@project", filter.Project?.Value)
+        .Bind("@cycle", filter.Cycle?.Value);
 
     private static SqliteCommand Audience(SqliteCommand command, RecordAudience audience) => command
         .Bind("@audiences", SqliteLexicalLeg.JsonArray(audience.Allowed.Select(static k => k.Value)))
@@ -104,6 +117,8 @@ internal sealed class SqliteLinearIssueStore(ContextDatabase database) : ILinear
     private static IRowMapper<LinearIssueRow> IssueMapper { get; } = new Mapper<LinearIssueRow>(r => new LinearIssueRow(
         RecordKey.From(r.GetString(0)), r.GetString(1), LinearRowReads.Text(r, 2), LinearRowReads.Text(r, 3), LinearRowReads.Text(r, 4), LinearRowReads.At(r, 5), LinearRowReads.At(r, 6),
         TeamOf(LinearRowReads.Text(r, 7)), LinearRowReads.ReadFields(r, 8), LinearRowReads.Text(r, 22)));
+
+    private static IRowMapper<KeyValuePair<string, int>> CountMapper { get; } = new Mapper<KeyValuePair<string, int>>(r => new KeyValuePair<string, int>(r.GetString(0), r.GetInt32(1)));
 
     private static IRowMapper<LinearSinceChange> ChangeMapper { get; } = new Mapper<LinearSinceChange>(r => new LinearSinceChange(
         RecordKey.From(r.GetString(0)), r.GetString(1), r.GetString(2), LinearRowReads.Id(r, 3), LinearRowReads.Id(r, 4), SqliteRead.GetTimestamp(r, 5), r.GetString(6)));

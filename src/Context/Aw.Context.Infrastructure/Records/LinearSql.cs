@@ -41,13 +41,24 @@ internal static class LinearSql
         "i.key, r.title, r.url, r.state_raw, r.author, r.created_at, r.closed_at, r.audience_key, " +
         "i.team_id, i.identifier, i.state_id, i.state_type, i.assignee_id, i.priority, i.estimate, i.cycle_id, i.project_id, i.parent_id, i.labels, i.due_date, i.sort_order, i.updated_at, i.description";
 
+    // why: one filter for the list and the count, so what a count says is what the list pages through
+    private const string IssueFilter =
+        "AND (@team IS NULL OR r.audience_key = 'linear:' || @team) AND (@assignee IS NULL OR i.assignee_id = @assignee) " +
+        "AND (@states IS NULL OR i.state_type IN (SELECT value FROM json_each(@states))) AND (@project IS NULL OR i.project_id = @project) AND (@cycle IS NULL OR i.cycle_id = @cycle) ";
+
     /// <summary>Issues newest first by Linear's update time, then key; a page continues after (@afterAt, @afterKey). A filter that is NULL does not narrow.</summary>
     internal const string ListIssues =
-        "SELECT " + IssueColumns + " FROM linear_issue i JOIN source_record r ON r.key = i.key WHERE " + Visible + " " +
-        "AND (@team IS NULL OR r.audience_key = 'linear:' || @team) AND (@assignee IS NULL OR i.assignee_id = @assignee) " +
-        "AND (@states IS NULL OR i.state_type IN (SELECT value FROM json_each(@states))) AND (@project IS NULL OR i.project_id = @project) AND (@cycle IS NULL OR i.cycle_id = @cycle) " +
+        "SELECT " + IssueColumns + " FROM linear_issue i JOIN source_record r ON r.key = i.key WHERE " + Visible + " " + IssueFilter +
         "AND (@afterAt IS NULL OR i.updated_at < @afterAt OR (i.updated_at = @afterAt AND i.key > @afterKey)) " +
         "ORDER BY i.updated_at DESC, i.key ASC LIMIT @limit";
+
+    /// <summary>The issues <see cref="ListIssues"/> would page through, counted per state type; an issue with no state type counts under 'unknown'.</summary>
+    internal const string CountIssues =
+        "SELECT coalesce(i.state_type, 'unknown'), count(*) FROM linear_issue i JOIN source_record r ON r.key = i.key WHERE " + Visible + " " + IssueFilter + "GROUP BY 1";
+
+    /// <summary>The issue whose identifier is @identifier ('ENG-12'); if a moved issue left two rows with it, the newest.</summary>
+    internal const string GetIssueByIdentifier =
+        "SELECT " + IssueColumns + " FROM linear_issue i JOIN source_record r ON r.key = i.key WHERE i.identifier = @identifier AND " + Visible + " ORDER BY i.updated_at DESC, i.key ASC LIMIT 1";
 
     internal const string GetIssue = "SELECT " + IssueColumns + " FROM linear_issue i JOIN source_record r ON r.key = i.key WHERE i.key = @key AND " + Visible;
 
