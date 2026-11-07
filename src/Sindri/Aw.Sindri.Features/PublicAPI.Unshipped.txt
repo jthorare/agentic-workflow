@@ -6012,3 +6012,19 @@ Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse.Doc.get -> Aw.Sindri.Core
 Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse.Doc.init -> void
 Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse.GetLibraryDocResponse(Aw.Sindri.Core.Views.AsOf! AsOf, Aw.Sindri.Core.Reviews.LibraryDocView! Doc) -> void
 Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocRequest.GetLibraryDocRequest(string! Doc) -> void
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.<Clone>$() -> Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest!
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.Deconstruct(out string! Owner, out string! Repo, out int Number) -> void
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.Equals(Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest? other) -> bool
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.GetReviewPageRequest(string! Owner, string! Repo, int Number) -> void
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.Number.get -> int
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.Number.init -> void
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.Owner.get -> string!
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.Owner.init -> void
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.Repo.get -> string!
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.Repo.init -> void
+override Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.GetHashCode() -> int
+override Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.ToString() -> string!
+static Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.operator !=(Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest? left, Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest? right) -> bool
+static Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.operator ==(Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest? left, Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest? right) -> bool

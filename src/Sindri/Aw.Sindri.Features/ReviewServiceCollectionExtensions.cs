@@ -3,6 +3,7 @@ using Aw.Sindri.Core.Reviews;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.GetLibrary;
 using Aw.Sindri.Features.GetLibraryDoc;
+using Aw.Sindri.Features.GetReviewPage;
 using Aw.Sindri.Features.ListReviews;
 using Aw.Sindri.Features.ReviewListFacts;
 using Aw.Sindri.Features.SetReviewLogin;
@@ -32,6 +33,8 @@ internal static class ReviewServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         return services
             .AddScoped<IValidator<ListReviewsRequest>, AcceptAllValidator<ListReviewsRequest>>().AddQuery<ListReviewsRequest, ListReviewsResponse, ListReviewsService>()
+            .AddScoped<IValidator<GetReviewPageRequest>, AcceptAllValidator<GetReviewPageRequest>>().AddQuery<GetReviewPageRequest, ReviewPageModel, GetReviewPageService>()
+            .AddScoped<IReviewPageStore, ContextReviewPageStore>().AddScoped<ReviewPageReader>().AddScoped<ReviewPageFactsReader>().AddScoped<ReviewPageCache>().AddScoped<ReviewPageLibraryReader>()
             .AddScoped<IReviewFacts, ContextReviewFacts>()
             .AddScoped<IReviewLibraryState, ContextLibraryState>()
             .AddScoped<IReviewProjects, ProjectReviewNames>()

@@ -8,8 +8,8 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 /// </summary>
 public sealed class ApiGoldenTests
 {
-    // hand-written before their routes (#2076): the PR page lands in Ph5c, the Library roots writes in their own slot and the review settings in Ph9's api slot, each registering its rows and leaving this list
-    private static readonly string[] _pendingGoldenFolders = ["reviews-pr", "library-roots", "review-settings", "review-settings-save"];
+    // hand-written before their routes (#2076): the Library roots writes in their own slot and the review settings in Ph9's api slot, each registering its rows and leaving this list
+    private static readonly string[] _pendingGoldenFolders = ["library-roots", "review-settings", "review-settings-save"];
 
     [Fact, Trait("Lane", "integration")]
     public void Every_golden_file_has_a_scenario()
@@ -26,7 +26,7 @@ public sealed class ApiGoldenTests
         Assert.Equal(expected, files);
 
         // the pending files are exactly the rows not yet registered
-        var pendingRows = ((IEnumerable<(string Slug, string Scenario)>)[.. ReviewScenarios.All.Where(r => r.Slug == "reviews-pr"), .. LibraryRootScenarios.All, .. ReviewSettingsScenarios.All]).Select(r => $"{r.Slug}/{r.Scenario}.json").Order(StringComparer.Ordinal);
+        var pendingRows = ((IEnumerable<(string Slug, string Scenario)>)[.. LibraryRootScenarios.All, .. ReviewSettingsScenarios.All]).Select(r => $"{r.Slug}/{r.Scenario}.json").Order(StringComparer.Ordinal);
         Assert.Equal(pendingRows, all.Where(f => _pendingGoldenFolders.Any(p => f.StartsWith(p + "/", StringComparison.Ordinal))).Order(StringComparer.Ordinal));
         Assert.DoesNotContain(ApiScenarios.All, r => _pendingGoldenFolders.Contains(r.Slug));
     }

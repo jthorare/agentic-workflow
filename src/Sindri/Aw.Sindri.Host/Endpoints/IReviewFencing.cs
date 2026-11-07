@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Reviews;
 using Aw.Sindri.Features.GetLibrary;
 using Aw.Sindri.Features.ListReviews;
 
@@ -13,6 +14,11 @@ internal interface IReviewFencing
     /// <param name="list">The list.</param>
     /// <returns>The JSON answer with PR titles, authors and unreadable folders fenced.</returns>
     public IResult List(ListReviewsResponse list);
+
+    /// <summary>One PR's page as a session reads it.</summary>
+    /// <param name="page">The page.</param>
+    /// <returns>The JSON answer with the forge's and the docs' text (titles, branches, patches, threads, evidence labels) fenced.</returns>
+    public IResult Page(ReviewPageModel page);
 
     /// <summary>The library page as a session reads it.</summary>
     /// <param name="library">The page.</param>

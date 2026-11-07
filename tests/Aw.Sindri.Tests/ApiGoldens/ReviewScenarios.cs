@@ -13,27 +13,25 @@ using static Aw.Sindri.Tests.Callers.CallerRequests;
 namespace Aw.Sindri.Tests.ApiGoldens;
 
 /// <summary>
-/// The list rows are registered (Ph5a); the PR page rows wait in ApiGoldenTests._pendingGoldenFolders until its route lands (Ph5c).
+/// The list rows (Ph5a) and the PR page rows (Ph5c) are registered.
 /// The Reviews page's goldens (PR review page spec §6.1-6.3, §9, §16): 'GET /reviews' in each list state and 'GET /reviews/{owner}/{repo}/{number}' in each page state. Hand-written first
 /// (Ph5 red): the routes don't exist yet, so every row answers 404 against its golden. The Ph5 implementation seeds what each row's `// seeded in Ph5:` note names.
 /// </summary>
 internal static class ReviewScenarios
 {
-    private const string Pr = "/sindri/reviews/acme/api/2071";
-
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
         ("reviews", "some"), ("reviews", "empty"), ("reviews", "no-login"), ("reviews", "github-failing"), ("reviews", "before-reviewers"), ("reviews", "library-unreadable"), ("reviews", "session"),
         ("reviews-pr", "full"), ("reviews-pr", "empty-panels"), ("reviews-pr", "panel-errors"), ("reviews-pr", "moving"), ("reviews-pr", "offline-cached"),
-        ("reviews-pr", "own-pr"), ("reviews-pr", "capped"), ("reviews-pr", "not-synced"), ("reviews-pr", "no-login"), ("reviews-pr", "not-found"),
+        ("reviews-pr", "own-pr"), ("reviews-pr", "agent-pr"), ("reviews-pr", "capped"), ("reviews-pr", "not-synced"), ("reviews-pr", "no-login"), ("reviews-pr", "not-found"), ("reviews-pr", "offline-uncached"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
     public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario));
 
-    private const string GithubContext = "context:\n  sources:\n    github: { repos: [acme/api, acme/web] }\n";
-    private const string SindriProject = "prj_0000000000000000000000000A";
+    internal const string GithubContext = "context:\n  sources:\n    github: { repos: [acme/api, acme/web] }\n";
+    internal const string SindriProject = "prj_0000000000000000000000000A";
     private const string ReviewBlock = "review:\n  login: joi-example\n  projects:\n    - { project: prj_0000000000000000000000000A, repos: [acme/api] }\n";
 
     private static readonly string[] _heads = [new('a', 40), new('b', 40), new('c', 40), new('d', 40)];
@@ -41,8 +39,7 @@ internal static class ReviewScenarios
     /// <summary>Starts the scenario's host: the item profile with the github repos (and the review block unless the scenario is 'no-login'), over the scenario's stored PR records, project names and forge login.</summary>
     public static Task<GoldenHost> Start(string slug, string scenario, CancellationToken ct) =>
         slug != "reviews"
-            // seeded in Ph5 (reviews-pr): the PR record, forge fakes for Files, CI runs, threads and evidence ('moving', 'offline-cached', 'own-pr' variants), 3,000 forge files for 'capped'
-            ? GoldenHost.Start(temporary: true, ct, ItemScenarios.ProfileYaml)
+            ? ReviewPageScenarios.Start(scenario, ct)
             : GoldenHost.Start(temporary: true, ct, ItemScenarios.ProfileYaml + GithubContext + (scenario == "no-login" ? string.Empty : ReviewBlock), extra: services =>
             {
                 _ = services.Replace(ServiceDescriptor.Singleton<IReviewFacts>(Facts(scenario)));
@@ -94,22 +91,21 @@ internal static class ReviewScenarios
             await SeedSummaries(host, ct);
         }
 
+        if (slug == "reviews-pr")
+        {
+            return await ReviewPageScenarios.Body(host, scenario);
+        }
+
         // seeded in Ph5: list rows ('some': acme/api#2071 requested, acme/web#880 reviewed with 2 new commits, acme/api#2064 and draft acme/web#875 by joi-example; 'empty': none;
         // 'github-failing': the last rows plus a failing github freshness; 'before-reviewers': PR records without reviewers), the library (41 docs, 3 with errors; 'library-unreadable': 33 docs and one unreadable root)
-        // and, for 'reviews-pr', the PR record, forge fakes for Files, CI runs, threads and evidence ('moving', 'offline-cached', 'own-pr' variants), all at the epoch clock
-        // seeded in Ph5: for 'capped', 3,000 forge files (the cap) with one file over the size limit (patch withheld, omitted tooLarge)
-        var path = slug == "reviews" ? "/sindri/reviews" : scenario switch
-        {
-            "not-synced" => "/sindri/reviews/acme/other/12",
-            "not-found" => "/sindri/reviews/acme/api/9999",
-            _ => Pr,
-        };
+        // all at the epoch clock
+        var path = "/sindri/reviews";
         var caller = scenario == "session" ? ItemScenarios.Session("demo") : ItemScenarios.Human(host);
         return (await host.Http.Ask(Get(path, caller))).Body;
     }
 
     /// <summary>A Projects page holding only the card the review block names, so the setup approval passes SND-REVIEW-002.</summary>
-    private sealed class OneProjectPage : IProjectPages
+    internal sealed class OneProjectPage : IProjectPages
     {
         public ValueTask<Result<ProjectsPage>> Read(bool all, CancellationToken cancellationToken) =>
             ValueTask.FromResult<Result<ProjectsPage>>(new ProjectsPage(Empty: null, Viewer: null, Freshness: [],

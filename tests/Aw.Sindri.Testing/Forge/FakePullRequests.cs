@@ -8,7 +8,7 @@ namespace Aw.Sindri.Testing.Forge;
 
 /// <summary>
 /// An in-memory <see cref="IPullRequests"/> over a list of pull requests on allowed hosts. Held to <see cref="PullRequestsContract"/>. A test seeds a pull request
-/// with <see cref="Add"/> and reads what the port did from <see cref="Calls"/> and <see cref="Pulls"/>.
+/// with <see cref="Add(PullRepo, string, string)"/> and reads what the port did from <see cref="Calls"/> and <see cref="Pulls"/>.
 /// </summary>
 /// <param name="hosts">The hosts the profile allows.</param>
 public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
@@ -20,6 +20,18 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
 
     /// <summary>Gets or sets an error that Find, Open, Update and PushBranch answer when set.</summary>
     public Error? Failure { get; set; }
+
+    /// <summary>Gets or sets an error that <see cref="Get"/> answers when set (the forge is unreachable).</summary>
+    public Error? GetFailure { get; set; }
+
+    /// <summary>Gets the head commits successive <see cref="Get"/> calls move the pull request to, one per call, until the queue is empty (a pull request that moves while it is read).</summary>
+    public Queue<string> HeadScript { get; } = new();
+
+    /// <summary>Gets or sets an error that <see cref="Files"/> answers when set.</summary>
+    public Error? FilesFailure { get; set; }
+
+    /// <summary>Gets or sets an error that <see cref="Threads"/> answers when set.</summary>
+    public Error? ThreadsFailure { get; set; }
 
     /// <summary>Gets the requests Open received, in order.</summary>
     public IList<OpenPull> Opened { get; } = [];
@@ -85,6 +97,20 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
         return pull;
     }
 
+    /// <summary>Adds an open pull request with a given number.</summary>
+    /// <param name="repo">The repository.</param>
+    /// <param name="number">The pull request number.</param>
+    /// <param name="head">The head branch.</param>
+    /// <param name="headSha">The head's tip.</param>
+    /// <returns>The pull request.</returns>
+    public FakePull Add(PullRepo repo, int number, string head, string headSha)
+    {
+        ArgumentNullException.ThrowIfNull(repo);
+        var pull = new FakePull(repo, number, head, headSha);
+        _pulls.Add(pull);
+        return pull;
+    }
+
     /// <summary>Puts an open pull request on the fake forge, as if the request had opened it.</summary>
     /// <param name="request">What it was opened with.</param>
     /// <returns>The pull request.</returns>
@@ -106,6 +132,16 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
     public ValueTask<Result<PullView>> Get(string link, CancellationToken cancellationToken)
     {
         Calls.Add("Get");
+        if (GetFailure is { } failure)
+        {
+            return ValueTask.FromResult<Result<PullView>>(failure);
+        }
+
+        if (HeadScript.Count > 0 && Locate(link) is { IsSuccess: true } located)
+        {
+            located.Value.HeadSha = HeadScript.Dequeue();
+        }
+
         return Done(Locate(link).Map(p => new PullView(p.Link, p.State, p.HeadSha, p.Mergeable, p.ReviewDecision, p.Threads.Count(static t => t.Kind == PullCommentKind.Thread && !t.Resolved), p.Checks ?? new PullChecks(p.FailingChecks.Count > 0 ? PullChecksState.Failing : p.ChecksState, p.ChecksSha ?? p.HeadSha, [.. p.FailingChecks], Passed: 0, Pending: 0), p.Labels, p.Base, p.BaseSha, p.Title, p.Author, p.Draft, p.Head, p.Body)));
     }
 
@@ -175,6 +211,11 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
     public ValueTask<Result<IReadOnlyList<PullThread>>> Threads(string link, CancellationToken cancellationToken)
     {
         Calls.Add("Threads");
+        if (ThreadsFailure is { } threadsFailure)
+        {
+            return ValueTask.FromResult<Result<IReadOnlyList<PullThread>>>(threadsFailure);
+        }
+
         return Done(Locate(link).Map<IReadOnlyList<PullThread>>(p => [.. p.Threads]));
     }
 
@@ -410,6 +451,11 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
     public ValueTask<Result<PullFiles>> Files(string link, CancellationToken cancellationToken)
     {
         Calls.Add("Files");
+        if (FilesFailure is { } filesFailure)
+        {
+            return ValueTask.FromResult<Result<PullFiles>>(filesFailure);
+        }
+
         return Done(Locate(link).Map(p => new PullFiles(p.Files, p.FilesCapReached)));
     }
 

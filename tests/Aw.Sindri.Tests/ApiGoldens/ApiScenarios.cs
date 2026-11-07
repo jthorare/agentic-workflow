@@ -42,7 +42,7 @@ internal static class ApiScenarios
         ["CodeIndex"] = CodeIndexScenarios.All,
         ["Sandbox"] = SandboxScenarios.All,
         ["Projects"] = ProjectScenarios.All,
-        ["Reviews"] = [.. ReviewScenarios.All.Where(r => r.Slug == "reviews"), .. ReviewLoginScenarios.All, .. LibraryScenarios.All, .. LibraryDocScenarios.All],
+        ["Reviews"] = [.. ReviewScenarios.All, .. ReviewLoginScenarios.All, .. LibraryScenarios.All, .. LibraryDocScenarios.All],
     };
 
     /// <summary>Every (route slug, scenario) pair, group by group.</summary>

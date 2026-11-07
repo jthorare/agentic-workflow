@@ -26,7 +26,8 @@
         "key": "ENG-12",
         "href": "sindri://linear/ENG-12"
       }
-    ]
+    ],
+    "postsFixThreads": false
   },
   "settings": {
     "name": "sindri",
@@ -37,7 +38,7 @@
   "strip": [
     {
       "panel": "requiredChecks",
-      "text": "3 open"
+      "text": "4 open"
     },
     {
       "panel": "docMap",
@@ -68,19 +69,19 @@
             "fixTask": true
           },
           {
-            "id": "doc-covers",
-            "title": "Names the design doc",
-            "need": "covers",
+            "id": "owner-ran-it",
+            "title": "I ran it myself",
+            "need": "manual",
             "status": "needsTick",
             "detail": null,
             "fixTask": false
           },
           {
-            "id": "changelog",
-            "title": "Changelog entry",
-            "need": "changedWith",
+            "id": "build",
+            "title": "Build passes",
+            "need": "ci",
             "status": "running",
-            "detail": "waiting on CI",
+            "detail": "build: no run on a1b2c3d yet",
             "fixTask": false
           },
           {
@@ -197,7 +198,7 @@
             "verifies": [
               "REQ-E4"
             ],
-            "ticked": true
+            "ticked": false
           }
         ]
       }
@@ -214,7 +215,7 @@
             "status": "completed",
             "conclusion": "failure",
             "sha7": "a1b2c3d",
-            "url": "https://github.com/acme/api/actions/runs/101"
+            "url": "https://github.com/acme/api/pull/2071/checks"
           },
           {
             "name": "lint",
@@ -222,7 +223,7 @@
             "status": "completed",
             "conclusion": "success",
             "sha7": "a1b2c3d",
-            "url": "https://github.com/acme/api/actions/runs/102"
+            "url": "https://github.com/acme/api/pull/2071/checks"
           }
         ],
         "babysitter": null
@@ -312,7 +313,19 @@
             "patch": null,
             "omitted": "tooLarge",
             "note": "Too large to show here",
-            "url": "https://github.com/acme/api/pull/2071/files#diff-5"
+            "url": "https://github.com/acme/api/pull/2071/files#diff-30f4ffb0cbbace253758e859e6a98e17ac1a05aacf3d628f1c79211daeba23e8"
+          },
+          {
+            "path": "src/Api/Migrations/0042_retry.sql",
+            "status": "added",
+            "previousPath": null,
+            "similarity": null,
+            "additions": 2,
+            "deletions": 0,
+            "patch": "@@ -0,0 +1,2 @@\n+alter table retry add column budget int;\n+update retry set budget = 5;",
+            "omitted": null,
+            "note": null,
+            "url": "https://github.com/acme/api/pull/2071/files#diff-454bc01b4be1ea9b13a18e04dcda382e6466d7db577d58ab46d541a56a98d27a"
           }
         ]
       }
