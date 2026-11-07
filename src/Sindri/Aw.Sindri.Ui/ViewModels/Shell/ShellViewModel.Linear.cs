@@ -10,8 +10,7 @@ internal sealed partial class ShellViewModel
     /// <summary>The Work page's Linear view: its switch, list and since-you-looked strip.</summary>
     public LinearWorkViewModel Linear { get; private set; }
 
-    private static readonly string[] _linearSwallowed = ["C", "/", "Y"];
-    private static readonly string[] _linearRowKeys = ["J", "K", "Enter"];
+    private static readonly string[] _linearSwallowed = ["C", "Y"];
 
     [MemberNotNull(nameof(Linear))]
     private void InitLinear()
@@ -29,7 +28,7 @@ internal sealed partial class ShellViewModel
     }
 
     // L switches Work between Sindri and Linear from anywhere on the page; C creates an item, and on the Linear view does nothing yet (New issue is not built).
-    // The row keys (J, K, Enter, / and Y) belong to the queue, which is hidden on the Linear view: they are handled there and do nothing until the Linear rows take them (#2187).
+    // The row keys belong to the Linear rows on the Linear view (J / K select, Enter opens, / focuses the filter bar), never to the hidden queue; Y has no action there. In a sheet J, K and Enter go to the sheet.
     private bool LinearKeyPressed(string key, bool inSheet)
     {
         if (!IsWork)
@@ -43,6 +42,24 @@ internal sealed partial class ShellViewModel
             return true;
         }
 
-        return Linear.IsLinear && (_linearSwallowed.Contains(key, StringComparer.Ordinal) || (!inSheet && _linearRowKeys.Contains(key, StringComparer.Ordinal)));
+        if (!Linear.IsLinear)
+        {
+            return false;
+        }
+
+        switch (key)
+        {
+            case "J" or "K" when !inSheet:
+                Linear.Move(key == "J" ? 1 : -1);
+                return true;
+            case "Enter" when !inSheet:
+                _ = Linear.OpenSelected();
+                return true;
+            case "/" when !inSheet:
+                Linear.FocusFilters();
+                return true;
+            default:
+                return string.Equals(key, "/", StringComparison.Ordinal) || _linearSwallowed.Contains(key, StringComparer.Ordinal);
+        }
     }
 }
