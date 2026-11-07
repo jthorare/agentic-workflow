@@ -84,4 +84,29 @@ public sealed class LibraryRootsGoldenTests
         Assert.Equal(HttpStatusCode.NotFound, RouteAnswer.Problem("library-roots", "remove-unknown").Status);
         Assert.Equal(HttpStatusCode.Forbidden, RouteAnswer.Problem("library-roots", "session-refused").Status);
     }
+
+    [Fact]
+    public async Task Removing_a_name_with_a_colon_and_a_slash_percent_encodes_the_path_segment()
+    {
+        var handler = new RecordingHandler();
+        var client = new SindriApiClient(new HttpClient(handler), new InMemoryHumanToken(), TimeProvider.System);
+
+        _ = await client.RemoveLibraryRoot(new Uri("http://127.0.0.1:7410/"), "repo:jthorare/agentic-workflow", approve: true, TestContext.Current.CancellationToken);
+
+        Assert.Equal(("DELETE", "/sindri/library/roots/repo%3Ajthorare%2Fagentic-workflow?approve=true"), (handler.Method, handler.Target));
+        Assert.Equal("repo%3Ajthorare%2Fagentic-workflow", Uri.EscapeDataString("repo:jthorare/agentic-workflow"));
+    }
+
+    private sealed class RecordingHandler : HttpMessageHandler
+    {
+        public string Method { get; private set; } = string.Empty;
+
+        public string Target { get; private set; } = string.Empty;
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            (Method, Target) = (request.Method.Method, request.RequestUri!.PathAndQuery);
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("""{"approved":true,"pendingCount":0}""") });
+        }
+    }
 }

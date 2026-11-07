@@ -51,7 +51,7 @@ public sealed class LibraryRootsTests
     {
         var card = await Shown();
 
-        Assert.Equal(["aw", "work", "inbox", "repo:agentic-workflow", "repo:harbor"], card.Rows.Select(r => r.Name), StringComparer.Ordinal);
+        Assert.Equal(["aw", "work", "inbox", "repo:jthorare/agentic-workflow", "repo:acme/harbor"], card.Rows.Select(r => r.Name), StringComparer.Ordinal);
         Assert.Equal(
             ["~/.agentic-workflow", "~/Documents/WorkVault", "~/Documents/Inbox", "jthorare/agentic-workflow · docs/**", "acme/harbor · docs/**"],
             card.Rows.Select(r => r.PathText),
@@ -70,7 +70,7 @@ public sealed class LibraryRootsTests
 
         Assert.Equal("scanned 3 min ago, 9 docs, 0 errors", Row(card, "aw").StatusText);
         Assert.Equal("scanned 3 min ago, 20 docs, 2 errors", Row(card, "work").StatusText);
-        Assert.Equal("scanned 3 min ago, 8 docs, 1 error", Row(card, "repo:agentic-workflow").StatusText);
+        Assert.Equal("scanned 3 min ago, 8 docs, 1 error", Row(card, "repo:jthorare/agentic-workflow").StatusText);
         Assert.Equal((Labels.LibraryFoldersReading, true), (Row(card, "inbox").StatusText, Row(card, "inbox").IsReading));
         Assert.False(Row(card, "work").IsReading);
     }
@@ -91,7 +91,7 @@ public sealed class LibraryRootsTests
 
         Assert.Equal((false, true, false, false), (Row(card, "aw").CanRemove, Row(card, "aw").CanTurnOff, Row(card, "aw").CanTurnOn, Row(card, "aw").IsReadOnly));
         Assert.Equal((true, false, false, false), (Row(card, "work").CanRemove, Row(card, "work").CanTurnOff, Row(card, "work").CanTurnOn, Row(card, "work").IsReadOnly));
-        var repo = Row(card, "repo:harbor");
+        var repo = Row(card, "repo:acme/harbor");
         Assert.Equal((false, false, false, true, Labels.LibraryFoldersReadOnly), (repo.CanRemove, repo.CanTurnOff, repo.CanTurnOn, repo.IsReadOnly, repo.ReadOnlyText));
     }
 
@@ -373,7 +373,7 @@ public sealed class LibraryRootsTests
         Assert.Equal("Turn off aw", Row(card, "aw").AwName);
         Assert.Equal("Remove work", Row(card, "work").RemoveName);
         Assert.Equal("work, vault, ~/Documents/WorkVault, scanned 3 min ago, 20 docs, 0 errors", Row(card, "work").AutomationName);
-        Assert.Equal("repo:harbor, from your repos, acme/harbor · docs/**, scanned 3 min ago, 4 docs, 0 errors, set by the repo list", Row(card, "repo:harbor").AutomationName);
+        Assert.Equal("repo:acme/harbor, from your repos, acme/harbor · docs/**, scanned 3 min ago, 4 docs, 0 errors, set by the repo list", Row(card, "repo:acme/harbor").AutomationName);
     }
 
     [Fact]
@@ -383,8 +383,8 @@ public sealed class LibraryRootsTests
 
         var work = Row(card, "work");
         Assert.Equal((true, "2 errors", "2 errors in work"), (work.HasErrors, work.ErrorsText, work.ErrorsName));
-        var repo = Row(card, "repo:agentic-workflow");
-        Assert.Equal((true, "1 error", "1 error in repo:agentic-workflow"), (repo.HasErrors, repo.ErrorsText, repo.ErrorsName));
+        var repo = Row(card, "repo:jthorare/agentic-workflow");
+        Assert.Equal((true, "1 error", "1 error in repo:jthorare/agentic-workflow"), (repo.HasErrors, repo.ErrorsText, repo.ErrorsName));
         Assert.False(Row(card, "aw").HasErrors);
         Assert.False(Row(card, "inbox").HasErrors);
     }
@@ -395,7 +395,7 @@ public sealed class LibraryRootsTests
         var card = await Shown();
 
         Assert.Equal(
-            [("aw", false), ("work", true), ("inbox", true), ("repo:agentic-workflow", false), ("repo:harbor", false)],
+            [("aw", false), ("work", true), ("inbox", true), ("repo:jthorare/agentic-workflow", false), ("repo:acme/harbor", false)],
             card.Rows.Select(r => (r.Name, r.HasVaultNote)));
         Assert.Equal(Labels.LibraryFoldersVaultNote, Row(card, "work").VaultNoteText);
     }
@@ -464,11 +464,11 @@ public sealed class LibraryRootsTests
 
         second.SetResult();
         await newer;
-        Assert.Equal(["aw", "repo:agentic-workflow", "repo:harbor"], card.Rows.Select(r => r.Name), StringComparer.Ordinal);
+        Assert.Equal(["aw", "repo:jthorare/agentic-workflow", "repo:acme/harbor"], card.Rows.Select(r => r.Name), StringComparer.Ordinal);
         first.SetResult();
         await older;
 
-        Assert.Equal(["aw", "repo:agentic-workflow", "repo:harbor"], card.Rows.Select(r => r.Name), StringComparer.Ordinal);
+        Assert.Equal(["aw", "repo:jthorare/agentic-workflow", "repo:acme/harbor"], card.Rows.Select(r => r.Name), StringComparer.Ordinal);
     }
 
     [Fact]

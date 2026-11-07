@@ -1,7 +1,7 @@
 namespace Aw.Sindri.Ui.Api.Reviews;
 
 /// <summary>One folder of the design library (GET /sindri/library's roots, review page spec §6.3): the aw folder, a vault the owner added, or a repo's docs.</summary>
-/// <param name="Name">Its name: "aw", a vault's own, or "repo:owner-name".</param>
+/// <param name="Name">Its name: "aw", a vault's own, or "repo:owner/name".</param>
 /// <param name="Kind">"aw", "vault" or "repo".</param>
 /// <param name="Path">The folder on disk.</param>
 /// <param name="Scope">A repo root's "owner/name · docs/**"; null for the others.</param>

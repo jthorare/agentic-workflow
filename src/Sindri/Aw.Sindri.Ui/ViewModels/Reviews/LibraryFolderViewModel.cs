@@ -18,7 +18,7 @@ internal sealed class LibraryFolderViewModel : ObservableObject
         Update(folder, now);
     }
 
-    /// <summary>The folder's name: "aw", a vault's own or "repo:owner-name".</summary>
+    /// <summary>The folder's name: "aw", a vault's own or "repo:owner/name".</summary>
     public string Name { get; }
 
     /// <summary>The chip: built in, vault or from your repos.</summary>

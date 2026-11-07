@@ -87,7 +87,7 @@
       "unreadable": null
     },
     {
-      "name": "repo:agentic-workflow",
+      "name": "repo:jthorare/agentic-workflow",
       "kind": "repo",
       "path": "~/repos/agentic-workflow",
       "scope": "jthorare/agentic-workflow · docs/**",
@@ -99,7 +99,7 @@
       "unreadable": null
     },
     {
-      "name": "repo:harbor",
+      "name": "repo:acme/harbor",
       "kind": "repo",
       "path": "~/repos/harbor",
       "scope": "acme/harbor · docs/**",
