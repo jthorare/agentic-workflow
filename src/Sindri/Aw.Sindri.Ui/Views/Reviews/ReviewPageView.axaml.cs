@@ -156,6 +156,14 @@ internal sealed partial class ReviewPageView : UserControl
         }
     }
 
+    private void OnOpenIssue(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: string key })
+        {
+            Page?.OpenIssue(key);
+        }
+    }
+
     private void OnBack(object? sender, RoutedEventArgs e) => Page?.GoBack();
 
     private void OnTryAgain(object? sender, RoutedEventArgs e) => _ = Page?.Reload(CancellationToken.None);
