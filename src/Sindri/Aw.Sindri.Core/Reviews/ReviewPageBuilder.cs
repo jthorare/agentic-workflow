@@ -196,9 +196,8 @@ public static partial class ReviewPageBuilder
 
     // ---- risk
 
-    private static (ReviewPagePanel, string?) RiskPanel(ReviewPageFacts f)
+    private static List<ReviewPageRiskHit> SettingsRisks(ReviewPageFacts f)
     {
-        const string id = "risk";
         var hits = new List<ReviewPageRiskHit>();
         var paths = f.Files.Ok ? f.Files.Value.Files.Select(static x => x.Path) : [];
         foreach (var path in paths)
@@ -209,6 +208,13 @@ public static partial class ReviewPageBuilder
             }
         }
 
+        return hits;
+    }
+
+    private static (ReviewPagePanel, string?) RiskPanel(ReviewPageFacts f)
+    {
+        const string id = "risk";
+        var hits = SettingsRisks(f);
         var files = hits.Count;
         if (f.Pr.Body is { } body && RisksSection.Match(body) is { Success: true } m)
         {
@@ -216,6 +222,12 @@ public static partial class ReviewPageBuilder
         }
 
         var strip = files > 0 ? Plural(files, "risky file", "risky files") : hits.Count > 0 ? "risks noted in the body" : null;
+        if (hits.Count == 0 && !f.Files.Ok)
+        {
+            // why: with the files unread, "no risky paths" would be a false all-clear; no strip part, the diff panel already says the files failed
+            return (Error(id, "Couldn't read the files: " + f.Files.Error, new RiskData([])), null);
+        }
+
         return (hits.Count == 0 ? Empty(id, "No risky paths touched", new RiskData([])) : Ready(id, new RiskData(hits)), strip);
     }
 
