@@ -259,6 +259,37 @@ public sealed class SandboxLaunchStagesTests : IDisposable
         Expect.Equal(1, _tokens.Calls);
     }
 
+    private static LaunchRequest AgentAppSkillStep(SkillBlockManifest block, bool trial) =>
+        PlannedStep() with { Skill = new SkillLaunch("skill", SkillTarget.ClaudeCode, block, new Dictionary<string, string>(StringComparer.Ordinal)) { Trial = trial } };
+
+    [Theory]
+    [InlineData(false, false)]   // a block that does not push
+    [InlineData(true, true)]     // a pushing block run as a trial
+    public async Task Request_mints_no_agent_token_for_a_skill_Step_that_cannot_push(bool pushingBlock, bool trial)
+    {
+        var block = pushingBlock ? SkillFixtures.BugFixOrchestrator : SkillFixtures.Review;
+
+        var built = await MakeWith(GithubCredentials.AgentApp).Request(AgentAppSkillStep(block, trial), chosenSession: null, CancellationToken.None);
+        var plan = SandboxPlanner.Build(SandboxMechanism.Bubblewrap, built.Value).Value;
+
+        Expect.Equal(0, _tokens.Calls);
+        Expect.Equal(GithubCredentials.None, plan.Github);
+        Expect.True(!plan.Network.Groups.Any(g => string.Equals(g.Name, "github", StringComparison.Ordinal)));
+    }
+
+    [Fact]
+    public async Task Request_mints_the_agent_token_for_a_skill_Step_whose_block_pushes()
+    {
+        var stages = MakeWith(GithubCredentials.AgentApp);
+
+        var built = await stages.Request(AgentAppSkillStep(SkillFixtures.BugFixOrchestrator, trial: false), chosenSession: null, CancellationToken.None);
+        var plan = SandboxPlanner.Build(SandboxMechanism.Bubblewrap, built.Value).Value;
+
+        Expect.Equal(1, _tokens.Calls);
+        Expect.Equal(GithubCredentials.AgentApp, plan.Github);
+        await stages.Release(plan.Launch, CancellationToken.None);
+    }
+
     private async Task<(SandboxLaunchStages Stages, SandboxPlan Plan)> WriteAgentAppToken(Action<string>? warn = null)
     {
         var stages = new SandboxLaunchStages(new GithubProfile(GithubCredentials.AgentApp), new EmptyLearn(), [_login], _inputs, Registry(), _clock, new AgentTokenRenewal(_tokens, _clock, warn));

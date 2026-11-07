@@ -22608,6 +22608,8 @@ static Aw.Sindri.Core.Forge.PullReviewComment.operator !=(Aw.Sindri.Core.Forge.P
 static Aw.Sindri.Core.Forge.PullReviewComment.operator ==(Aw.Sindri.Core.Forge.PullReviewComment? left, Aw.Sindri.Core.Forge.PullReviewComment? right) -> bool
 Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.SkillTrialDirectory.get -> string?
 Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.SkillTrialDirectory.init -> void
+Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.SkillPushes.get -> bool?
+Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.SkillPushes.init -> void
 Aw.Sindri.Core.Profile.PrReviewCheck
 Aw.Sindri.Core.Profile.PrReviewCheck.<Clone>$() -> Aw.Sindri.Core.Profile.PrReviewCheck!
 Aw.Sindri.Core.Profile.PrReviewCheck.Deconstruct(out string! Key, out string! Title, out System.Collections.Generic.IReadOnlyList<string!>? When, out Aw.Sindri.Core.Profile.PrReviewNeed? Need) -> void
@@ -23444,3 +23446,5 @@ Aw.Sindri.Core.Reviews.LibraryDocView.Deconstruct(out string! Slug, out string! 
 Aw.Sindri.Core.Reviews.LibraryDocView.LibraryDocView(string! Slug, string! Root, string! Scope, string? Kind, string? Status, string? Project, System.Collections.Generic.IReadOnlyList<string!>! Repos, System.Collections.Generic.IReadOnlyList<string!>! Issues, string! Title, string! Path, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryDocErrorView!>! Errors) -> void
 Aw.Sindri.Core.Reviews.ILibraryDocFacts
 Aw.Sindri.Core.Reviews.ILibraryDocFacts.Find(string! doc, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Reviews.LibraryDocView?>!>
+Aw.Sindri.Core.Sandbox.Credentials.GithubCredentialResolver
+static Aw.Sindri.Core.Sandbox.Credentials.GithubCredentialResolver.For(bool attended, Aw.Sindri.Core.Profile.SandboxSettings? settings, bool? skillPushes) -> Aw.Sindri.Core.Sandbox.GithubCredentials
