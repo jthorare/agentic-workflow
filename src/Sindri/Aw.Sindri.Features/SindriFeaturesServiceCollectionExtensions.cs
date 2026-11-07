@@ -197,6 +197,7 @@ public static class SindriFeaturesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<GetContextSourcesRequest>, AcceptAllValidator<GetContextSourcesRequest>>().AddQuery<GetContextSourcesRequest, SourcesView, GetContextSourcesService>();
         _ = services.AddScoped<IValidator<GetProfileRequest>, AcceptAllValidator<GetProfileRequest>>().AddQuery<GetProfileRequest, GetProfileResponse, GetProfileService>();
         _ = services.AddReviewQueries();
+        _ = services.AddLinearQueries();
         _ = services.AddScoped<ProfileReads>().AddScoped<HealthServiceRows>();
         _ = services.AddGetSetup().AddAppConfirm();
         _ = services.AddScoped<IValidator<GetStatusRequest>, AcceptAllValidator<GetStatusRequest>>().AddQuery<GetStatusRequest, GetStatusResponse, GetStatusService>();

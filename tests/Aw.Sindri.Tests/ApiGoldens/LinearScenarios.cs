@@ -3,7 +3,7 @@ using static Aw.Sindri.Tests.Callers.CallerRequests;
 namespace Aw.Sindri.Tests.ApiGoldens;
 
 /// <summary>
-/// Not registered in ApiScenarios until the Linear hub's read routes land (the rows answer 404 until then).
+/// Not registered in ApiScenarios until the Linear hub's read routes land (the rows answer 404 until then). 'GET /linear/issues' has landed: its rows are <see cref="LinearIssueScenarios"/>.
 /// Work → Linear, the strip, the issue sheet and New issue's lookups (Linear hub spec §3, §4.3, Ph3 1a; contract AGREED by api and ui,
 /// ~/.agentic-workflow/digests/api-scripts/contract-2077-ph3-linear-reads.md): 'GET /linear/issues', 'GET /linear/issues/{key}',
 /// 'GET /linear/lookups/{team}' and 'GET /linear/since'. Hand-written first: the routes don't exist yet. The api slot seeds what each
@@ -17,8 +17,6 @@ internal static class LinearScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("linear-issues", "mine"), ("linear-issues", "teams-page2"), ("linear-issues", "filtered-empty"), ("linear-issues", "not-connected"),
-        ("linear-issues", "feed-failing"), ("linear-issues", "rereading"), ("linear-issues", "session"),
         ("linear-issue", "full"), ("linear-issue", "removed"), ("linear-issue", "not-found"), ("linear-issue", "session"), ("linear-issue", "session-outside"),
         ("linear-lookups", "eng"), ("linear-lookups", "not-synced"), ("linear-lookups", "session-refused"),
         ("linear-since", "three"), ("linear-since", "empty"), ("linear-since", "session-refused"),
@@ -59,9 +57,6 @@ internal static class LinearScenarios
 
         var path = (slug, scenario) switch
         {
-            ("linear-issues", "teams-page2") => "/sindri/linear/issues?group=teams&after=page2&limit=50",
-            ("linear-issues", "filtered-empty") => "/sindri/linear/issues?group=mine&label=00000000-0000-4000-8000-0000000000ff",
-            ("linear-issues", _) => "/sindri/linear/issues?group=mine",
             ("linear-issue", "removed") => "/sindri/linear/issues/ENG-9",
             ("linear-issue", "not-found") => "/sindri/linear/issues/ENG-99",
             ("linear-issue", "session-outside") => "/sindri/linear/issues/OPS-40",

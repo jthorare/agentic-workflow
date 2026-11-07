@@ -59,4 +59,12 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
         new("doc.id"), new("doc.kind"), new("doc.status"), new("doc.project"), new("doc.repos[]"), new("doc.issues[]"),
         new("doc.title"), new("doc.path"), new("doc.errors[].text"),
     ]);
+
+    /// <summary>GET /sindri/linear/issues for a session: the viewer's name and each row's title, then the Linear-typed names nested in the row (state, assignee, project, cycle, labels), which sit inside a row the title already marks.</summary>
+    internal static FencePlan LinearIssues { get; } = new("sindri:linear",
+    [
+        new("viewer.name"), new("rows[].title"),
+        new("rows[].state.name", Mark: false), new("rows[].assignee.name", Mark: false), new("rows[].project.name", Mark: false),
+        new("rows[].cycle.name", Mark: false), new("rows[].labels[].name", Mark: false),
+    ]);
 }
