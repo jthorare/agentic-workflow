@@ -57,6 +57,24 @@ public sealed class LinearIssueSheetTextTests
         Assert.Equal(("the runbook (evil.example.net)", "https://evil.example.net/x"), (link.Text, link.Link!.AbsoluteUri));
     }
 
+    // A lookalike host (Cyrillic а in "аpple.com") shows as its punycode, so the host after the name can't pass for the real site.
+    [Fact]
+    public async Task A_lookalike_host_shows_as_punycode_after_a_name_on_a_picture_and_on_its_own()
+    {
+        var issue = LinearIssueSheetFixture.Golden("full");
+        issue["description"] = "Sign in at [Apple](https://\u0430pple.com/login) or ![logo](https://\u0430pple.com/l.png) or https://\u0430pple.com/x";
+        _f.Server.LinearIssueAnswer = LinearIssueSheetFixture.Served(issue);
+
+        var sheet = await _f.Opened("ENG-12", Token);
+
+        var runs = sheet.Description.SelectMany(l => l.Runs).ToList();
+        var links = runs.Where(r => r.IsLink).Select(r => r.Text).ToList();
+        Assert.Equal("Apple (xn--pple-43d.com)", links[0]);
+        Assert.Contains("[image logo from xn--pple-43d.com]", string.Concat(runs.Select(r => r.Text)), StringComparison.Ordinal);
+        Assert.Equal("https://xn--pple-43d.com/x", links[1]);
+        Assert.DoesNotContain("\u0430", string.Concat(runs.Select(r => r.Text)), StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task Only_http_and_https_are_links()
     {
