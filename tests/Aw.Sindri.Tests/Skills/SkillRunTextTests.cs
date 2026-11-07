@@ -60,4 +60,26 @@ public sealed class SkillRunTextTests
         Assert.Null(SkillRunText.Parked(owned: null, status));
         Assert.Null(SkillRunText.Parked(new EngineOwnedBadge(EngineOwnedKind.TakenOver, Reason: "with you"), status));
     }
+
+    [Fact]
+    public void An_escalation_and_a_takeover_while_following_print_one_line_each()
+    {
+        var status = WorkflowViewFixtures.StatusDone();
+
+        Assert.Equal("escalated: the gate timed out", SkillRunText.Notice(new EngineOwnedBadge(EngineOwnedKind.Escalated, Reason: "the gate timed out"), status));
+        Assert.Equal("taken over: human:cli", SkillRunText.Notice(new EngineOwnedBadge(EngineOwnedKind.TakenOver, Reason: "human:cli"), status));
+        Assert.Null(SkillRunText.Notice(owned: null, status));
+    }
+
+    [Fact]
+    public void A_cancelled_run_prints_cancelled_not_step_failed_and_exits_4()
+    {
+        var report = _passed with { Outcome = null, Succeeded = false, Facts = [], Cancelled = true };
+
+        var text = SkillRunText.Render(report);
+
+        Assert.Contains("cancelled", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("step failed", text, StringComparison.Ordinal);
+        Assert.Equal(4, SkillRunText.ExitCode(report));
+    }
 }

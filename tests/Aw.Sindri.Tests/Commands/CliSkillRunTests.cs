@@ -101,6 +101,31 @@ public sealed class CliSkillRunTests : IDisposable
         Assert.Null(await Verb(down).LaunchRefusalOf(A.FirstItemId.Value, Token));
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_session_that_ended_on_its_own_reports_its_exit_code()
+    {
+        var api = new RoutedApi().On("/sindri/ledger", HttpStatusCode.OK, new LedgerPage(
+        [
+            Event(1, "session.ended", """{"launch":"LCH-1","reason":"exit","exitCode":0}"""),
+            Event(2, "session.ended", """{"launch":"LCH-2","reason":"exit","exitCode":3}"""),
+        ], Next: null));
+
+        var line = await Verb(api).SessionEndOf(A.FirstItemId.Value, Token);
+
+        Assert.Equal("session exited 3", line);
+        Assert.Equal("?item=" + A.FirstItemId.Value + "&type=session.ended", api.Calls[^1].Query);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task No_session_end_or_an_unreadable_ledger_gives_none()
+    {
+        var none = new RoutedApi().On("/sindri/ledger", HttpStatusCode.OK, new LedgerPage([], Next: null));
+        var down = new RoutedApi().OnRaw("/sindri/ledger", HttpStatusCode.ServiceUnavailable, """{"title":"SND-API-011","detail":"views are behind"}""");
+
+        Assert.Null(await Verb(none).SessionEndOf(A.FirstItemId.Value, Token));
+        Assert.Null(await Verb(down).SessionEndOf(A.FirstItemId.Value, Token));
+    }
+
     private static PublicEvent Started(long sequence, string payload) => Event(sequence, "launch.started", payload);
 
     private static PublicEvent Event(long sequence, string type, string payload) =>

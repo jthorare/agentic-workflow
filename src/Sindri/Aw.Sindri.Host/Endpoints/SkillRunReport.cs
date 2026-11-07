@@ -8,4 +8,5 @@ namespace Aw.Sindri.Host.Endpoints;
 /// <param name="Facts">The facts the run wrote.</param>
 /// <param name="ResultPath">The result file's path.</param>
 /// <param name="ErrorLine">The 'SND-SKILL-00x ...' line of a failed Step; null otherwise.</param>
-internal sealed record SkillRunReport(string Skill, string ManifestHash, string? Outcome, bool Succeeded, IReadOnlyList<SkillRunFact> Facts, string ResultPath, string? ErrorLine);
+/// <param name="Cancelled">True when the instance was cancelled before it ended (<c lang="text">workflow cancel</c>).</param>
+internal sealed record SkillRunReport(string Skill, string ManifestHash, string? Outcome, bool Succeeded, IReadOnlyList<SkillRunFact> Facts, string ResultPath, string? ErrorLine, bool Cancelled = false);

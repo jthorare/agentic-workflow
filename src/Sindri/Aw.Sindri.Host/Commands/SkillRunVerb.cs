@@ -187,6 +187,16 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
         return null;
     }
 
+    /// <summary>How the item's newest agent session ended: 'session exited &lt;code&gt;' of its newest 'session.ended'; null when there is none or the ledger can't be read.</summary>
+    /// <param name="item">The item the trial ran on.</param>
+    /// <param name="ct">Cancels the read.</param>
+    /// <returns>The line, or null.</returns>
+    internal async Task<string?> SessionEndOf(string item, CancellationToken ct)
+    {
+        _ = await client.Get<LedgerPage>($"/sindri/ledger?item={Uri.EscapeDataString(item)}&type=session.ended", ct).ConfigureAwait(false);
+        return null;
+    }
+
     /// <summary>The result file of the item's latest skill launch: <c lang="text">skill.resultFile</c> of its newest 'launch.started', read from the ledger; empty when the ledger has none or can't be read (the report then leaves the line out).</summary>
     /// <param name="item">The item the trial ran on.</param>
     /// <param name="ct">Cancels the read.</param>

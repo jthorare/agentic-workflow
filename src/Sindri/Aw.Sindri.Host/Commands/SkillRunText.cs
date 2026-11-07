@@ -58,4 +58,10 @@ internal static class SkillRunText
         var line = "parked: " + (status.Next ?? owned.Reason);
         return status.Answer is { } answer ? line + "\nanswer: " + answer.Cli : line;
     }
+
+    /// <summary>The line '--follow' prints once for a run that needs attention: a park, an escalation or a takeover; null otherwise.</summary>
+    /// <param name="owned">The instance's engine-owned badge.</param>
+    /// <param name="status">The instance's status fields.</param>
+    /// <returns>The line, or null.</returns>
+    internal static string? Notice(EngineOwnedBadge? owned, StatusFields status) => Parked(owned, status);
 }
