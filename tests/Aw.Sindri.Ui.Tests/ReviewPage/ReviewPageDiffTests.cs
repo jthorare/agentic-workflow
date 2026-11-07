@@ -20,8 +20,8 @@ public sealed class ReviewPageDiffTests
     {
         var page = await _f.Opened(Token);
 
-        Assert.Equal((ReviewPanelState.Ready, "4 files"), (page.Diff.State, page.Diff.CountText));
-        Assert.Equal([("Core", false, 3), ("Assets", true, 1)], page.Diff.Groups.Select(g => (g.Name, g.IsFolded, g.FileCount)));
+        Assert.Equal((ReviewPanelState.Ready, "5 files"), (page.Diff.State, page.Diff.CountText));
+        Assert.Equal([("Core", false, 4), ("Assets", true, 1)], page.Diff.Groups.Select(g => (g.Name, g.IsFolded, g.FileCount)));
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public sealed class ReviewPageDiffTests
     {
         var page = await _f.Opened(Token);
 
-        Assert.Equal(["Core, 3 files", "Assets, collapsed, 1 file"], page.Diff.Groups.Select(g => g.AutomationName), StringComparer.Ordinal);
+        Assert.Equal(["Core, 4 files", "Assets, collapsed, 1 file"], page.Diff.Groups.Select(g => g.AutomationName), StringComparer.Ordinal);
     }
 
     [Fact]
@@ -89,7 +89,7 @@ public sealed class ReviewPageDiffTests
         var page = await _f.Opened(Token);
 
         var file = File(page, "assets/budget.png");
-        Assert.Equal(("Binary file, not shown here.", true, false, 0, "https://github.com/acme/api/pull/2071/files#diff-3"), (file.Note, file.HasOpenOnGitHub, file.HasShow, file.Hunks.Count, file.Url));
+        Assert.Equal(("Binary file, not shown here.", true, false, 0, "https://github.com/acme/api/pull/2071/files#diff-2bec3859d529737e3b3b4a89205ed35e5db67851c7ee4c723c9aa102b9b02854"), (file.Note, file.HasOpenOnGitHub, file.HasShow, file.Hunks.Count, file.Url));
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public sealed class ReviewPageDiffTests
         var page = await _f.Opened(Token);
 
         Assert.Equal(("3,000 files", "GitHub lists the first 3,000 files; open the rest on GitHub"), (page.Diff.CountText, page.Diff.CappedText));
-        var file = page.Diff.Groups.SelectMany(g => g.Files).Single();
+        var file = page.Diff.Groups.SelectMany(g => g.Files).Single(f => f.Note == "Too large to show here");
         Assert.Equal(("Too large to show here", true, 0), (file.Note, file.HasOpenOnGitHub, file.Hunks.Count));
     }
 
