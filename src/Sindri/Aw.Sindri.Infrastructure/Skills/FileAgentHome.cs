@@ -29,7 +29,11 @@ internal sealed partial class FileAgentHome : IAgentHome
     public string Folder { get; }
 
     /// <inheritdoc/>
-    public bool HasBin(string bin) => _path.Any(dir => File.Exists(Path.Combine(dir, bin)));
+    public bool HasBin(string bin) => _path.Any(dir => IsExecutable(Path.Combine(dir, bin)));
+
+    // What a shell's PATH lookup takes: a file with an execute bit (any execute bit off Windows, where there are none).
+    private static bool IsExecutable(string file) =>
+        File.Exists(file) && (OperatingSystem.IsWindows() || (File.GetUnixFileMode(file) & (UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute)) != UnixFileMode.None);
 
     /// <inheritdoc/>
     public bool HasAgent(string agent) => File.Exists(Path.Combine(Folder, "agents", agent + (_target == SkillTarget.Codex ? ".toml" : ".md")));

@@ -46,6 +46,16 @@ public sealed class SkillLaunchGateTests : IDisposable
 
     private FileAgentHome Home() => new(_agentHome, SkillTarget.ClaudeCode, Path.Combine(_root.Path, "home"), _bin);
 
+    private void Bin(string name, bool executable)
+    {
+        var path = Path.Combine(_bin, name);
+        File.WriteAllText(path, string.Empty);
+        if (!OperatingSystem.IsWindows())
+        {
+            File.SetUnixFileMode(path, executable ? UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute : UnixFileMode.UserRead | UnixFileMode.UserWrite);
+        }
+    }
+
     private void Requires(string text) => File.WriteAllText(Path.Combine(_toolkit, "review", "requires.yaml"), text);
 
     private void Link(string markdown)
@@ -84,7 +94,7 @@ public sealed class SkillLaunchGateTests : IDisposable
     {
         Requires("bins: [gh]\nmcp: [prism-mcp]\nskills: [formal-verify]\nagents: [explorer]\n");
         Link(SkillMarkdown);
-        File.WriteAllText(Path.Combine(_bin, "gh"), string.Empty);
+        Bin("gh", executable: true);
         File.WriteAllText(Path.Combine(_root.Path, "home", ".claude.json"), """{"mcpServers":{"prism-mcp":{}}}""");
         _ = Directory.CreateDirectory(Path.Combine(_agentHome, "skills", "formal-verify"));
         File.WriteAllText(Path.Combine(_agentHome, "skills", "formal-verify", "SKILL.md"), "x");
@@ -92,6 +102,20 @@ public sealed class SkillLaunchGateTests : IDisposable
         File.WriteAllText(Path.Combine(_agentHome, "agents", "explorer.md"), "x");
 
         Assert.Null(SkillLaunchGate.Check(Launch(), Home()));
+    }
+
+    [Fact]
+    public void A_bin_on_PATH_without_an_execute_bit_is_missing_SND_SKILL_005()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "Windows files have no execute bit");
+        Requires("bins: [gh]\n");
+        Link(SkillMarkdown);
+        Bin("gh", executable: false);
+
+        var error = SkillLaunchGate.Check(Launch(), Home());
+
+        Assert.Equal(SindriErrors.SkillRequirementMissing.Code, error?.Code);
+        Assert.Contains("bin gh", error?.Message, StringComparison.Ordinal);
     }
 
     [Fact]
