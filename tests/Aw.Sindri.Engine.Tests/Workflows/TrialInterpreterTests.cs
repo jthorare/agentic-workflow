@@ -68,7 +68,13 @@ public sealed class TrialInterpreterTests(BlockRuntimeDevServer server) : IClass
             var inputs = foldered ? new Dictionary<FactKey, InputFact> { [SkillLaunches.TrialFact] = new InputFact("skills", _harness.Fact(folder)) } : [];
             var handle = await WorkflowsHarness.Start(server.Environment.Client, start with { Inputs = inputs });
             ended = await WorkflowsHarness.Until(handle, v => SkillTrialRecipe.OutcomeOf(v.State) is not null);
-            var replayed = await new WorkflowReplayer(new WorkflowReplayerOptions().AddWorkflow<RecipeWorkflow>()).ReplayWorkflowAsync(await handle.FetchHistoryAsync(), throwOnReplayFailure: false, ct);
+            var history = await handle.FetchHistoryAsync();
+            if (foldered && Environment.GetEnvironmentVariable("AW_TRIAL_HISTORY_OUT") is { Length: > 0 } path)
+            {
+                await File.WriteAllTextAsync(path, history.ToJson(), ct);   // records the fixture trial-prefolder-history.json on the code under test
+            }
+
+            var replayed = await new WorkflowReplayer(new WorkflowReplayerOptions().AddWorkflow<RecipeWorkflow>()).ReplayWorkflowAsync(history, throwOnReplayFailure: false, ct);
             Assert.Null(replayed.ReplayFailure);
         }, ct);
         return ended!;   // why: the body ran to its Until, which fails the test when the state is never reached
