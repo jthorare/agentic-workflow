@@ -276,16 +276,36 @@ public sealed class ReviewSettingsTests
     }
 
     [Fact]
-    public async Task A_command_check_shows_read_only_and_goes_back_as_it_was()
+    public async Task Editing_the_ci_name_of_a_check_keeps_its_app()
     {
-        var settings = await Opened("shared-entry");
-        var command = ReviewSettingsNeed.Parse("manual")!.Value;
-        Assert.False(ReviewSettingsNeed.IsCommand(command));
-        using var document = System.Text.Json.JsonDocument.Parse("""{"command":["make","test"]}""");
-        var row = new SettingsCheckRow(3, "cmd", "Runs make", string.Empty, ReviewSettingsNeed.Text(document.RootElement), document.RootElement.Clone());
+        var settings = await OpenedWith(checks => checks[0]!["need"] = System.Text.Json.Nodes.JsonNode.Parse("""{"ci":"ui-tests","app":"sindri-ci"}"""));
+        Assert.Equal("ci: ui-tests (app: sindri-ci)", settings.CheckRows[0].NeedText);
 
-        Assert.Equal(("command: make, test", true), (row.NeedText, row.NeedReadOnly));
-        Assert.True(settings.IsShown);
+        settings.CheckRows[0].NeedText = "ci: ui-tests-2 (app: sindri-ci)";
+        await settings.Save(Token);
+
+        Assert.Equal("""{"ci":"ui-tests-2","app":"sindri-ci"}""", OnlySave().Entry.Checks![0].Need!.Value.GetRawText());
+    }
+
+    [Fact]
+    public async Task A_command_check_shows_read_only_and_is_sent_back_unchanged()
+    {
+        var settings = await OpenedWith(checks => checks[0]!["need"] = System.Text.Json.Nodes.JsonNode.Parse("""{"command":["make","test"]}"""));
+
+        await settings.Save(Token);
+
+        Assert.Equal(("command: make, test", true), (settings.CheckRows[0].NeedText, settings.CheckRows[0].NeedReadOnly));
+        Assert.Equal("""{"command":["make","test"]}""", OnlySave().Entry.Checks![0].Need!.Value.GetRawText());
+    }
+
+    // The shared-entry answer with its first check's need replaced, in both the entry and the resolved copy.
+    private async Task<ReviewSettingsViewModel> OpenedWith(Action<System.Text.Json.Nodes.JsonArray> edit)
+    {
+        var node = GoldenFiles.Node("review-settings", "shared-entry");
+        edit(node["entry"]!["checks"]!.AsArray());
+        edit(node["resolved"]!["checks"]!.AsArray());
+        _f.Server.ReviewSettingsAnswer = new RouteAnswer(HttpStatusCode.OK, node.ToJsonString());
+        return (await _f.Opened(ProjectSheetFixture.Attached, Token)).ReviewSettings;
     }
 
     [Theory]

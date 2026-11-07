@@ -100,14 +100,14 @@ public sealed class DesignIntakeStepTests
     [Fact]
     public async Task A_scope_packet_that_hashes_to_something_else_fails_the_Step_naming_both_hashes()
     {
-        var other = LineStation.ScopePacket.Replace("sha256:", "sha256:00", StringComparison.Ordinal);
+        var other = LineStation.ScopePacket.Replace("sha256:", "0000000000000000000000000000000000000000000000000000000000000000", StringComparison.Ordinal);
 
         var result = await Run(new LineStation(), other);
 
         Assert.Null(result.Result);
         Assert.Contains("SND-LINE-001", result.Failure, StringComparison.Ordinal);
         Assert.Contains("hashes to " + ScopeHash(), result.Failure, StringComparison.Ordinal);
-        Assert.Contains("sha256:00", result.Failure, StringComparison.Ordinal);
+        Assert.Contains("0000000000000000000000000000000000000000000000000000000000000000", result.Failure, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -175,7 +175,7 @@ public sealed class DesignIntakeStepTests
     public async Task A_revision_whose_prior_packet_hash_moved_fails_with_SND_LINE_001()
     {
         var station = new LineStation();
-        var prior = (await PriorPacket(station)).Replace("sha256:", "sha256:00", StringComparison.Ordinal);
+        var prior = (await PriorPacket(station)).Replace("sha256:", "0000000000000000000000000000000000000000000000000000000000000000", StringComparison.Ordinal);
 
         var result = await Run(station, revision: Revision, prior: prior);
 

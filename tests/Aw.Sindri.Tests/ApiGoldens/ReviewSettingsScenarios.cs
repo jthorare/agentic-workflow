@@ -50,7 +50,7 @@ internal static class ReviewSettingsScenarios
         "bad-repo" => Save(Project, "agentic-workflow", "sindri", "{}"),
         "bad-settings-name" => Save(Project, "jthorare/agentic-workflow", "my settings", "{}"),
         "unknown-project" => Save("prj_00000000000000000000000099", "jthorare/agentic-workflow", "sindri", "{}"),
-        "stale-hash" => Save(Project, "jthorare/agentic-workflow", "sindri", "{}", ifHash: "sha256:00"),
+        "stale-hash" => Save(Project, "jthorare/agentic-workflow", "sindri", "{}", ifHash: "0000000000000000000000000000000000000000000000000000000000000000"),
         _ => Save(Project, "jthorare/agentic-workflow", "sindri", """{"panels":["requiredChecks","ci"]}"""),
     };
 
