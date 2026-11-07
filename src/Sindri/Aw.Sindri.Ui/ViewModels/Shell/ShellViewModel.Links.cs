@@ -9,7 +9,7 @@ internal sealed partial class ShellViewModel
     /// <param name="link">The link.</param>
     internal void Navigate(DeepLink link)
     {
-        if (!AskBeforeLeavingFor(link))
+        if (!AskBeforeLeavingFor(link, rowSheet: false))
         {
             Navigate(link, rowSheet: false);
         }
@@ -22,7 +22,7 @@ internal sealed partial class ShellViewModel
     /// <param name="link">The link.</param>
     internal void NavigateToRowSheet(DeepLink link)
     {
-        if (!AskBeforeLeavingFor(link))
+        if (!AskBeforeLeavingFor(link, rowSheet: true))
         {
             Navigate(link, rowSheet: true);
         }
