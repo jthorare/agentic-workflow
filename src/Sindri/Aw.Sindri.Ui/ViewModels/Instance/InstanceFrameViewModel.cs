@@ -190,6 +190,7 @@ internal sealed partial class InstanceFrameViewModel(ISindriApi api, IClipboard 
             Show(answer.Value);
             await ReadRun(answer.Value, generation, cancellationToken).ConfigureAwait(true);
             await ReadNames(url, answer.Value, generation, cancellationToken).ConfigureAwait(true);
+            await ReadSkillCard(answer.Value, generation, cancellationToken).ConfigureAwait(true);
             await ReadPicks(url, answer.Value.Address, generation, cancellationToken).ConfigureAwait(true);
         }
         else
@@ -290,8 +291,7 @@ internal sealed partial class InstanceFrameViewModel(ISindriApi api, IClipboard 
         _shown = null;
         (Title, Recipe, Hash12, Version, StateText, Detail, SinceText, Identity, ProblemText, Note) = (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
         (WorkflowName, DetailsText, AddressCopy) = (string.Empty, string.Empty, null);
-        (Subject, Band, Expanded, StepRuns, ModelPicks) = (null, null, null, null, null);
-        (Grant, _grantSignature) = (null, string.Empty);
+        (Subject, Band, Expanded, StepRuns, ModelPicks, Grant, _grantSignature) = (null, null, null, null, null, null, string.Empty);
         ClearPanels();
         (_eventsFor, _eventRows) = (null, []);
         WantedFocus = null;

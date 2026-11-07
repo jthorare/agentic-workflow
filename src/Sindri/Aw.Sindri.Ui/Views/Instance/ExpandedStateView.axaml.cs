@@ -67,6 +67,24 @@ internal sealed partial class ExpandedStateView : UserControl
         }
     }
 
+    private void OnSkillTakeOver(object? sender, RoutedEventArgs e) => _ = _state?.TakeOverAsync();
+
+    private void OnOpenSkillOutput(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: SkillOutput output })
+        {
+            _ = _state?.SkillCard?.Open(output, CancellationToken.None);
+        }
+    }
+
+    private void OnCopySkillOutput(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: SkillOutput output })
+        {
+            _ = _state?.SkillCard?.CopyPath(output, CancellationToken.None);
+        }
+    }
+
     private void OnCopyAttach(object? sender, RoutedEventArgs e) => _ = _state?.CopyAttachCommand(CancellationToken.None);
 
     private void OnAnswerInChild(object? sender, RoutedEventArgs e) => _state?.AnswerInTheChild();
