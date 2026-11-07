@@ -6,4 +6,5 @@ namespace Aw.Context.Infrastructure.Docs;
 /// <param name="Repo">The repo.</param>
 /// <param name="Head">The head commit.</param>
 /// <param name="Tree">Path to blob.</param>
-internal sealed record RepoHead(ContextRepo Repo, string Head, IReadOnlyDictionary<string, string> Tree);
+/// <param name="Symlinks">The paths in <paramref name="Tree"/> that are symlinks (git lists them as blobs).</param>
+internal sealed record RepoHead(ContextRepo Repo, string Head, IReadOnlyDictionary<string, string> Tree, IReadOnlySet<string> Symlinks);
