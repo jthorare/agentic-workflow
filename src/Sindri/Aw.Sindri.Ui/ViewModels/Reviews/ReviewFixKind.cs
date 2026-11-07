@@ -11,4 +11,7 @@ internal enum ReviewFixKind
 
     /// <summary>A diff line: its thread is a line comment.</summary>
     Line,
+
+    /// <summary>A removed diff line: the forge takes line comments on the new side only, so its thread is a comment in the review body that names the old line.</summary>
+    RemovedLine,
 }

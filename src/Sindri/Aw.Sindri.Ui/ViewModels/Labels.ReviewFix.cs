@@ -137,4 +137,19 @@ internal static partial class Labels
     internal const string ReviewFixReviewComment = "review comment";
 
     internal const string ReviewFixLine = "line";
+
+    internal const string ReviewFixRemovedLine = "removed line";
+
+    /// <summary>What a removed line's comment starts with, so the reader finds the old line.</summary>
+    /// <param name="path">The file.</param>
+    /// <param name="line">The line's number in the old file.</param>
+    /// <returns>The words.</returns>
+    internal static string ReviewFixRemovedPrefix(string path, int line) => string.Create(CultureInfo.InvariantCulture, $"{path}:{line} (removed line)");
+
+    /// <summary>The PR thread line when Send posts a removed line's comment: GitHub takes line comments on the new side only.</summary>
+    /// <param name="number">The PR number.</param>
+    /// <param name="path">The file.</param>
+    /// <param name="line">The line's number in the old file.</param>
+    /// <returns>The words.</returns>
+    internal static string ReviewFixRemovedThread(int number, string path, int line) => string.Create(CultureInfo.InvariantCulture, $"Review comment on #{number} (the review body, a removed line has no new-side line), starting {ReviewFixRemovedPrefix(path, line)}, from Sindri, marker sindri.fix:<item id>");
 }

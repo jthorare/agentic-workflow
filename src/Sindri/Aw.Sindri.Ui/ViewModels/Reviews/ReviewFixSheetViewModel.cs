@@ -129,9 +129,10 @@ internal sealed partial class ReviewFixSheetViewModel : ObservableObject
             ReviewFixKind.Check => (Labels.ReviewFixCheckTitle(Labels.ReviewCheckFail, source.Title), Labels.ReviewFixCheckDetail(source.Detail)),
             ReviewFixKind.Requirement => ($"{source.SourceId}  {source.Title}", Labels.ReviewFixRequirementDetail(target.DocId)),
             ReviewFixKind.Line => (LineName(source), source.Added ? Labels.ReviewFixAddedLine : Labels.ReviewFixLine),
+            ReviewFixKind.RemovedLine => (LineName(source), Labels.ReviewFixRemovedLine),
             _ => throw new ArgumentOutOfRangeException(nameof(request), source.Kind, message: null),
         };
-        ThreadText = !target.PostsThreads ? Labels.ReviewFixItemOnly(target.Author) : source.Kind == ReviewFixKind.Line ? Labels.ReviewFixLineThread(source.Path, source.Line ?? 0) : Labels.ReviewFixBodyThread(target.Number);
+        ThreadText = ThreadOf(source, target);
         GoesToText = Labels.ReviewFixGoesTo(target.Number, target.Branch);
         (Outcome, OutcomeText, ItemId, ThreadResult, Code, CanRetry, IsSending, SendText, IsOpen) = (ReviewFixOutcome.None, string.Empty, string.Empty, string.Empty, string.Empty, false, false, Labels.ReviewFixSend, true);
         OnChanged(nameof(HasOutcome));
@@ -139,7 +140,7 @@ internal sealed partial class ReviewFixSheetViewModel : ObservableObject
         {
             ReviewFixKind.Check => Labels.ReviewFixCheckText(source.Title, source.Detail),
             ReviewFixKind.Requirement => Labels.ReviewFixRequirementText(source.SourceId, source.Title, target.DocId),
-            ReviewFixKind.Line => string.Empty,
+            ReviewFixKind.Line or ReviewFixKind.RemovedLine => string.Empty,
             _ => throw new ArgumentOutOfRangeException(nameof(request), source.Kind, message: null),
         };
         Refresh();
@@ -184,7 +185,7 @@ internal sealed partial class ReviewFixSheetViewModel : ObservableObject
         CanSend = false;
         using var done = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         _ = ShowSending(done.Token);
-        var send = new ReviewFixSend(KindWord(source.Kind), Text, target.HeadSha, source.Kind == ReviewFixKind.Line ? null : source.SourceId, source.Kind == ReviewFixKind.Line ? source.Path : null, source.Line, _item);
+        var send = SendOf(source, target);
         var answer = await _api.SendReviewFix(url, target.Repo, target.Number, send, cancellationToken).ConfigureAwait(true);
         await done.CancelAsync().ConfigureAwait(true);
         IsSending = false;
@@ -217,11 +218,31 @@ internal sealed partial class ReviewFixSheetViewModel : ObservableObject
         }
     }
 
+    // a line comment goes on the new side only: a removed line is sent as a review-body comment that starts by naming it
+    private ReviewFixSend SendOf(ReviewFixSource source, ReviewFixTarget target) => source.Kind switch
+    {
+        ReviewFixKind.Line => new ReviewFixSend(KindWord(source.Kind), Text, target.HeadSha, SourceId: null, source.Path, source.Line, _item),
+        ReviewFixKind.RemovedLine => new ReviewFixSend(KindWord(source.Kind), Labels.ReviewFixRemovedPrefix(source.Path, source.Line ?? 0) + " " + Text, target.HeadSha, SourceId: null, Path: null, Line: null, _item),
+        ReviewFixKind.Check or ReviewFixKind.Requirement => new ReviewFixSend(KindWord(source.Kind), Text, target.HeadSha, source.SourceId, Path: null, Line: null, _item),
+        _ => throw new ArgumentOutOfRangeException(nameof(source), source.Kind, message: null),
+    };
+
+    private static string ThreadOf(ReviewFixSource source, ReviewFixTarget target) => !target.PostsThreads
+        ? Labels.ReviewFixItemOnly(target.Author)
+        : source.Kind switch
+        {
+            ReviewFixKind.Line => Labels.ReviewFixLineThread(source.Path, source.Line ?? 0),
+            ReviewFixKind.RemovedLine => Labels.ReviewFixRemovedThread(target.Number, source.Path, source.Line ?? 0),
+            ReviewFixKind.Check or ReviewFixKind.Requirement => Labels.ReviewFixBodyThread(target.Number),
+            _ => throw new ArgumentOutOfRangeException(nameof(source), source.Kind, message: null),
+        };
+
     private static string KindWord(ReviewFixKind kind) => kind switch
     {
         ReviewFixKind.Check => "check",
         ReviewFixKind.Requirement => "requirement",
         ReviewFixKind.Line => "line",
+        ReviewFixKind.RemovedLine => "comment",
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, message: null),
     };
 }

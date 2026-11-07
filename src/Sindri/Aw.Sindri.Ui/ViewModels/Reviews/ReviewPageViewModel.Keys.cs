@@ -96,7 +96,8 @@ internal sealed partial class ReviewPageViewModel
             return false;
         }
 
-        var source = new ReviewFixSource(ReviewFixKind.Line, line.Text, string.Empty, string.Empty, file.Path, line.Number, line.Kind == ReviewDiffLineKind.Added);
+        var kind = line.Kind == ReviewDiffLineKind.Removed ? ReviewFixKind.RemovedLine : ReviewFixKind.Line;
+        var source = new ReviewFixSource(kind, line.Text, string.Empty, string.Empty, file.Path, line.Number, line.Kind == ReviewDiffLineKind.Added);
         FixRequested?.Invoke(this, new ReviewFixRequestedEventArgs(source, target, new ReviewFocus(ReviewFocusRegion.DiffLine, ReviewDiffViewModel.KeyOf(line))));
         return true;
     }

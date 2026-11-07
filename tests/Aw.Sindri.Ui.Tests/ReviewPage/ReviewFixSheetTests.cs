@@ -14,6 +14,7 @@ public sealed class ReviewFixSheetTests
     private static readonly ReviewFixTarget _theirs = _mine with { Author = "sam-dev", PostsThreads = false };
     private static readonly ReviewFixSource _check = new(ReviewFixKind.Check, "Recipe change shows Ui tests ran", "ci-ui", "ui-tests: failure on a1b2c3d", string.Empty, Line: null, Added: false);
     private static readonly ReviewFixSource _requirement = new(ReviewFixKind.Requirement, "Offline PRs answer from the cache", "REQ-E4", string.Empty, string.Empty, Line: null, Added: false);
+    private static readonly ReviewFixSource _removed = new(ReviewFixKind.RemovedLine, "var b = 2;", string.Empty, string.Empty, X, Line: 11, Added: false);
     private static readonly ReviewFixSource _line = new(ReviewFixKind.Line, "var b = 3;", string.Empty, string.Empty, X, Line: 11, Added: true);
     private static readonly ReviewFocus _checkRow = new(ReviewFocusRegion.Panel, "requiredChecks:ci-ui");
 
@@ -88,6 +89,28 @@ public sealed class ReviewFixSheetTests
         Assert.Equal("Review comment on #2071 (the review body, no diff line), from Sindri, marker sindri.fix:<item id>", check.ThreadText);
         Assert.Equal("Line comment on src/Api/A/A.Core/X.cs:11, from Sindri (verdict comment, marker sindri.fix:<item id>)", line.ThreadText);
         Assert.Equal("The babysitter watching #2071, else a live session on feat/retry-budget, else the item waits in Work", check.GoesToText);
+    }
+
+    [Fact]
+    public void A_removed_line_is_posted_in_the_review_body_not_as_a_line_comment()
+    {
+        var removed = Opened(_removed);
+
+        Assert.Equal(("src/Api/A/A.Core/X.cs:11", "removed line"), (removed.SourceTitle, removed.SourceDetail));
+        Assert.Equal("Review comment on #2071 (the review body, a removed line has no new-side line), starting src/Api/A/A.Core/X.cs:11 (removed line), from Sindri, marker sindri.fix:<item id>", removed.ThreadText);
+    }
+
+    [Fact]
+    public async Task A_removed_line_is_sent_without_a_path_or_line_and_its_text_starts_with_the_old_line()
+    {
+        var removed = Opened(_removed);
+        removed.Text = "Why drop this?";
+
+        await removed.Send(Token);
+
+        Assert.Equal(
+            [new Ui.Api.Reviews.ReviewFixSend("comment", "src/Api/A/A.Core/X.cs:11 (removed line) Why drop this?", "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678", SourceId: null, Path: null, Line: null, Item: null)],
+            _f.Server.ReviewFixSends);
     }
 
     [Fact]
