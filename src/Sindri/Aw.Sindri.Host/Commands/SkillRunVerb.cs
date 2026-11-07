@@ -9,6 +9,7 @@ using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Views;
 using Aw.Sindri.Features.CreateItem;
 using Aw.Sindri.Features.GetInstanceEvents;
+using Aw.Sindri.Features.GetInstanceFact;
 using Aw.Sindri.Features.GetItem;
 using Aw.Sindri.Features.ReadLedger;
 using Aw.Sindri.Features.StartSkillRun;
@@ -148,9 +149,7 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
     private async Task<Result<SkillRunReport>> Report(StartSkillRunResponse answer, InstanceDetail detail, StateCell ended, string route, CancellationToken ct)
     {
         var failed = string.Equals(detail.State, "failed", StringComparison.Ordinal);
-        var facts = failed ? [] : detail.Facts
-            .Where(f => f.Direction == FactDirection.Output && f.Status == FactStatus.Produced && answer.Outputs.Contains(f.Key, StringComparer.Ordinal))
-            .Select(static f => new SkillRunFact(f.Key, f.Summary)).ToList();
+        var facts = failed ? [] : await KeptFacts(answer, detail, route, ct).ConfigureAwait(false);
         string? error = null;
         if (failed)
         {
@@ -169,6 +168,31 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
         var outcome = failed ? null : SkillTrialRecipe.OutcomeOf(ended.State);
         var resultFile = await ResultFileOf(answer.Instance.Address.Value.Split('/')[0], ct).ConfigureAwait(false);
         return new SkillRunReport(answer.Skill, answer.ManifestHash, outcome, Succeeded: string.Equals(outcome, answer.Success, StringComparison.Ordinal), facts, resultFile, error);
+    }
+
+    /// <summary>The block's declared outputs the instance produced, each with its value.</summary>
+    private async Task<List<SkillRunFact>> KeptFacts(StartSkillRunResponse answer, InstanceDetail detail, string route, CancellationToken ct)
+    {
+        var facts = new List<SkillRunFact>();
+        foreach (var row in detail.Facts.Where(f => f.Direction == FactDirection.Output && f.Status == FactStatus.Produced && answer.Outputs.Contains(f.Key, StringComparer.Ordinal)))
+        {
+            facts.Add(new SkillRunFact(row.Key, await ValueOf(route, row.Key, ct).ConfigureAwait(false)));
+        }
+
+        return facts;
+    }
+
+    /// <summary>The fact's value through the instance facts route: a string body as the string, any other body as raw JSON. The row's own summary is only a hash.</summary>
+    private async Task<string> ValueOf(string route, string key, CancellationToken ct)
+    {
+        var read = await client.Get<FactView>($"{route}/facts/{Uri.EscapeDataString(key.StartsWith("fact:", StringComparison.Ordinal) ? key : "fact:" + key)}", ct).ConfigureAwait(false);
+        if (read.IsError)
+        {
+            return $"(unreadable: {read.Error.Code})";   // why: the run already ended, so a failed read (serve gone, fact pruned) must not turn a finished run into an error or change its exit code
+        }
+
+        var body = read.Value.Value.Body;
+        return body.ValueKind == JsonValueKind.String ? body.GetString() ?? string.Empty : body.GetRawText();
     }
 
     /// <summary>The refusal of the item's latest launch that never started: '&lt;code&gt; &lt;message&gt;' of its newest 'launch.failed'; null when there is none or the ledger can't be read.</summary>
