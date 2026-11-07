@@ -127,6 +127,37 @@ public sealed class LinearIssueCommentTests
         Assert.Equal(("Posted", false, string.Empty), (sheet.CommentStatus, sheet.CanRetryComment, sheet.CommentText));
     }
 
+    // A comment is a create: once the app's own call has no answer (its 120 s deadline, or a reset mid-answer), the POST may have
+    // reached Sindri, so the box can't be handed back for editing. SND-UI-002 doesn't say whether anything was sent, so every one is unknown.
+    [Fact]
+    public async Task No_answer_from_Sindri_is_unknown_the_box_stays_locked_and_retry_sends_the_same_client_id_and_text()
+    {
+        var sheet = await _f.Opened(Token);
+        _f.Server.QueueLinearComment(RouteAnswer.Problem(HttpStatusCode.GatewayTimeout, "SND-UI-002", "127.0.0.1:7410 didn't answer within 120 s"));
+        sheet.CommentText = Note;
+
+        await sheet.Post(Token);
+        var unknown = (sheet.CommentStatus, sheet.CommentError, sheet.CanRetryComment, sheet.CanComment, sheet.CommentText);
+        await sheet.RetryComment(Token);
+
+        Assert.Equal(("Linear didn't confirm the comment. Retry?", string.Empty, true, false, Note), unknown);
+        Assert.Equal(2, _f.Server.LinearComments.Count);
+        Assert.Equal((_f.Server.LinearComments[0].ClientId, Note), (_f.Server.LinearComments[1].ClientId, _f.Server.LinearComments[1].Body));
+        Assert.Equal("Posted", sheet.CommentStatus);
+    }
+
+    [Fact]
+    public async Task Posted_goes_at_the_next_comments_first_character()
+    {
+        var sheet = await _f.Opened(Token);
+        sheet.CommentText = Note;
+        await sheet.Post(Token);
+
+        sheet.CommentText = "A";
+
+        Assert.Equal(string.Empty, sheet.CommentStatus);
+    }
+
     [Fact]
     public async Task The_next_comment_after_one_is_posted_gets_a_new_client_id()
     {
