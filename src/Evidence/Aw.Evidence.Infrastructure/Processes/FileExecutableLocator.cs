@@ -1,4 +1,5 @@
 using Aw.Evidence.Core.Data;
+using Aw.Kernel.Data;
 
 namespace Aw.Evidence.Infrastructure.Processes;
 
@@ -6,19 +7,16 @@ namespace Aw.Evidence.Infrastructure.Processes;
 internal sealed class FileExecutableLocator : IExecutableLocator
 {
     private const int MaxLinks = 40;
-    private const UnixFileMode AnyExecute = UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute;
 
     /// <inheritdoc/>
     public string? RealExecutable(string path) =>
-        RealPath(path) is { } real && File.Exists(real) && IsExecutable(real) ? real : null;
+        RealPath(path) is { } real && ExecutableFiles.IsExecutable(real) ? real : null;
 
     /// <inheritdoc/>
     public string? RealFile(string path) => RealPath(path) is { } real && File.Exists(real) ? real : null;
 
     /// <inheritdoc/>
     public string? RealDirectory(string path) => RealPath(path) is { } real && Directory.Exists(real) ? real : null;
-
-    private static bool IsExecutable(string file) => OperatingSystem.IsWindows() || (File.GetUnixFileMode(file) & AnyExecute) != UnixFileMode.None;
 
     // The path with every symlink in it followed, directories on the way included (File.ResolveLinkTarget only follows the last one).
     private static string? RealPath(string path)
