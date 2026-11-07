@@ -3,10 +3,12 @@ using Aw.Context.Core.Audience;
 using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
+using Aw.Context.Core.Library;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Sync;
+using Aw.Context.Testing.Engine;
 using Aw.Kernel;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
@@ -75,6 +77,20 @@ public sealed class ContextReviewFactsTests
     }
 
     [Fact]
+    public async Task A_list_load_asks_for_the_claims_of_all_its_PRs_in_one_call()
+    {
+        await Approve();
+        using var caller = _h.Callers.EnterService("reviews-test");
+        _context.Pulls = [Pull("github:pr/acme/api/1", RecordState.Open), Pull("github:pr/acme/api/2", RecordState.Open), Pull("github:pr/acme/web/3", RecordState.Draft), Pull("github:pr/acme/web/4", RecordState.Open)];
+        _context.Progress = [Source("github", usable: true, code: null)];
+
+        var snapshot = (await Facts().Read(Ct)).Value;
+
+        Assert.Equal(4, snapshot.Pulls.Count);
+        Assert.True(_context.ClaimsCalls <= 1, $"#2154: the claims of 4 open PRs took {_context.ClaimsCalls.ToString(System.Globalization.CultureInfo.InvariantCulture)} library calls, expected one batched call");
+    }
+
+    [Fact]
     public async Task A_session_reads_only_its_own_repos_audience()
     {
         await Approve();
@@ -133,7 +149,7 @@ public sealed class ContextReviewFactsTests
     }
 
     /// <summary>Answers OpenPulls and Progress as set; every other call falls through to the fake engine.</summary>
-    private sealed class StubContext : IContextPulls, IIndexSync
+    private sealed class StubContext : IContextPulls, IIndexSync, IContextLibrary
     {
         public IReadOnlyList<StoredRecord> Pulls { get; set; } = [];
 
@@ -142,6 +158,27 @@ public sealed class ContextReviewFactsTests
         public Error? Failure { get; set; }
 
         public AudienceScope? AskedAudience { get; private set; }
+
+        /// <summary>How many times the facts asked for a PR's claims (#2154).</summary>
+        public int ClaimsCalls { get; private set; }
+
+        public ValueTask<Result<IReadOnlyList<LibraryClaim>>> Claims(RecordKey prKey, AudienceScope audience, CancellationToken cancellationToken)
+        {
+            ClaimsCalls++;
+            return ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryClaim>>([]));
+        }
+
+        public ValueTask<Result<IReadOnlyList<LibraryDoc>>> ListDocs(LibraryDocFilter filter, AudienceScope audience, CancellationToken cancellationToken) => FakeContextEngine.Instance.ListDocs(filter, audience, cancellationToken);
+
+        public ValueTask<Result<LibraryDoc?>> GetDoc(RecordKey key, AudienceScope audience, CancellationToken cancellationToken) => FakeContextEngine.Instance.GetDoc(key, audience, cancellationToken);
+
+        public ValueTask<Result<IReadOnlyList<LibraryItem>>> Items(RecordKey docKey, AudienceScope audience, CancellationToken cancellationToken) => FakeContextEngine.Instance.Items(docKey, audience, cancellationToken);
+
+        public ValueTask<Result<IReadOnlyList<LibraryRefResolution>>> Resolve(IReadOnlyList<string> refs, string? repo, AudienceScope audience, CancellationToken cancellationToken) => FakeContextEngine.Instance.Resolve(refs, repo, audience, cancellationToken);
+
+        public ValueTask<Result<IReadOnlyList<LibraryClaim>>> ClaimsOn(RecordKey docKey, AudienceScope audience, CancellationToken cancellationToken) => FakeContextEngine.Instance.ClaimsOn(docKey, audience, cancellationToken);
+
+        public ValueTask<Result<IReadOnlyList<LibraryRootStatus>>> Roots(ContextScope scope, CancellationToken cancellationToken) => FakeContextEngine.Instance.Roots(scope, cancellationToken);
 
         public ValueTask<Result<IReadOnlyList<StoredRecord>>> OpenPulls(AudienceScope audience, CancellationToken cancellationToken)
         {
