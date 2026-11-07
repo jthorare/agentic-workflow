@@ -12,6 +12,11 @@ internal sealed partial class SqliteRecordStore
     public async ValueTask<Result<int>> RecordAttempt(SourceId source, SyncAttempt attempt, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(attempt);
+        return await Guarded(() => SaveAttempt(source, attempt, cancellationToken), "record the attempt").ConfigureAwait(false);
+    }
+
+    private async ValueTask<Result<int>> SaveAttempt(SourceId source, SyncAttempt attempt, CancellationToken cancellationToken)
+    {
         // why: the caller holds the source's lock around a tick, so the read and the write below are not raced by another attempt for the same source
         var previous = await Backoff(source, cancellationToken).ConfigureAwait(false);
         if (previous.IsError)

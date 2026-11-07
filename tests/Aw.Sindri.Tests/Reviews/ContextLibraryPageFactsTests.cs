@@ -94,6 +94,56 @@ public sealed class ContextLibraryPageFactsTests
         Assert.Empty(facts.Roots);
     }
 
+    [Fact]
+    public async Task A_human_gets_each_near_miss_as_its_file_under_the_root_the_pass_read_with_the_line_and_fix_in_its_text()
+    {
+        await Approve();
+        using var caller = _h.Callers.EnterService("library-test");
+        _context.Statuses = [Missed("work", "/home/joi/Documents/Work", new DesignDocFinding("design/retry.md", new DesignDocError("SND-LIB-019", Line: 2, "design/retry.md:2: aw-doc is \"1\", not the number 1, so the file isn't read.", "Write aw-doc: 1 with no quotes, on the line after the first ---.")))];
+
+        var misses = (await Facts().Read(Ct)).Value.NearMisses;
+
+        Assert.Equal(
+            [new LibraryNearMiss("~/Documents/Work/design/retry.md", "SND-LIB-019", "~/Documents/Work/design/retry.md line 2: aw-doc is \"1\", not the number 1, so the file isn't read. Write aw-doc: 1 with no quotes, on the line after the first ---")],
+            misses);
+    }
+
+    [Fact]
+    public async Task A_near_miss_stored_before_findings_had_text_reads_as_its_message_alone_and_misses_list_by_file()
+    {
+        await Approve();
+        using var caller = _h.Callers.EnterService("library-test");
+        _context.Statuses =
+        [
+            Missed("work", "/home/joi/Documents/Work", new DesignDocFinding("z.md", new DesignDocError("SND-LIB-019", Line: null, "a near miss (read again on the next pass)", ""))),
+            Missed("aw", "/home/joi/.agentic-workflow/aw", new DesignDocFinding("b.md", new DesignDocError("SND-LIB-019", Line: null, "b.md: aw-doc is empty, not the number 1, so the file isn't read.", "Write aw-doc: 1."))),
+        ];
+
+        var misses = (await Facts().Read(Ct)).Value.NearMisses;
+
+        Assert.Equal(
+            [
+                new LibraryNearMiss("~/.agentic-workflow/aw/b.md", "SND-LIB-019", "~/.agentic-workflow/aw/b.md: aw-doc is empty, not the number 1, so the file isn't read. Write aw-doc: 1"),
+                new LibraryNearMiss("~/Documents/Work/z.md", "SND-LIB-019", "a near miss (read again on the next pass)"),
+            ],
+            misses);
+    }
+
+    [Fact]
+    public async Task A_session_never_gets_a_near_miss_or_the_folder_it_is_in()
+    {
+        await Approve();
+        using var caller = _h.Callers.Enter(new CallerContext(CallerClass.Session, Terminal: false, "session:mcp", _h.Ids.New<CommandId>(), _h.Ids.New<CorrelationId>(), RepoName.From("api")));
+        _context.Statuses = [Missed("work", "/home/joi/Documents/Work", new DesignDocFinding("design/retry.md", new DesignDocError("SND-LIB-019", Line: 2, "design/retry.md:2: quoted", "fix")))];
+
+        var facts = (await Facts().Read(Ct)).Value;
+
+        Assert.Empty(facts.NearMisses);
+        Assert.Empty(facts.Roots);
+    }
+
+    private static LibraryRootStatus Missed(string root, string path, params DesignDocFinding[] findings) => new(root, LibraryRootState.Ok, Reason: null, Docs: 0, findings.Length, _at, path, findings);
+
     /// <summary>Answers the library reads and the sync progress as set.</summary>
     private sealed class Stub : IContextLibrary, IIndexSync
     {
