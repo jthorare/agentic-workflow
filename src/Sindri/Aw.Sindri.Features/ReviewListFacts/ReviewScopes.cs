@@ -1,7 +1,6 @@
 using Aw.Context.Core.Audience;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
-using Aw.Context.Core.Records;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
@@ -47,25 +46,17 @@ internal static class ReviewScopes
         return audience.IsError ? audience.Error : new Scoped(settings.Value, scope, audience.Value);
     }
 
+    // why: Context's own query reads with RecordMask, which adds a human's extras (owner:library, the Slack channels); a hand-built union
+    // of each repo's audience drops them, so the owner saw no vault docs (#2176)
     private static async ValueTask<Result<AudienceScope>> AudienceOf(ContextSettings settings, ContextScope scope, CancellationToken cancellationToken)
     {
-        var names = scope.Repos.Select(static r => r.Name).ToList();
-        var policy = new ProfileAudiencePolicy(settings, names);
-        IEnumerable<ContextRepoName> asked = scope.Caller.Kind == ContextCallerKind.Session ? (scope.Caller.Repo is { } own ? [own] : []) : names;
-        var allowed = new HashSet<AudienceKey>();
-        foreach (var repo in asked)
-        {
-            var one = await policy.For(repo, cancellationToken).ConfigureAwait(false);
-            if (one.IsError)
-            {
-                return one.Error;
-            }
-
-            allowed.UnionWith(one.Value.Allowed);
-        }
-
-        return new AudienceScope(allowed);
+        var allowed = await RecordMask.Allowed(settings, Asked(scope), scope.Caller.Kind, cancellationToken).ConfigureAwait(false);
+        return allowed.IsError ? allowed.Error : new AudienceScope(allowed.Value);
     }
+
+    // why: a session reads its own repo only (none when it has no repo in scope); anyone else reads every repo in scope
+    private static IReadOnlyList<ContextRepo> Asked(ContextScope scope) =>
+        scope.Caller.Kind == ContextCallerKind.Session ? [.. scope.Repos.Where(r => r.Name == scope.Caller.Repo)] : scope.Repos;
 
     private static ContextCaller Caller(CallerContext? caller) => caller switch
     {
