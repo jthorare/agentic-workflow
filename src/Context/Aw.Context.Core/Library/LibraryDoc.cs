@@ -18,6 +18,7 @@ namespace Aw.Context.Core.Library;
 /// <param name="Title">The record's title.</param>
 /// <param name="Url">The record's link, when it has one.</param>
 /// <param name="Audience">The record's audience; null is visible to no one.</param>
+/// <param name="UpdatedAt">When the doc's file last changed, as the record stores it; null when unknown.</param>
 public sealed record LibraryDoc(
     RecordKey Key,
     string Root,
@@ -32,4 +33,5 @@ public sealed record LibraryDoc(
     IReadOnlyList<DesignDocError> Errors,
     string Title,
     string? Url,
-    AudienceKey? Audience);
+    AudienceKey? Audience,
+    DateTimeOffset? UpdatedAt = null);

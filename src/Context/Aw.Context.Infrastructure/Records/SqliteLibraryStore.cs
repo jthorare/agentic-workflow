@@ -17,7 +17,7 @@ internal sealed class SqliteLibraryStore(ContextDatabase database) : ILibrarySto
     private static readonly IRowMapper<LibraryDoc> _doc = new Mapper<LibraryDoc>(r => new LibraryDoc(
         RecordKey.From(r.GetString(0)), r.GetString(1), r.GetString(2), Text(r, 3), Text(r, 4), Text(r, 5), Text(r, 6),
         DesignDocJson.ReadStrings(r.GetString(7)), DesignDocJson.ReadStrings(r.GetString(8)), r.GetInt32(9), DesignDocJson.ReadErrors(r.GetString(10)),
-        r.GetString(11), Text(r, 12), Text(r, 13) is { } audience ? AudienceKey.From(audience) : null));
+        r.GetString(11), Text(r, 12), Text(r, 13) is { } audience ? AudienceKey.From(audience) : null, LinearRowReads.At(r, 14)));
 
     private static readonly IRowMapper<LibraryItem> _item = new Mapper<LibraryItem>(r => new LibraryItem(
         RecordKey.From(r.GetString(0)), r.GetString(1), (DesignItemKind)Math.Max(0, Array.IndexOf(_itemKinds, r.GetString(2))), Text(r, 3), r.GetInt32(4), r.GetInt32(5), r.GetString(6)));

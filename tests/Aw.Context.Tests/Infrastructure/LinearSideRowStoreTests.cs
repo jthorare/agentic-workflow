@@ -270,4 +270,22 @@ public sealed class LinearSideRowStoreTests : IDisposable
 
         Assert.Equal(1, _world.Count($"SELECT count(*) FROM linear_issue WHERE key = '{Key}' AND description IS NULL"));
     }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task An_issue_read_by_its_key_gives_its_newest_fifty_comments_when_more_are_stored()
+    {
+        // why: the side and the writer keep 50, so the 51st row, the oldest, goes in by hand (a copy of c2 a minute earlier); the read must cap on its own
+        var comments = Enumerable.Range(2, LinearIssueSide.MaxComments).Select(static n => Comment("c" + n.ToString(CultureInfo.InvariantCulture), "body", minutes: n)).Reverse().ToArray();
+        _ = await Commit(1, Write(Rows(Fields(Ada, Todo), LinearWrittenFields.None, comments)));
+        _world.Sql("INSERT INTO linear_comment (id, issue_key, author_id, created_at, body, sindri) SELECT 'c1', issue_key, author_id, replace(created_at, '12:02', '12:01'), body, sindri FROM linear_comment WHERE id = 'c2'");
+        Assert.Equal(LinearIssueSide.MaxComments + 1, _world.Count($"SELECT count(*) FROM linear_comment WHERE issue_key = '{Key}'"));
+
+        var audience = new RecordAudience(new HashSet<AudienceKey> { AudienceKey.From("linear:team-a") }, new HashSet<RecordKey>());
+        var detail = (await new SqliteLinearIssueStore(_world.Database).Get(LinearIssueKey.Parse("ENG-1").Value, audience, Ct)).Value;
+
+        Assert.NotNull(detail);
+        Assert.Equal(LinearIssueSide.MaxComments, detail.Comments.Count);
+        Assert.Equal("c51", detail.Comments[0].Id.Value);
+        Assert.Equal("c2", detail.Comments[^1].Id.Value);
+    }
 }
