@@ -18,7 +18,12 @@ public static class GithubCredentialResolver
     /// <returns>The mode.</returns>
     public static GithubCredentials For(bool attended, SandboxSettings? settings, bool? skillPushes, StepPolicy? policy = null, bool pushApproved = false)
     {
-        _ = (policy, pushApproved);   // red stub: the ask is not read yet
-        return attended || skillPushes == false ? GithubCredentials.None : settings?.Credentials?.Github ?? SandboxDefaults.Github;
+        if (attended || skillPushes == false)
+        {
+            return GithubCredentials.None;
+        }
+
+        // why: the ask is the one loosening a Step can make, and it counts only with the owner's approval for the repo
+        return pushApproved && policy?.Github is { } ask ? ask : settings?.Credentials?.Github ?? SandboxDefaults.Github;
     }
 }

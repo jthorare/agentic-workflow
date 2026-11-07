@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Nodes;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Blocks;
 
@@ -60,7 +61,7 @@ public static class AgentLaunches
         // Never plan mode: plan mode runs read-only tools only, so the session couldn't run 'sindri workflow complete'. A Step only tightens the
         // profile: every Step may report, a write Step may write its own worktree and commit it, and nothing else is allowed (no build tools: SC-R).
         string[] tools = [.. _report, .. EvidenceGrants.For(run.Step.Block), .. run.WriteScope ? _commit : []];   // an evidence Step also gets its own verbs, one grant each (cutover spec §3.1)
-        var policy = new StepPolicy(tools, StepPermissionMode.Default, run.WriteScope ? worktree : null) { TurnMarkers = extras?.Skill is not null };   // a skill session's prompt hook marks its turns (the result read needs them)
+        var policy = new StepPolicy(tools, StepPermissionMode.Default, run.WriteScope ? worktree : null) { TurnMarkers = extras?.Skill is not null, Github = extras?.Skill is { Block.Pushes: true, Trial: false } ? GithubCredentials.AgentApp : null };   // a skill session's prompt hook marks its turns (the result read needs them)
         return new LaunchRequest(
             LaunchIdFor(run), target.Item, target.Agent, LaunchMode.Open, Attended: false, target.RepoPath, run.Address, worktree,
             StepArgsFor(run, descriptor, extras, policy, LaunchIdFor(run)), run.Run)
