@@ -135,6 +135,23 @@ public sealed class LinearIssueEditDiscardTests
     }
 
     [Fact]
+    public async Task After_a_save_with_no_answer_Discard_still_lets_the_sheet_go_and_sends_no_retry()
+    {
+        // Sindri down or the call timed out: the outcome is unknown, which is exactly when the owner may want to drop the edits.
+        var sheet = await _f.Opened(Token);
+        _f.Server.QueueLinearChange(LinearIssueEditFixture.Change("unknown"));
+        _f.Pick("Priority", "High");
+        await sheet.Save(Token);
+        var closed = false;
+        sheet.LeaveConfirmed += (_, _) => closed = true;
+
+        Assert.True(sheet.Leaving());
+        sheet.Discard();
+
+        Assert.Equal((true, false, 1), (closed, sheet.IsConfirmingDiscard, _f.Server.LinearChanges.Count));
+    }
+
+    [Fact]
     public async Task A_refresh_that_answers_not_synced_keeps_the_issue_and_the_edits()
     {
         var sheet = await _f.Opened(Token);
