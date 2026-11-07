@@ -12268,6 +12268,8 @@ virtual Aw.Context.Core.Linear.LinearWriteOutcome.PrintMembers(System.Text.Strin
 Aw.Context.Core.Linear.LinearWriteLimits
 const Aw.Context.Core.Linear.LinearWriteLimits.TextMax = 65536 -> int
 const Aw.Context.Core.Linear.LinearWriteLimits.TitleMax = 255 -> int
+static Aw.Context.Core.Linear.LinearWriteLimits.Attachment(System.Uri! url, string? title) -> Aw.Kernel.Error?
+static Aw.Context.Core.Linear.LinearWriteLimits.Change(Aw.Context.Core.Linear.LinearIssueChange! change) -> Aw.Kernel.Error?
 static Aw.Context.Core.Linear.LinearWriteLimits.Text(string! what, string? text, bool required) -> Aw.Kernel.Error?
 static Aw.Context.Core.Linear.LinearWriteLimits.Title(string? title) -> Aw.Kernel.Error?
 Aw.Context.Core.Linear.ILinearLiveReads
