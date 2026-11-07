@@ -10,6 +10,7 @@ public sealed class FakeLinearLookupStore : ILinearLookupStore
     private readonly Lock _gate = new();
     private readonly Dictionary<ExternalId, LinearTeamLookups> _teams = [];
     private int _replaces;
+    private string? _urlKey;
 
     /// <summary>How many times a team was replaced.</summary>
     public int Replaces => Volatile.Read(ref _replaces);
@@ -37,12 +38,33 @@ public sealed class FakeLinearLookupStore : ILinearLookupStore
     }
 
     /// <inheritdoc />
+    public ValueTask<Result<Unit>> ReplaceWorkspaceUrlKey(string urlKey, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(urlKey);
+        lock (_gate)
+        {
+            _urlKey = urlKey;
+        }
+
+        return ValueTask.FromResult<Result<Unit>>(Unit.Value);
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<string?>> WorkspaceUrlKey(CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            return ValueTask.FromResult(Results.Success(_urlKey));
+        }
+    }
+
+    /// <inheritdoc />
     public ValueTask<Result<Unit>> ReplaceTeam(LinearTeamLookups team, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(team);
         lock (_gate)
         {
-            _teams[team.TeamId] = team;
+            _teams[team.TeamId ?? throw new ArgumentException("A team is stored under its Linear id.", nameof(team))] = team;
         }
 
         _ = Interlocked.Increment(ref _replaces);

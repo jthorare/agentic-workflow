@@ -28,8 +28,10 @@ public abstract class LinearLookupStoreContract<TStore>
         key,
         [.. names.Select((n, i) => new LinearLookupState(Id("a", i), "State " + n, "started", i))],
         [.. names.Select((n, i) => new LinearLookupCycle(Id("b", i), i + 1, "Cycle " + n, new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero).AddDays(14 * i), new DateTimeOffset(2026, 1, 15, 0, 0, 0, TimeSpan.Zero).AddDays(14 * i)))],
-        [.. names.Select((n, i) => new LinearLookupMember(Id("c", i), "Member " + n, DisplayName: null))],
-        [.. names.Select((n, i) => new LinearLookupLabel(Id("d", i), "Label " + n))]);
+        [.. names.Select((n, i) => new LinearLookupMember(Id("c", i), "Member " + n, DisplayName: null, Active: i % 2 == 0))],
+        [.. names.Select((n, i) => new LinearLookupLabel(Id("d", i), "Label " + n, "#eb575" + i.ToString(System.Globalization.CultureInfo.InvariantCulture)))],
+        "Team " + key,
+        new DateTimeOffset(2026, 3, 4, 5, 6, 7, TimeSpan.Zero));
 
     private static ExternalId Id(string kind, int n) => ExternalId.From($"00000000-0000-0000-0000-{kind}000000000{n:x3}");
 
@@ -110,5 +112,18 @@ public abstract class LinearLookupStoreContract<TStore>
         var eng = ContractCheck.Ok(_owner, await store.Team("ENG", CancellationToken.None));
 
         ContractCheck.That(_owner, ops is { States.Count: 1 } && eng is { States.Count: 2 }, "each key reads its own team's rows");
+    }
+
+    /// <summary>The workspace's URL key reads as null until it is stored, then reads back, and a second write replaces it.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task The_workspace_url_key_reads_null_then_what_was_stored()
+    {
+        var store = Create();
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.WorkspaceUrlKey(CancellationToken.None)) is null, "no key before the first write");
+        _ = ContractCheck.Ok(_owner, await store.ReplaceWorkspaceUrlKey("acme", CancellationToken.None));
+        ContractCheck.That(_owner, string.Equals(ContractCheck.Ok(_owner, await store.WorkspaceUrlKey(CancellationToken.None)), "acme", StringComparison.Ordinal), "the key reads back");
+        _ = ContractCheck.Ok(_owner, await store.ReplaceWorkspaceUrlKey("beta", CancellationToken.None));
+        ContractCheck.That(_owner, string.Equals(ContractCheck.Ok(_owner, await store.WorkspaceUrlKey(CancellationToken.None)), "beta", StringComparison.Ordinal), "a second write replaces it");
     }
 }

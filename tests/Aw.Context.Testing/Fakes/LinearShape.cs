@@ -55,9 +55,9 @@ internal static class LinearShape
             return connection is null ? value : Page(connection, int.MaxValue, orderBy: null);
         }
 
-        if (connection is null || child.Arguments.Keys.Any(static k => k is not ("first" or "orderBy")) || First(child) is not { } count)
+        if (connection is null || child.Arguments.Keys.Any(static k => k is not ("first" or "orderBy" or "includeDisabled")) || First(child) is not { } count)
         {
-            throw FakeRequestException.Invalid($"At {path} the fake Linear server reads only 'first' (a positive Int) and 'orderBy' (updatedAt or createdAt) on a nested connection.");
+            throw FakeRequestException.Invalid($"At {path} the fake Linear server reads only 'first' (a positive Int), 'includeDisabled' (ignored: every member comes back, with 'active') and 'orderBy' (updatedAt or createdAt) on a nested connection.");
         }
 
         return Page(connection, count, OrderBy(child, path));
