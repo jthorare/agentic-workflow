@@ -12146,3 +12146,8 @@ virtual Aw.Context.Core.Linear.LinearWriteKeyStatus.PrintMembers(System.Text.Str
 virtual Aw.Context.Core.Linear.LinearWriteOutcome.EqualityContract.get -> System.Type!
 virtual Aw.Context.Core.Linear.LinearWriteOutcome.Equals(Aw.Context.Core.Linear.LinearWriteOutcome? other) -> bool
 virtual Aw.Context.Core.Linear.LinearWriteOutcome.PrintMembers(System.Text.StringBuilder! builder) -> bool
+Aw.Context.Core.Linear.LinearWriteLimits
+const Aw.Context.Core.Linear.LinearWriteLimits.TextMax = 65536 -> int
+const Aw.Context.Core.Linear.LinearWriteLimits.TitleMax = 255 -> int
+static Aw.Context.Core.Linear.LinearWriteLimits.Text(string! what, string? text, bool required) -> Aw.Kernel.Error?
+static Aw.Context.Core.Linear.LinearWriteLimits.Title(string? title) -> Aw.Kernel.Error?
