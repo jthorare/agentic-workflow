@@ -25,6 +25,8 @@ internal static class LinearIssueScenarios
     private const string Cycle = "00000000-0000-4000-8000-0000000000c1";
     private const string Issues = "/sindri/linear/issues";
 
+    private const string Described = "The sync worker retries forever on a 500. Cap it at 5 tries per hour.\n\nSee https://example.com/runbooks/sync and the graph ![p95](https://example.com/p95.png).\nOld link: sindri://items/ITM-0192a1b2c3d4e5f6a7b8c9d0e1f2a301";
+
     private static readonly LinearPersonView _joi = new(Viewer, "Joi Example");
     private static readonly LinearPersonView _sam = new(Sam, "Sam Lee");
     private static readonly LinearLabelView _bug = new("00000000-0000-4000-8000-0000000000d1", "bug", "#eb5757");
@@ -37,6 +39,7 @@ internal static class LinearIssueScenarios
         ("linear-issues", "mine"), ("linear-issues", "teams-page2"), ("linear-issues", "filtered-empty"), ("linear-issues", "not-connected"),
         ("linear-issues", "feed-failing"), ("linear-issues", "rereading"), ("linear-issues", "session"),
         ("linear-issue", "full"), ("linear-issue", "removed"), ("linear-issue", "not-found"), ("linear-issue", "session"), ("linear-issue", "session-outside"),
+        ("linear-issue", "writable"), ("linear-issue", "no-write-key"), ("linear-issue", "team-not-picked"), ("linear-issue", "session-write-refused"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -48,8 +51,19 @@ internal static class LinearIssueScenarios
         {
             _ = services.Replace(ServiceDescriptor.Singleton<ILinearIssueFacts>(slug == "linear-issue" ? OneFacts(scenario) : Facts(scenario)));
             _ = services.Replace(ServiceDescriptor.Singleton<ILinearItemLinks>(Links()));
-            _ = services.Replace(ServiceDescriptor.Singleton<ILinearWriteGate>(scenario.StartsWith("session", StringComparison.Ordinal) ? new FakeLinearWriteGate().Off("SND-AUTH-002") : new FakeLinearWriteGate()));
+            _ = services.Replace(ServiceDescriptor.Singleton<ILinearWriteGate>(Gate(scenario)));
         });
+
+    /// <summary>The write gate a scenario runs under: a session never writes, 'no-write-key' has no write key, 'team-not-picked' reads a team the profile didn't pick, else writes are on.</summary>
+    /// <param name="scenario">The scenario.</param>
+    /// <returns>The fake gate.</returns>
+    internal static FakeLinearWriteGate Gate(string scenario) => scenario switch
+    {
+        "no-write-key" => new FakeLinearWriteGate().Off("SND-LINEAR-002"),
+        "team-not-picked" => new FakeLinearWriteGate().Off("SND-LINEAR-003"),
+        _ when scenario.StartsWith("session", StringComparison.Ordinal) => new FakeLinearWriteGate().Off("SND-AUTH-002"),
+        _ => new FakeLinearWriteGate(),
+    };
 
     /// <summary>Runs the scenario against <paramref name="host"/> and returns the body to compare.</summary>
     public static async Task<string> Body(GoldenHost host, string slug, string scenario, CancellationToken ct)
@@ -77,7 +91,7 @@ internal static class LinearIssueScenarios
         return (await host.Http.Ask(Get(path, caller))).Body;
     }
 
-    private static FakeLinearItemLinks Links() => new FakeLinearItemLinks()
+    internal static FakeLinearItemLinks Links() => new FakeLinearItemLinks()
         .With(Record(12), new LinearItemLinkView("ITM-0192a1b2c3d4e5f6a7b8c9d0e1f2a301", "running"), new LinearPrView(2071, "https://github.com/acme/api/pull/2071", "waiting"))
         .With(Record(57), new LinearItemLinkView("ITM-0192a1b2c3d4e5f6a7b8c9d0e1f2a302", "done"), new LinearPrView(2080, "https://github.com/acme/api/pull/2080", "approved"));
 
@@ -111,7 +125,6 @@ internal static class LinearIssueScenarios
             new("00000000-0000-4000-8000-0000000000f2", _sam, At(31, 23, 30), "@Joi Example the budget should reset at midnight UTC, not on restart.", Sindri: false),
             new("00000000-0000-4000-8000-0000000000f1", _joi, At(31, 21, 0), "Started a run on this (ITM-0192a1b2c3d4e5f6a7b8c9d0e1f2a301).", Sindri: true),
         };
-        const string Described = "The sync worker retries forever on a 500. Cap it at 5 tries per hour.\n\nSee https://example.com/runbooks/sync and the graph ![p95](https://example.com/p95.png).\nOld link: sindri://items/ITM-0192a1b2c3d4e5f6a7b8c9d0e1f2a301";
         var removed = Retry() with { Key = "ENG-9", Record = Record(9), Url = "https://linear.app/acme/issue/ENG-9", Title = "Old onboarding checklist", Project = null, Cycle = null, Labels = [] };
         _ = facts.VisibleTeams("ENG");
         return scenario.StartsWith("session", StringComparison.Ordinal)
@@ -119,13 +132,28 @@ internal static class LinearIssueScenarios
             : facts.VisibleTeams("ENG", "OPS").WithDetails(new LinearIssueDetailFacts(Retry(), Described, Removed: false, comments), new LinearIssueDetailFacts(removed, "Moved to the OPS team.", Removed: true, []));
     }
 
+    /// <summary>The sheet's facts for the write routes: the owner sees ENG-12 (state and last update as the store has them now) with its description and two comments.</summary>
+    /// <param name="state">The stored state.</param>
+    /// <param name="updatedAt">The stored last update.</param>
+    /// <returns>The fake facts.</returns>
+    internal static FakeLinearIssueFacts WriteFacts(LinearStateView state, DateTimeOffset updatedAt)
+    {
+        var facts = new FakeLinearIssueFacts().WithSource(new LinearSourceFacts(Connected: true, _joi, new LinearFeedView("ok", _synced, Code: null, Reread: null)));
+        var comments = new LinearCommentView[]
+        {
+            new("00000000-0000-4000-8000-0000000000f2", _sam, At(31, 23, 30), "@Joi Example the budget should reset at midnight UTC, not on restart.", Sindri: false),
+            new("00000000-0000-4000-8000-0000000000f1", _joi, At(31, 21, 0), "Started a run on this (ITM-0192a1b2c3d4e5f6a7b8c9d0e1f2a301).", Sindri: true),
+        };
+        return facts.VisibleTeams("ENG", "OPS").WithDetails(new LinearIssueDetailFacts(Retry() with { State = state, UpdatedAt = updatedAt }, Described, Removed: false, comments));
+    }
+
     private static IEnumerable<LinearIssueRowView> Stored() => [Retry(), Export(), Rotate(), Queue(), Flaky()];
 
     private static string Record(int number) => "linear:issue/00000000-0000-4000-8000-" + (0x100 + number).ToString("x12", CultureInfo.InvariantCulture);
 
-    private static DateTimeOffset At(int day, int hour, int minute) => new(2025, 12, day, hour, minute, 0, TimeSpan.Zero);
+    internal static DateTimeOffset At(int day, int hour, int minute) => new(2025, 12, day, hour, minute, 0, TimeSpan.Zero);
 
-    private static LinearIssueRowView Retry() => new("ENG-12", Record(12), "https://linear.app/acme/issue/ENG-12", "Retry budget for the sync worker", new(Eng, "ENG"),
+    internal static LinearIssueRowView Retry() => new("ENG-12", Record(12), "https://linear.app/acme/issue/ENG-12", "Retry budget for the sync worker", new(Eng, "ENG"),
         new("00000000-0000-4000-8000-000000000052", "In Progress", "started"), 1, _joi, new(Project, "Sync worker"), new(Cycle, 14, "Cycle 14"), [_bug, _api], At(31, 23, 40), Link: null, Pr: null);
 
     private static LinearIssueRowView Export() => new("ENG-31", Record(31), "https://linear.app/acme/issue/ENG-31", "Export limits: cap the CSV at 50k rows", new(Eng, "ENG"),

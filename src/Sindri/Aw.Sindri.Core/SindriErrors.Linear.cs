@@ -9,4 +9,10 @@ public static partial class SindriErrors
 
     /// <summary>SND-LINEAR-404: the profile names no Linear team and Context holds nothing for the one asked about.</summary>
     public static readonly ErrorDefinition LinearNothingStored = new("SND-LINEAR-404", ErrorKind.NotFound, "Sindri has nothing stored for that Linear team");
+
+    /// <summary>SND-LINEAR-002: a write with no usable write key (Linear hub spec 2026-11-04 §5.1, §8). Nothing was sent. Context raises its own 002 as a 400; the write routes answer 403 so the sheet shows "Edits need write access".</summary>
+    public static readonly ErrorDefinition LinearNoWriteKey = new("SND-LINEAR-002", ErrorKind.Forbidden, "Sindri has no Linear write key");
+
+    /// <summary>SND-LINEAR-006: a write named an id that is not in the issue's team's stored lookups (a state, member, label, cycle or parent the team doesn't have). Nothing was sent.</summary>
+    public static readonly ErrorDefinition LinearBadValue = new("SND-LINEAR-006", ErrorKind.Invalid, "Not one of the team's Linear values");
 }

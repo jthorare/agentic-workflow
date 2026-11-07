@@ -17,9 +17,6 @@ internal static class LinearScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("linear-issue", "writable"), ("linear-issue", "no-write-key"), ("linear-issue", "team-not-picked"), ("linear-issue", "session-write-refused"),
-        ("linear-change", "applied"), ("linear-change", "applied-store-failed"), ("linear-change", "already-applied"), ("linear-change", "conflict"), ("linear-change", "unknown"),
-        ("linear-change", "rate-limited"), ("linear-change", "no-write-key"), ("linear-change", "team-not-picked"), ("linear-change", "bad-value"), ("linear-change", "session-refused"),
         ("linear-comment", "applied"), ("linear-comment", "applied-slow"), ("linear-comment", "unknown"), ("linear-comment", "session-refused"),
         ("linear-create", "applied"), ("linear-create", "unknown"), ("linear-create", "bad-value"), ("linear-create", "session-refused"),
         ("linear-connection", "connected"), ("linear-connection", "not-connected"), ("linear-connection", "read-only"), ("linear-connection", "scope-unknown"),
@@ -38,7 +35,7 @@ internal static class LinearScenarios
     {
         await ViewScenarios.Approve(host, ct);
         await ViewScenarios.CatchUp(host, ct);
-        // the issue list, the sheet, the lookups and the strip are served (LinearIssueScenarios, LinearReadScenarios); what waits here are the write-gate rows of 'linear-issue' and the 1b writes
+        // the issue list, the sheet, the lookups and the strip are served (LinearIssueScenarios, LinearReadScenarios); what waits here are the 1b writes still to come (the edit's are LinearWriteScenarios)
         var human = ItemScenarios.Human(host);
         var session = ItemScenarios.Session("demo");
         var caller = scenario.StartsWith("session", StringComparison.Ordinal) ? session : human;
@@ -56,26 +53,13 @@ internal static class LinearScenarios
         return (await host.Http.Ask(Get(path, caller))).Body;
     }
 
-    // seeded by api, writes: ENG is a picked team, OPS is not; 'no-write-key' has no write key stored and 'team-not-picked' sends an issue of OPS (OPS-40). 'applied' moves ENG-12 to In Review
-    // (fake Linear answers with the re-read at 10:05); 'conflict' has Linear's state at Done since 10:01; 'unknown' and 'rate-limited' come from a fake Linear that times out / answers 429 with a 10:06 retry.
-    // 'applied-store-failed' fails the store write after Linear took it; 'already-applied' is the same body sent twice; 'bad-value' sends a stateId that isn't one of ENG's.
     // Connection: 'connected' has both keys resolved at 09:58; 'pending' has a live profile that differs from the approved one; 'same-as-read' sends the read key as the write key;
     // 'no-keychain' has none; 'no-teams' saves a read key with teams: [].
     private static HttpRequestMessage? WriteRequest(string slug, string scenario, (string Name, string Value)[] caller)
     {
         const string clientId = "5d0a4f6e-3b1c-4c0e-9a57-2f1d8c9b7e01";
-        const string review = "00000000-0000-4000-8000-000000000053";
-        const string progress = "00000000-0000-4000-8000-000000000052";
         return slug switch
         {
-            "linear-change" => Post(
-                scenario == "team-not-picked" ? "/sindri/linear/issues/OPS-40/change" : "/sindri/linear/issues/ENG-12/change",
-                scenario switch
-                {
-                    "bad-value" => $$$"""{"opened":{"stateId":"{{{progress}}}"},"set":{"stateId":"00000000-0000-4000-8000-0000000000ff"}}""",
-                    _ => $$$"""{"opened":{"stateId":"{{{progress}}}"},"set":{"stateId":"{{{review}}}"}}""",
-                },
-                caller),
             "linear-comment" => Post("/sindri/linear/issues/ENG-12/comments", $$"""{"clientId":"{{clientId}}","body":"Budget resets at midnight UTC: agreed."}""", caller),
             "linear-create" => Post("/sindri/linear/issues",
                 scenario == "bad-value"
