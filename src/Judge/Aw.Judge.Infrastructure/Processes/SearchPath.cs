@@ -1,6 +1,5 @@
 using Aw.Kernel.Data;
 
-
 namespace Aw.Judge.Infrastructure.Processes;
 
 /// <summary>Finds an executable in the PATH directories: a regular file with an execute bit (any file on Windows).</summary>
