@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using Aw.Kernel.Data;
 
 namespace Aw.Sindri.Host.Commands;
 
@@ -25,7 +26,7 @@ internal static class UiLauncher
             return $"not found at {path} (fix: publish Aw.Sindri.Ui.Desktop next to sindri, or set {Variable}); use sindri status";
         }
 
-        if (!OperatingSystem.IsWindows() && (File.GetUnixFileMode(path) & (UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute)) == UnixFileMode.None)
+        if (!ExecutableFiles.IsExecutable(path))
         {
             return $"not executable at {path} (fix: chmod +x it, or publish Aw.Sindri.Ui.Desktop next to sindri); use sindri status";
         }

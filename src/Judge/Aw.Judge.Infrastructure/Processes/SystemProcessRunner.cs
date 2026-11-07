@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Text;
 using Aw.Judge.Core.Ports;
 using Aw.Judge.Core.Processes;
+using Aw.Kernel.Data;
 
 namespace Aw.Judge.Infrastructure.Processes;
 
@@ -131,7 +132,7 @@ internal sealed class SystemProcessRunner(Func<string, string?> environment) : I
     // A bare name is looked up on PATH as the environment gives it; anything with a directory part is used as is.
     private string? Resolve(string fileName) =>
         fileName.Contains(Path.DirectorySeparatorChar, StringComparison.Ordinal) || fileName.Contains(Path.AltDirectorySeparatorChar, StringComparison.Ordinal)
-            ? SearchPath.IsExecutable(fileName) ? fileName : null
+            ? ExecutableFiles.IsExecutable(fileName) ? fileName : null
             : SearchPath.Find(environment("PATH"), fileName);
 
     // Writes the input and closes the stream; a program that exits without reading it (a broken pipe) is not an error.
