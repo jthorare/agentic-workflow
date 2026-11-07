@@ -101,16 +101,15 @@ public sealed class LinearWriteKeyStatusTests : IDisposable
     }
 
     [Theory]
-    [InlineData("has a space")]
-    [InlineData("line\nbreak")]
+    [InlineData("lin qz9secret")]
+    [InlineData("lin\nqz9secret")]
     public async Task A_secret_with_whitespace_or_control_characters_is_refused_and_never_shown(string secret)
     {
         _secrets[Write] = secret;
 
         var refused = Assert.IsType<LinearWriteKeyRefused>(await Status(Settings(Write)));
 
-        Assert.DoesNotContain("space", refused.Reason, StringComparison.Ordinal);
-        Assert.DoesNotContain("break", refused.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("qz9secret", refused.Reason, StringComparison.Ordinal);
     }
 
     private sealed class NeverCalledHandler : HttpMessageHandler

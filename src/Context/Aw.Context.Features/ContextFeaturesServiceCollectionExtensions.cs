@@ -150,8 +150,7 @@ public static class ContextFeaturesServiceCollectionExtensions
 
     private static IServiceCollection AddIndexSync(this IServiceCollection services) => services.AddScoped<FeedDecisions>().AddScoped<TickSteps>().AddScoped<ConceptSynthesisRun>().AddScoped<IIndexSync, IndexSync>()
         .AddSingleton<ISourcePurges>(static sp => sp.GetRequiredService<RecordFeedSync>())
-        .AddScoped<IService<LinearWriteThroughRequest, LinearWriteThroughResponse>, LinearWriteThroughService>()
-        .AddSingleton<ILinearWriteThrough, ScopedLinearWriteThrough>();
+        .AddLinearWriteThrough();
 
     private static IServiceCollection AddContextSlices(this IServiceCollection services) => services
         .AddBacktest()

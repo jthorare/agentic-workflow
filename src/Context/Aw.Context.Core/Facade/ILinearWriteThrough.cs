@@ -1,7 +1,8 @@
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Linear;
 using Aw.Context.Core.Sources;
 
-namespace Aw.Context.Core.Linear;
+namespace Aw.Context.Core.Facade;
 
 /// <summary>Stores one Linear issue's state right after a write changed it (Linear hub spec 2026-11-04 D4), so the Linear writes need not know how: the port of the write-through slice.</summary>
 public interface ILinearWriteThrough
