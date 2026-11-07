@@ -4,8 +4,8 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Navigation;
+using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels.Reviews;
 using Aw.Sindri.Ui.ViewModels.Shell;
@@ -25,6 +25,10 @@ public sealed class ReviewPageViewTests : FrameHost
         await Until(window, () => shell.IsReviewPageShown && shell.ReviewPage.State == ReviewPageState.Ready && Visible(window, "ReviewPanelColumn"), "the review page never showed");
         return (window, shell);
     }
+
+    // While Reload reads again the strip has no parts yet, so this can't throw the way Named would.
+    private static bool FirstStripPartFocused(Visual within) =>
+        within.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.Name == "ReviewStripSegment")?.IsFocused == true;
 
     private static Point Origin(Control control, Visual within) => control.TranslatePoint(default, within) ?? throw new InvalidOperationException(control.Name);
 
@@ -75,7 +79,7 @@ public sealed class ReviewPageViewTests : FrameHost
 
         Named<Button>(window, "ReviewReload").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
-        await Until(window, () => Server.ReviewPageReads.Count > reads && shell.ReviewPage.State == ReviewPageState.Ready && Named<Button>(window, "ReviewStripSegment").IsFocused, "Reload never read again and focused the strip");
+        await Until(window, () => Server.ReviewPageReads.Count > reads && shell.ReviewPage.State == ReviewPageState.Ready && FirstStripPartFocused(window), "Reload never read again and focused the strip");
         Assert.Equal(new ReviewFocus(ReviewFocusRegion.StripFirst), shell.ReviewPage.Focus);
     });
 
