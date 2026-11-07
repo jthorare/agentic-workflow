@@ -53,6 +53,20 @@ public sealed partial class SqliteIndexStoreFilesTests
         }
     }
 
+    [Fact]
+    public async Task A_symbol_vector_that_is_not_a_blob_is_damage()
+    {
+        var store = Store();
+        await PublishTwins(store);
+        await Plant("UPDATE embeddings SET vector = 'not a blob'", value: null);
+
+        var reader = (await store.OpenRead(_repo, _none)).Value;
+        await using (reader)
+        {
+            Assert.Equal("SND-CODEIDX-010", (await reader.SymbolVectors(["src/A.cs"], "m", _none)).Error.Code);
+        }
+    }
+
     private static SymbolRecord Twin(string qualified)
     {
         var minHash = Clones.Signature([.. Enumerable.Range(0, 40).Select(i => "t" + i.ToString(CultureInfo.InvariantCulture))]);
