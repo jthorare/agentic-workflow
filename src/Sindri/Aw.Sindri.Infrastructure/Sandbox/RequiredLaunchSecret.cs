@@ -8,6 +8,7 @@ namespace Aw.Sindri.Infrastructure.Sandbox;
 /// <summary>#2163: a plan that leaves <c lang="text">AW_SINDRI_LAUNCH_SECRET</c> to the launcher is not wrapped without a value for it, or the agent would start with no secret and its own reports would be refused.</summary>
 internal static class RequiredLaunchSecret
 {
+    // why a refusal and not the plain path: a future launch path that forgets the Put must fail loudly, not silently start an agent that can't report.
     internal const string Variable = "AW_SINDRI_LAUNCH_SECRET";
 
     /// <summary>Checks a launch's values against the plan.</summary>
