@@ -58,12 +58,19 @@ internal static class LaunchWorktree
         return null;
     }
 
-    /// <summary>Removes a trial's worktree with plain 'git worktree remove' (never forced): a tree with changes in it is kept, and the warning names it so the agent's work is never lost.</summary>
+    /// <summary>Removes a trial's worktree with plain 'git worktree remove' (never forced): a tree with changes in it, or commits on no branch (it is detached, so a plain remove would drop them), is kept, and the warning names it so the agent's work is never lost.</summary>
     /// <param name="repoPath">The repo.</param>
     /// <param name="worktree">The worktree.</param>
     /// <param name="warn">Where the one warning line goes.</param>
     internal static async ValueTask Remove(string repoPath, string worktree, Action<string> warn)
     {
+        if (await ViewerProcess.Output("git", ["-C", worktree, "rev-list", "--count", "HEAD", "--not", "--branches", "--remotes"], _gitBudget, CancellationToken.None).ConfigureAwait(false) is { } count
+            && int.TryParse(count.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var commits) && commits > 0)
+        {
+            warn($"warn: the skill trial's worktree {worktree} was kept: it holds {commits.ToString(System.Globalization.CultureInfo.InvariantCulture)} commit{(commits == 1 ? string.Empty : "s")} that are on no branch; branch them or remove it by hand with git worktree remove --force when you have looked");   // why: the trial worktree is detached, so removing it would drop them
+            return;
+        }
+
         var removed = await ViewerProcess.Output("git", ["-C", repoPath, "worktree", "remove", worktree], _gitBudget, CancellationToken.None).ConfigureAwait(false);
         if (removed is null && Directory.Exists(worktree))
         {
