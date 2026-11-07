@@ -39,11 +39,11 @@ internal sealed partial class LinearIssueSheetViewModel
         Fields =
         [
             Field("state", issue.State.Name),
-            Field("assignee", issue.Assignee?.Name ?? Labels.LinearUnassigned),
             Field("priority", Labels.LinearPriority(issue.Priority)),
-            Field("project", issue.Project?.Name),
+            Field("assignee", issue.Assignee?.Name ?? Labels.LinearUnassigned),
             Field("cycle", issue.Cycle?.Name),
             Field("labels", issue.Labels.Count > 0 ? string.Join(", ", issue.Labels.Select(l => l.Name)) : null),
+            Field("project", issue.Project?.Name),
         ];
         (PrText, _pr) = issue.Pr is { } pr ? (Labels.LinearPrChip(pr.Number, pr.Review), GitHubPr(pr.Url)) : (string.Empty, null);
         CanOpenPr = _pr is not null;

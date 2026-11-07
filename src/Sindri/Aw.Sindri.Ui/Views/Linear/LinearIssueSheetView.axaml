@@ -38,7 +38,7 @@
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="lvm:LinearIssueFieldViewModel">
-            <Border Name="IssueField" Margin="0,0,12,8" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+            <Border Name="IssueField" Margin="0,0,12,4" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
               <StackPanel Spacing="2" AutomationProperties.AccessibilityView="Raw">
                 <TextBlock Classes="eyebrow" Text="{Binding Label}" />
                 <TextBlock Classes="body" Text="{Binding Value}" TextWrapping="Wrap" />

@@ -20,7 +20,7 @@ public sealed class LinearIssueSheetTests
 
         Assert.Equal((FramePhase.Shown, "ENG-12", "Retry budget for the sync worker"), (sheet.Phase, sheet.Key, sheet.Title));
         Assert.Equal(
-            ["State: In Progress", "Assignee: Joi Example", "Priority: Urgent", "Project: Sync worker", "Cycle: Cycle 14", "Labels: bug, api"],
+            ["State: In Progress", "Priority: Urgent", "Assignee: Joi Example", "Cycle: Cycle 14", "Labels: bug, api", "Project: Sync worker"],
             sheet.Fields.Select(f => f.Name),
             StringComparer.Ordinal);
     }
@@ -39,7 +39,7 @@ public sealed class LinearIssueSheetTests
         var sheet = await _f.Opened("ENG-12", Token);
 
         Assert.Equal(
-            ["State: In Progress", "Assignee: Unassigned", "Priority: No priority", "Project: –", "Cycle: –", "Labels: –"],
+            ["State: In Progress", "Priority: No priority", "Assignee: Unassigned", "Cycle: –", "Labels: –", "Project: –"],
             sheet.Fields.Select(f => f.Name),
             StringComparer.Ordinal);
     }
