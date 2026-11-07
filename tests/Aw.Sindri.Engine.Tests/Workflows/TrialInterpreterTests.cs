@@ -133,7 +133,7 @@ public sealed class TrialInterpreterTests : AgentRuntimeTestBase
         }
     }
 
-    // The skills serve loaded: the fixture folder, whose 'review' is the descriptor registered as served.
+    // The skills serve loaded: the fixture folder, whose 'review' is the descriptor registered as served. It only answers for serve's own folder; the host's real source still reads a trial's folder.
     private sealed class ServedSkills : ISkillBlocks
     {
         public string Folder => SkillFixtures.Folder;
@@ -142,7 +142,7 @@ public sealed class TrialInterpreterTests : AgentRuntimeTestBase
 
         public IReadOnlyList<SkippedSkillBlock> Skipped => [];
 
-        public SkillBlocks LoadFolder(string folder) => SkillManifestLoader.Load(folder);
+        public SkillBlocks LoadFolder(string folder) => new([], []);   // why: serve has one source, and a trial's folder is read through it; a second one reading the folder too would lay the same block over the catalog twice
     }
 
     private sealed class KnownItemRepo(ItemId known) : IItemRepos
