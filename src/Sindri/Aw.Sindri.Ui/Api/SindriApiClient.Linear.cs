@@ -8,17 +8,17 @@ internal sealed partial class SindriApiClient
 {
     /// <inheritdoc />
     public Task<Result<LinearIssueList>> LinearIssues(Uri api, LinearIssueQuery query, CancellationToken cancellationToken) =>
-        throw new NotSupportedException(LinearRoutes.IssueList(query)); // red: the stub until the real call lands
+        Get<LinearIssueList>(api, LinearRoutes.IssueList(query), cancellationToken);
 
     /// <inheritdoc />
     public Task<Result<LinearIssueOne>> LinearIssue(Uri api, string key, CancellationToken cancellationToken) =>
-        throw new NotSupportedException(LinearRoutes.Issue(key)); // red: the stub until the real call lands
+        Get<LinearIssueOne>(api, LinearRoutes.Issue(key), cancellationToken);
 
     /// <inheritdoc />
     public Task<Result<LinearLookups>> LinearLookups(Uri api, string team, CancellationToken cancellationToken) =>
-        throw new NotSupportedException(LinearRoutes.Lookups(team)); // red: the stub until the real call lands
+        Get<LinearLookups>(api, LinearRoutes.Lookups(team), cancellationToken);
 
     /// <inheritdoc />
     public Task<Result<LinearSince>> LinearSince(Uri api, string? after, CancellationToken cancellationToken) =>
-        throw new NotSupportedException(LinearRoutes.Since(after)); // red: the stub until the real call lands
+        Get<LinearSince>(api, LinearRoutes.Since(after), cancellationToken);
 }
