@@ -82,14 +82,18 @@ public sealed class LinearSelectWhenShownTests
         work.SelectMissed += (_, _) => missed++;
         work.FocusRequested += (_, e) => focused.Add(e.ItemId);
 
+        var gate = f.Server.LinearIssuesGate = new TaskCompletionSource();
         work.SelectWhenShown("ENG-99");
         var waiting = work.Reading;
-        await work.Refresh(LinearFixture.Url, Token);
+        var onItsWay = !waiting.IsCompleted;
+        f.Server.LinearIssuesGate = null;
+        await work.Refresh(LinearFixture.Url, Token);   // replaces the held read, without the row
+        gate.SetResult();
         await waiting;
         f.Mine = WithMineRow("ENG-99");
         await work.Refresh(LinearFixture.Url, Token);
 
-        Assert.Equal((1, 0), (missed, focused.Count));
+        Assert.Equal((true, 1, 0), (onItsWay, missed, focused.Count));
     }, Token);
 
     [Fact]
