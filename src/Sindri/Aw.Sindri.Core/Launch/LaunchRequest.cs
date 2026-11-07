@@ -46,4 +46,8 @@ public sealed record LaunchRequest(
     /// <summary>Null, or the state's timeout, which the sandbox plan uses as the Step's wall limit instead of the 4 h default (skill flows spec D8). Never serialized.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public TimeSpan? StepTimeout { get; init; }
+
+    /// <summary>True when the owner's approval for this repo covers the Step's <see cref="StepPolicy.Github"/> ask (skill flows spec D7). Nothing sets it yet. Never serialized.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool GithubPushApproved { get; init; }
 }
