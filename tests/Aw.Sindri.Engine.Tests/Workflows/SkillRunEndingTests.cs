@@ -271,9 +271,9 @@ public sealed class SkillRunEndingTests : AgentRuntimeTestBase
 
     private sealed class KnownItemRepo(ItemId known) : IItemRepos
     {
-        public ValueTask<Aw.Kernel.Result<RepoName?>> RepoOf(ItemId item, CancellationToken cancellationToken) =>
-            ValueTask.FromResult<Aw.Kernel.Result<RepoName?>>(item == known ? RepoName.From(_item.Repo) : (RepoName?)null);
+        public ValueTask<Kernel.Result<RepoName?>> RepoOf(ItemId item, CancellationToken cancellationToken) =>
+            ValueTask.FromResult<Kernel.Result<RepoName?>>(item == known ? RepoName.From(_item.Repo) : (RepoName?)null);
 
-        public ValueTask<Aw.Kernel.Result<bool>> Exists(ItemId item, CancellationToken cancellationToken) => ValueTask.FromResult<Aw.Kernel.Result<bool>>(item == known);
+        public ValueTask<Kernel.Result<bool>> Exists(ItemId item, CancellationToken cancellationToken) => ValueTask.FromResult<Kernel.Result<bool>>(item == known);
     }
 }
