@@ -65,19 +65,50 @@ public sealed class ShellLinearTests
     }, Token);
 
     [Fact]
-    public Task C_opens_the_create_form_on_the_Sindri_view_and_does_nothing_yet_on_the_Linear_view() => UiThread.Run(async () =>
+    public Task C_opens_the_create_form_on_the_Sindri_view_and_New_issue_on_the_Linear_view() => UiThread.Run(async () =>
     {
         var shell = await Shell();
         shell.GoTo(PageId.Work);
 
         shell.Linear.Choose(linear: true);
         var onLinear = shell.Press("C");
-        var openOnLinear = shell.Create.IsOpen;
+        var onLinearOpen = (shell.Create.IsOpen, shell.NewIssue.IsOpen);
+        shell.NewIssue.Close();
         shell.Linear.Choose(linear: false);
         var onSindri = shell.Press("C");
 
-        Assert.Equal((true, false, true, true), (onLinear, openOnLinear, onSindri, shell.Create.IsOpen));
+        Assert.Equal((true, (false, true), true, true, false), (onLinear, onLinearOpen, onSindri, shell.Create.IsOpen, shell.NewIssue.IsOpen));
     }, Token);
+
+    [Fact]
+    public Task A_created_Linear_issue_is_selected_once_the_list_shows_it() => UiThread.Run(async () =>
+    {
+        var shell = await LinearShell();
+        _ = shell.Press("C");
+        await Until(() => shell.NewIssue.TeamChoices.Count == 2);
+        shell.NewIssue.Team = shell.NewIssue.TeamChoices[0];
+        await shell.NewIssue.Reading;
+        shell.NewIssue.Title = "Document the retry budget";
+        _server.LinearIssuesFor = query => string.Equals(query.Group, "teams", StringComparison.Ordinal)
+            ? RouteAnswer.Api("linear-issues", "teams-page2")
+            : WithMineRow("ENG-58");
+
+        await shell.NewIssue.Submit(Token);
+        await Until(() => string.Equals(shell.Linear.SelectedKey, "ENG-58", StringComparison.Ordinal));
+
+        Assert.Equal((false, "ENG-58"), (shell.NewIssue.IsOpen, shell.Linear.SelectedKey));
+    }, Token);
+
+    // The "mine" golden with one more row, as the list reads after an issue was created.
+    private static RouteAnswer WithMineRow(string key)
+    {
+        var body = System.Text.Json.Nodes.JsonNode.Parse(GoldenFiles.Api("linear-issues", "mine"))!.AsObject();
+        var rows = body["rows"]!.AsArray();
+        var added = rows[0]!.DeepClone();
+        added["key"] = key;
+        rows.Insert(0, added);
+        return new RouteAnswer(System.Net.HttpStatusCode.OK, body.ToJsonString());
+    }
 
     [Fact]
     public Task Going_to_Work_on_the_Linear_view_reads_the_list_and_leaving_stops_reading() => UiThread.Run(async () =>
@@ -107,10 +138,8 @@ public sealed class ShellLinearTests
         Assert.True(shell.IsSettings);
     }, Token);
 
-    [Theory]
-    [InlineData("Y")]
-    [InlineData("C")]
-    public Task Y_and_C_do_nothing_on_the_Linear_view(string key) => UiThread.Run(async () =>
+    [Fact]
+    public Task Y_does_nothing_on_the_Linear_view() => UiThread.Run(async () =>
     {
         _server.QueueView = WithCopyableRow();
         var shell = await Shell();
@@ -119,7 +148,7 @@ public sealed class ShellLinearTests
         shell.SelectQueueRow(QueueRow);
         shell.Linear.Choose(linear: true);
 
-        var handled = shell.Press(key);
+        var handled = shell.Press("Y");
 
         Assert.Equal((true, QueueRow, false, false, null), (handled, shell.Queue.SelectedId, shell.Queue.IsFiltering, shell.IsSheetOpen, _clipboard.Text));
     }, Token);
