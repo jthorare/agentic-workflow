@@ -89,7 +89,7 @@ internal sealed class SqliteLinearLookupStore(ContextDatabase database) : ILinea
         await using (read.Value.ConfigureAwait(false))
         {
             var keys = await SqliteQueries.List(read.Value, new SqlStatement(LinearLookupSql.Workspace), KeyMapper, cancellationToken).ConfigureAwait(false);
-            return keys.IsError ? ContextDatabase.Translate(keys.Error) : Results.Success<string?>(keys.Value.Count == 0 ? null : keys.Value[0]);
+            return keys.IsError ? ContextDatabase.Translate(keys.Error) : Results.Success(keys.Value.Count == 0 ? null : keys.Value[0]);
         }
     }
 

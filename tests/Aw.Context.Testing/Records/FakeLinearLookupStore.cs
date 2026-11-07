@@ -54,7 +54,7 @@ public sealed class FakeLinearLookupStore : ILinearLookupStore
     {
         lock (_gate)
         {
-            return ValueTask.FromResult(Results.Success<string?>(_urlKey));
+            return ValueTask.FromResult(Results.Success(_urlKey));
         }
     }
 

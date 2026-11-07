@@ -36,7 +36,7 @@ internal sealed class LinearLookupsReader(LinearClient client, TimeSpan deadline
     public async ValueTask<Result<string?>> ReadUrlKey(CancellationToken cancellationToken)
     {
         var data = await client.Query<LinearOrganizationData>("Organization", [], deadline, cancellationToken).ConfigureAwait(false);
-        return data.IsError ? data.Error : Results.Success<string?>(string.IsNullOrWhiteSpace(data.Value.Organization.UrlKey) ? null : data.Value.Organization.UrlKey);
+        return data.IsError ? data.Error : Results.Success(string.IsNullOrWhiteSpace(data.Value.Organization.UrlKey) ? null : data.Value.Organization.UrlKey);
     }
 
     // A team whose id isn't usable is left out; so is any row that has none (Linear sends uuids, so neither happens against Linear itself)
