@@ -1,6 +1,6 @@
 using Aw.Kernel;
 
-namespace Aw.Sindri.Features.ListLinearIssues;
+namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>The items linked to Linear issues and their pull requests.</summary>
 internal interface ILinearItemLinks

@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Features.ListLinearIssues;
+namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>The Sindri item working an issue.</summary>
 /// <param name="Item">The item's id.</param>

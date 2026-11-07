@@ -17,7 +17,6 @@ internal static class LinearScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("linear-issue", "full"), ("linear-issue", "removed"), ("linear-issue", "not-found"), ("linear-issue", "session"), ("linear-issue", "session-outside"),
         ("linear-lookups", "eng"), ("linear-lookups", "not-synced"), ("linear-lookups", "session-refused"),
         ("linear-since", "three"), ("linear-since", "empty"), ("linear-since", "session-refused"),
         ("linear-issue", "writable"), ("linear-issue", "no-write-key"), ("linear-issue", "team-not-picked"), ("linear-issue", "session-write-refused"),
@@ -57,9 +56,6 @@ internal static class LinearScenarios
 
         var path = (slug, scenario) switch
         {
-            ("linear-issue", "removed") => "/sindri/linear/issues/ENG-9",
-            ("linear-issue", "not-found") => "/sindri/linear/issues/ENG-99",
-            ("linear-issue", "session-outside") => "/sindri/linear/issues/OPS-40",
             ("linear-issue", _) => "/sindri/linear/issues/ENG-12",
             ("linear-lookups", "not-synced") => "/sindri/linear/lookups/OPS",
             ("linear-lookups", _) => "/sindri/linear/lookups/ENG",

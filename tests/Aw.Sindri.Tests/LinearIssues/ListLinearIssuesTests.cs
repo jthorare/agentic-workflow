@@ -1,7 +1,7 @@
 using System.Globalization;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
-using Aw.Sindri.Features.ListLinearIssues;
+using Aw.Sindri.Features.LinearIssues;
 using Aw.Sindri.Testing;
 using static Aw.Sindri.Tests.LinearIssues.LinearIssueRows;
 

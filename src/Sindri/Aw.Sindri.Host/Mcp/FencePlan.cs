@@ -67,4 +67,7 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
         new("rows[].state.name", Mark: false), new("rows[].assignee.name", Mark: false), new("rows[].project.name", Mark: false),
         new("rows[].cycle.name", Mark: false), new("rows[].labels[].name", Mark: false),
     ]);
+
+    /// <summary>GET /sindri/linear/issues/{key} for a session (red: not planned yet).</summary>
+    internal static FencePlan LinearIssue { get; } = new("sindri:linear", []);
 }

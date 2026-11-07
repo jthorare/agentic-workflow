@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Features.ListLinearIssues;
+namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>A Linear user as the list names one: the viewer or an assignee. The name is Linear text: fenced for a session.</summary>
 /// <param name="Id">The user's Linear id.</param>

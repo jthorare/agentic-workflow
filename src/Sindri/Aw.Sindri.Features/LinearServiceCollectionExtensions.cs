@@ -1,6 +1,6 @@
 using Aw.Kernel.Services;
 using Aw.Sindri.Features.Commands;
-using Aw.Sindri.Features.ListLinearIssues;
+using Aw.Sindri.Features.LinearIssues;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Features;
@@ -16,6 +16,8 @@ internal static class LinearServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         return services
             .AddScoped<IValidator<ListLinearIssuesRequest>, AcceptAllValidator<ListLinearIssuesRequest>>().AddQuery<ListLinearIssuesRequest, ListLinearIssuesResponse, ListLinearIssuesService>()
+            .AddScoped<IValidator<GetLinearIssueRequest>, AcceptAllValidator<GetLinearIssueRequest>>().AddQuery<GetLinearIssueRequest, GetLinearIssueResponse, GetLinearIssueService>()
+            .AddScoped<ILinearWriteGate, ContextLinearWriteGate>()
             .AddScoped<ILinearIssueFacts, ContextLinearIssueFacts>()
             .AddScoped<ILinearItemLinks, ViewLinearItemLinks>();
     }

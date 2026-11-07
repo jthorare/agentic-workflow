@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Aw.Kernel;
-using Aw.Sindri.Features.ListLinearIssues;
+using Aw.Sindri.Features.LinearIssues;
 
 namespace Aw.Sindri.Testing;
 
@@ -15,6 +15,7 @@ internal sealed class FakeLinearIssueFacts : ILinearIssueFacts
     private Result<LinearSourceFacts> _source = new LinearSourceFacts(Connected: true, Viewer: null, new LinearFeedView("ok", LastSyncedAt: null, Code: null, Reread: null));
     private IReadOnlyList<LinearIssueRowView> _issues = [];
     private IReadOnlyList<string>? _visibleTeams;
+    private IReadOnlyList<LinearIssueDetailFacts> _details = [];
     private Error? _failing;
     private int _pageSize = int.MaxValue;
 
@@ -36,6 +37,15 @@ internal sealed class FakeLinearIssueFacts : ILinearIssueFacts
     public FakeLinearIssueFacts WithIssues(params LinearIssueRowView[] issues)
     {
         _issues = issues;
+        return this;
+    }
+
+    /// <summary>Stores <paramref name="details"/> for the by-key read.</summary>
+    /// <param name="details">The stored issues with their descriptions and comments.</param>
+    /// <returns>The same instance.</returns>
+    public FakeLinearIssueFacts WithDetails(params LinearIssueDetailFacts[] details)
+    {
+        _details = details;
         return this;
     }
 
@@ -88,6 +98,18 @@ internal sealed class FakeLinearIssueFacts : ILinearIssueFacts
             .ToList();
         var size = Math.Min(filter.Limit, _pageSize);
         return ValueTask.FromResult<Result<LinearIssueFactsPage>>(new LinearIssueFactsPage([.. ordered.Take(size)], ordered.Count > size));
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<LinearIssueDetailFacts?>> Detail(string key, CancellationToken cancellationToken)
+    {
+        if (_failing is { } error)
+        {
+            return ValueTask.FromResult<Result<LinearIssueDetailFacts?>>(error);
+        }
+
+        var found = _details.FirstOrDefault(d => string.Equals(d.Row.Key, key, StringComparison.OrdinalIgnoreCase) && Visible(d.Row));
+        return ValueTask.FromResult(Results.Success<LinearIssueDetailFacts?>(found));
     }
 
     private bool Visible(LinearIssueRowView issue) => _visibleTeams is null || _visibleTeams.Contains(issue.Team.Key, StringComparer.Ordinal);

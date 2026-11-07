@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Aw.Kernel.Json;
-using Aw.Sindri.Features.ListLinearIssues;
+using Aw.Sindri.Features.LinearIssues;
 using Aw.Sindri.Host.Endpoints;
 
 namespace Aw.Sindri.Host.Mcp;

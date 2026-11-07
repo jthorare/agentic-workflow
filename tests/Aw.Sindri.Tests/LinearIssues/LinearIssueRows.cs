@@ -1,6 +1,6 @@
 using System.Globalization;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Features.ListLinearIssues;
+using Aw.Sindri.Features.LinearIssues;
 
 namespace Aw.Sindri.Tests.LinearIssues;
 

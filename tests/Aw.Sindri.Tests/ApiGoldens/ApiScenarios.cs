@@ -73,7 +73,7 @@ internal static class ApiScenarios
             : ProjectScenarios.Handles(slug, scenario)
             ? await ProjectScenarios.Start(slug, scenario, ct)
             : LinearIssueScenarios.Handles(slug, scenario)
-            ? await LinearIssueScenarios.Start(scenario, ct)
+            ? await LinearIssueScenarios.Start(slug, scenario, ct)
             : SandboxScenarios.Handles(slug, scenario)
             ? await SandboxScenarios.Start(slug, scenario, ct)
             : LaunchScenarios.Handles(slug, scenario)
@@ -169,7 +169,7 @@ internal static class ApiScenarios
         : WrapSessionScenarios.Handles(slug, scenario) ? () => WrapSessionScenarios.Body(host, slug, scenario, ct)
         : SandboxScenarios.Handles(slug, scenario) ? () => SandboxScenarios.Body(host, slug, scenario, ct)
         : ProjectScenarios.Handles(slug, scenario) ? () => ProjectScenarios.Body(host, slug, scenario, ct)
-        : LinearIssueScenarios.Handles(slug, scenario) ? () => LinearIssueScenarios.Body(host, scenario, ct)
+        : LinearIssueScenarios.Handles(slug, scenario) ? () => LinearIssueScenarios.Body(host, slug, scenario, ct)
         : ReviewBody(host, slug, scenario, ct);
 
     /// <summary>The body of a Reviews-group scenario (the pages, the login save, the library), else null.</summary>

@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Features.ListLinearIssues;
+namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>The pull request an issue's run opened.</summary>
 /// <param name="Number">The PR number.</param>

@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Features.ListLinearIssues;
+namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>The Linear issue feed's health, shown above the list.</summary>
 /// <param name="State">ok, failing or rereading.</param>

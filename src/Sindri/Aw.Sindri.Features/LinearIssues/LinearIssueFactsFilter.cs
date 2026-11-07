@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Features.ListLinearIssues;
+namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>What one read of the stored issues narrows by; every field narrows, and none set lists every issue the caller may see.</summary>
 /// <param name="Team">A team key, or null.</param>

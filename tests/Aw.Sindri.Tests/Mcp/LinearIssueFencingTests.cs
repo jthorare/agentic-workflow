@@ -44,4 +44,23 @@ public sealed class LinearIssueFencingTests
         Assert.Equal(JsonValueKind.Null, fenced.GetProperty("viewer").ValueKind);
         Assert.Equal(JsonValueKind.Null, fenced.GetProperty("rows")[0].GetProperty("project").ValueKind);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void One_issue_fences_the_description_the_comment_bodies_and_the_authors_too()
+    {
+        var comment = $$$"""{"id":"c1","author":{"id":"u2","name":"{{{Attack}}}"},"createdAt":"2026-01-01T00:00:00Z","body":"{{{Attack}}}","sindri":false}""";
+        using var document = JsonDocument.Parse($$$"""{"key":"ENG-1","title":"{{{Attack}}}","state":{"id":"s","name":"Todo","type":"unstarted"},"viewer":null,"description":"{{{Attack}}}","comments":[{{{comment}}}],"removed":false,"write":{"allowed":true,"code":null}}""");
+
+        var fenced = McpFencing.Apply(document.RootElement, FencePlan.LinearIssue);
+
+        Assert.StartsWith(Fence, fenced.GetProperty("title").GetString(), StringComparison.Ordinal);
+        Assert.StartsWith(Fence, fenced.GetProperty("description").GetString(), StringComparison.Ordinal);
+        Assert.Equal("untrusted", fenced.GetProperty("trust").GetString());
+        var first = fenced.GetProperty("comments")[0];
+        Assert.StartsWith(Fence, first.GetProperty("body").GetString(), StringComparison.Ordinal);
+        Assert.StartsWith(Fence, first.GetProperty("author").GetProperty("name").GetString(), StringComparison.Ordinal);
+        Assert.Equal("untrusted", first.GetProperty("author").GetProperty("trust").GetString());
+        Assert.Equal("c1", first.GetProperty("id").GetString());
+        Assert.Equal("ENG-1", fenced.GetProperty("key").GetString());
+    }
 }

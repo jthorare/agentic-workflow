@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Features.ListLinearIssues;
+namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>What Sindri holds on one issue: the item working it and that item's pull request.</summary>
 /// <param name="Link">The item, or null.</param>

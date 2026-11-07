@@ -1,6 +1,6 @@
 using Aw.Sindri.Core.Commands;
 
-namespace Aw.Sindri.Features.ListLinearIssues;
+namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>
 /// 'GET /sindri/linear/issues?group=&amp;team=&amp;project=&amp;cycle=&amp;state=&amp;assignee=&amp;priority=&amp;label=&amp;after=&amp;limit=' (Linear hub spec §3; query): one page of the Work page's Linear list.

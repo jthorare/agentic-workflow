@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Features.ListLinearIssues;
+namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>One read of the stored issues, newest first, with the names resolved and no link or PR yet.</summary>
 /// <param name="Issues">The issues.</param>

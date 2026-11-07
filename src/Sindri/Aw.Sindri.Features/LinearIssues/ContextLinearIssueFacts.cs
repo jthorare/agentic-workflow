@@ -9,7 +9,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Profile;
 
-namespace Aw.Sindri.Features.ListLinearIssues;
+namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>
 /// The issue facts over Context's IContextEngine (Linear hub spec §4.3): <c language="text">IssueList</c> under the current caller's scope, so a session sees only the teams mapped to its repo, and every name the
@@ -78,6 +78,8 @@ internal sealed class ContextLinearIssueFacts(IApprovedProfile approvals, ICalle
         var names = await Names(page.Value.Issues, owner.Value, cancellationToken).ConfigureAwait(false);
         return new LinearIssueFactsPage([.. page.Value.Issues.Select(i => Row(i, names))], page.Value.Next is not null);
     }
+
+    public ValueTask<Result<LinearIssueDetailFacts?>> Detail(string key, CancellationToken cancellationToken) => throw new NotSupportedException();
 
     private static LinearFeedView Feed(Aw.Context.Core.Sync.SourceProgress row)
     {

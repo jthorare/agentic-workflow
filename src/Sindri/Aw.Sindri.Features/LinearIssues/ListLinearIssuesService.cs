@@ -3,7 +3,7 @@ using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 
-namespace Aw.Sindri.Features.ListLinearIssues;
+namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>
 /// The Work page's Linear list (Linear hub spec §3; contract with the app, 2026-11-06). Open means a state type other than completed and canceled. <b>mine</b> reads the viewer's open issues in one go

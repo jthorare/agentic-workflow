@@ -1,6 +1,6 @@
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Commands;
-using Aw.Sindri.Features.ListLinearIssues;
+using Aw.Sindri.Features.LinearIssues;
 
 namespace Aw.Sindri.Host.Endpoints;
 

@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Features.ListLinearIssues;
+namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>Where a read of the stored issues continues: stored lists run newest first by Linear's update time, then by record key, so a read continues after one issue.</summary>
 /// <param name="UpdatedAt">That issue's update time.</param>

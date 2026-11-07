@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Features.ListLinearIssues;
+namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>What the stored Linear source says before any issue is read.</summary>
 /// <param name="Connected">Whether the profile has a Linear source.</param>

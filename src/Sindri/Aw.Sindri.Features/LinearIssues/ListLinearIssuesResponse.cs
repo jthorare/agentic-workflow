@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Features.ListLinearIssues;
+namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>One page of the Work page's Linear list (Linear hub spec §3). Not a view read: it carries no asOf.</summary>
 /// <param name="Connected">False when no Linear source is set up (the page shows Connect Linear): the rows are empty.</param>

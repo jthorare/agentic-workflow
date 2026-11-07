@@ -8,7 +8,7 @@ using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Profile;
 
-namespace Aw.Sindri.Features.ListLinearIssues;
+namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>
 /// The items and pull requests of a list's issues. An item is linked to a record in the 'items' view (its Link); its pull request is the <c language="text">pr</c> fact of the item's workflow instance, when it has one,

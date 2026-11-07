@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Aw.Kernel;
-using Aw.Sindri.Features.ListLinearIssues;
+using Aw.Sindri.Features.LinearIssues;
 
 namespace Aw.Sindri.Testing;
 

@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Features.ListLinearIssues;
+namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>One issue of the Work page's Linear list (Linear hub spec §3). Title and the names inside are Linear text: fenced for a session.</summary>
 /// <param name="Key">The issue key, 'ENG-12'.</param>

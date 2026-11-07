@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Features.ListLinearIssues;
+namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>An issue's project. The name is Linear text: fenced for a session.</summary>
 /// <param name="Id">The project's Linear id.</param>

@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Features.ListLinearIssues;
+namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>An issue's workflow state. The name is team-defined Linear text: fenced for a session.</summary>
 /// <param name="Id">The state's Linear id.</param>

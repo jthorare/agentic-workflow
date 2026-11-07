@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Features.ListLinearIssues;
+using Aw.Sindri.Features.LinearIssues;
 using Aw.Sindri.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -36,25 +36,33 @@ internal static class LinearIssueScenarios
     [
         ("linear-issues", "mine"), ("linear-issues", "teams-page2"), ("linear-issues", "filtered-empty"), ("linear-issues", "not-connected"),
         ("linear-issues", "feed-failing"), ("linear-issues", "rereading"), ("linear-issues", "session"),
+        ("linear-issue", "full"), ("linear-issue", "removed"), ("linear-issue", "not-found"), ("linear-issue", "session"), ("linear-issue", "session-outside"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
     public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario));
 
     /// <summary>Starts the scenario's host: the item profile over the scenario's stored issues, source and links.</summary>
-    public static Task<GoldenHost> Start(string scenario, CancellationToken ct) =>
+    public static Task<GoldenHost> Start(string slug, string scenario, CancellationToken ct) =>
         GoldenHost.Start(temporary: true, ct, ItemScenarios.ProfileYaml, extra: services =>
         {
-            _ = services.Replace(ServiceDescriptor.Singleton<ILinearIssueFacts>(Facts(scenario)));
+            _ = services.Replace(ServiceDescriptor.Singleton<ILinearIssueFacts>(slug == "linear-issue" ? OneFacts(scenario) : Facts(scenario)));
             _ = services.Replace(ServiceDescriptor.Singleton<ILinearItemLinks>(Links()));
+            _ = services.Replace(ServiceDescriptor.Singleton<ILinearWriteGate>(scenario.StartsWith("session", StringComparison.Ordinal) ? new FakeLinearWriteGate().Off("SND-AUTH-002") : new FakeLinearWriteGate()));
         });
 
     /// <summary>Runs the scenario against <paramref name="host"/> and returns the body to compare.</summary>
-    public static async Task<string> Body(GoldenHost host, string scenario, CancellationToken ct)
+    public static async Task<string> Body(GoldenHost host, string slug, string scenario, CancellationToken ct)
     {
         await ViewScenarios.Approve(host, ct);
         await ViewScenarios.CatchUp(host, ct);
-        var caller = scenario == "session" ? ItemScenarios.Session("demo") : ItemScenarios.Human(host);
+        var caller = scenario.StartsWith("session", StringComparison.Ordinal) ? ItemScenarios.Session("demo") : ItemScenarios.Human(host);
+        if (slug == "linear-issue")
+        {
+            var key = scenario switch { "removed" => "ENG-9", "not-found" => "ENG-99", "session-outside" => "OPS-40", _ => "ENG-12" };
+            return (await host.Http.Ask(Get("/sindri/linear/issues/" + key, caller))).Body;
+        }
+
         if (scenario == "teams-page2")
         {
             using var first = JsonDocument.Parse((await host.Http.Ask(Get(Issues + "?group=teams&limit=50", caller))).Body);
@@ -92,6 +100,23 @@ internal static class LinearIssueScenarios
             _ => facts.WithIssues([.. Stored(), .. Fillers()]),
         };
         return facts;
+    }
+
+    // 'full' and 'session' are ENG-12 with its description and two comments; 'removed' is ENG-9, moved out of the profile's teams; the session reads only ENG; ENG-99 is never stored
+    private static FakeLinearIssueFacts OneFacts(string scenario)
+    {
+        var facts = new FakeLinearIssueFacts().WithSource(new LinearSourceFacts(Connected: true, _joi, new LinearFeedView("ok", _synced, Code: null, Reread: null)));
+        var comments = new LinearCommentView[]
+        {
+            new("00000000-0000-4000-8000-0000000000f2", _sam, At(31, 23, 30), "@Joi Example the budget should reset at midnight UTC, not on restart.", Sindri: false),
+            new("00000000-0000-4000-8000-0000000000f1", _joi, At(31, 21, 0), "Started a run on this (ITM-0192a1b2c3d4e5f6a7b8c9d0e1f2a301).", Sindri: true),
+        };
+        const string Described = "The sync worker retries forever on a 500. Cap it at 5 tries per hour.\n\nSee https://example.com/runbooks/sync and the graph ![p95](https://example.com/p95.png).\nOld link: sindri://items/ITM-0192a1b2c3d4e5f6a7b8c9d0e1f2a301";
+        var removed = Retry() with { Key = "ENG-9", Record = Record(9), Url = "https://linear.app/acme/issue/ENG-9", Title = "Old onboarding checklist", Project = null, Cycle = null, Labels = [] };
+        _ = facts.VisibleTeams("ENG");
+        return scenario.StartsWith("session", StringComparison.Ordinal)
+            ? facts.WithDetails(new LinearIssueDetailFacts(Retry(), Described, Removed: false, comments), new LinearIssueDetailFacts(Rotate(), "Rotate it.", Removed: false, []))
+            : facts.VisibleTeams("ENG", "OPS").WithDetails(new LinearIssueDetailFacts(Retry(), Described, Removed: false, comments), new LinearIssueDetailFacts(removed, "Moved to the OPS team.", Removed: true, []));
     }
 
     private static IEnumerable<LinearIssueRowView> Stored() => [Retry(), Export(), Rotate(), Queue(), Flaky()];

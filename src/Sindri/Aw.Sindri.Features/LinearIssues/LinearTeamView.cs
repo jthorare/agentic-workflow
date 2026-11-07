@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Features.ListLinearIssues;
+namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>An issue's team.</summary>
 /// <param name="Id">The team's Linear id.</param>

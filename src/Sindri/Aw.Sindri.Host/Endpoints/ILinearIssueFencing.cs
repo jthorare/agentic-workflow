@@ -1,4 +1,4 @@
-using Aw.Sindri.Features.ListLinearIssues;
+using Aw.Sindri.Features.LinearIssues;
 
 namespace Aw.Sindri.Host.Endpoints;
 

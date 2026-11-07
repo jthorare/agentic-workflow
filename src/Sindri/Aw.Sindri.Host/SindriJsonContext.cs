@@ -101,7 +101,7 @@ using Aw.Sindri.Features.ListDecisions;
 using Aw.Sindri.Features.ListDenials;
 using Aw.Sindri.Features.ListItems;
 using Aw.Sindri.Features.ListJobs;
-using Aw.Sindri.Features.ListLinearIssues;
+using Aw.Sindri.Features.LinearIssues;
 using Aw.Sindri.Features.ListLinearProjects;
 using Aw.Sindri.Features.ListOutbox;
 using Aw.Sindri.Features.ListProjects;

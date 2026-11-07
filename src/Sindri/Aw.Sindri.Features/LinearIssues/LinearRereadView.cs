@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Features.ListLinearIssues;
+namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>How far the feed's full re-read has got.</summary>
 /// <param name="Done">Issues read so far.</param>
