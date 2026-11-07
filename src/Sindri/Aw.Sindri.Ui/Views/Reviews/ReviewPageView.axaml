@@ -148,11 +148,11 @@
         </StackPanel>
 
         <StackPanel x:Name="ReviewDiffPane" Spacing="{StaticResource Space.XS}" DataContext="{Binding Diff}" x:DataType="rvm:ReviewDiffViewModel">
-          <Grid ColumnDefinitions="Auto,*,Auto">
-            <TextBlock Classes="body-strong" Text="{Binding TitleText}" />
-            <TextBlock Grid.Column="1" Classes="caption subtle" Margin="8,0" Text="{Binding CountText}" />
-            <TextBlock Grid.Column="2" Classes="caption subtle" Text="{Binding KeysText}" />
-          </Grid>
+          <WrapPanel x:Name="ReviewDiffHeader" Orientation="Horizontal">
+            <TextBlock Classes="body-strong" Margin="0,0,8,0" Text="{Binding TitleText}" />
+            <TextBlock Classes="caption subtle" Margin="0,0,8,0" Text="{Binding CountText}" />
+            <TextBlock Classes="caption subtle" Text="{Binding KeysText}" TextWrapping="Wrap" />
+          </WrapPanel>
           <TextBlock x:Name="ReviewDiffText" Classes="caption muted" Text="{Binding Text}" TextWrapping="Wrap" IsVisible="{Binding Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
           <TextBlock x:Name="ReviewDiffCapped" Classes="caption subtle" Text="{Binding CappedText}" TextWrapping="Wrap" IsVisible="{Binding CappedText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
           <ItemsControl ItemsSource="{Binding Groups}">
@@ -172,11 +172,11 @@
                               <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding Status}" Margin="8,0" />
                               <TextBlock Grid.Column="2" Classes="caption subtle" Text="{Binding Stat}" />
                             </Grid>
-                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="8,2" IsVisible="{Binding Note, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                              <TextBlock Classes="caption" Text="{Binding Note}" TextWrapping="Wrap" />
-                              <Button x:Name="ReviewDiffShow" Click="OnShowFile" IsVisible="{Binding HasShow}" Content="{Binding ShowText}" AutomationProperties.Name="{Binding ShowName}" />
-                              <Button x:Name="ReviewDiffOpenFile" Click="OnOpenFile" IsVisible="{Binding HasOpenOnGitHub}" Content="{Binding OpenText}" AutomationProperties.Name="{Binding OpenName}" />
-                            </StackPanel>
+                            <Grid ColumnDefinitions="*,Auto,Auto" Margin="8,2" IsVisible="{Binding Note, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                              <TextBlock Classes="caption" Text="{Binding Note}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                              <Button x:Name="ReviewDiffShow" Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Top" Click="OnShowFile" IsVisible="{Binding HasShow}" Content="{Binding ShowText}" AutomationProperties.Name="{Binding ShowName}" />
+                              <Button x:Name="ReviewDiffOpenFile" Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Top" Click="OnOpenFile" IsVisible="{Binding HasOpenOnGitHub}" Content="{Binding OpenText}" AutomationProperties.Name="{Binding OpenName}" />
+                            </Grid>
                             <ItemsControl ItemsSource="{Binding Hunks}">
                               <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="rvm:ReviewDiffHunkViewModel">
@@ -188,10 +188,10 @@
                                           <Border x:Name="ReviewDiffLine" Classes="diff-line" Classes.added="{Binding IsAdded}" Classes.removed="{Binding IsRemoved}" Tag="{Binding Key}" Focusable="True" BorderThickness="1" Padding="8,0"
                                                   GotFocus="OnLineFocused" AutomationProperties.Name="{Binding AutomationName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
                                             <Grid ColumnDefinitions="40,40,16,*" AutomationProperties.AccessibilityView="Raw">
-                                              <TextBlock Classes="caption mono subtle" Text="{Binding OldNumber}" />
-                                              <TextBlock Grid.Column="1" Classes="caption mono subtle" Text="{Binding NewNumber}" />
-                                              <TextBlock Grid.Column="2" Classes="caption mono" Text="{Binding Sign}" />
-                                              <TextBlock Grid.Column="3" Classes="caption mono" Text="{Binding Text}" />
+                                              <TextBlock Classes="caption mono subtle" VerticalAlignment="Top" Text="{Binding OldNumber}" />
+                                              <TextBlock Grid.Column="1" Classes="caption mono subtle" VerticalAlignment="Top" Text="{Binding NewNumber}" />
+                                              <TextBlock Grid.Column="2" Classes="caption mono" VerticalAlignment="Top" Text="{Binding Sign}" />
+                                              <TextBlock Grid.Column="3" Classes="caption mono" Text="{Binding Text}" TextWrapping="Wrap" />
                                             </Grid>
                                           </Border>
                                         </DataTemplate>
