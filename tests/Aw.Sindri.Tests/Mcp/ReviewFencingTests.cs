@@ -25,4 +25,21 @@ public sealed class ReviewFencingTests
         Assert.StartsWith("<untrusted ", root.GetProperty("root").GetString(), StringComparison.Ordinal);
         Assert.StartsWith("<untrusted ", root.GetProperty("reason").GetString(), StringComparison.Ordinal);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_library_that_reads_has_no_unreadable_member_so_the_human_form_is_unchanged()
+    {
+        var library = Aw.Sindri.Core.Reviews.ReviewLibrary.From(new Aw.Sindri.Core.Reviews.ReviewLibraryFacts(Reading: false, 41, WithErrors: 3, []));
+
+        Assert.Null(library.Unreadable);
+        Assert.DoesNotContain("unreadable", JsonSerializer.Serialize(library, new JsonSerializerOptions(JsonSerializerDefaults.Web)), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_human_form_has_no_fence_when_the_plan_is_not_applied()
+    {
+        using var document = JsonDocument.Parse($$$"""{"groups":[{"sections":[{"rows":[{"title":"{{{Attack}}}"}]}]}]}""");
+
+        Assert.Equal(Attack, document.RootElement.GetProperty("groups")[0].GetProperty("sections")[0].GetProperty("rows")[0].GetProperty("title").GetString());
+    }
 }
