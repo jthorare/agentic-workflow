@@ -114,6 +114,9 @@ internal static partial class Labels
     /// <summary>SND-LINEAR-014: no keychain.</summary>
     internal const string LinearConnNoKeychain = "No keychain to keep the write key in. Unlock your login keyring, or put the key in 1Password and set writeToken to op://… SND-LINEAR-014";
 
+    /// <summary>SND-LINEAR-014 on Remove key: the keychain entry could not be deleted, so the write key stays.</summary>
+    internal const string LinearConnRemoveKeychainFailed = "Couldn't remove the write key from your keychain. Nothing changed: Sindri can still write. Unlock your login keyring and try again.";
+
     /// <summary>SND-LINEAR-010: Linear did not answer.</summary>
     internal const string LinearConnUnreachable = "Couldn't reach Linear, so nothing was changed. Try again.";
 

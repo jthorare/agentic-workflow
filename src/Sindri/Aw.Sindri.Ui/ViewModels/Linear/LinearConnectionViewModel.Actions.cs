@@ -129,7 +129,7 @@ internal sealed partial class LinearConnectionViewModel
 
         if (removed.IsError)
         {
-            _error = Labels.LinearConnFailed(removed.Error);
+            _error = string.Equals(removed.Error.Code, "SND-LINEAR-014", StringComparison.Ordinal) ? Labels.LinearConnRemoveKeychainFailed : Labels.LinearConnFailed(removed.Error);
             Changed();
             return;
         }

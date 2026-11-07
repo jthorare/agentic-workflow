@@ -234,6 +234,18 @@ public sealed class LinearConnectionTests
     }
 
     [Fact]
+    public async Task A_remove_the_keychain_refuses_shows_its_line_closes_the_question_and_keeps_write_connected()
+    {
+        var card = await Shown("connected");
+        card.AskRemove();
+        _server.LinearDisconnectWriteAnswer = RouteAnswer.Problem(HttpStatusCode.UnprocessableEntity, "SND-LINEAR-014", "No keychain to delete the write key from.");
+
+        await card.RemoveWrite(Token);
+
+        Assert.Equal((Labels.LinearConnRemoveKeychainFailed, false, true), (card.ErrorText, card.IsConfirmingRemove, card.ShowWriteSet));
+    }
+
+    [Fact]
     public async Task Replace_key_brings_the_paste_box_back_for_each_key()
     {
         var card = await Shown("connected");
