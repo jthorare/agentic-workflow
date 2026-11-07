@@ -217,6 +217,7 @@ internal sealed partial class LinearWorkViewModel : ObservableObject, IDisposabl
         else if (!shown)
         {
             _reads++;   // a read on its way is not wanted
+            _selectWhenShown = null;
             _sinceReads++;
             _shown?.Cancel();
         }
