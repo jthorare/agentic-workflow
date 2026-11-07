@@ -10,11 +10,13 @@ namespace Aw.Sindri.Features.LinearConnection;
 /// <param name="approval">Approves the profile when the removal is the only waiting change.</param>
 /// <param name="live">The live profile, for its hash.</param>
 /// <param name="callers">The current caller.</param>
-internal sealed class RemoveLinearWriteKeyService(ILinearConnectionStore store, ILinearConnectionApproval approval, IProfileSource live, ICallerContextAccessor callers)
+/// <param name="log">Keeps the result and time of the last check.</param>
+internal sealed class RemoveLinearWriteKeyService(ILinearConnectionStore store, ILinearConnectionApproval approval, IProfileSource live, ICallerContextAccessor callers, ILinearCheckStore log)
     : IService<RemoveLinearWriteKeyRequest, RemoveLinearWriteKeyResponse>
 {
     public async ValueTask<Result<RemoveLinearWriteKeyResponse>> Handle(RemoveLinearWriteKeyRequest request, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(log);
         if (!LinearConnectionRules.IsOwner(callers))
         {
             return LinearConnectionRules.Refused(LinearConnectionRules.ChangeRefusal);

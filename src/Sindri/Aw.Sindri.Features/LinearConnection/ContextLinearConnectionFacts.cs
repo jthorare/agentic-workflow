@@ -18,14 +18,15 @@ namespace Aw.Sindri.Features.LinearConnection;
 /// <param name="writes">Context's Linear writes, for the write key's status.</param>
 /// <param name="secrets">Resolves the read key's pointer.</param>
 /// <param name="side">The stored teams.</param>
-/// <param name="clock">The clock.</param>
-internal sealed class ContextLinearConnectionFacts(IProfileSource live, IApprovedProfile approvals, IContextEngine engine, IContextLinearWrites writes, ISecretPointers secrets, ILinearSideFacts side, TimeProvider clock)
+/// <param name="log">The last save-time check of each key.</param>
+internal sealed class ContextLinearConnectionFacts(IProfileSource live, IApprovedProfile approvals, IContextEngine engine, IContextLinearWrites writes, ISecretPointers secrets, ILinearSideFacts side, ILinearCheckStore log)
     : ILinearConnectionFacts
 {
     private const string Linear = "context.sources.linear";
 
     public async ValueTask<Result<LinearConnectionView>> Read(CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(log);
         var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
         var latest = await approvals.Latest(cancellationToken).ConfigureAwait(false);
         if (loaded.IsError || latest.IsError)
@@ -48,7 +49,7 @@ internal sealed class ContextLinearConnectionFacts(IProfileSource live, IApprove
             return status.Error;
         }
 
-        var now = clock.GetUtcNow();
+        var now = TimeProvider.System.GetUtcNow();
         return new LinearConnectionView(
             Stamp(ReadState(settings.Value), now),
             Stamp(WriteState(status.Value), now),

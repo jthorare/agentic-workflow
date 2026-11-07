@@ -21,7 +21,7 @@ public sealed class SaveLinearConnectionServiceTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private SaveLinearConnectionService Service() => new(_checks, _store, _approval, _profiles, _slice.Callers);
+    private SaveLinearConnectionService Service() => new(_checks, _store, _approval, _profiles, _slice.Callers, new FakeLinearCheckStore(), TimeProvider.System);
 
     private IDisposable Owner() => _slice.Callers.Enter(A.Caller().Human().Build());
 
