@@ -11,7 +11,7 @@ namespace Aw.Context.Core.Engine;
 /// </summary>
 internal static partial class SourcesReader
 {
-    private static readonly string[] _sources = ["linear", "github", "slack"];
+    private static readonly string[] _sources = ["linear", "github", "slack", "library"];
     private static readonly string[] _linear = ["teams", "url", "token"];
     private static readonly string[] _github = ["repos", "host", "allowPrivateHost", "token"];
     private static readonly string[] _slack = ["channels", "retainDays", "token", "workspace"];
@@ -28,18 +28,18 @@ internal static partial class SourcesReader
 
         if (sources.ValueKind != JsonValueKind.Object)
         {
-            return SettingsReader.Invalid("context.sources", "must be a map of sources (linear, github, slack)");
+            return SettingsReader.Invalid("context.sources", "must be a map of sources (linear, github, slack, library)");
         }
 
         return Unknown(sources, _sources) is { } name
-            ? SettingsReader.Invalid("context.sources." + name, "is not a source this build knows (linear, github, slack)")
-            : Entry(sources, "linear", _linear) ?? Entry(sources, "github", _github) ?? Entry(sources, "slack", _slack) ?? SlackChannelShape(sources);
+            ? SettingsReader.Invalid("context.sources." + name, "is not a source this build knows (linear, github, slack, library)")
+            : Entry(sources, "linear", _linear) ?? Entry(sources, "github", _github) ?? Entry(sources, "slack", _slack) ?? SlackChannelShape(sources) ?? LibraryRules.Shape(sources);
     }
 
     /// <summary>The checked Linear settings and teams of a well-shaped 'sources' map.</summary>
     /// <param name="section">The section as read, or null.</param>
     /// <returns>The values, or SND-CONTEXT-001 or 002 naming the key path.</returns>
-    internal static Result<(LinearSettings? Linear, IReadOnlyList<string> Teams, GitHubSource? GitHub, SlackSource? Slack)> Check(SourcesSection? section)
+    internal static Result<CheckedSources> Check(SourcesSection? section)
     {
         var linear = section?.Linear;
         var teams = linear?.Teams ?? [];
@@ -51,12 +51,14 @@ internal static partial class SourcesReader
         var native = NativeLinear(linear, teams);
         var github = IndexRules.GitHub(section?.Github);
         var slack = IndexRules.Slack(section?.Slack);
-        return (native, github, slack) switch
+        var library = LibraryRules.Library(section?.Library);
+        return (native, github, slack, library) switch
         {
-            ({ IsError: true }, _, _) => native.Error,
-            (_, { IsError: true }, _) => github.Error,
-            (_, _, { IsError: true }) => slack.Error,
-            _ => (native.Value, teams, github.Value, slack.Value),
+            ({ IsError: true }, _, _, _) => native.Error,
+            (_, { IsError: true }, _, _) => github.Error,
+            (_, _, { IsError: true }, _) => slack.Error,
+            (_, _, _, { IsError: true }) => library.Error,
+            _ => new CheckedSources(native.Value, teams, github.Value, slack.Value, library.Value),
         };
     }
 

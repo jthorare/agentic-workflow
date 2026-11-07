@@ -28,9 +28,6 @@ public static class RecordBatches
     /// <summary>What a stored Linear comment says when the scrubber withheld its text.</summary>
     public const string WithheldComment = "[withheld by the scrubber]";
 
-    /// <summary>The id of the library record feed (spec 2026-11-04 §5.2), whose doc records are itemized like the repo-docs ones.</summary>
-    public const string LibrarySource = "library";
-
     /// <summary>Builds the batch for one page.</summary>
     /// <param name="source">The source the page came from.</param>
     /// <param name="page">The page; its cursor becomes the position.</param>
@@ -79,7 +76,7 @@ public static class RecordBatches
 
     // why: only doc records of the two doc feeds are itemized (spec 2026-11-04 §5.3); the library feed does not exist yet, its id is matched here so it works the day it lands
     private static bool Itemized(SourceId source, RecordKind kind) =>
-        kind == RecordKind.Doc && (source == RepoDocs.Id || string.Equals(source.Value, LibrarySource, StringComparison.Ordinal));
+        kind == RecordKind.Doc && (source == RepoDocs.Id || source == LibrarySource.Id);
 
     // The design-doc library's rows (spec 2026-11-04 §4.4, §5.3). An itemized doc record always sends its parse (null when it is no design doc, so rows it had go); a PR always sends its claims.
     private static SideRows? Side(SourceId source, RecordItem item, string cleanText, bool blocked, Scrubbers scrubbers)
