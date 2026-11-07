@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Workflow.Blocks;
+using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Ids;
 using Microsoft.Extensions.Logging;
@@ -18,15 +19,18 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="times">The profile's 'workflow:' times (S1-D11): 'workflow.deskTimeout' and 'workflow.eventHold'.</param>
 /// <param name="blocks">Runs a block-runtime Step (DT-J2).</param>
 /// <param name="agents">Which Steps run on an agent session (engine P8).</param>
+/// <param name="trials">Lays a trial's skills folder over the catalog (skill flows spec §7).</param>
 /// <param name="logger">The log the open desk task is recorded in.</param>
-internal sealed partial class RunStepActivities(IApprovedRecipes approvals, BlockCatalog catalog, ProfileWorkflowTimes times, BlockStepRunner blocks, AgentStepSelection agents, ILogger<RunStepActivities> logger)
+internal sealed partial class RunStepActivities(IApprovedRecipes approvals, BlockCatalog catalog, ProfileWorkflowTimes times, BlockStepRunner blocks, AgentStepSelection agents, TrialBlocks trials, ILogger<RunStepActivities> logger)
 {
     /// <summary>Reads the approved recipe and the descriptors of its blocks.</summary>
     /// <param name="recipe">The recipe the instance is pinned to.</param>
+    /// <param name="folder">A skills-folder trial's stored '--skills' folder fact, whose blocks are laid over serve's; null for any other instance.</param>
     /// <returns>The loaded recipe.</returns>
     [Activity("LoadRecipe")]
-    public async Task<LoadedRecipe> LoadRecipeAsync(RecipeVersion recipe)
+    public async Task<LoadedRecipe> LoadRecipeAsync(RecipeVersion recipe, FactValue? folder)
     {
+        _ = (folder, trials);   // red stub
         ArgumentNullException.ThrowIfNull(recipe);
         var cancel = ActivityExecutionContext.Current.CancellationToken;
         var found = await approvals.Find(recipe.Id, recipe.Hash, cancel).ConfigureAwait(false);

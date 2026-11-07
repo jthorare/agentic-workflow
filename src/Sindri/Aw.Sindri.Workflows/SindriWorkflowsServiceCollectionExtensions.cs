@@ -82,7 +82,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
 
     /// <summary>The activities the interpreter runs (RunStep, RecordEvent, ReadItemRepo, the effect activities, EvaluateGates) and the Step, effect and gate dispatchers they run blocks through.</summary>
     private static IServiceCollection AddInterpreterActivities(this IServiceCollection services) => services
-        .AddSingleton<RunStepActivities>()
+        .AddSingleton<RunStepActivities>().AddSingleton<TrialBlocks>()
         .AddSingleton<RecordEventActivities>()
         .AddScoped<ScopingApprovals>()                             // BS-1b: the scoping.approved row after step.scope.freeze reports frozen
         .AddSingleton<FactReadActivities>()
