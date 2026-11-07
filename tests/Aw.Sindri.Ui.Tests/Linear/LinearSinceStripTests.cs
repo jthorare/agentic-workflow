@@ -14,13 +14,15 @@ public sealed class LinearSinceStripTests
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     [Fact]
+    // Sindri finds assigned and state changes by comparing what each sync stored, so it can't say who made them (actor null);
+    // only a mention names its author.
     public async Task The_strip_names_its_region_by_the_count_and_says_each_change_in_words()
     {
         var work = await _f.Shown(Token);
 
         Assert.Equal((true, "Since you last looked, 3 items"), (work.ShowsStrip, work.StripName));
         Assert.Equal(
-            ["ENG-31 assigned to you by Sam Lee", "Sam Lee mentioned you on ENG-12", "Sam Lee moved ENG-12 from Todo to In Progress"],
+            ["ENG-31 assigned to you", "Sam Lee mentioned you on ENG-12", "ENG-12 moved from Todo to In Progress"],
             work.StripRows.Select(r => r.Text),
             StringComparer.Ordinal);
     }
