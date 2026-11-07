@@ -170,11 +170,18 @@ internal sealed class ContextLinearIssueFacts(LinearScopes scopes, IContextEngin
             Assignee(f, team),
             f.ProjectId is { } projectId ? new LinearNamedView(projectId.Value, names.Projects.GetValueOrDefault(ProjectPrefix + projectId.Value, projectId.Value)) : null,
             Cycle(f, team),
-            [.. f.LabelIds.Select(l => new LinearLabelView(l.Value, team?.Labels.FirstOrDefault(x => x.Id == l)?.Name ?? l.Value, Color: null))],
+            Labels(f, team),
             f.UpdatedAt,
             Link: null,
             Pr: null);
     }
+
+    private static List<LinearLabelView> Labels(LinearIssueFields f, LinearTeamLookups? team) =>
+        [.. f.LabelIds.Select(id =>
+        {
+            var label = team?.Labels.FirstOrDefault(x => x.Id == id);
+            return new LinearLabelView(id.Value, label?.Name ?? id.Value, label?.Color);
+        })];
 
     private static LinearStateView State(LinearIssueRow issue, LinearTeamLookups? team)
     {

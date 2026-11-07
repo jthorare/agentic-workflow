@@ -15,8 +15,8 @@ internal static class LinearReadScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("linear-lookups", "session-refused"),
-        ("linear-since", "empty"), ("linear-since", "session-refused"),
+        ("linear-lookups", "eng"), ("linear-lookups", "not-synced"), ("linear-lookups", "session-refused"),
+        ("linear-since", "three"), ("linear-since", "empty"), ("linear-since", "session-refused"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -33,6 +33,7 @@ internal static class LinearReadScenarios
         var caller = scenario == "session-refused" ? ItemScenarios.Session("demo") : ItemScenarios.Human(host);
         var path = (slug, scenario) switch
         {
+            ("linear-lookups", "not-synced") => "/sindri/linear/lookups/OPS",
             ("linear-lookups", _) => "/sindri/linear/lookups/ENG",
             ("linear-since", "empty") => "/sindri/linear/since?after=lin_000000000000003f",
             _ => "/sindri/linear/since",
@@ -46,6 +47,16 @@ internal static class LinearReadScenarios
     /// </summary>
     internal static FakeLinearSideFacts Facts(string slug, string scenario)
     {
+        if ((slug, scenario) is ("linear-lookups", "eng"))
+        {
+            return new FakeLinearSideFacts().WithTeam(Eng());
+        }
+
+        if ((slug, scenario) is ("linear-lookups", "not-synced"))
+        {
+            return new FakeLinearSideFacts().WithTeam(new LinearLookupsResponse(new LinearTeamRef(Uuid: null, "OPS", Name: null), SyncedAt: null, [], [], [], []));
+        }
+
         var sam = new LinearPerson("00000000-0000-4000-8000-0000000000a2", "Sam Lee");
         return (slug, scenario) is ("linear-since", "three")
             ? new FakeLinearSideFacts().WithItems(
@@ -54,6 +65,28 @@ internal static class LinearReadScenarios
                 new LinearSinceItem("state", "ENG-12", "Retry budget for the sync worker", Actor: null, At(23, 40), From: "Todo", To: "In Progress"))
             : new FakeLinearSideFacts();
     }
+
+    // the golden linear-lookups/eng: ENG after a lookups tick at 23:58, with a member who left and two cycles
+    private static LinearLookupsResponse Eng() => new(
+        new LinearTeamRef("00000000-0000-4000-8000-0000000000e1", "ENG", "Engineering"),
+        At(23, 58),
+        [
+            new LinearStateOption("00000000-0000-4000-8000-000000000054", "Backlog", "backlog", 0),
+            new LinearStateOption("00000000-0000-4000-8000-000000000051", "Todo", "unstarted", 1),
+            new LinearStateOption("00000000-0000-4000-8000-000000000052", "In Progress", "started", 2),
+            new LinearStateOption("00000000-0000-4000-8000-000000000053", "In Review", "started", 3),
+            new LinearStateOption("00000000-0000-4000-8000-000000000055", "Done", "completed", 4),
+        ],
+        [
+            new LinearMemberOption("00000000-0000-4000-8000-0000000000a1", "Joi Example", Active: true),
+            new LinearMemberOption("00000000-0000-4000-8000-0000000000a2", "Sam Lee", Active: true),
+            new LinearMemberOption("00000000-0000-4000-8000-0000000000a3", "Former Member", Active: false),
+        ],
+        [new LinearLabelOption("00000000-0000-4000-8000-0000000000d1", "bug", "#eb5757"), new LinearLabelOption("00000000-0000-4000-8000-0000000000d2", "api", "#5e6ad2")],
+        [
+            new LinearCycleOption("00000000-0000-4000-8000-0000000000c1", 14, "Cycle 14", new DateTimeOffset(2025, 12, 29, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 1, 12, 0, 0, 0, TimeSpan.Zero), Current: true),
+            new LinearCycleOption("00000000-0000-4000-8000-0000000000c2", 15, "Cycle 15", new DateTimeOffset(2026, 1, 12, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 1, 26, 0, 0, 0, TimeSpan.Zero), Current: false),
+        ]);
 
     private static DateTimeOffset At(int hour, int minute) => new(2025, 12, 31, hour, minute, 0, TimeSpan.Zero);
 }

@@ -706,6 +706,8 @@ There is no decision, desk, protected, job or step-report tool, and no `sindri_c
 | `SND-LEASE-003` | A write carried a stale epoch |
 | `SND-LIB-001` | A bad `context.sources.library` key (the message names the key path and the allowed values), including a root at `/`, the home folder, or (for a vault) a folder holding `$AW_SINDRI_HOME`, or a root inside another |
 | `SND-LIB-404` | No design doc the caller may read has that id: "No design doc '<id>'; `sindri library list` names them" (`GET /sindri/library/{doc}`, 404; PR review page spec §9) |
+| `SND-LINEAR-003` | `GET /sindri/linear/lookups/{team}` for a team Context holds nothing for while the profile picks teams (403): "Sindri only reads teams you picked; OPS isn't one (fix: Settings, Connections, Linear, add OPS)" |
+| `SND-LINEAR-404` | The same read when the profile picks no Linear team (404): "Sindri has nothing stored for OPS yet" |
 | `SND-PROFILE-001` | No profile file, or it can't be read |
 | `SND-PROFILE-002` | The profile doesn't parse or doesn't match the schema (file, key path, expected type, fix) |
 | `SND-MODEL-001` | A `workflow.agent` model key names an agent that isn't in the launcher catalog, a `pin` state that no embedded or approved recipe has, or a `models` default that isn't in its list; the message names the nearest id (`profile validate`, `profile approve`) |

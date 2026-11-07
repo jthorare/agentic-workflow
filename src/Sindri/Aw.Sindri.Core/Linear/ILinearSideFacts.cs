@@ -11,8 +11,13 @@ public interface ILinearSideFacts
     /// <summary>Reads a team's pickers.</summary>
     /// <param name="team">The team's key.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>The lists; a team with none stored answers empty lists and a null sync time. Context's error otherwise (SND-CONTEXT-020 for a session).</returns>
-    public ValueTask<Result<LinearLookupsResponse>> Lookups(string team, CancellationToken cancellationToken);
+    /// <returns>The lists; a picked team never synced answers null ids, name and sync time and empty lists. Null when Context holds nothing for the team in this scope (it isn't a picked team). Context's error otherwise (SND-CONTEXT-020 for a session).</returns>
+    public ValueTask<Result<LinearLookupsResponse?>> Lookups(string team, CancellationToken cancellationToken);
+
+    /// <summary>Reads whether the profile names any Linear team (<c language="text">context.sources.linear.teams</c>).</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>True when it does; the error when the profile can't be read.</returns>
+    public ValueTask<Result<bool>> TeamsPicked(CancellationToken cancellationToken);
 
     /// <summary>Reads what changed for the owner after an instant.</summary>
     /// <param name="after">Only changes after this instant count.</param>

@@ -46,6 +46,7 @@ public sealed class LinearLookupsServiceTests
     public async Task A_team_never_synced_is_a_200_with_no_sync_time_and_empty_lists()
     {
         using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
+        _ = _facts.WithTeam(new LinearLookupsResponse(new LinearTeamRef(Uuid: null, "OPS", Name: null), SyncedAt: null, [], [], [], []));
 
         var result = await Service().Handle(new GetLinearLookupsRequest("OPS"), Token);
 
@@ -71,5 +72,45 @@ public sealed class LinearLookupsServiceTests
         var result = await Service().Handle(new GetLinearLookupsRequest("ENG"), Token);
 
         Expect.Equal(synced, result.Value);
+    }
+
+    [Fact]
+    public async Task A_team_outside_the_picked_ones_is_403_SND_LINEAR_003_when_the_profile_picks_teams()
+    {
+        using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
+        _ = _facts.WithTeamsPicked(true);
+
+        var result = await Service().Handle(new GetLinearLookupsRequest("OPS"), Token);
+
+        Expect.Equal("SND-LINEAR-003", result.Error.Code);
+        Expect.Equal(Aw.Kernel.ErrorKind.Forbidden, result.Error.Kind);
+        Expect.Equal("Sindri only reads teams you picked; OPS isn't one (fix: Settings, Connections, Linear, add OPS)", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task A_team_nothing_is_stored_for_is_404_when_the_profile_picks_no_teams()
+    {
+        using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
+        _ = _facts.WithTeamsPicked(false);
+
+        var result = await Service().Handle(new GetLinearLookupsRequest("OPS"), Token);
+
+        Expect.Equal("SND-LINEAR-404", result.Error.Code);
+        Expect.Equal(Aw.Kernel.ErrorKind.NotFound, result.Error.Kind);
+        Expect.Equal("Sindri has nothing stored for OPS yet", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task Inactive_members_and_the_stored_name_sync_time_and_label_colour_stay_in_the_answer()
+    {
+        using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
+        var stored = new LinearLookupsResponse(new LinearTeamRef("t1", "ENG", "Engineering"), new DateTimeOffset(2025, 12, 31, 23, 58, 0, TimeSpan.Zero),
+            [], [new LinearMemberOption("u3", "Former Member", Active: false)], [new LinearLabelOption("l1", "bug", "#eb5757")], []);
+        _ = _facts.WithTeam(stored);
+
+        var result = await Service().Handle(new GetLinearLookupsRequest("ENG"), Token);
+
+        Assert.False(Expect.Only(result.Value.Members).Active);
+        Expect.Equal("#eb5757", Expect.Only(result.Value.Labels).Color!);
     }
 }

@@ -25,7 +25,7 @@ internal sealed class ContextLinearSideFacts(IApprovedProfile approvals, ICaller
 {
     private const string UserPrefix = "linear:user/";
 
-    public async ValueTask<Result<LinearLookupsResponse>> Lookups(string team, CancellationToken cancellationToken)
+    public async ValueTask<Result<LinearLookupsResponse?>> Lookups(string team, CancellationToken cancellationToken)
     {
         var scope = await Scope(cancellationToken).ConfigureAwait(false);
         if (scope.IsError)
@@ -41,18 +41,31 @@ internal sealed class ContextLinearSideFacts(IApprovedProfile approvals, ICaller
 
         if (found.Value is not { } stored)
         {
-            return new LinearLookupsResponse(new LinearTeamRef(Uuid: null, team, Name: null), SyncedAt: null, [], [], [], []);
+            return Results.Success<LinearLookupsResponse?>(value: null);
         }
 
         var now = clock.GetUtcNow();
-        // why: Context stores no team name, sync time, member 'active' or label color yet; those fields wait for its wider lookups
+        // why: a picked team never synced has no id, name or sync time (and empty lists); inactive members stay, because older issues are still assigned to them
         return new LinearLookupsResponse(
-            new LinearTeamRef(stored.TeamId.Value, stored.TeamKey, Name: null),
-            SyncedAt: null,
+            new LinearTeamRef(stored.TeamId?.Value, stored.TeamKey, stored.Name),
+            stored.SyncedAt,
             [.. stored.States.Select(static s => new LinearStateOption(s.Id.Value, s.Name, s.Type, s.Position))],
-            [.. stored.Members.Select(static m => new LinearMemberOption(m.Id.Value, m.Name, Active: true))],
-            [.. stored.Labels.Select(static l => new LinearLabelOption(l.Id.Value, l.Name, Color: null))],
+            [.. stored.Members.Select(static m => new LinearMemberOption(m.Id.Value, m.Name, m.Active))],
+            [.. stored.Labels.Select(static l => new LinearLabelOption(l.Id.Value, l.Name, l.Color))],
             [.. stored.Cycles.Select(c => new LinearCycleOption(c.Id.Value, c.Number, c.Name ?? $"Cycle {c.Number.ToString(CultureInfo.InvariantCulture)}", c.StartsAt, c.EndsAt, c.StartsAt <= now && now < c.EndsAt))]);
+    }
+
+    public async ValueTask<Result<bool>> TeamsPicked(CancellationToken cancellationToken)
+    {
+        var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
+        if (approved.IsError || approved.Value is not { } loaded)
+        {
+            return approved.IsError ? approved.Error : SindriErrors.ProfileNotApproved.With("no profile is approved (fix: sindri profile approve)");
+        }
+
+        ProfileRepoEntry[] repos = [.. (loaded.Profile.Repos ?? []).Select(static r => new ProfileRepoEntry(r.Name, r.Path))];
+        var settings = engine.CheckSettings(loaded.Profile.Context, repos);
+        return settings.IsError ? settings.Error : settings.Value.LinearTeams.Count > 0 || settings.Value.Linear?.Teams.Count > 0;
     }
 
     public async ValueTask<Result<IReadOnlyList<LinearSinceItem>?>> Since(DateTimeOffset after, CancellationToken cancellationToken)

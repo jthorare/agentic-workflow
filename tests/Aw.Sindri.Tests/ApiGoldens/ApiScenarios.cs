@@ -69,14 +69,12 @@ internal static class ApiScenarios
 
     /// <summary>The last hosts of <see cref="Start"/>: the launch, approve-all, item-scope and wrapped-session ones, else the plain golden host.</summary>
     private static async Task<GoldenHost> StartLaunchOrLater(string slug, string scenario, CancellationToken ct) =>
-        LinearReadScenarios.Handles(slug, scenario)
-            ? await LinearReadScenarios.Start(slug, scenario, ct)
+        IsLinear(slug, scenario)
+            ? await StartLinear(slug, scenario, ct)
             : IsReviews(slug, scenario)
             ? await StartReviews(slug, scenario, ct)
             : ProjectScenarios.Handles(slug, scenario)
             ? await ProjectScenarios.Start(slug, scenario, ct)
-            : LinearIssueScenarios.Handles(slug, scenario)
-            ? await LinearIssueScenarios.Start(slug, scenario, ct)
             : SandboxScenarios.Handles(slug, scenario)
             ? await SandboxScenarios.Start(slug, scenario, ct)
             : LaunchScenarios.Handles(slug, scenario)
@@ -90,6 +88,13 @@ internal static class ApiScenarios
             : SessionScenarios.NeedsCgroup(slug, scenario)
             ? await SessionScenarios.Start(ct)
             : await GoldenHost.Start(temporary: !NeedsNonTemporaryHome(slug, scenario), ct, ProfileYaml(slug, scenario));
+
+    /// <summary>Whether the scenario belongs to the Linear hub's reads (the issue list and sheet, the lookups and the strip).</summary>
+    private static bool IsLinear(string slug, string scenario) => LinearIssueScenarios.Handles(slug, scenario) || LinearReadScenarios.Handles(slug, scenario);
+
+    /// <summary>The host of a Linear read scenario.</summary>
+    private static Task<GoldenHost> StartLinear(string slug, string scenario, CancellationToken ct) =>
+        LinearIssueScenarios.Handles(slug, scenario) ? LinearIssueScenarios.Start(slug, scenario, ct) : LinearReadScenarios.Start(slug, scenario, ct);
 
     /// <summary>Whether the scenario belongs to the Reviews group (the pages, the login save, the library and one doc of it).</summary>
     private static bool IsReviews(string slug, string scenario) =>

@@ -26,7 +26,26 @@ internal sealed class GetLinearLookupsService(ILinearSideFacts facts, ICallerCon
         }
 
         var read = await facts.Lookups(request.Team, cancellationToken).ConfigureAwait(false);
-        return read.IsError ? Refused(read.Error) : read.Value;
+        if (read.IsError)
+        {
+            return Refused(read.Error);
+        }
+
+        return read.Value is { } found ? found : await NotStored(request.Team, cancellationToken).ConfigureAwait(false);
+    }
+
+    // why: Context answers null for a team outside the picked ones; with teams picked that is the owner's mistake to fix in Settings, with none picked nothing has been stored yet
+    private async ValueTask<Result<LinearLookupsResponse>> NotStored(string team, CancellationToken cancellationToken)
+    {
+        var picked = await facts.TeamsPicked(cancellationToken).ConfigureAwait(false);
+        if (picked.IsError)
+        {
+            return picked.Error;
+        }
+
+        return picked.Value
+            ? SindriErrors.LinearTeamNotPicked.With($"Sindri only reads teams you picked; {team} isn't one (fix: Settings, Connections, Linear, add {team})")
+            : SindriErrors.LinearNothingStored.With($"Sindri has nothing stored for {team} yet");
     }
 
     // why: Context refuses a session with SND-CONTEXT-020; on this owner-only route that is SND-AUTH-002, as the caller check above

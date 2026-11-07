@@ -10,6 +10,7 @@ internal sealed class FakeLinearSideFacts : ILinearSideFacts
     private readonly List<LinearSinceItem> _items = [];
     private Error? _failure;
     private bool _noViewer;
+    private bool _teamsPicked;
 
     internal List<string> AskedTeams { get; } = [];
 
@@ -33,20 +34,28 @@ internal sealed class FakeLinearSideFacts : ILinearSideFacts
         return this;
     }
 
+    internal FakeLinearSideFacts WithTeamsPicked(bool picked)
+    {
+        _teamsPicked = picked;
+        return this;
+    }
+
     internal FakeLinearSideFacts Failing(Error error)
     {
         _failure = error;
         return this;
     }
 
-    public ValueTask<Result<LinearLookupsResponse>> Lookups(string team, CancellationToken cancellationToken)
+    public ValueTask<Result<LinearLookupsResponse?>> Lookups(string team, CancellationToken cancellationToken)
     {
         AskedTeams.Add(team);
-        Result<LinearLookupsResponse> answer = _failure is { } failure
+        var answer = _failure is { } failure
             ? failure
-            : _teams.TryGetValue(team, out var found) ? found : new LinearLookupsResponse(new LinearTeamRef(Uuid: null, team, Name: null), SyncedAt: null, [], [], [], []);
+            : Results.Success<LinearLookupsResponse?>(_teams.GetValueOrDefault(team));
         return ValueTask.FromResult(answer);
     }
+
+    public ValueTask<Result<bool>> TeamsPicked(CancellationToken cancellationToken) => ValueTask.FromResult(_failure is { } failure ? failure : Results.Success(_teamsPicked));
 
     public ValueTask<Result<IReadOnlyList<LinearSinceItem>?>> Since(DateTimeOffset after, CancellationToken cancellationToken)
     {
