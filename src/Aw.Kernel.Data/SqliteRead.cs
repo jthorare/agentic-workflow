@@ -57,6 +57,23 @@ public static class SqliteRead
     }
 
     /// <summary>
+    /// Reads a BLOB column as its bytes. Anything else (TEXT, an integer, NULL) is a data bug and throws, so damage never reads back as bytes; the value is never printed. Use this and not
+    /// GetFieldValue&lt;byte[]&gt;, which converts (ARCH-BLOB-001).
+    /// </summary>
+    /// <param name="reader">A reader on a row.</param>
+    /// <param name="ordinal">The column.</param>
+    /// <returns>The bytes.</returns>
+    /// <exception cref="InvalidDataException">The column isn't a BLOB.</exception>
+    public static byte[] GetBlob(SqliteDataReader reader, int ordinal)
+    {
+        ArgumentNullException.ThrowIfNull(reader);
+        var value = reader.GetValue(ordinal);
+        return value is byte[] bytes
+            ? bytes
+            : throw new InvalidDataException($"Column {reader.GetName(ordinal)} holds {value.GetType().Name}, not a blob.");
+    }
+
+    /// <summary>
     /// Reads TEXT at <paramref name="ordinal"/> and parses it. Any failure (the column isn't text, or <paramref name="parse"/> refuses the value, a Vogen id included) is a <see cref="StoredRowException"/> naming the table,
     /// the column and the row key, never the value, so a bad stored value is a store fault and not a request one (#2229).
     /// </summary>

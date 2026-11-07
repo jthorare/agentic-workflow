@@ -39,7 +39,8 @@ public sealed class HttpApiTransportContractTests : ApiTransportContract, IDispo
     {
         var transport = new HttpApiTransport(TimeSpan.FromSeconds(10));
         _owned.Add(transport);
-        return Task.FromResult(new ApiUnderTest(transport, "http://127.0.0.1:" + LocalHttpServer.FreePort().ToString(System.Globalization.CultureInfo.InvariantCulture), () => []));
+        _owned.Add(LocalHttpServer.ClosedPort(out var port));
+        return Task.FromResult(new ApiUnderTest(transport, "http://127.0.0.1:" + port.ToString(System.Globalization.CultureInfo.InvariantCulture), () => []));
     }
 
     public void Dispose()
