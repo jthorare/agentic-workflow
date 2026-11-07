@@ -20,7 +20,7 @@ public sealed class LibraryModelOptInTests
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private static async Task<int> Extractions(IReadOnlyList<string> modelRoots)
+    private static async Task<int> Extractions(IReadOnlyList<string> modelRoots, string audience = "repo:acme/shop")
     {
         using var world = new MapWorld();
         _ = await world.ImportFixture();
@@ -30,7 +30,7 @@ public sealed class LibraryModelOptInTests
         {
             Kind = RecordKind.Doc,
             Title = "Pane resize limits",
-            Audience = AudienceKey.From("repo:acme/shop"),
+            Audience = AudienceKey.From(audience),
             TextHash = RecordSamples.Hash(text),
         };
         var committed = await world.Records.Commit(RecordSamples.Batch(LibrarySource.Id, 1, RecordSamples.Write(record, text)), Ct);
@@ -58,4 +58,8 @@ public sealed class LibraryModelOptInTests
     [Fact]
     public async Task A_library_record_of_another_root_is_still_withheld() =>
         Assert.Equal(0, await Extractions(["warehouse"]));
+
+    [Fact]
+    public async Task An_owner_library_doc_is_withheld_from_the_decision_model_even_when_its_root_opted_in() =>
+        Assert.Equal(0, await Extractions(["harbor"], audience: "owner:library"));   // a decision carries a verbatim quote that a session's scoped map would show
 }
