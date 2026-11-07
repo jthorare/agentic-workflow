@@ -6,7 +6,8 @@ namespace Aw.Sindri.Core.Reviews;
 /// <param name="WithErrors">The docs stored with an error.</param>
 /// <param name="UnreadableRoots">The folders that couldn't be read.</param>
 /// <param name="Text">Sindri's words for it.</param>
-public sealed record ReviewLibrary(string State, int Docs, int WithErrors, int UnreadableRoots, string Text)
+/// <param name="Unreadable">Each folder that couldn't be read, with why ("&lt;root&gt; couldn't be read: &lt;reason&gt;", §6.3).</param>
+public sealed record ReviewLibrary(string State, int Docs, int WithErrors, int UnreadableRoots, string Text, IReadOnlyList<ReviewUnreadableRoot> Unreadable)
 {
     /// <summary>Decides the state and its words.</summary>
     /// <param name="facts">What the library holds.</param>
@@ -21,6 +22,6 @@ public sealed record ReviewLibrary(string State, int Docs, int WithErrors, int U
             _ when facts.Docs == 0 => ("empty", "Library: no design docs yet"),
             _ => ("ok", string.Create(System.Globalization.CultureInfo.InvariantCulture, $"Library: {facts.Docs} docs, {facts.WithErrors} with errors")),
         };
-        return new ReviewLibrary(state, facts.Docs, facts.WithErrors, facts.UnreadableRoots.Count, text);
+        return new ReviewLibrary(state, facts.Docs, facts.WithErrors, facts.UnreadableRoots.Count, text, facts.UnreadableRoots);
     }
 }

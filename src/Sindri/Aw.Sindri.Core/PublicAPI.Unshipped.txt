@@ -22399,15 +22399,17 @@ Aw.Sindri.Core.Reviews.ReviewGroupKind.Waiting = 0 -> Aw.Sindri.Core.Reviews.Rev
 Aw.Sindri.Core.Reviews.ReviewGroupKind.Yours = 1 -> Aw.Sindri.Core.Reviews.ReviewGroupKind
 Aw.Sindri.Core.Reviews.ReviewLibrary
 Aw.Sindri.Core.Reviews.ReviewLibrary.<Clone>$() -> Aw.Sindri.Core.Reviews.ReviewLibrary!
-Aw.Sindri.Core.Reviews.ReviewLibrary.Deconstruct(out string! State, out int Docs, out int WithErrors, out int UnreadableRoots, out string! Text) -> void
+Aw.Sindri.Core.Reviews.ReviewLibrary.Deconstruct(out string! State, out int Docs, out int WithErrors, out int UnreadableRoots, out string! Text, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewUnreadableRoot!>! Unreadable) -> void
 Aw.Sindri.Core.Reviews.ReviewLibrary.Docs.get -> int
 Aw.Sindri.Core.Reviews.ReviewLibrary.Docs.init -> void
 Aw.Sindri.Core.Reviews.ReviewLibrary.Equals(Aw.Sindri.Core.Reviews.ReviewLibrary? other) -> bool
-Aw.Sindri.Core.Reviews.ReviewLibrary.ReviewLibrary(string! State, int Docs, int WithErrors, int UnreadableRoots, string! Text) -> void
+Aw.Sindri.Core.Reviews.ReviewLibrary.ReviewLibrary(string! State, int Docs, int WithErrors, int UnreadableRoots, string! Text, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewUnreadableRoot!>! Unreadable) -> void
 Aw.Sindri.Core.Reviews.ReviewLibrary.State.get -> string!
 Aw.Sindri.Core.Reviews.ReviewLibrary.State.init -> void
 Aw.Sindri.Core.Reviews.ReviewLibrary.Text.get -> string!
 Aw.Sindri.Core.Reviews.ReviewLibrary.Text.init -> void
+Aw.Sindri.Core.Reviews.ReviewLibrary.Unreadable.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewUnreadableRoot!>!
+Aw.Sindri.Core.Reviews.ReviewLibrary.Unreadable.init -> void
 Aw.Sindri.Core.Reviews.ReviewLibrary.UnreadableRoots.get -> int
 Aw.Sindri.Core.Reviews.ReviewLibrary.UnreadableRoots.init -> void
 Aw.Sindri.Core.Reviews.ReviewLibrary.WithErrors.get -> int
