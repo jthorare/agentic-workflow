@@ -12317,6 +12317,8 @@ static Aw.Context.Core.Linear.LinearCommentView.operator !=(Aw.Context.Core.Line
 static Aw.Context.Core.Linear.LinearCommentView.operator ==(Aw.Context.Core.Linear.LinearCommentView? left, Aw.Context.Core.Linear.LinearCommentView? right) -> bool
 Aw.Context.Core.Library.GeneratedSource
 const Aw.Context.Core.Library.GeneratedSource.FileName = "packet.json" -> string!
+const Aw.Context.Core.Library.GeneratedSource.Mark = 'g' -> char
 static Aw.Context.Core.Library.GeneratedSource.IsGenerated(Aw.Context.Core.Library.DesignDocFrontMatter? frontMatter) -> bool
 static Aw.Context.Core.Library.GeneratedSource.PathBeside(string! docPath) -> string!
 static Aw.Context.Core.Library.GeneratedSource.Sha256(System.ReadOnlySpan<byte> source) -> string!
+static Aw.Context.Core.Library.GeneratedSource.Version(string! docVersion, string? packetVersion) -> string!

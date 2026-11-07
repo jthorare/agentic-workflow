@@ -161,6 +161,17 @@ public sealed class LibraryValidateTests : IDisposable
         Assert.Equal(0, await Run(new ScriptedApi(), _dir));
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_symlinked_packet_json_is_not_a_source_so_the_generated_doc_is_not_checked()
+    {
+        var real = Write("elsewhere/real.json", """{"n":1}""");
+        _ = Write("gen/doc.md", Generated("gen-doc", new string('0', 64)));
+        _ = File.CreateSymbolicLink(Path.Combine(_dir, "gen", "packet.json"), real);
+
+        Assert.Equal(0, await Run(new ScriptedApi(), _dir));
+        Assert.DoesNotContain("SND-LIB-017", _out.ToString(), StringComparison.Ordinal);
+    }
+
     private static string Generated(string id, string sourceSha) =>
         $"---\naw-doc: 1\nid: {id}\ntitle: Generated\nkind: spec\nstatus: draft\ngenerated: write_packet.py\nsource-sha256: {sourceSha}\n---\n# Generated\n\n## REQ-1 Size the queue\n";
 
