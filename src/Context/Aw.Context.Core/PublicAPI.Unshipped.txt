@@ -6718,9 +6718,10 @@ Aw.Context.Core.Linear.LinearSettings.Equals(Aw.Context.Core.Linear.LinearSettin
 Aw.Context.Core.Linear.LinearSettings.<Clone>$() -> Aw.Context.Core.Linear.LinearSettings!
 Aw.Context.Core.Linear.LinearSettings.Url.get -> System.Uri!
 Aw.Context.Core.Linear.LinearSettings.Token.get -> string!
+Aw.Context.Core.Linear.LinearSettings.WriteToken.get -> string?
 Aw.Context.Core.Linear.LinearSettings.Teams.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Context.Core.Linear.LinearSettings.Address.get -> string!
-static Aw.Context.Core.Linear.LinearSettings.Create(string? url, string? token, System.Collections.Generic.IReadOnlyList<string!>! teams) -> Aw.Kernel.Result<Aw.Context.Core.Linear.LinearSettings!>!
+static Aw.Context.Core.Linear.LinearSettings.Create(string? url, string? token, System.Collections.Generic.IReadOnlyList<string!>! teams, string? writeToken = null) -> Aw.Kernel.Result<Aw.Context.Core.Linear.LinearSettings!>!
 static Aw.Context.Core.Linear.LinearRecordKeys.KindOf(Aw.Context.Core.Sources.RecordKey canonical) -> Aw.Context.Core.Sources.RecordKind
 Aw.Context.Core.Engine.ContextSettings.Linear.init -> void
 Aw.Context.Core.Engine.ContextSettings.Linear.get -> Aw.Context.Core.Linear.LinearSettings?
@@ -12256,6 +12257,7 @@ static Aw.Context.Core.Linear.LinearWriteOutcome.operator ==(Aw.Context.Core.Lin
 static Aw.Context.Core.Linear.LinearWriteUnknown.operator !=(Aw.Context.Core.Linear.LinearWriteUnknown? left, Aw.Context.Core.Linear.LinearWriteUnknown? right) -> bool
 static Aw.Context.Core.Linear.LinearWriteUnknown.operator ==(Aw.Context.Core.Linear.LinearWriteUnknown? left, Aw.Context.Core.Linear.LinearWriteUnknown? right) -> bool
 static readonly Aw.Context.Core.Linear.LinearHubErrors.IssueNotFound -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.Linear.LinearHubErrors.NoWriteKey -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Context.Core.Linear.LinearHubErrors.NoAnswer -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Context.Core.Linear.LinearHubErrors.RateLimited -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Context.Core.Linear.LinearHubErrors.Rejected -> Aw.Kernel.ErrorDefinition!
@@ -12270,5 +12272,36 @@ virtual Aw.Context.Core.Linear.LinearWriteOutcome.PrintMembers(System.Text.Strin
 Aw.Context.Core.Linear.LinearWriteLimits
 const Aw.Context.Core.Linear.LinearWriteLimits.TextMax = 65536 -> int
 const Aw.Context.Core.Linear.LinearWriteLimits.TitleMax = 255 -> int
+static Aw.Context.Core.Linear.LinearWriteLimits.Attachment(System.Uri! url, string? title) -> Aw.Kernel.Error?
+static Aw.Context.Core.Linear.LinearWriteLimits.Change(Aw.Context.Core.Linear.LinearIssueChange! change) -> Aw.Kernel.Error?
 static Aw.Context.Core.Linear.LinearWriteLimits.Text(string! what, string? text, bool required) -> Aw.Kernel.Error?
 static Aw.Context.Core.Linear.LinearWriteLimits.Title(string? title) -> Aw.Kernel.Error?
+Aw.Context.Core.Facade.ILinearWriteThrough
+Aw.Context.Core.Facade.ILinearWriteThrough.Store(Aw.Context.Core.Engine.ContextScope! scope, Aw.Context.Core.Sources.ExternalId issueId, Aw.Context.Core.Linear.LinearWrittenFields written, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
+Aw.Context.Core.Linear.ILinearLiveReads
+Aw.Context.Core.Linear.ILinearLiveReads.Comment(Aw.Context.Core.Linear.LinearSettings! settings, Aw.Context.Core.Sources.ExternalId commentId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearCommentView?>!>
+Aw.Context.Core.Linear.ILinearLiveReads.HasAttachment(Aw.Context.Core.Linear.LinearSettings! settings, Aw.Context.Core.Sources.ExternalId issueId, System.Uri! url, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+Aw.Context.Core.Linear.ILinearLiveReads.Issue(Aw.Context.Core.Linear.LinearSettings! settings, string! idOrKey, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueView?>!>
+Aw.Context.Core.Linear.ILinearWrites
+Aw.Context.Core.Linear.ILinearWrites.CreateComment(Aw.Context.Core.Linear.LinearSettings! settings, Aw.Context.Core.Sources.ExternalId issueId, string! body, Aw.Context.Core.Linear.LinearClientId! clientId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueView!>!>
+Aw.Context.Core.Linear.ILinearWrites.CreateIssue(Aw.Context.Core.Linear.LinearSettings! settings, Aw.Context.Core.Linear.LinearIssueDraft! draft, Aw.Context.Core.Linear.LinearClientId! clientId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueView!>!>
+Aw.Context.Core.Linear.ILinearWrites.KeyStatus(Aw.Context.Core.Linear.LinearSettings! settings, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Context.Core.Linear.LinearWriteKeyStatus!>
+Aw.Context.Core.Linear.ILinearWrites.LinkUrl(Aw.Context.Core.Linear.LinearSettings! settings, Aw.Context.Core.Sources.ExternalId issueId, System.Uri! url, string! title, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueView!>!>
+Aw.Context.Core.Linear.ILinearWrites.UpdateComment(Aw.Context.Core.Linear.LinearSettings! settings, Aw.Context.Core.Sources.ExternalId commentId, string! body, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueView!>!>
+Aw.Context.Core.Linear.ILinearWrites.UpdateIssue(Aw.Context.Core.Linear.LinearSettings! settings, Aw.Context.Core.Sources.ExternalId issueId, Aw.Context.Core.Linear.LinearIssueChange! change, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueView!>!>
+Aw.Context.Core.Linear.LinearCommentView
+Aw.Context.Core.Linear.LinearCommentView.Body.get -> string!
+Aw.Context.Core.Linear.LinearCommentView.Body.init -> void
+Aw.Context.Core.Linear.LinearCommentView.<Clone>$() -> Aw.Context.Core.Linear.LinearCommentView!
+Aw.Context.Core.Linear.LinearCommentView.Deconstruct(out Aw.Context.Core.Sources.ExternalId Id, out Aw.Context.Core.Sources.ExternalId IssueId, out string! Body) -> void
+Aw.Context.Core.Linear.LinearCommentView.Equals(Aw.Context.Core.Linear.LinearCommentView? other) -> bool
+Aw.Context.Core.Linear.LinearCommentView.Id.get -> Aw.Context.Core.Sources.ExternalId
+Aw.Context.Core.Linear.LinearCommentView.Id.init -> void
+Aw.Context.Core.Linear.LinearCommentView.IssueId.get -> Aw.Context.Core.Sources.ExternalId
+Aw.Context.Core.Linear.LinearCommentView.IssueId.init -> void
+Aw.Context.Core.Linear.LinearCommentView.LinearCommentView(Aw.Context.Core.Sources.ExternalId Id, Aw.Context.Core.Sources.ExternalId IssueId, string! Body) -> void
+override Aw.Context.Core.Linear.LinearCommentView.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearCommentView.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearCommentView.ToString() -> string!
+static Aw.Context.Core.Linear.LinearCommentView.operator !=(Aw.Context.Core.Linear.LinearCommentView? left, Aw.Context.Core.Linear.LinearCommentView? right) -> bool
+static Aw.Context.Core.Linear.LinearCommentView.operator ==(Aw.Context.Core.Linear.LinearCommentView? left, Aw.Context.Core.Linear.LinearCommentView? right) -> bool

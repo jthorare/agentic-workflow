@@ -1,0 +1,9 @@
+{
+  "query": "mutation CommentUpdate($id: String!, $input: CommentUpdateInput!) {\n  commentUpdate(id: $id, input: $input) {\n    success\n    comment {\n      id\n      issue {\n        id identifier title description updatedAt priority estimate\n        state { id name type }\n        team { id key }\n        assignee { id }\n        cycle { id }\n        project { id }\n        parent { id identifier }\n        labels { nodes { id } }\n      }\n    }\n  }\n}\n",
+  "variables": {
+    "id": "comment-1",
+    "input": {
+      "body": "Edited text"
+    }
+  }
+}

@@ -252,7 +252,7 @@ internal sealed class LinearMutations(LinearStore store, FakeLinearSwitches swit
         }
 
         store.Save(Bump(issue, field.Name));
-        return Payload("attachment", LinearRender.Attachment(attachment));
+        return Payload("attachment", LinearRender.Attachment(store, attachment));
     }
 
     private JsonObject IssueArchive(GraphQlField field)
