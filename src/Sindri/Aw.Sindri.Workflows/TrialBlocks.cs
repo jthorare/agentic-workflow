@@ -39,14 +39,22 @@ internal sealed class TrialBlocks(IEnumerable<ISkillBlocks> skills, IRecipeAppro
             return approval.Error;
         }
 
-        foreach (var descriptor in fromFolder)
+        // Every block the recipe names is held to its pin as the run will see it: a pinned block the folder no longer has, or no
+        // longer parses, falls back to serve's, which fails here unless it is the very block the trial was approved on.
+        var overlaid = catalog.Overlaid(fromFolder);
+        var pins = approval.Value?.Pins.Blocks ?? [];
+        foreach (var id in named)
         {
-            if (approval.Value?.Pins.Blocks.FirstOrDefault(p => p.Block == descriptor.Id) is not { } pin || pin.Hash != PinRules.Hash(descriptor, json))
+            var pin = pins.FirstOrDefault(p => p.Block == id);
+            var held = pin is null
+                ? fromFolder.TrueForAll(d => d.Id != id)
+                : overlaid.Find(id) is { } descriptor && pin.Hash == PinRules.Hash(descriptor, json);
+            if (!held)
             {
-                return SindriErrors.RequestInvalid.With($"{descriptor.Id.Value} is not the block this trial was approved on: the skills folder changed since this trial started (fix: start the trial again)");
+                return SindriErrors.RequestInvalid.With($"{id.Value} is not the block this trial was approved on: the skills folder changed since this trial started (fix: start the trial again)");
             }
         }
 
-        return catalog.Overlaid(fromFolder);
+        return overlaid;
     }
 }
