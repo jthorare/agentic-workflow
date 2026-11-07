@@ -1,6 +1,6 @@
-using Aw.Sindri.Core.Linear;
 using System.Diagnostics.CodeAnalysis;
 using Aw.Kernel;
+using Aw.Sindri.Core.Linear;
 
 namespace Aw.Sindri.Testing;
 

@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.Text.Json;
 using Aw.Kernel.Services;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Aw.Sindri.Features.LinearIssues;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Aw.Sindri.Host.Endpoints;
 

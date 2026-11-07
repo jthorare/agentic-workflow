@@ -1,5 +1,5 @@
-using Aw.Sindri.Core.Linear;
 using System.Diagnostics.CodeAnalysis;
+using Aw.Sindri.Core.Linear;
 using Xunit;
 
 namespace Aw.Sindri.Testing;

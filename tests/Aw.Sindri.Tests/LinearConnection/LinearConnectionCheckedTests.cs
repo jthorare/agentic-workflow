@@ -1,8 +1,8 @@
-using Aw.Sindri.Core.Linear;
 using System.Text.Json;
 using Aw.Context.Testing.Engine;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Linear;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.LinearConnection;
 using Aw.Sindri.Testing;

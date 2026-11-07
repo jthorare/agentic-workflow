@@ -136,12 +136,12 @@ internal static class LinearChangeFields
                 Title => change with { Title = LinearFieldChange.Set(value as string ?? string.Empty) },
                 Description => change with { Description = LinearFieldChange.Set<string?>(value is string { Length: > 0 } text ? text : null) },
                 StateId => change with { StateId = LinearFieldChange.Set(ExternalId.From(value as string ?? string.Empty)) },
-                AssigneeId => change with { AssigneeId = LinearFieldChange.Set<ExternalId?>(Id(value)) },
+                AssigneeId => change with { AssigneeId = LinearFieldChange.Set(Id(value)) },
                 Priority => change with { Priority = LinearFieldChange.Set(value is int level ? level : 0) },
-                ProjectId => change with { ProjectId = LinearFieldChange.Set<ExternalId?>(Id(value)) },
-                CycleId => change with { CycleId = LinearFieldChange.Set<ExternalId?>(Id(value)) },
+                ProjectId => change with { ProjectId = LinearFieldChange.Set(Id(value)) },
+                CycleId => change with { CycleId = LinearFieldChange.Set(Id(value)) },
                 LabelIds => change with { LabelIds = LinearFieldChange.Set<IReadOnlyList<ExternalId>>([.. (value as string[] ?? []).Select(ExternalId.From)]) },
-                _ => change with { ParentId = LinearFieldChange.Set<ExternalId?>(parent) },
+                _ => change with { ParentId = LinearFieldChange.Set(parent) },
             };
         }
 

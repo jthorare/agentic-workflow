@@ -1,5 +1,5 @@
-using Aw.Sindri.Core.Linear;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Linear;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Secrets;
 using Aw.Sindri.Host.IndexSources;

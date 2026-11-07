@@ -1,5 +1,5 @@
-using Aw.Sindri.Core.Linear;
 using Aw.Kernel;
+using Aw.Sindri.Core.Linear;
 
 namespace Aw.Sindri.Host.IndexSources;
 

@@ -5,12 +5,12 @@ using Aw.Context.Core.Sources;
 using Aw.Context.Testing.Linear;
 using Aw.Sindri.Core.Linear;
 using Aw.Sindri.Features.LinearIssues;
-using Aw.Sindri.Tests.LinearReads;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.LinearReads;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using CommentView = Aw.Sindri.Features.LinearIssues.LinearCommentView;
 using static Aw.Sindri.Tests.Callers.CallerRequests;
+using CommentView = Aw.Sindri.Features.LinearIssues.LinearCommentView;
 
 namespace Aw.Sindri.Tests.ApiGoldens;
 

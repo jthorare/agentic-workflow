@@ -1,8 +1,8 @@
-using Aw.Sindri.Core.Linear;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Linear;
 using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Features.LinearConnection;

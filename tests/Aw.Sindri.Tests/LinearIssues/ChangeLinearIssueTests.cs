@@ -5,8 +5,8 @@ using Aw.Context.Testing.Linear;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Linear;
 using Aw.Sindri.Features.LinearIssues;
-using Aw.Sindri.Tests.LinearReads;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.LinearReads;
 using static Aw.Sindri.Tests.LinearIssues.LinearIssueRows;
 
 namespace Aw.Sindri.Tests.LinearIssues;

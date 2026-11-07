@@ -41,7 +41,7 @@ internal sealed class FileLinearCheckStore(ISindriHome home) : ILinearCheckStore
             {
                 OwnerOnly.EnsureDirectory(home.Path);
                 OwnerOnly.WriteAtomically(_filePath, AwJson.Serialize(change(Load()), _json));
-                return Aw.Kernel.Results.Success(Unit.Value);
+                return Results.Success(Unit.Value);
             }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException)
             {
