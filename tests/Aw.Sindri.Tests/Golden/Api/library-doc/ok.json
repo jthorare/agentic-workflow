@@ -1,0 +1,32 @@
+{
+  "asOf": {
+    "cursor": 5,
+    "ledgerHead": 5,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "doc": {
+    "id": "booking-retry-tdd",
+    "root": "aw",
+    "scope": "aw/acme-api",
+    "kind": "tdd",
+    "status": "draft",
+    "project": null,
+    "repos": [
+      "acme/api"
+    ],
+    "issues": [
+      "412",
+      "ENG-12"
+    ],
+    "title": "Booking retry TDD",
+    "path": "~/.agentic-workflow/acme-api/plans/booking-retry-tdd.md",
+    "errors": [
+      {
+        "rule": "SND-LIB-015",
+        "text": "~/.agentic-workflow/acme-api/plans/booking-retry-tdd.md line 31: queue-sizing-spec#REQ-9 is not in this scope. Fix the ref, or add REQ-9 to the doc it names."
+      }
+    ]
+  }
+}

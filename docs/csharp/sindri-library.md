@@ -1,9 +1,9 @@
-# The design library page
+# The design-doc library: routes, verbs and codes
 
 `GET /sindri/library` is the read behind the Reviews page's library sheet (PR review page spec `docs/superpowers/specs/2026-11-04-sindri-pr-review-page-design.md` §6.1, §6.3). It lists what the design-doc library holds and what is wrong with it.
 The Reviews header's one-line library state (`library` in `GET /sindri/reviews`) reads the same sources; this route is the long form.
 
-## The route
+## The list: `GET /sindri/library`
 
 A query (`GetLibrary` in `Aw.Sindri.Features/GetLibrary/`). It reads stored data only: nothing re-reads a folder.
 
@@ -46,3 +46,25 @@ A session reads only the docs its audiences allow, so its counts can be smaller 
 ## The Reviews header
 
 `ReviewLibrary` (the `library` object of `GET /sindri/reviews`) takes the same root states: an unreadable root becomes an `unreadable[]` entry, a root still `Reading` (or a library source whose first read has not finished) makes `state` `reading`.
+
+## One doc: `GET /sindri/library/{doc}`
+
+One doc by its front-matter `id`: `{asOf, doc: {id, root, scope, kind, status, project, repos, issues, title, path, errors: [{rule, text}]}}`. `path` has the home folder written `~`. `errors[].rule` is the `SND-LIB-nnn` code, `text` is the finding's message with the file and line written `<path> line <n>:`, then the fix. Two scopes can share an id (the `aw` root keeps one scope per repo-slug): the doc at the lowest path answers, which is the one that keeps the id (spec §4.2), and the other shows `SND-LIB-012` in its list entry
+
+A session caller gets the same body with `doc.title`, `doc.path` and each `doc.errors[].text` inside the untrusted fence (source `sindri:library`); the rest stays plain. A doc the caller's audience may not read is as good as missing.
+
+## Verbs
+
+| Verb | What it does |
+|------|--------------|
+| `sindri library list [--errors\|--near-misses] [--json]` | `GET /sindri/library`. Line 1 `Library: 41 docs, 3 with errors` (`Library: no design docs yet` when empty), then each broken doc and its findings, the near misses, the unreadable folders and `cappedText`. `--errors` prints only the broken docs, `--near-misses` only the near misses (`No docs with errors.` / `No near misses.` when empty). Exit 0 even when docs have errors; never starts the control plane |
+| `sindri library show <doc> [--json]` | `GET /sindri/library/{doc}`. Never starts the control plane |
+| `sindri library validate <path\|dir> [--root <name>] [--json]` | Runs the design-doc rules over a file or folder in this process: `DesignDocParser` per `*.md` (symlinks and dot folders skipped), then `DesignDocScope.Check` (012, 015, 016) over the docs found. All docs share the scope `--root` names (default `local`). Exit 0 no findings, 1 findings, 2 usage or an unreadable path. `--json` prints `{findings: [{rule, file, line, message, fix}], passed}`. `--pr-body`, `--repo` and `--docs` need the stored library and are refused with exit 2 "not yet" |
+
+## Codes
+
+| Code | Meaning |
+|------|---------|
+| `SND-LIB-404` | No design doc the caller may read has that id: "No design doc '<id>'; `sindri library list` names them" (HTTP 404) |
+
+The per-doc codes `SND-LIB-010`..`019` are the convention's (`docs/conventions/design-docs.md`).

@@ -52,4 +52,7 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
         new("broken[].path"), new("broken[].errors[].text"),
         new("nearMisses[].path"), new("nearMisses[].text"),
     ]);
+
+    /// <summary>GET /sindri/library/{doc} for a session: the doc's title, its file path and what its errors say (all of it text from a file somebody wrote).</summary>
+    internal static FencePlan LibraryDoc { get; } = new("sindri:library", [new("doc.title"), new("doc.path"), new("doc.errors[].text")]);
 }

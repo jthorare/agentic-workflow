@@ -42,7 +42,7 @@ internal static class ApiScenarios
         ["CodeIndex"] = CodeIndexScenarios.All,
         ["Sandbox"] = SandboxScenarios.All,
         ["Projects"] = ProjectScenarios.All,
-        ["Reviews"] = [.. ReviewScenarios.All.Where(r => r.Slug == "reviews"), .. ReviewLoginScenarios.All, .. LibraryScenarios.All],
+        ["Reviews"] = [.. ReviewScenarios.All.Where(r => r.Slug == "reviews"), .. ReviewLoginScenarios.All, .. LibraryScenarios.All, .. LibraryDocScenarios.All],
     };
 
     /// <summary>Every (route slug, scenario) pair, group by group.</summary>
@@ -69,6 +69,8 @@ internal static class ApiScenarios
     private static async Task<GoldenHost> StartLaunchOrLater(string slug, string scenario, CancellationToken ct) =>
         LibraryScenarios.Handles(slug, scenario)
             ? await LibraryScenarios.Start(scenario, ct)
+            : LibraryDocScenarios.Handles(slug, scenario)
+            ? await LibraryDocScenarios.Start(ct)
             : IsReviews(slug, scenario)
             ? await ReviewScenarios.Start(slug, scenario, ct)
             : ProjectScenarios.Handles(slug, scenario)
@@ -169,6 +171,7 @@ internal static class ApiScenarios
         ReviewScenarios.Handles(slug, scenario) ? () => ReviewScenarios.Body(host, slug, scenario, ct)
         : ReviewLoginScenarios.Handles(slug, scenario) ? () => ReviewLoginScenarios.Body(host, scenario, ct)
         : LibraryScenarios.Handles(slug, scenario) ? () => LibraryScenarios.Body(host, ct)
+        : LibraryDocScenarios.Handles(slug, scenario) ? () => LibraryDocScenarios.Body(host, scenario, ct)
         : null;
 
 
