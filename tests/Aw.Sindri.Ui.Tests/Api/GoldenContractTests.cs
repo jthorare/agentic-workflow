@@ -83,6 +83,8 @@ public sealed class GoldenContractTests
         ["reviews"] = As<ReviewList>,   // GET /reviews: the Reviews tab, its badge and Home's waiting line (review page spec §6.1)
         ["reviews-login"] = As<ReviewLoginSaved>,   // POST /reviews/login: the Reviews tab's login Save (review page spec §6.1); the refusals are ProblemDetails
         ["reviews-pr"] = As<Ui.Api.Reviews.ReviewPage>,   // GET /reviews/{owner}/{repo}/{number}: the review page (review page spec §6.2); the 404, 409 refusals are ProblemDetails
+        ["review-settings"] = As<ReviewSettingsRead>,   // GET /reviews/settings?project=: the project sheet's Review settings (Ph9, hand-written until the route lands)
+        ["review-settings-save"] = As<ReviewSettingsSaved>,   // PUT /reviews/settings: Save and approve (Ph9); the 400 SND-REVIEW-001/002 and 403 refusals are ProblemDetails
         ["library-roots"] = As<LibraryRootChanged>,   // POST /library/roots, DELETE /library/roots/{name}, POST /library/aw: Settings -> Library's three writes (review page spec §6.3); the refusals are ProblemDetails
         ["library"] = As<LibraryView>,   // GET /library: the Reviews header's library errors sheet (review page spec §6.1)
         ["projects-linear"] = As<ProjectLinearList>,   // GET /projects/linear: the Add project sheet's From Linear rows (projects page spec §3.2)

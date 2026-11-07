@@ -42,6 +42,20 @@ internal partial interface ISindriApi
     /// <returns>Where the task went (a half-done send says so in the answer), or SND-UI-002/003.</returns>
     public Task<Result<ReviewFixSent>> SendReviewFix(Uri api, string repo, int number, ReviewFixSend send, CancellationToken cancellationToken);
 
+    /// <summary>GET /sindri/reviews/settings?project= (review page spec §7, Ph9): one project's review settings, as written and as resolved.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="project">The project's id.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The settings, SND-REVIEW-002 (an unknown project), or SND-UI-002/003.</returns>
+    public Task<Result<ReviewSettingsRead>> GetReviewSettings(Uri api, string project, CancellationToken cancellationToken);
+
+    /// <summary>PUT /sindri/reviews/settings (Ph9): writes the project's settings entry, approving it in the same click when asked and nothing else waits.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="request">The project, repos, entry name, entry and whether to approve.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>Whether it took effect, SND-REVIEW-001/002 (400, the offending key in the error's <c language="text">field</c>), SND-AUTH-002 (a session), or SND-UI-002/003.</returns>
+    public Task<Result<ReviewSettingsSaved>> SaveReviewSettings(Uri api, ReviewSettingsSave request, CancellationToken cancellationToken);
+
     /// <summary>POST /sindri/library/roots (review page spec §6.3): adds a vault to the library.</summary>
     /// <param name="api">The base URL.</param>
     /// <param name="add">The vault.</param>

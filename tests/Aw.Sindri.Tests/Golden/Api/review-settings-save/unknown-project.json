@@ -1,0 +1,8 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-REVIEW-002",
+  "status": 400,
+  "detail": "review.projects[0].project: 'prj_00000000000000000000000099' is not on the Projects page (fix: attach it there first)",
+  "field": "project",
+  "traceId": "<trace>"
+}

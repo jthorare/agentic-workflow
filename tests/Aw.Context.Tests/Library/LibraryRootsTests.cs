@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Context.Core;
 using Aw.Context.Core.Library;
 using Aw.Context.Features.ReadLibrary;
@@ -23,6 +24,9 @@ public sealed class LibraryRootsTests : IDisposable
 
     private ContextLibrary Library => new(_world.Library, _status);
 
+    private static DesignDocFinding Miss(string path, int line) =>
+        new(path, new DesignDocError(DesignDocCodes.NearMiss, line, string.Create(CultureInfo.InvariantCulture, $"{path}:{line}: aw-doc is \"1\", not the number 1, so the file isn't read."), "Write aw-doc: 1 with no quotes, on the line after the first ---."));
+
     [Fact]
     public async Task Before_a_pass_has_finished_every_configured_root_is_reading()
     {
@@ -35,11 +39,23 @@ public sealed class LibraryRootsTests : IDisposable
     [Fact]
     public async Task A_finished_pass_gives_ok_with_its_counts()
     {
-        _status.Write([new LibraryRootReport("work", "/srv/work", Problem: null, Docs: 3, ["plans/a.md", "plans/b.md"], _at)]);
+        _status.Write([new LibraryRootReport("work", "/srv/work", Problem: null, Docs: 3, [Miss("plans/a.md", 2), Miss("plans/b.md", 3)], _at)]);
 
         var work = (await Library.Roots(MapWorld.HumanWith(WithVault), Ct)).Value.Single(static r => r.Root == "work");
 
-        Assert.Equal(new LibraryRootStatus("work", LibraryRootState.Ok, Reason: null, Docs: 3, NearMisses: 2, _at), work);
+        Assert.Equal((LibraryRootState.Ok, 3, 2, "/srv/work"), (work.State, work.Docs, work.NearMisses, work.Path));
+        Assert.Null(work.Reason);
+        Assert.Equal(_at, work.LastRead);
+        Assert.Equal([Miss("plans/a.md", 2), Miss("plans/b.md", 3)], work.NearMissFindings);
+    }
+
+    [Fact]
+    public async Task Before_a_pass_has_finished_a_root_has_no_path_and_no_findings()
+    {
+        var roots = (await Library.Roots(MapWorld.HumanWith(WithVault), Ct)).Value;
+
+        Assert.All(roots, static r => Assert.Null(r.Path));
+        Assert.All(roots, static r => Assert.Empty(r.NearMissFindings));
     }
 
     [Fact]
@@ -51,6 +67,7 @@ public sealed class LibraryRootsTests : IDisposable
 
         Assert.Equal(LibraryRootState.Unreadable, work.State);
         Assert.Equal("/srv/work is not a folder that exists", work.Reason);
+        Assert.Equal("/srv/work", work.Path);
     }
 
     [Fact]
@@ -60,7 +77,12 @@ public sealed class LibraryRootsTests : IDisposable
 
         var roots = (await Library.Roots(MapWorld.HumanWith("""{"sources":{"library":{"stateDir":"off"}}}"""), Ct)).Value;
 
-        Assert.Equal(new LibraryRootStatus("aw", LibraryRootState.Off, Reason: null, Docs: 0, NearMisses: 0, LastRead: null), Assert.Single(roots));
+        var aw = Assert.Single(roots);
+        Assert.Equal(("aw", LibraryRootState.Off, 0, 0), (aw.Root, aw.State, aw.Docs, aw.NearMisses));
+        Assert.Null(aw.Reason);
+        Assert.Null(aw.LastRead);
+        Assert.Null(aw.Path);
+        Assert.Empty(aw.NearMissFindings);
     }
 
     [Fact]

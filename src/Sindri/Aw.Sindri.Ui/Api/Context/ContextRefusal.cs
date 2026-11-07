@@ -16,7 +16,8 @@ internal static class ContextRefusal
     internal static Error Extend(Error error, byte[] body)
     {
         ArgumentNullException.ThrowIfNull(error);
-        if (!error.Code.StartsWith("SND-CONTEXT-", StringComparison.Ordinal) && !string.Equals(error.Code, "SND-JOB-409", StringComparison.Ordinal) && !string.Equals(error.Code, "SND-LIB-001", StringComparison.Ordinal))   // a job conflict carries the running job; a library refusal the field it belongs under
+        // a job conflict carries the running job; a review settings or library refusal carries the request key it is about (field)
+        if (!error.Code.StartsWith("SND-CONTEXT-", StringComparison.Ordinal) && !error.Code.StartsWith("SND-REVIEW-", StringComparison.Ordinal) && !string.Equals(error.Code, "SND-JOB-409", StringComparison.Ordinal) && !string.Equals(error.Code, "SND-LIB-001", StringComparison.Ordinal))
         {
             return error;
         }

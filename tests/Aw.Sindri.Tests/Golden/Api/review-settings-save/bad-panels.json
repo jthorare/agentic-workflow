@@ -1,0 +1,8 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-REVIEW-001",
+  "status": 400,
+  "detail": "review.settings.sindri.panels: 'ci' is named twice (fix: name each panel at most once)",
+  "field": "entry.panels",
+  "traceId": "<trace>"
+}
