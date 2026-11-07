@@ -4,12 +4,13 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Workflow.Engine.Decisions;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Ids;
-using Aw.Sindri.Infrastructure.Workflows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Temporalio.Common;
 using Temporalio.Exceptions;
 using Temporalio.Worker;
+using Temporalio.Worker.Interceptors;
+using Temporalio.Workflows;
 
 namespace Aw.Sindri.Tests.Workflows;
 
@@ -22,13 +23,8 @@ public sealed class LoadRecipeReadFailureTests(SindriTimeSkippingServer server) 
     private const int Attempts = 3;
 
     private readonly WorkflowsHarness _harness = new();
-    private readonly RetryPolicy _production = RecipeWorkflow.LoadRetries;
 
-    public void Dispose()
-    {
-        RecipeWorkflow.LoadRetries = _production;
-        _harness.Dispose();
-    }
+    public void Dispose() => _harness.Dispose();
 
     [Fact(Timeout = 120_000)]
     public async Task An_instance_whose_LoadRecipe_read_always_fails_ends_failed_naming_the_read()
@@ -37,13 +33,14 @@ public sealed class LoadRecipeReadFailureTests(SindriTimeSkippingServer server) 
         var env = server.Environment;
         _harness.Recipe("workflow.item", WorkflowsHarness.Shipped("sindri/workflow.item.yaml"));
         await using var plain = _harness.Sindri();
-        // why: the production policy backs off 1 s to 1 min; a local activity's backoff under a minute sleeps in the worker in real time, which the time-skipping server can't skip
-        RecipeWorkflow.LoadRetries = new RetryPolicy { MaximumAttempts = Attempts, InitialInterval = TimeSpan.FromMilliseconds(10), BackoffCoefficient = 1, MaximumInterval = TimeSpan.FromMilliseconds(10) };
         var start = await WorkflowsHarness.RecipeStart(plain, "workflow.item", "T-2191", ct);
         var store = new LockedStore(plain.GetRequiredService<IApprovedRecipes>());
         await using var sindri = _harness.Sindri(services => services.Replace(ServiceDescriptor.Singleton<IApprovedRecipes>(store)));
         await WorkflowsHarness.HoldLease(sindri, ct);
-        using var worker = new TemporalWorker(env.Client, sindri.GetRequiredService<TemporalWorkerOptions>());
+        // why: the production policy backs off 1 s to 1 min; a local activity's backoff under a minute sleeps in the worker in real time, which the time-skipping server can't skip, so this worker alone retries 3 times at 10 ms
+        var options = (TemporalWorkerOptions)sindri.GetRequiredService<TemporalWorkerOptions>().Clone();
+        options.Interceptors = [.. options.Interceptors ?? [], new ShortLoadRetries(Attempts)];
+        using var worker = new TemporalWorker(env.Client, options);
 
         await worker.ExecuteAsync(async () =>
         {
@@ -77,6 +74,32 @@ public sealed class LoadRecipeReadFailureTests(SindriTimeSkippingServer server) 
         }
 
         return string.Join(" | ", messages);
+    }
+
+    private sealed class ShortLoadRetries(int attempts) : IWorkerInterceptor
+    {
+        public WorkflowInboundInterceptor InterceptWorkflow(WorkflowInboundInterceptor nextInterceptor) => new Inbound(nextInterceptor, attempts);
+
+        private sealed class Inbound(WorkflowInboundInterceptor next, int attempts) : WorkflowInboundInterceptor(next)
+        {
+            public override void Init(WorkflowOutboundInterceptor outbound) => base.Init(new Outbound(outbound, attempts));
+        }
+
+        private sealed class Outbound(WorkflowOutboundInterceptor next, int attempts) : WorkflowOutboundInterceptor(next)
+        {
+            public override Task<TResult> ScheduleLocalActivityAsync<TResult>(ScheduleLocalActivityInput input)
+            {
+                ArgumentNullException.ThrowIfNull(input);
+                if (!string.Equals(input.Activity, "LoadRecipe", StringComparison.Ordinal))
+                {
+                    return base.ScheduleLocalActivityAsync<TResult>(input);
+                }
+
+                var options = (LocalActivityOptions)input.Options.Clone();
+                options.RetryPolicy = new RetryPolicy { MaximumAttempts = attempts, InitialInterval = TimeSpan.FromMilliseconds(10), BackoffCoefficient = 1, MaximumInterval = TimeSpan.FromMilliseconds(10) };
+                return base.ScheduleLocalActivityAsync<TResult>(input with { Options = options });
+            }
+        }
     }
 
     // Latest answers as the real store does (the start reads it); every Find, the read LoadRecipe makes, fails the way a locked store does.
