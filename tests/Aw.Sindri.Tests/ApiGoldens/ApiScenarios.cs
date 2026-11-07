@@ -170,7 +170,7 @@ internal static class ApiScenarios
     private static Func<Task<string>>? ReviewBody(GoldenHost host, string slug, string scenario, CancellationToken ct) =>
         ReviewScenarios.Handles(slug, scenario) ? () => ReviewScenarios.Body(host, slug, scenario, ct)
         : ReviewLoginScenarios.Handles(slug, scenario) ? () => ReviewLoginScenarios.Body(host, scenario, ct)
-        : LibraryScenarios.Handles(slug, scenario) ? () => LibraryScenarios.Body(host, ct)
+        : LibraryScenarios.Handles(slug, scenario) ? () => LibraryScenarios.Body(host, scenario, ct)
         : LibraryDocScenarios.Handles(slug, scenario) ? () => LibraryDocScenarios.Body(host, scenario, ct)
         : null;
 

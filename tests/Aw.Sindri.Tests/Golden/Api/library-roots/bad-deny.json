@@ -1,0 +1,8 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-LIB-001",
+  "status": 400,
+  "detail": "library root deny '/etc/**' isn't a folder pattern (fix: use patterns relative to the vault, like Private/** or Journal/**)",
+  "field": "deny",
+  "traceId": "<trace>"
+}

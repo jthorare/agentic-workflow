@@ -1,0 +1,8 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-LIB-001",
+  "status": 400,
+  "detail": "library root path 'Documents/Notes' isn't an absolute folder (fix: start it with / or ~/, and leave out ..)",
+  "field": "path",
+  "traceId": "<trace>"
+}

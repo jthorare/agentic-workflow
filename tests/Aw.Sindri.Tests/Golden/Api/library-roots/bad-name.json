@@ -1,0 +1,8 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-LIB-001",
+  "status": 400,
+  "detail": "library root name 'Work Notes' isn't a name (fix: use lowercase letters, digits and \"-\", starting with a letter)",
+  "field": "name",
+  "traceId": "<trace>"
+}
