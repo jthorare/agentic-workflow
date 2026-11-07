@@ -14,6 +14,13 @@ Runs parallel domain-specific reviewers and saves findings locally. Does **not**
 
 Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
 
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes. The skill reads the PR and writes findings locally; it never posts a review or comment (`/postReview` does that).
+- `readonly`: the same, since the skill changes no branch, worktree, commit, push, PR, PR comment or review and no remote ref. If a step would run one, print it under a `Would run:` heading instead.
+
 ## Under Sindri (`AW_RESULT_SKILL=review`)
 
 Only when the Result block's gate printed `AW_RESULT_SKILL=review`. The Step has no GitHub network, so:
