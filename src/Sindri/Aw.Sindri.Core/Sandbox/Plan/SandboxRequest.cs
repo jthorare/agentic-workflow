@@ -52,4 +52,7 @@ public sealed record SandboxRequest(
 
     /// <summary>Null, or a trial skill launch's --skills folder: the plan mounts it read-only, because the session's home is an empty tmpfs.</summary>
     public string? SkillTrialDirectory { get; init; }
+
+    /// <summary>Null for a Step that is not a skill block; else whether the block pushes and the run is not a trial. False leaves the Step without the agent GitHub token (<see cref="Credentials.GithubCredentialResolver"/>).</summary>
+    public bool? SkillPushes { get; init; }
 }
