@@ -37,7 +37,7 @@ internal static class LinearWriteRequests
         JsonObject input = [];
         Set(input, "title", change.Title.IsSet, JsonValue.Create(change.Title.Value));
         Set(input, "description", change.Description.IsSet, JsonValue.Create(change.Description.Value));
-        Set(input, "stateId", change.StateId.IsSet, JsonValue.Create(change.StateId.Value.Value));
+        Set(input, "stateId", change.StateId.IsSet, change.StateId.IsSet ? JsonValue.Create(change.StateId.Value.Value) : null);
         Set(input, "assigneeId", change.AssigneeId.IsSet, JsonValue.Create(change.AssigneeId.Value?.Value));
         Set(input, "priority", change.Priority.IsSet, JsonValue.Create(change.Priority.Value));
         Set(input, "estimate", change.Estimate.IsSet, JsonValue.Create(change.Estimate.Value));

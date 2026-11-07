@@ -24,6 +24,8 @@ await using var linear = await FakeLinear.Start(seed => seed
   issues hidden unless `includeArchived: true`), `issue(id:)` (by id, identifier, or an identifier the issue had before a team
   move), `comments` (newest first; filter by `issue: { team: { key } }`), `teams` (each with `states`, `cycles`, `members` and `labels` connections, for the lookups step), `users`, `issueLabels` (each with its `team`, null for a workspace label), `workflowStates`, `cycles`, `projects`, empty `documents` and `projectUpdates`.
   A field the fake doesn't have is a 400 that names it.
+- A comment's and an attachment's `issue` is the whole issue (without its own comments and attachments), so a mutation can ask for `comment { issue { ... } }` as the write client does.
+- `IssueCreateInput` and `IssueUpdateInput` accept `parentId`, but the fake does not apply it: an issue's `parent` is always null.
 - Mutations: `issueCreate`, `issueUpdate`, `commentCreate`, `commentUpdate`, `attachmentLinkURL`, `issueArchive`,
   `issueLabelCreate`. Each answers `{ success, lastSyncId, <entity> }`: `issue`, `comment`, `attachment`, `issueLabel`, and
   `entity` for `issueArchive`. Inputs may come through variables or inline.

@@ -17,13 +17,13 @@ internal static class LinearSchema
         [
             new("id", "String"), new("title", "String", Required: true), new("description", "String"), new("teamId", "String", Required: true),
             new("stateId", "String"), new("assigneeId", "String"), new("priority", "Int"), new("estimate", "Int"),
-            new("cycleId", "String"), new("projectId", "String"), new("labelIds", "String", List: true),
+            new("cycleId", "String"), new("projectId", "String"), new("parentId", "String"), new("labelIds", "String", List: true),
         ],
         ["IssueUpdateInput"] =
         [
             new("title", "String"), new("description", "String"), new("teamId", "String"), new("stateId", "String"),
             new("assigneeId", "String"), new("priority", "Int"), new("estimate", "Int"), new("cycleId", "String"),
-            new("projectId", "String"), new("labelIds", "String", List: true),
+            new("projectId", "String"), new("parentId", "String"), new("labelIds", "String", List: true),
         ],
         ["CommentCreateInput"] = [new("id", "String"), new("body", "String", Required: true), new("issueId", "String", Required: true)],
         ["CommentUpdateInput"] = [new("body", "String", Required: true)],
