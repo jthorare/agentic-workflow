@@ -49,6 +49,8 @@
         </StackPanel>
         <TextBlock x:Name="ReviewsLoginError" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding LoginError}" TextWrapping="Wrap"
                    IsVisible="{Binding LoginError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding LoginError}" />
+        <TextBlock x:Name="ReviewsLoginNote" Classes="caption subtle" Text="{Binding LoginNote}" TextWrapping="Wrap"
+                   IsVisible="{Binding LoginNote, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding LoginNote}" />
       </StackPanel>
     </Border>
 

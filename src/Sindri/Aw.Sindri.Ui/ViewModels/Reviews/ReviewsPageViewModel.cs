@@ -80,9 +80,19 @@ internal sealed partial class ReviewsPageViewModel : ObservableObject, IDisposab
         set
         {
             Set(ref field, value);
+            _loginTyped |= !_prefilling;
             OnChanged(nameof(CanSaveLogin));
         }
     } = string.Empty;
+
+    // True once the owner has typed in the field (emptying it counts): a refresh never puts the suggestion back.
+    private bool _loginTyped;
+
+    // True while the served suggestion is being put into the field.
+    private bool _prefilling;
+
+    /// <summary>The line under the field after a save that is written but waits for a profile approval; empty otherwise.</summary>
+    public string LoginNote { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>The empty state's lines (text, hint, teams); null when there are rows.</summary>
     public IReadOnlyList<string>? EmptyLines { get; private set => Set(ref field, value); }
@@ -124,11 +134,11 @@ internal sealed partial class ReviewsPageViewModel : ObservableObject, IDisposab
         var saved = await _api.SaveReviewLogin(url, new ReviewLoginSave(LoginField.Trim()), cancellationToken).ConfigureAwait(true);
         if (saved.IsError)
         {
-            LoginError = Labels.InstanceRefused(saved.Error);
+            (LoginError, LoginNote) = (Labels.InstanceRefused(saved.Error), string.Empty);
             return;
         }
 
-        LoginError = string.Empty;
+        (LoginError, LoginNote) = (string.Empty, saved.Value.Approved ? string.Empty : Labels.ReviewsLoginPending);   // not approved: written, but the prompt stays until the owner approves
         await Read(url, cancellationToken).ConfigureAwait(true);
     }
 
@@ -235,9 +245,11 @@ internal sealed partial class ReviewsPageViewModel : ObservableObject, IDisposab
         (Notice, StaleText, LibraryText, WaitingCount) = (list.Notice, list.Stale?.Text, list.Library.Text, list.WaitingCount);
         LibraryWarns = list.Library.WithErrors > 0 || list.Library.UnreadableRoots > 0;
         (IsLoginPrompt, LoginHeading) = (list.LoginPrompt is not null, list.LoginPrompt?.Text ?? string.Empty);
-        if (list.LoginPrompt is { } prompt && string.IsNullOrEmpty(LoginField))
+        if (list.LoginPrompt is { } prompt && !_loginTyped && string.IsNullOrEmpty(LoginField))
         {
-            LoginField = prompt.Suggested ?? string.Empty;   // only into an empty field: what the owner typed stays
+            _prefilling = true;
+            LoginField = prompt.Suggested ?? string.Empty;   // only into a field the owner never typed in: what they typed, or emptied, stays
+            _prefilling = false;
         }
 
         EmptyLines = list.Empty is { } empty ? [empty.Text, empty.Hint, empty.Teams] : null;
