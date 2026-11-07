@@ -50,7 +50,7 @@ public static partial class SkillResultReader
             return Of(SkillResultKind.OwnerWaiting, SkillWaitReason.Unreadable, SindriErrors.SkillResultWrongSkill, other);
         }
 
-        if (Text(root, "waiting") is { Length: > 0 } question)
+        if (QuestionOf(root) is { } question)
         {
             return Of(SkillResultKind.OwnerWaiting, SkillWaitReason.Question) with { Text = question };
         }
@@ -82,6 +82,10 @@ public static partial class SkillResultReader
 
         return new SkillResultDecision(SkillResultKind.Complete, Reason: null, outcome, facts, Text: null, Error: null, Detail: null);
     }
+
+    // why: only a non-empty string is a question; "waiting": false is not one
+    private static string? QuestionOf(JsonElement root) =>
+        root.TryGetProperty("waiting", out var waiting) && waiting.ValueKind == JsonValueKind.String && waiting.GetString() is { Length: > 0 } question ? question : null;
 
     private static (string Value, SkillResultDecision? Failure) OutcomeOf(JsonElement root, SkillResultInput input)
     {

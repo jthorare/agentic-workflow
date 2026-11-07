@@ -32,9 +32,12 @@ public static partial class SkillManifestParser
         }
     }
 
+    private static bool IsSchemaOne(JsonElement root) =>
+        root.ValueKind == JsonValueKind.Object && root.TryGetProperty("schema", out var schema) && schema.ValueKind == JsonValueKind.Number && schema.TryGetInt32(out var version) && version == 1;
+
     private static SkillBlocks Blocks(string skill, string path, JsonElement root, string? skillMarkdown)
     {
-        if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty("schema", out var schema) || schema.ValueKind != JsonValueKind.Number || schema.GetInt32() != 1)
+        if (!IsSchemaOne(root))
         {
             return Skipped(skill, path, "the file needs 'schema: 1'");
         }
@@ -56,6 +59,10 @@ public static partial class SkillManifestParser
             catch (ManifestProblemException problem)
             {
                 skipped.Add(new SkippedSkillBlock(Text(block, "id") ?? skill, path, problem.Message));
+            }
+            catch (Exception e) when (e is InvalidOperationException or FormatException)
+            {
+                skipped.Add(new SkippedSkillBlock(Text(block, "id") ?? skill, path, "a field has the wrong type: " + e.Message));   // why: a backstop for a value read as the wrong kind; one bad block never takes the file's good ones with it
             }
         }
 
@@ -205,14 +212,7 @@ public static partial class SkillManifestParser
 
         var success = Text(outcomes, "success") ?? throw new ManifestProblemException("'outcomes' needs a 'success'");
         var from = Text(outcomes, "from");
-        var map = new Dictionary<string, string>(StringComparer.Ordinal);
-        if (outcomes.TryGetProperty("map", out var mapped) && mapped.ValueKind == JsonValueKind.Object)
-        {
-            foreach (var property in mapped.EnumerateObject())
-            {
-                map[property.Name] = property.Value.GetString() ?? string.Empty;
-            }
-        }
+        var map = OutcomeMap(outcomes);
 
         if (from is not null && !map.ContainsValue(success))
         {
@@ -220,6 +220,20 @@ public static partial class SkillManifestParser
         }
 
         return new SkillOutcomes(from, map, success);
+    }
+
+    private static Dictionary<string, string> OutcomeMap(JsonElement outcomes)
+    {
+        var map = new Dictionary<string, string>(StringComparer.Ordinal);
+        if (outcomes.TryGetProperty("map", out var mapped) && mapped.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in mapped.EnumerateObject())
+            {
+                map[property.Name] = property.Value.ValueKind == JsonValueKind.String ? property.Value.GetString() ?? string.Empty : throw new ManifestProblemException($"outcome '{property.Name}' maps to something other than a name");
+            }
+        }
+
+        return map;
     }
 
     private static SkillValueType ValueType(string? type, string what) => type switch
