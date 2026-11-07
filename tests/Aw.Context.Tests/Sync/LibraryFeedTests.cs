@@ -44,7 +44,7 @@ public sealed class LibraryFeedTests
     }
 
     [Fact]
-    public async Task Near_misses_are_counted_with_their_paths_and_nothing_of_them_is_stored()
+    public async Task Near_misses_are_reported_with_their_paths_lines_and_fixes_and_nothing_of_them_is_stored()
     {
         using var home = new TempHome();
         using var rig = new LibraryFeedRig(home);
@@ -55,7 +55,12 @@ public sealed class LibraryFeedTests
         Assert.Equal(LibraryFeedRig.Harbor, report.Root);
         Assert.Null(report.Problem);
         Assert.Equal(3, report.Docs);
-        Assert.Equal(["plans/blank-first.md", "plans/float-one.md", "plans/quoted-one.md", "plans/yes-one.md"], report.NearMisses.Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["plans/blank-first.md", "plans/float-one.md", "plans/quoted-one.md", "plans/yes-one.md"], report.NearMisses.Select(static m => m.Path).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.All(report.NearMisses, static m => Assert.Equal("SND-LIB-019", m.Error.Code));
+        var quoted = report.NearMisses.Single(static m => m.Path == "plans/quoted-one.md");
+        Assert.Equal(2, quoted.Error.Line);
+        Assert.StartsWith("plans/quoted-one.md:2: aw-doc is \"1\"", quoted.Error.Message, StringComparison.Ordinal);
+        Assert.NotEmpty(quoted.Error.Fix);
         Assert.DoesNotContain(await rig.Stored(), static r => r.Key.Value.Contains("quoted-one", StringComparison.Ordinal));
     }
 

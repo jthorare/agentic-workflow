@@ -11950,14 +11950,14 @@ Aw.Context.Core.Library.LibraryAdmissionKind.Read = 2 -> Aw.Context.Core.Library
 Aw.Context.Core.Library.LibraryAdmissionKind.Skip = 0 -> Aw.Context.Core.Library.LibraryAdmissionKind
 Aw.Context.Core.Library.LibraryRootReport
 Aw.Context.Core.Library.LibraryRootReport.<Clone>$() -> Aw.Context.Core.Library.LibraryRootReport!
-Aw.Context.Core.Library.LibraryRootReport.Deconstruct(out string! Root, out string! Path, out string? Problem, out int Docs, out System.Collections.Generic.IReadOnlyList<string!>! NearMisses, out System.DateTimeOffset LastRead) -> void
+Aw.Context.Core.Library.LibraryRootReport.Deconstruct(out string! Root, out string! Path, out string? Problem, out int Docs, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignDocFinding!>! NearMisses, out System.DateTimeOffset LastRead) -> void
 Aw.Context.Core.Library.LibraryRootReport.Docs.get -> int
 Aw.Context.Core.Library.LibraryRootReport.Docs.init -> void
 Aw.Context.Core.Library.LibraryRootReport.Equals(Aw.Context.Core.Library.LibraryRootReport? other) -> bool
 Aw.Context.Core.Library.LibraryRootReport.LastRead.get -> System.DateTimeOffset
 Aw.Context.Core.Library.LibraryRootReport.LastRead.init -> void
-Aw.Context.Core.Library.LibraryRootReport.LibraryRootReport(string! Root, string! Path, string? Problem, int Docs, System.Collections.Generic.IReadOnlyList<string!>! NearMisses, System.DateTimeOffset LastRead) -> void
-Aw.Context.Core.Library.LibraryRootReport.NearMisses.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Library.LibraryRootReport.LibraryRootReport(string! Root, string! Path, string? Problem, int Docs, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignDocFinding!>! NearMisses, System.DateTimeOffset LastRead) -> void
+Aw.Context.Core.Library.LibraryRootReport.NearMisses.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignDocFinding!>!
 Aw.Context.Core.Library.LibraryRootReport.NearMisses.init -> void
 Aw.Context.Core.Library.LibraryRootReport.Path.get -> string!
 Aw.Context.Core.Library.LibraryRootReport.Path.init -> void
@@ -11972,13 +11972,17 @@ Aw.Context.Core.Library.LibraryRootState.Reading = 0 -> Aw.Context.Core.Library.
 Aw.Context.Core.Library.LibraryRootState.Unreadable = 2 -> Aw.Context.Core.Library.LibraryRootState
 Aw.Context.Core.Library.LibraryRootStatus
 Aw.Context.Core.Library.LibraryRootStatus.<Clone>$() -> Aw.Context.Core.Library.LibraryRootStatus!
-Aw.Context.Core.Library.LibraryRootStatus.Deconstruct(out string! Root, out Aw.Context.Core.Library.LibraryRootState State, out string? Reason, out int Docs, out int NearMisses, out System.DateTimeOffset? LastRead) -> void
+Aw.Context.Core.Library.LibraryRootStatus.Deconstruct(out string! Root, out Aw.Context.Core.Library.LibraryRootState State, out string? Reason, out int Docs, out int NearMisses, out System.DateTimeOffset? LastRead, out string? Path, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignDocFinding!>! NearMissFindings) -> void
 Aw.Context.Core.Library.LibraryRootStatus.Docs.get -> int
 Aw.Context.Core.Library.LibraryRootStatus.Docs.init -> void
 Aw.Context.Core.Library.LibraryRootStatus.Equals(Aw.Context.Core.Library.LibraryRootStatus? other) -> bool
 Aw.Context.Core.Library.LibraryRootStatus.LastRead.get -> System.DateTimeOffset?
 Aw.Context.Core.Library.LibraryRootStatus.LastRead.init -> void
-Aw.Context.Core.Library.LibraryRootStatus.LibraryRootStatus(string! Root, Aw.Context.Core.Library.LibraryRootState State, string? Reason, int Docs, int NearMisses, System.DateTimeOffset? LastRead) -> void
+Aw.Context.Core.Library.LibraryRootStatus.LibraryRootStatus(string! Root, Aw.Context.Core.Library.LibraryRootState State, string? Reason, int Docs, int NearMisses, System.DateTimeOffset? LastRead, string? Path, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignDocFinding!>! NearMissFindings) -> void
+Aw.Context.Core.Library.LibraryRootStatus.NearMissFindings.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.DesignDocFinding!>!
+Aw.Context.Core.Library.LibraryRootStatus.NearMissFindings.init -> void
+Aw.Context.Core.Library.LibraryRootStatus.Path.get -> string?
+Aw.Context.Core.Library.LibraryRootStatus.Path.init -> void
 Aw.Context.Core.Library.LibraryRootStatus.NearMisses.get -> int
 Aw.Context.Core.Library.LibraryRootStatus.NearMisses.init -> void
 Aw.Context.Core.Library.LibraryRootStatus.Reason.get -> string?
@@ -12007,6 +12011,7 @@ override Aw.Context.Core.Library.LibrarySetup.Equals(object? obj) -> bool
 override Aw.Context.Core.Library.LibrarySetup.GetHashCode() -> int
 override Aw.Context.Core.Library.LibrarySetup.ToString() -> string!
 static Aw.Context.Core.Library.LibraryAdmission.Classify(string! path, string! head) -> Aw.Context.Core.Library.LibraryAdmissionKind
+static Aw.Context.Core.Library.LibraryAdmission.NearMiss(string! path, string! head) -> Aw.Context.Core.Library.DesignDocError?
 static Aw.Context.Core.Library.LibraryRootReport.operator !=(Aw.Context.Core.Library.LibraryRootReport? left, Aw.Context.Core.Library.LibraryRootReport? right) -> bool
 static Aw.Context.Core.Library.LibraryRootReport.operator ==(Aw.Context.Core.Library.LibraryRootReport? left, Aw.Context.Core.Library.LibraryRootReport? right) -> bool
 static Aw.Context.Core.Library.LibraryRootStatus.operator !=(Aw.Context.Core.Library.LibraryRootStatus? left, Aw.Context.Core.Library.LibraryRootStatus? right) -> bool

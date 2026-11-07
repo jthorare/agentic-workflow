@@ -29,17 +29,17 @@ internal sealed class ContextLibrary(ILibraryStore store, ILibraryStatus? status
         // why: a profile that names no 'context.sources.library' still reads the 'aw' root, as the record feed catalog does
         var library = settings.Value.Library ?? new LibrarySettings();
         var reports = (status?.Read() ?? []).ToDictionary(static r => r.Root, StringComparer.Ordinal);
-        var roots = new List<LibraryRootStatus> { library.AwRootOn ? RootStatus("aw", reports) : new LibraryRootStatus("aw", LibraryRootState.Off, Reason: null, Docs: 0, NearMisses: 0, LastRead: null) };
+        var roots = new List<LibraryRootStatus> { library.AwRootOn ? RootStatus("aw", reports) : new LibraryRootStatus("aw", LibraryRootState.Off, Reason: null, Docs: 0, NearMisses: 0, LastRead: null, Path: null, NearMissFindings: []) };
         roots.AddRange(library.Vaults.Select(v => RootStatus(v.Name, reports)));
         return ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryRootStatus>>(roots));
     }
 
     private static LibraryRootStatus RootStatus(string root, Dictionary<string, LibraryRootReport> reports) =>
         !reports.TryGetValue(root, out var report)
-            ? new LibraryRootStatus(root, LibraryRootState.Reading, Reason: null, Docs: 0, NearMisses: 0, LastRead: null)
+            ? new LibraryRootStatus(root, LibraryRootState.Reading, Reason: null, Docs: 0, NearMisses: 0, LastRead: null, Path: null, NearMissFindings: [])
             : report.Problem is { } problem
-                ? new LibraryRootStatus(root, LibraryRootState.Unreadable, problem, Docs: 0, NearMisses: 0, report.LastRead)
-                : new LibraryRootStatus(root, LibraryRootState.Ok, Reason: null, report.Docs, report.NearMisses.Count, report.LastRead);
+                ? new LibraryRootStatus(root, LibraryRootState.Unreadable, problem, Docs: 0, NearMisses: 0, report.LastRead, report.Path, NearMissFindings: [])
+                : new LibraryRootStatus(root, LibraryRootState.Ok, Reason: null, report.Docs, report.NearMisses.Count, report.LastRead, report.Path, report.NearMisses);
 
     public async ValueTask<Result<IReadOnlyList<LibraryDoc>>> ListDocs(LibraryDocFilter filter, AudienceScope audience, CancellationToken cancellationToken)
     {
