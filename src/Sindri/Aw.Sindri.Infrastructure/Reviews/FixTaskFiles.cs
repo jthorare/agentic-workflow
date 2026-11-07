@@ -89,13 +89,26 @@ internal sealed class FixTaskFiles(ISindriHome home) : IFixTaskFiles
         List<(string Item, int Pr)> tasks = [];
         foreach (var task in array.OfType<JsonObject>())
         {
-            if (task["item"]?.GetValue<string>() is { } item && task["pr"]?.GetValue<int>() is { } pr)
+            if (Row(task) is { } row)
             {
-                tasks.Add((item, pr));
+                tasks.Add(row);
             }
         }
 
         return tasks;
+    }
+
+    // why: a hand-edited row ({"item":5}, {"pr":"x"}) is skipped, like a row missing a field; it must not fail the write
+    private static (string Item, int Pr)? Row(JsonObject task)
+    {
+        try
+        {
+            return task["item"]?.GetValue<string>() is { } item && task["pr"]?.GetValue<int>() is { } pr ? (item, pr) : null;
+        }
+        catch (Exception e) when (e is InvalidOperationException or FormatException)
+        {
+            return null;
+        }
     }
 
     private static string HeadOf(string path) => Read(path)?["head"]?.GetValue<string>() ?? string.Empty;

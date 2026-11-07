@@ -24,12 +24,13 @@ internal sealed class ReviewPageCache(IReviewPages pages, IReviewSummaries summa
         _ = await summaries.Write(pull, Summary(page, facts), cancellationToken).ConfigureAwait(false);
     }
 
-    internal async ValueTask<Result<ReviewPageModel>> Offline(ReviewPullRef pull, CancellationToken cancellationToken)
+    internal async ValueTask<Result<ReviewPageModel>> Offline(ReviewPullRef pull, string? refusedCode, CancellationToken cancellationToken)
     {
+        var refused = refusedCode is null ? string.Empty : $". GitHub refused: {refusedCode}";
         var cached = await pages.Newest(pull, cancellationToken).ConfigureAwait(false);
         return cached.IsSuccess && cached.Value is { } hit
-            ? hit.Page with { AsOf = status.Current.AsOf, Offline = new ReviewPageOffline(hit.CachedAt, "as of " + hit.CachedAt.UtcDateTime.ToString("HH:mm", CultureInfo.InvariantCulture) + ", the PR may have moved") }
-            : SindriErrors.ReviewOfflineUncached.With("Offline, and this PR isn't cached yet");
+            ? hit.Page with { AsOf = status.Current.AsOf, Offline = new ReviewPageOffline(hit.CachedAt, "as of " + hit.CachedAt.UtcDateTime.ToString("HH:mm", CultureInfo.InvariantCulture) + ", the PR may have moved" + refused) }
+            : SindriErrors.ReviewOfflineUncached.With("Offline, and this PR isn't cached yet" + refused);
     }
 
     private ReviewSummary Summary(ReviewPageModel page, ReviewPageFacts facts)
