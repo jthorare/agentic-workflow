@@ -50,7 +50,10 @@
             </ItemsControl>
           </StackPanel>
           <TextBlock x:Name="ReviewOffline" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding OfflineText}" IsVisible="{Binding OfflineText, Converter={x:Static ObjectConverters.IsNotNull}}" />
-          <TextBlock x:Name="ReviewMoving" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding MovingText}" IsVisible="{Binding MovingText, Converter={x:Static ObjectConverters.IsNotNull}}" />
+          <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}" IsVisible="{Binding MovingText, Converter={x:Static ObjectConverters.IsNotNull}}">
+            <TextBlock x:Name="ReviewMoving" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding MovingText}" VerticalAlignment="Center" />
+            <Button x:Name="ReviewReload" Click="OnTryAgain" Content="{Binding ReloadText}" AutomationProperties.Name="{Binding ReloadText}" />
+          </StackPanel>
         </StackPanel>
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{StaticResource Space.XS}" VerticalAlignment="Top">
           <TextBlock Classes="caption subtle" VerticalAlignment="Center" Text="{Binding SettingsText}" />

@@ -60,6 +60,9 @@ internal static partial class Labels
 
     internal const string ReviewCommentOnGitHub = "Comment on GitHub";
 
+    /// <summary>The Reload button beside the moving line.</summary>
+    internal const string ReviewReload = "Reload";
+
     internal const string ReviewOwnPr = "You can't approve or request changes on your own PR: GitHub takes a comment only";
 
     internal const string ReviewActionNote = "Release 1: both buttons open this PR's review box on GitHub. Your ticks are saved on this head.";

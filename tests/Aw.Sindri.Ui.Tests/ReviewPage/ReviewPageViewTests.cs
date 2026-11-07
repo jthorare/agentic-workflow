@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels.Reviews;
@@ -63,6 +64,19 @@ public sealed class ReviewPageViewTests : FrameHost
         segments[2].RaiseEvent(new RoutedEventArgs(Button.ClickEvent));   // "1 risky file"
 
         await Until(window, () => !shell.ReviewPage.Panels.Single(p => string.Equals(p.Id, "risk", StringComparison.Ordinal)).IsCollapsed, "the risk panel never opened");
+    });
+
+    [Fact]
+    public Task The_moving_line_has_a_Reload_button_that_reads_again_and_focuses_the_first_strip_part() => OnUi(async () =>
+    {
+        Server.ReviewPageAnswer = RouteAnswer.Api("reviews-pr", "moving");
+        var (window, shell) = await OnPage(1440);
+        var reads = Server.ReviewPageReads.Count;
+
+        Named<Button>(window, "ReviewReload").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        await Until(window, () => Server.ReviewPageReads.Count > reads && shell.ReviewPage.State == ReviewPageState.Ready && Named<Button>(window, "ReviewStripSegment").IsFocused, "Reload never read again and focused the strip");
+        Assert.Equal(new ReviewFocus(ReviewFocusRegion.StripFirst), shell.ReviewPage.Focus);
     });
 
     [Fact]
