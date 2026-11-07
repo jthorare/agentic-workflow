@@ -28,6 +28,25 @@ public sealed class PathExecutableLocatorTests : IDisposable
     }
 
     [Fact]
+    public void A_dangling_link_on_the_path_is_not_found()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "Symbolic links need a privilege on Windows");
+        _ = File.CreateSymbolicLink(Path.Combine(_path.First, "cursor-agent"), Path.Combine(_path.First, "missing-target"));
+
+        Assert.False(new PathExecutableLocator(name => name == "PATH" ? _path.Path : null).IsOnPath("cursor-agent"));
+    }
+
+    [Fact]
+    public void A_dangling_link_does_not_hide_a_real_binary_later_on_the_path()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "Symbolic links need a privilege on Windows");
+        _ = File.CreateSymbolicLink(Path.Combine(_path.First, "codex"), Path.Combine(_path.First, "missing-target"));
+        PathDirectories.AddFile(_path.Second, "codex", executable: true);
+
+        Assert.True(new PathExecutableLocator(name => name == "PATH" ? _path.Path : null).IsOnPath("codex"));
+    }
+
+    [Fact]
     public void Nothing_is_found_without_a_path()
     {
         PathDirectories.AddFile(_path.First, "codex", executable: true);

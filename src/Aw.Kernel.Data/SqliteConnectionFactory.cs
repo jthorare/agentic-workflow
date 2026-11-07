@@ -79,6 +79,9 @@ public sealed class SqliteConnectionFactory(SqliteOptions options) : ISqliteConn
         }
 
         _ = await Scalar(connection, "PRAGMA foreign_keys = ON; PRAGMA synchronous = NORMAL", cancellationToken).ConfigureAwait(false);
+        // Without a limit a -wal file keeps its high-water size after every checkpoint: one burst under a long reader
+        // left a 12G log beside a 2.2G context.db (#2022). With it, the next log reset truncates the file to 4 MiB.
+        _ = await Scalar(connection, "PRAGMA journal_size_limit = 4194304", cancellationToken).ConfigureAwait(false);
         return Results.Ok();
     }
 
