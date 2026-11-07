@@ -90,8 +90,14 @@ internal static class RecordMappers
     /// <returns>The mapper.</returns>
     internal static IRowMapper<VectorRow> Vector(VectorSpace space) => new Mapper<VectorRow>(r =>
     {
-        var bytes = r.GetFieldValue<byte[]>(5);
-        var floats = new float[bytes.Length / sizeof(float)];
+        var dim = r.GetInt32(4);
+        var bytes = SqliteRead.GetBlob(r, 5);
+        if (dim < 1 || bytes.Length != dim * sizeof(float))
+        {
+            throw new InvalidDataException(string.Create(CultureInfo.InvariantCulture, $"Column embedding.vec holds {bytes.Length} bytes, not dim {dim} floats ({dim} x {sizeof(float)} bytes)."));
+        }
+
+        var floats = new float[dim];
         for (var i = 0; i < floats.Length; i++)
         {
             floats[i] = BinaryPrimitives.ReadSingleLittleEndian(bytes.AsSpan(i * sizeof(float), sizeof(float)));
