@@ -157,6 +157,19 @@ public sealed class SkillResultReaderTests
     }
 
     [Fact]
+    public void A_malformed_output_on_a_non_success_outcome_is_skipped_with_a_detail_naming_it()
+    {
+        var input = Input(SkillFixtures.BugFixOrchestrator, """{"skill":"bugFixOrchestrator","status":"partial","branch":"fix/x","artifacts":["relative/resolution.md"]}""", skill: "bugFixOrchestrator");
+
+        var decision = SkillResultReader.Decide(input);
+
+        Assert.Equal((SkillResultKind.Complete, "partial"), (decision.Kind, decision.Outcome));
+        Assert.Contains("resolution", decision.Detail, StringComparison.Ordinal);
+        Assert.Contains("not an absolute path", decision.Detail, StringComparison.Ordinal);
+        Assert.Null(decision.Error);
+    }
+
+    [Fact]
     public void A_resolved_result_without_the_pr_still_fails_the_Step_SND_SKILL_004()
     {
         var input = Input(SkillFixtures.BugFixOrchestrator, """{"skill":"bugFixOrchestrator","status":"resolved","branch":"fix/x"}""", skill: "bugFixOrchestrator");

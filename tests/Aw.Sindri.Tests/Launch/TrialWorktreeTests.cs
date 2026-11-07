@@ -100,4 +100,24 @@ public sealed class TrialWorktreeTests : IAsyncLifetime
         Assert.Contains(request.Worktree!, warning, StringComparison.Ordinal);
         Assert.Contains("1 commit", warning, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public async Task A_commit_check_that_fails_keeps_the_tree_and_says_why()
+    {
+        // why: a git error must not drop the commit guard: a directory git can't read is kept, never removed
+        var notARepo = Directory.CreateTempSubdirectory("trial-not-a-repo-").FullName;
+        try
+        {
+            await LaunchWorktree.Remove(_repo.Path, notARepo, _warnings.Add);
+
+            Assert.True(Directory.Exists(notARepo));
+            var warning = Assert.Single(_warnings);
+            Assert.Contains(notARepo, warning, StringComparison.Ordinal);
+            Assert.Contains("could not check", warning, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(notARepo, recursive: true);
+        }
+    }
 }
