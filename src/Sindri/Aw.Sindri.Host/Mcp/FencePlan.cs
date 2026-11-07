@@ -68,6 +68,11 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
         new("rows[].cycle.name", Mark: false), new("rows[].labels[].name", Mark: false),
     ]);
 
-    /// <summary>GET /sindri/linear/issues/{key} for a session (red: not planned yet).</summary>
-    internal static FencePlan LinearIssue { get; } = new("sindri:linear", []);
+    /// <summary>GET /sindri/linear/issues/{key} for a session: the list row's text, the viewer's name, the description, and each comment's body and author name. The comments and the root carry the trust member; the names nested in the row do not (the golden's form, as in the list).</summary>
+    internal static FencePlan LinearIssue { get; } = new("sindri:linear",
+    [
+        new("viewer.name"), new("title"), new("description"),
+        new("state.name", Mark: false), new("assignee.name", Mark: false), new("project.name", Mark: false), new("cycle.name", Mark: false), new("labels[].name", Mark: false),
+        new("comments[].author.name"), new("comments[].body"),
+    ]);
 }

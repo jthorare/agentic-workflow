@@ -17,6 +17,7 @@ internal static class LinearServiceCollectionExtensions
         return services
             .AddScoped<IValidator<ListLinearIssuesRequest>, AcceptAllValidator<ListLinearIssuesRequest>>().AddQuery<ListLinearIssuesRequest, ListLinearIssuesResponse, ListLinearIssuesService>()
             .AddScoped<IValidator<GetLinearIssueRequest>, AcceptAllValidator<GetLinearIssueRequest>>().AddQuery<GetLinearIssueRequest, GetLinearIssueResponse, GetLinearIssueService>()
+            .AddScoped<LinearScopes>()
             .AddScoped<ILinearWriteGate, ContextLinearWriteGate>()
             .AddScoped<ILinearIssueFacts, ContextLinearIssueFacts>()
             .AddScoped<ILinearItemLinks, ViewLinearItemLinks>();

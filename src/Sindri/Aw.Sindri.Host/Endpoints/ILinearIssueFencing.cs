@@ -12,4 +12,9 @@ internal interface ILinearIssueFencing
     /// <param name="list">The list.</param>
     /// <returns>The JSON answer with titles and the names of states, people, projects, cycles and labels fenced.</returns>
     public IResult List(ListLinearIssuesResponse list);
+
+    /// <summary>One issue as a session reads it.</summary>
+    /// <param name="issue">The issue.</param>
+    /// <returns>The JSON answer with the title, description, comments and names fenced.</returns>
+    public IResult One(GetLinearIssueResponse issue);
 }

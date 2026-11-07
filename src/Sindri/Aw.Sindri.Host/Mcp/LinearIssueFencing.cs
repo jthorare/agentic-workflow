@@ -14,4 +14,10 @@ internal sealed class LinearIssueFencing(JsonSerializerOptions json) : ILinearIs
         using var document = JsonDocument.Parse(AwJson.Serialize(list, json));
         return TypedResults.Text(McpFencing.Apply(document.RootElement, FencePlan.LinearIssues).GetRawText(), "application/json", System.Text.Encoding.UTF8);
     }
+
+    public IResult One(GetLinearIssueResponse issue)
+    {
+        using var document = JsonDocument.Parse(AwJson.Serialize(issue, json));
+        return TypedResults.Text(McpFencing.Apply(document.RootElement, FencePlan.LinearIssue).GetRawText(), "application/json", System.Text.Encoding.UTF8);
+    }
 }
