@@ -1,6 +1,10 @@
+using Aw.Context.Core.Facade;
 using Aw.Kernel.Services;
+using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Reviews;
 using Aw.Sindri.Features.Commands;
+using Aw.Sindri.Features.GetLibraryDoc;
 using Aw.Sindri.Features.ListReviews;
 using Aw.Sindri.Features.ReviewListFacts;
 using Aw.Sindri.Features.SetReviewLogin;
@@ -33,6 +37,11 @@ internal static class ReviewServiceCollectionExtensions
             .AddScoped<IReviewFacts, ContextReviewFacts>()
             .AddScoped<IReviewLibraryState, ContextLibraryState>()
             .AddScoped<IReviewProjects, ProjectReviewNames>()
-            .AddScoped<ReviewSummaryReader>();
+            .AddScoped<ReviewSummaryReader>()
+            .AddScoped<IValidator<GetLibraryDocRequest>, AcceptAllValidator<GetLibraryDocRequest>>().AddQuery<GetLibraryDocRequest, GetLibraryDocResponse, GetLibraryDocService>()
+            .AddScoped<ILibraryDocFacts>(static sp => new ContextLibraryDocFacts(
+                sp.GetRequiredService<IApprovedProfile>(), sp.GetRequiredService<ICallerContextAccessor>(), sp.GetRequiredService<IContextEngine>(), HomeFolder()));
     }
+
+    private static string HomeFolder() => Environment.GetEnvironmentVariable("HOME") is { Length: > 0 } configured ? configured : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 }

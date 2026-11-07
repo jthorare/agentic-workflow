@@ -287,5 +287,6 @@ public static partial class SindriErrors
         ScrubStagedSecrets, ScrubForeignHook, ScrubNotARepo, ScrubGitFailed,
         ProjectAlreadyOnPage, ProjectFactsUnavailable, ProjectNotSynced, ProjectInvalid, ProjectNotFound, ProjectConflict,
         ReviewInvalid, ReviewProjectUnknown, ReviewCommandCheck, ReviewRepoUnsynced, ReviewOfflineUncached,
+        LibraryDocNotFound,
     ];
 }

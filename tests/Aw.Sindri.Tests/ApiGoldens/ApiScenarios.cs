@@ -42,7 +42,7 @@ internal static class ApiScenarios
         ["CodeIndex"] = CodeIndexScenarios.All,
         ["Sandbox"] = SandboxScenarios.All,
         ["Projects"] = ProjectScenarios.All,
-        ["Reviews"] = [.. ReviewScenarios.All.Where(r => r.Slug == "reviews"), .. ReviewLoginScenarios.All, .. LibraryScenarios.All],
+        ["Reviews"] = [.. ReviewScenarios.All.Where(r => r.Slug == "reviews"), .. ReviewLoginScenarios.All, .. LibraryScenarios.All, .. LibraryDocScenarios.All],
     };
 
     /// <summary>Every (route slug, scenario) pair, group by group.</summary>
@@ -67,7 +67,9 @@ internal static class ApiScenarios
 
     /// <summary>The last hosts of <see cref="Start"/>: the launch, approve-all, item-scope and wrapped-session ones, else the plain golden host.</summary>
     private static async Task<GoldenHost> StartLaunchOrLater(string slug, string scenario, CancellationToken ct) =>
-        IsReviews(slug, scenario)
+        LibraryDocScenarios.Handles(slug, scenario)
+            ? await LibraryDocScenarios.Start(ct)
+            : IsReviews(slug, scenario)
             ? await ReviewScenarios.Start(slug, scenario, ct)
             : ProjectScenarios.Handles(slug, scenario)
             ? await ProjectScenarios.Start(slug, scenario, ct)
@@ -167,6 +169,7 @@ internal static class ApiScenarios
         ReviewScenarios.Handles(slug, scenario) ? () => ReviewScenarios.Body(host, slug, scenario, ct)
         : ReviewLoginScenarios.Handles(slug, scenario) ? () => ReviewLoginScenarios.Body(host, scenario, ct)
         : LibraryScenarios.Handles(slug, scenario) ? () => LibraryScenarios.Body(host, ct)
+        : LibraryDocScenarios.Handles(slug, scenario) ? () => LibraryDocScenarios.Body(host, scenario, ct)
         : null;
 
 

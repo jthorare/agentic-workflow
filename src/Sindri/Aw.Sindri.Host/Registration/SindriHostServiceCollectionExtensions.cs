@@ -25,6 +25,7 @@ internal static class SindriHostServiceCollectionExtensions
         .AddSingleton<Projector>()
         .AddSingleton<Endpoints.IProjectFencing, Mcp.ProjectFencing>()   // a session's Projects answer is fenced like sindri_projects' (the fence is in Mcp; Endpoints cannot name it)
         .AddSingleton<Endpoints.IReviewFencing, Mcp.ReviewFencing>()   // a session's Reviews list is fenced the same way
+        .AddSingleton<Endpoints.ILibraryDocFencing, Mcp.LibraryDocFencing>()   // and a design doc's title, path and error text
         .AddSingleton<ScheduleInputs>()
         .AddSingleton<Context.Core.Sync.IExternalRecordFeeds>(static sp => new IndexSources.GitHubRecordFeeds(sp.GetRequiredService<Core.Secrets.ISecretPointers>(), sp.GetRequiredService<Connectors.Core.GitHub.IGitHubConnectorFactory>(), IndexSources.GitHubReaders.Create))   // the GitHub feed `index sync` picks up through the record-feed catalog
         .AddSingleton<Context.Core.Sync.IExternalRecordFeeds>(static sp => new IndexSources.SlackRecordFeeds(sp.GetRequiredService<Core.Secrets.ISecretPointers>(), sp.GetRequiredService<Connectors.Core.Slack.ISlackConnectorFactory>(), IndexSources.SlackReaders.Create))   // the Slack feed, present only when the profile lists channels, a workspace and a token that resolves
