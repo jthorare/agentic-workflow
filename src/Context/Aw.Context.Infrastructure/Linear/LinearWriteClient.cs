@@ -15,7 +15,6 @@ namespace Aw.Context.Infrastructure.Linear;
 /// was sent 010, sent and no answer (timeout, a reset connection, a 5xx) 011, a rate limit 012, and 'success: false' or any other GraphQL error 015 with Linear's own words. A body of the wrong shape is SND-CONTEXT-072.
 /// </summary>
 /// <param name="parts">The client, environment, clock and log every linear source shares.</param>
-#pragma warning disable MA0182 // why: the Linear hub registration (DI, another change of the same PR) is its only user; the unit and fake-server tests build it directly
 internal sealed class LinearWriteClient(LinearSourceParts parts) : ILinearWrites
 {
     private const string WriteTokenKey = "context.sources.linear.writeToken";
@@ -201,4 +200,3 @@ internal sealed class LinearWriteClient(LinearSourceParts parts) : ILinearWrites
     }
 }
 
-#pragma warning restore MA0182

@@ -154,9 +154,7 @@ public sealed class FakeContextLinearWrites : IContextLinearWrites
     {
         ArgumentNullException.ThrowIfNull(key);
         ArgumentNullException.ThrowIfNull(change);
-        var limit = (change.Title.IsSet ? LinearWriteLimits.Title(change.Title.Value) : null)
-            ?? (change.Description.IsSet ? LinearWriteLimits.Text("description", change.Description.Value, required: false) : null);
-        return Write(scope, limit, new FakeLinearWriteCall("Change", key, Change: change), () => Store(Apply(ViewOf(key), change)));
+        return Write(scope, LinearWriteLimits.Change(change), new FakeLinearWriteCall("Change", key, Change: change), () => Store(Apply(ViewOf(key), change)));
     }
 
     /// <inheritdoc />
@@ -179,7 +177,7 @@ public sealed class FakeContextLinearWrites : IContextLinearWrites
     {
         ArgumentNullException.ThrowIfNull(key);
         ArgumentNullException.ThrowIfNull(url);
-        return Write(scope, limit: null, new FakeLinearWriteCall("Attach", key, Url: url, Title: title), () => ViewOf(key));
+        return Write(scope, LinearWriteLimits.Attachment(url, title), new FakeLinearWriteCall("Attach", key, Url: url, Title: title), () => ViewOf(key));
     }
 
     private static ExternalId TodoId => ExternalId.From("fake-state-todo");

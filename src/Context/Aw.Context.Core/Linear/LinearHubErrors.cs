@@ -26,6 +26,6 @@ public static class LinearHubErrors
     /// <summary>SND-LINEAR-012: Linear's rate limit; nothing was sent. The message names the time to try again.</summary>
     public static readonly ErrorDefinition RateLimited = new("SND-LINEAR-012", ErrorKind.RateLimited, "Linear's rate limit");
 
-    /// <summary>SND-LINEAR-015: Linear refused the write with a validation error, or the text was over a limit Context checks first (a title of 1 to 255 characters, a description or comment of up to 65,536). Nothing was changed.</summary>
+    /// <summary>SND-LINEAR-015: Linear refused the write with a validation error, or Context refused it first ('Not sent: ...': a title of 1 to 255 characters, a description or comment of up to 65,536, an empty change, an attachment link that isn't https or sindri://item). Nothing was changed.</summary>
     public static readonly ErrorDefinition Rejected = new("SND-LINEAR-015", ErrorKind.Invalid, "Linear said no");
 }

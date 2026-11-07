@@ -13,6 +13,7 @@ using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Library;
+using Aw.Context.Core.Linear;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Locks;
 using Aw.Context.Core.Map;
@@ -129,9 +130,15 @@ public static class ContextFeaturesServiceCollectionExtensions
         services.TryAddSingleton<IMergeHistory>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IAsOfDocs>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IEvalStore>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
-        services.TryAddSingleton<IContextLinearWrites, UnconfiguredContextLinearWrites>();   // Linear hub Ph2: the host that wires the write client replaces it; not part of IContextEngine, so a caller asks the container for it
+        services.TryAddSingleton(LinearWritesOf);   // Linear hub Ph2: not part of IContextEngine, so a caller asks the container for it; real once the host also wires Aw.Context.Infrastructure's Linear ports, in either order
         return services.AddMapHeads().AddRelinkPinAliases().AddProjectFacts().AddLibraryReads().AddIssueReads().AddIndexSync().AddRecordSearch().AddEmbedRecords().AddContextSlices();
     }
+
+    // why: Features cannot see Infrastructure, so the choice is made when the first caller asks: the real writes when both Linear ports are registered, else the unwired ones
+    private static IContextLinearWrites LinearWritesOf(IServiceProvider services) =>
+        services.GetService<ILinearWrites>() is { } writes && services.GetService<ILinearLiveReads>() is { } reads
+            ? new ContextLinearWrites(writes, reads, services.GetRequiredService<ILinearWriteThrough>())
+            : new UnconfiguredContextLinearWrites();
 
     private static IServiceCollection AddMapHealthChecks(this IServiceCollection services) => services
         .AddScoped<IService<CheckRetentionRequest, MapHealth>, CheckRetentionService>()
@@ -143,7 +150,8 @@ public static class ContextFeaturesServiceCollectionExtensions
 
     private static IServiceCollection AddIndexSync(this IServiceCollection services) => services.AddScoped<FeedDecisions>().AddScoped<TickSteps>().AddScoped<ConceptSynthesisRun>().AddScoped<IIndexSync, IndexSync>()
         .AddSingleton<ISourcePurges>(static sp => sp.GetRequiredService<RecordFeedSync>())
-        .AddScoped<IService<LinearWriteThroughRequest, LinearWriteThroughResponse>, LinearWriteThroughService>();
+        .AddScoped<IService<LinearWriteThroughRequest, LinearWriteThroughResponse>, LinearWriteThroughService>()
+        .AddSingleton<ILinearWriteThrough, ScopedLinearWriteThrough>();
 
     private static IServiceCollection AddContextSlices(this IServiceCollection services) => services
         .AddBacktest()
