@@ -3,6 +3,6 @@
   "title": "SND-LINEAR-011",
   "status": 504,
   "detail": "Linear didn't confirm the change to ENG-12, and the re-read couldn't tell (fix: retry; the same edit is safe to send twice)",
-  "traceId": "<trace>",
-  "outcome": "unknown"
+  "outcome": "unknown",
+  "traceId": "<trace>"
 }

@@ -1141,7 +1141,7 @@
       "terminal": false,
       "method": "DELETE",
       "route": "/sindri/linear/connection/write",
-      "cli": "sindri profile set context.sources.linear.writeToken <pointer>",
+      "cli": "sindri profile set <key> <value>",
       "ui": "ready",
       "destructive": true,
       "readsViews": false,
