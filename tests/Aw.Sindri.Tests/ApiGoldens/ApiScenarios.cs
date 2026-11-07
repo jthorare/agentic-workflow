@@ -42,6 +42,7 @@ internal static class ApiScenarios
         ["CodeIndex"] = CodeIndexScenarios.All,
         ["Sandbox"] = SandboxScenarios.All,
         ["Projects"] = ProjectScenarios.All,
+        ["Reviews"] = [.. ReviewScenarios.All.Where(r => r.Slug == "reviews"), .. ReviewLoginScenarios.All],
     };
 
     /// <summary>Every (route slug, scenario) pair, group by group.</summary>
@@ -66,7 +67,9 @@ internal static class ApiScenarios
 
     /// <summary>The last hosts of <see cref="Start"/>: the launch, approve-all, item-scope and wrapped-session ones, else the plain golden host.</summary>
     private static async Task<GoldenHost> StartLaunchOrLater(string slug, string scenario, CancellationToken ct) =>
-        ProjectScenarios.Handles(slug, scenario)
+        IsReviews(slug, scenario)
+            ? await ReviewScenarios.Start(slug, scenario, ct)
+            : ProjectScenarios.Handles(slug, scenario)
             ? await ProjectScenarios.Start(slug, scenario, ct)
             : SandboxScenarios.Handles(slug, scenario)
             ? await SandboxScenarios.Start(slug, scenario, ct)
@@ -81,6 +84,10 @@ internal static class ApiScenarios
             : SessionScenarios.NeedsCgroup(slug, scenario)
             ? await SessionScenarios.Start(ct)
             : await GoldenHost.Start(temporary: !NeedsNonTemporaryHome(slug, scenario), ct, ProfileYaml(slug, scenario));
+
+    /// <summary>Whether the scenario belongs to the Reviews group (the pages, the login save, the library).</summary>
+    private static bool IsReviews(string slug, string scenario) =>
+        ReviewScenarios.Handles(slug, scenario) || ReviewLoginScenarios.Handles(slug, scenario) || LibraryScenarios.Handles(slug, scenario);
 
     /// <summary>Whether the scenario is a setup one (the steps, or adding a repo).</summary>
     private static bool IsSetup(string slug, string scenario) =>
@@ -153,6 +160,13 @@ internal static class ApiScenarios
         : WrapSessionScenarios.Handles(slug, scenario) ? () => WrapSessionScenarios.Body(host, slug, scenario, ct)
         : SandboxScenarios.Handles(slug, scenario) ? () => SandboxScenarios.Body(host, slug, scenario, ct)
         : ProjectScenarios.Handles(slug, scenario) ? () => ProjectScenarios.Body(host, slug, scenario, ct)
+        : ReviewBody(host, slug, scenario, ct);
+
+    /// <summary>The body of a Reviews-group scenario (the pages, the login save, the library), else null.</summary>
+    private static Func<Task<string>>? ReviewBody(GoldenHost host, string slug, string scenario, CancellationToken ct) =>
+        ReviewScenarios.Handles(slug, scenario) ? () => ReviewScenarios.Body(host, slug, scenario, ct)
+        : ReviewLoginScenarios.Handles(slug, scenario) ? () => ReviewLoginScenarios.Body(host, scenario, ct)
+        : LibraryScenarios.Handles(slug, scenario) ? () => LibraryScenarios.Body(host, ct)
         : null;
 
 

@@ -37,9 +37,9 @@
       "title": "Yours",
       "sections": [
         {
-          "by": "repo",
-          "id": null,
-          "name": "acme/api",
+          "by": "project",
+          "id": "prj_0000000000000000000000000A",
+          "name": "Sindri",
           "rows": [
             {
               "repo": "acme/api",

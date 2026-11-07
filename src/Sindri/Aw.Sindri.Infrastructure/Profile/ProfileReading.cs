@@ -25,7 +25,18 @@ internal static class ProfileReading
             return SindriErrors.ProfileInvalid.With($"{source}: {ProfileErrors.Explain(typed.Error.Message, options)} ({Fix})");
         }
 
-        var checkedProfile = ProfileRules.Check(typed.Value, box);
+        return FromTyped(typed.Value, source, options, box);
+    }
+
+    /// <summary>The checked profile for an already typed <paramref name="profile"/>, with its hash: what <see cref="FromJson"/> does after the shape is read.</summary>
+    /// <param name="profile">The typed profile.</param>
+    /// <param name="source">The file it came from, for messages.</param>
+    /// <param name="options">The package's AwJson options.</param>
+    /// <param name="box">The box's limits, or null to check the profile alone.</param>
+    /// <returns>The loaded profile, or SND-PROFILE-002 naming the file, the key path and the fix.</returns>
+    internal static Result<LoadedProfile> FromTyped(SindriProfile profile, string source, JsonSerializerOptions options, BoxLimits? box = null)
+    {
+        var checkedProfile = ProfileRules.Check(profile, box);
         if (checkedProfile.IsError)
         {
             // why: a leftover Onyx section keeps its own code (owned-index spec §12.3) so the fix reads as Onyx's, not a generic shape error.

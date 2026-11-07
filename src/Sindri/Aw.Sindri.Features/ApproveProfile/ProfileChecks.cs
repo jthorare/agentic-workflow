@@ -3,6 +3,7 @@ using Aw.Context.Core.Facade;
 using Aw.Kernel;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Projects.Cards;
 
 namespace Aw.Sindri.Features.ApproveProfile;
 
@@ -10,7 +11,8 @@ namespace Aw.Sindri.Features.ApproveProfile;
 /// <param name="context">Checks the context section.</param>
 /// <param name="catalog">The entries on this box.</param>
 /// <param name="models">Checks the model keys against the catalog and the recipes.</param>
-internal sealed class ProfileChecks(IContextEngine context, IAgentCatalog catalog, ModelKeyChecks? models = null)
+/// <param name="projects">The Projects page, for the projects 'review.projects' names; null skips that check.</param>
+internal sealed class ProfileChecks(IContextEngine context, IAgentCatalog catalog, ModelKeyChecks? models = null, IProjectPages? projects = null)
 {
     /// <summary>The model keys' verdict against this box (SND-MODEL-001); null when the checks aren't wired (a test without a catalog of recipes).</summary>
     /// <param name="profile">The live profile.</param>
@@ -18,6 +20,23 @@ internal sealed class ProfileChecks(IContextEngine context, IAgentCatalog catalo
     /// <returns>The error, or null.</returns>
     public ValueTask<Error?> Models(SindriProfile profile, CancellationToken cancellationToken) =>
         models is null ? ValueTask.FromResult<Error?>(null) : models.Models(profile, cancellationToken);
+
+    /// <summary>SND-REVIEW-002: a 'review.projects[].project' that isn't on the Projects page. The page is read only when the block names a project, and a page that can't be read is no reason to refuse the profile.</summary>
+    /// <param name="profile">The live profile.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The error, or null.</returns>
+    public async ValueTask<Error?> ReviewProjects(SindriProfile profile, CancellationToken cancellationToken)
+    {
+        if (projects is null || profile.Review?.Projects is not { Count: > 0 })
+        {
+            return null;
+        }
+
+        var page = await projects.Read(all: true, cancellationToken).ConfigureAwait(false);
+        return page.IsError
+            ? null
+            : PrReviewRules.UnknownProject(profile.Review, page.Value.Projects.Concat(page.Value.Finished).Concat(page.Value.Hidden).Select(static c => c.Key).ToHashSet(StringComparer.Ordinal));
+    }
 
     /// <summary>The context section's verdict: an invalid section is never approved (SND-CONTEXT-001).</summary>
     /// <param name="profile">The live profile.</param>
