@@ -10,12 +10,15 @@ internal sealed partial class ShellViewModel
     /// <summary>The Work page's Linear view: its switch, list and since-you-looked strip.</summary>
     public LinearWorkViewModel Linear { get; private set; }
 
-    private static readonly string[] _linearSwallowed = ["C", "Y"];
+    /// <summary>The Linear "New issue" dialog (`C` on the Linear view).</summary>
+    public NewLinearIssueViewModel NewIssue { get; private set; }
 
-    [MemberNotNull(nameof(Linear))]
+    [MemberNotNull(nameof(Linear), nameof(NewIssue))]
     private void InitLinear()
     {
         Linear = new LinearWorkViewModel(_api, _store, _clock);
+        NewIssue = new NewLinearIssueViewModel(_api, Health.ApiUrl, _clock);
+        NewIssue.Created += (_, created) => Linear.SelectWhenShown(created.Value, NewIssue.CreatedWhileOpen);
         Health.Follow(Linear.Refresh);
         PropertyChanged += (_, e) =>
         {
@@ -27,7 +30,7 @@ internal sealed partial class ShellViewModel
         Linear.ConnectRequested += (_, _) => GoTo(PageId.Settings);
     }
 
-    // L switches Work between Sindri and Linear from anywhere on the page; C creates an item, and on the Linear view does nothing yet (New issue is not built).
+    // L switches Work between Sindri and Linear from anywhere on the page; C creates an item, and on the Linear view opens the New issue dialog.
     // The row keys belong to the Linear rows on the Linear view (J / K select, Enter opens, / focuses the filter bar), never to the hidden queue; Y has no action there. In a sheet J, K and Enter go to the sheet.
     private bool LinearKeyPressed(string key, bool inSheet)
     {
@@ -42,15 +45,19 @@ internal sealed partial class ShellViewModel
             return true;
         }
 
-        if (!Linear.IsLinear)
-        {
-            return false;
-        }
+        return Linear.IsLinear && LinearViewKey(key, inSheet);
+    }
 
+    // The keys of the Linear view itself.
+    private bool LinearViewKey(string key, bool inSheet)
+    {
         switch (key)
         {
             case "J" or "K" when !inSheet:
                 Linear.Move(key == "J" ? 1 : -1);
+                return true;
+            case "C":
+                OpenNewIssue();
                 return true;
             case "Enter" when !inSheet:
                 _ = Linear.OpenSelected();
@@ -58,8 +65,19 @@ internal sealed partial class ShellViewModel
             case "/" when !inSheet:
                 Linear.FocusFilters();
                 return true;
+            case "/" or "Y":
+                return true;   // swallowed: / in a sheet, and Y, which has no action here
             default:
-                return string.Equals(key, "/", StringComparison.Ordinal) || _linearSwallowed.Contains(key, StringComparer.Ordinal);
+                return false;
+        }
+    }
+
+    /// <summary>Opens the New issue dialog (`C` on the Linear view, or its header button); the draft a close left is offered again.</summary>
+    internal void OpenNewIssue()
+    {
+        if (!NewIssue.IsOpen)
+        {
+            _ = NewIssue.Open(CancellationToken.None);
         }
     }
 }

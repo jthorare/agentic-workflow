@@ -68,6 +68,7 @@ internal sealed partial class ShellWindow
         ListenWorkflows(shell, on);
         ListenAgents(shell, on);
         ListenSandbox(shell, on);
+        ListenLinear(shell, on);
         if (on)
         {
             shell.Queue.FocusRequested += OnFocusRow;
@@ -79,8 +80,8 @@ internal sealed partial class ShellWindow
             shell.SheetStacked -= OnSheetStacked;
         }
 
-        PropertyChangedEventHandler[] handlers = [OnShellChanged, OnBannerChanged, OnOverlayChanged, OnOverlayChanged, OnOverlayChanged, OnOverlayChanged, OnOverlayChanged, OnQueueChanged];
-        INotifyPropertyChanged[] sources = [shell, shell.Health.Banner, shell.Palette, shell.Shortcuts, shell.Create, shell.Start, shell.ApproveAll, shell.Queue];
+        PropertyChangedEventHandler[] handlers = [OnShellChanged, OnBannerChanged, OnOverlayChanged, OnOverlayChanged, OnOverlayChanged, OnOverlayChanged, OnOverlayChanged, OnOverlayChanged, OnQueueChanged];
+        INotifyPropertyChanged[] sources = [shell, shell.Health.Banner, shell.Palette, shell.Shortcuts, shell.Create, shell.NewIssue, shell.Start, shell.ApproveAll, shell.Queue];
         for (var i = 0; i < sources.Length; i++)
         {
             if (on)

@@ -481,6 +481,9 @@
     <!-- The decision sheet's polite region: what Decide answered or refused; the flag changes before the text. -->
     <TextBlock x:Name="DecisionLive" Classes="live-region" Classes.live="{Binding Decision.IsAnnouncing}" Text="{Binding Decision.Announcement}"
                Width="0" Opacity="0" IsHitTestVisible="False" HorizontalAlignment="Left" VerticalAlignment="Top" />
+    <!-- The Linear New issue dialog's polite region: its blank-title and no-team lines, "Checking…", "Retry?" and "Created ENG-58" (the dialog closes on a create, so the region is the shell's); the flag changes before the text. -->
+    <TextBlock x:Name="NewIssueLive" Classes="live-region" Classes.live="{Binding NewIssue.IsAnnouncing}" Text="{Binding NewIssue.Announcement}"
+               Width="0" Opacity="0" IsHitTestVisible="False" HorizontalAlignment="Left" VerticalAlignment="Top" />
     <!-- The item sheet's polite region (L8): the refusal a gone control leaves behind, spoken once; the flag changes before the text. -->
     <TextBlock x:Name="ItemLive" Classes="live-region" Classes.live="{Binding Item.IsAnnouncing}" Text="{Binding Item.Announcement}"
                Width="0" Opacity="0" IsHitTestVisible="False" HorizontalAlignment="Left" VerticalAlignment="Top" />
@@ -496,6 +499,13 @@
       <controls:Deferred DataContext="{Binding Create}">
         <controls:Deferred.Template>
           <DataTemplate><item:CreateItemDialog x:Name="CreateItemDialog" /></DataTemplate>
+        </controls:Deferred.Template>
+      </controls:Deferred>
+    </Panel>
+    <Panel x:Name="NewIssueLayer" IsVisible="{Binding NewIssue.IsOpen}">
+      <controls:Deferred DataContext="{Binding NewIssue}">
+        <controls:Deferred.Template>
+          <DataTemplate><lnv:NewLinearIssueDialog x:Name="NewLinearIssueDialog" /></DataTemplate>
         </controls:Deferred.Template>
       </controls:Deferred>
     </Panel>

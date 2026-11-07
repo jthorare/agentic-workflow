@@ -51,14 +51,19 @@ internal sealed partial class FakeSindriApi
     /// <summary>The lookups reads the app made, by team key, in order.</summary>
     public IReadOnlyList<string> LinearLookupsRead { get { lock (_gate) { return [.. _linearLookups]; } } }
 
-    public Task<Result<LinearIssueList>> LinearIssues(Uri api, LinearIssueQuery query, CancellationToken cancellationToken)
+    /// <summary>When set, the list read waits for it (after it has recorded its query and taken its answer).</summary>
+    public TaskCompletionSource? LinearIssuesGate { get; set; }
+
+    public async Task<Result<LinearIssueList>> LinearIssues(Uri api, LinearIssueQuery query, CancellationToken cancellationToken)
     {
         lock (_gate)
         {
             _linearQueries.Add(query);
         }
 
-        return Task.FromResult(Answer<LinearIssueList>(api, LinearRoutes.IssueList(query), LinearIssuesFor?.Invoke(query) ?? LinearIssuesAnswer));
+        var answer = LinearIssuesFor?.Invoke(query) ?? LinearIssuesAnswer;
+        await WaitFor(LinearIssuesGate, cancellationToken).ConfigureAwait(false);
+        return Answer<LinearIssueList>(api, LinearRoutes.IssueList(query), answer);
     }
 
     /// <summary>When set, the issue read waits for it (after it has taken the answer served when it was asked).</summary>
