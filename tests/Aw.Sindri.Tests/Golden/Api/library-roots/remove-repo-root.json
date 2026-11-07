@@ -1,0 +1,8 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-LIB-001",
+  "status": 400,
+  "detail": "'repo:acme/api' isn't a vault (fix: repo folders are set by the repo list and can't be removed here)",
+  "field": "name",
+  "traceId": "<trace>"
+}
