@@ -37,7 +37,7 @@ public sealed class ContextReviewFactsTests
         _ = await _h.Profiles.Save(new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), "/home/profile.yaml"), Ct);
     }
 
-    private ContextReviewFacts Facts() => new(_h.Profiles, _h.Callers, EngineProxy.Of(_context), new ContextLibraryState(EngineProxy.Of(_context)));
+    private ContextReviewFacts Facts() => new(_h.Profiles, _h.Callers, EngineProxy.Of(_context), new ContextLibraryState(EngineProxy.Of(_context), new LibraryHost { Home = "/home/joi", StateDefault = "/home/joi/.agentic-workflow" }));
 
     private static StoredRecord Pull(string key, RecordState state, PullFacts? facts = null) =>
         new(RecordKey.From(key), SourceId.From("github"), RecordKind.Pr, Repo: null, AudienceKey.From("repo:acme/api"), $"Title of {key}", Url: "https://github.com/" + key, Author: "sam-dev", state, StateRaw: "open",

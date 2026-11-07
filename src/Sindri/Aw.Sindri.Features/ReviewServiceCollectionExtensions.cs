@@ -1,6 +1,8 @@
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Reviews;
 using Aw.Sindri.Features.Commands;
+using Aw.Sindri.Features.GetLibrary;
+using Aw.Sindri.Features.GetLibraryDoc;
 using Aw.Sindri.Features.ListReviews;
 using Aw.Sindri.Features.ReviewListFacts;
 using Aw.Sindri.Features.SetReviewLogin;
@@ -8,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Features;
 
-/// <summary>Registers the PR review page (PR review page spec §6.1, §9): the Reviews list and the login save.</summary>
+/// <summary>Registers the PR review page (PR review page spec §6.1, §9): the Reviews list, the library page and the login save.</summary>
 internal static class ReviewServiceCollectionExtensions
 {
     /// <summary>Adds SetReviewLogin behind the command chain, and the approval it settles.</summary>
@@ -33,6 +35,10 @@ internal static class ReviewServiceCollectionExtensions
             .AddScoped<IReviewFacts, ContextReviewFacts>()
             .AddScoped<IReviewLibraryState, ContextLibraryState>()
             .AddScoped<IReviewProjects, ProjectReviewNames>()
-            .AddScoped<ReviewSummaryReader>();
+            .AddScoped<ReviewSummaryReader>()
+            .AddScoped<IValidator<GetLibraryRequest>, AcceptAllValidator<GetLibraryRequest>>().AddQuery<GetLibraryRequest, GetLibraryResponse, GetLibraryService>()
+            .AddScoped<ILibraryPageFacts, ContextLibraryPageFacts>()
+            .AddScoped<IValidator<GetLibraryDocRequest>, AcceptAllValidator<GetLibraryDocRequest>>().AddQuery<GetLibraryDocRequest, GetLibraryDocResponse, GetLibraryDocService>()
+            .AddScoped<ILibraryDocFacts, ContextLibraryDocFacts>();
     }
 }

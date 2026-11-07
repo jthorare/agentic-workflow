@@ -1,11 +1,15 @@
+using System.Globalization;
+using Aw.Sindri.Core.Reviews;
+using Aw.Sindri.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using static Aw.Sindri.Tests.Callers.CallerRequests;
 
 namespace Aw.Sindri.Tests.ApiGoldens;
 
 /// <summary>
-/// Not registered in ApiScenarios until the library route lands (Ph5b); its rows wait in ApiGoldenTests._pendingGoldenFolders.
-/// The library sheet's read (PR review page spec §4.1, §6.3, §9): 'GET /library' in each state. Hand-written first (Ph5 red): the route doesn't exist yet, so every row answers 404
-/// against its golden. The Ph5 implementation seeds what each row's `// seeded in Ph5:` note names.
+/// Registered in ApiScenarios' Reviews group (Ph5b).
+/// The library sheet's read (PR review page spec §4.1, §6.3, §9): 'GET /library' in each state. Hand-written first (Ph5 red); each row runs over a fake of the library facts that holds what its name says.
 /// </summary>
 internal static class LibraryScenarios
 {
@@ -17,6 +21,58 @@ internal static class LibraryScenarios
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
     public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario));
+
+    /// <summary>Starts the scenario's host: the item profile over a fake of the library's facts.</summary>
+    public static Task<GoldenHost> Start(string scenario, CancellationToken ct) =>
+        GoldenHost.Start(temporary: true, ct, ItemScenarios.ProfileYaml, extra: services => _ = services.Replace(ServiceDescriptor.Singleton<ILibraryPageFacts>(new FakeLibraryPageFacts().With(Facts(scenario)))));
+
+    private static LibraryPageFacts Facts(string scenario) => scenario switch
+    {
+        "ok" => new(Docs: 41, [], [], [], [Aw(9), Work(20), Inbox(), Own(8, 0), Acme(4)]),
+        "with-errors" => new(Docs: 41,
+        [
+            Broken("booking-retry-tdd", "~/notes/design/booking-retry-tdd.md", ("SND-LIB-010", "line 4: a missing or bad front-matter key: status 'draft2' isn't one of the allowed values. Write the key as the table above says")),
+            Broken("queue-sizing-spec", "~/.agentic-workflow/acme-api/specs/queue-sizing-spec.md", ("SND-LIB-012", "line 2: another doc in the scope has this doc id. Rename one of them")),
+            Broken("export-plan", "~/notes/design/export-plan.md", ("SND-LIB-015", "line 31: a ref to an item the scope doesn't have: queue-sizing-spec#REQ-9. Fix the ref, or add the item"), ("SND-LIB-016", "line 5: an unknown parent: booking-retry. Use an id in the scope, or the full ref")),
+        ], [], [], [Aw(9), Work(20, errors: 2), Inbox(), Own(8, 1), Acme(4)]),
+        "near-misses-only" => new(Docs: 38, [],
+        [
+            Near("~/notes/design/queue-sizing.md", "line 2: a near miss: aw-doc is \"1\", not the number 1."),
+            Near("~/notes/design/export-limits.md", "line 2: a near miss: aw-doc is 1.0, not the number 1."),
+            Near("~/notes/design/retry-notes.md", "line 1: a near miss: the first line is blank, so the front matter isn't read."),
+        ], [], [Aw(9), Work(17), Own(8, 0), Acme(4)]),
+        "empty" => new(Docs: 0, [], [], [], [Aw(0, off: true), Own(0, 0), Acme(0)]),
+        // why: 250 docs with errors against the cap of 200, so the page lists the first 200 and says so
+        "capped" => new(Docs: 300, [.. Enumerable.Range(1, 250).Select(n => Broken(Draft(n), $"~/notes/design/{Draft(n)}.md", ("SND-LIB-010", "line 3: a missing or bad front-matter key: kind is missing. Write the key as the table above says")))], [], [], [Aw(9), Work(270, errors: 250), Own(14, 0), Acme(7)]),
+        "root-unreadable" => new(Docs: 33, [], [], [new ReviewUnreadableRoot("~/notes/vault", "permission denied")], [Aw(9), Work(12), Notes(), Own(8, 0), Acme(4)]),
+        // why: the session form blanks the roots whatever the facts hold, so this fake holds some
+        "session" => new(Docs: 0, [], [], [], [Aw(9), Work(20), Own(8, 0)]),
+        _ => throw new ArgumentOutOfRangeException(nameof(scenario), scenario, "not a library scenario"),
+    };
+
+    private static readonly DateTimeOffset _scanned = new(2025, 12, 31, 23, 57, 0, TimeSpan.Zero);
+
+    private static LibraryRootFacts Aw(int docs, bool off = false) => new("aw", LibraryRootKind.Aw, "~/.agentic-workflow", Repo: null, Deny: [], off, _scanned, docs, Errors: 0, Unreadable: null);
+
+    private static LibraryRootFacts Work(int docs, int errors = 0) => new("work", LibraryRootKind.Vault, "~/Documents/WorkVault", Repo: null, ["Private/**"], Off: false, _scanned, docs, errors, Unreadable: null);
+
+    // why: a vault added a moment ago, not scanned yet
+    private static LibraryRootFacts Inbox() => new("inbox", LibraryRootKind.Vault, "~/Documents/Inbox", Repo: null, Deny: [], Off: false, ScannedAt: null, Docs: 0, Errors: 0, Unreadable: null);
+
+    private static LibraryRootFacts Notes() => new("notes", LibraryRootKind.Vault, "~/notes/vault", Repo: null, Deny: [], Off: false, ScannedAt: null, Docs: 0, Errors: 0, "permission denied");
+
+    private static LibraryRootFacts Own(int docs, int errors) => new("repo:jthorare/agentic-workflow", LibraryRootKind.Repo, "~/repos/agentic-workflow", "jthorare/agentic-workflow", Deny: [], Off: false, _scanned, docs, errors, Unreadable: null);
+
+    private static LibraryRootFacts Acme(int docs) => new("repo:acme/harbor", LibraryRootKind.Repo, "~/repos/harbor", "acme/harbor", Deny: [], Off: false, _scanned, docs, Errors: 0, Unreadable: null);
+
+    private static string Draft(int n) => "draft-" + n.ToString("000", CultureInfo.InvariantCulture);
+
+    // why: the golden's texts are "<path> <text>", the way the real adapter writes a finding
+    private static LibraryBrokenDoc Broken(string doc, string path, params (string Rule, string Text)[] errors) =>
+        new(doc, path, [.. errors.Select(e => new LibraryDocError(e.Rule, $"{path} {e.Text}"))]);
+
+    private static LibraryNearMiss Near(string path, string text) =>
+        new(path, "SND-LIB-019", $"{path} {text} Write `aw-doc: 1` unquoted in the front matter, and make `---` the file's first line");
 
     /// <summary>Runs the scenario against <paramref name="host"/> and returns the body to compare.</summary>
     public static async Task<string> Body(GoldenHost host, string scenario, CancellationToken ct)
