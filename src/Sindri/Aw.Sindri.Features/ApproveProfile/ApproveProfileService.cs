@@ -144,6 +144,11 @@ internal sealed class ApproveProfileService(IProfileSource live, IApprovals appr
             return invalid;
         }
 
-        return await checks.Models(loaded.Value.Profile, cancellationToken).ConfigureAwait(false) is { } badModel ? badModel : loaded;   // SND-MODEL-001
+        if (await checks.Models(loaded.Value.Profile, cancellationToken).ConfigureAwait(false) is { } badModel)
+        {
+            return badModel;   // SND-MODEL-001
+        }
+
+        return await checks.ReviewProjects(loaded.Value.Profile, cancellationToken).ConfigureAwait(false) is { } badProject ? badProject : loaded;   // SND-REVIEW-002
     }
 }

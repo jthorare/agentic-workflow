@@ -10,4 +10,10 @@ public interface IProfileTextParser
     /// <param name="source">The file it is meant for, for messages.</param>
     /// <returns>The checked profile; SND-PROFILE-002 naming the key path and the fix.</returns>
     public Result<LoadedProfile> Parse(string yaml, string source);
+
+    /// <summary>Checks and hashes a profile that is already typed, the way <see cref="Parse"/> does after reading the text.</summary>
+    /// <param name="profile">The typed profile.</param>
+    /// <param name="source">The file it is meant for, for messages.</param>
+    /// <returns>The checked profile with its hash; SND-PROFILE-002 naming the key path and the fix.</returns>
+    public Result<LoadedProfile> Recheck(SindriProfile profile, string source);
 }
