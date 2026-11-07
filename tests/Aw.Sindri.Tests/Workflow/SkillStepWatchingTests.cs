@@ -23,7 +23,6 @@ namespace Aw.Sindri.Tests.Workflow;
 [Lane(TestLane.Integration)]
 public sealed class SkillStepWatchingTests : IDisposable
 {
-    private const string Findings = "/home/u/.agentic-workflow/acme-api/reviews/42.json";
     private static readonly DateTimeOffset _started = new(2026, 11, 5, 9, 0, 0, TimeSpan.Zero);
 
     // why: a watch of a live session returns only on a result or an end; one that never comes fails the row here instead of hanging the run
@@ -36,19 +35,29 @@ public sealed class SkillStepWatchingTests : IDisposable
     private readonly InMemoryFactStore _facts = new();
     private readonly SliceHarness _slice = new();
 
+    // why: the review block's output is a path, and the reader leaves out a path output that names nothing on disk
+    public SkillStepWatchingTests()
+    {
+        File.WriteAllText(Findings, "{}");
+    }
+
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     private static LaunchId Launch => A.FirstLaunchId;
+
+    private string Findings => Path.Combine(_directory, "42.json");
 
     public void Dispose() => Directory.Delete(_directory, recursive: true);
 
     private SkillWatch Watch() => new(Launch.Value, ItemId.From("ITM-00000000000000000000000000000001"), "review", SkillFixtures.Review, _directory, _started);
 
-    private void Result(string json)
+    private void Result(string json) => Result(Encoding.UTF8.GetBytes(json));   // why: not File.WriteAllText with Encoding.UTF8, which writes a byte-order mark first
+
+    private void Result(byte[] bytes)
     {
         var path = SkillLaunchEnv.ResultFileOf(_directory, Launch);
         _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, json, Encoding.UTF8);
+        File.WriteAllBytes(path, bytes);
         File.SetLastWriteTimeUtc(path, _started.AddMinutes(5).UtcDateTime);
     }
 
@@ -76,7 +85,7 @@ public sealed class SkillStepWatchingTests : IDisposable
 
     private void SettledTurnEnd() => _files.EndTurn(Launch, _clock.GetUtcNow() - SkillStepWatching.Settle - TimeSpan.FromSeconds(1));
 
-    private static string Review(string verdict) => $$"""{"skill":"review","verdict":"{{verdict}}","review_file":"{{Findings}}"}""";
+    private string Review(string verdict) => $$"""{"skill":"review","verdict":"{{verdict}}","review_file":"{{Findings}}"}""";
 
     [Fact]
     public async Task A_session_that_goes_idle_with_no_result_ends_idle_with_no_result()
@@ -117,6 +126,20 @@ public sealed class SkillStepWatchingTests : IDisposable
         Assert.Equal(Findings, Encoding.UTF8.GetString(_facts.Stored[stored.Value.Sha256]));
         Assert.True(state.FoundEnded);
         Assert.Equal(Convert.ToHexStringLower(SHA256.HashData(await File.ReadAllBytesAsync(SkillLaunchEnv.ResultFileOf(_directory, Launch), Token))), finished.ResultFileSha256);
+    }
+
+    [Fact]
+    public async Task A_result_written_with_a_byte_order_mark_finishes_and_its_sha_is_of_the_bytes_on_disk()
+    {
+        byte[] bytes = [.. Encoding.UTF8.GetPreamble(), .. Encoding.UTF8.GetBytes(Review("NEEDS_CHANGES"))];
+        Result(bytes);
+        _sessions.End(Launch, SessionEndReason.Exit, exitCode: 0);
+
+        var state = await Watched();
+
+        var finished = Assert.IsType<SkillFinished>(state.Skill);
+        Assert.Equal("needsChanges", finished.Outcome);
+        Assert.Equal(Convert.ToHexStringLower(SHA256.HashData(bytes)), finished.ResultFileSha256);
     }
 
     [Fact]

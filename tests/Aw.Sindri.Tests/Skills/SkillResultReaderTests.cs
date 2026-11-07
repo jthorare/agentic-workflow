@@ -114,6 +114,19 @@ public sealed class SkillResultReaderTests
     }
 
     [Fact]
+    public void A_result_that_starts_with_a_byte_order_mark_reads_as_the_finished_result()
+    {
+        var json = $$"""{"skill":"review","verdict":"NEEDS_CHANGES","review_file":"{{Findings}}"}""";
+        byte[] bytes = [.. Encoding.UTF8.GetPreamble(), .. Encoding.UTF8.GetBytes(json)];
+        var file = new SkillResultFile(bytes, _started.AddMinutes(30));
+
+        var decision = SkillResultReader.Decide(new SkillResultInput(file, "review", SkillFixtures.Review, _started, LastHandledTurnEnd: null, static _ => true));
+
+        Assert.Equal((SkillResultKind.Complete, "needsChanges"), (decision.Kind, decision.Outcome));
+        Assert.Equal(Findings, Assert.Single(decision.Facts).Value);
+    }
+
+    [Fact]
     public void A_result_from_another_skill_waits_and_names_it_SND_SKILL_002()
     {
         var decision = SkillResultReader.Decide(Review("""{"skill":"autoplan","verdict":"PASS"}"""));
