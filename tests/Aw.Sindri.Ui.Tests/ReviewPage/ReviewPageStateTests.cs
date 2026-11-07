@@ -192,4 +192,34 @@ public sealed class ReviewPageStateTests
 
         Assert.Equal("https://github.com/acme/api/pull/2071", page.PrUrl);
     }
+
+    [Fact]
+    public async Task Saving_the_login_in_the_prompt_reads_the_page_again()
+    {
+        _f.Refuse("no-login");
+        var page = await _f.Opened(Token);
+        Assert.True(page.IsLoginPrompt);
+        page.Login.Field = " joi-example ";
+        _f.Serve("full");
+
+        await page.SaveLogin(Token);
+
+        Assert.Equal(["joi-example"], _f.Server.ReviewLoginSaves.Select(l => l.Login), StringComparer.Ordinal);
+        Assert.Equal(2, _f.Server.ReviewPageReads.Count);
+        Assert.Equal((ReviewPageState.Ready, false), (page.State, page.IsLoginPrompt));
+    }
+
+    [Fact]
+    public async Task A_login_save_that_waits_for_the_profile_approval_shows_the_note_and_does_not_read()
+    {
+        _f.Refuse("no-login");
+        var page = await _f.Opened(Token);
+        page.Login.Field = "joi-example";
+        _f.Server.ReviewLoginAnswer = RouteAnswer.Api("reviews-login", "pending");
+
+        await page.SaveLogin(Token);
+
+        Assert.Equal((Labels.ReviewsLoginPending, ReviewPageState.LoginPrompt), (page.Login.Note, page.State));
+        _ = Assert.Single(_f.Server.ReviewPageReads);
+    }
 }

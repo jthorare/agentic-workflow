@@ -18,6 +18,16 @@
       <Button x:Name="ReviewBackFromState" Click="OnBack" AutomationProperties.Name="Back to Reviews" HorizontalAlignment="Left"><TextBlock Text="← Reviews" /></Button>
       <TextBlock x:Name="ReviewStateHeading" Classes="page-title" Focusable="True" Text="{Binding StateHeading}" AutomationProperties.Name="{Binding StateHeading}" TextWrapping="Wrap" />
       <TextBlock x:Name="ReviewStateText" Classes="body muted" Text="{Binding StateText}" TextWrapping="Wrap" />
+      <StackPanel x:Name="ReviewLogin" IsVisible="{Binding IsLoginPrompt}"><StackPanel Spacing="{StaticResource Space.SM}" DataContext="{Binding Login}" x:DataType="rvm:ReviewLoginViewModel">
+        <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
+          <TextBox x:Name="ReviewLoginField" Width="260" Text="{Binding Field, Mode=TwoWay}" KeyDown="OnLoginKey" AutomationProperties.Name="{Binding FieldName}" />
+          <Button x:Name="ReviewLoginSave" Content="{Binding SaveText}" IsEnabled="{Binding CanSave}" Click="OnSaveLogin" AutomationProperties.Name="{Binding SaveText}" />
+        </StackPanel>
+        <TextBlock x:Name="ReviewLoginError" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding Error}" TextWrapping="Wrap"
+                   IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Error}" />
+        <TextBlock x:Name="ReviewLoginNote" Classes="caption subtle" Text="{Binding Note}" TextWrapping="Wrap"
+                   IsVisible="{Binding Note, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Note}" />
+      </StackPanel></StackPanel>
       <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
         <Button x:Name="ReviewTryAgain" Click="OnTryAgain" Content="Try again" />
         <Button x:Name="ReviewOpenFromState" Click="OnOpenGitHub" Content="Open on GitHub" />

@@ -20,6 +20,7 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
     internal ReviewPageViewModel(ISindriApi api, ReviewPanelMemory? memory = null)
     {
         (_api, _memory) = (api, memory ?? new ReviewPanelMemory());
+        Login = new ReviewLoginViewModel(api);
         Diff = new ReviewDiffViewModel();
         ShowLoading();
     }
@@ -33,6 +34,7 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
             Set(ref field, value);
             OnChanged(nameof(ShowsPage));
             OnChanged(nameof(ShowsState));
+            OnChanged(nameof(IsLoginPrompt));
         }
     } = ReviewPageState.Loading;
 
@@ -41,6 +43,12 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
 
     /// <summary>True when a whole-page refusal shows instead.</summary>
     public bool ShowsState => !ShowsPage;
+
+    /// <summary>True when the whole page is the login prompt.</summary>
+    public bool IsLoginPrompt => State == ReviewPageState.LoginPrompt;
+
+    /// <summary>The login prompt's field and Save.</summary>
+    public ReviewLoginViewModel Login { get; }
 
     /// <summary>The heading of a whole-page state ("Pull request not found"); empty for the page.</summary>
     public string StateHeading { get; private set => Set(ref field, value); } = string.Empty;
@@ -241,18 +249,6 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
         ]);
         Patch(Panels, [.. _defaultOrder.Select(id => new ReviewPanelViewModel(id, ReviewPanelState.Loading, Labels.ReviewPanelReading, string.Empty, collapsed: false))]);
         Diff.ShowLoading();
-    }
-
-    // the previous PR's header must not show over the next PR's loading page; the PR's GitHub link comes from repo and number, so every refusal can offer it
-    private void ClearHeader()
-    {
-        (Title, Author, HeadText, Branch, Ref, SettingsText) = (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
-        PrUrl = _repo.Length > 0 ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"https://github.com/{_repo}/pull/{_number}") : string.Empty;
-        (ReviewUrl, OwnPrText) = (string.Empty, string.Empty);
-        (IssueKeys, IsDraft, IsYours) = ([], false, false);
-        (OfflineText, MovingText) = (null, null);
-        (ApproveEnabled, RequestChangesEnabled) = (false, false);
-        FixTarget = null;
     }
 
     private static readonly string[] _defaultOrder = ["requiredChecks", "docMap", "testPlan", "ci", "evidence", "risk", "conversation"];
