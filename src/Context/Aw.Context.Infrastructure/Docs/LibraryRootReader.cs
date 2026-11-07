@@ -128,9 +128,9 @@ internal sealed class LibraryRootReader(IReadOnlyList<string> githubRepos, IReco
         }
 
         var kind = LibraryAdmission.Classify(file.Relative, head);
-        if (kind == LibraryAdmissionKind.NearMiss)
+        if (kind == LibraryAdmissionKind.NearMiss && LibraryAdmission.NearMiss(file.Relative, head) is { } miss)
         {
-            tally.NearMisses.Add(file.Relative);
+            tally.NearMisses.Add(new DesignDocFinding(file.Relative, miss));
         }
         else if (kind == LibraryAdmissionKind.Read)
         {
@@ -263,7 +263,7 @@ internal sealed class LibraryRootReader(IReadOnlyList<string> githubRepos, IReco
 
         internal List<RecordItem> Items { get; } = [];
 
-        internal List<string> NearMisses { get; } = [];
+        internal List<DesignDocFinding> NearMisses { get; } = [];
 
         internal bool Cut { get; set; }
     }

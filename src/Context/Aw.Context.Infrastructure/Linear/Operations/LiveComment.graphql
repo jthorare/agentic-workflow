@@ -1,0 +1,6 @@
+query LiveComment($id: String!) {
+  comment(id: $id) {
+    id body
+    issue { id }
+  }
+}

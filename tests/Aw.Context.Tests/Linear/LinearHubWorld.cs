@@ -83,7 +83,7 @@ internal sealed class LinearHubWorld : IAsyncDisposable
         var linear = await FakeLinear.Start(seed);
         var profile = new JsonObject
         {
-            ["sources"] = new JsonObject { ["linear"] = new JsonObject { ["url"] = linear.Url.ToString(), ["teams"] = new JsonArray("ENG"), ["token"] = "env:" + KeyName } },
+            ["sources"] = new JsonObject { ["linear"] = new JsonObject { ["url"] = linear.Url.ToString(), ["teams"] = new JsonArray("ENG"), ["token"] = "env:" + KeyName, ["writeToken"] = "env:" + KeyName } },
         }.ToJsonString();
         return new LinearHubWorld(linear, profile);
     }

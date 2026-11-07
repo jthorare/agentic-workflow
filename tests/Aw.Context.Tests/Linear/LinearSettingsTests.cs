@@ -88,4 +88,46 @@ public sealed class LinearSettingsTests
     [Fact, Trait("Lane", "unit")]
     public void ToString_withholds_the_token()
         => Assert.DoesNotContain("work-read", LinearSettings.Create(url: null, Pointer, teams: []).Value.ToString(), StringComparison.Ordinal);
+
+    [Fact, Trait("Lane", "unit")]
+    public void No_write_token_means_none()
+        => Assert.Null(LinearSettings.Create(url: null, Pointer, teams: []).Value.WriteToken);
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_write_token_pointer_is_kept()
+        => Assert.Equal("op:vault/linear/write", LinearSettings.Create(url: null, Pointer, teams: [], writeToken: "op:vault/linear/write").Value.WriteToken);
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_write_token_that_is_not_a_secret_pointer_is_002_naming_its_key_and_is_not_repeated()
+    {
+        var error = LinearSettings.Create(url: null, Pointer, teams: [], writeToken: "a-key-written-into-the-profile").Error;
+
+        Assert.Equal("SND-CONTEXT-002", error.Code);
+        Assert.StartsWith("context.sources.linear.writeToken:", error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("a-key-written", error.Message, StringComparison.Ordinal);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("keychain:linear/work-write")]
+    [InlineData("op:vault/linear/write")]
+    public void A_loopback_url_with_a_keychain_or_op_write_token_is_070_so_the_real_write_key_never_reaches_a_local_listener(string writeToken)
+    {
+        var error = LinearSettings.Create("http://127.0.0.1:4010/graphql", "env:LINEAR_FIXTURE_KEY", teams: [], writeToken).Error;
+
+        Assert.Equal("SND-CONTEXT-070", error.Code);
+        Assert.StartsWith("context.sources.linear.url:", error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain(writeToken, error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_loopback_url_takes_an_env_write_token()
+        => Assert.True(LinearSettings.Create("http://127.0.0.1:4010/graphql", "env:LINEAR_FIXTURE_KEY", teams: [], writeToken: "env:LINEAR_FIXTURE_WRITE_KEY").IsSuccess);
+
+    [Fact, Trait("Lane", "unit")]
+    public void Linears_own_host_takes_any_write_token_scheme_because_the_profile_check_owns_that_rule()
+        => Assert.True(LinearSettings.Create(url: null, Pointer, teams: [], writeToken: "env:LINEAR_WRITE_KEY").IsSuccess);
+
+    [Fact, Trait("Lane", "unit")]
+    public void ToString_withholds_the_write_token()
+        => Assert.DoesNotContain("work-write", LinearSettings.Create(url: null, Pointer, teams: [], writeToken: "keychain:linear/work-write").Value.ToString(), StringComparison.Ordinal);
 }

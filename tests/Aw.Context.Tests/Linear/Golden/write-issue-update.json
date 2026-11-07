@@ -1,0 +1,17 @@
+{
+  "query": "mutation IssueUpdate($id: String!, $input: IssueUpdateInput!) {\n  issueUpdate(id: $id, input: $input) {\n    success\n    issue {\n      id identifier title description updatedAt priority estimate\n      state { id name type }\n      team { id key }\n      assignee { id }\n      cycle { id }\n      project { id }\n      parent { id identifier }\n      labels { nodes { id } }\n    }\n  }\n}\n",
+  "variables": {
+    "id": "issue-1",
+    "input": {
+      "title": "Renamed",
+      "description": null,
+      "stateId": "state-2",
+      "assigneeId": null,
+      "priority": 1,
+      "estimate": 5,
+      "projectId": null,
+      "parentId": "issue-0",
+      "labelIds": []
+    }
+  }
+}

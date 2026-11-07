@@ -188,6 +188,12 @@ public sealed class FakeLinear : IAsyncDisposable
             : throw FakeRequestException.Invalid("The request has no string 'query'.");
         var (mutation, fields) = GraphQlReader.Read(query, document["variables"] as JsonObject, allowMutation: true, allowObjects: true);
         var operation = string.Join(' ', fields.Select(f => f.Name));
+        if (mutation && Switches.DropBeforeApplying)
+        {
+            Switches.DropBeforeApplying = false;
+            return FakeHttpReply.Dropped("dropped before applying: " + operation);
+        }
+
         if (!mutation)
         {
             ApplyTeammate();

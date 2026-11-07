@@ -1,0 +1,12 @@
+query LiveIssue($id: String!) {
+  issue(id: $id) {
+    id identifier title description updatedAt priority estimate
+    state { id name type }
+    assignee { id }
+    cycle { id }
+    project { id }
+    parent { id identifier }
+    labels { nodes { id } }
+    team { id key }
+  }
+}
