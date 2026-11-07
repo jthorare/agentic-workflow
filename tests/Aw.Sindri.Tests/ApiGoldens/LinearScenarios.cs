@@ -17,7 +17,7 @@ internal static class LinearScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("linear-lookups", "eng"), ("linear-lookups", "not-synced"),
+        ("linear-lookups", "eng"), ("linear-lookups", "not-synced"), ("linear-since", "three"),
         ("linear-issues", "mine"), ("linear-issues", "teams-page2"), ("linear-issues", "filtered-empty"), ("linear-issues", "not-connected"),
         ("linear-issues", "feed-failing"), ("linear-issues", "rereading"), ("linear-issues", "session"),
         ("linear-issue", "full"), ("linear-issue", "removed"), ("linear-issue", "not-found"), ("linear-issue", "session"), ("linear-issue", "session-outside"),
@@ -67,6 +67,7 @@ internal static class LinearScenarios
             ("linear-issue", _) => "/sindri/linear/issues/ENG-12",
             ("linear-lookups", "not-synced") => "/sindri/linear/lookups/OPS",
             ("linear-lookups", _) => "/sindri/linear/lookups/ENG",
+            ("linear-since", _) => "/sindri/linear/since",
             ("linear-connection", _) => "/sindri/linear/connection",
             _ => throw new ArgumentOutOfRangeException(nameof(slug), slug, "no such linear scenario"),
         };

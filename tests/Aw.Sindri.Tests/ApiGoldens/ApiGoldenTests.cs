@@ -12,8 +12,8 @@ public sealed class ApiGoldenTests
     // the Linear hub's reads (#2077 Ph3 1a) and writes (1b) leave it when api serves them
     private static readonly string[] _pendingGoldenFolders = ["reviews-pr", "library-roots", "review-settings", "review-settings-save", "linear-issues", "linear-issue", "linear-change", "linear-comment", "linear-create", "linear-connection", "linear-connection-teams", "linear-connect", "linear-disconnect-write"];
 
-    // single files waiting on Context's wider lookups (team name, synced_at, member active, label color): the route is served, these two rows are not
-    private static readonly string[] _pendingGoldenFiles = ["linear-lookups/eng.json", "linear-lookups/not-synced.json"];
+    // single files waiting on Context's wider lookups (team name, synced_at, member active, label color) and the strip's `three` (its marker and null actors are re-recorded at the gate): the route is served, these two rows are not
+    private static readonly string[] _pendingGoldenFiles = ["linear-lookups/eng.json", "linear-lookups/not-synced.json", "linear-since/three.json"];
 
     private static bool IsPending(string file) => _pendingGoldenFiles.Contains(file) || _pendingGoldenFolders.Any(p => file.StartsWith(p + "/", StringComparison.Ordinal));
 
