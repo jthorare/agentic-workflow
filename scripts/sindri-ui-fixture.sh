@@ -112,6 +112,26 @@
 #                                  needed; the owner's writes are ledger events and refresh the view. Exit 2 without a context store (run
 #                                  'context up' first) or when the profile already has a context: section without the SPL team.
 #
+#   sindri-ui-fixture.sh reviews up|down  (run after 'context up')
+#                                  a review page that opens on a fixture PR, for sending a fix from its fix sheet end to end
+#                                  (POST /sindri/reviews/acme/api/<N>/fix; PR review page spec 8.2). up adds what projects adds to the live
+#                                  profile (the SPL team, github repos acme/api and acme/web), review.login fx-viewer and workflow.forge
+#                                  (adapter file, hosts github.com), and approves that. It builds a file-backed forge world inside the home,
+#                                  <home>/ui-fixture-forge/state/forge/file (never the owner's $AW_STATE_DIR), with ONE open PR on
+#                                  github.com/acme/api (branch feat/retry-budget, authored by fx-viewer so the fix posts a sindri.fix thread):
+#                                  the changed file src/Sync.cs (3 added lines at 41-43), three check runs (lint failing) and one open thread
+#                                  on src/Sync.cs; the world is rebuilt every run, so the PR is always #1. It stores that PR as the Context
+#                                  record github:pr/acme/api/<N> (audience linear:SPL, with a github cursor row), replacing the last run's,
+#                                  and restarts the control plane with AW_STATE_DIR and AW_FORGE_LOGIN pointing at the forge state (the
+#                                  real state's cache/bin, where serve finds Temporal, is linked into it), which every later restart keeps
+#                                  while <home>/ui-fixture-forge exists. aw-forge-fake is built into <home>/ui-fixture-forge/bin (dotnet,
+#                                  one project) or taken from AW_FORGE_FAKE (the command line, split on spaces). Prints three lines: the page
+#                                  address (/sindri/reviews/acme/api/<N>), the PR's head sha and the file:line a line fix targets (src/Sync.cs:42).
+#                                  The home must be under $TMPDIR (a proof-folder home is refused: the changed AW_STATE_DIR would fail
+#                                  sindri-prove.sh's guard). 'projects' deletes every github:pr/acme/ row: run reviews up after it. down
+#                                  removes the PR record, the forge world and the profile's review and forge entries, then restarts the
+#                                  control plane when it is running. Needs jq and sqlite3 or python3.
+#
 #   sindri-ui-fixture.sh sessions up|ask <pid>|end <pid>|back <pid>|disable|enable|down
 #                                  the Agents page's data (U11a; run after 'up', and run 'sessions up' right after every 'up': a
 #                                  control plane started without it reads the real box). up copies tests/fixtures/sessions/
@@ -914,7 +934,7 @@ projects_issues() {
 projects_pr() {
   local key="github:pr/$1/$2"
   projects_sql+="INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at)
-      VALUES ('$key', 'github', 'pr', '$1', '$PROJECTS_AUDIENCE', '$4', 'https://github.com/$1/pull/$2', '$PROJECTS_VIEWER_NAME', 'open', 'open', $(projects_ts '-3 days'), $(projects_ts '-1 days'), NULL, 'fixture', 'fixture-pr-$2', 'fixture', 0, NULL, $(projects_ts '+0 seconds'));
+      VALUES ('$key', 'github', 'pr', NULL, '$PROJECTS_AUDIENCE', '$4', 'https://github.com/$1/pull/$2', '$PROJECTS_VIEWER_NAME', 'open', 'open', $(projects_ts '-3 days'), $(projects_ts '-1 days'), NULL, 'fixture', 'fixture-pr-$2', 'fixture', 0, NULL, $(projects_ts '+0 seconds'));
 INSERT INTO record_link (from_key, to_ref, to_key, kind, title) VALUES ('linear:issue/fx-checkout-$3', '$key', '$key', 'relates', '$4');
 "
 }
@@ -976,6 +996,164 @@ UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;
   fi
 }
 
+# --- reviews: a review page on a fixture PR (PR review page spec 8.2) ---
+REVIEWS_SLUG="acme/api"
+REVIEWS_HEAD_SHA="1f2e3d4c5b6a79880011223344556677889900aa"
+REVIEWS_BRANCH="feat/retry-budget"
+REVIEWS_FILE="src/Sync.cs"
+REVIEWS_LINE=42
+REVIEWS_DIRNAME="ui-fixture-forge"
+reviews_dir() { printf '%s\n' "$AW_SINDRI_HOME/$REVIEWS_DIRNAME"; }
+reviews_state() { printf '%s\n' "$(reviews_dir)/state"; }
+
+# Serve is restarted with AW_STATE_DIR inside the home, which sindri-prove.sh's guard accepts only for a home under $TMPDIR.
+reviews_need_tmp_home() {
+  local home temp
+  home="$(cd "$AW_SINDRI_HOME" 2>/dev/null && pwd -P)" || die "reviews: can't resolve $AW_SINDRI_HOME"
+  temp="$(cd "${TMPDIR:-/tmp}" 2>/dev/null && pwd -P)" || die "reviews: can't resolve \$TMPDIR"
+  case "$home/" in "${temp%/}"/?*) ;; *) die "reviews: AW_SINDRI_HOME must be under \$TMPDIR (got $home): a changed AW_STATE_DIR fails the guard of a proof-folder home" ;; esac
+}
+
+# review.login and workflow.forge (the file adapter on github.com) in the live profile, once each; approved afterwards when it isn't.
+# What 'reviews up' added (one word per line: review, forge, cursor), so 'reviews down' removes only that and never a block that was there before.
+reviews_marker() { printf '%s\n' "$AW_SINDRI_HOME/ui-fixture-reviews-added"; }
+reviews_mark() { grep -qx "$1" "$(reviews_marker)" 2>/dev/null || printf '%s\n' "$1" >> "$(reviews_marker)"; }
+reviews_marked() { grep -qx "$1" "$(reviews_marker)" 2>/dev/null; }
+
+reviews_profile() {
+  local profile
+  profile="$(profile_path)"
+  # why: a forge another verb set (line-run writes hosts [forge.test]) can't reach https://github.com/acme/api/pull/N, so the fix route would fail
+  if grep -q '^  forge:' "$profile" && ! grep -q '^  forge:.*github\.com' "$profile"; then
+    die "reviews: the profile already has a workflow.forge without github.com ($(grep -m1 '^  forge:' "$profile" | sed 's/^ *//'); 'line-run' writes one): run 'down' and 'up' for a fresh home first"
+  fi
+  if ! grep -q '^review:' "$profile"; then
+    printf 'review:\n  login: %s\n' "$PROJECTS_VIEWER" >> "$profile" || die "reviews: can't add review.login to $profile"
+    reviews_mark review
+  fi
+  if ! grep -q '^  forge:' "$profile"; then
+    if grep -q '^workflow:' "$profile"; then
+      awk '{print} /^workflow:/ {print "  forge: { adapter: file, hosts: [github.com] }"}' "$profile" > "$profile.new"
+    else
+      awk '{print} /^user:/ {print "workflow:\n  forge: { adapter: file, hosts: [github.com] }"}' "$profile" > "$profile.new"
+    fi && mv "$profile.new" "$profile" || die "reviews: can't add workflow.forge to $profile"
+    reviews_mark forge
+  fi
+  if needs_approval; then approve >&2 || return; fi
+}
+
+# The aw-forge-fake command line in REVIEWS_CMD: AW_FORGE_FAKE, else a dotnet build of the one project into <home>/ui-fixture-forge/bin.
+reviews_ensure_bin() {
+  if [ -n "${AW_FORGE_FAKE:-}" ]; then
+    # shellcheck disable=SC2206
+    REVIEWS_CMD=($AW_FORGE_FAKE)
+    return
+  fi
+  need dotnet
+  local bin dll
+  bin="$(reviews_dir)/bin"
+  dll="$bin/aw-forge-fake.dll"
+  if [ ! -f "$dll" ] || [ -n "$(find "$ROOT/src/Forge" "$ROOT/src/Aw.Kernel" "$ROOT/src/Aw.Kernel.Telemetry" "$ROOT/src/Redaction/Aw.Redaction" -name '*.cs' -newer "$dll" -print -quit 2>/dev/null)" ]; then
+    echo "sindri-ui-fixture: building aw-forge-fake into $bin" >&2
+    mkdir -p "$bin" && dotnet build "$ROOT/src/Forge/Aw.Forge.Host" -c Release -o "$bin" -v q --nologo >&2 || die "reviews: dotnet build of aw-forge-fake failed"
+  fi
+  REVIEWS_CMD=(dotnet "$dll")
+}
+
+# aw-forge-fake on the fixture's own world (never the real $AW_STATE_DIR), acting as the viewer.
+reviews_forge() { AW_STATE_DIR="$(reviews_state)" AW_FORGE_ADAPTER=file AW_FORGE_HOSTS=github.com AW_FORGE_LOGIN="$PROJECTS_VIEWER" "${REVIEWS_CMD[@]}" "$@" </dev/null; }
+
+# The changed file's seed (docs/csharp/forge.md "seed files"): 3 lines added after line 40, so line 42 is on the new side.
+reviews_files_json() {
+  local n head="" base=""
+  for ((n = 1; n <= 40; n++)); do head+="    Step($n);"$'\n'; done
+  base="$head"
+  head+="    var delay = budget.Next(attempt);"$'\n'
+  head+="    if (delay is null) return Retry.Stop;"$'\n'
+  head+="    await Task.Delay(delay.Value);"$'\n'
+  jq -n --arg path "$REVIEWS_FILE" --arg text "$head" --arg baseText "$base" \
+    '[{file: {path: $path, previousPath: null, status: "Modified", additions: 3, deletions: 0,
+              patch: "@@ -40,0 +41,3 @@\n+    var delay = budget.Next(attempt);\n+    if (delay is null) return Retry.Stop;\n+    await Task.Delay(delay.Value);"},
+       text: $text, baseText: $baseText}]'
+}
+
+reviews_up() {
+  need jq
+  need_sql
+  reviews_need_tmp_home || return
+  local db dir state real link out number files key
+  db="$(context_db)"
+  [ -f "$db" ] || die "no context store at $db: run 'context up' first"
+  sql_on "$db" "SELECT pull_facts FROM source_record LIMIT 1" >/dev/null 2>&1 || die "the context store at $db has no pull_facts column (migration 0030): rebuild sindri and run 'context up' first"
+  projects_profile || return
+  reviews_profile || return
+
+  dir="$(reviews_dir)"
+  state="$(reviews_state)"
+  # Serve finds its Temporal binary under $AW_STATE_DIR/cache/bin: link the real one in before serve's state dir is the home's.
+  real="${AW_STATE_DIR:-$HOME/.agentic-workflow}"
+  mkdir -p "$state/cache" || return
+  if [ "$real" != "$state" ] && [ ! -e "$state/cache/bin" ]; then
+    ln -s "$real/cache/bin" "$state/cache/bin" || die "reviews: can't link $real/cache/bin"
+  fi
+  reviews_ensure_bin || return
+  # A new world every run: the PR is always the first one, so the stored record never needs a second number.
+  rm -rf -- "$state/forge"
+  out="$(reviews_forge open --repo "github.com/$REVIEWS_SLUG" --head "$REVIEWS_BRANCH" --base main --head-sha "$REVIEWS_HEAD_SHA" \
+    --title "Add a retry budget to sync" --body "Stops a failing sync from retrying forever. The fixture's PR for the review page.")" || die "reviews: aw-forge-fake open failed"
+  number="$(jq -r '.number // empty' <<<"$out")"
+  [[ "$number" =~ ^[0-9]+$ ]] || die "reviews: aw-forge-fake open gave no pull number: $out"
+  link="https://github.com/$REVIEWS_SLUG/pull/$number"
+  files="$dir/files.json"
+  reviews_files_json > "$files" || die "reviews: can't write $files"
+  reviews_forge seed files "$link" --from "$files" >/dev/null || die "reviews: seed files failed"
+  reviews_forge seed checks "$link" --state failing --failing lint --passed 2 --runs "build:success:github-actions,test:success:github-actions,lint:failure:github-actions" >/dev/null || die "reviews: seed checks failed"
+  reviews_forge seed thread "$link" --author reviewer-kai --association COLLABORATOR --kind thread --path "$REVIEWS_FILE" \
+    --body "What stops this from waiting forever when budget.Next keeps returning a delay?" >/dev/null || die "reviews: seed thread failed"
+
+  key="github:pr/$REVIEWS_SLUG/$number"
+  [ -n "$(sql_on "$db" "SELECT 1 FROM source_cursor WHERE source = 'github' AND repo = 'records'")" ] || reviews_mark cursor
+  sql_on "$db" "DELETE FROM source_record WHERE text_hash LIKE 'fixture-review-%';
+INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at, pull_facts)
+  VALUES ('$key', 'github', 'pr', NULL, '$PROJECTS_AUDIENCE', 'Add a retry budget to sync', '$link', '$PROJECTS_VIEWER', 'open', 'open', $(projects_ts '-2 days'), $(projects_ts '-3 hours'), NULL, 'fixture', 'fixture-review-$number', 'fixture', 0, NULL, $(projects_ts '+0 seconds'),
+    '{\"requestedReviewers\":[\"reviewer-kai\"],\"headSha\":\"$REVIEWS_HEAD_SHA\",\"reviews\":[]}');
+INSERT OR REPLACE INTO source_cursor (source, repo, cursor, last_sync, last_error, phase) VALUES ('github', 'records', NULL, $(projects_ts '-3 minutes'), NULL, 'incremental');
+UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;" >/dev/null || die "reviews: can't write the PR record to $db"
+
+  sessions_restart >&2 || return
+  printf '/sindri/reviews/%s/%s\n%s\n%s:%s\n' "$REVIEWS_SLUG" "$number" "$REVIEWS_HEAD_SHA" "$REVIEWS_FILE" "$REVIEWS_LINE"
+}
+
+reviews_down() {
+  need_sql
+  local db dir profile
+  db="$(context_db)"
+  if [ -f "$db" ]; then
+    if reviews_marked cursor; then sql_on "$db" "DELETE FROM source_cursor WHERE source = 'github' AND repo = 'records';" >/dev/null || die "reviews: can't remove the github cursor row from $db"; fi
+    sql_on "$db" "DELETE FROM source_record WHERE text_hash LIKE 'fixture-review-%'; UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;" >/dev/null || die "reviews: can't remove the PR record from $db"
+  fi
+  dir="$(reviews_dir)"
+  case "$dir" in */"$REVIEWS_DIRNAME") [ ! -e "$dir" ] || rm -rf -- "$dir" ;; *) die "reviews: refusing to delete $dir" ;; esac
+  profile="$(profile_path)"
+  local drop=""
+  reviews_marked review && drop="^review:\$|^  login: $PROJECTS_VIEWER\$"
+  reviews_marked forge && drop="${drop:+$drop|}^  forge: \\{ adapter: file, hosts: \\[github.com\\] \\}\$"
+  if [ -f "$profile" ] && [ -n "$drop" ]; then
+    grep -Ev "$drop" "$profile" \
+      | awk '{l[NR]=$0} END {for (i=1;i<=NR;i++) if (!(l[i]=="workflow:" && (i==NR || l[i+1] !~ /^  /))) print l[i]}' > "$profile.new" && mv "$profile.new" "$profile" || die "reviews: can't edit $profile"
+  fi
+  if [ -f "$profile" ] && needs_approval; then
+    (approve >&2) || echo "reviews: the profile is not approved; run 'reviews down' again or approve it (sindri profile approve)" >&2
+  fi
+  rm -f -- "$(reviews_marker)"
+  # The dir is gone, so the restart no longer points AW_STATE_DIR at it.
+  if [ -f "$AW_SINDRI_HOME/control.json" ]; then sessions_restart >&2 || return; fi
+}
+
+reviews() {
+  case "$1" in up) reviews_up ;; down) reviews_down ;; esac
+}
+
 # --- context sources: the node panel's source links (#1702) ---
 SOURCES_ORIGIN="https://github.com/acme/tabs.git"
 SOURCES_DOC_NODE="feature:staffing.schema"
@@ -1024,6 +1202,8 @@ sessions_export() {
   if [ -d "$(agent_dir)/claude-config" ]; then export CLAUDE_CONFIG_DIR="$(agent_dir)/claude-config"; fi
   # 'sandbox blocked|clear' keeps AW_SANDBOX_BWRAP across restarts.
   if [ -s "$(sandbox_dir)/bwrap" ]; then export AW_SANDBOX_BWRAP="$(cat "$(sandbox_dir)/bwrap")"; else unset AW_SANDBOX_BWRAP; fi
+  # 'reviews up' keeps serve on its forge world (acting as the viewer, as the world's PR was opened) while <home>/ui-fixture-forge exists.
+  if [ -d "$(reviews_state)" ]; then export AW_STATE_DIR="$(reviews_state)" AW_FORGE_LOGIN="$PROJECTS_VIEWER"; fi
   # model-picks-run's judge stub stays the judge of every later restart (the real judge would call a model provider).
   if [ -x "$(agent_dir)/stub-judge/judge" ]; then export AW_SINDRI_JUDGE="$(agent_dir)/stub-judge/judge"; fi
 }
@@ -1511,6 +1691,7 @@ case "$verb" in
   workflows) [ "$#" -eq 1 ] || { [ "$#" -eq 2 ] && [ "$2" = "--large" ]; } || die "usage: workflows [--large]" ;;
   line-run) [ "$#" -eq 1 ] || die "'line-run' takes no arguments" ;;
   projects) [ "$#" -eq 1 ] || die "'projects' takes no arguments" ;;
+  reviews) { [ "$#" -eq 2 ] && { [ "$2" = up ] || [ "$2" = down ]; }; } || die "usage: reviews up|down" ;;
   park-timeout | changed-recipe) [ "$#" -eq 1 ] || die "'$verb' takes no arguments" ;;
   incident) { [ "$#" -eq 2 ] && { [ "$2" = start ] || [ "$2" = stop ]; }; } || die "usage: incident start|stop" ;;
   request) [ "$#" -ge 2 ] || die "usage: request [--item ID] [--repo R] <text>" ;;
