@@ -29,6 +29,9 @@ internal sealed class SettingsCheckRow(int index, string id, string title, strin
     /// <summary>The need as the API wrote it, or null for a new row.</summary>
     internal JsonElement? Need { get; } = need;
 
+    /// <summary>True for a check that runs a command: its need shows but does not edit.</summary>
+    public bool NeedReadOnly { get; } = ReviewSettingsNeed.IsCommand(need);
+
     /// <summary>The need text as it was when the row was read.</summary>
     internal string OriginalNeedText { get; } = needText;
 

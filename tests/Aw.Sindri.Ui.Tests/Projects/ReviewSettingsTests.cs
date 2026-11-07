@@ -253,6 +253,41 @@ public sealed class ReviewSettingsTests
         Assert.Equal(text, ReviewSettingsNeed.Text(ReviewSettingsNeed.Parse(text)), StringComparer.Ordinal);
     }
 
+    [Fact]
+    public void A_ci_need_with_an_app_keeps_the_app_through_text_and_back()
+    {
+        var need = ReviewSettingsNeed.Parse("ci: ui-tests (app: github-actions)");
+
+        Assert.Equal("""{"ci":"ui-tests","app":"github-actions"}""", need!.Value.GetRawText());
+        Assert.Equal("ci: ui-tests (app: github-actions)", ReviewSettingsNeed.Text(need));
+    }
+
+    [Fact]
+    public async Task A_check_with_ci_and_app_is_sent_back_with_both_and_a_command_check_unchanged()
+    {
+        var settings = await Opened("shared-entry");
+        settings.AddCheck();
+        settings.CheckRows[2].Id = "withapp";
+        settings.CheckRows[2].NeedText = "ci: build (app: gha)";
+
+        await settings.Save(Token);
+
+        Assert.Equal("""{"ci":"build","app":"gha"}""", OnlySave().Entry.Checks![2].Need!.Value.GetRawText());
+    }
+
+    [Fact]
+    public async Task A_command_check_shows_read_only_and_goes_back_as_it_was()
+    {
+        var settings = await Opened("shared-entry");
+        var command = ReviewSettingsNeed.Parse("manual")!.Value;
+        Assert.False(ReviewSettingsNeed.IsCommand(command));
+        using var document = System.Text.Json.JsonDocument.Parse("""{"command":["make","test"]}""");
+        var row = new SettingsCheckRow(3, "cmd", "Runs make", string.Empty, ReviewSettingsNeed.Text(document.RootElement), document.RootElement.Clone());
+
+        Assert.Equal(("command: make, test", true), (row.NeedText, row.NeedReadOnly));
+        Assert.True(settings.IsShown);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("ci")]

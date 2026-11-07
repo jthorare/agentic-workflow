@@ -1,9 +1,10 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace Aw.Sindri.Ui.ViewModels.Projects;
 
 /// <summary>A check's <c language="text">need</c> object (spec §7.3, one key) as one line of text and back: "ci: ui-tests", "changedWith: a, b", "covers", "body: ^x$", "manual".</summary>
-internal static class ReviewSettingsNeed
+internal static partial class ReviewSettingsNeed
 {
     /// <summary>The line for a need as the API wrote it.</summary>
     /// <param name="need">The need, or null.</param>
@@ -15,6 +16,11 @@ internal static class ReviewSettingsNeed
             return string.Empty;
         }
 
+        if (body.TryGetProperty("ci", out var ci) && body.TryGetProperty("app", out var app))
+        {
+            return "ci: " + Value(ci) + " (app: " + Value(app) + ")";
+        }
+
         foreach (var member in body.EnumerateObject())
         {
             return member.Value.ValueKind == JsonValueKind.True ? member.Name : member.Name + ": " + Value(member.Value);
@@ -22,6 +28,11 @@ internal static class ReviewSettingsNeed
 
         return string.Empty;
     }
+
+    /// <summary>True for a need the API refuses to take new (SND-REVIEW-003): <c language="text">command</c>. It is shown and sent back unchanged.</summary>
+    /// <param name="need">The need, or null.</param>
+    /// <returns>True when the need runs a command.</returns>
+    internal static bool IsCommand(JsonElement? need) => need is { ValueKind: JsonValueKind.Object } body && body.TryGetProperty("command", out _);
 
     /// <summary>Reads a line written like <see cref="Text"/>.</summary>
     /// <param name="text">The line.</param>
@@ -31,6 +42,12 @@ internal static class ReviewSettingsNeed
         var at = text.IndexOf(':', StringComparison.Ordinal);
         var key = (at < 0 ? text : text[..at]).Trim();
         var value = at < 0 ? string.Empty : text[(at + 1)..].Trim();
+        var app = string.Empty;
+        if (string.Equals(key, "ci", StringComparison.Ordinal) && AppSuffix.Match(value) is { Success: true } suffix)
+        {
+            (value, app) = (suffix.Groups["ci"].Value.Trim(), suffix.Groups["app"].Value.Trim());
+        }
+
         using var stream = new MemoryStream();
         using (var writer = new Utf8JsonWriter(stream))
         {
@@ -40,12 +57,20 @@ internal static class ReviewSettingsNeed
                 return null;
             }
 
+            if (app.Length > 0)
+            {
+                writer.WriteString("app", app);
+            }
+
             writer.WriteEndObject();
         }
 
         using var document = JsonDocument.Parse(stream.ToArray());
         return document.RootElement.Clone();
     }
+
+    [GeneratedRegex(@"^(?<ci>.*?)\s*\(app:\s*(?<app>.+?)\)$", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex AppSuffix { get; }
 
     private static bool Member(Utf8JsonWriter writer, string key, string value)
     {

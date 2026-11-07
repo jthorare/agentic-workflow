@@ -165,7 +165,7 @@
                 <TextBox Name="CheckId" Text="{Binding Id, Mode=TwoWay}" AutomationProperties.Name="{Binding IdName}" />
                 <TextBox Name="CheckTitle" Text="{Binding Title, Mode=TwoWay}" AutomationProperties.Name="{Binding TitleName}" />
                 <TextBox Name="CheckWhen" Text="{Binding WhenText, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48" AutomationProperties.Name="{Binding WhenName}" />
-                <TextBox Name="CheckNeed" Text="{Binding NeedText, Mode=TwoWay}" AutomationProperties.Name="{Binding NeedName}" />
+                <TextBox Name="CheckNeed" Text="{Binding NeedText, Mode=TwoWay}" IsReadOnly="{Binding NeedReadOnly}" AutomationProperties.Name="{Binding NeedName}" />
                 <Button Name="CheckRemove" Content="{Binding RemoveText}" Click="OnRemoveCheck" HorizontalAlignment="Left" AutomationProperties.Name="{Binding RemoveName}" />
               </StackPanel>
             </DataTemplate>
