@@ -324,31 +324,6 @@ public sealed class NewLinearIssueTests
     }, Token);
 
     [Fact]
-    public Task A_create_answered_after_Esc_closed_the_dialog_says_it_was_not_open() => NewLinearIssueFixture.Run(async f =>
-    {
-        var vm = await f.OpenedOnEng(Token);
-        var gate = f.Server.LinearCreateGate = new TaskCompletionSource();
-        vm.Title = "Document the retry budget";
-        var sending = vm.Submit(Token);
-
-        vm.Close();
-        await NewLinearIssueFixture.Release(gate, sending);
-
-        Assert.Equal((false, false), (vm.CreatedWhileOpen, vm.IsOpen));
-    }, Token);
-
-    [Fact]
-    public Task A_create_answered_while_the_dialog_is_open_says_it_was_open() => NewLinearIssueFixture.Run(async f =>
-    {
-        var vm = await f.OpenedOnEng(Token);
-        vm.Title = "Document the retry budget";
-
-        await vm.Submit(Token);
-
-        Assert.True(vm.CreatedWhileOpen);
-    }, Token);
-
-    [Fact]
     public Task Discard_after_an_unknown_answer_unlocks_the_form_clears_the_draft_and_sends_nothing() => NewLinearIssueFixture.Run(async f =>
     {
         var vm = await f.OpenedOnEng(Token);
@@ -374,5 +349,76 @@ public sealed class NewLinearIssueTests
         await NewLinearIssueFixture.Release(gate, sending);
 
         Assert.Equal(("Document the retry budget", true), kept);
+    }, Token);
+
+    [Fact]
+    public Task A_create_answered_after_Esc_closed_the_dialog_says_it_was_not_open() => NewLinearIssueFixture.Run(async f =>
+    {
+        var vm = await f.OpenedOnEng(Token);
+        var gate = f.Server.LinearCreateGate = new TaskCompletionSource();
+        vm.Title = "Document the retry budget";
+        var sending = vm.Submit(Token);
+
+        vm.Close();
+        await NewLinearIssueFixture.Release(gate, sending);
+
+        Assert.Equal((false, false), (vm.CreatedWhileOpen, vm.IsOpen));
+    }, Token);
+
+    [Fact]
+    public Task A_create_answered_while_the_dialog_is_open_says_it_was_open() => NewLinearIssueFixture.Run(async f =>
+    {
+        var vm = await f.OpenedOnEng(Token);
+        vm.Title = "Document the retry budget";
+
+        await vm.Submit(Token);
+
+        Assert.True(vm.CreatedWhileOpen);
+    }, Token);
+
+    [Fact]
+    public Task Retry_with_no_API_url_stays_unknown_and_locked_with_the_not_running_banner() => UiThread.Run(async () =>
+    {
+        var f = new NewLinearIssueFixture();
+        f.OneTeam();
+        var address = (Uri?)NewLinearIssueFixture.Url;
+        var vm = new ViewModels.Linear.NewLinearIssueViewModel(f.Server, () => address, f.Clock);
+        await vm.Open(Token);
+        await vm.Reading;
+        f.Server.QueueLinearCreate(NewLinearIssueFixture.Create("unknown"));
+        vm.Title = "Document the retry budget";
+        await vm.Submit(Token);
+        address = null;
+
+        await vm.Retry(Token);
+
+        Assert.Equal((true, true, false, true, 1), (vm.IsUnknown, vm.IsLocked, vm.CanEdit, vm.HasErrorBanner, f.Server.LinearCreates.Count));
+    }, Token);
+
+    [Fact]
+    public Task A_create_answer_this_build_cannot_read_is_counted_as_unknown() => NewLinearIssueFixture.Run(async f =>
+    {
+        var vm = await f.OpenedOnEng(Token);
+        f.Server.QueueLinearCreate(new RouteAnswer(System.Net.HttpStatusCode.OK, "this is not json"));
+        vm.Title = "Document the retry budget";
+
+        await vm.Submit(Token);
+
+        Assert.Equal((true, true), (vm.IsUnknown, vm.IsLocked));
+    }, Token);
+
+    [Fact]
+    public Task A_single_teams_lookups_are_read_once_when_the_dialog_opens_however_slowly_they_answer() => NewLinearIssueFixture.Run(async f =>
+    {
+        f.OneTeam();
+        f.Server.LinearLookupsGate = new TaskCompletionSource();
+
+        var opening = f.Vm.Open(Token);
+        await Task.Delay(20, Token);
+        f.Server.LinearLookupsGate.SetResult();
+        await opening;
+        await f.Vm.Reading;
+
+        Assert.Equal(["ENG"], f.Server.LinearLookupsRead, StringComparer.Ordinal);
     }, Token);
 }

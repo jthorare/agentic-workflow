@@ -161,6 +161,7 @@ internal sealed partial class NewLinearIssueViewModel(ISindriApi api, Func<Uri?>
         ClearTitleError();
         ClearTeamError();
         IsOpen = true;
+        var before = Reading;
         if (url() is { } address)
         {
             var connection = await api.LinearConnection(address, cancellationToken).ConfigureAwait(true);
@@ -177,7 +178,7 @@ internal sealed partial class NewLinearIssueViewModel(ISindriApi api, Func<Uri?>
             }
         }
 
-        if (Team is { } picked)
+        if (Team is { } picked && ReferenceEquals(Reading, before))   // Offer's own pick has started the read already
         {
             Reading = ReadLookups(picked);   // the draft's team: its lookups again, the picks kept by id
         }

@@ -149,7 +149,13 @@ internal sealed partial class NewLinearIssueViewModel
     {
         if (url() is not { } address)
         {
+            var wasUnknown = IsUnknown;
             Refused(SindriUiErrors.NotRunning.With("no API to send to"), body.Team);
+            if (wasUnknown)
+            {
+                (IsUnknown, IsLocked) = (true, true);   // nothing was sent, so the old send is still unanswered: Retry stays, the edits stay locked out
+            }
+
             return;
         }
 
@@ -162,7 +168,7 @@ internal sealed partial class NewLinearIssueViewModel
         (_inFlight, CreateText) = (false, Labels.LinearNewCreate);
         if (answer.IsSuccess)
         {
-            Answered(answer.Value, body.Team);
+            Answered(answer.Value);
         }
         else
         {
@@ -187,7 +193,7 @@ internal sealed partial class NewLinearIssueViewModel
         }
     }
 
-    private void Answered(LinearWriteOutcome outcome, string team)
+    private void Answered(LinearWriteOutcome outcome)
     {
         StatusLine = string.Empty;
         switch (outcome)
@@ -203,7 +209,7 @@ internal sealed partial class NewLinearIssueViewModel
                 IsLocked = false;
                 break;
             default:
-                Refused(SindriUiErrors.BadAnswer.With($"{team}: the create was answered with something this build can't read"), team);
+                Unknown();   // an answer this build can't read says nothing about whether the issue exists
                 break;
         }
     }
@@ -211,9 +217,9 @@ internal sealed partial class NewLinearIssueViewModel
     private void Refused(Error error, string team)
     {
         StatusLine = string.Empty;
-        if (string.Equals(error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal))
+        if (string.Equals(error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal) || string.Equals(error.Code, SindriUiErrors.BadAnswer.Code, StringComparison.Ordinal))
         {
-            Unknown();   // the app's own call got no answer, so the POST may have landed
+            Unknown();   // the app's own call got no answer, or one it can't read, so the POST may have landed
             return;
         }
 
