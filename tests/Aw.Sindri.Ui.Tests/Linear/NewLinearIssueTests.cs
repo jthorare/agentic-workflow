@@ -74,10 +74,11 @@ public sealed class NewLinearIssueTests
     {
         await f.Vm.Open(Token);
         f.Vm.Title = "Document the retry budget";
+        var opened = f.Vm.TeamFocusRequests;   // opening with no team already asks for the team once
 
         await f.Vm.Submit(Token);
 
-        Assert.Equal(("Team is required", 1, 0), (f.Vm.TeamError, f.Vm.TeamFocusRequests, f.Server.LinearCreates.Count));
+        Assert.Equal(("Team is required", opened + 1, 0), (f.Vm.TeamError, f.Vm.TeamFocusRequests, f.Server.LinearCreates.Count));
     }, Token);
 
     [Fact]
