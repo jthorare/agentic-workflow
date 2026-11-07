@@ -22,22 +22,22 @@ internal sealed class LinearGroupViewModel(string heading) : ObservableObject
 
     /// <summary>Shows what a read found.</summary>
     /// <param name="rows">The rows, kept in place when already shown.</param>
-    /// <param name="total">How many issues match.</param>
+    /// <param name="total">How many issues match; null when unknown.</param>
     /// <param name="empty">The line to show while there is no row.</param>
-    internal void Show(IReadOnlyList<LinearIssueRowViewModel> rows, int total, string empty)
+    internal void Show(IReadOnlyList<LinearIssueRowViewModel> rows, int? total, string empty)
     {
         Patch.To(Rows, rows);
-        (Count, Empty) = (Labels.LinearGroupCount(total), rows.Count == 0 ? empty : string.Empty);
+        (Count, Empty) = (Labels.LinearGroupCount(total, rows.Count), rows.Count == 0 ? empty : string.Empty);
         OnChanged(nameof(IsVisible));
     }
 
     /// <summary>Adds the next page after the rows shown.</summary>
     /// <param name="more">The rows read.</param>
-    /// <param name="total">How many issues match.</param>
-    internal void Append(IReadOnlyList<LinearIssueRowViewModel> more, int total)
+    /// <param name="total">How many issues match; null when unknown.</param>
+    internal void Append(IReadOnlyList<LinearIssueRowViewModel> more, int? total)
     {
         Patch.To(Rows, [.. Rows, .. more.Where(r => !Rows.Contains(r))]);
-        Count = Labels.LinearGroupCount(total);
+        Count = Labels.LinearGroupCount(total, Rows.Count);
         OnChanged(nameof(IsVisible));
     }
 
