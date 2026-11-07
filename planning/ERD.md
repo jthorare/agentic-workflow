@@ -139,6 +139,8 @@ erDiagram
 
 The rows are read through `ILibraryStore` (`SqliteLibraryStore`), which joins `design_doc`, `design_doc_item` and `design_doc_claim` to their live `source_record` (`removed_at IS NULL`) and returns the record's `audience_key` beside each row; `IContextLibrary` applies `AudienceScope.Allows` to it, so the audience rule lives in one place. A doc, its items and its refs are read through the doc record's audience; a claim needs its PR record's audience and the audience of the doc it resolves to. A doc that holds `owner:library` (a `library` doc whose `repos:` does not name exactly one synced repo) is visible only to the owner's scope, which always adds that key.
 
+Migration 0033 (`s1_library_links`) adds `design_doc.parent` and `design_doc.supersedes` (the front matter's values as written). The library read decides SND-LIB-015 and -016 from them, the items and the refs of the docs the caller may read, with the same `DesignDocScope` that `library validate` runs; nothing about the result is stored (#2181).
+
 Migration 0032 (`linear_hub`) adds the Linear hub's tables (Linear hub spec 2026-11-04 §4.1, §4.2). An issue's fields, newest comments and assignee/state changes go through the same side-rows seam (`LinearSideRows`, the `linear` writer) in the transaction that stores the issue record; the pickers' lists are written by the issue feed's lookups tick step, one team at a time:
 
 ```mermaid

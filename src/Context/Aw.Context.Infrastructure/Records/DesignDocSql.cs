@@ -16,8 +16,8 @@ internal static class DesignDocSql
     internal const string DeleteDoc = "DELETE FROM design_doc WHERE doc_key = @key";
 
     internal const string InsertDoc =
-        "INSERT INTO design_doc (doc_key, root, scope, doc_id, kind, status, project, repos, issues, parser_version, errors) " +
-        "VALUES (@key, @root, @scope, @docId, @kind, @status, @project, @repos, @issues, @version, @errors)";
+        "INSERT INTO design_doc (doc_key, root, scope, doc_id, kind, status, project, repos, issues, parser_version, errors, parent, supersedes) " +
+        "VALUES (@key, @root, @scope, @docId, @kind, @status, @project, @repos, @issues, @version, @errors, @parent, @supersedes)";
 
     internal const string InsertItem =
         "INSERT INTO design_doc_item (doc_key, item_id, item_kind, parent_id, line_start, line_end, text) VALUES (@key, @item, @kind, @parent, @lineStart, @lineEnd, @text)";
