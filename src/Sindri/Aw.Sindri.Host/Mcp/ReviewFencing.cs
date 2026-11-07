@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Aw.Kernel.Json;
+using Aw.Sindri.Features.GetLibrary;
 using Aw.Sindri.Features.ListReviews;
 using Aw.Sindri.Host.Endpoints;
 
@@ -13,5 +14,12 @@ internal sealed class ReviewFencing(JsonSerializerOptions json) : IReviewFencing
     {
         using var document = JsonDocument.Parse(AwJson.Serialize(list, json));
         return TypedResults.Text(McpFencing.Apply(document.RootElement, FencePlan.Reviews).GetRawText(), "application/json", System.Text.Encoding.UTF8);
+    }
+
+    public IResult Library(GetLibraryResponse library)
+    {
+        // why: a folder's path and why it can't be read are the owner's machine; a session reads the docs it may, never the folders
+        using var document = JsonDocument.Parse(AwJson.Serialize(library with { UnreadableRoots = [] }, json));
+        return TypedResults.Text(McpFencing.Apply(document.RootElement, FencePlan.Library).GetRawText(), "application/json", System.Text.Encoding.UTF8);
     }
 }

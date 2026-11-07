@@ -22733,3 +22733,93 @@ static Aw.Sindri.Core.Reviews.ReviewLibraryFacts.operator ==(Aw.Sindri.Core.Revi
 static Aw.Sindri.Core.Reviews.ReviewLibrary.From(Aw.Sindri.Core.Reviews.ReviewLibraryFacts! facts) -> Aw.Sindri.Core.Reviews.ReviewLibrary!
 static Aw.Sindri.Core.Reviews.ReviewUnreadableRoot.operator !=(Aw.Sindri.Core.Reviews.ReviewUnreadableRoot? left, Aw.Sindri.Core.Reviews.ReviewUnreadableRoot? right) -> bool
 static Aw.Sindri.Core.Reviews.ReviewUnreadableRoot.operator ==(Aw.Sindri.Core.Reviews.ReviewUnreadableRoot? left, Aw.Sindri.Core.Reviews.ReviewUnreadableRoot? right) -> bool
+Aw.Sindri.Core.Reviews.LibraryBrokenDoc
+Aw.Sindri.Core.Reviews.LibraryBrokenDoc.<Clone>$() -> Aw.Sindri.Core.Reviews.LibraryBrokenDoc!
+Aw.Sindri.Core.Reviews.LibraryBrokenDoc.Deconstruct(out string! Doc, out string! Path, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryDocError!>! Errors) -> void
+Aw.Sindri.Core.Reviews.LibraryBrokenDoc.Doc.get -> string!
+Aw.Sindri.Core.Reviews.LibraryBrokenDoc.Doc.init -> void
+Aw.Sindri.Core.Reviews.LibraryBrokenDoc.Equals(Aw.Sindri.Core.Reviews.LibraryBrokenDoc? other) -> bool
+Aw.Sindri.Core.Reviews.LibraryBrokenDoc.Errors.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryDocError!>!
+Aw.Sindri.Core.Reviews.LibraryBrokenDoc.Errors.init -> void
+Aw.Sindri.Core.Reviews.LibraryBrokenDoc.LibraryBrokenDoc(string! Doc, string! Path, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryDocError!>! Errors) -> void
+Aw.Sindri.Core.Reviews.LibraryBrokenDoc.Path.get -> string!
+Aw.Sindri.Core.Reviews.LibraryBrokenDoc.Path.init -> void
+Aw.Sindri.Core.Reviews.LibraryDocError
+Aw.Sindri.Core.Reviews.LibraryDocError.<Clone>$() -> Aw.Sindri.Core.Reviews.LibraryDocError!
+Aw.Sindri.Core.Reviews.LibraryDocError.Deconstruct(out string! Rule, out string! Text) -> void
+Aw.Sindri.Core.Reviews.LibraryDocError.Equals(Aw.Sindri.Core.Reviews.LibraryDocError? other) -> bool
+Aw.Sindri.Core.Reviews.LibraryDocError.LibraryDocError(string! Rule, string! Text) -> void
+Aw.Sindri.Core.Reviews.LibraryDocError.Rule.get -> string!
+Aw.Sindri.Core.Reviews.LibraryDocError.Rule.init -> void
+Aw.Sindri.Core.Reviews.LibraryDocError.Text.get -> string!
+Aw.Sindri.Core.Reviews.LibraryDocError.Text.init -> void
+Aw.Sindri.Core.Reviews.LibraryNearMiss
+Aw.Sindri.Core.Reviews.LibraryNearMiss.<Clone>$() -> Aw.Sindri.Core.Reviews.LibraryNearMiss!
+Aw.Sindri.Core.Reviews.LibraryNearMiss.Deconstruct(out string! Path, out string! Rule, out string! Text) -> void
+Aw.Sindri.Core.Reviews.LibraryNearMiss.Equals(Aw.Sindri.Core.Reviews.LibraryNearMiss? other) -> bool
+Aw.Sindri.Core.Reviews.LibraryNearMiss.LibraryNearMiss(string! Path, string! Rule, string! Text) -> void
+Aw.Sindri.Core.Reviews.LibraryNearMiss.Path.get -> string!
+Aw.Sindri.Core.Reviews.LibraryNearMiss.Path.init -> void
+Aw.Sindri.Core.Reviews.LibraryNearMiss.Rule.get -> string!
+Aw.Sindri.Core.Reviews.LibraryNearMiss.Rule.init -> void
+Aw.Sindri.Core.Reviews.LibraryNearMiss.Text.get -> string!
+Aw.Sindri.Core.Reviews.LibraryNearMiss.Text.init -> void
+Aw.Sindri.Core.Reviews.LibraryPage
+Aw.Sindri.Core.Reviews.LibraryPage.<Clone>$() -> Aw.Sindri.Core.Reviews.LibraryPage!
+Aw.Sindri.Core.Reviews.LibraryPage.Broken.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryBrokenDoc!>!
+Aw.Sindri.Core.Reviews.LibraryPage.Broken.init -> void
+Aw.Sindri.Core.Reviews.LibraryPage.CappedText.get -> string?
+Aw.Sindri.Core.Reviews.LibraryPage.CappedText.init -> void
+Aw.Sindri.Core.Reviews.LibraryPage.Deconstruct(out int Docs, out int WithErrors, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryBrokenDoc!>! Broken, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryNearMiss!>! NearMisses, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewUnreadableRoot!>! UnreadableRoots, out string? CappedText) -> void
+Aw.Sindri.Core.Reviews.LibraryPage.Docs.get -> int
+Aw.Sindri.Core.Reviews.LibraryPage.Docs.init -> void
+Aw.Sindri.Core.Reviews.LibraryPage.Equals(Aw.Sindri.Core.Reviews.LibraryPage? other) -> bool
+Aw.Sindri.Core.Reviews.LibraryPage.LibraryPage(int Docs, int WithErrors, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryBrokenDoc!>! Broken, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryNearMiss!>! NearMisses, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewUnreadableRoot!>! UnreadableRoots, string? CappedText) -> void
+Aw.Sindri.Core.Reviews.LibraryPage.NearMisses.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryNearMiss!>!
+Aw.Sindri.Core.Reviews.LibraryPage.NearMisses.init -> void
+Aw.Sindri.Core.Reviews.LibraryPage.UnreadableRoots.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewUnreadableRoot!>!
+Aw.Sindri.Core.Reviews.LibraryPage.UnreadableRoots.init -> void
+Aw.Sindri.Core.Reviews.LibraryPage.WithErrors.get -> int
+Aw.Sindri.Core.Reviews.LibraryPage.WithErrors.init -> void
+Aw.Sindri.Core.Reviews.LibraryPageFacts
+Aw.Sindri.Core.Reviews.LibraryPageFacts.<Clone>$() -> Aw.Sindri.Core.Reviews.LibraryPageFacts!
+Aw.Sindri.Core.Reviews.LibraryPageFacts.Broken.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryBrokenDoc!>!
+Aw.Sindri.Core.Reviews.LibraryPageFacts.Broken.init -> void
+Aw.Sindri.Core.Reviews.LibraryPageFacts.Deconstruct(out int Docs, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryBrokenDoc!>! Broken, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryNearMiss!>! NearMisses, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewUnreadableRoot!>! UnreadableRoots) -> void
+Aw.Sindri.Core.Reviews.LibraryPageFacts.Docs.get -> int
+Aw.Sindri.Core.Reviews.LibraryPageFacts.Docs.init -> void
+Aw.Sindri.Core.Reviews.LibraryPageFacts.Equals(Aw.Sindri.Core.Reviews.LibraryPageFacts? other) -> bool
+Aw.Sindri.Core.Reviews.LibraryPageFacts.LibraryPageFacts(int Docs, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryBrokenDoc!>! Broken, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryNearMiss!>! NearMisses, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewUnreadableRoot!>! UnreadableRoots) -> void
+Aw.Sindri.Core.Reviews.LibraryPageFacts.NearMisses.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryNearMiss!>!
+Aw.Sindri.Core.Reviews.LibraryPageFacts.NearMisses.init -> void
+Aw.Sindri.Core.Reviews.LibraryPageFacts.UnreadableRoots.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewUnreadableRoot!>!
+Aw.Sindri.Core.Reviews.LibraryPageFacts.UnreadableRoots.init -> void
+const Aw.Sindri.Core.Reviews.LibraryPage.Cap = 200 -> int
+override Aw.Sindri.Core.Reviews.LibraryBrokenDoc.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Reviews.LibraryBrokenDoc.GetHashCode() -> int
+override Aw.Sindri.Core.Reviews.LibraryBrokenDoc.ToString() -> string!
+override Aw.Sindri.Core.Reviews.LibraryDocError.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Reviews.LibraryDocError.GetHashCode() -> int
+override Aw.Sindri.Core.Reviews.LibraryDocError.ToString() -> string!
+override Aw.Sindri.Core.Reviews.LibraryNearMiss.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Reviews.LibraryNearMiss.GetHashCode() -> int
+override Aw.Sindri.Core.Reviews.LibraryNearMiss.ToString() -> string!
+override Aw.Sindri.Core.Reviews.LibraryPage.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Reviews.LibraryPage.GetHashCode() -> int
+override Aw.Sindri.Core.Reviews.LibraryPage.ToString() -> string!
+override Aw.Sindri.Core.Reviews.LibraryPageFacts.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Reviews.LibraryPageFacts.GetHashCode() -> int
+override Aw.Sindri.Core.Reviews.LibraryPageFacts.ToString() -> string!
+static Aw.Sindri.Core.Reviews.LibraryBrokenDoc.operator !=(Aw.Sindri.Core.Reviews.LibraryBrokenDoc? left, Aw.Sindri.Core.Reviews.LibraryBrokenDoc? right) -> bool
+static Aw.Sindri.Core.Reviews.LibraryBrokenDoc.operator ==(Aw.Sindri.Core.Reviews.LibraryBrokenDoc? left, Aw.Sindri.Core.Reviews.LibraryBrokenDoc? right) -> bool
+static Aw.Sindri.Core.Reviews.LibraryDocError.operator !=(Aw.Sindri.Core.Reviews.LibraryDocError? left, Aw.Sindri.Core.Reviews.LibraryDocError? right) -> bool
+static Aw.Sindri.Core.Reviews.LibraryDocError.operator ==(Aw.Sindri.Core.Reviews.LibraryDocError? left, Aw.Sindri.Core.Reviews.LibraryDocError? right) -> bool
+static Aw.Sindri.Core.Reviews.LibraryNearMiss.operator !=(Aw.Sindri.Core.Reviews.LibraryNearMiss? left, Aw.Sindri.Core.Reviews.LibraryNearMiss? right) -> bool
+static Aw.Sindri.Core.Reviews.LibraryNearMiss.operator ==(Aw.Sindri.Core.Reviews.LibraryNearMiss? left, Aw.Sindri.Core.Reviews.LibraryNearMiss? right) -> bool
+static Aw.Sindri.Core.Reviews.LibraryPage.From(Aw.Sindri.Core.Reviews.LibraryPageFacts! facts) -> Aw.Sindri.Core.Reviews.LibraryPage!
+static Aw.Sindri.Core.Reviews.LibraryPage.operator !=(Aw.Sindri.Core.Reviews.LibraryPage? left, Aw.Sindri.Core.Reviews.LibraryPage? right) -> bool
+static Aw.Sindri.Core.Reviews.LibraryPage.operator ==(Aw.Sindri.Core.Reviews.LibraryPage? left, Aw.Sindri.Core.Reviews.LibraryPage? right) -> bool
+static Aw.Sindri.Core.Reviews.LibraryPageFacts.operator !=(Aw.Sindri.Core.Reviews.LibraryPageFacts? left, Aw.Sindri.Core.Reviews.LibraryPageFacts? right) -> bool
+static Aw.Sindri.Core.Reviews.LibraryPageFacts.operator ==(Aw.Sindri.Core.Reviews.LibraryPageFacts? left, Aw.Sindri.Core.Reviews.LibraryPageFacts? right) -> bool
+Aw.Sindri.Core.Reviews.ILibraryPageFacts
+Aw.Sindri.Core.Reviews.ILibraryPageFacts.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Reviews.LibraryPageFacts!>!>
