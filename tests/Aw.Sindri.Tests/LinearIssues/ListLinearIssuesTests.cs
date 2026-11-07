@@ -67,6 +67,7 @@ public sealed class ListLinearIssuesTests
     [InlineData("priority", "x")]
     [InlineData("after", "zzz")]
     [InlineData("after", "t1.2")]
+    [InlineData("after", "t1.5.not-a-record")]
     public async Task A_value_outside_its_set_is_refused(string name, string value)
     {
         var request = name switch
@@ -138,20 +139,22 @@ public sealed class ListLinearIssuesTests
     [InlineData("assignee")]
     public async Task An_id_nothing_has_gives_empty_rows_not_an_error(string filter)
     {
-        _ = _facts.WithIssues(Row("ENG-1", Viewer, labelId: Label, projectId: Project, cycleId: Cycle));
+        // why: teams, with a teammate's issue, so only the filter can empty the page and every case reaches the store
+        _ = _facts.WithIssues(Row("ENG-1", Sam, labelId: Label, projectId: Project, cycleId: Cycle));
         const string Unknown = "00000000-0000-4000-8000-0000000000ff";
         var request = filter switch
         {
-            "label" => new ListLinearIssuesRequest(Label: Unknown),
-            "project" => new ListLinearIssuesRequest(Project: Unknown),
-            "cycle" => new ListLinearIssuesRequest(Cycle: Unknown),
-            "state" => new ListLinearIssuesRequest(State: Unknown),
-            "team" => new ListLinearIssuesRequest(Team: "NOPE"),
-            _ => new ListLinearIssuesRequest(Assignee: Unknown),
+            "label" => new ListLinearIssuesRequest(Group: "teams", Label: Unknown),
+            "project" => new ListLinearIssuesRequest(Group: "teams", Project: Unknown),
+            "cycle" => new ListLinearIssuesRequest(Group: "teams", Cycle: Unknown),
+            "state" => new ListLinearIssuesRequest(Group: "teams", State: Unknown),
+            "team" => new ListLinearIssuesRequest(Group: "teams", Team: "NOPE"),
+            _ => new ListLinearIssuesRequest(Group: "teams", Assignee: Unknown),
         };
 
         var response = await Ask(request);
 
+        Assert.NotEmpty(_facts.Asked);
         Assert.Empty(response.Rows);
         Expect.Equal(0, response.Total);
         Assert.Null(response.Next);
@@ -362,5 +365,56 @@ public sealed class ListLinearIssuesTests
         var result = await Service().Handle(new ListLinearIssuesRequest(), Token);
 
         Expect.Equal(error.Code, result.Error.Code);
+    }
+
+    [Fact]
+    public async Task Teams_at_the_page_cap_offers_a_cursor_and_no_total_and_that_cursor_reaches_the_rest()
+    {
+        // why: one store page holds 1 and the first 52 issues are the viewer's, so 50 store pages find nothing while the store has more
+        _ = _facts.WithPageSize(1).WithIssues([.. Enumerable.Range(1, 52).Select(n => Row(EngKey(n), Viewer, updatedMinutesAgo: n)), Row("ENG-60", Sam, updatedMinutesAgo: 100)]);
+
+        var first = await Ask(new ListLinearIssuesRequest(Group: "teams"));
+        Assert.Empty(first.Rows);
+        Assert.NotNull(first.Next);
+        Assert.Null(first.Total);
+
+        var second = await Ask(new ListLinearIssuesRequest(Group: "teams", After: first.Next));
+
+        Expect.Sequence(["ENG-60"], Keys(second));
+        Assert.Null(second.Next);
+        Expect.Equal(1, second.Total);
+    }
+
+    [Fact]
+    public async Task Teams_finds_a_team_typed_in_lower_case()
+    {
+        _ = _facts.WithIssues(Row("ENG-1", Sam), Row("OPS-2", Sam));
+
+        var response = await Ask(new ListLinearIssuesRequest(Group: "teams", Team: "eng"));
+
+        Expect.Sequence(["ENG-1"], Keys(response));
+        Expect.Equal("ENG", Expect.Only(_facts.Asked).Filter.Team!);
+    }
+
+    [Fact]
+    public async Task Teams_for_the_viewers_own_id_is_empty_without_reading_the_store()
+    {
+        _ = _facts.WithIssues(Row("ENG-1", Viewer), Row("ENG-2", Sam));
+
+        var response = await Ask(new ListLinearIssuesRequest(Group: "teams", Assignee: ViewerId));
+
+        Assert.Empty(response.Rows);
+        Expect.Equal(0, response.Total);
+        Assert.Empty(_facts.Asked);
+    }
+
+    [Fact]
+    public async Task Mine_with_an_unknown_viewer_still_refuses_a_bad_cursor()
+    {
+        _ = _facts.WithSource(Connected(viewer: null));
+
+        var result = await Service().Handle(new ListLinearIssuesRequest(Group: "mine", After: "zzz"), Token);
+
+        Expect.Equal(SindriErrors.InvalidQuery.Code, result.Error.Code);
     }
 }
