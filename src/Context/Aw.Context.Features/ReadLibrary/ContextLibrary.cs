@@ -87,7 +87,7 @@ internal sealed class ContextLibrary(ILibraryStore store, ILibraryStatus? status
     {
         ArgumentNullException.ThrowIfNull(audience);
         var rows = await store.ClaimsOf(prKey, cancellationToken).ConfigureAwait(false);
-        return rows.IsError ? rows.Error : await Resolved(rows.Value, audience, onlyDoc: null, cancellationToken).ConfigureAwait(false);
+        return rows.IsError ? rows.Error : await Resolved(rows.Value, new LibraryReader(store, audience), audience, onlyDoc: null, cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask<Result<IReadOnlyDictionary<RecordKey, IReadOnlyList<LibraryClaim>>>> Claims(IReadOnlyList<RecordKey> prKeys, AudienceScope audience, CancellationToken cancellationToken)
@@ -106,10 +106,13 @@ internal sealed class ContextLibrary(ILibraryStore store, ILibraryStatus? status
             return rows.Error;
         }
 
+        // why: one reader for the whole batch, so a doc two PRs claim is read once.
+        var reader = new LibraryReader(store, audience);
+
         // why: a PR's audience comes with its claim rows, so a PR with claims the caller may not read is left out, while one with no claims (nothing to hide) maps to an empty list.
         foreach (var group in rows.Value.GroupBy(static row => row.Pr))
         {
-            var claims = await Resolved([.. group], audience, onlyDoc: null, cancellationToken).ConfigureAwait(false);
+            var claims = await Resolved([.. group], reader, audience, onlyDoc: null, cancellationToken).ConfigureAwait(false);
             if (claims.IsError)
             {
                 return claims.Error;
@@ -140,12 +143,12 @@ internal sealed class ContextLibrary(ILibraryStore store, ILibraryStatus? status
         }
 
         var rows = await store.ClaimsNaming(slug, cancellationToken).ConfigureAwait(false);
-        return rows.IsError ? rows.Error : await Resolved(rows.Value, audience, docKey, cancellationToken).ConfigureAwait(false);
+        return rows.IsError ? rows.Error : await Resolved(rows.Value, new LibraryReader(store, audience), audience, docKey, cancellationToken).ConfigureAwait(false);
     }
 
     // A claim is read through its PR's audience and its doc's: the PR must be readable, and the doc is resolved among the readable ones, so an owner-only half is missing, not an error.
     // With 'onlyDoc', only the claims that name that doc, from PRs that were not closed unmerged (spec §4.4: such a claim isn't shown on the doc map).
-    private async ValueTask<Result<IReadOnlyList<LibraryClaim>>> Resolved(IReadOnlyList<LibraryClaimRow> rows, AudienceScope audience, RecordKey? onlyDoc, CancellationToken cancellationToken)
+    private static async ValueTask<Result<IReadOnlyList<LibraryClaim>>> Resolved(IReadOnlyList<LibraryClaimRow> rows, LibraryReader reader, AudienceScope audience, RecordKey? onlyDoc, CancellationToken cancellationToken)
     {
         var claims = new List<LibraryClaim>(rows.Count);
         var readable = rows.Where(row => audience.Allows(row.PrAudience, row.Pr) && (onlyDoc is null || row.PrState is not (RecordState.Closed or RecordState.Canceled))).ToList();
@@ -154,7 +157,6 @@ internal sealed class ContextLibrary(ILibraryStore store, ILibraryStatus? status
             return claims;
         }
 
-        var reader = new LibraryReader(store, audience);
         foreach (var row in readable)
         {
             var one = await reader.Resolve(row.Ref, LibraryReader.RepoOf(row.Pr), cancellationToken).ConfigureAwait(false);
