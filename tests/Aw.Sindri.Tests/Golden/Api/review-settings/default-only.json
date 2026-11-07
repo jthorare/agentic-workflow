@@ -1,0 +1,53 @@
+{
+  "project": "prj_0000000000000000000000000H",
+  "repos": [
+    "jthorare/agentic-workflow"
+  ],
+  "settings": "default",
+  "sharedWith": [],
+  "entry": {},
+  "resolved": {
+    "name": "default",
+    "panels": [
+      "requiredChecks",
+      "docMap",
+      "testPlan",
+      "ci",
+      "evidence",
+      "risk",
+      "conversation"
+    ],
+    "groups": [],
+    "collapse": [
+      "package-lock.json",
+      "yarn.lock",
+      "pnpm-lock.yaml",
+      "**/packages.lock.json",
+      "Cargo.lock",
+      "poetry.lock",
+      "go.sum",
+      "*.min.js",
+      "*.g.cs",
+      "**/generated/**"
+    ],
+    "risky": [],
+    "checks": [],
+    "sources": {
+      "panels": "default",
+      "groups": "default",
+      "collapse": "default",
+      "risky": "default",
+      "checks": "default"
+    }
+  },
+  "hash": "221c8f3e6a76b02c68be447e853eae6439aa46a53e13a7939d313d95bd4817bd",
+  "allPanels": [
+    "requiredChecks",
+    "docMap",
+    "testPlan",
+    "ci",
+    "evidence",
+    "risk",
+    "conversation"
+  ]
+}
