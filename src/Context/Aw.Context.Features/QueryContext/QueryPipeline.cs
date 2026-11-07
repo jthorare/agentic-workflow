@@ -67,7 +67,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         }
 
         degraded.AddRange(searched.Degraded);
-        var fused = await Ranked(searched, (graph, RankerPlan.For(settings.Value.Ranker, inputs.Ranker)), scrubbers.Value.Egress, degraded, cancellationToken).ConfigureAwait(false);
+        var fused = await Ranked(searched, (graph, RankerPlan.For(settings.Value.Ranker, inputs.Ranker) with { LibraryModelRoots = settings.Value.LibraryModelRoots }), scrubbers.Value.Egress, degraded, cancellationToken).ConfigureAwait(false);
         var fetched = await Fetch(fused, (sources, scrubbers.Value.Ingest), deadline, degraded, cancellationToken).ConfigureAwait(false);
         if (miss is not null && !Answers(fetched, miss.Item.Trim()))
         {

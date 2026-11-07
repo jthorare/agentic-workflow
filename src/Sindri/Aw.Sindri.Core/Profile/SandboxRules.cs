@@ -38,7 +38,7 @@ internal static partial class SandboxRules
 
     private static Error? Fs(SandboxFs? fs) =>
         PathProblems((fs?.HomeAllow ?? []).Select(h => h.Path), "sandbox.fs.homeAllow", RelativePathProblem)
-        ?? PathProblems(fs?.DenyExtra, "sandbox.fs.denyExtra", AbsolutePathProblem);
+        ?? PathProblems(fs?.DenyExtra, "sandbox.fs.denyExtra", PathRules.AbsolutePathProblem);
 
     private static Error? Network(SandboxNetwork? network) =>
         (network?.Groups ?? new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal))
@@ -124,9 +124,6 @@ internal static partial class SandboxRules
         _ when path.Split('/').Contains("..") => "must not contain '..'",
         _ => null,
     };
-
-    private static string? AbsolutePathProblem(string? path) =>
-        string.IsNullOrWhiteSpace(path) || !path.StartsWith('/') || path.Split('/').Contains("..") ? "must be an absolute path with no '..'" : null;
 
     private static bool Optional(string? value, Func<string, bool> valid) => value is null || valid(value);
 

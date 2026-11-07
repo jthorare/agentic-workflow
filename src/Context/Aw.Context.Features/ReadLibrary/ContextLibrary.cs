@@ -1,4 +1,6 @@
+using Aw.Context.Core;
 using Aw.Context.Core.Audience;
+using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Library;
 using Aw.Context.Core.Records;
@@ -8,8 +10,37 @@ using Aw.Kernel;
 namespace Aw.Context.Features.ReadLibrary;
 
 /// <summary>The design-doc library's reads (PR review page spec 2026-11-04 §5.5): <see cref="ILibraryStore"/> rows, the caller's audience applied to each, claims resolved when read.</summary>
-internal sealed class ContextLibrary(ILibraryStore store) : IContextLibrary
+internal sealed class ContextLibrary(ILibraryStore store, ILibraryStatus? status = null) : IContextLibrary
 {
+    public ValueTask<Result<IReadOnlyList<LibraryRootStatus>>> Roots(ContextScope scope, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+        if (scope.Caller.Kind == ContextCallerKind.Session)
+        {
+            return ValueTask.FromResult<Result<IReadOnlyList<LibraryRootStatus>>>(ContextErrors.SessionsDisabled.With("where the library's roots stand is the owner's, not an agent session's"));
+        }
+
+        var settings = SettingsReader.Read(scope.Settings);
+        if (settings.IsError)
+        {
+            return ValueTask.FromResult<Result<IReadOnlyList<LibraryRootStatus>>>(settings.Error);
+        }
+
+        // why: a profile that names no 'context.sources.library' still reads the 'aw' root, as the record feed catalog does
+        var library = settings.Value.Library ?? new LibrarySettings();
+        var reports = (status?.Read() ?? []).ToDictionary(static r => r.Root, StringComparer.Ordinal);
+        var roots = new List<LibraryRootStatus> { library.AwRootOn ? RootStatus("aw", reports) : new LibraryRootStatus("aw", LibraryRootState.Off, Reason: null, Docs: 0, NearMisses: 0, LastRead: null) };
+        roots.AddRange(library.Vaults.Select(v => RootStatus(v.Name, reports)));
+        return ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryRootStatus>>(roots));
+    }
+
+    private static LibraryRootStatus RootStatus(string root, Dictionary<string, LibraryRootReport> reports) =>
+        !reports.TryGetValue(root, out var report)
+            ? new LibraryRootStatus(root, LibraryRootState.Reading, Reason: null, Docs: 0, NearMisses: 0, LastRead: null)
+            : report.Problem is { } problem
+                ? new LibraryRootStatus(root, LibraryRootState.Unreadable, problem, Docs: 0, NearMisses: 0, report.LastRead)
+                : new LibraryRootStatus(root, LibraryRootState.Ok, Reason: null, report.Docs, report.NearMisses.Count, report.LastRead);
+
     public async ValueTask<Result<IReadOnlyList<LibraryDoc>>> ListDocs(LibraryDocFilter filter, AudienceScope audience, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(filter);

@@ -49,9 +49,10 @@ internal sealed class SynthesisRig
     public static string Json(string name, string summary) => $$"""{"name":"{{name}}","summary":"{{summary}}"}""";
 
     /// <summary>Stores a record with one chunk and its vector at an angle on the circle.</summary>
-    public async Task Add(string source, string key, double degrees, string? text = null, string version = "v1")
+    public async Task Add(string source, string key, double degrees, string? text = null, string version = "v1", string? audience = null)
     {
         var record = RecordSamples.Record(key, version, SourceId.From(source));
+        record = audience is null ? record : record with { Audience = AudienceKey.From(audience) };
         var body = text ?? ("text of " + key);
         _ = await Records.Commit(RecordSamples.Batch(record.Source, ++_page, RecordSamples.Write(record, body)), Ct);
         var radians = degrees * Math.PI / 180;
@@ -69,6 +70,6 @@ internal sealed class SynthesisRig
     public async Task Remove(string source, string key) =>
         _ = await Records.Commit(new RecordBatch(SourceId.From(source), [], [RecordKey.From(key)], SyncPosition.Start, Clock.GetUtcNow()), Ct);
 
-    public ValueTask<ConceptSynthesisReport> Run(int maxTokens = 50_000, ConceptSynthesisSettings? settings = null) =>
-        new ConceptSynthesisRun(Records, new FakeVectorScan(), Concepts, Model, new FakeScrubberFactory(), Clock).Run(settings ?? new ConceptSynthesisSettings(), new LabelingSettings { MaxTokensPerSync = maxTokens }, [], Ct);
+    public ValueTask<ConceptSynthesisReport> Run(int maxTokens = 50_000, ConceptSynthesisSettings? settings = null, IReadOnlyList<string>? libraryRoots = null) =>
+        new ConceptSynthesisRun(Records, new FakeVectorScan(), Concepts, Model, new FakeScrubberFactory(), Clock).Run(settings ?? new ConceptSynthesisSettings(), new LabelingSettings { MaxTokensPerSync = maxTokens }, [], libraryRoots ?? [], Ct);
 }

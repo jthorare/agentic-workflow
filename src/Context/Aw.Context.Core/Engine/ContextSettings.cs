@@ -7,7 +7,7 @@ namespace Aw.Context.Core.Engine;
 /// The profile's 'context:' section, checked, with its defaults (spec §8.8). Later phases add their keys as init
 /// properties with defaults, so a profile written for an earlier build keeps its meaning.
 /// </summary>
-public sealed record ContextSettings
+public sealed partial record ContextSettings
 {
     /// <summary>The default doc globs.</summary>
     public static IReadOnlyList<string> DefaultDocGlobs { get; } = ["docs/**/*.md", "**/PRD*.md", "**/TDD*.md"];
