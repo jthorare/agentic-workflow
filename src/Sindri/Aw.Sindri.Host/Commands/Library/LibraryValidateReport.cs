@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Host.Commands;
+namespace Aw.Sindri.Host.Commands.Library;
 
 /// <summary>What 'sindri library validate --json' prints.</summary>
 /// <param name="Findings">Every finding, by file then line.</param>

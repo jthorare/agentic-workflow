@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Host.Commands;
+namespace Aw.Sindri.Host.Commands.Library;
 
 /// <summary>One finding of 'sindri library validate'.</summary>
 /// <param name="Rule">The SND-LIB code.</param>

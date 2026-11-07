@@ -173,7 +173,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(ListReviewsRequest)), JsonSerializable(typeof(ListReviewsResponse))]   // PR review page Ph5: the Reviews list
 [JsonSerializable(typeof(GetLibraryRequest)), JsonSerializable(typeof(GetLibraryResponse))]   // Ph5b: the library page
 [JsonSerializable(typeof(GetLibraryDocRequest)), JsonSerializable(typeof(GetLibraryDocResponse)), JsonSerializable(typeof(LibraryDocView)), JsonSerializable(typeof(LibraryDocErrorView))]   // PR review page Ph5b: one design doc
-[JsonSerializable(typeof(Commands.LibraryValidateReport)), JsonSerializable(typeof(Commands.LibraryFindingRow))]   // PR review page Ph5b: 'sindri library list' and 'validate'
+[JsonSerializable(typeof(Commands.Library.LibraryValidateReport)), JsonSerializable(typeof(Commands.Library.LibraryFindingRow))]   // PR review page Ph5b: 'sindri library list' and 'validate'
 [JsonSerializable(typeof(ListProjectsRequest)), JsonSerializable(typeof(ListProjectsResponse)), JsonSerializable(typeof(GetProjectRequest)), JsonSerializable(typeof(GetProjectResponse)), JsonSerializable(typeof(ProjectCard)), JsonSerializable(typeof(ListLinearProjectsRequest)), JsonSerializable(typeof(ListLinearProjectsResponse)), JsonSerializable(typeof(LinearProjectChoice))]
 [JsonSerializable(typeof(ProjectLead)), JsonSerializable(typeof(ProjectLink)), JsonSerializable(typeof(ProjectFreshnessRow))]
 [JsonSerializable(typeof(CloseItemRequest)), JsonSerializable(typeof(CloseItemBody)), JsonSerializable(typeof(GetQueueRequest)), JsonSerializable(typeof(QueueResponse))]
