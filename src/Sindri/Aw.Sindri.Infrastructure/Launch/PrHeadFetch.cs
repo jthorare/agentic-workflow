@@ -21,7 +21,7 @@ internal static class PrHeadFetch
     internal static async ValueTask<Result<FetchedPr?>> For(LaunchRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (PrReference.BranchFor(request) is not { } branch || request.Skill?.Inputs.GetValueOrDefault(PrReference.InputKey) is not { } input)
+        if (StepEnvironment.PrBranchOf(request) is not { } branch || request.Skill?.Inputs.GetValueOrDefault(PrReference.InputKey) is not { } input)
         {
             return Results.Success<FetchedPr?>(value: null);
         }

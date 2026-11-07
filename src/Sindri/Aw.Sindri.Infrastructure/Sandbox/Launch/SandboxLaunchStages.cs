@@ -72,7 +72,7 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
         }
 
         var env = new Dictionary<string, string>(SkillLaunchEnv.For(skill.Skill, request.Launch, run, inputs.Host().StateDir, SkillLaunchEnv.RepoSlugOf(await inputs.OriginRemote(request.RepoPath, cancellationToken).ConfigureAwait(false), request.RepoPath)), StringComparer.Ordinal);
-        if (PrReference.BranchFor(request) is { } branch)
+        if (StepEnvironment.PrBranchOf(request) is { } branch)
         {
             env[PrReference.BranchVariable] = branch;
         }

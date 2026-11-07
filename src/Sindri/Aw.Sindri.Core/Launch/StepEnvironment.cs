@@ -32,6 +32,17 @@ public static class StepEnvironment
             : step.Policy?.WritablePath ?? request.Worktree;
     }
 
+    /// <summary>The branch a launch's PR head is fetched to: set for an unattended skill Step with a 'pr' input, null for any other launch. The one condition the fetch and the sandbox environment share.</summary>
+    /// <param name="request">The launch.</param>
+    /// <returns>The branch, or null.</returns>
+    public static string? PrBranchOf(LaunchRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return request is { Attended: false, Skill: { } skill, Instance: { } instance, Run: { } run } && skill.Inputs.ContainsKey(PrReference.InputKey)
+            ? PrReference.BranchOf(WorkflowInstanceId.Of(instance), run.Number)
+            : null;
+    }
+
     /// <summary>The same directory from its parts, for the caller that has no request yet (a skill launch's seed names it).</summary>
     /// <param name="workflow">The instance.</param>
     /// <param name="state">The Step's state name.</param>
