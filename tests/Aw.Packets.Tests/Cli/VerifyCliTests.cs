@@ -119,7 +119,7 @@ public sealed class VerifyCliTests : IDisposable
 
     [Theory]
     [InlineData("verify", "x")]
-    [InlineData("verify", "--hash", "0000000000000000000000000000000000000000000000000000000000000000")]
+    [InlineData("verify", "--hash", "sha256:00")]
     [InlineData("verify", "x", "--hash", "nonsense")]
     [InlineData("verify", "x", "--hash", "sha256:0000000000000000000000000000000000000000000000000000000000000000", "--hash", "sha256:0000000000000000000000000000000000000000000000000000000000000000")]
     [InlineData("verify", "x", "--hash", "sha256:0000000000000000000000000000000000000000000000000000000000000000", "--by", "owner")]

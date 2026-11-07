@@ -19,7 +19,7 @@ public sealed class FileCodeIndexPinsTests
 
     [Fact, Trait("Lane", "unit")]
     public void A_different_model_digest_is_a_mismatch() =>
-        Assert.Equal(LockState.Mismatch, FileCodeIndexPins.Compare([_shipped[1], "ollama-model nomic-embed-text:latest 0000000000000000000000000000000000000000000000000000000000000000", _shipped[3]]));
+        Assert.Equal(LockState.Mismatch, FileCodeIndexPins.Compare([_shipped[1], "ollama-model nomic-embed-text:latest sha256:00", _shipped[3]]));
 
     [Fact, Trait("Lane", "unit")]
     public void A_missing_row_or_an_unknown_one_does_not_parse()

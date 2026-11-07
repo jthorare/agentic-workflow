@@ -76,7 +76,7 @@ public sealed class PlanIntakeStepTests
         var station = new LineStation();
         var evidence = await station.DesignEvidenceRun();
 
-        var result = await Run(station, LineStation.Fact(evidence, "designPacket"), LineStation.ScopePacket.Replace("sha256:", "0000000000000000000000000000000000000000000000000000000000000000", StringComparison.Ordinal));
+        var result = await Run(station, LineStation.Fact(evidence, "designPacket"), LineStation.ScopePacket.Replace("sha256:", "sha256:00", StringComparison.Ordinal));
 
         Assert.Null(result.Result);
         Assert.Contains("SND-LINE-001", result.Failure, StringComparison.Ordinal);
