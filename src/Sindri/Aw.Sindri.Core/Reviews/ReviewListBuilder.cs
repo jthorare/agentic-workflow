@@ -52,7 +52,7 @@ public static class ReviewListBuilder
         List<(ReviewPull Pull, ReviewWait? Wait)> yours = [];
         foreach (var pull in pulls)
         {
-            var wait = Classify(login, pull);
+            var wait = Same(pull.Author, login) ? null : Classify(login, pull);
             if (wait is not null)
             {
                 waiting.Add((pull, wait));
