@@ -50,11 +50,14 @@ public sealed class FakeContextEngine : IContextEngine
 
     private readonly Func<Result<StoreUpkeep?>>? _upkeep;
 
-    private FakeContextEngine(ProbeSet? probes, Func<EmbedRecordsRequest, Result<EmbedRecordsReport>>? embed = null, Func<Result<StoreUpkeep?>>? upkeep = null)
+    private readonly Result<IReadOnlyList<LibraryRootStatus>>? _roots;
+
+    private FakeContextEngine(ProbeSet? probes, Func<EmbedRecordsRequest, Result<EmbedRecordsReport>>? embed = null, Func<Result<StoreUpkeep?>>? upkeep = null, Result<IReadOnlyList<LibraryRootStatus>>? roots = null)
     {
         _probes = probes;
         _embed = embed;
         _upkeep = upkeep;
+        _roots = roots;
     }
 
     /// <summary>The one instance, with no probe file.</summary>
@@ -64,6 +67,11 @@ public sealed class FakeContextEngine : IContextEngine
     /// <param name="probes">The probes of the file.</param>
     /// <returns>The engine.</returns>
     public static FakeContextEngine WithProbes(ProbeSet probes) => new(probes);
+
+    /// <summary>An engine like <see cref="Instance"/> whose library roots read as <paramref name="roots"/> (the statuses, or the error of a store that can't be read).</summary>
+    /// <param name="roots">What <see cref="Roots"/> answers.</param>
+    /// <returns>The engine.</returns>
+    public static FakeContextEngine WithLibraryRoots(Result<IReadOnlyList<LibraryRootStatus>> roots) => new(probes: null, roots: roots);
 
     /// <summary>An engine like <see cref="Instance"/> whose embed runs answer with <paramref name="embed"/> (a report, or the error of a model that is down).</summary>
     /// <param name="embed">Answers one embed request.</param>
@@ -123,9 +131,9 @@ public sealed class FakeContextEngine : IContextEngine
     public ValueTask<Result<IReadOnlyList<LibraryClaim>>> Claims(RecordKey prKey, AudienceScope audience, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryClaim>>([]));
 
-    /// <summary>The fake reads no library: no roots.</summary>
+    /// <summary>The fake reads no library: no roots, unless <see cref="WithLibraryRoots"/> set them.</summary>
     public ValueTask<Result<IReadOnlyList<LibraryRootStatus>>> Roots(ContextScope scope, CancellationToken cancellationToken) =>
-        ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryRootStatus>>([]));
+        ValueTask.FromResult(_roots ?? Results.Success<IReadOnlyList<LibraryRootStatus>>([]));
 
     /// <inheritdoc cref="ListDocs" />
     public ValueTask<Result<IReadOnlyList<LibraryClaim>>> ClaimsOn(RecordKey docKey, AudienceScope audience, CancellationToken cancellationToken) =>
