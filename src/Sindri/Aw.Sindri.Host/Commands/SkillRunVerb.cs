@@ -127,7 +127,7 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
             var detail = got.Value.Value;
             if (string.Equals(detail.State, EngineStates.Cancelled, StringComparison.Ordinal))
             {
-                return new SkillRunReport(answer.Skill, answer.ManifestHash, Outcome: null, Succeeded: false, [], await ResultFileOf(answer.Instance.Address.Value.Split('/')[0], ct).ConfigureAwait(false), ErrorLine: null, Cancelled: true);   // why: a cancel moves the instance to the engine's 'cancelled' state, which no recipe state names, so the terminal check below never sees it
+                return new SkillRunReport(answer.Skill, answer.ManifestHash, Outcome: null, Succeeded: false, [], await ResultFileOf(answer.Instance.Address.Value.Split('/')[0], 0, ct).ConfigureAwait(false), ErrorLine: null, Cancelled: true);   // why: a cancel moves the instance to the engine's 'cancelled' state, which no recipe state names, so the terminal check below never sees it
             }
 
             if (detail.States.FirstOrDefault(s => string.Equals(s.State, detail.State, StringComparison.Ordinal) && s.Terminal) is { } ended)
@@ -160,13 +160,13 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
             }
 
             var item = answer.Instance.Address.Value.Split('/')[0];
-            error = await LaunchRefusalOf(item, ct).ConfigureAwait(false)
-                ?? await SessionEndOf(item, ct).ConfigureAwait(false)
+            error = await LaunchRefusalOf(item, 0, ct).ConfigureAwait(false)
+                ?? await SessionEndOf(item, 0, ct).ConfigureAwait(false)
                 ?? events.Value.Value.Events.LastOrDefault(static e => e.Transition.Reason is not null)?.Transition.Reason;
         }
 
         var outcome = failed ? null : SkillTrialRecipe.OutcomeOf(ended.State);
-        var resultFile = await ResultFileOf(answer.Instance.Address.Value.Split('/')[0], ct).ConfigureAwait(false);
+        var resultFile = await ResultFileOf(answer.Instance.Address.Value.Split('/')[0], 0, ct).ConfigureAwait(false);
         return new SkillRunReport(answer.Skill, answer.ManifestHash, outcome, Succeeded: string.Equals(outcome, answer.Success, StringComparison.Ordinal), facts, resultFile, error);
     }
 
@@ -197,10 +197,12 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
 
     /// <summary>The refusal of the item's latest launch that never started: '&lt;code&gt; &lt;message&gt;' of its newest 'launch.failed'; null when there is none or the ledger can't be read.</summary>
     /// <param name="item">The item the trial ran on.</param>
+    /// <param name="after">The ledger sequence to read after: the instance's own start.</param>
     /// <param name="ct">Cancels the read.</param>
     /// <returns>The line, or null.</returns>
-    internal async Task<string?> LaunchRefusalOf(string item, CancellationToken ct)
+    internal async Task<string?> LaunchRefusalOf(string item, long after, CancellationToken ct)
     {
+        _ = after;   // red stub: the fix reads from it
         var page = await client.Get<LedgerPage>($"/sindri/ledger?item={Uri.EscapeDataString(item)}&type=launch.failed", ct).ConfigureAwait(false);
         if (page.IsError)
         {
@@ -221,10 +223,12 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
 
     /// <summary>How the item's newest agent session ended: 'session exited &lt;code&gt;' of its newest 'session.ended'; null when there is none or the ledger can't be read.</summary>
     /// <param name="item">The item the trial ran on.</param>
+    /// <param name="after">The ledger sequence to read after: the instance's own start.</param>
     /// <param name="ct">Cancels the read.</param>
     /// <returns>The line, or null.</returns>
-    internal async Task<string?> SessionEndOf(string item, CancellationToken ct)
+    internal async Task<string?> SessionEndOf(string item, long after, CancellationToken ct)
     {
+        _ = after;   // red stub: the fix reads from it
         var page = await client.Get<LedgerPage>($"/sindri/ledger?item={Uri.EscapeDataString(item)}&type=session.ended", ct).ConfigureAwait(false);
         if (page.IsError)
         {
@@ -244,10 +248,12 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
 
     /// <summary>The result file of the item's latest skill launch: <c lang="text">skill.resultFile</c> of its newest 'launch.started', read from the ledger; empty when the ledger has none or can't be read (the report then leaves the line out).</summary>
     /// <param name="item">The item the trial ran on.</param>
+    /// <param name="after">The ledger sequence to read after: the instance's own start.</param>
     /// <param name="ct">Cancels the read.</param>
     /// <returns>The path, or empty.</returns>
-    internal async Task<string> ResultFileOf(string item, CancellationToken ct)
+    internal async Task<string> ResultFileOf(string item, long after, CancellationToken ct)
     {
+        _ = after;   // red stub: the fix reads from it
         var page = await client.Get<LedgerPage>($"/sindri/ledger?item={Uri.EscapeDataString(item)}&type=launch.started", ct).ConfigureAwait(false);
         if (page.IsError)
         {

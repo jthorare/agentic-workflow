@@ -66,10 +66,10 @@ public sealed class CliSkillRunTests : IDisposable
             Started(3, """{"launchId":"LCH-3","skill":{"name":"review","resultFile":"/run/new/result-LCH-3.json"}}"""),
         ], Next: null));
 
-        var path = await Verb(api).ResultFileOf(A.FirstItemId.Value, Token);
+        var path = await Verb(api).ResultFileOf(A.FirstItemId.Value, 0, Token);
 
         Assert.Equal("/run/new/result-LCH-3.json", path);
-        Assert.Equal("?item=" + A.FirstItemId.Value + "&type=launch.started", api.Calls[^1].Query);
+        Assert.StartsWith("?item=" + A.FirstItemId.Value + "&type=launch.started", api.Calls[^1].Query, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -78,8 +78,8 @@ public sealed class CliSkillRunTests : IDisposable
         var none = new RoutedApi().On("/sindri/ledger", HttpStatusCode.OK, new LedgerPage([Started(1, """{"launchId":"LCH-1"}""")], Next: null));
         var down = new RoutedApi().OnRaw("/sindri/ledger", HttpStatusCode.ServiceUnavailable, """{"title":"SND-API-011","detail":"views are behind"}""");
 
-        Assert.Equal(string.Empty, await Verb(none).ResultFileOf(A.FirstItemId.Value, Token));
-        Assert.Equal(string.Empty, await Verb(down).ResultFileOf(A.FirstItemId.Value, Token));
+        Assert.Equal(string.Empty, await Verb(none).ResultFileOf(A.FirstItemId.Value, 0, Token));
+        Assert.Equal(string.Empty, await Verb(down).ResultFileOf(A.FirstItemId.Value, 0, Token));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -92,10 +92,10 @@ public sealed class CliSkillRunTests : IDisposable
             Event(2, "launch.failed", """{"launchId":"LCH-2","code":"SND-SKILL-005","message":"review needs MCP server prism-mcp (register it with the agent)"}"""),
         ], Next: null));
 
-        var line = await Verb(api).LaunchRefusalOf(A.FirstItemId.Value, Token);
+        var line = await Verb(api).LaunchRefusalOf(A.FirstItemId.Value, 0, Token);
 
         Assert.Equal("SND-SKILL-005 review needs MCP server prism-mcp (register it with the agent)", line);
-        Assert.Equal("?item=" + A.FirstItemId.Value + "&type=launch.failed", api.Calls[^1].Query);
+        Assert.StartsWith("?item=" + A.FirstItemId.Value + "&type=launch.failed", api.Calls[^1].Query, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -104,8 +104,8 @@ public sealed class CliSkillRunTests : IDisposable
         var none = new RoutedApi().On("/sindri/ledger", HttpStatusCode.OK, new LedgerPage([], Next: null));
         var down = new RoutedApi().OnRaw("/sindri/ledger", HttpStatusCode.ServiceUnavailable, """{"title":"SND-API-011","detail":"views are behind"}""");
 
-        Assert.Null(await Verb(none).LaunchRefusalOf(A.FirstItemId.Value, Token));
-        Assert.Null(await Verb(down).LaunchRefusalOf(A.FirstItemId.Value, Token));
+        Assert.Null(await Verb(none).LaunchRefusalOf(A.FirstItemId.Value, 0, Token));
+        Assert.Null(await Verb(down).LaunchRefusalOf(A.FirstItemId.Value, 0, Token));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -117,10 +117,10 @@ public sealed class CliSkillRunTests : IDisposable
             Event(2, "session.ended", """{"launch":"LCH-2","reason":"exit","exitCode":3}"""),
         ], Next: null));
 
-        var line = await Verb(api).SessionEndOf(A.FirstItemId.Value, Token);
+        var line = await Verb(api).SessionEndOf(A.FirstItemId.Value, 0, Token);
 
         Assert.Equal("session exited 3", line);
-        Assert.Equal("?item=" + A.FirstItemId.Value + "&type=session.ended", api.Calls[^1].Query);
+        Assert.StartsWith("?item=" + A.FirstItemId.Value + "&type=session.ended", api.Calls[^1].Query, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -129,8 +129,8 @@ public sealed class CliSkillRunTests : IDisposable
         var none = new RoutedApi().On("/sindri/ledger", HttpStatusCode.OK, new LedgerPage([], Next: null));
         var down = new RoutedApi().OnRaw("/sindri/ledger", HttpStatusCode.ServiceUnavailable, """{"title":"SND-API-011","detail":"views are behind"}""");
 
-        Assert.Null(await Verb(none).SessionEndOf(A.FirstItemId.Value, Token));
-        Assert.Null(await Verb(down).SessionEndOf(A.FirstItemId.Value, Token));
+        Assert.Null(await Verb(none).SessionEndOf(A.FirstItemId.Value, 0, Token));
+        Assert.Null(await Verb(down).SessionEndOf(A.FirstItemId.Value, 0, Token));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -180,6 +180,60 @@ public sealed class CliSkillRunTests : IDisposable
         Assert.Contains("fact:reviewFindings = (unreadable: ", _out.ToString(), StringComparison.Ordinal);
         Assert.DoesNotContain("sha256:c16c", _out.ToString(), StringComparison.Ordinal);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_launch_refusal_past_the_first_ledger_page_is_printed()
+    {
+        var api = new RoutedApi().OnPages(LedgerRoute, [(0, new LedgerPage([], Next: 5000)), (5000, new LedgerPage([Event(5687, "launch.failed", """{"launchId":"LCH-1","code":"SND-SKILL-007","message":"no such agent"}""")], Next: null))]);
+
+        Assert.Equal("SND-SKILL-007 no such agent", await Verb(api).LaunchRefusalOf(A.FirstItemId.Value, 0, Token));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_session_end_past_the_first_ledger_page_is_printed()
+    {
+        var api = new RoutedApi().OnPages(LedgerRoute, [(0, new LedgerPage([], Next: 5000)), (5000, new LedgerPage([Event(5700, "session.ended", """{"launch":"LCH-1","reason":"exit","exitCode":3}""")], Next: null))]);
+
+        Assert.Equal("session exited 3", await Verb(api).SessionEndOf(A.FirstItemId.Value, 0, Token));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_result_file_past_the_first_ledger_page_is_printed()
+    {
+        var api = new RoutedApi().OnPages(LedgerRoute, [(0, new LedgerPage([], Next: 5000)), (5000, new LedgerPage([Started(5690, """{"launchId":"LCH-1","skill":{"name":"review","resultFile":"/run/late/result-LCH-1.json"}}""")], Next: null))]);
+
+        Assert.Equal("/run/late/result-LCH-1.json", await Verb(api).ResultFileOf(A.FirstItemId.Value, 0, Token));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Two_empty_ledger_pages_before_the_hit_do_not_end_the_read()
+    {
+        var api = new RoutedApi().OnPages(LedgerRoute,
+        [
+            (0, new LedgerPage([], Next: 5000)),
+            (5000, new LedgerPage([], Next: 10000)),
+            (10000, new LedgerPage([Event(10400, "session.ended", """{"launch":"LCH-1","reason":"exit","exitCode":1}""")], Next: null)),
+        ]);
+
+        Assert.Equal("session exited 1", await Verb(api).SessionEndOf(A.FirstItemId.Value, 0, Token));
+        Assert.Equal(3, api.Calls.Count(static c => c.Path == LedgerRoute));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_ledger_read_starts_at_the_trials_item_not_at_zero()
+    {
+        // why: the item is made for the trial, so its first row is at the sequence the create was accepted at (4); reading from 0 scans every older row first
+        var api = FollowedRun().OnPages(LedgerRoute, [(3, new LedgerPage([Started(5, """{"launchId":"LCH-1","skill":{"name":"review","resultFile":"/run/x/result-LCH-1.json"}}""")], Next: null))])
+            .On(FactRoute, HttpStatusCode.OK, FactValue("\"" + FindingsPath + "\""));
+
+        _ = await Verb(api).Run(["review", "--follow"], Token);
+
+        var asked = api.Calls.Where(static c => c.Path == LedgerRoute).Select(static c => c.Query).ToList();
+        Assert.NotEmpty(asked);
+        Assert.All(asked, static q => Assert.Contains("&after=3", q, StringComparison.Ordinal));
+    }
+
+    private const string LedgerRoute = "/sindri/ledger";
 
     private const string ManifestHash = "9f2c4be1a07d58a3c1e6b4d9027f83aa5c61d0e4b7f29a8c3d5e1f60b2a47c98";
     private const string FindingsPath = "/home/u/.agentic-workflow/acme-api/reviews/42.json";
