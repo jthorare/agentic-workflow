@@ -79,29 +79,20 @@ internal sealed partial class LinearWorkViewModel
 
         if (IsLinear && IsActive && _url is { } url)
         {
-            Reading = Observed(Settle(key, ReadList(url, _shown?.Token ?? CancellationToken.None), _reads + 1));
+            Reading = Observed(ReadList(url, _shown?.Token ?? CancellationToken.None));
         }
         else
         {
-            Missed(key);
+            Missed();
         }
     }
 
-    // The read SelectWhenShown started is over: a row not shown by now will not be by this wait. A read that replaced it settles the wait itself.
-    private async Task Settle(string key, Task read, int number)
+    // The newest read is over and did not bring the pending row (a filter hides it, or the read failed): the wait ends, and the dialog's closer gets its focus fallback.
+    private void Missed()
     {
-        await read.ConfigureAwait(true);
-        if (_reads == number)
+        if (_selectWhenShown is null)
         {
-            Missed(key);
-        }
-    }
-
-    private void Missed(string key)
-    {
-        if (!string.Equals(_selectWhenShown, key, StringComparison.Ordinal))
-        {
-            return;   // shown meanwhile, or a filter change ended the wait
+            return;
         }
 
         _selectWhenShown = null;

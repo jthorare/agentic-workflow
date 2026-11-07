@@ -72,4 +72,42 @@ public sealed class LinearSelectWhenShownTests
 
         Assert.Equal(("ENG-99", true, "ENG-99"), (request?.ItemId, request?.OnlyIfLost, work.SelectedKey));
     }, Token);
+
+    [Fact]
+    public Task A_read_that_replaces_the_waiting_one_without_the_row_ends_the_wait_and_later_reads_move_no_focus() => UiThread.Run(async () =>
+    {
+        var f = new LinearFixture();
+        var work = await f.Shown(Token);
+        var (missed, focused) = (0, new List<string>());
+        work.SelectMissed += (_, _) => missed++;
+        work.FocusRequested += (_, e) => focused.Add(e.ItemId);
+
+        work.SelectWhenShown("ENG-99");
+        var waiting = work.Reading;
+        await work.Refresh(LinearFixture.Url, Token);
+        await waiting;
+        f.Mine = WithMineRow("ENG-99");
+        await work.Refresh(LinearFixture.Url, Token);
+
+        Assert.Equal((1, 0), (missed, focused.Count));
+    }, Token);
+
+    [Fact]
+    public Task Leaving_Work_while_the_read_is_on_its_way_leaves_nothing_pending() => UiThread.Run(async () =>
+    {
+        var f = new LinearFixture();
+        var work = await f.Shown(Token);
+        var (missed, focused) = (0, new List<string>());
+        work.SelectMissed += (_, _) => missed++;
+        work.FocusRequested += (_, e) => focused.Add(e.ItemId);
+
+        work.SelectWhenShown("ENG-99");
+        work.SetShown(shown: false);
+        await work.Reading;
+        work.SetShown(shown: true);
+        f.Mine = WithMineRow("ENG-99");
+        await work.Refresh(LinearFixture.Url, Token);
+
+        Assert.Equal((0, 0), (missed, focused.Count));
+    }, Token);
 }
