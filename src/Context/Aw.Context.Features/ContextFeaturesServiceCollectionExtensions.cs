@@ -130,7 +130,7 @@ public static class ContextFeaturesServiceCollectionExtensions
         services.TryAddSingleton<IMergeHistory>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IAsOfDocs>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IEvalStore>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
-        services.TryAddSingleton<IContextLinearWrites>(LinearWritesOf);   // Linear hub Ph2: not part of IContextEngine, so a caller asks the container for it; real once the host also wires Aw.Context.Infrastructure's Linear ports, in either order
+        services.TryAddSingleton(LinearWritesOf);   // Linear hub Ph2: not part of IContextEngine, so a caller asks the container for it; real once the host also wires Aw.Context.Infrastructure's Linear ports, in either order
         return services.AddMapHeads().AddRelinkPinAliases().AddProjectFacts().AddLibraryReads().AddIssueReads().AddIndexSync().AddRecordSearch().AddEmbedRecords().AddContextSlices();
     }
 
