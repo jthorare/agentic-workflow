@@ -1,0 +1,72 @@
+{
+  "connected": true,
+  "viewer": {
+    "id": "00000000-0000-4000-8000-0000000000a1",
+    "name": "Joi Example"
+  },
+  "feed": {
+    "state": "rereading",
+    "lastSyncedAt": "2025-12-31T23:58:00.0000000Z",
+    "code": null,
+    "reread": {
+      "done": 412,
+      "total": 1000
+    }
+  },
+  "group": "mine",
+  "rows": [
+    {
+      "key": "ENG-12",
+      "record": "linear:issue/00000000-0000-4000-8000-00000000010c",
+      "url": "https://linear.app/acme/issue/ENG-12",
+      "title": "Retry budget for the sync worker",
+      "team": {
+        "id": "00000000-0000-4000-8000-0000000000e1",
+        "key": "ENG"
+      },
+      "state": {
+        "id": "00000000-0000-4000-8000-000000000052",
+        "name": "In Progress",
+        "type": "started"
+      },
+      "priority": 1,
+      "assignee": {
+        "id": "00000000-0000-4000-8000-0000000000a1",
+        "name": "Joi Example"
+      },
+      "project": {
+        "id": "00000000-0000-4000-8000-0000000000b1",
+        "name": "Sync worker"
+      },
+      "cycle": {
+        "id": "00000000-0000-4000-8000-0000000000c1",
+        "number": 14,
+        "name": "Cycle 14"
+      },
+      "labels": [
+        {
+          "id": "00000000-0000-4000-8000-0000000000d1",
+          "name": "bug",
+          "color": "#eb5757"
+        },
+        {
+          "id": "00000000-0000-4000-8000-0000000000d2",
+          "name": "api",
+          "color": "#5e6ad2"
+        }
+      ],
+      "updatedAt": "2025-12-31T23:40:00.0000000Z",
+      "link": {
+        "item": "ITM-0192a1b2c3d4e5f6a7b8c9d0e1f2a301",
+        "itemState": "running"
+      },
+      "pr": {
+        "number": 2071,
+        "url": "https://github.com/acme/api/pull/2071",
+        "review": "waiting"
+      }
+    }
+  ],
+  "next": null,
+  "total": 1
+}
