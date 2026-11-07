@@ -97,7 +97,7 @@ internal sealed class ContextDatabase : IDisposable
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            return ContextErrors.StoreUnavailable.With($"the context home can't be created or restricted ({e.GetType().Name}); check $AW_SINDRI_HOME permissions");
+            return ContextErrors.StoreUnavailable.With($"the context home can't be created or restricted ({e.GetType().Name}){ContextErrors.StoreHint}");
         }
     }
 
@@ -166,7 +166,7 @@ internal sealed class ContextDatabase : IDisposable
         }
         catch (Microsoft.Data.Sqlite.SqliteException e)
         {
-            return ContextErrors.StoreUnavailable.With($"{e.Message} (never delete context.db; check $AW_SINDRI_HOME permissions)");
+            return ContextErrors.StoreUnavailable.With($"{e.Message}{ContextErrors.StoreHint}");
         }
     }
 
@@ -215,5 +215,5 @@ internal sealed class ContextDatabase : IDisposable
     /// <param name="error">The Kernel.Data error.</param>
     /// <returns>The context error.</returns>
     public static Error Translate(Error error) =>
-        ContextErrors.StoreUnavailable.With($"{error.Code}: {error.Message} (never delete context.db; check $AW_SINDRI_HOME permissions)");
+        ContextErrors.StoreUnavailable.With($"{error.Code}: {error.Message}{ContextErrors.StoreHint}");
 }
