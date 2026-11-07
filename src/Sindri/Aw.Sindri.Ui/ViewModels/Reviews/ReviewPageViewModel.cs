@@ -206,7 +206,7 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
         Fail(answer.Error);
     }
 
-    private void Fail(Aw.Kernel.Error error)
+    private void Fail(Kernel.Error error)
     {
         Strip.Clear();
         Panels.Clear();
@@ -244,7 +244,7 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
 
     private static readonly string[] _defaultOrder = ["requiredChecks", "docMap", "testPlan", "ci", "evidence", "risk", "conversation"];
 
-    private static void Patch<T>(System.Collections.ObjectModel.ObservableCollection<T> to, IEnumerable<T> items)
+    private static void Patch<T>(ObservableCollection<T> to, IEnumerable<T> items)
     {
         to.Clear();
         foreach (var item in items)
