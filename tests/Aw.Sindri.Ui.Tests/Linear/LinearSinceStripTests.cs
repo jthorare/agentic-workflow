@@ -142,8 +142,8 @@ public sealed class LinearSinceStripTests
     public void A_row_whose_actor_is_known_names_them_and_a_mention_without_one_still_reads()
     {
         var sam = new LinearPerson("00000000-0000-4000-8000-0000000000a2", "Sam Lee");
-        LinearSinceItem Item(string kind, LinearPerson? actor) =>
-            new(kind, "ENG-12", "Retry budget for the sync worker", actor, DateTimeOffset.UnixEpoch, kind == "state" ? "Todo" : null, kind == "state" ? "In Progress" : null);
+        static LinearSinceItem Item(string kind, LinearPerson? actor) =>
+            new(kind, "ENG-12", "Retry budget for the sync worker", actor, DateTimeOffset.UnixEpoch, From: kind == "state" ? "Todo" : null, To: kind == "state" ? "In Progress" : null);
 
         Assert.Equal(
             ["ENG-12 assigned to you by Sam Lee", "ENG-12 moved from Todo to In Progress by Sam Lee", "You were mentioned on ENG-12", "ENG-12 changed"],

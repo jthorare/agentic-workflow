@@ -1,3 +1,5 @@
+using System.Net;
+using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
 
@@ -109,6 +111,19 @@ public sealed class LinearWorkStatesTests
         var work = await _f.Shown(Token);
 
         Assert.Equal("Updating issues… 412 of 1,000", work.UpdatingText);
+    }
+
+    [Fact]
+    public async Task A_re_read_that_does_not_know_how_many_issues_there_are_says_how_many_it_has_read()
+    {
+        // Context knows how many issues it has stored, not how many Linear holds: the progress total can be null.
+        var body = JsonNode.Parse(GoldenFiles.Api("linear-issues", "rereading"))!;
+        body["feed"]!["reread"]!["total"] = null;
+        _f.Mine = new RouteAnswer(HttpStatusCode.OK, body.ToJsonString());
+
+        var work = await _f.Shown(Token);
+
+        Assert.Equal("Updating issues… 412 so far", work.UpdatingText);
     }
 
     [Fact]
