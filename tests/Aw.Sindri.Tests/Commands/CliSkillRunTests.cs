@@ -7,12 +7,19 @@ using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items.Vocabulary;
+using Aw.Sindri.Core.Workflow.Engine;
+using Aw.Sindri.Core.Workflow.Engine.Runtime;
+using Aw.Sindri.Core.Workflow.Ids;
+using Aw.Sindri.Core.Workflow.Views;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.CreateItem;
+using Aw.Sindri.Features.GetInstanceFact;
 using Aw.Sindri.Features.GetItem;
 using Aw.Sindri.Features.ReadLedger;
+using Aw.Sindri.Features.StartSkillRun;
 using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Testing.Views;
 
 namespace Aw.Sindri.Tests.Commands;
 
@@ -124,6 +131,80 @@ public sealed class CliSkillRunTests : IDisposable
 
         Assert.Null(await Verb(none).SessionEndOf(A.FirstItemId.Value, Token));
         Assert.Null(await Verb(down).SessionEndOf(A.FirstItemId.Value, Token));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_produced_output_prints_its_value_not_its_hash()
+    {
+        var api = FollowedRun().On(FactRoute, HttpStatusCode.OK, FactValue("\"" + FindingsPath + "\""));
+
+        var code = await Verb(api).Run(["review", "--follow"], Token);
+
+        Assert.Equal(0, code);
+        Assert.Contains($"fact:reviewFindings = {FindingsPath}", _out.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("sha256:c16c", _out.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_followed_run_prints_the_pass_golden_with_its_fact_read_through_the_facts_route()
+    {
+        // why: the golden's fact used to be handed to SkillRunText as a value, so it could not tell a value from a hash (#2148)
+        var api = FollowedRun().On(FactRoute, HttpStatusCode.OK, FactValue("\"" + FindingsPath + "\""));
+
+        _ = await Verb(api).Run(["review", "--follow"], Token);
+
+        Golden.Match(_out.ToString(), typeof(CliSkillRunTests).Assembly, "Skills/Golden/skill-run-pass.txt", Normalization.None);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_object_value_prints_as_raw_json()
+    {
+        var api = FollowedRun().On(FactRoute, HttpStatusCode.OK, FactValue("""{"findings":2}"""));
+
+        _ = await Verb(api).Run(["review", "--follow"], Token);
+
+        Assert.Contains("""fact:reviewFindings = {"findings":2}""", _out.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_unreadable_fact_value_prints_the_key_and_a_reason()
+    {
+        var readable = FollowedRun().On(FactRoute, HttpStatusCode.OK, FactValue("\"" + FindingsPath + "\""));
+        var unreadable = FollowedRun().OnRaw(FactRoute, HttpStatusCode.NotFound, """{"title":"SND-ITEM-404","detail":"no such fact"}""");
+
+        var readableCode = await Verb(readable).Run(["review", "--follow"], Token);
+        _out.GetStringBuilder().Clear();
+        var code = await Verb(unreadable).Run(["review", "--follow"], Token);
+
+        Assert.Equal(readableCode, code);
+        Assert.Contains("fact:reviewFindings = (unreadable: ", _out.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("sha256:c16c", _out.ToString(), StringComparison.Ordinal);
+    }
+
+    private const string ManifestHash = "9f2c4be1a07d58a3c1e6b4d9027f83aa5c61d0e4b7f29a8c3d5e1f60b2a47c98";
+    private const string FindingsPath = "/home/u/.agentic-workflow/acme-api/reviews/42.json";
+    private static readonly InstanceAddress _address = InstanceAddress.From(A.FirstItemId.Value + "/skill-trial-review/1");
+    private static readonly WorkflowInstanceId _instance = WorkflowInstanceId.Of(_address);
+
+    private static string InstanceRoute => "/sindri/workflow/instances/" + Uri.EscapeDataString(_instance.Value);
+
+    private static string FactRoute => InstanceRoute + "/facts/" + Uri.EscapeDataString("fact:reviewFindings");
+
+    private static FactView FactValue(string json) => new("fact:reviewFindings", FactType.Text, JsonDocument.Parse(json).RootElement, Truncated: false);
+
+    /// <summary>An API where the trial starts and its instance has already ended on 'pass', with one produced output whose row carries only the hash; the facts route is left to the test.</summary>
+    private static RoutedApi FollowedRun()
+    {
+        var recipe = new RecipeVersion(RecipeId.From("workflow.skill-trial-review"), 1, RecipeHash.From("sha256:" + new string('a', 64)));
+        var view = new InstanceView(_address, recipe, "ended-pass", Detail: null, KnownInstants.Epoch, string.Empty, [], Question: null, Task: null, Run: null, Children: [], Outcome: null) { Id = _instance };
+        var row = new FactRow("fact:reviewFindings", "Findings", FactType.File, FactDirection.Output, From: null, FactStatus.Produced, "sha256:c16c6c90968b", At: null, By: null, Ref: null, Progress: null, Pending: null);
+        var ended = new StateCell("ended-pass", Order: null, BranchOf: null, StateGlyph.Done, Badge: null, Round: null, [], Desk: false, Child: false, Children: null, Outcome: null, Terminal: true);
+        var detail = WorkflowViewFixtures.Done() with { Address = _address, Id = _instance, State = "ended-pass", EngineOwned = null, States = [ended], Facts = [row] };
+        return new RoutedApi().On("/sindri/status", HttpStatusCode.OK, RoutedApi.StatusAtHead7)
+            .On("/sindri/items", HttpStatusCode.OK, new ItemCreatedResponse(new CommandAccepted(new SequentialIdGenerator().New<CommandId>(), Sequence: 4), A.FirstItemId))
+            .On("/sindri/skills/review/runs", HttpStatusCode.OK, new StartSkillRunResponse(view, "review", ManifestHash, ["fact:reviewFindings"], "pass"))
+            .On("/sindri/ledger", HttpStatusCode.OK, new LedgerPage([Started(1, """{"launchId":"LCH-1","skill":{"name":"review","resultFile":"/home/u/.agentic-workflow/sindri-app/workflow/runs/WFI-1/review/LCH-1/.sindri-out/result-LCH-1.json"}}""")], Next: null))
+            .On(InstanceRoute, HttpStatusCode.OK, detail);
     }
 
     private static PublicEvent Started(long sequence, string payload) => Event(sequence, "launch.started", payload);
