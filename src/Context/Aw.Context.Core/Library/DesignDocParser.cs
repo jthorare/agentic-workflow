@@ -10,7 +10,7 @@ namespace Aw.Context.Core.Library;
 /// </summary>
 public static class DesignDocParser
 {
-    /// <summary>The parser's version; a new one re-reads every doc. 3: stored refs carry their line (migration 0034, #2189), so every stored doc is rewritten. 4: a generated doc's stored version holds its packet.json (#2184), so generated docs stored before are re-read.</summary>
+    /// <summary>The parser's version; a new one re-reads every doc. 3: stored refs carry their line (migration 0034, #2189), so every stored doc is rewritten. 4: a generated doc's stored version holds its packet.json (#2184), and the bump re-reads every stored doc.</summary>
     public const int Version = 4;
 
     /// <summary>The largest doc read, in bytes of UTF-8.</summary>
