@@ -23225,3 +23225,9 @@ static Aw.Sindri.Core.Reviews.ReviewLibraryFacts.operator ==(Aw.Sindri.Core.Revi
 static Aw.Sindri.Core.Reviews.ReviewLibrary.From(Aw.Sindri.Core.Reviews.ReviewLibraryFacts! facts) -> Aw.Sindri.Core.Reviews.ReviewLibrary!
 static Aw.Sindri.Core.Reviews.ReviewUnreadableRoot.operator !=(Aw.Sindri.Core.Reviews.ReviewUnreadableRoot? left, Aw.Sindri.Core.Reviews.ReviewUnreadableRoot? right) -> bool
 static Aw.Sindri.Core.Reviews.ReviewUnreadableRoot.operator ==(Aw.Sindri.Core.Reviews.ReviewUnreadableRoot? left, Aw.Sindri.Core.Reviews.ReviewUnreadableRoot? right) -> bool
+Aw.Sindri.Core.Workflow.Engine.Triggers.StepCompleted.ResultSha256.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Triggers.StepCompleted.ResultSha256.init -> void
+Aw.Sindri.Core.Workflow.Engine.Events.TriggerRecord.ResultSha256.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Events.TriggerRecord.ResultSha256.init -> void
+Aw.Sindri.Core.Events.WorkflowEventDetail.ResultSha256.get -> string?
+Aw.Sindri.Core.Events.WorkflowEventDetail.ResultSha256.init -> void

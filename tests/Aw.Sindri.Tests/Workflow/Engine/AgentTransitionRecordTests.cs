@@ -38,6 +38,31 @@ public sealed class AgentTransitionRecordTests
         Assert.Equal((null, null), (change.Event.Trigger.Agent, change.Event.Trigger.Model));
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public void A_skill_completion_carries_its_result_files_sha256_onto_the_transition_and_its_detail()
+    {
+        var sha = new string('c', 64);
+        var report = Report() with { Via = StepRuntime.Agent, Agent = "claude-code", ResultSha256 = sha };
+        var change = Decide(report);
+
+        Assert.Equal(sha, change.Event.Trigger.ResultSha256);
+        var detail = WorkflowEventDetail.Of(change.Event, report);
+        Assert.Equal(sha, detail.ResultSha256);
+        Assert.Contains("\"resultSha256\":\"" + sha + "\"", System.Text.Json.JsonSerializer.Serialize(detail, SliceHarness.Json), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void An_agent_report_without_a_result_file_writes_no_resultSha256()
+    {
+        var report = Report() with { Via = StepRuntime.Agent, Agent = "codex" };
+        var change = Decide(report);
+
+        Assert.Null(change.Event.Trigger.ResultSha256);
+        var detail = WorkflowEventDetail.Of(change.Event, report);
+        Assert.Null(detail.ResultSha256);
+        Assert.DoesNotContain("resultSha256", System.Text.Json.JsonSerializer.Serialize(detail, SliceHarness.Json), StringComparison.Ordinal);
+    }
+
     private static InstanceChange Decide(StepCompleted report)
     {
         var instance = In("produce", new LoopState(1, 3, Last: null), Spent(0, 0));

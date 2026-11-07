@@ -32,4 +32,8 @@ public sealed record TriggerRecord(string Kind, TriggerKey Key, string Actor, Ou
     /// <summary>The model an agent report asked for; null for any other trigger and when none was named. Not written when null.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Model { get; init; }
+
+    /// <summary>The SHA-256 of a skill block's result file (skill flows spec §3.3); null for any other trigger. Not written when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ResultSha256 { get; init; }
 }

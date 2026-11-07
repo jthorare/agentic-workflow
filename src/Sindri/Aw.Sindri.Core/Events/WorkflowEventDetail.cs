@@ -75,6 +75,10 @@ public sealed record WorkflowEventDetail(
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Model { get; init; }
 
+    /// <summary>The SHA-256 of a skill block's result file (skill flows spec §3.3); null for any other event. Not written when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ResultSha256 { get; init; }
+
     /// <summary>On a step.failed row of an agent run: <see cref="AgentFailureKinds"/> (refused, check_failed, crashed); null otherwise. Not written when null.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? FailureKind { get; init; }

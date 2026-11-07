@@ -43,6 +43,9 @@ public sealed record StepCompleted(
     /// <summary>The model an agent run asked for, for the event's 'model'; null when none was named and for any other Step.</summary>
     public string? Model { get; init; }
 
+    /// <summary>The SHA-256 of a skill block's result file (skill flows spec §3.3), for the event's 'resultSha256'; null for any other Step.</summary>
+    public string? ResultSha256 { get; init; }
+
     /// <inheritdoc/>
     public override string KeyPart => "run:" + Run.Value + ":" + ReportSha256;
 }
