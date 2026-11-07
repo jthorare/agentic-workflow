@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
-using Aw.Sindri.Features.LinearConnection;
+using Aw.Sindri.Core.Linear;
 
-namespace Aw.Sindri.Host.IndexSources;
+namespace Aw.Sindri.Infrastructure.Linear;
 
 /// <summary>The stored Linear key checks' JSON context (used through AwJson.CreateOptions).</summary>
 [JsonSerializable(typeof(LinearStoredChecks))]

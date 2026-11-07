@@ -1,6 +1,6 @@
+using Aw.Sindri.Core.Linear;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Features.LinearConnection;
-using Aw.Sindri.Host.IndexSources;
+using Aw.Sindri.Infrastructure.Linear;
 using Aw.Sindri.Infrastructure;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Ledger;

@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Linear;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;

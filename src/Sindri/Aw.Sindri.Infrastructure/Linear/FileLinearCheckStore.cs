@@ -3,10 +3,9 @@ using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Control;
-using Aw.Sindri.Features.LinearConnection;
-using Aw.Sindri.Infrastructure;
+using Aw.Sindri.Core.Linear;
 
-namespace Aw.Sindri.Host.IndexSources;
+namespace Aw.Sindri.Infrastructure.Linear;
 
 /// <summary>
 /// The last save-time check of each Linear key in <c language="text">&lt;home&gt;/linear-checks.json</c> (owner-only, written atomically). Pointers, states and times only: never a key. Why a file and not the ledger or the profile: the

@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Linear;
 using System.Text.Json;
 using Aw.Context.Core;
 using Aw.Context.Core.Linear;
@@ -6,7 +7,6 @@ using Aw.Kernel.Json;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Secrets;
-using Aw.Sindri.Features.LinearConnection;
 using Aw.Sindri.Host.IndexSources;
 using Aw.Sindri.Testing;
 

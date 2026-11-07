@@ -1,9 +1,9 @@
 using Aw.Kernel;
 
-namespace Aw.Sindri.Features.LinearConnection;
+namespace Aw.Sindri.Core.Linear;
 
 /// <summary>Keeps, across restarts, the result and time of the last save-time check of each Linear key. Holds no key and no secret.</summary>
-internal interface ILinearCheckStore
+public interface ILinearCheckStore
 {
     /// <summary>Reads the stored checks.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
