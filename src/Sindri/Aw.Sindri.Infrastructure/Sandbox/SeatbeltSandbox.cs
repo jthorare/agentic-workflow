@@ -51,7 +51,8 @@ internal sealed class SeatbeltSandbox(SeatbeltOptions options, ISandboxProcesses
             return refused;
         }
 
-        return WrapWith(plan, argv, secrets.For(plan.Launch));
+        var values = secrets.For(plan.Launch);
+        return RequiredLaunchSecret.Check(plan, values) is { } missing ? missing : WrapWith(plan, argv, values);
     }
 
     /// <inheritdoc />
