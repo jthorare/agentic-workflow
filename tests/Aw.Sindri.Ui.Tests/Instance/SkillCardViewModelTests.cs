@@ -25,7 +25,7 @@ public sealed class SkillCardViewModelTests
             [new SkillInputView("idea", "text", "What do you want built?", Required: true)], ["fact:officeHoursFeatureDir"], ["done"], Pushes: false, "234a44b2", "<skills>/officeHours/block.yaml");
 
     private static StateCell Cell(StateGlyph glyph = StateGlyph.Active, Round? round = null, string? outcome = null) =>
-        new("shape", Order: 1, BranchOf: null, glyph, Badge: null, round, [], Desk: false, Child: false, Children: null, outcome, Terminal: false, Block: "office-hours");
+        new("shape", Order: 1, BranchOf: null, glyph, Badge: null, round, [], Desk: false, Child: false, Children: null, outcome, Terminal: false, Block: "step.skill.office-hours");
 
     private static StepRun Run(string state = "running", string? outcome = null, int attempt = 1) =>
         new("shape.1", "shape", attempt, MaxAttempts: null, state, "agent", A.Noon, EndedAt: state == "running" ? null : A.Noon, DurationMs: null, outcome, Tokens: null, Actor: null);
@@ -76,6 +76,56 @@ public sealed class SkillCardViewModelTests
         var card = Card(run: Run(attempt: 2), waiting: [Waiting(attempt: 1)]);
 
         Assert.Equal(("running", string.Empty), (card.StateWord, card.Question));
+    }
+
+    [Fact]
+    public void SkillCard_prefers_the_row_of_the_latest_run_over_a_later_row_with_no_attempt()
+    {
+        var card = Card(run: Run(attempt: 2), waiting: [Waiting(text: "Live?", attempt: 2), Waiting(text: "Unnumbered?", attempt: null)]);
+
+        Assert.Equal("Live?", card.Question);
+    }
+
+    [Fact]
+    public void SkillCard_with_stale_and_live_attempts_picks_the_live_one_in_either_order()
+    {
+        var live = Waiting(text: "Live?", attempt: 2);
+        var stale = Waiting(text: "Stale?", attempt: 1);
+
+        Assert.Equal("Live?", Card(run: Run(attempt: 2), waiting: [live, stale]).Question);
+        Assert.Equal("Live?", Card(run: Run(attempt: 2), waiting: [stale, live]).Question);
+    }
+
+    [Fact]
+    public void SkillCard_before_any_run_picks_the_highest_attempt()
+    {
+        var card = new SkillCardViewModel(new SkillCardInput(new SkillsView([Block()]), Address, "Shape the idea", Cell(), Run: null, [Waiting(text: "Second?", attempt: 2), Waiting(text: "First?", attempt: 1)], [], Cost: null, _launcher, _clipboard, _clock));
+
+        Assert.Equal("Second?", card.Question);
+    }
+
+    [Fact]
+    public void SkillCard_knows_a_skill_state_only_by_a_step_skill_block()
+    {
+        Assert.True(SkillCardViewModel.IsSkillState(Cell()));
+        Assert.False(SkillCardViewModel.IsSkillState(Cell() with { Block = "step.agent" }));
+        Assert.False(SkillCardViewModel.IsSkillState(Cell() with { Block = null }));
+    }
+
+    [Fact]
+    public void SkillCard_noResult_has_no_details() =>
+        Assert.False(Card(waiting: [Waiting("noResult", text: null)]).HasDetails);
+
+    [Fact]
+    public void SkillCard_names_a_skill_with_hyphens_in_words() =>
+        Assert.Equal("office hours", SkillWords.Outcome("office-hours"));
+
+    [Fact]
+    public void SkillCard_ignores_a_relative_ref_path()
+    {
+        var fact = PlanFact();
+
+        Assert.Empty(Card(facts: [fact with { Ref = fact.Ref! with { Path = "plans/x" } }]).Outputs);
     }
 
     [Fact]
@@ -180,11 +230,11 @@ public sealed class SkillCardViewModelTests
     }
 
     [Fact]
-    public void SkillCard_skillUpdated_asks_to_approve_again()
+    public void SkillCard_skillUpdated_says_it_waits_for_approval_without_promising_a_button()
     {
         var card = Card(waiting: [Waiting("skillUpdated", text: null)]);
 
-        Assert.Equal(("waiting on you", "The office hours skill changed since this run started. Approve again to continue."), (card.StateWord, card.Headline));
+        Assert.Equal(("waiting on you", "The office hours skill changed since this run started, so it waits for your approval again."), (card.StateWord, card.Headline));
     }
 
     [Theory]

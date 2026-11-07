@@ -23,7 +23,7 @@ public sealed class ExpandedStateSkillCardTests
     private SkillCardInput Input(string? question = null)
     {
         var block = new SkillBlockView("office-hours", "officeHours", "step.skill.office-hours", 1, "Shapes an idea.", [], [], ["done"], Pushes: false, "sha", "<skills>/officeHours/block.yaml");
-        var cell = new StateCell("mitigate", Order: 1, BranchOf: null, StateGlyph.Active, Badge: null, Round: null, [], Desk: false, Child: false, Children: null, Outcome: null, Terminal: false, Block: "office-hours");
+        var cell = new StateCell("mitigate", Order: 1, BranchOf: null, StateGlyph.Active, Badge: null, Round: null, [], Desk: false, Child: false, Children: null, Outcome: null, Terminal: false, Block: "step.skill.office-hours");
         var run = new StepRun("mitigate.1", "mitigate", 1, MaxAttempts: null, "running", "agent", A.Noon, EndedAt: null, DurationMs: null, Outcome: null, Tokens: null, Actor: null);
         var row = question is null ? null : new NeedsYouRowView("skill:T-1:mitigate", "skillWaiting", "skill", Subject: null, Item: null, "Mitigate", "waiting", Repo: null, "calm", A.Noon, RecordedOnly: false, Notice: null, AnswerKind: null, PrimaryAction: null, [], "cli",
             OwnerWaiting: new OwnerWaitingView("LCH-1", "question", question, "/r.json", Detail: null, "T-1", "mitigate", Attempt: 1));
@@ -77,5 +77,21 @@ public sealed class ExpandedStateSkillCardTests
         expanded.SkillCard!.Announce();
 
         Assert.Equal("Mitigate is waiting on you: Which branch?", expanded.SkillCard!.Voice.Announcement);
+    }
+
+    [Fact]
+    public void A_new_expanded_state_carries_the_announced_question_so_the_same_question_is_not_said_again()
+    {
+        var before = Expanded();
+        before.ShowSkillCard(Input("Which repo?"));
+        before.SkillCard!.Announce();
+        var after = Expanded();
+
+        after.CarrySkillCard(before);
+        after.ShowSkillCard(Input("Which repo?"));
+        after.SkillCard!.Voice.Quiet();
+        after.SkillCard.Announce();
+
+        Assert.False(after.SkillCard.Voice.IsAnnouncing);
     }
 }

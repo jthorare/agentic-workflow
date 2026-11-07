@@ -52,7 +52,7 @@ public sealed class SkillCardFrameTests : FrameHost
         var detail = FixtureInstances.Detail("incident-loop");
         var body = GoldenFiles.Node("workflow-instance", "incident-loop");
         var cell = body["states"]!.AsArray().Single(s => (string?)s!["id"] == "mitigate")!;
-        cell["block"] = "office-hours";
+        cell["block"] = "step.skill.office-hours";
         Server.WorkflowAnswer = new RouteAnswer(HttpStatusCode.OK, body.ToJsonString());
         if (!waiting)
         {
@@ -77,7 +77,7 @@ public sealed class SkillCardFrameTests : FrameHost
         Assert.Equal("Shapes an idea into a plan folder with requirements and tasks.", Named<TextBlock>(window, "SkillCardSentence").Text);
         Assert.Equal("waiting on you", Named<TextBlock>(window, "SkillCardState").Text);
         Assert.Equal("Mitigate is waiting on you: " + Question, Named<TextBlock>(window, "SkillCardHeadline").Text);
-        Assert.True(Visible(window, "SkillCardTakeOver"));
+        Assert.False(Visible(window, "SkillCardTakeOver"));   // the sheet has the one Take over
     });
 
     [Fact]

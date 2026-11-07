@@ -28,4 +28,8 @@ internal sealed partial class ExpandedStateViewModel
 
         SkillCard = card;
     }
+
+    /// <summary>Carries what the previous expanded state already said, so a swap for a new view model does not announce the same question again.</summary>
+    /// <param name="previous">The expanded state this one replaces.</param>
+    internal void CarrySkillCard(ExpandedStateViewModel previous) => _ = (SkillCard, previous.SkillCard);   // stub: the red row fails until this carries the announced question
 }
