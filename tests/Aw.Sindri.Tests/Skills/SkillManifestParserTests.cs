@@ -66,4 +66,25 @@ public sealed class SkillManifestParserTests
         Assert.Empty(blocks.Loaded);
         Assert.Contains("2 aw-result", Assert.Single(blocks.Skipped).Reason, StringComparison.Ordinal);
     }
+
+    [Theory]
+    [InlineData("""{"id":"","sentence":"x","maxDuration":"1h","outcomes":{"success":"done"}}""", "kebab-case")]
+    [InlineData("""{"id":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","sentence":"x","maxDuration":"1h","outcomes":{"success":"done"}}""", "id")]
+    [InlineData("""{"id":"bad","sentence":"x","maxDuration":"1h","outcomes":{"success":"Not-Camel"}}""", "outcome")]
+    [InlineData("""{"id":"bad","sentence":"x","maxDuration":"1h","outcomes":{"success":"done","from":"v","map":{"A":"done","B":"Not-Camel"}}}""", "outcome")]
+    public void A_value_the_descriptor_rejects_skips_the_block_with_a_reason_and_the_good_one_loads(string bad, string named)
+    {
+        var blocks = Parse($$"""{"schema":1,"blocks":[{{bad}},{{Good}}]}""");
+
+        Assert.Equal("good", Assert.Single(blocks.Loaded).Manifest.Name);
+        Assert.Contains(named, Assert.Single(blocks.Skipped).Reason, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Building_a_descriptor_from_an_invalid_outcome_name_returns_an_error_instead_of_throwing()
+    {
+        var manifest = new SkillBlockManifest("bad", "x", Inputs: [], Args: [], Outputs: [], new SkillOutcomes(From: null, new Dictionary<string, string>(StringComparer.Ordinal), "Not-Camel"), Pushes: false, MaxDuration: TimeSpan.FromHours(1));
+
+        Assert.True(SkillDescriptors.Build(manifest).IsError);
+    }
 }
