@@ -7,4 +7,5 @@ namespace Aw.Sindri.Ui.Api.Reviews;
 /// <param name="NearMisses">Files that almost read as docs, each with what to fix.</param>
 /// <param name="UnreadableRoots">The library folders that could not be read.</param>
 /// <param name="CappedText">Sindri's words when the lists are cut short; null otherwise.</param>
-internal sealed record LibraryView(int Docs, int WithErrors, IReadOnlyList<LibraryBrokenView> Broken, IReadOnlyList<LibraryNearMissView> NearMisses, IReadOnlyList<LibraryRootView> UnreadableRoots, string? CappedText);
+/// <param name="Roots">Every folder of the library for the owner (aw, vaults, repo roots); empty for an agent session.</param>
+internal sealed record LibraryView(int Docs, int WithErrors, IReadOnlyList<LibraryBrokenView> Broken, IReadOnlyList<LibraryNearMissView> NearMisses, IReadOnlyList<LibraryRootView> UnreadableRoots, string? CappedText, IReadOnlyList<LibraryFolderView> Roots);

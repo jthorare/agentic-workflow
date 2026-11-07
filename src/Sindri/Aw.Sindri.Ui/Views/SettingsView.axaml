@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Aw.Sindri.Ui.ViewModels.Settings"
              xmlns:sandbox="using:Aw.Sindri.Ui.Views.Sandbox"
+             xmlns:reviews="using:Aw.Sindri.Ui.Views.Reviews"
              x:Class="Aw.Sindri.Ui.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
   <!-- Settings (UI spec §3.3 ⌘,, §11.4, §14.2; setup spec §2.4): the setup checklist first, then this app's own preferences. The shell hosts it as its Settings page, inside
@@ -67,6 +68,11 @@
     <!-- The Sandbox section: read-only (the profile changes it), its heading carries the state (sandbox spec 8). -->
     <StackPanel x:Name="SandboxSettingsSlot" IsVisible="{Binding HasSandbox}">
       <sandbox:SandboxSettingsSection x:Name="SandboxSettings" DataContext="{Binding Sandbox}" />
+    </StackPanel>
+
+    <!-- The Library card: the folders the design library reads (review page spec 6.3); an agent session sees no folders and nothing to edit. -->
+    <StackPanel x:Name="LibrarySettingsSlot" IsVisible="{Binding HasLibrary}">
+      <reviews:LibraryRootsSection x:Name="LibraryRoots" DataContext="{Binding Library}" />
     </StackPanel>
 
     <Border x:Name="ThisAppName" AutomationProperties.Name="{Binding ThisAppLabel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="2">
