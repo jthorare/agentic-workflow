@@ -34,4 +34,17 @@ internal static class LibrarySql
     internal const string ClaimsNaming =
         "SELECT c.pr_key, r.audience_key, r.state, c.ref FROM design_doc_claim c JOIN source_record r ON r.key = c.pr_key " +
         "WHERE r.removed_at IS NULL AND c.doc_id = @slug ORDER BY c.pr_key, c.ref";
+
+    // What the scope checks (SND-LIB-015, -016) read for a set of docs: the keys come in as a JSON array. Item ids and refs only; the text is not needed.
+    internal const string ScopeLinks =
+        "SELECT d.doc_key, d.parent, d.supersedes FROM design_doc d JOIN source_record r ON r.key = d.doc_key " +
+        "WHERE r.removed_at IS NULL AND d.doc_key IN (SELECT value FROM json_each(@keys))";
+
+    internal const string ScopeItems =
+        "SELECT i.doc_key, i.item_id, i.item_kind, i.parent_id FROM design_doc_item i JOIN source_record r ON r.key = i.doc_key " +
+        "WHERE r.removed_at IS NULL AND i.doc_key IN (SELECT value FROM json_each(@keys)) ORDER BY i.doc_key, i.rowid";
+
+    internal const string ScopeRefs =
+        "SELECT f.doc_key, f.from_item, f.to_ref, f.kind FROM design_doc_ref f JOIN source_record r ON r.key = f.doc_key " +
+        "WHERE r.removed_at IS NULL AND f.doc_key IN (SELECT value FROM json_each(@keys)) ORDER BY f.doc_key, f.rowid";
 }

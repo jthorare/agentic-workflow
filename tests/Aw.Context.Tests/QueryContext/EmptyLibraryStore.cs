@@ -14,6 +14,8 @@ internal sealed class EmptyLibraryStore : ILibraryStore
 
     public ValueTask<Result<IReadOnlyList<LibraryItem>>> Items(RecordKey doc, CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryItem>>([]));
 
+    public ValueTask<Result<IReadOnlyList<LibraryScopeFacts>>> ScopeFacts(IReadOnlyList<RecordKey> docs, CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryScopeFacts>>([]));
+
     public ValueTask<Result<IReadOnlyList<LibraryClaimRow>>> ClaimsOfMany(IReadOnlyList<RecordKey> prs, CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryClaimRow>>([]));
 
     public ValueTask<Result<IReadOnlyList<LibraryClaimRow>>> ClaimsOf(RecordKey pr, CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryClaimRow>>([]));

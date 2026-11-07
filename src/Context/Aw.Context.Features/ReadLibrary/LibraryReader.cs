@@ -12,35 +12,40 @@ namespace Aw.Context.Features.ReadLibrary;
 /// </summary>
 internal sealed class LibraryReader(ILibraryStore store, AudienceScope audience)
 {
-    private readonly Dictionary<string, IReadOnlyList<LibraryDoc>> _byId = new(StringComparer.Ordinal);
     private readonly Dictionary<RecordKey, IReadOnlyList<LibraryItem>> _items = [];
     private IReadOnlyList<LibraryDoc>? _all;
 
-    /// <summary>The readable docs with this id (all docs for null), in key order, each marked when another doc keeps its id.</summary>
+    /// <summary>The readable docs with this id (all docs for null), in key order, each marked with the errors decided against its scope.</summary>
     public async ValueTask<Result<IReadOnlyList<LibraryDoc>>> Docs(string? slug, CancellationToken cancellationToken)
     {
-        if (slug is null ? _all is { } all : _byId.TryGetValue(slug, out all))
+        var all = await All(cancellationToken).ConfigureAwait(false);
+        return all.IsError || slug is null ? all : Results.Success<IReadOnlyList<LibraryDoc>>([.. all.Value.Where(d => string.Equals(d.Slug, slug, StringComparison.Ordinal))]);
+    }
+
+    // Every scope check runs over all the docs the caller may read, whatever the caller asked for: a doc that defines an item or a parent is as good as missing to a caller who may not read it, so it never
+    // makes another doc's ref or parent resolve (no leak), and a doc the caller can read always counts.
+    private async ValueTask<Result<IReadOnlyList<LibraryDoc>>> All(CancellationToken cancellationToken)
+    {
+        if (_all is { } cached)
         {
-            return Results.Success(all);
+            return Results.Success(cached);
         }
 
-        var rows = await store.Docs(new RecordAudience(audience.Allowed, audience.Records), slug, cancellationToken).ConfigureAwait(false);
+        var rows = await store.Docs(new RecordAudience(audience.Allowed, audience.Records), slug: null, cancellationToken).ConfigureAwait(false);
         if (rows.IsError)
         {
             return rows.Error;
         }
 
-        var readable = Mark([.. rows.Value.Where(d => audience.Allows(d.Audience, d.Key))]);
-        if (slug is null)
+        var readable = rows.Value.Where(d => audience.Allows(d.Audience, d.Key)).ToList();
+        var facts = await store.ScopeFacts([.. readable.Select(static d => d.Key)], cancellationToken).ConfigureAwait(false);
+        if (facts.IsError)
         {
-            _all = readable;
-        }
-        else
-        {
-            _byId[slug] = readable;
+            return facts.Error;
         }
 
-        return Results.Success<IReadOnlyList<LibraryDoc>>(readable);
+        _all = Mark(readable, facts.Value);
+        return Results.Success(_all);
     }
 
     /// <summary>Reads one doc, null when there is none or the caller may not read it.</summary>
@@ -160,21 +165,43 @@ internal sealed class LibraryReader(ILibraryStore store, AudienceScope audience)
     private static bool Holds(LibraryDoc doc) =>
         DesignDocFrontMatter.IsDocId(doc.Slug) && !doc.Errors.Any(static e => string.Equals(e.Code, DesignDocCodes.SharedDocId, StringComparison.Ordinal));
 
-    // The live doc at the lowest key keeps a shared id and the others show SND-LIB-012; a doc removed later hands the id to the next one on the next read.
-    private static List<LibraryDoc> Mark(List<LibraryDoc> docs)
+    // The live doc at the lowest key keeps a shared id and the others show SND-LIB-012; a doc removed later hands the id to the next one on the next read. SND-LIB-015 and -016 come from the same
+    // DesignDocScope `library validate` runs, over the stored rows; read-time findings carry no line.
+    private static List<LibraryDoc> Mark(List<LibraryDoc> docs, IReadOnlyList<LibraryScopeFacts> facts)
     {
-        var losers = new Dictionary<RecordKey, DesignDocError>();
+        var added = new Dictionary<RecordKey, List<DesignDocError>>();
         foreach (var group in docs.Where(static d => DesignDocFrontMatter.IsDocId(d.Slug)).GroupBy(static d => (d.Scope, d.Slug)))
         {
             var ordered = group.OrderBy(static d => d.Key.Value, StringComparer.Ordinal).ToList();
             foreach (var loser in ordered.Skip(1))
             {
-                losers[loser.Key] = new DesignDocError(DesignDocCodes.SharedDocId, Line: null, $"doc id \"{group.Key.Slug}\" is also used by {ordered[0].Key.Value}.", "Rename one of them.");
+                Add(added, loser.Key, new DesignDocError(DesignDocCodes.SharedDocId, Line: null, $"doc id \"{group.Key.Slug}\" is also used by {ordered[0].Key.Value}.", "Rename one of them."));
             }
         }
 
-        return [.. docs.Select(d => losers.TryGetValue(d.Key, out var error) ? d with { Errors = [.. d.Errors, error] } : d)];
+        var byKey = facts.ToDictionary(static f => f.Doc);
+        var scoped = docs.Select(d => new ScopedDesignDoc(d.Key.Value, d.Scope, Parsed(d, byKey.GetValueOrDefault(d.Key)))).ToList();
+        foreach (var finding in DesignDocScope.Check(scoped).Where(static f => string.Equals(f.Error.Code, DesignDocCodes.BrokenRef, StringComparison.Ordinal) || string.Equals(f.Error.Code, DesignDocCodes.UnknownDocLink, StringComparison.Ordinal)))
+        {
+            Add(added, RecordKey.From(finding.Path), finding.Error with { Line = null });
+        }
+
+        return [.. docs.Select(d => added.TryGetValue(d.Key, out var errors) ? d with { Errors = [.. d.Errors, .. errors] } : d)];
     }
+
+    private static void Add(Dictionary<RecordKey, List<DesignDocError>> added, RecordKey key, DesignDocError error)
+    {
+        if (!added.TryGetValue(key, out var errors))
+        {
+            added[key] = errors = [];
+        }
+
+        errors.Add(error);
+    }
+
+    // The stored rows in the shape the parser makes, with what the scope checks read: id, parent, supersedes, item ids and refs.
+    private static ParsedDesignDoc Parsed(LibraryDoc doc, LibraryScopeFacts? facts) =>
+        new(doc.ParserVersion, new DesignDocFrontMatter(1, doc.Slug, doc.Kind, Title: null, doc.Status, doc.Project, doc.Repos, doc.Issues, facts?.Supersedes, facts?.Parent, Generated: null, SourceSha256: null), facts?.Items ?? [], facts?.Refs ?? [], doc.Errors);
 
     // A phase is stored without leading zeros, as the parser keeps it: 'Ph01' names 'Ph1' and 'Ph2-01' names 'Ph2-1'.
     private static string NoLeadingZeros(string item)

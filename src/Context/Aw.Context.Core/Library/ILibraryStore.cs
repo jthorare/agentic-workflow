@@ -32,6 +32,12 @@ internal interface ILibraryStore
     /// <returns>The items; none for an unknown or itemless doc.</returns>
     public ValueTask<Result<IReadOnlyList<LibraryItem>>> Items(RecordKey doc, CancellationToken cancellationToken);
 
+    /// <summary>Reads what the scope checks need of many docs in one go: parent, supersedes, item ids and refs, whatever the docs' audience.</summary>
+    /// <param name="docs">The doc records.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>One entry per live doc among them, in key order.</returns>
+    public ValueTask<Result<IReadOnlyList<LibraryScopeFacts>>> ScopeFacts(IReadOnlyList<RecordKey> docs, CancellationToken cancellationToken);
+
     /// <summary>Reads the claims of one live PR record, whatever its audience.</summary>
     /// <param name="pr">The PR record.</param>
     /// <param name="cancellationToken">Cancels the read.</param>

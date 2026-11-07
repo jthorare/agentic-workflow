@@ -11227,7 +11227,7 @@ const Aw.Context.Core.Library.DesignDocParser.MaxBytes = 1048576 -> int
 const Aw.Context.Core.Library.DesignDocParser.MaxItems = 2000 -> int
 const Aw.Context.Core.Library.DesignDocParser.MaxRefs = 5000 -> int
 const Aw.Context.Core.Library.DesignDocParser.MaxTextChars = 4000 -> int
-const Aw.Context.Core.Library.DesignDocParser.Version = 1 -> int
+const Aw.Context.Core.Library.DesignDocParser.Version = 2 -> int
 override Aw.Context.Core.Library.DesignDocError.Equals(object? obj) -> bool
 override Aw.Context.Core.Library.DesignDocError.GetHashCode() -> int
 override Aw.Context.Core.Library.DesignDocError.ToString() -> string!
