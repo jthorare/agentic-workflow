@@ -148,14 +148,19 @@ internal static partial class Labels
 
     /// <summary>One change in the strip.</summary>
     /// <param name="item">The change.</param>
-    /// <returns>"ENG-12 assigned to you by Sam Lee", "Sam Lee mentioned you on ENG-12" or "Sam Lee moved ENG-12 from Todo to In Progress".</returns>
-    internal static string LinearSinceRow(LinearSinceItem item) => item.Kind switch
+    /// <returns>"ENG-12 assigned to you", "Sam Lee mentioned you on ENG-12" or "ENG-12 moved from Todo to In Progress"; a row whose actor is known names them ("ENG-12 assigned to you by Sam Lee").</returns>
+    internal static string LinearSinceRow(LinearSinceItem item)
     {
-        "assigned" => $"{item.Key} assigned to you by {item.Actor.Name}",
-        "mentioned" => $"{item.Actor.Name} mentioned you on {item.Key}",
-        "state" => $"{item.Actor.Name} moved {item.Key} from {item.From} to {item.To}",
-        _ => $"{item.Actor.Name} changed {item.Key}",
-    };
+        var by = item.Actor is { } actor ? " by " + actor.Name : string.Empty;
+        return item.Kind switch
+        {
+            "assigned" => $"{item.Key} assigned to you{by}",
+            "mentioned" when item.Actor is { } author => $"{author.Name} mentioned you on {item.Key}",
+            "mentioned" => $"You were mentioned on {item.Key}",
+            "state" => $"{item.Key} moved from {item.From} to {item.To}{by}",
+            _ => $"{item.Key} changed{by}",
+        };
+    }
 
     /// <summary>The strip's button that moves the marker.</summary>
     internal const string LinearDismiss = "Dismiss";
