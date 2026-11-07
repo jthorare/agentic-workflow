@@ -1,0 +1,144 @@
+{
+  "asOf": {
+    "cursor": 5,
+    "ledgerHead": 5,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "login": "joi-example",
+  "loginPrompt": null,
+  "notice": null,
+  "freshness": [
+    {
+      "source": "github",
+      "state": "ok",
+      "text": "synced 14 min ago",
+      "at": "2025-12-31T23:45:36.0000000Z"
+    }
+  ],
+  "stale": null,
+  "library": {
+    "state": "ok",
+    "docs": 41,
+    "withErrors": 3,
+    "unreadableRoots": 0,
+    "text": "Library: 41 docs, 3 with errors"
+  },
+  "waitingCount": 2,
+  "groups": [
+    {
+      "kind": "waiting",
+      "title": "Waiting on you",
+      "sections": [
+        {
+          "by": "project",
+          "id": "prj_0000000000000000000000000A",
+          "name": "Sindri",
+          "rows": [
+            {
+              "repo": "acme/api",
+              "number": 2071,
+              "title": "<untrusted source=\"sindri:review\">Add retry budget to the sync worker</untrusted>",
+              "author": "<untrusted source=\"sindri:review\">sam-dev</untrusted>",
+              "draft": false,
+              "openedAt": "2025-12-29T12:00:00.0000000Z",
+              "lastActivity": "2025-12-31T12:00:00.0000000Z",
+              "waiting": "requested",
+              "waitingText": "review requested",
+              "newCommits": null,
+              "ci": "fail",
+              "requiredOpen": 2,
+              "requiredText": "2 open",
+              "claimsDoc": true,
+              "href": "/reviews/acme/api/2071",
+              "trust": "untrusted"
+            }
+          ]
+        },
+        {
+          "by": "repo",
+          "id": null,
+          "name": "acme/web",
+          "rows": [
+            {
+              "repo": "acme/web",
+              "number": 880,
+              "title": "<untrusted source=\"sindri:review\">Fold the settings tabs into one page</untrusted>",
+              "author": "<untrusted source=\"sindri:review\">kim-dev</untrusted>",
+              "draft": false,
+              "openedAt": "2025-12-27T12:00:00.0000000Z",
+              "lastActivity": "2025-12-30T12:00:00.0000000Z",
+              "waiting": "newCommits",
+              "waitingText": "reviewed, 2 new commits",
+              "newCommits": 2,
+              "ci": "pass",
+              "requiredOpen": 0,
+              "requiredText": "none open",
+              "claimsDoc": false,
+              "href": "/reviews/acme/web/880",
+              "trust": "untrusted"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "yours",
+      "title": "Yours",
+      "sections": [
+        {
+          "by": "project",
+          "id": "prj_0000000000000000000000000A",
+          "name": "Sindri",
+          "rows": [
+            {
+              "repo": "acme/api",
+              "number": 2064,
+              "title": "<untrusted source=\"sindri:review\">Cache the repo list between syncs</untrusted>",
+              "author": "<untrusted source=\"sindri:review\">joi-example</untrusted>",
+              "draft": false,
+              "openedAt": "2025-12-28T12:00:00.0000000Z",
+              "lastActivity": "2025-12-31T12:00:00.0000000Z",
+              "waiting": null,
+              "waitingText": null,
+              "newCommits": null,
+              "ci": "running",
+              "requiredOpen": 1,
+              "requiredText": "1 open",
+              "claimsDoc": true,
+              "href": "/reviews/acme/api/2064",
+              "trust": "untrusted"
+            }
+          ]
+        },
+        {
+          "by": "repo",
+          "id": null,
+          "name": "acme/web",
+          "rows": [
+            {
+              "repo": "acme/web",
+              "number": 875,
+              "title": "<untrusted source=\"sindri:review\">Draft: new empty state for Work</untrusted>",
+              "author": "<untrusted source=\"sindri:review\">joi-example</untrusted>",
+              "draft": true,
+              "openedAt": "2025-12-30T12:00:00.0000000Z",
+              "lastActivity": "2025-12-30T12:00:00.0000000Z",
+              "waiting": null,
+              "waitingText": null,
+              "newCommits": null,
+              "ci": "none",
+              "requiredOpen": null,
+              "requiredText": null,
+              "claimsDoc": false,
+              "href": "/reviews/acme/web/875",
+              "trust": "untrusted"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "empty": null
+}

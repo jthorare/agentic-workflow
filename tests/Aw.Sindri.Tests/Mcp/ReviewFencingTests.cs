@@ -34,6 +34,6 @@ public sealed class ReviewFencingTests
         var library = Aw.Sindri.Core.Reviews.ReviewLibrary.From(new Aw.Sindri.Core.Reviews.ReviewLibraryFacts(Reading: false, 41, WithErrors: 3, []));
 
         Assert.Null(library.Unreadable);
-        Assert.DoesNotContain("unreadable", JsonSerializer.Serialize(library, _json), StringComparison.Ordinal);
+        Assert.DoesNotContain("\"unreadable\":", JsonSerializer.Serialize(library, _json), StringComparison.Ordinal);
     }
 }
