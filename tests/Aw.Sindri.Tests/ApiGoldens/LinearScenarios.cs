@@ -38,12 +38,7 @@ internal static class LinearScenarios
     {
         await ViewScenarios.Approve(host, ct);
         await ViewScenarios.CatchUp(host, ct);
-        // seeded by api: a linear source with teams ENG and OPS, viewer Joi Example; ENG-12, ENG-31 and OPS-40 assigned to the viewer, ENG-57 and ENG-44 not;
-        // ENG-12 linked to an item whose run has PR acme/api#2071 waiting on the owner, ENG-57 to a done item with acme/api#2080 approved.
-        // 'teams-page2' is page 2 of 52 teams rows (after the first page's cursor); 'filtered-empty' filters by an unknown label id; 'not-connected' has no linear source;
-        // 'feed-failing' a feed whose last tick ended SND-LINEAR-010 at 22:05; 'rereading' a ;f3 re-read at 412 of 1,000; 'session' is 'mine' read by a session of a repo mapped to ENG.
-        // One issue: 'removed' is ENG-9 tombstoned (moved to OPS's team outside the profile); 'not-found' ENG-99, never stored; 'session-outside' OPS-40 read by that session.
-        // Lookups: 'eng' after a lookups tick, 'not-synced' OPS before one. Since: 'three' after an assignment, a mention and a state move by Sam Lee; 'empty' at the newest marker.
+        // the issue list, the sheet, the lookups and the strip are served (LinearIssueScenarios, LinearReadScenarios); what waits here are the write-gate rows of 'linear-issue' and the 1b writes
         var human = ItemScenarios.Human(host);
         var session = ItemScenarios.Session("demo");
         var caller = scenario.StartsWith("session", StringComparison.Ordinal) ? session : human;
@@ -55,9 +50,6 @@ internal static class LinearScenarios
         var path = (slug, scenario) switch
         {
             ("linear-issue", _) => "/sindri/linear/issues/ENG-12",
-            ("linear-lookups", "not-synced") => "/sindri/linear/lookups/OPS",
-            ("linear-lookups", _) => "/sindri/linear/lookups/ENG",
-            ("linear-since", _) => "/sindri/linear/since",
             ("linear-connection", _) => "/sindri/linear/connection",
             _ => throw new ArgumentOutOfRangeException(nameof(slug), slug, "no such linear scenario"),
         };
