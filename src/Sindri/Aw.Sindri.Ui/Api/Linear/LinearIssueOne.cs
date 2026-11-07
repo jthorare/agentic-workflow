@@ -19,5 +19,5 @@ namespace Aw.Sindri.Ui.Api.Linear;
 /// <param name="Description">The description (markdown).</param>
 /// <param name="Comments">The newest 50 comments, newest first.</param>
 /// <param name="Removed">True when Linear no longer serves it: this is the last stored copy and writes are off.</param>
-/// <param name="Write">Whether the sheet may edit it, and why not when it may not; null from a server before the route, which means not allowed.</param>
-internal sealed record LinearIssueOne(string Key, string Record, string Url, string Title, LinearTeamRef Team, LinearStateRef State, int Priority, LinearPerson? Assignee, LinearNamedRef? Project, LinearCycleRef? Cycle, IReadOnlyList<LinearLabel> Labels, DateTimeOffset UpdatedAt, LinearItemLink? Link, LinearPrRef? Pr, LinearPerson? Viewer, string Description, IReadOnlyList<LinearComment> Comments, bool Removed, LinearWriteGate? Write);
+/// <param name="Write">Whether the sheet may edit it, and why not when it may not; absent or null from a server before the route, which means not allowed (the default keeps a missing member from failing the strict read).</param>
+internal sealed record LinearIssueOne(string Key, string Record, string Url, string Title, LinearTeamRef Team, LinearStateRef State, int Priority, LinearPerson? Assignee, LinearNamedRef? Project, LinearCycleRef? Cycle, IReadOnlyList<LinearLabel> Labels, DateTimeOffset UpdatedAt, LinearItemLink? Link, LinearPrRef? Pr, LinearPerson? Viewer, string Description, IReadOnlyList<LinearComment> Comments, bool Removed, LinearWriteGate? Write = null);
