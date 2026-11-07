@@ -58,6 +58,28 @@ public sealed class LinearWorkspaceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_team_row_from_before_the_migration_reads_without_a_name_or_a_sync_time()
+    {
+        _ = await _world.Tick();
+        _world.Sql("UPDATE linear_team SET name = '', synced_at = NULL WHERE key = 'ENG'");
+
+        var lookups = (await Call((i, s) => i.IssueLookups("ENG", s, TestContext.Current.CancellationToken))).Value;
+
+        Assert.NotNull(lookups);
+        Assert.Null(lookups.Name);
+        Assert.Null(lookups.SyncedAt);
+    }
+
+    [Fact]
+    public async Task A_picked_team_asked_for_in_lower_case_is_answered_under_the_profiles_spelling()
+    {
+        var lookups = (await Call((i, s) => i.IssueLookups("eng", s, TestContext.Current.CancellationToken))).Value;
+
+        Assert.Equal("ENG", lookups?.TeamKey);
+        Assert.Null(lookups?.TeamId);
+    }
+
+    [Fact]
     public async Task A_member_who_left_is_kept_with_active_false()
     {
         _ = await _world.Tick();
