@@ -29,4 +29,8 @@ public sealed record AudienceScope(IReadOnlySet<AudienceKey> Allowed)
     /// <param name="record">The record's key.</param>
     /// <returns>True when allowed.</returns>
     public bool Allows(AudienceKey? audience, RecordKey record) => Allows(audience) || (!audience.IsOwner() && Records.Contains(record));
+
+    /// <summary>This scope without its 'owner:' keys: a session's scope is built through it, so no later change to a policy can hand a session an owner-only audience (defense in depth, D17).</summary>
+    /// <returns>The scope with the same records and no 'owner:' audience.</returns>
+    internal AudienceScope WithoutOwner() => this with { Allowed = Allowed.Where(static k => !((AudienceKey?)k).IsOwner()).ToHashSet() };
 }

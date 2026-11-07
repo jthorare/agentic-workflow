@@ -115,7 +115,7 @@ internal static partial class CommandTable
             ["request" or "requests" or "decisions" or "decide" or "needs-you", ..] => await new RequestVerbs(client, output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct).ConfigureAwait(false),
             ["index", "connect", .. var rest] => await new IndexConnectVerbs(services, output, session).Run(["connect", .. rest], ct).ConfigureAwait(false),
             ["services" or "jobs", ..] or ["index", "embed", ..] => await JobCommands.Run(args, (client, output), start.EnsureRunning, services.GetRequiredService<TimeProvider>(), (ct, interrupt.Again)).ConfigureAwait(false),
-            ["agents" or "skill" or "skills" or "setup" or "code-index" or "index", ..] => await ReadVerbs(args, (client, output), (services, start), (ct, interrupt.Again), environment).ConfigureAwait(false),
+            ["agents" or "skill" or "skills" or "setup" or "code-index" or "index" or "library", ..] => await ReadVerbs(args, (client, output), (services, start), (ct, interrupt.Again), environment).ConfigureAwait(false),
             ["repo", ..] => await Repo(args, client, output, services, (ct, interrupt.Again)).ConfigureAwait(false),
             ["ledger", .. var rest] => await new LedgerVerbs(client, output, (launch, c) => start.EnsureRunning(launch, c)).Run(rest, ct).ConfigureAwait(false),
             ["launch" or "session", ..] => await LaunchOrSession(args, client, (output, environment), services, (ct, interrupt.Again)).ConfigureAwait(false),

@@ -9,7 +9,9 @@ namespace Aw.Context.Core.Library;
 /// <see cref="Audience.AudienceScope.Allows(AudienceKey?, RecordKey)"/> to each, so the rule lives in one place. Only live records count (<c language="text">removed_at IS NULL</c>).
 /// Every method answers an error, never throws, for a store that can't be read ('SND-CONTEXT-004').
 /// </summary>
-public interface ILibraryStore
+// why: internal so no host can read the library rows without the audience rule; Features and Infrastructure see it through InternalsVisibleTo, and MA0182 only looks inside this assembly
+#pragma warning disable MA0182
+internal interface ILibraryStore
 {
     /// <summary>Lists the live docs, in key order.</summary>
     /// <param name="mask">Which records may be returned at most: a record whose audience is allowed or that is listed (an 'owner:' record only through its audience).</param>
@@ -42,3 +44,4 @@ public interface ILibraryStore
     /// <returns>The claims in PR then ref order.</returns>
     public ValueTask<Result<IReadOnlyList<LibraryClaimRow>>> ClaimsNaming(string slug, CancellationToken cancellationToken);
 }
+#pragma warning restore MA0182

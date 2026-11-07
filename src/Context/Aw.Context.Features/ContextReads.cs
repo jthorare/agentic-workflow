@@ -19,7 +19,8 @@ internal sealed class ContextReads(
     IService<GetProjectFactsRequest, ProjectFactsAnswer> projects,
     IService<RelinkPinAliasesRequest, RelinkPinAliasesResult> relink,
     IContextLibrary library,
-    IssueReads issues)
+    IssueReads issues,
+    LibraryHost? libraryHost = null)
 {
     /// <summary>The design-doc library's reads.</summary>
     public IContextLibrary Library { get; } = library;
@@ -45,4 +46,8 @@ internal sealed class ContextReads(
 
     public ValueTask<Result<LinearSince>> IssueSince(DateTimeOffset marker, ExternalId viewer, ContextScope scope, CancellationToken cancellationToken) =>
         issues.Since(marker, viewer, scope, cancellationToken);
+
+    // why: the library's path rules need the machine's home folders, which the host passes in (Core reads no environment); a host that gave none checks the shape only
+    public Result<ContextSettings> CheckLibrary(ContextSettings settings) =>
+        settings.Library is null || libraryHost is null ? settings : LibraryPaths.Resolve(settings.Library, libraryHost).Map(_ => settings);
 }

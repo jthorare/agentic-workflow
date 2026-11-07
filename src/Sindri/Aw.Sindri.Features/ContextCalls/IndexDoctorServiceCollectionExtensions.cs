@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Features.ContextCalls;
 
-/// <summary>Registers doctor's 'context:index-*' rows (owned index, Part of #1394).</summary>
+/// <summary>Registers doctor's 'context:index-*' rows (owned index, Part of #1394) and the 'library' row (PR review page spec 2026-11-04 §5.2).</summary>
 internal static class IndexDoctorServiceCollectionExtensions
 {
     /// <summary>Adds the rows and a records-embedder probe that never answers, which a host with an Ollama probe replaces.</summary>
@@ -16,5 +16,6 @@ internal static class IndexDoctorServiceCollectionExtensions
         .AddSingleton<IRecordEmbedderProbe, NoRecordEmbedderProbe>()
         .AddScoped<IDoctorChecks>(static sp => new IndexDoctorChecks(
             sp.GetRequiredService<IApprovedProfile>(), sp.GetRequiredService<ContextScopes>(), sp.GetRequiredService<IContextEngine>(),
-            sp.GetRequiredService<ISecretPointers>(), sp.GetRequiredService<IRecordEmbedderProbe>(), TimeSpan.FromSeconds(3)));
+            sp.GetRequiredService<ISecretPointers>(), sp.GetRequiredService<IRecordEmbedderProbe>(), TimeSpan.FromSeconds(3)))
+        .AddScoped<IDoctorChecks>(static sp => new LibraryDoctorChecks(sp.GetRequiredService<IApprovedProfile>(), sp.GetRequiredService<ContextScopes>(), sp.GetRequiredService<IContextEngine>()));   // the 'library' row
 }

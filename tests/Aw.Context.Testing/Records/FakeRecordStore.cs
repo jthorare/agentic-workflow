@@ -323,7 +323,7 @@ public sealed class FakeRecordStore : IRecordStore
                 continue;
             }
 
-            if (Same(write.Record))
+            if (_records.TryGetValue(write.Record.Key, out var existing) && Same(existing, write.Record))
             {
                 unchanged++;
                 continue;
@@ -339,9 +339,9 @@ public sealed class FakeRecordStore : IRecordStore
         return (written, unchanged);
     }
 
-    private bool Same(StoredRecord incoming) =>
-        _records.TryGetValue(incoming.Key, out var existing) && existing.RemovedAt is null && existing.Version == incoming.Version && existing.TextHash == incoming.TextHash
-        && existing.Ruleset == incoming.Ruleset && existing.Blocked == incoming.Blocked;
+    private static bool Same(StoredRecord existing, StoredRecord record) =>
+        existing.RemovedAt is null && existing.Version == record.Version && existing.TextHash == record.TextHash
+        && existing.Ruleset == record.Ruleset && existing.Blocked == record.Blocked && existing.Audience == record.Audience;
 
     // The stored record is strictly newer than the incoming one; an equal time passes, and so does a record with no time on either side.
     private bool Stale(StoredRecord incoming) =>

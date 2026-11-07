@@ -6,11 +6,11 @@ namespace Aw.Context.Infrastructure.Docs;
 /// <summary>
 /// The doc globs of 'context.docs.globs', matched against '/'-separated repo-relative paths: '**/' is any number of
 /// folders (none included), '**' anything, '*' anything within one folder. The settings reader admits only letters,
-/// digits and '._-/*', so nothing else needs escaping beyond '.'.
+/// digits and '._-/*', so nothing else needs escaping beyond '.'. The library's globs ignore case (a vault on a case-insensitive disk has 'Secrets/').
 /// </summary>
-internal sealed class Glob(IReadOnlyList<string> globs)
+internal sealed class Glob(IReadOnlyList<string> globs, bool ignoreCase = false)
 {
-    private readonly Regex[] _patterns = [.. globs.Select(g => new Regex(ToRegex(g), RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1)))];
+    private readonly Regex[] _patterns = [.. globs.Select(g => new Regex(ToRegex(g), ignoreCase ? RegexOptions.CultureInvariant | RegexOptions.IgnoreCase : RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1)))];
 
     /// <summary>True when any glob matches <paramref name="path"/>.</summary>
     /// <param name="path">A repo-relative path.</param>
