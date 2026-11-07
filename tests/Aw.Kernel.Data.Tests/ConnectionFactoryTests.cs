@@ -25,6 +25,7 @@ public sealed class ConnectionFactoryTests
         Assert.Equal("1", await Pragma(connection, "foreign_keys"));
         Assert.Equal("1500", await Pragma(connection, "busy_timeout"));
         Assert.Equal("1", await Pragma(connection, "synchronous"));
+        Assert.Equal("4194304", await Pragma(connection, "journal_size_limit"));
     }
 
     [Fact]
