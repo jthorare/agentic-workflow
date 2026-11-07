@@ -19,7 +19,7 @@ internal sealed class LinearWriteErrors : LinearErrorSet
         var error = LinearHubErrors.RateLimited.With($"Linear's rate limit: try again after {Reset(resetHeader)}. Nothing was changed.");
         return ResetAt(resetHeader) is { } at
             // why: the round-trip form holds only digits and -:.Z, so the string literal needs no escaping
-            ? error.WithExtension("retryAfter", JsonDocument.Parse($"\"{at.ToString("O", CultureInfo.InvariantCulture)}\"").RootElement.Clone())
+            ? error.WithExtension("retryAfter", JsonDocument.Parse($"\"{at.UtcDateTime.ToString("O", CultureInfo.InvariantCulture)}\"").RootElement.Clone())
             : error;
     }
 
