@@ -116,7 +116,7 @@ public sealed class StartSkillRunFolderTests
         var folder = new TempDirectory();
         Directory.CreateDirectory(Path.Combine(folder.Path, block));
         File.WriteAllText(Path.Combine(folder.Path, block, "block.yaml"), yaml);
-        File.WriteAllText(Path.Combine(folder.Path, block, "SKILL.md"), File.ReadAllText(Path.Combine(SkillFixtures.Folder, "review", "SKILL.md")).Replace("review", block, StringComparison.Ordinal));
+        File.WriteAllText(Path.Combine(folder.Path, block, "SKILL.md"), File.ReadAllText(Path.Combine(SkillFixtures.Folder, "review", "SKILL.md")).Replace("\"skill\": \"review\"", $"\"skill\": \"{block}\"", StringComparison.Ordinal));   // why: only the skill name; review_file stays what the output reads
         return folder;
     }
 
