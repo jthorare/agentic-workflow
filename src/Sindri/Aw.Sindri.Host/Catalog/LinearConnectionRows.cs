@@ -17,6 +17,6 @@ internal static class LinearConnectionRows
             "POST", "/sindri/linear/connection", ShellRows.Form("sindri index connect linear"), "ready"),
         new(ActionId.From("RemoveLinearWriteKey"), typeof(RemoveLinearWriteKeyRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: true, ReadsViews: false, Shortcut: null,
-            "DELETE", "/sindri/linear/connection/write", ShellRows.Form("sindri profile set context.sources.linear.writeToken <pointer>"), "ready"),
+            "DELETE", "/sindri/linear/connection/write", ShellRows.Form("sindri profile set <key> <value>"), "ready"),
     ];
 }
