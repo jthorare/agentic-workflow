@@ -92,6 +92,22 @@ public sealed class ReviewFixSheetTests
     }
 
     [Fact]
+    public async Task An_answer_that_lands_after_the_sheet_closed_and_opened_again_is_dropped()
+    {
+        var sheet = Opened(_check);
+        _f.Server.ReviewFixGate = new TaskCompletionSource();
+        var send = sheet.Send(Token);
+        sheet.Close();
+        sheet.Open(ReviewPageFixture.Url, new ReviewFixRequestedEventArgs(_requirement, _mine, _checkRow));
+
+        _f.Server.ReviewFixGate.SetResult();
+        await send;
+
+        Assert.Equal((ReviewFixOutcome.None, string.Empty, true), (sheet.Outcome, sheet.ItemId, sheet.CanSend));
+        Assert.Equal("Send as fix task", sheet.Heading);
+    }
+
+    [Fact]
     public void A_removed_line_is_posted_in_the_review_body_not_as_a_line_comment()
     {
         var removed = Opened(_removed);

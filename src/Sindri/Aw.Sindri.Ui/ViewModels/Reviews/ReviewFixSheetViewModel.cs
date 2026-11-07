@@ -18,6 +18,7 @@ internal sealed partial class ReviewFixSheetViewModel : ObservableObject
     private Uri? _url;
     private ReviewFixRequestedEventArgs? _request;
     private string? _item;
+    private int _opened;   // counts opens and closes: an answer for an earlier sheet is dropped
 
     internal ReviewFixSheetViewModel(ISindriApi api, TimeProvider clock)
     {
@@ -121,6 +122,7 @@ internal sealed partial class ReviewFixSheetViewModel : ObservableObject
     internal void Open(Uri url, ReviewFixRequestedEventArgs request)
     {
         (_url, _request, _item) = (url, request, null);
+        _opened++;
         var (source, target) = (request.Source, request.Target);
         Heading = Labels.ReviewFixHeading;
         SubLine = Labels.ReviewFixSubLine(target.Repo, target.Number, target.Branch, target.Sha7);
@@ -160,7 +162,8 @@ internal sealed partial class ReviewFixSheetViewModel : ObservableObject
     /// <summary>Esc, Cancel or Close: closes the sheet and returns focus to where the request came from.</summary>
     internal void Close()
     {
-        IsOpen = false;
+        _opened++;
+        (IsOpen, IsSending) = (false, false);
         Closed?.Invoke(this, new ReviewFocusEventArgs(_request?.ReturnTo ?? ReviewFocus.None));
     }
 
@@ -181,6 +184,7 @@ internal sealed partial class ReviewFixSheetViewModel : ObservableObject
         }
 
         var (source, target) = (request.Source, request.Target);
+        var opened = _opened;
         IsSending = true;
         CanSend = false;
         using var done = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -188,6 +192,11 @@ internal sealed partial class ReviewFixSheetViewModel : ObservableObject
         var send = SendOf(source, target);
         var answer = await _api.SendReviewFix(url, target.Repo, target.Number, send, cancellationToken).ConfigureAwait(true);
         await done.CancelAsync().ConfigureAwait(true);
+        if (opened != _opened)
+        {
+            return;   // the sheet was closed or opened again while the send ran: that answer is not this sheet's
+        }
+
         IsSending = false;
         SendText = Labels.ReviewFixSend;
         if (answer.IsError)
