@@ -63,6 +63,7 @@ public sealed class TrialInterpreterTests : AgentRuntimeTestBase
             {
                 Fakes(services, item);
                 _ = services.AddSingleton(served);   // serve's own copy of the block
+                _ = services.AddSingleton<ISkillBlocks>(new ServedSkills());   // and what the launch reads when the trial names no folder
             });
             await WorkflowsHarness.HoldLease(sindri, ct);
             await AgentRig.ApproveTarget(sindri, ct);
@@ -130,6 +131,18 @@ public sealed class TrialInterpreterTests : AgentRuntimeTestBase
             var lines = rows.Select(static r => r.Envelope.Type + " " + r.Envelope.Payload);
             Assert.Fail("no launch. state=" + view.State + " question=" + view.Question + "\n" + string.Join('\n', lines));
         }
+    }
+
+    // The skills serve loaded: the fixture folder, whose 'review' is the descriptor registered as served.
+    private sealed class ServedSkills : ISkillBlocks
+    {
+        public string Folder => SkillFixtures.Folder;
+
+        public IReadOnlyList<LoadedSkillBlock> Loaded => SkillManifestLoader.Load(SkillFixtures.Folder).Loaded;
+
+        public IReadOnlyList<SkippedSkillBlock> Skipped => [];
+
+        public SkillBlocks LoadFolder(string folder) => SkillManifestLoader.Load(folder);
     }
 
     private sealed class KnownItemRepo(ItemId known) : IItemRepos
