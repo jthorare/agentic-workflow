@@ -1,3 +1,4 @@
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
@@ -30,7 +31,6 @@ internal sealed partial class RunStepActivities(IApprovedRecipes approvals, Bloc
     [Activity("LoadRecipe")]
     public async Task<LoadedRecipe> LoadRecipeAsync(RecipeVersion recipe, FactValue? folder)
     {
-        _ = (folder, trials);   // red stub
         ArgumentNullException.ThrowIfNull(recipe);
         var cancel = ActivityExecutionContext.Current.CancellationToken;
         var found = await approvals.Find(recipe.Id, recipe.Hash, cancel).ConfigureAwait(false);
@@ -52,7 +52,16 @@ internal sealed partial class RunStepActivities(IApprovedRecipes approvals, Bloc
             throw new InvalidOperationException($"{delay.Error.Code}: {delay.Error.Message}");
         }
 
-        var descriptors = catalog.Blocks.Where(b => used.Contains(b.Id)).ToList();
+        var blockCatalog = catalog;
+        if (folder is not null)
+        {
+            var laid = await trials.Overlay(found.Value, catalog, folder, cancel).ConfigureAwait(false);
+            blockCatalog = laid.IsError
+                ? throw new ApplicationFailureException(laid.Error.Message, errorType: laid.Error.Code, nonRetryable: string.Equals(laid.Error.Code, SindriErrors.RequestInvalid.Code, StringComparison.Ordinal))   // why: a folder that changed or holds no such block reads the same on a retry; a read that failed (I/O) may not
+                : laid.Value;
+        }
+
+        var descriptors = blockCatalog.Blocks.Where(b => used.Contains(b.Id)).ToList();
         var agentSteps = await agents.Selected(descriptors, cancel).ConfigureAwait(false);   // the approved profile's workflow.agent.target and the registered launcher (P8 D6)
         return agentSteps.IsError
             ? throw new InvalidOperationException($"{agentSteps.Error.Code}: {agentSteps.Error.Message}")

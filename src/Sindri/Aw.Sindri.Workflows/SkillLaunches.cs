@@ -76,7 +76,7 @@ internal static class SkillLaunches
         return read.IsError ? read.Error : Unwrapped(inputs.Scrubber.Scrub(System.Text.Encoding.UTF8.GetString(read.Value.Span)));
     }
 
-    private static string Unwrapped(string text)
+    internal static string Unwrapped(string text)
     {
         try
         {
