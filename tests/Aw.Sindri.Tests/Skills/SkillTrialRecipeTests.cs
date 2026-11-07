@@ -50,6 +50,30 @@ public sealed class SkillTrialRecipeTests
         Assert.Equal([.. loaded.Descriptor.Outputs.Select(static o => (o.Fact.Value, "run"))], [.. recipe.Outputs.Select(static o => (o.Key.Value, o.From))]);
     }
 
+    public static TheoryData<string, string, bool> OutputsByOutcome() => new()
+    {
+        { "review", "pass", true },
+        { "review", "needsChanges", true },
+        { "bug-fix-orchestrator", "partial", true },
+        { "autoplan", "needsWork", true },
+        { "autoplan", "blocked", false },
+    };
+
+    // why: 12a: `sindri skill run review --follow` printed no `fact:reviewFindings` for a needsChanges run, because only the success transition carried the outputs; a result the skill finished with keeps them, a blocked one has none
+    [Theory]
+    [MemberData(nameof(OutputsByOutcome))]
+    public void A_finished_outcome_s_transition_produces_the_block_s_outputs_except_a_blocked_one(string block, string outcome, bool produces)
+    {
+        var manifest = new[] { SkillFixtures.Review, SkillFixtures.Autoplan, SkillFixtures.BugFixOrchestrator }.Single(m => string.Equals(m.Name, block, StringComparison.Ordinal));
+        var loaded = new LoadedSkillBlock(manifest.Name, manifest, SkillDescriptors.Build(manifest).Value, "block.yaml", SkillDescriptors.HashOf(manifest));
+        var plan = SkillTrialRecipe.Build(loaded, [.. manifest.Inputs.Where(static i => i.Required).Select(static i => i.Key)]).Value;
+
+        var recipe = Assert.IsType<RecipeDocument>(RecipeComposition.Read(plan.Text, plan.Id.Value + ".yaml").Document).Recipe;
+        var transition = recipe.Transitions.Single(t => t.When?.Outcome?.Value == outcome);
+
+        Assert.Equal(produces ? [.. loaded.Descriptor.Outputs.Select(static o => o.Fact.Value)] : [], [.. transition.Produces.Select(static p => p.Fact.Value)]);
+    }
+
     [Fact]
     public void A_first_trial_registers_at_version_1() =>
         Assert.Equal(1, SkillTrialRecipe.VersionFor(Versions(), HashAt(foldered: false)));
