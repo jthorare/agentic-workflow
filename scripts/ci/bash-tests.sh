@@ -93,6 +93,8 @@ EXCLUDED=(
 # own HOME or AW_STATE_DIR, stubs on PATH, no fixed ports).
 SERIAL=(
   "scripts/tests/agent-token.test.sh	starts a fake HTTP server under a 30 s start budget and sends signals mid-request, asserting the script exits within 2 s and its curl is gone"
+  "scripts/tests/formal-verify-tlc.test.sh	SIGHUPs and TERMs tlc.sh while a real TLC java run is going and asserts the signal exit code (129) and that java and the temp dir are gone; a loaded box lets the run finish first or exit 2"
+  "scripts/tests/meta-launch.test.sh	drives a pty and asserts the agent, the lane script and the id watcher are gone right after the pty closes; under load they are still alive at the check"
   "config/hooks/tests/failopen.test.sh	SIGTERMs hooks 0.5 s into a 4 s fake-judge wait and runs each hook under a 10 s watchdog; a loaded machine shifts both"
   "config/lib/tests/failopen.test.sh	runs hooks against hung and slow fake judges under a short watchdog (rc=hung) and checks the fail-open path within the hook's own timeout"
   "config/lib/tests/statusline.test.sh	asserts the statusline returns within 1 s while a 3 s scorer runs, then polls a 10 s deadline for the cache"
