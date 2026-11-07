@@ -6,6 +6,7 @@ using Aw.Kernel.Json;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Secrets;
+using Aw.Sindri.Features.LinearConnection;
 using Aw.Sindri.Host.IndexSources;
 using Aw.Sindri.Testing;
 
@@ -24,6 +25,8 @@ public sealed class LinearConnectTests
     private readonly RecordingProfileWriter _written = new();
     private readonly ScriptedReader _reader = new();
     private readonly List<(Uri Url, string Key)> _built = [];
+    private readonly FakeLinearCheckStore _log = new();
+    private readonly RigClock _clock = new();
 
     public LinearConnectTests()
     {
@@ -35,7 +38,7 @@ public sealed class LinearConnectTests
     {
         _built.Add((url, key));
         return _reader;
-    });
+    }, new LinearCheckRecorder(_log, _clock));
 
     private static LoadedProfile Profile(string contextJson)
     {
@@ -71,6 +74,29 @@ public sealed class LinearConnectTests
         Assert.Equal(Planted, _secrets.Stored["keychain:sindri-index/linear"]);
         Assert.Equal(["keychain:sindri-index/linear"], _written.Pointers, StringComparer.Ordinal);
         Assert.Equal(("linear", 2), (_written.Sources[0], result.Value.Teams));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_connected_read_key_is_recorded_as_checked_now_under_the_pointer_the_profile_got()
+    {
+        _reader.Readable = ["ENG", "APP"];
+        _clock.SetUtcNow(new DateTimeOffset(2026, 11, 7, 9, 30, 0, TimeSpan.Zero));
+
+        var result = await Connect().Run(human: true, Ct);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : null);
+        Assert.Equal(new LinearStoredChecks(new LinearStoredCheck("keychain:sindri-index/linear", "resolves", _clock.GetUtcNow()), Write: null), (await _log.Read(Ct)).Value);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_failed_check_of_the_teams_records_nothing()
+    {
+        _reader.Readable = ["ENG"];
+
+        var result = await Connect().Run(human: true, Ct);
+
+        Assert.True(result.IsError);
+        Assert.Equal(new LinearStoredChecks(Read: null, Write: null), (await _log.Read(Ct)).Value);
     }
 
     [Fact, Trait("Lane", "unit")]

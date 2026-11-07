@@ -1,6 +1,7 @@
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Secrets;
+using Aw.Sindri.Features.LinearConnection;
 using Aw.Sindri.Host.IndexSources;
 
 namespace Aw.Sindri.Host.Commands;
@@ -55,7 +56,8 @@ internal sealed class IndexConnectVerbs(IServiceProvider services, Output output
             services.GetRequiredService<ISecretWriter>(),
             services.GetRequiredService<ISecretPointers>(),
             services.GetRequiredService<ISourceTokenProfileWriter>(),
-            LinearTeamReader.Create);
+            LinearTeamReader.Create,
+            new LinearCheckRecorder(services.GetRequiredService<ILinearCheckStore>(), services.GetRequiredService<TimeProvider>()));
         var connected = await connect.Run(session.Human && session.Launch is null, ct).ConfigureAwait(false);
         if (connected.IsError)
         {

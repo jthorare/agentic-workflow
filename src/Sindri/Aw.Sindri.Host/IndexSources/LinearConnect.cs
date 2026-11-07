@@ -18,13 +18,15 @@ namespace Aw.Sindri.Host.IndexSources;
 /// <param name="pointers">Reads the stored key back, to prove the pointer resolves.</param>
 /// <param name="profile">Writes the pointer into the profile.</param>
 /// <param name="readers">Makes a team reader for the endpoint and the key.</param>
+/// <param name="recorder">Keeps the check for Settings.</param>
 internal sealed class LinearConnect(
     ISecretPrompts prompts,
     IProfileSource profiles,
     ISecretWriter writer,
     ISecretPointers pointers,
     ISourceTokenProfileWriter profile,
-    Func<Uri, string, ILinearTeamReader> readers)
+    Func<Uri, string, ILinearTeamReader> readers,
+    LinearCheckRecorder recorder)
 {
     private const string Service = "sindri-index";
     private const string Account = "linear";
@@ -41,6 +43,7 @@ internal sealed class LinearConnect(
     /// <returns>The pointer now in the profile and how many teams were checked; SND-AUTH-002 for a session; SND-INDEX-009 when Linear refuses the key or the stored pointer does not resolve; SND-INDEX-010 naming the listed teams the key cannot read, or saying it reads none; SND-CONTEXT-010 when Linear is unreachable.</returns>
     internal async ValueTask<Result<LinearConnected>> Run(bool human, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(recorder);
         if (!human)
         {
             return SindriErrors.AuthRefused.With("`sindri index connect linear` is the human's: run it in your own terminal, not from an agent session");
