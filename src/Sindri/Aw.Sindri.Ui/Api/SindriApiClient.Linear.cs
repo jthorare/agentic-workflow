@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api.Linear;
 
@@ -21,4 +22,32 @@ internal sealed partial class SindriApiClient
     /// <inheritdoc />
     public Task<Result<LinearSince>> LinearSince(Uri api, string? after, CancellationToken cancellationToken) =>
         Get<LinearSince>(api, LinearRoutes.Since(after), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<LinearWriteOutcome>> LinearChange(Uri api, string key, JsonObject opened, JsonObject set, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+    /// <inheritdoc />
+    public Task<Result<LinearWriteOutcome>> LinearComment(Uri api, string key, string clientId, string body, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+    /// <inheritdoc />
+    public Task<Result<LinearWriteOutcome>> LinearCreate(Uri api, LinearCreateBody body, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+    /// <inheritdoc />
+    public Task<Result<LinearConnection>> LinearConnection(Uri api, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+    /// <inheritdoc />
+    public Task<Result<LinearTeamChoices>> LinearConnectionTeams(Uri api, string key, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+    /// <inheritdoc />
+    public Task<Result<LinearConnected>> LinearConnect(Uri api, string kind, string key, IReadOnlyList<string>? teams, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+    /// <inheritdoc />
+    public Task<Result<LinearDisconnected>> LinearDisconnectWrite(Uri api, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
 }

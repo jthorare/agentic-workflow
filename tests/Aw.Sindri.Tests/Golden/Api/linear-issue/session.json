@@ -81,5 +81,9 @@
     }
   ],
   "removed": false,
+  "write": {
+    "allowed": false,
+    "code": "SND-AUTH-002"
+  },
   "trust": "untrusted"
 }

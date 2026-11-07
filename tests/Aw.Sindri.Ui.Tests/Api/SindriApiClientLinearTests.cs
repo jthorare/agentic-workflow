@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Linear;
@@ -182,14 +183,257 @@ public sealed class SindriApiClientLinearTests
         Assert.Equal(("SND-AUTH-002", "SND-AUTH-002"), (lookups.Error.Code, since.Error.Code));
     }
 
+    // A golden as served: a ProblemDetails keeps the status it names, anything else is a 200.
+    private static Canned Served(string slug, string scenario)
+    {
+        var body = GoldenFiles.Api(slug, scenario);
+        var status = JsonNode.Parse(body) is JsonObject { } json && json["traceId"] is not null && json["status"] is JsonValue { } code ? (HttpStatusCode)(int)code : HttpStatusCode.OK;
+        return new(status, body);
+    }
+
+    private static readonly JsonObject _noFields = [];
+
+    private static JsonObject Fields(string name, JsonNode? value) => new() { [name] = value };
+
+    [Theory]
+    [InlineData("writable", true, null)]
+    [InlineData("no-write-key", false, "SND-LINEAR-002")]
+    [InlineData("team-not-picked", false, "SND-LINEAR-003")]
+    [InlineData("session-write-refused", false, "SND-AUTH-002")]
+    [InlineData("full", true, null)]
+    [InlineData("removed", false, null)]
+    [InlineData("session", false, "SND-AUTH-002")]
+    public async Task The_issue_goldens_carry_whether_the_sheet_may_write(string scenario, bool allowed, string? code)
+    {
+        var issue = (await Client(Ok("linear-issue", scenario)).LinearIssue(_api, "ENG-12", Token)).Value;
+
+        Assert.Equal((allowed, code), (issue.Write.Allowed, issue.Write.Code));
+    }
+
+    [Fact]
+    public async Task LinearChange_posts_the_opened_and_set_fields_to_the_change_route()
+    {
+        var canned = Served("linear-change", "applied");
+
+        _ = await Client(canned).LinearChange(_api, "ENG-12", Fields("stateId", "s1"), Fields("stateId", "s2"), Token);
+        _ = await Client(canned).LinearChange(_api, "a/b", Fields("assigneeId", "u1"), Fields("assigneeId", value: null), Token);
+
+        Assert.Equal([HttpMethod.Post, HttpMethod.Post], canned.Methods);
+        Assert.Equal(["/sindri/linear/issues/ENG-12/change", "/sindri/linear/issues/a%2Fb/change"], canned.Seen.Select(u => u.AbsolutePath), StringComparer.Ordinal);
+        Assert.Equal(["""{"opened":{"stateId":"s1"},"set":{"stateId":"s2"}}""", """{"opened":{"assigneeId":"u1"},"set":{"assigneeId":null}}"""], canned.Bodies);
+    }
+
+    [Theory]
+    [InlineData("applied", null, null)]
+    [InlineData("applied-store-failed", "SND-LINEAR-013", null)]
+    [InlineData("already-applied", null, true)]
+    public async Task LinearChange_reads_an_applied_edit_with_the_re_read_issue(string scenario, string? warning, bool? already)
+    {
+        var result = await Client(Served("linear-change", scenario)).LinearChange(_api, "ENG-12", _noFields, _noFields, Token);
+
+        var applied = Assert.IsType<LinearChangeApplied>(result.Value);
+        Assert.Equal(("applied", warning, already, "ENG-12", "In Review"), (applied.Outcome, applied.Warning, applied.AlreadyApplied, applied.Issue.Key, applied.Issue.State.Name));
+        Assert.True(applied.Issue.Write.Allowed);
+    }
+
+    [Fact]
+    public async Task LinearChange_reads_a_409_as_a_conflict_with_the_fields_and_the_live_issue()
+    {
+        var result = await Client(Served("linear-change", "conflict")).LinearChange(_api, "ENG-12", _noFields, _noFields, Token);
+
+        var conflict = Assert.IsType<LinearChangeConflict>(result.Value);
+        Assert.Equal(DateTimeOffset.Parse("2026-01-01T10:01:00Z", System.Globalization.CultureInfo.InvariantCulture), conflict.ChangedAt);
+        var field = Assert.Single(conflict.Fields);
+        Assert.Equal(("stateId", "00000000-0000-4000-8000-000000000052", "00000000-0000-4000-8000-000000000055", "Done"), (field.Field, field.Opened.GetString(), field.Linear.GetString(), conflict.Issue.State.Name));
+    }
+
+    [Fact]
+    public async Task LinearChange_reads_a_504_011_as_unknown_and_a_429_012_as_rate_limited_with_its_time()
+    {
+        var unknown = await Client(Served("linear-change", "unknown")).LinearChange(_api, "ENG-12", _noFields, _noFields, Token);
+        var limited = await Client(Served("linear-change", "rate-limited")).LinearChange(_api, "ENG-12", _noFields, _noFields, Token);
+
+        Assert.Equal(new LinearWriteUnknown(ClientId: null), unknown.Value);
+        Assert.Equal(DateTimeOffset.Parse("2026-01-01T10:06:00Z", System.Globalization.CultureInfo.InvariantCulture), Assert.IsType<LinearWriteRateLimited>(limited.Value).RetryAfter);
+    }
+
+    [Theory]
+    [InlineData("no-write-key", "SND-LINEAR-002")]
+    [InlineData("team-not-picked", "SND-LINEAR-003")]
+    [InlineData("bad-value", "SND-LINEAR-006")]
+    [InlineData("session-refused", "SND-AUTH-002")]
+    public async Task LinearChange_hands_any_other_refusal_back_as_the_error(string scenario, string code)
+    {
+        var result = await Client(Served("linear-change", scenario)).LinearChange(_api, "ENG-12", _noFields, _noFields, Token);
+
+        Assert.True(result.IsError);
+        Assert.Equal(code, result.Error.Code);
+        Assert.False(string.IsNullOrEmpty(result.Error.Message));
+    }
+
+    [Fact]
+    public async Task LinearComment_posts_the_client_id_and_text_and_reads_the_comment_and_whether_it_was_slow()
+    {
+        var canned = Served("linear-comment", "applied");
+        var slow = await Client(Served("linear-comment", "applied-slow")).LinearComment(_api, "ENG-12", "c-1", "hi", Token);
+
+        var posted = Assert.IsType<LinearCommentPosted>((await Client(canned).LinearComment(_api, "ENG-12", "c-1", "Say \"hi\"", Token)).Value);
+
+        Assert.Equal(HttpMethod.Post, canned.Methods[0]);
+        Assert.Equal("/sindri/linear/issues/ENG-12/comments", canned.Seen[0].AbsolutePath);
+        Assert.Equal("""{"clientId":"c-1","body":"Say \"hi\""}""", canned.Bodies[0], StringComparer.Ordinal);
+        Assert.Equal((false, "5d0a4f6e-3b1c-4c0e-9a57-2f1d8c9b7e01", true, "Joi Example"), (posted.Slow, posted.ClientId, posted.Comment.Sindri, posted.Comment.Author.Name));
+        Assert.True(Assert.IsType<LinearCommentPosted>(slow.Value).Slow);
+    }
+
+    [Fact]
+    public async Task LinearComment_reads_an_unknown_outcome_with_its_client_id_and_hands_a_session_refusal_back()
+    {
+        var unknown = await Client(Served("linear-comment", "unknown")).LinearComment(_api, "ENG-12", "c-1", "hi", Token);
+        var refused = await Client(Served("linear-comment", "session-refused")).LinearComment(_api, "ENG-12", "c-1", "hi", Token);
+
+        Assert.Equal(new LinearWriteUnknown("5d0a4f6e-3b1c-4c0e-9a57-2f1d8c9b7e01"), unknown.Value);
+        Assert.Equal("SND-AUTH-002", refused.Error.Code);
+    }
+
+    [Fact]
+    public async Task LinearCreate_posts_to_the_issues_route_and_leaves_the_unset_fields_out()
+    {
+        var canned = Served("linear-create", "applied");
+
+        var created = Assert.IsType<LinearCreated>((await Client(canned).LinearCreate(_api, new LinearCreateBody("c-1", "ENG", "T"), Token)).Value);
+        _ = await Client(canned).LinearCreate(_api, new LinearCreateBody("c-2", "ENG", "T", "d", "s", AssigneeId: null, 0, "p", "cy", ["l1"], "ENG-1"), Token);
+
+        Assert.Equal(HttpMethod.Post, canned.Methods[0]);
+        Assert.Equal("/sindri/linear/issues", canned.Seen[0].AbsolutePath);
+        Assert.Equal("""{"clientId":"c-1","team":"ENG","title":"T"}""", canned.Bodies[0]);
+        Assert.Equal("""{"clientId":"c-2","team":"ENG","title":"T","description":"d","stateId":"s","priority":0,"projectId":"p","cycleId":"cy","labelIds":["l1"],"parentKey":"ENG-1"}""", canned.Bodies[1]);
+        Assert.Equal(("ENG-58", "5d0a4f6e-3b1c-4c0e-9a57-2f1d8c9b7e01"), (created.Issue.Key, created.ClientId));
+    }
+
+    [Fact]
+    public async Task LinearCreate_reads_unknown_with_its_client_id_and_hands_a_bad_value_back_as_the_error()
+    {
+        var unknown = await Client(Served("linear-create", "unknown")).LinearCreate(_api, new LinearCreateBody("c-1", "ENG", "T"), Token);
+        var bad = await Client(Served("linear-create", "bad-value")).LinearCreate(_api, new LinearCreateBody("c-1", "ENG", "T"), Token);
+        var refused = await Client(Served("linear-create", "session-refused")).LinearCreate(_api, new LinearCreateBody("c-1", "ENG", "T"), Token);
+
+        Assert.Equal(new LinearWriteUnknown("5d0a4f6e-3b1c-4c0e-9a57-2f1d8c9b7e01"), unknown.Value);
+        Assert.Equal(("SND-LINEAR-006", "SND-AUTH-002"), (bad.Error.Code, refused.Error.Code));
+    }
+
+    [Theory]
+    [InlineData("connected", "resolves", "resolves", 2, false)]
+    [InlineData("not-connected", "notSet", "notSet", 0, false)]
+    [InlineData("read-only", "resolves", "notSet", 2, false)]
+    [InlineData("scope-unknown", "resolves", "scopeUnknown", 2, false)]
+    [InlineData("pending", "resolves", "notSet", 2, true)]
+    public async Task LinearConnection_gets_the_route_and_reads_both_keys_the_teams_and_pending(string scenario, string read, string write, int teams, bool pending)
+    {
+        var canned = Served("linear-connection", scenario);
+
+        var connection = (await Client(canned).LinearConnection(_api, Token)).Value;
+
+        Assert.Equal((HttpMethod.Get, "/sindri/linear/connection"), (canned.Methods[0], canned.Seen[0].AbsolutePath));
+        Assert.Equal((read, write, teams, pending), (connection.Read.State, connection.Write.State, connection.Teams.Count, connection.Pending));
+        Assert.Equal(scenario == "not-connected", connection.Read.CheckedAt is null);
+    }
+
+    [Fact]
+    public async Task LinearConnection_is_refused_a_session()
+    {
+        var result = await Client(Served("linear-connection", "session-refused")).LinearConnection(_api, Token);
+
+        Assert.Equal("SND-AUTH-002", result.Error.Code);
+    }
+
+    [Fact]
+    public async Task LinearConnectionTeams_posts_the_key_and_reads_the_teams_or_the_refusal()
+    {
+        var canned = Served("linear-connection-teams", "two-teams");
+
+        var teams = (await Client(canned).LinearConnectionTeams(_api, "lin_api_read", Token)).Value;
+        var refused = await Client(Served("linear-connection-teams", "refused")).LinearConnectionTeams(_api, "k", Token);
+        var unreachable = await Client(Served("linear-connection-teams", "unreachable")).LinearConnectionTeams(_api, "k", Token);
+
+        Assert.Equal((HttpMethod.Post, "/sindri/linear/connection/teams", """{"key":"lin_api_read"}"""), (canned.Methods[0], canned.Seen[0].AbsolutePath, canned.Bodies[0]));
+        Assert.Equal(["ENG", "OPS"], teams.Teams.Select(t => t.Key), StringComparer.Ordinal);
+        Assert.Equal(("SND-LINEAR-004", "SND-LINEAR-010"), (refused.Error.Code, unreachable.Error.Code));
+    }
+
+    [Fact]
+    public async Task LinearConnect_posts_a_read_key_with_its_teams_and_a_write_key_without()
+    {
+        var read = Served("linear-connect", "read-saved-approved");
+        var write = Served("linear-connect", "write-saved");
+
+        var saved = (await Client(read).LinearConnect(_api, "read", "k1", ["ENG", "OPS"], Token)).Value;
+        var wrote = (await Client(write).LinearConnect(_api, "write", "k2", teams: null, Token)).Value;
+
+        Assert.Equal((HttpMethod.Post, "/sindri/linear/connection"), (read.Methods[0], read.Seen[0].AbsolutePath));
+        Assert.Equal("""{"kind":"read","key":"k1","teams":["ENG","OPS"]}""", read.Bodies[0]);
+        Assert.Equal("""{"kind":"write","key":"k2"}""", write.Bodies[0]);
+        Assert.Equal((true, true, null), (saved.Saved, saved.Approved, saved.Write));
+        Assert.Equal("resolves", wrote.Write!.State);
+    }
+
+    [Fact]
+    public async Task LinearConnect_reads_a_save_that_waits_on_other_profile_changes_and_a_write_key_of_unknown_scope()
+    {
+        var waiting = (await Client(Served("linear-connect", "read-saved-waiting")).LinearConnect(_api, "read", "k", ["ENG"], Token)).Value;
+        var scope = (await Client(Served("linear-connect", "write-scope-unknown")).LinearConnect(_api, "write", "k", teams: null, Token)).Value;
+
+        Assert.Equal((true, false, 64), (waiting.Saved, waiting.Approved, waiting.ProfileHash.Length));
+        Assert.Equal("scopeUnknown", scope.Write!.State);
+    }
+
+    [Theory]
+    [InlineData("same-as-read", "SND-LINEAR-001")]
+    [InlineData("no-keychain", "SND-LINEAR-014")]
+    [InlineData("no-teams", "SND-LINEAR-003")]
+    [InlineData("session-refused", "SND-AUTH-002")]
+    public async Task LinearConnect_hands_its_refusals_back_as_the_error(string scenario, string code)
+    {
+        var result = await Client(Served("linear-connect", scenario)).LinearConnect(_api, "write", "k", teams: null, Token);
+
+        Assert.Equal(code, result.Error.Code);
+    }
+
+    [Fact]
+    public async Task LinearDisconnectWrite_deletes_the_write_key_and_reads_the_answer()
+    {
+        var canned = Served("linear-disconnect-write", "removed");
+
+        var removed = (await Client(canned).LinearDisconnectWrite(_api, Token)).Value;
+
+        Assert.Equal((HttpMethod.Delete, "/sindri/linear/connection/write", null), (canned.Methods[0], canned.Seen[0].AbsolutePath, canned.Bodies[0]));
+        Assert.Equal((true, true), (removed.Removed, removed.Approved));
+    }
+
+    [Fact]
+    public void The_write_event_and_the_unknown_outcome_row_read_through_the_apps_json_context()
+    {
+        var evt = Aw.Kernel.Json.AwJson.Deserialize<LinearWriteEvent>(Encoding.UTF8.GetBytes("""{"key":"ENG-12","team":"ENG","clientId":null,"attempt":2,"write":"edit","outcome":"failed","code":"SND-LINEAR-011"}"""), SindriApiClient.Json).Value;
+        var row = Aw.Kernel.Json.AwJson.Deserialize<LinearWriteUnknownRow>(Encoding.UTF8.GetBytes("""{"kind":"linear.write.unknown","key":null,"team":"ENG","clientId":"c-1","write":"create","at":"2026-01-01T10:05:00.0000000Z","text":"A new ENG issue from 10:05 may have been created"}"""), SindriApiClient.Json).Value;
+
+        Assert.Equal(("ENG-12", null, 2, "edit", "failed", "SND-LINEAR-011"), (evt.Key, evt.ClientId, evt.Attempt, evt.Write, evt.Outcome, evt.Code));
+        Assert.Equal((null, "create"), (row.Key, row.Write));
+    }
+
     private sealed class Canned(HttpStatusCode code, string body) : HttpMessageHandler
     {
         public List<Uri> Seen { get; } = [];
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        public List<HttpMethod> Methods { get; } = [];
+
+        public List<string?> Bodies { get; } = [];
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Seen.Add(request.RequestUri!); // why: HttpClient always sets the URI
-            return Task.FromResult(new HttpResponseMessage(code) { Content = new StringContent(body, Encoding.UTF8, "application/json") });
+            Methods.Add(request.Method);
+            Bodies.Add(request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken));
+            return new HttpResponseMessage(code) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
         }
     }
 }

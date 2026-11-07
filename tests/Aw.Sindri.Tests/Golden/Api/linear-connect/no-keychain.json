@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.4",
+  "title": "SND-LINEAR-014",
+  "status": 503,
+  "detail": "There is no keychain to keep the key in (fix: unlock the keychain, or set the key in the environment)",
+  "traceId": "<trace>"
+}

@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api.Linear;
 
@@ -75,4 +76,25 @@ internal sealed partial class FakeSindriApi
         await WaitFor(LinearSinceGate, cancellationToken).ConfigureAwait(false);
         return Answer<LinearSince>(api, LinearRoutes.Since(after), answer);
     }
+
+    public Task<Result<LinearWriteOutcome>> LinearChange(Uri api, string key, JsonObject opened, JsonObject set, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+    public Task<Result<LinearWriteOutcome>> LinearComment(Uri api, string key, string clientId, string body, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+    public Task<Result<LinearWriteOutcome>> LinearCreate(Uri api, LinearCreateBody body, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+    public Task<Result<LinearConnection>> LinearConnection(Uri api, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+    public Task<Result<LinearTeamChoices>> LinearConnectionTeams(Uri api, string key, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+    public Task<Result<LinearConnected>> LinearConnect(Uri api, string kind, string key, IReadOnlyList<string>? teams, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+    public Task<Result<LinearDisconnected>> LinearDisconnectWrite(Uri api, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
 }
