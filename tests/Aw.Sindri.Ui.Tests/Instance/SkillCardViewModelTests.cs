@@ -11,6 +11,7 @@ namespace Aw.Sindri.Ui.Tests.Instance;
 [Lane(TestLane.Unit)]
 public sealed class SkillCardViewModelTests
 {
+    private const string Address = "T-1";
     private const string Plan = "/work/plans/rate-limits";
 
     private readonly FakeClipboard _clipboard = new();
@@ -23,20 +24,22 @@ public sealed class SkillCardViewModelTests
         new("office-hours", "officeHours", "step.skill.office-hours", 955718892, "Shapes an idea into a plan folder with requirements and tasks.",
             [new SkillInputView("idea", "text", "What do you want built?", Required: true)], ["fact:officeHoursFeatureDir"], ["done"], Pushes: false, "234a44b2", "<skills>/officeHours/block.yaml");
 
-    private static StateCell Cell(StateGlyph glyph = StateGlyph.Active, Round? round = null) =>
-        new("shape", Order: 1, BranchOf: null, glyph, Badge: null, round, [], Desk: false, Child: false, Children: null, Outcome: null, Terminal: false);
+    private static StateCell Cell(StateGlyph glyph = StateGlyph.Active, Round? round = null, string? outcome = null) =>
+        new("shape", Order: 1, BranchOf: null, glyph, Badge: null, round, [], Desk: false, Child: false, Children: null, outcome, Terminal: false, Block: "office-hours");
 
     private static StepRun Run(string state = "running", string? outcome = null, int attempt = 1) =>
         new("shape.1", "shape", attempt, MaxAttempts: null, state, "agent", A.Noon, EndedAt: state == "running" ? null : A.Noon, DurationMs: null, outcome, Tokens: null, Actor: null);
 
-    private static SkillWaiting Waiting(string reason = "question", string? text = "Which repo should this plan cover?", string? detail = null, int? attempt = 1, string state = "shape") =>
-        new(reason, text, detail, "/work/.sindri/shape/result.json", state, attempt);
+    // The needs-you row the server serves for a waiting skill block (kind skillWaiting).
+    private static NeedsYouRowView Waiting(string reason = "question", string? text = "Which repo should this plan cover?", string? detail = null, int? attempt = 1, string state = "shape", string instance = Address) =>
+        new("skill:" + instance + ":" + state, "skillWaiting", "skill", Subject: null, Item: null, "Shape the idea", "waiting", Repo: null, "calm", A.Noon, RecordedOnly: false, Notice: null, AnswerKind: null, PrimaryAction: null, [], "sindri workflow status " + instance,
+            OwnerWaiting: new OwnerWaitingView("LCH-1", reason, text, "/work/.sindri/shape/result.json", detail, instance, state, attempt));
 
     private static FactRow PlanFact() =>
         new("fact:officeHoursFeatureDir", "Plan folder", FactType.File, FactDirection.Output, From: null, FactStatus.Produced, Plan, A.Noon, By: null, new FactRef(Name: null, Size: null, Hash: null, Plan, ItemId: null, Url: null, Host: null, Title: null, FactKey: null), Progress: null, Pending: null);
 
-    private SkillCardViewModel Card(StateCell? cell = null, StepRun? run = null, IReadOnlyList<SkillWaiting>? waiting = null, IReadOnlyList<FactRow>? facts = null, decimal? cost = null) =>
-        new(new SkillCardInput(Block(), "Shape the idea", cell ?? Cell(), run ?? Run(), waiting ?? [], facts ?? [], cost, _launcher, _clipboard, _clock));
+    private SkillCardViewModel Card(StateCell? cell = null, StepRun? run = null, IReadOnlyList<NeedsYouRowView>? waiting = null, IReadOnlyList<FactRow>? facts = null, decimal? cost = null) =>
+        new(new SkillCardInput(new SkillsView([Block()]), Address, "Shape the idea", cell ?? Cell(), run ?? Run(), waiting ?? [], facts ?? [], cost, _launcher, _clipboard, _clock));
 
     [Fact]
     public void SkillCard_shows_the_blocks_sentence() =>
@@ -100,15 +103,19 @@ public sealed class SkillCardViewModelTests
     [InlineData("Done", "passed", "done")]
     [InlineData("Active", "failed", "failed")]
     public void SkillCard_names_its_state_in_a_word(string glyph, string? run, string word) =>
-        Assert.Equal(word, new SkillCardViewModel(new SkillCardInput(Block(), "Shape the idea", Cell(Enum.Parse<StateGlyph>(glyph)), run is null ? null : Run(run), [], [], Cost: null, _launcher, _clipboard, _clock)).StateWord);
+        Assert.Equal(word, new SkillCardViewModel(new SkillCardInput(new SkillsView([Block()]), Address, "Shape the idea", Cell(Enum.Parse<StateGlyph>(glyph)), run is null ? null : Run(run), [], [], Cost: null, _launcher, _clipboard, _clock)).StateWord);
 
     [Fact]
-    public void SkillCard_stops_waiting_once_the_run_ends()
+    public void SkillCard_ignores_a_waiting_row_of_another_instance()
     {
-        var card = Card(run: Run("passed", "done"), waiting: [Waiting()]);
+        var card = Card(waiting: [Waiting(instance: "T-2")]);
 
-        Assert.Equal(("done", string.Empty), (card.StateWord, card.Question));
+        Assert.Equal(("running", string.Empty), (card.StateWord, card.Question));
     }
+
+    [Fact]
+    public void SkillCard_has_no_sentence_for_a_block_the_server_does_not_list() =>
+        Assert.Equal(string.Empty, new SkillCardViewModel(new SkillCardInput(new SkillsView([]), Address, "Shape the idea", Cell(), Run(), [], [], Cost: null, _launcher, _clipboard, _clock)).Sentence);
 
     [Theory]
     [InlineData("needsWork", "needs work")]
@@ -118,7 +125,7 @@ public sealed class SkillCardViewModelTests
     public void SkillCard_names_the_outcome_in_words(string id, string words)
     {
         Assert.Equal(words, SkillWords.Outcome(id));
-        Assert.Equal(words, Card(run: Run("passed", id)).Outcome);
+        Assert.Equal(words, Card(cell: Cell(outcome: id)).Outcome);
     }
 
     [Fact]

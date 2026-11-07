@@ -18,7 +18,7 @@ internal sealed class SkillCardViewModel(SkillCardInput input)
     /// <returns>True for a skill block.</returns>
     internal static bool IsSkillStep(StepDeclaration? step) => throw new NotSupportedException();
 
-    /// <summary>The block's sentence.</summary>
+    /// <summary>The sentence of the block the cell names (`block`) in GET /sindri/skills; empty when none is listed.</summary>
     public string Sentence => throw new NotSupportedException();
 
     /// <summary>Which state the card is in.</summary>
@@ -36,7 +36,7 @@ internal sealed class SkillCardViewModel(SkillCardInput input)
     /// <summary>What Details shows: the result path and, for a broken file, the parse error; empty when nothing waits.</summary>
     public string Details => throw new NotSupportedException();
 
-    /// <summary>The outcome in words ("needs work"); empty until the Step reported one.</summary>
+    /// <summary>The state cell's outcome in words ("needs work"); empty until it has one.</summary>
     public string Outcome => throw new NotSupportedException();
 
     /// <summary>The block's outputs that hold a path.</summary>
