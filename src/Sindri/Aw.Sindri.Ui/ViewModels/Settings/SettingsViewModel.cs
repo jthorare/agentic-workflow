@@ -1,4 +1,5 @@
 using Aw.Sindri.Ui.Platform;
+using Aw.Sindri.Ui.ViewModels.Reviews;
 using Aw.Sindri.Ui.ViewModels.Sandbox;
 using Aw.Sindri.Ui.ViewModels.Setup;
 
@@ -58,6 +59,12 @@ internal sealed class SettingsViewModel : ObservableObject, IDisposable
 
     /// <summary>The Sandbox section, below the product-surface-choice line; null when this host has none.</summary>
     public SandboxSettingsViewModel? Sandbox { get; }
+
+    /// <summary>The Library card, below the Sandbox section; null when this host has none.</summary>
+    public LibraryRootsViewModel? Library { get; init; }
+
+    /// <summary>True when the page has the Library card.</summary>
+    public bool HasLibrary => Library is not null;
 
     /// <summary>True when the page has the Sandbox section.</summary>
     public bool HasSandbox => Sandbox is not null;

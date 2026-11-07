@@ -22,6 +22,16 @@ public sealed class ShellSheetKindTests
     private static DeepLink Link(string text) => DeepLink.TryParse(text, out var link) ? link : throw new InvalidOperationException(text);
 
     [Fact]
+    public async Task The_Library_cards_errors_chip_opens_the_library_errors_sheet_without_a_Reviews_button_to_return_to()
+    {
+        var shell = await Shell();
+
+        shell.LibraryRoots.OpenErrors();
+
+        Assert.Equal((true, true, false), (shell.IsSheetOpen, shell.IsLibrarySheet, shell.OpenerLibrary));
+    }
+
+    [Fact]
     public async Task The_same_subject_under_two_kinds_gives_two_sheet_states()
     {
         var shell = await Shell();

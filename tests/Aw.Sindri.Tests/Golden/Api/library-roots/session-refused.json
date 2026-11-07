@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
+  "title": "SND-AUTH-002",
+  "status": 403,
+  "detail": "the library's folders are the owner's to set; a session can't change them (fix: use Settings -> Library)",
+  "traceId": "<trace>"
+}
