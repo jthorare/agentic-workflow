@@ -70,4 +70,7 @@ internal enum DeepLinkKind
 
     /// <summary>'reviews/fix': the fix-task sheet over the review page (review page spec §8.2); it has no subject, the page's request carries the finding.</summary>
     FixTaskSheet,
+
+    /// <summary>'linear/&lt;KEY&gt;': a Linear issue's read-only sheet (Linear hub spec §3), such as 'linear/ENG-12'; the same text as the sindri://linear/ENG-12 link.</summary>
+    Issue,
 }
