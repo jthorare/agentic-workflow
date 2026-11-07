@@ -122,6 +122,10 @@ public sealed class FakeContextEngine : IContextEngine
     public ValueTask<Result<IReadOnlyList<LibraryDoc>>> ListDocs(LibraryDocFilter filter, AudienceScope audience, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryDoc>>([]));
 
+    /// <summary>The fake keeps no library: no doc names any issue.</summary>
+    public ValueTask<Result<IReadOnlyDictionary<string, IReadOnlyList<LibraryDoc>>>> DocsNaming(IReadOnlyList<string> issueKeys, AudienceScope audience, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success<IReadOnlyDictionary<string, IReadOnlyList<LibraryDoc>>>(new Dictionary<string, IReadOnlyList<LibraryDoc>>(StringComparer.Ordinal)));
+
     /// <summary>The fake keeps no library: it returns no doc.</summary>
     public ValueTask<Result<LibraryDoc?>> GetDoc(RecordKey key, AudienceScope audience, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<LibraryDoc?>>((LibraryDoc?)null);
@@ -153,6 +157,14 @@ public sealed class FakeContextEngine : IContextEngine
     /// <summary>The fake keeps no records: the Linear issue reads answer like every query (all sources unavailable).</summary>
     public ValueTask<Result<LinearIssuePage>> IssueList(LinearIssueFilter filter, LinearIssueCursor? after, ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<LinearIssuePage>>(Down());
+
+    /// <inheritdoc cref="IssueList"/>
+    public ValueTask<Result<LinearIssueRow?>> IssueGet(LinearIssueKey key, ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<LinearIssueRow?>>(Down());
+
+    /// <inheritdoc cref="IssueList"/>
+    public ValueTask<Result<LinearIssueCounts>> IssueCounts(LinearIssueFilter filter, ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<LinearIssueCounts>>(Down());
 
     /// <inheritdoc cref="IssueList"/>
     public ValueTask<Result<LinearIssueRow?>> IssueGet(RecordKey key, ContextScope scope, CancellationToken cancellationToken) =>

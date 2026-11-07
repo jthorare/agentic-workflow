@@ -49,6 +49,8 @@ internal sealed class ContextLibrary(ILibraryStore store, ILibraryStatus? status
         return docs.IsError ? docs.Error : Results.Success<IReadOnlyList<LibraryDoc>>([.. docs.Value.Where(d => Matches(d, filter))]);
     }
 
+    public ValueTask<Result<IReadOnlyDictionary<string, IReadOnlyList<LibraryDoc>>>> DocsNaming(IReadOnlyList<string> issueKeys, AudienceScope audience, CancellationToken cancellationToken) => throw new NotSupportedException();
+
     public ValueTask<Result<LibraryDoc?>> GetDoc(RecordKey key, AudienceScope audience, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(audience);

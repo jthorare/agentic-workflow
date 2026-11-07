@@ -17,6 +17,14 @@ public sealed class EmptyLinearIssueStore : ILinearIssueStore
         ValueTask.FromResult(Results.Success<LinearIssueRow?>(value: null));
 
     /// <inheritdoc />
+    public ValueTask<Result<LinearIssueRow?>> Get(LinearIssueKey key, RecordAudience audience, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success<LinearIssueRow?>(value: null));
+
+    /// <inheritdoc />
+    public ValueTask<Result<LinearIssueCounts>> Count(LinearIssueFilter filter, RecordAudience audience, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<LinearIssueCounts>>(new LinearIssueCounts(new Dictionary<string, int>(StringComparer.Ordinal), Total: 0));
+
+    /// <inheritdoc />
     public ValueTask<Result<IReadOnlyList<LinearCommentRow>>> Comments(RecordKey key, RecordAudience audience, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success<IReadOnlyList<LinearCommentRow>>([]));
 

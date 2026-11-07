@@ -103,6 +103,12 @@ internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller 
 
     public ValueTask<Result<LinearIssuePage>> IssueList(LinearIssueFilter filter, LinearIssueCursor? after, ContextScope scope, CancellationToken cancellationToken) => inner.IssueList(filter, after, scope, cancellationToken);
 
+    public ValueTask<Result<LinearIssueRow?>> IssueGet(LinearIssueKey key, ContextScope scope, CancellationToken cancellationToken) => inner.IssueGet(key, scope, cancellationToken);
+
+    public ValueTask<Result<LinearIssueCounts>> IssueCounts(LinearIssueFilter filter, ContextScope scope, CancellationToken cancellationToken) => inner.IssueCounts(filter, scope, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyDictionary<string, IReadOnlyList<LibraryDoc>>>> DocsNaming(IReadOnlyList<string> issueKeys, AudienceScope audience, CancellationToken cancellationToken) => inner.DocsNaming(issueKeys, audience, cancellationToken);
+
     public ValueTask<Result<LinearIssueRow?>> IssueGet(RecordKey key, ContextScope scope, CancellationToken cancellationToken) => inner.IssueGet(key, scope, cancellationToken);
 
     public ValueTask<Result<IReadOnlyList<LinearCommentRow>>> IssueComments(RecordKey key, ContextScope scope, CancellationToken cancellationToken) => inner.IssueComments(key, scope, cancellationToken);

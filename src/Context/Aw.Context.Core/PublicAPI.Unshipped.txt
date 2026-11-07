@@ -12322,3 +12322,23 @@ static Aw.Context.Core.Library.GeneratedSource.IsGenerated(Aw.Context.Core.Libra
 static Aw.Context.Core.Library.GeneratedSource.PathBeside(string! docPath) -> string!
 static Aw.Context.Core.Library.GeneratedSource.Sha256(System.ReadOnlySpan<byte> source) -> string!
 static Aw.Context.Core.Library.GeneratedSource.Version(string! docVersion, string? packetVersion) -> string!
+Aw.Context.Core.Facade.IContextIssues.IssueGet(Aw.Context.Core.Linear.LinearIssueKey! key, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueRow?>!>
+Aw.Context.Core.Facade.IContextIssues.IssueCounts(Aw.Context.Core.Linear.LinearIssueFilter! filter, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueCounts!>!>
+Aw.Context.Core.Records.ILinearIssueStore.Get(Aw.Context.Core.Linear.LinearIssueKey! key, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueRow?>!>
+Aw.Context.Core.Records.ILinearIssueStore.Count(Aw.Context.Core.Linear.LinearIssueFilter! filter, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueCounts!>!>
+Aw.Context.Core.Facade.IContextLibrary.DocsNaming(System.Collections.Generic.IReadOnlyList<string!>! issueKeys, Aw.Context.Core.Audience.AudienceScope! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryDoc!>!>!>!>
+const Aw.Context.Core.Facade.IContextLibrary.DocsNamingMaxKeys = 200 -> int
+Aw.Context.Core.Linear.LinearIssueCounts
+Aw.Context.Core.Linear.LinearIssueCounts.<Clone>$() -> Aw.Context.Core.Linear.LinearIssueCounts!
+Aw.Context.Core.Linear.LinearIssueCounts.ByStateType.get -> System.Collections.Generic.IReadOnlyDictionary<string!, int>!
+Aw.Context.Core.Linear.LinearIssueCounts.ByStateType.init -> void
+Aw.Context.Core.Linear.LinearIssueCounts.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, int>! ByStateType, out int Total) -> void
+Aw.Context.Core.Linear.LinearIssueCounts.Equals(Aw.Context.Core.Linear.LinearIssueCounts? other) -> bool
+Aw.Context.Core.Linear.LinearIssueCounts.LinearIssueCounts(System.Collections.Generic.IReadOnlyDictionary<string!, int>! ByStateType, int Total) -> void
+Aw.Context.Core.Linear.LinearIssueCounts.Total.get -> int
+Aw.Context.Core.Linear.LinearIssueCounts.Total.init -> void
+override Aw.Context.Core.Linear.LinearIssueCounts.Equals(object? obj) -> bool
+override Aw.Context.Core.Linear.LinearIssueCounts.GetHashCode() -> int
+override Aw.Context.Core.Linear.LinearIssueCounts.ToString() -> string!
+static Aw.Context.Core.Linear.LinearIssueCounts.operator !=(Aw.Context.Core.Linear.LinearIssueCounts? left, Aw.Context.Core.Linear.LinearIssueCounts? right) -> bool
+static Aw.Context.Core.Linear.LinearIssueCounts.operator ==(Aw.Context.Core.Linear.LinearIssueCounts? left, Aw.Context.Core.Linear.LinearIssueCounts? right) -> bool

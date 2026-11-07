@@ -19,6 +19,16 @@ public interface IContextLibrary
     /// <returns>The docs, or SND-CONTEXT-004.</returns>
     public ValueTask<Result<IReadOnlyList<LibraryDoc>>> ListDocs(LibraryDocFilter filter, AudienceScope audience, CancellationToken cancellationToken);
 
+    /// <summary>Finds the docs whose front-matter <c language="text">issues:</c> name each of the given Linear issues, in one read.</summary>
+    /// <param name="issueKeys">Up to <see cref="DocsNamingMaxKeys"/> Linear keys ('ENG-12'); case is ignored.</param>
+    /// <param name="audience">The caller's audiences.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>Per key (upper case) the docs that name it, newest first; a key no readable doc names is absent. SND-CONTEXT-006 for more than the maximum keys, SND-CONTEXT-004.</returns>
+    public ValueTask<Result<IReadOnlyDictionary<string, IReadOnlyList<LibraryDoc>>>> DocsNaming(IReadOnlyList<string> issueKeys, AudienceScope audience, CancellationToken cancellationToken);
+
+    /// <summary>The most keys one <see cref="DocsNaming"/> call takes.</summary>
+    public const int DocsNamingMaxKeys = 200;
+
     /// <summary>Reads one doc.</summary>
     /// <param name="key">The doc record's key.</param>
     /// <param name="audience">The caller's audiences.</param>

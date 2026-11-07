@@ -50,6 +50,10 @@ internal sealed class SqliteLinearIssueStore(ContextDatabase database) : ILinear
         return rows.IsError ? rows.Error : Results.Success(rows.Value.Count == 0 ? null : rows.Value[0]);
     }
 
+    public ValueTask<Result<LinearIssueRow?>> Get(LinearIssueKey key, RecordAudience audience, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    public ValueTask<Result<LinearIssueCounts>> Count(LinearIssueFilter filter, RecordAudience audience, CancellationToken cancellationToken) => throw new NotSupportedException();
+
     public async ValueTask<Result<IReadOnlyList<LinearCommentRow>>> Comments(RecordKey key, RecordAudience audience, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(audience);
