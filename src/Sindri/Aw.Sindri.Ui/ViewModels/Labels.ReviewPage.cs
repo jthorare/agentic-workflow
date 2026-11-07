@@ -68,7 +68,7 @@ internal static partial class Labels
     internal const string ReviewActionNote = "Release 1: both buttons open this PR's review box on GitHub. Your ticks are saved on this head.";
 
     /// <summary>The page's whole-page states (mockups review-a-page-*).</summary>
-    internal const string ReviewNotFoundHeading = "Pull request not found";
+    internal const string ReviewNotFoundHeading = "PR not found";
 
     internal const string ReviewNotSyncedHeading = "Sindri doesn't sync this repo";
 
@@ -79,6 +79,27 @@ internal static partial class Labels
     internal const string ReviewBack = "Reviews";
 
     internal const string ReviewTryAgain = "Try again";
+
+    internal const string ReviewBackButton = "← Reviews";
+
+    internal const string ReviewBackName = "Back to Reviews";
+
+    internal const string ReviewOpenOnGitHubArrow = "Open on GitHub ↗";
+
+    /// <summary>A repeated Send as fix task button's name, so a screen reader hears which row it is on.</summary>
+    /// <param name="title">The check's or requirement's title.</param>
+    /// <returns>The name.</returns>
+    internal static string ReviewFixFor(string title) => $"{ReviewFixHeading}: {title}";
+
+    /// <summary>A deleted file's Show button's name.</summary>
+    /// <param name="path">The file.</param>
+    /// <returns>The name.</returns>
+    internal static string ReviewShowFor(string path) => $"{ReviewDiffShow} {path}";
+
+    /// <summary>A file's Open on GitHub button's name.</summary>
+    /// <param name="path">The file.</param>
+    /// <returns>The name.</returns>
+    internal static string ReviewOpenFileFor(string path) => $"{ReviewOpenOnGitHub}: {path}";
 
     /// <summary>The diff's words.</summary>
     internal const string ReviewDiffTitle = "Files changed";

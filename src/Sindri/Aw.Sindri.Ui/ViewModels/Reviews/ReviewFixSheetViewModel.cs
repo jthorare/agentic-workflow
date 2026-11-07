@@ -25,6 +25,20 @@ internal sealed partial class ReviewFixSheetViewModel : ObservableObject
         (_api, _clock) = (api, clock);
     }
 
+#pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
+    /// <summary>"From".</summary>
+    public string FromText => Labels.ReviewFixFrom;
+
+    /// <summary>"What needs fixing".</summary>
+    public string WhatNeedsText => Labels.ReviewFixWhatNeeds;
+
+    /// <summary>"What Send does".</summary>
+    public string WhatSendDoesText => Labels.ReviewFixWhatSendDoes;
+
+    /// <summary>The longest text the box takes (2,000 characters), the same limit <see cref="CanSend"/> checks.</summary>
+    public int TextLimit => Limit;
+#pragma warning restore CA1822, MA0041
+
     /// <summary>"Send as fix task"; "Fix task sent" or "Fix task not fully sent" after a send.</summary>
     public string Heading { get; private set => Set(ref field, value); } = string.Empty;
 

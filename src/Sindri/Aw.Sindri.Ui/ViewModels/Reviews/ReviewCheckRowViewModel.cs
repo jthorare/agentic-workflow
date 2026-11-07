@@ -19,6 +19,14 @@ internal sealed class ReviewCheckRowViewModel : ObservableObject
         AutomationName = Labels.ReviewCheckName(Title, StatusWord, check.Detail);
     }
 
+#pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
+    /// <summary>The fix button's words.</summary>
+    public string FixText => Labels.ReviewFixHeading;
+#pragma warning restore CA1822, MA0041
+
+    /// <summary>The fix button's screen-reader name, with the row's title.</summary>
+    public string FixName => Labels.ReviewFixFor(Title);
+
     /// <summary>The check's id.</summary>
     public string Id { get; }
 

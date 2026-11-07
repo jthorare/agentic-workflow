@@ -3,6 +3,29 @@ namespace Aw.Sindri.Ui.ViewModels.Reviews;
 /// <summary>The review page's header reset and login prompt (<see cref="ReviewPageViewModel"/>, continued; review page spec §6.3, §16).</summary>
 internal sealed partial class ReviewPageViewModel
 {
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    /// <summary>"Release 1: both buttons open this PR's review box on GitHub. Your ticks are saved on this head."</summary>
+    public string ActionNote => Labels.ReviewActionNote;
+
+    /// <summary>The Reload button's words.</summary>
+    public string ReloadText => Labels.ReviewReload;
+
+    /// <summary>"← Reviews".</summary>
+    public string BackText => Labels.ReviewBackButton;
+
+    /// <summary>"Back to Reviews".</summary>
+    public string BackName => Labels.ReviewBackName;
+
+    /// <summary>"Try again".</summary>
+    public string TryAgainText => Labels.ReviewTryAgain;
+
+    /// <summary>"Open on GitHub".</summary>
+    public string OpenOnGitHubText => Labels.ReviewOpenOnGitHub;
+
+    /// <summary>"Open on GitHub ↗".</summary>
+    public string OpenOnGitHubArrowText => Labels.ReviewOpenOnGitHubArrow;
+#pragma warning restore CA1822, MA0041
+
     /// <summary>Saves the login in the prompt's field; when it is in effect the page is read again.</summary>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>When the answer is shown.</returns>

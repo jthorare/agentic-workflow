@@ -40,7 +40,7 @@ public sealed class ReviewPageStateTests
 
         var page = await _f.Opened(Token);
 
-        Assert.Equal((ReviewPageState.NotFound, Labels.ReviewNotFoundHeading, "PR not found"), (page.State, page.StateHeading, page.StateText));
+        Assert.Equal((ReviewPageState.NotFound, "PR not found", "PR not found"), (page.State, page.StateHeading, page.StateText));
     }
 
     [Fact]

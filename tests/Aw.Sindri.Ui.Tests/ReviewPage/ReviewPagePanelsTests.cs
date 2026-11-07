@@ -114,6 +114,17 @@ public sealed class ReviewPagePanelsTests
     }
 
     [Fact]
+    public async Task A_repeated_fix_button_is_named_by_its_row_and_a_files_buttons_by_its_path()
+    {
+        var page = await _f.Opened(Token);
+
+        var check = Panel(page, "requiredChecks").Checks.First(c => c.CanSendFix);
+        Assert.Equal("Send as fix task: " + check.Title, check.FixName);
+        var deleted = page.Diff.Groups.SelectMany(g => g.Files).Single(f => f.HasShow);
+        Assert.Equal(("Show " + deleted.Path, "Open on GitHub: " + deleted.Path), (deleted.ShowName, deleted.OpenName));
+    }
+
+    [Fact]
     public async Task The_evidence_risk_and_conversation_panels_list_their_rows()
     {
         var page = await _f.Opened(Token);

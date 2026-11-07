@@ -150,6 +150,9 @@ public sealed class ReviewFixSheetTests
     }
 
     [Fact]
+    public void The_text_box_takes_exactly_the_limit_the_sheet_checks() => Assert.Equal(2000, Opened(_line).TextLimit);
+
+    [Fact]
     public async Task Send_posts_the_finding_with_its_kind_head_and_source()
     {
         var check = Opened(_check);

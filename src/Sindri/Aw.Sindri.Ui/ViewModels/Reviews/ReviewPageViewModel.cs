@@ -51,7 +51,7 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
     /// <summary>The login prompt's field and Save.</summary>
     public ReviewLoginViewModel Login { get; }
 
-    /// <summary>The heading of a whole-page state ("Pull request not found"); empty for the page.</summary>
+    /// <summary>The heading of a whole-page state ("PR not found"); empty for the page.</summary>
     public string StateHeading { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>The words under it: the refusal's detail as served; empty for the page.</summary>
@@ -93,13 +93,6 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
     /// <summary>"The PR is moving; reload when it settles." when the head moved twice during the read; null otherwise.</summary>
     public string? MovingText { get; private set => Set(ref field, value); }
 
-#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
-    /// <summary>"Release 1: both buttons open this PR's review box on GitHub. Your ticks are saved on this head."</summary>
-    public string ActionNote => Labels.ReviewActionNote;
-
-    /// <summary>The Reload button's words.</summary>
-    public string ReloadText => Labels.ReviewReload;
-#pragma warning restore CA1822, MA0041
 
     /// <summary>The summary strip: four placeholders while loading, then the served parts.</summary>
     public ObservableCollection<ReviewStripSegmentViewModel> Strip { get; } = [];

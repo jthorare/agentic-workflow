@@ -17,6 +17,14 @@ internal sealed class ReviewDocItemViewModel : ObservableObject
     /// <summary>Spaces that indent a child under its parent.</summary>
     public string Indent { get; }
 
+#pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
+    /// <summary>The fix button's words.</summary>
+    public string FixText => Labels.ReviewFixHeading;
+#pragma warning restore CA1822, MA0041
+
+    /// <summary>The fix button's screen-reader name, with the row's title.</summary>
+    public string FixName => Labels.ReviewFixFor(Title);
+
     /// <summary>The item's id (Ph5, REQ-E3).</summary>
     public string Id { get; }
 

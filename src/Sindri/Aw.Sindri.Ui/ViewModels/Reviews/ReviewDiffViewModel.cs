@@ -3,6 +3,14 @@ namespace Aw.Sindri.Ui.ViewModels.Reviews;
 /// <summary>The diff, the page's right pane (review page spec §6.2, §6.3): its state and words, the file count and the folded or open groups.</summary>
 internal sealed class ReviewDiffViewModel : ObservableObject
 {
+#pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
+    /// <summary>"Files changed".</summary>
+    public string TitleText => Labels.ReviewDiffTitle;
+
+    /// <summary>The keys line: "j/k file · n/p hunk · c fix task · o fold".</summary>
+    public string KeysText => Labels.ReviewDiffKeys;
+#pragma warning restore CA1822, MA0041
+
     /// <summary>Loading, ready, empty or error.</summary>
     public ReviewPanelState State { get; private set => Set(ref field, value); } = ReviewPanelState.Loading;
 

@@ -7,13 +7,13 @@
   <StackPanel Spacing="{StaticResource Space.SM}">
     <TextBlock Classes="caption subtle mono" Text="{Binding SubLine}" />
     <StackPanel Spacing="2" IsVisible="{Binding !HasOutcome}">
-      <TextBlock Classes="eyebrow subtle" Text="From" />
+      <TextBlock Classes="eyebrow subtle" Text="{Binding FromText}" />
       <TextBlock Classes="body-strong" Text="{Binding SourceTitle}" TextWrapping="Wrap" />
       <TextBlock Classes="caption subtle" Text="{Binding SourceDetail}" TextWrapping="Wrap" />
-      <TextBlock Classes="eyebrow subtle" Text="What needs fixing" Margin="0,8,0,0" />
-      <TextBox x:Name="ReviewFixText" Text="{Binding Text, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="96" MaxLength="4000" IsEnabled="{Binding !IsSending}" AutomationProperties.Name="What needs fixing" />
+      <TextBlock Classes="eyebrow subtle" Text="{Binding WhatNeedsText}" Margin="0,8,0,0" />
+      <TextBox x:Name="ReviewFixText" Text="{Binding Text, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="96" MaxLength="{Binding TextLimit}" IsEnabled="{Binding !IsSending}" AutomationProperties.Name="What needs fixing" />
       <TextBlock Classes="caption subtle" Text="{Binding CountText}" HorizontalAlignment="Right" />
-      <TextBlock Classes="eyebrow subtle" Text="What Send does" Margin="0,8,0,0" />
+      <TextBlock Classes="eyebrow subtle" Text="{Binding WhatSendDoesText}" Margin="0,8,0,0" />
       <TextBlock Classes="body" Text="{Binding ItemTitle}" TextWrapping="Wrap" />
       <TextBlock Classes="caption" Text="{Binding ThreadText}" TextWrapping="Wrap" />
       <TextBlock Classes="caption subtle" Text="{Binding GoesToText}" TextWrapping="Wrap" />
