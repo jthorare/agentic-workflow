@@ -526,7 +526,7 @@ public sealed class ReviewSettingsTests
 
         _f.Server.ReviewSettingsGate.SetResult();
         await saving;
-        Assert.True(settings.CanEdit);
+        Assert.Equal((true, false, Labels.ReviewSettingsSaveApprove), (settings.CanEdit, settings.IsSaving, settings.SaveText));
     }
 
     [Fact]
@@ -544,6 +544,40 @@ public sealed class ReviewSettingsTests
         await settings.Discard(Token);
 
         Assert.Equal((false, true), (settings.IsStale, settings.CanSave));
+    }
+
+    [Fact]
+    public async Task A_failed_read_back_leaves_Reload_working_and_clears_the_stale_line_when_pressed()
+    {
+        var settings = await Opened();
+        _f.Server.ReviewSettingsAnswer = RouteAnswer.Problem(HttpStatusCode.BadRequest, "SND-REVIEW-002", "gone");
+
+        await settings.Save(Token);
+        Assert.Equal((true, false, true), (settings.IsStale, settings.IsSaving, settings.CanEdit));
+
+        _f.Server.ReviewSettingsAnswer = RouteAnswer.Api("review-settings", "default-only");
+        await settings.Discard(Token);
+
+        Assert.Equal((false, true), (settings.IsStale, settings.CanSave));
+    }
+
+    [Fact]
+    public async Task Switching_projects_during_a_save_leaves_the_new_project_unlocked_and_the_late_answer_draws_nothing()
+    {
+        var settings = await Opened("extends-sindri");
+        _f.Server.ReviewSettingsSaveGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var saving = settings.Save(Token);
+        _f.Serve(ProjectSheetFixture.Led, c => c["origin"] = "led");
+        _f.Server.ReviewSettingsAnswer = RouteAnswer.Api("review-settings", "default-only");
+
+        await _f.Sheet.Open(ProjectsFixture.Url, ProjectSheetFixture.Subject(ProjectSheetFixture.Led), Token);
+        Assert.False(settings.IsSaving);
+        var reads = _f.Server.ReviewSettingsReads.Count;
+
+        _f.Server.ReviewSettingsSaveGate.SetResult();
+        await saving;
+
+        Assert.Equal((false, string.Empty, string.Empty, string.Empty, Labels.ReviewSettingsEntryLine("default"), reads), (settings.IsSaving, settings.Note, settings.Announcement, settings.SaveError, settings.EntryLine, _f.Server.ReviewSettingsReads.Count));
     }
 
     [Fact]

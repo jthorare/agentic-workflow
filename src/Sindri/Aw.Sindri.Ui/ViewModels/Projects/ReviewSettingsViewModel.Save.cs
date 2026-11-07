@@ -24,15 +24,15 @@ internal sealed partial class ReviewSettingsViewModel
             return;
         }
 
-        var generation = _generation;
+        var sheet = _sheet;
         IsSaving = true;   // fields stay locked through the read-back, so it cannot wipe typing
         try
         {
-            await Send(new ReviewSettingsSave(read.Project, Lines(ReposText), Name.Trim(), entry, Approve: true, read.Hash), url, generation, cancellationToken).ConfigureAwait(true);
+            await Send(new ReviewSettingsSave(read.Project, Lines(ReposText), Name.Trim(), entry, Approve: true, read.Hash), url, sheet, cancellationToken).ConfigureAwait(true);
         }
         finally
         {
-            if (generation == _generation)
+            if (sheet == _sheet)
             {
                 IsSaving = false;
             }
@@ -40,10 +40,10 @@ internal sealed partial class ReviewSettingsViewModel
     }
 
     // Sends the save and reads the settings back. An answer that comes after the sheet moved to another project belongs to nobody here and is dropped.
-    private async Task Send(ReviewSettingsSave request, Uri url, int generation, CancellationToken cancellationToken)
+    private async Task Send(ReviewSettingsSave request, Uri url, int sheet, CancellationToken cancellationToken)
     {
         var answer = await api.SaveReviewSettings(url, request, cancellationToken).ConfigureAwait(true);
-        if (generation != _generation)
+        if (sheet != _sheet)
         {
             return;
         }

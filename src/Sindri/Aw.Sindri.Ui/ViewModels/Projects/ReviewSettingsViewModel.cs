@@ -21,6 +21,7 @@ internal sealed partial class ReviewSettingsViewModel(ISindriApi api) : Observab
     private Uri? _url;
     private string? _snapshot;
     private int _generation;
+    private int _sheet;   // bumped only by Clear: a save's own read-back moves _generation, never this
 
     /// <summary>The labels the view binds.</summary>
     public ReviewSettingsWords Words { get; } = new();
@@ -182,6 +183,7 @@ internal sealed partial class ReviewSettingsViewModel(ISindriApi api) : Observab
     internal void Clear()
     {
         _generation++;
+        _sheet++;
         (_read, _snapshot) = (null, null);
         (IsShown, CanChange, IsSaving) = (false, true, false);
         (Note, SaveError, Announcement) = (string.Empty, string.Empty, string.Empty);
