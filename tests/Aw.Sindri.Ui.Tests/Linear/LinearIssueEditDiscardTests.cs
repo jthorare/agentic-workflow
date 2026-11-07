@@ -49,36 +49,36 @@ public sealed class LinearIssueEditDiscardTests
     public async Task Discard_drops_the_edits_and_lets_the_leaving_go_ahead()
     {
         var sheet = await _f.Opened(Token);
-        var next = (string?)"unset";
-        sheet.LeaveConfirmed += (_, e) => next = e.Value;
+        var left = 0;
+        sheet.LeaveConfirmed += (_, _) => left++;
         _f.Pick("Priority", "High");
 
-        Assert.True(sheet.Leaving(next: null));
+        Assert.True(sheet.Leaving());
         sheet.Discard();
 
-        Assert.Equal((false, false, "Urgent", null), (sheet.IsConfirmingDiscard, sheet.HasChanges, _f.Field("Priority").Selected?.Name, next));
+        Assert.Equal((false, false, "Urgent", 1), (sheet.IsConfirmingDiscard, sheet.HasChanges, _f.Field("Priority").Selected?.Name, left));
     }
 
     [Fact]
-    public async Task Opening_another_issue_with_edits_asks_first_and_goes_there_on_discard()
+    public async Task Leaving_with_a_way_on_of_its_own_runs_that_on_discard_instead_of_closing()
     {
         var sheet = await _f.Opened(Token);
-        var next = (string?)null;
-        sheet.LeaveConfirmed += (_, e) => next = e.Value;
+        var (left, ran) = (0, 0);
+        sheet.LeaveConfirmed += (_, _) => left++;
         _f.Pick("Priority", "High");
 
-        var asked = sheet.Leaving("ENG-99");
+        var asked = sheet.Leaving(then: () => ran++);
         sheet.Discard();
 
-        Assert.Equal((true, "ENG-99"), (asked, next));
+        Assert.Equal((true, 1, 0), (asked, ran, left));
     }
 
     [Fact]
-    public async Task Opening_another_issue_with_nothing_changed_does_not_ask()
+    public async Task Leaving_with_nothing_changed_does_not_ask()
     {
         var sheet = await _f.Opened(Token);
 
-        Assert.Equal((false, false), (sheet.Leaving("ENG-99"), sheet.IsConfirmingDiscard));
+        Assert.Equal((false, false), (sheet.Leaving(), sheet.IsConfirmingDiscard));
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public sealed class LinearIssueEditDiscardTests
         var left = 0;
         sheet.LeaveConfirmed += (_, _) => left++;
         _f.Pick("State", "In Review");
-        Assert.True(sheet.Leaving(next: null));
+        Assert.True(sheet.Leaving());
 
         await sheet.Save(Token);
         sheet.Discard();
@@ -111,7 +111,7 @@ public sealed class LinearIssueEditDiscardTests
     {
         var sheet = await _f.Opened(Token);
         _f.Pick("Priority", "High");
-        Assert.True(sheet.Leaving(next: null));
+        Assert.True(sheet.Leaving());
 
         _f.Pick("Priority", "Urgent");
 
@@ -124,7 +124,7 @@ public sealed class LinearIssueEditDiscardTests
         var sheet = await _f.Opened(Token);
         _f.Server.LinearChangeGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         _f.Pick("Priority", "High");
-        Assert.True(sheet.Leaving(next: null));
+        Assert.True(sheet.Leaving());
 
         var saving = sheet.Save(Token);
         sheet.Discard();

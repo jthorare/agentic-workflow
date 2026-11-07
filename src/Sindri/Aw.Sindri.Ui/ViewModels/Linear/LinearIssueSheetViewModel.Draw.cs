@@ -101,7 +101,7 @@ internal sealed partial class LinearIssueSheetViewModel
     private void ClearEdit()
     {
         _epoch++;
-        (_issue, _lookups, _sent, _leaveTo, _lookupsFailed) = (null, null, null, null, false);
+        (_issue, _lookups, _sent, _then, _lookupsFailed) = (null, null, null, null, false);
         (CanEdit, CanConnect, IsSaving, IsUnknown, HasConflict, IsConfirmingDiscard) = (false, false, false, false, false, false);
         (ConflictRows, WriteBanner, StatusLine, ErrorBanner) = ([], string.Empty, string.Empty, string.Empty);
         foreach (var field in Editable)

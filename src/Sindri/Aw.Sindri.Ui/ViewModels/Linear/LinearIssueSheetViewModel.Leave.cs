@@ -15,21 +15,20 @@ internal sealed partial class LinearIssueSheetViewModel
             return true;
         }
 
-        return Leaving(next: null);
+        return Leaving();
     }
 
-    /// <summary>The sheet is about to close or show another issue: asks when edits are unsaved.</summary>
-    /// <param name="next">The issue to open afterwards; null to close the sheet.</param>
-    /// <param name="then">What to do once Discard is pressed (the shell's own way on, such as following a link or Back); when set, <see cref="LeaveConfirmed"/> is not raised.</param>
+    /// <summary>The sheet is about to close or be replaced: asks when edits are unsaved.</summary>
+    /// <param name="then">What to do once Discard is pressed (the shell's own way on, such as following a link or Back); when null, <see cref="LeaveConfirmed"/> is raised and the shell closes the sheet.</param>
     /// <returns>True when the question is showing and the sheet must wait for the answer.</returns>
-    internal bool Leaving(string? next, Action? then = null)
+    internal bool Leaving(Action? then = null)
     {
         if (!HasChanges)
         {
             return false;
         }
 
-        (_leaveTo, _then) = (next, then);
+        _then = then;
         IsConfirmingDiscard = true;
         OnChanged(nameof(DiscardBody));
         FocusRequested?.Invoke(this, new ValueEventArgs<LinearIssueFocus>(LinearIssueFocus.KeepEditing));
@@ -51,9 +50,9 @@ internal sealed partial class LinearIssueSheetViewModel
     /// <summary>Drops the edits and lets the leaving go ahead.</summary>
     internal void Discard()
     {
-        if (!IsConfirmingDiscard)
+        if (!IsConfirmingDiscard || IsLocked)
         {
-            return;
+            return;   // no question, or a save is out: its answer decides what is left to drop
         }
 
         foreach (var field in Editable)
@@ -62,15 +61,24 @@ internal sealed partial class LinearIssueSheetViewModel
         }
 
         (ConflictRows, HasConflict, IsConfirmingDiscard) = ([], false, false);
-        var (next, then) = (_leaveTo, _then);
-        (_leaveTo, _then) = (null, null);
+        var then = _then;
+        _then = null;
         if (then is not null)
         {
             then();
         }
         else
         {
-            LeaveConfirmed?.Invoke(this, new ValueEventArgs<string?>(next));
+            LeaveConfirmed?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    // Nothing is left to lose (a save applied, or the edits were put back): the question and its pending way on go.
+    private void SettleQuestion()
+    {
+        if (!HasChanges)
+        {
+            (IsConfirmingDiscard, _then) = (false, null);
         }
     }
 }

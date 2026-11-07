@@ -37,14 +37,20 @@ internal sealed partial class ShellViewModel
         Health.Follow((url, token) => IsIssueSheet && IsSheetOpen ? IssueSheet.Refresh(url, token) : Task.CompletedTask);
         Linear.IssueRequested += (_, e) => OpenIssue(e.Key);
         ReviewPage.IssueRequested += (_, e) => OpenIssue(e.Key);
-        IssueSheet.PrRequested += (_, e) => OpenReviewPage(e.Repo, e.Number);
+        IssueSheet.PrRequested += (_, e) =>
+        {
+            if (!IssueSheet.Leaving(then: () => OpenReviewPage(e.Repo, e.Number)))
+            {
+                OpenReviewPage(e.Repo, e.Number);
+            }
+        };
         IssueSheet.ConnectRequested += (_, _) =>
         {
             LinearConnectRequested?.Invoke(this, EventArgs.Empty);
             // Settings has no Connections → Linear row yet (the write-access PR adds it, with the key paste and team ticks); until then Connect opens Settings at the top.
             GoTo(PageId.Settings);
         };
-        IssueSheet.LeaveConfirmed += (_, e) => LeaveIssue(e.Value);
+        IssueSheet.LeaveConfirmed += (_, _) => CloseSheet();
         Linear.PropertyChanged += (_, e) =>
         {
             if (string.Equals(e.PropertyName, nameof(LinearWorkViewModel.NewCount), StringComparison.Ordinal))
@@ -57,7 +63,7 @@ internal sealed partial class ShellViewModel
 
     /// <summary>The sheet's close button and Back: unsaved edits on an open issue sheet ask before they go.</summary>
     /// <returns>True when the question is showing and the sheet stays open.</returns>
-    internal bool AskBeforeClosingIssue() => IsIssueSheet && IsSheetOpen && IssueSheet.Leaving(next: null);
+    internal bool AskBeforeClosingIssue() => IsIssueSheet && IsSheetOpen && IssueSheet.Leaving();
 
     private void OpenIssue(string key) => Navigate(new DeepLink(DeepLinkKind.Issue, key));
 
@@ -66,19 +72,7 @@ internal sealed partial class ShellViewModel
         IsIssueSheet && IsSheetOpen && IssueSheet.HasChanges
         && !(link.Kind == DeepLinkKind.Issue && string.Equals(link.Subject, IssueSheet.Key, StringComparison.Ordinal))
         && !(PageOnly(link.Kind) is not null && link.Kind != DeepLinkKind.ProjectAdd)
-        && IssueSheet.Leaving(next: null, then: () => Navigate(link, rowSheet));
-
-    private void LeaveIssue(string? next)
-    {
-        if (next is null)
-        {
-            CloseSheet();
-        }
-        else
-        {
-            OpenIssue(next);   // the sheet's own request for another issue; links go through AskBeforeLeavingFor
-        }
-    }
+        && IssueSheet.Leaving(then: () => Navigate(link, rowSheet));
 
     // The issue part of opening the sheet (OnSheetOpened): the sheet names its issue at once and reads it.
     private void OnIssueSheetOpened(DeepLink link)

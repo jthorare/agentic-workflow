@@ -17,6 +17,7 @@ internal sealed partial class LinearIssueSheetViewModel
         }
 
         var epoch = _epoch;
+        _generation++;
         Sending(body);
         await using var checking = _clock.CreateTimer(_ => _ui.PostOrInline(() => Checking(epoch)), state: null, _checkAfter, Timeout.InfiniteTimeSpan).ConfigureAwait(true);
         var answer = await Api.LinearChange(url, Key, body.Opened, body.Set, cancellationToken).ConfigureAwait(true);
@@ -25,6 +26,7 @@ internal sealed partial class LinearIssueSheetViewModel
             return;   // another issue took the sheet over meanwhile
         }
 
+        _generation++;   // a read asked before this answer would draw the issue as it was before the save
         IsSaving = false;
         if (!answer.IsSuccess)
         {
@@ -80,6 +82,7 @@ internal sealed partial class LinearIssueSheetViewModel
     private void Applied(LinearChangeApplied applied)
     {
         Draw(applied.Issue, keepEdits: false);
+        SettleQuestion();
         Lock(locked: false);
         StatusLine = applied.AlreadyApplied == true ? Labels.LinearAlreadySaved
             : applied.Warning is not null ? Labels.LinearSavedAfterSync
@@ -107,6 +110,7 @@ internal sealed partial class LinearIssueSheetViewModel
         ConflictRows = rows;
         ConflictHeadline = Labels.LinearConflictHeadline(Key, StatusText.Clock(conflict.ChangedAt));
         HasConflict = rows.Count > 0;
+        SettleQuestion();
         Lock(locked: false);
         if (HasConflict)
         {

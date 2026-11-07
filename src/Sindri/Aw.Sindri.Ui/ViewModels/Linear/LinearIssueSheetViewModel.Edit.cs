@@ -18,7 +18,6 @@ internal sealed partial class LinearIssueSheetViewModel
     private readonly UiContext _ui = new();
     private LinearIssueOne? _issue;
     private LinearLookups? _lookups;
-    private string? _leaveTo;
     private Action? _then;
     private LinearChangeBody? _sent;
     private int _epoch;
@@ -30,8 +29,8 @@ internal sealed partial class LinearIssueSheetViewModel
     /// <summary>The write-access banner's Connect asked for Settings → Connections → Linear.</summary>
     internal event EventHandler? ConnectRequested;
 
-    /// <summary>Leaving with unsaved edits was confirmed (Discard): the value is the issue to open next, or null to close the sheet.</summary>
-    internal event EventHandler<ValueEventArgs<string?>>? LeaveConfirmed;
+    /// <summary>Leaving with unsaved edits was confirmed (Discard) with no way on of its own: the shell closes the sheet.</summary>
+    internal event EventHandler? LeaveConfirmed;
 
     /// <summary>True when the owner can edit the issue: the server said so, and the issue is still served.</summary>
     public bool CanEdit
@@ -201,7 +200,7 @@ internal sealed partial class LinearIssueSheetViewModel
     /// <summary>After a 409: sends the owner's values again; the baseline is the values Linear just showed.</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>A task that ends when the answer has been drawn.</returns>
-    internal Task SaveMineAnyway(CancellationToken cancellationToken) => HasConflict && HasChanges && !IsLocked ? Send(Body(), cancellationToken) : Task.CompletedTask;
+    internal Task SaveMineAnyway(CancellationToken cancellationToken) => HasConflict && CanEdit && HasChanges && !IsLocked ? Send(Body(), cancellationToken) : Task.CompletedTask;
 
     /// <summary>After a 409: takes Linear's value for every listed field.</summary>
     internal void UseLinearsForAll()
@@ -229,6 +228,7 @@ internal sealed partial class LinearIssueSheetViewModel
         OnChanged(nameof(DirtyLine));
         OnChanged(nameof(CanSave));
         OnChanged(nameof(DiscardBody));
+        SettleQuestion();
     }
 
     private List<string> ChangedNames() => [.. Editable.Where(f => f.IsChanged).Select(f => f.Label)];
