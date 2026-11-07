@@ -24,6 +24,7 @@ internal static partial class Labels
         ["OnboardRepo"] = "Onboard repo",
         ["InitProfile"] = "Create profile",
         ["SetProfileKey"] = "Set a profile key",
+        ["SetReviewLogin"] = "Set review login",
         ["ApproveProfile"] = "Approve profile",
         ["ApproveAllRecipes"] = ApproveAllTitle,
         ["ApproveRecipe"] = "Approve recipe",
