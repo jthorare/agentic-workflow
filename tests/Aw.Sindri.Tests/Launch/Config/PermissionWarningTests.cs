@@ -48,4 +48,16 @@ public sealed class PermissionWarningTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public void A_missing_file_warns_of_nothing() =>
         Assert.Empty(LauncherFilePermissions.Warnings(Path.Combine(_home, "missing.json")));
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_dangling_link_warns_that_it_cannot_be_read_with_the_fix()
+    {
+        var path = Path.Combine(_home, "launcher.json");
+        _ = File.CreateSymbolicLink(path, Path.Combine(_home, "nowhere.json"));
+
+        var warning = Assert.Single(LauncherFilePermissions.Warnings(path));
+
+        Assert.Equal("launcher.json can't be read (a broken link, or no permission to look at it) (fix: remove it or point it at a real file)",
+            warning.Replace(_home + "/", string.Empty, StringComparison.Ordinal));
+    }
 }
