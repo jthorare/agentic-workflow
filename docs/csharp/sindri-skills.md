@@ -109,11 +109,26 @@ skill that also wrote an unmapped `status` is still a waiting row.
 - **The PR fetch.** `review` is `pushes: false`, so its Step has no GitHub network. The host fetches the PR into a local
   ref before the launch and sets `AW_SINDRI_PR_REF`; `review` (and `addressReview`) read the PR from that ref, diffing it
   against the merge base with the default branch, and make no `gh` call. `review` never posts: `/postReview` stays yours.
-- **`AW_DIR`.** The host computes the repo's slug and sets `AW_DIR`; `skills/_shared/repo-slug.sh` keeps a preset value.
+- **`AW_DIR`.** The host computes the repo's slug and sets `AW_DIR`; `skills/_shared/repo-slug.sh` keeps a preset value
+  only when `AW_RESULT_SKILL` is set (a skill Step), and recomputes it anywhere else.
   `bugfix-state` keeps its own folder, `$AW_STATE_DIR/bugfix/<slug>/`, which the sandbox binds read-write.
 - **Turn hooks.** The "turn ended" marker comes from the Stop, UserPromptSubmit and PreToolUse hooks. Claude Code gets them
-  from the Step's policy file; a Codex Step needs the same three through its agent home's `hooks.json` (the launcher writes
-  none for Codex today).
+  from the Step's policy file. For a Codex Step the launcher writes them (plus PostToolUse) to the worktree's
+  `.codex/hooks.json`, git-excluded, and starts Codex with `--dangerously-bypass-hook-trust`; a repo that has its own
+  `.codex/hooks.json` refuses the launch.
+
+## Known gaps
+
+- A skill that is `waiting` on you is still ended by the 120 s idle sweep like any idle Step; skipping waiting skills is F-2a.
+- The PR fetch's local branch `sindri/<instance>/<run>/pr` is never deleted.
+- `providers/install-skills.sh` links only the toolkit's own skills into a separate login's home, not the external packs
+  (impeccable, emil-design-eng, taste-skill), so a skill whose `requires.yaml` names one fails SND-SKILL-005 there.
+- The seed fills every `{input}` slot of a text item in turn, so an input whose value itself contains `{other}` gets that
+  slot filled too.
+- `POST /sindri/skills/{id}/runs` has no API golden yet.
+- The Codex `.codex/hooks.json` and its `info/exclude` line stay in the worktree after the run (the next Codex Step rewrites
+  the same file).
+- A launch with sandboxing off skips SND-SKILL-005 and SND-SKILL-007 and gets no `AW_DIR` from the host.
 
 ## Evals
 
