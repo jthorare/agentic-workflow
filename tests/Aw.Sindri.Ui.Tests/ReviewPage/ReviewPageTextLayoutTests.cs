@@ -14,9 +14,11 @@ namespace Aw.Sindri.Ui.Tests.ReviewPage;
 public sealed class ReviewPageTextLayoutTests : FrameHost
 {
     [Theory]
-    [InlineData(1280)]
-    [InlineData(1440)]
-    public Task With_the_fix_sheet_open_no_two_diff_header_texts_touch_and_none_is_cut_off(double width) => OnUi(async () =>
+    [InlineData(1280, false)]
+    [InlineData(1440, false)]
+    [InlineData(1280, true)]
+    [InlineData(1440, true)]
+    public Task With_the_fix_sheet_open_the_diff_pane_has_no_cut_off_or_touching_texts(double width, bool wholePane) => OnUi(async () =>
     {
         var (window, shell) = await Connected(width: width, height: 900);
         shell.Navigate(DeepLink.ForReview("acme/api", 2071));
@@ -27,7 +29,10 @@ public sealed class ReviewPageTextLayoutTests : FrameHost
         await Until(window, () => shell.IsFixTaskSheet && shell.IsSheetOpen && Visible(window, "ReviewFixText"), "the fix sheet never opened");
         await Until(window, () => Named<Control>(window, "ReviewDiffPane").Bounds.Width > 0, "the diff pane never got a width");
 
-        var problems = TextRowCheck.Problems(Named<Control>(window, "ReviewDiffHeader"));
+        // The gap check stays on the header: diff line gutters touch by design. The right-edge check covers every text and button of the pane.
+        var problems = wholePane
+            ? TextRowCheck.CutOffControls(Named<Control>(window, "ReviewDiffPane"))
+            : TextRowCheck.Problems(Named<Control>(window, "ReviewDiffHeader"));
         Assert.True(problems.Count == 0, string.Join(Environment.NewLine, problems));
     });
 
