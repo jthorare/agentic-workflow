@@ -103,6 +103,20 @@ public sealed class ChangeLinearIssueTests
         Assert.Empty(_writes.Calls);
     }
 
+    [Theory]
+    [InlineData("{}", """{"priority":1}""", "priority has no opened value (fix: send the value you opened with each field you change)")]
+    [InlineData("""{"title":"Title of ENG-12"}""", """{"title":"x","priority":1,"estimate":3}""", "priority and estimate have no opened value (fix: send the value you opened with each field you change)")]
+    public async Task A_set_field_with_no_opened_value_is_refused_before_linear_is_read(string opened, string set, string message)
+    {
+        _writes.SetLive(Live());
+
+        var result = await Service().Handle(Edit("ENG-12", opened, set), Token);
+
+        Expect.Equal("SND-LINEAR-006", result.Error.Code);
+        Expect.Equal(message, result.Error.Message);
+        Assert.Empty(_writes.Calls);
+    }
+
     [Fact]
     public async Task A_cleared_assignee_cycle_and_project_need_no_lookup()
     {
