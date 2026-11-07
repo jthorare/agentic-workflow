@@ -1,14 +1,15 @@
+using System.Text.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Skills;
-using Aw.Sindri.Core.Workflow.Engine;
+using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
-using Aw.Sindri.Core.Workflow.Engine.Triggers;
 using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Infrastructure.Skills;
 using Aw.Sindri.Infrastructure.Workflows;
 using Aw.Sindri.Testing.Skills;
+using Aw.Sindri.Testing.Workflow;
 using Microsoft.Extensions.DependencyInjection;
-using Temporalio.Client;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Temporalio.Worker;
 
 namespace Aw.Sindri.Tests.Workflows;
@@ -19,7 +20,7 @@ public sealed class TrialInterpreterTests(BlockRuntimeDevServer server) : IClass
 {
     private const string Review = "schema: 1\nblocks:\n  - id: review\n    sentence: Reviews a pull request.\n    inputs:  { pr: { type: text, label: Pull request (number or link), required: true } }\n    args: [\"{pr}\"]\n    outputs: { findings: { type: path, from: review_file } }\n    outcomes:\n      from: verdict\n      map: { PASS: pass }\n      success: pass\n    pushes: false\n    maxDuration: 2h\n";
     private readonly WorkflowsHarness _harness = new();
-    private int _items;
+    private static int _items;
 
     public void Dispose() => _harness.Dispose();
 
@@ -50,7 +51,14 @@ public sealed class TrialInterpreterTests(BlockRuntimeDevServer server) : IClass
         var plan = SkillTrialRecipe.Build(block, provided: [], foldered).Value;
         _harness.Recipe(plan.Id.Value, plan.Text, services => services.AddSingleton(block.Descriptor));   // the approval pins the folder's block
         var served = SkillManifestLoader.Load(SkillFixtures.Folder).Loaded.Single(static b => b.Skill == "review").Descriptor;
-        await using var sindri = _harness.Sindri(services => services.AddSingleton(served));   // serve's own copy of the block
+        var outputs = block.Descriptor.Outputs.Where(_ => outcome != "blocked").ToDictionary(static o => o.Fact, static _ => JsonSerializer.SerializeToElement("/tmp/findings.json"));
+        var step = new FakeBlockStep((_, _) => ValueTask.FromResult(BlockStepResult.Completed(OutcomeName.From(outcome), outputs)));   // why: the harness has no agent runtime for a skill Step, so a registered block runtime stands in for the session
+        await using var sindri = _harness.Sindri(services =>
+        {
+            _ = services.AddSingleton(served);   // serve's own copy of the block
+            _ = services.Replace(ServiceDescriptor.Singleton(new BlockStepRuntimes([new BlockStepRegistration(served.Id)])));
+            _ = services.AddKeyedSingleton<IBlockStep>(served.Id.Value, step);
+        });
         await WorkflowsHarness.HoldLease(sindri, ct);
         using var worker = new TemporalWorker(server.Environment.Client, sindri.GetRequiredService<TemporalWorkerOptions>());
         InstanceView? ended = null;
@@ -59,10 +67,6 @@ public sealed class TrialInterpreterTests(BlockRuntimeDevServer server) : IClass
             var start = await WorkflowsHarness.RecipeStart(sindri, plan.Id.Value, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"T-{Interlocked.Increment(ref _items)}"), ct);
             var inputs = foldered ? new Dictionary<FactKey, InputFact> { [SkillLaunches.TrialFact] = new InputFact("skills", _harness.Fact(folder)) } : [];
             var handle = await WorkflowsHarness.Start(server.Environment.Client, start with { Inputs = inputs });
-            var running = await WorkflowsHarness.Until(handle, static v => v.Run is not null);
-            var outputs = block.Descriptor.Outputs.Where(_ => outcome != "blocked").ToDictionary(static o => o.Fact, _ => _harness.Fact("/tmp/findings.json"));
-            var report = new StepCompleted("human:cli", running.Run!.Value, OutcomeName.From(outcome), outputs, Tokens: 0, StepRuntime.Desk, new string('f', 64));
-            _ = await handle.ExecuteUpdateAsync(wf => wf.CompleteAsync(report), new WorkflowUpdateOptions(new string('a', 32)));
             ended = await WorkflowsHarness.Until(handle, v => SkillTrialRecipe.OutcomeOf(v.State) is not null);
             var replayed = await new WorkflowReplayer(new WorkflowReplayerOptions().AddWorkflow<RecipeWorkflow>()).ReplayWorkflowAsync(await handle.FetchHistoryAsync(), throwOnReplayFailure: false, ct);
             Assert.Null(replayed.ReplayFailure);
