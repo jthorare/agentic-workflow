@@ -150,6 +150,16 @@ public sealed class SkillCardViewModelTests
     }
 
     [Fact]
+    public void SkillCard_reads_an_outputs_path_from_its_summary_when_the_ref_has_none()
+    {
+        var fact = PlanFact() with { Type = FactType.Text, Ref = null };
+
+        Assert.Equal([new SkillOutput("Plan folder", Plan)], Card(facts: [fact]).Outputs);
+        Assert.Empty(Card(facts: [fact with { Summary = "not a path" }]).Outputs);
+        Assert.Empty(Card(facts: [fact with { Status = FactStatus.InProgress }]).Outputs);
+    }
+
+    [Fact]
     public void SkillCard_lists_only_the_outputs_its_block_names() =>
         Assert.Empty(Card(facts: [PlanFact() with { Key = "fact:somethingElse" }]).Outputs);
 
