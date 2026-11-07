@@ -1,6 +1,7 @@
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Extract;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Library;
 using Aw.Context.Core.Sync;
 
 namespace Aw.Context.Core.Map;
@@ -22,7 +23,7 @@ public sealed class LensBasisReader(IRepoReader repos, TimeProvider clock, IInde
     public async ValueTask<LensBasis> For(VisibleMap map, ContextSettings settings, ContextScope scope, bool draft, CancellationToken cancellationToken)
     {
         var version = map.Snapshot.Version;
-        var sources = await IntentSources(scope, cancellationToken).ConfigureAwait(false);
+        var sources = await IntentSources(settings, scope, cancellationToken).ConfigureAwait(false);
         return new LensBasis(map.Snapshot.Tag, draft, clock.GetUtcNow())
         {
             MapCreated = version.Created,
@@ -33,14 +34,18 @@ public sealed class LensBasisReader(IRepoReader repos, TimeProvider clock, IInde
         };
     }
 
-    // The owned index's sources with their sync state. A progress read that fails (or no index sync) adds no index rows.
-    private async ValueTask<IReadOnlyList<SearchedSource>> IntentSources(ContextScope scope, CancellationToken cancellationToken)
+    // The owned index's sources with their sync state. A progress read that fails (or no index sync) adds no index rows. The library is the owner's (review spec D13): a session's answer never searches it, so it
+    // gets no row, and a profile that names no library reads it as not-configured, not as a source that hasn't synced.
+    private async ValueTask<IReadOnlyList<SearchedSource>> IntentSources(ContextSettings settings, ContextScope scope, CancellationToken cancellationToken)
     {
         var rows = new List<SearchedSource>();
         var progress = sync is null ? null : await sync.Progress(scope, cancellationToken).ConfigureAwait(false);
         if (progress is { IsError: false })
         {
-            rows.AddRange(progress.Value.Select(SearchedSources.Index));
+            var session = scope.Caller.Kind == ContextCallerKind.Session;
+            rows.AddRange(progress.Value
+                .Where(p => !(session && p.Source == LibrarySource.Id))
+                .Select(p => p.Source == LibrarySource.Id && settings.Library is null ? SearchedSources.Intent(p.Source, configured: false, state: null) : SearchedSources.Index(p)));
         }
 
         return rows;

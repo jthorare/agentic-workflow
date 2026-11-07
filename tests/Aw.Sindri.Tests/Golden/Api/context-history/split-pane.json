@@ -322,6 +322,13 @@
         "asOf": "2026-01-01T00:00:00.0000000Z"
       },
       {
+        "id": "library",
+        "state": "not-configured",
+        "reason": "not-configured",
+        "code": null,
+        "asOf": null
+      },
+      {
         "id": "repo-docs",
         "state": "unavailable",
         "reason": "not-synced",
