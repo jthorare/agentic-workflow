@@ -155,7 +155,8 @@ public sealed class SkillCardViewModelTests
         var fact = PlanFact() with { Type = FactType.Text, Ref = null };
 
         Assert.Equal([new SkillOutput("Plan folder", Plan)], Card(facts: [fact]).Outputs);
-        Assert.Empty(Card(facts: [fact with { Summary = "not a path" }]).Outputs);
+        Assert.Empty(Card(facts: [fact with { Summary = "plans/x" }]).Outputs);
+        Assert.Empty(Card(facts: [fact with { Summary = Plan + "\nmore" }]).Outputs);
         Assert.Empty(Card(facts: [fact with { Status = FactStatus.InProgress }]).Outputs);
     }
 

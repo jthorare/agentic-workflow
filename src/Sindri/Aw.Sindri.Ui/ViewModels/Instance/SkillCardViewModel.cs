@@ -129,9 +129,9 @@ internal sealed class SkillCardViewModel : ObservableObject
         .Select(f => new SkillOutput(f.Label, PathOf(f)))
         .Where(o => o.Path.Length > 0)];
 
-    // The path is the ref's; a produced fact with none but a summary that reads as a path (absolute, home-relative or with a folder) falls back to the summary.
+    // The path is the ref's; a produced fact with none but a summary that is an absolute path on one line falls back to the summary (a finished skill's path output is always absolute, spec §3.3).
     private static string PathOf(FactRow fact) =>
-        fact.Ref?.Path ?? (fact.Status == FactStatus.Produced && (fact.Summary.StartsWith('/') || fact.Summary.StartsWith('~') || fact.Summary.Contains('/', StringComparison.Ordinal)) ? fact.Summary : string.Empty);
+        fact.Ref?.Path ?? (fact.Status == FactStatus.Produced && Path.IsPathRooted(fact.Summary) && !fact.Summary.Contains('\n', StringComparison.Ordinal) ? fact.Summary : string.Empty);
 
     /// <summary>"round 2 of 2" when the state is in a loop; empty otherwise.</summary>
     public string RoundLine => Input.Cell.Round is { } round ? Labels.SkillRound(round.N, round.Max) : string.Empty;
