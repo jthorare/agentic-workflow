@@ -85,4 +85,19 @@ public sealed class TrialWorktreeTests : IAsyncLifetime
         Assert.True(File.Exists(Path.Combine(request.Worktree!, "agent-work.txt")));
         Assert.Contains(request.Worktree!, Assert.Single(_warnings), StringComparison.Ordinal);
     }
+
+    [Fact]
+    public async Task A_trial_worktree_with_a_commit_on_no_branch_is_kept_and_the_warning_counts_the_commits()
+    {
+        var request = Request("skill-trial-review", "trial");
+        _ = await LaunchWorktree.Ensure(request, Token);
+        _ = await TempGitRepo.GitOut(request.Worktree!, "-c", "user.email=t@example.invalid", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "agent work");
+
+        await LaunchWorktree.Remove(_repo.Path, request.Worktree!, _warnings.Add);
+
+        Assert.True(Directory.Exists(request.Worktree));
+        var warning = Assert.Single(_warnings);
+        Assert.Contains(request.Worktree!, warning, StringComparison.Ordinal);
+        Assert.Contains("1 commit", warning, StringComparison.Ordinal);
+    }
 }
