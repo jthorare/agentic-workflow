@@ -18,6 +18,8 @@ public sealed class SindriApiClientLinearTests
 
     private static SindriApiClient Client(HttpMessageHandler handler) => new(new HttpClient(handler), new InMemoryHumanToken("tok-1"), TimeProvider.System);
 
+    private static string Marker(string scenario) => (string)GoldenFiles.Node("linear-since", scenario)["marker"]!;   // why: api re-records the marker as an opaque value
+
     private static Canned Ok(string slug, string scenario) => new(HttpStatusCode.OK, GoldenFiles.Api(slug, scenario));
 
     [Fact]
@@ -137,6 +139,7 @@ public sealed class SindriApiClientLinearTests
         var lookups = (await Client(Ok("linear-lookups", "not-synced")).LinearLookups(_api, "OPS", Token)).Value;
 
         Assert.Equal((null, 0, 0, 0, 0), (lookups.SyncedAt, lookups.States.Count, lookups.Members.Count, lookups.Labels.Count, lookups.Cycles.Count));
+        Assert.Equal((null, "OPS", null, "OPS"), (lookups.Team.Id, lookups.Team.Key, lookups.Team.Name, lookups.Team.DisplayName));   // a team that has not synced has no id or name; its key stands in
     }
 
     [Fact]
@@ -145,7 +148,7 @@ public sealed class SindriApiClientLinearTests
         var three = (await Client(Ok("linear-since", "three")).LinearSince(_api, after: null, Token)).Value;
         var empty = (await Client(Ok("linear-since", "empty")).LinearSince(_api, "lin_3f", Token)).Value;
 
-        Assert.Equal(("lin_000000000000003f", 3), (three.Marker, three.Count));
+        Assert.Equal((Marker("three"), 3), (three.Marker, three.Count));
         Assert.Equal(["assigned", "mentioned", "state"], three.Items.Select(i => i.Kind), StringComparer.Ordinal);
         Assert.Equal(("Todo", "In Progress", null), (three.Items[2].From, three.Items[2].To, three.Items[0].From));
         Assert.Equal(0, empty.Count);
