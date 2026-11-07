@@ -1,5 +1,6 @@
 using System.Globalization;
 using Aw.Kernel;
+using Aw.Kernel.Data;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Secrets;
 using Aw.Sindri.Infrastructure.Processes;
@@ -69,12 +70,13 @@ internal sealed class PointerSecrets(Func<string, string?> environment, IToolRun
             return SindriErrors.SecretFileUnsafe.With($"The {secretPointer} secret is unsafe: {path} is not a regular file (a link or a directory). Point it at a file holding only the secret, mode 0600.");
         }
 
-        if (!File.Exists(path))
+        var mode = FileModes.TryRead(path);
+        if (!File.Exists(path) || (mode is null && !OperatingSystem.IsWindows()))
         {
             return Unresolved(secretPointer, $"{path} doesn't exist or can't be reached; create it with mode 0600, or check the directory's owner and mode");
         }
 
-        if (!OperatingSystem.IsWindows() && (File.GetUnixFileMode(path) & GroupOrOther) != UnixFileMode.None)
+        if (mode is { } found && (found & GroupOrOther) != UnixFileMode.None)
         {
             return SindriErrors.SecretFileUnsafe.With($"The {secretPointer} secret is unsafe: {path} is readable or writable by others than its owner. Run 'chmod 600 {path}'.");
         }

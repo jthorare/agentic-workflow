@@ -75,6 +75,10 @@ public sealed record WorkflowEventDetail(
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Model { get; init; }
 
+    /// <summary>The SHA-256 of a skill block's result file (skill flows spec §3.3); null for any other event. Not written when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ResultSha256 { get; init; }
+
     /// <summary>On a step.failed row of an agent run: <see cref="AgentFailureKinds"/> (refused, check_failed, crashed); null otherwise. Not written when null.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? FailureKind { get; init; }
@@ -187,7 +191,7 @@ public sealed record WorkflowEventDetail(
         }.Ran(recorded.Trigger);
     }
 
-    // The agent and model an agent run ran on (#1269), and the images a judge choice looked at (images spec 5.1), from the trigger record.
+    // The agent and model an agent run ran on (#1269), the result file a skill run wrote (skill flows spec §3.3), and the images a judge choice looked at (images spec 5.1), from the trigger record.
     private WorkflowEventDetail Ran(TriggerRecord trigger) =>
-        this with { Agent = trigger.Agent, Model = trigger.Model, ImageCount = trigger.ImageCount, ImagesDropped = trigger.ImagesDropped };
+        this with { Agent = trigger.Agent, Model = trigger.Model, ResultSha256 = trigger.ResultSha256, ImageCount = trigger.ImageCount, ImagesDropped = trigger.ImagesDropped };
 }

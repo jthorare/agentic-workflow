@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Temporalio.Common;
@@ -14,11 +15,17 @@ internal sealed partial class RecipeWorkflow
     private static async Task<LoadedRecipe> LoadRecipe(InstanceStart start, bool storesLiterals)
     {
         var loaded = await Workflow.ExecuteLocalActivityAsync(
-            (RunStepActivities a) => a.LoadRecipeAsync(start.Recipe),
+            (RunStepActivities a) => a.LoadRecipeAsync(start.Recipe, TrialFolder(start)),
             new LocalActivityOptions { StartToCloseTimeout = ActivityBounds.Long }).ConfigureAwait(true);
         await StoreLiterals(start, storesLiterals).ConfigureAwait(true);
         return loaded;
     }
+
+    /// <summary>The stored '--skills' folder fact of a trial's start; null for a recipe that is no trial or a trial without a folder.</summary>
+    /// <param name="start">The instance's start.</param>
+    /// <returns>The fact, or null.</returns>
+    private static FactValue? TrialFolder(InstanceStart start) =>
+        SkillTrialRecipe.IsTrial(start.Recipe.Id) && start.Inputs.TryGetValue(SkillLaunches.TrialFact, out var stored) ? stored.Value : null;
 
     /// <summary>Writes the instance's literal inputs (a child started with 'literal:' facts) into the fact store, so every reader finds them under their hash.</summary>
     /// <param name="start">The instance's start.</param>

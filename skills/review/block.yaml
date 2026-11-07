@@ -1,0 +1,13 @@
+schema: 1
+blocks:
+  - id: review
+    sentence: Reviews a pull request with domain reviewers and says pass or needs changes.
+    inputs:  { pr: { type: text, label: Pull request (number or link), required: true } }
+    args: ["{pr}"]
+    outputs: { findings: { type: path, from: review_file } }
+    outcomes:
+      from: verdict
+      map: { PASS: pass, NEEDS_CHANGES: needsChanges }
+      success: pass
+    pushes: false
+    maxDuration: 2h

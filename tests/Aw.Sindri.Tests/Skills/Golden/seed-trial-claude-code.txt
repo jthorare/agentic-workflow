@@ -1,0 +1,1 @@
+Read /home/u/skills-trial/review/SKILL.md and follow it with arguments: 42

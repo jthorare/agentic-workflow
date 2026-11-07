@@ -12,6 +12,7 @@ internal sealed partial class Launcher
     {
         PolicyForm.ClaudeSettingsFile => Results.Success<string?>(StepPolicyFile.Write(parts.Options.PolicyDirectory, launch, policy)),
         PolicyForm.CursorConfig => await CursorFile(launch, workDir, policy, cancellationToken).ConfigureAwait(false),
+        PolicyForm.CodexOverrides when policy.TurnMarkers => await CodexTurnHooks.Write(workDir, cancellationToken).ConfigureAwait(false),   // a skill Step's turn hooks: Codex reads them from the worktree's .codex/hooks.json
         PolicyForm.None or PolicyForm.CodexOverrides => Results.Success<string?>(value: null),
         _ => Results.Success<string?>(value: null),
     };

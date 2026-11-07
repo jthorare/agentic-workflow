@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Aw.Kernel.Data;
 
 namespace Aw.Sindri.Infrastructure.Profile;
 
@@ -69,9 +70,9 @@ internal static class YamlProfileLines
     {
         var temporary = path + ".tmp";
         File.WriteAllText(temporary, text, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-        if (!OperatingSystem.IsWindows())
+        if (!OperatingSystem.IsWindows() && FileModes.TryRead(path) is { } mode)
         {
-            File.SetUnixFileMode(temporary, File.GetUnixFileMode(path));
+            File.SetUnixFileMode(temporary, mode);
         }
 
         File.Move(temporary, path, overwrite: true);

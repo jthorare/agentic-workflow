@@ -3,6 +3,7 @@ using System.Text.Json;
 using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Registry;
 using Aw.Sindri.Core.Workflow.Validation;
 
@@ -27,11 +28,19 @@ public sealed class RecipeRegistrar(IRecipeReader reader, IRecipeStore store, Re
     /// <param name="file">The file name its findings name.</param>
     /// <param name="cancellationToken">Cancels the reads and writes.</param>
     /// <returns>What was registered; SND-RECIPE-001 or SND-RECIPE-007 when it doesn't validate.</returns>
-    public async ValueTask<Result<RegistrarOutcome>> Register(string text, string file, CancellationToken cancellationToken)
+    public ValueTask<Result<RegistrarOutcome>> Register(string text, string file, CancellationToken cancellationToken) => Register(text, file, against: null, cancellationToken);
+
+    /// <summary>Registers the recipe in <paramref name="text"/>, its blocks checked against <paramref name="against"/>.</summary>
+    /// <param name="text">The recipe file's text.</param>
+    /// <param name="file">The file name its findings name.</param>
+    /// <param name="against">The catalog to check the blocks against; null for this build's.</param>
+    /// <param name="cancellationToken">Cancels the reads and writes.</param>
+    /// <returns>What was registered; SND-RECIPE-001 or SND-RECIPE-007 when it doesn't validate.</returns>
+    public async ValueTask<Result<RegistrarOutcome>> Register(string text, string file, BlockCatalog? against, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(text);
         ArgumentNullException.ThrowIfNull(file);
-        var validated = await Validate(text, file, cancellationToken).ConfigureAwait(false);
+        var validated = await Validate(text, file, against, cancellationToken).ConfigureAwait(false);
         if (validated.IsError)
         {
             return validated.Error;
@@ -48,7 +57,7 @@ public sealed class RecipeRegistrar(IRecipeReader reader, IRecipeStore store, Re
     }
 
     /// <summary>The bound document when it passes against the registry; else SND-RECIPE-007 for RCP-VERSION-001, or SND-RECIPE-001.</summary>
-    private async ValueTask<Result<RecipeDocument>> Validate(string text, string file, CancellationToken cancellationToken)
+    private async ValueTask<Result<RecipeDocument>> Validate(string text, string file, BlockCatalog? against, CancellationToken cancellationToken)
     {
         var reading = reader.Read(text, file);
         if (reading.Document is not { } document)
@@ -56,7 +65,7 @@ public sealed class RecipeRegistrar(IRecipeReader reader, IRecipeStore store, Re
             return Refused(file, reading.Findings);
         }
 
-        var context = await registry.Validation(document.Recipe, cancellationToken).ConfigureAwait(false);
+        var context = await registry.Validation(document.Recipe, against, cancellationToken).ConfigureAwait(false);
         if (context.IsError)
         {
             return context.Error;

@@ -1,0 +1,1 @@
+/officeHours (the text in /home/u/.agentic-workflow/sindri-app/workflow/runs/WFI-1/fix/LCH-1/idea.json)

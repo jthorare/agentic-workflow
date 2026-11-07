@@ -1,3 +1,4 @@
+using Aw.Kernel.Data;
 using Aw.Sindri.Core.Doctor;
 
 namespace Aw.Sindri.Infrastructure.Auth;
@@ -16,7 +17,14 @@ internal sealed class TokenFileDoctorChecks(SindriSettings settings) : IDoctorCh
             return ValueTask.FromResult<IReadOnlyList<DoctorCheck>>([]);
         }
 
-        var reachable = File.GetUnixFileMode(settings.TokenPath) & GroupOrOther;
+        if (FileModes.TryRead(settings.TokenPath) is not { } mode)
+        {
+            return ValueTask.FromResult<IReadOnlyList<DoctorCheck>>([new DoctorCheck("setup:token", CheckState.Warn,
+                $"{settings.TokenPath} can't be read (a broken link, or no permission to look at it)",
+                $"rm {settings.TokenPath}; the next sindri serve writes a new one")]);
+        }
+
+        var reachable = mode & GroupOrOther;
         var check = reachable == UnixFileMode.None
             ? new DoctorCheck("setup:token", CheckState.Ok, $"{settings.TokenPath} can be read by you alone", Fix: null)
             : new DoctorCheck("setup:token", CheckState.Warn,

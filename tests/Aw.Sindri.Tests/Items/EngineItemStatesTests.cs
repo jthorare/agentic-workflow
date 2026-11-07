@@ -66,6 +66,18 @@ public sealed class EngineItemStatesTests
     }
 
     [Fact]
+    public void A_skill_trial_that_fails_at_launch_ends_its_instance_so_the_item_reads_closed()
+    {
+        // why: skill flows spec §7 review item 7: a refused launch sends step.failed into the trial's terminal 'failed', which names an outcome, so the item closes without the CLI
+        var started = EngineItemStates.Next(prior: null, EventTypes.WorkflowStarted, Row("run", frame: new FrameSummary("run", 1, "1.1", Child: null, StepRuntime.Agent)));
+
+        var failed = EngineItemStates.Next(started, EventTypes.WorkflowTransition, Row("failed", trigger: "step.failed", outcome: "failed"));
+
+        Assert.True(failed!.Ended);
+        Assert.Equal(ItemState.Done, EngineItemStates.StateOf(failed));
+    }
+
+    [Fact]
     public void Live_unavailable_parks_are_counted_for_health_the_latest_root_and_an_earlier_one_each()
     {
         var unavailable = new SuspensionSummary(SuspensionKind.Park, ParkReason.Unavailable, ParkKind.Step, Escalation: null, Mirrors: null);

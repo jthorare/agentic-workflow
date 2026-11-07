@@ -156,3 +156,5 @@ Aw.Kernel.Data.StoredRowException.StoredRowException(string? table, string? colu
 Aw.Kernel.Data.StoredRowException.Table.get -> string?
 static Aw.Kernel.Data.SqliteRead.Parse<T>(Microsoft.Data.Sqlite.SqliteDataReader! reader, int ordinal, System.Func<string!, T>! parse, string? table = null, string? rowKey = null) -> T
 static Aw.Kernel.Data.SqliteRead.ParseOrNull<T>(Microsoft.Data.Sqlite.SqliteDataReader! reader, int ordinal, System.Func<string!, T>! parse, string? table = null, string? rowKey = null) -> T?
+Aw.Kernel.Data.FileModes
+static Aw.Kernel.Data.FileModes.TryRead(string! path) -> System.IO.UnixFileMode?

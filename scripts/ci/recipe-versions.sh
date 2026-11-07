@@ -50,7 +50,7 @@ cat "$work/head-manifest.txt"
 
 failed=0
 for file in "$work"/head/recipes/sindri/*.yaml; do
-  out="$("${sindri[@]}" recipe validate "$file" --against "$work/baseline.json")"; rc=$?
+  out="$("${sindri[@]}" recipe validate "$file" --against "$work/baseline.json" --skills skills)"; rc=$?
   if [ "$rc" -gt 1 ]; then
     echo "recipe-versions: recipe validate failed on $(basename "$file") (exit $rc), a tool error:" >&2
     echo "$out" >&2
