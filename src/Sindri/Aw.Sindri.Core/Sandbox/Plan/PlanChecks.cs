@@ -17,7 +17,7 @@ internal static partial class PlanChecks
 
     private static readonly string[] _renameWritten = [".credentials.json", ".claude.json", "auth.json"];
 
-    internal static Error? Validate(PlanContext c) => Mode(c) ?? Paths(c) ?? Namespace(c) ?? Worktree(c) ?? TranscriptKey(c) ?? Socket(c) ?? HomeEntries(c) ?? Login(c);
+    internal static Error? Validate(PlanContext c) => Mode(c) ?? Paths(c) ?? Namespace(c) ?? Worktree(c) ?? TranscriptKey(c) ?? Socket(c) ?? HomeEntries(c) ?? Login(c) ?? AgentBinary(c);
 
     private static Error? Mode(PlanContext c) =>
         c.Request.Policy is { Mode: not StepPermissionMode.Default, WritablePath: not null }
@@ -102,6 +102,16 @@ internal static partial class PlanChecks
         return writable.FirstOrDefault(p => OutsideWriteSet(c.Home, $"{c.Home}/{p}")) is { } path
             ? Failed(SandboxReasons.Login, $"'{path}' opens the agent home read-write outside its named write set")
             : null;
+    }
+
+    // #2149: the launch's agent binary must resolve in the sandbox as it does on the host, so a binary under a denied tree can't be reached and the launch is refused.
+    private static Error? AgentBinary(PlanContext c)
+    {
+        var denied = c.Denied().Concat(c.OwnerDenied()).Select(d => d.Path);
+        var (link, real) = AgentBinaryTree.Links(c).FirstOrDefault(l => denied.Any(d => string.Equals(l.Real, d, StringComparison.Ordinal) || Inside(l.Real, d)));
+        return real is null
+            ? null
+            : SandboxRefusal.For(SindriErrors.LaunchUnconfinable, SandboxReasons.BinDenied, $"the agent binary {link} resolves to {real}, which the sandbox denies");
     }
 
     private static Error? Login(PlanContext c)
