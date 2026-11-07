@@ -103,6 +103,13 @@ public sealed class FakeContextEngine : IContextEngine
     public ValueTask<Result<ProjectFactsAnswer>> Projects(ProjectFactsRequest request, ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<ProjectFactsAnswer>>(Down());
 
+    /// <summary>The open pull requests <see cref="OpenPulls"/> returns; empty by default.</summary>
+    public IReadOnlyList<StoredRecord> Pulls { get; set; } = [];
+
+    /// <inheritdoc />
+    public ValueTask<Result<IReadOnlyList<StoredRecord>>> OpenPulls(AudienceScope audience, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<IReadOnlyList<StoredRecord>>>(Pulls.Where(r => audience.Allows(r.Audience, r.Key)).ToList());
+
     /// <summary>The fake keeps no library: every read finds nothing.</summary>
     public ValueTask<Result<IReadOnlyList<LibraryDoc>>> ListDocs(LibraryDocFilter filter, AudienceScope audience, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success<IReadOnlyList<LibraryDoc>>([]));

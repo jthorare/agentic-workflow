@@ -1,8 +1,10 @@
+using Aw.Context.Core.Audience;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Linear;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Projects;
+using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Features.GetProjects;
 using Aw.Context.Features.MapHeads;
@@ -13,16 +15,40 @@ using Aw.Kernel.Services;
 
 namespace Aw.Context.Features;
 
-/// <summary>The small calls behind the facade that watchers and pages make: where the mapped repos stand, the stored projects, the pin-alias relink and the stored Linear issues.</summary>
+/// <summary>The small calls behind the facade that watchers and pages make: where the mapped repos stand, the stored projects, the pin-alias relink, the stored Linear issues and the open pull requests.</summary>
 internal sealed class ContextReads(
     IService<MapHeadsRequest, IReadOnlyList<RepoHead>> heads,
     IService<GetProjectFactsRequest, ProjectFactsAnswer> projects,
     IService<RelinkPinAliasesRequest, RelinkPinAliasesResult> relink,
     IContextLibrary library,
-    IssueReads issues)
+    IssueReads issues,
+    IRecordStore records)
 {
     /// <summary>The design-doc library's reads.</summary>
     public IContextLibrary Library { get; } = library;
+
+    public async ValueTask<Result<IReadOnlyList<StoredRecord>>> OpenPulls(AudienceScope audience, CancellationToken cancellationToken)
+    {
+        const int pageSize = 500;
+        var pulls = new List<StoredRecord>();
+        RecordKey? after = null;
+        while (true)
+        {
+            var page = await records.List(new RecordFilter(SourceId.From("github"), Repo: null, RecordKind.Pr), after, pageSize, cancellationToken).ConfigureAwait(false);
+            if (page.IsError)
+            {
+                return page.Error;
+            }
+
+            pulls.AddRange(page.Value.Where(r => r.State is RecordState.Open or RecordState.Draft && audience.Allows(r.Audience, r.Key)));
+            if (page.Value.Count < pageSize)
+            {
+                return pulls;
+            }
+
+            after = page.Value[^1].Key;
+        }
+    }
 
     public ValueTask<Result<IReadOnlyList<RepoHead>>> Heads(ContextScope scope, CancellationToken cancellationToken) => heads.Handle(new MapHeadsRequest(scope), cancellationToken);
 

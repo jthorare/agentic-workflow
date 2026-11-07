@@ -11,6 +11,6 @@ internal static class ReviewRows
     [
         new(ActionId.From("SetReviewLogin"), typeof(SetReviewLoginRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
-            "POST", "/sindri/reviews/login", ShellRows.Form("sindri profile set review.login <login>"), "ready"),
+            "POST", "/sindri/reviews/login", ShellRows.Form("sindri profile set <key> <value>"), "ready"),
     ];
 }

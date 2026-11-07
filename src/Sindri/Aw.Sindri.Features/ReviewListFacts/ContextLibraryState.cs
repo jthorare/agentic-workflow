@@ -8,7 +8,7 @@ namespace Aw.Sindri.Features.ReviewListFacts;
 
 /// <summary>The library header over <see cref="IContextLibrary"/>: docs and docs with errors; unreadable roots arrive with the library feed.</summary>
 /// <param name="library">Context's library reads.</param>
-internal sealed class ContextLibraryState(IContextLibrary library) : IReviewLibraryState
+internal sealed class ContextLibraryState(IContextEngine library) : IReviewLibraryState
 {
     public async ValueTask<ReviewLibraryFacts> Read(AudienceScope audience, SourceProgress? source, CancellationToken cancellationToken)
     {

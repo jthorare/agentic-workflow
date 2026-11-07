@@ -21,12 +21,10 @@ namespace Aw.Sindri.Features.ReviewListFacts;
 /// </summary>
 /// <param name="approvals">The approved profile.</param>
 /// <param name="callers">The current caller.</param>
-/// <param name="engine">Context's facade: settings, sync progress and the library.</param>
-/// <param name="store">The record store the PR records are listed from.</param>
+/// <param name="engine">Context's facade: settings, sync progress, the open PR records and the library.</param>
 /// <param name="library">The library header's state.</param>
-internal sealed class ContextReviewFacts(IApprovedProfile approvals, ICallerContextAccessor callers, IContextEngine engine, IRecordStore store, IReviewLibraryState library) : IReviewFacts
+internal sealed class ContextReviewFacts(IApprovedProfile approvals, ICallerContextAccessor callers, IContextEngine engine, IReviewLibraryState library) : IReviewFacts
 {
-    private const int PageSize = 500;
     private const string GithubSource = "github";
     private const string LibrarySource = "library";
     private const string PullKeyPrefix = "github:pr/";
@@ -80,31 +78,22 @@ internal sealed class ContextReviewFacts(IApprovedProfile approvals, ICallerCont
 
     private async ValueTask<Result<IReadOnlyList<ReviewPull>>> Pulls(IReadOnlyList<string> repos, AudienceScope audience, CancellationToken cancellationToken)
     {
-        var pulls = new List<ReviewPull>();
-        RecordKey? after = null;
-        while (true)
+        var records = await engine.OpenPulls(audience, cancellationToken).ConfigureAwait(false);
+        if (records.IsError)
         {
-            var page = await store.List(new RecordFilter(SourceId.From(GithubSource), Repo: null, RecordKind.Pr), after, PageSize, cancellationToken).ConfigureAwait(false);
-            if (page.IsError)
-            {
-                return page.Error;
-            }
-
-            foreach (var record in page.Value.Where(r => r.State is RecordState.Open or RecordState.Draft && audience.Allows(r.Audience, r.Key)))
-            {
-                if (Parse(record, repos) is { } pull)
-                {
-                    pulls.Add(pull with { Claims = await Claims(record.Key, audience, cancellationToken).ConfigureAwait(false) });
-                }
-            }
-
-            if (page.Value.Count < PageSize)
-            {
-                return pulls;
-            }
-
-            after = page.Value[^1].Key;
+            return records.Error;
         }
+
+        var pulls = new List<ReviewPull>();
+        foreach (var record in records.Value)
+        {
+            if (Parse(record, repos) is { } pull)
+            {
+                pulls.Add(pull with { Claims = await Claims(record.Key, audience, cancellationToken).ConfigureAwait(false) });
+            }
+        }
+
+        return pulls;
     }
 
     // why: the record key is github:pr/<owner>/<repo>/<number>, which names the GitHub repo even when the record's own repo is the profile's name for the checkout

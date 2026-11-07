@@ -70,6 +70,8 @@ internal sealed class ContextEngine(
     public ValueTask<Result<LinearSince>> IssueSince(DateTimeOffset marker, ExternalId viewer, ContextScope scope, CancellationToken cancellationToken) =>
         reads.IssueSince(marker, viewer, scope, cancellationToken);
 
+    public ValueTask<Result<IReadOnlyList<StoredRecord>>> OpenPulls(AudienceScope audience, CancellationToken cancellationToken) => reads.OpenPulls(audience, cancellationToken);
+
     public ValueTask<Result<IReadOnlyList<LibraryDoc>>> ListDocs(LibraryDocFilter filter, AudienceScope audience, CancellationToken cancellationToken) => reads.Library.ListDocs(filter, audience, cancellationToken);
 
     public ValueTask<Result<LibraryDoc?>> GetDoc(RecordKey key, AudienceScope audience, CancellationToken cancellationToken) => reads.Library.GetDoc(key, audience, cancellationToken);

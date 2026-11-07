@@ -73,7 +73,7 @@ public sealed class PrReviewRulesTests
     [Theory, Trait("Lane", "unit")]
     [InlineData("ghp_literal_token", "review.credential")]
     [InlineData("env:lower", "review.credential")]
-    [InlineData("command:", "review.credential")]
+    [InlineData("token:s3cr3t", "review.credential")]
     public void A_credential_that_is_not_a_pointer_is_refused_and_never_echoed(string credential, string key)
     {
         var error = ProfileRules.Check(With(new PrReviewSettings(Credential: credential))).Error;
