@@ -50,13 +50,20 @@ internal sealed class LibraryFeed(LibrarySetup setup, IRecordStore store, Scrubb
             reports.Add(Report(pass.Value, last));
         }
 
+        return await Finish(reports, new RecordPage(items, removed, SourceCursor.From(Cursor(cursor)), CursorReset: false), cancellationToken).ConfigureAwait(false);
+    }
+
+    // The pass's reports are left for the doctor row; a pull with no readable root fails, and docs of a root the profile no longer names are removed.
+    private async ValueTask<Result<RecordPage>> Finish(List<LibraryRootReport> reports, RecordPage page, CancellationToken cancellationToken)
+    {
         status.Write(reports);
         if (reports.Count > 0 && reports.TrueForAll(static r => r.Problem is not null))
         {
-            return ContextErrors.SourceUnavailable.With($"the library has no readable root: {string.Join("; ", reports.Select(static r => $"{r.Root}: {r.Problem}"))}");
+            return ContextErrors.SourceUnavailable.With($"the library has no readable root ({string.Join(", ", reports.Select(static r => r.Root))}); sindri doctor's library row says why");   // roots by name: a session can read a job's error, and paths are the owner's
         }
 
-        return new RecordPage(items, removed, SourceCursor.From(Cursor(cursor)), CursorReset: false);
+        var strays = await _reader.Strays([.. setup.Roots.Select(static r => r.Name)], cancellationToken).ConfigureAwait(false);
+        return strays.IsError ? strays.Error : page with { Removed = [.. page.Removed, .. strays.Value] };
     }
 
     // A root that was not read (unchanged) keeps the docs and near misses its last report counted.
@@ -75,7 +82,13 @@ internal sealed class LibraryFeed(LibrarySetup setup, IRecordStore store, Scrubb
             return parts;
         }
 
-        foreach (var part in cursor.Value.Split(';').Skip(1))
+        var tokens = cursor.Value.Split(';');
+        if (!string.Equals(tokens[0], Format, StringComparison.Ordinal))
+        {
+            return parts;   // a cursor this feed didn't write is no cursor: every root is read in full
+        }
+
+        foreach (var part in tokens.Skip(1))
         {
             if (part.Split('=') is [var name, var fingerprint])
             {

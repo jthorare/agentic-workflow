@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using Aw.Context.Core.Audience;
@@ -32,6 +33,11 @@ internal sealed class LibraryRootReader(IReadOnlyList<string> githubRepos, IReco
             return LibraryRootPass.Failed(root.Name, root.Path, problem);
         }
 
+        if (listing.Files.Count == 0 && await EmptyWhileStored(root, cancellationToken).ConfigureAwait(false) is { } kept)
+        {
+            return kept.IsError ? kept.Error : LibraryRootPass.Failed(root.Name, root.Path, kept.Value);
+        }
+
         var fingerprint = Fingerprint(listing.Files) + _repos;
         if (string.Equals(fingerprint, known, StringComparison.Ordinal))
         {
@@ -42,6 +48,47 @@ internal sealed class LibraryRootReader(IReadOnlyList<string> githubRepos, IReco
         var reaudience = known is null || !known.EndsWith(_repos, StringComparison.Ordinal);   // the synced repos changed: every doc's audience is worked out again
         return stored.IsError ? stored.Error : Diff(root, listing.Files, stored.Value, new Tally(room, reaudience), fingerprint);
     }
+
+    // An unmounted drive leaves an empty mount point: a root that lists nothing while docs are stored for it is a problem, not a deletion.
+    private async ValueTask<Result<string>?> EmptyWhileStored(LibraryRoot root, CancellationToken cancellationToken)
+    {
+        var stored = await Stored(root.Name, cancellationToken).ConfigureAwait(false);
+        if (stored.IsError)
+        {
+            return stored.Error;
+        }
+
+        return stored.Value.Count == 0 ? null : Results.Success(string.Create(CultureInfo.InvariantCulture, $"{root.Path} is empty, {stored.Value.Count} docs kept"));
+    }
+
+    /// <summary>The stored library docs whose root is not one of <paramref name="roots"/>: a vault the profile dropped, or the 'aw' root turned off.</summary>
+    /// <param name="roots">The roots the profile names now.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>Their keys.</returns>
+    internal async ValueTask<Result<List<RecordKey>>> Strays(IReadOnlyCollection<string> roots, CancellationToken cancellationToken)
+    {
+        var strays = new List<RecordKey>();
+        RecordKey? after = null;
+        while (true)
+        {
+            var page = await store.List(new RecordFilter(LibrarySource.Id, Repo: null, RecordKind.Doc), after, ListPage, cancellationToken).ConfigureAwait(false);
+            if (page.IsError)
+            {
+                return page.Error;
+            }
+
+            strays.AddRange(page.Value.Where(r => !roots.Contains(RootOf(r.Key.Value), StringComparer.Ordinal)).Select(static r => r.Key));
+            if (page.Value.Count < ListPage)
+            {
+                return strays;
+            }
+
+            after = page.Value[^1].Key;
+        }
+    }
+
+    // 'doc:<root>/<path>': the root is the segment after 'doc:' up to the first '/'
+    private static string RootOf(string key) => key.Length > 4 && key.IndexOf('/', 4) is var end and > 4 ? key[4..end] : string.Empty;
 
     private LibraryRootPass Diff(LibraryRoot root, IReadOnlyList<LibraryFile> files, Dictionary<string, StoredRecord> stored, Tally tally, string fingerprint)
     {

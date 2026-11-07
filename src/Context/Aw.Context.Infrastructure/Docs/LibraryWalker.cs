@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Aw.Context.Core.Engine;
 
 namespace Aw.Context.Infrastructure.Docs;
@@ -29,6 +30,10 @@ internal static class LibraryWalker
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)   // boundary: an unmounted drive or a folder the owner can't read
         {
             return Failed($"{root.Path} can't be read: {e.Message}");
+        }
+        catch (RegexMatchTimeoutException)   // boundary: a deny glob that backtracks without end on a deep path
+        {
+            return Failed($"{root.Path} can't be read: a deny glob takes too long to match a path (simplify the vault's deny globs)");
         }
 
         files.Sort(static (a, b) => string.CompareOrdinal(a.Relative, b.Relative));

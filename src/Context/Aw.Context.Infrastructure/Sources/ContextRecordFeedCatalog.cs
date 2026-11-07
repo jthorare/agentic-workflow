@@ -52,7 +52,7 @@ internal sealed class ContextRecordFeedCatalog(IRecordStore store, GitCli git, L
         }
 
         var roots = LibraryPaths.Resolve(settings.Library ?? new LibrarySettings(), library.Host);
-        return roots.IsError || roots.Value.Count == 0
+        return roots.IsError   // why: a profile with no root left (the vault dropped, or stateDir: off) still gets the feed, so it can remove what those roots left behind
             ? null
             : new LibraryFeed(new LibrarySetup(roots.Value, settings.GitHub?.Repos ?? []), store, scrubbers, library.Status, library.Clock);
     }

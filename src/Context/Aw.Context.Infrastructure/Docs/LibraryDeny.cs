@@ -5,7 +5,7 @@ internal sealed class LibraryDeny(IReadOnlyList<string> own)
 {
     private static readonly string[] _builtin = ["**/.env*", "**/*.pem", "**/*.key", "**/id_*", "**/*.p12", "**/secrets/**", "**/.git/**"];
 
-    private readonly Glob _globs = new([.. _builtin, .. own]);
+    private readonly Glob _globs = new([.. _builtin, .. own], ignoreCase: true);
 
     /// <summary>True when <paramref name="relative"/> is denied.</summary>
     /// <param name="relative">The root-relative path, '/'-separated.</param>
