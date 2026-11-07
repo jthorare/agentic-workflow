@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using Avalonia;
 using Aw.Sindri.Ui.ViewModels.Reviews;
 
 namespace Aw.Sindri.Ui.Views.Reviews;
@@ -9,26 +10,56 @@ namespace Aw.Sindri.Ui.Views.Reviews;
 /// <summary>The fix-task sheet's content: focus goes to its text box when it opens and to the outcome text after a send.</summary>
 internal sealed partial class ReviewFixSheetView : UserControl
 {
+    private ReviewFixSheetViewModel? _watched;
+
     public ReviewFixSheetView()
     {
         InitializeComponent();
-        DataContextChanged += (_, _) =>
+        DataContextChanged += (_, _) => Watch();
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        Watch();
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        Unwatch();
+        base.OnDetachedFromVisualTree(e);
+    }
+
+    // One subscription at a time: the old view model's is dropped when the DataContext changes and when the view leaves the tree.
+    private void Watch()
+    {
+        Unwatch();
+        if (Sheet is { } sheet)
         {
-            if (Sheet is { } sheet)
+            sheet.PropertyChanged += OnSheetChanged;
+            _watched = sheet;
+            if (sheet.IsOpen)
             {
-                sheet.PropertyChanged += (_, e) =>
-                {
-                    if (string.Equals(e.PropertyName, nameof(ReviewFixSheetViewModel.Focus), StringComparison.Ordinal))
-                    {
-                        Dispatcher.UIThread.Post(MoveFocus, DispatcherPriority.Loaded);
-                    }
-                };
-                if (sheet.IsOpen)
-                {
-                    Dispatcher.UIThread.Post(MoveFocus, DispatcherPriority.Loaded);   // the first open builds this view after Open set Focus: that change came before the handler
-                }
+                Dispatcher.UIThread.Post(MoveFocus, DispatcherPriority.Loaded);   // the first open builds this view after Open set Focus: that change came before the handler
             }
-        };
+        }
+    }
+
+    private void Unwatch()
+    {
+        if (_watched is { } old)
+        {
+            old.PropertyChanged -= OnSheetChanged;
+            _watched = null;
+        }
+    }
+
+    private void OnSheetChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (string.Equals(e.PropertyName, nameof(ReviewFixSheetViewModel.Focus), StringComparison.Ordinal))
+        {
+            Dispatcher.UIThread.Post(MoveFocus, DispatcherPriority.Loaded);
+        }
     }
 
     private ReviewFixSheetViewModel? Sheet => DataContext as ReviewFixSheetViewModel;
