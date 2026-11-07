@@ -8,6 +8,7 @@ using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.CodeIndex;
 using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Api.Jobs;
+using Aw.Sindri.Ui.Api.Linear;
 using Aw.Sindri.Ui.Api.Projects;
 using Aw.Sindri.Ui.Api.Reviews;
 using Aw.Sindri.Ui.Api.Sessions;
@@ -88,6 +89,10 @@ public sealed class GoldenContractTests
         ["library-roots"] = As<LibraryRootChanged>,   // POST /library/roots, DELETE /library/roots/{name}, POST /library/aw: Settings -> Library's three writes (review page spec §6.3); the refusals are ProblemDetails
         ["library"] = As<LibraryView>,   // GET /library: the Reviews header's library errors sheet (review page spec §6.1)
         ["projects-linear"] = As<ProjectLinearList>,   // GET /projects/linear: the Add project sheet's From Linear rows (projects page spec §3.2)
+        ["linear-issues"] = As<LinearIssueList>,   // GET /linear/issues: Work → Linear's list (Linear hub spec §3, Ph3 1a; hand-written until api serves it)
+        ["linear-issue"] = As<LinearIssueOne>,   // GET /linear/issues/{key}: one issue with its comments (hand-written until api serves it)
+        ["linear-lookups"] = As<LinearLookups>,   // GET /linear/lookups/{team}: a team's states, members, labels and cycles (hand-written until api serves it)
+        ["linear-since"] = As<LinearSince>,   // GET /linear/since: the changes strip above the filter bar (hand-written until api serves it)
         ["projects-id"] = As<ProjectOne>,   // GET /projects/{id}: one card with its hidden flag
         ["projects-attach"] = As<ProjectAcceptedView>,   // POST /projects' accepted answer: the new prj_ id at version 1 (hand-written until the route's scenario records it)
         ["projects-id-change"] = As<ProjectAcceptedView>,   // POST /projects/{id}/change's accepted answers (a prj_ id, or a led project's key for its notes); the stale 409 is ProblemDetails

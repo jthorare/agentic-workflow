@@ -5,7 +5,7 @@ namespace Aw.Sindri.Ui.ViewModels.Shell;
 
 /// <summary>
 /// The shell's single keys (<see cref="ShellViewModel"/>, continued; UI spec §8): the G chord (ShellViewModel.Chords.cs),
-/// J / K between rows, Enter to open the selected row's sheet, and C to create an item. The window passes a key only when
+/// J / K between rows, Enter to open the selected row's sheet, and C to create an item (a new issue on the Linear view), L to switch Work between Sindri and Linear. The window passes a key only when
 /// no text field has focus and no layer is open.
 /// </summary>
 internal sealed partial class ShellViewModel
@@ -28,8 +28,12 @@ internal sealed partial class ShellViewModel
             return true;
         }
 
-        return StripKeyPressed(key, inSheet) || NeedsYouKeyPressed(key, inSheet) || RunPageKeyPressed(key, inSheet) || WorkflowsKeyPressed(key, inSheet) || AgentsKeyPressed(key, inSheet) || RecipesKeyPressed(key, inSheet) || Single(key, inSheet) || RowKey(key, inSheet);
+        return LinearKeyPressed(key, inSheet) || PageKeyPressed(key, inSheet) || Single(key, inSheet) || RowKey(key, inSheet);
     }
+
+    // The keys of the pages that have their own (Home's strip, Needs you, a run, Workflows, Agents, Recipes).
+    private bool PageKeyPressed(string key, bool inSheet) =>
+        StripKeyPressed(key, inSheet) || NeedsYouKeyPressed(key, inSheet) || RunPageKeyPressed(key, inSheet) || WorkflowsKeyPressed(key, inSheet) || AgentsKeyPressed(key, inSheet) || RecipesKeyPressed(key, inSheet);
 
     // Y copies the selected row's CLI (§8); / opens the Queue page's filter.
     private bool RowKey(string key, bool inSheet)

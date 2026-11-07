@@ -19,7 +19,7 @@ internal static class PreferencesJson
 
         var f = file.Value;
         var d = UiPreferences.Defaults;
-        return new UiPreferences(
+        return Linear(new UiPreferences(
             f.Version,
             f.Window,
             f.SheetWidth ?? d.SheetWidth,
@@ -28,8 +28,12 @@ internal static class PreferencesJson
             f.PaletteHistory ?? [],
             f.TextScale ?? d.TextScale,
             f.ReduceMotion ?? d.ReduceMotion,
-            f.SeenPages ?? d.SeenPages).Clamp();
+            f.SeenPages ?? d.SeenPages), f).Clamp();
     }
+
+    // The Work page's switch pick and the strip's marker: a file from before them keeps the defaults.
+    private static UiPreferences Linear(UiPreferences read, PreferencesFile f) =>
+        read with { WorkView = f.WorkView ?? UiPreferences.SindriView, LinearSince = f.LinearSince };
 
     /// <summary>The preferences as the file's bytes (UTF-8 JSON, camelCase), clamped first, so a file never holds a value out of range.</summary>
     /// <param name="preferences">The preferences.</param>
@@ -37,6 +41,6 @@ internal static class PreferencesJson
     internal static byte[] Write(UiPreferences preferences)
     {
         var p = preferences.Clamp();
-        return AwJson.Serialize(new PreferencesFile(p.Version, p.Window, p.SheetWidth, p.LastPage, p.SeenIds, p.PaletteHistory, p.TextScale, p.ReduceMotion, p.SeenPages), SindriApiClient.Json);
+        return AwJson.Serialize(new PreferencesFile(p.Version, p.Window, p.SheetWidth, p.LastPage, p.SeenIds, p.PaletteHistory, p.TextScale, p.ReduceMotion, p.SeenPages, p.WorkView, p.LinearSince), SindriApiClient.Json);
     }
 }

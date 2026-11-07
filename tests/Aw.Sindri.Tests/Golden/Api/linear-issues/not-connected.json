@@ -1,0 +1,14 @@
+{
+  "connected": false,
+  "viewer": null,
+  "feed": {
+    "state": "ok",
+    "lastSyncedAt": null,
+    "code": null,
+    "reread": null
+  },
+  "group": "mine",
+  "rows": [],
+  "next": null,
+  "total": 0
+}
