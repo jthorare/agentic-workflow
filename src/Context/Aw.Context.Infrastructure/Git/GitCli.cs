@@ -53,16 +53,33 @@ internal sealed partial class GitCli
     /// <returns>The tree, '/'-separated paths.</returns>
     public async ValueTask<Result<IReadOnlyDictionary<string, string>>> Tree(string repo, string commit, CancellationToken cancellationToken)
     {
+        var listed = await TreeWithLinks(repo, commit, cancellationToken).ConfigureAwait(false);
+        return listed.Map(l => l.Blobs);
+    }
+
+    /// <summary>Every blob at <paramref name="commit"/> as <see cref="Tree"/> lists them, and which of those paths are symlinks (ls-tree mode 120000).</summary>
+    /// <param name="repo">The repo's checkout.</param>
+    /// <param name="commit">A commit sha.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The tree and its symlink paths, '/'-separated.</returns>
+    public async ValueTask<Result<(IReadOnlyDictionary<string, string> Blobs, IReadOnlySet<string> Symlinks)>> TreeWithLinks(string repo, string commit, CancellationToken cancellationToken)
+    {
         if (!IsSha(commit))
         {
             return ContextErrors.SourceUnavailable.With("not a commit sha");
         }
 
         var listed = await Text(repo, ["ls-tree", "-r", "-z", "--full-tree", commit], cancellationToken).ConfigureAwait(false);
-        return listed.Map<IReadOnlyDictionary<string, string>>(text => text.Split('\0', StringSplitOptions.RemoveEmptyEntries)
-            .Select(entry => entry.Split('\t', 2))
-            .Where(parts => parts.Length == 2 && parts[0].Split(' ') is [_, "blob", _])
-            .ToDictionary(parts => parts[1], parts => parts[0].Split(' ')[2], StringComparer.Ordinal));
+        return listed.Map<(IReadOnlyDictionary<string, string>, IReadOnlySet<string>)>(text =>
+        {
+            var entries = text.Split('\0', StringSplitOptions.RemoveEmptyEntries)
+                .Select(entry => entry.Split('\t', 2))
+                .Where(parts => parts.Length == 2 && parts[0].Split(' ') is [_, "blob", _])
+                .Select(parts => (Path: parts[1], Fields: parts[0].Split(' ')))
+                .ToList();
+            return (entries.ToDictionary(e => e.Path, e => e.Fields[2], StringComparer.Ordinal),
+                entries.Where(e => e.Fields[0] == "120000").Select(e => e.Path).ToHashSet(StringComparer.Ordinal));
+        });
     }
 
     /// <summary>A blob's size in bytes, read before its text so an oversized document is never loaded.</summary>
@@ -90,6 +107,18 @@ internal sealed partial class GitCli
         return exists.IsError ? exists.Error : await Text(repo, ["cat-file", "blob", blob], cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>A blob's raw bytes, so a hash of them equals the hash of the file as committed (no text decoding).</summary>
+    /// <param name="repo">The repo's checkout.</param>
+    /// <param name="blob">The blob sha.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The bytes, NotFound (SND-CONTEXT-003) when the repo has no such blob, or SND-CONTEXT-010.</returns>
+    public async ValueTask<Result<byte[]>> BlobBytes(string repo, string blob, CancellationToken cancellationToken)
+    {
+        var exists = await Exists(repo, blob, cancellationToken).ConfigureAwait(false);
+        var run = exists.IsError ? exists.Error : await Run(repo, ["cat-file", "blob", blob], cancellationToken, encoding: Encoding.Latin1).ConfigureAwait(false);
+        return run.Bind<byte[]>(r => r.Exit == 0 ? Encoding.Latin1.GetBytes(r.Stdout) : Failed("cat-file", r.Exit));   // Latin-1 maps each byte to one char, so the text round-trips exactly
+    }
+
     /// <summary>A file's text at a commit ('cat-file blob &lt;commit&gt;:&lt;path&gt;'). The caller has checked <paramref name="path"/> (relative, no '..').</summary>
     /// <param name="repo">The repo's checkout.</param>
     /// <param name="commit">A commit sha.</param>
@@ -100,63 +129,6 @@ internal sealed partial class GitCli
         IsSha(commit)
             ? await Text(repo, ["cat-file", "blob", $"{commit}:{path}"], cancellationToken).ConfigureAwait(false)
             : ContextErrors.SourceUnavailable.With("not a commit sha");
-
-    /// <summary>Streams 'git archive --format=tar' of a commit to <paramref name="consume"/> (tracked files only, never the working tree).</summary>
-    /// <param name="repo">The repo's checkout.</param>
-    /// <param name="commit">A commit sha.</param>
-    /// <param name="consume">Reads the tar stream to its end.</param>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>Unit, or SND-CONTEXT-010 when git fails or the consumer does.</returns>
-    public async ValueTask<Result<Unit>> Archive(string repo, string commit, Func<Stream, CancellationToken, Task> consume, CancellationToken cancellationToken)
-    {
-        if (!IsSha(commit))
-        {
-            return ContextErrors.SourceUnavailable.With("not a commit sha");
-        }
-
-        var start = CleanGit(["-C", repo, "archive", "--format=tar", commit]);
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(_archiveTimeout);
-        Process? git = null;
-        try
-        {
-            git = Process.Start(start) ?? throw new InvalidOperationException("git didn't start");
-            var stderr = git.StandardError.ReadToEndAsync(timeout.Token);
-            await ConsumeToEnd(git.StandardOutput.BaseStream, consume, timeout.Token).ConfigureAwait(false);
-            await git.WaitForExitAsync(timeout.Token).ConfigureAwait(false);
-            // git is gone, so everything it wrote is already in the pipe. Its end of stderr closed with it; a stray fork of a parallel
-            // process may still hold another copy, and waiting for that EOF held this call to the whole archive timeout (a gate hung 5 min here).
-            _ = await Task.WhenAny(stderr, Task.Delay(_drainGrace, timeout.Token)).ConfigureAwait(false);
-            return git.ExitCode == 0 ? Unit.Value : Failed("archive", git.ExitCode);
-        }
-        catch (OperationCanceledException)
-        {
-            Kill(git);
-            if (cancellationToken.IsCancellationRequested)
-            {
-                throw;
-            }
-
-            return ContextErrors.SourceUnavailable.With("git archive didn't finish in time");
-        }
-        catch (Exception e) when (e is InvalidOperationException or System.ComponentModel.Win32Exception or IOException or InvalidDataException)
-        {
-            Kill(git);
-            return ContextErrors.SourceUnavailable.With($"git archive didn't run: {e.GetType().Name}");
-        }
-        finally
-        {
-            git?.Dispose();
-        }
-    }
-
-    // A TarReader stops at the end-of-archive marker and leaves git's record padding in the pipe. On a loaded box (the user over
-    // pipe-user-pages-soft) a new pipe holds one page, so git blocked writing the rest and never exited (a gate hung here 30 s).
-    private static async Task ConsumeToEnd(Stream tar, Func<Stream, CancellationToken, Task> consume, CancellationToken cancellationToken)
-    {
-        await consume(tar, cancellationToken).ConfigureAwait(false);
-        await tar.CopyToAsync(Stream.Null, cancellationToken).ConfigureAwait(false);
-    }
 
     /// <summary>True for a full or abbreviated lower-case hex sha (never an option, never a ref expression).</summary>
     /// <param name="text">The candidate.</param>
@@ -187,14 +159,14 @@ internal sealed partial class GitCli
         return run.IsError ? run.Error : run.Value.Exit == 0 ? run.Value.Stdout : Failed(args[0], run.Value.Exit);
     }
 
-    private async ValueTask<Result<(int Exit, string Stdout)>> Run(string repo, string[] args, CancellationToken cancellationToken, string? locale = null)
+    private async ValueTask<Result<(int Exit, string Stdout)>> Run(string repo, string[] args, CancellationToken cancellationToken, string? locale = null, Encoding? encoding = null)
     {
         var start = new ProcessStartInfo(_command[0])
         {
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
-            StandardOutputEncoding = Encoding.UTF8,
+            StandardOutputEncoding = encoding ?? Encoding.UTF8,
         };
         foreach (var name in start.Environment.Keys.Where(k => k.StartsWith("GIT_", StringComparison.Ordinal)).ToList())
         {
