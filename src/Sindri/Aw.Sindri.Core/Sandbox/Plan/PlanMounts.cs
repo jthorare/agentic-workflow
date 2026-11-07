@@ -34,6 +34,7 @@ internal static class PlanMounts
             new(c.Home, PlanMountKind.Tmpfs, Size: c.Limits.HomeTmpfsBytes, Reason: "an empty home: only the entries below exist"),
         ];
         AddHomeAllow(m, c);
+        AddAgentBinary(m, c);
         AddLogin(m, c, inSindriHome: false);
         AddMasks(m, c);
         m.AddRange(c.Denied().Select(d => new PlanMount(d.Path, PlanMountKind.Deny, Reason: d.Reason)));
@@ -52,6 +53,18 @@ internal static class PlanMounts
         IEnumerable<HomeAllowEntry> declared = [.. c.Request.Settings?.Fs?.HomeAllow ?? [], .. c.Repo.HomeAllow ?? []];
         m.AddRange(declared.Select(e => new PlanMount($"{c.Home}/{e.Path}", e.Mode == MountMode.ReadWrite ? PlanMountKind.ReadWrite : PlanMountKind.ReadOnly, Reason: "allowed by the profile", Optional: true)));
         m.AddRange((c.Repo.CachePaths ?? []).Select(p => new PlanMount($"{c.Home}/{p}", PlanMountKind.ReadWrite, Reason: "a cache path this repo declares", Optional: true)));
+    }
+
+    // #2149: a link in ~/.local/bin into another home folder dangles in the empty home unless that folder is bound too.
+    private static void AddAgentBinary(List<PlanMount> m, PlanContext c)
+    {
+        foreach (var (link, real) in AgentBinaryTree.Links(c))
+        {
+            if (!m.Exists(x => Covers(x, real, c.Home)))
+            {
+                m.Add(new PlanMount(AgentBinaryTree.Of(c.Home, real), PlanMountKind.ReadOnly, Reason: $"the agent binary's install tree: {link} links into it"));
+            }
+        }
     }
 
     private static void AddLogin(List<PlanMount> m, PlanContext c, bool inSindriHome)

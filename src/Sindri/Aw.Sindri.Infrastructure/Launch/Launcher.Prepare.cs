@@ -4,6 +4,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launch.Argv;
+using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Core.Workflow.Engine;
 
 namespace Aw.Sindri.Infrastructure.Launch;
@@ -146,7 +147,8 @@ internal sealed partial class Launcher
         var policyPath = policyFile.Value;
         var session = request.Mode == LaunchMode.Resume && request.Resume is { } resumed ? resumed : PreChosen(entry);
         var seed = ArgvBuilder.Seed(request.Item) + StepSeed(step);
-        var (mcpPath, mcpArguments) = McpLaunchConfig.Prepare(entry.McpForm, entry.McpForm == McpForm.None ? null : ForStep(await parts.McpFor(request.RepoPath, cancellationToken).ConfigureAwait(false), request), parts.Options.LaunchDirectory, request.Launch);
+        var (staged, stagedArguments) = McpLaunchConfig.Prepare(entry.McpForm, entry.McpForm == McpForm.None ? null : ForStep(await parts.McpFor(request.RepoPath, cancellationToken).ConfigureAwait(false), request), parts.Options.LaunchDirectory, request.Launch);
+        var (mcpPath, mcpArguments) = InSessionHome(staged, stagedArguments, request.Launch);
         var built = ArgvBuilder.Build(entry, request.Mode, new ArgvInputs(request.Item, workDir, SessionName(request.Launch), seed, session, mcpPath, step, policyPath));
         if (built.IsError)
         {
@@ -155,6 +157,19 @@ internal sealed partial class Launcher
 
         IReadOnlyList<string> argv = [.. built.Value, .. mcpArguments];
         return (argv, session, seed);
+    }
+
+    // #2151: a sandboxed agent is given the config's final place, in its read-only session home (the sandbox moves the staged file there once it has made the home, as it does a policy file);
+    // the Sindri-home mask hides launch/, where the file is staged.
+    private (string? Path, IReadOnlyList<string> Arguments) InSessionHome(string? staged, IReadOnlyList<string> arguments, LaunchId launch)
+    {
+        if (staged is null || parts.Sandbox is null || parts.Options.SindriHome is not { } home)
+        {
+            return (staged, arguments);
+        }
+
+        var inside = McpLaunchConfig.PathFor(SessionHomePaths.For(home, launch), launch);
+        return (inside, [.. arguments.Select(a => string.Equals(a, staged, StringComparison.Ordinal) ? inside : a)]);
     }
 
     /// <summary>The Step with its denied paths added: the other worktrees and the holdout store. Only a form that can express a denied read gets them, since a codex entry would refuse the whole Step with SND-LAUNCH-013.</summary>
@@ -249,44 +264,4 @@ internal sealed partial class Launcher
     }
 
     private string GhConfigPath(LaunchId launch) => Path.Combine(parts.Options.LaunchDirectory, launch.Value + ".gh");
-
-    private async ValueTask Cleanup(LaunchId launch)
-    {
-        try
-        {
-            Directory.Delete(GhConfigPath(launch), recursive: true);   // a missing one is fine
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-        {
-            // an empty directory left behind holds nothing
-        }
-
-        LaunchSecrets.Delete(parts.Options.SecretsDirectory, launch);
-        LaunchFileStore.DeleteFlat(parts.Options, launch);
-        LaunchFileStore.DeleteIn(parts.Options.PolicyDirectory, StepPolicyFile.PathFor(parts.Options.PolicyDirectory, launch));
-        CursorPolicyFile.Delete(parts.Options.PolicyDirectory, launch);
-        LaunchFileStore.DeleteIn(parts.Options.LaunchDirectory, McpLaunchConfig.PathFor(parts.Options.LaunchDirectory, launch));
-        _ = await parts.Scratch.Remove(ScratchPath(launch), CancellationToken.None).ConfigureAwait(false);   // the evaluator's checkout; none for any other launch
-        await ReleaseSandbox(launch).ConfigureAwait(false);
-        if (_trialTrees.TryRemove(launch, out var trial))
-        {
-            await LaunchWorktree.Remove(trial.Repo, trial.Worktree, parts.Warn).ConfigureAwait(false);   // after the session is stopped: its files are no longer in use
-        }
-    }
-
-    private string ScratchPath(LaunchId launch) => Path.Combine(parts.Options.ScratchDirectory, "eval-" + launch.Value);
-
-    /// <summary>The start clashed with a session of this launch's name: it is the launch's own and stays untouched. The hash the live wrap checks is put back (and the session answered as started), or, with no hash to put back, the minted pair is removed and the launch fails.</summary>
-    private LaunchResult Clash(LaunchRequest request, AgentEntry entry, ISessionHost host, Prepared prepared, Error clash)
-    {
-        LaunchSecrets.Delete(parts.Options.SecretsDirectory, request.Launch);
-        if (prepared.PriorHash is not { } prior)
-        {
-            return Fail(clash);
-        }
-
-        OwnerOnly.WriteAtomically(LaunchSecrets.PathFor(parts.Options.SecretsDirectory, request.Launch), prior);
-        var session = new HostRef(host.Kind, SessionName(request.Launch));
-        return new StartedLaunch(session, ViewerOutcome.Skipped, host.AttachArgv(session), entry.Source, entry.ArgvHash ?? string.Empty);
-    }
 }

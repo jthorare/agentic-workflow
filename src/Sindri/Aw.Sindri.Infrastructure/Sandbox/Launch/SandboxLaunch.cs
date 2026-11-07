@@ -85,7 +85,7 @@ internal sealed class SandboxLaunch(ISandbox sandbox, ISessionCap cap, ISandboxL
             return checkedPlan.Error;
         }
 
-        var wrapped = sandbox.Wrap(plan, staged.Value.Policy.Apply(argv));   // the policy file now sits in the session home; a Codex Step's -c overrides go after the launcher's own
+        var wrapped = Wrap(plan, staged.Value.Policy.Apply(argv));   // the policy file now sits in the session home; a Codex Step's -c overrides go after the launcher's own
         if (wrapped.IsError)
         {
             return wrapped.Error;
@@ -101,6 +101,10 @@ internal sealed class SandboxLaunch(ISandbox sandbox, ISessionCap cap, ISandboxL
         var scoped = options.Scope is { } scope ? scope(plan.Launch, limits, wrapped.Value) : SystemdScopeArgv.Start(options.SystemdRun, plan.Launch, limits, wrapped.Value);
         return new PreparedSandbox(plan.ToSummary(), scoped, staged.Value.Home, plan.RunDirectory);
     }
+
+    // #2151: a path on the agent's command line that the sandbox hides would start the agent on a missing file, so the launch is refused before it starts.
+    private Result<IReadOnlyList<string>> Wrap(SandboxPlan plan, IReadOnlyList<string> inside) =>
+        PlanArgvPaths.Check(plan, inside) is { } hidden ? hidden : sandbox.Wrap(plan, inside);
 
     private string UnitOf(LaunchId launch) => options.UnitFor is { } unit ? unit(launch) : SystemdScopeArgv.UnitFor(launch);
 
@@ -133,6 +137,12 @@ internal sealed class SandboxLaunch(ISandbox sandbox, ISessionCap cap, ISandboxL
             return home.Error;
         }
 
+        var mcp = MoveMcpConfig(plan, home.Value);
+        if (mcp.IsError)
+        {
+            return mcp.Error;
+        }
+
         var policy = await stages.WritePolicy(request, plan, home.Value, cancellationToken).ConfigureAwait(false);
         if (policy.IsError)
         {
@@ -163,6 +173,25 @@ internal sealed class SandboxLaunch(ISandbox sandbox, ISessionCap cap, ISandboxL
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             return SandboxRefusal.For(SindriErrors.LaunchSelfCheckFailed, SandboxReasons.FsWrite, "the session home could not be made: " + e.Message);
+        }
+    }
+
+    // #2151: the launcher staged the MCP config under launch/ (hidden by the Sindri-home mask) and gave the agent its place in the session home; a launch without one has no staged file.
+    private Result<Unit> MoveMcpConfig(SandboxPlan plan, string sessionHome)
+    {
+        var from = McpLaunchConfig.PathFor(options.LaunchDirectory, plan.Launch);
+        try
+        {
+            if (File.Exists(from))
+            {
+                File.Move(from, McpLaunchConfig.PathFor(sessionHome, plan.Launch), overwrite: true);
+            }
+
+            return Unit.Value;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return SandboxRefusal.For(SindriErrors.LaunchSelfCheckFailed, SandboxReasons.FsWrite, "the MCP config could not be moved into the session home: " + e.Message);
         }
     }
 
