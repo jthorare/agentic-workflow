@@ -94,6 +94,8 @@ public sealed class LibraryRootsGoldenTests
         _ = await client.RemoveLibraryRoot(new Uri("http://127.0.0.1:7410/"), "repo:jthorare/agentic-workflow", approve: true, TestContext.Current.CancellationToken);
 
         Assert.Equal(("DELETE", "/sindri/library/roots/repo%3Ajthorare%2Fagentic-workflow?approve=true"), (handler.Method, handler.Target));
+        var segment = handler.Target["/sindri/library/roots/".Length..handler.Target.IndexOf('?', StringComparison.Ordinal)];
+        Assert.Equal("repo:jthorare/agentic-workflow", Uri.UnescapeDataString(segment));   // the whole name is one segment and comes back as it was
         Assert.Equal("repo%3Ajthorare%2Fagentic-workflow", Uri.EscapeDataString("repo:jthorare/agentic-workflow"));
     }
 

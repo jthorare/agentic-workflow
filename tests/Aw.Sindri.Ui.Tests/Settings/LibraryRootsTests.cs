@@ -557,4 +557,21 @@ public sealed class LibraryRootsTests
 
         Assert.Equal((true, string.Empty, string.Empty, string.Empty), (card.Form.HasFormError, card.Form.NameError, card.Form.PathError, card.Form.DenyError));
     }
+
+    [Fact]
+    public async Task An_answer_with_two_folders_of_one_name_does_not_throw_and_keeps_the_first()
+    {
+        var card = await Shown("ok");
+        var served = System.Text.Json.Nodes.JsonNode.Parse(GoldenFiles.Api("library", "ok"))!;   // why: the golden is a JSON document
+        var roots = served["roots"]!.AsArray();
+        var twin = System.Text.Json.Nodes.JsonNode.Parse(roots[1]!.ToJsonString())!;
+        twin["docs"] = 99;
+        roots.Add(twin);
+        _server.LibraryAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, served.ToJsonString());
+
+        await card.Refresh(_api, Token);
+
+        Assert.Equal(["aw", "work", "inbox", "repo:jthorare/agentic-workflow", "repo:acme/harbor"], card.Rows.Select(r => r.Name), StringComparer.Ordinal);
+        Assert.Equal("scanned 3 min ago, 20 docs, 0 errors", Row(card, "work").StatusText);
+    }
 }

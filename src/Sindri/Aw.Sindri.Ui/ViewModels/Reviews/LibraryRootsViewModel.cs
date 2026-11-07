@@ -151,7 +151,7 @@ internal sealed class LibraryRootsViewModel : ObservableObject
 
         var now = _clock.GetUtcNow();
         var kept = Rows.ToDictionary(r => r.Name, StringComparer.Ordinal);
-        Rows = [.. read.Value.Roots.Select(r => Kept(kept, r, now))];
+        Rows = [.. read.Value.Roots.DistinctBy(r => r.Name, StringComparer.Ordinal).Select(r => Kept(kept, r, now))];   // a name served twice keeps its first folder
         _loaded = true;
         ReadError = string.Empty;
         OnChanged(nameof(IsLoading));
