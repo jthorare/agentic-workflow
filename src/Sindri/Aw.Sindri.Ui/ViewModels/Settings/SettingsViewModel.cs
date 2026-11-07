@@ -1,4 +1,5 @@
 using Aw.Sindri.Ui.Platform;
+using Aw.Sindri.Ui.ViewModels.Linear;
 using Aw.Sindri.Ui.ViewModels.Reviews;
 using Aw.Sindri.Ui.ViewModels.Sandbox;
 using Aw.Sindri.Ui.ViewModels.Setup;
@@ -62,6 +63,12 @@ internal sealed class SettingsViewModel : ObservableObject, IDisposable
 
     /// <summary>The Library card, below the Sandbox section; null when this host has none.</summary>
     public LibraryRootsViewModel? Library { get; init; }
+
+    /// <summary>The Connections → Linear card, below the Library card; null when this host has none.</summary>
+    public LinearConnectionViewModel? LinearConnection { get; init; }
+
+    /// <summary>True when the page has the Linear card.</summary>
+    public bool HasLinearConnection => LinearConnection is not null;
 
     /// <summary>True when the page has the Library card.</summary>
     public bool HasLibrary => Library is not null;
