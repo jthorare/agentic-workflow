@@ -26,7 +26,7 @@ public sealed class ApiGoldenTests
         Assert.Equal(expected, files);
 
         // the pending files are exactly the rows not yet registered
-        var pendingRows = ((IEnumerable<(string Slug, string Scenario)>)[.. ReviewScenarios.All.Where(r => r.Slug == "reviews-pr"), .. LibraryScenarios.All]).Select(r => $"{r.Slug}/{r.Scenario}.json").Order(StringComparer.Ordinal);
+        var pendingRows = ((IEnumerable<(string Slug, string Scenario)>)[.. ReviewScenarios.All.Where(r => r.Slug == "reviews-pr")]).Select(r => $"{r.Slug}/{r.Scenario}.json").Order(StringComparer.Ordinal);
         Assert.Equal(pendingRows, all.Where(f => _pendingGoldenFolders.Any(p => f.StartsWith(p + "/", StringComparison.Ordinal))).Order(StringComparer.Ordinal));
         Assert.DoesNotContain(ApiScenarios.All, r => _pendingGoldenFolders.Contains(r.Slug));
     }

@@ -1,6 +1,5 @@
 using System.Globalization;
 using Aw.Context.Core.Audience;
-using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Library;
 using Aw.Context.Core.Records;
@@ -36,7 +35,7 @@ internal sealed class ContextReviewFacts(IApprovedProfile approvals, ICallerCont
             return SindriErrors.AuthRefused.With("the Reviews list needs a caller");
         }
 
-        var read = await ReadScope(cancellationToken).ConfigureAwait(false);
+        var read = await ReviewScopes.Read(approvals, callers, engine, cancellationToken).ConfigureAwait(false);
         if (read.IsError)
         {
             return read.Error;
@@ -50,30 +49,9 @@ internal sealed class ContextReviewFacts(IApprovedProfile approvals, ICallerCont
             return pulls.Error;
         }
 
-        var libraryFacts = await library.Read(audience, progress.Value.FirstOrDefault(static p => p.Source.Value == LibrarySource), cancellationToken).ConfigureAwait(false);
+        var libraryFacts = await library.Read(settings, scope, audience, progress.Value.FirstOrDefault(static p => p.Source.Value == LibrarySource), cancellationToken).ConfigureAwait(false);
         var github = progress.Value.FirstOrDefault(static p => p.Source.Value == GithubSource);
         return new ReviewFactsSnapshot(pulls.Value, github is null ? null : new ProjectSourceFreshness(github.Source.Value, github.Usable, github.LastSync, github.LastCode), libraryFacts);
-    }
-
-    private async ValueTask<Result<Scoped>> ReadScope(CancellationToken cancellationToken)
-    {
-        var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
-        if (approved.IsError || approved.Value is not { } loaded)
-        {
-            return approved.IsError ? approved.Error : SindriErrors.ProfileNotApproved.With("no profile is approved (fix: sindri profile approve)");
-        }
-
-        // why: the audience rule needs the repos' names, not each repo's index globs, so the entries carry name and path only
-        ProfileRepoEntry[] entries = [.. (loaded.Profile.Repos ?? []).Select(static r => new ProfileRepoEntry(r.Name, r.Path))];
-        var settings = engine.CheckSettings(loaded.Profile.Context, entries);
-        if (settings.IsError)
-        {
-            return settings.Error;
-        }
-
-        var scope = new ContextScope(loaded.Profile.Context, ScopeRules.Usable(entries), Caller(callers.Current));
-        var audience = await AudienceOf(settings.Value, scope, cancellationToken).ConfigureAwait(false);
-        return audience.IsError ? audience.Error : new Scoped(settings.Value, scope, audience.Value);
     }
 
     private async ValueTask<Result<IReadOnlyList<ReviewPull>>> Pulls(IReadOnlyList<string> repos, AudienceScope audience, CancellationToken cancellationToken)
@@ -131,33 +109,4 @@ internal sealed class ContextReviewFacts(IApprovedProfile approvals, ICallerCont
         var claims = await engine.Claims(pr, audience, cancellationToken).ConfigureAwait(false);
         return claims.IsError ? [] : [.. claims.Value.Select(static c => new ReviewClaim(c.Resolution.Ref, c.Resolution.Status == LibraryRefStatus.Resolved))];
     }
-
-    private static async ValueTask<Result<AudienceScope>> AudienceOf(ContextSettings settings, ContextScope scope, CancellationToken cancellationToken)
-    {
-        var names = scope.Repos.Select(static r => r.Name).ToList();
-        var policy = new ProfileAudiencePolicy(settings, names);
-        IEnumerable<ContextRepoName> asked = scope.Caller.Kind == ContextCallerKind.Session ? (scope.Caller.Repo is { } own ? [own] : []) : names;
-        var allowed = new HashSet<AudienceKey>();
-        foreach (var repo in asked)
-        {
-            var one = await policy.For(repo, cancellationToken).ConfigureAwait(false);
-            if (one.IsError)
-            {
-                return one.Error;
-            }
-
-            allowed.UnionWith(one.Value.Allowed);
-        }
-
-        return new AudienceScope(allowed);
-    }
-
-    private static ContextCaller Caller(CallerContext? caller) => caller switch
-    {
-        { Class: CallerClass.Human } => new ContextCaller(ContextCallerKind.Human, Repo: null, ContextClient.Http),
-        { Class: CallerClass.Session } => new ContextCaller(ContextCallerKind.Session, caller.Repo is { } repo && ContextRepoName.TryFrom(repo.Value, out var name) ? name : null, ContextClient.Http),
-        _ => new ContextCaller(ContextCallerKind.Service, Repo: null, ContextClient.Service),
-    };
-
-    private sealed record Scoped(ContextSettings Settings, ContextScope Scope, AudienceScope Audience);
 }

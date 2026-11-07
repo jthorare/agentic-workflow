@@ -1,3 +1,4 @@
+using Aw.Sindri.Features.GetLibrary;
 using Aw.Sindri.Features.ListReviews;
 
 namespace Aw.Sindri.Host.Endpoints;
@@ -12,4 +13,9 @@ internal interface IReviewFencing
     /// <param name="list">The list.</param>
     /// <returns>The JSON answer with PR titles, authors and unreadable folders fenced.</returns>
     public IResult List(ListReviewsResponse list);
+
+    /// <summary>The library page as a session reads it.</summary>
+    /// <param name="library">The page.</param>
+    /// <returns>The JSON answer with file paths and finding texts fenced, and no unreadable folders.</returns>
+    public IResult Library(GetLibraryResponse library);
 }
