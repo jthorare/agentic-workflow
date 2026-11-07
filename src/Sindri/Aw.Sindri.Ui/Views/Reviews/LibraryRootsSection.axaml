@@ -36,8 +36,13 @@
                   </StackPanel>
                   <TextBlock Classes="caption mono subtle" Text="{Binding PathText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
                   <TextBlock Classes="caption" Text="{Binding StatusText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                  <TextBlock Classes="caption subtle" Text="{Binding VaultNoteText}" IsVisible="{Binding HasVaultNote}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+                  <Border Classes="errors-chip" IsVisible="{Binding HasErrors}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.LG}"
+                          Padding="8,2" VerticalAlignment="Center" AutomationProperties.Name="{Binding ErrorsName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                    <TextBlock Classes="caption" Text="{Binding ErrorsText}" AutomationProperties.AccessibilityView="Raw" />
+                  </Border>
                   <Button Classes="command-control" Content="{Binding RemoveText}" IsVisible="{Binding CanRemove}" IsEnabled="{Binding !IsConfirmingRemove}" Click="OnRemoveAsk"
                           AutomationProperties.Name="{Binding RemoveName}" />
                   <Button Classes="command-control" Content="{Binding TurnOffText}" IsVisible="{Binding CanTurnOff}" Click="OnTurnOff" AutomationProperties.Name="{Binding AwName}" />

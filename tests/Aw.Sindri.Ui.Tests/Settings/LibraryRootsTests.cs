@@ -375,4 +375,28 @@ public sealed class LibraryRootsTests
         Assert.Equal("work, vault, ~/Documents/WorkVault, scanned 3 min ago, 20 docs, 0 errors", Row(card, "work").AutomationName);
         Assert.Equal("repo:harbor, from your repos, acme/harbor · docs/**, scanned 3 min ago, 4 docs, 0 errors, set by the repo list", Row(card, "repo:harbor").AutomationName);
     }
+
+    [Fact]
+    public async Task A_folder_with_errors_gets_a_chip_with_a_name_and_one_without_gets_none()
+    {
+        var card = await Shown("with-errors");
+
+        var work = Row(card, "work");
+        Assert.Equal((true, "2 errors", "2 errors in work"), (work.HasErrors, work.ErrorsText, work.ErrorsName));
+        var repo = Row(card, "repo:agentic-workflow");
+        Assert.Equal((true, "1 error", "1 error in repo:agentic-workflow"), (repo.HasErrors, repo.ErrorsText, repo.ErrorsName));
+        Assert.False(Row(card, "aw").HasErrors);
+        Assert.False(Row(card, "inbox").HasErrors);
+    }
+
+    [Fact]
+    public async Task Only_vault_rows_say_who_can_read_their_docs()
+    {
+        var card = await Shown();
+
+        Assert.Equal(
+            [("aw", false), ("work", true), ("inbox", true), ("repo:agentic-workflow", false), ("repo:harbor", false)],
+            card.Rows.Select(r => (r.Name, r.HasVaultNote)));
+        Assert.Equal(Labels.LibraryFoldersVaultNote, Row(card, "work").VaultNoteText);
+    }
 }

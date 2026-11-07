@@ -26,6 +26,9 @@ internal sealed class LibraryFolderViewModel : ObservableObject
         IsUnreadable = folder.Unreadable is { Length: > 0 };
         IsReading = !IsOff && !IsUnreadable && folder.ScannedAt is null;
         StatusText = Status(folder, now);
+        ErrorsText = Labels.LibraryFoldersErrors(folder.Errors);
+        ErrorsName = Labels.LibraryFoldersErrorsName(folder.Name, folder.Errors);
+        HasErrors = folder.Errors > 0;
         CanRemove = string.Equals(folder.Kind, Vault, StringComparison.Ordinal);
         CanTurnOff = string.Equals(folder.Kind, Aw, StringComparison.Ordinal) && folder.On;
         CanTurnOn = IsOff;
@@ -53,6 +56,23 @@ internal sealed class LibraryFolderViewModel : ObservableObject
 
     /// <summary>True for the aw folder turned off.</summary>
     public bool IsOff { get; }
+
+    /// <summary>True when docs of the folder have errors: the chip shows.</summary>
+    public bool HasErrors { get; }
+
+    /// <summary>The chip's words ("2 errors").</summary>
+    public string ErrorsText { get; }
+
+    /// <summary>The chip's screen-reader name ("2 errors in work").</summary>
+    public string ErrorsName { get; }
+
+    /// <summary>True for a vault: its row says who can read its docs.</summary>
+    public bool HasVaultNote => CanRemove;
+
+    /// <summary>The line beside a vault.</summary>
+#pragma warning disable CA1822, MA0041 // why: the view binds it as an instance property
+    public string VaultNoteText => Labels.LibraryFoldersVaultNote;
+#pragma warning restore CA1822, MA0041
 
     /// <summary>True for a vault: it can be removed.</summary>
     public bool CanRemove { get; }

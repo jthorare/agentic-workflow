@@ -46,7 +46,7 @@ internal static partial class Labels
     internal const string LibraryFoldersFormNote = "Name: lowercase letters, digits and \"-\". The change asks for your approval; as the only waiting change it approves in one click. Docs naming one synced repo are visible to that repo's agent sessions.";
 
     /// <summary>The form's save button.</summary>
-    internal const string LibraryFoldersSave = "Save and approve";
+    internal const string LibraryFoldersSave = "Add and approve";
 
     /// <summary>The save button while the call is on its way.</summary>
     internal const string LibraryFoldersSaving = "Saving…";
@@ -75,6 +75,20 @@ internal static partial class Labels
     /// <summary>The aw folder while it is turned off.</summary>
     internal const string LibraryFoldersOff = "turned off";
 
+    /// <summary>The line beside each vault: who can read its docs.</summary>
+    internal const string LibraryFoldersVaultNote = "Docs naming one synced repo are visible to that repo's agent sessions.";
+
+    /// <summary>The errors chip of a folder.</summary>
+    /// <param name="errors">How many docs have an error.</param>
+    /// <returns>"1 error" or "2 errors".</returns>
+    internal static string LibraryFoldersErrors(int errors) => string.Create(CultureInfo.InvariantCulture, $"{errors} {(errors == 1 ? "error" : "errors")}");
+
+    /// <summary>The errors chip's screen-reader name.</summary>
+    /// <param name="name">The folder's name.</param>
+    /// <param name="errors">How many docs have an error.</param>
+    /// <returns>"2 errors in work".</returns>
+    internal static string LibraryFoldersErrorsName(string name, int errors) => LibraryFoldersErrors(errors) + " in " + name;
+
     /// <summary>The remove confirmation's question.</summary>
     /// <param name="name">The vault's name.</param>
     /// <returns>The words.</returns>
@@ -96,7 +110,7 @@ internal static partial class Labels
     /// <param name="errors">The docs with an error.</param>
     /// <returns>"scanned 3 min ago, 9 docs, 0 errors".</returns>
     internal static string LibraryFoldersScanned(TimeSpan age, int docs, int errors) =>
-        string.Create(CultureInfo.InvariantCulture, $"scanned {LibraryFoldersAgo(age)}, {docs} {(docs == 1 ? "doc" : "docs")}, {errors} {(errors == 1 ? "error" : "errors")}");
+        string.Create(CultureInfo.InvariantCulture, $"scanned {LibraryFoldersAgo(age)}, {docs} {(docs == 1 ? "doc" : "docs")}, {LibraryFoldersErrors(errors)}");
 
     /// <summary>A folder that can't be read.</summary>
     /// <param name="reason">Sindri's reason.</param>
