@@ -3,7 +3,7 @@ using Aw.Kernel;
 
 namespace Aw.Context.Core.Linear;
 
-/// <summary>The checks of a Linear write that Context makes before anything is sent (Linear hub spec 2026-11-04, input limits, §9): text limits, an empty change, an attachment's url and title. Each refusal is SND-LINEAR-015 reading 'Not sent: <detail>. Nothing was changed.'; 'Linear said no: ...' stays for Linear's own refusal. Lengths count UTF-16 characters.</summary>
+/// <summary>The checks of a Linear write that Context makes before anything is sent (Linear hub spec 2026-11-04, input limits, §9): text limits, an empty change, an attachment's url and title. Each refusal is SND-LINEAR-015 reading 'Not sent: (the reason). Nothing was changed.'; 'Linear said no: ...' stays for Linear's own refusal. Lengths count UTF-16 characters.</summary>
 public static class LinearWriteLimits
 {
     /// <summary>The longest title.</summary>

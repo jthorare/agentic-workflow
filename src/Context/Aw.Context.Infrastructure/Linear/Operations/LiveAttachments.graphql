@@ -1,0 +1,7 @@
+query LiveAttachments($id: String!) {
+  issue(id: $id) {
+    id identifier title updatedAt
+    team { id key }
+    attachments(first: 250) { nodes { id url } }
+  }
+}
