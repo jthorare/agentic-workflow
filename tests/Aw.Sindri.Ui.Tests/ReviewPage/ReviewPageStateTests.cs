@@ -148,4 +148,48 @@ public sealed class ReviewPageStateTests
         Assert.Equal((false, true), (page.IsYours, page.FixTarget!.PostsThreads));
         Assert.Equal((true, true, string.Empty), (page.ApproveEnabled, page.RequestChangesEnabled, page.OwnPrText));   // spec §16 pick 4: disabled only on the owner's own PR
     }
+
+    [Fact]
+    public async Task Opening_another_PR_empties_the_old_PRs_header_and_buttons_until_its_answer()
+    {
+        var page = await _f.Opened(Token);
+        _ = page.PressDiffKey("j", focusInDiff: true, textBoxHasFocus: false);
+        _f.Server.ReviewPageGate = new TaskCompletionSource();
+
+        var open = page.Open(ReviewPageFixture.Url, "acme/web", 9, Token);
+
+        Assert.Equal((ReviewPageState.Loading, string.Empty, string.Empty, string.Empty, string.Empty), (page.State, page.Title, page.Author, page.ReviewUrl, page.Ref));
+        Assert.Equal((false, false, "https://github.com/acme/web/pull/9"), (page.ApproveEnabled, page.RequestChangesEnabled, page.PrUrl));
+        Assert.Empty(page.IssueKeys);
+        Assert.Null(page.FixTarget);
+        var asked = 0;
+        page.FixRequested += (_, _) => asked++;
+        Assert.False(page.PressDiffKey("c", focusInDiff: true, textBoxHasFocus: false));
+        Assert.Equal(0, asked);
+        _f.Server.ReviewPageGate.SetResult();
+        await open;
+    }
+
+    [Theory]
+    [InlineData("not-found")]
+    [InlineData("not-synced")]
+    [InlineData("no-login")]
+    public async Task Every_refusal_offers_the_PR_on_GitHub_from_its_repo_and_number(string scenario)
+    {
+        _f.Refuse(scenario);
+
+        var page = await _f.Opened(Token);
+
+        Assert.Equal("https://github.com/acme/api/pull/2071", page.PrUrl);
+    }
+
+    [Fact]
+    public async Task Offline_with_nothing_cached_offers_the_PR_on_GitHub()
+    {
+        _f.Server.ReviewPageAnswer = RouteAnswer.Problem(HttpStatusCode.ServiceUnavailable, "SND-REVIEW-503", "Offline, and this PR isn't cached yet");
+
+        var page = await _f.Opened(Token);
+
+        Assert.Equal("https://github.com/acme/api/pull/2071", page.PrUrl);
+    }
 }

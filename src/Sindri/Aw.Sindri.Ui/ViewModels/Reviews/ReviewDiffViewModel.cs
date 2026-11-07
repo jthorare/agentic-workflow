@@ -19,7 +19,11 @@ internal sealed class ReviewDiffViewModel : ObservableObject
     public IReadOnlyList<ReviewDiffGroupViewModel> Groups { get; private set => Set(ref field, value); } = [];
 
     /// <summary>Back to the placeholder while the page is read.</summary>
-    internal void ShowLoading() => (State, Text, CountText, CappedText, Groups) = (ReviewPanelState.Loading, Labels.ReviewDiffReading, string.Empty, string.Empty, []);
+    internal void ShowLoading()
+    {
+        (State, Text, CountText, CappedText, Groups) = (ReviewPanelState.Loading, Labels.ReviewDiffReading, string.Empty, string.Empty, []);
+        (FocusedFile, FocusedHunk, FocusedLine) = (null, null, null);
+    }
 
     /// <summary>Shows the served diff.</summary>
     /// <param name="diff">The diff.</param>

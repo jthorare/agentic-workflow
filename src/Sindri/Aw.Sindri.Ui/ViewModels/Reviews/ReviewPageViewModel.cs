@@ -232,6 +232,7 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
     {
         State = ReviewPageState.Loading;
         (StateHeading, StateText) = (string.Empty, string.Empty);
+        ClearHeader();
         Patch(Strip, [
             new ReviewStripSegmentViewModel(string.Empty, Labels.ReviewStripReadingChecks, StateGlyph.None, isLoading: true),
             new ReviewStripSegmentViewModel(string.Empty, Labels.ReviewStripReadingClaim, StateGlyph.None, isLoading: true),
@@ -240,6 +241,18 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
         ]);
         Patch(Panels, [.. _defaultOrder.Select(id => new ReviewPanelViewModel(id, ReviewPanelState.Loading, Labels.ReviewPanelReading, string.Empty, collapsed: false))]);
         Diff.ShowLoading();
+    }
+
+    // the previous PR's header must not show over the next PR's loading page; the PR's GitHub link comes from repo and number, so every refusal can offer it
+    private void ClearHeader()
+    {
+        (Title, Author, HeadText, Branch, Ref, SettingsText) = (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+        PrUrl = _repo.Length > 0 ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"https://github.com/{_repo}/pull/{_number}") : string.Empty;
+        (ReviewUrl, OwnPrText) = (string.Empty, string.Empty);
+        (IssueKeys, IsDraft, IsYours) = ([], false, false);
+        (OfflineText, MovingText) = (null, null);
+        (ApproveEnabled, RequestChangesEnabled) = (false, false);
+        FixTarget = null;
     }
 
     private static readonly string[] _defaultOrder = ["requiredChecks", "docMap", "testPlan", "ci", "evidence", "risk", "conversation"];
