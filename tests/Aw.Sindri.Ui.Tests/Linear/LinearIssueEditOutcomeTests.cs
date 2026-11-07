@@ -233,5 +233,22 @@ public sealed class LinearIssueEditOutcomeTests
         await sheet.Save(Token);
 
         Assert.Equal((true, false), (sheet.HasConflict, sheet.CanEdit));
+        await sheet.SaveMineAnyway(Token);
+        _ = Assert.Single(_f.Server.LinearChanges);   // the 409's request only: a read-only form sends nothing more
+    }
+
+    [Fact]
+    public async Task A_refresh_asked_before_a_save_and_answered_after_it_does_not_draw_the_old_issue()
+    {
+        var sheet = await _f.Opened(Token);
+        _f.Server.LinearIssueGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _f.Pick("State", "In Review");
+        var refresh = sheet.Refresh(LinearIssueEditFixture.Url, Token);
+
+        await sheet.Save(Token);
+        _f.Server.LinearIssueGate.SetResult();
+        await refresh;
+
+        Assert.Equal("In Review", _f.Field("State").Selected?.Name);
     }
 }

@@ -1,4 +1,5 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.ViewModels.Instance;
 using Aw.Sindri.Ui.ViewModels.Linear;
 
 namespace Aw.Sindri.Ui.Tests.Linear;
@@ -88,5 +89,60 @@ public sealed class LinearIssueEditDiscardTests
 
         Assert.True(sheet.Escape());
         Assert.Equal("Your edits to Title aren't saved yet.", sheet.DiscardBody);
+    }
+
+    [Fact]
+    public async Task A_save_that_applies_while_the_question_shows_clears_it_and_a_later_Discard_does_nothing()
+    {
+        var sheet = await _f.Opened(Token);
+        var left = 0;
+        sheet.LeaveConfirmed += (_, _) => left++;
+        _f.Pick("State", "In Review");
+        Assert.True(sheet.Leaving(next: null));
+
+        await sheet.Save(Token);
+        sheet.Discard();
+
+        Assert.Equal((false, 0), (sheet.IsConfirmingDiscard, left));
+    }
+
+    [Fact]
+    public async Task Putting_the_edits_back_while_the_question_shows_clears_it()
+    {
+        var sheet = await _f.Opened(Token);
+        _f.Pick("Priority", "High");
+        Assert.True(sheet.Leaving(next: null));
+
+        _f.Pick("Priority", "Urgent");
+
+        Assert.False(sheet.IsConfirmingDiscard);
+    }
+
+    [Fact]
+    public async Task Discard_does_nothing_while_a_save_is_in_flight()
+    {
+        var sheet = await _f.Opened(Token);
+        _f.Server.LinearChangeGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _f.Pick("Priority", "High");
+        Assert.True(sheet.Leaving(next: null));
+
+        var saving = sheet.Save(Token);
+        sheet.Discard();
+
+        Assert.Equal((true, true, true), (sheet.IsConfirmingDiscard, sheet.HasChanges, sheet.IsLocked));
+        _f.Server.LinearChangeGate.SetResult();
+        await saving;
+    }
+
+    [Fact]
+    public async Task A_refresh_that_answers_not_synced_keeps_the_issue_and_the_edits()
+    {
+        var sheet = await _f.Opened(Token);
+        _f.Pick("Priority", "High");
+        _f.Server.LinearIssueAnswer = LinearIssueSheetFixture.NotFound();
+
+        await sheet.Refresh(LinearIssueEditFixture.Url, Token);
+
+        Assert.Equal((FramePhase.Shown, "Retry budget for the sync worker", "High", true), (sheet.Phase, sheet.Title, _f.Field("Priority").Selected?.Name, sheet.HasChanges));
     }
 }
