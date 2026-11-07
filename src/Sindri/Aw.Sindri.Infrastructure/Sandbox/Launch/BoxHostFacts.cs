@@ -18,7 +18,7 @@ internal static class BoxHostFacts
         ArgumentNullException.ThrowIfNull(machine);
         var home = environment("HOME") is { Length: > 0 } configured ? configured : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var state = StateDir(environment, home);
-        return new SandboxHostFacts(home, state, sindriHome, CsBinDir(state), OwnUid.Read(), machine.RamBytes, machine.Cores, IsMacOs: OperatingSystem.IsMacOS(), ProcessEnvironment(), OtherHomes(Path.GetDirectoryName(home) ?? "/home", home));
+        return new SandboxHostFacts(home, state, sindriHome, CsBinDir(state), OwnUid.Read(), machine.RamBytes, machine.Cores, IsMacOs: OperatingSystem.IsMacOS(), ProcessEnvironment(), OtherHomes(Path.GetDirectoryName(home) ?? "/home", home), BinaryLinks: AgentBinaryLinks(environment("PATH") ?? string.Empty));
     }
 
     /// <summary>Gets AW_STATE_DIR, or ~/.agentic-workflow.</summary>
@@ -49,6 +49,34 @@ internal static class BoxHostFacts
         }
 
         return [.. Directory.EnumerateDirectories(homesRoot).Where(d => !string.Equals(d, ownHome, StringComparison.Ordinal)).Order(StringComparer.Ordinal)];
+    }
+
+    /// <summary>Resolves each agent binary on PATH that is a symlink to its real path (#2149).</summary>
+    /// <param name="path">The PATH value.</param>
+    /// <returns>The PATH entry's file mapped to its real path, for the links only.</returns>
+    internal static IReadOnlyDictionary<string, string> AgentBinaryLinks(string path)
+    {
+        var links = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var name in new[] { "claude", "codex" })
+        {
+            foreach (var dir in path.Split(':', StringSplitOptions.RemoveEmptyEntries).Where(d => d[0] == '/'))
+            {
+                var file = new FileInfo(Path.Combine(dir, name));
+                if (!file.Exists)
+                {
+                    continue;
+                }
+
+                if (file.LinkTarget is not null && file.ResolveLinkTarget(returnFinalTarget: true) is { Exists: true } real)
+                {
+                    links[file.FullName] = real.FullName;
+                }
+
+                break;
+            }
+        }
+
+        return links;
     }
 
     private static Dictionary<string, string> ProcessEnvironment()
