@@ -4,5 +4,6 @@
   "postCode": null,
   "postError": null,
   "went": "babysitter",
-  "session": null
+  "session": null,
+  "fileError": null
 }

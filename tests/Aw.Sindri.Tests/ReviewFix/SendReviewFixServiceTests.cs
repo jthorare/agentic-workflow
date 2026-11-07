@@ -29,6 +29,7 @@ public sealed class SendReviewFixServiceTests
     private readonly FlakyFiles _flaky;
     private readonly Items _items = new();
     private readonly SendReviewFixService _service;
+    private bool _leased;
 
     public SendReviewFixServiceTests()
     {
@@ -50,7 +51,13 @@ public sealed class SendReviewFixServiceTests
     {
         var profile = ProfileRules.Check(new SindriProfile(1, "thor", Review: new PrReviewSettings(Owner))).Value;
         _ = await _h.Profiles.Save(new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), "/home/profile.yaml"), Token);
-        _ = await _h.HoldLease();
+        if (!_leased)
+        {
+            // why: a retry sends twice in one test, and the lease can be taken only once per process
+            _ = await _h.HoldLease();
+            _leased = true;
+        }
+
         using var caller = _h.Callers.Enter(new CallerContext(CallerClass.Human, Terminal: false, "human:test", _h.Ids.New<CommandId>(), _h.Ids.New<CorrelationId>(), Repo: null));
         return await _service.Handle(new SendReviewFixRequest("acme", "api", 1, "line", "Guard the null.", _head, Source: null, "src/Sync.cs", 42, Side: null, item), Token);
     }

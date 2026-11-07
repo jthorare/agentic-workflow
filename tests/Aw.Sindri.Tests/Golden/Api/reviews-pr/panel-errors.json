@@ -105,8 +105,8 @@
     },
     {
       "id": "risk",
-      "state": "empty",
-      "text": "No risky paths touched",
+      "state": "error",
+      "text": "Couldn't read the files: github returned 502",
       "data": {
         "hits": []
       }

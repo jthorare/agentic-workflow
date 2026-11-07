@@ -4,5 +4,6 @@
   "postCode": "SND-REVIEW-006",
   "postError": "Item ITM-00000000000000000000000000000011 created in Work; posting to #1 failed: the PR's head moved since the finding was written",
   "went": "waiting",
-  "session": null
+  "session": null,
+  "fileError": null
 }

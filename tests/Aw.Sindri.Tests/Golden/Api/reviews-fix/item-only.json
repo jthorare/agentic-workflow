@@ -4,5 +4,6 @@
   "postCode": null,
   "postError": null,
   "went": "waiting",
-  "session": null
+  "session": null,
+  "fileError": null
 }
