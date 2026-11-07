@@ -90,7 +90,7 @@ What exists today (main bf83261):
 |---|---|---|---|
 | **Todo page** (new, `PageId.Todo`, deep link `sindri://todo`) | `GET /sindri/todos` (new), plus `needs-you`, `reviews`, `linear/issues?group=assigned` (existing) for From elsewhere | todo writes | the top-bar tab after Home, `G T`, ⌘K "Todo" |
 | **Quick-add box** (new, an overlay at the top of the window) | — | `POST /sindri/todos` | `N` on any page except inside a text box; ⌘K "New todo" |
-| **Home** (existing) | one new line, "3 todos due today · 1 overdue", which opens Todo | none | Home |
+| **Home** (existing) | one new line, "1 due today · 1 overdue" (the same two numbers as the tab's count), which opens Todo | none | Home |
 | **Tray** (existing) | the tooltip gains "1 overdue todo" when there is one | none | — |
 
 ### 3.1 The page
@@ -130,8 +130,8 @@ Ph0 checks `N`, `X`, `D` and `O` are free on every page they apply to, and that 
 
 | Surface | Loading | Empty | Error / slow | Success |
 |---|---|---|---|---|
-| Todo page | skeleton rows, first load only | no todos at all: "Nothing on your list. Press N to add one." From elsewhere, nothing waiting: hidden | Sindri not running: the existing Not running card. One From elsewhere source failing: that group says "Couldn't load Reviews" with Retry, and the rest stay | the groups |
-| Quick-add | — | Enter on empty text does nothing | save failed: the box stays open with the text and the reason (§8), Enter retries | the box closes, toast "Added: due Fri" with **Show** (opens Todo at the row) |
+| Todo page | skeleton rows, first load only (while Sindri isn't running, the tab shows no count) | no todos at all: "Nothing on your list. Press N to add one." From elsewhere, nothing waiting: hidden | Sindri not running: the existing Not running card. One From elsewhere source failing: that group says "Couldn't load Reviews" with Retry, and the rest stay | the groups |
+| Quick-add | — | Enter on empty text does nothing | save failed: the box stays open with the text and the reason (§6's text, or "Sindri isn't answering" when the call failed), Enter retries | the box closes, toast "Added: due Fri" with **Show** (opens Todo at the row) |
 | Row edit | "Saving…" after 300 ms | — | `SND-TODO-409`: "Changed somewhere else. Here's the latest", the row reloads, the edit stays in the field | the row shows the new values, focus stays on it |
 | Check off / delete | instant, rolled back on failure | — | failure: the row comes back with "Couldn't save: <reason>" | toast with Undo |
 
@@ -248,4 +248,5 @@ Each is a row in `SindriErrors.cs` and `docs/csharp/sindri.md`'s error table.
 
 ## Revision log
 
+- **Rev 1.1** (2026-11-07): mockups added (`mockups/`, ten tabs fit at 1,000 px with 76 px spare at 100% text; at 130% every tab count hides at the last step-down); §3.4 save-failed reason and Not-running tab count, Home's line matches the tab count.
 - **Rev 1** (2026-11-07): first draft on the recommendations above, before the owner's answers.
