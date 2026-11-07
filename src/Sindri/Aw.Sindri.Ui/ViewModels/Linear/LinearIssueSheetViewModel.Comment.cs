@@ -1,4 +1,5 @@
 using Aw.Kernel;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Linear;
 using Aw.Sindri.Ui.ViewModels.Run;
 
@@ -36,6 +37,10 @@ internal sealed partial class LinearIssueSheetViewModel
             if (!IsCommentLocked)
             {
                 CommentError = string.Empty;
+                if (value.Length > 0)
+                {
+                    CommentStatus = string.Empty;   // "Posted" is about the last comment, not the one being typed
+                }
             }
 
             NotifyComment();
@@ -204,6 +209,15 @@ internal sealed partial class LinearIssueSheetViewModel
         if (string.Equals(error.Code, "SND-AUTH-002", StringComparison.Ordinal))
         {
             CanEdit = false;   // a session may not write: the box reads as off, with no banner
+            return;
+        }
+
+        // A comment is a create: with no answer from Sindri (its deadline, a reset mid-answer) the POST may have gone through, and
+        // SND-UI-002 can't say it didn't. So it's unknown, the box stays locked, and Retry sends the same client id.
+        if (string.Equals(error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal))
+        {
+            CommentUnknown = true;
+            CommentStatus = Labels.LinearCommentUnknown;
             return;
         }
 
