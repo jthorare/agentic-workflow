@@ -41,9 +41,21 @@ internal sealed class ContextLibraryPageFacts(IApprovedProfile approvals, ICalle
         var roots = await engine.Roots(scope, cancellationToken).ConfigureAwait(false);
         var unreadable = roots.IsError ? [] : roots.Value.Where(static r => r.State == LibraryRootState.Unreadable).Select(r => new ReviewUnreadableRoot(folders.Root(r.Root), r.Reason ?? "it can't be read")).ToList();
 
-        // why: Context lists a near miss only as a count on its root today; it adds the finding (rule, line, message, fix) to LibraryRootStatus in its own change, and this list starts then
-        var listed = roots.IsError || read.Value.Scope.Caller.Kind == ContextCallerKind.Session ? [] : await RootFacts(roots.Value, new RootCounts(docs.Value), read.Value, folders, cancellationToken).ConfigureAwait(false);
-        return new LibraryPageFacts(docs.Value.Count, broken, NearMisses: [], unreadable, listed);
+        // why: a near miss names a file and can quote its text, and a root's folder is the owner's, so a session gets neither even when Context answers it
+        var owner = !roots.IsError && read.Value.Scope.Caller.Kind != ContextCallerKind.Session;
+        var listed = owner ? await RootFacts(roots.Value, new RootCounts(docs.Value), read.Value, folders, cancellationToken).ConfigureAwait(false) : [];
+        var misses = owner ? NearMisses(roots.Value, folders) : [];
+        return new LibraryPageFacts(docs.Value.Count, broken, misses, unreadable, listed);
+    }
+
+    // why: a finding's path is relative to the folder the pass read (LibraryRootStatus.Path), which may differ from the profile's now; the profile's folder stands in before the first pass
+    private static List<LibraryNearMiss> NearMisses(IReadOnlyList<LibraryRootStatus> states, LibraryFolders folders) =>
+        [.. states.SelectMany(s => s.NearMissFindings.Select(f => NearMiss(f, s.Path is { } read ? folders.Show(read) : folders.Root(s.Root)))).OrderBy(static m => m.Path, StringComparer.Ordinal)];
+
+    private static LibraryNearMiss NearMiss(DesignDocFinding finding, string folder)
+    {
+        var path = folder.TrimEnd('/') + "/" + finding.Path;
+        return new LibraryNearMiss(path, finding.Error.Code, LibraryErrorText.Of(finding.Error, finding.Path, path));
     }
 
     // why: the aw root and the vaults come from the feed's root states (what its last pass found); a repo root has no state of its own, so its docs and errors are counted from the docs the caller may read and its scan time is the repo-docs source's last sync
