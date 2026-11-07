@@ -22,6 +22,10 @@ public sealed class LinearConnectionViewTests : FrameHost
     private static T Find<T>(Visual within, string name)
         where T : Control => within.GetVisualDescendants().OfType<T>().Single(c => string.Equals(c.Name, name, StringComparison.Ordinal));
 
+    // False until the box is in the tree: the Settings page draws it after Connect switches to it.
+    private static bool Focused(Visual within, string name) =>
+        within.GetVisualDescendants().OfType<TextBox>().Any(c => string.Equals(c.Name, name, StringComparison.Ordinal) && c.IsFocused);
+
     private (Window Window, SettingsViewModel Settings) ShowSettings(LinearConnectionViewModel card)
     {
         var settings = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), Motion, _ => { }) { LinearConnection = card };
@@ -106,7 +110,7 @@ public sealed class LinearConnectionViewTests : FrameHost
         window.SettingsSlot.Content = new SettingsView { DataContext = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), Motion, _ => { }, shell.Setup) { LinearConnection = shell.LinearConnection } };
 
         shell.IssueSheet.Connect();
-        await Until(window, () => Find<TextBox>(window, "LinearReadKey").IsFocused);
+        await Until(window, () => Focused(window, "LinearReadKey"), "the read key box never took focus");
 
         Assert.True(shell.IsSettings);
         Assert.True(Find<Control>(window, "LinearConnectionCard").IsEffectivelyVisible);
@@ -120,7 +124,7 @@ public sealed class LinearConnectionViewTests : FrameHost
         window.SettingsSlot.Content = new SettingsView { DataContext = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), Motion, _ => { }, shell.Setup) { LinearConnection = shell.LinearConnection } };
 
         shell.IssueSheet.Connect();
-        await Until(window, () => Find<TextBox>(window, "LinearWriteKey").IsFocused);
+        await Until(window, () => Focused(window, "LinearWriteKey"), "the write key box never took focus");
 
         Assert.True(shell.IsSettings);
     });

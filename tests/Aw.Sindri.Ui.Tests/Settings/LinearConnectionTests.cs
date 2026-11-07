@@ -51,7 +51,9 @@ public sealed class LinearConnectionTests
     {
         var card = await Listed();
 
-        Assert.Equal((["lin_api_secret"], ["ENG", "OPS"], [false, false], true), (_server.LinearTeamKeys, card.Teams.Select(t => t.Key), card.Teams.Select(t => t.IsTicked), card.ShowTeams));
+        Assert.Equal(["lin_api_secret"], _server.LinearTeamKeys, StringComparer.Ordinal);
+        Assert.Equal(["ENG", "OPS"], card.Teams.Select(t => t.Key), StringComparer.Ordinal);
+        Assert.Equal((false, false, true), (card.Teams[0].IsTicked, card.Teams[1].IsTicked, card.ShowTeams));
         Assert.Equal(["Engineering ENG", "Operations OPS"], card.Teams.Select(t => t.AutomationName), StringComparer.Ordinal);
     }
 
@@ -91,7 +93,9 @@ public sealed class LinearConnectionTests
 
         await card.SaveRead(Token);
 
-        Assert.Equal([new("read", "lin_api_secret", ["OPS"])], _server.LinearConnects);
+        var sent = Assert.Single(_server.LinearConnects);
+        Assert.Equal(("read", "lin_api_secret"), (sent.Kind, sent.Key));
+        Assert.Equal(["OPS"], sent.Teams, StringComparer.Ordinal);
         Assert.Equal((string.Empty, "Reading ENG, OPS · read-only", false, true, false), (card.ReadKey, card.Summary, card.HasError, card.ShowReadSet, card.HasWaiting));
         Assert.Equal($"Read access: connected · checked {CheckedAt}", card.ReadAccessText);
     }
