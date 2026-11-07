@@ -431,6 +431,8 @@ tmux new-session -d -s t1-api "env AW_LAUNCHER_CONFIG=$WORK/l4.json AW_META_NO_S
 waitfor '[ "$(tmux display-message -p -t =t1-api: "#{pane_current_command}")" = codex ]'
 check "a non-Claude lane's pane is named after the agent (processName)" "$(tmux display-message -p -t =t1-api: '#{pane_current_command}')" "codex"
 tmux kill-session -t =t1-api 2> /dev/null
+# why: the pty case below finds its agent as the first "codex 60"; under load this case's agent can still be dying (#2158: 0:alive)
+waitfor '! pgrep -f "^codex 60$" > /dev/null'
 # The id watcher ends with the lane: a real hangup (the pty closed, as when a terminal pane is killed) must take the agent, the lane
 # script and the watcher with it, and a watcher must not outlive its lane to hold the team start lock.
 if command -v script > /dev/null 2>&1; then
