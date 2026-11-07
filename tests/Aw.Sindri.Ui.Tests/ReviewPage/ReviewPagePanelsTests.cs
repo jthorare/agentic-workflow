@@ -96,6 +96,23 @@ public sealed class ReviewPagePanelsTests
         Assert.Equal("https://github.com/acme/api/actions/runs/101", runs[0].Url);
     }
 
+    [Theory]
+    [InlineData("skipped", "neutral", "Ok", "Ok", "Ok")]
+    [InlineData("cancelled", "neutral", "Down", "Ok", "Down")]
+    [InlineData("skipped", "timed_out", "Ok", "Down", "Down")]
+    public async Task Skipped_and_neutral_runs_are_fine_and_cancelled_and_timed_out_runs_are_down_in_the_panel_and_the_strip(string first, string second, string firstGlyph, string secondGlyph, string strip)
+    {
+        var page = await _f.Opened("full", json =>
+        {
+            var runs = json["panels"]!.AsArray().Single(p => (string?)p!["id"] == "ci")!["data"]!["runs"]!.AsArray();
+            runs[0]!["conclusion"] = first;
+            runs[1]!["conclusion"] = second;
+        }, Token);
+
+        Assert.Equal([firstGlyph, secondGlyph], Panel(page, "ci").Lines.Select(l => l.Glyph.ToString()), StringComparer.Ordinal);
+        Assert.Equal(strip, page.Strip.Single(s => string.Equals(s.Panel, "ci", StringComparison.Ordinal)).Glyph.ToString());
+    }
+
     [Fact]
     public async Task The_evidence_risk_and_conversation_panels_list_their_rows()
     {

@@ -41,7 +41,7 @@ internal sealed partial class ReviewPageViewModel
         { State: "error" } => StateGlyph.Down,
         { Id: "requiredChecks", Data.Checks: { } checks } => checks.Any(c => string.Equals(c.Status, "fail", StringComparison.Ordinal)) ? StateGlyph.Down : checks.Any(c => !string.Equals(c.Status, "pass", StringComparison.Ordinal)) ? StateGlyph.Warning : StateGlyph.Ok,
         { Id: "risk", Data.Hits.Count: > 0 } => StateGlyph.Warning,
-        { Id: "ci", Data.Runs: { } runs } => runs.Any(r => string.Equals(r.Conclusion, "failure", StringComparison.Ordinal)) ? StateGlyph.Down : runs.Any(r => !string.Equals(r.Status, "completed", StringComparison.Ordinal)) ? StateGlyph.Stale : StateGlyph.Ok,
+        { Id: "ci", Data.Runs: { } runs } => runs.Any(r => RunGlyph(r) == StateGlyph.Down) ? StateGlyph.Down : runs.Any(r => RunGlyph(r) == StateGlyph.Stale) ? StateGlyph.Stale : StateGlyph.Ok,
         _ => StateGlyph.Ok,
     };
 
@@ -62,6 +62,11 @@ internal sealed partial class ReviewPageViewModel
         return new ReviewPanelLine(where, first, Url: null, thread.Resolved ? StateGlyph.Ok : StateGlyph.None);
     }
 
+    // One classifier for a run, in the strip and in the CI panel: skipped and neutral are fine, failed, cancelled and timed-out runs are down, a run still going is stale.
     private static StateGlyph RunGlyph(ReviewRunView run) =>
-        !string.Equals(run.Status, "completed", StringComparison.Ordinal) ? StateGlyph.Stale : string.Equals(run.Conclusion, "success", StringComparison.Ordinal) ? StateGlyph.Ok : StateGlyph.Down;
+        !string.Equals(run.Status, "completed", StringComparison.Ordinal) ? StateGlyph.Stale : run.Conclusion switch
+        {
+            "success" or "skipped" or "neutral" => StateGlyph.Ok,
+            _ => StateGlyph.Down,
+        };
 }
