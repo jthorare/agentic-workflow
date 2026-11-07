@@ -24,7 +24,7 @@ internal static class ReviewScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("reviews", "some"), ("reviews", "empty"), ("reviews", "no-login"), ("reviews", "github-failing"), ("reviews", "before-reviewers"), ("reviews", "library-unreadable"),
+        ("reviews", "some"), ("reviews", "empty"), ("reviews", "no-login"), ("reviews", "github-failing"), ("reviews", "before-reviewers"), ("reviews", "library-unreadable"), ("reviews", "session"),
         ("reviews-pr", "full"), ("reviews-pr", "empty-panels"), ("reviews-pr", "panel-errors"), ("reviews-pr", "moving"), ("reviews-pr", "offline-cached"),
         ("reviews-pr", "own-pr"), ("reviews-pr", "capped"), ("reviews-pr", "not-synced"), ("reviews-pr", "no-login"), ("reviews-pr", "not-found"),
     ];
@@ -104,7 +104,8 @@ internal static class ReviewScenarios
             "not-found" => "/sindri/reviews/acme/api/9999",
             _ => Pr,
         };
-        return (await host.Http.Ask(Get(path, ItemScenarios.Human(host)))).Body;
+        var caller = scenario == "session" ? ItemScenarios.Session("demo") : ItemScenarios.Human(host);
+        return (await host.Http.Ask(Get(path, caller))).Body;
     }
 
     /// <summary>A Projects page holding only the card the review block names, so the setup approval passes SND-REVIEW-002.</summary>
