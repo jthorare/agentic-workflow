@@ -73,7 +73,7 @@ public sealed class LinearWorkStatesTests
         await work.Reading;
 
         Assert.Equal((true, string.Empty, 0), (work.ShowsNoMatch, work.Mine.Empty, work.Mine.Rows.Count));
-        Assert.Equal(("No issues match these filters", "Clear filters"), (Aw.Sindri.Ui.ViewModels.Labels.LinearNoMatch, Aw.Sindri.Ui.ViewModels.Labels.LinearClearFilters));
+        Assert.Equal(("No issues match these filters", "Clear filters"), (ViewModels.Labels.LinearNoMatch, ViewModels.Labels.LinearClearFilters));
 
         _f.Mine = RouteAnswer.Api("linear-issues", "mine");
         work.ClearFilters();
@@ -121,7 +121,7 @@ public sealed class LinearWorkStatesTests
         await work.Refresh(LinearFixture.Url, Token);
 
         Assert.Equal((true, "as of 00:00", 3), (work.IsUnreachable, work.AsOfText, work.Mine.Rows.Count));
-        Assert.Equal("Linear unreachable", Aw.Sindri.Ui.ViewModels.Labels.LinearUnreachable);
+        Assert.Equal("Linear unreachable", ViewModels.Labels.LinearUnreachable);
     }
 
     [Fact]

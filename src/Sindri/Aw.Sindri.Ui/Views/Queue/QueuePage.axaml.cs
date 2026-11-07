@@ -113,8 +113,8 @@ internal sealed partial class QueuePage : UserControl
 
     private void OnShowHeld(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.Queue.ShowHeld(ViewModels.Queue.QueueScope.Page);
 
-    private void OnPanelEntered(object? sender, Avalonia.Input.PointerEventArgs e) => (DataContext as ShellViewModel)?.Queue.Hold(holding: true);
+    private void OnPanelEntered(object? sender, PointerEventArgs e) => (DataContext as ShellViewModel)?.Queue.Hold(holding: true);
 
-    private void OnPanelExited(object? sender, Avalonia.Input.PointerEventArgs e) => (DataContext as ShellViewModel)?.Queue.Hold(holding: false);
+    private void OnPanelExited(object? sender, PointerEventArgs e) => (DataContext as ShellViewModel)?.Queue.Hold(holding: false);
 }
 #pragma warning restore MA0182

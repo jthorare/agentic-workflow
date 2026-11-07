@@ -109,7 +109,7 @@ public sealed class LinearSinceStripTests
         var work = await _f.Shown(Token);
 
         Assert.Equal((true, true, 3), (work.ShowsStrip, work.StripFailed, work.Mine.Rows.Count));
-        Assert.Equal(("Couldn't load what changed", "Retry"), (Aw.Sindri.Ui.ViewModels.Labels.LinearStripFailed, Aw.Sindri.Ui.ViewModels.Labels.LinearStripRetry));
+        Assert.Equal(("Couldn't load what changed", "Retry"), (ViewModels.Labels.LinearStripFailed, ViewModels.Labels.LinearStripRetry));
     }
 
     [Fact]
