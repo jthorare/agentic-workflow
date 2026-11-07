@@ -41,6 +41,9 @@ internal sealed class LinearIssueRowViewModel : ObservableObject
     /// <summary>The linked item's state; empty when no item works the issue.</summary>
     public string RunState => _row.Link?.ItemState ?? string.Empty;
 
+    /// <summary>True while J / K have the row selected.</summary>
+    public bool IsSelected { get; internal set => Set(ref field, value); }
+
     /// <summary>The row's accessible name.</summary>
     public string Name => Labels.LinearRowName(_row);
 
