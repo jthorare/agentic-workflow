@@ -9,6 +9,8 @@ public sealed class ReviewPageKeysTests
 {
     private const string X = "src/Api/A/A.Core/X.cs";
 
+    private const string Retry = "src/Api/Migrations/0042_retry.sql";
+
     private readonly ReviewPageFixture _f = new();
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -35,7 +37,7 @@ public sealed class ReviewPageKeysTests
             seen.Add(page.Diff.FocusedFile?.Path);
         }
 
-        Assert.Equal([X, "src/Api/A/A.Core/Budget.cs", "src/Api/A/A.Core/Old.cs", "src/Api/A/A.Core/Old.cs", "src/Api/A/A.Core/Budget.cs", X, X, X], seen, StringComparer.Ordinal);
+        Assert.Equal([X, "src/Api/A/A.Core/Budget.cs", "src/Api/A/A.Core/Old.cs", Retry, "src/Api/A/A.Core/Old.cs", "src/Api/A/A.Core/Budget.cs", X, X], seen, StringComparer.Ordinal);
     }
 
     [Fact]
@@ -47,7 +49,7 @@ public sealed class ReviewPageKeysTests
             _ = Press(page, "j");
         }
 
-        Assert.Equal("src/Api/A/A.Core/Old.cs", page.Diff.FocusedFile?.Path);   // the Assets group is folded: j stops at the last open file
+        Assert.Equal(Retry, page.Diff.FocusedFile?.Path);   // the Assets group is folded: j stops at the last open file
 
         page.Diff.Groups[1].IsFolded = false;
         _ = Press(page, "j");
@@ -78,9 +80,9 @@ public sealed class ReviewPageKeysTests
             seen.Add((page.Diff.FocusedFile?.Path, page.Diff.FocusedHunk?.Header));
         }
 
-        // the deleted file shows no hunk until Show, so n goes past it and stops on the last hunk there is
+        // the deleted file shows no hunk until Show, so n goes past it to the migration, the last hunk there is
         Assert.Equal(
-            [(X, "@@ -10,3 +10,6 @@"), ("src/Api/A/A.Core/Budget.cs", "@@ -1,2 +1,2 @@"), ("src/Api/A/A.Core/Budget.cs", "@@ -1,2 +1,2 @@"), (X, "@@ -10,3 +10,6 @@"), (X, "@@ -10,3 +10,6 @@")],
+            [(X, "@@ -10,3 +10,6 @@"), ("src/Api/A/A.Core/Budget.cs", "@@ -1,2 +1,2 @@"), (Retry, "@@ -0,0 +1,2 @@"), ("src/Api/A/A.Core/Budget.cs", "@@ -1,2 +1,2 @@"), (X, "@@ -10,3 +10,6 @@")],
             seen);
     }
 

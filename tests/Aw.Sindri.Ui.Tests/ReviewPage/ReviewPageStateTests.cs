@@ -94,7 +94,7 @@ public sealed class ReviewPageStateTests
 
         var page = await _f.Opened(Token);
 
-        Assert.Equal((ReviewPageState.Ready, "as of 23:45, the PR may have moved", null), (page.State, page.OfflineText, page.MovingText));
+        Assert.Equal((ReviewPageState.Ready, "as of 00:00, the PR may have moved", null), (page.State, page.OfflineText, page.MovingText));
         Assert.NotEmpty(page.Diff.Groups);
     }
 
