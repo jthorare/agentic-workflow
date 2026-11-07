@@ -1,9 +1,11 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Blocks;
+using Aw.Sindri.Core.Workflow.Validation;
 using Aw.Sindri.Infrastructure.Skills;
 using Aw.Sindri.Testing.Skills;
 using Aw.Sindri.Testing.Workflow;
+using Aw.Sindri.Tests.Workflow;
 using Aw.Sindri.Tests.Workflow.Choice;
 
 namespace Aw.Sindri.Tests.Skills;
@@ -33,6 +35,18 @@ public sealed class SkillTrialRecipeTests
         var plan = SkillTrialRecipe.Build(loaded, [.. loaded.Manifest.Inputs.Select(static i => i.Key)], foldered).Value;
 
         Assert.Empty(RouteRecipes.Lines(plan.Text, plan.Id.Value + ".yaml", Catalog()));
+    }
+
+    // why: the instance's fact rows list only declared outputs, so a trial that declared none showed no 'fact:' line after its run (F-1's hand test, journey 2)
+    [Fact]
+    public void The_trial_recipe_declares_the_block_s_outputs_under_its_run_state()
+    {
+        var loaded = _blocks.Single(static b => string.Equals(b.Manifest.Name, "review", StringComparison.Ordinal));
+        var plan = SkillTrialRecipe.Build(loaded, [.. loaded.Manifest.Inputs.Select(static i => i.Key)]).Value;
+
+        var recipe = Assert.IsType<RecipeDocument>(RecipeComposition.Read(plan.Text, plan.Id.Value + ".yaml").Document).Recipe;
+
+        Assert.Equal([.. loaded.Descriptor.Outputs.Select(static o => (o.Fact.Value, "run"))], [.. recipe.Outputs.Select(static o => (o.Key.Value, o.From))]);
     }
 
     [Theory]
