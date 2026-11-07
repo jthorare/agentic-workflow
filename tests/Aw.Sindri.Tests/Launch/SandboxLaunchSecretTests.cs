@@ -108,7 +108,8 @@ public sealed class SandboxLaunchSecretTests : IDisposable
         var launch = MakeLaunch(hideLaunchDirectory: true);
         var request = A.LaunchRequest().Unattended(new StepArgs(Model: null, Policy: null, new StepRef("build", "agent"))).Build();
         var hidden = Path.Combine(SindriHome, "launch", "mcp-hidden.json");   // a path the plan's mask hides: refused before the agent starts (#2151)
-        await File.WriteAllTextAsync(LaunchSecrets.SecretPathFor(new LauncherOptions(LauncherHome).SecretsDirectory, request.Launch), "secret", TestContext.Current.CancellationToken);
+        var secrets = Directory.CreateDirectory(new LauncherOptions(LauncherHome).SecretsDirectory).FullName;   // the launcher makes this folder before it mints
+        await File.WriteAllTextAsync(LaunchSecrets.SecretPathFor(secrets, request.Launch), "secret", TestContext.Current.CancellationToken);
 
         var prepared = await launch.Prepare(request, ["claude", "--mcp-config", hidden], chosenSession: null, TestContext.Current.CancellationToken);
 
