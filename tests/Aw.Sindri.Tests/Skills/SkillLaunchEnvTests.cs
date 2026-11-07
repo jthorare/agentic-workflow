@@ -1,6 +1,7 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
@@ -50,5 +51,33 @@ public sealed class SkillLaunchEnvTests
 
         Assert.Equal(skill, request.Skill);
         Assert.Equal(TimeSpan.FromHours(8), request.StepTimeout);
+    }
+
+    [Theory]
+    [InlineData(true, GithubCredentials.AgentApp)]
+    [InlineData(false, null)]
+    public void A_skill_Step_asks_for_the_agent_app_only_when_its_block_pushes(bool pushes, GithubCredentials? expected)
+    {
+        var address = InstanceAddress.From("T-3/step/1");
+        var run = new AgentStepRun(WorkflowInstanceId.Of(address), address, RunToken.From("2.1"), new StepRef("fix", "step.skill.x"), WriteScope: true);
+        var target = new AgentStepTarget(ItemId.From("ITM-" + new string('a', 32)), AgentId.From("claude-code"), "/work/web");
+        var block = pushes ? SkillFixtures.BugFixOrchestrator : SkillFixtures.Review;
+        var skill = new SkillLaunch("x", SkillTarget.ClaudeCode, block, new Dictionary<string, string>(StringComparer.Ordinal));
+
+        var request = AgentLaunches.RequestFor(run, target, descriptor: null, new AgentLaunchExtras { Skill = skill });
+
+        Assert.Equal(expected, request.Step!.Policy!.Github);
+    }
+
+    [Fact]
+    public void A_Step_that_is_not_a_skill_block_asks_for_nothing()
+    {
+        var address = InstanceAddress.From("T-3/step/1");
+        var run = new AgentStepRun(WorkflowInstanceId.Of(address), address, RunToken.From("2.1"), new StepRef("build", "agent"), WriteScope: true);
+        var target = new AgentStepTarget(ItemId.From("ITM-" + new string('a', 32)), AgentId.From("claude-code"), "/work/web");
+
+        var request = AgentLaunches.RequestFor(run, target);
+
+        Assert.Null(request.Step!.Policy!.Github);
     }
 }
