@@ -26,6 +26,9 @@ public sealed class SkillStepWatchingTests : IDisposable
     private const string Findings = "/home/u/.agentic-workflow/acme-api/reviews/42.json";
     private static readonly DateTimeOffset _started = new(2026, 11, 5, 9, 0, 0, TimeSpan.Zero);
 
+    // why: a watch of a live session returns only on a result or an end; one that never comes fails the row here instead of hanging the run
+    private static readonly TimeSpan _watchLimit = TimeSpan.FromSeconds(10);
+
     private readonly string _directory = Directory.CreateTempSubdirectory("aw-skill-watching-").FullName;
     private readonly FakeTimeProvider _clock = new(_started.AddMinutes(10));
     private readonly FakeAgentSessions _sessions = new();
@@ -54,7 +57,9 @@ public sealed class SkillStepWatchingTests : IDisposable
         _ = await _slice.HoldLease();
         var recorder = new AgentLaunchRecorder(_slice.Store, _slice.Held, _slice.Events, new LaunchLiveness(), _slice.Clock);
         var watching = new SkillStepWatching(_sessions, _files, _facts, recorder, new AgentRuntimeOptions(PollInterval: TimeSpan.FromMilliseconds(10)), _clock);
-        return await watching.Watch(Watch(), static () => { }, Token);
+        using var limit = new CancellationTokenSource(_watchLimit, TimeProvider.System);
+        using var token = CancellationTokenSource.CreateLinkedTokenSource(Token, limit.Token);
+        return await watching.Watch(Watch(), static () => { }, token.Token);
     }
 
     // Watches a live session for a few polls (the interval is 10 ms), then idles it so the watch returns.
