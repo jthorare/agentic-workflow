@@ -50,7 +50,7 @@ internal sealed class ContextEngine(
     ContextReads reads) : IContextEngine
 {
     public Result<ContextSettings> CheckSettings(JsonElement? section, IReadOnlyList<ProfileRepoEntry> repos) =>
-        SettingsReader.Read(section).Bind(read => scrubbers.For(read.ExtraPatterns)).Bind(_ => SettingsReader.Check(section, repos));   // the keys, then the patterns, then the repos
+        SettingsReader.Read(section).Bind(read => scrubbers.For(read.ExtraPatterns)).Bind(_ => SettingsReader.Check(section, repos)).Bind(reads.CheckLibrary);   // the keys, then the patterns, then the repos, then the library's folders
 
     public ValueTask<Result<ProjectFactsAnswer>> Projects(ProjectFactsRequest request, ContextScope scope, CancellationToken cancellationToken) =>
         reads.Projects(request, scope, cancellationToken);
