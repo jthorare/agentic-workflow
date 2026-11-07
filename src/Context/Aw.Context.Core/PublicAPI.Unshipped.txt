@@ -12447,3 +12447,6 @@ static Aw.Context.Core.Concepts.FeaturePlace.operator ==(Aw.Context.Core.Concept
 Aw.Context.Core.Concepts.PinMoves
 const Aw.Context.Core.Concepts.PinMoves.MaxPlaces = 2 -> int
 static Aw.Context.Core.Concepts.PinMoves.Between(int fromVersion, int toVersion, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlySet<string!>!>! before, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlySet<string!>!>! after, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.FeaturePlace!>!>! placesAfter) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinMove!>!
+Aw.Context.Core.Concepts.PinMembership
+static Aw.Context.Core.Concepts.PinMembership.Moves(int fromVersion, int toVersion, Aw.Context.Core.Concepts.ConceptRead! before, Aw.Context.Core.Concepts.ConceptRead! after) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinMove!>!
+Aw.Context.Core.Facade.IContextMap.PinMoves(Aw.Context.Core.Map.MapVersion! from, Aw.Context.Core.Map.MapVersion! to, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinMove!>!>!>

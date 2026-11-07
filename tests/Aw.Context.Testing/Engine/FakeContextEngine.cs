@@ -306,6 +306,9 @@ public sealed class FakeContextEngine : IContextEngine
         ValueTask.FromResult(Results.Success(new MapPublishView(Repos: [], Hold: null, LatestDraft: null, Current: null, CurrentHeads: [])));
 
     /// <inheritdoc/>
+    public ValueTask<Result<IReadOnlyList<PinMove>>> PinMoves(MapVersion from, MapVersion to, ContextScope scope, CancellationToken cancellationToken) => NoMap<IReadOnlyList<PinMove>>();
+
+    /// <inheritdoc/>
     public ValueTask<Result<IReadOnlyList<RepoHead>>> MapHeads(ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<IReadOnlyList<RepoHead>>>(Array.Empty<RepoHead>());
 

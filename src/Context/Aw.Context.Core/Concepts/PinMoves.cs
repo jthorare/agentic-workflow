@@ -1,3 +1,5 @@
+using Aw.Context.Core.Engine;
+
 namespace Aw.Context.Core.Concepts;
 
 /// <summary>
@@ -21,6 +23,33 @@ public static class PinMoves
         int toVersion,
         IReadOnlyDictionary<string, IReadOnlySet<string>> before,
         IReadOnlyDictionary<string, IReadOnlySet<string>> after,
-        IReadOnlyDictionary<string, IReadOnlyList<FeaturePlace>> placesAfter) =>
-        throw new NotSupportedException();
+        IReadOnlyDictionary<string, IReadOnlyList<FeaturePlace>> placesAfter)
+    {
+        ArgumentNullException.ThrowIfNull(before);
+        ArgumentNullException.ThrowIfNull(after);
+        ArgumentNullException.ThrowIfNull(placesAfter);
+        var moves = new List<PinMove>();
+        foreach (var (pin, now) in after)
+        {
+            if (!before.TryGetValue(pin, out var was))
+            {
+                moves.Add(new PinMove(ConceptId.From(pin), fromVersion, toVersion, now.Count, 0, []));
+                continue;
+            }
+
+            var lost = was.Where(f => !now.Contains(f)).ToList();
+            moves.Add(new PinMove(ConceptId.From(pin), fromVersion, toVersion, now.Count(f => !was.Contains(f)), lost.Count, Places(pin, lost, placesAfter)));
+        }
+
+        return moves;
+    }
+
+    private static List<PinMoveTo> Places(string pin, List<string> lost, IReadOnlyDictionary<string, IReadOnlyList<FeaturePlace>> placesAfter) =>
+        [.. lost
+            .Select(f => placesAfter.TryGetValue(f, out var places) ? places.FirstOrDefault(p => p.Id.Value != pin) : null)
+            .GroupBy(p => p?.Id.Value, StringComparer.Ordinal)
+            .Select(g => new PinMoveTo(g.First()?.Id, g.First()?.Name, g.Count()))
+            .OrderByDescending(t => t.Features)
+            .ThenBy(t => t.Name ?? string.Empty, StringComparer.Ordinal)
+            .Take(MaxPlaces)];
 }
