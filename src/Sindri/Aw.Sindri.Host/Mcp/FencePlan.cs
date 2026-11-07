@@ -38,4 +38,11 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
 
     /// <summary>GET /sindri/projects/linear for a session: each row's Linear name and lead's name.</summary>
     internal static FencePlan LinearProjects { get; } = new("sindri:project", [new("projects[].name"), new("projects[].lead")]);
+
+    /// <summary>GET /sindri/reviews for a session: each PR's forge-sourced title and author, and each unreadable library folder with its reason.</summary>
+    internal static FencePlan Reviews { get; } = new("sindri:review",
+    [
+        new("groups[].sections[].rows[].title"), new("groups[].sections[].rows[].author"),
+        new("library.unreadable[].root"), new("library.unreadable[].reason"),
+    ]);
 }

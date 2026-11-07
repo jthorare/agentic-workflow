@@ -16,4 +16,11 @@ internal sealed class YamlProfileTextParser(JsonSerializerOptions options, Func<
             ? SindriErrors.ProfileInvalid.With($"{source}: {problem} ({ProfileReading.Fix})")
             : ProfileReading.FromJson(json, source, options, box?.Invoke());
     }
+
+    public Result<LoadedProfile> Recheck(SindriProfile profile, string source)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        ArgumentNullException.ThrowIfNull(source);
+        return ProfileReading.FromTyped(profile, source, options, box?.Invoke());
+    }
 }

@@ -63,7 +63,7 @@ internal sealed partial class Launcher
 
         WriteCaptureRule(request.Launch, entry);
         var prior = await MintSecret(request.Launch, cancellationToken).ConfigureAwait(false);
-        var confined = await Confine(request, composed.Value.Argv, Environment(request, located.WorkDir, located.Pr?.Branch), composed.Value.Session, cancellationToken).ConfigureAwait(false);
+        var confined = await Confine(request, composed.Value.Argv, await Environment(request, located.WorkDir, located.Pr?.Branch, cancellationToken).ConfigureAwait(false), composed.Value.Session, cancellationToken).ConfigureAwait(false);
         if (confined.IsError)
         {
             return confined.Error;   // a refusal carries its SND-LAUNCH-014..017 or -020 code; Start cleans up (and releases) after it
@@ -234,7 +234,7 @@ internal sealed partial class Launcher
         OwnerOnly.WriteAtomically(Path.Combine(parts.Options.LaunchesDirectory, LaunchFiles.CaptureName(launch)), AwJson.Serialize(rule, _captureJson));
     }
 
-    private Dictionary<string, string> Environment(LaunchRequest request, string workDir, string? prBranch)
+    private async ValueTask<Dictionary<string, string>> Environment(LaunchRequest request, string workDir, string? prBranch, CancellationToken cancellationToken)
     {
         var env = new Dictionary<string, string>(StepEnvironment.For(request, parts.Options.SindriHome), StringComparer.Ordinal)
         {
@@ -260,7 +260,7 @@ internal sealed partial class Launcher
 
         var ghConfig = GhConfigPath(request.Launch);
         _ = Directory.CreateDirectory(ghConfig);   // empty: the Step's gh has no login to find
-        return new Dictionary<string, string>(LaunchEnvironment.Scrub(env, workDir, ghConfig), StringComparer.Ordinal);
+        return new Dictionary<string, string>(LaunchEnvironment.Scrub(env, workDir, ghConfig, await parts.ReviewCredentialVariables(cancellationToken).ConfigureAwait(false)), StringComparer.Ordinal);
     }
 
     private string GhConfigPath(LaunchId launch) => Path.Combine(parts.Options.LaunchDirectory, launch.Value + ".gh");

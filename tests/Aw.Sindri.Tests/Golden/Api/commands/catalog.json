@@ -1487,6 +1487,24 @@
       "confirm": null
     },
     {
+      "action": "SetReviewLogin",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/reviews/login",
+      "cli": "sindri profile set <key> <value>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "ShowLineHoldout",
       "class": "protected",
       "allowedCallers": [

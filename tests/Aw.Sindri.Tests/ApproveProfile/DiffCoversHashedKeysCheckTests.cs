@@ -52,6 +52,9 @@ public sealed class DiffCoversHashedKeysCheckTests
             ("index.concepts owns", _approved with { Index = new IndexSettings(Concepts: [new ConceptSettings(Name: "Billing", Owns: ["invoices"])]) }),
             ("index.pages action concepts", _approved with { Index = new IndexSettings(Pages: [new PageSettings(Name: "Schedule week", Actions: [new PageActionSettings(Name: "Submit", Concepts: ["scheduling"])])]) }),
             ("setup.mcp", _approved with { Setup = new SetupSettings(SetupSettings.Off) }),
+            ("review.login", _approved with { Review = new PrReviewSettings(Login: "octocat") }),
+            ("review.settings checks need", _approved with { Review = new PrReviewSettings(Settings: new Dictionary<string, PrReviewSettingsEntry>(StringComparer.Ordinal) { ["api"] = new(Checks: [new PrReviewCheck("tests", "Tests", Need: new PrReviewNeed(Ci: "build"))]) }) }),
+            ("review.projects", _approved with { Review = new PrReviewSettings(Projects: [new PrReviewProject("prj_1", Repos: ["acme/api"])]) }),
             ("workflow.scoping.historyWindow", _approved with { Workflow = new WorkflowSettings(Scoping: new ScopingSettings(new HistoryWindowSettings(Since: "2026-01-01"))) }),
             ("context", _approved with { Context = context.RootElement.Clone() }),
         };

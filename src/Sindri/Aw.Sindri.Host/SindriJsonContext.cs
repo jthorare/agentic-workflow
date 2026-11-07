@@ -103,6 +103,7 @@ using Aw.Sindri.Features.ListOutbox;
 using Aw.Sindri.Features.ListProjects;
 using Aw.Sindri.Features.ListRecipes;
 using Aw.Sindri.Features.ListRequests;
+using Aw.Sindri.Features.ListReviews;
 using Aw.Sindri.Features.ListServices;
 using Aw.Sindri.Features.ListSessions;
 using Aw.Sindri.Features.OnboardRepo;
@@ -124,6 +125,7 @@ using Aw.Sindri.Features.Scrub;
 using Aw.Sindri.Features.SessionExit;
 using Aw.Sindri.Features.SessionHeartbeat;
 using Aw.Sindri.Features.SetProfileKey;
+using Aw.Sindri.Features.SetReviewLogin;
 using Aw.Sindri.Features.StartInstance;
 using Aw.Sindri.Features.StopProcess;
 using Aw.Sindri.Features.ValidateProfile;
@@ -162,9 +164,11 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(PublicEvent)), JsonSerializable(typeof(LedgerPage)), JsonSerializable(typeof(EventCatalogView)), JsonSerializable(typeof(EventTypeView))]
 [JsonSerializable(typeof(StreamErrorFrame)), JsonSerializable(typeof(InstanceChanged)), JsonSerializable(typeof(ListCommandsRequest)), JsonSerializable(typeof(ListCommandsResponse)), JsonSerializable(typeof(CommandListRow))]
 [JsonSerializable(typeof(ListServicesRequest)), JsonSerializable(typeof(ListServicesResponse)), JsonSerializable(typeof(ServiceView)), JsonSerializable(typeof(GetProfileRequest))]
+[JsonSerializable(typeof(SetReviewLoginRequest)), JsonSerializable(typeof(SetReviewLoginResponse))]
 [JsonSerializable(typeof(GetSetupRequest)), JsonSerializable(typeof(GetSetupResponse)), JsonSerializable(typeof(GetRepoStatusResponse)), JsonSerializable(typeof(RepoStatus))]
 [JsonSerializable(typeof(GetProfileResponse)), JsonSerializable(typeof(ProfilePack)), JsonSerializable(typeof(ProfileSummary)), JsonSerializable(typeof(RepoPreview)), JsonSerializable(typeof(RebuildViewsRequest)), JsonSerializable(typeof(CreateItemRequest)), JsonSerializable(typeof(ItemCreatedResponse))]
 [JsonSerializable(typeof(AttachProjectRequest)), JsonSerializable(typeof(AttachProjectBody)), JsonSerializable(typeof(ProjectAccepted)), JsonSerializable(typeof(ChangeProjectBody)), JsonSerializable(typeof(DetachProjectBody)), JsonSerializable(typeof(HideProjectRequest))]
+[JsonSerializable(typeof(ListReviewsRequest)), JsonSerializable(typeof(ListReviewsResponse))]   // PR review page Ph5: the Reviews list
 [JsonSerializable(typeof(ListProjectsRequest)), JsonSerializable(typeof(ListProjectsResponse)), JsonSerializable(typeof(GetProjectRequest)), JsonSerializable(typeof(GetProjectResponse)), JsonSerializable(typeof(ProjectCard)), JsonSerializable(typeof(ListLinearProjectsRequest)), JsonSerializable(typeof(ListLinearProjectsResponse)), JsonSerializable(typeof(LinearProjectChoice))]
 [JsonSerializable(typeof(ProjectLead)), JsonSerializable(typeof(ProjectLink)), JsonSerializable(typeof(ProjectFreshnessRow))]
 [JsonSerializable(typeof(CloseItemRequest)), JsonSerializable(typeof(CloseItemBody)), JsonSerializable(typeof(GetQueueRequest)), JsonSerializable(typeof(QueueResponse))]

@@ -15,8 +15,9 @@ internal static class ProfileKeyText
     /// <param name="text">The profile file's text.</param>
     /// <param name="keyPath">The dotted key.</param>
     /// <param name="value">The value as typed.</param>
+    /// <param name="asString">Write the value quoted, whatever it looks like.</param>
     /// <returns>The edited text (equal to <paramref name="text"/> when the key already has the value); SND-CLI-003 for a bad key or a value over several lines; SND-PROFILE-002 for a layout it won't edit.</returns>
-    internal static Result<string> Edit(string text, string keyPath, string value)
+    internal static Result<string> Edit(string text, string keyPath, string value, bool asString = false)
     {
         ArgumentNullException.ThrowIfNull(text);
         ArgumentNullException.ThrowIfNull(keyPath);
@@ -34,7 +35,7 @@ internal static class ProfileKeyText
 
         var lines = new List<string>(text.Split('\n'));
         var cr = text.Contains("\r\n", StringComparison.Ordinal) ? "\r" : string.Empty;
-        var scalar = Scalar(value);
+        var scalar = asString ? YamlProfileLines.Quote(value) : Scalar(value);
         var parent = -1;   // the line of the key whose block is searched; -1 is the document itself
         for (var i = 0; i < parts.Length - 1; i++)
         {
