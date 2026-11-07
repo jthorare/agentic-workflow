@@ -191,6 +191,7 @@ internal sealed partial class SqliteRecordStore(ContextDatabase database, IReadO
         .Bind("@source", filter.Source?.Value)
         .Bind("@repo", filter.Repo?.Value)
         .Bind("@kind", filter.Kind is { } kind ? RecordWire.Of(kind) : null)
+        .Bind("@states", filter.States is { } states ? SqliteLexicalLeg.JsonArray(states.Select(RecordWire.Of)) : null)
         .Bind("@removed", filter.IncludeRemoved)
         .Bind("@after", after?.Value)
         .Bind("@limit", limit));

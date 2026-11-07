@@ -38,6 +38,12 @@ internal interface ILibraryStore
     /// <returns>Its claims in ref order; none for an unknown or removed PR.</returns>
     public ValueTask<Result<IReadOnlyList<LibraryClaimRow>>> ClaimsOf(RecordKey pr, CancellationToken cancellationToken);
 
+    /// <summary>Reads the claims of many live PR records in one query, whatever their audience.</summary>
+    /// <param name="prs">The PR records.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>Their claims in PR key then ref order; none for unknown or removed PRs.</returns>
+    public ValueTask<Result<IReadOnlyList<LibraryClaimRow>>> ClaimsOfMany(IReadOnlyList<RecordKey> prs, CancellationToken cancellationToken);
+
     /// <summary>Reads the claims of live PR records whose ref names a doc id (in any form of the ref), whatever the PR's audience.</summary>
     /// <param name="slug">The doc id.</param>
     /// <param name="cancellationToken">Cancels the read.</param>

@@ -8710,17 +8710,19 @@ Aw.Context.Core.Records.RecordChunk.Tokens.get -> int
 Aw.Context.Core.Records.RecordChunk.Tokens.init -> void
 Aw.Context.Core.Records.RecordFilter
 Aw.Context.Core.Records.RecordFilter.<Clone>$() -> Aw.Context.Core.Records.RecordFilter!
-Aw.Context.Core.Records.RecordFilter.Deconstruct(out Aw.Context.Core.Sources.SourceId? Source, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Sources.RecordKind? Kind, out bool IncludeRemoved) -> void
+Aw.Context.Core.Records.RecordFilter.Deconstruct(out Aw.Context.Core.Sources.SourceId? Source, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Sources.RecordKind? Kind, out bool IncludeRemoved, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordState>? States) -> void
 Aw.Context.Core.Records.RecordFilter.Equals(Aw.Context.Core.Records.RecordFilter? other) -> bool
 Aw.Context.Core.Records.RecordFilter.IncludeRemoved.get -> bool
 Aw.Context.Core.Records.RecordFilter.IncludeRemoved.init -> void
 Aw.Context.Core.Records.RecordFilter.Kind.get -> Aw.Context.Core.Sources.RecordKind?
 Aw.Context.Core.Records.RecordFilter.Kind.init -> void
-Aw.Context.Core.Records.RecordFilter.RecordFilter(Aw.Context.Core.Sources.SourceId? Source = null, Aw.Context.Core.Engine.ContextRepoName? Repo = null, Aw.Context.Core.Sources.RecordKind? Kind = null, bool IncludeRemoved = false) -> void
+Aw.Context.Core.Records.RecordFilter.RecordFilter(Aw.Context.Core.Sources.SourceId? Source = null, Aw.Context.Core.Engine.ContextRepoName? Repo = null, Aw.Context.Core.Sources.RecordKind? Kind = null, bool IncludeRemoved = false, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordState>? States = null) -> void
 Aw.Context.Core.Records.RecordFilter.Repo.get -> Aw.Context.Core.Engine.ContextRepoName?
 Aw.Context.Core.Records.RecordFilter.Repo.init -> void
 Aw.Context.Core.Records.RecordFilter.Source.get -> Aw.Context.Core.Sources.SourceId?
 Aw.Context.Core.Records.RecordFilter.Source.init -> void
+Aw.Context.Core.Records.RecordFilter.States.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordState>?
+Aw.Context.Core.Records.RecordFilter.States.init -> void
 Aw.Context.Core.Records.RecordLink
 Aw.Context.Core.Records.RecordLink.<Clone>$() -> Aw.Context.Core.Records.RecordLink!
 Aw.Context.Core.Records.RecordLink.Deconstruct(out string! ToRef, out Aw.Context.Core.Records.RecordLinkKind Kind, out string? Title, out Aw.Context.Core.Sources.RecordKey? ToKey) -> void
@@ -11874,6 +11876,7 @@ Aw.Context.Core.Facade.IContextLibrary.ListDocs(Aw.Context.Core.Library.LibraryD
 Aw.Context.Core.Facade.IContextLibrary.Items(Aw.Context.Core.Sources.RecordKey docKey, Aw.Context.Core.Audience.AudienceScope! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryItem!>!>!>
 Aw.Context.Core.Facade.IContextLibrary.Resolve(System.Collections.Generic.IReadOnlyList<string!>! refs, string? repo, Aw.Context.Core.Audience.AudienceScope! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryRefResolution!>!>!>
 Aw.Context.Core.Facade.IContextLibrary.Claims(Aw.Context.Core.Sources.RecordKey prKey, Aw.Context.Core.Audience.AudienceScope! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryClaim!>!>!>
+Aw.Context.Core.Facade.IContextLibrary.Claims(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>! prKeys, Aw.Context.Core.Audience.AudienceScope! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyDictionary<Aw.Context.Core.Sources.RecordKey, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryClaim!>!>!>!>
 Aw.Context.Core.Facade.IContextLibrary.ClaimsOn(Aw.Context.Core.Sources.RecordKey docKey, Aw.Context.Core.Audience.AudienceScope! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryClaim!>!>!>
 Aw.Context.Core.Library.LibraryRefResolution.LibraryRefResolution(string! Ref, Aw.Context.Core.Library.LibraryRefStatus Status, Aw.Context.Core.Sources.RecordKey? Doc, Aw.Context.Core.Library.LibraryItem? Item) -> void
 Aw.Context.Core.Library.LibraryItem.LibraryItem(Aw.Context.Core.Sources.RecordKey DocKey, string! Key, Aw.Context.Core.Library.DesignItemKind Kind, string? Parent, int LineStart, int LineEnd, string! Text) -> void

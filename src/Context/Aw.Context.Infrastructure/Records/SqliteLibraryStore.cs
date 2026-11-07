@@ -44,6 +44,13 @@ internal sealed class SqliteLibraryStore(ContextDatabase database) : ILibrarySto
     public ValueTask<Result<IReadOnlyList<LibraryClaimRow>>> ClaimsOf(RecordKey pr, CancellationToken cancellationToken) =>
         Query(new SqlStatement(LibrarySql.ClaimsOf, c => c.Bind("@key", pr.Value)), _claim, cancellationToken);
 
+    public ValueTask<Result<IReadOnlyList<LibraryClaimRow>>> ClaimsOfMany(IReadOnlyList<RecordKey> prs, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(prs);
+        var keys = SqliteLexicalLeg.JsonArray(prs.Select(static k => k.Value));
+        return Query(new SqlStatement(LibrarySql.ClaimsOfMany, c => c.Bind("@keys", keys)), _claim, cancellationToken);
+    }
+
     public ValueTask<Result<IReadOnlyList<LibraryClaimRow>>> ClaimsNaming(string slug, CancellationToken cancellationToken) =>
         Query(new SqlStatement(LibrarySql.ClaimsNaming, c => c.Bind("@slug", slug)), _claim, cancellationToken);
 
