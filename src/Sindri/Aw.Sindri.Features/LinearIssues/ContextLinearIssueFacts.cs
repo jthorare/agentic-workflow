@@ -5,6 +5,7 @@ using Aw.Context.Core.Linear;
 using Aw.Context.Core.Projects;
 using Aw.Context.Core.Sources;
 using Aw.Kernel;
+using Aw.Sindri.Core;
 
 namespace Aw.Sindri.Features.LinearIssues;
 
@@ -62,6 +63,11 @@ internal sealed class ContextLinearIssueFacts(LinearScopes scopes, IContextEngin
         if (Unreadable(filter.Assignee) || Unreadable(filter.Project) || Unreadable(filter.Cycle))
         {
             return new LinearIssueFactsPage([], More: false);
+        }
+
+        if (after is not null && Cursor(after) is null)
+        {
+            return SindriErrors.InvalidQuery.With($"after '{after.Record}' is not a record Sindri stores");
         }
 
         var context = new LinearIssueFilter(filter.Team, Id(filter.Assignee), filter.StateTypes, Id(filter.Project), Id(filter.Cycle), filter.Limit);
