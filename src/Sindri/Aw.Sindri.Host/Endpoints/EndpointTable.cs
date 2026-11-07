@@ -31,7 +31,7 @@ internal static class EndpointTable
         _ = queries.MapGetItemTimeline();
         _ = queries.MapGetItemScope();
         _ = MapProjectQueries(queries);
-        _ = queries.MapGetQueue().MapGetReviews().MapGetLibrary().MapGetLibraryDoc();
+        _ = queries.MapGetQueue().MapGetReviews().MapGetReviewPage().MapGetLibrary().MapGetLibraryDoc();
         _ = queries.MapGetSession();
         _ = queries.MapGetRunSuspension();
         _ = queries.MapGetNeedsYou();
@@ -148,7 +148,7 @@ internal static class EndpointTable
         _ = commands.MapEndLearnMode().MapAllowDenial();
         _ = commands.MapOpenItem();
         _ = commands.MapPauseService();
-        _ = commands.MapSetReviewLogin();
+        _ = commands.MapSetReviewLogin().MapSendReviewFix();
         _ = commands.MapResumeService();
         _ = commands.MapRunService();
         _ = commands.MapContextJobs();

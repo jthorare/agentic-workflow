@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.4",
+  "title": "SND-REVIEW-503",
+  "status": 503,
+  "detail": "Offline, and this PR isn't cached yet",
+  "traceId": "<trace>"
+}

@@ -76,6 +76,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<PrWatchStore>()                              // PB spec API15: the watcher's 'pr-watch.json'
             .AddScoped<PrChangedRecorder>()                            // the watcher's 'pr.changed' rows
             .AddScoped<IWatchedPulls, TemporalWatchedPulls>()          // the pull requests the live instances wait on
+            .AddScoped<Core.Reviews.IFixBabysitters, WatchedFixBabysitters>()   // PR review page: is a babysitter on this pull request (fix-task routing)
             .AddScoped<IScheduledService, PrWatchService>()            // PB spec API15: 'pr.changed' from the forge's digests
             .AddSingleton(PrWatchService.BuiltIn);
 

@@ -15,6 +15,7 @@ namespace Aw.Forge.Core.Pulls;
 /// <param name="ReviewDecision">APPROVED, CHANGES_REQUESTED or null.</param>
 /// <param name="Checks">The checks on the head.</param>
 /// <param name="Labels">The labels on it, by name.</param>
+/// <param name="Body">The body text, or null where the adapter did not read it.</param>
 public sealed record PullSnapshot(
     ForgeRef Ref,
     string Url,
@@ -27,4 +28,5 @@ public sealed record PullSnapshot(
     bool? Mergeable,
     string? ReviewDecision,
     ChecksSummary Checks,
-    IReadOnlyList<string> Labels);
+    IReadOnlyList<string> Labels,
+    string? Body = null);

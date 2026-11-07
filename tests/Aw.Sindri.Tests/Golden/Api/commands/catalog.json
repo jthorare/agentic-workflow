@@ -1418,6 +1418,24 @@
       "confirm": null
     },
     {
+      "action": "SendReviewFix",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/reviews/{owner}/{repo}/{number}/fix",
+      "cli": "sindri review fix <pr> <text>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "SessionExit",
       "class": "issue",
       "allowedCallers": [

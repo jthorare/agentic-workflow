@@ -221,6 +221,9 @@ public static class EventTypes
     /// <summary>Pages were written into the live profile's 'index.pages' (pages spec §3.1).</summary>
     public const string ContextPageWritten = "context.page.written";
 
+    /// <summary>A PR finding was sent as a fix task (PR review page spec §8.2 step 4).</summary>
+    public const string ReviewFixSent = "review.fix-sent";
+
     /// <summary>The shipped recipes were registered at start (setup-once spec §7.5).</summary>
     public const string RecipeRegistrationCompleted = "recipe.registration.completed";
 

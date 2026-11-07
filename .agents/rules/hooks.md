@@ -78,6 +78,7 @@ All hook scripts live in `config/hooks/`:
 | `git-context.sh` | SessionStart | — |
 | `prism-context.sh` | SessionStart | — |
 | `sindri-nudge.sh` | SessionStart | — |
+| `sindri-tasks.sh` | UserPromptSubmit (Claude Code; Codex through the adapter; Cursor: none) | — |
 | `prompt-sort.sh` | UserPromptSubmit | — |
 | `meta-stop-gate.sh` | Stop | — |
 | `meta-outbox.sh` | PostToolUse | `SendMessage` |
@@ -87,11 +88,11 @@ All hook scripts live in `config/hooks/`:
 
 Each provider's `install-hooks.sh` installs them by copying, not symlinking, so they survive repo moves. Claude Code's copies go to `~/.claude/hooks/`, and Codex and Cursor copies go to `~/.agentic-workflow/hooks/`. The script then registers the command in that provider's hook config, wrapped by the adapter for Codex and Cursor.
 
-**Lever hooks** (context-guard, done-gate, scope-gate, external-write-guard, wake gating, judge-health, prompt-sort, sindri-nudge, trait-check) are installed by `scripts/install-*.sh --provider claude|codex|cursor`, with `claude` as the default. `setup.sh` runs them for each selected provider. A lever with no equivalent event on a provider prints `skipped for <provider>` and writes nothing. For example, context-guard is skipped on Cursor.
+**Lever hooks** (context-guard, done-gate, scope-gate, external-write-guard, wake gating, judge-health, prompt-sort, sindri-nudge, sindri-tasks, trait-check) are installed by `scripts/install-*.sh --provider claude|codex|cursor`, with `claude` as the default. `setup.sh` runs them for each selected provider. A lever with no equivalent event on a provider prints `skipped for <provider>` and writes nothing. For example, context-guard is skipped on Cursor.
 
 `providers/{claude,codex}/install-hooks.sh --target-dir DIR` installs into DIR as an agent config home (a separate-login home, SB-8): `DIR/settings.json` or `DIR/hooks.json`, scripts under `DIR/hooks/`, and command strings that name `DIR/hooks`. The owner's `~/.claude`, `~/.codex` and state dir are not touched; a missing DIR exits 2 with usage. Test: `providers/tests/install-hooks-target.test.sh`.
 
-Tests (all run under a temp `HOME`): `config/hooks/tests/{codex-adapter,cursor-adapter,failopen,provider-install-hooks,probe-log,judge-health,sindri-nudge,meta-hooks,fleet-state}.test.sh`, plus `config/lib/tests/{prompt-sort,install-prompt-sort,trait-check,install-trait-check}.test.sh` (run through the `config/lib/tests/*.test.sh` glob).
+Tests (all run under a temp `HOME`): `config/hooks/tests/{codex-adapter,cursor-adapter,failopen,provider-install-hooks,probe-log,judge-health,sindri-nudge,sindri-tasks,meta-hooks,fleet-state}.test.sh`, plus `config/lib/tests/{prompt-sort,install-prompt-sort,trait-check,install-trait-check}.test.sh` (run through the `config/lib/tests/*.test.sh` glob).
 
 ## Images for the judge
 
@@ -176,6 +177,8 @@ The steps below apply to **PreToolUse hooks**. SessionStart hooks have different
 `prompt-sort.sh` (`# aw:prompt-sort`) is the prompt sorter's UserPromptSubmit hook. It sorts the real prompt with `judge prompt-sort` (one Jev request), prints a scaffold note only when a scaffold switch is on and fires, never prints skill names (Prism's `prism-route` hook owns skill routing), always exits 0, and kills the judge after `AW_PROMPT_SORT_BUDGET_MS` (default 4000, logging `timeout` to the fail-open log). A non-zero exit or crash of the judge is swallowed. Skips machine text, slash commands and `AW_JUDGE_CHILD`. Install opt-out: `AW_NO_PROMPT_SORT=1`.
 
 `sindri-nudge.sh` (`# aw:sindri-nudge`) is installed by `scripts/install-sindri-hooks.sh --provider X` (the providers run it, because the C# Sindri is always installed). It runs `sindri repo status --nudge`, which reads the approved profile read-only and never writes the ledger, prints at most one line, kills the CLI after `AW_SINDRI_NUDGE_BUDGET_MS` (default 4000, logging `timeout`), always exits 0, and is silent outside git, without sindri, before any approval, for an onboarded repo (a linked worktree counts), on any error, and for `AW_JUDGE_CHILD` / `AW_SINDRI_CHILD` sessions.
+
+`sindri-tasks.sh` (`# aw:sindri-tasks`, installed by the same `install-sindri-hooks.sh`) tells a session once that a Sindri fix task is waiting on its branch (spec 2026-11-04-sindri-pr-review-page-design.md §8.2). It starts no .NET process: it reads the session id from the hook's stdin, the checkout's GitHub `origin` (https and ssh forms, lowercased) and branch through `git`, and `$AW_SINDRI_HOME/fix-tasks/<sha256 of "owner/repo:branch">.json`. It prints "Fix task <item> on #<pr> is waiting. `sindri review tasks` shows it." per task not in `fix-tasks/seen/<session id>` (item must be a 26-character ULID and pr digits, else the row is skipped; a session id outside `[A-Za-z0-9-]` is ignored) and records what it showed; seen files older than 7 days are pruned. Always exit 0, bounded at 500 ms, silent for `AW_JUDGE_CHILD` / `AW_SINDRI_CHILD` and on any error. Per provider: Claude Code `UserPromptSubmit` (timeout 1 s); Codex `UserPromptSubmit` through `adapters/codex.sh`; Cursor none (`beforeSubmitPrompt` can't add context), so a Cursor session sees fix tasks through `sindri review tasks` and the Work item.
 
 ## Session state hook (`aw:fleet`)
 

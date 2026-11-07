@@ -86,6 +86,7 @@ using Aw.Sindri.Features.GetProfile;
 using Aw.Sindri.Features.GetProject;
 using Aw.Sindri.Features.GetQueue;
 using Aw.Sindri.Features.GetRepoStatus;
+using Aw.Sindri.Features.GetReviewPage;
 using Aw.Sindri.Features.GetRunSuspension;
 using Aw.Sindri.Features.GetSession;
 using Aw.Sindri.Features.GetSetup;
@@ -125,6 +126,7 @@ using Aw.Sindri.Features.RunDoctor;
 using Aw.Sindri.Features.RunService;
 using Aw.Sindri.Features.Scoping;
 using Aw.Sindri.Features.Scrub;
+using Aw.Sindri.Features.SendReviewFix;
 using Aw.Sindri.Features.SessionExit;
 using Aw.Sindri.Features.SessionHeartbeat;
 using Aw.Sindri.Features.SetProfileKey;
@@ -168,10 +170,13 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(StreamErrorFrame)), JsonSerializable(typeof(InstanceChanged)), JsonSerializable(typeof(ListCommandsRequest)), JsonSerializable(typeof(ListCommandsResponse)), JsonSerializable(typeof(CommandListRow))]
 [JsonSerializable(typeof(ListServicesRequest)), JsonSerializable(typeof(ListServicesResponse)), JsonSerializable(typeof(ServiceView)), JsonSerializable(typeof(GetProfileRequest))]
 [JsonSerializable(typeof(SetReviewLoginRequest)), JsonSerializable(typeof(SetReviewLoginResponse))]
+[JsonSerializable(typeof(SendReviewFixRequest)), JsonSerializable(typeof(SendReviewFixResponse)), JsonSerializable(typeof(ReviewFixBody)), JsonSerializable(typeof(ReviewFixSent))]
 [JsonSerializable(typeof(GetSetupRequest)), JsonSerializable(typeof(GetSetupResponse)), JsonSerializable(typeof(GetRepoStatusResponse)), JsonSerializable(typeof(RepoStatus))]
 [JsonSerializable(typeof(GetProfileResponse)), JsonSerializable(typeof(ProfilePack)), JsonSerializable(typeof(ProfileSummary)), JsonSerializable(typeof(RepoPreview)), JsonSerializable(typeof(RebuildViewsRequest)), JsonSerializable(typeof(CreateItemRequest)), JsonSerializable(typeof(ItemCreatedResponse))]
 [JsonSerializable(typeof(AttachProjectRequest)), JsonSerializable(typeof(AttachProjectBody)), JsonSerializable(typeof(ProjectAccepted)), JsonSerializable(typeof(ChangeProjectBody)), JsonSerializable(typeof(DetachProjectBody)), JsonSerializable(typeof(HideProjectRequest))]
 [JsonSerializable(typeof(ListReviewsRequest)), JsonSerializable(typeof(ListReviewsResponse))]   // PR review page Ph5: the Reviews list
+[JsonSerializable(typeof(GetReviewPageRequest)), JsonSerializable(typeof(ReviewPageModel))]   // PR review page Ph5c: the PR page
+[JsonSerializable(typeof(RequiredChecksData)), JsonSerializable(typeof(DocMapData)), JsonSerializable(typeof(TestPlanData)), JsonSerializable(typeof(CiData)), JsonSerializable(typeof(EvidenceData)), JsonSerializable(typeof(RiskData)), JsonSerializable(typeof(ConversationData))]   // the panels' rows, picked by ReviewPagePanelConverter
 [JsonSerializable(typeof(GetLibraryRequest)), JsonSerializable(typeof(GetLibraryResponse))]   // Ph5b: the library page
 [JsonSerializable(typeof(GetLibraryDocRequest)), JsonSerializable(typeof(GetLibraryDocResponse)), JsonSerializable(typeof(LibraryDocView)), JsonSerializable(typeof(LibraryDocErrorView))]   // PR review page Ph5b: one design doc
 [JsonSerializable(typeof(Commands.Library.LibraryValidateReport)), JsonSerializable(typeof(Commands.Library.LibraryFindingRow))]   // PR review page Ph5b: 'sindri library list' and 'validate'

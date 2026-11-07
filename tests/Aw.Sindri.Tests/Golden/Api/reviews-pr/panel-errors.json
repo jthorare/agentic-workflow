@@ -26,7 +26,8 @@
         "key": "ENG-12",
         "href": "sindri://linear/ENG-12"
       }
-    ]
+    ],
+    "postsFixThreads": false
   },
   "settings": {
     "name": "sindri",
@@ -38,17 +39,13 @@
     {
       "panel": "requiredChecks",
       "text": "Couldn't decide checks"
-    },
-    {
-      "panel": "risk",
-      "text": "1 risky file"
     }
   ],
   "panels": [
     {
       "id": "requiredChecks",
       "state": "error",
-      "text": "Couldn't decide checks: github failed: SND-INDEX-401",
+      "text": "Couldn't decide checks: github failed: github returned 502",
       "data": {
         "checks": []
       }
@@ -75,7 +72,7 @@
     {
       "id": "ci",
       "state": "error",
-      "text": "Couldn't read CI: github returned 502",
+      "text": "Couldn't read CI: github sent no check runs for a1b2c3d",
       "data": {
         "runs": [],
         "babysitter": null
@@ -108,16 +105,10 @@
     },
     {
       "id": "risk",
-      "state": "ready",
-      "text": null,
+      "state": "error",
+      "text": "Couldn't read the files: github returned 502",
       "data": {
-        "hits": [
-          {
-            "path": "src/Api/Migrations/0042_retry.sql",
-            "why": "Migrations change stored data",
-            "source": "settings"
-          }
-        ]
+        "hits": []
       }
     },
     {

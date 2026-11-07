@@ -6012,3 +6012,75 @@ Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse.Doc.get -> Aw.Sindri.Core
 Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse.Doc.init -> void
 Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocResponse.GetLibraryDocResponse(Aw.Sindri.Core.Views.AsOf! AsOf, Aw.Sindri.Core.Reviews.LibraryDocView! Doc) -> void
 Aw.Sindri.Features.GetLibraryDoc.GetLibraryDocRequest.GetLibraryDocRequest(string! Doc) -> void
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.<Clone>$() -> Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest!
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.Deconstruct(out string! Owner, out string! Repo, out int Number) -> void
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.Equals(Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest? other) -> bool
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.GetReviewPageRequest(string! Owner, string! Repo, int Number) -> void
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.Number.get -> int
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.Number.init -> void
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.Owner.get -> string!
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.Owner.init -> void
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.Repo.get -> string!
+Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.Repo.init -> void
+override Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.GetHashCode() -> int
+override Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.ToString() -> string!
+static Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.operator !=(Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest? left, Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest? right) -> bool
+static Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest.operator ==(Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest? left, Aw.Sindri.Features.GetReviewPage.GetReviewPageRequest? right) -> bool
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.<Clone>$() -> Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest!
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Deconstruct(out string! Owner, out string! Repo, out int Number, out string! Kind, out string! Text, out string! Head, out string? Source, out string? Path, out int? Line, out string? Side, out string? Item) -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Equals(Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest? other) -> bool
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Head.get -> string!
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Head.init -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Item.get -> string?
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Item.init -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Kind.get -> string!
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Kind.init -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Line.get -> int?
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Line.init -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Number.get -> int
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Number.init -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Owner.get -> string!
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Owner.init -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Path.get -> string?
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Path.init -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Repo.get -> string!
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Repo.init -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.SendReviewFixRequest(string! Owner, string! Repo, int Number, string! Kind, string! Text, string! Head, string? Source, string? Path, int? Line, string? Side, string? Item) -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Side.get -> string?
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Side.init -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Source.get -> string?
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Source.init -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Text.get -> string!
+Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Text.init -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.<Clone>$() -> Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse!
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.Deconstruct(out Aw.Sindri.Core.Ids.ItemId ItemId, out bool Posted, out string? PostCode, out string? PostError, out string! Went, out string? Session, out string? FileError) -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.Equals(Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse? other) -> bool
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.FileError.get -> string?
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.FileError.init -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.ItemId.get -> Aw.Sindri.Core.Ids.ItemId
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.ItemId.init -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.PostCode.get -> string?
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.PostCode.init -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.PostError.get -> string?
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.PostError.init -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.Posted.get -> bool
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.Posted.init -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.SendReviewFixResponse(Aw.Sindri.Core.Ids.ItemId ItemId, bool Posted, string? PostCode, string? PostError, string! Went, string? Session, string? FileError) -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.Session.get -> string?
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.Session.init -> void
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.Went.get -> string!
+Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.Went.init -> void
+override Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.GetHashCode() -> int
+override Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.ToString() -> string!
+override Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.GetHashCode() -> int
+override Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.ToString() -> string!
+static Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.operator !=(Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest? left, Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest? right) -> bool
+static Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.operator ==(Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest? left, Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest? right) -> bool
+static Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.operator !=(Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse? left, Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse? right) -> bool
+static Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.operator ==(Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse? left, Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse? right) -> bool

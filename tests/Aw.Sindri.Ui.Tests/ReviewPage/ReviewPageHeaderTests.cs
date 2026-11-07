@@ -42,7 +42,7 @@ public sealed class ReviewPageHeaderTests
         var page = await _f.Opened(Token);
 
         Assert.Equal(
-            [("requiredChecks", "3 open"), ("docMap", "Covers Ph5, REQ-E3"), ("risk", "1 risky file"), ("ci", "1 failing")],
+            [("requiredChecks", "4 open"), ("docMap", "Covers Ph5, REQ-E3"), ("risk", "1 risky file"), ("ci", "1 failing")],
             page.Strip.Select(s => (s.Panel, s.Text)));
         Assert.All(page.Strip, s => Assert.False(s.IsLoading));
     }
@@ -52,7 +52,7 @@ public sealed class ReviewPageHeaderTests
     {
         var page = await _f.Opened(Token);
 
-        Assert.Equal("Required checks: 3 open", page.Strip[0].AutomationName);
+        Assert.Equal("Required checks: 4 open", page.Strip[0].AutomationName);
         Assert.All(page.Strip, s => Assert.NotEqual(StateGlyph.None, s.Glyph));
     }
 
@@ -67,13 +67,13 @@ public sealed class ReviewPageHeaderTests
     }
 
     [Fact]
-    public async Task When_checks_cant_be_decided_the_strip_says_so_and_still_has_the_risk_part()
+    public async Task When_checks_cant_be_decided_the_strip_says_so_and_has_no_other_part()
     {
         _f.Serve("panel-errors");
 
         var page = await _f.Opened(Token);
 
-        Assert.Equal([("requiredChecks", "Couldn't decide checks"), ("risk", "1 risky file")], page.Strip.Select(s => (s.Panel, s.Text)));
+        Assert.Equal([("requiredChecks", "Couldn't decide checks")], page.Strip.Select(s => (s.Panel, s.Text)));
     }
 
     [Fact]

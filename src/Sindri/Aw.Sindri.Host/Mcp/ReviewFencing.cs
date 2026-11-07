@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Aw.Kernel.Json;
+using Aw.Sindri.Core.Reviews;
 using Aw.Sindri.Features.GetLibrary;
 using Aw.Sindri.Features.ListReviews;
 using Aw.Sindri.Host.Endpoints;
@@ -14,6 +15,12 @@ internal sealed class ReviewFencing(JsonSerializerOptions json) : IReviewFencing
     {
         using var document = JsonDocument.Parse(AwJson.Serialize(list, json));
         return TypedResults.Text(McpFencing.Apply(document.RootElement, FencePlan.Reviews).GetRawText(), "application/json", System.Text.Encoding.UTF8);
+    }
+
+    public IResult Page(ReviewPageModel page)
+    {
+        using var document = JsonDocument.Parse(AwJson.Serialize(page, json));
+        return TypedResults.Text(McpFencing.Apply(document.RootElement, FencePlan.ReviewPage).GetRawText(), "application/json", System.Text.Encoding.UTF8);
     }
 
     public IResult Library(GetLibraryResponse library)
