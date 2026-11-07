@@ -11,7 +11,7 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 
 /// <summary>
 /// Work → Linear's list (Linear hub spec §3, Ph3 1a; contract ~/.agentic-workflow/digests/api-scripts/contract-2077-ph3-linear-reads.md): 'GET /linear/issues' in each state of the list. The stored issues, the
-/// source and the items linked to them are fakes seeded per scenario (<see cref="FakeLinearIssueFacts"/>, <see cref="FakeLinearItemLinks"/>); the rest of the Linear rows wait in <see cref="LinearScenarios"/>.
+/// source and the items linked to them are fakes seeded per scenario (<see cref="FakeLinearIssueFacts"/>, <see cref="FakeLinearItemLinks"/>).
 /// ENG-12, ENG-31 and OPS-40 are assigned to the viewer Joi Example; ENG-57, ENG-44 and 50 more ENG issues (ENG-100 to ENG-149, newer than ENG-57) are Sam Lee's or nobody's.
 /// 'teams-page2' asks the first page for its cursor and then page 2, so it holds the last two of 52 rows.
 /// </summary>
