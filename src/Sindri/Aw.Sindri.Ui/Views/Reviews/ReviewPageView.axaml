@@ -148,11 +148,11 @@
         </StackPanel>
 
         <StackPanel x:Name="ReviewDiffPane" Spacing="{StaticResource Space.XS}" DataContext="{Binding Diff}" x:DataType="rvm:ReviewDiffViewModel">
-          <Grid ColumnDefinitions="Auto,*,Auto">
-            <TextBlock Classes="body-strong" Text="{Binding TitleText}" />
-            <TextBlock Grid.Column="1" Classes="caption subtle" Margin="8,0" Text="{Binding CountText}" />
-            <TextBlock Grid.Column="2" Classes="caption subtle" Text="{Binding KeysText}" />
-          </Grid>
+          <WrapPanel x:Name="ReviewDiffHeader" Orientation="Horizontal">
+            <TextBlock Classes="body-strong" Margin="0,0,8,0" Text="{Binding TitleText}" />
+            <TextBlock Classes="caption subtle" Margin="0,0,8,0" Text="{Binding CountText}" />
+            <TextBlock Classes="caption subtle" Text="{Binding KeysText}" TextWrapping="Wrap" />
+          </WrapPanel>
           <TextBlock x:Name="ReviewDiffText" Classes="caption muted" Text="{Binding Text}" TextWrapping="Wrap" IsVisible="{Binding Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
           <TextBlock x:Name="ReviewDiffCapped" Classes="caption subtle" Text="{Binding CappedText}" TextWrapping="Wrap" IsVisible="{Binding CappedText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
           <ItemsControl ItemsSource="{Binding Groups}">
