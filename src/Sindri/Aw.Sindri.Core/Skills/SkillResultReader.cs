@@ -32,7 +32,7 @@ public static partial class SkillResultReader
 
         try
         {
-            using var document = JsonDocument.Parse(file.Bytes);
+            using var document = JsonDocument.Parse(WithoutBom(file.Bytes));
             return document.RootElement.ValueKind == JsonValueKind.Object
                 ? Read(document.RootElement, input)
                 : Of(SkillResultKind.OwnerWaiting, SkillWaitReason.Unreadable, SindriErrors.SkillResultUnreadable, "the result is not a JSON object");
@@ -42,6 +42,10 @@ public static partial class SkillResultReader
             return Of(SkillResultKind.OwnerWaiting, SkillWaitReason.Unreadable, SindriErrors.SkillResultUnreadable, e.Message);
         }
     }
+
+    // why: an editor or PowerShell may write a UTF-8 byte-order mark, which JsonDocument refuses on raw bytes; only the parse skips it, the result's sha is of the bytes on disk
+    private static ReadOnlyMemory<byte> WithoutBom(ReadOnlyMemory<byte> bytes) =>
+        bytes.Span.StartsWith("﻿"u8) ? bytes[3..] : bytes;
 
     private static SkillResultDecision Read(JsonElement root, SkillResultInput input)
     {
