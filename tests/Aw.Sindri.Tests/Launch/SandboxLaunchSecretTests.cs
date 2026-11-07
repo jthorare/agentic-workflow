@@ -3,9 +3,14 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Core.Workflow.Engine;
+using Aw.Sindri.Core.Workflow.Engine.Instances;
+using Aw.Sindri.Core.Workflow.Engine.Runtime;
+using Aw.Sindri.Core.Workflow.Ids;
+using Aw.Sindri.Features.CompleteStep;
 using Aw.Sindri.Infrastructure;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Infrastructure.Sandbox;
@@ -72,7 +77,8 @@ public sealed class SandboxLaunchSecretTests : IDisposable
             new HostlessBox(_provider.GetRequiredService<ISandbox>(), Path.Combine(SindriHome, "launch"), hideLaunchDirectory),
             new FileSessionCap(Path.Combine(_dir, "sessions.lock"), new FakeSliceScopes()),
             new FixedStages(Request()),
-            new SandboxLaunchOptions("systemd-run", new BoxFacts(32L * 1024 * 1024 * 1024, 8), SindriHome, new LauncherOptions(LauncherHome).SecretsDirectory, () => control));
+            new SandboxLaunchOptions("systemd-run", new BoxFacts(32L * 1024 * 1024 * 1024, 8), SindriHome, new LauncherOptions(LauncherHome).SecretsDirectory, () => control),
+            Registry);   // wiring only (#2163): SandboxLaunch now takes the registry it Puts the launch secret into
     }
 
     [Fact]
@@ -116,6 +122,78 @@ public sealed class SandboxLaunchSecretTests : IDisposable
         Assert.True(prepared.IsError);
         Assert.Equal("SND-LAUNCH-015", prepared.Error.Code);
         Assert.Empty(Registry.For(request.Launch));
+    }
+
+    private (Launcher Launcher, FakeSessionHost Host, LaunchRequest Request) Step()
+    {
+        var host = new FakeSessionHost();
+        var launcher = new Launcher(new LauncherParts(new AgentCatalog([AgentEntries.ClaudeCode]), _ => host, new FakeTerminalViewer(), new LauncherOptions(LauncherHome) { SindriHome = SindriHome }, new FakeTimeProvider(KnownInstants.Epoch))
+        {
+            Sandbox = MakeLaunch(hideLaunchDirectory: false),
+            ResolveBin = static (_, _) => ValueTask.FromResult<string?>(null),
+        });
+        var work = Directory.CreateDirectory(Path.Combine(_dir, "work")).FullName;
+        return (launcher, host, A.LaunchRequest().InDirectory(work).Unattended(new StepArgs(Model: null, Policy: null, Ref: new StepRef("build", "agent"))).Build());
+    }
+
+    [Fact]
+    public async Task A_start_that_fails_after_the_sandbox_was_prepared_forgets_the_secret()
+    {
+        var (launcher, host, request) = Step();
+        host.FailNextStart(KernelErrors.Unavailable.With("the host is down"));
+
+        var launched = await launcher.Launch(request, TestContext.Current.CancellationToken);
+
+        Assert.True(launched is FailedLaunch);
+        Assert.Empty(Registry.For(request.Launch));
+    }
+
+    [Fact]
+    public async Task The_secret_is_registered_while_the_session_lives_and_Stop_forgets_it()
+    {
+        var (launcher, _, request) = Step();
+        _ = await launcher.Launch(request, TestContext.Current.CancellationToken);
+        Assert.True(Registry.For(request.Launch).ContainsKey(SecretVariable));
+
+        _ = await launcher.Stop(request.Launch, TestContext.Current.CancellationToken);
+
+        Assert.Empty(Registry.For(request.Launch));
+    }
+
+    [Fact]
+    public async Task No_started_environment_value_or_argument_carries_the_secret()
+    {
+        var (launcher, host, request) = Step();
+        _ = await launcher.Launch(request, TestContext.Current.CancellationToken);
+
+        var secret = Registry.For(request.Launch)[SecretVariable];
+        var started = host.Started[0];
+        Assert.DoesNotContain(started.Env, e => e.Value.Contains(secret, StringComparison.Ordinal));
+        Assert.DoesNotContain(started.Env.Keys, name => string.Equals(name, SecretVariable, StringComparison.Ordinal));
+        Assert.DoesNotContain(started.Argv, a => a.Contains(secret, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task A_report_with_the_secret_the_sandbox_hands_the_agent_is_accepted_as_the_agent()
+    {
+        var (launcher, _, request) = Step();
+        _ = await launcher.Launch(request, TestContext.Current.CancellationToken);
+        var secret = new LaunchSecret(Registry.For(request.Launch)[SecretVariable]);   // what bubblewrap sets in the agent's environment, which CompleteCommand sends as X-Sindri-Launch-Secret
+        var address = InstanceAddress.From("T-9/step/1");
+        var view = new InstanceView(address, new RecipeVersion(RecipeId.From("workflow.step"), 1, RecipeHash.From("sha256:" + new string('a', 64))), "produce", Detail: null, KnownInstants.Epoch, string.Empty, [], Question: null, Task: null, RunToken.For(1, 1), Children: [], Outcome: null)
+        {
+            Id = WorkflowInstanceId.Of(address),
+            AgentRun = new OpenRun(RunToken.For(1, 1), StepRuntime.Agent, request.Launch.Value, Task: null),
+        };
+        var report = new CompleteStepRequest(address.Value, RunToken.For(1, 1), OutcomeName.From("done"), new Dictionary<FactKey, ReadOnlyMemory<byte>>(), Nonce: null, secret);
+        var files = new LaunchFileStore(new LauncherOptions(LauncherHome));
+
+        var decided = AgentReportAuthority.Decide(view, report, files);
+        var wrong = AgentReportAuthority.Decide(view, report with { LaunchSecret = new LaunchSecret("not-the-secret") }, files);
+
+        Assert.True(decided.IsSuccess, decided.IsError ? decided.Error.Message : null);
+        Assert.Equal(StepRuntime.Agent, decided.Value);
+        Assert.True(wrong.IsError);
     }
 
     /// <summary>The real bubblewrap Wrap over a plan whose host side is the temp run area (no probe, no self-check: they run bwrap).</summary>
