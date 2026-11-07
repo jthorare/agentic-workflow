@@ -80,7 +80,8 @@ internal sealed partial class ReviewPageViewModel
                 return false;
         }
 
-        Focus = Diff.FocusedLine is { } line ? new ReviewFocus(ReviewFocusRegion.DiffLine, ReviewDiffViewModel.KeyOf(line)) : ReviewFocus.None;
+        Focus = Diff.FocusedLine is { } line ? new ReviewFocus(ReviewFocusRegion.DiffLine, ReviewDiffViewModel.KeyOf(line))
+            : Diff.FocusedFile is { } file ? new ReviewFocus(ReviewFocusRegion.FileNote, file.Path) : ReviewFocus.None;
         return true;
     }
 
@@ -127,6 +128,7 @@ internal sealed partial class ReviewPageViewModel
     {
         ReviewFocusRegion.Panel => focus.Key.Split(':') is [var panel, var row] ? RowExists(panel, row) : Panels.Any(p => string.Equals(p.Id, focus.Key, StringComparison.Ordinal)),
         ReviewFocusRegion.DiffLine => Diff.VisibleFiles.Any(f => f.Hunks.Any(h => h.Lines.Any(l => string.Equals(l.Key, focus.Key, StringComparison.Ordinal)))),
+        ReviewFocusRegion.FileNote => Diff.VisibleFiles.Any(f => string.Equals(f.Path, focus.Key, StringComparison.Ordinal)),
         ReviewFocusRegion.GroupHeader => Diff.Groups.Any(g => string.Equals(g.Name, focus.Key, StringComparison.Ordinal)),
         ReviewFocusRegion.None or ReviewFocusRegion.StripFirst or ReviewFocusRegion.FixText or ReviewFocusRegion.FixOutcome => true,
         _ => false,

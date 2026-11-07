@@ -84,8 +84,29 @@ internal sealed class ReviewDiffViewModel : ObservableObject
         }
 
         var at = hunks.FindIndex(h => ReferenceEquals(h.Hunk, FocusedHunk));
-        var (file, hunk) = hunks[Math.Clamp(at < 0 ? 0 : at + delta, 0, hunks.Count - 1)];
+        if (at < 0 && FocusedFile is { } focused)
+        {
+            at = NextFrom(hunks, focused, delta);   // a focused file without lines: start from where it sits
+            if (at < 0)
+            {
+                return;
+            }
+        }
+        else
+        {
+            at = Math.Clamp(at < 0 ? 0 : at + delta, 0, hunks.Count - 1);
+        }
+
+        var (file, hunk) = hunks[at];
         Focus(file, hunk);
+    }
+
+    // The first hunk after (delta 1) or the last hunk before (delta -1) a file that has none; -1 when there is none that way.
+    private int NextFrom(List<(ReviewDiffFileViewModel File, ReviewDiffHunkViewModel Hunk)> hunks, ReviewDiffFileViewModel from, int delta)
+    {
+        var files = VisibleFiles.ToList();
+        var position = files.IndexOf(from);
+        return delta > 0 ? hunks.FindIndex(h => files.IndexOf(h.File) > position) : hunks.FindLastIndex(h => files.IndexOf(h.File) < position);
     }
 
     /// <summary>A line was clicked or focused: it becomes the focused line, with its hunk and file.</summary>

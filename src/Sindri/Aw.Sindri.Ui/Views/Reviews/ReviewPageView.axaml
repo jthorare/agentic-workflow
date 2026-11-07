@@ -168,7 +168,7 @@
                         <Border BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="6" Margin="0,0,0,8">
                           <StackPanel>
                             <Grid ColumnDefinitions="*,Auto,Auto" Margin="8,4">
-                              <TextBlock Classes="caption mono" Text="{Binding Path}" TextTrimming="CharacterEllipsis" />
+                              <TextBlock x:Name="ReviewDiffFile" Classes="caption mono" Focusable="True" Tag="{Binding Path}" Text="{Binding Path}" TextTrimming="CharacterEllipsis" />
                               <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding Status}" Margin="8,0" />
                               <TextBlock Grid.Column="2" Classes="caption subtle" Text="{Binding Stat}" />
                             </Grid>

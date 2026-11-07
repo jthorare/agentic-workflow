@@ -126,6 +126,22 @@ public sealed class ReviewPageKeysTests
     }
 
     [Fact]
+    public async Task J_onto_a_file_with_no_lines_focuses_that_files_header_and_p_starts_from_it()
+    {
+        var page = await _f.Opened(Token);
+        _ = Press(page, "j");
+        _ = Press(page, "j");
+        _ = Press(page, "j");   // Old.cs: deleted, its contents hidden
+
+        Assert.Equal(new ReviewFocus(ReviewFocusRegion.FileNote, "src/Api/A/A.Core/Old.cs"), page.Focus);
+        Assert.Equal("src/Api/A/A.Core/Old.cs", page.Diff.FocusedFile?.Path);
+
+        _ = Press(page, "p");
+
+        Assert.Equal("src/Api/A/A.Core/Budget.cs", page.Diff.FocusedFile?.Path);   // the hunk before Old.cs, not the diff's first
+    }
+
+    [Fact]
     public async Task Enter_does_nothing_when_no_group_header_has_focus()
     {
         var page = await _f.Opened(Token);

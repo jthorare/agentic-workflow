@@ -15,6 +15,9 @@ internal enum ReviewFocusRegion
     /// <summary>A diff line; the key is "path:+line" for an added line, "path:-line" for a removed one, "path:line" for an unchanged one.</summary>
     DiffLine,
 
+    /// <summary>A diff file's header, when the file has no line to focus (hidden, binary, too large, a pure rename); the key is its path.</summary>
+    FileNote,
+
     /// <summary>A diff group's header; the key is its name.</summary>
     GroupHeader,
 

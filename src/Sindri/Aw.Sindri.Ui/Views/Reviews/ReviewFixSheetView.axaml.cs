@@ -39,7 +39,7 @@ internal sealed partial class ReviewFixSheetView : UserControl
         {
             ReviewFocusRegion.FixText => this.FindControl<TextBox>("ReviewFixText"),
             ReviewFocusRegion.FixOutcome => this.FindControl<TextBlock>("ReviewFixOutcome"),
-            ReviewFocusRegion.None or ReviewFocusRegion.StripFirst or ReviewFocusRegion.Panel or ReviewFocusRegion.DiffLine or ReviewFocusRegion.GroupHeader => null,
+            ReviewFocusRegion.None or ReviewFocusRegion.StripFirst or ReviewFocusRegion.Panel or ReviewFocusRegion.DiffLine or ReviewFocusRegion.GroupHeader or ReviewFocusRegion.FileNote => null,
             _ => null,
         };
         _ = target?.Focus(NavigationMethod.Tab);
