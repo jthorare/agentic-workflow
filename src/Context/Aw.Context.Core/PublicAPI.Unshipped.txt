@@ -11306,8 +11306,11 @@ Aw.Context.Core.Records.ReviewedCommit.ReviewedCommit(string! Login, string! Com
 Aw.Context.Core.Records.PullFacts.PullFacts(System.Collections.Generic.IReadOnlyList<string!>! RequestedReviewers, string? HeadSha, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.ReviewedCommit!>! Reviews) -> void
 Aw.Context.Core.Linear.ILinearLookups
 Aw.Context.Core.Linear.ILinearLookups.Fetch(Aw.Context.Core.Linear.LinearSettings! settings, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearTeamLookups!>!>!>
+Aw.Context.Core.Linear.ILinearLookups.FetchWorkspaceUrlKey(Aw.Context.Core.Linear.LinearSettings! settings, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string?>!>
 Aw.Context.Core.Linear.ILinearLookupStore
 Aw.Context.Core.Linear.ILinearLookupStore.ReplaceTeam(Aw.Context.Core.Linear.LinearTeamLookups! team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Context.Core.Linear.ILinearLookupStore.ReplaceWorkspaceUrlKey(string! urlKey, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Context.Core.Linear.ILinearLookupStore.WorkspaceUrlKey(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string?>!>
 Aw.Context.Core.Linear.LinearCommentRow
 Aw.Context.Core.Linear.LinearCommentRow.AuthorId.get -> Aw.Context.Core.Sources.ExternalId?
 Aw.Context.Core.Linear.LinearCommentRow.AuthorId.init -> void
@@ -11380,22 +11383,26 @@ Aw.Context.Core.Linear.LinearLookupCycle.StartsAt.get -> System.DateTimeOffset
 Aw.Context.Core.Linear.LinearLookupCycle.StartsAt.init -> void
 Aw.Context.Core.Linear.LinearLookupLabel
 Aw.Context.Core.Linear.LinearLookupLabel.<Clone>$() -> Aw.Context.Core.Linear.LinearLookupLabel!
-Aw.Context.Core.Linear.LinearLookupLabel.Deconstruct(out Aw.Context.Core.Sources.ExternalId Id, out string! Name) -> void
+Aw.Context.Core.Linear.LinearLookupLabel.Deconstruct(out Aw.Context.Core.Sources.ExternalId Id, out string! Name, out string! Color) -> void
 Aw.Context.Core.Linear.LinearLookupLabel.Equals(Aw.Context.Core.Linear.LinearLookupLabel? other) -> bool
 Aw.Context.Core.Linear.LinearLookupLabel.Id.get -> Aw.Context.Core.Sources.ExternalId
 Aw.Context.Core.Linear.LinearLookupLabel.Id.init -> void
-Aw.Context.Core.Linear.LinearLookupLabel.LinearLookupLabel(Aw.Context.Core.Sources.ExternalId Id, string! Name) -> void
+Aw.Context.Core.Linear.LinearLookupLabel.Color.get -> string!
+Aw.Context.Core.Linear.LinearLookupLabel.Color.init -> void
+Aw.Context.Core.Linear.LinearLookupLabel.LinearLookupLabel(Aw.Context.Core.Sources.ExternalId Id, string! Name, string! Color) -> void
 Aw.Context.Core.Linear.LinearLookupLabel.Name.get -> string!
 Aw.Context.Core.Linear.LinearLookupLabel.Name.init -> void
 Aw.Context.Core.Linear.LinearLookupMember
 Aw.Context.Core.Linear.LinearLookupMember.<Clone>$() -> Aw.Context.Core.Linear.LinearLookupMember!
-Aw.Context.Core.Linear.LinearLookupMember.Deconstruct(out Aw.Context.Core.Sources.ExternalId Id, out string! Name, out string? DisplayName) -> void
+Aw.Context.Core.Linear.LinearLookupMember.Deconstruct(out Aw.Context.Core.Sources.ExternalId Id, out string! Name, out string? DisplayName, out bool Active) -> void
 Aw.Context.Core.Linear.LinearLookupMember.DisplayName.get -> string?
 Aw.Context.Core.Linear.LinearLookupMember.DisplayName.init -> void
 Aw.Context.Core.Linear.LinearLookupMember.Equals(Aw.Context.Core.Linear.LinearLookupMember? other) -> bool
 Aw.Context.Core.Linear.LinearLookupMember.Id.get -> Aw.Context.Core.Sources.ExternalId
 Aw.Context.Core.Linear.LinearLookupMember.Id.init -> void
-Aw.Context.Core.Linear.LinearLookupMember.LinearLookupMember(Aw.Context.Core.Sources.ExternalId Id, string! Name, string? DisplayName) -> void
+Aw.Context.Core.Linear.LinearLookupMember.Active.get -> bool
+Aw.Context.Core.Linear.LinearLookupMember.Active.init -> void
+Aw.Context.Core.Linear.LinearLookupMember.LinearLookupMember(Aw.Context.Core.Sources.ExternalId Id, string! Name, string? DisplayName, bool Active) -> void
 Aw.Context.Core.Linear.LinearLookupMember.Name.get -> string!
 Aw.Context.Core.Linear.LinearLookupMember.Name.init -> void
 Aw.Context.Core.Linear.LinearLookupState
@@ -11416,19 +11423,23 @@ Aw.Context.Core.Linear.LinearTeamLookups
 Aw.Context.Core.Linear.LinearTeamLookups.<Clone>$() -> Aw.Context.Core.Linear.LinearTeamLookups!
 Aw.Context.Core.Linear.LinearTeamLookups.Cycles.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearLookupCycle!>!
 Aw.Context.Core.Linear.LinearTeamLookups.Cycles.init -> void
-Aw.Context.Core.Linear.LinearTeamLookups.Deconstruct(out Aw.Context.Core.Sources.ExternalId TeamId, out string! TeamKey, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearLookupState!>! States, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearLookupCycle!>! Cycles, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearLookupMember!>! Members, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearLookupLabel!>! Labels) -> void
+Aw.Context.Core.Linear.LinearTeamLookups.Deconstruct(out Aw.Context.Core.Sources.ExternalId? TeamId, out string! TeamKey, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearLookupState!>! States, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearLookupCycle!>! Cycles, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearLookupMember!>! Members, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearLookupLabel!>! Labels, out string? Name, out System.DateTimeOffset? SyncedAt) -> void
 Aw.Context.Core.Linear.LinearTeamLookups.Equals(Aw.Context.Core.Linear.LinearTeamLookups? other) -> bool
 Aw.Context.Core.Linear.LinearTeamLookups.Labels.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearLookupLabel!>!
 Aw.Context.Core.Linear.LinearTeamLookups.Labels.init -> void
-Aw.Context.Core.Linear.LinearTeamLookups.LinearTeamLookups(Aw.Context.Core.Sources.ExternalId TeamId, string! TeamKey, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearLookupState!>! States, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearLookupCycle!>! Cycles, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearLookupMember!>! Members, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearLookupLabel!>! Labels) -> void
+Aw.Context.Core.Linear.LinearTeamLookups.LinearTeamLookups(Aw.Context.Core.Sources.ExternalId? TeamId, string! TeamKey, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearLookupState!>! States, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearLookupCycle!>! Cycles, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearLookupMember!>! Members, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearLookupLabel!>! Labels, string? Name, System.DateTimeOffset? SyncedAt) -> void
 Aw.Context.Core.Linear.LinearTeamLookups.Members.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearLookupMember!>!
 Aw.Context.Core.Linear.LinearTeamLookups.Members.init -> void
 Aw.Context.Core.Linear.LinearTeamLookups.States.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearLookupState!>!
 Aw.Context.Core.Linear.LinearTeamLookups.States.init -> void
-Aw.Context.Core.Linear.LinearTeamLookups.TeamId.get -> Aw.Context.Core.Sources.ExternalId
+Aw.Context.Core.Linear.LinearTeamLookups.TeamId.get -> Aw.Context.Core.Sources.ExternalId?
 Aw.Context.Core.Linear.LinearTeamLookups.TeamId.init -> void
 Aw.Context.Core.Linear.LinearTeamLookups.TeamKey.get -> string!
 Aw.Context.Core.Linear.LinearTeamLookups.TeamKey.init -> void
+Aw.Context.Core.Linear.LinearTeamLookups.Name.get -> string?
+Aw.Context.Core.Linear.LinearTeamLookups.Name.init -> void
+Aw.Context.Core.Linear.LinearTeamLookups.SyncedAt.get -> System.DateTimeOffset?
+Aw.Context.Core.Linear.LinearTeamLookups.SyncedAt.init -> void
 const Aw.Context.Core.Linear.LinearIssueSide.MaxComments = 50 -> int
 const Aw.Context.Core.Linear.LinearMarker.Prefix = "<!-- sindri:issue=" -> string!
 const Aw.Context.Core.Linear.LinearMarker.Suffix = "-->" -> string!
@@ -11599,6 +11610,7 @@ Aw.Context.Core.Facade.IContextIssues.IssueGet(Aw.Context.Core.Sources.RecordKey
 Aw.Context.Core.Facade.IContextIssues.IssueList(Aw.Context.Core.Linear.LinearIssueFilter! filter, Aw.Context.Core.Linear.LinearIssueCursor? after, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssuePage!>!>
 Aw.Context.Core.Facade.IContextIssues.IssueLookups(string! team, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearTeamLookups?>!>
 Aw.Context.Core.Facade.IContextIssues.IssueSince(System.DateTimeOffset marker, Aw.Context.Core.Sources.ExternalId viewer, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearSince!>!>
+Aw.Context.Core.Facade.IContextIssues.WorkspaceUrlKey(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string?>!>
 Aw.Context.Core.Records.ILinearIssueStore
 Aw.Context.Core.Records.ILinearIssueStore.Comments(Aw.Context.Core.Sources.RecordKey key, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>!>!>
 Aw.Context.Core.Records.ILinearIssueStore.Get(Aw.Context.Core.Sources.RecordKey key, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linear.LinearIssueRow?>!>

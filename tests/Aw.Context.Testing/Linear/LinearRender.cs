@@ -60,6 +60,17 @@ internal static class LinearRender
         return node;
     }
 
+    // a label inside a team's list: its colour too
+    private static JsonObject LabelRef(LinearRow l)
+    {
+        var node = Ref(l);
+        node["color"] = l.Color ?? "#bec2c8";
+        return node;
+    }
+
+    /// <summary>The workspace, as 'organization' answers.</summary>
+    public static JsonObject Organization(LinearStore s) => new() { ["id"] = "00000000-0000-4000-8000-0000000000f0", ["urlKey"] = s.UrlKey };
+
     public static JsonObject Comment(LinearStore s, FakeLinearComment c) => new()
     {
         ["id"] = c.Id,
@@ -93,7 +104,7 @@ internal static class LinearRender
         node["states"] = Nodes(s.States.Where(x => x.TeamId == t.Id).Select((x, position) => (JsonNode)new JsonObject { ["id"] = x.Id, ["name"] = x.Name, ["type"] = x.Type, ["position"] = position }));
         node["cycles"] = Nodes(s.Cycles.Where(c => c.TeamId is null || c.TeamId == t.Id).Select(c => (JsonNode)Cycle(s, c)));
         node["members"] = Nodes(s.Members.Select(m => (JsonNode)Member(m)));
-        node["labels"] = Nodes(s.Labels.Where(l => l.TeamId is null || l.TeamId == t.Id).Select(l => (JsonNode)Ref(l)));
+        node["labels"] = Nodes(s.Labels.Where(l => l.TeamId is null || l.TeamId == t.Id).Select(l => (JsonNode)LabelRef(l)));
         return node;
     }
 
@@ -104,7 +115,7 @@ internal static class LinearRender
         new() { ["id"] = x.Id, ["name"] = x.Name, ["type"] = x.Type, ["team"] = Ref(s.Teams.First(t => t.Id == x.TeamId), key: true) };
 
     public static JsonObject Member(LinearRow m) =>
-        new() { ["id"] = m.Id, ["name"] = m.Name, ["displayName"] = m.Name, ["active"] = true };
+        new() { ["id"] = m.Id, ["name"] = m.Name, ["displayName"] = m.Name, ["active"] = m.Active };
 
     public static JsonObject Project(LinearStore s, LinearRow p) => new()
     {
