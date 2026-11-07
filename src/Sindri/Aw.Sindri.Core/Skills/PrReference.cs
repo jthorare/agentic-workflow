@@ -14,6 +14,9 @@ public static partial class PrReference
     /// <summary>The input key that names the PR.</summary>
     public const string InputKey = "pr";
 
+    /// <summary>The environment variable that names the fetched branch for the session.</summary>
+    public const string BranchVariable = "AW_SINDRI_PR_REF";
+
     /// <summary>The PR number in <paramref name="input"/>: '42', '#42' or 'https://github.com/owner/name/pull/42' (with or without a trailing path, query or fragment).</summary>
     /// <param name="input">The input's value.</param>
     /// <returns>The number, or SND-SKILL-006.</returns>

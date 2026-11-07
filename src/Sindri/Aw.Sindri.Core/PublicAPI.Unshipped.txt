@@ -22299,6 +22299,7 @@ Aw.Sindri.Core.Events.LaunchStartedPublic.PrHead.init -> void
 Aw.Sindri.Core.Launch.StartedLaunch.PrHead.get -> string?
 Aw.Sindri.Core.Launch.StartedLaunch.PrHead.init -> void
 Aw.Sindri.Core.Skills.PrReference
+const Aw.Sindri.Core.Skills.PrReference.BranchVariable = "AW_SINDRI_PR_REF" -> string!
 const Aw.Sindri.Core.Skills.PrReference.InputKey = "pr" -> string!
 static Aw.Sindri.Core.Skills.PrReference.BranchOf(Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId instance, int runNumber) -> string!
 static Aw.Sindri.Core.Skills.PrReference.Number(string! input) -> Aw.Kernel.Result<int>!

@@ -14,6 +14,7 @@ using Aw.Sindri.Infrastructure.Sandbox.Launch;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Sandbox;
 using Aw.Sindri.Testing.Skills;
+using Aw.Sindri.Tests.Sandbox.Bubblewrap;
 using Aw.Sindri.Tests.Sandbox.Egress;
 using Microsoft.Extensions.Time.Testing;
 
@@ -98,6 +99,39 @@ public sealed class SandboxLaunchStagesTests : IDisposable
         Expect.True(built.Value.LongMax is null);   // the state timeout is the only bound (RCP-SKILL-001)
         var limits = LimitsResolver.Resolve(new LimitsInput(Limits: null, AttendedSettings: null, Attended: false, built.Value.StepTimeout, built.Value.LongMax, RamBytes: 32L * 1024 * 1024 * 1024, Cores: 8));
         Expect.Equal(TimeSpan.FromHours(48) + limits.WallGrace, limits.Wall);
+    }
+
+    private static LaunchRequest SkillStep(Dictionary<string, string> inputs) =>
+        PlannedStep() with { Skill = new SkillLaunch("review", SkillTarget.ClaudeCode, SkillFixtures.Review, inputs) };
+
+    private async Task<SandboxPlan> PlanOf(LaunchRequest request)
+    {
+        var asked = (await Make().Request(request, chosenSession: null, CancellationToken.None)).Value;
+        return SandboxPlanner.Build(SandboxMechanism.Bubblewrap, asked).Value;
+    }
+
+    [Fact]
+    public async Task A_skill_launch_with_a_pr_input_sets_the_branch_the_host_fetched_the_PR_head_to_inside_the_sandbox()
+    {
+        var request = SkillStep(new Dictionary<string, string>(StringComparer.Ordinal) { ["pr"] = "2148" });
+        var branch = PrReference.BranchOf(WorkflowInstanceId.Of(request.Instance!.Value), request.Run!.Value.Number);
+
+        var plan = await PlanOf(request);
+        var argv = BubblewrapArgv.Build(plan, new FakeHostPaths(), secretsFd: false).ToList();
+
+        Expect.Equal(branch, plan.Environment.Single(e => string.Equals(e.Name, PrReference.BranchVariable, StringComparison.Ordinal)).Value);
+        Expect.True(argv.Zip(argv.Skip(1), argv.Skip(2)).Any(t => t is ("--setenv", var name, var value) && string.Equals(name, PrReference.BranchVariable, StringComparison.Ordinal) && string.Equals(value, branch, StringComparison.Ordinal)));   // the real bubblewrap argv, after --clearenv
+    }
+
+    [Fact]
+    public async Task A_skill_launch_without_a_pr_input_gets_no_PR_variable_and_the_same_environment_names_as_before()
+    {
+        var plan = await PlanOf(SkillStep(new Dictionary<string, string>(StringComparer.Ordinal)));
+        var plain = await PlanOf(PlannedStep());
+
+        Expect.True(plan.Environment.All(e => !string.Equals(e.Name, PrReference.BranchVariable, StringComparison.Ordinal)));
+        string[] skillVariables = ["AW_RESULT", "AW_RESULT_SKILL", "AW_RESULT_FILE", "AW_DIR"];
+        Expect.True(plan.Environment.Select(e => e.Name).Order(StringComparer.Ordinal).SequenceEqual(plain.Environment.Select(e => e.Name).Concat(skillVariables).Order(StringComparer.Ordinal), StringComparer.Ordinal));
     }
 
     [Fact]
@@ -323,7 +357,7 @@ public sealed class SandboxLaunchStagesTests : IDisposable
         return (asked, SandboxPlanner.Build(SandboxMechanism.Bubblewrap, asked).Value);
     }
 
-    private sealed class NoProfile : IApprovedProfile
+    internal sealed class NoProfile : IApprovedProfile
     {
         public ValueTask<Result<LoadedProfile?>> Latest(CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success<LoadedProfile?>(value: null));
     }
@@ -335,12 +369,12 @@ public sealed class SandboxLaunchStagesTests : IDisposable
                 new SindriProfile(1, "thor", Sandbox: new SandboxSettings(Credentials: new SandboxCredentials(github))), ProfileHashing.Of("{}"u8), "/home/profile.yaml")));
     }
 
-    private sealed class EmptyLearn : ILearnHistory
+    internal sealed class EmptyLearn : ILearnHistory
     {
         public ValueTask<LearnHistory> Read(string repo, CancellationToken cancellationToken) => ValueTask.FromResult(new LearnHistory(FirstLearnRun: null, LearnRuns: 0, EndedAt: null));
     }
 
-    private sealed class StubInputs(string directory) : ISandboxLaunchInputs
+    internal sealed class StubInputs(string directory) : ISandboxLaunchInputs
     {
         public PolicyForm Form { get; set; }
 
