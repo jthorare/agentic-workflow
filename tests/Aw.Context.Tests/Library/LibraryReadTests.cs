@@ -120,6 +120,42 @@ public sealed class LibraryReadTests : IDisposable
     }
 
     [Fact, Trait("Lane", "integration")]
+    public async Task The_store_reads_the_claims_of_many_PRs_in_one_call_in_PR_then_ref_order()
+    {
+        const string Second = "github:pr/acme/widgets/14";
+        const string Bare = "github:pr/acme/widgets/15";
+        await PutPr(Second, _repoAudience, ["harbor#REQ-2"]);
+        await PutPr(Pr, _repoAudience, ["harbor#REQ-2", "harbor#REQ-1"]);
+        await PutPr(Bare, _repoAudience, []);
+
+        var rows = (await _world.Library.ClaimsOfMany([RecordKey.From(Second), RecordKey.From(Pr), RecordKey.From(Bare)], Ct)).Value;
+
+        Assert.Equal([(Pr, "harbor#REQ-1"), (Pr, "harbor#REQ-2"), (Second, "harbor#REQ-2")], rows.Select(static r => (r.Pr.Value, r.Ref)));
+        Assert.Empty((await _world.Library.ClaimsOfMany([RecordKey.From(Bare)], Ct)).Value);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task Claims_for_many_PRs_leave_out_a_PR_outside_the_audience_and_map_a_claimless_PR_to_an_empty_list()
+    {
+        const string Bare = "github:pr/acme/widgets/15";
+        await PutDoc(RepoDocs.Id, RepoDoc, _repoAudience, Parsed("harbor", Plan));
+        await PutPr(Pr, _repoAudience, ["harbor#REQ-1"]);
+        await PutPr(OwnerPr, _ownerAudience, ["harbor#REQ-2"]);
+        await PutPr(Bare, _repoAudience, []);
+        RecordKey[] asked = [RecordKey.From(Pr), RecordKey.From(OwnerPr), RecordKey.From(Bare)];
+
+        var session = (await Library.Claims(asked, Session(), Ct)).Value;
+        var owner = (await Library.Claims(asked, Owner(), Ct)).Value;
+
+        Assert.Equal([Bare, Pr], session.Keys.Select(static k => k.Value).Order(StringComparer.Ordinal), StringComparer.Ordinal);   // the owner-only PR has no entry
+        Assert.Equal(LibraryRefStatus.Resolved, Assert.Single(session[RecordKey.From(Pr)]).Resolution.Status);
+        Assert.Empty(session[RecordKey.From(Bare)]);
+        Assert.Equal(3, owner.Count);
+        _ = Assert.Single(owner[RecordKey.From(OwnerPr)]);
+        Assert.Empty((await Library.Claims([], Owner(), Ct)).Value);
+    }
+
+    [Fact, Trait("Lane", "integration")]
     public async Task A_claim_written_before_its_doc_resolves_once_the_doc_lands()
     {
         await PutPr(Pr, _repoAudience, ["harbor#REQ-1"]);

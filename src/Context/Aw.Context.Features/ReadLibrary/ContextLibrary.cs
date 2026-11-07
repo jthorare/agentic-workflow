@@ -90,6 +90,45 @@ internal sealed class ContextLibrary(ILibraryStore store, ILibraryStatus? status
         return rows.IsError ? rows.Error : await Resolved(rows.Value, audience, onlyDoc: null, cancellationToken).ConfigureAwait(false);
     }
 
+    public async ValueTask<Result<IReadOnlyDictionary<RecordKey, IReadOnlyList<LibraryClaim>>>> Claims(IReadOnlyList<RecordKey> prKeys, AudienceScope audience, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(prKeys);
+        ArgumentNullException.ThrowIfNull(audience);
+        var map = new Dictionary<RecordKey, IReadOnlyList<LibraryClaim>>();
+        if (prKeys.Count == 0)
+        {
+            return map;
+        }
+
+        var rows = await store.ClaimsOfMany(prKeys, cancellationToken).ConfigureAwait(false);
+        if (rows.IsError)
+        {
+            return rows.Error;
+        }
+
+        // why: a PR's audience comes with its claim rows, so a PR with claims the caller may not read is left out, while one with no claims (nothing to hide) maps to an empty list.
+        foreach (var group in rows.Value.GroupBy(static row => row.Pr))
+        {
+            var claims = await Resolved([.. group], audience, onlyDoc: null, cancellationToken).ConfigureAwait(false);
+            if (claims.IsError)
+            {
+                return claims.Error;
+            }
+
+            if (group.Any(row => audience.Allows(row.PrAudience, row.Pr)))
+            {
+                map[group.Key] = claims.Value;
+            }
+        }
+
+        foreach (var key in prKeys)
+        {
+            _ = map.TryAdd(key, []);
+        }
+
+        return map;
+    }
+
     public async ValueTask<Result<IReadOnlyList<LibraryClaim>>> ClaimsOn(RecordKey docKey, AudienceScope audience, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(audience);
