@@ -224,5 +224,10 @@ public sealed class LinearConnectTests
 
         public ValueTask<Result<IReadOnlyList<string>>> Teams(CancellationToken cancellationToken) =>
             ValueTask.FromResult(Failure is { } failure ? Results.Failure<IReadOnlyList<string>>(failure) : Results.Success(Readable));
+
+        public ValueTask<Result<IReadOnlyList<LinearTeamDetail>>> Details(CancellationToken cancellationToken) =>
+            ValueTask.FromResult(Failure is { } failure
+                ? Results.Failure<IReadOnlyList<LinearTeamDetail>>(failure)
+                : Results.Success<IReadOnlyList<LinearTeamDetail>>([.. Readable.Select(static k => new LinearTeamDetail(k, k, k))]));
     }
 }

@@ -9,8 +9,8 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 public sealed class ApiGoldenTests
 {
     // hand-written before their routes (#2076): the Library roots writes in their own slot and the review settings in Ph9's api slot, each registering its rows and leaving this list;
-    // the Linear hub's reads (#2077 Ph3 1a) and writes (1b) leave it when api serves them (the edit route's linear-change is served)
-    private static readonly string[] _pendingGoldenFolders = ["library-roots", "review-settings", "review-settings-save", "linear-connection", "linear-connection-teams", "linear-connect", "linear-disconnect-write"];
+    // the Linear hub's rows (#2077 Ph3) all left it when api served them
+    private static readonly string[] _pendingGoldenFolders = ["library-roots", "review-settings", "review-settings-save"];
 
     private static bool IsPending(string file) => _pendingGoldenFolders.Any(p => file.StartsWith(p + "/", StringComparison.Ordinal));
 
@@ -29,7 +29,7 @@ public sealed class ApiGoldenTests
         Assert.Equal(expected, files);
 
         // the pending files are exactly the rows not yet registered
-        var pendingRows = ((IEnumerable<(string Slug, string Scenario)>)[.. LibraryRootScenarios.All, .. ReviewSettingsScenarios.All, .. LinearScenarios.All]).Select(r => $"{r.Slug}/{r.Scenario}.json").Order(StringComparer.Ordinal);
+        var pendingRows = ((IEnumerable<(string Slug, string Scenario)>)[.. LibraryRootScenarios.All, .. ReviewSettingsScenarios.All]).Select(r => $"{r.Slug}/{r.Scenario}.json").Order(StringComparer.Ordinal);
         Assert.Equal(pendingRows, all.Where(IsPending).Order(StringComparer.Ordinal));
         Assert.DoesNotContain(ApiScenarios.All, r => _pendingGoldenFolders.Contains(r.Slug));
     }

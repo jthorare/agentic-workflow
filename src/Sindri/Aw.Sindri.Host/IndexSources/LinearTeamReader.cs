@@ -17,7 +17,7 @@ namespace Aw.Sindri.Host.IndexSources;
 /// <param name="http">The client (production: one shared client).</param>
 internal sealed class LinearTeamReader(Uri url, string key, HttpClient http) : ILinearTeamReader
 {
-    private const string Query = """{"query":"query { teams(first: 250) { nodes { key } } }"}""";
+    private const string Query = """{"query":"query { teams(first: 250) { nodes { id key name } } }"}""";
     private static readonly TimeSpan _deadline = TimeSpan.FromSeconds(15);
 
     private static readonly HttpClient _shared = new(new SocketsHttpHandler { AllowAutoRedirect = false, UseProxy = false });
@@ -30,6 +30,13 @@ internal sealed class LinearTeamReader(Uri url, string key, HttpClient http) : I
 
     /// <inheritdoc />
     public async ValueTask<Result<IReadOnlyList<string>>> Teams(CancellationToken cancellationToken)
+    {
+        var details = await Details(cancellationToken).ConfigureAwait(false);
+        return details.IsError ? details.Error : details.Value.Select(static t => t.Key).ToList();
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<Result<IReadOnlyList<LinearTeamDetail>>> Details(CancellationToken cancellationToken)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(_deadline);
@@ -52,7 +59,7 @@ internal sealed class LinearTeamReader(Uri url, string key, HttpClient http) : I
         }
     }
 
-    private Result<IReadOnlyList<string>> Read(HttpStatusCode status, byte[] body)
+    private Result<IReadOnlyList<LinearTeamDetail>> Read(HttpStatusCode status, byte[] body)
     {
         var code = (int)status;
         if (status is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
@@ -68,7 +75,7 @@ internal sealed class LinearTeamReader(Uri url, string key, HttpClient http) : I
         return Shape(code, body);
     }
 
-    private Result<IReadOnlyList<string>> Shape(int code, byte[] body)
+    private Result<IReadOnlyList<LinearTeamDetail>> Shape(int code, byte[] body)
     {
         try
         {
@@ -81,10 +88,7 @@ internal sealed class LinearTeamReader(Uri url, string key, HttpClient http) : I
 
             if (code is >= 200 and < 300 && NodesOf(root) is { } nodes)
             {
-                return nodes.EnumerateArray()
-                    .Select(static n => n.ValueKind == JsonValueKind.Object && n.TryGetProperty("key", out var k) && k.ValueKind == JsonValueKind.String ? k.GetString() : null)
-                    .OfType<string>()
-                    .ToList();
+                return nodes.EnumerateArray().Select(Team).OfType<LinearTeamDetail>().ToList();
             }
         }
         catch (JsonException)
@@ -94,6 +98,12 @@ internal sealed class LinearTeamReader(Uri url, string key, HttpClient http) : I
 
         return ContextErrors.LinearUnexpectedReply.With($"Linear at {url.Authority} answered the team read (HTTP {code.ToString(CultureInfo.InvariantCulture)}) with a body this build does not know; nothing was saved.");
     }
+
+    // why: a node with no key is skipped, as before; an id or name Linear leaves out reads as empty, not as a refusal
+    private static LinearTeamDetail? Team(JsonElement node) =>
+        node.ValueKind == JsonValueKind.Object && Text(node, "key") is { } key ? new LinearTeamDetail(Text(node, "id") ?? string.Empty, key, Text(node, "name") ?? string.Empty) : null;
+
+    private static string? Text(JsonElement node, string name) => node.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
 
     private Error? GraphQlError(JsonElement root)
     {

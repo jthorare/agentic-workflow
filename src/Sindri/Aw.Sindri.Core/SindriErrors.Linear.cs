@@ -18,4 +18,10 @@ public static partial class SindriErrors
 
     /// <summary>SND-LINEAR-011: a Linear write was sent and Linear never confirmed it, and the one re-read did not find it either (Linear hub spec 2026-11-04 §5.1, §8). The answer carries outcome 'unknown' and the client id; a retry sends the same one.</summary>
     public static readonly ErrorDefinition LinearNoAnswer = new("SND-LINEAR-011", ErrorKind.Timeout, "Linear didn't confirm it");
+
+    /// <summary>SND-LINEAR-001: the write key is the same key as the read key (Linear hub spec 2026-11-04 §8). A key with write access is a second one; the read key stays read-only.</summary>
+    public static readonly ErrorDefinition LinearWriteKeySameAsRead = new("SND-LINEAR-001", ErrorKind.Invalid, "The write key is the same as the read key");
+
+    /// <summary>SND-LINEAR-014: no OS keychain took the write key (Linear hub spec 2026-11-04 §8). The write key never goes in a file an agent session can read, so it is not saved.</summary>
+    public static readonly ErrorDefinition LinearNoKeychain = new("SND-LINEAR-014", ErrorKind.Invalid, "No keychain to keep the write key in");
 }
