@@ -273,6 +273,10 @@ internal sealed partial class ShellViewModel : ObservableObject
         {
             _beforeSettings = CurrentPage;
         }
+        else if (CurrentPage == PageId.Settings)
+        {
+            LinearConnection.Leave();   // the click's own "Saved." goes with the page, so the next open shows what is true then
+        }
 
         CurrentPage = page;
         Workflows.ClearNote();

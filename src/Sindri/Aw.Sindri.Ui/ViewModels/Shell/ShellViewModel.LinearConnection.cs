@@ -13,16 +13,7 @@ internal sealed partial class ShellViewModel
     private LinearConnectionViewModel InitLinearConnection(ISindriApi api)
     {
         var card = new LinearConnectionViewModel(Health.ApiUrl, api);
-        Health.Follow((url, token) =>
-        {
-            if (CurrentPage == PageId.Settings)
-            {
-                return card.Refresh(url, token);
-            }
-
-            card.Leave();
-            return Task.CompletedTask;
-        });
+        Health.Follow((url, token) => CurrentPage == PageId.Settings ? card.Refresh(url, token) : Task.CompletedTask);   // leaving Settings already dropped the click's answer (ShowPage)
         card.ReviewRequested += (_, _) => OpenApproveAll();   // the screen the setup step's Review uses: every waiting profile change together
         return card;
     }
