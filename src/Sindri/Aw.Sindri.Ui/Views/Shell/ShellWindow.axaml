@@ -284,6 +284,10 @@
                 </controls:Deferred.Template>
               </controls:Deferred>
             </Panel>
+            <!-- One PR's review page (review page spec §6.2): over the Reviews list, in place of it. -->
+            <ScrollViewer x:Name="ReviewPageLayer" IsVisible="{Binding IsReviewPageShown}">
+              <Panel Classes="page-content"><rwv:ReviewPageView x:Name="ReviewPageContent" DataContext="{Binding ReviewPage}" /></Panel>
+            </ScrollViewer>
           </Panel>
         </Border>
 
@@ -406,6 +410,9 @@
                       <DataTemplate><cwv:AddSeveralPagesView x:Name="AddSeveralPagesContent" /></DataTemplate>
                     </controls:Deferred.Template>
                   </controls:Deferred>
+                </ScrollViewer>
+                <ScrollViewer x:Name="ReviewFixSheetScroll" IsVisible="{Binding IsFixTaskSheet}">
+                  <rwv:ReviewFixSheetView x:Name="ReviewFixSheetContent" DataContext="{Binding ReviewFix}" />
                 </ScrollViewer>
                 <ScrollViewer x:Name="LibrarySheetScroll" IsVisible="{Binding IsLibrarySheet}">
                   <rwv:LibrarySheetView x:Name="LibrarySheetContent" DataContext="{Binding Reviews.Library}" />
