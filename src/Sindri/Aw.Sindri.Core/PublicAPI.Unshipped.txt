@@ -19448,6 +19448,8 @@ override Aw.Sindri.Core.ModelHistory.StateOrder.ToString() -> string!
 static Aw.Sindri.Core.ModelHistory.StateOrder.operator !=(Aw.Sindri.Core.ModelHistory.StateOrder? left, Aw.Sindri.Core.ModelHistory.StateOrder? right) -> bool
 static Aw.Sindri.Core.ModelHistory.StateOrder.operator ==(Aw.Sindri.Core.ModelHistory.StateOrder? left, Aw.Sindri.Core.ModelHistory.StateOrder? right) -> bool
 static Aw.Sindri.Core.Sandbox.SandboxRefusal.SourceTextOf(Aw.Kernel.Error! error) -> string?
+Aw.Sindri.Core.Sandbox.Plan.PlanArgvPaths
+static Aw.Sindri.Core.Sandbox.Plan.PlanArgvPaths.Check(Aw.Sindri.Core.Sandbox.Plan.SandboxPlan! plan, System.Collections.Generic.IReadOnlyList<string!>! argv) -> Aw.Kernel.Error?
 Aw.Sindri.Core.Sandbox.Plan.SessionHomePaths
 static Aw.Sindri.Core.Sandbox.Plan.SessionHomePaths.For(string! sindriHome, Aw.Sindri.Core.Workflow.Engine.LaunchId launch) -> string!
 static Aw.Sindri.Core.Sandbox.Plan.SessionHomePaths.GhTokenDirectory(string! sessionHome) -> string!
