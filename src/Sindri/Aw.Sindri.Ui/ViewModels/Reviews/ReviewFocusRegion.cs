@@ -9,6 +9,9 @@ internal enum ReviewFocusRegion
     /// <summary>The summary strip's first segment.</summary>
     StripFirst,
 
+    /// <summary>The heading of a whole-page state (not found, offline, failed), where focus goes after a Try again that failed.</summary>
+    StateHeading,
+
     /// <summary>A panel's header or row; the key is the panel id, or "panelId:rowId" for a row.</summary>
     Panel,
 

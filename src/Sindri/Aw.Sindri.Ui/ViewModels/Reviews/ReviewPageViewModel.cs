@@ -168,13 +168,18 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
         return Read(cancellationToken);
     }
 
-    /// <summary>Reads the page again (Try again, Reload); focus lands on the summary strip's first part.</summary>
+    /// <summary>Reads the page again (Try again, Reload); focus lands on the summary strip's first part, or on the state's heading when the read failed again.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>When the answer is shown.</returns>
     internal async Task Reload(CancellationToken cancellationToken)
     {
+        if (ShowsState)
+        {
+            ShowLoading();   // Try again: the press shows loading, as the first read did
+        }
+
         await Read(cancellationToken).ConfigureAwait(true);
-        Focus = new ReviewFocus(ReviewFocusRegion.StripFirst);
+        Focus = new ReviewFocus(ShowsState ? ReviewFocusRegion.StateHeading : ReviewFocusRegion.StripFirst);
     }
 
     /// <summary>The back button: the shell shows the Reviews list again.</summary>

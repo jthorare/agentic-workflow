@@ -133,6 +133,7 @@ internal sealed partial class ReviewPageView : UserControl
         ReviewFocusRegion.StripFirst => all.FirstOrDefault(c => c.Name == "ReviewStripSegment" && c.IsEnabled) ?? all.FirstOrDefault(c => c.Name == "ReviewTitle"),
         ReviewFocusRegion.Panel => PanelTarget(all, focus.Key),
         ReviewFocusRegion.DiffLine => all.FirstOrDefault(c => c.Name == "ReviewDiffLine" && string.Equals(c.Tag as string, focus.Key, StringComparison.Ordinal)),
+        ReviewFocusRegion.StateHeading => all.FirstOrDefault(c => c.Name == "ReviewStateHeading"),
         ReviewFocusRegion.FileNote => all.FirstOrDefault(c => c.Name == "ReviewDiffFile" && string.Equals(c.Tag as string, focus.Key, StringComparison.Ordinal)),
         ReviewFocusRegion.GroupHeader => all.FirstOrDefault(c => c.Name == "ReviewDiffGroupHeader" && string.Equals(c.Tag as string, focus.Key, StringComparison.Ordinal)),
         ReviewFocusRegion.None or ReviewFocusRegion.FixText or ReviewFocusRegion.FixOutcome => null,

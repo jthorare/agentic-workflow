@@ -130,7 +130,7 @@ internal sealed partial class ReviewPageViewModel
         ReviewFocusRegion.DiffLine => Diff.VisibleFiles.Any(f => f.Hunks.Any(h => h.Lines.Any(l => string.Equals(l.Key, focus.Key, StringComparison.Ordinal)))),
         ReviewFocusRegion.FileNote => Diff.VisibleFiles.Any(f => string.Equals(f.Path, focus.Key, StringComparison.Ordinal)),
         ReviewFocusRegion.GroupHeader => Diff.Groups.Any(g => string.Equals(g.Name, focus.Key, StringComparison.Ordinal)),
-        ReviewFocusRegion.None or ReviewFocusRegion.StripFirst or ReviewFocusRegion.FixText or ReviewFocusRegion.FixOutcome => true,
+        ReviewFocusRegion.None or ReviewFocusRegion.StateHeading or ReviewFocusRegion.StripFirst or ReviewFocusRegion.FixText or ReviewFocusRegion.FixOutcome => true,
         _ => false,
     };
 

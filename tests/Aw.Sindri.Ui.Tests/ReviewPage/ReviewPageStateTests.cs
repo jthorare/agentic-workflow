@@ -222,4 +222,31 @@ public sealed class ReviewPageStateTests
         Assert.Equal((Labels.ReviewsLoginPending, ReviewPageState.LoginPrompt), (page.Login.Note, page.State));
         _ = Assert.Single(_f.Server.ReviewPageReads);
     }
+
+    [Fact]
+    public async Task Try_again_shows_loading_first_and_focus_goes_to_the_state_heading_when_the_read_fails_again()
+    {
+        _f.Refuse("not-found");
+        var page = await _f.Opened(Token);
+        _f.Server.ReviewPageGate = new TaskCompletionSource();
+
+        var again = page.Reload(Token);
+
+        Assert.Equal(ReviewPageState.Loading, page.State);
+        _f.Server.ReviewPageGate.SetResult();
+        await again;
+        Assert.Equal((ReviewPageState.NotFound, new ReviewFocus(ReviewFocusRegion.StateHeading)), (page.State, page.Focus));
+    }
+
+    [Fact]
+    public async Task Try_again_that_works_focuses_the_strips_first_part()
+    {
+        _f.Refuse("not-found");
+        var page = await _f.Opened(Token);
+        _f.Serve("full");
+
+        await page.Reload(Token);
+
+        Assert.Equal((ReviewPageState.Ready, new ReviewFocus(ReviewFocusRegion.StripFirst)), (page.State, page.Focus));
+    }
 }
