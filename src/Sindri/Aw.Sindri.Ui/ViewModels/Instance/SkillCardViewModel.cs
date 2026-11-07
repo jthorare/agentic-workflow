@@ -115,8 +115,12 @@ internal sealed class SkillCardViewModel : ObservableObject
     /// <summary>The block's outputs that hold a path.</summary>
     public IReadOnlyList<SkillOutput> Outputs => [.. (Block?.Outputs ?? []).Select(key => Input.Facts.FirstOrDefault(f => string.Equals(f.Key, key, StringComparison.Ordinal)))
         .OfType<FactRow>()
-        .Select(f => new SkillOutput(f.Label, f.Ref?.Path ?? (f.Type == FactType.File ? f.Summary : string.Empty)))
+        .Select(f => new SkillOutput(f.Label, PathOf(f)))
         .Where(o => o.Path.Length > 0)];
+
+    // The path is the ref's; a produced fact with none but a summary that reads as a path (absolute, home-relative or with a folder) falls back to the summary.
+    private static string PathOf(FactRow fact) =>
+        fact.Ref?.Path ?? (fact.Status == FactStatus.Produced && (fact.Summary.StartsWith('/') || fact.Summary.StartsWith('~') || fact.Summary.Contains('/', StringComparison.Ordinal)) ? fact.Summary : string.Empty);
 
     /// <summary>"round 2 of 2" when the state is in a loop; empty otherwise.</summary>
     public string RoundLine => Input.Cell.Round is { } round ? Labels.SkillRound(round.N, round.Max) : string.Empty;
