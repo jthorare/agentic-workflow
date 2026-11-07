@@ -125,7 +125,7 @@ public sealed class SkillCardViewModelTests
     {
         var fact = PlanFact();
 
-        Assert.Empty(Card(facts: [fact with { Ref = fact.Ref! with { Path = "plans/x" } }]).Outputs);
+        Assert.Empty(Card(facts: [fact with { Summary = "plans/x", Ref = fact.Ref! with { Path = "plans/x" } }]).Outputs);
     }
 
     [Fact]
