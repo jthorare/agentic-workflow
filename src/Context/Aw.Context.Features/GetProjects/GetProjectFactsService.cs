@@ -65,21 +65,8 @@ internal sealed class GetProjectFactsService(IRecordStore store, ISourceIdentity
     // why: a session reads only its own repo's audiences, a human every repo of the profile; the policy gives a repo the profile doesn't name nothing
     private static async ValueTask<Result<AudienceScope>> AudienceOf(ContextSettings settings, ContextScope scope, CancellationToken cancellationToken)
     {
-        var names = scope.Repos.Select(r => r.Name).ToList();
-        var policy = new ProfileAudiencePolicy(settings, names);
-        IEnumerable<ContextRepoName> asked = scope.Caller.Kind == ContextCallerKind.Session ? (scope.Caller.Repo is { } own ? [own] : []) : names;
-        var allowed = new HashSet<AudienceKey>();
-        foreach (var repo in asked)
-        {
-            var one = await policy.For(repo, cancellationToken).ConfigureAwait(false);
-            if (one.IsError)
-            {
-                return one.Error;
-            }
-
-            allowed.UnionWith(one.Value.Allowed);
-        }
-
-        return new AudienceScope(allowed);
+        var asked = scope.Repos.Where(r => scope.Caller.Kind != ContextCallerKind.Session || (scope.Caller.Repo is { } own && r.Name.Equals(own))).ToList();
+        var allowed = await RecordMask.Allowed(settings, asked, scope.Caller.Kind, cancellationToken).ConfigureAwait(false);
+        return allowed.IsError ? allowed.Error : new AudienceScope(allowed.Value);
     }
 }
