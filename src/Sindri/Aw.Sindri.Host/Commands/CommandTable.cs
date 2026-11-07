@@ -42,6 +42,14 @@ internal static partial class CommandTable
             return await SandboxShowVerb.Run(show, environment, Console.Out, Console.Error, CancellationToken.None).ConfigureAwait(false);
         }
 
+        var skills = SkillsFlag.Apply(args, environment, Directory.GetCurrentDirectory());   // 'recipe validate|eval --skills <dir>': the folder the in-process verbs read their blocks from
+        if (skills.IsError)
+        {
+            await Console.Error.WriteLineAsync($"{skills.Error.Code} {skills.Error.Message}").ConfigureAwait(false);
+            return 2;
+        }
+
+        (args, environment) = skills.Value;
         var services = Composition.Compose(new ServiceCollection(), environment, clock);
         configure?.Invoke(services);   // tests only: a test replaces a port with its fake; Program passes nothing
         var provider = services.BuildServiceProvider();
@@ -107,7 +115,7 @@ internal static partial class CommandTable
             ["request" or "requests" or "decisions" or "decide" or "needs-you", ..] => await new RequestVerbs(client, output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct).ConfigureAwait(false),
             ["index", "connect", .. var rest] => await new IndexConnectVerbs(services, output, session).Run(["connect", .. rest], ct).ConfigureAwait(false),
             ["services" or "jobs", ..] or ["index", "embed", ..] => await JobCommands.Run(args, (client, output), start.EnsureRunning, services.GetRequiredService<TimeProvider>(), (ct, interrupt.Again)).ConfigureAwait(false),
-            ["agents" or "setup" or "code-index" or "index" or "library", ..] => await ReadVerbs(args, (client, output), (services, start), (ct, interrupt.Again)).ConfigureAwait(false),
+            ["agents" or "skill" or "skills" or "setup" or "code-index" or "index" or "library", ..] => await ReadVerbs(args, (client, output), (services, start), (ct, interrupt.Again), environment).ConfigureAwait(false),
             ["repo", ..] => await Repo(args, client, output, services, (ct, interrupt.Again)).ConfigureAwait(false),
             ["ledger", .. var rest] => await new LedgerVerbs(client, output, (launch, c) => start.EnsureRunning(launch, c)).Run(rest, ct).ConfigureAwait(false),
             ["launch" or "session", ..] => await LaunchOrSession(args, client, (output, environment), services, (ct, interrupt.Again)).ConfigureAwait(false),

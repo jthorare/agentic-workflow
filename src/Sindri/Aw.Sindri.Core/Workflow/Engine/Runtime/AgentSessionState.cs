@@ -7,7 +7,9 @@ namespace Aw.Sindri.Core.Workflow.Engine.Runtime;
 /// <param name="Refused">True when <paramref name="Detail"/> is the text of a refused report (model-pick spec 7.1: the failure is "refused", not a crash).</param>
 /// <param name="Limit">Which limit killed the session, for <see cref="AgentSessionEnd.Limit"/>, otherwise null.</param>
 /// <param name="FoundEnded">True when the watch's first poll already found the session ended: it ended before the watch began (during a park or a takeover that kept the session, or while no watch ran). Absent from a result recorded before it existed.</param>
-public sealed record AgentSessionState(AgentSessionEnd? EndedAs = null, int? ExitCode = null, string? Detail = null, bool Refused = false, AgentSessionLimit? Limit = null, bool FoundEnded = false)
+/// <param name="Skill">A skill block's finished result, read from its result file at a turn end (skill flows spec §3.3): the run completes from it as 'agent:result'. Null for every other watch.</param>
+/// <param name="SkillFailure">'SND-SKILL-00x: &lt;sentence&gt;' when a skill block's result is a block-author bug (an unmapped verdict, a missing or bad output): the Step fails with it. Null otherwise.</param>
+public sealed record AgentSessionState(AgentSessionEnd? EndedAs = null, int? ExitCode = null, string? Detail = null, bool Refused = false, AgentSessionLimit? Limit = null, bool FoundEnded = false, Skills.SkillFinished? Skill = null, string? SkillFailure = null)
 {
     /// <summary>The session has not ended.</summary>
     public static AgentSessionState Live { get; } = new();

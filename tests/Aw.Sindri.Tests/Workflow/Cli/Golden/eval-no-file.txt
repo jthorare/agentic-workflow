@@ -2,4 +2,4 @@ $ sindri recipe eval
 exit 2
 --- stdout
 --- stderr
-SND-CLI-003 recipe eval needs a recipe file (usage: sindri recipe eval <file> [--json] | --shipped [--json] | --scaffold <file> [--out <dir>] | --record <address> --out <file>)
+SND-CLI-003 recipe eval needs a recipe file (usage: sindri recipe eval <file> [--json] [--skills <dir>] | --shipped [--json] [--skills <dir>] | --scaffold <file> [--out <dir>] | --record <address> --out <file>)

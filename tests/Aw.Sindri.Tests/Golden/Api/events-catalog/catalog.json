@@ -172,6 +172,16 @@
       ]
     },
     {
+      "type": "launch.owner-waiting",
+      "keyShape": "launch.owner-waiting:<launchId>:<turnEndedAtMs>",
+      "invalidates": [
+        "launch",
+        "item",
+        "timeline",
+        "needs-you"
+      ]
+    },
+    {
       "type": "launch.probed",
       "keyShape": "launch.probed:<probe>",
       "invalidates": [

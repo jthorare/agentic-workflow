@@ -1,4 +1,5 @@
 using Aw.Redaction;
+using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Temporalio.Activities;
@@ -17,7 +18,8 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="options">The poll interval.</param>
 /// <param name="refusals">Why a session was ended for a refused report, for the Step that fails on it.</param>
 /// <param name="recovering">Reads the output folder of a session that ended without a report.</param>
-internal sealed class AgentStepActivities(AgentLaunching launching, AgentClosing closing, IAgentSessions sessions, AgentRuntimeOptions options, ReportRefusals refusals, AgentRecovering recovering)
+/// <param name="skills">Watches a skill block's session and reads its result file at each turn end.</param>
+internal sealed class AgentStepActivities(AgentLaunching launching, AgentClosing closing, IAgentSessions sessions, AgentRuntimeOptions options, ReportRefusals refusals, AgentRecovering recovering, SkillStepWatching skills)
 {
     /// <summary>Starts the run's session and records the outcome.</summary>
     /// <param name="run">The run.</param>
@@ -53,6 +55,17 @@ internal sealed class AgentStepActivities(AgentLaunching launching, AgentClosing
             first = false;
             _ = await timer.WaitForNextTickAsync(context.CancellationToken).ConfigureAwait(false);
         }
+    }
+
+    /// <summary>Waits for a skill block's session to end or to finish: the plain watch, plus the result file read at each turn end (skill flows spec §3.3). Idempotent: a retry watches the same session and reads the same file.</summary>
+    /// <param name="watch">The skill launch.</param>
+    /// <returns>How the session ended, or the finished result.</returns>
+    [Activity("WatchSkillStep")]
+    public async Task<AgentSessionState> WatchSkillAsync(SkillWatch watch)
+    {
+        var context = ActivityExecutionContext.Current;
+        var state = await skills.Watch(watch, () => context.Heartbeat(), context.CancellationToken).ConfigureAwait(false);
+        return state.EndedAs is not null && refusals.Take(LaunchId.From(watch.Launch)) is { } refusal ? state with { Detail = Redactor.Default.Scrub(refusal).Text, Refused = true } : state;
     }
 
     /// <summary>Reads the output folder of a session that ended without a report: the result it proves, or why it parks (issue #1000).</summary>

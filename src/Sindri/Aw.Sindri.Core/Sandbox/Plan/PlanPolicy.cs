@@ -34,8 +34,21 @@ internal static class PlanPolicy
         return rules;
     }
 
+    // The permanent denies are carved around the Step's writable paths; the owner's and the login's are the last word and stay whole.
     private static IEnumerable<string> ReadDenied(PlanContext c) =>
-        c.Denied().Concat(c.OwnerDenied()).Select(d => d.Path).Concat(c.Request.Login?.DeniedReads ?? []).Distinct(StringComparer.Ordinal);
+        c.Denied().Select(d => d.Path).SelectMany(d => DenyCarve.Around(d, Writable(c), c.Request.Host.DirectoryEntries))
+            .Concat(c.OwnerDenied().Select(d => d.Path)).Concat(c.Request.Login?.DeniedReads ?? []).Distinct(StringComparer.Ordinal);
+
+    private static List<string> Writable(PlanContext c)
+    {
+        List<string> roots = c.WritablePath is { } worktree ? [worktree, c.Request.Paths.RunDirectory] : [c.Request.Paths.RunDirectory];
+        if (c.SkillDirectory is { } skillDirectory)
+        {
+            roots.Add(skillDirectory);   // why: the skill's results go to $AW_DIR, which PlanMounts binds read-write under the state dir's deny
+        }
+
+        return roots;
+    }
 
     private static List<InnerRule> AttendedAllows() =>
         [Allow("Read", string.Empty), Allow("Glob", string.Empty), Allow("Grep", string.Empty), Ask("Bash"), Ask("Edit"), Ask("Write")];
@@ -44,7 +57,7 @@ internal static class PlanPolicy
 
     private static List<InnerRule> StepAllows(PlanContext c, StepPolicy policy)
     {
-        List<string> roots = c.WritablePath is { } worktree ? [worktree, c.Request.Paths.RunDirectory] : [c.Request.Paths.RunDirectory];
+        var roots = Writable(c);
         List<InnerRule> allows = policy.AllowedTools.Count > 0 ? [.. policy.AllowedTools.SelectMany(t => FromTool(t, roots, c.WriteScope)).Distinct()] : [.. Defaults(c, roots)];
         allows.Add(Allow("mcp__sindri-step__*", string.Empty));
         return allows;

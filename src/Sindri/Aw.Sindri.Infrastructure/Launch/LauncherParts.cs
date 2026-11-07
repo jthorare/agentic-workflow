@@ -13,6 +13,9 @@ namespace Aw.Sindri.Infrastructure.Launch;
 /// <param name="Time">The clock the stage bounds run on.</param>
 internal sealed record LauncherParts(IAgentCatalog Catalog, Func<bool, ISessionHost> HostFor, ITerminalViewer Viewer, LauncherOptions Options, TimeProvider Time)
 {
+    /// <summary>Where a one-line warning goes (a skill trial's worktree that was kept); stderr by default.</summary>
+    public Action<string> Warn { get; init; } = static line => Console.Error.WriteLine(line);
+
     /// <summary>The built-in entry's argvHash for an id (a bin-only override keeps it, SL8), or null for an id with no built-in.</summary>
     public Func<AgentId, string?> BuiltinHash { get; init; } = static _ => null;
 

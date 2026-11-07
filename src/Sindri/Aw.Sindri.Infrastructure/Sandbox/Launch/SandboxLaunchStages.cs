@@ -7,9 +7,11 @@ using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
+using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Recipes;
 using Aw.Sindri.Infrastructure.Launch;
+using Aw.Sindri.Infrastructure.Skills;
 
 namespace Aw.Sindri.Infrastructure.Sandbox.Launch;
 
@@ -36,32 +38,91 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
         var loaded = approved.Value?.Profile;
         var settings = loaded?.Sandbox;
         var repo = RepoNameOf(loaded, request.RepoPath);
+        var prepared = await Admit(request, settings, repo, cancellationToken).ConfigureAwait(false);
+        if (prepared.IsError)
+        {
+            return prepared.Error;
+        }
+
+        var history = await learn.Read(repo.Value, cancellationToken).ConfigureAwait(false);
+        var common = await inputs.GitCommonDir(request.RepoPath, cancellationToken).ConfigureAwait(false);
+        var run = RunDirectory(request);
+        var skill = await SkillEnvironment(request, run, cancellationToken).ConfigureAwait(false);
+        return new SandboxRequest(
+            request.Launch, request.Item, request.Agent, repo, request.Instance,
+            new SandboxPaths(request.RepoPath, common, request.Worktree, run, inputs.RunAreaFor(request.Launch)),
+            RunNamespace(request),
+            request.Step?.Policy, request.Attended,
+            request.StepTimeout, LongMax: request.Skill is null ? LongMax(loaded) : null, SlotHeld: false,   // why: a skill launch skips the longMax cap, its state timeout is the only bound (RCP-SKILL-001); the heavy-slot fact is not on the launch request
+            new SandboxNetFacts(inputs.NetDirFor(request.Launch), inputs.SindriPort(), inputs.ProxyPort()),
+            inputs.Host(), settings, prepared.Value)
+        {
+            Learn = new LearnContext(history, clock.GetUtcNow()),
+            SkillEnvironment = skill,
+            SkillTrialDirectory = request.Skill?.TrialSkillsDirectory,
+            SkillPushes = SkillPushes(request),
+        };
+    }
+
+    // The skill block's variables: AW_DIR is computed here, once, from the repo's origin remote, the way skills/_shared/repo-slug.sh would (D8). A 'pr' input adds the branch PrHeadFetch fetched the PR head to, which the cleared sandbox environment would otherwise lose.
+    private async ValueTask<IReadOnlyDictionary<string, string>?> SkillEnvironment(LaunchRequest request, string run, CancellationToken cancellationToken)
+    {
+        if (request is not { Attended: false, Skill: { } skill })
+        {
+            return null;
+        }
+
+        var env = new Dictionary<string, string>(SkillLaunchEnv.For(skill.Skill, request.Launch, run, inputs.Host().StateDir, SkillLaunchEnv.RepoSlugOf(await inputs.OriginRemote(request.RepoPath, cancellationToken).ConfigureAwait(false), request.RepoPath)), StringComparer.Ordinal);
+        if (StepEnvironment.PrBranchOf(request) is { } branch)
+        {
+            env[PrReference.BranchVariable] = branch;
+        }
+
+        return env;
+    }
+
+    // What a launch needs before a plan is worth building: its login, a skill launch's two checks (SND-SKILL-005 and -007: the Step fails before any session starts), and the agent token.
+    private async ValueTask<Result<PreparedLogin>> Admit(LaunchRequest request, SandboxSettings? settings, RepoName repo, CancellationToken cancellationToken)
+    {
         var prepared = await Login(request, settings, repo, cancellationToken).ConfigureAwait(false);
         if (prepared.IsError)
         {
             return prepared.Error;
         }
 
-        var minted = await MintAgentToken(request, settings, repo, cancellationToken).ConfigureAwait(false);
-        if (minted.IsError)
+        if (SkillGate(request, prepared.Value) is { } refused)
         {
-            return minted.Error;
+            return refused;
         }
 
-        var history = await learn.Read(repo.Value, cancellationToken).ConfigureAwait(false);
-        var common = await inputs.GitCommonDir(request.RepoPath, cancellationToken).ConfigureAwait(false);
-        var run = RunDirectory(request);
-        return new SandboxRequest(
-            request.Launch, request.Item, request.Agent, repo, request.Instance,
-            new SandboxPaths(request.RepoPath, common, request.Worktree, run, inputs.RunAreaFor(request.Launch)),
-            RunNamespace(request),
-            request.Step?.Policy, request.Attended,
-            StepTimeout: null, LongMax: LongMax(loaded), SlotHeld: false,   // not on the launch request: the Step's own timeout and the heavy-slot fact
-            new SandboxNetFacts(inputs.NetDirFor(request.Launch), inputs.SindriPort(), inputs.ProxyPort()),
-            inputs.Host(), settings, prepared.Value)
+        var minted = await MintAgentToken(request, settings, repo, cancellationToken).ConfigureAwait(false);
+        return minted.IsError ? minted.Error : prepared.Value;
+    }
+
+    // A skill launch's two checks (requires.yaml, and the agent home's SKILL.md against the loaded one) read the agent home this launch uses: a separate login's own folder, else the owner's.
+    private Error? SkillGate(LaunchRequest request, PreparedLogin login)
+    {
+        if (request is not { Attended: false, Skill: { } skill })
         {
-            Learn = new LearnContext(history, clock.GetUtcNow()),
-        };
+            return null;
+        }
+
+        var host = inputs.Host();
+        return SkillLaunchGate.Check(skill, new FileAgentHome(AgentHomeFolder(login, skill.Target, host.Home), skill.Target, host.Home, host.Environment.GetValueOrDefault("PATH", string.Empty)));
+    }
+
+    /// <summary>The agent home a skill launch's checks read on the host: a separate login's own folder, else the owner's '~/.claude' or '~/.codex'.</summary>
+    /// <param name="login">The launch's prepared login.</param>
+    /// <param name="target">The agent the launch runs.</param>
+    /// <param name="home">The owner's home on the host.</param>
+    /// <returns>The folder.</returns>
+    internal static string AgentHomeFolder(PreparedLogin login, SkillTarget target, string home)
+    {
+        // why: only a separate login's folder is bound at its own path; the owner copy's ('~/.claude-run') exists inside the sandbox only, and holds the owner's agent home bound read-only
+        var variable = target == SkillTarget.Codex ? "CODEX_HOME" : "CLAUDE_CONFIG_DIR";
+        return login.Source == ModelLoginSource.SeparateLogin && login.Environment.TryGetValue(variable, out var separate) && separate.Length > 0
+            ? separate
+            : Path.Combine(home, target == SkillTarget.Codex ? ".codex" : ".claude");
     }
 
     // The branch namespace the session may write refs in: an open's own, a Step's run, or none.
@@ -132,10 +193,12 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
     private static RepoName RepoNameOf(SindriProfile? loaded, string repoPath) =>
         RepoName.From(loaded?.Repos?.FirstOrDefault(r => string.Equals(r.Path.TrimEnd('/'), repoPath.TrimEnd('/'), StringComparison.Ordinal))?.Name ?? Path.GetFileName(repoPath.TrimEnd('/')));
 
+    private static bool? SkillPushes(LaunchRequest request) => request.Skill is { } skill ? skill.Block.Pushes && !skill.Trial : null;
+
     // why: the same resolution PlanContext makes (an attended session never gets one); minting here makes a failure a Step failure, not an unconfined launch with no token
     private async ValueTask<Result<Unit>> MintAgentToken(LaunchRequest request, SandboxSettings? settings, RepoName repo, CancellationToken cancellationToken)
     {
-        var github = request.Attended ? GithubCredentials.None : settings?.Credentials?.Github ?? SandboxDefaults.Github;
+        var github = GithubCredentialResolver.For(request.Attended, settings, SkillPushes(request));
         if (github != GithubCredentials.AgentApp)
         {
             return Unit.Value;

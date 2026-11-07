@@ -4,8 +4,8 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launch.Argv;
-using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Plan;
+using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Engine;
 
 namespace Aw.Sindri.Infrastructure.Launch;
@@ -22,6 +22,11 @@ internal sealed partial class Launcher
             return located.Error;
         }
         var workDir = located.Value;
+        if (created && request.Worktree is { } made && LaunchWorktree.IsTrial(request))
+        {
+            _trialTrees[request.Launch] = (request.RepoPath, made);   // removed when the launch ends, whatever the outcome (Cleanup)
+        }
+
         if (await GuardAndPrepare(request, entry, (workDir, created), cancellationToken).ConfigureAwait(false) is { } refusedStart)
         {
             return refusedStart;   // the guard's refusal, or SND-LAUNCH-021 (a step failure; nothing started)
@@ -34,26 +39,38 @@ internal sealed partial class Launcher
                 return refused;
             }
 
-            var composed = await Compose(request, entry, workDir, cancellationToken).ConfigureAwait(false);
-            if (composed.IsError)
+            var pr = await PrHeadFetch.For(request, cancellationToken).ConfigureAwait(false);   // before the sandbox: the session reads the PR from the repo's own refs
+            if (pr.IsError)
             {
-                return composed.Error;
+                return pr.Error;
             }
 
-            WriteCaptureRule(request.Launch, entry);
-            var prior = await MintSecret(request.Launch, cancellationToken).ConfigureAwait(false);
-            var confined = await Confine(request, composed.Value.Argv, await Environment(request, workDir, cancellationToken).ConfigureAwait(false), composed.Value.Session, cancellationToken).ConfigureAwait(false);
-            if (confined.IsError)
-            {
-                return confined.Error;   // a refusal carries its SND-LAUNCH-014..017 or -020 code; Start cleans up (and releases) after it
-            }
-
-            return new Prepared(workDir, confined.Value.Argv, confined.Value.Env, composed.Value.Session?.Value) { PriorHash = prior, Seed = composed.Value.Seed, Sandbox = confined.Value.Summary, SandboxRunArea = confined.Value.RunArea };
+            return await Assemble(request, entry, (workDir, pr.Value), cancellationToken).ConfigureAwait(false);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             return KernelErrors.Unavailable.With($"the launch's files could not be written: {e.Message}");
         }
+    }
+
+    /// <summary>The argv, the secret and the sandbox of a start, once its files are written and the PR (if any) is fetched.</summary>
+    private async ValueTask<Result<Prepared>> Assemble(LaunchRequest request, AgentEntry entry, (string WorkDir, FetchedPr? Pr) located, CancellationToken cancellationToken)
+    {
+        var composed = await Compose(request, entry, located.WorkDir, cancellationToken).ConfigureAwait(false);
+        if (composed.IsError)
+        {
+            return composed.Error;
+        }
+
+        WriteCaptureRule(request.Launch, entry);
+        var prior = await MintSecret(request.Launch, cancellationToken).ConfigureAwait(false);
+        var confined = await Confine(request, composed.Value.Argv, await Environment(request, located.WorkDir, located.Pr?.Branch, cancellationToken).ConfigureAwait(false), composed.Value.Session, cancellationToken).ConfigureAwait(false);
+        if (confined.IsError)
+        {
+            return confined.Error;   // a refusal carries its SND-LAUNCH-014..017 or -020 code; Start cleans up (and releases) after it
+        }
+
+        return new Prepared(located.WorkDir, confined.Value.Argv, confined.Value.Env, composed.Value.Session?.Value) { PriorHash = prior, Seed = composed.Value.Seed, Sandbox = confined.Value.Summary, SandboxRunArea = confined.Value.RunArea, PrHead = located.Pr?.Head };
     }
 
     /// <summary>Mints the launch's secret and writes its hash; returns the hash file as it was before (a live session of this launch may own it), or null when there was none.</summary>
@@ -218,7 +235,7 @@ internal sealed partial class Launcher
         OwnerOnly.WriteAtomically(Path.Combine(parts.Options.LaunchesDirectory, LaunchFiles.CaptureName(launch)), AwJson.Serialize(rule, _captureJson));
     }
 
-    private async ValueTask<Dictionary<string, string>> Environment(LaunchRequest request, string workDir, CancellationToken cancellationToken)
+    private async ValueTask<Dictionary<string, string>> Environment(LaunchRequest request, string workDir, string? prBranch, CancellationToken cancellationToken)
     {
         var env = new Dictionary<string, string>(StepEnvironment.For(request, parts.Options.SindriHome), StringComparer.Ordinal)
         {
@@ -232,6 +249,11 @@ internal sealed partial class Launcher
             env["AW_SINDRI_HOME"] = home;
         }
 
+        if (prBranch is not null)
+        {
+            env[PrReference.BranchVariable] = prBranch;   // the branch the host fetched the PR head to; the session reads it with git
+        }
+
         if (request.Attended || request.Step is null)
         {
             return env;
@@ -243,55 +265,4 @@ internal sealed partial class Launcher
     }
 
     private string GhConfigPath(LaunchId launch) => Path.Combine(parts.Options.LaunchDirectory, launch.Value + ".gh");
-
-    private async ValueTask Cleanup(LaunchId launch)
-    {
-        try
-        {
-            Directory.Delete(GhConfigPath(launch), recursive: true);   // a missing one is fine
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-        {
-            // an empty directory left behind holds nothing
-        }
-
-        LaunchSecrets.Delete(parts.Options.SecretsDirectory, launch);
-        LaunchFileStore.DeleteFlat(parts.Options, launch);
-        LaunchFileStore.DeleteIn(parts.Options.PolicyDirectory, StepPolicyFile.PathFor(parts.Options.PolicyDirectory, launch));
-        CursorPolicyFile.Delete(parts.Options.PolicyDirectory, launch);
-        LaunchFileStore.DeleteIn(parts.Options.LaunchDirectory, McpLaunchConfig.PathFor(parts.Options.LaunchDirectory, launch));
-        _ = await parts.Scratch.Remove(ScratchPath(launch), CancellationToken.None).ConfigureAwait(false);   // the evaluator's checkout; none for any other launch
-        await ReleaseSandbox(launch).ConfigureAwait(false);
-    }
-
-    private string ScratchPath(LaunchId launch) => Path.Combine(parts.Options.ScratchDirectory, "eval-" + launch.Value);
-
-    private sealed record Prepared(string WorkDir, IReadOnlyList<string> Argv, Dictionary<string, string> Env, string? Session)
-    {
-        /// <summary>The hash file as it was before this start rewrote it, or null when there was none.</summary>
-        public byte[]? PriorHash { get; init; }
-
-        /// <summary>The first message, for a host that runs the agent itself (T3) rather than the argv.</summary>
-        public string? Seed { get; init; }
-
-        /// <summary>The sandbox summary of a confined Step launch (<c lang="text">launch.started</c>'s sandbox field), or null when it ran unconfined.</summary>
-        public SandboxSummary? Sandbox { get; init; }
-
-        /// <summary>The confined launch's run directory, where <c lang="text">wrap-limits.json</c> sits, or null when it ran unconfined.</summary>
-        public string? SandboxRunArea { get; init; }
-    }
-
-    /// <summary>The start clashed with a session of this launch's name: it is the launch's own and stays untouched. The hash the live wrap checks is put back (and the session answered as started), or, with no hash to put back, the minted pair is removed and the launch fails.</summary>
-    private LaunchResult Clash(LaunchRequest request, AgentEntry entry, ISessionHost host, Prepared prepared, Error clash)
-    {
-        LaunchSecrets.Delete(parts.Options.SecretsDirectory, request.Launch);
-        if (prepared.PriorHash is not { } prior)
-        {
-            return Fail(clash);
-        }
-
-        OwnerOnly.WriteAtomically(LaunchSecrets.PathFor(parts.Options.SecretsDirectory, request.Launch), prior);
-        var session = new HostRef(host.Kind, SessionName(request.Launch));
-        return new StartedLaunch(session, ViewerOutcome.Skipped, host.AttachArgv(session), entry.Source, entry.ArgvHash ?? string.Empty);
-    }
 }

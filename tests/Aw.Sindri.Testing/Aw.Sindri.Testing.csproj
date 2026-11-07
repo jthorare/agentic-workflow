@@ -24,6 +24,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The two fixture skill folders (skill flows F-1): review and officeHours (two blocks), loaded through SkillFixtures.Folder. -->
+    <None Include="Fixtures/skills/**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Recipe fixtures (spec §9.1: each rule has an invalid fixture), read by RecipeFixtures without file I/O. -->
     <EmbeddedResource Include="Workflow/Recipes/**/*.yaml" LogicalName="recipes/%(RecursiveDir)%(Filename)%(Extension)" />
     <EmbeddedResource Include="Workflow/Histories/*.json" LogicalName="histories/%(Filename)%(Extension)" />

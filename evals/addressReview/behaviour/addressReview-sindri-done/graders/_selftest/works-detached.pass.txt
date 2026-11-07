@@ -1,0 +1,2 @@
+Would run:
+  git checkout --detach sindri/inst-1/1/work

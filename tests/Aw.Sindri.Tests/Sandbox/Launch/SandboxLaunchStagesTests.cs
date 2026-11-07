@@ -6,12 +6,15 @@ using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
+using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Infrastructure.Sandbox;
 using Aw.Sindri.Infrastructure.Sandbox.Launch;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Sandbox;
+using Aw.Sindri.Testing.Skills;
+using Aw.Sindri.Tests.Sandbox.Bubblewrap;
 using Aw.Sindri.Tests.Sandbox.Egress;
 using Microsoft.Extensions.Time.Testing;
 
@@ -70,6 +73,65 @@ public sealed class SandboxLaunchStagesTests : IDisposable
         Expect.Equal("sindri/" + WorkflowInstanceId.Of(InstanceAddress.From("ITM-1/spec/1")).Value + "/1", r.RunNamespace);   // the instance id, never the address with its slashes
         Expect.True(r.Learn is { } learn && learn.Now == _clock.GetUtcNow());
         Expect.Equal("web", r.Repo.Value);   // no profile repo: the directory's name
+    }
+
+    [Fact]
+    public async Task Request_passes_the_Steps_timeout_and_a_plain_Step_keeps_the_longMax_cap()
+    {
+        var request = Step() with { StepTimeout = TimeSpan.FromHours(48) };
+
+        var built = await MakeWith(GithubCredentials.None).Request(request, chosenSession: null, CancellationToken.None);
+
+        Expect.True(built.IsSuccess);
+        Expect.Equal(TimeSpan.FromHours(48), built.Value.StepTimeout);
+        Expect.Equal(TimeSpan.FromHours(2), built.Value.LongMax);   // workflow.steps.longMax, default 2h
+    }
+
+    [Fact]
+    public async Task A_skill_launch_skips_the_longMax_cap_so_a_48h_state_timeout_plans_a_48h_wall_plus_grace()
+    {
+        var request = Step() with { StepTimeout = TimeSpan.FromHours(48), Skill = new SkillLaunch("review", SkillTarget.ClaudeCode, SkillFixtures.Review, new Dictionary<string, string>(StringComparer.Ordinal) { ["pr"] = "42" }) };
+
+        var built = await MakeWith(GithubCredentials.None).Request(request, chosenSession: null, CancellationToken.None);
+
+        Expect.True(built.IsSuccess);
+        Expect.Equal(TimeSpan.FromHours(48), built.Value.StepTimeout);
+        Expect.True(built.Value.LongMax is null);   // the state timeout is the only bound (RCP-SKILL-001)
+        var limits = LimitsResolver.Resolve(new LimitsInput(Limits: null, AttendedSettings: null, Attended: false, built.Value.StepTimeout, built.Value.LongMax, RamBytes: 32L * 1024 * 1024 * 1024, Cores: 8));
+        Expect.Equal(TimeSpan.FromHours(48) + limits.WallGrace, limits.Wall);
+    }
+
+    private static LaunchRequest SkillStep(Dictionary<string, string> inputs) =>
+        PlannedStep() with { Skill = new SkillLaunch("review", SkillTarget.ClaudeCode, SkillFixtures.Review, inputs) };
+
+    private async Task<SandboxPlan> PlanOf(LaunchRequest request)
+    {
+        var asked = (await Make().Request(request, chosenSession: null, CancellationToken.None)).Value;
+        return SandboxPlanner.Build(SandboxMechanism.Bubblewrap, asked).Value;
+    }
+
+    [Fact]
+    public async Task A_skill_launch_with_a_pr_input_sets_the_branch_the_host_fetched_the_PR_head_to_inside_the_sandbox()
+    {
+        var request = SkillStep(new Dictionary<string, string>(StringComparer.Ordinal) { ["pr"] = "2148" });
+        var branch = PrReference.BranchOf(WorkflowInstanceId.Of(request.Instance!.Value), request.Run!.Value.Number);
+
+        var plan = await PlanOf(request);
+        var argv = BubblewrapArgv.Build(plan, new FakeHostPaths(), secretsFd: false).ToList();
+
+        Expect.Equal(branch, plan.Environment.Single(e => string.Equals(e.Name, PrReference.BranchVariable, StringComparison.Ordinal)).Value);
+        Expect.True(argv.Zip(argv.Skip(1), argv.Skip(2)).Any(t => t is ("--setenv", var name, var value) && string.Equals(name, PrReference.BranchVariable, StringComparison.Ordinal) && string.Equals(value, branch, StringComparison.Ordinal)));   // the real bubblewrap argv, after --clearenv
+    }
+
+    [Fact]
+    public async Task A_skill_launch_without_a_pr_input_gets_no_PR_variable_and_the_same_environment_names_as_before()
+    {
+        var plan = await PlanOf(SkillStep(new Dictionary<string, string>(StringComparer.Ordinal)));
+        var plain = await PlanOf(PlannedStep());
+
+        Expect.True(plan.Environment.All(e => !string.Equals(e.Name, PrReference.BranchVariable, StringComparison.Ordinal)));
+        string[] skillVariables = ["AW_RESULT", "AW_RESULT_SKILL", "AW_RESULT_FILE", "AW_DIR"];
+        Expect.True(plan.Environment.Select(e => e.Name).Order(StringComparer.Ordinal).SequenceEqual(plain.Environment.Select(e => e.Name).Concat(skillVariables).Order(StringComparer.Ordinal), StringComparer.Ordinal));
     }
 
     [Fact]
@@ -197,6 +259,37 @@ public sealed class SandboxLaunchStagesTests : IDisposable
         Expect.Equal(1, _tokens.Calls);
     }
 
+    private static LaunchRequest AgentAppSkillStep(SkillBlockManifest block, bool trial) =>
+        PlannedStep() with { Skill = new SkillLaunch("skill", SkillTarget.ClaudeCode, block, new Dictionary<string, string>(StringComparer.Ordinal)) { Trial = trial } };
+
+    [Theory]
+    [InlineData(false, false)]   // a block that does not push
+    [InlineData(true, true)]     // a pushing block run as a trial
+    public async Task Request_mints_no_agent_token_for_a_skill_Step_that_cannot_push(bool pushingBlock, bool trial)
+    {
+        var block = pushingBlock ? SkillFixtures.BugFixOrchestrator : SkillFixtures.Review;
+
+        var built = await MakeWith(GithubCredentials.AgentApp).Request(AgentAppSkillStep(block, trial), chosenSession: null, CancellationToken.None);
+        var plan = SandboxPlanner.Build(SandboxMechanism.Bubblewrap, built.Value).Value;
+
+        Expect.Equal(0, _tokens.Calls);
+        Expect.Equal(GithubCredentials.None, plan.Github);
+        Expect.True(!plan.Network.Groups.Any(g => string.Equals(g.Name, "github", StringComparison.Ordinal)));
+    }
+
+    [Fact]
+    public async Task Request_mints_the_agent_token_for_a_skill_Step_whose_block_pushes()
+    {
+        var stages = MakeWith(GithubCredentials.AgentApp);
+
+        var built = await stages.Request(AgentAppSkillStep(SkillFixtures.BugFixOrchestrator, trial: false), chosenSession: null, CancellationToken.None);
+        var plan = SandboxPlanner.Build(SandboxMechanism.Bubblewrap, built.Value).Value;
+
+        Expect.Equal(1, _tokens.Calls);
+        Expect.Equal(GithubCredentials.AgentApp, plan.Github);
+        await stages.Release(plan.Launch, CancellationToken.None);
+    }
+
     private async Task<(SandboxLaunchStages Stages, SandboxPlan Plan)> WriteAgentAppToken(Action<string>? warn = null)
     {
         var stages = new SandboxLaunchStages(new GithubProfile(GithubCredentials.AgentApp), new EmptyLearn(), [_login], _inputs, Registry(), _clock, new AgentTokenRenewal(_tokens, _clock, warn));
@@ -295,7 +388,7 @@ public sealed class SandboxLaunchStagesTests : IDisposable
         return (asked, SandboxPlanner.Build(SandboxMechanism.Bubblewrap, asked).Value);
     }
 
-    private sealed class NoProfile : IApprovedProfile
+    internal sealed class NoProfile : IApprovedProfile
     {
         public ValueTask<Result<LoadedProfile?>> Latest(CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success<LoadedProfile?>(value: null));
     }
@@ -307,12 +400,12 @@ public sealed class SandboxLaunchStagesTests : IDisposable
                 new SindriProfile(1, "thor", Sandbox: new SandboxSettings(Credentials: new SandboxCredentials(github))), ProfileHashing.Of("{}"u8), "/home/profile.yaml")));
     }
 
-    private sealed class EmptyLearn : ILearnHistory
+    internal sealed class EmptyLearn : ILearnHistory
     {
         public ValueTask<LearnHistory> Read(string repo, CancellationToken cancellationToken) => ValueTask.FromResult(new LearnHistory(FirstLearnRun: null, LearnRuns: 0, EndedAt: null));
     }
 
-    private sealed class StubInputs(string directory) : ISandboxLaunchInputs
+    internal sealed class StubInputs(string directory) : ISandboxLaunchInputs
     {
         public PolicyForm Form { get; set; }
 

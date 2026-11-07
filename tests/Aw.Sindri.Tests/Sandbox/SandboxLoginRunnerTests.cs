@@ -6,7 +6,7 @@ using Aw.Sindri.Tests.Ledger;
 
 namespace Aw.Sindri.Tests.Sandbox;
 
-/// <summary>'sindri sandbox login' behind the CLI (sandbox spec SB-8): the runner makes the agent home, runs the hook installer into it, then the sign-in, over fake installers and a fake claude and codex.</summary>
+/// <summary>'sindri sandbox login' behind the CLI (sandbox spec SB-8): the runner makes the agent home, runs the hook and skills installers into it, then the sign-in, over fake installers and a fake claude and codex.</summary>
 [Collection(ProcessEnvironment.Name)]
 [Lane(TestLane.Integration)]
 public sealed class SandboxLoginRunnerTests : IDisposable
@@ -44,8 +44,18 @@ public sealed class SandboxLoginRunnerTests : IDisposable
         _ = ExecutableScript.Write(Path.Combine(directory, "install-hooks.sh"), body + "\n", "/bin/bash");
     }
 
-    private void RecordingInstaller(string provider, int exit = 0) =>
+    private void RecordingInstaller(string provider, int exit = 0, int skillsExit = 0)
+    {
         Installer(provider, $"echo \"installer {provider} $* TOOLKIT_DIR=$TOOLKIT_DIR\" >> '{_log}'\nexit {exit.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+        SkillsInstaller($"echo \"skills $* TOOLKIT_DIR=$TOOLKIT_DIR\" >> '{_log}'\nexit {skillsExit.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+    }
+
+    private void SkillsInstaller(string body)
+    {
+        var directory = Path.Combine(_toolkit, "providers");
+        _ = Directory.CreateDirectory(directory);
+        _ = ExecutableScript.Write(Path.Combine(directory, "install-skills.sh"), body + "\n", "/bin/bash");
+    }
 
     private void Agent(string name, string variable) =>
         _ = ExecutableScript.Write(Path.Combine(_bin, name), $"echo \"{name} $* {variable}=${variable}\" >> '{_log}'\n");
@@ -71,7 +81,7 @@ public sealed class SandboxLoginRunnerTests : IDisposable
             Assert.Equal(UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute, File.GetUnixFileMode(home));
         }
 
-        Assert.Equal([$"installer {provider} --target-dir {home} TOOLKIT_DIR={_toolkit}", $"{provider} {signInArgs} {variable}={home}"], Calls());
+        Assert.Equal([$"installer {provider} --target-dir {home} TOOLKIT_DIR={_toolkit}", $"skills --target-dir {home} TOOLKIT_DIR={_toolkit}", $"{provider} {signInArgs} {variable}={home}"], Calls());
     }
 
     [Fact]
@@ -84,7 +94,7 @@ public sealed class SandboxLoginRunnerTests : IDisposable
 
         _ = await new SandboxLoginRunner(slashed, name => name == "TOOLKIT_DIR" ? _toolkit : null, _bin).Run(id, CancellationToken.None);
 
-        var handed = Calls()[1].Split("CLAUDE_CONFIG_DIR=")[1];
+        var handed = Calls()[2].Split("CLAUDE_CONFIG_DIR=")[1];
         Assert.Equal(AgentHomes.For(slashed, id), handed);
         Assert.Equal(AgentHomes.For(SindriHome, id), handed);
         Assert.Equal(SecurityCliKeychainLogin.ServiceFor(AgentHomes.For(slashed, id)), SecurityCliKeychainLogin.ServiceFor(handed));
@@ -122,6 +132,34 @@ public sealed class SandboxLoginRunnerTests : IDisposable
         _ = await Runner().Run(AgentId.From("codex"), CancellationToken.None);
         Assert.Contains("CODEX_HOME=" + AgentHomes.For(SindriHome, AgentId.From("codex")), _error.ToString(), StringComparison.Ordinal);
         Assert.Contains("/hooks", _error.ToString(), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("claude-code", "claude", "CLAUDE_CONFIG_DIR")]
+    [InlineData("codex", "codex", "CODEX_HOME")]
+    public async Task A_failing_skills_installer_stops_before_the_sign_in(string target, string provider, string variable)
+    {
+        RecordingInstaller(provider, skillsExit: 4);
+        Agent(provider, variable);
+
+        var ran = await Runner().Run(AgentId.From(target), CancellationToken.None);
+
+        Assert.True(ran.IsError);
+        Assert.Contains("has no skills", ran.Error.Message, StringComparison.Ordinal);
+        Assert.Equal(2, Calls().Length);   // the hook installer and the skills one; no sign-in
+    }
+
+    [Fact]
+    public async Task A_toolkit_without_the_skills_installer_is_named_and_stops_before_the_sign_in()
+    {
+        Installer("claude", $"echo \"installer $*\" >> '{_log}'");
+        Agent("claude", "CLAUDE_CONFIG_DIR");
+
+        var ran = await Runner().Run(AgentId.From("claude-code"), CancellationToken.None);
+
+        Assert.True(ran.IsError);
+        Assert.Contains("install-skills.sh", ran.Error.Message, StringComparison.Ordinal);
+        _ = Assert.Single(Calls());
     }
 
     [Theory]

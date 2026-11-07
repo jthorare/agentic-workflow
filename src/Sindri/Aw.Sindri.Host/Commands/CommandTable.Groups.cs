@@ -24,14 +24,16 @@ internal static partial class CommandTable
         _ => null,
     };
 
-    /// <summary>'sindri agents|setup|code-index|index|library …': the verbs that only call the control plane (the reads never start it; 'index sync' and 'library sync' may).</summary>
-    private static async Task<int> ReadVerbs(string[] args, (ControlPlaneClient Client, Output Output) api, (IServiceProvider Services, StartCommand Start) host, (CancellationToken Interrupt, CancellationToken Again) signals)
+    /// <summary>'sindri agents|skill|skills|setup|code-index|index|library …': the verbs that only call the control plane (the reads never start it; 'index sync' and 'library sync' may).</summary>
+    private static async Task<int> ReadVerbs(string[] args, (ControlPlaneClient Client, Output Output) api, (IServiceProvider Services, StartCommand Start) host, (CancellationToken Interrupt, CancellationToken Again) signals, Func<string, string?> environment)
     {
         var (client, output) = api;
         var ct = signals.Interrupt;
         return args switch
         {
             ["agents", .. var rest] => await new AgentsVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
+            ["skill", "run", .. var rest] => await new SkillRunVerb(client, output, environment, host.Services.GetRequiredService<TimeProvider>()).Run(rest, ct).ConfigureAwait(false),
+            ["skills", .. var rest] => await new SkillsVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
             ["setup", .. var rest] => await new SetupVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
             ["code-index", .. var rest] => await new CodeIndexVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
             ["index", .. var rest] => await Index(client, output, host).Run(rest, ct, signals.Again).ConfigureAwait(false),

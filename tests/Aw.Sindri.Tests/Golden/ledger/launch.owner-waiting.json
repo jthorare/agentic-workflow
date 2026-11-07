@@ -1,0 +1,10 @@
+{
+  "launchId": "LCH-00000000000000000000000000000001",
+  "item": "ITM-00000000000000000000000000000001",
+  "reason": "question",
+  "text": "Who calls this API: browsers, servers, or both?",
+  "resultPath": "/home/u/.agentic-workflow/sindri-app/workflow/runs/WFI-1/shape/LCH-1/.sindri-out/result-LCH-1.json",
+  "instance": "ITM-00000000000000000000000000000001/spec/1",
+  "state": "build",
+  "attempt": 1
+}

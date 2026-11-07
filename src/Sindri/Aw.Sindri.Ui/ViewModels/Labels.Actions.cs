@@ -94,6 +94,7 @@ internal static partial class Labels
         ["RunDoctor"] = "Run doctor",
         ["RunService"] = "Run now",
         ["StartInstance"] = "Start workflow",
+        ["StartSkillRun"] = "Run skill",
         ["StopProcess"] = "Stop Sindri",
         ["SyncIndexSource"] = "Sync index source",
         ["SyncSources"] = "Sync context sources",

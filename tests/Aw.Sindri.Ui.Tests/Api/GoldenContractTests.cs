@@ -135,6 +135,7 @@ public sealed class GoldenContractTests
         "workflow-instance-scoping",   // API2 (SC-K2): the scoping stop view; the app reads it in SC-U (U2)
         "workflow-instance-line",   // LN-API1 (LN-L): the line board of a workflow.line instance; the app reads it in LN-U (LN-UI1)
         "workflow-instance-design-stop",   // LN-API2 (LN-K): stop 2's view of a workflow.plan instance; the app reads it in LN-U (LN-UI2)
+        "skills",   // GET /sindri/skills: the Skills list of F-3; ui reads it there (skill flows spec §8.1), so no golden is read yet
         "items-id-scope",   // an item's scope: the Context page reads it once it lands (UI lane, with the lenses routes)
         "sandbox-status", "sandbox-check", "sandbox-denials", "sandbox-allow",   // SB-6a serves them; the app reads them in SB-6b (Health, Settings, the park card and the item sheet)
         "code-index-symbols", "code-index-callers", "code-index-callees",   // the code-index reads (CI-10a) are the CLI's; status is read below for the Health card (CI-10b)

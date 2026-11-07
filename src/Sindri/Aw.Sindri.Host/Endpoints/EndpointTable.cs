@@ -72,6 +72,7 @@ internal static class EndpointTable
     {
         _ = queries.MapCheckSandbox();
         _ = queries.MapGetSandboxStatus();
+        _ = queries.MapGetSkills();
         _ = queries.MapListDenials();
         return queries;
     }
@@ -171,7 +172,7 @@ internal static class EndpointTable
         _ = commands.MapIssueChallenge();
         _ = commands.MapIssueAppChallenge();
         _ = commands.MapRegisterRecipe();
-        _ = commands.MapStartInstance();
+        _ = commands.MapStartInstance().MapStartSkillRun();
         _ = commands.MapIssueNonce();
         _ = commands.MapApplyCommand();
         _ = commands.MapCompleteStep();
