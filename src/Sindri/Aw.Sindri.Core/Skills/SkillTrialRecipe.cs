@@ -1,16 +1,16 @@
 using System.Globalization;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
 using Aw.Kernel;
 using Aw.Sindri.Core.Workflow.Ids;
+using Aw.Sindri.Core.Workflow.Registry;
 
 namespace Aw.Sindri.Core.Skills;
 
 /// <summary>
 /// The one-state recipe 'sindri skill run' runs a block in (skill flows spec §7): a single active state around 'step.skill.&lt;id&gt;' whose inputs are start facts, one terminal state per outcome and one for a failed Step.
-/// Its id is 'workflow.skill-trial-&lt;block&gt;', which is how the launch knows it is a trial (<see cref="IsTrial(RecipeId)"/>: no push grant, 'trial' on launch.started). Its version comes from the manifest hash and the inputs given, so the same block and
-/// inputs register as the same recipe and an edited manifest as a new version, never SND-RECIPE-007.
+/// Its id is 'workflow.skill-trial-&lt;block&gt;', which is how the launch knows it is a trial (<see cref="IsTrial(RecipeId)"/>: no push grant, 'trial' on launch.started). Its version is <see cref="VersionFor"/>'s: the same block and inputs
+/// register as the same recipe, and a changed one one version up, never SND-RECIPE-007 or RCP-VERSION-002.
 /// </summary>
 public static class SkillTrialRecipe
 {
@@ -18,9 +18,6 @@ public static class SkillTrialRecipe
     public const string IdPrefix = "workflow.skill-trial-";
 
     private const string EndedPrefix = "ended-";
-
-    // why: bump it when Text writes a different recipe for the same block and inputs, so a home holding the old text registers a new version, never SND-RECIPE-007 (2: the 'outputs:' block)
-    private const int Shape = 2;
 
     /// <summary>The fact the trial's start carries when 'skill run --skills &lt;dir&gt;' sent a folder: the path the launch seeds the skill from.</summary>
     public const string SkillsFolderFact = "fact:skillTrialFolder";
@@ -51,8 +48,9 @@ public static class SkillTrialRecipe
     /// <param name="block">The loaded block.</param>
     /// <param name="provided">The input keys the run gives a value for.</param>
     /// <param name="foldered">True when the run carries a skills folder (<see cref="SkillsFolderFact"/>), which the recipe then declares as an input.</param>
+    /// <param name="version">The version to write (<see cref="VersionFor"/>).</param>
     /// <returns>The recipe's id, version and text; an error when the id or an input key is not legal.</returns>
-    public static Result<SkillTrialPlan> Build(LoadedSkillBlock block, IReadOnlyCollection<string> provided, bool foldered = false)
+    public static Result<SkillTrialPlan> Build(LoadedSkillBlock block, IReadOnlyCollection<string> provided, bool foldered = false, int version = 1)
     {
         ArgumentNullException.ThrowIfNull(block);
         ArgumentNullException.ThrowIfNull(provided);
@@ -70,15 +68,9 @@ public static class SkillTrialRecipe
             }
         }
 
-        var version = VersionOf(block.ManifestHash, foldered ? [.. given.Select(static i => i.Key), SkillsFolderFact] : given.Select(static i => i.Key));
         return new SkillTrialPlan(id, version, Text(block, id, version, given, foldered));
     }
 
-    private static int VersionOf(string manifestHash, IEnumerable<string> keys)
-    {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(manifestHash + "|" + string.Join(',', keys.Order(StringComparer.Ordinal)) + "|" + Shape.ToString(CultureInfo.InvariantCulture)));
-        return (int)(BitConverter.ToUInt32(bytes, 0) & 0x7fffffff) | 1;   // positive, and never 0
-    }
 
     private static string Text(LoadedSkillBlock block, RecipeId id, int version, List<SkillInput> given, bool foldered)
     {
@@ -142,6 +134,15 @@ public static class SkillTrialRecipe
 
         return text;
     }
+
+    /// <summary>
+    /// The version a trial registers at: the registered version whose text the trial would write again (same hash), else one above the highest registered, else 1. Recipe versions only go up
+    /// (RCP-VERSION-002), and the text changes with the manifest, the inputs given and this builder, so a hash of those can't be the version (found in F-1's hand test).
+    /// </summary>
+    /// <param name="registered">The registered versions of the trial's id.</param>
+    /// <param name="hashAt">The hash of the trial's text at a version.</param>
+    /// <returns>The version.</returns>
+    public static int VersionFor(IReadOnlyList<RegisteredRecipe> registered, Func<int, RecipeHash> hashAt) => throw new NotSupportedException();
 
     /// <summary>The block outcome a trial ended with, from its terminal state: 'ended-needs-changes' is 'needsChanges'.</summary>
     /// <param name="state">The instance's state.</param>
