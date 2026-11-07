@@ -23231,3 +23231,5 @@ Aw.Sindri.Core.Workflow.Engine.Events.TriggerRecord.ResultSha256.get -> string?
 Aw.Sindri.Core.Workflow.Engine.Events.TriggerRecord.ResultSha256.init -> void
 Aw.Sindri.Core.Events.WorkflowEventDetail.ResultSha256.get -> string?
 Aw.Sindri.Core.Events.WorkflowEventDetail.ResultSha256.init -> void
+Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts.DirectoryEntries.get -> System.Func<string!, System.Collections.Generic.IReadOnlyList<string!>!>?
+Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts.DirectoryEntries.init -> void

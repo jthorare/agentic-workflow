@@ -34,8 +34,12 @@ internal static class PlanPolicy
         return rules;
     }
 
+    // The permanent denies are carved around the Step's writable paths; the owner's and the login's are the last word and stay whole.
     private static IEnumerable<string> ReadDenied(PlanContext c) =>
-        c.Denied().Concat(c.OwnerDenied()).Select(d => d.Path).Concat(c.Request.Login?.DeniedReads ?? []).Distinct(StringComparer.Ordinal);
+        c.Denied().Select(d => d.Path).SelectMany(d => DenyCarve.Around(d, Writable(c), c.Request.Host.DirectoryEntries))
+            .Concat(c.OwnerDenied().Select(d => d.Path)).Concat(c.Request.Login?.DeniedReads ?? []).Distinct(StringComparer.Ordinal);
+
+    private static List<string> Writable(PlanContext c) => c.WritablePath is { } worktree ? [worktree, c.Request.Paths.RunDirectory] : [c.Request.Paths.RunDirectory];
 
     private static List<InnerRule> AttendedAllows() =>
         [Allow("Read", string.Empty), Allow("Glob", string.Empty), Allow("Grep", string.Empty), Ask("Bash"), Ask("Edit"), Ask("Write")];
