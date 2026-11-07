@@ -64,7 +64,8 @@ public sealed class LinearConnectionCheckedTests
 
         Expect.Equal(new LinearKeyStateView("resolves", _savedAt), first.Write);
         Expect.Equal(new LinearKeyStateView("resolves", _savedAt), first.Read);
-        Expect.Equal(first, second);
+        Expect.Equal(first with { Teams = [] }, second with { Teams = [] });
+        Expect.Sequence(first.Teams, second.Teams);
     }
 
     [Fact]
