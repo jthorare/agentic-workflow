@@ -5,7 +5,7 @@ namespace Aw.Sindri.Features.SweepLostSessions;
 
 /// <summary>
 /// The agent runs that are idle past <see cref="LaunchRules.IdleAfter"/> and still not ended (issue #1000): the same sessions <see cref="IdleSessions"/> ends, read for health and Needs you, so a
-/// run that makes no progress shows there as soon as it is idle, not only at the Step's timeout. A Step a person took over is not stalled (the takeover pauses its timer); a session whose
+/// run that makes no progress shows there as soon as it is idle, not only at the Step's timeout. A skill block waits on the owner for as long as its Step timeout allows, so it is never stalled (skill flows spec §3.3 item 4). A Step a person took over is not stalled (the takeover pauses its timer); a session whose
 /// instance can't be read is listed, since the sweep leaves it alone and so nothing else ends it.
 /// </summary>
 /// <param name="liveness">The launches this process tracks.</param>
@@ -27,7 +27,7 @@ internal sealed class StalledAgentRuns(LaunchLiveness liveness, TimeProvider clo
             }
 
             var row = await views.Get(launch, cancellationToken).ConfigureAwait(false);
-            if (row.IsError || row.Value is not { Live: true, Step.Instance: { } address } known)
+            if (row.IsError || row.Value is not { Live: true, Step.Instance: { } address, Skill: null } known)
             {
                 continue;
             }

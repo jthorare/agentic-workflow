@@ -1,0 +1,48 @@
+{
+  "rows": [
+    {
+      "id": "skill:WFI-50d588615ca6801fbfc521302f520bc8",
+      "kind": "skillWaiting",
+      "label": "skill · waiting on you",
+      "subject": {
+        "kind": "instance",
+        "id": "WFI-50d588615ca6801fbfc521302f520bc8"
+      },
+      "item": "ITM-00000000000000000000000000000001",
+      "title": "Ship it",
+      "reason": "Shape the idea is waiting on you: Who calls this API?",
+      "repo": null,
+      "urgency": "pulse",
+      "since": "2026-01-01T00:05:00.0000000Z",
+      "recordedOnly": false,
+      "notice": null,
+      "answerKind": null,
+      "primaryAction": "ApplyCommand:takeover",
+      "actions": [
+        "ApplyCommand:takeover"
+      ],
+      "cli": "sindri takeover ITM-1/step/1",
+      "open": {
+        "route": "workflow/ITM-1/step/1",
+        "label": "Open the run"
+      },
+      "ownerWaiting": {
+        "launchId": "LCH-00000000000000000000000000000001",
+        "reason": "question",
+        "text": "Who calls this API?",
+        "resultPath": "/run/.sindri-out/result-1.json",
+        "instance": "ITM-1/step/1",
+        "state": "review",
+        "attempt": 1
+      }
+    }
+  ],
+  "empty": null,
+  "asOf": {
+    "cursor": 7,
+    "ledgerHead": 7,
+    "projectedAt": "2026-01-01T00:05:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  }
+}

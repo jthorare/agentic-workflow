@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Workflow;
 using Aw.Sindri.Core.Workflow.Engine;
@@ -41,9 +42,9 @@ public sealed class StalledAgentRunsTests
         }
     }
 
-    private async Task Idle(TimeSpan since)
+    private async Task Idle(TimeSpan since, LaunchSkill? skill = null)
     {
-        await _s.Started(instance: _step);
+        await _s.Started(instance: _step, skill: skill);
         _s.Liveness.Beat(A.FirstLaunchId, _s.Now);
         _s.Files.EndTurn(A.FirstLaunchId, _s.Now);
         _s.Views.Slice.Clock.Advance(since);
@@ -58,6 +59,14 @@ public sealed class StalledAgentRunsTests
 
         Expect.Equal((A.FirstLaunchId, _step), (run.Launch, run.Instance));
         Expect.Equal(_s.Now - TimeSpan.FromSeconds(120), run.TurnEndedAt);
+    }
+
+    [Fact]
+    public async Task A_skill_block_idle_past_the_idle_time_is_not_stalled_because_it_waits_on_the_owner()
+    {
+        await Idle(TimeSpan.FromMinutes(5), new LaunchSkill("review", 1, Manifest: null, SkillMdSha: null, Push: false, Trial: false));
+
+        Assert.Empty(await Runs().Find(Token));
     }
 
     [Fact]

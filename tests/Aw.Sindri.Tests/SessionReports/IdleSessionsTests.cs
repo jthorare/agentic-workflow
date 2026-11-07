@@ -49,9 +49,11 @@ public sealed class IdleSessionsTests
         }
     }
 
-    private async Task<int> SweepAfterTurnEnded(string? takenOverBy = null, bool unreadable = false)
+    private static readonly LaunchSkill _review = new("review", 1, Manifest: null, SkillMdSha: null, Push: false, Trial: false);
+
+    private async Task<int> SweepAfterTurnEnded(string? takenOverBy = null, bool unreadable = false, LaunchSkill? skill = null)
     {
-        await _s.Started(instance: _step);
+        await _s.Started(instance: _step, skill: skill);
         _s.Liveness.Beat(A.FirstLaunchId, _s.Now);
         _s.Files.EndTurn(A.FirstLaunchId, _s.Now);
         (_instances.TakenOverBy, _instances.Fail) = (takenOverBy, unreadable);
@@ -62,6 +64,27 @@ public sealed class IdleSessionsTests
 
     [Fact]
     public async Task A_Step_not_taken_over_ends_as_idle_when_its_instance_is_read() => Expect.Equal(1, await SweepAfterTurnEnded());
+
+    [Fact]
+    public async Task A_skill_block_waiting_on_the_owner_is_never_ended_as_idle()
+    {
+        Expect.Equal(0, await SweepAfterTurnEnded(skill: _review));
+        Expect.Equal(0, _s.Views.Slice.Store.Events.Count);
+        Expect.Equal(0, await Sweeper().Sweep(Token));   // and not on the next sweep either
+    }
+
+    [Fact]
+    public async Task A_skill_block_an_API_error_stopped_is_not_re_prompted_or_ended()
+    {
+        await _s.Started(instance: _step, skill: _review);
+        _s.Liveness.Beat(A.FirstLaunchId, _s.Now);
+        _s.Files.FailTurn(A.FirstLaunchId, _s.Now);
+        _s.Views.Slice.Clock.Advance(TimeSpan.FromSeconds(121));
+        _s.Liveness.Beat(A.FirstLaunchId, _s.Now);
+
+        Expect.Equal(0, await Sweeper().Sweep(Token));
+        Assert.Empty(_nudges.Sent);
+    }
 
     [Fact]
     public async Task A_Step_a_person_took_over_is_never_ended_as_idle()

@@ -5,6 +5,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
+using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.ApproveAll;
@@ -14,6 +15,7 @@ using Aw.Sindri.Testing.Workflow.ApproveAll;
 using Aw.Sindri.Tests.ApproveAll;
 using Aw.Sindri.Tests.GetInstance;
 using Aw.Sindri.Tests.Requests;
+using Aw.Sindri.Tests.Views;
 using Aw.Sindri.Tests.Workflow.Engine;
 
 namespace Aw.Sindri.Tests.GetNeedsYou;
@@ -27,8 +29,16 @@ public sealed class GetNeedsYouTests
 
     private readonly InMemoryJobViews _jobs = new();
     private IShippedRecipes _shipped = new FakeShippedRecipes([]);
+    private readonly FakeSkillWaitingRuns _skillWaiting = new();
 
-    private GetNeedsYouService Service() => new(_q.Views.Views, _q.Views.Progress, _q.Views.Slice.Callers, new NeedsYouLiveRows(new SetupNotices(_jobs, _q.Views.Slice.Profiles, new ApproveAllPlanReader(_q.Views.Slice.Profiles, _shipped), new PassThroughScrubber(), TimeProvider.System, new Core.Setup.McpAutoGate(_q.Views.Slice.Profiles, new Core.Setup.McpEvents(_q.Views.Slice.Held, _q.Views.Slice.Store, _q.Views.Slice.Events, _q.Views.Slice.Callers), new NoSwitch(), _jobs), _q.Views.Slice.Profiles), new PassThroughScrubber()), TimeProvider.System, new NeedsYouJoins(new SomeInstances(), new SomeInstances(), new Core.Workflow.Registry.RecipeRegistryReader(new Testing.Workflow.Registry.InMemoryRecipeStore(), new Testing.Workflow.Registry.InMemoryRecipeApprovals(), EngineFixture.Catalog, SliceHarness.Json, new NoProfileFacts()), EngineFixture.Catalog));
+    private GetNeedsYouService Service() => new(_q.Views.Views, _q.Views.Progress, _q.Views.Slice.Callers, new NeedsYouLiveRows(new SetupNotices(_jobs, _q.Views.Slice.Profiles, new ApproveAllPlanReader(_q.Views.Slice.Profiles, _shipped), new PassThroughScrubber(), TimeProvider.System, new Core.Setup.McpAutoGate(_q.Views.Slice.Profiles, new Core.Setup.McpEvents(_q.Views.Slice.Held, _q.Views.Slice.Store, _q.Views.Slice.Events, _q.Views.Slice.Callers), new NoSwitch(), _jobs), _q.Views.Slice.Profiles), new PassThroughScrubber(), views: _q.Views.Views, skillWaiting: _skillWaiting), TimeProvider.System, new NeedsYouJoins(new SomeInstances(), new SomeInstances(), new Core.Workflow.Registry.RecipeRegistryReader(new Testing.Workflow.Registry.InMemoryRecipeStore(), new Testing.Workflow.Registry.InMemoryRecipeApprovals(), EngineFixture.Catalog, SliceHarness.Json, new NoProfileFacts()), EngineFixture.Catalog));
+
+    private sealed class FakeSkillWaitingRuns : ISkillWaitingRuns
+    {
+        public List<SkillWaitingRun> Runs { get; } = [];
+
+        public ValueTask<IReadOnlyList<SkillWaitingRun>> Find(CancellationToken cancellationToken) => ValueTask.FromResult<IReadOnlyList<SkillWaitingRun>>(Runs);
+    }
 
     private sealed class NoSwitch : Core.Setup.IMcpAutoSwitch
     {
@@ -40,6 +50,54 @@ public sealed class GetNeedsYouTests
     private void AddRepoJob(JobState state, string? summary = null, int n = 1, string kind = "AddRepo") =>
         _jobs.Put(new JobRow(JobId.From("JOB-" + n.ToString("x32", System.Globalization.CultureInfo.InvariantCulture)), JobKind.From(kind), JobKey.From("a" + n.ToString(System.Globalization.CultureInfo.InvariantCulture)), Item: null, Repo: null, Service: null, state, "human:app",
             KnownInstants.Epoch.AddMinutes(n), state == JobState.Running ? null : KnownInstants.Epoch.AddMinutes(n + 1), [], 0, summary, state == JobState.Failed ? "SND-SETUP-001" : null, Result: null, CancelledBy: null, Sequence: n));
+
+    [Fact]
+    public async Task A_skill_run_waiting_on_the_owner_is_a_skillWaiting_row_that_takes_over()
+    {
+        await _q.Views.Item(repo: null);
+        var address = Core.Workflow.Engine.InstanceAddress.From("ITM-1/step/1");
+        var waiting = new LaunchOwnerWaiting(A.FirstLaunchId, A.FirstItemId, "question", "Who calls this API?", "/run/.sindri-out/result-1.json", Detail: null, address, "review", 1);
+        _skillWaiting.Runs.Add(new SkillWaitingRun(A.FirstLaunchId, A.FirstItemId, address, "Shape the idea", "officeHours", waiting, KnownInstants.Epoch.AddMinutes(5)));
+        using var entered = _q.Human();
+
+        var row = Assert.Single((await Get()).Rows);
+
+        Expect.Equal((NeedsYouKind.SkillWaiting, "ApplyCommand:takeover", KnownInstants.Epoch.AddMinutes(5)), (row.Kind, row.PrimaryAction!.Value.Value, row.Since));
+        Expect.Equal("Shape the idea is waiting on you: Who calls this API?", row.Reason);
+        Expect.Equal("Who calls this API?", row.OwnerWaiting!.Text);
+    }
+
+    [Fact]
+    public async Task The_skill_waiting_row_matches_its_golden_file()
+    {
+        await _q.Views.Item(repo: null);
+        var address = Core.Workflow.Engine.InstanceAddress.From("ITM-1/step/1");
+        var waiting = new LaunchOwnerWaiting(A.FirstLaunchId, A.FirstItemId, "question", "Who calls this API?", "/run/.sindri-out/result-1.json", Detail: null, address, "review", 1);
+        var since = KnownInstants.Epoch.AddMinutes(5);
+        _skillWaiting.Runs.Add(new SkillWaitingRun(A.FirstLaunchId, A.FirstItemId, address, "Shape the idea", "officeHours", waiting, since));
+        using var entered = _q.Human();
+
+        var rows = (await Get()).Rows;
+
+        ApiGoldens.ApiGolden.Match(
+            System.Text.Encoding.UTF8.GetString(Aw.Kernel.Json.AwJson.Serialize(new GetNeedsYouResponse(rows, Empty: null, new AsOf(7, 7, since, Rebuilding: false, Stalled: false)), SliceHarness.Json)),
+            Path.GetTempPath(), "needs-you", "skill-waiting");
+    }
+
+    [Fact]
+    public async Task A_skill_run_waiting_on_the_owner_means_the_list_is_not_the_empty_sentence()
+    {
+        await _q.Views.Item(repo: null);
+        var address = Core.Workflow.Engine.InstanceAddress.From("ITM-1/step/1");
+        var waiting = new LaunchOwnerWaiting(A.FirstLaunchId, A.FirstItemId, "noResult", Text: null, "/run/.sindri-out/result-1.json", Detail: null, address, "review", 1);
+        _skillWaiting.Runs.Add(new SkillWaitingRun(A.FirstLaunchId, A.FirstItemId, address, "Shape the idea", "officeHours", waiting, KnownInstants.Epoch));
+        using var entered = _q.Human();
+
+        var response = await Get();
+
+        Assert.Null(response.Empty);
+        _ = Assert.Single(response.Rows);
+    }
 
     [Fact]
     public async Task A_failed_AddRepo_job_with_no_repo_in_the_profile_is_the_setup_repo_row_for_a_human()

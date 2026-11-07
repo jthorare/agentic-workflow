@@ -46,6 +46,78 @@ public sealed class LaunchesProjectionTests
         SandboxData.AssertIsSummary(row.Sandbox);
     }
 
+    private static readonly LaunchSkill _review = new("review", 1, Manifest: null, SkillMdSha: null, Push: false, Trial: false);
+
+    [Fact]
+    public async Task A_start_of_a_skill_block_keeps_the_skills_name()
+    {
+        await _v.Request();
+        await _v.Start(skill: _review);
+
+        Expect.Equal("review", (await Row())!.Skill);
+    }
+
+    [Fact]
+    public async Task A_start_without_a_skill_leaves_the_row_without_one()
+    {
+        await _v.Request();
+        await _v.Start();
+
+        Assert.Null((await Row())!.Skill);
+    }
+
+    [Fact]
+    public async Task An_owner_waiting_is_kept_on_the_row_with_when_it_was_recorded()
+    {
+        await _v.Request();
+        await _v.Start(skill: _review);
+        _v.Slice.Clock.Advance(TimeSpan.FromMinutes(3));
+        await _v.OwnerWaiting(text: "Which branch is the base?");
+
+        var row = (await Row())!;
+
+        Assert.NotNull(row.OwnerWaiting);
+        Expect.Equal(("question", "Which branch is the base?"), (row.OwnerWaiting!.Reason, row.OwnerWaiting.Text));
+        Expect.Equal(_v.Slice.Clock.GetUtcNow(), row.OwnerWaitingAt);
+    }
+
+    [Fact]
+    public async Task A_turn_started_after_an_owner_waiting_clears_it()
+    {
+        await _v.Request();
+        await _v.Start(skill: _review);
+        await _v.OwnerWaiting();
+        await _v.TurnStarted();
+
+        var row = (await Row())!;
+
+        Assert.Null(row.OwnerWaiting);
+        Assert.Null(row.OwnerWaitingAt);
+    }
+
+    [Fact]
+    public async Task A_second_owner_waiting_after_a_turn_started_is_kept()
+    {
+        await _v.Request();
+        await _v.Start(skill: _review);
+        await _v.OwnerWaiting(text: "first?");
+        await _v.TurnStarted();
+        await _v.OwnerWaiting(text: "second?");
+
+        var waiting = (await Row())!.OwnerWaiting;
+
+        Assert.NotNull(waiting);
+        Expect.Equal("second?", waiting.Text);
+    }
+
+    [Fact]
+    public async Task An_owner_waiting_for_a_launch_nobody_requested_changes_nothing()
+    {
+        await _v.OwnerWaiting();
+
+        Assert.Null(await Row());
+    }
+
     [Fact]
     public async Task A_start_without_a_sandbox_leaves_the_row_without_one()
     {

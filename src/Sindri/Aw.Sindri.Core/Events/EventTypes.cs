@@ -170,6 +170,9 @@ public static class EventTypes
     /// <summary>A skill block's session ended a turn without finishing: it asks the owner a question, left no result or an unreadable one (skill flows spec §7). One per turn end.</summary>
     public const string LaunchOwnerWaiting = "launch.owner-waiting";
 
+    /// <summary>A skill block's session that had raised 'launch.owner-waiting' started a new turn from a prompt, so the owner is no longer needed (skill flows spec §7, F-2a).</summary>
+    public const string LaunchTurnStarted = "launch.turn-started";
+
     /// <summary>The model an engine launch was given, and how it was chosen (model-pick spec §6).</summary>
     public const string ModelPicked = "model.picked";
 

@@ -12,8 +12,8 @@ namespace Aw.Sindri.Core.Ids;
 public readonly partial struct NeedsYouRowId : ITypedId<NeedsYouRowId, string>
 {
     private static Validation Validate(string value) =>
-        Shape.IsMatch(value) ? Validation.Ok : Validation.Invalid("A needs-you row id is 'decision:DEC-…', 'park:WFI-…' (or 'desk:', 'takeover:'), 'failure:service:<name>', 'profile:drift', 'setup:repo', 'setup:recipes' or 'setup:mcp', or 'recipe:workflow.<name>'");
+        Shape.IsMatch(value) ? Validation.Ok : Validation.Invalid("A needs-you row id is 'decision:DEC-…', 'park:WFI-…' (or 'desk:', 'takeover:', 'skill:'), 'failure:service:<name>', 'profile:drift', 'setup:repo', 'setup:recipes' or 'setup:mcp', or 'recipe:workflow.<name>'");
 
-    [GeneratedRegex("^(?:decision:DEC-[0-9a-f]{32}|(?:park|desk|takeover):WFI-[0-9a-f]{32}|failure:service:[A-Za-z0-9][A-Za-z0-9._-]{0,99}|profile:drift|setup:(?:repo|recipes|mcp)|recipe:workflow\\.[a-z][a-z0-9]*(?:-[a-z0-9]+)*)\\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex("^(?:decision:DEC-[0-9a-f]{32}|(?:park|desk|takeover|skill):WFI-[0-9a-f]{32}|failure:service:[A-Za-z0-9][A-Za-z0-9._-]{0,99}|profile:drift|setup:(?:repo|recipes|mcp)|recipe:workflow\\.[a-z][a-z0-9]*(?:-[a-z0-9]+)*)\\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }
 }

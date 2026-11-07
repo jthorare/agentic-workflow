@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
@@ -43,7 +44,7 @@ internal sealed class SessionHarness
     }
 
     /// <summary>Holds the lease and starts <paramref name="launch"/> of the first item on <paramref name="target"/>, open in the files.</summary>
-    public async Task Started(LaunchId? launch = null, string target = "claude-code", InstanceAddress? instance = null)
+    public async Task Started(LaunchId? launch = null, string target = "claude-code", InstanceAddress? instance = null, LaunchSkill? skill = null)
     {
         var id = launch ?? A.FirstLaunchId;
         if (Views.Slice.Held.Current is null)
@@ -53,7 +54,7 @@ internal sealed class SessionHarness
         }
 
         await Views.Request(id, AgentId.From(target));
-        await Views.Start(id, target: AgentId.From(target), instance: instance);
+        await Views.Start(id, target: AgentId.From(target), instance: instance, skill: skill);
         Files.Open(id);
     }
 }

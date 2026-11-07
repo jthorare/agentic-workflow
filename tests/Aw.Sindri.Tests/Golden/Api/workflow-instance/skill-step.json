@@ -1,0 +1,272 @@
+{
+  "address": "ITM-01JK9/skill-flow/1",
+  "id": "WFI-4d138fcbc5168af0954b5502d12a5901",
+  "parent": null,
+  "itemId": "ITM-01JK9",
+  "title": "Outbox retry storm",
+  "recipe": {
+    "id": "workflow.incident-response",
+    "hash": "sha256:5d90e1b200000000000000000000000000000000000000000000000000000000",
+    "version": 4,
+    "urgency": "incident",
+    "displayName": "Incident response"
+  },
+  "state": "mitigate",
+  "since": "2026-10-12T11:02:00.0000000Z",
+  "engineOwned": null,
+  "subject": {
+    "kind": "webhook",
+    "key": "P-2211",
+    "label": "PagerDuty P-2211 · Outbox retry storm",
+    "href": null
+  },
+  "orderedBy": "path",
+  "states": [
+    {
+      "id": "assess",
+      "order": 1,
+      "branchOf": null,
+      "glyph": "done",
+      "badge": null,
+      "round": null,
+      "loops": [],
+      "desk": false,
+      "child": false,
+      "children": null,
+      "outcome": "sev2",
+      "terminal": false,
+      "enteredAt": "2026-10-12T09:00:00.0000000Z",
+      "leftAt": "2026-10-12T09:10:00.0000000Z",
+      "block": "step.skill.review"
+    },
+    {
+      "id": "mitigate",
+      "order": 2,
+      "branchOf": null,
+      "glyph": "active",
+      "badge": null,
+      "round": {
+        "n": 1,
+        "max": 3
+      },
+      "loops": [
+        {
+          "with": "verify",
+          "n": 0,
+          "max": 3
+        }
+      ],
+      "desk": false,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": false,
+      "enteredAt": "2026-10-12T09:10:00.0000000Z",
+      "block": "step.agent"
+    },
+    {
+      "id": "verify",
+      "order": 3,
+      "branchOf": null,
+      "glyph": "pending",
+      "badge": null,
+      "round": null,
+      "loops": [
+        {
+          "with": "mitigate",
+          "n": 0,
+          "max": 3
+        }
+      ],
+      "desk": false,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": false
+    },
+    {
+      "id": "comms",
+      "order": 4,
+      "branchOf": null,
+      "glyph": "pending",
+      "badge": null,
+      "round": null,
+      "loops": [],
+      "desk": false,
+      "child": true,
+      "children": null,
+      "outcome": null,
+      "terminal": false
+    },
+    {
+      "id": "resolved",
+      "order": 5,
+      "branchOf": null,
+      "glyph": "pending",
+      "badge": null,
+      "round": null,
+      "loops": [],
+      "desk": false,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": true
+    }
+  ],
+  "current": {
+    "state": "mitigate",
+    "step": {
+      "kind": "active",
+      "ref": "step.agent",
+      "declaration": "roll back the last release"
+    },
+    "gates": [],
+    "desk": null,
+    "status": {
+      "header": {
+        "address": "ITM-01JK1/incident-response/1",
+        "recipe": "workflow.incident-response",
+        "hash12": "5d90e1b20000",
+        "version": 4,
+        "state": "mitigate",
+        "detail": null,
+        "since": "2026-10-12T11:02:00.0000000Z",
+        "ageSeconds": 5040
+      },
+      "next": "Mitigate the outage in round 1/3: ITM-01JG2 rolls back the last release.",
+      "answer": null,
+      "child": null,
+      "drift": null,
+      "inputs": [],
+      "timeout": {
+        "kind": "escalates",
+        "inSeconds": 9360,
+        "on": "mitigate"
+      },
+      "budget": null,
+      "paused": null,
+      "commands": [
+        {
+          "verb": "takeover",
+          "actionId": "ApplyCommand:takeover",
+          "class": "pause",
+          "cli": "sindri workflow takeover ITM-01JK1/incident-response/1",
+          "confirm": null
+        },
+        {
+          "verb": "cancel",
+          "actionId": "ApplyCommand:cancel",
+          "class": "desk",
+          "cli": "sindri workflow cancel ITM-01JK1/incident-response/1",
+          "confirm": "Cancel ITM-01JK1/incident-response/1? 1 running step stops; 0 children are cancelled."
+        }
+      ],
+      "text": "ITM-01JK1/incident-response/1  workflow.incident-response@5d90e1b20000  v4  mitigate  since 11:02 (1h 24m)\n  next      Mitigate the outage in round 1/3: ITM-01JG2 rolls back the last release.\n  timeout   escalates in 2h 36m (mitigate)\n  commands  takeover, cancel\n",
+      "injection": []
+    }
+  },
+  "facts": [
+    {
+      "key": "fact:alert",
+      "label": "Alert",
+      "type": "payload",
+      "direction": "input",
+      "from": null,
+      "status": "produced",
+      "summary": "PagerDuty P-2211 · Outbox retry storm",
+      "at": "2026-10-12T11:02:00.0000000Z",
+      "by": "service:webhook",
+      "ref": {
+        "name": null,
+        "size": null,
+        "hash": null,
+        "path": null,
+        "itemId": null,
+        "url": null,
+        "host": null,
+        "title": null,
+        "factKey": "fact:alert"
+      },
+      "progress": null,
+      "pending": null
+    },
+    {
+      "key": "fact:severity",
+      "label": "Severity",
+      "type": "text",
+      "direction": "output",
+      "from": "assess",
+      "status": "produced",
+      "summary": "sev2",
+      "at": "2026-10-12T11:04:00.0000000Z",
+      "by": "step.assess",
+      "ref": {
+        "name": null,
+        "size": null,
+        "hash": null,
+        "path": null,
+        "itemId": null,
+        "url": null,
+        "host": null,
+        "title": null,
+        "factKey": "fact:severity"
+      },
+      "progress": null,
+      "pending": null
+    },
+    {
+      "key": "fact:history",
+      "label": "Alert history",
+      "type": "payload",
+      "direction": "output",
+      "from": "assess",
+      "status": "produced",
+      "summary": "2 of 40 events",
+      "at": "2026-10-12T11:03:00.0000000Z",
+      "by": "service:webhook",
+      "ref": {
+        "name": null,
+        "size": null,
+        "hash": null,
+        "path": null,
+        "itemId": null,
+        "url": null,
+        "host": null,
+        "title": null,
+        "factKey": "fact:history"
+      },
+      "progress": null,
+      "pending": null
+    },
+    {
+      "key": "fact:postmortem",
+      "label": "Postmortem draft",
+      "type": "text",
+      "direction": "output",
+      "from": "comms",
+      "status": "pending",
+      "summary": "not started",
+      "at": null,
+      "by": null,
+      "ref": null,
+      "progress": null,
+      "pending": null
+    }
+  ],
+  "children": [],
+  "counts": {
+    "timeline": 12,
+    "decisions": 1,
+    "requests": 0,
+    "context": null
+  },
+  "actions": [
+    "ApplyCommand:takeover",
+    "ApplyCommand:cancel"
+  ],
+  "stepRuns": [],
+  "asOf": "2026-10-12T12:26:00.0000000Z",
+  "steps": [],
+  "startedBy": null,
+  "allowedCommands": []
+}

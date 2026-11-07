@@ -11,13 +11,14 @@ namespace Aw.Sindri.Features.GetNeedsYou;
 /// <param name="stalled">The agent runs idle past their launch's idle time (issue #1000); none when this build has no launcher.</param>
 /// <param name="views">The items view, for the title of a stalled run's item.</param>
 /// <param name="ownerStops">The 'desk:' rows of the instances that wait on the owner at a human-verb wait; none when this build has no reader.</param>
-internal sealed class NeedsYouLiveRows(SetupNotices setup, ITextScrubber scrubber, IStalledAgentRuns? stalled = null, IViewReader? views = null, NeedsYouOwnerStops? ownerStops = null)
+/// <param name="skillWaiting">The skill block runs waiting on the owner (skill flows spec §7); none when this build has no launcher.</param>
+internal sealed class NeedsYouLiveRows(SetupNotices setup, ITextScrubber scrubber, IStalledAgentRuns? stalled = null, IViewReader? views = null, NeedsYouOwnerStops? ownerStops = null, ISkillWaitingRuns? skillWaiting = null)
 {
-    /// <summary>The profile drift row, the setup rows, the stalled agent runs and the owner-stop rows, in that order.</summary>
+    /// <summary>The profile drift row, the setup rows, the stalled agent runs, the owner-stop rows and the skill runs waiting on the owner, in that order.</summary>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>The rows; empty when a source can't be read.</returns>
     public async ValueTask<IReadOnlyList<NeedsYouRow>> Read(CancellationToken cancellationToken) =>
-        [.. await DriftRows(cancellationToken).ConfigureAwait(false), .. await SetupRows(cancellationToken).ConfigureAwait(false), .. await StalledRows(cancellationToken).ConfigureAwait(false), .. await OwnerStopRows(cancellationToken).ConfigureAwait(false)];
+        [.. await DriftRows(cancellationToken).ConfigureAwait(false), .. await SetupRows(cancellationToken).ConfigureAwait(false), .. await StalledRows(cancellationToken).ConfigureAwait(false), .. await OwnerStopRows(cancellationToken).ConfigureAwait(false), .. await SkillWaitingRows(cancellationToken).ConfigureAwait(false)];
 
     // The profile drift row, computed from the live profile against the approved one (SetupNotices reads both).
     private async ValueTask<IReadOnlyList<NeedsYouRow>> DriftRows(CancellationToken cancellationToken) =>
@@ -38,6 +39,27 @@ internal sealed class NeedsYouLiveRows(SetupNotices setup, ITextScrubber scrubbe
             if (item is { IsSuccess: true, Value: { } found })
             {
                 rows.Add(NeedsYouRows.ForStalledAgent(found, run.Instance, run.TurnEndedAt, scrubber));
+            }
+        }
+
+        return rows;
+    }
+
+    // The 'skill:' rows of the skill block runs waiting on the owner (skill flows spec §5.4): one per open skill launch, read like the stalled runs, never folded.
+    private async ValueTask<IReadOnlyList<NeedsYouRow>> SkillWaitingRows(CancellationToken cancellationToken)
+    {
+        if (skillWaiting is null || views is null)
+        {
+            return [];
+        }
+
+        var rows = new List<NeedsYouRow>();
+        foreach (var run in await skillWaiting.Find(cancellationToken).ConfigureAwait(false))
+        {
+            var item = await views.Get<ItemRow>(ViewNames.Items, run.Item.Value, cancellationToken).ConfigureAwait(false);
+            if (item is { IsSuccess: true, Value: { } found })
+            {
+                rows.Add(NeedsYouRows.ForSkillWaiting(found, run, scrubber));
             }
         }
 

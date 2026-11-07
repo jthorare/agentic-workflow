@@ -49,7 +49,8 @@ public static class StateCells
             Outcome: Outcome(terminal && isActive, at),
             terminal,
             visit?.EnteredAt,
-            visit?.LeftAt);
+            visit?.LeftAt,
+            state.Step?.Use.Value);
     }
 
     private static string? Outcome(bool endedHere, Place at) => endedHere && at.Instance.Ended ? at.Instance.Outcome?.Value : null;

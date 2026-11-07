@@ -36,6 +36,7 @@ internal sealed class SkillStepWatching(IAgentSessions sessions, ILaunchFiles fi
         var resultFile = SkillLaunchEnv.ResultFileOf(watch.RunDirectory, id);
         DateTimeOffset? handled = null;
         var first = true;
+        var waited = false;   // an owner-waiting row was recorded and no new prompt has answered it
         using var timer = new PeriodicTimer(options.PollInterval);
         while (true)
         {
@@ -53,18 +54,38 @@ internal sealed class SkillStepWatching(IAgentSessions sessions, ILaunchFiles fi
             }
 
             first = false;
-            if (files.TurnEndedAt(id) is { } turn && turn != handled && !files.ToolRunning(id) && clock.GetUtcNow() - turn >= Settle)
+            waited = await AnswerWait(watch, handled, waited, cancellationToken).ConfigureAwait(false);
+            if (SettledTurnEnd(id, handled) is { } turn)
             {
-                if (await AtTurnEnd(watch, resultFile, turn, handled, cancellationToken).ConfigureAwait(false) is { } done)
+                var read = await AtTurnEnd(watch, resultFile, turn, handled, cancellationToken).ConfigureAwait(false);
+                if (read.Skill is not null || read.Failure is not null)
                 {
-                    return state.Value with { Skill = done.Skill, SkillFailure = done.Failure };
+                    return state.Value with { Skill = read.Skill, SkillFailure = read.Failure };
                 }
 
+                waited = read.Waited;
                 handled = turn;
             }
 
             _ = await timer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false);
         }
+    }
+
+    // The turn end not handled yet whose marker has stood for Settle with no tool running; null otherwise.
+    private DateTimeOffset? SettledTurnEnd(LaunchId id, DateTimeOffset? handled) =>
+        files.TurnEndedAt(id) is { } turn && turn != handled && !files.ToolRunning(id) && clock.GetUtcNow() - turn >= Settle ? turn : null;
+
+    // After an owner-waiting row, a prompt newer than the turn end handled starts a new turn: record it once, so the waiting row clears. Returns whether a wait is still unanswered.
+    private async Task<bool> AnswerWait(SkillWatch watch, DateTimeOffset? handled, bool waited, CancellationToken cancellationToken)
+    {
+        if (!waited || handled is not { } last || files.PromptedAt(LaunchId.From(watch.Launch)) is not { } prompt || prompt <= last)
+        {
+            return waited;
+        }
+
+        // why: the waiting row clears on this event; without it the row would linger until some other event
+        await recorder.TurnStarted(watch, prompt, cancellationToken).ConfigureAwait(false);
+        return false;
     }
 
     // A session that ended may have left a finished result (an agent that exits when done); anything else is how it ended.
@@ -81,25 +102,27 @@ internal sealed class SkillStepWatching(IAgentSessions sessions, ILaunchFiles fi
         };
     }
 
-    // Reads the result at a settled turn end: a finished result or a block-author bug ends the watch (returned), anything else is recorded when it needs the owner and the watch goes on (null).
-    private async Task<(SkillFinished? Skill, string? Failure)?> AtTurnEnd(SkillWatch watch, string resultFile, DateTimeOffset turn, DateTimeOffset? handled, CancellationToken cancellationToken)
+    // Reads the result at a settled turn end: a finished result or a block-author bug ends the watch (returned), anything else is recorded when it needs the owner and the watch goes on (no skill, no failure).
+    private async Task<(SkillFinished? Skill, string? Failure, bool Waited)> AtTurnEnd(SkillWatch watch, string resultFile, DateTimeOffset turn, DateTimeOffset? handled, CancellationToken cancellationToken)
     {
         // why: with no turn end handled yet, the seed's own prompt is no news; only a prompt after a handled turn end says the file may be stale
         var prompt = handled is null ? null : files.PromptedAt(LaunchId.From(watch.Launch));
         var file = ReadFile(resultFile);
         var decision = SkillResultReader.Decide(Input(watch, file, handled, prompt));
+        var waited = false;
         if (decision.Kind == SkillResultKind.OwnerWaiting && decision.Reason is { } reason)
         {
             var text = decision.Text is { } question ? Redactor.Default.Scrub(question).Text : null;
             var detail = decision.Detail is { } d ? Redactor.Default.Scrub(d).Text : null;
             await recorder.OwnerWaiting(watch, new OwnerWaitingRow(reason, text, resultFile, detail, turn), cancellationToken).ConfigureAwait(false);
+            waited = true;
         }
 
         return decision.Kind switch
         {
-            SkillResultKind.Complete when file is not null => (await Finished(watch, decision, file, cancellationToken).ConfigureAwait(false), null),
-            SkillResultKind.StepFailed => (null, Failure(decision)),
-            SkillResultKind.Complete or SkillResultKind.OwnerWaiting or SkillResultKind.StillWaiting or SkillResultKind.Working => null,
+            SkillResultKind.Complete when file is not null => (await Finished(watch, decision, file, cancellationToken).ConfigureAwait(false), null, false),
+            SkillResultKind.StepFailed => (null, Failure(decision), false),
+            SkillResultKind.Complete or SkillResultKind.OwnerWaiting or SkillResultKind.StillWaiting or SkillResultKind.Working => (null, null, waited),
             _ => throw new ArgumentOutOfRangeException(nameof(watch), decision.Kind, "not a result kind"),
         };
     }

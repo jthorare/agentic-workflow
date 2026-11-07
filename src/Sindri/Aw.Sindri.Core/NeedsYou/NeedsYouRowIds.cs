@@ -20,4 +20,9 @@ public static class NeedsYouRowIds
     /// <param name="address">The instance's address.</param>
     /// <returns>The row id.</returns>
     public static NeedsYouRowId Takeover(InstanceAddress address) => NeedsYouRowId.From("takeover:" + WorkflowInstanceId.Of(address).Value);
+
+    /// <summary>The 'skill:' row of the instance at <paramref name="address"/>: a skill block's session waiting on the owner.</summary>
+    /// <param name="address">The instance's address.</param>
+    /// <returns>The row id.</returns>
+    public static NeedsYouRowId SkillWaiting(InstanceAddress address) => NeedsYouRowId.From("skill:" + WorkflowInstanceId.Of(address).Value);
 }
