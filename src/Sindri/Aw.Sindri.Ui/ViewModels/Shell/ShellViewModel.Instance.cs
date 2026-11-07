@@ -91,9 +91,9 @@ internal sealed partial class ShellViewModel
     /// <summary>Back: returns to the frame or sheet this one was opened from (a child, an item), else closes the sheet like Esc does.</summary>
     internal void Back()
     {
-        if (AskBeforeClosingIssue())
+        if (IsIssueSheet && IsSheetOpen && IssueSheet.Leaving(next: null, then: Back))
         {
-            return;   // unsaved edits on a Linear issue: the question comes first
+            return;   // unsaved edits on a Linear issue: the question comes first, and Discard goes back along the trail
         }
 
         if (IsSheetOpen && _trail.TryPop(out var previous))

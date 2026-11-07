@@ -19,6 +19,7 @@ internal sealed partial class LinearIssueSheetViewModel
     private LinearIssueOne? _issue;
     private LinearLookups? _lookups;
     private string? _leaveTo;
+    private Action? _then;
     private LinearChangeBody? _sent;
     private int _epoch;
     private bool _lookupsFailed;

@@ -20,15 +20,16 @@ internal sealed partial class LinearIssueSheetViewModel
 
     /// <summary>The sheet is about to close or show another issue: asks when edits are unsaved.</summary>
     /// <param name="next">The issue to open afterwards; null to close the sheet.</param>
+    /// <param name="then">What to do once Discard is pressed (the shell's own way on, such as following a link or Back); when set, <see cref="LeaveConfirmed"/> is not raised.</param>
     /// <returns>True when the question is showing and the sheet must wait for the answer.</returns>
-    internal bool Leaving(string? next)
+    internal bool Leaving(string? next, Action? then = null)
     {
         if (!HasChanges)
         {
             return false;
         }
 
-        _leaveTo = next;
+        (_leaveTo, _then) = (next, then);
         IsConfirmingDiscard = true;
         OnChanged(nameof(DiscardBody));
         FocusRequested?.Invoke(this, new ValueEventArgs<LinearIssueFocus>(LinearIssueFocus.KeepEditing));
@@ -43,7 +44,7 @@ internal sealed partial class LinearIssueSheetViewModel
             return;
         }
 
-        IsConfirmingDiscard = false;
+        (IsConfirmingDiscard, _then) = (false, null);
         FocusRequested?.Invoke(this, new ValueEventArgs<LinearIssueFocus>(LinearIssueFocus.Title));
     }
 
@@ -61,8 +62,15 @@ internal sealed partial class LinearIssueSheetViewModel
         }
 
         (ConflictRows, HasConflict, IsConfirmingDiscard) = ([], false, false);
-        var next = _leaveTo;
-        _leaveTo = null;
-        LeaveConfirmed?.Invoke(this, new ValueEventArgs<string?>(next));
+        var (next, then) = (_leaveTo, _then);
+        (_leaveTo, _then) = (null, null);
+        if (then is not null)
+        {
+            then();
+        }
+        else
+        {
+            LeaveConfirmed?.Invoke(this, new ValueEventArgs<string?>(next));
+        }
     }
 }
