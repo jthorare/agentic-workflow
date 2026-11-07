@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Core.Sandbox.Credentials;
@@ -6,9 +7,23 @@ namespace Aw.Sindri.Core.Sandbox.Credentials;
 public static class GithubCredentialResolver
 {
     /// <summary>
-    /// The profile's 'credentials.github', except none for an attended session and for a skill Step that cannot push (<paramref name="skillPushes"/> false: the block does not push, or the run is a trial).
+    /// The profile's 'credentials.github', loosened to the Step's ask only when <paramref name="pushApproved"/>, except none for an attended session and for a skill Step that cannot push (<paramref name="skillPushes"/> false: the block does not push, or the run is a trial).
     /// <paramref name="skillPushes"/> is null for a Step that is not a skill block (a recipe phase), which keeps the profile's choice.
     /// </summary>
-    public static GithubCredentials For(bool attended, SandboxSettings? settings, bool? skillPushes) =>
-        attended || skillPushes == false ? GithubCredentials.None : settings?.Credentials?.Github ?? SandboxDefaults.Github;
+    /// <param name="attended">True for an attended session, which never gets the token.</param>
+    /// <param name="settings">The profile's sandbox section.</param>
+    /// <param name="skillPushes">Null for a Step that is not a skill block; else whether the block pushes and the run is not a trial.</param>
+    /// <param name="policy">The Step's policy, whose <see cref="StepPolicy.Github"/> is the ask; null for none.</param>
+    /// <param name="pushApproved">True when the owner's approval for this repo covers the ask. Without it the ask grants nothing.</param>
+    /// <returns>The mode.</returns>
+    public static GithubCredentials For(bool attended, SandboxSettings? settings, bool? skillPushes, StepPolicy? policy = null, bool pushApproved = false)
+    {
+        if (attended || skillPushes == false)
+        {
+            return GithubCredentials.None;
+        }
+
+        // why: the ask is the one loosening a Step can make, and it counts only with the owner's approval for the repo
+        return pushApproved && policy?.Github is { } ask ? ask : settings?.Credentials?.Github ?? SandboxDefaults.Github;
+    }
 }
