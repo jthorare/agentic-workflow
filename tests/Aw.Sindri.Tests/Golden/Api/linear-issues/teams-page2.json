@@ -1,0 +1,87 @@
+{
+  "connected": true,
+  "viewer": {
+    "id": "00000000-0000-4000-8000-0000000000a1",
+    "name": "Joi Example"
+  },
+  "feed": {
+    "state": "ok",
+    "lastSyncedAt": "2025-12-31T23:58:00.0000000Z",
+    "code": null,
+    "reread": null
+  },
+  "group": "teams",
+  "rows": [
+    {
+      "key": "ENG-57",
+      "record": "linear:issue/00000000-0000-4000-8000-000000000139",
+      "url": "https://linear.app/acme/issue/ENG-57",
+      "title": "Queue sizing: measure the p95 wait",
+      "team": {
+        "id": "00000000-0000-4000-8000-0000000000e1",
+        "key": "ENG"
+      },
+      "state": {
+        "id": "00000000-0000-4000-8000-000000000053",
+        "name": "In Review",
+        "type": "started"
+      },
+      "priority": 2,
+      "assignee": {
+        "id": "00000000-0000-4000-8000-0000000000a2",
+        "name": "Sam Lee"
+      },
+      "project": {
+        "id": "00000000-0000-4000-8000-0000000000b1",
+        "name": "Sync worker"
+      },
+      "cycle": {
+        "id": "00000000-0000-4000-8000-0000000000c1",
+        "number": 14,
+        "name": "Cycle 14"
+      },
+      "labels": [],
+      "updatedAt": "2025-12-31T23:55:00.0000000Z",
+      "link": {
+        "item": "ITM-0192a1b2c3d4e5f6a7b8c9d0e1f2a302",
+        "itemState": "done"
+      },
+      "pr": {
+        "number": 2080,
+        "url": "https://github.com/acme/api/pull/2080",
+        "review": "approved"
+      }
+    },
+    {
+      "key": "ENG-44",
+      "record": "linear:issue/00000000-0000-4000-8000-00000000012c",
+      "url": "https://linear.app/acme/issue/ENG-44",
+      "title": "Flaky login test on CI",
+      "team": {
+        "id": "00000000-0000-4000-8000-0000000000e1",
+        "key": "ENG"
+      },
+      "state": {
+        "id": "00000000-0000-4000-8000-000000000051",
+        "name": "Todo",
+        "type": "unstarted"
+      },
+      "priority": 0,
+      "assignee": null,
+      "project": null,
+      "cycle": null,
+      "labels": [
+        {
+          "id": "00000000-0000-4000-8000-0000000000d1",
+          "name": "bug",
+          "color": "#eb5757"
+        }
+      ],
+      "updatedAt": "2025-12-31T18:00:00.0000000Z",
+      "link": null,
+      "pr": null
+    }
+  ],
+  "next": null,
+  "total": 52
+}

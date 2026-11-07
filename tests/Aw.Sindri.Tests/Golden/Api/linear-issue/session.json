@@ -1,0 +1,85 @@
+{
+  "key": "ENG-12",
+  "record": "linear:issue/00000000-0000-4000-8000-00000000010c",
+  "url": "https://linear.app/acme/issue/ENG-12",
+  "title": "<untrusted source=\"sindri:linear\">Retry budget for the sync worker</untrusted>",
+  "team": {
+    "id": "00000000-0000-4000-8000-0000000000e1",
+    "key": "ENG"
+  },
+  "state": {
+    "id": "00000000-0000-4000-8000-000000000052",
+    "name": "<untrusted source=\"sindri:linear\">In Progress</untrusted>",
+    "type": "started"
+  },
+  "priority": 1,
+  "assignee": {
+    "id": "00000000-0000-4000-8000-0000000000a1",
+    "name": "<untrusted source=\"sindri:linear\">Joi Example</untrusted>"
+  },
+  "project": {
+    "id": "00000000-0000-4000-8000-0000000000b1",
+    "name": "<untrusted source=\"sindri:linear\">Sync worker</untrusted>"
+  },
+  "cycle": {
+    "id": "00000000-0000-4000-8000-0000000000c1",
+    "number": 14,
+    "name": "<untrusted source=\"sindri:linear\">Cycle 14</untrusted>"
+  },
+  "labels": [
+    {
+      "id": "00000000-0000-4000-8000-0000000000d1",
+      "name": "<untrusted source=\"sindri:linear\">bug</untrusted>",
+      "color": "#eb5757"
+    },
+    {
+      "id": "00000000-0000-4000-8000-0000000000d2",
+      "name": "<untrusted source=\"sindri:linear\">api</untrusted>",
+      "color": "#5e6ad2"
+    }
+  ],
+  "updatedAt": "2025-12-31T23:40:00.0000000Z",
+  "link": {
+    "item": "ITM-0192a1b2c3d4e5f6a7b8c9d0e1f2a301",
+    "itemState": "running"
+  },
+  "pr": {
+    "number": 2071,
+    "url": "https://github.com/acme/api/pull/2071",
+    "review": "waiting"
+  },
+  "viewer": {
+    "id": "00000000-0000-4000-8000-0000000000a1",
+    "name": "<untrusted source=\"sindri:linear\">Joi Example</untrusted>",
+    "trust": "untrusted"
+  },
+  "description": "<untrusted source=\"sindri:linear\">The sync worker retries forever on a 500. Cap it at 5 tries per hour.\n\nSee https://example.com/runbooks/sync and the graph ![p95](https://example.com/p95.png).\nOld link: sindri://items/ITM-0192a1b2c3d4e5f6a7b8c9d0e1f2a301</untrusted>",
+  "comments": [
+    {
+      "id": "00000000-0000-4000-8000-0000000000f2",
+      "author": {
+        "id": "00000000-0000-4000-8000-0000000000a2",
+        "name": "<untrusted source=\"sindri:linear\">Sam Lee</untrusted>",
+        "trust": "untrusted"
+      },
+      "createdAt": "2025-12-31T23:30:00.0000000Z",
+      "body": "<untrusted source=\"sindri:linear\">@Joi Example the budget should reset at midnight UTC, not on restart.</untrusted>",
+      "sindri": false,
+      "trust": "untrusted"
+    },
+    {
+      "id": "00000000-0000-4000-8000-0000000000f1",
+      "author": {
+        "id": "00000000-0000-4000-8000-0000000000a1",
+        "name": "<untrusted source=\"sindri:linear\">Joi Example</untrusted>",
+        "trust": "untrusted"
+      },
+      "createdAt": "2025-12-31T21:00:00.0000000Z",
+      "body": "<untrusted source=\"sindri:linear\">Started a run on this (ITM-0192a1b2c3d4e5f6a7b8c9d0e1f2a301).</untrusted>",
+      "sindri": true,
+      "trust": "untrusted"
+    }
+  ],
+  "removed": false,
+  "trust": "untrusted"
+}

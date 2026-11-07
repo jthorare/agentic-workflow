@@ -1,5 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Layout;
@@ -61,6 +63,48 @@ internal sealed partial class QueuePage : UserControl
 
     private void OnClearFilter(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.Queue.ClearFilter();
 
+    private void OnSindriTab(object? sender, RoutedEventArgs e) => PickTab(linear: false, sender);
+
+    private void OnLinearTab(object? sender, RoutedEventArgs e) => PickTab(linear: true, sender);
+
+    // A toggle flips itself on a click; the tab shown is the view model's, so a click on the tab already on leaves it on.
+    private void PickTab(bool linear, object? sender)
+    {
+        if (DataContext is not ShellViewModel shell)
+        {
+            return;
+        }
+
+        shell.Linear.Choose(linear);
+        if (sender is ToggleButton button)
+        {
+            button.IsChecked = linear ? shell.Linear.IsLinear : shell.Linear.IsSindri;
+        }
+    }
+
+    // Left and Right move between the two tabs, Home and End to the first and the last; focus follows the pick.
+    private void OnSwitchKey(object? sender, KeyEventArgs e)
+    {
+        var name = TabKeyName(e.Key);
+        if (name is null || e.KeyModifiers != KeyModifiers.None || DataContext is not ShellViewModel shell || !shell.Linear.MoveTab(name))
+        {
+            return;
+        }
+
+        e.Handled = true;
+        _ = this.FindControl<ToggleButton>(shell.Linear.IsLinear ? "WorkTabLinear" : "WorkTabSindri")?.Focus(NavigationMethod.Directional);
+    }
+
+    private static string? TabKeyName(Key key)
+    {
+        if (key is Key.Left or Key.Right or Key.Home or Key.End)
+        {
+            return key.ToString();
+        }
+
+        return null;
+    }
+
     private void OnCreate(object? sender, RoutedEventArgs e)
     {
         OpenerNote.Raise(this, sender);
@@ -69,8 +113,8 @@ internal sealed partial class QueuePage : UserControl
 
     private void OnShowHeld(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.Queue.ShowHeld(ViewModels.Queue.QueueScope.Page);
 
-    private void OnPanelEntered(object? sender, Avalonia.Input.PointerEventArgs e) => (DataContext as ShellViewModel)?.Queue.Hold(holding: true);
+    private void OnPanelEntered(object? sender, PointerEventArgs e) => (DataContext as ShellViewModel)?.Queue.Hold(holding: true);
 
-    private void OnPanelExited(object? sender, Avalonia.Input.PointerEventArgs e) => (DataContext as ShellViewModel)?.Queue.Hold(holding: false);
+    private void OnPanelExited(object? sender, PointerEventArgs e) => (DataContext as ShellViewModel)?.Queue.Hold(holding: false);
 }
 #pragma warning restore MA0182
