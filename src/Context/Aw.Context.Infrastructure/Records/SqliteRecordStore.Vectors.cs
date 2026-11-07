@@ -12,7 +12,7 @@ internal sealed partial class SqliteRecordStore
     public async ValueTask<Result<int>> PutVectors(IReadOnlyList<VectorWrite> vectors, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(vectors);
-        return await Guarded(() => StoreVectors(vectors, cancellationToken), "store vectors").ConfigureAwait(false);
+        return await Guarded(() => StoreVectors(vectors, cancellationToken), "store vectors", cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<int>> StoreVectors(IReadOnlyList<VectorWrite> vectors, CancellationToken cancellationToken)
@@ -85,7 +85,7 @@ internal sealed partial class SqliteRecordStore
     public async ValueTask<Result<int>> DeleteVectors(VectorSpace space, IReadOnlyList<string> keys, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(keys);
-        return await Guarded(() => RemoveVectors(space, keys, cancellationToken), "delete vectors").ConfigureAwait(false);
+        return await Guarded(() => RemoveVectors(space, keys, cancellationToken), "delete vectors", cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<int>> RemoveVectors(VectorSpace space, IReadOnlyList<string> keys, CancellationToken cancellationToken)
