@@ -26,10 +26,10 @@ public sealed class SystemEgressNetworkTests
     [Fact, Trait("Lane", "integration")]
     public async Task Dial_to_a_closed_port_throws_a_socket_exception()
     {
-        var free = new TcpListener(IPAddress.Loopback, 0);
-        free.Start();
-        var port = ((IPEndPoint)free.LocalEndpoint).Port;
-        free.Stop();
+        // Bound without Listen() for the whole test: a connect is refused, and no parallel test can take the port (#2254).
+        using var closed = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        closed.Bind(new IPEndPoint(IPAddress.Loopback, 0));
+        var port = ((IPEndPoint)closed.LocalEndPoint!).Port;
 
         _ = await Assert.ThrowsAsync<SocketException>(async () => await new SystemEgressNetwork().Dial(IPAddress.Loopback, port, TestContext.Current.CancellationToken));
     }

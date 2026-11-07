@@ -130,6 +130,7 @@ static Aw.Kernel.Data.SqliteQueries.Execute(Aw.Kernel.Data.ISqliteSession! sessi
 static Aw.Kernel.Data.SqliteQueries.Exists(Aw.Kernel.Data.ISqliteSession! session, Aw.Kernel.Data.SqlStatement! statement, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
 static Aw.Kernel.Data.SqliteQueries.List<T>(Aw.Kernel.Data.ISqliteSession! session, Aw.Kernel.Data.SqlStatement! statement, Aw.Kernel.Data.IRowMapper<T>! mapper, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<T>!>!>
 static Aw.Kernel.Data.SqliteQueries.One<T>(Aw.Kernel.Data.ISqliteSession! session, Aw.Kernel.Data.SqlStatement! statement, Aw.Kernel.Data.IRowMapper<T>! mapper, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<T>!>
+static Aw.Kernel.Data.SqliteRead.GetBlob(Microsoft.Data.Sqlite.SqliteDataReader! reader, int ordinal) -> byte[]!
 static Aw.Kernel.Data.SqliteRead.GetGuid(Microsoft.Data.Sqlite.SqliteDataReader! reader, int ordinal) -> System.Guid
 static Aw.Kernel.Data.SqliteRead.GetTimestamp(Microsoft.Data.Sqlite.SqliteDataReader! reader, int ordinal) -> System.DateTimeOffset
 static readonly Aw.Kernel.Data.DataErrors.Busy -> Aw.Kernel.ErrorDefinition!
