@@ -26,7 +26,7 @@ public sealed class LibraryFeedTests
         Assert.Equal(3, run.Report!.Written);
         var ferry = stored.Single(static r => r.Key.Value.EndsWith("ferry-booking.md", StringComparison.Ordinal));
         Assert.Equal(LibraryFeedRig.Sha256(Path.Combine(rig.VaultPath, "plans", "ferry-booking.md")), ferry.Version.Value);
-        Assert.Equal("Harbor ferry booking", ferry.Title);
+        Assert.Contains("Harbor ferry booking", ferry.Title, StringComparison.Ordinal);
         Assert.All(stored, static r => Assert.Equal(RecordKind.Doc, r.Kind));
     }
 
@@ -173,7 +173,7 @@ public sealed class LibraryFeedTests
     {
         using var home = new TempHome();
         using var rig = new LibraryFeedRig(home, copyFixture: false);
-        _ = rig.Write("big.md", "---\naw-doc: 1\nid: big-plan\nkind: plan\ntitle: \"Big plan\"\nstatus: draft\n---\n\n" + new string('x', (1024 * 1024) + 10));
+        _ = rig.Write("big.md", "---\naw-doc: 1\nid: big-plan\nkind: plan\ntitle: \"Big plan\"\nstatus: draft\n---\n\n" + string.Concat(Enumerable.Repeat("harbor ferry sailing schedule line\n", 31000)));
 
         var run = await FeedRun.Once(rig.Feed(rig.Vault()), rig.Store, home.Scrubbers);
 

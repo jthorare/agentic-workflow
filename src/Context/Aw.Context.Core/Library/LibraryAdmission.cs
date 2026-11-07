@@ -10,5 +10,12 @@ public static class LibraryAdmission
     /// <param name="path">The file's path, for messages.</param>
     /// <param name="head">The first <see cref="HeadBytes"/> bytes of the file, as text.</param>
     /// <returns>Skip, near miss or read.</returns>
-    public static LibraryAdmissionKind Classify(string path, string head) => throw new NotSupportedException();
+    public static LibraryAdmissionKind Classify(string path, string head)
+    {
+        ArgumentNullException.ThrowIfNull(path);
+        ArgumentNullException.ThrowIfNull(head);
+        var lines = head.TrimStart('\uFEFF').Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n').Split('\n');
+        var outcome = FrontMatterBlock.Find(path, lines);
+        return outcome.Read ? LibraryAdmissionKind.Read : outcome.Errors.Count > 0 ? LibraryAdmissionKind.NearMiss : LibraryAdmissionKind.Skip;
+    }
 }
