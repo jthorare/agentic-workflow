@@ -111,6 +111,7 @@ public sealed class GoldenContractTests
         ["context-map-refresh"] = As<JobStarted>,   // POST /context/map/refresh's 202 (the setup map row's Retry); the 409 is ProblemDetails
         ["setup-repos"] = As<JobStarted>,   // POST /setup/repos' 200 (api #528, AddRepo); the 400/409/403 bodies are ProblemDetails
         ["setup-mcp"] = As<JobStarted>,   // POST /setup/mcp's 202 (RegisterMcp, spec-shaped)
+        ["skills"] = As<SkillsView>,   // GET /skills: the skill blocks the Instance sheet's skill card reads (skill flows spec §8.1)
         ["launch-picks"] = As<LaunchPicksView>,   // GET /launch/picks: the model picks of the runs (model-pick spec §6.1)
         ["launches-id"] = As<LaunchView>,   // GET /launches/{id}: the launch an Open started (Attach, the run line)
         // The approve-all plan and result are the engine's real goldens (workflow-recipes-approve-all); the start, job and refusal bodies below stay SPEC-SHAPED (the engine has none).
@@ -143,7 +144,6 @@ public sealed class GoldenContractTests
         "workflow-instance-scoping",   // API2 (SC-K2): the scoping stop view; the app reads it in SC-U (U2)
         "workflow-instance-line",   // LN-API1 (LN-L): the line board of a workflow.line instance; the app reads it in LN-U (LN-UI1)
         "workflow-instance-design-stop",   // LN-API2 (LN-K): stop 2's view of a workflow.plan instance; the app reads it in LN-U (LN-UI2)
-        "skills",   // GET /sindri/skills: the Skills list of F-3; ui reads it there (skill flows spec §8.1), so no golden is read yet
         "items-id-scope",   // an item's scope: the Context page reads it once it lands (UI lane, with the lenses routes)
         "sandbox-status", "sandbox-check", "sandbox-denials", "sandbox-allow",   // SB-6a serves them; the app reads them in SB-6b (Health, Settings, the park card and the item sheet)
         "code-index-symbols", "code-index-callers", "code-index-callees",   // the code-index reads (CI-10a) are the CLI's; status is read below for the Health card (CI-10b)
