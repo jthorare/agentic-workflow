@@ -36,7 +36,7 @@ internal sealed class StepTakeovers(ILaunchViews views, IInstanceReader instance
     /// <returns>True for a skill launch.</returns>
     public async ValueTask<bool> SkillBlock(LaunchId launch, CancellationToken cancellationToken)
     {
-        _ = await views.Get(launch, cancellationToken).ConfigureAwait(false);   // F-2a: the row's skill is not read yet
-        return false;
+        var row = await views.Get(launch, cancellationToken).ConfigureAwait(false);
+        return row is { IsSuccess: true, Value.Skill: not null };
     }
 }

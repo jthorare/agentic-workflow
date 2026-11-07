@@ -108,6 +108,20 @@ internal sealed class AgentLaunchRecorder(ILedgerStore ledger, HeldLease lease, 
         _ = await Append(events.Entry(EventTypes.LaunchOwnerWaiting, payload, key, watch.Item.Value), cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Records that a skill block's session started a new turn after it had asked for the owner (skill flows spec §7): one 'launch.turn-started' per prompt, keyed by the prompt's time so a retried watch records nothing twice.</summary>
+    /// <param name="watch">The skill launch.</param>
+    /// <param name="promptedAt">When the prompt started the turn.</param>
+    /// <param name="cancellationToken">Cancels the append.</param>
+    /// <returns>Done; throws when the ledger refuses, so the activity retries.</returns>
+    public async Task TurnStarted(SkillWatch watch, DateTimeOffset promptedAt, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(watch);
+        var launch = LaunchId.From(watch.Launch);
+        var payload = new LaunchTurnStarted(launch, watch.Item, watch.Instance is { } instance ? InstanceAddress.From(instance) : null, watch.State, watch.Attempt);
+        var key = string.Create(CultureInfo.InvariantCulture, $"launch.turn-started:{launch.Value}:{promptedAt.ToUnixTimeMilliseconds()}");
+        _ = await Append(events.Entry(EventTypes.LaunchTurnStarted, payload, key, watch.Item.Value), cancellationToken).ConfigureAwait(false);
+    }
+
     private async Task<LedgerAppend> Append(LedgerEntry entry, CancellationToken cancellationToken)
     {
         var grant = lease.Current ?? throw new InvalidOperationException("SND-LEASE-002: this process holds no lease; the launch outcome waits for one");

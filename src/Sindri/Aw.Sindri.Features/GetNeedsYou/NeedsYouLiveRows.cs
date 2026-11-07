@@ -48,12 +48,22 @@ internal sealed class NeedsYouLiveRows(SetupNotices setup, ITextScrubber scrubbe
     // The 'skill:' rows of the skill block runs waiting on the owner (skill flows spec §5.4): one per open skill launch, read like the stalled runs, never folded.
     private async ValueTask<IReadOnlyList<NeedsYouRow>> SkillWaitingRows(CancellationToken cancellationToken)
     {
-        if (skillWaiting is not null)
+        if (skillWaiting is null || views is null)
         {
-            _ = await skillWaiting.Find(cancellationToken).ConfigureAwait(false);   // F-2a: the rows are not built yet
+            return [];
         }
 
-        return [];
+        var rows = new List<NeedsYouRow>();
+        foreach (var run in await skillWaiting.Find(cancellationToken).ConfigureAwait(false))
+        {
+            var item = await views.Get<ItemRow>(ViewNames.Items, run.Item.Value, cancellationToken).ConfigureAwait(false);
+            if (item is { IsSuccess: true, Value: { } found })
+            {
+                rows.Add(NeedsYouRows.ForSkillWaiting(found, run, scrubber));
+            }
+        }
+
+        return rows;
     }
 
     // The 'desk:' rows of the instances at a human-verb wait (a folded row of the same id wins, in the service).

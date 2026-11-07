@@ -29,6 +29,8 @@ internal sealed class LaunchesProjection(EventFactory events) : IProjection
         || string.Equals(eventType, EventTypes.LaunchViewerAttached, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.LaunchTakeoverOpened, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.LaunchSessionReported, StringComparison.Ordinal)
+        || string.Equals(eventType, EventTypes.LaunchOwnerWaiting, StringComparison.Ordinal)
+        || string.Equals(eventType, EventTypes.LaunchTurnStarted, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.SessionEnded, StringComparison.Ordinal);
 
     public async ValueTask<Result<Unit>> Apply(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
@@ -43,6 +45,8 @@ internal sealed class LaunchesProjection(EventFactory events) : IProjection
             EventTypes.LaunchViewerAttached => await Change<LaunchViewerAttached>(recorded, rows, static a => a.Launch, Fold, cancellationToken).ConfigureAwait(false),
             EventTypes.LaunchTakeoverOpened => await Change<LaunchTakeoverOpened>(recorded, rows, static o => o.Launch, Fold, cancellationToken).ConfigureAwait(false),
             EventTypes.LaunchSessionReported => await Change<LaunchSessionReported>(recorded, rows, static r => r.Launch, Fold, cancellationToken).ConfigureAwait(false),
+            EventTypes.LaunchOwnerWaiting => await Change<LaunchOwnerWaiting>(recorded, rows, static w => w.Launch, Fold, cancellationToken).ConfigureAwait(false),
+            EventTypes.LaunchTurnStarted => await Change<LaunchTurnStarted>(recorded, rows, static t => t.Launch, Fold, cancellationToken).ConfigureAwait(false),
             _ => await Change<SessionEnded>(recorded, rows, static e => e.Launch, Fold, cancellationToken).ConfigureAwait(false),
         };
     }
@@ -168,6 +172,7 @@ internal sealed class LaunchesProjection(EventFactory events) : IProjection
                 Step = new LaunchStep(started.Instance, started.State, started.Attempt),
                 Model = started.Model,
                 Sandbox = started.Sandbox,
+                Skill = started.Skill?.Name,
                 Sequence = recorded.Sequence,
             };
     }
@@ -211,6 +216,32 @@ internal sealed class LaunchesProjection(EventFactory events) : IProjection
         return row.Viewer is { Outcome: ViewerOutcomeKind.Unconfirmed } viewer
             ? row with { Viewer = viewer with { Outcome = ViewerOutcomeKind.Opened }, Late = true, Sequence = recorded.Sequence }
             : row;
+    }
+
+    /// <summary>The row after a 'launch.owner-waiting': the skill launch waits on the owner, from when the event was recorded.</summary>
+    /// <param name="row">The row so far.</param>
+    /// <param name="waiting">The payload.</param>
+    /// <param name="recorded">The recorded event.</param>
+    /// <returns>The row.</returns>
+    public static LaunchRow Fold(LaunchRow row, LaunchOwnerWaiting waiting, LedgerEvent recorded)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        ArgumentNullException.ThrowIfNull(waiting);
+        ArgumentNullException.ThrowIfNull(recorded);
+        return row with { OwnerWaiting = waiting, OwnerWaitingAt = recorded.Envelope.OccurredAt, Sequence = recorded.Sequence };
+    }
+
+    /// <summary>The row after a 'launch.turn-started': a new prompt answers the wait, so the owner is no longer needed.</summary>
+    /// <param name="row">The row so far.</param>
+    /// <param name="started">The payload.</param>
+    /// <param name="recorded">The recorded event.</param>
+    /// <returns>The row.</returns>
+    public static LaunchRow Fold(LaunchRow row, LaunchTurnStarted started, LedgerEvent recorded)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        ArgumentNullException.ThrowIfNull(started);
+        ArgumentNullException.ThrowIfNull(recorded);
+        return row with { OwnerWaiting = null, OwnerWaitingAt = null, Sequence = recorded.Sequence };
     }
 
     /// <summary>The row after a 'launch.takeover-opened': the takeover's viewer outcome is the launch's latest, its attach command is kept, and a late attach no longer applies to it.</summary>

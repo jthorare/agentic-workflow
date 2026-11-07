@@ -76,6 +76,7 @@ public sealed class LaunchesProjectionTests
 
         var row = (await Row())!;
 
+        Assert.NotNull(row.OwnerWaiting);
         Expect.Equal(("question", "Which branch is the base?"), (row.OwnerWaiting!.Reason, row.OwnerWaiting.Text));
         Expect.Equal(_v.Slice.Clock.GetUtcNow(), row.OwnerWaitingAt);
     }
@@ -103,7 +104,10 @@ public sealed class LaunchesProjectionTests
         await _v.TurnStarted();
         await _v.OwnerWaiting(text: "second?");
 
-        Expect.Equal("second?", (await Row())!.OwnerWaiting!.Text);
+        var waiting = (await Row())!.OwnerWaiting;
+
+        Assert.NotNull(waiting);
+        Expect.Equal("second?", waiting.Text);
     }
 
     [Fact]

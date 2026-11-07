@@ -21,6 +21,7 @@ public static partial class NeedsYouRows
     private static readonly ActionId _completeStep = ActionId.From("CompleteStep");
     private static readonly ActionId _command = ActionId.From("ApplyCommand:command");
     private static readonly ActionId _handback = ActionId.From("ApplyCommand:handback");
+    private static readonly ActionId _takeover = ActionId.From("ApplyCommand:takeover");
     private static readonly ActionId _cancel = ActionId.From("ApplyCommand:cancel");
     private static readonly ActionId _approveRecipe = ActionId.From("ApproveRecipe");
 
@@ -128,8 +129,28 @@ public static partial class NeedsYouRows
     /// <param name="run">The waiting run.</param>
     /// <param name="scrubber">Scrubs the text the row stores.</param>
     /// <returns>The row.</returns>
-    public static NeedsYouRow ForSkillWaiting(ItemRow item, SkillWaitingRun run, ITextScrubber scrubber) =>
-        throw new NotSupportedException("F-2a: the skillWaiting row is not built yet");
+    public static NeedsYouRow ForSkillWaiting(ItemRow item, SkillWaitingRun run, ITextScrubber scrubber)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        ArgumentNullException.ThrowIfNull(scrubber);
+        var waiting = run.Waiting;
+        var sentence = waiting.Reason switch
+        {
+            "question" => $"{run.StateName} is waiting on you: {waiting.Text}",
+            "noResult" => $"{run.StateName} stopped without giving an answer. Open the session to see why.",
+            "unreadable" => $"{run.StateName} finished, but its answer file is broken. Open the session and ask it to write the answer again.",
+            "skillUpdated" => $"The {run.Skill} skill changed since this run started. Approve again to continue.",
+            _ => $"{run.StateName} is waiting on you.",
+        };
+        var shape = new EngineRow(NeedsYouRowIds.SkillWaiting(run.Instance), "skill · waiting on you", sentence, Urgency.Pulse, AnswerKind: null, _takeover, [_takeover], $"sindri takeover {run.Instance.Value}",
+            new NeedsYouOpen(NeedsYouRoutes.Workflow(run.Instance), "Open the run"));
+        return Row(item, run.Instance, shape, run.Since, scrubber) with
+        {
+            Kind = NeedsYouKind.SkillWaiting,
+            OwnerWaiting = new NeedsYouOwnerWaiting(waiting.Launch, waiting.Reason, waiting.Text is { } text ? scrubber.Scrub(text) : null, waiting.ResultPath,
+                waiting.Detail is { } detail ? scrubber.Scrub(detail) : null, waiting.Instance, waiting.State, waiting.Attempt),
+        };
+    }
 
     // The complete command, with the run and the outcome left for the person (the row does not carry the open run's token; 'workflow status' prints the filled line).
     private static string Complete(InstanceAddress address) => $"sindri workflow complete {address.Value} --run <run> --outcome <outcome>";
