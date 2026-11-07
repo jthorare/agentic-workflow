@@ -11,7 +11,6 @@ using Aw.Sindri.Features.CreateItem;
 using Aw.Sindri.Features.GetInstanceEvents;
 using Aw.Sindri.Features.GetInstanceFact;
 using Aw.Sindri.Features.GetItem;
-using Aw.Sindri.Features.ReadLedger;
 using Aw.Sindri.Features.StartSkillRun;
 using Aw.Sindri.Host.Endpoints;
 
@@ -46,7 +45,7 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
             return await output.Error(started.Error).ConfigureAwait(false);
         }
 
-        var (answer, body) = (started.Value.Value, started.Value.Body);
+        var (answer, body, after) = (started.Value.Answer.Value, started.Value.Answer.Body, started.Value.After);
         var awDir = SkillAwDir.Of(environment, currentDirectory);
         if (!run.Follow)
         {
@@ -60,7 +59,7 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
             await output.Notice($"Writes to your real plans under {awDir}").ConfigureAwait(false);
         }
 
-        var report = await Follow(answer, ct).ConfigureAwait(false);
+        var report = await Follow(answer, after, ct).ConfigureAwait(false);
         if (report.IsError)
         {
             return await output.Error(report.Error).ConfigureAwait(false);
@@ -70,8 +69,8 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
         return run.Json ? await output.Json(report.Value, code).ConfigureAwait(false) : await output.Text(SkillRunText.Render(report.Value), code).ConfigureAwait(false);
     }
 
-    /// <summary>Makes the item the trial runs on, then starts the block on it.</summary>
-    private async Task<Result<ApiAnswer<StartSkillRunResponse>>> Start(SkillRunArguments run, CancellationToken ct)
+    /// <summary>Makes the item the trial runs on, then starts the block on it; with the ledger sequence to read after, just before the item's first row.</summary>
+    private async Task<Result<(ApiAnswer<StartSkillRunResponse> Answer, long After)>> Start(SkillRunArguments run, CancellationToken ct)
     {
         RepoName? repo = null;
         if (run.Repo is { } text)
@@ -97,7 +96,7 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
             await CancelItem(id, ct).ConfigureAwait(false);   // the refusal is the answer; the item it was made for must not stay open
         }
 
-        return started;
+        return started.IsError ? started.Error : (started.Value, item.Value.Value.Accepted.Sequence - 1);
     }
 
     /// <summary>Closes the trial's item as cancelled, best effort: a failure here must not replace the refusal the caller is about to report.</summary>
@@ -112,9 +111,9 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
     }
 
     /// <summary>Polls the instance until it sits in a terminal state, then reads its outcome, the facts the block wrote and, for a failed Step, why.</summary>
-    private async Task<Result<SkillRunReport>> Follow(StartSkillRunResponse answer, CancellationToken ct)
+    private async Task<Result<SkillRunReport>> Follow(StartSkillRunResponse answer, long after, CancellationToken ct)
     {
-        var route = $"{InstanceReads.Instances}/{InstanceRoute.Segment(answer.Instance.Id.Value)}";
+        var route = RouteOf(answer);
         string? shown = null;
         while (true)
         {
@@ -127,12 +126,12 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
             var detail = got.Value.Value;
             if (string.Equals(detail.State, EngineStates.Cancelled, StringComparison.Ordinal))
             {
-                return new SkillRunReport(answer.Skill, answer.ManifestHash, Outcome: null, Succeeded: false, [], await ResultFileOf(answer.Instance.Address.Value.Split('/')[0], 0, ct).ConfigureAwait(false), ErrorLine: null, Cancelled: true);   // why: a cancel moves the instance to the engine's 'cancelled' state, which no recipe state names, so the terminal check below never sees it
+                return new SkillRunReport(answer.Skill, answer.ManifestHash, Outcome: null, Succeeded: false, [], await ResultFileOf(answer.Instance.Address.Value.Split('/')[0], after, ct).ConfigureAwait(false), ErrorLine: null, Cancelled: true);   // why: a cancel moves the instance to the engine's 'cancelled' state, which no recipe state names, so the terminal check below never sees it
             }
 
             if (detail.States.FirstOrDefault(s => string.Equals(s.State, detail.State, StringComparison.Ordinal) && s.Terminal) is { } ended)
             {
-                return await Report(answer, detail, ended, route, ct).ConfigureAwait(false);
+                return await Report(answer, after, detail, ended, ct).ConfigureAwait(false);
             }
 
             // A park, an escalation or a takeover waits for an answer, a resume or a handback, which the follow then sees through; it says why once, so the run never sits silent (found in F-1's hand test).
@@ -146,9 +145,12 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
         }
     }
 
-    private async Task<Result<SkillRunReport>> Report(StartSkillRunResponse answer, InstanceDetail detail, StateCell ended, string route, CancellationToken ct)
+    private static string RouteOf(StartSkillRunResponse answer) => $"{InstanceReads.Instances}/{InstanceRoute.Segment(answer.Instance.Id.Value)}";
+
+    private async Task<Result<SkillRunReport>> Report(StartSkillRunResponse answer, long after, InstanceDetail detail, StateCell ended, CancellationToken ct)
     {
         var failed = string.Equals(detail.State, "failed", StringComparison.Ordinal);
+        var route = RouteOf(answer);
         var facts = failed ? [] : await KeptFacts(answer, detail, route, ct).ConfigureAwait(false);
         string? error = null;
         if (failed)
@@ -160,13 +162,13 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
             }
 
             var item = answer.Instance.Address.Value.Split('/')[0];
-            error = await LaunchRefusalOf(item, 0, ct).ConfigureAwait(false)
-                ?? await SessionEndOf(item, 0, ct).ConfigureAwait(false)
+            error = await LaunchRefusalOf(item, after, ct).ConfigureAwait(false)
+                ?? await SessionEndOf(item, after, ct).ConfigureAwait(false)
                 ?? events.Value.Value.Events.LastOrDefault(static e => e.Transition.Reason is not null)?.Transition.Reason;
         }
 
         var outcome = failed ? null : SkillTrialRecipe.OutcomeOf(ended.State);
-        var resultFile = await ResultFileOf(answer.Instance.Address.Value.Split('/')[0], 0, ct).ConfigureAwait(false);
+        var resultFile = await ResultFileOf(answer.Instance.Address.Value.Split('/')[0], after, ct).ConfigureAwait(false);
         return new SkillRunReport(answer.Skill, answer.ManifestHash, outcome, Succeeded: string.Equals(outcome, answer.Success, StringComparison.Ordinal), facts, resultFile, error);
     }
 
@@ -202,14 +204,13 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
     /// <returns>The line, or null.</returns>
     internal async Task<string?> LaunchRefusalOf(string item, long after, CancellationToken ct)
     {
-        _ = after;   // red stub: the fix reads from it
-        var page = await client.Get<LedgerPage>($"/sindri/ledger?item={Uri.EscapeDataString(item)}&type=launch.failed", ct).ConfigureAwait(false);
-        if (page.IsError)
+        var rows = await SkillLedgerRows.Read(client, item, "launch.failed", after, ct).ConfigureAwait(false);
+        if (rows is null)
         {
             return null;
         }
 
-        foreach (var failed in page.Value.Value.Events.Reverse())
+        foreach (var failed in rows.AsEnumerable().Reverse())
         {
             if (failed.Payload.ValueKind == JsonValueKind.Object && failed.Payload.TryGetProperty("code", out var code) && code.ValueKind == JsonValueKind.String
                 && failed.Payload.TryGetProperty("message", out var message) && message.ValueKind == JsonValueKind.String)
@@ -228,14 +229,13 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
     /// <returns>The line, or null.</returns>
     internal async Task<string?> SessionEndOf(string item, long after, CancellationToken ct)
     {
-        _ = after;   // red stub: the fix reads from it
-        var page = await client.Get<LedgerPage>($"/sindri/ledger?item={Uri.EscapeDataString(item)}&type=session.ended", ct).ConfigureAwait(false);
-        if (page.IsError)
+        var rows = await SkillLedgerRows.Read(client, item, "session.ended", after, ct).ConfigureAwait(false);
+        if (rows is null)
         {
             return null;
         }
 
-        foreach (var ended in page.Value.Value.Events.Reverse())
+        foreach (var ended in rows.AsEnumerable().Reverse())
         {
             if (ended.Payload.ValueKind == JsonValueKind.Object && ended.Payload.TryGetProperty("exitCode", out var code) && code.ValueKind == JsonValueKind.Number && code.TryGetInt32(out var exit))
             {
@@ -253,14 +253,13 @@ internal sealed class SkillRunVerb(ControlPlaneClient client, Output output, Fun
     /// <returns>The path, or empty.</returns>
     internal async Task<string> ResultFileOf(string item, long after, CancellationToken ct)
     {
-        _ = after;   // red stub: the fix reads from it
-        var page = await client.Get<LedgerPage>($"/sindri/ledger?item={Uri.EscapeDataString(item)}&type=launch.started", ct).ConfigureAwait(false);
-        if (page.IsError)
+        var rows = await SkillLedgerRows.Read(client, item, "launch.started", after, ct).ConfigureAwait(false);
+        if (rows is null)
         {
             return string.Empty;
         }
 
-        foreach (var started in page.Value.Value.Events.Reverse())
+        foreach (var started in rows.AsEnumerable().Reverse())
         {
             if (started.Payload.ValueKind == JsonValueKind.Object && started.Payload.TryGetProperty("skill", out var skill) && skill.ValueKind == JsonValueKind.Object
                 && skill.TryGetProperty("resultFile", out var file) && file.ValueKind == JsonValueKind.String && file.GetString() is { Length: > 0 } path)
