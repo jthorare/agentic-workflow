@@ -1,6 +1,7 @@
 #nullable enable
 Aw.Kernel.Data.DataErrors
 Aw.Kernel.Data.EmbeddedMigrations
+Aw.Kernel.Data.ExecutableFiles
 Aw.Kernel.Data.IRowMapper<T>
 Aw.Kernel.Data.IRowMapper<T>.Map(Microsoft.Data.Sqlite.SqliteDataReader! reader) -> T
 Aw.Kernel.Data.ISqliteConnectionFactory
@@ -103,6 +104,8 @@ override Aw.Kernel.Data.SqliteOptions.GetHashCode() -> int
 override Aw.Kernel.Data.SqliteOptions.ToString() -> string!
 static Aw.Kernel.Data.DataErrors.All.get -> System.Collections.Generic.IReadOnlyList<Aw.Kernel.ErrorDefinition!>!
 static Aw.Kernel.Data.EmbeddedMigrations.Load(System.Reflection.Assembly! assembly, string! resourcePrefix) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Kernel.Data.Migration!>!>!
+static Aw.Kernel.Data.ExecutableFiles.IsExecutable(string! path) -> bool
+static Aw.Kernel.Data.ExecutableFiles.IsExecutableByOthers(string! path) -> bool
 static Aw.Kernel.Data.Migration.operator !=(Aw.Kernel.Data.Migration? left, Aw.Kernel.Data.Migration? right) -> bool
 static Aw.Kernel.Data.Migration.operator ==(Aw.Kernel.Data.Migration? left, Aw.Kernel.Data.Migration? right) -> bool
 static Aw.Kernel.Data.MigrationReport.operator !=(Aw.Kernel.Data.MigrationReport? left, Aw.Kernel.Data.MigrationReport? right) -> bool
