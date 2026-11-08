@@ -62,7 +62,7 @@ public sealed class TodoAttentionPicksTests
     [Fact]
     public async Task A_pick_that_removes_or_keeps_a_removal_says_so()
     {
-        var removedHere = Conflicted("td_c1", "reply to Sam", AttentionFixture.Side(text: null, due: null, removed: true), AttentionFixture.Side("edited"));
+        var removedHere = Conflicted("td_c1", "reply to Sam", Side(text: null, due: null, removed: true), Side("edited"));
         _a.Serve(TodoNoteSample.WithConflicts("td_c1"), Todos(removedHere));
         var panel = await _a.Read(Token);
 
@@ -254,7 +254,7 @@ public sealed class TodoAttentionPicksTests
         _a.Serve(TodoNoteSample.Quiet, Todos());
         var panel = await _a.Read(Token);
         _a.Serve(TodoNoteSample.WithConflicts("td_c1"), Todos(TextOnly("td_c1")));
-        await panel.Refresh(TodoFixture.Url, Token);   // a sync brought a conflict in
+        await panel.Refresh(Url, Token);   // a sync brought a conflict in
 
         await panel.Pick(1);
         Assert.Empty(Server.TodoPicks);
