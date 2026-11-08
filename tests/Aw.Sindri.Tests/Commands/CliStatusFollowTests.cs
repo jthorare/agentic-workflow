@@ -12,7 +12,7 @@ public sealed class CliStatusFollowTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Follow_reprints_when_status_changes()
     {
-        var api = new FollowApi(FollowRig.Status(needsApproval: true), FollowRig.Status(needsApproval: false));
+        var api = new FollowApi(FollowRig.Status(withProblem: true), FollowRig.Status(withProblem: false));
         var run = _rig.Start(api, json: false);
         await FollowRig.WaitUntil(() => api.Streams == 1);
 
@@ -32,7 +32,7 @@ public sealed class CliStatusFollowTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Follow_ignores_pings_and_unchanged_reads()
     {
-        var api = new FollowApi(FollowRig.Status(needsApproval: true));
+        var api = new FollowApi(FollowRig.Status(withProblem: true));
         var run = _rig.Start(api, json: false);
         await FollowRig.WaitUntil(() => api.Streams == 1);
 
@@ -49,7 +49,7 @@ public sealed class CliStatusFollowTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Two_frames_in_one_debounce_make_one_read_that_reflects_the_later_one()
     {
-        var api = new FollowApi(FollowRig.Status(needsApproval: true), FollowRig.Status(needsApproval: false));
+        var api = new FollowApi(FollowRig.Status(withProblem: true), FollowRig.Status(withProblem: false));
         var run = _rig.Start(api, json: false);
         await FollowRig.WaitUntil(() => api.Streams == 1);
 
@@ -67,7 +67,7 @@ public sealed class CliStatusFollowTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Follow_exits_1_when_the_stream_ends()
     {
-        var api = new FollowApi(FollowRig.Status(needsApproval: true));
+        var api = new FollowApi(FollowRig.Status(withProblem: true));
         var run = _rig.Start(api, json: false);
         await FollowRig.WaitUntil(() => api.Streams == 1);
 
@@ -80,7 +80,7 @@ public sealed class CliStatusFollowTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Follow_falls_back_to_polling_on_429()
     {
-        var api = new FollowApi(FollowRig.Status(needsApproval: true), FollowRig.Status(needsApproval: false)) { StreamsFull = true };
+        var api = new FollowApi(FollowRig.Status(withProblem: true), FollowRig.Status(withProblem: false)) { StreamsFull = true };
         var run = _rig.Start(api, json: false);
         await FollowRig.WaitUntil(() => api.Streams == 1);
 
@@ -95,8 +95,8 @@ public sealed class CliStatusFollowTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Follow_json_prints_one_body_per_line()
     {
-        var first = FollowRig.Status(needsApproval: true);
-        var second = FollowRig.Status(needsApproval: false);
+        var first = FollowRig.Status(withProblem: true);
+        var second = FollowRig.Status(withProblem: false);
         var api = new FollowApi(first, second);
         var run = _rig.Start(api, json: true);
         await FollowRig.WaitUntil(() => api.Streams == 1);
