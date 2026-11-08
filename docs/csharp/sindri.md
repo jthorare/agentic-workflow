@@ -758,6 +758,19 @@ There is no decision, desk, protected, job or step-report tool, and no `sindri_c
 | `SND-PROJECT-004` | A project field is invalid; the message starts with the field (`name`, `linear`, `state`, `links`, `notes`, `target`, `change`) (400) |
 | `SND-PROJECT-404` | No project has that id (404) |
 | `SND-PROJECT-409` | The project changed since the caller read it, or another command won the version key (409) |
+| `SND-TODO-001` | A todo's text is empty or over 280 characters, a rule the MCP schema can't say (`change` with no field or no version), or a bad client id (400) |
+| `SND-TODO-002` | A bad `todo.obsidian` key (400) |
+| `SND-TODO-003` | A bad date or due word (400) |
+| `SND-TODO-004` | A link of no known shape, a PR url on another host, or more than 10 links (400) |
+| `SND-TODO-005` | `keep` on a todo with no conflict, an Undo with nothing to undo, or a hold pick with no hold open (409) |
+| `SND-TODO-006` | Adding past 500 open todos (409) |
+| `SND-TODO-007` | A forbidden character (Control, Format, line or paragraph separator), a note marker or a markdown link in a todo's text (400) |
+| `SND-TODO-008` | `import` with nothing to import (409) |
+| `SND-TODO-010` | An id prefix that matches several todos (CLI only) |
+| `SND-TODO-404` | No such todo (404) |
+| `SND-TODO-409` | The todo changed since the caller read it (a stale version), or the note moved since the caller's view (409) |
+| `SND-TODO-423` | A write to a todo with an open both-places conflict; a version has to be picked first (423) |
+| `SND-TODO-429` | The 21st add in an hour from one session, or from one piped CLI caller; carries `retryAfter` (429) |
 | `SND-REVIEW-001` | A bad `review` profile key: a login, panel, glob or regex, a duplicate check id, an unknown `settings` or `extends`, a cycle, `when: []`, or a `need` with other than one key (names the key path and the allowed values) |
 | `SND-REVIEW-002` | A `review.projects[].project` that isn't on the Projects page: "No project <id>. `sindri projects` lists them." (checked at approve) |
 | `SND-REVIEW-003` | A `command:` need: "Command checks wait for the sandbox. Use `ci:` with the CI job that runs it." |
