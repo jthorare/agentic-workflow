@@ -20,6 +20,7 @@ public static class ModelKinds
         ModelPurpose.Cleanup => ModelKind.MapCleanup,
         ModelPurpose.Rerank => ModelKind.Rerank,
         ModelPurpose.ProductSurfaces => ModelKind.ProductSurfaces,
+        ModelPurpose.WorkflowPrompt => throw new NotSupportedException(),   // why: red stub
         _ => throw new ArgumentOutOfRangeException(nameof(purpose)),
     };
 
@@ -54,6 +55,7 @@ public static class ModelKinds
         ModelKind.MapCleanup => "mapCleanup",
         ModelKind.Rerank => "rerank",
         ModelKind.ProductSurfaces => "productSurfaces",
+        ModelKind.WorkflowPrompt => throw new NotSupportedException(),   // why: red stub
         _ => throw new ArgumentOutOfRangeException(nameof(kind)),
     };
 }

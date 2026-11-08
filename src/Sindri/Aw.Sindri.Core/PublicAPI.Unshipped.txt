@@ -24948,3 +24948,91 @@ Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckRemoveWriteToken(string! sou
 Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckSetTeams(string! source, System.Collections.Generic.IReadOnlyList<string!>! teams) -> Aw.Kernel.Result<bool>!
 Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckSetToken(string! source, string! secretPointer) -> Aw.Kernel.Result<bool>!
 Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckSetWriteToken(string! source, string! secretPointer) -> Aw.Kernel.Result<bool>!
+Aw.Sindri.Core.Graph.Blocks.BlockContext
+Aw.Sindri.Core.Graph.Blocks.BlockContext.BlockContext(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId Node, System.Text.Json.Nodes.JsonObject! Config, System.Text.Json.Nodes.JsonObject! RawConfig, System.Func<string!, System.Text.Json.Nodes.JsonNode?>! Resolve) -> void
+Aw.Sindri.Core.Graph.Blocks.BlockContext.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.BlockContext!
+Aw.Sindri.Core.Graph.Blocks.BlockContext.Config.get -> System.Text.Json.Nodes.JsonObject!
+Aw.Sindri.Core.Graph.Blocks.BlockContext.Config.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockContext.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, out Aw.Sindri.Core.Graph.Ids.NodeId Node, out System.Text.Json.Nodes.JsonObject! Config, out System.Text.Json.Nodes.JsonObject! RawConfig, out System.Func<string!, System.Text.Json.Nodes.JsonNode?>! Resolve) -> void
+Aw.Sindri.Core.Graph.Blocks.BlockContext.Equals(Aw.Sindri.Core.Graph.Blocks.BlockContext? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.BlockContext.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Blocks.BlockContext.Node.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockContext.RawConfig.get -> System.Text.Json.Nodes.JsonObject!
+Aw.Sindri.Core.Graph.Blocks.BlockContext.RawConfig.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockContext.Resolve.get -> System.Func<string!, System.Text.Json.Nodes.JsonNode?>!
+Aw.Sindri.Core.Graph.Blocks.BlockContext.Resolve.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockContext.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Graph.Blocks.BlockContext.RunId.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockResult
+Aw.Sindri.Core.Graph.Blocks.BlockResult.BlockResult(System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.Nodes.JsonNode?>! Outputs, System.Collections.Generic.IReadOnlyList<string!>? Branches = null) -> void
+Aw.Sindri.Core.Graph.Blocks.BlockResult.Branches.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Graph.Blocks.BlockResult.Branches.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockResult.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.BlockResult!
+Aw.Sindri.Core.Graph.Blocks.BlockResult.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.Nodes.JsonNode?>! Outputs, out System.Collections.Generic.IReadOnlyList<string!>? Branches) -> void
+Aw.Sindri.Core.Graph.Blocks.BlockResult.Equals(Aw.Sindri.Core.Graph.Blocks.BlockResult? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.BlockResult.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.Nodes.JsonNode?>!
+Aw.Sindri.Core.Graph.Blocks.BlockResult.Outputs.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockResult.Taken.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Blocks.ConditionBlock
+Aw.Sindri.Core.Graph.Blocks.ConditionBlock.ConditionBlock() -> void
+Aw.Sindri.Core.Graph.Blocks.ConditionBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.ConditionBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ConditionBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.ConditionBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.ConditionBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.ConditionBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry
+Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.Find(string! type) -> Aw.Sindri.Core.Graph.Blocks.IGraphBlock?
+Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.GraphBlockRegistry(System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Graph.Blocks.IGraphBlock!>! blocks) -> void
+Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.Types.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Graph.Blocks.IGraphBlockType!>!
+Aw.Sindri.Core.Graph.Blocks.IGraphBlock
+Aw.Sindri.Core.Graph.Blocks.IGraphBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.IGraphModelPort
+Aw.Sindri.Core.Graph.Blocks.IGraphModelPort.Ask(string! prompt, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Sindri.Core.Graph.Blocks.INotifyPort
+Aw.Sindri.Core.Graph.Blocks.INotifyPort.Post(Aw.Sindri.Core.Graph.Ids.WorkflowRunId runId, Aw.Sindri.Core.Graph.Ids.NodeId node, string! title, string? body, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Graph.Blocks.ManualBlock
+Aw.Sindri.Core.Graph.Blocks.ManualBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.ManualBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ManualBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.ManualBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.ManualBlock.ManualBlock() -> void
+Aw.Sindri.Core.Graph.Blocks.ManualBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.ManualBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.NotifyBlock
+Aw.Sindri.Core.Graph.Blocks.NotifyBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.NotifyBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.NotifyBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.NotifyBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.NotifyBlock.NotifyBlock(Aw.Sindri.Core.Graph.Blocks.INotifyPort! notify) -> void
+Aw.Sindri.Core.Graph.Blocks.NotifyBlock.Notify.get -> Aw.Sindri.Core.Graph.Blocks.INotifyPort!
+Aw.Sindri.Core.Graph.Blocks.NotifyBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.NotifyBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.PromptBlock
+Aw.Sindri.Core.Graph.Blocks.PromptBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.PromptBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.PromptBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.PromptBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.PromptBlock.Model.get -> Aw.Sindri.Core.Graph.Blocks.IGraphModelPort!
+Aw.Sindri.Core.Graph.Blocks.PromptBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.PromptBlock.PromptBlock(Aw.Sindri.Core.Graph.Blocks.IGraphModelPort! model) -> void
+Aw.Sindri.Core.Graph.Blocks.PromptBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ScheduleBlock
+Aw.Sindri.Core.Graph.Blocks.ScheduleBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.ScheduleBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ScheduleBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.ScheduleBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.ScheduleBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.ScheduleBlock.ScheduleBlock() -> void
+Aw.Sindri.Core.Graph.Blocks.ScheduleBlock.Type.get -> string!
+override Aw.Sindri.Core.Graph.Blocks.BlockContext.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.BlockContext.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.BlockContext.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.BlockResult.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.BlockResult.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.BlockResult.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.BlockContext.operator !=(Aw.Sindri.Core.Graph.Blocks.BlockContext? left, Aw.Sindri.Core.Graph.Blocks.BlockContext? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.BlockContext.operator ==(Aw.Sindri.Core.Graph.Blocks.BlockContext? left, Aw.Sindri.Core.Graph.Blocks.BlockContext? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.BlockResult.operator !=(Aw.Sindri.Core.Graph.Blocks.BlockResult? left, Aw.Sindri.Core.Graph.Blocks.BlockResult? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.BlockResult.operator ==(Aw.Sindri.Core.Graph.Blocks.BlockResult? left, Aw.Sindri.Core.Graph.Blocks.BlockResult? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.Standard(Aw.Sindri.Core.Graph.Blocks.INotifyPort! notify, Aw.Sindri.Core.Graph.Blocks.IGraphModelPort! model) -> Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry!

@@ -11,11 +11,12 @@ internal static class GraphFixtures
 {
     public static readonly IReadOnlyDictionary<string, IGraphBlockType> Blocks = new Dictionary<string, IGraphBlockType>(StringComparer.Ordinal)
     {
-        ["schedule"] = new TestBlock("schedule", trigger: true, [new("cron", BlockFieldType.Text), new("timezone", BlockFieldType.Text, Required: false)], new Dictionary<string, string>(StringComparer.Ordinal)),
+        ["schedule"] = new TestBlock("schedule", trigger: true, [new("cron", BlockFieldType.Text), new("timezone", BlockFieldType.Text, Required: false)], new Dictionary<string, string>(StringComparer.Ordinal) { ["scheduledFor"] = "string" }),
         ["memory_search"] = new TestBlock("memory_search", trigger: false, [new("memory", BlockFieldType.Text), new("query", BlockFieldType.Text)], new Dictionary<string, string>(StringComparer.Ordinal) { ["facts"] = "string" }),
         ["notify"] = new TestBlock("notify", trigger: false, [new("title", BlockFieldType.Text), new("body", BlockFieldType.Text, Required: false)], new Dictionary<string, string>(StringComparer.Ordinal)),
         ["run_agent"] = new TestBlock("run_agent", trigger: false, [new("repo", BlockFieldType.Text), new("readOnlyRepos", BlockFieldType.TextList, Required: false), new("prompt", BlockFieldType.Text, Required: false)], new Dictionary<string, string>(StringComparer.Ordinal) { ["drifted"] = "boolean" }),
         ["webhook"] = new TestBlock("webhook", trigger: false, [new("url", BlockFieldType.Text), new("headers", BlockFieldType.Map, Required: false), new("args", BlockFieldType.TextList, Required: false)], new Dictionary<string, string>(StringComparer.Ordinal)),
+        ["limit"] = new TestBlock("limit", trigger: false, [new("count", BlockFieldType.Number), new("enabled", BlockFieldType.Boolean, Required: false)], new Dictionary<string, string>(StringComparer.Ordinal)),
         ["condition"] = new TestBlock("condition", trigger: false, [new("when", BlockFieldType.Text)], new Dictionary<string, string>(StringComparer.Ordinal), ["true", "false"]),
     };
 
@@ -30,6 +31,10 @@ internal static class GraphFixtures
     public static GraphNode Notify(string id, string body) => new(NodeId.From(id), "notify", Title: null, new JsonObject { ["title"] = "Drifted", ["body"] = body });
 
     public static GraphNode Agent(string id, string repo, string prompt = "check") => new(NodeId.From(id), "run_agent", Title: null, new JsonObject { ["repo"] = repo, ["prompt"] = prompt });
+
+    public static GraphNode Condition(string id, string when) => new(NodeId.From(id), "condition", Title: null, new JsonObject { ["when"] = when });
+
+    public static GraphNode Limit(string id, JsonObject config) => new(NodeId.From(id), "limit", Title: null, config);
 
     public static GraphNode Hook(string id, JsonObject extra)
     {
