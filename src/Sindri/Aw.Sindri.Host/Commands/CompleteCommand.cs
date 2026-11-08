@@ -49,13 +49,21 @@ internal static class CompleteCommand
     }
 
     /// <summary>
-    /// Resolves the instance and posts the report. A launched session (its proof is set) waits out a control plane that is down, see <see cref="ConnectRetry"/>, and keeps the nonce it was
+    /// Starts the control plane when this CLI may, then posts the report. A launched session (its proof is set) waits out a control plane that is down, see <see cref="ConnectRetry"/>, and keeps the nonce it was
     /// issued across the waits, so a report that did land is never sent as a second command. A human's call is tried once.
     /// </summary>
     private static Task<Result<ApiAnswer<CompleteStepResponse>>> Attempt(RecipeDesk desk, CompleteStepRequest request, TimeProvider clock, Output output, CancellationToken ct)
     {
         var nonce = request.Nonce;
-        Task<Result<ApiAnswer<CompleteStepResponse>>> Once() => Send(desk, request with { Nonce = nonce }, ct);
+        async Task<Result<ApiAnswer<CompleteStepResponse>>> Once()
+        {
+            if (await desk.EnsureRunning(ct).ConfigureAwait(false) is { } down)   // a human's command starts the control plane when this CLI may (API spec §7)
+            {
+                return down;
+            }
+
+            return await Send(desk, request with { Nonce = nonce }, ct).ConfigureAwait(false);
+        }
 
         return desk.Environment?.Invoke(SecretVariable) is { Length: > 0 } ? ConnectRetry.Run(Once, ConnectRetry.WindowOf(desk.Environment), clock, output.Notice, ct) : Once();
     }
