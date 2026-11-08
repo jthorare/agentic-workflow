@@ -298,6 +298,51 @@ public sealed class ContextLinearWritesTests
     }
 
     [Fact]
+    public async Task A_retried_comment_that_Linear_refuses_for_its_repeated_id_is_applied_when_the_comment_is_there()
+    {
+        _reads.Issues["ENG-12"] = Results.Success<LinearIssueView?>(View());
+        _writes.Answer = LinearHubErrors.Rejected.With("Linear said no: a comment with this id already exists");
+        _reads.Comments[_clientId.Value] = Results.Success<LinearCommentView?>(new LinearCommentView(ExternalId.From(_clientId.Value), _issueId, "hi"));
+
+        var result = await Facade().Comment(_key, "hi", _clientId, Human(), Ct);
+
+        Assert.True(Assert.IsType<LinearWriteApplied>(result.Value).FoundOnReread);
+        _ = Assert.Single(_through.Stored);
+    }
+
+    [Fact]
+    public async Task A_comment_that_Linear_refuses_and_is_not_there_stays_a_refusal()
+    {
+        _reads.Issues["ENG-12"] = Results.Success<LinearIssueView?>(View());
+        _writes.Answer = LinearHubErrors.Rejected.With("Linear said no");
+        _reads.Comments[_clientId.Value] = Results.Success<LinearCommentView?>(value: null);
+
+        AssertFails(await Facade().Comment(_key, "hi", _clientId, Human(), Ct), LinearHubErrors.Rejected.Code);
+        Assert.Empty(_through.Stored);
+    }
+
+    [Fact]
+    public async Task A_retried_create_that_Linear_refuses_for_its_repeated_id_is_applied_when_the_issue_is_there()
+    {
+        _writes.Answer = LinearHubErrors.Rejected.With("Linear said no: an issue with this id already exists");
+        _reads.Issues[_clientId.Value] = Results.Success<LinearIssueView?>(View());
+
+        var result = await Facade().Create(new LinearIssueDraft(ExternalId.From("team"), "A"), _clientId, Human(), Ct);
+
+        Assert.True(Assert.IsType<LinearWriteApplied>(result.Value).FoundOnReread);
+        _ = Assert.Single(_through.Stored);
+    }
+
+    [Fact]
+    public async Task A_create_that_Linear_refuses_and_is_not_there_stays_a_refusal()
+    {
+        _writes.Answer = LinearHubErrors.Rejected.With("Linear said no");
+        _reads.Issues[_clientId.Value] = Results.Success<LinearIssueView?>(value: null);
+
+        AssertFails(await Facade().Create(new LinearIssueDraft(ExternalId.From("team"), "A"), _clientId, Human(), Ct), LinearHubErrors.Rejected.Code);
+    }
+
+    [Fact]
     public async Task An_edit_with_no_answer_is_applied_when_the_comment_holds_the_new_text()
     {
         _reads.Issues["ENG-12"] = Results.Success<LinearIssueView?>(View());

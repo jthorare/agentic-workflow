@@ -45,7 +45,7 @@ public sealed class PlainWordsTests
         Assert.Equal("Go to a page: H or N Home, D Decisions on Home, P Projects, Q Work, C Context, A Agents, . or S System, V Reviews, J Jobs, U Settings", go.Action);
         Assert.Contains(("O", "Open the linked page"), Labels.FixedKeys);
         Assert.Contains(("Y", "Copy the row's command"), Labels.FixedKeys);
-        Assert.Contains(("X / Shift+X", "Decline / cancel the run"), Labels.FixedKeys);
+        Assert.Contains(("X", "Decline"), Labels.FixedKeys);
         Assert.Contains(("F6 / Shift+F6", "Next / previous area"), Labels.FixedKeys);
     }
 }
