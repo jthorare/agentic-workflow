@@ -15,7 +15,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="launcher">Starts the Temporal workflow.</param>
 /// <param name="clock">The clock the run's start time comes from.</param>
 /// <param name="logger">Where a skipped trigger is logged.</param>
-internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunLauncher launcher, TimeProvider clock, ILogger<GraphRunStarter> logger) : IGraphRunStarter
+internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunLauncher launcher, TimeProvider clock, ILogger<GraphRunStarter> logger) : IGraphRunStarter, IGraphQueueAdvance
 {
     private readonly IWorkflowRunStore _runs = runs;
     private readonly IGraphRunLauncher _launcher = launcher;
@@ -52,6 +52,9 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
         var launched = await Launch(run, cancellationToken).ConfigureAwait(false);
         return launched.IsError ? launched.Error : new GraphStart(GraphStartKind.Started, id);
     }
+
+    /// <inheritdoc />
+    public ValueTask<Result<WorkflowRunId?>> StartNextQueued(WorkflowId workflow, CancellationToken cancellationToken) => throw new NotSupportedException();
 
     private async ValueTask<Result<bool>> Launch(WorkflowRun run, CancellationToken cancellationToken)
     {

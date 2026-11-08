@@ -24618,9 +24618,7 @@ Aw.Sindri.Core.Graph.GraphNode
 Aw.Sindri.Core.Graph.GraphNode.<Clone>$() -> Aw.Sindri.Core.Graph.GraphNode!
 Aw.Sindri.Core.Graph.GraphNode.Config.get -> System.Text.Json.Nodes.JsonObject!
 Aw.Sindri.Core.Graph.GraphNode.Config.init -> void
-Aw.Sindri.Core.Graph.GraphNode.Deconstruct(out Aw.Sindri.Core.Graph.Ids.NodeId Id, out string! Type, out string? Title, out System.Text.Json.Nodes.JsonObject! Config) -> void
 Aw.Sindri.Core.Graph.GraphNode.Equals(Aw.Sindri.Core.Graph.GraphNode? other) -> bool
-Aw.Sindri.Core.Graph.GraphNode.GraphNode(Aw.Sindri.Core.Graph.Ids.NodeId Id, string! Type, string? Title, System.Text.Json.Nodes.JsonObject! Config) -> void
 Aw.Sindri.Core.Graph.GraphNode.Id.get -> Aw.Sindri.Core.Graph.Ids.NodeId
 Aw.Sindri.Core.Graph.GraphNode.Id.init -> void
 Aw.Sindri.Core.Graph.GraphNode.Title.get -> string?
@@ -25654,3 +25652,9 @@ override Aw.Sindri.Core.Scheduling.StoreCheckpoint.ToString() -> string!
 static Aw.Sindri.Core.Scheduling.StoreCheckpoint.operator !=(Aw.Sindri.Core.Scheduling.StoreCheckpoint? left, Aw.Sindri.Core.Scheduling.StoreCheckpoint? right) -> bool
 static Aw.Sindri.Core.Scheduling.StoreCheckpoint.operator ==(Aw.Sindri.Core.Scheduling.StoreCheckpoint? left, Aw.Sindri.Core.Scheduling.StoreCheckpoint? right) -> bool
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.Admit(Aw.Sindri.Core.Graph.Runs.WorkflowRun! run, Aw.Sindri.Core.Graph.Runs.GraphConcurrency mode, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Runs.GraphStartKind>!>
+Aw.Sindri.Core.Graph.GraphNode.Deconstruct(out Aw.Sindri.Core.Graph.Ids.NodeId Id, out string! Type, out string? Title, out System.Text.Json.Nodes.JsonObject! Config, out string? OnFailure) -> void
+Aw.Sindri.Core.Graph.GraphNode.GraphNode(Aw.Sindri.Core.Graph.Ids.NodeId Id, string! Type, string? Title, System.Text.Json.Nodes.JsonObject! Config, string? OnFailure = null) -> void
+Aw.Sindri.Core.Graph.GraphNode.OnFailure.get -> string?
+Aw.Sindri.Core.Graph.GraphNode.OnFailure.init -> void
+Aw.Sindri.Core.Graph.Runs.IGraphQueueAdvance
+Aw.Sindri.Core.Graph.Runs.IGraphQueueAdvance.StartNextQueued(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Ids.WorkflowRunId?>!>
