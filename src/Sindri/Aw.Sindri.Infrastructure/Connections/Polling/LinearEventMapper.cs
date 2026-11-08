@@ -8,6 +8,44 @@ internal static class LinearEventMapper
 {
     internal static IEnumerable<PolledEvent> Map(JsonElement issue, EventKind kind, DateTimeOffset? after)
     {
+        if (kind == EventKind.LinearIssueCreated)
+        {
+            return Created(issue, after);
+        }
+
+        return kind == EventKind.LinearCommentAdded ? Comments(issue, after) : History(issue, kind, after);
+    }
+
+    private static IEnumerable<PolledEvent> Created(JsonElement issue, DateTimeOffset? after)
+    {
+        var text = PollJson.Text(PollJson.Member(issue, "createdAt"));
+        var identifier = PollJson.Text(PollJson.Member(issue, "identifier"));
+        if (identifier is not null && PollJson.Time(text) is { } at && (after is null || at > after))
+        {
+            yield return new PolledEvent($"linear:issue:{identifier}:created", EventKind.LinearIssueCreated, at, IssueFields(issue));
+        }
+    }
+
+    private static IEnumerable<PolledEvent> Comments(JsonElement issue, DateTimeOffset? after)
+    {
+        var nodes = PollJson.Member(PollJson.Member(issue, "comments") ?? default, "nodes");
+        foreach (var node in nodes is { ValueKind: JsonValueKind.Array } list ? list.EnumerateArray() : default)
+        {
+            var id = PollJson.Text(PollJson.Member(node, "id"));
+            if (id is null || PollJson.Time(PollJson.Text(PollJson.Member(node, "createdAt"))) is not { } at || (after is { } floor && at <= floor))
+            {
+                continue;
+            }
+
+            var fields = IssueFields(issue);
+            PollJson.Put(fields, "body", PollJson.Text(PollJson.Member(node, "body")));
+            PollJson.Put(fields, "author", PollJson.Text(PollJson.Path(node, "user", "name")));
+            yield return new PolledEvent($"linear:comment:{id}", EventKind.LinearCommentAdded, at, fields);
+        }
+    }
+
+    private static IEnumerable<PolledEvent> History(JsonElement issue, EventKind kind, DateTimeOffset? after)
+    {
         var history = PollJson.Member(PollJson.Member(issue, "history") ?? default, "nodes");
         if (history is not { ValueKind: JsonValueKind.Array } nodes)
         {

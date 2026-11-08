@@ -11,7 +11,7 @@ namespace Aw.Sindri.Infrastructure.Connections.Polling;
 /// <summary>
 /// IEventPoller for Linear over a plain HttpClient: one GraphQL 'issues' query with each issue's history. The delivery key is the history
 /// entry id plus what changed, so it is the same on every poll. The token goes only to api.linear.app and a redirect is refused
-/// (SND-CONN-012). Provider text in the events is untrusted. Created issues and comments are not polled yet (SND-CONN-012 says so).
+/// (SND-CONN-012). Provider text in the events is untrusted.
 /// </summary>
 /// <param name="http">The HTTP client; it must not follow redirects on its own.</param>
 /// <param name="secrets">The connection secrets.</param>
@@ -19,7 +19,7 @@ internal sealed class LinearEventPoller(HttpClient http, IConnectionSecrets secr
 {
     private const string Host = "api.linear.app";
 
-    private const string Fields = "identifier title url history(first: 25) { nodes { id createdAt addedLabels { name } fromState { name } toState { name } } }";
+    private const string Fields = "identifier title url createdAt comments(first: 10) { nodes { id createdAt body user { name } } } history(first: 25) { nodes { id createdAt addedLabels { name } fromState { name } toState { name } } }";
 
     private readonly PollerClient _client = new(http, secrets, Host);
 
@@ -28,9 +28,9 @@ internal sealed class LinearEventPoller(HttpClient http, IConnectionSecrets secr
     public async ValueTask<Result<PollResult>> Poll(Connection connection, EventKind kind, string? cursor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(connection);
-        if (kind != EventKind.LinearIssueLabeled && kind != EventKind.LinearIssueStateChanged)
+        if (!PollCatalog.For(Preset).Contains(kind))
         {
-            return SindriErrors.ConnectionProviderChanged.With($"{kind} is not polled yet");
+            return SindriErrors.ConnectionProviderChanged.With($"{kind} is not a Linear event");
         }
 
         var after = PollJson.Time(cursor);
@@ -90,17 +90,19 @@ internal sealed class LinearEventPoller(HttpClient http, IConnectionSecrets secr
 
     private static (string? Text, DateTimeOffset? At) Newest(JsonElement issue, (string? Text, DateTimeOffset? At) current)
     {
-        var best = current;
-        var nodes = PollJson.Member(PollJson.Member(issue, "history") ?? default, "nodes");
-        foreach (var node in nodes is { ValueKind: JsonValueKind.Array } list ? list.EnumerateArray() : default)
+        var best = Later(current, PollJson.Text(PollJson.Member(issue, "createdAt")));
+        foreach (var list in new[] { "history", "comments" })
         {
-            var text = PollJson.Text(PollJson.Member(node, "createdAt"));
-            if (PollJson.Time(text) is { } at && (best.At is null || at > best.At))
+            var nodes = PollJson.Member(PollJson.Member(issue, list) ?? default, "nodes");
+            foreach (var node in nodes is { ValueKind: JsonValueKind.Array } items ? items.EnumerateArray() : default)
             {
-                best = (text, at);
+                best = Later(best, PollJson.Text(PollJson.Member(node, "createdAt")));
             }
         }
 
         return best;
     }
+
+    private static (string? Text, DateTimeOffset? At) Later((string? Text, DateTimeOffset? At) best, string? text)
+        => PollJson.Time(text) is { } at && (best.At is null || at > best.At) ? (text, at) : best;
 }
