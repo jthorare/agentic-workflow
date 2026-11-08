@@ -1,5 +1,5 @@
 using Aw.Sindri.Core.Ids;
-using Aw.Sindri.Core.Workflow.Engine;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Host;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Testing;
@@ -44,7 +44,7 @@ internal static class WrapSessionScenarios
         await ViewScenarios.CatchUp(host, ct);
         var launch = A.FirstLaunchId;
         await LaunchScenarios.Request(host, launch, ItemId.From(item), ct);
-        await LaunchScenarios.Started(host, launch, item, Core.Launch.ViewerOutcomeKind.Skipped, ct);
+        await LaunchScenarios.Started(host, launch, item, ViewerOutcomeKind.Skipped, ct);
         await ViewScenarios.CatchUp(host, ct);
         LaunchSecrets.Write(new LauncherOptions(host.Home).SecretsDirectory, launch, Proof);
         return launch;

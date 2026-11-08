@@ -37,7 +37,7 @@ public sealed class SqliteWorkflowClaimsContractTests : WorkflowClaimsContract, 
     {
         var claims = Create();
 
-        var found = await claims.Find(Core.Workflow.Engine.ItemKey.From("T-3"), TestContext.Current.CancellationToken);
+        var found = await claims.Find(Core.Launch.ItemKey.From("T-3"), TestContext.Current.CancellationToken);
 
         Assert.Null(found.Value);
         Assert.False(File.Exists(Path.Combine(_home.Path, "ledger.db")));

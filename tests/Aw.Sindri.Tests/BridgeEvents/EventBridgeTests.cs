@@ -3,6 +3,7 @@ using System.Text.Json;
 using Aw.Kernel.Events;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Control;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Scheduling;

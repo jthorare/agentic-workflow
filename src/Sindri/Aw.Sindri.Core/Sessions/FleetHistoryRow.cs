@@ -13,5 +13,5 @@ public sealed record FleetHistoryRow(SessionRef Ref, FleetChangeKind Kind, DateT
     public string HostKind { get; init; } = "unknown";
 
     /// <summary>The launch the row carried.</summary>
-    public Workflow.Engine.LaunchId? LaunchId { get; init; }
+    public Launch.LaunchId? LaunchId { get; init; }
 }

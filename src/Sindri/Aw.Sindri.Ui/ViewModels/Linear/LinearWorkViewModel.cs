@@ -20,7 +20,7 @@ internal sealed partial class LinearWorkViewModel : ObservableObject, IDisposabl
 
     private static readonly string[] _derived =
     [
-        nameof(IsLoading), nameof(ShowsConnect), nameof(ShowsFinding), nameof(ShowsNoMatch), nameof(UpdatingText), nameof(FeedText), nameof(IsSindriDown), nameof(AsOfText),
+        nameof(IsLoading), nameof(ShowsConnect), nameof(ShowsFinding), nameof(ShowsNoMatch), nameof(UpdatingText), nameof(FeedText), nameof(IsSindriDown), nameof(IsSindriOlder), nameof(OlderText), nameof(AsOfText),
         nameof(HasMore), nameof(HasFilters),
     ];
 

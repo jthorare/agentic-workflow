@@ -7,7 +7,7 @@ using Aw.Kernel.Json;
 using Aw.Sindri.Core.Workflow.Ids;
 using Vogen;
 
-namespace Aw.Sindri.Core.Workflow.Engine;
+namespace Aw.Sindri.Core.Launch;
 
 /// <summary>
 /// An instance's CLI address (spec §5.1, §6.1): a root is '{item}/{recipe name}/{attempt}' ('T-3/item/1'); a child
@@ -78,8 +78,8 @@ public readonly partial struct InstanceAddress : ITypedId<InstanceAddress, strin
         return cut > 0 && LinkedShape.IsMatch(Value[(cut + 1)..]) ? From(Value[..cut]) : null;
     }
 
-    private static Vogen.Validation Validate(string value) =>
-        Shape.IsMatch(value) ? Vogen.Validation.Ok : Vogen.Validation.Invalid("An address is '{item}/{recipe}/{attempt}', then '/{recipe}.{entry}' per child generation");
+    private static Validation Validate(string value) =>
+        Shape.IsMatch(value) ? Validation.Ok : Validation.Invalid("An address is '{item}/{recipe}/{attempt}', then '/{recipe}.{entry}' per child generation");
 
     [GeneratedRegex("^[A-Z][A-Z0-9]*-[A-Za-z0-9]+/[a-z][a-z0-9]*(-[a-z0-9]+)*/[1-9][0-9]*(/[a-z][a-z0-9]*(-[a-z0-9]+)*(\\.[a-z0-9][a-z0-9-]*)?\\.[1-9][0-9]*)*\\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }
