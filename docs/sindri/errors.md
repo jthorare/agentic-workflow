@@ -106,3 +106,17 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-ONYX-012` | Sindri can't use its Onyx directory |
 | `SND-SETUP-005` | The Onyx admin email and password were both needed |
 | `SND-SETUP-006` | No Onyx setup was waiting for the login |
+
+## SND-GRAPH (workflow graphs)
+
+| Code | Meaning |
+|---|---|
+| `SND-GRAPH-001` | That is not a workflow graph (bad JSON, an unknown member or a wrong type) |
+| `SND-GRAPH-002` | The workflow graph has problems; the message lists them |
+| `SND-GRAPH-003` | Unknown block type |
+| `SND-GRAPH-004` | A reference doesn't point at an upstream output |
+| `SND-GRAPH-005` | A condition can't be read |
+| `SND-GRAPH-006` | A cron or timezone can't be read |
+| `SND-GRAPH-007` | This workflow changed since you read it. Read it again and retry |
+| `SND-GRAPH-008` | No such workflow |
+| `SND-GRAPH-009` | Another workflow already has that slug |
