@@ -18,6 +18,7 @@ internal static class WorkflowCommandTable
     internal static Task<int> Run(string[] args, IServiceProvider services, Output output, RecipeDesk desk, CancellationToken ct) => args switch
     {
         ["complete", .. var rest] => CompleteCommand.Run(rest, desk, services, output, ct),
+        ["takeover" or "handback"] => output.Error(SindriErrors.InvalidInput.With($"usage: sindri {args[0]} <item-or-address> [--nonce <n>] [--json]")),
         ["takeover" or "handback", ..] => output.Error(SindriErrors.GraphRunControlsPending.With($"'{args[0]}' returns with the graph engine's agent blocks")),
         _ => output.Error(SindriErrors.UnknownVerb.With($"'{string.Join(' ', ["workflow", .. args])}' is not a sindri command ({UsageText})")),
     };
