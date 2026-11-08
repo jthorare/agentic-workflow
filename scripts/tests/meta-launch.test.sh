@@ -516,6 +516,7 @@ fi
 # the pane really shows in the .agent record, which is what aw-meta's wake guard compares.
 cat > "$WORK/codex-npm" <<'EOF'
 #!/usr/bin/env bash
+[ "${1:-}" = --help ] && exit 0   # the launcher's --no-daemon probe runs the agent with --help: this stub must not run its body then
 if command -v node > /dev/null 2>&1; then exec node -e "require('child_process').spawnSync('sleep', ['60'], { stdio: 'inherit' })"; fi
 exec -a node SLEEPER_NODE 60
 EOF
@@ -572,6 +573,7 @@ codex_dir="$HOME/.codex/sessions/2026/10/14"; mkdir -p "$codex_dir"
 old="$codex_dir/rollout-2026-10-14T00-00-00-11111111-1111-1111-1111-111111111111.jsonl"; : > "$old"
 cat > "$WORK/codex-race" <<'EOF2'
 #!/usr/bin/env bash
+[ "${1:-}" = --help ] && exit 0   # the launcher's --no-daemon probe runs the agent with --help: this stub must not create its session file then
 ( sleep 0.4; echo more >> "$OLD_ROLLOUT" ) &
 sleep 1
 mkdir -p "$HOME/.codex/sessions/2026/10/15"
@@ -589,6 +591,7 @@ kill "$rp" 2> /dev/null; killstubs; wait "$rp" 2> /dev/null
 # Two new session files at once are refused: no id, a .ambiguous marker, and the launcher says so.
 cat > "$WORK/codex-two" <<'EOF2'
 #!/usr/bin/env bash
+[ "${1:-}" = --help ] && exit 0   # the launcher's --no-daemon probe runs the agent with --help: this stub must not create its session file then
 mkdir -p "$HOME/.codex/sessions/2026/10/16"
 : > "$HOME/.codex/sessions/2026/10/16/rollout-2026-10-16T00-00-00-33333333-3333-3333-3333-333333333333.jsonl"
 : > "$HOME/.codex/sessions/2026/10/16/rollout-2026-10-16T00-00-01-44444444-4444-4444-4444-444444444444.jsonl"
@@ -606,6 +609,7 @@ killstubs
 # A session id pattern is a whole-id match, as in the C# reader: an unanchored pattern that matches only part of the captured id refuses it.
 cat > "$WORK/codex-whole" <<'EOF2'
 #!/usr/bin/env bash
+[ "${1:-}" = --help ] && exit 0   # the launcher's --no-daemon probe runs the agent with --help: this stub must not create its session file then
 mkdir -p "$HOME/.codex/sessions/2026/10/17"
 : > "$HOME/.codex/sessions/2026/10/17/rollout-2026-10-17T00-00-00-55555555-5555-5555-5555-555555555555.jsonl"
 sleep 600
@@ -627,6 +631,7 @@ kill "$rp" 2> /dev/null; killstubs; wait "$rp" 2> /dev/null
 # An agent that never reports: the launcher times out with a message and the next lane still starts.
 cat > "$WORK/codex-idle" <<'EOF2'
 #!/usr/bin/env bash
+[ "${1:-}" = --help ] && exit 0   # the launcher's --no-daemon probe runs the agent with --help: this stub must not run its body then
 sleep 600
 EOF2
 chmod +x "$WORK/codex-idle"
@@ -757,6 +762,7 @@ many="$HOME/.codex/sessions/2026/09/01"; mkdir -p "$many"
 ( cd "$many" && seq 1 2000 | awk '{ printf "rollout-2026-09-01T00-00-00-%08d-0000-0000-0000-000000000000.jsonl\n", $1 }' | xargs touch )
 cat > "$WORK/codex-new" <<'EOF2'
 #!/usr/bin/env bash
+[ "${1:-}" = --help ] && exit 0   # the launcher's --no-daemon probe runs the agent with --help: this stub must not create its session file then
 sleep 1
 mkdir -p "$HOME/.codex/sessions/2026/10/17"
 : > "$HOME/.codex/sessions/2026/10/17/rollout-2026-10-17T00-00-00-55555555-5555-5555-5555-555555555555.jsonl"
@@ -775,6 +781,7 @@ rm -rf "$HOME/.codex/sessions/2026/09" "$HOME/.codex/sessions/2026/10/17"
 # 2. A lane whose file shows up after the timeout keeps its id: the next lane does not take it.
 cat > "$WORK/codex-late" <<'EOF2'
 #!/usr/bin/env bash
+[ "${1:-}" = --help ] && exit 0   # the launcher's --no-daemon probe runs the agent with --help: this stub must not run its body then
 case "$AW_META_LANE" in la) sleep 3.5 ;; *) sleep 1.8 ;; esac
 id="$(cat /proc/sys/kernel/random/uuid 2> /dev/null || uuidgen | tr '[:upper:]' '[:lower:]')"
 mkdir -p "$HOME/.codex/sessions/2026/10/18"
