@@ -110,6 +110,18 @@ public sealed class EndpointCqrsTests : IDisposable
             v => v.Contains("challenges", StringComparison.Ordinal)), StringComparison.Ordinal);
     }
 
+    [Fact, Trait("Lane", "integration")]
+    public async Task Cqrs_rule_allows_a_command_on_DELETE_and_flags_a_query_on_DELETE()
+    {
+        await using var app = WebApplication.CreateSlimBuilder().Build();
+        _ = app.MapDelete("/sindri/fixture/delete-ok", ([FromServices] IService<FixtureApply, CommandAccepted> _) => Results.Ok());
+        _ = app.MapDelete("/sindri/fixture/delete-query", ([FromServices] IService<FixtureQuery, string> _) => Results.Ok());
+
+        var violations = EndpointCqrsRules.Check(Endpoints(app), new InMemoryCommandCatalog(IssueRow()));
+
+        Assert.Equal(["ARCH-CQRS-001: DELETE /sindri/fixture/delete-query serves FixtureQuery, which isn't an ICommand<>; a DELETE is a command"], violations);
+    }
+
     private static CompositeEndpointDataSource Endpoints(IEndpointRouteBuilder app) => new(app.DataSources);
 
     private static CommandRow IssueRow() =>

@@ -39,6 +39,10 @@ public sealed class InMemoryLaneSessions : ILaneSessions
     /// <param name="id">The session id.</param>
     public void Set(string session, string id) => _current[session] = SessionId.From(id);
 
+    /// <summary>Ends the lane's Claude: it reports no session id any more.</summary>
+    /// <param name="session">The tmux session name.</param>
+    public void End(string session) => _current.Remove(session);
+
     /// <inheritdoc />
     public ValueTask<Result<SessionId?>> Current(string session, CancellationToken cancellationToken)
     {

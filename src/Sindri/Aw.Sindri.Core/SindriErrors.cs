@@ -289,6 +289,6 @@ public static partial class SindriErrors
         GraphInvalid, GraphFindings, GraphUnknownBlock, GraphBadReference, GraphBadExpression, GraphBadCron, GraphStaleRevision, GraphNotFound, GraphSlugTaken, GraphIdTaken, GraphArchived,
         SkillResultUnreadable, SkillResultWrongSkill, SkillVerdictUnmapped, SkillOutputInvalid, SkillRequirementMissing, SkillPrInputInvalid, SkillAgentCopyDiffers, SkillPrFetchFailed,
         ReviewInvalid, ReviewProjectUnknown, ReviewCommandCheck, ReviewNotSynced, ReviewFixNotPosted, ReviewRepoUnsynced, ReviewNoLogin, ReviewPrNotFound, ReviewOfflineUncached,
-        LibraryDocNotFound, LinearTeamNotPicked, LinearNothingStored,
+        LibraryDocNotFound, LinearTeamNotPicked, LinearNothingStored, LinearNoWriteKey, LinearBadValue, LinearNoAnswer, LinearWriteKeySameAsRead, LinearNoKeychain, LinearUrlNotApproved,
     ];
 }

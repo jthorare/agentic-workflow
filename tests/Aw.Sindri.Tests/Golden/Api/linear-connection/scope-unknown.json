@@ -1,11 +1,11 @@
 {
   "read": {
     "state": "resolves",
-    "checkedAt": "2026-01-01T09:58:00.0000000Z"
+    "checkedAt": "2025-12-31T23:58:00.0000000Z"
   },
   "write": {
     "state": "scopeUnknown",
-    "checkedAt": "2026-01-01T09:58:00.0000000Z"
+    "checkedAt": "2025-12-31T23:58:00.0000000Z"
   },
   "teams": [
     {
