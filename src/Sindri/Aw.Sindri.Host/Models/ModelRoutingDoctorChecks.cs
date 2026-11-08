@@ -27,6 +27,7 @@ internal sealed class ModelRoutingDoctorChecks(IApprovedModels models, IModelCat
         [ModelKind.MapCleanup] = ModelPurpose.Cleanup,
         [ModelKind.Rerank] = ModelPurpose.Rerank,
         [ModelKind.ProductSurfaces] = ModelPurpose.ProductSurfaces,
+        [ModelKind.WorkflowPrompt] = ModelPurpose.WorkflowPrompt,
     };
 
     public async ValueTask<IReadOnlyList<DoctorCheck>> Run(CancellationToken cancellationToken)

@@ -37,6 +37,18 @@ public static partial class SindriErrors
     /// <summary>SND-GRAPH-011: an archived workflow can't be activated.</summary>
     public static readonly ErrorDefinition GraphArchived = new("SND-GRAPH-011", ErrorKind.Conflict, "This workflow is archived; it can't be activated");
 
+    /// <summary>SND-GRAPH-100: a run with that id exists (a re-delivered trigger or a catch-up overlap).</summary>
+    public static readonly ErrorDefinition GraphRunIdTaken = new("SND-GRAPH-100", ErrorKind.Conflict, "A run with that id already exists");
+
+    /// <summary>SND-GRAPH-101: no such run.</summary>
+    public static readonly ErrorDefinition GraphRunNotFound = new("SND-GRAPH-101", ErrorKind.NotFound, "No such workflow run");
+
+    /// <summary>SND-GRAPH-102: a block could not finish; the message says why.</summary>
+    public static readonly ErrorDefinition GraphBlockFailed = new("SND-GRAPH-102", ErrorKind.Invalid, "A block could not finish");
+
+    /// <summary>SND-GRAPH-103: a prompt node's answer did not fit its 'output' schema.</summary>
+    public static readonly ErrorDefinition GraphPromptAnswer = new("SND-GRAPH-103", ErrorKind.Invalid, "The model's answer does not fit the prompt's output schema");
+
     /// <summary>SND-GRAPH-104: run controls (complete a Step, take over, hand back) are not available until the graph engine runs agents.</summary>
     public static readonly ErrorDefinition GraphRunControlsPending = new("SND-GRAPH-104", ErrorKind.Unavailable, "This run control returns with the graph engine's agent blocks");
 }

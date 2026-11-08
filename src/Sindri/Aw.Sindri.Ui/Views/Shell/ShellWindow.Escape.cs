@@ -16,15 +16,8 @@ internal sealed partial class ShellWindow
             return false;
         }
 
-        if (shell.Palette.IsOpen)
+        if (EscapeOverlay(shell))
         {
-            shell.Palette.Close();
-            return true;
-        }
-
-        if (shell.Shortcuts.IsOpen)
-        {
-            shell.Shortcuts.Close();
             return true;
         }
 
@@ -34,6 +27,11 @@ internal sealed partial class ShellWindow
         }
 
         if (EscapeReviewPage(shell))
+        {
+            return true;
+        }
+
+        if (EscapeTodoPanel(shell))
         {
             return true;
         }
@@ -49,6 +47,29 @@ internal sealed partial class ShellWindow
         }
 
         Dispatcher.UIThread.Post(KeepFocus, DispatcherPriority.Loaded);
+        return true;
+    }
+
+    // The palette, then the ? sheet, then the quick-add box (todo spec §3.3).
+    private static bool EscapeOverlay(ShellViewModel shell)
+    {
+        if (shell.Palette.IsOpen)
+        {
+            shell.Palette.Close();
+        }
+        else if (shell.Shortcuts.IsOpen)
+        {
+            shell.Shortcuts.Close();
+        }
+        else if (shell.QuickAdd.IsOpen)
+        {
+            shell.QuickAdd.Close();
+        }
+        else
+        {
+            return false;
+        }
+
         return true;
     }
 

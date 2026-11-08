@@ -167,11 +167,12 @@ rev down >/dev/null 2>&1; check "down after that exits 0" "$?" "0"
 contains "down keeps the review: block up did not add" "$(cat "$PJ/profile/profile.yaml")" "login: fx-viewer"
 lacks "down still removes the forge up added" "$(cat "$PJ/profile/profile.yaml")" "forge:"
 
-# A profile with a forge.test-only forge can't reach the github.com PR: up refuses and says why.
+# After another verb's forge.test-only forge is in the profile, up can't reach the github.com PR: it refuses and says why.
 printf 'schemaVersion: 1\nuser: fixture\nservices:\n  heartbeat: { every: 5s }\nworkflow:\n  forge: { adapter: file, hosts: [forge.test] }\n' > "$PJ/profile/profile.yaml"
 : > "$FORGE_LOG"
-rev up >/dev/null 2>"$WORK/err-forge"; check "up after a forge.test-only forge exits 2" "$?" "2"
-contains "the refusal names the forge" "$(cat "$WORK/err-forge")" "workflow.forge without github.com"
+rev up >/dev/null 2>"$WORK/err-forge"; check "up with a forge.test-only forge exits 2" "$?" "2"
+contains "the refusal says the forge is without github.com" "$(cat "$WORK/err-forge")" "without github.com"
+contains "the refusal names the forge line" "$(cat "$WORK/err-forge")" "hosts: [forge.test]"
 check "the refusal opens no forge PR" "$(grep -c '^open ' "$FORGE_LOG")" "0"
 contains "the refusal leaves the forge.test forge in place" "$(cat "$PJ/profile/profile.yaml")" "hosts: [forge.test]"
 

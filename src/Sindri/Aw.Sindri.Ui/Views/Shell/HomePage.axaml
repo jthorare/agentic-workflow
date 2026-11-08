@@ -7,11 +7,21 @@
              xmlns:nyvm="using:Aw.Sindri.Ui.ViewModels.NeedsYou"
              xmlns:nyv="using:Aw.Sindri.Ui.Views.NeedsYou"
              xmlns:rows="using:Aw.Sindri.Ui.Views.Queue"
+             xmlns:tv="using:Aw.Sindri.Ui.Views.Todo"
              x:Class="Aw.Sindri.Ui.Views.Shell.HomePage"
              x:DataType="shell:ShellViewModel">
   <!-- Home (UI spec §3.2, §4.2): four panels in a fixed order. Each panel is a header row (the eyebrow over a hairline,
        home.html .phead) and a body. Running and With you, and Queued, are GET /queue's groups (U2: at most five rows, then
        "Show all N in Queue"; each group's own empty sentence, E-18); Needs you is the served list (U3'). The health strip is the status as labelled cells and opens Health. -->
+  <UserControl.Styles>
+    <!-- The two focus regions of Home (todo spec D6, §3.3): the one with focus draws its edge in the accent colour and its heading with it. -->
+    <Style Selector="Border.panel.region-focus">
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
+    </Style>
+    <Style Selector="TextBlock.region-focus">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Primary}" />
+    </Style>
+  </UserControl.Styles>
   <StackPanel Spacing="{StaticResource Size.PanelGap}">
     <TextBlock Classes="page-title" Text="{Binding Text.Home}" AutomationProperties.Name="{Binding Text.Home}" />
 
@@ -33,17 +43,23 @@
       </Grid>
     </Border>
 
+    <!-- The Todo panel (todo spec §3.1): across both columns, above Needs you; Home's decisions filter (G D) hides it. The host carries the
+         shell's flag, because the panel's own DataContext is the Todo view model. -->
+    <Panel x:Name="TodoPanelHost" IsVisible="{Binding IsTodoShown}">
+      <tv:TodoPanel DataContext="{Binding Todo}" />
+    </Panel>
+
     <!-- F3 home spec §2: Needs you on the left; Running (the workflow strip, then With you) and Queued on the right; the health strip across the bottom.
          Under 1100 px the columns stack (HomePage.axaml.cs). -->
     <Grid x:Name="HomeColumns" ColumnDefinitions="*,16,*">
       <StackPanel x:Name="HomeLeft" Spacing="{StaticResource Size.PanelGap}">
-        <Border x:Name="NeedsYouPanel" Classes="panel" PointerEntered="OnNeedsYouPanelEntered" PointerExited="OnNeedsYouPanelExited" AutomationProperties.Name="{Binding Text.NeedsYouPanel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+        <Border x:Name="NeedsYouPanel" Classes="panel" Classes.region-focus="{Binding IsNeedsYouFocused}" PointerEntered="OnNeedsYouPanelEntered" PointerExited="OnNeedsYouPanelExited" AutomationProperties.Name="{Binding Text.NeedsYouPanel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
           <StackPanel>
             <Border Classes="phead">
               <Grid ColumnDefinitions="*,Auto">
                 <!-- A Grid, not a StackPanel: a horizontal StackPanel measures the summary at its full width, so in a narrow cell it was drawn under the right cell (#1061). -->
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                  <TextBlock Classes="eyebrow" Text="{Binding Text.NeedsYouPanel}" AutomationProperties.Name="{Binding Text.NeedsYouPanel}" />
+                  <TextBlock Classes="eyebrow" Classes.region-focus="{Binding IsNeedsYouFocused}" Text="{Binding Text.NeedsYouPanel}" AutomationProperties.Name="{Binding Text.NeedsYouPanel}" />
                   <TextBlock x:Name="NeedsYouSummary" Grid.Column="1" Classes="caption subtle" Text="{Binding Attention.SummaryLine}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                              ToolTip.Tip="{Binding Attention.SummaryLine}" AutomationProperties.Name="{Binding Attention.SummaryLine}" />
                 </Grid>

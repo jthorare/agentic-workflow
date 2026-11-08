@@ -81,7 +81,14 @@ public sealed class LinearNewLineTests
     {
         var shell = await ShellOnWork();
 
-        await ShellWait.Until(shell, () => shell.Attention.Tray.Tooltip.EndsWith("\n3 new on your Linear issues", StringComparison.Ordinal), Token);
+        await ShellWait.Until(shell, () => shell.Attention.Tray.Tooltip.Contains("\n3 new on your Linear issues", StringComparison.Ordinal) && !shell.Todo.IsLoading, Token);
+
+        // The whole tooltip, line by line: the needs-you head, the session counts (when the status serves them), the Linear line, then the todo counts.
+        var lines = shell.Attention.Tray.Tooltip.Split('\n');
+        var sessions = shell.Health.Sessions is { } counts ? Labels.AgentsCounts(counts.Live, counts.Asking) : null;
+        var todos = shell.Todo.OverdueCount > 0 || shell.Todo.ToSortOutCount > 0 ? Labels.TrayTodos(shell.Todo.OverdueCount, shell.Todo.ToSortOutCount) : null;
+        Assert.StartsWith("Sindri", lines[0], StringComparison.Ordinal);
+        Assert.Equal(new[] { sessions, Labels.LinearNewLine(3), todos }.OfType<string>(), lines[1..], StringComparer.Ordinal);
     }, Token);
 
     [Fact]

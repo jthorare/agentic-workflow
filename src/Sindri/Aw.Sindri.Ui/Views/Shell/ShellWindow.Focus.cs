@@ -64,6 +64,7 @@ internal sealed partial class ShellWindow
         }
 
         ListenNeedsYou(shell, on);
+        ListenTodo(shell, on);
         ListenAgents(shell, on);
         ListenLinear(shell, on);
         if (on)
@@ -75,8 +76,8 @@ internal sealed partial class ShellWindow
             shell.Queue.FocusRequested -= OnFocusRow;
         }
 
-        PropertyChangedEventHandler[] handlers = [OnShellChanged, OnBannerChanged, OnOverlayChanged, OnOverlayChanged, OnOverlayChanged, OnOverlayChanged, OnQueueChanged];
-        INotifyPropertyChanged[] sources = [shell, shell.Health.Banner, shell.Palette, shell.Shortcuts, shell.Create, shell.NewIssue, shell.Queue];
+        PropertyChangedEventHandler[] handlers = [OnShellChanged, OnBannerChanged, OnOverlayChanged, OnOverlayChanged, OnOverlayChanged, OnOverlayChanged, OnOverlayChanged, OnQueueChanged];
+        INotifyPropertyChanged[] sources = [shell, shell.Health.Banner, shell.Palette, shell.Shortcuts, shell.Create, shell.NewIssue, shell.QuickAdd, shell.Queue];
         for (var i = 0; i < sources.Length; i++)
         {
             if (on)
