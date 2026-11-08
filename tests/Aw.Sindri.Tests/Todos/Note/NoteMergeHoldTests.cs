@@ -70,7 +70,7 @@ public sealed class NoteMergeHoldTests
 
         var r = Run(_ten, Without(1, 2, 3, 4), sindri);
 
-        Same([$"replace 6: {L(6, "t6 from sindri")}"], Edits(r));
+        Same([$"replace 2: {L(6, "t6 from sindri")}"], Edits(r));
         Assert.Contains(L(6, "t6 from sindri"), r.NextBase, StringComparer.Ordinal);
         Assert.Contains(L(1, "t1"), r.NextBase, StringComparer.Ordinal);
     }
