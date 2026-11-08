@@ -30,6 +30,7 @@ internal static class ConnectionServiceCollectionExtensions
             .AddScoped<IService<AddConnectionRequest, AddConnectionResponse>, AddConnectionService>()
             .AddScoped<IService<TestConnectionRequest, TestConnectionResponse>, TestConnectionService>()
             .AddScoped<IService<RemoveConnectionRequest, RemoveConnectionResponse>, RemoveConnectionService>()
+            .AddScoped<IService<SignInConnectionRequest, AddConnectionResponse>, SignInConnectionService>()
             .AddScoped<IValidator<ListConnectionsRequest>, AcceptAllValidator<ListConnectionsRequest>>().AddQuery<ListConnectionsRequest, ListConnectionsResponse, ListConnectionsService>()
             .AddScoped<IValidator<GetConnectionRequest>, AcceptAllValidator<GetConnectionRequest>>().AddQuery<GetConnectionRequest, GetConnectionResponse, GetConnectionService>();
     }

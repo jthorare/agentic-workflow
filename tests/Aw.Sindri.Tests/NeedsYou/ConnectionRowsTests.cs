@@ -21,7 +21,7 @@ public sealed class ConnectionRowsTests
         var row = NeedsYouRows.ForConnection(ConnectionSamples.Name(), "invalid_grant", _t, new PassThroughScrubber()).Value;
 
         Expect.Equal(("connection:linear:work", NeedsYouKind.Connection, SubjectKind.Connection, "linear:work"), (row.Id.Value, row.Kind, row.Subject.Kind, row.Subject.Id.Value));
-        Expect.Equal(("sindri connection add linear:work --oauth", _t), (row.Cli, row.Since));
+        Expect.Equal(("sindri connection signin linear:work", _t), (row.Cli, row.Since));
         Assert.Contains("invalid_grant", row.Reason, StringComparison.Ordinal);
         Assert.Contains("linear:work", row.Title, StringComparison.Ordinal);
     }

@@ -114,4 +114,20 @@ public sealed class CliConnectionVerbsTests : IDisposable
         Assert.DoesNotContain(api.Calls, static c => c.Method == "POST");
         AssertNeitherPrinted();
     }
+
+    [Fact]
+    public async Task Signin_posts_to_the_connection_prints_the_consent_url_and_waits_for_a_newer_refresh()
+    {
+        var before = Added("linear:work", "oauth").Connection with { Status = "needs-sign-in", StatusReason = "refresh failed", LastRefreshedAt = DateTimeOffset.UnixEpoch };
+        var after = before with { Status = "connected", StatusReason = null, LastRefreshedAt = DateTimeOffset.UnixEpoch.AddHours(1) };
+        var api = new RoutedApi()
+            .OnPost("/sindri/connections/linear%3Awork/signin", HttpStatusCode.OK, new AddConnectionResponse(before, "https://provider.example.test/authorize?state=x"))
+            .On("/sindri/connections/linear%3Awork", HttpStatusCode.OK, new Aw.Sindri.Features.GetConnection.GetConnectionResponse(after));
+
+        var code = await Verbs(api).Run(["connection", "signin", "linear:work"], Token);
+
+        Assert.Equal(0, code);
+        Assert.Contains("https://provider.example.test/authorize", _error.ToString(), StringComparison.Ordinal);
+        Assert.Contains("connected", _out.ToString(), StringComparison.Ordinal);
+    }
 }

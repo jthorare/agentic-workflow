@@ -97,6 +97,14 @@ internal sealed class ConnectionHarness
 
     public RemoveConnectionService Remove() => new(Store, Secrets);
 
+    /// <summary>The sign-in-again slice over the harness's ports and the same sign-in flow Add builds.</summary>
+    /// <returns>The service.</returns>
+    public SignInConnectionService SignInAgain()
+    {
+        _ = Store;   // red stub: the green builds the service over the harness's ports
+        return new SignInConnectionService();
+    }
+
     /// <summary>The refresh service over the harness's ports, with the ledger and an event factory on the harness clock.</summary>
     /// <returns>The service.</returns>
     /// <param name="oauth">The token client; the scripted one when null.</param>

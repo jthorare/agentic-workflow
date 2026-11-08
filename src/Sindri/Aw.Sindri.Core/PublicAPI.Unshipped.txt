@@ -24755,6 +24755,7 @@ static Aw.Sindri.Core.Connections.TokenSet.operator !=(Aw.Sindri.Core.Connection
 static Aw.Sindri.Core.Connections.TokenSet.operator ==(Aw.Sindri.Core.Connections.TokenSet? left, Aw.Sindri.Core.Connections.TokenSet? right) -> bool
 static readonly Aw.Sindri.Core.SindriErrors.ConnectionConsentDenied -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ConnectionExists -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionKindNoSignIn -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ConnectionNameInvalid -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ConnectionNeedsClientId -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ConnectionNeedsSignIn -> Aw.Kernel.ErrorDefinition!

@@ -6233,3 +6233,17 @@ Aw.Sindri.Features.AddConnection.AddConnectionRequest.Key.get -> string?
 Aw.Sindri.Features.AddConnection.AddConnectionRequest.Key.init -> void
 Aw.Sindri.Features.AddConnection.AddConnectionRequest.AddConnectionRequest(string! Name, string? Preset, string? Kind, string? Client, string? KeyEnv, System.Collections.Generic.IReadOnlyList<string!>! Scopes, bool Wait, string? ClientSecretEnv = null, string? Key = null, string? ClientSecret = null, string? Url = null) -> void
 Aw.Sindri.Features.AddConnection.AddConnectionRequest.Deconstruct(out string! Name, out string? Preset, out string? Kind, out string? Client, out string? KeyEnv, out System.Collections.Generic.IReadOnlyList<string!>! Scopes, out bool Wait, out string? ClientSecretEnv, out string? Key, out string? ClientSecret, out string? Url) -> void
+Aw.Sindri.Features.AddConnection.SignInConnectionRequest
+Aw.Sindri.Features.AddConnection.SignInConnectionRequest.<Clone>$() -> Aw.Sindri.Features.AddConnection.SignInConnectionRequest!
+Aw.Sindri.Features.AddConnection.SignInConnectionRequest.Deconstruct(out string! Name, out bool Wait) -> void
+Aw.Sindri.Features.AddConnection.SignInConnectionRequest.Equals(Aw.Sindri.Features.AddConnection.SignInConnectionRequest? other) -> bool
+Aw.Sindri.Features.AddConnection.SignInConnectionRequest.Name.get -> string!
+Aw.Sindri.Features.AddConnection.SignInConnectionRequest.Name.init -> void
+Aw.Sindri.Features.AddConnection.SignInConnectionRequest.SignInConnectionRequest(string! Name, bool Wait = false) -> void
+Aw.Sindri.Features.AddConnection.SignInConnectionRequest.Wait.get -> bool
+Aw.Sindri.Features.AddConnection.SignInConnectionRequest.Wait.init -> void
+override Aw.Sindri.Features.AddConnection.SignInConnectionRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.AddConnection.SignInConnectionRequest.GetHashCode() -> int
+override Aw.Sindri.Features.AddConnection.SignInConnectionRequest.ToString() -> string!
+static Aw.Sindri.Features.AddConnection.SignInConnectionRequest.operator !=(Aw.Sindri.Features.AddConnection.SignInConnectionRequest? left, Aw.Sindri.Features.AddConnection.SignInConnectionRequest? right) -> bool
+static Aw.Sindri.Features.AddConnection.SignInConnectionRequest.operator ==(Aw.Sindri.Features.AddConnection.SignInConnectionRequest? left, Aw.Sindri.Features.AddConnection.SignInConnectionRequest? right) -> bool
