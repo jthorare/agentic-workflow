@@ -15,8 +15,8 @@ namespace Aw.Sindri.Infrastructure.Profile;
 /// <param name="settings">Where the profile is.</param>
 /// <param name="options">The package's AwJson options.</param>
 /// <param name="box">The box's limits the profile must stay inside, read each time; null checks the profile alone.</param>
-/// <param name="cache">Told right after a write, so the next read parses the file; null when nothing keeps the profile.</param>
-internal sealed class YamlProfileIndexWriter(SindriSettings settings, JsonSerializerOptions options, Func<BoxLimits>? box = null, IProfileCache? cache = null) : IProfileIndexWriter
+/// <param name="cache">Told right after a write, so the next read parses the file.</param>
+internal sealed class YamlProfileIndexWriter(SindriSettings settings, JsonSerializerOptions options, IProfileCache cache, Func<BoxLimits>? box = null) : IProfileIndexWriter
 {
     private const string Conflict = "The profile changed while Sindri was writing it. Try again.";
     private const int Attempts = 2;
@@ -68,7 +68,7 @@ internal sealed class YamlProfileIndexWriter(SindriSettings settings, JsonSerial
         var (result, reason) = YamlProfileRepoWriter.Write(path, before, after);
         if (result == YamlProfileRepoWriter.Written.Done)
         {
-            cache?.Invalidate();
+            cache.Invalidate();
         }
 
         return result switch

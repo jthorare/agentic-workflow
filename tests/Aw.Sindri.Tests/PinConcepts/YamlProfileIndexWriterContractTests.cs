@@ -28,6 +28,6 @@ public sealed class YamlProfileIndexWriterContractTests : ProfileIndexWriterCont
         File.WriteAllText(path, "schemaVersion: 1\nuser: thor\nrepos: []\n");
         Assert.Null(YamlToJson.TryConvert(File.ReadAllText(path), out var json));
         var loaded = ProfileReading.FromJson(json, path, ProfileFiles.Options);
-        return (new YamlProfileIndexWriter(new SindriSettings(_dir, path), ProfileFiles.Options), loaded.Value.Hash);
+        return (new YamlProfileIndexWriter(new SindriSettings(_dir, path), ProfileFiles.Options, Aw.Sindri.Testing.NoProfileCache.Instance), loaded.Value.Hash);
     }
 }

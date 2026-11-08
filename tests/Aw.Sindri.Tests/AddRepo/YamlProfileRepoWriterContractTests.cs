@@ -19,5 +19,5 @@ public sealed class YamlProfileRepoWriterContractTests : ProfileRepoWriterContra
         }
     }
 
-    protected override IProfileRepoWriter Create() => new YamlProfileRepoWriter(new SindriSettings(_dir, Path.Combine(_dir, "profile", "profile.yaml")));
+    protected override IProfileRepoWriter Create() => new YamlProfileRepoWriter(new SindriSettings(_dir, Path.Combine(_dir, "profile", "profile.yaml")), Aw.Sindri.Testing.NoProfileCache.Instance);
 }

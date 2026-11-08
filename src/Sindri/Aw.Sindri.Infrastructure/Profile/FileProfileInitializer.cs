@@ -7,8 +7,8 @@ namespace Aw.Sindri.Infrastructure.Profile;
 
 /// <summary><see cref="IProfileInitializer"/> over the live profile file: created owner-only, and never over a file that is there (the create fails if another process wrote one first).</summary>
 /// <param name="settings">Where the profile is.</param>
-/// <param name="cache">Told right after a write, so the next read parses the file; null when nothing keeps the profile.</param>
-internal sealed class FileProfileInitializer(SindriSettings settings, Aw.Sindri.Core.Profile.IProfileCache? cache = null) : IProfileInitializer
+/// <param name="cache">Told right after a write, so the next read parses the file.</param>
+internal sealed class FileProfileInitializer(SindriSettings settings, Aw.Sindri.Core.Profile.IProfileCache cache) : IProfileInitializer
 {
     public async ValueTask<Result<string>> Create(IReadOnlyCollection<string> defaultEffects, CancellationToken cancellationToken)
     {
@@ -35,7 +35,7 @@ internal sealed class FileProfileInitializer(SindriSettings settings, Aw.Sindri.
             }
 
             OwnerOnly.RestrictFiles(path);
-            cache?.Invalidate();
+            cache.Invalidate();
             return path;
         }
         catch (IOException) when (File.Exists(path))

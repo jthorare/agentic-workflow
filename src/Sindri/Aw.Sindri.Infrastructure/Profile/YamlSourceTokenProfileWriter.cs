@@ -10,7 +10,7 @@ namespace Aw.Sindri.Infrastructure.Profile;
 /// otherwise one is added as the block's first line. The source's block must already exist in block style (its repos are the owner's to write); a flow-style entry is a layout Sindri won't edit. The result is parsed again before it
 /// is written, and the file is written atomically.
 /// </summary>
-internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings, Aw.Sindri.Core.Profile.IProfileCache? cache = null) : ISourceTokenProfileWriter, ILinearWriteTokenWriter, ILinearProfileEditCheck
+internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings, Aw.Sindri.Core.Profile.IProfileCache cache) : ISourceTokenProfileWriter, ILinearWriteTokenWriter, ILinearProfileEditCheck
 {
     /// <inheritdoc />
     public Result<bool> SetToken(string source, string secretPointer)
@@ -106,12 +106,12 @@ internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings, Aw.S
 
     private static string TeamsLine(IReadOnlyList<string> teams) => $"teams: [{string.Join(", ", teams.Select(YamlProfileLines.Quote))}]";
 
-    private static Result<bool> Save(string path, string text, Aw.Sindri.Core.Profile.IProfileCache? cache)
+    private static Result<bool> Save(string path, string text, Aw.Sindri.Core.Profile.IProfileCache cache)
     {
         try
         {
             YamlProfileLines.Write(path, text);
-            cache?.Invalidate();
+            cache.Invalidate();
             return true;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
