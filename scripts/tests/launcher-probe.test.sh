@@ -39,4 +39,16 @@ check "a CLI that hangs on --help: no, within the cap" "$rc:$([ $((SECONDS - t0)
 sleep 0.3
 kid="$(head -1 "$KIDS")"
 check "the child that --help forked is gone after the probe" "$(kill -0 "$kid" 2> /dev/null && echo running || echo gone)" "gone"
+
+# A hangup of the caller (a pane killed) during the probe ends the probe's group too: it is outside the caller's own group.
+: > "$KIDS"
+( launcher_cli_has_flag "$WORK/forks" --no-daemon ) &
+caller=$!
+for _ in $(seq 30); do [ -s "$KIDS" ] && break; sleep 0.1; done
+kid="$(head -1 "$KIDS")"
+# the hangup reaches every process in the caller's group: here the caller and the probe's own subshell (its child)
+probe_sh="$(pgrep -P "$caller" | head -1)"
+kill -HUP "$probe_sh" "$caller" 2> /dev/null; wait "$caller" 2> /dev/null
+sleep 0.5
+check "a hangup during the probe: the child is gone too" "$(kill -0 "$kid" 2> /dev/null && echo running || echo gone)" "gone"
 exit "$fail"
