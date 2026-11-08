@@ -29,6 +29,34 @@ internal static partial class Libc
         NativeLibrary.SetDllImportResolver(typeof(Libc).Assembly, Resolve);
     }
 
+    /// <summary>errno for "function not implemented": this OS or file system has no atomic swap.</summary>
+    internal const int NotImplemented = 38;   // Linux ENOSYS; macOS reports its own value (78), which only matters as "not zero"
+
+    private const int AtFdCwd = -100;   // Linux AT_FDCWD
+    private const uint SwapFlag = 2;    // Linux RENAME_EXCHANGE and macOS RENAME_SWAP are both 2
+
+    /// <summary>Swaps two existing files in one step ('renameat2' with RENAME_EXCHANGE on Linux, 'renamex_np' with RENAME_SWAP on macOS): afterwards each path holds the other's file.</summary>
+    /// <param name="first">One file.</param>
+    /// <param name="second">The other file, on the same file system.</param>
+    /// <returns>0 when swapped, else the errno (the file system or the OS has no swap, or a path is missing).</returns>
+    internal static int SwapFiles(string first, string second)
+    {
+        if (!OperatingSystem.IsMacOS() && !OperatingSystem.IsLinux())
+        {
+            return NotImplemented;
+        }
+
+        try
+        {
+            var done = OperatingSystem.IsMacOS() ? RenamexNp(first, second, SwapFlag) : Renameat2(AtFdCwd, first, AtFdCwd, second, SwapFlag);
+            return done == 0 ? 0 : Marshal.GetLastPInvokeError();
+        }
+        catch (EntryPointNotFoundException)
+        {
+            return NotImplemented;
+        }
+    }
+
     /// <summary>Creates one directory atomically.</summary>
     /// <param name="path">The directory; its parent must exist.</param>
     /// <returns>0, or the errno when it failed (<see cref="AlreadyExists"/> when it is there).</returns>
@@ -86,6 +114,12 @@ internal static partial class Libc
 
     [LibraryImport(Library, EntryPoint = "mkdir", SetLastError = true, StringMarshalling = StringMarshalling.Utf8)]
     private static partial int Mkdir(string path, uint mode);
+
+    [LibraryImport(Library, EntryPoint = "renameat2", SetLastError = true, StringMarshalling = StringMarshalling.Utf8)]
+    private static partial int Renameat2(int oldDirectory, string oldPath, int newDirectory, string newPath, uint flags);
+
+    [LibraryImport(Library, EntryPoint = "renamex_np", SetLastError = true, StringMarshalling = StringMarshalling.Utf8)]
+    private static partial int RenamexNp(string from, string to, uint flags);
 
     private static IntPtr Resolve(string name, Assembly assembly, DllImportSearchPath? searchPath)
     {

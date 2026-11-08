@@ -28,6 +28,7 @@ namespace Aw.Sindri.Core.Profile;
 /// <param name="Sandbox">The 'sandbox:' section (sandbox spec §9). Left out of the canonical JSON when absent, so a profile without it keeps its hash and gets the built-in defaults.</param>
 /// <param name="Setup">The 'setup:' block (setup-once spec §7.1). Left out of the canonical JSON when absent, so a profile without it keeps its hash.</param>
 /// <param name="Review">The top-level 'review:' block (PR review page spec §7; not 'workflow.review', the lens models). Left out of the canonical JSON when absent, so a profile without it keeps its hash.</param>
+/// <param name="Todo">The top-level 'todo:' block (todo spec §4.5): the Obsidian note the todos sync with. Left out of the canonical JSON when absent, so a profile without it keeps its hash.</param>
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record SindriProfile(
     int SchemaVersion,
@@ -43,7 +44,8 @@ public sealed record SindriProfile(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] AgentSettings? Agents = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] SetupSettings? Setup = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] SandboxSettings? Sandbox = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] PrReviewSettings? Review = null)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] PrReviewSettings? Review = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] TodoSettings? Todo = null)
 {
     /// <summary>The tenant key until team mode.</summary>
     public const string DefaultTenant = "local";

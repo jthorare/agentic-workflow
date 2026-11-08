@@ -477,6 +477,25 @@
       "confirm": null
     },
     {
+      "action": "CheckTodoNote",
+      "class": "request",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/todos/note/check",
+      "cli": "sindri todo note set <vault> <note> [--json]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": true,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "CloseItem:cancelled",
       "class": "desk",
       "allowedCallers": [
@@ -1781,6 +1800,20 @@
       "confirm": null
     },
     {
+      "action": "SetTodoNote",
+      "class": "local",
+      "allowedCallers": [],
+      "terminal": false,
+      "method": null,
+      "route": null,
+      "cli": "sindri todo note set <vault> <note> [--json]",
+      "ui": "cli-only:local",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "ShowLineHoldout",
       "class": "protected",
       "allowedCallers": [
@@ -1847,6 +1880,20 @@
       "cli": "sindri stop",
       "ui": "ready",
       "destructive": true,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "StopTodoNote",
+      "class": "local",
+      "allowedCallers": [],
+      "terminal": false,
+      "method": null,
+      "route": null,
+      "cli": "sindri todo note stop [--json]",
+      "ui": "cli-only:local",
+      "destructive": false,
       "readsViews": false,
       "shortcut": null,
       "confirm": null

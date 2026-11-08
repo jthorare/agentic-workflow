@@ -22734,10 +22734,8 @@ Aw.Sindri.Core.Profile.PrReviewSettingsEntry.Panels.init -> void
 Aw.Sindri.Core.Profile.PrReviewSettingsEntry.PrReviewSettingsEntry(string? Extends = null, System.Collections.Generic.IReadOnlyList<string!>? Panels = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewGroup!>? Groups = null, System.Collections.Generic.IReadOnlyList<string!>? Collapse = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewRisky!>? Risky = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewCheck!>? Checks = null) -> void
 Aw.Sindri.Core.Profile.PrReviewSettingsEntry.Risky.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PrReviewRisky!>?
 Aw.Sindri.Core.Profile.PrReviewSettingsEntry.Risky.init -> void
-Aw.Sindri.Core.Profile.SindriProfile.Deconstruct(out int SchemaVersion, out string! User, out string! Tenant, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.RepoEntry!>? Repos, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.ServiceSettings!>? Services, out Aw.Sindri.Core.Profile.ApiSettings? Api, out Aw.Sindri.Core.Profile.WorkflowSettings? Workflow, out System.Text.Json.JsonElement? Context, out Aw.Sindri.Core.Profile.IndexSettings? Index, out Aw.Sindri.Core.Profile.LaunchSettings? Launch, out Aw.Sindri.Core.Profile.AgentSettings? Agents, out Aw.Sindri.Core.Profile.SetupSettings? Setup, out Aw.Sindri.Core.Profile.SandboxSettings? Sandbox, out Aw.Sindri.Core.Profile.PrReviewSettings? Review) -> void
 Aw.Sindri.Core.Profile.SindriProfile.Review.get -> Aw.Sindri.Core.Profile.PrReviewSettings?
 Aw.Sindri.Core.Profile.SindriProfile.Review.init -> void
-Aw.Sindri.Core.Profile.SindriProfile.SindriProfile(int SchemaVersion, string! User, string! Tenant = "local", System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.RepoEntry!>? Repos = null, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.ServiceSettings!>? Services = null, Aw.Sindri.Core.Profile.ApiSettings? Api = null, Aw.Sindri.Core.Profile.WorkflowSettings? Workflow = null, System.Text.Json.JsonElement? Context = null, Aw.Sindri.Core.Profile.IndexSettings? Index = null, Aw.Sindri.Core.Profile.LaunchSettings? Launch = null, Aw.Sindri.Core.Profile.AgentSettings? Agents = null, Aw.Sindri.Core.Profile.SetupSettings? Setup = null, Aw.Sindri.Core.Profile.SandboxSettings? Sandbox = null, Aw.Sindri.Core.Profile.PrReviewSettings? Review = null) -> void
 const Aw.Sindri.Core.Profile.PrReviewDefaults.DefaultName = "default" -> string!
 override Aw.Sindri.Core.Profile.PrReviewCheck.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Profile.PrReviewCheck.GetHashCode() -> int
@@ -26360,3 +26358,102 @@ Aw.Sindri.Core.Graph.Blocks.PromptBlock.CheckConfig(System.Text.Json.Nodes.JsonO
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.MarkTick(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.DateTimeOffset tick, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.LastTick(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.DateTimeOffset?>!>
 static Aw.Sindri.Core.Graph.Runs.WorkflowRun.TriggerProblem(string! trigger) -> string?
+Aw.Sindri.Core.Profile.SindriProfile.Deconstruct(out int SchemaVersion, out string! User, out string! Tenant, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.RepoEntry!>? Repos, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.ServiceSettings!>? Services, out Aw.Sindri.Core.Profile.ApiSettings? Api, out Aw.Sindri.Core.Profile.WorkflowSettings? Workflow, out System.Text.Json.JsonElement? Context, out Aw.Sindri.Core.Profile.IndexSettings? Index, out Aw.Sindri.Core.Profile.LaunchSettings? Launch, out Aw.Sindri.Core.Profile.AgentSettings? Agents, out Aw.Sindri.Core.Profile.SetupSettings? Setup, out Aw.Sindri.Core.Profile.SandboxSettings? Sandbox, out Aw.Sindri.Core.Profile.PrReviewSettings? Review, out Aw.Sindri.Core.Profile.TodoSettings? Todo) -> void
+Aw.Sindri.Core.Profile.SindriProfile.SindriProfile(int SchemaVersion, string! User, string! Tenant = "local", System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.RepoEntry!>? Repos = null, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.ServiceSettings!>? Services = null, Aw.Sindri.Core.Profile.ApiSettings? Api = null, Aw.Sindri.Core.Profile.WorkflowSettings? Workflow = null, System.Text.Json.JsonElement? Context = null, Aw.Sindri.Core.Profile.IndexSettings? Index = null, Aw.Sindri.Core.Profile.LaunchSettings? Launch = null, Aw.Sindri.Core.Profile.AgentSettings? Agents = null, Aw.Sindri.Core.Profile.SetupSettings? Setup = null, Aw.Sindri.Core.Profile.SandboxSettings? Sandbox = null, Aw.Sindri.Core.Profile.PrReviewSettings? Review = null, Aw.Sindri.Core.Profile.TodoSettings? Todo = null) -> void
+Aw.Sindri.Core.Profile.SindriProfile.Todo.get -> Aw.Sindri.Core.Profile.TodoSettings?
+Aw.Sindri.Core.Profile.SindriProfile.Todo.init -> void
+Aw.Sindri.Core.Profile.TodoObsidianRules
+Aw.Sindri.Core.Profile.TodoObsidianSettings
+Aw.Sindri.Core.Profile.TodoObsidianSettings.<Clone>$() -> Aw.Sindri.Core.Profile.TodoObsidianSettings!
+Aw.Sindri.Core.Profile.TodoObsidianSettings.Deconstruct(out string? Vault, out string? Note) -> void
+Aw.Sindri.Core.Profile.TodoObsidianSettings.Equals(Aw.Sindri.Core.Profile.TodoObsidianSettings? other) -> bool
+Aw.Sindri.Core.Profile.TodoObsidianSettings.Note.get -> string?
+Aw.Sindri.Core.Profile.TodoObsidianSettings.Note.init -> void
+Aw.Sindri.Core.Profile.TodoObsidianSettings.TodoObsidianSettings(string? Vault = null, string? Note = null) -> void
+Aw.Sindri.Core.Profile.TodoObsidianSettings.Vault.get -> string?
+Aw.Sindri.Core.Profile.TodoObsidianSettings.Vault.init -> void
+Aw.Sindri.Core.Profile.TodoSettings
+Aw.Sindri.Core.Profile.TodoSettings.<Clone>$() -> Aw.Sindri.Core.Profile.TodoSettings!
+Aw.Sindri.Core.Profile.TodoSettings.Deconstruct(out Aw.Sindri.Core.Profile.TodoObsidianSettings? Obsidian) -> void
+Aw.Sindri.Core.Profile.TodoSettings.Equals(Aw.Sindri.Core.Profile.TodoSettings? other) -> bool
+Aw.Sindri.Core.Profile.TodoSettings.Obsidian.get -> Aw.Sindri.Core.Profile.TodoObsidianSettings?
+Aw.Sindri.Core.Profile.TodoSettings.Obsidian.init -> void
+Aw.Sindri.Core.Profile.TodoSettings.TodoSettings(Aw.Sindri.Core.Profile.TodoObsidianSettings? Obsidian = null) -> void
+Aw.Sindri.Core.Setup.IProfileKeyWriter.PlanRemove(string! keyPath) -> Aw.Kernel.Result<Aw.Sindri.Core.Setup.ProfileKeyEdit!>!
+Aw.Sindri.Core.Setup.IProfileKeyWriter.PlanTexts(System.Collections.Generic.IReadOnlyList<(string! KeyPath, string! Value)>! values) -> Aw.Kernel.Result<Aw.Sindri.Core.Setup.ProfileKeyEdit!>!
+Aw.Sindri.Core.Todos.Note.ITodoNoteDisk
+Aw.Sindri.Core.Todos.Note.ITodoNoteDisk.Inspect(string! vaultRoot, string! note) -> Aw.Sindri.Core.Todos.Note.NoteFileFacts!
+Aw.Sindri.Core.Todos.Note.ITodoNoteDisk.Probe(string! vaultRoot, string! note) -> Aw.Sindri.Core.Todos.Note.NoteFolderFacts!
+Aw.Sindri.Core.Todos.Note.NoteCounter
+Aw.Sindri.Core.Todos.Note.NoteCounts
+Aw.Sindri.Core.Todos.Note.NoteCounts.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteCounts!
+Aw.Sindri.Core.Todos.Note.NoteCounts.CantImport.get -> int
+Aw.Sindri.Core.Todos.Note.NoteCounts.CantImport.init -> void
+Aw.Sindri.Core.Todos.Note.NoteCounts.CantImportLines.get -> System.Collections.Generic.IReadOnlyList<int>!
+Aw.Sindri.Core.Todos.Note.NoteCounts.CantImportLines.init -> void
+Aw.Sindri.Core.Todos.Note.NoteCounts.Deconstruct(out int Open, out int Done, out int Other, out int Importable, out int CantImport, out System.Collections.Generic.IReadOnlyList<int>! CantImportLines) -> void
+Aw.Sindri.Core.Todos.Note.NoteCounts.Done.get -> int
+Aw.Sindri.Core.Todos.Note.NoteCounts.Done.init -> void
+Aw.Sindri.Core.Todos.Note.NoteCounts.Equals(Aw.Sindri.Core.Todos.Note.NoteCounts? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteCounts.Importable.get -> int
+Aw.Sindri.Core.Todos.Note.NoteCounts.Importable.init -> void
+Aw.Sindri.Core.Todos.Note.NoteCounts.NoteCounts(int Open, int Done, int Other, int Importable, int CantImport, System.Collections.Generic.IReadOnlyList<int>! CantImportLines) -> void
+Aw.Sindri.Core.Todos.Note.NoteCounts.Open.get -> int
+Aw.Sindri.Core.Todos.Note.NoteCounts.Open.init -> void
+Aw.Sindri.Core.Todos.Note.NoteCounts.Other.get -> int
+Aw.Sindri.Core.Todos.Note.NoteCounts.Other.init -> void
+Aw.Sindri.Core.Todos.Note.NoteFileFacts
+Aw.Sindri.Core.Todos.Note.NoteFileFacts.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteFileFacts!
+Aw.Sindri.Core.Todos.Note.NoteFileFacts.Deconstruct(out bool Exists, out bool IsSymlink, out int LinkCount, out string? Text, out string? Unreadable) -> void
+Aw.Sindri.Core.Todos.Note.NoteFileFacts.Equals(Aw.Sindri.Core.Todos.Note.NoteFileFacts? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteFileFacts.Exists.get -> bool
+Aw.Sindri.Core.Todos.Note.NoteFileFacts.Exists.init -> void
+Aw.Sindri.Core.Todos.Note.NoteFileFacts.IsSymlink.get -> bool
+Aw.Sindri.Core.Todos.Note.NoteFileFacts.IsSymlink.init -> void
+Aw.Sindri.Core.Todos.Note.NoteFileFacts.LinkCount.get -> int
+Aw.Sindri.Core.Todos.Note.NoteFileFacts.LinkCount.init -> void
+Aw.Sindri.Core.Todos.Note.NoteFileFacts.NoteFileFacts(bool Exists, bool IsSymlink, int LinkCount, string? Text, string? Unreadable) -> void
+Aw.Sindri.Core.Todos.Note.NoteFileFacts.Text.get -> string?
+Aw.Sindri.Core.Todos.Note.NoteFileFacts.Text.init -> void
+Aw.Sindri.Core.Todos.Note.NoteFileFacts.Unreadable.get -> string?
+Aw.Sindri.Core.Todos.Note.NoteFileFacts.Unreadable.init -> void
+Aw.Sindri.Core.Todos.Note.NoteFolderFacts
+Aw.Sindri.Core.Todos.Note.NoteFolderFacts.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteFolderFacts!
+Aw.Sindri.Core.Todos.Note.NoteFolderFacts.CanSwap.get -> bool
+Aw.Sindri.Core.Todos.Note.NoteFolderFacts.CanSwap.init -> void
+Aw.Sindri.Core.Todos.Note.NoteFolderFacts.Deconstruct(out bool Writable, out bool CanSwap) -> void
+Aw.Sindri.Core.Todos.Note.NoteFolderFacts.Equals(Aw.Sindri.Core.Todos.Note.NoteFolderFacts? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteFolderFacts.NoteFolderFacts(bool Writable, bool CanSwap) -> void
+Aw.Sindri.Core.Todos.Note.NoteFolderFacts.Writable.get -> bool
+Aw.Sindri.Core.Todos.Note.NoteFolderFacts.Writable.init -> void
+const Aw.Sindri.Core.Todos.Note.NoteCounter.ListedLines = 5 -> int
+const Aw.Sindri.Core.Todos.Note.NoteCounter.MaxOpen = 500 -> int
+override Aw.Sindri.Core.Profile.TodoObsidianSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.TodoObsidianSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.TodoObsidianSettings.ToString() -> string!
+override Aw.Sindri.Core.Profile.TodoSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.TodoSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.TodoSettings.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteCounts.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteCounts.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteCounts.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteFileFacts.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteFileFacts.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteFileFacts.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteFolderFacts.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteFolderFacts.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteFolderFacts.ToString() -> string!
+static Aw.Sindri.Core.Profile.TodoObsidianRules.NotePath(string? note) -> string?
+static Aw.Sindri.Core.Profile.TodoObsidianRules.Problem(string? vault, string? note, System.Text.Json.JsonElement? context) -> Aw.Kernel.Error?
+static Aw.Sindri.Core.Profile.TodoObsidianSettings.operator !=(Aw.Sindri.Core.Profile.TodoObsidianSettings? left, Aw.Sindri.Core.Profile.TodoObsidianSettings? right) -> bool
+static Aw.Sindri.Core.Profile.TodoObsidianSettings.operator ==(Aw.Sindri.Core.Profile.TodoObsidianSettings? left, Aw.Sindri.Core.Profile.TodoObsidianSettings? right) -> bool
+static Aw.Sindri.Core.Profile.TodoSettings.operator !=(Aw.Sindri.Core.Profile.TodoSettings? left, Aw.Sindri.Core.Profile.TodoSettings? right) -> bool
+static Aw.Sindri.Core.Profile.TodoSettings.operator ==(Aw.Sindri.Core.Profile.TodoSettings? left, Aw.Sindri.Core.Profile.TodoSettings? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteCounter.Count(Aw.Sindri.Core.Todos.Note.NoteDocument! note) -> Aw.Sindri.Core.Todos.Note.NoteCounts!
+static Aw.Sindri.Core.Todos.Note.NoteCounter.WillImport(int importable, int sindriOpen) -> int
+static Aw.Sindri.Core.Todos.Note.NoteCounts.operator !=(Aw.Sindri.Core.Todos.Note.NoteCounts? left, Aw.Sindri.Core.Todos.Note.NoteCounts? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteCounts.operator ==(Aw.Sindri.Core.Todos.Note.NoteCounts? left, Aw.Sindri.Core.Todos.Note.NoteCounts? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteFileFacts.operator !=(Aw.Sindri.Core.Todos.Note.NoteFileFacts? left, Aw.Sindri.Core.Todos.Note.NoteFileFacts? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteFileFacts.operator ==(Aw.Sindri.Core.Todos.Note.NoteFileFacts? left, Aw.Sindri.Core.Todos.Note.NoteFileFacts? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteFolderFacts.operator !=(Aw.Sindri.Core.Todos.Note.NoteFolderFacts? left, Aw.Sindri.Core.Todos.Note.NoteFolderFacts? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteFolderFacts.operator ==(Aw.Sindri.Core.Todos.Note.NoteFolderFacts? left, Aw.Sindri.Core.Todos.Note.NoteFolderFacts? right) -> bool
