@@ -6,7 +6,6 @@ using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Workflow;
-using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Features.Launching;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Launch;

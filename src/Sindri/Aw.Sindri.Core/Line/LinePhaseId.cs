@@ -5,7 +5,7 @@ using Vogen;
 
 namespace Aw.Sindri.Core.Line;
 
-/// <summary>A phase's id as the plan names it ('P1'): not empty, at most 256 characters. A linked instance's address names its slug (<see cref="Workflow.Engine.InstanceAddress.LinkedId"/>).</summary>
+/// <summary>A phase's id as the plan names it ('P1'): not empty, at most 256 characters. A linked instance's address names its slug (<see cref="Launch.InstanceAddress.LinkedId"/>).</summary>
 [ValueObject<string>(comparison: ComparisonGeneration.Omit)]
 [JsonConverter(typeof(StringIdJsonConverter<LinePhaseId>))]
 public readonly partial struct LinePhaseId : ITypedId<LinePhaseId, string>
