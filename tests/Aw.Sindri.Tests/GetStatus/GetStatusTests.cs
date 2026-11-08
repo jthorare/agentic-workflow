@@ -58,4 +58,16 @@ public sealed class GetStatusTests
         var heartbeat = Assert.Single(status.Services);
         Assert.Equal(("heartbeat", "5s", _h.Clock.GetUtcNow()), (heartbeat.Name.Value, heartbeat.Every, heartbeat.LastRun!.Value));
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task GetStatus_fails_with_the_code_and_the_file_when_the_live_profile_is_invalid()
+    {
+        _h.Profiles.Live = Aw.Sindri.Core.SindriErrors.ProfileInvalid.With("/home/thor/profile.yaml: line 3: unknown key 'tennant'");
+
+        var result = await Service().Handle(new GetStatusRequest(), Token);
+
+        Assert.True(result.IsError);
+        Assert.Equal("SND-PROFILE-002", result.Error.Code);
+        Assert.Contains("/home/thor/profile.yaml", result.Error.Message, StringComparison.Ordinal);
+    }
 }

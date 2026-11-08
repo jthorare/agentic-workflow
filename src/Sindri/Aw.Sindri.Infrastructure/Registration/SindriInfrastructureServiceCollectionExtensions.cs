@@ -191,7 +191,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IOldApprovalsCleanup, ApprovalsDirectoryCleanup>()   // #2258 PR 1: run once at start by serve
             .AddSingleton<IBoxLimitsSource>(sp => new HeavyCapSource(environment, sp.GetRequiredService<SindriSettings>().StateDirectory))
             .AddSingleton<ILineSetupProbe>(new FileLineSetupProbe(environment))   // 'line doctor' (LN-L)
-            .AddSingleton<IApprovedProfile>(static sp => new LiveApprovedProfile(sp.GetRequiredService<IProfileSource>()))   // #2258 PR 1: edits apply on save
+            .AddSingleton<IApprovedProfile>(static sp => new LiveApprovedProfile(sp.GetRequiredService<IProfileSource>(), sp.GetRequiredService<SindriSettings>().ProfilePath))   // #2258 PR 1: edits apply on save
             .AddSingleton<IEndpointFile, FileEndpoint>()
             .AddSingleton<IControlPlaneProbe, HttpControlPlaneProbe>()
             .AddSingleton<IControlPlaneLauncher, ServeLauncher>()

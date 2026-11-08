@@ -53,7 +53,7 @@ public static class ProfileRules
     private static Error? OnyxLeftover(JsonElement? context) =>
         context is { ValueKind: JsonValueKind.Object } c && c.TryGetProperty("sources", out var sources)
         && sources.ValueKind == JsonValueKind.Object && sources.TryGetProperty("onyx", out _)
-            ? SindriErrors.IndexOnyxInProfile.With("context.sources.onyx: Sindri no longer runs or reads Onyx. Remove the 'onyx' entry under context.sources in profile.yaml, then run sindri profile approve")
+            ? SindriErrors.IndexOnyxInProfile.With("context.sources.onyx: Sindri no longer runs or reads Onyx. Remove the 'onyx' entry under context.sources in profile.yaml. Edits apply on save; there is no approve step")
             : null;
 
     /// <summary>The 'setup:' block (setup-once spec §7.1): 'setup.mcp' is auto or off.</summary>

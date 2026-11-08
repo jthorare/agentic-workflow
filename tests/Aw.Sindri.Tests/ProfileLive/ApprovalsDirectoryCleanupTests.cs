@@ -7,7 +7,7 @@ namespace Aw.Sindri.Tests.ProfileLive;
 /// <summary>The old &lt;home&gt;/approved folder goes once, at the first start after the upgrade, with one ledger note (#2258 PR 1).</summary>
 public sealed class ApprovalsDirectoryCleanupTests : IDisposable
 {
-    private const string NoteType = "profile.approvals.removed";   // guess: the fix may name the event otherwise
+    private const string NoteType = "profile.approvals.removed";
 
     private readonly TempHome _home = new();
     private readonly SliceHarness _slice = new();
@@ -32,5 +32,23 @@ public sealed class ApprovalsDirectoryCleanupTests : IDisposable
 
         Assert.False(Directory.Exists(settings.ApprovalsDirectory));
         _ = Assert.Single(_slice.Store.Events, static e => e.Envelope.Type == NoteType);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_folder_that_comes_back_does_not_append_a_second_note()
+    {
+        var settings = new SindriSettings(_home.Path, Path.Combine(_home.Path, "profile", "profile.yaml"));
+        _ = await _slice.HoldLease();
+        using var caller = _slice.Callers.EnterService("test");
+        var cleanup = new ApprovalsDirectoryCleanup(settings, _slice.Held, _slice.Store, _slice.Events);
+        var token = TestContext.Current.CancellationToken;
+
+        _ = Directory.CreateDirectory(settings.ApprovalsDirectory);
+        Assert.True((await cleanup.Run(token)).IsSuccess);
+        _ = Directory.CreateDirectory(settings.ApprovalsDirectory);   // a delete that failed last start looks the same: the folder is still there
+        Assert.True((await cleanup.Run(token)).IsSuccess);
+
+        var note = Assert.Single(_slice.Store.Events, static e => e.Envelope.Type == NoteType);
+        Assert.Equal(NoteType, note.IdempotencyKey);
     }
 }

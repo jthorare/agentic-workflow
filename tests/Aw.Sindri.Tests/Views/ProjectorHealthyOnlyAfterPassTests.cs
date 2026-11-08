@@ -21,7 +21,7 @@ public sealed class ProjectorHealthyOnlyAfterPassTests
     {
         var progress = new ProjectorProgress(_h.Clock);   // serve just booted: no pass has published, views.db may say stalled
 
-        var health = HealthSummary.For(running: true, progress.Current, [], ProfileApproval.Approved);
+        var health = HealthSummary.For(running: true, progress.Current, []);
 
         Assert.NotEqual(HealthWord.Healthy, health.Word);
     }
@@ -47,7 +47,7 @@ public sealed class ProjectorHealthyOnlyAfterPassTests
         var shown = progress.Current;
         Assert.True(shown is { Stalled: true, StalledAt: null });
         Assert.Contains(nameof(InvalidOperationException), shown.StalledType, StringComparison.Ordinal);
-        var health = HealthSummary.For(running: true, shown, [], ProfileApproval.Approved);
+        var health = HealthSummary.For(running: true, shown, []);
         Assert.NotEqual(HealthWord.Healthy, health.Word);
     }
 

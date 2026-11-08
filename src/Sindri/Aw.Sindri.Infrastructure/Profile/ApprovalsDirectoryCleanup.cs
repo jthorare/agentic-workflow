@@ -39,6 +39,7 @@ internal sealed class ApprovalsDirectoryCleanup(SindriSettings settings, HeldLea
             return SindriErrors.NotRunning.With("the control plane doesn't hold the lease (fix: sindri)");
         }
 
+        // The event type doubles as the idempotency key, so a removal that keeps failing records the note once, not on every start.
         var appended = await Ledger.Append(Events.Entry(EventTypes.ProfileApprovalsRemoved, new ProfileApprovalsRemoved(directory), EventTypes.ProfileApprovalsRemoved), grant, cancellationToken).ConfigureAwait(false);
         if (appended.IsError)
         {

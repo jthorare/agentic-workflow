@@ -91,4 +91,16 @@ public sealed class RunDoctorTests
         Assert.Equal((CheckState.Fail, "ledger"), (check.State, check.Name));
         Assert.Contains("schema 4/3: written by another build", check.Detail, StringComparison.Ordinal);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task RunDoctor_names_the_code_and_the_file_when_the_live_profile_is_invalid()
+    {
+        _h.Profiles.Live = Aw.Sindri.Core.SindriErrors.ProfileInvalid.With("/home/thor/profile.yaml: line 3: unknown key 'tennant'");
+
+        var profile = (await Service().Handle(new RunDoctorRequest(), Token)).Value.Checks.Single(c => c.Name == "profile");
+
+        Assert.Equal(CheckState.Fail, profile.State);
+        Assert.Contains("SND-PROFILE-002", profile.Detail, StringComparison.Ordinal);
+        Assert.Contains("/home/thor/profile.yaml", profile.Detail, StringComparison.Ordinal);
+    }
 }
