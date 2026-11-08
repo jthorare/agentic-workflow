@@ -25077,3 +25077,4 @@ override Aw.Sindri.Core.Graph.Runs.GraphStartRequest.GetHashCode() -> int
 override Aw.Sindri.Core.Graph.Runs.GraphStartRequest.ToString() -> string!
 static Aw.Sindri.Core.Graph.Runs.GraphStartRequest.operator !=(Aw.Sindri.Core.Graph.Runs.GraphStartRequest? left, Aw.Sindri.Core.Graph.Runs.GraphStartRequest? right) -> bool
 static Aw.Sindri.Core.Graph.Runs.GraphStartRequest.operator ==(Aw.Sindri.Core.Graph.Runs.GraphStartRequest? left, Aw.Sindri.Core.Graph.Runs.GraphStartRequest? right) -> bool
+static Aw.Sindri.Core.Graph.Runs.NodeRunLimits.Cap(string? text, out bool truncated) -> string?
