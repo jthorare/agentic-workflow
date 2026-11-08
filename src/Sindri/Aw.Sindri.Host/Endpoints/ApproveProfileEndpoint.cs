@@ -1,4 +1,5 @@
 using Aw.Sindri.Core;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Aw.Sindri.Host.Endpoints;
 
@@ -13,5 +14,6 @@ internal static class ApproveProfileEndpoint
         return group;
     }
 
-    private static IResult Removed() => HttpResults.Problem(SindriErrors.RouteRemoved.With(RemovedText), StatusCodes.Status410Gone);
+    // TypedResults directly, not HttpResults: this folder must not depend on the root namespace (ARCH-CYCLE-001), and the error carries no extensions.
+    private static ProblemHttpResult Removed() => TypedResults.Problem(title: SindriErrors.RouteRemoved.Code, detail: RemovedText, statusCode: StatusCodes.Status410Gone);
 }

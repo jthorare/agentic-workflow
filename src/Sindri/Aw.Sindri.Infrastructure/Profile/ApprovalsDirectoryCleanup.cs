@@ -3,6 +3,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Infrastructure.Profile;
 
@@ -11,7 +12,7 @@ namespace Aw.Sindri.Infrastructure.Profile;
 /// <param name="held">The lease this process holds.</param>
 /// <param name="ledger">Where the note goes.</param>
 /// <param name="events">Builds the note.</param>
-internal sealed class ApprovalsDirectoryCleanup(SindriSettings settings, HeldLease held, ILedgerStore ledger, EventFactory events)
+internal sealed class ApprovalsDirectoryCleanup(SindriSettings settings, HeldLease held, ILedgerStore ledger, EventFactory events) : IOldApprovalsCleanup
 {
     internal SindriSettings Settings { get; } = settings;
 
@@ -21,7 +22,8 @@ internal sealed class ApprovalsDirectoryCleanup(SindriSettings settings, HeldLea
 
     internal EventFactory Events { get; } = events;
 
-    /// <summary>Removes the folder when it is there, and says so in the ledger. The note goes first: a crash between the two repeats the removal, never loses the note.</summary>
+    /// <inheritdoc/>
+    /// <remarks>The note goes first: a crash between the two repeats the removal, never loses the note.</remarks>
     /// <param name="cancellationToken">Cancels the operation.</param>
     /// <returns>Success, or why the note or the removal failed.</returns>
     public async ValueTask<Result<Unit>> Run(CancellationToken cancellationToken)

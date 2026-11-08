@@ -9,11 +9,11 @@ using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Lease;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.StartProcess;
 using Aw.Sindri.Features.StopProcess;
 using Aw.Sindri.Host.Registration;
 using Aw.Sindri.Host.Server;
-using Aw.Sindri.Infrastructure.Profile;
 
 namespace Aw.Sindri.Host.Commands;
 
@@ -76,7 +76,7 @@ internal static class ServeCommand
     {
         using (app.Services.GetRequiredService<ICallerContextAccessor>().EnterService("host"))
         {
-            _ = await app.Services.GetRequiredService<ApprovalsDirectoryCleanup>().Run(CancellationToken.None).ConfigureAwait(false);
+            _ = await app.Services.GetRequiredService<IOldApprovalsCleanup>().Run(CancellationToken.None).ConfigureAwait(false);
         }
     }
 

@@ -188,7 +188,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IJobViews, SqliteJobViews>().AddSingleton<IServicePauses, ViewServicePauses>()
             .AddScoped<IRecipeStateCatalog, RecipeStateCatalog>()
             .AddSingleton<IProfileSource>(sp => new YamlProfileSource(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<JsonSerializerOptions>(), () => HeavyCap.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory)))
-            .AddSingleton<ApprovalsDirectoryCleanup>()   // #2258 PR 1: run once at start by serve
+            .AddSingleton<IOldApprovalsCleanup, ApprovalsDirectoryCleanup>()   // #2258 PR 1: run once at start by serve
             .AddSingleton<IBoxLimitsSource>(sp => new HeavyCapSource(environment, sp.GetRequiredService<SindriSettings>().StateDirectory))
             .AddSingleton<ILineSetupProbe>(new FileLineSetupProbe(environment))   // 'line doctor' (LN-L)
             .AddSingleton<IApprovedProfile>(static sp => new LiveApprovedProfile(sp.GetRequiredService<IProfileSource>()))   // #2258 PR 1: edits apply on save
