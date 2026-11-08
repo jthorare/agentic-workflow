@@ -109,7 +109,7 @@ public sealed class GoldenContractTests
         ["sandbox-status"] = As<Ui.Api.Sandbox.SandboxStatusView>,   // GET /sandbox/status: Health and Settings (SB-6; spec-shaped until the server's golden is recorded)
         ["sandbox-check"] = As<Ui.Api.Sandbox.SandboxCheckView>,   // GET /sandbox/check: Check again and the resume list (SB-6, spec-shaped)
         ["sandbox-denials"] = As<Ui.Api.Sandbox.DenialsView>,   // GET /sandbox/denials?item=: the item sheet's Blocked list (SB-6, spec-shaped)
-        ["sandbox-allow"] = As<Ui.Api.Sandbox.AllowView>,   // POST /sandbox/allow's needs-approval answer; the refusals are ProblemDetails (SB-6, spec-shaped)
+        ["sandbox-allow"] = As<Ui.Api.Sandbox.AllowView>,   // POST /sandbox/allow's allowed answer (it applies on save); the refusals are ProblemDetails (SB-6, spec-shaped)
         ["todos"] = As<TodoListView>,   // GET /todos: the todo panel's list (todo spec Ph2)
         ["todos-add"] = As<TodoAcceptedView>,   // POST /todos' 200 (api Ph1a records it); the refusals are ProblemDetails
         ["todos-change"] = As<TodoAcceptedView>,   // POST /todos/{id}/change's 200, e.g. clear-due (api Ph1a)

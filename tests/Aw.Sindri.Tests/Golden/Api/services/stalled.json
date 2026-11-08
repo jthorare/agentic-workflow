@@ -73,6 +73,19 @@
       "description": "Checkpoints context.db's log and refreshes its query stats."
     },
     {
+      "name": "heartbeat",
+      "every": "5s",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run",
+        "pause"
+      ],
+      "description": "Records that Sindri is alive."
+    },
+    {
       "name": "index-decisions",
       "every": "15m",
       "paused": false,

@@ -1,7 +1,7 @@
 {
   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
-  "title": "SND-SETUP-007",
+  "title": "SND-RECIPE-009",
   "status": 409,
-  "detail": "approve-all waits for an approved profile (fix: approve the profile first)",
+  "detail": "c41e07 isn't the plan's digest (1c1fd4); read the plan again",
   "traceId": "<trace>"
 }

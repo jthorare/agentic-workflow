@@ -175,7 +175,7 @@
       "paused": false,
       "lastRun": null,
       "nextSlot": null,
-      "job": "JOB-0000000000000000000000000000000f",
+      "job": "JOB-00000000000000000000000000000006",
       "actions": [
         "pause"
       ]
@@ -195,8 +195,8 @@
   ],
   "empty": null,
   "asOf": {
-    "cursor": 8,
-    "ledgerHead": 8,
+    "cursor": 4,
+    "ledgerHead": 4,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

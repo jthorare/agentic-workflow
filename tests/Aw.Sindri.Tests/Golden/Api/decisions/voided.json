@@ -1,11 +1,11 @@
 {
   "decisions": [
     {
-      "id": "DEC-00000000000000000000000000000017",
+      "id": "DEC-0000000000000000000000000000000e",
       "kind": "accept-request",
       "class": "decision",
       "label": "decision · re-scope",
-      "item": "ITM-0000000000000000000000000000000f",
+      "item": "ITM-00000000000000000000000000000006",
       "itemVersion": 1,
       "repo": "demo",
       "question": "Accept this re-scope request?\nSplit the checkout work into two items.",
@@ -14,13 +14,13 @@
           "id": "accept",
           "label": "Accept",
           "rejectLike": false,
-          "cli": "sindri decide DEC-00000000000000000000000000000017 accept"
+          "cli": "sindri decide DEC-0000000000000000000000000000000e accept"
         },
         {
           "id": "decline",
           "label": "Decline",
           "rejectLike": true,
-          "cli": "sindri decide DEC-00000000000000000000000000000017 decline"
+          "cli": "sindri decide DEC-0000000000000000000000000000000e decline"
         }
       ],
       "recommended": "accept",
@@ -34,14 +34,14 @@
       "recordedOnly": false,
       "notice": "voided: the item was closed",
       "actions": [],
-      "cli": "sindri decide DEC-00000000000000000000000000000017 accept",
+      "cli": "sindri decide DEC-0000000000000000000000000000000e accept",
       "cleared": "voided: the item was closed"
     }
   ],
   "empty": null,
   "asOf": {
-    "cursor": 11,
-    "ledgerHead": 11,
+    "cursor": 7,
+    "ledgerHead": 7,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

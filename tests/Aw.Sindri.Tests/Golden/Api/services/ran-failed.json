@@ -177,8 +177,8 @@
   ],
   "empty": null,
   "asOf": {
-    "cursor": 6,
-    "ledgerHead": 6,
+    "cursor": 2,
+    "ledgerHead": 2,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

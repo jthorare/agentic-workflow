@@ -1,21 +1,21 @@
 {
   "requests": [
     {
-      "id": "REQ-00000000000000000000000000000011",
+      "id": "REQ-00000000000000000000000000000008",
       "kind": "rescope",
       "item": null,
       "repo": "other",
       "text": "In other.",
       "actor": "session:cli",
       "state": "open",
-      "decisionId": "DEC-00000000000000000000000000000012",
+      "decisionId": "DEC-00000000000000000000000000000009",
       "filedAt": "2026-01-01T00:00:00.0000000Z"
     }
   ],
   "empty": null,
   "asOf": {
-    "cursor": 7,
-    "ledgerHead": 7,
+    "cursor": 3,
+    "ledgerHead": 3,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false
