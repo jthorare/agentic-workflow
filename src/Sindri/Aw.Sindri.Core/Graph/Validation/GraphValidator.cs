@@ -36,6 +36,11 @@ public sealed partial class GraphValidator(GraphValidationContext context)
 
     private static void Duplicates(GraphSpec spec, List<GraphFinding> found)
     {
+        foreach (var node in spec.Nodes.Where(static n => _scopeRoots.Contains(n.Id.Value)))
+        {
+            found.Add(Found.Error("GRAPH-NODE-002", [node.Id.Value], $"node id '{node.Id.Value}' is reserved: references read 'trigger', 'item' and 'workflow' as themselves", "rename the node"));
+        }
+
         foreach (var group in spec.Nodes.GroupBy(static n => n.Id.Value, StringComparer.Ordinal).Where(static g => g.Skip(1).Any()))
         {
             found.Add(Found.At("GRAPH-NODE-001", group.Key, "id", $"node id '{group.Key}' is used by more than one node", "give each node its own id"));
@@ -51,8 +56,9 @@ public sealed partial class GraphValidator(GraphValidationContext context)
                 found.Add(Found.At("GRAPH-EDGE-001", end, "edges", $"an edge names node '{end}', which does not exist", $"add a node '{end}' or remove the edge"));
             }
 
-            if (structure.Find(edge.From.Value) is { } source && context.Blocks.TryGetValue(source.Type, out var block) && edge.Output is { } output)
+            if (structure.Find(edge.From.Value) is { } source && context.Blocks.TryGetValue(source.Type, out var block))
             {
+                var output = edge.Output ?? "out";
                 var branches = block.OutputsFor(source.Config).BranchNames;
                 if (!branches.Contains(output, StringComparer.Ordinal))
                 {

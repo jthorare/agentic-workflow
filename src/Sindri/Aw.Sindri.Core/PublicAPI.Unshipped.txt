@@ -24863,6 +24863,7 @@ static Aw.Sindri.Core.Graph.Ids.WorkflowSlug.TryFrom(string? value, out Aw.Sindr
 static Aw.Sindri.Core.Graph.Ids.WorkflowSlug.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Graph.Ids.WorkflowSlug result) -> bool
 static Aw.Sindri.Core.Graph.Ids.WorkflowSlug.operator !=(Aw.Sindri.Core.Graph.Ids.WorkflowSlug left, Aw.Sindri.Core.Graph.Ids.WorkflowSlug right) -> bool
 static Aw.Sindri.Core.Graph.Ids.WorkflowSlug.operator ==(Aw.Sindri.Core.Graph.Ids.WorkflowSlug left, Aw.Sindri.Core.Graph.Ids.WorkflowSlug right) -> bool
+static Aw.Sindri.Core.Graph.Interpolation.Template.HasUnclosed(string! text) -> bool
 static Aw.Sindri.Core.Graph.Interpolation.Template.References(string! text) -> System.Collections.Generic.IReadOnlyList<string!>!
 static Aw.Sindri.Core.Graph.Interpolation.Template.Render(string! text, System.Func<string!, System.Text.Json.Nodes.JsonNode?>! lookup) -> System.Text.Json.Nodes.JsonNode?
 static Aw.Sindri.Core.Graph.Validation.ConditionParse.operator !=(Aw.Sindri.Core.Graph.Validation.ConditionParse? left, Aw.Sindri.Core.Graph.Validation.ConditionParse? right) -> bool

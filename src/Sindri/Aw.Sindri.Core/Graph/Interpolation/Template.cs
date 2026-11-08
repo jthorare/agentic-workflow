@@ -22,6 +22,15 @@ public static partial class Template
         return [.. Reference.Matches(text).Select(static m => m.Groups["ref"].Value)];
     }
 
+    /// <summary>Whether <paramref name="text"/> opens a reference it never closes, such as '{{agent.drifted'; rendering leaves it as literal text.</summary>
+    /// <param name="text">A config string.</param>
+    /// <returns>True when a '{{' is left after the complete references are taken out.</returns>
+    public static bool HasUnclosed(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        return Reference.Replace(text, string.Empty).Contains("{{", StringComparison.Ordinal);
+    }
+
     /// <summary>Renders <paramref name="text"/>.</summary>
     /// <param name="text">A config string.</param>
     /// <param name="lookup">The value of a reference such as 'agent.drifted'; null for a missing or null value.</param>
