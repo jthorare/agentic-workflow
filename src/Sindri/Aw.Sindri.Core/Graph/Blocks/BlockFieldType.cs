@@ -17,4 +17,7 @@ public enum BlockFieldType
 
     /// <summary>A JSON object (its own members are the block's business).</summary>
     Map,
+
+    /// <summary>A list of JSON objects (each one's members are the block's business).</summary>
+    MapList,
 }

@@ -50,6 +50,7 @@ public sealed record BlockSchema(IReadOnlyList<BlockField> Fields)
         BlockFieldType.Number => value.GetValueKind() == JsonValueKind.Number || Reference(value),
         BlockFieldType.TextList => value is JsonArray list && list.All(static item => item?.GetValueKind() == JsonValueKind.String),
         BlockFieldType.Map => value is JsonObject,
+        BlockFieldType.MapList => value is JsonArray objects && objects.All(static item => item is JsonObject),
         _ => false,
     };
 
@@ -64,6 +65,7 @@ public sealed record BlockSchema(IReadOnlyList<BlockField> Fields)
         BlockFieldType.Number => "a number",
         BlockFieldType.TextList => "a list of text",
         BlockFieldType.Map => "an object",
+        BlockFieldType.MapList => "a list of objects",
         _ => "a value",
     };
 }

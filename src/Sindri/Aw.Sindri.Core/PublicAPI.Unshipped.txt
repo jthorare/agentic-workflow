@@ -26552,3 +26552,7 @@ static Aw.Sindri.Core.Graph.Blocks.Vulnerability.operator !=(Aw.Sindri.Core.Grap
 static Aw.Sindri.Core.Graph.Blocks.Vulnerability.operator ==(Aw.Sindri.Core.Graph.Blocks.Vulnerability? left, Aw.Sindri.Core.Graph.Blocks.Vulnerability? right) -> bool
 static Aw.Sindri.Core.Graph.Blocks.VulnPackage.operator !=(Aw.Sindri.Core.Graph.Blocks.VulnPackage? left, Aw.Sindri.Core.Graph.Blocks.VulnPackage? right) -> bool
 static Aw.Sindri.Core.Graph.Blocks.VulnPackage.operator ==(Aw.Sindri.Core.Graph.Blocks.VulnPackage? left, Aw.Sindri.Core.Graph.Blocks.VulnPackage? right) -> bool
+Aw.Sindri.Core.Graph.Blocks.BlockFieldType.MapList = 6 -> Aw.Sindri.Core.Graph.Blocks.BlockFieldType
+Aw.Sindri.Core.Graph.Blocks.JevBlock.CheckConfig(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
+Aw.Sindri.Core.Graph.Blocks.NewsBlock.CheckConfig(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
+Aw.Sindri.Core.Graph.Blocks.VulnerabilitiesBlock.CheckConfig(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!

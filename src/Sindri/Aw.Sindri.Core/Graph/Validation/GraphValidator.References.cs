@@ -128,7 +128,7 @@ public sealed partial class GraphValidator
     {
         BlockFieldType.Number => "number",
         BlockFieldType.Boolean => "boolean",
-        BlockFieldType.TextList => "array",
+        BlockFieldType.TextList or BlockFieldType.MapList => "array",
         BlockFieldType.Map => "object",
         BlockFieldType.Text => null,
         _ => null,
