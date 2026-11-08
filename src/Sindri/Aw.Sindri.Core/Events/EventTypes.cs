@@ -14,6 +14,9 @@ public static class EventTypes
     /// <summary>An instance still open when the recipe engine was removed was cancelled, once, with this note (issue 2258 PR 3).</summary>
     public const string WorkflowRetired = "workflow.retired";
 
+    /// <summary>The retire pass finished (issue 2258 PR 3): written once, even when it retired nothing, so a later start reads no ledger page.</summary>
+    public const string WorkflowRetireDone = "workflow.retire.done";
+
     /// <summary>A recipe instance started (mirrored from its RecipeWorkflow; engine spec rev 8.1 §5.6).</summary>
     public const string WorkflowStarted = "workflow.started";
 
