@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Expressions;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Validation;
 using static Aw.Sindri.Tests.Graph.GraphFixtures;
@@ -112,5 +113,39 @@ public sealed class GraphValidatorTests
         Assert.Contains("five fields", badCron.Findings[0].Message, StringComparison.Ordinal);
         Assert.Contains("Mars/Base", badZone.Findings[0].Message, StringComparison.Ordinal);
         Assert.Empty(Validator(cron: Problem).Validate(spec, GraphMode.Activate).Findings);
+    }
+
+    private static GraphValidator WithConditions() => Validator(condition: text =>
+        ConditionExpression.TryParse(text, out var expression, out var error) ? new ConditionParse(Error: null, expression!.References) : new ConditionParse(error, []));   // why: TryParse sets the expression when it returns true
+
+    private static GraphNode When(string id, string when) =>
+        new(NodeId.From(id), "condition", Title: null, Config: new JsonObject { ["when"] = when });
+
+    [Fact]
+    public void A_condition_that_does_not_parse_is_refused_with_the_parsers_text()
+    {
+        var spec = Spec([Trigger("daily"), When("if", "{{a.facts}} =="), Notify("tell", "hi")], [Edge("daily", "if"), Edge("if", "tell", "true")]);
+
+        var result = WithConditions().Validate(spec, GraphMode.Activate);
+
+        var finding = Assert.Single(result.Findings, f => f.Code == "GRAPH-COND-001");
+        Assert.Equal(["if"], finding.Nodes);
+        Assert.Equal("config.when", finding.Field);
+        Assert.Contains("can't be read", finding.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_condition_that_reads_a_node_that_is_not_upstream_is_refused()
+    {
+        var spec = Spec(
+            [Trigger("daily"), Search("a"), Search("b"), When("if", "{{b.facts}} == \"x\" and exists(a.facts)")],
+            [Edge("daily", "a"), Edge("daily", "b"), Edge("a", "if")]);
+
+        var result = WithConditions().Validate(spec, GraphMode.Activate);
+
+        var finding = Assert.Single(result.Findings, f => f.Code == "GRAPH-REF-001");
+        Assert.Equal(["if"], finding.Nodes);
+        Assert.Equal("config.when", finding.Field);
+        Assert.Contains("'b'", finding.ToString(), StringComparison.Ordinal);
     }
 }

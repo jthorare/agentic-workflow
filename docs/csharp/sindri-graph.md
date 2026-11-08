@@ -31,6 +31,8 @@ A workflow is a JSON document Sindri stores as revisions. This page covers what 
 | `GRAPH-REPO-001`, `GRAPH-NAME-001` | repo, connection or memory that does not exist (`-002` is the warning when nobody can answer yet) |
 | `GRAPH-NODE-001`, `GRAPH-EDGE-001` / `-002` | repeated node id, edge to a missing node, edge by an output the block lacks |
 
+`wf validate` reads `config.when` with `ConditionExpression` (references, comparisons, `and`/`or`/`not`, `exists(x)`); a parse error comes back with its column as `GRAPH-COND-001`, and the references it reads are checked for being upstream like any other.
+
 A **draft** save keeps wiring gaps (`GRAPH-TRIGGER-002`, `GRAPH-WIRING-001`); **activation** refuses every error. Warnings never
 block. `wf validate` always checks as for activation. The block catalog is empty in this build, so every node type reads as unknown
 until the blocks arrive.
