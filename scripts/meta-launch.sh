@@ -149,7 +149,16 @@ if [ -n "${AW_LAUNCHER_CONFIG:-}" ]; then lc_env=(-e "AW_LAUNCHER_CONFIG=$AW_LAU
 # running server is stale. SHELL falls back to /bin/bash when unset or not executable. AW_META_CALLER_PATH carries the PATH past a
 # login profile that resets PATH; meta-lane.sh puts it back first.
 sh_bin="${SHELL:-}"; { [ -n "$sh_bin" ] && [ -x "$sh_bin" ]; } || sh_bin=/bin/bash
-shq() { case "$1" in ''|*[!A-Za-z0-9_/.,:=@%+-]*) printf "'%s'" "${1//\'/\'\\\'\'}" ;; *) printf '%s' "$1" ;; esac; }   # sh-quoted only when needed
+# sh-quoted only when needed. A loop on a quote variable, not ${s//\'/...}: bash 3.2 (macOS) reads backslashes in that replacement differently (#2281).
+shq() {
+  case "$1" in
+    ''|*[!A-Za-z0-9_/.,:=@%+-]*)
+      local q="'" s="$1" out=""
+      while [[ "$s" == *"$q"* ]]; do out="$out${s%%"$q"*}'\\''"; s="${s#*"$q"}"; done
+      printf "'%s%s'" "$out" "$s" ;;
+    *) printf '%s' "$1" ;;
+  esac
+}
 env_args=(-e "PATH=$PATH" -e "SHELL=$sh_bin" -e "AW_META_CALLER_PATH=$PATH")
 env_str=" -e $(shq "PATH=$PATH") -e $(shq "SHELL=$sh_bin") -e $(shq "AW_META_CALLER_PATH=$PATH")"
 # tmux overwrites SHELL in a new session with its default-shell, so `env SHELL=` sets it again for the login shell and everything under it.

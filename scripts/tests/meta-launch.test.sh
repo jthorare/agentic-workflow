@@ -888,4 +888,28 @@ shell_rows() { # name: the lane runs through <name> -lc with the caller's PATH f
 shell_rows zsh
 shell_rows fish
 tmux kill-server 2> /dev/null
+
+# 6. Quoting does not depend on the bash version (#2281): bash 3.2 (macOS) read the backslashes in ${s//\'/...} differently from bash 5.
+eval "$(sed -n '/^shq() {/,/^}/p' "$DIR/meta-launch.sh")"
+Q1="$(shq "it's")"; Q2="$(shq "$Q1")"
+check "shq of a string holding a single quote: exact bytes" "$Q1" "'it'\\''s'"
+check "shq of shq of it: exact bytes" "$Q2" "''\\''it'\\''\\'\\'''\\''s'\\'''"
+check "shq of shq reads back through sh to the first quoting" "$(sh -c "printf '%s' $Q2")" "$Q1"
+check "shq of shq of shq reads back to shq of shq" "$(sh -c "printf '%s' $(shq "$Q2")")" "$Q2"
+check "shq leaves a plain word alone, quotes a space, an empty string and a lone quote" "$(shq abc/d-e):$(shq 'a b'):$(shq ''):$(shq "'")" "abc/d-e:'a b':'':''\\'''"
+fresh_server; tmux kill-session -t t1-api 2> /dev/null
+PATH="$SPQ:$QQ:$ORIG_PATH" SHELL=/bin/bash bash "$DIR/meta-launch.sh" --no-open --lanes api > /dev/null 2>&1
+wline="$(grep 'new -A -s t1-api' "$yaml" | sed 's/^ *- exec: //')"
+for sh in sh bash zsh; do
+  if ! command -v "$sh" > /dev/null; then echo "ok - SKIP $sh not installed"; continue; fi
+  "$sh" -n -c "$wline" 2> "$WORK/syntax.err"; check "the Warp attach line passes $sh -n" "$?:$(cat "$WORK/syntax.err")" "0:"
+done
+if command -v zsh > /dev/null; then
+  # run the printed line under zsh as Warp does (new-session -d instead of new -A: there is no terminal here) until it reaches meta-lane.sh
+  tmux kill-session -t t1-api 2> /dev/null; rm -f "$WORK/lane-env"
+  ZDOTDIR="$WORK/zsh-config" zsh -f -c "${wline/ new -A / new-session -d }" > "$WORK/zsh-run.out" 2>&1
+  waitfor '[ -s "$WORK/lane-env" ]'
+  check "the Warp line run by zsh reaches meta-lane.sh with the odd PATH first" "$(cut -d: -f1-2 "$WORK/lane-env" 2> /dev/null)" "$SPQ:$QQ"
+else echo "ok - SKIP zsh not installed"; fi
+tmux kill-server 2> /dev/null
 exit $fail
