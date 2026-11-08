@@ -103,12 +103,38 @@ public sealed class ChangeLinearIssueTests
         Assert.Empty(_writes.Calls);
     }
 
+    [Theory]
+    [InlineData("{}", """{"priority":1}""", "priority has no opened value (fix: send the value you opened with each field you change)")]
+    [InlineData("""{"title":"Title of ENG-12"}""", """{"title":"x","priority":1,"assigneeId":null}""", "assigneeId and priority have no opened value (fix: send the value you opened with each field you change)")]
+    public async Task A_set_field_with_no_opened_value_is_refused_before_linear_is_read(string opened, string set, string message)
+    {
+        _writes.SetLive(Live());
+
+        var result = await Service().Handle(Edit("ENG-12", opened, set), Token);
+
+        Expect.Equal("SND-LINEAR-006", result.Error.Code);
+        Expect.Equal(message, result.Error.Message);
+        Assert.Empty(_writes.Calls);
+    }
+
+    [Fact]
+    public async Task An_opened_key_holding_null_counts_as_opened_and_is_compared_with_linear()
+    {
+        _writes.SetLive(Live());
+
+        var answer = await Ok(Edit("ENG-12", """{"assigneeId":null}""", """{"assigneeId":null}"""));
+
+        var field = Expect.Only(answer.Conflict!.Fields);
+        Expect.Equal("assigneeId", field.Field);
+        Assert.DoesNotContain(_writes.Calls, static c => c.Method == "Change");
+    }
+
     [Fact]
     public async Task A_cleared_assignee_cycle_and_project_need_no_lookup()
     {
         _writes.SetLive(Live());
 
-        var applied = await Ok(Edit("ENG-12", "{}", """{"assigneeId":null,"cycleId":null,"projectId":null}"""));
+        var applied = await Ok(Edit("ENG-12", $$"""{"assigneeId":"{{ViewerId}}","cycleId":null,"projectId":null}""", """{"assigneeId":null,"cycleId":null,"projectId":null}"""));
 
         Assert.NotNull(applied.Applied);
         var change = Expect.Only(_writes.Calls.Where(static c => c.Method == "Change").ToArray()).Change!;
