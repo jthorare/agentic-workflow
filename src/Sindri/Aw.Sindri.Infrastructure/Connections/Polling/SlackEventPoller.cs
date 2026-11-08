@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text.Json;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
@@ -9,9 +8,11 @@ namespace Aw.Sindri.Infrastructure.Connections.Polling;
 
 /// <summary>
 /// IEventPoller for Slack over a plain HttpClient: conversations.history of the channel in Connection.Config["channel"], with the optional
-/// "filter" (a word the text must contain) and "userId" (the owner, for mentions). The cursor is the newest message ts; a null cursor is a baseline (no events). Slack's has_more is reported as a gap (history is not paged). Slack answers HTTP 200
-/// with ok=false on errors: ratelimited is a rate-limited result, invalid_auth and token_revoked are SND-CONN-002, anything else SND-CONN-012.
-/// The token goes only to slack.com. Message text is untrusted.
+/// "filter" (a word the text must contain) and "userId" (the owner, for mentions). The cursor is the newest message ts; a null cursor is a
+/// baseline (no events). The history is newest first, so the poller follows response_metadata.next_cursor up to the page cap and returns the
+/// events oldest first; past the cap <see cref="PollResult.Gap"/> is true. Slack answers HTTP 200 with ok=false on errors: ratelimited is a
+/// rate-limited result, invalid_auth and token_revoked are SND-CONN-002, anything else SND-CONN-012. The token goes only to slack.com.
+/// Message text is untrusted.
 /// </summary>
 /// <param name="http">The HTTP client; it must not follow redirects on its own.</param>
 /// <param name="secrets">The connection secrets.</param>
@@ -22,10 +23,6 @@ internal sealed class SlackEventPoller(HttpClient http, IConnectionSecrets secre
     private const string Host = "slack.com";
 
     private readonly PollerClient _client = new(http, secrets, Host, clock);
-
-    private readonly TimeProvider _clock = clock;
-
-    internal int PageCap { get; } = pageCap;
 
     public string Preset => "slack";
 
@@ -43,77 +40,50 @@ internal sealed class SlackEventPoller(HttpClient http, IConnectionSecrets secre
             return SindriErrors.ConnectionProviderChanged.With($"{connection.Name} has no 'channel' setting");
         }
 
+        var filter = new SlackFilter(kind, channel, connection.Config.GetValueOrDefault("filter", string.Empty), connection.Config.GetValueOrDefault("userId", string.Empty));
         var url = $"https://{Host}/api/conversations.history?channel={Uri.EscapeDataString(channel)}&limit=100" + (cursor is null ? string.Empty : "&oldest=" + Uri.EscapeDataString(cursor));
-        var answer = await _client.Send(connection, new HttpRequestMessage(HttpMethod.Get, url), cursor is not null, cancellationToken).ConfigureAwait(false);
-        if (answer.IsError)
-        {
-            return answer.Error;
-        }
-
-        return answer.Value.Body is { } body
-            ? Read(body, new SlackFilter(kind, channel, connection.Config.GetValueOrDefault("filter", string.Empty), connection.Config.GetValueOrDefault("userId", string.Empty)), cursor, _clock.GetUtcNow())
-            : new PollResult([], cursor, RateLimited: true, answer.Value.RetryAfter, Reason: answer.Value.Reason);
+        return await ReadPages(connection, new SlackFeed(filter, cursor), url, cursor, cancellationToken).ConfigureAwait(false);
     }
 
-    private static Result<PollResult> Read(string body, SlackFilter filter, string? cursor, DateTimeOffset now)
+    private async ValueTask<Result<PollResult>> ReadPages(Connection connection, SlackFeed feed, string url, string? cursor, CancellationToken cancellationToken)
     {
-        try
+        var page = string.Empty;
+        for (var number = 1; ; number++)
         {
-            using var document = JsonDocument.Parse(body);
-            var root = document.RootElement;
-            if (PollJson.Member(root, "ok") is not { ValueKind: JsonValueKind.True })
+            var answer = await _client.Send(connection, new HttpRequestMessage(HttpMethod.Get, url + page), cursorSent: false, cancellationToken).ConfigureAwait(false);
+            if (answer.IsError || answer.Value.Body is not { } body)
             {
-                return Failure(PollJson.Text(PollJson.Member(root, "error")), cursor);
+                return answer.IsError ? answer.Error : new PollResult([], cursor, RateLimited: true, answer.Value.RetryAfter, Reason: answer.Value.Reason);
             }
 
-            if (PollJson.Member(root, "messages") is not { ValueKind: JsonValueKind.Array } messages)
+            var added = feed.Add(body);
+            if (added.IsError)
             {
-                return SindriErrors.ConnectionProviderChanged.With("the history answer has no message list");
+                return added.Error;
             }
 
-            return Collect(messages, filter, cursor, now, PollJson.Member(root, "has_more") is { ValueKind: JsonValueKind.True });
-        }
-        catch (JsonException)
-        {
-            return SindriErrors.ConnectionProviderChanged.With("the history answer is not JSON");
+            if (feed.RateLimited)
+            {
+                return new PollResult([], cursor, RateLimited: true, RetryAfter: null, Reason: "the provider is rate limiting this connection");
+            }
+
+            if (cursor is null || feed.NextPage is not { } next)
+            {
+                return Finish(feed, gap: false);
+            }
+
+            if (number >= pageCap)
+            {
+                return Finish(feed, gap: true);
+            }
+
+            page = "&cursor=" + Uri.EscapeDataString(next);
         }
     }
 
-    private static Result<PollResult> Collect(JsonElement messages, SlackFilter filter, string? cursor, DateTimeOffset now, bool more)
+    private PollResult Finish(SlackFeed feed, bool gap)
     {
-        var after = Stamp(cursor);
-        var newest = (Text: cursor, Value: after);
-        var found = new List<(decimal Ts, PolledEvent Event)>();
-        foreach (var message in messages.EnumerateArray())
-        {
-            if (PollJson.Text(PollJson.Member(message, "ts")) is not { } ts || Stamp(ts) is not { } value)
-            {
-                return SindriErrors.ConnectionProviderChanged.With("a message has no ts");
-            }
-
-            newest = Later(newest, ts, value);
-            if (after is not null && value > after && SlackMessages.Matches(message, filter) && SlackMessages.Map(message, filter, ts) is { } polled)
-            {
-                found.Add((value, polled));
-            }
-        }
-
-        var next = newest.Text ?? Baseline(now);
-        var gapped = more && after is not null;
-        return new PollResult([.. found.OrderBy(static f => f.Ts).Select(static f => f.Event)], next, RateLimited: false, RetryAfter: null, Gap: gapped);
+        var next = feed.NewestTs ?? (clock.GetUtcNow().ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture) + ".000000");
+        return new PollResult(feed.Events, next, RateLimited: false, RetryAfter: null, gap);
     }
-
-    private static (string? Text, decimal? Value) Later((string? Text, decimal? Value) newest, string ts, decimal value)
-        => newest.Value is not { } seen || value > seen ? (ts, value) : newest;
-
-    private static string Baseline(DateTimeOffset now) => now.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture) + ".000000";
-
-    private static Result<PollResult> Failure(string? slackError, string? cursor) => (slackError ?? "unknown") switch
-    {
-        "ratelimited" => new PollResult([], cursor, RateLimited: true, RetryAfter: null, Reason: "the provider is rate limiting this connection"),
-        "invalid_auth" or "token_revoked" or "not_authed" or "account_inactive" => SindriErrors.ConnectionNeedsSignIn.With($"Slack answered {slackError}"),
-        _ => SindriErrors.ConnectionProviderChanged.With($"Slack answered {slackError ?? "ok=false"}"),
-    };
-
-    private static decimal? Stamp(string? ts) => decimal.TryParse(ts, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var value) ? value : null;
 }

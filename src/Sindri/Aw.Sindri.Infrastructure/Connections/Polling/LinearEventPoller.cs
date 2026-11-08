@@ -23,7 +23,7 @@ internal sealed class LinearEventPoller(HttpClient http, IConnectionSecrets secr
 {
     private const string Host = "api.linear.app";
 
-    private const string Fields = "identifier title url createdAt comments(first: 10) { nodes { id createdAt body user { name } } } history(first: 25) { nodes { id createdAt addedLabels { id name } fromState { id name } toState { id name } } }";
+    private const string Fields = "identifier title url createdAt comments(first: 10) { nodes { id createdAt body user { name } } pageInfo { hasNextPage } } history(first: 25) { nodes { id createdAt addedLabels { id name } fromState { id name } toState { id name } } pageInfo { hasNextPage } }";
 
     private readonly PollerClient _client = new(http, secrets, Host, clock, bareKeys: true);
 
@@ -57,12 +57,12 @@ internal sealed class LinearEventPoller(HttpClient http, IConnectionSecrets secr
 
             if (after is null || feed.More is not { } more)
             {
-                return Finish(feed, gap: false);
+                return Finish(feed, capped: false);
             }
 
             if (page >= pageCap)
             {
-                return Finish(feed, gap: true);
+                return Finish(feed, capped: true);
             }
 
             endCursor = more;
@@ -91,8 +91,9 @@ internal sealed class LinearEventPoller(HttpClient http, IConnectionSecrets secr
         return Encoding.UTF8.GetString(buffer.ToArray());
     }
 
-    private Result<PollResult> Finish(LinearFeed feed, bool gap)
+    private Result<PollResult> Finish(LinearFeed feed, bool capped)
     {
+        var gap = feed.Reading && (capped || feed.NestedMore);
         var events = feed.Events.DistinctBy(static e => e.DeliveryKey, StringComparer.Ordinal).OrderBy(static e => e.OccurredAt).ThenBy(static e => e.DeliveryKey, StringComparer.Ordinal).ToList();
         return new PollResult(events, feed.Newest.Text ?? PollCursorText.Now(clock.GetUtcNow()), RateLimited: false, RetryAfter: null, gap);
     }

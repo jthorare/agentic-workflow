@@ -13,12 +13,18 @@ internal sealed class LinearFeed(EventKind kind, DateTimeOffset? after, string? 
 {
     private readonly List<PolledEvent> _events = [];
 
+    /// <summary>Gets a value indicating whether this poll reads events (a cursor was saved) and is not a baseline.</summary>
+    internal bool Reading { get; } = after is not null;
+
     internal IReadOnlyList<PolledEvent> Events => _events;
 
     internal PollCursorText Newest { get; private set; } = new PollCursorText(Text: null, At: null).Later(start);
 
     /// <summary>Gets the endCursor of the last page when Linear said there is another, else null.</summary>
     internal string? More { get; private set; }
+
+    /// <summary>Gets a value indicating whether some issue's comments or history had a next page that was not read (those lists are read 10 and 25 at a time).</summary>
+    internal bool NestedMore { get; private set; }
 
     internal Result<Unit> Add(string body)
     {
@@ -40,6 +46,7 @@ internal sealed class LinearFeed(EventKind kind, DateTimeOffset? after, string? 
                 }
 
                 Newest = LinearTimes.Newest(issue, Newest);
+                NestedMore |= LinearTimes.HasMore(issue);
             }
 
             var info = PollJson.Member(issues ?? default, "pageInfo") ?? default;

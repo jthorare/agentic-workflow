@@ -54,7 +54,7 @@ internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secr
         var next = first;
         for (var page = 1; ; page++)
         {
-            var answer = await _client.Send(connection, new HttpRequestMessage(HttpMethod.Get, next), cursor is not null, cancellationToken).ConfigureAwait(false);
+            var answer = await _client.Send(connection, new HttpRequestMessage(HttpMethod.Get, next), cursorSent: false, cancellationToken).ConfigureAwait(false);
             if (answer.IsError || answer.Value.Body is not { } body)
             {
                 return answer.IsError ? answer.Error : new PollResult([], cursor, RateLimited: true, answer.Value.RetryAfter, Reason: answer.Value.Reason);

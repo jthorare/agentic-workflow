@@ -88,9 +88,14 @@ internal sealed class PollerClient(HttpClient http, IConnectionSecrets secrets, 
             return new PollerAnswer(body, RateLimited: false, RetryAfter: null, NextUrl(response));
         }
 
-        if (status == (int)HttpStatusCode.BadRequest && (await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false)).Contains("RATELIMITED", StringComparison.Ordinal))
+        if (status is (int)HttpStatusCode.BadRequest or (int)HttpStatusCode.Forbidden)
         {
-            return new PollerAnswer(Body: null, RateLimited: true, RetryAfter: WaitOf(response), Reason: Limiting);
+            // Linear answers a rate limit as 400 (RATELIMITED), Google as 403 (rateLimitExceeded, userRateLimitExceeded)
+            var text = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            if (text.Contains("RATELIMITED", StringComparison.Ordinal) || text.Contains("ateLimitExceeded", StringComparison.Ordinal))
+            {
+                return new PollerAnswer(Body: null, RateLimited: true, RetryAfter: WaitOf(response), Reason: Limiting);
+            }
         }
 
         var code = status.ToString(CultureInfo.InvariantCulture);
