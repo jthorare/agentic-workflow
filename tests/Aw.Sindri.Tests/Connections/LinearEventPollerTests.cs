@@ -230,6 +230,33 @@ public sealed class LinearEventPollerTests
     }
 
     [Fact]
+    public async Task Twenty_five_new_history_entries_with_a_next_page_give_25_events_and_a_gap()
+    {
+        var provider = new FakeProvider();
+        provider.AddLinearIssue(ProviderFixtures.LinearManyLabels("ENG-6", 25, hasNextPage: true, DateTimeOffset.Parse("2026-11-08T10:00:00Z", CultureInfo.InvariantCulture)));
+        using var h = PollerHarness.For("linear", provider);
+
+        var polled = await h.Poller.Poll(h.Connection, EventKind.LinearIssueLabeled, Before, TestContext.Current.CancellationToken);
+
+        Assert.Equal(25, polled.Value.Events.Count);
+        Assert.True(polled.Value.Gap);   // every returned entry is newer than the cursor and more exist
+    }
+
+    [Fact]
+    public async Task History_served_oldest_first_with_a_next_page_reports_a_gap_that_names_the_order()
+    {
+        var provider = new FakeProvider();
+        provider.LinearHistoryOldestFirst();
+        provider.AddLinearIssue(ProviderFixtures.LinearManyLabels("ENG-7", 26, hasNextPage: false, DateTimeOffset.Parse("2026-11-08T08:00:00Z", CultureInfo.InvariantCulture)));
+        using var h = PollerHarness.For("linear", provider);
+
+        var polled = await h.Poller.Poll(h.Connection, EventKind.LinearIssueLabeled, "2026-11-08T08:00:10Z", TestContext.Current.CancellationToken);
+
+        Assert.True(polled.Value.Gap);
+        Assert.Contains("history order", polled.Value.Reason, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task The_cursor_goes_to_the_query_as_a_variable_that_both_nested_lists_and_the_issues_filter_use()
     {
         var provider = new FakeProvider();
@@ -241,7 +268,8 @@ public sealed class LinearEventPollerTests
         var query = request.RootElement.GetProperty("query").GetString();
         Assert.Contains("$since: DateTimeOrDuration", query, StringComparison.Ordinal);
         Assert.Contains("comments(first: 10, filter: { createdAt: { gt: $since } })", query, StringComparison.Ordinal);
-        Assert.Contains("history(first: 25, filter: { createdAt: { gt: $since } })", query, StringComparison.Ordinal);
+        Assert.Contains("history(first: 25, orderBy: createdAt)", query, StringComparison.Ordinal);   // history takes no filter argument
+        Assert.DoesNotContain("history(first: 25, filter", query, StringComparison.Ordinal);
         Assert.Contains("filter: { updatedAt: { gt: $since } }", query, StringComparison.Ordinal);
         Assert.DoesNotContain("2026-11-08", query, StringComparison.Ordinal);   // the instant travels in variables, never spliced into the text
         Assert.StartsWith("2026-11-08T08:00:11", request.RootElement.GetProperty("variables").GetProperty("since").GetString(), StringComparison.Ordinal);

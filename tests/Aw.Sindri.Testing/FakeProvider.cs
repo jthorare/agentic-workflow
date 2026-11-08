@@ -36,6 +36,7 @@ public sealed class FakeProvider : HttpMessageHandler
     private readonly List<ProviderRequest> _requests = [];
     private string? _slackError;
     private bool _unreachable;
+    private bool _historyOldestFirst;
     private int _limitedLeft;
     private IReadOnlyDictionary<string, string>? _limitHeaders;
     private string? _limitBody;
@@ -129,6 +130,15 @@ public sealed class FakeProvider : HttpMessageHandler
             _limitedLeft = times;
             _limitRetryAfter = retryAfter;
             _limitStatus = status;
+        }
+    }
+
+    /// <summary>Makes Linear serve an issue's history oldest first (it serves newest first by default).</summary>
+    public void LinearHistoryOldestFirst()
+    {
+        lock (_gate)
+        {
+            _historyOldestFirst = true;
         }
     }
 
@@ -259,6 +269,11 @@ public sealed class FakeProvider : HttpMessageHandler
         if (requestBody.Length > 0)
         {
             using var document = System.Text.Json.JsonDocument.Parse(requestBody);
+            if (document.RootElement.TryGetProperty("query", out var text) && LinearWindow.FiltersHistory(text.GetString()))
+            {
+                return LinearWindow.UnknownHistoryFilter;
+            }
+
             if (document.RootElement.TryGetProperty("variables", out var variables))
             {
                 offset = variables.TryGetProperty("after", out var after) && int.TryParse(after.GetString(), out var parsed) ? parsed : 0;
@@ -268,7 +283,7 @@ public sealed class FakeProvider : HttpMessageHandler
 
         var end = Math.Min(offset + LinearPageSize, _linearIssues.Count);
         var more = end < _linearIssues.Count ? "true" : "false";
-        var page = _linearIssues.Skip(offset).Take(LinearPageSize).Select(issue => LinearWindow.Apply(issue, since));
+        var page = _linearIssues.Skip(offset).Take(LinearPageSize).Select(issue => LinearWindow.Apply(issue, since, _historyOldestFirst));
         return "{\"data\":{\"issues\":{\"nodes\":[" + string.Join(',', page) + "],\"pageInfo\":{\"hasNextPage\":" + more + ",\"endCursor\":\"" + end.ToString(System.Globalization.CultureInfo.InvariantCulture) + "\"}}}}";
     }
 }
