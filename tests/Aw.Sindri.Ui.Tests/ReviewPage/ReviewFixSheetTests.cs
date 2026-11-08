@@ -92,6 +92,19 @@ public sealed class ReviewFixSheetTests
     }
 
     [Fact]
+    public async Task The_fix_sheet_has_no_babysitter_route()
+    {
+        _f.Server.ReviewFixAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, ReviewFixBodies.Babysitter);
+        var sheet = Opened(_check);
+
+        await sheet.Send(Token);
+
+        Assert.DoesNotContain("babysitter", sheet.GoesToText, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("babysitter", sheet.OutcomeText, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("Waiting", sheet.Outcome.ToString());   // an old server's "babysitter" reads as no session: the item waits in Work
+    }
+
+    [Fact]
     public async Task An_answer_that_lands_after_the_sheet_closed_and_opened_again_is_dropped()
     {
         var sheet = Opened(_check);
