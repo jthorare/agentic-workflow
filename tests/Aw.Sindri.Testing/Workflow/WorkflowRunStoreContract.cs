@@ -211,4 +211,60 @@ public abstract class WorkflowRunStoreContract
         Expect.Equal(19, results.Count(static r => r.IsSuccess && r.Value == GraphStartKind.Skipped));
         _ = Expect.Only((await store.InFlight(_workflow, Token)).Value);
     }
+
+    /// <summary>The oldest queued run becomes running once nothing of the workflow is in flight.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Promote_moves_the_oldest_queued_run_to_running_and_only_one_at_a_time()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Admit(Run(1), GraphConcurrency.Queue, Token)).Value;
+        _ = (await store.Admit(Run(2), GraphConcurrency.Queue, Token)).Value;
+        _ = (await store.Admit(Run(3), GraphConcurrency.Queue, Token)).Value;
+        _ = (await store.SetStatus(Run(1).Id, WorkflowRunStatus.Succeeded, outputs: null, error: null, Token)).Value;
+
+        var promoted = await store.PromoteOldestQueued(_workflow, Token);
+        var again = await store.PromoteOldestQueued(_workflow, Token);
+
+        Expect.Equal<WorkflowRunId?>(Run(2).Id, promoted.Value?.Id);
+        Expect.Equal(WorkflowRunStatus.Running, promoted.Value?.Status);
+        Expect.Equal(WorkflowRunStatus.Running, (await store.Get(Run(2).Id, Token)).Value.Status);
+        Expect.Equal(WorkflowRunStatus.Queued, (await store.Get(Run(3).Id, Token)).Value.Status);
+        Expect.Equal<WorkflowRun?>(expected: null, again.Value);   // run 2 is now in flight
+    }
+
+    /// <summary>A run still running holds the queue.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Promote_does_nothing_while_a_run_is_in_flight_or_none_is_queued()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        var empty = await store.PromoteOldestQueued(_workflow, Token);
+        _ = (await store.Admit(Run(1), GraphConcurrency.Queue, Token)).Value;
+        _ = (await store.Admit(Run(2), GraphConcurrency.Queue, Token)).Value;
+
+        var busy = await store.PromoteOldestQueued(_workflow, Token);
+
+        Expect.Equal<WorkflowRun?>(expected: null, empty.Value);
+        Expect.Equal<WorkflowRun?>(expected: null, busy.Value);
+        Expect.Equal(WorkflowRunStatus.Queued, (await store.Get(Run(2).Id, Token)).Value.Status);
+    }
+
+    /// <summary>The check and the change are one step: 20 promotes racing over 5 queued runs start exactly one.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Twenty_promotes_racing_start_exactly_one_queued_run()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        foreach (var n in Enumerable.Range(1, 5))
+        {
+            _ = (await store.Insert(Run(n, WorkflowRunStatus.Queued), Token)).Value;
+        }
+
+        var results = await Task.WhenAll(Enumerable.Range(1, 20).Select(_ => Task.Run(async () => await store.PromoteOldestQueued(_workflow, Token), Token)));
+
+        Expect.Equal(1, results.Count(static r => r.IsSuccess && r.Value is not null));
+        Expect.Equal(1, (await store.InFlight(_workflow, Token)).Value.Count(static r => r.Status == WorkflowRunStatus.Running));
+        Expect.Equal(4, (await store.InFlight(_workflow, Token)).Value.Count(static r => r.Status == WorkflowRunStatus.Queued));
+    }
 }

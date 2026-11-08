@@ -22,6 +22,15 @@ public interface IWorkflowRunStore
     /// <returns>What happened, or SND-GRAPH-100 when the id is used.</returns>
     public ValueTask<Result<GraphStartKind>> Admit(WorkflowRun run, GraphConcurrency mode, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Starts the next queued run in one write: when nothing of <paramref name="workflow"/> is running or waiting, the oldest queued run becomes running and is returned.
+    /// The check and the change are one step, so two runs ending together cannot both promote one.
+    /// </summary>
+    /// <param name="workflow">The workflow whose run just ended.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>The run, now running; null when none is queued or another run is running or waiting.</returns>
+    public ValueTask<Result<WorkflowRun?>> PromoteOldestQueued(WorkflowId workflow, CancellationToken cancellationToken);
+
     /// <summary>One run.</summary>
     /// <param name="id">The run.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
