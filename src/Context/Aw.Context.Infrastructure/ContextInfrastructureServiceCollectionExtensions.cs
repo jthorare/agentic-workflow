@@ -102,7 +102,7 @@ public static class ContextInfrastructureServiceCollectionExtensions
 
     /// <summary>
     /// Adds the labeling pass ('context.labeling'): <see cref="ILabeler"/> over the host's <see cref="Core.Models.IModelPort"/>. The token cap
-    /// ('context.labeling.maxTokens') arrives with each pass; a build asks the labeler only when the profile turns labeling on. The Jev pick and the route's prompt budget
+    /// ('context.labeling.maxTokens') arrives with each pass; a build asks the labeler only when the approved profile turns labeling on. The Jev pick and the route's prompt budget
     /// (<see cref="Core.Models.IChoicePort"/>, <see cref="Core.Models.IModelPromptBudget"/>) are used when the host registers them. The product-surface picker (<see cref="Core.Surfaces.ISurfacePicker"/>) sits beside the labeler.
     /// </summary>
     /// <param name="services">The service collection.</param>

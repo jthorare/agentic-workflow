@@ -11,7 +11,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// sets 'workflow.agent.target' and a launcher is registered. 'LoadRecipe' reads it once when an instance starts, so the answer is part of history.
 /// With no target or no launcher the list is empty: a deskCapable Step runs at the desk and any other parks with SND-WF-010.
 /// </summary>
-/// <param name="approved">The profile.</param>
+/// <param name="approved">The approved profile.</param>
 /// <param name="launchers">The registered launchers; none when the host has no launcher.</param>
 internal sealed class AgentStepSelection(IApprovedProfile approved, IEnumerable<ILauncher> launchers)
 {

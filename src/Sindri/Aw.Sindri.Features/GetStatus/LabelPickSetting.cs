@@ -3,7 +3,7 @@ using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Features.GetStatus;
 
-/// <summary>'context.models.labeling.pick' (or 'context.models.productSurfaces.pick') of the profile, as the Settings page says it (model routing spec §8.5): 'off', 'on', or 'needs-key' when it is on and Jev has no key. Computed here so the app never derives it.</summary>
+/// <summary>'context.models.labeling.pick' (or 'context.models.productSurfaces.pick') of the approved profile, as the Settings page says it (model routing spec §8.5): 'off', 'on', or 'needs-key' when it is on and Jev has no key. Computed here so the app never derives it.</summary>
 internal static class LabelPickSetting
 {
     internal const string Off = "off";
@@ -12,8 +12,8 @@ internal static class LabelPickSetting
     internal const string Labeling = "labeling";
     internal const string ProductSurfaces = "productSurfaces";
 
-    /// <summary>The verdict for the profile.</summary>
-    /// <param name="approved">The profile, or null when none is approved (the pick is off).</param>
+    /// <summary>The verdict for the approved profile.</summary>
+    /// <param name="approved">The approved profile, or null when none is approved (the pick is off).</param>
     /// <param name="keys">Says whether Jev has a key; null counts it present.</param>
     /// <param name="cancellationToken">Cancels the key check.</param>
     /// <param name="kind">The 'context.models' key whose pick is read: 'labeling' or 'productSurfaces'.</param>

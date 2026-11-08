@@ -12,7 +12,7 @@ public static class LaunchTargetChoice
 
     /// <summary>The first of the repo's last used agent, its profile default, the profile's launch default and Claude Code that the catalog has: a rule whose agent is absent from this box's catalog is skipped.</summary>
     /// <param name="catalog">This box's catalog.</param>
-    /// <param name="launch">The profile's 'launch:' block, or null.</param>
+    /// <param name="launch">The approved profile's 'launch:' block, or null.</param>
     /// <param name="repo">The item's repo, or null.</param>
     /// <param name="lastUsed">The agent the repo's last started launch used, or null.</param>
     /// <returns>The agent, or null when the catalog has none of them.</returns>

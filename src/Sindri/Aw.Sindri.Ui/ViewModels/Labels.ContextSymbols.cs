@@ -20,7 +20,7 @@ internal static partial class Labels
     /// <summary>The cell and caption when the index file is damaged.</summary>
     internal const string ContextSymbolsDamaged = "index damaged";
 
-    /// <summary>The cell and caption when the repo is not in the profile.</summary>
+    /// <summary>The cell and caption when the repo is not in the approved profile.</summary>
     internal const string ContextSymbolsNotConfigured = "not configured";
 
     /// <summary>The caption of the callers panel.</summary>

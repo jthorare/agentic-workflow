@@ -11,7 +11,7 @@ namespace Aw.Sindri.Host.Models;
 
 /// <summary>
 /// The context engine's model port with routing (model routing spec §4) over Judge's provider catalog. It asks only the owner's own agent CLIs (Claude Code, Codex, Cursor), never the remote 'jev' API, because the prompt carries the
-/// owner's repo text. For each call it finds the kind from the purpose, reads 'context.models' of the profile, lets <see cref="ModelRouting"/> pick the harnesses and the model each runs, and walks them in order
+/// owner's repo text. For each call it finds the kind from the purpose, reads 'context.models' of the approved profile, lets <see cref="ModelRouting"/> pick the harnesses and the model each runs, and walks them in order
 /// (<see cref="ModelWalker"/>). When nothing answered and a harness is at its limit, a call that runs under a job parks the job on 'model-limit' (<see cref="ModelPauser"/>) and walks again from the first harness when it is resumed; every
 /// other end is SND-CONTEXT-240, 241 or 042 (<see cref="ModelCallErrors"/>). It also tells a caller how big a prompt it may send, the smallest budget among the harnesses of the route (<see cref="IModelPromptBudget"/>). The tries become 'context.model.called' events (<see cref="ModelCallRecorder"/>). A request's own model names win over the profile and go through the same name check.
 /// </summary>
@@ -29,7 +29,7 @@ internal sealed class RoutedModelPort : IModelPort, IModelPromptBudget
 
     /// <summary>Creates the port.</summary>
     /// <param name="catalog">Finds the provider lineup (resolved on the first request).</param>
-    /// <param name="models">'context.models' of the profile.</param>
+    /// <param name="models">'context.models' of the approved profile.</param>
     /// <param name="jobs">The job the call runs under, and the handle that parks it.</param>
     /// <param name="log">Where the call's event is written.</param>
     /// <param name="ids">Names each call's event.</param>

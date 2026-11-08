@@ -37,7 +37,7 @@ public interface IContextConcepts
     /// <returns>The view, or SND-CONTEXT-257 for a page the map lacks, SND-CONTEXT-258 for a concept or repo it lacks, else as <see cref="Concepts"/>.</returns>
     public ValueTask<Result<PagesView>> Pages(PagesQuery query, ContextScope scope, CancellationToken cancellationToken);
 
-    /// <summary>Checks the profile's pages against the map (the doctor row 'context:pages').</summary>
+    /// <summary>Checks the approved profile's pages against the map (the doctor row 'context:pages').</summary>
     /// <param name="scope">The approved scope, or null when none is approved.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The health row.</returns>

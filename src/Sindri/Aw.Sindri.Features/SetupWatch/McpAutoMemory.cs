@@ -10,14 +10,14 @@ internal sealed class McpAutoMemory
 
     /// <summary>Whether <paramref name="repo"/> was already looked at under this profile and port.</summary>
     /// <param name="repo">The repo.</param>
-    /// <param name="profile">The profile's hash.</param>
+    /// <param name="profile">The approved profile's hash.</param>
     /// <param name="port">The control plane's port.</param>
     /// <returns>True when nothing changed since.</returns>
     internal bool Seen(RepoName repo, ProfileHash profile, int port) => _seen.TryGetValue(repo, out var last) && last == (profile, port);
 
     /// <summary>Records that <paramref name="repo"/> was looked at under this profile and port.</summary>
     /// <param name="repo">The repo.</param>
-    /// <param name="profile">The profile's hash.</param>
+    /// <param name="profile">The approved profile's hash.</param>
     /// <param name="port">The control plane's port.</param>
     internal void Remember(RepoName repo, ProfileHash profile, int port) => _seen[repo] = (profile, port);
 }

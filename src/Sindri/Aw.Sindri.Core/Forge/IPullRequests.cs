@@ -6,7 +6,7 @@ namespace Aw.Sindri.Core.Forge;
 /// The pull requests Sindri follows and opens (PR babysitter spec PB10 and §10.2, BD1): Sindri's own port over the forge, with only what its
 /// steps and effects need and Sindri's types and strings. Its adapters sit in the Host, the one project that may reference the forge package.
 /// Everything the forge returns (a check's log, a title) is untrusted text. Every member answers an error rather than throwing: SND-FORGE-001
-/// when the profile names no forge, SND-FORGE-002 when the forge or the profile's host list refuses the call, SND-FORGE-003 when the
+/// when the approved profile names no forge, SND-FORGE-002 when the forge or the profile's host list refuses the call, SND-FORGE-003 when the
 /// pull request isn't there, SND-FORGE-004 when the forge can't be reached.
 /// </summary>
 public interface IPullRequests

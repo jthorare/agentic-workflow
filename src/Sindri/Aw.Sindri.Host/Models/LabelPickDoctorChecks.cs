@@ -5,10 +5,10 @@ using Aw.Sindri.Features.GetStatus;
 namespace Aw.Sindri.Host.Models;
 
 /// <summary>
-/// The doctor's 'context:labelpick' row (model routing spec §8.4), the way 'model:pick' works for the launch pick: whether Jev picks each cluster's label from the model's candidates. Off (the profile says so, or says nothing) is fine,
+/// The doctor's 'context:labelpick' row (model routing spec §8.4), the way 'model:pick' works for the launch pick: whether Jev picks each cluster's label from the model's candidates. Off (the approved profile says so, or says nothing) is fine,
 /// a choice; on without a Jev key is a warning, because every label then takes the model's first candidate.
 /// </summary>
-/// <param name="models">'context.models' of the profile.</param>
+/// <param name="models">'context.models' of the approved profile.</param>
 /// <param name="key">Says whether Jev has a key.</param>
 internal sealed class LabelPickDoctorChecks(IApprovedModels models, IJevKeyProbe key) : IDoctorChecks
 {

@@ -15,7 +15,7 @@ namespace Aw.Sindri.Features.Prepare;
 /// The host-side prepare of a Step's worktree (sandbox spec §3.8, SB-11): for each package directory the repo declares, the lockfile is read at the run's base commit, a cached install is
 /// copied in on a hit, and a miss installs (scripts off, then only the allowed packages' scripts) and fills the cache. A repo with no declaration, or a launch with no base commit, is left alone.
 /// </summary>
-/// <param name="profile">The profile, for the repo's <c lang="text">sandbox.repos.&lt;repo&gt;.prepare</c>.</param>
+/// <param name="profile">The approved profile, for the repo's <c lang="text">sandbox.repos.&lt;repo&gt;.prepare</c>.</param>
 /// <param name="source">Reads the lockfiles at the base commit.</param>
 /// <param name="cache">The installs kept per lockfile hash.</param>
 /// <param name="commands">Runs the install.</param>

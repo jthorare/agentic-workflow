@@ -22,7 +22,7 @@ namespace Aw.Sindri.Features.GetInstanceLine;
 /// <param name="contents">The stored fact content.</param>
 /// <param name="scrubber">Removes secrets from the text.</param>
 /// <param name="frozen">The freeze records.</param>
-/// <param name="profile">The profile, whose <c language="text">workflow.line</c> keys are the limits shown.</param>
+/// <param name="profile">The approved profile, whose <c language="text">workflow.line</c> keys are the limits shown.</param>
 /// <param name="clock">What the wall clock of a running phase is measured to.</param>
 internal sealed class GetInstanceLineService(LineInstances instances, IInstanceReader reader, IFactContents contents, ITextScrubber scrubber, IFrozenPackets frozen, IApprovedProfile profile, TimeProvider clock)
     : IService<GetInstanceLineRequest, LineView>

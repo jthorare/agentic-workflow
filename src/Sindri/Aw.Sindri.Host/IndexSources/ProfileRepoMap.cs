@@ -13,7 +13,7 @@ internal sealed class ProfileRepoMap
 
     /// <summary>Builds the map.</summary>
     /// <param name="listed">'context.sources.github.repos', each 'owner/name'.</param>
-    /// <param name="profileRepos">The names of the profile's repos.</param>
+    /// <param name="profileRepos">The names of the approved profile's repos.</param>
     internal ProfileRepoMap(IEnumerable<string> listed, IEnumerable<ContextRepoName> profileRepos)
     {
         ArgumentNullException.ThrowIfNull(listed);

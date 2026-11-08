@@ -12,7 +12,7 @@ namespace Aw.Sindri.Features.OpenItem;
 /// session's, else the first of the repo's last used, the repo's default, the profile's default and Claude Code that this box's catalog has. The click
 /// is not checked against the catalog: the launcher answers SND-LAUNCH-003 for it. An attach starts no process, so the budget doesn't gate it.
 /// </summary>
-/// <param name="approvals">The profile: launch defaults and budgets.</param>
+/// <param name="approvals">The approved profile: launch defaults and budgets.</param>
 /// <param name="launches">The 'launches' view, for the repo's last used agent.</param>
 /// <param name="catalog">This box's agent catalog.</param>
 /// <param name="spend">What each agent has spent today.</param>

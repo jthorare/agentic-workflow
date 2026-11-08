@@ -14,7 +14,7 @@ internal static class ContextChecks
     internal const string SyncName = "context:sync";
     internal const string McpScopeName = "context:mcp-scope";
 
-    /// <summary>No profile: nothing to check yet.</summary>
+    /// <summary>No approved profile: nothing to check yet.</summary>
     internal static DoctorCheck NoProfile(Error error) =>
         new(SourcesName, CheckState.Warn, $"{error.Code} {error.Message}", Fix: null);   // every error ContextScopes returns names its fix
 

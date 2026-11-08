@@ -4,7 +4,7 @@ namespace Aw.Sindri.Core.Profile;
 public static class RepoRoleSets
 {
     /// <summary>The roles of <paramref name="repo"/>.</summary>
-    /// <param name="profile">The profile.</param>
+    /// <param name="profile">The approved profile.</param>
     /// <param name="repo">One of its repos.</param>
     /// <returns>One entry per role, in name order; or null when the repo has no roles.</returns>
     public static IReadOnlyList<ProfileRole>? For(SindriProfile profile, RepoEntry repo)

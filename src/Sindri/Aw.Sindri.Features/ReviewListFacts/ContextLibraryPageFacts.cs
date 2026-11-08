@@ -13,7 +13,7 @@ namespace Aw.Sindri.Features.ReviewListFacts;
 /// The library page's facts over Context (PR review page spec §6.1): every doc the caller may read with its errors, each file written with the home folder as <c language="text">~</c>, and the folders that couldn't be read.
 /// A finding's text is its message and its fix, with the record key in the message replaced by the file.
 /// </summary>
-/// <param name="approvals">The profile.</param>
+/// <param name="approvals">The approved profile.</param>
 /// <param name="callers">The current caller.</param>
 /// <param name="engine">Context's facade: settings and the library reads.</param>
 /// <param name="host">The machine's home folders.</param>

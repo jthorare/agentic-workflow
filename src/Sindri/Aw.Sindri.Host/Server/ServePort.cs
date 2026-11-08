@@ -8,7 +8,7 @@ namespace Aw.Sindri.Host.Server;
 
 /// <summary>
 /// The port 'sindri serve' listens on, chosen from the app's own container before it binds: AW_SINDRI_PORT when set,
-/// else the profile's api.port, else 7410. Kestrel reads its options when the app is built, so serve's host adds
+/// else the approved profile's api.port, else 7410. Kestrel reads its options when the app is built, so serve's host adds
 /// no listener then (<see cref="LoopbackBinding"/>) and this adds the one loopback listener once the port is known.
 /// </summary>
 internal sealed class ServePort(IApprovedProfile approvals, IOptions<KestrelServerOptions> kestrel)

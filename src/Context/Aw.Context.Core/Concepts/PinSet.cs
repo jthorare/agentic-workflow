@@ -95,7 +95,7 @@ public sealed class PinSet : IAliasPins
     /// <returns>The aliases, empty for a concept that is no pin.</returns>
     public IReadOnlyList<string> AliasesOf(NodeKey concept) => IdOf(concept) is { } id && _shown.TryGetValue(id, out var pin) ? pin.Pin.Aliases : [];
 
-    /// <summary>A pin's definition, read from the profile (not from the map node, which carries the one of its last build).</summary>
+    /// <summary>A pin's definition, read from the approved profile (not from the map node, which carries the one of its last build).</summary>
     /// <param name="concept">The concept's key.</param>
     /// <returns>The summary, or null when the concept is no pin or it has none.</returns>
     public string? SummaryOf(NodeKey concept) => IdOf(concept) is { } id && _shown.TryGetValue(id, out var pin) && !string.IsNullOrWhiteSpace(pin.Pin.Summary) ? pin.Pin.Summary : null;

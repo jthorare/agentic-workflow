@@ -12,7 +12,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 
 /// <summary>
 /// The router stub (workflow engine spec §12, engine P7 plan D8), a built-in service: for each 'workflow.item' instance that
-/// started, it appends one 'item.routed' event as the scheduler records it (service:router-stub), whose outcome comes from the profile's
+/// started, it appends one 'item.routed' event as the scheduler records it (service:router-stub), whose outcome comes from the approved profile's
 /// 'workflow.route' ('startable', or 'notStartable' for 'none') and whose 'fact:stepSpec' is the item's spec
 /// (<see cref="ItemRouter"/>). The event bridge delivers it to the instance. It reads the ledger past its own cursor, and an
 /// event is keyed by the 'workflow.started' row it answers, so a crash between the append and the cursor repeats nothing.

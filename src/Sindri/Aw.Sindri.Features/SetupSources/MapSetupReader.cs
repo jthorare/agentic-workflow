@@ -12,9 +12,9 @@ namespace Aw.Sindri.Features.SetupSources;
 
 /// <summary>
 /// What the setup list reads of the context map: whether the engine's stored state holds a current map (through the facade, as a service sees the whole map), and while it doesn't,
-/// the build jobs: one running is "building" with its n/N when its lines say so, a failed latest one is "failed". With no profile or no repo there is nothing to build from.
+/// the build jobs: one running is "building" with its n/N when its lines say so, a failed latest one is "failed". With no approved profile or no repo there is nothing to build from.
 /// </summary>
-/// <param name="approvals">The profile (its context section and repos make the scope).</param>
+/// <param name="approvals">The approved profile (its context section and repos make the scope).</param>
 /// <param name="engine">The context engine.</param>
 /// <param name="jobs">The 'jobs' view.</param>
 internal sealed class MapSetupReader(IApprovedProfile approvals, IContextEngine engine, IJobViews jobs)
@@ -64,7 +64,7 @@ internal sealed class MapSetupReader(IApprovedProfile approvals, IContextEngine 
         return status.Error.Code == ContextErrors.NoMap.Code ? await Builds(cancellationToken).ConfigureAwait(false) : status.Error;
     }
 
-    // The profile's scope as a service reads it (the deny globs apply), as doctor builds it.
+    // The approved profile's scope as a service reads it (the deny globs apply), as doctor builds it.
     private static ContextScope Scope(SindriProfile profile) =>
         new(profile.Context, ScopeRules.Usable([.. (profile.Repos ?? []).Select(r => new ProfileRepoEntry(r.Name, r.Path, RepoDenyGlobs.For(profile, r), [.. RepoConcepts.For(profile, r).Select(c => ConceptPin.Of(c.Id is { } id ? ConceptId.From(id.Value) : null, c.Name, c.Summary, c.Features, c.Paths).Declaring(c.DependsOn, c.Owns).WithAliases(c.Aliases))], DemotePaths: RepoDemoteGlobs.For(profile, r)) { Roles = RepoRoleSets.For(profile, r) is { } sets ? [.. sets.Select(x => new RepoRole(x.Name, x.Demoted, x.Globs))] : null })]), new ContextCaller(ContextCallerKind.Service, Repo: null, ContextClient.Service));
 

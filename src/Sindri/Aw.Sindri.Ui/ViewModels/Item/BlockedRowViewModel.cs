@@ -82,7 +82,7 @@ internal sealed class BlockedRowViewModel : ObservableObject
         }
     }
 
-    /// <summary>The profile's hash read when the Allow became a draft edit; null when none was approved or it couldn't be read.</summary>
+    /// <summary>The approved profile's hash read when the Allow became a draft edit; null when none was approved or it couldn't be read.</summary>
     internal string? ApprovedWhenAsked { get; private set; }
 
     /// <summary>True while the approval is open and not yet answered.</summary>
@@ -122,7 +122,7 @@ internal sealed class BlockedRowViewModel : ObservableObject
             return;
         }
 
-        // The profile's hash as the edit lands: the row is allowed only once the approved hash moves past it.
+        // The approved profile's hash as the edit lands: the row is allowed only once the approved hash moves past it.
         ApprovedWhenAsked = await _approvedNow(cancellationToken).ConfigureAwait(true);
         State = AllowState.NeedsApproval;
         _voice.Say(Labels.AllowNeedsApproval(_target.Target));

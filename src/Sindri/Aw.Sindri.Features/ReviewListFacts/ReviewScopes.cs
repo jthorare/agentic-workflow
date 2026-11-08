@@ -8,15 +8,15 @@ using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Features.ReviewListFacts;
 
-/// <summary>What the PR review page reads Context with: the profile's checked settings, the scope of the current caller and the audiences that caller may read.</summary>
+/// <summary>What the PR review page reads Context with: the approved profile's checked settings, the scope of the current caller and the audiences that caller may read.</summary>
 internal static class ReviewScopes
 {
     /// <summary>Reads the scope of the current caller.</summary>
-    /// <param name="approvals">The profile.</param>
+    /// <param name="approvals">The approved profile.</param>
     /// <param name="callers">The current caller.</param>
     /// <param name="engine">Context's facade, for the settings check.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>The settings, scope and audiences; or the error (no profile, bad settings, no caller).</returns>
+    /// <returns>The settings, scope and audiences; or the error (no approved profile, bad settings, no caller).</returns>
     internal static async ValueTask<Result<Scoped>> Read(IApprovedProfile approvals, ICallerContextAccessor callers, IContextEngine engine, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(approvals);

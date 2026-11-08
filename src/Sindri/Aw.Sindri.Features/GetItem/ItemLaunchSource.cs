@@ -9,7 +9,7 @@ namespace Aw.Sindri.Features.GetItem;
 /// <summary>Reads the projections an item's launch block needs and hands them to <see cref="LaunchOptions.For"/>, which decides.</summary>
 /// <param name="launches">The item's and the repo's launches.</param>
 /// <param name="targets">The last probe with budgets.</param>
-/// <param name="approvals">The profile: launch settings and repo paths.</param>
+/// <param name="approvals">The approved profile: launch settings and repo paths.</param>
 /// <param name="catalog">The agent catalog.</param>
 /// <param name="clock">Now.</param>
 internal sealed class ItemLaunchSource(ILaunchViews launches, LaunchTargetsReader targets, IApprovedProfile approvals, IAgentCatalog catalog, TimeProvider clock) : IItemLaunchSource

@@ -9,11 +9,11 @@ using Aw.Sindri.Core.Views;
 namespace Aw.Sindri.Features.SetupSources;
 
 /// <summary>
-/// What the setup list reads of the per-repo MCP registration: for each repo the profile names, whether each installed provider's local registration exists for its checkout (Claude Code's local-scope entry, Codex's and Cursor's project files).
+/// What the setup list reads of the per-repo MCP registration: for each repo the approved profile names, whether each installed provider's local registration exists for its checkout (Claude Code's local-scope entry, Codex's and Cursor's project files).
 /// Each line also carries the installed providers' own states: connected (the entry exists), connecting (a RegisterMcp job for the repo is queued or running), failed (the newest such job failed) or not started.
 /// Only local scope counts; a user-wide entry is never looked for here (doctor warns on that) and a file that can't be read is no entry. It starts nothing.
 /// </summary>
-/// <param name="approvals">The profile (the repos and their checkouts).</param>
+/// <param name="approvals">The approved profile (the repos and their checkouts).</param>
 /// <param name="host">Reads the providers' config files and says which are installed.</param>
 /// <param name="jobs">The 'jobs' view (the RegisterMcp jobs).</param>
 /// <param name="queue">The setup service's job queue (a job waiting for its turn is connecting too).</param>

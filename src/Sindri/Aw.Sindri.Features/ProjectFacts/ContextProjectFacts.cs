@@ -13,9 +13,9 @@ namespace Aw.Sindri.Features.ProjectFacts;
 /// <summary>
 /// The facts port over Context's IContextEngine (projects page spec §6.1): Projects for the stored projects, Progress for the freshness line,
 /// both under the current caller's scope (mapped as ContextCalls' ContextScopes maps it; slices don't share types), so the audience rule applies as for any record read. Reads only stored data.
-/// Any failure (no profile, Context down) is SND-PROJECT-002 carrying the cause's code, the page's "by name only" state.
+/// Any failure (no approved profile, Context down) is SND-PROJECT-002 carrying the cause's code, the page's "by name only" state.
 /// </summary>
-/// <param name="approvals">The profile.</param>
+/// <param name="approvals">The approved profiles.</param>
 /// <param name="callers">The current caller.</param>
 /// <param name="engine">Context's facade.</param>
 internal sealed class ContextProjectFacts(IApprovedProfile approvals, ICallerContextAccessor callers, IContextEngine engine) : IProjectFacts

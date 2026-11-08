@@ -11,12 +11,12 @@ namespace Aw.Sindri.Features.ProjectFacts;
 
 /// <summary>
 /// The one read behind ListProjects and GetProject (their <see cref="IProjectPages" />) (projects page spec §6.2 steps 1-4): the owner's two views, Context's facts for the attached
-/// Linear keys and their freshness, whether the profile configures Linear, then <see cref="ProjectCards.Build"/>. Context failing is not a
+/// Linear keys and their freshness, whether the approved profile configures Linear, then <see cref="ProjectCards.Build"/>. Context failing is not a
 /// failure here: the page builds from the owner's state alone. Only the views failing is.
 /// </summary>
 /// <param name="views">The 'project-attached' and 'project-hidden' views.</param>
 /// <param name="facts">Context's stored Linear projects.</param>
-/// <param name="approvals">The profile.</param>
+/// <param name="approvals">The approved profile.</param>
 /// <param name="engine">The context engine, which checks the profile's context section.</param>
 /// <param name="clock">The clock.</param>
 internal sealed class ProjectPageReader(IViewReader views, IProjectFacts facts, IApprovedProfile approvals, IContextEngine engine, TimeProvider clock) : IProjectPages

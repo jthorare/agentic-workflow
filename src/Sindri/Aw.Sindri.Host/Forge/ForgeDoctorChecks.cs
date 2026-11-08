@@ -6,10 +6,10 @@ using Aw.Sindri.Core.Profile;
 namespace Aw.Sindri.Host.Forge;
 
 /// <summary>
-/// The doctor's 'forge:credential' row (PR babysitter spec §10.2, W27): whether the profile's forge credential works. It names the credential's
+/// The doctor's 'forge:credential' row (PR babysitter spec §10.2, W27): whether the approved profile's forge credential works. It names the credential's
 /// source ('env:NAME', or 'command:' and the program) and never its value or the command's arguments.
 /// </summary>
-/// <param name="approved">The profile.</param>
+/// <param name="approved">The approved profile.</param>
 /// <param name="pulls">The pull-request port; its Self is the check.</param>
 /// <param name="environment">Reads an environment variable.</param>
 /// <param name="limit">How long Self may take (5 s in the app).</param>

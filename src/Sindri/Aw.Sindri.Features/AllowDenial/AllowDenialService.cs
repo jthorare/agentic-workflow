@@ -15,7 +15,7 @@ namespace Aw.Sindri.Features.AllowDenial;
 /// <param name="files">The runs' counters.</param>
 /// <param name="owners">The repo of each launch.</param>
 /// <param name="writer">Edits the live profile.</param>
-/// <param name="approved">The profile.</param>
+/// <param name="approved">The approved profile.</param>
 internal sealed class AllowDenialService(IDenialFiles files, ILaunchOwners owners, IProfileSandboxWriter writer, IApprovedProfile approved) : IService<AllowDenialRequest, AllowDenialResponse>
 {
     public async ValueTask<Result<AllowDenialResponse>> Handle(AllowDenialRequest request, CancellationToken cancellationToken)

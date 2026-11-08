@@ -14,7 +14,7 @@ namespace Aw.Sindri.Host.Commands;
 /// 'sindri pr babysit &lt;url&gt; [--item &lt;id&gt;] [--json]' and 'sindri docs sync &lt;url&gt; [--item &lt;id&gt;] [--json]' (PR babysitter spec API16, §4.2 'The hand start'):
 /// start 'workflow.pr-babysitter' or 'workflow.docs-sync' on a pull request by its link, with the facts §4.2 lists (the link as a JSON string, {} for every
 /// other declared input) sent as content, never as paths. The link is checked here for its shape only (https, owner/repo/pull/number); the intake Step
-/// refuses a host or repo the profile doesn't name before any network call. The item is --item, else the open item titled with the link, else a new one titled so.
+/// refuses a host or repo the approved profile doesn't name before any network call. The item is --item, else the open item titled with the link, else a new one titled so.
 /// Same caller class as 'workflow start'; exit 0 started or found, 1 not running, 2 invalid, refused or error.
 /// </summary>
 internal static class HandStartCommand

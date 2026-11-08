@@ -14,7 +14,7 @@ namespace Aw.Sindri.Features.CheckSandbox;
 /// <param name="checks">The checks Check again runs.</param>
 /// <param name="sandbox">The mechanism, for the ready line's version.</param>
 /// <param name="clock">Times the checks.</param>
-/// <param name="approved">The profile's sandbox section, for the limits and the agents' own sandboxes.</param>
+/// <param name="approved">The approved profile's sandbox section, for the limits and the agents' own sandboxes.</param>
 /// <param name="machine">The memory and cores the limits are read against.</param>
 internal sealed class SandboxDoctorChecks(ISandboxChecks checks, ISandbox sandbox, TimeProvider clock, IApprovedProfile approved, ISandboxMachine machine) : IDoctorChecks
 {

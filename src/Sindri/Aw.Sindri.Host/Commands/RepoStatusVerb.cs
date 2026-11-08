@@ -6,7 +6,7 @@ using Aw.Sindri.Features.GetRepoStatus;
 namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
-/// 'sindri repo status [&lt;path&gt;] [--nudge] [--json]': where a repo stands against the profile. Local and read-only: it reads the profile and asks git, takes no lock, writes
+/// 'sindri repo status [&lt;path&gt;] [--nudge] [--json]': where a repo stands against the approved profile. Local and read-only: it reads the approved snapshot and asks git, takes no lock, writes
 /// nothing and never starts the control plane, so the SessionStart hook can call it with --nudge (hook contract). --nudge never fails: an error is silence, exit 0.
 /// </summary>
 /// <param name="services">The CLI's scoped services.</param>

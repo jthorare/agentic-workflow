@@ -18,7 +18,7 @@ namespace Aw.Sindri.Features.ReviewListFacts;
 /// claims, the GitHub source's state and the library's counts. It reads stored data only; nothing calls GitHub. The audience rule is the one the projects facts apply: a human reads every repo of the profile,
 /// a session its own repo's.
 /// </summary>
-/// <param name="approvals">The profile.</param>
+/// <param name="approvals">The approved profile.</param>
 /// <param name="callers">The current caller.</param>
 /// <param name="engine">Context's facade: settings, sync progress, the open PR records and the library.</param>
 /// <param name="library">The library header's state.</param>

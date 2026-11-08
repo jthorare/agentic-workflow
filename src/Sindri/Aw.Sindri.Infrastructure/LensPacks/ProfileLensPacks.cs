@@ -6,12 +6,12 @@ using Aw.Sindri.Core.Profile;
 namespace Aw.Sindri.Infrastructure.LensPacks;
 
 /// <summary>
-/// <see cref="ILensPacks"/> over the live profile and the built-in packs (LN-PK lite): the pack id is the profile's repo entry, else its default, else
+/// <see cref="ILensPacks"/> over the APPROVED profile and the built-in packs (LN-PK lite): the pack id is the profile's repo entry, else its default, else
 /// 'design-five' (design) or 'code-review' (review). Nothing approved means the defaults; an approved profile that can't be read fails the call, and a pack id
 /// that resolves nowhere is an error, never a silent fallback. A pack is looked for in the repo ('&lt;repo&gt;/.agentic-workflow/packs'), then on the machine, then built in
 /// (line spec §5.1); one that is not built in needs a pin in 'workflow.packs.pins' ('lenses/&lt;id&gt;') equal to its hash, or it is SND-PACK-002.
 /// </summary>
-/// <param name="approved">The profile.</param>
+/// <param name="approved">The approved profile.</param>
 /// <param name="source">The built-in packs' files.</param>
 /// <param name="outside">The files of the packs a repo or the machine supplies; null for built-in packs only.</param>
 /// <param name="machineRoot">The machine's packs root ('$AW_STATE_DIR/packs'); null for none.</param>

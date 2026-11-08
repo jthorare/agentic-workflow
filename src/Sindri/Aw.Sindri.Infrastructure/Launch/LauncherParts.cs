@@ -18,10 +18,10 @@ internal sealed record LauncherParts(IAgentCatalog Catalog, Func<bool, ISessionH
     /// <summary>The built-in entry's argvHash for an id (a bin-only override keeps it, SL8), or null for an id with no built-in.</summary>
     public Func<AgentId, string?> BuiltinHash { get; init; } = static _ => null;
 
-    /// <summary>The profile's <c lang="text">agents:</c> block, read per Step launch.</summary>
+    /// <summary>The approved profile's <c lang="text">agents:</c> block, read per Step launch.</summary>
     public Func<CancellationToken, ValueTask<AgentSettings?>> Approved { get; init; } = static _ => ValueTask.FromResult<AgentSettings?>(null);
 
-    /// <summary>The variables the live and the profile's 'review.credential: env:NAME' read (none for a 'command:' pointer or no credential), emptied in a Step's environment beside the fixed credential variables.</summary>
+    /// <summary>The variables the live and the approved profile's 'review.credential: env:NAME' read (none for a 'command:' pointer or no credential), emptied in a Step's environment beside the fixed credential variables.</summary>
     public Func<CancellationToken, ValueTask<IReadOnlyList<string>>> ReviewCredentialVariables { get; init; } = static _ => ValueTask.FromResult<IReadOnlyList<string>>([]);
 
     /// <summary>The launcher.json as read now (problems, dropped entries), or null when nothing is checked.</summary>

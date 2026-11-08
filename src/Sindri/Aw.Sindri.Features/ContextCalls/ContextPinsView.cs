@@ -1,6 +1,6 @@
 namespace Aw.Sindri.Features.ContextCalls;
 
-/// <summary>'GET /sindri/context/pins': the live profile's pins, how each stands against the profile and the map, and why the map is or isn't being rebuilt.</summary>
+/// <summary>'GET /sindri/context/pins': the live profile's pins, how each stands against the approved profile and the map, and why the map is or isn't being rebuilt.</summary>
 /// <param name="ApiVersion">1.</param>
 /// <param name="Repo">The repo this answer is for, or null when the profile has several and none was asked for.</param>
 /// <param name="FileHash">The hash of the profile file the pins were read from (the one load the pins came from): the Pin sheet sends it as ifHash.</param>

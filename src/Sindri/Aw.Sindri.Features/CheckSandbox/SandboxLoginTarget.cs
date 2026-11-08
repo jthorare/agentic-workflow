@@ -10,7 +10,7 @@ internal static class SandboxLoginTarget
     /// <summary>A floor for how long the login must stay valid: a Step's own wall time is only known at launch.</summary>
     internal static readonly TimeSpan Needed = TimeSpan.FromMinutes(30);
 
-    /// <summary>The profile's 'workflow.agent.target' when it is installed, approved for Steps and its policy form is expressible; null otherwise.</summary>
+    /// <summary>The approved profile's 'workflow.agent.target' when it is installed, approved for Steps and its policy form is expressible; null otherwise.</summary>
     internal static async ValueTask<(AgentId Target, SandboxSettings? Settings)?> Find(ILaunchSetup setup, IAgentCatalog catalog, IApprovedProfile approved, CancellationToken cancellationToken)
     {
         var profile = await approved.Latest(cancellationToken).ConfigureAwait(false);

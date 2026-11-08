@@ -3,8 +3,8 @@ using Aw.Sindri.Core.Setup;
 
 namespace Aw.Sindri.Features.OnboardRepo;
 
-/// <summary><see cref="IRepoHookStates"/> over the profile's repos: each repo's pre-commit file, classified by the installer.</summary>
-/// <param name="approvals">The profile.</param>
+/// <summary><see cref="IRepoHookStates"/> over the approved profile's repos: each repo's pre-commit file, classified by the installer.</summary>
+/// <param name="approvals">The approved profile.</param>
 /// <param name="installer">Classifies a repo's hook.</param>
 internal sealed class RepoHookStates(IApprovedProfile approvals, IPreCommitInstaller installer) : IRepoHookStates
 {

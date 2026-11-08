@@ -3,7 +3,7 @@ namespace Aw.Context.Core.Models;
 /// <summary>The reason codes an <see cref="IChoicePort"/> failure carries as its message (never provider text), and the ones the labeler stays quiet about.</summary>
 public static class ChoiceReasons
 {
-    /// <summary>The profile's pick is off: nothing was asked.</summary>
+    /// <summary>The approved profile's pick is off: nothing was asked.</summary>
     public const string Off = "off";
 
     /// <summary>The pick is on but there is no Jev key: nothing was asked.</summary>

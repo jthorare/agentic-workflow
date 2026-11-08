@@ -16,7 +16,7 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// Turns a '{ fact: … }' argument into the fact's content. The engine hands a Step input the stored reference ('{ref, sha256, headSha}', the
 /// serialized <see cref="FactValue"/>), never the content; so an input that wants the value (anchors, a window) reads it here through the same
 /// <see cref="IFactContents"/> port the effects use, checks it against the reference's SHA-256, and parses it as JSON (a content that isn't JSON is its text).
-/// A '{ profile: key }' argument is resolved here too, against the profile (never in workflow code, which must replay): a key the
+/// A '{ profile: key }' argument is resolved here too, against the approved profile snapshot (never in workflow code, which must replay): a key the
 /// snapshot can't give is an error: a key no input can read is SND-WF-021 (see <see cref="Fails"/>, it fails the fill), and a missing or unreadable profile file is SND-PROFILE-001 (an unavailable section, like an unreadable fact). A key the profile leaves unset is the open window.
 /// A reference that can't be read is an error that names the argument and the fact (an honest unavailable section); content that isn't what its SHA-256 says is SND-WF-018 (see <see cref="Fails"/>), which fails the fill.
 /// </summary>

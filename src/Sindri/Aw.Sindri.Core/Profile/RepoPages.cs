@@ -4,7 +4,7 @@ namespace Aw.Sindri.Core.Profile;
 public static class RepoPages
 {
     /// <summary>The entries of <paramref name="repo"/> under <paramref name="profile"/>.</summary>
-    /// <param name="profile">The profile.</param>
+    /// <param name="profile">The approved profile.</param>
     /// <param name="repo">One of its repos.</param>
     /// <returns>The profile's entries that name no repo or this one, then the repo's own; empty when neither names any.</returns>
     public static IReadOnlyList<PageSettings> For(SindriProfile profile, RepoEntry repo)

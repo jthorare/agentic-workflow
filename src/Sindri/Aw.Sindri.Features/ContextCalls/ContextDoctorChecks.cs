@@ -5,7 +5,7 @@ using Aw.Sindri.Core.Mcp;
 namespace Aw.Sindri.Features.ContextCalls;
 
 /// <summary>
-/// Doctor's context checks. context:sources asks the engine in-process with the profile from the same home
+/// Doctor's context checks. context:sources asks the engine in-process with the approved profile from the same home
 /// serve reads (so it works with the process stopped); context:mcp-scope reads the three providers' user-wide MCP files.
 /// </summary>
 internal sealed class ContextDoctorChecks(ContextScopes scopes, IContextEngine engine, IProviderFiles files) : IDoctorChecks

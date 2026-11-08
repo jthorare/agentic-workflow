@@ -4,8 +4,8 @@ using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Host.Models;
 
-/// <summary>'context.models' read from the profile's 'context' section, once per approved hash (model routing spec §4 "Settings").</summary>
-/// <param name="approved">The profile.</param>
+/// <summary>'context.models' read from the approved profile's 'context' section, once per approved hash (model routing spec §4 "Settings").</summary>
+/// <param name="approved">The approved profile.</param>
 internal sealed class ApprovedModels(IApprovedProfile approved) : IApprovedModels
 {
     private volatile Cached? _cached;

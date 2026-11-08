@@ -14,7 +14,7 @@ namespace Aw.Sindri.Features.ReviewListFacts;
 /// The PR page's stored side over Context (PR review page spec §6.2, §4.4): the PR's record and the library's view of its claims (<see cref="ReviewPageLibraryReader"/>). The audience rule is the list's (<see cref="ReviewScopes"/>):
 /// a session reads its own repo's docs and is told how many claimed docs it may not read. A repo outside <c language="text">context.sources.github.repos</c> is SND-REVIEW-004.
 /// </summary>
-/// <param name="approvals">The profile.</param>
+/// <param name="approvals">The approved profile.</param>
 /// <param name="callers">The current caller.</param>
 /// <param name="engine">Context's facade.</param>
 /// <param name="library">The claims and the doc map.</param>

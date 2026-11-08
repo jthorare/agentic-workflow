@@ -34,7 +34,7 @@ internal partial interface ISindriApi
     /// <returns>The suggestions, the API's refusal (SND-CONTEXT-179 for a request it can't read), or SND-UI-002/003.</returns>
     public Task<Result<PinSuggestView>> ContextPinSuggest(Uri api, PinSuggestQuery query, CancellationToken cancellationToken);
 
-    /// <summary>GET /sindri/context/pins: the live profile's pins against the profile and the map, and the map's rebuild state. A server without the route answers 404.</summary>
+    /// <summary>GET /sindri/context/pins: the live profile's pins against the approved profile and the map, and the map's rebuild state. A server without the route answers 404.</summary>
     /// <param name="api">The base URL.</param>
     /// <param name="repo">The repo; empty for the profile's only repo.</param>
     /// <param name="cancellationToken">Cancels the call.</param>

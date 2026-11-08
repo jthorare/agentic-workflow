@@ -95,7 +95,7 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
         return rows;
     }
 
-    // Each entry with the id the map gives it (null id for an entry the profile lacks is never asked for).
+    // Each entry with the id the map gives it (null id for an entry the approved profile lacks is never asked for).
     private static List<(ProfilePin Pin, string Id)> Identified(SindriProfile profile)
     {
         var pins = ProfilePins.Of(profile);
@@ -116,7 +116,7 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
 
     private static IReadOnlyList<string> Listed(IReadOnlyList<string>? list) => list ?? [];
 
-    // Stale as the refresh tick decides it (ContextMapRefreshService.RulesChanged): a map built under other rules than the profile's, unless a held draft is already on its way to replace it.
+    // Stale as the refresh tick decides it (ContextMapRefreshService.RulesChanged): a map built under other rules than the approved profile's, unless a held draft is already on its way to replace it.
     private static bool Stale(MapPublishState state, ContextScope scope) =>
         state.Current is not null && state.Hold is null && MapRuleset.Running(scope) is { } running && !string.Equals(state.CurrentRuleset, running, StringComparison.Ordinal);
 

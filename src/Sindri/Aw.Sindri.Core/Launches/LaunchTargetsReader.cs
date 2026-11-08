@@ -10,7 +10,7 @@ namespace Aw.Sindri.Core.Launches;
 /// <summary>The last recorded probe with today's budgets (API spec 'GET /launch/targets'): shared by the targets route and an item's launch block.</summary>
 /// <param name="ledger">Reads the last 'launch.probed'.</param>
 /// <param name="events">Reads its payload.</param>
-/// <param name="approvals">The profile, which names the budgets.</param>
+/// <param name="approvals">The approved profile, which names the budgets.</param>
 /// <param name="spend">What each agent spent today.</param>
 /// <param name="status">How fresh the views are.</param>
 public sealed class LaunchTargetsReader(ILedgerReader ledger, EventFactory events, IApprovedProfile approvals, ILaunchSpend spend, IProjectorStatus status)

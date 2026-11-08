@@ -24,7 +24,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="pulls">The forge.</param>
 /// <param name="recorder">Records the events.</param>
 /// <param name="store">'pr-watch.json'.</param>
-/// <param name="profile">The profile: the poll interval and the idle reminder.</param>
+/// <param name="profile">The approved profile: the poll interval and the idle reminder.</param>
 /// <param name="clock">The clock.</param>
 /// <param name="logger">The log.</param>
 internal sealed partial class PrWatchService(IWatchedPulls watched, IPullRequests pulls, PrChangedRecorder recorder, PrWatchStore store, IApprovedProfile profile, TimeProvider clock, ILogger<PrWatchService> logger) : IScheduledService

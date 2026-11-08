@@ -109,7 +109,7 @@ public static class ConceptBuilder
         return new ConceptRow(node.Key, text.Label(node.Label, trust), summary, source, Size(index, index.MembersOf(node.Key.Value)), citations) { Terms = terms.Count == 0 ? null : terms, Pinned = pinned, Aliases = aliases.Count == 0 ? null : aliases, Pages = pages?.Count ?? 0, SuggestedPages = Suggested(pages) };
     }
 
-    // A pin's definition is the profile's, over the node's from the last build.
+    // A pin's definition is the approved profile's, over the node's from the last build.
     private static string Summary(GraphNode node, PinSet? own, MapText text, Results.Trust trust) =>
         (own?.SummaryOf(node.Key) ?? NodeAttributes.String(node, "summary")) is { Length: > 0 } written ? text.Excerpt(written, trust, NodeAttributes.SummaryMax) : string.Empty;
 

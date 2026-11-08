@@ -126,7 +126,7 @@ internal static class LauncherServiceCollectionExtensions
         return new T3Options(sp.GetRequiredService<LauncherOptions>().T3Directory, t3Home, cli);
     }
 
-    /// <summary>The repo the profile names for a checkout path (the launcher passes the profile checkout as RepoPath; an engine step's worktree travels separately in LaunchRequest.Worktree, so only an exact checkout path matches) and the port Sindri answers on: the running instance's, else the profile's.</summary>
+    /// <summary>The repo the approved profile names for a checkout path (the launcher passes the profile checkout as RepoPath; an engine step's worktree travels separately in LaunchRequest.Worktree, so only an exact checkout path matches) and the port Sindri answers on: the running instance's, else the profile's.</summary>
     private static Func<string, CancellationToken, ValueTask<McpTarget?>> McpTargetFor(IServiceProvider sp) => async (path, ct) =>
     {
         var latest = await sp.GetRequiredService<IApprovedProfile>().Latest(ct).ConfigureAwait(false);

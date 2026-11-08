@@ -25,7 +25,7 @@ namespace Aw.Sindri.Features.Blocks.Effect;
 /// <param name="files">Reads pr.json and body.md of the hand-off.</param>
 /// <param name="contents">Reads the stored facts.</param>
 /// <param name="store">Stores 'fact:pr'.</param>
-/// <param name="profile">The profile: 'workflow.ship.draft'.</param>
+/// <param name="profile">The approved profile: 'workflow.ship.draft'.</param>
 internal sealed class PrOpenEffect(IPullRequests pulls, IForgeRepos repos, IPacketFiles files, IFactContents contents, IFactStore store, IApprovedProfile profile)
     : IEffectKind, IDescribedBlock
 {

@@ -8,7 +8,7 @@ namespace Aw.Sindri.Features.CheckSandbox;
 /// <summary>The fixture login: the profile's credential source for the Step agent.</summary>
 /// <param name="setup">The catalog and what is installed.</param>
 /// <param name="catalog">The entries' policy forms.</param>
-/// <param name="approved">The profile.</param>
+/// <param name="approved">The approved profile.</param>
 /// <param name="sources">The credential sources.</param>
 internal sealed class SandboxFixtureLogin(ILaunchSetup setup, IAgentCatalog catalog, IApprovedProfile approved, ModelCredentialSources sources) : ISandboxFixtureLogin
 {

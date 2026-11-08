@@ -8,7 +8,7 @@ namespace Aw.Sindri.Core.Launches;
 public static class LaunchBudgets
 {
     /// <summary>Where <paramref name="target"/> stands against today's <paramref name="spend"/>: a spend counted in tokens only has no limit applied (E-28).</summary>
-    /// <param name="agents">The profile's 'agents:' block, or null.</param>
+    /// <param name="agents">The approved profile's 'agents:' block, or null.</param>
     /// <param name="target">The agent.</param>
     /// <param name="spend">Today's spend, or null when the agent has no usage reader.</param>
     /// <returns>The state.</returns>
@@ -16,7 +16,7 @@ public static class LaunchBudgets
         Of(agents, target, spend is { Basis: SpendBasis.TokensOnly } ? 0m : spend?.Usd);
 
     /// <summary>Where <paramref name="target"/> stands.</summary>
-    /// <param name="agents">The profile's 'agents:' block, or null.</param>
+    /// <param name="agents">The approved profile's 'agents:' block, or null.</param>
     /// <param name="target">The agent.</param>
     /// <param name="spentToday">Its spend today in USD, or null when it has no usage reader.</param>
     /// <returns>The state.</returns>

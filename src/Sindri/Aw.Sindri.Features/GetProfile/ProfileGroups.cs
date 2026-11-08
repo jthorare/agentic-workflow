@@ -25,7 +25,7 @@ internal static class ProfileGroups
     ];
 
     /// <summary>The spending and work limits the live profile raises or adds.</summary>
-    /// <param name="approved">The profile, or null.</param>
+    /// <param name="approved">The approved profile, or null.</param>
     /// <param name="live">The live profile.</param>
     /// <returns>One sentence per limit, in a fixed order.</returns>
     public static IEnumerable<string> Allowance(SindriProfile? approved, SindriProfile live) =>
@@ -34,7 +34,7 @@ internal static class ProfileGroups
             .Concat(SizeBudgets(approved?.Workflow?.Plan, live.Workflow?.Plan, approved is null));
 
     /// <summary>The outside systems the live profile points Sindri at that the approved one did not.</summary>
-    /// <param name="approved">The profile, or null.</param>
+    /// <param name="approved">The approved profile, or null.</param>
     /// <param name="live">The live profile.</param>
     /// <returns>One sentence per connection, in a fixed order.</returns>
     public static IEnumerable<string> Connections(SindriProfile? approved, SindriProfile live) =>
@@ -46,7 +46,7 @@ internal static class ProfileGroups
                 Newly(McpOf(live) == SetupSettings.Auto, McpOf(approved) == SetupSettings.Auto, "Sindri will register its MCP server in each repo on its own")));
 
     /// <summary>The steps the live profile keeps for you alone that the approved one did not.</summary>
-    /// <param name="approved">The profile, or null.</param>
+    /// <param name="approved">The approved profile, or null.</param>
     /// <param name="live">The live profile.</param>
     /// <returns>One sentence per stop, in a fixed order.</returns>
     public static IEnumerable<string> HumanOnly(SindriProfile? approved, SindriProfile live) =>

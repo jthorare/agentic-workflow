@@ -5,12 +5,12 @@ using Aw.Kernel;
 namespace Aw.Context.Core.Audience;
 
 /// <summary>
-/// <see cref="IAudiencePolicy"/> over the profile (spec §4.4). A session scoped to a profile repo reads: that repo's own audience
+/// <see cref="IAudiencePolicy"/> over the approved profile (spec §4.4). A session scoped to a profile repo reads: that repo's own audience
 /// ('repo:&lt;owner&gt;/&lt;repo&gt;') and the profile's Linear teams ('linear:&lt;team key&gt;'). Slack channels are left out of this rule on purpose: the spec lets a Slack thread
 /// reach a session only through a link to the repo's graph nodes (rule c), which an audience key can't express: the pipeline adds those records to <see cref="AudienceScope.Records"/> from the session's scoped map. A human caller is not scoped by it (spec §4.4):
 /// the pipeline adds <see cref="HumanExtras"/>, the profile's Slack channels and the owner's library, to the repo and Linear keys of every repo the human's query covers. A repo the profile doesn't name reads nothing.
 /// </summary>
-/// <param name="settings">The profile's 'context:' section.</param>
+/// <param name="settings">The approved profile's 'context:' section.</param>
 /// <param name="profileRepos">The repos the profile names.</param>
 public sealed class ProfileAudiencePolicy(ContextSettings settings, IReadOnlyCollection<ContextRepoName> profileRepos) : IAudiencePolicy
 {
@@ -61,7 +61,7 @@ public sealed class ProfileAudiencePolicy(ContextSettings settings, IReadOnlyCol
     /// The audiences only a human reads on top of the session rule (spec §4.4: a human caller is not scoped): the profile's Slack channels
     /// ('slack:&lt;channelId&gt;') and always <see cref="OwnerLibrary"/>. Taken from the profile, not from the store, so the mask stays a list the lexical and dense legs can apply.
     /// </summary>
-    /// <param name="settings">The profile's 'context:' section.</param>
+    /// <param name="settings">The approved profile's 'context:' section.</param>
     /// <returns>One key per listed channel, then <see cref="OwnerLibrary"/>.</returns>
     public static IEnumerable<AudienceKey> HumanExtras(ContextSettings settings)
     {

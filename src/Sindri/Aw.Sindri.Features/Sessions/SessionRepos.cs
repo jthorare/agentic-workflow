@@ -7,7 +7,7 @@ namespace Aw.Sindri.Features.Sessions;
 
 /// <summary>
 /// The profile repo of a session's directory (collector spec §4.1 step 7, §4.3): resolved once per directory, off the pass, and cached. A row gets its repo on the pass
-/// after the lookup finished. An entry is dropped when the profile changes and after five minutes (the directory may be gone).
+/// after the lookup finished. An entry is dropped when the approved profile changes and after five minutes (the directory may be gone).
 /// </summary>
 internal sealed class SessionRepos(IRepoLocator locator, IApprovedProfile approved, TimeProvider clock)
 {

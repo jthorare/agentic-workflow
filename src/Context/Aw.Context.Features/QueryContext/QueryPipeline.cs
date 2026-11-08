@@ -22,7 +22,7 @@ namespace Aw.Context.Features.QueryContext;
 /// deadline (a missing source is degraded; all of them missing is SND-CONTEXT-011), canonical dedup and RRF, the top
 /// items fetched and cleaned once at the ingest boundary, one batched version check per source, then packing,
 /// citations and per-field egress scrubbing (<see cref="ResultAssembly"/>). Ingest and egress both use this call's
-/// scrubbers, built from the profile's extra patterns, and so does the map's text. A text question asked with no
+/// scrubbers, built from the approved profile's extra patterns, and so does the map's text. A text question asked with no
 /// map (or by a session whose repo implements none of it) is answered from the sources alone. A live query also searches the record store's lexical leg as one more source (<see cref="RecordStoreSource"/>). No model is called unless 'context.ranker.rerank' is on (Phase 8: <see cref="RankerStage"/>).
 /// </summary>
 internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, IIdGenerator ids, TimeProvider clock, IIntentStore intents, IModelPort model,

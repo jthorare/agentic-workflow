@@ -4,9 +4,9 @@ using Aw.Sindri.Core.Text;
 
 namespace Aw.Sindri.Core.Todos;
 
-/// <summary>What a todo's typed fields become before they reach an event (todo spec D3, §4.3): checked, then scrubbed whoever wrote them. The forge hosts a PR link may name are the profile's 'workflow.forge.hosts', else github.com.</summary>
+/// <summary>What a todo's typed fields become before they reach an event (todo spec D3, §4.3): checked, then scrubbed whoever wrote them. The forge hosts a PR link may name are the approved profile's 'workflow.forge.hosts', else github.com.</summary>
 /// <param name="scrubber">Takes secrets out of the text.</param>
-/// <param name="approvals">The profile.</param>
+/// <param name="approvals">The approved profile.</param>
 public sealed class TodoInput(ITextScrubber scrubber, IApprovedProfile approvals)
 {
     private static readonly string[] _defaultHosts = ["github.com"];

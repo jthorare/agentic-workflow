@@ -7,7 +7,7 @@ namespace Aw.Sindri.Host.Forge;
 /// <summary>Registers Sindri's pull-request port.</summary>
 internal static class PullRequestsServiceCollectionExtensions
 {
-    /// <summary>Adds <see cref="IPullRequests"/>: the forge the profile names, or the no-forge answer when it names none.</summary>
+    /// <summary>Adds <see cref="IPullRequests"/>: the forge the approved profile names, or the no-forge answer when it names none.</summary>
     /// <param name="services">The service collection.</param>
     /// <param name="environment">Reads an environment variable.</param>
     /// <returns>The same collection.</returns>

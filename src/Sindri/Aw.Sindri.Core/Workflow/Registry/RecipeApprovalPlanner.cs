@@ -23,7 +23,7 @@ namespace Aw.Sindri.Core.Workflow.Registry;
 /// <param name="wake">The running instances (a drift approval resumes its parked ones).</param>
 /// <param name="catalog">This build's blocks.</param>
 /// <param name="json">The package's AwJson options (they read the stored text and hash the pins).</param>
-/// <param name="profile">The profile's facts (its effect allowlist, which the preview marks each effect against).</param>
+/// <param name="profile">The approved profile's facts (its effect allowlist, which the preview marks each effect against).</param>
 /// <param name="inputRuntimes">The Step inputs this build runs (an approval refuses one with no runtime, SND-WF-016).</param>
 public sealed class RecipeApprovalPlanner(IRecipeStore store, IRecipeApprovals approvals, IRecipeWake wake, BlockCatalog catalog, JsonSerializerOptions json, IRecipeProfileFacts profile, StepInputRuntimes inputRuntimes)
 {

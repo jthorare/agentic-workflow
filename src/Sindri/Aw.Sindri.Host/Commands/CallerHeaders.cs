@@ -100,12 +100,12 @@ internal sealed class CallerHeaders
         }
     }
 
-    /// <summary>The repo <paramref name="directory"/> belongs to among the profile's repos (API spec §3.1).</summary>
-    /// <param name="approvals">The profile.</param>
+    /// <summary>The repo <paramref name="directory"/> belongs to among the approved profile's repos (API spec §3.1).</summary>
+    /// <param name="approvals">The approved profile.</param>
     /// <param name="locator">Resolves the main checkout and matches it.</param>
     /// <param name="directory">The working directory.</param>
     /// <param name="cancellationToken">Cancels the work.</param>
-    /// <returns>The repo, or null (no profile, no repos, outside every repo).</returns>
+    /// <returns>The repo, or null (no approved profile, no repos, outside every repo).</returns>
     internal static async ValueTask<RepoName?> RepoOf(IApprovedProfile approvals, IRepoLocator locator, string directory, CancellationToken cancellationToken)
     {
         var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);

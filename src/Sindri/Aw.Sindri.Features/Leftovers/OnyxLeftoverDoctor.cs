@@ -9,10 +9,10 @@ namespace Aw.Sindri.Features.Leftovers;
 
 /// <summary>
 /// Doctor's `index:onyx-leftover` row (owned index spec §5.8): what an old `sindri onyx up` left on this box (containers and volumes under its compose label, its keychain entry, the onyx/ directory),
-/// read-only through <see cref="OnyxLeftovers"/>. Anything left fails, and the fix is `sindri onyx down --purge`; once the profile sets `context.index.acknowledgeOnyxLeftover`
+/// read-only through <see cref="OnyxLeftovers"/>. Anything left fails, and the fix is `sindri onyx down --purge`; once the approved profile sets `context.index.acknowledgeOnyxLeftover`
 /// it warns instead. Nothing left is no row. Docker answering wrongly is a warning, never a failure.
 /// </summary>
-/// <param name="approvals">The profile (for the acknowledge flag).</param>
+/// <param name="approvals">The approved profile (for the acknowledge flag).</param>
 /// <param name="engine">Reads the profile's context settings.</param>
 /// <param name="home">The Sindri home the leftovers are looked up under.</param>
 /// <param name="docker">Lists containers and volumes by compose label.</param>

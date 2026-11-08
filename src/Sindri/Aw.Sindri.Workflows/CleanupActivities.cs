@@ -15,7 +15,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// </summary>
 /// <param name="claims">The 'workflow_claims' table.</param>
 /// <param name="refs">Deletes the marker ref.</param>
-/// <param name="profile">The profile: the user and the repo's path.</param>
+/// <param name="profile">The approved profile: the user and the repo's path.</param>
 /// <param name="workspaces">Removes an ended phase's worktree.</param>
 internal sealed class CleanupActivities(IWorkflowClaims claims, IClaimRefs refs, IApprovedProfile profile, PhaseWorkspaceRemoval workspaces)
 {
@@ -55,7 +55,7 @@ internal sealed class CleanupActivities(IWorkflowClaims claims, IClaimRefs refs,
         return Checked(await claims.Release(item, owner, cancellationToken).ConfigureAwait(false));
     }
 
-    /// <summary>The user and the repo path the marker was made with; none when the profile no longer lists the repo (the row is still freed).</summary>
+    /// <summary>The user and the repo path the marker was made with; none when the approved profile no longer lists the repo (the row is still freed).</summary>
     private async ValueTask<(string User, string Path)?> Marker(ReleaseRun run, CancellationToken cancellationToken)
     {
         var approved = Checked(await profile.Latest(cancellationToken).ConfigureAwait(false));

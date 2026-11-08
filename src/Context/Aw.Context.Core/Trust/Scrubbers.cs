@@ -1,7 +1,7 @@
 namespace Aw.Context.Core.Trust;
 
 /// <summary>
-/// The scrubbing ports for one call, built from the profile's extra patterns (spec §7, D14): the ingest
+/// The scrubbing ports for one call, built from the approved profile's extra patterns (spec §7, D14): the ingest
 /// boundary, the egress scrubber and the fingerprint of their rules. Every call builds its own, so an approval that
 /// changes the patterns applies to the next call.
 /// </summary>

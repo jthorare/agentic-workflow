@@ -27,7 +27,7 @@ public static class NeedsYouClearing
         return row.IsError ? row.Error : Results.Success<NeedsYouRow?>(row.Value);
     }
 
-    /// <summary>Whether a failure row outlives a check: false when a profile no longer names its service (a built-in needs no naming).</summary>
+    /// <summary>Whether a failure row outlives a check: false when an approved profile no longer names its service (a built-in needs no naming).</summary>
     /// <param name="failure">The failure row.</param>
     /// <param name="profile">The profile row after the check.</param>
     /// <param name="builtIns">The build's built-in services, which the profile need not name.</param>

@@ -15,7 +15,7 @@ using Aw.Sindri.Infrastructure.Skills;
 namespace Aw.Sindri.Infrastructure.Sandbox.Launch;
 
 /// <summary>
-/// The sandbox step's launch-specific parts (<see cref="ISandboxLaunchStages"/>): the plan request from the profile, the login and the learn history, the egress, and what
+/// The sandbox step's launch-specific parts (<see cref="ISandboxLaunchStages"/>): the plan request from the approved profile, the login and the learn history, the egress, and what
 /// the end of a launch releases. The session home itself is made and removed by <see cref="SandboxLaunch"/>.
 /// </summary>
 internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistory learn, IReadOnlyList<IModelCredentialSource> logins, ISandboxLaunchInputs inputs, LaunchSandboxRegistry egress, TimeProvider clock, AgentTokenRenewal agentTokens) : ISandboxLaunchStages

@@ -13,7 +13,7 @@ namespace Aw.Sindri.Features.FileRequest;
 /// <summary>What a request is filed about (API spec §3.2): the item it names, if open and visible to the caller, the repo that follows from it, and the caps a session's request meets.</summary>
 /// <param name="items">Resolves the item by id or alias, in the caller's repo scope.</param>
 /// <param name="views">The 'requests' view, for the open ones.</param>
-/// <param name="approvals">The profile, whose repos a repo-less request's header repo must be one of.</param>
+/// <param name="approvals">The approved profile, whose repos a repo-less request's header repo must be one of.</param>
 internal sealed class RequestTarget(IItemResolver items, IViewReader views, IApprovedProfile approvals)
 {
     /// <summary>Settles the item and repo of <paramref name="request"/> for <paramref name="caller"/>.</summary>

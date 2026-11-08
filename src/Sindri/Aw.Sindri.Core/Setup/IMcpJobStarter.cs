@@ -7,7 +7,7 @@ namespace Aw.Sindri.Core.Setup;
 public interface IMcpJobStarter
 {
     /// <summary>Starts the job.</summary>
-    /// <param name="repo">The repo of the profile.</param>
+    /// <param name="repo">The repo of the approved snapshot.</param>
     /// <param name="cancellationToken">Cancels the start.</param>
     /// <returns>Unit when the runner took it, or why it refused.</returns>
     public ValueTask<Result<Unit>> Start(RepoName repo, CancellationToken cancellationToken);

@@ -8,7 +8,7 @@ namespace Aw.Context.Core.Audience;
 
 /// <summary>
 /// The one mask of which stored records a caller may see (spec §4.4), shared by the query's record legs and the pin-suggest read: the audiences
-/// the profile gives the repos in scope, a human's extras (the profile's Slack channels), and for a session the records of its scoped map.
+/// the approved profile gives the repos in scope, a human's extras (the profile's Slack channels), and for a session the records of its scoped map.
 /// </summary>
 public static class RecordMask
 {

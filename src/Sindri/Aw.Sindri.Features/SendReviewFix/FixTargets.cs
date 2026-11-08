@@ -13,7 +13,7 @@ namespace Aw.Sindri.Features.SendReviewFix;
 /// Checks the PR a fix task names (PR review page spec §8.2, §9): <c language="text">review.login</c> is set, the repo is synced (SND-REVIEW-004), Context holds the PR (SND-REVIEW-404), and the forge names its head
 /// branch and repository (when it doesn't, the task is still made and posted, with "branch: unknown", and has no task file).
 /// </summary>
-/// <param name="approvals">The profile.</param>
+/// <param name="approvals">The approved profile.</param>
 /// <param name="repos">The synced repos.</param>
 /// <param name="facts">The stored PR records.</param>
 /// <param name="pulls">The forge port: the PR's head and the credential's own login.</param>

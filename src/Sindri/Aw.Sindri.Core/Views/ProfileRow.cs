@@ -9,7 +9,7 @@ namespace Aw.Sindri.Core.Views;
 /// <param name="CheckedAt">When it was last checked.</param>
 /// <param name="Changed">True when the live profile differs from the approved one.</param>
 /// <param name="ChangedPaths">The key paths that differ.</param>
-/// <param name="ApprovedServices">The services the profile names.</param>
+/// <param name="ApprovedServices">The services the approved profile names.</param>
 /// <param name="Sequence">The ledger sequence that last changed the row.</param>
 public sealed record ProfileRow(ProfileHash? Approved, DateTimeOffset? ApprovedAt, ProfileHash? Live, DateTimeOffset? CheckedAt,
     bool Changed, IReadOnlyList<string> ChangedPaths, IReadOnlyList<ServiceName> ApprovedServices, long Sequence);

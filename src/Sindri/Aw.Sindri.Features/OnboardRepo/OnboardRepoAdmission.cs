@@ -8,7 +8,7 @@ using Aw.Sindri.Core.Profile;
 namespace Aw.Sindri.Features.OnboardRepo;
 
 /// <summary>
-/// The cheap checks an OnboardRepo start makes inside the gate (setup-once spec §5.1): there is a profile (SND-PROFILE-001) and the folder belongs to a repo the profile names, never the live file (SND-SETUP-004),
+/// The cheap checks an OnboardRepo start makes inside the gate (setup-once spec §5.1): there is a profile (SND-PROFILE-001) and the folder belongs to a repo the approved snapshot names, never the live file (SND-SETUP-004),
 /// so both are real HTTP errors before any job is claimed. It keeps the repo it resolved for the job key and the work.
 /// </summary>
 /// <param name="approvals">The profile snapshot.</param>

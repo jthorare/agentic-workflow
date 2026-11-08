@@ -7,10 +7,10 @@ using Aw.Sindri.Core.Workflow.Recipes;
 namespace Aw.Sindri.Core.Checks;
 
 /// <summary>
-/// The commands of the profile's <c language="text">workflow.build.commands</c>: each entry is one command line (<see cref="CommandLine"/>), each may run as long as <c language="text">workflow.steps.longMax</c>.
+/// The commands of the approved profile's <c language="text">workflow.build.commands</c>: each entry is one command line (<see cref="CommandLine"/>), each may run as long as <c language="text">workflow.steps.longMax</c>.
 /// With no profile approved, or no commands in it, the set is empty.
 /// </summary>
-/// <param name="profile">The profile.</param>
+/// <param name="profile">The approved profile.</param>
 public sealed class ProfileBuildCommands(IApprovedProfile profile) : IBuildCommandSource
 {
     /// <inheritdoc />

@@ -3,7 +3,7 @@ using Aw.Kernel;
 
 namespace Aw.Context.Core.Engine;
 
-/// <summary>The rules for named pages at write (pages spec §3.1): pure, over the pages and the current map's facts. A read of a profile never runs them: the overlay falls back instead.</summary>
+/// <summary>The rules for named pages at write (pages spec §3.1): pure, over the pages and the current map's facts. A read of an approved profile never runs them: the overlay falls back instead.</summary>
 public static class PageRules
 {
     /// <summary>The most pages a profile holds.</summary>

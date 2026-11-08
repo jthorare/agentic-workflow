@@ -6,7 +6,7 @@ using Aw.Sindri.Core.Workflow.Ids;
 namespace Aw.Sindri.Features.LensLoops;
 
 /// <summary>
-/// 'step.review.round', on the block runtime (line spec §5.2, DTC4, LN-PK lite): resolves the review lens pack the profile chooses, queues the lenses that apply to the paths the change
+/// 'step.review.round', on the block runtime (line spec §5.2, DTC4, LN-PK lite): resolves the review lens pack the approved profile chooses, queues the lenses that apply to the paths the change
 /// touches ('when'), and records each other lens as 'notApplicable' in 'fact:lensRounds' with the reason. 'ready'; 'noLens' when none applies (the loop ends stuck for the owner, never a clean review of
 /// unreviewed code). A change that names no base and head (the empty change a bug fix passes) has no known paths, so every lens applies.
 /// </summary>

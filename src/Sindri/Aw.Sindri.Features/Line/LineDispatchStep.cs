@@ -11,7 +11,7 @@ namespace Aw.Sindri.Features.Line;
 /// running phases or <c language="text">workflow.line.maxOpenPrs</c> open PRs, or nothing ready while phases still run), <c language="text">done</c> (every phase merged or skipped) or <c language="text">blocked</c> (a failed phase
 /// holds the line for the owner, or nothing can start and nothing runs). The event and the edit are written back empty, so a later run does not fold them twice. Pure apart from the profile read.
 /// </summary>
-/// <param name="profile">The profile, whose <c language="text">workflow.line</c> keys cap the dispatch (defaults 2 and 4).</param>
+/// <param name="profile">The approved profile, whose <c language="text">workflow.line</c> keys cap the dispatch (defaults 2 and 4).</param>
 internal sealed class LineDispatchStep(IApprovedProfile profile) : IBlockStep, IBlockStepId
 {
     /// <inheritdoc/>

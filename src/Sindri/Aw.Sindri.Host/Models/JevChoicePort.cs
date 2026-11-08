@@ -12,11 +12,11 @@ namespace Aw.Sindri.Host.Models;
 
 /// <summary>
 /// The context engine's choice port over Judge's batch classifier (model routing spec §6.7): Jev picks one option for each question of a pack. It sends only the strings Context already scrubbed (the judge's own redactor and cap run on top), reads the
-/// pick setting from the live profile at every call (never the live file), and writes one 'context.model.called' event per call.
+/// pick setting from the APPROVED profile at every call (never the live file), and writes one 'context.model.called' event per call.
 /// </summary>
 /// <param name="classifier">Judge's batch classifier (built on first use).</param>
 /// <param name="providers">The judge's 'providers' config (its 'inputCapChars'), or null for the defaults.</param>
-/// <param name="availability">Whether a call can go out: the profile's pick and the Jev key.</param>
+/// <param name="availability">Whether a call can go out: the approved profile's pick and the Jev key.</param>
 /// <param name="jobs">The job the call runs under.</param>
 /// <param name="log">Where the call's event is written.</param>
 /// <param name="ids">Names each call's event.</param>

@@ -20,7 +20,7 @@ namespace Aw.Sindri.Core.Sandbox.Plan;
 /// <param name="SlotHeld">True when the Step already holds a heavy slot (LN-WF3).</param>
 /// <param name="Net">The network facts.</param>
 /// <param name="Host">The host facts.</param>
-/// <param name="Settings">The profile's sandbox section; null means the built-in defaults.</param>
+/// <param name="Settings">The approved profile's sandbox section; null means the built-in defaults.</param>
 /// <param name="Login">The prepared login, or null for a plan built only to check the form.</param>
 /// <param name="OmitGroups">Groups the Step removes from itself (a Step only tightens).</param>
 /// <param name="ExtraDeny">More denied paths from the line's capability policy (holdout store, other runs' worktrees).</param>
