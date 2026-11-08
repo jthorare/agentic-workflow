@@ -1,10 +1,10 @@
 using System.Text;
+using Aw.Sindri.Core.Events;
 using System.Text.Json;
 using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Features.StreamEvents;
 

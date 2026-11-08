@@ -1,11 +1,11 @@
 using System.Globalization;
+using Aw.Sindri.Core.Workflow.Blocks;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Nodes;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Skills;
-using Aw.Sindri.Core.Workflow.Blocks;
 
 namespace Aw.Sindri.Core.Workflow.Engine.Runtime;
 
@@ -74,7 +74,7 @@ public static class AgentLaunches
 
     // The Step's 'model' parameter (null runs the agent's default), its brief and the pack and facts it is given.
     private static StepArgs StepArgsFor(AgentStepRun run, BlockDescriptor? descriptor, AgentLaunchExtras? extras, StepPolicy policy, LaunchId launch) =>
-        extras?.Skill is { } skill ? SkillStepArgs(run, extras, skill, policy, launch) : new(Model: extras?.Model, policy, run.Step, AgentStepBrief.Render(run, descriptor, extras?.Instructions, extras?.Facts?.Keys), extras?.Bundle, extras?.Facts is { Count: > 0 } facts ? facts : null);
+        extras?.Skill is { } skill ? SkillStepArgs(run, extras, skill, policy, launch) : new(Model: extras?.Model, policy, run.Step, AgentStepBrief.Render(run, descriptor, extras?.Instructions, extras?.Facts?.Keys), extras?.Facts is { Count: > 0 } facts ? facts : null);
 
     // A skill block's seed is the skill's invocation alone (skill flows spec D2), not the Step brief that tells the agent to call 'sindri workflow complete'.
     // Every input also goes into the run directory as '<key>.json', which is where a long or risky text's seed points.
@@ -91,7 +91,7 @@ public static class AgentLaunches
             files[key + ".json"] = JsonValue.Create(value).ToJsonString();
         }
 
-        return new(Model: extras.Model, policy, run.Step, SkillSeed.Render(skill, SkillRunDirectory(run, extras.SindriHome, launch)), extras.Bundle, files);
+        return new(Model: extras.Model, policy, run.Step, SkillSeed.Render(skill, SkillRunDirectory(run, extras.SindriHome, launch)), files);
     }
 
     // why: the run directory is the launcher's ('$AW_SINDRI_RUN_DIR', StepEnvironment.RunDirectoryOf); without Sindri's home (a test) the seed names the variable.

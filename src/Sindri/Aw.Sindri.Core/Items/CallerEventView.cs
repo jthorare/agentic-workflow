@@ -1,6 +1,6 @@
 using System.Text.Json;
-using Aw.Kernel;
 using Aw.Sindri.Core.Events;
+using Aw.Kernel;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Text;
 

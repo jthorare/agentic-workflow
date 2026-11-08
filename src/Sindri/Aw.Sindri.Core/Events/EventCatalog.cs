@@ -1,5 +1,4 @@
 using Aw.Sindri.Core.Launch;
-using Aw.Sindri.Core.Workflow.Registry;
 
 namespace Aw.Sindri.Core.Events;
 

@@ -1,12 +1,10 @@
 using Aw.Kernel;
+using Aw.Sindri.Core.Workflow.Blocks;
+using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Judge;
 using Aw.Sindri.Core.Launch;
-using Aw.Sindri.Core.LensPacks;
 using Aw.Sindri.Core.Skills;
-using Aw.Sindri.Core.Workflow.Blocks;
-using Aw.Sindri.Core.Workflow.Engine;
-using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Ids;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
@@ -44,18 +42,12 @@ internal sealed class AgentLaunching(AgentLaunchWaiting launcher, AgentPlacing p
             return StepFailed(workspace.Error);
         }
 
-        var bundle = await Bundle(run, where, cancellationToken).ConfigureAwait(false);
-        if (bundle.IsError)
-        {
-            return BundleFailed(bundle.Error);
-        }
-
         if (run.ModelProfile is { } profile)
         {
             return StepFailed("SND-LAUNCH-013", AgentModels.Refusal(profile));   // the launcher's own refusal of a model it can't express
         }
 
-        var asked = await Request(run, where, workspace.Value, bundle.Value, cancellationToken).ConfigureAwait(false);
+        var asked = await Request(run, where, workspace.Value, cancellationToken).ConfigureAwait(false);
         if (asked.IsError)
         {
             return StepFailed(asked.Error);
@@ -106,7 +98,7 @@ internal sealed class AgentLaunching(AgentLaunchWaiting launcher, AgentPlacing p
             : null;
 
     // The launcher's request: the Step's brief and policy, its pack, and its declared read facts as files (read and scrubbed here); the failure when a fact can't be read.
-    private async ValueTask<Result<PreparedLaunch>> Request(AgentLaunchRun run, AgentStepTarget target, string? workspace, PackBundle? bundle, CancellationToken cancellationToken)
+    private async ValueTask<Result<PreparedLaunch>> Request(AgentLaunchRun run, AgentStepTarget target, string? workspace, CancellationToken cancellationToken)
     {
         var block = BlockId.From(run.Run.Step.Block);
         var descriptor = catalog.Find(block);
@@ -123,8 +115,8 @@ internal sealed class AgentLaunching(AgentLaunchWaiting launcher, AgentPlacing p
             return skill.Error;
         }
 
-        var extras = new AgentLaunchExtras(PayloadFacts.WithShapes(Told(block), run.Payloads), workspace, bundle, facts.Value, run.Model, seed) { Skill = skill.Value, StepTimeout = run.StepTimeout };
-        return new PreparedLaunch(AgentLaunches.RequestFor(run.Run, target, descriptor, extras), Files(bundle, facts.Value), model => AgentLaunches.RequestFor(run.Run, target, descriptor, extras with { Model = model }));
+        var extras = new AgentLaunchExtras(Told(block), workspace, facts.Value, run.Model, seed) { Skill = skill.Value, StepTimeout = run.StepTimeout };
+        return new PreparedLaunch(AgentLaunches.RequestFor(run.Run, target, descriptor, extras), Files(facts.Value), model => AgentLaunches.RequestFor(run.Run, target, descriptor, extras with { Model = model }));
     }
 
     // The commit a phase workspace was seeded at, from the stored 'fact:lineContext' (sandbox spec 3.8); null when the instance has none or it holds no valid base, and the prepare is then skipped, never read from the worktree's HEAD.
@@ -139,16 +131,11 @@ internal sealed class AgentLaunching(AgentLaunchWaiting launcher, AgentPlacing p
         return read.IsError ? null : PhaseSeed.BaseOf(System.Text.Encoding.UTF8.GetString(read.Value.Span));
     }
 
-    // The files the model-pick question shows: the pack's files and the written facts, each as path and text.
-    private static List<PickFileText> Files(PackBundle? bundle, IReadOnlyDictionary<string, string>? facts) =>
+    // The files the model-pick question shows: the written facts, each as path and text.
+    private static List<PickFileText> Files(IReadOnlyDictionary<string, string>? facts) =>
     [
-        .. bundle?.Files.Select(static f => new PickFileText(f.Key, f.Value)) ?? [],
         .. facts?.Select(static f => new PickFileText(f.Key, f.Value)) ?? [],
     ];
-
-    // An unpinned or changed pack parks for the owner (SND-PACK-002); any other pack failure ends the Step.
-    private static AgentLaunched BundleFailed(Error error) =>
-        new(Worktree: null, StartHead: null, new AgentLaunchFailure(string.Equals(error.Code, PackErrors.PinMismatch.Code, StringComparison.Ordinal) ? AgentLaunchFailureKind.Park : AgentLaunchFailureKind.StepFailed, error.Code, error.Message));
 
     private static AgentLaunched StepFailed(Error error) => StepFailed(error.Code, error.Message);
 
@@ -156,43 +143,6 @@ internal sealed class AgentLaunching(AgentLaunchWaiting launcher, AgentPlacing p
 
     // What the Step is told to do (its instructions), after the brief's first line; null when it has none.
     private IReadOnlyList<string>? Told(BlockId block) => inputs.Instructions.FirstOrDefault(i => i.IsFor(block))?.Lines;
-
-    // The pack the Step's 'bundle' names, resolved and pin-checked at launch; none (a null bundle) when the Step bundles nothing.
-    private async ValueTask<Result<PackBundle?>> Bundle(AgentLaunchRun run, AgentStepTarget target, CancellationToken cancellationToken)
-    {
-        if (run.Bundle is not { } name)
-        {
-            return (PackBundle?)null;
-        }
-
-        var resolved = await inputs.Bundles.Resolve(new PackBundleRequest(name, target.Repo, run.Subject, await HeadLens(run.LensQueue, cancellationToken).ConfigureAwait(false)), cancellationToken).ConfigureAwait(false);
-        if (resolved.IsError)
-        {
-            return resolved.Error;
-        }
-
-        return resolved.Value;
-    }
-
-    // The first lens id of the stored lens queue, a JSON array of ids; null when there is no queue, it can't be read or it is empty.
-    private async ValueTask<string?> HeadLens(FactValue? queue, CancellationToken cancellationToken)
-    {
-        if (queue is null || (await inputs.Contents.Read(queue, cancellationToken).ConfigureAwait(false)) is not { IsError: false } bytes)
-        {
-            return null;
-        }
-
-        try
-        {
-            using var document = System.Text.Json.JsonDocument.Parse(bytes.Value);
-            var first = document.RootElement.ValueKind == System.Text.Json.JsonValueKind.Array && document.RootElement.GetArrayLength() > 0 ? document.RootElement[0] : default;
-            return first.ValueKind == System.Text.Json.JsonValueKind.String ? first.GetString() : null;
-        }
-        catch (System.Text.Json.JsonException)
-        {
-            return null;
-        }
-    }
 
     /// <summary>The worktree path the stored 'fact:workspace' holds; null when the Step reads none.</summary>
     private async Task<Result<string?>> WorkspaceOf(AgentLaunchRun run, CancellationToken cancellationToken)

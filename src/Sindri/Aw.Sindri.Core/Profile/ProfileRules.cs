@@ -2,7 +2,6 @@ using System.Globalization;
 using System.Text.Json;
 using Aw.Kernel;
 using Aw.Sindri.Core.Ids;
-using Aw.Sindri.Core.Workflow.Recipes;
 
 namespace Aw.Sindri.Core.Profile;
 
@@ -21,6 +20,7 @@ public static class ProfileRules
     public static Result<SindriProfile> Check(SindriProfile profile, BoxLimits? box)
     {
         ArgumentNullException.ThrowIfNull(profile);
+        _ = box;   // why: the heavy-slot cap limited 'workflow.line.parallel', which went with the line; the parameter stays so callers keep their signature
         if (profile.SchemaVersion != SindriProfile.CurrentSchemaVersion)
         {
             return Invalid("schemaVersion", string.Create(CultureInfo.InvariantCulture,
@@ -37,7 +37,7 @@ public static class ProfileRules
             return Invalid("api.port", "must be 0 (a free port) or 1024 to 65535");
         }
 
-        var invalid = Sections(profile) ?? LineProfileRules.Check(profile.Workflow, box);
+        var invalid = Sections(profile);
         if (invalid is not null)
         {
             return invalid;

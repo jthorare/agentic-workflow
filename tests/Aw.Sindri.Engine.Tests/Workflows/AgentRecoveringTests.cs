@@ -18,7 +18,7 @@ public sealed class AgentRecoveringTests
 
     public AgentRecoveringTests()
     {
-        _recovering = new AgentRecovering(new BlockCatalog([TestBlocks.Step("step.produce")], []), _outputs, _facts, PayloadReportChecks.Instance);
+        _recovering = new AgentRecovering(new BlockCatalog([TestBlocks.Step("step.produce")], []), _outputs, _facts, new RecoveryChecks());
     }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -73,6 +73,11 @@ public sealed class AgentRecoveringTests
 
         Assert.Null(recovered.Outcome);
         Assert.Contains("fact:output breaks its schema", recovered.Reason, StringComparison.Ordinal);
+    }
+
+    private sealed class RecoveryChecks : IReportOutputChecks
+    {
+        public IReadOnlyList<string> Violations(IReadOnlyDictionary<FactKey, ReadOnlyMemory<byte>> outputs, IReadOnlySet<FactKey> payloads, bool scopingQuestions) => [];
     }
 
     private sealed class RefusingChecks : IReportOutputChecks

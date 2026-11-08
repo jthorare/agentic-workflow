@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using Aw.Sindri.Core.Workflow.Ids;
-using Aw.Sindri.Core.Workflow.Recipes;
+using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Tests.Workflow;
 

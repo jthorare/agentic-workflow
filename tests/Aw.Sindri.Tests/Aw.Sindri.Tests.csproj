@@ -54,11 +54,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- A small recipe set embedded under the prefix the Host reads (aw-recipes/sindri/), so ManifestEmbeddedRecipesTests exercises the real adapter against a real assembly. -->
-    <EmbeddedResource Include="Shipped/Embedded/**/*.yaml;Shipped/Embedded/**/*.jsonl;Shipped/Embedded/README.md" LogicalName="aw-recipes/sindri/%(RecursiveDir)%(Filename)%(Extension)" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Include="Sandbox/Denials/Fixtures/**" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Workflow/ModelCheck/Fixtures/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

@@ -1,6 +1,6 @@
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Aw.Sindri.Core.Events;
+using System.Text.RegularExpressions;
 
 namespace Aw.Sindri.Core.Sandbox.Denials;
 

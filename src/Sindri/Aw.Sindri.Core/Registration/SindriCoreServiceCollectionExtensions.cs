@@ -1,7 +1,7 @@
 using Aw.Sindri.Core.Auth;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Control;
-using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Launches;
@@ -9,16 +9,12 @@ using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.NeedsYou;
-using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Blocks;
-using Aw.Sindri.Core.Workflow.Engine.Runtime;
-using Aw.Sindri.Core.Workflow.Registry;
-using Aw.Sindri.Core.Workflow.Validation;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Core.Registration;
@@ -42,12 +38,9 @@ public static class SindriCoreServiceCollectionExtensions
             .AddSingleton<IJobContextAccessor, AsyncLocalJobContextAccessor>()
             .AddSingleton<HeldLease>()
             .AddSingleton<LiveSchedule>()
-            .AddSingleton<EndedInstanceViews>()
             .AddSingleton<TemporalRuntime>()
             .AddSingleton<HeldHumanToken>()
             .AddSingleton<BlockCatalog>()
-            .AddSingleton<BlockStepRuntimes>()
-            .AddSingleton<StepInputRuntimes>()
             .AddSingleton<ILedgerSignal, LedgerSignal>()
             .AddSingleton<IStreamSlots, StreamSlots>()
             .AddScoped<CallerEventView>()
@@ -62,14 +55,6 @@ public static class SindriCoreServiceCollectionExtensions
             .AddSingleton<UsageSamples>()
             .AddScoped<ReportedIdAdmission>()
             .AddScoped<LaunchSessionEvents>()
-            .AddScoped<RecipeApprovalPlanner>()
-            .AddScoped<Workflow.ApproveAll.ShippedApprovalPlans>()
-            .AddScoped<RecipeRevokePlanner>()
-            .AddScoped<IRecipeProfileFacts, ApprovedRecipeProfileFacts>()
-            .AddScoped<RecipeRegistryReader>()
-            .AddSingleton<RecipeEvents>()
-            .AddSingleton<IPinRenewals, PinRenewals>()
-            .AddSingleton<IApprovedRecipes, RegistryApprovedRecipes>()
             .AddSandboxCore();
 
     /// <summary>The views' projections, in the order the projector folds them.</summary>

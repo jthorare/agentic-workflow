@@ -1,10 +1,10 @@
 using Aw.CodeIndex.Core.Facade;
+using Aw.Sindri.Core.Events;
 using Aw.CodeIndex.Core.Model;
 using Aw.CodeIndex.Core.Values;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Jobs;
 
 namespace Aw.Sindri.Features.CodeIndexJobs;

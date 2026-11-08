@@ -73,10 +73,6 @@ public static class A
     /// <returns>A new builder.</returns>
     public static GetItemTimelineRequestBuilder GetItemTimelineRequest() => new();
 
-    /// <summary>A GetItemScopeRequest builder with deterministic defaults.</summary>
-    /// <returns>A new builder.</returns>
-    public static GetItemScopeRequestBuilder GetItemScopeRequest() => new();
-
     /// <summary>A ReadLedgerRequest builder with deterministic defaults.</summary>
     /// <returns>A new builder.</returns>
     public static ReadLedgerRequestBuilder ReadLedgerRequest() => new();

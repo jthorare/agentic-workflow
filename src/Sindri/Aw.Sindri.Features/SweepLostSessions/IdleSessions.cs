@@ -1,5 +1,5 @@
-using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launches;
 
 namespace Aw.Sindri.Features.SweepLostSessions;

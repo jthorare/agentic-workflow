@@ -1,6 +1,6 @@
 using Aw.Kernel;
-using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Profile;
 

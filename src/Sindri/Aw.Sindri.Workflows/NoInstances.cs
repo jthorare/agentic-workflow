@@ -1,10 +1,9 @@
 using Aw.Kernel;
+using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Workflow;
 using Aw.Sindri.Core.Workflow.Engine;
-using Aw.Sindri.Core.Workflow.Engine.Desk;
-using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Engine.Triggers;
 using Aw.Sindri.Core.Workflow.Ids;
 
@@ -15,7 +14,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// 'not found' or an empty list, and starting one is refused. The sweeps and reads that still ask (the lost-session sweep, launch picks, the Linear item links) run
 /// over it unchanged until the graph runs (issue 2258 PR 6, 7) give them node runs to read.
 /// </summary>
-internal sealed class NoInstances : IInstanceDirectory, IInstanceRuntime, IWorkflowInstances
+internal sealed class NoInstances : IInstanceDirectory, IInstanceRuntime
 {
     public ValueTask<Result<AttemptState?>> Latest(ItemKey item, RecipeId recipe, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<AttemptState?>>((AttemptState?)null);
@@ -37,12 +36,6 @@ internal sealed class NoInstances : IInstanceDirectory, IInstanceRuntime, IWorkf
 
     public ValueTask<Result<Unit>> Signal(InstanceAddress address, WaitSatisfied delivered, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<Unit>>(NotFound(address.Value));
-
-    public ValueTask<Result<IReadOnlyList<InstanceRow>>> List(string? query, bool ended, CancellationToken cancellationToken) =>
-        ValueTask.FromResult(Results.Success<IReadOnlyList<InstanceRow>>([]));
-
-    public ValueTask<Result<IReadOnlyList<InstanceRow>>> List(InstanceFilter filter, bool ended, CancellationToken cancellationToken) =>
-        ValueTask.FromResult(Results.Success<IReadOnlyList<InstanceRow>>([]));
 
     private static Error NotFound(string reference) => WorkflowErrors.InstanceNotFound.With($"no instance {reference}: workflow instances are gone");
 }

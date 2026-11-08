@@ -129,7 +129,7 @@ public sealed class TakeoverViewerCheckTests
         public ValueTask<Result<Unit>> Signal(InstanceAddress address, WaitSatisfied delivered, CancellationToken cancellationToken) => throw new NotSupportedException();
 
         private static InstanceView View(InstanceAddress address, string state) =>
-            new(address, _recipe, state, Detail: null, DateTimeOffset.FromUnixTimeMilliseconds(1_000), string.Empty, [], Question: null, Task: null, Run: null, Children: [], Outcome: null)
+            new(address, _recipe, state, DateTimeOffset.FromUnixTimeMilliseconds(1_000))
             { Id = WorkflowInstanceId.Of(address), Version = 1 };
     }
 }

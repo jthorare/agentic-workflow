@@ -1,10 +1,10 @@
 using System.Globalization;
+using Aw.Sindri.Core.Events;
 using Aw.Context.Core.Models;
 using Aw.Judge.Core.Batching;
 using Aw.Judge.Core.Providers;
 using Aw.Kernel;
 using Aw.Kernel.Ids;
-using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
 

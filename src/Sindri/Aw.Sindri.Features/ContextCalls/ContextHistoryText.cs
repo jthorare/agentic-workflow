@@ -5,6 +5,7 @@ using static Aw.Sindri.Features.ContextCalls.ContextLensText;
 
 namespace Aw.Sindri.Features.ContextCalls;
 
+#pragma warning disable MA0182 // used by Host's verbs through InternalsVisibleTo; MA0182 only looks inside this assembly
 /// <summary>
 /// Plain text for 'context history': every state is a word ('ok', 'not-configured', 'leaky'), never colour. A human's answer carries clean labels beside their trust, so the text
 /// fences the untrusted ones itself; a session's answer was fenced by the server already.
@@ -93,3 +94,4 @@ internal static class ContextHistoryText
         }
     }
 }
+#pragma warning restore MA0182

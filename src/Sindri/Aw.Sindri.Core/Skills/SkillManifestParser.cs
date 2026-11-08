@@ -1,6 +1,6 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Aw.Sindri.Core.Workflow.Recipes;
+using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Core.Skills;
 

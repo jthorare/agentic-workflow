@@ -5,7 +5,6 @@ using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
-using Aw.Sindri.Core.Workflow.Registry;
 
 namespace Aw.Sindri.Tests.Cqrs;
 
@@ -20,7 +19,7 @@ internal static class QueryPortRules
     /// them through Core's read-only domain services instead.
     /// </summary>
     public static readonly IReadOnlyList<Type> WritePorts =
-        [typeof(ILedgerStore), typeof(ILease), typeof(IApprovals), typeof(IViewStore), typeof(IProjectorControl), typeof(IProjectorFeed), typeof(IRecipeStore), typeof(IRecipeApprovals), typeof(IRecipeWake), typeof(IInstanceRuntime), typeof(IFactStore), typeof(ICommandNonces)];
+        [typeof(ILedgerStore), typeof(ILease), typeof(IApprovals), typeof(IViewStore), typeof(IProjectorControl), typeof(IProjectorFeed), typeof(IInstanceRuntime), typeof(IFactStore), typeof(ICommandNonces)];
 
     /// <summary>The query handlers among <paramref name="types"/> that take a write port. There is no allowlist (P1's G1 one went with C9).</summary>
     public static IReadOnlyList<string> Check(IEnumerable<Type> types) =>

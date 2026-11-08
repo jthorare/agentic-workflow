@@ -1,9 +1,8 @@
 using System.Diagnostics;
+using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
-using Aw.Sindri.Core.Workflow.Engine.Desk;
-using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -39,7 +38,6 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<IInstanceDirectory>(static sp => sp.GetRequiredService<NoInstances>())
             .AddSingleton<IInstanceRuntime>(static sp => sp.GetRequiredService<NoInstances>())
             .AddSingleton<IInstanceReader>(static sp => sp.GetRequiredService<NoInstances>())
-            .AddSingleton<IWorkflowInstances>(static sp => sp.GetRequiredService<NoInstances>())
             .AddSingleton<HomeFactStore>()
             .AddSingleton<IFactStore>(static sp => sp.GetRequiredService<HomeFactStore>())
             .AddSingleton<IFactContents>(static sp => sp.GetRequiredService<HomeFactStore>())   // the agent target resolver and the Linear item links read stored facts
@@ -49,6 +47,8 @@ public static class SindriWorkflowsServiceCollectionExtensions
     // Engine P8 U3: LaunchAgentStep, WatchAgentStep, CloseAgentStep and what they use, and the worker's set of activity classes.
     private static IServiceCollection AddAgentRuntime(this IServiceCollection services)
     {
+        services.TryAddSingleton<ReportRefusals>();
+        services.TryAddSingleton<IReportOutputChecks, NoReportOutputChecks>();
         services.TryAddSingleton<IModelPickSettings, NoModelPickSettings>();   // the profile adapter replaces these two
         services.TryAddSingleton<IModelPickHistory, NoModelPickHistory>();
         return services

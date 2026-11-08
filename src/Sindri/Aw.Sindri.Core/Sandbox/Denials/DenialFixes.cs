@@ -1,5 +1,5 @@
-using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Events;
 
 namespace Aw.Sindri.Core.Sandbox.Denials;
 

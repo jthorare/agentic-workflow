@@ -17,7 +17,7 @@ namespace Aw.Sindri.Core.NeedsYou;
 /// <param name="events">Reads the payloads through the package's AwJson options.</param>
 /// <param name="scrubber">Scrubs secrets out of the text a row stores.</param>
 /// <param name="builtIns">The services the build runs without a profile entry: a failure row of one offers RunService only and outlives a profile check.</param>
-internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrubber scrubber, IEnumerable<BuiltInService> builtIns) : IProjection
+internal sealed class NeedsYouProjection(EventFactory events, ITextScrubber scrubber, IEnumerable<BuiltInService> builtIns) : IProjection
 {
     private IReadOnlyList<BuiltInService> BuiltIns { get; } = [.. builtIns];
 
@@ -49,7 +49,7 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
             EventTypes.ServiceRan => await Ran(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ProfileChecked => await Checked(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ProfileApproved => await Approved(recorded, rows, cancellationToken).ConfigureAwait(false),
-            _ => await Engine(recorded, rows, cancellationToken).ConfigureAwait(false),
+            _ => Results.Success(Unit.Value),
         };
     }
 

@@ -1,6 +1,6 @@
 using System.Globalization;
-using System.Text;
 using Aw.Sindri.Core.Events;
+using System.Text;
 
 namespace Aw.Sindri.Core.Sandbox.Denials;
 

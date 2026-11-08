@@ -41,7 +41,7 @@ public sealed class GetLaunchPicksTests
 
     // why: the picks read an instance only for the recipe and version its model history is keyed by
     private static InstanceView Done() =>
-        new(_one, new RecipeVersion(FakeModelHistory.Recipe, 1, RecipeHash.From("sha256:" + new string('0', 64))), "done", Detail: null, DateTimeOffset.UnixEpoch, Next: string.Empty, [], Question: null, Task: null, Run: null, [], Outcome: null)
+        new(_one, new RecipeVersion(FakeModelHistory.Recipe, 1, RecipeHash.From("sha256:" + new string('0', 64))), "done", DateTimeOffset.UnixEpoch)
         {
             Id = WorkflowInstanceId.Of(_one),
         };

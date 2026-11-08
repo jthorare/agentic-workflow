@@ -28,7 +28,6 @@ internal static class EndpointTable
         _ = MapSandboxQueries(queries);
         _ = queries.MapListJobs();
         _ = queries.MapGetItemTimeline();
-        _ = queries.MapGetItemScope();
         _ = MapProjectQueries(queries);
         _ = queries.MapGetQueue().MapGetReviews().MapGetReviewPage().MapGetLibrary().MapGetLibraryDoc().MapListLinearIssues().MapGetLinearIssue();
         _ = queries.MapGetSession();

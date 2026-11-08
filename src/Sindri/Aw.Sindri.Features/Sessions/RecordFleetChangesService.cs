@@ -1,7 +1,7 @@
 using System.Globalization;
+using Aw.Sindri.Core.Events;
 using Aw.Kernel;
 using Aw.Kernel.Services;
-using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ledger;
 
 namespace Aw.Sindri.Features.Sessions;

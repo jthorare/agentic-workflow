@@ -1,8 +1,8 @@
 using System.Globalization;
+using Aw.Sindri.Core.Events;
 using Aw.Kernel;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Decisions;
-using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.OpenTargets;
 using Aw.Sindri.Core.Requests;

@@ -1,7 +1,7 @@
 using System.Text.Json;
+using Aw.Sindri.Core.Events;
 using Aw.Kernel;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
 

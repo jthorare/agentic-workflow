@@ -7,11 +7,9 @@ using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Profile;
-using Aw.Sindri.Core.Workflow.Shipped;
 using Aw.Sindri.Features.StartProcess;
 using Aw.Sindri.Host;
 using Aw.Sindri.Testing;
-using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Tests.Ledger;
 using Aw.Sindri.Tests.Server;
 using Aw.Sindri.Tests.Views;
@@ -150,7 +148,6 @@ public sealed class GoldenHost : IAsyncDisposable
         var app = LoopbackBinding.Build([], Environment, new FakeTimeProvider(KnownInstants.Epoch), services =>
         {
             // why: an ordinary build embeds the checkout's recipes/sindri (#878), and unapproved shipped recipes would add a setup row to every golden; a test that needs a shipped set replaces this in 'extra'
-            _ = services.Replace(ServiceDescriptor.Singleton<IEmbeddedRecipes>(FakeEmbeddedRecipes.Empty));
             // why: the dense leg of a context query embeds the query through Ollama on 127.0.0.1:11434; a box without it reports 'records-dense' degraded (CI), a box with it does not, so every golden would depend on the machine; a test that needs the model down sets Failure on a fake of its own in 'extra'
             _ = services.Replace(ServiceDescriptor.Singleton<Context.Core.Vectors.IQueryEmbedder>(new Context.Testing.Vectors.FakeQueryEmbedder()));
             _extra?.Invoke(services);
