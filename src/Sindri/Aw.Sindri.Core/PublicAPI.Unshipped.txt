@@ -13986,6 +13986,7 @@ const Aw.Sindri.Core.Events.ModelCallOutcome.NotAsked = "not-asked" -> string!
 const Aw.Sindri.Core.Events.ModelCallOutcome.Skipped = "skipped" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Estimated = "estimated" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Reported = "reported" -> string!
+const Aw.Sindri.Core.Views.ViewSchema.Version = 26 -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Events.ContextModelCalled.GetHashCode() -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.ToString() -> string!
@@ -17990,6 +17991,354 @@ static Aw.Sindri.Core.Ids.TodoId.operator ==(Aw.Sindri.Core.Ids.TodoId left, Aw.
 static Aw.Sindri.Core.Ids.TodoId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Ids.TodoId
 static Aw.Sindri.Core.Ids.TodoId.TryFrom(string? value, out Aw.Sindri.Core.Ids.TodoId vo) -> bool
 static Aw.Sindri.Core.Ids.TodoId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Ids.TodoId result) -> bool
+Aw.Sindri.Core.Events.TodoAdded
+Aw.Sindri.Core.Events.TodoAdded.By.get -> string!
+Aw.Sindri.Core.Events.TodoAdded.By.init -> void
+Aw.Sindri.Core.Events.TodoAdded.ClientId.init -> void
+Aw.Sindri.Core.Events.TodoAdded.<Clone>$() -> Aw.Sindri.Core.Events.TodoAdded!
+Aw.Sindri.Core.Events.TodoAdded.Due.get -> System.DateOnly?
+Aw.Sindri.Core.Events.TodoAdded.Due.init -> void
+Aw.Sindri.Core.Events.TodoAdded.Equals(Aw.Sindri.Core.Events.TodoAdded? other) -> bool
+Aw.Sindri.Core.Events.TodoAdded.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Events.TodoAdded.Id.init -> void
+Aw.Sindri.Core.Events.TodoAdded.Links.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Events.TodoAdded.Links.init -> void
+Aw.Sindri.Core.Events.TodoAdded.Text.get -> string!
+Aw.Sindri.Core.Events.TodoAdded.Text.init -> void
+Aw.Sindri.Core.Events.TodoAdded.Via.get -> string?
+Aw.Sindri.Core.Events.TodoAdded.Via.init -> void
+Aw.Sindri.Core.Events.TodoChanged
+Aw.Sindri.Core.Events.TodoChanged.By.get -> string!
+Aw.Sindri.Core.Events.TodoChanged.By.init -> void
+Aw.Sindri.Core.Events.TodoChanged.ClearDue.get -> bool
+Aw.Sindri.Core.Events.TodoChanged.ClearDue.init -> void
+Aw.Sindri.Core.Events.TodoChanged.<Clone>$() -> Aw.Sindri.Core.Events.TodoChanged!
+Aw.Sindri.Core.Events.TodoChanged.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out long Version, out string? Text, out System.DateOnly? Due, out bool ClearDue, out System.Collections.Generic.IReadOnlyList<string!>? Links, out string! By, out string? Via) -> void
+Aw.Sindri.Core.Events.TodoChanged.Due.get -> System.DateOnly?
+Aw.Sindri.Core.Events.TodoChanged.Due.init -> void
+Aw.Sindri.Core.Events.TodoChanged.Equals(Aw.Sindri.Core.Events.TodoChanged? other) -> bool
+Aw.Sindri.Core.Events.TodoChanged.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Events.TodoChanged.Id.init -> void
+Aw.Sindri.Core.Events.TodoChanged.Links.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Events.TodoChanged.Links.init -> void
+Aw.Sindri.Core.Events.TodoChanged.Text.get -> string?
+Aw.Sindri.Core.Events.TodoChanged.Text.init -> void
+Aw.Sindri.Core.Events.TodoChanged.TodoChanged(Aw.Sindri.Core.Ids.TodoId Id, long Version, string? Text, System.DateOnly? Due, bool ClearDue, System.Collections.Generic.IReadOnlyList<string!>? Links, string! By, string? Via = null) -> void
+Aw.Sindri.Core.Events.TodoChanged.Version.get -> long
+Aw.Sindri.Core.Events.TodoChanged.Version.init -> void
+Aw.Sindri.Core.Events.TodoChanged.Via.get -> string?
+Aw.Sindri.Core.Events.TodoChanged.Via.init -> void
+Aw.Sindri.Core.Events.TodoConflicted
+Aw.Sindri.Core.Events.TodoConflicted.<Clone>$() -> Aw.Sindri.Core.Events.TodoConflicted!
+Aw.Sindri.Core.Events.TodoConflicted.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out Aw.Sindri.Core.Events.TodoSide! Sindri, out Aw.Sindri.Core.Events.TodoSide! Obsidian, out string! NoteHash) -> void
+Aw.Sindri.Core.Events.TodoConflicted.Equals(Aw.Sindri.Core.Events.TodoConflicted? other) -> bool
+Aw.Sindri.Core.Events.TodoConflicted.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Events.TodoConflicted.Id.init -> void
+Aw.Sindri.Core.Events.TodoConflicted.NoteHash.get -> string!
+Aw.Sindri.Core.Events.TodoConflicted.NoteHash.init -> void
+Aw.Sindri.Core.Events.TodoConflicted.Obsidian.get -> Aw.Sindri.Core.Events.TodoSide!
+Aw.Sindri.Core.Events.TodoConflicted.Obsidian.init -> void
+Aw.Sindri.Core.Events.TodoConflicted.Sindri.get -> Aw.Sindri.Core.Events.TodoSide!
+Aw.Sindri.Core.Events.TodoConflicted.Sindri.init -> void
+Aw.Sindri.Core.Events.TodoConflicted.TodoConflicted(Aw.Sindri.Core.Ids.TodoId Id, Aw.Sindri.Core.Events.TodoSide! Sindri, Aw.Sindri.Core.Events.TodoSide! Obsidian, string! NoteHash) -> void
+Aw.Sindri.Core.Events.TodoConflictReopened
+Aw.Sindri.Core.Events.TodoConflictReopened.By.get -> string!
+Aw.Sindri.Core.Events.TodoConflictReopened.By.init -> void
+Aw.Sindri.Core.Events.TodoConflictReopened.<Clone>$() -> Aw.Sindri.Core.Events.TodoConflictReopened!
+Aw.Sindri.Core.Events.TodoConflictReopened.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out string! By, out string? Via) -> void
+Aw.Sindri.Core.Events.TodoConflictReopened.Equals(Aw.Sindri.Core.Events.TodoConflictReopened? other) -> bool
+Aw.Sindri.Core.Events.TodoConflictReopened.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Events.TodoConflictReopened.Id.init -> void
+Aw.Sindri.Core.Events.TodoConflictReopened.TodoConflictReopened(Aw.Sindri.Core.Ids.TodoId Id, string! By, string? Via = null) -> void
+Aw.Sindri.Core.Events.TodoConflictReopened.Via.get -> string?
+Aw.Sindri.Core.Events.TodoConflictReopened.Via.init -> void
+Aw.Sindri.Core.Events.TodoConflictResolved
+Aw.Sindri.Core.Events.TodoConflictResolved.BaseLine.get -> string!
+Aw.Sindri.Core.Events.TodoConflictResolved.BaseLine.init -> void
+Aw.Sindri.Core.Events.TodoConflictResolved.By.get -> string!
+Aw.Sindri.Core.Events.TodoConflictResolved.By.init -> void
+Aw.Sindri.Core.Events.TodoConflictResolved.<Clone>$() -> Aw.Sindri.Core.Events.TodoConflictResolved!
+Aw.Sindri.Core.Events.TodoConflictResolved.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out Aw.Sindri.Core.Events.TodoSideName Kept, out string! BaseLine, out string! By, out string? Via) -> void
+Aw.Sindri.Core.Events.TodoConflictResolved.Equals(Aw.Sindri.Core.Events.TodoConflictResolved? other) -> bool
+Aw.Sindri.Core.Events.TodoConflictResolved.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Events.TodoConflictResolved.Id.init -> void
+Aw.Sindri.Core.Events.TodoConflictResolved.Kept.get -> Aw.Sindri.Core.Events.TodoSideName
+Aw.Sindri.Core.Events.TodoConflictResolved.Kept.init -> void
+Aw.Sindri.Core.Events.TodoConflictResolved.TodoConflictResolved(Aw.Sindri.Core.Ids.TodoId Id, Aw.Sindri.Core.Events.TodoSideName Kept, string! BaseLine, string! By, string? Via = null) -> void
+Aw.Sindri.Core.Events.TodoConflictResolved.Via.get -> string?
+Aw.Sindri.Core.Events.TodoConflictResolved.Via.init -> void
+Aw.Sindri.Core.Events.TodoDone
+Aw.Sindri.Core.Events.TodoDone.By.get -> string!
+Aw.Sindri.Core.Events.TodoDone.By.init -> void
+Aw.Sindri.Core.Events.TodoDone.<Clone>$() -> Aw.Sindri.Core.Events.TodoDone!
+Aw.Sindri.Core.Events.TodoDone.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out long Version, out string! By, out string? Via) -> void
+Aw.Sindri.Core.Events.TodoDone.Equals(Aw.Sindri.Core.Events.TodoDone? other) -> bool
+Aw.Sindri.Core.Events.TodoDone.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Events.TodoDone.Id.init -> void
+Aw.Sindri.Core.Events.TodoDone.TodoDone(Aw.Sindri.Core.Ids.TodoId Id, long Version, string! By, string? Via = null) -> void
+Aw.Sindri.Core.Events.TodoDone.Version.get -> long
+Aw.Sindri.Core.Events.TodoDone.Version.init -> void
+Aw.Sindri.Core.Events.TodoDone.Via.get -> string?
+Aw.Sindri.Core.Events.TodoDone.Via.init -> void
+Aw.Sindri.Core.Events.TodoRemoved
+Aw.Sindri.Core.Events.TodoRemoved.By.get -> string!
+Aw.Sindri.Core.Events.TodoRemoved.By.init -> void
+Aw.Sindri.Core.Events.TodoRemoved.<Clone>$() -> Aw.Sindri.Core.Events.TodoRemoved!
+Aw.Sindri.Core.Events.TodoRemoved.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out long Version, out string! By, out string? Via) -> void
+Aw.Sindri.Core.Events.TodoRemoved.Equals(Aw.Sindri.Core.Events.TodoRemoved? other) -> bool
+Aw.Sindri.Core.Events.TodoRemoved.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Events.TodoRemoved.Id.init -> void
+Aw.Sindri.Core.Events.TodoRemoved.TodoRemoved(Aw.Sindri.Core.Ids.TodoId Id, long Version, string! By, string? Via = null) -> void
+Aw.Sindri.Core.Events.TodoRemoved.Version.get -> long
+Aw.Sindri.Core.Events.TodoRemoved.Version.init -> void
+Aw.Sindri.Core.Events.TodoRemoved.Via.get -> string?
+Aw.Sindri.Core.Events.TodoRemoved.Via.init -> void
+Aw.Sindri.Core.Events.TodoReopened
+Aw.Sindri.Core.Events.TodoReopened.By.get -> string!
+Aw.Sindri.Core.Events.TodoReopened.By.init -> void
+Aw.Sindri.Core.Events.TodoReopened.<Clone>$() -> Aw.Sindri.Core.Events.TodoReopened!
+Aw.Sindri.Core.Events.TodoReopened.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out long Version, out string! By, out string? Via) -> void
+Aw.Sindri.Core.Events.TodoReopened.Equals(Aw.Sindri.Core.Events.TodoReopened? other) -> bool
+Aw.Sindri.Core.Events.TodoReopened.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Events.TodoReopened.Id.init -> void
+Aw.Sindri.Core.Events.TodoReopened.TodoReopened(Aw.Sindri.Core.Ids.TodoId Id, long Version, string! By, string? Via = null) -> void
+Aw.Sindri.Core.Events.TodoReopened.Version.get -> long
+Aw.Sindri.Core.Events.TodoReopened.Version.init -> void
+Aw.Sindri.Core.Events.TodoReopened.Via.get -> string?
+Aw.Sindri.Core.Events.TodoReopened.Via.init -> void
+Aw.Sindri.Core.Events.TodoRestored
+Aw.Sindri.Core.Events.TodoRestored.By.get -> string!
+Aw.Sindri.Core.Events.TodoRestored.By.init -> void
+Aw.Sindri.Core.Events.TodoRestored.<Clone>$() -> Aw.Sindri.Core.Events.TodoRestored!
+Aw.Sindri.Core.Events.TodoRestored.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out long Version, out string! By, out string? Via) -> void
+Aw.Sindri.Core.Events.TodoRestored.Equals(Aw.Sindri.Core.Events.TodoRestored? other) -> bool
+Aw.Sindri.Core.Events.TodoRestored.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Events.TodoRestored.Id.init -> void
+Aw.Sindri.Core.Events.TodoRestored.TodoRestored(Aw.Sindri.Core.Ids.TodoId Id, long Version, string! By, string? Via = null) -> void
+Aw.Sindri.Core.Events.TodoRestored.Version.get -> long
+Aw.Sindri.Core.Events.TodoRestored.Version.init -> void
+Aw.Sindri.Core.Events.TodoRestored.Via.get -> string?
+Aw.Sindri.Core.Events.TodoRestored.Via.init -> void
+Aw.Sindri.Core.Events.TodoSide
+Aw.Sindri.Core.Events.TodoSide.<Clone>$() -> Aw.Sindri.Core.Events.TodoSide!
+Aw.Sindri.Core.Events.TodoSide.Deconstruct(out string? Text, out System.DateOnly? Due, out System.Collections.Generic.IReadOnlyList<string!>! Links, out bool Done, out bool Removed) -> void
+Aw.Sindri.Core.Events.TodoSide.Done.get -> bool
+Aw.Sindri.Core.Events.TodoSide.Done.init -> void
+Aw.Sindri.Core.Events.TodoSide.Due.get -> System.DateOnly?
+Aw.Sindri.Core.Events.TodoSide.Due.init -> void
+Aw.Sindri.Core.Events.TodoSide.Equals(Aw.Sindri.Core.Events.TodoSide? other) -> bool
+Aw.Sindri.Core.Events.TodoSide.Links.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Events.TodoSide.Links.init -> void
+Aw.Sindri.Core.Events.TodoSide.Removed.get -> bool
+Aw.Sindri.Core.Events.TodoSide.Removed.init -> void
+Aw.Sindri.Core.Events.TodoSide.Text.get -> string?
+Aw.Sindri.Core.Events.TodoSide.Text.init -> void
+Aw.Sindri.Core.Events.TodoSide.TodoSide(string? Text, System.DateOnly? Due, System.Collections.Generic.IReadOnlyList<string!>! Links, bool Done, bool Removed) -> void
+Aw.Sindri.Core.Events.TodoSideName
+Aw.Sindri.Core.Events.TodoSideName.Obsidian = 1 -> Aw.Sindri.Core.Events.TodoSideName
+Aw.Sindri.Core.Events.TodoSideName.Sindri = 0 -> Aw.Sindri.Core.Events.TodoSideName
+const Aw.Sindri.Core.Events.EventTypes.TodoAdded = "todo.added" -> string!
+const Aw.Sindri.Core.Events.EventTypes.TodoChanged = "todo.changed" -> string!
+const Aw.Sindri.Core.Events.EventTypes.TodoConflicted = "todo.conflicted" -> string!
+const Aw.Sindri.Core.Events.EventTypes.TodoConflictReopened = "todo.conflict.reopened" -> string!
+const Aw.Sindri.Core.Events.EventTypes.TodoConflictResolved = "todo.conflict.resolved" -> string!
+const Aw.Sindri.Core.Events.EventTypes.TodoDone = "todo.done" -> string!
+const Aw.Sindri.Core.Events.EventTypes.TodoRemoved = "todo.removed" -> string!
+const Aw.Sindri.Core.Events.EventTypes.TodoReopened = "todo.reopened" -> string!
+const Aw.Sindri.Core.Events.EventTypes.TodoRestored = "todo.restored" -> string!
+override Aw.Sindri.Core.Events.TodoAdded.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.TodoAdded.GetHashCode() -> int
+override Aw.Sindri.Core.Events.TodoAdded.ToString() -> string!
+override Aw.Sindri.Core.Events.TodoChanged.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.TodoChanged.GetHashCode() -> int
+override Aw.Sindri.Core.Events.TodoChanged.ToString() -> string!
+override Aw.Sindri.Core.Events.TodoConflicted.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.TodoConflicted.GetHashCode() -> int
+override Aw.Sindri.Core.Events.TodoConflicted.ToString() -> string!
+override Aw.Sindri.Core.Events.TodoConflictReopened.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.TodoConflictReopened.GetHashCode() -> int
+override Aw.Sindri.Core.Events.TodoConflictReopened.ToString() -> string!
+override Aw.Sindri.Core.Events.TodoConflictResolved.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.TodoConflictResolved.GetHashCode() -> int
+override Aw.Sindri.Core.Events.TodoConflictResolved.ToString() -> string!
+override Aw.Sindri.Core.Events.TodoDone.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.TodoDone.GetHashCode() -> int
+override Aw.Sindri.Core.Events.TodoDone.ToString() -> string!
+override Aw.Sindri.Core.Events.TodoRemoved.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.TodoRemoved.GetHashCode() -> int
+override Aw.Sindri.Core.Events.TodoRemoved.ToString() -> string!
+override Aw.Sindri.Core.Events.TodoReopened.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.TodoReopened.GetHashCode() -> int
+override Aw.Sindri.Core.Events.TodoReopened.ToString() -> string!
+override Aw.Sindri.Core.Events.TodoRestored.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.TodoRestored.GetHashCode() -> int
+override Aw.Sindri.Core.Events.TodoRestored.ToString() -> string!
+override Aw.Sindri.Core.Events.TodoSide.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.TodoSide.GetHashCode() -> int
+override Aw.Sindri.Core.Events.TodoSide.ToString() -> string!
+static Aw.Sindri.Core.Events.TodoAdded.operator !=(Aw.Sindri.Core.Events.TodoAdded? left, Aw.Sindri.Core.Events.TodoAdded? right) -> bool
+static Aw.Sindri.Core.Events.TodoAdded.operator ==(Aw.Sindri.Core.Events.TodoAdded? left, Aw.Sindri.Core.Events.TodoAdded? right) -> bool
+static Aw.Sindri.Core.Events.TodoChanged.operator !=(Aw.Sindri.Core.Events.TodoChanged? left, Aw.Sindri.Core.Events.TodoChanged? right) -> bool
+static Aw.Sindri.Core.Events.TodoChanged.operator ==(Aw.Sindri.Core.Events.TodoChanged? left, Aw.Sindri.Core.Events.TodoChanged? right) -> bool
+static Aw.Sindri.Core.Events.TodoConflicted.operator !=(Aw.Sindri.Core.Events.TodoConflicted? left, Aw.Sindri.Core.Events.TodoConflicted? right) -> bool
+static Aw.Sindri.Core.Events.TodoConflicted.operator ==(Aw.Sindri.Core.Events.TodoConflicted? left, Aw.Sindri.Core.Events.TodoConflicted? right) -> bool
+static Aw.Sindri.Core.Events.TodoConflictReopened.operator !=(Aw.Sindri.Core.Events.TodoConflictReopened? left, Aw.Sindri.Core.Events.TodoConflictReopened? right) -> bool
+static Aw.Sindri.Core.Events.TodoConflictReopened.operator ==(Aw.Sindri.Core.Events.TodoConflictReopened? left, Aw.Sindri.Core.Events.TodoConflictReopened? right) -> bool
+static Aw.Sindri.Core.Events.TodoConflictResolved.operator !=(Aw.Sindri.Core.Events.TodoConflictResolved? left, Aw.Sindri.Core.Events.TodoConflictResolved? right) -> bool
+static Aw.Sindri.Core.Events.TodoConflictResolved.operator ==(Aw.Sindri.Core.Events.TodoConflictResolved? left, Aw.Sindri.Core.Events.TodoConflictResolved? right) -> bool
+static Aw.Sindri.Core.Events.TodoDone.operator !=(Aw.Sindri.Core.Events.TodoDone? left, Aw.Sindri.Core.Events.TodoDone? right) -> bool
+static Aw.Sindri.Core.Events.TodoDone.operator ==(Aw.Sindri.Core.Events.TodoDone? left, Aw.Sindri.Core.Events.TodoDone? right) -> bool
+static Aw.Sindri.Core.Events.TodoRemoved.operator !=(Aw.Sindri.Core.Events.TodoRemoved? left, Aw.Sindri.Core.Events.TodoRemoved? right) -> bool
+static Aw.Sindri.Core.Events.TodoRemoved.operator ==(Aw.Sindri.Core.Events.TodoRemoved? left, Aw.Sindri.Core.Events.TodoRemoved? right) -> bool
+static Aw.Sindri.Core.Events.TodoReopened.operator !=(Aw.Sindri.Core.Events.TodoReopened? left, Aw.Sindri.Core.Events.TodoReopened? right) -> bool
+static Aw.Sindri.Core.Events.TodoReopened.operator ==(Aw.Sindri.Core.Events.TodoReopened? left, Aw.Sindri.Core.Events.TodoReopened? right) -> bool
+static Aw.Sindri.Core.Events.TodoRestored.operator !=(Aw.Sindri.Core.Events.TodoRestored? left, Aw.Sindri.Core.Events.TodoRestored? right) -> bool
+static Aw.Sindri.Core.Events.TodoRestored.operator ==(Aw.Sindri.Core.Events.TodoRestored? left, Aw.Sindri.Core.Events.TodoRestored? right) -> bool
+static Aw.Sindri.Core.Events.TodoSide.operator !=(Aw.Sindri.Core.Events.TodoSide? left, Aw.Sindri.Core.Events.TodoSide? right) -> bool
+static Aw.Sindri.Core.Events.TodoSide.operator ==(Aw.Sindri.Core.Events.TodoSide? left, Aw.Sindri.Core.Events.TodoSide? right) -> bool
+Aw.Sindri.Core.Events.TodoAdded.ClientId.get -> Aw.Sindri.Core.Ids.TodoClientId?
+Aw.Sindri.Core.Events.TodoAdded.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out string! Text, out System.DateOnly? Due, out System.Collections.Generic.IReadOnlyList<string!>! Links, out Aw.Sindri.Core.Ids.TodoClientId? ClientId, out string! By, out string? Via) -> void
+Aw.Sindri.Core.Events.TodoAdded.TodoAdded(Aw.Sindri.Core.Ids.TodoId Id, string! Text, System.DateOnly? Due, System.Collections.Generic.IReadOnlyList<string!>! Links, Aw.Sindri.Core.Ids.TodoClientId? ClientId, string! By, string? Via = null) -> void
+Aw.Sindri.Core.Ids.TodoClientId
+Aw.Sindri.Core.Ids.TodoClientId.Equals(Aw.Sindri.Core.Ids.TodoClientId other) -> bool
+Aw.Sindri.Core.Ids.TodoClientId.Equals(Aw.Sindri.Core.Ids.TodoClientId other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Ids.TodoClientId>! comparer) -> bool
+Aw.Sindri.Core.Ids.TodoClientId.GetTypeCode() -> System.TypeCode
+Aw.Sindri.Core.Ids.TodoClientId.IsInitialized() -> bool
+Aw.Sindri.Core.Ids.TodoClientId.TodoClientId() -> void
+Aw.Sindri.Core.Ids.TodoClientId.ToString(System.IFormatProvider? provider) -> string!
+Aw.Sindri.Core.Ids.TodoClientId.Value.get -> string!
+override Aw.Sindri.Core.Ids.TodoClientId.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Ids.TodoClientId.GetHashCode() -> int
+override Aw.Sindri.Core.Ids.TodoClientId.ToString() -> string!
+static Aw.Sindri.Core.Ids.TodoClientId.From(string! value) -> Aw.Sindri.Core.Ids.TodoClientId
+static Aw.Sindri.Core.Ids.TodoClientId.operator !=(Aw.Sindri.Core.Ids.TodoClientId left, Aw.Sindri.Core.Ids.TodoClientId right) -> bool
+static Aw.Sindri.Core.Ids.TodoClientId.operator ==(Aw.Sindri.Core.Ids.TodoClientId left, Aw.Sindri.Core.Ids.TodoClientId right) -> bool
+static Aw.Sindri.Core.Ids.TodoClientId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Ids.TodoClientId
+static Aw.Sindri.Core.Ids.TodoClientId.TryFrom(string? value, out Aw.Sindri.Core.Ids.TodoClientId vo) -> bool
+static Aw.Sindri.Core.Ids.TodoClientId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Ids.TodoClientId result) -> bool
+Aw.Sindri.Core.Todos.TodoAccepted
+Aw.Sindri.Core.Todos.TodoAccepted.Accepted.get -> Aw.Sindri.Core.Commands.CommandAccepted!
+Aw.Sindri.Core.Todos.TodoAccepted.Accepted.init -> void
+Aw.Sindri.Core.Todos.TodoAccepted.<Clone>$() -> Aw.Sindri.Core.Todos.TodoAccepted!
+Aw.Sindri.Core.Todos.TodoAccepted.Deconstruct(out Aw.Sindri.Core.Commands.CommandAccepted! Accepted, out Aw.Sindri.Core.Ids.TodoId Id, out long Version, out System.DateOnly? Due) -> void
+Aw.Sindri.Core.Todos.TodoAccepted.Due.get -> System.DateOnly?
+Aw.Sindri.Core.Todos.TodoAccepted.Due.init -> void
+Aw.Sindri.Core.Todos.TodoAccepted.Equals(Aw.Sindri.Core.Todos.TodoAccepted? other) -> bool
+Aw.Sindri.Core.Todos.TodoAccepted.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Todos.TodoAccepted.Id.init -> void
+Aw.Sindri.Core.Todos.TodoAccepted.TodoAccepted(Aw.Sindri.Core.Commands.CommandAccepted! Accepted, Aw.Sindri.Core.Ids.TodoId Id, long Version, System.DateOnly? Due) -> void
+Aw.Sindri.Core.Todos.TodoAccepted.Version.get -> long
+Aw.Sindri.Core.Todos.TodoAccepted.Version.init -> void
+Aw.Sindri.Core.Todos.TodoCliVerb
+Aw.Sindri.Core.Todos.TodoCliVerb.Done = 2 -> Aw.Sindri.Core.Todos.TodoCliVerb
+Aw.Sindri.Core.Todos.TodoCliVerb.Edit = 1 -> Aw.Sindri.Core.Todos.TodoCliVerb
+Aw.Sindri.Core.Todos.TodoCliVerb.Keep = 6 -> Aw.Sindri.Core.Todos.TodoCliVerb
+Aw.Sindri.Core.Todos.TodoCliVerb.Remove = 4 -> Aw.Sindri.Core.Todos.TodoCliVerb
+Aw.Sindri.Core.Todos.TodoCliVerb.Reopen = 3 -> Aw.Sindri.Core.Todos.TodoCliVerb
+Aw.Sindri.Core.Todos.TodoCliVerb.Restore = 5 -> Aw.Sindri.Core.Todos.TodoCliVerb
+Aw.Sindri.Core.Todos.TodoCliVerb.Show = 0 -> Aw.Sindri.Core.Todos.TodoCliVerb
+Aw.Sindri.Core.Todos.TodoCounts
+Aw.Sindri.Core.Todos.TodoCounts.<Clone>$() -> Aw.Sindri.Core.Todos.TodoCounts!
+Aw.Sindri.Core.Todos.TodoCounts.Deconstruct(out int Open, out int Done, out int Removed) -> void
+Aw.Sindri.Core.Todos.TodoCounts.Done.get -> int
+Aw.Sindri.Core.Todos.TodoCounts.Done.init -> void
+Aw.Sindri.Core.Todos.TodoCounts.Equals(Aw.Sindri.Core.Todos.TodoCounts? other) -> bool
+Aw.Sindri.Core.Todos.TodoCounts.Open.get -> int
+Aw.Sindri.Core.Todos.TodoCounts.Open.init -> void
+Aw.Sindri.Core.Todos.TodoCounts.Removed.get -> int
+Aw.Sindri.Core.Todos.TodoCounts.Removed.init -> void
+Aw.Sindri.Core.Todos.TodoCounts.TodoCounts(int Open, int Done, int Removed) -> void
+Aw.Sindri.Core.Todos.TodoLinks
+Aw.Sindri.Core.Todos.TodoListState
+Aw.Sindri.Core.Todos.TodoListState.All = 2 -> Aw.Sindri.Core.Todos.TodoListState
+Aw.Sindri.Core.Todos.TodoListState.Done = 1 -> Aw.Sindri.Core.Todos.TodoListState
+Aw.Sindri.Core.Todos.TodoListState.Open = 0 -> Aw.Sindri.Core.Todos.TodoListState
+Aw.Sindri.Core.Todos.TodoOpenConflict
+Aw.Sindri.Core.Todos.TodoOpenConflict.<Clone>$() -> Aw.Sindri.Core.Todos.TodoOpenConflict!
+Aw.Sindri.Core.Todos.TodoOpenConflict.Deconstruct(out Aw.Sindri.Core.Events.TodoSide! Sindri, out Aw.Sindri.Core.Events.TodoSide! Obsidian, out string! NoteHash) -> void
+Aw.Sindri.Core.Todos.TodoOpenConflict.Equals(Aw.Sindri.Core.Todos.TodoOpenConflict? other) -> bool
+Aw.Sindri.Core.Todos.TodoOpenConflict.NoteHash.get -> string!
+Aw.Sindri.Core.Todos.TodoOpenConflict.NoteHash.init -> void
+Aw.Sindri.Core.Todos.TodoOpenConflict.Obsidian.get -> Aw.Sindri.Core.Events.TodoSide!
+Aw.Sindri.Core.Todos.TodoOpenConflict.Obsidian.init -> void
+Aw.Sindri.Core.Todos.TodoOpenConflict.Sindri.get -> Aw.Sindri.Core.Events.TodoSide!
+Aw.Sindri.Core.Todos.TodoOpenConflict.Sindri.init -> void
+Aw.Sindri.Core.Todos.TodoOpenConflict.TodoOpenConflict(Aw.Sindri.Core.Events.TodoSide! Sindri, Aw.Sindri.Core.Events.TodoSide! Obsidian, string! NoteHash) -> void
+Aw.Sindri.Core.Todos.TodoPrefix
+Aw.Sindri.Core.Todos.TodoRow
+Aw.Sindri.Core.Todos.TodoRow.AddedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Todos.TodoRow.AddedAt.init -> void
+Aw.Sindri.Core.Todos.TodoRow.AddedBy.get -> string!
+Aw.Sindri.Core.Todos.TodoRow.AddedBy.init -> void
+Aw.Sindri.Core.Todos.TodoRow.AddedVia.get -> string?
+Aw.Sindri.Core.Todos.TodoRow.AddedVia.init -> void
+Aw.Sindri.Core.Todos.TodoRow.<Clone>$() -> Aw.Sindri.Core.Todos.TodoRow!
+Aw.Sindri.Core.Todos.TodoRow.Conflict.get -> Aw.Sindri.Core.Todos.TodoOpenConflict?
+Aw.Sindri.Core.Todos.TodoRow.Conflict.init -> void
+Aw.Sindri.Core.Todos.TodoRow.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out string! Text, out System.DateOnly? Due, out System.Collections.Generic.IReadOnlyList<string!>! Links, out System.DateTimeOffset AddedAt, out string! AddedBy, out string? AddedVia, out System.DateTimeOffset? DoneAt, out bool Removed, out System.DateTimeOffset? RemovedAt, out string? RemovedBy, out string? LastLineHash, out long Version, out string! LastBy, out string? LastVia, out Aw.Sindri.Core.Todos.TodoOpenConflict? Conflict, out Aw.Sindri.Core.Todos.TodoOpenConflict? PickedConflict, out long Sequence) -> void
+Aw.Sindri.Core.Todos.TodoRow.DoneAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Todos.TodoRow.DoneAt.init -> void
+Aw.Sindri.Core.Todos.TodoRow.Due.get -> System.DateOnly?
+Aw.Sindri.Core.Todos.TodoRow.Due.init -> void
+Aw.Sindri.Core.Todos.TodoRow.Equals(Aw.Sindri.Core.Todos.TodoRow? other) -> bool
+Aw.Sindri.Core.Todos.TodoRow.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Todos.TodoRow.Id.init -> void
+Aw.Sindri.Core.Todos.TodoRow.LastBy.get -> string!
+Aw.Sindri.Core.Todos.TodoRow.LastBy.init -> void
+Aw.Sindri.Core.Todos.TodoRow.LastLineHash.get -> string?
+Aw.Sindri.Core.Todos.TodoRow.LastLineHash.init -> void
+Aw.Sindri.Core.Todos.TodoRow.LastVia.get -> string?
+Aw.Sindri.Core.Todos.TodoRow.LastVia.init -> void
+Aw.Sindri.Core.Todos.TodoRow.Links.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Todos.TodoRow.Links.init -> void
+Aw.Sindri.Core.Todos.TodoRow.PickedConflict.get -> Aw.Sindri.Core.Todos.TodoOpenConflict?
+Aw.Sindri.Core.Todos.TodoRow.PickedConflict.init -> void
+Aw.Sindri.Core.Todos.TodoRow.RemovedAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Todos.TodoRow.RemovedAt.init -> void
+Aw.Sindri.Core.Todos.TodoRow.RemovedBy.get -> string?
+Aw.Sindri.Core.Todos.TodoRow.RemovedBy.init -> void
+Aw.Sindri.Core.Todos.TodoRow.Removed.get -> bool
+Aw.Sindri.Core.Todos.TodoRow.Removed.init -> void
+Aw.Sindri.Core.Todos.TodoRow.Sequence.get -> long
+Aw.Sindri.Core.Todos.TodoRow.Sequence.init -> void
+Aw.Sindri.Core.Todos.TodoRow.Text.get -> string!
+Aw.Sindri.Core.Todos.TodoRow.Text.init -> void
+Aw.Sindri.Core.Todos.TodoRow.TodoRow(Aw.Sindri.Core.Ids.TodoId Id, string! Text, System.DateOnly? Due, System.Collections.Generic.IReadOnlyList<string!>! Links, System.DateTimeOffset AddedAt, string! AddedBy, string? AddedVia, System.DateTimeOffset? DoneAt, bool Removed, System.DateTimeOffset? RemovedAt, string? RemovedBy, string? LastLineHash, long Version, string! LastBy, string? LastVia, Aw.Sindri.Core.Todos.TodoOpenConflict? Conflict, Aw.Sindri.Core.Todos.TodoOpenConflict? PickedConflict, long Sequence) -> void
+Aw.Sindri.Core.Todos.TodoRow.Version.get -> long
+Aw.Sindri.Core.Todos.TodoRow.Version.init -> void
+Aw.Sindri.Core.Todos.TodoText
+Aw.Sindri.Core.Todos.TodoVerb
+Aw.Sindri.Core.Todos.TodoVerb.Done = 0 -> Aw.Sindri.Core.Todos.TodoVerb
+Aw.Sindri.Core.Todos.TodoVerb.Remove = 2 -> Aw.Sindri.Core.Todos.TodoVerb
+Aw.Sindri.Core.Todos.TodoVerb.Reopen = 1 -> Aw.Sindri.Core.Todos.TodoVerb
+Aw.Sindri.Core.Todos.TodoVerb.Restore = 3 -> Aw.Sindri.Core.Todos.TodoVerb
+const Aw.Sindri.Core.Todos.TodoLinks.Max = 10 -> int
+const Aw.Sindri.Core.Todos.TodoText.MaxLength = 280 -> int
+const Aw.Sindri.Core.Views.ViewNames.Todo = "todo" -> string!
+override Aw.Sindri.Core.Todos.TodoAccepted.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoAccepted.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoAccepted.ToString() -> string!
+override Aw.Sindri.Core.Todos.TodoCounts.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoCounts.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoCounts.ToString() -> string!
+override Aw.Sindri.Core.Todos.TodoOpenConflict.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoOpenConflict.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoOpenConflict.ToString() -> string!
+override Aw.Sindri.Core.Todos.TodoRow.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoRow.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoRow.ToString() -> string!
+static Aw.Sindri.Core.Todos.TodoAccepted.operator !=(Aw.Sindri.Core.Todos.TodoAccepted? left, Aw.Sindri.Core.Todos.TodoAccepted? right) -> bool
+static Aw.Sindri.Core.Todos.TodoAccepted.operator ==(Aw.Sindri.Core.Todos.TodoAccepted? left, Aw.Sindri.Core.Todos.TodoAccepted? right) -> bool
+static Aw.Sindri.Core.Todos.TodoCounts.operator !=(Aw.Sindri.Core.Todos.TodoCounts? left, Aw.Sindri.Core.Todos.TodoCounts? right) -> bool
+static Aw.Sindri.Core.Todos.TodoCounts.operator ==(Aw.Sindri.Core.Todos.TodoCounts? left, Aw.Sindri.Core.Todos.TodoCounts? right) -> bool
+static Aw.Sindri.Core.Todos.TodoLinks.ParseAll(System.Collections.Generic.IReadOnlyList<string!>! typed, System.Collections.Generic.IReadOnlyCollection<string!>! forgeHosts) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!
+static Aw.Sindri.Core.Todos.TodoLinks.Parse(string! typed, System.Collections.Generic.IReadOnlyCollection<string!>! forgeHosts) -> Aw.Kernel.Result<string!>!
+static Aw.Sindri.Core.Todos.TodoOpenConflict.operator !=(Aw.Sindri.Core.Todos.TodoOpenConflict? left, Aw.Sindri.Core.Todos.TodoOpenConflict? right) -> bool
+static Aw.Sindri.Core.Todos.TodoOpenConflict.operator ==(Aw.Sindri.Core.Todos.TodoOpenConflict? left, Aw.Sindri.Core.Todos.TodoOpenConflict? right) -> bool
+static Aw.Sindri.Core.Todos.TodoPrefix.Resolve(string! typed, Aw.Sindri.Core.Todos.TodoCliVerb verb, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.TodoRow!>! rows) -> Aw.Kernel.Result<Aw.Sindri.Core.Ids.TodoId>!
+static Aw.Sindri.Core.Todos.TodoRow.operator !=(Aw.Sindri.Core.Todos.TodoRow? left, Aw.Sindri.Core.Todos.TodoRow? right) -> bool
+static Aw.Sindri.Core.Todos.TodoRow.operator ==(Aw.Sindri.Core.Todos.TodoRow? left, Aw.Sindri.Core.Todos.TodoRow? right) -> bool
+static Aw.Sindri.Core.Todos.TodoText.Check(string! text) -> Aw.Kernel.Result<string!>!
 abstract Aw.Sindri.Core.Todos.Note.NoteIntent.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteIntent!
 Aw.Sindri.Core.Todos.Note.HeldChange
 Aw.Sindri.Core.Todos.Note.HeldChange.<Clone>$() -> Aw.Sindri.Core.Todos.Note.HeldChange!
@@ -18741,6 +19090,82 @@ Aw.Sindri.Core.Workflow.Blocks.BlockServiceCollectionExtensions
 Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceView.TakenOverBy.get -> string?
 Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceView.TakenOverBy.init -> void
 static Aw.Sindri.Core.Workflow.Blocks.BlockServiceCollectionExtensions.AddBlockDescriptor(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor! descriptor) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static readonly Aw.Sindri.Core.SindriErrors.TodoText -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.TodoNoteKey -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.TodoDate -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.TodoLink -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.TodoNothingToPick -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.TodoCap -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.TodoForbidden -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.TodoNothingToImport -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.TodoAmbiguous -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.TodoNotFound -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.TodoConflict -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.TodoLocked -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.TodoRateLimited -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Todos.TodoDecisions
+const Aw.Sindri.Core.Todos.TodoDecisions.LockedText = "That todo changed in Sindri and in Obsidian. Pick which version to keep first." -> string!
+const Aw.Sindri.Core.Todos.TodoDecisions.StaleText = "That todo changed somewhere else. Reload and try again." -> string!
+static Aw.Sindri.Core.Todos.TodoDecisions.Fits(Aw.Sindri.Core.Todos.TodoRow! row, Aw.Sindri.Core.Todos.TodoVerb verb) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+static Aw.Sindri.Core.Todos.TodoDecisions.IsOpen(Aw.Sindri.Core.Todos.TodoRow! row) -> bool
+static Aw.Sindri.Core.Todos.TodoDecisions.Writable(Aw.Sindri.Core.Ids.TodoId id, Aw.Sindri.Core.Todos.TodoRow? row, long? seen) -> Aw.Kernel.Result<Aw.Sindri.Core.Todos.TodoRow!>!
+Aw.Sindri.Core.Todos.TodoWrite
+const Aw.Sindri.Core.Todos.TodoWrite.Pipe = "pipe" -> string!
+static Aw.Sindri.Core.Todos.TodoWrite.Append(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Lease.LeaseGrant! grant, Aw.Sindri.Core.Ledger.LedgerEntry! entry, Aw.Sindri.Core.Ids.CommandId command, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Commands.CommandAccepted!>!>
+static Aw.Sindri.Core.Todos.TodoWrite.Begin(Aw.Sindri.Core.Commands.ICallerContextAccessor! callers, Aw.Sindri.Core.Lease.HeldLease! held, string! action) -> Aw.Kernel.Result<(Aw.Sindri.Core.Commands.CallerContext! Caller, Aw.Sindri.Core.Lease.LeaseGrant! Grant)>!
+static Aw.Sindri.Core.Todos.TodoWrite.By(Aw.Sindri.Core.Commands.CallerContext! caller) -> string!
+static Aw.Sindri.Core.Todos.TodoWrite.Via(bool piped) -> string?
+static Aw.Sindri.Core.Todos.TodoWrite.VersionKey(Aw.Sindri.Core.Ids.TodoId id, long version) -> string!
+Aw.Sindri.Core.Todos.TodoAddWindow
+Aw.Sindri.Core.Todos.TodoAddWindow.Lock(string! actor) -> System.Threading.SemaphoreSlim!
+Aw.Sindri.Core.Todos.TodoAddWindow.Refresh(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, System.DateTimeOffset now, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Todos.TodoAddWindow.TodoAddWindow() -> void
+Aw.Sindri.Core.Todos.TodoAdds
+Aw.Sindri.Core.Todos.TodoAdds.Admit(Aw.Sindri.Core.Ids.TodoClientId? clientId, Aw.Sindri.Core.Commands.CallerContext! caller, string! by, bool piped, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Todos.TodoAccepted?>!>
+Aw.Sindri.Core.Todos.TodoAdds.Lock(string! by) -> System.Threading.SemaphoreSlim!
+Aw.Sindri.Core.Todos.TodoAdds.TodoAdds(Aw.Sindri.Core.Views.IViewReader! views, Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, System.TimeProvider! clock, Aw.Sindri.Core.Todos.TodoAddWindow! window) -> void
+Aw.Sindri.Core.Todos.TodoInput
+Aw.Sindri.Core.Todos.TodoInput.Edit(string? text, System.Collections.Generic.IReadOnlyList<string!>? links, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<(string? Text, System.Collections.Generic.IReadOnlyList<string!>? Links)>!>
+Aw.Sindri.Core.Todos.TodoInput.Links(System.Collections.Generic.IReadOnlyList<string!>! typed, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
+Aw.Sindri.Core.Todos.TodoInput.Text(string! text) -> Aw.Kernel.Result<string!>!
+Aw.Sindri.Core.Todos.TodoInput.TodoInput(Aw.Sindri.Core.Text.ITextScrubber! scrubber, Aw.Sindri.Core.Profile.IApprovedProfile! approvals) -> void
+static Aw.Sindri.Core.Todos.TodoDecisions.NoEdit(string? text, System.DateOnly? due, bool clearDue, System.Collections.Generic.IReadOnlyList<string!>? links) -> Aw.Kernel.Error?
+static readonly Aw.Sindri.Core.Todos.TodoAddWindow.Span -> System.TimeSpan
+Aw.Sindri.Core.Todos.TodoAddWindow.Dispose() -> void
+Aw.Sindri.Core.Todos.TodoAddWindow.Find(string! by, Aw.Sindri.Core.Ids.TodoClientId clientId) -> Aw.Sindri.Core.Todos.TodoEarlierAdd?
+Aw.Sindri.Core.Todos.TodoAddWindow.Within(string! by, bool pipeOnly, System.DateTimeOffset now) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.TodoRecentAdd!>!
+Aw.Sindri.Core.Todos.TodoEarlierAdd
+Aw.Sindri.Core.Todos.TodoEarlierAdd.<Clone>$() -> Aw.Sindri.Core.Todos.TodoEarlierAdd!
+Aw.Sindri.Core.Todos.TodoEarlierAdd.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out long Sequence, out System.DateOnly? Due) -> void
+Aw.Sindri.Core.Todos.TodoEarlierAdd.Due.get -> System.DateOnly?
+Aw.Sindri.Core.Todos.TodoEarlierAdd.Due.init -> void
+Aw.Sindri.Core.Todos.TodoEarlierAdd.Equals(Aw.Sindri.Core.Todos.TodoEarlierAdd? other) -> bool
+Aw.Sindri.Core.Todos.TodoEarlierAdd.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Todos.TodoEarlierAdd.Id.init -> void
+Aw.Sindri.Core.Todos.TodoEarlierAdd.Sequence.get -> long
+Aw.Sindri.Core.Todos.TodoEarlierAdd.Sequence.init -> void
+Aw.Sindri.Core.Todos.TodoEarlierAdd.TodoEarlierAdd(Aw.Sindri.Core.Ids.TodoId Id, long Sequence, System.DateOnly? Due) -> void
+Aw.Sindri.Core.Todos.TodoRecentAdd
+Aw.Sindri.Core.Todos.TodoRecentAdd.<Clone>$() -> Aw.Sindri.Core.Todos.TodoRecentAdd!
+Aw.Sindri.Core.Todos.TodoRecentAdd.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Todos.TodoRecentAdd.At.init -> void
+Aw.Sindri.Core.Todos.TodoRecentAdd.By.get -> string!
+Aw.Sindri.Core.Todos.TodoRecentAdd.By.init -> void
+Aw.Sindri.Core.Todos.TodoRecentAdd.Deconstruct(out System.DateTimeOffset At, out string! By, out string? Via) -> void
+Aw.Sindri.Core.Todos.TodoRecentAdd.Equals(Aw.Sindri.Core.Todos.TodoRecentAdd? other) -> bool
+Aw.Sindri.Core.Todos.TodoRecentAdd.TodoRecentAdd(System.DateTimeOffset At, string! By, string? Via) -> void
+Aw.Sindri.Core.Todos.TodoRecentAdd.Via.get -> string?
+Aw.Sindri.Core.Todos.TodoRecentAdd.Via.init -> void
+override Aw.Sindri.Core.Todos.TodoEarlierAdd.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoEarlierAdd.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoEarlierAdd.ToString() -> string!
+override Aw.Sindri.Core.Todos.TodoRecentAdd.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoRecentAdd.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoRecentAdd.ToString() -> string!
+static Aw.Sindri.Core.Todos.TodoEarlierAdd.operator !=(Aw.Sindri.Core.Todos.TodoEarlierAdd? left, Aw.Sindri.Core.Todos.TodoEarlierAdd? right) -> bool
+static Aw.Sindri.Core.Todos.TodoEarlierAdd.operator ==(Aw.Sindri.Core.Todos.TodoEarlierAdd? left, Aw.Sindri.Core.Todos.TodoEarlierAdd? right) -> bool
+static Aw.Sindri.Core.Todos.TodoRecentAdd.operator !=(Aw.Sindri.Core.Todos.TodoRecentAdd? left, Aw.Sindri.Core.Todos.TodoRecentAdd? right) -> bool
+static Aw.Sindri.Core.Todos.TodoRecentAdd.operator ==(Aw.Sindri.Core.Todos.TodoRecentAdd? left, Aw.Sindri.Core.Todos.TodoRecentAdd? right) -> bool
 Aw.Sindri.Core.Connections.ConnectionFailures
 static Aw.Sindri.Core.Connections.ConnectionFailures.Reason(Aw.Kernel.Error! error) -> string!
 static Aw.Sindri.Core.Connections.ConnectionFailures.Safe(Aw.Kernel.Error! error) -> Aw.Kernel.Error!
@@ -18984,6 +19409,24 @@ override Aw.Sindri.Core.Scheduling.StoreCheckpoint.GetHashCode() -> int
 override Aw.Sindri.Core.Scheduling.StoreCheckpoint.ToString() -> string!
 static Aw.Sindri.Core.Scheduling.StoreCheckpoint.operator !=(Aw.Sindri.Core.Scheduling.StoreCheckpoint? left, Aw.Sindri.Core.Scheduling.StoreCheckpoint? right) -> bool
 static Aw.Sindri.Core.Scheduling.StoreCheckpoint.operator ==(Aw.Sindri.Core.Scheduling.StoreCheckpoint? left, Aw.Sindri.Core.Scheduling.StoreCheckpoint? right) -> bool
+Aw.Sindri.Core.Todos.TodoCandidate
+Aw.Sindri.Core.Todos.TodoCandidate.<Clone>$() -> Aw.Sindri.Core.Todos.TodoCandidate!
+Aw.Sindri.Core.Todos.TodoCandidate.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out bool Done, out bool Removed) -> void
+Aw.Sindri.Core.Todos.TodoCandidate.Done.get -> bool
+Aw.Sindri.Core.Todos.TodoCandidate.Done.init -> void
+Aw.Sindri.Core.Todos.TodoCandidate.Equals(Aw.Sindri.Core.Todos.TodoCandidate? other) -> bool
+Aw.Sindri.Core.Todos.TodoCandidate.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Todos.TodoCandidate.Id.init -> void
+Aw.Sindri.Core.Todos.TodoCandidate.Removed.get -> bool
+Aw.Sindri.Core.Todos.TodoCandidate.Removed.init -> void
+Aw.Sindri.Core.Todos.TodoCandidate.TodoCandidate(Aw.Sindri.Core.Ids.TodoId Id, bool Done, bool Removed) -> void
+override Aw.Sindri.Core.Todos.TodoCandidate.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoCandidate.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoCandidate.ToString() -> string!
+static Aw.Sindri.Core.Todos.TodoCandidate.operator !=(Aw.Sindri.Core.Todos.TodoCandidate? left, Aw.Sindri.Core.Todos.TodoCandidate? right) -> bool
+static Aw.Sindri.Core.Todos.TodoCandidate.operator ==(Aw.Sindri.Core.Todos.TodoCandidate? left, Aw.Sindri.Core.Todos.TodoCandidate? right) -> bool
+static Aw.Sindri.Core.Todos.TodoLinks.Describe(string! deepLink) -> (string! Kind, string! Ref, string! Href)
+static Aw.Sindri.Core.Todos.TodoPrefix.Resolve(string! typed, Aw.Sindri.Core.Todos.TodoCliVerb verb, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.TodoCandidate!>! rows) -> Aw.Kernel.Result<Aw.Sindri.Core.Ids.TodoId>!
 Aw.Sindri.Core.Connections.IConnectionStore.Insert(Aw.Sindri.Core.Connections.Connection! connection, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Connections.IConnectionStore.Update(Aw.Sindri.Core.Connections.Connection! connection, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Connections.OAuth.CodeExchange.ClientSecret.get -> string?

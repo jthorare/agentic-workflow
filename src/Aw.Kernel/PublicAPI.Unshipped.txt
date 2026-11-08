@@ -255,3 +255,22 @@ override Aw.Kernel.ErrorExtensions.Equals(object? obj) -> bool
 override Aw.Kernel.ErrorExtensions.GetHashCode() -> int
 Aw.Kernel.PathRules
 static Aw.Kernel.PathRules.AbsolutePathProblem(string? path) -> string?
+Aw.Kernel.Dates.DueSplit
+Aw.Kernel.Dates.DueSplit.<Clone>$() -> Aw.Kernel.Dates.DueSplit!
+Aw.Kernel.Dates.DueSplit.Deconstruct(out string! Text, out System.DateOnly? Due) -> void
+Aw.Kernel.Dates.DueSplit.Due.get -> System.DateOnly?
+Aw.Kernel.Dates.DueSplit.Due.init -> void
+Aw.Kernel.Dates.DueSplit.DueSplit(string! Text, System.DateOnly? Due) -> void
+Aw.Kernel.Dates.DueSplit.Equals(Aw.Kernel.Dates.DueSplit? other) -> bool
+Aw.Kernel.Dates.DueSplit.Text.get -> string!
+Aw.Kernel.Dates.DueSplit.Text.init -> void
+Aw.Kernel.Dates.DueWords
+override Aw.Kernel.Dates.DueSplit.Equals(object? obj) -> bool
+override Aw.Kernel.Dates.DueSplit.GetHashCode() -> int
+override Aw.Kernel.Dates.DueSplit.ToString() -> string!
+static Aw.Kernel.Dates.DueSplit.operator !=(Aw.Kernel.Dates.DueSplit? left, Aw.Kernel.Dates.DueSplit? right) -> bool
+static Aw.Kernel.Dates.DueSplit.operator ==(Aw.Kernel.Dates.DueSplit? left, Aw.Kernel.Dates.DueSplit? right) -> bool
+static Aw.Kernel.Dates.DueWords.Resolve(string! word, System.DateOnly today) -> Aw.Kernel.Result<System.DateOnly>!
+static Aw.Kernel.Dates.DueWords.Split(string! typed, System.DateOnly today) -> Aw.Kernel.Result<Aw.Kernel.Dates.DueSplit!>!
+static readonly Aw.Kernel.Dates.DueErrors.BadDue -> Aw.Kernel.ErrorDefinition!
+Aw.Kernel.Dates.DueErrors

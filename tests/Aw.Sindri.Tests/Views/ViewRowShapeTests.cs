@@ -6,6 +6,7 @@ using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Projects;
+using Aw.Sindri.Core.Todos;
 using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Tests.Views;
@@ -24,7 +25,7 @@ public sealed class ViewRowShapeTests
     [
         typeof(ServiceRow), typeof(ProfileRow), typeof(ItemRow), typeof(AliasRow), typeof(TimelineRow), typeof(RequestRow),
         typeof(HumanDecisionRow), typeof(NeedsYouRowRecord), typeof(JobRow), typeof(LaunchRow), typeof(CodeIndexRow),
-        typeof(ModelHistoryRow), typeof(RunScope), typeof(RunModel), typeof(StateOrder), typeof(ProjectAttachedRow), typeof(ProjectHiddenRow), typeof(ItemLinkRow),
+        typeof(ModelHistoryRow), typeof(RunScope), typeof(RunModel), typeof(StateOrder), typeof(ProjectAttachedRow), typeof(ProjectHiddenRow), typeof(ItemLinkRow), typeof(TodoRow),
     ];
 
     [Fact, Trait("Lane", "unit")]

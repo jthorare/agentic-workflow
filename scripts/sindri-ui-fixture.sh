@@ -20,6 +20,11 @@
 #   sindri-ui-fixture.sh request [--item ID] [--repo R] <text>
 #                                  file a request as a session (a POST to /sindri/requests with no caller header, so the
 #                                  API reads a session; --repo sends X-Sindri-Repo): a decision lands in Needs you (U3')
+#   sindri-ui-fixture.sh todos     (run after 'up')
+#                                  the todo panel's data (todo spec §10 Ph2): 11 todos added at the CLI as the owner (sindri todo add, through the
+#                                  real routes): one overdue, two due today, three upcoming (tomorrow twice, a weekday, a MM-dd), three with no
+#                                  date, links on four (one with a PR and a Linear issue), and the last one marked done. Each add carries a fixed
+#                                  --client-id (ui-fixture-todo-NN), so a repeat adds nothing and marks nothing done twice
 #   sindri-ui-fixture.sh decide <DEC-id> <choice>
 #                                  decide at the CLI (sindri decide, as the owner): with the app open on the same
 #                                  decision, the app's own Decide is then refused (SND-ITEM-409)
@@ -346,6 +351,46 @@ items() {
       request "Large fixture request $n" || return
     fi
   done
+}
+
+# The todo panel's 11 todos: "client id|text|due word or date|links, comma-separated" (a past date is overdue for any run).
+TODOS=(
+  "01|renew the staging cert|2020-01-01|"
+  "02|reply to Sam about the offsite|today|"
+  "03|check the flaky sync test|today|"
+  "04|rotate the staging key|tomorrow|acme/api#12,ENG-12"
+  "05|answer the review comments|mon|acme/web#40"
+  "06|book the offsite room|12-20|"
+  "07|call the dentist||"
+  "08|read the sandbox spec||"
+  "09|plan next week||ENG-34"
+  "10|file the expense report|tomorrow|"
+  "11|update the runbook|2020-01-02|"
+)
+
+# Add one todo through the real CLI route. The client id makes a repeat a no-op; prints the todo id.
+todo_add() { # $1 client id, $2 text, $3 due, $4 links
+  local args=(todo add "$2" --client-id "ui-fixture-todo-$1" --json) link
+  [ -z "$3" ] || args+=(--due "$3")
+  if [ -n "$4" ]; then
+    IFS=',' read -ra links <<< "$4"
+    for link in "${links[@]}"; do args+=(--link "$link"); done
+  fi
+  "$PROVE" human "${args[@]}" | jq -r '.id'
+}
+
+todos() {
+  local row id cid text due links done_id=""
+  for row in "${TODOS[@]}"; do
+    IFS='|' read -r cid text due links <<< "$row"
+    id="$(todo_add "$cid" "$text" "$due" "$links")" || return
+    [ -n "$id" ] && [ "$id" != null ] || die "todo add printed no todo id for '$text'"
+    [ "$cid" = 11 ] && done_id="$id"
+  done
+  # The last one is the done one; marking it twice would fail, so it's marked only while it is still open.
+  if "$PROVE" human todos --json --no-fence | jq -e --arg id "$done_id" '.todos[] | select(.id == $id)' >/dev/null; then
+    "$PROVE" human todo done "$done_id" || return
+  fi
 }
 
 close() {
@@ -1200,6 +1245,7 @@ case "$verb" in
   items) [ "$#" -eq 1 ] || { [ "$#" -eq 2 ] && [ "$2" = "--large" ]; } || die "usage: items [--large]" ;;
   close) [ "$#" -eq 2 ] || { [ "$#" -eq 3 ] && [ "$3" = "--cancelled" ]; } || die "usage: close <item> [--cancelled]" ;;
   projects) [ "$#" -eq 1 ] || die "'projects' takes no arguments" ;;
+  todos) [ "$#" -eq 1 ] || die "'todos' takes no arguments" ;;
   reviews) { [ "$#" -eq 2 ] && { [ "$2" = up ] || [ "$2" = down ]; }; } || die "usage: reviews up|down" ;;
   request) [ "$#" -ge 2 ] || die "usage: request [--item ID] [--repo R] <text>" ;;
   context)
