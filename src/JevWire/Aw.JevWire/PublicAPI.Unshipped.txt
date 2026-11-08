@@ -1,0 +1,205 @@
+#nullable enable
+abstract Aw.JevWire.JevBatchQuestion.<Clone>$() -> Aw.JevWire.JevBatchQuestion!
+Aw.JevWire.JevAnswer
+Aw.JevWire.JevAnswer.Choice.get -> string?
+Aw.JevWire.JevAnswer.Choice.init -> void
+Aw.JevWire.JevAnswer.<Clone>$() -> Aw.JevWire.JevAnswer!
+Aw.JevWire.JevAnswer.Confidence.get -> double?
+Aw.JevWire.JevAnswer.Confidence.init -> void
+Aw.JevWire.JevAnswer.Deconstruct(out string? Type, out string? Choice, out double? Confidence, out System.Collections.Generic.IReadOnlyDictionary<string!, double>? Probabilities) -> void
+Aw.JevWire.JevAnswer.Equals(Aw.JevWire.JevAnswer? other) -> bool
+Aw.JevWire.JevAnswer.JevAnswer(string? Type = null, string? Choice = null, double? Confidence = null, System.Collections.Generic.IReadOnlyDictionary<string!, double>? Probabilities = null) -> void
+Aw.JevWire.JevAnswer.Probabilities.get -> System.Collections.Generic.IReadOnlyDictionary<string!, double>?
+Aw.JevWire.JevAnswer.Probabilities.init -> void
+Aw.JevWire.JevAnswer.Type.get -> string?
+Aw.JevWire.JevAnswer.Type.init -> void
+Aw.JevWire.JevAsset
+Aw.JevWire.JevAsset.<Clone>$() -> Aw.JevWire.JevAsset!
+Aw.JevWire.JevAsset.Deconstruct(out string! Type, out string! Part) -> void
+Aw.JevWire.JevAsset.Equals(Aw.JevWire.JevAsset? other) -> bool
+Aw.JevWire.JevAsset.JevAsset(string! Type, string! Part) -> void
+Aw.JevWire.JevAsset.Part.get -> string!
+Aw.JevWire.JevAsset.Part.init -> void
+Aw.JevWire.JevAsset.Type.get -> string!
+Aw.JevWire.JevAsset.Type.init -> void
+Aw.JevWire.JevBatchAnswer
+Aw.JevWire.JevBatchAnswer.Choice.get -> string?
+Aw.JevWire.JevBatchAnswer.Choice.init -> void
+Aw.JevWire.JevBatchAnswer.<Clone>$() -> Aw.JevWire.JevBatchAnswer!
+Aw.JevWire.JevBatchAnswer.Confidence.get -> double?
+Aw.JevWire.JevBatchAnswer.Confidence.init -> void
+Aw.JevWire.JevBatchAnswer.Deconstruct(out string? Type, out string? Choice, out double? Noul, out double? Score, out double? Confidence, out System.Collections.Generic.IReadOnlyDictionary<string!, double>? Probabilities) -> void
+Aw.JevWire.JevBatchAnswer.Equals(Aw.JevWire.JevBatchAnswer? other) -> bool
+Aw.JevWire.JevBatchAnswer.JevBatchAnswer(string? Type = null, string? Choice = null, double? Noul = null, double? Score = null, double? Confidence = null, System.Collections.Generic.IReadOnlyDictionary<string!, double>? Probabilities = null) -> void
+Aw.JevWire.JevBatchAnswer.Noul.get -> double?
+Aw.JevWire.JevBatchAnswer.Noul.init -> void
+Aw.JevWire.JevBatchAnswer.Probabilities.get -> System.Collections.Generic.IReadOnlyDictionary<string!, double>?
+Aw.JevWire.JevBatchAnswer.Probabilities.init -> void
+Aw.JevWire.JevBatchAnswer.Score.get -> double?
+Aw.JevWire.JevBatchAnswer.Score.init -> void
+Aw.JevWire.JevBatchAnswer.Type.get -> string?
+Aw.JevWire.JevBatchAnswer.Type.init -> void
+Aw.JevWire.JevBatchChoice
+Aw.JevWire.JevBatchChoice.Criteria.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.JevWire.JevBatchChoice.Criteria.init -> void
+Aw.JevWire.JevBatchChoice.Deconstruct(out string! Instructions, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Criteria) -> void
+Aw.JevWire.JevBatchChoice.Equals(Aw.JevWire.JevBatchChoice? other) -> bool
+Aw.JevWire.JevBatchChoice.JevBatchChoice(string! Instructions, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Criteria) -> void
+Aw.JevWire.JevBatchNoul
+Aw.JevWire.JevBatchNoul.Deconstruct(out string! Instructions) -> void
+Aw.JevWire.JevBatchNoul.Equals(Aw.JevWire.JevBatchNoul? other) -> bool
+Aw.JevWire.JevBatchNoul.JevBatchNoul(string! Instructions) -> void
+Aw.JevWire.JevBatchQuestion
+Aw.JevWire.JevBatchQuestion.Deconstruct(out string! Instructions) -> void
+Aw.JevWire.JevBatchQuestion.Instructions.get -> string!
+Aw.JevWire.JevBatchQuestion.Instructions.init -> void
+Aw.JevWire.JevBatchQuestion.JevBatchQuestion(Aw.JevWire.JevBatchQuestion! original) -> void
+Aw.JevWire.JevBatchQuestion.JevBatchQuestion(string! Instructions) -> void
+Aw.JevWire.JevBatchRequest
+Aw.JevWire.JevBatchRequest.Assets.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.JevWire.JevAsset!>?
+Aw.JevWire.JevBatchRequest.Assets.init -> void
+Aw.JevWire.JevBatchRequest.<Clone>$() -> Aw.JevWire.JevBatchRequest!
+Aw.JevWire.JevBatchRequest.Deconstruct(out System.Text.Json.Nodes.JsonNode? State, out string! Model, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.JevWire.JevBatchQuestion!>! Questions) -> void
+Aw.JevWire.JevBatchRequest.Equals(Aw.JevWire.JevBatchRequest? other) -> bool
+Aw.JevWire.JevBatchRequest.JevBatchRequest(System.Text.Json.Nodes.JsonNode? State, string! Model, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.JevWire.JevBatchQuestion!>! Questions) -> void
+Aw.JevWire.JevBatchRequest.Model.get -> string!
+Aw.JevWire.JevBatchRequest.Model.init -> void
+Aw.JevWire.JevBatchRequest.Questions.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.JevWire.JevBatchQuestion!>!
+Aw.JevWire.JevBatchRequest.Questions.init -> void
+Aw.JevWire.JevBatchRequest.State.get -> System.Text.Json.Nodes.JsonNode?
+Aw.JevWire.JevBatchRequest.State.init -> void
+Aw.JevWire.JevBatchResponse
+Aw.JevWire.JevBatchResponse.Answers.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.JevWire.JevBatchAnswer!>?
+Aw.JevWire.JevBatchResponse.Answers.init -> void
+Aw.JevWire.JevBatchResponse.<Clone>$() -> Aw.JevWire.JevBatchResponse!
+Aw.JevWire.JevBatchResponse.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.JevWire.JevBatchAnswer!>? Answers, out Aw.JevWire.JevUsage? Usage) -> void
+Aw.JevWire.JevBatchResponse.Equals(Aw.JevWire.JevBatchResponse? other) -> bool
+Aw.JevWire.JevBatchResponse.JevBatchResponse(System.Collections.Generic.IReadOnlyDictionary<string!, Aw.JevWire.JevBatchAnswer!>? Answers = null, Aw.JevWire.JevUsage? Usage = null) -> void
+Aw.JevWire.JevBatchResponse.Usage.get -> Aw.JevWire.JevUsage?
+Aw.JevWire.JevBatchResponse.Usage.init -> void
+Aw.JevWire.JevBatchScore
+Aw.JevWire.JevBatchScore.Criteria.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.JevWire.JevBatchScore.Criteria.init -> void
+Aw.JevWire.JevBatchScore.Deconstruct(out string! Instructions, out System.Collections.Generic.IReadOnlyList<string!>! Criteria) -> void
+Aw.JevWire.JevBatchScore.Equals(Aw.JevWire.JevBatchScore? other) -> bool
+Aw.JevWire.JevBatchScore.JevBatchScore(string! Instructions, System.Collections.Generic.IReadOnlyList<string!>! Criteria) -> void
+Aw.JevWire.JevChoiceQuestion
+Aw.JevWire.JevChoiceQuestion.<Clone>$() -> Aw.JevWire.JevChoiceQuestion!
+Aw.JevWire.JevChoiceQuestion.Criteria.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.JevWire.JevChoiceQuestion.Criteria.init -> void
+Aw.JevWire.JevChoiceQuestion.Deconstruct(out string! Type, out string! Instructions, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Criteria) -> void
+Aw.JevWire.JevChoiceQuestion.Equals(Aw.JevWire.JevChoiceQuestion? other) -> bool
+Aw.JevWire.JevChoiceQuestion.Instructions.get -> string!
+Aw.JevWire.JevChoiceQuestion.Instructions.init -> void
+Aw.JevWire.JevChoiceQuestion.JevChoiceQuestion(string! Type, string! Instructions, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Criteria) -> void
+Aw.JevWire.JevChoiceQuestion.Type.get -> string!
+Aw.JevWire.JevChoiceQuestion.Type.init -> void
+Aw.JevWire.JevEndpoints
+Aw.JevWire.JevRequest
+Aw.JevWire.JevRequest.Assets.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.JevWire.JevAsset!>?
+Aw.JevWire.JevRequest.Assets.init -> void
+Aw.JevWire.JevRequest.<Clone>$() -> Aw.JevWire.JevRequest!
+Aw.JevWire.JevRequest.Deconstruct(out System.Text.Json.Nodes.JsonNode? State, out string! Model, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.JevWire.JevChoiceQuestion!>! Questions) -> void
+Aw.JevWire.JevRequest.Equals(Aw.JevWire.JevRequest? other) -> bool
+Aw.JevWire.JevRequest.JevRequest(System.Text.Json.Nodes.JsonNode? State, string! Model, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.JevWire.JevChoiceQuestion!>! Questions) -> void
+Aw.JevWire.JevRequest.Model.get -> string!
+Aw.JevWire.JevRequest.Model.init -> void
+Aw.JevWire.JevRequest.Questions.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.JevWire.JevChoiceQuestion!>!
+Aw.JevWire.JevRequest.Questions.init -> void
+Aw.JevWire.JevRequest.State.get -> System.Text.Json.Nodes.JsonNode?
+Aw.JevWire.JevRequest.State.init -> void
+Aw.JevWire.JevResponse
+Aw.JevWire.JevResponse.Answers.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.JevWire.JevAnswer!>?
+Aw.JevWire.JevResponse.Answers.init -> void
+Aw.JevWire.JevResponse.<Clone>$() -> Aw.JevWire.JevResponse!
+Aw.JevWire.JevResponse.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.JevWire.JevAnswer!>? Answers) -> void
+Aw.JevWire.JevResponse.Equals(Aw.JevWire.JevResponse? other) -> bool
+Aw.JevWire.JevResponse.JevResponse(System.Collections.Generic.IReadOnlyDictionary<string!, Aw.JevWire.JevAnswer!>? Answers = null) -> void
+Aw.JevWire.JevUsage
+Aw.JevWire.JevUsage.<Clone>$() -> Aw.JevWire.JevUsage!
+Aw.JevWire.JevUsage.Deconstruct(out double? InputTokens, out double? OutputTokens) -> void
+Aw.JevWire.JevUsage.Equals(Aw.JevWire.JevUsage? other) -> bool
+Aw.JevWire.JevUsage.InputTokens.get -> double?
+Aw.JevWire.JevUsage.InputTokens.init -> void
+Aw.JevWire.JevUsage.JevUsage(double? InputTokens = null, double? OutputTokens = null) -> void
+Aw.JevWire.JevUsage.OutputTokens.get -> double?
+Aw.JevWire.JevUsage.OutputTokens.init -> void
+const Aw.JevWire.JevEndpoints.InputCapChars = 160000 -> int
+const Aw.JevWire.JevEndpoints.MaxChoiceOptions = 255 -> int
+const Aw.JevWire.JevEndpoints.MaxScoreLevels = 10 -> int
+const Aw.JevWire.JevEndpoints.Model = "jev-1.13.0" -> string!
+const Aw.JevWire.JevEndpoints.SystemOne = "https://api.typesafe.ai/v1/systemone" -> string!
+override Aw.JevWire.JevAnswer.Equals(object? obj) -> bool
+override Aw.JevWire.JevAnswer.GetHashCode() -> int
+override Aw.JevWire.JevAnswer.ToString() -> string!
+override Aw.JevWire.JevAsset.Equals(object? obj) -> bool
+override Aw.JevWire.JevAsset.GetHashCode() -> int
+override Aw.JevWire.JevAsset.ToString() -> string!
+override Aw.JevWire.JevBatchAnswer.Equals(object? obj) -> bool
+override Aw.JevWire.JevBatchAnswer.GetHashCode() -> int
+override Aw.JevWire.JevBatchAnswer.ToString() -> string!
+override Aw.JevWire.JevBatchChoice.<Clone>$() -> Aw.JevWire.JevBatchChoice!
+override Aw.JevWire.JevBatchChoice.Equals(object? obj) -> bool
+override Aw.JevWire.JevBatchChoice.GetHashCode() -> int
+override Aw.JevWire.JevBatchChoice.ToString() -> string!
+override Aw.JevWire.JevBatchNoul.<Clone>$() -> Aw.JevWire.JevBatchNoul!
+override Aw.JevWire.JevBatchNoul.Equals(object? obj) -> bool
+override Aw.JevWire.JevBatchNoul.GetHashCode() -> int
+override Aw.JevWire.JevBatchNoul.ToString() -> string!
+override Aw.JevWire.JevBatchQuestion.Equals(object? obj) -> bool
+override Aw.JevWire.JevBatchQuestion.GetHashCode() -> int
+override Aw.JevWire.JevBatchQuestion.ToString() -> string!
+override Aw.JevWire.JevBatchRequest.Equals(object? obj) -> bool
+override Aw.JevWire.JevBatchRequest.GetHashCode() -> int
+override Aw.JevWire.JevBatchRequest.ToString() -> string!
+override Aw.JevWire.JevBatchResponse.Equals(object? obj) -> bool
+override Aw.JevWire.JevBatchResponse.GetHashCode() -> int
+override Aw.JevWire.JevBatchResponse.ToString() -> string!
+override Aw.JevWire.JevBatchScore.<Clone>$() -> Aw.JevWire.JevBatchScore!
+override Aw.JevWire.JevBatchScore.Equals(object? obj) -> bool
+override Aw.JevWire.JevBatchScore.GetHashCode() -> int
+override Aw.JevWire.JevBatchScore.ToString() -> string!
+override Aw.JevWire.JevChoiceQuestion.Equals(object? obj) -> bool
+override Aw.JevWire.JevChoiceQuestion.GetHashCode() -> int
+override Aw.JevWire.JevChoiceQuestion.ToString() -> string!
+override Aw.JevWire.JevRequest.Equals(object? obj) -> bool
+override Aw.JevWire.JevRequest.GetHashCode() -> int
+override Aw.JevWire.JevRequest.ToString() -> string!
+override Aw.JevWire.JevResponse.Equals(object? obj) -> bool
+override Aw.JevWire.JevResponse.GetHashCode() -> int
+override Aw.JevWire.JevResponse.ToString() -> string!
+override Aw.JevWire.JevUsage.Equals(object? obj) -> bool
+override Aw.JevWire.JevUsage.GetHashCode() -> int
+override Aw.JevWire.JevUsage.ToString() -> string!
+override sealed Aw.JevWire.JevBatchChoice.Equals(Aw.JevWire.JevBatchQuestion? other) -> bool
+override sealed Aw.JevWire.JevBatchNoul.Equals(Aw.JevWire.JevBatchQuestion? other) -> bool
+override sealed Aw.JevWire.JevBatchScore.Equals(Aw.JevWire.JevBatchQuestion? other) -> bool
+static Aw.JevWire.JevAnswer.operator !=(Aw.JevWire.JevAnswer? left, Aw.JevWire.JevAnswer? right) -> bool
+static Aw.JevWire.JevAnswer.operator ==(Aw.JevWire.JevAnswer? left, Aw.JevWire.JevAnswer? right) -> bool
+static Aw.JevWire.JevAsset.operator !=(Aw.JevWire.JevAsset? left, Aw.JevWire.JevAsset? right) -> bool
+static Aw.JevWire.JevAsset.operator ==(Aw.JevWire.JevAsset? left, Aw.JevWire.JevAsset? right) -> bool
+static Aw.JevWire.JevBatchAnswer.operator !=(Aw.JevWire.JevBatchAnswer? left, Aw.JevWire.JevBatchAnswer? right) -> bool
+static Aw.JevWire.JevBatchAnswer.operator ==(Aw.JevWire.JevBatchAnswer? left, Aw.JevWire.JevBatchAnswer? right) -> bool
+static Aw.JevWire.JevBatchChoice.operator !=(Aw.JevWire.JevBatchChoice? left, Aw.JevWire.JevBatchChoice? right) -> bool
+static Aw.JevWire.JevBatchChoice.operator ==(Aw.JevWire.JevBatchChoice? left, Aw.JevWire.JevBatchChoice? right) -> bool
+static Aw.JevWire.JevBatchNoul.operator !=(Aw.JevWire.JevBatchNoul? left, Aw.JevWire.JevBatchNoul? right) -> bool
+static Aw.JevWire.JevBatchNoul.operator ==(Aw.JevWire.JevBatchNoul? left, Aw.JevWire.JevBatchNoul? right) -> bool
+static Aw.JevWire.JevBatchQuestion.operator !=(Aw.JevWire.JevBatchQuestion? left, Aw.JevWire.JevBatchQuestion? right) -> bool
+static Aw.JevWire.JevBatchQuestion.operator ==(Aw.JevWire.JevBatchQuestion? left, Aw.JevWire.JevBatchQuestion? right) -> bool
+static Aw.JevWire.JevBatchRequest.operator !=(Aw.JevWire.JevBatchRequest? left, Aw.JevWire.JevBatchRequest? right) -> bool
+static Aw.JevWire.JevBatchRequest.operator ==(Aw.JevWire.JevBatchRequest? left, Aw.JevWire.JevBatchRequest? right) -> bool
+static Aw.JevWire.JevBatchResponse.operator !=(Aw.JevWire.JevBatchResponse? left, Aw.JevWire.JevBatchResponse? right) -> bool
+static Aw.JevWire.JevBatchResponse.operator ==(Aw.JevWire.JevBatchResponse? left, Aw.JevWire.JevBatchResponse? right) -> bool
+static Aw.JevWire.JevBatchScore.operator !=(Aw.JevWire.JevBatchScore? left, Aw.JevWire.JevBatchScore? right) -> bool
+static Aw.JevWire.JevBatchScore.operator ==(Aw.JevWire.JevBatchScore? left, Aw.JevWire.JevBatchScore? right) -> bool
+static Aw.JevWire.JevChoiceQuestion.operator !=(Aw.JevWire.JevChoiceQuestion? left, Aw.JevWire.JevChoiceQuestion? right) -> bool
+static Aw.JevWire.JevChoiceQuestion.operator ==(Aw.JevWire.JevChoiceQuestion? left, Aw.JevWire.JevChoiceQuestion? right) -> bool
+static Aw.JevWire.JevRequest.operator !=(Aw.JevWire.JevRequest? left, Aw.JevWire.JevRequest? right) -> bool
+static Aw.JevWire.JevRequest.operator ==(Aw.JevWire.JevRequest? left, Aw.JevWire.JevRequest? right) -> bool
+static Aw.JevWire.JevResponse.operator !=(Aw.JevWire.JevResponse? left, Aw.JevWire.JevResponse? right) -> bool
+static Aw.JevWire.JevResponse.operator ==(Aw.JevWire.JevResponse? left, Aw.JevWire.JevResponse? right) -> bool
+static Aw.JevWire.JevUsage.operator !=(Aw.JevWire.JevUsage? left, Aw.JevWire.JevUsage? right) -> bool
+static Aw.JevWire.JevUsage.operator ==(Aw.JevWire.JevUsage? left, Aw.JevWire.JevUsage? right) -> bool
+virtual Aw.JevWire.JevBatchQuestion.EqualityContract.get -> System.Type!
+virtual Aw.JevWire.JevBatchQuestion.Equals(Aw.JevWire.JevBatchQuestion? other) -> bool
+virtual Aw.JevWire.JevBatchQuestion.PrintMembers(System.Text.StringBuilder! builder) -> bool

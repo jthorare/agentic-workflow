@@ -732,6 +732,9 @@
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, 10.0.12]"
         }
       },
+      "aw.jevwire": {
+        "type": "Project"
+      },
       "aw.judge.core": {
         "type": "Project",
         "dependencies": {
@@ -751,6 +754,7 @@
       "aw.judge.infrastructure": {
         "type": "Project",
         "dependencies": {
+          "Aw.JevWire": "[1.0.0, )",
           "Aw.Judge.Core": "[1.0.0, )",
           "Aw.Kernel": "[1.0.0, )",
           "Aw.Kernel.Data": "[1.0.0, )",
@@ -845,6 +849,7 @@
       "aw.sindri.infrastructure": {
         "type": "Project",
         "dependencies": {
+          "Aw.JevWire": "[1.0.0, )",
           "Aw.Kernel": "[1.0.0, )",
           "Aw.Kernel.Data": "[1.0.0, )",
           "Aw.Redaction": "[1.0.0, )",

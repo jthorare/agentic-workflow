@@ -1,6 +1,6 @@
-namespace Aw.Judge.Infrastructure.Providers;
+namespace Aw.JevWire;
 
 /// <summary>A 'choice' question: pick one of the criteria's keys (at most 255).</summary>
 /// <param name="Instructions">The prompt.</param>
 /// <param name="Criteria">Each option and what it means.</param>
-internal sealed record JevBatchChoice(string Instructions, IReadOnlyDictionary<string, string> Criteria) : JevBatchQuestion(Instructions);
+public sealed record JevBatchChoice(string Instructions, IReadOnlyDictionary<string, string> Criteria) : JevBatchQuestion(Instructions);

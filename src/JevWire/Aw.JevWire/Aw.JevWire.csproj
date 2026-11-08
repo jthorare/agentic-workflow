@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Aw.JevWire: tier 0 (deps.yaml), the BCL only. The wire records of Jev's POST /v1/systemone, shared by Aw.Judge and
+       Aw.Sindri (the Aw.Redaction precedent: two tier-1+ packages need one definition, so it sits below both). Each caller
+       builds its own JSON context over these types. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Aw.JevWire</RootNamespace>
+    <!-- Records and constants only: no clock, ids, I/O or environment (BannedSymbols.txt). -->
+    <AwBannedSymbols>true</AwBannedSymbols>
+  </PropertyGroup>
+</Project>

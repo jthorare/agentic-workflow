@@ -42,6 +42,7 @@
     <ProjectReference Include="../../Aw.Kernel/Aw.Kernel.csproj" />
     <ProjectReference Include="../../Aw.Kernel.Data/Aw.Kernel.Data.csproj" />
     <ProjectReference Include="../../Redaction/Aw.Redaction/Aw.Redaction.csproj" />
+    <ProjectReference Include="../../JevWire/Aw.JevWire/Aw.JevWire.csproj" />
   </ItemGroup>
 
   <ItemGroup>

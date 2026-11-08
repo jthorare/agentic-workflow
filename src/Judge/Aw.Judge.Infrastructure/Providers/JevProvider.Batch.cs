@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using Aw.JevWire;
 using Aw.Judge.Core.Batching;
 using Aw.Judge.Core.Config;
 using Aw.Judge.Core.Providers;

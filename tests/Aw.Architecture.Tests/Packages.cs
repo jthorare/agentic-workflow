@@ -23,6 +23,7 @@ internal static class Packages
         "Aw.Readiness.Core",
         "Aw.Readiness.App",
         "Aw.Redaction",
+        "Aw.JevWire",
         "Aw.Judge.Core",
         "Aw.Judge.Features",
         "Aw.Judge.Infrastructure",

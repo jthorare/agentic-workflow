@@ -107,6 +107,9 @@
           "Vogen": "[8.0.7, 8.0.7]"
         }
       },
+      "aw.jevwire": {
+        "type": "Project"
+      },
       "aw.kernel": {
         "type": "Project"
       },
@@ -149,6 +152,7 @@
       "aw.sindri.infrastructure": {
         "type": "Project",
         "dependencies": {
+          "Aw.JevWire": "[1.0.0, )",
           "Aw.Kernel": "[1.0.0, )",
           "Aw.Kernel.Data": "[1.0.0, )",
           "Aw.Redaction": "[1.0.0, )",

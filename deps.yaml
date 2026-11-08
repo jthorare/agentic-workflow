@@ -109,6 +109,12 @@ packages:
     projectPrefix: Aw.Redaction
     src: src/Redaction
     note: "the scrubbing patterns copied between judge and sindri today, merged into one package; tier 0 per §4e B10"
+  - id: JevWire
+    kind: package
+    tier: 0
+    projectPrefix: Aw.JevWire
+    src: src/JevWire
+    note: "the wire records of Jev's POST /v1/systemone (request, response, question and answer kinds, the model, the 160,000-character input cap), shared by Judge and Sindri's jev block; tier 0 like Redaction because two packages above it need one definition (PR 9b, #2258)"
   - id: Analyzers
     kind: package
     tier: 0
@@ -395,6 +401,11 @@ edges:
     kind: project
     status: current
     note: "replaces judge's copy of the scrubbing patterns"
+  - from: Judge
+    to: JevWire
+    kind: project
+    status: current
+    note: "JevProvider and the batch classifier build and read Jev's wire records from the shared package"
   - from: UiDriver
     to: Kernel
     kind: project
@@ -496,6 +507,11 @@ edges:
     kind: project
     status: current
     note: "the text scrubber adapter (Infrastructure/Text/RedactingScrubber); Aw.Sindri.Workflows' RecordEvent scrubs each mirrored payload with it; replaces sindri's copy of the scrubbing patterns"
+  - from: Sindri
+    to: JevWire
+    kind: project
+    status: current
+    note: "the jev block's client (Aw.Sindri.Infrastructure.Workflow.Jev) sends the same wire records the judge does"
   - from: Sindri
     to: Packets
     kind: cli
@@ -701,3 +717,13 @@ exceptions:
     reason: "the launch only spawns the separate sindri-ui process (owner decision 2026-10-12, PR #184): Sindri shares no code or data with the app, and Sindri's HTTP API (with its endpoint record control.json and human token auth/human.token) stays the app's only contract"
     recorded: 2026-10-12
     expires: 2027-04-12
+  - rule: DEPS-FANOUT-002
+    subject: Judge
+    reason: "Aw.Judge.Infrastructure holds Core, Kernel, Kernel.Data, Redaction and now JevWire (5 of 4): the Jev wire records moved out of it so Sindri's jev block shares them (PR 9b, #2258); the fifth reference goes when the Jev provider moves to its own project"
+    recorded: 2026-11-08
+    expires: 2027-05-01
+  - rule: DEPS-FANOUT-002
+    subject: Sindri
+    reason: "Aw.Sindri.Infrastructure holds Core, Kernel, Kernel.Data, Redaction and now JevWire (5 of 4): the jev block's client needs the shared wire records (PR 9b, #2258); revisit when Workflow providers get their own project"
+    recorded: 2026-11-08
+    expires: 2027-05-01

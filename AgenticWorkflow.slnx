@@ -5,6 +5,7 @@
     <Project Path="src/Aw.Kernel.Data/Aw.Kernel.Data.csproj" />
     <Project Path="src/Aw.Kernel.Telemetry/Aw.Kernel.Telemetry.csproj" />
     <Project Path="src/Redaction/Aw.Redaction/Aw.Redaction.csproj" />
+    <Project Path="src/JevWire/Aw.JevWire/Aw.JevWire.csproj" />
   </Folder>
   <Folder Name="/src/Embeddings/">
     <Project Path="src/Embeddings/Aw.Embeddings/Aw.Embeddings.csproj" />

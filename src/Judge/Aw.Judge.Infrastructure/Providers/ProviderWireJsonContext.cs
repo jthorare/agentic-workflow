@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Aw.JevWire;
 
 namespace Aw.Judge.Infrastructure.Providers;
 
