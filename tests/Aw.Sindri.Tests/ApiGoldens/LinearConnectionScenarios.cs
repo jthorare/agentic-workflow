@@ -25,9 +25,9 @@ internal static class LinearConnectionScenarios
     [
         ("linear-connection", "connected"), ("linear-connection", "not-connected"), ("linear-connection", "read-only"), ("linear-connection", "scope-unknown"),
         ("linear-connection", "pending"), ("linear-connection", "session-refused"),
-        ("linear-connection-teams", "two-teams"), ("linear-connection-teams", "refused"), ("linear-connection-teams", "unreachable"),
+        ("linear-connection-teams", "two-teams"), ("linear-connection-teams", "refused"), ("linear-connection-teams", "unreachable"), ("linear-connection-teams", "url-waiting"),
         ("linear-connect", "read-saved-approved"), ("linear-connect", "read-saved-waiting"), ("linear-connect", "write-saved"), ("linear-connect", "write-scope-unknown"),
-        ("linear-connect", "same-as-read"), ("linear-connect", "no-keychain"), ("linear-connect", "no-teams"), ("linear-connect", "session-refused"),
+        ("linear-connect", "same-as-read"), ("linear-connect", "no-keychain"), ("linear-connect", "no-teams"), ("linear-connect", "session-refused"), ("linear-connect", "url-waiting"),
         ("linear-disconnect-write", "removed"), ("linear-disconnect-write", "keychain-failed"),
     ];
 
@@ -49,6 +49,13 @@ internal static class LinearConnectionScenarios
     {
         await ViewScenarios.Approve(host, ct);
         await ViewScenarios.CatchUp(host, ct);
+        if (scenario == "url-waiting")
+        {
+            // a Linear url added by hand after the approval: the save and the teams list refuse before the key goes anywhere (409 SND-LINEAR-016)
+            var file = Path.Combine(host.Home, "profile", "profile.yaml");
+            await File.AppendAllTextAsync(file, "context:\n  sources:\n    linear:\n      url: http://127.0.0.1:9/graphql\n", ct);
+        }
+
         var caller = scenario.StartsWith("session", StringComparison.Ordinal) ? ItemScenarios.Session("demo") : ItemScenarios.Human(host);
         var request = slug switch
         {

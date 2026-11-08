@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-LINEAR-016",
+  "status": 409,
+  "detail": "The Linear url has a change waiting for approval; your key wasn't sent (fix: approve or undo it in Review changes, then save again)",
+  "traceId": "<trace>"
+}
