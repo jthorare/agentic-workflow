@@ -68,7 +68,7 @@ public sealed class CliConnectionVerbsTests : IDisposable
         var code = await Verbs(api).Run(["connection", "add", "acme:key", "--kind", "rest", "--key-env", "ACME_KEY"], Token);
 
         Assert.Equal(0, code);
-        var body = api.Calls.Single(static c => c.Method == "POST").Body!;
+        var body = api.Calls.Single(static c => c.Method == "POST").Body;
         Assert.Contains(KeyCanary, body, StringComparison.Ordinal);   // serve has to receive it to store it
         Assert.DoesNotContain("ACME_KEY", body, StringComparison.Ordinal);   // the name would send serve looking in its own environment
         AssertNeitherPrinted();
@@ -84,7 +84,7 @@ public sealed class CliConnectionVerbsTests : IDisposable
         var code = await Verbs(api).Run(["connection", "add", "linear:work", "--preset", "linear", "--client-id", "client-123", "--client-secret-env", "GH_CLIENT_SECRET"], Token);
 
         Assert.NotEqual(0, code);
-        var body = api.Calls.Single(static c => c.Method == "POST").Body!;
+        var body = api.Calls.Single(static c => c.Method == "POST").Body;
         Assert.Contains(ClientSecretCanary, body, StringComparison.Ordinal);
         Assert.DoesNotContain("GH_CLIENT_SECRET", body, StringComparison.Ordinal);
         AssertNeitherPrinted();

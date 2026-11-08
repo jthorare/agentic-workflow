@@ -132,3 +132,7 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-GRAPH-009` | Another workflow already has that slug |
 | `SND-GRAPH-010` | A workflow with that id already exists |
 | `SND-GRAPH-011` | This workflow is archived; it can't be activated |
+| `SND-GRAPH-100` | A run with that id already exists |
+| `SND-GRAPH-101` | No such workflow run |
+| `SND-GRAPH-102` | A block could not finish |
+| `SND-GRAPH-103` | The model's answer does not fit the prompt's output schema |

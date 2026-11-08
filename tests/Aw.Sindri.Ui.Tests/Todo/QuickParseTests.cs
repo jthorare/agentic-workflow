@@ -122,4 +122,8 @@ public sealed class QuickParseTests
         Assert.Equal(("", null), Read(""));
         Assert.Equal(("", null), Read("   "));
     }
+
+    [Fact]
+    public void A_lone_quoted_day_word_stays_text_without_the_quote_mark() =>
+        Assert.Equal(("fri", null), Read("fri\""));
 }

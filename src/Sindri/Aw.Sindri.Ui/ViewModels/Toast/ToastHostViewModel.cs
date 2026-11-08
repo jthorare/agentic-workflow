@@ -81,7 +81,7 @@ internal sealed class ToastHostViewModel : ObservableObject
         _pending.Add(toast);
     }
 
-    /// <summary>The pointer is on the toast, or left it.</summary>
+    /// <summary>The pointer is on the toast, or left it. The flags outlive a toast: the view says what is true when the next one shows.</summary>
     /// <param name="over">True while it is on.</param>
     internal void SetPointerOver(bool over) => _pointerOver = over;
 
@@ -102,7 +102,21 @@ internal sealed class ToastHostViewModel : ObservableObject
         }
 
         End();
-        await undo().ConfigureAwait(false);
+        string? failure;
+        try
+        {
+            failure = await undo().ConfigureAwait(true);
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            failure = e.Message;
+        }
+
+        if (failure is not null)
+        {
+            Show(new ToastMessage(Labels.ToastUndoFailed(failure)));
+        }
+
         return true;
     }
 
@@ -150,8 +164,6 @@ internal sealed class ToastHostViewModel : ObservableObject
         StopTimer();
         _current = toast;
         Hidden = false;
-        _pointerOver = false;
-        _focused = false;
         Remaining = (int)(toast.CountdownSeconds is { } s ? s : DefaultFor.TotalSeconds);
         var gen = ++_gen;
         _timer = _clock.CreateTimer(_ => _ui.PostOrInline(() => Tick(gen)), state: null, _tick, _tick);
@@ -194,8 +206,6 @@ internal sealed class ToastHostViewModel : ObservableObject
         _gen++;
         _current = null;
         Hidden = false;
-        _pointerOver = false;
-        _focused = false;
         Remaining = 0;
         IsAnnouncing = false;
         OnChanged(nameof(IsAnnouncing));

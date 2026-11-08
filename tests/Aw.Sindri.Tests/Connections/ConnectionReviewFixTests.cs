@@ -82,7 +82,7 @@ public sealed class ConnectionReviewFixTests
         Assert.True(added.IsSuccess, added.IsError ? added.Error.Message : null);
         Assert.Equal(CliKey, world.Secrets.Tokens(Assert.Single(world.Store.Rows).SecretPointer!.ToString())!.AccessToken);
         Assert.DoesNotContain(CliKey, request.ToString(), StringComparison.Ordinal);
-        Assert.DoesNotContain(CliKey, System.Text.Json.JsonSerializer.Serialize(added.Value, Aw.Sindri.Host.SindriJsonContext.Default.AddConnectionResponse), StringComparison.Ordinal);
+        Assert.DoesNotContain(CliKey, System.Text.Json.JsonSerializer.Serialize(added.Value, Host.SindriJsonContext.Default.AddConnectionResponse), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -133,7 +133,7 @@ public sealed class ConnectionReviewFixTests
         _ = await world.Add().Handle(ConnectionHarness.Oauth(wait: false), Token);
 
         world.SignIn.Fail(SindriErrors.ConnectionConsentDenied.With("denied"));
-        Aw.Kernel.Result<GetConnectionResponse> denied = SindriErrors.ConnectionNotFound.With("not yet");
+        Kernel.Result<GetConnectionResponse> denied = SindriErrors.ConnectionNotFound.With("not yet");
         for (var attempt = 0; attempt < 100 && denied.Error.Code == SindriErrors.ConnectionNotFound.Code; attempt++)
         {
             await Task.Delay(50, Token);

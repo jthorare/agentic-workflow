@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using Aw.Sindri.Infrastructure.Processes;
 
 namespace Aw.Sindri.Infrastructure.Connections;
 
@@ -15,8 +16,9 @@ internal sealed class BrowserOpener : IBrowserOpener
             return false;
         }
 
-        var start = new ProcessStartInfo(OperatingSystem.IsMacOS() ? "open" : "xdg-open") { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
-        start.ArgumentList.Add(url.AbsoluteUri);
+        var start = ChildEnvironment.Start(OperatingSystem.IsMacOS() ? "open" : "xdg-open", [url.AbsoluteUri]);
+        start.RedirectStandardOutput = true;
+        start.RedirectStandardError = true;
         try
         {
             using var process = Process.Start(start);
