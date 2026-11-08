@@ -10,8 +10,8 @@ public sealed class ApiGoldenTests
 {
     // hand-written before their routes (#2076): the Library roots writes in their own slot and the review settings in Ph9's api slot, each registering its rows and leaving this list;
     // the Linear hub's rows (#2077 Ph3) all left it when api served them;
-    // the todo goldens (#2264 Ph1a) left it when api served GET /sindri/todos
-    private static readonly string[] _pendingGoldenFolders = ["library-roots", "review-settings", "review-settings-save"];
+    // the todo goldens (#2264 Ph1a) left it when api served GET /sindri/todos; todos-note leaves it when todo Ph3b serves the note routes
+    private static readonly string[] _pendingGoldenFolders = ["library-roots", "review-settings", "review-settings-save", "todos-note"];
 
     private static bool IsPending(string file) => _pendingGoldenFolders.Any(p => file.StartsWith(p + "/", StringComparison.Ordinal));
 
@@ -29,8 +29,8 @@ public sealed class ApiGoldenTests
 
         Assert.Equal(expected, files);
 
-        // the pending files are exactly the rows not yet registered
-        var pendingRows = ((IEnumerable<(string Slug, string Scenario)>)[.. LibraryRootScenarios.All, .. ReviewSettingsScenarios.All]).Select(r => $"{r.Slug}/{r.Scenario}.json").Order(StringComparer.Ordinal);
+        // the pending files are exactly the rows not yet registered (todos-note: todo Ph3b, #2264)
+        var pendingRows = ((IEnumerable<(string Slug, string Scenario)>)[.. LibraryRootScenarios.All, .. ReviewSettingsScenarios.All, ("todos-note", "note"), ("todos-note", "hold"), ("todos-note", "conflict")]).Select(r => $"{r.Slug}/{r.Scenario}.json").Order(StringComparer.Ordinal);
         Assert.Equal(pendingRows, all.Where(IsPending).Order(StringComparer.Ordinal));
         Assert.DoesNotContain(ApiScenarios.All, r => _pendingGoldenFolders.Contains(r.Slug));
     }
