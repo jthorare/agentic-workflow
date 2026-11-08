@@ -41,6 +41,12 @@ internal sealed class TodoPanelViewModel : ObservableObject, IDisposable
     /// <summary>"11 open · 1 overdue", plus "· 1 to sort out" while a conflict is open.</summary>
     public string CountLine { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>Open todos due before today (the tray's tooltip).</summary>
+    public int OverdueCount { get; private set => Set(ref field, value); }
+
+    /// <summary>Todos with an open both-places conflict (the tray's tooltip).</summary>
+    public int ToSortOutCount { get; private set => Set(ref field, value); }
+
     /// <summary>True when no todo is open.</summary>
     public bool IsEmpty { get; private set => Set(ref field, value); }
 

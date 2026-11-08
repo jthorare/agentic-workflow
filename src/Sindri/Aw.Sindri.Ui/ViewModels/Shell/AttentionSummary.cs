@@ -42,6 +42,12 @@ internal sealed record AttentionSummary(string Title, int Badge, TrayView Tray, 
     internal AttentionSummary WithLinearNew(int count) =>
         count > 0 && Tray.State is not (TrayState.NotRunning or TrayState.Stale) ? this with { Tray = Tray with { Tooltip = $"{Tray.Tooltip}\n{Labels.LinearNewLine(count)}" } } : this;
 
+    /// <summary>Adds the todo counts to the tray's tooltip as a line, the way the Linear count does; the badge and the title stay.</summary>
+    /// <param name="overdue">Open todos due before today.</param>
+    /// <param name="toSortOut">Todos with an open conflict.</param>
+    /// <returns>The summary with the line; unchanged when both are 0 or the tray is not running or stale.</returns>
+    internal AttentionSummary WithTodos(int overdue, int toSortOut) => throw new NotSupportedException();
+
     /// <summary>True when the state shows the list's rows (a running Sindri, fresh or not); else the count is 0 because there is no list to count.</summary>
     /// <param name="state">The shell's state.</param>
     /// <returns>True when the rows count.</returns>
