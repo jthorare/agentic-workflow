@@ -34,15 +34,9 @@
 
   <ItemGroup>
     <!-- Helpers the moved suites share with Aw.Sindri.Tests, compiled into both (the split moves tests, not their support code). -->
-    <Compile Include="../Aw.Sindri.Tests/Launch/PrivateTmux.cs" Link="Shared/Launch/PrivateTmux.cs" />
-    <Compile Include="../Aw.Sindri.Tests/Ledger/SqliteStores.cs" Link="Shared/Ledger/SqliteStores.cs" />
     <Compile Include="../Aw.Sindri.Tests/Ledger/TempHome.cs" Link="Shared/Ledger/TempHome.cs" />
-    <Compile Include="../Aw.Sindri.Tests/Notifications/FakeOsNotifier.cs" Link="Shared/Notifications/FakeOsNotifier.cs" />
-    <Compile Include="../Aw.Sindri.Tests/ReadFailingLedger.cs" Link="Shared/ReadFailingLedger.cs" />
     <Compile Include="../Aw.Sindri.Tests/Server/Callers.cs" Link="Shared/Server/Callers.cs" />
-    <Compile Include="../Aw.Sindri.Tests/Server/ListLogger.cs" Link="Shared/Server/ListLogger.cs" />
     <Compile Include="../Aw.Sindri.Tests/SliceHarness.cs" Link="Shared/SliceHarness.cs" />
-    <Compile Include="../Aw.Sindri.Tests/Workflow/LegacyRecipeRows.cs" Link="Shared/Workflow/LegacyRecipeRows.cs" />
   </ItemGroup>
 
   <ItemGroup>

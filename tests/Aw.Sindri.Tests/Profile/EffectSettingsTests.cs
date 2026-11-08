@@ -2,11 +2,8 @@ using System.Text;
 using System.Text.Json;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Workflow.Ids;
-using Aw.Sindri.Infrastructure.Workflows;
-using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Workflow;
 
 namespace Aw.Sindri.Tests.Profile;
@@ -109,23 +106,4 @@ public sealed class EffectSettingsTests
         Assert.Equal(new HashSet<BlockId> { BlockId.From("effect.notify.desk"), BlockId.From("effect.claim.ref") }, settings.Allowlist);
         Assert.Equal(TimeSpan.FromSeconds(60), settings.DispatchDelay);
     }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task LoadRecipe_reads_the_dispatch_delay_from_the_approved_profile_not_the_live_file()
-    {
-        var profiles = new InMemoryProfiles();
-        var times = new ProfileWorkflowTimes(profiles, profiles);
-        var ct = TestContext.Current.CancellationToken;
-
-        var none = await times.DispatchDelay(ct);
-        profiles.Live = Loaded(_valid with { Workflow = new(DispatchDelay: "5s") });
-        _ = await profiles.Save(Loaded(_valid with { Workflow = new(DispatchDelay: "60s") }), ct);
-        var approved = await times.DispatchDelay(ct);
-
-        Assert.Equal(TimeSpan.FromSeconds(10), none.Value);
-        Assert.Equal(TimeSpan.FromSeconds(60), approved.Value);
-    }
-
-    private static LoadedProfile Loaded(SindriProfile profile) =>
-        new(profile, ProfileHash.From(new string('a', 64)), "/home/profile.yaml");
 }

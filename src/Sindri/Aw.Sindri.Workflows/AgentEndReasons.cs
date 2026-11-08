@@ -3,6 +3,7 @@ using Aw.Sindri.Core.Workflow.Engine.Runtime;
 namespace Aw.Sindri.Infrastructure.Workflows;
 
 /// <summary>The reason a Step fails with when its agent's session ended without a report (the word the failed Step, the ledger and the app carry).</summary>
+#pragma warning disable MA0182 // kept for the graph workflow (PR 6) and the agent block (PR 7), which have no caller of it yet
 internal static class AgentEndReasons
 {
     /// <summary>The reason for how the session ended.</summary>
@@ -17,3 +18,4 @@ internal static class AgentEndReasons
         _ => throw new ArgumentOutOfRangeException(nameof(ended), ended, "not a way a session ends"),
     };
 }
+#pragma warning restore MA0182

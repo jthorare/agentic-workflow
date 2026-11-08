@@ -11,10 +11,10 @@ using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.ListServices;
+using Aw.Sindri.Features.RecordHeartbeat;
 using Aw.Sindri.Features.StartProcess;
 using Aw.Sindri.Host;
 using Aw.Sindri.Host.Server;
-using Aw.Sindri.Infrastructure.Workflows;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Ledger;
 using Aw.Sindri.Tests.Server;
@@ -33,7 +33,7 @@ namespace Aw.Sindri.Tests.Scheduling;
 /// </summary>
 public sealed class ListedNextSlotTests : IDisposable
 {
-    private static readonly ServiceName _watch = ServiceName.From("pr-watch");
+    private static readonly ServiceName _watch = ServiceName.From("heartbeat");
     private readonly TempHome _home = new();
     private readonly FakeTimeProvider _clock = new(KnownInstants.Epoch);
     private readonly IdleService _service = new();
@@ -68,14 +68,14 @@ public sealed class ListedNextSlotTests : IDisposable
     private async Task<WebApplication> Start(string every)
     {
         _ = Directory.CreateDirectory(Path.Combine(_home.Path, "profile"));
-        await File.WriteAllTextAsync(Path.Combine(_home.Path, "profile", "profile.yaml"), $"schemaVersion: 1\nuser: idle\nservices:\n  pr-watch: {{ every: {every} }}\n", Token);
+        await File.WriteAllTextAsync(Path.Combine(_home.Path, "profile", "profile.yaml"), $"schemaVersion: 1\nuser: idle\nservices:\n  heartbeat: {{ every: {every} }}\n", Token);
         var app = LoopbackBinding.Build([], n => n == "AW_SINDRI_HOME" ? _home.Path : null, _clock, services =>
         {
             _ = services.Replace(ServiceDescriptor.Singleton<IIdGenerator>(new SequentialIdGenerator()));
             _ = services.Replace(ServiceDescriptor.Singleton<IProcessProbe>(new FakeProcessProbe()));
-            foreach (var own in services.Where(d => d.ServiceType == typeof(IScheduledService) && d.ImplementationType == typeof(PrWatchService)).ToList())
+            foreach (var own in services.Where(d => d.ServiceType == typeof(IScheduledService) && d.ImplementationType == typeof(HeartbeatService)).ToList())
             {
-                _ = services.Remove(own);   // the host's own pr-watch would run in place of the idle one (same name)
+                _ = services.Remove(own);   // the host's own heartbeat would run in place of the idle one (same name)
             }
 
             _ = services.AddSingleton<IScheduledService>(_service);
@@ -117,7 +117,7 @@ public sealed class ListedNextSlotTests : IDisposable
         return Assert.Single(body!.Services, s => s.Name == _watch);
     }
 
-    /// <summary>A service named 'pr-watch' that finds no work on any run.</summary>
+    /// <summary>A service named 'heartbeat' that finds no work on any run.</summary>
     private sealed class IdleService : IScheduledService
     {
         private int _runs;
