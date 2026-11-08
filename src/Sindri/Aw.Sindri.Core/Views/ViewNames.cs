@@ -51,6 +51,9 @@ public static class ViewNames
     /// <summary>Whether a led Linear project is hidden, keyed by its Linear key (projects page spec §5.2).</summary>
     public const string ProjectHidden = "project-hidden";
 
+    /// <summary>What each item is linked to (a tracker issue, a pull request, a graph run), keyed '&lt;item&gt;/&lt;kind&gt;/&lt;ref&gt;'. Not in <see cref="All"/> until its migration (0012_item_links.sql) lands in the green commit.</summary>
+    public const string ItemLinks = "item-links";
+
     /// <summary>Every view that has a table.</summary>
     public static IReadOnlyList<string> All { get; } = [CodeIndex, Services, Profile, Items, ItemAliases, ItemTimeline, Requests, Decisions, NeedsYou, Jobs, Launches, RecipeStats, ModelHistory, ModelRuns, ProjectAttached, ProjectHidden];
 }

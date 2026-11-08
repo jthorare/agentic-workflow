@@ -23,6 +23,15 @@ namespace Aw.Sindri.Features.LinearIssues;
 /// <param name="approvals">The approved profile, for the review login.</param>
 internal sealed class ViewLinearItemLinks(IViewReader views, IInstanceReader instances, IFactContents contents, IReviewFacts pulls, IApprovedProfile approvals) : ILinearItemLinks
 {
+    /// <summary>Reads PR chips from the item-links view only. Red stub: it still reads the instance path until the green commit drops <c language="text">instances</c> and <c language="text">contents</c>.</summary>
+    /// <param name="views">The 'items' and 'item-links' views.</param>
+    /// <param name="pulls">The stored PR records.</param>
+    /// <param name="approvals">The approved profile, for the review login.</param>
+    public ViewLinearItemLinks(IViewReader views, IReviewFacts pulls, IApprovedProfile approvals)
+        : this(views, instances: null!, contents: null!, pulls, approvals)   // why: red stub; the instance path only runs for an item with an instance, which the tests don't make, and the green commit deletes both parameters
+    {
+    }
+
     public async ValueTask<Result<IReadOnlyDictionary<string, LinearIssueLinks>>> For(IReadOnlyList<string> records, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(records);

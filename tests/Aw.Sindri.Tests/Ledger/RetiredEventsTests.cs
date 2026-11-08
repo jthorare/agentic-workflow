@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Infrastructure;
 using Aw.Sindri.Infrastructure.Ledger;
 using Microsoft.Data.Sqlite;
@@ -40,4 +41,21 @@ public sealed class RetiredEventsTests : IDisposable
         Assert.Equal(type, recorded.Envelope.Type);
         Assert.Equal(payload, recorded.Envelope.Payload);
     }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("workflow.started")]
+    [InlineData("workflow.transition")]
+    [InlineData("workflow.retired")]
+    [InlineData("line.phaseChanged")]
+    [InlineData("recipe.approved")]
+    [InlineData("profile.approved")]
+    [InlineData("scope.frozen")]
+    public void Is_names_the_kinds_the_removed_engines_wrote(string type) => Assert.True(RetiredEvents.Is(type));
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("item.created")]
+    [InlineData("item.linked")]
+    [InlineData("service.ran")]
+    [InlineData("workflowish.started")]
+    public void Is_leaves_the_live_kinds_alone(string type) => Assert.False(RetiredEvents.Is(type));
 }
