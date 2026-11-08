@@ -31,11 +31,7 @@ internal sealed class NeedsYouProjection(EventFactory events, ITextScrubber scru
         || string.Equals(eventType, EventTypes.ItemStateChanged, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.ServiceRan, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.ProfileChecked, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.ProfileApproved, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.WorkflowStarted, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.WorkflowTransition, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.WorkflowRefused, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.WorkflowNotified, StringComparison.Ordinal);
+        || string.Equals(eventType, EventTypes.ProfileApproved, StringComparison.Ordinal);
 
     public async ValueTask<Result<Unit>> Apply(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
     {
