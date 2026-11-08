@@ -91,7 +91,7 @@ public static class NoteRenderer
         return result.ToString();
     }
 
-    /// <summary>Applies edits to a note, leaving every other line byte for byte: Replace and Remove by number, Append after the document's last todo line (of the document as parsed, before the edits), in the order given; with no todo line they go at the end, after adding a line ending to a last line that has none. New lines use the note's first line ending ("\n" when it has none). A document with no lines becomes '# Todo', a blank line, then the appended lines.</summary>
+    /// <summary>Applies edits to a note, leaving every other line byte for byte: Replace and Remove by number, Append after the document's last todo line and the indented lines under it (of the document as parsed, before the edits), in the order given; with no todo line they go at the end, after adding a line ending to a last line that has none. New lines use the note's first line ending ("\n" when it has none). A document with no lines becomes '# Todo', a blank line, then the appended lines.</summary>
     /// <param name="document">The parsed note.</param>
     /// <param name="edits">The edits.</param>
     /// <returns>The new text.</returns>
@@ -102,7 +102,7 @@ public static class NoteRenderer
         var eol = document.Lines.Count > 0 && document.Lines[0].Eol.Length > 0 ? document.Lines[0].Eol : "\n";
         var appended = edits.Where(static e => e.Kind == NoteLineEditKind.Append).Select(static e => e.Line!).ToList(); // why: Append always carries a line
         var changes = edits.Where(static e => e.Kind != NoteLineEditKind.Append).ToLookup(static e => e.Number);
-        var anchor = document.Lines.ToList().FindLastIndex(static l => l.Todo is not null);
+        var anchor = AnchorOf(document);
         var output = new List<(string Text, string Eol)>();
         if (document.Lines.Count == 0 && appended.Count > 0)
         {
@@ -126,6 +126,26 @@ public static class NoteRenderer
 
         return string.Concat(output.Select(static o => o.Text + o.Eol));
     }
+
+    /// <summary>The line after which appended lines go: the last todo line, past the indented lines that follow it (its children), or -1 with no todo.</summary>
+    private static int AnchorOf(NoteDocument document)
+    {
+        var lines = document.Lines;
+        var anchor = -1;
+        for (var i = lines.Count - 1; i >= 0 && anchor < 0; i--)
+        {
+            anchor = lines[i].Todo is not null ? i : -1;
+        }
+
+        while (anchor >= 0 && anchor + 1 < lines.Count && IsIndented(lines[anchor + 1].Text))
+        {
+            anchor++;
+        }
+
+        return anchor;
+    }
+
+    private static bool IsIndented(string text) => text.Length > 0 && text[0] is ' ' or '\t' && !string.IsNullOrWhiteSpace(text);
 
     private static void AddEdited(List<(string Text, string Eol)> output, NoteLine line, NoteLineEdit? edit)
     {

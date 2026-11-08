@@ -133,4 +133,24 @@ public sealed class NoteRendererTests
 
         Assert.Equal("a\nc\n", rebuilt);
     }
+
+    [Fact]
+    public void An_appended_line_goes_after_the_indented_children_of_the_last_todo()
+    {
+        var note = $"# Todo\n{L(1, "a")}\n  - child\n\t- tab child\nprose\n";
+
+        var rebuilt = NoteRenderer.Rebuild(NoteParser.Parse(note), [NoteLineEdit.Append("- [ ] new")]);
+
+        Assert.Equal($"# Todo\n{L(1, "a")}\n  - child\n\t- tab child\n- [ ] new\nprose\n", rebuilt);
+    }
+
+    [Fact]
+    public void An_appended_line_stays_straight_after_a_last_todo_with_a_blank_line_below_it()
+    {
+        var note = $"{L(1, "a")}\n\n  - not a child\n";
+
+        var rebuilt = NoteRenderer.Rebuild(NoteParser.Parse(note), [NoteLineEdit.Append("- [ ] new")]);
+
+        Assert.Equal($"{L(1, "a")}\n- [ ] new\n\n  - not a child\n", rebuilt);
+    }
 }
