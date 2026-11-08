@@ -38,8 +38,8 @@ public sealed class ShortPathTests
         Assert.Equal(StatusText.ShortPathLength, shown.Length);
     }
 
-    // S3: the profile's file is a path, shown in mono as every path is; the hashes beside it stay as they are.
+    // S3: the profile's file is a path, shown in mono as every path is; the hash beside it stays as it is.
     [Fact]
     public void The_profile_file_is_the_one_path_cell() =>
-        Assert.Equal([false, false, true], StatusText.Profile(A.ChangedProfile()).Select(c => c.IsPath));
+        Assert.Equal([false, true], StatusText.Profile(A.Live()).Select(c => c.IsPath));
 }

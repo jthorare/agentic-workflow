@@ -256,13 +256,13 @@ internal sealed class LibraryRootsViewModel : ObservableObject
         }
 
         ChangeError = string.Empty;
-        await Applied(changed.Value, cancellationToken).ConfigureAwait(true);
+        await Applied(cancellationToken).ConfigureAwait(true);
     }
 
-    // A change that went through: said when it waits for the approval, and the folders are read again.
-    private async Task Applied(LibraryRootChanged changed, CancellationToken cancellationToken)
+    // A change that went through (it applies on save): the folders are read again.
+    private async Task Applied(CancellationToken cancellationToken)
     {
-        Note = changed.Approved ? string.Empty : Labels.ReviewsLoginPending;
+        Note = string.Empty;
         OnChanged(nameof(CanAdd));
         if (_url() is { } url)
         {

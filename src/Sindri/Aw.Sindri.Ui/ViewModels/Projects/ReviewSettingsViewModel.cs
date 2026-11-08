@@ -126,7 +126,7 @@ internal sealed partial class ReviewSettingsViewModel(ISindriApi api) : Observab
     }
 
     /// <summary>"Save and approve", or "Saving…" while the write is in flight.</summary>
-    public string SaveText => IsSaving ? Labels.ProjectSaving : Labels.ReviewSettingsSaveApprove;
+    public string SaveText => IsSaving ? Labels.ProjectSaving : Labels.ReviewSettingsSaveButton;
 
     /// <summary>True when the settings on screen can't be trusted until Reload: the profile changed since they were read, or a save went through but the read-back failed. Save is off meanwhile.</summary>
     public bool IsStale

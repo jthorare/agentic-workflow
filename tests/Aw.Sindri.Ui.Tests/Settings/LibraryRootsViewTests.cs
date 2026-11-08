@@ -133,21 +133,6 @@ public sealed class LibraryRootsViewTests
         Assert.True(Find<Border>(window, "LibraryForm").IsEffectivelyVisible);
     });
 
-    [Fact]
-    public Task A_save_that_waits_for_the_approval_shows_the_waiting_line_and_closes_the_form() => OnUi(async () =>
-    {
-        var card = await Read("ok");
-        var window = ShowSettings(card);
-        card.OpenForm();
-        (card.Form.Name, card.Form.Path) = ("harbor-notes", "~/Documents/Harbor");
-        _server.LibraryRootAnswer = RouteAnswer.Api("library-roots", "added-pending-others");
-
-        await card.Form.Save(Token);
-        Settle(window);
-
-        Assert.Equal((true, Labels.ReviewsLoginPending, false), (Find<TextBlock>(window, "LibraryNote").IsEffectivelyVisible, Find<TextBlock>(window, "LibraryNote").Text, Find<Border>(window, "LibraryForm").IsEffectivelyVisible));
-    });
-
     // SettingsViewTests checks names only on what its window shows, and it has no Library: this is the card's own check, with the folders and the form both up.
     [Fact]
     public Task Every_card_control_has_an_automation_name_with_folders_and_the_form_open() => OnUi(async () =>

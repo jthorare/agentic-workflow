@@ -39,12 +39,12 @@ public abstract partial class SindriApiContract
     [Fact]
     public async Task Status_answers_the_lease_profile_and_services()
     {
-        var server = new FakeSindriApi { Current = A.Status(pid: 5, epoch: 2, A.ChangedProfile(), A.Heartbeat(A.Noon, "7s")) };
+        var server = new FakeSindriApi { Current = A.Status(pid: 5, epoch: 2, A.Live(), A.Heartbeat(A.Noon, "7s")) };
 
         var status = (await Reach(server).Status(_api, Token)).Value;
 
         Expect.Equal((5, 2L), (status.Pid, status.Epoch));
-        Expect.Equal(A.ChangedProfile(), status.Profile);
+        Expect.Equal(A.Live(), status.Profile);
         Expect.Sequence([A.Heartbeat(A.Noon, "7s")], status.Services);
     }
 

@@ -199,9 +199,6 @@ internal static partial class Labels
     /// <summary>The Health page's lease row.</summary>
     internal const string RowLease = "Host lease";
 
-    /// <summary>The Health page's approved-hash row.</summary>
-    internal const string RowApproved = "approved";
-
     /// <summary>The Health page's live-hash row.</summary>
     internal const string RowLive = "live";
 

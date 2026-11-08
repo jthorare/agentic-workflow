@@ -25,12 +25,10 @@ internal sealed partial class ItemSheet : UserControl
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
-        _sheet?.Blocked.ApprovalRequested -= OnApprovalRequested;
         _sheet?.ControlsLeaving -= OnControlsLeaving;
         _sheet?.PropertyChanged -= OnSheetChanged;
         _sheet = DataContext as ItemSheetViewModel;
         _sheet?.ControlsLeaving += OnControlsLeaving;
-        _sheet?.Blocked.ApprovalRequested += OnApprovalRequested;
         _sheet?.PropertyChanged += OnSheetChanged;
     }
 
@@ -81,10 +79,6 @@ internal sealed partial class ItemSheet : UserControl
     }
 
     private void OnSeeAllBlocked(object? sender, RoutedEventArgs e) => _sheet?.Blocked.ShowAll();
-
-    // The approval of an Allow is the profile approval in Needs you.
-    private void OnApprovalRequested(object? sender, ApprovalRequestedEventArgs e) =>
-        (TopLevel.GetTopLevel(this)?.DataContext as ViewModels.Shell.ShellViewModel)?.Navigate(Navigation.DeepLink.HomeNeedsYou);
 
     private void OnCopyId(object? sender, RoutedEventArgs e)
     {

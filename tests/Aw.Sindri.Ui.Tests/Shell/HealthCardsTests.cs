@@ -8,7 +8,7 @@ namespace Aw.Sindri.Ui.Tests.Shell;
 [Lane(TestLane.Unit)]
 public sealed class HealthCardsTests
 {
-    private static readonly string[] _wanted = ["pid · epoch", "API", "approved", "file"];
+    private static readonly string[] _wanted = ["pid · epoch", "API", "live", "file"];
 
     private static string[] Flat(IEnumerable<HealthCell> cells) => [.. cells.SelectMany(c => new[] { c.Label, c.Value })];
 
@@ -20,7 +20,7 @@ public sealed class HealthCardsTests
         await system.Show();
 
         Assert.Equal(["pid · epoch", "API"], system.Vm.Detail.Process.Select(c => c.Label).Where(l => _wanted.Contains(l, StringComparer.Ordinal)), StringComparer.Ordinal);
-        Assert.Equal(["approved", "file"], system.Vm.Detail.Profile.Select(c => c.Label).Where(l => _wanted.Contains(l, StringComparer.Ordinal)), StringComparer.Ordinal);
+        Assert.Equal(["live", "file"], system.Vm.Detail.Profile.Select(c => c.Label).Where(l => _wanted.Contains(l, StringComparer.Ordinal)), StringComparer.Ordinal);
     }
 
     [Fact]
