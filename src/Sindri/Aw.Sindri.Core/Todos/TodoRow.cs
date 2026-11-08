@@ -1,3 +1,5 @@
+using Aw.Sindri.Core.Ids;
+
 namespace Aw.Sindri.Core.Todos;
 
 /// <summary>One todo in the 'todo' view (todo spec §4.2), keyed by its id.</summary>

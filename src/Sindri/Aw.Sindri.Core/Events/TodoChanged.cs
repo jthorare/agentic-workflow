@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using Aw.Sindri.Core.Todos;
+using Aw.Sindri.Core.Ids;
 
 namespace Aw.Sindri.Core.Events;
 

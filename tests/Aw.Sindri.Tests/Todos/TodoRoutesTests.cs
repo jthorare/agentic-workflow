@@ -1,9 +1,9 @@
 using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Aw.Sindri.Testing;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Host;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.ApiGoldens;
 using Aw.Sindri.Tests.Callers;
 using Microsoft.Extensions.DependencyInjection;
@@ -57,7 +57,7 @@ public sealed partial class TodoRoutesTests
         var added = await Add(host, human, "rotate the staging key", "c-1");
         var id = IdOf(added);
         Assert.Equal(HttpStatusCode.OK, added.Status);
-        Expect.Sequence(["rotate the staging key"], (await List(host, "open")).EnumerateArray().Select(t => t.GetProperty("text").GetString()!));
+        Expect.Sequence(["rotate the staging key"], (await List(host, "open")).EnumerateArray().Select(t => t.GetProperty("text").GetString()));
 
         foreach (var verb in new[] { "done", "reopen", "remove", "restore" })
         {

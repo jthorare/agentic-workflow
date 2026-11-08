@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Aw.Sindri.Core.Todos;
+namespace Aw.Sindri.Core.Events;
 
 /// <summary>Which side of a both-places conflict a pick keeps (todo spec D11, §4.1): written in camel case.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<TodoSideName>))]

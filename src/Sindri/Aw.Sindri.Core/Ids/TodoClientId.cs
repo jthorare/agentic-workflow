@@ -4,7 +4,7 @@ using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
 using Vogen;
 
-namespace Aw.Sindri.Core.Todos;
+namespace Aw.Sindri.Core.Ids;
 
 /// <summary>A caller's retry id for adding a todo (todo spec §4.1): 1 to 64 of 'A-Za-z0-9_-'. A retried add with the same id makes one todo.</summary>
 [ValueObject<string>(comparison: ComparisonGeneration.Omit)]
