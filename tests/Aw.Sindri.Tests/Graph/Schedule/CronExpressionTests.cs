@@ -93,6 +93,14 @@ public sealed class CronExpressionTests
         Assert.Equal(At(expected), schedule.LastTick(At(after), At(upTo)));
     }
 
+    [Fact]
+    public void LastTick_over_a_year_of_every_minute_is_the_last_minute_of_the_window()
+    {
+        var schedule = Parse("* * * * *", timezone: null);
+
+        Assert.Equal(At("2027-01-01T00:00:00Z"), schedule.LastTick(At("2026-01-01T00:00:00Z"), At("2027-01-01T00:00:00Z")));
+    }
+
     [Theory]
     [InlineData("0 9 * * *", null, "2026-11-07T10:00:00Z", "2026-11-07T20:00:00Z")]
     [InlineData("*/15 * * * *", null, "2026-11-07T12:45:00Z", "2026-11-07T12:50:00Z")]
@@ -119,6 +127,10 @@ public sealed class CronExpressionTests
     [InlineData("* * * FOO *", null, "month", "1-12")]
     [InlineData("* * * * 8", null, "day-of-week", "0-7")]
     [InlineData("*/0 * * * *", null, "minute", "step")]
+    [InlineData("1/2147483647 * * * *", null, "minute", "step")]
+    [InlineData("*/99999999999 * * * *", null, "minute", "step")]
+    [InlineData("*/60 * * * *", null, "minute", "step")]
+    [InlineData("* */24 * * *", null, "hour", "step")]
     [InlineData("5-1 * * * *", null, "minute", "range")]
     [InlineData("1,,2 * * * *", null, "minute", "empty")]
     public void A_bad_field_is_refused_naming_the_field_and_the_fix(string cron, string? timezone, string field, string fix)

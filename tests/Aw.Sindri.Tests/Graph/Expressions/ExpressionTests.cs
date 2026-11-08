@@ -143,6 +143,52 @@ public sealed class ExpressionTests
         Assert.Contains("column " + column.ToString(CultureInfo.InvariantCulture), error, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData(65)]
+    [InlineData(5000)]
+    public void Parentheses_nested_past_the_depth_limit_are_refused_with_a_column_and_do_not_crash(int depth)
+    {
+        var text = new string('(', depth) + "a" + new string(')', depth);
+
+        Assert.False(ConditionExpression.TryParse(text, out var expression, out var error));
+
+        Assert.Null(expression);
+        Assert.Contains("column", error, StringComparison.Ordinal);
+        Assert.Contains("deep", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Parentheses_nested_to_the_depth_limit_still_parse()
+    {
+        var text = new string('(', 64) + "a" + new string(')', 64);
+
+        Assert.True(ConditionExpression.TryParse(text, out var expression, out var error), error);
+        Assert.NotNull(expression);
+    }
+
+    [Fact]
+    public void A_chain_of_nots_past_the_depth_limit_is_refused_with_a_column()
+    {
+        var text = string.Concat(Enumerable.Repeat("not ", 65)) + "a";
+
+        Assert.False(ConditionExpression.TryParse(text, out var expression, out var error));
+
+        Assert.Null(expression);
+        Assert.Contains("column", error, StringComparison.Ordinal);
+        Assert.Contains("deep", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_number_literal_too_big_for_a_double_is_refused_at_parse_with_a_column()
+    {
+        var text = "n.count < " + new string('9', 400);
+
+        Assert.False(ConditionExpression.TryParse(text, out var expression, out var error));
+
+        Assert.Null(expression);
+        Assert.Contains("column 11", error, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void Calling_a_function_other_than_exists_says_only_exists_is_available()
     {
