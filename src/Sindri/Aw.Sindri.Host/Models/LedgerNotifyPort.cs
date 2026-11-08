@@ -1,4 +1,5 @@
 using Aw.Kernel;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph.Blocks;
@@ -10,17 +11,25 @@ namespace Aw.Sindri.Host.Models;
 
 // why: registered with the rest of the workflow piece; until then only tests build it.
 #pragma warning disable MA0182
-/// <summary>Posts a 'notify' node's note as a 'workflow.notify' event, which the needs-you view shows until the run ends.</summary>
+/// <summary>Posts a 'notify' node's note as a 'workflow.notify' event, which the needs-you view shows until the run ends. The key is the run and node, so posting the same note again adds nothing.</summary>
 /// <param name="ledger">Appends the event.</param>
 /// <param name="held">The lease this process holds.</param>
 /// <param name="events">Builds the entry.</param>
 /// <param name="callers">The caller, when there is one.</param>
 internal sealed class LedgerNotifyPort(ILedgerStore ledger, HeldLease held, EventFactory events, ICallerContextAccessor callers) : INotifyPort
 {
-    public ValueTask<Result<Unit>> Post(WorkflowRunId runId, NodeId node, string title, string? body, CancellationToken cancellationToken)
+    public async ValueTask<Result<Unit>> Post(WorkflowRunId runId, NodeId node, string title, string? body, CancellationToken cancellationToken)
     {
-        _ = (ledger, held, events, callers);
-        throw new NotSupportedException();
+        ArgumentNullException.ThrowIfNull(title);
+        if (held.Current is not { } grant)
+        {
+            return SindriErrors.NotRunning.With("the control plane doesn't hold the lease (fix: sindri)");
+        }
+
+        var by = callers.Current?.Actor ?? "service:workflow";
+        var entry = events.Entry(EventTypes.WorkflowNotify, new WorkflowNotifyPayload(runId, node, title, body, by), $"{EventTypes.WorkflowNotify}:{runId.Value}:{node.Value}");
+        var appended = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
+        return appended.IsError ? appended.Error : Unit.Value;
     }
 }
 #pragma warning restore MA0182

@@ -25835,3 +25835,6 @@ override Aw.Sindri.Core.Events.WorkflowNotifyPayload.GetHashCode() -> int
 override Aw.Sindri.Core.Events.WorkflowNotifyPayload.ToString() -> string!
 static Aw.Sindri.Core.Events.WorkflowNotifyPayload.operator !=(Aw.Sindri.Core.Events.WorkflowNotifyPayload? left, Aw.Sindri.Core.Events.WorkflowNotifyPayload? right) -> bool
 static Aw.Sindri.Core.Events.WorkflowNotifyPayload.operator ==(Aw.Sindri.Core.Events.WorkflowNotifyPayload? left, Aw.Sindri.Core.Events.WorkflowNotifyPayload? right) -> bool
+static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.WorkflowRun(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run) -> string!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRowIds.WorkflowNotify(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, Aw.Sindri.Core.Graph.Ids.NodeId node) -> Aw.Sindri.Core.Ids.NeedsYouRowId
+static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForWorkflowNotify(Aw.Sindri.Core.Events.WorkflowNotifyPayload! note, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>!
