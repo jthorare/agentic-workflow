@@ -58,6 +58,19 @@ public sealed class TodoRowTests
     }
 
     [Fact]
+    public async Task A_piped_cli_edit_of_the_owners_todo_tags_it_edited_by_an_agent()
+    {
+        var edited = Of(1);
+        edited["lastBy"] = "human:cli";
+        edited["lastVia"] = "pipe";
+        _f.ServeTodos(edited);
+
+        var panel = await _f.Read(Token);
+
+        Assert.Equal("edited by an agent", panel.Rows[0].Tag);
+    }
+
+    [Fact]
     public async Task The_owner_fixing_an_agents_todo_leaves_it_tagged_agent()
     {
         var panel = await _f.Read(Token);

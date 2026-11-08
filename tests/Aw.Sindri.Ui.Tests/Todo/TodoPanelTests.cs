@@ -134,6 +134,20 @@ public sealed class TodoPanelTests
     }
 
     [Fact]
+    public async Task A_conflict_on_a_todo_Sindri_removed_still_counts_to_sort_out()
+    {
+        var removed = Of(6);
+        removed["conflict"] = System.Text.Json.Nodes.JsonNode.Parse("""
+            {"sindri":{"text":null,"due":null,"done":false,"removed":true},"obsidian":{"text":"old task, edited","due":null,"done":false},"noteHash":"sha256:cd"}
+            """);
+        _f.ServeTodos(Of(1), removed);
+
+        var panel = await _f.Read(Token);
+
+        Assert.EndsWith("· 1 to sort out", panel.CountLine, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task With_nothing_open_the_panel_says_so()
     {
         _f.ServeTodos(Of(0), Of(6));
