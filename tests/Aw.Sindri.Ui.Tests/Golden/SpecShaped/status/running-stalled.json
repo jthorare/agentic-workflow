@@ -4,12 +4,9 @@
   "epoch": 1,
   "leaseExpiresAt": "2026-01-01T00:01:00.0000000Z",
   "profile": {
-    "approved": "70e1581b3ecaf617318482f6b0844b67f79a287a7136b4e4b6ff5d26005e4261",
     "live": "70e1581b3ecaf617318482f6b0844b67f79a287a7136b4e4b6ff5d26005e4261",
-    "changedSinceApproval": false,
     "problem": null,
     "source": "<home>/profile/profile.yaml",
-    "needsApproval": false,
     "modelPick": "off",
     "labelPick": "off",
     "surfacePick": "off"

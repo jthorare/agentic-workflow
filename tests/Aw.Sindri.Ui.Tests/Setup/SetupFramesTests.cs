@@ -138,13 +138,13 @@ public sealed class SetupFramesTests : FrameHost
         var line = Named<Button>(window, "SetupHomeLink");
 
         Assert.True(line.IsEffectivelyVisible);
-        Assert.Equal("Finish setting up Sindri, 1 of 5 done. Next: Your settings", Heard.Name(line));
+        Assert.Equal("Finish setting up Sindri, 2 of 5 done. Next: Connect your coding agents", Heard.Name(line));
         var next = Named<Button>(window, "SetupHomeContinue");
-        Assert.Equal(("Continue, Your settings", true), (Heard.Name(next), next.IsEffectivelyVisible));
+        Assert.Equal(("Continue, Connect your coding agents", true), (Heard.Name(next), next.IsEffectivelyVisible));
         Assert.True(line.Bounds.Height <= 48, string.Create(CultureInfo.InvariantCulture, $"the line is {line.Bounds.Height} px high"));
         next.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Settle(window);
-        Assert.Equal((PageId.Settings, true), (shell.CurrentPage, shell.Setup.Steps.Single(s => s.Id == "profile").IsOpen));
+        Assert.Equal((PageId.Settings, true), (shell.CurrentPage, shell.Setup.Steps.Single(s => s.Id == "mcp").IsOpen));
     });
 
     [Fact]

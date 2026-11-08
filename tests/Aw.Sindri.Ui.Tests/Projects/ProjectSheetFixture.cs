@@ -9,7 +9,7 @@ namespace Aw.Sindri.Ui.Tests.Projects;
 /// <summary>What the project sheet tests share: the attached golden as the served card, edited per case, the fake launcher, and the sheet opened on it.</summary>
 internal sealed class ProjectSheetFixture
 {
-    internal const string Attached = "prj_0000000000000000000000000H";
+    internal const string Attached = "prj_00000000000000000000000008";
     internal const string Led = "linear:project/00000000-0000-4000-8000-000000000001";
 
     internal ProjectsFixture Projects { get; } = new();

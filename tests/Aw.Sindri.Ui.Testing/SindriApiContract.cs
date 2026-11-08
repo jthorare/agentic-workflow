@@ -117,9 +117,9 @@ public abstract partial class SindriApiContract
     {
         var catalog = (await Reach(new FakeSindriApi()).Commands(_api, Token)).Value;
 
-        Expect.Equal(107, catalog.Rows.Count);
+        Expect.Equal(106, catalog.Rows.Count);
         Expect.Equal("ready", catalog.Rows.Single(r => r.Action == "RebuildViews").Ui);
-        Expect.Equal("sindri profile approve [<hash>]", catalog.Rows.Single(r => r.Action == "ApproveProfile").Cli);
+        Expect.True(catalog.Rows.All(r => r.Action != "ApproveProfile"));
     }
 
     // GET /sindri/services (API P2, spec-shaped): U1 reads the view's EmptyText sentence and its asOf.

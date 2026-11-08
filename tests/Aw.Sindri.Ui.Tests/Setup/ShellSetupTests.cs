@@ -93,7 +93,7 @@ public sealed class ShellSetupTests
 
         shell.Setup.Continue();
 
-        Assert.Equal((PageId.Settings, "profile"), (shell.CurrentPage, at));
+        Assert.Equal((PageId.Settings, "mcp"), (shell.CurrentPage, at));
     }, Token);
 
     [Fact]

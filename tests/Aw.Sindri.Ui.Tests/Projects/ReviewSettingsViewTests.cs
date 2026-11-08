@@ -20,7 +20,7 @@ public sealed class ReviewSettingsViewTests : FrameHost
     {
         Server.ReviewSettingsAnswer = RouteAnswer.Api("review-settings", scenario);
         var (window, shell) = await Connected();
-        shell.Navigate(new DeepLink(DeepLinkKind.Project, "prj_0000000000000000000000000H"));
+        shell.Navigate(new DeepLink(DeepLinkKind.Project, "prj_00000000000000000000000008"));
         await Until(window, () => shell.ProjectSheet.ReviewSettings.IsShown && Visible<Border>(window, "ReviewSettingsEntryLine") is not null, "the Review settings never showed");
         return (window, shell);
     }

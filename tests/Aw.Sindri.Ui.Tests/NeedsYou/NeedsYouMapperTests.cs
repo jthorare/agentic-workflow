@@ -107,14 +107,14 @@ public sealed class NeedsYouMapperTests
     }
 
     [Fact]
-    public void Failure_actions_and_a_profile_approve_are_ready_from_the_catalog()
+    public void Failure_actions_and_the_setup_mcp_row_are_ready_from_the_catalog()
     {
         var rows = Feed().Rows;
 
         Assert.Equal(["RunService", "PauseService"], rows[1].Actions.Select(a => a.CatalogId), StringComparer.Ordinal);
         Assert.All(rows[1].Actions, a => Assert.Equal(ActionReadiness.Ready, a.Readiness));
         Assert.Equal((NeedsYouUrgency.Colour, new StateChip("FAILED", ChipTone.Fail), (string)_served[1]!["cli"]!), (rows[1].Urgency, rows[1].Chip, rows[1].Cli));
-        Assert.Equal((NeedsYouUrgency.Calm, ActionReadiness.Ready, "ApproveProfile"), (rows[2].Urgency, rows[2].Actions[0].Readiness, rows[2].PrimaryAction));
+        Assert.Equal((NeedsYouUrgency.Colour, ActionReadiness.Ready, "RegisterMcp"), (rows[2].Urgency, rows[2].Actions[0].Readiness, rows[2].PrimaryAction));
     }
 
     [Fact]
@@ -174,11 +174,11 @@ public sealed class NeedsYouMapperTests
     [Fact]
     public void The_feed_carries_the_served_sentence_the_views_state_and_the_counts()
     {
-        var empty = Feed("empty");
+        var empty = Feed("extra-nothing");
         var stalled = Feed("stalled");
         var rebuilding = Feed("rebuilding");
 
-        Assert.Equal(((string)GoldenFiles.Node("needs-you", "empty")["empty"]!, false, false), (empty.Sentence, empty.Stalled, empty.Rebuilding));
+        Assert.Equal(("Nothing needs you. 0 running, 0 queued.", false, false), (empty.Sentence, empty.Stalled, empty.Rebuilding));
         Assert.Empty(empty.Rows);
         Assert.Equal((true, false), (stalled.Stalled, stalled.Rebuilding));
         Assert.Equal((false, true), (rebuilding.Stalled, rebuilding.Rebuilding));
