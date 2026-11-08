@@ -8,7 +8,9 @@ internal sealed class Parser
     private readonly List<Tokenizer.Token> _tokens;
     private readonly List<string> _references = [];
     private readonly HashSet<string> _seen = new(StringComparer.Ordinal);
+    private const int MaxDepth = 64;
     private int _position;
+    private int _depth;
 
     private Parser(List<Tokenizer.Token> tokens)
     {
@@ -112,8 +114,18 @@ internal sealed class Parser
             return ParseComparison();
         }
 
-        _ = Next();
-        return new Evaluator.Not(ParseNot());
+        Descend(Next());
+        var operand = ParseNot();
+        _depth--;
+        return new Evaluator.Not(operand);
+    }
+
+    private void Descend(Tokenizer.Token at)
+    {
+        if (++_depth > MaxDepth)
+        {
+            throw Fail(at, "the condition is nested too deep (more than " + MaxDepth.ToString(System.Globalization.CultureInfo.InvariantCulture) + " levels of '(' and 'not'); flatten it with 'and' and 'or'");
+        }
     }
 
     private Evaluator.Node ParseComparison()
@@ -167,7 +179,9 @@ internal sealed class Parser
             throw Fail(token, "expected a value, a reference or '(' but found " + Tokenizer.Describe(token));
         }
 
+        Descend(token);
         var inner = ParseOr();
+        _depth--;
         Expect(Tokenizer.Kind.RParen, ")");
         return inner;
     }

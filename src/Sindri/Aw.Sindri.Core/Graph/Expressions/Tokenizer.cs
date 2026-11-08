@@ -79,8 +79,7 @@ internal static class Tokenizer
 
         if (char.IsAsciiDigit(c) || (c == '-' && i + 1 < text.Length && char.IsAsciiDigit(text[i + 1])))
         {
-            Number(text, ref i, tokens);
-            return true;
+            return TryNumber(text, ref i, tokens, out error);
         }
 
         if (IsIdentStart(c))
@@ -179,8 +178,9 @@ internal static class Tokenizer
         _ => '\0',
     };
 
-    private static void Number(string text, ref int i, List<Token> tokens)
+    private static bool TryNumber(string text, ref int i, List<Token> tokens, out string? error)
     {
+        error = null;
         var start = i;
         i++;
         while (i < text.Length && char.IsAsciiDigit(text[i]))
@@ -199,7 +199,14 @@ internal static class Tokenizer
 
         var raw = text[start..i];
         var number = double.Parse(raw, NumberStyles.Float, CultureInfo.InvariantCulture);
+        if (!double.IsFinite(number))
+        {
+            error = At(start + 1, "the number is too big to use; write a smaller number");
+            return false;
+        }
+
         tokens.Add(new Token(Kind.Num, raw, start + 1, Value: JsonValue.Create(number)));
+        return true;
     }
 
     private static void Word(string text, ref int i, List<Token> tokens)

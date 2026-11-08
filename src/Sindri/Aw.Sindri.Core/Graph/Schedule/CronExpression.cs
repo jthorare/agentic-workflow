@@ -115,6 +115,13 @@ public sealed class CronExpression
     /// <returns>The tick, or null when none fell in the window.</returns>
     public DateTimeOffset? LastTick(DateTimeOffset after, DateTimeOffset upTo)
     {
+        // why: walk only the last 366 days first; a dense cron finds its last tick there. A sparse one (Feb 29) has few ticks, so the full walk is cheap.
+        var floor = upTo.AddDays(-366);
+        return after < floor ? WalkTicks(floor, upTo) ?? WalkTicks(after, upTo) : WalkTicks(after, upTo);
+    }
+
+    private DateTimeOffset? WalkTicks(DateTimeOffset after, DateTimeOffset upTo)
+    {
         DateTimeOffset? last = null;
         var cursor = after;
         while (cursor < upTo)

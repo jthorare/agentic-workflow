@@ -22,7 +22,8 @@ internal sealed record CronFieldSpec(string Name, int Min, int Max, string[]? Na
 
             var (rangeText, stepText) = SplitOnce(item, '/');
             var step = 1;
-            if (stepText is not null && (!int.TryParse(stepText, NumberStyles.None, CultureInfo.InvariantCulture, out step) || step < 1))
+            // why: a step above Max can only mean one value, and a huge one would overflow `v += step`.
+            if (stepText is not null && (!int.TryParse(stepText, NumberStyles.None, CultureInfo.InvariantCulture, out step) || step < 1 || step > Max))
             {
                 error = Name + " field '" + text + "' has a bad step '" + stepText + "'; a step is a whole number of 1 or more, like */5";
                 return false;
