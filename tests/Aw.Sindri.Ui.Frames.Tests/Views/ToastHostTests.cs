@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Threading;
@@ -90,7 +91,7 @@ public sealed class ToastHostTests : IDisposable
         Assert.Equal(Avalonia.Automation.AutomationLiveSetting.Polite, Avalonia.Automation.AutomationProperties.GetLiveSetting(live));
         Assert.True(host.Bounds.Height > 0 && host.Bounds.Bottom <= window.Bounds.Height);   // drawn inside the window, at the bottom of the page
 
-        shell.Toast.PressEscape(focusOnToast: true);
+        Assert.True(shell.Toast.PressEscape(focusOnToast: true));
         Settle(window);
         Assert.False(host.IsEffectivelyVisible);
     });

@@ -4,13 +4,13 @@
              x:Class="Aw.Sindri.Ui.Views.Shell.ToastHost"
              x:DataType="shell:ShellViewModel"
              Focusable="True" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="24"
-             AutomationProperties.Name="{Binding Toast.RegionName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+             AutomationProperties.Name="{Binding Text.ToastRegion}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
   <!-- The shell's one toast (todo spec §3.3): its text and Undo, over the page's bottom. The window shows the host only while a toast shows, so F6 reaches it
        then; its words are spoken once by the window's ToastLive, not by this control. The pointer and focus pause a plain toast's timer (ToastHost.axaml.cs). -->
   <Border x:Name="ToastCard" Classes="card" Padding="14,8">
     <StackPanel Orientation="Horizontal" Spacing="12">
       <TextBlock x:Name="ToastText" Classes="body" Text="{Binding Toast.Text}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-      <Button x:Name="ToastUndo" Classes="copy" IsVisible="{Binding Toast.HasUndo}" Click="OnUndo" AutomationProperties.Name="{Binding Toast.UndoName}">
+      <Button x:Name="ToastUndo" Classes="copy" IsVisible="{Binding Toast.HasUndo}" Click="OnUndo" AutomationProperties.Name="{Binding Text.ToastUndoName}">
         <TextBlock Classes="caption" Text="{Binding Toast.UndoLabel}" />
       </Button>
     </StackPanel>
