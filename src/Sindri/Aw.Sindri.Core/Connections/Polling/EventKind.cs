@@ -37,6 +37,15 @@ public readonly record struct EventKind(string Key)
     /// <summary>Gets 'linear.comment.added'.</summary>
     public static EventKind LinearCommentAdded { get; } = new("linear.comment.added");
 
+    /// <summary>Gets 'slack.message': a message in the connection's named channel that matches its filter.</summary>
+    public static EventKind SlackMessage { get; } = new("slack.message");
+
+    /// <summary>Gets 'slack.mention': a message in the named channel that mentions the owner.</summary>
+    public static EventKind SlackMention { get; } = new("slack.mention");
+
+    /// <summary>Gets 'google.calendar.event_starting': a calendar event that starts within the connection's window.</summary>
+    public static EventKind GoogleCalendarEventStarting { get; } = new("google.calendar.event_starting");
+
     /// <summary>The id as typed back.</summary>
     /// <returns>The catalog id.</returns>
     public override string ToString() => Key;

@@ -258,6 +258,8 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IPollCursors, SqlitePollCursors>()   // PR 11: poll cursors in ledger.db
             .AddSingleton<IEventPoller>(static sp => new GitHubEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>()))
             .AddSingleton<IEventPoller>(static sp => new LinearEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>()))
+            .AddSingleton<IEventPoller>(static sp => new SlackEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>()))
+            .AddSingleton<IEventPoller>(static sp => new GoogleCalendarPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<ISignInSession>(static sp => new LoopbackSignIn(sp.GetRequiredService<IOAuthClient>(), sp.GetRequiredService<IBrowserOpener>(), TimeSpan.FromMinutes(5), System.Security.Cryptography.RandomNumberGenerator.GetBytes));
 
     // A poller sends the connection's token, so its client never follows a redirect on its own: the poller refuses one that leaves the preset's host.

@@ -25795,3 +25795,6 @@ static readonly Aw.Sindri.Core.SindriErrors.ConnectionProviderChanged -> Aw.Kern
 static readonly Aw.Sindri.Core.SindriErrors.ConnectionRateLimited -> Aw.Kernel.ErrorDefinition!
 ~override Aw.Sindri.Core.Connections.Polling.EventKind.Equals(object obj) -> bool
 static Aw.Sindri.Core.Connections.Polling.PollCatalog.Find(string! key) -> Aw.Sindri.Core.Connections.Polling.EventKind?
+static Aw.Sindri.Core.Connections.Polling.EventKind.GoogleCalendarEventStarting.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.SlackMention.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.SlackMessage.get -> Aw.Sindri.Core.Connections.Polling.EventKind

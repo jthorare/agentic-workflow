@@ -10,6 +10,8 @@ public sealed class EventPollerTests
     [Theory]
     [InlineData("github", FakeProvider.GitHubHost)]
     [InlineData("linear", FakeProvider.LinearHost)]
+    [InlineData("slack", FakeProvider.SlackHost)]
+    [InlineData("google", FakeProvider.GoogleHost)]
     public async Task The_token_is_sent_only_to_the_preset_host(string preset, string host)
     {
         var provider = new FakeProvider();
@@ -29,6 +31,8 @@ public sealed class EventPollerTests
     [Theory]
     [InlineData("github")]
     [InlineData("linear")]
+    [InlineData("slack")]
+    [InlineData("google")]
     public async Task A_429_with_Retry_After_is_a_rate_limited_result_that_keeps_the_cursor(string preset)
     {
         var provider = new FakeProvider();
@@ -47,6 +51,8 @@ public sealed class EventPollerTests
     [Theory]
     [InlineData("github")]
     [InlineData("linear")]
+    [InlineData("slack")]
+    [InlineData("google")]
     public async Task A_503_without_Retry_After_is_rate_limited_with_no_wait_named(string preset)
     {
         var provider = new FakeProvider();

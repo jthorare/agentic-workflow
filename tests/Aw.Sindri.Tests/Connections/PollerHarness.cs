@@ -1,8 +1,10 @@
+using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Connections.Polling;
 using Aw.Sindri.Infrastructure.Connections.Polling;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Connections;
+using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.Connections;
 
@@ -20,19 +22,29 @@ internal sealed record PollerHarness(IEventPoller Poller, Connection Connection,
     public const string Token = "tok-123";
 
     /// <summary>Builds the harness for a preset.</summary>
-    /// <param name="preset">'github' or 'linear'.</param>
+    /// <param name="preset">'github', 'linear', 'slack' or 'google'.</param>
     /// <param name="provider">The fake provider.</param>
-    /// <returns>The harness.</returns>
-    public static PollerHarness For(string preset, FakeProvider provider)
+    /// <param name="settings">Connection settings to add or override, or null.</param>
+    /// <returns>The harness. The Google poller's clock stands at <see cref="KnownInstants.Epoch"/>.</returns>
+    public static PollerHarness For(string preset, FakeProvider provider, IReadOnlyDictionary<string, string>? settings = null)
     {
         var secrets = new FakeConnectionSecrets();
         var name = ConnectionSamples.Name(preset, "work");
         _ = secrets.Store(name, new TokenSet(Token, RefreshToken: null, ExpiresAt: null));
-        var config = new Dictionary<string, string>(StringComparer.Ordinal) { ["repo"] = "acme/app" };
+        var config = new Dictionary<string, string>(StringComparer.Ordinal) { ["repo"] = "acme/app", ["channel"] = "C123", ["filter"] = "deploy", ["userId"] = "UOWNER" };
+        foreach (var (key, value) in settings ?? new Dictionary<string, string>(StringComparer.Ordinal))
+        {
+            config[key] = value;
+        }
+
         var connection = ConnectionSamples.Oauth(name) with { Config = config };
         var http = new HttpClient(provider, disposeHandler: false);
-        return preset == "github"
-            ? new PollerHarness(new GitHubEventPoller(http, secrets), connection, EventKind.GitHubPrMerged, http)
-            : new PollerHarness(new LinearEventPoller(http, secrets), connection, EventKind.LinearIssueLabeled, http);
+        return preset switch
+        {
+            "github" => new PollerHarness(new GitHubEventPoller(http, secrets), connection, EventKind.GitHubPrMerged, http),
+            "linear" => new PollerHarness(new LinearEventPoller(http, secrets), connection, EventKind.LinearIssueLabeled, http),
+            "slack" => new PollerHarness(new SlackEventPoller(http, secrets), connection, EventKind.SlackMessage, http),
+            _ => new PollerHarness(new GoogleCalendarPoller(http, secrets, new FakeTimeProvider(KnownInstants.Epoch)), connection, EventKind.GoogleCalendarEventStarting, http),
+        };
     }
 }

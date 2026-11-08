@@ -4,7 +4,7 @@ using System.Text;
 namespace Aw.Sindri.Testing;
 
 /// <summary>
-/// The GitHub and Linear APIs in memory, as the innermost HttpMessageHandler of a poller's HttpClient. GitHub: any GET on
+/// The GitHub, Linear, Slack and Google Calendar APIs in memory, as the innermost HttpMessageHandler of a poller's HttpClient. GitHub: any GET on
 /// api.github.com answers the added events as the repo events array, newest first. Linear: any POST on api.linear.app answers
 /// the added issues as {"data":{"issues":{"nodes":[...]}}}. A queued rate limit answers the next requests with 429 (or another
 /// status) and an optional Retry-After in seconds; a redirect answers every request with a 302 to another URL. Each request is
@@ -18,10 +18,19 @@ public sealed class FakeProvider : HttpMessageHandler
     /// <summary>The Linear API host.</summary>
     public const string LinearHost = "api.linear.app";
 
+    /// <summary>The Slack API host.</summary>
+    public const string SlackHost = "slack.com";
+
+    /// <summary>The Google API host.</summary>
+    public const string GoogleHost = "www.googleapis.com";
+
     private readonly Lock _gate = new();
     private readonly List<string> _githubEvents = [];
     private readonly List<string> _linearIssues = [];
+    private readonly List<string> _slackMessages = [];
+    private readonly List<string> _calendarEvents = [];
     private readonly List<ProviderRequest> _requests = [];
+    private string? _slackError;
     private int _limitedLeft;
     private HttpStatusCode _limitStatus = HttpStatusCode.TooManyRequests;
     private TimeSpan? _limitRetryAfter;
@@ -56,6 +65,45 @@ public sealed class FakeProvider : HttpMessageHandler
         lock (_gate)
         {
             _linearIssues.Add(json);
+        }
+    }
+
+    /// <summary>Adds a Slack message (from <see cref="ProviderFixtures"/>); conversations.history answers newest first.</summary>
+    /// <param name="json">The message.</param>
+    public void AddSlackMessage(string json)
+    {
+        lock (_gate)
+        {
+            _slackMessages.Add(json);
+        }
+    }
+
+    /// <summary>Makes every Slack request answer HTTP 200 with ok=false and this error code.</summary>
+    /// <param name="code">Slack's error code ('ratelimited', 'invalid_auth').</param>
+    public void SlackError(string code)
+    {
+        lock (_gate)
+        {
+            _slackError = code;
+        }
+    }
+
+    /// <summary>Adds a calendar event (from <see cref="ProviderFixtures"/>).</summary>
+    /// <param name="json">The event.</param>
+    public void AddCalendarEvent(string json)
+    {
+        lock (_gate)
+        {
+            _calendarEvents.Add(json);
+        }
+    }
+
+    /// <summary>Removes every calendar event (to put them back moved).</summary>
+    public void ClearCalendarEvents()
+    {
+        lock (_gate)
+        {
+            _calendarEvents.Clear();
         }
     }
 
@@ -120,6 +168,10 @@ public sealed class FakeProvider : HttpMessageHandler
         {
             GitHubHost => "[" + string.Join(',', Enumerable.Reverse(_githubEvents)) + "]",
             LinearHost => "{\"data\":{\"issues\":{\"nodes\":[" + string.Join(',', _linearIssues) + "]}}}",
+            SlackHost => _slackError is { } code
+                ? "{\"ok\":false,\"error\":\"" + code + "\"}"
+                : "{\"ok\":true,\"messages\":[" + string.Join(',', Enumerable.Reverse(_slackMessages)) + "]}",
+            GoogleHost => "{\"items\":[" + string.Join(',', _calendarEvents) + "]}",
             _ => null,
         };
         return json is null
