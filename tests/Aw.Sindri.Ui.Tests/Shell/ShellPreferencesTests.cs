@@ -122,11 +122,11 @@ public sealed class ShellPreferencesTests
 
         await shell.Palette.Run(shell.Palette.Entries.First(e => e.Id == "go:Work"), Token);
         shell.Palette.Open();
-        await shell.Palette.Run(shell.Palette.Entries.First(e => e.Id == "go:Recipes"), Token);
+        await shell.Palette.Run(shell.Palette.Entries.First(e => e.Id == "go:Context"), Token);
         shell.Palette.Open();
         await shell.Palette.Run(shell.Palette.Entries.First(e => e.Id == "go:Work"), Token);
 
-        Assert.Equal(["go:Recipes", "go:Work"], (await Stored()).PaletteHistory, StringComparer.Ordinal);
+        Assert.Equal(["go:Context", "go:Work"], (await Stored()).PaletteHistory, StringComparer.Ordinal);
         Assert.Equal(PageId.Work, shell.CurrentPage);
     }
 }

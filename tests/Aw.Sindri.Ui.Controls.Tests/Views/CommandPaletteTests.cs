@@ -249,7 +249,7 @@ public sealed class CommandPaletteTests : IDisposable
         Press(window, Key.K, PhysicalKey.K, _command, "k");
         var scroll = Named<ScrollViewer>(window, "PaletteScroll");
 
-        Assert.Equal(("ApproveAllRecipes", 0d), (shell.Palette.Selected?.Id, scroll.Offset.Y));   // the first enabled action by name: the catalog now has ApproveAllRecipes ready
+        Assert.Equal(("CreateItem", 0d), (shell.Palette.Selected?.Id, scroll.Offset.Y));   // the first enabled action by name
         var heading = Named<ItemsControl>(window, "PaletteSections").GetVisualDescendants().OfType<TextBlock>().First(t => t.Text == "Actions");
         Assert.True(heading.TranslatePoint(default, scroll) is { Y: >= 0 } at && at.Y < scroll.Viewport.Height, "the Actions heading is in view");
         Frame(window, "palette-top");

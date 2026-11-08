@@ -74,7 +74,7 @@ public sealed partial class CommandPaletteViewModelTests
         _palette.Open();
 
         Assert.Equal(
-            ["Home G H", "Projects G P", "Workflows G W", "Work G Q", "Workflow types G R", "Context G C", "Agents G A", "System G .", "Reviews G V", "Jobs G J", "Settings ⌘,"],
+            ["Home G H", "Projects G P", "Work G Q", "Context G C", "Agents G A", "System G .", "Reviews G V", "Jobs G J", "Settings ⌘,"],
             _palette.Sections[1].Entries.Select(e => e.Label + " " + e.Key),
             StringComparer.Ordinal);
     }
@@ -659,8 +659,8 @@ public sealed partial class CommandPaletteViewModelTests
         Assert.Contains(_palette.Selected!.Name, _palette.Announcement, StringComparison.Ordinal);
         Assert.Contains("2 of", _palette.Announcement, StringComparison.Ordinal);
 
-        _palette.Query = "workflow types";
-        Assert.Contains("Workflow types", _palette.Announcement, StringComparison.Ordinal);
+        _palette.Query = "context";
+        Assert.Contains(_palette.Selected!.Name, _palette.Announcement, StringComparison.Ordinal);
 
         _palette.Query = "zzzz";
         Assert.Equal("Nothing matches", _palette.Announcement);

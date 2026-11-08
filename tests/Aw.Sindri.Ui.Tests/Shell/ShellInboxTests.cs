@@ -44,14 +44,14 @@ public sealed class ShellInboxTests
     [Fact]
     public Task Opening_the_inbox_keeps_Home_the_page_and_selects_the_first_row() => UiThread.Run(async () =>
     {
-        var shell = await Shell(NeedsYouRows.Failure(), NeedsYouRows.Park("desk:WFI-1"));
+        var shell = await Shell(NeedsYouRows.Failure(), NeedsYouRows.Decision());
 
         shell.OpenNeedsYouInbox();
 
         Assert.True(shell.IsNeedsYouInbox);
         Assert.Equal(PageId.Home, shell.CurrentPage);
         Assert.True(shell.IsHome);
-        Assert.Equal("desk:WFI-1", shell.NeedsYou.SelectedId);
+        Assert.Equal("decision:DEC-1", shell.NeedsYou.SelectedId);
     }, Token);
 
     [Fact]
@@ -74,7 +74,7 @@ public sealed class ShellInboxTests
         shell.Navigate(new DeepLink(DeepLinkKind.NeedsYou, "desk:gone"));
 
         Assert.True(shell.IsNeedsYouInbox);
-        Assert.Equal("desk:WFI-1", shell.NeedsYou.SelectedId);
+        Assert.Equal("decision:DEC-1", shell.NeedsYou.SelectedId);
     }, Token);
 
     [Fact]
@@ -104,7 +104,7 @@ public sealed class ShellInboxTests
     [Fact]
     public Task J_and_K_walk_the_inbox_not_Homes_capped_list() => UiThread.Run(async () =>
     {
-        var shell = await Shell(NeedsYouRows.Failure(), NeedsYouRows.Park("desk:WFI-1"));
+        var shell = await Shell(NeedsYouRows.Failure(), NeedsYouRows.Decision());
         shell.OpenNeedsYouInbox();
 
         _ = shell.Press("J");
@@ -143,13 +143,13 @@ public sealed class ShellInboxTests
     [Fact]
     public Task The_inbox_lists_every_row_after_Homes_decisions_filter_and_Home_gets_its_filter_back() => UiThread.Run(async () =>
     {
-        var shell = await Shell(NeedsYouRows.Decision(), NeedsYouRows.Park("desk:WFI-1"), NeedsYouRows.Failure());
+        var shell = await Shell(NeedsYouRows.Decision(), NeedsYouRows.Profile(), NeedsYouRows.Failure());
         shell.GoTo(PageId.Home, HomeFilter.Decisions);
         _ = Assert.Single(shell.NeedsYou.Seen.Rows);
 
         shell.OpenNeedsYouInbox();
-        Assert.Equal(["Your approvals", "Agent decisions", "Something failed"], shell.Inbox.Groups.Select(g => g.Heading), StringComparer.Ordinal);
-        Assert.Equal("3 waiting, 0 runs", shell.Inbox.CountText);
+        Assert.Equal([Labels.NeedsYouGroupDecisions, Labels.NeedsYouGroupSettings, Labels.NeedsYouGroupFailures], shell.Inbox.Groups.Select(g => g.Heading), StringComparer.Ordinal);
+        Assert.Equal("3 waiting", shell.Inbox.CountText);
 
         _ = shell.LeaveNeedsYouInbox();
         _ = Assert.Single(shell.NeedsYou.Seen.Rows);

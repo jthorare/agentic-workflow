@@ -38,11 +38,11 @@ public sealed class ShellSheetKindTests
 
         shell.Navigate(Link("item/X"));
         var item = shell.SheetLink;
-        shell.Navigate(Link("workflow/X"));
-        var workflow = shell.SheetLink;
+        shell.Navigate(Link("job/X"));
+        var job = shell.SheetLink;
 
         Assert.Equal(Link("item/X"), item);
-        Assert.Equal(Link("workflow/X"), workflow);
+        Assert.Equal(Link("job/X"), job);
         Assert.Equal("X", shell.SheetSubject);
     }
 
@@ -51,14 +51,14 @@ public sealed class ShellSheetKindTests
     {
         var shell = await Shell();
         shell.Navigate(Link("item/A"));
-        shell.Navigate(Link("recipe/workflow.project-build"));
+        shell.Navigate(Link("job/JOB-A"));
         shell.CloseSheet();
 
         shell.ReopenSheet();
 
         Assert.True(shell.IsSheetOpen);
-        Assert.Equal(Link("recipe/workflow.project-build"), shell.SheetLink);
-        Assert.Equal("workflow.project-build", shell.SheetSubject);
+        Assert.Equal(Link("job/JOB-A"), shell.SheetLink);
+        Assert.Equal("JOB-A", shell.SheetSubject);
     }
 
     [Fact]
@@ -129,10 +129,8 @@ public sealed class ShellSheetKindTests
         Assert.Contains("IsVisible=\"{Binding IsSheetPlaceholderShown}\"", body, StringComparison.Ordinal);
     }
 
-    // a11y-1: the kind is part of the name, so "workflow/X" and "recipe/X" are not both "X". Ids that name themselves (ITM-, REQ-, JOB-) stay bare.
+    // a11y-1: the kind is part of the name, so "node/X" and "job/X" are not both "X". Ids that name themselves (ITM-, REQ-, JOB-) stay bare.
     [Theory]
-    [InlineData("workflow/WFI-1", "Workflow WFI-1", "Reopen workflow")]
-    [InlineData("recipe/workflow.project", "Recipe Project", "Reopen recipe Project")]
     [InlineData("node/src.Api", "Node src.Api", "Reopen node src.Api")]
     [InlineData("session/codex/S1", "Session codex/S1", "Reopen session codex/S1")]
     [InlineData("system/docker", "System docker", "Reopen system docker")]

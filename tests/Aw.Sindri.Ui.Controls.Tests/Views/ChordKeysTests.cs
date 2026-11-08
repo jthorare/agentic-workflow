@@ -288,7 +288,7 @@ public sealed class ChordKeysTests : IDisposable
         var (_, shell) = await Show(ShellState.Normal);
         Assert.True(shell.PressKey("G"));
         AdvanceOnAnotherThread(ShellViewModel.ChordWait);   // the first chord's wait is over; its continuation waits for the UI thread
-        Assert.True(shell.PressKey("W"));
+        Assert.True(shell.PressKey("P"));
         Assert.True(shell.PressKey("G"));
 
         Dispatcher.UIThread.RunJobs();   // the old continuation runs now
