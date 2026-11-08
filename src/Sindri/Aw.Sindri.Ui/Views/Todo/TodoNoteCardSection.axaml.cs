@@ -25,9 +25,9 @@ internal sealed partial class TodoNoteCardSection : UserControl
         _card?.LibraryRequested += OnLibraryRequested;
     }
 
-    // The Library card sits on the same Settings page, in the slot SettingsView names LibrarySettingsSlot.
+    // The Library card sits on the same Settings page, in the slot the Settings page names LibrarySettingsSlot.
     private void OnLibraryRequested(object? sender, EventArgs e) =>
-        this.FindAncestorOfType<SettingsView>()?.FindControl<Control>("LibrarySettingsSlot")?.BringIntoView();
+        this.GetVisualAncestors().OfType<Control>().Select(a => a.FindControl<Control>("LibrarySettingsSlot")).FirstOrDefault(c => c is not null)?.BringIntoView();
 
     private void OnOpenLibrary(object? sender, RoutedEventArgs e) => _card?.OpenLibrary();
 
