@@ -3,8 +3,8 @@ using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Infrastructure;
 using Aw.Sindri.Infrastructure.Connections;
 using Aw.Sindri.Infrastructure.Ledger;
-using Aw.Sindri.Tests.Ledger;
 using Aw.Sindri.Testing.Connections;
+using Aw.Sindri.Tests.Ledger;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.Connections;
