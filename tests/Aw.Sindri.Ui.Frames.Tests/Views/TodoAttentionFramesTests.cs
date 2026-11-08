@@ -325,7 +325,7 @@ public sealed class TodoAttentionFramesTests : IDisposable
         _server.TodoPickAnswer = RouteAnswer.Problem(HttpStatusCode.Conflict, "SND-TODO-409", "The note's line changed since.");
 
         Key(window, PhysicalKey.Digit2);
-        await Until(window, () => Texts(window, "TodoAttentionNotice").Length == 1);
+        await Until(window, () => Texts(window, "TodoAttentionFormNotice").Length == 1, "the open form never showed the line-moved notice");
         await Until(window, () => window.FocusManager?.GetFocusedElement() is Button, "focus was lost with the redrawn form");
         _server.TodoPickAnswer = null;
         _clock.Advance(TimeSpan.FromSeconds(1));
