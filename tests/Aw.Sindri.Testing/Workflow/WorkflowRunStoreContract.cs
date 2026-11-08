@@ -148,4 +148,50 @@ public abstract class WorkflowRunStoreContract
 
         Expect.Equal(SindriErrors.GraphRunNotFound.Code, result.Error.Code);
     }
+
+    /// <summary>'one-per-workflow' with a run in flight inserts nothing.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Admit_in_one_per_workflow_skips_while_a_run_is_in_flight()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        var first = await store.Admit(Run(1), GraphConcurrency.OnePerWorkflow, Token);
+
+        var second = await store.Admit(Run(2), GraphConcurrency.OnePerWorkflow, Token);
+
+        Expect.Equal(GraphStartKind.Started, first.Value);
+        Expect.Equal(GraphStartKind.Skipped, second.Value);
+        Expect.Sequence([Run(1).Id], (await store.InFlight(_workflow, Token)).Value.Select(static r => r.Id));
+        Expect.Equal(SindriErrors.GraphRunNotFound.Code, (await store.Get(Run(2).Id, Token)).Error.Code);
+    }
+
+    /// <summary>'queue' with a run in flight inserts the run as queued; a used id is still refused.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Admit_in_queue_mode_queues_while_a_run_is_in_flight()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Admit(Run(1), GraphConcurrency.Queue, Token)).Value;
+
+        var second = await store.Admit(Run(2), GraphConcurrency.Queue, Token);
+        var again = await store.Admit(Run(2), GraphConcurrency.Queue, Token);
+
+        Expect.Equal(GraphStartKind.Queued, second.Value);
+        Expect.Equal(WorkflowRunStatus.Queued, (await store.Get(Run(2).Id, Token)).Value.Status);
+        Expect.Equal(SindriErrors.GraphRunIdTaken.Code, again.Error.Code);
+    }
+
+    /// <summary>The check and the insert are one step: 20 triggers racing give one run and 19 skips.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Two_admits_racing_in_one_per_workflow_start_exactly_one()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+
+        var results = await Task.WhenAll(Enumerable.Range(1, 20).Select(n => Task.Run(async () => await store.Admit(Run(n), GraphConcurrency.OnePerWorkflow, Token), Token)));
+
+        Expect.Equal(1, results.Count(static r => r.IsSuccess && r.Value == GraphStartKind.Started));
+        Expect.Equal(19, results.Count(static r => r.IsSuccess && r.Value == GraphStartKind.Skipped));
+        _ = Expect.Only((await store.InFlight(_workflow, Token)).Value);
+    }
 }

@@ -47,6 +47,8 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
         }, cancellationToken);
     }
 
+    public ValueTask<Result<GraphStartKind>> Admit(WorkflowRun run, GraphConcurrency mode, CancellationToken cancellationToken) => throw new NotSupportedException();
+
     public async ValueTask<Result<WorkflowRun>> Get(WorkflowRunId id, CancellationToken cancellationToken)
     {
         var found = await RecipeSessions.Read(database, LedgerDatabase.WorkflowRunsVersion, empty: null, (session, token) => FindRun(session, id, token), cancellationToken).ConfigureAwait(false);
