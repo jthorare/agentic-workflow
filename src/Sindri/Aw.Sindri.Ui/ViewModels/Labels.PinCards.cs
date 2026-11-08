@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Sindri.Ui.Api.Context;
 
 namespace Aw.Sindri.Ui.ViewModels;
 
@@ -87,12 +88,25 @@ internal static partial class Labels
     /// <returns>"+4 features".</returns>
     internal static string PinMovedGained(int count) => string.Create(CultureInfo.InvariantCulture, $"+{count} {(count == 1 ? "feature" : "features")}");
 
-    /// <summary>The what-moved part for features the pin lost. Guess: features that left into no concept read "now in no concept".</summary>
+    /// <summary>The what-moved part for features the pin lost.</summary>
     /// <param name="count">How many.</param>
-    /// <param name="places">Up to two names of where they went; empty when they went into no concept.</param>
-    /// <returns>"−2 features (now in Notify and Sign in)".</returns>
-    internal static string PinMovedLost(int count, IReadOnlyList<string> places) =>
-        string.Create(CultureInfo.InvariantCulture, $"\u2212{count} {(count == 1 ? "feature" : "features")} (now in {(places.Count == 0 ? "no concept" : string.Join(" and ", places))})");
+    /// <param name="to">Where they went; an entry with no name, or no entry at all, is "no concept".</param>
+    /// <returns>"−3 features (now in Sign in)", "−3 features (2 now in Sign in, 1 in no concept)" or "−6 features (now in Notify, Sign in and 1 other)".</returns>
+    internal static string PinMovedLost(int count, IReadOnlyList<PinMovedTo> to)
+    {
+        var head = string.Create(CultureInfo.InvariantCulture, $"\u2212{count} {(count == 1 ? "feature" : "features")}");
+        return to.Count switch
+        {
+            0 => $"{head} (now in {PinNoConcept})",
+            1 => $"{head} (now in {PlaceName(to[0])})",
+            2 => string.Create(CultureInfo.InvariantCulture, $"{head} ({to[0].Features} now in {PlaceName(to[0])}, {to[1].Features} in {PlaceName(to[1])})"),
+            _ => string.Create(CultureInfo.InvariantCulture, $"{head} (now in {PlaceName(to[0])}, {PlaceName(to[1])} and {to.Count - 2} {(to.Count == 3 ? "other" : "others")})"),
+        };
+    }
+
+    private const string PinNoConcept = "no concept";
+
+    private static string PlaceName(PinMovedTo place) => place.Name ?? PinNoConcept;
 
     /// <summary>The what-moved part for the net change in linked records.</summary>
     /// <param name="net">Positive for more records, negative for fewer; never 0.</param>
@@ -105,10 +119,10 @@ internal static partial class Labels
     /// <returns>"+4 features; records linking…".</returns>
     internal static string PinMovedRecordsLinking(string features) => $"{features}; records linking\u2026";
 
-    /// <summary>The what-moved line when the relink failed. Guess wording.</summary>
-    /// <param name="features">The feature parts.</param>
-    /// <returns>"+4 features; couldn't link records".</returns>
-    internal static string PinMovedRecordsFailed(string features) => $"{features}; couldn't link records";
+    /// <summary>The what-moved line when the relink failed.</summary>
+    /// <param name="features">The feature parts; empty when no feature moved.</param>
+    /// <returns>"+4 features; records not linked yet, retrying", or "Records not linked yet, retrying" alone.</returns>
+    internal static string PinMovedRecordsFailed(string features) => features.Length == 0 ? "Records not linked yet, retrying" : $"{features}; records not linked yet, retrying";
 
     /// <summary>The problem line for features the map no longer has.</summary>
     /// <param name="gone">How many.</param>
