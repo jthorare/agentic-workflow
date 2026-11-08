@@ -21,6 +21,8 @@ internal static partial class Labels
 
     internal const string ReviewFixRetry = "Retry post";
 
+    internal const string ReviewFixSendAgain = "Send again";
+
     internal const string ReviewFixClose = "Close";
 
     internal const string ReviewFixSentHeading = "Fix task sent";

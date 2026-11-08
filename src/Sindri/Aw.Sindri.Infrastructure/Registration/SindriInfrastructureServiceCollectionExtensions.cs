@@ -173,7 +173,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
     {
         return services
             .AddSingleton<IIdGenerator, GuidV7Ids>().AddSingleton<IProcessProbe, PosixProcessProbe>()
-            .AddSingleton<LedgerDatabase>()
+            .AddSingleton<LedgerDatabase>().AddSingleton<IStoreCheckpoints>(static sp => new SqliteStoreCheckpoints([sp.GetRequiredService<SindriSettings>().LedgerPath, sp.GetRequiredService<SindriSettings>().ViewsPath]))   // #2221: the tick that truncates both logs
             .AddSingleton<ILedgerStore, SqliteLedger>()
             .AddSingleton<ILedgerReader, SqliteLedgerReader>()
             .AddSingleton<IMirroredSequences, SqliteMirroredSequences>()   // API P13: which ledger row mirrors a Temporal event

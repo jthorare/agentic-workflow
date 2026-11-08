@@ -95,6 +95,9 @@ internal static partial class Labels
     /// <summary>The line when the API cannot be reached.</summary>
     internal const string LinearSindriDown = "Sindri isn't answering";
 
+    /// <summary>The line when the running Sindri answers but is an older build than the app, so it has no Linear routes (#2247).</summary>
+    internal const string LinearSindriOlder = "The running Sindri is older than this app and has no Linear yet. Restart it to use Linear: sindri stop && sindri";
+
     /// <summary>When the rows shown were read.</summary>
     /// <param name="time">HH:mm.</param>
     /// <returns>"as of 10:05".</returns>
