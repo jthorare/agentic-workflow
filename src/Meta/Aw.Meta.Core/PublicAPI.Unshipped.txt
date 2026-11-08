@@ -2163,13 +2163,14 @@ Aw.Meta.Core.Ports.IBugfixRecords
 Aw.Meta.Core.Ports.IBugfixRecords.Naming(string! worktree, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Ports.BugfixCandidate!>!>!>
 Aw.Meta.Core.Worktrees.WorktreeInspector.WorktreeInspector(Aw.Meta.Core.Coordination.RepoCommands! repo, Aw.Meta.Core.Ports.IProcessLocations! processes, Aw.Meta.Core.MetaPaths! paths, Aw.Meta.Core.Ports.IKeyValueStore! values, Aw.Meta.Core.Ports.IWorktreeFiles! files, Aw.Meta.Core.Ports.IBugfixRecords! bugfix) -> void
 Aw.Meta.Core.Worktrees.WorktreeScope.Discarded.get -> bool
+Aw.Meta.Core.Worktrees.WorktreeScope.Done.get -> bool
 Aw.Meta.Core.Worktrees.WorktreeScope.Path.get -> string?
 override Aw.Meta.Core.Ports.BugfixCandidate.Equals(object? obj) -> bool
 override Aw.Meta.Core.Ports.BugfixCandidate.GetHashCode() -> int
 override Aw.Meta.Core.Ports.BugfixCandidate.ToString() -> string!
 static Aw.Meta.Core.Ports.BugfixCandidate.operator !=(Aw.Meta.Core.Ports.BugfixCandidate? left, Aw.Meta.Core.Ports.BugfixCandidate? right) -> bool
 static Aw.Meta.Core.Ports.BugfixCandidate.operator ==(Aw.Meta.Core.Ports.BugfixCandidate? left, Aw.Meta.Core.Ports.BugfixCandidate? right) -> bool
-static Aw.Meta.Core.Worktrees.WorktreeScope.ForPath(string! path, bool discarded, bool includeNoPr = false) -> Aw.Meta.Core.Worktrees.WorktreeScope!
+static Aw.Meta.Core.Worktrees.WorktreeScope.ForPath(string! path, bool discarded, bool includeNoPr = false, bool done = false) -> Aw.Meta.Core.Worktrees.WorktreeScope!
 Aw.Meta.Core.Coordination.LaneBeats.LastCli(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.DateTimeOffset?>!>
 Aw.Meta.Core.Lanes.LaneHookTrace
 Aw.Meta.Core.Lanes.LaneHookTrace.At.get -> System.DateTimeOffset
