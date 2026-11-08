@@ -216,9 +216,6 @@ internal sealed partial class TodoVerbs(ControlPlaneClient client, Output output
         return text.ToString();
     }
 
-    private static string RowLine(TodoRow row, bool withState) =>
-        RowLine(new RowFields(row.Id, StateOf(row), row.Due, row.Text, row.Links, row.Conflict is not null), withState);
-
     private static string RowLine(TodoItem row, bool withState) =>
         RowLine(new RowFields(row.Id, row.Removed ? "removed" : row.DoneAt is not null ? "done" : "open", row.Due, row.Text, [.. row.Links.Select(static l => l.Href)], row.Conflict is not null), withState);
 
@@ -247,9 +244,7 @@ internal sealed partial class TodoVerbs(ControlPlaneClient client, Output output
         return line.ToString();
     }
 
-    private static string StateOf(TodoRow row) => row.Removed ? "removed" : row.DoneAt is not null ? "done" : "open";
-
-    private static string RenderOne(TodoRow row)
+    private static string RenderOne(TodoItem row)
     {
         var text = new StringBuilder();
         _ = text.AppendLine(RowLine(row, withState: true));
