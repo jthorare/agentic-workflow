@@ -7,6 +7,7 @@ using Aw.Sindri.Ui.ViewModels.NeedsYou;
 using Aw.Sindri.Ui.ViewModels.Palette;
 using Aw.Sindri.Ui.ViewModels.Queue;
 using Aw.Sindri.Ui.ViewModels.Setup;
+using Aw.Sindri.Ui.ViewModels.Todo;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
 
@@ -57,6 +58,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         Health.Pill.PropertyChanged += OnPillChanged;
         CommandOutcome = new CommandOutcomeRegion(control => Health.Banner.HasRebuild && ReferenceEquals(Health.Banner.Rebuild, control));
         Create = new CreateItemViewModel(Health.Catalog, () => Health.ApiUrl(), api);
+        QuickAdd = new QuickAddViewModel(api, () => Health.ApiUrl(), clock);
         Palette = new CommandPaletteViewModel(Health.Catalog, GoTo, RememberRun, CommandOutcome, () => Create.Open());
         Shortcuts = new ShortcutsViewModel(Health.Catalog);
         Queue = new QueueViewModel(api, Health.Catalog, clock);
