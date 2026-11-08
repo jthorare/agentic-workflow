@@ -3,7 +3,7 @@ using Aw.Sindri.Ui.Api.Context;
 
 namespace Aw.Sindri.Ui.ViewModels.Context.Concepts;
 
-/// <summary>The §3.7 table as one pure function: where a pin stands against the approval and the map rebuild decides the card's state line and button.</summary>
+/// <summary>The §3.7 table as one pure function: where a pin stands against the map rebuild decides the card's state line and button.</summary>
 internal static class PinLineRules
 {
     private const int MostLines = 3;
@@ -20,16 +20,11 @@ internal static class PinLineRules
         ArgumentNullException.ThrowIfNull(pin);
         ArgumentNullException.ThrowIfNull(rebuild);
         ArgumentNullException.ThrowIfNull(zone);
-        var applied = pin.State switch
-        {
-            PinStates.Waiting => new PinCardLines([Labels.PinNotApproved, Labels.PinOtherChangesWaiting], PinCardAction.ReviewAndApprove),
-            PinStates.Removing => new PinCardLines([Labels.PinUnpinNotApproved, Labels.PinOtherChangesWaiting], PinCardAction.ReviewAndApprove),
-            _ => Applying(pin, rebuild, zone),
-        };
+        var applied = Applying(pin, rebuild, zone);
         return new PinCardLines([.. applied.Lines.Concat([problem, moved]).OfType<string>().Take(MostLines)], applied.Action);
     }
 
-    // An approved pin the current map doesn't have yet is waiting on the rebuild; one the map has says nothing about it.
+    // A pin the current map doesn't have yet is waiting on the rebuild; one the map has says nothing about it.
     private static PinCardLines Applying(PinView pin, MapRebuildView rebuild, TimeZoneInfo zone)
     {
         if (pin.Change is null)

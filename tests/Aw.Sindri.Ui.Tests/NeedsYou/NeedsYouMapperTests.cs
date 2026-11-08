@@ -119,13 +119,6 @@ public sealed class NeedsYouMapperTests
     }
 
     [Fact]
-    public void A_profile_subject_maps_and_a_null_one_stays_null()
-    {
-        Assert.Equal(new NeedsYouSubject("profile", (string)_served[2]!["subject"]!["id"]!), Feed().Rows[2].Subject);
-        Assert.Null(Feed("extra-profile-null-subject").Rows[2].Subject);
-    }
-
-    [Fact]
     public void A_row_with_a_null_primary_action_has_no_primary_control()
     {
         var row = Feed("unknown-service").Rows[0];   // the API's own golden: a profile service this build lacks, served with a null primaryAction
@@ -195,16 +188,13 @@ public sealed class NeedsYouMapperTests
 
     // review run 1, K5: the served reason sentence reaches the sheets (the label is the row's secondary line).
     [Fact]
-    public void The_failure_and_profile_sheets_show_the_served_reason_from_the_golden()
+    public void The_failure_sheet_shows_the_served_reason_from_the_golden()
     {
         var rows = Feed().Rows;
         var failure = rows.First(r => r.Subject?.Kind == "service");
-        var profile = rows.First(r => r.Id == "profile:drift");
         var servedFailure = (string)_served.First(r => (string)r!["id"]! == failure.Id)!["reason"]!;
-        var servedProfile = (string)_served.First(r => (string)r!["id"]! == profile.Id)!["reason"]!;
 
         Assert.Contains(new SheetDetail("Why", servedFailure), FailureDetails.Build(failure, "1h"));
-        Assert.Contains(new SheetDetail("Changed", servedProfile), ProfileDetails.Build(profile));
     }
 
     // q93: the catalog's ui word gates nothing; an action the catalog lists is ready, one it does not list waits for the catalog.

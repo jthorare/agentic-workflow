@@ -41,7 +41,7 @@ internal sealed partial class NeedsYouConfirm
 
     // The approval of the shown row's kind, to its own route: the refusal, or whether it approved. A workflow is approved at the version and hash served now.
     private Task<(Error? Refused, bool Approved)> Send(Uri api) =>
-        Kind == NeedsYouConfirmKind.Recipe ? SendRecipe(_api, api, _hash, _cli) : SendProfile(_api, api, _hash);
+        SendRecipe(_api, api, _hash, _cli);
 
     /// <summary>Approves a changed workflow at the version and hash the recipe list serves now (the hash the row's command names when it names one): the one send the bar and Home's row share.</summary>
     /// <param name="client">The API.</param>
@@ -65,17 +65,5 @@ internal sealed partial class NeedsYouConfirm
 
         var approved = await client.ApproveRecipe(api, recipe.Id, recipe.Hash, CancellationToken.None).ConfigureAwait(true);
         return (approved.IsError ? approved.Error : null, approved.IsSuccess);
-    }
-
-    /// <summary>Approves the changed settings at the hash the row names: the one send the bar and Home's row share.</summary>
-    /// <param name="client">The API.</param>
-    /// <param name="api">The control plane's address.</param>
-    /// <param name="hash">The profile's hash (the row's subject).</param>
-    /// <returns>The refusal, or whether it approved.</returns>
-    internal static async Task<(Error? Refused, bool Approved)> SendProfile(ISindriApi client, Uri api, string hash)
-    {
-        ArgumentNullException.ThrowIfNull(client);
-        var profile = await client.ApproveProfile(api, new ApproveProfileRequest(hash), CancellationToken.None).ConfigureAwait(true);
-        return (profile.IsError ? profile.Error : null, profile.IsSuccess && profile.Value.Approved);
     }
 }

@@ -17,7 +17,6 @@ internal sealed partial class AddSeveralPagesViewModel
         }
 
         var save = Pending();
-        var approve = Approves(save);
         Say(string.Empty);
         IsSaving = true;
         OnChanged(nameof(IsSaving));
@@ -26,7 +25,7 @@ internal sealed partial class AddSeveralPagesViewModel
         try
         {
             // The ifHash is the hash the rows were built on: the preview's profileHash in paste mode, FileHash ?? LiveHash in Accept all suggested (#1826's rule, as the single page sheet).
-            saved = await _writes.Save(save, _hash, approve, cancellationToken).ConfigureAwait(true);
+            saved = await _writes.Save(save, _hash, cancellationToken).ConfigureAwait(true);
         }
         catch (OperationCanceledException)
         {
@@ -82,12 +81,9 @@ internal sealed partial class AddSeveralPagesViewModel
         FocusRequested?.Invoke(this, new ValueEventArgs<AddSeveralPagesFocus>(AddSeveralPagesFocus.Text));
     }
 
-    // The write for the ticked rows: their pages, and the key paths that already waited, so a page with no id yet finds its own path afterwards.
+    // The write for the ticked rows.
     private PageSave Pending() =>
-        new([.. Rows.Where(static r => r.Ticked).Select(static r => r.Page).OfType<PagesPreviewPage>().Select(Draft)], []) { Before = _waiting?.ChangedPaths ?? [] };
-
-    // One click saves and approves only when nothing but these pages waits.
-    private bool Approves(PageSave save) => _waiting?.OnlyMine(PageWrites.Mine(save)) == true;
+        new([.. Rows.Where(static r => r.Ticked).Select(static r => r.Page).OfType<PagesPreviewPage>().Select(Draft)], []);
 
     private static PageDraft Draft(PagesPreviewPage page) =>
         new(page.Id, page.Name, page.Repo, page.Surface, Owner: false, [.. page.Actions.Select(static a => new PageActionDraft(a.Id, a.Name, a.Action, a.Concepts))]);
@@ -109,7 +105,7 @@ internal sealed partial class AddSeveralPagesViewModel
         var ticked = Rows.Where(static r => r.Ticked).Select(static r => r.Block).ToHashSet();
         var picks = Rows.ToDictionary(static r => r.Block, static r => r.Picks);
         var read = await _writes.Preview(_readText, _repo, cancellationToken).ConfigureAwait(true);
-        _waiting = await _writes.Waiting(cancellationToken).ConfigureAwait(true);
+        _hashes = await _writes.Hashes(cancellationToken).ConfigureAwait(true);
         if (read.Preview is { } preview)
         {
             Fill(preview, _readText);
@@ -138,7 +134,7 @@ internal sealed partial class AddSeveralPagesViewModel
     {
         switch (saved.State)
         {
-            case PageSavedState.Approved or PageSavedState.Waiting:
+            case PageSavedState.Applied:
                 Saved?.Invoke(this, EventArgs.Empty);
                 Close();
                 break;

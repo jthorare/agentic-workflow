@@ -12,7 +12,6 @@ namespace Aw.Sindri.Ui.Testing;
 internal sealed partial class FakeSindriApi
 {
     private readonly List<ApproveAllRequest> _approvals = [];
-    private readonly List<ApproveProfileRequest> _profileApprovals = [];
     private readonly List<RecipeApprovalSent> _recipeApprovals = [];
     private int _planCalls;
     private int _profileCalls;
@@ -23,9 +22,6 @@ internal sealed partial class FakeSindriApi
 
     /// <summary>POST /sindri/workflow/recipes/approve-all's answer.</summary>
     public RouteAnswer ApproveAllStartAnswer { get; set; } = RouteAnswer.SpecShaped("recipes-approve-all-start", "started");
-
-    /// <summary>POST /sindri/profile/approve's answer.</summary>
-    public RouteAnswer ApproveProfileAnswer { get; set; } = RouteAnswer.Api("profile-approve", "approved");
 
     /// <summary>GET /sindri/profile's answer: an approved profile (no summary) by default.</summary>
     public RouteAnswer ProfileAnswer { get; set; } = RouteAnswer.Api("profile", "approved");
@@ -38,12 +34,6 @@ internal sealed partial class FakeSindriApi
 
     /// <summary>Every recipe approval received, in order.</summary>
     public IReadOnlyList<RecipeApprovalSent> RecipeApprovals { get { lock (_gate) { return [.. _recipeApprovals]; } } }
-
-    /// <summary>Held open until set: the profile approval waits for it (the app is sending meanwhile).</summary>
-    public TaskCompletionSource? ApproveProfileGate { get; set; }
-
-    /// <summary>Every profile approval body received, in order.</summary>
-    public IReadOnlyList<ApproveProfileRequest> ProfileApprovals { get { lock (_gate) { return [.. _profileApprovals]; } } }
 
     /// <summary>What the job read answers once <see cref="ApproveAllJobAnswers"/> has none left to give.</summary>
     public RouteAnswer ApproveAllJobAnswer { get; set; } = RouteAnswer.SpecShaped("approve-all-job", "succeeded");
@@ -97,22 +87,6 @@ internal sealed partial class FakeSindriApi
         }
 
         return Task.FromResult(Answer<ApproveAllJob>(api, WorkflowRoutes.Job(id), LastJobAnswer));
-    }
-
-    public async Task<Result<ProfileApproved>> ApproveProfile(Uri api, ApproveProfileRequest request, CancellationToken cancellationToken)
-    {
-        if (NotReceived<ProfileApproved>(api) is { } unanswered)
-        {
-            return unanswered;
-        }
-
-        lock (_gate)
-        {
-            _profileApprovals.Add(request);
-        }
-
-        await WaitFor(ApproveProfileGate, cancellationToken).ConfigureAwait(false);
-        return Answer<ProfileApproved>(api, "/sindri/profile/approve", ApproveProfileAnswer);
     }
 
     public Task<Result<ProfileRead>> ProfileSummary(Uri api, CancellationToken cancellationToken)

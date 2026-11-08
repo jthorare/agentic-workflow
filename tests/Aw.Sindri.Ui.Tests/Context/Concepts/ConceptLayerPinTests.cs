@@ -18,7 +18,7 @@ public sealed class ConceptLayerPinTests
 {
     private static readonly MapRebuildView _idle = new(MapRebuildPhases.Idle, Progress: null, RetryAt: null, Stale: false, Failed: null);
 
-    private static PinView Pin(string id, string name, string state = PinStates.Approved, string? change = null, params string[] features) =>
+    private static PinView Pin(string id, string name, string state = "approved", string? change = null, params string[] features) =>
         new(id, name, "def of " + name, ["word"], features, FolderRules: 0, "profile", state, change);
 
     private static ConceptLayerViewModel Layer(IReadOnlyList<ContextConcept> concepts, List<PinSheetOpen>? opened = null, PinsView? pins = null)
@@ -81,7 +81,7 @@ public sealed class ConceptLayerPinTests
     {
         var layer = Layer(
             [AConcepts.Concept("concept:billing", "Billing", source: "override"), AConcepts.Concept("concept:auth", "Auth")],
-            pins: Pins(rebuild: null, Pin("billing", "Billing"), Pin("refunds", "Refunds", PinStates.Waiting)));
+            pins: Pins(rebuild: null, Pin("billing", "Billing"), Pin("refunds", "Refunds", "approved")));
 
         var waiting = layer.Tiles[1];
         Assert.Equal(["Billing", "Refunds", "Auth"], [.. layer.Tiles.Select(t => t.Name)]);
@@ -95,7 +95,7 @@ public sealed class ConceptLayerPinTests
     {
         var layer = Layer(
             [AConcepts.Concept("concept:auth", "Auth", source: "override"), AConcepts.Concept("concept:notify", "Notify", source: "override")],
-            pins: Pins(rebuild: null, Pin("auth", "Auth"), Pin("billing", "Billing", PinStates.Waiting), Pin("notify", "Notify")));
+            pins: Pins(rebuild: null, Pin("auth", "Auth"), Pin("billing", "Billing", "approved"), Pin("notify", "Notify")));
 
         Assert.Equal(["Auth", "Billing", "Notify"], [.. layer.Tiles.Select(t => t.Name)]);
         Assert.Equal([false, true, false], [.. layer.Tiles.Select(t => t.Card.Waiting)]);
@@ -118,7 +118,7 @@ public sealed class ConceptLayerPinTests
     {
         var layer = Layer(
             [AConcepts.Concept("concept:payments", "Payments"), AConcepts.Concept("concept:auth", "Auth")],
-            pins: Pins(rebuild: null, Pin("billing-payments", "payments", PinStates.Waiting)));
+            pins: Pins(rebuild: null, Pin("billing-payments", "payments", "approved")));
 
         Assert.Equal(["payments", "Auth"], [.. layer.Tiles.Select(t => t.Name)]);
         Assert.False(layer.Tiles[0].ShowPinThis);
@@ -128,7 +128,7 @@ public sealed class ConceptLayerPinTests
     [Fact]
     public void The_real_card_takes_the_waiting_cards_automation_id_when_the_map_lands()
     {
-        var layer = Layer([AConcepts.Concept("concept:auth", "Auth")], pins: Pins(rebuild: null, Pin("refunds", "Refunds", PinStates.Approved, "created")));
+        var layer = Layer([AConcepts.Concept("concept:auth", "Auth")], pins: Pins(rebuild: null, Pin("refunds", "Refunds", "approved", "created")));
         Assert.Equal("PinCard.refunds", layer.Tiles[0].AutomationId);
 
         layer.Show(AConcepts.Ok([AConcepts.Concept("concept:auth", "Auth"), AConcepts.Concept("concept:refunds", "Refunds", source: "override")]));
@@ -142,7 +142,7 @@ public sealed class ConceptLayerPinTests
     public void A_concept_a_person_set_whose_pin_is_gone_reads_Unpinned_until_the_rebuild()
     {
         var stale = new MapRebuildView(MapRebuildPhases.Idle, Progress: null, RetryAt: null, Stale: true, Failed: null);
-        var layer = Layer([AConcepts.Concept("concept:billing", "Billing", source: "override")], pins: Pins(stale, Pin("billing", "Billing", PinStates.Approved, "removed")));
+        var layer = Layer([AConcepts.Concept("concept:billing", "Billing", source: "override")], pins: Pins(stale, Pin("billing", "Billing", "approved", "removed")));
 
         Assert.Equal(["Unpinned · the map rebuild starts within a minute"], layer.Tiles[0].Lines);
         Assert.False(layer.Tiles[0].ShowEditPin);
@@ -182,7 +182,7 @@ public sealed class ConceptLayerPinTests
     {
         var layer = Layer(
             [AConcepts.Concept("concept:billing", "Billing", features: 120, records: 410, source: "override")],
-            pins: Pins(rebuild: null, Pin("billing", "Billing", PinStates.Approved, "removed")));
+            pins: Pins(rebuild: null, Pin("billing", "Billing", "approved", "removed")));
 
         Assert.Equal("No pins yet. Press Pin this on a concept to make it yours.", layer.PinHeadText);
     }
@@ -192,7 +192,7 @@ public sealed class ConceptLayerPinTests
     {
         var layer = Layer(
             [AConcepts.Concept("concept:billing", "Billing", features: 120, records: 410, source: "override"), AConcepts.Concept("concept:auth", "Auth", features: 180, records: 1890, source: "override")],
-            pins: Pins(rebuild: null, Pin("billing", "Billing"), Pin("auth", "Auth", PinStates.Approved, "removed")));
+            pins: Pins(rebuild: null, Pin("billing", "Billing"), Pin("auth", "Auth", "approved", "removed")));
 
         Assert.Equal("You've pinned 120 of 300 features and 410 of 2,300 records. The rest are in suggestions or in no concept.", layer.PinHeadText);
     }
@@ -230,22 +230,6 @@ public sealed class ConceptLayerPinTests
 
         layer.ShowPins(Pins());
         Assert.Equal("The map is ready", layer.RebuildText);
-    }
-
-    [Fact]
-    public void A_footer_button_asks_for_what_it_names()
-    {
-        var asked = new List<string>();
-        var layer = Layer([AConcepts.Concept("concept:billing", "Billing", source: "override")], pins: null);
-        layer.ReviewAndApprove = () => asked.Add("review");
-        layer.TryAgain = () => asked.Add("again");
-        layer.ShowPins(Pins(rebuild: null, Pin("billing", "Billing", PinStates.Waiting)));
-        layer.RunAction(layer.Tiles[0]);
-        layer.ShowPins(Pins(new MapRebuildView(MapRebuildPhases.Idle, Progress: null, RetryAt: null, Stale: true, Failed: "SND-CONTEXT-040"), Pin("billing", "Billing", PinStates.Approved, "updated")));
-        layer.RunAction(layer.Tiles[0]);
-
-        Assert.Equal(["review", "again"], asked);
-        Assert.Equal("Try again", layer.Tiles[0].ActionText);
     }
 
     [Fact]

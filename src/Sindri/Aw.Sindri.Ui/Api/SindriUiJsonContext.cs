@@ -86,8 +86,6 @@ namespace Aw.Sindri.Ui.Api;
 [JsonSerializable(typeof(Workflow.ApproveAllRequest))]
 [JsonSerializable(typeof(Workflow.ApproveAllStarted))]
 [JsonSerializable(typeof(Workflow.ApproveAllJob))]
-[JsonSerializable(typeof(ApproveProfileRequest))]
-[JsonSerializable(typeof(ProfileApproved))]
 [JsonSerializable(typeof(RecipeApproved))]
 [JsonSerializable(typeof(Workflow.CompleteStepBody))]
 [JsonSerializable(typeof(Workflow.CompleteStepAccepted))]

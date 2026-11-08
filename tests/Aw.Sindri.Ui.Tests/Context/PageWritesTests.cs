@@ -7,7 +7,7 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Context;
 
-/// <summary>The page sheet's seam (pages spec §3.6): a page read from the map, and a write that is approved only when nothing but these pages waits.</summary>
+/// <summary>The page sheet's seam (pages spec §3.6): a page read from the map, and a write that is applied when it lands.</summary>
 [Lane(TestLane.Unit)]
 public sealed class PageWritesTests
 {
@@ -24,8 +24,8 @@ public sealed class PageWritesTests
         return new PageWrites(new ProfileWriteFlow(api, () => url, new FakeTimeProvider(A.Noon)), api, () => url);
     }
 
-    private static RouteAnswer Profile(string live, params string[] changed) =>
-        new(HttpStatusCode.OK, $$"""{"approved":"h0","live":"{{live}}","changed":true,"changedPaths":[{{string.Join(',', changed.Select(c => $"\"{c}\""))}}]}""");
+    private static RouteAnswer Profile(string live) =>
+        new(HttpStatusCode.OK, $$"""{"live":"{{live}}"}""");
 
     private static FakeSindriApi Server(RouteAnswer profile, string state = "succeeded", string? code = null, string? summary = null)
     {
@@ -44,13 +44,13 @@ public sealed class PageWritesTests
     private static string Quoted(string? text) => text is null ? "null" : $"\"{text}\"";
 
     [Fact]
-    public async Task Save_sends_the_pages_and_maps_the_approval()
+    public async Task Save_sends_the_pages_and_maps_the_write_to_applied()
     {
-        var api = Server(Profile("h1", "index.pages.schedule-week"));
+        var api = Server(Profile("h1"));
 
-        var saved = await Writes(api).Save(_week, "h0", approve: true, cancellationToken: Token);
+        var saved = await Writes(api).Save(_week, "h0", cancellationToken: Token);
 
-        Assert.Equal(PageSavedState.Approved, saved.State);
+        Assert.Equal(PageSavedState.Applied, saved.State);
         var body = Assert.Single(api.PagesSet);
         Assert.Equal("h0", body.IfHash);
         var page = Assert.Single(body.Set!);
@@ -59,34 +59,12 @@ public sealed class PageWritesTests
     }
 
     [Fact]
-    public async Task Save_leaves_it_waiting_when_another_page_waits()
-    {
-        var api = Server(Profile("h1", "index.pages.schedule-week", "index.pages.other"));
-
-        var saved = await Writes(api).Save(_week, "h0", approve: true, cancellationToken: Token);
-
-        Assert.Equal(PageSavedState.Waiting, saved.State);
-        Assert.Empty(api.ProfileApprovals);
-    }
-
-    [Fact]
-    public async Task Save_and_approve_after_a_hand_edit_leaves_it_waiting()
-    {
-        var api = Server(new RouteAnswer(HttpStatusCode.OK, """{"approved":"h0","live":"live-old","fileHash":"h1","changed":true,"changedPaths":["index.pages.schedule-week"]}"""));
-
-        var saved = await Writes(api).Save(_week, "file-new", approve: true, cancellationToken: Token);
-
-        Assert.Equal(PageSavedState.Waiting, saved.State);
-        Assert.Empty(api.ProfileApprovals);
-    }
-
-    [Fact]
     public async Task Save_maps_a_refusal_to_its_sentence()
     {
         var api = Server(Profile("h1"));
         api.SetContextPagesAnswer = RouteAnswer.Problem(HttpStatusCode.BadRequest, "SND-CONTEXT-252", "'aproval' is no concept");
 
-        var saved = await Writes(api).Save(_week, "h0", approve: true, cancellationToken: Token);
+        var saved = await Writes(api).Save(_week, "h0", cancellationToken: Token);
 
         Assert.Equal(PageSavedState.Refused, saved.State);
         Assert.Equal("'aproval' is no concept", saved.Message);
@@ -262,24 +240,6 @@ public sealed class PageWritesTests
         Assert.Equal(("owner", 1, null), (asked.Marks, asked.Limit, asked.Concept));
     }
 
-    [Theory]
-    [InlineData("index.pages.schedule-week", true)]
-    [InlineData("repos.web.index.pages.schedule-week", true)]
-    [InlineData("index.pages.other", false)]
-    [InlineData("index.concepts.approval", false)]
-    public void OnlyPages_holds_when_every_waiting_path_is_one_of_these_pages(string path, bool only) =>
-        Assert.Equal(only, new ProfileWaiting("h1", [path]).OnlyPages(["schedule-week"]));
-
-    [Fact]
-    public void OnlyPages_holds_when_nothing_waits() => Assert.True(new ProfileWaiting("h1", []).OnlyPages(["schedule-week"]));
-
-    [Theory]
-    [InlineData("index.pages.schedule-week", "schedule-week", true)]
-    [InlineData("repos.web.index.pages.schedule-week", "schedule-week", true)]
-    [InlineData("index.pages.schedule-week", "week", false)]
-    public void Waits_names_the_page_whose_path_waits(string path, string page, bool waits) =>
-        Assert.Equal(waits, new ProfileWaiting("h1", [path]).Waits(page));
-
     private static RouteAnswer Pages(bool truncated) => new(HttpStatusCode.OK, string.Concat(
         "{'pages':[{'id':'schedule-week','key':'surface:route/GET:/schedule/week','name':'Schedule week','repo':'web','mark':'owner','code':true,",
         "'actions':[{'id':'submit-week','key':'action:WeekPage.submit','name':'Submit week','mark':'owner','code':false,'concepts':['approval']}]},",
@@ -287,16 +247,4 @@ public sealed class PageWritesTests
         "'actions':[{'id':'ask','key':'action:owner/help/ask','name':'Ask','mark':'owner','code':false,'concepts':[]}]}],'total':2,'truncated':",
         truncated ? "true" : "false",
         ",'mapVersion':'v41'}").Replace('\'', '"'));
-
-    [Fact]
-    public void A_new_page_is_mine_when_its_path_was_not_already_waiting()
-    {
-        var save = new PageSave([new PageDraft(Id: null, "Time off", Repo: null, Surface: null, Owner: false, [])], []) { Before = ["index.pages.old"] };
-        var mine = PageWrites.Mine(save);
-
-        Expect.True(new ProfileWaiting("h", ["index.pages.old", "index.pages.time-off"]).OnlyMine(path => mine(path) || path == "index.pages.old") && mine("index.pages.time-off"), "the new path is the write's");
-        Expect.True(!mine("index.pages.old"), "a path that already waited is not the write's");
-        Expect.True(!new ProfileWaiting("h", ["index.pages.old", "index.pages.time-off"]).OnlyMine(mine), "so the write stays Waiting while that other path is still there");
-        Expect.True(new ProfileWaiting("h", ["index.pages.time-off-2"]).OnlyMine(mine), "alone, the new path approves");
-    }
 }

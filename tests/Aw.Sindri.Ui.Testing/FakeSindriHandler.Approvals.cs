@@ -1,4 +1,3 @@
-using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Workflow;
 
 namespace Aw.Sindri.Ui.Testing;
@@ -8,7 +7,6 @@ internal sealed partial class FakeSindriHandler
 {
     private const string PlanPath = "/sindri/workflow/recipes/approve-all";
     private const string ProfilePath = "/sindri/profile";
-    private const string ProfileApprovePath = "/sindri/profile/approve";
     private const string JobsPrefix = "/sindri/jobs/";
     private const string ApproveAllJobId = "JOB-0000000000000000000000000000000e";   // the spec-shaped approve-all job; any other job goes to the Jobs routes
 
@@ -19,7 +17,7 @@ internal sealed partial class FakeSindriHandler
         request.Method == HttpMethod.Post && path.StartsWith(RecipesPrefix, StringComparison.Ordinal) && path.EndsWith(ApproveSuffix, StringComparison.Ordinal);
 
     private static bool IsApproval(HttpRequestMessage request, string path) =>
-        IsRecipeApproval(request, path) || (string.Equals(path, ProfilePath, StringComparison.Ordinal) && request.Method == HttpMethod.Get) || (string.Equals(path, ProfileApprovePath, StringComparison.Ordinal) && request.Method == HttpMethod.Post) || string.Equals(path, PlanPath, StringComparison.Ordinal) || (request.Method == HttpMethod.Get && string.Equals(path, JobsPrefix + ApproveAllJobId, StringComparison.Ordinal));
+        IsRecipeApproval(request, path) || (string.Equals(path, ProfilePath, StringComparison.Ordinal) && request.Method == HttpMethod.Get) || string.Equals(path, PlanPath, StringComparison.Ordinal) || (request.Method == HttpMethod.Get && string.Equals(path, JobsPrefix + ApproveAllJobId, StringComparison.Ordinal));
 
     private async Task<HttpResponseMessage> ApprovalRoute(HttpRequestMessage request, string path, CancellationToken cancellationToken)
     {
@@ -34,11 +32,6 @@ internal sealed partial class FakeSindriHandler
         if (string.Equals(path, ProfilePath, StringComparison.Ordinal))
         {
             return Answer(Counted(await server.ProfileSummary(uri, cancellationToken), server.ProfileAnswer));
-        }
-
-        if (string.Equals(path, ProfileApprovePath, StringComparison.Ordinal))
-        {
-            return Answer(Counted(await server.ApproveProfile(uri, await Body<ApproveProfileRequest>(request, cancellationToken), cancellationToken), server.ApproveProfileAnswer));
         }
 
         if (string.Equals(path, PlanPath, StringComparison.Ordinal))

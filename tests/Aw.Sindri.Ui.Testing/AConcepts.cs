@@ -51,12 +51,12 @@ internal static class AConcepts
     /// <summary>The pin-suggest answer as the route serves it.</summary>
     internal static RouteAnswer Served(PinSuggestView view) => new(HttpStatusCode.OK, Encoding.UTF8.GetString(AwJson.Serialize(view, SindriApiClient.Json)));
 
-    /// <summary>A pins answer: a waiting pin, an approved one and a removing one, with an idle rebuild.</summary>
+    /// <summary>A pins answer: three pins the live profile names, with an idle rebuild.</summary>
     internal static PinsView Pinned() => new(1, "aw-split-panes", new string('b', 64), "v4",
     [
-        new PinView("billing", "Billing", "Invoices and payment.", ["payments"], ["feature:invoices"], 0, "profile", PinStates.Approved, Change: null),
-        new PinView("refunds", "Refunds", Summary: null, [], [], 2, "repo api", PinStates.Waiting, Change: null),
-        new PinView("auth", "Sign in", Summary: null, [], [], 0, "profile", PinStates.Removing, Change: null),
+        new PinView("billing", "Billing", "Invoices and payment.", ["payments"], ["feature:invoices"], 0, "profile", "approved", Change: null),
+        new PinView("refunds", "Refunds", Summary: null, [], [], 2, "repo api", "approved", Change: null),
+        new PinView("auth", "Sign in", Summary: null, [], [], 0, "profile", "approved", Change: null),
     ],
     new MapRebuildView(MapRebuildPhases.Idle, Progress: null, RetryAt: null, Stale: false, Failed: null));
 

@@ -121,9 +121,6 @@ internal static partial class Labels
     /// <summary>The approve-all button.</summary>
     internal const string ApproveAllButton = "Approve all workflows";
 
-    /// <summary>The profile approval's button.</summary>
-    internal const string ApproveSettings = "Approve settings";
-
     /// <summary>The Grant tokens control's title and button.</summary>
     internal const string GrantTokens = "Grant tokens";
 }

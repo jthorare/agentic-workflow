@@ -22,7 +22,6 @@ internal sealed partial class PinSeveralViewModel : ObservableObject
     private readonly ConcurrentDictionary<string, PinSuggestView?> _concepts = new(StringComparer.Ordinal);
     private IReadOnlyList<PinView> _pins;
     private string? _ifHash;
-    private bool _approve;
     private bool _started;
     private bool _matching;
     private bool _matchFailed;
@@ -111,7 +110,7 @@ internal sealed partial class PinSeveralViewModel : ObservableObject
     public bool HasMessage => Message.Length > 0;
 
     /// <summary>The submit button: "Pin all and approve", "Pin all" or "Pinning 12…".</summary>
-    public string SubmitText => _writing ? Labels.PinSeveralSubmitting(WrittenRows().Count) : Labels.PinSeveralSubmit(_approve);
+    public string SubmitText => _writing ? Labels.PinSeveralSubmitting(WrittenRows().Count) : Labels.PinSeveralSubmit;
 
     /// <summary>Gets a value indicating whether the submit button works: a row is ticked and nothing is being matched or written.</summary>
     public bool CanSubmit => _ifHash is not null && !_writing && !_matching && WrittenRows().Count > 0;
@@ -122,10 +121,8 @@ internal sealed partial class PinSeveralViewModel : ObservableObject
     /// <summary>Whether the submit note has words.</summary>
     public bool HasSubmitNote => SubmitNote.Length > 0;
 
-    /// <summary>Reads what waits for approval, once, when the sheet opens: whether its button approves. The write's ifHash is the one the page's pins read gave (<see cref="PinSheetOpen.FileHash"/>).</summary>
-    /// <param name="cancellationToken">Cancels the reads.</param>
-    /// <returns>A task that ends when it is read.</returns>
-    internal async Task StartAsync(CancellationToken cancellationToken)
+    /// <summary>Marks the sheet as opened, once. The write's ifHash is the one the page's pins read gave (<see cref="PinSheetOpen.FileHash"/>).</summary>
+    internal void Start()
     {
         if (_started)
         {
@@ -133,13 +130,6 @@ internal sealed partial class PinSeveralViewModel : ObservableObject
         }
 
         _started = true;
-        await ReadWaitingAsync(cancellationToken).ConfigureAwait(true);
-    }
-
-    private async Task ReadWaitingAsync(CancellationToken cancellationToken)
-    {
-        var waiting = await _writes.Waiting(cancellationToken).ConfigureAwait(true);
-        _approve = waiting is { ChangedPaths.Count: 0 };
         Changed();
     }
 

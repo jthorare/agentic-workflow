@@ -210,7 +210,6 @@ internal sealed partial class NeedsYouRowViewModel : ObservableObject
                 field = Entry.Subject?.Kind switch
                 {
                     NeedsYouKinds.Service => FailureDetails.Build(Entry, Age),
-                    NeedsYouKinds.Profile => ProfileDetails.Build(Entry),
                     _ => [],
                 };
                 _detailsFor = key;

@@ -49,18 +49,6 @@ public sealed class SindriApiClientNeedsYouTests
     }
 
     [Fact]
-    public async Task NeedsYou_reads_a_profile_row_with_a_null_subject()
-    {
-        var (client, server, _) = Reach();
-        server.NeedsYouView = RouteAnswer.SpecShaped("needs-you", "extra-profile-null-subject");
-
-        var profile = (await client.NeedsYou(_api, Token)).Value.Rows[2];
-
-        Assert.Equal(("profile:drift", "calm", "ApproveProfile"), (profile.Id, profile.Urgency, profile.PrimaryAction));
-        Assert.Null(profile.Subject);
-    }
-
-    [Fact]
     public async Task NeedsYou_reads_a_failure_row_whose_primary_action_is_null()
     {
         var (client, server, _) = Reach();

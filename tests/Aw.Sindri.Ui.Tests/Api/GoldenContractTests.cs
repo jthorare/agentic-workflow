@@ -118,8 +118,7 @@ public sealed class GoldenContractTests
         ["workflow-recipes-approve-all"] = AsApproveAll,   // GET /workflow/recipes/approve-all (the plan*, empty scenarios) and the job's result (applied, refused): the engine's real goldens
         ["recipes-approve-all-start"] = As<ApproveAllStarted>,   // POST /workflow/recipes/approve-all's 202
         ["approve-all-job"] = As<ApproveAllJob>,   // GET /jobs/{id} of the approval
-        ["profile"] = As<ProfileRead>,   // GET /profile: the approval's plain-words summary is the part the Setup profile step reads (api #782)
-        ["profile-approve"] = As<ProfileApproved>,   // POST /profile/approve's approved and preview answers (needs-you slice 3: the typed approve on a drifted-profile row); the refusals are ProblemDetails
+        ["profile"] = As<ProfileRead>,   // GET /profile: the live and file hashes a sheet sends back as its ifHash
         ["recipe-approve"] = As<RecipeApproved>,   // POST /workflow/recipes/{id}@{hash}/approve's accepted answer (needs-you slice 3b: the typed approve on a changed-workflow row; spec-shaped)
         ["workflow-complete"] = As<CompleteStepAccepted>,   // POST /workflow/instances/{id}/runs/{run}/complete's accepted answer (spec-shaped; the engine has no golden for it)
         ["sandbox-status"] = As<Ui.Api.Sandbox.SandboxStatusView>,   // GET /sandbox/status: Health and Settings (SB-6; spec-shaped until the server's golden is recorded)
@@ -326,7 +325,6 @@ public sealed class GoldenContractTests
         Assert.Equal(("desk", "ready", "sindri views rebuild", false, false), (rebuild.Class, rebuild.Ui, rebuild.Cli, rebuild.Destructive, rebuild.ReadsViews));
         var stop = Assert.Single(catalog.Rows, r => r.Action == "StopProcess");
         Assert.Equal(("ready", true), (stop.Ui, stop.Destructive));
-        Assert.Equal("ready", Assert.Single(catalog.Rows, r => r.Action == "ApproveProfile").Ui);
     }
 
     [Fact]

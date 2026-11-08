@@ -18,7 +18,6 @@ internal sealed class NeedsYouDispatcher
     private const string ResumeServiceAction = "ResumeService";
     private const string RunAction = "RunService";
     private const string ApproveRecipeAction = "ApproveRecipe";
-    private const string ApproveProfileAction = "ApproveProfile";
 
     private readonly ISindriApi _api;
     private readonly Func<Uri?> _apiUrl;
@@ -67,7 +66,7 @@ internal sealed class NeedsYouDispatcher
         return Approval(entry, action);
     }
 
-    // A changed workflow or the changed settings, approved with the same send the inbox bar uses; any other action is said as not available.
+    // A changed workflow, approved with the same send the inbox bar uses; any other action is said as not available.
     private Task<NeedsYouDispatch> Approval(NeedsYouEntry entry, NeedsYouAction action)
     {
         if (string.Equals(action.CatalogId, ApproveRecipeAction, StringComparison.Ordinal) && SubjectOf(entry, NeedsYouKinds.Recipe) is { } recipe)
@@ -75,9 +74,7 @@ internal sealed class NeedsYouDispatcher
             return Approve(ApproveRecipeAction + recipe, entry.Cli, url => NeedsYouConfirm.SendRecipe(_api, url, recipe, entry.Cli));
         }
 
-        return string.Equals(action.CatalogId, ApproveProfileAction, StringComparison.Ordinal) && SubjectOf(entry, NeedsYouKinds.Profile) is { } hash
-            ? Approve(ApproveProfileAction + hash, entry.Cli, url => NeedsYouConfirm.SendProfile(_api, url, hash))
-            : Task.FromResult(new NeedsYouDispatch(DispatchOutcome.Unhandled, Labels.RowNotAvailable(action.Cli)));
+        return Task.FromResult(new NeedsYouDispatch(DispatchOutcome.Unhandled, Labels.RowNotAvailable(action.Cli)));
     }
 
     private async Task<NeedsYouDispatch> Approve(string key, string cli, Func<Uri, Task<(Error? Refused, bool Approved)>> send)

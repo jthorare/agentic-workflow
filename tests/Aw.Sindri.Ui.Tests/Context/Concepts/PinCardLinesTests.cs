@@ -16,24 +16,6 @@ public sealed class PinCardLinesTests
         PinLineRules.Of(pin, rebuild, problem, moved, TimeZoneInfo.Utc);
 
     [Fact, Trait("Lane", "unit")]
-    public void A_pin_written_but_not_approved_says_other_changes_wait_and_offers_Review_and_approve()
-    {
-        var lines = Of(Pin("waiting", change: null), Rebuild());
-
-        Assert.Equal(["Pinned, not approved yet", "Other changes are waiting, so this needs your review."], lines.Lines);
-        Assert.Equal(PinCardAction.ReviewAndApprove, lines.Action);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public void A_removal_not_approved_says_unpinned_and_offers_Review_and_approve()
-    {
-        var lines = Of(Pin("removing", change: "removed"), Rebuild());
-
-        Assert.Equal(["Unpinned, not approved yet", "Other changes are waiting, so this needs your review."], lines.Lines);
-        Assert.Equal(PinCardAction.ReviewAndApprove, lines.Action);
-    }
-
-    [Fact, Trait("Lane", "unit")]
     public void A_held_map_blocks_the_rebuild_and_offers_Open_review()
     {
         var lines = Of(Pin(), Rebuild("mapHeld", stale: true));

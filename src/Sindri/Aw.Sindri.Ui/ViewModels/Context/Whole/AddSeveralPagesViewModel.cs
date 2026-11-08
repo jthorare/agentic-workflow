@@ -12,7 +12,7 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
     private readonly IPageWrites _writes;
     private readonly string? _repo;
     private readonly IReadOnlyList<ConceptChoice> _known;
-    private ProfileWaiting? _waiting;
+    private ProfileHashes? _hashes;
     private string? _hash;
     private string _initialTicks = string.Empty;
     private string _readText = string.Empty;
@@ -124,8 +124,8 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
     /// <summary>Gets a value indicating whether Save all can be pressed: the rows were read from this text, some row is ticked and nothing is in flight.</summary>
     public bool CanSave => !IsSaving && (_acceptKeys is null || _hash is not null) && string.Equals(Text, _readText, StringComparison.Ordinal) && Rows.Any(static r => r.Ticked);
 
-    /// <summary>Gets the save button's words: "Saving…", "Save all and approve" when only these pages wait, else "Save all".</summary>
-    public string SaveText => IsSaving ? Labels.PageSheetSaving : Approves(Pending()) ? Labels.AddSeveralPagesSaveAllAndApprove : Labels.AddSeveralPagesSaveAll;
+    /// <summary>Gets the save button's words: "Saving…" or "Save all".</summary>
+    public string SaveText => IsSaving ? Labels.PageSheetSaving : Labels.AddSeveralPagesSaveAll;
 
     /// <summary>Gets the line under the buttons: the clash or a failure.</summary>
     public string Note { get; private set; } = string.Empty;
@@ -190,7 +190,7 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
         try
         {
             var read = await _writes.Preview(text, _repo, cancellationToken).ConfigureAwait(true);
-            _waiting = read.Preview is null ? null : await _writes.Waiting(cancellationToken).ConfigureAwait(true);
+            _hashes = read.Preview is null ? null : await _writes.Hashes(cancellationToken).ConfigureAwait(true);
             return read;
         }
         catch (OperationCanceledException)
