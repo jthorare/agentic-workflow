@@ -26,6 +26,7 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
 
     private readonly CatalogViewModel _catalog;
     private readonly Action<PageId> _goTo;
+    private readonly Action? _openTodo;
     private readonly Action<string> _remember;
     private IReadOnlyList<PaletteSection>? _all;
 
@@ -35,10 +36,11 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
     /// <param name="remember">Records an entry run (the paletteHistory preference).</param>
     /// <param name="outcomes">The shell's region for a run whose palette closed before its outcome; null hands such a run back to its control.</param>
     /// <param name="createItem">Opens the Create item form (the CreateItem entry runs it); null leaves that entry unrunnable.</param>
+    /// <param name="openTodo">Shows Home with focus on the Todo panel (the Todo entry, G T); null leaves that entry unrunnable.</param>
     /// <param name="newTodo">Opens the quick-add box (the New todo entry runs it); null leaves that entry out.</param>
-    internal CommandPaletteViewModel(CatalogViewModel catalog, Action<PageId> goTo, Action<string> remember, CommandOutcomeRegion? outcomes = null, Action? createItem = null, Action? newTodo = null)
+    internal CommandPaletteViewModel(CatalogViewModel catalog, Action<PageId> goTo, Action<string> remember, CommandOutcomeRegion? outcomes = null, Action? createItem = null, Action? openTodo = null, Action? newTodo = null)
     {
-        (_catalog, _goTo, _remember, Outcomes, CreateItem, NewTodo) = (catalog, goTo, remember, outcomes, createItem, newTodo);
+        (_catalog, _goTo, _remember, Outcomes, CreateItem, _openTodo, NewTodo) = (catalog, goTo, remember, outcomes, createItem, openTodo, newTodo);
         _catalog.PropertyChanged += OnCatalogChanged;
     }
 
@@ -161,6 +163,10 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
         _remember(entry.Id);
         switch (entry)
         {
+            case { Id: PaletteEntry.TodoId }:
+                _openTodo?.Invoke();
+                Close();
+                break;
             case { Page: { } page }:
                 // The page changes first, so the region the close hands focus back to already carries the new page's name.
                 _goTo(page);
@@ -203,9 +209,17 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
         return
         [
             new(Labels.PaletteActions, [.. actions]),
-            new(Labels.PaletteGoTo, [.. _pages.Select(p => PaletteEntry.For(p.Page, p.Key))]),
+            new(Labels.PaletteGoTo, [.. GoTo()]),
             new(Labels.Sindri, [.. sindri]),
         ];
+    }
+
+    // Home first, then Todo (G T, Home with the Todo panel focused), then the other pages.
+    private List<PaletteEntry> GoTo()
+    {
+        var entries = _pages.Select(p => PaletteEntry.For(p.Page, p.Key)).ToList();
+        entries.Insert(1, PaletteEntry.ForTodo("G T", runs: _openTodo is not null));
+        return entries;
     }
 
     // Enter does something with a row that has a sender, with Stop Sindri (it goes to Health) and with a row the app has no form for, which it copies.

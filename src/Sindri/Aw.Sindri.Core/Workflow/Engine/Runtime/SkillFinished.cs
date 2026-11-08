@@ -1,7 +1,6 @@
-using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Ids;
 
-namespace Aw.Sindri.Core.Skills;
+namespace Aw.Sindri.Core.Workflow.Engine.Runtime;
 
 /// <summary>A skill block's finished result as the watch stored it (skill flows spec §3.3): the workflow completes the run from it as 'agent:result'.</summary>
 /// <param name="Outcome">The mapped outcome name.</param>

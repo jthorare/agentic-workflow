@@ -1,5 +1,6 @@
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Items.Vocabulary;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Instances;

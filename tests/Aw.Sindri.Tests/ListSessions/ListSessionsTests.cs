@@ -2,7 +2,6 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sessions;
-using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Features.ListSessions;
 using Aw.Sindri.Tests.Sessions;
 using Aw.Sindri.Tests.Views;

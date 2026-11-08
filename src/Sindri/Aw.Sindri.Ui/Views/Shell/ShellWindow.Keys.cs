@@ -14,6 +14,11 @@ internal sealed partial class ShellWindow
     // §8: single keys never fire while typing in a field, over a layer, or with a modifier other than Shift ('.').
     private bool PageKey(KeyEventArgs e)
     {
+        if (ToastUndoKey(e))
+        {
+            return true;
+        }
+
         if (Shell is not { } shell || KeysBlocked(shell, e))
         {
             return false;
@@ -174,6 +179,11 @@ internal sealed partial class ShellWindow
     // Esc's U2 layers, above the sheet (§8 "the topmost layer"): the new issue form, the create form, then a destructive control's question.
     private bool EscapeItemLayer(ViewModels.Shell.ShellViewModel shell)
     {
+        if (EscapeToast(shell))
+        {
+            return true;
+        }
+
         if (EscapeForm(shell))
         {
             return true;
