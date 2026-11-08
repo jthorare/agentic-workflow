@@ -37,7 +37,7 @@ public sealed class ModelRoutingDoctorChecksTests
 
         Expect.Equal("context:models", row.Name);
         Expect.Equal(CheckState.Ok, row.State);
-        Expect.Equal("labeling, decisionExtraction, adjudication, mapCleanup, rerank: claude-code haiku, then codex gpt-6-luna; conceptNaming: claude-code sonnet, then codex gpt-5.5; productSurfaces: no model", row.Detail);
+        Expect.Equal("labeling, decisionExtraction, adjudication, mapCleanup, rerank, workflowPrompt: claude-code haiku, then codex gpt-6-luna; conceptNaming: claude-code sonnet, then codex gpt-5.5; productSurfaces: no model", row.Detail);
         Assert.Null(row.Fix);
     }
 
