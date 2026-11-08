@@ -3,8 +3,8 @@
 # At 1280x800, in the real sindri-ui:
 #   1. (gone with Onyx, #1598: the skipped Onyx step's Docker link. No setup step names a web address any more.)
 #   2. the Text size slider has tick marks (TickPlacement is not None) and 90% / 100% / 130% labels under it;
-#   3. the "Approve the workflows" step can be approved through the driver (button "Approve all workflows", then the step says done).
-# Both run, every FAIL is printed, and the exit is 1 when any failed. Part 3 changes state, so it runs last.
+#   3. (gone with the Recipes page, #2258: the "Approve the workflows" step.)
+# Every FAIL is printed, and the exit is 1 when any failed.
 # It drives the REAL sindri-ui (UI driver, docs/csharp/ui-driver.md) against a guarded fixture home (scripts/sindri-ui-fixture.sh
 # through scripts/sindri-prove.sh).
 #   bash tests/ui-checks/gh-1539-settings-leftovers.sh        exit 0 pass; 1 FAIL (stderr lines); 2 the setup broke
@@ -94,7 +94,6 @@ APP_WRAPPER_PID=$!
 "$DRIVER" ready --wait-ms 120000 >/dev/null 2>&1 || setup_fail "the app's driver never answered (see $OUT/app.log)"
 
 sources_title="Connect your sources"
-wf_title="Approve the workflows"
 
 # Settings at 1280x800, by the Ctrl+, chord.
 timeout 120 "$DRIVER" window --width 1280 --height 800 >/dev/null 2>&1 || setup_fail "could not size the window"
@@ -142,31 +141,8 @@ if [ -n "$missing" ]; then
   fail "no tick labels under the Text size slider for: $missing (screenshot in $OUT)"
 fi
 
-# ---- Part 3: the workflows are approved through the driver (last: it changes state) --------------------------------------------
-wf_id="$(wait_step "$wf_title, " 20)"
-if [ -z "$wf_id" ]; then
-  setup_fail "no '$wf_title' step in Settings"
-fi
-if [ -n "$(step_id "$wf_title, done")" ]; then
-  setup_fail "the '$wf_title' step is already done before the click"
-fi
-"$DRIVER" action --node-id "$wf_id" --do expand >/dev/null 2>&1 || true
-if ! "$DRIVER" wait-for --type Button --name "Approve all workflows" --state visible --wait-ms 30000 >/dev/null 2>&1; then
-  fail "no 'Approve all workflows' button in the '$wf_title' step (screenshot in $OUT)"
-elif ! "$DRIVER" click --type Button --name "Approve all workflows" >/dev/null 2>&1; then
-  fail "the driver would not click 'Approve all workflows' (screenshot in $OUT)"
-else
-  approved=0
-  for _ in $(seq 1 120); do
-    if [ -n "$(step_id "$wf_title, done")" ]; then approved=1; break; fi
-    sleep 0.5
-  done
-  [ "$approved" = 1 ] || fail "the '$wf_title' step never said done within 60 s of the click (screenshot in $OUT)"
-fi
-"$DRIVER" screenshot --out "$OUT/part3.png" >/dev/null 2>&1
-
 if [ "$FAILED" = 0 ]; then
-  echo "PASS: the Text size slider has ticks and labels, and the workflows approve through the driver (screenshots in $OUT)"
+  echo "PASS: the Text size slider has ticks and labels (screenshots in $OUT)"
   exit 0
 fi
 exit 1
