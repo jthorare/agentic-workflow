@@ -19509,3 +19509,15 @@ Aw.Sindri.Core.Graph.Blocks.PromptBlock.CheckConfig(System.Text.Json.Nodes.JsonO
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.MarkTick(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.DateTimeOffset tick, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.LastTick(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.DateTimeOffset?>!>
 static Aw.Sindri.Core.Graph.Runs.WorkflowRun.TriggerProblem(string! trigger) -> string?
+Aw.Sindri.Core.Events.RetirePassDone
+Aw.Sindri.Core.Events.RetirePassDone.<Clone>$() -> Aw.Sindri.Core.Events.RetirePassDone!
+Aw.Sindri.Core.Events.RetirePassDone.Deconstruct(out int Retired) -> void
+Aw.Sindri.Core.Events.RetirePassDone.Equals(Aw.Sindri.Core.Events.RetirePassDone? other) -> bool
+Aw.Sindri.Core.Events.RetirePassDone.Retired.get -> int
+Aw.Sindri.Core.Events.RetirePassDone.Retired.init -> void
+Aw.Sindri.Core.Events.RetirePassDone.RetirePassDone(int Retired) -> void
+override Aw.Sindri.Core.Events.RetirePassDone.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.RetirePassDone.GetHashCode() -> int
+override Aw.Sindri.Core.Events.RetirePassDone.ToString() -> string!
+static Aw.Sindri.Core.Events.RetirePassDone.operator !=(Aw.Sindri.Core.Events.RetirePassDone? left, Aw.Sindri.Core.Events.RetirePassDone? right) -> bool
+static Aw.Sindri.Core.Events.RetirePassDone.operator ==(Aw.Sindri.Core.Events.RetirePassDone? left, Aw.Sindri.Core.Events.RetirePassDone? right) -> bool

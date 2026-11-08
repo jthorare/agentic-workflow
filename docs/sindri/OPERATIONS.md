@@ -87,7 +87,7 @@ What is left of the old verbs:
 
 - `sindri workflow complete <address> --run <token> --outcome <o>` and `sindri workflow takeover|handback` (and the short forms
   `sindri takeover|handback`) answer `SND-GRAPH-104` until the graph engine runs agent blocks.
-- An instance the old engine left running gets a `workflow.retired` note the next time Sindri starts, once. Its item reads
+- An instance the old engine left running gets a `workflow.retired` note the next time Sindri starts, once; the pass ends with a `workflow.retire.done` marker (private, written even when it retired nothing) so a later start reads no ledger page. Its item reads
   cancelled and its Needs-you rows are gone; the ledger keeps the old rows.
 
 ## Model choice and what Jev reads

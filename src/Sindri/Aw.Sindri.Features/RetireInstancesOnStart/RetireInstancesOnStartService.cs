@@ -11,7 +11,7 @@ namespace Aw.Sindri.Features.RetireInstancesOnStart;
 /// Gives every instance the removed recipe engine left behind one 'workflow.retired' note. The ledger is the only source: an instance is
 /// every address a 'workflow.started' event names whose last 'workflow.started' or 'workflow.transition' did not enter an end state of its recipe (RetiredRecipeEnds), and one with a note already is skipped (the note's key is per instance, so a restart
 /// adds nothing). An unknown or ambiguous state counts as open.
-/// It runs once, at the first start with a recipe-era ledger: any 'workflow.retired' note in the ledger ends the pass, and only recipe-shaped addresses ('{item}/{recipe}/{attempt}') are considered, so a graph run is never retired.
+/// It runs once: it ends with a 'workflow.retire.done' marker (even when it retired nothing), and a ledger without any 'workflow.started' row gets no marker and no page read, and only recipe-shaped addresses ('{item}/{recipe}/{attempt}') are considered, so a graph run is never retired.
 /// </summary>
 internal sealed class RetireInstancesOnStartService(ILedgerStore ledger, HeldLease held, EventFactory events) : IService<RetireInstancesOnStartRequest, RetireInstancesOnStartResponse>
 {
@@ -25,16 +25,10 @@ internal sealed class RetireInstancesOnStartService(ILedgerStore ledger, HeldLea
             return new RetireInstancesOnStartResponse(0);
         }
 
-        // The pass runs once: any retired note means an earlier start did it, and a workflow row written since belongs to the graph engine.
-        var earlier = await ledger.Latest(EventTypes.WorkflowRetired, cancellationToken).ConfigureAwait(false);
-        if (earlier.IsError)
+        var skip = await HasNothingToDo(cancellationToken).ConfigureAwait(false);
+        if (skip.IsError || skip.Value)
         {
-            return earlier.Error;
-        }
-
-        if (earlier.Value is not null)
-        {
-            return new RetireInstancesOnStartResponse(0);
+            return skip.IsError ? skip.Error : new RetireInstancesOnStartResponse(0);
         }
 
         var found = await Scan(cancellationToken).ConfigureAwait(false);
@@ -43,7 +37,22 @@ internal sealed class RetireInstancesOnStartService(ILedgerStore ledger, HeldLea
             return found.Error;
         }
 
-        var (state, retired) = found.Value;
+        var retiring = await RetireOpen(found.Value, grant, cancellationToken).ConfigureAwait(false);
+        if (retiring.IsError)
+        {
+            return retiring.Error;
+        }
+
+        var count = retiring.Value;
+        var marker = events.Entry(EventTypes.WorkflowRetireDone, new RetirePassDone(count), "workflow:retire-pass:done");
+        var marked = await ledger.Append(marker, grant, cancellationToken).ConfigureAwait(false);
+        return marked.IsError ? marked.Error : new RetireInstancesOnStartResponse(count);
+    }
+
+    // One note per open recipe instance (idempotent by key); returns how many were new.
+    private async ValueTask<Result<int>> RetireOpen((Dictionary<string, (string To, string? Item)> Last, HashSet<string> Retired) found, LeaseGrant grant, CancellationToken cancellationToken)
+    {
+        var (state, retired) = found;
         var count = 0;
         foreach (var (instance, last) in state.Where(s => !retired.Contains(s.Key) && !RetiredRecipeEnds.IsEnd(s.Key, s.Value.To)))
         {
@@ -57,7 +66,21 @@ internal sealed class RetireInstancesOnStartService(ILedgerStore ledger, HeldLea
             count += appended.Value.AlreadyRecorded ? 0 : 1;
         }
 
-        return new RetireInstancesOnStartResponse(count);
+        return count;
+    }
+
+    // The pass runs once: the 'workflow.retire.done' marker means an earlier start finished it, and a workflow row written since belongs to the graph engine.
+    // A ledger that never held a recipe instance has nothing to retire and gets no marker: one lookup, no page read.
+    private async ValueTask<Result<bool>> HasNothingToDo(CancellationToken cancellationToken)
+    {
+        var done = await ledger.Latest(EventTypes.WorkflowRetireDone, cancellationToken).ConfigureAwait(false);
+        if (done.IsError || done.Value is not null)
+        {
+            return done.IsError ? done.Error : true;
+        }
+
+        var anyStarted = await ledger.Latest(EventTypes.WorkflowStarted, cancellationToken).ConfigureAwait(false);
+        return anyStarted.IsError ? anyStarted.Error : anyStarted.Value is null;
     }
 
     /// <summary>Every instance a started event names (with its item) and every instance that already has a retired note.</summary>
