@@ -18,6 +18,7 @@
         xmlns:ctxv="using:Aw.Sindri.Ui.Views.Context"
         xmlns:item="using:Aw.Sindri.Ui.Views.Item"
         xmlns:ny="using:Aw.Sindri.Ui.Views.NeedsYou"
+        xmlns:tdv="using:Aw.Sindri.Ui.Views.Todo"
         x:Class="Aw.Sindri.Ui.Views.Shell.ShellWindow"
         x:DataType="shell:ShellViewModel"
         Title="{Binding WindowTitle}"
@@ -448,6 +449,14 @@
       <controls:Deferred DataContext="{Binding Palette}">
         <controls:Deferred.Template>
           <DataTemplate><root:CommandPalette x:Name="CommandPalette" /></DataTemplate>
+        </controls:Deferred.Template>
+      </controls:Deferred>
+    </Panel>
+    <!-- The quick-add box (todo spec §3.2): under the top bar, over the page, which stays visible behind it. -->
+    <Panel x:Name="QuickAddLayer" IsVisible="{Binding QuickAdd.IsOpen}">
+      <controls:Deferred DataContext="{Binding QuickAdd}">
+        <controls:Deferred.Template>
+          <DataTemplate><tdv:QuickAddBox x:Name="QuickAddBox" /></DataTemplate>
         </controls:Deferred.Template>
       </controls:Deferred>
     </Panel>

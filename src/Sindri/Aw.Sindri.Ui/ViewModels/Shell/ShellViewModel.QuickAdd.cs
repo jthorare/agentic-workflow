@@ -13,11 +13,23 @@ internal sealed partial class ShellViewModel
 
     /// <summary>The N key or Ctrl+Shift+N.</summary>
     /// <returns>True when the key was taken. A form held open (Create, New issue) takes neither key.</returns>
-    internal bool PressQuickAdd() => throw new NotSupportedException();
+    internal bool PressQuickAdd() => IsChromeVisible && !Create.IsOpen && !NewIssue.IsOpen && OpenQuickAdd();
 
     /// <summary>Opens the box: the palette and the `?` sheet close first; while Sindri isn't running it raises <see cref="QuickAddWhileStopped"/> instead.</summary>
     /// <returns>True when the key was taken.</returns>
-    internal bool OpenQuickAdd() => throw new NotSupportedException();
+    internal bool OpenQuickAdd()
+    {
+        if (IsNotRunning)
+        {
+            OnQuickAddWhileStopped();
+            return true;
+        }
+
+        Shortcuts.Close();
+        Palette.Close();
+        QuickAdd.Open();
+        return true;
+    }
 
     /// <summary>What happens when the box was asked for while Sindri isn't running.</summary>
     internal void OnQuickAddWhileStopped() => QuickAddWhileStopped?.Invoke(this, EventArgs.Empty);

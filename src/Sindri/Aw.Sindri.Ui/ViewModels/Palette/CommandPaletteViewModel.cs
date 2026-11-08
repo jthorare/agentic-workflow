@@ -35,14 +35,18 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
     /// <param name="remember">Records an entry run (the paletteHistory preference).</param>
     /// <param name="outcomes">The shell's region for a run whose palette closed before its outcome; null hands such a run back to its control.</param>
     /// <param name="createItem">Opens the Create item form (the CreateItem entry runs it); null leaves that entry unrunnable.</param>
-    internal CommandPaletteViewModel(CatalogViewModel catalog, Action<PageId> goTo, Action<string> remember, CommandOutcomeRegion? outcomes = null, Action? createItem = null)
+    /// <param name="newTodo">Opens the quick-add box (the New todo entry runs it); null leaves that entry out.</param>
+    internal CommandPaletteViewModel(CatalogViewModel catalog, Action<PageId> goTo, Action<string> remember, CommandOutcomeRegion? outcomes = null, Action? createItem = null, Action? newTodo = null)
     {
-        (_catalog, _goTo, _remember, Outcomes, CreateItem) = (catalog, goTo, remember, outcomes, createItem);
+        (_catalog, _goTo, _remember, Outcomes, CreateItem, NewTodo) = (catalog, goTo, remember, outcomes, createItem, newTodo);
         _catalog.PropertyChanged += OnCatalogChanged;
     }
 
     /// <summary>Opens the Create item form, or null.</summary>
     internal Action? CreateItem { get; }
+
+    /// <summary>Opens the quick-add box, or null.</summary>
+    internal Action? NewTodo { get; }
 
     /// <summary>The shell's region for a run whose palette closed before its outcome, or null.</summary>
     internal CommandOutcomeRegion? Outcomes { get; }
@@ -171,6 +175,10 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
                 CreateItem?.Invoke();
                 Close();
                 break;
+            case { Id: PaletteEntry.NewTodoId }:
+                NewTodo?.Invoke();
+                Close();
+                break;
             case { Control.IsCopyOnly: true }:
                 await Copy(entry, entry.Control, cancellationToken).ConfigureAwait(true);
                 break;
@@ -185,6 +193,11 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
     {
         var actions = _catalog.Controls.Where(c => !_sindri.Contains(c.Action, StringComparer.Ordinal)).OrderBy(c => c.IsCopyOnly && !OpensForm(c))
             .Select(c => PaletteEntry.For(c, Runs(c), NotRun(c), OpensForm(c)));
+        if (NewTodo is not null)
+        {
+            actions = actions.Append(PaletteEntry.NewTodo("N"));
+        }
+
         var sindri = _sindri.Select(_catalog.For).OfType<ControlViewModel>().Select(c => PaletteEntry.For(c, Runs(c), NotRun(c), OpensForm(c)))
             .Append(PaletteEntry.For(PageId.System, "G ."));
         return

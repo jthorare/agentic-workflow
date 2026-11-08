@@ -102,6 +102,14 @@ internal sealed class PaletteEntry : ObservableObject
     internal static PaletteEntry For(ControlViewModel control, bool runs, string notRun = Labels.NotInApp, bool opensForm = false) =>
         new(control.Action, control.Label, control.Shortcut, runs, control, page: null, notRun) { OpensForm = opensForm };
 
+    /// <summary>The id of the New todo entry.</summary>
+    internal const string NewTodoId = "NewTodo";
+
+    /// <summary>The New todo entry: it opens the quick-add box.</summary>
+    /// <param name="key">Its key.</param>
+    /// <returns>The entry.</returns>
+    internal static PaletteEntry NewTodo(string key) => new(NewTodoId, Labels.QuickAddName, key, enabled: true, control: null, page: null);
+
     /// <summary>A page's entry.</summary>
     /// <param name="page">The page.</param>
     /// <param name="key">Its key.</param>

@@ -10,6 +10,7 @@ using Aw.Sindri.Ui.Views.Item;
 using Aw.Sindri.Ui.Views.Layout;
 using Aw.Sindri.Ui.Views.Linear;
 using Aw.Sindri.Ui.Views.Palette;
+using Aw.Sindri.Ui.Views.Todo;
 
 namespace Aw.Sindri.Ui.Views.Shell;
 
@@ -22,6 +23,11 @@ internal sealed partial class ShellWindow
         if (Shell is not { IsChromeVisible: true } shell)
         {
             return false;
+        }
+
+        if (QuickAddByKey(e))
+        {
+            return true;
         }
 
         if (FormOpen(shell))
@@ -43,6 +49,23 @@ internal sealed partial class ShellWindow
         return OpenSettingsByKey(e, shell);
     }
 
+    // N opens the quick-add box (never in a text field or over a layer), and so does Ctrl+Shift+N (⌘⇧N) over a page or the palette (todo spec §3.3).
+    // Both reach the view model even while Sindri isn't running, which says so instead of opening the box.
+    private bool QuickAddByKey(KeyEventArgs e)
+    {
+        if (e.Key != Key.N || Shell is not { IsChromeVisible: true } shell)
+        {
+            return false;
+        }
+
+        if (e.KeyModifiers == (_command | KeyModifiers.Shift))
+        {
+            return shell.PressQuickAdd();
+        }
+
+        return e.KeyModifiers == KeyModifiers.None && e.Source is not TextBox && !AnyLayerOpen(shell) && shell.PressQuickAdd();
+    }
+
     private static bool FormOpen(ShellViewModel shell) => shell.Create.IsOpen || shell.NewIssue.IsOpen;
 
     // ⌘K opens the palette, ⌘N the Create form (like C): one layer at a time, so the one open goes first (focus goes back to the original opener first, OnOverlayChanged).
@@ -54,6 +77,7 @@ internal sealed partial class ShellWindow
         }
 
         shell.Shortcuts.Close();
+        shell.QuickAdd.Close();
         if (e.Key == Key.K)
         {
             shell.Palette.Open();
@@ -102,7 +126,7 @@ internal sealed partial class ShellWindow
     // A page's button is about to open an overlay: closing it returns focus there even when a click left focus on the page region.
     private void NoteInvoker(object? sender, OpenerNoteEventArgs e) => _invoker = e.Invoker;
 
-    private bool OverlayOpen => Shell is { } shell && (shell.Palette.IsOpen || shell.Shortcuts.IsOpen || shell.Create.IsOpen || shell.NewIssue.IsOpen);
+    private bool OverlayOpen => Shell is { } shell && (shell.Palette.IsOpen || shell.Shortcuts.IsOpen || shell.Create.IsOpen || shell.NewIssue.IsOpen || shell.QuickAdd.IsOpen);
 
     // `?` is Shift+/ on most layouts; the key symbol says so on the rest.
     private static bool IsQuestionMark(KeyEventArgs e) =>
@@ -178,7 +202,7 @@ internal sealed partial class ShellWindow
             DispatcherPriority.Loaded);
 
     private static bool IsOpen(object? sender, ShellViewModel shell) =>
-        sender == shell.Palette ? shell.Palette.IsOpen : sender == shell.Create ? shell.Create.IsOpen : sender == shell.NewIssue ? shell.NewIssue.IsOpen : shell.Shortcuts.IsOpen;
+        sender == shell.Palette ? shell.Palette.IsOpen : sender == shell.Create ? shell.Create.IsOpen : sender == shell.NewIssue ? shell.NewIssue.IsOpen : sender == shell.QuickAdd ? shell.QuickAdd.IsOpen : shell.Shortcuts.IsOpen;
 
     // Where focus goes when what opened the overlay is gone: the Create form falls back to the Queue page's "Create item"
     // button, the others to the ⌘K field.
@@ -208,6 +232,10 @@ internal sealed partial class ShellWindow
         else if (sender == shell.Create || sender == shell.NewIssue)
         {
             FocusForm(sender, shell);
+        }
+        else if (sender == shell.QuickAdd)
+        {
+            Built<QuickAddBox>("QuickAddBox")?.FocusField();
         }
         else
         {
