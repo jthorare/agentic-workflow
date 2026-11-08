@@ -52,7 +52,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         ? Failed(config, SindriErrors.GraphOutputTruncated.With($"the output of '{cut}' was cut at 64 KB; refer to a smaller field"))
         : null;
 
-    private static GraphBlockOutcome Failed(JsonObject? input, Aw.Kernel.Error error) =>
+    private static GraphBlockOutcome Failed(JsonObject? input, Kernel.Error error) =>
         new(NodeRunStatus.Failed, input?.ToJsonString(), Output: null, [], $"{error.Code}: {error.Message}");
 
     private static GraphBlockOutcome Succeeded(JsonObject input, BlockResult result)
