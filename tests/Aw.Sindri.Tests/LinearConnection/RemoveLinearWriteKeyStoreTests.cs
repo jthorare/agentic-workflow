@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Aw.Context.Core;
-using Aw.Context.Core.Facade;
 using Aw.Context.Core.Models;
 using Aw.Context.Features;
 using Aw.Context.Infrastructure;
@@ -11,6 +10,7 @@ using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Linear;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.LinearConnection;
 using Aw.Sindri.Infrastructure;
@@ -36,6 +36,7 @@ public sealed class RemoveLinearWriteKeyStoreTests : IDisposable
     private readonly ServiceProvider _provider;
     private readonly AsyncServiceScope _scope;
     private readonly FakeSecretWriter _keychain = new();
+    private readonly FakeLinearCheckStore _checks = new();
 
     public RemoveLinearWriteKeyStoreTests()
     {
@@ -68,12 +69,12 @@ public sealed class RemoveLinearWriteKeyStoreTests : IDisposable
         Directory.Delete(_home, recursive: true);
     }
 
-    private CoreLinearConnectionStore Store()
+    private CoreLinearConnectionStore Store(string contextJson = ContextJson)
     {
-        var profile = new SindriProfile(1, "me", Context: JsonDocument.Parse(ContextJson).RootElement.Clone());
+        var profile = new SindriProfile(1, "me", Context: JsonDocument.Parse(contextJson).RootElement.Clone());
         var profiles = new InMemoryProfiles { Live = new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), ProfilePath) };
         var yaml = new YamlSourceTokenProfileWriter(new SindriSettings(_home, ProfilePath));
-        return new CoreLinearConnectionStore(profiles, _scope.ServiceProvider.GetRequiredService<IContextEngine>(), _keychain, _keychain, yaml, yaml);
+        return new CoreLinearConnectionStore(profiles, _keychain, _keychain, yaml, yaml, yaml, _checks);
     }
 
     [Fact]
@@ -100,5 +101,70 @@ public sealed class RemoveLinearWriteKeyStoreTests : IDisposable
         Assert.Equal(SindriErrors.LinearNoKeychain.Code, removed.Error.Code);
         Assert.Contains($"writeToken: \"{WritePointer}\"", await File.ReadAllTextAsync(ProfilePath, TestContext.Current.CancellationToken), StringComparison.Ordinal);
         Assert.Contains(WritePointer, _keychain.Stored.Keys, StringComparer.Ordinal);
+    }
+
+    // A layout the writer refuses: the linear entry in flow style.
+    private Task UseFlowStyleProfile() =>
+        File.WriteAllTextAsync(ProfilePath, $"schemaVersion: 1\nuser: me\ncontext:\n  sources:\n    linear: {{teams: [ENG], token: \"{ReadPointer}\", writeToken: \"{WritePointer}\"}}\n", TestContext.Current.CancellationToken);
+
+    private static LinearStoredCheck Resolves() => new(WritePointer, "resolves", new DateTimeOffset(2026, 1, 1, 9, 0, 0, TimeSpan.Zero));
+
+    [Fact]
+    public async Task An_unrelated_invalid_context_setting_still_deletes_the_keychain_entry()
+    {
+        const string Invalid = $$$$"""{"checks":{"mode":"bogus"},"sources":{"linear":{"teams":["ENG"],"token":"{{{{ReadPointer}}}}","writeToken":"{{{{WritePointer}}}}"}}}""";
+
+        var removed = await Store(Invalid).RemoveWrite(TestContext.Current.CancellationToken);
+
+        Assert.True(removed.IsSuccess, removed.IsError ? removed.Error.Message : "");
+        Assert.DoesNotContain(WritePointer, _keychain.Stored.Keys, StringComparer.Ordinal);
+        Assert.DoesNotContain("writeToken", await File.ReadAllTextAsync(ProfilePath, TestContext.Current.CancellationToken), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_profile_edit_that_would_be_refused_leaves_the_keychain_and_the_check_alone()
+    {
+        await UseFlowStyleProfile();
+        _ = await _checks.RecordWrite(Resolves(), TestContext.Current.CancellationToken);
+
+        var removed = await Store().RemoveWrite(TestContext.Current.CancellationToken);
+
+        Assert.True(removed.IsError);
+        Assert.Contains(WritePointer, _keychain.Stored.Keys, StringComparer.Ordinal);
+        Assert.NotNull((await _checks.Read(TestContext.Current.CancellationToken)).Value.Write);
+    }
+
+    [Fact]
+    public async Task A_removed_write_key_clears_its_check()
+    {
+        _ = await _checks.RecordWrite(Resolves(), TestContext.Current.CancellationToken);
+
+        var removed = await Store().RemoveWrite(TestContext.Current.CancellationToken);
+
+        Assert.True(removed.IsSuccess);
+        Assert.Null((await _checks.Read(TestContext.Current.CancellationToken)).Value.Write);
+    }
+
+    [Fact]
+    public async Task Saving_a_write_key_when_the_profile_edit_would_be_refused_stores_no_secret()
+    {
+        await UseFlowStyleProfile();
+        _ = _keychain.Stored.Remove(WritePointer);
+
+        var saved = await Store().SaveWrite("lin_api_new", TestContext.Current.CancellationToken);
+
+        Assert.True(saved.IsError);
+        Assert.DoesNotContain(WritePointer, _keychain.Stored.Keys, StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task Saving_a_read_key_when_the_teams_edit_would_be_refused_keeps_the_old_keychain_entry()
+    {
+        await UseFlowStyleProfile();
+
+        var saved = await Store().SaveRead("lin_api_new", ["ENG", "OPS"], TestContext.Current.CancellationToken);
+
+        Assert.True(saved.IsError);
+        Assert.Equal("lin_api_read", _keychain.Stored[ReadPointer]);
     }
 }

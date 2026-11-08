@@ -24546,3 +24546,8 @@ Aw.Sindri.Core.Launch.LaunchRequest.GithubPushApproved.get -> bool
 Aw.Sindri.Core.Launch.LaunchRequest.GithubPushApproved.init -> void
 Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.GithubPushApproved.get -> bool
 Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.GithubPushApproved.init -> void
+Aw.Sindri.Core.Secrets.ILinearProfileEditCheck
+Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckRemoveWriteToken(string! source) -> Aw.Kernel.Result<bool>!
+Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckSetTeams(string! source, System.Collections.Generic.IReadOnlyList<string!>! teams) -> Aw.Kernel.Result<bool>!
+Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckSetToken(string! source, string! secretPointer) -> Aw.Kernel.Result<bool>!
+Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckSetWriteToken(string! source, string! secretPointer) -> Aw.Kernel.Result<bool>!

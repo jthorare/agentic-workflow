@@ -242,6 +242,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<YamlSourceTokenProfileWriter>()
             .AddSingleton<ISourceTokenProfileWriter>(static sp => sp.GetRequiredService<YamlSourceTokenProfileWriter>())
             .AddSingleton<ILinearWriteTokenWriter>(static sp => sp.GetRequiredService<YamlSourceTokenProfileWriter>())
+            .AddSingleton<ILinearProfileEditCheck>(static sp => sp.GetRequiredService<YamlSourceTokenProfileWriter>())
             .AddSingleton<ISecretPrompts, TerminalSecretPrompts>();                                       // the owner at the terminal, no echo for the token                      // the source pointer line in the live profile
 
     /// <summary>
