@@ -73,6 +73,8 @@ not in the profile: they live in `launcher.json` (`docs/csharp/sindri-launcher.m
 | `steps` | object (`longMax`) | no | none | The longest a block Step may declare (line spec LN-WF7) |
 | `docs` | object (`globs`, `sync`) | no | none | Where docs sync may write (line spec §7.6) and whether it runs (`workflow.docs.sync`, below) |
 | `scoping` | object (`historyWindow`) | no | none | The scoping recipe's keys (see `workflow.scoping.historyWindow` below) |
+| `news` | object (`hosts`) | no | none | The hosts the `news` workflow block may read (see `workflow.news` below) |
+| `vulnerabilities` | object (`hosts`) | no | none | The hosts the `vulnerabilities` workflow block may read (see `workflow.vulnerabilities` below) |
 
 ### `workflow.agent` model keys
 
@@ -139,6 +141,15 @@ The forge port's settings (PR babysitter spec W27, §10.2; `docs/csharp/forge.md
 | `adapter` | `github` or `file` | no | none | Which forge adapter the services and effects use; `file` is the file-backed forge tests and proofs use |
 | `hosts` | string[] (host names) | no | none | The forge hosts a link or request may name, such as `github.com`; a host outside the list is refused (`AW-FORGE-002`) before anything is sent |
 | `credential` | `env:NAME` or `command:<argv>` | no | `env:AW_FORGE_TOKEN` | A variable that holds a long-lived token, or a program run per call that prints a token (or JSON with `token` and `expiresAt`); cached until five minutes before the expiry, re-run once after a 401 |
+
+### `workflow.news` and `workflow.vulnerabilities`
+
+The host allowlists of the `news` and `vulnerabilities` workflow blocks (PR 9b; `docs/workflows/blocks/news.md`, `vulnerabilities.md`). A block reads only the hosts listed here: a host that is not listed, a loopback address, and a redirect to another host are all refused with `SND-GRAPH-102`. A change to either key is a profile change you approve again.
+
+| Key | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `workflow.news.hosts` | string[] (host names) | no | `hacker-news.firebaseio.com` | The hosts the `news` block may read. Add the host of each RSS feed you use, for example `feeds.example.com` |
+| `workflow.vulnerabilities.hosts` | string[] (host names) | no | `api.osv.dev` | The hosts the `vulnerabilities` block may read |
 
 ### `workflow.pr`
 

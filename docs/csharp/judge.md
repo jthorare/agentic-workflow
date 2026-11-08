@@ -69,8 +69,11 @@ Everything the judge reads or writes as JSON goes through the Kernel `AwJson` pr
   → probability) are the typed values, serialized through the same options.
 
 The one exception is the providers' wire formats (the agent CLIs' output envelopes, an image input's paths, Jev's request
-and response): those records are internal to Infrastructure, which the Host's context can't name, so they have their own
-internal `ProviderWireJsonContext`, used only through `AwJson.CreateOptions` (`WireJson.Options`). An answer's free
+and response): the Host's context can't name them, so they have their own internal `ProviderWireJsonContext`, used only through
+`AwJson.CreateOptions` (`WireJson.Options`). Jev's wire records (`JevRequest`, `JevResponse`, the batch request, question and
+answer records, the model id and the 160,000-character input cap, in `JevEndpoints`) live in the shared tier-0 package
+`Aw.JevWire` (`src/JevWire`), which Aw.Judge.Infrastructure and Aw.Sindri.Infrastructure both reference: Sindri's `jev`
+workflow block (`docs/workflows/blocks/jev.md`) sends the same records. `InputCap` itself stays in Aw.Judge.Core. An answer's free
 fields (the decision plus the question's extra properties) are read as a `JsonObject` and checked against the question.
 
 ## CLI contract

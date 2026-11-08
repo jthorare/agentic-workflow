@@ -15650,8 +15650,6 @@ static Aw.Sindri.Core.Scoping.ChangeRead.Scoping.get -> Aw.Sindri.Core.Scoping.C
 Aw.Sindri.Core.Scoping.ChangeRead.Cut(string! text) -> (string! Text, bool Truncated)
 Aw.Sindri.Core.Profile.DocsSettings.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? Globs, out string? Sync) -> void
 Aw.Sindri.Core.Profile.DocsSettings.DocsSettings(System.Collections.Generic.IReadOnlyList<string!>? Globs = null, string? Sync = null) -> void
-Aw.Sindri.Core.Profile.WorkflowSettings.Deconstruct(out string? DeskTimeout, out string? EventHold, out System.Collections.Generic.IReadOnlyList<string!>? Effects, out string? DispatchDelay, out Aw.Sindri.Core.Profile.JudgeSettings? Judge, out Aw.Sindri.Core.Profile.WorkflowAgentSettings? Agent, out Aw.Sindri.Core.Profile.ForgeSettings? Forge, out Aw.Sindri.Core.Profile.RouteSettings? Route, out Aw.Sindri.Core.Profile.PackSettings? Packs, out Aw.Sindri.Core.Profile.LineSettings? Line, out Aw.Sindri.Core.Profile.PlanSettings? Plan, out Aw.Sindri.Core.Profile.ProveSettings? Prove, out Aw.Sindri.Core.Profile.BuildSettings? Build, out Aw.Sindri.Core.Profile.ShipSettings? Ship, out Aw.Sindri.Core.Profile.DesignSettings? Design, out Aw.Sindri.Core.Profile.ReviewSettings? Review, out Aw.Sindri.Core.Profile.StepsSettings? Steps, out Aw.Sindri.Core.Profile.DocsSettings? Docs, out Aw.Sindri.Core.Profile.PrSettings? Pr, out Aw.Sindri.Core.Profile.ScopingSettings? Scoping) -> void
-Aw.Sindri.Core.Profile.WorkflowSettings.WorkflowSettings(string? DeskTimeout = null, string? EventHold = null, System.Collections.Generic.IReadOnlyList<string!>? Effects = null, string? DispatchDelay = null, Aw.Sindri.Core.Profile.JudgeSettings? Judge = null, Aw.Sindri.Core.Profile.WorkflowAgentSettings? Agent = null, Aw.Sindri.Core.Profile.ForgeSettings? Forge = null, Aw.Sindri.Core.Profile.RouteSettings? Route = null, Aw.Sindri.Core.Profile.PackSettings? Packs = null, Aw.Sindri.Core.Profile.LineSettings? Line = null, Aw.Sindri.Core.Profile.PlanSettings? Plan = null, Aw.Sindri.Core.Profile.ProveSettings? Prove = null, Aw.Sindri.Core.Profile.BuildSettings? Build = null, Aw.Sindri.Core.Profile.ShipSettings? Ship = null, Aw.Sindri.Core.Profile.DesignSettings? Design = null, Aw.Sindri.Core.Profile.ReviewSettings? Review = null, Aw.Sindri.Core.Profile.StepsSettings? Steps = null, Aw.Sindri.Core.Profile.DocsSettings? Docs = null, Aw.Sindri.Core.Profile.PrSettings? Pr = null, Aw.Sindri.Core.Profile.ScopingSettings? Scoping = null) -> void
 Aw.Sindri.Core.Workflow.Blocks.StepContext.HeavySlotHeld.get -> bool
 Aw.Sindri.Core.Workflow.Blocks.StepContext.HeavySlotHeld.init -> void
 Aw.Sindri.Core.Workflow.Blocks.StepContext.LoopCaps.get -> System.Collections.Generic.IReadOnlyDictionary<string!, int>!
@@ -26556,3 +26554,33 @@ Aw.Sindri.Core.Graph.Blocks.BlockFieldType.MapList = 6 -> Aw.Sindri.Core.Graph.B
 Aw.Sindri.Core.Graph.Blocks.JevBlock.CheckConfig(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
 Aw.Sindri.Core.Graph.Blocks.NewsBlock.CheckConfig(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
 Aw.Sindri.Core.Graph.Blocks.VulnerabilitiesBlock.CheckConfig(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
+Aw.Sindri.Core.Profile.NewsSettings
+Aw.Sindri.Core.Profile.NewsSettings.<Clone>$() -> Aw.Sindri.Core.Profile.NewsSettings!
+Aw.Sindri.Core.Profile.NewsSettings.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? Hosts) -> void
+Aw.Sindri.Core.Profile.NewsSettings.Equals(Aw.Sindri.Core.Profile.NewsSettings? other) -> bool
+Aw.Sindri.Core.Profile.NewsSettings.Hosts.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Profile.NewsSettings.Hosts.init -> void
+Aw.Sindri.Core.Profile.NewsSettings.NewsSettings(System.Collections.Generic.IReadOnlyList<string!>? Hosts = null) -> void
+Aw.Sindri.Core.Profile.VulnerabilitySettings
+Aw.Sindri.Core.Profile.VulnerabilitySettings.<Clone>$() -> Aw.Sindri.Core.Profile.VulnerabilitySettings!
+Aw.Sindri.Core.Profile.VulnerabilitySettings.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? Hosts) -> void
+Aw.Sindri.Core.Profile.VulnerabilitySettings.Equals(Aw.Sindri.Core.Profile.VulnerabilitySettings? other) -> bool
+Aw.Sindri.Core.Profile.VulnerabilitySettings.Hosts.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Profile.VulnerabilitySettings.Hosts.init -> void
+Aw.Sindri.Core.Profile.VulnerabilitySettings.VulnerabilitySettings(System.Collections.Generic.IReadOnlyList<string!>? Hosts = null) -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.Deconstruct(out string? DeskTimeout, out string? EventHold, out System.Collections.Generic.IReadOnlyList<string!>? Effects, out string? DispatchDelay, out Aw.Sindri.Core.Profile.JudgeSettings? Judge, out Aw.Sindri.Core.Profile.WorkflowAgentSettings? Agent, out Aw.Sindri.Core.Profile.ForgeSettings? Forge, out Aw.Sindri.Core.Profile.RouteSettings? Route, out Aw.Sindri.Core.Profile.PackSettings? Packs, out Aw.Sindri.Core.Profile.LineSettings? Line, out Aw.Sindri.Core.Profile.PlanSettings? Plan, out Aw.Sindri.Core.Profile.ProveSettings? Prove, out Aw.Sindri.Core.Profile.BuildSettings? Build, out Aw.Sindri.Core.Profile.ShipSettings? Ship, out Aw.Sindri.Core.Profile.DesignSettings? Design, out Aw.Sindri.Core.Profile.ReviewSettings? Review, out Aw.Sindri.Core.Profile.StepsSettings? Steps, out Aw.Sindri.Core.Profile.DocsSettings? Docs, out Aw.Sindri.Core.Profile.PrSettings? Pr, out Aw.Sindri.Core.Profile.ScopingSettings? Scoping, out Aw.Sindri.Core.Profile.NewsSettings? News, out Aw.Sindri.Core.Profile.VulnerabilitySettings? Vulnerabilities) -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.News.get -> Aw.Sindri.Core.Profile.NewsSettings?
+Aw.Sindri.Core.Profile.WorkflowSettings.News.init -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.Vulnerabilities.get -> Aw.Sindri.Core.Profile.VulnerabilitySettings?
+Aw.Sindri.Core.Profile.WorkflowSettings.Vulnerabilities.init -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.WorkflowSettings(string? DeskTimeout = null, string? EventHold = null, System.Collections.Generic.IReadOnlyList<string!>? Effects = null, string? DispatchDelay = null, Aw.Sindri.Core.Profile.JudgeSettings? Judge = null, Aw.Sindri.Core.Profile.WorkflowAgentSettings? Agent = null, Aw.Sindri.Core.Profile.ForgeSettings? Forge = null, Aw.Sindri.Core.Profile.RouteSettings? Route = null, Aw.Sindri.Core.Profile.PackSettings? Packs = null, Aw.Sindri.Core.Profile.LineSettings? Line = null, Aw.Sindri.Core.Profile.PlanSettings? Plan = null, Aw.Sindri.Core.Profile.ProveSettings? Prove = null, Aw.Sindri.Core.Profile.BuildSettings? Build = null, Aw.Sindri.Core.Profile.ShipSettings? Ship = null, Aw.Sindri.Core.Profile.DesignSettings? Design = null, Aw.Sindri.Core.Profile.ReviewSettings? Review = null, Aw.Sindri.Core.Profile.StepsSettings? Steps = null, Aw.Sindri.Core.Profile.DocsSettings? Docs = null, Aw.Sindri.Core.Profile.PrSettings? Pr = null, Aw.Sindri.Core.Profile.ScopingSettings? Scoping = null, Aw.Sindri.Core.Profile.NewsSettings? News = null, Aw.Sindri.Core.Profile.VulnerabilitySettings? Vulnerabilities = null) -> void
+override Aw.Sindri.Core.Profile.NewsSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.NewsSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.NewsSettings.ToString() -> string!
+override Aw.Sindri.Core.Profile.VulnerabilitySettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.VulnerabilitySettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.VulnerabilitySettings.ToString() -> string!
+static Aw.Sindri.Core.Profile.NewsSettings.operator !=(Aw.Sindri.Core.Profile.NewsSettings? left, Aw.Sindri.Core.Profile.NewsSettings? right) -> bool
+static Aw.Sindri.Core.Profile.NewsSettings.operator ==(Aw.Sindri.Core.Profile.NewsSettings? left, Aw.Sindri.Core.Profile.NewsSettings? right) -> bool
+static Aw.Sindri.Core.Profile.VulnerabilitySettings.operator !=(Aw.Sindri.Core.Profile.VulnerabilitySettings? left, Aw.Sindri.Core.Profile.VulnerabilitySettings? right) -> bool
+static Aw.Sindri.Core.Profile.VulnerabilitySettings.operator ==(Aw.Sindri.Core.Profile.VulnerabilitySettings? left, Aw.Sindri.Core.Profile.VulnerabilitySettings? right) -> bool

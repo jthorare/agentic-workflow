@@ -56,6 +56,8 @@ public sealed class DiffCoversHashedKeysCheckTests
             ("review.settings checks need", _approved with { Review = new PrReviewSettings(Settings: new Dictionary<string, PrReviewSettingsEntry>(StringComparer.Ordinal) { ["api"] = new(Checks: [new PrReviewCheck("tests", "Tests", Need: new PrReviewNeed(Ci: "build"))]) }) }),
             ("review.projects", _approved with { Review = new PrReviewSettings(Projects: [new PrReviewProject("prj_1", Repos: ["acme/api"])]) }),
             ("workflow.scoping.historyWindow", _approved with { Workflow = new WorkflowSettings(Scoping: new ScopingSettings(new HistoryWindowSettings(Since: "2026-01-01"))) }),
+            ("workflow.news.hosts", _approved with { Workflow = new WorkflowSettings(News: new NewsSettings(["feeds.example.com"])) }),
+            ("workflow.vulnerabilities.hosts", _approved with { Workflow = new WorkflowSettings(Vulnerabilities: new VulnerabilitySettings(["api.osv.dev"])) }),
             ("context", _approved with { Context = context.RootElement.Clone() }),
         };
 

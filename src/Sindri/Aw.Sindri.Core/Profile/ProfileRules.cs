@@ -211,7 +211,9 @@ public static class ProfileRules
             : null;
     }
 
-    private static Error? Workflow(SindriProfile profile) => DurationsAndAgent(profile.Workflow) ?? Effects(profile.Workflow) ?? Judges(profile) ?? ForgeRules.Check(profile.Workflow?.Forge) ?? PrRules.Check(profile.Workflow?.Pr, profile.Workflow?.Docs) ?? Route(profile.Workflow?.Route);
+    private static Error? Workflow(SindriProfile profile) => DurationsAndAgent(profile.Workflow) ?? Effects(profile.Workflow) ?? Judges(profile) ?? Hosts(profile.Workflow) ?? PrRules.Check(profile.Workflow?.Pr, profile.Workflow?.Docs) ?? Route(profile.Workflow?.Route);
+
+    private static Error? Hosts(WorkflowSettings? workflow) => ForgeRules.Check(workflow?.Forge) ?? DataHostRules.Check(workflow);
 
     private static Error? DurationsAndAgent(WorkflowSettings? workflow) => Durations(workflow) ?? ModelKeyRules.Shape(workflow?.Agent);
 
