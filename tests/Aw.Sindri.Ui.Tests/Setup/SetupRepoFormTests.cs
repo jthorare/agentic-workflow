@@ -176,7 +176,7 @@ public sealed class SetupRepoFormTests
     [Fact]
     public async Task A_step_button_never_sends_a_protected_approval()
     {
-        _f.Serve(With(With("all-done", "profile", "needs-you", "ApproveProfile"), "recipes", "needs-you", "ApproveAllRecipes"));
+        _f.Serve(With("all-done", "profile", "needs-you", "ApproveProfile"));
         var setup = await _f.Read(Token);
 
         foreach (var step in setup.Steps.Where(s => s.Action is not null))

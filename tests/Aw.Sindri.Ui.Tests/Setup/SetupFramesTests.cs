@@ -41,16 +41,16 @@ public sealed class SetupFramesTests : FrameHost
     [Theory]
     [InlineData(1440)]
     [InlineData(900)]
-    public Task A_first_run_shows_six_rows_the_first_open_and_never_scrolls_sideways(double width) => OnUi(async () =>
+    public Task A_first_run_shows_five_rows_the_first_open_and_never_scrolls_sideways(double width) => OnUi(async () =>
     {
         var (window, shell) = await OnSettings("first-run", width);
 
         var rows = Rows(window);
 
-        Assert.Equal(6, rows.Count);
+        Assert.Equal(5, rows.Count);
         Assert.Equal([.. shell.Setup.Steps.Select(s => s.Name)], [.. rows.Select(r => Heard.Name(Expander(r)))], StringComparer.Ordinal);
-        Assert.Equal([true, false, false, false, false, false], rows.Select(r => Expander(r).IsExpanded));
-        Assert.Equal(("Set up Sindri", "0 of 6 done"), (Heard.Wrapper(Named<Border>(window, "SetupLeadName")), Heard.Wrapper(Named<Border>(window, "SetupCountName"))));
+        Assert.Equal([true, false, false, false, false], rows.Select(r => Expander(r).IsExpanded));
+        Assert.Equal(("Set up Sindri", "0 of 5 done"), (Heard.Wrapper(Named<Border>(window, "SetupLeadName")), Heard.Wrapper(Named<Border>(window, "SetupCountName"))));
         var scroll = window.GetVisualDescendants().OfType<ScrollViewer>().First(s => s.Content is not null && s.IsEffectivelyVisible && s.Extent.Height > 0);
         Assert.True(scroll.Extent.Width <= scroll.Viewport.Width + 0.5, string.Create(CultureInfo.InvariantCulture, $"the page scrolls sideways: {scroll.Extent.Width} > {scroll.Viewport.Width}"));
         Frame(window, string.Create(CultureInfo.InvariantCulture, $"setup-first-run-{width}"), prefix: "f3-");
@@ -140,7 +140,7 @@ public sealed class SetupFramesTests : FrameHost
     {
         var (window, shell) = await OnSettings("all-done", 1440);
 
-        Assert.Equal(("Sindri is set up", "All 6 done", false), (shell.Setup.Lead, shell.Setup.CountText, Visible(window, "SetupSubName")));
+        Assert.Equal(("Sindri is set up", "All 5 done", false), (shell.Setup.Lead, shell.Setup.CountText, Visible(window, "SetupSubName")));
         Assert.All(Rows(window), r => Assert.False(Expander(r).IsExpanded));
         Frame(window, "setup-done-1440", prefix: "f3-");
     });
@@ -169,7 +169,7 @@ public sealed class SetupFramesTests : FrameHost
         var line = Named<Button>(window, "SetupHomeLink");
 
         Assert.True(line.IsEffectivelyVisible);
-        Assert.Equal("Finish setting up Sindri, 1 of 6 done. Next: Approve your settings", Heard.Name(line));
+        Assert.Equal("Finish setting up Sindri, 1 of 5 done. Next: Approve your settings", Heard.Name(line));
         var next = Named<Button>(window, "SetupHomeContinue");
         Assert.Equal(("Continue, Approve your settings", true), (Heard.Name(next), next.IsEffectivelyVisible));
         Assert.True(line.Bounds.Height <= 48, string.Create(CultureInfo.InvariantCulture, $"the line is {line.Bounds.Height} px high"));

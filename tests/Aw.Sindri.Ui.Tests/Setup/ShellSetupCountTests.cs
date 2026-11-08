@@ -55,11 +55,11 @@ public sealed class ShellSetupCountTests
     public Task When_the_first_read_leaves_a_step_open_only_the_row_of_the_step_the_line_names_stays_out() => UiThread.Run(async () =>
     {
         _server.NeedsYouView = ThreeAndTwoSetup();
-        _server.SetupAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, SetupFixture.With("extra-priority-mix", "profile", "done").ToJsonString());   // the first open step is recipes
+        _server.SetupAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, SetupFixture.With("extra-priority-mix", "profile", "done").ToJsonString());   // the first open step is mcp (the recipes step is dropped)
         var shell = await Connected(s => s.Setup.IsHomeLineShown);
 
-        Assert.Equal("recipes", shell.Setup.HomeStepId);
-        Assert.Equal((4, 4), (shell.NeedsYou.Count, shell.NeedsYou.Rows.Count));   // setup:recipes is the line's; setup:mcp stays
+        Assert.Equal("mcp", shell.Setup.HomeStepId);
+        Assert.Equal((4, 4), (shell.NeedsYou.Count, shell.NeedsYou.Rows.Count));   // setup:mcp is the line's; setup:recipes stays
         Assert.StartsWith("4 need you", shell.Attention.SummaryLine, StringComparison.Ordinal);
     }, Token);
 

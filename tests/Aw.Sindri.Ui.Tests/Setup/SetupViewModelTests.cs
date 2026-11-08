@@ -87,9 +87,9 @@ public sealed class SetupViewModelTests
 
         var setup = await _f.Read(Token);
 
-        Assert.Equal(["repo", "profile", "recipes", "mcp", "map"], Ids(setup.Steps.Take(5)));
-        Assert.Equal(["Needs you", "To do", "To do", "To do", "To do"], setup.Steps.Take(5).Select(s => s.ChipWord), StringComparer.Ordinal);
-        Assert.Equal([true, false, false, false, false], setup.Steps.Take(5).Select(s => s.IsOpen));
+        Assert.Equal(["repo", "profile", "mcp", "map"], Ids(setup.Steps.Take(4)));
+        Assert.Equal(["Needs you", "To do", "To do", "To do"], setup.Steps.Take(4).Select(s => s.ChipWord), StringComparer.Ordinal);
+        Assert.Equal([true, false, false, false], setup.Steps.Take(4).Select(s => s.IsOpen));
         Assert.Equal(("Set up Sindri", Labels.SetupCount(0, setup.Steps.Count), true), (setup.Lead, setup.CountText, setup.HasSub));
     }
 
@@ -101,10 +101,10 @@ public sealed class SetupViewModelTests
         var setup = await _f.Read(Token);
 
         Assert.Equal(
-            ["Add your repository", "Approve your settings", "Approve the workflows", "Connect your coding agents", "Build the product map"],
-            setup.Steps.Take(5).Select(s => s.Title),
+            ["Add your repository", "Approve your settings", "Connect your coding agents", "Build the product map"],
+            setup.Steps.Take(4).Select(s => s.Title),
             StringComparer.Ordinal);
-        Assert.Equal([1, 2, 3, 4, 5], setup.Steps.Take(5).Select(s => s.Number));
+        Assert.Equal([1, 2, 3, 4], setup.Steps.Take(4).Select(s => s.Number));
     }
 
     [Fact]
@@ -114,7 +114,7 @@ public sealed class SetupViewModelTests
 
         var setup = await _f.Read(Token);
 
-        Assert.Equal(["Done", "Done", "Done", "Done", "Failed", "To do"], [.. setup.Steps.Select(s => s.ChipWord).Take(5), Step(setup, "later").ChipWord], StringComparer.Ordinal);
+        Assert.Equal(["Done", "Done", "Done", "Failed", "To do"], [.. setup.Steps.Select(s => s.ChipWord).Take(4), Step(setup, "later").ChipWord], StringComparer.Ordinal);
         Assert.Equal("paused", Step(setup, "later").Chip.Word);   // unknown: the To do chip, with the served word
         Assert.Equal("Working", Step(await ReadWith("running-progress"), "map").ChipWord);
         Assert.Equal("Skipped", Step(await ReadWith("first-run", "map", "skipped"), "map").ChipWord);
@@ -146,12 +146,12 @@ public sealed class SetupViewModelTests
     public async Task Opening_a_row_never_closes_another_and_the_persons_choice_survives_a_read()
     {
         var setup = await ReadWith("profile-needs-approval");
-        Step(setup, "recipes").IsOpen = true;
+        Step(setup, "mcp").IsOpen = true;
         Step(setup, "profile").IsOpen = false;
 
         await setup.Refresh(Url, Token);
 
-        Assert.Equal(["recipes"], Ids(setup.Steps.Where(s => s.IsOpen)), StringComparer.Ordinal);
+        Assert.Equal(["mcp"], Ids(setup.Steps.Where(s => s.IsOpen)), StringComparer.Ordinal);
     }
 
     [Fact]
@@ -171,7 +171,7 @@ public sealed class SetupViewModelTests
     {
         var setup = await ReadWith("failed");
 
-        Assert.Equal("26 workflows.", Step(setup, "recipes").Sub);   // done: the served detail
+        Assert.Equal("Claude Code in demo.", Step(setup, "mcp").Sub);   // done: the served detail
         Assert.Equal("The last try at building the map didn't finish.", Step(setup, "map").ErrorText);
         Assert.Equal("Waits for a repository.", Step(await ReadWith("first-run"), "profile").Sub);
     }
@@ -182,9 +182,9 @@ public sealed class SetupViewModelTests
         var done = await ReadWith("running-progress");
         var first = await ReadWith("first-run");
 
-        Assert.Equal(["done", "done", "done", "done", "working"], done.Segments.Take(5).Select(s => s.Kind), StringComparer.Ordinal);
+        Assert.Equal(["done", "done", "done", "working"], done.Segments.Take(4).Select(s => s.Kind), StringComparer.Ordinal);
         Assert.Equal(Labels.SetupCount(done.Steps.Count(s => s.IsFinished), done.Steps.Count), done.CountText);
-        Assert.Equal(["todo", "todo", "todo", "todo", "todo"], first.Segments.Take(5).Select(s => s.Kind), StringComparer.Ordinal);
+        Assert.Equal(["todo", "todo", "todo", "todo"], first.Segments.Take(4).Select(s => s.Kind), StringComparer.Ordinal);
     }
 
     [Fact]
@@ -216,7 +216,7 @@ public sealed class SetupViewModelTests
         setup.ChecklistRequested += (_, _) => asked++;
         Step(setup, "profile").IsOpen = false;
 
-        Assert.Equal(("Approve your settings", "Continue", "Finish setting up Sindri, 1 of 6 done. Next: Approve your settings"), (setup.HomeStepText, setup.ContinueText, setup.HomeLineName));
+        Assert.Equal(("Approve your settings", "Continue", "Finish setting up Sindri, 1 of 5 done. Next: Approve your settings"), (setup.HomeStepText, setup.ContinueText, setup.HomeLineName));
         setup.Continue();
 
         Assert.Equal((1, true), (asked, Step(setup, "profile").IsOpen));
@@ -360,7 +360,7 @@ public sealed class SetupViewModelTests
         _f.Serve("first-run");
         await setup.Retry(Token);
 
-        Assert.Equal((false, 6), (setup.IsFailed, setup.Steps.Count));
+        Assert.Equal((false, 5), (setup.IsFailed, setup.Steps.Count));
     }
 
     [Fact]
@@ -371,6 +371,6 @@ public sealed class SetupViewModelTests
 
         await setup.Refresh(Url, Token);
 
-        Assert.Equal((6, true, false), (setup.Steps.Count, setup.IsStale, setup.IsFailed));
+        Assert.Equal((5, true, false), (setup.Steps.Count, setup.IsStale, setup.IsFailed));
     }
 }
