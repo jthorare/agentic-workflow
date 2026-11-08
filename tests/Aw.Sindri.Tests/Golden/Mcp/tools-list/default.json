@@ -614,7 +614,7 @@
   },
   {
     "name": "connection_add",
-    "description": "Add a connection. An oauth connection returns a consent URL to hand to the owner and finishes when they sign in; a rest or cli connection reads the named environment variable once and stores it as the secret.",
+    "description": "Add a connection. An oauth connection returns a consent URL to hand to the owner and finishes when they sign in; a rest, cli or mcp connection with keyEnv reads the named environment variable once and stores it as the secret; an mcp connection also needs url.",
     "inputSchema": {
       "type": "object",
       "additionalProperties": false,
@@ -648,6 +648,33 @@
         "clientSecretEnv": {
           "type": "string",
           "description": "The NAME of an environment variable in the running sindri serve's environment that holds the OAuth client secret, for providers that want one (the github and google presets)"
+        },
+        "url": {
+          "type": "string",
+          "description": "The MCP server's address, for kind mcp (https, or http on this machine). With keyEnv it connects with that key; without one it starts the server's own sign-in and returns a consent URL"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "connection_signin",
+    "description": "Sign a stored oauth or mcp connection in again (its refresh lapsed or its grant was revoked) without removing it. Returns a consent URL to hand to the owner; the connection keeps its name and settings and finishes when they sign in. A key-based connection is refused (SND-CONN-011).",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The connection name"
         }
       },
       "required": [
