@@ -65,11 +65,11 @@ public static class SindriCoreServiceCollectionExtensions
             .AddSingleton<IProjection, RequestsProjection>()
             .AddSingleton<IProjection, ItemsProjection>()
             .AddSingleton<IProjection, ItemAliasesProjection>()
+            .AddSingleton<IProjection, ItemLinksProjection>()
             .AddSingleton<IProjection, ItemTimelineProjection>()
             .AddSingleton<IProjection, NeedsYouProjection>()
             .AddSingleton<IProjection, JobsProjection>()
             .AddSingleton<IProjection, LaunchesProjection>()
-            .AddSingleton<IProjection, RecipeStatsProjection>()
             .AddSingleton<IProjection, ModelHistoryProjection>()
             .AddSingleton<IProjection, CodeIndexProjection>()
             .AddSingleton<IProjection, ProjectsProjection>();

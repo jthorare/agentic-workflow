@@ -640,11 +640,9 @@ Aw.Sindri.Core.Events.ItemLinked.Alias.get -> Aw.Sindri.Core.Ids.ItemAlias?
 Aw.Sindri.Core.Events.ItemLinked.Alias.init -> void
 Aw.Sindri.Core.Events.ItemLinked.CommandId.get -> Aw.Sindri.Core.Ids.CommandId
 Aw.Sindri.Core.Events.ItemLinked.CommandId.init -> void
-Aw.Sindri.Core.Events.ItemLinked.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Ids.RecordKey Record, out Aw.Sindri.Core.Ids.ItemAlias? Alias) -> void
 Aw.Sindri.Core.Events.ItemLinked.Equals(Aw.Sindri.Core.Events.ItemLinked? other) -> bool
 Aw.Sindri.Core.Events.ItemLinked.Item.get -> Aw.Sindri.Core.Ids.ItemId
 Aw.Sindri.Core.Events.ItemLinked.Item.init -> void
-Aw.Sindri.Core.Events.ItemLinked.ItemLinked(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Ids.RecordKey Record, Aw.Sindri.Core.Ids.ItemAlias? Alias) -> void
 Aw.Sindri.Core.Events.ItemLinked.Record.get -> Aw.Sindri.Core.Ids.RecordKey
 Aw.Sindri.Core.Events.ItemLinked.Record.init -> void
 Aw.Sindri.Core.Events.ItemStateChanged
@@ -5545,40 +5543,6 @@ Aw.Sindri.Core.Launch.PolicyForm.ClaudeSettingsFile = 1 -> Aw.Sindri.Core.Launch
 Aw.Sindri.Core.Launch.PolicyForm.CodexOverrides = 2 -> Aw.Sindri.Core.Launch.PolicyForm
 Aw.Sindri.Core.Launch.PolicyForm.CursorConfig = 3 -> Aw.Sindri.Core.Launch.PolicyForm
 Aw.Sindri.Core.Launch.PolicyForm.None = 0 -> Aw.Sindri.Core.Launch.PolicyForm
-Aw.Sindri.Core.Items.EngineItemStates
-Aw.Sindri.Core.Views.EngineItemPart
-Aw.Sindri.Core.Views.EngineItemPart.<Clone>$() -> Aw.Sindri.Core.Views.EngineItemPart!
-Aw.Sindri.Core.Views.EngineItemPart.Address.get -> string!
-Aw.Sindri.Core.Views.EngineItemPart.Address.init -> void
-Aw.Sindri.Core.Views.EngineItemPart.Cancelled.get -> bool
-Aw.Sindri.Core.Views.EngineItemPart.Cancelled.init -> void
-Aw.Sindri.Core.Views.EngineItemPart.Deconstruct(out string! Address, out string! State, out bool RunOpen, out Aw.Sindri.Core.Launch.StepRuntime? Runtime, out Aw.Sindri.Core.Workflow.Engine.Instances.SuspensionKind? Suspension, out bool Ended, out bool Cancelled) -> void
-Aw.Sindri.Core.Views.EngineItemPart.Earlier.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Views.EngineItemPart!>?
-Aw.Sindri.Core.Views.EngineItemPart.Earlier.init -> void
-Aw.Sindri.Core.Views.EngineItemPart.Reason.get -> Aw.Sindri.Core.Workflow.Engine.ParkReason?
-Aw.Sindri.Core.Views.EngineItemPart.Reason.init -> void
-Aw.Sindri.Core.Views.EngineItemPart.Ended.get -> bool
-Aw.Sindri.Core.Views.EngineItemPart.Ended.init -> void
-Aw.Sindri.Core.Views.EngineItemPart.EngineItemPart(string! Address, string! State, bool RunOpen, Aw.Sindri.Core.Launch.StepRuntime? Runtime, Aw.Sindri.Core.Workflow.Engine.Instances.SuspensionKind? Suspension, bool Ended, bool Cancelled) -> void
-Aw.Sindri.Core.Views.EngineItemPart.Equals(Aw.Sindri.Core.Views.EngineItemPart? other) -> bool
-Aw.Sindri.Core.Views.EngineItemPart.RunOpen.get -> bool
-Aw.Sindri.Core.Views.EngineItemPart.RunOpen.init -> void
-Aw.Sindri.Core.Views.EngineItemPart.Runtime.get -> Aw.Sindri.Core.Launch.StepRuntime?
-Aw.Sindri.Core.Views.EngineItemPart.Runtime.init -> void
-Aw.Sindri.Core.Views.EngineItemPart.State.get -> string!
-Aw.Sindri.Core.Views.EngineItemPart.State.init -> void
-Aw.Sindri.Core.Views.EngineItemPart.Suspension.get -> Aw.Sindri.Core.Workflow.Engine.Instances.SuspensionKind?
-Aw.Sindri.Core.Views.EngineItemPart.Suspension.init -> void
-Aw.Sindri.Core.Views.ItemRow.Engine.get -> Aw.Sindri.Core.Views.EngineItemPart?
-Aw.Sindri.Core.Views.ItemRow.Engine.init -> void
-override Aw.Sindri.Core.Views.EngineItemPart.Equals(object? obj) -> bool
-override Aw.Sindri.Core.Views.EngineItemPart.GetHashCode() -> int
-override Aw.Sindri.Core.Views.EngineItemPart.ToString() -> string!
-static Aw.Sindri.Core.Items.EngineItemStates.Next(Aw.Sindri.Core.Views.EngineItemPart? prior, string! eventType, Aw.Sindri.Core.Events.WorkflowEventPayload! payload) -> Aw.Sindri.Core.Views.EngineItemPart?
-static Aw.Sindri.Core.Items.EngineItemStates.StateOf(Aw.Sindri.Core.Views.EngineItemPart! part) -> Aw.Sindri.Core.Items.Vocabulary.ItemState
-static Aw.Sindri.Core.Items.EngineItemStates.Unavailable(Aw.Sindri.Core.Views.EngineItemPart? part) -> int
-static Aw.Sindri.Core.Views.EngineItemPart.operator !=(Aw.Sindri.Core.Views.EngineItemPart? left, Aw.Sindri.Core.Views.EngineItemPart? right) -> bool
-static Aw.Sindri.Core.Views.EngineItemPart.operator ==(Aw.Sindri.Core.Views.EngineItemPart? left, Aw.Sindri.Core.Views.EngineItemPart? right) -> bool
 Aw.Sindri.Core.NeedsYou.ParkRowInput
 override Aw.Sindri.Core.NeedsYou.ParkRowInput.Equals(object? obj) -> bool
 override Aw.Sindri.Core.NeedsYou.ParkRowInput.GetHashCode() -> int
@@ -10756,7 +10720,6 @@ Aw.Sindri.Core.Events.WorkflowEventDelta.Recipe.get -> string?
 Aw.Sindri.Core.Events.WorkflowEventDelta.Recipe.init -> void
 Aw.Sindri.Core.Events.WorkflowEventDelta.RecipeHash.get -> string?
 Aw.Sindri.Core.Events.WorkflowEventDelta.RecipeHash.init -> void
-const Aw.Sindri.Core.Views.ViewNames.RecipeStats = "recipe-stats" -> string!
 Aw.Sindri.Core.Views.IViewRows.Clear(string! view, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Forge.PullThread.CreatedAt.get -> System.DateTimeOffset
 Aw.Sindri.Core.Forge.PullThread.CreatedAt.init -> void
@@ -12304,8 +12267,6 @@ static Aw.Sindri.Core.Launches.StalledLaunch.operator !=(Aw.Sindri.Core.Launches
 static Aw.Sindri.Core.Launches.StalledLaunch.operator ==(Aw.Sindri.Core.Launches.StalledLaunch? left, Aw.Sindri.Core.Launches.StalledLaunch? right) -> bool
 Aw.Sindri.Core.Launches.StalledLaunch.Item.get -> Aw.Sindri.Core.Ids.ItemId
 Aw.Sindri.Core.Launches.StalledLaunch.Item.init -> void
-static Aw.Sindri.Core.Launches.StalledLaunches.Open(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launches.StalledLaunch!>! stalled, Aw.Sindri.Core.Views.IViewReader? views, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launches.StalledLaunch!>!>
-static Aw.Sindri.Core.Launches.StalledLaunches.MovedPast(Aw.Sindri.Core.Launches.StalledLaunch! launch, Aw.Sindri.Core.Views.EngineItemPart? engine) -> bool
 Aw.Sindri.Core.Workflow.Engine.Triggers.RewindRequested
 Aw.Sindri.Core.Workflow.Engine.Triggers.RewindRequested.Equals(Aw.Sindri.Core.Workflow.Engine.Triggers.RewindRequested? other) -> bool
 Aw.Sindri.Core.Workflow.Engine.Triggers.RewindRequested.Stamp.get -> Aw.Sindri.Core.Workflow.Engine.Triggers.CommandStamp!
@@ -14025,7 +13986,6 @@ const Aw.Sindri.Core.Events.ModelCallOutcome.NotAsked = "not-asked" -> string!
 const Aw.Sindri.Core.Events.ModelCallOutcome.Skipped = "skipped" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Estimated = "estimated" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Reported = "reported" -> string!
-const Aw.Sindri.Core.Views.ViewSchema.Version = 26 -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Events.ContextModelCalled.GetHashCode() -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.ToString() -> string!
@@ -19096,3 +19056,8 @@ override Aw.Sindri.Core.Views.ItemLinkRow.ToString() -> string!
 static Aw.Sindri.Core.Events.RetiredEvents.Is(string! eventType) -> bool
 static Aw.Sindri.Core.Views.ItemLinkRow.operator !=(Aw.Sindri.Core.Views.ItemLinkRow? left, Aw.Sindri.Core.Views.ItemLinkRow? right) -> bool
 static Aw.Sindri.Core.Views.ItemLinkRow.operator ==(Aw.Sindri.Core.Views.ItemLinkRow? left, Aw.Sindri.Core.Views.ItemLinkRow? right) -> bool
+const Aw.Sindri.Core.Views.ViewSchema.Version = 27 -> int
+Aw.Sindri.Core.Events.ItemLinked.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Ids.RecordKey Record, out Aw.Sindri.Core.Ids.ItemAlias? Alias, out string? Url) -> void
+Aw.Sindri.Core.Events.ItemLinked.Url.get -> string?
+Aw.Sindri.Core.Events.ItemLinked.Url.init -> void
+Aw.Sindri.Core.Events.ItemLinked.ItemLinked(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Ids.RecordKey Record, Aw.Sindri.Core.Ids.ItemAlias? Alias, string? Url = null) -> void
