@@ -100,7 +100,7 @@ internal static class NeedsYouRows
         Cli = "sindri services run index",
     };
 
-    /// <summary>A drifted profile: calm, a protected approve, and the subject optional.</summary>
+    /// <summary>A calm settings row (a generic fixture row the list tests share; the server no longer sends a profile approval): the subject optional.</summary>
     internal static NeedsYouEntry Profile(NeedsYouSubject? subject = null) => new("profile:drift", NeedsYouUrgency.Calm)
     {
         Kind = "profile",
@@ -113,13 +113,6 @@ internal static class NeedsYouRows
         Actions = [new NeedsYouAction("ApproveProfile", "Approve", ActionReadiness.Ready, "sindri profile approve 3f1c09", RejectLike: false)],
         Subject = subject,
         Cli = "sindri profile approve 3f1c09",
-    };
-
-    /// <summary>The drifted profile with its full hash as the subject and an approve the catalog lets the app confirm.</summary>
-    internal static NeedsYouEntry ProfileReady(string hash = ProfileHash) => Profile(new NeedsYouSubject("profile", hash)) with
-    {
-        Actions = [new NeedsYouAction("ApproveProfile", "Approve", ActionReadiness.Ready, "sindri profile approve " + hash[..6], RejectLike: false)],
-        Cli = "sindri profile approve " + hash[..6],
     };
 
     /// <summary>The setup row that waits on approve-all: its primary is ApproveAllRecipes.</summary>

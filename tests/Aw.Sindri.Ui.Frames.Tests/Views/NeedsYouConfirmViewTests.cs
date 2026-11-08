@@ -7,29 +7,10 @@ using Aw.Sindri.Ui.ViewModels.Shell;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
-/// <summary>The inbox bar's approve button in a real window (needs-you slice 3; q93): the bar's primary approves with one click and no challenge, for a drifted profile and for approve-all.</summary>
+/// <summary>The inbox bar's approve button in a real window (needs-you slice 3; q93): the bar's primary approves with one click and no challenge, for approve-all and a changed workflow.</summary>
 [Lane(TestLane.Integration)]
 public sealed class NeedsYouConfirmViewTests : FrameHost
 {
-    [Fact]
-    public Task One_click_on_the_primary_approves_a_drifted_profile_with_no_challenge() => OnUi(async () =>
-    {
-        var (window, shell) = await Connected(s => s.NeedsYou.Count > 0, 1440, 800);
-        shell.OpenNeedsYouInbox();
-        shell.Inbox.Select("profile:drift");
-        Settle(window);
-        await Until(window, () => shell.Inbox.Bar.PrimaryEnabled, State(shell));
-        Settle(window);
-
-        Assert.True(Visible(window, "NeedsYouApprove"));
-        Assert.Empty(Server.ProfileApprovals);   // showing it approved nothing
-
-        Named<Button>(window, "NeedsYouApprove").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        await Until(window, () => shell.Inbox.Bar.IsApproved, $"profileApprovals={Server.ProfileApprovals.Count} refusal={shell.Inbox.Bar.Refusal}; {State(shell)}");
-
-        _ = Assert.Single(Server.ProfileApprovals);
-    });
-
     [Fact]
     public Task One_click_on_the_primary_approves_all_new_workflows() => OnUi(async () =>
     {

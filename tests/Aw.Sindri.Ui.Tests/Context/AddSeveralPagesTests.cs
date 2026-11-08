@@ -1,5 +1,4 @@
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
@@ -97,13 +96,12 @@ public sealed class AddSeveralPagesTests
         sheet.Closed += (_, _) => closed = true;
         sheet.Saved += (_, _) => saved = true;
 
-        Expect.Equal("Save all and approve", sheet.SaveText);
+        Expect.Equal("Save all", sheet.SaveText);
         await sheet.SaveAll(TestContext.Current.CancellationToken);
 
         var call = Assert.Single(writes.Saves);
         Expect.Sequence(["Schedule week", "Time off"], call.Save.Set.Select(p => p.Name));
         Expect.Equal(Hash, call.IfHash);
-        Expect.True(call.Approve, "nothing else waits, so one click approves");
         Expect.True(saved && closed, "a saved list reads the section again and closes the sheet");
     }
 
@@ -120,19 +118,6 @@ public sealed class AddSeveralPagesTests
 
         var action = Assert.Single(Assert.Single(Assert.Single(writes.Saves).Save.Set).Actions);
         Expect.Equal("send-it-2", action.Id);
-    }
-
-    [Fact]
-    public async Task Save_all_only_saves_when_other_changes_wait()
-    {
-        var (sheet, writes) = Sheet(Block(1, "Schedule week"));
-        writes.Profile = new ProfileWaiting("h", ["repos.web.index.pages.other"]);
-        sheet.Text = "x";
-        await sheet.ReadList(TestContext.Current.CancellationToken);
-
-        Expect.Equal("Save all", sheet.SaveText);
-        await sheet.SaveAll(TestContext.Current.CancellationToken);
-        Expect.True(!writes.Saves[0].Approve, "another change waits: no approval");
     }
 
     [Fact]

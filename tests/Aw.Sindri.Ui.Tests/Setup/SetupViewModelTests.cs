@@ -76,7 +76,7 @@ public sealed class SetupViewModelTests
         await sources.Action!.Cli!.Copy(Token);
 
         Assert.Equal(("Connect your sources", "To do", "To do"), (sources.Title, sources.ChipWord, sources.Chip.Word));
-        Assert.Equal(("ConnectIndexSource", false, null, null, null), (sources.Action.Action, sources.Action.IsInApp, sources.Action.Protected, sources.Repo, sources.Profile));
+        Assert.Equal(("ConnectIndexSource", false, null, null), (sources.Action.Action, sources.Action.IsInApp, sources.Action.Protected, sources.Repo));
         Assert.Equal("sindri index connect <source>", _f.Clipboard.Text);
     }
 
