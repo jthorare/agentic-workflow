@@ -18657,11 +18657,9 @@ Aw.Sindri.Core.Sandbox.Plan.GroupsInput
 Aw.Sindri.Core.Sandbox.Plan.GroupsInput.<Clone>$() -> Aw.Sindri.Core.Sandbox.Plan.GroupsInput!
 Aw.Sindri.Core.Sandbox.Plan.GroupsInput.Attended.get -> bool
 Aw.Sindri.Core.Sandbox.Plan.GroupsInput.Attended.init -> void
-Aw.Sindri.Core.Sandbox.Plan.GroupsInput.Deconstruct(out Aw.Sindri.Core.Profile.SandboxSettings? Settings, out Aw.Sindri.Core.Profile.SandboxRepoSettings? Repo, out Aw.Sindri.Core.Launch.AgentId Target, out bool WriteScope, out bool Attended, out Aw.Sindri.Core.Sandbox.GithubCredentials Github, out System.Collections.Generic.IReadOnlyList<string!>? Omit) -> void
 Aw.Sindri.Core.Sandbox.Plan.GroupsInput.Equals(Aw.Sindri.Core.Sandbox.Plan.GroupsInput? other) -> bool
 Aw.Sindri.Core.Sandbox.Plan.GroupsInput.Github.get -> Aw.Sindri.Core.Sandbox.GithubCredentials
 Aw.Sindri.Core.Sandbox.Plan.GroupsInput.Github.init -> void
-Aw.Sindri.Core.Sandbox.Plan.GroupsInput.GroupsInput(Aw.Sindri.Core.Profile.SandboxSettings? Settings, Aw.Sindri.Core.Profile.SandboxRepoSettings? Repo, Aw.Sindri.Core.Launch.AgentId Target, bool WriteScope, bool Attended, Aw.Sindri.Core.Sandbox.GithubCredentials Github, System.Collections.Generic.IReadOnlyList<string!>? Omit) -> void
 Aw.Sindri.Core.Sandbox.Plan.GroupsInput.Omit.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Aw.Sindri.Core.Sandbox.Plan.GroupsInput.Omit.init -> void
 Aw.Sindri.Core.Sandbox.Plan.GroupsInput.Repo.get -> Aw.Sindri.Core.Profile.SandboxRepoSettings?
@@ -25659,3 +25657,87 @@ Aw.Sindri.Core.Graph.Blocks.PromptBlock.CheckConfig(System.Text.Json.Nodes.JsonO
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.MarkTick(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.DateTimeOffset tick, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.LastTick(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.DateTimeOffset?>!>
 static Aw.Sindri.Core.Graph.Runs.WorkflowRun.TriggerProblem(string! trigger) -> string?
+Aw.Sindri.Core.Graph.Blocks.AgentRunReport
+Aw.Sindri.Core.Graph.Blocks.AgentRunReport.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.AgentRunReport!
+Aw.Sindri.Core.Graph.Blocks.AgentRunReport.AgentRunReport(System.Text.Json.Nodes.JsonObject! Fields, string! Status, string? Branch, string? Commit, Aw.Sindri.Core.Launch.LaunchId SessionId, System.Text.Json.Nodes.JsonObject? Usage) -> void
+Aw.Sindri.Core.Graph.Blocks.AgentRunReport.Branch.get -> string?
+Aw.Sindri.Core.Graph.Blocks.AgentRunReport.Branch.init -> void
+Aw.Sindri.Core.Graph.Blocks.AgentRunReport.Commit.get -> string?
+Aw.Sindri.Core.Graph.Blocks.AgentRunReport.Commit.init -> void
+Aw.Sindri.Core.Graph.Blocks.AgentRunReport.Deconstruct(out System.Text.Json.Nodes.JsonObject! Fields, out string! Status, out string? Branch, out string? Commit, out Aw.Sindri.Core.Launch.LaunchId SessionId, out System.Text.Json.Nodes.JsonObject? Usage) -> void
+Aw.Sindri.Core.Graph.Blocks.AgentRunReport.Equals(Aw.Sindri.Core.Graph.Blocks.AgentRunReport? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.AgentRunReport.Fields.get -> System.Text.Json.Nodes.JsonObject!
+Aw.Sindri.Core.Graph.Blocks.AgentRunReport.Fields.init -> void
+Aw.Sindri.Core.Graph.Blocks.AgentRunReport.SessionId.get -> Aw.Sindri.Core.Launch.LaunchId
+Aw.Sindri.Core.Graph.Blocks.AgentRunReport.SessionId.init -> void
+Aw.Sindri.Core.Graph.Blocks.AgentRunReport.Status.get -> string!
+Aw.Sindri.Core.Graph.Blocks.AgentRunReport.Status.init -> void
+Aw.Sindri.Core.Graph.Blocks.AgentRunReport.Usage.get -> System.Text.Json.Nodes.JsonObject?
+Aw.Sindri.Core.Graph.Blocks.AgentRunReport.Usage.init -> void
+Aw.Sindri.Core.Graph.Blocks.AgentRunRequest
+Aw.Sindri.Core.Graph.Blocks.AgentRunRequest.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.AgentRunRequest!
+Aw.Sindri.Core.Graph.Blocks.AgentRunRequest.AgentRunRequest(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId Node, Aw.Sindri.Core.Graph.Blocks.RunAgentConfig! Config) -> void
+Aw.Sindri.Core.Graph.Blocks.AgentRunRequest.Config.get -> Aw.Sindri.Core.Graph.Blocks.RunAgentConfig!
+Aw.Sindri.Core.Graph.Blocks.AgentRunRequest.Config.init -> void
+Aw.Sindri.Core.Graph.Blocks.AgentRunRequest.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, out Aw.Sindri.Core.Graph.Ids.NodeId Node, out Aw.Sindri.Core.Graph.Blocks.RunAgentConfig! Config) -> void
+Aw.Sindri.Core.Graph.Blocks.AgentRunRequest.Equals(Aw.Sindri.Core.Graph.Blocks.AgentRunRequest? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.AgentRunRequest.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Blocks.AgentRunRequest.Node.init -> void
+Aw.Sindri.Core.Graph.Blocks.AgentRunRequest.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Graph.Blocks.AgentRunRequest.RunId.init -> void
+Aw.Sindri.Core.Graph.Blocks.IAgentRunPort
+Aw.Sindri.Core.Graph.Blocks.IAgentRunPort.Run(Aw.Sindri.Core.Graph.Blocks.AgentRunRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.AgentRunReport!>!>
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.RunAgentBlock(Aw.Sindri.Core.Graph.Blocks.IAgentRunPort! agents) -> void
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.RunAgentConfig!
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Agent.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Agent.init -> void
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Connections.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Connections.init -> void
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Deconstruct(out string! Repo, out System.Collections.Generic.IReadOnlyList<string!>! ReadOnlyRepos, out string! Agent, out string! Prompt, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Outputs, out string? Timeout, out System.Collections.Generic.IReadOnlyList<string!>! Connections) -> void
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Equals(Aw.Sindri.Core.Graph.Blocks.RunAgentConfig? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Outputs.init -> void
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Prompt.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Prompt.init -> void
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.ReadOnlyRepos.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.ReadOnlyRepos.init -> void
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Repo.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Repo.init -> void
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.RunAgentConfig(string! Repo, System.Collections.Generic.IReadOnlyList<string!>! ReadOnlyRepos, string! Agent, string! Prompt, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Outputs, string? Timeout, System.Collections.Generic.IReadOnlyList<string!>! Connections) -> void
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Timeout.get -> string?
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Timeout.init -> void
+Aw.Sindri.Core.Graph.Blocks.RunAgentNames
+Aw.Sindri.Core.Sandbox.Plan.GroupsInput.ConnectionHosts.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>?
+Aw.Sindri.Core.Sandbox.Plan.GroupsInput.ConnectionHosts.init -> void
+Aw.Sindri.Core.Sandbox.Plan.GroupsInput.Connections.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Sandbox.Plan.GroupsInput.Connections.init -> void
+Aw.Sindri.Core.Sandbox.Plan.GroupsInput.Deconstruct(out Aw.Sindri.Core.Profile.SandboxSettings? Settings, out Aw.Sindri.Core.Profile.SandboxRepoSettings? Repo, out Aw.Sindri.Core.Launch.AgentId Target, out bool WriteScope, out bool Attended, out Aw.Sindri.Core.Sandbox.GithubCredentials Github, out System.Collections.Generic.IReadOnlyList<string!>? Omit, out string? NodeRepo, out System.Collections.Generic.IReadOnlyList<string!>? Connections, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>? ConnectionHosts) -> void
+Aw.Sindri.Core.Sandbox.Plan.GroupsInput.GroupsInput(Aw.Sindri.Core.Profile.SandboxSettings? Settings, Aw.Sindri.Core.Profile.SandboxRepoSettings? Repo, Aw.Sindri.Core.Launch.AgentId Target, bool WriteScope, bool Attended, Aw.Sindri.Core.Sandbox.GithubCredentials Github, System.Collections.Generic.IReadOnlyList<string!>? Omit, string? NodeRepo = null, System.Collections.Generic.IReadOnlyList<string!>? Connections = null, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>? ConnectionHosts = null) -> void
+Aw.Sindri.Core.Sandbox.Plan.GroupsInput.NodeRepo.get -> string?
+Aw.Sindri.Core.Sandbox.Plan.GroupsInput.NodeRepo.init -> void
+override Aw.Sindri.Core.Graph.Blocks.AgentRunReport.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.AgentRunReport.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.AgentRunReport.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.AgentRunRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.AgentRunRequest.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.AgentRunRequest.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.AgentRunReport.operator !=(Aw.Sindri.Core.Graph.Blocks.AgentRunReport? left, Aw.Sindri.Core.Graph.Blocks.AgentRunReport? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.AgentRunReport.operator ==(Aw.Sindri.Core.Graph.Blocks.AgentRunReport? left, Aw.Sindri.Core.Graph.Blocks.AgentRunReport? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.AgentRunRequest.operator !=(Aw.Sindri.Core.Graph.Blocks.AgentRunRequest? left, Aw.Sindri.Core.Graph.Blocks.AgentRunRequest? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.AgentRunRequest.operator ==(Aw.Sindri.Core.Graph.Blocks.AgentRunRequest? left, Aw.Sindri.Core.Graph.Blocks.AgentRunRequest? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.CheckReport(Aw.Sindri.Core.Graph.Blocks.RunAgentConfig! config, System.Text.Json.Nodes.JsonObject! report) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Parse(System.Text.Json.Nodes.JsonObject! config) -> Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.RunAgentConfig!>!
+static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.operator !=(Aw.Sindri.Core.Graph.Blocks.RunAgentConfig? left, Aw.Sindri.Core.Graph.Blocks.RunAgentConfig? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.operator ==(Aw.Sindri.Core.Graph.Blocks.RunAgentConfig? left, Aw.Sindri.Core.Graph.Blocks.RunAgentConfig? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.RunAgentNames.Branch(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run) -> string!
