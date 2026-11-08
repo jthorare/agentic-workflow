@@ -39,7 +39,7 @@ public sealed class LinearConnectionApprovalTests
     }
 
     [Fact, Trait("Lane", "integration")]
-    public async Task A_pending_url_edit_is_not_approved_with_the_read_key()
+    public async Task A_pending_url_edit_refuses_the_read_key_save_before_the_key_is_sent()
     {
         var ct = TestContext.Current.CancellationToken;
         await using var host = await Start(BaseYaml, ct);
@@ -47,7 +47,8 @@ public sealed class LinearConnectionApprovalTests
 
         var answer = await host.Http.Ask(Post(Connect, Read, ItemScenarios.Human(host)));
 
-        Assert.Contains(NotApproved, answer.Body, StringComparison.Ordinal);
+        Assert.Contains("SND-LINEAR-006", answer.Body, StringComparison.Ordinal);
+        Assert.DoesNotContain("LINEAR_API_KEY\"", await File.ReadAllTextAsync(Path.Combine(host.Home, "profile", "profile.yaml"), ct), StringComparison.Ordinal);   // nothing was stored: the old pointer is still the only one
     }
 
     [Fact, Trait("Lane", "integration")]

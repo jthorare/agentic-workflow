@@ -14,10 +14,36 @@ public sealed class ListLinearTeamsServiceTests
 
     private readonly SliceHarness _slice = new();
     private readonly FakeLinearKeyChecks _checks = new();
+    private readonly InMemoryProfiles _profiles = LinearConnectionTestSupport.Profiles();
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private ListLinearTeamsService Service() => new(_checks, _slice.Callers);
+    private ListLinearTeamsService Service() => new(_checks, _slice.Callers, LinearConnectionTestSupport.Guard(_profiles));
+
+    [Fact]
+    public async Task A_Linear_url_that_waits_for_approval_refuses_the_list_and_Linear_is_not_asked()
+    {
+        using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
+        var service = new ListLinearTeamsService(_checks, _slice.Callers, LinearConnectionTestSupport.Pending(_profiles));
+
+        var result = await service.Handle(new ListLinearTeamsRequest(Key), Token);
+
+        Expect.Equal(SindriErrors.LinearBadValue.Code, result.Error.Code);
+        Expect.Equal(LinearUrlGuard.Waiting, result.Error.Message);
+        Assert.Empty(_checks.Asked);
+    }
+
+    [Fact]
+    public async Task With_no_approved_profile_at_all_the_list_is_refused_the_same_way()
+    {
+        using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
+        var service = new ListLinearTeamsService(_checks, _slice.Callers, new LinearUrlGuard(_profiles, _profiles));
+
+        var result = await service.Handle(new ListLinearTeamsRequest(Key), Token);
+
+        Expect.Equal(SindriErrors.LinearBadValue.Code, result.Error.Code);
+        Assert.Empty(_checks.Asked);
+    }
 
     [Fact]
     public async Task A_session_is_refused_SND_AUTH_002_and_Linear_is_not_asked()

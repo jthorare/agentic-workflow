@@ -21,11 +21,42 @@ public sealed class SaveLinearConnectionServiceTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private SaveLinearConnectionService Service() => new(_checks, _store, _approval, _profiles, _slice.Callers, new FakeLinearCheckStore(), TimeProvider.System);
+    private SaveLinearConnectionService Service() => new(_checks, _store, _approval, _slice.Callers, new FakeLinearCheckStore(), TimeProvider.System, LinearConnectionTestSupport.Guard(_profiles));
 
     private IDisposable Owner() => _slice.Callers.Enter(A.Caller().Human().Build());
 
     private static SaveLinearConnectionRequest Read(params string[] teams) => new("read", ReadKey, teams);
+
+    [Theory]
+    [InlineData("read")]
+    [InlineData("write")]
+    public async Task A_Linear_url_that_waits_for_approval_refuses_the_save_before_the_key_goes_anywhere(string kind)
+    {
+        using var entered = Owner();
+        var service = new SaveLinearConnectionService(_checks, _store, _approval, _slice.Callers, new FakeLinearCheckStore(), TimeProvider.System, LinearConnectionTestSupport.Pending(_profiles));
+
+        var result = await service.Handle(new SaveLinearConnectionRequest(kind, kind == "read" ? ReadKey : WriteKey, ["ENG"]), Token);
+
+        Expect.Equal(SindriErrors.LinearBadValue.Code, result.Error.Code);
+        Expect.Equal(LinearUrlGuard.Waiting, result.Error.Message);
+        Assert.Empty(_checks.Asked);
+        Assert.Empty(_store.ReadSaves);
+        Assert.Empty(_store.WriteSaves);
+        Expect.Equal(0, _approval.Settles);
+    }
+
+    [Fact]
+    public async Task With_no_approved_profile_at_all_the_save_is_refused_the_same_way()
+    {
+        using var entered = Owner();
+        var service = new SaveLinearConnectionService(_checks, _store, _approval, _slice.Callers, new FakeLinearCheckStore(), TimeProvider.System, new LinearUrlGuard(_profiles, _profiles));
+
+        var result = await service.Handle(Read("ENG"), Token);
+
+        Expect.Equal(SindriErrors.LinearBadValue.Code, result.Error.Code);
+        Assert.Empty(_checks.Asked);
+        Assert.Empty(_store.ReadSaves);
+    }
 
     [Fact]
     public async Task A_session_is_refused_SND_AUTH_002_and_nothing_is_asked_or_stored()

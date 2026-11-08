@@ -3,7 +3,6 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Linear;
-using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Features.LinearConnection;
 
@@ -14,16 +13,17 @@ namespace Aw.Sindri.Features.LinearConnection;
 /// <param name="checks">Asks Linear.</param>
 /// <param name="store">Keeps the key and its pointer.</param>
 /// <param name="approval">Approves the profile when the key is the only waiting change.</param>
-/// <param name="live">The live profile, for its hash.</param>
 /// <param name="callers">The current caller.</param>
 /// <param name="log">Keeps the result and time of the check.</param>
 /// <param name="clock">The clock.</param>
-internal sealed class SaveLinearConnectionService(ILinearKeyChecks checks, ILinearConnectionStore store, ILinearConnectionApproval approval, IProfileSource live, ICallerContextAccessor callers, ILinearCheckStore log, TimeProvider clock)
+/// <param name="urlGuard">Refuses while the Linear url has a change waiting, before the key goes anywhere; also loads the live profile for its hash.</param>
+internal sealed class SaveLinearConnectionService(ILinearKeyChecks checks, ILinearConnectionStore store, ILinearConnectionApproval approval, ICallerContextAccessor callers, ILinearCheckStore log, TimeProvider clock, LinearUrlGuard urlGuard)
     : IService<SaveLinearConnectionRequest, SaveLinearConnectionResponse>
 {
     public async ValueTask<Result<SaveLinearConnectionResponse>> Handle(SaveLinearConnectionRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        _ = urlGuard;   // red stub: not wired yet
         if (!LinearConnectionRules.IsOwner(callers))
         {
             return LinearConnectionRules.Refused(LinearConnectionRules.ChangeRefusal);
@@ -100,7 +100,7 @@ internal sealed class SaveLinearConnectionService(ILinearKeyChecks checks, ILine
     private async ValueTask<Result<SaveLinearConnectionResponse>> Settled(SavedKey saved, CancellationToken cancellationToken)
     {
         var approved = await approval.Settle(saved.Change, cancellationToken).ConfigureAwait(false);
-        var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
+        var loaded = await urlGuard.Live(cancellationToken).ConfigureAwait(false);
         if (approved.IsError || loaded.IsError)
         {
             return approved.IsError ? approved.Error : loaded.Error;

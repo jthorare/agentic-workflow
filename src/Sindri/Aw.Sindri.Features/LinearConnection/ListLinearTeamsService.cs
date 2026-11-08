@@ -11,11 +11,13 @@ namespace Aw.Sindri.Features.LinearConnection;
 /// </summary>
 /// <param name="checks">Asks Linear.</param>
 /// <param name="callers">The current caller.</param>
-internal sealed class ListLinearTeamsService(ILinearKeyChecks checks, ICallerContextAccessor callers) : IService<ListLinearTeamsRequest, ListLinearTeamsResponse>
+/// <param name="urlGuard">Refuses while the Linear url has a change waiting.</param>
+internal sealed class ListLinearTeamsService(ILinearKeyChecks checks, ICallerContextAccessor callers, LinearUrlGuard urlGuard) : IService<ListLinearTeamsRequest, ListLinearTeamsResponse>
 {
     public async ValueTask<Result<ListLinearTeamsResponse>> Handle(ListLinearTeamsRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        _ = urlGuard;   // red stub: not wired yet
         if (!LinearConnectionRules.IsOwner(callers))
         {
             return LinearConnectionRules.Refused(LinearConnectionRules.ChangeRefusal);
