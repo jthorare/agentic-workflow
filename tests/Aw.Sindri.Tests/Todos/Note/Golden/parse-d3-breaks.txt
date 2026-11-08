@@ -1,0 +1,7 @@
+01 todo  | id=td_01jc5a8xq0n4w7ms2t9r3v0002 done=no on=- due=- links=- bad=- break=TwoIds text=two ids ^td-01jc5a8xq0n4w7ms2t9r3v0001
+02 todo  | id=td_01jc5a8xq0n4w7ms2t9r3v0003 done=no on=- due=2026-11-11 links=- bad=- break=TwoDueMarkers text=two dues 📅 2026-11-10
+03 todo  | id=td_01jc5a8xq0n4w7ms2t9r3v0004 done=no on=- due=- links=- bad=- break=MarkerInText text=marker inside 📅 text here
+04 todo  | id=td_01jc5a8xq0n4w7ms2t9r3v0005 done=no on=- due=- links=- bad=- break=ForeignLink text=pasted [docs](https://example.com/a) link
+05 todo  | id=td_01jc5a8xq0n4w7ms2t9r3v0006 done=no on=- due=- links=- bad=- break=ForeignLink text=trailing [docs](https://example.com)
+06 todo  | id=td_01jc5a8xq0n4w7ms2t9r3v0007 done=no on=- due=- links=- bad=- break=ForbiddenCharacter text=bad char‮
+07 todo  | id=td_01jc5a8xq0n4w7ms2t9r3v0008 done=no on=- due=- links=- bad=- break=EmptyText text=

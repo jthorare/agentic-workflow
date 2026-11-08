@@ -1,0 +1,5 @@
+01 line  | - parent
+02 line  |   - [ ] child task ^td-01jc5a8xq0n4w7ms2t9r3v0003
+03 line  | \u0009- [ ] tab indented
+04 line  |  - [ ] one space indented
+05 todo  | id=- done=no on=- due=- links=- bad=- break=None text=top level

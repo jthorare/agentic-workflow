@@ -1,0 +1,7 @@
+- [ ] reply to Sam about the offsite 📅 2026-11-14 ^td-01jc5a8xq0n4w7ms2t9r3v0001
+- [ ] rotate the staging key 📅 2026-11-10 [PR #12](sindri://reviews/jthorare/agentic-workflow/12) [ENG-12](sindri://linear/ENG-12) ^td-01jc5a8xq0n4w7ms2t9r3v0002
+- [ ] call the dentist ^td-01jc5a8xq0n4w7ms2t9r3v0003
+- [x] renew the cert ✅ 2026-11-07 ^td-01jc5a8xq0n4w7ms2t9r3v0004
+- [x] ship it 📅 2026-11-09 [ITM-0042](sindri://item/ITM-0042) ^td-01jc5a8xq0n4w7ms2t9r3v0005
+- [x] all fields 📅 2026-11-09 [ENG-12](sindri://linear/ENG-12) ✅ 2026-11-08 ^td-01jc5a8xq0n4w7ms2t9r3v0006
+- [ ] a\`b \<tag> \[[x]] ^td-01jc5a8xq0n4w7ms2t9r3v0007
