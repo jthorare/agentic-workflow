@@ -443,6 +443,7 @@ check "a {cmd...} inside an argument is refused" "$RC:$(grep -c 'SND-LAUNCH-011'
 # Lane agents from the catalog: a non-Claude lane, and ids reported one lane at a time.
 cat > "$WORK/codex" <<'EOF'
 #!/usr/bin/env bash
+if [ "${1:-}" = --help ]; then echo "Usage: codex [OPTIONS] [PROMPT]"; exit 0; fi   # the launcher's --no-daemon probe (this fake lists no such flag)
 echo "start $AW_META_LANE" >> "$CALLS.events"
 sleep 0.4
 id="$(cat /proc/sys/kernel/random/uuid 2> /dev/null || uuidgen | tr '[:upper:]' '[:lower:]')"
@@ -466,7 +467,7 @@ a="$(tr -d '[:space:]' < "$ids/api")"; u="$(tr -d '[:space:]' < "$ids/ui")"
 check "codex lanes: each lane recorded the id its own rollout file carries" "$(grep -c "wrote api $a" "$CALLS.events"):$(grep -c "wrote ui $u" "$CALLS.events")" "1:1"
 check "codex lanes: two distinct ids" "$([ "$a" != "$u" ] && [ -n "$a" ] && echo yes)" "yes"
 check "codex lanes: the built-in open argv (the model and policy forms add nothing), the prompt as the last argument, none without one" "$(grep -h -- '-C' "$CALLS.codex" | sort | tr '\n' ';')" "-C|$WORK/repo|1|t1|meta;-C|$WORK/repo|1|t1|ui;-C|$WORK/repo|API kickoff  When you answer a message from the meta (aw-meta lane-inbox shows it), end your turn with a line starting REPLY TO META: followed by your reply.|1|t1|api;"
-check "codex lanes: <lane>.agent records the catalog facts the lane map needs" "$(jq -cS . "$ids/api.agent")" '{"agent":"codex","hooks":true,"processName":"codex","transcripts":"~/.codex/sessions/*/*/*/rollout-*-{sessionId}.jsonl"}'
+check "codex lanes: <lane>.agent records the catalog facts the lane map needs" "$(jq -cS . "$ids/api.agent")" '{"agent":"codex","codex":true,"hooks":true,"noDaemon":false,"processName":"codex","transcripts":"~/.codex/sessions/*/*/*/rollout-*-{sessionId}.jsonl"}'
 check "codex lanes: the meta lane has an .agent record too (one agent per team)" "$(jq -r .agent "$ids/meta.agent")" "codex"
 check "codex lanes: AW_META_LANE_PID is the agent's parent (the lane script), AW_META_LANE_PROC the process name, AW_META_LANE_AGENT the catalog id" "$(sort -u "$CALLS.pid" | tr '\n' ';')" "parent=lane-script|proc=codex|agent=codex;"
 check "codex lanes: the agent's environment names the state directory and the team config" "$(sort -u "$CALLS.state" | tr '\n' ';')" "$AW_STATE_DIR|$cfg;"

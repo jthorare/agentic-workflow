@@ -217,6 +217,31 @@ launcher_agent_ok() { # id: 0 when launchable
   fi
 }
 
+# launcher_is_codex <id>: whether the catalog entry is a Codex CLI: the built-in id, or an entry derived from it (an alias that keeps
+# its process name, model form or policy form, or whose binary is named codex). A shared-daemon rule (#2286) keys on this, not on the id.
+launcher_is_codex() {
+  jq -e --arg id "$1" '.[$id] | $id == "codex" or (.processName // "") == "codex" or (.model // "") == "codex-flag"
+    or (.policy // "") == "codex-overrides" or ((.bin // "") | split("/") | last) == "codex"' <<< "$LAUNCHER_CAT" > /dev/null 2>&1
+}
+
+# launcher_cli_has_flag <bin> <flag>: whether `<bin> --help` names the flag. One run, output to a temp file, ended after
+# AW_LAUNCHER_PROBE_SECONDS (default 5) so a CLI that hangs never stops a lane (no `timeout` on macOS). A CLI that does not run answers no.
+launcher_cli_has_flag() {
+  local bin="$1" flag="$2" out pid i found=1
+  out="$(mktemp "${TMPDIR:-/tmp}/aw-probe.XXXXXX")" || return 1
+  "$bin" --help > "$out" 2>&1 < /dev/null &
+  pid=$!
+  for ((i = 0; i < ${AW_LAUNCHER_PROBE_SECONDS:-5} * 10; i++)); do
+    kill -0 "$pid" 2> /dev/null || break
+    sleep 0.1
+  done
+  if kill -0 "$pid" 2> /dev/null; then kill "$pid" 2> /dev/null; fi
+  wait "$pid" 2> /dev/null
+  grep -q -- "$flag" "$out" 2> /dev/null && found=0
+  unlink "$out" 2> /dev/null
+  return "$found"
+}
+
 launcher_agent_field() { # id field
   jq -r --arg id "$1" --arg f "$2" '.[$id][$f] | if . == null then empty elif type == "string" then . else tojson end' <<< "$LAUNCHER_CAT"
 }

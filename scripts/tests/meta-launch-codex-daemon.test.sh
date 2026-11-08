@@ -91,7 +91,8 @@ run_lane codex-yolo fresh yes
 check "a codex with --no-daemon: the .agent record says so" "$(jq -c '[.agent, .noDaemon]' "$ids/api.agent")" '["codex-yolo",true]'
 
 # Other agents are untouched.
-jq -n --arg c "$WORK/codex" '{schema:1, agents:{plain:{bin:$c, open:["{bin}","{seed}"], processName:"plain", sessionId:"none"}}}' > "$LCFG"
+cp "$WORK/codex" "$WORK/plain-agent"
+jq -n --arg c "$WORK/plain-agent" '{schema:1, agents:{plain:{bin:$c, open:["{bin}","{seed}"], processName:"plain", sessionId:"none"}}}' > "$LCFG"
 run_lane plain fresh yes
 check "a non-Codex agent never gets --no-daemon" "$(grep -c -- '--no-daemon' "$WORK/argv" 2> /dev/null)" "0"
 exit "$fail"
