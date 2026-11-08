@@ -97,10 +97,10 @@ Uses the tldraw offline app (`./setup.sh` installs it; the app's Develop -> Inst
 2. Draw:
 
 ```bash
-node "$S/scripts/draw_diagrams.mjs" --spec "$SD/diagrams" --out "$SD/diagrams" --name "<slug>-diagrams" [--only key]
+node "$S/scripts/draw_diagrams.mjs" --spec "$SD/diagrams" --out "$SD/diagrams" --name "<slug>-diagrams" [--only key] [--theme dark|light]
 ```
 
-It creates your own tldraw doc (`POST /api/docs/create`; never edit another session's doc), one page per diagram, clears and redraws on rerun, forces sans font, solid strokes, semi fill and a transparent background, runs the canvas lints, saves, and writes `<key>.svg`. Fix reported lints (overlapping text) by shortening labels or splitting the diagram, then rerun.
+Diagrams are exported dark by default (`--theme light` for the old look): the SVG comes from tldraw's `darkMode` export option, and the colors tldraw reports for each role are swapped for Sindri's, so they sit on the dark pages. It creates your own tldraw doc (`POST /api/docs/create`; never edit another session's doc), one page per diagram, clears and redraws on rerun, forces sans font, solid strokes, semi fill and a transparent background, runs the canvas lints, saves, and writes `<key>.svg`. Fix reported lints (overlapping text) by shortening labels or splitting the diagram, then rerun.
 3. Embed as `<figure class="shot diagram"><img src="diagrams/<key>.svg" alt="..."></figure>`: linked in the TDD, inlined in the shareable page.
 4. Render each SVG to an image and read it. A diagram nobody looked at is not done.
 
