@@ -1,4 +1,4 @@
--- Memory (agent-first PR 13): named stores of short facts, recalled by meaning. Number 9 on this branch; renumbered at the final merge.
+-- Memory (agent-first PR 13): named stores of short facts, recalled by meaning. Ledger migration 11.
 -- Text is scrubbed before it is written. 'embedding' is a VectorCodec blob (NULL when no model answered at write time).
 CREATE TABLE memory (
     id TEXT PRIMARY KEY,
