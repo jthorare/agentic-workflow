@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
 
-// why: the host registers it with the Temporal launcher in the next commit; until then only tests build it.
+// why: the host registers it with the Temporal launcher in the GraphWorkflow piece (IGraphRunLauncher has no implementation yet); until then only tests build it.
 #pragma warning disable MA0182
 /// <summary>
 /// Turns a trigger into a run (issue 2258, PR 6): records the run under its id (a used id is refused), applies the workflow's
@@ -15,7 +15,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="launcher">Starts the Temporal workflow.</param>
 /// <param name="clock">The clock the run's start time comes from.</param>
 /// <param name="logger">Where a skipped trigger is logged.</param>
-internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunLauncher launcher, TimeProvider clock, ILogger<GraphRunStarter> logger)
+internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunLauncher launcher, TimeProvider clock, ILogger<GraphRunStarter> logger) : IGraphRunStarter
 {
     private readonly IWorkflowRunStore _runs = runs;
     private readonly IGraphRunLauncher _launcher = launcher;
