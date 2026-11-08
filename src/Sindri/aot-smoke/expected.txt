@@ -49,7 +49,7 @@ exit 2
  \__ \ | | | | (_| | |  | |
  |___/_|_| |_|\__,_|_|  |_|
   profile   WORK/home/profile/profile.yaml (not approved; fix: sindri profile approve)
-  services  none scheduled (the approved profile names no services)
+  services  none scheduled (the profile names no services)
   views     cursor N of M
   health    degraded
               SND-PROFILE-005 Not approved: run `sindri profile approve`
