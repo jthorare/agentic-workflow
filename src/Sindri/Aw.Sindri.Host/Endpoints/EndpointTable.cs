@@ -67,6 +67,7 @@ internal static class EndpointTable
         _ = queries.MapGetProjects();
         _ = queries.MapGetLinearLookups();
         _ = queries.MapGetLinearSince();
+        _ = queries.MapGetLinearConnection();
         return queries;
     }
 
@@ -146,11 +147,11 @@ internal static class EndpointTable
         _ = commands.MapApproveProfile();
         _ = commands.MapCancelJob();
         _ = commands.MapResumeJob();
-        _ = commands.MapCloseItem().MapProjectWrites();
+        _ = commands.MapCloseItem().MapProjectWrites().MapChangeLinearIssue();
         _ = commands.MapEndLearnMode().MapAllowDenial();
         _ = commands.MapOpenItem();
         _ = commands.MapPauseService();
-        _ = commands.MapSetReviewLogin().MapSendReviewFix();
+        _ = commands.MapSetReviewLogin().MapSendReviewFix().MapLinearConnectionWrites();
         _ = commands.MapResumeService();
         _ = commands.MapRunService();
         _ = commands.MapContextJobs();
@@ -176,7 +177,7 @@ internal static class EndpointTable
         _ = commands.MapRegisterRecipe();
         _ = commands.MapStartInstance().MapStartSkillRun();
         _ = commands.MapIssueNonce();
-        _ = commands.MapApplyCommand();
+        _ = commands.MapApplyCommand().MapLinearCommentCreate();
         _ = commands.MapCompleteStep();
         _ = commands.MapSessionHeartbeat();
         _ = commands.MapSessionExit().MapRecordLimitHit();   // the wrap's calls, proven by the launch secret

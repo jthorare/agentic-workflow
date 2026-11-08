@@ -9,8 +9,8 @@
 # done-gate, ...) stay in scripts/install-*.sh --provider codex.
 #
 # Codex only runs non-managed hooks after you trust them: open `codex`, run
-# /hooks, and trust the aw:* entries (re-trust after each reinstall that
-# changes a command).
+# /hooks, and trust the aw:* entries once. Trust is stored in config.toml per event, position and hash of the entry, and a
+# reinstall rewrites entries in place with the same text, so it holds. (A changed command, i.e. new text for an entry, needs trust again.)
 #
 # Usage: providers/codex/install-hooks.sh [--uninstall] [--target-dir DIR]
 #        --target-dir DIR  install into DIR as if it were the agent's config home (a separate-login

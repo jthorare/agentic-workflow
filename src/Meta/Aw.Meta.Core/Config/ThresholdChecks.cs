@@ -21,13 +21,15 @@ public static class ThresholdChecks
             : team.Usage.ResumeMarginSeconds < 0 ? Message("usage.resumeMarginSeconds", "0 or more", team.Usage.ResumeMarginSeconds)
             : team.Usage.ProbeMinutes < 1 ? Message("usage.probeMinutes", "1 or more", team.Usage.ProbeMinutes)
             : heavy.Cap < 1 ? Message("heavy.cap", "1 or more", heavy.Cap)
-            : AgentProblem(team.Agent);
+            : AgentAndRoutingProblem(team);
     }
+
+    private static string? AgentAndRoutingProblem(TeamConfig team) => AgentProblem(team.Agent) ?? RoutingChecks.Problem(team);
 
     private static string? AgentProblem(string? agent) =>
         agent is null || IsAgentId(agent) ? null : $"agent must be an agent id (^[a-z][a-z0-9-]{{1,31}}$), not '{agent}'";
 
-    private static bool IsAgentId(string agent)
+    internal static bool IsAgentId(string agent)
     {
         if (agent.Length is < 2 or > 32 || agent[0] is < 'a' or > 'z')
         {

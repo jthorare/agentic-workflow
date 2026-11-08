@@ -1073,10 +1073,8 @@ static Aw.Meta.Features.Usage.UsageWaitRequest.operator !=(Aw.Meta.Features.Usag
 static Aw.Meta.Features.Usage.UsageWaitRequest.operator ==(Aw.Meta.Features.Usage.UsageWaitRequest? left, Aw.Meta.Features.Usage.UsageWaitRequest? right) -> bool
 static Aw.Meta.Features.Usage.UsageWaitResponse.operator !=(Aw.Meta.Features.Usage.UsageWaitResponse? left, Aw.Meta.Features.Usage.UsageWaitResponse? right) -> bool
 static Aw.Meta.Features.Usage.UsageWaitResponse.operator ==(Aw.Meta.Features.Usage.UsageWaitResponse? left, Aw.Meta.Features.Usage.UsageWaitResponse? right) -> bool
-Aw.Meta.Features.Usage.UsageRow.Deconstruct(out string! Subject, out Aw.Meta.Core.Usage.UsageState State, out Aw.Meta.Core.Usage.UsageKind? Kind, out System.DateTimeOffset? ResetsAt, out string? Source, out string? Reason) -> void
 Aw.Meta.Features.Usage.UsageRow.Kind.get -> Aw.Meta.Core.Usage.UsageKind?
 Aw.Meta.Features.Usage.UsageRow.State.get -> Aw.Meta.Core.Usage.UsageState
-Aw.Meta.Features.Usage.UsageRow.UsageRow(string! Subject, Aw.Meta.Core.Usage.UsageState State, Aw.Meta.Core.Usage.UsageKind? Kind, System.DateTimeOffset? ResetsAt, string? Source = null, string? Reason = null) -> void
 Aw.Meta.Features.LaneInbox.LaneInboxRequest.HookEvent.get -> string?
 Aw.Meta.Features.LaneInbox.LaneInboxRequest.HookEvent.init -> void
 Aw.Meta.Features.LaneSend.LaneSendRequest.WakeConfirmSeconds.get -> int
@@ -1089,3 +1087,51 @@ Aw.Meta.Features.Watch.WatchResponse.EndedOnMail.get -> bool
 Aw.Meta.Features.Watch.WatchResponse.EndedOnMail.init -> void
 Aw.Meta.Features.LaneStopCheck.LaneStopCheckRequest.HookEvent.get -> string?
 Aw.Meta.Features.LaneStopCheck.LaneStopCheckRequest.HookEvent.init -> void
+Aw.Meta.Features.Routing.RouteRequest
+Aw.Meta.Features.Routing.RouteRequest.Apply.get -> bool
+Aw.Meta.Features.Routing.RouteRequest.Apply.init -> void
+Aw.Meta.Features.Routing.RouteRequest.<Clone>$() -> Aw.Meta.Features.Routing.RouteRequest!
+Aw.Meta.Features.Routing.RouteRequest.Equals(Aw.Meta.Features.Routing.RouteRequest? other) -> bool
+Aw.Meta.Features.Routing.RouteRequest.Lane.get -> string?
+Aw.Meta.Features.Routing.RouteRequest.Lane.init -> void
+Aw.Meta.Features.Routing.RouteResponse
+Aw.Meta.Features.Routing.RouteResponse.Applied.get -> bool
+Aw.Meta.Features.Routing.RouteResponse.Applied.init -> void
+Aw.Meta.Features.Routing.RouteResponse.Attention.get -> bool
+Aw.Meta.Features.Routing.RouteResponse.Attention.init -> void
+Aw.Meta.Features.Routing.RouteResponse.<Clone>$() -> Aw.Meta.Features.Routing.RouteResponse!
+Aw.Meta.Features.Routing.RouteResponse.Equals(Aw.Meta.Features.Routing.RouteResponse? other) -> bool
+Aw.Meta.Features.Routing.RouteResponse.Skipped.get -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.RouteSkip!>!
+Aw.Meta.Features.Routing.RouteResponse.Skipped.init -> void
+Aw.Meta.Features.Routing.RouteResponse.Suggestions.get -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.RouteSuggestion!>!
+Aw.Meta.Features.Routing.RouteResponse.Suggestions.init -> void
+Aw.Meta.Features.Usage.UsageRow.Agent.get -> string?
+Aw.Meta.Features.Usage.UsageRow.Agent.init -> void
+Aw.Meta.Features.Usage.UsageRow.Deconstruct(out string! Subject, out Aw.Meta.Core.Usage.UsageState State, out Aw.Meta.Core.Usage.UsageKind? Kind, out System.DateTimeOffset? ResetsAt, out string? Source, out string? Reason, out string? Agent, out string? Model, out double? RemainingPct, out System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.ProviderWindow!>? Windows, out string? SignalNote) -> void
+Aw.Meta.Features.Usage.UsageRow.Model.get -> string?
+Aw.Meta.Features.Usage.UsageRow.Model.init -> void
+Aw.Meta.Features.Usage.UsageRow.RemainingPct.get -> double?
+Aw.Meta.Features.Usage.UsageRow.RemainingPct.init -> void
+Aw.Meta.Features.Usage.UsageRow.SignalNote.get -> string?
+Aw.Meta.Features.Usage.UsageRow.SignalNote.init -> void
+Aw.Meta.Features.Usage.UsageRow.UsageRow(string! Subject, Aw.Meta.Core.Usage.UsageState State, Aw.Meta.Core.Usage.UsageKind? Kind, System.DateTimeOffset? ResetsAt, string? Source = null, string? Reason = null, string? Agent = null, string? Model = null, double? RemainingPct = null, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.ProviderWindow!>? Windows = null, string? SignalNote = null) -> void
+Aw.Meta.Features.Usage.UsageRow.Windows.get -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.ProviderWindow!>?
+Aw.Meta.Features.Usage.UsageRow.Windows.init -> void
+override Aw.Meta.Features.Routing.RouteRequest.Equals(object? obj) -> bool
+override Aw.Meta.Features.Routing.RouteRequest.GetHashCode() -> int
+override Aw.Meta.Features.Routing.RouteRequest.ToString() -> string!
+override Aw.Meta.Features.Routing.RouteResponse.Equals(object? obj) -> bool
+override Aw.Meta.Features.Routing.RouteResponse.GetHashCode() -> int
+override Aw.Meta.Features.Routing.RouteResponse.ToString() -> string!
+static Aw.Meta.Features.Routing.RouteRequest.operator !=(Aw.Meta.Features.Routing.RouteRequest? left, Aw.Meta.Features.Routing.RouteRequest? right) -> bool
+static Aw.Meta.Features.Routing.RouteRequest.operator ==(Aw.Meta.Features.Routing.RouteRequest? left, Aw.Meta.Features.Routing.RouteRequest? right) -> bool
+static Aw.Meta.Features.Routing.RouteResponse.operator !=(Aw.Meta.Features.Routing.RouteResponse? left, Aw.Meta.Features.Routing.RouteResponse? right) -> bool
+static Aw.Meta.Features.Routing.RouteResponse.operator ==(Aw.Meta.Features.Routing.RouteResponse? left, Aw.Meta.Features.Routing.RouteResponse? right) -> bool
+Aw.Meta.Features.Routing.RouteResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.RouteSuggestion!>! Suggestions, out System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.RouteSkip!>! Skipped, out bool Applied, out bool Attention, out System.Collections.Generic.IReadOnlyList<string!>? Warnings) -> void
+Aw.Meta.Features.Routing.RouteResponse.RouteResponse(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.RouteSuggestion!>! Suggestions, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.RouteSkip!>! Skipped, bool Applied, bool Attention, System.Collections.Generic.IReadOnlyList<string!>? Warnings = null) -> void
+Aw.Meta.Features.Routing.RouteResponse.Warnings.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Meta.Features.Routing.RouteResponse.Warnings.init -> void
+Aw.Meta.Features.Routing.RouteRequest.Deconstruct(out bool Apply, out string? Lane, out bool Force) -> void
+Aw.Meta.Features.Routing.RouteRequest.Force.get -> bool
+Aw.Meta.Features.Routing.RouteRequest.Force.init -> void
+Aw.Meta.Features.Routing.RouteRequest.RouteRequest(bool Apply = false, string? Lane = null, bool Force = false) -> void

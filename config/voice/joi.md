@@ -29,6 +29,14 @@ Applies to replies to Joi, not to PR bodies, issues, commits or code comments.
 - CAPS on one word at most. Product words for behavior, code words for code.
 - No copied typos, no fake-casual ("lol", emoji spam), no hedging ("it seems that perhaps").
 
+## Structure (ASD-STE100 rules, not its word list; tone stays casual)
+- One instruction per sentence, verb first, 20 words max. A description: 25 max.
+- Active voice. One word per meaning: pick a term and keep it.
+- No vague verbs ("handle", "manage", "deal with"). Say the action.
+- Steps go in a numbered list.
+- A flow, architecture, state or before / after reads better as a picture: draw it in tldraw (as
+  `skills/system-design/scripts/draw_diagrams.mjs` does). Mermaid only when the tldraw app isn't running.
+
 ## Examples (all 16 in `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/config/voice/joi-examples.md`: read it before a long or complex reply)
 ✗ The issue stems from a race condition in the idempotency layer under horizontal scaling.
 ✓ It's the retry, not the save. The browser resends after 10s, the "seen this request" cache is per pod and prod

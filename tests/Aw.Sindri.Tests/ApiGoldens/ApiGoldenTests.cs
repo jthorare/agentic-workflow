@@ -9,14 +9,10 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 public sealed class ApiGoldenTests
 {
     // hand-written before their routes (#2076): the Library roots writes in their own slot and the review settings in Ph9's api slot, each registering its rows and leaving this list;
-    // the Linear hub's reads (#2077 Ph3 1a) and writes (1b) leave it when api serves them
-    private static readonly string[] _pendingGoldenFolders = ["library-roots", "review-settings", "review-settings-save", "linear-change", "linear-comment", "linear-create", "linear-connection", "linear-connection-teams", "linear-connect", "linear-disconnect-write"];
+    // the Linear hub's rows (#2077 Ph3) all left it when api served them
+    private static readonly string[] _pendingGoldenFolders = ["library-roots", "review-settings", "review-settings-save"];
 
-    // the folder linear-issue is served for the reads; its write-gate rows wait for the writes (1b)
-    private static readonly string[] _pendingGoldenFiles = ["linear-issue/writable.json", "linear-issue/no-write-key.json", "linear-issue/team-not-picked.json", "linear-issue/session-write-refused.json"];
-
-    private static bool IsPending(string file) =>
-        _pendingGoldenFiles.Contains(file, StringComparer.Ordinal) || _pendingGoldenFolders.Any(p => file.StartsWith(p + "/", StringComparison.Ordinal));
+    private static bool IsPending(string file) => _pendingGoldenFolders.Any(p => file.StartsWith(p + "/", StringComparison.Ordinal));
 
     [Fact, Trait("Lane", "integration")]
     public void Every_golden_file_has_a_scenario()
@@ -33,7 +29,7 @@ public sealed class ApiGoldenTests
         Assert.Equal(expected, files);
 
         // the pending files are exactly the rows not yet registered
-        var pendingRows = ((IEnumerable<(string Slug, string Scenario)>)[.. LibraryRootScenarios.All, .. ReviewSettingsScenarios.All, .. LinearScenarios.All]).Select(r => $"{r.Slug}/{r.Scenario}.json").Order(StringComparer.Ordinal);
+        var pendingRows = ((IEnumerable<(string Slug, string Scenario)>)[.. LibraryRootScenarios.All, .. ReviewSettingsScenarios.All]).Select(r => $"{r.Slug}/{r.Scenario}.json").Order(StringComparer.Ordinal);
         Assert.Equal(pendingRows, all.Where(IsPending).Order(StringComparer.Ordinal));
         Assert.DoesNotContain(ApiScenarios.All, r => _pendingGoldenFolders.Contains(r.Slug));
     }
