@@ -59,8 +59,9 @@ nested_hook() { # a `codex exec` the agent's shell tool starts: named like the a
 case " $* " in
   *" --no-daemon "*) [ ! -e "$FAKE/nested" ] || nested_hook; hook ;;   # direct topology: the hook is this process's child, under the lane script
   *)  # shared daemon: a double fork reparents the hook away from the lane script, and the environment is team A's
-    ( ( AW_META_TEAM=teamA AW_META_LANE=meta AW_META_DIR="$FAKE/teamA" AW_META_LANE_PID="$KEEP" hook & ) & )
-    for _ in $(seq 50); do [ -e "$FAKE/teamA/lane-sessions/meta.hook" ] && break; sleep 0.1; done ;;
+    rm -f "$FAKE/daemon-done"
+    ( ( AW_META_TEAM=teamA AW_META_LANE=meta AW_META_DIR="$FAKE/teamA" AW_META_LANE_PID="$KEEP" hook; : > "$FAKE/daemon-done" ) & ) &
+    for _ in $(seq 100); do [ -e "$FAKE/daemon-done" ] && break; sleep 0.1; done ;;   # the whole turn, so no late write lands in the next run
 esac
 EOS
 chmod +x "$WORK/codex"
