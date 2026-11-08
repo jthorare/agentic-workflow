@@ -129,7 +129,11 @@ internal sealed class DirectoryLaneFiles(string directory) : ILaneFiles
             }
 
             var hooks = root.TryGetProperty("hooks", out var flag) && flag.ValueKind == JsonValueKind.True;
-            return new LaneAgent(agent, Text(root, "processName") ?? agent, hooks, Text(root, "transcripts"));
+            var codex = root.TryGetProperty("codex", out var codexFlag) && codexFlag.ValueKind == JsonValueKind.True;
+            bool? noDaemon = root.TryGetProperty("noDaemon", out var daemonFlag) && daemonFlag.ValueKind is JsonValueKind.True or JsonValueKind.False
+                ? daemonFlag.ValueKind == JsonValueKind.True
+                : null;
+            return new LaneAgent(agent, Text(root, "processName") ?? agent, hooks, Text(root, "transcripts"), codex, noDaemon);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
         {
