@@ -706,5 +706,163 @@
       "idempotentHint": true,
       "openWorldHint": false
     }
+  },
+  {
+    "name": "memory_list",
+    "description": "List Sindri memory stores (named stores of short facts) with their fact counts.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {}
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "memory_create",
+    "description": "Make a Sindri memory store: a named place to keep short facts that later runs can recall by meaning.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The memory's name, e.g. team-notes"
+        },
+        "description": {
+          "type": "string",
+          "description": "What the store is for"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "memory_search",
+    "description": "Recall facts from a Sindri memory store by meaning (keyword match when the local embedding model is off; the answer's mode says which). Returns facts with score and provenance.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The memory's name, e.g. team-notes"
+        },
+        "query": {
+          "type": "string",
+          "description": "What to recall"
+        },
+        "level": {
+          "type": "string",
+          "description": "How close a fact must be: loose, balanced (default) or strict",
+          "enum": [
+            "loose",
+            "balanced",
+            "strict"
+          ]
+        },
+        "limit": {
+          "type": "integer",
+          "description": "At most this many facts (default 10, most 50)",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "name",
+        "query"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "memory_write",
+    "description": "Write a fact (1 to 2,000 characters) to a Sindri memory store. A near duplicate with the same tags refreshes the old fact instead of adding one. Secrets are scrubbed before storing.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The memory's name, e.g. team-notes"
+        },
+        "text": {
+          "type": "string",
+          "description": "The fact"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Tags; part of the fact's identity"
+        },
+        "expiresAt": {
+          "type": "string",
+          "description": "ISO 8601 time after which the fact is deleted"
+        }
+      },
+      "required": [
+        "name",
+        "text"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "memory_forget",
+    "description": "Forget facts in a Sindri memory store: one by id, every one with a tag, or every expired one. Give exactly one of fact, tag or expired.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The memory's name, e.g. team-notes"
+        },
+        "fact": {
+          "type": "string",
+          "description": "One fact's id"
+        },
+        "tag": {
+          "type": "string",
+          "description": "Every fact with this tag"
+        },
+        "expired": {
+          "type": "boolean",
+          "description": "True: every expired fact"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
   }
 ]

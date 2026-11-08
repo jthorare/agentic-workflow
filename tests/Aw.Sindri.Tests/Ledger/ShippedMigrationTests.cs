@@ -19,6 +19,7 @@ public sealed class ShippedMigrationTests
         [8] = "e508255c703eb9b7ca9660691058b8b06dea9a698188c3a124455adf32bd9582",
         [9] = "410da89696743ee58d3bedc2171e684a10494c0f6e4b66c8951400335955095c",
         [10] = "b5f07b6f8994efed783fc4e84064ff8300e10e4fd46d52009ce26a55d6f4a0d4",
+        [11] = "49037e0f08c489ec10a62ca890d84c6b5f3727e28dd1a1a29914e37ef54556a2",
     };
 
     [Fact, Trait("Lane", "unit")]

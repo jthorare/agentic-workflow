@@ -1,0 +1,159 @@
+{
+  "note": "Hand-made 4-dimension vectors standing in for model output. 'near' pairs must score at or above MemoryDedupe.Threshold (0.9); 'related' and 'unrelated' pairs below it.",
+  "threshold": 0.9,
+  "pairs": [
+    {
+      "kind": "near",
+      "left": "The deploy runs from the main branch",
+      "right": "Deploys run from the main branch",
+      "leftVector": [
+        1,
+        0.2,
+        0,
+        0
+      ],
+      "rightVector": [
+        1,
+        0.25,
+        0.02,
+        0
+      ]
+    },
+    {
+      "kind": "near",
+      "left": "Owner prefers short replies",
+      "right": "The owner likes short replies",
+      "leftVector": [
+        0.2,
+        1,
+        0.1,
+        0
+      ],
+      "rightVector": [
+        0.22,
+        1,
+        0.1,
+        0.02
+      ]
+    },
+    {
+      "kind": "near",
+      "left": "Staging DB is reset every Monday",
+      "right": "Every Monday the staging DB is reset",
+      "leftVector": [
+        0,
+        0.3,
+        1,
+        0.1
+      ],
+      "rightVector": [
+        0.02,
+        0.3,
+        1,
+        0.12
+      ]
+    },
+    {
+      "kind": "related",
+      "left": "The deploy runs from the main branch",
+      "right": "Releases need an approved pull request",
+      "leftVector": [
+        1,
+        0.2,
+        0,
+        0
+      ],
+      "rightVector": [
+        0.8,
+        0.5,
+        0.4,
+        0.1
+      ]
+    },
+    {
+      "kind": "related",
+      "left": "Owner prefers short replies",
+      "right": "The owner reviews PRs in the morning",
+      "leftVector": [
+        0.2,
+        1,
+        0.1,
+        0
+      ],
+      "rightVector": [
+        0.6,
+        0.8,
+        0.5,
+        0.1
+      ]
+    },
+    {
+      "kind": "related",
+      "left": "Staging DB is reset every Monday",
+      "right": "Production backups run nightly",
+      "leftVector": [
+        0,
+        0.3,
+        1,
+        0.1
+      ],
+      "rightVector": [
+        0.5,
+        0.5,
+        0.7,
+        0.3
+      ]
+    },
+    {
+      "kind": "unrelated",
+      "left": "The deploy runs from the main branch",
+      "right": "Lunch is at noon",
+      "leftVector": [
+        1,
+        0.2,
+        0,
+        0
+      ],
+      "rightVector": [
+        0,
+        0.1,
+        0.2,
+        1
+      ]
+    },
+    {
+      "kind": "unrelated",
+      "left": "Owner prefers short replies",
+      "right": "The staging DB password rotates",
+      "leftVector": [
+        0.2,
+        1,
+        0.1,
+        0
+      ],
+      "rightVector": [
+        0.1,
+        0,
+        1,
+        0.3
+      ]
+    },
+    {
+      "kind": "unrelated",
+      "left": "Staging DB is reset every Monday",
+      "right": "The logo is blue",
+      "leftVector": [
+        0,
+        0.3,
+        1,
+        0.1
+      ],
+      "rightVector": [
+        1,
+        0,
+        0,
+        0.2
+      ]
+    }
+  ]
+}
