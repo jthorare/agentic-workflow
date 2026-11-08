@@ -2,38 +2,40 @@
 ok    lease             free (never held)
 warn  ledger            no ledger yet (fix: sindri)
 warn  views             no views yet (fix: sindri)
-fail  profile           not approved (fix: sindri profile approve)
+ok    profile           hash HASH6
 fail  api               unreachable: no control plane is recorded (fix: sindri)
 fail  temporal          not running: no dev server on this home's temporal.db (fix: sindri)
 ok    build             not running from an installed build
 warn  context:map       no map yet (fix: sindri context map import <file>)
 ok    context:pages     no pages named
-ok    context:roles     not configured: no approved profile
+ok    context:roles     no map yet
 ok    context:retention no expired exports; retained map versions are within the newest 100 and the 90-day eval window
 ok    context:store     no store yet
-ok    context:publish   no approved profile, so no map to publish
-ok    context:linear    not configured (no profile is approved)
-ok    code-index        not configured: no approved profile
-warn  context:sources   SND-PROFILE-005 no profile is approved, so no repo is mapped (fix: sindri profile approve)
+ok    context:publish   no map yet, so nothing to publish
+ok    context:linear    not configured (the profile names no context.sources.linear.token)
+warn  code-index:smoke  first build queued
+ok    code-index:graphify no index built yet
+ok    code-index:lock   context/code-index.lock parses and matches the pins this build carries
+ok    context:sources   no context: section in the profile, so no context sources
 ok    context:sync      no context sources, so nothing syncs
 ok    context:mcp-scope no user-wide 'sindri' MCP entry for Claude Code, Codex or Cursor
-ok    context:index-store not configured (no profile is approved)
-ok    context:index-github not configured (no profile is approved)
-ok    context:index-linear not configured (no profile is approved)
-ok    context:index-linear-projects not configured (no profile is approved)
-ok    context:index-slack not configured (no profile is approved)
-ok    context:index-ollama not configured (no profile is approved)
-ok    context:index-sync not configured (no profile is approved)
-ok    library           not configured (no profile is approved)
+ok    context:index-store not configured (the profile names no github, linear or slack source)
+ok    context:index-github not configured (the profile names no context.sources.github)
+ok    context:index-linear not configured (the profile names no context.sources.linear)
+ok    context:index-linear-projects not configured (the profile names no context.sources.linear)
+ok    context:index-slack not configured (the profile names no context.sources.slack)
+ok    context:index-ollama not configured (no record source, so nothing to embed)
+ok    context:index-sync not configured (no record source, so nothing syncs)
+ok    library           the first read of aw hasn't finished yet (sindri library sync reads now)
 ok    launcher:adoption no opens in the last 30 days
 ok    pr-watch          the watcher has not run yet
-warn  setup             not finished: profile (needs-you), recipes (todo), mcp (todo), map (todo), sources (todo) 
+warn  setup             not finished: recipes (needs-you), mcp (todo), map (todo), sources (todo) (fix: sindri recipe approve-all)
+warn  pre-commit:smoke  no pre-commit hook, so staged secrets are not scanned (fix: sindri scrub --install-pre-commit --repo WORK/repo)
 warn  setup:ui-evidence ui-evidence not found (ROOT/artifacts/aot-sindri-smoke/bin/ui-evidence) (fix: run ./setup.sh from the agentic-workflow checkout (the evidence tool ships with Sindri))
 warn  model:check       the TLC runner isn't installed next to sindri; the model check stops for you until it is fixed (fix: run ./setup.sh from the agentic-workflow checkout (it installs the runner and java))
 ok    context:labelpick label choice is off
 ok    context:surfacepick product surface choice is off
 ok    model:pick        model choice is off
-ok    context:models    not configured (no profile is approved)
 ok    forge:credential  no forge configured
 warn  skills:folder     no skills folder (fix: set AW_SINDRI_SKILLS_DIR, or run ./setup.sh from the agentic-workflow checkout)
 warn  codex:read-only   pending: owner probe (fix: in that harness, sindri doctor --probe --harness codex:read-only > tests/Aw.Sindri.Tests/Golden/Probe/codex-read-only.json; docs/csharp/sindri.md, 'The harness probe')
@@ -48,22 +50,20 @@ exit 2
  / __| | '_ \ / _` | '__| |
  \__ \ | | | | (_| | |  | |
  |___/_|_| |_|\__,_|_|  |_|
-  profile   WORK/home/profile/profile.yaml (not approved; fix: sindri profile approve)
-  services  none scheduled (the profile names no services)
+  profile   WORK/home/profile/profile.yaml (hash HASH6)
+  services  heartbeat every 5s
   views     cursor N of M
-  health    degraded
-              SND-PROFILE-005 Not approved: run `sindri profile approve`
+  health    healthy
   api       127.0.0.1:PORT
   lease     held by pid PID, epoch 1
-  ready     running; the profile needs your approval
-exit 1
+  ready     running
 ## sindri serve
 SND-LEASE-001 held by HOST/PID since TIME (epoch 1)
 exit 1
 ## sindri profile approve (human, terminal)
-removed: edits apply on save
+removed: edits apply on save (nothing to approve; `sindri profile set`, `repo add` and the app write the live profile)
 ## sindri profile approve (session, terminal)
-removed: edits apply on save
+removed: edits apply on save (nothing to approve; `sindri profile set`, `repo add` and the app write the live profile)
 ## sindri status
   profile   WORK/home/profile/profile.yaml (hash HASH6)
   services  heartbeat every 5s
@@ -235,18 +235,18 @@ ok    context:roles     no map yet
 ok    context:retention no expired exports; retained map versions are within the newest 100 and the 90-day eval window
 ok    context:store     no store yet
 ok    context:publish   no map yet, so nothing to publish
-ok    context:linear    not configured (the approved profile names no context.sources.linear.token)
+ok    context:linear    not configured (the profile names no context.sources.linear.token)
 warn  code-index:smoke  first build queued
 ok    code-index:graphify no index built yet
 ok    code-index:lock   context/code-index.lock parses and matches the pins this build carries
 ok    context:sources   no context: section in the profile, so no context sources
 ok    context:sync      no context sources, so nothing syncs
 ok    context:mcp-scope no user-wide 'sindri' MCP entry for Claude Code, Codex or Cursor
-ok    context:index-store not configured (the approved profile names no github, linear or slack source)
-ok    context:index-github not configured (the approved profile names no context.sources.github)
-ok    context:index-linear not configured (the approved profile names no context.sources.linear)
-ok    context:index-linear-projects not configured (the approved profile names no context.sources.linear)
-ok    context:index-slack not configured (the approved profile names no context.sources.slack)
+ok    context:index-store not configured (the profile names no github, linear or slack source)
+ok    context:index-github not configured (the profile names no context.sources.github)
+ok    context:index-linear not configured (the profile names no context.sources.linear)
+ok    context:index-linear-projects not configured (the profile names no context.sources.linear)
+ok    context:index-slack not configured (the profile names no context.sources.slack)
 ok    context:index-ollama not configured (no record source, so nothing to embed)
 ok    context:index-sync not configured (no record source, so nothing syncs)
 ok    library           the first read of aw hasn't finished yet (sindri library sync reads now)
