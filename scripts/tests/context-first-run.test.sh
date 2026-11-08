@@ -64,10 +64,6 @@ case "$*" in
     printf '{"state":"%s","publishedVersion":1}\n' "$st"; exit 0 ;;
   "context map status") echo "map v1 current" ;;
   "context map refresh") touch "$AW_SINDRI_HOME/stub/mapped" ;;
-  "recipe list") flag recipes && echo 'workflow.scoping@0123456789ab approved (shipped)' || echo 'workflow.scoping@0123456789ab unapproved (shipped)' ;;
-  "item add "*) echo "ITM-0A1B2C created (sequence 3)" ;;
-  "workflow start "*) echo "workflow.scoping started" ;;
-  "workflow status "*) echo "ITM-0A1B2C/workflow.scoping/1 running" ;;
   "stop") rm -f "$AW_SINDRI_HOME/stub/serving" ;;
   *) echo "stub: unexpected: $*" >&2; exit 2 ;;
 esac
@@ -80,19 +76,19 @@ OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_REPO_PATH="$REPO" "$SCRIPT" up --dry-run 
 if [ "${CFR_GOLDEN_UPDATE:-0}" = 1 ]; then printf '%s\n' "$OUT" > "$GOLDEN"; echo "  (golden rewritten: $GOLDEN)"; fi
 if [ "$CODE" = 0 ] && [ "$OUT" = "$(cat "$GOLDEN" 2>/dev/null)" ]; then ok "the up --dry-run transcript matches its golden"; else fail "the up --dry-run transcript matches its golden (exit $CODE)"; diff <(printf '%s\n' "$OUT") "$GOLDEN" | head -20 | sed 's/^/       | /'; fi
 steps="$(printf '%s\n' "$OUT" | grep '^== ' | sed -E 's/^== ([0-9]+)\. .*/\1/' | tr '\n' ' ')"
-if [ "$steps" = "0 1 2 3 4 5 6 7 8 9 " ]; then ok "the steps run 0 to 9 in order"; else fail "the steps run 0 to 9 in order (got: $steps)"; fi
+if [ "$steps" = "0 1 2 3 4 5 6 7 " ]; then ok "the steps run 0 to 7 in order"; else fail "the steps run 0 to 7 in order (got: $steps)"; fi
 if [ ! -e "$STATE/sindri-app-firstrun" ]; then ok "a dry run creates no home"; else fail "a dry run creates no home"; fi
 cmds="$(printf '%s\n' "$OUT" | grep -E '^\+ AW_SINDRI_HOME=[^ ]+ AW_SINDRI_PORT=[0-9]+ AW_SINDRI_APP_NO_MCP=1 sindri ' | sed -E 's#^.*NO_MCP=1 sindri ##' | awk '{print $1" "$2}' | tr '\n' '|')"
-want="profile init|profile validate|--headless |status --json|code-index status|services run|context map|context map|context map|recipe list|item add|workflow start|"
+want="profile init|profile validate|--headless |status --json|code-index status|services run|context map|context map|context map|"
 if [ "$cmds" = "$want" ]; then ok "the commands come in the documented order"; else fail "the commands come in the documented order (got: $cmds)"; fi
 OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_REPO_PATH="$REPO" "$SCRIPT" up --dry-run 2>&1)"; CODE=$?
-expect "the dry run prints the approval commands for the owner and keeps going" 0 "profile approve <hash>" "recipe approve-all" "workflow start workflow.scoping"
+expect "the dry run prints the approval command for the owner and keeps going" 0 "profile approve <hash>"
 OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_REPO_PATH="$REPO" FIRST_RUN_CONTEXT_EXTRA="  models: { default: { harnesses: [codex] } }" "$SCRIPT" up --dry-run --stop-after 5 2>&1)"; CODE=$?
 expect "--stop-after 5 ends after the index build, and FIRST_RUN_CONTEXT_EXTRA lands in the context: section (exit 0)" 0 "stopped after step 5" "|   publish: { waitForIndexMinutes: 15 }
     |   models: { default: { harnesses: [codex] } }"
 case "$OUT" in *"== 6."*) fail "--stop-after 5 runs nothing past step 5" ;; *) ok "--stop-after 5 runs nothing past step 5" ;; esac
 OUT="$(AW_STATE_DIR="$STATE" "$SCRIPT" up --stop-after x 2>&1)"; CODE=$?
-expect "--stop-after takes a step number" 2 "step number 0 to 9"
+expect "--stop-after takes a step number" 2 "step number 0 to 7"
 OUT="$(AW_STATE_DIR="$STATE" "$SCRIPT" down --stop-after 5 2>&1)"; CODE=$?
 expect "--stop-after belongs to up only" 2
 run down --dry-run
@@ -191,18 +187,13 @@ else
 
   mkdir -p "$STATE/sindri-app-firstrun/stub"; : > "$STATE/sindri-app-firstrun/stub/approved"
   run continue --no-embeddings --no-graph --no-ui
-  expect "after approval, continue serves, indexes, maps, then stops for the recipes (exit 3)" 3 "recipe approve-all"
+  expect "after approval, continue serves, indexes and maps (exit 0)" 0 "context-first-run up: done"
   if logged '--headless' && logged 'services run code-index-main-move' && logged 'context map refresh'; then ok "serve, the index build and the map refresh ran"; else fail "serve, the index build and the map refresh ran"; fi
   if [ -s "$STUB_LOG.mcp" ] && [ "$(sort -u "$STUB_LOG.mcp")" = 1 ]; then ok "every sindri call runs with AW_SINDRI_APP_NO_MCP=1 (no MCP registration in ~/.claude.json)"; else fail "every sindri call runs with AW_SINDRI_APP_NO_MCP=1"; sort "$STUB_LOG.mcp" | uniq -c | sed 's/^/       | /'; fi
-  if ! logged 'item add'; then ok "no item was added before the recipes were approved"; else fail "no item was added before the recipes were approved"; fi
-
-  : > "$STATE/sindri-app-firstrun/stub/recipes"
   : > "$STUB_LOG"
   run continue --no-embeddings --no-graph --no-ui
-  expect "after the recipes are approved, continue adds the item and starts scoping (exit 0)" 0 "ITM-0A1B2C is being scoped"
+  expect "a second continue finishes too (exit 0)" 0 "context-first-run up: done"
   if ! logged 'services run' && ! logged 'context map refresh' && ! logged '--headless'; then ok "a finished step is skipped on the second pass"; else fail "a finished step is skipped on the second pass"; sed 's/^/       | /' "$STUB_LOG"; fi
-  if logged 'workflow start workflow.scoping --item ITM-0A1B2C --fact fact:scopeInput='; then ok "scoping started on the new item with the brief as its input"; else fail "scoping started on the new item with the brief as its input"; fi
-  if grep -q '"path":"docs/sindri/README.md"' "$STATE/sindri-app-firstrun/first-run/scope-input.json"; then ok "the scope input names the repo's brief"; else fail "the scope input names the repo's brief"; fi
 
   # step 6's waiting paths: forget the map, script the states the status answers, and run again
   step6() { # step6 <state>… ; leaves OUT and CODE of a continue with a 1 s poll and a 3 s timeout
@@ -224,7 +215,7 @@ else
   rm -f "$STATE/sindri-app-firstrun/stub/mapstate"; : > "$STATE/sindri-app-firstrun/stub/mapped"
 
   run status
-  expect "status reads the plane, the index, the map and the item" 0 "ITM-0A1B2C/workflow.scoping/1 running"
+  expect "status reads the plane, the index and the map" 0 "agentic-workflow ok" "map v1 current"
   run down
   expect "down deletes the home" 0 "deleted"
   if [ ! -e "$STATE/sindri-app-firstrun" ]; then ok "the home is gone"; else fail "the home is gone"; fi

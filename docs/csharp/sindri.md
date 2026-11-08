@@ -74,7 +74,6 @@ local verbs' `--json` (`profile validate`, `doctor`) print their response record
 **Which verbs are API clients.** `status`, `stop`, `profile approve`, `views rebuild`, `queue`, `items`, `item add`, `item close`, `projects`, `project show|add|edit|remove|hide|unhide`, `request`, `requests`, `decisions`, `decide` and `needs-you` call the running process's API (the CLI is a
 client of the same handlers the UI will call, §17.27.1). `doctor` and `profile validate` run the same handlers in the
 calling process, read-only, because they must work while the control plane is down (`doctor` reports exactly that).
-`recipe validate` is local too: it reads only the recipe file and its child recipes beside it.
 `status` and `stop` never start the process: "not running" is an answer. `profile approve` needs it running, because
 the approval is a ledger event fenced by the lease, so it starts it first (`--no-start` opts
 out).
@@ -99,7 +98,6 @@ directory keeps its mode; files are 0600.
 | `logs/serve.log` | The detached control plane's output (0600: written under umask 077, and an older log is narrowed after each start) |
 | `temporal.db` | The Temporal dev server's SQLite file (`--db-filename`); the server is found by it, so one home has one server |
 | `logs/temporal.log` | The dev server's output (`--log-level warn`, appended under umask 077). The server runs detached in its own session, never as serve's child, so it outlives a serve that dies and the next start adopts it |
-| `recipes/<id>.yaml` | P4a: the recipes the worker's `LoadRecipe` reads by id (P4 reads approved recipes from the registry instead) |
 | `workflow/nonces/<nonce>` | P4: the stand-in for the API's nonce table (0600 files in a 0700 directory, a 10-minute lifetime, not swept yet): a command's claim, so a retry with the same nonce is recognised |
 | `workflow/events.cursor` | P4: the ledger-to-Temporal bridge's last delivered ledger sequence |
 | `workflow/facts/<sha256>` | P4: the fact files `StartInstance` takes as inputs and `CompleteStep` takes as outputs, stored 0600 and named by their SHA-256 |
@@ -794,17 +792,6 @@ together with `SindriErrors`. Retired codes stay reserved in `WorkflowErrors.Ret
 
 | Code | Kind | When |
 |---|---|---|
-| `SND-RECIPE-001` | invalid | Validation failed, or the recipe was registered before input kinds (a start or a first approval of it); fix each `RCP-*` line, or register the current file at a new version and approve it |
-| `SND-RECIPE-002` | notFound | No recipe with that id or hash (`sindri recipe list`) |
-| `SND-RECIPE-003` | conflict | Not approved (`sindri recipe approve`) |
-| `SND-RECIPE-004` | — | Retired: a caller without a terminal gets the API's `SND-AUTH-002` |
-| `SND-RECIPE-005` | conflict | Revoked; approve a new version |
-| `SND-RECIPE-006` | conflict | A pinned block changed since approval; re-approve (`recipe list --stale`) |
-| `SND-RECIPE-007` | conflict | Same id and version, other content; raise `version` |
-| `SND-RECIPE-008` | conflict | Evals missing or failing (`sindri recipe eval <file>`) |
-| `SND-RECIPE-009` | conflict | A recipe challenge expired, or its subject changed since the preview |
-| `SND-RECIPE-010` | notFound | The recipe file can't be read |
-| `SND-RECIPE-011` | conflict | A recipe is not one this build ships (its `id@hash` is not in the embedded set); approve it on its own |
 | `SND-SETUP-007` | conflict | The approve-all plan or its challenge is asked for before a profile is approved |
 | `SND-FORGE-001` | conflict | A pull-request call while the approved profile names no forge (`workflow.forge.adapter`) |
 | `SND-FORGE-002` | forbidden | The forge port refused the call: a host outside `workflow.forge.hosts`, a missing or rejected credential, input it doesn't accept |
@@ -831,12 +818,6 @@ together with `SindriErrors`. Retired codes stay reserved in `WorkflowErrors.Ret
 | `SND-WF-019` | invalid | A Step input filled an invalid plan: a bad section name, a section over 256 KiB, a typed result over 256 KiB, or a plan over 1 MiB; the Step fails |
 | `SND-WF-020` | unavailable | A Step input's fill timed out: it ran past 30 minutes, or sent no heartbeat for 2 minutes; the Step fails with the code and the seconds |
 | `SND-WF-021` | not found | A Step input's `{ profile: key }` argument names a key no input can read; the fill fails and the Step with it (an unset key is the open window; no approved profile is `SND-PROFILE-005`, an unavailable section) |
-| `SND-BLOCK-001` | unavailable | A fact a block Step reads can't be read; the run ends as `step.failed` with the message as its reason |
-| `SND-BLOCK-002` | unavailable | The approved profile a block Step's providers come from can't be read; the run ends as `step.failed` `profile-unreadable: <code>` |
-| `SND-BLOCK-003` | unavailable | The item's repo (`fact:item`) couldn't be read, so a block Step's per-repo keys can't be resolved; the run ends as `step.failed` `repo-unreadable`, never with the box's list |
-| `SND-BLOCK-004` | unavailable | A Step's run-area file (`$AW_SINDRI_HOME/workflow/runs/<WFI-id>/`, for example the scoping station's `rounds.jsonl`) can't be written or read; the Step fails with the reason, and the line is never dropped |
-| `SND-BLOCK-005` | notFound | A phase has no hidden set in the holdout store (`$AW_SINDRI_HOME/holdout/<line>/<phase>/set.json`): nothing was written or sealed for it |
-| `SND-BLOCK-006` | unavailable | A file of the holdout store can't be read, parsed or written (`set.json`, `seal.json`, `spent.json`); the owner replaces the phase's hidden set |
 
 ## Sandbox contract (sandbox spec; SB-0)
 
