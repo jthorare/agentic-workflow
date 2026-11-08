@@ -158,6 +158,19 @@ public sealed class WorktreeDoneDetachedTests : IDisposable
         Assert.Contains("--done needs --path", sweep.Out + sweep.Err, StringComparison.Ordinal);
     }
 
+    [Fact, Trait("Lane", "integration")]
+    public async Task Done_together_with_discarded_is_a_usage_error()
+    {
+        await _lab.Init();
+        await _lab.Gh();
+        await _lab.Team();
+
+        var sweep = await _lab.Cli.Run("worktree-sweep", "--path", _lab.Root, "--done", "--discarded");
+
+        Assert.Equal(2, sweep.Exit);
+        Assert.Contains("--done and --discarded can't be combined", sweep.Out + sweep.Err, StringComparison.Ordinal);
+    }
+
     public void Dispose()
     {
         _lab.StopSleepers();
