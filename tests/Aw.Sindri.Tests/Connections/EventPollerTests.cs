@@ -65,4 +65,41 @@ public sealed class EventPollerTests
         Assert.True(polled.Value.RateLimited);
         Assert.Null(polled.Value.RetryAfter);
     }
+
+    [Theory]
+    [InlineData("github")]
+    [InlineData("linear")]
+    [InlineData("slack")]
+    [InlineData("google")]
+    public async Task A_provider_that_cannot_be_reached_says_so_and_a_429_says_rate_limiting(string preset)
+    {
+        var down = new FakeProvider();
+        down.Unreachable();
+        var limited = new FakeProvider();
+        limited.RateLimit(times: 1, retryAfter: null);
+        using var offline = PollerHarness.For(preset, down);
+        using var busy = PollerHarness.For(preset, limited);
+        var ct = TestContext.Current.CancellationToken;
+
+        var unreachable = await offline.Poller.Poll(offline.Connection, offline.Kind, cursor: "500", ct);
+        var throttled = await busy.Poller.Poll(busy.Connection, busy.Kind, cursor: "500", ct);
+
+        Assert.True(unreachable.Value.RateLimited);
+        Assert.Contains("could not be reached", unreachable.Value.Reason, StringComparison.Ordinal);
+        Assert.True(throttled.Value.RateLimited);
+        Assert.Contains("rate limiting", throttled.Value.Reason, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_Retry_After_given_as_an_HTTP_date_is_read_against_the_clock()
+    {
+        var provider = new FakeProvider();
+        provider.RateLimit(times: 1, retryAfter: null, headers: new Dictionary<string, string>(StringComparer.Ordinal) { ["Retry-After"] = "Thu, 01 Jan 2026 00:01:00 GMT" });
+        using var h = PollerHarness.For("github", provider);
+
+        var polled = await h.Poller.Poll(h.Connection, h.Kind, cursor: "2026-11-08T09:00:00Z", TestContext.Current.CancellationToken);
+
+        Assert.True(polled.Value.RateLimited);
+        Assert.Equal(TimeSpan.FromMinutes(1), polled.Value.RetryAfter);   // the test clock stands at 2026-01-01T00:00:00Z
+    }
 }

@@ -25797,8 +25797,10 @@ static Aw.Sindri.Core.Connections.Polling.EventKind.GoogleCalendarEventStarting.
 static Aw.Sindri.Core.Connections.Polling.EventKind.SlackMention.get -> Aw.Sindri.Core.Connections.Polling.EventKind
 static Aw.Sindri.Core.Connections.Polling.EventKind.SlackMessage.get -> Aw.Sindri.Core.Connections.Polling.EventKind
 Aw.Sindri.Core.Connections.Polling.PollLimits
-Aw.Sindri.Core.Connections.Polling.PollResult.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Connections.Polling.PolledEvent!>! Events, out string? NextCursor, out bool RateLimited, out System.TimeSpan? RetryAfter, out bool Gap) -> void
 Aw.Sindri.Core.Connections.Polling.PollResult.Gap.get -> bool
 Aw.Sindri.Core.Connections.Polling.PollResult.Gap.init -> void
-Aw.Sindri.Core.Connections.Polling.PollResult.PollResult(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Connections.Polling.PolledEvent!>! Events, string? NextCursor, bool RateLimited, System.TimeSpan? RetryAfter, bool Gap = false) -> void
 const Aw.Sindri.Core.Connections.Polling.PollLimits.DefaultPageCap = 10 -> int
+Aw.Sindri.Core.Connections.Polling.PollResult.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Connections.Polling.PolledEvent!>! Events, out string? NextCursor, out bool RateLimited, out System.TimeSpan? RetryAfter, out bool Gap, out string? Reason) -> void
+Aw.Sindri.Core.Connections.Polling.PollResult.PollResult(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Connections.Polling.PolledEvent!>! Events, string? NextCursor, bool RateLimited, System.TimeSpan? RetryAfter, bool Gap = false, string? Reason = null) -> void
+Aw.Sindri.Core.Connections.Polling.PollResult.Reason.get -> string?
+Aw.Sindri.Core.Connections.Polling.PollResult.Reason.init -> void

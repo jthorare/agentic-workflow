@@ -34,6 +34,7 @@ public sealed class FakeProvider : HttpMessageHandler
     private readonly List<string> _calendarEvents = [];
     private readonly List<ProviderRequest> _requests = [];
     private string? _slackError;
+    private bool _unreachable;
     private int _limitedLeft;
     private IReadOnlyDictionary<string, string>? _limitHeaders;
     private string? _limitBody;
@@ -130,6 +131,15 @@ public sealed class FakeProvider : HttpMessageHandler
         }
     }
 
+    /// <summary>Makes every request fail as a network error (HttpRequestException).</summary>
+    public void Unreachable()
+    {
+        lock (_gate)
+        {
+            _unreachable = true;
+        }
+    }
+
     /// <summary>Makes every request answer 302 to another URL.</summary>
     /// <param name="target">Where to send the caller.</param>
     public void RedirectTo(Uri target)
@@ -147,6 +157,11 @@ public sealed class FakeProvider : HttpMessageHandler
         var body = request.Content is null ? string.Empty : await request.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
         lock (_gate)
         {
+            if (_unreachable)
+            {
+                throw new HttpRequestException("the fake provider is unreachable");
+            }
+
             _requests.Add(new ProviderRequest(request.RequestUri!, request.Method.Method, request.Headers.Authorization?.ToString(), body));   // why: HttpClient always sets the URI before the handler runs
             return Answer(request.RequestUri!, body);   // why: same
         }

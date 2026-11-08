@@ -145,6 +145,20 @@ public sealed class GitHubEventPollerTests
         Assert.Equal("SND-CONN-002", polled.Error.Code);
     }
 
+    [Fact]
+    public async Task The_same_event_seen_twice_in_one_poll_is_returned_once()
+    {
+        var provider = new FakeProvider();
+        var json = ProviderFixtures.GitHubPrMerged("4001", "acme/app", 60, "Twice", "ada", "2026-11-08T10:00:00Z");
+        provider.AddGitHubEvent(json);
+        provider.AddGitHubEvent(json);
+        using var h = PollerHarness.For("github", provider);
+
+        var polled = await h.Poller.Poll(h.Connection, EventKind.GitHubPrMerged, Before, TestContext.Current.CancellationToken);
+
+        Assert.Equal("github:4001", Assert.Single(polled.Value.Events).DeliveryKey);
+    }
+
     private static void AddMerged(FakeProvider provider, int count)
     {
         for (var i = 1; i <= count; i++)
