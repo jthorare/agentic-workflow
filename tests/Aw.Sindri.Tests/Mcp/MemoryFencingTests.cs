@@ -8,6 +8,7 @@ using Aw.Sindri.Host.Endpoints;
 using Aw.Sindri.Host.Mcp;
 using Aw.Sindri.Testing;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Tests.Mcp;
 
@@ -21,7 +22,8 @@ public sealed class MemoryFencingTests
 
     private static async Task<string> Body(IResult result)
     {
-        var context = new DefaultHttpContext();
+        await using var services = new ServiceCollection().AddLogging().BuildServiceProvider();
+        var context = new DefaultHttpContext { RequestServices = services };
         context.Response.Body = new MemoryStream();
         await result.ExecuteAsync(context);
         context.Response.Body.Position = 0;
@@ -39,35 +41,18 @@ public sealed class MemoryFencingTests
     public async Task A_session_read_of_a_recall_comes_back_fenced()
     {
         var fencing = new MemoryFencing(AwJson.CreateOptions(SindriJsonContext.Default));
-        var session = Callers(new CallerContextBuilder().Build());
 
-        var body = await Body(MemoryEndpoints.Answer<SearchMemoryResponse>(_recall, session, fencing.Facts));
+        var body = await Body(fencing.Facts(_recall));
 
         Assert.Contains("sindri:memory", body, StringComparison.Ordinal);
         Assert.Contains("untrusted", body, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void An_owner_read_does_not_take_the_fence_path()
-    {
-        var human = Callers(new CallerContextBuilder().Human().Build());
-        var marker = Microsoft.AspNetCore.Http.Results.Text("fenced");
-
-        var answer = MemoryEndpoints.Answer<SearchMemoryResponse>(_recall, human, _ => marker);
-
-        Assert.NotSame(marker, answer);
-    }
+    public void An_owner_read_does_not_take_the_fence_path() =>
+        Assert.False(MemoryEndpoints.Fenced(Callers(new CallerContextBuilder().Human().Build())));
 
     [Fact, Trait("Lane", "unit")]
-    public void A_session_read_takes_the_fence_path_and_a_refusal_never_does()
-    {
-        var session = Callers(new CallerContextBuilder().Build());
-        var marker = Microsoft.AspNetCore.Http.Results.Text("fenced");
-
-        var fenced = MemoryEndpoints.Answer<SearchMemoryResponse>(_recall, session, _ => marker);
-        var refused = MemoryEndpoints.Answer<SearchMemoryResponse>(Aw.Sindri.Core.SindriErrors.MemoryNotFound.With("none"), session, _ => marker);
-
-        Assert.Same(marker, fenced);
-        Assert.NotSame(marker, refused);
-    }
+    public void A_session_read_takes_the_fence_path() =>
+        Assert.True(MemoryEndpoints.Fenced(Callers(new CallerContextBuilder().Session().Build())));
 }

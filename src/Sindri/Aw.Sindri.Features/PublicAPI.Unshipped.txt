@@ -6214,7 +6214,7 @@ Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Moves.get -> System.Coll
 Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Moves.init -> void
 Aw.Sindri.Features.CreateMemory.CreateMemoryRequest
 Aw.Sindri.Features.CreateMemory.CreateMemoryRequest.<Clone>$() -> Aw.Sindri.Features.CreateMemory.CreateMemoryRequest!
-Aw.Sindri.Features.CreateMemory.CreateMemoryRequest.CreateMemoryRequest(string! Name, string? Description) -> void
+Aw.Sindri.Features.CreateMemory.CreateMemoryRequest.CreateMemoryRequest(string! Name, string? Description = null) -> void
 Aw.Sindri.Features.CreateMemory.CreateMemoryRequest.Deconstruct(out string! Name, out string? Description) -> void
 Aw.Sindri.Features.CreateMemory.CreateMemoryRequest.Description.get -> string?
 Aw.Sindri.Features.CreateMemory.CreateMemoryRequest.Description.init -> void
