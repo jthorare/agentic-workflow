@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Host;
 using Aw.Sindri.Testing;
@@ -25,7 +26,28 @@ public sealed partial class TodoRoutesTests
     {
         var host = await GoldenHost.Start(temporary: true, Token, ItemScenarios.ProfileYaml);
         await ViewScenarios.Approve(host, Token);
+        _ = KeepViewsCaughtUp(host);
         return host;
+    }
+
+    // why: every todo write first waits for the views to reach the ledger head (AwaitingViews), but this host's projector runs only on CatchUp and its
+    // fake clock never ends that 2 s wait, so a write would hang; a real 'sindri serve' projects all the time. The projector's own gate serializes this
+    // loop with List's CatchUp. It stops when the host stops.
+    private static async Task KeepViewsCaughtUp(GoldenHost host)
+    {
+        var stopping = host.App.Lifetime.ApplicationStopping;
+        try
+        {
+            while (!stopping.IsCancellationRequested)
+            {
+                await ViewScenarios.CatchUp(host, stopping);
+                await Task.Delay(TimeSpan.FromMilliseconds(10), RealTime.Clock, stopping);
+            }
+        }
+        catch (Exception e) when (e is OperationCanceledException or ObjectDisposedException)
+        {
+            // the host stopped
+        }
     }
 
     private static async Task<Answer> Add(GoldenHost host, (string Name, string Value)[] caller, string text, string? clientId = null, string query = "") =>
