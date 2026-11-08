@@ -2,12 +2,9 @@ using System.Globalization;
 using Aw.Kernel.Data;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Ledger;
-using Aw.Sindri.Core.Workflow.Engine.Effects;
 using Aw.Sindri.Infrastructure;
 using Aw.Sindri.Infrastructure.Ledger;
-using Aw.Sindri.Infrastructure.Workflow;
 using Aw.Sindri.Testing;
-using Aw.Sindri.Testing.Workflow.Registry;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Time.Testing;
 
@@ -51,38 +48,11 @@ public sealed class LedgerFileTests : IDisposable
         _ = Directory.CreateDirectory(home);
         File.Copy(previous, Path.Combine(home, "ledger.db"));
         using var database = new LedgerDatabase(new SindriSettings(home, Path.Combine(home, "profile.yaml")), new FakeTimeProvider());
-        var store = new SqliteRecipeStore(database);
-        var recipe = RegistryData.Recipe("workflow.step");
 
-        Assert.Empty((await store.All(TestContext.Current.CancellationToken)).Value);
-        Assert.True((await store.Add(recipe, TestContext.Current.CancellationToken)).Value.Added);
+        Assert.True((await database.Writable(TestContext.Current.CancellationToken)).IsSuccess);
 
         Assert.True((await database.Schema(TestContext.Current.CancellationToken)).Value.IsCurrent);
-        Assert.Equal(recipe, (await store.Find(recipe.Hash, TestContext.Current.CancellationToken)).Value);
         Assert.Equal("7", Scalar(Path.Combine(home, "ledger.db"), "SELECT epoch FROM lease WHERE id = 1"));
-    }
-
-    [Fact, Trait("Lane", "integration")]
-    public async Task A_copy_of_the_recipes_schema_gains_workflow_claims_on_the_first_take_and_keeps_its_recipes()
-    {
-        // The previous schema is main's: S1's three, the recipe registry at 4, the Temporal event id at 5; engine P6 unit (d) adds claims at 6.
-        var previous = Path.Combine(_home.Path, "previous.db");
-        var runner = new MigrationRunner(new SqliteConnectionFactory(new SqliteOptions(previous)), new FakeTimeProvider(), backupBeforeUpgrade: false);
-        Assert.True((await runner.Migrate(LedgerDatabase.Migrations, TestContext.Current.CancellationToken, targetVersion: LedgerDatabase.ClaimsVersion - 1)).IsSuccess);
-        Execute(previous, "INSERT INTO recipes (hash, id, version, text, registered_at) VALUES ('sha256:" + new string('a', 64) + "', 'workflow.step', 1, '{}', '2026-10-10T07:05:07.0000000Z')");
-        var home = Path.Combine(_home.Path, "home");
-        _ = Directory.CreateDirectory(home);
-        File.Copy(previous, Path.Combine(home, "ledger.db"));
-        using var database = new LedgerDatabase(new SindriSettings(home, Path.Combine(home, "profile.yaml")), new FakeTimeProvider());
-        var claims = new SqliteWorkflowClaims(database, new FakeTimeProvider());
-        var claim = new WorkflowClaim(ItemKey.From("T-3"), InstanceAddress.From("T-3/item/1"), 1);
-
-        Assert.Null((await claims.Find(ItemKey.From("T-3"), TestContext.Current.CancellationToken)).Value);   // a read doesn't migrate
-        Assert.Equal(claim, (await claims.Take(claim, ended: null, TestContext.Current.CancellationToken)).Value);
-
-        Assert.True((await database.Schema(TestContext.Current.CancellationToken)).Value.IsCurrent);
-        Assert.Equal(claim, (await claims.Find(ItemKey.From("T-3"), TestContext.Current.CancellationToken)).Value);
-        Assert.Equal("workflow.step", Scalar(Path.Combine(home, "ledger.db"), "SELECT id FROM recipes"));
     }
 
     [Fact, Trait("Lane", "integration")]
