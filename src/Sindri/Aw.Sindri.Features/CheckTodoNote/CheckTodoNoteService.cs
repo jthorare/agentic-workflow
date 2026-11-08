@@ -57,7 +57,7 @@ internal sealed class CheckTodoNoteService(IProfileSource live, IContextEngine c
         }
 
         var open = await views.List<TodoRow>(ViewNames.Todo, cancellationToken).ConfigureAwait(false);
-        return open.IsError ? open.Error : Answer(request, looked.Value, open.Value.Count(TodoDecisions.IsOpen));
+        return open.IsError ? open.Error : Answer(looked.Value, open.Value.Count(TodoDecisions.IsOpen));
     }
 
     private Result<string> VaultRoot(SindriProfile profile, string vault)
@@ -104,10 +104,9 @@ internal sealed class CheckTodoNoteService(IProfileSource live, IContextEngine c
 
     private static Error Refused(string keyPath, string why) => SindriErrors.TodoNoteKey.With($"{keyPath}: {why}");
 
-    private static CheckTodoNoteResponse Answer(CheckTodoNoteRequest request, (NoteFileFacts File, NoteFolderFacts Folder) looked, int sindriOpen)
+    private static CheckTodoNoteResponse Answer((NoteFileFacts File, NoteFolderFacts Folder) looked, int sindriOpen)
     {
         var counts = NoteCounter.Count(NoteParser.Parse(looked.File.Text ?? string.Empty));
-        var will = NoteCounter.WillImport(counts.Importable, sindriOpen);
-        return new CheckTodoNoteResponse(request.Vault, request.Note, looked.File.Exists, counts.Open, counts.Done, counts.Other, counts.Importable, counts.CantImport, counts.CantImportLines, sindriOpen, will, will < counts.Importable, looked.Folder.CanSwap);
+        return new CheckTodoNoteResponse(looked.File.Exists, counts.Open, counts.Done, counts.Other, counts.CantImport, NoteCounter.WillImport(counts.Importable, sindriOpen), NoteCounter.MaxOpen, sindriOpen, looked.Folder.CanSwap);
     }
 }

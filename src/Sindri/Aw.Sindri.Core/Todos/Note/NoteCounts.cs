@@ -5,6 +5,5 @@ namespace Aw.Sindri.Core.Todos.Note;
 /// <param name="Done">Done task lines ('- [x]').</param>
 /// <param name="Other">Every line that isn't a top-level task line.</param>
 /// <param name="Importable">Open task lines that are valid todos (D3), the ones an import would adopt.</param>
-/// <param name="CantImport">Open task lines that break D3, such as a markdown link or a due marker inside the text.</param>
-/// <param name="CantImportLines">The line numbers of the first five of those, in file order.</param>
-public sealed record NoteCounts(int Open, int Done, int Other, int Importable, int CantImport, IReadOnlyList<int> CantImportLines);
+/// <param name="CantImport">Every open task line that breaks D3, such as a markdown link or a due marker inside the text, in file order.</param>
+public sealed record NoteCounts(int Open, int Done, int Other, int Importable, IReadOnlyList<NoteCantImport> CantImport);

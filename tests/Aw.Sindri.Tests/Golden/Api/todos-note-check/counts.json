@@ -1,17 +1,16 @@
 {
-  "vault": "notes",
-  "note": "Todo.md",
   "exists": true,
   "open": 3,
   "done": 1,
   "other": 3,
-  "importable": 2,
-  "cantImport": 1,
-  "cantImportLines": [
-    4
+  "cantImport": [
+    {
+      "line": 4,
+      "reason": "it has a markdown link"
+    }
   ],
-  "sindriOpen": 0,
   "willImport": 2,
-  "overCap": false,
+  "cap": 500,
+  "sindriOpen": 0,
   "canSwap": true
 }

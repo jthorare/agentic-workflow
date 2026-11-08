@@ -3,9 +3,6 @@ namespace Aw.Sindri.Core.Todos.Note;
 /// <summary>Counts what a note holds and how much of it an import would take (todo spec §3.4, §4.4 'note/check'). Pure.</summary>
 public static class NoteCounter
 {
-    /// <summary>The most line numbers the card lists before "and N more".</summary>
-    public const int ListedLines = 5;
-
     /// <summary>The most open todos Sindri holds (SND-TODO-006).</summary>
     public const int MaxOpen = 500;
 
@@ -18,7 +15,7 @@ public static class NoteCounter
         var todos = note.Todos.ToList();
         var open = todos.Where(static t => !t.Done).ToList();
         var broken = open.Where(static t => t.Break != NoteBreak.None).ToList();
-        return new NoteCounts(open.Count, todos.Count - open.Count, note.Lines.Count - todos.Count, open.Count - broken.Count, broken.Count, [.. broken.Take(ListedLines).Select(static t => t.Number)]);
+        return new NoteCounts(open.Count, todos.Count - open.Count, note.Lines.Count - todos.Count, open.Count - broken.Count, [.. broken.Select(static t => new NoteCantImport(t.Number, NoteBreakReasons.Of(t.Break)))]);
     }
 
     /// <summary>How many of the importable lines fit under the open cap beside the todos Sindri already holds.</summary>

@@ -10,11 +10,12 @@ using Aw.Sindri.Features.ListTodos;
 using Aw.Sindri.Features.MarkTodo;
 using Aw.Sindri.Features.SetTodoNote;
 using Aw.Sindri.Features.StopTodoNote;
+using Aw.Sindri.Features.TodoNoteProfile;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Features;
 
-/// <summary>Registers the todo slices (todo spec §4.4): the three writes behind the command chain, the three reads behind the query chain, the note check (a command that writes nothing), and the two profile edits the CLI runs without the control plane.</summary>
+/// <summary>Registers the todo slices (todo spec §4.4): the three writes behind the command chain, the three reads behind the query chain, the note check (a command that writes nothing), and the two profile edits (routes behind the command chain; the CLI runs <see cref="TodoNoteProfileEdit"/> in process).</summary>
 internal static class TodoServiceCollectionExtensions
 {
     /// <summary>Adds AddTodo, ChangeTodo and MarkTodo (request class) and ListTodos, GetTodo and GetTodoNote.</summary>
@@ -34,7 +35,8 @@ internal static class TodoServiceCollectionExtensions
             .AddScoped<IValidator<GetTodoRequest>, AcceptAllValidator<GetTodoRequest>>().AddQuery<GetTodoRequest, GetTodoResponse, GetTodoService>()
             .AddScoped<IValidator<GetTodoNoteRequest>, AcceptAllValidator<GetTodoNoteRequest>>().AddQuery<GetTodoNoteRequest, GetTodoNoteResponse, GetTodoNoteService>()
             .AddScoped<IValidator<CheckTodoNoteRequest>, AcceptAllValidator<CheckTodoNoteRequest>>().AddCommand<CheckTodoNoteRequest, CheckTodoNoteResponse, CheckTodoNoteService>()
-            .AddScoped<IService<SetTodoNoteRequest, SetTodoNoteResponse>, SetTodoNoteService>()
-            .AddScoped<IService<StopTodoNoteRequest, StopTodoNoteResponse>, StopTodoNoteService>();
+            .AddScoped<TodoNoteProfileEdit>()
+            .AddScoped<IValidator<SetTodoNoteRequest>, AcceptAllValidator<SetTodoNoteRequest>>().AddCommand<SetTodoNoteRequest, TodoNoteWritten, SetTodoNoteService>()
+            .AddScoped<IValidator<StopTodoNoteRequest>, AcceptAllValidator<StopTodoNoteRequest>>().AddCommand<StopTodoNoteRequest, TodoNoteWritten, StopTodoNoteService>();
     }
 }

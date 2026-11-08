@@ -1,7 +1,6 @@
-using Aw.Kernel.Services;
 using Aw.Sindri.Core;
-using Aw.Sindri.Features.SetTodoNote;
-using Aw.Sindri.Features.StopTodoNote;
+using Aw.Sindri.Features.TodoNoteProfile;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Host.Commands;
 
@@ -33,7 +32,7 @@ internal sealed class TodoNoteVerbs(IServiceProvider services, Output output)
 
     private async Task<int> Set(string vault, string note, bool json, CancellationToken ct)
     {
-        var set = await services.GetRequiredService<IService<SetTodoNoteRequest, SetTodoNoteResponse>>().Handle(new SetTodoNoteRequest(vault, note), ct).ConfigureAwait(false);
+        var set = await services.GetRequiredService<TodoNoteProfileEdit>().Set(vault, note, ifHash: null, ct).ConfigureAwait(false);
         if (set.IsError)
         {
             return await output.Error(set.Error).ConfigureAwait(false);
@@ -42,12 +41,12 @@ internal sealed class TodoNoteVerbs(IServiceProvider services, Output output)
         var done = set.Value;
         return json
             ? await output.Json(done, 0).ConfigureAwait(false)
-            : await output.Text(done.Changed ? $"todo.obsidian set to {done.Vault}/{done.Note}\n" : $"todo.obsidian is already {done.Vault}/{done.Note}: unchanged\n", 0).ConfigureAwait(false);
+            : await output.Text(done.Changed ? $"todo.obsidian set to {vault}/{note}\n" : $"todo.obsidian is already {vault}/{note}: unchanged\n", 0).ConfigureAwait(false);
     }
 
     private async Task<int> Stop(bool json, CancellationToken ct)
     {
-        var stop = await services.GetRequiredService<IService<StopTodoNoteRequest, StopTodoNoteResponse>>().Handle(new StopTodoNoteRequest(), ct).ConfigureAwait(false);
+        var stop = await services.GetRequiredService<TodoNoteProfileEdit>().Stop(ifHash: null, ct).ConfigureAwait(false);
         if (stop.IsError)
         {
             return await output.Error(stop.Error).ConfigureAwait(false);
@@ -56,7 +55,7 @@ internal sealed class TodoNoteVerbs(IServiceProvider services, Output output)
         var done = stop.Value;
         return json
             ? await output.Json(done, 0).ConfigureAwait(false)
-            : await output.Text(done.Changed ? string.Concat(done.Keys.Select(static k => $"removed {k}\n")) : "todo.obsidian isn't set: unchanged\n", 0).ConfigureAwait(false);
+            : await output.Text(done.Changed ? "removed todo.obsidian\n" : "todo.obsidian isn't set: unchanged\n", 0).ConfigureAwait(false);
     }
 
     private async Task<int> Usage(string verb) =>

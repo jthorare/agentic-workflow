@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Aw.Kernel.Testing;
 using static Aw.Sindri.Tests.Callers.CallerRequests;
 
@@ -13,7 +14,7 @@ internal static class TodoScenarios
     private static readonly string[] _markSlugs = ["todos-done", "todos-reopen", "todos-remove", "todos-restore"];
 
     /// <summary>The (slug, scenario) pairs of this class.</summary>
-    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted"), ("todos-note-check", "counts")];
+    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted"), ("todos-note-check", "counts"), ("todos-note-set", "changed"), ("todos-note-stop", "unchanged")];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
     public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario));
@@ -23,7 +24,12 @@ internal static class TodoScenarios
     /// <param name="ct">Cancellation.</param>
     /// <returns>The started host.</returns>
     public static Task<GoldenHost> Start(string slug, CancellationToken ct) =>
-        GoldenHost.Start(temporary: true, ct, string.Equals(slug, "todos-note-check", StringComparison.Ordinal) ? NoteVaultProfile() : ItemScenarios.ProfileYaml);
+        GoldenHost.Start(temporary: true, ct, slug switch
+        {
+            "todos-note-check" => NoteVaultProfile(),
+            "todos-note-set" or "todos-note-stop" => ItemScenarios.ProfileYaml + "context:\n  sources:\n    library:\n      vaults:\n        - { name: notes, path: /work/notes }\n",
+            _ => ItemScenarios.ProfileYaml,
+        });
 
     // a vault folder at a fixed place under the temp folder with the note the golden counts (3 open, one with a pasted link, 1 done); the answer carries no path
     private static string NoteVaultProfile()
@@ -43,6 +49,12 @@ internal static class TodoScenarios
         if (slug == "todos-note-check")
         {
             return (await host.Http.Ask(Post("/sindri/todos/note/check", Request(slug, scenario), human))).Body;
+        }
+
+        if (slug is "todos-note-set" or "todos-note-stop")
+        {
+            var written = (await host.Http.Ask(Post("/sindri/" + slug.Replace("todos-note-", "todos/note/", StringComparison.Ordinal), Request(slug, scenario), human))).Body;
+            return Regex.Replace(written, "(?<=\"profileHash\"\\s*:\\s*\")[0-9a-f]{64}", new string('0', 64), RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));   // the hash follows the machine's profile text; the golden pins the shape
         }
 
         if (slug == "todos-add")

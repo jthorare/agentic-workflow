@@ -13,8 +13,9 @@ public sealed class NoteCounterTests
     {
         var counts = NoteCounter.Count(NoteParser.Parse("# Todo\n- [ ] reply to Sam\n- [ ] read [docs](https://example.com)\n- [x] pay rent\n\nnotes below\n"));
 
-        Assert.Equal((2, 1, 3, 1, 1), (counts.Open, counts.Done, counts.Other, counts.Importable, counts.CantImport));
-        Assert.Equal([3], counts.CantImportLines);
+        Assert.Equal((2, 1, 3, 1, 1), (counts.Open, counts.Done, counts.Other, counts.Importable, counts.CantImport.Count));
+        Assert.Equal([3], counts.CantImport.Select(static c => c.Line));
+        Assert.Equal("it has a markdown link", counts.CantImport[0].Reason);
     }
 
     [Fact]
@@ -22,7 +23,7 @@ public sealed class NoteCounterTests
     {
         var counts = NoteCounter.Count(NoteParser.Parse(string.Empty));
 
-        Assert.Equal((0, 0, 0, 0, 0), (counts.Open, counts.Done, counts.Other, counts.Importable, counts.CantImport));
+        Assert.Equal((0, 0, 0, 0, 0), (counts.Open, counts.Done, counts.Other, counts.Importable, counts.CantImport.Count));
     }
 
     [Fact]
@@ -38,18 +39,17 @@ public sealed class NoteCounterTests
     {
         var counts = NoteCounter.Count(NoteParser.Parse("- [x] see [docs](https://example.com)\n- [ ] fine\n"));
 
-        Assert.Equal((1, 1, 0, 1), (counts.Open, counts.Done, counts.CantImport, counts.Importable));
+        Assert.Equal((1, 1, 0, 1), (counts.Open, counts.Done, counts.CantImport.Count, counts.Importable));
     }
 
     [Fact]
-    public void Only_the_first_five_lines_that_cannot_import_are_listed_but_all_are_counted()
+    public void Every_line_that_cannot_import_is_listed_with_its_number_in_file_order()
     {
         var note = string.Concat(Enumerable.Range(1, 7).Select(static i => string.Create(CultureInfo.InvariantCulture, $"- [ ] item {i} [x](https://e.com/{i})\n")));
 
         var counts = NoteCounter.Count(NoteParser.Parse(note));
 
-        Assert.Equal(7, counts.CantImport);
-        Assert.Equal([1, 2, 3, 4, 5], counts.CantImportLines);
+        Assert.Equal([1, 2, 3, 4, 5, 6, 7], counts.CantImport.Select(static c => c.Line));
     }
 
     [Theory]

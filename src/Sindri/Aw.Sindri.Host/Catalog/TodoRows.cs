@@ -4,13 +4,15 @@ using Aw.Sindri.Features.AddTodo;
 using Aw.Sindri.Features.ChangeTodo;
 using Aw.Sindri.Features.CheckTodoNote;
 using Aw.Sindri.Features.MarkTodo;
+using Aw.Sindri.Features.SetTodoNote;
+using Aw.Sindri.Features.StopTodoNote;
 
 namespace Aw.Sindri.Host.Catalog;
 
 /// <summary>
 /// The todo writes (todo spec D2, §4.4): add, change, and the four state verbs as variants of 'MarkTodo'. Request class, so the app, the terminal, MCP sessions and Sindri-launched sessions can all run them;
 /// each waits for the views because it reads the todo's row. Remove is soft (Undo is restore), so none is destructive. The note's check is a command that writes nothing (self-audited, so no 'command.handled' row);
-/// 'todo note set' and 'stop' edit the profile in process, with no control plane, so they are CLI-only rows.
+/// 'todo note set' and 'stop' are commands too (the Settings card's Start and Stop syncing); the CLI runs the same profile edit in process, with no control plane.
 /// </summary>
 internal static class TodoRows
 {
@@ -25,12 +27,12 @@ internal static class TodoRows
         new(ActionId.From("CheckTodoNote"), typeof(CheckTodoNoteRequest), Variant: null, ActionClass.Request, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: true, Destructive: false, ReadsViews: true, Shortcut: null,
             "POST", "/sindri/todos/note/check", ShellRows.Form("sindri todo note set <vault> <note> [--json]"), "ready"),
-        new(ActionId.From("SetTodoNote"), CommandType: null, Variant: null, ActionClass.Local, ServiceGrants: [],
+        new(ActionId.From("SetTodoNote"), typeof(SetTodoNoteRequest), Variant: null, ActionClass.Request, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
-            Method: null, Route: null, ShellRows.Form("sindri todo note set <vault> <note> [--json]"), "cli-only:local"),
-        new(ActionId.From("StopTodoNote"), CommandType: null, Variant: null, ActionClass.Local, ServiceGrants: [],
+            "POST", "/sindri/todos/note/set", ShellRows.Form("sindri todo note set <vault> <note> [--json]"), "ready"),
+        new(ActionId.From("StopTodoNote"), typeof(StopTodoNoteRequest), Variant: null, ActionClass.Request, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
-            Method: null, Route: null, ShellRows.Form("sindri todo note stop [--json]"), "cli-only:local"),
+            "POST", "/sindri/todos/note/stop", ShellRows.Form("sindri todo note stop [--json]"), "ready"),
     ];
 
     private static CommandRow Mark(string variant, string cli) =>

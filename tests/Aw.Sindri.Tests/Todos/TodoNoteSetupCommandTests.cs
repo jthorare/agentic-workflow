@@ -159,16 +159,15 @@ public sealed class TodoNoteSetupCommandTests : IDisposable
     }
 
     [Fact, Trait("Lane", "integration")]
-    public async Task Json_prints_the_path_vault_note_and_whether_it_changed_for_set_and_the_keys_for_stop()
+    public async Task Json_prints_the_path_whether_it_changed_and_the_profile_hash_for_set_and_stop()
     {
         Assert.Equal(0, await Run("todo", "note", "set", "notes", "Todo.md", "--json"));
         var set = _out.ToString().Replace("\":\"", "\": \"", StringComparison.Ordinal);
-        Assert.Contains("\"vault\": \"notes\"", set, StringComparison.Ordinal);
-        Assert.Contains("\"note\": \"Todo.md\"", set, StringComparison.Ordinal);
-        Assert.Contains("\"changed\"", set, StringComparison.Ordinal);
+        Assert.Contains("\"changed\": true", set.Replace("\":true", "\": true", StringComparison.Ordinal), StringComparison.Ordinal);
+        Assert.Contains("\"profileHash\"", set, StringComparison.Ordinal);
 
         _ = _out.GetStringBuilder().Clear();
         Assert.Equal(0, await Run("todo", "note", "stop", "--json"));
-        Assert.Contains("todo.obsidian", _out.ToString(), StringComparison.Ordinal);
+        Assert.Contains("\"profileHash\"", _out.ToString(), StringComparison.Ordinal);
     }
 }

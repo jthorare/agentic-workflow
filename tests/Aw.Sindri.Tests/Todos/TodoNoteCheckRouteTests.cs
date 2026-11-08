@@ -56,8 +56,9 @@ public sealed class TodoNoteCheckRouteTests : IDisposable
 
         Assert.Equal(HttpStatusCode.OK, answer.Status);
         var json = Root(answer);
-        Assert.Equal((true, 2, 1, 3, 1, 1, 0, 1, false), (json.GetProperty("exists").GetBoolean(), json.GetProperty("open").GetInt32(), json.GetProperty("done").GetInt32(), json.GetProperty("other").GetInt32(), json.GetProperty("importable").GetInt32(), json.GetProperty("cantImport").GetInt32(), json.GetProperty("sindriOpen").GetInt32(), json.GetProperty("willImport").GetInt32(), json.GetProperty("overCap").GetBoolean()));
-        Assert.Equal([3], json.GetProperty("cantImportLines").EnumerateArray().Select(static l => l.GetInt32()));
+        Assert.Equal((true, 2, 1, 3, 1, 500, 0), (json.GetProperty("exists").GetBoolean(), json.GetProperty("open").GetInt32(), json.GetProperty("done").GetInt32(), json.GetProperty("other").GetInt32(), json.GetProperty("willImport").GetInt32(), json.GetProperty("cap").GetInt32(), json.GetProperty("sindriOpen").GetInt32()));
+        var cant = Assert.Single(json.GetProperty("cantImport").EnumerateArray());
+        Assert.Equal((3, "it has a markdown link"), (cant.GetProperty("line").GetInt32(), cant.GetProperty("reason").GetString()));
         Assert.Equal(Note, await File.ReadAllTextAsync(Path.Combine(_vault, "Todo.md"), Token));
         Assert.Equal(["Todo.md"], Directory.GetFileSystemEntries(_vault).Select(static p => Path.GetFileName(p)), StringComparer.Ordinal);   // the swap probe's two temporary files are gone
         Assert.Equal(before, await LedgerHead(host));
@@ -72,7 +73,7 @@ public sealed class TodoNoteCheckRouteTests : IDisposable
 
         Assert.Equal(HttpStatusCode.OK, answer.Status);
         var json = Root(answer);
-        Assert.Equal((false, 0, 0), (json.GetProperty("exists").GetBoolean(), json.GetProperty("open").GetInt32(), json.GetProperty("importable").GetInt32()));
+        Assert.Equal((false, 0, 0), (json.GetProperty("exists").GetBoolean(), json.GetProperty("open").GetInt32(), json.GetProperty("willImport").GetInt32()));
         Assert.False(Directory.Exists(Path.Combine(_vault, "Daily")));   // checking creates no folder
     }
 
@@ -89,7 +90,7 @@ public sealed class TodoNoteCheckRouteTests : IDisposable
 
         var json = Root(await host.Http.Ask(Post(Route, Body("notes", "Todo.md"), ItemScenarios.Human(host))));
 
-        Assert.Equal((2, 3, 3), (json.GetProperty("sindriOpen").GetInt32(), json.GetProperty("importable").GetInt32(), json.GetProperty("willImport").GetInt32()));
+        Assert.Equal((2, 3, 3), (json.GetProperty("sindriOpen").GetInt32(), json.GetProperty("open").GetInt32(), json.GetProperty("willImport").GetInt32()));
     }
 
     [Theory, Trait("Lane", "integration")]

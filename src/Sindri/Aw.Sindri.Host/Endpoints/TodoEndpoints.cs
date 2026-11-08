@@ -10,6 +10,9 @@ using Aw.Sindri.Features.GetTodo;
 using Aw.Sindri.Features.GetTodoNote;
 using Aw.Sindri.Features.ListTodos;
 using Aw.Sindri.Features.MarkTodo;
+using Aw.Sindri.Features.SetTodoNote;
+using Aw.Sindri.Features.StopTodoNote;
+using Aw.Sindri.Features.TodoNoteProfile;
 
 namespace Aw.Sindri.Host.Endpoints;
 
@@ -68,6 +71,10 @@ internal static class TodoEndpoints
         });
         _ = group.MapPost("/todos/note/check", static async (CheckTodoNoteBody? body, IService<CheckTodoNoteRequest, CheckTodoNoteResponse> service, CancellationToken ct) =>
             (await service.Handle((body ?? new CheckTodoNoteBody()).ToRequest(), ct).ConfigureAwait(false)).ToHttpResult());
+        _ = group.MapPost("/todos/note/set", static async (SetTodoNoteBody? body, IService<SetTodoNoteRequest, TodoNoteWritten> service, CancellationToken ct) =>
+            (await service.Handle((body ?? new SetTodoNoteBody()).ToRequest(), ct).ConfigureAwait(false)).ToHttpResult());
+        _ = group.MapPost("/todos/note/stop", static async (StopTodoNoteBody? body, IService<StopTodoNoteRequest, TodoNoteWritten> service, CancellationToken ct) =>
+            (await service.Handle((body ?? new StopTodoNoteBody()).ToRequest(), ct).ConfigureAwait(false)).ToHttpResult());
         _ = Mark(group, "done", TodoVerb.Done);
         _ = Mark(group, "reopen", TodoVerb.Reopen);
         _ = Mark(group, "remove", TodoVerb.Remove);
