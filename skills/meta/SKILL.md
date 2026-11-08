@@ -63,6 +63,7 @@ it prints what you owe and the command that settles it. Settle it, don't argue w
    `team.json` `agent` or `launcher.json` puts a lane on another agent, the launcher prints `lane <l>: <agent>, takes part in the obligations
    through its hooks` (the hooks come from `scripts/install-meta.sh --provider codex|cursor`) or, for a CLI with no
    hook system, `lane <l>: <agent>, launch-only: no obligations`: don't message a lane marked launch-only.
+   Lanes run in your login shell (`$SHELL -lc`, else bash) with the `PATH` of the shell that ran `aw-meta-launch`, even on a tmux server that was already up.
    `aw-meta-launch` refuses while the team's lanes still run on tmux's default socket (the pre-switch team). The meta
    session must never pass `--allow-legacy` or set `AW_META_ALLOW_LEGACY`: they skip the check that stops a second agent on the same transcripts. Tell the owner.
    The team runs on its own tmux socket, named after the team, so attach with `tmux -L <team> attach -t =<team>-<lane>`

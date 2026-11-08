@@ -4,6 +4,7 @@
 # Set by the OS or the shell.
 HOME # the user's home directory (OS)
 PATH # executable search path (OS)
+SHELL # the user's login shell, set by the OS (the lane drops to it when its agent exits)
 LANG # the locale, set by the OS or shell
 TERM # set by the terminal
 USER # login name (OS)
