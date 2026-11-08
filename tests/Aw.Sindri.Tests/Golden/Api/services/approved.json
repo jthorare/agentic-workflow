@@ -122,6 +122,18 @@
       "description": "Pulls new records from each source into the index."
     },
     {
+      "name": "memory-expire",
+      "every": "1h",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Deletes memory facts whose expiry has passed."
+    },
+    {
       "name": "setup",
       "every": "1m",
       "paused": false,
