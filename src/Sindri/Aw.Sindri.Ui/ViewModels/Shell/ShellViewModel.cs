@@ -83,9 +83,10 @@ internal sealed partial class ShellViewModel : ObservableObject
     }
 
     // The views the control plane's follower re-reads on connect and after every event.
-    [MemberNotNull(nameof(Linear), nameof(NewIssue))]
+    [MemberNotNull(nameof(Linear), nameof(NewIssue), nameof(Todo))]
     private void FollowViews()
     {
+        InitTodo();
         InitLinear();
         Health.Follow(Queue.Refresh);
         Health.Follow(Item.Refresh);
