@@ -45,7 +45,7 @@ internal abstract class AgentCliProvider(IProcessRunner runner, AgentCliName cli
             ProcessEnd.NotStarted => new ProviderUnavailable(ProviderReasons.NotInstalled),
             ProcessEnd.FailedToStart => new ProviderErrored(ProviderReasons.SpawnFailed),
             ProcessEnd.TimedOut => new ProviderUnavailable(ProviderUnavailable.Timeout),
-            ProcessEnd.Exited when result.ExitCode != 0 => Errored(ProviderReasons.Exit(result.ExitCode), UsageLimitMatcher.Match(result.StandardError) ?? LimitIn(result.StandardOutput)),
+            ProcessEnd.Exited when result.ExitCode != 0 => Errored(ProviderReasons.Exit(result.ExitCode), Match(result.StandardError) ?? LimitIn(result.StandardOutput)),
             ProcessEnd.Exited => Read(result.StandardOutput, question),
             _ => throw new InvalidOperationException($"unknown process end {result.End}"),
         };
@@ -118,6 +118,11 @@ internal abstract class AgentCliProvider(IProcessRunner runner, AgentCliName cli
     /// <param name="output">The CLI's standard output.</param>
     /// <returns>The pattern's id, or null.</returns>
     protected virtual string? LimitIn(string output) => null;
+
+    /// <summary>The usage-limit pattern in a message; the default knows Claude's and Codex's wording, the Cursor provider adds its own.</summary>
+    /// <param name="message">The error text.</param>
+    /// <returns>The pattern's id, or null.</returns>
+    protected virtual string? Match(string? message) => UsageLimitMatcher.Match(message);
 
     /// <summary>An errored result, flagged as a usage limit when a pattern fired; the reason code is the same either way.</summary>
     /// <param name="reasonCode">Why, as before the flag existed ('exit-1', 'cli-reported-error').</param>
