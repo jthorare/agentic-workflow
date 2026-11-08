@@ -107,6 +107,18 @@ public sealed class WorktreeDoneDetachedTests : IDisposable
     }
 
     [Fact, Trait("Lane", "integration")]
+    public async Task A_locked_detached_tree_is_kept()
+    {
+        var (onMain, _, _) = await Box();
+        WorktreeLab.Git(_lab.Repo, "worktree", "lock", onMain);
+
+        var sweep = await Sweep("--path", onMain, "--done");
+
+        Assert.True(Directory.Exists(onMain), sweep.Out);
+        Assert.Contains("locked", sweep.Out, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "integration")]
     public async Task Without_a_previous_sweep_the_tree_is_kept()
     {
         var (onMain, _, _) = await Box();
