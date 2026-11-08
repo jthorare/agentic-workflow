@@ -30,6 +30,21 @@ internal sealed class TodoPanelViewModel : ObservableObject, IDisposable
     /// <summary>The panel's name.</summary>
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     public string Title => Labels.TodoTitle;
+
+    /// <summary>The key of the quick-add hint ("N").</summary>
+    public string NewKey => Labels.TodoNewKey;
+
+    /// <summary>The quick-add hint's words ("New todo").</summary>
+    public string NewText => Labels.TodoNewText;
+
+    /// <summary>The quick-add hint for a screen reader ("New todo, press N").</summary>
+    public string NewName => Labels.TodoNewName;
+
+    /// <summary>"Show less".</summary>
+    public string ShowLessText => Labels.TodoShowLess;
+
+    /// <summary>The key beside "Show less" ("Esc").</summary>
+    public string EscKey => Labels.TodoEscKey;
 #pragma warning restore CA1822, MA0041
 
     /// <summary>True until the first answer.</summary>
@@ -40,6 +55,12 @@ internal sealed class TodoPanelViewModel : ObservableObject, IDisposable
 
     /// <summary>"11 open · 1 overdue", plus "· 1 to sort out" while a conflict is open.</summary>
     public string CountLine { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>Open todos due before today (the tray's tooltip).</summary>
+    public int OverdueCount { get; private set => Set(ref field, value); }
+
+    /// <summary>Todos with an open both-places conflict (the tray's tooltip).</summary>
+    public int ToSortOutCount { get; private set => Set(ref field, value); }
 
     /// <summary>True when no todo is open.</summary>
     public bool IsEmpty { get; private set => Set(ref field, value); }
@@ -192,7 +213,9 @@ internal sealed class TodoPanelViewModel : ObservableObject, IDisposable
     {
         var open = split.Open.Count;
         var listed = split.Done.Count + split.Removed.Count;
-        CountLine = Labels.TodoCountLine(open, split.Overdue.Count, todos.Count(t => t.Conflict is not null));
+        var toSortOut = todos.Count(t => t.Conflict is not null);
+        (OverdueCount, ToSortOutCount) = (split.Overdue.Count, toSortOut);
+        CountLine = Labels.TodoCountLine(open, split.Overdue.Count, toSortOut);
         (IsEmpty, EmptyText) = (open == 0, open == 0 ? Labels.TodoEmpty : string.Empty);
         (ShowsShowAll, ShowAllText) = (!IsExpanded && open > CollapsedRows, Labels.TodoShowAll(open));
         DoneToggleText = ShowsDone ? Labels.TodoHideDone : Labels.TodoShowDone;

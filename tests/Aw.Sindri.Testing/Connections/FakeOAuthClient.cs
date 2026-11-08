@@ -12,6 +12,9 @@ public sealed class FakeOAuthClient : IOAuthClient
     /// <summary>Gets the refresh calls: the preset key, the client id and the refresh token presented.</summary>
     public IList<(string Preset, string Client, string RefreshToken)> Refreshes { get; } = [];
 
+    /// <summary>Gets the client secret each refresh call presented, in call order (null for a public client).</summary>
+    public IList<string?> RefreshClientSecrets { get; } = [];
+
     /// <summary>Gets or sets the tokens the next refreshes return (a provider that keeps the old refresh token returns null for it).</summary>
     public TokenSet? Next { get; set; }
 
@@ -23,10 +26,11 @@ public sealed class FakeOAuthClient : IOAuthClient
         => ValueTask.FromResult<Result<TokenSet>>(Next ?? throw new InvalidOperationException("set Next first"));
 
     /// <inheritdoc />
-    public ValueTask<Result<TokenSet>> Refresh(ConnectionPreset preset, string client, string refreshToken, CancellationToken cancellationToken)
+    public ValueTask<Result<TokenSet>> Refresh(ConnectionPreset preset, string client, string refreshToken, string? clientSecret, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(preset);
         Refreshes.Add((preset.Key, client, refreshToken));
+        RefreshClientSecrets.Add(clientSecret);
         if (RefuseWith is { } code)
         {
             // the provider's own error code rides in the 'providerCode' extension, so the caller can name it without parsing text

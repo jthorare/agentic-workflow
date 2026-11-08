@@ -50,6 +50,40 @@ public sealed class InMemoryConnectionStore : IConnectionStore
     }
 
     /// <inheritdoc />
+    public ValueTask<Result<Unit>> Insert(Connection connection, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        lock (_gate)
+        {
+            if (_rows.ContainsKey(connection.Name.ToString()))
+            {
+                return ValueTask.FromResult<Result<Unit>>(SindriErrors.ConnectionExists.With($"A connection named {connection.Name} already exists."));
+            }
+
+            _rows[connection.Name.ToString()] = connection;
+        }
+
+        return ValueTask.FromResult<Result<Unit>>(Unit.Value);
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<Unit>> Update(Connection connection, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        lock (_gate)
+        {
+            if (!_rows.ContainsKey(connection.Name.ToString()))
+            {
+                return ValueTask.FromResult<Result<Unit>>(SindriErrors.ConnectionNotFound.With($"No connection {connection.Name}."));
+            }
+
+            _rows[connection.Name.ToString()] = connection;
+        }
+
+        return ValueTask.FromResult<Result<Unit>>(Unit.Value);
+    }
+
+    /// <inheritdoc />
     public ValueTask<Result<bool>> Remove(ConnectionName name, CancellationToken cancellationToken)
     {
         lock (_gate)

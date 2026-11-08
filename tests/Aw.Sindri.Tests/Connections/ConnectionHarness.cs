@@ -1,13 +1,14 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Commands;
-using Aw.Sindri.Core.Events;
-using Aw.Sindri.Core.Scheduling;
-using Aw.Sindri.Features.RefreshConnections;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Connections.OAuth;
+using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Scheduling;
+using Aw.Sindri.Features;
 using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.GetConnection;
 using Aw.Sindri.Features.ListConnections;
+using Aw.Sindri.Features.RefreshConnections;
 using Aw.Sindri.Features.RemoveConnection;
 using Aw.Sindri.Features.TestConnection;
 using Aw.Sindri.Testing;
@@ -56,6 +57,9 @@ internal sealed class ConnectionHarness
 
     public FakeSignInSession SignIn { get; } = new();
 
+    /// <summary>Gets the memory of failed sign-ins the add flow writes and the get slice reads.</summary>
+    public SignInOutcomes Outcomes { get; } = new();
+
     public FakeEnvironment Environment { get; } = new();
 
     public FakeConnectionProbe Probe { get; } = new();
@@ -73,11 +77,11 @@ internal sealed class ConnectionHarness
     public ICallerContextAccessor Callers { get; }
 
     public AddConnectionService Add(ISignInSession? signIn = null)
-        => new(Store, Secrets, Presets, signIn ?? SignIn, Environment, Clock, Callers);
+        => new(Store, Secrets, Presets, Environment, Clock, Callers, new OAuthSignInFlow(Store, Secrets, signIn ?? SignIn, Clock, Outcomes, new TypedLog<OAuthSignInFlow>(Logs)));
 
     public ListConnectionsService List() => new(Store);
 
-    public GetConnectionService Get() => new(Store);
+    public GetConnectionService Get() => new(Store, Outcomes);
 
     public RemoveConnectionService Remove() => new(Store, Secrets);
 
@@ -90,6 +94,12 @@ internal sealed class ConnectionHarness
     /// <returns>The run, at the harness clock.</returns>
     public async Task<ScheduledRun> Tick()
         => new((await Ledger.Acquire(LedgerProbe.Self(), TestContext.Current.CancellationToken)).Value, Clock.GetUtcNow());
+
+
+    /// <summary>The test slice over another probe, with the capturing log, so a probe that echoes the credential is seen by the log canary.</summary>
+    /// <param name="probe">The probe.</param>
+    /// <returns>The service.</returns>
+    public TestConnectionService TestWith(IConnectionProbe probe) => new(Store, Secrets, Presets, probe, Clock, new TypedLog<TestConnectionService>(Logs));
 
     public TestConnectionService Test(IMcpConnectionClient? mcp = null) => new(Store, Secrets, Presets, Probe, Clock, new TypedLog<TestConnectionService>(Logs), mcp);
 

@@ -1,12 +1,14 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
 
 namespace Aw.Sindri.Features.GetConnection;
 
 /// <summary>Reads one connection. A bad name is SND-CONN-008, an unknown one SND-CONN-001.</summary>
 /// <param name="store">The connections.</param>
-internal sealed class GetConnectionService(IConnectionStore store) : IService<GetConnectionRequest, GetConnectionResponse>
+/// <param name="outcomes">The last failed sign-in per name: a name with no row but a failed sign-in answers that failure instead of SND-CONN-001.</param>
+internal sealed class GetConnectionService(IConnectionStore store, SignInOutcomes outcomes) : IService<GetConnectionRequest, GetConnectionResponse>
 {
     private readonly IConnectionStore _store = store;
 
@@ -20,6 +22,12 @@ internal sealed class GetConnectionService(IConnectionStore store) : IService<Ge
         }
 
         var found = await _store.Get(name.Value, cancellationToken).ConfigureAwait(false);
-        return found.IsError ? ConnectionFailures.Safe(found.Error) : new GetConnectionResponse(ConnectionView.From(found.Value));
+        if (found.IsSuccess)
+        {
+            return new GetConnectionResponse(ConnectionView.From(found.Value));
+        }
+
+        // why: a sign-in that failed left no row, so the caller that waits for it (the CLI, an agent) would otherwise see "not found" until it gave up
+        return found.Error.Code == SindriErrors.ConnectionNotFound.Code && outcomes.Last(name.Value.ToString()) is { } failed ? failed : ConnectionFailures.Safe(found.Error);
     }
 }

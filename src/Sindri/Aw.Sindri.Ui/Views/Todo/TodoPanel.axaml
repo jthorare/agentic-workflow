@@ -1,0 +1,152 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:todo="using:Aw.Sindri.Ui.ViewModels.Todo"
+             xmlns:tv="using:Aw.Sindri.Ui.Views.Todo"
+             x:Class="Aw.Sindri.Ui.Views.Todo.TodoPanel"
+             x:DataType="todo:TodoPanelViewModel">
+  <UserControl.Styles>
+    <!-- The Show done toggle reads as the quiet "copy" link the other panels use, checked or not. -->
+    <Style Selector="ToggleButton.done-toggle">
+      <Setter Property="Padding" Value="8,2" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="ToggleButton.done-toggle:checked /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.done-toggle:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Border.todo-group-head">
+      <Setter Property="Padding" Value="16,8,16,4" />
+    </Style>
+  </UserControl.Styles>
+  <!-- The Todo panel on Home (todo spec §3.1, §3.4, §3.5): a labelled region. Header: the title, the count line, the "N New todo" hint.
+       Collapsed: up to five rows, overdue first, and "Show all N". Expanded: the groups in their own scroll (capped at half the
+       window's height, TodoPanel.axaml.cs), the Show done toggle and Show less at the foot. Loading draws three skeleton rows as tall
+       as a loaded row; an empty list says so. -->
+  <Border x:Name="TodoPanelFrame" Classes="panel" AutomationProperties.Name="{Binding Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+    <!-- Header on top, the body (collapsed or expanded) in the rest: the frame is capped at half the window (TodoPanel.axaml.cs), so
+         the expanded list's own scroll gets what the header and the foot leave. -->
+    <Grid RowDefinitions="Auto,*">
+      <Border Classes="phead">
+        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+          <TextBlock x:Name="TodoTitle" Classes="body-strong" Text="{Binding Title}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Title}" />
+          <TextBlock x:Name="TodoCount" Grid.Column="1" Classes="caption subtle" Text="{Binding CountLine}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                     ToolTip.Tip="{Binding CountLine}" AutomationProperties.Name="{Binding CountLine}" />
+          <!-- The quick-add hint (Home only): a keycap and its words. The key itself is the quick-add slice's. -->
+          <StackPanel x:Name="TodoNewHint" Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" AutomationProperties.Name="{Binding NewName}"
+                      AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+            <Border Classes="kbd" VerticalAlignment="Center">
+              <TextBlock x:Name="TodoNewKey" Classes="kbd" Text="{Binding NewKey}" AutomationProperties.AccessibilityView="Raw" />
+            </Border>
+            <TextBlock x:Name="TodoNewText" Classes="caption" Text="{Binding NewText}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- Collapsed: one body of a fixed height in every state (spec D13, §3.4): five row slots on top, the Show all slot below
+           (Show all on the left, the error line on the right). The rows, the skeleton and the empty sentence draw in the slots;
+           none of them changes the height, so Needs you below never moves. TodoPanel.axaml.cs sets the height from Size.Row. -->
+      <Grid x:Name="TodoCollapsed" Grid.Row="1" RowDefinitions="*,Auto" ClipToBounds="True" IsVisible="{Binding !IsExpanded}">
+        <StackPanel>
+          <!-- First load: three skeleton rows, each as tall as a loaded row (the same item-row), no shimmer. -->
+          <StackPanel x:Name="TodoSkeleton" IsVisible="{Binding IsLoading}" AutomationProperties.AccessibilityView="Raw">
+            <Border Classes="item-row">
+              <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                <Border Classes="skeleton" Width="20" Height="20" Margin="0,0,12,0" />
+                <Border Grid.Column="1" Classes="skeleton" Width="300" />
+                <Border Grid.Column="2" Classes="skeleton" Width="64" />
+              </Grid>
+            </Border>
+            <Border Classes="item-row">
+              <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                <Border Classes="skeleton" Width="20" Height="20" Margin="0,0,12,0" />
+                <Border Grid.Column="1" Classes="skeleton" Width="220" />
+                <Border Grid.Column="2" Classes="skeleton" Width="48" />
+              </Grid>
+            </Border>
+            <Border Classes="item-row">
+              <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                <Border Classes="skeleton" Width="20" Height="20" Margin="0,0,12,0" />
+                <Border Grid.Column="1" Classes="skeleton" Width="260" />
+                <Border Grid.Column="2" Classes="skeleton" Width="56" />
+              </Grid>
+            </Border>
+          </StackPanel>
+
+          <TextBlock x:Name="TodoEmpty" Classes="caption quiet" Text="{Binding EmptyText}" Margin="16,12" HorizontalAlignment="Left" TextAlignment="Left"
+                     IsVisible="{Binding EmptyText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding EmptyText}" />
+
+          <ItemsControl x:Name="TodoRows" ItemsSource="{Binding Rows}" IsVisible="{Binding !IsExpanded}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="todo:TodoRowViewModel">
+                <tv:TodoRow />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+        <Grid x:Name="TodoShowAllSlot" Grid.Row="1" ColumnDefinitions="Auto,*" Height="{StaticResource Size.Row}">
+          <Button x:Name="TodoShowAll" HorizontalAlignment="Left" VerticalAlignment="Center" Classes="copy" Click="OnShowAll" IsVisible="{Binding ShowsShowAll}" Margin="16,0"
+                  AutomationProperties.Name="{Binding ShowAllText}">
+            <TextBlock x:Name="TodoShowAllText" Classes="caption" Text="{Binding ShowAllText}" AutomationProperties.AccessibilityView="Raw" />
+          </Button>
+          <TextBlock x:Name="TodoError" Grid.Column="1" Classes="caption" Text="{Binding Error}" Margin="16,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                     TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.Attention}" ToolTip.Tip="{Binding Error}"
+                     IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Error}" />
+        </Grid>
+      </Grid>
+
+      <!-- Expanded: the groups in their own scroll, then the foot. -->
+      <Grid x:Name="TodoExpanded" Grid.Row="1" RowDefinitions="*,Auto" IsVisible="{Binding IsExpanded}">
+        <ScrollViewer x:Name="TodoScroll" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+          <StackPanel>
+            <ItemsControl x:Name="TodoGroups" ItemsSource="{Binding Groups}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="todo:TodoGroupViewModel">
+                  <StackPanel>
+                    <Border x:Name="TodoGroup" Classes="todo-group-head" AutomationProperties.Name="{Binding Heading}" AutomationProperties.AccessibilityView="Control"
+                            AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="2">
+                      <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock x:Name="TodoGroupHeading" Classes="eyebrow" Text="{Binding Heading}" AutomationProperties.AccessibilityView="Raw" />
+                        <TextBlock Classes="caption subtle" Text="{Binding Rows.Count}" AutomationProperties.AccessibilityView="Raw" />
+                      </StackPanel>
+                    </Border>
+                    <ItemsControl ItemsSource="{Binding Rows}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="todo:TodoRowViewModel">
+                          <tv:TodoRow />
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock x:Name="TodoDoneEmpty" Classes="caption subtle" Text="{Binding DoneEmptyText}" Margin="16,8"
+                       IsVisible="{Binding DoneEmptyText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding DoneEmptyText}" />
+          </StackPanel>
+        </ScrollViewer>
+        <Border Grid.Row="1" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0">
+          <Grid ColumnDefinitions="Auto,*,Auto" Margin="8,4">
+            <ToggleButton x:Name="TodoDoneToggle" Classes="done-toggle" Click="OnToggleDone" IsChecked="{Binding ShowsDone, Mode=OneWay}"
+                          AutomationProperties.Name="{Binding DoneToggleName}">
+              <TextBlock x:Name="TodoDoneToggleText" Classes="caption" Text="{Binding DoneToggleText}" AutomationProperties.AccessibilityView="Raw" />
+            </ToggleButton>
+            <TextBlock x:Name="TodoErrorExpanded" Grid.Column="1" Classes="caption" Text="{Binding Error}" Margin="12,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.Attention}" ToolTip.Tip="{Binding Error}"
+                       IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Error}" />
+            <Button x:Name="TodoShowLess" Grid.Column="2" Classes="copy" Click="OnShowLess" AutomationProperties.Name="{Binding ShowLessText}">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Classes="caption" Text="{Binding ShowLessText}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+                <Border Classes="kbd" VerticalAlignment="Center">
+                  <TextBlock Classes="kbd" Text="{Binding EscKey}" AutomationProperties.AccessibilityView="Raw" />
+                </Border>
+              </StackPanel>
+            </Button>
+          </Grid>
+        </Border>
+      </Grid>
+
+      <!-- The "From elsewhere" line (2 PRs waiting on your review · 1 Linear issue assigned · 3 need you, below) goes here: its own
+           control, made in its own slice. Nothing draws here yet. -->
+    </Grid>
+  </Border>
+</UserControl>

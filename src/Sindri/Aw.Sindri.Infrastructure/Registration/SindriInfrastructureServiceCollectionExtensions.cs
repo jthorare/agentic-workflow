@@ -5,6 +5,8 @@ using Aw.Sindri.Core.Auth;
 using Aw.Sindri.Core.BugFix;
 using Aw.Sindri.Core.Challenges;
 using Aw.Sindri.Core.Checks;
+using Aw.Sindri.Core.Connections;
+using Aw.Sindri.Core.Connections.OAuth;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.EngineReads;
@@ -29,10 +31,7 @@ using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Denials;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Scoping;
-using Aw.Sindri.Core.Connections;
-using Aw.Sindri.Core.Connections.OAuth;
 using Aw.Sindri.Core.Secrets;
-using Aw.Sindri.Infrastructure.Connections;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Views;
@@ -48,6 +47,7 @@ using Aw.Sindri.Infrastructure.Auth;
 using Aw.Sindri.Infrastructure.BugFix;
 using Aw.Sindri.Infrastructure.Challenges;
 using Aw.Sindri.Infrastructure.Checks;
+using Aw.Sindri.Infrastructure.Connections;
 using Aw.Sindri.Infrastructure.Control;
 using Aw.Sindri.Infrastructure.Deploy;
 using Aw.Sindri.Infrastructure.Evidence;
@@ -173,7 +173,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
     {
         return services
             .AddSingleton<IIdGenerator, GuidV7Ids>().AddSingleton<IProcessProbe, PosixProcessProbe>()
-            .AddSingleton<LedgerDatabase>()
+            .AddSingleton<LedgerDatabase>().AddSingleton<IStoreCheckpoints>(static sp => new SqliteStoreCheckpoints([sp.GetRequiredService<SindriSettings>().LedgerPath, sp.GetRequiredService<SindriSettings>().ViewsPath]))   // #2221: the tick that truncates both logs
             .AddSingleton<ILedgerStore, SqliteLedger>()
             .AddSingleton<ILedgerReader, SqliteLedgerReader>()
             .AddSingleton<IMirroredSequences, SqliteMirroredSequences>()   // API P13: which ledger row mirrors a Temporal event
@@ -253,7 +253,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IConnectionProbe>(static _ => new HttpConnectionProbe(new HttpClient()))
             .AddSingleton<IOAuthClient>(static sp => new HttpOAuthClient(new HttpClient(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IMcpConnectionClient>(static _ => new McpConnectionClient(new HttpClient()))
-            .AddSingleton<IBrowserOpener>(static _ => new BrowserOpener(new ProcessToolRunner()))
+            .AddSingleton<IBrowserOpener>(static _ => new BrowserOpener())
             .AddSingleton<ISignInSession>(static sp => new LoopbackSignIn(sp.GetRequiredService<IOAuthClient>(), sp.GetRequiredService<IBrowserOpener>(), TimeSpan.FromMinutes(5), System.Security.Cryptography.RandomNumberGenerator.GetBytes));
 
     private static IServiceCollection AddSecretInfrastructure(this IServiceCollection services)

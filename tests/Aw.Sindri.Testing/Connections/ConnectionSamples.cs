@@ -1,6 +1,6 @@
+using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Secrets;
-using Aw.Kernel.Testing;
 
 namespace Aw.Sindri.Testing.Connections;
 

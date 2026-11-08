@@ -15,9 +15,10 @@ public interface IOAuthClient
     /// <param name="preset">The provider.</param>
     /// <param name="client">The OAuth client id.</param>
     /// <param name="refreshToken">The current refresh token.</param>
+    /// <param name="clientSecret">The OAuth client secret the connection stored with its tokens, or null.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The tokens, or SND-CONN-005.</returns>
-    public ValueTask<Result<TokenSet>> Refresh(ConnectionPreset preset, string client, string refreshToken, CancellationToken cancellationToken);
+    public ValueTask<Result<TokenSet>> Refresh(ConnectionPreset preset, string client, string refreshToken, string? clientSecret, CancellationToken cancellationToken);
 
     /// <summary>Asks the provider to revoke a token. A preset without a revoke endpoint succeeds without a call.</summary>
     /// <param name="preset">The provider.</param>

@@ -26,13 +26,14 @@ internal sealed class HttpOAuthClient(HttpClient http, TimeProvider time) : IOAu
             ["client_id"] = exchange.Client,
             ["code_verifier"] = exchange.Verifier,
         };
+        AddSecret(form, exchange.ClientSecret);
         var answer = await Post(exchange.Preset.TokenUrl, form, cancellationToken).ConfigureAwait(false);
         return answer.IsError
             ? SindriErrors.ConnectionNeedsSignIn.With($"{exchange.Preset.Key}: the provider did not accept the sign-in code ({answer.Error.Message})")
-            : Tokens(answer.Value, previousRefresh: null);
+            : Tokens(answer.Value, previousRefresh: null, exchange.ClientSecret);
     }
 
-    public async ValueTask<Result<TokenSet>> Refresh(ConnectionPreset preset, string client, string refreshToken, CancellationToken cancellationToken)
+    public async ValueTask<Result<TokenSet>> Refresh(ConnectionPreset preset, string client, string refreshToken, string? clientSecret, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(preset);
         var form = new Dictionary<string, string>(StringComparer.Ordinal)
@@ -41,10 +42,11 @@ internal sealed class HttpOAuthClient(HttpClient http, TimeProvider time) : IOAu
             ["refresh_token"] = refreshToken,
             ["client_id"] = client,
         };
+        AddSecret(form, clientSecret);
         var answer = await Post(preset.TokenUrl, form, cancellationToken).ConfigureAwait(false);
         return answer.IsError
             ? SindriErrors.ConnectionRefreshFailed.With($"{preset.Key}: {answer.Error.Message}")
-            : Tokens(answer.Value, previousRefresh: refreshToken);
+            : Tokens(answer.Value, previousRefresh: refreshToken, clientSecret);
     }
 
     public async ValueTask<Result<Unit>> Revoke(ConnectionPreset preset, string client, string token, CancellationToken cancellationToken)
@@ -57,7 +59,15 @@ internal sealed class HttpOAuthClient(HttpClient http, TimeProvider time) : IOAu
 
         var form = new Dictionary<string, string>(StringComparer.Ordinal) { ["token"] = token, ["client_id"] = client };
         var answer = await Post(preset.RevokeUrl, form, cancellationToken).ConfigureAwait(false);
-        return answer.IsError ? SindriErrors.ConnectionNeedsSignIn.With($"{preset.Key}: the provider would not revoke the token ({answer.Error.Message})") : Unit.Value;
+        return answer.IsError ? SindriErrors.ConnectionRefreshFailed.With($"{preset.Key}: the provider would not revoke the token ({answer.Error.Message})") : Unit.Value;
+    }
+
+    private static void AddSecret(Dictionary<string, string> form, string? clientSecret)
+    {
+        if (clientSecret is { Length: > 0 })
+        {
+            form["client_secret"] = clientSecret;
+        }
     }
 
     // Returns the answer's JSON text on a 2xx; otherwise an error naming the status and the provider's error code (a short [a-z_] word) only.
@@ -108,7 +118,7 @@ internal sealed class HttpOAuthClient(HttpClient http, TimeProvider time) : IOAu
         return "no error code";
     }
 
-    private Result<TokenSet> Tokens(string json, string? previousRefresh)
+    private Result<TokenSet> Tokens(string json, string? previousRefresh, string? clientSecret)
     {
         try
         {
@@ -119,7 +129,7 @@ internal sealed class HttpOAuthClient(HttpClient http, TimeProvider time) : IOAu
                 return SindriErrors.ConnectionRefreshFailed.With("the token endpoint answered without an access token");
             }
 
-            return new TokenSet(accessToken, Text(root, "refresh_token") is { Length: > 0 } next ? next : previousRefresh, ExpiresAt(root));
+            return new TokenSet(accessToken, Text(root, "refresh_token") is { Length: > 0 } next ? next : previousRefresh, ExpiresAt(root), clientSecret);
         }
         catch (JsonException)
         {

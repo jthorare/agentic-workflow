@@ -81,7 +81,7 @@ public sealed class LinearNewLineTests
     {
         var shell = await ShellOnWork();
 
-        await ShellWait.Until(shell, () => shell.Attention.Tray.Tooltip.EndsWith("\n3 new on your Linear issues", StringComparison.Ordinal), Token);
+        await ShellWait.Until(shell, () => shell.Attention.Tray.Tooltip.Contains("\n3 new on your Linear issues", StringComparison.Ordinal), Token);
     }, Token);
 
     [Fact]

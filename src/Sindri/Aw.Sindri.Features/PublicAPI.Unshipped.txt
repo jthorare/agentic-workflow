@@ -6219,11 +6219,17 @@ static Aw.Sindri.Features.TestConnection.TestConnectionRequest.operator !=(Aw.Si
 static Aw.Sindri.Features.TestConnection.TestConnectionRequest.operator ==(Aw.Sindri.Features.TestConnection.TestConnectionRequest? left, Aw.Sindri.Features.TestConnection.TestConnectionRequest? right) -> bool
 static Aw.Sindri.Features.TestConnection.TestConnectionResponse.operator !=(Aw.Sindri.Features.TestConnection.TestConnectionResponse? left, Aw.Sindri.Features.TestConnection.TestConnectionResponse? right) -> bool
 static Aw.Sindri.Features.TestConnection.TestConnectionResponse.operator ==(Aw.Sindri.Features.TestConnection.TestConnectionResponse? left, Aw.Sindri.Features.TestConnection.TestConnectionResponse? right) -> bool
-Aw.Sindri.Features.AddConnection.AddConnectionRequest.AddConnectionRequest(string! Name, string? Preset, string? Kind, string? Client, string? KeyEnv, System.Collections.Generic.IReadOnlyList<string!>! Scopes, bool Wait, string? Url = null) -> void
-Aw.Sindri.Features.AddConnection.AddConnectionRequest.Deconstruct(out string! Name, out string? Preset, out string? Kind, out string? Client, out string? KeyEnv, out System.Collections.Generic.IReadOnlyList<string!>! Scopes, out bool Wait, out string? Url) -> void
 Aw.Sindri.Features.AddConnection.AddConnectionRequest.Url.get -> string?
 Aw.Sindri.Features.AddConnection.AddConnectionRequest.Url.init -> void
 Aw.Sindri.Features.TestConnection.TestConnectionResponse.Deconstruct(out Aw.Sindri.Core.Connections.ConnectionView! Connection, out bool Ok, out string? Reason, out System.Collections.Generic.IReadOnlyList<string!>? Tools) -> void
 Aw.Sindri.Features.TestConnection.TestConnectionResponse.TestConnectionResponse(Aw.Sindri.Core.Connections.ConnectionView! Connection, bool Ok, string? Reason, System.Collections.Generic.IReadOnlyList<string!>? Tools = null) -> void
 Aw.Sindri.Features.TestConnection.TestConnectionResponse.Tools.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Aw.Sindri.Features.TestConnection.TestConnectionResponse.Tools.init -> void
+Aw.Sindri.Features.AddConnection.AddConnectionRequest.ClientSecret.get -> string?
+Aw.Sindri.Features.AddConnection.AddConnectionRequest.ClientSecret.init -> void
+Aw.Sindri.Features.AddConnection.AddConnectionRequest.ClientSecretEnv.get -> string?
+Aw.Sindri.Features.AddConnection.AddConnectionRequest.ClientSecretEnv.init -> void
+Aw.Sindri.Features.AddConnection.AddConnectionRequest.Key.get -> string?
+Aw.Sindri.Features.AddConnection.AddConnectionRequest.Key.init -> void
+Aw.Sindri.Features.AddConnection.AddConnectionRequest.AddConnectionRequest(string! Name, string? Preset, string? Kind, string? Client, string? KeyEnv, System.Collections.Generic.IReadOnlyList<string!>! Scopes, bool Wait, string? ClientSecretEnv = null, string? Key = null, string? ClientSecret = null, string? Url = null) -> void
+Aw.Sindri.Features.AddConnection.AddConnectionRequest.Deconstruct(out string! Name, out string? Preset, out string? Kind, out string? Client, out string? KeyEnv, out System.Collections.Generic.IReadOnlyList<string!>! Scopes, out bool Wait, out string? ClientSecretEnv, out string? Key, out string? ClientSecret, out string? Url) -> void
