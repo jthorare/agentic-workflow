@@ -161,7 +161,7 @@ internal sealed partial class ContextPageViewModel
 
     // A server without the route answers 404: a refusal of kind not found, or the client's own "answered 404".
     private static bool IsNotServed(Error error) =>
-        error.Kind == ErrorKind.NotFound || (string.Equals(error.Code, SindriUiErrors.BadStatus.Code, StringComparison.Ordinal) && error.Message.Contains("404", StringComparison.Ordinal));
+        error.Kind == ErrorKind.NotFound || (string.Equals(error.Code, SindriUiErrors.BadStatus.Code, StringComparison.Ordinal) && error.Message.EndsWith(" answered 404", StringComparison.Ordinal));
 
     /// <summary>Opens a concept: the three bands, scoped to it.</summary>
     /// <param name="id">The concept's id ("other" for the unassigned nodes).</param>

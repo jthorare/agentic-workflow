@@ -3,9 +3,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Aw.Kernel;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Sandbox.Plan;
-using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Infrastructure.Sandbox;
 
 namespace Aw.Sindri.Infrastructure.Launch;
@@ -40,19 +40,19 @@ internal sealed partial class LaunchFileStore(LauncherOptions options, StaleSwee
         }
     }
 
-    public DateTimeOffset? TurnEndedAt(LaunchId launch) => MarkAt(Core.Launch.LaunchFiles.TurnEndedName(launch));
+    public DateTimeOffset? TurnEndedAt(LaunchId launch) => MarkAt(LaunchFiles.TurnEndedName(launch));
 
-    public DateTimeOffset? TurnFailedAt(LaunchId launch) => MarkAt(Core.Launch.LaunchFiles.TurnFailedName(launch));
+    public DateTimeOffset? TurnFailedAt(LaunchId launch) => MarkAt(LaunchFiles.TurnFailedName(launch));
 
-    public DateTimeOffset? PromptedAt(LaunchId launch) => MarkAt(Core.Launch.LaunchFiles.PromptedName(launch));
+    public DateTimeOffset? PromptedAt(LaunchId launch) => MarkAt(LaunchFiles.PromptedName(launch));
 
-    public bool ToolRunning(LaunchId launch) => MarkAt(Core.Launch.LaunchFiles.ToolRunningName(launch)) is not null;
+    public bool ToolRunning(LaunchId launch) => MarkAt(LaunchFiles.ToolRunningName(launch)) is not null;
 
-    public DateTimeOffset? NudgedAt(LaunchId launch) => MarkAt(Core.Launch.LaunchFiles.NudgedName(launch));
+    public DateTimeOffset? NudgedAt(LaunchId launch) => MarkAt(LaunchFiles.NudgedName(launch));
 
     public void MarkNudged(LaunchId launch, DateTimeOffset at)
     {
-        var path = Path.Combine(options.LaunchesDirectory, Core.Launch.LaunchFiles.NudgedName(launch));
+        var path = Path.Combine(options.LaunchesDirectory, LaunchFiles.NudgedName(launch));
         try
         {
             OwnerOnly.EnsureDirectory(options.LaunchesDirectory);
@@ -223,13 +223,13 @@ internal sealed partial class LaunchFileStore(LauncherOptions options, StaleSwee
 
     internal static void DeleteFlat(LauncherOptions options, LaunchId launch)
     {
-        _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, Core.Launch.LaunchFiles.CaptureName(launch)));
-        _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, Core.Launch.LaunchFiles.SessionIdName(launch)));
-        _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, Core.Launch.LaunchFiles.TurnEndedName(launch)));
-        _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, Core.Launch.LaunchFiles.TurnFailedName(launch)));
-        _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, Core.Launch.LaunchFiles.ToolRunningName(launch)));
-        _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, Core.Launch.LaunchFiles.NudgedName(launch)));
-        _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, Core.Launch.LaunchFiles.PromptedName(launch)));
+        _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, LaunchFiles.CaptureName(launch)));
+        _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, LaunchFiles.SessionIdName(launch)));
+        _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, LaunchFiles.TurnEndedName(launch)));
+        _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, LaunchFiles.TurnFailedName(launch)));
+        _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, LaunchFiles.ToolRunningName(launch)));
+        _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, LaunchFiles.NudgedName(launch)));
+        _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, LaunchFiles.PromptedName(launch)));
     }
 
     /// <summary>Deletes <paramref name="file"/> when its <paramref name="directory"/> exists; whatever is gone is fine.</summary>

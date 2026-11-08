@@ -1,9 +1,11 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Api.Linear;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Queue;
 using Aw.Sindri.Ui.ViewModels.Shell;
+using Aw.Sindri.Ui.ViewModels.Todo;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Linear;
@@ -99,6 +101,9 @@ public sealed class ShellLinearTests
         Assert.Equal((false, "ENG-58"), (shell.NewIssue.IsOpen, shell.Linear.SelectedKey));
     }, Token);
 
+    // The Work page's own reads: Home's From elsewhere line reads the assigned count on every event (todo spec §3), with its own limit.
+    private IEnumerable<LinearIssueQuery> WorkQueries() => _server.LinearQueries.Where(q => q.Limit != FromElsewhereViewModel.LinearLimit);
+
     // The "mine" golden with one more row, as the list reads after an issue was created.
     private static RouteAnswer WithMineRow(string key)
     {
@@ -116,12 +121,12 @@ public sealed class ShellLinearTests
         var shell = await Shell();
         shell.Linear.Choose(linear: true);
         await Task.Delay(50, Token);
-        Assert.Empty(_server.LinearQueries);
+        Assert.Empty(WorkQueries());
 
         shell.GoTo(PageId.Work);
         await Until(() => !shell.Linear.IsLoading);
 
-        Assert.Equal(["mine", "teams"], _server.LinearQueries.Select(q => q.Group).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["mine", "teams"], WorkQueries().Select(q => q.Group).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }, Token);
 
     [Fact]
