@@ -126,13 +126,7 @@ cat > "$STUB" <<'EOF'
 echo "$*" >> "$STUB_LOG"
 case "$*" in
   "profile validate --json")
-    ok=false; [ "$(cat "$STUB_LOG.approved" 2>/dev/null)" = "$(cksum < "$AW_SINDRI_HOME/profile/profile.yaml")" ] && ok=true
-    echo "{\"valid\":true,\"hash\":\"abcdef0123456789\",\"approved\":$ok}" ;;
-  "profile approve abcdef0123456789")
-    IFS= read -r line; echo "typed=$line" >> "$STUB_LOG"; echo "approval text from the CLI"
-    echo "approve-env prover=${AW_SINDRI_PROVER:-} tty=$([ -t 0 ] && echo 1 || echo 0)" >> "$STUB_LOG.env"
-    [ -n "${STUB_FAIL_APPROVE:-}" ] && { echo "approve refused" >&2; exit 1; }
-    cksum < "$AW_SINDRI_HOME/profile/profile.yaml" > "$STUB_LOG.approved" ;;
+    echo "{\"valid\":true,\"hash\":\"abcdef0123456789\"}" ;;
   "--headless") echo "headless proc=${AW_SESSIONS_PROC_ROOT:-} claude=${AW_SESSIONS_CLAUDE_DIR:-} fleet=${AW_FLEET_DIR:-} launcher=${AW_LAUNCHER_CONFIG:-}" >> "$STUB_LOG.env"; echo "judge=${AW_SINDRI_JUDGE:-}" >> "$STUB_LOG.judge" ;;
   "context map status --json") [ -z "${STUB_NO_MAP:-}" ] || exit 1; echo '{"version":{"number":1}}' ;;
   "context map build") echo "build-env prover=${AW_SINDRI_PROVER:-} tty=$([ -t 0 ] && echo 1 || echo 0)" >> "$STUB_LOG.env" ;;
@@ -152,8 +146,8 @@ U="$TMPDIR/up"
 mkdir -p "$U"
 AW_SINDRI_HOME="$U" SINDRI="$STUB" bash "$FIXTURE" up >/dev/null 2>&1; check "up exits 0" "$?" "0"
 contains "up writes a profile with a heartbeat" "$(cat "$U/profile/profile.yaml")" "heartbeat: { every: 5s }"
-check "up validates, approves by typing 'approve profile' and the hash's first six characters (K7a), then starts headless" "$(tr '\n' ';' < "$STUB_LOG")" \
-  "profile validate --json;profile approve abcdef0123456789;typed=approve profile abcdef;--headless;"
+check "up validates the profile (no approval: edits apply on save), then starts headless" "$(tr '\n' ';' < "$STUB_LOG")" \
+  "profile validate --json;--headless;"
 AW_SINDRI_HOME="$U" bash "$FIXTURE" drift >/dev/null 2>&1; check "drift exits 0" "$?" "0"
 contains "drift changes the cadence" "$(cat "$U/profile/profile.yaml")" "every: 7s"
 AW_SINDRI_HOME="$U" bash "$FIXTURE" drift >/dev/null 2>&1
@@ -216,11 +210,11 @@ AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" decide DEC-1 accept >/dev/null 
 : > "$STUB_LOG"
 AW_SINDRI_HOME="$U" SINDRI="$STUB" bash "$FIXTURE" fail >/dev/null 2>&1; check "fail exits 0" "$?" "0"
 contains "fail_adds_a_service_the_build_cannot_run" "$(cat "$U/profile/profile.yaml")" "broken: { every: 5s }"
-contains "fail approves the changed profile" "$(tr '\n' ';' < "$STUB_LOG")" "profile approve abcdef0123456789;typed=approve profile abcdef;"
+check "fail validates the changed profile and approves nothing" "$(tr '\n' ';' < "$STUB_LOG")" "profile validate --json;"
 : > "$STUB_LOG"
 AW_SINDRI_HOME="$U" SINDRI="$STUB" bash "$FIXTURE" unfail >/dev/null 2>&1; check "unfail exits 0" "$?" "0"
 absent "unfail_removes_it" "$(cat "$U/profile/profile.yaml")" "broken"
-contains "unfail approves the profile again" "$(tr '\n' ';' < "$STUB_LOG")" "typed=approve profile abcdef;"
+check "unfail validates the profile and approves nothing" "$(tr '\n' ';' < "$STUB_LOG")" "profile validate --json;"
 AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" fail >/dev/null 2>&1; check "every_verb_refuses_an_unguarded_home: fail" "$?" "2"
 AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" unfail >/dev/null 2>&1; check "every_verb_refuses_an_unguarded_home: unfail" "$?" "2"
 
@@ -335,19 +329,17 @@ check "the repo's sha is the same on every run (fixed author and date)" "$(git -
 contains "the repo is one of the profile's repos" "$(cat "$C/profile/profile.yaml")" "name: aw-split-panes, path: $R"
 contains "the profile keeps its other keys" "$(cat "$C/profile/profile.yaml")" "heartbeat: { every: 5s }"
 calls="$(tr '\n' ';' < "$STUB_LOG")"
-contains "the changed profile is approved by typing the hash's first six characters" "$calls" "profile approve abcdef0123456789;typed=approve profile abcdef;"
+absent "the changed profile is not approved (edits apply on save)" "$calls" "profile approve"
 want="import map $(sha256sum "$ROOT/tests/Aw.Context.Testing/Fixtures/map-tabs.json" | cut -c1-6)"
 contains "the tabs map is imported by typing 'import map' and the file's hash6, under the human pty" "$calls" "context map import $C/ui-fixture-context/tabs-map.json;typed=$want;"
 check "the imported file is the tabs map" "$(cmp "$C/ui-fixture-context/tabs-map.json" "$ROOT/tests/Aw.Context.Testing/Fixtures/map-tabs.json" && echo same)" "same"
 envs="$(cat "$STUB_LOG.env")"
-contains "the approve runs as the owner under a pty (human mode, not a session)" "$envs" "approve-env prover=1 tty=1"
 contains "the import runs as the owner under a pty (human mode, not a session)" "$envs" "import-env prover=1 tty=1"
-check "context up's stdout is exactly the repo name even when approve prints text" "$out" "aw-split-panes"
+check "context up's stdout is exactly the repo name" "$out" "aw-split-panes"
 : > "$STUB_LOG"
 AW_SINDRI_HOME="$C" SINDRI="$STUB" bash "$FIXTURE" context up >/dev/null 2>&1; check "a second context up exits 0" "$?" "0"
 check "a second context up adds the repo to the profile once" "$(grep -c 'name: aw-split-panes' "$C/profile/profile.yaml")" "1"
 check "a second context up keeps one commit" "$(git -C "$R" rev-list --count main)" "1"
-absent "a second context up does not approve again" "$(cat "$STUB_LOG")" "profile approve"
 absent "a second context up does not import the map again (the current map is this file's)" "$(cat "$STUB_LOG")" "context map import"
 rm -f "$C/ui-fixture-context-imported"
 out="$(STUB_FAIL_IMPORT=1 AW_SINDRI_HOME="$C" SINDRI="$STUB" bash "$FIXTURE" context up 2>&1)"; check "a refused import exits non-zero" "$([ "$?" -ne 0 ] && echo yes || echo no)" "yes"
@@ -364,12 +356,11 @@ check "context down removes the repo and the map copy" "$([ -e "$C/ui-fixture-co
 absent "context down removes the profile entry" "$(cat "$C/profile/profile.yaml")" "aw-split-panes"
 absent "context down leaves no empty repos: key" "$(cat "$C/profile/profile.yaml")" "repos:"
 contains "context down keeps the rest of the profile" "$(cat "$C/profile/profile.yaml")" "heartbeat: { every: 5s }"
-contains "context down approves the changed profile" "$(cat "$STUB_LOG")" "typed=approve profile abcdef"
+absent "context down approves nothing (edits apply on save)" "$(cat "$STUB_LOG")" "profile approve"
 before="$(cat "$C/profile/profile.yaml")"; : > "$STUB_LOG"
 AW_SINDRI_HOME="$C" SINDRI="$STUB" bash "$FIXTURE" context down >/dev/null 2>&1; check "context down twice exits 0 (idempotent)" "$?" "0"
 check "the second context down changes nothing" "$(cat "$C/profile/profile.yaml")" "$before"
-absent "the second context down approves nothing" "$(cat "$STUB_LOG")" "profile approve"
-# --- review run 1: re-import, approval retry, AW_SINDRI_PROFILE ---
+# --- review run 1: re-import, AW_SINDRI_PROFILE ---
 : > "$STUB_LOG"
 # The marker names this very file, so only the status check can send it back to the import.
 sha256sum "$ROOT/tests/Aw.Context.Testing/Fixtures/map-tabs.json" | cut -d' ' -f1 > "$C/ui-fixture-context-imported"
@@ -379,24 +370,6 @@ rm -f "$C/ui-fixture-context-imported"
 : > "$STUB_LOG"
 AW_SINDRI_HOME="$C" SINDRI="$STUB" bash "$FIXTURE" context up >/dev/null 2>&1
 contains "a changed map file is imported again" "$(cat "$STUB_LOG")" "context map import"
-
-# A failed approve is retried by the next up, which approves because the profile says it isn't approved.
-D="$TMPDIR/ctx2"; mkdir -p "$D"
-AW_SINDRI_HOME="$D" SINDRI="$STUB" bash "$FIXTURE" up >/dev/null 2>&1
-rm -f "$STUB_LOG.approved"; : > "$STUB_LOG"
-STUB_FAIL_APPROVE=1 AW_SINDRI_HOME="$D" SINDRI="$STUB" bash "$FIXTURE" context up >/dev/null 2>&1
-check "a refused approve fails context up" "$([ "$?" -ne 0 ] && echo yes || echo no)" "yes"
-contains "the profile already lists the repo" "$(cat "$D/profile/profile.yaml")" "name: aw-split-panes"
-absent "no import ran against the unapproved profile" "$(cat "$STUB_LOG")" "context map import"
-: > "$STUB_LOG"
-AW_SINDRI_HOME="$D" SINDRI="$STUB" bash "$FIXTURE" context up >/dev/null 2>&1; check "the next context up exits 0" "$?" "0"
-contains "the next context up approves although the entry is already there" "$(cat "$STUB_LOG")" "profile approve"
-contains "and then imports" "$(cat "$STUB_LOG")" "context map import"
-# down: a failed approve is warned about and the next down tries again
-STUB_FAIL_APPROVE=1 AW_SINDRI_HOME="$D" SINDRI="$STUB" bash "$FIXTURE" context down >/dev/null 2>&1
-: > "$STUB_LOG"
-AW_SINDRI_HOME="$D" SINDRI="$STUB" bash "$FIXTURE" context down >/dev/null 2>&1; check "the next context down exits 0" "$?" "0"
-contains "the next context down approves the profile it left unapproved" "$(cat "$STUB_LOG")" "profile approve"
 
 # AW_SINDRI_PROFILE outside the home: the real file is untouched, the home's profile is used
 G="$TMPDIR/ctx3"; mkdir -p "$G" "$WORK/realprofile"
@@ -690,7 +663,7 @@ check "model-picks-run exits 1 when the picks never show in the ledger" "$rc" "1
 contains "model-picks-run names what it waited for" "$out" "no model.picked"
 contains "model-picks-run turns the pick on in the profile (quoted, so it stays a word)" "$(cat "$P/profile/profile.yaml")" 'pick: "on"'
 contains "model-picks-run lists a priced cheap model and a stronger one" "$(cat "$P/profile/profile.yaml")" "list: [claude-haiku-4-5, claude-sonnet-4-5]"
-contains "model-picks-run approves the profile as the owner (the Jev notice is part of that approval)" "$(cat "$STUB_LOG")" "profile approve abcdef0123456789"
+absent "model-picks-run runs no profile approve (edits apply on save)" "$(cat "$STUB_LOG")" "profile approve"
 contains "model-picks-run approves its own recipe" "$(cat "$STUB_LOG")" "recipe approve"
 contains "model-picks-run starts that recipe" "$(cat "$STUB_LOG")" "workflow start workflow.dev-agent-pick"
 contains "model-picks-run points the launcher at its own claude stub" "$(jq -r '.agents["claude-code"].bin' "$P/ui-fixture-sessions/launcher.json")" "$PD/stub-bin-pick/claude"
@@ -749,7 +722,7 @@ check "Checkout rewrite has 5 open issues" "$(sqlq "$PJDB" "SELECT COUNT(*) FROM
 check "the viewer's identity row is stored" "$(sqlq "$PJDB" "SELECT user_ref, name FROM source_identity WHERE source = 'linear'")" "linear:user/fx-viewer|Sam Rivera"
 check "both Linear sources are past their first read" "$(sqlq "$PJDB" "SELECT GROUP_CONCAT(source || ':' || phase) FROM (SELECT source, phase FROM source_cursor WHERE repo = 'records' ORDER BY source)")" "linear:incremental,linear-projects:incremental"
 contains "projects puts the Linear team in the live profile" "$(cat "$PJ/profile/profile.yaml")" "linear: { teams: [SPL] }"
-contains "projects approves the changed profile" "$(cat "$STUB_LOG")" "profile approve"
+absent "projects runs no profile approve (edits apply on save)" "$(cat "$STUB_LOG")" "profile approve"
 contains "projects attaches the paused project as the owner" "$(cat "$STUB_LOG")" "project add --linear linear:project/fx-billing"
 contains "projects adds the hand-made project" "$(cat "$STUB_LOG")" "project add --name Hiring loop --state in-progress --notes Two onsite slots left this month --target "
 contains "projects hides a project the viewer leads" "$(cat "$STUB_LOG")" "project hide linear:project/fx-search"
@@ -759,7 +732,6 @@ proj >/dev/null 2>&1; check "a second projects exits 0" "$?" "0"
 check "a second projects adds no row" "$(sqlq "$PJDB" "SELECT COUNT(*) FROM source_record") $(sqlq "$PJDB" "SELECT COUNT(*) FROM record_link")" "30 30"
 check "a second projects adds the team to the profile once" "$(grep -c 'teams: \[SPL\]' "$PJ/profile/profile.yaml")" "1"
 absent "a second projects attaches, adds and hides nothing" "$(cat "$STUB_LOG")" "project "
-absent "a second projects approves nothing" "$(cat "$STUB_LOG")" "profile approve"
 # A run that stopped half way resumes: with only the attach marker left, only the add and the hide run.
 rm -f "$PJ/ui-fixture-projects-owner-add" "$PJ/ui-fixture-projects-owner-hide"
 : > "$STUB_LOG"
