@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Aw.Sindri.Ui.ViewModels.Toast;
 using Aw.Sindri.Ui.ViewModels.Todo;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
@@ -20,5 +21,11 @@ internal sealed partial class ShellViewModel
     {
         Todo = new TodoPanelViewModel(_api, _clock);
         Health.Follow(Todo.Refresh);
+        Todo.Acted += (_, acted) => ShowToast(new ToastMessage(acted.Text, acted.Undo));
     }
+
+    // The keys Needs you acts on (J, K, A, X, Y, Enter) belong to the panel alone while focus is inside it (D6): the shell spends them, so X there can never reject a decision.
+    private static readonly HashSet<string> _panelKeys = new(["J", "K", "A", "X", "Y", "Enter"], StringComparer.Ordinal);
+
+    private bool TodoOwns(string key, bool inSheet) => Todo.HasFocus && !inSheet && IsHomeShown && _panelKeys.Contains(key);
 }

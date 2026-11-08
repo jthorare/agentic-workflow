@@ -105,6 +105,7 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
     internal async Task Refresh(Uri url, CancellationToken cancellationToken)
     {
         var read = ++_reads;
+        _url = url;
         var list = await _api.Todos(url, "all", cancellationToken).ConfigureAwait(true);
         if (read != _reads)
         {
@@ -118,7 +119,7 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
             return;
         }
 
-        (Error, _todos) = (string.Empty, list.Value.Todos);
+        (Error, _todos) = (string.Empty, Overlaid(list.Value.Todos));
         Show();
         ScheduleMidnight();
     }
