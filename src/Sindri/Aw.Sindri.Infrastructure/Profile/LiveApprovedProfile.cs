@@ -11,27 +11,36 @@ namespace Aw.Sindri.Infrastructure.Profile;
 /// </summary>
 /// <param name="source">The live profile.</param>
 /// <param name="path">The profile file <paramref name="source"/> reads, for the change check; null turns the cache off.</param>
-internal sealed class LiveApprovedProfile(IProfileSource source, string? path = null) : IApprovedProfile
+internal sealed class LiveApprovedProfile(IProfileSource source, string? path = null) : IApprovedProfile, IProfileCache
 {
     private Cached? _cached;
+    private int _generation;
 
     internal IProfileSource Source { get; } = source;
 
     public async ValueTask<Result<LoadedProfile?>> Latest(CancellationToken cancellationToken)
     {
+        var generation = Volatile.Read(ref _generation);
         var stamp = Stamp();
-        if (stamp is not null && Volatile.Read(ref _cached) is { } hit && hit.Stamp == stamp)
+        if (stamp is not null && Volatile.Read(ref _cached) is { } hit && hit.Stamp == stamp && hit.Generation == generation)
         {
             return hit.Answer;
         }
 
         var answer = Convert(await Source.Load(cancellationToken).ConfigureAwait(false));
-        if (stamp is not null && Stamp() == stamp)   // the file did not move while it was read
+        if (stamp is not null && Stamp() == stamp && Volatile.Read(ref _generation) == generation)   // nothing wrote the file while it was read
         {
-            Volatile.Write(ref _cached, new Cached(stamp, answer));
+            Volatile.Write(ref _cached, new Cached(stamp, generation, answer));
         }
 
         return answer;
+    }
+
+    /// <inheritdoc/>
+    public void Invalidate()
+    {
+        _ = Interlocked.Increment(ref _generation);
+        Volatile.Write(ref _cached, null);
     }
 
     private static Result<LoadedProfile?> Convert(Result<LoadedProfile> loaded)
@@ -68,5 +77,5 @@ internal sealed class LiveApprovedProfile(IProfileSource source, string? path = 
 
     private sealed record FileStamp(DateTime LastWriteUtc, long Length);
 
-    private sealed record Cached(FileStamp Stamp, Result<LoadedProfile?> Answer);
+    private sealed record Cached(FileStamp Stamp, int Generation, Result<LoadedProfile?> Answer);
 }

@@ -26339,3 +26339,5 @@ Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.LastTick(Aw.Sindri.Core.Graph.Ids.Wo
 static Aw.Sindri.Core.Graph.Runs.WorkflowRun.TriggerProblem(string! trigger) -> string?
 Aw.Sindri.Core.Profile.IOldApprovalsCleanup
 Aw.Sindri.Core.Profile.IOldApprovalsCleanup.Run(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Profile.IProfileCache
+Aw.Sindri.Core.Profile.IProfileCache.Invalidate() -> void
