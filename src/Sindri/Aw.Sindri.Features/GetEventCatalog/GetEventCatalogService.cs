@@ -1,6 +1,6 @@
 using Aw.Kernel;
-using Aw.Sindri.Core.Events;
 using Aw.Kernel.Services;
+using Aw.Sindri.Core.Events;
 
 namespace Aw.Sindri.Features.GetEventCatalog;
 

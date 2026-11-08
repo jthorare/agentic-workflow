@@ -1,6 +1,6 @@
 using System.Globalization;
-using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Workflow.Blocks;
 
 namespace Aw.Sindri.Features.GetProfile;
 

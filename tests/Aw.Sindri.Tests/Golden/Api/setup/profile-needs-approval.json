@@ -29,17 +29,6 @@
       "items": []
     },
     {
-      "id": "recipes",
-      "title": "Approve the workflows",
-      "state": "todo",
-      "why": "After the profile is approved.",
-      "detail": "26 workflows registered.",
-      "error": null,
-      "action": null,
-      "progress": null,
-      "items": []
-    },
-    {
       "id": "mcp",
       "title": "Connect your agents",
       "state": "todo",

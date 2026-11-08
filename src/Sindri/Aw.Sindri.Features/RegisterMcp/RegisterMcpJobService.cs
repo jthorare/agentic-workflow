@@ -1,8 +1,8 @@
 using System.Text.Json;
-using Aw.Sindri.Core.Events;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Mcp;
 using Aw.Sindri.Core.Profile;

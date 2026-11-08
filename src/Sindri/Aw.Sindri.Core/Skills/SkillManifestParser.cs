@@ -1,6 +1,6 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Ids;
 
 namespace Aw.Sindri.Core.Skills;
 

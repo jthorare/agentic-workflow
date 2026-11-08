@@ -65,21 +65,6 @@ public sealed class SetupStepsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Recipes_wait_for_an_approved_profile_then_count_what_waits()
-    {
-        var none = SetupSteps.Recipes(new RecipesFact(0, 0), profileApproved: true);
-        var early = SetupSteps.Recipes(new RecipesFact(26, 0), profileApproved: false);
-        var waiting = SetupSteps.Recipes(new RecipesFact(26, 20), profileApproved: true);
-        var done = SetupSteps.Recipes(new RecipesFact(26, 26), profileApproved: true);
-
-        Assert.Equal((SetupState.Skipped, null), (none.State, none.Action));
-        Assert.Equal((SetupState.Todo, null, null, "After the profile is approved.", "26 workflows registered."), (early.State, early.Action, early.Progress, early.Why, early.Detail));
-        Assert.Equal((SetupState.NeedsYou, SetupActions.ApproveAllRecipes, new SetupProgress(20, 26, "workflows"), "6 workflows wait for your approval."), (waiting.State, waiting.Action, waiting.Progress, waiting.Why));
-        Assert.Equal((SetupState.Done, null, new SetupProgress(26, 26, "workflows")), (done.State, done.Action, done.Progress));
-        Assert.Equal("1 workflow waits for your approval.", SetupSteps.Recipes(new RecipesFact(3, 2), profileApproved: true).Why);
-    }
-
-    [Fact, Trait("Lane", "unit")]
     public void Mcp_needs_an_installed_provider_first_then_waits_for_a_repo_and_is_done_when_every_repo_is_registered()
     {
         var noProvider = SetupSteps.Mcp(new McpFact(2, 2, Providers: string.Empty));
@@ -194,7 +179,7 @@ public sealed class SetupStepsTests
     {
         var all = new[]
         {
-            SetupSteps.Repo(new RepoFact(0)), SetupSteps.Profile(new ProfileFact(ProfilePresence.Missing), new RepoFact(0)), SetupSteps.Recipes(new RecipesFact(0, 0), profileApproved: false),
+            SetupSteps.Repo(new RepoFact(0)), SetupSteps.Profile(new ProfileFact(ProfilePresence.Missing), new RepoFact(0)),
             SetupSteps.Mcp(new McpFact(0, 0, "Claude Code")), SetupSteps.Map(new MapFact(MapPhase.Waiting)), SetupSteps.Sources(new SourcesFact(0)),
         };
 

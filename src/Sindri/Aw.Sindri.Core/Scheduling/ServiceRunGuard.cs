@@ -1,5 +1,5 @@
-using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Ids;
 
 namespace Aw.Sindri.Core.Scheduling;
 

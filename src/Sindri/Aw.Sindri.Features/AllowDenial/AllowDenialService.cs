@@ -1,7 +1,7 @@
 using Aw.Kernel;
-using Aw.Sindri.Core.Events;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox.Denials;
 using Aw.Sindri.Core.Setup;

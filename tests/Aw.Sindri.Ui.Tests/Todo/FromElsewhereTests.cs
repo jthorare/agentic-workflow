@@ -253,4 +253,16 @@ public sealed class FromElsewhereTests
         Assert.Contains(raised, r => string.Equals(r, nameof(FromElsewhereViewModel.Parts), StringComparison.Ordinal));
         Assert.Contains(raised, r => string.Equals(r, nameof(FromElsewhereViewModel.Text), StringComparison.Ordinal));
     }
+
+    [Fact]
+    public async Task A_bare_404_from_an_older_sindri_draws_no_linear_part_and_is_not_failed_or_loading()
+    {
+        _server.LinearIssuesAnswer = new RouteAnswer(HttpStatusCode.NotFound, string.Empty);
+
+        var line = await Ready();
+
+        Assert.Equal("2 PRs waiting on your review · 3 need you, below", line.Text);
+        Assert.DoesNotContain(line.Parts, p => p.Part == ElsewherePart.Linear);
+        Assert.False(line.IsLoading);
+    }
 }

@@ -21,7 +21,6 @@ internal static class ApiScenarios
         ("profile-approve", "preview"), ("profile-approve", "approved"), ("profile-approve", "already-approved"),
         ("profile-approve", "refused-origin"),
         ("profile-approve", "stale-hash"), ("profile-approve", "bad-body"),
-        ("workflow-recipe", "not-found"),
     ];
 
     /// <summary>The rows by route group, each run by its own test class (the per-group ApiGoldenTests classes) so xUnit runs the groups in parallel; every row starts a host of its own, so no group shares state.</summary>
@@ -160,7 +159,6 @@ internal static class ApiScenarios
             ("commands", "catalog") => await Ask(host, Get("/sindri/commands", Human(token))),
             ("events", "process-started") => await FirstEventData(host, ct),
             ("events-catalog", "catalog") => await Ask(host, Get("/sindri/events/catalog", Human(token))),
-            ("workflow-recipe", "not-found") => await Ask(host, Get(UnknownRecipe, Human(token))),
             ("stop", "accepted") => await Ask(host, Post("/sindri/stop", json: null, Human(token))),
             ("stop", "refused-origin") => await Ask(host, Post("/sindri/stop", json: null, [.. Human(token), Origin])),
             _ => await ApproveScenario(host, scenario, ct),
@@ -210,7 +208,6 @@ internal static class ApiScenarios
 
 
     // An unknown recipe answers the engine's SND-RECIPE-002 (WorkflowErrors.RecipeNotFound; API spec §3.8), from GET /workflow/recipes/{id} (API P11).
-    private static string UnknownRecipe => "/sindri/workflow/recipes/workflow.unknown";
 
     private static (string Name, string Value) Origin => ("Origin", "http://localhost:3000");
 

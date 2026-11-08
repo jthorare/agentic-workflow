@@ -1,5 +1,4 @@
 using System.Globalization;
-using Aw.Sindri.Core.Events;
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
@@ -8,6 +7,7 @@ using Aw.Context.Core.Sources;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;

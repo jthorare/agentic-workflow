@@ -48,6 +48,7 @@ public static class EventCatalog
         new(EventTypes.WorkflowExpired, Public: true, typeof(WorkflowEventPayload), "workflow:<workflow id>:<run id>:<activity id>[:<content hash>]"),
         new(EventTypes.WorkflowHeavy, Public: true, typeof(WorkflowEventPayload), "workflow:<workflow id>:<run id>:<activity id>[:<content hash>]"),
         new(EventTypes.WorkflowInjection, Public: true, typeof(WorkflowEventPayload), "workflow:<workflow id>:<run id>:<activity id>[:<content hash>]"),
+        new(EventTypes.WorkflowRetired, Public: true, typeof(WorkflowEventPayload), "workflow:<workflow id>:retired"),
         new(EventTypes.ServiceRan, Public: true, typeof(ServiceRan), "service.ran:<name>:<epoch>:<slot> | service.ran:<name>:manual:<jobId>") { Invalidates = [ApiViews.Status, ApiViews.Services, ApiViews.NeedsYou] },
         new(EventTypes.JobStarted, Public: true, typeof(JobStarted), "job.started:<jobId>") { Invalidates = [ApiViews.Job, ApiViews.Jobs, ApiViews.Services, ApiViews.ContextLenses, ApiViews.ContextHistory] },
         new(EventTypes.JobProgress, Public: true, typeof(JobProgress), "job.progress:<jobId>:<n>") { Invalidates = [ApiViews.Job, ApiViews.Jobs] },

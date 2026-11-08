@@ -1,6 +1,6 @@
 using System.Globalization;
-using Aw.Sindri.Core.Events;
 using System.Text;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Features.GetJob;
 

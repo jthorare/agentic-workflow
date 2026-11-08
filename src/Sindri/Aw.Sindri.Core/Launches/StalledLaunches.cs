@@ -1,5 +1,5 @@
-using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Core.Launches;

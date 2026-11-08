@@ -1,7 +1,7 @@
 using System.Globalization;
-using Aw.Sindri.Core.Events;
 using System.Text.RegularExpressions;
 using Aw.Kernel;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Projects.Vocabulary;
 

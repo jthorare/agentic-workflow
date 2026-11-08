@@ -1,5 +1,6 @@
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Linear;
+using Aw.Sindri.Ui.ViewModels.Linear;
 
 namespace Aw.Sindri.Ui.ViewModels.Todo;
 
@@ -27,6 +28,7 @@ internal sealed class FromElsewhereViewModel(ISindriApi api) : ObservableObject
         Ready,
         Failed,
         NotConnected,
+        NotShown,   // an older Sindri has no Linear route: the line says nothing about Linear
     }
 
     /// <summary>The line's words: the parts joined by " · ", or the loading or all-zero placeholder.</summary>
@@ -86,6 +88,7 @@ internal sealed class FromElsewhereViewModel(ISindriApi api) : ObservableObject
 
         (_linear, _assigned) = list switch
         {
+            { IsError: true } when OlderSindri.IsNotServed(list.Error) => (LinearState.NotShown, 0),
             { IsError: true } => (LinearState.Failed, 0),
             { Value.Connected: false } => (LinearState.NotConnected, 0),
             _ => (LinearState.Ready, list.Value.Total ?? list.Value.Rows.Count),
@@ -157,7 +160,7 @@ internal sealed class FromElsewhereViewModel(ISindriApi api) : ObservableObject
         LinearState.Failed => Part(ElsewherePart.Linear, Labels.ElsewhereLinearFailed, "Linear", retryName: "Linear"),
         LinearState.NotConnected => Part(ElsewherePart.Linear, Labels.ElsewhereLinearNotConnected, "Settings, Connections"),
         LinearState.Ready when _assigned > 0 => Part(ElsewherePart.Linear, Labels.ElsewhereLinear(_assigned), "Linear"),
-        LinearState.Loading or LinearState.Ready => null,
+        LinearState.Loading or LinearState.Ready or LinearState.NotShown => null,
         _ => throw new InvalidOperationException(_linear.ToString()),
     };
 

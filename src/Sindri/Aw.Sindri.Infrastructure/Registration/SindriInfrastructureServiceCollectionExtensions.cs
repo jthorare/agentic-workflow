@@ -1,11 +1,11 @@
 using System.Text.Json;
-using Aw.Sindri.Core.Workflow.Engine.Runtime;
-using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Kernel.Ids;
 using Aw.Redaction;
 using Aw.Sindri.Core.Auth;
 using Aw.Sindri.Core.Challenges;
 using Aw.Sindri.Core.Checks;
+using Aw.Sindri.Core.Connections;
+using Aw.Sindri.Core.Connections.OAuth;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.EngineReads;
@@ -29,11 +29,14 @@ using Aw.Sindri.Core.Secrets;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Views;
+using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine.Effects;
+using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Worktrees;
 using Aw.Sindri.Infrastructure.Auth;
 using Aw.Sindri.Infrastructure.Challenges;
 using Aw.Sindri.Infrastructure.Checks;
+using Aw.Sindri.Infrastructure.Connections;
 using Aw.Sindri.Infrastructure.Control;
 using Aw.Sindri.Infrastructure.Deploy;
 using Aw.Sindri.Infrastructure.Evidence;
@@ -120,7 +123,8 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IWorktrees, GitWorktrees>()               // per-run worktrees (engine spec §6.5)
             .AddSingleton<IWorkflowStore, SqliteWorkflowStore>()    // workflow graphs and their revisions (#2258, PR 5): workflow and workflow_revision in ledger.db
             .AddSingleton<IWorkflowRunStore, SqliteWorkflowRunStore>()    // workflow runs and node runs (#2258, PR 6): workflow_run and workflow_node_run in ledger.db
-            .AddSingleton<IGraphBlockCatalog, EmptyGraphBlockCatalog>(); // no graph blocks until PR 6 and 9
+            .AddSingleton<IGraphBlockCatalog, EmptyGraphBlockCatalog>() // no graph blocks until PR 6 and 9
+            .AddConnections();
 
     private static IServiceCollection AddSindriAdapters(this IServiceCollection services, Func<string, string?> environment)
     {
@@ -190,6 +194,18 @@ public static class SindriInfrastructureServiceCollectionExtensions
         => services
             .AddSingleton<IProfileKeyWriter, YamlProfileKeyWriter>()
             .AddSingleton<IProfileTextParser>(sp => new YamlProfileTextParser(sp.GetRequiredService<JsonSerializerOptions>(), () => HeavyCap.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory)));
+
+    // Connections (PR 10a): the store, the keychain secrets, the presets, the loopback sign-in and the token client.
+    private static IServiceCollection AddConnections(this IServiceCollection services)
+        => services
+            .AddSingleton<IConnectionStore, SqliteConnectionStore>()
+            .AddSingleton<IConnectionSecrets>(static sp => new KeychainConnectionSecrets(sp.GetRequiredService<ISecretWriter>(), sp.GetRequiredService<ISecretPointers>(), new ProcessToolRunner()))
+            .AddSingleton<IConnectionPresetCatalog, EmbeddedConnectionPresets>()
+            .AddSingleton<IEnvironmentReader, ProcessEnvironmentReader>()
+            .AddSingleton<IConnectionProbe>(static _ => new HttpConnectionProbe(new HttpClient()))
+            .AddSingleton<IOAuthClient>(static sp => new HttpOAuthClient(new HttpClient(), sp.GetRequiredService<TimeProvider>()))
+            .AddSingleton<IBrowserOpener>(static _ => new BrowserOpener())
+            .AddSingleton<ISignInSession>(static sp => new LoopbackSignIn(sp.GetRequiredService<IOAuthClient>(), sp.GetRequiredService<IBrowserOpener>(), TimeSpan.FromMinutes(5), System.Security.Cryptography.RandomNumberGenerator.GetBytes));
 
     private static IServiceCollection AddSecretInfrastructure(this IServiceCollection services)
         => services

@@ -265,16 +265,6 @@ public sealed class SetupFactsTests
         Assert.Equal(ContextErrors.SettingsInvalid.Code, (await rig.Facts.Map(Token)).Error.Code);
     }
 
-    [Fact, Trait("Lane", "unit")]
-    public async Task Recipes_count_none_now_that_the_recipe_engine_is_gone()
-    {
-        await using var rig = new SetupFactsRig();
-
-        var none = (await rig.Facts.Recipes(Token)).Value;
-
-        Assert.Equal((0, 0), (none.Total, none.Approved));
-    }
-
     private const string BothSources = """{"sources":{"github":{"repos":["owner/name"],"token":"env:GH_KEY"},"slack":{"channels":[{"id":"C0001GEN","name":"eng"}],"token":"env:SLACK_KEY"}}}""";
 
     [Fact, Trait("Lane", "unit")]

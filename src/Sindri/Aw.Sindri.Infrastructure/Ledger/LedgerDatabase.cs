@@ -121,8 +121,10 @@ internal sealed class LedgerDatabase : IDisposable
     /// <summary>The first migration with 'workflow_run' and 'workflow_node_run' (issue 2258, PR 6); reads of an older file find no run. The number is renumbered at the final main merge.</summary>
     internal const int WorkflowRunsVersion = 9;
 
-    /// <summary>The migration that dropped the recipe-era tables (issue 2258, PR 3); the number is provisional until the final merge.</summary>
-    internal const int RetireRecipesVersion = 10;
+    /// <summary>The first migration with 'connection' (connections PR 10a); reads of an older file find no connection.</summary>
+    internal const int ConnectionsVersion = 10;
+    /// <summary>The migration that dropped the recipe-era tables (issue 2258, PR 3).</summary>
+    internal const int RetireRecipesVersion = 11;
 
     private static IReadOnlyList<Migration> LoadMigrations()
     {

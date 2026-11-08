@@ -1,0 +1,29 @@
+{
+  "item": "ITM-0000000000000000000000000000000f",
+  "scope": {
+    "anchors": [
+      {
+        "key": "code:src/sync.ts",
+        "mapVersion": "v8"
+      },
+      {
+        "key": "feature:tabs.tab-manager",
+        "mapVersion": "v7"
+      },
+      {
+        "key": "feature:tabs.tab-manager",
+        "mapVersion": "v8"
+      }
+    ],
+    "mapVersion": null,
+    "mapVersions": {
+      "code": "v7",
+      "product": "v7",
+      "related": "v8",
+      "history": "v7"
+    },
+    "mapCommit": null,
+    "packetHash": "sha256:0000000000000000000000000000000000000000000000000000000000000001",
+    "frozenAt": "2026-01-01T00:00:00.0000000Z"
+  }
+}

@@ -44,13 +44,11 @@ internal static class SetupScenarios
         {
             RepoAnswer = InMemorySetupFacts.OneRepo,
             ProfileAnswer = new ProfileFact(ProfilePresence.Unapproved),
-            RecipesAnswer = new RecipesFact(26, 0),
         },
         "profile-preview" => new InMemorySetupFacts
         {
             RepoAnswer = InMemorySetupFacts.OneRepo,
             ProfileAnswer = new ProfileFact(ProfilePresence.Unapproved) { Preview = _previewLines },
-            RecipesAnswer = new RecipesFact(26, 0),
         },
         "running-progress" => Done(map: new MapFact(MapPhase.Building, new SetupProgress(40, 100, "files")) { Items = Lines(SetupState.Running) }),
         "failed" => Done(map: new MapFact(MapPhase.Failed, FailureCode: "SND-CONTEXT-042") { Items = Lines(SetupState.Failed) }),
@@ -59,7 +57,7 @@ internal static class SetupScenarios
         "sources-github-needs-token" => Done(sources: InMemorySetupFacts.NamedSources(("github", false))),
         "sources-all-connected" => Done(sources: InMemorySetupFacts.NamedSources(("github", true), ("slack", true))),
         "all-done" => InMemorySetupFacts.AllDone(),
-        _ => new InMemorySetupFacts { RecipesAnswer = new RecipesFact(26, 0) },
+        _ => new InMemorySetupFacts(),
     };
 
     private static readonly SetupPreviewLine[] _previewLines =
