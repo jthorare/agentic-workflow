@@ -54,6 +54,39 @@ internal sealed class Scenario(GoldenHost host)
         return await Fetch(route, ct);
     }
 
+    /// <summary>
+    /// Seeds the jobs the pins read's 'moved' field comes from, then GET as the app: a refresh of the current map version that moved billing (gained 2, lost 3, one place named Sign in with 2 features and one nameless with 1),
+    /// and, after it, a relink that is <paramref name="relink"/> (billing's records <paramref name="before"/> to <paramref name="after"/> when it succeeded). The stored results are what the read trusts, so the refresh
+    /// names the version before the current one even when the host imported only one.
+    /// </summary>
+    public async Task<string> FetchWithMoved(string route, string relink, int before, int after, CancellationToken ct)
+    {
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        var current = int.Parse(Json(await Fetch(route, ct)).GetProperty("mapVersion").GetString()!.TrimStart('v'), inv);
+        var (version, previous, was, now) = (current.ToString(inv), (current - 1).ToString(inv), before.ToString(inv), after.ToString(inv));
+        var moves = $$"""{"repo":"map-tabs","version":{{version}},"moves":[{"pin":"billing","fromVersion":{{previous}},"toVersion":{{version}},"gained":2,"lost":3,"to":[{"id":"auth","name":"Sign in","features":2},{"id":null,"name":null,"features":1}]}]}""";
+        await SeedJob(1, Features.ContextCalls.ContextMapRefreshService.RefreshKind, "refresh", Json(moves).Clone(), failed: false, ct);
+        Advance();
+        var linked = $$"""{"mapVersion":{{version}},"pins":[{"id":"billing","before":{{was}},"after":{{now}}}]}""";
+        await SeedJob(2, Features.ContextCalls.ContextMapRefreshService.RelinkKind, "relink", relink == "succeeded" ? Json(linked).Clone() : null, failed: relink == "failed", ct, finish: relink != "running");
+        await ViewScenarios.CatchUp(host, ct);
+        return await Fetch(route, ct);
+    }
+
+    private async Task SeedJob(int n, Core.Ids.JobKind kind, string key, JsonElement? result, bool failed, CancellationToken ct, bool finish = true)
+    {
+        var job = Core.Ids.JobId.From($"JOB-{n.ToString("x32", System.Globalization.CultureInfo.InvariantCulture)}");
+        var command = Core.Ids.CommandId.From(new Guid(0xc0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (byte)n));
+        await ViewScenarios.Append(host, Core.Events.EventTypes.JobStarted,
+            new Core.Events.JobStarted(command, job, kind, Core.Ids.JobKey.From(key), Item: null, Repo: null, Service: null), $"job.started:{job.Value}", ct);
+        if (finish)
+        {
+            Advance();
+            await ViewScenarios.Append(host, Core.Events.EventTypes.JobFinished,
+                new Core.Events.JobFinished(command, job, failed ? Core.Jobs.JobOutcome.Failed : Core.Jobs.JobOutcome.Succeeded, failed ? "failed" : "ok", failed ? "SND-JOB-001" : null, result), $"job.finished:{job.Value}", ct);
+        }
+    }
+
     /// <summary>POST a pasted page list to the preview as the app: the answer, a refusal included.</summary>
     public async Task<string> PreviewPages(string text, CancellationToken ct)
     {
