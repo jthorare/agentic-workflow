@@ -35,7 +35,7 @@ internal static partial class Labels
     /// <param name="text">The todo's text.</param>
     /// <param name="reason">Why it failed.</param>
     /// <returns>Couldn't add "call Sam": reason.</returns>
-    internal static string QuickAddFailed(string text, string reason) => throw new NotSupportedException();
+    internal static string QuickAddFailed(string text, string reason) => $"Couldn't add \"{text}\": {reason}";
 
     /// <summary>The line under the field when the text ends in a day.</summary>
     /// <param name="due">The day that will be saved.</param>
