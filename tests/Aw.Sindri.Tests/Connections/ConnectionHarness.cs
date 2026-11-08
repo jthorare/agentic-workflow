@@ -7,6 +7,7 @@ using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features;
 using Aw.Sindri.Features.AddConnection;
+using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.GetConnection;
 using Aw.Sindri.Features.ListConnections;
 using Aw.Sindri.Features.RefreshConnections;
@@ -65,6 +66,9 @@ internal sealed class ConnectionHarness
 
     public FakeConnectionProbe Probe { get; } = new();
 
+    /// <summary>Gets the command gate the test slice's status write waits for.</summary>
+    internal CommandGateLock Gate { get; } = new();
+
     public FakeTimeProvider Clock { get; } = new(KnownInstants.Epoch);
 
     /// <summary>Gets the ledger the connection slices append to (the green wires it in; the secret-leak tests read every event from it).</summary>
@@ -117,9 +121,9 @@ internal sealed class ConnectionHarness
     /// <summary>The test slice over another probe, with the capturing log, so a probe that echoes the credential is seen by the log canary.</summary>
     /// <param name="probe">The probe.</param>
     /// <returns>The service.</returns>
-    public TestConnectionService TestWith(IConnectionProbe probe) => new(Store, Secrets, Presets, probe, Events(), new TypedLog<TestConnectionService>(Logs));
+    public TestConnectionService TestWith(IConnectionProbe probe) => new(Store, Secrets, Presets, probe, new ConnectionStatusWriter(Store, Events(), new CommandGateAccess(Gate, Clock)), new TypedLog<TestConnectionService>(Logs));
 
-    public TestConnectionService Test(IMcpConnectionClient? mcp = null) => new(Store, Secrets, Presets, Probe, Events(), new TypedLog<TestConnectionService>(Logs), mcp);
+    public TestConnectionService Test(IMcpConnectionClient? mcp = null) => new(Store, Secrets, Presets, Probe, new ConnectionStatusWriter(Store, Events(), new CommandGateAccess(Gate, Clock)), new TypedLog<TestConnectionService>(Logs), mcp);
 
     /// <summary>Lends the capturing log to a service that wants an ILogger of its own type.</summary>
     /// <typeparam name="T">The service.</typeparam>

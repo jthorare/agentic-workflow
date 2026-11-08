@@ -10,22 +10,23 @@ namespace Aw.Sindri.Features.TestConnection;
 /// Tests a connection: reads its secret and calls the probe URL (the connection's Config 'probeUrl', else its preset's). An unknown name is SND-CONN-001.
 /// A rejected credential sets status 'error' (or 'needs-sign-in' for an oauth connection) and a reason; the answer is Ok false, not a failed call.
 /// The reason is the failure's code and fixed title: a provider's refusal text is never shown, because it can repeat the token.
+/// The secret read and the probe run outside the command gate (the command is registered with AddUngatedCommand); only the status write takes it (#2349).
 /// </summary>
 /// <param name="store">The connections.</param>
 /// <param name="secrets">Reads the tokens.</param>
 /// <param name="presets">The shipped presets.</param>
 /// <param name="probe">Calls the probe URL.</param>
-/// <param name="events">The clock, and the 'connection.signed-in' event that clears a Needs-you row once a test passes again.</param>
+/// <param name="writer">Records the status under the command gate.</param>
 /// <param name="logger">Where a refused test is reported (code only); null logs nothing.</param>
 /// <param name="mcp">Lists an mcp server's tools (the test of an mcp connection); the host always supplies it.</param>
-internal sealed partial class TestConnectionService(IConnectionStore store, IConnectionSecrets secrets, IConnectionPresetCatalog presets, IConnectionProbe probe, ConnectionEvents events, ILogger<TestConnectionService>? logger = null, IMcpConnectionClient? mcp = null)
+internal sealed partial class TestConnectionService(IConnectionStore store, IConnectionSecrets secrets, IConnectionPresetCatalog presets, IConnectionProbe probe, ConnectionStatusWriter writer, ILogger<TestConnectionService>? logger = null, IMcpConnectionClient? mcp = null)
     : IService<TestConnectionRequest, TestConnectionResponse>
 {
     private readonly IConnectionStore _store = store;
     private readonly IConnectionSecrets _secrets = secrets;
     private readonly IConnectionPresetCatalog _presets = presets;
     private readonly IConnectionProbe _probe = probe;
-    private readonly ConnectionEvents _events = events;
+    private readonly ConnectionStatusWriter _writer = writer;
     private readonly ILogger? _logger = logger;
     private readonly IMcpConnectionClient? _mcp = mcp;
 
@@ -116,19 +117,8 @@ internal sealed partial class TestConnectionService(IConnectionStore store, ICon
 
     private async ValueTask<Result<TestConnectionResponse>> Record(Connection connection, ConnectionStatus status, string? reason, CancellationToken cancellationToken, bool ok = false)
     {
-        var updated = connection with { Status = status, StatusReason = ok ? null : reason, UpdatedAt = _events.Now };
-        var written = await _store.Update(updated, cancellationToken).ConfigureAwait(false);
-        if (written.IsError)
-        {
-            return ConnectionFailures.Safe(written.Error);
-        }
-
-        if (ok && connection.Status == ConnectionStatus.NeedsSignIn)
-        {
-            await _events.SignedIn(connection.Name, cancellationToken).ConfigureAwait(false);   // the Needs-you row of the failed refresh goes away
-        }
-
-        return new TestConnectionResponse(ConnectionView.From(updated), ok, reason);
+        var written = await _writer.Record(connection.Name, status, reason, ok, cancellationToken).ConfigureAwait(false);
+        return written.IsError ? written.Error : new TestConnectionResponse(ConnectionView.From(written.Value), ok, reason);
     }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "The test of connection {Name} was refused ({Code})")]

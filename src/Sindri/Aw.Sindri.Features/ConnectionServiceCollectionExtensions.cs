@@ -15,7 +15,7 @@ namespace Aw.Sindri.Features;
 /// <summary>Registers the connection slices (connections PR 10a).</summary>
 internal static class ConnectionServiceCollectionExtensions
 {
-    /// <summary>Adds AddConnection, TestConnection, RemoveConnection and SignInConnection behind the command chain and ListConnections and GetConnection behind the query chain (ARCH-CQRS-001, #2344). Agent sessions are allowed by the catalog rows' SessionOk (owner decision D2).</summary>
+    /// <summary>Adds AddConnection, RemoveConnection and SignInConnection behind the command chain, TestConnection behind it without the gate (its handler takes the gate for the status write only, #2349), and ListConnections and GetConnection behind the query chain (ARCH-CQRS-001, #2344). Agent sessions are allowed by the catalog rows' SessionOk (owner decision D2).</summary>
     /// <param name="services">The service collection.</param>
     /// <returns>The same collection.</returns>
     internal static IServiceCollection AddConnectionSlices(this IServiceCollection services)
@@ -25,10 +25,11 @@ internal static class ConnectionServiceCollectionExtensions
             .AddScoped<IScheduledService, RefreshConnectionsService>()
             .AddSingleton(RefreshConnectionsService.BuiltIn)
             .AddScoped<ConnectionEvents>()
+            .AddScoped<ConnectionStatusWriter>()
             .AddSingleton<SignInOutcomes>()
             .AddScoped<OAuthSignInFlow>()
             .AddScoped<IValidator<AddConnectionRequest>, AcceptAllValidator<AddConnectionRequest>>().AddCommand<AddConnectionRequest, AddConnectionResponse, AddConnectionService>()
-            .AddScoped<IValidator<TestConnectionRequest>, AcceptAllValidator<TestConnectionRequest>>().AddCommand<TestConnectionRequest, TestConnectionResponse, TestConnectionService>()
+            .AddScoped<IValidator<TestConnectionRequest>, AcceptAllValidator<TestConnectionRequest>>().AddUngatedCommand<TestConnectionRequest, TestConnectionResponse, TestConnectionService>()
             .AddScoped<IValidator<RemoveConnectionRequest>, AcceptAllValidator<RemoveConnectionRequest>>().AddCommand<RemoveConnectionRequest, RemoveConnectionResponse, RemoveConnectionService>()
             .AddScoped<IValidator<SignInConnectionRequest>, AcceptAllValidator<SignInConnectionRequest>>().AddCommand<SignInConnectionRequest, AddConnectionResponse, SignInConnectionService>()
             .AddScoped<IValidator<ListConnectionsRequest>, AcceptAllValidator<ListConnectionsRequest>>().AddQuery<ListConnectionsRequest, ListConnectionsResponse, ListConnectionsService>()

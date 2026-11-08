@@ -171,6 +171,8 @@ Aw.Sindri.Core.Commands.ICallerContextAccessor
 Aw.Sindri.Core.Commands.ICallerContextAccessor.Current.get -> Aw.Sindri.Core.Commands.CallerContext?
 Aw.Sindri.Core.Commands.ICallerContextAccessor.Enter(Aw.Sindri.Core.Commands.CallerContext! context) -> System.IDisposable!
 Aw.Sindri.Core.Commands.ICallerContextAccessor.EnterService(string! service) -> System.IDisposable!
+Aw.Sindri.Core.Commands.ICommandGate
+Aw.Sindri.Core.Commands.ICommandGate.Enter(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.IDisposable?>
 Aw.Sindri.Core.Commands.IClassifiedCommand
 Aw.Sindri.Core.Commands.IClassifiedCommand.CarriesProtectedFields.get -> bool
 Aw.Sindri.Core.Commands.IClassifiedCommand.Variant.get -> string?
