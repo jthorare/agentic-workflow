@@ -5,7 +5,6 @@ using Aw.Sindri.Core.Connections.OAuth;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Scheduling;
-using Aw.Sindri.Features;
 using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.GetConnection;
