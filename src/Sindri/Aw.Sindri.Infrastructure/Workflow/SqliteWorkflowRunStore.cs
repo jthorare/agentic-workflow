@@ -86,7 +86,7 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
                 return moved.Error;
             }
 
-            return (WorkflowRun?)(oldest with { Status = WorkflowRunStatus.Running });
+            return oldest with { Status = WorkflowRunStatus.Running };
         }, cancellationToken);
 
     public async ValueTask<Result<WorkflowRun>> Get(WorkflowRunId id, CancellationToken cancellationToken)

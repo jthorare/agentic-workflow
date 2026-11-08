@@ -60,7 +60,7 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
             var inFlight = _runs.Where(r => r.WorkflowId == workflow && r.Status is WorkflowRunStatus.Queued or WorkflowRunStatus.Running or WorkflowRunStatus.Waiting).ToList();
             if (inFlight.Count == 0 || inFlight.Exists(static r => r.Status != WorkflowRunStatus.Queued))
             {
-                return Ok<WorkflowRun?>(null);
+                return Ok<WorkflowRun?>(value: null);
             }
 
             var oldest = inFlight.OrderBy(static r => r.StartedAt).ThenBy(static r => r.Id.Value, StringComparer.Ordinal).First();
