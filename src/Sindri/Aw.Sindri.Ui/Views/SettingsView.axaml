@@ -1,8 +1,10 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Aw.Sindri.Ui.ViewModels.Settings"
+             xmlns:lvm="using:Aw.Sindri.Ui.ViewModels.Linear"
              xmlns:sandbox="using:Aw.Sindri.Ui.Views.Sandbox"
              xmlns:reviews="using:Aw.Sindri.Ui.Views.Reviews"
+             xmlns:linear="using:Aw.Sindri.Ui.Views.Linear"
              x:Class="Aw.Sindri.Ui.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
   <!-- Settings (UI spec §3.3 ⌘,, §11.4, §14.2; setup spec §2.4): the setup checklist first, then this app's own preferences. The shell hosts it as its Settings page, inside
@@ -73,6 +75,19 @@
     <!-- The Library card: the folders the design library reads (review page spec 6.3); an agent session sees no folders and nothing to edit. -->
     <StackPanel x:Name="LibrarySettingsSlot" IsVisible="{Binding HasLibrary}" AutomationProperties.Name="{Binding Library.Title}">
       <reviews:LibraryRootsSection x:Name="LibraryRoots" DataContext="{Binding Library}" AutomationProperties.Name="{Binding Title}" />
+    </StackPanel>
+
+    <!-- The Connections group (Linear hub spec §3): Settings → Connections → Linear, the keys and the teams. An agent session is refused the connection and sees none of it. -->
+    <StackPanel x:Name="ConnectionsSettingsSlot" IsVisible="{Binding HasLinearConnection}">
+      <StackPanel x:Name="LinearSettingsSlot" DataContext="{Binding LinearConnection}" x:DataType="lvm:LinearConnectionViewModel" IsVisible="{Binding IsAvailable}" Spacing="{StaticResource Space.XS}">
+        <Border AutomationProperties.Name="{Binding Text.ConnectionsHeading}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="2">
+          <TextBlock x:Name="ConnectionsTitle" Classes="detail-title" Text="{Binding Text.ConnectionsHeading}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Border AutomationProperties.Name="{Binding Text.ConnectionsIntro}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock x:Name="ConnectionsIntro" Classes="caption subtle" Text="{Binding Text.ConnectionsIntro}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <linear:LinearConnectionSection x:Name="LinearConnectionSettings" />
+      </StackPanel>
     </StackPanel>
 
     <Border x:Name="ThisAppName" AutomationProperties.Name="{Binding ThisAppLabel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="2">
