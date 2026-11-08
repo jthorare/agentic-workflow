@@ -17,7 +17,7 @@ namespace Aw.Sindri.Features.GetInstanceEvents;
 /// <param name="ledger">The ledger, read-only.</param>
 /// <param name="events">Reads the payloads.</param>
 /// <param name="views">The items view, for the item's repo.</param>
-/// <param name="approved">The approved profile, for the repo's checkout.</param>
+/// <param name="approved">The profile, for the repo's checkout.</param>
 /// <param name="branches">Says whether the run branch kept commits.</param>
 internal sealed class LimitEndingReader(ILedgerReader ledger, EventFactory events, IViewReader views, IApprovedProfile approved, IRunBranches branches)
 {

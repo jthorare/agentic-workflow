@@ -91,7 +91,7 @@ internal static class ApprovalPreviews
 
     /// <summary>The effect kinds the recipe emits, each marked against the approved profile's effect allowlist.</summary>
     /// <param name="recipe">The recipe.</param>
-    /// <param name="allowlist">The approved profile's 'workflow.effects'; null when it sets none (then none is on it).</param>
+    /// <param name="allowlist">The profile's 'workflow.effects'; null when it sets none (then none is on it).</param>
     /// <returns>The kinds, ordered by id.</returns>
     public static IReadOnlyList<PreviewEffect> Effects(Recipe recipe, IReadOnlySet<BlockId>? allowlist) =>
         [.. recipe.Transitions.SelectMany(static t => t.Effects).Select(static e => e.Use).Distinct()

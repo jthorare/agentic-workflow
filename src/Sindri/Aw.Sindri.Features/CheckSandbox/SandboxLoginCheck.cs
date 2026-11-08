@@ -7,12 +7,12 @@ using Aw.Sindri.Core.Sandbox.Credentials;
 namespace Aw.Sindri.Features.CheckSandbox;
 
 /// <summary>
-/// The login probe (sandbox spec §3.4, §6): for the agent Steps run (the approved profile's 'workflow.agent.target', when installed, approved for Steps and its policy form is expressible), the credential source the profile picks (a repo's, else the
+/// The login probe (sandbox spec §3.4, §6): for the agent Steps run (the profile's 'workflow.agent.target', when installed, approved for Steps and its policy form is expressible), the credential source the profile picks (a repo's, else the
 /// agent's, else the profile's) must deliver the model login. Never tries another source. Distinct failures are listed once. With no target (or an unreadable profile) Steps go to the desk, so there is nothing to check; any other installed agent is no blocker.
 /// </summary>
 /// <param name="setup">The catalog and what is installed.</param>
 /// <param name="catalog">The entries' policy forms.</param>
-/// <param name="approved">The approved profile.</param>
+/// <param name="approved">The profile.</param>
 /// <param name="sources">The credential sources.</param>
 internal sealed class SandboxLoginCheck(ILaunchSetup setup, IAgentCatalog catalog, IApprovedProfile approved, ModelCredentialSources sources) : ISandboxLoginCheck
 {

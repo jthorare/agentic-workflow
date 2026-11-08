@@ -7,10 +7,10 @@ using Aw.Sindri.Core.Profile;
 namespace Aw.Sindri.Infrastructure.LensPacks;
 
 /// <summary>
-/// <see cref="IStylePacks"/> over the APPROVED profile and the built-in packs (line spec §5.1): the pack id is the profile's repo entry, else its default, else 'plain'. Nothing approved means
-/// the default; an approved profile that can't be read fails the call, and a pack id that is not a built-in one is an error (SND-PACK-001), never a silent fallback.
+/// <see cref="IStylePacks"/> over the live profile and the built-in packs (line spec §5.1): the pack id is the profile's repo entry, else its default, else 'plain'. Nothing approved means
+/// the default; a profile that can't be read fails the call, and a pack id that is not a built-in one is an error (SND-PACK-001), never a silent fallback.
 /// </summary>
-/// <param name="approved">The approved profile.</param>
+/// <param name="approved">The profile.</param>
 /// <param name="source">The built-in packs' files.</param>
 internal sealed class ProfileStylePacks(IApprovedProfile approved, IStylePackSource source) : IStylePacks
 {

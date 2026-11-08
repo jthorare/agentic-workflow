@@ -20,7 +20,7 @@ namespace Aw.Sindri.Features.LinearIssues;
 /// <param name="instances">The workflow instances.</param>
 /// <param name="contents">The stored fact contents.</param>
 /// <param name="pulls">The stored PR records.</param>
-/// <param name="approvals">The approved profile, for the review login.</param>
+/// <param name="approvals">The profile, for the review login.</param>
 internal sealed class ViewLinearItemLinks(IViewReader views, IInstanceReader instances, IFactContents contents, IReviewFacts pulls, IApprovedProfile approvals) : ILinearItemLinks
 {
     public async ValueTask<Result<IReadOnlyDictionary<string, LinearIssueLinks>>> For(IReadOnlyList<string> records, CancellationToken cancellationToken)

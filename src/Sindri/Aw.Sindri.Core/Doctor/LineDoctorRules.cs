@@ -6,7 +6,7 @@ using Aw.Sindri.Core.Profile;
 namespace Aw.Sindri.Core.Doctor;
 
 /// <summary>
-/// The checks of 'sindri line doctor' (line spec Appendix D, LN-WF9): the approved profile's line keys for one repo and what the checkout and the environment hold. Pure: the facts are read by the caller.
+/// The checks of 'sindri line doctor' (line spec Appendix D, LN-WF9): the profile's line keys for one repo and what the checkout and the environment hold. Pure: the facts are read by the caller.
 /// The parallel-versus-cap check is the profile's own cross-key rule (<c language="text">LineProfileRules</c>), repeated here because the cap can drop after the profile was approved.
 /// </summary>
 public static class LineDoctorRules
@@ -27,7 +27,7 @@ public static class LineDoctorRules
     }
 
     /// <summary>Checks one repo.</summary>
-    /// <param name="profile">The approved profile.</param>
+    /// <param name="profile">The profile.</param>
     /// <param name="repo">The repo's name in the profile.</param>
     /// <param name="box">The box's limits now.</param>
     /// <param name="facts">What the checkout and the environment hold.</param>

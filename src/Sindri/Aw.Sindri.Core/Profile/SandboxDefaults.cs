@@ -3,7 +3,7 @@ using Aw.Sindri.Core.Sandbox;
 namespace Aw.Sindri.Core.Profile;
 
 /// <summary>
-/// The built-in sandbox settings (sandbox spec §9). An approved profile with no 'sandbox:' section is valid and gets these;
+/// The built-in sandbox settings (sandbox spec §9). A profile with no 'sandbox:' section is valid and gets these;
 /// 'sindri doctor' prints "using the built-in sandbox defaults".
 /// </summary>
 public static class SandboxDefaults

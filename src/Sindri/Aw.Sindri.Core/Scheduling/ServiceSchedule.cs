@@ -24,17 +24,17 @@ public sealed record ServiceSchedule(ServiceName Name, Cadence Cadence, DateTime
         return this with { NextSlot = next };
     }
 
-    /// <summary>The schedules for the services an approved profile names, first slots at <paramref name="start"/>.</summary>
-    /// <param name="profile">The approved profile (checked, so every name and cadence parses).</param>
+    /// <summary>The schedules for the services a profile names, first slots at <paramref name="start"/>.</summary>
+    /// <param name="profile">The profile (checked, so every name and cadence parses).</param>
     /// <param name="start">When the process started its scheduler.</param>
     /// <returns>One schedule per service.</returns>
     public static IReadOnlyList<ServiceSchedule> From(SindriProfile profile, DateTimeOffset start) => Named(profile, start, NoRuns);
 
     /// <summary>
-    /// The schedules for the services an approved profile names and for the build's built-in services (engine spec §7.2
-    /// S1-D8): a built-in runs on its own cadence unless the profile names it, and runs with no approved profile too.
+    /// The schedules for the services a profile names and for the build's built-in services (engine spec §7.2
+    /// S1-D8): a built-in runs on its own cadence unless the profile names it, and runs with no profile too.
     /// </summary>
-    /// <param name="profile">The approved profile, or null when none is approved.</param>
+    /// <param name="profile">The profile, or null when none is approved.</param>
     /// <param name="builtIns">The services the build runs without a profile entry.</param>
     /// <param name="start">When the process started its scheduler.</param>
     /// <returns>One schedule per service: the profile's first, then the built-ins it doesn't name.</returns>
@@ -44,7 +44,7 @@ public sealed record ServiceSchedule(ServiceName Name, Cadence Cadence, DateTime
     /// The schedules as <see cref="From(SindriProfile?, IEnumerable{BuiltInService}, DateTimeOffset)"/> builds them, each
     /// first slot anchored on the service's latest recorded run in <paramref name="lastRuns"/> (see <see cref="FirstSlot"/>).
     /// </summary>
-    /// <param name="profile">The approved profile, or null when none is approved.</param>
+    /// <param name="profile">The profile, or null when none is approved.</param>
     /// <param name="builtIns">The services the build runs without a profile entry.</param>
     /// <param name="now">The current time.</param>
     /// <param name="lastRuns">The slot of each service's latest recorded run; a service missing here has none.</param>

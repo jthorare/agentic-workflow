@@ -8,7 +8,7 @@ using Aw.Sindri.Core.Views;
 namespace Aw.Sindri.Features.ListServices;
 
 /// <summary>
-/// The approved profile's services and the build's built-ins (name and cadence, plan G5), each joined with its row in the 'services' view: the
+/// The profile's services and the build's built-ins (name and cadence, plan G5), each joined with its row in the 'services' view: the
 /// last run, and the next slot (the last slot plus the cadence, moved on by whole cadences past now; null before the first run). Paused and the running job come from P6.
 /// A service the approval dropped leaves the list, though its row stays in the view.
 /// </summary>
@@ -75,7 +75,7 @@ internal sealed class ListServicesService(IApprovedProfile approvals, IViewReade
     }
 
     /// <summary>
-    /// One service; the approved profile was checked, so its cadence parses (an unparseable one shows no next slot). The next slot is the scheduler's last
+    /// One service; the profile was checked, so its cadence parses (an unparseable one shows no next slot). The next slot is the scheduler's last
     /// slot plus the cadence, so a manual run does not move it, and there is none while the service is paused.
     /// </summary>
     private ServiceView View(Listed entry, ServiceRow? row, JobId? job)

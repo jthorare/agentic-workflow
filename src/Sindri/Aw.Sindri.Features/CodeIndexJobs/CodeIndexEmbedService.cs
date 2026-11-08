@@ -14,7 +14,7 @@ using IndexRepoStatus = Aw.CodeIndex.Core.Facade.RepoStatus;
 namespace Aw.Sindri.Features.CodeIndexJobs;
 
 /// <summary>
-/// The 'code-index-embed' background service (code index spec §6.3): for each repo of the approved profile whose index has its embeddings layer pending, it starts an 'EmbedCodeIndex' job of key 'embed:&lt;repo&gt;'
+/// The 'code-index-embed' background service (code index spec §6.3): for each repo of the profile whose index has its embeddings layer pending, it starts an 'EmbedCodeIndex' job of key 'embed:&lt;repo&gt;'
 /// as itself, through the command chain, and keeps doing so until the layer is ok, so a repo is fully embedded without any HEAD move (a move leaves only the changed files' symbols pending). The job takes no heavy-job slot.
 /// Each repo is decided on its own by <see cref="EmbedDecision"/>. A repo whose last jobs failed is named in the summary, and the run stays ok: a model that is not there is a layer state, not a needs-you item.
 /// A tick reads the index status and the jobs once.
@@ -45,7 +45,7 @@ internal sealed partial class CodeIndexEmbedService(CodeIndexJobScopes scopes, I
         var scope = await scopes.Current(cancellationToken).ConfigureAwait(false);
         if (scope.IsError || scope.Value.Repos.Count == 0)
         {
-            // no approved profile, or no repo, is nothing to embed, not a failed run (a failed run would land in needs-you every tick)
+            // no profile, or no repo, is nothing to embed, not a failed run (a failed run would land in needs-you every tick)
             return scope.IsError && scope.Error.Code != SindriErrors.ProfileMissing.Code ? scope.Error : ScheduledResult.Quiet;
         }
 

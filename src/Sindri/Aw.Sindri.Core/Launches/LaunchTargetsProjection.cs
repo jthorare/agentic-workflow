@@ -10,7 +10,7 @@ public static class LaunchTargetsProjection
     /// <summary>Builds the view.</summary>
     /// <param name="probed">The newest probe, or null before the first.</param>
     /// <param name="probedAt">When it was recorded.</param>
-    /// <param name="agents">The approved profile's 'agents:' block, or null.</param>
+    /// <param name="agents">The profile's 'agents:' block, or null.</param>
     /// <param name="spend">Today's spend per agent id; an id without an entry has no usage reader.</param>
     /// <param name="asOf">How fresh the views are.</param>
     /// <returns>The view.</returns>

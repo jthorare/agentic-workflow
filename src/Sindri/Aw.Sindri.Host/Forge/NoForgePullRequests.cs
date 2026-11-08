@@ -4,7 +4,7 @@ using Aw.Sindri.Core.Forge;
 
 namespace Aw.Sindri.Host.Forge;
 
-/// <summary>The pull requests of a Sindri whose approved profile names no forge: every call answers SND-FORGE-001 and nothing is sent anywhere.</summary>
+/// <summary>The pull requests of a Sindri whose profile names no forge: every call answers SND-FORGE-001 and nothing is sent anywhere.</summary>
 internal sealed class NoForgePullRequests : IPullRequests
 {
     public ValueTask<Result<PullView>> Get(string link, CancellationToken cancellationToken) => None<PullView>();

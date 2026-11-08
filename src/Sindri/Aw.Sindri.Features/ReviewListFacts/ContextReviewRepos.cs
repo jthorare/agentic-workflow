@@ -6,8 +6,8 @@ using Aw.Sindri.Core.Reviews;
 
 namespace Aw.Sindri.Features.ReviewListFacts;
 
-/// <summary><see cref="IReviewRepos"/> from the approved profile's checked Context settings (<see cref="ReviewScopes"/>).</summary>
-/// <param name="approvals">The approved profile.</param>
+/// <summary><see cref="IReviewRepos"/> from the profile's checked Context settings (<see cref="ReviewScopes"/>).</summary>
+/// <param name="approvals">The profile.</param>
 /// <param name="callers">The current caller.</param>
 /// <param name="engine">Context's facade, for the settings check.</param>
 internal sealed class ContextReviewRepos(IApprovedProfile approvals, ICallerContextAccessor callers, IContextEngine engine) : IReviewRepos

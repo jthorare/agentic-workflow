@@ -19,7 +19,7 @@ public static class EffectRules
     /// </summary>
     /// <param name="origin">The effect's origin.</param>
     /// <param name="approval">The recipe's approval check now.</param>
-    /// <param name="effects">The approved profile's effect settings now.</param>
+    /// <param name="effects">The profile's effect settings now.</param>
     /// <param name="kind">The effect block.</param>
     /// <returns>The refusal code, or null.</returns>
     public static string? Recheck(CommandOrigin origin, ApprovalCheck approval, EffectSettings effects, BlockId kind)

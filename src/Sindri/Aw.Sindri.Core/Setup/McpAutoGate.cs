@@ -9,7 +9,7 @@ namespace Aw.Sindri.Core.Setup;
 /// Whether Sindri may register itself in the repos on its own (setup-once spec §5.4): there is a profile, nothing turns it off (the profile key 'setup.mcp: off' or AW_SINDRI_APP_NO_MCP=1) and the owner pressed "Turn on for your repos"
 /// (#2258 PR 1: consent is not keyed on a profile hash). It reads the live profile. A repo whose newest RegisterMcp job failed is left to the owner.
 /// </summary>
-/// <param name="approvals">The approved profile snapshot.</param>
+/// <param name="approvals">The profile.</param>
 /// <param name="facts">Reads the recorded consent.</param>
 /// <param name="environment">The environment's off switch.</param>
 /// <param name="jobs">The jobs view.</param>
@@ -17,9 +17,9 @@ public sealed class McpAutoGate(IApprovedProfile approvals, McpEvents facts, IMc
 {
     private static readonly JobKind _kind = JobKind.From("RegisterMcp");
 
-    /// <summary>The approved profile when the automatic runs may go ahead, else null.</summary>
+    /// <summary>The profile when the automatic runs may go ahead, else null.</summary>
     /// <param name="cancellationToken">Cancels the reads.</param>
-    /// <returns>The approved profile, or null.</returns>
+    /// <returns>The profile, or null.</returns>
     public async ValueTask<LoadedProfile?> Ready(CancellationToken cancellationToken) =>
         await Approved(cancellationToken).ConfigureAwait(false) is { } profile && await facts.ConsentGiven(cancellationToken).ConfigureAwait(false) ? profile : null;
 

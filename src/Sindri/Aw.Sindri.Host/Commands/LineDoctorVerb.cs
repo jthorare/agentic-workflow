@@ -6,7 +6,7 @@ using Aw.Sindri.Features.LineDoctor;
 namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
-/// 'sindri line doctor [&lt;repo&gt;] [--json]' (line spec Appendix D, LN-API4, class local): whether a repo is set up for the line. Reads the approved profile, the checkout and the box's cap in this process, writes
+/// 'sindri line doctor [&lt;repo&gt;] [--json]' (line spec Appendix D, LN-API4, class local): whether a repo is set up for the line. Reads the profile, the checkout and the box's cap in this process, writes
 /// nothing and never starts the control plane. Exit 0 when every check is ok, 1 when one warns or fails, 2 on a usage or tool error.
 /// </summary>
 internal static class LineDoctorVerb

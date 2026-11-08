@@ -4,7 +4,7 @@ namespace Aw.Sindri.Core.Profile;
 public static class RepoDenyGlobs
 {
     /// <summary>The globs of <paramref name="repo"/> under <paramref name="profile"/>.</summary>
-    /// <param name="profile">The approved profile.</param>
+    /// <param name="profile">The profile.</param>
     /// <param name="repo">One of its repos.</param>
     /// <returns>The globs, or null when neither names any.</returns>
     public static IReadOnlyList<string>? For(SindriProfile profile, RepoEntry repo)
@@ -22,7 +22,7 @@ public static class RepoDenyGlobs
             .OrderBy(r => r.Key, StringComparer.Ordinal).SelectMany(r => r.Value);
 
     /// <summary>Every repo of <paramref name="profile"/> with its globs: the one mapping from the profile to the scope the context engine reads (every surface and the doctor use it).</summary>
-    /// <param name="profile">The approved profile.</param>
+    /// <param name="profile">The profile.</param>
     /// <returns>Each repo's name, path and globs (null when none), in profile order.</returns>
     public static IReadOnlyList<(string Name, string Path, IReadOnlyList<string>? DenyPaths)> Entries(SindriProfile profile)
     {

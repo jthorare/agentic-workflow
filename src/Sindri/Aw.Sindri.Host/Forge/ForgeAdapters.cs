@@ -17,7 +17,7 @@ namespace Aw.Sindri.Host.Forge;
 internal static class ForgeAdapters
 {
     /// <summary>Builds the adapter.</summary>
-    /// <param name="settings">The approved profile's 'workflow.forge' block, with an adapter.</param>
+    /// <param name="settings">The profile's 'workflow.forge' block, with an adapter.</param>
     /// <param name="environment">Reads an environment variable (AW_STATE_DIR for the file adapter's state, the credential's variable for GitHub).</param>
     /// <param name="clock">The clock the command credential source caches by.</param>
     /// <returns>The adapter, or SND-FORGE-002 when the block can't be used (the profile check refuses most of these first).</returns>

@@ -21,7 +21,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="contents">Reads a stored fact.</param>
 /// <param name="facts">Stores an output.</param>
 /// <param name="contexts">Gives a Step the sections and typed results of its inputs (kept in memory, or run again and checked against the recorded digests).</param>
-/// <param name="approved">The APPROVED profile (never the live file): 'providers' resolves from its 'workflow.judge.providers'.</param>
+/// <param name="approved">The live profile (never the live file): 'providers' resolves from its 'workflow.judge.providers'.</param>
 internal sealed class BlockStepRunner(BlockStepRuntimes runtimes, BlockCatalog catalog, BlockStepDispatch dispatch, IFactContents contents, IFactStore facts, IApprovedProfile approved, StepContexts contexts)
 {
     private const string ProvidersArgument = "providers";
@@ -174,8 +174,8 @@ internal sealed class BlockStepRunner(BlockStepRuntimes runtimes, BlockCatalog c
             : JsonSerializer.SerializeToElement(Encoding.UTF8.GetString(read.Value.Span), _json);
     }
 
-    // The APPROVED profile (never the live one): 'providers' (JudgeProviders) and a '{ profile: workflow.judge.parallel }' width resolve from it. Nothing approved means the defaults
-    // (no jev, the Step's own width); an approved profile that can't be read fails the run, and the list is never widened.
+    // The live profile (never the live one): 'providers' (JudgeProviders) and a '{ profile: workflow.judge.parallel }' width resolve from it. Nothing approved means the defaults
+    // (no jev, the Step's own width); a profile that can't be read fails the run, and the list is never widened.
     private async Task<Result<SindriProfile>> ApprovedProfile(BlockStepRun run, CancellationToken cancellationToken)
     {
         if (run.RepoUnreadable)

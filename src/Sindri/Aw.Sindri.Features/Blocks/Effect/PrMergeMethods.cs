@@ -11,7 +11,7 @@ internal static class PrMergeMethods
 {
     /// <summary>Resolves the method.</summary>
     /// <param name="context">The effect's context.</param>
-    /// <param name="profile">The approved profile.</param>
+    /// <param name="profile">The profile.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The method, or the error.</returns>
     public static async ValueTask<Result<PullMergeMethod>> Resolve(EffectContext context, IApprovedProfile profile, CancellationToken cancellationToken)

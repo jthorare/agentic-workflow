@@ -1,6 +1,6 @@
 namespace Aw.Sindri.Ui.Api.Context;
 
-/// <summary>GET /sindri/context/pins: the live profile's pins, how each stands against the approved profile and the map, and why the map is or isn't being rebuilt (concept pins spec §3.6-§3.8).</summary>
+/// <summary>GET /sindri/context/pins: the live profile's pins, how each stands against the profile and the map, and why the map is or isn't being rebuilt (concept pins spec §3.6-§3.8).</summary>
 /// <param name="ApiVersion">The answer's version.</param>
 /// <param name="Repo">The repo the answer is for; null when the profile has several and none was asked for.</param>
 /// <param name="FileHash">The hash of the profile file the pins were read from: the Pin sheet sends it as ifHash, so a hand edit after this read is refused as stale (SND-PROFILE-003), never written over.</param>

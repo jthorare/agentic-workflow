@@ -9,7 +9,7 @@ namespace Aw.Sindri.Features.GetSandboxStatus;
 
 /// <summary>Says what the last sandbox check found and how the sandbox is set up (sandbox spec §8). Read-only and cheap: it runs no check and no probe.</summary>
 /// <param name="last">The newest check.</param>
-/// <param name="approved">The approved profile's sandbox section.</param>
+/// <param name="approved">The profile's sandbox section.</param>
 /// <param name="machine">The memory and cores the limits are read against.</param>
 /// <param name="learn">The ledger's learn history.</param>
 /// <param name="platform">Names the mechanism the platform runs.</param>

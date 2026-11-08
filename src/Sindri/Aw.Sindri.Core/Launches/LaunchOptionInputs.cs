@@ -16,13 +16,13 @@ public sealed record LaunchOptionInputs
     /// <summary>The last probe with budgets, or null when none was recorded.</summary>
     public LaunchTargets? Probe { get; init; }
 
-    /// <summary>The approved profile's launch settings, or null.</summary>
+    /// <summary>The profile's launch settings, or null.</summary>
     public LaunchSettings? Settings { get; init; }
 
     /// <summary>The newest started launch in the item's repo, or null (any item).</summary>
     public AgentId? LastUsedInRepo { get; init; }
 
-    /// <summary>The item's repo path from the approved profile, or null.</summary>
+    /// <summary>The item's repo path from the profile, or null.</summary>
     public string? RepoPath { get; init; }
 
     /// <summary>Whether an agent resolves in the catalog.</summary>

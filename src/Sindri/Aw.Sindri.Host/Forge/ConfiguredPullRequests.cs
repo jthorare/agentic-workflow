@@ -6,11 +6,11 @@ using Results = Aw.Kernel.Results;
 namespace Aw.Sindri.Host.Forge;
 
 /// <summary>
-/// The <see cref="IPullRequests"/> Sindri registers: each call reads the approved profile's 'workflow.forge' block and goes to the adapter it names
+/// The <see cref="IPullRequests"/> Sindri registers: each call reads the profile's 'workflow.forge' block and goes to the adapter it names
 /// (<see cref="ForgePullRequests"/>), or to <see cref="NoForgePullRequests"/> when the block names none, so approving a profile switches the forge
 /// without a restart. The adapter is built once per distinct block.
 /// </summary>
-/// <param name="approved">The approved profile.</param>
+/// <param name="approved">The profile.</param>
 /// <param name="environment">Reads an environment variable.</param>
 /// <param name="clock">The clock.</param>
 internal sealed class ConfiguredPullRequests(IApprovedProfile approved, Func<string, string?> environment, TimeProvider clock) : IPullRequests

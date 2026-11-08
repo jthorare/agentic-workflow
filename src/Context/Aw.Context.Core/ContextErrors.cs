@@ -216,7 +216,7 @@ public static partial class ContextErrors
     /// <summary>SND-CONTEXT-103: <c xml:lang="en">concept=</c> was given and the caller sees no pin at all.</summary>
     public static readonly ErrorDefinition NoPins = new("SND-CONTEXT-103", ErrorKind.NotFound, "No pins are set up");
 
-    /// <summary>SND-CONTEXT-104: the approved profile has the pin but the map version has no concept node for it yet.</summary>
+    /// <summary>SND-CONTEXT-104: the profile has the pin but the map version has no concept node for it yet.</summary>
     public static readonly ErrorDefinition PinNewerThanMap = new("SND-CONTEXT-104", ErrorKind.NotFound, "The pin is newer than the map");
 
     /// <summary>SND-CONTEXT-105: <c xml:lang="en">concept=</c> needs a built map and there is none the caller may read.</summary>
@@ -237,7 +237,7 @@ public static partial class ContextErrors
     /// <summary>SND-CONTEXT-242: Jev refused a pack of choice questions (input too big, an answer that wasn't one, a timeout). The labeler splits the pack and asks again, down to two levels; what still fails takes its fallback. The message is a reason code.</summary>
     public static readonly ErrorDefinition ChoiceRejected = new("SND-CONTEXT-242", ErrorKind.Unavailable, "Jev refused a pack of choice questions");
 
-    /// <summary>SND-CONTEXT-243: Jev can't be asked for the rest of this pass (no key, offline, excluded, a refused key, rate limited, a server error, or the pick is off in the approved profile). Every undecided choice takes its fallback. The message is a reason code.</summary>
+    /// <summary>SND-CONTEXT-243: Jev can't be asked for the rest of this pass (no key, offline, excluded, a refused key, rate limited, a server error, or the pick is off in the profile). Every undecided choice takes its fallback. The message is a reason code.</summary>
     public static readonly ErrorDefinition ChoiceUnavailable = new("SND-CONTEXT-243", ErrorKind.Unavailable, "Jev can't be asked for choices");
 
     /// <summary>SND-CONTEXT-250: index.pages names a concept that isn't pinned or derived in the current map.</summary>

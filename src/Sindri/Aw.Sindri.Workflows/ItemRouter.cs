@@ -12,12 +12,12 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 
 /// <summary>
 /// How the router stub routes one started instance (engine P7 plan D8, workflow engine spec §12): a 'workflow.item' root is
-/// 'startable' unless the approved profile's 'workflow.route.startable' says 'none', and its Step spec is the 'spec' of the
+/// 'startable' unless the profile's 'workflow.route.startable' says 'none', and its Step spec is the 'spec' of the
 /// stored 'fact:item', stored again as 'fact:stepSpec'. Any other instance is not the stub's.
 /// </summary>
 /// <param name="instances">Reads an instance's recipe and fact digests.</param>
 /// <param name="store">Reads 'fact:item' and stores 'fact:stepSpec'.</param>
-/// <param name="profile">The approved profile ('workflow.route').</param>
+/// <param name="profile">The profile ('workflow.route').</param>
 internal sealed class ItemRouter(IInstanceReader instances, HomeFactStore store, IApprovedProfile profile)
 {
     private static readonly Result<RoutedItem?> _none = Results.Success<RoutedItem?>(value: null);

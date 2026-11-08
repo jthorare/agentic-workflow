@@ -5,7 +5,7 @@ using Aw.Context.Core.Map;
 
 namespace Aw.Context.Core.Pages;
 
-/// <summary>The doctor row 'context:pages': the approved profile's pages against the map as stored, without the owner overlay (pages spec §3.7).</summary>
+/// <summary>The doctor row 'context:pages': the profile's pages against the map as stored, without the owner overlay (pages spec §3.7).</summary>
 public static class PageHealth
 {
     /// <summary>The row's name.</summary>
@@ -21,7 +21,7 @@ public static class PageHealth
     public static MapHealth NoMap { get; } = new(Name, MapHealthState.Ok, "no map yet", Fix: null);
 
     /// <summary>Checks the pages against the map.</summary>
-    /// <param name="repos">The approved profile's repos, each with its pages.</param>
+    /// <param name="repos">The profile's repos, each with its pages.</param>
     /// <param name="stored">The map's graph before the deny cut.</param>
     /// <param name="visible">The same graph after the deny cut, without the pages laid over it.</param>
     /// <returns>Ok when every key and concept is on the map and the caps hold, else a warning naming the first problem and how many there are.</returns>

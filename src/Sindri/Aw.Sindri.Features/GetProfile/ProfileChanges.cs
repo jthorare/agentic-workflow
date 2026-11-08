@@ -17,7 +17,7 @@ internal sealed record ProfileChanges(IReadOnlyList<RepoEntry> NewRepos, IReadOn
     public bool IsEmpty => NewRepos.Count == 0 && Services.Count == 0 && Allowance.Count == 0 && Connections.Count == 0 && HumanOnly.Count == 0;
 
     /// <summary>What <paramref name="live"/> asks for that <paramref name="approved"/> does not.</summary>
-    /// <param name="approved">The approved profile, or null when nothing is approved yet.</param>
+    /// <param name="approved">The profile, or null when nothing is approved yet.</param>
     /// <param name="live">The live profile.</param>
     /// <param name="sentences">The plain sentence of each effect block.</param>
     /// <returns>The changes.</returns>

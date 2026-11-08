@@ -3,7 +3,7 @@ namespace Aw.Sindri.Ui.ViewModels.Context;
 /// <summary>The concept layer's pin side on the page (<see cref="ContextPageViewModel"/>, continued): the pins read beside the concepts, kept current as events arrive.</summary>
 internal sealed partial class ContextPageViewModel
 {
-    // The live pins against the approved profile and the map rebuild state. A 404 or any failure leaves the layer without pin buttons (an older server).
+    // The live pins against the profile and the map rebuild state. A 404 or any failure leaves the layer without pin buttons (an older server).
     private async Task ReadPins(Uri api, CancellationToken cancellationToken)
     {
         var read = await Ports.Api.ContextPins(api, _repo ?? string.Empty, cancellationToken).ConfigureAwait(true);

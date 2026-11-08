@@ -1,6 +1,6 @@
 namespace Aw.Sindri.Core.Setup;
 
-/// <summary>The index sources (github, slack) the approved profile names, each with whether its token is connected.</summary>
+/// <summary>The index sources (github, slack) the profile names, each with whether its token is connected.</summary>
 /// <param name="Count">How many sources the profile names.</param>
 public sealed record SourcesFact(int Count)
 {

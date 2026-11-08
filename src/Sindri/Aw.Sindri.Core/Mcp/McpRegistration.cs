@@ -32,7 +32,7 @@ public static class McpRegistration
 
     /// <summary>The port to register: the running instance's, else the profile's API port.</summary>
     /// <param name="running">The running instance's URL, or null when none is running.</param>
-    /// <param name="profilePort">The approved profile's api.port, or null.</param>
+    /// <param name="profilePort">The profile's api.port, or null.</param>
     /// <returns>The port.</returns>
     public static int Port(Uri? running, int? profilePort) =>
         running is { IsDefaultPort: false } url ? url.Port : profilePort ?? Profile.ApiSettings.DefaultPort;

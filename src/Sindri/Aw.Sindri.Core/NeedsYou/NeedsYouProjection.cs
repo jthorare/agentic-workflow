@@ -10,7 +10,7 @@ namespace Aw.Sindri.Core.NeedsYou;
 
 /// <summary>
 /// Folds the events that make the human's list into the 'needs_you' view (API spec §3.6, P4 plan Unit C): a filed request is a decision
-/// row until it is decided or its item is closed, a failed service run is a failure row until a run succeeds or an approved profile no
+/// row until it is decided or its item is closed, a failed service run is a failure row until a run succeeds or a profile no
 /// longer names the service, and a drifted live profile is a profile row until it reverts or is approved. Each row is stored as a
 /// <see cref="NeedsYouRowRecord"/>, keyed by the row's id; the pure rules are <see cref="NeedsYouRows"/> and <see cref="NeedsYouClearing"/>.
 /// </summary>

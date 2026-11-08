@@ -4,11 +4,11 @@ using Aw.Sindri.Core.Profile;
 namespace Aw.Sindri.Infrastructure.Launch;
 
 /// <summary>
-/// <see cref="IModelPickSettings"/> over the APPROVED profile's 'workflow.agent' block (model-pick spec 8): the pick is on only when that block says 'on', so a profile the owner has not approved
+/// <see cref="IModelPickSettings"/> over the live profile's 'workflow.agent' block (model-pick spec 8): the pick is on only when that block says 'on', so a profile the owner has not approved
 /// (and one that never showed the Jev notice) picks nothing. The pin is <see cref="ModelKeyRules.PinFor"/>'s, the cap is the agent's own entry, and the deny globs are the profile's index.denyPaths.
 /// A profile that can't be read means off: no pick and nothing sent to Jev.
 /// </summary>
-/// <param name="approved">The approved profile.</param>
+/// <param name="approved">The profile.</param>
 internal sealed class ProfileModelPickSettings(IApprovedProfile approved) : IModelPickSettings
 {
     public async ValueTask<bool> PickEnabled(CancellationToken cancellationToken) =>

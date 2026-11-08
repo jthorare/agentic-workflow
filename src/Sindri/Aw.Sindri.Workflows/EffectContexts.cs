@@ -59,7 +59,7 @@ internal static class EffectContexts
 
     /// <summary>
     /// A Step input's 'with:' arguments: those of <see cref="Arguments"/>, plus each '{ profile: key }' as the reference '{"profile": key}'. The input resolves it
-    /// against the approved profile inside its fill (ContextInputFacts), never here: the workflow only carries the key, so a replay reads the same history.
+    /// against the profile inside its fill (ContextInputFacts), never here: the workflow only carries the key, so a replay reads the same history.
     /// </summary>
     /// <param name="with">The arguments as the recipe wrote them.</param>
     /// <param name="facts">The instance's facts.</param>

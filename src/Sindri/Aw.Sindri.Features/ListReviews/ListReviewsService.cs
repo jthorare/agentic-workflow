@@ -10,9 +10,9 @@ namespace Aw.Sindri.Features.ListReviews;
 
 /// <summary>
 /// The Reviews list (PR review page spec §6.1): rows, groups, the waiting count and whether a PR claims a doc come from the stored PR records (<see cref="IReviewFacts"/>); a row's CI and open required
-/// checks come from the per-head summary (<see cref="ReviewSummaryReader"/>). The login is the approved profile's <c language="text">review.login</c>; without one the list is the login prompt, with the forge credential's own login suggested.
+/// checks come from the per-head summary (<see cref="ReviewSummaryReader"/>). The login is the profile's <c language="text">review.login</c>; without one the list is the login prompt, with the forge credential's own login suggested.
 /// </summary>
-/// <param name="approvals">The approved profile.</param>
+/// <param name="approvals">The profile.</param>
 /// <param name="facts">The stored PR records and the sources' state.</param>
 /// <param name="projects">The project names for the sections.</param>
 /// <param name="summaries">The per-head summaries.</param>

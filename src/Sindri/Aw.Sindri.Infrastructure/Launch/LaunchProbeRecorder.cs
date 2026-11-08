@@ -15,7 +15,7 @@ namespace Aw.Sindri.Infrastructure.Launch;
 /// fact, and two probes that race over the same predecessor record one.
 /// </summary>
 /// <param name="launcher">Probes the viewer, the host and the catalog.</param>
-/// <param name="approvals">The approved profile, which names the repos.</param>
+/// <param name="approvals">The profile, which names the repos.</param>
 /// <param name="locator">Says whether a repo's path is a checkout.</param>
 /// <param name="ledger">The ledger.</param>
 /// <param name="events">Builds the entry.</param>

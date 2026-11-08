@@ -59,7 +59,7 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
         return HealthSummary.WithIdleAgents(stalled, await healthRows.IdleAgents(cancellationToken).ConfigureAwait(false));   // issue #1265: and sessions ended as idle that no retry replaced (ended launches, so no overlap with the live count above)
     }
 
-    // 'on' when the APPROVED profile asks for model choice: that is what is in force, and the app never reads the word itself (model-pick spec 8).
+    // 'on' when the live profile asks for model choice: that is what is in force, and the app never reads the word itself (model-pick spec 8).
     private static string ModelPick(LoadedProfile? approved) => approved?.Profile.Workflow?.Agent is { PickIsOn: true } ? "on" : "off";
 
     private static ProfileStatus Profile(LoadedProfile? approved, Result<LoadedProfile> loaded, string labelPick, string surfacePick) =>

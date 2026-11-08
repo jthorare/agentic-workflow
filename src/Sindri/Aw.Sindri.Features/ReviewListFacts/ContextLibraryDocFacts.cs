@@ -12,7 +12,7 @@ namespace Aw.Sindri.Features.ReviewListFacts;
 /// One design doc over Context (PR review page spec §6.1). The audience rule is the Reviews list's (<see cref="ReviewScopes"/>): a human reads the docs of every repo of the profile, a session its own repo's.
 /// Two scopes can share a doc id; the doc at the lowest path answers, which is the one that keeps the id (spec §4.2).
 /// </summary>
-/// <param name="approvals">The approved profile.</param>
+/// <param name="approvals">The profile.</param>
 /// <param name="callers">The current caller.</param>
 /// <param name="engine">Context's facade.</param>
 /// <param name="host">The machine's home folders, to write a path with <c language="text">~</c>.</param>

@@ -11,7 +11,7 @@ namespace Aw.Sindri.Core.Launches;
 /// <param name="InFlight">A launch that is still being started, or null.</param>
 /// <param name="LastStarted">The newest launch that started, or null.</param>
 /// <param name="Confirm">Set when another Open should ask first, or null.</param>
-/// <param name="RepoPath">The item's repo checkout from the approved profile, or null.</param>
+/// <param name="RepoPath">The item's repo checkout from the profile, or null.</param>
 /// <param name="Blockers">Why an Open would fail now (from the last probe); empty when it would not, or nothing was probed.</param>
 public sealed record ItemLaunch(
     IReadOnlyList<LaunchMode> Modes,

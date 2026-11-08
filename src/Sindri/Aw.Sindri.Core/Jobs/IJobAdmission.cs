@@ -4,7 +4,7 @@ using Aw.Sindri.Core.Ids;
 namespace Aw.Sindri.Core.Jobs;
 
 /// <summary>
-/// What a job's start checks inside the gate when the check needs scoped services (the approved profile, the services this build has), and which
+/// What a job's start checks inside the gate when the check needs scoped services (the profile, the services this build has), and which
 /// background service the job runs, if any (RunService: its start event, its work's caller and its record then carry that service). Registered
 /// scoped per request type; a job without one needs none.
 /// </summary>

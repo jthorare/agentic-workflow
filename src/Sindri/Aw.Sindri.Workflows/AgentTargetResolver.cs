@@ -11,11 +11,11 @@ using Aw.Sindri.Core.Workflow.Engine.Runtime;
 namespace Aw.Sindri.Infrastructure.Workflows;
 
 /// <summary>
-/// Where an agent Step runs (engine P8 D8): the agent is the APPROVED profile's 'workflow.agent.target', and the item and its repo checkout come from the instance's
+/// Where an agent Step runs (engine P8 D8): the agent is the live profile's 'workflow.agent.target', and the item and its repo checkout come from the instance's
 /// stored 'fact:item' and the profile's 'repos' entry of that name. A child instance starts with its declared inputs only, so it has no 'fact:item':
 /// its item (the first part of its address) names the repo through the items port instead. Read when the launch activity runs, so a retry sees the current approval.
 /// </summary>
-/// <param name="approved">The approved profile.</param>
+/// <param name="approved">The profile.</param>
 /// <param name="contents">Reads the stored 'fact:item'.</param>
 /// <param name="repos">The repo an item was created in, for an instance (a child) that has no 'fact:item'.</param>
 internal sealed class AgentTargetResolver(IApprovedProfile approved, IFactContents contents, IItemRepos repos)

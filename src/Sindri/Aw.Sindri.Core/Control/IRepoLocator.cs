@@ -12,7 +12,7 @@ public interface IRepoLocator
 {
     /// <summary>The repo <paramref name="directory"/> belongs to.</summary>
     /// <param name="directory">The working directory.</param>
-    /// <param name="repos">The approved profile's repo entries.</param>
+    /// <param name="repos">The profile's repo entries.</param>
     /// <param name="cancellationToken">Cancels the operation.</param>
     /// <returns>The repo's name, or null outside git or outside every repo entry.</returns>
     public ValueTask<RepoName?> Locate(string directory, IReadOnlyList<RepoEntry> repos, CancellationToken cancellationToken);

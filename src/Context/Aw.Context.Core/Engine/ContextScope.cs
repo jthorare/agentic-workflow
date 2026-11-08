@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace Aw.Context.Core.Engine;
 
-/// <summary>What a facade call runs against: the approved profile's context section and repos, and who asks.</summary>
+/// <summary>What a facade call runs against: the profile's context section and repos, and who asks.</summary>
 /// <param name="Settings">The profile's 'context:' section, or null when it has none.</param>
 /// <param name="Repos">The profile's repos (name and checkout path).</param>
 /// <param name="Caller">The caller.</param>

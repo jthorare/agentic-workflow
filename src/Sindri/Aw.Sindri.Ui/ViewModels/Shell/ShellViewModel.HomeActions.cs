@@ -46,7 +46,7 @@ internal sealed partial class ShellViewModel
 
         if (result.Outcome == DispatchOutcome.Sent && Health.ApiUrl() is { } url)
         {
-            // An accepted command changes what needs the person: read the list now, so a row it settled (an approved profile) leaves Home instead of waiting for an event.
+            // An accepted command changes what needs the person: read the list now, so a row it settled (a profile) leaves Home instead of waiting for an event.
             await ReadNeedsYou(url, CancellationToken.None).ConfigureAwait(true);
         }
     }

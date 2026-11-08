@@ -12,7 +12,7 @@ namespace Aw.Sindri.Features.ValidateRecipe;
 /// Reads the recipe (a file, or text with the name findings show), validates it against the build's catalog, and
 /// returns the reader's and the validator's findings with the hash. Not served, a child recipe resolves from the
 /// recipe file's directory (spec §9.1); text has no directory, so its children don't resolve. RCP-EFFECT-001 checks
-/// the approved profile's 'workflow.effects' (S1-D11); it is skipped when none is approved or it has no such key.
+/// the profile's 'workflow.effects' (S1-D11); it is skipped when none is approved or it has no such key.
 /// </summary>
 internal sealed class ValidateRecipeService(IRecipeReader reader, IRecipeFiles files, BlockCatalog catalog, IRecipeProfileFacts profileFacts)
     : IService<ValidateRecipeRequest, ValidateRecipeResponse>

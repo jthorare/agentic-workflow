@@ -6,7 +6,7 @@ namespace Aw.Sindri.Core.Doctor;
 public interface ICodeIndexChecks
 {
     /// <summary>The checks, in the order doctor prints them.</summary>
-    /// <param name="approved">The approved profile, or null.</param>
+    /// <param name="approved">The profile, or null.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>One row per repo, then graphify, ollama and the lock.</returns>
     public ValueTask<DoctorCheck[]> Check(LoadedProfile? approved, CancellationToken cancellationToken);

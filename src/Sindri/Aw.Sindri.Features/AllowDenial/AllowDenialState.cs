@@ -10,7 +10,7 @@ public enum AllowDenialState
     [JsonStringEnumMemberName("needs-approval")]
     NeedsApproval,
 
-    /// <summary>The approved profile already has it.</summary>
+    /// <summary>The profile already has it.</summary>
     [JsonStringEnumMemberName("allowed")]
     Allowed,
 }

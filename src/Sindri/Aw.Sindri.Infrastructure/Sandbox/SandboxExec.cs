@@ -17,7 +17,7 @@ namespace Aw.Sindri.Infrastructure.Sandbox;
 /// <param name="sandbox">The sandbox that wraps the command.</param>
 /// <param name="cap">The concurrent-session cap.</param>
 /// <param name="egress">Starts the exec's own listeners.</param>
-/// <param name="profile">The approved profile: the cap and the limits.</param>
+/// <param name="profile">The profile: the cap and the limits.</param>
 /// <param name="box">The box's RAM and cores.</param>
 /// <param name="platform">The platform's scope for the command and its cleanup.</param>
 /// <param name="launchDirectory">The launcher's directory, read when a launch's plan is looked up.</param>

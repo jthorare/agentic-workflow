@@ -49,7 +49,7 @@ internal sealed partial class ContextConceptScanService(ContextScopes scopes, IC
         var scope = await scopes.Current(cancellationToken).ConfigureAwait(false);
         if (scope.IsError || scope.Value.Settings is null)
         {
-            // no approved profile is nothing to scan, not a failed run (a failed run would land in needs-you every tick)
+            // no profile is nothing to scan, not a failed run (a failed run would land in needs-you every tick)
             return scope.IsError && scope.Error.Code != SindriErrors.ProfileMissing.Code ? scope.Error : ScheduledResult.Quiet;
         }
 

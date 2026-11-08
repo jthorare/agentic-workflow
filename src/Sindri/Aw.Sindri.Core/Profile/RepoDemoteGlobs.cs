@@ -4,7 +4,7 @@ namespace Aw.Sindri.Core.Profile;
 public static class RepoDemoteGlobs
 {
     /// <summary>The demoted globs of <paramref name="repo"/>.</summary>
-    /// <param name="profile">The approved profile.</param>
+    /// <param name="profile">The profile.</param>
     /// <param name="repo">One of its repos.</param>
     /// <returns>The globs of each demoted role, roles in name order; or null when the repo demotes none.</returns>
     public static IReadOnlyList<string>? For(SindriProfile profile, RepoEntry repo)

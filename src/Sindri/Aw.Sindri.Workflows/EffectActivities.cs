@@ -41,7 +41,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="catalog">The registered events: a block's reply outcome names the reply event that declares it.</param>
 /// <param name="dispatch">Runs an effect block's runtime, by its id.</param>
 /// <param name="recipes">The recipe approvals now (P2's IRecipeApprovals and PinRules.Check), for the recheck.</param>
-/// <param name="profile">The approved profile snapshot (never the live file), whose 'workflow.effects' the recheck reads.</param>
+/// <param name="profile">The profile (never the live file), whose 'workflow.effects' the recheck reads.</param>
 internal sealed class EffectActivities(
     ILedgerStore ledger, HeldLease lease, EventFactory events, BlockCatalog catalog, EffectDispatch dispatch, IApprovedRecipes recipes, IApprovedProfile profile)
 {

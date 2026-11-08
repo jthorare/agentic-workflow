@@ -5,7 +5,7 @@ using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Features.GetRepoStatus;
 
-/// <summary>Reads the approved profile and places the directory in it. The live profile only names a repo waiting for approval, so a live profile that can't be read is no name.</summary>
+/// <summary>Reads the profile and places the directory in it. The live profile only names a repo waiting for approval, so a live profile that can't be read is no name.</summary>
 internal sealed class GetRepoStatusService(IApprovedProfile approvals, IProfileSource live, IRepoLocator locator) : IService<GetRepoStatusRequest, GetRepoStatusResponse>
 {
     public async ValueTask<Result<GetRepoStatusResponse>> Handle(GetRepoStatusRequest request, CancellationToken cancellationToken)

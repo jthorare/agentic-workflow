@@ -19,7 +19,7 @@ namespace Aw.Sindri.Core.Workflow.Registry;
 /// <param name="approvals">The approvals and revocations.</param>
 /// <param name="catalog">This build's blocks, against which an approval's pins drift.</param>
 /// <param name="json">The package's AwJson options (they read the stored text and hash the descriptors).</param>
-/// <param name="profile">The approved profile's facts, whose 'workflow.effects' RCP-EFFECT-001 checks against (S1-D11).</param>
+/// <param name="profile">The profile's facts, whose 'workflow.effects' RCP-EFFECT-001 checks against (S1-D11).</param>
 /// <param name="names">The names the app shows instead of the ids (setup-once spec §7.7); null shows the ids.</param>
 public sealed class RecipeRegistryReader(IRecipeStore store, IRecipeApprovals approvals, BlockCatalog catalog, JsonSerializerOptions json, IRecipeProfileFacts profile, IRecipeDisplayNames? names = null)
 {

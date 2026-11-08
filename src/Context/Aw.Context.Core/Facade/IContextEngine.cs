@@ -13,7 +13,7 @@ namespace Aw.Context.Core.Facade;
 
 /// <summary>
 /// The context engine's one facade (spec §4): every surface (HTTP, CLI, MCP, scheduled services, doctor) calls it with
-/// Core records only. Sindri passes the approved profile's 'context:' section, its repos and the caller on every call;
+/// Core records only. Sindri passes the profile's 'context:' section, its repos and the caller on every call;
 /// the engine keeps no profile of its own.
 /// </summary>
 public interface IContextEngine : IContextMap, IContextGraph, IContextLenses, IContextCode, IContextHistory, IContextConcepts, IContextEmbed, IContextProjects, IContextLibrary, IContextIssues, IContextPulls, IIndexSync

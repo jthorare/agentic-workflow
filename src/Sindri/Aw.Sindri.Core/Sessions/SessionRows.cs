@@ -19,7 +19,7 @@ public static class SessionRows
     /// <summary>The row of <paramref name="session"/>.</summary>
     /// <param name="session">The session.</param>
     /// <param name="entry">Its agent's catalog entry, or null when the catalog no longer has it.</param>
-    /// <param name="repoPath">The checkout path of its repo in the approved profile, or null.</param>
+    /// <param name="repoPath">The checkout path of its repo in the profile, or null.</param>
     /// <param name="launch">The instance, Step and attempt of the session's Sindri launch, or null when none is known.</param>
     /// <param name="sandbox">The sandbox of the session's launch, or null when it was not sandboxed.</param>
     /// <returns>The row.</returns>

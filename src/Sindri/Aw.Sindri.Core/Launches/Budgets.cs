@@ -73,7 +73,7 @@ public static class Budgets
     }
 
     /// <summary>The budget facts of <paramref name="target"/>.</summary>
-    /// <param name="agents">The approved profile's 'agents:' block, or null.</param>
+    /// <param name="agents">The profile's 'agents:' block, or null.</param>
     /// <param name="target">The agent.</param>
     /// <param name="spend">Today's spend, or null when the agent has no usage reader.</param>
     /// <returns>The facts.</returns>
@@ -84,7 +84,7 @@ public static class Budgets
     }
 
     /// <summary>The facts over all of <paramref name="targets"/>: budgets and spend added, and the state those totals earn.</summary>
-    /// <param name="agents">The approved profile's 'agents:' block, or null.</param>
+    /// <param name="agents">The profile's 'agents:' block, or null.</param>
     /// <param name="targets">Every target's facts.</param>
     /// <returns>The total.</returns>
     public static BudgetFacts Total(AgentSettings? agents, IReadOnlyList<BudgetFacts> targets)

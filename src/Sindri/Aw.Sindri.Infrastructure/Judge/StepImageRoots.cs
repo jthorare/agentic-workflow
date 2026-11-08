@@ -5,7 +5,7 @@ using Aw.Sindri.Core.Scoping;
 namespace Aw.Sindri.Infrastructure.Judge;
 
 /// <summary>
-/// <see cref="IStepImageRoots"/> over the approved profile and the environment: the instance repo's checkout, and ui-evidence's output root,
+/// <see cref="IStepImageRoots"/> over the profile and the environment: the instance repo's checkout, and ui-evidence's output root,
 /// $AW_STATE_DIR/ui-evidence (its runs are runs/{id} under it), else ~/.agentic-workflow/ui-evidence.
 /// </summary>
 /// <param name="checkouts">Where a repo is checked out.</param>

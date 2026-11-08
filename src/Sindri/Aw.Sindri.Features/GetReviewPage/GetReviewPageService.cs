@@ -12,7 +12,7 @@ namespace Aw.Sindri.Features.GetReviewPage;
 /// The forge is read by <see cref="ReviewPageReader"/> (a head that moves is read again), the page is built by <see cref="ReviewPageBuilder"/> and cached by <see cref="ReviewPageCache"/>;
 /// when the forge can't be reached the newest cached page answers, and with none cached the answer is SND-REVIEW-503. A PR the forge does not have is SND-REVIEW-404.
 /// </summary>
-/// <param name="approvals">The approved profile.</param>
+/// <param name="approvals">The profile.</param>
 /// <param name="store">The stored record, claims and doc map.</param>
 /// <param name="reader">The forge reads.</param>
 /// <param name="facts">The facts the page is built from.</param>

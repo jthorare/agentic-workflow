@@ -41,13 +41,13 @@ public sealed class RepoEvents(HeldLease held, ILedgerStore ledger, EventFactory
 
     /// <summary>The idempotency key of a repo's 'repo.onboarded': one per repo and approved hash, so a tick and the OnboardRepo job cannot both record it.</summary>
     /// <param name="repo">The repo's name.</param>
-    /// <param name="approved">The approved profile that names it.</param>
+    /// <param name="approved">The profile that names it.</param>
     /// <returns>'repo.onboarded:&lt;name&gt;:&lt;hash&gt;'.</returns>
     public static string OnboardedKeyOf(RepoName repo, ProfileHash approved) => $"repo.onboarded:{repo.Value}:{approved.Value}";
 
     /// <summary>Appends 'repo.onboarded' under <see cref="OnboardedKeyOf"/>; recording it again is a no-op.</summary>
     /// <param name="repo">The repo's name.</param>
-    /// <param name="approved">The approved profile that names it.</param>
+    /// <param name="approved">The profile that names it.</param>
     /// <param name="cancellationToken">Cancels the append.</param>
     /// <returns>Success, or SND-API-001 when this process holds no lease or no call is running, or the ledger's error.</returns>
     public async ValueTask<Result<Unit>> Onboarded(RepoName repo, ProfileHash approved, CancellationToken cancellationToken)

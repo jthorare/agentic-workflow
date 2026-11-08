@@ -8,10 +8,10 @@ using Aw.Sindri.Core.Setup;
 namespace Aw.Sindri.Features.SetupSources;
 
 /// <summary>
-/// What the sources step reads: the github, slack and linear sources the approved profile names (linear once it names a token, a url or a team), and whether each token pointer resolves, decided by
+/// What the sources step reads: the github, slack and linear sources the profile names (linear once it names a token, a url or a team), and whether each token pointer resolves, decided by
 /// <see cref="SourceTokens"/> as doctor does. A read; no source is called and no token value is kept.
 /// </summary>
-/// <param name="approvals">The approved profile.</param>
+/// <param name="approvals">The profile.</param>
 /// <param name="engine">The context engine, which checks the profile's context section.</param>
 /// <param name="secrets">Resolves a token pointer.</param>
 internal sealed class SourcesSetupReader(IApprovedProfile approvals, IContextEngine engine, ISecretPointers secrets)

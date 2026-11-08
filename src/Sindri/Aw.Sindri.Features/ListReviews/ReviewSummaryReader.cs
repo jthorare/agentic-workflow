@@ -22,7 +22,7 @@ internal sealed class ReviewSummaryReader(IReviewSummaries cache, IPullRequests 
 
     /// <summary>Reads or builds the summary of each PR.</summary>
     /// <param name="pulls">The PRs the list shows.</param>
-    /// <param name="review">The approved profile's review block, or null.</param>
+    /// <param name="review">The profile's review block, or null.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>The summary by repo and number; a PR with none is left out.</returns>
     internal async Task<IReadOnlyDictionary<(string Repo, int Number), ReviewSummary>> Read(IReadOnlyList<ReviewPull> pulls, PrReviewSettings? review, CancellationToken cancellationToken)

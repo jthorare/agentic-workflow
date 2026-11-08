@@ -1,6 +1,6 @@
 namespace Aw.Sindri.Core.Setup;
 
-/// <summary>Reads the pre-commit hook of every repo the approved profile names, at the path git resolves for it (core.hooksPath respected).</summary>
+/// <summary>Reads the pre-commit hook of every repo the profile names, at the path git resolves for it (core.hooksPath respected).</summary>
 public interface IRepoHookStates
 {
     /// <summary>Reads each repo's hook.</summary>

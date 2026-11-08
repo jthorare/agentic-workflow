@@ -16,7 +16,7 @@ internal sealed class ContextWarmup(IApprovedProfile approvals, IContextEngine e
     // A key no map holds: the lens read loads the map and builds the view, then answers SND-CONTEXT-003, which is all a warm read needs.
     private const string NoNode = "feature:sindri-warm-read";
 
-    /// <summary>Reads the current map once as a person at the app; false when there is no approved profile or the read failed.</summary>
+    /// <summary>Reads the current map once as a person at the app; false when there is no profile or the read failed.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>Whether the view is warm.</returns>
     internal async ValueTask<bool> Warm(CancellationToken cancellationToken)

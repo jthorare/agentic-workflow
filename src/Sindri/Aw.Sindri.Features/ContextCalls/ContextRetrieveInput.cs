@@ -10,7 +10,7 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// <summary>
 /// 'input.context.retrieve' (context spec Phase 10): one question ('q', a 'node' or a 'symbol', with optional 'depth' and 'budget') put to the context engine's query as the service, cut to the
 /// instance's repo, on the current map. The section 'context' is the readable answer with its [Cn] markers and a sources list (the run receipt's citations); the typed result is the <see cref="Context.Core.Results.ContextResult"/>
-/// as the route answers it, made stable first (no query id, no clock). The record text in it was fenced as untrusted by the engine and is handed over as it is. A missing question, an item with no repo, an unapproved profile or any
+/// as the route answers it, made stable first (no query id, no clock). The record text in it was fenced as untrusted by the engine and is handed over as it is. A missing question, an item with no repo, an unprofile or any
 /// refusal from the engine is one honest section and no typed result: the Step runs without context, never fails for it.
 /// </summary>
 /// <param name="engine">The context engine.</param>
