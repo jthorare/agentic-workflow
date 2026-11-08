@@ -385,6 +385,24 @@
       "confirm": null
     },
     {
+      "action": "CancelWorkflowRun",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflow-runs/{run}/cancel",
+      "cli": "sindri wf cancel <run>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "ChangeLinearIssue",
       "class": "desk",
       "allowedCallers": [
@@ -1518,6 +1536,24 @@
       "method": "POST",
       "route": "/sindri/services/{name}/run",
       "cli": "sindri services run <name>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "RunWorkflow",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflows/{slug}/runs",
+      "cli": "sindri wf run <slug> [--payload <json>]",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
