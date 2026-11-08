@@ -155,6 +155,8 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
     {
         _midnight?.Dispose();
         _midnight = null;
+        _savingTimer?.Dispose();
+        _savingTimer = null;
     }
 
     // One shot at the next local midnight; the callback regroups and sets the next one.
@@ -192,6 +194,7 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
         foreach (var gone in _rows.Keys.Where(k => !wanted.Contains(k)).ToList())
         {
             _ = _rows.Remove(gone);
+            Editing = string.Equals(Editing?.Id, gone, StringComparison.Ordinal) ? null : Editing;   // the todo went elsewhere: its edit goes with it
         }
 
         Patch.To(Rows, [.. split.Overdue.Concat(split.Due).Concat(split.Upcoming).Concat(split.Undated).Take(CollapsedRows).Select(t => Row(t, today))]);

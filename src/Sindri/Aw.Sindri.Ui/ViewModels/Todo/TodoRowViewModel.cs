@@ -56,6 +56,24 @@ internal sealed class TodoRowViewModel : ObservableObject
     /// <summary>"Couldn't save: " and the reason, after a key's write failed; empty otherwise.</summary>
     public string Notice { get; internal set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>The edit open on this row, or null. It is the panel's to set; a read never touches it, so the fields keep what was typed.</summary>
+    public TodoEditViewModel? Edit
+    {
+        get;
+        internal set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(IsEditing));
+            OnChanged(nameof(IsReading));
+        }
+    }
+
+    /// <summary>True while the row is an edit.</summary>
+    public bool IsEditing => Edit is not null;
+
+    /// <summary>True while the row shows its todo (not an edit).</summary>
+    public bool IsReading => Edit is null;
+
     /// <summary>The sentence a screen reader gets for the row.</summary>
     public string AccessibleName { get; private set => Set(ref field, value); } = string.Empty;
 
