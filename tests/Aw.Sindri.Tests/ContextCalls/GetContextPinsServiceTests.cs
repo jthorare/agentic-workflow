@@ -328,15 +328,20 @@ public sealed class GetContextPinsServiceTests
 
     private static PinMove Move(string pin, int gained, int lost, params PinMoveTo[] to) => new(ConceptId.From(pin), 41, 42, gained, lost, to);
 
+    private void PutRefresh(int version, PinMove[]? moves, TimeSpan endedAgo, long sequence)
+    {
+        var result = new RefreshContextMapResult("alpha", version, new Dictionary<string, string>(StringComparer.Ordinal), 0, 0, 0, "none", Held: false) { Moves = moves };
+        _jobs.Put(new JobRow(JobId.New(_h.Ids), ContextMapRefreshService.RefreshKind, JobKey.From("refresh"), Item: null, Repo: null, Service: null, JobState.Succeeded,
+            "service:context-map-refresh", _now - endedAgo - TimeSpan.FromSeconds(5), _now - endedAgo, [], Rounds: 0, Summary: null, Code: null,
+            JsonSerializer.SerializeToElement(result, _web), CancelledBy: null, Sequence: sequence));
+    }
+
     // Billing is the one pin; the map is at version 42, and the refresh that published 42 ended 3 h ago with these moves (null: the result carries none).
     private async Task<ContextPinRow> Billing(int mapVersion, int refreshVersion, PinMove[]? moves)
     {
         var profile = Loaded(Human, [Pin("Billing", id: "billing")], "same", new RepoEntry("alpha", "/r/alpha"));
         _engine.State = new MapPublishState(Hold: null, LatestDraft: null, mapVersion, [new MapHead(ContextRepoName.From("alpha"), "1", OnDefault: true)]);
-        var result = new RefreshContextMapResult("alpha", refreshVersion, new Dictionary<string, string>(StringComparer.Ordinal), 0, 0, 0, "none", Held: false) { Moves = moves };
-        _jobs.Put(new JobRow(JobId.New(_h.Ids), ContextMapRefreshService.RefreshKind, JobKey.From("refresh"), Item: null, Repo: null, Service: null, JobState.Succeeded,
-            "service:context-map-refresh", _now - TimeSpan.FromHours(3) - TimeSpan.FromSeconds(5), _now - TimeSpan.FromHours(3), [], Rounds: 0, Summary: null, Code: null,
-            JsonSerializer.SerializeToElement(result, _web), CancelledBy: null, Sequence: 1));
+        PutRefresh(refreshVersion, moves, TimeSpan.FromHours(3), 1);
         var read = await Read(profile, profile);
         return Assert.Single(read.Value.Pins);
     }
@@ -378,6 +383,37 @@ public sealed class GetContextPinsServiceTests
         var row = await Billing(42, 42, [Move("billing", 0, 1)]);
 
         Assert.Equal(-5, row.Moved!.RecordsLinked);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Two_relinks_of_the_version_after_the_refresh_add_up()
+    {
+        Relink(JobState.Succeeded, TimeSpan.FromHours(2), 2, version: 42, before: 10, after: 17);
+        Relink(JobState.Succeeded, TimeSpan.FromHours(1), 3, version: 42, before: 17, after: 18);
+
+        var row = await Billing(42, 42, [Move("billing", 1, 0)]);
+
+        Assert.Equal(8, row.Moved!.RecordsLinked);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_newer_refresh_whose_draft_was_held_does_not_hide_the_moves_of_the_one_that_published()
+    {
+        PutRefresh(version: 43, moves: null, TimeSpan.FromHours(1), 5);   // succeeded, held: the current map is still 42
+
+        var row = await Billing(42, 42, [Move("billing", 2, 1)]);
+
+        Assert.Equal((2, 1), (row.Moved!.Gained, row.Moved.Lost));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_newer_refresh_that_ended_already_current_does_not_hide_the_moves_of_the_one_that_published()   // also where the retry after a recorder error ends
+    {
+        PutRefresh(version: 42, moves: null, TimeSpan.FromHours(1), 5);
+
+        var row = await Billing(42, 42, [Move("billing", 2, 1)]);
+
+        Assert.Equal((2, 1), (row.Moved!.Gained, row.Moved.Lost));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -431,13 +467,11 @@ public sealed class GetContextPinsServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_pin_with_no_move_entry_in_a_refresh_that_stored_moves_is_all_zeros()
+    public async Task A_pin_with_no_move_entry_in_a_refresh_that_stored_moves_has_no_moved()
     {
         var row = await Billing(42, 42, [Move("refunds", 5, 5)]);
 
-        var expected = new ContextPinMoved("v41", "v42", 0, 0, [], RecordsLinked: null);
-        Assert.Equal(expected.To, row.Moved!.To);   // the list compares by reference inside the record
-        Assert.Equal(expected, row.Moved with { To = expected.To });
+        Assert.Null(row.Moved);
     }
 
     [Fact, Trait("Lane", "unit")]

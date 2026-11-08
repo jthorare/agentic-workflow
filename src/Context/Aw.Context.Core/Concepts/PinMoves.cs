@@ -51,5 +51,6 @@ public static class PinMoves
             .Select(g => new PinMoveTo(g.First()?.Id, g.First()?.Name, g.Count()))
             .OrderByDescending(t => t.Features)
             .ThenBy(t => t.Name ?? string.Empty, StringComparer.Ordinal)
+            .ThenBy(t => t.Id?.Value ?? string.Empty, StringComparer.Ordinal)
             .Take(MaxPlaces)];
 }
