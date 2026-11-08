@@ -80,7 +80,7 @@ internal sealed partial class TestConnectionService(IConnectionStore store, ICon
     private async ValueTask<Result<TestConnectionResponse>> Record(Connection connection, ConnectionStatus status, string? reason, CancellationToken cancellationToken, bool ok = false)
     {
         var updated = connection with { Status = status, StatusReason = ok ? null : reason, UpdatedAt = _time.GetUtcNow() };
-        var written = await _store.Upsert(updated, cancellationToken).ConfigureAwait(false);
+        var written = await _store.Update(updated, cancellationToken).ConfigureAwait(false);
         if (written.IsError)
         {
             return ConnectionFailures.Safe(written.Error);

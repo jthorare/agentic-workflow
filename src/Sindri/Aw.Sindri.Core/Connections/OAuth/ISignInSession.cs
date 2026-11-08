@@ -12,7 +12,8 @@ public interface ISignInSession
     /// <param name="preset">The provider.</param>
     /// <param name="client">The OAuth client id.</param>
     /// <param name="scopes">The scopes; empty takes the preset's defaults.</param>
+    /// <param name="clientSecret">The OAuth client secret for the token exchange, or null for a public client.</param>
     /// <param name="cancellationToken">Cancels the sign-in and closes the listener.</param>
     /// <returns>The consent URL and the completion, or SND-CONN-006-style failure when no port can be listened on.</returns>
-    public ValueTask<Result<SignInStarted>> Start(ConnectionPreset preset, string client, IReadOnlyList<string> scopes, CancellationToken cancellationToken);
+    public ValueTask<Result<SignInStarted>> Start(ConnectionPreset preset, string client, IReadOnlyList<string> scopes, string? clientSecret, CancellationToken cancellationToken);
 }

@@ -8,7 +8,7 @@
   "defaultScopes": ["repo", "read:org"],
   "hostGroup": "github",
   "loopbackAllowed": true,
-  "signInNote": "Register an OAuth app with the callback http://127.0.0.1 and pass its client id with --client-id.",
+  "signInNote": "Register an OAuth app with the callback http://127.0.0.1 and pass its client id with --client-id. GitHub OAuth apps also need the client secret at the token endpoint: put it in a variable and pass --client-secret-env NAME (it is stored in your OS keychain with the tokens).",
   "pollableEvents": [],
   "probeUrl": "https://api.github.com/user"
 }

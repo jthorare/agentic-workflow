@@ -101,4 +101,38 @@ public abstract class ConnectionStoreContract
         Expect.True(!second.Value);
         Expect.Equal(0, (await store.List(Token)).Value.Count);
     }
+
+    /// <summary>Insert refuses a name that is taken, and leaves the old row alone.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Insert_refuses_a_taken_name_with_SND_CONN_010_and_keeps_the_old_row()
+    {
+        var store = Create();
+        var connection = ConnectionSamples.Oauth();
+        var first = await store.Insert(connection, Token);
+
+        var second = await store.Insert(ConnectionSamples.Oauth(connection.Name, ConnectionStatus.NeedsSignIn), Token);
+
+        Expect.True(first.IsSuccess);
+        Expect.Equal(SindriErrors.ConnectionExists.Code, second.Error.Code);
+        Expect.Equal(ConnectionStatus.Connected, (await store.Get(connection.Name, Token)).Value.Status);
+    }
+
+    /// <summary>Update changes an existing row and never brings back a removed one.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Update_changes_a_row_that_exists_and_is_SND_CONN_001_for_one_that_was_removed()
+    {
+        var store = Create();
+        var connection = ConnectionSamples.Oauth();
+        _ = await store.Insert(connection, Token);
+
+        var changed = await store.Update(ConnectionSamples.Oauth(connection.Name, ConnectionStatus.Error), Token);
+        _ = await store.Remove(connection.Name, Token);
+        var late = await store.Update(connection, Token);
+
+        Expect.True(changed.IsSuccess);
+        Expect.Equal(SindriErrors.ConnectionNotFound.Code, late.Error.Code);
+        Expect.Equal(0, (await store.List(Token)).Value.Count);
+    }
 }

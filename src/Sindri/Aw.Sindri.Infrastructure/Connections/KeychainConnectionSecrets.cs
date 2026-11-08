@@ -95,6 +95,11 @@ internal sealed class KeychainConnectionSecrets(ISecretWriter writer, ISecretPoi
                 writer.WriteString("expiresAt", expires);
             }
 
+            if (tokens.ClientSecret is not null)
+            {
+                writer.WriteString("clientSecret", tokens.ClientSecret);
+            }
+
             writer.WriteEndObject();
         }
 
@@ -107,20 +112,22 @@ internal sealed class KeychainConnectionSecrets(ISecretWriter writer, ISecretPoi
         {
             using var document = JsonDocument.Parse(Base64Url.DecodeFromChars(text.Trim()));
             var root = document.RootElement;
-            if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty("access", out var access) || access.ValueKind != JsonValueKind.String || access.GetString() is not { } accessToken)
+            if (root.ValueKind != JsonValueKind.Object || Text(root, "access") is not { } accessToken)
             {
                 return null;
             }
 
-            var refresh = root.TryGetProperty("refresh", out var r) && r.ValueKind == JsonValueKind.String ? r.GetString() : null;
             DateTimeOffset? expires = root.TryGetProperty("expiresAt", out var e) && e.ValueKind == JsonValueKind.String && e.TryGetDateTimeOffset(out var at) ? at : null;
-            return new TokenSet(accessToken, refresh, expires);
+            return new TokenSet(accessToken, Text(root, "refresh"), expires, Text(root, "clientSecret"));
         }
         catch (Exception e) when (e is FormatException or JsonException)
         {
             return null;
         }
     }
+
+    private static string? Text(JsonElement root, string name) =>
+        root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
 
     private Result<Unit> DeleteFromKeychain(string[] segments)
     {
@@ -134,8 +141,8 @@ internal sealed class KeychainConnectionSecrets(ISecretWriter writer, ISecretPoi
             _ => ToolRun.Missing,
         };
 
-        // why: nothing stored counts as deleted: security exits 44, secret-tool 1 (or 0) for an entry that is not there
-        return run is { Outcome: ToolOutcome.Exited, ExitCode: 0 or 1 or 44 }
+        // why: the same exit codes as KeychainSecretWriter.DeleteFromKeychain: 0, and 44 on macOS ("not there"). secret-tool exits 1 for no D-Bus or a locked keyring too, which must not drop the row and orphan the secret
+        return run is { Outcome: ToolOutcome.Exited } && (run.ExitCode == 0 || (run.ExitCode == 44 && _platform == KeychainPlatform.MacOS))
             ? Unit.Value
             : SindriErrors.ConnectionSecretUnavailable.With("the OS keychain would not delete the connection's secret (none installed, or locked)");
     }

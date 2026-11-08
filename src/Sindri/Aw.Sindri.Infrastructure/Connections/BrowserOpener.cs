@@ -1,13 +1,12 @@
-using Aw.Sindri.Infrastructure.Processes;
+using System.ComponentModel;
+using System.Diagnostics;
 
 namespace Aw.Sindri.Infrastructure.Connections;
 
 /// <summary>IBrowserOpener over 'open' (macOS) or 'xdg-open' (elsewhere), as the Needs-you links open (the URL is an argument, never a shell string).</summary>
-/// <param name="runner">Runs the opener.</param>
-internal sealed class BrowserOpener(IToolRunner runner) : IBrowserOpener
+internal sealed class BrowserOpener : IBrowserOpener
 {
-    private static readonly TimeSpan _timeout = TimeSpan.FromSeconds(10);
-
+    // Starts the opener and returns: xdg-open can hold its terminal for as long as the browser runs, and the sign-in must not wait for it. The URL is an argument, never a shell string.
     public bool Open(Uri url)
     {
         ArgumentNullException.ThrowIfNull(url);
@@ -16,7 +15,16 @@ internal sealed class BrowserOpener(IToolRunner runner) : IBrowserOpener
             return false;
         }
 
-        var run = runner.Run(OperatingSystem.IsMacOS() ? "open" : "xdg-open", [url.AbsoluteUri], _timeout);
-        return run is { Outcome: ToolOutcome.Exited, ExitCode: 0 };
+        var start = new ProcessStartInfo(OperatingSystem.IsMacOS() ? "open" : "xdg-open") { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
+        start.ArgumentList.Add(url.AbsoluteUri);
+        try
+        {
+            using var process = Process.Start(start);
+            return process is not null;
+        }
+        catch (Exception e) when (e is Win32Exception or InvalidOperationException)
+        {
+            return false;   // no opener installed: the caller still hands the URL to the owner
+        }
     }
 }

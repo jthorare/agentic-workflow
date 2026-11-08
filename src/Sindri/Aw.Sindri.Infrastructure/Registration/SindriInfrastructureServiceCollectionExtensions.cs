@@ -252,7 +252,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IEnvironmentReader, ProcessEnvironmentReader>()
             .AddSingleton<IConnectionProbe>(static _ => new HttpConnectionProbe(new HttpClient()))
             .AddSingleton<IOAuthClient>(static sp => new HttpOAuthClient(new HttpClient(), sp.GetRequiredService<TimeProvider>()))
-            .AddSingleton<IBrowserOpener>(static _ => new BrowserOpener(new ProcessToolRunner()))
+            .AddSingleton<IBrowserOpener>(static _ => new BrowserOpener())
             .AddSingleton<ISignInSession>(static sp => new LoopbackSignIn(sp.GetRequiredService<IOAuthClient>(), sp.GetRequiredService<IBrowserOpener>(), TimeSpan.FromMinutes(5), System.Security.Cryptography.RandomNumberGenerator.GetBytes));
 
     private static IServiceCollection AddSecretInfrastructure(this IServiceCollection services)

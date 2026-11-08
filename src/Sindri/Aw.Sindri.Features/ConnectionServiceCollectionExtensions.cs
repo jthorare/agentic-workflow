@@ -19,6 +19,8 @@ internal static class ConnectionServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         return services
+            .AddSingleton<SignInOutcomes>()
+            .AddScoped<OAuthSignInFlow>()
             .AddScoped<IService<AddConnectionRequest, AddConnectionResponse>, AddConnectionService>()
             .AddScoped<IService<TestConnectionRequest, TestConnectionResponse>, TestConnectionService>()
             .AddScoped<IService<RemoveConnectionRequest, RemoveConnectionResponse>, RemoveConnectionService>()

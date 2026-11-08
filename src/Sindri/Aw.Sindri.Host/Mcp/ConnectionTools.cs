@@ -62,7 +62,8 @@ internal static class ConnectionTools
             ["preset"] = ContextTools.Property("string", "A shipped preset: github, linear, slack, google or spotify"),
             ["kind"] = ContextTools.Property("string", "oauth, mcp, rest or cli; the preset's kind when left out", bounds: new ContextTools.PropertyBounds(Allowed: ["oauth", "mcp", "rest", "cli"])),
             ["clientId"] = ContextTools.Property("string", "The OAuth client id (not secret); presets ship none"),
-            ["keyEnv"] = ContextTools.Property("string", "The environment variable that holds the key of a rest or cli connection"),
+            ["keyEnv"] = ContextTools.Property("string", "The NAME of an environment variable in the environment of the running sindri serve (not your shell) that holds the key of a rest or cli connection; the error says when serve has no such variable"),
+            ["clientSecretEnv"] = ContextTools.Property("string", "The NAME of an environment variable in the running sindri serve's environment that holds the OAuth client secret, for providers that want one (the github and google presets)"),
         }, required: ["name"]),
         Annotations = new ToolAnnotations { ReadOnlyHint = false, DestructiveHint = false, IdempotentHint = false, OpenWorldHint = true },
     };
@@ -132,27 +133,13 @@ internal static class ConnectionTools
     /// <returns>The tool result.</returns>
     internal static async ValueTask<CallToolResult> CallAdd(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
     {
-        if (McpArguments.Only(Add, arguments, "name", "preset", "kind", "clientId", "keyEnv") is { } refused)
+        var request = BindAdd(arguments);
+        if (request.IsError)
         {
-            return McpResults.Failure(services, refused);
+            return McpResults.Failure(services, request.Error);
         }
 
-        var name = McpArguments.RequiredString(Add, arguments, "name", "linear:work");
-        var preset = McpArguments.OptionalString(Add, arguments, "preset");
-        var kind = McpArguments.OptionalString(Add, arguments, "kind");
-        var client = McpArguments.OptionalString(Add, arguments, "clientId");
-        var keyEnv = McpArguments.OptionalString(Add, arguments, "keyEnv");
-        foreach (var bad in new[] { name.IsError ? name.Error : null, preset.IsError ? preset.Error : null, kind.IsError ? kind.Error : null, client.IsError ? client.Error : null, keyEnv.IsError ? keyEnv.Error : null })
-        {
-            if (bad is not null)
-            {
-                return McpResults.Failure(services, bad);
-            }
-        }
-
-        // why: an agent cannot wait minutes for a browser; it gets the consent URL at once and the sign-in finishes in the background
-        var request = new AddConnectionRequest(name.Value, preset.Value, kind.Value, client.Value, keyEnv.Value, [], Wait: false);
-        var answer = await services.GetRequiredService<IService<AddConnectionRequest, AddConnectionResponse>>().Handle(request, ct).ConfigureAwait(false);
+        var answer = await services.GetRequiredService<IService<AddConnectionRequest, AddConnectionResponse>>().Handle(request.Value, ct).ConfigureAwait(false);
         return McpResults.From(services, answer, static added => added.ConsentUrl is null ? Summary(added.Connection) : "Sign-in started. Give the consentUrl to the owner; the connection finishes when they sign in.");
     }
 
@@ -188,6 +175,33 @@ internal static class ConnectionTools
 
         var answer = await services.GetRequiredService<IService<RemoveConnectionRequest, RemoveConnectionResponse>>().Handle(new RemoveConnectionRequest(name.Value), ct).ConfigureAwait(false);
         return McpResults.From(services, answer, static removed => removed.SecretDeleted ? "Removed the connection and its secret." : "Removed the connection (it had no stored secret).");
+    }
+
+    private static readonly string[] _optionalAdd = ["preset", "kind", "clientId", "keyEnv", "clientSecretEnv"];
+
+    // why: an agent cannot wait minutes for a browser, so Wait is false: it gets the consent URL at once and the sign-in finishes in the background. The key and the client secret are
+    // NAMES of variables read from the running sindri serve's environment: an MCP call has no shell of its own.
+    private static Result<AddConnectionRequest> BindAdd(IDictionary<string, JsonElement>? arguments)
+    {
+        if (McpArguments.Only(Add, arguments, "name", "preset", "kind", "clientId", "keyEnv", "clientSecretEnv") is { } refused)
+        {
+            return refused;
+        }
+
+        var name = McpArguments.RequiredString(Add, arguments, "name", "linear:work");
+        var optional = _optionalAdd.Select(n => McpArguments.OptionalString(Add, arguments, n)).ToList();
+        if (name.IsError)
+        {
+            return name.Error;
+        }
+
+        var bad = optional.FirstOrDefault(static o => o.IsError);
+        if (bad is not null)
+        {
+            return bad.Error;
+        }
+
+        return new AddConnectionRequest(name.Value, optional[0].Value, optional[1].Value, optional[2].Value, optional[3].Value, [], Wait: false, ClientSecretEnv: optional[4].Value);
     }
 
     private static Result<string> Name(string tool, IDictionary<string, JsonElement>? arguments) =>

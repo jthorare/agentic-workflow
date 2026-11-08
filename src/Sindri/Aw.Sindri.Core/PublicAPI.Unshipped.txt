@@ -24664,8 +24664,6 @@ Aw.Sindri.Core.Connections.OAuth.CodeExchange.Client.get -> string!
 Aw.Sindri.Core.Connections.OAuth.CodeExchange.Client.init -> void
 Aw.Sindri.Core.Connections.OAuth.CodeExchange.Code.get -> string!
 Aw.Sindri.Core.Connections.OAuth.CodeExchange.Code.init -> void
-Aw.Sindri.Core.Connections.OAuth.CodeExchange.CodeExchange(Aw.Sindri.Core.Connections.ConnectionPreset! Preset, string! Client, string! Code, string! RedirectUri, string! Verifier) -> void
-Aw.Sindri.Core.Connections.OAuth.CodeExchange.Deconstruct(out Aw.Sindri.Core.Connections.ConnectionPreset! Preset, out string! Client, out string! Code, out string! RedirectUri, out string! Verifier) -> void
 Aw.Sindri.Core.Connections.OAuth.CodeExchange.Equals(Aw.Sindri.Core.Connections.OAuth.CodeExchange? other) -> bool
 Aw.Sindri.Core.Connections.OAuth.CodeExchange.Preset.get -> Aw.Sindri.Core.Connections.ConnectionPreset!
 Aw.Sindri.Core.Connections.OAuth.CodeExchange.Preset.init -> void
@@ -24675,10 +24673,8 @@ Aw.Sindri.Core.Connections.OAuth.CodeExchange.Verifier.get -> string!
 Aw.Sindri.Core.Connections.OAuth.CodeExchange.Verifier.init -> void
 Aw.Sindri.Core.Connections.OAuth.IOAuthClient
 Aw.Sindri.Core.Connections.OAuth.IOAuthClient.ExchangeCode(Aw.Sindri.Core.Connections.OAuth.CodeExchange! exchange, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Connections.TokenSet!>!>
-Aw.Sindri.Core.Connections.OAuth.IOAuthClient.Refresh(Aw.Sindri.Core.Connections.ConnectionPreset! preset, string! client, string! refreshToken, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Connections.TokenSet!>!>
 Aw.Sindri.Core.Connections.OAuth.IOAuthClient.Revoke(Aw.Sindri.Core.Connections.ConnectionPreset! preset, string! client, string! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Connections.OAuth.ISignInSession
-Aw.Sindri.Core.Connections.OAuth.ISignInSession.Start(Aw.Sindri.Core.Connections.ConnectionPreset! preset, string! client, System.Collections.Generic.IReadOnlyList<string!>! scopes, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Connections.OAuth.SignInStarted!>!>
 Aw.Sindri.Core.Connections.OAuth.PkceChallenge
 Aw.Sindri.Core.Connections.OAuth.PkceChallenge.<Clone>$() -> Aw.Sindri.Core.Connections.OAuth.PkceChallenge!
 Aw.Sindri.Core.Connections.OAuth.PkceChallenge.Challenge.get -> string!
@@ -24704,13 +24700,11 @@ Aw.Sindri.Core.Connections.TokenSet
 Aw.Sindri.Core.Connections.TokenSet.<Clone>$() -> Aw.Sindri.Core.Connections.TokenSet!
 Aw.Sindri.Core.Connections.TokenSet.AccessToken.get -> string!
 Aw.Sindri.Core.Connections.TokenSet.AccessToken.init -> void
-Aw.Sindri.Core.Connections.TokenSet.Deconstruct(out string! AccessToken, out string? RefreshToken, out System.DateTimeOffset? ExpiresAt) -> void
 Aw.Sindri.Core.Connections.TokenSet.Equals(Aw.Sindri.Core.Connections.TokenSet? other) -> bool
 Aw.Sindri.Core.Connections.TokenSet.ExpiresAt.get -> System.DateTimeOffset?
 Aw.Sindri.Core.Connections.TokenSet.ExpiresAt.init -> void
 Aw.Sindri.Core.Connections.TokenSet.RefreshToken.get -> string?
 Aw.Sindri.Core.Connections.TokenSet.RefreshToken.init -> void
-Aw.Sindri.Core.Connections.TokenSet.TokenSet(string! AccessToken, string? RefreshToken, System.DateTimeOffset? ExpiresAt) -> void
 const Aw.Sindri.Core.Connections.OAuth.PkceChallenge.Method = "S256" -> string!
 override Aw.Sindri.Core.Connections.Connection.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Connections.Connection.GetHashCode() -> int
@@ -25679,3 +25673,15 @@ override Aw.Sindri.Core.Scheduling.StoreCheckpoint.GetHashCode() -> int
 override Aw.Sindri.Core.Scheduling.StoreCheckpoint.ToString() -> string!
 static Aw.Sindri.Core.Scheduling.StoreCheckpoint.operator !=(Aw.Sindri.Core.Scheduling.StoreCheckpoint? left, Aw.Sindri.Core.Scheduling.StoreCheckpoint? right) -> bool
 static Aw.Sindri.Core.Scheduling.StoreCheckpoint.operator ==(Aw.Sindri.Core.Scheduling.StoreCheckpoint? left, Aw.Sindri.Core.Scheduling.StoreCheckpoint? right) -> bool
+Aw.Sindri.Core.Connections.IConnectionStore.Insert(Aw.Sindri.Core.Connections.Connection! connection, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Connections.IConnectionStore.Update(Aw.Sindri.Core.Connections.Connection! connection, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Connections.OAuth.CodeExchange.ClientSecret.get -> string?
+Aw.Sindri.Core.Connections.OAuth.CodeExchange.ClientSecret.init -> void
+Aw.Sindri.Core.Connections.OAuth.CodeExchange.CodeExchange(Aw.Sindri.Core.Connections.ConnectionPreset! Preset, string! Client, string! Code, string! RedirectUri, string! Verifier, string? ClientSecret = null) -> void
+Aw.Sindri.Core.Connections.OAuth.CodeExchange.Deconstruct(out Aw.Sindri.Core.Connections.ConnectionPreset! Preset, out string! Client, out string! Code, out string! RedirectUri, out string! Verifier, out string? ClientSecret) -> void
+Aw.Sindri.Core.Connections.OAuth.IOAuthClient.Refresh(Aw.Sindri.Core.Connections.ConnectionPreset! preset, string! client, string! refreshToken, string? clientSecret, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Connections.TokenSet!>!>
+Aw.Sindri.Core.Connections.OAuth.ISignInSession.Start(Aw.Sindri.Core.Connections.ConnectionPreset! preset, string! client, System.Collections.Generic.IReadOnlyList<string!>! scopes, string? clientSecret, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Connections.OAuth.SignInStarted!>!>
+Aw.Sindri.Core.Connections.TokenSet.ClientSecret.get -> string?
+Aw.Sindri.Core.Connections.TokenSet.ClientSecret.init -> void
+Aw.Sindri.Core.Connections.TokenSet.Deconstruct(out string! AccessToken, out string? RefreshToken, out System.DateTimeOffset? ExpiresAt, out string? ClientSecret) -> void
+Aw.Sindri.Core.Connections.TokenSet.TokenSet(string! AccessToken, string? RefreshToken, System.DateTimeOffset? ExpiresAt, string? ClientSecret = null) -> void

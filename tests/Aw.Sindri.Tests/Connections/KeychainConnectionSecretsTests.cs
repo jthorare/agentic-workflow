@@ -121,12 +121,26 @@ public sealed partial class KeychainConnectionSecretsTests
     }
 
     [Fact]
-    public void Deleting_what_is_not_stored_is_not_an_error()
+    public void Deleting_what_is_not_stored_is_not_an_error_on_macos_where_security_exits_44()
     {
-        var runner = new FakeToolRunner(new ToolRun(ToolOutcome.Exited, 1, string.Empty));
-        var secrets = new KeychainConnectionSecrets(new FakeSecretWriter(), new FakeSecretWriter(), runner, KeychainPlatform.Linux);
+        var runner = new FakeToolRunner(new ToolRun(ToolOutcome.Exited, 44, string.Empty));
+        var secrets = new KeychainConnectionSecrets(new FakeSecretWriter(), new FakeSecretWriter(), runner, KeychainPlatform.MacOS);
 
         Assert.True(secrets.Delete(SecretPointer.Parse("keychain:sindri-connection/slack.team").Value).IsSuccess);
+    }
+
+    [Fact]
+    public void An_exit_1_from_secret_tool_is_SND_CONN_006_so_the_row_and_its_pointer_stay()
+    {
+        // why: secret-tool exits 1 for no D-Bus or a locked keyring as well, and exit 44 is macOS's alone (the same codes as KeychainSecretWriter.DeleteFromKeychain)
+        var runner = new FakeToolRunner(new ToolRun(ToolOutcome.Exited, 1, string.Empty));
+        var linux = new KeychainConnectionSecrets(new FakeSecretWriter(), new FakeSecretWriter(), runner, KeychainPlatform.Linux);
+        var other = new KeychainConnectionSecrets(new FakeSecretWriter(), new FakeSecretWriter(), new FakeToolRunner(new ToolRun(ToolOutcome.Exited, 44, string.Empty)), KeychainPlatform.Linux);
+
+        var pointer = SecretPointer.Parse("keychain:sindri-connection/slack.team").Value;
+
+        Assert.Equal(SindriErrors.ConnectionSecretUnavailable.Code, linux.Delete(pointer).Error.Code);
+        Assert.Equal(SindriErrors.ConnectionSecretUnavailable.Code, other.Delete(pointer).Error.Code);
     }
 
     [Fact]

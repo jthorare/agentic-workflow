@@ -7,6 +7,9 @@ using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Connections.OAuth;
 using Aw.Sindri.Core.Secrets;
 using Aw.Sindri.Features.TestConnection;
+using Aw.Sindri.Infrastructure;
+using Aw.Sindri.Infrastructure.Ledger;
+using Aw.Sindri.Tests.Ledger;
 using Aw.Sindri.Host;
 using Aw.Sindri.Host.Mcp;
 using Aw.Sindri.Infrastructure.Connections;
@@ -43,6 +46,16 @@ public sealed class ConnectionSecretsTests
         }
     }
 
+    /// <summary>The CLI path: the key and the client secret ride in the request, read from the CLI's own environment.</summary>
+    private static async Task<string> DriveCliPath(ConnectionHarness world)
+    {
+        var request = ConnectionHarness.Rest("acme:cli") with { KeyEnv = null, Key = _canary };
+        var sent = await world.Add().Handle(request, Token);
+        return JsonSerializer.Serialize(sent.IsSuccess ? sent.Value : null, SindriJsonContext.Default.AddConnectionResponse)
+            + (sent.IsError ? sent.Error.Message : string.Empty)
+            + (request with { ClientSecret = _canary });
+    }
+
     /// <summary>Plants the canary as a rest key and an oauth token set, then runs add, a refused test and a failed sign-in.</summary>
     private static async Task<(ConnectionHarness World, List<string> Outputs)> DriveEveryPath()
     {
@@ -53,13 +66,15 @@ public sealed class ConnectionSecretsTests
         var added = await world.Add().Handle(ConnectionHarness.Rest(), Token);
         outputs.Add(JsonSerializer.Serialize(added.IsSuccess ? added.Value : null, SindriJsonContext.Default.AddConnectionResponse) + (added.IsError ? added.Error.Message : string.Empty));
 
+        outputs.Add(await DriveCliPath(world));
+
         var oauthPointer = world.Secrets.Store(ConnectionSamples.Name(), new TokenSet(_canary, _canary + "-refresh", ExpiresAt: null)).Value;
         _ = await world.Store.Upsert(ConnectionSamples.Oauth() with { SecretPointer = oauthPointer }, Token);
 
         foreach (var echoes in new[] { false, true })
         {
             world.Probe.Refuses = true;
-            var service = echoes ? new TestConnectionService(world.Store, world.Secrets, world.Presets, new EchoingProbe(), world.Clock) : world.Test();
+            var service = echoes ? world.TestWith(new EchoingProbe()) : world.Test();
             foreach (var name in new[] { "acme:key", "linear:work" })
             {
                 var tested = await service.Handle(new TestConnectionRequest(name), Token);
@@ -67,10 +82,16 @@ public sealed class ConnectionSecretsTests
             }
         }
 
-        var pending = world.Add().Handle(ConnectionHarness.Oauth(name: "linear:other"), Token).AsTask();
+        var pending = world.Add().Handle(ConnectionHarness.Oauth(name: "linear:other") with { ClientSecret = _canary }, Token).AsTask();
         world.SignIn.Fail(SindriErrors.ConnectionConsentDenied.With($"denied for {_canary}"));
         var failed = await pending;
         outputs.Add(failed.IsError ? failed.Error.Message : string.Empty);
+
+        // an add that fails after the key was read: the secret store is down
+        world.Secrets.Fails = true;
+        var down = await world.Add().Handle(ConnectionHarness.Rest("acme:down") with { KeyEnv = null, Key = _canary }, Token);
+        outputs.Add(down.IsError ? down.Error.Message : string.Empty);
+        world.Secrets.Fails = false;
         return (world, outputs);
     }
 
@@ -104,7 +125,9 @@ public sealed class ConnectionSecretsTests
             .AddSingleton(AwJson.CreateOptions(SindriJsonContext.Default))
             .AddSingleton<Kernel.Services.IService<Features.GetConnection.GetConnectionRequest, Features.GetConnection.GetConnectionResponse>>(world.Get())
             .AddSingleton<Kernel.Services.IService<Features.ListConnections.ListConnectionsRequest, Features.ListConnections.ListConnectionsResponse>>(world.List())
-            .AddSingleton<Kernel.Services.IService<TestConnectionRequest, TestConnectionResponse>>(new TestConnectionService(world.Store, world.Secrets, world.Presets, new EchoingProbe(), world.Clock))
+            .AddSingleton<Kernel.Services.IService<TestConnectionRequest, TestConnectionResponse>>(world.TestWith(new EchoingProbe()))
+            .AddSingleton<Kernel.Services.IService<Features.AddConnection.AddConnectionRequest, Features.AddConnection.AddConnectionResponse>>(world.Add())
+            .AddSingleton<Kernel.Services.IService<Features.RemoveConnection.RemoveConnectionRequest, Features.RemoveConnection.RemoveConnectionResponse>>(world.Remove())
             .BuildServiceProvider();
         var results = new List<ModelContextProtocol.Protocol.CallToolResult>
         {
@@ -117,6 +140,16 @@ public sealed class ConnectionSecretsTests
             results.Add(await ConnectionTools.CallTest(services, arguments, Token));
         }
 
+        // add (serve's environment holds the canary), an add that fails because the secret store is down, and remove
+        world.Environment.Set("ACME_MCP_KEY", _canary);
+        var addArguments = new Dictionary<string, JsonElement>(StringComparer.Ordinal) { ["name"] = JsonSerializer.SerializeToElement("acme:mcp"), ["kind"] = JsonSerializer.SerializeToElement("rest"), ["keyEnv"] = JsonSerializer.SerializeToElement("ACME_MCP_KEY") };
+        results.Add(await ConnectionTools.CallAdd(services, addArguments, Token));
+        world.Secrets.Fails = true;
+        addArguments["name"] = JsonSerializer.SerializeToElement("acme:mcpdown");
+        results.Add(await ConnectionTools.CallAdd(services, addArguments, Token));
+        world.Secrets.Fails = false;
+        results.Add(await ConnectionTools.CallRemove(services, new Dictionary<string, JsonElement>(StringComparer.Ordinal) { ["name"] = JsonSerializer.SerializeToElement("acme:mcp") }, Token));
+
         Assert.All(results, result =>
         {
             var text = (result.StructuredContent?.GetRawText() ?? string.Empty) + string.Concat(result.Content.OfType<ModelContextProtocol.Protocol.TextContentBlock>().Select(static t => t.Text));
@@ -125,12 +158,50 @@ public sealed class ConnectionSecretsTests
     }
 
     [Fact]
-    public async Task Secret_never_reaches_the_test_output()
+    public async Task Secret_never_reaches_the_service_answers_the_cli_and_the_http_route_print()
     {
-        var (_, outputs) = await DriveEveryPath();   // success and refused answers, as the CLI prints them and the HTTP route serializes them
+        // the answers the CLI prints and the route serializes, one per path; the CLI's own stdout and stderr only print these fields
+        var (_, outputs) = await DriveEveryPath();
 
         Assert.All(outputs, output => Assert.DoesNotContain(_canary, output, StringComparison.Ordinal));
         Assert.Contains(outputs, static output => output.Contains("acme:key", StringComparison.Ordinal));   // the answers are not empty
+    }
+
+    [Fact]
+    public async Task Secret_never_reaches_a_stored_row_in_memory()
+    {
+        var (world, _) = await DriveEveryPath();
+
+        foreach (var row in world.Store.Rows)
+        {
+            var fields = string.Join('\n', [row.Name.ToString(), row.Preset, row.StatusReason, row.SecretPointer?.ToString(), row.CreatedBy, .. row.Config.Select(static p => p.Key + "=" + p.Value)]);
+            Assert.DoesNotContain(_canary, fields, StringComparison.Ordinal);
+        }
+
+        Assert.Contains(world.Store.Rows, static r => r.Name.ToString() == "acme:cli");   // the CLI-sent key was stored (in the secret store), so the scan above read a real row
+    }
+
+    [Fact]
+    public async Task Secret_never_reaches_the_sqlite_row()
+    {
+        using var home = new TempHome();
+        using var database = new LedgerDatabase(new SindriSettings(home.Path, Path.Combine(home.Path, "profile.yaml")), new FakeTimeProvider(KnownInstants.Epoch));
+        var world = new ConnectionHarness();
+        var store = new SqliteConnectionStore(database);
+        var oauth = new Features.AddConnection.OAuthSignInFlow(store, world.Secrets, world.SignIn, world.Clock, world.Outcomes);
+        var service = new Features.AddConnection.AddConnectionService(store, world.Secrets, world.Presets, world.Environment, world.Clock, world.Callers, oauth);
+
+        var added = await service.Handle(ConnectionHarness.Rest("acme:sql") with { KeyEnv = null, Key = _canary }, Token);
+
+        Assert.True(added.IsSuccess, added.IsError ? added.Error.Message : null);
+        var file = Path.Combine(home.Path, "ledger.db");
+        await using var connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={file};Mode=ReadOnly;Pooling=False");
+        await connection.OpenAsync(Token);
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT name || ' ' || kind || ' ' || ifnull(preset, '') || ' ' || config_json || ' ' || ifnull(secret_pointer, '') || ' ' || status || ' ' || ifnull(status_reason, '') || ' ' || created_by FROM connection";
+        var text = Convert.ToString(await command.ExecuteScalarAsync(Token), System.Globalization.CultureInfo.InvariantCulture);
+        Assert.Contains("acme:sql", text, StringComparison.Ordinal);
+        Assert.DoesNotContain(_canary, text, StringComparison.Ordinal);
     }
 
     private static void AssertClean(string text)
@@ -173,7 +244,7 @@ public sealed class ConnectionSecretsTests
         using var http = new HttpClient();
         var client = new HttpOAuthClient(http, new FakeTimeProvider(KnownInstants.Epoch));
 
-        var refreshed = await client.Refresh(server.Preset(), "client-123", Refresh, ct);
+        var refreshed = await client.Refresh(server.Preset(), "client-123", Refresh, clientSecret: null, ct);
         var exchanged = await client.ExchangeCode(new CodeExchange(server.Preset(), "client-123", "code-not-issued", "http://127.0.0.1:1/callback", Access), ct);
 
         Assert.Equal(SindriErrors.ConnectionRefreshFailed.Code, refreshed.Error.Code);
@@ -192,9 +263,9 @@ public sealed class ConnectionSecretsTests
         using var http = new HttpClient();
         var client = new HttpOAuthClient(http, new FakeTimeProvider(KnownInstants.Epoch));
 
-        var kept = await client.Refresh(server.Preset(), "client-123", "refresh-old", ct);
+        var kept = await client.Refresh(server.Preset(), "client-123", "refresh-old", clientSecret: null, ct);
         server.RotateRefresh = true;
-        var rotated = await client.Refresh(server.Preset(), "client-123", "refresh-old", ct);
+        var rotated = await client.Refresh(server.Preset(), "client-123", "refresh-old", clientSecret: null, ct);
 
         Assert.Equal("refresh-old", kept.Value.RefreshToken);
         Assert.NotEqual("refresh-old", rotated.Value.RefreshToken, StringComparer.Ordinal);

@@ -3,33 +3,32 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Connections;
-using Aw.Sindri.Core.Connections.OAuth;
 
 namespace Aw.Sindri.Features.AddConnection;
 
 /// <summary>
-/// Adds a connection. A bad name is SND-CONN-008, an existing one SND-CONN-010, a preset without a client id SND-CONN-007. An oauth connection starts the
-/// sign-in; its row is written only after the tokens are stored, so a denied consent (SND-CONN-009), a timeout (SND-CONN-003) or a state mismatch
-/// (SND-CONN-004) leaves no row and no secret. A rest or cli connection reads --key-env once and stores it as the secret. An error shows its code and
-/// fixed title only (<see cref="ConnectionFailures"/>),.
+/// Adds a connection. A bad name is SND-CONN-008, an existing one SND-CONN-010 (the insert itself refuses a duplicate, so two adds racing cannot both win), a preset
+/// without a client id SND-CONN-007, and a preset that cannot take a loopback sign-in is refused with its sign-in note before any listener opens. An oauth connection
+/// runs <see cref="OAuthSignInFlow"/>. A rest or cli connection stores the key the CLI sent (read from the CLI's own environment) or, for an agent, the variable named by
+/// --key-env in serve's environment. An error shows its code and fixed title only (<see cref="ConnectionFailures"/>).
 /// </summary>
 /// <param name="store">The connections.</param>
 /// <param name="secrets">Stores the tokens.</param>
 /// <param name="presets">The shipped presets.</param>
-/// <param name="signIn">Starts the browser sign-in.</param>
-/// <param name="environment">Reads --key-env.</param>
+/// <param name="environment">Reads --key-env and --client-secret-env when the caller sent only the names (serve's environment).</param>
 /// <param name="time">The clock.</param>
 /// <param name="callers">Who is adding.</param>
-internal sealed class AddConnectionService(IConnectionStore store, IConnectionSecrets secrets, IConnectionPresetCatalog presets, ISignInSession signIn, IEnvironmentReader environment, TimeProvider time, ICallerContextAccessor callers)
+/// <param name="oauth">The oauth sign-in.</param>
+internal sealed class AddConnectionService(IConnectionStore store, IConnectionSecrets secrets, IConnectionPresetCatalog presets, IEnvironmentReader environment, TimeProvider time, ICallerContextAccessor callers, OAuthSignInFlow oauth)
     : IService<AddConnectionRequest, AddConnectionResponse>
 {
     private readonly IConnectionStore _store = store;
     private readonly IConnectionSecrets _secrets = secrets;
     private readonly IConnectionPresetCatalog _presets = presets;
-    private readonly ISignInSession _signIn = signIn;
     private readonly IEnvironmentReader _environment = environment;
     private readonly TimeProvider _time = time;
     private readonly ICallerContextAccessor _callers = callers;
+    private readonly OAuthSignInFlow _oauth = oauth;
 
     public async ValueTask<Result<AddConnectionResponse>> Handle(AddConnectionRequest request, CancellationToken cancellationToken)
     {
@@ -109,88 +108,41 @@ internal sealed class AddConnectionService(IConnectionStore store, IConnectionSe
             return SindriErrors.InvalidInput.With("an oauth connection needs a --preset (its endpoints come from the preset)");
         }
 
+        if (!preset.LoopbackAllowed)
+        {
+            // why: the provider refuses a plain-http 127.0.0.1 redirect, so a consent page would open that can never come back; the note says how to sign in instead
+            return SindriErrors.InvalidInput.With($"{preset.DisplayName} does not accept the browser sign-in Sindri runs on this machine. {preset.SignInNote}");
+        }
+
         if (string.IsNullOrWhiteSpace(request.Client))
         {
             return SindriErrors.ConnectionNeedsClientId.With($"the {preset.Key} preset ships no client id (fix: register an OAuth app with {preset.DisplayName} and pass --client-id; {preset.SignInNote})");
         }
 
-        var started = await _signIn.Start(preset, request.Client, request.Scopes, cancellationToken).ConfigureAwait(false);
-        if (started.IsError)
+        var secret = Secret(request.ClientSecret, request.ClientSecretEnv, "--client-secret-env");
+        if (secret.IsError)
         {
-            return ConnectionFailures.Safe(started.Error);
+            return secret.Error;
         }
 
-        var sign = new SignInContext(name, preset, request.Client, request.Scopes.Count > 0 ? request.Scopes : preset.DefaultScopes, _callers.Current?.Actor ?? "unknown", _time.GetUtcNow());
-        if (request.Wait)
-        {
-            var finished = await started.Value.Completion.WaitAsync(cancellationToken).ConfigureAwait(false);
-            var done = await Finish(sign, finished, cancellationToken).ConfigureAwait(false);
-            return done.IsError ? done.Error : new AddConnectionResponse(ConnectionView.From(done.Value), ConsentUrl: null);
-        }
-
-        _ = FinishInBackground(sign, started.Value.Completion);
-        return new AddConnectionResponse(ConnectionView.From(Pending(sign)), started.Value.ConsentUrl.ToString());
+        var add = new OAuthAdd(name, preset, request.Client, secret.Value, request.Scopes, _callers.Current?.Actor ?? "unknown", request.Wait);
+        return await _oauth.Run(add, cancellationToken).ConfigureAwait(false);
     }
-
-    // why: nothing awaits this; a failed sign-in leaves no row and no secret, which is what a later 'connection list' shows
-    private async Task FinishInBackground(SignInContext sign, Task<Result<TokenSet>> completion)
-    {
-        var finished = await completion.ConfigureAwait(false);
-        _ = await Finish(sign, finished, CancellationToken.None).ConfigureAwait(false);
-    }
-
-    // The row is written only here, after the tokens are stored: a failed or denied sign-in never leaves a row or a secret.
-    private async ValueTask<Result<Connection>> Finish(SignInContext sign, Result<TokenSet> tokens, CancellationToken cancellationToken)
-    {
-        if (tokens.IsError)
-        {
-            return ConnectionFailures.Safe(tokens.Error);
-        }
-
-        var pointer = _secrets.Store(sign.Name, tokens.Value);
-        if (pointer.IsError)
-        {
-            return ConnectionFailures.Safe(pointer.Error);
-        }
-
-        var row = Pending(sign) with { SecretPointer = pointer.Value, Status = ConnectionStatus.Connected, StatusReason = null, UpdatedAt = _time.GetUtcNow() };
-        var written = await _store.Upsert(row, cancellationToken).ConfigureAwait(false);
-        if (written.IsError)
-        {
-            _ = _secrets.Delete(pointer.Value);   // why: a secret with no row is one nobody can remove
-            return ConnectionFailures.Safe(written.Error);
-        }
-
-        return row;
-    }
-
-    private static Connection Pending(SignInContext sign) => new(
-        sign.Name,
-        ConnectionKind.OAuth,
-        sign.Preset.Key,
-        new Dictionary<string, string>(StringComparer.Ordinal) { ["clientId"] = sign.Client, ["scopes"] = string.Join(' ', sign.Scopes) },
-        SecretPointer: null,
-        ConnectionStatus.NeedsSignIn,
-        StatusReason: "waiting for the browser sign-in",
-        sign.Actor,
-        sign.Created,
-        sign.Created,
-        LastRefreshedAt: null);
 
     private async ValueTask<Result<AddConnectionResponse>> AddKey(ConnectionName name, ConnectionKind kind, AddConnectionRequest request, ConnectionPreset? preset, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.KeyEnv))
+        var key = Secret(request.Key, request.KeyEnv, "--key-env");
+        if (key.IsError)
+        {
+            return key.Error;
+        }
+
+        if (key.Value is null)
         {
             return SindriErrors.InvalidInput.With($"a {ConnectionWire.Name(kind)} connection needs --key-env NAME (the environment variable that holds the key)");
         }
 
-        var key = _environment.Get(request.KeyEnv);
-        if (key is null)
-        {
-            return SindriErrors.InvalidInput.With($"the environment variable {request.KeyEnv} is not set or is empty (fix: export it in this shell, then run the command again)");
-        }
-
-        var pointer = _secrets.Store(name, new TokenSet(key, RefreshToken: null, ExpiresAt: null));
+        var pointer = _secrets.Store(name, new TokenSet(key.Value, RefreshToken: null, ExpiresAt: null));
         if (pointer.IsError)
         {
             return ConnectionFailures.Safe(pointer.Error);
@@ -204,7 +156,7 @@ internal sealed class AddConnectionService(IConnectionStore store, IConnectionSe
         }
 
         var row = new Connection(name, kind, preset?.Key, config, pointer.Value, ConnectionStatus.Connected, StatusReason: null, _callers.Current?.Actor ?? "unknown", now, now, LastRefreshedAt: null);
-        var written = await _store.Upsert(row, cancellationToken).ConfigureAwait(false);
+        var written = await _store.Insert(row, cancellationToken).ConfigureAwait(false);
         if (written.IsError)
         {
             _ = _secrets.Delete(pointer.Value);
@@ -214,5 +166,21 @@ internal sealed class AddConnectionService(IConnectionStore store, IConnectionSe
         return new AddConnectionResponse(ConnectionView.From(row), ConsentUrl: null);
     }
 
-    private sealed record SignInContext(ConnectionName Name, ConnectionPreset Preset, string Client, IReadOnlyList<string> Scopes, string Actor, DateTimeOffset Created);
+    // The value the CLI sent wins; otherwise the variable named by the flag is read from serve's environment (an agent has no other way). Neither given is no secret; a name that is unset is an error that says whose environment.
+    private Result<string?> Secret(string? sent, string? variable, string flag)
+    {
+        if (sent is { Length: > 0 })
+        {
+            return sent;
+        }
+
+        if (string.IsNullOrWhiteSpace(variable))
+        {
+            return Results.Success<string?>(value: null);
+        }
+
+        return _environment.Get(variable) is { } read
+            ? read
+            : SindriErrors.InvalidInput.With($"the environment variable {variable} is not set or is empty in the environment of the running Sindri (fix: export it where `sindri` runs, or run `sindri connection add ... {flag} {variable}` from a terminal, which sends its own value)");
+    }
 }
