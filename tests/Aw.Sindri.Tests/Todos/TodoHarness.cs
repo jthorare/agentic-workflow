@@ -20,6 +20,7 @@ namespace Aw.Sindri.Tests.Todos;
 /// <summary>
 /// The todo services over an in-memory ledger and views, with a scrubber that masks GitHub tokens.
 /// </summary>
+#pragma warning disable CA1001 // why: the window's semaphores are never waited on after a test ends, and the test classes that own a harness have nothing to dispose it with
 internal sealed partial class TodoHarness
 {
     internal static readonly TodoId First = TodoId.From("td_01jc5a8xq0n4w7ms2t9r3vbk6e");
@@ -74,3 +75,4 @@ internal sealed partial class TodoHarness
         private static partial Regex Token { get; }
     }
 }
+#pragma warning restore CA1001

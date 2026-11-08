@@ -24943,3 +24943,52 @@ static Aw.Sindri.Core.Todos.TodoWrite.Append(Aw.Sindri.Core.Ledger.ILedgerStore!
 static Aw.Sindri.Core.Todos.TodoWrite.Begin(Aw.Sindri.Core.Commands.ICallerContextAccessor! callers, Aw.Sindri.Core.Lease.HeldLease! held, string! action) -> Aw.Kernel.Result<(Aw.Sindri.Core.Commands.CallerContext! Caller, Aw.Sindri.Core.Lease.LeaseGrant! Grant)>!
 static Aw.Sindri.Core.Todos.TodoWrite.By(Aw.Sindri.Core.Commands.CallerContext! caller) -> string!
 static Aw.Sindri.Core.Todos.TodoWrite.Via(bool piped) -> string?
+Aw.Sindri.Core.Todos.TodoAddWindow
+Aw.Sindri.Core.Todos.TodoAddWindow.Earlier
+Aw.Sindri.Core.Todos.TodoAddWindow.Earlier.<Clone>$() -> Aw.Sindri.Core.Todos.TodoAddWindow.Earlier!
+Aw.Sindri.Core.Todos.TodoAddWindow.Earlier.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out long Sequence, out System.DateOnly? Due) -> void
+Aw.Sindri.Core.Todos.TodoAddWindow.Earlier.Due.get -> System.DateOnly?
+Aw.Sindri.Core.Todos.TodoAddWindow.Earlier.Due.init -> void
+Aw.Sindri.Core.Todos.TodoAddWindow.Earlier.Earlier(Aw.Sindri.Core.Ids.TodoId Id, long Sequence, System.DateOnly? Due) -> void
+Aw.Sindri.Core.Todos.TodoAddWindow.Earlier.Equals(Aw.Sindri.Core.Todos.TodoAddWindow.Earlier? other) -> bool
+Aw.Sindri.Core.Todos.TodoAddWindow.Earlier.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Todos.TodoAddWindow.Earlier.Id.init -> void
+Aw.Sindri.Core.Todos.TodoAddWindow.Earlier.Sequence.get -> long
+Aw.Sindri.Core.Todos.TodoAddWindow.Earlier.Sequence.init -> void
+Aw.Sindri.Core.Todos.TodoAddWindow.Find(Aw.Sindri.Core.Ids.TodoClientId clientId) -> Aw.Sindri.Core.Todos.TodoAddWindow.Earlier?
+Aw.Sindri.Core.Todos.TodoAddWindow.Lock(string! actor) -> System.Threading.SemaphoreSlim!
+Aw.Sindri.Core.Todos.TodoAddWindow.Recent
+Aw.Sindri.Core.Todos.TodoAddWindow.Recent.<Clone>$() -> Aw.Sindri.Core.Todos.TodoAddWindow.Recent!
+Aw.Sindri.Core.Todos.TodoAddWindow.Recent.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Todos.TodoAddWindow.Recent.At.init -> void
+Aw.Sindri.Core.Todos.TodoAddWindow.Recent.By.get -> string!
+Aw.Sindri.Core.Todos.TodoAddWindow.Recent.By.init -> void
+Aw.Sindri.Core.Todos.TodoAddWindow.Recent.Deconstruct(out System.DateTimeOffset At, out string! By, out string? Via) -> void
+Aw.Sindri.Core.Todos.TodoAddWindow.Recent.Equals(Aw.Sindri.Core.Todos.TodoAddWindow.Recent? other) -> bool
+Aw.Sindri.Core.Todos.TodoAddWindow.Recent.Recent(System.DateTimeOffset At, string! By, string? Via) -> void
+Aw.Sindri.Core.Todos.TodoAddWindow.Recent.Via.get -> string?
+Aw.Sindri.Core.Todos.TodoAddWindow.Recent.Via.init -> void
+Aw.Sindri.Core.Todos.TodoAddWindow.Refresh(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, System.DateTimeOffset now, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Todos.TodoAddWindow.TodoAddWindow() -> void
+Aw.Sindri.Core.Todos.TodoAddWindow.Within(string! by, bool pipeOnly, System.DateTimeOffset now) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.TodoAddWindow.Recent!>!
+Aw.Sindri.Core.Todos.TodoAdds
+Aw.Sindri.Core.Todos.TodoAdds.Admit(Aw.Sindri.Core.Ids.TodoClientId? clientId, Aw.Sindri.Core.Commands.CallerContext! caller, string! by, bool piped, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Todos.TodoAccepted?>!>
+Aw.Sindri.Core.Todos.TodoAdds.Lock(string! by) -> System.Threading.SemaphoreSlim!
+Aw.Sindri.Core.Todos.TodoAdds.TodoAdds(Aw.Sindri.Core.Views.IViewReader! views, Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, System.TimeProvider! clock, Aw.Sindri.Core.Todos.TodoAddWindow! window) -> void
+Aw.Sindri.Core.Todos.TodoInput
+Aw.Sindri.Core.Todos.TodoInput.Edit(string? text, System.Collections.Generic.IReadOnlyList<string!>? links, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<(string? Text, System.Collections.Generic.IReadOnlyList<string!>? Links)>!>
+Aw.Sindri.Core.Todos.TodoInput.Links(System.Collections.Generic.IReadOnlyList<string!>! typed, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
+Aw.Sindri.Core.Todos.TodoInput.Text(string! text) -> Aw.Kernel.Result<string!>!
+Aw.Sindri.Core.Todos.TodoInput.TodoInput(Aw.Sindri.Core.Text.ITextScrubber! scrubber, Aw.Sindri.Core.Profile.IApprovedProfile! approvals) -> void
+override Aw.Sindri.Core.Todos.TodoAddWindow.Earlier.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoAddWindow.Earlier.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoAddWindow.Earlier.ToString() -> string!
+override Aw.Sindri.Core.Todos.TodoAddWindow.Recent.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoAddWindow.Recent.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoAddWindow.Recent.ToString() -> string!
+static Aw.Sindri.Core.Todos.TodoAddWindow.Earlier.operator !=(Aw.Sindri.Core.Todos.TodoAddWindow.Earlier? left, Aw.Sindri.Core.Todos.TodoAddWindow.Earlier? right) -> bool
+static Aw.Sindri.Core.Todos.TodoAddWindow.Earlier.operator ==(Aw.Sindri.Core.Todos.TodoAddWindow.Earlier? left, Aw.Sindri.Core.Todos.TodoAddWindow.Earlier? right) -> bool
+static Aw.Sindri.Core.Todos.TodoAddWindow.Recent.operator !=(Aw.Sindri.Core.Todos.TodoAddWindow.Recent? left, Aw.Sindri.Core.Todos.TodoAddWindow.Recent? right) -> bool
+static Aw.Sindri.Core.Todos.TodoAddWindow.Recent.operator ==(Aw.Sindri.Core.Todos.TodoAddWindow.Recent? left, Aw.Sindri.Core.Todos.TodoAddWindow.Recent? right) -> bool
+static Aw.Sindri.Core.Todos.TodoDecisions.NoEdit(string? text, System.DateOnly? due, bool clearDue, System.Collections.Generic.IReadOnlyList<string!>? links) -> Aw.Kernel.Error?
+static readonly Aw.Sindri.Core.Todos.TodoAddWindow.Span -> System.TimeSpan

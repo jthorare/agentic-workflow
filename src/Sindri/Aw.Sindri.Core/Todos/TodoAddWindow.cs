@@ -10,7 +10,7 @@ namespace Aw.Sindri.Core.Todos;
 /// What the ledger says about adds (todo spec §4.4 "The hourly limit"): which client ids already made a todo, and the adds of the last hour by who wrote them. Read from the ledger
 /// (so it survives a restart) and kept up to date by reading only what was appended since the last look. One per process; the adds of one actor run inside <see cref="Lock"/>.
 /// </summary>
-public sealed class TodoAddWindow
+public sealed class TodoAddWindow : IDisposable
 {
     /// <summary>How long an add counts against the hourly limit.</summary>
     public static readonly TimeSpan Span = TimeSpan.FromHours(1);
@@ -19,21 +19,19 @@ public sealed class TodoAddWindow
 
     private readonly SemaphoreSlim _sync = new(1, 1);
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, Earlier> _byClient = new(StringComparer.Ordinal);
-    private readonly List<Recent> _recent = [];
+    private readonly Dictionary<string, TodoEarlierAdd> _byClient = new(StringComparer.Ordinal);
+    private readonly List<TodoRecentAdd> _recent = [];
     private long _scannedTo;
 
-    /// <summary>One todo a client id made.</summary>
-    /// <param name="Id">The todo.</param>
-    /// <param name="Sequence">The ledger sequence of its 'todo.added'.</param>
-    /// <param name="Due">Its due date when added.</param>
-    public sealed record Earlier(TodoId Id, long Sequence, DateOnly? Due);
-
-    /// <summary>One add inside the hour.</summary>
-    /// <param name="At">When it was recorded.</param>
-    /// <param name="By">Who wrote it.</param>
-    /// <param name="Via">Its 'via'.</param>
-    public sealed record Recent(DateTimeOffset At, string By, string? Via);
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        _sync.Dispose();
+        foreach (var turn in _locks.Values)
+        {
+            turn.Dispose();
+        }
+    }
 
     /// <summary>The lock that serializes the adds of <paramref name="actor"/>, so counting and appending never interleave.</summary>
     /// <param name="actor">The 'by' of the caller.</param>
@@ -83,7 +81,7 @@ public sealed class TodoAddWindow
     /// <summary>The todo an earlier add with this client id made.</summary>
     /// <param name="clientId">The client id.</param>
     /// <returns>The todo, or null when none did.</returns>
-    public Earlier? Find(TodoClientId clientId)
+    public TodoEarlierAdd? Find(TodoClientId clientId)
     {
         lock (_byClient)
         {
@@ -96,7 +94,7 @@ public sealed class TodoAddWindow
     /// <param name="pipeOnly">Whether only piped adds count.</param>
     /// <param name="now">The clock.</param>
     /// <returns>The adds.</returns>
-    public IReadOnlyList<Recent> Within(string by, bool pipeOnly, DateTimeOffset now)
+    public IReadOnlyList<TodoRecentAdd> Within(string by, bool pipeOnly, DateTimeOffset now)
     {
         lock (_recent)
         {
@@ -111,7 +109,7 @@ public sealed class TodoAddWindow
         {
             lock (_byClient)
             {
-                _ = _byClient.TryAdd(client.Value, new Earlier(added.Id, recorded.Sequence, added.Due));
+                _ = _byClient.TryAdd(client.Value, new TodoEarlierAdd(added.Id, recorded.Sequence, added.Due));
             }
         }
 
@@ -122,7 +120,7 @@ public sealed class TodoAddWindow
 
         lock (_recent)
         {
-            _recent.Add(new Recent(recorded.Envelope.OccurredAt, added.By, added.Via));
+            _recent.Add(new TodoRecentAdd(recorded.Envelope.OccurredAt, added.By, added.Via));
         }
     }
 }

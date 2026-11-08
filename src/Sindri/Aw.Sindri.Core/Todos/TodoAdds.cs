@@ -63,11 +63,11 @@ public sealed class TodoAdds(IViewReader views, ILedgerStore ledger, EventFactor
         }
 
         var limited = Limit(caller, by, piped, now);
-        return limited is null ? Results.Success<TodoAccepted?>(null) : limited;
+        return limited is null ? Results.Success<TodoAccepted?>(value: null) : limited;
     }
 
     // a retried add answers with the todo the first one made, at the version it has now
-    private async ValueTask<Result<TodoAccepted?>> Replay(TodoAddWindow.Earlier earlier, CallerContext caller, CancellationToken cancellationToken)
+    private async ValueTask<Result<TodoAccepted?>> Replay(TodoEarlierAdd earlier, CallerContext caller, CancellationToken cancellationToken)
     {
         var row = await views.Get<TodoRow>(ViewNames.Todo, earlier.Id.Value, cancellationToken).ConfigureAwait(false);
         if (row.IsError)
