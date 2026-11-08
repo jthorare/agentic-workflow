@@ -16,15 +16,23 @@ public sealed class FakeProvenanceQuery : IProvenanceQuery
     /// <summary>The patterns queried.</summary>
     public IList<string> Patterns { get; } = [];
 
+    /// <summary>The database each query named (null for the default), in order.</summary>
+    public IList<string?> Databases { get; } = [];
+
     /// <inheritdoc/>
-    public ValueTask<Result<IReadOnlyList<string>>> EmailsLikeAsync(string likePattern, CancellationToken cancellationToken)
+    public ValueTask<Result<IReadOnlyList<string>>> EmailsLikeAsync(string likePattern, string? database, CancellationToken cancellationToken)
     {
         Patterns.Add(likePattern);
+        Databases.Add(database);
         return Answer([.. Emails.Where(e => Like(e, likePattern))]);
     }
 
     /// <inheritdoc/>
-    public ValueTask<Result<IReadOnlyList<string>>> AllEmailsAsync(CancellationToken cancellationToken) => Answer([.. Emails]);
+    public ValueTask<Result<IReadOnlyList<string>>> AllEmailsAsync(string? database, CancellationToken cancellationToken)
+    {
+        Databases.Add(database);
+        return Answer([.. Emails]);
+    }
 
     private ValueTask<Result<IReadOnlyList<string>>> Answer(IReadOnlyList<string> rows) =>
         ValueTask.FromResult(Failure is null ? Results.Success(rows) : EvidenceErrors.ProbeFailed.With(Failure));
