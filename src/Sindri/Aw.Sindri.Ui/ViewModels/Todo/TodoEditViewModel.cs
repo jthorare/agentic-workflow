@@ -56,6 +56,9 @@ internal sealed class TodoEditViewModel : ObservableObject
     /// <summary>The line under the fields: why a save did not happen; empty otherwise.</summary>
     public string Message { get; internal set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>After "changed somewhere else": the todo as it is now ("Now: text · day · links"), next to the fields; empty otherwise.</summary>
+    public string Latest { get; internal set => Set(ref field, value); } = string.Empty;
+
     /// <summary>True when the save has run longer than 300 ms: the row says "Saving…".</summary>
     public bool IsSaving { get; internal set => Set(ref field, value); }
 

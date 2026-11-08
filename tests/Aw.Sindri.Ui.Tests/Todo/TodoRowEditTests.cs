@@ -170,6 +170,29 @@ public sealed class TodoRowEditTests
     }
 
     [Fact]
+    public async Task A_409_shows_the_latest_takes_it_into_untouched_fields_and_the_next_Enter_sends_only_the_owners_change()
+    {
+        var panel = await Two();
+        var version = panel.Rows[0].Version;
+        var edit = Edit(panel, "td_a");
+        edit.Text = "typed";
+        var latest = Open("td_a", "first, from the CLI", "2026-01-05");
+        latest["version"] = version + 1;
+        _f.ServeTodos(latest, Open("td_b", "second"));
+        _f.Server.TodoWriteAnswer = RouteAnswer.Problem(HttpStatusCode.Conflict, "SND-TODO-409", "The todo changed.");
+
+        await panel.SaveEdit();
+
+        Assert.Equal("Now: first, from the CLI · 2026-01-05", edit.Latest);
+        Assert.Equal(("typed", "2026-01-05"), (edit.Text, edit.Due));   // the owner's text stays; the day they didn't touch is the latest
+        _f.Server.TodoWriteAnswer = null;
+
+        await panel.SaveEdit();
+
+        Assert.Equal(new TodoChange(version + 1, Text: "typed"), _f.Server.TodoWrites[^1].Body);
+    }
+
+    [Fact]
     public async Task A_423_closes_the_edit_says_to_pick_a_version_and_puts_focus_on_the_row()
     {
         var panel = await Two();
