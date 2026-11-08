@@ -18,7 +18,7 @@ internal sealed class LinearUrlGuard(IProfileSource live, IApprovedProfile appro
 
     /// <summary>Checks the live Linear url against the approved one.</summary>
     /// <param name="cancellationToken">Cancels the work.</param>
-    /// <returns>Null when the urls match; SND-LINEAR-006 when they differ or nothing was approved; the error when a profile can't be read.</returns>
+    /// <returns>Null when the urls match; SND-LINEAR-016 when they differ or nothing was approved; the error when a profile can't be read.</returns>
     public async ValueTask<Error?> Pending(CancellationToken cancellationToken)
     {
         var current = await live.Load(cancellationToken).ConfigureAwait(false);
@@ -30,7 +30,7 @@ internal sealed class LinearUrlGuard(IProfileSource live, IApprovedProfile appro
 
         return latest.Value is { } previous && string.Equals(Url(current.Value.Profile), Url(previous.Profile), StringComparison.Ordinal)
             ? null
-            : SindriErrors.LinearBadValue.With(Waiting);
+            : SindriErrors.LinearUrlNotApproved.With(Waiting);
     }
 
     /// <summary>Loads the live profile, for the hash a save answers with.</summary>

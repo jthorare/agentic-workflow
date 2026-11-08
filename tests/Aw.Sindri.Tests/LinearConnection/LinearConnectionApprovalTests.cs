@@ -47,7 +47,8 @@ public sealed class LinearConnectionApprovalTests
 
         var answer = await host.Http.Ask(Post(Connect, Read, ItemScenarios.Human(host)));
 
-        Assert.Contains("SND-LINEAR-006", answer.Body, StringComparison.Ordinal);
+        Assert.Equal(409, (int)answer.Status);
+        Assert.Contains("SND-LINEAR-016", answer.Body, StringComparison.Ordinal);
         Assert.DoesNotContain("LINEAR_API_KEY\"", await File.ReadAllTextAsync(Path.Combine(host.Home, "profile", "profile.yaml"), ct), StringComparison.Ordinal);   // nothing was stored: the old pointer is still the only one
     }
 

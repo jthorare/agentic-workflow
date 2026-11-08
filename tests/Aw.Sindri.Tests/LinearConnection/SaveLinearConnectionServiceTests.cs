@@ -37,7 +37,7 @@ public sealed class SaveLinearConnectionServiceTests
 
         var result = await service.Handle(new SaveLinearConnectionRequest(kind, kind == "read" ? ReadKey : WriteKey, ["ENG"]), Token);
 
-        Expect.Equal(SindriErrors.LinearBadValue.Code, result.Error.Code);
+        Expect.Equal(SindriErrors.LinearUrlNotApproved.Code, result.Error.Code);
         Expect.Equal(LinearUrlGuard.Waiting, result.Error.Message);
         Assert.Empty(_checks.Asked);
         Assert.Empty(_store.ReadSaves);
@@ -53,7 +53,7 @@ public sealed class SaveLinearConnectionServiceTests
 
         var result = await service.Handle(Read("ENG"), Token);
 
-        Expect.Equal(SindriErrors.LinearBadValue.Code, result.Error.Code);
+        Expect.Equal(SindriErrors.LinearUrlNotApproved.Code, result.Error.Code);
         Assert.Empty(_checks.Asked);
         Assert.Empty(_store.ReadSaves);
     }

@@ -24,4 +24,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-LINEAR-014: no OS keychain took the write key (Linear hub spec 2026-11-04 §8). The write key never goes in a file an agent session can read, so it is not saved.</summary>
     public static readonly ErrorDefinition LinearNoKeychain = new("SND-LINEAR-014", ErrorKind.Invalid, "No keychain to keep the write key in");
+
+    /// <summary>SND-LINEAR-016: the live Linear url differs from the approved profile's, or no profile is approved yet (Linear hub spec 2026-11-04 §3, Settings, Connections, Linear). A pasted key is never sent to a url nobody approved; nothing was sent or stored.</summary>
+    public static readonly ErrorDefinition LinearUrlNotApproved = new("SND-LINEAR-016", ErrorKind.Conflict, "The Linear url waits for approval");
 }

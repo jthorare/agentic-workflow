@@ -28,7 +28,7 @@ public sealed class ListLinearTeamsServiceTests
 
         var result = await service.Handle(new ListLinearTeamsRequest(Key), Token);
 
-        Expect.Equal(SindriErrors.LinearBadValue.Code, result.Error.Code);
+        Expect.Equal(SindriErrors.LinearUrlNotApproved.Code, result.Error.Code);
         Expect.Equal(LinearUrlGuard.Waiting, result.Error.Message);
         Assert.Empty(_checks.Asked);
     }
@@ -41,7 +41,7 @@ public sealed class ListLinearTeamsServiceTests
 
         var result = await service.Handle(new ListLinearTeamsRequest(Key), Token);
 
-        Expect.Equal(SindriErrors.LinearBadValue.Code, result.Error.Code);
+        Expect.Equal(SindriErrors.LinearUrlNotApproved.Code, result.Error.Code);
         Assert.Empty(_checks.Asked);
     }
 
