@@ -1,5 +1,13 @@
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Aw.Kernel.Services;
+using Aw.Sindri.Core.Todos;
+using Aw.Sindri.Core.Views;
+using Aw.Sindri.Features.AddTodo;
+using Aw.Sindri.Features.ChangeTodo;
+using Aw.Sindri.Features.ListTodos;
+using Aw.Sindri.Features.MarkTodo;
 using ModelContextProtocol.Protocol;
 
 namespace Aw.Sindri.Host.Mcp;
@@ -63,14 +71,45 @@ internal static partial class SindriTools
     /// <param name="arguments">The call's arguments.</param>
     /// <param name="ct">Cancels the call.</param>
     /// <returns>The tool result.</returns>
-    internal static ValueTask<CallToolResult> CallTodos(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct) =>
-        throw new NotSupportedException("sindri_todos isn't built yet (todo Ph1b red)");
+    internal static async ValueTask<CallToolResult> CallTodos(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
+    {
+        var state = TodoBindings.State(arguments);
+        if (state.IsError)
+        {
+            return McpResults.Failure(services, state.Error);
+        }
 
-    /// <summary>Runs sindri_todo.</summary>
+        var answer = await services.GetRequiredService<IService<ListTodosRequest, ListTodosResponse>>().Handle(new ListTodosRequest(state.Value), ct).ConfigureAwait(false);
+        return McpResults.From(services, answer, TodoSummaries.List, FencePlan.Todos);
+    }
+
+    /// <summary>Runs sindri_todo: binds the action, calls the service its route calls, then waits for the views to hold the write (as sindri_request does).</summary>
     /// <param name="services">The request's services.</param>
     /// <param name="arguments">The call's arguments.</param>
     /// <param name="ct">Cancels the call.</param>
     /// <returns>The tool result.</returns>
-    internal static ValueTask<CallToolResult> CallTodo(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct) =>
-        throw new NotSupportedException("sindri_todo isn't built yet (todo Ph1b red)");
+    internal static async ValueTask<CallToolResult> CallTodo(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
+    {
+        var bound = TodoBindings.Write(arguments);
+        if (bound.IsError)
+        {
+            return McpResults.Failure(services, bound.Error);
+        }
+
+        var (action, request) = bound.Value;
+        var answer = request switch
+        {
+            AddTodoRequest add => await services.GetRequiredService<IService<AddTodoRequest, TodoAccepted>>().Handle(add, ct).ConfigureAwait(false),
+            ChangeTodoRequest change => await services.GetRequiredService<IService<ChangeTodoRequest, TodoAccepted>>().Handle(change, ct).ConfigureAwait(false),
+            MarkTodoRequest mark => await services.GetRequiredService<IService<MarkTodoRequest, TodoAccepted>>().Handle(mark, ct).ConfigureAwait(false),
+            _ => throw new UnreachableException($"TodoBindings bound '{action}' to {request.GetType().Name}"),
+        };
+        if (answer.IsError)
+        {
+            return McpResults.Failure(services, answer.Error);
+        }
+
+        var caught = await services.GetRequiredService<IProjectorStatus>().WaitFor(answer.Value.Accepted.Sequence, WaitForViews, ct).ConfigureAwait(false);
+        return McpResults.Success(services, answer.Value, TodoSummaries.Written(action, answer.Value, viewsCaughtUp: !caught.IsError), FencePlan.TodoWrite);
+    }
 }

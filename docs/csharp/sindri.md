@@ -667,7 +667,7 @@ blocks.
 
 ## MCP tools (API P8)
 
-`/sindri/mcp` (one stateless Streamable HTTP endpoint, `Aw.Sindri.Host/Mcp/`) serves the `context_*` tools (docs/csharp/sindri-context.md S-1M) and these seven. Every call runs as `session:mcp`; the `sindri_*` tools answer for every repo, as the same call does for a human, and only the `context_*` and graph tools need the repo named by `X-Sindri-Repo` (owner decision q93, 2026-10-23). Each tool binds its arguments (`McpArguments`), calls one service of the same decorated chain the HTTP route uses, fences the result and summarises it; no logic lives in the endpoint. `tools/list` returns 12 tools in this order: the five `context_*`, then the seven below.
+`/sindri/mcp` (one stateless Streamable HTTP endpoint, `Aw.Sindri.Host/Mcp/`) serves the `context_*` tools (docs/csharp/sindri-context.md S-1M) and these ten `sindri_*` tools. Every call runs as `session:mcp`; the `sindri_*` tools answer for every repo, as the same call does for a human, and only the `context_*` and graph tools need the repo named by `X-Sindri-Repo` (owner decision q93, 2026-10-23). Each tool binds its arguments (`McpArguments`), calls one service of the same decorated chain the HTTP route uses, fences the result and summarises it; no logic lives in the endpoint. `tools/list` returns 12 tools in this order: the five `context_*`, then the seven below.
 
 | Tool | Arguments | Same as | Kind |
 |---|---|---|---|
@@ -678,8 +678,10 @@ blocks.
 | `sindri_pending_decisions` | `itemId?` | `GET /decisions?pending=true` | query, `readOnlyHint` |
 | `sindri_job` | `jobId` | `GET /jobs/{jobId}` | query, `readOnlyHint` |
 | `sindri_request` | `kind` (`rescope`, `add-task`, `note`, `handback`), `text` (1 to 65,536 characters), `itemId?` | `POST /requests` (`FileRequest`) | request, `readOnlyHint: false`, `destructiveHint: false` |
+| `sindri_todos` | `state?` (`open` default, `done`, `all`) | `GET /todos` | query, `readOnlyHint` |
+| `sindri_todo` | `action` (`add`, `change`, `done`, `reopen`, `remove`, `restore`), `id` (every action but `add`), `version?` (`change` needs it), `text`, `due?` (`YYYY-MM-DD`; `""` clears it), `links?`, `clientId?` (`add`) | `POST /todos`, `/todos/{id}/change`, `/done`, `/reopen`, `/remove`, `/restore` | request, `readOnlyHint: false`, `destructiveHint: true` |
 
-There is no decision, desk, protected, job or step-report tool, and no `sindri_context` (use `context_query`): a session asks a human through `sindri_request`, and `McpSurfaceTests` (`tests/Aw.Architecture.Tests`) fails the integration lane if the MCP namespace references any command but `FileRequestRequest`, a challenge answer or the launch secret. Results are the route's body: an id that isn't an id is `SND-CLI-003`, an item or job of another repo is `SND-ITEM-404` / `SND-JOB-404`, a request over its caps `SND-REQ-001` / `SND-REQ-002`.
+There is no decision, desk, protected, job or step-report tool, and no `sindri_context` (use `context_query`): a session asks a human through `sindri_request`, and `McpSurfaceTests` (`tests/Aw.Architecture.Tests`) fails the integration lane if the MCP namespace references any command but `FileRequestRequest`, the connection commands and the three todo requests (`AddTodoRequest`, `ChangeTodoRequest`, `MarkTodoRequest`: the six todo writes, request class, todo spec D2), a challenge answer or the launch secret. Results are the route's body: an id that isn't an id is `SND-CLI-003`, an item or job of another repo is `SND-ITEM-404` / `SND-JOB-404`, a request over its caps `SND-REQ-001` / `SND-REQ-002`.
 
 **Fencing.** `structuredContent` is the HTTP body with the free-text fields below wrapped by `UntrustedFence.Wrap` (source and author as listed) and `"trust": "untrusted"` added to the object that holds each one (`McpFencing` over the serialized body, per `FencePlan`). The HTTP routes are unchanged. Fencing the strings of a job `result` is a provisional owner default ("fence all free text", 2026-10-16), reversible by deleting its `FencePlan.Job` field. A path may end in `[]` for an array of strings. The text block carries ids, states and counts only, never record text.
 
@@ -690,11 +692,12 @@ There is no decision, desk, protected, job or step-report tool, and no `sindri_c
 | `sindri_item_timeline` | `entries[].line` | `sindri:timeline` | the entry's `actor` |
 | `sindri_pending_decisions` | `decisions[].question`, `.note`, `.notice`, `.cleared` | `sindri:decision` | `filedBy` (question), `decidedBy` (note) |
 | `sindri_job` | `summary`, every string inside `result` (any depth; numbers, booleans and nulls stay), `progress[].line` | `sindri:job` | `startedBy` for `summary` and `result`; none for `progress[].line` (a line carries no author) |
-| `sindri_status`, `sindri_request` | none | | |
+| `sindri_todos` | `todos[].text` (and a conflict's `sindri.text` and `obsidian.text`) | `sindri:todo` | `lastBy` (the conflict's two texts have none) |
+| `sindri_status`, `sindri_request`, `sindri_todo` | none (`sindri_todo`'s answer holds ids, a version and a date; `FencePlan.TodoWrite` fences an echoed `text` should one appear) | | |
 
 **Headers.** `UseMcpCaller` removes every `X-Sindri-*` request header except `X-Sindri-Repo`, then sets `X-Sindri-Client: mcp`; a caller, terminal, token, read-your-writes (`X-Sindri-After`) or launch-secret header can't ride an MCP call, and any `Origin` is `SND-API-008`.
 
-**Read-your-writes.** `X-Sindri-After` isn't honoured on MCP, so `sindri_request` waits for the views to reach its own write (at most 2 seconds, `SindriTools.WaitForViews`, which a test holds equal to the `ReadYourWrites.Limit` the HTTP routes wait; the Host root depends on the Mcp namespace, so it can not read that constant) before answering; a `sindri_pending_decisions` right after it lists the new decision. On a timeout it still answers success, with "views catching up" in the text.
+**Read-your-writes.** `X-Sindri-After` isn't honoured on MCP, so `sindri_request` and `sindri_todo` wait for the views to reach their own write (at most 2 seconds, `SindriTools.WaitForViews`, which a test holds equal to the `ReadYourWrites.Limit` the HTTP routes wait; the Host root depends on the Mcp namespace, so it can not read that constant) before answering; a `sindri_pending_decisions` right after it lists the new decision. On a timeout it still answers success, with "views catching up" in the text.
 
 **The endpoint's own refusals** (shared by the `context_*` and `sindri_*` tools; every tool error is `isError` with `McpToolError {code, message}`, text `<code> <message>`):
 

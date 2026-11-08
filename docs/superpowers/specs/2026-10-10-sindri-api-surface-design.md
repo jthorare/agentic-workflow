@@ -1155,13 +1155,15 @@ that target launches without Sindri MCP. `sindri doctor` warns on any user-wide 
 | `sindri_pending_decisions` | `itemId?` | `GET /decisions?pending=true` | query |
 | `sindri_job` | `jobId` | `GET /jobs/{jobId}` | query, **from P6** |
 | `sindri_request` | `kind`, `itemId?`, `text` | `POST /requests` (`FileRequest`) | request |
+| `sindri_todos` | `state?` | `GET /todos` | query (todo spec §4.4) |
+| `sindri_todo` | `action`, `id?`, `version?`, `text?`, `due?`, `links?`, `clientId?` | `POST /todos`, `/todos/{id}/change`, `/done`, `/reopen`, `/remove`, `/restore` | request, `destructiveHint` (todo spec §4.4, D2) |
 | `context_query`, `context_node`, `context_neighbors`, `context_sources` | context spec §8.5 | `IContextEngine` | query, **with S3**; off while `context.sessions.enabled` is false |
 
 Every free-text field a `sindri_*` result returns that isn't Sindri's own wording (item titles and bodies, timeline
 lines, decision questions and notes, job summaries and progress lines) is fenced and the object holding it carries
 `"trust": "untrusted"`, as `context_*` results do (context spec §7), whoever wrote it. `sindri_request` waits (up to 2 s)
 for the views to reach its own write before it answers, so a `sindri_pending_decisions` straight after it lists the
-new decision. The tools are listed in this table's order, after the five `context_*` tools. There is no decision, desk, protected or job tool, so the MCP surface can't even attempt one. Query tools carry the MCP
+new decision. The tools are listed in this table's order, after the five `context_*` tools. There is no decision, desk, protected or job tool, so the MCP surface can't even attempt one (todos excepted: `sindri_todo` makes the six todo writes, which are request class and change nothing outside Sindri; todo spec D2). Query tools carry the MCP
 `readOnlyHint` annotation. Whichever lands first, context Phase 1 (S-1M) or this spec's P8, creates the endpoint; the
 other adds its tools to it. `sindri mcp register` ships with whichever creates the endpoint.
 
