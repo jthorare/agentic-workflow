@@ -65,7 +65,7 @@ internal sealed class FileTeamCatalog(TeamLayout layout, ISessionDirectory sessi
         return Move(plan.Value);
     }
 
-    // A live session named <team>-<lane> for a lane of the legacy config, or one whose id a lane-sessions record holds.
+    // A running session (not an offline one) named <team>-<lane> for a lane of the legacy config, or one whose id a lane-sessions record holds.
     private string? RunningSession(string team, IReadOnlyList<Core.Lanes.LiveSession> live)
     {
         var names = new HashSet<string>(Read(_legacyConfig)?.Lanes.Select(lane => team + "-" + lane) ?? [], StringComparer.Ordinal);
@@ -86,7 +86,8 @@ internal sealed class FileTeamCatalog(TeamLayout layout, ISessionDirectory sessi
             }
         }
 
-        var found = live.FirstOrDefault(s => names.Contains(s.Name) || recorded.Contains(s.Session.Value));
+        // An offline entry (a Remote Control session nothing runs for) is not a running session, whatever its name.
+        var found = live.FirstOrDefault(s => !string.Equals(s.Status, "offline", StringComparison.OrdinalIgnoreCase) && (names.Contains(s.Name) || recorded.Contains(s.Session.Value)));
         return found is null ? null : found.Name.Length > 0 ? found.Name : found.Session.Value;
     }
 
