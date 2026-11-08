@@ -20,14 +20,14 @@ public sealed class ForgetMemoryFactTests
         _ = await h.Store.Add(MemorySamples.Fact("d", "delta", expiresAt: h.Clock.GetUtcNow().AddMinutes(-1)), Token);
         _ = await h.Store.Add(MemorySamples.Fact("e", "epsilon"), Token);
 
-        var byKey = await h.Forget().Handle(new ForgetMemoryFactRequest("team-notes", "a", null, false), Token);
-        var byTag = await h.Forget().Handle(new ForgetMemoryFactRequest("team-notes", null, "old", false), Token);
-        var expired = await h.Forget().Handle(new ForgetMemoryFactRequest("team-notes", null, null, true), Token);
+        var byKey = await h.Forget().Handle(new ForgetMemoryFactRequest("team-notes", Fact: "a", Tag: null, Expired: false), Token);
+        var byTag = await h.Forget().Handle(new ForgetMemoryFactRequest("team-notes", Fact: null, Tag: "old", Expired: false), Token);
+        var expired = await h.Forget().Handle(new ForgetMemoryFactRequest("team-notes", Fact: null, Tag: null, Expired: true), Token);
 
         Assert.Equal(1, byKey.Value.Deleted);
         Assert.Equal(2, byTag.Value.Deleted);
         Assert.Equal(1, expired.Value.Deleted);
-        Assert.Equal(["e"], h.Store.AllFacts.Select(static f => f.Key));
+        Assert.Equal(["e"], h.Store.AllFacts.Select(static f => f.Key), StringComparer.Ordinal);
     }
 
     [Fact]
@@ -37,11 +37,11 @@ public sealed class ForgetMemoryFactTests
         await h.Memory();
         _ = await h.Store.Add(MemorySamples.Fact("a", "alpha", tags: ["old"]), Token);
 
-        var none = await h.Forget().Handle(new ForgetMemoryFactRequest("team-notes", null, null, false), Token);
-        var two = await h.Forget().Handle(new ForgetMemoryFactRequest("team-notes", "a", "old", false), Token);
+        var none = await h.Forget().Handle(new ForgetMemoryFactRequest("team-notes", Fact: null, Tag: null, Expired: false), Token);
+        var two = await h.Forget().Handle(new ForgetMemoryFactRequest("team-notes", Fact: "a", Tag: "old", Expired: false), Token);
 
         Assert.True(none.IsError);
         Assert.True(two.IsError);
-        Assert.Single(h.Store.AllFacts);
+        _ = Assert.Single(h.Store.AllFacts);
     }
 }

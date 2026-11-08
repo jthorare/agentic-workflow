@@ -1,20 +1,5 @@
 namespace Aw.Sindri.Core.Memory;
 
-/// <summary>How a recall ranked the facts.</summary>
-public enum RecallMode
-{
-    /// <summary>By cosine similarity of embeddings ('semantic').</summary>
-    Semantic = 1,
-
-    /// <summary>By token overlap, because no model was available ('keyword').</summary>
-    Keyword = 2,
-}
-
-/// <summary>A fact and its score for one query.</summary>
-/// <param name="Fact">The fact.</param>
-/// <param name="Score">Cosine similarity (semantic) or the share of query tokens found (keyword), from 0 to 1.</param>
-public sealed record RecalledFact(MemoryFact Fact, float Score);
-
 /// <summary>The answer of a recall: the facts best first, and how they were ranked.</summary>
 /// <param name="Facts">The facts, best first.</param>
 /// <param name="Mode">How they were ranked.</param>

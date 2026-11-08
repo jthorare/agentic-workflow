@@ -4,8 +4,8 @@ namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
 /// 'sindri memory list|create|search|write|forget' (agent-first PR 13): a client of the /sindri/memories routes. A session may run every verb.
-/// <c>create &lt;name&gt; [--description T]</c>, <c>search &lt;name&gt; &lt;query&gt; [--level loose|balanced|strict] [--limit N]</c>, <c>write &lt;name&gt; &lt;text&gt; [--tag T]... [--expires-at D]</c>,
-/// <c>forget &lt;name&gt; (--fact KEY | --tag T | --expired)</c>; every verb takes <c>--json</c>.
+/// create &lt;name&gt; [--description T], search &lt;name&gt; &lt;query&gt; [--level loose|balanced|strict] [--limit N], write &lt;name&gt; &lt;text&gt; [--tag T]... [--expires-at D],
+/// forget &lt;name&gt; (--fact KEY | --tag T | --expired); every verb takes --json.
 /// </summary>
 /// <param name="client">The API client.</param>
 /// <param name="output">Where the verbs write.</param>

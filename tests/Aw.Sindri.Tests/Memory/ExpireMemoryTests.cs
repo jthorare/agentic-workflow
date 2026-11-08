@@ -24,7 +24,7 @@ public sealed class ExpireMemoryTests
         var ran = await h.Expire().Run(new ScheduledRun(grant, h.Clock.GetUtcNow()), Token);
 
         Assert.True(ran.IsSuccess);
-        Assert.Equal(["keep"], h.Store.AllFacts.Select(static f => f.Key));
+        Assert.Equal(["keep"], h.Store.AllFacts.Select(static f => f.Key), StringComparer.Ordinal);
     }
 
     [Fact]

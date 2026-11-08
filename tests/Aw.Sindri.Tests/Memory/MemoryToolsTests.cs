@@ -18,6 +18,8 @@ namespace Aw.Sindri.Tests.Memory;
 [Lane(TestLane.Unit)]
 public sealed class MemoryToolsTests
 {
+    private static readonly string[] _ops = ["ops"];
+
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     private static ServiceProvider Services(MemoryHarness h) => new ServiceCollection()
@@ -43,7 +45,7 @@ public sealed class MemoryToolsTests
         await using var services = Services(h);
 
         var created = await MemoryTools.CallCreate(services, Arguments(("name", "team-notes")), Token);
-        var written = await MemoryTools.CallWrite(services, Arguments(("name", "team-notes"), ("text", "Deploys run from main"), ("tags", new[] { "ops" })), Token);
+        var written = await MemoryTools.CallWrite(services, Arguments(("name", "team-notes"), ("text", "Deploys run from main"), ("tags", _ops)), Token);
         var recalled = await MemoryTools.CallSearch(services, Arguments(("name", "team-notes"), ("query", "how do we deploy")), Token);
         var listed = await MemoryTools.CallList(services, new Dictionary<string, JsonElement>(StringComparer.Ordinal), Token);
 
@@ -52,7 +54,7 @@ public sealed class MemoryToolsTests
         Assert.Contains("Deploys run from main", Text(recalled), StringComparison.Ordinal);
         Assert.Contains("semantic", Text(recalled), StringComparison.Ordinal);
         Assert.Contains("team-notes", Text(listed), StringComparison.Ordinal);
-        Assert.Single(h.Store.AllFacts);   // the tools and a CLI or HTTP caller share one store
+        _ = Assert.Single(h.Store.AllFacts);   // the tools and a CLI or HTTP caller share one store
     }
 
     [Fact]

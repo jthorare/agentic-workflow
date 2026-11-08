@@ -17,7 +17,7 @@ public sealed class MemoryReadsAndCreateTests
         var h = new MemoryHarness();
 
         var first = await h.Create().Handle(new CreateMemoryRequest("team-notes", "Shared notes"), Token);
-        var second = await h.Create().Handle(new CreateMemoryRequest("team-notes", null), Token);
+        var second = await h.Create().Handle(new CreateMemoryRequest("team-notes", Description: null), Token);
 
         Assert.Equal("team-notes", first.Value.Store.Name);
         Assert.Equal(SindriErrors.MemoryNameTaken.Code, second.Error.Code);
@@ -28,7 +28,7 @@ public sealed class MemoryReadsAndCreateTests
     {
         var h = new MemoryHarness();
 
-        var result = await h.Create().Handle(new CreateMemoryRequest("Team Notes", null), Token);
+        var result = await h.Create().Handle(new CreateMemoryRequest("Team Notes", Description: null), Token);
 
         Assert.Equal(SindriErrors.MemoryNameInvalid.Code, result.Error.Code);
         Assert.Empty((await h.Store.List(Token)).Value);
@@ -44,7 +44,7 @@ public sealed class MemoryReadsAndCreateTests
 
         var listed = await h.List().Handle(new ListMemoriesRequest(), Token);
 
-        Assert.Equal(["alpha", "zeta"], listed.Value.Memories.Select(static m => m.Name));
+        Assert.Equal(["alpha", "zeta"], listed.Value.Memories.Select(static m => m.Name), StringComparer.Ordinal);
         Assert.Equal([1, 0], listed.Value.Memories.Select(static m => m.Facts));
     }
 }

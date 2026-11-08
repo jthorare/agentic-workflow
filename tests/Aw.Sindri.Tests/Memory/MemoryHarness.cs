@@ -1,6 +1,5 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Commands;
-using Aw.Sindri.Core.Memory;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Features.CreateMemory;
 using Aw.Sindri.Features.ExpireMemory;
@@ -45,7 +44,7 @@ internal sealed class MemoryHarness
 
     public ExpireMemoryService Expire() => new(Store, Clock);
 
-    public async Task Memory(string name = "team-notes") => _ = await Create().Handle(new CreateMemoryRequest(name, null), TestContext.Current.CancellationToken);
+    public async Task Memory(string name = "team-notes") => _ = await Create().Handle(new CreateMemoryRequest(name, Description: null), TestContext.Current.CancellationToken);
 
     public static WriteMemoryFactRequest Fact(string text, params string[] tags) => new("team-notes", text, tags, ExpiresAt: null, Provenance: null);
 

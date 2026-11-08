@@ -8,5 +8,5 @@ namespace Aw.Sindri.Core.Memory;
 public sealed record MemoryProvenance(string? Workflow, string? Run, string? Item, string? Session)
 {
     /// <summary>Gets a provenance with no part set.</summary>
-    public static MemoryProvenance None { get; } = new(null, null, null, null);
+    public static MemoryProvenance None { get; } = new(Workflow: null, Run: null, Item: null, Session: null);
 }

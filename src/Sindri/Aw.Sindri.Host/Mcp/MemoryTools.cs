@@ -31,7 +31,7 @@ internal static class MemoryTools
     {
         Name = List,
         Description = "List Sindri memory stores (named stores of short facts) with their fact counts.",
-        InputSchema = ContextTools.Schema(new JsonObject()),
+        InputSchema = ContextTools.Schema([]),
         Annotations = new ToolAnnotations { ReadOnlyHint = true, OpenWorldHint = false },
     };
 

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Memory;
+using Aw.Sindri.Testing.Memory;
 
 namespace Aw.Sindri.Tests.Memory;
 
@@ -8,6 +9,9 @@ namespace Aw.Sindri.Tests.Memory;
 [Lane(TestLane.Unit)]
 public sealed class MemoryDedupeTests
 {
+    private static readonly float[] _probe = [1f, 0.25f, 0.02f, 0f];
+    private static readonly string[] _ops = ["ops"];
+
     private sealed record Pair(string Kind, string Left, string Right, float[] LeftVector, float[] RightVector);
 
     private static IReadOnlyList<Pair> Pairs()
@@ -63,7 +67,7 @@ public sealed class MemoryDedupeTests
         var near = MemorySamples.Fact("near", tags: ["ops"], vector: [1f, 0.2f, 0f, 0f]);
         var otherTags = MemorySamples.Fact("other", tags: ["dev"], vector: [1f, 0.2f, 0f, 0f]);
 
-        var found = MemoryDedupe.FindDuplicate(new float[] { 1f, 0.25f, 0.02f, 0f }, ["ops"], [otherTags, near]);
+        var found = MemoryDedupe.FindDuplicate(_probe, _ops, [otherTags, near]);
 
         Assert.Equal("near", found?.Key);
     }

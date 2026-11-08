@@ -49,7 +49,7 @@ public sealed class MatchLevelTests
         var recall = KeywordRank.Rank("deploy main", [none, one, both], limit: 10);
 
         Assert.Equal(RecallMode.Keyword, recall.Mode);
-        Assert.Equal(["both", "one"], recall.Facts.Select(static f => f.Fact.Key));
+        Assert.Equal(["both", "one"], recall.Facts.Select(static f => f.Fact.Key), StringComparer.Ordinal);
     }
 
     private static MemoryFact FactOf(string key, string text) => MemorySamples.Fact(key, text);

@@ -5,7 +5,7 @@ namespace Aw.Sindri.Host.Memory;
 
 /// <summary>
 /// Memory's <see cref="IMemoryEmbedder"/> over <see cref="IEmbedder"/> (the pinned local model through Ollama, loopback only). Any embedder error, or a switched-off
-/// <c>context.index.embedding</c>, comes back as <see cref="MemoryEmbedding.Unavailable"/> with the reason, never as an exception, so recall can fall back to keywords.
+/// context.index.embedding, comes back as <see cref="MemoryEmbedding.Unavailable"/> with the reason, never as an exception, so recall can fall back to keywords.
 /// </summary>
 /// <param name="embedder">The embedder.</param>
 /// <param name="enabled">Whether the profile's embedding settings allow it (one switch turns the code index and memory off together).</param>
