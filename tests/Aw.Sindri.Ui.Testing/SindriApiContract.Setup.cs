@@ -7,14 +7,14 @@ namespace Aw.Sindri.Ui.Testing;
 public abstract partial class SindriApiContract
 {
     [Fact]
-    public async Task Setup_answers_the_six_steps_in_the_served_order()
+    public async Task Setup_answers_the_five_steps_in_the_served_order()
     {
         var golden = GoldenFiles.Node("setup", "first-run");
 
         var view = (await Reach(new FakeSindriApi { SetupAnswer = RouteAnswer.Api("setup", "first-run") }).Setup(_api, Token)).Value;
 
         Expect.Sequence(golden["steps"]!.AsArray().Select(s => (string)s!["id"]!), view.Steps.Select(s => s.Id));
-        Expect.Sequence(["repo", "profile", "recipes", "mcp", "map"], view.Steps.Take(5).Select(s => s.Id));
+        Expect.Sequence(["repo", "profile", "mcp", "map"], view.Steps.Take(4).Select(s => s.Id));
         var repo = view.Steps[0];
         Expect.Equal(("Add your repo", "needs-you", "AddRepo", null), (repo.Title, repo.State, repo.Action, repo.Error));
     }
