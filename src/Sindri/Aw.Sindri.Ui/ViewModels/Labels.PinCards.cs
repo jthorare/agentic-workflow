@@ -82,6 +82,34 @@ internal static partial class Labels
     /// <returns>"Couldn't rebuild the map with this pin (SND-CONTEXT-040). Try again.".</returns>
     internal static string PinRestFailed(string code) => $"Couldn't rebuild the map with this pin ({code}). Try again.";
 
+    /// <summary>The what-moved part for features the pin gained.</summary>
+    /// <param name="count">How many.</param>
+    /// <returns>"+4 features".</returns>
+    internal static string PinMovedGained(int count) => string.Create(CultureInfo.InvariantCulture, $"+{count} {(count == 1 ? "feature" : "features")}");
+
+    /// <summary>The what-moved part for features the pin lost. Guess: features that left into no concept read "now in no concept".</summary>
+    /// <param name="count">How many.</param>
+    /// <param name="places">Up to two names of where they went; empty when they went into no concept.</param>
+    /// <returns>"−2 features (now in Notify and Sign in)".</returns>
+    internal static string PinMovedLost(int count, IReadOnlyList<string> places) =>
+        string.Create(CultureInfo.InvariantCulture, $"\u2212{count} {(count == 1 ? "feature" : "features")} (now in {(places.Count == 0 ? "no concept" : string.Join(" and ", places))})");
+
+    /// <summary>The what-moved part for the net change in linked records.</summary>
+    /// <param name="net">Positive for more records, negative for fewer; never 0.</param>
+    /// <returns>"3 more records linked here" or "5 fewer records linked here".</returns>
+    internal static string PinMovedRecords(int net) =>
+        string.Create(CultureInfo.InvariantCulture, $"{Math.Abs(net)} {(net > 0 ? "more" : "fewer")} {(Math.Abs(net) == 1 ? "record" : "records")} linked here");
+
+    /// <summary>The what-moved line while the relink still runs.</summary>
+    /// <param name="features">The feature parts.</param>
+    /// <returns>"+4 features; records linking…".</returns>
+    internal static string PinMovedRecordsLinking(string features) => $"{features}; records linking\u2026";
+
+    /// <summary>The what-moved line when the relink failed. Guess wording.</summary>
+    /// <param name="features">The feature parts.</param>
+    /// <returns>"+4 features; couldn't link records".</returns>
+    internal static string PinMovedRecordsFailed(string features) => $"{features}; couldn't link records";
+
     /// <summary>The problem line for features the map no longer has.</summary>
     /// <param name="gone">How many.</param>
     /// <returns>"2 of its features are gone from the map".</returns>
