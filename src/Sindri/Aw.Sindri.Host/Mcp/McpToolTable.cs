@@ -50,6 +50,16 @@ internal static class McpToolTable
                 "the call has no X-Sindri-Repo header, so it has no repo scope (fix: run 'sindri mcp register' in the work repo and use that registration)")));
         }
 
+        return Dispatch(services, call, cancellationToken);
+    }
+
+    /// <summary>Calls the handler of a known tool.</summary>
+    /// <param name="services">The request's services.</param>
+    /// <param name="call">The tools/call parameters.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The tool result.</returns>
+    private static ValueTask<CallToolResult> Dispatch(IServiceProvider services, CallToolRequestParams call, CancellationToken cancellationToken)
+    {
         return call.Name switch
         {
             ContextTools.Query => ContextTools.CallQuery(services, call.Arguments, cancellationToken),

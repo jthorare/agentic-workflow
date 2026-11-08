@@ -20,7 +20,7 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="timeout">A hard cap on one call (AW_SINDRI_CLI_TIMEOUT); none by default, so a slow but healthy answer completes. Connecting is bounded by <see cref="CliTimeout.Connect"/> instead.</param>
 /// <param name="refusal">A refusal every call answers with instead of calling (a malformed AW_SINDRI_CLI_TIMEOUT), so verbs that never call the control plane aren't affected by it.</param>
 /// <param name="handler">The HTTP handler (tests); a loopback handler without a proxy when null.</param>
-internal sealed partial class ControlPlaneClient(IControlPlaneProbe probe, JsonSerializerOptions options, CallerHeaders? headers = null, TimeSpan? timeout = null,
+internal sealed class ControlPlaneClient(IControlPlaneProbe probe, JsonSerializerOptions options, CallerHeaders? headers = null, TimeSpan? timeout = null,
     HttpMessageHandler? handler = null, Error? refusal = null) : IDisposable
 {
     private readonly HttpClient _http = new(handler ?? new SocketsHttpHandler { UseProxy = false, ConnectTimeout = CliTimeout.Connect }) { Timeout = timeout ?? Timeout.InfiniteTimeSpan };
