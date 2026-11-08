@@ -7,7 +7,7 @@ namespace Aw.Sindri.Ui.ViewModels.Todo;
 /// The Todo panel on Home (todo spec §3.1, §5): the owner's open todos grouped by day, collapsed to five rows or expanded to the groups
 /// with a Show done toggle. It reads on connect and on every event, and regroups at local midnight.
 /// </summary>
-internal sealed class TodoPanelViewModel : ObservableObject, IDisposable
+internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
 {
     private const int CollapsedRows = 5;
     private static readonly TimeSpan _doneWithin = TimeSpan.FromDays(7);

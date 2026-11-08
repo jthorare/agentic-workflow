@@ -12,6 +12,9 @@ internal sealed partial class ShellViewModel
     /// <summary>False while Home's decisions filter (G D) is on: the panel is hidden then.</summary>
     public bool IsTodoShown => HomeFilter != HomeFilter.Decisions;
 
+    /// <summary>True while focus is inside Home's Needs you panel (the other focus region, spec D6); the view sets it.</summary>
+    public bool IsNeedsYouFocused { get; internal set => Set(ref field, value); }
+
     [MemberNotNull(nameof(Todo))]
     private void InitTodo()
     {
