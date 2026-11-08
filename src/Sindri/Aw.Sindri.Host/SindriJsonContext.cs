@@ -155,6 +155,8 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(ProfileApproved)), JsonSerializable(typeof(Heartbeat)), JsonSerializable(typeof(CommandHandled)), JsonSerializable(typeof(ServiceRan))]
 [JsonSerializable(typeof(ProfileChecked)), JsonSerializable(typeof(ViewsRebuilt)), JsonSerializable(typeof(ItemCreated)), JsonSerializable(typeof(ItemCreatedPublic))]
 [JsonSerializable(typeof(ProjectAttached)), JsonSerializable(typeof(ProjectChanged)), JsonSerializable(typeof(ProjectDetached)), JsonSerializable(typeof(ProjectHidden)), JsonSerializable(typeof(ProjectLedNoted)), JsonSerializable(typeof(ProjectAttachedRow)), JsonSerializable(typeof(ProjectHiddenRow))]   // projects page Ph3: the owner-state events and their views
+[JsonSerializable(typeof(TodoAdded)), JsonSerializable(typeof(TodoChanged)), JsonSerializable(typeof(TodoDone)), JsonSerializable(typeof(TodoReopened)), JsonSerializable(typeof(TodoRemoved)), JsonSerializable(typeof(TodoRestored))]   // the ledger events of the todos spec (§4.1)
+[JsonSerializable(typeof(TodoConflicted)), JsonSerializable(typeof(TodoConflictResolved)), JsonSerializable(typeof(TodoConflictReopened)), JsonSerializable(typeof(TodoSide))]
 [JsonSerializable(typeof(ItemStateChanged)), JsonSerializable(typeof(ItemLinked)), JsonSerializable(typeof(RequestFiled)), JsonSerializable(typeof(RequestFiledPublic))]
 [JsonSerializable(typeof(DecisionFact)), JsonSerializable(typeof(DecisionRecorded)), JsonSerializable(typeof(DecisionRecordedPublic)), JsonSerializable(typeof(JobStarted))]
 [JsonSerializable(typeof(JobProgress)), JsonSerializable(typeof(JobFinished)), JsonSerializable(typeof(JobFinishedPublic)), JsonSerializable(typeof(JobCancelled)), JsonSerializable(typeof(JobWaiting)), JsonSerializable(typeof(JobResumed))]
