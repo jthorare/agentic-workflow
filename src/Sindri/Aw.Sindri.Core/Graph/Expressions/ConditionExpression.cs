@@ -5,6 +5,7 @@ namespace Aw.Sindri.Core.Graph.Expressions;
 /// <summary>
 /// A parsed condition.when expression: references (node.field, trigger.x, item, workflow.x, optionally
 /// wrapped as {{node.field}}), literals, the six comparisons (equal, not equal, less, at most, greater, at least), and or not, parentheses and exists(ref).
+/// Precedence, tightest first: comparison, not, and, or. So not a == b is not (a == b).
 /// Comparing values of different types is false (never an exception), and so is any ordering involving null.
 /// </summary>
 public sealed class ConditionExpression

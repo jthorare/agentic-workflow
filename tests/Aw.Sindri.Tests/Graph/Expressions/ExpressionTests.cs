@@ -45,7 +45,14 @@ public sealed class ExpressionTests
     [InlineData("not not a", true)]
     [InlineData("a and not b", true)]
     [InlineData("not n.count == 5", false)]
-    public void Not_binds_tighter_than_comparison_then_and_then_or(string text, bool expected) =>
+    [InlineData("not n.count == 6", true)]
+    [InlineData("not text == \"hello\"", false)]
+    [InlineData("not text == \"bye\"", true)]
+    [InlineData("not n.count < 3 and a", true)]
+    [InlineData("not a and b", false)]
+    [InlineData("not b and a", true)]
+    [InlineData("not not n.count == 5", true)]
+    public void Comparison_binds_tighter_than_not_then_and_then_or(string text, bool expected) =>
         Assert.Equal(expected, Run(text));
 
     [Theory]

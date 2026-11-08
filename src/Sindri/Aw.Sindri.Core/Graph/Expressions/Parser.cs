@@ -2,7 +2,7 @@ using System.Text.Json.Nodes;
 
 namespace Aw.Sindri.Core.Graph.Expressions;
 
-/// <summary>Recursive descent over the tokens. Precedence, tightest first: not, comparison, and, or.</summary>
+/// <summary>Recursive descent over the tokens. Precedence, tightest first: comparison, not, and, or.</summary>
 internal sealed class Parser
 {
     private readonly List<Tokenizer.Token> _tokens;
@@ -95,37 +95,37 @@ internal sealed class Parser
 
     private Evaluator.Node ParseAnd()
     {
-        var left = ParseComparison();
+        var left = ParseNot();
         while (Peek.Kind == Tokenizer.Kind.And)
         {
             _ = Next();
-            left = new Evaluator.And(left, ParseComparison());
+            left = new Evaluator.And(left, ParseNot());
         }
 
         return left;
-    }
-
-    private Evaluator.Node ParseComparison()
-    {
-        var left = ParseNot();
-        if (!IsComparison(Peek.Kind))
-        {
-            return left;
-        }
-
-        var op = Next().Kind;
-        return new Evaluator.Compare(op, left, ParseNot());
     }
 
     private Evaluator.Node ParseNot()
     {
         if (Peek.Kind != Tokenizer.Kind.Not)
         {
-            return ParsePrimary();
+            return ParseComparison();
         }
 
         _ = Next();
         return new Evaluator.Not(ParseNot());
+    }
+
+    private Evaluator.Node ParseComparison()
+    {
+        var left = ParsePrimary();
+        if (!IsComparison(Peek.Kind))
+        {
+            return left;
+        }
+
+        var op = Next().Kind;
+        return new Evaluator.Compare(op, left, ParsePrimary());
     }
 
     private static Evaluator.Literal? LiteralOf(Tokenizer.Token token)
