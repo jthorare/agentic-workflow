@@ -98,7 +98,6 @@ directory keeps its mode; files are 0600.
 | `logs/serve.log` | The detached control plane's output (0600: written under umask 077, and an older log is narrowed after each start) |
 | `temporal.db` | The Temporal dev server's SQLite file (`--db-filename`); the server is found by it, so one home has one server |
 | `logs/temporal.log` | The dev server's output (`--log-level warn`, appended under umask 077). The server runs detached in its own session, never as serve's child, so it outlives a serve that dies and the next start adopts it |
-| `workflow/nonces/<nonce>` | P4: the stand-in for the API's nonce table (0600 files in a 0700 directory, a 10-minute lifetime, not swept yet): a command's claim, so a retry with the same nonce is recognised |
 | `workflow/events.cursor` | P4: the ledger-to-Temporal bridge's last delivered ledger sequence |
 | `workflow/facts/<sha256>` | P4: the fact files `StartInstance` takes as inputs and `CompleteStep` takes as outputs, stored 0600 and named by their SHA-256 |
 | `profile/profile.yaml` | The live profile (`AW_SINDRI_PROFILE` overrides the path) |
@@ -490,7 +489,7 @@ the same object as `launch` (null when no launch row is known; see `sindri-sessi
 
 `GET /sindri/commands` (a query: any caller) answers `{rows: [{action, class, allowedCallers, terminal, method, route,
 cli, ui, destructive, readsViews, shortcut}]}` sorted by action id. `allowedCallers` comes from the authorization table
-(`human+terminal`, `human`, `session`, `service`, `service:<name>`); the terminal-bound line holdout row lists only `human+terminal`, and
+(`human+terminal`, `human`, `session`, `service`, `service:<name>`); and
 `local` and `step-report` rows list none.
 
 **CLI forms (UI spec E-16):** `CliForm.Parse` accepts `sindri` followed by lower-case words, fixed `--flags`,
