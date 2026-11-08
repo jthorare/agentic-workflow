@@ -31,7 +31,7 @@ public sealed class HealthCardsTests
         await system.Show();
 
         Assert.Equal(Labels.ViewsUpToDate, system.Vm.ViewsWord);
-        Assert.Equal([Labels.ViewsReadUpTo, "event 5 of 5", Labels.ViewsUpdated], Flat(system.Vm.ViewsRows).Take(3), StringComparer.Ordinal);
+        Assert.Equal([Labels.ViewsReadUpTo, "event 1 of 1", Labels.ViewsUpdated], Flat(system.Vm.ViewsRows).Take(3), StringComparer.Ordinal);
         Assert.Null(system.Vm.ViewsFix);
     }
 

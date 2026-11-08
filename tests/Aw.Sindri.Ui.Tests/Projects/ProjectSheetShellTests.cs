@@ -43,14 +43,14 @@ public sealed class ProjectSheetShellTests
     private const string Led = "linear:project/00000000-0000-4000-8000-000000000001";
 
     private void ServeLed() => _server.ProjectAnswers[Led] = new RouteAnswer(HttpStatusCode.OK,
-        GoldenFiles.Api("projects-id", "attached").Replace("prj_0000000000000000000000000H", Led, StringComparison.Ordinal).Replace("\"origin\": \"attached\"", "\"origin\": \"led\"", StringComparison.Ordinal).Replace("\"name\": \"Mobile app\"", "\"name\": \"Checkout rewrite\"", StringComparison.Ordinal));
+        GoldenFiles.Api("projects-id", "attached").Replace("prj_00000000000000000000000008", Led, StringComparison.Ordinal).Replace("\"origin\": \"attached\"", "\"origin\": \"led\"", StringComparison.Ordinal).Replace("\"name\": \"Mobile app\"", "\"name\": \"Checkout rewrite\"", StringComparison.Ordinal));
 
     [Fact]
     public Task A_project_link_goes_to_Projects_and_opens_its_sheet_on_the_card() => UiThread.Run(async () =>
     {
         var shell = await Shell();
 
-        shell.Navigate(Link("prj_0000000000000000000000000H"));
+        shell.Navigate(Link("prj_00000000000000000000000008"));
         await Until(() => shell.ProjectSheet.IsShown);
 
         Assert.Equal((PageId.Projects, true, true, false), (shell.CurrentPage, shell.IsSheetOpen, shell.IsProjectSheet, shell.IsSheetPlaceholderShown));
@@ -66,15 +66,15 @@ public sealed class ProjectSheetShellTests
 
         shell.Projects.RequestOpen(shell.Projects.Groups[2].Cards[0].Link);
 
-        Assert.Equal((true, "prj_0000000000000000000000000H"), (shell.IsProjectSheet, shell.OpenerProject));
+        Assert.Equal((true, "prj_00000000000000000000000008"), (shell.IsProjectSheet, shell.OpenerProject));
     }, Token);
 
     [Fact]
     public Task A_sheet_opened_some_other_way_has_no_opener() => UiThread.Run(async () =>
     {
         var shell = await Shell();
-        shell.Projects.RequestOpen(Link("prj_0000000000000000000000000H"));
-        shell.Navigate(Link("prj_0000000000000000000000000H"));
+        shell.Projects.RequestOpen(Link("prj_00000000000000000000000008"));
+        shell.Navigate(Link("prj_00000000000000000000000008"));
 
         Assert.Null(shell.OpenerProject);
     }, Token);
@@ -83,7 +83,7 @@ public sealed class ProjectSheetShellTests
     public Task Esc_closes_the_sheet_and_the_edge_tab_reopens_the_card_by_name() => UiThread.Run(async () =>
     {
         var shell = await Shell();
-        shell.Navigate(Link("prj_0000000000000000000000000H"));
+        shell.Navigate(Link("prj_00000000000000000000000008"));
         await Until(() => shell.ProjectSheet.IsShown);
 
         shell.CloseSheet();
@@ -96,7 +96,7 @@ public sealed class ProjectSheetShellTests
     public Task The_open_sheet_reads_again_on_every_event() => UiThread.Run(async () =>
     {
         var shell = await Shell();
-        shell.Navigate(Link("prj_0000000000000000000000000H"));
+        shell.Navigate(Link("prj_00000000000000000000000008"));
         await Until(() => shell.ProjectSheet.IsShown);
         var reads = _server.ProjectsRead.Count;
 
@@ -130,7 +130,7 @@ public sealed class ProjectSheetShellTests
     public Task Removing_closes_the_sheet_and_says_so() => UiThread.Run(async () =>
     {
         var shell = await Shell();
-        shell.Navigate(Link("prj_0000000000000000000000000H"));
+        shell.Navigate(Link("prj_00000000000000000000000008"));
         await Until(() => shell.ProjectSheet.IsShown);
         shell.ProjectSheet.AskRemove();
 
@@ -143,7 +143,7 @@ public sealed class ProjectSheetShellTests
     public Task Saving_announces_and_leaves_the_sheet_open() => UiThread.Run(async () =>
     {
         var shell = await Shell();
-        shell.Navigate(Link("prj_0000000000000000000000000H"));
+        shell.Navigate(Link("prj_00000000000000000000000008"));
         await Until(() => shell.ProjectSheet.IsShown);
         shell.ProjectSheet.BeginEdit();
 
@@ -159,7 +159,7 @@ public sealed class ProjectSheetShellTests
 
         Assert.True(DeepLink.TryParse(link.ToString(), out var parsed));
         Assert.Equal(("project/linear%3Aproject%2F00000000-0000-4000-8000-000000000001", link), (link.ToString(), parsed));
-        Assert.True(DeepLink.TryParse("project/prj_0000000000000000000000000H", out _));
+        Assert.True(DeepLink.TryParse("project/prj_00000000000000000000000008", out _));
         Assert.False(DeepLink.TryParse("project/", out _));
         Assert.False(DeepLink.TryParse("project/a%2Fb/c", out _));
         Assert.False(DeepLink.TryParse("project/a b", out _));

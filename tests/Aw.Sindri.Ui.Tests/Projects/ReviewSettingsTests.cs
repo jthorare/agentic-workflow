@@ -641,7 +641,7 @@ public sealed class ReviewSettingsTests
 
         var body = Encoding.UTF8.GetString(AwJson.Serialize(OnlySave(), SindriApiClient.Json));
         Assert.Equal(
-            """{"project":"prj_0000000000000000000000000H","repos":["jthorare/agentic-workflow"],"settings":"default","entry":{"collapse":["a/**"]},"approve":true,"ifHash":"221c8f3e6a76b02c68be447e853eae6439aa46a53e13a7939d313d95bd4817bd"}""",
+            """{"project":"prj_00000000000000000000000008","repos":["jthorare/agentic-workflow"],"settings":"default","entry":{"collapse":["a/**"]},"approve":true,"ifHash":"221c8f3e6a76b02c68be447e853eae6439aa46a53e13a7939d313d95bd4817bd"}""",
             body);
     }
 
