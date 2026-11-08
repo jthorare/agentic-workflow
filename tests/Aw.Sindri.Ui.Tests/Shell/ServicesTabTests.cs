@@ -16,7 +16,7 @@ public sealed class ServicesTabTests
 
         await system.Show();
 
-        Assert.Equal(("Services (14)", "14 scheduled", true), (system.Vm.ServicesTabLabel, system.Vm.ServicesScheduled, system.Vm.ShowOverview));
+        Assert.Equal(("Services (15)", "15 scheduled", true), (system.Vm.ServicesTabLabel, system.Vm.ServicesScheduled, system.Vm.ShowOverview));
         Assert.Equal(14, system.Vm.ServiceTable.Count);
         Assert.Equal(14, system.Vm.ServiceCard.Count);   // every service, not the first four
     }
