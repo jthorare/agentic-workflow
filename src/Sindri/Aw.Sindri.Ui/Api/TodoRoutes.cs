@@ -20,4 +20,16 @@ internal static class TodoRoutes
     internal static string Remove(string id) => One(id) + "/remove";
 
     internal static string Restore(string id) => One(id) + "/restore";
+
+    internal static string Note => Root + "/note";
+
+    internal static string Keep(string id) => One(id) + "/keep";
+
+    internal static string KeepUndo(string id) => Keep(id) + "/undo";
+
+    internal static string HoldApply => Note + "/hold/apply";
+
+    internal static string HoldRestore => Note + "/hold/restore";
+
+    internal static string HoldUndo => Note + "/hold/undo";
 }
