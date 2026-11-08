@@ -38,7 +38,7 @@ public sealed class WorkflowNotifyRowsTests
 
         Assert.Equal("workflow-notify:nightly@3:12:notify", row.Row.Id.Value);
         Assert.Equal(NeedsYouKind.WorkflowNotify, row.Row.Kind);
-        Assert.Equal(new NeedsYouSubject(SubjectKind.WorkflowRun, Aw.Sindri.Core.Ids.SubjectId.From(_run.Value)), row.Row.Subject);
+        Assert.Equal(new NeedsYouSubject(SubjectKind.WorkflowRun, Aw.Sindri.Core.Ids.SubjectId.From("nightly.3:12")), row.Row.Subject);
         Assert.Equal("Drifted", row.Row.Title);
         Assert.Equal("2 contracts changed", row.Row.Reason);
         Assert.Equal(notify.Sequence, row.Sequence);

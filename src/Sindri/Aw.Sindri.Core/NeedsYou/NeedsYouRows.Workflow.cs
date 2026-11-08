@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.OpenTargets;
 using Aw.Sindri.Core.Text;
@@ -28,7 +29,7 @@ public static partial class NeedsYouRows
             NeedsYouRowIds.WorkflowNotify(note.Run, note.Node),
             NeedsYouKind.WorkflowNotify,
             "workflow · note",
-            new NeedsYouSubject(SubjectKind.WorkflowRun, SubjectId.From(note.Run.Value)),
+            new NeedsYouSubject(SubjectKind.WorkflowRun, RunSubject(note.Run)),
             Item: null,
             SafeText.Clean(scrubber, note.Title, TitleMax),
             SafeText.Clean(scrubber, note.Body ?? string.Empty, ReasonMax),
@@ -43,4 +44,9 @@ public static partial class NeedsYouRows
             cli.Value.Text,
             new NeedsYouOpen(NeedsYouRoutes.WorkflowRun(note.Run), "Open the run"));
     }
+
+    /// <summary>The subject id of a run's rows: the run id with its '@' written as '.', because a subject id holds no '@'. A slug holds no '.', so the result stays unique and the mapping reverses.</summary>
+    /// <param name="run">The run.</param>
+    /// <returns>The subject id, for example 'nightly.3:12'.</returns>
+    internal static SubjectId RunSubject(WorkflowRunId run) => SubjectId.From(run.Value.Replace('@', '.'));
 }

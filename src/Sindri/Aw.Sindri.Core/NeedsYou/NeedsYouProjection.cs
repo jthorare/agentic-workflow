@@ -130,7 +130,7 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
         var notes = await rows.Where<NeedsYouRowRecord>(ViewNames.NeedsYou, ViewColumn.Kind, "workflow-notify", cancellationToken).ConfigureAwait(false);
         return notes.IsError
             ? notes.Error
-            : await DeleteAll(rows, notes.Value.Where(r => string.Equals(r.Row.Subject.Id.Value, run.Value, StringComparison.Ordinal)), cancellationToken).ConfigureAwait(false);
+            : await DeleteAll(rows, notes.Value.Where(r => r.Row.Subject.Id == NeedsYouRows.RunSubject(run)), cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<Unit>> Ran(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
