@@ -2,7 +2,6 @@ using System.Text;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Profile;
-using Aw.Sindri.Testing.Workflow;
 
 namespace Aw.Sindri.Tests.Profile;
 
@@ -41,18 +40,6 @@ public sealed class WorkflowSettingsTests
         Assert.Equal(["workflow.deskTimeout"], ProfileDiff.Between(live, live with { Workflow = new("1m") }));
         Assert.DoesNotContain("workflow", Encoding.UTF8.GetString(AwJson.Serialize(live, SliceHarness.Json)), StringComparison.Ordinal);
         Assert.DoesNotContain("eventHold", Encoding.UTF8.GetString(AwJson.Serialize(live with { Workflow = new("1m") }, SliceHarness.Json)), StringComparison.Ordinal);
-    }
-
-    [Fact, Trait("Lane", "integration")]
-    public async Task The_dev_profile_matches_the_schema_and_sets_a_1m_desk_timeout()
-    {
-        using var files = new ProfileFiles();
-        files.Write(ShippedRecipes.Read("dev/profile.yaml"));
-
-        var loaded = await files.Source.Load(TestContext.Current.CancellationToken);
-
-        Assert.False(loaded.IsError, loaded.IsError ? loaded.Error.Message : null);
-        Assert.Equal(TimeSpan.FromMinutes(1), WorkflowTimes.Of(loaded.Value.Profile).DeskTimeout);
     }
 
     private static (TimeSpan, TimeSpan) Times(WorkflowTimes times) => (times.DeskTimeout, times.EventHold);

@@ -36,6 +36,7 @@
     <!-- Helpers the moved suites share with Aw.Sindri.Tests, compiled into both (the split moves tests, not their support code). -->
     <Compile Include="../Aw.Sindri.Tests/Ledger/TempHome.cs" Link="Shared/Ledger/TempHome.cs" />
     <Compile Include="../Aw.Sindri.Tests/Server/Callers.cs" Link="Shared/Server/Callers.cs" />
+    <Compile Include="../Aw.Sindri.Tests/Server/ListLogger.cs" Link="Shared/Server/ListLogger.cs" />
     <Compile Include="../Aw.Sindri.Tests/SliceHarness.cs" Link="Shared/SliceHarness.cs" />
   </ItemGroup>
 

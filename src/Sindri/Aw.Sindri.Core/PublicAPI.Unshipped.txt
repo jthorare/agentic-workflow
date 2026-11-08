@@ -10855,22 +10855,6 @@ Aw.Sindri.Core.Setup.SetupStepLog.Snapshot() -> System.Collections.Generic.IRead
 Aw.Sindri.Core.Setup.SetupStepRecorder
 Aw.Sindri.Core.Setup.SetupStepRecorder.Record(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.SetupStep!>! steps, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Sindri.Core.Setup.SetupStepRecorder.SetupStepRecorder(Aw.Sindri.Core.Lease.HeldLease! held, Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Ledger.ILedgerReader! reader, Aw.Sindri.Core.Events.EventFactory! events, Aw.Sindri.Core.Commands.ICallerContextAccessor! callers, Aw.Sindri.Core.Setup.SetupStepLog! log) -> void
-Aw.Sindri.Core.Setup.IRecipeBuild
-Aw.Sindri.Core.Setup.IRecipeBuild.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Setup.RecipeTrees?>
-Aw.Sindri.Core.Setup.RecipeTrees
-Aw.Sindri.Core.Setup.RecipeTrees.<Clone>$() -> Aw.Sindri.Core.Setup.RecipeTrees!
-Aw.Sindri.Core.Setup.RecipeTrees.Deconstruct(out string! Embedded, out string? Head) -> void
-Aw.Sindri.Core.Setup.RecipeTrees.Embedded.get -> string!
-Aw.Sindri.Core.Setup.RecipeTrees.Embedded.init -> void
-Aw.Sindri.Core.Setup.RecipeTrees.Equals(Aw.Sindri.Core.Setup.RecipeTrees? other) -> bool
-Aw.Sindri.Core.Setup.RecipeTrees.Head.get -> string?
-Aw.Sindri.Core.Setup.RecipeTrees.Head.init -> void
-Aw.Sindri.Core.Setup.RecipeTrees.RecipeTrees(string! Embedded, string? Head) -> void
-override Aw.Sindri.Core.Setup.RecipeTrees.Equals(object? obj) -> bool
-override Aw.Sindri.Core.Setup.RecipeTrees.GetHashCode() -> int
-override Aw.Sindri.Core.Setup.RecipeTrees.ToString() -> string!
-static Aw.Sindri.Core.Setup.RecipeTrees.operator !=(Aw.Sindri.Core.Setup.RecipeTrees? left, Aw.Sindri.Core.Setup.RecipeTrees? right) -> bool
-static Aw.Sindri.Core.Setup.RecipeTrees.operator ==(Aw.Sindri.Core.Setup.RecipeTrees? left, Aw.Sindri.Core.Setup.RecipeTrees? right) -> bool
 Aw.Sindri.Core.Workflow.Engine.Runtime.IAgentStepInstructions.IsFor(Aw.Sindri.Core.Workflow.Ids.BlockId step) -> bool
 Aw.Sindri.Core.Launch.IAgentTrust
 Aw.Sindri.Core.Launch.IAgentTrust.Trust(string! directory, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>

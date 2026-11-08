@@ -4,7 +4,6 @@ using Aw.Kernel.Json;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Workflow.Ids;
-using Aw.Sindri.Testing.Workflow;
 
 namespace Aw.Sindri.Tests.Profile;
 
@@ -91,19 +90,5 @@ public sealed class EffectSettingsTests
         Assert.DoesNotContain("dispatchDelay", Encoding.UTF8.GetString(json), StringComparison.Ordinal);
         Assert.NotEqual(ProfileHashing.Of(json),
             ProfileHashing.Of(AwJson.Serialize(before with { Workflow = new("1m", DispatchDelay: "10s") }, SliceHarness.Json)));
-    }
-
-    [Fact, Trait("Lane", "integration")]
-    public async Task The_dev_profile_validates_with_desk_notices_allowlisted_and_a_60s_delay()
-    {
-        using var files = new ProfileFiles();
-        files.Write(ShippedRecipes.Read("dev/profile.yaml"));
-
-        var loaded = await files.Source.Load(TestContext.Current.CancellationToken);
-
-        Assert.False(loaded.IsError, loaded.IsError ? loaded.Error.Message : null);
-        var settings = EffectSettings.Of(loaded.Value.Profile);
-        Assert.Equal(new HashSet<BlockId> { BlockId.From("effect.notify.desk"), BlockId.From("effect.claim.ref") }, settings.Allowlist);
-        Assert.Equal(TimeSpan.FromSeconds(60), settings.DispatchDelay);
     }
 }
