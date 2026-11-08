@@ -27,7 +27,7 @@ public sealed class AgentNodeActivitiesTests
     [Fact]
     public void The_activities_are_named_LaunchAgentNode_and_WatchAgentNode()
     {
-        static string? NameOf(string method) => typeof(AgentNodeActivities).GetMethod(method, BindingFlags.Public | BindingFlags.Static)?.GetCustomAttribute<ActivityAttribute>()?.Name;
+        static string? NameOf(string method) => typeof(AgentNodeActivities).GetMethod(method, BindingFlags.Public | BindingFlags.Instance)?.GetCustomAttribute<ActivityAttribute>()?.Name;
 
         Assert.Equal("LaunchAgentNode", NameOf(nameof(AgentNodeActivities.LaunchNodeAsync)));
         Assert.Equal("WatchAgentNode", NameOf(nameof(AgentNodeActivities.WatchNodeAsync)));
