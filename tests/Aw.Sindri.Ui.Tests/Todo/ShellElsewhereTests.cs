@@ -156,7 +156,7 @@ public sealed class ShellElsewhereTests
 
         shell.Shortcuts.Open();
 
-        Assert.Contains(shell.Shortcuts.Rows, r => r.Keys.StartsWith("G then ", StringComparison.Ordinal) && r.Keys.EndsWith(" T", StringComparison.Ordinal) && r.Action.Contains("T Todo", StringComparison.Ordinal));
+        Assert.Contains(shell.Shortcuts.Rows, r => r.Keys.StartsWith("G then ", StringComparison.Ordinal) && r.Keys.Contains(" T ", StringComparison.Ordinal) && r.Action.Contains("T Todo", StringComparison.Ordinal));
     }, Token);
 
     [Fact]

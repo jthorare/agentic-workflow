@@ -46,7 +46,8 @@ internal sealed record AttentionSummary(string Title, int Badge, TrayView Tray, 
     /// <param name="overdue">Open todos due before today.</param>
     /// <param name="toSortOut">Todos with an open conflict.</param>
     /// <returns>The summary with the line; unchanged when both are 0 or the tray is not running or stale.</returns>
-    internal AttentionSummary WithTodos(int overdue, int toSortOut) => throw new NotSupportedException();
+    internal AttentionSummary WithTodos(int overdue, int toSortOut) =>
+        (overdue > 0 || toSortOut > 0) && Tray.State is not (TrayState.NotRunning or TrayState.Stale) ? this with { Tray = Tray with { Tooltip = $"{Tray.Tooltip}\n{Labels.TrayTodos(overdue, toSortOut)}" } } : this;
 
     /// <summary>True when the state shows the list's rows (a running Sindri, fresh or not); else the count is 0 because there is no list to count.</summary>
     /// <param name="state">The shell's state.</param>
