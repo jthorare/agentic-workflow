@@ -89,4 +89,10 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
         new("state.name", Mark: false), new("assignee.name", Mark: false), new("project.name", Mark: false), new("cycle.name", Mark: false), new("labels[].name", Mark: false),
         new("comments[].author.name"), new("comments[].body"),
     ]);
+
+    /// <summary>GET /sindri/todos for a fenced caller: each todo's text (by its last writer) and the two texts of an open conflict.</summary>
+    internal static FencePlan Todos { get; } = new("sindri:todo", [new("todos[].text", "lastBy"), new("todos[].conflict.sindri.text"), new("todos[].conflict.obsidian.text")]);
+
+    /// <summary>GET /sindri/todos/{id} for a fenced caller: the todo's text and the two texts of an open conflict.</summary>
+    internal static FencePlan OneTodo { get; } = new("sindri:todo", [new("todo.text", "lastBy"), new("todo.conflict.sindri.text"), new("todo.conflict.obsidian.text")]);
 }

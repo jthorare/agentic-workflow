@@ -38,6 +38,25 @@
       "confirm": null
     },
     {
+      "action": "AddTodo",
+      "class": "request",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/todos",
+      "cli": "sindri todo add <text> [--due <day>] [--link <ref>] [--client-id <id>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": true,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "AllowDenial",
       "class": "desk",
       "allowedCallers": [
@@ -414,6 +433,25 @@
       "method": "POST",
       "route": "/sindri/projects/{projectId}/change",
       "cli": "sindri project edit <project> --version <n> [--name <text>] [--link <url>] [--state <state>] [--clear-state] [--notes <text>] [--target <date>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": true,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "ChangeTodo",
+      "class": "request",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/todos/{todoId}/change",
+      "cli": "sindri todo edit <id> [--text <text>] [--due <day>] [--no-due] [--link <ref>] [--no-links] [--version <n>]",
       "ui": "ready",
       "destructive": false,
       "readsViews": true,
@@ -833,6 +871,82 @@
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "MarkTodo:done",
+      "class": "request",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/todos/{todoId}/done",
+      "cli": "sindri todo done <id> [--version <n>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": true,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "MarkTodo:remove",
+      "class": "request",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/todos/{todoId}/remove",
+      "cli": "sindri todo remove <id> [--version <n>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": true,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "MarkTodo:reopen",
+      "class": "request",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/todos/{todoId}/reopen",
+      "cli": "sindri todo reopen <id> [--version <n>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": true,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "MarkTodo:restore",
+      "class": "request",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/todos/{todoId}/restore",
+      "cli": "sindri todo restore <id> [--version <n>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": true,
       "shortcut": null,
       "confirm": null
     },
