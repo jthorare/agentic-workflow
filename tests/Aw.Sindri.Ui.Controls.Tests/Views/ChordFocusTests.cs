@@ -110,6 +110,17 @@ public sealed class ChordFocusTests : IDisposable
         return (window, shell);
     }
 
+    [Fact]
+    public Task The_command_N_chord_opens_Create_like_C() => OnUi(async () =>
+    {
+        var (window, shell) = await Opened("region");
+        Assert.False(shell.Create.IsOpen);
+
+        Press(window, Key.N, _command);
+
+        Assert.True(shell.Create.IsOpen);
+    });
+
     [Theory]
     [InlineData("pill")]
     [InlineData("nav")]
