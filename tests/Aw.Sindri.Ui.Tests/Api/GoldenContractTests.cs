@@ -126,6 +126,7 @@ public sealed class GoldenContractTests
     {
         "stop",
         "todos-id",   // the app never calls GET /sindri/todos/{id}; the CLI's `todo show` does
+        "todos-note",   // the note route's goldens (#2354): the app's Ph4 client reads them and moves this slug to _read
         "workflow-instances", "workflow-instance", "workflow-instance-fact", "workflow-status", "workflow-recipe", "workflow-recipes", "workflow-recipes-id-stats", "workflow-instances-start", "workflow-recipes-approve-all",   // v2 PR 4: the app has no Recipes, Workflows or run pages; the routes stay served until the backend PR removes them
         "workflow-challenges-app",   // q93: the app asks for no challenge any more; the route stays served until api removes it
         "setup-repos",   // POST /setup/repos (Add repo): the app's call and the job's progress are U3's (SO-U3)
