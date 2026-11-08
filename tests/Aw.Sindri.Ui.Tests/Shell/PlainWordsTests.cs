@@ -42,7 +42,7 @@ public sealed class PlainWordsTests
     {
         var go = Labels.FixedKeys.Single(k => k.Keys.StartsWith("G then", StringComparison.Ordinal));
 
-        Assert.Equal("Go to a page: H or N Home, D Decisions on Home, P Projects, Q Work, C Context, A Agents, . or S System, V Reviews, J Jobs, U Settings", go.Action);
+        Assert.Equal("Go to a page: H or N Home, D Decisions on Home, T Todo on Home, P Projects, Q Work, C Context, A Agents, . or S System, V Reviews, J Jobs, U Settings", go.Action);
         Assert.Contains(("O", "Open the linked page"), Labels.FixedKeys);
         Assert.Contains(("Y", "Copy the row's command"), Labels.FixedKeys);
         Assert.Contains(("X", "Decline"), Labels.FixedKeys);

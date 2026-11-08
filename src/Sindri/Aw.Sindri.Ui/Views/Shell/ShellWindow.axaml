@@ -400,6 +400,9 @@
             </DockPanel>
           </DockPanel>
         </Border>
+
+        <!-- The toast (todo spec §3.3): one slot over the page's bottom, shown only while a toast shows; F6 reaches it. -->
+        <views:ToastHost x:Name="Toast" IsVisible="{Binding Toast.IsShown}" />
       </Panel>
     </DockPanel>
 
@@ -442,6 +445,9 @@
                Width="0" Opacity="0" IsHitTestVisible="False" HorizontalAlignment="Left" VerticalAlignment="Top" />
     <!-- The item sheet's polite region (L8): the refusal a gone control leaves behind, spoken once; the flag changes before the text. -->
     <TextBlock x:Name="ItemLive" Classes="live-region" Classes.live="{Binding Item.IsAnnouncing}" Text="{Binding Item.Announcement}"
+               Width="0" Opacity="0" IsHitTestVisible="False" HorizontalAlignment="Left" VerticalAlignment="Top" />
+    <!-- The toast's polite region (todo spec §3.5): its text and the Undo key, spoken once; the flag changes before the text. -->
+    <TextBlock x:Name="ToastLive" Classes="live-region" Classes.live="{Binding Toast.IsAnnouncing}" Text="{Binding Toast.Announcement}"
                Width="0" Opacity="0" IsHitTestVisible="False" HorizontalAlignment="Left" VerticalAlignment="Top" />
     <!-- The palette and the ? sheet (§8): layers over everything, shown by their view models; Esc closes the topmost. -->
     <Panel x:Name="PaletteLayer" IsVisible="{Binding Palette.IsOpen}">
