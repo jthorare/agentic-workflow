@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using Aw.Kernel;
-using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Linear;
 using Aw.Sindri.Ui.ViewModels.Queue;
 
@@ -255,14 +254,10 @@ internal sealed partial class LinearWorkViewModel
         return shown;
     }
 
-    // A route this Sindri doesn't have answers 404: a refusal of kind not found, or the client's own "answered 404" (#2247).
-    private static bool IsNotServed(Error error) =>
-        error.Kind == ErrorKind.NotFound || (string.Equals(error.Code, SindriUiErrors.BadStatus.Code, StringComparison.Ordinal) && error.Message.Contains("404", StringComparison.Ordinal));
-
     // The last read failed: a Sindri that answers 404 is an older build than the app and needs a restart; anything else is Sindri not answering.
     private void Unanswered(Error error)
     {
-        if (IsNotServed(error))
+        if (OlderSindri.IsNotServed(error))
         {
             SindriOlder();
         }
