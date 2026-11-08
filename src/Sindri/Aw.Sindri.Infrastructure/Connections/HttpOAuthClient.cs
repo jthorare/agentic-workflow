@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Text.Json;
 using Aw.Kernel;
 using Aw.Sindri.Core;
@@ -75,7 +76,7 @@ internal sealed class HttpOAuthClient(HttpClient http, TimeProvider time) : IOAu
         }
     }
 
-    // Returns the answer's JSON text on a 2xx; otherwise an error naming the status and the provider's error code (a short [a-z_] word) only.
+    // Returns the answer's JSON text on a 2xx; otherwise an error naming the status and the provider's error code (a short [a-z_] word) only. The 'providerCode' extension is set only on a 400 or 401.
     private async ValueTask<Result<string>> Post(string url, Dictionary<string, string> form, CancellationToken cancellationToken)
     {
         try
@@ -91,7 +92,8 @@ internal sealed class HttpOAuthClient(HttpClient http, TimeProvider time) : IOAu
 
             var code = ProviderCode(body);
             var refused = SindriErrors.ConnectionRefreshFailed.With($"the token endpoint answered {((int)response.StatusCode).ToString(CultureInfo.InvariantCulture)} ({code})");
-            return code == NoCode ? refused : refused.WithExtension("providerCode", Text(code));
+            // only a 400 or 401 is the provider refusing the grant; a 429 or 5xx is it being busy, and its code ('temporarily_unavailable') is not a verdict on the token
+            return code == NoCode || response.StatusCode is not (HttpStatusCode.BadRequest or HttpStatusCode.Unauthorized) ? refused : refused.WithExtension("providerCode", Text(code));
         }
         catch (HttpRequestException)
         {

@@ -21,25 +21,45 @@ public sealed class FakeOAuthClient : IOAuthClient
     /// <summary>Gets or sets the provider error code every refresh is refused with ('invalid_grant'); null lets refreshes succeed.</summary>
     public string? RefuseWith { get; set; }
 
+    /// <summary>Gets or sets whether every refresh fails as the real client does when the token endpoint cannot be reached: a refresh failure with no provider code.</summary>
+    public bool Unreachable { get; set; }
+
+    /// <summary>Gets or sets what runs after the refresh call is made and before it answers (a sign-in or removal that lands while the provider is slow).</summary>
+    public Func<ValueTask>? DuringRefresh { get; set; }
+
+    /// <summary>Gets or sets text the failure messages carry, so a test can prove the provider's wording never reaches a row, the ledger or a log (a real provider's text can repeat a token).</summary>
+    public string? ErrorCanary { get; set; }
+
     /// <inheritdoc />
     public ValueTask<Result<TokenSet>> ExchangeCode(CodeExchange exchange, CancellationToken cancellationToken)
         => ValueTask.FromResult<Result<TokenSet>>(Next ?? throw new InvalidOperationException("set Next first"));
 
     /// <inheritdoc />
-    public ValueTask<Result<TokenSet>> Refresh(ConnectionPreset preset, string client, string refreshToken, string? clientSecret, CancellationToken cancellationToken)
+    public async ValueTask<Result<TokenSet>> Refresh(ConnectionPreset preset, string client, string refreshToken, string? clientSecret, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(preset);
         Refreshes.Add((preset.Key, client, refreshToken));
         RefreshClientSecrets.Add(clientSecret);
+        if (DuringRefresh is { } during)
+        {
+            await during().ConfigureAwait(false);
+        }
+
+        if (Unreachable)
+        {
+            return SindriErrors.ConnectionRefreshFailed.With($"the token endpoint could not be reached{Canary()}");
+        }
+
         if (RefuseWith is { } code)
         {
             // the provider's own error code rides in the 'providerCode' extension, so the caller can name it without parsing text
-            var refused = SindriErrors.ConnectionRefreshFailed.With($"the token endpoint answered 400 ({code})").WithExtension("providerCode", JsonSerializer.SerializeToElement(code));
-            return ValueTask.FromResult<Result<TokenSet>>(refused);
+            return SindriErrors.ConnectionRefreshFailed.With($"the token endpoint answered 400 ({code}){Canary()}").WithExtension("providerCode", JsonSerializer.SerializeToElement(code));
         }
 
-        return ValueTask.FromResult<Result<TokenSet>>(Next ?? throw new InvalidOperationException("set Next first"));
+        return Next ?? throw new InvalidOperationException("set Next first");
     }
+
+    private string Canary() => ErrorCanary is { } text ? " " + text : string.Empty;
 
     /// <summary>Gets or sets what the next MCP registration returns; null refuses it.</summary>
     public McpSignInTarget? McpTarget { get; set; }

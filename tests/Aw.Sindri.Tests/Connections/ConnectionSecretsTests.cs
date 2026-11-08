@@ -311,6 +311,21 @@ public sealed class ConnectionSecretsTests
     }
 
     [Fact(Timeout = 60_000)]
+    public async Task A_busy_provider_gives_no_provider_code_so_the_refresh_is_retried_not_refused()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var server = new FakeOAuthServer { BusyRefresh = true };
+        using var http = new HttpClient();
+        var client = new HttpOAuthClient(http, new FakeTimeProvider(KnownInstants.Epoch));
+
+        var refreshed = await client.Refresh(server.Preset(), "client-123", Refresh, clientSecret: null, ct);
+
+        Assert.Equal(SindriErrors.ConnectionRefreshFailed.Code, refreshed.Error.Code);
+        Assert.Contains("503", refreshed.Error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain(refreshed.Error.Extensions ?? ErrorExtensions.Empty, static e => e.Key == "providerCode");   // only a 400 or 401 carries the provider's code
+    }
+
+    [Fact(Timeout = 60_000)]
     public async Task A_refresh_gets_a_new_access_token_and_keeps_or_rotates_the_refresh_token()
     {
         var ct = TestContext.Current.CancellationToken;

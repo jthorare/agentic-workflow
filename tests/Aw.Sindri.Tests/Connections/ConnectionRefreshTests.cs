@@ -88,7 +88,7 @@ public sealed class ConnectionRefreshTests
         Assert.Equal(EventTypes.ConnectionNeedsSignIn, recorded.Envelope.Type);
         using var payload = JsonDocument.Parse(recorded.Envelope.Payload);
         Assert.Equal("linear:work", payload.RootElement.GetProperty("connection").GetString());
-        Assert.Equal("invalid_grant", payload.RootElement.GetProperty("reason").GetString());
+        Assert.Contains("invalid_grant", payload.RootElement.GetProperty("reason").GetString(), StringComparison.Ordinal);
         _ = Assert.Single(world.OAuth.Refreshes);
         Assert.DoesNotContain(OldAccess, recorded.Envelope.Payload, StringComparison.Ordinal);
         Assert.DoesNotContain(OldRefresh, recorded.Envelope.Payload, StringComparison.Ordinal);

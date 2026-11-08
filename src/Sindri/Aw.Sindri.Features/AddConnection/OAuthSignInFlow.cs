@@ -1,4 +1,6 @@
+using System.Globalization;
 using Aw.Kernel;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Connections.OAuth;
 using Microsoft.Extensions.Logging;
@@ -20,6 +22,9 @@ namespace Aw.Sindri.Features.AddConnection;
 /// <param name="logger">Logs a failed sign-in by code; null logs nothing.</param>
 internal sealed partial class OAuthSignInFlow(IConnectionStore store, IConnectionSecrets secrets, ISignInSession signIn, TimeProvider time, SignInOutcomes outcomes, ConnectionEvents events, ILogger<OAuthSignInFlow>? logger = null)
 {
+    /// <summary>The Config key a finished sign-in stamps with the time, so a caller can wait for its own sign-in.</summary>
+    internal const string SignedInAt = "signedInAt";
+
     internal async ValueTask<Result<AddConnectionResponse>> Run(OAuthAdd add, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(add);
@@ -100,15 +105,18 @@ internal sealed partial class OAuthSignInFlow(IConnectionStore store, IConnectio
         }
 
         var now = time.GetUtcNow();
-        var row = sign.Pending with { SecretPointer = pointer.Value, Status = ConnectionStatus.Connected, StatusReason = null, UpdatedAt = now, LastRefreshedAt = sign.Replaces ? now : sign.Pending.LastRefreshedAt };
+        // 'signedInAt' is the one field only a sign-in changes (a refresh moves LastRefreshedAt and UpdatedAt too), so 'sindri connection signin' can tell its own sign-in from a refresh tick
+        var config = new Dictionary<string, string>(sign.Pending.Config, StringComparer.Ordinal) { [SignedInAt] = now.ToString("O", CultureInfo.InvariantCulture) };
+        var row = sign.Pending with { Config = config, SecretPointer = pointer.Value, Status = ConnectionStatus.Connected, StatusReason = null, UpdatedAt = now, LastRefreshedAt = sign.Replaces ? now : sign.Pending.LastRefreshedAt };
         var written = sign.Replaces
             ? await store.Update(row, cancellationToken).ConfigureAwait(false)
             : await store.Insert(row, cancellationToken).ConfigureAwait(false);
         if (written.IsError)
         {
-            if (!sign.Replaces)
+            // why: a secret with no row is one nobody can remove. A row that still exists keeps its pointer (the key is the same), so only a removal during the browser wait (SND-CONN-001 on a replace) or a failed insert deletes it
+            if (!sign.Replaces || written.Error.Code == SindriErrors.ConnectionNotFound.Code)
             {
-                _ = secrets.Delete(pointer.Value);   // why: a secret with no row is one nobody can remove (a row that already existed keeps its pointer)
+                _ = secrets.Delete(pointer.Value);
             }
 
             return ConnectionFailures.Safe(written.Error);

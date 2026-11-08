@@ -117,10 +117,10 @@ public sealed class CliConnectionVerbsTests : IDisposable
     }
 
     [Fact]
-    public async Task Signin_posts_to_the_connection_prints_the_consent_url_and_waits_for_a_newer_refresh()
+    public async Task Signin_posts_to_the_connection_prints_the_consent_url_and_waits_for_its_own_sign_in()
     {
         var before = Added("linear:work", "oauth").Connection with { Status = "needs-sign-in", StatusReason = "refresh failed", LastRefreshedAt = DateTimeOffset.UnixEpoch };
-        var after = before with { Status = "connected", StatusReason = null, LastRefreshedAt = DateTimeOffset.UnixEpoch.AddHours(1) };
+        var after = before with { Status = "connected", StatusReason = null, LastRefreshedAt = DateTimeOffset.UnixEpoch.AddHours(1), Config = new Dictionary<string, string>(StringComparer.Ordinal) { ["signedInAt"] = "2026-11-08T10:00:00.0000000+00:00" } };
         var api = new RoutedApi()
             .OnPost("/sindri/connections/linear%3Awork/signin", HttpStatusCode.OK, new AddConnectionResponse(before, "https://provider.example.test/authorize?state=x"))
             .On("/sindri/connections/linear%3Awork", HttpStatusCode.OK, new GetConnectionResponse(after));
@@ -130,5 +130,23 @@ public sealed class CliConnectionVerbsTests : IDisposable
         Assert.Equal(0, code);
         Assert.Contains("https://provider.example.test/authorize", _error.ToString(), StringComparison.Ordinal);
         Assert.Contains("connected", _out.ToString(), StringComparison.Ordinal);
+    }
+
+    private static Dictionary<string, string> Stamp(string at) => new(StringComparer.Ordinal) { ["signedInAt"] = at };
+
+    [Fact]
+    public async Task Signin_does_not_report_done_when_a_refresh_tick_touches_a_connected_row()
+    {
+        var before = Added("linear:work", "oauth").Connection with { Config = Stamp("2026-11-08T09:00:00.0000000+00:00"), LastRefreshedAt = DateTimeOffset.UnixEpoch };
+        var refreshed = before with { LastRefreshedAt = DateTimeOffset.UnixEpoch.AddMinutes(5) };   // a tick refreshed the token: connected, newer last-refreshed time, same sign-in
+        var signedIn = refreshed with { Config = Stamp("2026-11-08T10:00:00.0000000+00:00") };
+        var api = new RoutedApi()
+            .OnPost("/sindri/connections/linear%3Awork/signin", HttpStatusCode.OK, new AddConnectionResponse(before, "https://provider.example.test/authorize?state=x"))
+            .OnSequence("/sindri/connections/linear%3Awork", [new GetConnectionResponse(refreshed), new GetConnectionResponse(signedIn)]);
+
+        var code = await Verbs(api).Run(["connection", "signin", "linear:work"], Token);
+
+        Assert.Equal(0, code);
+        Assert.Equal(2, api.Calls.Count(static c => c.Method == "GET" && c.Path == "/sindri/connections/linear%3Awork"));   // the first read (the refresh) did not end the wait
     }
 }

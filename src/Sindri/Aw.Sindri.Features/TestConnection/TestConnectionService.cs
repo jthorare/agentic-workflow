@@ -117,7 +117,7 @@ internal sealed partial class TestConnectionService(IConnectionStore store, ICon
 
     private async ValueTask<Result<TestConnectionResponse>> Record(Connection connection, ConnectionStatus status, string? reason, CancellationToken cancellationToken, bool ok = false)
     {
-        var written = await _writer.Record(connection.Name, status, reason, ok, cancellationToken).ConfigureAwait(false);
+        var written = await _writer.Record(connection, status, reason, grant: null, cancellationToken).ConfigureAwait(false);
         return written.IsError ? written.Error : new TestConnectionResponse(ConnectionView.From(written.Value), ok, reason);
     }
 

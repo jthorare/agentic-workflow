@@ -26423,6 +26423,12 @@ Aw.Sindri.Core.Connections.ConnectionEvents
 Aw.Sindri.Core.Connections.ConnectionEvents.ConnectionEvents(Aw.Sindri.Core.Lease.HeldLease! held, Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, System.TimeProvider! clock) -> void
 Aw.Sindri.Core.Connections.ConnectionEvents.Now.get -> System.DateTimeOffset
 Aw.Sindri.Core.Connections.ConnectionEvents.SignedIn(Aw.Sindri.Core.Connections.ConnectionName name, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Sindri.Core.Connections.ConnectionEvents.NeedsSignIn(Aw.Sindri.Core.Connections.ConnectionName name, string! reason, Aw.Sindri.Core.Lease.LeaseGrant? grant, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Sindri.Core.Connections.ConnectionStatusWriter
+Aw.Sindri.Core.Connections.ConnectionStatusWriter.ConnectionStatusWriter(Aw.Sindri.Core.Connections.IConnectionStore! store, Aw.Sindri.Core.Connections.IConnectionSecrets! secrets, Aw.Sindri.Core.Connections.ConnectionEvents! events, Aw.Sindri.Core.Commands.ICommandGate! gate) -> void
+Aw.Sindri.Core.Connections.ConnectionStatusWriter.Record(Aw.Sindri.Core.Connections.Connection! probed, Aw.Sindri.Core.Connections.ConnectionStatus status, string? reason, Aw.Sindri.Core.Lease.LeaseGrant? grant, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Connections.Connection!>!>
+Aw.Sindri.Core.Connections.ConnectionStatusWriter.ReplaceTokens(Aw.Sindri.Core.Connections.Connection! snapshot, Aw.Sindri.Core.Connections.TokenSet! old, Aw.Sindri.Core.Connections.TokenSet! fresh, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+static Aw.Sindri.Core.Connections.ConnectionStatusWriter.Unchanged(Aw.Sindri.Core.Connections.Connection! before, Aw.Sindri.Core.Connections.Connection! now) -> bool
 Aw.Sindri.Core.Todos.TodoItem
 Aw.Sindri.Core.Todos.TodoItem.<Clone>$() -> Aw.Sindri.Core.Todos.TodoItem!
 Aw.Sindri.Core.Todos.TodoItem.AddedAt.get -> System.DateTimeOffset

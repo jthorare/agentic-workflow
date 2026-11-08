@@ -94,6 +94,10 @@ internal sealed class ConnectionHarness
     /// <returns>The recorder.</returns>
     public ConnectionEvents Events() => new(Held, Ledger, new EventFactory(EventScope.ControlPlane, Clock, Ids, SliceHarness.Json, Callers), Clock);
 
+    /// <summary>The status writer over the harness's store, secrets, events and command gate.</summary>
+    /// <returns>The writer.</returns>
+    public ConnectionStatusWriter Writer() => new(Store, Secrets, Events(), new CommandGateAccess(Gate, Clock));
+
     public ListConnectionsService List() => new(Store);
 
     public GetConnectionService Get() => new(Store, Outcomes);
@@ -109,7 +113,13 @@ internal sealed class ConnectionHarness
     /// <returns>The service.</returns>
     /// <param name="oauth">The token client; the scripted one when null.</param>
     public RefreshConnectionsService Refresh(IOAuthClient? oauth = null)
-        => new(Store, Secrets, Presets, oauth ?? OAuth, Ledger, new EventFactory(EventScope.ControlPlane, Clock, Ids, SliceHarness.Json, Callers), Clock);
+        => new(Store, Secrets, Presets, oauth ?? OAuth, Writer(), Clock, new TypedLog<RefreshConnectionsService>(Logs));
+
+    /// <summary>The refresh service over another connection store (for a store that fails), with the harness's other ports.</summary>
+    /// <param name="store">The store.</param>
+    /// <returns>The service.</returns>
+    public RefreshConnectionsService RefreshOver(IConnectionStore store)
+        => new(store, Secrets, Presets, OAuth, new ConnectionStatusWriter(store, Secrets, Events(), new CommandGateAccess(Gate, Clock)), Clock, new TypedLog<RefreshConnectionsService>(Logs));
 
     /// <summary>Takes the ledger's lease and builds the run a tick would hand the refresh service.</summary>
     /// <returns>The run, at the harness clock.</returns>
@@ -120,9 +130,9 @@ internal sealed class ConnectionHarness
     /// <summary>The test slice over another probe, with the capturing log, so a probe that echoes the credential is seen by the log canary.</summary>
     /// <param name="probe">The probe.</param>
     /// <returns>The service.</returns>
-    public TestConnectionService TestWith(IConnectionProbe probe) => new(Store, Secrets, Presets, probe, new ConnectionStatusWriter(Store, Events(), new CommandGateAccess(Gate, Clock)), new TypedLog<TestConnectionService>(Logs));
+    public TestConnectionService TestWith(IConnectionProbe probe) => new(Store, Secrets, Presets, probe, Writer(), new TypedLog<TestConnectionService>(Logs));
 
-    public TestConnectionService Test(IMcpConnectionClient? mcp = null) => new(Store, Secrets, Presets, Probe, new ConnectionStatusWriter(Store, Events(), new CommandGateAccess(Gate, Clock)), new TypedLog<TestConnectionService>(Logs), mcp);
+    public TestConnectionService Test(IMcpConnectionClient? mcp = null) => new(Store, Secrets, Presets, Probe, Writer(), new TypedLog<TestConnectionService>(Logs), mcp);
 
     /// <summary>Lends the capturing log to a service that wants an ILogger of its own type.</summary>
     /// <typeparam name="T">The service.</typeparam>

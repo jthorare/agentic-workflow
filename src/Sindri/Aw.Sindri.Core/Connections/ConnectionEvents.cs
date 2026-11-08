@@ -36,4 +36,22 @@ public sealed class ConnectionEvents(HeldLease held, ILedgerStore ledger, EventF
         var entry = events.Entry(EventTypes.ConnectionSignedIn, new ConnectionSignedIn(name.ToString(), at), string.Create(CultureInfo.InvariantCulture, $"{EventTypes.ConnectionSignedIn}:{name}:{at.UtcTicks}"));
         _ = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
     }
+
+    /// <summary>Appends 'connection.needs-sign-in' for <paramref name="name"/>, which projects its Needs-you row. Like <see cref="SignedIn"/> it is skipped when no lease is held and ignores a failed append: the status row is already written.</summary>
+    /// <param name="name">The connection.</param>
+    /// <param name="reason">Why (a provider's error code or fixed text, never a token).</param>
+    /// <param name="grant">The lease to append under; null uses the one this process holds.</param>
+    /// <param name="cancellationToken">Cancels the append.</param>
+    /// <returns>A task that ends when the event is recorded or skipped.</returns>
+    public async ValueTask NeedsSignIn(ConnectionName name, string reason, LeaseGrant? grant, CancellationToken cancellationToken)
+    {
+        if ((grant ?? held.Current) is not { } lease)
+        {
+            return;
+        }
+
+        var at = Now;
+        var entry = events.Entry(EventTypes.ConnectionNeedsSignIn, new ConnectionNeedsSignIn(name.ToString(), reason, at), string.Create(CultureInfo.InvariantCulture, $"{EventTypes.ConnectionNeedsSignIn}:{name}:{at.UtcTicks}"));
+        _ = await ledger.Append(entry, lease, cancellationToken).ConfigureAwait(false);
+    }
 }

@@ -26,7 +26,7 @@ internal sealed partial class ConnectionVerbs
 
         await _output.Notice("Sign in at this address if your browser did not open:").ConfigureAwait(false);
         await _output.Notice(response.ConsentUrl).ConfigureAwait(false);
-        var finished = await WaitForNewSignIn(command.Name, response.Connection.LastRefreshedAt, ct).ConfigureAwait(false);
+        var finished = await WaitForNewSignIn(command.Name, response.Connection.Config.GetValueOrDefault(SignedInAt), ct).ConfigureAwait(false);
         if (finished.IsError)
         {
             return await _output.Error(finished.Error).ConfigureAwait(false);
@@ -38,8 +38,11 @@ internal sealed partial class ConnectionVerbs
             : await _output.Text($"Signed in {view.Name} ({view.Kind}), {view.Status}.\n", 0).ConfigureAwait(false);
     }
 
-    // The row exists already, so "found" proves nothing: a finished sign-in leaves it connected with a newer last-refreshed time. A failed one is the API's own error (GET reports it).
-    private async Task<Result<ApiAnswer<GetConnectionResponse>>> WaitForNewSignIn(string name, DateTimeOffset? before, CancellationToken ct)
+    // The Config key a finished sign-in stamps (OAuthSignInFlow.SignedInAt); the host project reads it by name.
+    private const string SignedInAt = "signedInAt";
+
+    // The row exists already, so "found" proves nothing, and a refresh tick moves LastRefreshedAt too: a finished sign-in leaves it connected with a different 'signedInAt'. A failed one is the API's own error (GET reports it).
+    private async Task<Result<ApiAnswer<GetConnectionResponse>>> WaitForNewSignIn(string name, string? before, CancellationToken ct)
     {
         using var limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
         limit.CancelAfter(_signInWait);
@@ -48,7 +51,7 @@ internal sealed partial class ConnectionVerbs
             while (true)
             {
                 var read = await _client.Get<GetConnectionResponse>(Route(name), limit.Token).ConfigureAwait(false);
-                if (read.IsError || (read.Value.Value.Connection is { LastRefreshedAt: { } at } view && string.Equals(view.Status, "connected", StringComparison.Ordinal) && (before is null || at > before)))
+                if (read.IsError || (read.Value.Value.Connection is { } view && string.Equals(view.Status, "connected", StringComparison.Ordinal) && view.Config.GetValueOrDefault(SignedInAt) is { } at && !string.Equals(at, before, StringComparison.Ordinal)))
                 {
                     return read;
                 }
