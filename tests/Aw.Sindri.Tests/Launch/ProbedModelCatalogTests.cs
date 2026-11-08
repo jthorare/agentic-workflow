@@ -11,7 +11,7 @@ public sealed class ProbedModelCatalogTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static ProbedModelCatalog Catalog(ProbedModelCatalog.Run run) => new(ProbedModelCatalog.Readers(run));
+    private static ProbedModelCatalog Catalog(ProbedModelCatalog.Run run, bool cursorInstalled = true) => new(ProbedModelCatalog.Readers(run, name => cursorInstalled || name != "cursor-agent"));
 
     private static ValueTask<string?> Never(string program, IReadOnlyList<string> arguments, CancellationToken cancellationToken) =>
         throw new InvalidOperationException($"nothing should run: {program}");
@@ -88,6 +88,14 @@ public sealed class ProbedModelCatalogTests
         Expect.True(models.All(static m => m.Source == ModelSource.Catalog));
         Expect.True(models.Any(static m => m.Slug == "gpt-5"));
         Expect.True(models.Any(static m => m.Slug == "auto"));
+    }
+
+    [Fact]
+    public async Task Cursor_that_is_not_installed_offers_no_models_and_nothing_runs()
+    {
+        var models = await Catalog(Never, cursorInstalled: false).ModelsOf(AgentId.From("cursor"), Token);
+
+        Expect.Equal(0, models.Count);
     }
 
     [Fact]

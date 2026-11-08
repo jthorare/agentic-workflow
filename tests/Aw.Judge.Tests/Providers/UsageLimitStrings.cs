@@ -19,8 +19,8 @@ internal static class UsageLimitStrings
     /// <summary>The Codex limit's codex_error_info.</summary>
     public static string CodexErrorInfo { get; } = _file["codex"]!["codexErrorInfo"]!.GetValue<string>();
 
-    /// <summary>Every real string, for the theories.</summary>
-    public static IEnumerable<string> All => [.. Claude, .. Cursor, CodexMessage];
+    /// <summary>Every Claude and Codex string, for the shared matcher's theories (Cursor's are matched by MatchCursor only).</summary>
+    public static IEnumerable<string> All => [.. Claude, CodexMessage];
 
     /// <summary>The same strings as theory data.</summary>
     public static TheoryData<string> AllData => [.. All];
