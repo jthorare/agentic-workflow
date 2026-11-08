@@ -13,7 +13,7 @@ public sealed class CliStatusFollowEdgeTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Follow_exits_1_without_opening_a_stream_when_sindri_is_not_running()
     {
-        var api = new FollowApi(FollowRig.Status(needsApproval: true)) { Down = true };
+        var api = new FollowApi(FollowRig.Status(withProblem: true)) { Down = true };
 
         Assert.Equal(1, await FollowRig.Finished(_rig.Start(api, json: false)));
 
@@ -24,7 +24,7 @@ public sealed class CliStatusFollowEdgeTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Follow_exits_2_when_the_first_read_fails_for_another_reason()
     {
-        var api = new FollowApi(FollowRig.Status(needsApproval: true)) { StatusFails = true };
+        var api = new FollowApi(FollowRig.Status(withProblem: true)) { StatusFails = true };
 
         Assert.Equal(2, await FollowRig.Finished(_rig.Start(api, json: false)));
 
@@ -35,7 +35,7 @@ public sealed class CliStatusFollowEdgeTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Follow_falls_back_to_polling_on_an_error_frame()
     {
-        var api = new FollowApi(FollowRig.Status(needsApproval: true), FollowRig.Status(needsApproval: false));
+        var api = new FollowApi(FollowRig.Status(withProblem: true), FollowRig.Status(withProblem: false));
         var run = _rig.Start(api, json: false);
         await FollowRig.WaitUntil(() => api.Streams == 1);
 
@@ -50,7 +50,7 @@ public sealed class CliStatusFollowEdgeTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Follow_falls_back_to_polling_on_an_error_frame_that_follows_an_event_within_the_debounce()
     {
-        var api = new FollowApi(FollowRig.Status(needsApproval: true), FollowRig.Status(needsApproval: true), FollowRig.Status(needsApproval: false));
+        var api = new FollowApi(FollowRig.Status(withProblem: true), FollowRig.Status(withProblem: true), FollowRig.Status(withProblem: false));
         var run = _rig.Start(api, json: false);
         await FollowRig.WaitUntil(() => api.Streams == 1);
 
@@ -66,7 +66,7 @@ public sealed class CliStatusFollowEdgeTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Follow_exits_1_when_the_server_is_gone_after_an_event()
     {
-        var api = new FollowApi(FollowRig.Status(needsApproval: true));
+        var api = new FollowApi(FollowRig.Status(withProblem: true));
         var run = _rig.Start(api, json: false);
         await FollowRig.WaitUntil(() => api.Streams == 1);
 
@@ -81,7 +81,7 @@ public sealed class CliStatusFollowEdgeTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Follow_prints_the_summary_when_the_views_cannot_catch_up_to_the_event()
     {
-        var api = new FollowApi(FollowRig.Status(needsApproval: true), FollowRig.Status(needsApproval: false)) { ViewsBehind = true };
+        var api = new FollowApi(FollowRig.Status(withProblem: true), FollowRig.Status(withProblem: false)) { ViewsBehind = true };
         var run = _rig.Start(api, json: false);
         await FollowRig.WaitUntil(() => api.Streams == 1);
 

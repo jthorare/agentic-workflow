@@ -20,8 +20,8 @@ public sealed class HealthSummaryTests
         new(ServiceName.From(name), new LastRun(_slot, outcome, code, _slot), Paused: false, Sequence: 1);
 
     private static HealthReport For(bool running = true, ViewsStatus? views = null, IReadOnlyList<ServiceRow>? services = null,
-        bool changed = false, IReadOnlyList<HealthProblem>? codeIndex = null) =>
-        HealthSummary.For(running, views ?? Fresh(), services ?? [], changed ? ProfileApproval.Changed : ProfileApproval.Approved, new HealthContext(codeIndex, _slot.AddMinutes(1)));
+        bool needsApproval = false, bool changed = false, IReadOnlyList<HealthProblem>? codeIndex = null) =>
+        HealthSummary.For(running, views ?? Fresh(), services ?? [], changed ? ProfileApproval.Changed : needsApproval ? ProfileApproval.NeedsApproval : ProfileApproval.Approved, new HealthContext(codeIndex, _slot.AddMinutes(1)));
 
     [Fact, Trait("Lane", "unit")]
     public void Nothing_wrong_is_healthy_with_no_problems_and_no_sentence()
@@ -49,13 +49,13 @@ public sealed class HealthSummaryTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Code_index_problems_follow_the_services_and_come_after_the_services()
+    public void Code_index_problems_follow_the_services_and_come_before_the_profile()
     {
         HealthProblem[] index = [new("SND-CODEIDX-014", "demo: code index is behind main; rebuild it from the System page", "the code index for demo is behind main"), new("SND-CODEIDX-010", "other: code index is damaged; it rebuilds on the next check", "the code index for other is damaged")];
 
-        var health = For(services: [Row("heartbeat", ServiceOutcome.Failed, "SND-SCHED-001")], codeIndex: index);
+        var health = For(services: [Row("heartbeat", ServiceOutcome.Failed, "SND-SCHED-001")], needsApproval: true, codeIndex: index);
 
-        Assert.Equal(["SND-SCHED-001", "SND-CODEIDX-014", "SND-CODEIDX-010"], health.Problems.Select(p => p.Code), StringComparer.Ordinal);
+        Assert.Equal(["SND-SCHED-001", "SND-CODEIDX-014", "SND-CODEIDX-010", "SND-PROFILE-005"], health.Problems.Select(p => p.Code), StringComparer.Ordinal);
         Assert.Equal(HealthWord.Degraded, health.Word);
     }
 
@@ -71,9 +71,10 @@ public sealed class HealthSummaryTests
     public void Health_lists_problems_in_order()
     {
         var health = For(running: false, Stalled(),
-            [Row("digest", ServiceOutcome.Ok), Row("heartbeat", ServiceOutcome.Failed, "SND-SCHED-001"), Row("purge", ServiceOutcome.Failed, "SND-CTX-001")]);
+            [Row("digest", ServiceOutcome.Ok), Row("heartbeat", ServiceOutcome.Failed, "SND-SCHED-001"), Row("purge", ServiceOutcome.Failed, "SND-CTX-001")],
+            needsApproval: true);
 
-        Assert.Equal(["SND-API-001", "SND-VIEW-001", "SND-SCHED-001", "SND-CTX-001"], health.Problems.Select(p => p.Code), StringComparer.Ordinal);
+        Assert.Equal(["SND-API-001", "SND-VIEW-001", "SND-SCHED-001", "SND-CTX-001", "SND-PROFILE-005"], health.Problems.Select(p => p.Code), StringComparer.Ordinal);
     }
 
     [Theory, Trait("Lane", "unit")]
@@ -92,21 +93,22 @@ public sealed class HealthSummaryTests
     [Fact, Trait("Lane", "unit")]
     public void Each_problem_has_its_fix_text_and_its_clause()
     {
-        var health = For(running: false, Stalled(), [Row("heartbeat", ServiceOutcome.Failed, "SND-SCHED-001")]);
+        var health = For(running: false, Stalled(), [Row("heartbeat", ServiceOutcome.Failed, "SND-SCHED-001")], needsApproval: true);
 
         Assert.Equal(
             [
                 ("SND-API-001", "Sindri isn't running: run `sindri`", "Sindri isn't running"),
                 ("SND-VIEW-001", "Views are stalled at 7: run `sindri views rebuild`", "the views stopped at event 7"),
                 ("SND-SCHED-001", "Service heartbeat failed 1 min ago", "service heartbeat failed"),
+                ("SND-PROFILE-005", "Not approved: run `sindri profile approve`", "the profile isn't approved"),
             ],
             health.Problems.Select(p => (p.Code, p.Text, p.Clause)));
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_rebuild_names_the_cursor_and_a_changed_profile_adds_its_row()
+    public void A_rebuild_names_the_cursor_and_a_changed_profile_beats_needs_approval()
     {
-        var health = For(views: Rebuilding(), changed: true);
+        var health = For(views: Rebuilding(), needsApproval: true, changed: true);
 
         Assert.Equal(
             [
@@ -129,13 +131,13 @@ public sealed class HealthSummaryTests
     {
         var one = For(views: Stalled());
         var two = For(running: false, services: [Row("heartbeat", ServiceOutcome.Failed, "SND-SCHED-001")]);
-        var three = For(services: [Row("heartbeat", ServiceOutcome.Failed, "SND-SCHED-001")], changed: true);
-        var four = For(running: false, services: [Row("heartbeat", ServiceOutcome.Failed, "SND-SCHED-001")], changed: true);
+        var three = For(services: [Row("heartbeat", ServiceOutcome.Failed, "SND-SCHED-001")], changed: true, needsApproval: true);
+        var four = For(running: false, services: [Row("heartbeat", ServiceOutcome.Failed, "SND-SCHED-001")], needsApproval: true);
 
         Assert.Equal("Sindri is stalled: the views stopped at event 7.", one.Sentence);
         Assert.Equal("Sindri is degraded: Sindri isn't running and service heartbeat failed.", two.Sentence);
         Assert.Equal("Sindri is degraded: service heartbeat failed and the profile changed since approval.", three.Sentence);
-        Assert.Equal("Sindri is degraded: Sindri isn't running, service heartbeat failed, and the profile changed since approval.", four.Sentence);
+        Assert.Equal("Sindri is degraded: Sindri isn't running, service heartbeat failed, and the profile isn't approved.", four.Sentence);
     }
 
     [Fact, Trait("Lane", "unit")]

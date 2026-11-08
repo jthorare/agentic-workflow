@@ -135,6 +135,10 @@ public static class HealthSummary
         {
             yield return new("SND-PROFILE-003", "The live profile changed since approval: run `sindri profile approve`", "the profile changed since approval");
         }
+        else if (profile == ProfileApproval.NeedsApproval)
+        {
+            yield return new("SND-PROFILE-005", "Not approved: run `sindri profile approve`", "the profile isn't approved");
+        }
     }
 
     private static IEnumerable<HealthProblem> Views(ViewsStatus views)

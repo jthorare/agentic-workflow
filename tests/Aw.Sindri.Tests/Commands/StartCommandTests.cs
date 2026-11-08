@@ -114,14 +114,14 @@ public sealed class StartCommandTests : IDisposable
     [Theory, Trait("Lane", "unit")]
     [InlineData(false, 0)]
     [InlineData(true, 1)]
-    public async Task The_summary_carries_the_opener_line_and_the_exit_code_follows_only_the_profile(bool needsApproval, int code)
+    public async Task The_summary_carries_the_opener_line_and_the_exit_code_follows_only_the_profile(bool withProblem, int code)
     {
         var stdout = new StringWriter();
         var calls = 0;
         var command = new StartCommand(_probe, new FakeControlPlaneLauncher(), _client, new Output(stdout, TextWriter.Null, SliceHarness.Json), _clock,
             openUi: () => { calls++; return "not found at /x (fix: …)"; });
 
-        var exit = await command.Report(Status(needsApproval), _found.Item1);
+        var exit = await command.Report(Status(withProblem), _found.Item1);
 
         Assert.Equal((1, code), (calls, exit));
         Assert.Contains("  ui        not found at /x (fix: …)", stdout.ToString(), StringComparison.Ordinal);
@@ -133,14 +133,14 @@ public sealed class StartCommandTests : IDisposable
         var stdout = new StringWriter();
         var command = new StartCommand(_probe, new FakeControlPlaneLauncher(), _client, new Output(stdout, TextWriter.Null, SliceHarness.Json), _clock);
 
-        _ = await command.Report(Status(needsApproval: false), _found.Item1);
+        _ = await command.Report(Status(withProblem: false), _found.Item1);
 
         Assert.DoesNotContain("  ui ", stdout.ToString(), StringComparison.Ordinal);
     }
 
-    private static Features.GetStatus.GetStatusResponse Status(bool needsApproval) =>
+    private static Features.GetStatus.GetStatusResponse Status(bool withProblem) =>
         new(Running: true, 42, 3, LeaseExpiresAt: null,
-            new Features.GetStatus.ProfileStatus(Live: null, Problem: needsApproval ? "p" : null, Source: null), []);
+            new Features.GetStatus.ProfileStatus(Live: null, Problem: withProblem ? "p" : null, Source: null), []);
 
     private StartCommand Command(FakeControlPlaneLauncher launcher) =>
         new(_probe, launcher, _client, new Output(TextWriter.Null, TextWriter.Null, SliceHarness.Json), _clock);
