@@ -222,5 +222,8 @@ fi
 # number is as fresh as the last fetch.
 behind="$(git -C "$SCRIPT_DIR" rev-list --count HEAD..origin/main 2> /dev/null || true)"
 if [ -n "$behind" ] && [ "$behind" -gt 0 ] 2> /dev/null; then
-  echo "  meta: WARNING this tree is behind origin/main by $behind commit$([ "$behind" = 1 ] || echo s) (as of its last fetch): the installed aw-meta is older than main; git pull, then rerun" >&2
+  behind_msg="  meta: WARNING this tree is behind origin/main by $behind commit$([ "$behind" = 1 ] || echo s) (as of its last fetch): the installed aw-meta is older than main; git pull, then rerun"
+  echo "$behind_msg" >&2
+  # setup.sh --with-meta gives a file here and repeats the line as setup's last line (the install output scrolls past)
+  [ -z "${AW_META_NOTE_FILE:-}" ] || echo "$behind_msg" >> "$AW_META_NOTE_FILE" 2> /dev/null || true
 fi
