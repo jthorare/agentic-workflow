@@ -46,6 +46,15 @@ public static partial class SindriErrors
     /// <summary>SND-GRAPH-102: a block could not finish; the message says why.</summary>
     public static readonly ErrorDefinition GraphBlockFailed = new("SND-GRAPH-102", ErrorKind.Invalid, "A block could not finish");
 
+    /// <summary>SND-GRAPH-104: the workflow has no active revision, so a trigger can't start it.</summary>
+    public static readonly ErrorDefinition GraphNotActive = new("SND-GRAPH-104", ErrorKind.Conflict, "This workflow is not active; activate a revision to run it");
+
+    /// <summary>SND-GRAPH-105: a manual run's payload is not a JSON object.</summary>
+    public static readonly ErrorDefinition GraphBadPayload = new("SND-GRAPH-105", ErrorKind.Invalid, "A manual run's payload must be a JSON object");
+
+    /// <summary>SND-GRAPH-106: the run already ended, so it can't be cancelled.</summary>
+    public static readonly ErrorDefinition GraphRunEnded = new("SND-GRAPH-106", ErrorKind.Conflict, "This run already ended");
+
     /// <summary>SND-GRAPH-103: a prompt node's answer did not fit its 'output' schema.</summary>
     public static readonly ErrorDefinition GraphPromptAnswer = new("SND-GRAPH-103", ErrorKind.Invalid, "The model's answer does not fit the prompt's output schema");
 }
