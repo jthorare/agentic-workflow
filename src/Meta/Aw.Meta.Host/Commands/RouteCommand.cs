@@ -7,9 +7,9 @@ internal static class RouteCommand
 {
     internal static CommandEntry Entry { get; } = new(
         "route",
-        new CommandSpec("route [--lane <l>] [--apply] [--json]", [], ["lane"], ["apply"]),
+        new CommandSpec("route [--lane <l>] [--apply [--force]] [--json]", [], ["lane"], ["apply", "force"]),
         NeedsConfig: true,
-        static context => CommandOutput.Call<RouteRequest, RouteResponse>(context, new RouteRequest(context.Line.Has("apply"), context.Line["lane"]), Text, static r => r.Attention));
+        static context => CommandOutput.Call<RouteRequest, RouteResponse>(context, new RouteRequest(context.Line.Has("apply"), context.Line["lane"], context.Line.Has("force")), Text, static r => r.Attention));
 
     private static string Text(RouteResponse response)
     {

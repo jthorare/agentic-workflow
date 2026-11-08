@@ -40,7 +40,7 @@ internal sealed class SwitchRunner(PaneSubmitter pane, ILaneSessions sessions, I
         var typed = await pane.Submit(plan.Session, ExitLine, cancellationToken).ConfigureAwait(false);
         if (typed.IsError && !typed.Error.Message.Contains("still in the input box", StringComparison.Ordinal))
         {
-            return typed.Error;
+            return MetaErrors.RecycleRefused.With($"{typed.Error.Message}; if the lane's Claude did exit, run {string.Join(' ', Launch(plan))} once its pane is at a shell");
         }
 
         var gone = await ClaudeGone(plan, cancellationToken).ConfigureAwait(false);
@@ -68,7 +68,7 @@ internal sealed class SwitchRunner(PaneSubmitter pane, ILaneSessions sessions, I
 
         var note = LogLine.Event(LogKind.Note, clock.GetUtcNow(), $"switched lane {plan.Lane} from claude-code to {plan.SwitchTo}{(plan.SwitchModel is { } model ? $" ({model})" : string.Empty)} (routing.lanes): session {plan.OldSession.Value} ended, digest {plan.Digest}");
         var logged = await log.Append(note, cancellationToken).ConfigureAwait(false);
-        var warning = $"lane {plan.Lane} now starts on {plan.SwitchTo}; it begins from its kickoff prompt, not the digest. Once it is up, tell it: aw-meta lane-send --lane {plan.Lane} --text '{plan.ContinueLine}'";
+        var warning = $"lane {plan.Lane} now starts on {plan.SwitchTo}; it begins from its kickoff prompt, not the digest. Check its hooks first: scripts/install-meta.sh --provider {plan.SwitchTo}, then trust them with /hooks in {plan.SwitchTo}. Once it is up, tell it: aw-meta lane-send --lane {plan.Lane} --text '{plan.ContinueLine}'";
         return logged.IsError ? logged.Error : new LaneRecycleResponse(plan.Lane, DryRun: false, plan.OldSession.Value, NewSession: null, plan.OldTokens, plan.Digest, Steps(plan), warning);
     }
 

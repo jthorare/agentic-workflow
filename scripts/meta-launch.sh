@@ -163,6 +163,14 @@ if [ -n "$odd" ]; then
   echo "meta-launch: a team runs one agent: the meta lane '$meta_lane' runs $meta_agent, but $odd do not. Fix launcher.json: set meta.lanes.$meta_lane to the lanes' agent, or put the lanes back on $meta_agent (meta.lanesAgent and meta.lanes.<lane>). Or set agent in team.json to one catalog id: it sets every lane, including the meta lane, and wins over launcher.json." >&2
   exit 1
 fi
+# A Claude lane is messaged with SendMessage, which only a Claude meta has (lane-send refuses a Claude lane): a lane routed to
+# Claude under a meta on another agent would come up unreachable.
+for l in "${A[@]}"; do
+  if [ "$l" != "$meta_lane" ] && launcher_lane_routed "$l" && [ "$(agent_of "$l")" = claude-code ] && [ "$meta_agent" != claude-code ]; then
+    echo "meta-launch: lane '$l' is routed to claude-code, but the meta lane '$meta_lane' runs $meta_agent: the meta can't message a Claude lane. Route the lane to $meta_agent, or run the meta on claude-code." >&2
+    exit 1
+  fi
+done
 if [ "$viewer" = exec-template ] && [ "$(jq -r '.viewer.argv | type' <<< "$LAUNCHER_DOC")" != array ]; then
   echo "meta-launch: SND-LAUNCH-011: viewer.argv is required for an exec-template viewer (in ${launcher_file:-launcher.json})" >&2; exit 1
 fi

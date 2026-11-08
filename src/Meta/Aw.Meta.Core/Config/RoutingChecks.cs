@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Meta.Core.Lanes;
 
 namespace Aw.Meta.Core.Config;
 
@@ -83,13 +84,23 @@ internal static class RoutingChecks
                 return $"routing.lanes.{lane} is not a lane of the team";
             }
 
-            if (RouteProblem(team.Routing, lane, route) is { } problem)
+            var problem = RouteProblem(team.Routing, lane, route) ?? ClaudeLaneProblem(team, lane, route);
+            if (problem is not null)
             {
                 return problem;
             }
         }
 
         return null;
+    }
+
+    // A Claude lane is messaged with SendMessage, which only a Claude meta has.
+    private static string? ClaudeLaneProblem(TeamConfig team, string lane, LaneRoute route)
+    {
+        var agent = route.Agent ?? (route.Model is { } model ? team.Routing.AgentOf(model) : null);
+        return string.Equals(agent, LaneAgent.ClaudeCode, StringComparison.Ordinal) && team.Agent is { } meta && !string.Equals(meta, LaneAgent.ClaudeCode, StringComparison.Ordinal)
+            ? $"routing.lanes.{lane}: a {meta} meta can't message a Claude lane (set team.json agent to claude-code, or route the lane elsewhere)"
+            : null;
     }
 
     private static string? RouteProblem(RoutingConfig routing, string lane, LaneRoute route)
