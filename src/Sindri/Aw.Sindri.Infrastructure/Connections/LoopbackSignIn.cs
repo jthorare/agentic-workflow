@@ -132,7 +132,7 @@ internal sealed class LoopbackSignIn(IOAuthClient oauth, IBrowserOpener browser,
 
     private static async Task Reply(Callback callback, int status, string text)
     {
-        var bytes = Encoding.UTF8.GetBytes("<!doctype html><meta charset=utf-8><title>Sindri</title><p>" + System.Net.WebUtility.HtmlEncode(text));
+        var bytes = Encoding.UTF8.GetBytes("<!doctype html><meta charset=utf-8><title>Sindri</title><p>" + WebUtility.HtmlEncode(text));
         try
         {
             callback.Context.Response.StatusCode = status;
