@@ -192,6 +192,20 @@ public sealed class TodoPanelHomeTests : IDisposable
         Assert.Equal([skeleton, skeleton, skeleton], [empty, two, six]);
     });
 
+    // The collapsed body clips at five rows plus the Show all slot: a row drawn taller than its slot would hide the fifth.
+    [Fact]
+    public Task The_fifth_row_fits_inside_the_collapsed_body() => OnUi(async () =>
+    {
+        Serve(Eight());
+        var (window, _) = await Connected();
+
+        var body = Named<Control>(window, "TodoCollapsed");
+        var fifth = Rows(window)[4];
+        var bottom = fifth.TranslatePoint(new Point(0, fifth.Bounds.Height), body)!.Value.Y;   // why: both are in the same visual tree
+
+        Assert.True(bottom <= body.Bounds.Height, string.Create(CultureInfo.InvariantCulture, $"the fifth row ends at {bottom}, the body at {body.Bounds.Height}"));
+    });
+
     [Fact]
     public Task An_empty_list_says_so_and_offers_nothing_to_expand() => OnUi(async () =>
     {
