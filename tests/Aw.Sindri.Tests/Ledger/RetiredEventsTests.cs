@@ -28,7 +28,7 @@ public sealed class RetiredEventsTests : IDisposable
             connection.Open();
             using var insert = connection.CreateCommand();
             insert.CommandText = "INSERT INTO events (id, type, schema_version, occurred_at, actor, tenant, ring, item, correlation_id, epoch, idempotency_key, payload_json) " +
-                "VALUES ('evt-1', $type, 1, '2026-10-10T07:05:07.0000000Z', 'host:sindri', 't', 0, 'T-1', 'c-1', 1, 'k-1', $payload)";
+                "VALUES ('11111111-1111-4111-8111-111111111111', $type, 1, '2026-10-10T07:05:07.0000000Z', 'host:sindri', 't', 0, 'T-1', '22222222-2222-4222-8222-222222222222', 1, 'k-1', $payload)";
             _ = insert.Parameters.AddWithValue("$type", type);
             _ = insert.Parameters.AddWithValue("$payload", payload);
             _ = insert.ExecuteNonQuery();

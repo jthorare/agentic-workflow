@@ -13,7 +13,7 @@ public sealed class RetireInstancesOnStartTests
     public async Task Serve_cancels_instances_in_flight_once_with_a_retired_note()
     {
         var grant = await _h.HoldLease();
-        _ = await _h.Store.Append(_h.Events.Entry(EventTypes.WorkflowStarted, new { instance = "T-1/item/1" }, "workflow:T-1/item/1:run-a:1", item: "T-1"), grant, Token);
+        _ = await _h.Store.Append(_h.Events.Entry(EventTypes.WorkflowStarted, new WorkflowEventPayload("T-1/item/1", "", "produce", "start", Outcome: null, Run: null), "workflow:T-1/item/1:run-a:1", item: "T-1"), grant, Token);
         var service = new RetireInstancesOnStartService();
 
         var first = (await service.Handle(new RetireInstancesOnStartRequest(), Token)).Value;
