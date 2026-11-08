@@ -62,7 +62,7 @@ public static class DoctorRules
     /// <param name="live">The live profile, or why it doesn't load.</param>
     /// <returns>The check.</returns>
     public static DoctorCheck Profile(Result<LoadedProfile> live) => live.IsError
-        ? new("profile", CheckState.Fail, live.Error.Message, "edit the profile; keys are in docs/csharp/sindri.md")
+        ? new("profile", CheckState.Fail, $"{live.Error.Code}: {live.Error.Message}", "edit the profile; keys are in docs/csharp/sindri.md")
         : new("profile", CheckState.Ok, $"hash {live.Value.Hash.Abbreviated}", Fix: null);
 
     /// <summary>The API: it answers, at the epoch the lease holds.</summary>

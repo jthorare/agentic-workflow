@@ -7,7 +7,7 @@ new optional keys join version 1, renames and removals bump it. `node scripts/ch
 `SindriProfile` key is missing from this page.
 
 The profile is a YAML file, by default `$AW_SINDRI_HOME/profile/profile.yaml` (`AW_SINDRI_PROFILE`). Edits apply on
-save: Sindri reads the live file, so a valid change takes effect at once. There is no approval step (`sindri profile approve` only prints `removed: edits apply on save`); `--if-hash` on the write verbs stays as a check that the file has not moved since you read it (`SND-PROFILE-003`). The machine's terminal and extra agent entries are
+save: Sindri reads the live file, so a valid change takes effect at once. There is no approval step (`sindri profile approve` only prints `removed: edits apply on save`); `--if-hash` on the write verbs stays as a check that the file has not moved since you read it (`SND-PROFILE-003`). An invalid live file fails loudly and there is no last-good fallback: a typo stops reads until it is fixed; `sindri doctor` and `sindri status` name the file and the error (`SND-PROFILE-002`). The machine's terminal and extra agent entries are
 not in the profile: they live in `launcher.json` (`docs/csharp/sindri-launcher.md`).
 
 ## profile.yaml

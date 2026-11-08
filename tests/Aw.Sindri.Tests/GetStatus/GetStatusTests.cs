@@ -70,4 +70,16 @@ public sealed class GetStatusTests
 
         Assert.Equal(ReadFailingLedger.Failure.Code, status.Error.Code);   // an error (exit 2), never "needs approval"
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task GetStatus_fails_with_the_code_and_the_file_when_the_live_profile_is_invalid()
+    {
+        _h.Profiles.Live = Aw.Sindri.Core.SindriErrors.ProfileInvalid.With("/home/thor/profile.yaml: line 3: unknown key 'tennant'");
+
+        var result = await Service().Handle(new GetStatusRequest(), Token);
+
+        Assert.True(result.IsError);
+        Assert.Equal("SND-PROFILE-002", result.Error.Code);
+        Assert.Contains("/home/thor/profile.yaml", result.Error.Message, StringComparison.Ordinal);
+    }
 }
