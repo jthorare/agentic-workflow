@@ -47,15 +47,7 @@
       "folderRules": 0,
       "setIn": "profile",
       "state": "approved",
-      "change": null,
-      "moved": {
-        "fromVersion": "v0",
-        "toVersion": "v1",
-        "gained": 0,
-        "lost": 0,
-        "to": [],
-        "recordsLinked": null
-      }
+      "change": null
     }
   ],
   "rebuild": {
