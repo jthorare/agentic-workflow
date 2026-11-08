@@ -1,0 +1,159 @@
+{
+  "asOf": {
+    "cursor": 9,
+    "ledgerHead": 9,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "state": "all",
+  "counts": {
+    "open": 5,
+    "done": 1,
+    "removed": 1
+  },
+  "todos": [
+    {
+      "id": "td_01jc5917f3h8n2p5s9v4x1z6bq",
+      "text": "renew the cert",
+      "due": "2025-12-30",
+      "links": [],
+      "addedAt": "2025-12-29T08:05:00.0000000Z",
+      "addedBy": "human:ui",
+      "addedVia": null,
+      "doneAt": "2025-12-31T16:20:00.0000000Z",
+      "removed": false,
+      "removedAt": null,
+      "removedBy": null,
+      "version": 2,
+      "lastBy": "human:ui",
+      "lastVia": null,
+      "conflict": null
+    },
+    {
+      "id": "td_01jc5a8xq0n4w7ms2t9r3vbk6e",
+      "text": "reply to Sam about the offsite",
+      "due": "2026-01-02",
+      "links": [],
+      "addedAt": "2025-12-30T09:15:00.0000000Z",
+      "addedBy": "human:ui",
+      "addedVia": null,
+      "doneAt": null,
+      "removed": false,
+      "removedAt": null,
+      "removedBy": null,
+      "version": 1,
+      "lastBy": "human:ui",
+      "lastVia": null,
+      "conflict": null
+    },
+    {
+      "id": "td_01jc5b2kz8m3r6tq1w9xh4dn7y",
+      "text": "rotate the staging key",
+      "due": "2025-12-31",
+      "links": [
+        {
+          "kind": "pr",
+          "ref": "acme/api#12",
+          "href": "sindri://reviews/acme/api/12"
+        },
+        {
+          "kind": "linear",
+          "ref": "ENG-12",
+          "href": "sindri://linear/ENG-12"
+        }
+      ],
+      "addedAt": "2025-12-30T10:40:00.0000000Z",
+      "addedBy": "human:cli",
+      "addedVia": null,
+      "doneAt": null,
+      "removed": false,
+      "removedAt": null,
+      "removedBy": null,
+      "version": 1,
+      "lastBy": "human:cli",
+      "lastVia": null,
+      "conflict": null
+    },
+    {
+      "id": "td_01jc5c90a2b7k4m8q1r6t3w9xz",
+      "text": "call the dentist",
+      "due": null,
+      "links": [],
+      "addedAt": "2025-12-30T18:02:00.0000000Z",
+      "addedBy": "obsidian",
+      "addedVia": null,
+      "doneAt": null,
+      "removed": false,
+      "removedAt": null,
+      "removedBy": null,
+      "version": 1,
+      "lastBy": "obsidian",
+      "lastVia": null,
+      "conflict": null
+    },
+    {
+      "id": "td_01jc5d4m7p2q9r5s8t1v3w6x0y",
+      "text": "check the flaky sync test",
+      "due": "2026-01-01",
+      "links": [
+        {
+          "kind": "item",
+          "ref": "ITM-0000000000000000000000000000000f",
+          "href": "sindri://item/ITM-0000000000000000000000000000000f"
+        }
+      ],
+      "addedAt": "2025-12-31T11:30:00.0000000Z",
+      "addedBy": "session:mcp",
+      "addedVia": null,
+      "doneAt": null,
+      "removed": false,
+      "removedAt": null,
+      "removedBy": null,
+      "version": 2,
+      "lastBy": "human:ui",
+      "lastVia": null,
+      "conflict": null
+    },
+    {
+      "id": "td_01jc5e6n8q3r7s2t4v9w1x5y0z",
+      "text": "answer the review comments on acme/web#40",
+      "due": "2026-01-09",
+      "links": [
+        {
+          "kind": "pr",
+          "ref": "acme/web#40",
+          "href": "sindri://reviews/acme/web/40"
+        }
+      ],
+      "addedAt": "2025-12-31T14:45:00.0000000Z",
+      "addedBy": "human:cli",
+      "addedVia": "pipe",
+      "doneAt": null,
+      "removed": false,
+      "removedAt": null,
+      "removedBy": null,
+      "version": 2,
+      "lastBy": "session:mcp",
+      "lastVia": null,
+      "conflict": null
+    },
+    {
+      "id": "td_01jc5f8p9r4s8t3v5w2x6y1z7a",
+      "text": "book the offsite room",
+      "due": null,
+      "links": [],
+      "addedAt": "2025-12-31T15:10:00.0000000Z",
+      "addedBy": "human:ui",
+      "addedVia": null,
+      "doneAt": null,
+      "removed": true,
+      "removedAt": "2025-12-31T23:30:00.0000000Z",
+      "removedBy": "human:ui",
+      "version": 2,
+      "lastBy": "human:ui",
+      "lastVia": null,
+      "conflict": null
+    }
+  ]
+}
