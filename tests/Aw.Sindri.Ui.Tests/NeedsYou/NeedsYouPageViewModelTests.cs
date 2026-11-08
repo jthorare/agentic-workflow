@@ -16,29 +16,31 @@ public sealed class NeedsYouPageViewModelTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private async Task<(NeedsYouViewModel List, NeedsYouPageViewModel Page)> Page(params NeedsYouEntry[] rows)
+    private Task<(NeedsYouViewModel List, NeedsYouPageViewModel Page)> Page(params NeedsYouEntry[] rows) => Page(confirm: null, rows);
+
+    private async Task<(NeedsYouViewModel List, NeedsYouPageViewModel Page)> Page(NeedsYouConfirm? confirm, params NeedsYouEntry[] rows)
     {
         var list = new NeedsYouViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), _clock);
         await list.Restore(Token);
         list.Update(new NeedsYouFeed(rows, rows.Length == 0 ? "Nothing needs you. 1 running, 2 queued." : ""));
-        return (list, new NeedsYouPageViewModel(list, _clock, _clipboard, new DeskReporter(_server, () => new Uri("http://127.0.0.1:7410/"))));
+        return (list, new NeedsYouPageViewModel(list, _clock, _clipboard, new FakeLauncher(), confirm));
     }
 
     [Fact]
     public async Task Groups_carry_their_heading_and_count_and_hold_the_row_view_models_of_the_list()
     {
-        var (list, page) = await Page(NeedsYouRows.Failure(), NeedsYouRows.Decision(), NeedsYouRows.Park("park:WFI-1"), NeedsYouRows.Park("desk:WFI-2"));
+        var (list, page) = await Page(NeedsYouRows.Failure(), NeedsYouRows.Decision(), NeedsYouRows.Park("setup:WFI-2"));
 
-        Assert.Equal([("Your approvals", "1"), ("Paused runs", "1"), ("Agent decisions", "1"), ("Something failed", "1")], page.Groups.Select(g => (g.Heading, g.CountText)));
-        Assert.Same(list.Seen.Rows.Single(r => r.Id == "desk:WFI-2"), page.Groups[0].Rows.Single());
+        Assert.Equal([("Agent decisions", "1"), ("Settings approvals", "1"), ("Something failed", "1")], page.Groups.Select(g => (g.Heading, g.CountText)));
+        Assert.Same(list.Seen.Rows.Single(r => r.Id == "setup:WFI-2"), page.Groups[1].Rows.Single());
     }
 
     [Fact]
-    public async Task The_header_counts_the_rows_and_the_paused_runs()
+    public async Task The_header_counts_the_rows()
     {
-        var (_, page) = await Page(NeedsYouRows.Decision(), NeedsYouRows.Park("park:WFI-1"), NeedsYouRows.Park("takeover:WFI-2"));
+        var (_, page) = await Page(NeedsYouRows.Decision(), NeedsYouRows.Failure(), NeedsYouRows.Profile());
 
-        Assert.Equal("3 waiting, 2 runs", page.CountText);
+        Assert.Equal("3 waiting", page.CountText);
     }
 
     [Fact]
@@ -57,7 +59,7 @@ public sealed class NeedsYouPageViewModelTests
     [Fact]
     public async Task J_and_K_walk_the_groups_in_the_pages_order_and_stop_at_the_ends()
     {
-        var (list, page) = await Page(NeedsYouRows.Failure(), NeedsYouRows.Decision(), NeedsYouRows.Park("desk:WFI-2"));
+        var (list, page) = await Page(NeedsYouRows.Failure(), NeedsYouRows.Decision(), NeedsYouRows.Park("setup:WFI-2"));
         page.SelectFirst();
 
         var seen = new List<string?> { list.SelectedId };
@@ -70,18 +72,18 @@ public sealed class NeedsYouPageViewModelTests
         _ = page.Move(-1);
         seen.Add(list.SelectedId);
 
-        Assert.Equal(["desk:WFI-2", "decision:DEC-1", "failure:service:index", "failure:service:index", "decision:DEC-1"], seen);
+        Assert.Equal(["decision:DEC-1", "setup:WFI-2", "failure:service:index", "failure:service:index", "setup:WFI-2"], seen);
     }
 
     [Fact]
     public async Task The_card_follows_the_selected_row_in_plain_words()
     {
-        var (list, page) = await Page(NeedsYouRows.Park("desk:WFI-2", minutes: 351), NeedsYouRows.Decision());
+        var (list, page) = await Page(NeedsYouRows.Park("setup:WFI-2", minutes: 351), NeedsYouRows.Decision());
 
-        list.Select("desk:WFI-2");
+        list.Select("setup:WFI-2");
 
-        Assert.Equal("desk:WFI-2", page.Selected?.Id);
-        Assert.Equal(("Your approval", "Waiting for you", "waiting 5h 51m"), (page.KindWord, page.FooterLeft, page.FooterRight));
+        Assert.Equal("setup:WFI-2", page.Selected?.Id);
+        Assert.Equal(("Settings change", "Waiting for you", "waiting 5h 51m"), (page.KindWord, page.FooterLeft, page.FooterRight));
 
         list.Select("decision:DEC-1");
         Assert.Equal(("Agent decision", "waiting 26m"), (page.KindWord, page.FooterRight));
@@ -90,16 +92,16 @@ public sealed class NeedsYouPageViewModelTests
     [Fact]
     public async Task The_card_names_every_kind_by_its_own_word()
     {
-        var (list, page) = await Page(NeedsYouRows.Park("park:WFI-1"), NeedsYouRows.Park("takeover:WFI-2"), NeedsYouRows.Profile(), NeedsYouRows.Failure());
+        var (list, page) = await Page(NeedsYouRows.Profile(), NeedsYouRows.Failure());
 
         var words = new List<string>();
-        foreach (var id in new[] { "park:WFI-1", "takeover:WFI-2", "profile:drift", "failure:service:index" })
+        foreach (var id in new[] { "profile:drift", "failure:service:index" })
         {
             list.Select(id);
             words.Add(page.KindWord);
         }
 
-        Assert.Equal(["Paused run", "Paused run", "Settings change", "Something failed"], words);
+        Assert.Equal(["Settings change", "Something failed"], words);
     }
 
     [Fact]
@@ -108,7 +110,7 @@ public sealed class NeedsYouPageViewModelTests
         var (list, page) = await Page(NeedsYouRows.Decision(), NeedsYouRows.Failure());
         list.Select("failure:service:index");
 
-        list.Update(new NeedsYouFeed([NeedsYouRows.Failure(), NeedsYouRows.Decision(), NeedsYouRows.Park("desk:WFI-2")], ""));
+        list.Update(new NeedsYouFeed([NeedsYouRows.Failure(), NeedsYouRows.Decision(), NeedsYouRows.Park("setup:WFI-2")], ""));
 
         Assert.Equal("failure:service:index", page.Selected?.Id);
     }
@@ -128,18 +130,18 @@ public sealed class NeedsYouPageViewModelTests
     [Fact]
     public async Task Moving_or_clicking_leaves_the_cleared_card()
     {
-        var (list, page) = await Page(NeedsYouRows.Decision(), NeedsYouRows.Failure(), NeedsYouRows.Park("desk:WFI-2"));
+        var (list, page) = await Page(NeedsYouRows.Decision(), NeedsYouRows.Failure(), NeedsYouRows.Park("setup:WFI-2"));
         list.Select("decision:DEC-1");
-        list.Update(new NeedsYouFeed([NeedsYouRows.Failure(), NeedsYouRows.Park("desk:WFI-2")], ""));
+        list.Update(new NeedsYouFeed([NeedsYouRows.Failure(), NeedsYouRows.Park("setup:WFI-2")], ""));
         Assert.True(page.IsCleared);
 
         _ = page.Move(1);
         Assert.Equal((false, page.Selected?.Id), (page.IsCleared, page.Card?.Id));
 
         list.Select("failure:service:index");
-        list.Update(new NeedsYouFeed([NeedsYouRows.Park("desk:WFI-2")], ""));
+        list.Update(new NeedsYouFeed([NeedsYouRows.Park("setup:WFI-2")], ""));
         Assert.True(page.IsCleared);
-        page.Select("desk:WFI-2");
+        page.Select("setup:WFI-2");
         Assert.False(page.IsCleared);
     }
 
@@ -168,14 +170,6 @@ public sealed class NeedsYouPageViewModelTests
     }
 
     [Fact]
-    public async Task One_run_reads_as_one_run()
-    {
-        var (_, page) = await Page(NeedsYouRows.Park("park:WFI-1"));
-
-        Assert.Equal("1 waiting, 1 run", page.CountText);
-    }
-
-    [Fact]
     public async Task The_selected_row_says_so_in_its_name()
     {
         var (list, _) = await Page(NeedsYouRows.Decision(), NeedsYouRows.Failure());
@@ -194,13 +188,13 @@ public sealed class NeedsYouPageViewModelTests
 
         Assert.Empty(page.Groups);
         Assert.Null(page.Selected);
-        Assert.Equal("0 waiting, 0 runs", page.CountText);
+        Assert.Equal("0 waiting", page.CountText);
     }
     [Fact]
     public async Task The_action_bar_follows_the_card_and_a_new_request_starts_it_fresh()
     {
-        var (list, page) = await Page(NeedsYouRows.Desk(), NeedsYouRows.Decision());
-        list.Select(NeedsYouRows.Desk().Id);
+        var (list, page) = await Page(NeedsYouRows.Decision(), NeedsYouRows.Failure());
+        list.Select(NeedsYouRows.Decision().Id);
         await page.Bar.Loaded;
         page.Bar.ReadToEnd = true;
         await page.Bar.PressSendBack();
@@ -208,21 +202,19 @@ public sealed class NeedsYouPageViewModelTests
 
         _ = page.Move(1);
 
-        Assert.Equal((NeedsYouBarMode.Pending, false, "Accept"), (page.Bar.Mode, page.Bar.ReadToEnd, page.Bar.ApproveWord));
+        Assert.Equal((NeedsYouBarMode.Pending, false, "Approve"), (page.Bar.Mode, page.Bar.ReadToEnd, page.Bar.ApproveWord));
     }
 
     [Fact]
     public async Task Approving_replaces_the_card_with_the_done_card_until_the_user_moves_on()
     {
-        _server.ServeDeskWithoutRequiredOutput();
-        var (list, page) = await Page(NeedsYouRows.Desk(), NeedsYouRows.Decision());
-        list.Select(NeedsYouRows.Desk().Id);
+        var (list, page) = await Page(new NeedsYouConfirm(() => new Uri("http://127.0.0.1:7410/"), _server), NeedsYouRows.ProfileReady(), NeedsYouRows.Decision());
+        list.Select(NeedsYouRows.ProfileReady().Id);
         await page.Bar.Loaded;
-        page.Bar.ReadToEnd = true;
 
         await page.Bar.PressApprove();
 
-        Assert.Equal((true, false, "Approved: Try the engine"), (page.IsDone, page.ShowsRequest, page.Bar.DoneTitle));
+        Assert.Equal((true, false, Labels.NeedsYouApprovedTitle(NeedsYouRows.ProfileReady().Title)), (page.IsDone, page.ShowsRequest, page.Bar.DoneTitle));
         _ = page.Move(1);
         Assert.Equal((false, true), (page.IsDone, page.ShowsRequest));
     }
@@ -230,10 +222,9 @@ public sealed class NeedsYouPageViewModelTests
     [Fact]
     public async Task A_request_that_left_the_list_keeps_its_card_and_quiets_the_bar()
     {
-        var (list, page) = await Page(NeedsYouRows.Desk(), NeedsYouRows.Decision());
-        list.Select(NeedsYouRows.Desk().Id);
+        var (list, page) = await Page(new NeedsYouConfirm(() => new Uri("http://127.0.0.1:7410/"), _server), NeedsYouRows.ProfileReady(), NeedsYouRows.Decision());
+        list.Select(NeedsYouRows.ProfileReady().Id);
         await page.Bar.Loaded;
-        page.Bar.ReadToEnd = true;
 
         list.Update(new NeedsYouFeed([NeedsYouRows.Decision()], ""));
 

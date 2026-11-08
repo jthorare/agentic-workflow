@@ -110,7 +110,6 @@ internal sealed partial class FakeSindriApi : ISindriApi
             _streams.Clear();
         }
 
-        DropChanges();
     }
 
     /// <summary>Takes the server down: calls fail and open streams end.</summary>

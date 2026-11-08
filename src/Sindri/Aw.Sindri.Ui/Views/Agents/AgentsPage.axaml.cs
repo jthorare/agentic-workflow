@@ -42,7 +42,6 @@ internal sealed partial class AgentsPage : UserControl
         Page?.ClearFilters();
     }
 
-    private void OnOpenWorkflows(object? sender, RoutedEventArgs e) => Page?.RequestWorkflows();
 
     private AgentsPageViewModel? Page => DataContext as AgentsPageViewModel;
 

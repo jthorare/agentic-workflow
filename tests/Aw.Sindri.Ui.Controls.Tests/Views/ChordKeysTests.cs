@@ -74,15 +74,15 @@ public sealed class ChordKeysTests : IDisposable
     }
 
     [Fact]
-    public Task G_then_W_navigates_to_Workflows() => OnUi(async () =>
+    public Task G_then_A_navigates_to_Agents() => OnUi(async () =>
     {
         _records.Write(A.Record());
         var (window, shell) = await Show(ShellState.Normal);
 
         Press(window, Key.G);
-        Press(window, Key.W);
+        Press(window, Key.A);
 
-        Assert.Equal(PageId.Workflows, shell.CurrentPage);
+        Assert.Equal(PageId.Agents, shell.CurrentPage);
     });
 
     [Fact]
@@ -92,7 +92,7 @@ public sealed class ChordKeysTests : IDisposable
         var (window, shell) = await Show(ShellState.Normal);
 
         Press(window, Key.G, RawInputModifiers.Control);
-        Press(window, Key.W);
+        Press(window, Key.A);
 
         Assert.False(shell.IsChordPending);
         Assert.Equal(PageId.Home, shell.CurrentPage);
@@ -144,7 +144,7 @@ public sealed class ChordKeysTests : IDisposable
         _ = field.Focus();
 
         Press(window, Key.G);
-        Press(window, Key.W);
+        Press(window, Key.A);
 
         Assert.False(shell.IsChordPending);
         Assert.Equal(PageId.Settings, shell.CurrentPage);
@@ -159,7 +159,7 @@ public sealed class ChordKeysTests : IDisposable
         Dispatcher.UIThread.RunJobs();
 
         Press(window, Key.G);
-        Press(window, Key.W);
+        Press(window, Key.A);
 
         Assert.False(shell.IsChordPending);
         Assert.Equal(PageId.Home, shell.CurrentPage);
@@ -176,7 +176,7 @@ public sealed class ChordKeysTests : IDisposable
         Assert.True(shell.Shortcuts.IsOpen);
 
         Press(window, Key.G);
-        Press(window, Key.W);
+        Press(window, Key.A);
 
         Assert.False(shell.IsChordPending);
         Assert.Equal(PageId.Home, shell.CurrentPage);
@@ -191,7 +191,7 @@ public sealed class ChordKeysTests : IDisposable
         shell.GoTo(PageId.Context);
 
         Press(window, Key.G);
-        Press(window, Key.W);
+        Press(window, Key.A);
 
         Assert.False(shell.IsChordPending);
         Assert.Equal(PageId.Context, shell.CurrentPage);
@@ -205,7 +205,7 @@ public sealed class ChordKeysTests : IDisposable
         shell.GoTo(PageId.Context);
 
         Press(window, Key.G);
-        Press(window, Key.W);
+        Press(window, Key.A);
 
         Assert.False(shell.IsChordPending);
         Assert.Equal(PageId.Context, shell.CurrentPage);
@@ -227,7 +227,7 @@ public sealed class ChordKeysTests : IDisposable
         Press(window, other);
 
         Assert.False(shell.IsChordPending);
-        Press(window, Key.W);
+        Press(window, Key.A);
         Assert.Equal(PageId.Home, shell.CurrentPage);
     });
 

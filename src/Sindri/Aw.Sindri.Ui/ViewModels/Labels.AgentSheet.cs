@@ -28,7 +28,6 @@ internal static partial class Labels
     internal const string SheetAttempt = "Attempt";
 
     /// <summary>The visible words of the action that opens the Step's frame.</summary>
-    internal const string OpenStepFrame = "Open the run";
 
     /// <summary>The label of the time the process started.</summary>
     internal const string SheetStarted = "Started";
@@ -107,8 +106,4 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string SessionStale(Error error) => "Couldn't read the session just now. " + InstanceRefused(error);
 
-    /// <summary>The accessible name of the action that opens the Step's frame.</summary>
-    /// <param name="state">The step's state, or null.</param>
-    /// <returns>The words.</returns>
-    internal static string OpenStepFrameName(string? state) => state is { Length: > 0 } ? $"{OpenStepFrame} at {state}" : OpenStepFrame;
 }

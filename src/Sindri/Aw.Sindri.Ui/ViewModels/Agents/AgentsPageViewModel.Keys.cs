@@ -81,10 +81,6 @@ internal sealed partial class AgentsPageViewModel
         {
             RequestOpen(new SessionOpenRequestedEventArgs(row.Link));
         }
-        else if (row.HasStep)
-        {
-            row.OpenFrame();   // O: open with the resolved target, the frame of the Step the session works on
-        }
         else
         {
             RequestFocus(new AgentFocusEventArgs(row.Ref, toFocusLine: true, onlyIfLost: false));

@@ -13,7 +13,7 @@ namespace Aw.Sindri.Ui.Tests.Shell;
 public sealed class ShellSelectionTests
 {
     private readonly InMemoryEndpointRecords _records = new();
-    private readonly FakeSindriApi _server = new() { Catalog = RouteAnswer.Api("commands", "catalog"), QueueView = RouteAnswer.SpecShaped("queue", "extra-p4-waiting"), NeedsYouView = RouteAnswer.Api("needs-you", "empty"), WorkflowAnswer = RouteAnswer.Api("workflow-instances", "empty") };
+    private readonly FakeSindriApi _server = new() { Catalog = RouteAnswer.Api("commands", "catalog"), QueueView = RouteAnswer.SpecShaped("queue", "extra-p4-waiting"), NeedsYouView = RouteAnswer.Api("needs-you", "empty") };
     private readonly FakeTimeProvider _clock = new(A.Noon);
     private readonly FakeClipboard _clipboard = new();
 
@@ -72,23 +72,6 @@ public sealed class ShellSelectionTests
         Assert.Equal(expected, _clipboard.Text);
         Assert.True(shell.Press("Enter"));
         Assert.Equal(DeepLinkKind.Item, shell.SheetLink?.Kind);
-    }, Token);
-
-    [Fact]
-    public Task A_queue_row_chosen_after_a_strip_row_owns_the_keys() => UiThread.Run(async () =>
-    {
-        var shell = await Connected();
-        shell.Strip.Update(FixtureInstances.Root);
-        shell.SelectStripRow(shell.Strip.Rows[0].Address);
-        const string queueRow = QueueRow;
-
-        shell.SelectQueueRow(queueRow);
-        const string expected = "sindri decide <decisionId> <choice> [--note <note>]";
-
-        Assert.Null(shell.Strip.SelectedAddress);
-        Assert.True(shell.Press("Y"));
-        await Task.Delay(1, Token);
-        Assert.Equal(expected, _clipboard.Text);
     }, Token);
 
     [Fact]

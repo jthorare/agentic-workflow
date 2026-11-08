@@ -1,6 +1,6 @@
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.ViewModels.Instance;
 using Aw.Sindri.Ui.ViewModels.Linear;
+using Aw.Sindri.Ui.ViewModels;
 
 namespace Aw.Sindri.Ui.Tests.Linear;
 

@@ -159,13 +159,13 @@ public sealed class CommandPaletteTests : IDisposable
         Settle(window);
         Assert.True(shell.Palette.IsOpen);
 
-        window.KeyTextInput("go:workflows");   // the Workflows page entry by id (the label "Workflow types" also matches a bare "workflows")
+        window.KeyTextInput("go:agents");   // the Agents page entry by id
         Settle(window);
         Press(window, Key.Down, PhysicalKey.ArrowDown);
-        Assert.Equal("go:Workflows", shell.Palette.Selected?.Id);
+        Assert.Equal("go:Agents", shell.Palette.Selected?.Id);
         Press(window, Key.Enter, PhysicalKey.Enter);
 
-        Assert.Equal((PageId.Workflows, false), (shell.CurrentPage, shell.Palette.IsOpen));
+        Assert.Equal((PageId.Agents, false), (shell.CurrentPage, shell.Palette.IsOpen));
     });
 
     [Fact]

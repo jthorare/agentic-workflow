@@ -1,7 +1,6 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
-using Aw.Sindri.Ui.ViewModels.Instance;
 using static Aw.Sindri.Ui.Tests.Jobs.JobsFixture;
 
 namespace Aw.Sindri.Ui.Tests.Jobs;

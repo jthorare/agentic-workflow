@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using Avalonia.Automation;
 using Avalonia.Automation.Peers;
@@ -8,21 +7,13 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.Api;
-using Aw.Sindri.Ui.Api.Workflow;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels.Agents;
 using Aw.Sindri.Ui.ViewModels.Controls;
-using Aw.Sindri.Ui.ViewModels.Instance;
 using Aw.Sindri.Ui.ViewModels.Item;
-using Aw.Sindri.Ui.ViewModels.Run;
-using Aw.Sindri.Ui.ViewModels.Takeover;
 using Aw.Sindri.Ui.Views.Agents;
-using Aw.Sindri.Ui.Views.Components;
-using Aw.Sindri.Ui.Views.Instance;
 using Aw.Sindri.Ui.Views.Item;
-using Aw.Sindri.Ui.Views.Run;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
@@ -130,77 +121,4 @@ public sealed class SandboxSheetViewTests : FrameHost
         window.Close();
     });
 
-    [Fact]
-    public Task Waiting_for_a_slot_is_a_word_in_the_runs_row_said_once_never_takes_focus_and_ends_with_Started() => OnUi(async () =>
-    {
-        var status = FixtureInstances.Parse<StatusFields>(JsonNode.Parse(GoldenFiles.SpecShaped("workflow-status", "sandbox-waiting-for-slot"))!);
-        var expanded = new ExpandedStateViewModel(new CurrentState(status.Header.State, Step: null, Gates: [], Desk: null, status), status.Header.Address, new FakeClipboard(), new FakeTimeProvider(A.Noon));
-        var window = Show(new ExpandedStateView { DataContext = expanded });
-        await Until(window, () => expanded.WaitingVoice.IsAnnouncing, "the wait was never said");
-        var live = Named<TextBlock>(window, "ExpandedWaitingAnnouncement");
-
-        Assert.Equal("Waiting for a free session slot (3 of 3 running)", Heard.Name(Named<Border>(window, "ExpandedWaiting")));
-        Assert.Equal(("Waiting for a free session slot, 3 of 3 running", 0d, true), (live.Text, live.Width, Polite(live)));
-        Assert.Null(window.FocusManager!.GetFocusedElement());
-
-        expanded.Update(new CurrentState(status.Header.State, Step: null, Gates: [], Desk: null, status with { Run = status.Run! with { WaitingForSlot = null, Session = new SessionHandle("claude", "abc") } }));
-        Settle(window);
-
-        Assert.Equal(("Started", "Started"), (live.Text, Named<TextBlock>(window, "ExpandedWaitingLine").Text));
-        Assert.Null(window.FocusManager.GetFocusedElement());
-        window.Close();
-    });
-
-    [Fact]
-    public Task A_limit_ending_is_one_sentence_in_the_failure_row_and_that_sentence_is_its_name() => OnUi(async () =>
-    {
-        var line = RunFixtures.Line("plan", new Dictionary<string, string>(StringComparer.Ordinal) { ["plan"] = "FAILED" }) with { State = "stuck", Since = A.Noon.AddHours(-1) };
-        line = line with { States = [.. line.States.Select(c => string.Equals(c.State, "stuck", StringComparison.Ordinal) ? c with { Glyph = StateGlyph.Done, Outcome = "failed" } : c)] };
-        var child = RunFixtures.Child("plan", ("produce", StateGlyph.Active, false), ("check", StateGlyph.Pending, false)) with
-        {
-            StepRuns = [new StepRun("review.1", "produce", Attempt: 1, MaxAttempts: null, "failed", "agent", A.Noon.AddHours(-4), A.Noon.AddHours(-3), DurationMs: 3_600_000, Outcome: null, Tokens: null, Actor: null)],
-        };
-        static RouteAnswer Body<T>(T value) => new(HttpStatusCode.OK, JsonSerializer.Serialize(value, SindriApiClient.Json));
-        Server.InstanceBody = id => string.Equals(id, line.Id, StringComparison.Ordinal) ? Body(line)
-            : string.Equals(id, "WFI-plan", StringComparison.Ordinal) ? Body(child)
-            : RunFixtures.Stages.Contains(id["WFI-".Length..], StringComparer.Ordinal) ? Body(RunFixtures.Child(id["WFI-".Length..], ("produce", StateGlyph.Done, false))) : null;
-        Server.InstanceEventAnswers["WFI-plan"] = RouteAnswer.SpecShaped("workflow-instance-events", "sandbox-limit-memory-branch");
-        var catalog = new CatalogViewModel(new FakeClipboard(), new FakeTimeProvider(A.Noon));
-        var page = new RunPageViewModel(Server, catalog, new FakeClipboard(), new FakeTimeProvider(A.Noon));
-        await page.Open(_api, line.Address, line.Id, Token);
-        var window = Show(new RunPage { DataContext = page }, 1200, 800);
-
-        const string Sentence = "This Step ran out of memory (12GiB) after 21 min. Its work so far is kept on branch sindri/itm-0f-review-1.";
-        Assert.Equal((Sentence, Sentence), (Named<TextBlock>(window, "RunFailureText").Text, Heard.Name(Named<TextBlock>(window, "RunFailureText"))));
-        window.Close();
-    });
-
-    [Fact]
-    public Task The_takeover_banner_is_read_once_never_takes_focus_dismisses_once_and_comes_back_on_the_next_takeover() => OnUi(() =>
-    {
-        var banner = new TakeoverBannerViewModel();
-        var window = Show(new TakeoverBannerView { DataContext = banner });
-        var live = Named<TextBlock>(window, "TakeoverBannerAnnouncement");
-        Assert.False(Visible(window, "TakeoverBanner"));
-
-        banner.Update(sandboxed: true, takenOver: true);
-        Settle(window);
-
-        Assert.True(Visible(window, "TakeoverBanner"));
-        Assert.Equal((GoldenFiles.Sandbox("takeover-banner.txt").Trim(), 0d, true), (live.Text, live.Width, Polite(live)));
-        Assert.Equal(banner.Text, Heard.Name(Named<Control>(window, "TakeoverBanner")));
-        Assert.Null(window.FocusManager.GetFocusedElement());
-
-        Named<Button>(window, "TakeoverBannerDismiss").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        banner.Update(sandboxed: true, takenOver: true);
-        Settle(window);
-        Assert.False(Visible(window, "TakeoverBanner"));
-
-        banner.Update(sandboxed: true, takenOver: false);
-        banner.Update(sandboxed: true, takenOver: true);
-        Settle(window);
-        Assert.True(Visible(window, "TakeoverBanner"));
-        window.Close();
-        return Task.CompletedTask;
-    });
 }

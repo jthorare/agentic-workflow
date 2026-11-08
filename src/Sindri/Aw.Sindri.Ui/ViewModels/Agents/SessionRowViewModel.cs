@@ -108,13 +108,10 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
     /// <summary>True when Sindri launched the session (it sits in the second group).</summary>
     public bool IsLaunched => Row.LaunchId is { Length: > 0 };
 
-    /// <summary>Raised when the row asks to open the frame of the Step it works on.</summary>
-    internal event EventHandler<SessionFrameRequestedEventArgs>? FrameRequested;
-
     /// <summary>"on ITM-…/step/1 · build · attempt 2" for a session an engine launch started; empty otherwise.</summary>
     public string StepText { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>The step button's accessible name: its visible words first, then what it opens.</summary>
+    /// <summary>The step's accessible name: its visible words first, then its state.</summary>
     public string StepName { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>True when the row names the Step it works on.</summary>
@@ -125,15 +122,6 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
 
     /// <summary>What the doing cell says then.</summary>
     public string NoStepText { get; } = Labels.SessionNoStep;
-
-    /// <summary>Opens the frame of the Step the session works on; nothing without one.</summary>
-    internal void OpenFrame()
-    {
-        if (Row.Launch is { Instance: { Length: > 0 } instance } launch)
-        {
-            FrameRequested?.Invoke(this, new SessionFrameRequestedEventArgs(instance, launch.State));
-        }
-    }
 
     /// <summary>Everything the row draws, so a read that changes nothing leaves the row alone.</summary>
     internal string Signature { get; private set; } = string.Empty;

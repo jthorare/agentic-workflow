@@ -133,33 +133,6 @@ public sealed class SetupConfirmTests
     }
 
     [Fact]
-    public async Task Workflows_row_shows_the_plan_with_its_change_words_and_the_approve_button()
-    {
-        _f.Serve(With("profile-needs-approval", "recipes", "needs-you", "ApproveAllRecipes"));
-
-        var row = Step(await _f.Read(Token), "recipes");
-        var all = row.Workflows!;
-
-        Assert.Null(row.Action);
-        Assert.Equal((true, true, true), (all.IsOpen, all.ShowsPlan, all.CanApprove));
-        Assert.NotEmpty(all.Rows);
-        Assert.All(all.Rows, r => Assert.NotEmpty(r.Reason));   // New, Updated or Needs a second look, as the plan serves it
-        Assert.Empty(_f.Server.Approvals);   // reading the plan approves nothing
-    }
-
-    [Fact]
-    public async Task A_workflows_row_that_stops_needing_the_person_closes_its_plan()
-    {
-        _f.Serve(With("profile-needs-approval", "recipes", "needs-you", "ApproveAllRecipes"));
-        var setup = await _f.Read(Token);
-
-        _f.Serve(With("profile-needs-approval", "recipes", "todo"));
-        await setup.Refresh(Url, Token);
-
-        Assert.False(Step(setup, "recipes").Workflows!.IsOpen);
-    }
-
-    [Fact]
     public async Task The_profile_row_reads_the_summary_once_per_hash_and_shows_it_even_before_the_app_may_approve()
     {
         _f.Server.ProfileAnswer = RouteAnswer.Api("profile", "repo-added");

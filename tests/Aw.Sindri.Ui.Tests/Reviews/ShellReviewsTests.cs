@@ -7,7 +7,7 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Reviews;
 
-/// <summary>The Reviews tab in the shell (review page spec §3, §6.1, §16 pick 5): the ninth tab, G V, the deep link, the badge and Home's line.</summary>
+/// <summary>The Reviews tab in the shell (review page spec §3, §6.1, §16 pick 5): the seventh tab, G V, the deep link, the badge and Home's line.</summary>
 [Lane(TestLane.Unit)]
 public sealed class ShellReviewsTests
 {
@@ -29,12 +29,12 @@ public sealed class ShellReviewsTests
     private static NavEntry Tab(ShellViewModel shell) => shell.Navigation.Single(n => n.Page == PageId.Reviews);
 
     [Fact]
-    public Task Reviews_is_the_ninth_tab_after_System() => UiThread.Run(async () =>
+    public Task Reviews_is_the_seventh_tab_after_System() => UiThread.Run(async () =>
     {
         var shell = await Shell();
 
         Assert.Equal(
-            [PageId.Home, PageId.Projects, PageId.Workflows, PageId.Work, PageId.Recipes, PageId.Context, PageId.Agents, PageId.System, PageId.Reviews],
+            [PageId.Home, PageId.Projects, PageId.Work, PageId.Context, PageId.Agents, PageId.System, PageId.Reviews],
             shell.Navigation.Select(n => n.Page));
         Assert.Equal(("Reviews", "V"), (Tab(shell).Label, Tab(shell).Key));
     }, Token);

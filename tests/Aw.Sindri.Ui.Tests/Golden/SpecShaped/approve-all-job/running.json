@@ -1,1 +1,0 @@
-{"id":"JOB-0000000000000000000000000000000e","kind":"ApproveAllRecipes","key":"approve-all","state":"running","startedBy":"human:ui","startedAt":"2026-01-01T00:00:00.0000000Z","endedAt":null,"progress":[{"round":1,"line":"Approving One step","at":"2026-01-01T00:00:00.0000000Z"}],"rounds":1,"summary":null,"code":null,"result":null}

@@ -32,7 +32,6 @@ public sealed class RowContrastTests : FrameHost
     {
         var (window, shell) = await Connected(s => s.NeedsYou.Count > 0);
         shell.NeedsYou.Rows[0].SetContext(stale: true, rebuilding: false, selected: false);
-        shell.Strip.SetStale(stale: true);
         Settle(window);
 
         var rows = window.GetVisualDescendants().OfType<NeedsYouRow>().Where(r => r.IsEffectivelyVisible).ToList();

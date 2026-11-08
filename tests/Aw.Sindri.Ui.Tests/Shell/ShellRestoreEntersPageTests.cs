@@ -21,7 +21,7 @@ public sealed class ShellRestoreEntersPageTests
         await new Preferences(store).Update(_ => UiPreferences.Defaults with { LastPage = nameof(PageId.Context) });
         var records = new InMemoryEndpointRecords();
         records.Write(A.Record());
-        var server = new FakeSindriApi { Catalog = RouteAnswer.Api("commands", "catalog"), QueueView = RouteAnswer.SpecShaped("queue", "extra-p4-waiting"), NeedsYouView = RouteAnswer.Api("needs-you", "empty"), WorkflowAnswer = RouteAnswer.Api("workflow-instances", "empty") };
+        var server = new FakeSindriApi { Catalog = RouteAnswer.Api("commands", "catalog"), QueueView = RouteAnswer.SpecShaped("queue", "extra-p4-waiting"), NeedsYouView = RouteAnswer.Api("needs-you", "empty") };
         var shell = new ShellViewModel(records, server, new FakeTimeProvider(A.Noon), new Preferences(store), new FakeClipboard());
 
         await shell.Restore(Token);

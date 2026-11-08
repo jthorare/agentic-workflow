@@ -14,7 +14,6 @@ using Aw.Sindri.Ui.Api.Reviews;
 using Aw.Sindri.Ui.Api.Sessions;
 using Aw.Sindri.Ui.Api.Setup;
 using Aw.Sindri.Ui.Api.Sources;
-using Aw.Sindri.Ui.Api.Workflow;
 using Aw.Sindri.Ui.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Api;
@@ -44,16 +43,7 @@ public sealed class GoldenContractTests
         ["items-id-timeline"] = As<TimelineView>,
         ["items"] = As<ItemCreatedView>,   // POST /items' created* goldens only
         ["items-id-close"] = As<CommandAcceptedView>,
-        ["workflow-instances"] = As<InstanceList>,
-        ["workflow-instance"] = As<InstanceDetail>,
-        ["workflow-instance-fact"] = As<FactView>,
-        ["workflow-instance-events"] = As<InstanceEventsView>,   // GET /workflow/instances/{id}/events: the run canvas's "What went wrong" (spec-shaped until the engine has a golden)
-        ["workflow-status"] = As<StatusFields>,
         ["code-index-status"] = As<CodeIndexStatusView>,   // the Health card's Code index lines (CI-10b)
-        ["workflow-recipe"] = As<RecipeView>,
-        ["workflow-recipes"] = As<RecipeList>,
-        ["workflow-recipes-id-stats"] = As<RecipeStatsView>,   // API P12: one recipe's stats, on the recipe sheet
-        ["workflow-instances-start"] = AsStart,   // POST /workflow/instances: the request golden, and the started answer (which also carries the engine's whole view)
         ["needs-you"] = As<NeedsYouList>,
         ["decisions"] = As<DecisionList>,
         ["decisions-id"] = As<CommandAcceptedView>,   // POST /decisions/{id}'s accepted goldens; the refusals are ProblemDetails
@@ -114,14 +104,9 @@ public sealed class GoldenContractTests
         ["skills"] = As<SkillsView>,   // GET /skills: the skill blocks the Instance sheet's skill card reads (skill flows spec §8.1)
         ["launch-picks"] = As<LaunchPicksView>,   // GET /launch/picks: the model picks of the runs (model-pick spec §6.1)
         ["launches-id"] = As<LaunchView>,   // GET /launches/{id}: the launch an Open started (Attach, the run line)
-        // The approve-all plan and result are the engine's real goldens (workflow-recipes-approve-all); the start, job and refusal bodies below stay SPEC-SHAPED (the engine has none).
-        ["workflow-recipes-approve-all"] = AsApproveAll,   // GET /workflow/recipes/approve-all (the plan*, empty scenarios) and the job's result (applied, refused): the engine's real goldens
-        ["recipes-approve-all-start"] = As<ApproveAllStarted>,   // POST /workflow/recipes/approve-all's 202
-        ["approve-all-job"] = As<ApproveAllJob>,   // GET /jobs/{id} of the approval
         ["profile"] = As<ProfileRead>,   // GET /profile: the approval's plain-words summary is the part the Setup profile step reads (api #782)
         ["profile-approve"] = As<ProfileApproved>,   // POST /profile/approve's approved and preview answers (needs-you slice 3: the typed approve on a drifted-profile row); the refusals are ProblemDetails
-        ["recipe-approve"] = As<RecipeApproved>,   // POST /workflow/recipes/{id}@{hash}/approve's accepted answer (needs-you slice 3b: the typed approve on a changed-workflow row; spec-shaped)
-        ["workflow-complete"] = As<CompleteStepAccepted>,   // POST /workflow/instances/{id}/runs/{run}/complete's accepted answer (spec-shaped; the engine has no golden for it)
+        ["workflow-complete"] = As<ApplyCommandAccepted>,   // POST /workflow/instances/{id}/commands' accepted answer (the takeover; spec-shaped, the engine has no golden for it)
         ["sandbox-status"] = As<Ui.Api.Sandbox.SandboxStatusView>,   // GET /sandbox/status: Health and Settings (SB-6; spec-shaped until the server's golden is recorded)
         ["sandbox-check"] = As<Ui.Api.Sandbox.SandboxCheckView>,   // GET /sandbox/check: Check again and the resume list (SB-6, spec-shaped)
         ["sandbox-denials"] = As<Ui.Api.Sandbox.DenialsView>,   // GET /sandbox/denials?item=: the item sheet's Blocked list (SB-6, spec-shaped)
@@ -133,6 +118,7 @@ public sealed class GoldenContractTests
     private static readonly HashSet<string> _notRead = new(StringComparer.Ordinal)
     {
         "stop",
+        "workflow-instances", "workflow-instance", "workflow-instance-fact", "workflow-status", "workflow-recipe", "workflow-recipes", "workflow-recipes-id-stats", "workflow-instances-start", "workflow-recipes-approve-all",   // v2 PR 4: the app has no Recipes, Workflows or run pages; the routes stay served until the backend PR removes them
         "workflow-challenges-app",   // q93: the app asks for no challenge any more; the route stays served until api removes it
         "setup-repos",   // POST /setup/repos (Add repo): the app's call and the job's progress are U3's (SO-U3)
         "context-concepts-id-members",   // GET /sindri/context/concepts/{id}/members: the band reads sizes from the concepts answer, never a concept's member list
@@ -350,13 +336,6 @@ public sealed class GoldenContractTests
     // One slug for GET and POST /requests (U3-API-5): the list-* scenarios are RequestList, the others RequestFiled.
     private static Result<object> AsRequests(byte[] body) =>
         JsonNode.Parse(body) is JsonObject node && node.ContainsKey("requests") ? As<RequestList>(body) : As<RequestFiledView>(body);
-
-    // One slug for the plan and the job's result: the result has 'approved', the plan has 'recipes'.
-    private static Result<object> AsApproveAll(byte[] body) =>
-        JsonNode.Parse(body) is JsonObject node && node.ContainsKey("approved") ? As<ApproveAllResult>(body) : As<ApproveAllPlan>(body);
-
-    private static Result<object> AsStart(byte[] body) =>
-        JsonNode.Parse(body) is JsonObject node && node.ContainsKey("instance") ? As<StartedView>(body) : As<StartInstanceRequest>(body);
 
     // One slug for GET and POST /context/map/review: the post-* scenarios are the decision's reply, the others the queue.
     private static Result<object> AsReview(byte[] body) =>

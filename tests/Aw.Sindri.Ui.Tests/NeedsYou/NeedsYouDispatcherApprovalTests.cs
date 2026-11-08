@@ -6,50 +6,15 @@ using Aw.Sindri.Ui.ViewModels.NeedsYou;
 
 namespace Aw.Sindri.Ui.Tests.NeedsYou;
 
-/// <summary>A Home row's Approve recipe and Approve profile (gh-1038): each sends its approval once, to the route the inbox bar uses, and says what came back; approve-all stays the dialog's.</summary>
+/// <summary>A Home row's Approve profile (gh-1038): it sends its approval once, to the route the inbox bar uses, and says what came back.</summary>
 [Lane(TestLane.Unit)]
 public sealed class NeedsYouDispatcherApprovalTests
 {
-    private const string StepHash = "sha256:4ca37bf46333dc66a14c042bb4561aad96eed677f35f5fc221f0497c8b3e31f7";   // workflow.step v5 in the served recipe list (the workflow-recipes list golden)
     private static readonly Uri _api = new("http://127.0.0.1:7410/");
     private readonly FakeSindriApi _server = new();
 
     private NeedsYouDispatcher Dispatcher() =>
-        new(_server, () => _api, new InstanceCommander(_server, () => _api), new DeskReporter(_server, () => _api));
-
-    [Fact]
-    public async Task A_home_recipe_row_posts_one_approval_for_the_version_the_list_serves()
-    {
-        var row = NeedsYouRows.Recipe();
-
-        var result = await Dispatcher().Run(row, row.Actions[0]);
-
-        var sent = Assert.Single(_server.RecipeApprovals);
-        Assert.Equal(("workflow.step", StepHash, DispatchOutcome.Sent), (sent.Id, sent.Hash, result.Outcome));
-    }
-
-    [Fact]
-    public async Task A_home_recipe_row_that_names_its_hash_approves_that_hash()
-    {
-        var row = NeedsYouRows.Recipe() with { Cli = "sindri recipe approve workflow.step@" + StepHash };
-
-        _ = await Dispatcher().Run(row, row.Actions[0]);
-
-        Assert.Equal(StepHash, Assert.Single(_server.RecipeApprovals).Hash);
-    }
-
-    [Fact]
-    public async Task A_refused_recipe_approval_is_said_with_its_code_and_the_rows_command()
-    {
-        _server.ApproveRecipeAnswer = RouteAnswer.Problem(HttpStatusCode.Conflict, "SND-WF-009", "That version changed again.");
-        var row = NeedsYouRows.Recipe();
-
-        var result = await Dispatcher().Run(row, row.Actions[0]);
-
-        Assert.Equal(DispatchOutcome.Refused, result.Outcome);
-        Assert.Contains("SND-WF-009", result.Message, StringComparison.Ordinal);
-        Assert.Contains(row.Cli, result.Message, StringComparison.Ordinal);
-    }
+        new(_server, () => _api);
 
     [Fact]
     public async Task A_home_profile_row_posts_the_full_hash_once()

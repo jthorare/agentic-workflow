@@ -6,7 +6,6 @@ using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Api.Jobs;
 using Aw.Sindri.Ui.Api.Reviews;
 using Aw.Sindri.Ui.Api.Sessions;
-using Aw.Sindri.Ui.Api.Workflow;
 
 namespace Aw.Sindri.Ui.Testing;
 
@@ -96,14 +95,7 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
         {
             // LANE ANCHOR U3': add the Needs you routes as arms above the workflow-read arm, each a RouteAnswer from the goldens. Insert immediately above this marker, never between the markers.
             // LANE ANCHOR U8: add the workflow command routes as arms above the workflow-read arm, each a RouteAnswer from the goldens. Insert immediately below this marker, never between the markers.
-            var path when IsApproval(request, path) => await ApprovalRoute(request, path, cancellationToken),
-            var path when IsComplete(request, path) => await CompleteRoute(request, path, cancellationToken),
-            var path when IsCommand(request, path) => await CommandRoute(request, path, cancellationToken),
-            "/sindri/workflow/recipes" when request.Method == HttpMethod.Get => Answer(Counted(await server.Recipes(uri, cancellationToken), server.RecipeListAnswer)),
-            "/sindri/workflow/instances" when request.Method == HttpMethod.Post =>
-                Answer(Counted(await server.StartInstance(uri, await Body<StartInstanceRequest>(request, cancellationToken), cancellationToken), server.StartAnswer)),
-            { } path when request.Method == HttpMethod.Post && path.StartsWith("/sindri/workflow/instances/", StringComparison.Ordinal) && path.EndsWith("/rerun", StringComparison.Ordinal) =>
-                Answer(Counted(await server.RerunInstance(uri, Uri.UnescapeDataString(path["/sindri/workflow/instances/".Length..^"/rerun".Length]), cancellationToken), server.RerunAnswer)),
+            var path when IsProfile(request, path) => await ProfileRoute(request, path, cancellationToken),
             var path when IsServiceCommand(request, path) => await ServiceCommand(request, path, cancellationToken),
             "/sindri/context/map/refresh" when request.Method == HttpMethod.Post => Answer(Counted(await server.RefreshContextMap(uri, cancellationToken), server.RefreshContextMapAnswer)),
             { } path when path.StartsWith("/sindri/context/", StringComparison.Ordinal) => await ContextRoute(request, cancellationToken),
@@ -115,7 +107,6 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
             "/sindri/index/status" when request.Method == HttpMethod.Get => Answer(Counted(await server.IndexStatus(uri, cancellationToken), server.IndexStatusAnswer)),
             "/sindri/setup" when request.Method == HttpMethod.Get => Answer(Counted(await server.Setup(uri, cancellationToken), server.SetupAnswer)),
             { } path when request.Method == HttpMethod.Post && IsSetupWrite(path) => await SetupWrite(request, path, cancellationToken),
-            { } path when request.Method == HttpMethod.Get && path.StartsWith("/sindri/workflow/", StringComparison.Ordinal) => await Workflow(uri, cancellationToken),
             _ => Text(HttpStatusCode.NotFound, "{}", "application/json"),
         };
     }
@@ -127,7 +118,6 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
         {
             "/sindri/ping" => await PingAnswer(uri, cancellationToken),
             "/sindri/status" => await StatusAnswer(uri, after, cancellationToken),
-            "/sindri/events" when string.Equals(Query(uri, "types"), InstanceChange.Type, StringComparison.Ordinal) => await Changes(Query(uri, "instance"), cancellationToken),
             "/sindri/events" => Events(After(uri), cancellationToken),
             "/sindri/commands" => Answer(Counted(await server.Commands(uri, cancellationToken), server.Catalog)),
             "/sindri/services" => Answer(Counted(await server.Services(uri, after), server.ServiceView)),
@@ -292,33 +282,6 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
         return Answer(server.ContextPinSuggestAnswer(suggest));
     }
 
-    // The workflow reads (API §3.8): the call goes through the model (so a down server or a refusal answers as it does there),
-    // then the route's golden is served as the model has it. An address is only ever a query value, so every segment is an id, a key or a recipe.
-    private async Task<HttpResponseMessage> Workflow(Uri uri, CancellationToken cancellationToken)
-    {
-        var parts = uri.AbsolutePath["/sindri/workflow/".Length..].Split('/').Select(Uri.UnescapeDataString).ToArray();
-        switch (parts)
-        {
-            case ["instances"]:
-                var query = Query(uri);
-                _ = await server.Instances(uri, query, cancellationToken);
-                return Answer(server.InstancesAnswer(query));
-            case ["instances", var id]:
-                _ = await server.Instance(uri, id, cancellationToken);
-                return Answer(server.InstanceAnswer(id));
-            case ["instances", var id, "facts", var key]:
-                _ = await server.InstanceFact(uri, id, key, cancellationToken);
-                return Answer(server.FactAnswer(id, key));
-            case ["recipes", var named]:
-                var at = named.IndexOf('@', StringComparison.Ordinal);
-                var (recipe, hash) = at < 0 ? (named, null) : (named[..at], named[(at + 1)..]);
-                _ = await server.Recipe(uri, recipe, hash, cancellationToken);
-                return Answer(server.RecipeAnswer(recipe, hash));
-            default:
-                return Text(HttpStatusCode.NotFound, "{}", "application/json");
-        }
-    }
-
     // The session reads (collector spec CA-1, CA-2): through the model (a down server or a refusal answers as it does there), then the route's golden as the model has it.
     private async Task<HttpResponseMessage> Sessions(Uri uri, CancellationToken cancellationToken)
     {
@@ -354,17 +317,6 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
             default:
                 return Text(HttpStatusCode.NotFound, "{}", "application/json");
         }
-    }
-
-    private static InstanceQuery Query(Uri uri)
-    {
-        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-        return new InstanceQuery(
-            Root: query["root"] == "true",
-            Open: query["open"] switch { "true" => true, "false" => false, _ => null },
-            Recipe: query["recipe"],
-            Subject: query["subject"],
-            Address: query["address"]);
     }
 
     // The ping goes through the model (its count, and the new epoch that drops a pending sequence); a failing ping is a transport failure.
@@ -453,28 +405,6 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
                 body.Send(Encoding.UTF8.GetBytes(string.Create(CultureInfo.InvariantCulture, $"id: {e.Sequence}\nevent: {e.Type}\ndata: {Event(e)}\n\n")));
             }
 
-            body.End();
-        }, cancellationToken);
-        return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(body) { Headers = { { "Content-Type", "text/event-stream" } } } };
-    }
-
-    // The derived stream: frames are written as the API writes them, with an event name and no "id:" line (API §5).
-    private async Task<HttpResponseMessage> Changes(string? instance, CancellationToken cancellationToken)
-    {
-        var body = new ChunkStream();
-        var items = server.InstanceChanges(new Uri("http://fake/"), instance, cancellationToken).GetAsyncEnumerator(cancellationToken);
-        var open = await items.MoveNextAsync();   // the stream is registered with the model before the response, as a connected socket is
-        _ = Task.Run(async () =>
-        {
-            for (var more = open; more; more = await items.MoveNextAsync())
-            {
-                if (items.Current.Change is { } c)
-                {
-                    body.Send(Encoding.UTF8.GetBytes(string.Create(CultureInfo.InvariantCulture, $"event: {InstanceChange.Type}\ndata: {{\"instance\":\"{c.Instance}\",\"state\":\"{c.State}\",\"cursor\":{c.Cursor}}}\n\n")));
-                }
-            }
-
-            await items.DisposeAsync();
             body.End();
         }, cancellationToken);
         return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(body) { Headers = { { "Content-Type", "text/event-stream" } } } };

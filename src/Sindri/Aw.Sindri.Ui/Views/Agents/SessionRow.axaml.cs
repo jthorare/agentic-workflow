@@ -47,7 +47,6 @@ internal sealed partial class SessionRow : UserControl
 
     private void OnOpen(object? sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(OpenEvent, this));
 
-    private void OnOpenFrame(object? sender, RoutedEventArgs e) => (DataContext as SessionRowViewModel)?.OpenFrame();
 
     private void OnCopyFocus(object? sender, RoutedEventArgs e) => _ = (DataContext as SessionRowViewModel)?.Focus.Copy(CancellationToken.None);
 }

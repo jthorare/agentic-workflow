@@ -38,7 +38,6 @@
     <Compile Include="../Aw.Sindri.Ui.Tests/Views/HeadlessWindows.cs" Link="Shared/HeadlessWindows.cs" />
     <Compile Include="../Aw.Sindri.Ui.Tests/Views/Heard.cs" Link="Shared/Heard.cs" />
     <Compile Include="../Aw.Sindri.Ui.Tests/OffThreadTimers.cs" Link="Shared/OffThreadTimers.cs" />
-    <Compile Include="../Aw.Sindri.Ui.Tests/Workflows/LineGolden.cs" Link="Shared/LineGolden.cs" />
     <Compile Include="../Aw.Sindri.Ui.Tests/Jobs/JobsFixture.cs" Link="Shared/JobsFixture.cs" />
   </ItemGroup>
 

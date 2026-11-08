@@ -115,43 +115,4 @@ public sealed class NeedsYouHomeActionsSendTests : IDisposable
         Assert.Equal([service], _server.PauseServiceCalls, StringComparer.Ordinal);
     });
 
-    // A desk row's Complete reports through the engine's CompleteStep, which needs the desk run and an outcome. The test pins only
-    // the observable: one click on Home's Complete (plus at most one confirm from the answer bar, clicked below when the bar offers it)
-    // leads to exactly one CompleteStep for that instance.
-    [Fact]
-    public Task Complete_on_a_desk_row_sends_one_CompleteStep_for_its_instance() => OnUi(async () =>
-    {
-        _server.ServeDeskWithoutRequiredOutput();   // the golden's desk requires a file, which Home's Complete opens the sheet for (#1170): this row's step asks for none
-        var (window, _) = await WithFeed(new NeedsYouFeed([NeedsYouRows.Desk()], ""));
-
-        ActionButton(Rows(window).Single(), "CompleteStep").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        await WaitFor(window, () => _server.CompleteCalls.Count > 0);
-        if (_server.CompleteCalls.Count == 0)
-        {
-            var confirm = window.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.IsEffectivelyVisible && b.IsEnabled && string.Equals(b.Content as string, "Complete", StringComparison.Ordinal) && !Rows(window).Exists(r => r.GetVisualDescendants().Contains(b)));
-            confirm?.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            await WaitFor(window, () => _server.CompleteCalls.Count > 0);
-        }
-
-        var (instance, _) = Assert.Single(_server.CompleteCalls);
-        Assert.Equal(NeedsYouRows.DeskInstance, instance);
-    });
-
-    [Fact]
-    public Task Complete_on_a_row_that_is_not_a_desk_task_is_not_ready_and_carries_the_command() => OnUi(async () =>
-    {
-        var desk = NeedsYouRows.Desk();
-        var plain = desk with
-        {
-            Id = "park:ITM-01JL1",
-            Subject = new NeedsYouSubject("item", "ITM-01JL1"),
-            Actions = [desk.Actions[0] with { Readiness = ActionReadiness.Ready }],
-        };
-        var (window, _) = await WithFeed(new NeedsYouFeed([plain], ""));
-
-        var button = ActionButton(Rows(window).Single(), "CompleteStep");
-
-        Assert.False(button.IsEnabled);
-        Assert.Equal(plain.Cli, ToolTip.GetTip(button));
-    });
 }

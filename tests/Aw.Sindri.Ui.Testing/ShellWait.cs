@@ -52,5 +52,5 @@ internal static class ShellWait
     }
 
     private static List<INotifyPropertyChanged> Sources(ShellViewModel shell) =>
-        [shell, shell.Health, shell.Queue, shell.Item, shell.NeedsYou, shell.NeedsYou.Seen, shell.Strip, shell.Decision, shell.Workflows, shell.Instance];
+        [shell, shell.Health, shell.Queue, shell.Item, shell.NeedsYou, shell.NeedsYou.Seen, shell.Decision];
 }

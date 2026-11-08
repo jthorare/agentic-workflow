@@ -36,13 +36,10 @@
     <Compile Include="../Aw.Sindri.Ui.Tests/Views/FrameHost.cs" Link="Shared/FrameHost.cs" />
     <Compile Include="../Aw.Sindri.Ui.Tests/Views/FrameFile.cs" Link="Shared/FrameFile.cs" />
     <Compile Include="../Aw.Sindri.Ui.Tests/Views/HeadlessWindows.cs" Link="Shared/HeadlessWindows.cs" />
-    <Compile Include="../Aw.Sindri.Ui.Tests/Views/Heard.cs" Link="Shared/Heard.cs" />
     <Compile Include="../Aw.Sindri.Ui.Tests/OffThreadTimers.cs" Link="Shared/OffThreadTimers.cs" />
     <Compile Include="../Aw.Sindri.Ui.Tests/Theme/TokenFile.cs" Link="Shared/TokenFile.cs" />
     <Compile Include="../Aw.Sindri.Ui.Tests/Theme/UiSource.cs" Link="Shared/UiSource.cs" />
     <Compile Include="../Aw.Sindri.Ui.Tests/Theme/Wcag.cs" Link="Shared/Wcag.cs" />
-    <Compile Include="../Aw.Sindri.Ui.Tests/NeedsYou/ChildAnswerRows.cs" Link="Shared/ChildAnswerRows.cs" />
-    <Compile Include="../Aw.Sindri.Ui.Tests/Start/StartFormFixture.cs" Link="Shared/StartFormFixture.cs" />
   </ItemGroup>
 
   <!-- The API goldens the fake serves (Aw.Sindri.Ui.Testing reads them from the output folder): the same files as Aw.Sindri.Ui.Tests. -->

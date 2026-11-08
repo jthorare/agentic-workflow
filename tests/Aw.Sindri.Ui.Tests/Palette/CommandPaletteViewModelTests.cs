@@ -617,12 +617,12 @@ public sealed partial class CommandPaletteViewModelTests
     public async Task A_go_to_entry_shows_its_page()
     {
         _palette.Open();
-        _palette.Query = "recipes";
+        _palette.Query = "context";
 
         await _palette.Run(_palette.Selected, Token);
 
-        Assert.Equal([PageId.Recipes], _pages);
-        Assert.Equal(["go:Recipes"], _history, StringComparer.Ordinal);
+        Assert.Equal([PageId.Context], _pages);
+        Assert.Equal(["go:Context"], _history, StringComparer.Ordinal);
         Assert.False(_palette.IsOpen);
     }
 

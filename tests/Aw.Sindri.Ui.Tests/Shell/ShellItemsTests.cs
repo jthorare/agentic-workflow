@@ -19,7 +19,7 @@ public sealed class ShellItemsTests
 {
     private readonly InMemoryEndpointRecords _records = new();
     // P3 serves no waitingOnYou rows; the P4 extra adds the needs-decision row (a pending Decide) these behaviours need.
-    private readonly FakeSindriApi _server = new() { Catalog = RouteAnswer.Api("commands", "catalog"), QueueView = RouteAnswer.SpecShaped("queue", "extra-p4-waiting"), NeedsYouView = RouteAnswer.Api("needs-you", "empty"), WorkflowAnswer = RouteAnswer.Api("workflow-instances", "empty") };
+    private readonly FakeSindriApi _server = new() { Catalog = RouteAnswer.Api("commands", "catalog"), QueueView = RouteAnswer.SpecShaped("queue", "extra-p4-waiting"), NeedsYouView = RouteAnswer.Api("needs-you", "empty") };
     private readonly FakeTimeProvider _clock = new(A.Noon);
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -136,7 +136,7 @@ public sealed class ShellItemsTests
         Assert.Equal((PageId.Work, QueueFilter.All), (shell.CurrentPage, shell.Queue.Showing));
 
         shell.GoToQueue(QueueFilter.Running);
-        shell.GoTo(PageId.Recipes);
+        shell.GoTo(PageId.Agents);
         shell.SelectedNav = shell.Navigation.Single(n => n.Page == PageId.Work);
         Assert.Equal(QueueFilter.All, shell.Queue.Showing);
     }
@@ -237,7 +237,7 @@ public sealed class ShellItemsTests
             _ = shell.Press("J");
             _ = shell.Press("J");
             var selected = shell.Queue.SelectedId!;
-            shell.GoTo(PageId.Recipes);
+            shell.GoTo(PageId.Agents);
 
             _server.QueueView = QueueKeysTests.Regrouped("extra-p11-running", selected, "waitingOnYou");
             await shell.Queue.Refresh(new Uri("http://127.0.0.1:7410/"), Token);   // awaited: an event's refresh would race the reads
@@ -246,9 +246,9 @@ public sealed class ShellItemsTests
             Assert.Equal((selected, false, Labels.Sindri), (shell.Queue.SelectedId, shell.Queue.IsAnnouncing, shell.Queue.Announcement));
         }, Token);
 
-    // V1 through the shell: the selected row leaves the queue on Recipes; the settle is silent, so G H works on the first key.
+    // V1 through the shell: the selected row leaves the queue on Agents; the settle is silent, so G H works on the first key.
     [Fact]
-    public async Task A_selected_row_that_leaves_while_recipes_is_shown_does_not_guard_the_next_key()
+    public async Task A_selected_row_that_leaves_while_agents_is_shown_does_not_guard_the_next_key()
     {
         _server.QueueView = RouteAnswer.SpecShaped("queue", "extra-p11-running");
         var shell = await Connected();
@@ -256,8 +256,8 @@ public sealed class ShellItemsTests
         _ = shell.Press("J");
         var selected = shell.Queue.SelectedId!;
         _ = shell.Press("G");
-        _ = shell.Press("R");
-        Assert.Equal(PageId.Recipes, shell.CurrentPage);
+        _ = shell.Press("A");
+        Assert.Equal(PageId.Agents, shell.CurrentPage);
 
         _server.QueueView = QueueKeysTests.Without("extra-p11-running", selected);
         await shell.Queue.Refresh(new Uri("http://127.0.0.1:7410/"), Token);   // awaited here: an event's refresh would race the keys
@@ -272,7 +272,7 @@ public sealed class ShellItemsTests
     public async Task A_row_regrouped_while_the_restored_page_has_no_rows_keeps_its_selection_silently()
     {
         var store = new InMemoryPreferencesStore();
-        await new Preferences(store).Update(_ => UiPreferences.Defaults with { LastPage = nameof(PageId.Recipes) });
+        await new Preferences(store).Update(_ => UiPreferences.Defaults with { LastPage = nameof(PageId.Agents) });
         _server.QueueView = RouteAnswer.SpecShaped("queue", "extra-p11-running");
         _records.Write(A.Record());
         var shell = new ShellViewModel(_records, _server, _clock, new Preferences(store), new FakeClipboard());
@@ -280,7 +280,7 @@ public sealed class ShellItemsTests
         await shell.Restore(Token);
         _ = shell.Run(Token);
         await Until(() => shell.State == ShellState.Normal && shell.Queue.Total > 0);
-        Assert.Equal(PageId.Recipes, shell.CurrentPage);
+        Assert.Equal(PageId.Agents, shell.CurrentPage);
 
         _server.QueueView = QueueKeysTests.Regrouped("extra-p11-running", QueueKeysTests.Running(1), "waitingOnYou");
         await shell.Queue.Refresh(new Uri("http://127.0.0.1:7410/"), Token);   // awaited here: an event's refresh would race the assertions

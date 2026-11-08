@@ -24,8 +24,8 @@ public sealed class PlainWordsTests
     [Fact]
     public void The_session_sheet_labels_are_plain() =>
         Assert.Equal(
-            ["Agent session", "Run", "Step", "Open the run", "In this status since", "How this was detected", "History", "Details"],
-            [Labels.SheetLaunch, Labels.SheetInstance, Labels.SheetStep, Labels.OpenStepFrame, Labels.SheetSince, Labels.SheetStateSource, Labels.SheetHistory, Labels.SheetDetails]);
+            ["Agent session", "Run", "Step", "In this status since", "How this was detected", "History", "Details"],
+            [Labels.SheetLaunch, Labels.SheetInstance, Labels.SheetStep, Labels.SheetSince, Labels.SheetStateSource, Labels.SheetHistory, Labels.SheetDetails]);
 
     [Fact]
     public void The_context_page_words_are_plain() =>

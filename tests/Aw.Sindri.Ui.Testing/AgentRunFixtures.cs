@@ -1,13 +1,11 @@
 using System.Text.Json.Nodes;
 using Aw.Kernel.Json;
 using Aw.Sindri.Ui.Api;
-using Aw.Sindri.Ui.Api.Workflow;
 
 namespace Aw.Sindri.Ui.Testing;
 
 /// <summary>
-/// The agent run the app draws, for the unit lane. The status is engine P8's golden, tests/Aw.Sindri.Tests/Golden/Api/workflow-status/agent-run.json (the one
-/// the API tests pin, so the app and the engine cannot drift); the live-session item is the API's Golden/Api/items-id/live-session.json.
+/// The agent run the app draws, for the unit lane. The live-session item is the API's Golden/Api/items-id/live-session.json.
 /// </summary>
 internal static class AgentRunFixtures
 {
@@ -19,14 +17,6 @@ internal static class AgentRunFixtures
 
     /// <summary>The launch id OpenItem's requested golden answers with.</summary>
     internal const string Requested = "LCH-00000000000000000000000000000016";
-
-    /// <summary>The status of an instance an agent session runs.</summary>
-    /// <returns>The status as P8 serves it.</returns>
-    internal static StatusFields Status() => Golden<StatusFields>("workflow-status", "agent-run");
-
-    /// <summary>The same status with no run, as a server before P8 serves it.</summary>
-    /// <returns>The status without the run.</returns>
-    internal static StatusFields StatusWithoutRun() => Status() with { Run = null };
 
     /// <summary>An API golden read through the app's records.</summary>
     /// <typeparam name="T">The record.</typeparam>

@@ -13,7 +13,7 @@ namespace Aw.Sindri.Ui.Tests.Shell;
 public sealed class ShellInboxTests
 {
     private readonly InMemoryEndpointRecords _records = new();
-    private readonly FakeSindriApi _server = new() { Catalog = RouteAnswer.Api("commands", "catalog"), NeedsYouView = RouteAnswer.Api("needs-you", "empty"), WorkflowAnswer = RouteAnswer.Api("workflow-instances", "empty") };
+    private readonly FakeSindriApi _server = new() { Catalog = RouteAnswer.Api("commands", "catalog"), NeedsYouView = RouteAnswer.Api("needs-you", "empty") };
     private readonly FakeTimeProvider _clock = new(A.Noon);
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -132,7 +132,7 @@ public sealed class ShellInboxTests
         var shell = await Shell(NeedsYouRows.Park("desk:WFI-1"));
         shell.OpenNeedsYouInbox();
 
-        shell.GoTo(PageId.Workflows);
+        shell.GoTo(PageId.Agents);
 
         Assert.False(shell.IsNeedsYouInbox);
         shell.OpenNeedsYouInbox();
@@ -165,29 +165,6 @@ public sealed class ShellInboxTests
 
         Assert.Equal(NeedsYouViewModel.Cap, shell.NeedsYou.Rows.Count);
         Assert.Equal(8, shell.Inbox.Groups.Sum(g => g.Rows.Count));
-    }, Token);
-
-    private void ServeDeskInstance() =>
-        _server.ServeDeskWithoutRequiredOutput();
-
-    [Fact]
-    public Task A_asks_first_on_an_unread_desk_request_and_a_second_A_reports_it() => UiThread.Run(async () =>
-    {
-        ServeDeskInstance();
-        var shell = await Shell(NeedsYouRows.Desk());
-        shell.OpenNeedsYouInbox();
-        await shell.Inbox.Bar.Loaded;
-
-        _ = shell.Press("A");
-        Assert.Equal(NeedsYouBarMode.Confirming, shell.Inbox.Bar.Mode);
-        _ = shell.Press("A");
-
-        for (var i = 0; i < 400 && _server.CompleteCalls.Count == 0; i++)
-        {
-            await Task.Delay(5, Token);
-        }
-
-        Assert.Equal("approve", _server.CompleteCalls.Single().Body.Outcome);
     }, Token);
 
     [Fact]

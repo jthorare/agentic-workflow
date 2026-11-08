@@ -1,9 +1,6 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api;
-using Aw.Sindri.Ui.Api.Workflow;
-using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels.Controls;
-using Served = Aw.Sindri.Ui.Api.StateChip;
 
 namespace Aw.Sindri.Ui.Tests.Controls;
 
@@ -39,22 +36,9 @@ public sealed class StateChipTests
         ["POLLING"] = ChipTone.Neutral,
     };
 
-    // Every chip the API serves: on the list rows, on the instance and on its child rows, found in the goldens on disk.
-    private static IEnumerable<(string Where, Served Chip, string State, bool Terminal)> ServedChips()
-    {
-        foreach (var row in FixtureInstances.Rows)
-        {
-            yield return ($"list {row.Address}", row.Chip, row.State, row.States.Single(s => s.State == row.State).Terminal);
-        }
-
-        foreach (var (scenario, detail) in FixtureInstances.Details)
-        {
-            foreach (var child in detail.Children.SelectMany(FixtureInstances.ChildRows))
-            {
-                yield return ($"{scenario} {child.Address}", child.Chip, child.State, child.Glyph == StateGlyph.Done);
-            }
-        }
-    }
+    // Every chip of the table, as the API serves it: a word and its tone.
+    private static IEnumerable<(string Where, StateChip Chip, string State, bool Terminal)> ServedChips() =>
+        _spec.Select(entry => ($"table {entry.Key}", new StateChip(entry.Key, entry.Value), string.Empty, true));
 
     [Fact]
     public void Every_fixture_word_maps_to_its_class()
@@ -85,25 +69,11 @@ public sealed class StateChipTests
         }
     }
 
-    // A recipe's state is a stage: plain text beside the chip, never inside it. The chip says how the instance is doing.
-    [Fact]
-    public void Stage_names_are_never_chips()
-    {
-        foreach (var (where, chip, state, terminal) in ServedChips().Where(c => !c.Terminal))
-        {
-            Assert.False(string.Equals(chip.Word, state, StringComparison.OrdinalIgnoreCase), $"{where}: the stage {state} is served as a chip");
-        }
-
-        var stages = FixtureInstances.Rows.SelectMany(r => r.States).Where(s => !s.Terminal).Select(s => s.State).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        Assert.NotEmpty(stages);
-        Assert.DoesNotContain(ServedChips().Where(c => !c.Terminal), c => stages.Contains(c.Chip.Word));
-    }
-
     [Fact]
     public void Served_chip_wins_when_present()
     {
-        var served = new Served("PARKED", ChipTone.Attn);
-        var drawn = new Served("RUNNING", ChipTone.Ok);
+        var served = new StateChip("PARKED", ChipTone.Attn);
+        var drawn = new StateChip("RUNNING", ChipTone.Ok);
 
         Assert.Equal(new ChipView("PARKED", ChipTone.Attn), ChipView.Resolve(served, drawn));
         Assert.Equal(new ChipView("RUNNING", ChipTone.Ok), ChipView.Resolve(served: null, drawn));

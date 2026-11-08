@@ -64,7 +64,6 @@ public sealed class ServicesTabLayoutTests
         {
             Catalog = RouteAnswer.Api("commands", "catalog"),
             NeedsYouView = RouteAnswer.Api("needs-you", "empty"),
-            WorkflowAnswer = RouteAnswer.Api("workflow-instances", "empty"),
             ServiceView = RouteAnswer.Api("services", "running-job"),
         };
         var shell = new ShellViewModel(records, server, new FakeTimeProvider(A.Noon), new Preferences(new InMemoryPreferencesStore()), new FakeClipboard());

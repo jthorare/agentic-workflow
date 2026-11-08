@@ -38,18 +38,15 @@ public sealed class AgentsPageStatesTests : FrameHost
     });
 
     [Fact]
-    public Task No_agents_says_the_served_sentence_and_offers_the_Workflows_page() => OnUi(async () =>
+    public Task No_agents_says_the_served_sentence() => OnUi(async () =>
     {
         Server.SessionAnswer = RouteAnswer.Api("sessions", "empty");
         var (window, shell) = await Open();
 
         await Until(window, () => shell.Agents.IsEmpty);
         Assert.Equal((string)GoldenFiles.Node("sessions", "empty")["empty"]!, Named<TextBlock>(window, "AgentsEmpty").Text);
-        Assert.True(Visible(window, "AgentsOpenWorkflows"));
         Assert.False(Visible(window, "AgentsClearFilters"));
         Assert.False(Visible(window, "AgentsSkeleton"));
-        Named<Button>(window, "AgentsOpenWorkflows").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-        Assert.True(shell.IsWorkflows);
     });
 
     [Fact]
@@ -65,7 +62,6 @@ public sealed class AgentsPageStatesTests : FrameHost
 
         Assert.Equal(Labels.NoSessionsMatch, Named<TextBlock>(window, "AgentsEmpty").Text);
         Assert.True(Visible(window, "AgentsClearFilters"));
-        Assert.False(Visible(window, "AgentsOpenWorkflows"));
         Named<Button>(window, "AgentsClearFilters").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         await Until(window, () => !shell.Agents.IsEmpty && shell.Agents.Groups.Count > 0);
         Assert.False(Visible(window, "AgentsClearFilters"));
