@@ -892,6 +892,34 @@ shell_rows zsh
 shell_rows fish
 tmux kill-server 2> /dev/null
 
+# 5d. The agent runs through the user's interactive shell (#2274), so an alias or function from the shell's rc file applies to it.
+# The agent is a bare name on PATH (the default is `claude`), which is what an alias is keyed on. Scratch config only: the real rc files are never read.
+printf '#!/usr/bin/env bash\nprintf "%%s\\n" "$*" > "%s"\n' "$WORK/alias-args" > "$WORK/callerbin/fakeagent"
+chmod +x "$WORK/callerbin/fakeagent"
+alias_row() { # name rc-line [shell]: the lane's agent got the extra flag the rc file adds
+  local n="$1" rcline="$2" sh; sh="$(command -v "${3:-$1}" 2> /dev/null)"
+  if [ -z "$sh" ]; then echo "ok - SKIP $n not installed"; return; fi
+  local cfg="$WORK/alias-$n"; rm -rf "$cfg"; mkdir -p "$cfg/fish"
+  case "$n" in
+    zsh*) printf '%s\n' "$rcline" > "$cfg/.zshrc" ;;
+    bash) printf '%s\n' "$rcline" > "$cfg/.bashrc" ;;
+    fish) printf '%s\n' "$rcline" > "$cfg/fish/config.fish" ;;
+  esac
+  fresh_server; tmux set-environment -g AW_META_CLAUDE fakeagent
+  tmux set-environment -g ZDOTDIR "$cfg"; tmux set-environment -g XDG_CONFIG_HOME "$cfg"
+  [ "$n" != bash ] || tmux set-environment -g HOME "$cfg"
+  rm -f "$WORK/alias-args"
+  env ZDOTDIR="$cfg" XDG_CONFIG_HOME="$cfg" PATH="$WORK/callerbin:$ORIG_PATH" SHELL="$sh" bash "$DIR/meta-launch.sh" --no-open --lanes api > /dev/null 2>&1
+  waitfor '[ -s "$WORK/alias-args" ]'
+  check "$n: the rc file's alias or function applies to the agent command" "$(grep -c -- '--from-alias' "$WORK/alias-args" 2> /dev/null)" "1"
+  tmux kill-session -t t1-api 2> /dev/null
+}
+alias_row zsh "alias fakeagent='fakeagent --from-alias'"
+alias_row bash "alias fakeagent='fakeagent --from-alias'"
+alias_row fish "alias fakeagent 'fakeagent --from-alias'"
+alias_row zsh-function "fakeagent() { command fakeagent --from-alias \"\$@\"; }" zsh
+tmux kill-server 2> /dev/null
+
 # 6. Quoting does not depend on the bash version (#2281): bash 3.2 (macOS) read the backslashes in ${s//\'/...} differently from bash 5.
 eval "$(sed -n '/^shq() {/,/^}/p' "$DIR/meta-launch.sh")"
 Q1="$(shq "it's")"; Q2="$(shq "$Q1")"
