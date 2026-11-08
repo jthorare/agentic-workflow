@@ -15,6 +15,9 @@ internal static class ReviewFixBodies
     /// <summary>A contributor's PR: the item only, no thread.</summary>
     internal const string ItemOnly = """{"itemId":"01J9Z3T7KQ","posted":false,"postCode":null,"postError":null,"went":"waiting","session":null}""";
 
+    /// <summary>The thread was posted but the fix-task file wasn't written (the service's own words, SendReviewFixService).</summary>
+    internal const string FileNotWritten = """{"itemId":"01J9Z3T7KQ","posted":true,"postCode":null,"postError":null,"went":"waiting","session":null,"fileError":"The fix-task file wasn't written (disk full); send it again to write it."}""";
+
     /// <summary>The item was made and the thread wasn't posted (SND-REVIEW-006).</summary>
     internal const string HalfDone = """{"itemId":"01J9Z3T7KQ","posted":false,"postCode":"SND-REVIEW-006","postError":"Item 01J9Z3T7KQ created in Work; posting to #2071 failed: GitHub answered 502 (bad gateway).","went":"waiting","session":null}""";
 }

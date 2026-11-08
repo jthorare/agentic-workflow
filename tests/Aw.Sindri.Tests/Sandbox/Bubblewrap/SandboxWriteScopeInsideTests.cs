@@ -1,6 +1,6 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sandbox.Plan;
-using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Infrastructure.Sandbox;
 using Aw.Sindri.Testing.Sandbox;
 using Aw.Sindri.Tests.Launch;
@@ -147,6 +147,10 @@ public sealed class SandboxWriteScopeInsideTests
         _ = Directory.CreateDirectory(Path.GetDirectoryName(copy)!);
         File.Copy(Path.Combine(real, "heavy"), copy, overwrite: true);
         File.SetUnixFileMode(copy, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+
+        // why: heavy sources heavy-config.sh from its own folder (scripts/heavy.sh), and an install ships it beside heavy in the build folder, so the copy needs it too.
+        var config = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(new FileInfo(Path.Combine(real, "heavy")).ResolveLinkTarget(returnFinalTarget: true)?.FullName ?? Path.Combine(real, "heavy")))!, "heavy-config.sh");
+        File.Copy(config, Path.Combine(Path.GetDirectoryName(copy)!, "heavy-config.sh"), overwrite: true);
         return true;
     }
 

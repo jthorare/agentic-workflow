@@ -88,6 +88,12 @@
     },
     {
       "code": "SND-LAUNCH-015",
+      "reason": "path-hidden",
+      "text": "The agent was given a file path the sandbox hides (`<path>`). This is a Sindri fault: press Copy details and report it, then Resume.",
+      "attendedText": "The agent was given a file path the sandbox hides (`<path>`). This is a Sindri fault: press Copy details and report it, then open again."
+    },
+    {
+      "code": "SND-LAUNCH-015",
       "reason": "host-not-tmux",
       "text": "The Step's workspace isn't set up the way the sandbox needs. This is a Sindri fault: press Copy details and report it, then Resume.",
       "attendedText": "The session's workspace isn't set up the way the sandbox needs. This is a Sindri fault: press Copy details and report it, then open again."

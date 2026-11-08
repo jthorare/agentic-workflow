@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Plan;
