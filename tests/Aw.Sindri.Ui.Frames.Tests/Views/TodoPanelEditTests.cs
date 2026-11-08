@@ -8,6 +8,7 @@ using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.NeedsYou;
@@ -179,7 +180,7 @@ public sealed class TodoPanelEditTests : IDisposable
         Key(window, PhysicalKey.Enter);
         await Until(window, () => _server.TodoWrites.Count == 1);
 
-        var sent = Assert.IsType<Aw.Sindri.Ui.Api.TodoChange>(Assert.Single(_server.TodoWrites).Body);
+        var sent = Assert.IsType<TodoChange>(Assert.Single(_server.TodoWrites).Body);
         Assert.Equal("renew the production cert", sent.Text);
         Assert.Null(sent.Due);
         await Until(window, () => !Editing(window));
