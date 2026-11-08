@@ -26,13 +26,15 @@ internal partial interface ISindriApi
     /// <param name="api">The base URL.</param>
     /// <param name="vault">The vault's name.</param>
     /// <param name="note">The note's vault-relative path.</param>
+    /// <param name="ifHash">The profile hash the last set or stop answered, or null; a profile that moved on since is SND-TODO-409.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>Whether the profile changed; SND-TODO-002 or SND-PROFILE-001/002; or SND-UI-002/003.</returns>
-    public Task<Result<TodoNoteChangedView>> SetTodoNote(Uri api, string vault, string note, CancellationToken cancellationToken);
+    /// <returns>Whether the profile changed, and its hash; SND-TODO-002, SND-TODO-409 or SND-PROFILE-001/002; or SND-UI-002/003.</returns>
+    public Task<Result<TodoNoteChangedView>> SetTodoNote(Uri api, string vault, string note, string? ifHash, CancellationToken cancellationToken);
 
     /// <summary>POST /sindri/todos/note/stop (todo spec §4.4): removes todo.obsidian from the live profile; the note stays as it is.</summary>
     /// <param name="api">The base URL.</param>
+    /// <param name="ifHash">The profile hash the last set or stop answered, or null; a profile that moved on since is SND-TODO-409.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>Whether the profile changed; SND-PROFILE-001/002; or SND-UI-002/003.</returns>
-    public Task<Result<TodoNoteChangedView>> StopTodoNote(Uri api, CancellationToken cancellationToken);
+    /// <returns>Whether the profile changed, and its hash; SND-TODO-409 or SND-PROFILE-001/002; or SND-UI-002/003.</returns>
+    public Task<Result<TodoNoteChangedView>> StopTodoNote(Uri api, string? ifHash, CancellationToken cancellationToken);
 }

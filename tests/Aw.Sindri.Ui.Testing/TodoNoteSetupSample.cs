@@ -39,6 +39,11 @@ internal static class TodoNoteSetupSample
     /// <summary>The set's and the stop's answer when the profile changed.</summary>
     internal static string Changed => """{"changed":true}""";
 
+    /// <summary>The set's and the stop's answer when the profile changed, with the live profile's hash after the call.</summary>
+    /// <param name="profileHash">The profile hash.</param>
+    /// <returns>The answer as JSON.</returns>
+    internal static string ChangedTo(string profileHash) => new JsonObject { ["changed"] = true, ["profileHash"] = profileHash }.ToJsonString();
+
     /// <summary>A note read in this state, with the vault "work" and the note "Todo.md".</summary>
     /// <param name="state">The doctor row's words.</param>
     /// <param name="lastError">The last failure's reason, or null.</param>

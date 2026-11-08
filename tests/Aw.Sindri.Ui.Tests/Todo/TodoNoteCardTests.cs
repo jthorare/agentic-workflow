@@ -214,7 +214,7 @@ public sealed class TodoNoteCardTests
         await card.Start(Token);
 
         Assert.Equal(["check", "set"], _f.Calls);
-        Assert.Equal(new TodoNoteTarget("work", "Todo.md"), _f.Server.TodoNoteSetup[1].Body);
+        Assert.Equal(new TodoNoteSetBody("work", "Todo.md", IfHash: null), _f.Server.TodoNoteSetup[1].Body);
         Assert.Equal(TodoNoteCardStage.Syncing, card.Stage);
     }
 

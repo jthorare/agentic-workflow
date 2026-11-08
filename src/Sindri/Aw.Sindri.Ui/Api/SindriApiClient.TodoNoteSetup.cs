@@ -15,10 +15,10 @@ internal sealed partial class SindriApiClient
         Call<TodoNoteImportedView>(api, HttpMethod.Post, TodoRoutes.NoteImport, cancellationToken, new CallOptions(Content: AwJson.Serialize(new TodoNoteImportBody(vault, note, expectOpen), Json)));
 
     /// <inheritdoc />
-    public Task<Result<TodoNoteChangedView>> SetTodoNote(Uri api, string vault, string note, CancellationToken cancellationToken) =>
-        Call<TodoNoteChangedView>(api, HttpMethod.Post, TodoRoutes.NoteSet, cancellationToken, new CallOptions(Content: AwJson.Serialize(new TodoNoteTarget(vault, note), Json)));
+    public Task<Result<TodoNoteChangedView>> SetTodoNote(Uri api, string vault, string note, string? ifHash, CancellationToken cancellationToken) =>
+        Call<TodoNoteChangedView>(api, HttpMethod.Post, TodoRoutes.NoteSet, cancellationToken, new CallOptions(Content: AwJson.Serialize(new TodoNoteSetBody(vault, note, ifHash), Json)));
 
     /// <inheritdoc />
-    public Task<Result<TodoNoteChangedView>> StopTodoNote(Uri api, CancellationToken cancellationToken) =>
-        Call<TodoNoteChangedView>(api, HttpMethod.Post, TodoRoutes.NoteStop, cancellationToken, new CallOptions(Content: "{}"u8.ToArray()));
+    public Task<Result<TodoNoteChangedView>> StopTodoNote(Uri api, string? ifHash, CancellationToken cancellationToken) =>
+        Call<TodoNoteChangedView>(api, HttpMethod.Post, TodoRoutes.NoteStop, cancellationToken, new CallOptions(Content: AwJson.Serialize(new TodoNoteStopBody(ifHash), Json)));
 }

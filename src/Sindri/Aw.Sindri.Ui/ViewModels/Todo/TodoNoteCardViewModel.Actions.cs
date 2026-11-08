@@ -181,7 +181,7 @@ internal sealed partial class TodoNoteCardViewModel
         Result<TodoNoteChangedView> stopped;
         try
         {
-            stopped = await _api.StopTodoNote(url, cancellationToken).ConfigureAwait(true);
+            stopped = await _api.StopTodoNote(url, ifHash: null, cancellationToken).ConfigureAwait(true);
         }
         finally
         {
@@ -221,7 +221,7 @@ internal sealed partial class TodoNoteCardViewModel
         Changed();
         try
         {
-            var set = await _api.SetTodoNote(url, vault, note, cancellationToken).ConfigureAwait(true);
+            var set = await _api.SetTodoNote(url, vault, note, ifHash: null, cancellationToken).ConfigureAwait(true);
             if (set.IsError)
             {
                 ErrorText = Labels.TodoCardError(set.Error);
@@ -260,8 +260,8 @@ internal sealed partial class TodoNoteCardViewModel
         }
 
         _ = _changing && _note is { Vault: { } vault, Note: { } note }
-            ? await _api.SetTodoNote(url, vault, note, CancellationToken.None).ConfigureAwait(true)
-            : await _api.StopTodoNote(url, CancellationToken.None).ConfigureAwait(true);
+            ? await _api.SetTodoNote(url, vault, note, ifHash: null, CancellationToken.None).ConfigureAwait(true)
+            : await _api.StopTodoNote(url, ifHash: null, CancellationToken.None).ConfigureAwait(true);
     }
 
     // SND-TODO-409: the note's open count is not the one shown. Read it again, say the new count, and ask again. Any other refusal is shown as it came.

@@ -4,7 +4,7 @@ using Aw.Sindri.Ui.Api;
 
 namespace Aw.Sindri.Ui.Testing;
 
-/// <summary>The todo note setup calls of the fake (todo spec §4.4): each answers its <see cref="RouteAnswer"/> and is recorded in order.</summary>
+/// <summary>The todo note setup calls of the fake (todo spec §4.4): each answers its <see cref="RouteAnswer"/> and is recorded in order; a set records a <see cref="TodoNoteSetBody"/> and a stop a <see cref="TodoNoteStopBody"/>, both with the ifHash sent.</summary>
 internal sealed partial class FakeSindriApi
 {
     private readonly List<TodoNoteSetupSent> _todoNoteSetup = [];
@@ -45,11 +45,11 @@ internal sealed partial class FakeSindriApi
     public Task<Result<TodoNoteImportedView>> ImportTodoNote(Uri api, string vault, string note, int expectOpen, CancellationToken cancellationToken) =>
         SetupCall<TodoNoteImportedView>(api, TodoRoutes.NoteImport, new TodoNoteImportBody(vault, note, expectOpen), TodoNoteImportAnswer, cancellationToken);
 
-    public Task<Result<TodoNoteChangedView>> SetTodoNote(Uri api, string vault, string note, CancellationToken cancellationToken) =>
-        SetupCall<TodoNoteChangedView>(api, TodoRoutes.NoteSet, new TodoNoteTarget(vault, note), TodoNoteSetAnswer, cancellationToken);
+    public Task<Result<TodoNoteChangedView>> SetTodoNote(Uri api, string vault, string note, string? ifHash, CancellationToken cancellationToken) =>
+        SetupCall<TodoNoteChangedView>(api, TodoRoutes.NoteSet, new TodoNoteSetBody(vault, note, ifHash), TodoNoteSetAnswer, cancellationToken);
 
-    public Task<Result<TodoNoteChangedView>> StopTodoNote(Uri api, CancellationToken cancellationToken) =>
-        SetupCall<TodoNoteChangedView>(api, TodoRoutes.NoteStop, body: null, TodoNoteStopAnswer, cancellationToken);
+    public Task<Result<TodoNoteChangedView>> StopTodoNote(Uri api, string? ifHash, CancellationToken cancellationToken) =>
+        SetupCall<TodoNoteChangedView>(api, TodoRoutes.NoteStop, new TodoNoteStopBody(ifHash), TodoNoteStopAnswer, cancellationToken);
 
     private async Task<Result<T>> SetupCall<T>(Uri api, string route, object? body, RouteAnswer answer, CancellationToken cancellationToken)
     {

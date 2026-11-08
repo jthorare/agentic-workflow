@@ -96,6 +96,8 @@ namespace Aw.Sindri.Ui.Api;
 [JsonSerializable(typeof(TodoKeepBody))]
 [JsonSerializable(typeof(TodoHoldBody))]
 [JsonSerializable(typeof(TodoNoteTarget))]
+[JsonSerializable(typeof(TodoNoteSetBody))]
+[JsonSerializable(typeof(TodoNoteStopBody))]
 [JsonSerializable(typeof(TodoNoteImportBody))]
 [JsonSerializable(typeof(TodoNoteCheckView))]
 [JsonSerializable(typeof(TodoNoteImportedView))]
