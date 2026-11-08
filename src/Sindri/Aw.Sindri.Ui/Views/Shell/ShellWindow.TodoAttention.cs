@@ -31,7 +31,7 @@ internal sealed partial class ShellWindow
         }, DispatcherPriority.Loaded);
 
     private bool FocusMayMoveToAttention() =>
-        FocusManager?.GetFocusedElement() is not Visual focused || ReferenceEquals(focused, this) || TopLevel.GetTopLevel(focused) is null || AttentionStopOf(focused) is not null;
+        FocusManager?.GetFocusedElement() is not Visual focused || ReferenceEquals(focused, this) || GetTopLevel(focused) is null || AttentionStopOf(focused) is not null;
 
     // A pick took its row away: focus goes to the next attention line, else to the todo row the panel selected, else to the panel.
     private void OnTodoPicked(object? sender, TodoPickedEventArgs e) =>
