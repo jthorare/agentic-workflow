@@ -6429,3 +6429,117 @@ Aw.Sindri.Features.AddConnection.AddConnectionRequest.ClientSecretEnv.init -> vo
 Aw.Sindri.Features.AddConnection.AddConnectionRequest.Deconstruct(out string! Name, out string? Preset, out string? Kind, out string? Client, out string? KeyEnv, out System.Collections.Generic.IReadOnlyList<string!>! Scopes, out bool Wait, out string? ClientSecretEnv, out string? Key, out string? ClientSecret) -> void
 Aw.Sindri.Features.AddConnection.AddConnectionRequest.Key.get -> string?
 Aw.Sindri.Features.AddConnection.AddConnectionRequest.Key.init -> void
+Aw.Sindri.Features.KeepTodo.KeepTodoRequest
+Aw.Sindri.Features.KeepTodo.KeepTodoRequest.<Clone>$() -> Aw.Sindri.Features.KeepTodo.KeepTodoRequest!
+Aw.Sindri.Features.KeepTodo.KeepTodoRequest.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out Aw.Sindri.Core.Events.TodoSideName Side, out bool Piped) -> void
+Aw.Sindri.Features.KeepTodo.KeepTodoRequest.Equals(Aw.Sindri.Features.KeepTodo.KeepTodoRequest? other) -> bool
+Aw.Sindri.Features.KeepTodo.KeepTodoRequest.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Features.KeepTodo.KeepTodoRequest.Id.init -> void
+Aw.Sindri.Features.KeepTodo.KeepTodoRequest.KeepTodoRequest(Aw.Sindri.Core.Ids.TodoId Id, Aw.Sindri.Core.Events.TodoSideName Side, bool Piped = false) -> void
+Aw.Sindri.Features.KeepTodo.KeepTodoRequest.Piped.get -> bool
+Aw.Sindri.Features.KeepTodo.KeepTodoRequest.Piped.init -> void
+Aw.Sindri.Features.KeepTodo.KeepTodoRequest.Side.get -> Aw.Sindri.Core.Events.TodoSideName
+Aw.Sindri.Features.KeepTodo.KeepTodoRequest.Side.init -> void
+Aw.Sindri.Features.KeepTodo.KeepTodoResponse
+Aw.Sindri.Features.KeepTodo.KeepTodoResponse.<Clone>$() -> Aw.Sindri.Features.KeepTodo.KeepTodoResponse!
+Aw.Sindri.Features.KeepTodo.KeepTodoResponse.Deconstruct(out Aw.Sindri.Core.Todos.TodoRow! Todo, out System.DateTimeOffset UndoUntil) -> void
+Aw.Sindri.Features.KeepTodo.KeepTodoResponse.Equals(Aw.Sindri.Features.KeepTodo.KeepTodoResponse? other) -> bool
+Aw.Sindri.Features.KeepTodo.KeepTodoResponse.KeepTodoResponse(Aw.Sindri.Core.Todos.TodoRow! Todo, System.DateTimeOffset UndoUntil) -> void
+Aw.Sindri.Features.KeepTodo.KeepTodoResponse.Todo.get -> Aw.Sindri.Core.Todos.TodoRow!
+Aw.Sindri.Features.KeepTodo.KeepTodoResponse.Todo.init -> void
+Aw.Sindri.Features.KeepTodo.KeepTodoResponse.UndoUntil.get -> System.DateTimeOffset
+Aw.Sindri.Features.KeepTodo.KeepTodoResponse.UndoUntil.init -> void
+Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoRequest
+Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoRequest.<Clone>$() -> Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoRequest!
+Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoRequest.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out bool Piped) -> void
+Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoRequest.Equals(Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoRequest? other) -> bool
+Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoRequest.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoRequest.Id.init -> void
+Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoRequest.KeepTodoUndoRequest(Aw.Sindri.Core.Ids.TodoId Id, bool Piped = false) -> void
+Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoRequest.Piped.get -> bool
+Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoRequest.Piped.init -> void
+Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoResponse
+Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoResponse.<Clone>$() -> Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoResponse!
+Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoResponse.Deconstruct(out Aw.Sindri.Core.Todos.TodoRow! Todo) -> void
+Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoResponse.Equals(Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoResponse? other) -> bool
+Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoResponse.KeepTodoUndoResponse(Aw.Sindri.Core.Todos.TodoRow! Todo) -> void
+Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoResponse.Todo.get -> Aw.Sindri.Core.Todos.TodoRow!
+Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoResponse.Todo.init -> void
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest.<Clone>$() -> Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest!
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest.CarriesProtectedFields.get -> bool
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest.Deconstruct(out bool Restore, out string! NoteHash, out bool Piped) -> void
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest.Equals(Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest? other) -> bool
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest.NoteHash.get -> string!
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest.NoteHash.init -> void
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest.PickTodoHoldRequest(bool Restore, string! NoteHash, bool Piped = false) -> void
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest.Piped.get -> bool
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest.Piped.init -> void
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest.Restore.get -> bool
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest.Restore.init -> void
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest.Variant.get -> string?
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse.<Clone>$() -> Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse!
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse.Count.get -> int
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse.Count.init -> void
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse.Deconstruct(out string! Kept, out int Count, out System.DateTimeOffset UndoUntil) -> void
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse.Equals(Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse? other) -> bool
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse.Kept.get -> string!
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse.Kept.init -> void
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse.PickTodoHoldResponse(string! Kept, int Count, System.DateTimeOffset UndoUntil) -> void
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse.UndoUntil.get -> System.DateTimeOffset
+Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse.UndoUntil.init -> void
+Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldRequest
+Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldRequest.<Clone>$() -> Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldRequest!
+Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldRequest.Deconstruct(out bool Piped) -> void
+Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldRequest.Equals(Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldRequest? other) -> bool
+Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldRequest.Piped.get -> bool
+Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldRequest.Piped.init -> void
+Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldRequest.UndoTodoHoldRequest(bool Piped = false) -> void
+Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldResponse
+Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldResponse.<Clone>$() -> Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldResponse!
+Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldResponse.Deconstruct(out string? Kept) -> void
+Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldResponse.Equals(Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldResponse? other) -> bool
+Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldResponse.Kept.get -> string?
+Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldResponse.Kept.init -> void
+Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldResponse.UndoTodoHoldResponse(string? Kept) -> void
+override Aw.Sindri.Features.KeepTodo.KeepTodoRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.KeepTodo.KeepTodoRequest.GetHashCode() -> int
+override Aw.Sindri.Features.KeepTodo.KeepTodoRequest.ToString() -> string!
+override Aw.Sindri.Features.KeepTodo.KeepTodoResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.KeepTodo.KeepTodoResponse.GetHashCode() -> int
+override Aw.Sindri.Features.KeepTodo.KeepTodoResponse.ToString() -> string!
+override Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoRequest.GetHashCode() -> int
+override Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoRequest.ToString() -> string!
+override Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoResponse.GetHashCode() -> int
+override Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoResponse.ToString() -> string!
+override Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest.GetHashCode() -> int
+override Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest.ToString() -> string!
+override Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse.GetHashCode() -> int
+override Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse.ToString() -> string!
+override Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldRequest.GetHashCode() -> int
+override Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldRequest.ToString() -> string!
+override Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldResponse.GetHashCode() -> int
+override Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldResponse.ToString() -> string!
+static Aw.Sindri.Features.KeepTodo.KeepTodoRequest.operator !=(Aw.Sindri.Features.KeepTodo.KeepTodoRequest? left, Aw.Sindri.Features.KeepTodo.KeepTodoRequest? right) -> bool
+static Aw.Sindri.Features.KeepTodo.KeepTodoRequest.operator ==(Aw.Sindri.Features.KeepTodo.KeepTodoRequest? left, Aw.Sindri.Features.KeepTodo.KeepTodoRequest? right) -> bool
+static Aw.Sindri.Features.KeepTodo.KeepTodoResponse.operator !=(Aw.Sindri.Features.KeepTodo.KeepTodoResponse? left, Aw.Sindri.Features.KeepTodo.KeepTodoResponse? right) -> bool
+static Aw.Sindri.Features.KeepTodo.KeepTodoResponse.operator ==(Aw.Sindri.Features.KeepTodo.KeepTodoResponse? left, Aw.Sindri.Features.KeepTodo.KeepTodoResponse? right) -> bool
+static Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoRequest.operator !=(Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoRequest? left, Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoRequest? right) -> bool
+static Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoRequest.operator ==(Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoRequest? left, Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoRequest? right) -> bool
+static Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoResponse.operator !=(Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoResponse? left, Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoResponse? right) -> bool
+static Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoResponse.operator ==(Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoResponse? left, Aw.Sindri.Features.KeepTodoUndo.KeepTodoUndoResponse? right) -> bool
+static Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest.operator !=(Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest? left, Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest? right) -> bool
+static Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest.operator ==(Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest? left, Aw.Sindri.Features.PickTodoHold.PickTodoHoldRequest? right) -> bool
+static Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse.operator !=(Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse? left, Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse? right) -> bool
+static Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse.operator ==(Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse? left, Aw.Sindri.Features.PickTodoHold.PickTodoHoldResponse? right) -> bool
+static Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldRequest.operator !=(Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldRequest? left, Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldRequest? right) -> bool
+static Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldRequest.operator ==(Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldRequest? left, Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldRequest? right) -> bool
+static Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldResponse.operator !=(Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldResponse? left, Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldResponse? right) -> bool
+static Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldResponse.operator ==(Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldResponse? left, Aw.Sindri.Features.UndoTodoHold.UndoTodoHoldResponse? right) -> bool

@@ -26360,3 +26360,187 @@ Aw.Sindri.Core.Graph.Blocks.PromptBlock.CheckConfig(System.Text.Json.Nodes.JsonO
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.MarkTick(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.DateTimeOffset tick, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.LastTick(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.DateTimeOffset?>!>
 static Aw.Sindri.Core.Graph.Runs.WorkflowRun.TriggerProblem(string! trigger) -> string?
+Aw.Sindri.Core.Events.TodoHeldChange
+Aw.Sindri.Core.Events.TodoHeldChange.<Clone>$() -> Aw.Sindri.Core.Events.TodoHeldChange!
+Aw.Sindri.Core.Events.TodoHeldChange.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out string! Kind, out string? NoteLine) -> void
+Aw.Sindri.Core.Events.TodoHeldChange.Equals(Aw.Sindri.Core.Events.TodoHeldChange? other) -> bool
+Aw.Sindri.Core.Events.TodoHeldChange.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Events.TodoHeldChange.Id.init -> void
+Aw.Sindri.Core.Events.TodoHeldChange.Kind.get -> string!
+Aw.Sindri.Core.Events.TodoHeldChange.Kind.init -> void
+Aw.Sindri.Core.Events.TodoHeldChange.NoteLine.get -> string?
+Aw.Sindri.Core.Events.TodoHeldChange.NoteLine.init -> void
+Aw.Sindri.Core.Events.TodoHeldChange.TodoHeldChange(Aw.Sindri.Core.Ids.TodoId Id, string! Kind, string? NoteLine) -> void
+Aw.Sindri.Core.Events.TodoNoteHeld
+Aw.Sindri.Core.Events.TodoNoteHeld.<Clone>$() -> Aw.Sindri.Core.Events.TodoNoteHeld!
+Aw.Sindri.Core.Events.TodoNoteHeld.By.get -> string!
+Aw.Sindri.Core.Events.TodoNoteHeld.By.init -> void
+Aw.Sindri.Core.Events.TodoNoteHeld.Changes.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.TodoHeldChange!>!
+Aw.Sindri.Core.Events.TodoNoteHeld.Changes.init -> void
+Aw.Sindri.Core.Events.TodoNoteHeld.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.TodoHeldChange!>! Changes, out string! NoteHash, out string! By, out string? Via) -> void
+Aw.Sindri.Core.Events.TodoNoteHeld.Equals(Aw.Sindri.Core.Events.TodoNoteHeld? other) -> bool
+Aw.Sindri.Core.Events.TodoNoteHeld.NoteHash.get -> string!
+Aw.Sindri.Core.Events.TodoNoteHeld.NoteHash.init -> void
+Aw.Sindri.Core.Events.TodoNoteHeld.TodoNoteHeld(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.TodoHeldChange!>! Changes, string! NoteHash, string! By, string? Via = null) -> void
+Aw.Sindri.Core.Events.TodoNoteHeld.Via.get -> string?
+Aw.Sindri.Core.Events.TodoNoteHeld.Via.init -> void
+Aw.Sindri.Core.Events.TodoNoteHeldReopened
+Aw.Sindri.Core.Events.TodoNoteHeldReopened.<Clone>$() -> Aw.Sindri.Core.Events.TodoNoteHeldReopened!
+Aw.Sindri.Core.Events.TodoNoteHeldReopened.By.get -> string!
+Aw.Sindri.Core.Events.TodoNoteHeldReopened.By.init -> void
+Aw.Sindri.Core.Events.TodoNoteHeldReopened.Deconstruct(out string! By, out string? Via) -> void
+Aw.Sindri.Core.Events.TodoNoteHeldReopened.Equals(Aw.Sindri.Core.Events.TodoNoteHeldReopened? other) -> bool
+Aw.Sindri.Core.Events.TodoNoteHeldReopened.TodoNoteHeldReopened(string! By, string? Via = null) -> void
+Aw.Sindri.Core.Events.TodoNoteHeldReopened.Via.get -> string?
+Aw.Sindri.Core.Events.TodoNoteHeldReopened.Via.init -> void
+Aw.Sindri.Core.Events.TodoNoteHeldResolved
+Aw.Sindri.Core.Events.TodoNoteHeldResolved.<Clone>$() -> Aw.Sindri.Core.Events.TodoNoteHeldResolved!
+Aw.Sindri.Core.Events.TodoNoteHeldResolved.By.get -> string!
+Aw.Sindri.Core.Events.TodoNoteHeldResolved.By.init -> void
+Aw.Sindri.Core.Events.TodoNoteHeldResolved.Count.get -> int
+Aw.Sindri.Core.Events.TodoNoteHeldResolved.Count.init -> void
+Aw.Sindri.Core.Events.TodoNoteHeldResolved.Deconstruct(out string! Kept, out string! NoteHash, out int Count, out string! By, out string? Via) -> void
+Aw.Sindri.Core.Events.TodoNoteHeldResolved.Equals(Aw.Sindri.Core.Events.TodoNoteHeldResolved? other) -> bool
+Aw.Sindri.Core.Events.TodoNoteHeldResolved.Kept.get -> string!
+Aw.Sindri.Core.Events.TodoNoteHeldResolved.Kept.init -> void
+Aw.Sindri.Core.Events.TodoNoteHeldResolved.NoteHash.get -> string!
+Aw.Sindri.Core.Events.TodoNoteHeldResolved.NoteHash.init -> void
+Aw.Sindri.Core.Events.TodoNoteHeldResolved.TodoNoteHeldResolved(string! Kept, string! NoteHash, int Count, string! By, string? Via = null) -> void
+Aw.Sindri.Core.Events.TodoNoteHeldResolved.Via.get -> string?
+Aw.Sindri.Core.Events.TodoNoteHeldResolved.Via.init -> void
+Aw.Sindri.Core.Todos.ITodoNoteSource
+Aw.Sindri.Core.Todos.ITodoNoteSource.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Todos.TodoNoteSnapshot?>!>
+Aw.Sindri.Core.Todos.TodoHoldPick
+Aw.Sindri.Core.Todos.TodoHoldPick.<Clone>$() -> Aw.Sindri.Core.Todos.TodoHoldPick!
+Aw.Sindri.Core.Todos.TodoHoldPick.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Todos.TodoHoldPick.At.init -> void
+Aw.Sindri.Core.Todos.TodoHoldPick.Deconstruct(out System.DateTimeOffset At, out string! Kept, out System.Collections.Generic.IReadOnlyList<(Aw.Sindri.Core.Todos.TodoRow! Prior, long VersionAfter)>! Priors) -> void
+Aw.Sindri.Core.Todos.TodoHoldPick.Equals(Aw.Sindri.Core.Todos.TodoHoldPick? other) -> bool
+Aw.Sindri.Core.Todos.TodoHoldPick.Kept.get -> string!
+Aw.Sindri.Core.Todos.TodoHoldPick.Kept.init -> void
+Aw.Sindri.Core.Todos.TodoHoldPick.Priors.get -> System.Collections.Generic.IReadOnlyList<(Aw.Sindri.Core.Todos.TodoRow! Prior, long VersionAfter)>!
+Aw.Sindri.Core.Todos.TodoHoldPick.Priors.init -> void
+Aw.Sindri.Core.Todos.TodoHoldPick.TodoHoldPick(System.DateTimeOffset At, string! Kept, System.Collections.Generic.IReadOnlyList<(Aw.Sindri.Core.Todos.TodoRow! Prior, long VersionAfter)>! Priors) -> void
+Aw.Sindri.Core.Todos.TodoHolds
+Aw.Sindri.Core.Todos.TodoHolds.Open(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Todos.TodoOpenHold?>!>
+Aw.Sindri.Core.Todos.TodoHolds.TodoHolds(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events) -> void
+Aw.Sindri.Core.Todos.TodoNoteSides
+Aw.Sindri.Core.Todos.TodoNoteSnapshot
+Aw.Sindri.Core.Todos.TodoNoteSnapshot.<Clone>$() -> Aw.Sindri.Core.Todos.TodoNoteSnapshot!
+Aw.Sindri.Core.Todos.TodoNoteSnapshot.Deconstruct(out string! Hash, out Aw.Sindri.Core.Todos.Note.NoteDocument! Document) -> void
+Aw.Sindri.Core.Todos.TodoNoteSnapshot.Document.get -> Aw.Sindri.Core.Todos.Note.NoteDocument!
+Aw.Sindri.Core.Todos.TodoNoteSnapshot.Document.init -> void
+Aw.Sindri.Core.Todos.TodoNoteSnapshot.Equals(Aw.Sindri.Core.Todos.TodoNoteSnapshot? other) -> bool
+Aw.Sindri.Core.Todos.TodoNoteSnapshot.Hash.get -> string!
+Aw.Sindri.Core.Todos.TodoNoteSnapshot.Hash.init -> void
+Aw.Sindri.Core.Todos.TodoNoteSnapshot.TodoNoteSnapshot(string! Hash, Aw.Sindri.Core.Todos.Note.NoteDocument! Document) -> void
+Aw.Sindri.Core.Todos.TodoOpenHold
+Aw.Sindri.Core.Todos.TodoOpenHold.<Clone>$() -> Aw.Sindri.Core.Todos.TodoOpenHold!
+Aw.Sindri.Core.Todos.TodoOpenHold.Changes.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>!
+Aw.Sindri.Core.Todos.TodoOpenHold.Changes.init -> void
+Aw.Sindri.Core.Todos.TodoOpenHold.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>! Changes, out string! NoteHash) -> void
+Aw.Sindri.Core.Todos.TodoOpenHold.Equals(Aw.Sindri.Core.Todos.TodoOpenHold? other) -> bool
+Aw.Sindri.Core.Todos.TodoOpenHold.NoteHash.get -> string!
+Aw.Sindri.Core.Todos.TodoOpenHold.NoteHash.init -> void
+Aw.Sindri.Core.Todos.TodoOpenHold.TodoOpenHold(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>! Changes, string! NoteHash) -> void
+Aw.Sindri.Core.Todos.TodoPick
+Aw.Sindri.Core.Todos.TodoPick.<Clone>$() -> Aw.Sindri.Core.Todos.TodoPick!
+Aw.Sindri.Core.Todos.TodoPick.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Todos.TodoPick.At.init -> void
+Aw.Sindri.Core.Todos.TodoPick.Deconstruct(out System.DateTimeOffset At, out Aw.Sindri.Core.Todos.TodoRow! Prior, out long VersionAfter) -> void
+Aw.Sindri.Core.Todos.TodoPick.Equals(Aw.Sindri.Core.Todos.TodoPick? other) -> bool
+Aw.Sindri.Core.Todos.TodoPick.Prior.get -> Aw.Sindri.Core.Todos.TodoRow!
+Aw.Sindri.Core.Todos.TodoPick.Prior.init -> void
+Aw.Sindri.Core.Todos.TodoPick.TodoPick(System.DateTimeOffset At, Aw.Sindri.Core.Todos.TodoRow! Prior, long VersionAfter) -> void
+Aw.Sindri.Core.Todos.TodoPick.VersionAfter.get -> long
+Aw.Sindri.Core.Todos.TodoPick.VersionAfter.init -> void
+Aw.Sindri.Core.Todos.TodoPickWindow
+Aw.Sindri.Core.Todos.TodoPickWindow.Find(Aw.Sindri.Core.Ids.TodoId id, System.DateTimeOffset now) -> Aw.Sindri.Core.Todos.TodoPick?
+Aw.Sindri.Core.Todos.TodoPickWindow.FindHold(System.DateTimeOffset now) -> Aw.Sindri.Core.Todos.TodoHoldPick?
+Aw.Sindri.Core.Todos.TodoPickWindow.Forget(Aw.Sindri.Core.Ids.TodoId id) -> void
+Aw.Sindri.Core.Todos.TodoPickWindow.ForgetHold() -> void
+Aw.Sindri.Core.Todos.TodoPickWindow.Open(System.DateTimeOffset now) -> (System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.TodoId>! Todos, bool Hold)
+Aw.Sindri.Core.Todos.TodoPickWindow.Remember(Aw.Sindri.Core.Ids.TodoId id, Aw.Sindri.Core.Todos.TodoPick! pick) -> void
+Aw.Sindri.Core.Todos.TodoPickWindow.RememberHold(Aw.Sindri.Core.Todos.TodoHoldPick! pick) -> void
+Aw.Sindri.Core.Todos.TodoPickWindow.TodoPickWindow() -> void
+Aw.Sindri.Core.Todos.UnsetTodoNoteSource
+Aw.Sindri.Core.Todos.UnsetTodoNoteSource.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Todos.TodoNoteSnapshot?>!>
+Aw.Sindri.Core.Todos.UnsetTodoNoteSource.UnsetTodoNoteSource() -> void
+const Aw.Sindri.Core.Events.EventTypes.TodoNoteHeld = "todo.note.held" -> string!
+const Aw.Sindri.Core.Events.EventTypes.TodoNoteHeldReopened = "todo.note.held.reopened" -> string!
+const Aw.Sindri.Core.Events.EventTypes.TodoNoteHeldResolved = "todo.note.held.resolved" -> string!
+override Aw.Sindri.Core.Events.TodoHeldChange.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.TodoHeldChange.GetHashCode() -> int
+override Aw.Sindri.Core.Events.TodoHeldChange.ToString() -> string!
+override Aw.Sindri.Core.Events.TodoNoteHeld.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.TodoNoteHeld.GetHashCode() -> int
+override Aw.Sindri.Core.Events.TodoNoteHeld.ToString() -> string!
+override Aw.Sindri.Core.Events.TodoNoteHeldReopened.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.TodoNoteHeldReopened.GetHashCode() -> int
+override Aw.Sindri.Core.Events.TodoNoteHeldReopened.ToString() -> string!
+override Aw.Sindri.Core.Events.TodoNoteHeldResolved.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.TodoNoteHeldResolved.GetHashCode() -> int
+override Aw.Sindri.Core.Events.TodoNoteHeldResolved.ToString() -> string!
+override Aw.Sindri.Core.Todos.TodoHoldPick.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoHoldPick.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoHoldPick.ToString() -> string!
+override Aw.Sindri.Core.Todos.TodoNoteSnapshot.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoNoteSnapshot.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoNoteSnapshot.ToString() -> string!
+override Aw.Sindri.Core.Todos.TodoOpenHold.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoOpenHold.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoOpenHold.ToString() -> string!
+override Aw.Sindri.Core.Todos.TodoPick.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoPick.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoPick.ToString() -> string!
+static Aw.Sindri.Core.Events.TodoHeldChange.operator !=(Aw.Sindri.Core.Events.TodoHeldChange? left, Aw.Sindri.Core.Events.TodoHeldChange? right) -> bool
+static Aw.Sindri.Core.Events.TodoHeldChange.operator ==(Aw.Sindri.Core.Events.TodoHeldChange? left, Aw.Sindri.Core.Events.TodoHeldChange? right) -> bool
+static Aw.Sindri.Core.Events.TodoNoteHeld.operator !=(Aw.Sindri.Core.Events.TodoNoteHeld? left, Aw.Sindri.Core.Events.TodoNoteHeld? right) -> bool
+static Aw.Sindri.Core.Events.TodoNoteHeld.operator ==(Aw.Sindri.Core.Events.TodoNoteHeld? left, Aw.Sindri.Core.Events.TodoNoteHeld? right) -> bool
+static Aw.Sindri.Core.Events.TodoNoteHeldReopened.operator !=(Aw.Sindri.Core.Events.TodoNoteHeldReopened? left, Aw.Sindri.Core.Events.TodoNoteHeldReopened? right) -> bool
+static Aw.Sindri.Core.Events.TodoNoteHeldReopened.operator ==(Aw.Sindri.Core.Events.TodoNoteHeldReopened? left, Aw.Sindri.Core.Events.TodoNoteHeldReopened? right) -> bool
+static Aw.Sindri.Core.Events.TodoNoteHeldResolved.operator !=(Aw.Sindri.Core.Events.TodoNoteHeldResolved? left, Aw.Sindri.Core.Events.TodoNoteHeldResolved? right) -> bool
+static Aw.Sindri.Core.Events.TodoNoteHeldResolved.operator ==(Aw.Sindri.Core.Events.TodoNoteHeldResolved? left, Aw.Sindri.Core.Events.TodoNoteHeldResolved? right) -> bool
+static Aw.Sindri.Core.Todos.TodoHoldPick.operator !=(Aw.Sindri.Core.Todos.TodoHoldPick? left, Aw.Sindri.Core.Todos.TodoHoldPick? right) -> bool
+static Aw.Sindri.Core.Todos.TodoHoldPick.operator ==(Aw.Sindri.Core.Todos.TodoHoldPick? left, Aw.Sindri.Core.Todos.TodoHoldPick? right) -> bool
+static Aw.Sindri.Core.Todos.TodoNoteSides.FromLine(string! raw, System.Collections.Generic.IReadOnlyList<string!>! keep) -> Aw.Sindri.Core.Events.TodoSide!
+static Aw.Sindri.Core.Todos.TodoNoteSides.Of(Aw.Sindri.Core.Todos.Note.NoteDocument! note, Aw.Sindri.Core.Ids.TodoId id) -> Aw.Sindri.Core.Events.TodoSide!
+static Aw.Sindri.Core.Todos.TodoNoteSides.Of(Aw.Sindri.Core.Todos.TodoRow! row) -> Aw.Sindri.Core.Events.TodoSide!
+static Aw.Sindri.Core.Todos.TodoNoteSides.Same(Aw.Sindri.Core.Events.TodoSide! shown, Aw.Sindri.Core.Events.TodoSide! now) -> bool
+static Aw.Sindri.Core.Todos.TodoNoteSnapshot.operator !=(Aw.Sindri.Core.Todos.TodoNoteSnapshot? left, Aw.Sindri.Core.Todos.TodoNoteSnapshot? right) -> bool
+static Aw.Sindri.Core.Todos.TodoNoteSnapshot.operator ==(Aw.Sindri.Core.Todos.TodoNoteSnapshot? left, Aw.Sindri.Core.Todos.TodoNoteSnapshot? right) -> bool
+static Aw.Sindri.Core.Todos.TodoOpenHold.operator !=(Aw.Sindri.Core.Todos.TodoOpenHold? left, Aw.Sindri.Core.Todos.TodoOpenHold? right) -> bool
+static Aw.Sindri.Core.Todos.TodoOpenHold.operator ==(Aw.Sindri.Core.Todos.TodoOpenHold? left, Aw.Sindri.Core.Todos.TodoOpenHold? right) -> bool
+static Aw.Sindri.Core.Todos.TodoPick.operator !=(Aw.Sindri.Core.Todos.TodoPick? left, Aw.Sindri.Core.Todos.TodoPick? right) -> bool
+static Aw.Sindri.Core.Todos.TodoPick.operator ==(Aw.Sindri.Core.Todos.TodoPick? left, Aw.Sindri.Core.Todos.TodoPick? right) -> bool
+static Aw.Sindri.Core.Todos.TodoPickWindow.Until(System.DateTimeOffset at) -> System.DateTimeOffset
+static readonly Aw.Sindri.Core.Todos.TodoPickWindow.Span -> System.TimeSpan
+Aw.Sindri.Core.Todos.TodoConverger
+Aw.Sindri.Core.Todos.TodoConverger.Apply(Aw.Sindri.Core.Todos.TodoRow! row, Aw.Sindri.Core.Events.TodoSide! target, string! by, Aw.Sindri.Core.Todos.TodoPickCaller! who, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<long>!>
+Aw.Sindri.Core.Todos.TodoConverger.TodoConverger(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, Aw.Sindri.Core.Todos.TodoInput! input) -> void
+Aw.Sindri.Core.Todos.TodoPickCaller
+Aw.Sindri.Core.Todos.TodoPickCaller.<Clone>$() -> Aw.Sindri.Core.Todos.TodoPickCaller!
+Aw.Sindri.Core.Todos.TodoPickCaller.By.get -> string!
+Aw.Sindri.Core.Todos.TodoPickCaller.Caller.get -> Aw.Sindri.Core.Commands.CallerContext!
+Aw.Sindri.Core.Todos.TodoPickCaller.Caller.init -> void
+Aw.Sindri.Core.Todos.TodoPickCaller.Deconstruct(out Aw.Sindri.Core.Commands.CallerContext! Caller, out Aw.Sindri.Core.Lease.LeaseGrant! Grant, out System.DateTimeOffset Now) -> void
+Aw.Sindri.Core.Todos.TodoPickCaller.Equals(Aw.Sindri.Core.Todos.TodoPickCaller? other) -> bool
+Aw.Sindri.Core.Todos.TodoPickCaller.Grant.get -> Aw.Sindri.Core.Lease.LeaseGrant!
+Aw.Sindri.Core.Todos.TodoPickCaller.Grant.init -> void
+Aw.Sindri.Core.Todos.TodoPickCaller.Now.get -> System.DateTimeOffset
+Aw.Sindri.Core.Todos.TodoPickCaller.Now.init -> void
+Aw.Sindri.Core.Todos.TodoPickCaller.TodoPickCaller(Aw.Sindri.Core.Commands.CallerContext! Caller, Aw.Sindri.Core.Lease.LeaseGrant! Grant, System.DateTimeOffset Now) -> void
+Aw.Sindri.Core.Todos.TodoPickCaller.Via.get -> string?
+Aw.Sindri.Core.Todos.TodoPickCaller.Via.init -> void
+Aw.Sindri.Core.Todos.TodoPickWrites
+Aw.Sindri.Core.Todos.TodoPickWrites.Append<TPayload>(Aw.Sindri.Core.Todos.TodoPickCaller! who, string! type, TPayload payload, string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Commands.CommandAccepted!>!>
+Aw.Sindri.Core.Todos.TodoPickWrites.Begin(string! action, bool piped) -> Aw.Kernel.Result<Aw.Sindri.Core.Todos.TodoPickCaller!>!
+Aw.Sindri.Core.Todos.TodoPickWrites.Key(string! prefix) -> string!
+Aw.Sindri.Core.Todos.TodoPickWrites.Row(Aw.Sindri.Core.Ids.TodoId id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Todos.TodoRow!>!>
+Aw.Sindri.Core.Todos.TodoPickWrites.TodoPickWrites(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Lease.HeldLease! held, Aw.Sindri.Core.Events.EventFactory! events, Aw.Sindri.Core.Commands.ICallerContextAccessor! callers, System.TimeProvider! clock, Aw.Kernel.Ids.IIdGenerator! ids, Aw.Sindri.Core.Views.IViewReader! views) -> void
+override Aw.Sindri.Core.Todos.TodoPickCaller.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoPickCaller.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoPickCaller.ToString() -> string!
+static Aw.Sindri.Core.Todos.TodoConverger.After(Aw.Sindri.Core.Todos.TodoRow! row, Aw.Sindri.Core.Events.TodoSide! target, long version, System.DateTimeOffset now, string! by) -> Aw.Sindri.Core.Todos.TodoRow!
+static Aw.Sindri.Core.Todos.TodoPickCaller.operator !=(Aw.Sindri.Core.Todos.TodoPickCaller? left, Aw.Sindri.Core.Todos.TodoPickCaller? right) -> bool
+static Aw.Sindri.Core.Todos.TodoPickCaller.operator ==(Aw.Sindri.Core.Todos.TodoPickCaller? left, Aw.Sindri.Core.Todos.TodoPickCaller? right) -> bool

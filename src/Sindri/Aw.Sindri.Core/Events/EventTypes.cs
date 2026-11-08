@@ -152,6 +152,15 @@ public static class EventTypes
     /// <summary>A conflict pick was undone, so the conflict is open again.</summary>
     public const string TodoConflictReopened = "todo.conflict.reopened";
 
+    /// <summary>A sync pass held the note's changes for the owner to apply or put back.</summary>
+    public const string TodoNoteHeld = "todo.note.held";
+
+    /// <summary>A caller picked what happens to the held changes.</summary>
+    public const string TodoNoteHeldResolved = "todo.note.held.resolved";
+
+    /// <summary>A hold pick was undone, so the hold is open again.</summary>
+    public const string TodoNoteHeldReopened = "todo.note.held.reopened";
+
     /// <summary>A session or a human filed a request; a decision was created with it.</summary>
     public const string RequestFiled = "request.filed";
 
