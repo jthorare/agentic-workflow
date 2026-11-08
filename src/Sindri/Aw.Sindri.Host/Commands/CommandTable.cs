@@ -125,7 +125,7 @@ internal static partial class CommandTable
             ["mcp", .. var rest] => await new McpVerbs(services, output).Run(rest, ct).ConfigureAwait(false),
             ["context", ..] => await ContextOrPin(args, (client, output), (services, start), (ct, interrupt.Again)).ConfigureAwait(false),
             ["line", "holdout", .. var rest] => await new LineHoldoutVerbs(client, output, Interactive(), Console.In).Run(rest, ct).ConfigureAwait(false),
-            ["recipe" or "workflow" or "scoping" or "design" or "plan" or "line" or "pack" or "outbox" or "takeover" or "handback" or "docs" or "pr", ..] => await Workflows(args, new ScopingCommandTable.Host(services, output, new RecipeDesk(client, Console.In, c => start.EnsureRunning(launch: true, c), environment), environment), ct).ConfigureAwait(false),
+            ["recipe" or "workflow" or "wf" or "scoping" or "design" or "plan" or "line" or "pack" or "outbox" or "takeover" or "handback" or "docs" or "pr", ..] => await Workflows(args, new ScopingCommandTable.Host(services, output, new RecipeDesk(client, Console.In, c => start.EnsureRunning(launch: true, c), environment), environment), ct).ConfigureAwait(false),
             ["help" or "--help" or "-h"] => await output.Text(Usage.Text + "\n", 0).ConfigureAwait(false),
             _ => await UnknownVerb(args, output).ConfigureAwait(false),
         };
@@ -141,6 +141,7 @@ internal static partial class CommandTable
             ["workflow", .. var rest] => await WorkflowCommandTable.Run(rest, services, output, desk, ct).ConfigureAwait(false),
             ["scoping", .. var rest] => await ScopingCommandTable.Run(rest, host with { Desk = desk with { EnsureRunning = static _ => Task.FromResult<Kernel.Error?>(null) } }, ct).ConfigureAwait(false),
             ["design" or "plan" or "line", ..] => await LineCommandTable.Run(args, host with { Desk = desk with { EnsureRunning = static _ => Task.FromResult<Kernel.Error?>(null) } }, ct).ConfigureAwait(false),
+            ["wf", "validate", .. var rest] => await WfValidateCommand.Run(rest, services, output, ct).ConfigureAwait(false),   // in process: reads the graph file, never starts or contacts serve
             ["pack", .. var rest] => await PackCommandTable.Run(rest, services, output, ct).ConfigureAwait(false),
             ["outbox", .. var rest] => await OutboxCommandTable.Run(rest, services, output, ct).ConfigureAwait(false),
             ["docs", .. var rest] => await DocsCommandTable.Run(rest, services, output, desk, ct).ConfigureAwait(false),

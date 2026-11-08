@@ -4,6 +4,7 @@ using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Line;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Workflow.Engine;

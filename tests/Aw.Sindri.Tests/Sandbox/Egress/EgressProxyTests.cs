@@ -101,7 +101,7 @@ public sealed class EgressProxyTests
     [Fact, Trait("Lane", "unit")]
     public async Task Proxy_counts_a_denied_host()
     {
-        var counter = new DenialCounter(Core.Workflow.Engine.LaunchId.From("LCH-00000000000000000000000000000001"), "/nonexistent/denials.json",
+        var counter = new DenialCounter(Core.Launch.LaunchId.From("LCH-00000000000000000000000000000001"), "/nonexistent/denials.json",
             Kernel.Json.AwJson.CreateOptions(Host.SindriJsonContext.Default), new Infrastructure.Text.RedactingScrubber(Redaction.Redactor.Default), TimeProvider.System);
         var (proxy, _, _) = Make(denials: counter);
         foreach (var request in new[] { "CONNECT evil.example:443", "CONNECT evil.example:443", "CONNECT inside.example:443" })

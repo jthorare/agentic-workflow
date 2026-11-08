@@ -5,7 +5,7 @@ using Aw.Sindri.Infrastructure.Ledger;
 namespace Aw.Sindri.Infrastructure.Memory;
 
 /// <summary>
-/// IMemoryStore over the 'memory' and 'memory_fact' tables of ledger.db (migration 14): embeddings packed with Aw.Embeddings.VectorCodec, tags as sorted JSON.
+/// IMemoryStore over the 'memory' and 'memory_fact' tables of ledger.db (migration 9): embeddings packed with Aw.Embeddings.VectorCodec, tags as sorted JSON.
 /// A read never creates or migrates the file and finds nothing on a file older than the tables.
 /// </summary>
 /// <param name="database">The ledger file.</param>

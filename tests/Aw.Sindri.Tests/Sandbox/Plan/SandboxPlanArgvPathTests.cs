@@ -3,7 +3,6 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Plan;
-using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Launch;
@@ -67,5 +66,29 @@ public sealed class SandboxPlanArgvPathTests : IDisposable
         Assert.NotNull(refusal);
         Assert.Equal(SindriErrors.LaunchUnconfinable.Code, refusal.Code);
         Assert.Contains(hidden, refusal.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void An_absolute_path_argument_under_a_bind_from_elsewhere_is_refused_before_start()
+    {
+        var plan = SandboxPlanner.Build(SandboxMechanism.PassThrough, Req.WriteScope).Value;   // /tmp is bound from the run area
+        var hidden = "/tmp/x.json";
+
+        var refusal = PlanArgvPaths.Check(plan, ["claude", "--settings", hidden]);
+
+        Assert.NotNull(refusal);
+        Assert.Equal(SindriErrors.LaunchUnconfinable.Code, refusal.Code);
+        Assert.Contains(hidden, refusal.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_hidden_path_refusal_carries_the_path_hidden_reason()
+    {
+        var plan = SandboxPlanner.Build(SandboxMechanism.PassThrough, Req.WriteScope).Value;
+
+        var refusal = PlanArgvPaths.Check(plan, ["claude", "--settings", "/tmp/x.json"]);
+
+        Assert.NotNull(refusal);
+        Assert.Equal(SandboxReasons.PathHidden, SandboxRefusal.ReasonOf(refusal));
     }
 }

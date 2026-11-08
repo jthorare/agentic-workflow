@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Memory;
 
 namespace Aw.Sindri.Features.WriteMemoryFact;
@@ -8,4 +9,4 @@ namespace Aw.Sindri.Features.WriteMemoryFact;
 /// <param name="Tags">The tags; null or empty is none.</param>
 /// <param name="ExpiresAt">When the hourly service deletes it; null is never.</param>
 /// <param name="Provenance">Where it came from; null is none.</param>
-public sealed record WriteMemoryFactRequest(string Name, string Text, IReadOnlyList<string>? Tags, DateTimeOffset? ExpiresAt, MemoryProvenance? Provenance);
+public sealed record WriteMemoryFactRequest(string Name, string Text, IReadOnlyList<string>? Tags, DateTimeOffset? ExpiresAt, MemoryProvenance? Provenance) : ICommand<WriteMemoryFactResponse>;
