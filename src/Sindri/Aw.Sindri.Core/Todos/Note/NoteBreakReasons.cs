@@ -15,6 +15,7 @@ public static class NoteBreakReasons
         NoteBreak.ForbiddenCharacter => "it has a character Sindri can't store",
         NoteBreak.EmptyText => "it has no text",
         NoteBreak.TextTooLong => "it is longer than 280 characters",
+        NoteBreak.ForeignBlockId => "it ends in a block id (^…) of its own",
         NoteBreak.None => throw new ArgumentOutOfRangeException(nameof(reason), reason, "a line that is a valid todo has no reason"),
         _ => throw new ArgumentOutOfRangeException(nameof(reason), reason, "a line that is a valid todo has no reason"),
     };

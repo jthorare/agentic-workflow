@@ -122,6 +122,14 @@ public sealed class NoteParserTests
     }
 
     [Theory]
+    [InlineData("- [ ] a ^abc123", NoteBreak.ForeignBlockId)]
+    [InlineData("- [ ] a ^abc123 ^td-01jc5a8xq0n4w7ms2t9r3vbk6e", NoteBreak.ForeignBlockId)]
+    [InlineData("- [ ] a^abc123", NoteBreak.None)]
+    [InlineData("- [ ] a ^abc123 b", NoteBreak.None)]
+    public void A_block_id_of_the_owners_own_breaks_the_line_only_at_its_end(string line, NoteBreak expected) =>
+        Assert.Equal(expected, NoteParser.Parse(line + "\n").Todos.Single().Break);
+
+    [Theory]
     [InlineData(280, NoteBreak.None)]
     [InlineData(281, NoteBreak.TextTooLong)]
     public void Text_is_one_to_280_characters(int length, NoteBreak expected)
@@ -223,6 +231,7 @@ public sealed class NoteParserTests
     [InlineData(NoteBreak.ForbiddenCharacter, "it has a character Sindri can't store")]
     [InlineData(NoteBreak.EmptyText, "it has no text")]
     [InlineData(NoteBreak.TextTooLong, "it is longer than 280 characters")]
+    [InlineData(NoteBreak.ForeignBlockId, "it ends in a block id (^…) of its own")]
     public void Each_break_has_its_words_for_the_sync_line(NoteBreak reason, string words) =>
         Assert.Equal(words, NoteBreakReasons.Of(reason));
 

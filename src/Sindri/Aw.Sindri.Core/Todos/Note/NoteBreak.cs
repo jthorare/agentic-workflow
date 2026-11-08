@@ -26,4 +26,7 @@ public enum NoteBreak
 
     /// <summary>The text is over 280 characters.</summary>
     TextTooLong,
+
+    /// <summary>The line ends in a block id of its own ('^abc123') that isn't a '^td-' id; a second id on the line would break links to it ('[[note#^abc123]]'), so the line stays as text. Checked last.</summary>
+    ForeignBlockId,
 }

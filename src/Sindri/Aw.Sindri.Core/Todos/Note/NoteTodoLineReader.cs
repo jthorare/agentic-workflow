@@ -176,7 +176,17 @@ internal static partial class NoteTodoLineReader
             return NoteBreak.ForbiddenCharacter;
         }
 
-        return text.Length == 0 ? NoteBreak.EmptyText : text.Length > MaxTextLength ? NoteBreak.TextTooLong : NoteBreak.None;
+        if (text.Length == 0)
+        {
+            return NoteBreak.EmptyText;
+        }
+
+        if (text.Length > MaxTextLength)
+        {
+            return NoteBreak.TextTooLong;
+        }
+
+        return ForeignBlock.IsMatch(raw) ? NoteBreak.ForeignBlockId : NoteBreak.None;
     }
 
     /// <summary>True when the text is link-shaped, or so tangled the link check timed out (a line the regex can't judge isn't synced).</summary>
@@ -213,6 +223,9 @@ internal static partial class NoteTodoLineReader
 
     [GeneratedRegex("(?:^|(?<=\\s))\\[[^\\[\\]]*\\]\\((?<url>sindri://[^()\\s]+)\\)\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex TrailingLink { get; }
+
+    [GeneratedRegex("(?:^|(?<=\\s))\\^[A-Za-z0-9-]+\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex ForeignBlock { get; }
 
     [GeneratedRegex("\\[[^\\[\\]]*\\]\\([^)]*\\)", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex MarkdownLink { get; }
