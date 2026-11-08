@@ -33,4 +33,13 @@ public static partial class SindriErrors
 
     /// <summary>SND-CONN-010: a connection with that name exists.</summary>
     public static readonly ErrorDefinition ConnectionExists = new("SND-CONN-010", ErrorKind.Conflict, "A connection with that name already exists");
+
+    /// <summary>SND-CONN-011: the provider answered 429 or 5xx to a poll; the next poll waits.</summary>
+    public static readonly ErrorDefinition ConnectionRateLimited = new("SND-CONN-011", ErrorKind.RateLimited, "The provider is rate limiting this connection");
+
+    /// <summary>SND-CONN-012: the provider's answer is not the shape the poller knows, or a redirect left the preset's host.</summary>
+    public static readonly ErrorDefinition ConnectionProviderChanged = new("SND-CONN-012", ErrorKind.Unavailable, "The provider's answer is not the shape Sindri expects");
+
+    /// <summary>SND-CONN-013: the provider rejected the saved cursor; a full re-read is refused unless the owner asks.</summary>
+    public static readonly ErrorDefinition ConnectionCursorRejected = new("SND-CONN-013", ErrorKind.Conflict, "The provider rejected the saved poll cursor");
 }

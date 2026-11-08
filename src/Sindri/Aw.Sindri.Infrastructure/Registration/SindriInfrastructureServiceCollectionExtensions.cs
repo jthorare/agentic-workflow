@@ -7,6 +7,7 @@ using Aw.Sindri.Core.Challenges;
 using Aw.Sindri.Core.Checks;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Connections.OAuth;
+using Aw.Sindri.Core.Connections.Polling;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.EngineReads;
@@ -48,6 +49,7 @@ using Aw.Sindri.Infrastructure.BugFix;
 using Aw.Sindri.Infrastructure.Challenges;
 using Aw.Sindri.Infrastructure.Checks;
 using Aw.Sindri.Infrastructure.Connections;
+using Aw.Sindri.Infrastructure.Connections.Polling;
 using Aw.Sindri.Infrastructure.Control;
 using Aw.Sindri.Infrastructure.Deploy;
 using Aw.Sindri.Infrastructure.Evidence;
@@ -253,7 +255,15 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IConnectionProbe>(static _ => new HttpConnectionProbe(new HttpClient()))
             .AddSingleton<IOAuthClient>(static sp => new HttpOAuthClient(new HttpClient(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IBrowserOpener>(static _ => new BrowserOpener(new ProcessToolRunner()))
+            .AddSingleton<IPollCursors, SqlitePollCursors>()   // PR 11: poll cursors in ledger.db
+            .AddSingleton<IEventPoller>(static sp => new GitHubEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>()))
+            .AddSingleton<IEventPoller>(static sp => new LinearEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>()))
             .AddSingleton<ISignInSession>(static sp => new LoopbackSignIn(sp.GetRequiredService<IOAuthClient>(), sp.GetRequiredService<IBrowserOpener>(), TimeSpan.FromMinutes(5), System.Security.Cryptography.RandomNumberGenerator.GetBytes));
+
+    // A poller sends the connection's token, so its client never follows a redirect on its own: the poller refuses one that leaves the preset's host.
+    private static HttpClient NoRedirectClient() => new(_noRedirect, disposeHandler: false);
+
+    private static readonly SocketsHttpHandler _noRedirect = new() { AllowAutoRedirect = false };
 
     private static IServiceCollection AddSecretInfrastructure(this IServiceCollection services)
         => services
