@@ -19,6 +19,18 @@ internal static partial class UsageLimitMatcher
     /// <summary>The pattern for "Claude usage limit reached. …".</summary>
     public const string UsageLimitReached = "usage-limit-reached";
 
+    /// <summary>
+    /// The pattern for Cursor's wording: "You've reached your usage limit", "You've hit your monthly limit", "You've run out of premium requests".
+    /// Best-known phrasing from Cursor's docs and forum posts; not captured from a live session (#2110), so it is loose on purpose. Needs usage, request, monthly, premium or plan before "limit" so a rate or context-window limit is not read as a usage limit, and only the Cursor provider calls it (<see cref="MatchCursor"/>).
+    /// </summary>
+    public const string CursorLimit = "cursor-limit";
+
+    /// <summary>The id of the pattern a Cursor message matches: Cursor's own wording, then the shared patterns. Only the Cursor provider calls it.</summary>
+    /// <param name="message">The error text.</param>
+    /// <returns>The pattern's id, or null when the message is not a usage limit.</returns>
+    public static string? MatchCursor(string? message) =>
+        Match(message) ?? (!string.IsNullOrEmpty(message) && CursorLimitPattern.IsMatch(message) ? CursorLimit : null);
+
     /// <summary>The id of the pattern a message matches.</summary>
     /// <param name="message">The error text.</param>
     /// <returns>The pattern's id, or null when the message is not a usage limit.</returns>
@@ -50,4 +62,7 @@ internal static partial class UsageLimitMatcher
 
     [GeneratedRegex(@"\A[^\p{L}\p{N}]*(?:claude\s+)?usage\s+limit\s+reached\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 100)]
     private static partial Regex UsageLimitReachedPattern { get; }
+
+    [GeneratedRegex(@"\A[^\p{L}\p{N}]*you(?:['’]ve|\s+have)\s+(?:(?:reached|hit|exceeded)\s+(?:your|the)\s+(?:[A-Za-z0-9._-]+\s+){0,3}(?:usage|requests?|monthly|premium|plan)\s+(?:[A-Za-z0-9._-]+\s+){0,2}?limit|run\s+out\s+of\s+(?:[A-Za-z0-9._-]+\s+){0,3}(?:requests|usage|credits))\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 100)]
+    private static partial Regex CursorLimitPattern { get; }
 }

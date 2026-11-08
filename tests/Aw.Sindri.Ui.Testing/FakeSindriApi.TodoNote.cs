@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
 
@@ -31,24 +32,43 @@ internal sealed partial class FakeSindriApi
         return Task.FromResult(Answer<TodoNoteView>(api, TodoRoutes.Note, TodoNoteAnswer));
     }
 
-    public Task<Result<TodoPickAcceptedView>> KeepTodo(Uri api, string id, string side, CancellationToken cancellationToken) =>
-        TodoPick(api, TodoRoutes.Keep(id), new TodoKeepBody(side), cancellationToken);
+    public Task<Result<TodoKeepAcceptedView>> KeepTodo(Uri api, string id, string side, CancellationToken cancellationToken) =>
+        TodoPick<TodoKeepAcceptedView>(api, TodoRoutes.Keep(id), new TodoKeepBody(side), KeptAnswer(id, side), cancellationToken);
 
-    public Task<Result<TodoPickAcceptedView>> UndoKeepTodo(Uri api, string id, CancellationToken cancellationToken) =>
-        TodoPick(api, TodoRoutes.KeepUndo(id), body: null, cancellationToken);
-
-    public Task<Result<TodoPickAcceptedView>> ApplyHold(Uri api, string noteHash, CancellationToken cancellationToken) =>
-        TodoPick(api, TodoRoutes.HoldApply, new TodoHoldBody(noteHash), cancellationToken);
-
-    public Task<Result<TodoPickAcceptedView>> RestoreHold(Uri api, string noteHash, CancellationToken cancellationToken) =>
-        TodoPick(api, TodoRoutes.HoldRestore, new TodoHoldBody(noteHash), cancellationToken);
-
-    public Task<Result<TodoPickAcceptedView>> UndoHold(Uri api, CancellationToken cancellationToken) =>
-        TodoPick(api, TodoRoutes.HoldUndo, body: null, cancellationToken);
-
-    private async Task<Result<TodoPickAcceptedView>> TodoPick(Uri api, string route, object? body, CancellationToken cancellationToken)
+    // What Sindri answers to a keep: the todo with the picked version and no conflict, as the served list has it (the todo is optional, so a test can answer without it).
+    private string KeptAnswer(string id, string side)
     {
-        if (NotReceived<TodoPickAcceptedView>(api) is { } unanswered)
+        const string window = "\"undoUntil\":\"2026-01-01T00:00:10.0000000Z\"";
+        var todo = JsonNode.Parse(TodosAnswer.Body)?["todos"]?.AsArray().FirstOrDefault(t => string.Equals((string?)t?["id"], id, StringComparison.Ordinal))?.DeepClone();
+        return todo?["conflict"]?[side] is JsonObject picked ? "{\"todo\":" + Kept(todo, picked).ToJsonString() + "," + window + "}" : "{" + window + "}";
+    }
+
+    private static JsonNode Kept(JsonNode todo, JsonObject picked)
+    {
+        var (removed, done) = ((bool?)picked["removed"] == true, (bool?)picked["done"] == true);
+        const string at = "2026-01-01T00:00:00Z";
+        todo["conflict"] = null;
+        todo["text"] = picked["text"]?.DeepClone() ?? todo["text"]?.DeepClone();
+        todo["due"] = removed ? todo["due"]?.DeepClone() : picked["due"]?.DeepClone();
+        (todo["doneAt"], todo["removed"], todo["removedAt"]) = (done && !removed ? at : null, removed, removed ? at : null);
+        return todo;
+    }
+
+    public Task<Result<TodoKeepUndoneView>> UndoKeepTodo(Uri api, string id, CancellationToken cancellationToken) =>
+        TodoPick<TodoKeepUndoneView>(api, TodoRoutes.KeepUndo(id), body: null, "{}", cancellationToken);
+
+    public Task<Result<TodoHoldPickedView>> ApplyHold(Uri api, string noteHash, CancellationToken cancellationToken) =>
+        TodoPick<TodoHoldPickedView>(api, TodoRoutes.HoldApply, new TodoHoldBody(noteHash), """{"kept":"applied","undoUntil":"2026-01-01T00:00:10.0000000Z"}""", cancellationToken);
+
+    public Task<Result<TodoHoldPickedView>> RestoreHold(Uri api, string noteHash, CancellationToken cancellationToken) =>
+        TodoPick<TodoHoldPickedView>(api, TodoRoutes.HoldRestore, new TodoHoldBody(noteHash), """{"kept":"restored","undoUntil":"2026-01-01T00:00:10.0000000Z"}""", cancellationToken);
+
+    public Task<Result<TodoHoldUndoneView>> UndoHold(Uri api, CancellationToken cancellationToken) =>
+        TodoPick<TodoHoldUndoneView>(api, TodoRoutes.HoldUndo, body: null, """{"kept":null}""", cancellationToken);
+
+    private async Task<Result<T>> TodoPick<T>(Uri api, string route, object? body, string accepted, CancellationToken cancellationToken)
+    {
+        if (NotReceived<T>(api) is { } unanswered)
         {
             return unanswered;
         }
@@ -59,7 +79,7 @@ internal sealed partial class FakeSindriApi
         }
 
         await WaitFor(CommandGate, cancellationToken).ConfigureAwait(false);
-        var answer = Answer<TodoPickAcceptedView>(api, route, TodoPickAnswer ?? new RouteAnswer(HttpStatusCode.OK, """{"accepted":{"commandId":"cmd_fake","sequence":42},"undoUntil":"2026-01-01T00:00:10.0000000Z"}"""));
+        var answer = Answer<T>(api, route, TodoPickAnswer ?? new RouteAnswer(HttpStatusCode.OK, accepted));
         if (answer.IsSuccess)
         {
             OnTodoPicked?.Invoke(route, body);

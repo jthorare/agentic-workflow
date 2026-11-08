@@ -74,6 +74,9 @@ internal static partial class Labels
     /// <summary>What a conflict row says to X, Space and Delete: nothing is sent.</summary>
     internal const string TodoAttnPickFirst = "Pick a version first";
 
+    /// <summary>The notice when a pick finds a bare 404: the running Sindri has no keep or hold route yet.</summary>
+    internal const string TodoAttnSindriOlder = "The running Sindri is older than this app and can't save this yet. Restart it: sindri stop && sindri";
+
     /// <summary>The notice after Keep Obsidian's when the note's line moved since the row was drawn (SND-TODO-409).</summary>
     internal const string TodoAttnLineChanged = "The note's line changed since. Here's the latest";
 

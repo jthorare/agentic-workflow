@@ -1,8 +1,11 @@
 #nullable enable
 Aw.Evidence.Features.CheckProvenance.CheckProvenanceRequest
 Aw.Evidence.Features.CheckProvenance.CheckProvenanceRequest.<Clone>$() -> Aw.Evidence.Features.CheckProvenance.CheckProvenanceRequest!
-Aw.Evidence.Features.CheckProvenance.CheckProvenanceRequest.CheckProvenanceRequest() -> void
+Aw.Evidence.Features.CheckProvenance.CheckProvenanceRequest.CheckProvenanceRequest(string? Worktree = null) -> void
+Aw.Evidence.Features.CheckProvenance.CheckProvenanceRequest.Deconstruct(out string? Worktree) -> void
 Aw.Evidence.Features.CheckProvenance.CheckProvenanceRequest.Equals(Aw.Evidence.Features.CheckProvenance.CheckProvenanceRequest? other) -> bool
+Aw.Evidence.Features.CheckProvenance.CheckProvenanceRequest.Worktree.get -> string?
+Aw.Evidence.Features.CheckProvenance.CheckProvenanceRequest.Worktree.init -> void
 Aw.Evidence.Features.CheckProvenance.CheckProvenanceResponse
 Aw.Evidence.Features.CheckProvenance.CheckProvenanceResponse.<Clone>$() -> Aw.Evidence.Features.CheckProvenance.CheckProvenanceResponse!
 Aw.Evidence.Features.CheckProvenance.CheckProvenanceResponse.CheckProvenanceResponse(Aw.Evidence.Core.Guard.DbProvenance Provenance, string! Reason) -> void

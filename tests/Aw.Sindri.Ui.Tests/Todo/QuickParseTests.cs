@@ -55,7 +55,6 @@ public sealed class QuickParseTests
     [InlineData("12-31", "2026-12-31")]
     [InlineData("11-07", "2027-11-07")]
     [InlineData("01-02", "2027-01-02")]
-    [InlineData("1-5", "2027-01-05")]
     [InlineData("02-29", "2028-02-29")]
     public void A_month_and_day_is_the_next_such_date_so_a_passed_one_is_next_year(string word, string due) =>
         Assert.Equal(("file taxes", due), Read("file taxes " + word));
@@ -72,6 +71,7 @@ public sealed class QuickParseTests
     [InlineData("11-100")]
     [InlineData("11-")]
     [InlineData("1-2-3")]
+    [InlineData("1-5")] // why: the box reads day words through DueWords, as the CLI does (spec §4.4), and DueWords wants two digits each side
     public void A_date_that_does_not_exist_stays_text(string word) =>
         Assert.Equal(("call " + word, null), Read("call " + word));
 

@@ -65,6 +65,8 @@
            none of them changes the height, so Needs you below never moves. TodoPanel.axaml.cs sets the height from Size.Row. -->
       <Grid x:Name="TodoCollapsed" Grid.Row="1" RowDefinitions="*,Auto" ClipToBounds="True" IsVisible="{Binding !IsExpanded}">
         <StackPanel>
+          <!-- The attention rows (a conflict or the hold, todo spec §3.1, D13) take the first slots, inside the five. -->
+          <tv:AttentionArea x:Name="TodoAttentionCollapsed" />
           <!-- First load: three skeleton rows, each as tall as a loaded row (the same item-row), no shimmer. -->
           <StackPanel x:Name="TodoSkeleton" IsVisible="{Binding IsLoading}" AutomationProperties.AccessibilityView="Raw">
             <Border Classes="item-row">
@@ -116,6 +118,7 @@
       <Grid x:Name="TodoExpanded" Grid.Row="1" RowDefinitions="*,Auto" IsVisible="{Binding IsExpanded}">
         <ScrollViewer x:Name="TodoScroll" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
           <StackPanel>
+            <tv:AttentionArea x:Name="TodoAttentionExpanded" />
             <ItemsControl x:Name="TodoGroups" ItemsSource="{Binding Groups}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="todo:TodoGroupViewModel">

@@ -7,7 +7,8 @@ that changes on the way is called out in that PR.
 - `note.json`: `GET /sindri/todos/note` while syncing, one open conflict, one pick in its Undo window, one line that
   can't sync.
 - `hold.json`: the same route with an open hold (REQ-E7) of four held changes.
-- `conflict.json`: `GET /sindri/todos/{id}` for a todo with an open both-places conflict (D11).
+- `conflict.json`: `GET /sindri/todos/{id}` for a todo with an open both-places conflict (D11), in the `TodoItem`
+  shape the list serves, without the stored row's internal fields (#2355 makes the route answer it).
 
 Fields of the note route:
 

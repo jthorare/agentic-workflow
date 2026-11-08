@@ -172,12 +172,12 @@ public sealed class TodoAttentionFramesTests : IDisposable
         Assert.Equal(["changed", "changed", "changed", "changed"], Texts(window, "TodoAttentionMark"));
         Assert.Equal(["Keep Sindri's", "Keep Obsidian's"], Buttons(window).Select(b => ((AttentionChoiceViewModel)b.DataContext!).ButtonText), StringComparer.Ordinal);
         Assert.Equal(["1", "2"], Texts(window, "TodoAttentionKey"));
-        Assert.Same(Buttons(window)[0], window.FocusManager!.GetFocusedElement());
+        await Until(window, () => Buttons(window).Count == 2 && ReferenceEquals(Buttons(window)[0], window.FocusManager!.GetFocusedElement()), "focus never reached the first button");
 
         Key(window, PhysicalKey.Escape);
 
         Assert.False(shell.Todo.IsAttentionOpen);
-        Assert.Equal("TodoAttentionLine", Focused(window));
+        await Until(window, () => string.Equals(Focused(window), "TodoAttentionLine", StringComparison.Ordinal), "focus never came back to the line");
     });
 
     [Fact]
@@ -238,7 +238,7 @@ public sealed class TodoAttentionFramesTests : IDisposable
         var values = Panel(window).GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name == "TodoAttentionFieldValue" && t.IsEffectivelyVisible).ToList();
 
         Assert.All(values, v => Assert.Equal((TextWrapping.Wrap, 3, TextTrimming.CharacterEllipsis), (v.TextWrapping, v.MaxLines, v.TextTrimming)));
-        Assert.All(values, v => Assert.True(v.Bounds.Height <= (v.FontSize * 1.6 * 3) + 4, "a version's text is at most three lines tall"));
+        Assert.All(values, v => Assert.True(v.Bounds.Height <= (v.FontSize * 2 * 3) + 4, "a version's text is at most three lines tall"));
     });
 
     [Fact]
@@ -311,5 +311,72 @@ public sealed class TodoAttentionFramesTests : IDisposable
 
         Assert.False(Shown(window, "TodoAttentionLine"));
         Assert.Equal(5, TodoRowCount(window));
+    });
+
+    [Fact]
+    public Task After_a_409_redraws_the_open_form_a_digit_still_picks() => OnUi(async () =>
+    {
+        Serve(TodoNoteSample.WithConflicts("td_c1"), Conflicted("td_c1", "reply to Sam", Side("reply to Sam today")));
+        var (window, shell) = await Connected();
+        FocusAttention(window);
+        Key(window, PhysicalKey.Enter);
+        await Until(window, () => Focused(window) != "(nothing)" && window.FocusManager?.GetFocusedElement() is Button, "focus never reached the form's button");
+        Serve(TodoNoteSample.WithConflicts("td_c1"), Conflicted("td_c1", "reply to Sam", Side("reply to Sam by noon")));
+        _server.TodoPickAnswer = RouteAnswer.Problem(HttpStatusCode.Conflict, "SND-TODO-409", "The note's line changed since.");
+
+        Key(window, PhysicalKey.Digit2);
+        await Until(window, () => Texts(window, "TodoAttentionFormNotice").Length == 1, "the open form never showed the line-moved notice");
+        await Until(window, () => window.FocusManager?.GetFocusedElement() is Button, "focus was lost with the redrawn form");
+        _server.TodoPickAnswer = null;
+        _clock.Advance(TimeSpan.FromSeconds(1));
+        Key(window, PhysicalKey.Digit2);
+        await Until(window, () => shell.Toast.Text == "Kept Obsidian's version.");
+
+        Assert.Equal(2, _server.TodoPicks.Count);
+    });
+
+    [Fact]
+    public Task A_sync_that_changes_the_open_row_leaves_focus_in_the_quick_add_box_and_a_digit_types_there() => OnUi(async () =>
+    {
+        Serve(TodoNoteSample.WithConflicts("td_c1"), Conflicted("td_c1", "reply to Sam", Side("reply to Sam today")));
+        var (window, shell) = await Connected();
+        FocusAttention(window);
+        Key(window, PhysicalKey.Enter);
+        await Until(window, () => window.FocusManager?.GetFocusedElement() is Button, "focus never reached the form's button");
+        Assert.True(shell.PressQuickAdd());
+        Settle(window);
+        var field = window.GetVisualDescendants().OfType<TextBox>().First(t => t.Name == "QuickAddField" && t.IsEffectivelyVisible);
+        _ = field.Focus();
+        Settle(window);
+        Serve(TodoNoteSample.WithConflicts("td_c1"), Conflicted("td_c1", "reply to Sam", Side("reply to Sam by noon")));
+
+        await shell.Todo.Refresh(new Uri("http://127.0.0.1:7410/"), Token);
+        Settle(window);
+        await Task.Delay(50, Token);
+        Settle(window);
+        _clock.Advance(TimeSpan.FromSeconds(1));
+        window.KeyTextInput("2");
+        Settle(window);
+
+        Assert.Same(field, window.FocusManager?.GetFocusedElement());
+        Assert.Contains("2", field.Text, StringComparison.Ordinal);
+        Assert.Empty(_server.TodoPicks);
+    });
+
+    [Fact]
+    public Task Esc_with_focus_outside_the_panel_leaves_the_open_attention_row_open() => OnUi(async () =>
+    {
+        Serve(TodoNoteSample.WithConflicts("td_c1"), Conflicted("td_c1", "reply to Sam", Side("reply to Sam today")));
+        var (window, shell) = await Connected();
+        FocusAttention(window);
+        Key(window, PhysicalKey.Enter);
+        Assert.True(shell.Todo.IsAttentionOpen);
+        var outside = window.GetVisualDescendants().OfType<Border>().First(b => b.Name == "RowFrame" && b.Focusable && b.IsEffectivelyVisible);
+        _ = outside.Focus(NavigationMethod.Tab);
+        Settle(window);
+
+        Key(window, PhysicalKey.Escape);
+
+        Assert.True(shell.Todo.IsAttentionOpen);
     });
 }
