@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using Aw.Kernel;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Linear;
 using Aw.Sindri.Ui.ViewModels.Queue;
 
@@ -117,7 +119,7 @@ internal sealed partial class LinearWorkViewModel
 
         if (page.IsError)
         {
-            SindriNotAnswering();
+            Unanswered(page.Error);
             return;
         }
 
@@ -186,7 +188,7 @@ internal sealed partial class LinearWorkViewModel
 
         if (mine.IsError || teams.IsError)
         {
-            SindriNotAnswering();
+            Unanswered(mine.IsError ? mine.Error : teams.Error);
             Missed();
             return;
         }
@@ -202,7 +204,7 @@ internal sealed partial class LinearWorkViewModel
     {
         _list = mine;
         _lastGood = _clock.GetUtcNow();
-        (IsSindriDown, AsOfText) = (false, string.Empty);
+        (IsSindriDown, IsSindriOlder, AsOfText) = (false, false, string.Empty);
         var kept = new Dictionary<string, LinearIssueRowViewModel>(StringComparer.Ordinal);
         var mineRows = mine.Rows.Select(r => Row(r, kept)).ToList();
         var teamRows = teams.Rows.Select(r => Row(r, kept)).ToList();
@@ -253,11 +255,38 @@ internal sealed partial class LinearWorkViewModel
         return shown;
     }
 
+    // A route this Sindri doesn't have answers 404: a refusal of kind not found, or the client's own "answered 404" (#2247).
+    private static bool IsNotServed(Error error) =>
+        error.Kind == ErrorKind.NotFound || (string.Equals(error.Code, SindriUiErrors.BadStatus.Code, StringComparison.Ordinal) && error.Message.Contains("404", StringComparison.Ordinal));
+
+    // The last read failed: a Sindri that answers 404 is an older build than the app and needs a restart; anything else is Sindri not answering.
+    private void Unanswered(Error error)
+    {
+        if (IsNotServed(error))
+        {
+            SindriOlder();
+        }
+        else
+        {
+            SindriNotAnswering();
+        }
+    }
+
+    // The running Sindri is reachable but has no Linear routes: one line for the page, never "isn't answering".
+    private void SindriOlder()
+    {
+        IsLoading = false;
+        (IsSindriOlder, IsSindriDown, AsOfText) = (true, false, string.Empty);
+        OnChanged(nameof(IsLoading));
+        OnChanged(nameof(OlderText));
+    }
+
     // The last read failed: the rows stay, marked with the time of the last good read.
     private void SindriNotAnswering()
     {
         IsLoading = false;
-        IsSindriDown = true;
+        (IsSindriDown, IsSindriOlder) = (true, false);
+        OnChanged(nameof(OlderText));
         AsOfText = _list is not null && _lastGood is { } at ? Labels.LinearAsOf(Clock(at)) : string.Empty;
         OnChanged(nameof(IsLoading));
     }

@@ -60,6 +60,13 @@ internal sealed partial class LinearWorkViewModel
             return;
         }
 
+        if (answer.IsError && IsNotServed(answer.Error))
+        {
+            Show(since: null);   // an older Sindri has no changes feed: the page says so once, under the filter bar, not here as well
+            SindriOlder();
+            return;
+        }
+
         if (answer.IsError)
         {
             StripFailed = true;   // the changes already shown stay under the line
