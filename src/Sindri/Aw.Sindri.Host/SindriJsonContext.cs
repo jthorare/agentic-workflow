@@ -98,6 +98,7 @@ using Aw.Sindri.Features.HideProject;
 using Aw.Sindri.Features.InitProfile;
 using Aw.Sindri.Features.IssueChallenge;
 using Aw.Sindri.Features.IssueNonce;
+using Aw.Sindri.Features.LinearConnection;
 using Aw.Sindri.Features.LinearIssues;
 using Aw.Sindri.Features.LineDoctor;
 using Aw.Sindri.Features.LineHoldout;
@@ -174,6 +175,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(StreamErrorFrame)), JsonSerializable(typeof(InstanceChanged)), JsonSerializable(typeof(ListCommandsRequest)), JsonSerializable(typeof(ListCommandsResponse)), JsonSerializable(typeof(CommandListRow))]
 [JsonSerializable(typeof(ListServicesRequest)), JsonSerializable(typeof(ListServicesResponse)), JsonSerializable(typeof(ServiceView)), JsonSerializable(typeof(GetProfileRequest))]
 [JsonSerializable(typeof(SetReviewLoginRequest)), JsonSerializable(typeof(SetReviewLoginResponse))]
+[JsonSerializable(typeof(GetLinearConnectionRequest)), JsonSerializable(typeof(LinearConnectionView)), JsonSerializable(typeof(LinearKeyStateView)), JsonSerializable(typeof(LinearConnectionTeamView)), JsonSerializable(typeof(ListLinearTeamsRequest)), JsonSerializable(typeof(ListLinearTeamsResponse)), JsonSerializable(typeof(SaveLinearConnectionRequest)), JsonSerializable(typeof(SaveLinearConnectionResponse)), JsonSerializable(typeof(LinearSavedWriteView)), JsonSerializable(typeof(RemoveLinearWriteKeyRequest)), JsonSerializable(typeof(RemoveLinearWriteKeyResponse))]   // Linear hub 1b: Settings, Connections, Linear
 [JsonSerializable(typeof(SendReviewFixRequest)), JsonSerializable(typeof(SendReviewFixResponse)), JsonSerializable(typeof(ReviewFixBody)), JsonSerializable(typeof(ReviewFixSent))]
 [JsonSerializable(typeof(GetSetupRequest)), JsonSerializable(typeof(GetSetupResponse)), JsonSerializable(typeof(GetRepoStatusResponse)), JsonSerializable(typeof(RepoStatus))]
 [JsonSerializable(typeof(GetProfileResponse)), JsonSerializable(typeof(ProfilePack)), JsonSerializable(typeof(ProfileSummary)), JsonSerializable(typeof(RepoPreview)), JsonSerializable(typeof(RebuildViewsRequest)), JsonSerializable(typeof(CreateItemRequest)), JsonSerializable(typeof(ItemCreatedResponse))]
@@ -183,8 +185,10 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(RequiredChecksData)), JsonSerializable(typeof(DocMapData)), JsonSerializable(typeof(TestPlanData)), JsonSerializable(typeof(CiData)), JsonSerializable(typeof(EvidenceData)), JsonSerializable(typeof(RiskData)), JsonSerializable(typeof(ConversationData))]   // the panels' rows, picked by ReviewPagePanelConverter
 [JsonSerializable(typeof(GetLibraryRequest)), JsonSerializable(typeof(GetLibraryResponse))]   // Ph5b: the library page
 [JsonSerializable(typeof(GetLibraryDocRequest)), JsonSerializable(typeof(GetLibraryDocResponse)), JsonSerializable(typeof(LibraryDocView)), JsonSerializable(typeof(LibraryDocErrorView))]   // PR review page Ph5b: one design doc
+[JsonSerializable(typeof(CommentLinearIssueRequest)), JsonSerializable(typeof(CommentLinearIssueBody)), JsonSerializable(typeof(CommentLinearIssueResponse)), JsonSerializable(typeof(CreateLinearIssueRequest)), JsonSerializable(typeof(CreateLinearIssueResponse))]   // Linear hub Ph3 1b: the comment and create writes
 [JsonSerializable(typeof(ListLinearIssuesRequest)), JsonSerializable(typeof(ListLinearIssuesResponse)), JsonSerializable(typeof(GetLinearIssueRequest)), JsonSerializable(typeof(GetLinearIssueResponse))]   // Linear hub Ph3 1a: the Work page's Linear list
 [JsonSerializable(typeof(Commands.Library.LibraryValidateReport)), JsonSerializable(typeof(Commands.Library.LibraryFindingRow))]   // PR review page Ph5b: 'sindri library list' and 'validate'
+[JsonSerializable(typeof(ChangeLinearIssueRequest)), JsonSerializable(typeof(ChangeLinearIssueBody)), JsonSerializable(typeof(LinearChangeApplied)), JsonSerializable(typeof(LinearChangeResult)), JsonSerializable(typeof(LinearFieldConflict[]))]   // Linear hub Ph3 1b: the issue edit
 [JsonSerializable(typeof(ListProjectsRequest)), JsonSerializable(typeof(ListProjectsResponse)), JsonSerializable(typeof(GetProjectRequest)), JsonSerializable(typeof(GetProjectResponse)), JsonSerializable(typeof(ProjectCard)), JsonSerializable(typeof(ListLinearProjectsRequest)), JsonSerializable(typeof(ListLinearProjectsResponse)), JsonSerializable(typeof(LinearProjectChoice))]
 [JsonSerializable(typeof(ProjectLead)), JsonSerializable(typeof(ProjectLink)), JsonSerializable(typeof(ProjectFreshnessRow))]
 [JsonSerializable(typeof(CloseItemRequest)), JsonSerializable(typeof(CloseItemBody)), JsonSerializable(typeof(GetQueueRequest)), JsonSerializable(typeof(QueueResponse))]
