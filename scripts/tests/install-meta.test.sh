@@ -310,6 +310,22 @@ finish() { # finish <installer exit code> -> "<exit>:<registry written>:<last li
 }
 check "setup finish: a failed meta step still writes the registry, then exits with the installer's code and the message last" "$(finish 1)" "1:1:1"
 check "setup finish: a refused tree (3) fails setup at the end like any failure; a success ends with 0 and no message" "$(finish 3):$(finish 0)" "3:1:1:0:1:0"
+# The behind-origin/main warning must not stay mid-output while setup exits 0 (#2283 follow-up): install-meta also writes it to
+# $AW_META_NOTE_FILE when set; the setup step keeps it and aw_setup_meta_finish repeats it as setup's last line, whatever the exit code.
+NOTE='  meta: WARNING this tree is behind origin/main by 2 commits (as of its last fetch)'
+note_finish() { # note_finish <installer exit code> -> "<exit>:<last line is the note>:<note lines>"
+  printf '#!/usr/bin/env bash\n[ -n "${AW_META_NOTE_FILE:-}" ] && echo "%s" >> "$AW_META_NOTE_FILE"\necho "%s" >&2\nexit %s\n' "$NOTE" "$NOTE" "$1" > "$WORK/fake/scripts/install-meta.sh"
+  local out rc=0
+  out="$( ( set -euo pipefail; source "$DIR/../config/lib/setup-meta-step.sh"
+    META_RC=0; aw_setup_meta_step "$WORK/fake" claude codex || META_RC=$?
+    echo "registry written"
+    aw_setup_meta_finish "$META_RC" ) 2>&1 )" || rc=$?
+  echo "$rc:$(printf '%s' "$out" | tail -1 | grep -c 'behind origin/main by 2 commits'):$(printf '%s' "$out" | grep -c 'behind origin/main by 2 commits')"
+}
+check "setup finish: a success with a behind-main warning repeats it as the last line (exit 0), once more than the installer printed" "$(note_finish 0)" "0:1:3"
+check "setup finish: a failure repeats the warning too, the failure message stays before it" "$(note_finish 1)" "1:1:3"
+OUT="$(AW_META_NOTE_FILE="$WORK/note" bash "$WORK/behind/scripts/install-meta.sh" --provider claude 2>&1)"
+check "install-meta writes the behind-main warning to AW_META_NOTE_FILE when set" "$(grep -c 'behind origin/main by 1 commit' "$WORK/note")" "1"
 SETUP_SRC="$DIR/../setup.sh"
 check "setup.sh runs the meta step with '|| META_RC=\$?' and finishes after the registry is written" "$(grep -c 'aw_setup_meta_step .* || META_RC=\$?' "$SETUP_SRC"):$([ "$(grep -n 'aw_setup_meta_finish' "$SETUP_SRC" | tail -1 | cut -d: -f1)" -gt "$(grep -n 'aw_write_provider_registry "' "$SETUP_SRC" | tail -1 | cut -d: -f1)" ] && echo after)" "1:after"
 

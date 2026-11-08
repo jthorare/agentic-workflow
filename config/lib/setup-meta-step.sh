@@ -8,6 +8,8 @@
 aw_setup_meta_step() {
   local dir="$1" p built=0 rc skip failed=0
   shift
+  # install-meta.sh appends its end-of-run notes (the behind-origin/main warning) to this file; aw_setup_meta_finish repeats them last
+  AW_META_NOTE_FILE="$(mktemp "${TMPDIR:-/tmp}/aw-meta-note.XXXXXX" 2> /dev/null || true)"; export AW_META_NOTE_FILE
   for p in "$@"; do
     skip="${AW_SKIP_BUILD:-0}"; [ "$built" = 1 ] && skip=1
     rc=0
@@ -18,17 +20,22 @@ aw_setup_meta_step() {
       *) echo "  meta: scripts/install-meta.sh failed for $p (exit $rc); setup goes on and fails at the end, the installed aw-meta (if any) is unchanged and may be stale" >&2; [ "$failed" != 0 ] || failed="$rc" ;;
     esac
   done
+  aw_meta_last_note=""
+  [ -z "$AW_META_NOTE_FILE" ] || { aw_meta_last_note="$(tail -1 "$AW_META_NOTE_FILE" 2> /dev/null || true)"; rm -f "$AW_META_NOTE_FILE"; }
+  unset AW_META_NOTE_FILE
   return "$failed"
 }
 
 # aw_setup_meta_finish <rc>  — the last line of setup.sh: the meta step's result, after everything else has run.
-# 0 returns 0; any other code (a refused tree, exit 3, included) is returned with the message.
+# The behind-origin/main warning install-meta.sh saved (aw_meta_last_note) is repeated last, exit 0 or not. 0 returns 0; any other code (a refused tree, exit 3, included) is returned with the message.
 aw_setup_meta_finish() {
   local rc="${1:-0}"
   [ "$rc" = 0 ] || {
     echo "" >&2
     echo "meta install failed (exit $rc): the rest of setup ran; the installed aw-meta (if any) is unchanged and may be stale. Fix the cause above and rerun ./setup.sh --with-meta (or scripts/install-meta.sh)." >&2
+    [ -z "${aw_meta_last_note:-}" ] || echo "$aw_meta_last_note" >&2
     return "$rc"
   }
+  [ -z "${aw_meta_last_note:-}" ] || echo "$aw_meta_last_note" >&2
   return 0
 }
