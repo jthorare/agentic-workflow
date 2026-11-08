@@ -87,6 +87,12 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     }
 
     /// <inheritdoc/>
+    public ValueTask<Result<Unit>> MarkTick(WorkflowId workflow, DateTimeOffset tick, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    /// <inheritdoc/>
+    public ValueTask<Result<DateTimeOffset?>> LastTick(WorkflowId workflow, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    /// <inheritdoc/>
     public ValueTask<Result<WorkflowRun>> SetStatus(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, CancellationToken cancellationToken)
     {
         lock (_gate)

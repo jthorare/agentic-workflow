@@ -41,6 +41,19 @@ public interface IWorkflowRunStore
     /// <returns>The occurrence, or null when no such run exists.</returns>
     public ValueTask<Result<int?>> LatestOccurrence(WorkflowId workflow, string triggerKind, CancellationToken cancellationToken);
 
+    /// <summary>Records that a schedule tick was handled (fired, queued or skipped), so only later ticks fire. It only moves forward: an earlier tick than the one on record changes nothing.</summary>
+    /// <param name="workflow">The workflow.</param>
+    /// <param name="tick">The tick, in UTC.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>Success, or the reason the write failed.</returns>
+    public ValueTask<Result<Unit>> MarkTick(WorkflowId workflow, DateTimeOffset tick, CancellationToken cancellationToken);
+
+    /// <summary>The latest schedule tick recorded by <see cref="MarkTick"/>.</summary>
+    /// <param name="workflow">The workflow.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The tick, or null when none was recorded.</returns>
+    public ValueTask<Result<DateTimeOffset?>> LastTick(WorkflowId workflow, CancellationToken cancellationToken);
+
     /// <summary>Moves a run to a new status; a final status also sets its end time.</summary>
     /// <param name="id">The run.</param>
     /// <param name="status">The new status.</param>

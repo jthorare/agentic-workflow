@@ -211,4 +211,37 @@ public abstract class WorkflowRunStoreContract
         Expect.Equal(19, results.Count(static r => r.IsSuccess && r.Value == GraphStartKind.Skipped));
         _ = Expect.Only((await store.InFlight(_workflow, Token)).Value);
     }
+
+    /// <summary>No tick is recorded until one is marked, and a tick belongs to its workflow.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_workflow_has_no_last_tick_until_one_is_marked_and_ticks_are_per_workflow()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        var before = await store.LastTick(_workflow, Token);
+        var tick = KnownInstants.Epoch.AddHours(7);
+
+        _ = (await store.MarkTick(_workflow, tick, Token)).Value;
+
+        Expect.Equal<DateTimeOffset?>(expected: null, before.Value);
+        Expect.Equal<DateTimeOffset?>(tick, (await store.LastTick(_workflow, Token)).Value);
+        Expect.Equal<DateTimeOffset?>(expected: null, (await store.LastTick(WorkflowId.From("WF-00000000000000000000000000000002"), Token)).Value);
+    }
+
+    /// <summary>A tick earlier than the one on record changes nothing: the last tick only moves forward.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Marking_an_earlier_tick_keeps_the_later_one()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        var later = KnownInstants.Epoch.AddDays(2);
+        _ = (await store.MarkTick(_workflow, later, Token)).Value;
+
+        _ = (await store.MarkTick(_workflow, KnownInstants.Epoch.AddDays(1), Token)).Value;
+        Expect.Equal<DateTimeOffset?>(later, (await store.LastTick(_workflow, Token)).Value);
+
+        var latest = KnownInstants.Epoch.AddDays(3);
+        _ = (await store.MarkTick(_workflow, latest, Token)).Value;
+        Expect.Equal<DateTimeOffset?>(latest, (await store.LastTick(_workflow, Token)).Value);
+    }
 }

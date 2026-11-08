@@ -81,6 +81,10 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
         return latest.IsError ? latest.Error : latest.Value.Count == 0 ? (int?)null : latest.Value[0].Id.Occurrence;
     }
 
+    public ValueTask<Result<Unit>> MarkTick(WorkflowId workflow, DateTimeOffset tick, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    public ValueTask<Result<DateTimeOffset?>> LastTick(WorkflowId workflow, CancellationToken cancellationToken) => throw new NotSupportedException();
+
     public ValueTask<Result<WorkflowRun>> SetStatus(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, CancellationToken cancellationToken) =>
         RecipeSessions.Write(database, async ValueTask<Result<WorkflowRun>> (session, token) =>
         {
