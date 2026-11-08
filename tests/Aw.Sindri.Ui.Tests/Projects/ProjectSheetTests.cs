@@ -1,9 +1,9 @@
 using System.Net;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Projects;
-using Aw.Sindri.Ui.Api.Workflow;
 using Aw.Sindri.Ui.Testing;
-using Aw.Sindri.Ui.ViewModels.Instance;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Projects;
 
 namespace Aw.Sindri.Ui.Tests.Projects;

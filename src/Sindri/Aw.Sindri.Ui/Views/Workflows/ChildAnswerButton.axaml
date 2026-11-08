@@ -1,9 +1,0 @@
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:wf="using:Aw.Sindri.Ui.ViewModels.Workflows"
-             x:Class="Aw.Sindri.Ui.Views.Workflows.ChildAnswerButton"
-             x:DataType="wf:ChildAnswerViewModel">
-  <!-- A row whose answer a child instance decides: no answer form and no copy of the engine's placeholder, one button that opens the
-       child's frame (or the parent's, at its Children panel). The name leads with the drawn words (WCAG 2.5.3). -->
-  <Button x:Name="AnswerInChild" Classes="command-control" Content="{Binding Text}" Click="OnFollow" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}" />
-</UserControl>

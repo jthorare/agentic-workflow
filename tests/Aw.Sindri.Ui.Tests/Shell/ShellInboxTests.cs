@@ -13,7 +13,7 @@ namespace Aw.Sindri.Ui.Tests.Shell;
 public sealed class ShellInboxTests
 {
     private readonly InMemoryEndpointRecords _records = new();
-    private readonly FakeSindriApi _server = new() { Catalog = RouteAnswer.Api("commands", "catalog"), NeedsYouView = RouteAnswer.Api("needs-you", "empty"), WorkflowAnswer = RouteAnswer.Api("workflow-instances", "empty") };
+    private readonly FakeSindriApi _server = new() { Catalog = RouteAnswer.Api("commands", "catalog"), NeedsYouView = RouteAnswer.Api("needs-you", "empty") };
     private readonly FakeTimeProvider _clock = new(A.Noon);
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -44,14 +44,14 @@ public sealed class ShellInboxTests
     [Fact]
     public Task Opening_the_inbox_keeps_Home_the_page_and_selects_the_first_row() => UiThread.Run(async () =>
     {
-        var shell = await Shell(NeedsYouRows.Failure(), NeedsYouRows.Park("desk:WFI-1"));
+        var shell = await Shell(NeedsYouRows.Failure(), NeedsYouRows.Decision());
 
         shell.OpenNeedsYouInbox();
 
         Assert.True(shell.IsNeedsYouInbox);
         Assert.Equal(PageId.Home, shell.CurrentPage);
         Assert.True(shell.IsHome);
-        Assert.Equal("desk:WFI-1", shell.NeedsYou.SelectedId);
+        Assert.Equal("decision:DEC-1", shell.NeedsYou.SelectedId);
     }, Token);
 
     [Fact]
@@ -67,14 +67,25 @@ public sealed class ShellInboxTests
     }, Token);
 
     [Fact]
-    public Task A_link_to_a_row_the_list_does_not_have_still_opens_the_inbox_on_the_first_row() => UiThread.Run(async () =>
+    public Task The_Linear_cards_Review_changes_opens_the_inbox_on_the_profile_row() => UiThread.Run(async () =>
     {
-        var shell = await Shell(NeedsYouRows.Park("desk:WFI-1"));
+        var shell = await Shell(NeedsYouRows.Failure(), NeedsYouRows.Profile());
 
-        shell.Navigate(new DeepLink(DeepLinkKind.NeedsYou, "desk:gone"));
+        shell.LinearConnection.RequestReview();
 
         Assert.True(shell.IsNeedsYouInbox);
-        Assert.Equal("desk:WFI-1", shell.NeedsYou.SelectedId);
+        Assert.Equal("profile:drift", shell.NeedsYou.SelectedId);
+    }, Token);
+
+    [Fact]
+    public Task A_link_to_a_row_the_list_does_not_have_still_opens_the_inbox_on_the_first_row() => UiThread.Run(async () =>
+    {
+        var shell = await Shell(NeedsYouRows.Decision());
+
+        shell.Navigate(new DeepLink(DeepLinkKind.NeedsYou, "decision:gone"));
+
+        Assert.True(shell.IsNeedsYouInbox);
+        Assert.Equal("decision:DEC-1", shell.NeedsYou.SelectedId);
     }, Token);
 
     [Fact]
@@ -104,7 +115,7 @@ public sealed class ShellInboxTests
     [Fact]
     public Task J_and_K_walk_the_inbox_not_Homes_capped_list() => UiThread.Run(async () =>
     {
-        var shell = await Shell(NeedsYouRows.Failure(), NeedsYouRows.Park("desk:WFI-1"));
+        var shell = await Shell(NeedsYouRows.Failure(), NeedsYouRows.Decision());
         shell.OpenNeedsYouInbox();
 
         _ = shell.Press("J");
@@ -132,7 +143,7 @@ public sealed class ShellInboxTests
         var shell = await Shell(NeedsYouRows.Park("desk:WFI-1"));
         shell.OpenNeedsYouInbox();
 
-        shell.GoTo(PageId.Workflows);
+        shell.GoTo(PageId.Agents);
 
         Assert.False(shell.IsNeedsYouInbox);
         shell.OpenNeedsYouInbox();
@@ -143,13 +154,13 @@ public sealed class ShellInboxTests
     [Fact]
     public Task The_inbox_lists_every_row_after_Homes_decisions_filter_and_Home_gets_its_filter_back() => UiThread.Run(async () =>
     {
-        var shell = await Shell(NeedsYouRows.Decision(), NeedsYouRows.Park("desk:WFI-1"), NeedsYouRows.Failure());
+        var shell = await Shell(NeedsYouRows.Decision(), NeedsYouRows.Profile(), NeedsYouRows.Failure());
         shell.GoTo(PageId.Home, HomeFilter.Decisions);
         _ = Assert.Single(shell.NeedsYou.Seen.Rows);
 
         shell.OpenNeedsYouInbox();
-        Assert.Equal(["Your approvals", "Agent decisions", "Something failed"], shell.Inbox.Groups.Select(g => g.Heading), StringComparer.Ordinal);
-        Assert.Equal("3 waiting, 0 runs", shell.Inbox.CountText);
+        Assert.Equal([Labels.NeedsYouGroupDecisions, Labels.NeedsYouGroupSettings, Labels.NeedsYouGroupFailures], shell.Inbox.Groups.Select(g => g.Heading), StringComparer.Ordinal);
+        Assert.Equal("3 waiting", shell.Inbox.CountText);
 
         _ = shell.LeaveNeedsYouInbox();
         _ = Assert.Single(shell.NeedsYou.Seen.Rows);
@@ -165,29 +176,6 @@ public sealed class ShellInboxTests
 
         Assert.Equal(NeedsYouViewModel.Cap, shell.NeedsYou.Rows.Count);
         Assert.Equal(8, shell.Inbox.Groups.Sum(g => g.Rows.Count));
-    }, Token);
-
-    private void ServeDeskInstance() =>
-        _server.ServeDeskWithoutRequiredOutput();
-
-    [Fact]
-    public Task A_asks_first_on_an_unread_desk_request_and_a_second_A_reports_it() => UiThread.Run(async () =>
-    {
-        ServeDeskInstance();
-        var shell = await Shell(NeedsYouRows.Desk());
-        shell.OpenNeedsYouInbox();
-        await shell.Inbox.Bar.Loaded;
-
-        _ = shell.Press("A");
-        Assert.Equal(NeedsYouBarMode.Confirming, shell.Inbox.Bar.Mode);
-        _ = shell.Press("A");
-
-        for (var i = 0; i < 400 && _server.CompleteCalls.Count == 0; i++)
-        {
-            await Task.Delay(5, Token);
-        }
-
-        Assert.Equal("approve", _server.CompleteCalls.Single().Body.Outcome);
     }, Token);
 
     [Fact]

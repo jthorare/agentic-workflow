@@ -91,7 +91,7 @@ poll() {  # poll <seconds> <command...>: true as soon as the command succeeds
 shot() { drv_to /dev/null screenshot --out "$OUT/$1.png" || true; }
 
 
-# 2. Home lists the seven decisions plus whatever setup rows Needs you also counts (e.g. "Approve all new workflows"): the header
+# 2. Home lists the seven decisions plus whatever setup rows Needs you also counts (e.g. "Turn on for your repos"): the header
 # is read once it shows a number and has held it for ~3 s; that number is N.
 summary_n() {
   nodes "$OUT/summary.json" --type TextBlock --contains " need you · "

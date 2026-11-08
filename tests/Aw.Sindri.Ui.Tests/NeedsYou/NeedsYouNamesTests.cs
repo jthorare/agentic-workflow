@@ -1,8 +1,6 @@
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.Api.Workflow;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels.NeedsYou;
-using Aw.Sindri.Ui.ViewModels.Workflows;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.NeedsYou;
@@ -42,17 +40,4 @@ public sealed class NeedsYouNamesTests
         Assert.Equal(["Accept DEC-1", "Decline DEC-1"], sheet.Options.Select(o => o.Name), StringComparer.Ordinal);
     }
 
-    [Fact]
-    public void An_incident_strip_row_says_so_in_its_name()
-    {
-        var incident = FixtureInstances.Rows.First(r => r.Recipe.Urgency == RecipeUrgency.Incident);
-        var plain = FixtureInstances.Rows.First(r => r.Recipe.Urgency != RecipeUrgency.Incident && r.EngineOwned is null);
-
-        var name = new StripRowViewModel(incident, new FakeClipboard(), _clock).AccessibleName;
-        var other = new StripRowViewModel(plain, new FakeClipboard(), _clock).AccessibleName;
-
-        Assert.StartsWith(incident.Subject.Label, name, StringComparison.Ordinal);
-        Assert.EndsWith(", incident", name, StringComparison.Ordinal);
-        Assert.DoesNotContain("incident", other, StringComparison.Ordinal);
-    }
 }

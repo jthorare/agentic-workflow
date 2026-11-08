@@ -93,7 +93,7 @@ internal sealed partial class ShellViewModel
     private static PageId? PageOnly(DeepLinkKind kind) =>
         kind == DeepLinkKind.Setup ? PageId.Settings : kind == DeepLinkKind.Projects ? PageId.Projects : kind == DeepLinkKind.Reviews ? PageId.Reviews : null;
 
-    // The links that open a whole page of their own, with no sheet: a line run's page, and the Context page for an item (its frozen scope is read as it opens).
+    // The links that open a whole page of their own, with no sheet: the Context page for an item (its frozen scope is read as it opens).
     private bool OpenWholePage(DeepLink link)
     {
         if (link.Kind == DeepLinkKind.ContextItem)
@@ -106,12 +106,6 @@ internal sealed partial class ShellViewModel
         if (link.Kind == DeepLinkKind.Review && link.Subject?.Split('/') is [var owner, var repo, var number])
         {
             OpenReviewPage(owner + "/" + repo, int.Parse(number, System.Globalization.CultureInfo.InvariantCulture));
-            return true;
-        }
-
-        if (link.Kind == DeepLinkKind.Workflow && IsLineRun(link.Subject))
-        {
-            OpenRunPage(link.Subject!);   // why: IsLineRun is true only for a subject
             return true;
         }
 
@@ -128,8 +122,6 @@ internal sealed partial class ShellViewModel
     // The rev 8 links name a page (screens spec §3); the older ones open their sheet over the page shown.
     private static PageId? PageOf(DeepLinkKind kind) => kind switch
     {
-        DeepLinkKind.Workflow => PageId.Workflows,
-        DeepLinkKind.Recipe => PageId.Recipes,
         DeepLinkKind.Node => PageId.Context,
         DeepLinkKind.Session => PageId.Agents,
         DeepLinkKind.System => PageId.System,

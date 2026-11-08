@@ -110,6 +110,17 @@ public sealed class ChordFocusTests : IDisposable
         return (window, shell);
     }
 
+    [Fact]
+    public Task The_command_N_chord_opens_Create_like_C() => OnUi(async () =>
+    {
+        var (window, shell) = await Opened("region");
+        Assert.False(shell.Create.IsOpen);
+
+        Press(window, Key.N, _command);
+
+        Assert.True(shell.Create.IsOpen);
+    });
+
     [Theory]
     [InlineData("pill")]
     [InlineData("nav")]
@@ -124,10 +135,10 @@ public sealed class ChordFocusTests : IDisposable
         }
 
         Press(window, Key.G);
-        Press(window, Key.W);
+        Press(window, Key.A);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(PageId.Workflows, shell.CurrentPage);
+        Assert.Equal(PageId.Agents, shell.CurrentPage);
         AssertOnPageRegion(window, shell);
     });
 
@@ -140,11 +151,11 @@ public sealed class ChordFocusTests : IDisposable
         var page = window.Get<Border>("Page");
         window.KeyPress(Key.K, _command, PhysicalKey.K, keySymbol: "k");
         Dispatcher.UIThread.RunJobs();
-        window.KeyTextInput("workflows");
+        window.KeyTextInput("agents");
         Dispatcher.UIThread.RunJobs();
-        for (var step = 0; shell.Palette.Selected?.Page != PageId.Workflows && step < 10; step++)
+        for (var step = 0; shell.Palette.Selected?.Page != PageId.Agents && step < 10; step++)
         {
-            shell.Palette.Move(1);   // "Approve all workflows" matches the query too and now comes first
+            shell.Palette.Move(1);
         }
 
         var raised = 0;
@@ -165,7 +176,7 @@ public sealed class ChordFocusTests : IDisposable
             Dispatcher.UIThread.RunJobs();
         }
 
-        Assert.Equal(PageId.Workflows, shell.CurrentPage);
+        Assert.Equal(PageId.Agents, shell.CurrentPage);
         AssertOnPageRegion(window, shell);
         Assert.All(names, n => Assert.Equal(shell.PageName, n));   // nr-1: the page changes before the palette closes, so both events say the new page
         Assert.Equal(2, raised);   // the palette closing returns focus to the region, then the page change raises its fresh event

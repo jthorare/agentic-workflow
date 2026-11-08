@@ -66,6 +66,9 @@ internal sealed record WorktreeFacts
     /// <summary>Set by a `--discarded` sweep when the tree is not a discarded candidate: why not (no run names it, HEAD moved, it won, the run isn't over).</summary>
     public string? NotDiscarded { get; init; }
 
+    /// <summary>Set by a `--done` sweep: the owning lane says it is finished with this tree, so a detached tree is judged by the other rules instead of being kept for being detached.</summary>
+    public bool Done { get; init; }
+
     /// <summary>Whether a branch with no pull request is kept whatever else holds (a sweep without --include-no-pr).</summary>
     public bool KeepNoPr { get; init; }
 
