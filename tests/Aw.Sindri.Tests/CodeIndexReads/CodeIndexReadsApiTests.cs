@@ -54,14 +54,4 @@ public sealed class CodeIndexReadsApiTests
         Assert.Equal(["missing", "missing"], [.. JsonDocument.Parse(status.Body).RootElement.GetProperty("repos").EnumerateArray().Select(static r => r.GetProperty("state").GetString())]);
         Assert.Equal((HttpStatusCode.NotFound, "SND-CODEIDX-013"), (symbols.Status, symbols.Code));
     }
-
-    [Fact(Timeout = 60_000), Trait("Lane", "integration")]
-    public async Task Without_an_approved_profile_no_repo_is_mapped_and_the_read_is_refused()
-    {
-        await using var host = await GoldenHost.Start(temporary: true, TestContext.Current.CancellationToken, ItemScenarios.ProfileYaml);
-
-        var status = await host.Http.Ask(Get("/sindri/code-index/status", ItemScenarios.Human(host)));
-
-        Assert.Equal("SND-PROFILE-005", status.Code);
-    }
 }

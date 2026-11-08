@@ -28,12 +28,18 @@ internal static partial class EndpointCqrsRules
         "POST /sindri/launches/{}/limit-hit",   // the wrap's pids limit hit (sandbox spec §3.3), proven by the launch secret like exit
     ];
 
+    /// <summary>The routes kept for one release that only answer 410 SND-API-014 (#2258 PR 1), with parameter names ignored: no service, so no request type to check.</summary>
+    public static readonly IReadOnlyList<string> RemovedRoutes =
+    [
+        "POST /sindri/profile/approve",
+    ];
+
     public static IReadOnlyList<string> Check(EndpointDataSource endpoints, ICommandCatalog catalog)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(catalog);
         return [.. endpoints.Endpoints.OfType<RouteEndpoint>()
-            .Where(endpoint => !IsMcp(endpoint))   // the MCP transport's own route only; its tools are proven to take the query chain (ContextMcpTests)
+            .Where(endpoint => !IsMcp(endpoint) && !Routes(endpoint).All(RemovedRoutes.Contains))   // a 410 stub has no service; the MCP transport's own route only; its tools are proven to take the query chain (ContextMcpTests)
             .SelectMany(endpoint => Violations(endpoint, catalog))];
     }
 

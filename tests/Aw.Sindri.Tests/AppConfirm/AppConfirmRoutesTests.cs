@@ -27,14 +27,10 @@ public sealed class AppConfirmRoutesTests
 
     private static void After(GoldenHost host, TimeSpan time) => ((FakeTimeProvider)host.App.Services.GetRequiredService<TimeProvider>()).Advance(time);
 
-    private static async Task<GoldenHost> Started(FakeShippedRecipes? shipped = null, bool approved = true)
+    private static async Task<GoldenHost> Started(FakeShippedRecipes? shipped = null)
     {
         var host = await Start(shipped ?? new FakeShippedRecipes(ApproveAllFixtures.StepAndItem()), Token);
-        if (approved)
-        {
-            await ViewScenarios.Approve(host, Token);
-        }
-
+        await ViewScenarios.Approve(host, Token);
         return host;
     }
 
@@ -48,7 +44,7 @@ public sealed class AppConfirmRoutesTests
     [Fact, Trait("Lane", "integration")]
     public async Task The_app_starts_approve_all_with_no_body()
     {
-        await using var host = await Started(approved: false);
+        await using var host = await Started();
 
         var started = await host.Http.Ask(Post(PlanRoute, json: null, App(host)));
         await JobHost.Settle(host, Token);
@@ -81,15 +77,4 @@ public sealed class AppConfirmRoutesTests
 
         Assert.Equal([(HttpStatusCode.Forbidden, "SND-AUTH-002")], new[] { revoke, stop }.Select(static a => (a.Status, a.Code)).Distinct().ToArray());
     }
-
-    [Fact, Trait("Lane", "integration")]
-    public async Task Approve_all_before_a_profile_is_approved_has_no_app_challenge()
-    {
-        await using var host = await Started(approved: false);
-
-        var challenge = await host.Http.Ask(Post(AppChallenge, """{"action":"approve-all c41e07"}""", App(host)));
-
-        Assert.Equal((HttpStatusCode.Conflict, "SND-SETUP-007"), (challenge.Status, challenge.Code));
-    }
-
 }
