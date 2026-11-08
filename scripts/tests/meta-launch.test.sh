@@ -317,6 +317,56 @@ mv "$WORK/cfg.bak" "$cfg"
 unlink "$AW_STATE_DIR/launcher.json"
 rm -f "$LCFG"
 
+# team.json routing.lanes (aw-meta route --apply): a lane starts on its routed agent and model, and a team that routes a lane
+# may run mixed agents. A lane with no entry keeps the one-agent rule.
+cp "$cfg" "$WORK/cfg.route"
+jq -n --arg c "$WORK/codex-route" '{schema:1, agents:{codex:{override:true, bin:$c}}}' > "$LCFG"
+reset
+jq '.routing = {models:{"claude-code":["opus","sonnet"],codex:["gpt-5.5"]}, lanes:{api:{agent:"codex",model:"gpt-5.5"}}}' "$WORK/cfg.route" > "$cfg"
+OUT="$(AW_LAUNCHER_CONFIG="$LCFG" bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
+check "routing.lanes puts api on codex under a Claude meta: accepted, api noted as a hook lane, ui stays Claude" "$RC:$(grep -c -x 'lane api: codex, takes part in the obligations through its hooks (scripts/install-meta.sh installs them)' <<< "$OUT"):$(grep -c 'a team runs one agent' <<< "$OUT"):$(grep -c '^lane ui' <<< "$OUT")" "0:1:0:0"
+jq '.routing.lanes = {ui:{model:"gpt-5.5"}}' "$cfg" > "$WORK/cfg.m" && mv "$WORK/cfg.m" "$cfg"
+OUT="$(AW_LAUNCHER_CONFIG="$LCFG" bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
+check "a routing entry with only a model takes the agent that lists the model" "$RC:$(grep -c -x 'lane ui: codex, takes part in the obligations through its hooks (scripts/install-meta.sh installs them)' <<< "$OUT")" "0:1"
+jq -n --arg c "$WORK/codex-route" '{schema:1, agents:{codex:{override:true, bin:$c}}, meta:{lanesAgent:"codex"}}' > "$LCFG"
+jq '.routing.lanes = {api:{agent:"codex"}}' "$cfg" > "$WORK/cfg.m" && mv "$WORK/cfg.m" "$cfg"
+OUT="$(AW_LAUNCHER_CONFIG="$LCFG" bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
+check "a lane with no routing entry keeps the one-agent rule: only ui is named, api (routed) is not" "$RC:$(grep -c "the meta lane 'meta' runs claude-code, but ui (codex) do not" <<< "$OUT")" "1:1"
+jq '.routing.lanes = {api:{agent:"nonesuch"}}' "$cfg" > "$WORK/cfg.m" && mv "$WORK/cfg.m" "$cfg"
+OUT="$(AW_LAUNCHER_CONFIG="$LCFG" bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
+check "a routed agent the catalog lacks: exit 1 with SND-LAUNCH-003" "$RC:$(grep -c 'SND-LAUNCH-003' <<< "$OUT")" "1:1"
+# The lane script: the routed agent's argv, with the routed model as the CLI's own flag (codex -m, claude --model) right after the binary.
+cat > "$WORK/agent-model" <<'EOF2'
+#!/usr/bin/env bash
+printf '%s|' "$@" > "$CALLS.model"
+echo "$$" > "$CALLS.modelpid"
+exec sleep 600
+EOF2
+chmod +x "$WORK/agent-model"
+run_model_lane() { # lane: run meta-lane.sh against the stub until it has recorded its argv, then stop the stub by its recorded pid
+  rm -f "$CALLS.model" "$CALLS.modelpid"
+  AW_META_CLAUDE="$WORK/agent-model" AW_META_ID_WAIT=1 AW_META_ID_GRACE=0 AW_META_NO_SHELL=1 bash "$DIR/meta-lane.sh" t1 "$1" > "$WORK/lane.out" 2>&1 &
+  local rp=$!
+  waitfor '[ -s "$CALLS.modelpid" ]'
+  [ -s "$CALLS.modelpid" ] && kill "$(cat "$CALLS.modelpid")" 2> /dev/null
+  wait "$rp" 2> /dev/null
+}
+jq -n --arg c "$WORK/agent-model" '{schema:1, agents:{codex:{override:true, bin:$c}}}' > "$AW_STATE_DIR/launcher.json"
+jq '.routing = {models:{"claude-code":["opus"],codex:["gpt-5.5"]}, lanes:{api:{agent:"codex",model:"gpt-5.5"}}}' "$WORK/cfg.route" > "$cfg"
+run_model_lane api
+check "meta-lane.sh starts the routed codex lane with -m <model> before the other arguments" "$(grep -c '^-m|gpt-5.5|-C|' "$CALLS.model")" "1"
+check "the routed lane's .agent record names codex" "$(jq -r .agent "$AW_STATE_DIR/meta/lane-sessions/api.agent")" "codex"
+jq -n --arg c "$WORK/agent-model" '{schema:1, agents:{"claude-code":{override:true, bin:$c}}}' > "$AW_STATE_DIR/launcher.json"
+jq '.routing = {models:{"claude-code":["opus","sonnet"]}, lanes:{ui:{agent:"claude-code",model:"sonnet"}}}' "$WORK/cfg.route" > "$cfg"
+run_model_lane ui
+check "meta-lane.sh starts a routed Claude lane with --model <model> before the session flags" "$(grep -c '^--model|sonnet|--session-id|' "$CALLS.model")" "1"
+cp "$WORK/cfg.route" "$cfg"
+run_model_lane ui
+check "a Claude lane with no routing entry gets no model flag" "$(grep -c -- '--model' "$CALLS.model")" "0"
+cp "$WORK/cfg.route" "$cfg"
+unlink "$AW_STATE_DIR/launcher.json"
+rm -f "$LCFG"
+
 # viewer: warp written explicitly equals the no-file layout.
 reset
 OUT0="$(bash "$DIR/meta-launch.sh" --no-open --dry-run | sed "s#$WORK#W#g")"

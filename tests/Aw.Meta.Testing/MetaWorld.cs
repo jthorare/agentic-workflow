@@ -5,6 +5,9 @@ using Aw.Meta.Core.Ids;
 using Aw.Meta.Core.Lanes;
 using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Obligations;
+using Aw.Meta.Core.Poll;
+using Aw.Meta.Core.Routing;
+using Aw.Meta.Core.Usage;
 using Aw.Meta.Core.Worktrees;
 
 namespace Aw.Meta.Testing;
@@ -134,6 +137,13 @@ public sealed class MetaWorld
 
     /// <summary>The lanes' context sizes.</summary>
     public LaneContextReader Context => new(LaneFiles, LaneSessions, ClaudeTranscripts);
+
+    /// <summary>One watch poll's usage work over the fakes.</summary>
+    public UsageMonitor Monitor => new(
+        new UsageReader(LaneFiles, LaneSessions, ClaudeTranscripts, Panes, Messages, Clock),
+        new LaneStandingReader(LaneFiles, CodexRollouts, Clock),
+        new UsageWatcher(new PaneSubmitter(Panes, Delay), Log, Values, Clock),
+        new RouteWatcher(Values));
 
     /// <summary>The non-Claude lanes' standing.</summary>
     public LaneHealthReader LaneHealth => new(LaneFiles, Beats, LaneMail, LaneGuard, Clock, LaneHealthOptions.Default);

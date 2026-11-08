@@ -87,4 +87,35 @@ public sealed class WatchUsageTests
 
         Assert.Empty(Usage());
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_Codex_lane_at_its_weekly_limit_is_announced_once_and_back_when_the_window_resets_and_is_never_typed_into()
+    {
+        await _u.Ready();
+        _u.World.LaneFiles.Put(new Aw.Meta.Core.Lanes.LaneRecord("ui", Aw.Meta.Core.Ids.SessionId.From("codex-ui"), new Aw.Meta.Core.Lanes.LaneAgent("codex", "codex", Hooks: true), Testing.A.At(1)));
+        _u.World.CodexRollouts.Put("codex-ui", Routing.RoutingWorld.Rollout(10, 100) + "\n", Testing.A.At(55));
+
+        await Watch(TimeSpan.FromMinutes(20));
+        await Watch(TimeSpan.FromMinutes(20));
+
+        Assert.Equal(["USAGE LIMITED ui weekly resets 2026-10-18 05:00:00Z"], Usage(), StringComparer.Ordinal);
+
+        _u.World.CodexRollouts.Put("codex-ui", Routing.RoutingWorld.Rollout(10, 12) + "\n", Testing.A.At(120));
+        await Watch(TimeSpan.FromMinutes(5));
+
+        Assert.Equal(["USAGE LIMITED ui weekly resets 2026-10-18 05:00:00Z", "USAGE OK ui"], Usage(), StringComparer.Ordinal);
+        Assert.Empty(_u.World.Panes.Woken);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_Codex_lane_at_its_5h_limit_reads_as_a_session_limit()
+    {
+        await _u.Ready();
+        _u.World.LaneFiles.Put(new Aw.Meta.Core.Lanes.LaneRecord("ui", Aw.Meta.Core.Ids.SessionId.From("codex-ui"), new Aw.Meta.Core.Lanes.LaneAgent("codex", "codex", Hooks: true), Testing.A.At(1)));
+        _u.World.CodexRollouts.Put("codex-ui", Routing.RoutingWorld.Rollout(100, 30) + "\n", Testing.A.At(55));
+
+        await Watch(TimeSpan.FromMinutes(10));
+
+        Assert.Equal(["USAGE LIMITED ui session resets 2026-10-15 07:00:00Z"], Usage(), StringComparer.Ordinal);
+    }
 }

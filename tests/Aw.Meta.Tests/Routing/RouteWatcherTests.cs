@@ -11,7 +11,7 @@ public sealed class RouteWatcherTests
     {
         var team = (await _w.U.World.Config.Load(CancellationToken.None)).Value;
         var readings = (await _w.U.Reader.Read(team, CancellationToken.None)).Value;
-        return await _w.U.Routes.Check(team, readings, CancellationToken.None);
+        return await _w.U.Routes.Check(team, await _w.U.Standings.Read(team, readings, CancellationToken.None), CancellationToken.None);
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -26,8 +26,9 @@ internal sealed class UsageService(IMetaConfig config, UsageReader reader, LaneS
             return readings.Error;
         }
 
-        var lanes = (await standings.Read(team.Value, readings.Value, cancellationToken).ConfigureAwait(false)).ToDictionary(static s => s.Lane, StringComparer.Ordinal);
-        var rows = readings.Value.Select(r => Row(r, lanes.GetValueOrDefault(r.Subject))).ToList();
+        var looked = await standings.Read(team.Value, readings.Value, cancellationToken).ConfigureAwait(false);
+        var lanes = looked.ToDictionary(static s => s.Lane, StringComparer.Ordinal);
+        var rows = StandingReadings.Merge(readings.Value, looked).Select(r => Row(r, lanes.GetValueOrDefault(r.Subject))).ToList();
         return new UsageResponse(rows, rows.Exists(static r => r.State == UsageState.Limited));
     }
 
@@ -36,18 +37,6 @@ internal sealed class UsageService(IMetaConfig config, UsageReader reader, LaneS
         var plain = new UsageRow(reading.Subject, reading.State, reading.Stop?.Kind, reading.Stop?.ResetsAt, reading.Source, reading.Reason);
         return lane is null
             ? plain
-            : With(plain, lane) with { Agent = lane.Agent, Model = lane.Model, RemainingPct = lane.RemainingPct, Windows = lane.Signal?.Windows, SignalNote = lane.Note };
-    }
-
-    // A provider that says its limit is reached stops the lane as surely as a limit stop does.
-    private static UsageRow With(UsageRow row, LaneStanding lane)
-    {
-        if (row.State == UsageState.Limited || lane.Signal is not { LimitReached: true } signal)
-        {
-            return row;
-        }
-
-        var resets = signal.Windows.Where(static w => w.UsedPct >= 100).Min(static w => w.ResetsAt);
-        return row with { State = UsageState.Limited, Kind = UsageKind.Other, ResetsAt = resets, Source = lane.RunningAgent + " rollout" };
+            : plain with { Agent = lane.Agent, Model = lane.Model, RemainingPct = lane.RemainingPct, Windows = lane.Signal?.Windows, SignalNote = lane.Note };
     }
 }

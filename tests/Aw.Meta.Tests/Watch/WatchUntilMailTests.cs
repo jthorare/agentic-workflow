@@ -1,9 +1,6 @@
 using Aw.Meta.Core.Commands;
-using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Ids;
 using Aw.Meta.Core.Messages;
-using Aw.Meta.Core.Poll;
-using Aw.Meta.Core.Usage;
 using Aw.Meta.Features.Watch;
 using Aw.Meta.Testing;
 using Aw.Meta.Tests.Reserve;
@@ -23,7 +20,7 @@ public sealed class WatchUntilMailTests
         _world.Values,
         _world.Delay,
         _world.Clock,
-        new UsageMonitor(new UsageReader(_world.LaneFiles, _world.LaneSessions, _world.ClaudeTranscripts, _world.Panes, _world.Messages, _world.Clock), new UsageWatcher(new PaneSubmitter(_world.Panes, _world.Delay), _world.Log, _world.Values, _world.Clock), new Core.Routing.RouteWatcher(new Core.Routing.LaneStandingReader(_world.LaneFiles, _world.CodexRollouts, _world.Clock), _world.Values)));
+        _world.Monitor);
 
     // Mail arrives while poll number `mailAtPoll` (from 0) runs, so that poll sees it; -1 sends none.
     private void Script(int mailAtPoll)

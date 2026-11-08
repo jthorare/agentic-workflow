@@ -21,9 +21,9 @@ internal sealed class UsageWorld
 
     internal LaneStandingReader Standings => new(World.LaneFiles, World.CodexRollouts, World.Clock);
 
-    internal RouteWatcher Routes => new(Standings, World.Values);
+    internal RouteWatcher Routes => new(World.Values);
 
-    internal UsageMonitor Monitor => new(Reader, Watcher, Routes);
+    internal UsageMonitor Monitor => World.Monitor;
 
     internal UsageWatcher Watcher => new(new PaneSubmitter(World.Panes, World.Delay), World.Log, World.Values, World.Clock);
 
