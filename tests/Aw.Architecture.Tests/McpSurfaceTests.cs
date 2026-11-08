@@ -1,7 +1,10 @@
 using Aw.Sindri.Core.Challenges;
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.Decide;
 using Aw.Sindri.Features.FileRequest;
+using Aw.Sindri.Features.RemoveConnection;
+using Aw.Sindri.Features.TestConnection;
 
 namespace Aw.Architecture.Tests;
 
@@ -22,7 +25,14 @@ public sealed class McpSurfaceTests
     public void Mcp_tools_reference_only_queries_and_the_request_command()
     {
         var catalog = HostIntrospection.Catalog().Rows;
-        var allowed = new HashSet<string>(StringComparer.Ordinal) { typeof(FileRequestRequest).FullName! };
+        // why: connections PR 10a (owner decision D2): agents get every connection verb, so the connection_* tools reach the three connection commands; each is Desk class with SessionOk
+        var allowed = new HashSet<string>(StringComparer.Ordinal)
+        {
+            typeof(FileRequestRequest).FullName!,
+            typeof(AddConnectionRequest).FullName!,
+            typeof(TestConnectionRequest).FullName!,
+            typeof(RemoveConnectionRequest).FullName!,
+        };
         var commands = catalog.Select(r => r.CommandType?.FullName).OfType<string>().Where(n => !allowed.Contains(n)).ToHashSet(StringComparer.Ordinal);
         // why: catalog routes are templates ('/sindri/decisions/{decisionId}'); code that builds one loads only the text before the first '{'
         var protectedPrefixes = catalog.Where(r => r.Class != ActionClass.Request).Select(r => r.Route).OfType<string>()
