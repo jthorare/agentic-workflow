@@ -54,8 +54,9 @@ public sealed class RunsProjectionTests
     [Fact]
     public async Task A_run_that_finished_is_succeeded_and_ended_when_the_event_was_recorded()
     {
+        var started = Started();
         var finished = Event(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(_run, "succeeded", Error: null, "service:workflow"));
-        await _v.Apply([Started(), finished]);
+        await _v.Apply([started, finished]);
 
         var row = (await Row())!;
 
@@ -77,8 +78,9 @@ public sealed class RunsProjectionTests
     [Fact]
     public async Task A_cancelled_run_is_cancelled_with_its_reason_and_an_end_time()
     {
+        var started = Started();
         var cancelled = Event(EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(_run, "owner stopped it", "human"));
-        await _v.Apply([Started(), cancelled]);
+        await _v.Apply([started, cancelled]);
 
         var row = (await Row())!;
 
