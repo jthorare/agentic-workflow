@@ -63,7 +63,7 @@ golden_transcript() {
     echo "== lane ui, fresh, AW_META_CLAUDE_ARGS"; rm "$AW_STATE_DIR/meta/lane-sessions/ui"; AW_META_CLAUDE_ARGS="--model x" bash "$S/meta-lane.sh" t1 ui; cat "$CALLS"; : > "$CALLS"
     echo "== lane meta"; bash "$S/meta-lane.sh" t1 meta; cat "$CALLS.meta"
     echo "== bad lane"; bash "$S/meta-lane.sh" t1 'Bad Lane' 2>&1; echo "rc=$?"
-  ) 2>&1 | sed -E -e "s#$G#@WORK@#g" -e "s#$S#@SCRIPTS@#g" -e 's/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/@ID@/g'
+  ) 2>&1 | sed -E -e "s#$(printf '%s' "$G/shim:$PATH" | sed 's/[][\.*^$+?(){}|#]/\\&/g')#@PATH@#g" -e "s#$G#@WORK@#g" -e "s#$S#@SCRIPTS@#g" -e 's/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/@ID@/g'
   rm -r "$G"
 }
 if [ "${1:-}" = "--print-golden" ]; then golden_transcript "${2:?--print-golden <scripts dir>}"; exit 0; fi
@@ -149,7 +149,7 @@ check "launch: three sessions started" "$(printf '%s\n' "$OUT" | grep -c ': star
 yaml="$AW_WARP_LAUNCH_DIR/t1-team.yaml"
 check "launch: warp yaml written" "$(test -s "$yaml" && echo yes)" "yes"
 check "launch: one attach per lane" "$(grep -c 'exec: tmux -L t1 new -A -s t1-' "$yaml")" "3"
-check "launch: a pane that creates its session runs the lane, not a shell" "$(grep -c "exec: tmux -L t1 new -A -s t1-api -c $WORK/repo -e AW_META_CONFIG=$cfg '$DIR/meta-lane.sh t1 api'" "$yaml")" "1"
+check "launch: a pane that creates its session runs the lane, not a shell" "$(grep -c "exec: tmux -L t1 new -A -s t1-api -c $WORK/repo -e AW_META_CONFIG=$cfg .*'exec env SHELL=[^ ]* [^ ]* -lc .*$DIR/meta-lane.sh t1 api" "$yaml")" "1"
 check "launch: absolute cwd everywhere" "$(grep -c "cwd: $WORK/repo" "$yaml")" "3"
 check "launch: meta pane first" "$(grep -m1 -o 't1-[a-z]*' "$yaml")" "t1-meta"
 # A live lane: a script running a child, as meta-lane.sh runs claude (tmux reports the pane's command as bash).
@@ -191,7 +191,7 @@ check "relative repo refused (Warp needs absolute cwd)" "$RC" "1"
 tmux kill-server 2> /dev/null   # the stub lane may still be winding down: no session may exist for this dry run
 mkdir -p "$WORK/bin"; ln -s "$DIR/meta-launch.sh" "$WORK/bin/aw-meta-launch"   # as install-meta.sh links it
 OUT="$("$WORK/bin/aw-meta-launch" --no-open --dry-run --lanes api)"
-check "run through a symlink: finds meta-lane.sh beside the real script" "$(printf '%s\n' "$OUT" | grep -c "^\[dry-run\] tmux -L t1 new-session .* $DIR/meta-lane.sh t1 api")" "1"
+check "run through a symlink: finds meta-lane.sh beside the real script" "$(printf '%s\n' "$OUT" | grep -c "^\[dry-run\] tmux -L t1 new-session .* -lc '$DIR/meta-lane.sh t1 api'\$")" "1"
 jq '.lanes = ["meta", "api"]' "$cfg" > "$WORK/dup.json"   # team-init lists the meta lane in lanes too
 OUT="$(AW_META_CONFIG="$WORK/dup.json" bash "$DIR/meta-launch.sh" --no-open --dry-run)"
 check "meta lane listed in lanes: one pane, not two" "$(printf '%s\n' "$OUT" | grep -c 'exec: tmux -L t1 new -A -s t1-meta')" "1"
@@ -838,7 +838,7 @@ check "the caller's PATH has no duplicate entries" "$(tr ':' '\n' <<< "${GOT%|*}
 rm -f "$HOME/.bash_profile"
 # the Warp pane and the dry run carry the same environment and login-shell wrapper
 tmux kill-session -t t1-api 2> /dev/null
-OUT="$(PATH="$WORK/callerbin:$ORIG_PATH" SHELL=/bin/bash bash "$DIR/meta-launch.sh" --no-open --dry-run 2>&1)"
+OUT="$(PATH="$WORK/callerbin:$ORIG_PATH" SHELL=/bin/bash bash "$DIR/meta-launch.sh" --no-open --dry-run --lanes api 2>&1)"
 check "dry run shows the -lc wrapper and the caller's PATH and SHELL" "$(grep -c "new-session .* -e PATH=.* -e SHELL=/bin/bash .*-lc" <<< "$OUT")" "1"
 check "the Warp pane's attach line carries them too" "$(grep -c "new -A -s t1-api .* -e SHELL=/bin/bash .*-lc" "$AW_WARP_LAUNCH_DIR/t1-team.yaml")" "1"
 tmux kill-server 2> /dev/null

@@ -145,6 +145,15 @@ fi
 viewer="$(launcher_viewer_kind)"
 lc_env=(); lc_str=""
 if [ -n "${AW_LAUNCHER_CONFIG:-}" ]; then lc_env=(-e "AW_LAUNCHER_CONFIG=$AW_LAUNCHER_CONFIG"); lc_str=" -e AW_LAUNCHER_CONFIG=$AW_LAUNCHER_CONFIG"; fi
+# The caller's PATH and login shell go to every lane (#2278): tmux runs a new session with the SERVER's environment, which on a
+# running server is stale. SHELL falls back to /bin/bash when unset or not executable. AW_META_CALLER_PATH carries the PATH past a
+# login profile that resets PATH; meta-lane.sh puts it back first.
+sh_bin="${SHELL:-}"; { [ -n "$sh_bin" ] && [ -x "$sh_bin" ]; } || sh_bin=/bin/bash
+shq() { case "$1" in ''|*[!A-Za-z0-9_/.,:=@%+-]*) printf "'%s'" "${1//\'/\'\\\'\'}" ;; *) printf '%s' "$1" ;; esac; }   # sh-quoted only when needed
+env_args=(-e "PATH=$PATH" -e "SHELL=$sh_bin" -e "AW_META_CALLER_PATH=$PATH")
+env_str=" -e $(shq "PATH=$PATH") -e $(shq "SHELL=$sh_bin") -e $(shq "AW_META_CALLER_PATH=$PATH")"
+# tmux overwrites SHELL in a new session with its default-shell, so `env SHELL=` sets it again for the login shell and everything under it.
+lane_cmd() { printf 'exec env SHELL=%s %s -lc %s' "$(shq "$sh_bin")" "$(shq "$sh_bin")" "$(shq "$(shq "$here/meta-lane.sh") $team $1")"; }   # run by tmux through sh -c; fish takes -lc too
 agent_of() { launcher_lane_agent "$1" "$meta_lane"; }
 proc_of() { # lane: the process name a pane runs while the lane's agent is up
   local a pn; a="$(agent_of "$1")"; pn="$(launcher_agent_field "$a" processName)"
@@ -260,17 +269,17 @@ for l in "${L[@]}"; do
     # Claude exited or crashed and the pane fell back to its shell (meta-lane.sh left <lane>.exited): start the lane
     # again in place, resumed by id. A pane still running claude is never touched.
     if [ ! -f "$meta_dir/lane-sessions/$l.exited" ] || claude_in_pane "$s" "$(proc_of "$l")"; then echo "tmux $s: running"
-    elif [ "$dry" = 1 ]; then echo "[dry-run] ${tmux_t[*]} respawn-pane -k -t $s $here/meta-lane.sh $team $l"
+    elif [ "$dry" = 1 ]; then echo "[dry-run] ${tmux_t[*]} respawn-pane -k -t $s -c $repo$env_str $(lane_cmd "$l")"
     else
       mark_start "$l"
-      "${tmux_t[@]}" respawn-pane -k -t "=$s:" -c "$repo" -e "AW_META_CONFIG=$config" ${lc_env[@]+"${lc_env[@]}"} "$here/meta-lane.sh $team $l"
+      "${tmux_t[@]}" respawn-pane -k -t "=$s:" -c "$repo" -e "AW_META_CONFIG=$config" "${env_args[@]}" ${lc_env[@]+"${lc_env[@]}"} "$(lane_cmd "$l")"
       echo "tmux $s: restarted (claude had exited)"
       wait_reported "$l"
     fi
-  elif [ "$dry" = 1 ]; then echo "[dry-run] ${tmux_t[*]} new-session -d -s $s -c $repo $here/meta-lane.sh $team $l"
+  elif [ "$dry" = 1 ]; then echo "[dry-run] ${tmux_t[*]} new-session -d -s $s -c $repo$env_str $(lane_cmd "$l")"
   else
     mark_start "$l"
-    "${tmux_t[@]}" new-session -d -s "$s" -c "$repo" -e "AW_META_CONFIG=$config" ${lc_env[@]+"${lc_env[@]}"} "$here/meta-lane.sh $team $l"
+    "${tmux_t[@]}" new-session -d -s "$s" -c "$repo" -e "AW_META_CONFIG=$config" "${env_args[@]}" ${lc_env[@]+"${lc_env[@]}"} "$(lane_cmd "$l")"
     echo "tmux $s: started"
     wait_reported "$l"
   fi
@@ -279,7 +288,7 @@ done
 # 2. Warp launch configuration: the first lane on the left, the others stacked on the right.
 # The pane attaches, or creates the session itself with the same command as step 1, so a session that is missing when
 # Warp opens (a --lanes run, a lane that exited) still runs the lane instead of a plain shell under its name.
-attach() { printf 'tmux -L %s new -A -s %s -c %s -e AW_META_CONFIG=%s%s %s' "$team" "$team-$1" "$repo" "$config" "$lc_str" "'$here/meta-lane.sh $team $1'"; }
+attach() { printf 'tmux -L %s new -A -s %s -c %s -e AW_META_CONFIG=%s%s%s %s' "$team" "$team-$1" "$repo" "$config" "$env_str" "$lc_str" "$(shq "$(lane_cmd "$1")")"; }
 pane() { # indent lane
   printf '%s- cwd: %s\n%s  commands:\n%s    - exec: %s\n' "$1" "$repo" "$1" "$1" "$(attach "$2")"
 }
