@@ -70,14 +70,23 @@ internal sealed partial class NotePass
 
     private void Live(NoteTodoLine line, TodoId id, SindriTodo todo, NoteFields note)
     {
-        if (_options.OpenConflicts.TryGetValue(id, out var open) && note.Is(open))
+        var sindri = NoteFields.Of(todo);
+        var noteLine = LineOf(line, id, note);
+        if (_options.OpenConflicts.TryGetValue(id, out var open))
         {
-            KeepBase(id);
+            // D11: nothing about the todo syncs until the owner picks. The note's side or Sindri's moving again re-asks; the two agreeing closes it.
+            if (note.Is(open))
+            {
+                KeepBase(id);
+            }
+            else
+            {
+                Settle(id, note.SameAs(sindri), sindri.ToSide(), note, noteLine);
+            }
+
             return;
         }
 
-        var sindri = NoteFields.Of(todo);
-        var noteLine = LineOf(line, id, note);
         var from = BaseFields(id);
         if (from is null)
         {
@@ -108,7 +117,11 @@ internal sealed partial class NotePass
 
     private void Settle(TodoId id, bool agree, NoteSide sindri, NoteFields note, string noteLine)
     {
-        if (agree)
+        if (agree && _options.OpenConflicts.ContainsKey(id))
+        {
+            AddSlot(id, [new NoteConflictSettled(id)], candidate: null, noteLine);
+        }
+        else if (agree)
         {
             SetBase(id, noteLine);
         }
@@ -159,9 +172,16 @@ internal sealed partial class NotePass
 
     private void RemovedByAppNoteUntouched(NoteTodoLine line, TodoId id, NoteFields note)
     {
-        if (_options.OpenConflicts.TryGetValue(id, out var open) && note.Is(open))
+        if (_options.OpenConflicts.TryGetValue(id, out var open))
         {
-            KeepBase(id);
+            if (note.Is(open))
+            {
+                KeepBase(id);
+            }
+            else
+            {
+                AddSlot(id, [new NoteConflict(id, _removedSide, note.ToSide())], candidate: null, OldBaseLine(id));
+            }
         }
         else if (note.SameAs(BaseFields(id)!)) // why: the caller checked the base has the id
         {
@@ -184,15 +204,30 @@ internal sealed partial class NotePass
 
         if (!_sindri.TryGetValue(id, out var todo) || todo.Removed)
         {
-            SetBase(id, line: null);
+            if (_options.OpenConflicts.ContainsKey(id))
+            {
+                AddSlot(id, [new NoteConflictSettled(id)], candidate: null, newBaseLine: null);
+            }
+            else
+            {
+                SetBase(id, line: null);
+            }
+
             return;
         }
 
         var from = BaseFields(id)!; // why: the id came from the base
         var sindri = NoteFields.Of(todo);
-        if (_options.OpenConflicts.TryGetValue(id, out var open) && open.Removed)
+        if (_options.OpenConflicts.TryGetValue(id, out var open))
         {
-            KeepBase(id);
+            if (open.Removed)
+            {
+                KeepBase(id);
+            }
+            else
+            {
+                AddSlot(id, [new NoteConflict(id, sindri.ToSide(), _removedSide)], candidate: null, OldBaseLine(id));
+            }
         }
         else if (sindri.SameAs(from))
         {
@@ -208,7 +243,7 @@ internal sealed partial class NotePass
     {
         foreach (var todo in _sindriList)
         {
-            if (todo.Removed || _noteFirst.ContainsKey(todo.Id) || _base.ContainsKey(todo.Id) || _newOrder.Contains(todo.Id))
+            if (todo.Removed || _options.LeaveAlone.Contains(todo.Id) || _noteFirst.ContainsKey(todo.Id) || _base.ContainsKey(todo.Id) || _newOrder.Contains(todo.Id))
             {
                 continue;
             }

@@ -57,6 +57,7 @@ internal static class NoteSamples
         NoteReopen r => $"reopen {N(r.Id)}",
         NoteRemove r => $"remove {N(r.Id)}",
         NoteRestore r => $"restore {N(r.Id)}",
+        NoteConflictSettled c => $"settled {N(c.Id)}",
         NoteConflict c => $"conflict {N(c.Id)} sindri={ShowSide(c.Sindri)} note={ShowSide(c.Obsidian)}",
         NoteLineBlocked b => $"blocked {N(b.Id)} line {Num(b.LineNumber)}: {b.Reason}",
         _ => throw new ArgumentOutOfRangeException(nameof(intent)),

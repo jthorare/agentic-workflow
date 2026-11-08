@@ -14,6 +14,9 @@ public sealed record NoteMergeOptions(PassIdMinter Minter, ITextScrubber Scrubbe
     /// <summary>Ids named by a pick whose Undo window is open: their lines get no edit and their base lines are kept (D11).</summary>
     public IReadOnlySet<TodoId> LeaveAlone { get; init; } = FrozenSet<TodoId>.Empty;
 
+    /// <summary>Ids whose conflict was picked against a removal: the removal is their base, so the saved base line is ignored and a todo Sindri kept comes back into the note instead of being raised again (D11). Pass it for the pass that writes the pick.</summary>
+    public IReadOnlySet<TodoId> PickedRemoved { get; init; } = FrozenSet<TodoId>.Empty;
+
     /// <summary>Open conflicts by id, each with the note side it was raised against.</summary>
     public IReadOnlyDictionary<TodoId, NoteSide> OpenConflicts { get; init; } = FrozenDictionary<TodoId, NoteSide>.Empty;
 

@@ -24948,3 +24948,16 @@ Aw.Sindri.Core.Todos.Note.PassIdMinter.Source.get -> System.Func<Aw.Sindri.Core.
 Aw.Sindri.Core.Todos.Note.SindriTodo.Deconstruct(out Aw.Sindri.Core.Todos.TodoId Id, out string! Text, out System.DateOnly? Due, out System.Collections.Generic.IReadOnlyList<string!>! Links, out bool Done, out System.DateOnly? DoneOn, out bool Removed, out Aw.Sindri.Core.Todos.Note.NoteOrigin? RemovedBy, out string? LastLineHash, out long Version) -> void
 Aw.Sindri.Core.Todos.Note.SindriTodo.Id.get -> Aw.Sindri.Core.Todos.TodoId
 Aw.Sindri.Core.Todos.Note.SindriTodo.SindriTodo(Aw.Sindri.Core.Todos.TodoId Id, string! Text, System.DateOnly? Due, System.Collections.Generic.IReadOnlyList<string!>! Links, bool Done = false, System.DateOnly? DoneOn = null, bool Removed = false, Aw.Sindri.Core.Todos.Note.NoteOrigin? RemovedBy = null, string? LastLineHash = null, long Version = 1) -> void
+Aw.Sindri.Core.Todos.Note.NoteConflictSettled
+Aw.Sindri.Core.Todos.Note.NoteConflictSettled.Equals(Aw.Sindri.Core.Todos.Note.NoteConflictSettled? other) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteConflictSettled.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteConflictSettled!
+override Aw.Sindri.Core.Todos.Note.NoteConflictSettled.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteConflictSettled.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteConflictSettled.ToString() -> string!
+override sealed Aw.Sindri.Core.Todos.Note.NoteConflictSettled.Equals(Aw.Sindri.Core.Todos.Note.NoteIntent? other) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteConflictSettled.operator !=(Aw.Sindri.Core.Todos.Note.NoteConflictSettled? left, Aw.Sindri.Core.Todos.Note.NoteConflictSettled? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteConflictSettled.operator ==(Aw.Sindri.Core.Todos.Note.NoteConflictSettled? left, Aw.Sindri.Core.Todos.Note.NoteConflictSettled? right) -> bool
+Aw.Sindri.Core.Todos.Note.NoteConflictSettled.Deconstruct(out Aw.Sindri.Core.Todos.TodoId Id) -> void
+Aw.Sindri.Core.Todos.Note.NoteConflictSettled.NoteConflictSettled(Aw.Sindri.Core.Todos.TodoId Id) -> void
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.PickedRemoved.get -> System.Collections.Generic.IReadOnlySet<Aw.Sindri.Core.Todos.TodoId>!
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.PickedRemoved.init -> void

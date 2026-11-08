@@ -26,7 +26,7 @@ internal sealed partial class NotePass
         _options = options;
         foreach (var line in noteBase?.Lines ?? [])
         {
-            if (NoteTodoLineReader.IsTaskLine(line) && NoteTodoLineReader.Read(0, line) is { Id: { } id } parsed && !_base.ContainsKey(id))
+            if (NoteTodoLineReader.IsTaskLine(line) && NoteTodoLineReader.Read(0, line) is { Id: { } id } parsed && !_base.ContainsKey(id) && !options.PickedRemoved.Contains(id))
             {
                 _base[id] = new BaseEntry(line, FieldsOf(parsed));
                 _baseOrder.Add(id);
