@@ -25,13 +25,14 @@ public sealed class McpSurfaceTests
     public void Mcp_tools_reference_only_queries_and_the_request_command()
     {
         var catalog = HostIntrospection.Catalog().Rows;
-        // why: connections PR 10a (owner decision D2): agents get every connection verb, so the connection_* tools reach the three connection commands; each is Desk class with SessionOk
+        // why: connections PR 10a (owner decision D2): agents get every connection verb, so the connection_* tools reach the four connection commands; each is Desk class with SessionOk
         var allowed = new HashSet<string>(StringComparer.Ordinal)
         {
             typeof(FileRequestRequest).FullName!,
             typeof(AddConnectionRequest).FullName!,
             typeof(TestConnectionRequest).FullName!,
             typeof(RemoveConnectionRequest).FullName!,
+            typeof(SignInConnectionRequest).FullName!,
         };
         var commands = catalog.Select(r => r.CommandType?.FullName).OfType<string>().Where(n => !allowed.Contains(n)).ToHashSet(StringComparer.Ordinal);
         // why: catalog routes are templates ('/sindri/decisions/{decisionId}'); code that builds one loads only the text before the first '{'

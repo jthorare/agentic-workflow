@@ -42,7 +42,9 @@ What happens when you run `sindri connection add linear:work --preset linear --c
 4. Sindri checks the callback's `state`, trades the code for tokens (PKCE, S256) and stores them in the keychain. Only then is the connection row written.
 5. The listener closes. It also closes after 5 minutes, on a denied consent, and on a state mismatch.
 
-A sign-in that fails leaves **no row and no secret**: denied consent is `SND-CONN-009`, no callback in 5 minutes `SND-CONN-003`, a callback that is not this sign-in's `SND-CONN-004`. The CLI shows the failure as soon as it happens. An agent that started the sign-in without waiting can ask `connection_get` for that name and gets the same failure code until the name is added again (Sindri keeps it in memory; a restart forgets it).
+**Signing in again.** `sindri connection signin <name>` (POST `/sindri/connections/{name}/signin`, MCP `connection_signin`) runs the same loopback sign-in for a stored oauth or mcp connection, from the row's own preset, client id, scopes (or server address) and the client secret kept beside its tokens. The row stays (name, creator, creation time); its tokens are replaced when the callback lands, and the Needs-you row clears. A failed try leaves the row and its old secret as they were, and `connection show` reports the failure until the next try. A rest or cli connection is `SND-CONN-011`. Removing a connection that needed a sign-in clears its Needs-you row too.
+
+A sign-in that fails leaves **no row and no secret** (for a new connection): denied consent is `SND-CONN-009`, no callback in 5 minutes `SND-CONN-003`, a callback that is not this sign-in's `SND-CONN-004`. The CLI shows the failure as soon as it happens. An agent that started the sign-in without waiting can ask `connection_get` for that name and gets the same failure code until the name is added again (Sindri keeps it in memory; a restart forgets it).
 
 ### Per preset
 
@@ -91,7 +93,7 @@ The row in `ledger.db` (table `connection`) has the name, kind, preset, non-secr
 
 ## Errors
 
-`SND-CONN-001` to `SND-CONN-010` are listed in [errors.md](errors.md): not found, needs sign-in, sign-in timeout, state mismatch, refresh failed, secret store unavailable, preset needs a client id, invalid name, consent denied, already exists.
+`SND-CONN-001` to `SND-CONN-011` are listed in [errors.md](errors.md): not found, needs sign-in, sign-in timeout, state mismatch, refresh failed, secret store unavailable, preset needs a client id, invalid name, consent denied, already exists, key-based (no browser sign-in).
 
 ## What this release does not do yet
 

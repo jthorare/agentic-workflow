@@ -99,11 +99,18 @@ internal sealed partial class OAuthSignInFlow(IConnectionStore store, IConnectio
             return ConnectionFailures.Safe(pointer.Error);
         }
 
-        var row = sign.Pending with { SecretPointer = pointer.Value, Status = ConnectionStatus.Connected, StatusReason = null, UpdatedAt = time.GetUtcNow() };
-        var written = await store.Insert(row, cancellationToken).ConfigureAwait(false);
+        var now = time.GetUtcNow();
+        var row = sign.Pending with { SecretPointer = pointer.Value, Status = ConnectionStatus.Connected, StatusReason = null, UpdatedAt = now, LastRefreshedAt = sign.Replaces ? now : sign.Pending.LastRefreshedAt };
+        var written = sign.Replaces
+            ? await store.Update(row, cancellationToken).ConfigureAwait(false)
+            : await store.Insert(row, cancellationToken).ConfigureAwait(false);
         if (written.IsError)
         {
-            _ = secrets.Delete(pointer.Value);   // why: a secret with no row is one nobody can remove
+            if (!sign.Replaces)
+            {
+                _ = secrets.Delete(pointer.Value);   // why: a secret with no row is one nobody can remove (a row that already existed keeps its pointer)
+            }
+
             return ConnectionFailures.Safe(written.Error);
         }
 
@@ -114,9 +121,11 @@ internal sealed partial class OAuthSignInFlow(IConnectionStore store, IConnectio
     private static partial void LogFailed(ILogger logger, string name, string code);
 
     /// <summary>One sign-in in flight: the row it will become (waiting for the browser) and the client secret to store with its tokens.</summary>
-    private sealed record Sign(Connection Pending, string? ClientSecret)
+    private sealed record Sign(Connection Pending, string? ClientSecret, bool Replaces = false)
     {
-        internal static Sign Of(OAuthAdd add, DateTimeOffset created) => new(
+        internal static Sign Of(OAuthAdd add, DateTimeOffset created) => add.Existing is { } kept
+            ? new(Waiting(kept), add.Secret, Replaces: true)
+            : new(
             new Connection(
                 add.Name,
                 ConnectionKind.OAuth,
@@ -131,7 +140,9 @@ internal sealed partial class OAuthSignInFlow(IConnectionStore store, IConnectio
                 LastRefreshedAt: null),
             add.Secret);
 
-        internal static Sign Of(McpAdd add, DateTimeOffset created) => new(
+        internal static Sign Of(McpAdd add, DateTimeOffset created) => add.Existing is { } kept
+            ? new(Waiting(kept), ClientSecret: null, Replaces: true)
+            : new(
             new Connection(
                 add.Name,
                 ConnectionKind.Mcp,
@@ -145,5 +156,8 @@ internal sealed partial class OAuthSignInFlow(IConnectionStore store, IConnectio
                 created,
                 LastRefreshedAt: null),
             ClientSecret: null);
+
+        // The stored row stays as it is until the callback lands; only the text the caller sees says it is waiting.
+        private static Connection Waiting(Connection kept) => kept with { StatusReason = "waiting for the browser sign-in" };
     }
 }

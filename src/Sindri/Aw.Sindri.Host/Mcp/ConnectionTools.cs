@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -30,6 +31,9 @@ internal static class ConnectionTools
 
     /// <summary>connection_test's name.</summary>
     internal const string Test = "connection_test";
+
+    /// <summary>connection_signin's name.</summary>
+    internal const string SignIn = "connection_signin";
 
     /// <summary>connection_remove's name.</summary>
     internal const string Remove = "connection_remove";
@@ -77,6 +81,14 @@ internal static class ConnectionTools
         Annotations = new ToolAnnotations { ReadOnlyHint = false, DestructiveHint = false, IdempotentHint = true, OpenWorldHint = true },
     };
 
+    private static Tool SignInTool => new()
+    {
+        Name = SignIn,
+        Description = "Sign a stored oauth or mcp connection in again (its refresh lapsed or its grant was revoked) without removing it. Returns a consent URL to hand to the owner; the connection keeps its name and settings and finishes when they sign in. A key-based connection is refused (SND-CONN-011).",
+        InputSchema = ContextTools.Schema(new JsonObject { ["name"] = ContextTools.Property("string", "The connection name") }, required: ["name"]),
+        Annotations = new ToolAnnotations { ReadOnlyHint = false, DestructiveHint = false, IdempotentHint = false, OpenWorldHint = true },
+    };
+
     private static Tool RemoveTool { get; } = new()
     {
         Name = Remove,
@@ -85,8 +97,25 @@ internal static class ConnectionTools
         Annotations = new ToolAnnotations { ReadOnlyHint = false, DestructiveHint = true, IdempotentHint = true, OpenWorldHint = false },
     };
 
-    /// <summary>The five tools.</summary>
-    internal static IReadOnlyList<Tool> All { get; } = [ListTool, GetTool, AddTool, TestTool, RemoveTool];
+    /// <summary>The six tools.</summary>
+    internal static IReadOnlyList<Tool> All { get; } = [ListTool, GetTool, AddTool, SignInTool, TestTool, RemoveTool];
+
+    /// <summary>Runs the connection_* tool named <paramref name="tool"/>.</summary>
+    /// <param name="tool">The tool's name (one of the six constants).</param>
+    /// <param name="services">The request's services.</param>
+    /// <param name="arguments">The call's arguments.</param>
+    /// <param name="ct">Cancels the call.</param>
+    /// <returns>The tool result.</returns>
+    internal static ValueTask<CallToolResult> Call(string tool, IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct) => tool switch
+    {
+        List => CallList(services, arguments, ct),
+        Get => CallGet(services, arguments, ct),
+        Add => CallAdd(services, arguments, ct),
+        SignIn => CallSignIn(services, arguments, ct),
+        Test => CallTest(services, arguments, ct),
+        Remove => CallRemove(services, arguments, ct),
+        _ => throw new UnreachableException($"ConnectionTools has no handler for '{tool}'"),
+    };
 
     /// <summary>Runs connection_list.</summary>
     /// <param name="services">The request's services.</param>
@@ -142,6 +171,24 @@ internal static class ConnectionTools
 
         var answer = await services.GetRequiredService<IService<AddConnectionRequest, AddConnectionResponse>>().Handle(request.Value, ct).ConfigureAwait(false);
         return McpResults.From(services, answer, static added => added.ConsentUrl is null ? Summary(added.Connection) : "Sign-in started. Give the consentUrl to the owner; the connection finishes when they sign in.");
+    }
+
+    /// <summary>Runs connection_signin.</summary>
+    /// <param name="services">The request's services.</param>
+    /// <param name="arguments">The call's arguments.</param>
+    /// <param name="ct">Cancels the call.</param>
+    /// <returns>The tool result.</returns>
+    internal static async ValueTask<CallToolResult> CallSignIn(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
+    {
+        var name = Name(SignIn, arguments);
+        if (name.IsError)
+        {
+            return McpResults.Failure(services, name.Error);
+        }
+
+        // why: an agent cannot wait minutes for a browser, so Wait is false: it gets the consent URL at once and the sign-in finishes in the background
+        var answer = await services.GetRequiredService<IService<SignInConnectionRequest, AddConnectionResponse>>().Handle(new SignInConnectionRequest(name.Value, Wait: false), ct).ConfigureAwait(false);
+        return McpResults.From(services, answer, static started => "Sign-in started. Give the consentUrl to the owner; the connection is connected again when they sign in.");
     }
 
     /// <summary>Runs connection_test.</summary>

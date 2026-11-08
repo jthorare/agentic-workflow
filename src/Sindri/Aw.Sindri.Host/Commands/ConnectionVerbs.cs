@@ -12,14 +12,14 @@ using Aw.Sindri.Features.TestConnection;
 namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
-/// 'sindri connection add|list|show|test|remove [--client-id ID] [--key-env NAME] [--kind K] [--preset P]' (connections PR 10a): a client of the /sindri/connections routes.
+/// 'sindri connection add|list|show|test|remove|signin [--client-id ID] [--key-env NAME] [--kind K] [--preset P]' (connections PR 10a): a client of the /sindri/connections routes.
 /// A session may run every verb (owner decision D2). 'add' for an oauth connection prints the consent URL as soon as it has it, then waits for the callback.
 /// </summary>
 /// <param name="client">The API client.</param>
 /// <param name="output">Where the verbs write.</param>
 /// <param name="ensureRunning">Starts the control plane (true: this verb may launch it) or names why not; null: never start it.</param>
 /// <param name="environment">Reads --key-env and --client-secret-env from the CLI's own environment; null reads this process's.</param>
-internal sealed class ConnectionVerbs(ControlPlaneClient client, Output output, Func<bool, CancellationToken, Task<Error?>>? ensureRunning = null, Func<string, string?>? environment = null)
+internal sealed partial class ConnectionVerbs(ControlPlaneClient client, Output output, Func<bool, CancellationToken, Task<Error?>>? ensureRunning = null, Func<string, string?>? environment = null)
 {
     private const string Root = "/sindri/connections";
     private static readonly TimeSpan _signInWait = TimeSpan.FromMinutes(5.5);   // the sign-in's own limit is 5 minutes
@@ -51,6 +51,7 @@ internal sealed class ConnectionVerbs(ControlPlaneClient client, Output output, 
             "show" => await Show(command, ct).ConfigureAwait(false),
             "test" => await Test(command, ct).ConfigureAwait(false),
             "remove" => await Remove(command, ct).ConfigureAwait(false),
+            "signin" => await SignIn(command, ct).ConfigureAwait(false),
             _ => await Add(command, ct).ConfigureAwait(false),
         };
     }
@@ -221,7 +222,7 @@ internal sealed class ConnectionVerbs(ControlPlaneClient client, Output output, 
         return text.ToString();
     }
 
-    private static readonly string[] _verbs = ["add", "list", "show", "test", "remove"];
+    private static readonly string[] _verbs = ["add", "list", "show", "test", "remove", "signin"];
     private static readonly string[] _switchFlags = ["--json", "--no-start"];
     private static readonly string[] _valueFlags = ["--preset", "--kind", "--client-id", "--client-secret-env", "--key-env", "--scope", "--url"];
 
@@ -231,7 +232,7 @@ internal sealed class ConnectionVerbs(ControlPlaneClient client, Output output, 
         var verb = alias || args.Length < 2 ? "list" : args[1];
         if (!_verbs.Contains(verb, StringComparer.Ordinal))
         {
-            return SindriErrors.InvalidInput.With("usage: sindri connection add|list|show|test|remove (fix: sindri help)");
+            return SindriErrors.InvalidInput.With("usage: sindri connection add|list|show|test|remove|signin (fix: sindri help)");
         }
 
         var scanned = Scan([.. args.Skip(alias ? 1 : 2)]);

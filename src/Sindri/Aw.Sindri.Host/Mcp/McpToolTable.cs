@@ -67,11 +67,7 @@ internal static class McpToolTable
             SindriTools.Job => SindriTools.CallJob(services, call.Arguments, cancellationToken),
             SindriTools.Projects => SindriTools.CallProjects(services, call.Arguments, cancellationToken),
             SindriTools.Request => SindriTools.CallRequest(services, call.Arguments, cancellationToken),
-            ConnectionTools.List => ConnectionTools.CallList(services, call.Arguments, cancellationToken),
-            ConnectionTools.Get => ConnectionTools.CallGet(services, call.Arguments, cancellationToken),
-            ConnectionTools.Add => ConnectionTools.CallAdd(services, call.Arguments, cancellationToken),
-            ConnectionTools.Test => ConnectionTools.CallTest(services, call.Arguments, cancellationToken),
-            ConnectionTools.Remove => ConnectionTools.CallRemove(services, call.Arguments, cancellationToken),
+            ConnectionTools.List or ConnectionTools.Get or ConnectionTools.Add or ConnectionTools.SignIn or ConnectionTools.Test or ConnectionTools.Remove => ConnectionTools.Call(call.Name, services, call.Arguments, cancellationToken),
             _ => throw new UnreachableException($"McpToolTable lists '{call.Name}' but has no handler for it"),
         };
     }

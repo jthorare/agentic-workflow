@@ -90,6 +90,7 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-CONN-008` | The connection name is not `&lt;service&gt;:&lt;label&gt;` in lowercase. | use letters, digits and `-`, 1 to 32 characters per part |
 | `SND-CONN-009` | Consent was denied at the provider. | run the command again and allow access |
 | `SND-CONN-010` | A connection with that name exists. | pick another label, or `sindri connection remove` it first |
+| `SND-CONN-011` | The connection uses a key, so it has no browser sign-in to run again. | `sindri connection remove` it, then add it with a new `--key-env` |
 | `SND-TRACKER-001` | The tracker's source is missing or unreadable (for plan-file: the repo path or plan dir). | Restore that directory, or fix `path` in repos/&lt;name&gt;.yaml and run `sindri profile approve`. |
 | `SND-TRACKER-002` | The tracker's source holds no items to read (for plan-file: no plan file matches tracker.include). | Fix tracker.include in profile.yaml (or restore the plan files), then run `sindri profile approve`. |
 | `SND-TRACKER-003` | A plan file is too big to read (over 2 MiB). | Split the plan file into smaller plans. |
