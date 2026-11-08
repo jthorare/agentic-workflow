@@ -4,8 +4,8 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using Aw.Sindri.Ui.ViewModels.Linear;
 using Aw.Sindri.Ui.ViewModels;
+using Aw.Sindri.Ui.ViewModels.Linear;
 
 namespace Aw.Sindri.Ui.Views.Linear;
 

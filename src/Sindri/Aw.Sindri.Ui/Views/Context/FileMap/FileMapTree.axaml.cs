@@ -1,8 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Context;
 using Aw.Sindri.Ui.ViewModels.Controls;
-using Aw.Sindri.Ui.ViewModels;
 
 namespace Aw.Sindri.Ui.Views.Context.FileMap;
 
