@@ -24,6 +24,15 @@ public static class HostGroups
             groups.Add(new PlanGroup(Repo, extra));
         }
 
+        foreach (var name in input.Connections ?? [])
+        {
+            // why: a connection with no preset (none ship before PR 10) opens nothing
+            if (input.ConnectionHosts?.TryGetValue(name, out var opened) == true && opened.Count > 0)
+            {
+                groups.Add(new PlanGroup("connection-" + name, opened));
+            }
+        }
+
         var omit = input.Omit ?? [];
         return [.. groups.Where(g => !omit.Contains(g.Name, StringComparer.Ordinal))];
     }
@@ -55,6 +64,12 @@ public static class HostGroups
         }
 
         if (input.Github == GithubCredentials.AgentApp && !input.Attended)
+        {
+            names.Add(Github);
+        }
+
+        // why: a node that names a repo always reaches github (it clones and pushes there), whatever the launch's credentials say
+        if (input.NodeRepo is not null && !names.Contains(Github, StringComparer.Ordinal))
         {
             names.Add(Github);
         }

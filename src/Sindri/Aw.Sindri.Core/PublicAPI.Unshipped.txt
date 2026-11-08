@@ -25741,3 +25741,4 @@ static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Parse(System.Text.Json.Nodes.J
 static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.operator !=(Aw.Sindri.Core.Graph.Blocks.RunAgentConfig? left, Aw.Sindri.Core.Graph.Blocks.RunAgentConfig? right) -> bool
 static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.operator ==(Aw.Sindri.Core.Graph.Blocks.RunAgentConfig? left, Aw.Sindri.Core.Graph.Blocks.RunAgentConfig? right) -> bool
 static Aw.Sindri.Core.Graph.Blocks.RunAgentNames.Branch(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run) -> string!
+static readonly Aw.Sindri.Core.SindriErrors.GraphAgentReport -> Aw.Kernel.ErrorDefinition!

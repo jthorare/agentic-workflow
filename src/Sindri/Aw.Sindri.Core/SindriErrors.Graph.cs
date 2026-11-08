@@ -48,4 +48,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-GRAPH-103: a prompt node's answer did not fit its 'output' schema.</summary>
     public static readonly ErrorDefinition GraphPromptAnswer = new("SND-GRAPH-103", ErrorKind.Invalid, "The model's answer does not fit the prompt's output schema");
+
+    /// <summary>SND-GRAPH-109: an agent's report is missing a declared output or has one of the wrong type; the message names the field.</summary>
+    public static readonly ErrorDefinition GraphAgentReport = new("SND-GRAPH-109", ErrorKind.Invalid, "The agent's report does not match the node's outputs");
 }
