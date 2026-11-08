@@ -1,4 +1,3 @@
-#pragma warning disable CS0649, IDE0032, IDE0044, IDE0052 // why: the red commit's stubs leave these fields unread until the green commit; removed there
 using Aw.Sindri.Ui.Api;
 
 namespace Aw.Sindri.Ui.ViewModels.Todo;
@@ -24,13 +23,9 @@ internal sealed partial class TodoNoteCardViewModel : ObservableObject
     private TodoNoteView? _note;
     private string _checkedVault = string.Empty;
     private string _checkedNote = string.Empty;
-    private string _status = string.Empty;
-    private string _error = string.Empty;
     private string _selectedVault = string.Empty;
     private string _noteText = "Todo.md";
-    private bool _working;
     private bool _changing;
-    private bool _confirmingStop;
 
     /// <summary>The card over the API.</summary>
     /// <param name="url">The API's base URL, or null while it isn't known.</param>
@@ -69,7 +64,10 @@ internal sealed partial class TodoNoteCardViewModel : ObservableObject
     public bool ShowSyncing => Stage == TodoNoteCardStage.Syncing;
 
     /// <summary>True while the stop question is shown.</summary>
-    public bool ShowStopAsk => ShowSyncing && _confirmingStop;
+    public bool ShowStopAsk => ShowSyncing && IsConfirmingStop;
+
+    /// <summary>True while the stop question is asked.</summary>
+    public bool IsConfirmingStop { get; private set; }
 
     /// <summary>The chosen vault; changing it drops a shown check.</summary>
     public string SelectedVault
@@ -77,7 +75,12 @@ internal sealed partial class TodoNoteCardViewModel : ObservableObject
         get => _selectedVault;
         set
         {
-            _selectedVault = value ?? string.Empty;
+            if (value is null)
+            {
+                return;   // the box clears its pick while its list is replaced; the card keeps the vault it had
+            }
+
+            _selectedVault = value;
             Edited();
         }
     }
@@ -94,10 +97,10 @@ internal sealed partial class TodoNoteCardViewModel : ObservableObject
     }
 
     /// <summary>True when a call is running.</summary>
-    public bool IsBusy => _working;
+    public bool IsBusy { get; private set; }
 
     /// <summary>True when Check note can be pressed.</summary>
-    public bool CanCheck => !_working && _selectedVault.Length > 0 && _noteText.Trim().Length > 0;
+    public bool CanCheck => !IsBusy && _selectedVault.Length > 0 && _noteText.Trim().Length > 0;
 
     /// <summary>True when Check note is drawn.</summary>
     public bool ShowCheck => ShowForm;
@@ -152,13 +155,13 @@ internal sealed partial class TodoNoteCardViewModel : ObservableObject
     public string StopAskText => Labels.TodoCardStopAsk(_note?.Note ?? _checkedNote);
 
     /// <summary>The progress line and the answer to the click (a polite live region, always in the tree); empty otherwise.</summary>
-    public string StatusText => _status;
+    public string StatusText { get; private set; } = string.Empty;
 
     /// <summary>The last refusal; empty otherwise.</summary>
-    public string ErrorText => _error;
+    public string ErrorText { get; private set; } = string.Empty;
 
     /// <summary>True when there is a refusal to show.</summary>
-    public bool HasError => _error.Length > 0;
+    public bool HasError => ErrorText.Length > 0;
 
     private bool IsOverCap => _check is { Exists: true } c && c.WillImport < c.Open - c.CantImport.Count;
 
@@ -168,7 +171,7 @@ internal sealed partial class TodoNoteCardViewModel : ObservableObject
     {
         if (Stage == TodoNoteCardStage.Checked)
         {
-            (_check, Stage, _status) = (null, TodoNoteCardStage.Form, string.Empty);
+            (_check, Stage, StatusText) = (null, TodoNoteCardStage.Form, string.Empty);   // what was checked is not what is typed any more
         }
 
         Changed();

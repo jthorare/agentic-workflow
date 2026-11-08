@@ -11,7 +11,7 @@ internal sealed class TodoNoteCardFixture
 {
     internal static readonly Uri Url = new("http://127.0.0.1:7410/");
 
-    internal FakeSindriApi Server { get; } = new();
+    internal FakeSindriApi Server { get; } = new() { TodoNoteAnswer = new RouteAnswer(HttpStatusCode.OK, TodoNoteSetupSample.NoteIn("not set")) };
 
     internal FakeTimeProvider Clock { get; } = new(DateTimeOffset.Parse("2026-01-01T10:00:00Z", System.Globalization.CultureInfo.InvariantCulture));
 

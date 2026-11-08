@@ -82,12 +82,13 @@ public sealed class TodoSyncLineFramesTests : IDisposable
     private static async Task Reads(Window window, string name, string text) => await Until(window, () => string.Equals(Block(window, name).Text, text, StringComparison.Ordinal));
 
     [Fact]
-    public Task With_no_note_set_neither_block_is_drawn() => OnUi(async () =>
+    public Task With_no_note_set_neither_block_says_anything_and_the_live_region_stays_in_the_tree() => OnUi(async () =>
     {
         var window = await Home(TodoNoteSetupSample.NoteIn("not set"));
 
         Assert.False(Block(window, "TodoSyncQuiet").IsEffectivelyVisible);
-        Assert.False(Block(window, "TodoSyncLive").IsEffectivelyVisible);
+        Assert.Equal((string.Empty, string.Empty), (Block(window, "TodoSyncQuiet").Text, Block(window, "TodoSyncLive").Text));
+        Assert.Equal(Avalonia.Automation.AutomationLiveSetting.Polite, Avalonia.Automation.AutomationProperties.GetLiveSetting(Block(window, "TodoSyncLive")));
     });
 
     [Fact]
@@ -111,7 +112,7 @@ public sealed class TodoSyncLineFramesTests : IDisposable
         await Reads(window, "TodoSyncLive", words);
 
         Assert.Equal(Application.Current!.FindResource("Brush.Attention"), Block(window, "TodoSyncLive").Foreground);   // why: the headless session starts the app
-        Assert.False(Block(window, "TodoSyncQuiet").IsEffectivelyVisible);
+        Assert.Equal(string.Empty, Block(window, "TodoSyncQuiet").Text);
     });
 
     [Fact]

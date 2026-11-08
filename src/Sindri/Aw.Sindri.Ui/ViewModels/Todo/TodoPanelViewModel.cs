@@ -157,6 +157,8 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
         _midnight = null;
         _savingTimer?.Dispose();
         _savingTimer = null;
+        _syncTick?.Dispose();
+        _syncTick = null;
     }
 
     // One shot at the next local midnight; the callback regroups and sets the next one.

@@ -21,6 +21,12 @@ internal sealed class TodoNoteCardText
     /// <summary>The vault box's name.</summary>
     public string Vault { get; } = Labels.TodoCardVault;
 
+    /// <summary>The vault box's name for a screen reader.</summary>
+    public string VaultName { get; } = Labels.TodoCardVaultName;
+
+    /// <summary>The note box's name for a screen reader.</summary>
+    public string NoteName { get; } = Labels.TodoCardNoteName;
+
     /// <summary>The note box's name.</summary>
     public string Note { get; } = Labels.TodoCardNote;
 

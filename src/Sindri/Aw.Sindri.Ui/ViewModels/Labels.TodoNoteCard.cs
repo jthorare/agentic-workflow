@@ -17,8 +17,14 @@ internal static partial class Labels
     /// <summary>The button that brings the Library card into view.</summary>
     internal const string TodoCardOpenLibrary = "Go to Library";
 
-    /// <summary>The vault box's name.</summary>
+    /// <summary>The vault box's label.</summary>
     internal const string TodoCardVault = "Vault";
+
+    /// <summary>The vault box's name for a screen reader.</summary>
+    internal const string TodoCardVaultName = "Obsidian vault";
+
+    /// <summary>The note box's name for a screen reader.</summary>
+    internal const string TodoCardNoteName = "Obsidian note, a path in the vault";
 
     /// <summary>The note box's name.</summary>
     internal const string TodoCardNote = "Note";

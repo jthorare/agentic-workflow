@@ -23,7 +23,7 @@ public sealed class TodoNoteCardFramesTests : IDisposable
     private static readonly Uri _api = new("http://127.0.0.1:7410/");
     private readonly List<Window> _windows = [];
     private readonly CancellationTokenSource _stop = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-    private readonly FakeSindriApi _server = new();
+    private readonly FakeSindriApi _server = new() { TodoNoteAnswer = new RouteAnswer(HttpStatusCode.OK, TodoNoteSetupSample.NoteIn("not set")) };
     private readonly FakeTimeProvider _clock = new(A.Noon);
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
