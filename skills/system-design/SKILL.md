@@ -17,7 +17,7 @@ allowed-tools: Bash(git *), Bash(mkdir *), Bash(SHARED_DIR=*), Bash(source *), B
 
 One run turns a project into a status doc (the source of truth), one page per persona, a shareable TDD and the deck that presents it, mockups, and diagrams. Pages are plain HTML so they can be shared without a build step.
 
-**Prerequisites (checked in Diagrams and Style and build, not before):** `python3` (stdlib only); Node 20+; the tldraw offline app running (diagrams); Playwright installed in some directory's `node_modules` (page verification, passed as `--playwright-root`). If one is missing, say which step it blocks and **Ask the user**; do not skip the step.
+**Prerequisites (checked in Diagrams and Style and build, not before):** `python3` (stdlib only); Node 20+; the tldraw offline app running (diagrams); Playwright installed in some directory's `node_modules` (page verification, passed as `--playwright-root`). If one is missing, say which step it blocks and **Ask the user**; do not skip the step. A missing `design-tokens.json` is not a prerequisite: the pages fall back to Sindri's tokens (Style).
 
 ```bash
 SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
@@ -36,7 +36,7 @@ Every run ends with the [Result block](#result-block), whatever the outcome: don
 - **Subject:** a ticket or project from the project's tracker, plus any brief. Read the ticket's decisions and the owner's replies first; never re-ask what they already answered. Reach the tracker through whatever the project provides (an MCP server or CLI named in `AGENTS.md`); if there is none, ask the user to paste the ticket.
 - **Code and surfaces:** Sindri context when the `sindri` MCP server is registered for the repo (`mcp: sindri/context_lenses`, `context_query`, `context_neighbors`, line runs) plus the repo's `AGENTS.md`. Sindri output is a lead, not a verdict: reconcile it against a hand map of readers, writers and screens, read from the remote default branch (`git fetch`, then `git show origin/<default>:<path>`), never a stale checkout.
 - **Data:** read-only counts from whatever read access the project documents (`AGENTS.md` or its rules). Writes are out of scope. If none is documented, say so in the status doc and ask the user rather than guessing sizes.
-- **Style:** `design-tokens.json` and `.impeccable.md` from `/design-language` (see `_shared/design-artifact-paths.md`), or the tokens file the repo's `AGENTS.md` points to. If neither exists, run **Invoke skill** `design-language` first.
+- **Style:** the repo's `design-tokens.json` and `.impeccable.md` from `/design-language` (see `_shared/design-artifact-paths.md`), or the tokens file the repo's `AGENTS.md` points to. They layer on top of the default look, Sindri's dark tokens in `$S/assets/sindri-tokens.json`. With no tokens file in the repo, use the Sindri tokens and carry on; do not stop to run `/design-language`, and the "No design language found" stop in the design preamble does not apply to this skill.
 
 ## The packet
 
@@ -84,7 +84,7 @@ Each step writes to `$SD/status.md`, the one living doc. Sections: surfaces, cou
 7. **Product + design page.** Mockups first.
 8. **Mockups.** Build only from the project's real components and tokens (**Invoke skill** `design-mockup-web` for the HTML). Render each beside a real screenshot of the same screen and compare before showing anyone. Reuse filters and creation flows that already exist; never re-mock them.
 9. **Diagrams.** Next section.
-10. **Style pass.** **Invoke skill** `design-refine` on each hand-written page, then re-apply the style and build the shareable TDD and deck (below). Their look lives in `templates/share-base.css` and `deck-base.css`; never hand-edit the generated files, they are rewritten on every build.
+10. **Style pass.** **Invoke skill** `design-refine` on each hand-written page (skip it when the repo has no tokens file or `.impeccable.md`; the Sindri default needs no refine pass), then re-apply the style and build the shareable TDD and deck (below). Their look lives in `templates/share-base.css` and `deck-base.css`; never hand-edit the generated files, they are rewritten on every build.
 11. **Verify.** Every page rendered (the deck included: `verify_page.mjs` also fails a slide whose content overflows its 16:9 frame; open slides of each kind and read them), 0 broken images, no horizontal scroll at 390px, every screenshot opened and read by you. The script gives metrics; the metrics are not the review.
 12. **Packet.** `python3 -I "$S/scripts/write_packet.py" "$SD" --slug <slug> --title "<title>" [--repo "$(gh repo view --json nameWithOwner -q .nameWithOwner)"]` after the last page and diagram change (omit `--repo` when that `gh` call fails); open `packet.json` and check every path exists. It also writes `doc.md`, the design-doc convention (`docs/conventions/design-docs.md`): generated from `packet.json`, so hand edits are lost on the next run and show as `SND-LIB-017`. EARS criteria are read from `tdd.html` (a list item or table cell that starts with When, While, Where, If or The and holds "shall"), test rows from each card's `## Tests` list or table. Its id is `<slug>-tdd`. Then run "The check" from `_shared/design-doc-front-matter.md` with `OUT="$SD/doc.md"`; an error there is fixed in the packet (or the card), then rerun this step.
 13. **Tracker last.** Create issues only after the owner approves scope and pages, in whatever state the project's tracker uses for "not started".
@@ -107,7 +107,8 @@ It creates your own tldraw doc (`POST /api/docs/create`; never edit another sess
 ## Style and build
 
 ```bash
-python3 -I "$S/scripts/tokens_to_css.py" design-tokens.json "$SD/doc-style.css"   # prints tokens it could not map
+TOKENS=design-tokens.json; [ -f "$TOKENS" ] || TOKENS="$S/assets/sindri-tokens.json"   # no repo tokens: the Sindri default
+python3 -I "$S/scripts/tokens_to_css.py" "$TOKENS" "$SD/doc-style.css"   # prints tokens it could not map
 python3 -I "$S/scripts/apply_doc_style.py" "$SD/tdd.html" "$SD/doc-style.css"          # rerunnable
 python3 -I "$S/scripts/build_page.py" "$SD/product-design.src.html" "$SD/product-design.html" "$SD/doc-style.css"
 python3 -I "$S/scripts/build_share.py" "$SD"                    # tdd-share.html + deck.html from share/story.json; --check validates only
@@ -116,7 +117,8 @@ node "$S/scripts/verify_page.mjs" "$SD/deck.html" "$SD/shots" --playwright-root 
 node "$S/scripts/verify_page.mjs" "$SD/product-design.html" "$SD/shots" --playwright-root <dir whose node_modules has playwright>
 ```
 
-- `tokens_to_css.py` maps `color.*`, `font.*`, `radius.*` tokens onto the semantic variables in `templates/doc-base.css`. For any it lists as unmapped, ask the user for the value or fix `design-tokens.json`; do not invent brand colors.
+- The default look is Sindri's: near-black canvas, Inter and JetBrains Mono, a 12px panel radius, violet for flagged, green for outcome, orange for needs-attention, red for alert. `assets/sindri-tokens.json` holds the values, copied from the Sindri app's theme; the base CSS carries the same values as its fallbacks, so a page looks right even with no tokens step. Pass `$S/assets/sindri-tokens.json` as the tokens file when the repo has none. A repo's own tokens replace Sindri's value by value, so a repo that defines only an accent keeps Sindri's dark canvas.
+- `tokens_to_css.py` maps `color.*`, `font.*`, `radius.*` tokens onto the semantic variables in `templates/doc-base.css`. For any it lists as unmapped, the page keeps Sindri's value; ask the user only if that value would clash with their brand. Do not invent brand colors.
 - Exit codes: the Python scripts exit 0 on success and 1 with a message on bad arguments, a missing image, a missing style marker or unmatched markers; `draw_diagrams.mjs` exits 0 when every diagram is drawn, 2 on bad arguments, 1 on an API error; `verify_page.mjs` exits 0 clean, 1 on a broken image or horizontal scroll, 2 on bad arguments.
 - `build_share.py` exits 0 when both pages are written and 1 with every problem listed: a missing field, a list or text over its limit, a history marker, a missing image. It layers the project tokens from `$SD/doc-style.css` (or `--style`) on `templates/share-base.css` (+ `deck-base.css` for the deck), so run `tokens_to_css.py` first. The deck: arrow keys or space to move, `N` speaker notes, `P` presenter window (current, next, notes, timer), `F` full screen, `#N` deep-links a slide, print gives one slide per page.
 - `build_page.py` inlines every `<img>` as a data URI and fails on a missing image. `verify_page.mjs` exits 1 on a broken image or horizontal scroll at 1280 or 390px.
