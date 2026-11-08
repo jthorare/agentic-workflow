@@ -160,9 +160,9 @@ exist):
   `out`, and branching blocks name theirs (`condition`: `true` / `false`).
 - **References.** Config strings interpolate `{{node.field}}`, `{{trigger.*}}`, `{{item}}` (inside a for-each) and
   `{{workflow.*}}`. A string that is exactly one reference keeps the referenced value's type.
-- **One trigger.** A trigger is a block with no inbound edge. A workflow has exactly one (manual runs need none).
+- **One trigger.** A trigger is a block with no inbound edge. A workflow has exactly one (`called` runs need none).
 - **Revisions.** Every save is an immutable revision with its hash. `activate` pins the revision that triggers run;
-  manual runs use the latest. Editing never changes a run in flight.
+  `called` runs use the latest. Editing never changes a run in flight.
 
 ### Validation (on save and again at run start)
 
@@ -171,15 +171,19 @@ type or a config that fails the block's schema; an invalid cron or timezone; a `
 profile; a connection or memory name that doesn't exist. Drafts may save with wiring gaps; `activate` refuses any
 finding. Every finding names the node and the field, and says how to fix it, in the repo's existing error style.
 
-### Block catalog v1
+### Block catalog
 
-| Group | Blocks |
+The owner approved the block list on 2026-11-08. The per-block config, outputs and run notes live in
+`2026-11-08-sindri-block-list.md`; this table is the picker's list (`title` and `group` come from `IGraphBlockType`).
+Labels can change; the type name in a saved spec never does. `manual` stays as an alias of `called`.
+
+| Group | Picker label (type name) |
 |---|---|
-| Triggers | `schedule` (cron, timezone, up to 6 crons), `manual` (implicit), `poll` (a connection's event: "Linear issue labelled X", "PR merged in repo Y"; Part 3), `inbox` (handoff work arrives; Part 3), `workflow_call` (called by another workflow) |
-| Agents and models | `run_agent` (below), `prompt` (one model call with an optional JSON output schema; uses the owner's model routes) |
-| Flow | `condition`, `for_each`, `collect`, `only_new` (dedupe items against what earlier runs saw), `wait` (a duration or until a time) |
-| Data | `http` (a request through a connection), `call_tool` (a toolkit's or MCP connection's tool; Part 5), `memory_search`, `memory_write`, `memory_forget` (Part 4), `run_workflow` |
-| Effects | `notify` (a Sindri Needs-you row, and/or a message through a connection), `create_item` (a Sindri item, optionally linked to a Linear issue), `ask_owner` (a question on the owner's queue; the run waits for the answer, with a timeout and a default branch) |
+| Triggers | Schedule (`schedule`), When called (`called`), Connection event (`connection_event`) |
+| Data | News (`news`), Vulnerabilities (`vulnerabilities`), Meetings (`meetings`), Read conversation (`read_conversation`), Workflow result (`workflow_result`), Recall (`memory_search`), HTTP call (`http`), Toolkit tool (`call_tool`) |
+| AI | Prompt (`prompt`), Sandbox (`run_agent`), Run on machine (`run_on_machine`), Jev (`jev`) |
+| Logic | For each (`for_each`), Code (`code`, C#), Approval (`approval`), Add to conversation (`add_to_conversation`), Link thread (`link_thread`), Run workflow (`run_workflow`), Remember (`memory_write`), Forget (`memory_forget`), Only new (`only_new`), If (`condition`), Collect (`collect`), Wait (`wait`) |
+| Outputs | Send notification (`notify`), Offer job (`offer_job`) |
 
 New blocks are added the way blocks are today: a typed C# module with its contract and tests. The test for G2 is the
 example above: it uses no block outside this table.
@@ -204,15 +208,15 @@ It reuses what Sindri already has for launching agents (the agent runtime, P8 in
 
 - **Temporal stays.** One new workflow type, `GraphWorkflow`, interprets every spec: topological order (ties broken by
   spec order), one activity per block execution, `for_each` as child iterations with an `itemIndex`. Parking (an agent
-  run, `ask_owner`, `wait`) is a Temporal wait, not a polling sweep, so replay, timers and cancellation come from
+  (an agent run, `approval`, `wait`) is a Temporal wait, not a polling sweep, so replay, timers and cancellation come from
   Temporal. Every node start, finish and failure is mirrored into the ledger, which stays the one public log.
 - **Concurrency per workflow:** `one-per-workflow` (default; a trigger while a run is in flight is skipped and logged),
   `queue` (runs wait their turn), `unlimited`.
 - **Run statuses:** `queued`, `running`, `waiting`, `succeeded`, `failed`, `cancelled`. Node statuses: `running`,
   `waiting`, `succeeded`, `failed`, `skipped`. A failure halts the walk unless the node says `continue`; nodes that never
   ran are `skipped`.
-- **Idempotent triggers.** A run's id is `<workflow>@<revision>:<occurrence>` (the cron tick time, the poll event's
-  delivery id, the inbox claim id, or a fresh id for manual). A second start with the same id is refused, so a
+- **Idempotent triggers.** A run's id is `<workflow>@<revision>:<occurrence>` (the cron tick time, the connection event's
+  delivery id, the inbox claim id, or a fresh id for a `called` run). A second start with the same id is refused, so a
   re-delivered event or a catch-up overlap never runs twice.
 - **Missed schedules.** On start or wake, a schedule whose ticks passed while Sindri was down runs **once**, for the
   latest missed tick, then resumes its cadence.
@@ -296,9 +300,9 @@ No C#, no app.
 
 ### Polling triggers and the catch-up scan (D6)
 
-- Each `poll` trigger names a connection and an event filter. Sindri keeps a **cursor** per (connection, event kind):
+- Each `connection_event` trigger names a connection and an event filter. Sindri keeps a **cursor** per (connection, event kind):
   the last `updatedAt`, event id or page token.
-- While running, a scheduler service polls each connection that has an active `poll` trigger every 2 minutes (per
+- While running, a scheduler service polls each connection that has an active `connection_event` trigger every 2 minutes (per
   connection, configurable, with the provider's rate limits respected and backoff on 429).
 - **Catch-up:** on control-plane start and on system wake, every cursor is read forward to now before the regular cadence
   resumes, and missed schedules run once (Part 2).
@@ -309,10 +313,10 @@ No C#, no app.
 
 A generic contract so any outside system can hand work to Sindri without reaching the laptop:
 
-- An `inbox` connection points at an HTTP API that implements three calls: **list offers** for this owner, **claim** one
+- An inbox-role `rest` connection points at an HTTP API that implements three calls: **list offers** for this owner, **claim** one
   (an atomic claim; a lost race returns 409 and nothing starts), **submit** a result (markdown and links).
 - Sindri polls the inbox like any connection. A claimed offer becomes a Sindri **item** with the offer's payload (title,
-  repo, branch, prompt, links) and starts any workflow whose trigger is `inbox` with a matching filter. When the
+  repo, branch, prompt, links) and starts any workflow whose trigger is a Connection event on that inbox-role connection (event kind `inbox.offer`) with a matching filter. When the
   workflow finishes, its `outputs` are submitted back.
 - A **local endpoint** `POST 127.0.0.1:<port>/sindri/handoff` (with the per-start token) lets apps and scripts on the
   same machine create the same kind of item directly.
@@ -321,7 +325,7 @@ A generic contract so any outside system can hand work to Sindri without reachin
 ### Done means
 
 The owner signs in to GitHub, Linear and Slack from `sindri connection add` (or an agent starts it) and each shows
-`connected`. A Linear `poll` trigger fires within 2 minutes of a label change while awake. After the laptop sleeps
+`connected`. A Linear `connection_event` trigger fires within 2 minutes of a label change while awake. After the laptop sleeps
 through an event, the run starts within a minute of wake, exactly once. A fixture inbox's offer becomes an item, runs a
 workflow and gets its result submitted.
 
@@ -401,12 +405,14 @@ MCP tools have. The existing Workflows / Workflow types pages are replaced.
 |---|---|---|
 | P1 | Drop approvals; open every verb to sessions (Part 1) | No `profile approve`; the API goldens pass as a session; doctor and pages have no approval states |
 | P2 | Remove recipes and the factory pipeline (Part 2, "Removal") | The solution builds and tests green without them; docs and `AGENTS.md` updated |
-| P3 | Graph spec, validator, `GraphWorkflow`, run store, blocks `schedule`, `manual`, `run_agent`, `condition`, `notify`, `prompt` | A spec run end to end by CLI on a fixture repo |
+| P3 | Graph spec, validator, `GraphWorkflow`, run store, blocks `schedule`, `called` (`manual` kept as an alias), `run_agent`, `condition`, `notify`, `prompt` | A spec run end to end by CLI on a fixture repo |
 | P4 | MCP build tools and `workflow_docs` | Part 2's acceptance test |
-| P5 | Remaining v1 blocks (`for_each`, `collect`, `only_new`, `wait`, `ask_owner`, `create_item`, `run_workflow`, `workflow_call`, `http`) | Each block's example spec runs |
+| P5 | Remaining blocks (`for_each`, `collect`, `only_new`, `wait`, `approval`, `offer_job`, `run_workflow`, `workflow_result`, `http`; PR 9) | Each block's example spec runs |
+| P5b | `code` (C# through Roslyn and `sindri-code-runner`; PR 9c) and the public data blocks `news`, `vulnerabilities`, `jev` (PR 9b) | Each block's example spec runs; `sindri wf validate` compiles Code nodes |
 | P6 | Connections (`oauth`, `mcp`, `rest`, `cli`), presets, refresh | Part 3's sign-in checks |
-| P7 | `poll` triggers, cursors, catch-up on start and wake | Part 3's poll and wake checks |
-| P8 | Handoff inbox contract, inbox trigger, local endpoint | Part 3's inbox check |
+| P7 | `connection_event` triggers, cursors, catch-up on start and wake | Part 3's poll and wake checks |
+| P8 | Handoff inbox contract, `connection_event` on an inbox-role connection, local endpoint, conversation blocks (`read_conversation`, `add_to_conversation`, `link_thread`) | Part 3's inbox check |
+| P8b | `meetings` block with the `granola` and `wispr-flow` presets (PR 10d, after PR 10b sign-in) | A fixture meeting list reaches a prompt, fenced |
 | P9 | Memory stores, blocks and tools | A workflow remembers a fact and a later run recalls it; a session reads it |
 | P10 | Resources (database, disk, sandbox) for workflows and blocks | The example spec gets its `state` database and sandbox size |
 | P11 | Toolkit SDK, `/new-toolkit`, toolkit runtime and controls, `call_tool` | An agent scaffolds a toolkit, it builds, its tool is called from a workflow |
@@ -433,7 +439,7 @@ P1 and P2 can run in parallel. P3 to P5 are the critical path to the first usefu
 2. **OAuth providers and loopback redirects.** Some providers refuse a plain-http loopback redirect or require a
    registered HTTPS URL. Each preset must be checked against the provider's current rules in P6; the fallback is a
    pasted token for that provider.
-3. **Polling cost and rate limits.** Many `poll` triggers on one connection should share one poll per event kind. P7
+3. **Polling cost and rate limits.** Many `connection_event` triggers on one connection should share one poll per event kind. P7
    designs that sharing.
 4. **Temporal and large graphs.** `for_each` over hundreds of items should use child workflows or batching so history
    stays under Temporal's limits. P5 measures it.
@@ -472,9 +478,9 @@ These follow from D1 to D12. The owner can overturn any of them on this issue.
      block's declared outputs.
 5. **Sessions launched by a workflow get Sindri's MCP with every tool (D2).** Loop guards:
    - a run can't start its own workflow;
-   - `run_workflow` and `workflow_call` stop at depth 3;
+   - `run_workflow` and `called` (when started by another workflow) stop at depth 3;
    - every write a launched session makes is attributed to `session:<id>` and to its run.
-6. **Poll events in v1.**
+6. **Connection events in v1.**
    - GitHub: PR opened, merged or review requested; issue opened or labelled; push to a branch.
    - Linear: issue created, state changed or labelled; comment added.
    - Slack: a message in a named channel that matches a filter; a mention of the owner.
@@ -488,7 +494,7 @@ These follow from D1 to D12. The owner can overturn any of them on this issue.
 8. **The `prompt` block reuses the context engine's model routing** (`ModelRouting`: harness and model per route, with
    fallback) under a new `workflowPrompt` route. Billing and credentials are the owner's agent CLI logins, as for every
    other model call Sindri makes.
-9. **`ask_owner` uses the Needs-you queue and `sindri answer`.** Any caller may answer (D2), and the answer is attributed.
+9. **`approval` uses the Needs-you queue and `sindri answer`.** Any caller may answer (D2), and the answer is attributed.
    An agent answering its own run's question is allowed and shows as such on the timeline.
 10. **Platform for acceptance.** P3 and P4 are proven on macOS (the owner's box, Seatbelt) and on Linux in CI
     (bubblewrap). If the macOS sandbox can't host `run_agent` yet, closing that gap is part of P3. `AGENTS.md`'s
