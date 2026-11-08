@@ -16,7 +16,7 @@ public static class PlanArgvPaths
         var hidden = argv.FirstOrDefault(a => IsPath(a) && Hidden(plan, a));
         return hidden is null
             ? null
-            : SandboxRefusal.For(SindriErrors.LaunchUnconfinable, SandboxReasons.ToolNotExpressible, $"the agent is given the path {hidden}, which the sandbox hides (fix: put the file where the plan binds it)");
+            : SandboxRefusal.For(SindriErrors.LaunchUnconfinable, SandboxReasons.PathHidden, $"the agent is given the path {hidden}, which the sandbox hides (fix: put the file where the plan binds it)");
     }
 
     // A prompt or a title is free text: only a single token that starts at the root is a path.
@@ -27,6 +27,13 @@ public static class PlanArgvPaths
     private static bool Hidden(SandboxPlan plan, string path)
     {
         var covering = plan.Mounts.LastOrDefault(m => string.Equals(m.Path, path, StringComparison.Ordinal) || path.StartsWith(m.Path + "/", StringComparison.Ordinal));
-        return covering is { Kind: PlanMountKind.Deny } or { Kind: PlanMountKind.Tmpfs, PrivateScratch: false } && !string.Equals(covering.Path, "/run", StringComparison.Ordinal);
+        if (covering is null)
+        {
+            return false;
+        }
+
+        // A bind from elsewhere (/tmp from the run area) shows another folder's files at that path, not the host's.
+        var foreignBind = covering.Source is not null && !string.Equals(covering.Source, covering.Path, StringComparison.Ordinal);
+        return foreignBind || (covering is { Kind: PlanMountKind.Deny } or { Kind: PlanMountKind.Tmpfs, PrivateScratch: false } && !string.Equals(covering.Path, "/run", StringComparison.Ordinal));
     }
 }

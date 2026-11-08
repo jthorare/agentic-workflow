@@ -39,4 +39,59 @@ public sealed class BoxHostFactsTests : IDisposable
 
         Assert.Equal([Path.Combine(_dir, "another"), Path.Combine(_dir, "other")], others);
     }
+
+    // #2162: a PATH directory with a claude entry of the given kind; returns the directory.
+    private string PathDir(string name, Action<string> make)
+    {
+        var dir = Directory.CreateDirectory(Path.Combine(_dir, "path", name)).FullName;
+        make(Path.Combine(dir, "claude"));
+        return dir;
+    }
+
+    private string Binary(string name)
+    {
+        var file = Path.Combine(Directory.CreateDirectory(Path.Combine(_dir, "share", name)).FullName, "claude-bin");
+        File.WriteAllText(file, "#!/bin/sh\n");
+        return file;
+    }
+
+    [Fact]
+    public void A_symlinked_agent_binary_on_path_maps_to_its_real_file()
+    {
+        var real = Binary("a");
+        var dir = PathDir("bin", link => File.CreateSymbolicLink(link, real));
+
+        var links = BoxHostFacts.AgentBinaryLinks(dir);
+
+        var only = Assert.Single(links);
+        Assert.Equal(Path.Combine(dir, "claude"), only.Key);
+        Assert.Equal(real, only.Value);
+    }
+
+    [Fact]
+    public void A_plain_file_agent_binary_on_path_is_not_a_link()
+    {
+        var dir = PathDir("bin", file => File.WriteAllText(file, "#!/bin/sh\n"));
+
+        Assert.Empty(BoxHostFacts.AgentBinaryLinks(dir));
+    }
+
+    [Fact]
+    public void A_dangling_agent_binary_link_on_path_is_skipped()
+    {
+        var dir = PathDir("bin", link => File.CreateSymbolicLink(link, Path.Combine(_dir, "gone")));
+
+        Assert.Empty(BoxHostFacts.AgentBinaryLinks(dir));
+    }
+
+    [Fact]
+    public void An_agent_binary_in_two_path_directories_counts_only_at_the_first_hit()
+    {
+        var first = PathDir("first", link => File.CreateSymbolicLink(link, Binary("one")));
+        var second = PathDir("second", link => File.CreateSymbolicLink(link, Binary("two")));
+
+        var links = BoxHostFacts.AgentBinaryLinks(first + ":" + second);
+
+        Assert.Equal(Path.Combine(first, "claude"), Assert.Single(links).Key);
+    }
 }

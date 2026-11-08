@@ -133,6 +133,19 @@ public sealed class SandboxMcpConfigTests : IDisposable
     }
 
     [Fact]
+    public async Task A_launch_whose_argv_names_the_session_home_config_but_has_no_staged_file_is_refused_as_fs_write()
+    {
+        var (launch, request, _) = MakeSandboxLaunch();
+        var inside = McpLaunchConfig.PathFor(SessionHomePaths.For(SindriHome, request.Launch), request.Launch);
+
+        var prepared = await launch.Prepare(Step(), ["claude", "--mcp-config", inside], chosenSession: null, TestContext.Current.CancellationToken);
+
+        Assert.True(prepared.IsError, "claude would start on a missing --mcp-config and exit 1 with no message");
+        Assert.Equal(SindriErrors.LaunchSelfCheckFailed.Code, prepared.Error.Code);
+        Assert.Equal(SandboxReasons.FsWrite, SandboxRefusal.ReasonOf(prepared.Error));
+    }
+
+    [Fact]
     public async Task A_config_that_cannot_be_moved_refuses_the_launch_as_fs_write()
     {
         Assert.SkipWhen(Environment.IsPrivilegedProcess, "root can rename out of a read-only directory");
