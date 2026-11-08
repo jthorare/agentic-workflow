@@ -13,6 +13,8 @@ using Aw.Sindri.Core.Judge;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.Memory;
+using Aw.Sindri.Infrastructure.Memory;
 using Aw.Sindri.Core.Leftovers;
 using Aw.Sindri.Core.LensPacks;
 using Aw.Sindri.Core.Line;
@@ -159,7 +161,8 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IScriptRuns>(_ => new BashScriptRuns(new ProcessToolRunner()))   // the prove station's before/after scripts
             .AddSingleton<ITrackedFiles, GitTrackedFiles>()          // the docs-sync scope's file list
             .AddSingleton<IWorktrees, GitWorktrees>()               // per-run and phase worktrees (engine spec §6.5); nothing calls it until BS-10
-            .AddSingleton<IPrCommentMarks, SqlitePrCommentMarks>(); // the PR babysitter's comment marks (W26): pr_comment_marks in ledger.db
+            .AddSingleton<IPrCommentMarks, SqlitePrCommentMarks>() // the PR babysitter's comment marks (W26): pr_comment_marks in ledger.db
+            .AddSingleton<IMemoryStore, SqliteMemoryStore>();       // memory stores and facts (agent-first PR 13): memory and memory_fact in ledger.db
 
     private static IServiceCollection AddSindriAdapters(this IServiceCollection services, Func<string, string?> environment)
     {

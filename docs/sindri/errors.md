@@ -80,6 +80,12 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-SECRET-001` | A secret pointer could not be resolved. | check the pointer in the profile and that the secret exists (env var, file, keychain item or 1Password item) |
 | `SND-SECRET-002` | A secret file is readable by other users. | chmod 600 &lt;file&gt; |
 | `SND-SECRET-004` | A secret couldn't be stored: neither the OS secret store nor the owner-only file took it. | on Linux install libsecret (secret-tool) or check the Sindri home is writable by you; on macOS unlock the login keychain; then run the command again |
+| `SND-MEM-001` | No memory has that name. | `sindri memory list` shows the names |
+| `SND-MEM-002` | A memory with that name exists. | pick another name |
+| `SND-MEM-003` | A fact is empty or longer than 2,000 characters. | shorten the text |
+| `SND-MEM-004` | The embedding model did not answer, so recall used keywords (informational). | start Ollama and pull the pinned model (`sindri doctor`) |
+| `SND-MEM-005` | The match level is not loose, balanced or strict. | use one of the three |
+| `SND-MEM-006` | The memory name is not lowercase letters, digits and `-`. | use 1 to 48 of them, starting with a letter or digit |
 | `SND-TRACKER-001` | The tracker's source is missing or unreadable (for plan-file: the repo path or plan dir). | Restore that directory, or fix `path` in repos/&lt;name&gt;.yaml and run `sindri profile approve`. |
 | `SND-TRACKER-002` | The tracker's source holds no items to read (for plan-file: no plan file matches tracker.include). | Fix tracker.include in profile.yaml (or restore the plan files), then run `sindri profile approve`. |
 | `SND-TRACKER-003` | A plan file is too big to read (over 2 MiB). | Split the plan file into smaller plans. |
