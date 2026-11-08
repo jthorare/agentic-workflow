@@ -23,7 +23,7 @@ public sealed class ChainRegistrationTests
             var commands = Registered(services, typeof(ICommand<>));
 
             Assert.NotEmpty(commands);
-            Assert.All(commands.Where(type => !IsStop(type)), type => Assert.Equal(
+            Assert.All(commands.Where(type => !IsStop(type) && !IsTestConnection(type)), type => Assert.Equal(
                 [typeof(CommandGate<,>), typeof(AuditingService<,>), typeof(AuthorizingService<,>), typeof(ValidatingService<,>), typeof(AwaitingViews<,>), null],
                 Chain(scope.ServiceProvider.GetRequiredService(type))));
         }
@@ -44,7 +44,24 @@ public sealed class ChainRegistrationTests
         }
     }
 
+    // The connection test reads a secret and calls a provider (up to 15 s + the probe): holding the gate for that fails every other command with SND-API-009 (#2349). Only its status write takes the gate.
+    [Fact, Trait("Lane", "unit")]
+    public void The_connection_test_is_audited_and_authorized_but_does_not_hold_the_gate_while_it_probes()
+    {
+        var (services, scope) = Composed();
+        using (scope)
+        {
+            var test = Assert.Single(Registered(services, typeof(ICommand<>)), IsTestConnection);
+
+            Assert.Equal(
+                [typeof(AuditingService<,>), typeof(AuthorizingService<,>), typeof(ValidatingService<,>), typeof(AwaitingViews<,>), null],
+                Chain(scope.ServiceProvider.GetRequiredService(test)));
+        }
+    }
+
     private static bool IsStop(Type service) => service.GenericTypeArguments[0] == typeof(Features.StopProcess.StopProcessRequest);
+
+    private static bool IsTestConnection(Type service) => service.GenericTypeArguments[0] == typeof(Features.TestConnection.TestConnectionRequest);
 
     [Fact, Trait("Lane", "unit")]
     public void Every_registered_command_has_a_validator()
