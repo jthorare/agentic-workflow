@@ -435,4 +435,64 @@ public sealed class TodoPanelHomeTests : IDisposable
         Assert.False(box.Focusable);   // why: the row is the one stop; check-off is a later slice
         Assert.Equal(["TodoRowFrame"], row.GetVisualDescendants().OfType<InputElement>().Where(c => c.Focusable && c.IsTabStop && c.IsEffectivelyVisible).Select(c => c.Name), StringComparer.Ordinal);
     });
+
+    [Fact]
+    public Task The_from_elsewhere_line_is_drawn_under_the_rows_inside_the_panel() => OnUi(async () =>
+    {
+        Serve(Eight());
+        var (window, shell) = await Connected();
+        await Until(window, () => !shell.Elsewhere.IsLoading && Shown(Panel(window), "ElsewhereFrame"));
+
+        var line = Named<Control>(Panel(window), "ElsewhereFrame");
+        var lastRow = Rows(window)[^1];
+        var rowBottom = lastRow.TranslatePoint(new Point(0, lastRow.Bounds.Height), Panel(window))!.Value.Y;   // why: both are in the same visual tree
+        var lineTop = line.TranslatePoint(default, Panel(window))!.Value.Y;
+
+        Assert.True(lineTop >= rowBottom, string.Create(CultureInfo.InvariantCulture, $"the line starts at {lineTop}, the last row ends at {rowBottom}"));
+        Assert.True(line.Bounds.Height > 0);
+        Assert.True(line.TranslatePoint(new Point(0, line.Bounds.Height), Panel(window))!.Value.Y <= Panel(window).Bounds.Height);
+    });
+
+    [Fact]
+    public Task The_panel_keeps_one_height_whatever_the_line_says() => OnUi(async () =>
+    {
+        Serve(Eight());
+        var (window, shell) = await Connected();
+        await Until(window, () => !shell.Elsewhere.IsLoading);
+        var withParts = Panel(window).Bounds.Height;
+
+        shell.Elsewhere.SetReviews(loading: false, waiting: 0, failed: false);
+        shell.Elsewhere.SetNeedsYou(0);
+        Settle(window);
+        var fewer = Panel(window).Bounds.Height;
+        shell.Elsewhere.SetReviews(loading: true, waiting: 0, failed: false);
+        Settle(window);
+
+        Assert.Equal([withParts, withParts], [fewer, Panel(window).Bounds.Height]);
+    });
+
+    [Fact]
+    public Task G_T_focuses_the_first_todo_row() => OnUi(async () =>
+    {
+        Serve(Eight());
+        var (window, shell) = await Connected();
+
+        shell.OpenTodo();
+        await Until(window, () => window.FocusManager?.GetFocusedElement() is Border b && string.Equals(b.Name, "TodoRowFrame", StringComparison.Ordinal));
+
+        var focused = (Visual)window.FocusManager!.GetFocusedElement()!;
+        Assert.Same(Rows(window)[0], focused.GetSelfAndVisualAncestors().OfType<TodoRow>().First());
+    });
+
+    [Fact]
+    public Task G_T_with_no_rows_focuses_the_panel_region() => OnUi(async () =>
+    {
+        Serve();
+        var (window, shell) = await Connected();
+
+        shell.OpenTodo();
+        await Until(window, () => ReferenceEquals(window.FocusManager?.GetFocusedElement(), Panel(window)));
+
+        Assert.Empty(Rows(window));
+    });
 }
