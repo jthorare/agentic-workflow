@@ -102,4 +102,29 @@ public sealed class EventPollerTests
         Assert.True(polled.Value.RateLimited);
         Assert.Equal(TimeSpan.FromMinutes(1), polled.Value.RetryAfter);   // the test clock stands at 2026-01-01T00:00:00Z
     }
+
+    [Theory]
+    [InlineData("github")]
+    [InlineData("linear")]
+    [InlineData("slack")]
+    [InlineData("google")]
+    public async Task A_503_names_its_status_and_a_429_says_rate_limiting_and_both_keep_the_backoff(string preset)
+    {
+        var down = new FakeProvider();
+        down.RateLimit(times: 1, retryAfter: null, HttpStatusCode.ServiceUnavailable);
+        var busy = new FakeProvider();
+        busy.RateLimit(times: 1, retryAfter: null);
+        using var failing = PollerHarness.For(preset, down);
+        using var throttled = PollerHarness.For(preset, busy);
+        var ct = TestContext.Current.CancellationToken;
+
+        var five = await failing.Poller.Poll(failing.Connection, failing.Kind, cursor: "500", ct);
+        var limited = await throttled.Poller.Poll(throttled.Connection, throttled.Kind, cursor: "500", ct);
+
+        Assert.True(five.Value.RateLimited);   // the backoff still applies
+        Assert.Contains("503", five.Value.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("rate limiting", five.Value.Reason, StringComparison.Ordinal);
+        Assert.True(limited.Value.RateLimited);
+        Assert.Contains("rate limiting", limited.Value.Reason, StringComparison.Ordinal);
+    }
 }
