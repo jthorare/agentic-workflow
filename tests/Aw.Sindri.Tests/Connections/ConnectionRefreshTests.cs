@@ -95,6 +95,23 @@ public sealed class ConnectionRefreshTests
     }
 
     [Fact]
+    public async Task A_connection_signed_in_again_clears_its_Needs_you_row()
+    {
+        var world = new ConnectionHarness();
+        await world.Hold();
+        _ = await Seed(world, TimeSpan.FromMinutes(2));
+        world.OAuth.RefuseWith = "invalid_grant";
+        _ = await world.Refresh().Run(await world.Tick(), Token);
+        Assert.Equal(EventTypes.ConnectionNeedsSignIn, Assert.Single(world.Ledger.Events).Envelope.Type);
+
+        var tested = await world.Test().Handle(new Features.TestConnection.TestConnectionRequest("linear:work"), Token);   // the probe accepts the stored token this time
+
+        Assert.True(tested.Value.Ok);
+        Assert.Equal(ConnectionStatus.Connected, Assert.Single(world.Store.Rows).Status);
+        Assert.Equal([EventTypes.ConnectionNeedsSignIn, EventTypes.ConnectionSignedIn], world.Ledger.Events.Select(static e => e.Envelope.Type), StringComparer.Ordinal);   // 'connection.signed-in' removes the row 'connection:linear:work'
+    }
+
+    [Fact]
     public async Task Only_oauth_connections_are_refreshed()
     {
         var world = new ConnectionHarness();

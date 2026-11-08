@@ -17,7 +17,7 @@ internal static class ConnectionRows
     [
         new(ActionId.From("AddConnection"), typeof(AddConnectionRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
-            "POST", "/sindri/connections", ShellRows.Form("sindri connection add <name> [--preset <preset>] [--kind <kind>] [--client-id <id>] [--client-secret-env <name>] [--key-env <name>]"), "ready", SessionOk: true),
+            "POST", "/sindri/connections", ShellRows.Form("sindri connection add <name> [--preset <preset>] [--kind <kind>] [--client-id <id>] [--client-secret-env <name>] [--key-env <name>] [--url <address>]"), "ready", SessionOk: true),
         new(ActionId.From("TestConnection"), typeof(TestConnectionRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/connections/{name}/test", ShellRows.Form("sindri connection test <name>"), "ready", SessionOk: true),

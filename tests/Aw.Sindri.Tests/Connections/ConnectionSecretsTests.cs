@@ -234,12 +234,12 @@ public sealed class ConnectionSecretsTests
         using var database = new LedgerDatabase(new SindriSettings(home.Path, Path.Combine(home.Path, "profile.yaml")), new FakeTimeProvider(KnownInstants.Epoch));
         var world = new ConnectionHarness();
         var store = new SqliteConnectionStore(database);
-        var oauth = new Features.AddConnection.OAuthSignInFlow(store, world.Secrets, world.SignIn, world.Clock, world.Outcomes);
+        var oauth = new Features.AddConnection.OAuthSignInFlow(store, world.Secrets, world.SignIn, world.Clock, world.Outcomes, world.Events());
         var service = new Features.AddConnection.AddConnectionService(store, world.Secrets, world.Presets, world.Environment, world.Clock, world.Callers, oauth);
 
         var added = await service.Handle(ConnectionHarness.Rest("acme:sql") with { KeyEnv = null, Key = _canary }, Token);
         var signed = new FakeSignInSession();
-        var oauthService = new Features.AddConnection.AddConnectionService(store, world.Secrets, world.Presets, world.Environment, world.Clock, world.Callers, new Features.AddConnection.OAuthSignInFlow(store, world.Secrets, signed, world.Clock, world.Outcomes));
+        var oauthService = new Features.AddConnection.AddConnectionService(store, world.Secrets, world.Presets, world.Environment, world.Clock, world.Callers, new Features.AddConnection.OAuthSignInFlow(store, world.Secrets, signed, world.Clock, world.Outcomes, world.Events()));
         var oauthAdd = oauthService.Handle(ConnectionHarness.Oauth(name: "linear:sql") with { ClientSecret = _secretCanary }, Token).AsTask();
         signed.Succeed(new TokenSet("access-sql", "refresh-sql", ExpiresAt: null));
         var oauthAdded = await oauthAdd;

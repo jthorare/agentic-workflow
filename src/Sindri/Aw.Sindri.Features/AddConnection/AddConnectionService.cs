@@ -67,7 +67,7 @@ internal sealed class AddConnectionService(IConnectionStore store, IConnectionSe
             ConnectionKind.OAuth => await AddOAuth(name.Value, request, preset.Value, cancellationToken).ConfigureAwait(false),
             ConnectionKind.Rest or ConnectionKind.Cli => await AddKey(name.Value, kind.Value, request, preset.Value, cancellationToken).ConfigureAwait(false),
             ConnectionKind.Mcp => await AddMcp(name.Value, request, cancellationToken).ConfigureAwait(false),
-            _ => SindriErrors.InvalidInput.With("the mcp connection kind arrives in a later release (fix: use --kind rest or --kind cli with --key-env)"),
+            _ => SindriErrors.InvalidInput.With($"cannot add a connection of kind {ConnectionWire.Name(kind.Value)} (fix: use oauth, mcp, rest or cli)"),
         };
     }
 
@@ -130,11 +130,20 @@ internal sealed class AddConnectionService(IConnectionStore store, IConnectionSe
     }
 
     // An mcp connection takes --url and either --key-env (a key, stored like a rest one) or no key (the server's own OAuth sign-in through ISignInSession.StartMcp,
-    // with a client registered on the spot). The row's config holds 'serverUrl'. Written in the green.
-    private static ValueTask<Result<AddConnectionResponse>> AddMcp(ConnectionName name, AddConnectionRequest request, CancellationToken cancellationToken)
+    // with a client registered on the spot). The row's config holds 'serverUrl'.
+    private async ValueTask<Result<AddConnectionResponse>> AddMcp(ConnectionName name, AddConnectionRequest request, CancellationToken cancellationToken)
     {
-        _ = (name, request, cancellationToken);
-        throw new NotSupportedException();
+        if (!Uri.TryCreate(request.Url, UriKind.Absolute, out var server) || !(server.Scheme == Uri.UriSchemeHttps || (server.Scheme == Uri.UriSchemeHttp && server.IsLoopback)))
+        {
+            return SindriErrors.InvalidInput.With("an mcp connection needs --url with the server's address (https, or http on this machine)");
+        }
+
+        if (request.Key is { Length: > 0 } || !string.IsNullOrWhiteSpace(request.KeyEnv))
+        {
+            return await AddKey(name, ConnectionKind.Mcp, request, preset: null, cancellationToken).ConfigureAwait(false);
+        }
+
+        return await _oauth.RunMcp(new McpAdd(name, server, _callers.Current?.Actor ?? "unknown", request.Wait), cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<AddConnectionResponse>> AddKey(ConnectionName name, ConnectionKind kind, AddConnectionRequest request, ConnectionPreset? preset, CancellationToken cancellationToken)
@@ -157,13 +166,7 @@ internal sealed class AddConnectionService(IConnectionStore store, IConnectionSe
         }
 
         var now = _time.GetUtcNow();
-        var config = new Dictionary<string, string>(StringComparer.Ordinal);
-        if (preset?.ProbeUrl is { } probe)
-        {
-            config["probeUrl"] = probe;
-        }
-
-        var row = new Connection(name, kind, preset?.Key, config, pointer.Value, ConnectionStatus.Connected, StatusReason: null, _callers.Current?.Actor ?? "unknown", now, now, LastRefreshedAt: null);
+        var row = new Connection(name, kind, preset?.Key, KeyConfig(kind, preset, request), pointer.Value, ConnectionStatus.Connected, StatusReason: null, _callers.Current?.Actor ?? "unknown", now, now, LastRefreshedAt: null);
         var written = await _store.Insert(row, cancellationToken).ConfigureAwait(false);
         if (written.IsError)
         {
@@ -172,6 +175,23 @@ internal sealed class AddConnectionService(IConnectionStore store, IConnectionSe
         }
 
         return new AddConnectionResponse(ConnectionView.From(row), ConsentUrl: null);
+    }
+
+    // A probe URL from the preset, and for an mcp connection the server's address (AddMcp checked that it parses).
+    private static Dictionary<string, string> KeyConfig(ConnectionKind kind, ConnectionPreset? preset, AddConnectionRequest request)
+    {
+        var config = new Dictionary<string, string>(StringComparer.Ordinal);
+        if (preset?.ProbeUrl is { } probe)
+        {
+            config["probeUrl"] = probe;
+        }
+
+        if (kind == ConnectionKind.Mcp && request.Url is { } server)
+        {
+            config["serverUrl"] = new Uri(server).ToString();
+        }
+
+        return config;
     }
 
     // The value the CLI sent wins; otherwise the variable named by the flag is read from serve's environment (an agent has no other way). Neither given is no secret; a name that is unset is an error that says whose environment.

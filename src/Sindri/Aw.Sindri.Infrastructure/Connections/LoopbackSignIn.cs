@@ -33,24 +33,45 @@ internal sealed class LoopbackSignIn(IOAuthClient oauth, IBrowserOpener browser,
 #pragma warning disable CA2000 // the listener's owner is Complete, which closes it on every way out
         var listener = Listen(out var port);
 #pragma warning restore CA2000
-        if (listener is null)
-        {
-            return ValueTask.FromResult<Result<SignInStarted>>(SindriErrors.ConnectionSecretUnavailable.With("no free loopback port to listen on for the sign-in callback"));
-        }
-
-        var redirect = $"http://127.0.0.1:{port.ToString(CultureInfo.InvariantCulture)}{CallbackPath}";
-        var pkce = PkceChallenge.Create(_randomBytes);
-        var request = new AuthorizationRequest(preset, clientId, redirect, scopes.Count > 0 ? scopes : preset.DefaultScopes, pkce);
-        var url = request.ToUrl();
-        var completion = Complete(listener, new SignIn(preset, clientId, redirect, pkce, clientSecret), cancellationToken);
-        _ = _browser.Open(url);
-        return ValueTask.FromResult<Result<SignInStarted>>(new SignInStarted(url, completion));
+        return ValueTask.FromResult(listener is null
+            ? NoPort()
+            : Begin(listener, Redirect(port), new SignInTarget(preset, clientId, clientSecret), scopes, cancellationToken));
     }
 
-    public ValueTask<Result<SignInStarted>> StartMcp(Uri server, CancellationToken cancellationToken)
+    public async ValueTask<Result<SignInStarted>> StartMcp(Uri server, CancellationToken cancellationToken)
     {
-        _ = (server, cancellationToken);
-        throw new NotSupportedException();
+        ArgumentNullException.ThrowIfNull(server);
+#pragma warning disable CA2000 // the listener's owner is Complete, which closes it on every way out
+        var listener = Listen(out var port);
+#pragma warning restore CA2000
+        if (listener is null)
+        {
+            return NoPort();
+        }
+
+        var redirect = Redirect(port);
+        var target = await _oauth.RegisterMcpClient(server, redirect, cancellationToken).ConfigureAwait(false);
+        if (target.IsError)
+        {
+            listener.Close();
+            return target.Error;
+        }
+
+        return Begin(listener, redirect, new SignInTarget(target.Value.Preset, target.Value.Client, target.Value.ClientSecret), [], cancellationToken);
+    }
+
+    private static Result<SignInStarted> NoPort() => SindriErrors.ConnectionSecretUnavailable.With("no free loopback port to listen on for the sign-in callback");
+
+    private static string Redirect(int port) => $"http://127.0.0.1:{port.ToString(CultureInfo.InvariantCulture)}{CallbackPath}";
+
+    private Result<SignInStarted> Begin(HttpListener listener, string redirect, SignInTarget target, IReadOnlyList<string> scopes, CancellationToken cancellationToken)
+    {
+        var pkce = PkceChallenge.Create(_randomBytes);
+        var request = new AuthorizationRequest(target.Preset, target.Client, redirect, scopes.Count > 0 ? scopes : target.Preset.DefaultScopes, pkce);
+        var url = request.ToUrl();
+        var completion = Complete(listener, new SignIn(target.Preset, target.Client, redirect, pkce, target.ClientSecret), cancellationToken);
+        _ = _browser.Open(url);
+        return new SignInStarted(url, completion);
     }
 
     private static HttpListener? Listen(out int port)
@@ -162,6 +183,8 @@ internal sealed class LoopbackSignIn(IOAuthClient oauth, IBrowserOpener browser,
             // the browser went away before the page was written: the sign-in's own result is unaffected
         }
     }
+
+    private sealed record SignInTarget(ConnectionPreset Preset, string Client, string? ClientSecret);
 
     private sealed record SignIn(ConnectionPreset Preset, string Client, string Redirect, PkceChallenge Pkce, string? ClientSecret);
 

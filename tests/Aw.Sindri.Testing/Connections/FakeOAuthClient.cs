@@ -41,6 +41,13 @@ public sealed class FakeOAuthClient : IOAuthClient
         return ValueTask.FromResult<Result<TokenSet>>(Next ?? throw new InvalidOperationException("set Next first"));
     }
 
+    /// <summary>Gets or sets what the next MCP registration returns; null refuses it.</summary>
+    public McpSignInTarget? McpTarget { get; set; }
+
+    /// <inheritdoc />
+    public ValueTask<Result<McpSignInTarget>> RegisterMcpClient(Uri server, string redirectUri, CancellationToken cancellationToken)
+        => ValueTask.FromResult<Result<McpSignInTarget>>(McpTarget is { } target ? target : SindriErrors.ConnectionRefreshFailed.With("the fake MCP server offers no sign-in"));
+
     /// <inheritdoc />
     public ValueTask<Result<Unit>> Revoke(ConnectionPreset preset, string client, string token, CancellationToken cancellationToken)
         => ValueTask.FromResult<Result<Unit>>(Unit.Value);

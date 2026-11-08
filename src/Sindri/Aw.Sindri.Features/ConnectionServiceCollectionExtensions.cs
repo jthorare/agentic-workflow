@@ -23,6 +23,7 @@ internal static class ConnectionServiceCollectionExtensions
         return services
             .AddScoped<IScheduledService, RefreshConnectionsService>()
             .AddSingleton(RefreshConnectionsService.BuiltIn)
+            .AddScoped<ConnectionEvents>()
             .AddSingleton<SignInOutcomes>()
             .AddScoped<OAuthSignInFlow>()
             .AddScoped<IService<AddConnectionRequest, AddConnectionResponse>, AddConnectionService>()

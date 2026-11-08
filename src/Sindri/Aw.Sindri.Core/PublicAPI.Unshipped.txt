@@ -25724,3 +25724,20 @@ Aw.Sindri.Core.Connections.TokenSet.ClientSecret.get -> string?
 Aw.Sindri.Core.Connections.TokenSet.ClientSecret.init -> void
 Aw.Sindri.Core.Connections.TokenSet.Deconstruct(out string! AccessToken, out string? RefreshToken, out System.DateTimeOffset? ExpiresAt, out string? ClientSecret) -> void
 Aw.Sindri.Core.Connections.TokenSet.TokenSet(string! AccessToken, string? RefreshToken, System.DateTimeOffset? ExpiresAt, string? ClientSecret = null) -> void
+Aw.Sindri.Core.Connections.OAuth.IOAuthClient.RegisterMcpClient(System.Uri! server, string! redirectUri, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Connections.OAuth.McpSignInTarget!>!>
+Aw.Sindri.Core.Connections.OAuth.McpSignInTarget
+Aw.Sindri.Core.Connections.OAuth.McpSignInTarget.<Clone>$() -> Aw.Sindri.Core.Connections.OAuth.McpSignInTarget!
+Aw.Sindri.Core.Connections.OAuth.McpSignInTarget.Client.get -> string!
+Aw.Sindri.Core.Connections.OAuth.McpSignInTarget.Client.init -> void
+Aw.Sindri.Core.Connections.OAuth.McpSignInTarget.ClientSecret.get -> string?
+Aw.Sindri.Core.Connections.OAuth.McpSignInTarget.ClientSecret.init -> void
+Aw.Sindri.Core.Connections.OAuth.McpSignInTarget.Deconstruct(out Aw.Sindri.Core.Connections.ConnectionPreset! Preset, out string! Client, out string? ClientSecret) -> void
+Aw.Sindri.Core.Connections.OAuth.McpSignInTarget.Equals(Aw.Sindri.Core.Connections.OAuth.McpSignInTarget? other) -> bool
+Aw.Sindri.Core.Connections.OAuth.McpSignInTarget.McpSignInTarget(Aw.Sindri.Core.Connections.ConnectionPreset! Preset, string! Client, string? ClientSecret = null) -> void
+Aw.Sindri.Core.Connections.OAuth.McpSignInTarget.Preset.get -> Aw.Sindri.Core.Connections.ConnectionPreset!
+Aw.Sindri.Core.Connections.OAuth.McpSignInTarget.Preset.init -> void
+override Aw.Sindri.Core.Connections.OAuth.McpSignInTarget.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Connections.OAuth.McpSignInTarget.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.OAuth.McpSignInTarget.ToString() -> string!
+static Aw.Sindri.Core.Connections.OAuth.McpSignInTarget.operator !=(Aw.Sindri.Core.Connections.OAuth.McpSignInTarget? left, Aw.Sindri.Core.Connections.OAuth.McpSignInTarget? right) -> bool
+static Aw.Sindri.Core.Connections.OAuth.McpSignInTarget.operator ==(Aw.Sindri.Core.Connections.OAuth.McpSignInTarget? left, Aw.Sindri.Core.Connections.OAuth.McpSignInTarget? right) -> bool

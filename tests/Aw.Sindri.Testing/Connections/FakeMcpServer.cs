@@ -132,6 +132,12 @@ public sealed class FakeMcpServer : IDisposable
 
     private void Mcp(HttpListenerContext context, string body)
     {
+        if (context.Request.HttpMethod != "POST")
+        {
+            Status(context, 405);   // the streamable transport may open a GET stream or send a DELETE; this server has neither
+            return;
+        }
+
         if (context.Request.Headers["Authorization"] != "Bearer " + Key)
         {
             Reply(context, 401, new JsonObject { ["error"] = "unauthorized" });
@@ -140,6 +146,12 @@ public sealed class FakeMcpServer : IDisposable
 
         var request = JsonNode.Parse(body)!.AsObject();
         var method = request["method"]!.GetValue<string>();
+        if (request["id"] is { } unknownId && method is not ("initialize" or "tools/list"))
+        {
+            MethodNotFound(context, unknownId);   // newer clients try 'server/discover' first and fall back; it is not one of the methods this fake records
+            return;
+        }
+
         lock (_gate)
         {
             _methods.Add(method);
@@ -147,8 +159,7 @@ public sealed class FakeMcpServer : IDisposable
 
         if (request["id"] is not { } id)
         {
-            context.Response.StatusCode = 202;   // a notification has no answer
-            context.Response.Close();
+            Status(context, 202);   // a notification has no answer
             return;
         }
 
@@ -160,6 +171,15 @@ public sealed class FakeMcpServer : IDisposable
         };
         Reply(context, 200, new JsonObject { ["jsonrpc"] = "2.0", ["id"] = id.DeepClone(), ["result"] = result });
     }
+
+    private static void Status(HttpListenerContext context, int status)
+    {
+        context.Response.StatusCode = status;
+        context.Response.Close();
+    }
+
+    private static void MethodNotFound(HttpListenerContext context, JsonNode id)
+        => Reply(context, 200, new JsonObject { ["jsonrpc"] = "2.0", ["id"] = id.DeepClone(), ["error"] = new JsonObject { ["code"] = -32601, ["message"] = "method not found" } });
 
     private static void Reply(HttpListenerContext context, int status, JsonObject json)
     {

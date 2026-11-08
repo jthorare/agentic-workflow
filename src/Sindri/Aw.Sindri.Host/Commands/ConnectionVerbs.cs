@@ -102,7 +102,7 @@ internal sealed class ConnectionVerbs(ControlPlaneClient client, Output output, 
         var code = tested.Ok ? 0 : 1;
         return command.Json
             ? await _output.Raw(answer.Value.Body, code).ConfigureAwait(false)
-            : await _output.Text(tested.Ok ? $"{tested.Connection.Name}: the provider accepted the credential.\n" : $"{tested.Connection.Name}: {tested.Reason}\n", code).ConfigureAwait(false);
+            : await _output.Text(tested.Ok ? $"{tested.Connection.Name}: the provider accepted the credential.{(tested.Tools is { } tools ? $" Tools: {string.Join(", ", tools)}." : string.Empty)}\n" : $"{tested.Connection.Name}: {tested.Reason}\n", code).ConfigureAwait(false);
     }
 
     private async Task<int> Remove(Parsed command, CancellationToken ct)
@@ -130,7 +130,7 @@ internal sealed class ConnectionVerbs(ControlPlaneClient client, Output output, 
             return await _output.Error(key.IsError ? key.Error : clientSecret.Error).ConfigureAwait(false);
         }
 
-        var request = new AddConnectionRequest(command.Name, command.Preset, command.Kind, command.Client, KeyEnv: null, command.Scopes, Wait: false, ClientSecretEnv: null, key.Value, clientSecret.Value);
+        var request = new AddConnectionRequest(command.Name, command.Preset, command.Kind, command.Client, KeyEnv: null, command.Scopes, Wait: false, ClientSecretEnv: null, key.Value, clientSecret.Value, command.Url);
         var added = await _client.Post<AddConnectionRequest, AddConnectionResponse>(Root, request, ct).ConfigureAwait(false);
         if (added.IsError)
         {
@@ -187,7 +187,7 @@ internal sealed class ConnectionVerbs(ControlPlaneClient client, Output output, 
     {
         if (string.IsNullOrWhiteSpace(variable))
         {
-            return Aw.Kernel.Results.Success<string?>(value: null);
+            return Kernel.Results.Success<string?>(value: null);
         }
 
         return _environment(variable) is { Length: > 0 } value
@@ -223,7 +223,7 @@ internal sealed class ConnectionVerbs(ControlPlaneClient client, Output output, 
 
     private static readonly string[] _verbs = ["add", "list", "show", "test", "remove"];
     private static readonly string[] _switchFlags = ["--json", "--no-start"];
-    private static readonly string[] _valueFlags = ["--preset", "--kind", "--client-id", "--client-secret-env", "--key-env", "--scope"];
+    private static readonly string[] _valueFlags = ["--preset", "--kind", "--client-id", "--client-secret-env", "--key-env", "--scope", "--url"];
 
     private static Result<Parsed> Parse(string[] args)
     {
@@ -247,7 +247,7 @@ internal sealed class ConnectionVerbs(ControlPlaneClient client, Output output, 
         }
 
         string? Last(string flag) => values.TryGetValue(flag, out var given) ? given[^1] : null;
-        return new Parsed(verb, names.Count == 0 ? string.Empty : names[0], Last("--preset"), Last("--kind"), Last("--client-id"), Last("--key-env"), Last("--client-secret-env"), values.GetValueOrDefault("--scope") ?? [], switches.Contains("--json"), switches.Contains("--no-start"));
+        return new Parsed(verb, names.Count == 0 ? string.Empty : names[0], Last("--preset"), Last("--kind"), Last("--client-id"), Last("--key-env"), Last("--client-secret-env"), values.GetValueOrDefault("--scope") ?? [], switches.Contains("--json"), switches.Contains("--no-start"), Last("--url"));
     }
 
     private static Error? WrongNames(string verb, List<string> names) =>
@@ -290,5 +290,5 @@ internal sealed class ConnectionVerbs(ControlPlaneClient client, Output output, 
         return (values, switches, names);
     }
 
-    private sealed record Parsed(string Verb, string Name, string? Preset, string? Kind, string? Client, string? KeyEnv, string? ClientSecretEnv, IReadOnlyList<string> Scopes, bool Json, bool NoStart);
+    private sealed record Parsed(string Verb, string Name, string? Preset, string? Kind, string? Client, string? KeyEnv, string? ClientSecretEnv, IReadOnlyList<string> Scopes, bool Json, bool NoStart, string? Url = null);
 }
