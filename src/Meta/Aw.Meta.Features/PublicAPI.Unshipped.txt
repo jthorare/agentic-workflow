@@ -1137,3 +1137,5 @@ Aw.Meta.Features.Routing.RouteRequest.Deconstruct(out bool Apply, out string? La
 Aw.Meta.Features.Routing.RouteRequest.Force.get -> bool
 Aw.Meta.Features.Routing.RouteRequest.Force.init -> void
 Aw.Meta.Features.Routing.RouteRequest.RouteRequest(bool Apply = false, string? Lane = null, bool Force = false) -> void
+Aw.Meta.Features.Status.StatusResponse.Consumer.get -> string?
+Aw.Meta.Features.Status.StatusResponse.Consumer.init -> void
