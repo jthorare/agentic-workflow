@@ -17226,10 +17226,8 @@ Aw.Sindri.Core.Launch.EvaluatorLaunch.PhaseWorktree.init -> void
 Aw.Sindri.Core.Launch.IScratchCheckouts
 Aw.Sindri.Core.Launch.IScratchCheckouts.Create(string! repoPath, string! path, string! headSha, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
 Aw.Sindri.Core.Launch.IScratchCheckouts.Remove(string! path, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
-Aw.Sindri.Core.Launch.LaunchRequest.Deconstruct(out Aw.Sindri.Core.Launch.LaunchId Launch, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Launch.AgentId Agent, out Aw.Sindri.Core.Launch.LaunchMode Mode, out bool Attended, out string! RepoPath, out Aw.Sindri.Core.Launch.InstanceAddress? Instance, out string? Worktree, out Aw.Sindri.Core.Launch.StepArgs? Step, out Aw.Sindri.Core.Launch.RunToken? Run, out Aw.Sindri.Core.Ids.SessionId? Resume, out Aw.Sindri.Core.Launch.EvaluatorLaunch? Evaluator) -> void
 Aw.Sindri.Core.Launch.LaunchRequest.Evaluator.get -> Aw.Sindri.Core.Launch.EvaluatorLaunch?
 Aw.Sindri.Core.Launch.LaunchRequest.Evaluator.init -> void
-Aw.Sindri.Core.Launch.LaunchRequest.LaunchRequest(Aw.Sindri.Core.Launch.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Launch.AgentId Agent, Aw.Sindri.Core.Launch.LaunchMode Mode, bool Attended, string! RepoPath, Aw.Sindri.Core.Launch.InstanceAddress? Instance, string? Worktree, Aw.Sindri.Core.Launch.StepArgs? Step, Aw.Sindri.Core.Launch.RunToken? Run, Aw.Sindri.Core.Ids.SessionId? Resume = null, Aw.Sindri.Core.Launch.EvaluatorLaunch? Evaluator = null) -> void
 Aw.Sindri.Core.Launch.StepPolicy.ReadOnlyPaths.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Aw.Sindri.Core.Launch.StepPolicy.ReadOnlyPaths.init -> void
 Aw.Sindri.Core.Workflow.Blocks.Capability.Evaluator = 64 -> Aw.Sindri.Core.Workflow.Blocks.Capability
@@ -26001,3 +25999,41 @@ static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.operator !=(Aw.Sindri.Core.Gra
 static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.operator ==(Aw.Sindri.Core.Graph.Blocks.RunAgentConfig? left, Aw.Sindri.Core.Graph.Blocks.RunAgentConfig? right) -> bool
 static Aw.Sindri.Core.Graph.Blocks.RunAgentNames.Branch(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run) -> string!
 static readonly Aw.Sindri.Core.SindriErrors.GraphAgentReport -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Launch.AgentTask
+Aw.Sindri.Core.Launch.AgentTask.<Clone>$() -> Aw.Sindri.Core.Launch.AgentTask!
+Aw.Sindri.Core.Launch.AgentTask.AgentTask(string! Brief, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Outputs, string? Model) -> void
+Aw.Sindri.Core.Launch.AgentTask.Brief.get -> string!
+Aw.Sindri.Core.Launch.AgentTask.Brief.init -> void
+Aw.Sindri.Core.Launch.AgentTask.Deconstruct(out string! Brief, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Outputs, out string? Model) -> void
+Aw.Sindri.Core.Launch.AgentTask.Equals(Aw.Sindri.Core.Launch.AgentTask? other) -> bool
+Aw.Sindri.Core.Launch.AgentTask.Model.get -> string?
+Aw.Sindri.Core.Launch.AgentTask.Model.init -> void
+Aw.Sindri.Core.Launch.AgentTask.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Launch.AgentTask.Outputs.init -> void
+Aw.Sindri.Core.Launch.LaunchRequest.Deconstruct(out Aw.Sindri.Core.Launch.LaunchId Launch, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Launch.AgentId Agent, out Aw.Sindri.Core.Launch.LaunchMode Mode, out bool Attended, out string! RepoPath, out Aw.Sindri.Core.Launch.InstanceAddress? Instance, out string? Worktree, out Aw.Sindri.Core.Launch.StepArgs? Step, out Aw.Sindri.Core.Launch.RunToken? Run, out Aw.Sindri.Core.Ids.SessionId? Resume, out Aw.Sindri.Core.Launch.EvaluatorLaunch? Evaluator, out Aw.Sindri.Core.Launch.NodeRunAddress? NodeRun, out Aw.Sindri.Core.Launch.AgentTask? Task) -> void
+Aw.Sindri.Core.Launch.LaunchRequest.LaunchRequest(Aw.Sindri.Core.Launch.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Launch.AgentId Agent, Aw.Sindri.Core.Launch.LaunchMode Mode, bool Attended, string! RepoPath, Aw.Sindri.Core.Launch.InstanceAddress? Instance, string? Worktree, Aw.Sindri.Core.Launch.StepArgs? Step, Aw.Sindri.Core.Launch.RunToken? Run, Aw.Sindri.Core.Ids.SessionId? Resume = null, Aw.Sindri.Core.Launch.EvaluatorLaunch? Evaluator = null, Aw.Sindri.Core.Launch.NodeRunAddress? NodeRun = null, Aw.Sindri.Core.Launch.AgentTask? Task = null) -> void
+Aw.Sindri.Core.Launch.LaunchRequest.NodeRun.get -> Aw.Sindri.Core.Launch.NodeRunAddress?
+Aw.Sindri.Core.Launch.LaunchRequest.NodeRun.init -> void
+Aw.Sindri.Core.Launch.LaunchRequest.Task.get -> Aw.Sindri.Core.Launch.AgentTask?
+Aw.Sindri.Core.Launch.LaunchRequest.Task.init -> void
+Aw.Sindri.Core.Launch.NodeRunAddress
+Aw.Sindri.Core.Launch.NodeRunAddress.<Clone>$() -> Aw.Sindri.Core.Launch.NodeRunAddress!
+Aw.Sindri.Core.Launch.NodeRunAddress.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out Aw.Sindri.Core.Graph.Ids.NodeId Node, out int Index) -> void
+Aw.Sindri.Core.Launch.NodeRunAddress.Equals(Aw.Sindri.Core.Launch.NodeRunAddress? other) -> bool
+Aw.Sindri.Core.Launch.NodeRunAddress.Index.get -> int
+Aw.Sindri.Core.Launch.NodeRunAddress.Index.init -> void
+Aw.Sindri.Core.Launch.NodeRunAddress.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Launch.NodeRunAddress.Node.init -> void
+Aw.Sindri.Core.Launch.NodeRunAddress.NodeRunAddress(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, Aw.Sindri.Core.Graph.Ids.NodeId Node, int Index) -> void
+Aw.Sindri.Core.Launch.NodeRunAddress.Run.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Launch.NodeRunAddress.Run.init -> void
+override Aw.Sindri.Core.Launch.AgentTask.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Launch.AgentTask.GetHashCode() -> int
+override Aw.Sindri.Core.Launch.AgentTask.ToString() -> string!
+override Aw.Sindri.Core.Launch.NodeRunAddress.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Launch.NodeRunAddress.GetHashCode() -> int
+override Aw.Sindri.Core.Launch.NodeRunAddress.ToString() -> string!
+static Aw.Sindri.Core.Launch.AgentTask.operator !=(Aw.Sindri.Core.Launch.AgentTask? left, Aw.Sindri.Core.Launch.AgentTask? right) -> bool
+static Aw.Sindri.Core.Launch.AgentTask.operator ==(Aw.Sindri.Core.Launch.AgentTask? left, Aw.Sindri.Core.Launch.AgentTask? right) -> bool
+static Aw.Sindri.Core.Launch.NodeRunAddress.operator !=(Aw.Sindri.Core.Launch.NodeRunAddress? left, Aw.Sindri.Core.Launch.NodeRunAddress? right) -> bool
+static Aw.Sindri.Core.Launch.NodeRunAddress.operator ==(Aw.Sindri.Core.Launch.NodeRunAddress? left, Aw.Sindri.Core.Launch.NodeRunAddress? right) -> bool

@@ -18,6 +18,8 @@ namespace Aw.Sindri.Core.Launch;
 /// <param name="Run">The Step run's token, or null.</param>
 /// <param name="Resume">For a Resume: the session id to resume (the item's newest resumable launch), else null.</param>
 /// <param name="Evaluator">Non-null for the holdout evaluator (LN-LCH2): the launcher runs it in its own scratch checkout instead of <paramref name="Worktree"/>.</param>
+/// <param name="NodeRun">The graph node run an unattended launch belongs to; null for an attended launch ('sindri open') and for a recipe Step. Added at the end: old payloads read with null.</param>
+/// <param name="Task">The 'run_agent' node's task (brief, declared outputs, model); null when <paramref name="NodeRun"/> is null.</param>
 public sealed record LaunchRequest(
     LaunchId Launch,
     ItemId Item,
@@ -30,7 +32,9 @@ public sealed record LaunchRequest(
     StepArgs? Step,
     RunToken? Run,
     SessionId? Resume = null,
-    EvaluatorLaunch? Evaluator = null)
+    EvaluatorLaunch? Evaluator = null,
+    NodeRunAddress? NodeRun = null,
+    AgentTask? Task = null)
 {
     /// <summary>
     /// The commit the run's worktree started from (sandbox spec §3.8): the host-side prepare reads the lockfiles at it, never from the worktree. The engine sets it for a phase workspace (the phase seed);

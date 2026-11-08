@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Ids;
@@ -54,6 +55,13 @@ internal static class AgentRecovery
             ? AgentRecoveryDecision.Complete(only.Outcome, only.Files)
             : AgentRecoveryDecision.Park(reason + " (fix: read the outputs there and report with 'sindri workflow complete')");
     }
+
+    /// <summary>Decides what to do with a node run whose session ended without a report: complete only when every declared, non-optional output is in the folder.</summary>
+    /// <param name="config">The node's config, whose outputs are the proof.</param>
+    /// <param name="files">The names of the files in the output folder.</param>
+    /// <param name="folder">The output folder's path, for the reason.</param>
+    /// <returns>Complete with the files found, else a park whose reason names the folder.</returns>
+    public static NodeRecoveryDecision DecideNode(RunAgentConfig config, IReadOnlyCollection<string> files, string folder) => throw new NotSupportedException();
 
     /// <summary>The file an agent writes a fact to: the fact's name without its 'fact:' prefix.</summary>
     /// <param name="fact">The fact.</param>

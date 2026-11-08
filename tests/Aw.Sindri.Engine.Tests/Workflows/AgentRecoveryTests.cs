@@ -1,4 +1,5 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Infrastructure.Workflows;
@@ -91,4 +92,47 @@ public sealed class AgentRecoveryTests
 
     [Fact]
     public void A_Step_the_catalog_does_not_know_parks() => Assert.Null(AgentRecovery.Decide(descriptor: null, ["challengeRound"], Folder).Outcome);
+
+    private static RunAgentConfig Node(params (string Name, string Type)[] outputs) =>
+        new("app", [], "claude-code", "check drift", outputs.ToDictionary(o => o.Name, o => o.Type, StringComparer.Ordinal), Timeout: null, Connections: []);
+
+    [Fact]
+    public void Outputs_in_sindri_out_complete_the_node_when_the_session_ended_unreported()
+    {
+        var decision = AgentRecovery.DecideNode(Node(("drifted", "boolean"), ("summary", "string")), ["drifted", "summary", "notes.md"], Folder);
+
+        Assert.True(decision.Completes);
+        Assert.Null(decision.Reason);
+        Assert.Equal("drifted", decision.Files["drifted"]);
+        Assert.Equal("summary", decision.Files["summary"]);
+        Assert.DoesNotContain("notes.md", decision.Files.Values, StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void A_missing_declared_output_parks_the_node_naming_the_folder()
+    {
+        var decision = AgentRecovery.DecideNode(Node(("drifted", "boolean"), ("summary", "string")), ["drifted"], Folder);
+
+        Assert.False(decision.Completes);
+        Assert.Empty(decision.Files);
+        Assert.StartsWith("the agent finished but its result was not recorded: " + Folder, decision.Reason, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void An_optional_output_may_be_absent()
+    {
+        var decision = AgentRecovery.DecideNode(Node(("drifted", "boolean"), ("note", "string?")), ["drifted"], Folder);
+
+        Assert.True(decision.Completes);
+        Assert.Equal(["drifted"], decision.Files.Keys, StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void A_node_with_no_declared_outputs_is_never_completed_from_a_folder()
+    {
+        var decision = AgentRecovery.DecideNode(Node(), ["anything"], Folder);
+
+        Assert.False(decision.Completes);
+        Assert.Contains(Folder, decision.Reason, StringComparison.Ordinal);
+    }
 }
