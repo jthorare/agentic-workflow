@@ -64,6 +64,7 @@ internal sealed partial class ShellWindow
         }
 
         ListenNeedsYou(shell, on);
+        ListenTodo(shell, on);
         ListenAgents(shell, on);
         ListenLinear(shell, on);
         if (on)

@@ -24,6 +24,8 @@ internal sealed partial class HomePage : UserControl
         AddHandler(NeedsYouRow.ActionEvent, OnNeedsYouAction);
         AddHandler(GotFocusEvent, (_, e) => Look(e, looking: true), handledEventsToo: true);
         AddHandler(LostFocusEvent, (_, e) => Look(e, looking: false), handledEventsToo: true);
+        AddHandler(GotFocusEvent, (_, e) => Region(e, on: true), handledEventsToo: true);
+        AddHandler(LostFocusEvent, (_, e) => Region(e, on: false), handledEventsToo: true);
         DataContextChanged += (_, _) => FollowNeedsYouRows();
     }
 
