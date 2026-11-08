@@ -28,6 +28,7 @@ internal sealed partial class ShellViewModel
         InitAgentSheet();
         InitAgentCounts();
         InitReviews();
+        WireElsewhere();   // after Reviews exists
         InitProjects(launcher);   // likewise: the Projects page reads while shown
         InitIssueSheet(launcher);
         InitJobs();   // the Jobs page is not an Agents page, but it rides the same constructor line: ShellViewModel.cs is at its size cap
