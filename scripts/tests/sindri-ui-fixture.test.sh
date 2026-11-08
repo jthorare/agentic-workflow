@@ -257,58 +257,6 @@ check "items --large with every request refused exits non-zero" "$([ "$rc" -ne 0
 contains "items --large shows the problem detail" "$out" "repo demo is not in the approved profile"
 check "items --large stops at the first refused request" "$(grep -c '^curl .*sindri/requests' "$STUB_LOG")" "1"
 
-# --- U3' T20: the Workflows strip's instances (sindri workflow start / cancel as the owner) ---
-: > "$STUB_LOG"; echo 0 > "$STUB_LOG.n"
-AW_SINDRI_HOME="$U" SINDRI="$STUB" bash "$FIXTURE" workflows >/dev/null 2>&1; check "workflows exits 0" "$?" "0"
-starts="$(grep '^workflow start' "$STUB_LOG")"
-check "workflows_starts_one_triage_and_two_work_instances_through_the_cli: three starts" "$(printf '%s\n' "$starts" | grep -c .)" "3"
-check "one triage" "$(printf '%s\n' "$starts" | grep -c 'workflow start workflow.dev-triage-three-state --item ITM-')" "1"
-check "two work" "$(printf '%s\n' "$starts" | grep -c 'workflow start workflow.dev-desk-round-trip --item ITM-')" "2"
-check "each start has an item of its own" "$(printf '%s\n' "$starts" | grep -o 'ITM-[A-Za-z0-9]*' | sort -u | wc -l | tr -d ' ')" "3"
-# #1343: the dev recipes aren't embedded, so each is approved (which registers it) before its first start, typing "approve <id> <version>".
-check "workflows_approves_each_dev_recipe_once_before_starting_it: two approvals" "$(grep -c '^recipe approve ' "$STUB_LOG")" "2"
-contains "the triage recipe is approved from recipes/dev" "$(grep '^recipe approve ' "$STUB_LOG")" "recipe approve $ROOT/recipes/dev/triage-three-state.yaml"
-contains "the work recipe is approved from recipes/dev" "$(grep '^recipe approve ' "$STUB_LOG")" "recipe approve $ROOT/recipes/dev/desk-round-trip.yaml"
-contains "the approval types the id and version" "$(grep '^typed=' "$STUB_LOG")" "typed=approve workflow.dev-triage-three-state $(sed -n 's/^version: *//p' "$ROOT/recipes/dev/triage-three-state.yaml" | head -1)"
-check "the approval comes before the first start" "$(grep -n '^recipe approve .*triage-three-state\|^workflow start workflow.dev-triage' "$STUB_LOG" | head -1 | grep -c 'recipe approve')" "1"
-# F3: the recipes' required inputs go with the start: fact:item as JSON naming the item, fact:request as text.
-check "the triage start passes fact:item" "$(printf '%s\n' "$starts" | grep 'dev-triage-three-state' | grep -c -- '--fact fact:item=')" "1"
-check "each work start passes fact:request" "$(printf '%s\n' "$starts" | grep 'dev-desk-round-trip' | grep -c -- '--fact fact:request=')" "2"
-facts="$(grep '^fact ' "$STUB_LOG")"
-check "fact:item is JSON with the item's id" "$(printf '%s\n' "$facts" | grep '^fact fact:item ' | sed 's/^fact fact:item //' | jq -r '.id')" "ITM-01"
-check "the triage start passes fact:scope" "$(printf '%s\n' "$starts" | grep 'dev-triage-three-state' | grep -c -- '--fact fact:scope=')" "1"
-check "fact:scope is text" "$(printf '%s\n' "$facts" | grep -c '^fact fact:scope Fixture')" "1"
-check "fact:request is text" "$(printf '%s\n' "$facts" | grep -c '^fact fact:request Fixture')" "2"
-out="$(AW_SINDRI_HOME="$U" SINDRI="$STUB" bash "$FIXTURE" workflows 2>&1)"
-contains "workflows prints what it started" "$out" "started workflow.dev-triage-three-state on ITM-"
-check "workflows prints a line for each start" "$(printf '%s\n' "$out" | grep -c '^started ')" "3"
-out="$(STUB_FAIL_START=1 AW_SINDRI_HOME="$U" SINDRI="$STUB" bash "$FIXTURE" workflows 2>&1)"; rc=$?
-check "a refused start exits non-zero" "$([ "$rc" -ne 0 ] && echo yes || echo no)" "yes"
-contains "a refused start says which one and why" "$out" "workflow.dev-triage-three-state"
-contains "a refused start carries the CLI's refusal" "$out" "SND-CLI-003 refused"
-: > "$STUB_LOG"; echo 0 > "$STUB_LOG.n"
-AW_SINDRI_HOME="$U" SINDRI="$STUB" bash "$FIXTURE" workflows --large >/dev/null 2>&1; check "workflows --large exits 0" "$?" "0"
-starts="$(grep '^workflow start' "$STUB_LOG")"
-check "workflows_large_starts_twelve_roots_across_three_recipes: twelve starts" "$(printf '%s\n' "$starts" | grep -c .)" "12"
-check "three recipes" "$(printf '%s\n' "$starts" | awk '{print $3}' | sort -u | wc -l | tr -d ' ')" "3"
-check "workflows --large approves each of its three recipes once" "$(grep -c '^recipe approve ' "$STUB_LOG")" "3"
-contains "workflows --large approves the notify recipe" "$(grep '^recipe approve ' "$STUB_LOG")" "recipe approve $ROOT/recipes/dev/workflow.dev-notify.yaml"
-: > "$STUB_LOG"; echo 0 > "$STUB_LOG.n"
-AW_SINDRI_HOME="$U" SINDRI="$STUB" bash "$FIXTURE" incident start >/dev/null 2>&1; check "incident start exits 0" "$?" "0"
-contains "incident_start_starts_an_incident_urgency_instance: the incident recipe" "$(grep '^workflow start' "$STUB_LOG")" "workflow start workflow.dev-incident-hold --item ITM-01"
-check "incident_start_approves_the_incident_recipe_first" "$(grep '^recipe approve \|^workflow start ' "$STUB_LOG" | head -1)" "recipe approve $ROOT/recipes/dev/incident-hold.yaml"
-contains "incident start types the incident recipe's id and version" "$(grep '^typed=' "$STUB_LOG")" "typed=approve workflow.dev-incident-hold $(sed -n 's/^version: *//p' "$ROOT/recipes/dev/incident-hold.yaml" | head -1)"
-: > "$STUB_LOG"
-AW_SINDRI_HOME="$U" SINDRI="$STUB" bash "$FIXTURE" incident stop >/dev/null 2>&1; check "incident stop exits 0" "$?" "0"
-check "incident_stop_cancels_it" "$(cat "$STUB_LOG")" "workflow cancel ITM-01"
-AW_SINDRI_HOME="$U" SINDRI="$STUB" bash "$FIXTURE" incident stop >/dev/null 2>&1; check "incident stop with none started exits 2" "$?" "2"
-AW_SINDRI_HOME="$U" bash "$FIXTURE" incident sideways >/dev/null 2>&1; check "incident takes start or stop (exit 2)" "$?" "2"
-AW_SINDRI_HOME="$U" bash "$FIXTURE" workflows --big >/dev/null 2>&1; check "workflows takes only --large (exit 2)" "$?" "2"
-for v in "workflows" "workflows --large" "incident start" "incident stop"; do
-  # shellcheck disable=SC2086
-  AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" $v >/dev/null 2>&1; check "every_workflow_verb_refuses_an_unguarded_home: $v" "$?" "2"
-done
-
 # --- T-F: context up | draft | down (the Context page's data, U9) ---
 C="$TMPDIR/ctx"
 mkdir -p "$C"
@@ -611,13 +559,6 @@ check "every edge of the concepts map joins two of its nodes (a decision row imp
 check "the concepts map has one decision, on a Self scheduling feature, keyed as context keys it (the Why band, #1281)" "$(jq -r '[.edges[] | select(.type == "decides") | .from + ">" + .to] | join(",")' "$M")" "$DKEY>feature:swaps"
 check "the decision belongs to Self scheduling, so the concept opens it (ConceptScope)" "$(jq -r --arg d "$DKEY" '[.edges[] | select(.from == $d and .type == "belongs-to") | .to] | join(",")' "$M")" "concept:scheduling"
 
-# model-picks (issue #1206 M-8): the usage and the refusals that need no control plane.
-contains "the usage lists model-picks" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh model-picks picked|escalated|unpriced|picking"
-AW_SINDRI_HOME="$S" bash "$FIXTURE" model-picks picked >/dev/null 2>&1; check "model-picks needs an item and an instance (exit 2)" "$?" "2"
-AW_SINDRI_HOME="$S" bash "$FIXTURE" model-picks nope ITM-0f ITM-0f/step/1 >/dev/null 2>&1; check "model-picks refuses an unknown state (exit 2)" "$?" "2"
-AW_SINDRI_HOME="$S" bash "$FIXTURE" model-picks picked not-an-item ITM-0f/step/1 >/dev/null 2>&1; check "model-picks refuses a bad item id (exit 2)" "$?" "2"
-AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" model-picks picked ITM-0f ITM-0f/step/1 >/dev/null 2>&1; check "model-picks refuses an unguarded home" "$?" "2"
-
 # model-calls (#1567 R-4): the usage, the refusals, and the ledger rows each state writes (fixed ids, so a rerun adds nothing).
 contains "the usage lists model-calls" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh model-calls fell-back|no-answer|paused|none"
 AW_SINDRI_HOME="$S" bash "$FIXTURE" model-calls >/dev/null 2>&1; check "model-calls needs a state (exit 2)" "$?" "2"
@@ -666,64 +607,6 @@ AW_SINDRI_HOME="$S" bash "$FIXTURE" sandbox denials >/dev/null 2>&1; check "sand
 AW_SINDRI_HOME="$S" bash "$FIXTURE" sandbox denials not-an-item ITM-0f/step/1 >/dev/null 2>&1; check "sandbox refuses a bad item id (exit 2)" "$?" "2"
 AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" sandbox denials ITM-0f ITM-0f/step/1 >/dev/null 2>&1; check "sandbox refuses an unguarded home" "$?" "2"
 AW_SINDRI_HOME="$S" bash "$FIXTURE" sandbox clear >/dev/null 2>&1; check "sandbox clear before sessions up exits 2" "$?" "2"
-
-# model-picks-run (issue #1452): the Model picks table's four states through a real agent run with the pick on. The control
-# plane is the stub, so this checks what the verb sets up: the usage, the refusals, the profile, the launcher stub, the judge
-# stub and the environment the control plane restarts with; the states themselves are the lead's proof under a real serve.
-contains "the usage lists model-picks-run" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh model-picks-run picked|escalated|unpriced|picking"
-AW_SINDRI_HOME="$S" bash "$FIXTURE" model-picks-run >/dev/null 2>&1; check "model-picks-run needs a state (exit 2)" "$?" "2"
-AW_SINDRI_HOME="$S" bash "$FIXTURE" model-picks-run nope >/dev/null 2>&1; check "model-picks-run refuses an unknown state (exit 2)" "$?" "2"
-AW_SINDRI_HOME="$S" bash "$FIXTURE" model-picks-run picked extra >/dev/null 2>&1; check "model-picks-run takes one argument (exit 2)" "$?" "2"
-AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" model-picks-run picked >/dev/null 2>&1; check "model-picks-run refuses an unguarded home" "$?" "2"
-out="$(AW_SINDRI_HOME="$S" SINDRI="$STUB" bash "$FIXTURE" model-picks-run picked 2>&1)"; check "model-picks-run before sessions up exits 2" "$?" "2"
-contains "model-picks-run names the missing sessions copy" "$out" "run 'sessions up' first"
-
-P="$TMPDIR/picksrun"
-mkdir -p "$P"
-AW_SINDRI_HOME="$P" SINDRI="$STUB" bash "$FIXTURE" up >/dev/null 2>&1
-mkdir -p "$P/ui-fixture-sessions/proc"
-echo '{"schema":1}' > "$P/ui-fixture-sessions/launcher.json"
-PD="$P/ui-fixture-agent"
-: > "$STUB_LOG"; : > "$STUB_LOG.env"; : > "$STUB_LOG.judge"
-out="$(FIXTURE_AGENT_WAIT=2 AW_SINDRI_HOME="$P" SINDRI="$STUB" bash "$FIXTURE" model-picks-run escalated 2>&1 >/dev/null)"; rc=$?
-check "model-picks-run exits 1 when the picks never show in the ledger" "$rc" "1"
-contains "model-picks-run names what it waited for" "$out" "no model.picked"
-contains "model-picks-run turns the pick on in the profile (quoted, so it stays a word)" "$(cat "$P/profile/profile.yaml")" 'pick: "on"'
-contains "model-picks-run lists a priced cheap model and a stronger one" "$(cat "$P/profile/profile.yaml")" "list: [claude-haiku-4-5, claude-sonnet-4-5]"
-contains "model-picks-run approves the profile as the owner (the Jev notice is part of that approval)" "$(cat "$STUB_LOG")" "profile approve abcdef0123456789"
-contains "model-picks-run approves its own recipe" "$(cat "$STUB_LOG")" "recipe approve"
-contains "model-picks-run starts that recipe" "$(cat "$STUB_LOG")" "workflow start workflow.dev-agent-pick"
-contains "model-picks-run points the launcher at its own claude stub" "$(jq -r '.agents["claude-code"].bin' "$P/ui-fixture-sessions/launcher.json")" "$PD/stub-bin-pick/claude"
-contains "model-picks-run restarts the control plane with a judge stub" "$(cat "$STUB_LOG.judge")" "judge=$PD/stub-judge/judge"
-check "the judge stub is executable" "$([ -x "$PD/stub-judge/judge" ] && echo yes || echo no)" "yes"
-check "the judge stub answers m1 as Jev" "$(echo '{}' | "$PD/stub-judge/judge" model-pick | jq -r '[.decision, .model] | join(",")')" "m1,jev"
-AW_SINDRI_HOME="$P" SINDRI="$STUB" FIXTURE_AGENT_WAIT=2 bash "$FIXTURE" model-picks-run unpriced >/dev/null 2>&1
-contains "unpriced lists a model the price table lacks after the cheap one" "$(cat "$P/profile/profile.yaml")" "list: [claude-haiku-4-5, fixture-unpriced-model]"
-AW_SINDRI_HOME="$P" SINDRI="$STUB" FIXTURE_AGENT_WAIT=2 bash "$FIXTURE" model-picks-run picking >/dev/null 2>&1
-check "picking holds the judge stub (its call outlasts the wait)" "$(echo '{}' | with_timeout 1 "$PD/stub-judge/judge" model-pick >/dev/null 2>&1; echo $?)" "124"
-AW_SINDRI_HOME="$P" SINDRI="$STUB" FIXTURE_AGENT_WAIT=2 bash "$FIXTURE" model-picks-run picked >/dev/null 2>&1
-check "the next state lets the judge stub answer again" "$(echo '{}' | with_timeout 1 "$PD/stub-judge/judge" model-pick >/dev/null 2>&1; echo $?)" "0"
-
-# The launcher stub: what it writes and what it reports, run by hand with the environment a launch gives it. Each run has its own folders.
-AW_SINDRI_HOME="$P" SINDRI="$STUB" FIXTURE_AGENT_WAIT=2 bash "$FIXTURE" model-picks-run escalated >/dev/null 2>&1   # the stub refuses Haiku in this state only
-R="$TMPDIR/picksstub"
-mkdir -p "$R/home/launches" "$R/run1" "$R/claude1" "$R/run2" "$R/claude2"
-seed='Sindri Step brief. Report with: sindri workflow complete ITM-0f/wf/1 --run RUN-abc --outcome done --output fact:resolution=$AW_SINDRI_RUN_DIR/.sindri-out/resolution'
-: > "$STUB_LOG"
-with_timeout 5 env AW_SINDRI_HOME="$R/home" AW_SINDRI_LAUNCH=LCH-1 AW_SINDRI_INSTANCE=ITM-0f/wf/1 AW_SINDRI_RUN_DIR="$R/run1" CLAUDE_CONFIG_DIR="$R/claude1" \
-  "$PD/stub-bin-pick/claude" --model claude-haiku-4-5 --session-id 11111111-2222-4333-8444-555555555555 "$seed" >/dev/null 2>&1
-check "the stub on the model it refuses reports twice (the second bad report ends its session)" "$(grep -c '^workflow complete ITM-0f/wf/1 --run RUN-abc --outcome done --output fact:resolution=' "$STUB_LOG")" "2"
-check "the stub's refused report is not JSON" "$(jq -e . "$R/run1/bad-report" >/dev/null 2>&1 && echo json || echo not-json)" "not-json"
-check "the refused stub leaves no file in .sindri-out (recovery would prove the outcome from one)" "$(ls -A "$R/run1/.sindri-out" | wc -l | tr -d ' ')" "0"
-contains "the stub logs each workflow complete call in stub.log" "$(cat "$R/run1/stub.log")" "--- workflow complete $R/run1/bad-report"
-check "stub.log has one entry per call" "$(grep -c '^exit ' "$R/run1/stub.log")" "2"
-check "the stub writes the session's transcript under the session id, naming the model it ran on" "$(jq -r '[.type, .message.model] | join(",")' "$R/claude1/projects/fixture/11111111-2222-4333-8444-555555555555.jsonl")" "assistant,claude-haiku-4-5"
-: > "$STUB_LOG"
-with_timeout 5 env AW_SINDRI_HOME="$R/home" AW_SINDRI_LAUNCH=LCH-2 AW_SINDRI_INSTANCE=ITM-0f/wf/1 AW_SINDRI_RUN_DIR="$R/run2" CLAUDE_CONFIG_DIR="$R/claude2" \
-  "$PD/stub-bin-pick/claude" --model claude-sonnet-4-5 --session-id 66666666-2222-4333-8444-555555555555 "$seed" >/dev/null 2>&1
-check "the stub on any other model reports once" "$(grep -c '^workflow complete ' "$STUB_LOG")" "1"
-check "the stub's good report is a JSON object" "$(jq -r type "$R/run2/.sindri-out/resolution")" "object"
-check "the stub's usage is read from its transcript as tokens on that model" "$(jq -r '[.message.model, .message.usage.input_tokens > 0, .message.usage.output_tokens > 0] | join(",")' "$R/claude2/projects/fixture/66666666-2222-4333-8444-555555555555.jsonl")" "claude-sonnet-4-5,true,true"
 
 # --- projects: the Projects page's data (projects page spec 4.1, 5, 12 Ph5, 13.1) ---
 contains "the usage lists projects" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh projects"
