@@ -48,6 +48,24 @@ internal static partial class Labels
     /// <summary>The due word of a todo due today.</summary>
     internal const string TodoDueToday = "Today";
 
+    /// <summary>The key of the quick-add hint in the panel's header.</summary>
+    internal const string TodoNewKey = "N";
+
+    /// <summary>The quick-add hint's words.</summary>
+    internal const string TodoNewText = "New todo";
+
+    /// <summary>The quick-add hint for a screen reader.</summary>
+    internal const string TodoNewName = "New todo, press N";
+
+    /// <summary>The control that folds the expanded panel back to five rows.</summary>
+    internal const string TodoShowLess = "Show less";
+
+    /// <summary>The key that does the same, drawn beside it.</summary>
+    internal const string TodoEscKey = "Esc";
+
+    /// <summary>The name of a row's checkbox for a screen reader (the row's own sentence carries the text).</summary>
+    internal const string TodoDoneBoxName = "Done";
+
     /// <summary>The panel's count line.</summary>
     /// <param name="open">Open todos.</param>
     /// <param name="overdue">Open todos due before today.</param>

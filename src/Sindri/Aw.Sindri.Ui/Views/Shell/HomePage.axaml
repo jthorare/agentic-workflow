@@ -7,6 +7,7 @@
              xmlns:nyvm="using:Aw.Sindri.Ui.ViewModels.NeedsYou"
              xmlns:nyv="using:Aw.Sindri.Ui.Views.NeedsYou"
              xmlns:rows="using:Aw.Sindri.Ui.Views.Queue"
+             xmlns:tv="using:Aw.Sindri.Ui.Views.Todo"
              x:Class="Aw.Sindri.Ui.Views.Shell.HomePage"
              x:DataType="shell:ShellViewModel">
   <!-- Home (UI spec §3.2, §4.2): four panels in a fixed order. Each panel is a header row (the eyebrow over a hairline,
@@ -32,6 +33,12 @@
         </Button>
       </Grid>
     </Border>
+
+    <!-- The Todo panel (todo spec §3.1): across both columns, above Needs you; Home's decisions filter (G D) hides it. The host carries the
+         shell's flag, because the panel's own DataContext is the Todo view model. -->
+    <Panel x:Name="TodoPanelHost" IsVisible="{Binding IsTodoShown}">
+      <tv:TodoPanel DataContext="{Binding Todo}" />
+    </Panel>
 
     <!-- F3 home spec §2: Needs you on the left; Running (the workflow strip, then With you) and Queued on the right; the health strip across the bottom.
          Under 1100 px the columns stack (HomePage.axaml.cs). -->
