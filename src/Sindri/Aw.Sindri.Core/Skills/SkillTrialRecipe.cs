@@ -29,11 +29,11 @@ public static class SkillTrialRecipe
     /// <returns>True for 'workflow.skill-trial-…'.</returns>
     public static bool IsTrial(RecipeId recipe) => recipe.Value.StartsWith(IdPrefix, StringComparison.Ordinal);
 
-    /// <summary>Whether <paramref name="instance"/> is a trial run, from its address ('&lt;item&gt;/skill-trial-&lt;block&gt;/&lt;attempt&gt;', or a child of one).</summary>
-    /// <param name="instance">The instance address.</param>
+    /// <summary>Whether <paramref name="instanceAddress"/> is a trial run's ('&lt;item&gt;/skill-trial-&lt;block&gt;/&lt;attempt&gt;', or a child of one). A plain string, so Skills stays below Launch (ARCH-CYCLE-001).</summary>
+    /// <param name="instanceAddress">The instance address's value.</param>
     /// <returns>True for a trial's.</returns>
-    public static bool IsTrial(Launch.InstanceAddress instance) =>
-        instance.Value.Split('/') is [_, var recipe, ..] && recipe.StartsWith(IdPrefix["workflow.".Length..], StringComparison.Ordinal);
+    public static bool IsTrial(string instanceAddress) =>
+        instanceAddress.Split('/') is [_, var recipe, ..] && recipe.StartsWith(IdPrefix["workflow.".Length..], StringComparison.Ordinal);
 
     /// <summary>The fact an input arrives in: 'fact:&lt;key&gt;'.</summary>
     /// <param name="inputKey">The input's key.</param>

@@ -19894,8 +19894,8 @@ Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.Limit.get -> long
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.Limit.init -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.Peak.get -> long
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.Peak.init -> void
-Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.AgentSessionState(Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd? EndedAs = null, int? ExitCode = null, string? Detail = null, bool Refused = false, Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit? Limit = null, bool FoundEnded = false, Aw.Sindri.Core.Skills.SkillFinished? Skill = null, string? SkillFailure = null) -> void
-Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd? EndedAs, out int? ExitCode, out string? Detail, out bool Refused, out Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit? Limit, out bool FoundEnded, out Aw.Sindri.Core.Skills.SkillFinished? Skill, out string? SkillFailure) -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.AgentSessionState(Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd? EndedAs = null, int? ExitCode = null, string? Detail = null, bool Refused = false, Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit? Limit = null, bool FoundEnded = false, Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished? Skill = null, string? SkillFailure = null) -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd? EndedAs, out int? ExitCode, out string? Detail, out bool Refused, out Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit? Limit, out bool FoundEnded, out Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished? Skill, out string? SkillFailure) -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.FoundEnded.get -> bool
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.FoundEnded.init -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.Limit.get -> Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit?
@@ -22385,24 +22385,24 @@ static Aw.Sindri.Core.Skills.SkillRequires.None.get -> Aw.Sindri.Core.Skills.Ski
 static Aw.Sindri.Core.Skills.SkillRequires.Parse(string! text, out string? problem) -> Aw.Sindri.Core.Skills.SkillRequires!
 static Aw.Sindri.Core.Skills.SkillRequires.operator !=(Aw.Sindri.Core.Skills.SkillRequires? left, Aw.Sindri.Core.Skills.SkillRequires? right) -> bool
 static Aw.Sindri.Core.Skills.SkillRequires.operator ==(Aw.Sindri.Core.Skills.SkillRequires? left, Aw.Sindri.Core.Skills.SkillRequires? right) -> bool
-Aw.Sindri.Core.Skills.SkillFinished
-Aw.Sindri.Core.Skills.SkillFinished.<Clone>$() -> Aw.Sindri.Core.Skills.SkillFinished!
-Aw.Sindri.Core.Skills.SkillFinished.Equals(Aw.Sindri.Core.Skills.SkillFinished? other) -> bool
-override Aw.Sindri.Core.Skills.SkillFinished.Equals(object? obj) -> bool
-override Aw.Sindri.Core.Skills.SkillFinished.GetHashCode() -> int
-override Aw.Sindri.Core.Skills.SkillFinished.ToString() -> string!
-static Aw.Sindri.Core.Skills.SkillFinished.operator !=(Aw.Sindri.Core.Skills.SkillFinished? left, Aw.Sindri.Core.Skills.SkillFinished? right) -> bool
-static Aw.Sindri.Core.Skills.SkillFinished.operator ==(Aw.Sindri.Core.Skills.SkillFinished? left, Aw.Sindri.Core.Skills.SkillFinished? right) -> bool
-Aw.Sindri.Core.Skills.SkillFinished.SkillFinished(string! Outcome, System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Engine.FactValue!>! Outputs, string! ReportSha256, string! ResultFileSha256) -> void
-Aw.Sindri.Core.Skills.SkillFinished.Deconstruct(out string! Outcome, out System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Engine.FactValue!>! Outputs, out string! ReportSha256, out string! ResultFileSha256) -> void
-Aw.Sindri.Core.Skills.SkillFinished.Outcome.get -> string!
-Aw.Sindri.Core.Skills.SkillFinished.Outcome.init -> void
-Aw.Sindri.Core.Skills.SkillFinished.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Engine.FactValue!>!
-Aw.Sindri.Core.Skills.SkillFinished.Outputs.init -> void
-Aw.Sindri.Core.Skills.SkillFinished.ReportSha256.get -> string!
-Aw.Sindri.Core.Skills.SkillFinished.ReportSha256.init -> void
-Aw.Sindri.Core.Skills.SkillFinished.ResultFileSha256.get -> string!
-Aw.Sindri.Core.Skills.SkillFinished.ResultFileSha256.init -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished
+Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished.<Clone>$() -> Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished!
+Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished.Equals(Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished? other) -> bool
+override Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished.GetHashCode() -> int
+override Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished.ToString() -> string!
+static Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished.operator !=(Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished? left, Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished? right) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished.operator ==(Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished? left, Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished? right) -> bool
+Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished.SkillFinished(string! Outcome, System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Engine.FactValue!>! Outputs, string! ReportSha256, string! ResultFileSha256) -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished.Deconstruct(out string! Outcome, out System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Engine.FactValue!>! Outputs, out string! ReportSha256, out string! ResultFileSha256) -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished.Outcome.get -> string!
+Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished.Outcome.init -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Engine.FactValue!>!
+Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished.Outputs.init -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished.ReportSha256.get -> string!
+Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished.ReportSha256.init -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished.ResultFileSha256.get -> string!
+Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished.ResultFileSha256.init -> void
 Aw.Sindri.Core.Skills.SkillWatch
 Aw.Sindri.Core.Skills.SkillWatch.<Clone>$() -> Aw.Sindri.Core.Skills.SkillWatch!
 Aw.Sindri.Core.Skills.SkillWatch.Equals(Aw.Sindri.Core.Skills.SkillWatch? other) -> bool
@@ -22467,7 +22467,7 @@ static Aw.Sindri.Core.Launch.LaunchFiles.PromptedName(Aw.Sindri.Core.Launch.Laun
 Aw.Sindri.Core.Launches.ILaunchFiles.PromptedAt(Aw.Sindri.Core.Launch.LaunchId launch) -> System.DateTimeOffset?
 Aw.Sindri.Core.Launch.StepPolicy.TurnMarkers.get -> bool
 Aw.Sindri.Core.Launch.StepPolicy.TurnMarkers.init -> void
-Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.Skill.get -> Aw.Sindri.Core.Skills.SkillFinished?
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.Skill.get -> Aw.Sindri.Core.Workflow.Engine.Runtime.SkillFinished?
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.Skill.init -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.SkillFailure.get -> string?
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.SkillFailure.init -> void
@@ -22489,7 +22489,7 @@ Aw.Sindri.Core.Workflow.Blocks.BlockCatalog.WhyUnloaded(Aw.Sindri.Core.Workflow.
 Aw.Sindri.Core.Events.LaunchSkill.ResultFile.get -> string?
 Aw.Sindri.Core.Events.LaunchSkill.ResultFile.init -> void
 Aw.Sindri.Core.Skills.ISkillBlocks.Folder.get -> string!
-static Aw.Sindri.Core.Skills.SkillTrialRecipe.IsTrial(Aw.Sindri.Core.Launch.InstanceAddress instance) -> bool
+static Aw.Sindri.Core.Skills.SkillTrialRecipe.IsTrial(string! instanceAddress) -> bool
 Aw.Sindri.Core.Forge.IPullRequests.FileText(string! link, string! path, string! sha, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
 Aw.Sindri.Core.Forge.IPullRequests.Files(string! link, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Forge.PullFiles!>!>
 Aw.Sindri.Core.Forge.IPullRequests.SubmitReview(Aw.Sindri.Core.Forge.PullReview! review, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Forge.PullReviewOutcome>!>
