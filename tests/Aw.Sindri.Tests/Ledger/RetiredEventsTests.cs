@@ -48,7 +48,6 @@ public sealed class RetiredEventsTests : IDisposable
     [InlineData("workflow.retired")]
     [InlineData("line.phaseChanged")]
     [InlineData("recipe.approved")]
-    [InlineData("profile.approved")]
     [InlineData("scope.frozen")]
     public void Is_names_the_kinds_the_removed_engines_wrote(string type) => Assert.True(RetiredEvents.Is(type));
 
@@ -56,6 +55,8 @@ public sealed class RetiredEventsTests : IDisposable
     [InlineData("item.created")]
     [InlineData("item.linked")]
     [InlineData("service.ran")]
+    // why: profile approval is dropped by v2 PR 1, not PR3b; whichever of PR 1 and PR4b lands second moves this row up (engine, 2026-11-08).
+    [InlineData("profile.approved")]
     [InlineData("workflowish.started")]
     public void Is_leaves_the_live_kinds_alone(string type) => Assert.False(RetiredEvents.Is(type));
 }
