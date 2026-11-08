@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Sindri.Infrastructure.Ledger;
 
 namespace Aw.Sindri.Tests.Ledger;
@@ -30,7 +31,7 @@ public sealed class ShippedMigrationTests
         {
             var migration = LedgerDatabase.Migrations.Single(m => m.Version == version);
             Assert.True(string.Equals(checksum, migration.Checksum, StringComparison.Ordinal),
-                $"Ledger migration {version} ({migration.Name}) changed text. A shipped migration never changes, comments included; put the change in a new migration.");
+                $"Ledger migration {version.ToString(CultureInfo.InvariantCulture)} ({migration.Name}) changed text. A shipped migration never changes, comments included; put the change in a new migration.");
         }
     }
 }
