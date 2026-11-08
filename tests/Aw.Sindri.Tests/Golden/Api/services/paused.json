@@ -136,30 +136,6 @@
       ]
     },
     {
-      "name": "pr-watch",
-      "every": "5s",
-      "paused": false,
-      "lastRun": null,
-      "nextSlot": null,
-      "job": null,
-      "actions": [
-        "run"
-      ],
-      "description": "Watches the pull requests that wait on the forge."
-    },
-    {
-      "name": "router-stub",
-      "every": "5s",
-      "paused": false,
-      "lastRun": null,
-      "nextSlot": null,
-      "job": null,
-      "actions": [
-        "run"
-      ],
-      "description": "Routes each started item to its workflow."
-    },
-    {
       "name": "setup",
       "every": "1m",
       "paused": false,
@@ -182,18 +158,6 @@
         "run",
         "pause"
       ]
-    },
-    {
-      "name": "workflow-events",
-      "every": "5s",
-      "paused": false,
-      "lastRun": null,
-      "nextSlot": null,
-      "job": null,
-      "actions": [
-        "run"
-      ],
-      "description": "Passes ledger events to the running workflows."
     }
   ],
   "empty": null,
