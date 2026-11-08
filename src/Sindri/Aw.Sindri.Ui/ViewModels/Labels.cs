@@ -104,7 +104,7 @@ internal static partial class Labels
     internal const string LastEventCard = "Last event";
 
     /// <summary>The services card with none scheduled.</summary>
-    internal const string NoServices = "none scheduled (the approved profile names no services)";
+    internal const string NoServices = "none scheduled (the profile names no services)";
 
     /// <summary>The not-running panel's fix prompt.</summary>
     internal const string StartIt = "Start it:";
