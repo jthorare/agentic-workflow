@@ -1,8 +1,7 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.30",
   "title": "SND-LINEAR-012",
   "status": 429,
   "detail": "Linear is rate-limiting this key; nothing was sent (fix: retry after 10:06)",
-  "traceId": "<trace>",
-  "retryAfter": "2026-01-01T10:06:00.0000000Z"
+  "retryAfter": "2026-01-01T10:06:00.0000000Z",
+  "traceId": "<trace>"
 }

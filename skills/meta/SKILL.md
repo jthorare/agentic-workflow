@@ -63,6 +63,7 @@ it prints what you owe and the command that settles it. Settle it, don't argue w
    `team.json` `agent` or `launcher.json` puts a lane on another agent, the launcher prints `lane <l>: <agent>, takes part in the obligations
    through its hooks` (the hooks come from `scripts/install-meta.sh --provider codex|cursor`) or, for a CLI with no
    hook system, `lane <l>: <agent>, launch-only: no obligations`: don't message a lane marked launch-only.
+   Lanes run in your login shell (`$SHELL -lc`, else bash) with the `PATH` of the shell that ran `aw-meta-launch`, even on a tmux server that was already up.
    `aw-meta-launch` refuses while the team's lanes still run on tmux's default socket (the pre-switch team). The meta
    session must never pass `--allow-legacy` or set `AW_META_ALLOW_LEGACY`: they skip the check that stops a second agent on the same transcripts. Tell the owner.
    The team runs on its own tmux socket, named after the team, so attach with `tmux -L <team> attach -t =<team>-<lane>`
@@ -230,6 +231,15 @@ A Claude usage limit stops every lane and your own subagents at once ("You've hi
 - On `USAGE OK meta` (or the `usage-wait` exit): resume your own subagents with SendMessage (their ids are in your digest), re-arm
   `aw-meta watch`, then run `aw-meta usage` and confirm every lane is `ok`. A lane still `limited` after the reset
   (`USAGE RESUME FAILED`, or it was busy or had a draft in its box) needs a nudge: SendMessage it (`aw-meta lane-send` only for a non-Claude lane; it refuses a Claude lane, AW-META-017).
+
+## Usage across providers
+
+`aw-meta usage` also shows, per lane, the agent and model it is assigned and what its provider says is left (Codex: 5h and weekly percent used; Claude Code: only the limit stop; Cursor: nothing, shown as unknown). `aw-meta route` turns that into moves, using `routing.equivalents` in the team config (for example opus to gpt-5.5, haiku to gpt-5.4-mini).
+
+- Run `aw-meta route` when `watch` prints `ROUTE SUGGEST <lane> ...`, when `USAGE LIMITED` hits and the reset is hours away, and before you hand a lane new work.
+- It only prints. Read each `switch` line and each `keep` line (`keep` says why a limited lane cannot move: no equivalent model, the target provider is limited too, a relaunch is pending).
+- Switching a lane is your action. Run `aw-meta route --apply` (add `--lane <l>` for one lane), then log the decision: `aw-meta log-append --kind decision --text "route: moved <lane> from <from> to <to> because <reason>"`.
+- `--apply` writes `routing.lanes.<lane>` and starts nothing. The lane moves at its next start: for a Claude lane run `aw-meta lane-recycle <lane> --digest <path>` (it exits the Claude and relaunches the lane on the routed agent and model instead of clearing), then `aw-meta lane-send --lane <lane>` the digest line it prints (the new agent starts from its kickoff prompt). A lane already on Codex or Cursor: exit it and run `aw-meta-launch --lanes <lane>`. Do not move a lane whose provider shows `usage unknown` without saying so in the digest.
 
 ## The running log
 

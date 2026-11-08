@@ -1,3 +1,4 @@
+using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptScan;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
@@ -73,6 +74,9 @@ internal sealed class ContextMap(MapAdmin admin, MapReview review, MapProposals 
     public ValueTask<Result<Unit>> Release(int version, ContextScope scope, CancellationToken cancellationToken) => publishing.Release(version, scope, cancellationToken);
 
     public ValueTask<Result<MapPublishView>> PublishStatus(ContextScope scope, CancellationToken cancellationToken) => publishing.PublishStatus(scope, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<PinMove>>> PinMoves(MapVersion from, MapVersion to, ContextScope scope, CancellationToken cancellationToken) =>
+        publishing.PinMoves(from, to, scope, cancellationToken);
 
     public ValueTask<Result<ProposeResult>> Propose(ScopeProposal proposal, ContextScope scope, CancellationToken cancellationToken) =>
         proposals.Propose(proposal, scope, cancellationToken);

@@ -226,7 +226,8 @@ public static class SindriInfrastructureServiceCollectionExtensions
     private static IServiceCollection AddLeftoverInfrastructure(this IServiceCollection services) => services
         .AddSingleton<IPurgeDocker>(static _ => new ToolPurgeDocker(new ProcessToolRunner()))
         .AddSingleton<IPurgeKeychain>(static _ => new ToolPurgeKeychain(new ProcessToolRunner()))
-        .AddSingleton<ILeftoverFiles, DiskLeftoverFiles>();
+        .AddSingleton<ILeftoverFiles, DiskLeftoverFiles>()
+        .AddSingleton<Core.Linear.ILinearCheckStore, Linear.FileLinearCheckStore>();   // what the last save found out about each Linear key, so Settings' read needs no key lookup
 
     // 'profile set' (#1740): the in-place key writer and the reader that checks its result before it is written.
     private static IServiceCollection AddProfileEditing(this IServiceCollection services, Func<string, string?> environment)
@@ -238,7 +239,10 @@ public static class SindriInfrastructureServiceCollectionExtensions
         => services
             .AddSingleton<ISindriHome, SettingsSindriHome>()
             .AddSingleton<ISecretWriter>(static sp => new KeychainSecretWriter(new ProcessToolRunner(), sp.GetRequiredService<ISindriHome>()))   // the key into the OS store, else an owner-only file
-            .AddSingleton<ISourceTokenProfileWriter, YamlSourceTokenProfileWriter>()
+            .AddSingleton<YamlSourceTokenProfileWriter>()
+            .AddSingleton<ISourceTokenProfileWriter>(static sp => sp.GetRequiredService<YamlSourceTokenProfileWriter>())
+            .AddSingleton<ILinearWriteTokenWriter>(static sp => sp.GetRequiredService<YamlSourceTokenProfileWriter>())
+            .AddSingleton<ILinearProfileEditCheck>(static sp => sp.GetRequiredService<YamlSourceTokenProfileWriter>())
             .AddSingleton<ISecretPrompts, TerminalSecretPrompts>();                                       // the owner at the terminal, no echo for the token                      // the source pointer line in the live profile
 
     /// <summary>

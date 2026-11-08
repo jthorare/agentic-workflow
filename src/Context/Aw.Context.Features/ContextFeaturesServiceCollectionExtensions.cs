@@ -56,6 +56,7 @@ using Aw.Context.Features.GetHistory;
 using Aw.Context.Features.GetLenses;
 using Aw.Context.Features.GetPageFacts;
 using Aw.Context.Features.GetPages;
+using Aw.Context.Features.GetPinMoves;
 using Aw.Context.Features.GetPinSuggest;
 using Aw.Context.Features.GetProjects;
 using Aw.Context.Features.GetProposals;
@@ -213,7 +214,8 @@ public static class ContextFeaturesServiceCollectionExtensions
         .AddScoped<IService<HeldMapRequest, MapPublishState>, HeldMapService>()
         .AddScoped<IService<HoldMapRequest, MapHold>, HoldMapService>()
         .AddScoped<IService<ReleaseMapRequest, Unit>, ReleaseMapService>()
-        .AddScoped<IService<ShowPublishStatusRequest, MapPublishView>, ShowPublishStatusService>();
+        .AddScoped<IService<ShowPublishStatusRequest, MapPublishView>, ShowPublishStatusService>()
+        .AddScoped<IService<GetPinMovesRequest, IReadOnlyList<PinMove>>, GetPinMovesService>();
 
     // The repo heads the map watcher reads (F1).
     private static IServiceCollection AddRelinkPinAliases(this IServiceCollection services) =>

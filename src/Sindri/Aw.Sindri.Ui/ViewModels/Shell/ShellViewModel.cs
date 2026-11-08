@@ -71,7 +71,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         Inbox = InitInbox(api, clipboard, (window ?? WindowPorts.None).Launcher);
         InitSandbox();
         window ??= WindowPorts.None;
-        (Setup, LibraryRoots) = (new SetupViewModel(api, Health.Catalog, clock, OpensInApp, window.Folders, () => Health.LiveProfile), InitLibraryRoots(api, window));
+        (Setup, LibraryRoots, LinearConnection) = (new SetupViewModel(api, Health.Catalog, clock, OpensInApp, window.Folders, () => Health.LiveProfile), InitLibraryRoots(api, window), InitLinearConnection(api));
         InitSetup();
         InitSheetNames();
         InitAgents(clipboard, window.Launcher);
@@ -225,6 +225,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         {
             ReadLibraryRoots();
             Setup.RevealChecklist();   // every way into Settings (the rail, ⌘,, G U, the setup link, Home's line) shows the checklist, its first section
+            ReadLinearConnection();   // after the checklist's reveal, so a Connect that asked for the Linear card is the last scroll
         }
 
         if (page == PageId.Context)
@@ -245,6 +246,10 @@ internal sealed partial class ShellViewModel : ObservableObject
         if (page == PageId.Settings)
         {
             _beforeSettings = CurrentPage;
+        }
+        else if (CurrentPage == PageId.Settings)
+        {
+            LinearConnection.Leave();   // the click's own "Saved." goes with the page, so the next open shows what is true then
         }
 
         CurrentPage = page;

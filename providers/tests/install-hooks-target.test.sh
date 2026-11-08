@@ -63,7 +63,7 @@ check "codex: hooks.json lands in the target dir" "$([ -f "$XT/hooks.json" ] && 
 check "codex: scripts and adapter land in DIR/hooks" "$([ -x "$XT/hooks/block-destructive.sh" ] && [ -x "$XT/hooks/adapters/codex.sh" ] && [ -f "$XT/hooks/lib/locks.sh" ] && echo y)" "y"
 check "codex: commands go through DIR's adapter" \
   "$(jq -r '.hooks.PreToolUse[].hooks[].command | select(endswith("# aw:block-destructive"))' "$XT/hooks.json")" \
-  "$XT/hooks/adapters/codex.sh $XT/hooks/block-destructive.sh # aw:block-destructive"
+  "'$XT/hooks/adapters/codex.sh' '$XT/hooks/block-destructive.sh' # aw:block-destructive"
 check "codex: every command is rooted at DIR" \
   "$(jq -r '[.hooks[][].hooks[].command | select(contains("'"$XT"'/hooks/") | not)] | length' "$XT/hooks.json")" "0"
 check "codex: the real home is untouched" "$(home_files)" "0"

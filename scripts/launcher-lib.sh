@@ -17,6 +17,13 @@
 #                                   team.json "agent" sets every lane, including the meta lane, and replaces this
 #                                   launch's meta.lanesAgent and meta.lanes. Absent or null changes nothing. Returns 2
 #                                   when the value is not an agent id.
+#   launcher_apply_routing <team.json> <meta-lane>
+#                                   team.json routing.lanes.<lane> {agent?, model?} (what `aw-meta route --apply` writes) puts that lane
+#                                   on its routed agent (a model with no agent takes the agent routing.models lists it under) and
+#                                   records its model. Runs after launcher_apply_team_agent; a lane with no entry changes nothing.
+#                                   The meta lane is never routed. Returns 2 when the block cannot be read.
+#   launcher_lane_routed <lane>     0 when routing.lanes names the lane's agent
+#   launcher_lane_model <lane>      the lane's routed model as text, empty when it has none
 #   launcher_lane_agent <lane> <meta-lane>   the lane's agent id (the meta lane's is meta.lanes.<meta-lane>, else claude-code: lanesAgent never reaches it)
 #   launcher_agent_ok <id>          0 when the catalog has a usable entry, else prints SND-LAUNCH-003/-011 and returns 1
 #   launcher_agent_field <id> <f>   one catalog field as text (empty for null/absent); arrays and objects as JSON
@@ -170,6 +177,25 @@ launcher_apply_team_agent() { # <team.json> <meta-lane>
   id="$(jq -r .agent "$1")"
   LAUNCHER_DOC="$(jq -c --arg a "$id" --arg m "$2" '.meta = ((.meta // {}) | .lanesAgent = $a | .lanes = {($m): $a})' <<< "$LAUNCHER_DOC")"
 }
+
+# shellcheck disable=SC2016
+launcher_apply_routing() { # <team.json> <meta-lane>
+  [ -f "$1" ] || return 0
+  local routed
+  routed="$(jq -c --arg meta "$2" '
+    (.routing // {}) as $r
+    | ($r.models // {}) as $models
+    | reduce (($r.lanes // {}) | to_entries[] | select(.key != $meta and (.value | type) == "object")) as $e ({agents: {}, models: {}};
+        ($e.value.agent // (if ($e.value.model | type) == "string" then ($models | to_entries | map(select(.value | index($e.value.model))) | .[0].key) else null end)) as $a
+        | (if $a then .agents[$e.key] = $a else . end)
+        | (if ($e.value.model | type) == "string" then .models[$e.key] = $e.value.model else . end))
+  ' "$1")" || { echo "launcher: $1: could not read routing" >&2; return 2; }
+  LAUNCHER_DOC="$(jq -c --argjson r "$routed" '.meta = ((.meta // {}) | .lanes = ((.lanes // {}) + $r.agents) | .routed = ($r.agents | keys) | .laneModels = $r.models)' <<< "$LAUNCHER_DOC")"
+}
+
+launcher_lane_routed() { jq -e --arg l "$1" '(.meta.routed // []) | index($l) != null' <<< "$LAUNCHER_DOC" > /dev/null; }
+
+launcher_lane_model() { jq -r --arg l "$1" '.meta.laneModels[$l] // empty' <<< "$LAUNCHER_DOC"; }
 
 launcher_lane_agent() { # lane meta-lane
   # The meta's own pane stays Claude Code unless meta.lanes names it (spec section 9): lanesAgent is the lanes' default, never the

@@ -18,20 +18,31 @@ def entry_ok:
 if $entry != null and (entry_ok | not)
 then error("every command in the entry must end with '" + tag + "'")
 else
+  # In place: the first group that holds an owned command is replaced where it stands, so a reinstall never moves an
+  # entry. Codex keys its hook trust by event and position and hashes the entry, so a moved or reworded one loses trust.
+  # Later owned duplicates are dropped; a group that also holds foreign commands keeps them and the entry is appended.
+  def owned_in_group: ((.hooks // []) | any(owned));
+  def foreign_only: .hooks = [ (.hooks // [])[] | select(owned | not) ];
+  def merged($list):
+    if is_flat then
+      ([ $list | to_entries[] | select(.value | owned) | .key ] | first // null) as $at
+      | if $entry == null or $at == null
+        then [ $list[] | select(owned | not) ] + (if $entry == null then [] else [$entry] end)
+        else [ $list | to_entries[] | if .key == $at then $entry elif (.value | owned) then empty else .value end ]
+        end
+    else
+      ([ $list | to_entries[] | select(.value | owned_in_group) | .key ] | first // null) as $at
+      | if $entry == null or $at == null or ($list[$at].hooks | all(owned) | not)
+        then [ $list[] | foreign_only | select(.hooks | length > 0) ] + (if $entry == null then [] else [$entry] end)
+        else [ $list | to_entries[]
+               | if .key == $at then $entry
+                 elif (.value | owned_in_group) then (.value | foreign_only | select(.hooks | length > 0))
+                 else .value end ]
+        end
+    end;
   .hooks = (
     (.hooks // {}) as $h
-    | $h + {
-        ($event): (
-          (if is_flat then
-             [ ($h[$event] // [])[] | select(owned | not) ]
-           else
-             [ ($h[$event] // [])[]
-               | .hooks = [ (.hooks // [])[] | select(owned | not) ]
-               | select(.hooks | length > 0) ]
-           end)
-          + (if $entry == null then [] else [$entry] end)
-        )
-      }
+    | $h + { ($event): merged($h[$event] // []) }
   )
   | if (.hooks[$event] | length) == 0 then .hooks |= del(.[$event]) else . end
   | if is_flat then .version = (.version // 1) else . end
