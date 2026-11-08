@@ -226,17 +226,31 @@ launcher_is_codex() {
 
 # launcher_cli_has_flag <bin> <flag>: whether `<bin> --help` names the flag. One run, output to a temp file, ended after
 # AW_LAUNCHER_PROBE_SECONDS (default 5) so a CLI that hangs never stops a lane (no `timeout` on macOS). A CLI that does not run answers no.
+# The run is its own process group (set -m in a subshell, bash 3.2 safe), and the whole group is ended: a wrapper script's children
+# do not outlive the probe (#2329). The group is killed by its recorded id, never by a name pattern.
 launcher_cli_has_flag() {
-  local bin="$1" flag="$2" out pid i found=1
+  local bin="$1" flag="$2" out found=1
   out="$(mktemp "${TMPDIR:-/tmp}/aw-probe.XXXXXX")" || return 1
-  "$bin" --help > "$out" 2>&1 < /dev/null &
-  pid=$!
-  for ((i = 0; i < ${AW_LAUNCHER_PROBE_SECONDS:-5} * 10; i++)); do
-    kill -0 "$pid" 2> /dev/null || break
-    sleep 0.1
-  done
-  if kill -0 "$pid" 2> /dev/null; then kill "$pid" 2> /dev/null; fi
-  wait "$pid" 2> /dev/null
+  (
+    set -m
+    "$bin" --help > "$out" 2>&1 < /dev/null &
+    pid=$!
+    set +m   # job control was for the probe's group only: the loop's sleep below is not a job
+    # The probe's group is outside the lane's, so a hangup of the lane's terminal does not reach it: end it here.
+    trap 'kill -TERM -- "-$pid" 2> /dev/null; exit 1' HUP INT TERM
+    for ((i = 0; i < ${AW_LAUNCHER_PROBE_SECONDS:-5} * 10; i++)); do
+      kill -0 "$pid" 2> /dev/null || break
+      sleep 0.1
+    done
+    kill -TERM -- "-$pid" 2> /dev/null   # the group lives while any member lives, so this also reaches children of a finished leader
+    for ((i = 0; i < 10; i++)); do
+      kill -0 "$pid" 2> /dev/null || break
+      sleep 0.1
+    done
+    kill -KILL -- "-$pid" 2> /dev/null   # a member that ignored TERM; wait below would otherwise block until it exits
+    wait "$pid" 2> /dev/null
+    exit 0
+  ) 2> /dev/null
   grep -q -- "$flag" "$out" 2> /dev/null && found=0
   unlink "$out" 2> /dev/null
   return "$found"

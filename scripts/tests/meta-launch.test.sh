@@ -516,6 +516,7 @@ fi
 # the pane really shows in the .agent record, which is what aw-meta's wake guard compares.
 cat > "$WORK/codex-npm" <<'EOF'
 #!/usr/bin/env bash
+[ "${1:-}" = --help ] && exit 0   # the launcher's --no-daemon probe runs the agent with --help: this stub must not run its body then
 if command -v node > /dev/null 2>&1; then exec node -e "require('child_process').spawnSync('sleep', ['60'], { stdio: 'inherit' })"; fi
 exec -a node SLEEPER_NODE 60
 EOF
