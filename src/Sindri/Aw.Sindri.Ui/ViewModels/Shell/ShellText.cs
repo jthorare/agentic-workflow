@@ -93,6 +93,12 @@ internal sealed class ShellText
     /// <summary><see cref="Labels.Undo"/>.</summary>
     public string Undo { get; } = Labels.Undo;
 
+    /// <summary><see cref="Labels.ToastRegion"/>.</summary>
+    public string ToastRegion { get; } = Labels.ToastRegion;
+
+    /// <summary><see cref="Labels.ToastUndoName"/>.</summary>
+    public string ToastUndoName { get; } = Labels.ToastUndoName;
+
     /// <summary><see cref="Labels.UndoMarkAllSeen"/>.</summary>
     public string UndoMarkAllSeen { get; } = Labels.UndoMarkAllSeen;
 
