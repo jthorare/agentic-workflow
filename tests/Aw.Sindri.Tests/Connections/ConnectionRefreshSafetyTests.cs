@@ -210,16 +210,17 @@ public sealed class ConnectionRefreshSafetyTests
         var world = new ConnectionHarness();
         await world.Hold();
         var row = ConnectionSamples.Oauth(status: ConnectionStatus.NeedsSignIn);
-        _ = world.Secrets.Store(row.Name, new TokenSet("old-access", "old-refresh", ExpiresAt: null));
+        var pointer = world.Secrets.Store(row.Name, new TokenSet("old-access", "old-refresh", ExpiresAt: null)).Value;
         _ = await world.Store.Upsert(row, Token);
         var signing = world.SignInAgain().Handle(new SignInConnectionRequest("linear:work", Wait: true), Token).AsTask();
 
         _ = await world.Store.Remove(row.Name, Token);
+        _ = world.Secrets.Delete(pointer);   // as the remove command does
         world.SignIn.Succeed(new TokenSet("new-access", "new-refresh", ExpiresAt: null));
         var signed = await signing;
 
         Assert.Equal(SindriErrors.ConnectionNotFound.Code, signed.Error.Code);
-        Assert.Empty(world.Secrets.Pointers);   // the tokens the sign-in just stored are deleted with no row to own them
+        Assert.Empty(world.Secrets.Pointers);   // the sign-in found no row, so it stored no tokens
     }
 
     [Fact]

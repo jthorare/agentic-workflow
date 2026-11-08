@@ -1,8 +1,10 @@
 using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Connections.OAuth;
+using Aw.Sindri.Core.Secrets;
 using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Features.AddConnection;
@@ -16,11 +18,11 @@ namespace Aw.Sindri.Features.AddConnection;
 /// <param name="store">The connections.</param>
 /// <param name="secrets">Stores the tokens.</param>
 /// <param name="signIn">Starts the browser sign-in.</param>
-/// <param name="time">The clock.</param>
+/// <param name="gate">The command gate a sign-in of a stored row takes for its write (the command itself runs ungated, so the browser wait and the keychain never hold it).</param>
 /// <param name="outcomes">Remembers a failed sign-in.</param>
 /// <param name="events">Records that a connection is signed in again, so its Needs-you row clears.</param>
 /// <param name="logger">Logs a failed sign-in by code; null logs nothing.</param>
-internal sealed partial class OAuthSignInFlow(IConnectionStore store, IConnectionSecrets secrets, ISignInSession signIn, TimeProvider time, SignInOutcomes outcomes, ConnectionEvents events, ILogger<OAuthSignInFlow>? logger = null)
+internal sealed partial class OAuthSignInFlow(IConnectionStore store, IConnectionSecrets secrets, ISignInSession signIn, ICommandGate gate, SignInOutcomes outcomes, ConnectionEvents events, ILogger<OAuthSignInFlow>? logger = null)
 {
     /// <summary>The Config key a finished sign-in stamps with the time, so a caller can wait for its own sign-in.</summary>
     internal const string SignedInAt = "signedInAt";
@@ -32,7 +34,7 @@ internal sealed partial class OAuthSignInFlow(IConnectionStore store, IConnectio
         var started = await signIn.Start(add.Preset, add.Client, add.Scopes, add.Secret, Limit(add.Wait, cancellationToken)).ConfigureAwait(false);
         return started.IsError
             ? ConnectionFailures.Safe(started.Error)
-            : await Follow(Sign.Of(add, time.GetUtcNow()), started.Value, add.Wait, cancellationToken).ConfigureAwait(false);
+            : await Follow(Sign.Of(add, events.Now), started.Value, add.Wait, cancellationToken).ConfigureAwait(false);
     }
 
     // An mcp server's own sign-in: its metadata, a client registered on the spot, then the same loopback callback. The start's failure text is fixed text with no server content, so it is kept (it says how to use a key instead).
@@ -43,7 +45,7 @@ internal sealed partial class OAuthSignInFlow(IConnectionStore store, IConnectio
         var started = await signIn.StartMcp(add.Server, Limit(add.Wait, cancellationToken)).ConfigureAwait(false);
         return started.IsError
             ? started.Error
-            : await Follow(Sign.Of(add, time.GetUtcNow()), started.Value, add.Wait, cancellationToken).ConfigureAwait(false);
+            : await Follow(Sign.Of(add, events.Now), started.Value, add.Wait, cancellationToken).ConfigureAwait(false);
     }
 
     // A request that waits ties the sign-in to its own token; one that does not (an agent) runs it under its own 5-minute limit alone.
@@ -98,31 +100,71 @@ internal sealed partial class OAuthSignInFlow(IConnectionStore store, IConnectio
             return ConnectionFailures.Safe(tokens.Error);
         }
 
-        var pointer = secrets.Store(sign.Pending.Name, tokens.Value with { ClientSecret = sign.ClientSecret });
+        var stored = tokens.Value with { ClientSecret = sign.ClientSecret };
+        return sign.Replaces
+            ? await Replace(sign, stored, cancellationToken).ConfigureAwait(false)
+            : await Insert(sign, stored, cancellationToken).ConfigureAwait(false);
+    }
+
+    // A new connection: the add command already holds the gate.
+    private async ValueTask<Result<Connection>> Insert(Sign sign, TokenSet tokens, CancellationToken cancellationToken)
+    {
+        var pointer = secrets.Store(sign.Pending.Name, tokens);
         if (pointer.IsError)
         {
             return ConnectionFailures.Safe(pointer.Error);
         }
 
-        var now = time.GetUtcNow();
-        // 'signedInAt' is the one field only a sign-in changes (a refresh moves LastRefreshedAt and UpdatedAt too), so 'sindri connection signin' can tell its own sign-in from a refresh tick
-        var config = new Dictionary<string, string>(sign.Pending.Config, StringComparer.Ordinal) { [SignedInAt] = now.ToString("O", CultureInfo.InvariantCulture) };
-        var row = sign.Pending with { Config = config, SecretPointer = pointer.Value, Status = ConnectionStatus.Connected, StatusReason = null, UpdatedAt = now, LastRefreshedAt = sign.Replaces ? now : sign.Pending.LastRefreshedAt };
-        var written = sign.Replaces
-            ? await store.Update(row, cancellationToken).ConfigureAwait(false)
-            : await store.Insert(row, cancellationToken).ConfigureAwait(false);
+        var row = Stamped(sign.Pending, pointer.Value, lastRefreshed: sign.Pending.LastRefreshedAt);
+        var written = await store.Insert(row, cancellationToken).ConfigureAwait(false);
         if (written.IsError)
         {
-            // why: a secret with no row is one nobody can remove. A row that still exists keeps its pointer (the key is the same), so only a removal during the browser wait (SND-CONN-001 on a replace) or a failed insert deletes it
-            if (!sign.Replaces || written.Error.Code == SindriErrors.ConnectionNotFound.Code)
-            {
-                _ = secrets.Delete(pointer.Value);
-            }
-
+            _ = secrets.Delete(pointer.Value);   // why: a secret with no row is one nobody can remove
             return ConnectionFailures.Safe(written.Error);
         }
 
         return row;
+    }
+
+    // A stored row signing in again: the command runs ungated, so the write waits for the gate, re-reads the row (a refresh or edit may have landed during the browser wait,
+    // and a removal means there is nothing to store tokens for) and stores the tokens only then.
+    private async ValueTask<Result<Connection>> Replace(Sign sign, TokenSet tokens, CancellationToken cancellationToken)
+    {
+        using var held = await gate.Enter(cancellationToken).ConfigureAwait(false);
+        if (held is null)
+        {
+            return SindriErrors.CommandBusy.With("another command held the command gate for 5 s; run the sign-in again");
+        }
+
+        var current = await store.Get(sign.Pending.Name, cancellationToken).ConfigureAwait(false);
+        if (current.IsError)
+        {
+            return ConnectionFailures.Safe(current.Error);   // removed during the browser wait: nothing is stored
+        }
+
+        var pointer = secrets.Store(sign.Pending.Name, tokens);
+        if (pointer.IsError)
+        {
+            return ConnectionFailures.Safe(pointer.Error);
+        }
+
+        var row = Stamped(current.Value, pointer.Value, lastRefreshed: events.Now);
+        var written = await store.Update(row, cancellationToken).ConfigureAwait(false);
+        if (written.IsError)
+        {
+            _ = secrets.Delete(pointer.Value);   // the row went away between the read and the write
+            return ConnectionFailures.Safe(written.Error);
+        }
+
+        return row;
+    }
+
+    // 'signedInAt' is the one field only a sign-in changes (a refresh moves LastRefreshedAt and UpdatedAt too), so 'sindri connection signin' can tell its own sign-in from a refresh tick.
+    private Connection Stamped(Connection basis, SecretPointer pointer, DateTimeOffset? lastRefreshed)
+    {
+        var now = events.Now;
+        var config = new Dictionary<string, string>(basis.Config, StringComparer.Ordinal) { [SignedInAt] = now.ToString("O", CultureInfo.InvariantCulture) };
+        return basis with { Config = config, SecretPointer = pointer, Status = ConnectionStatus.Connected, StatusReason = null, UpdatedAt = now, LastRefreshedAt = lastRefreshed };
     }
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "The sign-in for connection {Name} ended without a connection ({Code})")]
