@@ -6,6 +6,9 @@ namespace Aw.Sindri.Core.Connections.Polling;
 /// </summary>
 public static class PollBackoff
 {
+    // 2^20 x 30 s is far over the cap, and a shift past 62 would overflow the ticks.
+    private const int MaxDoublings = 20;
+
     /// <summary>Gets the first wait when the provider names none: 30 seconds.</summary>
     public static TimeSpan BaseDelay { get; } = TimeSpan.FromSeconds(30);
 
@@ -18,5 +21,10 @@ public static class PollBackoff
     /// <param name="now">The time of the failed poll.</param>
     /// <returns>The new failure count and the instant before which no poll runs.</returns>
     public static BackoffDecision Next(int previousFailures, TimeSpan? retryAfter, DateTimeOffset now)
-        => throw new NotSupportedException("red stub: PR 11 part 1");
+    {
+        var failures = Math.Max(previousFailures, 0);
+        var first = retryAfter is { } named && named > TimeSpan.Zero ? named : BaseDelay;
+        var delay = failures >= MaxDoublings ? MaxDelay : TimeSpan.FromTicks(Math.Min(Math.Min(first.Ticks, MaxDelay.Ticks) * (1L << failures), MaxDelay.Ticks));
+        return new BackoffDecision(failures + 1, now + delay);
+    }
 }

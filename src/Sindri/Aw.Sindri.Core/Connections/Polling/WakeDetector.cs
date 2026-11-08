@@ -8,14 +8,25 @@ namespace Aw.Sindri.Core.Connections.Polling;
 /// <param name="tick">The scheduler tick (30 s).</param>
 public sealed class WakeDetector(TimeProvider clock, TimeSpan tick)
 {
-    private readonly TimeProvider _clock = clock;
-    private readonly TimeSpan _tick = tick;
+    private DateTimeOffset? _wall;
+    private long _stamp;
 
     /// <summary>Compares the wall and monotonic time that passed since the last call. The first call only sets the baseline.</summary>
     /// <returns>True when the gap between the two is over 3 x tick; the baseline is reset either way.</returns>
     public bool Observe()
     {
-        _ = (_clock, _tick);
-        throw new NotSupportedException("red stub: PR 11 part 1");
+        var wall = clock.GetUtcNow();
+        var stamp = clock.GetTimestamp();
+        var previousWall = _wall;
+        var previousStamp = _stamp;
+        _wall = wall;
+        _stamp = stamp;
+        if (previousWall is null)
+        {
+            return false;
+        }
+
+        var monotonic = clock.GetElapsedTime(previousStamp, stamp);
+        return wall - previousWall.Value - monotonic > tick * 3;
     }
 }
