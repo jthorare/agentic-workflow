@@ -24498,3 +24498,248 @@ Aw.Sindri.Core.Launch.LaunchRequest.GithubPushApproved.get -> bool
 Aw.Sindri.Core.Launch.LaunchRequest.GithubPushApproved.init -> void
 Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.GithubPushApproved.get -> bool
 Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.GithubPushApproved.init -> void
+Aw.Sindri.Core.Connections.Connection
+Aw.Sindri.Core.Connections.Connection.<Clone>$() -> Aw.Sindri.Core.Connections.Connection!
+Aw.Sindri.Core.Connections.Connection.Config.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Connections.Connection.Config.init -> void
+Aw.Sindri.Core.Connections.Connection.Connection(Aw.Sindri.Core.Connections.ConnectionName Name, Aw.Sindri.Core.Connections.ConnectionKind Kind, string? Preset, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Config, Aw.Sindri.Core.Secrets.SecretPointer? SecretPointer, Aw.Sindri.Core.Connections.ConnectionStatus Status, string? StatusReason, string! CreatedBy, System.DateTimeOffset CreatedAt, System.DateTimeOffset UpdatedAt, System.DateTimeOffset? LastRefreshedAt) -> void
+Aw.Sindri.Core.Connections.Connection.CreatedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Connections.Connection.CreatedAt.init -> void
+Aw.Sindri.Core.Connections.Connection.CreatedBy.get -> string!
+Aw.Sindri.Core.Connections.Connection.CreatedBy.init -> void
+Aw.Sindri.Core.Connections.Connection.Deconstruct(out Aw.Sindri.Core.Connections.ConnectionName Name, out Aw.Sindri.Core.Connections.ConnectionKind Kind, out string? Preset, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Config, out Aw.Sindri.Core.Secrets.SecretPointer? SecretPointer, out Aw.Sindri.Core.Connections.ConnectionStatus Status, out string? StatusReason, out string! CreatedBy, out System.DateTimeOffset CreatedAt, out System.DateTimeOffset UpdatedAt, out System.DateTimeOffset? LastRefreshedAt) -> void
+Aw.Sindri.Core.Connections.Connection.Equals(Aw.Sindri.Core.Connections.Connection? other) -> bool
+Aw.Sindri.Core.Connections.Connection.Kind.get -> Aw.Sindri.Core.Connections.ConnectionKind
+Aw.Sindri.Core.Connections.Connection.Kind.init -> void
+Aw.Sindri.Core.Connections.Connection.LastRefreshedAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Connections.Connection.LastRefreshedAt.init -> void
+Aw.Sindri.Core.Connections.Connection.Name.get -> Aw.Sindri.Core.Connections.ConnectionName
+Aw.Sindri.Core.Connections.Connection.Name.init -> void
+Aw.Sindri.Core.Connections.Connection.Preset.get -> string?
+Aw.Sindri.Core.Connections.Connection.Preset.init -> void
+Aw.Sindri.Core.Connections.Connection.SecretPointer.get -> Aw.Sindri.Core.Secrets.SecretPointer?
+Aw.Sindri.Core.Connections.Connection.SecretPointer.init -> void
+Aw.Sindri.Core.Connections.Connection.Status.get -> Aw.Sindri.Core.Connections.ConnectionStatus
+Aw.Sindri.Core.Connections.Connection.Status.init -> void
+Aw.Sindri.Core.Connections.Connection.StatusReason.get -> string?
+Aw.Sindri.Core.Connections.Connection.StatusReason.init -> void
+Aw.Sindri.Core.Connections.Connection.UpdatedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Connections.Connection.UpdatedAt.init -> void
+Aw.Sindri.Core.Connections.ConnectionKind
+Aw.Sindri.Core.Connections.ConnectionKind.Cli = 3 -> Aw.Sindri.Core.Connections.ConnectionKind
+Aw.Sindri.Core.Connections.ConnectionKind.Mcp = 1 -> Aw.Sindri.Core.Connections.ConnectionKind
+Aw.Sindri.Core.Connections.ConnectionKind.OAuth = 0 -> Aw.Sindri.Core.Connections.ConnectionKind
+Aw.Sindri.Core.Connections.ConnectionKind.Rest = 2 -> Aw.Sindri.Core.Connections.ConnectionKind
+Aw.Sindri.Core.Connections.ConnectionName
+Aw.Sindri.Core.Connections.ConnectionName.ConnectionName() -> void
+Aw.Sindri.Core.Connections.ConnectionName.Equals(Aw.Sindri.Core.Connections.ConnectionName other) -> bool
+Aw.Sindri.Core.Connections.ConnectionName.Label.get -> string!
+Aw.Sindri.Core.Connections.ConnectionName.Label.init -> void
+Aw.Sindri.Core.Connections.ConnectionName.Service.get -> string!
+Aw.Sindri.Core.Connections.ConnectionName.Service.init -> void
+Aw.Sindri.Core.Connections.ConnectionPreset
+Aw.Sindri.Core.Connections.ConnectionPreset.<Clone>$() -> Aw.Sindri.Core.Connections.ConnectionPreset!
+Aw.Sindri.Core.Connections.ConnectionPreset.AuthorizeUrl.get -> string!
+Aw.Sindri.Core.Connections.ConnectionPreset.AuthorizeUrl.init -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.ConnectionPreset(string! Key, string! DisplayName, Aw.Sindri.Core.Connections.ConnectionKind Kind, string! AuthorizeUrl, string! TokenUrl, string? RevokeUrl, System.Collections.Generic.IReadOnlyList<string!>! DefaultScopes, string! HostGroup, bool LoopbackAllowed, string! SignInNote, System.Collections.Generic.IReadOnlyList<string!>! PollableEvents, string? ProbeUrl) -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.Deconstruct(out string! Key, out string! DisplayName, out Aw.Sindri.Core.Connections.ConnectionKind Kind, out string! AuthorizeUrl, out string! TokenUrl, out string? RevokeUrl, out System.Collections.Generic.IReadOnlyList<string!>! DefaultScopes, out string! HostGroup, out bool LoopbackAllowed, out string! SignInNote, out System.Collections.Generic.IReadOnlyList<string!>! PollableEvents, out string? ProbeUrl) -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.DefaultScopes.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Connections.ConnectionPreset.DefaultScopes.init -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.DisplayName.get -> string!
+Aw.Sindri.Core.Connections.ConnectionPreset.DisplayName.init -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.Equals(Aw.Sindri.Core.Connections.ConnectionPreset? other) -> bool
+Aw.Sindri.Core.Connections.ConnectionPreset.HostGroup.get -> string!
+Aw.Sindri.Core.Connections.ConnectionPreset.HostGroup.init -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.Key.get -> string!
+Aw.Sindri.Core.Connections.ConnectionPreset.Key.init -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.Kind.get -> Aw.Sindri.Core.Connections.ConnectionKind
+Aw.Sindri.Core.Connections.ConnectionPreset.Kind.init -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.LoopbackAllowed.get -> bool
+Aw.Sindri.Core.Connections.ConnectionPreset.LoopbackAllowed.init -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.PollableEvents.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Connections.ConnectionPreset.PollableEvents.init -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.ProbeUrl.get -> string?
+Aw.Sindri.Core.Connections.ConnectionPreset.ProbeUrl.init -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.RevokeUrl.get -> string?
+Aw.Sindri.Core.Connections.ConnectionPreset.RevokeUrl.init -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.SignInNote.get -> string!
+Aw.Sindri.Core.Connections.ConnectionPreset.SignInNote.init -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.TokenUrl.get -> string!
+Aw.Sindri.Core.Connections.ConnectionPreset.TokenUrl.init -> void
+Aw.Sindri.Core.Connections.ConnectionPresets
+Aw.Sindri.Core.Connections.ConnectionStatus
+Aw.Sindri.Core.Connections.ConnectionStatus.Connected = 0 -> Aw.Sindri.Core.Connections.ConnectionStatus
+Aw.Sindri.Core.Connections.ConnectionStatus.Error = 2 -> Aw.Sindri.Core.Connections.ConnectionStatus
+Aw.Sindri.Core.Connections.ConnectionStatus.NeedsSignIn = 1 -> Aw.Sindri.Core.Connections.ConnectionStatus
+Aw.Sindri.Core.Connections.ConnectionWire
+Aw.Sindri.Core.Connections.IConnectionPresetCatalog
+Aw.Sindri.Core.Connections.IConnectionPresetCatalog.Find(string! key) -> Aw.Sindri.Core.Connections.ConnectionPreset?
+Aw.Sindri.Core.Connections.IConnectionPresetCatalog.List() -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Connections.ConnectionPreset!>!>!
+Aw.Sindri.Core.Connections.IConnectionProbe
+Aw.Sindri.Core.Connections.IConnectionProbe.Probe(string! url, Aw.Sindri.Core.Connections.OAuth.TokenSet! tokens, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Connections.IConnectionSecrets
+Aw.Sindri.Core.Connections.IConnectionSecrets.Delete(Aw.Sindri.Core.Secrets.SecretPointer! location) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+Aw.Sindri.Core.Connections.IConnectionSecrets.Read(Aw.Sindri.Core.Secrets.SecretPointer! location) -> Aw.Kernel.Result<Aw.Sindri.Core.Connections.OAuth.TokenSet!>!
+Aw.Sindri.Core.Connections.IConnectionSecrets.Store(Aw.Sindri.Core.Connections.ConnectionName name, Aw.Sindri.Core.Connections.OAuth.TokenSet! tokens) -> Aw.Kernel.Result<Aw.Sindri.Core.Secrets.SecretPointer!>!
+Aw.Sindri.Core.Connections.IConnectionStore
+Aw.Sindri.Core.Connections.IConnectionStore.Get(Aw.Sindri.Core.Connections.ConnectionName name, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Connections.Connection!>!>
+Aw.Sindri.Core.Connections.IConnectionStore.List(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Connections.Connection!>!>!>
+Aw.Sindri.Core.Connections.IConnectionStore.Remove(Aw.Sindri.Core.Connections.ConnectionName name, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+Aw.Sindri.Core.Connections.IConnectionStore.Upsert(Aw.Sindri.Core.Connections.Connection! connection, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Connections.IEnvironmentReader
+Aw.Sindri.Core.Connections.IEnvironmentReader.Get(string! name) -> string?
+Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest
+Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest.<Clone>$() -> Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest!
+Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest.AuthorizationRequest(Aw.Sindri.Core.Connections.ConnectionPreset! Preset, string! Client, string! RedirectUri, System.Collections.Generic.IReadOnlyList<string!>! Scopes, Aw.Sindri.Core.Connections.OAuth.PkceChallenge! Pkce) -> void
+Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest.Client.get -> string!
+Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest.Client.init -> void
+Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest.Deconstruct(out Aw.Sindri.Core.Connections.ConnectionPreset! Preset, out string! Client, out string! RedirectUri, out System.Collections.Generic.IReadOnlyList<string!>! Scopes, out Aw.Sindri.Core.Connections.OAuth.PkceChallenge! Pkce) -> void
+Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest.Equals(Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest? other) -> bool
+Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest.Pkce.get -> Aw.Sindri.Core.Connections.OAuth.PkceChallenge!
+Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest.Pkce.init -> void
+Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest.Preset.get -> Aw.Sindri.Core.Connections.ConnectionPreset!
+Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest.Preset.init -> void
+Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest.RedirectUri.get -> string!
+Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest.RedirectUri.init -> void
+Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest.Scopes.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest.Scopes.init -> void
+Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest.ToUrl() -> System.Uri!
+Aw.Sindri.Core.Connections.OAuth.CodeExchange
+Aw.Sindri.Core.Connections.OAuth.CodeExchange.<Clone>$() -> Aw.Sindri.Core.Connections.OAuth.CodeExchange!
+Aw.Sindri.Core.Connections.OAuth.CodeExchange.Client.get -> string!
+Aw.Sindri.Core.Connections.OAuth.CodeExchange.Client.init -> void
+Aw.Sindri.Core.Connections.OAuth.CodeExchange.Code.get -> string!
+Aw.Sindri.Core.Connections.OAuth.CodeExchange.Code.init -> void
+Aw.Sindri.Core.Connections.OAuth.CodeExchange.CodeExchange(Aw.Sindri.Core.Connections.ConnectionPreset! Preset, string! Client, string! Code, string! RedirectUri, string! Verifier) -> void
+Aw.Sindri.Core.Connections.OAuth.CodeExchange.Deconstruct(out Aw.Sindri.Core.Connections.ConnectionPreset! Preset, out string! Client, out string! Code, out string! RedirectUri, out string! Verifier) -> void
+Aw.Sindri.Core.Connections.OAuth.CodeExchange.Equals(Aw.Sindri.Core.Connections.OAuth.CodeExchange? other) -> bool
+Aw.Sindri.Core.Connections.OAuth.CodeExchange.Preset.get -> Aw.Sindri.Core.Connections.ConnectionPreset!
+Aw.Sindri.Core.Connections.OAuth.CodeExchange.Preset.init -> void
+Aw.Sindri.Core.Connections.OAuth.CodeExchange.RedirectUri.get -> string!
+Aw.Sindri.Core.Connections.OAuth.CodeExchange.RedirectUri.init -> void
+Aw.Sindri.Core.Connections.OAuth.CodeExchange.Verifier.get -> string!
+Aw.Sindri.Core.Connections.OAuth.CodeExchange.Verifier.init -> void
+Aw.Sindri.Core.Connections.OAuth.IOAuthClient
+Aw.Sindri.Core.Connections.OAuth.IOAuthClient.ExchangeCode(Aw.Sindri.Core.Connections.OAuth.CodeExchange! exchange, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Connections.OAuth.TokenSet!>!>
+Aw.Sindri.Core.Connections.OAuth.IOAuthClient.Refresh(Aw.Sindri.Core.Connections.ConnectionPreset! preset, string! client, string! refreshToken, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Connections.OAuth.TokenSet!>!>
+Aw.Sindri.Core.Connections.OAuth.IOAuthClient.Revoke(Aw.Sindri.Core.Connections.ConnectionPreset! preset, string! client, string! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Connections.OAuth.ISignInSession
+Aw.Sindri.Core.Connections.OAuth.ISignInSession.Start(Aw.Sindri.Core.Connections.ConnectionPreset! preset, string! client, System.Collections.Generic.IReadOnlyList<string!>! scopes, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Connections.OAuth.SignInStarted!>!>
+Aw.Sindri.Core.Connections.OAuth.PkceChallenge
+Aw.Sindri.Core.Connections.OAuth.PkceChallenge.<Clone>$() -> Aw.Sindri.Core.Connections.OAuth.PkceChallenge!
+Aw.Sindri.Core.Connections.OAuth.PkceChallenge.Challenge.get -> string!
+Aw.Sindri.Core.Connections.OAuth.PkceChallenge.Challenge.init -> void
+Aw.Sindri.Core.Connections.OAuth.PkceChallenge.Deconstruct(out string! Verifier, out string! Challenge, out string! State) -> void
+Aw.Sindri.Core.Connections.OAuth.PkceChallenge.Equals(Aw.Sindri.Core.Connections.OAuth.PkceChallenge? other) -> bool
+Aw.Sindri.Core.Connections.OAuth.PkceChallenge.PkceChallenge(string! Verifier, string! Challenge, string! State) -> void
+Aw.Sindri.Core.Connections.OAuth.PkceChallenge.State.get -> string!
+Aw.Sindri.Core.Connections.OAuth.PkceChallenge.State.init -> void
+Aw.Sindri.Core.Connections.OAuth.PkceChallenge.Verifier.get -> string!
+Aw.Sindri.Core.Connections.OAuth.PkceChallenge.Verifier.init -> void
+Aw.Sindri.Core.Connections.OAuth.PkceChallenge.Verify(string? state) -> bool
+Aw.Sindri.Core.Connections.OAuth.SignInStarted
+Aw.Sindri.Core.Connections.OAuth.SignInStarted.<Clone>$() -> Aw.Sindri.Core.Connections.OAuth.SignInStarted!
+Aw.Sindri.Core.Connections.OAuth.SignInStarted.Completion.get -> System.Threading.Tasks.Task<Aw.Kernel.Result<Aw.Sindri.Core.Connections.OAuth.TokenSet!>!>!
+Aw.Sindri.Core.Connections.OAuth.SignInStarted.Completion.init -> void
+Aw.Sindri.Core.Connections.OAuth.SignInStarted.ConsentUrl.get -> System.Uri!
+Aw.Sindri.Core.Connections.OAuth.SignInStarted.ConsentUrl.init -> void
+Aw.Sindri.Core.Connections.OAuth.SignInStarted.Deconstruct(out System.Uri! ConsentUrl, out System.Threading.Tasks.Task<Aw.Kernel.Result<Aw.Sindri.Core.Connections.OAuth.TokenSet!>!>! Completion) -> void
+Aw.Sindri.Core.Connections.OAuth.SignInStarted.Equals(Aw.Sindri.Core.Connections.OAuth.SignInStarted? other) -> bool
+Aw.Sindri.Core.Connections.OAuth.SignInStarted.SignInStarted(System.Uri! ConsentUrl, System.Threading.Tasks.Task<Aw.Kernel.Result<Aw.Sindri.Core.Connections.OAuth.TokenSet!>!>! Completion) -> void
+Aw.Sindri.Core.Connections.OAuth.TokenSet
+Aw.Sindri.Core.Connections.OAuth.TokenSet.<Clone>$() -> Aw.Sindri.Core.Connections.OAuth.TokenSet!
+Aw.Sindri.Core.Connections.OAuth.TokenSet.AccessToken.get -> string!
+Aw.Sindri.Core.Connections.OAuth.TokenSet.AccessToken.init -> void
+Aw.Sindri.Core.Connections.OAuth.TokenSet.Deconstruct(out string! AccessToken, out string? RefreshToken, out System.DateTimeOffset? ExpiresAt) -> void
+Aw.Sindri.Core.Connections.OAuth.TokenSet.Equals(Aw.Sindri.Core.Connections.OAuth.TokenSet? other) -> bool
+Aw.Sindri.Core.Connections.OAuth.TokenSet.ExpiresAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Connections.OAuth.TokenSet.ExpiresAt.init -> void
+Aw.Sindri.Core.Connections.OAuth.TokenSet.RefreshToken.get -> string?
+Aw.Sindri.Core.Connections.OAuth.TokenSet.RefreshToken.init -> void
+Aw.Sindri.Core.Connections.OAuth.TokenSet.TokenSet(string! AccessToken, string? RefreshToken, System.DateTimeOffset? ExpiresAt) -> void
+const Aw.Sindri.Core.Connections.OAuth.PkceChallenge.Method = "S256" -> string!
+override Aw.Sindri.Core.Connections.Connection.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Connections.Connection.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.Connection.ToString() -> string!
+override Aw.Sindri.Core.Connections.ConnectionName.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.ConnectionName.ToString() -> string!
+override Aw.Sindri.Core.Connections.ConnectionPreset.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Connections.ConnectionPreset.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.ConnectionPreset.ToString() -> string!
+override Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest.ToString() -> string!
+override Aw.Sindri.Core.Connections.OAuth.CodeExchange.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Connections.OAuth.CodeExchange.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.OAuth.CodeExchange.ToString() -> string!
+override Aw.Sindri.Core.Connections.OAuth.PkceChallenge.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Connections.OAuth.PkceChallenge.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.OAuth.PkceChallenge.ToString() -> string!
+override Aw.Sindri.Core.Connections.OAuth.SignInStarted.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Connections.OAuth.SignInStarted.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.OAuth.SignInStarted.ToString() -> string!
+override Aw.Sindri.Core.Connections.OAuth.TokenSet.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Connections.OAuth.TokenSet.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.OAuth.TokenSet.ToString() -> string!
+static Aw.Sindri.Core.Connections.Connection.operator !=(Aw.Sindri.Core.Connections.Connection? left, Aw.Sindri.Core.Connections.Connection? right) -> bool
+static Aw.Sindri.Core.Connections.Connection.operator ==(Aw.Sindri.Core.Connections.Connection? left, Aw.Sindri.Core.Connections.Connection? right) -> bool
+static Aw.Sindri.Core.Connections.ConnectionName.Parse(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Connections.ConnectionName>!
+static Aw.Sindri.Core.Connections.ConnectionName.operator !=(Aw.Sindri.Core.Connections.ConnectionName left, Aw.Sindri.Core.Connections.ConnectionName right) -> bool
+static Aw.Sindri.Core.Connections.ConnectionName.operator ==(Aw.Sindri.Core.Connections.ConnectionName left, Aw.Sindri.Core.Connections.ConnectionName right) -> bool
+static Aw.Sindri.Core.Connections.ConnectionPreset.operator !=(Aw.Sindri.Core.Connections.ConnectionPreset? left, Aw.Sindri.Core.Connections.ConnectionPreset? right) -> bool
+static Aw.Sindri.Core.Connections.ConnectionPreset.operator ==(Aw.Sindri.Core.Connections.ConnectionPreset? left, Aw.Sindri.Core.Connections.ConnectionPreset? right) -> bool
+static Aw.Sindri.Core.Connections.ConnectionPresets.Parse(string! json) -> Aw.Kernel.Result<Aw.Sindri.Core.Connections.ConnectionPreset!>!
+static Aw.Sindri.Core.Connections.ConnectionWire.Name(Aw.Sindri.Core.Connections.ConnectionKind kind) -> string!
+static Aw.Sindri.Core.Connections.ConnectionWire.Name(Aw.Sindri.Core.Connections.ConnectionStatus status) -> string!
+static Aw.Sindri.Core.Connections.ConnectionWire.ParseKind(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Connections.ConnectionKind>!
+static Aw.Sindri.Core.Connections.ConnectionWire.ParseStatus(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Connections.ConnectionStatus>!
+static Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest.operator !=(Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest? left, Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest? right) -> bool
+static Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest.operator ==(Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest? left, Aw.Sindri.Core.Connections.OAuth.AuthorizationRequest? right) -> bool
+static Aw.Sindri.Core.Connections.OAuth.CodeExchange.operator !=(Aw.Sindri.Core.Connections.OAuth.CodeExchange? left, Aw.Sindri.Core.Connections.OAuth.CodeExchange? right) -> bool
+static Aw.Sindri.Core.Connections.OAuth.CodeExchange.operator ==(Aw.Sindri.Core.Connections.OAuth.CodeExchange? left, Aw.Sindri.Core.Connections.OAuth.CodeExchange? right) -> bool
+static Aw.Sindri.Core.Connections.OAuth.PkceChallenge.ChallengeFor(string! verifier) -> string!
+static Aw.Sindri.Core.Connections.OAuth.PkceChallenge.Create(System.Func<int, byte[]!>! randomBytes) -> Aw.Sindri.Core.Connections.OAuth.PkceChallenge!
+static Aw.Sindri.Core.Connections.OAuth.PkceChallenge.operator !=(Aw.Sindri.Core.Connections.OAuth.PkceChallenge? left, Aw.Sindri.Core.Connections.OAuth.PkceChallenge? right) -> bool
+static Aw.Sindri.Core.Connections.OAuth.PkceChallenge.operator ==(Aw.Sindri.Core.Connections.OAuth.PkceChallenge? left, Aw.Sindri.Core.Connections.OAuth.PkceChallenge? right) -> bool
+static Aw.Sindri.Core.Connections.OAuth.SignInStarted.operator !=(Aw.Sindri.Core.Connections.OAuth.SignInStarted? left, Aw.Sindri.Core.Connections.OAuth.SignInStarted? right) -> bool
+static Aw.Sindri.Core.Connections.OAuth.SignInStarted.operator ==(Aw.Sindri.Core.Connections.OAuth.SignInStarted? left, Aw.Sindri.Core.Connections.OAuth.SignInStarted? right) -> bool
+static Aw.Sindri.Core.Connections.OAuth.TokenSet.operator !=(Aw.Sindri.Core.Connections.OAuth.TokenSet? left, Aw.Sindri.Core.Connections.OAuth.TokenSet? right) -> bool
+static Aw.Sindri.Core.Connections.OAuth.TokenSet.operator ==(Aw.Sindri.Core.Connections.OAuth.TokenSet? left, Aw.Sindri.Core.Connections.OAuth.TokenSet? right) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionConsentDenied -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionExists -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionNameInvalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionNeedsClientId -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionNeedsSignIn -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionNotFound -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionRefreshFailed -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionSecretUnavailable -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionSignInTimeout -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionStateMismatch -> Aw.Kernel.ErrorDefinition!
+~override Aw.Sindri.Core.Connections.ConnectionName.Equals(object obj) -> bool
+Aw.Sindri.Core.Connections.ConnectionView
+Aw.Sindri.Core.Connections.ConnectionView.<Clone>$() -> Aw.Sindri.Core.Connections.ConnectionView!
+Aw.Sindri.Core.Connections.ConnectionView.Config.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Connections.ConnectionView.Config.init -> void
+Aw.Sindri.Core.Connections.ConnectionView.ConnectionView(string! Name, string! Kind, string? Preset, string! Status, string? StatusReason, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Config, System.DateTimeOffset? LastRefreshedAt, bool HasSecret) -> void
+Aw.Sindri.Core.Connections.ConnectionView.Deconstruct(out string! Name, out string! Kind, out string? Preset, out string! Status, out string? StatusReason, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Config, out System.DateTimeOffset? LastRefreshedAt, out bool HasSecret) -> void
+Aw.Sindri.Core.Connections.ConnectionView.Equals(Aw.Sindri.Core.Connections.ConnectionView? other) -> bool
+Aw.Sindri.Core.Connections.ConnectionView.HasSecret.get -> bool
+Aw.Sindri.Core.Connections.ConnectionView.HasSecret.init -> void
+Aw.Sindri.Core.Connections.ConnectionView.Kind.get -> string!
+Aw.Sindri.Core.Connections.ConnectionView.Kind.init -> void
+Aw.Sindri.Core.Connections.ConnectionView.LastRefreshedAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Connections.ConnectionView.LastRefreshedAt.init -> void
+Aw.Sindri.Core.Connections.ConnectionView.Name.get -> string!
+Aw.Sindri.Core.Connections.ConnectionView.Name.init -> void
+Aw.Sindri.Core.Connections.ConnectionView.Preset.get -> string?
+Aw.Sindri.Core.Connections.ConnectionView.Preset.init -> void
+Aw.Sindri.Core.Connections.ConnectionView.Status.get -> string!
+Aw.Sindri.Core.Connections.ConnectionView.Status.init -> void
+Aw.Sindri.Core.Connections.ConnectionView.StatusReason.get -> string?
+Aw.Sindri.Core.Connections.ConnectionView.StatusReason.init -> void
+override Aw.Sindri.Core.Connections.ConnectionView.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Connections.ConnectionView.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.ConnectionView.ToString() -> string!
+static Aw.Sindri.Core.Connections.ConnectionView.From(Aw.Sindri.Core.Connections.Connection! connection) -> Aw.Sindri.Core.Connections.ConnectionView!
+static Aw.Sindri.Core.Connections.ConnectionView.operator !=(Aw.Sindri.Core.Connections.ConnectionView? left, Aw.Sindri.Core.Connections.ConnectionView? right) -> bool
+static Aw.Sindri.Core.Connections.ConnectionView.operator ==(Aw.Sindri.Core.Connections.ConnectionView? left, Aw.Sindri.Core.Connections.ConnectionView? right) -> bool

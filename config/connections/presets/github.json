@@ -1,0 +1,14 @@
+{
+  "id": "github",
+  "displayName": "GitHub",
+  "kind": "oauth",
+  "authorizeUrl": "https://github.com/login/oauth/authorize",
+  "tokenUrl": "https://github.com/login/oauth/access_token",
+  "revokeUrl": null,
+  "defaultScopes": ["repo", "read:org"],
+  "hostGroup": "github",
+  "loopbackAllowed": true,
+  "signInNote": "Register an OAuth app with the callback http://127.0.0.1 and pass its client id with --client-id.",
+  "pollableEvents": [],
+  "probeUrl": "https://api.github.com/user"
+}

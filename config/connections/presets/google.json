@@ -1,0 +1,14 @@
+{
+  "id": "google",
+  "displayName": "Google",
+  "kind": "oauth",
+  "authorizeUrl": "https://accounts.google.com/o/oauth2/v2/auth",
+  "tokenUrl": "https://oauth2.googleapis.com/token",
+  "revokeUrl": "https://oauth2.googleapis.com/revoke",
+  "defaultScopes": ["openid", "email"],
+  "hostGroup": "google",
+  "loopbackAllowed": true,
+  "signInNote": "Create a Desktop-app OAuth client in Google Cloud and pass its client id with --client-id.",
+  "pollableEvents": [],
+  "probeUrl": "https://openidconnect.googleapis.com/v1/userinfo"
+}

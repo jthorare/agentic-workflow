@@ -62,6 +62,7 @@ internal static class EndpointTable
 
     private static RouteGroupBuilder MapProjectQueries(RouteGroupBuilder queries)
     {
+        _ = queries.MapConnectionReads();
         _ = queries.MapListLinearProjects();
         _ = queries.MapGetProject();
         _ = queries.MapGetProjects();
@@ -146,7 +147,7 @@ internal static class EndpointTable
         _ = commands.MapApproveProfile();
         _ = commands.MapCancelJob();
         _ = commands.MapResumeJob();
-        _ = commands.MapCloseItem().MapProjectWrites();
+        _ = commands.MapCloseItem().MapProjectWrites().MapConnectionWrites();
         _ = commands.MapEndLearnMode().MapAllowDenial();
         _ = commands.MapOpenItem();
         _ = commands.MapPauseService();

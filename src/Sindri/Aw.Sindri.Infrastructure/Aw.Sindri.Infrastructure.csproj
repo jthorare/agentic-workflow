@@ -21,6 +21,8 @@
     <!-- the built-in agent catalog, once in config/launcher (collector spec CA-0) -->
     <EmbeddedResource Include="../../../config/launcher/builtins.json" LogicalName="builtins.json" Link="Launch/builtins.json" />
     <EmbeddedResource Include="../../../config/launcher/terminals.json" LogicalName="terminals.json" Link="Launch/terminals.json" />
+    <!-- the connection presets (connections PR 10a): config/connections/presets/<id>.json, embedded as connection-presets/<id>.json -->
+    <EmbeddedResource Include="../../../config/connections/presets/*.json" LogicalName="connection-presets/%(Filename)%(Extension)" Link="Connections/presets/%(Filename)%(Extension)" />
     <!-- the built-in lens packs (line spec §5.2, LN-PK lite): config/packs/lenses/<id>/..., embedded as lens-packs/<id>/<path> -->
     <LensPackFile Include="../../../config/packs/lenses/**/*" />
     <EmbeddedResource Include="@(LensPackFile)" LogicalName="lens-packs/$([System.String]::Copy('%(RecursiveDir)').Replace('\', '/'))%(Filename)%(Extension)" />

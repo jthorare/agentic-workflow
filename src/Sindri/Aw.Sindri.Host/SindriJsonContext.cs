@@ -56,6 +56,7 @@ using Aw.Sindri.Features.ApplyCommand;
 using Aw.Sindri.Features.ApproveAllRecipes;
 using Aw.Sindri.Features.ApproveProfile;
 using Aw.Sindri.Features.ApproveRecipe;
+using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.AttachProject;
 using Aw.Sindri.Features.CancelJob;
 using Aw.Sindri.Features.CheckPack;
@@ -86,6 +87,8 @@ using Aw.Sindri.Features.GetLinearLookups;
 using Aw.Sindri.Features.GetLinearSince;
 using Aw.Sindri.Features.GetNeedsYou;
 using Aw.Sindri.Features.GetProfile;
+using Aw.Sindri.Core.Connections;
+using Aw.Sindri.Features.GetConnection;
 using Aw.Sindri.Features.GetProject;
 using Aw.Sindri.Features.GetQueue;
 using Aw.Sindri.Features.GetRepoStatus;
@@ -95,6 +98,8 @@ using Aw.Sindri.Features.GetSession;
 using Aw.Sindri.Features.GetSetup;
 using Aw.Sindri.Features.GetStatus;
 using Aw.Sindri.Features.HideProject;
+using Aw.Sindri.Features.RemoveConnection;
+using Aw.Sindri.Features.TestConnection;
 using Aw.Sindri.Features.InitProfile;
 using Aw.Sindri.Features.IssueChallenge;
 using Aw.Sindri.Features.IssueNonce;
@@ -106,6 +111,7 @@ using Aw.Sindri.Features.ListDecisions;
 using Aw.Sindri.Features.ListDenials;
 using Aw.Sindri.Features.ListItems;
 using Aw.Sindri.Features.ListJobs;
+using Aw.Sindri.Features.ListConnections;
 using Aw.Sindri.Features.ListLinearProjects;
 using Aw.Sindri.Features.ListOutbox;
 using Aw.Sindri.Features.ListProjects;
@@ -186,6 +192,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(ListLinearIssuesRequest)), JsonSerializable(typeof(ListLinearIssuesResponse)), JsonSerializable(typeof(GetLinearIssueRequest)), JsonSerializable(typeof(GetLinearIssueResponse))]   // Linear hub Ph3 1a: the Work page's Linear list
 [JsonSerializable(typeof(Commands.Library.LibraryValidateReport)), JsonSerializable(typeof(Commands.Library.LibraryFindingRow))]   // PR review page Ph5b: 'sindri library list' and 'validate'
 [JsonSerializable(typeof(ListProjectsRequest)), JsonSerializable(typeof(ListProjectsResponse)), JsonSerializable(typeof(GetProjectRequest)), JsonSerializable(typeof(GetProjectResponse)), JsonSerializable(typeof(ProjectCard)), JsonSerializable(typeof(ListLinearProjectsRequest)), JsonSerializable(typeof(ListLinearProjectsResponse)), JsonSerializable(typeof(LinearProjectChoice))]
+[JsonSerializable(typeof(AddConnectionRequest)), JsonSerializable(typeof(AddConnectionResponse)), JsonSerializable(typeof(TestConnectionRequest)), JsonSerializable(typeof(TestConnectionResponse)), JsonSerializable(typeof(ListConnectionsRequest)), JsonSerializable(typeof(ListConnectionsResponse)), JsonSerializable(typeof(GetConnectionRequest)), JsonSerializable(typeof(GetConnectionResponse)), JsonSerializable(typeof(RemoveConnectionRequest)), JsonSerializable(typeof(RemoveConnectionResponse)), JsonSerializable(typeof(ConnectionView))]   // connections PR 10a
 [JsonSerializable(typeof(ProjectLead)), JsonSerializable(typeof(ProjectLink)), JsonSerializable(typeof(ProjectFreshnessRow))]
 [JsonSerializable(typeof(CloseItemRequest)), JsonSerializable(typeof(CloseItemBody)), JsonSerializable(typeof(GetQueueRequest)), JsonSerializable(typeof(QueueResponse))]
 [JsonSerializable(typeof(QueueGroupView)), JsonSerializable(typeof(ItemSummary)), JsonSerializable(typeof(ListItemsRequest)), JsonSerializable(typeof(ListItemsResponse))]

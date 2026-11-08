@@ -1,0 +1,14 @@
+{
+  "id": "linear",
+  "displayName": "Linear",
+  "kind": "oauth",
+  "authorizeUrl": "https://linear.app/oauth/authorize",
+  "tokenUrl": "https://api.linear.app/oauth/token",
+  "revokeUrl": "https://api.linear.app/oauth/revoke",
+  "defaultScopes": ["read", "write"],
+  "hostGroup": "linear",
+  "loopbackAllowed": true,
+  "signInNote": "Create an OAuth application in Linear's API settings and add the callback http://127.0.0.1 to it.",
+  "pollableEvents": [],
+  "probeUrl": null
+}

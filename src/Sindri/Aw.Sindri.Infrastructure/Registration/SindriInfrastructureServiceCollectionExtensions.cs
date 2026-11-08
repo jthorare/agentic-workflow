@@ -27,7 +27,10 @@ using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Denials;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Scoping;
+using Aw.Sindri.Core.Connections;
+using Aw.Sindri.Core.Connections.OAuth;
 using Aw.Sindri.Core.Secrets;
+using Aw.Sindri.Infrastructure.Connections;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Views;
@@ -159,7 +162,8 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IScriptRuns>(_ => new BashScriptRuns(new ProcessToolRunner()))   // the prove station's before/after scripts
             .AddSingleton<ITrackedFiles, GitTrackedFiles>()          // the docs-sync scope's file list
             .AddSingleton<IWorktrees, GitWorktrees>()               // per-run and phase worktrees (engine spec §6.5); nothing calls it until BS-10
-            .AddSingleton<IPrCommentMarks, SqlitePrCommentMarks>(); // the PR babysitter's comment marks (W26): pr_comment_marks in ledger.db
+            .AddSingleton<IPrCommentMarks, SqlitePrCommentMarks>() // the PR babysitter's comment marks (W26): pr_comment_marks in ledger.db
+            .AddConnections();
 
     private static IServiceCollection AddSindriAdapters(this IServiceCollection services, Func<string, string?> environment)
     {
@@ -233,6 +237,18 @@ public static class SindriInfrastructureServiceCollectionExtensions
         => services
             .AddSingleton<IProfileKeyWriter, YamlProfileKeyWriter>()
             .AddSingleton<IProfileTextParser>(sp => new YamlProfileTextParser(sp.GetRequiredService<JsonSerializerOptions>(), () => HeavyCap.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory)));
+
+    // Connections (PR 10a): the store, the keychain secrets, the presets, the loopback sign-in and the token client.
+    private static IServiceCollection AddConnections(this IServiceCollection services)
+        => services
+            .AddSingleton<IConnectionStore, SqliteConnectionStore>()
+            .AddSingleton<IConnectionSecrets>(static sp => new KeychainConnectionSecrets(sp.GetRequiredService<ISecretWriter>(), sp.GetRequiredService<ISecretPointers>(), new ProcessToolRunner()))
+            .AddSingleton<IConnectionPresetCatalog, EmbeddedConnectionPresets>()
+            .AddSingleton<IEnvironmentReader, ProcessEnvironmentReader>()
+            .AddSingleton<IConnectionProbe>(static _ => new HttpConnectionProbe(new HttpClient()))
+            .AddSingleton<IOAuthClient>(static sp => new HttpOAuthClient(new HttpClient(), sp.GetRequiredService<TimeProvider>()))
+            .AddSingleton<IBrowserOpener>(static _ => new BrowserOpener(new ProcessToolRunner()))
+            .AddSingleton<ISignInSession>(static sp => new LoopbackSignIn(sp.GetRequiredService<IOAuthClient>(), sp.GetRequiredService<IBrowserOpener>(), TimeSpan.FromMinutes(5), System.Security.Cryptography.RandomNumberGenerator.GetBytes));
 
     private static IServiceCollection AddSecretInfrastructure(this IServiceCollection services)
         => services
