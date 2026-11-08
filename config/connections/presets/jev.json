@@ -1,0 +1,9 @@
+{
+  "id": "jev",
+  "displayName": "Jev",
+  "kind": "rest",
+  "hostGroup": "typesafe",
+  "baseUrl": "https://api.typesafe.ai/v1/systemone",
+  "keyEnv": "TYPESAFE_API_KEY",
+  "signInNote": "No sign-in: Jev reads the key from TYPESAFE_API_KEY, else from the judge's keychain entry, so one key serves both."
+}

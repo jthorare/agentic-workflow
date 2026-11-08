@@ -8,10 +8,10 @@ namespace Aw.Sindri.Tests.Connections;
 [Lane(TestLane.Unit)]
 public sealed class ConnectionPresetsTests
 {
-    private static readonly string[] _shipped = ["github", "google", "linear", "slack", "spotify"];
+    private static readonly string[] _shipped = ["github", "google", "jev", "linear", "slack", "spotify"];
 
     [Fact]
-    public void Every_shipped_preset_parses_and_the_five_are_there()
+    public void Every_shipped_preset_parses_and_the_six_are_there()
     {
         var presets = new EmbeddedConnectionPresets().List();
 
@@ -34,11 +34,10 @@ public sealed class ConnectionPresetsTests
     }
 
     [Fact]
-    public void Every_endpoint_is_https_and_every_preset_is_an_oauth_one_with_scopes_and_a_note()
+    public void Every_endpoint_is_https_and_every_oauth_preset_has_scopes_and_a_note()
     {
-        foreach (var preset in new EmbeddedConnectionPresets().List().Value)
+        foreach (var preset in new EmbeddedConnectionPresets().List().Value.Where(static p => p.Kind == ConnectionKind.OAuth))
         {
-            Assert.Equal(ConnectionKind.OAuth, preset.Kind);
             Assert.StartsWith("https://", preset.AuthorizeUrl, StringComparison.Ordinal);
             Assert.StartsWith("https://", preset.TokenUrl, StringComparison.Ordinal);
             Assert.True(preset.RevokeUrl is null || preset.RevokeUrl.StartsWith("https://", StringComparison.Ordinal), preset.Key);
@@ -53,7 +52,7 @@ public sealed class ConnectionPresetsTests
     [Fact]
     public void A_provider_that_refuses_a_plain_http_loopback_says_how_to_sign_in_instead()
     {
-        foreach (var preset in new EmbeddedConnectionPresets().List().Value.Where(static p => !p.LoopbackAllowed))
+        foreach (var preset in new EmbeddedConnectionPresets().List().Value.Where(static p => p.Kind == ConnectionKind.OAuth && !p.LoopbackAllowed))
         {
             Assert.Contains("--kind rest", preset.SignInNote, StringComparison.Ordinal);
         }
@@ -88,5 +87,39 @@ public sealed class ConnectionPresetsTests
         }
 
         return Path.Combine(directory?.FullName ?? throw new DirectoryNotFoundException("config/connections/presets"), "config", "connections", "presets");
+    }
+
+    private const string Rest = """{"id":"jev","displayName":"Jev","kind":"rest","hostGroup":"typesafe","baseUrl":"https://api.typesafe.ai/v1/systemone","keyEnv":"TYPESAFE_API_KEY"}""";
+
+    [Fact]
+    public void A_valid_rest_preset_parses_with_its_url_and_key_variable()
+    {
+        var preset = ConnectionPresets.Parse(Rest);
+
+        Assert.True(preset.IsSuccess);
+        Assert.Equal(ConnectionKind.Rest, preset.Value.Kind);
+        Assert.Equal("https://api.typesafe.ai/v1/systemone", preset.Value.BaseUrl);
+        Assert.Equal("TYPESAFE_API_KEY", preset.Value.KeyEnv);
+    }
+
+    [Theory]
+    [InlineData("baseUrl")]
+    [InlineData("keyEnv")]
+    public void A_rest_preset_missing_its_url_or_key_variable_is_refused(string missing)
+    {
+        var json = Rest.Replace(missing == "baseUrl" ? "\"baseUrl\":\"https://api.typesafe.ai/v1/systemone\"," : ",\"keyEnv\":\"TYPESAFE_API_KEY\"", string.Empty, StringComparison.Ordinal);
+
+        var preset = ConnectionPresets.Parse(json);
+
+        Assert.True(preset.IsError);
+        Assert.Contains(missing, preset.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_rest_preset_with_a_plain_http_url_or_a_bad_variable_name_is_refused_and_an_oauth_one_still_needs_its_fields()
+    {
+        Assert.True(ConnectionPresets.Parse(Rest.Replace("https://", "http://", StringComparison.Ordinal)).IsError);
+        Assert.True(ConnectionPresets.Parse(Rest.Replace("TYPESAFE_API_KEY", "not a name", StringComparison.Ordinal)).IsError);
+        Assert.True(ConnectionPresets.Parse("""{"id":"x","displayName":"X","kind":"oauth","hostGroup":"x"}""").IsError);
     }
 }

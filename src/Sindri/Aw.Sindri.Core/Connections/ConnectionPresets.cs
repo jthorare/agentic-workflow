@@ -6,6 +6,7 @@ namespace Aw.Sindri.Core.Connections;
 /// <summary>Reads a preset file.</summary>
 public static class ConnectionPresets
 {
+    private static readonly string[] _requiredRest = ["id", "displayName", "hostGroup", "baseUrl", "keyEnv"];
     private static readonly string[] _requiredText = ["id", "displayName", "kind", "authorizeUrl", "tokenUrl", "hostGroup", "signInNote"];
     private static readonly string[] _httpsUrls = ["authorizeUrl", "tokenUrl", "revokeUrl", "probeUrl"];
 
@@ -25,7 +26,53 @@ public static class ConnectionPresets
         }
     }
 
-    private static Result<ConnectionPreset> Build(JsonElement root)
+    private static Result<ConnectionPreset> Build(JsonElement root) =>
+        string.Equals(Text(root, "kind"), "rest", StringComparison.Ordinal) ? BuildRest(root) : BuildOAuth(root);
+
+    // A rest preset (PR 9b, the 'jev' one): a key read from an environment variable, sent to one https URL. No sign-in, so none of the oauth fields.
+    private static Result<ConnectionPreset> BuildRest(JsonElement root)
+    {
+        if (RestProblem(root) is { } problem)
+        {
+            return Bad(problem);
+        }
+
+        return new ConnectionPreset(
+            Key: Text(root, "id") ?? string.Empty,
+            DisplayName: Text(root, "displayName") ?? string.Empty,
+            Kind: ConnectionKind.Rest,
+            AuthorizeUrl: string.Empty,
+            TokenUrl: string.Empty,
+            RevokeUrl: null,
+            DefaultScopes: [],
+            HostGroup: Text(root, "hostGroup") ?? string.Empty,
+            LoopbackAllowed: false,
+            SignInNote: Text(root, "signInNote") ?? string.Empty,
+            PollableEvents: [],
+            ProbeUrl: null,
+            BaseUrl: Text(root, "baseUrl"),
+            KeyEnv: Text(root, "keyEnv"));
+    }
+
+    private static string? RestProblem(JsonElement root)
+    {
+        var missing = _requiredRest.FirstOrDefault(name => Text(root, name) is not { Length: > 0 });
+        if (missing is not null)
+        {
+            return $"'{missing}' is missing";
+        }
+
+        if (Text(root, "baseUrl") is not { } url || !url.StartsWith("https://", StringComparison.Ordinal))
+        {
+            return "'baseUrl' is not an https URL";
+        }
+
+        return Text(root, "keyEnv") is { } env && env.All(static c => char.IsAsciiLetterUpper(c) || char.IsAsciiDigit(c) || c == '_')
+            ? null
+            : "'keyEnv' is not an environment variable name (capitals, digits and '_')";
+    }
+
+    private static Result<ConnectionPreset> BuildOAuth(JsonElement root)
     {
         var text = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var name in _requiredText)

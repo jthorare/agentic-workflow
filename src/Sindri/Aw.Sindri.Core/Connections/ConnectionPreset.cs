@@ -16,6 +16,8 @@ namespace Aw.Sindri.Core.Connections;
 /// <param name="SignInNote">A line shown with the consent URL.</param>
 /// <param name="PollableEvents">Events a poll trigger can watch (empty for now).</param>
 /// <param name="ProbeUrl">A cheap authenticated GET that proves the token works, or null.</param>
+/// <param name="BaseUrl">A rest preset's API URL (https); null for an oauth preset.</param>
+/// <param name="KeyEnv">A rest preset's environment variable that holds the key; null for an oauth preset.</param>
 public sealed record ConnectionPreset(
     string Key,
     string DisplayName,
@@ -28,4 +30,6 @@ public sealed record ConnectionPreset(
     bool LoopbackAllowed,
     string SignInNote,
     IReadOnlyList<string> PollableEvents,
-    string? ProbeUrl);
+    string? ProbeUrl,
+    string? BaseUrl = null,
+    string? KeyEnv = null);

@@ -24593,8 +24593,6 @@ Aw.Sindri.Core.Connections.ConnectionPreset
 Aw.Sindri.Core.Connections.ConnectionPreset.<Clone>$() -> Aw.Sindri.Core.Connections.ConnectionPreset!
 Aw.Sindri.Core.Connections.ConnectionPreset.AuthorizeUrl.get -> string!
 Aw.Sindri.Core.Connections.ConnectionPreset.AuthorizeUrl.init -> void
-Aw.Sindri.Core.Connections.ConnectionPreset.ConnectionPreset(string! Key, string! DisplayName, Aw.Sindri.Core.Connections.ConnectionKind Kind, string! AuthorizeUrl, string! TokenUrl, string? RevokeUrl, System.Collections.Generic.IReadOnlyList<string!>! DefaultScopes, string! HostGroup, bool LoopbackAllowed, string! SignInNote, System.Collections.Generic.IReadOnlyList<string!>! PollableEvents, string? ProbeUrl) -> void
-Aw.Sindri.Core.Connections.ConnectionPreset.Deconstruct(out string! Key, out string! DisplayName, out Aw.Sindri.Core.Connections.ConnectionKind Kind, out string! AuthorizeUrl, out string! TokenUrl, out string? RevokeUrl, out System.Collections.Generic.IReadOnlyList<string!>! DefaultScopes, out string! HostGroup, out bool LoopbackAllowed, out string! SignInNote, out System.Collections.Generic.IReadOnlyList<string!>! PollableEvents, out string? ProbeUrl) -> void
 Aw.Sindri.Core.Connections.ConnectionPreset.DefaultScopes.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Sindri.Core.Connections.ConnectionPreset.DefaultScopes.init -> void
 Aw.Sindri.Core.Connections.ConnectionPreset.DisplayName.get -> string!
@@ -26584,3 +26582,9 @@ static Aw.Sindri.Core.Profile.NewsSettings.operator !=(Aw.Sindri.Core.Profile.Ne
 static Aw.Sindri.Core.Profile.NewsSettings.operator ==(Aw.Sindri.Core.Profile.NewsSettings? left, Aw.Sindri.Core.Profile.NewsSettings? right) -> bool
 static Aw.Sindri.Core.Profile.VulnerabilitySettings.operator !=(Aw.Sindri.Core.Profile.VulnerabilitySettings? left, Aw.Sindri.Core.Profile.VulnerabilitySettings? right) -> bool
 static Aw.Sindri.Core.Profile.VulnerabilitySettings.operator ==(Aw.Sindri.Core.Profile.VulnerabilitySettings? left, Aw.Sindri.Core.Profile.VulnerabilitySettings? right) -> bool
+Aw.Sindri.Core.Connections.ConnectionPreset.BaseUrl.get -> string?
+Aw.Sindri.Core.Connections.ConnectionPreset.BaseUrl.init -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.ConnectionPreset(string! Key, string! DisplayName, Aw.Sindri.Core.Connections.ConnectionKind Kind, string! AuthorizeUrl, string! TokenUrl, string? RevokeUrl, System.Collections.Generic.IReadOnlyList<string!>! DefaultScopes, string! HostGroup, bool LoopbackAllowed, string! SignInNote, System.Collections.Generic.IReadOnlyList<string!>! PollableEvents, string? ProbeUrl, string? BaseUrl = null, string? KeyEnv = null) -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.Deconstruct(out string! Key, out string! DisplayName, out Aw.Sindri.Core.Connections.ConnectionKind Kind, out string! AuthorizeUrl, out string! TokenUrl, out string? RevokeUrl, out System.Collections.Generic.IReadOnlyList<string!>! DefaultScopes, out string! HostGroup, out bool LoopbackAllowed, out string! SignInNote, out System.Collections.Generic.IReadOnlyList<string!>! PollableEvents, out string? ProbeUrl, out string? BaseUrl, out string? KeyEnv) -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.KeyEnv.get -> string?
+Aw.Sindri.Core.Connections.ConnectionPreset.KeyEnv.init -> void
