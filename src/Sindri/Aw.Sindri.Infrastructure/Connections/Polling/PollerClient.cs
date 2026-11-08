@@ -34,7 +34,16 @@ internal sealed class PollerClient(HttpClient http, IConnectionSecrets secrets, 
                 return tokens.Error;
             }
 
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokens.Value.AccessToken);
+            if (BareKeys && connection.Kind != ConnectionKind.OAuth)
+            {
+                // a personal API key goes bare, as LinearClient sends it
+                _ = request.Headers.TryAddWithoutValidation("Authorization", tokens.Value.AccessToken);
+            }
+            else
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokens.Value.AccessToken);
+            }
+
             request.Headers.UserAgent.ParseAdd("sindri");
             return await Exchange(request, cursorSent, cancellationToken).ConfigureAwait(false);
         }
@@ -51,9 +60,9 @@ internal sealed class PollerClient(HttpClient http, IConnectionSecrets secrets, 
                 return SindriErrors.ConnectionProviderChanged.With($"{host} answered a redirect; the token was not sent anywhere else");
             }
 
-            if (status is (int)HttpStatusCode.TooManyRequests or >= 500)
+            if (IsRateLimited(response, status))
             {
-                return new PollerAnswer(Body: null, RateLimited: true, RetryAfter: response.Headers.RetryAfter?.Delta);
+                return new PollerAnswer(Body: null, RateLimited: true, RetryAfter: WaitOf(response));
             }
 
             return await Classify(response, status, cursorSent, cancellationToken).ConfigureAwait(false);
@@ -73,7 +82,12 @@ internal sealed class PollerClient(HttpClient http, IConnectionSecrets secrets, 
         if (response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-            return new PollerAnswer(body, RateLimited: false, RetryAfter: null);
+            return new PollerAnswer(body, RateLimited: false, RetryAfter: null, NextUrl(response));
+        }
+
+        if (status == (int)HttpStatusCode.BadRequest && (await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false)).Contains("RATELIMITED", StringComparison.Ordinal))
+        {
+            return new PollerAnswer(Body: null, RateLimited: true, RetryAfter: WaitOf(response));
         }
 
         var code = status.ToString(CultureInfo.InvariantCulture);
@@ -84,5 +98,49 @@ internal sealed class PollerClient(HttpClient http, IConnectionSecrets secrets, 
                 => SindriErrors.ConnectionCursorRejected.With($"{host} answered {code} to the saved cursor"),
             _ => SindriErrors.ConnectionProviderChanged.With($"{host} answered {code}"),
         };
+    }
+
+    // 429 and 5xx; GitHub also answers a primary or secondary limit with 403 and either no requests left or a Retry-After.
+    private static bool IsRateLimited(HttpResponseMessage response, int status)
+        => status is (int)HttpStatusCode.TooManyRequests or >= 500
+            || (status == (int)HttpStatusCode.Forbidden && (response.Headers.RetryAfter is not null || Header(response, "x-ratelimit-remaining") == "0"));
+
+    private TimeSpan? WaitOf(HttpResponseMessage response)
+    {
+        var now = Clock.GetUtcNow();
+        TimeSpan? wait = null;
+        if (response.Headers.RetryAfter is { } named)
+        {
+            wait = named.Delta ?? (named.Date - now);
+        }
+        else if (long.TryParse(Header(response, "x-ratelimit-reset"), NumberStyles.None, CultureInfo.InvariantCulture, out var reset))
+        {
+            wait = DateTimeOffset.FromUnixTimeSeconds(reset) - now;
+        }
+
+        return wait is { } found && found > TimeSpan.Zero ? found : null;
+    }
+
+    private static string? Header(HttpResponseMessage response, string name)
+        => response.Headers.TryGetValues(name, out var values) ? values.FirstOrDefault() : null;
+
+    // Link: <https://host/path?page=2>; rel="next", <...>; rel="last"
+    private static string? NextUrl(HttpResponseMessage response)
+    {
+        if (!response.Headers.TryGetValues("Link", out var values))
+        {
+            return null;
+        }
+
+        foreach (var part in values.SelectMany(static v => v.Split(',')))
+        {
+            var pieces = part.Split(';');
+            if (pieces.Length > 1 && pieces.Skip(1).Any(static p => p.Replace(" ", string.Empty, StringComparison.Ordinal) == "rel=\"next\"") && pieces[0].Trim() is ['<', .. var url, '>'])
+            {
+                return new string(url);
+            }
+        }
+
+        return null;
     }
 }

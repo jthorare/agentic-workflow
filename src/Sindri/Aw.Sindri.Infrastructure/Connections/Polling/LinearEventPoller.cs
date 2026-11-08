@@ -9,9 +9,11 @@ using Aw.Sindri.Core.Connections.Polling;
 namespace Aw.Sindri.Infrastructure.Connections.Polling;
 
 /// <summary>
-/// IEventPoller for Linear over a plain HttpClient: one GraphQL 'issues' query with each issue's history. The delivery key is the history
-/// entry id plus what changed, so it is the same on every poll. The token goes only to api.linear.app and a redirect is refused
-/// (SND-CONN-012). Provider text in the events is untrusted.
+/// IEventPoller for Linear over a plain HttpClient: one GraphQL 'issues' query with each issue's history and comments. The delivery key uses
+/// ids (history entry plus label or state id), so it is the same on every poll and holds no provider text. The token goes only to
+/// api.linear.app: an OAuth token as Bearer, a personal API key bare (as LinearClient sends it). A redirect is refused (SND-CONN-012). A 400
+/// that says RATELIMITED is a rate-limited result, not a rejected cursor. The cursor is the newest createdAt seen; a null cursor is a baseline.
+/// Pages are followed (pageInfo.endCursor) up to the page cap; past it <see cref="PollResult.Gap"/> is true. Provider text in the events is untrusted.
 /// </summary>
 /// <param name="http">The HTTP client; it must not follow redirects on its own.</param>
 /// <param name="secrets">The connection secrets.</param>
@@ -21,11 +23,9 @@ internal sealed class LinearEventPoller(HttpClient http, IConnectionSecrets secr
 {
     private const string Host = "api.linear.app";
 
-    private const string Fields = "identifier title url createdAt comments(first: 10) { nodes { id createdAt body user { name } } } history(first: 25) { nodes { id createdAt addedLabels { name } fromState { name } toState { name } } }";
+    private const string Fields = "identifier title url createdAt comments(first: 10) { nodes { id createdAt body user { name } } } history(first: 25) { nodes { id createdAt addedLabels { id name } fromState { id name } toState { id name } } }";
 
     private readonly PollerClient _client = new(http, secrets, Host, clock, bareKeys: true);
-
-    internal int PageCap { get; } = pageCap;
 
     public string Preset => "linear";
 
@@ -38,75 +38,62 @@ internal sealed class LinearEventPoller(HttpClient http, IConnectionSecrets secr
         }
 
         var after = PollJson.Time(cursor);
-        var request = new HttpRequestMessage(HttpMethod.Post, $"https://{Host}/graphql") { Content = new StringContent(Query(after), Encoding.UTF8, "application/json") };
-        var answer = await _client.Send(connection, request, cursor is not null, cancellationToken).ConfigureAwait(false);
-        if (answer.IsError)
+        var feed = new LinearFeed(kind, after, cursor);
+        string? endCursor = null;
+        for (var page = 1; ; page++)
         {
-            return answer.Error;
-        }
+            var request = new HttpRequestMessage(HttpMethod.Post, $"https://{Host}/graphql") { Content = new StringContent(Query(after, endCursor), Encoding.UTF8, "application/json") };
+            var answer = await _client.Send(connection, request, cursor is not null, cancellationToken).ConfigureAwait(false);
+            if (answer.IsError || answer.Value.Body is not { } body)
+            {
+                return answer.IsError ? answer.Error : new PollResult([], cursor, RateLimited: true, answer.Value.RetryAfter);
+            }
 
-        return answer.Value.Body is { } body
-            ? Read(body, kind, cursor, after)
-            : new PollResult([], cursor, RateLimited: true, answer.Value.RetryAfter);
+            var added = feed.Add(body);
+            if (added.IsError)
+            {
+                return added.Error;
+            }
+
+            if (after is null || feed.More is not { } more)
+            {
+                return Finish(feed, gap: false);
+            }
+
+            if (page >= pageCap)
+            {
+                return Finish(feed, gap: true);
+            }
+
+            endCursor = more;
+        }
     }
 
-    private static string Query(DateTimeOffset? after)
+    private static string Query(DateTimeOffset? after, string? endCursor)
     {
         var filter = after is { } floor ? $"filter: {{ updatedAt: {{ gt: \"{floor.UtcDateTime.ToString("O", CultureInfo.InvariantCulture)}\" }} }}, " : string.Empty;
-        var query = "{ issues(" + filter + "first: 50, orderBy: updatedAt) { nodes { " + Fields + " } } }";
+        var query = "query($after: String) { issues(after: $after, " + filter + "first: 50, orderBy: updatedAt) { nodes { " + Fields + " } pageInfo { hasNextPage endCursor } } }";
         using var buffer = new MemoryStream();
         using (var writer = new Utf8JsonWriter(buffer))
         {
             writer.WriteStartObject();
             writer.WriteString("query", query);
+            if (endCursor is not null)
+            {
+                writer.WriteStartObject("variables");
+                writer.WriteString("after", endCursor);
+                writer.WriteEndObject();
+            }
+
             writer.WriteEndObject();
         }
 
         return Encoding.UTF8.GetString(buffer.ToArray());
     }
 
-    private static Result<PollResult> Read(string body, EventKind kind, string? cursor, DateTimeOffset? after)
+    private Result<PollResult> Finish(LinearFeed feed, bool gap)
     {
-        try
-        {
-            using var document = JsonDocument.Parse(body);
-            if (PollJson.Member(document.RootElement, "errors") is not null
-                || PollJson.Member(PollJson.Path(document.RootElement, "data", "issues") ?? default, "nodes") is not { ValueKind: JsonValueKind.Array } issues)
-            {
-                return SindriErrors.ConnectionProviderChanged.With("the issues answer is not the shape Sindri expects");
-            }
-
-            var events = new List<PolledEvent>();
-            var newest = (Text: cursor, At: after);
-            foreach (var issue in issues.EnumerateArray())
-            {
-                events.AddRange(LinearEventMapper.Map(issue, kind, after));
-                newest = Newest(issue, newest);
-            }
-
-            return new PollResult([.. events.OrderBy(static e => e.OccurredAt)], newest.Text, RateLimited: false, RetryAfter: null);
-        }
-        catch (JsonException)
-        {
-            return SindriErrors.ConnectionProviderChanged.With("the issues answer is not JSON");
-        }
+        var events = feed.Events.OrderBy(static e => e.OccurredAt).ThenBy(static e => e.DeliveryKey, StringComparer.Ordinal).ToList();
+        return new PollResult(events, feed.Newest.Text ?? PollCursorText.Now(clock.GetUtcNow()), RateLimited: false, RetryAfter: null, gap);
     }
-
-    private static (string? Text, DateTimeOffset? At) Newest(JsonElement issue, (string? Text, DateTimeOffset? At) current)
-    {
-        var best = Later(current, PollJson.Text(PollJson.Member(issue, "createdAt")));
-        foreach (var list in new[] { "history", "comments" })
-        {
-            var nodes = PollJson.Member(PollJson.Member(issue, list) ?? default, "nodes");
-            foreach (var node in nodes is { ValueKind: JsonValueKind.Array } items ? items.EnumerateArray() : default)
-            {
-                best = Later(best, PollJson.Text(PollJson.Member(node, "createdAt")));
-            }
-        }
-
-        return best;
-    }
-
-    private static (string? Text, DateTimeOffset? At) Later((string? Text, DateTimeOffset? At) best, string? text)
-        => PollJson.Time(text) is { } at && (best.At is null || at > best.At) ? (text, at) : best;
 }

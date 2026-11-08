@@ -1,5 +1,3 @@
-using System.Globalization;
-using System.Text.Json;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
@@ -11,6 +9,11 @@ namespace Aw.Sindri.Infrastructure.Connections.Polling;
 /// IEventPoller for GitHub over a plain HttpClient: the repo's events feed (Connection.Config["repo"] = 'owner/name'). The token comes
 /// from the connection's secret, goes only to api.github.com, and a redirect is refused (SND-CONN-012) instead of followed. Provider text
 /// in the events is untrusted.
+/// The cursor is the newest created_at seen. The feed can lag by 30 s to 6 h, so an id or time order is not safe: each poll re-reads
+/// everything created after cursor minus 6 h (<see cref="Overlap"/>) and returns it, repeats included. A repeat is harmless: the delivery
+/// key is the run's occurrence id and the caller's duplicate-id refusal drops it. The feed is newest first, so the poller follows the Link
+/// header up to the page cap and returns the events oldest first; past the cap <see cref="PollResult.Gap"/> is true and the cursor still
+/// moves to the newest event.
 /// </summary>
 /// <param name="http">The HTTP client; it must not follow redirects on its own.</param>
 /// <param name="secrets">The connection secrets.</param>
@@ -18,11 +21,11 @@ namespace Aw.Sindri.Infrastructure.Connections.Polling;
 /// <param name="pageCap">The most pages one poll reads.</param>
 internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secrets, TimeProvider clock, int pageCap = PollLimits.DefaultPageCap) : IEventPoller
 {
+    internal static readonly TimeSpan Overlap = TimeSpan.FromHours(6);
+
     private const string Host = "api.github.com";
 
     private readonly PollerClient _client = new(http, secrets, Host, clock);
-
-    internal int PageCap { get; } = pageCap;
 
     public string Preset => "github";
 
@@ -40,53 +43,47 @@ internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secr
             return SindriErrors.ConnectionProviderChanged.With($"{connection.Name} has no 'repo' setting like owner/name");
         }
 
-        var url = $"https://{Host}/repos/{Uri.EscapeDataString(parts[0])}/{Uri.EscapeDataString(parts[1])}/events?per_page=100";
-        var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Accept.ParseAdd("application/vnd.github+json");
-        var answer = await _client.Send(connection, request, cursor is not null, cancellationToken).ConfigureAwait(false);
-        if (answer.IsError)
-        {
-            return answer.Error;
-        }
-
-        return answer.Value.Body is { } body
-            ? Read(body, kind, cursor)
-            : new PollResult([], cursor, RateLimited: true, answer.Value.RetryAfter);
+        var first = $"https://{Host}/repos/{Uri.EscapeDataString(parts[0])}/{Uri.EscapeDataString(parts[1])}/events?per_page=100";
+        return await ReadPages(connection, kind, cursor, first, cancellationToken).ConfigureAwait(false);
     }
 
-    private static Result<PollResult> Read(string body, EventKind kind, string? cursor)
+    private async ValueTask<Result<PollResult>> ReadPages(Connection connection, EventKind kind, string? cursor, string first, CancellationToken cancellationToken)
     {
-        try
+        var after = PollJson.Time(cursor);
+        var feed = new GitHubFeed(kind, after is { } at ? at - Overlap : null);
+        var next = first;
+        for (var page = 1; ; page++)
         {
-            using var document = JsonDocument.Parse(body);
-            if (document.RootElement.ValueKind != JsonValueKind.Array)
+            var answer = await _client.Send(connection, new HttpRequestMessage(HttpMethod.Get, next), cursor is not null, cancellationToken).ConfigureAwait(false);
+            if (answer.IsError || answer.Value.Body is not { } body)
             {
-                return SindriErrors.ConnectionProviderChanged.With("the events answer is not a list");
+                return answer.IsError ? answer.Error : new PollResult([], cursor, RateLimited: true, answer.Value.RetryAfter);
             }
 
-            var after = long.TryParse(cursor, NumberStyles.None, CultureInfo.InvariantCulture, out var saved) ? saved : 0L;
-            var newest = after;
-            var found = new List<(long Id, PolledEvent Event)>();
-            foreach (var item in document.RootElement.EnumerateArray())
+            var added = feed.Add(body);
+            if (added.IsError)
             {
-                if (!long.TryParse(PollJson.Text(PollJson.Member(item, "id")), NumberStyles.None, CultureInfo.InvariantCulture, out var id))
-                {
-                    return SindriErrors.ConnectionProviderChanged.With("an event has no numeric id");
-                }
-
-                newest = Math.Max(newest, id);
-                if (id > after && GitHubEventMapper.KindOf(item) == kind && GitHubEventMapper.Map(item, kind) is { } polled)
-                {
-                    found.Add((id, polled));
-                }
+                return added.Error;
             }
 
-            var next = newest == 0 ? cursor : newest.ToString(CultureInfo.InvariantCulture);
-            return new PollResult([.. found.OrderBy(static f => f.Id).Select(static f => f.Event)], next, RateLimited: false, RetryAfter: null);
+            if (feed.ReachedFloor || answer.Value.NextUrl is not { } more)
+            {
+                return Finish(feed, cursor, after, gap: false);
+            }
+
+            if (page >= pageCap)
+            {
+                return Finish(feed, cursor, after, gap: true);
+            }
+
+            next = more;
         }
-        catch (JsonException)
-        {
-            return SindriErrors.ConnectionProviderChanged.With("the events answer is not JSON");
-        }
+    }
+
+    private Result<PollResult> Finish(GitHubFeed feed, string? cursor, DateTimeOffset? after, bool gap)
+    {
+        var newest = feed.Newest.Later(cursor);
+        var events = after is null ? [] : feed.Events.OrderBy(static e => e.OccurredAt).ThenBy(static e => e.DeliveryKey, StringComparer.Ordinal).ToList();
+        return new PollResult(events, newest.Text ?? PollCursorText.Now(clock.GetUtcNow()), RateLimited: false, RetryAfter: null, gap);
     }
 }

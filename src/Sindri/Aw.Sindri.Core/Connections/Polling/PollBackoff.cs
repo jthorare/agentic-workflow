@@ -2,7 +2,7 @@ namespace Aw.Sindri.Core.Connections.Polling;
 
 /// <summary>
 /// The rate-limit policy: Retry-After is honored, and each further failure in a row doubles the wait (429 and 5xx).
-/// Without a Retry-After the first wait is <see cref="BaseDelay"/>. The wait is capped at <see cref="MaxDelay"/>.
+/// Without a Retry-After the first wait is <see cref="BaseDelay"/>. Our own doubling is capped at <see cref="MaxDelay"/>; a Retry-After longer than that is honored as given.
 /// </summary>
 public static class PollBackoff
 {
@@ -23,8 +23,9 @@ public static class PollBackoff
     public static BackoffDecision Next(int previousFailures, TimeSpan? retryAfter, DateTimeOffset now)
     {
         var failures = Math.Max(previousFailures, 0);
-        var first = retryAfter is { } named && named > TimeSpan.Zero ? named : BaseDelay;
-        var delay = failures >= MaxDoublings ? MaxDelay : TimeSpan.FromTicks(Math.Min(Math.Min(first.Ticks, MaxDelay.Ticks) * (1L << failures), MaxDelay.Ticks));
-        return new BackoffDecision(failures + 1, now + delay);
+        var named = retryAfter is { } wait && wait > TimeSpan.Zero ? wait : (TimeSpan?)null;
+        var first = Math.Min((named ?? BaseDelay).Ticks, MaxDelay.Ticks);
+        var doubled = failures >= MaxDoublings ? MaxDelay : TimeSpan.FromTicks(Math.Min(first * (1L << failures), MaxDelay.Ticks));
+        return new BackoffDecision(failures + 1, now + (named is { } given && given > doubled ? given : doubled));
     }
 }

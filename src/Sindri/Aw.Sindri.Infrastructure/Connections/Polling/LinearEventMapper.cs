@@ -73,19 +73,25 @@ internal static class LinearEventMapper
         if (kind == EventKind.LinearIssueLabeled
             && PollJson.Member(node, "addedLabels") is { ValueKind: JsonValueKind.Array } labels)
         {
-            foreach (var label in labels.EnumerateArray().Select(static l => PollJson.Text(PollJson.Member(l, "name"))).OfType<string>())
+            foreach (var label in labels.EnumerateArray())
             {
+                if (PollJson.Text(PollJson.Member(label, "id")) is not { } labelId || PollJson.Text(PollJson.Member(label, "name")) is not { } name)
+                {
+                    continue;
+                }
+
                 var fields = IssueFields(issue);
-                fields["label"] = label;
-                yield return new PolledEvent($"linear:{historyId}:label:{label}", kind, at, fields);
+                fields["label"] = name;
+                yield return new PolledEvent($"linear:{historyId}:label:{labelId}", kind, at, fields);
             }
         }
-        else if (kind == EventKind.LinearIssueStateChanged && PollJson.Text(PollJson.Path(node, "toState", "name")) is { } to)
+        else if (kind == EventKind.LinearIssueStateChanged
+            && PollJson.Text(PollJson.Path(node, "toState", "name")) is { } to && PollJson.Text(PollJson.Path(node, "toState", "id")) is { } stateId)
         {
             var fields = IssueFields(issue);
             fields["to"] = to;
             PollJson.Put(fields, "from", PollJson.Text(PollJson.Path(node, "fromState", "name")));
-            yield return new PolledEvent($"linear:{historyId}:state:{to}", kind, at, fields);
+            yield return new PolledEvent($"linear:{historyId}:state:{stateId}", kind, at, fields);
         }
     }
 

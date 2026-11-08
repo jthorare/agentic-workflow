@@ -9,7 +9,7 @@ namespace Aw.Sindri.Infrastructure.Connections.Polling;
 
 /// <summary>
 /// IEventPoller for Slack over a plain HttpClient: conversations.history of the channel in Connection.Config["channel"], with the optional
-/// "filter" (a word the text must contain) and "userId" (the owner, for mentions). The cursor is the newest message ts. Slack answers HTTP 200
+/// "filter" (a word the text must contain) and "userId" (the owner, for mentions). The cursor is the newest message ts; a null cursor is a baseline (no events). Slack's has_more is reported as a gap (history is not paged). Slack answers HTTP 200
 /// with ok=false on errors: ratelimited is a rate-limited result, invalid_auth and token_revoked are SND-CONN-002, anything else SND-CONN-012.
 /// The token goes only to slack.com. Message text is untrusted.
 /// </summary>
@@ -21,6 +21,8 @@ internal sealed class SlackEventPoller(HttpClient http, IConnectionSecrets secre
     private const string Host = "slack.com";
 
     private readonly PollerClient _client = new(http, secrets, Host, clock);
+
+    private readonly TimeProvider _clock = clock;
 
     public string Preset => "slack";
 
@@ -46,11 +48,11 @@ internal sealed class SlackEventPoller(HttpClient http, IConnectionSecrets secre
         }
 
         return answer.Value.Body is { } body
-            ? Read(body, new SlackFilter(kind, channel, connection.Config.GetValueOrDefault("filter", string.Empty), connection.Config.GetValueOrDefault("userId", string.Empty)), cursor)
+            ? Read(body, new SlackFilter(kind, channel, connection.Config.GetValueOrDefault("filter", string.Empty), connection.Config.GetValueOrDefault("userId", string.Empty)), cursor, _clock.GetUtcNow())
             : new PollResult([], cursor, RateLimited: true, answer.Value.RetryAfter);
     }
 
-    private static Result<PollResult> Read(string body, SlackFilter filter, string? cursor)
+    private static Result<PollResult> Read(string body, SlackFilter filter, string? cursor, DateTimeOffset now)
     {
         try
         {
@@ -66,7 +68,7 @@ internal sealed class SlackEventPoller(HttpClient http, IConnectionSecrets secre
                 return SindriErrors.ConnectionProviderChanged.With("the history answer has no message list");
             }
 
-            return Collect(messages, filter, cursor);
+            return Collect(messages, filter, cursor, now, PollJson.Member(root, "has_more") is { ValueKind: JsonValueKind.True });
         }
         catch (JsonException)
         {
@@ -74,7 +76,7 @@ internal sealed class SlackEventPoller(HttpClient http, IConnectionSecrets secre
         }
     }
 
-    private static Result<PollResult> Collect(JsonElement messages, SlackFilter filter, string? cursor)
+    private static Result<PollResult> Collect(JsonElement messages, SlackFilter filter, string? cursor, DateTimeOffset now, bool more)
     {
         var after = Stamp(cursor);
         var newest = (Text: cursor, Value: after);
@@ -86,19 +88,22 @@ internal sealed class SlackEventPoller(HttpClient http, IConnectionSecrets secre
                 return SindriErrors.ConnectionProviderChanged.With("a message has no ts");
             }
 
-            if (newest.Value is not { } seen || value > seen)
-            {
-                newest = (ts, value);
-            }
-
-            if ((after is null || value > after) && SlackMessages.Matches(message, filter) && SlackMessages.Map(message, filter, ts) is { } polled)
+            newest = Later(newest, ts, value);
+            if (after is not null && value > after && SlackMessages.Matches(message, filter) && SlackMessages.Map(message, filter, ts) is { } polled)
             {
                 found.Add((value, polled));
             }
         }
 
-        return new PollResult([.. found.OrderBy(static f => f.Ts).Select(static f => f.Event)], newest.Text, RateLimited: false, RetryAfter: null);
+        var next = newest.Text ?? Baseline(now);
+        var gapped = more && after is not null;
+        return new PollResult([.. found.OrderBy(static f => f.Ts).Select(static f => f.Event)], next, RateLimited: false, RetryAfter: null, Gap: gapped);
     }
+
+    private static (string? Text, decimal? Value) Later((string? Text, decimal? Value) newest, string ts, decimal value)
+        => newest.Value is not { } seen || value > seen ? (ts, value) : newest;
+
+    private static string Baseline(DateTimeOffset now) => now.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture) + ".000000";
 
     private static Result<PollResult> Failure(string? slackError, string? cursor) => (slackError ?? "unknown") switch
     {
