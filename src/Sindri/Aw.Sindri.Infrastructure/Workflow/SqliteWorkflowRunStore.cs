@@ -89,7 +89,7 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
             }
 
             var oldest = inFlight.Value[0];
-            var moved = await RecipeSessions.Execute(session, new SqlStatement(WorkflowRunSql.SetStatus,
+            var moved = await RecipeSessions.Execute(session, new SqlStatement(WorkflowRunSql.FromQueued,
                 c => c.Bind("$id", oldest.Id.Value).Bind("$status", RunStatusText.Of(WorkflowRunStatus.Running)).Bind("$outputs", (string?)null).Bind("$error", (string?)null).Bind("$ended", (string?)null)), token).ConfigureAwait(false);
             if (moved.IsError)
             {
@@ -139,6 +139,27 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
             }, cancellationToken);
 
     public ValueTask<Result<WorkflowRun>> SetStatus(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, CancellationToken cancellationToken) =>
+        Move(id, new Change(status, outputs, error, status == WorkflowRunStatus.Queued ? WorkflowRunSql.Requeue : WorkflowRunSql.SetStatus), cancellationToken);
+
+    public ValueTask<Result<WorkflowRun>> CancelQueued(WorkflowRunId id, string? error, CancellationToken cancellationToken) =>
+        Move(id, new Change(WorkflowRunStatus.Cancelled, Outputs: null, error, WorkflowRunSql.FromQueued), cancellationToken);
+
+    public ValueTask<Result<bool>> Discard(WorkflowRunId id, CancellationToken cancellationToken) =>
+        RecipeSessions.Write(database, async ValueTask<Result<bool>> (session, token) =>
+        {
+            var existing = await FindRun(session, id, token).ConfigureAwait(false);
+            if (existing.IsError || existing.Value is not { Status: WorkflowRunStatus.Running })
+            {
+                return existing.IsError ? existing.Error : (Result<bool>)false;
+            }
+
+            var removed = await RecipeSessions.Execute(session, new SqlStatement(WorkflowRunSql.Discard, c => c.Bind("$id", id.Value)), token).ConfigureAwait(false);
+            return removed.IsError ? removed.Error : true;
+        }, cancellationToken);
+
+    private sealed record Change(WorkflowRunStatus Status, string? Outputs, string? Error, string Sql);
+
+    private ValueTask<Result<WorkflowRun>> Move(WorkflowRunId id, Change change, CancellationToken cancellationToken) =>
         RecipeSessions.Write(database, async ValueTask<Result<WorkflowRun>> (session, token) =>
         {
             var existing = await FindRun(session, id, token).ConfigureAwait(false);
@@ -147,9 +168,9 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
                 return existing.IsError ? existing.Error : NotFound(id);
             }
 
-            var ended = RunStatusText.IsFinal(status) ? clock.GetUtcNow().UtcDateTime.ToString("O", CultureInfo.InvariantCulture) : null;
-            var moved = await RecipeSessions.Execute(session, new SqlStatement(WorkflowRunSql.SetStatus,
-                c => c.Bind("$id", id.Value).Bind("$status", RunStatusText.Of(status)).Bind("$outputs", outputs).Bind("$error", error).Bind("$ended", ended)), token).ConfigureAwait(false);
+            var ended = RunStatusText.IsFinal(change.Status) ? clock.GetUtcNow().UtcDateTime.ToString("O", CultureInfo.InvariantCulture) : null;
+            var moved = await RecipeSessions.Execute(session, new SqlStatement(change.Sql,
+                c => c.Bind("$id", id.Value).Bind("$status", RunStatusText.Of(change.Status)).Bind("$outputs", change.Outputs).Bind("$error", change.Error).Bind("$ended", ended)), token).ConfigureAwait(false);
             if (moved.IsError)
             {
                 return moved.Error;

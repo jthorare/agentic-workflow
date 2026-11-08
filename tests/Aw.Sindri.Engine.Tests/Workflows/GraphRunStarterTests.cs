@@ -1,5 +1,6 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Infrastructure.Workflows;
@@ -20,13 +21,21 @@ public sealed class GraphRunStarterTests
 
     private sealed record World(GraphRunStarter Starter, InMemoryWorkflowRunStore Runs, FakeGraphRunLauncher Launcher, ListLogger<GraphRunStarter> Log);
 
-    private static World Build()
+    private static async Task<(GraphMirror Mirror, SliceHarness Harness)> MirrorOf()
     {
+        var harness = new SliceHarness();
+        _ = await harness.HoldLease();
+        return (new GraphMirror(harness.Store, harness.Held, harness.Events), harness);
+    }
+
+    private static async Task<World> Build()
+    {
+        var (mirror, _) = await MirrorOf();
         var clock = new FakeTimeProvider(KnownInstants.Epoch);
         var runs = new InMemoryWorkflowRunStore(clock);
         var launcher = new FakeGraphRunLauncher();
         var log = new ListLogger<GraphRunStarter>();
-        return new World(new GraphRunStarter(runs, launcher, clock, log), runs, launcher, log);
+        return new World(new GraphRunStarter(runs, launcher, mirror, clock, log), runs, launcher, log);
     }
 
     private static ValueTask<Kernel.Result<GraphStart>> Start(World w, int occurrence, GraphConcurrency mode) =>
@@ -35,7 +44,7 @@ public sealed class GraphRunStarterTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_second_start_with_the_same_run_id_is_refused()
     {
-        var w = Build();
+        var w = await Build();
         var first = (await Start(w, 12, GraphConcurrency.Unlimited)).Value;
 
         var second = await Start(w, 12, GraphConcurrency.Unlimited);
@@ -50,7 +59,7 @@ public sealed class GraphRunStarterTests
     [Fact, Trait("Lane", "unit")]
     public async Task One_per_workflow_skips_a_trigger_while_a_run_is_in_flight_and_logs_it()
     {
-        var w = Build();
+        var w = await Build();
         _ = (await Start(w, 1, GraphConcurrency.OnePerWorkflow)).Value;
 
         var skipped = (await Start(w, 2, GraphConcurrency.OnePerWorkflow)).Value;
@@ -64,7 +73,7 @@ public sealed class GraphRunStarterTests
     [Fact, Trait("Lane", "unit")]
     public async Task One_per_workflow_starts_again_once_the_run_in_flight_has_ended()
     {
-        var w = Build();
+        var w = await Build();
         var first = (await Start(w, 1, GraphConcurrency.OnePerWorkflow)).Value;
         _ = (await w.Runs.SetStatus(first.RunId, WorkflowRunStatus.Succeeded, outputs: null, error: null, Token)).Value;
 
@@ -77,7 +86,7 @@ public sealed class GraphRunStarterTests
     [Fact, Trait("Lane", "unit")]
     public async Task Queue_records_a_trigger_that_arrives_while_a_run_is_in_flight_and_waits_to_start_it()
     {
-        var w = Build();
+        var w = await Build();
         _ = (await Start(w, 1, GraphConcurrency.Queue)).Value;
 
         var queued = (await Start(w, 2, GraphConcurrency.Queue)).Value;
@@ -90,7 +99,7 @@ public sealed class GraphRunStarterTests
     [Fact, Trait("Lane", "unit")]
     public async Task Unlimited_starts_every_trigger_even_while_a_run_is_in_flight()
     {
-        var w = Build();
+        var w = await Build();
         _ = (await Start(w, 1, GraphConcurrency.Unlimited)).Value;
 
         var second = (await Start(w, 2, GraphConcurrency.Unlimited)).Value;
@@ -100,12 +109,13 @@ public sealed class GraphRunStarterTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_failed_launch_starts_the_next_queued_run()
+    public async Task A_failed_launch_starts_the_next_queued_run_and_the_failed_run_shows_in_the_ledger()
     {
         var clock = new FakeTimeProvider(KnownInstants.Epoch);
         var runs = new InMemoryWorkflowRunStore(clock);
-        var launcher = new FailFirstLauncher();
-        var starter = new GraphRunStarter(runs, launcher, clock, new ListLogger<GraphRunStarter>());
+        var launcher = new FailFirstLauncher(SindriErrors.GraphInvalid.With("the workflow id is refused"));
+        var (mirror, harness) = await MirrorOf();
+        var starter = new GraphRunStarter(runs, launcher, mirror, clock, new ListLogger<GraphRunStarter>());
         // run 2 arrives while run 1 is in flight, so it queues; then run 1's launch fails
         launcher.WhileLaunching = () => starter.Start(new GraphStartRequest(_workflow, _slug, Revision: 3, Occurrence: 2, Trigger, GraphConcurrency.Queue), Token);
 
@@ -115,10 +125,54 @@ public sealed class GraphRunStarterTests
         Assert.Equal(WorkflowRunStatus.Failed, (await runs.Get(WorkflowRunId.Of(_slug, 3, 1), Token)).Value.Status);
         Assert.Equal(WorkflowRunStatus.Running, (await runs.Get(WorkflowRunId.Of(_slug, 3, 2), Token)).Value.Status);
         Assert.Equal([WorkflowRunId.Of(_slug, 3, 1), WorkflowRunId.Of(_slug, 3, 2)], launcher.Launched.Select(static r => r.Id));
+        // the failed run is in the ledger: a start and a finish with status failed, so the runs view lists it
+        Assert.Equal([EventTypes.WorkflowRunStarted, EventTypes.WorkflowRunFinished], harness.Store.Events.Select(static e => e.Envelope.Type), StringComparer.Ordinal);
+        Assert.Equal("workflow.run.finished:contract-drift@3:1", harness.Store.Events[1].IdempotencyKey);
     }
 
-    /// <summary>Fails the first launch only, after running <see cref="WhileLaunching"/> (which queues a trigger behind the run being launched).</summary>
-    private sealed class FailFirstLauncher : IGraphRunLauncher
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_first_run_whose_launch_finds_temporal_down_leaves_no_row_so_the_same_tick_is_tried_again()
+    {
+        var clock = new FakeTimeProvider(KnownInstants.Epoch);
+        var runs = new InMemoryWorkflowRunStore(clock);
+        var launcher = new FailFirstLauncher(SindriErrors.EngineUnavailable.With("temporal is down"));
+        var (mirror, harness) = await MirrorOf();
+        var starter = new GraphRunStarter(runs, launcher, mirror, clock, new ListLogger<GraphRunStarter>());
+        var request = new GraphStartRequest(_workflow, _slug, Revision: 3, Occurrence: 1, Trigger, GraphConcurrency.OnePerWorkflow);
+
+        var down = await starter.Start(request, Token);
+        var again = await starter.Start(request, Token);   // the schedule's next pass: Temporal is back
+
+        Assert.Equal(SindriErrors.EngineUnavailable.Code, down.Error.Code);
+        Assert.Equal(GraphStartKind.Started, again.Value.Kind);   // not SND-GRAPH-100: there was no Failed row
+        Assert.Equal(WorkflowRunStatus.Running, (await runs.Get(WorkflowRunId.Of(_slug, 3, 1), Token)).Value.Status);
+        Assert.Empty(harness.Store.Events);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task With_temporal_down_the_loop_stops_at_the_first_queued_run_and_puts_it_back_in_the_queue()
+    {
+        var clock = new FakeTimeProvider(KnownInstants.Epoch);
+        var runs = new InMemoryWorkflowRunStore(clock);
+        var launcher = new FailFirstLauncher(SindriErrors.EngineUnavailable.With("temporal is down"), failEvery: true);
+        var (mirror, harness) = await MirrorOf();
+        var starter = new GraphRunStarter(runs, launcher, mirror, clock, new ListLogger<GraphRunStarter>());
+        foreach (var n in new[] { 2, 3, 4 })
+        {
+            _ = (await runs.Insert(new WorkflowRun(WorkflowRunId.Of(_slug, 3, n), _workflow, 3, Trigger, WorkflowRunStatus.Queued, Outputs: null, Error: null, ItemId: null, clock.GetUtcNow().AddSeconds(n), EndedAt: null), Token)).Value;
+        }
+
+        var advanced = await starter.StartNextQueued(_workflow, Token);
+
+        Assert.Equal(SindriErrors.EngineUnavailable.Code, advanced.Error.Code);   // the finishing run's activity sees an error and is retried
+        _ = Assert.Single(launcher.Launched);   // one try, not one per queued run
+        var statuses = (await runs.InFlight(_workflow, Token)).Value.Select(static r => r.Status).ToList();
+        Assert.Equal([WorkflowRunStatus.Queued, WorkflowRunStatus.Queued, WorkflowRunStatus.Queued], statuses);
+        Assert.Empty(harness.Store.Events);
+    }
+
+    /// <summary>Fails with the error the first launch only (every launch with failEvery), after running <see cref="WhileLaunching"/> (which queues a trigger behind the run being launched).</summary>
+    private sealed class FailFirstLauncher(Kernel.Error error, bool failEvery = false) : IGraphRunLauncher
     {
         private readonly List<WorkflowRun> _launched = [];
 
@@ -129,7 +183,7 @@ public sealed class GraphRunStarterTests
         public async ValueTask<Kernel.Result<bool>> Launch(WorkflowRun run, CancellationToken cancellationToken)
         {
             _launched.Add(run);
-            if (_launched.Count > 1)
+            if (_launched.Count > 1 && !failEvery)
             {
                 return true;
             }
@@ -139,7 +193,7 @@ public sealed class GraphRunStarterTests
                 _ = await queue().ConfigureAwait(false);
             }
 
-            return SindriErrors.EngineUnavailable.With("temporal is down");
+            return error;
         }
     }
 }

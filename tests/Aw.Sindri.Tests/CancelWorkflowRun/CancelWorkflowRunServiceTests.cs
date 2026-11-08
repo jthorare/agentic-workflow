@@ -62,6 +62,35 @@ public sealed class CancelWorkflowRunServiceTests
     }
 
     [Fact]
+    public async Task A_queued_cancel_whose_event_was_lost_is_finished_by_the_retry_once()
+    {
+        var run = await Insert(6, WorkflowRunStatus.Queued);
+        _ = (await _runs.CancelQueued(run.Id, "cancelled while queued", Token)).Value;   // the store write happened, the lease went before the append
+        _ = await _h.HoldLease();
+
+        var retry = await _service.Handle(new CancelWorkflowRunRequest(run.Id, "owner"), Token);
+        var again = await _service.Handle(new CancelWorkflowRunRequest(run.Id, "owner"), Token);
+
+        Assert.True(retry.IsSuccess);
+        Assert.True(again.IsSuccess);
+        _ = Assert.Single(_h.Store.Events);   // the key is the run's, so two appends are one event
+        Assert.Empty(_canceller.Cancelled);
+    }
+
+    [Fact]
+    public async Task A_run_cancelled_for_another_reason_still_answers_ended()
+    {
+        _ = await _h.HoldLease();
+        var run = await Insert(7, WorkflowRunStatus.Running);
+        _ = (await _runs.SetStatus(run.Id, WorkflowRunStatus.Cancelled, outputs: null, error: "cancelled", Token)).Value;
+
+        var result = await _service.Handle(new CancelWorkflowRunRequest(run.Id, "owner"), Token);
+
+        Assert.Equal(SindriErrors.GraphRunEnded.Code, result.Error.Code);
+        Assert.Empty(_h.Store.Events);
+    }
+
+    [Fact]
     public async Task Cancelling_a_queued_run_without_the_lease_is_refused_and_leaves_it_queued()
     {
         var run = await Insert(5, WorkflowRunStatus.Queued);

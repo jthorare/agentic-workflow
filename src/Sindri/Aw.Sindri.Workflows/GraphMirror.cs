@@ -61,6 +61,17 @@ internal sealed class GraphMirror(ILedgerStore ledger, HeldLease lease, EventFac
         return result.IsBlocked ? "[blocked by the redactor]" : result.Text;
     }
 
+    /// <summary>Appends 'workflow.run.started' for a run. The key is the run's, so it is recorded once however many times it is asked (the begin step, and an end that finds no start).</summary>
+    /// <param name="run">The run row.</param>
+    /// <param name="cancellationToken">Cancels the append.</param>
+    /// <returns>Completes when the event is in the ledger.</returns>
+    public Task AppendStarted(WorkflowRun run, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        var payload = new WorkflowRunStartedPayload(run.Id, run.WorkflowId, run.Revision, Clean(run.Trigger) ?? string.Empty, By);
+        return Append(EventTypes.WorkflowRunStarted, payload, $"{EventTypes.WorkflowRunStarted}:{run.Id.Value}", run.ItemId?.Value, cancellationToken);
+    }
+
     /// <summary>Appends one event.</summary>
     /// <param name="type">The event type.</param>
     /// <param name="payload">The payload record.</param>

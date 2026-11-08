@@ -55,8 +55,10 @@ internal sealed partial class GraphWorkflow
         _current = node;
         await Record(Row(node, NodeRunStatus.Running), _write).ConfigureAwait(true);
         var outcome = await RunBlock(node).ConfigureAwait(true);
-        await Record(new NodeRun(_run, node.Id, 0, outcome.Status, outcome.Input, outcome.Output, Truncated: false, outcome.Error, Usage: null), _write).ConfigureAwait(true);
+
+        // why: once the block has answered, the node's result is decided; clearing _current first and writing detached means a cancel now cannot overwrite 'succeeded' with 'cancelled'
         _current = null;
+        await Record(new NodeRun(_run, node.Id, 0, outcome.Status, outcome.Input, outcome.Output, Truncated: false, outcome.Error, Usage: null), _detached).ConfigureAwait(true);
         return outcome;
     }
 
@@ -72,14 +74,16 @@ internal sealed partial class GraphWorkflow
         }
     }
 
+    // why: the row carries no payload (input, output, usage), so Truncated is false here; the store sets it when it cuts a real payload
     private NodeRun Row(GraphNode node, NodeRunStatus status) => new(_run, node.Id, 0, status, Input: null, Output: null, Truncated: false, Error: null, Usage: null);
 
     private static Task Record(NodeRun row, ActivityOptions options) => Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.RecordNodeAsync(row), options);
 
     private async Task<GraphWorkflowResult> End(WorkflowRunStatus status, string? error)
     {
-        await SkipRest(_write).ConfigureAwait(true);
-        await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.FinishAsync(new GraphFinish(_run, status, error)), _write).ConfigureAwait(true);
+        // why: the walk has decided how the run ends, so the end is written detached; a cancel that arrives now finds the run already final (the store refuses a second end)
+        await SkipRest(_detached).ConfigureAwait(true);
+        await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.FinishAsync(new GraphFinish(_run, status, error)), _detached).ConfigureAwait(true);
         return new GraphWorkflowResult(status);
     }
 

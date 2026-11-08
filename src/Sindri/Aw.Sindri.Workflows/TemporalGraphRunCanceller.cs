@@ -9,12 +9,14 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 
 /// <summary>Asks Temporal to cancel the <see cref="GraphWorkflow"/> whose workflow id is the run id; the workflow ends the run as 'cancelled'.</summary>
 /// <param name="connect">Gives the Temporal client (a seam so a test passes its own).</param>
-internal sealed class TemporalGraphRunCanceller(Func<CancellationToken, ValueTask<Result<ITemporalClient>>> connect) : IGraphRunCanceller
+/// <param name="runs">Says whether a run Temporal no longer knows has ended.</param>
+internal sealed class TemporalGraphRunCanceller(Func<CancellationToken, ValueTask<Result<ITemporalClient>>> connect, IWorkflowRunStore runs) : IGraphRunCanceller
 {
     /// <summary>A canceller that connects to the dev server 'sindri serve' started, once per cancel.</summary>
     /// <param name="frontend">Finds and connects to it.</param>
-    public TemporalGraphRunCanceller(TemporalFrontend frontend)
-        : this(ct => (frontend ?? throw new ArgumentNullException(nameof(frontend))).Connect(flag: null, ct))
+    /// <param name="runs">Says whether a run Temporal no longer knows has ended.</param>
+    public TemporalGraphRunCanceller(TemporalFrontend frontend, IWorkflowRunStore runs)
+        : this(ct => (frontend ?? throw new ArgumentNullException(nameof(frontend))).Connect(flag: null, ct), runs)
     {
     }
 
@@ -34,7 +36,11 @@ internal sealed class TemporalGraphRunCanceller(Func<CancellationToken, ValueTas
         }
         catch (RpcException e) when (e.Code == RpcException.StatusCode.NotFound)   // boundary: Temporal has no such workflow, so the run row has nothing running behind it
         {
-            return SindriErrors.GraphRunNotFound.With($"Temporal has no running workflow for '{run.Value}'; it may have ended already");
+            // why: a run that just ended is gone from Temporal too; answer that it ended (SND-GRAPH-107), not that it never existed (SND-GRAPH-101)
+            var row = await runs.Get(run, cancellationToken).ConfigureAwait(false);
+            return row.IsSuccess && row.Value.Status is WorkflowRunStatus.Succeeded or WorkflowRunStatus.Failed or WorkflowRunStatus.Cancelled
+                ? SindriErrors.GraphRunEnded.With($"the run '{run.Value}' already ended; there is nothing to cancel")
+                : SindriErrors.GraphRunNotFound.With($"Temporal has no running workflow for '{run.Value}'; it may have ended already");
         }
         catch (RpcException e)   // boundary: the server is down or refused
         {

@@ -17,7 +17,21 @@ internal static class WorkflowRunSql
 
     internal const string SetEnded = "UPDATE workflow_run SET ended_at = $at WHERE id = $id";
 
-    internal const string SetStatus = "UPDATE workflow_run SET status = $status, outputs = COALESCE($outputs, outputs), error = $error, ended_at = $ended WHERE id = $id";
+    private const string Update = "UPDATE workflow_run SET status = $status, outputs = COALESCE($outputs, outputs), error = $error, ended_at = $ended WHERE id = $id";
+
+    // why: every change is conditional, so a run that already ended never moves again, whatever order two writers arrive in; the caller reads the row back to see whether its change applied.
+
+    /// <summary>Any move of a run that has not ended.</summary>
+    internal const string SetStatus = Update + " AND status NOT IN ('succeeded', 'failed', 'cancelled')";
+
+    /// <summary>Putting a run back to queued: only a running one (a launch that never reached Temporal).</summary>
+    internal const string Requeue = Update + " AND status = 'running'";
+
+    /// <summary>Starting a queued run (promote) and cancelling one (a queued cancel): only a run that is still queued.</summary>
+    internal const string FromQueued = Update + " AND status = 'queued'";
+
+    /// <summary>Removing a run that never reached Temporal.</summary>
+    internal const string Discard = "DELETE FROM workflow_run WHERE id = $id AND status = 'running'";
 
     internal const string UpsertTick =
         "INSERT INTO workflow_schedule_tick (workflow_id, last_tick) VALUES ($workflow, $tick) ON CONFLICT (workflow_id) DO UPDATE SET last_tick = excluded.last_tick WHERE excluded.last_tick > workflow_schedule_tick.last_tick";

@@ -139,7 +139,23 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     }
 
     /// <inheritdoc/>
-    public ValueTask<Result<WorkflowRun>> SetStatus(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, CancellationToken cancellationToken)
+    public ValueTask<Result<WorkflowRun>> SetStatus(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, CancellationToken cancellationToken) =>
+        Move(id, status, outputs, error, from => status == WorkflowRunStatus.Queued ? from == WorkflowRunStatus.Running : !IsFinal(from));
+
+    /// <inheritdoc/>
+    public ValueTask<Result<WorkflowRun>> CancelQueued(WorkflowRunId id, string? error, CancellationToken cancellationToken) =>
+        Move(id, WorkflowRunStatus.Cancelled, outputs: null, error, static from => from == WorkflowRunStatus.Queued);
+
+    /// <inheritdoc/>
+    public ValueTask<Result<bool>> Discard(WorkflowRunId id, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            return Ok(_runs.RemoveAll(r => r.Id == id && r.Status == WorkflowRunStatus.Running) > 0);
+        }
+    }
+
+    private ValueTask<Result<WorkflowRun>> Move(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, Func<WorkflowRunStatus, bool> allowedFrom)
     {
         lock (_gate)
         {
@@ -149,11 +165,16 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
                 return Done<WorkflowRun>(NotFound(id));
             }
 
-            var final = status is WorkflowRunStatus.Succeeded or WorkflowRunStatus.Failed or WorkflowRunStatus.Cancelled;
-            _runs[at] = _runs[at] with { Status = status, Outputs = outputs ?? _runs[at].Outputs, Error = error, EndedAt = final ? clock.GetUtcNow() : null };
+            if (allowedFrom(_runs[at].Status))
+            {
+                _runs[at] = _runs[at] with { Status = status, Outputs = outputs ?? _runs[at].Outputs, Error = error, EndedAt = IsFinal(status) ? clock.GetUtcNow() : null };
+            }
+
             return Done<WorkflowRun>(_runs[at]);
         }
     }
+
+    private static bool IsFinal(WorkflowRunStatus status) => status is WorkflowRunStatus.Succeeded or WorkflowRunStatus.Failed or WorkflowRunStatus.Cancelled;
 
     /// <inheritdoc/>
     public ValueTask<Result<NodeRun>> RecordNodeRun(NodeRun nodeRun, CancellationToken cancellationToken)
