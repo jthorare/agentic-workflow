@@ -72,6 +72,8 @@ internal sealed class KeychainConnectionSecrets(ISecretWriter writer, ISecretPoi
                     return SindriErrors.ConnectionSecretUnavailable.With("the connection's secret file could not be deleted");
                 }
 
+            case SecretScheme.Env:
+            case SecretScheme.OnePassword:
             default:
                 return Unit.Value;   // an env or op pointer is not Sindri's to delete
         }
@@ -106,14 +108,14 @@ internal sealed class KeychainConnectionSecrets(ISecretWriter writer, ISecretPoi
         {
             using var document = JsonDocument.Parse(Base64Url.DecodeFromChars(text.Trim()));
             var root = document.RootElement;
-            if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty("access", out var access) || access.ValueKind != JsonValueKind.String)
+            if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty("access", out var access) || access.ValueKind != JsonValueKind.String || access.GetString() is not { } accessToken)
             {
                 return null;
             }
 
             var refresh = root.TryGetProperty("refresh", out var r) && r.ValueKind == JsonValueKind.String ? r.GetString() : null;
             DateTimeOffset? expires = root.TryGetProperty("expiresAt", out var e) && e.ValueKind == JsonValueKind.String && e.TryGetDateTimeOffset(out var at) ? at : null;
-            return new TokenSet(access.GetString()!, refresh, expires);
+            return new TokenSet(accessToken, refresh, expires);
         }
         catch (Exception e) when (e is FormatException or JsonException)
         {
@@ -129,6 +131,7 @@ internal sealed class KeychainConnectionSecrets(ISecretWriter writer, ISecretPoi
         {
             KeychainPlatform.MacOS => _runner.Run("security", ["delete-generic-password", "-s", service, "-a", account], _timeout),
             KeychainPlatform.Linux => _runner.Run("secret-tool", ["clear", "service", service, "account", account], _timeout),
+            KeychainPlatform.Unsupported => ToolRun.Missing,
             _ => ToolRun.Missing,
         };
 

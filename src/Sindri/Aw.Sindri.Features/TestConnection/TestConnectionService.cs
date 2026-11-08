@@ -70,7 +70,7 @@ internal sealed partial class TestConnectionService(IConnectionStore store, ICon
     {
         if (_logger is not null)
         {
-            LogRefused(_logger, connection.Name.ToString(), error.Code);
+            LogRefused(_logger, connection.Name, error.Code);
         }
 
         var status = connection.Kind == ConnectionKind.OAuth && error.Code == SindriErrors.ConnectionNeedsSignIn.Code ? ConnectionStatus.NeedsSignIn : ConnectionStatus.Error;
@@ -90,5 +90,5 @@ internal sealed partial class TestConnectionService(IConnectionStore store, ICon
     }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "The test of connection {Name} was refused ({Code})")]
-    private static partial void LogRefused(ILogger logger, string name, string code);
+    private static partial void LogRefused(ILogger logger, ConnectionName name, string code);
 }

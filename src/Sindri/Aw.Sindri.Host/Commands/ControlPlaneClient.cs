@@ -49,11 +49,7 @@ internal sealed class ControlPlaneClient(IControlPlaneProbe probe, JsonSerialize
     /// <returns>The answer, or the API's error.</returns>
     public Task<Result<ApiAnswer<T>>> Get<T>(string route, CancellationToken ct) => Send<T>(HttpMethod.Get, route, content: null, after: null, ct);
 
-    /// <summary>DELETE a route and read its answer as <typeparamref name="T"/>.</summary>
-    /// <param name="route">The route under the base URL, e.g. '/sindri/connections/linear:work'.</param>
-    /// <param name="ct">Cancels the call.</param>
-    /// <typeparam name="T">The response record (in the package's JSON context).</typeparam>
-    /// <returns>The answer, or the API's error.</returns>
+    /// <summary>DELETE a route and read its answer.</summary>
     public Task<Result<ApiAnswer<T>>> Delete<T>(string route, CancellationToken ct) => Send<T>(HttpMethod.Delete, route, content: null, after: null, ct);
 
     /// <summary>GET a route so it reflects every write up to <paramref name="after"/> (X-Sindri-After, API spec §2.4).</summary>

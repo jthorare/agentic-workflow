@@ -198,72 +198,73 @@ internal sealed class ConnectionVerbs(ControlPlaneClient client, Output output, 
         return text.ToString();
     }
 
+    private static readonly string[] _verbs = ["add", "list", "show", "test", "remove"];
+    private static readonly string[] _switchFlags = ["--json", "--no-start"];
+    private static readonly string[] _valueFlags = ["--preset", "--kind", "--client-id", "--key-env", "--scope"];
+
     private static Result<Parsed> Parse(string[] args)
     {
-        var verb = args.Length > 1 ? args[1] : "list";
-        if (args[0] == "connections" && args.Length == 1)
-        {
-            verb = "list";
-        }
-
-        if (verb is not ("add" or "list" or "show" or "test" or "remove"))
+        var alias = args[0] == "connections";
+        var verb = alias || args.Length < 2 ? "list" : args[1];
+        if (!_verbs.Contains(verb, StringComparer.Ordinal))
         {
             return SindriErrors.InvalidInput.With("usage: sindri connection add|list|show|test|remove (fix: sindri help)");
         }
 
-        string? name = null;
-        string? preset = null;
-        string? kind = null;
-        string? client = null;
-        string? keyEnv = null;
-        var scopes = new List<string>();
-        var json = false;
-        var noStart = false;
-        var rest = args.Skip(args[0] == "connections" && args.Length == 1 ? 1 : 2).ToArray();
+        var scanned = Scan([.. args.Skip(alias ? 1 : 2)]);
+        if (scanned.IsError)
+        {
+            return scanned.Error;
+        }
+
+        var (values, switches, names) = scanned.Value;
+        if (WrongNames(verb, names) is { } wrong)
+        {
+            return wrong;
+        }
+
+        string? Last(string flag) => values.TryGetValue(flag, out var given) ? given[^1] : null;
+        return new Parsed(verb, names.Count == 0 ? string.Empty : names[0], Last("--preset"), Last("--kind"), Last("--client-id"), Last("--key-env"), values.GetValueOrDefault("--scope") ?? [], switches.Contains("--json"), switches.Contains("--no-start"));
+    }
+
+    private static Error? WrongNames(string verb, List<string> names) =>
+        names.Count > 1 || (!string.Equals(verb, "list", StringComparison.Ordinal) && names.Count == 0)
+            ? SindriErrors.InvalidInput.With($"sindri connection {verb} takes exactly one name (service:label)")
+            : null;
+
+    private static Result<(Dictionary<string, List<string>> Values, HashSet<string> Switches, List<string> Names)> Scan(string[] rest)
+    {
+        var values = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        var switches = new HashSet<string>(StringComparer.Ordinal);
+        var names = new List<string>();
         for (var i = 0; i < rest.Length; i++)
         {
-            switch (rest[i])
+            var word = rest[i];
+            if (_switchFlags.Contains(word, StringComparer.Ordinal))
             {
-                case "--json":
-                    json = true;
-                    break;
-                case "--no-start":
-                    noStart = true;
-                    break;
-                case "--preset" or "--kind" or "--client-id" or "--key-env" or "--scope":
-                    var flag = rest[i];
-                    var value = i + 1 < rest.Length ? rest[++i] : null;
-                    if (value is null)
-                    {
-                        return SindriErrors.InvalidInput.With($"{flag} needs a value");
-                    }
+                _ = switches.Add(word);
+            }
+            else if (_valueFlags.Contains(word, StringComparer.Ordinal))
+            {
+                if (i + 1 >= rest.Length)
+                {
+                    return SindriErrors.InvalidInput.With($"{word} needs a value");
+                }
 
-                    switch (flag)
-                    {
-                        case "--preset": preset = value; break;
-                        case "--kind": kind = value; break;
-                        case "--client-id": client = value; break;
-                        case "--key-env": keyEnv = value; break;
-                        default: scopes.Add(value); break;
-                    }
-
-                    break;
-                case var flagLike when flagLike.StartsWith('-'):
-                    return SindriErrors.InvalidInput.With($"unknown flag {flagLike} (fix: sindri help)");
-                case var positional when name is null:
-                    name = positional;
-                    break;
-                default:
-                    return SindriErrors.InvalidInput.With("one connection name at most (service:label)");
+                _ = values.TryAdd(word, []);
+                values[word].Add(rest[++i]);
+            }
+            else if (word.StartsWith('-'))
+            {
+                return SindriErrors.InvalidInput.With($"unknown flag {word} (fix: sindri help)");
+            }
+            else
+            {
+                names.Add(word);
             }
         }
 
-        if (verb != "list" && name is null)
-        {
-            return SindriErrors.InvalidInput.With($"sindri connection {verb} needs a name (service:label)");
-        }
-
-        return new Parsed(verb, name ?? string.Empty, preset, kind, client, keyEnv, scopes, json, noStart);
+        return (values, switches, names);
     }
 
     private sealed record Parsed(string Verb, string Name, string? Preset, string? Kind, string? Client, string? KeyEnv, IReadOnlyList<string> Scopes, bool Json, bool NoStart);

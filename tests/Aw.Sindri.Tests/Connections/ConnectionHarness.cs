@@ -63,7 +63,7 @@ internal sealed class ConnectionHarness
     public ICallerContextAccessor Callers { get; }
 
     public AddConnectionService Add(ISignInSession? signIn = null)
-        => new(Store, Secrets, Presets, signIn ?? SignIn, Environment, Clock, Callers, new TypedLog<AddConnectionService>(Logs));
+        => new(Store, Secrets, Presets, signIn ?? SignIn, Environment, Clock, Callers);
 
     public ListConnectionsService List() => new(Store);
 

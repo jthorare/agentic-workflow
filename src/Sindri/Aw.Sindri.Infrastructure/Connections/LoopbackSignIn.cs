@@ -30,7 +30,9 @@ internal sealed class LoopbackSignIn(IOAuthClient oauth, IBrowserOpener browser,
     {
         ArgumentNullException.ThrowIfNull(preset);
         ArgumentNullException.ThrowIfNull(scopes);
+#pragma warning disable CA2000 // the listener's owner is Complete, which closes it on every way out
         var listener = Listen(out var port);
+#pragma warning restore CA2000
         if (listener is null)
         {
             return ValueTask.FromResult<Result<SignInStarted>>(SindriErrors.ConnectionSecretUnavailable.With("no free loopback port to listen on for the sign-in callback"));
@@ -40,7 +42,7 @@ internal sealed class LoopbackSignIn(IOAuthClient oauth, IBrowserOpener browser,
         var pkce = PkceChallenge.Create(_randomBytes);
         var request = new AuthorizationRequest(preset, clientId, redirect, scopes.Count > 0 ? scopes : preset.DefaultScopes, pkce);
         var url = request.ToUrl();
-        var completion = Complete(listener, preset, clientId, redirect, pkce, cancellationToken);
+        var completion = Complete(listener, new SignIn(preset, clientId, redirect, pkce), cancellationToken);
         _ = _browser.Open(url);
         return ValueTask.FromResult<Result<SignInStarted>>(new SignInStarted(url, completion));
     }
@@ -70,14 +72,14 @@ internal sealed class LoopbackSignIn(IOAuthClient oauth, IBrowserOpener browser,
         return null;
     }
 
-    private async Task<Result<TokenSet>> Complete(HttpListener listener, ConnectionPreset preset, string clientId, string redirect, PkceChallenge pkce, CancellationToken cancellationToken)
+    private async Task<Result<TokenSet>> Complete(HttpListener listener, SignIn sign, CancellationToken cancellationToken)
     {
         using var limit = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         limit.CancelAfter(_timeout);
         try
         {
             var callback = await WaitForCallback(listener, limit.Token).ConfigureAwait(false);
-            if (!pkce.Verify(callback.Query["state"]))
+            if (!sign.Pkce.Verify(callback.Query["state"]))
             {
                 await Reply(callback, 400, "Sindri: this sign-in did not match. Close this tab and run the command again.").ConfigureAwait(false);
                 return SindriErrors.ConnectionStateMismatch.With("the callback's state is not the one this sign-in made");
@@ -86,17 +88,17 @@ internal sealed class LoopbackSignIn(IOAuthClient oauth, IBrowserOpener browser,
             if (callback.Query["error"] is { Length: > 0 })
             {
                 await Reply(callback, 200, "Sindri: consent was denied. You can close this tab.").ConfigureAwait(false);
-                return SindriErrors.ConnectionConsentDenied.With($"{preset.DisplayName} did not get consent");
+                return SindriErrors.ConnectionConsentDenied.With($"{sign.Preset.DisplayName} did not get consent");
             }
 
             if (callback.Query["code"] is not { Length: > 0 } code)
             {
                 await Reply(callback, 400, "Sindri: the callback had no code.").ConfigureAwait(false);
-                return SindriErrors.ConnectionConsentDenied.With($"{preset.DisplayName} sent the callback without a code");
+                return SindriErrors.ConnectionConsentDenied.With($"{sign.Preset.DisplayName} sent the callback without a code");
             }
 
             await Reply(callback, 200, "Sindri: signed in. You can close this tab.").ConfigureAwait(false);
-            return await _oauth.ExchangeCode(new CodeExchange(preset, clientId, code, redirect, pkce.Verifier), limit.Token).ConfigureAwait(false);
+            return await _oauth.ExchangeCode(new CodeExchange(sign.Preset, sign.Client, code, sign.Redirect, sign.Pkce.Verifier), limit.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -118,9 +120,9 @@ internal sealed class LoopbackSignIn(IOAuthClient oauth, IBrowserOpener browser,
         while (true)
         {
             var context = await listener.GetContextAsync().WaitAsync(cancellationToken).ConfigureAwait(false);
-            if (string.Equals(context.Request.Url?.AbsolutePath, CallbackPath, StringComparison.Ordinal))
+            if (context.Request.Url is { } url && string.Equals(url.AbsolutePath, CallbackPath, StringComparison.Ordinal))
             {
-                return new Callback(context, System.Web.HttpUtility.ParseQueryString(context.Request.Url!.Query));
+                return new Callback(context, System.Web.HttpUtility.ParseQueryString(url.Query));
             }
 
             context.Response.StatusCode = 404;
@@ -143,6 +145,8 @@ internal sealed class LoopbackSignIn(IOAuthClient oauth, IBrowserOpener browser,
             // the browser went away before the page was written: the sign-in's own result is unaffected
         }
     }
+
+    private sealed record SignIn(ConnectionPreset Preset, string Client, string Redirect, PkceChallenge Pkce);
 
     private sealed record Callback(HttpListenerContext Context, System.Collections.Specialized.NameValueCollection Query);
 }

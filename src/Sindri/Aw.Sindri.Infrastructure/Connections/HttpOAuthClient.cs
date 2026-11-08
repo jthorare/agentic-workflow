@@ -114,20 +114,24 @@ internal sealed class HttpOAuthClient(HttpClient http, TimeProvider time) : IOAu
         {
             using var document = JsonDocument.Parse(json);
             var root = document.RootElement;
-            if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty("access_token", out var access) || access.ValueKind != JsonValueKind.String || access.GetString() is not { Length: > 0 } accessToken)
+            if (Text(root, "access_token") is not { Length: > 0 } accessToken)
             {
                 return SindriErrors.ConnectionRefreshFailed.With("the token endpoint answered without an access token");
             }
 
-            var refresh = root.TryGetProperty("refresh_token", out var r) && r.ValueKind == JsonValueKind.String && r.GetString() is { Length: > 0 } next ? next : previousRefresh;
-            DateTimeOffset? expires = root.TryGetProperty("expires_in", out var e) && e.ValueKind == JsonValueKind.Number && e.TryGetDouble(out var seconds)
-                ? _time.GetUtcNow().AddSeconds(seconds)
-                : null;
-            return new TokenSet(accessToken, refresh, expires);
+            return new TokenSet(accessToken, Text(root, "refresh_token") is { Length: > 0 } next ? next : previousRefresh, ExpiresAt(root));
         }
         catch (JsonException)
         {
             return SindriErrors.ConnectionRefreshFailed.With("the token endpoint answered with text that is not JSON");
         }
     }
+
+    private DateTimeOffset? ExpiresAt(JsonElement root) =>
+        root.ValueKind == JsonValueKind.Object && root.TryGetProperty("expires_in", out var seconds) && seconds.ValueKind == JsonValueKind.Number && seconds.TryGetDouble(out var value)
+            ? _time.GetUtcNow().AddSeconds(value)
+            : null;
+
+    private static string? Text(JsonElement root, string name) =>
+        root.ValueKind == JsonValueKind.Object && root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
 }

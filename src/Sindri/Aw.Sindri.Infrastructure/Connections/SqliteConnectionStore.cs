@@ -27,7 +27,7 @@ internal sealed class SqliteConnectionStore(LedgerDatabase database) : IConnecti
 
     public async ValueTask<Result<Connection>> Get(ConnectionName name, CancellationToken cancellationToken)
     {
-        var found = await RecipeSessions.Read<Connection?>(database, LedgerDatabase.ConnectionsVersion, null,
+        var found = await RecipeSessions.Read<Connection?>(database, LedgerDatabase.ConnectionsVersion, empty: null,
             (session, token) => RecipeSessions.First(session, new SqlStatement("SELECT " + Columns + " FROM connection WHERE name = $name", c => c.Bind("$name", name.ToString()), "connection " + name), ConnectionMapper.Instance, token),
             cancellationToken).ConfigureAwait(false);
         if (found.IsError)
@@ -40,7 +40,7 @@ internal sealed class SqliteConnectionStore(LedgerDatabase database) : IConnecti
 
     public ValueTask<Result<IReadOnlyList<Connection>>> List(CancellationToken cancellationToken) =>
         RecipeSessions.Read<IReadOnlyList<Connection>>(database, LedgerDatabase.ConnectionsVersion, [],
-            (session, token) => RecipeSessions.List(session, new SqlStatement("SELECT " + Columns + " FROM connection ORDER BY name", null, "connections"), ConnectionMapper.Instance, token),
+            (session, token) => RecipeSessions.List(session, new SqlStatement("SELECT " + Columns + " FROM connection ORDER BY name", Bind: null, Subject: "connections"), ConnectionMapper.Instance, token),
             cancellationToken);
 
     public ValueTask<Result<Unit>> Upsert(Connection connection, CancellationToken cancellationToken)
