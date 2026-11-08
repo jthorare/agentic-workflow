@@ -1,0 +1,34 @@
+{
+  "asOf": {
+    "cursor": 14,
+    "ledgerHead": 14,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "state": "syncing",
+  "vault": "notes",
+  "note": "Todo.md",
+  "lastCheckAt": "2026-01-01T09:59:30.0000000Z",
+  "lastSyncAt": "2026-01-01T09:58:12.0000000Z",
+  "lastError": null,
+  "conflicts": [
+    "td_01jc5a8xq0n4w7ms2t9r3vbk6e"
+  ],
+  "hold": null,
+  "picks": [
+    {
+      "kind": "conflict",
+      "id": "td_01jc5d4m7p2q9r5s8t1v3w6x0y",
+      "kept": "obsidian",
+      "by": "human:ui",
+      "undoUntil": "2026-01-01T10:00:08.0000000Z"
+    }
+  ],
+  "cantSync": [
+    {
+      "line": 14,
+      "reason": "it has a markdown link"
+    }
+  ]
+}
