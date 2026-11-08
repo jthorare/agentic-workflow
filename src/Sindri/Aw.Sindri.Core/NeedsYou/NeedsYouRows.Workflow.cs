@@ -18,7 +18,7 @@ public static partial class NeedsYouRows
     {
         ArgumentNullException.ThrowIfNull(note);
         ArgumentNullException.ThrowIfNull(scrubber);
-        var cli = CliForm.Parse("sindri ledger --type workflow.notify");
+        var cli = CliForm.Parse("sindri ledger");   // why: no verb shows one graph run until PR 8, and a form takes no bare value after a flag, so the row points at the ledger read
         if (cli.IsError)
         {
             return cli.Error;
