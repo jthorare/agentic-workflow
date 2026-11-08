@@ -3448,6 +3448,7 @@ const Aw.Sindri.Core.Workflow.Engine.Runtime.IFactStore.MaxBytes = 1048576 -> in
 const Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceEvents.None = "no events" -> string!
 const Aw.Sindri.Core.Workflow.Engine.Triggers.TriggerNames.Answer = "answer" -> string!
 const Aw.Sindri.Core.Workflow.Engine.Triggers.TriggerNames.Cancel = "cancel" -> string!
+const Aw.Sindri.Core.Workflow.Engine.Triggers.TriggerNames.Retire = "retire" -> string!
 const Aw.Sindri.Core.Workflow.Engine.Triggers.TriggerNames.ChildEscalated = "child.escalated" -> string!
 const Aw.Sindri.Core.Workflow.Engine.Triggers.TriggerNames.ChildParked = "child.parked" -> string!
 const Aw.Sindri.Core.Workflow.Engine.Triggers.TriggerNames.ChildResumed = "child.resumed" -> string!

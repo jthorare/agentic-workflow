@@ -28,7 +28,8 @@ internal sealed partial class ItemsProjection(EventFactory events, ITextScrubber
         || string.Equals(eventType, EventTypes.WorkflowStarted, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.WorkflowTransition, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.WorkflowRefused, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.WorkflowNotified, StringComparison.Ordinal);
+        || string.Equals(eventType, EventTypes.WorkflowNotified, StringComparison.Ordinal)
+        || string.Equals(eventType, EventTypes.WorkflowRetired, StringComparison.Ordinal);
 
     public async ValueTask<Result<Unit>> Apply(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
     {
