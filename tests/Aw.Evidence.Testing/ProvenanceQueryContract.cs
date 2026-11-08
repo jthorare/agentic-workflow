@@ -27,7 +27,7 @@ public abstract class ProvenanceQueryContract
     {
         var query = Create(["seed-admin-1@example.com", "staff@example.com", "seed-admin-2@example.com"]);
 
-        var seeds = await query.EmailsLikeAsync("seed-admin-%@example.com", CancellationToken.None);
+        var seeds = await query.EmailsLikeAsync("seed-admin-%@example.com", database: null, CancellationToken.None);
 
         Expect.That(seeds.Value.SequenceEqual(["seed-admin-1@example.com", "seed-admin-2@example.com"], StringComparer.Ordinal), "only the matching rows, in order");
     }
@@ -39,7 +39,7 @@ public abstract class ProvenanceQueryContract
     {
         var query = Create(["seed-admin-1@example.com", "real.person@gmail.com"]);
 
-        var all = await query.AllEmailsAsync(CancellationToken.None);
+        var all = await query.AllEmailsAsync(database: null, CancellationToken.None);
 
         Expect.That(all.Value.SequenceEqual(["seed-admin-1@example.com", "real.person@gmail.com"], StringComparer.Ordinal), "every row");
     }
@@ -51,7 +51,7 @@ public abstract class ProvenanceQueryContract
     {
         var query = Create(["seed-admin-1@example.com", string.Empty]);
 
-        var all = await query.AllEmailsAsync(CancellationToken.None);
+        var all = await query.AllEmailsAsync(database: null, CancellationToken.None);
 
         Expect.That(all.Value.SequenceEqual(["seed-admin-1@example.com", string.Empty], StringComparer.Ordinal), "the row without an email is kept, as empty");
     }
@@ -61,7 +61,7 @@ public abstract class ProvenanceQueryContract
     [Fact]
     public async Task A_failed_query_is_a_probe_failure_with_the_message()
     {
-        var all = await CreateFailing("relation \"public.users\" does not exist").AllEmailsAsync(CancellationToken.None);
+        var all = await CreateFailing("relation \"public.users\" does not exist").AllEmailsAsync(database: null, CancellationToken.None);
 
         Expect.That(all.IsError && all.Error.Code == EvidenceErrors.ProbeFailed.Code, "a failed query is AW-EVIDENCE-014");
         Expect.That(all.Error.Message.Contains("does not exist", StringComparison.Ordinal), "the message says why");
