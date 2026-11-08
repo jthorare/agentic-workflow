@@ -98,6 +98,7 @@ using Aw.Sindri.Features.StopProcess;
 using Aw.Sindri.Features.StreamEvents;
 using Aw.Sindri.Features.SweepLostSessions;
 using Aw.Sindri.Features.ValidateProfile;
+using Aw.Sindri.Features.WorkflowSchedule;
 using Aw.Sindri.Features.WorkflowStats;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -123,6 +124,7 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<IItemResolver, ViewItemResolver>()
             .AddScoped<RequestTarget>()
             .AddScoped<IService<StartProcessRequest, StartProcessResponse>, StartProcessService>()
+            .AddScoped<IScheduledService, WorkflowScheduleService>().AddSingleton(WorkflowScheduleService.BuiltIn)   // the built-in 'workflow-schedule' service (#2258, PR 6): runs without a profile entry, every minute
             .AddScoped<IService<RunWorkflowRequest, RunWorkflowResponse>, RunWorkflowService>().AddScoped<IService<CancelWorkflowRunRequest, CancelWorkflowRunResponse>, CancelWorkflowRunService>()   // 'sindri wf run' and 'wf cancel' (#2258, PR 6)
             .AddScoped<IService<RecordHeartbeatRequest, RecordHeartbeatResponse>, RecordHeartbeatService>()
             .AddRecordServiceRun()

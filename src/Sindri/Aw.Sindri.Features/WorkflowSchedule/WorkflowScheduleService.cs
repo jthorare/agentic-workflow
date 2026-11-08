@@ -13,8 +13,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aw.Sindri.Features.WorkflowSchedule;
 
-// why: registered, with its BuiltIn entry, in the GraphWorkflow piece together with the launcher; until then only tests build it.
-#pragma warning disable MA0182
 /// <summary>
 /// The 'workflow-schedule' background service (issue 2258, PR 6): each minute it starts one run for the latest tick a workflow's
 /// 'schedule' node has passed and not yet handled. Several missed ticks (a laptop asleep for days) fire only the latest. A tick
@@ -173,4 +171,3 @@ internal sealed partial class WorkflowScheduleService(IWorkflowStore workflows, 
         _ => [],
     };
 }
-#pragma warning restore MA0182
