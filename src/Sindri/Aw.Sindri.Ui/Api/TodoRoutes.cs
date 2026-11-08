@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Ui.Api.Todos;
+namespace Aw.Sindri.Ui.Api;
 
 /// <summary>The paths of the todo calls (todo spec §4.4). The id is escaped as one segment.</summary>
 internal static class TodoRoutes

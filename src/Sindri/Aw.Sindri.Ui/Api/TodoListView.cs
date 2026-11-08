@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Ui.Api.Todos;
+namespace Aw.Sindri.Ui.Api;
 
 /// <summary>GET /sindri/todos?state=open|done|all (todo spec §4.4): the todos and the counts. A view read.</summary>
 /// <param name="AsOf">How fresh the view is.</param>

@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Ui.Api.Todos;
+namespace Aw.Sindri.Ui.Api;
 
 /// <summary>The counts of GET /sindri/todos (todo spec §4.4): how many todos sit in each state, whatever the list's state filter.</summary>
 /// <param name="Open">Open todos.</param>

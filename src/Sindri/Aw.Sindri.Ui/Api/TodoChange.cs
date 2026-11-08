@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Aw.Sindri.Ui.Api.Todos;
+namespace Aw.Sindri.Ui.Api;
 
 /// <summary>POST /sindri/todos/{id}/change's body (todo spec §4.4): the version the row showed and what to change. A field left out stays as it was.</summary>
 /// <param name="Version">The todo's version as the row showed it.</param>

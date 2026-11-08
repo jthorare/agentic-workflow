@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Ui.Api.Todos;
+namespace Aw.Sindri.Ui.Api;
 
 /// <summary>The open both-places conflict of a todo (todo spec §3.1).</summary>
 /// <param name="Sindri">Sindri's side.</param>

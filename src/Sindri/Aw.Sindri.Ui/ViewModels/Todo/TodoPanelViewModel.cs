@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using Aw.Sindri.Ui.Api;
-using Aw.Sindri.Ui.Api.Todos;
 
 namespace Aw.Sindri.Ui.ViewModels.Todo;
 

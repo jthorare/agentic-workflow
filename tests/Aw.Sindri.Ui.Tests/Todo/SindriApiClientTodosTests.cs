@@ -4,7 +4,6 @@ using System.Text;
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api;
-using Aw.Sindri.Ui.Api.Todos;
 using Aw.Sindri.Ui.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Todo;

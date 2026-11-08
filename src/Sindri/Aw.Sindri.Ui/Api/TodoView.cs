@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Ui.Api.Todos;
+namespace Aw.Sindri.Ui.Api;
 
 /// <summary>One todo as GET /sindri/todos serves it (todo spec §4.2).</summary>
 /// <param name="Id">"td_…".</param>

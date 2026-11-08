@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Ui.Api.Todos;
+namespace Aw.Sindri.Ui.Api;
 
 /// <summary>One side of a both-places conflict (todo spec §4.1 todo.conflicted): the todo as Sindri or the note has it.</summary>
 /// <param name="Text">The text; null on a side that removed the todo.</param>

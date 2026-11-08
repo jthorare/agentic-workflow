@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Ui.Api.Todos;
+namespace Aw.Sindri.Ui.Api;
 
 /// <summary>A todo write the API accepted (todo spec §4.4).</summary>
 /// <param name="Accepted">The command id and the ledger sequence the app sends as X-Sindri-After next.</param>

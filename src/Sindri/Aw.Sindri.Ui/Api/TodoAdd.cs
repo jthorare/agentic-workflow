@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Aw.Sindri.Ui.Api.Todos;
+namespace Aw.Sindri.Ui.Api;
 
 /// <summary>POST /sindri/todos's body (todo spec §4.4): a new todo.</summary>
 /// <param name="Text">The text.</param>

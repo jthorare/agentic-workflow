@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Ui.Api.Todos;
+namespace Aw.Sindri.Ui.Api;
 
 /// <summary>One link on a todo (todo spec §4.3): a PR, a Linear issue or an item.</summary>
 /// <param name="Kind">"pr", "linear" or "item".</param>

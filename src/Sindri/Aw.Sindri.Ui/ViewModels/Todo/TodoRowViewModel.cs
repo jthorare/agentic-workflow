@@ -1,5 +1,5 @@
 using System.Globalization;
-using Aw.Sindri.Ui.Api.Todos;
+using Aw.Sindri.Ui.Api;
 
 namespace Aw.Sindri.Ui.ViewModels.Todo;
 

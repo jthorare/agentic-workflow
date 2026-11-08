@@ -111,6 +111,7 @@ public sealed class GoldenContractTests
         ["sandbox-check"] = As<Ui.Api.Sandbox.SandboxCheckView>,   // GET /sandbox/check: Check again and the resume list (SB-6, spec-shaped)
         ["sandbox-denials"] = As<Ui.Api.Sandbox.DenialsView>,   // GET /sandbox/denials?item=: the item sheet's Blocked list (SB-6, spec-shaped)
         ["sandbox-allow"] = As<Ui.Api.Sandbox.AllowView>,   // POST /sandbox/allow's needs-approval answer; the refusals are ProblemDetails (SB-6, spec-shaped)
+        ["todos"] = As<TodoListView>,   // GET /todos: the todo panel's list (todo spec Ph2)
     };
 
     // Routes the app never calls yet: stop is Health's (U4), and the
