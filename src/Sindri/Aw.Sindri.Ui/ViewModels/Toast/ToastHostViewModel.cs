@@ -102,7 +102,7 @@ internal sealed class ToastHostViewModel : ObservableObject
         }
 
         End();
-        await undo().ConfigureAwait(false);
+        _ = await undo().ConfigureAwait(false);
         return true;
     }
 
