@@ -25,7 +25,7 @@ A workflow is a JSON document Sindri stores as revisions. This page covers what 
 | `GRAPH-TRIGGER-001` / `-002` | more than one trigger (names all) / none |
 | `GRAPH-WIRING-001` | a node no trigger reaches |
 | `GRAPH-CYCLE-001` | a loop, with its path in spec order (`a -> b -> c -> a`) |
-| `GRAPH-REF-001` / `-002` / `-003` / `-004` | a reference to a node that is not upstream / to an output name the node does not have / to no node / a `{{` that is never closed |
+| `GRAPH-REF-001` / `-002` / `-003` / `-004` / `-005` | a reference to a node that is not upstream / to an output name the node does not have / to no node / a `{{` that is never closed (a `{{` inside a string literal of a condition is text, not a reference) / an output whose type does not fit the field it fills |
 | `GRAPH-BLOCK-001`, `GRAPH-CONFIG-001` | unknown block type, config that fails the block's schema |
 | `GRAPH-CRON-001`, `GRAPH-COND-001` | unreadable cron or timezone, unreadable condition |
 | `GRAPH-REPO-001`, `GRAPH-NAME-001` | repo, connection or memory that does not exist (`-002` is the warning when nobody can answer yet) |
@@ -33,7 +33,7 @@ A workflow is a JSON document Sindri stores as revisions. This page covers what 
 
 `GRAPH-TRIGGER-001` / `-002`, `GRAPH-CYCLE-001` and `GRAPH-WIRING-001` are node-level findings: they name nodes and have no field.
 
-The validator checks that a referenced output exists, not its type; type checks come with the typed block configs in PR 6.
+The validator checks that a referenced output exists, and that a whole-value reference (`"{{a.n}}"` as the entire string) has a type the field takes (`GRAPH-REF-005`). A reference inside longer text is always text, so it is not type-checked.
 
 A document with a missing or null node, edge, `id`, `type`, `config`, `from` or `to` is refused by `GraphJson.Parse` as `SND-GRAPH-001` naming the JSON path (such as `nodes[2].type`); neither `Parse` nor `wf validate` throws on any text.
 
@@ -51,6 +51,10 @@ saving on a revision that is no longer the latest is `SND-GRAPH-007`; `Activate`
 ## Error codes
 
 `SND-GRAPH-001..009`, listed in `docs/sindri/errors.md`.
+
+## The `prompt` block's `output` schema
+
+`prompt` asks the model once and checks the answer against its `output` JSON schema, with a hand-written subset (Core has no JSON-schema library). **It checks exactly this:** the answer is a JSON object (a ``` fence around it is removed); every name in `required` is present (names must be text); and every property that has a `type` has a value of that type, where `type` is `string`, `number`, `integer`, `boolean`, `object` or `array` (`integer` accepts any number, so `1.5` passes), or a list of type names, of which the first one other than `"null"` is used. **It does not check:** `enum`, nested `properties` or `items`, `additionalProperties`, `null`/union members beyond the first type, formats or ranges. An `output: {}` accepts any JSON object. A `type` that is not text or lists only `"null"`, or a non-text `required` entry, is a `GRAPH-CONFIG-001` finding when the workflow is validated and `SND-GRAPH-103` when the node runs (before the model is asked). Only the schema's `properties` become the node's outputs.
 
 ## Runs (PR 6)
 
