@@ -47,7 +47,7 @@ internal sealed class ContextLinearWrites(ILinearWrites writes, ILinearLiveReads
 
         var written = (draft.AssigneeId is null ? LinearWrittenFields.None : LinearWrittenFields.Assignee) | (draft.StateId is null ? LinearWrittenFields.None : LinearWrittenFields.State);
         var sent = await writes.CreateIssue(settings.Value, draft, clientId, cancellationToken).ConfigureAwait(false);
-        return await Finish(scope, sent, written, () => ReadIssue(settings.Value, clientId.Value, cancellationToken), cancellationToken, retriedWithClientId: true).ConfigureAwait(false);
+        return await Finish(scope, new Write(sent, written, ByClientId: true), () => ReadIssue(settings.Value, clientId.Value, cancellationToken), cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -64,7 +64,7 @@ internal sealed class ContextLinearWrites(ILinearWrites writes, ILinearLiveReads
         var (settings, issue) = prepared.Value;
         var written = (change.AssigneeId.IsSet ? LinearWrittenFields.Assignee : LinearWrittenFields.None) | (change.StateId.IsSet ? LinearWrittenFields.State : LinearWrittenFields.None);
         var sent = await writes.UpdateIssue(settings, issue.Id, change, cancellationToken).ConfigureAwait(false);
-        return await Finish(scope, sent, written, async () => (await ReadIssue(settings, issue.Id.Value, cancellationToken).ConfigureAwait(false)) is { } now && LinearChangeApplied.In(change, now) ? now : null, cancellationToken).ConfigureAwait(false);
+        return await Finish(scope, new Write(sent, written), async () => (await ReadIssue(settings, issue.Id.Value, cancellationToken).ConfigureAwait(false)) is { } now && LinearChangeApplied.In(change, now) ? now : null, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -80,11 +80,11 @@ internal sealed class ContextLinearWrites(ILinearWrites writes, ILinearLiveReads
 
         var (settings, issue) = prepared.Value;
         var sent = await writes.CreateComment(settings, issue.Id, body, clientId, cancellationToken).ConfigureAwait(false);
-        return await Finish(scope, sent, LinearWrittenFields.None, async () =>
+        return await Finish(scope, new Write(sent, LinearWrittenFields.None, ByClientId: true), async () =>
         {
             var comment = await reads.Comment(settings, ExternalId.From(clientId.Value), cancellationToken).ConfigureAwait(false);
             return comment.IsSuccess && comment.Value is { } found && found.IssueId == issue.Id ? issue : null;
-        }, cancellationToken, retriedWithClientId: true).ConfigureAwait(false);
+        }, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -105,7 +105,7 @@ internal sealed class ContextLinearWrites(ILinearWrites writes, ILinearLiveReads
         }
 
         var sent = await writes.UpdateComment(settings, commentId, body, cancellationToken).ConfigureAwait(false);
-        return await Finish(scope, sent, LinearWrittenFields.None, async () =>
+        return await Finish(scope, new Write(sent, LinearWrittenFields.None), async () =>
         {
             var comment = await reads.Comment(settings, commentId, cancellationToken).ConfigureAwait(false);
             return comment.IsSuccess && comment.Value is { } found && string.Equals(found.Body, body, StringComparison.Ordinal) ? issue : null;
@@ -125,7 +125,7 @@ internal sealed class ContextLinearWrites(ILinearWrites writes, ILinearLiveReads
 
         var (settings, issue) = prepared.Value;
         var sent = await writes.LinkUrl(settings, issue.Id, url, title, cancellationToken).ConfigureAwait(false);
-        return await Finish(scope, sent, LinearWrittenFields.None, async () =>
+        return await Finish(scope, new Write(sent, LinearWrittenFields.None), async () =>
         {
             var has = await reads.HasAttachment(settings, issue.Id, url, cancellationToken).ConfigureAwait(false);
             return has.IsSuccess && has.Value ? issue : null;
@@ -201,8 +201,12 @@ internal sealed class ContextLinearWrites(ILinearWrites writes, ILinearLiveReads
         return read.IsSuccess ? read.Value : null;
     }
 
-    private async ValueTask<Result<LinearWriteOutcome>> Finish(ContextScope scope, Result<LinearIssueView> sent, LinearWrittenFields written, Func<ValueTask<LinearIssueView?>> reread, CancellationToken cancellationToken, bool retriedWithClientId = false)
+    // why: ByClientId marks a write a retry can repeat with the same client id, so a refusal of that id may mean the first send landed
+    private readonly record struct Write(Result<LinearIssueView> Sent, LinearWrittenFields Written, bool ByClientId = false);
+
+    private async ValueTask<Result<LinearWriteOutcome>> Finish(ContextScope scope, Write write, Func<ValueTask<LinearIssueView?>> reread, CancellationToken cancellationToken)
     {
+        var (sent, written, retriedWithClientId) = write;
         if (sent.IsSuccess)
         {
             return await Store(scope, sent.Value, written, foundOnReread: false, cancellationToken).ConfigureAwait(false);
