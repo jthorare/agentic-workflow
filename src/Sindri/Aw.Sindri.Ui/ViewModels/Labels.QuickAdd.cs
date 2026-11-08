@@ -31,6 +31,12 @@ internal static partial class Labels
     /// <returns>"Added. Due Fri".</returns>
     internal static string QuickAddAddedDue(DateOnly due) => "Added. Due " + due.ToString("ddd", CultureInfo.InvariantCulture);
 
+    /// <summary>The toast when an add sent before the box closed was refused.</summary>
+    /// <param name="text">The todo's text.</param>
+    /// <param name="reason">Why it failed.</param>
+    /// <returns>Couldn't add "call Sam": reason.</returns>
+    internal static string QuickAddFailed(string text, string reason) => throw new NotSupportedException();
+
     /// <summary>The line under the field when the text ends in a day.</summary>
     /// <param name="due">The day that will be saved.</param>
     /// <returns>"Due Fri 11-13".</returns>

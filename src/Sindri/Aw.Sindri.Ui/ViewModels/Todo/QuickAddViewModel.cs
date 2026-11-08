@@ -25,6 +25,11 @@ internal sealed class QuickAddViewModel : ObservableObject
     /// <summary>Raised when Sindri took a todo from the box (before the box closes).</summary>
     internal event EventHandler<QuickAddedEventArgs>? Added;
 
+    /// <summary>Raised when a todo the box sent after it closed was refused (the box shows nothing for it, so the shell toasts).</summary>
+#pragma warning disable CS0067 // red stub: raised by the green commit
+    internal event EventHandler<QuickAddFailedEventArgs>? AddFailed;
+#pragma warning restore CS0067
+
     /// <summary>The box's accessible name and its field's.</summary>
     public string Name { get; } = Labels.QuickAddName;
 
