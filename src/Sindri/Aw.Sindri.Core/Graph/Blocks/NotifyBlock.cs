@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
 
@@ -6,24 +7,41 @@ namespace Aw.Sindri.Core.Graph.Blocks;
 /// <summary>The 'notify' block: writes a Needs-you row through <see cref="INotifyPort"/>.</summary>
 public sealed class NotifyBlock(INotifyPort notify) : IGraphBlock
 {
-    /// <summary>The port this block writes through.</summary>
-    public INotifyPort Notify { get; } = notify;
+    private static readonly BlockOutputs _outputs = new(new Dictionary<string, string>(StringComparer.Ordinal));
 
     /// <inheritdoc />
-    public string Type => throw new NotSupportedException();
+    public string Type => "notify";
 
     /// <inheritdoc />
-    public bool IsTrigger => throw new NotSupportedException();
+    public bool IsTrigger => false;
 
     /// <inheritdoc />
-    public BlockSchema Config => throw new NotSupportedException();
+    public BlockSchema Config { get; } = new([new("title", BlockFieldType.Text), new("body", BlockFieldType.Text, Required: false)]);
 
     /// <inheritdoc />
-    public string Example => throw new NotSupportedException();
+    public string Example => """{"title":"Drifted","body":"{{agent.summary}}"}""";
 
     /// <inheritdoc />
-    public BlockOutputs OutputsFor(JsonObject config) => throw new NotSupportedException();
+    public BlockOutputs OutputsFor(JsonObject config) => _outputs;
 
     /// <inheritdoc />
-    public ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public async ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        var title = Text(context.Config["title"]);
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return SindriErrors.GraphBlockFailed.With("notify needs a non-empty 'title'");
+        }
+
+        var posted = await notify.Post(context.RunId, context.Node, title, Text(context.Config["body"]), cancellationToken).ConfigureAwait(false);
+        return posted.IsError ? posted.Error : new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal));
+    }
+
+    private static string? Text(JsonNode? node) => node switch
+    {
+        null => null,
+        JsonValue v when v.GetValueKind() == JsonValueKind.String => v.GetValue<string>(),
+        _ => node.ToJsonString(),
+    };
 }

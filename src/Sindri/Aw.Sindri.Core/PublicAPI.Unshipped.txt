@@ -24948,6 +24948,8 @@ Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckRemoveWriteToken(string! sou
 Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckSetTeams(string! source, System.Collections.Generic.IReadOnlyList<string!>! teams) -> Aw.Kernel.Result<bool>!
 Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckSetToken(string! source, string! secretPointer) -> Aw.Kernel.Result<bool>!
 Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckSetWriteToken(string! source, string! secretPointer) -> Aw.Kernel.Result<bool>!
+static readonly Aw.Sindri.Core.SindriErrors.GraphBlockFailed -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphPromptAnswer -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Graph.Blocks.BlockContext
 Aw.Sindri.Core.Graph.Blocks.BlockContext.BlockContext(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId Node, System.Text.Json.Nodes.JsonObject! Config, System.Text.Json.Nodes.JsonObject! RawConfig, System.Func<string!, System.Text.Json.Nodes.JsonNode?>! Resolve) -> void
 Aw.Sindri.Core.Graph.Blocks.BlockContext.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.BlockContext!
@@ -25005,7 +25007,6 @@ Aw.Sindri.Core.Graph.Blocks.NotifyBlock.Example.get -> string!
 Aw.Sindri.Core.Graph.Blocks.NotifyBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
 Aw.Sindri.Core.Graph.Blocks.NotifyBlock.IsTrigger.get -> bool
 Aw.Sindri.Core.Graph.Blocks.NotifyBlock.NotifyBlock(Aw.Sindri.Core.Graph.Blocks.INotifyPort! notify) -> void
-Aw.Sindri.Core.Graph.Blocks.NotifyBlock.Notify.get -> Aw.Sindri.Core.Graph.Blocks.INotifyPort!
 Aw.Sindri.Core.Graph.Blocks.NotifyBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
 Aw.Sindri.Core.Graph.Blocks.NotifyBlock.Type.get -> string!
 Aw.Sindri.Core.Graph.Blocks.PromptBlock
@@ -25013,7 +25014,6 @@ Aw.Sindri.Core.Graph.Blocks.PromptBlock.Config.get -> Aw.Sindri.Core.Graph.Block
 Aw.Sindri.Core.Graph.Blocks.PromptBlock.Example.get -> string!
 Aw.Sindri.Core.Graph.Blocks.PromptBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
 Aw.Sindri.Core.Graph.Blocks.PromptBlock.IsTrigger.get -> bool
-Aw.Sindri.Core.Graph.Blocks.PromptBlock.Model.get -> Aw.Sindri.Core.Graph.Blocks.IGraphModelPort!
 Aw.Sindri.Core.Graph.Blocks.PromptBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
 Aw.Sindri.Core.Graph.Blocks.PromptBlock.PromptBlock(Aw.Sindri.Core.Graph.Blocks.IGraphModelPort! model) -> void
 Aw.Sindri.Core.Graph.Blocks.PromptBlock.Type.get -> string!
