@@ -230,6 +230,15 @@ public sealed class GoldenContractTests
         Assert.Equal((1L, "process.started"), (started.Sequence, started.Type));
     }
 
+    [Fact]
+    public void The_reviews_fix_golden_carries_the_file_error_the_fix_sheet_shows()
+    {
+        var sent = Read<ReviewFixSent>("reviews-fix", "file-not-written");
+
+        Assert.Equal(("waiting", null), (sent.Went, sent.Session));
+        Assert.StartsWith("The fix-task file wasn't written", sent.FileError, StringComparison.Ordinal);
+    }
+
     // FakeSindriHandler writes the 2xx bodies by hand so it can serve any model state; it must write Sindri's shape.
     [Fact]
     public void The_fake_handler_writes_the_goldens_status_ping_and_event_shapes()
