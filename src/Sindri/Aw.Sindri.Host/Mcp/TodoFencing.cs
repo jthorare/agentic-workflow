@@ -32,18 +32,20 @@ internal sealed class TodoFencing(JsonSerializerOptions json) : ITodoFencing
         {
             foreach (var @event in events.OfType<JsonObject>())
             {
-                if (@event["type"]?.GetValue<string>() is { } type && type.StartsWith("todo.", StringComparison.Ordinal) && @event["payload"] is JsonObject payload)
-                {
-                    var by = payload["by"]?.GetValue<string>();
-                    if (FenceStrings(payload, by))
-                    {
-                        payload[McpFencing.TrustMember] = McpFencing.Untrusted;
-                    }
-                }
+                FenceEvent(@event);
             }
         }
 
         return TypedResults.Text(node?.ToJsonString(_write) ?? "null", "application/json", System.Text.Encoding.UTF8);
+    }
+
+    private static void FenceEvent(JsonObject @event)
+    {
+        if (@event["type"]?.GetValue<string>() is { } type && type.StartsWith("todo.", StringComparison.Ordinal) && @event["payload"] is JsonObject payload
+            && FenceStrings(payload, payload["by"]?.GetValue<string>()))
+        {
+            payload[McpFencing.TrustMember] = McpFencing.Untrusted;
+        }
     }
 
     private static readonly JsonSerializerOptions _write = new() { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };

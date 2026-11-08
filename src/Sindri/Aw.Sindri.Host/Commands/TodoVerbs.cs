@@ -45,7 +45,9 @@ internal sealed class TodoVerbs(ControlPlaneClient client, Output output, Func<b
             TodoVerbArguments.Verb.List => await List(command, ct).ConfigureAwait(false),
             TodoVerbArguments.Verb.Show => await Show(command, ct).ConfigureAwait(false),
             TodoVerbArguments.Verb.Note => await Note(command, ct).ConfigureAwait(false),
-            _ => await Write(command, ct).ConfigureAwait(false),
+            TodoVerbArguments.Verb.None or TodoVerbArguments.Verb.Add or TodoVerbArguments.Verb.Edit or TodoVerbArguments.Verb.Done or TodoVerbArguments.Verb.Reopen or TodoVerbArguments.Verb.Remove or TodoVerbArguments.Verb.Restore
+                => await Write(command, ct).ConfigureAwait(false),
+            _ => throw new ArgumentOutOfRangeException(nameof(args), command.Verb, "not a todo verb"),
         };
     }
 
@@ -73,7 +75,7 @@ internal sealed class TodoVerbs(ControlPlaneClient client, Output output, Func<b
 
     private async Task<int> Show(TodoVerbArguments.Parsed command, CancellationToken ct)
     {
-        var id = await Resolve(command.Id!, TodoCliVerb.Show, ct).ConfigureAwait(false);
+        var id = await Resolve(command.Id, TodoCliVerb.Show, ct).ConfigureAwait(false);
         if (id.IsError)
         {
             return await output.Error(id.Error).ConfigureAwait(false);
@@ -123,36 +125,32 @@ internal sealed class TodoVerbs(ControlPlaneClient client, Output output, Func<b
         var fence = Fenced(command) ? "?fence=1" : string.Empty;
         if (command.Verb == TodoVerbArguments.Verb.Add)
         {
-            var body = new AddTodoBody(command.Text, command.Due?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), command.Links.Count == 0 ? null : command.Links, command.ClientId ?? Guid.NewGuid().ToString("N"));
+            var body = new AddTodoBody(command.Text, Iso(command.Due), command.Links.Count == 0 ? null : command.Links, command.ClientId ?? Guid.NewGuid().ToString("N"));
             return await client.Post<AddTodoBody, TodoAccepted>(Root + fence, body, ct).ConfigureAwait(false);
         }
 
-        var verb = CliVerb(command.Verb);
-        var id = await Resolve(command.Id!, verb, ct).ConfigureAwait(false);
+        var id = await Resolve(command.Id, CliVerb(command.Verb), ct).ConfigureAwait(false);
         if (id.IsError)
         {
             return id.Error;
         }
 
-        var route = Root + "/" + id.Value.Value;
-        if (command.Verb == TodoVerbArguments.Verb.Edit)
+        var version = await Version(command, id.Value, ct).ConfigureAwait(false);
+        if (version.IsError)
         {
-            var version = await Version(command, id.Value, ct).ConfigureAwait(false);
-            if (version.IsError)
-            {
-                return version.Error;
-            }
-
-            var due = command.ClearDue ? string.Empty : command.Due?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-            var links = command.NoLinks ? [] : command.Links.Count == 0 ? null : (IReadOnlyList<string>)command.Links;
-            return await client.Post<ChangeTodoBody, TodoAccepted>(route + "/change" + fence, new ChangeTodoBody(version.Value, command.Text, due, links), ct).ConfigureAwait(false);
+            return version.Error;
         }
 
-        var marked = await Version(command, id.Value, ct).ConfigureAwait(false);
-        return marked.IsError
-            ? marked.Error
-            : await client.Post<MarkTodoBody, TodoAccepted>(route + "/" + command.Verb.ToString().ToLowerInvariant() + fence, new MarkTodoBody(marked.Value), ct).ConfigureAwait(false);
+        var route = Root + "/" + id.Value.Value;
+        return command.Verb == TodoVerbArguments.Verb.Edit
+            ? await client.Post<ChangeTodoBody, TodoAccepted>(route + "/change" + fence, EditBody(command, version.Value), ct).ConfigureAwait(false)
+            : await client.Post<MarkTodoBody, TodoAccepted>(route + "/" + command.Verb.ToString().ToLowerInvariant() + fence, new MarkTodoBody(version.Value), ct).ConfigureAwait(false);
     }
+
+    private static ChangeTodoBody EditBody(TodoVerbArguments.Parsed command, long version) =>
+        new(version, command.Text, command.ClearDue ? string.Empty : Iso(command.Due), command.NoLinks ? [] : command.Links.Count == 0 ? null : command.Links);
+
+    private static string? Iso(DateOnly? date) => date?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
     private static TodoCliVerb CliVerb(TodoVerbArguments.Verb verb) => verb switch
     {

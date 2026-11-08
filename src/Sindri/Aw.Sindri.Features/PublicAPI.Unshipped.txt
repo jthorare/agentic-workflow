@@ -6227,3 +6227,5 @@ Aw.Sindri.Features.MarkTodo.MarkTodoRequest.Deconstruct(out Aw.Sindri.Core.Ids.T
 Aw.Sindri.Features.MarkTodo.MarkTodoRequest.MarkTodoRequest(Aw.Sindri.Core.Ids.TodoId Id, Aw.Sindri.Core.Todos.TodoVerb Verb, long? Version = null, bool Piped = false) -> void
 Aw.Sindri.Features.MarkTodo.MarkTodoRequest.Piped.get -> bool
 Aw.Sindri.Features.MarkTodo.MarkTodoRequest.Piped.init -> void
+Aw.Sindri.Features.MarkTodo.MarkTodoRequest.CarriesProtectedFields.get -> bool
+Aw.Sindri.Features.MarkTodo.MarkTodoRequest.Variant.get -> string?

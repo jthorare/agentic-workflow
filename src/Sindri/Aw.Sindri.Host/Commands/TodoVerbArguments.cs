@@ -60,36 +60,55 @@ internal static class TodoVerbArguments
         return Shape(parsed, words, today) is { } wrong ? wrong : parsed;
     }
 
+    private static readonly HashSet<string> _valueFlags = new(StringComparer.Ordinal) { "--text", "--due", "--link", "--client-id", "--version" };
+
     private static Result<int> Flag(Parsed parsed, string[] rest, int i, List<string> words, DateOnly today)
     {
         var flag = rest[i];
+        if (Switch(parsed, flag))
+        {
+            return 0;
+        }
+
+        if (_valueFlags.Contains(flag) && Takes(parsed.Verb, flag))
+        {
+            return i + 1 < rest.Length ? Valued(parsed, flag, rest[i + 1], today) : SindriErrors.InvalidInput.With($"{flag} needs a value: {Usage}");
+        }
+
+        if (flag.StartsWith("--", StringComparison.Ordinal))
+        {
+            return SindriErrors.InvalidInput.With($"'{flag}' isn't a flag of this command: {Usage}");
+        }
+
+        words.Add(flag);
+        return 0;
+    }
+
+    // the flags that take no value; false when <paramref name="flag"/> is none of them for this verb
+    private static bool Switch(Parsed parsed, string flag)
+    {
         switch (flag)
         {
             case "--json":
                 parsed.Json = true;
-                return 0;
+                return true;
             case "--no-start":
                 parsed.NoStart = true;
-                return 0;
+                return true;
             case "--fence" or "--no-fence" when parsed.Verb == Verb.List:
                 parsed.Fence = flag == "--fence";
-                return 0;
+                return true;
             case "--done" or "--all" when parsed.Verb == Verb.List:
                 parsed.State = flag == "--done" ? "done" : "all";
-                return 0;
+                return true;
             case "--no-due" when parsed.Verb == Verb.Edit:
                 parsed.ClearDue = true;
-                return 0;
+                return true;
             case "--no-links" when parsed.Verb == Verb.Edit:
                 parsed.NoLinks = true;
-                return 0;
-            case "--text" or "--due" or "--link" or "--client-id" or "--version" when Takes(parsed.Verb, flag):
-                return i + 1 < rest.Length ? Valued(parsed, flag, rest[i + 1], today) : SindriErrors.InvalidInput.With($"{flag} needs a value: {Usage}");
-            case var other when other.StartsWith("--", StringComparison.Ordinal):
-                return SindriErrors.InvalidInput.With($"'{other}' isn't a flag of this command: {Usage}");
+                return true;
             default:
-                words.Add(flag);
-                return 0;
+                return false;
         }
     }
 
@@ -136,41 +155,44 @@ internal static class TodoVerbArguments
         return 1;
     }
 
-    private static Error? Shape(Parsed parsed, List<string> words, DateOnly today)
+    private static Error? Shape(Parsed parsed, List<string> words, DateOnly today) => parsed.Verb switch
     {
-        switch (parsed.Verb)
+        Verb.List or Verb.Note => words.Count > 0 ? SindriErrors.InvalidInput.With($"'{string.Join(' ', words)}' isn't expected here: {Usage}") : null,
+        Verb.Add => AddShape(parsed, words, today),
+        Verb.Show or Verb.Edit or Verb.Done or Verb.Reopen or Verb.Remove or Verb.Restore => IdShape(parsed, words),
+        Verb.None => null,
+        _ => null,
+    };
+
+    private static Error? AddShape(Parsed parsed, List<string> words, DateOnly today)
+    {
+        if (words.Count == 0)
         {
-            case Verb.List or Verb.Note when words.Count > 0:
-                return SindriErrors.InvalidInput.With($"'{string.Join(' ', words)}' isn't expected here: {Usage}");
-            case Verb.Add:
-                if (words.Count == 0)
-                {
-                    return SindriErrors.TodoText.With("Add the todo's text.");
-                }
-
-                var split = DueWords.Split(string.Join(' ', words), today);
-                if (split.IsError)
-                {
-                    return split.Error;
-                }
-
-                parsed.Text = split.Value.Text;
-                parsed.Due ??= split.Value.Due;
-                return null;
-            case Verb.Show or Verb.Edit or Verb.Done or Verb.Reopen or Verb.Remove or Verb.Restore:
-                if (words.Count != 1)
-                {
-                    return SindriErrors.InvalidInput.With($"{parsed.Verb.ToString().ToLowerInvariant()} takes one todo id: {Usage}");
-                }
-
-                parsed.Id = words[0];
-                return parsed.Verb == Verb.Edit && parsed.Text is null && parsed.Due is null && !parsed.ClearDue && parsed.Links.Count == 0 && !parsed.NoLinks
-                    ? SindriErrors.TodoText.With("edit needs at least one of --text, --due, --no-due, --link, --no-links.")
-                    : null;
-            case Verb.None or Verb.List or Verb.Note:
-            default:
-                return null;
+            return SindriErrors.TodoText.With("Add the todo's text.");
         }
+
+        var split = DueWords.Split(string.Join(' ', words), today);
+        if (split.IsError)
+        {
+            return split.Error;
+        }
+
+        parsed.Text = split.Value.Text;
+        parsed.Due ??= split.Value.Due;
+        return null;
+    }
+
+    private static Error? IdShape(Parsed parsed, List<string> words)
+    {
+        if (words.Count != 1)
+        {
+            return SindriErrors.InvalidInput.With($"{parsed.Verb.ToString().ToLowerInvariant()} takes one todo id: {Usage}");
+        }
+
+        parsed.Id = words[0];
+        return parsed.Verb == Verb.Edit && parsed.Text is null && parsed.Due is null && !parsed.ClearDue && parsed.Links.Count == 0 && !parsed.NoLinks
+            ? SindriErrors.TodoText.With("edit needs at least one of --text, --due, --no-due, --link, --no-links.")
+            : null;
     }
 
     internal sealed class Parsed(Verb verb)
@@ -185,7 +207,7 @@ internal static class TodoVerbArguments
 
         internal string State { get; set; } = "open";
 
-        internal string? Id { get; set; }
+        internal string Id { get; set; } = string.Empty;
 
         internal string? Text { get; set; }
 

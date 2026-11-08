@@ -18,7 +18,7 @@ public sealed record MarkTodoRequest(TodoId Id, TodoVerb Verb, long? Version = n
         TodoVerb.Reopen => "reopen",
         TodoVerb.Remove => "remove",
         TodoVerb.Restore => "restore",
-        _ => throw new ArgumentOutOfRangeException(nameof(Verb), Verb, "not a todo verb"),
+        _ => "unknown",   // why: no catalog row has this variant, so the command is classified protected (fail closed)
     };
 
     /// <inheritdoc/>

@@ -62,7 +62,7 @@ internal sealed class AddTodoService(TodoAdds adds, TodoInput input, ILedgerStor
     private async ValueTask<Result<TodoAccepted>> Append(AddTodoRequest request, (string? Text, IReadOnlyList<string>? Links) fields, (CallerContext Caller, LeaseGrant Grant, string By) who, CancellationToken cancellationToken)
     {
         var id = TodoId.New(ids);
-        var added = new TodoAdded(id, fields.Text!, request.Due, fields.Links ?? [], request.ClientId, who.By, TodoWrite.Via(request.Piped));
+        var added = new TodoAdded(id, fields.Text ?? request.Text, request.Due, fields.Links ?? [], request.ClientId, who.By, TodoWrite.Via(request.Piped));
         var key = request.ClientId is { } named ? $"{EventTypes.TodoAdded}:client:{named.Value}" : $"{EventTypes.TodoAdded}:{id.Value}";
         var appended = await TodoWrite.Append(ledger, who.Grant, events.Entry(EventTypes.TodoAdded, added, key), who.Caller.CommandId, cancellationToken).ConfigureAwait(false);
         return appended.IsError ? appended.Error : new TodoAccepted(appended.Value, id, 1, request.Due);
