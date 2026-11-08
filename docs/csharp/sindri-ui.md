@@ -201,7 +201,7 @@ Below the checklist, `SettingsView` has one read-only section over `ViewModels/S
 
 ### The setup checklist in Settings (setup spec §2.4, F3 slice 2)
 
-The first section of `SettingsView` is the six-step checklist over `ViewModels/Setup/SetupViewModel` (`Views/Setup/SetupChecklist`); the local preferences sit below it under "This app".
+The first section of `SettingsView` is the five-step checklist over `ViewModels/Setup/SetupViewModel` (`Views/Setup/SetupChecklist`); the local preferences sit below it under "This app".
 `SettingsViewModel.Setup` is the shell's `SetupViewModel` (an optional constructor argument: a host without setup shows only the preferences). There is **no Setup page and no card on Home**:
 Home gets one 40 px line, "Finish setting up Sindri" with the count (`SetupHomeLink`), while any step is not done or skipped, and Home hides the `setup:*` rows of Needs you meanwhile (the line stands for
 them; Needs you elsewhere and the tray keep them). Every way into Settings (the rail, ⌘,, the chord G U, the deep link `setup`, Home's line) goes through `ShellViewModel.ShowPage`, which asks the

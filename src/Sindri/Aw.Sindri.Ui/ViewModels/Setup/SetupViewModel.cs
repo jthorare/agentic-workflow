@@ -9,7 +9,7 @@ using Aw.Sindri.Ui.ViewModels.Controls;
 namespace Aw.Sindri.Ui.ViewModels.Setup;
 
 /// <summary>
-/// The setup checklist, the first section of Settings, and Home's one line while any step is open (setup spec §2.4): the six steps in the app's own words, the progress strip, and
+/// The setup checklist, the first section of Settings, and Home's one line while any step is open (setup spec §2.4): the steps in the app's own words (five since the recipes step went; an old server's "recipes" step is dropped), the progress strip, and
 /// which rows are open. The list is read on connect and with every event, and the steps are kept by id across reads. It decides nothing: states, sentences and actions are the
 /// API's; what the app adds is words, order, and the one button the map shows when it failed.
 /// </summary>

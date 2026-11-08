@@ -45,8 +45,6 @@
   <ItemGroup>
     <None Include="../Aw.Sindri.Tests/Golden/Api/**/*.json" Link="Golden/Api/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Aw.Sindri.Ui.Tests/Golden/SpecShaped/**/*.json" Link="Golden/SpecShaped/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="../Aw.Sindri.Tests/Layout/Golden/instance-summary-*.json" Link="Golden/Layout/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="../Aw.Sindri.Tests/Golden/ledger/workflow.transition-*.json" Link="Golden/Ledger/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Aw.Sindri.Tests/Golden/Sandbox/**/*" Link="Golden/Sandbox/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
