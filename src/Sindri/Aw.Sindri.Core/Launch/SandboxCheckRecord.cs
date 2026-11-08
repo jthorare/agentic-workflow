@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Core.Sandbox;
+namespace Aw.Sindri.Core.Launch;
 
 /// <summary>One finished check: when it ran and what it found.</summary>
 /// <param name="At">When it finished.</param>

@@ -5,7 +5,7 @@ using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
 using Vogen;
 
-namespace Aw.Sindri.Core.Workflow.Engine;
+namespace Aw.Sindri.Core.Launch;
 
 /// <summary>
 /// A Step run's token (spec §5.1, §5.3): '{entry}.{n}', the frame entry and the run's number within it. A public
@@ -28,8 +28,8 @@ public readonly partial struct RunToken : ITypedId<RunToken, string>
     public static RunToken For(int entry, int number) =>
         From(string.Create(CultureInfo.InvariantCulture, $"{entry}.{number}"));
 
-    private static Vogen.Validation Validate(string value) =>
-        Shape.IsMatch(value) ? Vogen.Validation.Ok : Vogen.Validation.Invalid("A run token is '{entry}.{n}', two whole numbers from 1");
+    private static Validation Validate(string value) =>
+        Shape.IsMatch(value) ? Validation.Ok : Validation.Invalid("A run token is '{entry}.{n}', two whole numbers from 1");
 
     [GeneratedRegex("^[1-9][0-9]{0,8}\\.[1-9][0-9]{0,8}\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }

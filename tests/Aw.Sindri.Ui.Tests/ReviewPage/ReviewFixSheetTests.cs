@@ -296,6 +296,32 @@ public sealed class ReviewFixSheetTests
     }
 
     [Fact]
+    public async Task A_send_whose_task_file_was_not_written_shows_the_servers_words_and_can_be_sent_again()
+    {
+        _f.Server.ReviewFixAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, ReviewFixBodies.FileNotWritten);
+        var sheet = Opened(_check);
+
+        await sheet.Send(Token);
+
+        Assert.Equal(("The fix-task file wasn't written (disk full); send it again to write it.", true), (sheet.FileError, sheet.CanRetry));
+        Assert.Equal(ReviewFixOutcome.Waiting, sheet.Outcome);
+    }
+
+    [Fact]
+    public async Task Sending_again_after_a_file_error_reuses_the_item_and_clears_the_error()
+    {
+        _f.Server.ReviewFixAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, ReviewFixBodies.FileNotWritten);
+        var sheet = Opened(_check);
+        await sheet.Send(Token);
+        _f.Server.ReviewFixAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, ReviewFixBodies.Waiting);
+
+        await sheet.Retry(Token);
+
+        Assert.Equal([null, "01J9Z3T7KQ"], _f.Server.ReviewFixSends.Select(s => s.Item), StringComparer.Ordinal);
+        Assert.Equal((string.Empty, false), (sheet.FileError, sheet.CanRetry));
+    }
+
+    [Fact]
     public async Task A_refused_send_made_nothing_says_why_and_can_be_pressed_again()
     {
         _f.Server.ReviewFixAnswer = RouteAnswer.Refused("This caller may not run the command.");

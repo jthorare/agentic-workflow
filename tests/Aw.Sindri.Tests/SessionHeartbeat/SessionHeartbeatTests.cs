@@ -1,8 +1,8 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
-using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Features.SessionHeartbeat;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.SessionReports;
@@ -18,7 +18,7 @@ public sealed class SessionHeartbeatTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private SessionHeartbeatService Service(params Core.Launch.AgentEntry[] catalog) => new(_s.Events(catalog));
+    private SessionHeartbeatService Service(params AgentEntry[] catalog) => new(_s.Events(catalog));
 
     private IReadOnlyList<Core.Ledger.LedgerEvent> Recorded() => _s.Views.Slice.Store.Events;
 

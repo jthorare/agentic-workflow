@@ -118,6 +118,7 @@ internal sealed partial class SindriApiClient
         JobResumedView r => r.Accepted.Sequence,
         ProjectAcceptedView p => p.Accepted.Sequence,
         OpenAcceptedView o => o.Accepted.Sequence,
+        TodoAcceptedView t => t.Accepted.Sequence,
         _ => null,
     };
 

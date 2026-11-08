@@ -3,7 +3,6 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
-using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Features.Launching;
 using Aw.Sindri.Testing;
 

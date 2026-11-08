@@ -147,7 +147,7 @@ CO-2a (discovery): `Aw.Sindri.Core/Sessions/` (the records, the pure rules `Sess
 catalog, CA-0), `Infrastructure/Sessions/` (`ProcProcessTable`, `ClaudeSessionRecords`, `FleetStateFiles`, `TranscriptFiles`, `SessionSnapshotStore`),
 `Features/Sessions/` (the pass, `RecordFleetChanges`, `RestoreFleetHistory`) and `Host/Server/SessionCollectorHost`. Host detection landed in CO-2b (the previous section); the routes and the CLI are CO-3 (the section below). The event is `fleet.changed`; the codes are `SND-SESSION-001`
 (a source failed), `-002` (`unsupported-platform`, `proc-unreadable`, `disabled`) and `-003` (a test override) in `docs/csharp/sindri.md`. The snapshot over
-`tests/fixtures/sessions/` is pinned by `tests/Aw.Sindri.Tests/Sessions/Golden/snapshot-discovery.json`. `LaunchId` (the engine's, `Core/Workflow/Engine/LaunchId.cs`, `LCH-` and 32 hex) is the
+`tests/fixtures/sessions/` is pinned by `tests/Aw.Sindri.Tests/Sessions/Golden/snapshot-discovery.json`. `LaunchId` (the launcher's, `Core/Launch/LaunchId.cs`, `LCH-` and 32 hex) is the
 typed id of `AW_SINDRI_LAUNCH`; a value of another shape is dropped.
 
 ## Routes and CLI (CO-3)
