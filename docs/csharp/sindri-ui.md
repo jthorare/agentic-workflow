@@ -152,7 +152,7 @@ the top bar reads "Sindri not responding: run `sindri doctor`" in full, since th
 1,000 px. The view models carry no Avalonia types; views bind the app's copy through `ShellText` (compiled bindings
 resolve public members only, and `Labels` is internal). F6 / Shift+F6 cycle top bar, page and sheet; on macOS ⌘⌥→ / ⌘⌥← do the same (owner decision, 2026-10-12;
 UI spec §8), since with the default "Use F1, F2, etc. keys as standard function keys" off F6 is the Focus key there and
-reaches the app only with fn held (fn+F6 and fn+Shift+F6). Ctrl+F6 isn't bound. The window's minimum is 1,000 × 600 (eight tabs fit; `Size.WindowMinWidth` in `Theme/Tokens.axaml` and `UiPreferences.MinWidth`).
+reaches the app only with fn held (fn+F6 and fn+Shift+F6). Ctrl+F6 isn't bound. The window's minimum is 1,000 × 600 (seven tabs fit; `Size.WindowMinWidth` in `Theme/Tokens.axaml` and `UiPreferences.MinWidth`).
 
 **Focus never goes nowhere (§11.2).** When the focused control disappears, focus moves to a neighbour: Refresh keeps
 focus through its in-flight phase and gets it back when the refresh fails; when Sindri answers and Refresh hides, the
@@ -544,12 +544,12 @@ U3'.
   `home/needs-you` is Home. `ShellViewModel.Navigate` routes them and the
   sheet and its subject live in `ShellViewModel.Sheet.cs`.
 
-## Lane anchors (U3', U8, U10, U9 and U11a)
+## Lane anchors (U3', U8, U9 and U11a)
 
 Two lanes add to the same files, so each hotspot carries one marker per lane, `LANE ANCHOR U3'` and `LANE ANCHOR U8`
 (a comment: `//` in C#, `<!-- -->` in XAML), adjacent: U3' first, U8 second. **One insertion rule:** U3' adds its lines
 immediately above its own marker and U8 adds its lines immediately below its own, so the pair stays together and neither
-lane inserts between the markers; every marker's text says so. Two merges then touch different lines. The files:
+lane inserts between the markers; every marker's text says so. Two merges then touch different lines. The sheet's switch and `SheetContent` keep only U3', U9 and U11a: the U8 and U10 markers went with the Workflow and Recipe kinds when those pages were removed (#2258). The files:
 `Api/ISindriApi.cs`, `Api/SindriApiClient.cs` (a lane's routes go in a routes
 class of its own), `Api/SindriUiJsonContext.cs`, `ViewModels/Shell/ShellViewModel.cs` and
 `.Sheet.cs` (the markers sit inside the `IsSheetPlaceholderShown` switch), `Views/Shell/ShellWindow.axaml` (inside `SheetContent`, the content of the one sheet layer, chosen by the
@@ -800,6 +800,11 @@ can't fake (`clear` needs a working bubblewrap); `blocked` also starts the agent
 parked Steps). `denials`, `denials-many`, `waiting`, `limit-memory`, `limit-wall`, `learning`, `takeover` and `attended` write ledger rows on an
 existing item and instance,. The mockups are `sandbox-park.html`, `sandbox-sheet.html` and `sandbox-health.html` in the
 screens mockups folder, with matching entries in `docs/sindri/ui-evidence/screens.json`.
+
+<!-- LANE ANCHOR U3': document the Needs you screens. Insert immediately above this marker, never between the markers. -->
+<!-- LANE ANCHOR U8: document the command sends. Insert immediately below this marker, never between the markers. -->
+<!-- LANE ANCHOR U11a: document the Agents page, the session sheet and the tray line (U11a). Insert immediately below this marker, never between the markers. -->
+<!-- LANE ANCHOR U9: document the Context page (U9a to U9e) under the U9 heading. Insert immediately below this marker, never between the markers. -->
 
 ## U9: the Context page (screens spec §4.4)
 

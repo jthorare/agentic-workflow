@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Xml.Linq;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
@@ -23,10 +22,9 @@ public sealed class LaneAnchorTests
     {
         var u3 = Find(lines, "LANE ANCHOR U3'");
         var u8 = Find(lines, "LANE ANCHOR U8");
-        var recipe = Find(lines, "Task<Result<RecipeView>> Recipe(");
         var events = Find(lines, " Events(");
 
-        Assert.True(recipe >= 0 && recipe < u3, "the U3' marker belongs after Recipe(...), found at index " + u3.ToString(CultureInfo.InvariantCulture));
+        Assert.True(u3 >= 0, "the U3' marker is missing");
         Assert.Equal(u3 + 1, u8);
         Assert.True(u8 < events, "the markers sit before Events(...)");
     }
@@ -45,9 +43,9 @@ public sealed class LaneAnchorTests
     {
         var lines = Lines(ClientPath);
         var u3 = Find(lines, "LANE ANCHOR U3'");
-        var withRead = Insert(lines, u3, "    /// <summary>Reads X.</summary>", "    public Task<Result<RecipeView>> Nodes(Uri api, CancellationToken cancellationToken) => Get<RecipeView>(api, \"x\", cancellationToken);", string.Empty);
+        var withRead = Insert(lines, u3, "    /// <summary>Reads X.</summary>", "    public Task<Result<ClientProbe>> Nodes(Uri api, CancellationToken cancellationToken) => Get<ClientProbe>(api, \"x\", cancellationToken);", string.Empty);
         var u8 = Find(withRead, "LANE ANCHOR U8");
-        var both = Insert(withRead, u8 + 1, "    /// <summary>Sends Y.</summary>", "    public Task<Result<RecipeView>> Send(Uri api, CancellationToken cancellationToken) => Get<RecipeView>(api, \"y\", cancellationToken);");
+        var both = Insert(withRead, u8 + 1, "    /// <summary>Sends Y.</summary>", "    public Task<Result<ClientProbe>> Send(Uri api, CancellationToken cancellationToken) => Get<ClientProbe>(api, \"y\", cancellationToken);");
 
         AssertClient(both);
     }
@@ -64,15 +62,12 @@ public sealed class LaneAnchorTests
     {
         var property = Find(lines, "IsSheetPlaceholderShown =>");
         var u3 = Find(lines, "LANE ANCHOR U3'");
-        var u8 = Find(lines, "LANE ANCHOR U8");
-        var u10 = Find(lines, "LANE ANCHOR U10");
         var u9 = Find(lines, "LANE ANCHOR U9");
         var u11a = Find(lines, "LANE ANCHOR U11a");
         var fallback = Find(lines, "_ => true");
 
-        Assert.True(property >= 0 && property < u3 && u8 == u3 + 1 && u8 < u10 && u10 < u9 && u9 < u11a && u11a < fallback, "U3' and U8 are adjacent inside the switch, U10 follows U8's arms, U9 follows U10's and U11a U9's, all above its '_ => true' arm");
-        Assert.All(lines[(u8 + 1)..u10], l => Assert.True(IsArmOrBlank(l), "between u8 and u10 only `… => false,` arms: " + l));
-        Assert.All(lines[(u10 + 1)..u9], l => Assert.True(IsArmOrBlank(l), "between u10 and u9 only `… => false,` arms: " + l));
+        Assert.True(property >= 0 && property < u3 && u3 < u9 && u9 < u11a && u11a < fallback, "U3' sits inside the switch, U9 follows U3''s arms and U11a U9's, all above its '_ => true' arm");
+        Assert.All(lines[(u3 + 1)..u9], l => Assert.True(IsArmOrBlank(l), "between u3 and u9 only `… => false,` arms: " + l));
         Assert.All(lines[(u9 + 1)..u11a], l => Assert.True(IsArmOrBlank(l), "between u9 and u11a only `… => false,` arms: " + l));
         Assert.All(lines[(u11a + 1)..fallback], l => Assert.True(IsArmOrBlank(l), "between u11a and the fallback only `… => false,` arms: " + l));
     }
@@ -86,9 +81,8 @@ public sealed class LaneAnchorTests
     {
         var lines = File.ReadAllLines(Path.Combine(UiSource.Root, SheetPath));
         var withAbove = Insert(lines, Find(lines, "LANE ANCHOR U3'"), "        DeepLinkKind.NeedsYou or DeepLinkKind.Decision => false,");
-        var both = Insert(withAbove, Find(withAbove, "LANE ANCHOR U8") + 1, "        DeepLinkKind.Workflow => false,");
-        var withTen = Insert(both, Find(both, "LANE ANCHOR U10") + 1, "        DeepLinkKind.Recipe => false,");
-        var all = Insert(withTen, Find(withTen, "LANE ANCHOR U9") + 1, "        DeepLinkKind.Node => false,");
+        var both = Insert(withAbove, Find(withAbove, "LANE ANCHOR U3'") + 1, "        DeepLinkKind.Service => false,");
+        var all = Insert(both, Find(both, "LANE ANCHOR U9") + 1, "        DeepLinkKind.Node => false,");
         all = Insert(all, Find(all, "LANE ANCHOR U11a") + 1, "        DeepLinkKind.Session => false,");
 
         AssertSwitch(all);
@@ -105,19 +99,13 @@ public sealed class LaneAnchorTests
         var sheet = Named(doc, "Sheet");
         var content = Named(doc, "SheetContent");
         var u3 = Marker(doc, "LANE ANCHOR U3'");
-        var u8 = Marker(doc, "LANE ANCHOR U8");
-        var u10 = Marker(doc, "LANE ANCHOR U10");
         var u11a = Marker(doc, "LANE ANCHOR U11a");
         var u9 = Marker(doc, "LANE ANCHOR U9");
 
         Assert.Contains(content, sheet.Descendants());
         Assert.Same(content, u3.Parent);
-        Assert.Same(content, u8.Parent);
-        Assert.Same(u8, u3.NextNode);
-        Assert.Same(content, u10.Parent);
-        Assert.True(u10.IsAfter(u8), "the U10 marker follows U8's content");
         Assert.Same(content, u9.Parent);
-        Assert.True(u9.IsAfter(u10), "the U9 marker follows U10's content");
+        Assert.True(u9.IsAfter(u3), "the U9 marker follows U3''s content");
         Assert.Same(content, u11a.Parent);
         Assert.True(u11a.IsAfter(u9), "the U11a marker follows U9's content");
     }
@@ -132,8 +120,7 @@ public sealed class LaneAnchorTests
     {
         var doc = Window();
         Marker(doc, "LANE ANCHOR U3'").AddBeforeSelf(new XElement("Border", new XElement("TextBlock", new XAttribute("Text", "a"))));
-        Marker(doc, "LANE ANCHOR U8").AddAfterSelf(new XElement("Border", new XElement("TextBlock", new XAttribute("Text", "b"))));
-        Marker(doc, "LANE ANCHOR U10").AddAfterSelf(new XElement("Border", new XElement("TextBlock", new XAttribute("Text", "c"))));
+        Marker(doc, "LANE ANCHOR U9").AddAfterSelf(new XElement("Border", new XElement("TextBlock", new XAttribute("Text", "b"))));
 
         AssertWindow(doc);
     }
@@ -144,13 +131,15 @@ public sealed class LaneAnchorTests
         var files = new[]
         {
             "src/Sindri/Aw.Sindri.Ui/Api/ISindriApi.cs", "src/Sindri/Aw.Sindri.Ui/Api/SindriApiClient.cs", "src/Sindri/Aw.Sindri.Ui/Api/SindriUiJsonContext.cs",
-            "src/Sindri/Aw.Sindri.Ui/ViewModels/Shell/ShellViewModel.cs", "src/Sindri/Aw.Sindri.Ui/ViewModels/Shell/ShellViewModel.Sheet.cs", "src/Sindri/Aw.Sindri.Ui/Views/Shell/ShellWindow.axaml",
+            "src/Sindri/Aw.Sindri.Ui/ViewModels/Shell/ShellViewModel.cs",
             "tests/Aw.Sindri.Ui.Testing/FakeSindriApi.Workflow.cs", "tests/Aw.Sindri.Ui.Testing/FakeSindriHandler.cs", "tests/Aw.Sindri.Ui.Testing/SindriApiContract.cs", "tests/Aw.Sindri.Ui.Testing/SindriApiContract.Workflow.cs",
             "docs/csharp/sindri-ui.md",
         };
+        string[] sheetFiles = ["src/Sindri/Aw.Sindri.Ui/ViewModels/Shell/ShellViewModel.Sheet.cs", "src/Sindri/Aw.Sindri.Ui/Views/Shell/ShellWindow.axaml"];   // the sheet's switch and content carry U3' only: the workflow and recipe kinds went with their pages
         var markers = files.SelectMany(f => File.ReadAllLines(Path.Combine(UiSource.Root, f)).Where(l => l.Contains("LANE ANCHOR U3':", StringComparison.Ordinal) || l.Contains("LANE ANCHOR U8:", StringComparison.Ordinal)).Select(l => (File: f, Line: l))).ToList();
 
         Assert.True(markers.Count >= 2 * files.Length);
+        Assert.All(sheetFiles, f => Assert.Contains(Lines(f), l => l.Contains("LANE ANCHOR U3':", StringComparison.Ordinal) && l.Contains("immediately above this marker, never between the markers", StringComparison.Ordinal)));
         Assert.All(markers, m => Assert.True(
             m.Line.Contains("never between the markers", StringComparison.Ordinal) && (m.Line.Contains("immediately above", StringComparison.Ordinal) || m.Line.Contains("immediately below", StringComparison.Ordinal)),
             m.File + ": " + m.Line));
@@ -166,36 +155,14 @@ public sealed class LaneAnchorTests
     }
 
     [Fact]
-    public void The_two_markers_claim_real_kinds_and_no_kind_twice_and_the_window_says_the_same()
+    public void The_U3_marker_claims_real_kinds_and_the_window_says_the_same()
     {
         var u3 = Kinds(SheetPath, "LANE ANCHOR U3'");
-        var u8 = Kinds(SheetPath, "LANE ANCHOR U8");
         var real = Enum.GetNames<DeepLinkKind>().ToHashSet(StringComparer.Ordinal);
 
         Assert.NotEmpty(u3);
-        Assert.NotEmpty(u8);
         Assert.Subset(real, u3);
-        Assert.Subset(real, u8);
-        Assert.Empty(u3.Intersect(u8, StringComparer.Ordinal));
         Assert.Equal(u3.Order(StringComparer.Ordinal), Kinds("src/Sindri/Aw.Sindri.Ui/Views/Shell/ShellWindow.axaml", "LANE ANCHOR U3'").Order(StringComparer.Ordinal));
-        Assert.Equal(u8.Order(StringComparer.Ordinal), Kinds("src/Sindri/Aw.Sindri.Ui/Views/Shell/ShellWindow.axaml", "LANE ANCHOR U8").Order(StringComparer.Ordinal));
-    }
-
-    [Fact]
-    public void The_U10_marker_follows_U8_and_claims_Recipe()
-    {
-        var u10 = Kinds(SheetPath, "LANE ANCHOR U10");
-
-        Assert.Equal(["Recipe"], u10);
-        Assert.Equal(u10, Kinds("src/Sindri/Aw.Sindri.Ui/Views/Shell/ShellWindow.axaml", "LANE ANCHOR U10"));
-        Assert.Empty(u10.Intersect(Kinds(SheetPath, "LANE ANCHOR U8"), StringComparer.Ordinal));
-        Assert.Empty(u10.Intersect(Kinds(SheetPath, "LANE ANCHOR U3'"), StringComparer.Ordinal));
-        string[] files = [SheetPath, "src/Sindri/Aw.Sindri.Ui/Views/Shell/ShellWindow.axaml", "docs/csharp/sindri-ui.md"];
-        Assert.All(files, f =>
-        {
-            var line = Lines(f).Single(l => l.Contains("LANE ANCHOR U10", StringComparison.Ordinal));
-            Assert.Contains("never between the markers", line, StringComparison.Ordinal);
-        });
     }
 
     [Fact]
@@ -206,7 +173,7 @@ public sealed class LaneAnchorTests
 
         Assert.Equal(["Session"], u11a);
         Assert.Equal(u11a, Kinds(Window, "LANE ANCHOR U11a"));
-        foreach (var other in (string[])["LANE ANCHOR U3'", "LANE ANCHOR U8", "LANE ANCHOR U10"])
+        foreach (var other in (string[])["LANE ANCHOR U3'", "LANE ANCHOR U9"])
         {
             Assert.Empty(u11a.Intersect(Kinds(SheetPath, other), StringComparer.Ordinal));
         }
@@ -217,31 +184,27 @@ public sealed class LaneAnchorTests
             var line = Lines(f).Single(l => l.Contains("LANE ANCHOR U11a", StringComparison.Ordinal));
             Assert.Contains("immediately below this marker, never between the markers", line, StringComparison.Ordinal);
         });
-        foreach (var f in (string[])[SheetPath, Window])
-        {
-            Assert.DoesNotContain("Session,", string.Join('\n', Lines(f).Where(l => l.Contains("LANE ANCHOR U10", StringComparison.Ordinal))), StringComparison.Ordinal);
-        }
     }
 
-    // arch-3: every kind has an owner: one of the two lanes, U2's item sheet, a page link (Home's Needs you, Settings' setup checklist, Projects and a project's sheet, the Context page's page sheet, the Work page's Linear issue sheet), or the phase that renders it later.
+    // arch-3: every kind has an owner: one of the three lanes, U2's item sheet, a page link (Home's Needs you, Settings' setup checklist, Projects and a project's sheet, the Context page's page sheet, the Work page's Linear issue sheet), or the phase that renders it later.
     [Fact]
     public void Every_deep_link_kind_is_claimed_by_a_lane_or_named_as_later()
     {
         string[] owned = ["Item", "HomeNeedsYou", "Setup", "ContextItem", "Projects", "Project", "ProjectAdd", "PageSheet", "PinSheet", "AddSeveralPages", "Reviews", "LibrarySheet", "Review", "FixTaskSheet", "Issue"];   // the Reviews tab owns its page link; the Work page's Linear view owns Issue
         string[] later = ["System", "Service", "Job"];
-        var claimed = Kinds(SheetPath, "LANE ANCHOR U3'").Concat(Kinds(SheetPath, "LANE ANCHOR U8")).Concat(Kinds(SheetPath, "LANE ANCHOR U10")).Concat(Kinds(SheetPath, "LANE ANCHOR U9")).Concat(Kinds(SheetPath, "LANE ANCHOR U11a")).Concat(owned).Concat(later);
+        var claimed = Kinds(SheetPath, "LANE ANCHOR U3'").Concat(Kinds(SheetPath, "LANE ANCHOR U9")).Concat(Kinds(SheetPath, "LANE ANCHOR U11a")).Concat(owned).Concat(later);
 
         Assert.Equal(Enum.GetNames<DeepLinkKind>().Order(StringComparer.Ordinal), claimed.Order(StringComparer.Ordinal));
     }
 
     [Fact]
-    public void The_U9_marker_follows_U10_and_claims_Node()
+    public void The_U9_marker_follows_U3_and_claims_Node()
     {
         var u9 = Kinds(SheetPath, "LANE ANCHOR U9");
 
         Assert.Equal(["Node"], u9);
         Assert.Equal(u9, Kinds("src/Sindri/Aw.Sindri.Ui/Views/Shell/ShellWindow.axaml", "LANE ANCHOR U9"));
-        Assert.Empty(u9.Intersect(Kinds(SheetPath, "LANE ANCHOR U10"), StringComparer.Ordinal));
+        Assert.Empty(u9.Intersect(Kinds(SheetPath, "LANE ANCHOR U3'"), StringComparer.Ordinal));
         string[] files = [SheetPath, "src/Sindri/Aw.Sindri.Ui/Views/Shell/ShellWindow.axaml", "docs/csharp/sindri-ui.md"];
         Assert.All(files, f =>
         {
@@ -251,9 +214,9 @@ public sealed class LaneAnchorTests
     }
 
     [Fact]
-    public void The_four_markers_claim_no_kind_twice_and_the_window_says_the_same()
+    public void The_three_markers_claim_no_kind_twice_and_the_window_says_the_same()
     {
-        var markers = new[] { "LANE ANCHOR U3'", "LANE ANCHOR U8", "LANE ANCHOR U10", "LANE ANCHOR U9" };
+        var markers = new[] { "LANE ANCHOR U3'", "LANE ANCHOR U9", "LANE ANCHOR U11a" };
         var all = markers.SelectMany(m => Kinds(SheetPath, m)).ToList();
 
         Assert.Equal(all.Count, all.Distinct(StringComparer.Ordinal).Count());
