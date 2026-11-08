@@ -1,12 +1,20 @@
+using System.Text.Json;
+using Aw.Kernel;
+using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Connections.OAuth;
 using Aw.Sindri.Core.Secrets;
+using Aw.Sindri.Features.TestConnection;
+using Aw.Sindri.Host;
+using Aw.Sindri.Host.Mcp;
 using Aw.Sindri.Infrastructure.Connections;
 using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Secrets;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Connections;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.Connections;
@@ -18,6 +26,109 @@ public sealed class ConnectionSecretsTests
     private const string Access = "access-SECRET-ABCDEF123456";
     private const string Refresh = "refresh-SECRET-654321FEDCBA";
 
+
+    // The canary is the secret of every connection below. Each surface test plants it, drives add, test and a failing path,
+    // then searches that surface's raw text. A provider that echoes the token back in an error body is part of the setup.
+    private static readonly string _canary = "aw-canary-tok-" + RealTime.NewGuid().ToString("N");
+
+    private static CancellationToken Token => TestContext.Current.CancellationToken;
+
+    /// <summary>A provider whose refusal body repeats the credential it was sent.</summary>
+    private sealed class EchoingProbe : IConnectionProbe
+    {
+        public ValueTask<Result<Unit>> Probe(string url, TokenSet tokens, CancellationToken cancellationToken)
+        {
+            ArgumentNullException.ThrowIfNull(tokens);
+            return ValueTask.FromResult<Result<Unit>>(SindriErrors.ConnectionNeedsSignIn.With($"401 from {url}: invalid token {tokens.AccessToken} (refresh {tokens.RefreshToken})"));
+        }
+    }
+
+    /// <summary>Plants the canary as a rest key and an oauth token set, then runs add, a refused test and a failed sign-in.</summary>
+    private static async Task<(ConnectionHarness World, List<string> Outputs)> DriveEveryPath()
+    {
+        var world = new ConnectionHarness();
+        var outputs = new List<string>();
+        world.Environment.Set("ACME_KEY", _canary);
+
+        var added = await world.Add().Handle(ConnectionHarness.Rest(), Token);
+        outputs.Add(JsonSerializer.Serialize(added.IsSuccess ? added.Value : null, SindriJsonContext.Default.AddConnectionResponse) + (added.IsError ? added.Error.Message : string.Empty));
+
+        var oauthPointer = world.Secrets.Store(ConnectionSamples.Name(), new TokenSet(_canary, _canary + "-refresh", ExpiresAt: null)).Value;
+        _ = await world.Store.Upsert(ConnectionSamples.Oauth() with { SecretPointer = oauthPointer }, Token);
+
+        foreach (var echoes in new[] { false, true })
+        {
+            world.Probe.Refuses = true;
+            var service = echoes ? new TestConnectionService(world.Store, world.Secrets, world.Presets, new EchoingProbe(), world.Clock) : world.Test();
+            foreach (var name in new[] { "acme:key", "linear:work" })
+            {
+                var tested = await service.Handle(new TestConnectionRequest(name), Token);
+                outputs.Add(tested.IsSuccess ? JsonSerializer.Serialize(tested.Value, SindriJsonContext.Default.TestConnectionResponse) : tested.Error.Message);
+            }
+        }
+
+        var pending = world.Add().Handle(ConnectionHarness.Oauth(name: "linear:other"), Token).AsTask();
+        world.SignIn.Fail(SindriErrors.ConnectionConsentDenied.With($"denied for {_canary}"));
+        var failed = await pending;
+        outputs.Add(failed.IsError ? failed.Error.Message : string.Empty);
+        return (world, outputs);
+    }
+
+    [Fact]
+    public async Task Secret_never_reaches_the_ledger()
+    {
+        var (world, _) = await DriveEveryPath();
+
+        var events = world.Ledger.Events;
+        Assert.All(events, e => Assert.DoesNotContain(_canary, JsonSerializer.Serialize(e.Envelope) + e.IdempotencyKey + e.Item, StringComparison.Ordinal));
+        Assert.All(events, e => Assert.DoesNotContain(_canary, e.Envelope.Payload, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task Secret_never_reaches_the_logs()
+    {
+        var (world, outputs) = await DriveEveryPath();
+
+        Assert.All(world.Logs.Lines, line => Assert.DoesNotContain(_canary, line, StringComparison.Ordinal));
+        Assert.NotEmpty(outputs);   // the paths ran: a stub that throws fails above, never here
+    }
+
+    [Fact]
+    public async Task Secret_never_reaches_the_mcp_results()
+    {
+        var (world, _) = await DriveEveryPath();
+        await using var services = new ServiceCollection()
+            .AddSingleton(AwJson.CreateOptions(SindriJsonContext.Default))
+            .AddSingleton<Kernel.Services.IService<Features.GetConnection.GetConnectionRequest, Features.GetConnection.GetConnectionResponse>>(world.Get())
+            .AddSingleton<Kernel.Services.IService<Features.ListConnections.ListConnectionsRequest, Features.ListConnections.ListConnectionsResponse>>(world.List())
+            .AddSingleton<Kernel.Services.IService<TestConnectionRequest, TestConnectionResponse>>(new TestConnectionService(world.Store, world.Secrets, world.Presets, new EchoingProbe(), world.Clock))
+            .BuildServiceProvider();
+        var results = new List<ModelContextProtocol.Protocol.CallToolResult>
+        {
+            await ConnectionTools.CallList(services, new Dictionary<string, JsonElement>(StringComparer.Ordinal), Token),
+        };
+        foreach (var name in new[] { "acme:key", "linear:work", "linear:nobody" })
+        {
+            var arguments = new Dictionary<string, JsonElement>(StringComparer.Ordinal) { ["name"] = JsonSerializer.SerializeToElement(name) };
+            results.Add(await ConnectionTools.CallGet(services, arguments, Token));
+            results.Add(await ConnectionTools.CallTest(services, arguments, Token));
+        }
+
+        Assert.All(results, result =>
+        {
+            var text = (result.StructuredContent?.GetRawText() ?? string.Empty) + string.Concat(result.Content.OfType<ModelContextProtocol.Protocol.TextContentBlock>().Select(static t => t.Text));
+            Assert.DoesNotContain(_canary, text, StringComparison.Ordinal);
+        });
+    }
+
+    [Fact]
+    public async Task Secret_never_reaches_the_test_output()
+    {
+        var (_, outputs) = await DriveEveryPath();   // success and refused answers, as the CLI prints them and the HTTP route serializes them
+
+        Assert.All(outputs, output => Assert.DoesNotContain(_canary, output, StringComparison.Ordinal));
+        Assert.Contains(outputs, static output => output.Contains("acme:key", StringComparison.Ordinal));   // the answers are not empty
+    }
 
     private static void AssertClean(string text)
     {

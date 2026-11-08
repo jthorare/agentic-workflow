@@ -7,6 +7,7 @@ using Aw.Sindri.Features.GetConnection;
 using Aw.Sindri.Features.ListConnections;
 using Aw.Sindri.Features.RemoveConnection;
 using Aw.Sindri.Features.TestConnection;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Connections;
 using Microsoft.Extensions.Time.Testing;
 
@@ -49,6 +50,12 @@ internal sealed class ConnectionHarness
     public FakeConnectionProbe Probe { get; } = new();
 
     public FakeTimeProvider Clock { get; } = new(KnownInstants.Epoch);
+
+    /// <summary>Gets the ledger the connection slices append to (the green wires it in; the secret-leak tests read every event from it).</summary>
+    public InMemorySindriStore Ledger { get; } = new(new FakeTimeProvider(KnownInstants.Epoch), new FakeProcessProbe());
+
+    /// <summary>Gets the log every connection slice writes to (the green wires it in; the secret-leak tests read every line from it).</summary>
+    public CapturingConnectionLog Logs { get; } = new();
 
     public SequentialIdGenerator Ids { get; } = new();
 
