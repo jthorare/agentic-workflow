@@ -44,7 +44,7 @@ public sealed class CliStatusFollowEdgeTests : IDisposable
         await _rig.Interrupt();
 
         Assert.Equal(0, await FollowRig.Finished(run));
-        Assert.Contains("(approved, hash", _rig.Out.ToString(), StringComparison.Ordinal);
+        Assert.Contains("(hash", _rig.Out.ToString(), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -59,7 +59,7 @@ public sealed class CliStatusFollowEdgeTests : IDisposable
         await _rig.Interrupt();
 
         Assert.Equal(0, await FollowRig.Finished(run));
-        Assert.Contains("(approved, hash", _rig.Out.ToString(), StringComparison.Ordinal);
+        Assert.Contains("(hash", _rig.Out.ToString(), StringComparison.Ordinal);
         Assert.Empty(api.Afters.OfType<string>());   // every read after the error frame is a plain one: it keeps polling, it doesn't wait on the stream
     }
 
@@ -90,7 +90,7 @@ public sealed class CliStatusFollowEdgeTests : IDisposable
         await _rig.Interrupt();
 
         Assert.Equal(0, await FollowRig.Finished(run));
-        Assert.Contains("(approved, hash", _rig.Out.ToString(), StringComparison.Ordinal);
+        Assert.Contains("(hash", _rig.Out.ToString(), StringComparison.Ordinal);
         Assert.Equal([null, "2", null], api.Afters);   // the read that asked to reflect 2 was refused, so it was repeated plain
     }
 }

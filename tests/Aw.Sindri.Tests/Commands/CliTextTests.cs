@@ -23,7 +23,7 @@ public sealed class CliTextTests
         var text = SummaryText.Render(status, _endpoint, ui: "opened (sindri-ui, pid 77)");
 
         Assert.Equal(string.Join('\n',
-            "  profile   /home/profile.yaml (approved, hash 3f1c2a)",
+            "  profile   /home/profile.yaml (hash 3f1c2a)",
             "  services  heartbeat every 5s (last 00:00:00Z)",
             "  api       127.0.0.1:7410",
             "  ui        opened (sindri-ui, pid 77)",
@@ -34,14 +34,13 @@ public sealed class CliTextTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void An_unapproved_profile_needs_attention_and_says_the_fix()
+    public void A_profile_with_a_problem_needs_attention()
     {
         var status = new GetStatusResponse(Running: true, 42, 3, LeaseExpiresAt: null, new ProfileStatus(_hash, Problem: "p", "/p.yaml"), []);
 
         var text = SummaryText.Render(status, _endpoint, ui: null);
 
-        Assert.Contains("running; the profile needs your approval", text, StringComparison.Ordinal);
-        Assert.Contains("(not approved; fix: sindri profile approve)", text, StringComparison.Ordinal);
+        Assert.Contains("running; the live profile file has a problem", text, StringComparison.Ordinal);
         Assert.DoesNotContain("ui ", text, StringComparison.Ordinal);
     }
 

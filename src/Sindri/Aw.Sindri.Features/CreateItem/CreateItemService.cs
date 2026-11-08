@@ -61,7 +61,7 @@ internal sealed class CreateItemService(IApprovedProfile approvals, HeldLease he
 
         var known = latest.Value?.Profile.Repos?.Any(r => string.Equals(r.Name, repo.Value, StringComparison.Ordinal)) ?? false;
         return known ? null
-            : fromHeader ? SindriErrors.InvalidInput.With($"this checkout, {repo.Value}, isn't a repo of the profile (fix: pass --repo <name>, or add it to the profile and approve it)")
+            : fromHeader ? SindriErrors.InvalidInput.With($"this checkout, {repo.Value}, isn't a repo of the profile (fix: pass --repo <name>, or add it to the profile)")
             : SindriErrors.InvalidInput.With($"'{repo.Value}' isn't a repo of the profile (fix: sindri repo add <path>, or name one of its repos)");
     }
 }

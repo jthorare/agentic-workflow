@@ -71,16 +71,16 @@ public sealed class StatusViewsHealthTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_failed_service_and_an_unapproved_profile_degrade_it()
+    public async Task A_failed_service_degrades_it_and_the_profile_adds_no_problem()
     {
-        _ = (await H.Profiles.Save(SliceHarness.Profile(), Token)).Value;   // heartbeat is in the approved profile; the ledger holds no approval record
+        _ = (await H.Profiles.Save(SliceHarness.Profile(), Token)).Value;   // heartbeat is in the live profile
         await _v.Fold(EventTypes.ServiceRan, new ServiceRan(H.Ids.New<CommandId>(), ServiceName.From("heartbeat"), H.Clock.GetUtcNow(), ServiceOutcome.Failed, "SND-SCHED-001"));
 
         var status = (await Service().Handle(new GetStatusRequest(), Token)).Value;
 
         Assert.Equal(HealthWord.Degraded, status.Health!.Word);
-        Assert.Equal(["SND-API-001", "SND-SCHED-001", "SND-PROFILE-005"], status.Health.Problems.Select(p => p.Code), StringComparer.Ordinal);
-        Assert.Equal("Sindri is degraded: Sindri isn't running, service heartbeat failed, and the profile isn't approved.", status.Health.Sentence);
+        Assert.Equal(["SND-API-001", "SND-SCHED-001"], status.Health.Problems.Select(p => p.Code), StringComparer.Ordinal);
+        Assert.Equal("Sindri is degraded: Sindri isn't running and service heartbeat failed.", status.Health.Sentence);
     }
 
     [Fact, Trait("Lane", "unit")]

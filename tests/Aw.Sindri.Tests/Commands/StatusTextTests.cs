@@ -80,12 +80,4 @@ public sealed class StatusTextTests
 
         Assert.Equal(expected, Verbs.StatusExitCode(status));
     }
-
-    [Fact, Trait("Lane", "unit")]
-    public void A_server_without_health_still_exits_1_for_a_profile_that_needs_approval()
-    {
-        var status = Status(Fresh(), Healthy(), needsApproval: true) with { Health = null };
-
-        Assert.Equal(1, Verbs.StatusExitCode(status));
-    }
 }
