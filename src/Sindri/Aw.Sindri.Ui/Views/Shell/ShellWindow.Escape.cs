@@ -31,6 +31,11 @@ internal sealed partial class ShellWindow
             return true;
         }
 
+        if (EscapeTodoPanel(shell))
+        {
+            return true;
+        }
+
         if (EscapeSheetOrInbox(shell))
         {
             return true;
