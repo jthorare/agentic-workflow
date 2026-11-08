@@ -24,7 +24,7 @@ internal sealed class GraphTestBlocks
 
     /// <summary>The three blocks.</summary>
     /// <returns>Echo, fail and hold.</returns>
-    public IEnumerable<IGraphBlock> All() => [new Echo(this), new Fail(this), new Hold(this)];
+    public IEnumerable<IGraphBlock> All() => [new Echo(this), new Fail(this), new Hold(this), new Big()];
 
     private abstract class Base(string type) : IGraphBlock
     {
@@ -42,6 +42,12 @@ internal sealed class GraphTestBlocks
 
         protected static Result<BlockResult> Ok(BlockContext context) =>
             new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal) { ["node"] = JsonValue.Create(context.Node.Value) });
+    }
+
+    private sealed class Big() : Base("big")
+    {
+        public override ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken) =>
+            ValueTask.FromResult<Result<BlockResult>>(new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal) { ["data"] = JsonValue.Create(new string('x', 70_000)) }));
     }
 
     private sealed class Echo(GraphTestBlocks owner) : Base("echo")

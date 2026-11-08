@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using Aw.Kernel;
 using Aw.Sindri.Core.Control;
+using Aw.Sindri.Core.Graph.Blocks;
+using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.EngineReads;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
@@ -38,6 +40,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<ITemporalServer, DevServerTemporal>()
             .AddInterpreterActivities()
             .AddAgentRuntime()
+            .AddGraphEngine()
             .AddSingleton(provider => SindriWorker.Options(settings, provider.GetRequiredService<WorkerActivities>()))
             .AddSingleton<TemporalFrontend>()
             .AddSingleton<KnownInstances>()                            // engine P4: the opaque ids this process has seen (spec §6.3)
@@ -111,6 +114,23 @@ public static class SindriWorkflowsServiceCollectionExtensions
                 ? await runtime.Evaluate(context, cancellationToken).ConfigureAwait(false)
                 : null;
         }
+    }
+
+    /// <summary>The graph engine (issue 2258, PR 6): the run starter and its Temporal launcher, the queue advance, the blocks and the activities of <see cref="GraphWorkflow"/>.</summary>
+    private static IServiceCollection AddGraphEngine(this IServiceCollection services)
+    {
+        services.TryAddSingleton<INotifyPort, NoNotifyPort>();   // the host's adapters replace these two
+        services.TryAddSingleton<IGraphModelPort, NoGraphModelPort>();
+        return services
+            .AddSingleton<GraphMirror>()
+            .AddSingleton(static provider => GraphBlockRegistry.Standard(provider.GetRequiredService<INotifyPort>(), provider.GetRequiredService<IGraphModelPort>()))
+            .AddSingleton(static provider => new TemporalGraphRunLauncher(provider.GetRequiredService<TemporalFrontend>(), provider.GetRequiredService<TemporalSettings>()))
+            .AddSingleton<IGraphBlockCatalog>(static provider => provider.GetRequiredService<GraphBlockRegistry>())   // the validator reads what the engine runs, replacing the empty catalog
+            .AddSingleton<IGraphRunLauncher>(static provider => provider.GetRequiredService<TemporalGraphRunLauncher>())
+            .AddSingleton<GraphRunStarter>()
+            .AddSingleton<IGraphRunStarter>(static provider => provider.GetRequiredService<GraphRunStarter>())
+            .AddSingleton<IGraphQueueAdvance>(static provider => provider.GetRequiredService<GraphRunStarter>())
+            .AddSingleton<GraphRunActivities>().AddSingleton<GraphBlockActivities>().AddSingleton<GraphActivities>();
     }
 
     // Engine P8 U3: LaunchAgentStep, WatchAgentStep, CloseAgentStep and what they use, and the worker's set of activity classes.

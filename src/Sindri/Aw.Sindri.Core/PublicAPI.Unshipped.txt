@@ -25811,3 +25811,4 @@ Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.WorkflowRunCancelledPayload(Aw
 Aw.Sindri.Core.Events.WorkflowNodeStartedPayload.WorkflowNodeStartedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! By) -> void
 Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.WorkflowNodeFinishedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! Status, bool Truncated, string! By) -> void
 Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.WorkflowNodeFailedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! Error, string! By) -> void
+static readonly Aw.Sindri.Core.SindriErrors.GraphOutputTruncated -> Aw.Kernel.ErrorDefinition!

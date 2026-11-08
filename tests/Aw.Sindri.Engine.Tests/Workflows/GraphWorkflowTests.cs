@@ -12,6 +12,8 @@ namespace Aw.Sindri.Tests.Workflows;
 [Lane(TestLane.Integration)]
 public sealed class GraphWorkflowTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
 {
+    private static readonly string[] _walked = ["start", "a", "b", "c"];
+
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     [Fact]
@@ -29,6 +31,17 @@ public sealed class GraphWorkflowTests(SindriTimeSkippingServer server) : IClass
         Assert.Equal(["walk-test@1:1/a", "walk-test@1:1/b", "walk-test@1:1/c"], rig.Blocks.Log);
         Assert.All(await rig.NodeStatuses(started.RunId), static s => Assert.Equal(NodeRunStatus.Succeeded, s.Value));
         Assert.Equal(4, (await rig.NodeStatuses(started.RunId)).Count);
+        Assert.Equal(
+            [
+                "workflow.run.started workflow.run.started:walk-test@1:1",
+                .. _walked.SelectMany(static n => new[]
+                {
+                    $"workflow.node.started workflow.node.started:walk-test@1:1:{n}:0",
+                    $"workflow.node.finished workflow.node.finished:walk-test@1:1:{n}:0",
+                }),
+                "workflow.run.finished workflow.run.finished:walk-test@1:1",
+            ],
+            await rig.Rows());
     }
 
     [Fact]
@@ -105,7 +118,11 @@ public sealed class GraphWorkflowTests(SindriTimeSkippingServer server) : IClass
         Assert.Equal(NodeRunStatus.Cancelled, nodes["wait"]);
         Assert.Equal(NodeRunStatus.Skipped, nodes["after"]);
         Assert.DoesNotContain(rig.Blocks.Log, static l => string.Equals(l, "walk-test@1:1/after", StringComparison.Ordinal));
-        // the ledger rows (workflow.run.cancelled, workflow.node.*) are asserted once the event types are merged (b6t)
+        var rows = await rig.Rows();
+        Assert.Contains("workflow.run.cancelled workflow.run.cancelled:walk-test@1:1", rows, StringComparer.Ordinal);
+        Assert.DoesNotContain(rows, static r => r.StartsWith("workflow.run.finished", StringComparison.Ordinal));
+        Assert.Contains("workflow.node.finished workflow.node.finished:walk-test@1:1:wait:0", rows, StringComparer.Ordinal);   // 'cancelled' status
+        Assert.Contains("workflow.node.finished workflow.node.finished:walk-test@1:1:after:0", rows, StringComparer.Ordinal);   // 'skipped' status
     }
 
     [Fact]
@@ -129,5 +146,26 @@ public sealed class GraphWorkflowTests(SindriTimeSkippingServer server) : IClass
         Assert.Equal(WorkflowRunStatus.Succeeded, firstEnded.Status);
         Assert.Equal(WorkflowRunStatus.Succeeded, secondEnded.Status);
         Assert.Equal(["start walk-test@1:1/wait", "done walk-test@1:1/wait", "start walk-test@1:2/wait", "done walk-test@1:2/wait"], rig.Blocks.Log);
+    }
+
+    [Fact]
+    public async Task A_reference_to_a_cut_output_fails_the_node_and_never_uses_the_cut_text()
+    {
+        await using var rig = GraphRig.Start(server.Environment);
+        var workflow = await rig.Define(GraphRig.Spec("unlimited",
+            [GraphRig.Node("start", "manual"), GraphRig.Node("big", "big"), GraphRig.Node("use", "echo", config: new JsonObject { ["text"] = "{{big.data}}" }), GraphRig.Node("after", "echo")],
+            [GraphRig.Edge("start", "big"), GraphRig.Edge("big", "use"), GraphRig.Edge("use", "after")]));
+
+        var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
+        var run = await rig.Final(started.RunId);
+        var nodes = (await rig.Runs.NodeRuns(started.RunId, Token)).Value.ToDictionary(static n => n.NodeId.Value, StringComparer.Ordinal);
+
+        Assert.Equal(WorkflowRunStatus.Failed, run.Status);
+        Assert.True(nodes["big"].Truncated);
+        Assert.Equal(NodeRunStatus.Failed, nodes["use"].Status);
+        Assert.Contains("SND-GRAPH-108", nodes["use"].Error, StringComparison.Ordinal);
+        Assert.Contains("'big'", nodes["use"].Error, StringComparison.Ordinal);
+        Assert.Empty(rig.Blocks.Log);   // 'use' never ran its block
+        Assert.Equal(NodeRunStatus.Skipped, nodes["after"].Status);
     }
 }

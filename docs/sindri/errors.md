@@ -126,3 +126,4 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-GRAPH-101` | No such workflow run |
 | `SND-GRAPH-102` | A block could not finish |
 | `SND-GRAPH-103` | The model's answer does not fit the prompt's output schema |
+| `SND-GRAPH-108` | A referenced node output was cut at 64 KB |

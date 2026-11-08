@@ -5,8 +5,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
 
-// why: the host registers it with the Temporal launcher in the GraphWorkflow piece (IGraphRunLauncher has no implementation yet); until then only tests build it.
-#pragma warning disable MA0182
 /// <summary>
 /// Turns a trigger into a run (issue 2258, PR 6): records the run under its id (a used id is refused), applies the workflow's
 /// concurrency mode, and starts the Temporal workflow through <see cref="IGraphRunLauncher"/>.
@@ -54,7 +52,37 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
     }
 
     /// <inheritdoc />
-    public ValueTask<Result<WorkflowRunId?>> StartNextQueued(WorkflowId workflow, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public async ValueTask<Result<WorkflowRunId?>> StartNextQueued(WorkflowId workflow, CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            var inFlight = await _runs.InFlight(workflow, cancellationToken).ConfigureAwait(false);
+            if (inFlight.IsError)
+            {
+                return inFlight.Error;
+            }
+
+            // why: only when nothing of the workflow is running or waiting does the oldest queued run get its turn
+            if (inFlight.Value.Count == 0 || inFlight.Value.Any(static r => r.Status != WorkflowRunStatus.Queued))
+            {
+                return (WorkflowRunId?)null;
+            }
+
+            var oldest = inFlight.Value[0];
+
+            var running = await _runs.SetStatus(oldest.Id, WorkflowRunStatus.Running, outputs: null, error: null, cancellationToken).ConfigureAwait(false);
+            if (running.IsError)
+            {
+                return running.Error;
+            }
+
+            // why: a run whose start fails is marked failed by Launch; the next queued run then gets the turn
+            if (!(await Launch(running.Value, cancellationToken).ConfigureAwait(false)).IsError)
+            {
+                return (WorkflowRunId?)oldest.Id;
+            }
+        }
+    }
 
     private async ValueTask<Result<bool>> Launch(WorkflowRun run, CancellationToken cancellationToken)
     {
@@ -71,4 +99,3 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
     [LoggerMessage(Level = LogLevel.Information, Message = "Run {Run} of workflow {Slug} skipped: another run is in flight and the workflow runs one at a time")]
     private static partial void Skipped(ILogger logger, string run, string slug);
 }
-#pragma warning restore MA0182

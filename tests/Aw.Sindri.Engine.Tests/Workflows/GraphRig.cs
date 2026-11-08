@@ -1,5 +1,10 @@
 using System.Text.Json.Nodes;
+using Aw.Kernel;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Lease;
+using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Ids;
@@ -26,6 +31,7 @@ internal sealed class GraphRig : IAsyncDisposable
     private readonly TemporalWorker _worker;
     private readonly Task _loop;
     private readonly GraphRunStarter _starter;
+    private readonly InMemorySindriStore _ledger;
 
     private GraphRig(WorkflowEnvironment environment)
     {
@@ -35,11 +41,18 @@ internal sealed class GraphRig : IAsyncDisposable
         Blocks = new GraphTestBlocks();
         Client = environment.Client;
         var registry = new GraphBlockRegistry([new ManualBlock(), new ConditionBlock(), .. Blocks.All()]);
-        var starter = new GraphRunStarter(Runs, new TemporalGraphRunLauncher(Client, TaskQueue), clock, NullLogger<GraphRunStarter>.Instance);
+        var probe = new FakeProcessProbe();
+        _ledger = new InMemorySindriStore(clock, probe);
+        var held = new HeldLease();
+        held.Hold(_ledger.Acquire(probe.Self(), Token).AsTask().GetAwaiter().GetResult().Value);
+        var ids = new SequentialIdGenerator();
+        var mirror = new GraphMirror(_ledger, held, new EventFactory(EventScope.ControlPlane, clock, ids, SliceHarness.Json, new AsyncLocalCallerContextAccessor(ids)));
+        var launcher = new TemporalGraphRunLauncher(_ => ValueTask.FromResult(Results.Success<Temporalio.Client.ITemporalClient>(Client)), TaskQueue);
+        var starter = new GraphRunStarter(Runs, launcher, clock, NullLogger<GraphRunStarter>.Instance);
         _starter = starter;
         var options = new TemporalWorkerOptions(TaskQueue)
             .AddWorkflow<GraphWorkflow>()
-            .AddAllActivities(new GraphRunActivities(Runs, Workflows, starter))
+            .AddAllActivities(new GraphRunActivities(Runs, Workflows, starter, mirror))
             .AddAllActivities(new GraphBlockActivities(registry, Runs, Workflows));
         _worker = new TemporalWorker(Client, options);
         _loop = _worker.ExecuteAsync(_stop.Token);
@@ -97,6 +110,14 @@ internal sealed class GraphRig : IAsyncDisposable
 
     public async Task<IReadOnlyDictionary<string, NodeRunStatus>> NodeStatuses(WorkflowRunId id) =>
         (await Runs.NodeRuns(id, Token)).Value.ToDictionary(static n => n.NodeId.Value, static n => n.Status, StringComparer.Ordinal);
+
+    /// <summary>The ledger rows the run wrote, as '&lt;type&gt; &lt;idempotency key&gt;', oldest first.</summary>
+    public async Task<IReadOnlyList<string>> Rows()
+    {
+        var read = (await _ledger.ReadAfter(0, 1000, Token)).Value;
+        return [.. read.Where(static e => e.Envelope.Type.StartsWith("workflow.run.", StringComparison.Ordinal) || e.Envelope.Type.StartsWith("workflow.node.", StringComparison.Ordinal))
+            .Select(static e => $"{e.Envelope.Type} {e.IdempotencyKey}")];
+    }
 
     public async ValueTask DisposeAsync()
     {

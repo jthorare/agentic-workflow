@@ -48,4 +48,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-GRAPH-103: a prompt node's answer did not fit its 'output' schema.</summary>
     public static readonly ErrorDefinition GraphPromptAnswer = new("SND-GRAPH-103", ErrorKind.Invalid, "The model's answer does not fit the prompt's output schema");
+
+    /// <summary>SND-GRAPH-108: a reference read the output of a node that the store cut at 64 KB.</summary>
+    public static readonly ErrorDefinition GraphOutputTruncated = new("SND-GRAPH-108", ErrorKind.Invalid, "A referenced node output was cut at 64 KB");
 }
