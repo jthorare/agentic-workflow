@@ -80,6 +80,9 @@ public sealed class ConnectionSecretsTests
         var (world, _) = await DriveEveryPath();
 
         var events = world.Ledger.Events;
+        // 10a writes no ledger events, so this canary has nothing to check yet. PR 10b flips it to NotEmpty with its
+        // connection.needs-sign-in event; until then a 10a change that starts writing events fails here instead of passing quietly.
+        Assert.Empty(events);
         Assert.All(events, e => Assert.DoesNotContain(_canary, JsonSerializer.Serialize(e.Envelope) + e.IdempotencyKey + e.Item, StringComparison.Ordinal));
         Assert.All(events, e => Assert.DoesNotContain(_canary, e.Envelope.Payload, StringComparison.Ordinal));
     }
