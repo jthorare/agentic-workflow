@@ -7,9 +7,6 @@
         xmlns:controls="using:Aw.Sindri.Ui.Views.Controls"
         xmlns:root="using:Aw.Sindri.Ui.Views.Palette"
         xmlns:queue="using:Aw.Sindri.Ui.Views.Queue"
-        xmlns:wfv="using:Aw.Sindri.Ui.Views.Workflows"
-        xmlns:iv="using:Aw.Sindri.Ui.Views.Instance"
-        xmlns:rv="using:Aw.Sindri.Ui.Views.Recipes"
         xmlns:agv="using:Aw.Sindri.Ui.Views.Agents"
         xmlns:jv="using:Aw.Sindri.Ui.Views.Jobs"
         xmlns:pv="using:Aw.Sindri.Ui.Views.Projects"
@@ -20,10 +17,7 @@
         xmlns:cnvm="using:Aw.Sindri.Ui.ViewModels.Context.Concepts"
         xmlns:ctxv="using:Aw.Sindri.Ui.Views.Context"
         xmlns:item="using:Aw.Sindri.Ui.Views.Item"
-        xmlns:startv="using:Aw.Sindri.Ui.Views.Start"
-        xmlns:apv="using:Aw.Sindri.Ui.Views.Approvals"
         xmlns:ny="using:Aw.Sindri.Ui.Views.NeedsYou"
-        xmlns:runv="using:Aw.Sindri.Ui.Views.Run"
         x:Class="Aw.Sindri.Ui.Views.Shell.ShellWindow"
         x:DataType="shell:ShellViewModel"
         Title="{Binding WindowTitle}"
@@ -209,25 +203,11 @@
                 <Panel IsVisible="{Binding IsProjects}"><pv:ProjectsPage x:Name="ProjectsPage" DataContext="{Binding Projects}" /></Panel>
                 <!-- Reviews (review page spec §6.1): the owner's PRs and the ones waiting on them. -->
                 <Panel IsVisible="{Binding IsReviews}"><rwv:ReviewsPage x:Name="ReviewsPage" DataContext="{Binding Reviews}" /></Panel>
-                <Panel IsVisible="{Binding IsWorkflows}">
-                  <controls:Deferred DataContext="{Binding Workflows}">
-                    <controls:Deferred.Template>
-                      <DataTemplate><wfv:WorkflowsPage x:Name="WorkflowsPage" /></DataTemplate>
-                    </controls:Deferred.Template>
-                  </controls:Deferred>
-                </Panel>
                 <controls:Deferred IsVisible="{Binding IsWork}">
                   <controls:Deferred.Template>
                     <DataTemplate><queue:QueuePage x:Name="QueuePage" /></DataTemplate>
                   </controls:Deferred.Template>
                 </controls:Deferred>
-                <Panel IsVisible="{Binding IsRecipes}">
-                  <controls:Deferred DataContext="{Binding RecipesPage}">
-                    <controls:Deferred.Template>
-                      <DataTemplate><rv:RecipesPage x:Name="RecipesPage" /></DataTemplate>
-                    </controls:Deferred.Template>
-                  </controls:Deferred>
-                </Panel>
                 <Panel IsVisible="{Binding IsContext}">
                   <controls:Deferred DataContext="{Binding Context}">
                     <controls:Deferred.Template>
@@ -277,14 +257,6 @@
                 </controls:Deferred.Template>
               </controls:Deferred>
             </Panel>
-            <!-- A line run (F3 run canvas): its canvas over the Workflows page, in place of the detail sheet. -->
-            <Panel x:Name="RunPageLayer" IsVisible="{Binding IsRunPageShown}">
-              <controls:Deferred DataContext="{Binding RunPage}">
-                <controls:Deferred.Template>
-                  <DataTemplate><runv:RunPage x:Name="RunPageView" /></DataTemplate>
-                </controls:Deferred.Template>
-              </controls:Deferred>
-            </Panel>
             <!-- One PR's review page (review page spec §6.2): over the Reviews list, in place of it. -->
             <ScrollViewer x:Name="ReviewPageLayer" IsVisible="{Binding IsReviewPageShown}">
               <Panel Classes="page-content"><rwv:ReviewPageView x:Name="ReviewPageContent" DataContext="{Binding ReviewPage}" /></Panel>
@@ -313,7 +285,7 @@
                    AutomationProperties.Name="{Binding Text.Sheet}" />
             <DockPanel Margin="24,16">
               <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,12">
-                <Button x:Name="SheetBack" Classes="back" Classes.trail="{Binding HasTrail}" Content="{Binding Text.Back}" Click="OnBack"
+                <Button x:Name="SheetBack" Classes="back" Content="{Binding Text.Back}" Click="OnBack"
                         AutomationProperties.Name="{Binding Text.Back}" Margin="0,0,12,0" />
                 <!-- The focus target is a Text-typed wrapper named for the kind and subject ("Workflow WFI-1"); the subject is mono (an id) except a project's, which is its name; the visible subject inside it is Raw, as ChordHint's key is (a TextBlock's peer reads its Text and ignores a Name). -->
                 <Border x:Name="SheetTitle" Classes="sheet-title" Grid.Column="1" Focusable="True" VerticalAlignment="Center"
@@ -359,22 +331,6 @@
                   </controls:Deferred>
                 </ScrollViewer>
                 <!-- LANE ANCHOR U3': the sheet content for the kinds U3' claims (kinds: NeedsYou, Decision). Insert immediately above this marker, never between the markers. -->
-                <!-- LANE ANCHOR U8: the sheet content for the kinds U8 claims (kinds: Workflow); the item sheet's re-base (U8b) is content only. Insert immediately below this marker, never between the markers. -->
-                <ScrollViewer x:Name="InstanceSheetScroll" IsVisible="{Binding IsInstanceSheet}">
-                  <controls:Deferred DataContext="{Binding Instance}">
-                    <controls:Deferred.Template>
-                      <DataTemplate><iv:InstanceFrameView x:Name="InstanceSheetFrame" /></DataTemplate>
-                    </controls:Deferred.Template>
-                  </controls:Deferred>
-                </ScrollViewer>
-                <!-- LANE ANCHOR U10: the sheet content for the kinds U10 claims (kinds: Recipe). System, Service and Job are claimed later, at this switch, by the phase that renders them (screens spec §8). Insert immediately below this marker, never between the markers. -->
-                <ScrollViewer x:Name="RecipeSheetScroll" IsVisible="{Binding IsRecipeSheet}">
-                  <controls:Deferred DataContext="{Binding Recipe}">
-                    <controls:Deferred.Template>
-                      <DataTemplate><rv:RecipeSheetView x:Name="RecipeSheetContent" /></DataTemplate>
-                    </controls:Deferred.Template>
-                  </controls:Deferred>
-                </ScrollViewer>
                 <!-- LANE ANCHOR U9: the sheet content for the kinds U9 claims (kinds: Node), the node card of the Context page. Insert immediately below this marker, never between the markers. -->
                 <!-- LANE ANCHOR U11a: the sheet content for the kinds U11a claims (kinds: Session), the session sheet. Insert immediately below this marker, never between the markers. -->
                 <ScrollViewer x:Name="JobSheetScroll" IsVisible="{Binding IsJobSheet}">
@@ -506,20 +462,6 @@
       <controls:Deferred DataContext="{Binding NewIssue}">
         <controls:Deferred.Template>
           <DataTemplate><lnv:NewLinearIssueDialog x:Name="NewLinearIssueDialog" /></DataTemplate>
-        </controls:Deferred.Template>
-      </controls:Deferred>
-    </Panel>
-    <Panel x:Name="StartLayer" IsVisible="{Binding Start.IsOpen}">
-      <controls:Deferred DataContext="{Binding Start}">
-        <controls:Deferred.Template>
-          <DataTemplate><startv:StartDialog x:Name="StartDialog" /></DataTemplate>
-        </controls:Deferred.Template>
-      </controls:Deferred>
-    </Panel>
-    <Panel x:Name="ApproveAllLayer" IsVisible="{Binding ApproveAll.IsOpen}">
-      <controls:Deferred DataContext="{Binding ApproveAll}">
-        <controls:Deferred.Template>
-          <DataTemplate><apv:ApproveAllDialog x:Name="ApproveAllDialog" /></DataTemplate>
         </controls:Deferred.Template>
       </controls:Deferred>
     </Panel>

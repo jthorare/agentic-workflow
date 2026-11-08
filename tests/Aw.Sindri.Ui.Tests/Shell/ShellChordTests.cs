@@ -48,8 +48,24 @@ public sealed class ShellChordTests
         _clock.Advance(ShellViewModel.ChordWait - TimeSpan.FromMilliseconds(1));
 
         Assert.True(shell.IsChordPending);
-        Assert.True(shell.PressKey("W"));
-        Assert.Equal(PageId.Workflows, shell.CurrentPage);
+        Assert.True(shell.PressKey("A"));
+        Assert.Equal(PageId.Agents, shell.CurrentPage);
+    }
+
+    [Fact]
+    public async Task The_shortcuts_sheet_names_exactly_the_G_chords_that_exist()
+    {
+        const string prefix = "G then ";
+        var line = Labels.FixedKeys.Single(k => k.Keys.StartsWith(prefix, StringComparison.Ordinal)).Keys;
+        var named = line[prefix.Length..].Split(' ', StringSplitOptions.RemoveEmptyEntries).ToHashSet(StringComparer.Ordinal);
+
+        foreach (var key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ.".Select(c => c.ToString()))
+        {
+            var shell = await Shell();
+            _ = shell.PressKey("G");
+
+            Assert.Equal(named.Contains(key), shell.PressKey(key));
+        }
     }
 
     [Fact]
@@ -63,7 +79,7 @@ public sealed class ShellChordTests
 
         Assert.False(shell.IsChordPending);
         Assert.Equal(string.Empty, shell.ChordHint);
-        Assert.False(shell.PressKey("W"));
+        Assert.False(shell.PressKey("A"));
         Assert.Equal(PageId.Home, shell.CurrentPage);
     }
 
@@ -73,7 +89,7 @@ public sealed class ShellChordTests
         var shell = await Shell();
         _ = shell.PressKey("G");
         _clock.Advance(TimeSpan.FromMilliseconds(900));
-        _ = shell.PressKey("W");
+        _ = shell.PressKey("A");
         _ = shell.PressKey("G");
 
         _clock.Advance(TimeSpan.FromMilliseconds(200));   // 1.1 s after the first G, 0.2 s after the second
@@ -93,7 +109,7 @@ public sealed class ShellChordTests
         shell.CancelChord();
 
         Assert.False(shell.IsChordPending);
-        Assert.False(shell.PressKey("W"));
+        Assert.False(shell.PressKey("A"));
         Assert.Equal(PageId.Home, shell.CurrentPage);
     }
 
@@ -179,7 +195,7 @@ public sealed class ShellChordTests
         Assert.Equal(ShellState.NotRunning, shell.State);
         Assert.False(shell.PressKey("G"));
         Assert.False(shell.IsChordPending);
-        Assert.False(shell.PressKey("W"));
+        Assert.False(shell.PressKey("A"));
         Assert.Equal(PageId.Context, shell.CurrentPage);
         Assert.Equal("Context", (await new Preferences(_preferences).Load(Token)).LastPage);
     }

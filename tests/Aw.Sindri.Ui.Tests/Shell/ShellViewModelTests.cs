@@ -52,18 +52,18 @@ public sealed class ShellViewModelTests
 
     // Screens spec §3 and the Projects page spec §7: eight pages, each with its G-chord key; Settings is not a tab.
     [Fact]
-    public async Task Nav_is_Home_Projects_Workflows_Work_Recipes_Context_Agents_System_Reviews()
+    public async Task Nav_is_Home_Projects_Work_Context_Agents_System_Reviews()
     {
         var shell = await Shell();
 
         Assert.Equal(
-            [PageId.Home, PageId.Projects, PageId.Workflows, PageId.Work, PageId.Recipes, PageId.Context, PageId.Agents, PageId.System, PageId.Reviews],
+            [PageId.Home, PageId.Projects, PageId.Work, PageId.Context, PageId.Agents, PageId.System, PageId.Reviews],
             shell.Navigation.Select(n => n.Page));
         Assert.Equal(
-            [Labels.Home, Labels.Projects, Labels.Workflows, Labels.Work, Labels.Recipes, Labels.Context, Labels.Agents, Labels.System, Labels.ReviewsTab],
+            [Labels.Home, Labels.Projects, Labels.Work, Labels.Context, Labels.Agents, Labels.System, Labels.ReviewsTab],
             shell.Navigation.Select(n => n.Label),
             StringComparer.Ordinal);
-        Assert.Equal(["H", "P", "W", "Q", "R", "C", "A", ".", "V"], shell.Navigation.Select(n => n.Key), StringComparer.Ordinal);
+        Assert.Equal(["H", "P", "Q", "C", "A", ".", "V"], shell.Navigation.Select(n => n.Key), StringComparer.Ordinal);
         Assert.All(shell.Navigation, n => Assert.Equal(string.Empty, n.Count));
     }
 
@@ -77,8 +77,6 @@ public sealed class ShellViewModelTests
 
         Assert.Equal(words, Labels.ArrivesWith(page));
         Assert.Null(Labels.ArrivesWith(PageId.Home));
-        Assert.Null(Labels.ArrivesWith(PageId.Workflows));   // built in U8
-        Assert.Null(Labels.ArrivesWith(PageId.Recipes));
         Assert.Null(Labels.ArrivesWith(PageId.Agents));   // built in U11a
         Assert.Null(Labels.ArrivesWith(PageId.System));
     }
@@ -105,7 +103,7 @@ public sealed class ShellViewModelTests
         var shell = await Shell();
 
         Assert.Equal((PageId.Projects, Labels.Projects), (shell.Navigation[1].Page, shell.Navigation[1].Label));
-        Assert.Equal(9, shell.Navigation.Count);
+        Assert.Equal(7, shell.Navigation.Count);
         Assert.Equal(PageId.Projects, Enum.GetValues<PageId>()[1]);
     }
 
@@ -113,9 +111,7 @@ public sealed class ShellViewModelTests
     [Theory]
     [InlineData("H", PageId.Home)]
     [InlineData("P", PageId.Projects)]
-    [InlineData("W", PageId.Workflows)]
     [InlineData("Q", PageId.Work)]
-    [InlineData("R", PageId.Recipes)]
     [InlineData("C", PageId.Context)]
     [InlineData("A", PageId.Agents)]
     [InlineData(".", PageId.System)]
@@ -192,9 +188,6 @@ public sealed class ShellViewModelTests
     }
 
     [Theory]
-    [InlineData("workflow/INC-14", DeepLinkKind.Workflow, PageId.Workflows)]
-    [InlineData("workflow/ITM-01JC8/step", DeepLinkKind.Workflow, PageId.Workflows)]
-    [InlineData("recipe/workflow.project-build", DeepLinkKind.Recipe, PageId.Recipes)]
     [InlineData("node/feature:tabs.tab-manager", DeepLinkKind.Node, PageId.Context)]
     [InlineData("session/codex/snd-01JE7.2", DeepLinkKind.Session, PageId.Agents)]
     [InlineData("system/temporal", DeepLinkKind.System, PageId.System)]
@@ -352,9 +345,7 @@ public sealed class ShellViewModelTests
     // §11.2: the page region is read with the page it shows, not always "Home".
     [Theory]
     [InlineData(PageId.Home, Labels.Home)]
-    [InlineData(PageId.Workflows, Labels.Workflows)]
     [InlineData(PageId.Work, Labels.Work)]
-    [InlineData(PageId.Recipes, Labels.Recipes)]
     [InlineData(PageId.Context, Labels.Context)]
     [InlineData(PageId.Agents, Labels.Agents)]
     [InlineData(PageId.System, Labels.System)]
