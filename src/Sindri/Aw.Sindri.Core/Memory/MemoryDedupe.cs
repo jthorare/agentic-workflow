@@ -3,7 +3,7 @@ namespace Aw.Sindri.Core.Memory;
 /// <summary>The write-time rule: a fact very similar to an existing one with the same tags refreshes it instead of adding a row.</summary>
 public static class MemoryDedupe
 {
-    /// <summary>The cosine similarity at and above which two facts with the same tags are one fact. Calibrated over tests/fixtures/memory/pairs.json.</summary>
+    /// <summary>The cosine similarity at and above which two facts with the same tags are one fact. Provisional: calibrated over tests/fixtures/memory/pairs.json, which holds hand-made vectors, not the pinned model's real output.</summary>
     public const float Threshold = 0.9f;
 
     /// <summary>The cosine similarity of two vectors.</summary>

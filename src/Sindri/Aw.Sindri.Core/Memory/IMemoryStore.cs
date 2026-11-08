@@ -39,6 +39,30 @@ public interface IMemoryStore
     /// <returns>Unit, or SND-MEM-001 when its memory does not exist.</returns>
     public ValueTask<Result<Unit>> Add(MemoryFact fact, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Writes a fact in one transaction: when an unexpired fact of the memory has the same tags and a vector at or above <see cref="MemoryDedupe.Threshold"/> of this one's, that fact is
+    /// refreshed (RefreshedAt and ExpiresAt of this fact), else this fact is added. Two concurrent writes of near-same facts add one fact.
+    /// </summary>
+    /// <param name="fact">The fact; its RefreshedAt is the time of the write.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>The key written or refreshed, or SND-MEM-001.</returns>
+    public ValueTask<Result<FactWritten>> AddOrRefresh(MemoryFact fact, CancellationToken cancellationToken);
+
+    /// <summary>Reads facts that have no vector yet, oldest first, across every memory.</summary>
+    /// <param name="limit">At most this many.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The facts.</returns>
+    public ValueTask<Result<IReadOnlyList<MemoryFact>>> Unembedded(int limit, CancellationToken cancellationToken);
+
+    /// <summary>Gives a fact without a vector its vector and model.</summary>
+    /// <param name="memory">The memory.</param>
+    /// <param name="key">The fact's key.</param>
+    /// <param name="vector">The vector.</param>
+    /// <param name="model">The model that made it, or null.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>True when the fact was there and had no vector.</returns>
+    public ValueTask<Result<bool>> SetEmbedding(MemoryName memory, string key, ReadOnlyMemory<float> vector, string? model, CancellationToken cancellationToken);
+
     /// <summary>Marks a fact written again: sets RefreshedAt (and ExpiresAt when given).</summary>
     /// <param name="memory">The memory.</param>
     /// <param name="key">The fact's key.</param>

@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Services;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Memory;
 using Aw.Sindri.Core.Text;
 
@@ -38,31 +39,24 @@ internal sealed class WriteMemoryFactService(IMemoryStore store, IMemoryEmbedder
             return name.Error;
         }
 
-        var stored = await _store.Facts(name.Value, cancellationToken).ConfigureAwait(false);
-        if (stored.IsError)
-        {
-            return stored.Error;
-        }
-
         var text = _scrubber.Scrub(checkedText.Value);
         var tags = Tags(request.Tags);
         var now = _time.GetUtcNow();
-        var embedded = await _embedder.Embed([text], cancellationToken).ConfigureAwait(false);
-        var vector = embedded.Vectors is { Count: 1 } vectors ? vectors[0] : ReadOnlyMemory<float>.Empty;
-        var duplicate = vector.IsEmpty ? null : MemoryDedupe.FindDuplicate(vector, tags, [.. stored.Value.Where(f => !f.IsExpired(now))]);
-        if (duplicate is not null)
+        if (request.ExpiresAt is { } expiry && expiry <= now)
         {
-            var refreshed = await _store.Refresh(name.Value, duplicate.Key, now, request.ExpiresAt, cancellationToken).ConfigureAwait(false);
-            return refreshed.IsError ? refreshed.Error : new WriteMemoryFactResponse(duplicate.Key, "refreshed");
+            return SindriErrors.MemoryExpiryPast.With("A fact's expiry has to be in the future.");
         }
 
+        var embedded = await _embedder.Embed([text], cancellationToken).ConfigureAwait(false);
+        var vector = embedded.Vectors is { Count: 1 } vectors ? vectors[0] : ReadOnlyMemory<float>.Empty;
         var key = "mf_" + _ids.NewId().ToString("N", System.Globalization.CultureInfo.InvariantCulture);
-        var fact = new MemoryFact(key, name.Value, text, tags, request.Provenance ?? MemoryProvenance.None, request.ExpiresAt, now, now, vector);
-        var added = await _store.Add(fact, cancellationToken).ConfigureAwait(false);
-        return added.IsError ? added.Error : new WriteMemoryFactResponse(key, "added");
+        var fact = new MemoryFact(key, name.Value, text, tags, request.Provenance ?? MemoryProvenance.None, request.ExpiresAt, now, now, vector, vector.IsEmpty ? null : embedded.Model);
+        // the dedupe decision and the write are one store transaction, so two near-same writes at once add one fact
+        var written = await _store.AddOrRefresh(fact, cancellationToken).ConfigureAwait(false);
+        return written.IsError ? written.Error : new WriteMemoryFactResponse(written.Value.Key, written.Value.Refreshed ? "refreshed" : "added");
     }
 
     // Tags are lowercase, trimmed, sorted and without repeats, so the same set is the same identity.
-    private static string[] Tags(IReadOnlyList<string>? tags) =>
-        tags is null ? [] : [.. tags.Select(static t => t.Trim().ToLowerInvariant()).Where(static t => t.Length > 0).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
+    private string[] Tags(IReadOnlyList<string>? tags) =>
+        tags is null ? [] : [.. tags.Select(t => _scrubber.Scrub(t).Trim().ToLowerInvariant()).Where(static t => t.Length > 0).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
 }

@@ -102,6 +102,51 @@ internal sealed class SqliteMemoryStore(LedgerDatabase database) : IMemoryStore
         }, cancellationToken);
     }
 
+    public ValueTask<Result<FactWritten>> AddOrRefresh(MemoryFact fact, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(fact);
+        return RecipeSessions.Write(_database, async ValueTask<Result<FactWritten>> (session, token) =>
+        {
+            var exists = await RecipeSessions.Exists(session, Named(MemorySql.MemoryExists, fact.Store), token).ConfigureAwait(false);
+            if (exists.IsError)
+            {
+                return exists.Error;
+            }
+
+            if (!exists.Value)
+            {
+                return NotFound(fact.Store);
+            }
+
+            var rows = await RecipeSessions.List(session, Named(MemorySql.SelectFacts, fact.Store), MemoryFactMapper.Instance, token).ConfigureAwait(false);
+            if (rows.IsError)
+            {
+                return rows.Error;
+            }
+
+            // the read, the decision and the write sit in this one write transaction, so a concurrent near-same write sees this fact
+            var duplicate = fact.Embedding.IsEmpty ? null : MemoryDedupe.FindDuplicate(fact.Embedding, fact.Tags, [.. rows.Value.Where(f => !f.IsExpired(fact.RefreshedAt))]);
+            var statement = duplicate is null
+                ? new SqlStatement(MemorySql.InsertFact, c => BindFact(c, fact), $"fact {fact.Key}")
+                : new SqlStatement(MemorySql.Refresh, c => c.Bind("$name", fact.Store.Value).Bind("$key", duplicate.Key).Bind("$refreshedAt", fact.RefreshedAt).Bind("$expiresAt", Iso(fact.ExpiresAt)), $"fact {duplicate.Key}");
+            var written = await RecipeSessions.Execute(session, statement, token).ConfigureAwait(false);
+            return written.IsError ? written.Error : new FactWritten(duplicate?.Key ?? fact.Key, Refreshed: duplicate is not null);
+        }, cancellationToken);
+    }
+
+    public async ValueTask<Result<IReadOnlyList<MemoryFact>>> Unembedded(int limit, CancellationToken cancellationToken)
+        => await RecipeSessions.Read(_database, LedgerDatabase.MemoryVersion, [],
+            (session, token) => RecipeSessions.List(session, new SqlStatement(MemorySql.SelectUnembedded, c => c.Bind("$limit", limit)), MemoryFactMapper.Instance, token), cancellationToken).ConfigureAwait(false);
+
+    public ValueTask<Result<bool>> SetEmbedding(MemoryName memory, string key, ReadOnlyMemory<float> vector, string? model, CancellationToken cancellationToken)
+        => RecipeSessions.Write(_database, async ValueTask<Result<bool>> (session, token) =>
+        {
+            var statement = new SqlStatement(MemorySql.SetEmbedding, c => c
+                .Bind("$name", memory.Value).Bind("$key", key).Bind("$embedding", MemoryFactMapper.Encode(vector.Span)).Bind("$model", model).Bind("$dimension", vector.Length), $"fact {key}");
+            var changed = await RecipeSessions.Execute(session, statement, token).ConfigureAwait(false);
+            return changed.IsError ? changed.Error : changed.Value > 0;
+        }, cancellationToken);
+
     public ValueTask<Result<bool>> Refresh(MemoryName memory, string key, DateTimeOffset refreshedAt, DateTimeOffset? expiresAt, CancellationToken cancellationToken)
         => RecipeSessions.Write(_database, async ValueTask<Result<bool>> (session, token) =>
         {
@@ -155,5 +200,7 @@ internal sealed class SqliteMemoryStore(LedgerDatabase database) : IMemoryStore
         .Bind("$session", fact.Provenance.Session)
         .Bind("$expiresAt", Iso(fact.ExpiresAt))
         .Bind("$createdAt", fact.CreatedAt)
-        .Bind("$refreshedAt", fact.RefreshedAt);
+        .Bind("$refreshedAt", fact.RefreshedAt)
+        .Bind("$model", fact.Embedding.IsEmpty ? null : fact.Model)
+        .Bind("$dimension", fact.Embedding.IsEmpty ? null : fact.Embedding.Length);
 }

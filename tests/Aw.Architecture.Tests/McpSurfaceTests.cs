@@ -1,7 +1,10 @@
 using Aw.Sindri.Core.Challenges;
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Features.CreateMemory;
 using Aw.Sindri.Features.Decide;
 using Aw.Sindri.Features.FileRequest;
+using Aw.Sindri.Features.ForgetMemoryFact;
+using Aw.Sindri.Features.WriteMemoryFact;
 
 namespace Aw.Architecture.Tests;
 
@@ -22,7 +25,14 @@ public sealed class McpSurfaceTests
     public void Mcp_tools_reference_only_queries_and_the_request_command()
     {
         var catalog = HostIntrospection.Catalog().Rows;
-        var allowed = new HashSet<string>(StringComparer.Ordinal) { typeof(FileRequestRequest).FullName! };
+        // why: PR13 (G8): agents write memory, so the memory_* tools reach the three memory commands; each is Desk class with SessionOk, the owner's own sessions included
+        var allowed = new HashSet<string>(StringComparer.Ordinal)
+        {
+            typeof(FileRequestRequest).FullName!,
+            typeof(CreateMemoryRequest).FullName!,
+            typeof(WriteMemoryFactRequest).FullName!,
+            typeof(ForgetMemoryFactRequest).FullName!,
+        };
         var commands = catalog.Select(r => r.CommandType?.FullName).OfType<string>().Where(n => !allowed.Contains(n)).ToHashSet(StringComparer.Ordinal);
         // why: catalog routes are templates ('/sindri/decisions/{decisionId}'); code that builds one loads only the text before the first '{'
         var protectedPrefixes = catalog.Where(r => r.Class != ActionClass.Request).Select(r => r.Route).OfType<string>()

@@ -10,6 +10,8 @@ namespace Aw.Sindri.Testing.Memory;
 /// </summary>
 public abstract class MemoryStoreContract
 {
+    private static readonly float[] _pair = [0.5f, 0.5f];
+
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     /// <summary>A fresh, empty store.</summary>
@@ -159,5 +161,98 @@ public abstract class MemoryStoreContract
         var swept = await store.DeleteExpired(now, Token);
 
         Expect.Equal(2, swept.Value);
+    }
+
+    /// <summary>A second fact with a key already in the store is refused.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Adding_a_duplicate_key_is_an_error()
+    {
+        var store = Create();
+        _ = await store.Create(MemorySamples.Info(), Token);
+        _ = await store.Add(MemorySamples.Fact("same", "one"), Token);
+
+        var again = await store.Add(MemorySamples.Fact("same", "two"), Token);
+
+        Expect.True(again.IsError);
+        Expect.Equal(1, (await store.Facts(MemorySamples.Name(), Token)).Value.Count);
+    }
+
+    /// <summary>A fact that expires exactly at the sweep time is swept, one a tick later is kept.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_fact_expiring_exactly_now_is_swept_and_one_a_tick_later_is_kept()
+    {
+        var store = Create();
+        _ = await store.Create(MemorySamples.Info(), Token);
+        var now = MemorySamples.Fact().CreatedAt.AddDays(1);
+        _ = await store.Add(MemorySamples.Fact("at", "at", expiresAt: now), Token);
+        _ = await store.Add(MemorySamples.Fact("after", "after", expiresAt: now.AddTicks(1)), Token);
+
+        var swept = await store.DeleteExpired(now, Token);
+
+        Expect.Equal(1, swept.Value);
+        Expect.Sequence(["after"], (await store.Facts(MemorySamples.Name(), Token)).Value.Select(static f => f.Key));
+    }
+
+    /// <summary>AddOrRefresh refreshes a near duplicate with the same tags and adds anything else.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task AddOrRefresh_refreshes_a_near_duplicate_and_adds_the_rest()
+    {
+        var store = Create();
+        _ = await store.Create(MemorySamples.Info(), Token);
+        var later = MemorySamples.Fact().CreatedAt.AddHours(1);
+
+        var first = await store.AddOrRefresh(MemorySamples.Fact("a", "alpha", tags: ["ops"], vector: [1f, 0.2f, 0f, 0f]), Token);
+        var near = await store.AddOrRefresh(MemorySamples.Fact("b", "alpha again", tags: ["ops"], vector: [1f, 0.25f, 0f, 0f]) with { RefreshedAt = later }, Token);
+        var otherTags = await store.AddOrRefresh(MemorySamples.Fact("c", "alpha", tags: ["dev"], vector: [1f, 0.2f, 0f, 0f]), Token);
+        var otherDimension = await store.AddOrRefresh(MemorySamples.Fact("d", "alpha", tags: ["ops"], vector: [1f, 0.2f]), Token);
+
+        Expect.True(!first.Value.Refreshed);
+        Expect.True(near.Value.Refreshed);
+        Expect.Equal("a", near.Value.Key);
+        Expect.True(!otherTags.Value.Refreshed);
+        Expect.True(!otherDimension.Value.Refreshed);
+        Expect.Equal(3, (await store.Facts(MemorySamples.Name(), Token)).Value.Count);
+        Expect.Equal(later, (await store.Facts(MemorySamples.Name(), Token)).Value.First(static f => f.Key == "a").RefreshedAt);
+    }
+
+    /// <summary>Two near-same writes at once add one fact.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Two_concurrent_near_same_writes_add_one_fact()
+    {
+        var store = Create();
+        _ = await store.Create(MemorySamples.Info(), Token);
+
+        var both = await Task.WhenAll(
+            store.AddOrRefresh(MemorySamples.Fact("a", "alpha", tags: ["ops"], vector: [1f, 0.2f, 0f, 0f]), Token).AsTask(),
+            store.AddOrRefresh(MemorySamples.Fact("b", "alpha too", tags: ["ops"], vector: [1f, 0.21f, 0f, 0f]), Token).AsTask());
+
+        Expect.True(both.All(static r => r.IsSuccess));
+        Expect.Equal(1, (await store.Facts(MemorySamples.Name(), Token)).Value.Count);
+    }
+
+    /// <summary>A fact written with no vector is found by Unembedded and takes a vector once, with its model.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Unembedded_finds_facts_without_a_vector_and_SetEmbedding_fills_them_once()
+    {
+        var store = Create();
+        _ = await store.Create(MemorySamples.Info(), Token);
+        _ = await store.Add(MemorySamples.Fact("none", "no vector") with { Embedding = ReadOnlyMemory<float>.Empty }, Token);
+        _ = await store.Add(MemorySamples.Fact("has", "vector"), Token);
+
+        var waiting = await store.Unembedded(10, Token);
+        var set = await store.SetEmbedding(MemorySamples.Name(), "none", _pair, "model@sha", Token);
+        var again = await store.SetEmbedding(MemorySamples.Name(), "none", _pair, "model@sha", Token);
+
+        Expect.Sequence(["none"], waiting.Value.Select(static f => f.Key));
+        Expect.True(set.Value);
+        Expect.True(!again.Value);
+        var read = (await store.Facts(MemorySamples.Name(), Token)).Value.First(static f => f.Key == "none");
+        Expect.Equal(2, read.Dimension);
+        Expect.Equal("model@sha", read.Model);
     }
 }

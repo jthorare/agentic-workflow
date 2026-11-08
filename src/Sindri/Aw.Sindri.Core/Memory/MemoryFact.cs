@@ -12,6 +12,7 @@ namespace Aw.Sindri.Core.Memory;
 /// <param name="CreatedAt">When it was first written.</param>
 /// <param name="RefreshedAt">When it was last written again (equal to CreatedAt until a near duplicate refreshes it).</param>
 /// <param name="Embedding">The text's vector, or empty when no model was available at write time.</param>
+/// <param name="Model">The model (name and digest) that made the vector, or null when there is none.</param>
 public sealed record MemoryFact(
     string Key,
     MemoryName Store,
@@ -21,8 +22,12 @@ public sealed record MemoryFact(
     DateTimeOffset? ExpiresAt,
     DateTimeOffset CreatedAt,
     DateTimeOffset RefreshedAt,
-    ReadOnlyMemory<float> Embedding)
+    ReadOnlyMemory<float> Embedding,
+    string? Model = null)
 {
+    /// <summary>Gets the dimension of the stored vector; 0 when the fact has none yet.</summary>
+    public int Dimension => Embedding.Length;
+
     /// <summary>The longest fact text: 2,000 characters.</summary>
     public const int MaxTextLength = 2000;
 

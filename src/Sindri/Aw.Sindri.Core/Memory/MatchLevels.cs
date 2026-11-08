@@ -8,7 +8,7 @@ public static class MatchLevels
     /// <summary>Gets the level a search uses when it names none.</summary>
     public static MatchLevel Default => MatchLevel.Balanced;
 
-    /// <summary>The lowest cosine similarity a fact may have to be recalled at a level.</summary>
+    /// <summary>The lowest cosine similarity (provisional: tuned on hand-made vectors, not yet on the pinned model's real output) a fact may have to be recalled at a level.</summary>
     /// <param name="level">The level.</param>
     /// <returns>The floor, from 0 to 1; a higher level has a higher floor.</returns>
     public static float Threshold(MatchLevel level) => level switch

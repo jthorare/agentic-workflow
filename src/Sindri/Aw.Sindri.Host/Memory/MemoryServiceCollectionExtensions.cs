@@ -12,7 +12,7 @@ internal static class MemoryServiceCollectionExtensions
     /// <param name="services">The service collection.</param>
     /// <returns>The same collection.</returns>
     internal static IServiceCollection AddMemoryEmbedder(this IServiceCollection services) => services
-        .AddSingleton<IMemoryEmbedder>(static sp => new EmbeddingsMemoryEmbedder(new OllamaEmbedder(ContextVectorsServiceCollectionExtensions.DefaultOptions), ct => EmbeddingsOn(sp, ct)));
+        .AddSingleton<IMemoryEmbedder>(static sp => new EmbeddingsMemoryEmbedder(new OllamaEmbedder(ContextVectorsServiceCollectionExtensions.DefaultOptions), ct => EmbeddingsOn(sp, ct), $"{ContextVectorsServiceCollectionExtensions.DefaultOptions.Model}@{ContextVectorsServiceCollectionExtensions.DefaultOptions.Digest}"));
 
     // why: the live profile may be scoped, so each look opens its own scope; no profile or no setting leaves the default (on)
     private static async ValueTask<bool> EmbeddingsOn(IServiceProvider services, CancellationToken cancellationToken)

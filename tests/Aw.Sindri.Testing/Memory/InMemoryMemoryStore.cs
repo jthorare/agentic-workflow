@@ -84,8 +84,62 @@ public sealed class InMemoryMemoryStore : IMemoryStore
                 return ValueTask.FromResult<Result<Unit>>(NotFound(fact.Store));
             }
 
+            if (_facts.Exists(f => string.Equals(f.Key, fact.Key, StringComparison.Ordinal)))
+            {
+                return ValueTask.FromResult<Result<Unit>>(SindriErrors.InvalidInput.With($"A fact with key {fact.Key} exists."));
+            }
+
             _facts.Add(fact);
             return ValueTask.FromResult<Result<Unit>>(Unit.Value);
+        }
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<FactWritten>> AddOrRefresh(MemoryFact fact, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(fact);
+        lock (_gate)
+        {
+            if (!_memories.ContainsKey(fact.Store.Value))
+            {
+                return ValueTask.FromResult<Result<FactWritten>>(NotFound(fact.Store));
+            }
+
+            var duplicate = fact.Embedding.IsEmpty ? null : MemoryDedupe.FindDuplicate(fact.Embedding, fact.Tags, [.. _facts.Where(f => f.Store == fact.Store && !f.IsExpired(fact.RefreshedAt))]);
+            if (duplicate is null)
+            {
+                _facts.Add(fact);
+                return ValueTask.FromResult<Result<FactWritten>>(new FactWritten(fact.Key, Refreshed: false));
+            }
+
+            var index = _facts.FindIndex(f => string.Equals(f.Key, duplicate.Key, StringComparison.Ordinal));
+            _facts[index] = _facts[index] with { RefreshedAt = fact.RefreshedAt, ExpiresAt = fact.ExpiresAt ?? _facts[index].ExpiresAt };
+            return ValueTask.FromResult<Result<FactWritten>>(new FactWritten(duplicate.Key, Refreshed: true));
+        }
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<IReadOnlyList<MemoryFact>>> Unembedded(int limit, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            return ValueTask.FromResult<Result<IReadOnlyList<MemoryFact>>>(_facts.Where(static f => f.Embedding.IsEmpty).Take(limit).ToList());
+        }
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<bool>> SetEmbedding(MemoryName memory, string key, ReadOnlyMemory<float> vector, string? model, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            var index = _facts.FindIndex(f => f.Store == memory && string.Equals(f.Key, key, StringComparison.Ordinal) && f.Embedding.IsEmpty);
+            if (index < 0)
+            {
+                return ValueTask.FromResult<Result<bool>>(false);
+            }
+
+            _facts[index] = _facts[index] with { Embedding = vector, Model = model };
+            return ValueTask.FromResult<Result<bool>>(true);
         }
     }
 

@@ -9,8 +9,9 @@ namespace Aw.Sindri.Host.Memory;
 /// The embedder's own errors (AW-EMBEDDINGS-003, 004, 005) are the reachability check, so no separate probe call is made.
 /// </summary>
 /// <param name="embedder">The embedder.</param>
+/// <param name="model">The model (name and digest) the vectors come from, kept on each fact; null when not known.</param>
 /// <param name="enabled">Whether the profile's <c xml:lang="en">index.embeddings.enabled</c> allows it (one switch turns the code index and memory off together).</param>
-internal sealed class EmbeddingsMemoryEmbedder(IEmbedder embedder, Func<CancellationToken, ValueTask<bool>> enabled) : IMemoryEmbedder
+internal sealed class EmbeddingsMemoryEmbedder(IEmbedder embedder, Func<CancellationToken, ValueTask<bool>> enabled, string? model = null) : IMemoryEmbedder
 {
     public async ValueTask<MemoryEmbedding> Embed(IReadOnlyList<string> texts, CancellationToken cancellationToken)
     {
@@ -27,7 +28,7 @@ internal sealed class EmbeddingsMemoryEmbedder(IEmbedder embedder, Func<Cancella
         }
 
         return embedded.Value.Count == texts.Count
-            ? MemoryEmbedding.Of(embedded.Value)
+            ? MemoryEmbedding.Of(embedded.Value, model)
             : MemoryEmbedding.Unavailable("the embedder answered a different number of vectors than texts");
     }
 }

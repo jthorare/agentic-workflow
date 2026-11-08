@@ -13,6 +13,8 @@ CREATE TABLE memory_fact (
     memory_id TEXT NOT NULL REFERENCES memory (id),
     text TEXT NOT NULL,
     embedding BLOB,
+    model TEXT,
+    dimension INTEGER,
     tags TEXT NOT NULL,
     workflow_id TEXT,
     run_id TEXT,

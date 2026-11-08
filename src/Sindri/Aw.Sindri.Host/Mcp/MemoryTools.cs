@@ -110,7 +110,7 @@ internal static class MemoryTools
         }
 
         var answer = await services.GetRequiredService<IService<ListMemoriesRequest, ListMemoriesResponse>>().Handle(new ListMemoriesRequest(), ct).ConfigureAwait(false);
-        return McpResults.From(services, answer, static a => $"{a.Memories.Count.ToString(CultureInfo.InvariantCulture)} Sindri memory stores");
+        return McpResults.From(services, answer, static a => $"{a.Memories.Count.ToString(CultureInfo.InvariantCulture)} Sindri memory stores", FencePlan.MemoryStores);
     }
 
     /// <summary>Runs memory_create.</summary>
@@ -129,7 +129,7 @@ internal static class MemoryTools
         }
 
         var answer = await services.GetRequiredService<IService<CreateMemoryRequest, CreateMemoryResponse>>().Handle(new CreateMemoryRequest(required.Value, description.Value), ct).ConfigureAwait(false);
-        return McpResults.From(services, answer, static a => $"made Sindri memory store {a.Store.Name}");
+        return McpResults.From(services, answer, static a => $"made Sindri memory store {a.Store.Name}", FencePlan.MemoryStore);
     }
 
     /// <summary>Runs memory_search.</summary>
@@ -151,7 +151,7 @@ internal static class MemoryTools
 
         var request = new SearchMemoryRequest(name.Value, query.Value, level.Value, limit.Value is { } n ? (int)Math.Min(n, int.MaxValue) : null);
         var answer = await services.GetRequiredService<IService<SearchMemoryRequest, SearchMemoryResponse>>().Handle(request, ct).ConfigureAwait(false);
-        return McpResults.From(services, answer, static a => $"{a.Count.ToString(CultureInfo.InvariantCulture)} facts from Sindri memory, mode {a.Mode}");
+        return McpResults.From(services, answer, static a => $"{a.Count.ToString(CultureInfo.InvariantCulture)} facts from Sindri memory, mode {a.Mode}", FencePlan.MemoryFacts);
     }
 
     /// <summary>Runs memory_write.</summary>

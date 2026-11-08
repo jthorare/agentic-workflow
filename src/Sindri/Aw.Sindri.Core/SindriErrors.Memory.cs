@@ -19,6 +19,9 @@ public static partial class SindriErrors
     /// <summary>SND-MEM-005: the match level is not loose, balanced or strict.</summary>
     public static readonly ErrorDefinition MemoryMatchLevelInvalid = new("SND-MEM-005", ErrorKind.Invalid, "A match level is loose, balanced or strict");
 
+    /// <summary>SND-MEM-007: the fact's expiry is not in the future.</summary>
+    public static readonly ErrorDefinition MemoryExpiryPast = new("SND-MEM-007", ErrorKind.Invalid, "A fact's expiry has to be in the future");
+
     /// <summary>SND-MEM-006: the memory name is not lowercase letters, digits and '-'.</summary>
     public static readonly ErrorDefinition MemoryNameInvalid = new("SND-MEM-006", ErrorKind.Invalid, "A memory name is lowercase letters, digits and '-', 1 to 48 characters");
 }

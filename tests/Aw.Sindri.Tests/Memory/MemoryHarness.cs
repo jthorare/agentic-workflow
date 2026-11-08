@@ -32,7 +32,7 @@ internal sealed class MemoryHarness
 
     public ICallerContextAccessor Callers { get; }
 
-    public CreateMemoryService Create() => new(Store, Clock, Callers);
+    public CreateMemoryService Create() => new(Store, Scrubber, Clock, Callers);
 
     public ListMemoriesService List() => new(Store);
 
@@ -42,7 +42,7 @@ internal sealed class MemoryHarness
 
     public ForgetMemoryFactService Forget() => new(Store, Clock);
 
-    public ExpireMemoryService Expire() => new(Store, Clock);
+    public ExpireMemoryService Expire() => new(Store, Embedder, Clock);
 
     public async Task Memory(string name = "team-notes") => _ = await Create().Handle(new CreateMemoryRequest(name, Description: null), TestContext.Current.CancellationToken);
 

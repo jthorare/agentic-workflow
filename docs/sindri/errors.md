@@ -86,6 +86,7 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-MEM-004` | The embedding model did not answer, so recall used keywords (informational). | start Ollama and pull the pinned model (`sindri doctor`) |
 | `SND-MEM-005` | The match level is not loose, balanced or strict. | use one of the three |
 | `SND-MEM-006` | The memory name is not lowercase letters, digits and `-`. | use 1 to 48 of them, starting with a letter or digit |
+| `SND-MEM-007` | A fact's expiry is not in the future. | give a later `--expires-at`, or none |
 | `SND-TRACKER-001` | The tracker's source is missing or unreadable (for plan-file: the repo path or plan dir). | Restore that directory, or fix `path` in repos/&lt;name&gt;.yaml and run `sindri profile approve`. |
 | `SND-TRACKER-002` | The tracker's source holds no items to read (for plan-file: no plan file matches tracker.include). | Fix tracker.include in profile.yaml (or restore the plan files), then run `sindri profile approve`. |
 | `SND-TRACKER-003` | A plan file is too big to read (over 2 MiB). | Split the plan file into smaller plans. |

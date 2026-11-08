@@ -19,7 +19,8 @@ internal sealed class MemoryFactMapper : IRowMapper<MemoryFact>
         reader.IsDBNull(9) ? null : SqliteRead.GetTimestamp(reader, 9),
         SqliteRead.GetTimestamp(reader, 10),
         SqliteRead.GetTimestamp(reader, 11),
-        reader.IsDBNull(3) ? ReadOnlyMemory<float>.Empty : Decode(SqliteRead.GetBlob(reader, 3)));
+        reader.IsDBNull(3) ? ReadOnlyMemory<float>.Empty : Decode(SqliteRead.GetBlob(reader, 3), reader.IsDBNull(13) ? 0 : reader.GetInt32(13)),
+        Text(reader, 12));
 
     /// <summary>The stored form of a vector: float32, little-endian, no header (the format of Aw.Embeddings.VectorCodec, which Sindri reaches from the Host only).</summary>
     internal static byte[] Encode(ReadOnlySpan<float> vector)
@@ -33,8 +34,14 @@ internal sealed class MemoryFactMapper : IRowMapper<MemoryFact>
         return blob;
     }
 
-    private static float[] Decode(byte[] blob)
+    private static float[] Decode(byte[] blob, int dimension)
     {
+        // a blob that is not exactly dimension * 4 bytes is a data bug: refuse it as VectorCodec does, so a row never reads back as a different vector
+        if (dimension < 1 || blob.Length != dimension * sizeof(float))
+        {
+            throw new InvalidDataException("A memory fact's vector blob does not match its dimension.");
+        }
+
         var vector = new float[blob.Length / sizeof(float)];
         for (var i = 0; i < vector.Length; i++)
         {

@@ -48,7 +48,8 @@ internal sealed class SearchMemoryService(IMemoryStore store, IMemoryEmbedder em
         var embedded = await _embedder.Embed([request.Query], cancellationToken).ConfigureAwait(false);
         if (embedded.Vectors is { Count: 1 } vectors)
         {
-            return Answer(MemoryRecall.Semantic(vectors[0], live, level.Value, limit), note: null);
+            var recall = MemoryRecall.Semantic(vectors[0], live, level.Value, limit);
+            return Answer(recall, recall.Skipped > 0 ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{recall.Skipped} facts were not compared: they have no vector yet or were embedded with another model") : null);
         }
 
         var reason = embedded.Reason is { Length: > 0 } why ? $"{SindriErrors.MemoryEmbedUnavailable.Title} ({why})" : SindriErrors.MemoryEmbedUnavailable.Title;
