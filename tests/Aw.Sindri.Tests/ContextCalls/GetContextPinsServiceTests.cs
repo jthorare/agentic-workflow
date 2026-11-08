@@ -397,6 +397,30 @@ public sealed class GetContextPinsServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_relink_that_failed_after_a_success_sets_relink_failed_and_no_record_count()
+    {
+        Relink(JobState.Succeeded, TimeSpan.FromHours(2), 2, version: 42, before: 10, after: 17);
+        Relink(JobState.Failed, TimeSpan.FromMinutes(90), 3, version: 42);
+
+        var row = await Billing(42, 42, [Move("billing", 1, 0)]);
+
+        Assert.True(row.Moved!.RelinkFailed);
+        Assert.Null(row.Moved.RecordsLinked);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_success_after_a_failed_relink_clears_it_and_the_count_is_the_sum_of_every_success()
+    {
+        Relink(JobState.Succeeded, TimeSpan.FromHours(2), 2, version: 42, before: 10, after: 17);   // +7
+        Relink(JobState.Failed, TimeSpan.FromMinutes(90), 3, version: 42);
+        Relink(JobState.Succeeded, TimeSpan.FromHours(1), 4, version: 42, before: 17, after: 18);   // +1
+
+        var row = await Billing(42, 42, [Move("billing", 1, 0)]);
+
+        Assert.Equal((false, 8), (row.Moved!.RelinkFailed, row.Moved.RecordsLinked));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_newer_refresh_whose_draft_was_held_does_not_hide_the_moves_of_the_one_that_published()
     {
         PutRefresh(version: 43, moves: null, TimeSpan.FromHours(1), 5);   // succeeded, held: the current map is still 42
