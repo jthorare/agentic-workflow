@@ -2,7 +2,6 @@ using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Jobs;
 using Aw.Sindri.Ui.ViewModels.Controls;
-using Aw.Sindri.Ui.ViewModels.Instance;
 
 namespace Aw.Sindri.Ui.ViewModels.Jobs;
 

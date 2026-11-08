@@ -9,14 +9,8 @@ internal enum PageId
     /// <summary>The projects Sindri's work belongs to (Projects page spec §7). A tab, second after Home; G P and 'projects' open it.</summary>
     Projects,
 
-    /// <summary>Open root instances grouped by recipe, and the instance frame (screens spec §4.2).</summary>
-    Workflows,
-
     /// <summary>Items (screens spec §3, chord G Q).</summary>
     Work,
-
-    /// <summary>Recipes (screens spec §4.3).</summary>
-    Recipes,
 
     /// <summary>The context lens stack (screens spec §4.4).</summary>
     Context,

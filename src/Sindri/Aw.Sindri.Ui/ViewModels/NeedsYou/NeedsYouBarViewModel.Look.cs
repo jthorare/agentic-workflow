@@ -9,21 +9,6 @@ internal sealed partial class NeedsYouBarViewModel
     /// <summary>The More menu's accessible name.</summary>
     public string MoreName => Labels.NeedsYouMoreName(Subject);
 
-    /// <summary>The menu item that drops the request.</summary>
-    public string DropWord { get; } = Labels.NeedsYouDrop;
-
-    /// <summary>The question before a drop is sent.</summary>
-    public string DropAsk { get; } = Labels.NeedsYouDropAsk;
-
-    /// <summary>The button that sends the drop.</summary>
-    public string DropConfirmWord { get; } = Labels.NeedsYouDropConfirm;
-
-    /// <summary>The words of the feature that is not built yet.</summary>
-    public string EditWord { get; } = Labels.NeedsYouEditLater;
-
-    /// <summary>The chip on it.</summary>
-    public string NotAvailableWord { get; } = Labels.NeedsYouNotAvailableYet;
-
     /// <summary>The reason box's accessible name.</summary>
     public string ReasonName { get; } = Labels.NeedsYouReasonName;
 
@@ -37,16 +22,13 @@ internal sealed partial class NeedsYouBarViewModel
     public string BarName => Labels.NeedsYouBarGroupName(Subject);
 
     /// <summary>True when the request has a bar of its own.</summary>
-    public bool HasBar => Kind != BarKind.None && (ShowsPrimary || ShowsSendBack || HasVerbs || IsApproved);
+    public bool HasBar => Kind != BarKind.None && (ShowsPrimary || ShowsSendBack || IsApproved);
 
     /// <summary>True in the resting modes (Approve and Send back show).</summary>
     public bool IsPending => Mode is NeedsYouBarMode.Pending or NeedsYouBarMode.Confirming;
 
     /// <summary>True while the reason box shows.</summary>
     public bool IsSendingBack => Mode == NeedsYouBarMode.SendingBack;
-
-    /// <summary>True while the drop question shows.</summary>
-    public bool IsConfirmingDrop => Mode == NeedsYouBarMode.ConfirmingDrop;
 
     /// <summary>True once the request was answered.</summary>
     public bool IsApproved => Mode == NeedsYouBarMode.Approved;
@@ -57,36 +39,18 @@ internal sealed partial class NeedsYouBarViewModel
     /// <summary>True while the primary asks first.</summary>
     public bool IsAsking => Mode == NeedsYouBarMode.Confirming;
 
-    /// <summary>The ask step's questions, each with its answer field; empty for every other request.</summary>
-    public IReadOnlyList<DeskQuestionViewModel> Questions { get; private set; } = [];
-
-    /// <summary>True while the card asks questions: the answers are what the step needs.</summary>
-    public bool HasQuestions => Kind == BarKind.Desk && Questions.Count > 0;
-
-#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
-    /// <summary>The heading over the questions.</summary>
-    public string QuestionsHeading => Labels.NeedsYouQuestionsHeading;
-#pragma warning restore CA1822, MA0041
-
-    /// <summary>True when every question has an answer.</summary>
-    public bool AllAnswered => Questions.All(q => q.IsAnswered);
-
-    /// <summary>The line that says every question needs an answer, while one is open; empty otherwise.</summary>
-    public string QuestionsHint => HasQuestions && !AllAnswered ? Labels.NeedsYouAnswerAll : string.Empty;
-
-    /// <summary>The primary button's words: the decision's own, "Send answers" for the ask step, else "Approve", or "Approve?" while it asks.</summary>
-    public string ApproveWord => HasAsk ? Labels.NeedsYouSendAnswers : Kind == BarKind.Decision ? AcceptControl?.Action.Label ?? Labels.NeedsYouApprove : IsAsking ? Labels.NeedsYouApproveAsk : Labels.NeedsYouApprove;
+    /// <summary>The primary button's words: the decision's own, else "Approve", or "Approve?" while it asks.</summary>
+    public string ApproveWord => Kind == BarKind.Decision ? AcceptControl?.Action.Label ?? Labels.NeedsYouApprove : IsAsking ? Labels.NeedsYouApproveAsk : Labels.NeedsYouApprove;
 
     /// <summary>The primary button's accessible name: the words and the request.</summary>
     public string ApproveName => Labels.NeedsYouBarName(ApproveWord, Subject);
 
-    /// <summary>True when the primary button shows: a desk request whose step the person completes here, a decision with a recommended option, or one of the three approvals.</summary>
+    /// <summary>True when the primary button shows: a decision with a recommended option, or an approval.</summary>
     public bool ShowsPrimary => Kind switch
     {
-        BarKind.Desk => DeskControl is not null,
         BarKind.Decision => AcceptControl is not null,
         BarKind.Settings => ConfirmKind != NeedsYouConfirmKind.None,
-        BarKind.None or BarKind.Run => false,
+        BarKind.None => false,
         _ => throw new InvalidOperationException("a kind the bar doesn't know"),
     };
 
@@ -95,29 +59,27 @@ internal sealed partial class NeedsYouBarViewModel
     {
         BarKind.Decision => AcceptControl is { IsEnabled: true },
         BarKind.Settings => _confirm?.CanApprove == true,
-        BarKind.None or BarKind.Desk or BarKind.Run => true,
+        BarKind.None => true,
         _ => throw new InvalidOperationException("a kind the bar doesn't know"),
     };
 
     /// <summary>True when the primary can be pressed now.</summary>
-    public bool PrimaryEnabled => ShowsPrimary && Enabled && !IsSending && (Kind != BarKind.Desk || _target is not null) && (!HasAsk || AskReady) && KindAllowsPrimary;
+    public bool PrimaryEnabled => ShowsPrimary && Enabled && !IsSending && KindAllowsPrimary;
 
     /// <summary>True when the send back button shows (disabled with its reason on a settings request).</summary>
     public bool ShowsSendBack => Kind switch
     {
-        BarKind.Desk => DeskControl is not null && !HasAsk,
         BarKind.Decision => RejectControl is not null,
         BarKind.Settings => true,
-        BarKind.None or BarKind.Run => false,
+        BarKind.None => false,
         _ => throw new InvalidOperationException("a kind the bar doesn't know"),
     };
 
     /// <summary>True when send back can be pressed.</summary>
     public bool SendBackEnabled => Kind switch
     {
-        BarKind.Desk => Enabled && _target is not null && !IsSending,
         BarKind.Decision => Enabled && RejectControl is { IsEnabled: true },
-        BarKind.None or BarKind.Settings or BarKind.Run => false,
+        BarKind.None or BarKind.Settings => false,
         _ => throw new InvalidOperationException("a kind the bar doesn't know"),
     };
 
@@ -130,36 +92,22 @@ internal sealed partial class NeedsYouBarViewModel
     /// <summary>Why send back is off; empty when it is on.</summary>
     public string SendBackTooltip => Kind == BarKind.Settings ? Labels.NeedsYouSendBackLocked : "";
 
-    /// <summary>True for the dashed chip of the feature that is not built yet (a desk request).</summary>
-    public bool ShowsEditChip => Kind == BarKind.Desk;
-
-    /// <summary>True when the card's More menu offers dropping the request (a desk request whose run is open).</summary>
-    public bool ShowsDrop => Kind == BarKind.Desk && _target is not null;
-
     /// <summary>True when the card keeps the row's own controls: no bar takes the request's primary.</summary>
-    public bool ShowsRowControls => Kind == BarKind.None || Kind == BarKind.Run || (Kind == BarKind.Settings && ConfirmKind == NeedsYouConfirmKind.None);
+    public bool ShowsRowControls => Kind == BarKind.None || (Kind == BarKind.Settings && ConfirmKind == NeedsYouConfirmKind.None);
 
     /// <summary>The line under the buttons.</summary>
     public string Hint => Mode switch
     {
         NeedsYouBarMode.Approved => ApprovedHint,
         NeedsYouBarMode.Confirming => Labels.NeedsYouConfirmHint,
-        NeedsYouBarMode.Pending or NeedsYouBarMode.SendingBack or NeedsYouBarMode.ConfirmingDrop => RestingHint,
+        NeedsYouBarMode.Pending or NeedsYouBarMode.SendingBack => RestingHint,
         _ => throw new InvalidOperationException("a mode the bar doesn't know"),
     };
 
-    private string ApprovedHint => _done switch
-    {
-        NeedsYouBarOutcome.Revise or NeedsYouBarOutcome.Rework => Labels.NeedsYouSentBackHint,
-        NeedsYouBarOutcome.Drop => Labels.NeedsYouDroppedHint,
-        NeedsYouBarOutcome.None or NeedsYouBarOutcome.Approve or NeedsYouBarOutcome.Answer or NeedsYouBarOutcome.Answered or NeedsYouBarOutcome.DoneAsking => Labels.NeedsYouApprovedHint,
-        _ => throw new InvalidOperationException("an outcome the bar doesn't know"),
-    };
+    private static string ApprovedHint => Labels.NeedsYouApprovedHint;
 
     private string RestingHint =>
-        Kind == BarKind.Desk && _targetKnown && _target is null ? Labels.NeedsYouNotOpen
-        : Kind == BarKind.Settings ? Labels.NeedsYouKeepSettings
-        : SuggestedHint;
+        Kind == BarKind.Settings ? Labels.NeedsYouKeepSettings : "";
 
     /// <summary>True when there is a line to show.</summary>
     public bool HasHint => Hint.Length > 0;
@@ -183,20 +131,10 @@ internal sealed partial class NeedsYouBarViewModel
     public string SendWord => SendBackWord;
 
     /// <summary>The done card's title.</summary>
-    public string DoneTitle => _row is null ? "" : _done switch
-    {
-        NeedsYouBarOutcome.Revise or NeedsYouBarOutcome.Rework => Labels.NeedsYouSentBackTitle(_row.Title),
-        NeedsYouBarOutcome.Drop => Labels.NeedsYouDroppedTitle(_row.Title),
-        NeedsYouBarOutcome.None or NeedsYouBarOutcome.Approve or NeedsYouBarOutcome.Answer or NeedsYouBarOutcome.Answered or NeedsYouBarOutcome.DoneAsking => Labels.NeedsYouApprovedTitle(_row.Title),
-        _ => throw new InvalidOperationException("an outcome the bar doesn't know"),
-    };
+    public string DoneTitle => _row is null ? "" : Labels.NeedsYouApprovedTitle(_row.Title);
 
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     /// <summary>The done card's sentence.</summary>
-    public string DoneBody => _done switch
-    {
-        NeedsYouBarOutcome.Revise or NeedsYouBarOutcome.Rework => Labels.NeedsYouSentBackBody,
-        NeedsYouBarOutcome.Drop => Labels.NeedsYouDroppedBody,
-        NeedsYouBarOutcome.None or NeedsYouBarOutcome.Approve or NeedsYouBarOutcome.Answer or NeedsYouBarOutcome.Answered or NeedsYouBarOutcome.DoneAsking => Labels.NeedsYouApprovedBody,
-        _ => throw new InvalidOperationException("an outcome the bar doesn't know"),
-    };
+    public string DoneBody => Labels.NeedsYouApprovedBody;
+#pragma warning restore CA1822, MA0041
 }

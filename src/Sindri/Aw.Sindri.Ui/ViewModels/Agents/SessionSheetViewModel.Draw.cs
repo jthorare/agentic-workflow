@@ -1,6 +1,5 @@
 using Aw.Sindri.Ui.Api.Sessions;
 using Aw.Sindri.Ui.ViewModels.Controls;
-using Aw.Sindri.Ui.ViewModels.Instance;
 
 namespace Aw.Sindri.Ui.ViewModels.Agents;
 

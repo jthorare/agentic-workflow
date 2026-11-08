@@ -1,6 +1,5 @@
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api.Linear;
-using Aw.Sindri.Ui.ViewModels.Instance;
 
 namespace Aw.Sindri.Ui.ViewModels.Linear;
 

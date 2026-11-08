@@ -1,5 +1,4 @@
 using Aw.Sindri.Ui.Api;
-using Aw.Sindri.Ui.ViewModels.Workflows;
 
 namespace Aw.Sindri.Ui.ViewModels.NeedsYou;
 
@@ -13,15 +12,14 @@ internal static class NeedsYouMapper
     /// <param name="catalog">GET /commands: where each action's readiness comes from.</param>
     /// <param name="decisions">The pending decisions, whose options become a decision row's Decide buttons; null keeps the one served action.</param>
     /// <param name="counts">Home's other totals.</param>
-    /// <param name="readAt">When the list was read: a row's served time left is counted from it. Default for unknown, which leaves the rows' timeouts out.</param>
     /// <returns>The feed, rows in the API's order.</returns>
-    internal static NeedsYouFeed Map(NeedsYouList list, CommandList catalog, DecisionList? decisions, HomeCounts counts, DateTimeOffset readAt = default)
+    internal static NeedsYouFeed Map(NeedsYouList list, CommandList catalog, DecisionList? decisions, HomeCounts counts)
     {
         ArgumentNullException.ThrowIfNull(list);
         ArgumentNullException.ThrowIfNull(catalog);
         var readiness = catalog.Rows.ToDictionary(r => r.Action, r => (r.Cli, Protected: string.Equals(r.Class, "protected", StringComparison.Ordinal)), StringComparer.Ordinal);
         var read = catalog.Rows.Count > 0;
-        return new NeedsYouFeed([.. list.Rows.Select(row => Entry(row, readiness, decisions, read, readAt))], list.Empty ?? string.Empty)
+        return new NeedsYouFeed([.. list.Rows.Where(row => !NeedsYouKinds.Retired.Contains(row.Kind, StringComparer.Ordinal)).Select(row => Entry(row, readiness, decisions, read))], list.Empty ?? string.Empty)
         {
             Stalled = list.AsOf.Stalled,
             Rebuilding = list.AsOf.Rebuilding,
@@ -29,10 +27,9 @@ internal static class NeedsYouMapper
         };
     }
 
-    private static NeedsYouEntry Entry(NeedsYouRowView row, Dictionary<string, (string Cli, bool Protected)> readiness, DecisionList? decisions, bool read, DateTimeOffset readAt)
+    private static NeedsYouEntry Entry(NeedsYouRowView row, Dictionary<string, (string Cli, bool Protected)> readiness, DecisionList? decisions, bool read)
     {
         var subject = row.Subject is { } s ? new NeedsYouSubject(s.Kind, s.Id) : null;
-        row = Unanswerable(row);
         var pending = PendingDecision(subject?.DecisionId, decisions);
         return new NeedsYouEntry(row.Id, UrgencyOf(row.Urgency))
         {
@@ -49,14 +46,9 @@ internal static class NeedsYouMapper
             Subject = subject,
             ItemId = row.Item,
             Cli = row.Cli,
-            Via = row.Via,
-            Child = ChildOf(row),
             RecordedOnly = row.RecordedOnly,
             Notice = Text(row.Notice),
-            Timeout = TimeoutOf(row, readAt),
-            Stop = row.Stop,
             Open = row.Open,
-            Sandbox = row.Sandbox,
             Question = Text(pending?.Question),
             FiledBy = Text(pending?.FiledBy),
         };
@@ -64,17 +56,6 @@ internal static class NeedsYouMapper
 
     // A served text that may be absent, as the empty string.
     private static string Text(string? served) => served ?? string.Empty;
-
-    // The served time left, counted from when the list was read; none without the read time.
-    private static RowTimeout? TimeoutOf(NeedsYouRowView row, DateTimeOffset readAt) =>
-        row.Timeout is { } timeout && readAt != default ? new RowTimeout(timeout.Kind, readAt.AddSeconds(timeout.InSeconds)) : null;
-
-    // The child's address a via child row names; a row that is not via child names none, whatever it carries.
-    private static string? ChildOf(NeedsYouRowView row) => InstanceRules.IsChildVia(row.Via) && row.Child is { Length: > 0 } child ? child : null;
-
-    // A child pointer has no answer control and no command to copy: its served action and cli are the engine's placeholder, so the row drops them.
-    private static NeedsYouRowView Unanswerable(NeedsYouRowView row) =>
-        InstanceRules.IsChildVia(row.Via) ? row with { PrimaryAction = null, Actions = [], Cli = string.Empty } : row;
 
     // The id shown at rest: the decision's own on a decision row, else the row's item.
     private static string ShownOf(NeedsYouRowView row, NeedsYouSubject? subject) => subject?.DecisionId ?? row.Item ?? string.Empty;
@@ -115,7 +96,6 @@ internal static class NeedsYouMapper
         NeedsYouKinds.Decision => new StateChip("DECISION", ChipTone.Attn),
         NeedsYouKinds.Failure => new StateChip("FAILED", ChipTone.Fail),
         NeedsYouKinds.Profile => new StateChip("PROFILE", ChipTone.Attn),
-        NeedsYouKinds.Park => new StateChip("PARKED", ChipTone.Attn),
         _ => new StateChip(kind.ToUpperInvariant(), ChipTone.Attn),
     };
 }

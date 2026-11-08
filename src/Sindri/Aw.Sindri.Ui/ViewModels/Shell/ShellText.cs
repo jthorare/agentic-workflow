@@ -54,14 +54,8 @@ internal sealed class ShellText
     /// <summary><see cref="Labels.HealthPanel"/>.</summary>
     public string HealthPanel { get; } = Labels.HealthPanel;
 
-    /// <summary><see cref="Labels.Workflows"/>.</summary>
-    public string Workflows { get; } = Labels.Workflows;
-
     /// <summary><see cref="Labels.Work"/>.</summary>
     public string Work { get; } = Labels.Work;
-
-    /// <summary><see cref="Labels.Recipes"/>.</summary>
-    public string Recipes { get; } = Labels.Recipes;
 
     /// <summary><see cref="Labels.Context"/>.</summary>
     public string Context { get; } = Labels.Context;
@@ -143,9 +137,6 @@ internal sealed class ShellText
 
     /// <summary><see cref="Labels.SearchKeyLetter"/>.</summary>
     public string SearchKeyLetter { get; } = Labels.SearchKeyLetter;
-
-    /// <summary><see cref="Labels.StartWorkflow"/>.</summary>
-    public string StartWorkflow { get; } = Labels.StartWorkflow;
 
     /// <summary><see cref="Labels.Stale"/>.</summary>
     public string Stale { get; } = Labels.Stale;

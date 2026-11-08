@@ -1,5 +1,4 @@
 using Aw.Sindri.Ui.Navigation;
-using Aw.Sindri.Ui.ViewModels.Approvals;
 using Aw.Sindri.Ui.ViewModels.Controls;
 using Aw.Sindri.Ui.ViewModels.NeedsYou;
 using Aw.Sindri.Ui.ViewModels.Setup;
@@ -19,10 +18,9 @@ internal sealed partial class ShellViewModel
     /// <summary>The setup checklist behind Settings' first section and Home's line.</summary>
     public SetupViewModel Setup { get; }
 
-    // The app does approve-all itself, and opens the profile's approval row when Needs you has it; every other action is a command to copy until its form exists.
+    // The app opens the profile's approval row when Needs you has it; every other action is a command to copy until its form exists.
     private bool OpensInApp(string action) => action switch
     {
-        ApproveAllViewModel.Action => true,
         "ApproveProfile" => _needsYou?.Rows.Any(r => string.Equals(r.Id, ProfileDriftRow, StringComparison.Ordinal)) == true,   // the unfiltered feed: Home's Decisions filter trims what NeedsYou lists
         _ => false,
     };
@@ -58,11 +56,7 @@ internal sealed partial class ShellViewModel
 
     private void OpenSetupAction(string action)
     {
-        if (string.Equals(action, ApproveAllViewModel.Action, StringComparison.Ordinal))
-        {
-            OpenApproveAll();
-        }
-        else if (string.Equals(action, "ApproveProfile", StringComparison.Ordinal))
+        if (string.Equals(action, "ApproveProfile", StringComparison.Ordinal))
         {
             Navigate(LinkOf(ProfileDriftRow));
         }

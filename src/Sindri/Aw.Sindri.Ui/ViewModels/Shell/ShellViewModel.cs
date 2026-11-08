@@ -2,15 +2,11 @@ using System.Diagnostics.CodeAnalysis;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Platform;
-using Aw.Sindri.Ui.ViewModels.Approvals;
-using Aw.Sindri.Ui.ViewModels.Instance;
 using Aw.Sindri.Ui.ViewModels.Item;
 using Aw.Sindri.Ui.ViewModels.NeedsYou;
 using Aw.Sindri.Ui.ViewModels.Palette;
 using Aw.Sindri.Ui.ViewModels.Queue;
-using Aw.Sindri.Ui.ViewModels.Recipes;
 using Aw.Sindri.Ui.ViewModels.Setup;
-using Aw.Sindri.Ui.ViewModels.Workflows;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
 
@@ -33,7 +29,7 @@ internal sealed partial class ShellViewModel : ObservableObject
 
     private static readonly string[] _pageProperties =
     [
-        nameof(CurrentPage), nameof(PageName), nameof(SelectedNav), nameof(IsHome), nameof(IsProjects), nameof(IsWorkflows), nameof(IsWork), nameof(IsRecipes), nameof(IsContext),
+        nameof(CurrentPage), nameof(PageName), nameof(SelectedNav), nameof(IsHome), nameof(IsProjects), nameof(IsWork), nameof(IsContext),
         nameof(IsAgents), nameof(IsSystem), nameof(IsReviews), nameof(IsJobs), nameof(IsSettings), nameof(IsNotRunningPanel), nameof(IsPageVisible), nameof(IsHomeShown), nameof(IsInboxShown), nameof(IsPagesShown),
     ];
 
@@ -61,7 +57,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         Health.Pill.PropertyChanged += OnPillChanged;
         CommandOutcome = new CommandOutcomeRegion(control => Health.Banner.HasRebuild && ReferenceEquals(Health.Banner.Rebuild, control));
         Create = new CreateItemViewModel(Health.Catalog, () => Health.ApiUrl(), api);
-        Palette = new CommandPaletteViewModel(Health.Catalog, GoTo, RememberRun, CommandOutcome, () => Create.Open(), OpenStart, OpenApproveAll);
+        Palette = new CommandPaletteViewModel(Health.Catalog, GoTo, RememberRun, CommandOutcome, () => Create.Open());
         Shortcuts = new ShortcutsViewModel(Health.Catalog);
         Queue = new QueueViewModel(api, Health.Catalog, clock);
         Queue.PageShown(RowScopeOf(CurrentPage));
@@ -70,25 +66,16 @@ internal sealed partial class ShellViewModel : ObservableObject
         _api = api;
         FollowViews();
         NeedsYou = new NeedsYouViewModel(preferences, motion ?? new StillMotion(), clock);
-        ApproveAll = new ApproveAllViewModel(Health.Catalog, () => Health.ApiUrl(), api, clock);
         Decision = new DecisionSheetViewModel(api, () => Health.ApiUrl(), clock, decisions, clipboard);
         InitNeedsYou(clipboard);
-        Inbox = InitSandbox(InitInbox(api, clipboard, (window ?? WindowPorts.None).Launcher, (window ?? WindowPorts.None).Files));
-        Strip = new WorkflowsStripViewModel(clipboard, clock);
-        InitStrip();
+        Inbox = InitInbox(api, clipboard, (window ?? WindowPorts.None).Launcher);
+        InitSandbox();
         window ??= WindowPorts.None;
         (Setup, LibraryRoots) = (new SetupViewModel(api, Health.Catalog, clock, OpensInApp, window.Folders, () => Health.LiveProfile), InitLibraryRoots(api, window));
         InitSetup();
-        Workflows = new WorkflowsViewModel(api, clipboard, clock);
-        InitWorkflows();
-        Start = InitStart(api, window);
-        Instance = new InstanceFrameViewModel(api, clipboard, clock, catalog: Health.Catalog, launcher: window.Launcher, files: window.Files);
-        InitInstance();
-        Recipe = new RecipeSheetViewModel(api, clipboard);
-        InitRecipe();
+        InitSheetNames();
         InitAgents(clipboard, window.Launcher);
         InitContext(api, clipboard, window.Launcher);
-        InitRunPage(api, clipboard);
         Queue.PropertyChanged += OnQueueChanged;
         Create.Created += (_, created) => Queue.Reveal(created.ItemId);
         InitAnnouncements();
@@ -111,14 +98,12 @@ internal sealed partial class ShellViewModel : ObservableObject
     /// <summary>The connection and the Health page's status card.</summary>
     public HealthViewModel Health { get; }
 
-    /// <summary>The top bar's segments, in order: Home, Projects, Workflows, Work, Recipes, Context, Agents, System (screens spec §3, Projects page spec §7).</summary>
+    /// <summary>The top bar's segments, in order: Home, Projects, Work, Context, Agents, System (screens spec §3, Projects page spec §7).</summary>
     public IReadOnlyList<NavEntry> Navigation { get; } =
     [
         new(PageId.Home, Labels.Home, "H", string.Empty),
         new(PageId.Projects, Labels.Projects, "P", string.Empty),
-        new(PageId.Workflows, Labels.Workflows, "W", string.Empty, Labels.WorkflowsTabShort),
         new(PageId.Work, Labels.Work, "Q", string.Empty),
-        new(PageId.Recipes, Labels.Recipes, "R", string.Empty),
         new(PageId.Context, Labels.Context, "C", string.Empty),
         new(PageId.Agents, Labels.Agents, "A", string.Empty),
         new(PageId.System, Labels.System, ".", string.Empty),
@@ -152,14 +137,8 @@ internal sealed partial class ShellViewModel : ObservableObject
     /// <summary>True on Home.</summary>
     public bool IsHome => CurrentPage == PageId.Home;
 
-    /// <summary>True on Workflows.</summary>
-    public bool IsWorkflows => CurrentPage == PageId.Workflows;
-
     /// <summary>True on Work.</summary>
     public bool IsWork => CurrentPage == PageId.Work;
-
-    /// <summary>True on Recipes.</summary>
-    public bool IsRecipes => CurrentPage == PageId.Recipes;
 
     /// <summary>True on Context.</summary>
     public bool IsContext => CurrentPage == PageId.Context;
@@ -258,11 +237,6 @@ internal sealed partial class ShellViewModel : ObservableObject
     {
         _ = LeaveNeedsYouInbox();   // any way to a page, Home included, leaves the inbox that shows over it
         SetHomeFilter(filter);
-        if (page != PageId.Workflows || page == CurrentPage)
-        {
-            CloseRunPage();   // any other page, and the Workflows tab again, leaves a run for the list
-        }
-
         if (page == CurrentPage)
         {
             return;
@@ -274,7 +248,6 @@ internal sealed partial class ShellViewModel : ObservableObject
         }
 
         CurrentPage = page;
-        Workflows.ClearNote();
         Queue.PageShown(RowScopeOf(page));
         Changed(_pageProperties);
         Remember(p => p with { LastPage = page.ToString() });

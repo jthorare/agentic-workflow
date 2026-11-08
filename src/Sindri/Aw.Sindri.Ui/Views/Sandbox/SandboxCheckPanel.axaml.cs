@@ -1,12 +1,11 @@
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Threading;
 using Aw.Sindri.Ui.ViewModels.Sandbox;
 
 namespace Aw.Sindri.Ui.Views.Sandbox;
 
-/// <summary>Check again with its outcome, blockers and resume list (sandbox spec 8): binds to <see cref="SandboxCheckViewModel"/> and holds only the focus moves the view model asks for.</summary>
+/// <summary>Check again with its outcome and blockers (sandbox spec 8): binds to <see cref="SandboxCheckViewModel"/>.</summary>
+#pragma warning disable MA0182 // why: SandboxHealthCard.axaml places it
 internal sealed partial class SandboxCheckPanel : UserControl
 {
     private SandboxCheckViewModel? _check;
@@ -19,20 +18,10 @@ internal sealed partial class SandboxCheckPanel : UserControl
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
-        _check?.FocusCheckRequested -= OnFocusCheck;
         _check = DataContext as SandboxCheckViewModel;
-        _check?.FocusCheckRequested += OnFocusCheck;
     }
 
-    // Not now: back to Check again, on the keyboard's ring.
-    private void OnFocusCheck(object? sender, EventArgs e) =>
-        Dispatcher.UIThread.Post(() => _ = SandboxCheckButton.Focus(NavigationMethod.Directional), DispatcherPriority.Loaded);
-
     private void OnCheck(object? sender, RoutedEventArgs e) => _ = _check?.Check(CancellationToken.None);
-
-    private void OnResume(object? sender, RoutedEventArgs e) => _ = _check?.Resume(CancellationToken.None);
-
-    private void OnNotNow(object? sender, RoutedEventArgs e) => _check?.NotNow();
 
     private void OnCopy(object? sender, RoutedEventArgs e)
     {
@@ -42,3 +31,4 @@ internal sealed partial class SandboxCheckPanel : UserControl
         }
     }
 }
+#pragma warning restore MA0182

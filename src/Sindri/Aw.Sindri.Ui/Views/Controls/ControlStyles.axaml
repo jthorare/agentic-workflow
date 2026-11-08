@@ -120,82 +120,40 @@
   <Style Selector="controls|StateChipView.ok > TextBlock">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
   </Style>
-  <!-- A run's status (F3 workflows spec §2): glyph and word in the kind's colour on its soft pair, the pill radius. Each pair is
-       held by the contrast tests; the glyph always sits beside the word. -->
-  <Style Selector="controls|StatusBadge">
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
-    <Setter Property="Padding" Value="6,1,8,1" />
-    <Setter Property="VerticalAlignment" Value="Center" />
-    <Setter Property="HorizontalAlignment" Value="Left" />
+  <!-- A quiet full-width group toggle (the Agents page's group heads): a hairline above, no radius. -->
+  <Style Selector="Border.group-row Button.group-toggle">
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="16,6" />
   </Style>
-  <Style Selector="controls|StatusBadge TextBlock">
-    <Setter Property="FontSize" Value="{DynamicResource Type.Caption.Size}" />
-    <Setter Property="LineHeight" Value="{DynamicResource Type.Caption.LineHeight}" />
-    <Setter Property="FontWeight" Value="Medium" />
-    <Setter Property="VerticalAlignment" Value="Center" />
+  <Style Selector="Button.group-toggle">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
+    <Setter Property="BorderThickness" Value="0,1,0,0" />
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="Padding" Value="16,8" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
   </Style>
-  <Style Selector="controls|StatusBadge.running">
-    <Setter Property="Background" Value="{DynamicResource Brush.PrimarySoft}" />
-  </Style>
-  <Style Selector="controls|StatusBadge.running TextBlock">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.PrimaryHover}" />
-  </Style>
-  <Style Selector="controls|StatusBadge.running icons|StateIcon">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.PrimaryHover}" />
-  </Style>
-  <Style Selector="controls|StatusBadge.attn">
-    <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
-  </Style>
-  <Style Selector="controls|StatusBadge.attn TextBlock">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" />
-  </Style>
-  <Style Selector="controls|StatusBadge.attn icons|StateIcon">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" />
-  </Style>
-  <Style Selector="controls|StatusBadge.violet">
-    <Setter Property="Background" Value="{DynamicResource Brush.VioletSoft}" />
-  </Style>
-  <Style Selector="controls|StatusBadge.violet TextBlock">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Violet}" />
-  </Style>
-  <Style Selector="controls|StatusBadge.violet icons|StateIcon">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Violet}" />
-  </Style>
-  <Style Selector="controls|StatusBadge.ok">
-    <Setter Property="Background" Value="{DynamicResource Brush.SuccessSoft}" />
-  </Style>
-  <Style Selector="controls|StatusBadge.ok TextBlock">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
-  </Style>
-  <Style Selector="controls|StatusBadge.ok icons|StateIcon">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
-  </Style>
-  <Style Selector="controls|StatusBadge.fail">
-    <Setter Property="Background" Value="{DynamicResource Brush.ErrorSoft}" />
-  </Style>
-  <Style Selector="controls|StatusBadge.fail TextBlock">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Error}" />
-  </Style>
-  <Style Selector="controls|StatusBadge.fail icons|StateIcon">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Error}" />
-  </Style>
-  <Style Selector="controls|StatusBadge.neutral">
-    <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
-  </Style>
-  <Style Selector="controls|StatusBadge.neutral TextBlock">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.InkMuted}" />
-  </Style>
-  <Style Selector="controls|StatusBadge.neutral icons|StateIcon">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.InkMuted}" />
-  </Style>
-  <Style Selector="controls|StatusBadge.faint">
+  <!-- A callout in a sheet: a soft box, tinted for attention, failure or the violet state. Tokens only. -->
+  <Style Selector="Border.callout">
+    <Setter Property="Margin" Value="16,16,16,0" />
+    <Setter Property="Padding" Value="12" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.MD}" />
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
+    <Setter Property="BorderThickness" Value="1" />
   </Style>
-  <Style Selector="controls|StatusBadge.faint TextBlock">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
+  <Style Selector="Border.callout.attn">
+    <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Attention}" />
   </Style>
-  <Style Selector="controls|StatusBadge.faint icons|StateIcon">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
+  <Style Selector="Border.callout.fail">
+    <Setter Property="Background" Value="{DynamicResource Brush.ErrorSoft}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Error}" />
+  </Style>
+  <Style Selector="Border.callout.violet">
+    <Setter Property="Background" Value="{DynamicResource Brush.VioletSoft}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Violet}" />
   </Style>
   <!-- The context map's own controls (F3 spec 1 §2). The stage shows the hand cursor, since a drag pans it; the edges layer is
        never a keyboard stop (the nodes are); the coverage strip is a quiet button that lifts to Surface2 under the pointer, its

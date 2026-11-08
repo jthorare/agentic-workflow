@@ -27,7 +27,7 @@ internal sealed partial class ShellViewModel
     public bool IsInboxShown => IsNeedsYouInbox && IsPageVisible;
 
     /// <summary>The pages' scrolling region shows: the pages are visible and the inbox, which scrolls itself, does not take their place.</summary>
-    public bool IsPagesShown => IsPageVisible && !IsNeedsYouInbox && !IsRunPageShown && !IsReviewPageShown;
+    public bool IsPagesShown => IsPageVisible && !IsNeedsYouInbox && !IsReviewPageShown;
 
     /// <summary>Opens the inbox, on a row when one is named and listed, else on the first row.</summary>
     /// <param name="rowId">The row to select; null for the first.</param>
@@ -39,7 +39,6 @@ internal sealed partial class ShellViewModel
         }
 
         Queue.ClearSelection();
-        Strip.Deselect();
         NeedsYou.PointerOver = false;   // the pointer that held Home's list is not over the inbox's: a hide gives no exit
         IsNeedsYouInbox = true;
         UpdateNeedsYou();   // without Home's filter
@@ -71,17 +70,11 @@ internal sealed partial class ShellViewModel
     }
 
     private NeedsYouDispatcher? _dispatcher;
-    private DeskReporter? _desk;
-    private IFilePicker _files = NullFilePicker.Instance;
 
-    private NeedsYouPageViewModel InitInbox(ISindriApi api, IClipboard clipboard, ILauncher launcher, IFilePicker files)
+    private NeedsYouPageViewModel InitInbox(ISindriApi api, IClipboard clipboard, ILauncher launcher)
     {
-        _files = files;
-        var commands = new InstanceCommander(api, Health.ApiUrl);
-        _desk = new DeskReporter(api, Health.ApiUrl, launcher);   // the one reporter: Home's Complete, the dispatcher and the inbox bar share its in-flight guard
-        _dispatcher = new NeedsYouDispatcher(api, Health.ApiUrl, commands, _desk);
-        var inbox = new NeedsYouPageViewModel(NeedsYou, _clock, clipboard, _desk, new NeedsYouConfirm(Health.Catalog, Health.ApiUrl, api, _clock),
-            new PausedAnswerViewModel(commands), new TakeoverViewModel(api, Health.ApiUrl, commands, _clock));
+        _dispatcher = new NeedsYouDispatcher(api, Health.ApiUrl);
+        var inbox = new NeedsYouPageViewModel(NeedsYou, _clock, clipboard, launcher, new NeedsYouConfirm(Health.ApiUrl, api));
         inbox.LeaveRequested += (_, _) => LeaveNeedsYouInbox();
         inbox.Bar.DecisionRequested += (_, e) => e.Settled = AnswerDecision(e.RowId, e.OptionId, e.Note);
         inbox.PrRequested += (_, e) =>
@@ -90,13 +83,6 @@ internal sealed partial class ShellViewModel
             {
                 _ = inbox.OpenPrLink(uri);
             }
-        };
-        inbox.Bar.SheetRequested += (_, e) => OpenNeedsYouRowSheet(e.RowId);
-        inbox.Bar.SessionRequested += (_, e) => Navigate(new DeepLink(DeepLinkKind.Session, e.SessionRef));
-        inbox.Bar.FactRequested += (_, e) =>
-        {
-            Instance.Intend(e.Address, FrameIntent.OpenInitial);
-            Navigate(new DeepLink(DeepLinkKind.Workflow, e.Address));
         };
         inbox.ItemRequested += (_, e) =>
         {

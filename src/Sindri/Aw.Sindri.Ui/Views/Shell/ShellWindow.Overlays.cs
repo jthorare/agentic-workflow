@@ -6,12 +6,10 @@ using Avalonia.VisualTree;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.ViewModels.Palette;
 using Aw.Sindri.Ui.ViewModels.Shell;
-using Aw.Sindri.Ui.Views.Approvals;
 using Aw.Sindri.Ui.Views.Item;
 using Aw.Sindri.Ui.Views.Layout;
 using Aw.Sindri.Ui.Views.Linear;
 using Aw.Sindri.Ui.Views.Palette;
-using Aw.Sindri.Ui.Views.Start;
 
 namespace Aw.Sindri.Ui.Views.Shell;
 
@@ -45,31 +43,22 @@ internal sealed partial class ShellWindow
         return OpenSettingsByKey(e, shell);
     }
 
-    private static bool FormOpen(ShellViewModel shell) => shell.Create.IsOpen || shell.NewIssue.IsOpen || shell.Start.IsOpen || shell.ApproveAll.IsOpen;
+    private static bool FormOpen(ShellViewModel shell) => shell.Create.IsOpen || shell.NewIssue.IsOpen;
 
-    // ⌘K opens the palette, ⌘N the Start form: one layer at a time, so the one open goes first (focus goes back to the original opener first, OnOverlayChanged).
+    // ⌘K opens the palette: one layer at a time, so the one open goes first (focus goes back to the original opener first, OnOverlayChanged).
     private static bool OpenLayerByChord(KeyEventArgs e, ShellViewModel shell)
     {
-        if (e.KeyModifiers != _command || e.Key is not (Key.K or Key.N))
+        if (e.KeyModifiers != _command || e.Key != Key.K)
         {
             return false;
         }
 
         shell.Shortcuts.Close();
-        if (e.Key == Key.N)
-        {
-            shell.Palette.Close();
-            shell.OpenStart();
-        }
-        else
-        {
-            shell.Palette.Open();
-        }
-
+        shell.Palette.Open();
         return true;
     }
 
-    // The Create and Start forms are modal (L10, §11.2; U5'): ⌘K, ⌘, and ? are swallowed. ? is a character in a field, so it types there.
+    // The Create and New issue forms are modal (L10, §11.2; U5'): ⌘K, ⌘, and ? are swallowed. ? is a character in a field, so it types there.
     private static bool SwallowedByForm(KeyEventArgs e) =>
         (e.Key is Key.K or Key.OemComma && e.KeyModifiers == _command) || (IsQuestionMark(e) && e.Source is not TextBox);
     private bool _openingSettings;
@@ -104,7 +93,7 @@ internal sealed partial class ShellWindow
     // A page's button is about to open an overlay: closing it returns focus there even when a click left focus on the page region.
     private void NoteInvoker(object? sender, OpenerNoteEventArgs e) => _invoker = e.Invoker;
 
-    private bool OverlayOpen => Shell is { } shell && (shell.Palette.IsOpen || shell.Shortcuts.IsOpen || shell.Create.IsOpen || shell.NewIssue.IsOpen || shell.Start.IsOpen || shell.ApproveAll.IsOpen);
+    private bool OverlayOpen => Shell is { } shell && (shell.Palette.IsOpen || shell.Shortcuts.IsOpen || shell.Create.IsOpen || shell.NewIssue.IsOpen);
 
     // `?` is Shift+/ on most layouts; the key symbol says so on the rest.
     private static bool IsQuestionMark(KeyEventArgs e) =>
@@ -142,20 +131,13 @@ internal sealed partial class ShellWindow
         _ = back?.Focus(Method());   // a pointer flow draws no ring; a keyboard one does
     }
 
-    // A create closed the dialog and asked the list to focus the new row, or an accepted start opened the new instance's frame: focus goes there,
+    // A create closed the dialog and asked the list to focus the new row: focus goes there,
     // not back to what opened the form.
     private bool ClosedForSomethingElse(object? sender, ShellViewModel shell)
     {
         if (sender == shell.NewIssue && shell.NewIssue.JustCreated)
         {
             _overlayOpener = null;
-            return true;
-        }
-
-        if (sender == shell.Start && shell.Start.OpenedFrame)
-        {
-            _overlayOpener = null;
-            Dispatcher.UIThread.Post(FocusOpenedSheet, DispatcherPriority.Loaded);
             return true;
         }
 
@@ -187,7 +169,7 @@ internal sealed partial class ShellWindow
             DispatcherPriority.Loaded);
 
     private static bool IsOpen(object? sender, ShellViewModel shell) =>
-        sender == shell.Palette ? shell.Palette.IsOpen : sender == shell.Create ? shell.Create.IsOpen : sender == shell.NewIssue ? shell.NewIssue.IsOpen : sender == shell.Start ? shell.Start.IsOpen : sender == shell.ApproveAll ? shell.ApproveAll.IsOpen : shell.Shortcuts.IsOpen;
+        sender == shell.Palette ? shell.Palette.IsOpen : sender == shell.Create ? shell.Create.IsOpen : sender == shell.NewIssue ? shell.NewIssue.IsOpen : shell.Shortcuts.IsOpen;
 
     // Where focus goes when what opened the overlay is gone: the Create form falls back to the Queue page's "Create item"
     // button, the others to the ⌘K field.
@@ -217,14 +199,6 @@ internal sealed partial class ShellWindow
         else if (sender == shell.Create || sender == shell.NewIssue)
         {
             FocusForm(sender, shell);
-        }
-        else if (sender == shell.Start)
-        {
-            Built<StartDialog>("StartDialog")?.FocusFirst();
-        }
-        else if (sender == shell.ApproveAll)
-        {
-            Built<ApproveAllDialog>("ApproveAllDialog")?.FocusFirst();
         }
         else
         {

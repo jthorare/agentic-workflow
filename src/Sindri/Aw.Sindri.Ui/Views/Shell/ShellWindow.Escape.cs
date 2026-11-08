@@ -33,12 +33,12 @@ internal sealed partial class ShellWindow
             return true;
         }
 
-        if (EscapeRunPage(shell))
+        if (EscapeReviewPage(shell))
         {
             return true;
         }
 
-        if (EscapeSheetOrInbox(shell) || EscapeRunDrawer(shell))
+        if (EscapeSheetOrInbox(shell))
         {
             return true;
         }
@@ -52,11 +52,8 @@ internal sealed partial class ShellWindow
         return true;
     }
 
-    // The Workflows run drawer closes before Esc leaves anything else.
-    private static bool EscapeRunDrawer(ShellViewModel shell) => shell.IsWorkflows && shell.Workflows.Press("Esc");
-
-    // Esc on the run page clears the selection, then leaves the run for the Workflows list.
-    private static bool EscapeRunPage(ShellViewModel shell)
+    // Esc leaves a review page for the Reviews list.
+    private static bool EscapeReviewPage(ShellViewModel shell)
     {
         if (shell.IsReviewPageShown && !shell.IsSheetOpen)
         {
@@ -64,16 +61,6 @@ internal sealed partial class ShellWindow
             return true;
         }
 
-        if (!shell.IsRunPageShown || shell.IsSheetOpen)
-        {
-            return false;
-        }
-
-        if (!shell.RunPage.ClearSelection())
-        {
-            shell.CloseRunPage();
-        }
-
-        return true;
+        return false;
     }
 }

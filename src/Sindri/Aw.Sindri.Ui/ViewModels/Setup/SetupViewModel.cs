@@ -18,7 +18,7 @@ internal sealed partial class SetupViewModel : ObservableObject
     private const string MapStep = "map";
     private const string McpStep = "mcp";
     private const string ProfileStep = "profile";
-    private const string RecipesStep = "recipes";
+    private const string RetiredRecipesStep = "recipes";
     private const string ProfileAction = "ApproveProfile";
     private const string MapRefresh = "RefreshContextMap";
     private const string RegisterAction = "RegisterMcp";
@@ -132,17 +132,6 @@ internal sealed partial class SetupViewModel : ObservableObject
         var step = _revealStep;
         _revealStep = null;
         RevealRequested?.Invoke(this, new SetupRevealEventArgs(step));
-    }
-
-    /// <summary>Has the next reveal bring one step into view and open it (the Recipes page's Approve new workflows lands on the workflows row).</summary>
-    /// <param name="id">The step's id.</param>
-    internal void RevealStepNext(string id)
-    {
-        _revealStep = id;
-        if (_rows.TryGetValue(id, out var row))
-        {
-            row.IsOpen = true;
-        }
     }
 
     /// <summary>The first step still to do (or being worked on), as Home's line names it; empty when setup is finished or before the first list.</summary>

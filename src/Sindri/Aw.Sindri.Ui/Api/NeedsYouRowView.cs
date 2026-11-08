@@ -1,10 +1,8 @@
-using Aw.Sindri.Ui.Api.Workflow;
-
 namespace Aw.Sindri.Ui.Api;
 
 /// <summary>One row of GET /sindri/needs-you (API P4): what waits on the human, in the API's order.</summary>
 /// <param name="Id">The row's id: "decision:DEC-…", "failure:service:name", "profile:drift".</param>
-/// <param name="Kind">The row's kind (decision, failure, profile, park).</param>
+/// <param name="Kind">The row's kind (decision, failure, profile).</param>
 /// <param name="Label">The served label ("decision · re-scope").</param>
 /// <param name="Subject">What it is about; null for a profile row before its owner decision.</param>
 /// <param name="Item">The item the row names, when it names one.</param>
@@ -20,13 +18,7 @@ namespace Aw.Sindri.Ui.Api;
 /// <param name="Actions">The catalog ids of every action.</param>
 /// <param name="Cli">The one command to copy.</param>
 /// <param name="Chip">The served chip (U3'-API-9); null until the API serves one.</param>
-/// <param name="Via">"child" on a row whose cli points at a child that decides the answer, else null (omitted).</param>
-/// <param name="Child">The deciding child instance's address (what `sindri workflow status` takes); set only on a via child row, else null (omitted).</param>
-/// <param name="Stop">On a desk row, which desk state of its recipe it waits in; null (omitted) otherwise or when the recipe could not be read.</param>
-/// <param name="Timeout">On a desk or park row, the timeout the instance status serves, measured at the response; null (omitted) when there is none.</param>
 /// <param name="Open">The one place the owner acts on the row (q65); the API always serves it, null only for a body from before it.</param>
-/// <param name="OwnerWaiting">On a `skillWaiting` row, what the skill block waits on (skill flows spec §5.4); null (omitted) otherwise.</param>
-/// <param name="Sandbox">On a park row whose Step cannot start because of the sandbox, the blocker in the owner's words (state gray or wait when the card is never red); null (omitted) otherwise.</param>
 internal sealed record NeedsYouRowView(
     string Id,
     string Kind,
@@ -45,10 +37,4 @@ internal sealed record NeedsYouRowView(
     IReadOnlyList<string> Actions,
     string Cli,
     StateChip? Chip = null,
-    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? Via = null,
-    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? Child = null,
-    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] NeedsYouStopView? Stop = null,
-    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] StatusTimeout? Timeout = null,
-    NeedsYouOpenView? Open = null,
-    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] Sandbox.SandboxBlockerLineView? Sandbox = null,
-    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] OwnerWaitingView? OwnerWaiting = null);
+    NeedsYouOpenView? Open = null);

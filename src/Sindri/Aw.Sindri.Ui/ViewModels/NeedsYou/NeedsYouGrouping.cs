@@ -14,16 +14,6 @@ internal static class NeedsYouGrouping
             return NeedsYouGroupKind.Decisions;
         }
 
-        if (HasPrefix(entry, "desk:"))
-        {
-            return NeedsYouGroupKind.Approvals;
-        }
-
-        if (HasPrefix(entry, "park:") || HasPrefix(entry, "takeover:"))
-        {
-            return NeedsYouGroupKind.Runs;
-        }
-
         if (HasPrefix(entry, "profile:") || HasPrefix(entry, "setup:"))
         {
             return NeedsYouGroupKind.Settings;
@@ -53,8 +43,6 @@ internal static class NeedsYouGrouping
 
     private static string HeadingOf(NeedsYouEntry entry) => KindOf(entry) switch
     {
-        NeedsYouGroupKind.Approvals => Labels.NeedsYouGroupApprovals,
-        NeedsYouGroupKind.Runs => Labels.NeedsYouGroupRuns,
         NeedsYouGroupKind.Decisions => Labels.NeedsYouGroupDecisions,
         NeedsYouGroupKind.Settings => Labels.NeedsYouGroupSettings,
         NeedsYouGroupKind.Failures => Labels.NeedsYouGroupFailures,

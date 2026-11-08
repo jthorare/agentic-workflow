@@ -20,7 +20,7 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
     // §8's G-chords (and ⌘, for Settings), by page.
     private static readonly (PageId Page, string Key)[] _pages =
     [
-        (PageId.Home, "G H"), (PageId.Projects, "G P"), (PageId.Workflows, "G W"), (PageId.Work, "G Q"), (PageId.Recipes, "G R"), (PageId.Context, "G C"), (PageId.Agents, "G A"),
+        (PageId.Home, "G H"), (PageId.Projects, "G P"), (PageId.Work, "G Q"), (PageId.Context, "G C"), (PageId.Agents, "G A"),
         (PageId.System, "G ."), (PageId.Reviews, "G V"), (PageId.Jobs, "G J"), (PageId.Settings, "⌘,"),
     ];
 
@@ -35,22 +35,14 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
     /// <param name="remember">Records an entry run (the paletteHistory preference).</param>
     /// <param name="outcomes">The shell's region for a run whose palette closed before its outcome; null hands such a run back to its control.</param>
     /// <param name="createItem">Opens the Create item form (the CreateItem entry runs it); null leaves that entry unrunnable.</param>
-    /// <param name="startWorkflow">Opens the Start form (the StartInstance entry runs it); null leaves that entry unrunnable.</param>
-    /// <param name="approveAll">Opens the approve-all dialog (the ApproveAllRecipes entry runs it); null leaves that entry unrunnable.</param>
-    internal CommandPaletteViewModel(CatalogViewModel catalog, Action<PageId> goTo, Action<string> remember, CommandOutcomeRegion? outcomes = null, Action? createItem = null, Action? startWorkflow = null, Action? approveAll = null)
+    internal CommandPaletteViewModel(CatalogViewModel catalog, Action<PageId> goTo, Action<string> remember, CommandOutcomeRegion? outcomes = null, Action? createItem = null)
     {
-        (_catalog, _goTo, _remember, Outcomes, CreateItem, StartWorkflow, ApproveAll) = (catalog, goTo, remember, outcomes, createItem, startWorkflow, approveAll);
+        (_catalog, _goTo, _remember, Outcomes, CreateItem) = (catalog, goTo, remember, outcomes, createItem);
         _catalog.PropertyChanged += OnCatalogChanged;
     }
 
     /// <summary>Opens the Create item form, or null.</summary>
     internal Action? CreateItem { get; }
-
-    /// <summary>Opens the Start form, or null.</summary>
-    internal Action? StartWorkflow { get; }
-
-    /// <summary>Opens the approve-all dialog, or null.</summary>
-    internal Action? ApproveAll { get; }
 
     /// <summary>The shell's region for a run whose palette closed before its outcome, or null.</summary>
     internal CommandOutcomeRegion? Outcomes { get; }
@@ -174,9 +166,9 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
                 Close();
                 _goTo(PageId.System);
                 break;
-            case { Control.Action: "CreateItem" or "StartInstance" or "ApproveAllRecipes" }:
+            case { Control.Action: "CreateItem" }:
                 // The form's or dialog's own control sends it; it opens first, so the window hands the palette's opener on to it.
-                OpenerOf(entry.Control.Action)?.Invoke();
+                CreateItem?.Invoke();
                 Close();
                 break;
             case { Control.IsCopyOnly: true }:
@@ -188,13 +180,6 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
                 break;
         }
     }
-
-    private Action? OpenerOf(string action) => action switch
-    {
-        "CreateItem" => CreateItem,
-        "StartInstance" => StartWorkflow,
-        _ => ApproveAll,
-    };
 
     private List<PaletteSection> Build()
     {
@@ -222,10 +207,9 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
         || string.Equals(control.Action, "StartInstance", StringComparison.Ordinal)
         || string.Equals(control.Action, "ApproveAllRecipes", StringComparison.Ordinal);
 
-    // Create item and Start workflow open their forms (when the shell has them).
+    // Create item opens its form (when the shell has one).
     private bool OpensForm(ControlViewModel control) =>
-        (control.Action == "CreateItem" && CreateItem is not null) || (control.Action == "StartInstance" && StartWorkflow is not null)
-            || (control.Action == "ApproveAllRecipes" && ApproveAll is not null);
+        control.Action == "CreateItem" && CreateItem is not null;
 
     // What a sendable row that Enter skips says instead of "ready": where it lives, or that the app has no sender for it.
     private static string NotRun(ControlViewModel control) =>

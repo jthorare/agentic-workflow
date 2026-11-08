@@ -94,12 +94,6 @@ internal sealed partial class SetupStepViewModel : ObservableObject
         }
     }
 
-    /// <summary>The plan, hold and typed alternative of the workflows step (the approve-all dialog's own view model); null for every other step.</summary>
-    public Approvals.ApproveAllViewModel? Workflows { get; set; }
-
-    /// <summary>The workflows under the workflows step; empty for every other step.</summary>
-    public SetupRecipeListViewModel Recipes { get; private set; } = SetupRecipeListViewModel.Empty;
-
     /// <summary>One line per coding agent for the agents step; empty for every other step.</summary>
     public IReadOnlyList<SetupAgentViewModel> Agents { get; private set; } = [];
 
@@ -194,10 +188,6 @@ internal sealed partial class SetupStepViewModel : ObservableObject
         return changed;
     }
 
-    /// <summary>Takes the workflows read with the list; read before <see cref="Update"/> so the row words itself with them.</summary>
-    /// <param name="recipes">The workflows.</param>
-    internal void ShowRecipes(SetupRecipeListViewModel recipes) => Recipes = recipes;
-
     /// <summary>Shows the step as working with a note, until the next read says otherwise (a retry was started, or one was already running).</summary>
     /// <param name="note">The note.</param>
     internal void ShowWorking(string note)
@@ -250,7 +240,7 @@ internal sealed partial class SetupStepViewModel : ObservableObject
         DeriveProgress();
     }
 
-    private string SubFor(string state) => Recipes.HasOutdated && NeedsYou ? Labels.SetupOutdatedSub(Recipes.OutdatedCount) : Labels.SetupSubFor(Step.Id, state, Waiting, Step.Why, Step.Detail);
+    private string SubFor(string state) => Labels.SetupSubFor(Step.Id, state, Waiting, Step.Why, Step.Detail);
     // A todo step with no action waits on another step.
     private bool Waiting => string.Equals(Step.State, "todo", StringComparison.Ordinal) && string.IsNullOrEmpty(Step.Action);
 

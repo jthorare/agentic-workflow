@@ -12,9 +12,6 @@ internal enum NeedsYouBarMode
     /// <summary>The reason box shows and Send is disabled until there is text (#sendback).</summary>
     SendingBack,
 
-    /// <summary>"Drop this item" was chosen in the card's More menu and waits for its confirm.</summary>
-    ConfirmingDrop,
-
     /// <summary>The request was approved: the card is replaced by the done card (#approved).</summary>
     Approved,
 }

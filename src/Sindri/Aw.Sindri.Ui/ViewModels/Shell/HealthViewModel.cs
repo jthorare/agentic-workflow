@@ -34,12 +34,6 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
     /// <summary>The shortest time between two re-reads of a view after events (§9.2: one refresh per view per 250 ms).</summary>
     internal static readonly TimeSpan RefreshEvery = TimeSpan.FromMilliseconds(250);
 
-    /// <summary>How many more times a view that lags an instance change's state is read (after the first read), each after twice the wait before: <see cref="InstanceBackoff"/>, then double, then double.</summary>
-    internal const int InstanceRetries = 3;
-
-    /// <summary>The wait before the first retry of a lagging view.</summary>
-    internal static readonly TimeSpan InstanceBackoff = TimeSpan.FromMilliseconds(200);
-
     // How often "updated Ns ago" is re-worded.
     private static readonly TimeSpan _tick = TimeSpan.FromSeconds(1);
 
@@ -77,8 +71,8 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
     /// <summary>The Code index card (code-index spec §7.3, CI-10b); the shell has it followed with the other views.</summary>
     public CodeIndexCardViewModel CodeIndex => field ??= WatchCodeIndex(new CodeIndexCardViewModel(api, clock));
 
-    /// <summary>The Sandbox row and Check again (sandbox spec §8); the shell has it followed with the other views, and Settings and the park card share it.</summary>
-    public Sandbox.SandboxCardViewModel Sandbox => field ??= new Sandbox.SandboxCardViewModel(api, clock, ApiUrl, new NeedsYou.InstanceCommander(api, ApiUrl).Send, clipboard);
+    /// <summary>The Sandbox row and Check again (sandbox spec §8); the shell has it followed with the other views, and Settings shares it.</summary>
+    public Sandbox.SandboxCardViewModel Sandbox => field ??= new Sandbox.SandboxCardViewModel(api, clock, ApiUrl, clipboard);
 
     /// <summary>The Context index card (#1597): one line per context source.</summary>
     public ContextIndexCardViewModel ContextIndex => field ??= WatchContextIndex(new ContextIndexCardViewModel(api, clock));

@@ -324,9 +324,6 @@
   <Style Selector="Border.sheet Button.back">
     <Setter Property="IsVisible" Value="False" />
   </Style>
-  <Style Selector="Border.sheet Button.back.trail">
-    <Setter Property="IsVisible" Value="True" />
-  </Style>
   <Style Selector="Border.sheet.covers Button.back">
     <Setter Property="IsVisible" Value="True" />
   </Style>

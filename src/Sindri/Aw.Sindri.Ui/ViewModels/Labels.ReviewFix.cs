@@ -34,10 +34,9 @@ internal static partial class Labels
     internal const string ReviewFixRetryNote = "Retry reuses the item and the same marker, so the thread can't post twice.";
 
     /// <summary>The Goes to line of "What Send does".</summary>
-    /// <param name="number">The PR number.</param>
     /// <param name="branch">The head branch.</param>
     /// <returns>The words.</returns>
-    internal static string ReviewFixGoesTo(int number, string branch) => string.Create(CultureInfo.InvariantCulture, $"The babysitter watching #{number}, else a live session on {branch}, else the item waits in Work");
+    internal static string ReviewFixGoesTo(string branch) => $"A live session on {branch}, else the item waits in Work";
 
     /// <summary>The check's From box: its state word and title, and its second line.</summary>
     /// <param name="status">The state's word.</param>
@@ -92,11 +91,6 @@ internal static partial class Labels
     /// <param name="author">The author.</param>
     /// <returns>The words.</returns>
     internal static string ReviewFixItemOnly(string author) => $"Item only: Sindri won't post on {author}'s PR";
-
-    /// <summary>The outcome when the babysitter took the thread.</summary>
-    /// <param name="number">The PR number.</param>
-    /// <returns>The words.</returns>
-    internal static string ReviewFixBabysitter(int number) => string.Create(CultureInfo.InvariantCulture, $"Fix task sent to the babysitter on #{number}. It takes the thread as work and closes the item when it's fixed.");
 
     /// <summary>The outcome when a live session took it.</summary>
     /// <param name="branch">The head branch.</param>

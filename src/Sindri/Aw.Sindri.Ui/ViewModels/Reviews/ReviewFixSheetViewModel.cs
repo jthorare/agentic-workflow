@@ -6,7 +6,7 @@ namespace Aw.Sindri.Ui.ViewModels.Reviews;
 
 /// <summary>
 /// The fix-task sheet (review page spec §8.2, §6.3, §6.4, §16): a text box pre-filled for a check or a requirement, exactly what Send will do, the Sending pattern,
-/// the outcomes (babysitter, session, waiting, item only), the half-done send with Retry, and where focus goes after.
+/// the outcomes (session, waiting, item only), the half-done send with Retry, and where focus goes after.
 /// </summary>
 internal sealed partial class ReviewFixSheetViewModel : ObservableObject
 {
@@ -80,7 +80,7 @@ internal sealed partial class ReviewFixSheetViewModel : ObservableObject
     /// <summary>The PR thread line of "What Send does".</summary>
     public string ThreadText { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>"The babysitter watching #2071, else a live session on feat/retry-budget, else the item waits in Work".</summary>
+    /// <summary>"A live session on feat/retry-budget, else the item waits in Work".</summary>
     public string GoesToText { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>True when Send can be pressed: some text, at most 2,000 characters, nothing sent or sending.</summary>
@@ -148,7 +148,7 @@ internal sealed partial class ReviewFixSheetViewModel : ObservableObject
             _ => throw new ArgumentOutOfRangeException(nameof(request), source.Kind, message: null),
         };
         ThreadText = ThreadOf(source, target);
-        GoesToText = Labels.ReviewFixGoesTo(target.Number, target.Branch);
+        GoesToText = Labels.ReviewFixGoesTo(target.Branch);
         (Outcome, OutcomeText, ItemId, ThreadResult, Code, CanRetry, IsSending, SendText, IsOpen) = (ReviewFixOutcome.None, string.Empty, string.Empty, string.Empty, string.Empty, false, false, Labels.ReviewFixSend, true);
         OnChanged(nameof(HasOutcome));
         Text = source.Kind switch

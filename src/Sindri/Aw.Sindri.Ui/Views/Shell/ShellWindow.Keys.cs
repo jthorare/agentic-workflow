@@ -47,7 +47,7 @@ internal sealed partial class ShellWindow
 
     private static bool KeysBlocked(ViewModels.Shell.ShellViewModel shell, KeyEventArgs e) =>
         shell is not { IsChromeVisible: true, IsNavigationEnabled: true } || e.Source is TextBox
-        || shell.Palette.IsOpen || shell.Shortcuts.IsOpen || shell.Create.IsOpen || shell.NewIssue.IsOpen || shell.Start.IsOpen || shell.ApproveAll.IsOpen
+        || shell.Palette.IsOpen || shell.Shortcuts.IsOpen || shell.Create.IsOpen || shell.NewIssue.IsOpen
         || (e.KeyModifiers & ~KeyModifiers.Shift) != KeyModifiers.None;
 
     // §11.2: with the sheet beside the page and open on the selected row's item (the row drawn on this page), Enter again moves into its first action
@@ -68,16 +68,9 @@ internal sealed partial class ShellWindow
     }
 
     // The item sheet's first control, or the decision form's first usable tab stop in tree order (its note while enabled, else the first
-    // option: the note sits above the options, so entering at an option would leave it behind forward Tab); the instance frame's first read
-    // action (Open in, else Copy status).
+    // option: the note sits above the options, so entering at an option would leave it behind forward Tab).
     private bool FocusFirstSheetAction()
     {
-        if (Shell is { IsInstanceSheet: true } shell)
-        {
-            shell.Instance.FocusInitial();
-            return true;
-        }
-
         var descendants = SheetPanel.GetVisualDescendants().ToList();
         return descendants.OfType<Controls.CommandControl>().FirstOrDefault(c => c.IsEffectivelyVisible)?.FocusRun() == true
             || descendants.OfType<InputElement>().FirstOrDefault(IsDecisionFormStop)?.Focus(NavigationMethod.Tab) == true;
@@ -105,16 +98,15 @@ internal sealed partial class ShellWindow
     private static bool IsLastStopOf(Border frame, Visual focused) =>
         frame.GetVisualDescendants().OfType<InputElement>().LastOrDefault(c => c.Focusable && c.IsTabStop && c.IsEffectivelyVisible && c.IsEffectivelyEnabled) is not { } last || ReferenceEquals(last, focused);
 
-    private static bool AnyLayerOpen(ViewModels.Shell.ShellViewModel shell) => shell.Palette.IsOpen || shell.Shortcuts.IsOpen || shell.Create.IsOpen || shell.NewIssue.IsOpen || shell.Start.IsOpen || shell.ApproveAll.IsOpen;
+    private static bool AnyLayerOpen(ViewModels.Shell.ShellViewModel shell) => shell.Palette.IsOpen || shell.Shortcuts.IsOpen || shell.Create.IsOpen || shell.NewIssue.IsOpen;
 
     // The frame of the row that the focused control is in, when that row is the one the sheet shows.
     private Border? OpenRowFrame(Visual focused) =>
-        focused.GetSelfAndVisualAncestors().OfType<Border>().FirstOrDefault(b => string.Equals(b.Name, "RowFrame", StringComparison.Ordinal) || string.Equals(b.Name, "WorkflowRowFrame", StringComparison.Ordinal))
+        focused.GetSelfAndVisualAncestors().OfType<Border>().FirstOrDefault(b => string.Equals(b.Name, "RowFrame", StringComparison.Ordinal))
             is { } frame && IsOpenRow(frame.DataContext) ? frame : null;
 
     private bool IsOpenRow(object? row) => row switch
     {
-        ViewModels.Workflows.InstanceRowViewModel workflow => Shell is { IsSelectedWorkflowOpen: true } && string.Equals(workflow.Address, Shell.Instance.Address, StringComparison.Ordinal),
         ViewModels.Queue.ItemRowViewModel item => string.Equals(item.Id, Shell?.Item.ItemId, StringComparison.Ordinal),
         ViewModels.NeedsYou.NeedsYouRowViewModel need => string.Equals(need.Id, Shell?.NeedsYou.SheetRowId, StringComparison.Ordinal),
         _ => false,
@@ -161,21 +153,9 @@ internal sealed partial class ShellWindow
         return e.Key is >= Key.A and <= Key.Z && e.KeyModifiers == KeyModifiers.None ? e.Key.ToString() : null;
     }
 
-    // The forms and dialogs over the shell: the approve-all dialog, the Start form, then the create form.
+    // The forms and dialogs over the shell: the new issue form, then the create form.
     private static bool EscapeForm(ViewModels.Shell.ShellViewModel shell)
     {
-        if (shell.ApproveAll.IsOpen)
-        {
-            shell.ApproveAll.Close();
-            return true;
-        }
-
-        if (shell.Start.IsOpen)
-        {
-            shell.Start.Close();
-            return true;
-        }
-
         if (shell.NewIssue.IsOpen)
         {
             shell.NewIssue.Close();
@@ -191,19 +171,11 @@ internal sealed partial class ShellWindow
         return true;
     }
 
-    // Esc's U2 layers, above the sheet (§8 "the topmost layer"): the Start form, the create form, then a destructive control's question.
+    // Esc's U2 layers, above the sheet (§8 "the topmost layer"): the new issue form, the create form, then a destructive control's question.
     private bool EscapeItemLayer(ViewModels.Shell.ShellViewModel shell)
     {
         if (EscapeForm(shell))
         {
-            return true;
-        }
-
-        if (shell is { IsSheetShown: true, IsInstanceSheet: true, Instance.Expanded.IsConfirmingCancel: true })
-        {
-            // The frame's Cancel question: Esc answers Keep, as it does in the item sheet, and focus returns to the control that asked.
-            shell.Instance.Expanded.Keep();
-            _ = SheetPanel.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => string.Equals(b.Name, "CommandAsk", StringComparison.Ordinal) && b.IsEffectivelyVisible)?.Focus(Method());
             return true;
         }
 

@@ -5,7 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels.Linear;
-using Aw.Sindri.Ui.ViewModels.Run;
+using Aw.Sindri.Ui.ViewModels;
 
 namespace Aw.Sindri.Ui.Views.Linear;
 

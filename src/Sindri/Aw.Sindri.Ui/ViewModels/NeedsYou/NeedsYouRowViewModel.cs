@@ -1,6 +1,5 @@
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Navigation;
-using Aw.Sindri.Ui.ViewModels.Workflows;
 
 namespace Aw.Sindri.Ui.ViewModels.NeedsYou;
 
@@ -22,14 +21,7 @@ internal sealed partial class NeedsYouRowViewModel : ObservableObject
         _clock = clock;
         (_seen, _reduced, _arrived) = (seen, reducedMotion, arrived);
         Controls = BuildControls();
-        ChildAnswer = ChildAnswerOf(entry);
     }
-
-    /// <summary>The "Answer in the child" control of a row whose answer a child decides (the row's served via); null for any other row.</summary>
-    public ChildAnswerViewModel? ChildAnswer { get; private set; }
-
-    private static ChildAnswerViewModel? ChildAnswerOf(NeedsYouEntry entry) =>
-        InstanceRules.IsChildVia(entry.Via) ? ChildAnswerViewModel.ForNeedsYouRow(entry.Id, entry.ShownId.Length > 0 ? entry.ShownId : entry.Id, entry.Child) : null;
 
     /// <summary>The row's chip as served, the one chip control draws it; null for none.</summary>
     public StateChip? Chip => Entry.Chip;
@@ -49,7 +41,7 @@ internal sealed partial class NeedsYouRowViewModel : ObservableObject
     /// <summary>The served reason sentence (the sheet shows it).</summary>
     public string Reason => Entry.Reason;
 
-    /// <summary>True when the sheet shows the reason as its own line: a row with no details of its own (a park, a decision) has nowhere else for it.</summary>
+    /// <summary>True when the sheet shows the reason as its own line: a row with no details of its own (a decision) has nowhere else for it.</summary>
     public bool HasReasonLine => Entry.Reason.Length > 0 && Details.Count == 0;
 
     /// <summary>The one served command to copy; empty for none.</summary>
@@ -80,14 +72,8 @@ internal sealed partial class NeedsYouRowViewModel : ObservableObject
     /// <summary>Where Enter and a click on the title go: the row's own sheet, keyed on the row id (never the subject).</summary>
     public DeepLink SheetLink => new(DeepLinkKind.NeedsYou, Entry.Id);
 
-    /// <summary>
-    /// Where a click on the row goes, from Home, the inbox or the tray: a nested park (via child, with the child's address) opens the child's workflow frame
-    /// at once, where the answer is; every other row opens its own sheet.
-    /// </summary>
-    public DeepLink OpenLink => RouteLink ?? (ChildAnswer is { OpensChild: true, Link: { } child } ? child : SheetLink);
-
-    /// <summary>True when a click on the row opens a child's frame instead of its sheet.</summary>
-    public bool OpensChild => OpenLink.Kind == DeepLinkKind.Workflow;
+    /// <summary>Where a click on the row goes, from Home, the inbox or the tray: the served route when there is one, else the row's own sheet.</summary>
+    public DeepLink OpenLink => RouteLink ?? SheetLink;
 
     /// <summary>True when the row names an item, so it offers Open.</summary>
     public bool CanOpenItem => Entry.ItemId is not null;
@@ -118,7 +104,6 @@ internal sealed partial class NeedsYouRowViewModel : ObservableObject
         {
             var before = (Tint, HasOutline, SlidesIn, HasNewWord);
             Entry = entry;
-            ChildAnswer = ChildAnswerOf(entry);
             foreach (var name in _content)
             {
                 OnChanged(name);
@@ -162,7 +147,7 @@ internal sealed partial class NeedsYouRowViewModel : ObservableObject
     private static readonly string[] _content =
     [
         nameof(Chip), nameof(Details), nameof(PrimaryDetails), nameof(MoreDetails), nameof(HasMoreDetails), nameof(ShowsCliUpFront), nameof(ShownId), nameof(Title), nameof(Repo), nameof(Label), nameof(Reason), nameof(HasReasonLine), nameof(Cli), nameof(Age), nameof(AccessibleName),
-        nameof(CanOpenItem), nameof(ItemLink), nameof(OpenLabel), nameof(HasPr), nameof(OpenPrText), nameof(ChildAnswer), nameof(Notice), nameof(HasNotice), nameof(InboxLine), nameof(InboxName),
+        nameof(CanOpenItem), nameof(ItemLink), nameof(OpenLabel), nameof(HasPr), nameof(OpenPrText), nameof(Notice), nameof(HasNotice), nameof(InboxLine), nameof(InboxName),
     ];
 
     private bool _rebuilding;
@@ -184,7 +169,7 @@ internal sealed partial class NeedsYouRowViewModel : ObservableObject
     private NeedsYouActionControl[] BuildControls() =>
     [
         .. Entry.Actions
-            .Select(a => new NeedsYouActionControl(a, IsPrimary(a), a.IsReady && !_rebuilding && !IsCliOnlyComplete(a), IsCliOnlyComplete(a) ? Entry.Cli : Tooltip(a, _rebuilding), IdShown))
+            .Select(a => new NeedsYouActionControl(a, IsPrimary(a), a.IsReady && !_rebuilding, Tooltip(a, _rebuilding), IdShown))
             .OrderByDescending(c => c.IsPrimary && c.Action.OptionId.Length == 0),
     ];
 

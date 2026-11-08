@@ -39,8 +39,6 @@ internal static partial class Labels
     /// <returns>The noun, capitalised ("Workflow"), or empty.</returns>
     internal static string KindNoun(DeepLinkKind kind) => kind switch
     {
-        DeepLinkKind.Workflow => "Workflow",
-        DeepLinkKind.Recipe => "Recipe",
         DeepLinkKind.Node => "Node",
         DeepLinkKind.Session => "Session",
         DeepLinkKind.System => "System",
@@ -59,9 +57,7 @@ internal static partial class Labels
     {
         PageId.Home => Home,
         PageId.Projects => Projects,
-        PageId.Workflows => Workflows,
         PageId.Work => Work,
-        PageId.Recipes => Recipes,
         PageId.Context => Context,
         PageId.Agents => Agents,
         PageId.System => System,
@@ -84,7 +80,7 @@ internal static partial class Labels
     {
         PageId.Work => ArrivesWork,
         PageId.Context => ArrivesContext,
-        PageId.Home or PageId.Projects or PageId.Workflows or PageId.Recipes or PageId.Agents or PageId.System or PageId.Reviews or PageId.Jobs or PageId.Settings => null,
+        PageId.Home or PageId.Projects or PageId.Agents or PageId.System or PageId.Reviews or PageId.Jobs or PageId.Settings => null,
         _ => throw new ArgumentOutOfRangeException(nameof(page), page, message: null),
     };
 

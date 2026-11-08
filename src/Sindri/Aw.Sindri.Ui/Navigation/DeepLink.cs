@@ -2,7 +2,7 @@ namespace Aw.Sindri.Ui.Navigation;
 
 /// <summary>
 /// A place inside the app (UI spec §3.3): 'home/needs-you', 'needs-you/&lt;rowId&gt;', 'item/&lt;ItemId&gt;',
-/// 'decision/&lt;DecisionId&gt;', 'service/&lt;name&gt;', 'job/&lt;JobId&gt;', and from screens spec §3 'workflow/&lt;address&gt;', 'recipe/&lt;id&gt;', 'node/&lt;key&gt;', 'session/&lt;provider&gt;/&lt;id&gt;' 'system/&lt;dependency&gt;' and 'project/&lt;escaped id&gt;'. The tray, the palette and a
+/// 'decision/&lt;DecisionId&gt;', 'service/&lt;name&gt;', 'job/&lt;JobId&gt;', and from screens spec §3 'node/&lt;key&gt;', 'session/&lt;provider&gt;/&lt;id&gt;' 'system/&lt;dependency&gt;' and 'project/&lt;escaped id&gt;'. The tray, the palette and a
 /// second launch use them; a deep link only navigates. Subjects are opaque to the app: one segment of letters, digits and
 /// '-_.:', at most 128 characters.
 /// </summary>
@@ -131,8 +131,6 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
         ("decision", DeepLinkKind.Decision),
         ("service", DeepLinkKind.Service),
         ("job", DeepLinkKind.Job),
-        ("workflow", DeepLinkKind.Workflow),
-        ("recipe", DeepLinkKind.Recipe),
         ("node", DeepLinkKind.Node),
         ("session", DeepLinkKind.Session),
         ("system", DeepLinkKind.System),
@@ -144,8 +142,6 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
     // Each kind's own rule for its subject.
     private static bool IsSubjectOf(DeepLinkKind kind, string subject) => kind switch
     {
-        DeepLinkKind.Workflow => IsAddress(subject),
-        DeepLinkKind.Recipe => IsRecipe(subject),
         DeepLinkKind.Session => IsSessionRef(subject),
         DeepLinkKind.Project => IsEscapedId(subject),
         DeepLinkKind.Review => IsPrRef(subject),
@@ -162,14 +158,6 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
     // A Linear link names the issue by its key: the team key, a dash and the number ('ENG-12').
     private static bool IsIssueKey(string s) =>
         s.Length <= MaxSubject && s.Split('-') is [{ Length: > 0 } team, { Length: > 0 } number] && team.All(char.IsAsciiLetterOrDigit) && number.All(char.IsAsciiDigit);
-
-    // A workflow address is the instance's, whose tail may hold segments ('ITM-01JC8/step'): each is a subject, none a dot step.
-    private static bool IsAddress(string s) =>
-        s.Length <= MaxSubject && s.Split('/').All(segment => segment is not ("." or "..") && IsSubject(segment));
-
-    // A recipe link names the recipe, and may pin a version after '@': the hash, whole or by a prefix ('id@hash12').
-    private static bool IsRecipe(string s) =>
-        s.Length <= MaxSubject && s.Split('@') is var parts && parts.Length <= 2 && parts.All(IsSubject);
 
     // A session link names the session by its ref, provider/id: two segments, each a subject, neither a dot step.
     private static bool IsSessionRef(string s) =>

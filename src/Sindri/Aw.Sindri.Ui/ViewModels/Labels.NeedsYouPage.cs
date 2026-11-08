@@ -1,5 +1,4 @@
 using System.Globalization;
-using Aw.Sindri.Ui.Api.Workflow;
 
 namespace Aw.Sindri.Ui.ViewModels;
 
@@ -20,21 +19,14 @@ internal static partial class Labels
 
     /// <summary>The header's count.</summary>
     /// <param name="waiting">How many rows wait for the user.</param>
-    /// <param name="runs">How many of them are paused runs.</param>
     /// <returns>The words.</returns>
-    internal static string NeedsYouWaiting(int waiting, int runs) => string.Create(CultureInfo.InvariantCulture, $"{waiting} waiting, {runs} {(runs == 1 ? "run" : "runs")}");
-
-    /// <summary>The heading of the desk tasks.</summary>
-    internal const string NeedsYouGroupApprovals = "Your approvals";
-
-    /// <summary>The heading of the paused runs.</summary>
-    internal const string NeedsYouGroupRuns = "Paused runs";
+    internal static string NeedsYouWaiting(int waiting) => string.Create(CultureInfo.InvariantCulture, $"{waiting} waiting");
 
     /// <summary>The heading of the agent decisions.</summary>
     internal const string NeedsYouGroupDecisions = "Agent decisions";
 
     /// <summary>The heading of the workflow and settings approvals.</summary>
-    internal const string NeedsYouGroupSettings = "Workflow and settings approvals";
+    internal const string NeedsYouGroupSettings = "Settings approvals";
 
     /// <summary>The heading of the failures, which the prototype leaves out and the app keeps so no row is lost.</summary>
     internal const string NeedsYouGroupFailures = "Something failed";
@@ -63,9 +55,6 @@ internal static partial class Labels
 
     /// <summary>The card's kind word for an agent's decision.</summary>
     internal const string NeedsYouKindDecision = "Agent decision";
-
-    /// <summary>The card's kind word for a changed workflow.</summary>
-    internal const string NeedsYouKindWorkflow = "Workflow change";
 
     /// <summary>The card's kind word for changed settings.</summary>
     internal const string NeedsYouKindSettings = "Settings change";
@@ -118,18 +107,6 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string NeedsYouFootRight(string waited) => "waiting " + waited;
 
-    /// <summary>The footer's right side once the row serves a timeout.</summary>
-    /// <param name="waited">How long the row has waited, as <see cref="NeedsYouWaited"/> words it.</param>
-    /// <param name="timeout">What the timeout does.</param>
-    /// <param name="left">The time left, as <see cref="Duration(long)"/> words it.</param>
-    /// <returns>"waiting 5h 51m · pauses and asks again in 6d 18h".</returns>
-    internal static string NeedsYouFootTimeout(string waited, TimeoutKind timeout, string left) => timeout switch
-    {
-        TimeoutKind.Parks => NeedsYouFootRight(waited) + " · pauses and asks again in " + left,
-        TimeoutKind.Escalates => NeedsYouFootRight(waited) + " · escalates in " + left,
-        _ => NeedsYouFootRight(waited),
-    };
-
     /// <summary>How long a row has waited, to the minute: "26m", "5h 51m", "6d 18h".</summary>
     /// <param name="age">How long.</param>
     /// <returns>The words.</returns>
@@ -140,13 +117,6 @@ internal static partial class Labels
         < 1440 => string.Create(CultureInfo.InvariantCulture, $"{(int)age.TotalHours}h {age.Minutes}m"),
         _ => string.Create(CultureInfo.InvariantCulture, $"{(int)age.TotalDays}d {age.Hours}h"),
     };
-
-    /// <summary>What is left of a row's timeout, in the same two units as the wait; seconds under a minute, never below zero.</summary>
-    /// <param name="left">The time left.</param>
-    /// <returns>The words, e.g. "6d 18h", "30m" or "0s".</returns>
-    internal static string NeedsYouTimeLeft(TimeSpan left) => left.TotalMinutes < 1
-        ? string.Create(CultureInfo.InvariantCulture, $"{(int)Math.Max(0, left.TotalSeconds)}s")
-        : NeedsYouWaited(left);
 
     /// <summary>The detail column's sentence when the list is empty and serves none.</summary>
     internal const string NeedsYouEmptyFallback = "Nothing needs you";

@@ -24,10 +24,7 @@ internal sealed partial class ShellViewModel
     internal bool IsSelectedNeedsYouRowOpen => IsHome && NeedsYou.SelectedId is { } id && string.Equals(NeedsYou.SheetRowId, id, StringComparison.Ordinal);
 
     /// <summary>True when the selected row (a queue row or a Needs-you row) is the one whose sheet is open.</summary>
-    internal bool IsSelectedSheetOpen => IsSelectedRowOpen || IsSelectedNeedsYouRowOpen || IsSelectedWorkflowOpen;
-
-    /// <summary>True when the Workflows page's selected row is the instance whose frame is open.</summary>
-    internal bool IsSelectedWorkflowOpen => IsWorkflows && IsSheetOpen && IsInstanceSheet && Workflows.SelectedAddress is { } address && string.Equals(address, Instance.Address, StringComparison.Ordinal);
+    internal bool IsSelectedSheetOpen => IsSelectedRowOpen || IsSelectedNeedsYouRowOpen;
 
     /// <summary>Marks every current row seen (Shift+A from anywhere but a text field).</summary>
     internal void MarkAllSeen() => NeedsYou.MarkAllSeen();
@@ -49,13 +46,6 @@ internal sealed partial class ShellViewModel
     {
         Health.Follow(ReadNeedsYou);
         NeedsYou.SheetRequested += (_, e) => OpenNeedsYouRow(e.RowId);
-        NeedsYou.PropertyChanged += (_, e) =>
-        {
-            if (string.Equals(e.PropertyName, nameof(NeedsYouViewModel.SheetRow), StringComparison.Ordinal))
-            {
-                _ = LoadSheetOutputs(NeedsYou.SheetRow);
-            }
-        };
         NeedsYou.ActionRequested += (_, e) => Decide(e);
         Decision.Refused += (_, _) => Navigate(new DeepLink(DeepLinkKind.Decision, Decision.DecisionId));
         Decision.PropertyChanged += OnDecisionChanged;
@@ -105,7 +95,6 @@ internal sealed partial class ShellViewModel
         if (row is not null)
         {
             Queue.ClearSelection();
-            Strip.Deselect();
             NeedsYou.OpenSheetOn(row.Id);
             if (link.Kind == DeepLinkKind.Decision)
             {
@@ -119,7 +108,6 @@ internal sealed partial class ShellViewModel
     internal void SelectNeedsYouRow(string rowId)
     {
         Queue.ClearSelection();
-        Strip.Deselect();
         NeedsYou.Select(rowId);
     }
 
@@ -131,7 +119,6 @@ internal sealed partial class ShellViewModel
         if (scope == QueueScope.Home)
         {
             NeedsYou.Deselect();
-            Strip.Deselect();
         }
 
         Queue.Select(itemId, scope);
@@ -153,7 +140,7 @@ internal sealed partial class ShellViewModel
         }
     }
 
-    /// <summary>Opens where a row's click goes (its title, Enter, the tray): the child's frame for a nested park, else the row's sheet. The one place that choice is made.</summary>
+    /// <summary>Opens where a row's click goes (its title, Enter, the tray): its served route, else the row's sheet. The one place that choice is made.</summary>
     /// <param name="rowId">The row's id.</param>
     internal void OpenNeedsYouRow(string rowId)
     {
@@ -163,12 +150,12 @@ internal sealed partial class ShellViewModel
         }
     }
 
-    /// <summary>Opens the row's own sheet over the page, never the inbox or a nested park's child: where a row goes when the sheet is the only place that can finish it (a step that needs a file, #1170).</summary>
+    /// <summary>Opens the row's own sheet over the page, never the inbox.</summary>
     /// <param name="rowId">The row's id.</param>
     internal void OpenNeedsYouRowSheet(string rowId) => NavigateToRowSheet(LinkOf(rowId));
 
     // The served open.route of a row (api q65) is where its click goes. A route that is the row's own sheet changes nothing here, and a row with none keeps the older rule.
-    private bool OpenTargetOf(string? rowId) => OpenChildOf(rowId) || OpenRouteOf(rowId);
+    private bool OpenTargetOf(string? rowId) => OpenRouteOf(rowId);
 
     private bool OpenRouteOf(string? rowId)
     {
@@ -178,18 +165,6 @@ internal sealed partial class ShellViewModel
         }
 
         Navigate(link);
-        return true;
-    }
-
-    // A nested park's click is the answer in its child: the row stays selected (Esc returns to it) and the child's frame opens at its first read action.
-    private bool OpenChildOf(string? rowId)
-    {
-        if (rowId is null || NeedsYou.Row(rowId) is not { OpensChild: true, ChildAnswer: { } answer })
-        {
-            return false;
-        }
-
-        FollowChildAnswerFromNeedsYou(rowId, answer);
         return true;
     }
 

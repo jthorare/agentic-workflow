@@ -21,12 +21,6 @@ internal enum DeepLinkKind
     /// <summary>'job/&lt;JobId&gt;': a job's detail.</summary>
     Job,
 
-    /// <summary>'workflow/&lt;address&gt;': a workflow instance in the Workflows frame (screens spec §3).</summary>
-    Workflow,
-
-    /// <summary>'recipe/&lt;id&gt;': a recipe's inspector (screens spec §4.3).</summary>
-    Recipe,
-
     /// <summary>'node/&lt;key&gt;': a context node (screens spec §4.4).</summary>
     Node,
 

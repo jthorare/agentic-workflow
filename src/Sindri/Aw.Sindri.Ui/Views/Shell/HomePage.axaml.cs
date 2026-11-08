@@ -8,7 +8,6 @@ using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Layout;
 using Aw.Sindri.Ui.Views.NeedsYou;
 using Aw.Sindri.Ui.Views.Queue;
-using Aw.Sindri.Ui.Views.Workflows;
 
 namespace Aw.Sindri.Ui.Views.Shell;
 
@@ -25,10 +24,6 @@ internal sealed partial class HomePage : UserControl
         AddHandler(NeedsYouRow.ActionEvent, OnNeedsYouAction);
         AddHandler(GotFocusEvent, (_, e) => Look(e, looking: true), handledEventsToo: true);
         AddHandler(LostFocusEvent, (_, e) => Look(e, looking: false), handledEventsToo: true);
-        AddHandler(StripRow.OpenEvent, OnStripOpen);
-        AddHandler(StripRow.SelectEvent, OnStripSelect);
-        AddHandler(StripRow.AnswerEvent, OnStripAnswer);
-        AddHandler(ChildAnswerButton.FollowEvent, OnChildAnswer);
         DataContextChanged += (_, _) => FollowNeedsYouRows();
     }
 
@@ -110,58 +105,6 @@ internal sealed partial class HomePage : UserControl
     private void OnSetupLink(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.Setup.RequestChecklist();
 
     private void OnSetupContinue(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.Setup.Continue();
-
-    private void OnStart(object? sender, RoutedEventArgs e)
-    {
-        OpenerNote.Raise(this, sender);
-        (DataContext as ShellViewModel)?.OpenStart();
-    }
-
-    private void OnWorkflowsMore(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.Strip.OpenWorkflows();
-
-    // Focus arriving on a strip row selects it, and the other lists' selections give way: one selection on Home.
-    private void OnStripSelect(object? sender, RoutedEventArgs e)
-    {
-        if (e.Source is StripRow { Address.Length: > 0 } row && DataContext is ShellViewModel shell)
-        {
-            shell.SelectStripRow(row.Address);
-        }
-    }
-
-    private void OnStripOpen(object? sender, RoutedEventArgs e)
-    {
-        if (e.Source is StripRow { Address.Length: > 0 } row && DataContext is ShellViewModel shell)
-        {
-            shell.SelectStripRow(row.Address);
-            shell.OpenStripRow(row.Address);
-        }
-    }
-
-    // "Answer in the child" on a strip or needs-you row: the row is selected and stays the opener, like its other buttons.
-    private void OnChildAnswer(object? sender, RoutedEventArgs e)
-    {
-        if (e.Source is not ChildAnswerButton { Answer: { } answer } button || DataContext is not ShellViewModel shell)
-        {
-            return;
-        }
-
-        if (button.FindAncestorOfType<StripRow>() is { Address.Length: > 0 } strip)
-        {
-            shell.FollowChildAnswerFromStrip(strip.Address, answer);
-        }
-        else if (button.FindAncestorOfType<NeedsYouRow>() is { RowId.Length: > 0 } needsYou)
-        {
-            shell.FollowChildAnswerFromNeedsYou(needsYou.RowId, answer);
-        }
-    }
-
-    private void OnStripAnswer(object? sender, RoutedEventArgs e)
-    {
-        if (e.Source is StripRow { Address.Length: > 0 } row && DataContext is ShellViewModel shell)
-        {
-            shell.AnswerStripRow(row.Address);
-        }
-    }
 
     // A row is seen once it has been on screen and focused, in the active window, for a second (§5): focus in a row starts the
     // count, focus out of it stops it, and so does the window going inactive (it starts again when the window is activated).

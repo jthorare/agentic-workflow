@@ -7,8 +7,6 @@
              xmlns:nyvm="using:Aw.Sindri.Ui.ViewModels.NeedsYou"
              xmlns:nyv="using:Aw.Sindri.Ui.Views.NeedsYou"
              xmlns:rows="using:Aw.Sindri.Ui.Views.Queue"
-             xmlns:wfv="using:Aw.Sindri.Ui.Views.Workflows"
-             xmlns:wfvm="using:Aw.Sindri.Ui.ViewModels.Workflows"
              x:Class="Aw.Sindri.Ui.Views.Shell.HomePage"
              x:DataType="shell:ShellViewModel">
   <!-- Home (UI spec §3.2, §4.2): four panels in a fixed order. Each panel is a header row (the eyebrow over a hairline,
@@ -106,46 +104,6 @@
 
       </StackPanel>
       <StackPanel x:Name="HomeRight" Grid.Column="2" Spacing="{StaticResource Size.PanelGap}">
-        <!-- The Workflows strip (screens spec §4.1): the open root instances as the API serves them, between Needs you and the columns. -->
-        <Border x:Name="WorkflowsPanel" Classes="panel" AutomationProperties.Name="{Binding Strip.Heading}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
-          <StackPanel>
-            <Border Classes="phead">
-              <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock Classes="eyebrow" Text="{Binding Strip.Heading}" AutomationProperties.Name="{Binding Strip.Heading}" />
-                <TextBlock x:Name="WorkflowsOpen" Classes="caption subtle" Text="{Binding Strip.OpenText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Strip.OpenText}" />
-                <Button x:Name="HomeStart" Classes="command-control" Click="OnStart" AutomationProperties.Name="{Binding Text.StartWorkflow}">
-                  <TextBlock Classes="button" Text="{Binding Text.StartWorkflow}" VerticalAlignment="Center" />
-                </Button>
-                <StackPanel x:Name="WorkflowsStale" Orientation="Horizontal" Spacing="4" IsVisible="{Binding Health.Banner.IsStalled}">
-                  <icons:StateIcon Glyph="Stale" VerticalAlignment="Center" />
-                  <TextBlock Classes="caption subtle" Text="{Binding Text.Stale}" VerticalAlignment="Center" />
-                </StackPanel>
-              </StackPanel>
-            </Border>
-            <ItemsControl x:Name="WorkflowsRows" ItemsSource="{Binding Strip.Rows}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="wfvm:StripRowViewModel">
-                  <wfv:StripRow />
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <StackPanel x:Name="WorkflowsSkeleton" IsVisible="{Binding Strip.IsLoading}" AutomationProperties.AccessibilityView="Raw">
-              <Grid Classes="skrow" ColumnDefinitions="70,*,40"><Border Classes="skeleton" Width="60" /><Border Grid.Column="1" Classes="skeleton" Width="300" /><Border Grid.Column="2" Classes="skeleton" Width="32" /></Grid>
-              <Grid Classes="skrow" ColumnDefinitions="70,*,40"><Border Classes="skeleton" Width="60" /><Border Grid.Column="1" Classes="skeleton" Width="220" /><Border Grid.Column="2" Classes="skeleton" Width="32" /></Grid>
-              <Grid Classes="skrow" ColumnDefinitions="70,*,40"><Border Classes="skeleton" Width="60" /><Border Grid.Column="1" Classes="skeleton" Width="260" /><Border Grid.Column="2" Classes="skeleton" Width="32" /></Grid>
-            </StackPanel>
-            <TextBlock x:Name="WorkflowsEmpty" Classes="caption quiet" Text="{Binding Strip.EmptyLine}" Margin="16,8"
-                       IsVisible="{Binding Strip.EmptyLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Strip.EmptyLine}" />
-            <TextBlock x:Name="WorkflowsNotServed" Classes="caption quiet" Text="{Binding Strip.NotServedText}" Margin="16,8"
-                       IsVisible="{Binding Strip.IsNotServed}" AutomationProperties.Name="{Binding Strip.NotServedText}" />
-            <TextBlock x:Name="WorkflowsUnreadable" Classes="caption quiet" Text="{Binding Strip.UnreadableText}" Margin="16,8" TextWrapping="Wrap"
-                       IsVisible="{Binding Strip.IsUnreadable}" AutomationProperties.Name="{Binding Strip.UnreadableText}" />
-            <Button x:Name="WorkflowsMore" HorizontalAlignment="Left" Classes="copy" Click="OnWorkflowsMore" IsVisible="{Binding Strip.HasMore}"
-                    AutomationProperties.Name="{Binding Strip.MoreText}" Margin="16,6">
-              <TextBlock Classes="caption" Text="{Binding Strip.MoreText}" />
-            </Button>
-          </StackPanel>
-        </Border>
 
         <!-- §8: new rows wait behind this pill while the pointer is over Running or Queued. -->
         <Button x:Name="HomeHeldPill" Classes="held-pill" Click="OnShowHeld" IsVisible="{Binding Queue.HasHeld}" HorizontalAlignment="Center"

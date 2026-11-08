@@ -21,7 +21,6 @@ internal sealed partial class ReviewFixSheetViewModel
             var where = source.Kind == ReviewFixKind.Line && !source.Removed ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{Path.GetFileName(source.Path)}:{source.Line}") : Labels.ReviewFixReviewComment;
             var (outcome, text) = sent.Went switch
             {
-                "babysitter" => (ReviewFixOutcome.Babysitter, Labels.ReviewFixBabysitter(target.Number)),
                 "session" => (ReviewFixOutcome.Session, Labels.ReviewFixSession(target.Branch, sent.Session ?? string.Empty)),
                 _ => (ReviewFixOutcome.Waiting, Labels.ReviewFixWaiting(target.Branch)),
             };

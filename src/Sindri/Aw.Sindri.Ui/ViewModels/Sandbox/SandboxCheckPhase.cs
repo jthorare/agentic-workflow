@@ -12,12 +12,6 @@ internal enum SandboxCheckPhase
     /// <summary>The check found blockers; the card lists every one.</summary>
     StillFailing,
 
-    /// <summary>All clear; the Steps that would resume are listed before anything is sent.</summary>
+    /// <summary>All clear.</summary>
     AllClear,
-
-    /// <summary>Every listed Step resumed.</summary>
-    Resumed,
-
-    /// <summary>Some listed Steps moved on; the rest stay parked.</summary>
-    ResumedPartial,
 }

@@ -150,10 +150,10 @@ internal sealed partial class ShellWindow : Window
     private void Cover(double width)
     {
         var below = this.TryFindResource("Size.SheetCoversBelow", out var value) && value is double limit ? limit : 1100;
-        var covers = (width > 0 && width < below) || Shell is { SheetCoversPage: true };
+        var covers = width > 0 && width < below;
         var changed = covers != SheetPanel.Classes.Contains("covers");
         SheetPanel.Classes.Set("covers", covers);
-        SheetPanel.Width = covers ? double.NaN : Shell?.ShownSheetWidth ?? double.NaN;
+        SheetPanel.Width = covers ? double.NaN : Shell?.SheetWidth ?? double.NaN;
         CoverPage();
         if (changed && Shell is { IsSheetShown: true })
         {
@@ -186,7 +186,7 @@ internal sealed partial class ShellWindow : Window
     {
         switch (e.PropertyName)
         {
-            case nameof(ShellViewModel.SheetWidth) or nameof(ShellViewModel.ShownSheetWidth) or nameof(ShellViewModel.SheetCoversPage):
+            case nameof(ShellViewModel.SheetWidth):
                 Cover(Bounds.Width);
                 break;
             case nameof(ShellViewModel.State):
@@ -199,8 +199,8 @@ internal sealed partial class ShellWindow : Window
             case nameof(ShellViewModel.IsNeedsYouInbox):
                 FollowInbox();
                 break;
-            case nameof(ShellViewModel.SheetSubject) when Shell is { SheetChangeIsStacked: false }:
-                ResetSheetScroll();   // another row opened on the open sheet; a pushed child and Back keep their scroll
+            case nameof(ShellViewModel.SheetSubject):
+                ResetSheetScroll();   // another row opened on the open sheet
                 break;
             case nameof(ShellViewModel.IsSheetShown):
                 OnSheetShownChanged();
@@ -213,9 +213,9 @@ internal sealed partial class ShellWindow : Window
     private void OnSheetShownChanged()
     {
         CoverPage();
-        if (Shell is { IsSheetShown: true, SheetChangeIsStacked: false })
+        if (Shell is { IsSheetShown: true })
         {
-            ResetSheetScroll();   // a sheet that opens starts at its top; a pushed child and Back keep their scroll
+            ResetSheetScroll();   // a sheet that opens starts at its top
         }
 
         Dispatcher.UIThread.Post(Shell is { IsSheetShown: true } ? FocusOpenedSheet : KeepFocusAfterClose, DispatcherPriority.Loaded);

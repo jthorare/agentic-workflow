@@ -1,5 +1,4 @@
 using Aw.Sindri.Ui.ViewModels.NeedsYou;
-using Aw.Sindri.Ui.ViewModels.Workflows;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
 
@@ -29,7 +28,6 @@ internal sealed partial class ShellViewModel
     {
         _line.PropertyChanged += (_, e) => OnChanged(string.Equals(e.PropertyName, nameof(LiveLine.IsLive), StringComparison.Ordinal) ? nameof(IsNeedsYouAnnouncing) : nameof(NeedsYouAnnouncement));
         NeedsYou.PropertyChanged += (_, e) => SayNeedsYou(e.PropertyName);
-        Strip.PropertyChanged += (_, e) => SayIf(e.PropertyName, nameof(WorkflowsStripViewModel.Announcement), Strip.Announcement);
     }
 
     private void SayIf(string? changed, string name, string sentence)
