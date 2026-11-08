@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Aw.Context.Core;
+using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
 using Aw.Kernel;
 using Aw.Sindri.Core.Ids;
@@ -318,6 +320,201 @@ public sealed class GetContextPinsServiceTests
 
         Assert.Equal(["alpha-only"], humanOneRepo.Value.Pins.Select(p => p.Id), StringComparer.Ordinal);
         Assert.Equal(["alpha-only"], session.Value.Pins.Select(p => p.Id), StringComparer.Ordinal);
+    }
+
+    // ---- Moved: what the newest refresh moved in and out of each pin, and what the relink after it did to the pin's records ----
+
+    private static readonly JsonSerializerOptions _web = new(JsonSerializerDefaults.Web);
+
+    private static PinMove Move(string pin, int gained, int lost, params PinMoveTo[] to) => new(ConceptId.From(pin), 41, 42, gained, lost, to);
+
+    private void PutRefresh(int version, PinMove[]? moves, TimeSpan endedAgo, long sequence)
+    {
+        var result = new RefreshContextMapResult("alpha", version, new Dictionary<string, string>(StringComparer.Ordinal), 0, 0, 0, "none", Held: false) { Moves = moves };
+        _jobs.Put(new JobRow(JobId.New(_h.Ids), ContextMapRefreshService.RefreshKind, JobKey.From("refresh"), Item: null, Repo: null, Service: null, JobState.Succeeded,
+            "service:context-map-refresh", _now - endedAgo - TimeSpan.FromSeconds(5), _now - endedAgo, [], Rounds: 0, Summary: null, Code: null,
+            JsonSerializer.SerializeToElement(result, _web), CancelledBy: null, Sequence: sequence));
+    }
+
+    // Billing is the one pin; the map is at version 42, and the refresh that published 42 ended 3 h ago with these moves (null: the result carries none).
+    private async Task<ContextPinRow> Billing(int mapVersion, int refreshVersion, PinMove[]? moves)
+    {
+        var profile = Loaded(Human, [Pin("Billing", id: "billing")], "same", new RepoEntry("alpha", "/r/alpha"));
+        _engine.State = new MapPublishState(Hold: null, LatestDraft: null, mapVersion, [new MapHead(ContextRepoName.From("alpha"), "1", OnDefault: true)]);
+        PutRefresh(refreshVersion, moves, TimeSpan.FromHours(3), 1);
+        var read = await Read(profile, profile);
+        return Assert.Single(read.Value.Pins);
+    }
+
+    private void Relink(JobState state, TimeSpan endedAgo, long sequence, int version, int before = 0, int after = 0) =>
+        _jobs.Put(new JobRow(JobId.New(_h.Ids), ContextMapRefreshService.RelinkKind, JobKey.From("relink"), Item: null, Repo: null, Service: null, state,
+            "service:context-map-refresh", _now - endedAgo - TimeSpan.FromSeconds(5), state == JobState.Running ? null : _now - endedAgo, [], Rounds: 0, Summary: null,
+            state == JobState.Failed ? "SND-CONTEXT-030" : null,
+            state == JobState.Succeeded ? JsonSerializer.SerializeToElement(new RelinkPinAliasesJobResult("h", version, Records: 9, Changed: 1, ElapsedMs: 5, [new PinLinkCount(ConceptId.From("billing"), before, after)]), _web) : null,
+            CancelledBy: null, Sequence: sequence));
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task While_the_relink_still_runs_moved_has_the_feature_counts_and_no_record_count()
+    {
+        Relink(JobState.Running, TimeSpan.Zero, 2, version: 42);
+
+        var row = await Billing(42, 42, [Move("billing", 2, 3, new PinMoveTo(ConceptId.From("refunds"), "Refunds", 3))]);
+
+        var expected = new ContextPinMoved("v41", "v42", 2, 3, [new ContextPinMovedTo("refunds", "Refunds", 3)], RecordsLinked: null);
+        Assert.Equal(expected.To, row.Moved!.To);   // the list compares by reference inside the record
+        Assert.Equal(expected, row.Moved with { To = expected.To });
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_relink_that_linked_more_records_is_a_positive_count()
+    {
+        Relink(JobState.Succeeded, TimeSpan.FromHours(2), 2, version: 42, before: 10, after: 17);
+
+        var row = await Billing(42, 42, [Move("billing", 1, 0)]);
+
+        Assert.Equal((7, false), (row.Moved!.RecordsLinked, row.Moved.RelinkFailed));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_relink_that_linked_fewer_records_is_a_negative_count()
+    {
+        Relink(JobState.Succeeded, TimeSpan.FromHours(2), 2, version: 42, before: 17, after: 12);
+
+        var row = await Billing(42, 42, [Move("billing", 0, 1)]);
+
+        Assert.Equal(-5, row.Moved!.RecordsLinked);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Two_relinks_of_the_version_after_the_refresh_add_up()
+    {
+        Relink(JobState.Succeeded, TimeSpan.FromHours(2), 2, version: 42, before: 10, after: 17);
+        Relink(JobState.Succeeded, TimeSpan.FromHours(1), 3, version: 42, before: 17, after: 18);
+
+        var row = await Billing(42, 42, [Move("billing", 1, 0)]);
+
+        Assert.Equal(8, row.Moved!.RecordsLinked);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_relink_that_failed_after_a_success_sets_relink_failed_and_no_record_count()
+    {
+        Relink(JobState.Succeeded, TimeSpan.FromHours(2), 2, version: 42, before: 10, after: 17);
+        Relink(JobState.Failed, TimeSpan.FromMinutes(90), 3, version: 42);
+
+        var row = await Billing(42, 42, [Move("billing", 1, 0)]);
+
+        Assert.True(row.Moved!.RelinkFailed);
+        Assert.Null(row.Moved.RecordsLinked);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_success_after_a_failed_relink_clears_it_and_the_count_is_the_sum_of_every_success()
+    {
+        Relink(JobState.Succeeded, TimeSpan.FromHours(2), 2, version: 42, before: 10, after: 17);   // +7
+        Relink(JobState.Failed, TimeSpan.FromMinutes(90), 3, version: 42);
+        Relink(JobState.Succeeded, TimeSpan.FromHours(1), 4, version: 42, before: 17, after: 18);   // +1
+
+        var row = await Billing(42, 42, [Move("billing", 1, 0)]);
+
+        Assert.Equal((false, 8), (row.Moved!.RelinkFailed, row.Moved.RecordsLinked));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_newer_refresh_whose_draft_was_held_does_not_hide_the_moves_of_the_one_that_published()
+    {
+        PutRefresh(version: 43, moves: null, TimeSpan.FromHours(1), 5);   // succeeded, held: the current map is still 42
+
+        var row = await Billing(42, 42, [Move("billing", 2, 1)]);
+
+        Assert.Equal((2, 1), (row.Moved!.Gained, row.Moved.Lost));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_newer_refresh_that_ended_already_current_does_not_hide_the_moves_of_the_one_that_published()   // also where the retry after a recorder error ends
+    {
+        PutRefresh(version: 42, moves: null, TimeSpan.FromHours(1), 5);
+
+        var row = await Billing(42, 42, [Move("billing", 2, 1)]);
+
+        Assert.Equal((2, 1), (row.Moved!.Gained, row.Moved.Lost));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_relink_of_another_version_does_not_count()
+    {
+        Relink(JobState.Succeeded, TimeSpan.FromHours(2), 2, version: 41, before: 1, after: 9);
+
+        var row = await Billing(42, 42, [Move("billing", 0, 0)]);
+
+        Assert.Null(row.Moved!.RecordsLinked);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_relink_that_failed_after_the_refresh_sets_relink_failed_and_no_record_count()
+    {
+        Relink(JobState.Failed, TimeSpan.FromHours(2), 2, version: 42);
+
+        var row = await Billing(42, 42, [Move("billing", 1, 1)]);
+
+        Assert.True(row.Moved!.RelinkFailed);
+        Assert.Null(row.Moved.RecordsLinked);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_later_successful_relink_clears_the_failure()
+    {
+        Relink(JobState.Failed, TimeSpan.FromHours(2), 2, version: 42);
+        Relink(JobState.Succeeded, TimeSpan.FromHours(1), 3, version: 42, before: 4, after: 6);
+
+        var row = await Billing(42, 42, [Move("billing", 1, 1)]);
+
+        Assert.Equal((false, 2), (row.Moved!.RelinkFailed, row.Moved.RecordsLinked));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_relink_that_failed_before_the_refresh_ended_is_not_this_versions_failure()
+    {
+        Relink(JobState.Failed, TimeSpan.FromHours(4), 0, version: 41);
+
+        var row = await Billing(42, 42, [Move("billing", 1, 1)]);
+
+        Assert.False(row.Moved!.RelinkFailed);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_current_map_other_than_the_refreshs_version_has_no_moved()
+    {
+        var row = await Billing(43, 42, [Move("billing", 1, 1)]);
+
+        Assert.Null(row.Moved);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_pin_with_no_move_entry_in_a_refresh_that_stored_moves_has_no_moved()
+    {
+        var row = await Billing(42, 42, [Move("refunds", 5, 5)]);
+
+        Assert.Null(row.Moved);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Moved_is_left_out_when_null_and_relink_failed_when_false_and_the_names_are_camel_case()
+    {
+        var plain = new ContextPinRow("billing", "Billing", Summary: null, [], [], FolderRules: 0, "profile", PinStates.Approved, Change: null);
+        var moved = plain with { Moved = new ContextPinMoved("v41", "v42", 1, 2, [new ContextPinMovedTo(Id: null, Name: null, 2)], RecordsLinked: -3) };
+        var failed = plain with { Moved = new ContextPinMoved("v41", "v42", 0, 0, [], RecordsLinked: null) { RelinkFailed = true } };
+
+        using var none = JsonDocument.Parse(JsonSerializer.Serialize(plain, SliceHarness.Json));
+        using var shown = JsonDocument.Parse(JsonSerializer.Serialize(moved, SliceHarness.Json));
+        using var broken = JsonDocument.Parse(JsonSerializer.Serialize(failed, SliceHarness.Json));
+
+        Assert.False(none.RootElement.TryGetProperty("moved", out _));
+        var m = shown.RootElement.GetProperty("moved");
+        Assert.Equal(["fromVersion", "toVersion", "gained", "lost", "to", "recordsLinked"], m.EnumerateObject().Select(p => p.Name), StringComparer.Ordinal);
+        Assert.Equal(-3, m.GetProperty("recordsLinked").GetInt32());
+        Assert.Equal(2, m.GetProperty("to")[0].GetProperty("features").GetInt32());
+        Assert.True(broken.RootElement.GetProperty("moved").GetProperty("relinkFailed").GetBoolean());
     }
 
     private void Refresh(JobState state, TimeSpan endedAgo, long sequence, string? code = null, params string[] lines) =>
