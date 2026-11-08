@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Aw.Kernel;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
@@ -96,7 +97,7 @@ internal sealed partial class TodoHarness
     {
         internal TodoNoteSnapshot? Current { get; set; }
 
-        public ValueTask<Aw.Kernel.Result<TodoNoteSnapshot?>> Read(CancellationToken cancellationToken) => ValueTask.FromResult(Aw.Kernel.Results.Success(Current));
+        public ValueTask<Result<TodoNoteSnapshot?>> Read(CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success(Current));
     }
 
     private sealed partial class MaskingScrubber : ITextScrubber
