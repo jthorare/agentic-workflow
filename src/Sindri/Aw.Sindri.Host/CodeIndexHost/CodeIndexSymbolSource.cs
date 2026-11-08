@@ -123,7 +123,7 @@ internal sealed class CodeIndexSymbolSource(ICodeIndex index, ICodeIndexScopeSou
         var scope = await scopes.Current(cancellationToken).ConfigureAwait(false);
         if (scope.IsError)
         {
-            return scope.Error.Code == "SND-PROFILE-005" ? new Reading(NotConfigured(), Scope: null, name) : scope.Error;
+            return scope.Error.Code == "SND-PROFILE-001" ? new Reading(NotConfigured(), Scope: null, name) : scope.Error;
         }
 
         if (scope.Value.Repos.All(r => r.Name != name))
