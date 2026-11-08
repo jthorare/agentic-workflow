@@ -8,7 +8,11 @@ namespace Aw.Sindri.Core.Todos.Note;
 /// <param name="DoneOn">The done date.</param>
 internal sealed record NoteFields(string Text, DateOnly? Due, IReadOnlyList<string> Links, bool Done, DateOnly? DoneOn)
 {
-    public static NoteFields Of(SindriTodo todo) => new(todo.Text, todo.Due, NoteLinks.Renderable(todo.Links), todo.Done, todo.DoneOn);
+    /// <summary>Links Sindri's todo has that the note can't show (a workflow address): never compared, and put back into a links change so the note can't clear them.</summary>
+    public IReadOnlyList<string> Hidden { get; init; } = [];
+
+    public static NoteFields Of(SindriTodo todo) =>
+        new(todo.Text, todo.Due, NoteLinks.Renderable(todo.Links), todo.Done, todo.DoneOn) { Hidden = [.. todo.Links.Where(static l => !NoteLinks.IsTodoLink(l))] };
 
     public bool SameAs(NoteFields other) => Done == other.Done && !FieldsDiffer(other);
 
@@ -21,7 +25,11 @@ internal sealed record NoteFields(string Text, DateOnly? Due, IReadOnlyList<stri
         !side.Removed && string.Equals(Text, side.Text, StringComparison.Ordinal) && Due == side.Due && Done == side.Done && Links.SequenceEqual(side.Links, StringComparer.Ordinal);
 
     /// <summary>What the note would have to tell Sindri to turn <paramref name="from"/> into this: the changed fields, then the tick or the untick.</summary>
-    public IEnumerable<NoteIntent> IntentsFrom(TodoId id, NoteFields from)
+    /// <param name="id">The todo's id.</param>
+    /// <param name="from">The fields the note started from.</param>
+    /// <param name="hidden">The links Sindri's todo has that the note can't show; a links change keeps them.</param>
+    /// <returns>The intents.</returns>
+    public IEnumerable<NoteIntent> IntentsFrom(TodoId id, NoteFields from, IReadOnlyList<string> hidden)
     {
         if (FieldsDiffer(from))
         {
@@ -30,7 +38,7 @@ internal sealed record NoteFields(string Text, DateOnly? Due, IReadOnlyList<stri
                 string.Equals(Text, from.Text, StringComparison.Ordinal) ? null : Text,
                 Due != from.Due,
                 Due,
-                Links.SequenceEqual(from.Links, StringComparer.Ordinal) ? null : Links);
+                Links.SequenceEqual(from.Links, StringComparer.Ordinal) ? null : [.. Links, .. hidden]);
         }
 
         if (Done && !from.Done)

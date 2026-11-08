@@ -98,7 +98,7 @@ internal sealed partial class NotePass
         }
         else if (sindri.SameAs(from))
         {
-            FromNote(line, id, from, note, noteLine);
+            FromNote(line, id, from, note, noteLine, sindri.Hidden);
         }
         else if (note.SameAs(from))
         {
@@ -131,7 +131,7 @@ internal sealed partial class NotePass
         }
     }
 
-    private void FromNote(NoteTodoLine line, TodoId id, NoteFields from, NoteFields note, string noteLine)
+    private void FromNote(NoteTodoLine line, TodoId id, NoteFields from, NoteFields note, string noteLine, IReadOnlyList<string> hidden)
     {
         HeldChange? candidate = null;
         if (!note.Done && from.Done)
@@ -143,7 +143,7 @@ internal sealed partial class NotePass
             candidate = new HeldChange(id, HeldKind.Edited, line.Raw);
         }
 
-        AddSlot(id, note.IntentsFrom(id, from), candidate, noteLine);
+        AddSlot(id, note.IntentsFrom(id, from, hidden), candidate, noteLine);
     }
 
     private void RemovedInSindri(NoteTodoLine line, TodoId id, SindriTodo todo, NoteFields note)
@@ -166,7 +166,7 @@ internal sealed partial class NotePass
         }
         else
         {
-            AddSlot(id, new[] { new NoteRestore(id) }.Concat(note.IntentsFrom(id, NoteFields.Of(todo))), candidate: null, noteLine);
+            AddSlot(id, new[] { new NoteRestore(id) }.Concat(note.IntentsFrom(id, NoteFields.Of(todo), NoteFields.Of(todo).Hidden)), candidate: null, noteLine);
         }
     }
 
