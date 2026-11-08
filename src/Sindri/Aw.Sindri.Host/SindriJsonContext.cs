@@ -39,7 +39,6 @@ using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Sessions;
-using Aw.Sindri.Core.Todos;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.ApproveAll;
 using Aw.Sindri.Core.Workflow.Blocks;
@@ -54,7 +53,6 @@ using Aw.Sindri.Core.Workflow.Stats;
 using Aw.Sindri.Core.Workflow.Views;
 using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.AddRepo;
-using Aw.Sindri.Features.AddTodo;
 using Aw.Sindri.Features.AllowDenial;
 using Aw.Sindri.Features.ApplyCommand;
 using Aw.Sindri.Features.ApproveAllRecipes;
@@ -62,7 +60,6 @@ using Aw.Sindri.Features.ApproveProfile;
 using Aw.Sindri.Features.ApproveRecipe;
 using Aw.Sindri.Features.AttachProject;
 using Aw.Sindri.Features.CancelJob;
-using Aw.Sindri.Features.ChangeTodo;
 using Aw.Sindri.Features.CheckPack;
 using Aw.Sindri.Features.CheckSandbox;
 using Aw.Sindri.Features.CloseItem;
@@ -100,8 +97,6 @@ using Aw.Sindri.Features.GetRunSuspension;
 using Aw.Sindri.Features.GetSession;
 using Aw.Sindri.Features.GetSetup;
 using Aw.Sindri.Features.GetStatus;
-using Aw.Sindri.Features.GetTodo;
-using Aw.Sindri.Features.GetTodoNote;
 using Aw.Sindri.Features.HideProject;
 using Aw.Sindri.Features.InitProfile;
 using Aw.Sindri.Features.IssueChallenge;
@@ -124,8 +119,6 @@ using Aw.Sindri.Features.ListRequests;
 using Aw.Sindri.Features.ListReviews;
 using Aw.Sindri.Features.ListServices;
 using Aw.Sindri.Features.ListSessions;
-using Aw.Sindri.Features.ListTodos;
-using Aw.Sindri.Features.MarkTodo;
 using Aw.Sindri.Features.OnboardRepo;
 using Aw.Sindri.Features.OpenItem;
 using Aw.Sindri.Features.PauseService;
@@ -170,7 +163,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(ProfileChecked)), JsonSerializable(typeof(ViewsRebuilt)), JsonSerializable(typeof(ItemCreated)), JsonSerializable(typeof(ItemCreatedPublic))]
 [JsonSerializable(typeof(ProjectAttached)), JsonSerializable(typeof(ProjectChanged)), JsonSerializable(typeof(ProjectDetached)), JsonSerializable(typeof(ProjectHidden)), JsonSerializable(typeof(ProjectLedNoted)), JsonSerializable(typeof(ProjectAttachedRow)), JsonSerializable(typeof(ProjectHiddenRow))]   // projects page Ph3: the owner-state events and their views
 [JsonSerializable(typeof(TodoAdded)), JsonSerializable(typeof(TodoChanged)), JsonSerializable(typeof(TodoDone)), JsonSerializable(typeof(TodoReopened)), JsonSerializable(typeof(TodoRemoved)), JsonSerializable(typeof(TodoRestored))]   // the ledger events of the todos spec (§4.1)
-[JsonSerializable(typeof(TodoConflicted)), JsonSerializable(typeof(TodoConflictResolved)), JsonSerializable(typeof(TodoConflictReopened)), JsonSerializable(typeof(TodoSide)), JsonSerializable(typeof(TodoRow)), JsonSerializable(typeof(TodoOpenConflict))]
+[JsonSerializable(typeof(TodoConflicted)), JsonSerializable(typeof(TodoConflictResolved)), JsonSerializable(typeof(TodoConflictReopened)), JsonSerializable(typeof(TodoSide)), JsonSerializable(typeof(Core.Todos.TodoRow)), JsonSerializable(typeof(Core.Todos.TodoOpenConflict))]
 [JsonSerializable(typeof(ItemStateChanged)), JsonSerializable(typeof(ItemLinked)), JsonSerializable(typeof(RequestFiled)), JsonSerializable(typeof(RequestFiledPublic))]
 [JsonSerializable(typeof(DecisionFact)), JsonSerializable(typeof(DecisionRecorded)), JsonSerializable(typeof(DecisionRecordedPublic)), JsonSerializable(typeof(JobStarted))]
 [JsonSerializable(typeof(JobProgress)), JsonSerializable(typeof(JobFinished)), JsonSerializable(typeof(JobFinishedPublic)), JsonSerializable(typeof(JobCancelled)), JsonSerializable(typeof(JobWaiting)), JsonSerializable(typeof(JobResumed))]
@@ -194,7 +187,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(SendReviewFixRequest)), JsonSerializable(typeof(SendReviewFixResponse)), JsonSerializable(typeof(ReviewFixBody)), JsonSerializable(typeof(ReviewFixSent))]
 [JsonSerializable(typeof(GetSetupRequest)), JsonSerializable(typeof(GetSetupResponse)), JsonSerializable(typeof(GetRepoStatusResponse)), JsonSerializable(typeof(RepoStatus))]
 [JsonSerializable(typeof(GetProfileResponse)), JsonSerializable(typeof(ProfilePack)), JsonSerializable(typeof(ProfileSummary)), JsonSerializable(typeof(RepoPreview)), JsonSerializable(typeof(RebuildViewsRequest)), JsonSerializable(typeof(CreateItemRequest)), JsonSerializable(typeof(ItemCreatedResponse))]
-[JsonSerializable(typeof(AddTodoRequest)), JsonSerializable(typeof(AddTodoBody)), JsonSerializable(typeof(ChangeTodoRequest)), JsonSerializable(typeof(ChangeTodoBody)), JsonSerializable(typeof(MarkTodoRequest)), JsonSerializable(typeof(MarkTodoBody)), JsonSerializable(typeof(TodoAccepted)), JsonSerializable(typeof(ListTodosRequest)), JsonSerializable(typeof(ListTodosResponse)), JsonSerializable(typeof(GetTodoResponse)), JsonSerializable(typeof(GetTodoNoteResponse)), JsonSerializable(typeof(TodoCounts)), JsonSerializable(typeof(TodoListState)), JsonSerializable(typeof(TodoItem)), JsonSerializable(typeof(TodoLinkItem))]   // the todo writes and reads (todo spec §4.4)
+[JsonSerializable(typeof(Features.AddTodo.AddTodoRequest)), JsonSerializable(typeof(AddTodoBody)), JsonSerializable(typeof(Features.ChangeTodo.ChangeTodoRequest)), JsonSerializable(typeof(ChangeTodoBody)), JsonSerializable(typeof(Features.MarkTodo.MarkTodoRequest)), JsonSerializable(typeof(MarkTodoBody)), JsonSerializable(typeof(Core.Todos.TodoAccepted)), JsonSerializable(typeof(Features.ListTodos.ListTodosRequest)), JsonSerializable(typeof(Features.ListTodos.ListTodosResponse)), JsonSerializable(typeof(Features.GetTodo.GetTodoResponse)), JsonSerializable(typeof(Features.GetTodoNote.GetTodoNoteResponse)), JsonSerializable(typeof(Core.Todos.TodoCounts)), JsonSerializable(typeof(Core.Todos.TodoListState)), JsonSerializable(typeof(Features.ListTodos.TodoItem)), JsonSerializable(typeof(Features.ListTodos.TodoLinkItem))]   // the todo writes and reads (todo spec §4.4)
 [JsonSerializable(typeof(AttachProjectRequest)), JsonSerializable(typeof(AttachProjectBody)), JsonSerializable(typeof(ProjectAccepted)), JsonSerializable(typeof(ChangeProjectBody)), JsonSerializable(typeof(DetachProjectBody)), JsonSerializable(typeof(HideProjectRequest))]
 [JsonSerializable(typeof(ListReviewsRequest)), JsonSerializable(typeof(ListReviewsResponse))]   // PR review page Ph5: the Reviews list
 [JsonSerializable(typeof(GetReviewPageRequest)), JsonSerializable(typeof(ReviewPageModel))]   // PR review page Ph5c: the PR page
