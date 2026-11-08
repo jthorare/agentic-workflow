@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
+using Aw.Sindri.Ui.Api.Reviews;
 using Aw.Sindri.Ui.ViewModels.Linear;
 
 namespace Aw.Sindri.Ui.ViewModels.Todo;
@@ -42,7 +43,7 @@ internal sealed partial class TodoNoteCardViewModel
         Changed();
     }
 
-    private void ApplyVaults(Result<Aw.Sindri.Ui.Api.Reviews.LibraryView> library)
+    private void ApplyVaults(Result<LibraryView> library)
     {
         if (library.IsSuccess)
         {
