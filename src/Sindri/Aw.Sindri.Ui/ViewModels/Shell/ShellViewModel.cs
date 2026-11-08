@@ -57,7 +57,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         Health.Pill.PropertyChanged += OnPillChanged;
         CommandOutcome = new CommandOutcomeRegion(control => Health.Banner.HasRebuild && ReferenceEquals(Health.Banner.Rebuild, control));
         Create = new CreateItemViewModel(Health.Catalog, () => Health.ApiUrl(), api);
-        Palette = new CommandPaletteViewModel(Health.Catalog, GoTo, RememberRun, CommandOutcome, () => Create.Open());
+        Palette = new CommandPaletteViewModel(Health.Catalog, GoTo, RememberRun, CommandOutcome, () => Create.Open(), OpenTodo);
         Shortcuts = new ShortcutsViewModel(Health.Catalog);
         Queue = new QueueViewModel(api, Health.Catalog, clock);
         Queue.PageShown(RowScopeOf(CurrentPage));
@@ -83,10 +83,11 @@ internal sealed partial class ShellViewModel : ObservableObject
     }
 
     // The views the control plane's follower re-reads on connect and after every event.
-    [MemberNotNull(nameof(Linear), nameof(NewIssue), nameof(Todo), nameof(Toast))]
+    [MemberNotNull(nameof(Linear), nameof(NewIssue), nameof(Todo), nameof(Elsewhere), nameof(Toast))]
     private void FollowViews()
     {
         InitTodo();
+        InitElsewhere();
         InitToast();
         InitLinear();
         Health.Follow(Queue.Refresh);

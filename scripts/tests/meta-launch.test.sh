@@ -630,6 +630,7 @@ kill "$rp" 2> /dev/null; killstubs; wait "$rp" 2> /dev/null
 # An agent that never reports: the launcher times out with a message and the next lane still starts.
 cat > "$WORK/codex-idle" <<'EOF2'
 #!/usr/bin/env bash
+[ "${1:-}" = --help ] && exit 0   # the launcher's --no-daemon probe runs the agent with --help: this stub must not run its body then
 sleep 600
 EOF2
 chmod +x "$WORK/codex-idle"
@@ -779,6 +780,7 @@ rm -rf "$HOME/.codex/sessions/2026/09" "$HOME/.codex/sessions/2026/10/17"
 # 2. A lane whose file shows up after the timeout keeps its id: the next lane does not take it.
 cat > "$WORK/codex-late" <<'EOF2'
 #!/usr/bin/env bash
+[ "${1:-}" = --help ] && exit 0   # the launcher's --no-daemon probe runs the agent with --help: this stub must not run its body then
 case "$AW_META_LANE" in la) sleep 3.5 ;; *) sleep 1.8 ;; esac
 id="$(cat /proc/sys/kernel/random/uuid 2> /dev/null || uuidgen | tr '[:upper:]' '[:lower:]')"
 mkdir -p "$HOME/.codex/sessions/2026/10/18"
