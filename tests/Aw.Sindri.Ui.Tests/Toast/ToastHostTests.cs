@@ -1,8 +1,8 @@
+using Avalonia.Input;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels.Toast;
 using Aw.Sindri.Ui.Views.Shell;
-using Avalonia.Input;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Toast;
