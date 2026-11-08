@@ -6,9 +6,6 @@ internal enum ReviewFixOutcome
     /// <summary>Not sent.</summary>
     None,
 
-    /// <summary>A babysitter instance watching the PR took the thread.</summary>
-    Babysitter,
-
     /// <summary>A live session on the head branch took it.</summary>
     Session,
 

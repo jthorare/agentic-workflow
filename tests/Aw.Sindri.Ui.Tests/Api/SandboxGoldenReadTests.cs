@@ -3,7 +3,6 @@ using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Sessions;
-using Aw.Sindri.Ui.Api.Workflow;
 using Aw.Sindri.Ui.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Api;
@@ -44,33 +43,5 @@ public sealed class SandboxGoldenReadTests
         var failed = Read<LaunchView>("launches-id", "sandbox-failed");
 
         Assert.Equal(("SND-LAUNCH-014", "no-bwrap"), (failed.Code, failed.Reason));
-    }
-
-    [Fact]
-    public void A_park_row_carries_the_blocker_and_its_gray_state()
-    {
-        var red = Assert.Single(Read<NeedsYouList>("needs-you", "sandbox-park-no-bwrap").Rows).Sandbox!;
-        var gray = Assert.Single(Read<NeedsYouList>("needs-you", "sandbox-park-unsupported").Rows).Sandbox!;
-
-        Assert.Equal(("no-bwrap", null, "sudo apt install bubblewrap"), (red.Reason, red.State, red.Command));
-        Assert.Equal(("unsupported-platform", "gray", null), (gray.Reason, gray.State, gray.Command));
-    }
-
-    [Fact]
-    public void An_instance_status_waiting_for_a_slot_says_how_many_run()
-    {
-        var status = Read<StatusFields>("workflow-status", "sandbox-waiting-for-slot");
-
-        Assert.Equal((3, 3), (status.Run!.WaitingForSlot!.Running, status.Run.WaitingForSlot.Cap));
-    }
-
-    [Fact]
-    public void A_limit_ending_event_carries_the_kind_the_limit_and_the_kept_branch_when_there_is_one()
-    {
-        var memory = Read<InstanceEventsView>("workflow-instance-events", "sandbox-limit-memory-branch").Events[^1].Transition!;
-        var wall = Read<InstanceEventsView>("workflow-instance-events", "sandbox-limit-wall-no-branch").Events[^1].Transition!;
-
-        Assert.Equal(("limit", "memory", "12GiB", "1260", "sindri/itm-0f-review-1"), (memory.Reason, memory.Limit!.Kind, memory.Limit.Limit, memory.Limit.Elapsed, memory.Limit.Branch));
-        Assert.Equal(("wall", "40m", null), (wall.Limit!.Kind, wall.Limit.Limit, wall.Limit.Branch));
     }
 }

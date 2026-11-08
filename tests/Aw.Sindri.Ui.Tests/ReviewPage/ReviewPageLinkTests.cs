@@ -4,7 +4,6 @@ using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Reviews;
 using Aw.Sindri.Ui.ViewModels.Shell;
-using Aw.Sindri.Ui.ViewModels.Workflows;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.ReviewPage;
@@ -64,7 +63,7 @@ public sealed class ReviewPageLinkTests
         list.SetShown(shown: true);
         await list.Refresh(new Uri("http://127.0.0.1:7410/"), Token);
         var row = list.Groups[0].Sections[0].Rows[0];
-        OpenRequestedEventArgs? asked = null;
+        ReviewOpenRequestedEventArgs? asked = null;
         list.OpenRequested += (_, e) => asked = e;
 
         list.OpenRow(row);

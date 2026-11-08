@@ -47,8 +47,7 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
         var (entries, pulls, scan) = world.Value;
         var inspection = new Inspection(team, paths, pulls, scan, DateTimeOffset.TryParse(since.Value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var start) ? start : null, cancellationToken)
         {
-            IncludeNoPr = scope.IncludeNoPr,
-            Discarded = scope.Discarded,
+            Scope = scope,
         };
         var reports = new List<WorktreeReport>();
         foreach (var entry in entries)
@@ -153,7 +152,7 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
         }
 
         var composed = Compose(inspection, entry, gatePr, pull, git.Value with { Changed = changed.Value });
-        if (!inspection.Discarded)
+        if (!inspection.Scope.Discarded)
         {
             return composed;
         }
@@ -231,7 +230,8 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
             NoPreviousSweep = inspection.Since is null,
             PrNumber = gatePr is null ? pull?.Number : null,
             PrState = pull?.State,
-            KeepNoPr = !inspection.IncludeNoPr,
+            Done = inspection.Scope.Done,
+            KeepNoPr = !inspection.Scope.IncludeNoPr,
             GatePr = gatePr,
             HeadIsGateMerge = gatePr is not null && git.Committer == GateCommitter,
             GateRunning = gatePr is { } running && inspection.Scan.Any(p => !p.IsInvoker && Runs(p.Command, running)),
@@ -266,9 +266,7 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
     {
         internal DateTimeOffset? Since { get; } = since;
 
-        internal bool IncludeNoPr { get; init; }
-
-        internal bool Discarded { get; init; }
+        internal WorktreeScope Scope { get; init; } = WorktreeScope.All;
 
         internal CancellationToken Cancellation { get; } = cancellation;
 

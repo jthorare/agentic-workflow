@@ -13,7 +13,6 @@ internal sealed partial class SessionSheetView : UserControl
         InitializeComponent();
     }
 
-    private void OnOpenFrame(object? sender, RoutedEventArgs e) => (DataContext as SessionSheetViewModel)?.OpenFrame();
 
     private void OnCopyRef(object? sender, RoutedEventArgs e)
     {

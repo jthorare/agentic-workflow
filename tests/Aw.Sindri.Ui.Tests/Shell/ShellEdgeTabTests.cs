@@ -3,7 +3,6 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
-using Aw.Sindri.Ui.ViewModels.Instance;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Microsoft.Extensions.Time.Testing;
 
@@ -28,7 +27,7 @@ public sealed partial class ShellEdgeTabTests
         var shell = new ShellViewModel(_records, _server, _clock, new Preferences(new InMemoryPreferencesStore()), new FakeClipboard());
         await shell.Restore(Token);
         _ = shell.Run(Token);
-        await ShellWait.Until(shell, () => shell.State == ShellState.Normal && shell.Workflows.Groups.Count > 0, Token);
+        await ShellWait.Until(shell, () => shell.State == ShellState.Normal, Token);
         return shell;
     }
 
@@ -49,24 +48,6 @@ public sealed partial class ShellEdgeTabTests
     }, Token);
 
     [Fact]
-    public Task A_workflow_sheets_edge_tab_reads_the_kind_word_before_its_title_loads_and_the_title_after() => UiThread.Run(async () =>
-    {
-        var shell = await Connected();
-        var detail = FixtureInstances.Detail("project-build");
-        var gate = _server.InstanceGates[detail.Id] = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        shell.OpenInstance(detail.Address, id: null);
-        shell.CloseSheet();
-        Assert.Equal(Labels.EdgeTabWorkflowRun, shell.EdgeTabText);
-        Assert.DoesNotMatch(RawAddress, shell.EdgeTabText);
-
-        gate.SetResult();   // the held instance read is served (the list already named its id)
-        await ShellWait.Until(shell, () => shell.Instance.Phase == FramePhase.Shown && shell.Instance.Address == detail.Address, Token);
-        Assert.Equal(detail.Title, shell.EdgeTabText);
-        Assert.DoesNotMatch(RawAddress, shell.EdgeTabText);
-    }, Token);
-
-    [Fact]
     public Task An_item_sheets_edge_tab_name_reads_Reopen_item_then_the_items_title_never_the_address() => UiThread.Run(async () =>
     {
         var shell = await Connected();
@@ -82,39 +63,6 @@ public sealed partial class ShellEdgeTabTests
         Assert.Contains("Try the queue", shell.EdgeTabName, StringComparison.Ordinal);
         Assert.DoesNotContain(A.NewItem, shell.EdgeTabName, StringComparison.Ordinal);
         Assert.DoesNotMatch(RawAddress, shell.EdgeTabName);
-    }, Token);
-
-    [Fact]
-    public Task A_workflow_sheets_edge_tab_name_reads_Reopen_workflow_then_the_runs_title_never_the_address() => UiThread.Run(async () =>
-    {
-        var shell = await Connected();
-        var detail = FixtureInstances.Detail("project-build");
-        var gate = _server.InstanceGates[detail.Id] = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        shell.OpenInstance(detail.Address, id: null);
-        shell.CloseSheet();
-        Assert.Equal(Labels.Reopen + " workflow", shell.EdgeTabName);
-        Assert.DoesNotContain(detail.Address, shell.EdgeTabName, StringComparison.Ordinal);
-
-        gate.SetResult();   // the held instance read is served (the list already named its id)
-        await ShellWait.Until(shell, () => shell.Instance.Phase == FramePhase.Shown && shell.Instance.Address == detail.Address, Token);
-        Assert.Contains(detail.Title, shell.EdgeTabName, StringComparison.Ordinal);
-        Assert.DoesNotContain(detail.Address, shell.EdgeTabName, StringComparison.Ordinal);
-        Assert.DoesNotMatch(RawAddress, shell.EdgeTabName);
-    }, Token);
-
-    [Fact]
-    public Task A_workflow_type_sheets_edge_tab_reads_the_workflows_name_never_the_recipe_id() => UiThread.Run(async () =>
-    {
-        var shell = await Connected();
-        Assert.True(DeepLink.TryParse("recipe/workflow.scoping", out var parsed));
-
-        shell.Navigate(parsed);
-        shell.CloseSheet();
-
-        Assert.NotEmpty(shell.Recipe.Title);   // the sheet's title, which is never the id
-        Assert.Equal(shell.Recipe.Title, shell.EdgeTabText);
-        Assert.DoesNotContain("workflow.scoping", shell.EdgeTabText, StringComparison.Ordinal);
     }, Token);
 
     [Theory]
