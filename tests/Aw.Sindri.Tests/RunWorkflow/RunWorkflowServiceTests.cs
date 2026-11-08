@@ -21,13 +21,14 @@ public sealed class RunWorkflowServiceTests
     private readonly FakeTimeProvider _clock = new();
     private readonly InMemoryWorkflowStore _workflows;
     private readonly InMemoryWorkflowRunStore _runs;
-    private readonly FakeStarter _starter = new();
+    private readonly FakeStarter _starter;
     private readonly RunWorkflowService _service;
 
     public RunWorkflowServiceTests()
     {
         _workflows = new InMemoryWorkflowStore(_clock);
         _runs = new InMemoryWorkflowRunStore(_clock);
+        _starter = new FakeStarter(_runs, _clock);
         _service = new RunWorkflowService(_workflows, _runs, _starter);
     }
 
@@ -124,16 +125,25 @@ public sealed class RunWorkflowServiceTests
         }
     }
 
-    private sealed class FakeStarter : IGraphRunStarter
+    /// <summary>Like the real starter, it admits the run into the store, so the next manual run sees it; a set <see cref="Answer"/> stands in for a queue or skip answer and admits nothing.</summary>
+    private sealed class FakeStarter(InMemoryWorkflowRunStore runs, TimeProvider clock) : IGraphRunStarter
     {
         public List<GraphStartRequest> Requests { get; } = [];
 
-        public GraphStartKind Answer { get; set; } = GraphStartKind.Started;
+        public GraphStartKind? Answer { get; set; }
 
-        public ValueTask<Result<GraphStart>> Start(GraphStartRequest request, CancellationToken cancellationToken)
+        public async ValueTask<Result<GraphStart>> Start(GraphStartRequest request, CancellationToken cancellationToken)
         {
             Requests.Add(request);
-            return ValueTask.FromResult<Result<GraphStart>>(new GraphStart(Answer, WorkflowRunId.Of(request.Slug, request.Revision, request.Occurrence)));
+            var id = WorkflowRunId.Of(request.Slug, request.Revision, request.Occurrence);
+            if (Answer is { } fixedAnswer)
+            {
+                return new GraphStart(fixedAnswer, id);
+            }
+
+            var run = new WorkflowRun(id, request.Workflow, request.Revision, request.Trigger, WorkflowRunStatus.Running, Outputs: null, Error: null, ItemId: null, clock.GetUtcNow(), EndedAt: null);
+            var admitted = await runs.Admit(run, request.Concurrency, cancellationToken);
+            return admitted.IsError ? admitted.Error : new GraphStart(admitted.Value, id);
         }
     }
 }
