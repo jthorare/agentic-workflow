@@ -1,0 +1,125 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:todo="using:Aw.Sindri.Ui.ViewModels.Todo"
+             x:Class="Aw.Sindri.Ui.Views.Todo.AttentionArea"
+             x:DataType="todo:TodoPanelViewModel">
+  <UserControl.Styles>
+    <!-- An attention row wears the attention tint with a 3 px bar on its left, a shape as well as a colour (todo spec §3.1, D13). -->
+    <Style Selector="Border.attention-row">
+      <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Attention}" />
+      <Setter Property="BorderThickness" Value="3,1,0,0" />
+      <Setter Property="Padding" Value="13,0,16,0" />
+    </Style>
+    <Style Selector="Border.attention-row:focus-visible">
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
+      <Setter Property="BorderThickness" Value="3,2,2,2" />
+      <Setter Property="Padding" Value="13,0,14,0" />
+    </Style>
+    <Style Selector="Border.attention-form">
+      <Setter Property="Padding" Value="13,12,16,12" />
+    </Style>
+    <Style Selector="Border.attention-form:focus-visible">
+      <Setter Property="Padding" Value="13,11,14,11" />
+    </Style>
+    <Style Selector="Border.attention-card">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="{StaticResource Radius.LG}" />
+      <Setter Property="Padding" Value="12" />
+    </Style>
+  </UserControl.Styles>
+  <!-- The attention area of the Todo panel (todo spec §3.1, §3.3, D13): the shown row as one line, or open to its full form (two columns and a button each, or the
+       hold's changes and its two buttons), and the "Sort out N more" line under it. Enter on the line opens it, the digits pick, Esc folds it (ShellWindow.TodoKeys.cs). -->
+  <StackPanel x:Name="TodoAttention" IsVisible="{Binding HasAttention}">
+    <Border x:Name="TodoAttentionLine" Classes="item-row attention-row" Focusable="True" DataContext="{Binding Attention}" x:DataType="todo:AttentionRowViewModel"
+            IsVisible="{Binding !IsOpen}" AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+      <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12" VerticalAlignment="Center">
+        <TextBlock x:Name="TodoAttentionLineText" Classes="body-strong" Text="{Binding Line}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                   ToolTip.Tip="{Binding Line}" AutomationProperties.AccessibilityView="Raw" />
+        <TextBlock x:Name="TodoAttentionNotice" Grid.Column="1" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding Notice}" TextTrimming="CharacterEllipsis"
+                   MaxWidth="260" IsVisible="{Binding Notice, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.LiveSetting="Polite" />
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
+          <Border Classes="kbd" VerticalAlignment="Center">
+            <TextBlock x:Name="TodoAttentionEnterKey" Classes="kbd" Text="{Binding EnterKey}" />
+          </Border>
+          <TextBlock x:Name="TodoAttentionHint" Classes="caption" Text="{Binding EnterHint}" VerticalAlignment="Center" />
+        </StackPanel>
+      </Grid>
+    </Border>
+    <Border x:Name="TodoAttentionForm" Classes="item-row attention-row attention-form" Focusable="True" DataContext="{Binding Attention}" x:DataType="todo:AttentionRowViewModel"
+            IsVisible="{Binding IsOpen}" AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+      <StackPanel Spacing="10">
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+          <TextBlock x:Name="TodoAttentionTitle" Classes="body-strong" Text="{Binding Title}" TextWrapping="Wrap" VerticalAlignment="Center" />
+          <TextBlock x:Name="TodoAttentionMeta" Grid.Column="1" Classes="caption subtle" Text="{Binding Meta}" TextWrapping="Wrap" MaxWidth="420" TextAlignment="Right"
+                     IsVisible="{Binding IsConflict}" VerticalAlignment="Center" />
+        </Grid>
+        <!-- The hold's changes, one line each (the first five). -->
+        <StackPanel IsVisible="{Binding IsHold}" Spacing="2">
+          <ItemsControl x:Name="TodoAttentionChanges" ItemsSource="{Binding Changes}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="x:String">
+                <TextBlock x:Name="TodoAttentionChange" Classes="caption" Text="{Binding}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock x:Name="TodoAttentionMoreChanges" Classes="caption subtle" Text="{Binding MoreChanges}" IsVisible="{Binding MoreChanges, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        </StackPanel>
+        <ItemsControl x:Name="TodoAttentionChoices" ItemsSource="{Binding Choices}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <UniformGrid Columns="2" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="todo:AttentionChoiceViewModel">
+              <Border Classes="attention-card" Margin="0,0,8,0">
+                <StackPanel Spacing="8">
+                  <TextBlock x:Name="TodoAttentionHeading" Classes="eyebrow" Text="{Binding Heading}" IsVisible="{Binding Heading, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                  <ItemsControl ItemsSource="{Binding Fields}" IsVisible="{Binding HasFields}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="todo:AttentionFieldViewModel">
+                        <StackPanel Spacing="2" Margin="0,0,0,6">
+                          <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Classes="caption subtle" Text="{Binding Label}" VerticalAlignment="Center" />
+                            <Border Classes="phrase-chip">
+                              <TextBlock x:Name="TodoAttentionMark" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding Mark}" />
+                            </Border>
+                          </StackPanel>
+                          <TextBlock x:Name="TodoAttentionFieldValue" Classes="body" Foreground="{DynamicResource Brush.Attention}" Text="{Binding Value}" TextWrapping="Wrap" MaxLines="3"
+                                     TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Value}" />
+                        </StackPanel>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <Button Classes="attention-button command-control" HorizontalAlignment="Left" AutomationProperties.Name="{Binding ButtonName}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                      <Border Classes="kbd" VerticalAlignment="Center">
+                        <TextBlock x:Name="TodoAttentionKey" Classes="kbd" Text="{Binding Key}" AutomationProperties.AccessibilityView="Raw" />
+                      </Border>
+                      <TextBlock Classes="body-strong" Text="{Binding ButtonText}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+                    </StackPanel>
+                  </Button>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock x:Name="TodoAttentionFormNotice" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding Notice}" TextWrapping="Wrap"
+                   IsVisible="{Binding Notice, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.LiveSetting="Polite" />
+      </StackPanel>
+    </Border>
+    <!-- "Sort out 2 more": the next attention row, one slot under the shown one. Enter shows it and folds this one. -->
+    <Border x:Name="TodoAttentionMore" Classes="item-row attention-row" Focusable="True" IsVisible="{Binding HasMore}" AutomationProperties.Name="{Binding MoreName}"
+            AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" VerticalAlignment="Center">
+        <TextBlock x:Name="TodoAttentionMoreText" Classes="body" Text="{Binding MoreText}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+        <Border Grid.Column="1" Classes="kbd" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
+          <TextBlock Classes="kbd" Text="{Binding MoreKey}" />
+        </Border>
+      </Grid>
+    </Border>
+  </StackPanel>
+</UserControl>

@@ -1,4 +1,3 @@
-using System.Runtime.ExceptionServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -7,6 +6,7 @@ using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.ViewModels.Todo;
 using Aw.Sindri.Ui.Views.NeedsYou;
+using Aw.Sindri.Ui.Views.Todo;
 
 namespace Aw.Sindri.Ui.Views.Shell;
 
@@ -21,10 +21,14 @@ internal sealed partial class ShellWindow
         if (on)
         {
             shell.Todo.FocusRequested += OnTodoFocus;
+            shell.Todo.AttentionButtonsRequested += OnAttentionButtons;
+            shell.Todo.Picked += OnTodoPicked;
         }
         else
         {
             shell.Todo.FocusRequested -= OnTodoFocus;
+            shell.Todo.AttentionButtonsRequested -= OnAttentionButtons;
+            shell.Todo.Picked -= OnTodoPicked;
         }
     }
 
@@ -44,7 +48,7 @@ internal sealed partial class ShellWindow
             return TabBetweenRegions(shell, e.KeyModifiers, focused);
         }
 
-        return TodoPanelOf(focused) is { } panel && PanelKey(shell, panel, focused, e);
+        return TodoPanelOf(focused) is { } panel && (AttentionKey(shell, focused, e) || PanelKey(shell, panel, focused, e));
     }
 
     // Tab or Shift+Tab in the panel goes to the Needs you list (its selected row, else the first); Shift+Tab on the first Needs you row comes back to the panel.
@@ -164,18 +168,7 @@ internal sealed partial class ShellWindow
     {
         if (row is not null)
         {
-            // A fault is thrown again on the UI thread, as an event handler's would be, instead of being dropped.
-            _ = act(row.Id).ContinueWith(
-                static done =>
-                {
-                    if (done.Exception?.GetBaseException() is { } fault)
-                    {
-                        ExceptionDispatchInfo.Throw(fault);
-                    }
-                },
-                CancellationToken.None,
-                TaskContinuationOptions.OnlyOnFaulted,
-                TaskScheduler.FromCurrentSynchronizationContext());
+            TaskFaults.Rethrow(act(row.Id));
         }
 
         return true;
@@ -198,13 +191,24 @@ internal sealed partial class ShellWindow
     // The panel's focus stops: the todo rows, Show all, Show done and the From elsewhere line.
     private static bool IsPanelStop(InputElement c) =>
         c is { Focusable: true, IsEffectivelyVisible: true, IsEffectivelyEnabled: true }
-        && (c is Border b ? b.Classes.Contains("todo-row") || string.Equals(b.Name, "ElsewhereFrame", StringComparison.Ordinal)
+        && (c is Border b ? b.Classes.Contains("todo-row") || string.Equals(b.Name, "ElsewhereFrame", StringComparison.Ordinal) || IsAttentionName(b.Name)
             : c is Button && (string.Equals(c.Name, "TodoShowAll", StringComparison.Ordinal) || string.Equals(c.Name, "TodoDoneToggle", StringComparison.Ordinal)));
 
-    // Esc folds the expanded panel (after the chord, the quick-add box and the layers above); focus stays on the same todo, else the panel.
+    // Esc leaves an open attention row's buttons (it folds to its line), then folds the expanded panel (after the chord, the quick-add box and the layers above); focus stays on the same todo, else the panel.
     private bool EscapeTodoPanel(ShellViewModel shell)
     {
-        if (!shell.IsHomeShown || shell.IsSheetShown || !shell.Todo.IsExpanded)
+        if (!shell.IsHomeShown || shell.IsSheetShown)
+        {
+            return false;
+        }
+
+        if (FocusManager?.GetFocusedElement() is Visual focused && TodoPanelOf(focused) is not null && shell.Todo.CloseAttention())
+        {
+            Dispatcher.UIThread.Post(() => FocusAttentionLine(fallback: true), DispatcherPriority.Loaded);
+            return true;
+        }
+
+        if (!shell.Todo.IsExpanded)
         {
             return false;
         }
