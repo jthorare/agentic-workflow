@@ -1,8 +1,11 @@
 using Aw.Sindri.Core.Challenges;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Features.AddConnection;
+using Aw.Sindri.Features.AddTodo;
+using Aw.Sindri.Features.ChangeTodo;
 using Aw.Sindri.Features.Decide;
 using Aw.Sindri.Features.FileRequest;
+using Aw.Sindri.Features.MarkTodo;
 using Aw.Sindri.Features.RemoveConnection;
 using Aw.Sindri.Features.TestConnection;
 
@@ -10,7 +13,7 @@ namespace Aw.Architecture.Tests;
 
 /// <summary>
 /// The MCP surface (API spec §8, engine spec §4.2): the sindri_* and context_* tools reach queries and the one request
-/// command, so the endpoint can't even attempt a decision, a desk, protected or job action, and it never carries a
+/// command (and, todos excepted, the six todo writes: todo spec D2), so the endpoint can't even attempt a decision, a desk, protected or job action, and it never carries a
 /// challenge answer or the launch secret. Read from the Sindri host's catalog, the one table the command chain reads.
 /// </summary>
 [Trait("Lane", "integration")]
@@ -32,6 +35,10 @@ public sealed class McpSurfaceTests
             typeof(AddConnectionRequest).FullName!,
             typeof(TestConnectionRequest).FullName!,
             typeof(RemoveConnectionRequest).FullName!,
+            // why: todo spec D2 (Ph1b): a todo list can't change anything outside Sindri, so agents get the six todo writes (add, change, done, reopen, remove, restore), all request class; MarkTodoRequest carries the last four
+            typeof(AddTodoRequest).FullName!,
+            typeof(ChangeTodoRequest).FullName!,
+            typeof(MarkTodoRequest).FullName!,
         };
         var commands = catalog.Select(r => r.CommandType?.FullName).OfType<string>().Where(n => !allowed.Contains(n)).ToHashSet(StringComparer.Ordinal);
         // why: catalog routes are templates ('/sindri/decisions/{decisionId}'); code that builds one loads only the text before the first '{'
@@ -58,7 +65,7 @@ public sealed class McpSurfaceTests
             .ToList();
 
         Assert.True(found.Count == 0, string.Join(Environment.NewLine, found)
-            + $". Fix: the MCP tools call queries and {nameof(FileRequestRequest)} only; a human decides, desks and approves (API spec §8, engine spec §4.2)");
+            + $". Fix: the MCP tools call queries and {nameof(FileRequestRequest)} only; a human decides, desks and approves, todos excepted (API spec §8, engine spec §4.2, todo spec D2)");
     }
 
     [Fact]
