@@ -13,7 +13,7 @@ internal static class TodoScenarios
     private static readonly string[] _markSlugs = ["todos-done", "todos-reopen", "todos-remove", "todos-restore"];
 
     /// <summary>The (slug, scenario) pairs of this class.</summary>
-    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos", "show"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted")];
+    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-id", "show"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted")];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
     public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario));
@@ -43,7 +43,7 @@ internal static class TodoScenarios
             return await Mark(host, human, slug, scenario, ct);
         }
 
-        if (slug == "todos" && scenario == "show")
+        if (slug == "todos-id")
         {
             return await Show(host, human, ct);
         }
