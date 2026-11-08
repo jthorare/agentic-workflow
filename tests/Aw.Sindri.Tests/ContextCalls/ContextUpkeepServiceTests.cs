@@ -20,7 +20,7 @@ public sealed class ContextUpkeepServiceTests
     {
         _h.Clock.SetUtcNow(_now);
         var grant = await _h.HoldLease();
-        return await new ContextUpkeepService(EngineProxy.Of(FakeContextEngine.WithUpkeep(upkeep))).Run(new ScheduledRun(grant, _now), Ct);
+        return await new ContextUpkeepService(EngineProxy.Of(FakeContextEngine.WithUpkeep(upkeep)), new NoStoreCheckpoints()).Run(new ScheduledRun(grant, _now), Ct);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -74,5 +74,11 @@ public sealed class ContextUpkeepServiceTests
 
         Assert.True(result.IsError);
         Assert.Equal("SND-CONTEXT-004", result.Error.Code);
+    }
+
+    private sealed class NoStoreCheckpoints : IStoreCheckpoints
+    {
+        public ValueTask<IReadOnlyList<StoreCheckpoint>> Run(CancellationToken cancellationToken) =>
+            ValueTask.FromResult<IReadOnlyList<StoreCheckpoint>>([]);
     }
 }

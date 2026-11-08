@@ -56,6 +56,12 @@ internal sealed class TodoPanelViewModel : ObservableObject, IDisposable
     /// <summary>"11 open · 1 overdue", plus "· 1 to sort out" while a conflict is open.</summary>
     public string CountLine { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>Open todos due before today (the tray's tooltip).</summary>
+    public int OverdueCount { get; private set => Set(ref field, value); }
+
+    /// <summary>Todos with an open both-places conflict (the tray's tooltip).</summary>
+    public int ToSortOutCount { get; private set => Set(ref field, value); }
+
     /// <summary>True when no todo is open.</summary>
     public bool IsEmpty { get; private set => Set(ref field, value); }
 
@@ -207,7 +213,9 @@ internal sealed class TodoPanelViewModel : ObservableObject, IDisposable
     {
         var open = split.Open.Count;
         var listed = split.Done.Count + split.Removed.Count;
-        CountLine = Labels.TodoCountLine(open, split.Overdue.Count, todos.Count(t => t.Conflict is not null));
+        var toSortOut = todos.Count(t => t.Conflict is not null);
+        (OverdueCount, ToSortOutCount) = (split.Overdue.Count, toSortOut);
+        CountLine = Labels.TodoCountLine(open, split.Overdue.Count, toSortOut);
         (IsEmpty, EmptyText) = (open == 0, open == 0 ? Labels.TodoEmpty : string.Empty);
         (ShowsShowAll, ShowAllText) = (!IsExpanded && open > CollapsedRows, Labels.TodoShowAll(open));
         DoneToggleText = ShowsDone ? Labels.TodoHideDone : Labels.TodoShowDone;

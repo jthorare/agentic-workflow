@@ -167,13 +167,14 @@ rev down >/dev/null 2>&1; check "down after that exits 0" "$?" "0"
 contains "down keeps the review: block up did not add" "$(cat "$PJ/profile/profile.yaml")" "login: fx-viewer"
 lacks "down still removes the forge up added" "$(cat "$PJ/profile/profile.yaml")" "forge:"
 
-# After line-run the profile has a forge.test-only forge, which can't reach the github.com PR: up refuses and says why.
+# After another verb's forge.test-only forge is in the profile, up can't reach the github.com PR: it refuses and says why.
 printf 'schemaVersion: 1\nuser: fixture\nservices:\n  heartbeat: { every: 5s }\nworkflow:\n  forge: { adapter: file, hosts: [forge.test] }\n' > "$PJ/profile/profile.yaml"
 : > "$FORGE_LOG"
-rev up >/dev/null 2>"$WORK/err-forge"; check "up after line-run's forge.test forge exits 2" "$?" "2"
-contains "the refusal names line-run" "$(cat "$WORK/err-forge")" "line-run"
+rev up >/dev/null 2>"$WORK/err-forge"; check "up with a forge.test-only forge exits 2" "$?" "2"
+contains "the refusal says the forge is without github.com" "$(cat "$WORK/err-forge")" "without github.com"
+contains "the refusal names the forge line" "$(cat "$WORK/err-forge")" "hosts: [forge.test]"
 check "the refusal opens no forge PR" "$(grep -c '^open ' "$FORGE_LOG")" "0"
-contains "the refusal leaves line-run's forge in place" "$(cat "$PJ/profile/profile.yaml")" "hosts: [forge.test]"
+contains "the refusal leaves the forge.test forge in place" "$(cat "$PJ/profile/profile.yaml")" "hosts: [forge.test]"
 
 if [ "$fail" -eq 0 ]; then echo "all checks passed"; else echo "some checks FAILED"; fi
 exit "$fail"

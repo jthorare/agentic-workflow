@@ -48,6 +48,12 @@ internal sealed partial class ShellViewModel
         }
 
         CancelChord();
+        if (string.Equals(key, "T", StringComparison.OrdinalIgnoreCase))
+        {
+            OpenTodo();   // G T: Home with focus on the Todo panel (todo spec §3.3)
+            return true;
+        }
+
         if (SecondKey(key) is not { } target)
         {
             return false;
