@@ -222,4 +222,35 @@ public sealed class FromElsewhereTests
 
         Assert.Equal("1 need you, below", line.Text);
     }
+
+    [Fact]
+    public async Task Feeding_the_same_values_again_raises_nothing()
+    {
+        Assigned(1);
+        var line = await Ready(reviews: 2, needsYou: 3);
+        var parts = line.Parts;
+        var raised = new List<string?>();
+        line.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+        line.SetReviews(loading: false, waiting: 2, failed: false);
+        line.SetNeedsYou(3);
+        await line.Refresh(_url, Token);
+
+        Assert.Empty(raised);
+        Assert.Same(parts, line.Parts);
+    }
+
+    [Fact]
+    public async Task A_changed_count_still_raises_Parts_and_Text()
+    {
+        Assigned(1);
+        var line = await Ready(reviews: 2, needsYou: 3);
+        var raised = new List<string?>();
+        line.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+        line.SetNeedsYou(4);
+
+        Assert.Contains(raised, r => string.Equals(r, nameof(FromElsewhereViewModel.Parts), StringComparison.Ordinal));
+        Assert.Contains(raised, r => string.Equals(r, nameof(FromElsewhereViewModel.Text), StringComparison.Ordinal));
+    }
 }

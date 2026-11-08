@@ -11,9 +11,14 @@ internal static partial class Labels
     /// <summary>The Undo button's name for a screen reader.</summary>
     internal const string ToastUndoName = "Undo";
 
+    /// <summary>The plain toast after an Undo that did not work.</summary>
+    /// <param name="reason">Why.</param>
+    /// <returns>"Couldn't undo: reason".</returns>
+    internal static string ToastUndoFailed(string reason) => "Couldn't undo: " + reason;
+
     /// <summary>The Undo button's words on a toast with no countdown, with the key.</summary>
     /// <param name="macOS">Whether the app runs on macOS.</param>
-    /// <returns>The words.</returns>
+    /// <returns>"Undo (Ctrl+Z)" or "Undo (⌘Z)".</returns>
     internal static string ToastUndo(bool macOS) => macOS ? "Undo (⌘Z)" : "Undo (Ctrl+Z)";
 
     /// <summary>The Undo button's words on a toast that counts down.</summary>

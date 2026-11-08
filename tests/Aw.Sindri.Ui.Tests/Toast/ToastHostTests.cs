@@ -19,13 +19,13 @@ public sealed class ToastHostTests
     private ToastMessage Plain(string text) => new(text, () =>
     {
         _undone.Add(text);
-        return Task.CompletedTask;
+        return Task.FromResult<string?>(null);
     });
 
     private ToastMessage Pick(string text, int seconds = 10) => new(text, () =>
     {
         _undone.Add(text);
-        return Task.CompletedTask;
+        return Task.FromResult<string?>(null);
     }, ToastKind.Pick, seconds);
 
     private void Wait(int seconds)
@@ -271,5 +271,51 @@ public sealed class ToastHostTests
 
         Assert.Equal("Done. Undo with Command Z", host.Announcement);
         Assert.Equal("Undo (⌘Z)", host.UndoLabel);
+    }
+
+    [Fact]
+    public void A_plain_toast_that_starts_while_the_pointer_is_on_the_host_is_paused()
+    {
+        var host = Host();
+        host.SetPointerOver(over: true);
+
+        host.Show(Plain("Done."));
+
+        Assert.True(host.IsPaused);
+    }
+
+    [Fact]
+    public void A_toast_that_waited_behind_a_pick_starts_paused_when_focus_is_on_the_host()
+    {
+        var host = Host();
+        host.Show(Pick("Kept mine.", 3));
+        host.Show(Plain("Done."));
+        host.SetFocused(focused: true);
+
+        Wait(3);
+
+        Assert.Equal(("Done.", true), (host.Text, host.IsPaused));
+    }
+
+    [Fact]
+    public async Task An_Undo_that_throws_shows_Couldnt_undo_with_the_reason_in_a_plain_toast()
+    {
+        var host = Host();
+        host.Show(new ToastMessage("Done.", () => throw new InvalidOperationException("gone")));
+
+        Assert.True(await host.Undo());
+
+        Assert.Equal(("Couldn't undo: gone", false), (host.Text, host.HasUndo));
+    }
+
+    [Fact]
+    public async Task An_Undo_that_returns_a_reason_shows_it_the_same_way()
+    {
+        var host = Host();
+        host.Show(new ToastMessage("Done.", () => Task.FromResult<string?>("Changed since.")));
+
+        Assert.True(await host.Undo());
+
+        Assert.Equal(("Couldn't undo: Changed since.", false), (host.Text, host.HasUndo));
     }
 }

@@ -32,6 +32,20 @@ public sealed class ShortcutsViewModelTests
         Assert.All(sheet.Rows, r => Assert.Equal(r.Keys + ": " + r.Action, r.Name));
     }
 
+    [Fact]
+    public void The_sheet_lists_the_todo_keys()
+    {
+        var sheet = new ShortcutsViewModel(_catalog);
+
+        sheet.Open();
+
+        var rows = sheet.Rows.Select(r => (r.Keys, r.Action)).ToList();
+        Assert.Contains(("N", "New todo"), rows);
+        Assert.Contains(("⌘⇧N / Ctrl+Shift+N", "New todo from anywhere"), rows);
+        Assert.Contains(("⌘Z / Ctrl+Z", "Undo the last action"), rows);
+        Assert.Contains("T Todo on Home", sheet.Rows.Single(r => r.Keys.StartsWith("G then", StringComparison.Ordinal)).Action, StringComparison.Ordinal);
+    }
+
     // E-8: a catalog row's shortcut is listed with its label.
     [Fact]
     public void A_catalog_shortcut_is_listed_with_its_label()
