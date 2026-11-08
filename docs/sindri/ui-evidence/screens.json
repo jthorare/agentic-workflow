@@ -241,6 +241,13 @@
           "action": "launch"
         },
         {
+          "action": "click",
+          "target": {
+            "type": "ListBoxItem",
+            "name": "System"
+          }
+        },
+        {
           "action": "wait-for",
           "target": {
             "contains": "Check again"
