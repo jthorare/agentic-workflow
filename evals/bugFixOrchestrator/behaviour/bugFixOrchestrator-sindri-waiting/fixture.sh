@@ -2,6 +2,7 @@
 # Sindri block case: the shared fixture (two levels up, when the skill has one), then the two files the staged Result block reads
 # (scripts/skill-evals.sh, rewrite_stage) so the run sees AW_RESULT_SKILL and AW_RESULT_FILE as a Sindri Step would.
 set -eu
+export AW_GIT_MODE=full # the setup commits; the agent runs after this process, still readonly (as aw_fixture_repo)
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 mkdir -p .aw-eval .aw-state
 printf '%s\n' bugFixOrchestrator > .aw-eval/result-skill

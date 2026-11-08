@@ -44,7 +44,7 @@ public sealed class LinearConnectionCheckedTests
 
     private ContextLinearConnectionFacts Facts() => new(_profiles, _profiles, FakeContextEngine.Instance, new FakeLinearSideFacts(), _log);
 
-    private SaveLinearConnectionService Save() => new(new FakeLinearKeyChecks().Reading(new LinearConnectionTeamView("e1", "ENG", "Engineering")), _store, new FakeLinearConnectionApproval(), _profiles, _slice.Callers, _log, _clock);
+    private SaveLinearConnectionService Save() => new(new FakeLinearKeyChecks().Reading(new LinearConnectionTeamView("e1", "ENG", "Engineering")), _store, new FakeLinearConnectionApproval(), _slice.Callers, _log, _clock, LinearConnectionTestSupport.Guard(_profiles));
 
     private RemoveLinearWriteKeyService Remove() => new(_store, new FakeLinearConnectionApproval(), _profiles, _slice.Callers, _log);
 

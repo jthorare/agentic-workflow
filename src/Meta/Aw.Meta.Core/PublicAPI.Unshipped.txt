@@ -2073,9 +2073,8 @@ Aw.Meta.Core.Usage.UsageKind
 Aw.Meta.Core.Usage.UsageKind.Other = 3 -> Aw.Meta.Core.Usage.UsageKind
 Aw.Meta.Core.Usage.UsageKind.Session = 1 -> Aw.Meta.Core.Usage.UsageKind
 Aw.Meta.Core.Usage.UsageKind.Weekly = 2 -> Aw.Meta.Core.Usage.UsageKind
-Aw.Meta.Core.Usage.UsageMonitor
-Aw.Meta.Core.Usage.UsageMonitor.Check(Aw.Meta.Core.Config.TeamConfig! team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<string!>!>
-Aw.Meta.Core.Usage.UsageMonitor.UsageMonitor(Aw.Meta.Core.Usage.UsageReader! reader, Aw.Meta.Core.Usage.UsageWatcher! watcher) -> void
+Aw.Meta.Core.Poll.UsageMonitor
+Aw.Meta.Core.Poll.UsageMonitor.Check(Aw.Meta.Core.Config.TeamConfig! team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<string!>!>
 Aw.Meta.Core.Usage.UsageReader
 Aw.Meta.Core.Usage.UsageReader.Read(Aw.Meta.Core.Config.TeamConfig! team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Usage.UsageReading!>!>!>
 Aw.Meta.Core.Usage.UsageReader.ReadOrNull(Aw.Meta.Core.Config.TeamConfig? team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Usage.UsageReading!>?>
@@ -2208,3 +2207,181 @@ const Aw.Meta.Core.Messages.InboxState.Open = "open" -> string!
 static Aw.Meta.Core.Messages.InboxState.IsDeferred(Aw.Meta.Core.Messages.InboxMessage! message, System.DateTimeOffset now) -> bool
 static Aw.Meta.Core.Messages.InboxState.Of(Aw.Meta.Core.Messages.InboxMessage! message, bool owed, System.DateTimeOffset now) -> string!
 Aw.Meta.Core.Messages.InboxState
+Aw.Meta.Core.Config.LaneRoute
+Aw.Meta.Core.Config.LaneRoute.Agent.get -> string?
+Aw.Meta.Core.Config.LaneRoute.Agent.init -> void
+Aw.Meta.Core.Config.LaneRoute.<Clone>$() -> Aw.Meta.Core.Config.LaneRoute!
+Aw.Meta.Core.Config.LaneRoute.Deconstruct(out string? Agent, out string? Model) -> void
+Aw.Meta.Core.Config.LaneRoute.Equals(Aw.Meta.Core.Config.LaneRoute? other) -> bool
+Aw.Meta.Core.Config.LaneRoute.LaneRoute(string? Agent = null, string? Model = null) -> void
+Aw.Meta.Core.Config.LaneRoute.Model.get -> string?
+Aw.Meta.Core.Config.LaneRoute.Model.init -> void
+Aw.Meta.Core.Config.RoutingConfig
+Aw.Meta.Core.Config.RoutingConfig.AgentOf(string! model) -> string?
+Aw.Meta.Core.Config.RoutingConfig.<Clone>$() -> Aw.Meta.Core.Config.RoutingConfig!
+Aw.Meta.Core.Config.RoutingConfig.DefaultModel.get -> string?
+Aw.Meta.Core.Config.RoutingConfig.DefaultModel.init -> void
+Aw.Meta.Core.Config.RoutingConfig.Equals(Aw.Meta.Core.Config.RoutingConfig? other) -> bool
+Aw.Meta.Core.Config.RoutingConfig.EquivalentOf(string! model) -> string?
+Aw.Meta.Core.Config.RoutingConfig.Equivalents.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Meta.Core.Config.RoutingConfig.Equivalents.init -> void
+Aw.Meta.Core.Config.RoutingConfig.Lanes.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Meta.Core.Config.LaneRoute!>!
+Aw.Meta.Core.Config.RoutingConfig.Lanes.init -> void
+Aw.Meta.Core.Config.RoutingConfig.MinRemainingPct.get -> int
+Aw.Meta.Core.Config.RoutingConfig.MinRemainingPct.init -> void
+Aw.Meta.Core.Config.RoutingConfig.Models.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>!
+Aw.Meta.Core.Config.RoutingConfig.Models.init -> void
+Aw.Meta.Core.Config.RoutingConfig.RoutingConfig(System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>? models = null, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? equivalents = null, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Meta.Core.Config.LaneRoute!>? lanes = null, string? defaultModel = null, bool switchWhenLimited = true, int minRemainingPct = 10) -> void
+Aw.Meta.Core.Config.RoutingConfig.SwitchWhenLimited.get -> bool
+Aw.Meta.Core.Config.RoutingConfig.SwitchWhenLimited.init -> void
+Aw.Meta.Core.Config.TeamConfig.Routing.get -> Aw.Meta.Core.Config.RoutingConfig!
+Aw.Meta.Core.Config.TeamConfig.Routing.init -> void
+Aw.Meta.Core.Ports.ICodexRollouts
+Aw.Meta.Core.Ports.ICodexRollouts.Tail(Aw.Meta.Core.Ids.SessionId session, int maxBytes, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Ports.TranscriptTail?>!>
+Aw.Meta.Core.Routing.CodexRateLimits
+Aw.Meta.Core.Routing.LaneStanding
+Aw.Meta.Core.Routing.LaneStanding.Agent.get -> string!
+Aw.Meta.Core.Routing.LaneStanding.Agent.init -> void
+Aw.Meta.Core.Routing.LaneStanding.<Clone>$() -> Aw.Meta.Core.Routing.LaneStanding!
+Aw.Meta.Core.Routing.LaneStanding.Equals(Aw.Meta.Core.Routing.LaneStanding? other) -> bool
+Aw.Meta.Core.Routing.LaneStanding.Kind.get -> Aw.Meta.Core.Usage.UsageKind?
+Aw.Meta.Core.Routing.LaneStanding.Kind.init -> void
+Aw.Meta.Core.Routing.LaneStanding.Lane.get -> string!
+Aw.Meta.Core.Routing.LaneStanding.Lane.init -> void
+Aw.Meta.Core.Routing.LaneStanding.Limited.get -> bool
+Aw.Meta.Core.Routing.LaneStanding.Model.get -> string?
+Aw.Meta.Core.Routing.LaneStanding.Model.init -> void
+Aw.Meta.Core.Routing.LaneStanding.Note.get -> string?
+Aw.Meta.Core.Routing.LaneStanding.Note.init -> void
+Aw.Meta.Core.Routing.LaneStanding.PendingRelaunch.get -> bool
+Aw.Meta.Core.Routing.LaneStanding.RemainingPct.get -> double?
+Aw.Meta.Core.Routing.LaneStanding.ResetsAt.get -> System.DateTimeOffset?
+Aw.Meta.Core.Routing.LaneStanding.ResetsAt.init -> void
+Aw.Meta.Core.Routing.LaneStanding.RunningAgent.get -> string!
+Aw.Meta.Core.Routing.LaneStanding.RunningAgent.init -> void
+Aw.Meta.Core.Routing.LaneStanding.Signal.get -> Aw.Meta.Core.Routing.ProviderSignal?
+Aw.Meta.Core.Routing.LaneStanding.Signal.init -> void
+Aw.Meta.Core.Routing.LaneStanding.State.get -> Aw.Meta.Core.Usage.UsageState
+Aw.Meta.Core.Routing.LaneStanding.State.init -> void
+Aw.Meta.Core.Routing.ProviderSignal
+Aw.Meta.Core.Routing.ProviderSignal.<Clone>$() -> Aw.Meta.Core.Routing.ProviderSignal!
+Aw.Meta.Core.Routing.ProviderSignal.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.ProviderWindow!>! Windows, out bool LimitReached) -> void
+Aw.Meta.Core.Routing.ProviderSignal.Equals(Aw.Meta.Core.Routing.ProviderSignal? other) -> bool
+Aw.Meta.Core.Routing.ProviderSignal.LimitReached.get -> bool
+Aw.Meta.Core.Routing.ProviderSignal.LimitReached.init -> void
+Aw.Meta.Core.Routing.ProviderSignal.ProviderSignal(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.ProviderWindow!>! Windows, bool LimitReached) -> void
+Aw.Meta.Core.Routing.ProviderSignal.RemainingPct.get -> double?
+Aw.Meta.Core.Routing.ProviderSignal.Windows.get -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.ProviderWindow!>!
+Aw.Meta.Core.Routing.ProviderSignal.Windows.init -> void
+Aw.Meta.Core.Routing.ProviderWindow
+Aw.Meta.Core.Routing.ProviderWindow.<Clone>$() -> Aw.Meta.Core.Routing.ProviderWindow!
+Aw.Meta.Core.Routing.ProviderWindow.Deconstruct(out string! Name, out double UsedPct, out System.DateTimeOffset? ResetsAt) -> void
+Aw.Meta.Core.Routing.ProviderWindow.Equals(Aw.Meta.Core.Routing.ProviderWindow? other) -> bool
+Aw.Meta.Core.Routing.ProviderWindow.Name.get -> string!
+Aw.Meta.Core.Routing.ProviderWindow.Name.init -> void
+Aw.Meta.Core.Routing.ProviderWindow.ProviderWindow(string! Name, double UsedPct, System.DateTimeOffset? ResetsAt) -> void
+Aw.Meta.Core.Routing.ProviderWindow.ResetsAt.get -> System.DateTimeOffset?
+Aw.Meta.Core.Routing.ProviderWindow.ResetsAt.init -> void
+Aw.Meta.Core.Routing.ProviderWindow.UsedPct.get -> double
+Aw.Meta.Core.Routing.ProviderWindow.UsedPct.init -> void
+Aw.Meta.Core.Routing.RoutePlan
+Aw.Meta.Core.Routing.RoutePlan.<Clone>$() -> Aw.Meta.Core.Routing.RoutePlan!
+Aw.Meta.Core.Routing.RoutePlan.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.RouteSuggestion!>! Suggestions, out System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.RouteSkip!>! Skipped) -> void
+Aw.Meta.Core.Routing.RoutePlan.Equals(Aw.Meta.Core.Routing.RoutePlan? other) -> bool
+Aw.Meta.Core.Routing.RoutePlanner
+Aw.Meta.Core.Routing.RoutePlan.RoutePlan(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.RouteSuggestion!>! Suggestions, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.RouteSkip!>! Skipped) -> void
+Aw.Meta.Core.Routing.RoutePlan.Skipped.get -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.RouteSkip!>!
+Aw.Meta.Core.Routing.RoutePlan.Skipped.init -> void
+Aw.Meta.Core.Routing.RoutePlan.Suggestions.get -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.RouteSuggestion!>!
+Aw.Meta.Core.Routing.RoutePlan.Suggestions.init -> void
+Aw.Meta.Core.Routing.RouteSkip
+Aw.Meta.Core.Routing.RouteSkip.<Clone>$() -> Aw.Meta.Core.Routing.RouteSkip!
+Aw.Meta.Core.Routing.RouteSkip.Deconstruct(out string! Lane, out string! Reason) -> void
+Aw.Meta.Core.Routing.RouteSkip.Equals(Aw.Meta.Core.Routing.RouteSkip? other) -> bool
+Aw.Meta.Core.Routing.RouteSkip.Lane.get -> string!
+Aw.Meta.Core.Routing.RouteSkip.Lane.init -> void
+Aw.Meta.Core.Routing.RouteSkip.Reason.get -> string!
+Aw.Meta.Core.Routing.RouteSkip.Reason.init -> void
+Aw.Meta.Core.Routing.RouteSkip.RouteSkip(string! Lane, string! Reason) -> void
+Aw.Meta.Core.Routing.RouteSuggestion
+Aw.Meta.Core.Routing.RouteSuggestion.<Clone>$() -> Aw.Meta.Core.Routing.RouteSuggestion!
+Aw.Meta.Core.Routing.RouteSuggestion.Equals(Aw.Meta.Core.Routing.RouteSuggestion? other) -> bool
+Aw.Meta.Core.Routing.RouteSuggestion.FromAgent.get -> string!
+Aw.Meta.Core.Routing.RouteSuggestion.FromAgent.init -> void
+Aw.Meta.Core.Routing.RouteSuggestion.FromModel.get -> string!
+Aw.Meta.Core.Routing.RouteSuggestion.FromModel.init -> void
+Aw.Meta.Core.Routing.RouteSuggestion.Key.get -> string!
+Aw.Meta.Core.Routing.RouteSuggestion.Lane.get -> string!
+Aw.Meta.Core.Routing.RouteSuggestion.Lane.init -> void
+Aw.Meta.Core.Routing.RouteSuggestion.Reason.get -> string!
+Aw.Meta.Core.Routing.RouteSuggestion.Reason.init -> void
+Aw.Meta.Core.Routing.RouteSuggestion.ToAgent.get -> string!
+Aw.Meta.Core.Routing.RouteSuggestion.ToAgent.init -> void
+Aw.Meta.Core.Routing.RouteSuggestion.ToModel.get -> string!
+Aw.Meta.Core.Routing.RouteSuggestion.ToModel.init -> void
+Aw.Meta.Core.Routing.RouteWatcher
+const Aw.Meta.Core.KvKeys.RouteWatch = "route.watch" -> string!
+const Aw.Meta.Core.Routing.LaneStandingReader.TailBytes = 262144 -> int
+override Aw.Meta.Core.Config.LaneRoute.Equals(object? obj) -> bool
+override Aw.Meta.Core.Config.LaneRoute.GetHashCode() -> int
+override Aw.Meta.Core.Config.LaneRoute.ToString() -> string!
+override Aw.Meta.Core.Config.RoutingConfig.Equals(object? obj) -> bool
+override Aw.Meta.Core.Config.RoutingConfig.GetHashCode() -> int
+override Aw.Meta.Core.Config.RoutingConfig.ToString() -> string!
+override Aw.Meta.Core.Routing.LaneStanding.Equals(object? obj) -> bool
+override Aw.Meta.Core.Routing.LaneStanding.GetHashCode() -> int
+override Aw.Meta.Core.Routing.LaneStanding.ToString() -> string!
+override Aw.Meta.Core.Routing.ProviderSignal.Equals(object? obj) -> bool
+override Aw.Meta.Core.Routing.ProviderSignal.GetHashCode() -> int
+override Aw.Meta.Core.Routing.ProviderSignal.ToString() -> string!
+override Aw.Meta.Core.Routing.ProviderWindow.Equals(object? obj) -> bool
+override Aw.Meta.Core.Routing.ProviderWindow.GetHashCode() -> int
+override Aw.Meta.Core.Routing.ProviderWindow.ToString() -> string!
+override Aw.Meta.Core.Routing.RoutePlan.Equals(object? obj) -> bool
+override Aw.Meta.Core.Routing.RoutePlan.GetHashCode() -> int
+override Aw.Meta.Core.Routing.RoutePlan.ToString() -> string!
+override Aw.Meta.Core.Routing.RouteSkip.Equals(object? obj) -> bool
+override Aw.Meta.Core.Routing.RouteSkip.GetHashCode() -> int
+override Aw.Meta.Core.Routing.RouteSkip.ToString() -> string!
+override Aw.Meta.Core.Routing.RouteSuggestion.Equals(object? obj) -> bool
+override Aw.Meta.Core.Routing.RouteSuggestion.GetHashCode() -> int
+override Aw.Meta.Core.Routing.RouteSuggestion.ToString() -> string!
+static Aw.Meta.Core.Config.LaneRoute.operator !=(Aw.Meta.Core.Config.LaneRoute? left, Aw.Meta.Core.Config.LaneRoute? right) -> bool
+static Aw.Meta.Core.Config.LaneRoute.operator ==(Aw.Meta.Core.Config.LaneRoute? left, Aw.Meta.Core.Config.LaneRoute? right) -> bool
+static Aw.Meta.Core.Config.RoutingConfig.operator !=(Aw.Meta.Core.Config.RoutingConfig? left, Aw.Meta.Core.Config.RoutingConfig? right) -> bool
+static Aw.Meta.Core.Config.RoutingConfig.operator ==(Aw.Meta.Core.Config.RoutingConfig? left, Aw.Meta.Core.Config.RoutingConfig? right) -> bool
+static Aw.Meta.Core.Routing.CodexRateLimits.Read(System.Collections.Generic.IReadOnlyList<string!>! lines, System.DateTimeOffset now) -> Aw.Meta.Core.Routing.ProviderSignal?
+static Aw.Meta.Core.Routing.LaneStanding.operator !=(Aw.Meta.Core.Routing.LaneStanding? left, Aw.Meta.Core.Routing.LaneStanding? right) -> bool
+static Aw.Meta.Core.Routing.LaneStanding.operator ==(Aw.Meta.Core.Routing.LaneStanding? left, Aw.Meta.Core.Routing.LaneStanding? right) -> bool
+static Aw.Meta.Core.Routing.ProviderSignal.operator !=(Aw.Meta.Core.Routing.ProviderSignal? left, Aw.Meta.Core.Routing.ProviderSignal? right) -> bool
+static Aw.Meta.Core.Routing.ProviderSignal.operator ==(Aw.Meta.Core.Routing.ProviderSignal? left, Aw.Meta.Core.Routing.ProviderSignal? right) -> bool
+static Aw.Meta.Core.Routing.ProviderWindow.operator !=(Aw.Meta.Core.Routing.ProviderWindow? left, Aw.Meta.Core.Routing.ProviderWindow? right) -> bool
+static Aw.Meta.Core.Routing.ProviderWindow.operator ==(Aw.Meta.Core.Routing.ProviderWindow? left, Aw.Meta.Core.Routing.ProviderWindow? right) -> bool
+static Aw.Meta.Core.Routing.RoutePlanner.Plan(Aw.Meta.Core.Config.RoutingConfig! routing, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.LaneStanding!>! lanes) -> Aw.Meta.Core.Routing.RoutePlan!
+static Aw.Meta.Core.Routing.RoutePlan.operator !=(Aw.Meta.Core.Routing.RoutePlan? left, Aw.Meta.Core.Routing.RoutePlan? right) -> bool
+static Aw.Meta.Core.Routing.RoutePlan.operator ==(Aw.Meta.Core.Routing.RoutePlan? left, Aw.Meta.Core.Routing.RoutePlan? right) -> bool
+static Aw.Meta.Core.Routing.RouteSkip.operator !=(Aw.Meta.Core.Routing.RouteSkip? left, Aw.Meta.Core.Routing.RouteSkip? right) -> bool
+static Aw.Meta.Core.Routing.RouteSkip.operator ==(Aw.Meta.Core.Routing.RouteSkip? left, Aw.Meta.Core.Routing.RouteSkip? right) -> bool
+static Aw.Meta.Core.Routing.RouteSuggestion.operator !=(Aw.Meta.Core.Routing.RouteSuggestion? left, Aw.Meta.Core.Routing.RouteSuggestion? right) -> bool
+static Aw.Meta.Core.Routing.RouteSuggestion.operator ==(Aw.Meta.Core.Routing.RouteSuggestion? left, Aw.Meta.Core.Routing.RouteSuggestion? right) -> bool
+Aw.Meta.Core.Routing.LaneStanding.Deconstruct(out string! Lane, out string! Agent, out string! RunningAgent, out string? Model, out Aw.Meta.Core.Usage.UsageState State, out Aw.Meta.Core.Usage.UsageKind? Kind, out System.DateTimeOffset? ResetsAt, out Aw.Meta.Core.Routing.ProviderSignal? Signal, out string? Note, out bool IsMeta) -> void
+Aw.Meta.Core.Routing.LaneStanding.IsMeta.get -> bool
+Aw.Meta.Core.Routing.LaneStanding.IsMeta.init -> void
+Aw.Meta.Core.Routing.LaneStanding.LaneStanding(string! Lane, string! Agent, string! RunningAgent, string? Model, Aw.Meta.Core.Usage.UsageState State, Aw.Meta.Core.Usage.UsageKind? Kind, System.DateTimeOffset? ResetsAt, Aw.Meta.Core.Routing.ProviderSignal? Signal, string? Note, bool IsMeta = false) -> void
+Aw.Meta.Core.Routing.LaneStandingReader
+Aw.Meta.Core.Routing.LaneStandingReader.LaneStandingReader(Aw.Meta.Core.Ports.ILaneFiles! files, Aw.Meta.Core.Ports.ICodexRollouts! rollouts, System.TimeProvider! clock) -> void
+Aw.Meta.Core.Routing.LaneStandingReader.Read(Aw.Meta.Core.Config.TeamConfig! team, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Usage.UsageReading!>! readings, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.LaneStanding!>!>
+Aw.Meta.Core.Poll.UsageMonitor.UsageMonitor(Aw.Meta.Core.Usage.UsageReader! reader, Aw.Meta.Core.Routing.LaneStandingReader! standings, Aw.Meta.Core.Usage.UsageWatcher! watcher, Aw.Meta.Core.Routing.RouteWatcher! routes) -> void
+Aw.Meta.Core.Routing.RouteWatcher.Check(Aw.Meta.Core.Config.TeamConfig! team, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.LaneStanding!>! standings, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<string!>!>
+Aw.Meta.Core.Routing.RouteWatcher.RouteWatcher(Aw.Meta.Core.Ports.IKeyValueStore! values) -> void
+Aw.Meta.Core.Routing.StandingReadings
+static Aw.Meta.Core.Routing.StandingReadings.Merge(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Usage.UsageReading!>! readings, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.LaneStanding!>! standings) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Usage.UsageReading!>!
+Aw.Meta.Core.Ports.ICodexModels
+Aw.Meta.Core.Ports.ICodexModels.Known(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlySet<string!>?>!>
+Aw.Meta.Core.Routing.CodexModelCheck
+const Aw.Meta.Core.Routing.CodexModelCheck.Codex = "codex" -> string!
+static Aw.Meta.Core.Routing.CodexModelCheck.Warnings(Aw.Meta.Core.Config.RoutingConfig! routing, System.Collections.Generic.IReadOnlySet<string!>! known) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Meta.Core.Routing.RouteSuggestion.Deconstruct(out string! Lane, out string! FromAgent, out string! FromModel, out string! ToAgent, out string! ToModel, out string! Reason, out bool TargetKnown) -> void
+Aw.Meta.Core.Routing.RouteSuggestion.RouteSuggestion(string! Lane, string! FromAgent, string! FromModel, string! ToAgent, string! ToModel, string! Reason, bool TargetKnown = true) -> void
+Aw.Meta.Core.Routing.RouteSuggestion.TargetKnown.get -> bool
+Aw.Meta.Core.Routing.RouteSuggestion.TargetKnown.init -> void

@@ -10,7 +10,7 @@ namespace Aw.Sindri.Infrastructure.Profile;
 /// otherwise one is added as the block's first line. The source's block must already exist in block style (its repos are the owner's to write); a flow-style entry is a layout Sindri won't edit. The result is parsed again before it
 /// is written, and the file is written atomically.
 /// </summary>
-internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : ISourceTokenProfileWriter, ILinearWriteTokenWriter
+internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : ISourceTokenProfileWriter, ILinearWriteTokenWriter, ILinearProfileEditCheck
 {
     /// <inheritdoc />
     public Result<bool> SetToken(string source, string secretPointer)
@@ -35,8 +35,39 @@ internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : IS
         return Apply(source, "writeToken:", line: null, yaml => HoldsKey(yaml, source, "writeToken", pointer: null));
     }
 
+    /// <inheritdoc />
+    public Result<bool> CheckSetToken(string source, string secretPointer)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(secretPointer);
+        return Apply(source, "token:", $"token: {YamlProfileLines.Quote(secretPointer)}", yaml => Holds(yaml, source, secretPointer), write: false);
+    }
+
+    /// <inheritdoc />
+    public Result<bool> CheckSetTeams(string source, IReadOnlyList<string> teams)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(teams);
+        return Apply(source, "teams:", TeamsLine(teams), yaml => HoldsTeams(yaml, source, teams), write: false);
+    }
+
+    /// <inheritdoc />
+    public Result<bool> CheckSetWriteToken(string source, string secretPointer)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(secretPointer);
+        return Apply(source, "writeToken:", $"writeToken: {YamlProfileLines.Quote(secretPointer)}", yaml => HoldsKey(yaml, source, "writeToken", secretPointer), write: false);
+    }
+
+    /// <inheritdoc />
+    public Result<bool> CheckRemoveWriteToken(string source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        return Apply(source, "writeToken:", line: null, yaml => HoldsKey(yaml, source, "writeToken", pointer: null), write: false);
+    }
+
     // Reads the live profile, sets one `key: value` line under the source's block, checks the result parses back to the intended value and writes it.
-    private Result<bool> Apply(string source, string key, string? line, Func<string, bool> holds)
+    private Result<bool> Apply(string source, string key, string? line, Func<string, bool> holds, bool write = true)
     {
         var path = settings.ProfilePath;
         string before;
@@ -61,7 +92,7 @@ internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : IS
         }
 
         return holds(edited.Value)
-            ? Save(path, edited.Value)
+            ? (write ? Save(path, edited.Value) : true)
             : SindriErrors.ProfileInvalid.With($"{path} has a layout Sindri won't edit (fix: change `{key}` under context.sources.{source} by hand)");
     }
 
@@ -70,9 +101,10 @@ internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : IS
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(teams);
-        var line = $"teams: [{string.Join(", ", teams.Select(YamlProfileLines.Quote))}]";
-        return Apply(source, "teams:", line, yaml => HoldsTeams(yaml, source, teams));
+        return Apply(source, "teams:", TeamsLine(teams), yaml => HoldsTeams(yaml, source, teams));
     }
+
+    private static string TeamsLine(IReadOnlyList<string> teams) => $"teams: [{string.Join(", ", teams.Select(YamlProfileLines.Quote))}]";
 
     private static Result<bool> Save(string path, string text)
     {

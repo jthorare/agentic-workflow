@@ -95,6 +95,11 @@ internal sealed class ChangeLinearIssueService(
             return parent.Error;
         }
 
+        if (Unopened(fields.Value.Set, fields.Value.Opened) is { } unopened)
+        {
+            return unopened;
+        }
+
         var owner = await scope.Owner(cancellationToken).ConfigureAwait(false);
         if (owner.IsError)
         {
@@ -115,6 +120,15 @@ internal sealed class ChangeLinearIssueService(
             : opened.IsError ? opened.Error
             : set.Value.Count == 0 ? SindriErrors.InvalidInput.With("set names no field to change (fix: send the fields the edit changed)")
             : (set.Value, opened.Value);
+    }
+
+    // why: a field sent without the value the sheet opened has nothing to compare with Linear's live value, so it would overwrite a change made meanwhile without a conflict (spec §5.3, D6)
+    private static Error? Unopened(IReadOnlyList<KeyValuePair<string, object?>> set, IReadOnlyList<KeyValuePair<string, object?>> opened)
+    {
+        var missing = set.Select(static f => f.Key).Where(name => !opened.Any(o => o.Key == name)).ToList();
+        return missing.Count == 0
+            ? null
+            : SindriErrors.LinearBadValue.With($"{string.Join(" and ", missing)} {(missing.Count == 1 ? "has" : "have")} no opened value (fix: send the value you opened with each field you change)");
     }
 
     // why: the ids the owner sends come from the lookups the app read; one that is not in them is a stale sheet or a typo, and Linear's own refusal would say less about which

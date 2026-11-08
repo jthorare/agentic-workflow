@@ -26,6 +26,7 @@ using Aw.Meta.Features.OwnerAsk;
 using Aw.Meta.Features.QueueDrop;
 using Aw.Meta.Features.QueueGate;
 using Aw.Meta.Features.Roles;
+using Aw.Meta.Features.Routing;
 using Aw.Meta.Features.ShowVersion;
 using Aw.Meta.Features.Status;
 using Aw.Meta.Features.StopCheck;
@@ -104,6 +105,7 @@ public static class MetaFeaturesServiceCollectionExtensions
         .Plain<LanesContextService, LanesContextRequest, LanesContextResponse>()
         .AddScoped<RecycleGuard>()
         .AddScoped<RecycleRunner>()
+        .AddScoped<SwitchRunner>()
         .AddScoped<LaneRecycleService>()
         .AddScoped<IValidator<LaneRecycleRequest>, LaneRecycleValidator>()
         .Validated<LaneRecycleService, LaneRecycleRequest, LaneRecycleResponse>()
@@ -164,6 +166,8 @@ public static class MetaFeaturesServiceCollectionExtensions
         .Plain<HealthService, HealthRequest, HealthResponse>()
         .AddScoped<UsageService>()
         .Plain<UsageService, UsageRequest, UsageResponse>()
+        .AddScoped<RouteService>()
+        .Plain<RouteService, RouteRequest, RouteResponse>()
         .AddScoped<UsageWaitService>()
         .AddScoped<IValidator<UsageWaitRequest>, UsageWaitValidator>()
         .Validated<UsageWaitService, UsageWaitRequest, UsageWaitResponse>()

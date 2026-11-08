@@ -290,6 +290,41 @@ public sealed class SandboxLaunchStagesTests : IDisposable
         await stages.Release(plan.Launch, CancellationToken.None);
     }
 
+    // A pushing skill Step carrying its ask (StepPolicy.Github) on a profile that gives no GitHub credential.
+    private static LaunchRequest AskingSkillStep(bool approved)
+    {
+        var step = AgentAppSkillStep(SkillFixtures.BugFixOrchestrator, trial: false);
+        return step with { Step = step.Step! with { Policy = new StepPolicy([], StepPermissionMode.ReadOnly, WritablePath: null, Github: GithubCredentials.AgentApp) } } with { GithubPushApproved = approved };
+    }
+
+    [Theory]
+    [InlineData(true, 1, GithubCredentials.AgentApp)]
+    [InlineData(false, 0, GithubCredentials.None)]   // an ask with no approval stays scrubbed
+    public async Task Request_mints_and_plans_the_same_mode_for_a_Steps_ask(bool approved, int mints, GithubCredentials expected)
+    {
+        var stages = MakeWith(GithubCredentials.None);
+
+        var built = await stages.Request(AskingSkillStep(approved), chosenSession: null, CancellationToken.None);
+        var plan = SandboxPlanner.Build(SandboxMechanism.Bubblewrap, built.Value).Value;
+
+        Expect.Equal(mints, _tokens.Calls);
+        Expect.Equal(expected, plan.Github);
+        await stages.Release(plan.Launch, CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task A_trial_run_never_gets_the_token_even_with_an_approved_ask()
+    {
+        var step = AskingSkillStep(approved: true);
+        step = step with { Skill = step.Skill! with { Trial = true } };
+
+        var built = await MakeWith(GithubCredentials.None).Request(step, chosenSession: null, CancellationToken.None);
+        var plan = SandboxPlanner.Build(SandboxMechanism.Bubblewrap, built.Value).Value;
+
+        Expect.Equal(0, _tokens.Calls);
+        Expect.Equal(GithubCredentials.None, plan.Github);
+    }
+
     private async Task<(SandboxLaunchStages Stages, SandboxPlan Plan)> WriteAgentAppToken(Action<string>? warn = null)
     {
         var stages = new SandboxLaunchStages(new GithubProfile(GithubCredentials.AgentApp), new EmptyLearn(), [_login], _inputs, Registry(), _clock, new AgentTokenRenewal(_tokens, _clock, warn));

@@ -4,7 +4,7 @@
 # agent list never changes across restarts. It resumes the lane's recorded session id when that session has a transcript;
 # otherwise it starts a fresh session with a new id, records the id, and sends the lane's kickoff prompt
 # (<prompts>/<lane>.md) when there is one. For the meta lane it also registers the session with aw-meta (role-set), which
-# arms the meta hooks for it. Drops to a shell when the agent exits, so the pane survives.
+# arms the meta hooks for it. Drops to $SHELL (default /bin/bash) when the agent exits, so the pane survives.
 # The lane's agent comes from team.json "agent" when it is set (every lane, including the meta lane), else from
 # launcher.json (scripts/launcher-lib.sh; docs/csharp/sindri-launcher.md): the catalog entry
 # for meta.lanes.<lane>, else meta.lanesAgent, else claude-code. Its open and resume argv templates, process name and
@@ -26,6 +26,19 @@
 #   AW_META_ID_GRACE     seconds a lane whose id timed out keeps the start lock for its late session file (default 10; tests)
 #   AW_META_NO_SHELL     1: exit when the agent exits instead of dropping to a shell (tests)
 set -u
+# The lane runs as `$SHELL -lc meta-lane.sh` (scripts/meta-launch.sh), so the login profile has loaded. A profile may reset PATH:
+# put the PATH of the aw-meta-launch caller (AW_META_CALLER_PATH) back first, each entry once (#2278).
+if [ -n "${AW_META_CALLER_PATH:-}" ]; then
+  _np=""; _seen=":"
+  IFS=: read -r -a _pe <<< "$AW_META_CALLER_PATH:${PATH:-}"
+  for _e in "${_pe[@]}"; do
+    [ -n "$_e" ] || continue
+    case "$_seen" in *":$_e:"*) continue ;; esac
+    _seen="$_seen$_e:"; _np="${_np:+$_np:}$_e"
+  done
+  PATH="$_np"; export PATH
+  unset _np _seen _pe _e
+fi
 self="$0"   # resolve symlinks without readlink -f (older macOS has none)
 while [ -L "$self" ]; do
   d="$(cd "$(dirname "$self")" && pwd)"; t="$(readlink "$self")"
@@ -52,6 +65,7 @@ meta_bin="${AW_META_BIN:-$state_dir/bin/aw-meta}"
 . "$here/launcher-lib.sh"
 launcher_load "$state_dir" || exit 1
 launcher_apply_team_agent "$config" "$meta_lane" || exit $?
+launcher_apply_routing "$config" "$meta_lane" || exit $?
 agent="$(launcher_lane_agent "$lane" "$meta_lane")"
 launcher_agent_ok "$agent" || exit 1
 field() { launcher_agent_field "$agent" "$1"; }
@@ -193,6 +207,17 @@ if [ "$agent" = claude-code ]; then
   [ "$mode" = resume ] && [[ "$tpl" != *'{name}'* ]] && args+=(-n "$name")
   args=("${args[0]}" ${claude_args[@]+"${claude_args[@]}"} "${args[@]:1}")
 fi
+# A model routed to this lane (team.json routing.lanes.<lane>.model) goes in as the CLI's own flag, right after the binary. A
+# catalog entry with another model form (cursor-flag is reserved) gets none.
+routed_model="$(launcher_lane_model "$lane")"
+if [ -n "$routed_model" ]; then
+  case "$routed_model" in -*) fail 1 "meta-lane: lane $lane: the routed model '$routed_model' starts with '-'; the agent was not started" ;; esac
+  case "$(field model)" in
+    claude-flag) args=("${args[0]}" --model "$routed_model" "${args[@]:1}") ;;
+    codex-flag) args=("${args[0]}" -m "$routed_model" "${args[@]:1}") ;;
+    *) echo "meta-lane: lane $lane: agent $agent has no model flag the launcher applies; routed model '$routed_model' not passed" >&2 ;;
+  esac
+fi
 # A launcher run from inside a Claude session (the meta recreating a dead lane) must not hand the lane that session's
 # identity: its id, pid, messaging socket and token. Only these are cleared; user settings such as model or
 # provider variables pass through.
@@ -268,4 +293,4 @@ fi
 stop_watcher
 [ "${AW_META_NO_SHELL:-0}" = 1 ] && exit 0
 : > "$exited"
-exec bash -i
+exec "${SHELL:-/bin/bash}" -i

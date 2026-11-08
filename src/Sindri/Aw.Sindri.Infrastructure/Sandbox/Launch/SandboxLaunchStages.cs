@@ -61,6 +61,7 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
             SkillEnvironment = skill,
             SkillTrialDirectory = request.Skill?.TrialSkillsDirectory,
             SkillPushes = SkillPushes(request),
+            GithubPushApproved = request.GithubPushApproved,
         };
     }
 
@@ -198,7 +199,7 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
     // why: the same resolution PlanContext makes (an attended session never gets one); minting here makes a failure a Step failure, not an unconfined launch with no token
     private async ValueTask<Result<Unit>> MintAgentToken(LaunchRequest request, SandboxSettings? settings, RepoName repo, CancellationToken cancellationToken)
     {
-        var github = GithubCredentialResolver.For(request.Attended, settings, SkillPushes(request));
+        var github = GithubCredentialResolver.For(request.Attended, settings, SkillPushes(request), request.Step?.Policy, request.GithubPushApproved);
         if (github != GithubCredentials.AgentApp)
         {
             return Unit.Value;

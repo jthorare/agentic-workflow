@@ -8,6 +8,8 @@ allowed-tools: Bash(git *), Bash(ls *), Bash(find *), Bash(curl *), Bash(docker 
 <!-- preamble -->
 **Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
+**Writing rules:** write every doc, spec and PR body this skill makes in the toolkit's plain style, `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/config/packs/style/plain/voice.md`: short sentences, one term per meaning, steps as numbered lists, and a tldraw diagram where a picture explains it better.
+
 > **MCP Servers** — available in every session. Prefer these over built-in tools.
 >
 > | Server | When to reach for it |

@@ -1,4 +1,5 @@
 using System.Reflection;
+using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Map;
@@ -36,6 +37,9 @@ public class RefreshEngineProxy : DispatchProxy
 
     /// <summary>What <see cref="IContextMap.Held"/> answers: a draft v2 over a current v1, no hold.</summary>
     public Result<MapPublishState> State { get; set; } = new MapPublishState(Hold: null, LatestDraft: 2, Current: 1, CurrentHeads: []);
+
+    /// <summary>What <see cref="IContextMap.PinMoves"/> answers: a failure, so a refresh result carries no moves unless a test sets some.</summary>
+    public Result<IReadOnlyList<PinMove>> Moved { get; set; } = Context.Core.ContextErrors.NoMap.With("this proxy has no pin moves");
 
     /// <summary>The start of the wait an earlier hold of the chain began, or null: <see cref="IContextMap.Hold"/> answers it as the hold's start.</summary>
     public DateTimeOffset? Chain { get; set; }
@@ -92,6 +96,7 @@ public class RefreshEngineProxy : DispatchProxy
             nameof(IContextEngine.Promote) => new ValueTask<Result<MapPromoted>>(Expect(args, Promoted)),
             nameof(IContextEngine.Held) => new ValueTask<Result<MapPublishState>>(State),
             nameof(IContextEngine.Hold) => new ValueTask<Result<MapHold>>(Hold((MapHold)args![0]!)),
+            nameof(IContextEngine.PinMoves) => new ValueTask<Result<IReadOnlyList<PinMove>>>(Moved),
             nameof(IContextEngine.Release) => new ValueTask<Result<Unit>>(Release((int)args![0]!)),
             _ => throw new NotSupportedException(name),
         };

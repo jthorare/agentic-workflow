@@ -23,6 +23,7 @@ internal static class LinearConnectionServiceCollectionExtensions
             .AddScoped<ILinearConnectionFacts, ContextLinearConnectionFacts>()
             .AddScoped<ILinearConnectionStore, CoreLinearConnectionStore>()
             .AddScoped<ProfileChangeApproval>()
+            .AddScoped(static sp => new LinearUrlGuard(sp.GetRequiredService<IProfileSource>(), sp.GetRequiredService<IApprovedProfile>()))
             .AddScoped<ILinearConnectionApproval, ProfileLinearConnectionApproval>();
     }
 }
