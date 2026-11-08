@@ -7,17 +7,37 @@ internal sealed partial class TodoPanelViewModel
     internal event EventHandler<TodoLinkOpenEventArgs>? LinkOpened;
 
     /// <summary>The list O opens on a row with several links.</summary>
-    internal TodoLinkListViewModel LinkList { get; } = new();
+    public TodoLinkListViewModel LinkList { get; } = new();
 
     /// <summary>O on a row: opens its only link, or the list of its links.</summary>
     /// <param name="id">The todo's id.</param>
-    internal void OpenLinks(string id) => throw new NotSupportedException();
+    internal void OpenLinks(string id)
+    {
+        if (_todos?.FirstOrDefault(t => string.Equals(t.Id, id, StringComparison.Ordinal)) is not { Links.Count: > 0 } todo)
+        {
+            return;
+        }
+
+        if (todo.Links.Count == 1)
+        {
+            OnLinkOpened(todo.Links[0].Href);
+            return;
+        }
+
+        LinkList.Open(todo.Links);
+    }
 
     /// <summary>Enter in the list: opens the selected link and closes the list.</summary>
     internal void OpenSelectedLink()
     {
-        OnLinkOpened(string.Empty);
-        throw new NotSupportedException();
+        if (LinkList.Selected is not { } line)
+        {
+            return;
+        }
+
+        var href = line.Href;
+        _ = LinkList.Close();
+        OnLinkOpened(href);
     }
 
     private void OnLinkOpened(string href) => LinkOpened?.Invoke(this, new TodoLinkOpenEventArgs(href));

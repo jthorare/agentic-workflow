@@ -12,8 +12,34 @@ internal sealed class TodoEditViewModel : ObservableObject
         (Text, Due, Links) = (text, due?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty, string.Join(", ", refs));
     }
 
+    /// <summary>Saves what changed (Enter in a field); the panel sets it.</summary>
+    internal Func<Task> Save { get; init; } = static () => Task.CompletedTask;
+
+    /// <summary>Closes the edit and sends nothing (Esc in a field); the panel sets it.</summary>
+    internal Action Cancel { get; init; } = static () => { };
+
     /// <summary>The todo's id.</summary>
     public string Id { get; }
+
+#pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
+    /// <summary>"Saving…".</summary>
+    public string SavingText => Labels.TodoEditSaving;
+
+    /// <summary>The text field's name for a screen reader.</summary>
+    public string TextName => Labels.TodoEditTextName;
+
+    /// <summary>The due field's name for a screen reader.</summary>
+    public string DueName => Labels.TodoEditDueName;
+
+    /// <summary>The due field's hint.</summary>
+    public string DuePlaceholder => Labels.TodoEditDuePlaceholder;
+
+    /// <summary>The links field's name for a screen reader.</summary>
+    public string LinksName => Labels.TodoEditLinksName;
+
+    /// <summary>The links field's hint.</summary>
+    public string LinksPlaceholder => Labels.TodoEditLinksPlaceholder;
+#pragma warning restore CA1822, MA0041
 
     /// <summary>The version the save sends: the row's when the edit opened, then the latest one after a "changed somewhere else".</summary>
     public long Version { get; internal set; }
