@@ -26360,3 +26360,60 @@ Aw.Sindri.Core.Graph.Blocks.PromptBlock.CheckConfig(System.Text.Json.Nodes.JsonO
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.MarkTick(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.DateTimeOffset tick, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.LastTick(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.DateTimeOffset?>!>
 static Aw.Sindri.Core.Graph.Runs.WorkflowRun.TriggerProblem(string! trigger) -> string?
+Aw.Sindri.Core.Todos.TodoItem
+Aw.Sindri.Core.Todos.TodoItem.<Clone>$() -> Aw.Sindri.Core.Todos.TodoItem!
+Aw.Sindri.Core.Todos.TodoItem.AddedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Todos.TodoItem.AddedAt.init -> void
+Aw.Sindri.Core.Todos.TodoItem.AddedBy.get -> string!
+Aw.Sindri.Core.Todos.TodoItem.AddedBy.init -> void
+Aw.Sindri.Core.Todos.TodoItem.AddedVia.get -> string?
+Aw.Sindri.Core.Todos.TodoItem.AddedVia.init -> void
+Aw.Sindri.Core.Todos.TodoItem.Conflict.get -> Aw.Sindri.Core.Todos.TodoOpenConflict?
+Aw.Sindri.Core.Todos.TodoItem.Conflict.init -> void
+Aw.Sindri.Core.Todos.TodoItem.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out string! Text, out System.DateOnly? Due, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.TodoLinkItem!>! Links, out System.DateTimeOffset AddedAt, out string! AddedBy, out string? AddedVia, out System.DateTimeOffset? DoneAt, out bool Removed, out System.DateTimeOffset? RemovedAt, out string? RemovedBy, out long Version, out string! LastBy, out string? LastVia, out Aw.Sindri.Core.Todos.TodoOpenConflict? Conflict) -> void
+Aw.Sindri.Core.Todos.TodoItem.DoneAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Todos.TodoItem.DoneAt.init -> void
+Aw.Sindri.Core.Todos.TodoItem.Due.get -> System.DateOnly?
+Aw.Sindri.Core.Todos.TodoItem.Due.init -> void
+Aw.Sindri.Core.Todos.TodoItem.Equals(Aw.Sindri.Core.Todos.TodoItem? other) -> bool
+Aw.Sindri.Core.Todos.TodoItem.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Todos.TodoItem.Id.init -> void
+Aw.Sindri.Core.Todos.TodoItem.LastBy.get -> string!
+Aw.Sindri.Core.Todos.TodoItem.LastBy.init -> void
+Aw.Sindri.Core.Todos.TodoItem.LastVia.get -> string?
+Aw.Sindri.Core.Todos.TodoItem.LastVia.init -> void
+Aw.Sindri.Core.Todos.TodoItem.Links.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.TodoLinkItem!>!
+Aw.Sindri.Core.Todos.TodoItem.Links.init -> void
+Aw.Sindri.Core.Todos.TodoItem.Removed.get -> bool
+Aw.Sindri.Core.Todos.TodoItem.Removed.init -> void
+Aw.Sindri.Core.Todos.TodoItem.RemovedAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Todos.TodoItem.RemovedAt.init -> void
+Aw.Sindri.Core.Todos.TodoItem.RemovedBy.get -> string?
+Aw.Sindri.Core.Todos.TodoItem.RemovedBy.init -> void
+Aw.Sindri.Core.Todos.TodoItem.Text.get -> string!
+Aw.Sindri.Core.Todos.TodoItem.Text.init -> void
+Aw.Sindri.Core.Todos.TodoItem.TodoItem(Aw.Sindri.Core.Ids.TodoId Id, string! Text, System.DateOnly? Due, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.TodoLinkItem!>! Links, System.DateTimeOffset AddedAt, string! AddedBy, string? AddedVia, System.DateTimeOffset? DoneAt, bool Removed, System.DateTimeOffset? RemovedAt, string? RemovedBy, long Version, string! LastBy, string? LastVia, Aw.Sindri.Core.Todos.TodoOpenConflict? Conflict) -> void
+Aw.Sindri.Core.Todos.TodoItem.Version.get -> long
+Aw.Sindri.Core.Todos.TodoItem.Version.init -> void
+Aw.Sindri.Core.Todos.TodoLinkItem
+Aw.Sindri.Core.Todos.TodoLinkItem.<Clone>$() -> Aw.Sindri.Core.Todos.TodoLinkItem!
+Aw.Sindri.Core.Todos.TodoLinkItem.Deconstruct(out string! Kind, out string! Ref, out string! Href) -> void
+Aw.Sindri.Core.Todos.TodoLinkItem.Equals(Aw.Sindri.Core.Todos.TodoLinkItem? other) -> bool
+Aw.Sindri.Core.Todos.TodoLinkItem.Href.get -> string!
+Aw.Sindri.Core.Todos.TodoLinkItem.Href.init -> void
+Aw.Sindri.Core.Todos.TodoLinkItem.Kind.get -> string!
+Aw.Sindri.Core.Todos.TodoLinkItem.Kind.init -> void
+Aw.Sindri.Core.Todos.TodoLinkItem.Ref.get -> string!
+Aw.Sindri.Core.Todos.TodoLinkItem.Ref.init -> void
+Aw.Sindri.Core.Todos.TodoLinkItem.TodoLinkItem(string! Kind, string! Ref, string! Href) -> void
+override Aw.Sindri.Core.Todos.TodoItem.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoItem.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoItem.ToString() -> string!
+override Aw.Sindri.Core.Todos.TodoLinkItem.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoLinkItem.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoLinkItem.ToString() -> string!
+static Aw.Sindri.Core.Todos.TodoItem.From(Aw.Sindri.Core.Todos.TodoRow! row) -> Aw.Sindri.Core.Todos.TodoItem!
+static Aw.Sindri.Core.Todos.TodoItem.operator !=(Aw.Sindri.Core.Todos.TodoItem? left, Aw.Sindri.Core.Todos.TodoItem? right) -> bool
+static Aw.Sindri.Core.Todos.TodoItem.operator ==(Aw.Sindri.Core.Todos.TodoItem? left, Aw.Sindri.Core.Todos.TodoItem? right) -> bool
+static Aw.Sindri.Core.Todos.TodoLinkItem.operator !=(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
+static Aw.Sindri.Core.Todos.TodoLinkItem.operator ==(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
