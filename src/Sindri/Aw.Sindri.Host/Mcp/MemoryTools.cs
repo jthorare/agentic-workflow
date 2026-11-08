@@ -1,5 +1,14 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Aw.Context.Core;
+using Aw.Kernel;
+using Aw.Kernel.Services;
+using Aw.Sindri.Features.CreateMemory;
+using Aw.Sindri.Features.ForgetMemoryFact;
+using Aw.Sindri.Features.ListMemories;
+using Aw.Sindri.Features.SearchMemory;
+using Aw.Sindri.Features.WriteMemoryFact;
 using ModelContextProtocol.Protocol;
 
 namespace Aw.Sindri.Host.Mcp;
@@ -93,33 +102,124 @@ internal static class MemoryTools
     /// <param name="arguments">The call's arguments.</param>
     /// <param name="ct">Cancels the call.</param>
     /// <returns>The tool result.</returns>
-    internal static ValueTask<CallToolResult> CallList(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct) => throw new NotSupportedException();
+    internal static async ValueTask<CallToolResult> CallList(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
+    {
+        if (McpArguments.None(List, arguments) is { } refused)
+        {
+            return McpResults.Failure(services, refused);
+        }
+
+        var answer = await services.GetRequiredService<IService<ListMemoriesRequest, ListMemoriesResponse>>().Handle(new ListMemoriesRequest(), ct).ConfigureAwait(false);
+        return McpResults.From(services, answer, static a => $"{a.Memories.Count.ToString(CultureInfo.InvariantCulture)} Sindri memory stores");
+    }
 
     /// <summary>Runs memory_create.</summary>
     /// <param name="services">The request's services.</param>
     /// <param name="arguments">The call's arguments.</param>
     /// <param name="ct">Cancels the call.</param>
     /// <returns>The tool result.</returns>
-    internal static ValueTask<CallToolResult> CallCreate(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct) => throw new NotSupportedException();
+    internal static async ValueTask<CallToolResult> CallCreate(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
+    {
+        var refused = McpArguments.Only(Create, arguments, "name", "description");
+        var required = McpArguments.RequiredString(Create, arguments, "name", "team-notes");
+        var description = McpArguments.OptionalString(Create, arguments, "description");
+        if ((refused ?? required.E() ?? description.E()) is { } error)
+        {
+            return McpResults.Failure(services, error);
+        }
+
+        var answer = await services.GetRequiredService<IService<CreateMemoryRequest, CreateMemoryResponse>>().Handle(new CreateMemoryRequest(required.Value, description.Value), ct).ConfigureAwait(false);
+        return McpResults.From(services, answer, static a => $"made Sindri memory store {a.Store.Name}");
+    }
 
     /// <summary>Runs memory_search.</summary>
     /// <param name="services">The request's services.</param>
     /// <param name="arguments">The call's arguments.</param>
     /// <param name="ct">Cancels the call.</param>
     /// <returns>The tool result.</returns>
-    internal static ValueTask<CallToolResult> CallSearch(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct) => throw new NotSupportedException();
+    internal static async ValueTask<CallToolResult> CallSearch(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
+    {
+        var refused = McpArguments.Only(Search, arguments, "name", "query", "level", "limit");
+        var name = McpArguments.RequiredString(Search, arguments, "name", "team-notes");
+        var query = McpArguments.RequiredString(Search, arguments, "query", "how do we deploy");
+        var level = McpArguments.OptionalString(Search, arguments, "level");
+        var limit = McpArguments.OptionalLong(Search, arguments, "limit", min: 1);
+        if ((refused ?? name.E() ?? query.E() ?? level.E() ?? limit.E()) is { } error)
+        {
+            return McpResults.Failure(services, error);
+        }
+
+        var request = new SearchMemoryRequest(name.Value, query.Value, level.Value, limit.Value is { } n ? (int)Math.Min(n, int.MaxValue) : null);
+        var answer = await services.GetRequiredService<IService<SearchMemoryRequest, SearchMemoryResponse>>().Handle(request, ct).ConfigureAwait(false);
+        return McpResults.From(services, answer, static a => $"{a.Count.ToString(CultureInfo.InvariantCulture)} facts from Sindri memory, mode {a.Mode}");
+    }
 
     /// <summary>Runs memory_write.</summary>
     /// <param name="services">The request's services.</param>
     /// <param name="arguments">The call's arguments.</param>
     /// <param name="ct">Cancels the call.</param>
     /// <returns>The tool result.</returns>
-    internal static ValueTask<CallToolResult> CallWrite(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct) => throw new NotSupportedException();
+    internal static async ValueTask<CallToolResult> CallWrite(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
+    {
+        var refused = McpArguments.Only(Write, arguments, "name", "text", "tags", "expiresAt");
+        var name = McpArguments.RequiredString(Write, arguments, "name", "team-notes");
+        var text = McpArguments.RequiredString(Write, arguments, "text", "Deploys run from main");
+        var expires = McpArguments.OptionalString(Write, arguments, "expiresAt");
+        var tags = Tags(arguments);
+        if ((refused ?? name.E() ?? text.E() ?? expires.E() ?? tags.E()) is { } error)
+        {
+            return McpResults.Failure(services, error);
+        }
+
+        DateTimeOffset? at = null;
+        if (expires.Value is { Length: > 0 } stamp)
+        {
+            if (!DateTimeOffset.TryParse(stamp, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var parsed))
+            {
+                return McpResults.Failure(services, ContextErrors.McpArgumentsInvalid.With("'expiresAt' must be an ISO 8601 time (fix: 2026-12-01T00:00:00Z)"));
+            }
+
+            at = parsed;
+        }
+
+        var answer = await services.GetRequiredService<IService<WriteMemoryFactRequest, WriteMemoryFactResponse>>()
+            .Handle(new WriteMemoryFactRequest(name.Value, text.Value, tags.Value, at, Provenance: null), ct).ConfigureAwait(false);
+        return McpResults.From(services, answer, static a => $"{a.Action} fact {a.Key}");
+    }
 
     /// <summary>Runs memory_forget.</summary>
     /// <param name="services">The request's services.</param>
     /// <param name="arguments">The call's arguments.</param>
     /// <param name="ct">Cancels the call.</param>
     /// <returns>The tool result.</returns>
-    internal static ValueTask<CallToolResult> CallForget(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct) => throw new NotSupportedException();
+    internal static async ValueTask<CallToolResult> CallForget(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
+    {
+        var refused = McpArguments.Only(Forget, arguments, "name", "fact", "tag", "expired");
+        var name = McpArguments.RequiredString(Forget, arguments, "name", "team-notes");
+        var fact = McpArguments.OptionalString(Forget, arguments, "fact");
+        var tag = McpArguments.OptionalString(Forget, arguments, "tag");
+        var expired = McpArguments.OptionalBool(Forget, arguments, "expired");
+        if ((refused ?? name.E() ?? fact.E() ?? tag.E() ?? expired.E()) is { } error)
+        {
+            return McpResults.Failure(services, error);
+        }
+
+        var answer = await services.GetRequiredService<IService<ForgetMemoryFactRequest, ForgetMemoryFactResponse>>()
+            .Handle(new ForgetMemoryFactRequest(name.Value, fact.Value, tag.Value, expired.Value == true), ct).ConfigureAwait(false);
+        return McpResults.From(services, answer, static a => $"forgot {a.Deleted.ToString(CultureInfo.InvariantCulture)} facts");
+    }
+
+    private static Result<IReadOnlyList<string>?> Tags(IDictionary<string, JsonElement>? arguments)
+    {
+        if (arguments is null || !arguments.TryGetValue("tags", out var raw) || raw.ValueKind == JsonValueKind.Null)
+        {
+            return Aw.Kernel.Results.Success<IReadOnlyList<string>?>(value: null);
+        }
+
+        return raw.ValueKind == JsonValueKind.Array && raw.EnumerateArray().All(static t => t.ValueKind == JsonValueKind.String)
+            ? Aw.Kernel.Results.Success<IReadOnlyList<string>?>(value: [.. raw.EnumerateArray().Select(static t => t.GetString() ?? string.Empty)])
+            : ContextErrors.McpArgumentsInvalid.With("'tags' must be an array of strings (fix: see memory_write's input schema)");
+    }
+
+    private static Error? E<T>(this Result<T> result) => result.IsError ? result.Error : null;
 }

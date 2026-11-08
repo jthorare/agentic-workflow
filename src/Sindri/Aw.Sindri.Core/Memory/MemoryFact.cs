@@ -29,10 +29,13 @@ public sealed record MemoryFact(
     /// <summary>Checks a fact text before it is scrubbed and stored.</summary>
     /// <param name="text">The text.</param>
     /// <returns>The text, or SND-MEM-003 when it is empty or longer than <see cref="MaxTextLength"/>.</returns>
-    public static Result<string> CheckText(string text) => throw new NotSupportedException();
+    public static Result<string> CheckText(string text) =>
+        string.IsNullOrWhiteSpace(text) || text.Length > MaxTextLength
+            ? SindriErrors.MemoryFactInvalid.With("A fact is 1 to 2,000 characters of text.")
+            : text;
 
     /// <summary>Whether the fact has expired.</summary>
     /// <param name="now">The time to compare with.</param>
     /// <returns>True when ExpiresAt is set and not after <paramref name="now"/>.</returns>
-    public bool IsExpired(DateTimeOffset now) => throw new NotSupportedException();
+    public bool IsExpired(DateTimeOffset now) => ExpiresAt is { } at && at <= now;
 }

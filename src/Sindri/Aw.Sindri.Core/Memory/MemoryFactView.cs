@@ -23,5 +23,9 @@ public sealed record MemoryFactView(
     /// <param name="fact">The fact.</param>
     /// <param name="score">The recall score, or null.</param>
     /// <returns>The view.</returns>
-    public static MemoryFactView From(MemoryFact fact, float? score) => throw new NotSupportedException();
+    public static MemoryFactView From(MemoryFact fact, float? score)
+    {
+        ArgumentNullException.ThrowIfNull(fact);
+        return new MemoryFactView(fact.Key, fact.Text, fact.Tags, fact.Provenance, fact.ExpiresAt, fact.RefreshedAt, score);
+    }
 }

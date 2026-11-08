@@ -10,12 +10,20 @@ internal sealed class ListMemoriesService(IMemoryStore store) : IService<ListMem
 {
     private readonly IMemoryStore _store = store;
 
-    public ValueTask<Result<ListMemoriesResponse>> Handle(ListMemoriesRequest request, CancellationToken cancellationToken) => throw Pending();
-
-    // A red stub: the ports are held so the tests build the class the way the green one is built.
-    private NotSupportedException Pending()
+    public async ValueTask<Result<ListMemoriesResponse>> Handle(ListMemoriesRequest request, CancellationToken cancellationToken)
     {
-        _ = _store;
-        return new NotSupportedException();
+        var memories = await _store.List(cancellationToken).ConfigureAwait(false);
+        if (memories.IsError)
+        {
+            return memories.Error;
+        }
+
+        var counts = await _store.Counts(cancellationToken).ConfigureAwait(false);
+        if (counts.IsError)
+        {
+            return counts.Error;
+        }
+
+        return new ListMemoriesResponse([.. memories.Value.Select(m => MemoryView.From(m, counts.Value.GetValueOrDefault(m.Name.Value)))]);
     }
 }

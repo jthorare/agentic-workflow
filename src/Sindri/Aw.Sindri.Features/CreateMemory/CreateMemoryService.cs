@@ -15,12 +15,17 @@ internal sealed class CreateMemoryService(IMemoryStore store, TimeProvider time,
     private readonly TimeProvider _time = time;
     private readonly ICallerContextAccessor _callers = callers;
 
-    public ValueTask<Result<CreateMemoryResponse>> Handle(CreateMemoryRequest request, CancellationToken cancellationToken) => throw Pending();
-
-    // A red stub: the ports are held so the tests build the class the way the green one is built.
-    private NotSupportedException Pending()
+    public async ValueTask<Result<CreateMemoryResponse>> Handle(CreateMemoryRequest request, CancellationToken cancellationToken)
     {
-        _ = (_store, _time, _callers);
-        return new NotSupportedException();
+        ArgumentNullException.ThrowIfNull(request);
+        var name = MemoryName.Parse(request.Name);
+        if (name.IsError)
+        {
+            return name.Error;
+        }
+
+        var memory = new MemoryInfo(name.Value, string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(), _callers.Current?.Actor ?? "service:host", _time.GetUtcNow());
+        var created = await _store.Create(memory, cancellationToken).ConfigureAwait(false);
+        return created.IsError ? created.Error : new CreateMemoryResponse(MemoryView.From(memory, 0));
     }
 }

@@ -27,12 +27,9 @@ internal sealed class ExpireMemoryService(IMemoryStore store, TimeProvider time)
     public ServiceName Identity() => ServiceId;
 
     /// <inheritdoc/>
-    public ValueTask<Result<ScheduledResult>> Run(ScheduledRun run, CancellationToken cancellationToken) => throw Pending();
-
-    // A red stub: the ports are held so the tests build the class the way the green one is built.
-    private NotSupportedException Pending()
+    public async ValueTask<Result<ScheduledResult>> Run(ScheduledRun run, CancellationToken cancellationToken)
     {
-        _ = (_store, _time);
-        return new NotSupportedException();
+        var deleted = await _store.DeleteExpired(_time.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+        return deleted.IsError ? deleted.Error : deleted.Value > 0 ? ScheduledResult.Worked : ScheduledResult.Quiet;
     }
 }

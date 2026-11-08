@@ -23,12 +23,46 @@ internal sealed class WriteMemoryFactService(IMemoryStore store, IMemoryEmbedder
     private readonly TimeProvider _time = time;
     private readonly IIdGenerator _ids = ids;
 
-    public ValueTask<Result<WriteMemoryFactResponse>> Handle(WriteMemoryFactRequest request, CancellationToken cancellationToken) => throw Pending();
-
-    // A red stub: the ports are held so the tests build the class the way the green one is built.
-    private NotSupportedException Pending()
+    public async ValueTask<Result<WriteMemoryFactResponse>> Handle(WriteMemoryFactRequest request, CancellationToken cancellationToken)
     {
-        _ = (_store, _embedder, _scrubber, _time, _ids);
-        return new NotSupportedException();
+        ArgumentNullException.ThrowIfNull(request);
+        var checkedText = MemoryFact.CheckText(request.Text);
+        if (checkedText.IsError)
+        {
+            return checkedText.Error;
+        }
+
+        var name = MemoryName.Parse(request.Name);
+        if (name.IsError)
+        {
+            return name.Error;
+        }
+
+        var stored = await _store.Facts(name.Value, cancellationToken).ConfigureAwait(false);
+        if (stored.IsError)
+        {
+            return stored.Error;
+        }
+
+        var text = _scrubber.Scrub(checkedText.Value);
+        var tags = Tags(request.Tags);
+        var now = _time.GetUtcNow();
+        var embedded = await _embedder.Embed([text], cancellationToken).ConfigureAwait(false);
+        var vector = embedded.Vectors is { Count: 1 } vectors ? vectors[0] : ReadOnlyMemory<float>.Empty;
+        var duplicate = vector.IsEmpty ? null : MemoryDedupe.FindDuplicate(vector, tags, [.. stored.Value.Where(f => !f.IsExpired(now))]);
+        if (duplicate is not null)
+        {
+            var refreshed = await _store.Refresh(name.Value, duplicate.Key, now, request.ExpiresAt, cancellationToken).ConfigureAwait(false);
+            return refreshed.IsError ? refreshed.Error : new WriteMemoryFactResponse(duplicate.Key, "refreshed");
+        }
+
+        var key = "mf_" + _ids.NewId().ToString("N", System.Globalization.CultureInfo.InvariantCulture);
+        var fact = new MemoryFact(key, name.Value, text, tags, request.Provenance ?? MemoryProvenance.None, request.ExpiresAt, now, now, vector);
+        var added = await _store.Add(fact, cancellationToken).ConfigureAwait(false);
+        return added.IsError ? added.Error : new WriteMemoryFactResponse(key, "added");
     }
+
+    // Tags are lowercase, trimmed, sorted and without repeats, so the same set is the same identity.
+    private static string[] Tags(IReadOnlyList<string>? tags) =>
+        tags is null ? [] : [.. tags.Select(static t => t.Trim().ToLowerInvariant()).Where(static t => t.Length > 0).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
 }

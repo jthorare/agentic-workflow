@@ -12,5 +12,9 @@ public sealed record MemoryView(string Name, string? Description, string Created
     /// <param name="memory">The memory.</param>
     /// <param name="facts">How many facts it holds.</param>
     /// <returns>The view.</returns>
-    public static MemoryView From(MemoryInfo memory, int facts) => throw new NotSupportedException();
+    public static MemoryView From(MemoryInfo memory, int facts)
+    {
+        ArgumentNullException.ThrowIfNull(memory);
+        return new MemoryView(memory.Name.Value, memory.Description, memory.CreatedBy, memory.CreatedAt, facts);
+    }
 }
