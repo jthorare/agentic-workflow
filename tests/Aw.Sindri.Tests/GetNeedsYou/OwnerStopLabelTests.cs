@@ -3,6 +3,7 @@ using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Desk;

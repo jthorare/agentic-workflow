@@ -1,4 +1,4 @@
-using Aw.Sindri.Core.Sandbox;
+using Aw.Sindri.Core.Launch;
 
 namespace Aw.Sindri.Features.CheckSandbox;
 

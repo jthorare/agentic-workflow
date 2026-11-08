@@ -8,7 +8,6 @@ using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Views;
-using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Features.GetInstanceEvents;
 using Aw.Sindri.Testing;

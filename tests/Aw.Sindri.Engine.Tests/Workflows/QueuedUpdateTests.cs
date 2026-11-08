@@ -1,5 +1,6 @@
 using System.Globalization;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Triggers;
 using Aw.Sindri.Core.Workflow.Ids;
