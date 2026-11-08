@@ -7,7 +7,7 @@ namespace Aw.Sindri.Core.Workflow.ApproveAll;
 /// The shipped recipes' plan, once a profile is approved (setup-once spec §5.3, §7.6): every approval check uses the approved profile's allowlist, so before one
 /// there is no plan, no challenge and no approval (SND-PROFILE-001). Shared by the plan query, the challenge issue and the approve-all start.
 /// </summary>
-/// <param name="profile">The approved profile.</param>
+/// <param name="profile">The profile.</param>
 /// <param name="shipped">The recipes this build ships.</param>
 public sealed class ApproveAllPlanReader(IApprovedProfile profile, IShippedRecipes shipped)
 {

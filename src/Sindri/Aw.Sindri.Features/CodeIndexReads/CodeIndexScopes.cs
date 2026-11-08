@@ -9,12 +9,12 @@ using Aw.Sindri.Core.Profile;
 namespace Aw.Sindri.Features.CodeIndexReads;
 
 /// <summary>
-/// The one mapping from Sindri to the code index's scope (code-index spec §7, §10): the approved profile's repos, each with the
-/// settings its 'index:' sections make, and the current caller. A session reads every repo of the approved profile, as a human does
+/// The one mapping from Sindri to the code index's scope (code-index spec §7, §10): the profile's repos, each with the
+/// settings its 'index:' sections make, and the current caller. A session reads every repo of the profile, as a human does
 /// (owner q93, 2026-10-23; spec §7.3 narrowed it to the session's own repo).
 /// </summary>
-/// <param name="approvals">The approved profiles.</param>
-/// <param name="live">The live profile file: its repos the approved profile doesn't name are indexed too (owner q102, CIX-L59).</param>
+/// <param name="approvals">The profile.</param>
+/// <param name="live">The live profile file: its repos the profile doesn't name are indexed too (owner q102, CIX-L59).</param>
 /// <param name="callers">The current caller.</param>
 internal sealed class CodeIndexScopes(IApprovedProfile approvals, IProfileSource live, ICallerContextAccessor callers)
 {
@@ -33,8 +33,8 @@ internal sealed class CodeIndexScopes(IApprovedProfile approvals, IProfileSource
         return For(loaded.Profile, file.IsError ? null : file.Value.Profile, callers.Current);   // a live file that is missing or invalid adds nothing: the approved repos stay indexed
     }
 
-    /// <summary>The scope an approved profile, the live profile and a caller make (owner q102, CIX-L59): the approved repos, then every live repo the approved profile doesn't name.</summary>
-    /// <param name="approved">The approved profile: the only source of the top-level 'index:' section (deny globs, embeddings address).</param>
+    /// <summary>The scope a profile, the live profile and a caller make (owner q102, CIX-L59): the approved repos, then every live repo the profile doesn't name.</summary>
+    /// <param name="approved">The profile: the only source of the top-level 'index:' section (deny globs, embeddings address).</param>
     /// <param name="live">The live profile, or null when there is none.</param>
     /// <param name="caller">The Sindri caller, or null for an in-process service.</param>
     /// <returns>The scope; SND-CODEIDX-001 when a repo's settings are invalid.</returns>
@@ -64,12 +64,12 @@ internal sealed class CodeIndexScopes(IApprovedProfile approvals, IProfileSource
     }
 
     /// <summary>The scope a profile and a caller make.</summary>
-    /// <param name="profile">The approved profile.</param>
+    /// <param name="profile">The profile.</param>
     /// <param name="caller">The Sindri caller, or null for an in-process service.</param>
     /// <returns>The scope; SND-CODEIDX-001 when a repo's settings are invalid.</returns>
     internal static Result<CodeIndexScope> For(SindriProfile profile, CallerContext? caller) => For(profile, live: null, caller);
 
-    /// <summary>The approved repos, then each live repo the approved profile names neither by name nor by folder.</summary>
+    /// <summary>The approved repos, then each live repo the profile names neither by name nor by folder.</summary>
     private static IEnumerable<(RepoEntry Entry, bool IsLive)> Entries(SindriProfile approved, SindriProfile? live)
     {
         var named = (approved.Repos ?? []).ToList();

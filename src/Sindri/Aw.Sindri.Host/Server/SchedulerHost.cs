@@ -12,7 +12,7 @@ using Aw.Sindri.Features.RecordServiceRun;
 namespace Aw.Sindri.Host.Server;
 
 /// <summary>
-/// Runs the background services the approved profile names, and the build's built-in services (engine spec §7.2 S1-D8),
+/// Runs the background services the profile names, and the build's built-in services (engine spec §7.2 S1-D8),
 /// on their cadence (factory addendum §17.29.1). It re-reads the approval once a second, so an approval takes effect
 /// without a restart; a failed run is logged and the next slot still runs, and an approval it can't read is logged once
 /// (SND-SCHED-001) while the current schedule keeps running. Each service runs on its own loop (S1-D10): a run still in

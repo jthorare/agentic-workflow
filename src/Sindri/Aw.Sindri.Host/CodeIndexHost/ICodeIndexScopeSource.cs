@@ -3,7 +3,7 @@ using Aw.Kernel;
 
 namespace Aw.Sindri.Host.CodeIndexHost;
 
-/// <summary>The scope the code index is read in for the call running now: the approved profile's repos and the current caller (code-index spec §7, §10).</summary>
+/// <summary>The scope the code index is read in for the call running now: the profile's repos and the current caller (code-index spec §7, §10).</summary>
 internal interface ICodeIndexScopeSource
 {
     /// <summary>The scope of the call running now.</summary>

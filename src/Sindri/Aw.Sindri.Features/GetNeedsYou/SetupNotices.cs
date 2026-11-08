@@ -49,7 +49,7 @@ internal sealed class SetupNotices(IJobViews jobs, IProfileSource live, ApproveA
     }
 
     // The approve-all plan's rows (setup-once spec §7.3): read at request time from the registry and the approvals, and absent when the plan can't be read
-    // (no approved profile yet, or the read failed): the list never fails for them.
+    // (no profile yet, or the read failed): the list never fails for them.
     internal async ValueTask<IReadOnlyList<NeedsYouRow>> Recipes(CancellationToken cancellationToken)
     {
         try
