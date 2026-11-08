@@ -37,7 +37,7 @@ internal sealed class IndexEmbedService(ContextScopes scopes, IContextEngine emb
         if (scope.IsError || scope.Value.Settings is null)
         {
             // no approved profile, or no context section, is nothing to embed, not a failed run (a failed run would land in needs-you every tick)
-            return scope.IsError && scope.Error.Code != SindriErrors.ProfileNotApproved.Code ? scope.Error : ScheduledResult.Quiet;
+            return scope.IsError && scope.Error.Code != SindriErrors.ProfileMissing.Code ? scope.Error : ScheduledResult.Quiet;
         }
 
         var report = await embed.Embed(new EmbedRecordsRequest(), scope.Value, cancellationToken).ConfigureAwait(false);

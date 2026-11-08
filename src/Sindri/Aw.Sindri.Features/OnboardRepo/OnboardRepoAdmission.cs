@@ -29,7 +29,7 @@ internal sealed class OnboardRepoAdmission(IApprovedProfile approvals, IRepoLoca
 
         if (approved.Value is not { } snapshot)
         {
-            return SindriErrors.SetupProfileNotApproved.With("no profile is approved yet (fix: sindri profile approve)");
+            return SindriErrors.ProfileMissing.With("no profile yet (fix: sindri repo add <path>)");
         }
 
         var repo = await locator.Locate(request.Path, snapshot.Profile.Repos ?? [], cancellationToken).ConfigureAwait(false);

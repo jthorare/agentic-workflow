@@ -31,7 +31,6 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
         || string.Equals(eventType, EventTypes.ItemStateChanged, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.ServiceRan, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.ProfileChecked, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.ProfileApproved, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.WorkflowStarted, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.WorkflowTransition, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.WorkflowRefused, StringComparison.Ordinal)
@@ -48,7 +47,6 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
             EventTypes.ItemStateChanged => await Closed(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ServiceRan => await Ran(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ProfileChecked => await Checked(recorded, rows, cancellationToken).ConfigureAwait(false),
-            EventTypes.ProfileApproved => await Approved(recorded, rows, cancellationToken).ConfigureAwait(false),
             _ => await Engine(recorded, rows, cancellationToken).ConfigureAwait(false),
         };
     }
@@ -130,14 +128,8 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
             return check.Error;
         }
 
-        var existing = await rows.Get<NeedsYouRowRecord>(ViewNames.NeedsYou, DriftKey, cancellationToken).ConfigureAwait(false);
-        if (existing.IsError)
-        {
-            return existing.Error;
-        }
-
         var profile = ProfileProjection.Fold(row: null, check.Value, recorded);
-        var drift = await Replace(rows, DriftKey, NeedsYouClearing.AfterCheck(existing.Value?.Row, profile, scrubber), recorded, cancellationToken).ConfigureAwait(false);
+        var drift = await rows.Delete(ViewNames.NeedsYou, DriftKey, cancellationToken).ConfigureAwait(false);   // #2258 PR 1: no drift row any more; drops one an older build stored
         if (drift.IsError)
         {
             return drift;
@@ -147,26 +139,6 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
         return failures.IsError
             ? failures.Error
             : await DeleteAll(rows, failures.Value.Where(r => !NeedsYouClearing.FailureStands(r.Row, profile, [.. BuiltIns.Select(static b => b.Name)])), cancellationToken).ConfigureAwait(false);
-    }
-
-    private async ValueTask<Result<Unit>> Approved(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
-    {
-        var approved = events.Payload<ProfileApproved>(recorded);
-        if (approved.IsError)
-        {
-            return approved.Error;
-        }
-
-        var drift = await rows.Get<NeedsYouRowRecord>(ViewNames.NeedsYou, DriftKey, cancellationToken).ConfigureAwait(false);
-        if (drift.IsError)
-        {
-            return drift.Error;
-        }
-
-        // Approving the hash the row names settles it without waiting for the next check.
-        return drift.Value is { } row && string.Equals(row.Row.Subject.Id.Value, approved.Value.Hash.Value, StringComparison.Ordinal)
-            ? await rows.Delete(ViewNames.NeedsYou, DriftKey, cancellationToken).ConfigureAwait(false)
-            : Unit.Value;
     }
 
     private static async ValueTask<Result<Unit>> Put(IViewRows rows, Result<NeedsYouRow> row, LedgerEvent recorded, CancellationToken cancellationToken) =>

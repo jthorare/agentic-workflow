@@ -76,7 +76,7 @@ internal sealed partial class SchedulerHost(
         }
         catch (Exception e) when (!ct.IsCancellationRequested)   // boundary: a broken read (its own timeout too) must not stop the schedule
         {
-            approved = SindriErrors.ApprovalsUnavailable.With(e.Message);
+            approved = SindriErrors.ProfileInvalid.With(e.Message);
         }
 
         if (approved.IsError)

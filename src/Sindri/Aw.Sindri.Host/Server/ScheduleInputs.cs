@@ -8,9 +8,9 @@ namespace Aw.Sindri.Host.Server;
 /// <param name="builtIns">The built-in services.</param>
 /// <param name="pauses">The paused services.</param>
 /// <param name="live">Where the scheduler publishes its next slots.</param>
-internal sealed class ScheduleInputs(IApprovals approvals, IEnumerable<BuiltInService> builtIns, IServicePauses pauses, LiveSchedule live)
+internal sealed class ScheduleInputs(IApprovedProfile approvals, IEnumerable<BuiltInService> builtIns, IServicePauses pauses, LiveSchedule live)
 {
-    public IApprovals Approvals { get; } = approvals;
+    public IApprovedProfile Approvals { get; } = approvals;
 
     public IReadOnlyList<BuiltInService> BuiltIns { get; } = [.. builtIns];
 

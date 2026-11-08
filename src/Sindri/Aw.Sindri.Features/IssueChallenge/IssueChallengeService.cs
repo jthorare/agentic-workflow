@@ -4,7 +4,6 @@ using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Challenges;
-using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Workflow;
 using Aw.Sindri.Core.Workflow.ApproveAll;
 using Aw.Sindri.Core.Workflow.Engine;
@@ -19,23 +18,21 @@ namespace Aw.Sindri.Features.IssueChallenge;
 /// Issues a challenge for one protected action (engine spec §4.2, S1-D5): parses the action text, plans the action so its
 /// subject and preview are the server's own, and returns the challenge with that preview. The chain lets only a human at
 /// a terminal reach it. Forms: 'approve &lt;id&gt; &lt;version&gt;' (or 'approve &lt;id&gt;@&lt;hash&gt;', issued as the
-/// former), 'revoke &lt;id&gt;@&lt;hash&gt;' and
-/// 'approve profile &lt;hash6&gt;' (the profile's preview is profile approve's own, so that one carries none), and a
+/// former), 'revoke &lt;id&gt;@&lt;hash&gt;', and a
 /// protected answer on an instance, 'grant &lt;n&gt; &lt;address&gt;', 'grant-tokens &lt;n&gt; &lt;address&gt;' or 'accept
 /// &lt;address&gt;' (engine spec §6.2), bound to the instance's address and version, whose preview is the instance.
 /// </summary>
 /// <param name="approvals">Plans a recipe approval, registering a shipped version that waits for its own approval first (#983).</param>
 /// <param name="revokes">Plans a revoke.</param>
 /// <param name="challenges">The server's challenges.</param>
-/// <param name="profiles">The live profile, for 'approve profile'.</param>
 /// <param name="directory">Resolves an instance's address, for a protected answer.</param>
 /// <param name="runtime">Reads the instance as it is now, for a protected answer.</param>
 /// <param name="approveAll">Reads the approve-all plan, for 'approve-all &lt;digest6&gt;'.</param>
-internal sealed partial class IssueChallengeService(ShippedApprovalPlans approvals, RecipeRevokePlanner revokes, IChallenges challenges, IProfileSource profiles,
+internal sealed partial class IssueChallengeService(ShippedApprovalPlans approvals, RecipeRevokePlanner revokes, IChallenges challenges,
     IInstanceDirectory directory, IInstanceRuntime runtime, ApproveAllPlanReader? approveAll = null)
     : IService<IssueChallengeRequest, IssueChallengeResponse>
 {
-    private const string Forms = "'approve <recipe> <version>', 'revoke <recipe>@<hash>', 'approve profile <hash6>', 'approve-all <digest6>', 'grant <n> <address>', 'grant-tokens <n> <address>' or 'accept <address>'";
+    private const string Forms = "'approve <recipe> <version>', 'revoke <recipe>@<hash>', 'approve-all <digest6>', 'grant <n> <address>', 'grant-tokens <n> <address>' or 'accept <address>'";
 
     public ValueTask<Result<IssueChallengeResponse>> Handle(IssueChallengeRequest request, CancellationToken cancellationToken)
     {
@@ -51,8 +48,7 @@ internal sealed partial class IssueChallengeService(ShippedApprovalPlans approva
     internal async ValueTask<Result<IssueChallengeResponse>> Issue(string action, ChallengeChannel channel, CancellationToken cancellationToken)
     {
         var text = action.Trim();
-        return ProfileForm.Match(text) is { Success: true } profile ? await Profile(profile.Groups["hash"].Value, channel, cancellationToken).ConfigureAwait(false)
-            : ApproveAllForm.Match(text) is { Success: true } all ? await ApproveAll(all.Groups["digest"].Value, channel, cancellationToken).ConfigureAwait(false)
+        return ApproveAllForm.Match(text) is { Success: true } all ? await ApproveAll(all.Groups["digest"].Value, channel, cancellationToken).ConfigureAwait(false)
             : ApproveForm.Match(text) is { Success: true } approve ? await Approve(text, approve, channel, cancellationToken).ConfigureAwait(false)
             : ApproveByHashForm.Match(text) is { Success: true } byHash ? await ApproveByHash(text, byHash, channel, cancellationToken).ConfigureAwait(false)
             : RevokeForm.Match(text) is { Success: true } revoke ? await Revoke(text, revoke, cancellationToken).ConfigureAwait(false)
@@ -159,20 +155,6 @@ internal sealed partial class IssueChallengeService(ShippedApprovalPlans approva
             : Issued(Mint(ChallengeAction.ApproveAll(digest), ChallengeSubject.ForApproveAll(digest), channel), approve: null, revoke: null) with { ApproveAll = plan.Value };
     }
 
-    private async ValueTask<Result<IssueChallengeResponse>> Profile(string hash6, ChallengeChannel channel, CancellationToken cancellationToken)
-    {
-        var live = await profiles.Load(cancellationToken).ConfigureAwait(false);
-        if (live.IsError)
-        {
-            return live.Error;
-        }
-
-        var hash = live.Value.Hash;
-        return string.Equals(hash.Abbreviated, hash6, StringComparison.Ordinal)
-            ? Issued(Mint(ChallengeAction.ApproveProfile(hash), ChallengeSubject.ForProfile(hash), channel), approve: null, revoke: null)
-            : SindriErrors.ProfileHashMismatch.With($"{hash6} isn't the live profile's hash; the live hash is {hash.Value} (fix: sindri profile approve {hash.Value})");
-    }
-
     /// <summary>Issues the challenge: at the terminal it is typed; in the app approve-all is held (typing its text also redeems it) and everything else is typed.</summary>
     private IssuedChallenge Mint(ChallengeAction action, ChallengeSubject subject, ChallengeChannel channel) =>
         challenges.Issue(action, subject, channel == ChallengeChannel.App && action.Text.StartsWith("approve-all ", StringComparison.Ordinal) ? ChallengeMode.Held : ChallengeMode.Typed, channel);
@@ -191,9 +173,6 @@ internal sealed partial class IssueChallengeService(ShippedApprovalPlans approva
 
     [GeneratedRegex(@"^approve-all (?<digest>[0-9a-f]{6})\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex ApproveAllForm { get; }
-
-    [GeneratedRegex(@"^approve profile (?<hash>[0-9a-f]{6})\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex ProfileForm { get; }
 
     [GeneratedRegex(@"^approve (?<id>\S+) (?<version>[0-9]{1,9})\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex ApproveForm { get; }

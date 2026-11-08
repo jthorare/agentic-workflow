@@ -79,7 +79,7 @@ internal sealed class ContextInputFacts(IFactContents contents, IApprovedProfile
     {
         if (profile is null)
         {
-            return SindriErrors.ProfileNotApproved.With($"the {name} argument names profile key {key}, and this input has no profile to read it from");
+            return SindriErrors.ProfileMissing.With($"the {name} argument names profile key {key}, and this input has no profile to read it from");
         }
 
         var approved = await profile.Latest(cancellationToken).ConfigureAwait(false);
@@ -90,7 +90,7 @@ internal sealed class ContextInputFacts(IFactContents contents, IApprovedProfile
 
         if (approved.Value is not { } loaded)
         {
-            return SindriErrors.ProfileNotApproved.With($"the {name} argument names profile key {key}, and no profile is approved (fix: sindri profile approve)");
+            return SindriErrors.ProfileMissing.With($"the {name} argument names profile key {key}, and no profile yet (fix: sindri repo add <path>)");
         }
 
         return Setting(loaded.Profile, key) is { } setting

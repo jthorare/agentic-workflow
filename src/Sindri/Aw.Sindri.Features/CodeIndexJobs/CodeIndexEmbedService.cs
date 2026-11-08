@@ -46,7 +46,7 @@ internal sealed partial class CodeIndexEmbedService(CodeIndexJobScopes scopes, I
         if (scope.IsError || scope.Value.Repos.Count == 0)
         {
             // no approved profile, or no repo, is nothing to embed, not a failed run (a failed run would land in needs-you every tick)
-            return scope.IsError && scope.Error.Code != SindriErrors.ProfileNotApproved.Code ? scope.Error : ScheduledResult.Quiet;
+            return scope.IsError && scope.Error.Code != SindriErrors.ProfileMissing.Code ? scope.Error : ScheduledResult.Quiet;
         }
 
         var status = await index.Status(scope.Value, cancellationToken).ConfigureAwait(false);

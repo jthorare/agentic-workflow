@@ -33,7 +33,7 @@ internal sealed class IndexDecisionsService(ContextScopes scopes, IContextEngine
         var scope = await scopes.Current(cancellationToken).ConfigureAwait(false);
         if (scope.IsError || scope.Value.Settings is null)
         {
-            return scope.IsError && scope.Error.Code != SindriErrors.ProfileNotApproved.Code ? scope.Error : ScheduledResult.Quiet;
+            return scope.IsError && scope.Error.Code != SindriErrors.ProfileMissing.Code ? scope.Error : ScheduledResult.Quiet;
         }
 
         var report = await engine.Decide(scope.Value, cancellationToken).ConfigureAwait(false);

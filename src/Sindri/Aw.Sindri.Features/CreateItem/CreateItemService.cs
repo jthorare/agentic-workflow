@@ -13,7 +13,7 @@ namespace Aw.Sindri.Features.CreateItem;
 
 /// <summary>
 /// Creates an item (API spec §3.2; desk): a new id, then 'item.created' keyed by that id and about it. The repo is the body's, else the
-/// caller's X-Sindri-Repo, and must be a repo of the approved profile (G9) or the call is SND-CLI-003 and records nothing.
+/// caller's X-Sindri-Repo, and must be a repo of the profile (G9) or the call is SND-CLI-003 and records nothing.
 /// </summary>
 /// <param name="approvals">The approved profile, whose repos a new item may name.</param>
 /// <param name="held">The lease this process holds.</param>
@@ -50,7 +50,7 @@ internal sealed class CreateItemService(IApprovedProfile approvals, HeldLease he
         return appended.IsError ? appended.Error : new ItemCreatedResponse(new CommandAccepted(caller.CommandId, appended.Value.Sequence), item);
     }
 
-    /// <summary>The refusal when <paramref name="repo"/> isn't a repo of the approved profile; null when it is. A header repo is the checkout the human ran from, so its message says that.</summary>
+    /// <summary>The refusal when <paramref name="repo"/> isn't a repo of the profile; null when it is. A header repo is the checkout the human ran from, so its message says that.</summary>
     private async ValueTask<Error?> Unknown(RepoName repo, bool fromHeader, CancellationToken cancellationToken)
     {
         var latest = await approvals.Latest(cancellationToken).ConfigureAwait(false);
@@ -61,7 +61,7 @@ internal sealed class CreateItemService(IApprovedProfile approvals, HeldLease he
 
         var known = latest.Value?.Profile.Repos?.Any(r => string.Equals(r.Name, repo.Value, StringComparison.Ordinal)) ?? false;
         return known ? null
-            : fromHeader ? SindriErrors.InvalidInput.With($"this checkout, {repo.Value}, isn't a repo of the approved profile (fix: pass --repo <name>, or add it to the profile and approve it)")
-            : SindriErrors.InvalidInput.With($"'{repo.Value}' isn't a repo of the approved profile (fix: sindri profile approve, or name one of its repos)");
+            : fromHeader ? SindriErrors.InvalidInput.With($"this checkout, {repo.Value}, isn't a repo of the profile (fix: pass --repo <name>, or add it to the profile and approve it)")
+            : SindriErrors.InvalidInput.With($"'{repo.Value}' isn't a repo of the profile (fix: sindri repo add <path>, or name one of its repos)");
     }
 }

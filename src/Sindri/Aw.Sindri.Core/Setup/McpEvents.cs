@@ -35,11 +35,10 @@ public sealed class McpEvents(HeldLease held, ILedgerStore ledger, EventFactory 
         return appended.IsError ? appended.Error : Unit.Value;
     }
 
-    /// <summary>Whether consent for the 'mcp' step was recorded for <paramref name="profile"/> (setup-once spec §5.4: the profile's approval, or the owner's press of "Turn on for your repos").</summary>
-    /// <param name="profile">The approved profile's hash.</param>
+    /// <summary>Whether consent for the 'mcp' step was recorded: the owner's press of "Turn on for your repos" (#2258 PR 1: not keyed on a profile hash; an edit to the profile doesn't take it back).</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>True when the newest 'setup.consent.given' names that profile and the 'mcp' step.</returns>
-    public async ValueTask<bool> ConsentGiven(ProfileHash profile, CancellationToken cancellationToken)
+    /// <returns>True when the newest 'setup.consent.given' names the 'mcp' step.</returns>
+    public async ValueTask<bool> ConsentGiven(CancellationToken cancellationToken)
     {
         var latest = await ledger.Latest(EventTypes.SetupConsentGiven, cancellationToken).ConfigureAwait(false);
         if (latest.IsError || latest.Value is not { } recorded)
@@ -48,16 +47,16 @@ public sealed class McpEvents(HeldLease held, ILedgerStore ledger, EventFactory 
         }
 
         var payload = events.Payload<SetupConsentGiven>(recorded);
-        return payload.IsSuccess && payload.Value.ProfileHash == profile && payload.Value.Steps.Contains(McpStep, StringComparer.Ordinal);
+        return payload.IsSuccess && payload.Value.Steps.Contains(McpStep, StringComparer.Ordinal);
     }
 
-    /// <summary>Records the owner's consent when a human is the caller and none is recorded for <paramref name="profile"/> yet (the press of "Turn on for your repos"); nothing otherwise.</summary>
-    /// <param name="profile">The approved profile's hash.</param>
+    /// <summary>Records the owner's consent when a human is the caller and none is recorded yet (the press of "Turn on for your repos"); nothing otherwise.</summary>
+    /// <param name="profile">The live profile's hash (recorded in the event, not matched).</param>
     /// <param name="cancellationToken">Cancels the append.</param>
     /// <returns>Unit, or why it could not be recorded.</returns>
     public async ValueTask<Result<Unit>> ConsentOnHumanPress(ProfileHash profile, CancellationToken cancellationToken)
     {
-        if (callers.Current is not { Class: CallerClass.Human } caller || await ConsentGiven(profile, cancellationToken).ConfigureAwait(false))
+        if (callers.Current is not { Class: CallerClass.Human } caller || await ConsentGiven(cancellationToken).ConfigureAwait(false))
         {
             return Unit.Value;
         }

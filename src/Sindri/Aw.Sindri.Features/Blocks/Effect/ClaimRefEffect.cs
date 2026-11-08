@@ -94,7 +94,7 @@ internal sealed class ClaimRefEffect(IWorkflowClaims claims, IInstanceLiveness l
 
         if (approved.Value is not { } snapshot)
         {
-            return WorkflowErrors.NoRuntime.With("no profile is approved, so the claim has no user or repo (fix: sindri profile approve)");
+            return WorkflowErrors.NoRuntime.With("no profile yet, so the claim has no user or repo (fix: sindri repo add <path>)");
         }
 
         return snapshot.Profile.Repos?.FirstOrDefault(r => string.Equals(r.Name, repo.Value, StringComparison.Ordinal)) is { } entry

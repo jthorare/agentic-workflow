@@ -11,7 +11,7 @@ namespace Aw.Sindri.Host.Server;
 /// else the approved profile's api.port, else 7410. Kestrel reads its options when the app is built, so serve's host adds
 /// no listener then (<see cref="LoopbackBinding"/>) and this adds the one loopback listener once the port is known.
 /// </summary>
-internal sealed class ServePort(IApprovals approvals, IOptions<KestrelServerOptions> kestrel)
+internal sealed class ServePort(IApprovedProfile approvals, IOptions<KestrelServerOptions> kestrel)
 {
     /// <summary>
     /// The chosen port, or null until <see cref="Listen"/> has run. While it is null serve's host refuses to start

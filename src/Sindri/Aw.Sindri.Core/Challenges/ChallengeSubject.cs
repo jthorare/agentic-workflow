@@ -1,5 +1,4 @@
 using System.Globalization;
-using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Ids;
 
@@ -28,11 +27,6 @@ public sealed record ChallengeSubject(string Key, string? Digest)
     /// <returns>The subject.</returns>
     public static ChallengeSubject ForInstance(WorkflowInstanceId instance, long version) =>
         new(string.Create(CultureInfo.InvariantCulture, $"instance:{instance.Value}@{version}"), Digest: null);
-
-    /// <summary>A profile approval (S1-D5: replaces the 'confirmed' flag).</summary>
-    /// <param name="hash">The profile hash.</param>
-    /// <returns>The subject.</returns>
-    public static ChallengeSubject ForProfile(ProfileHash hash) => new("profile:" + hash.Value, Digest: null);
 
     /// <summary>An approve-all: bound to the plan's digest, so a plan that changed since the preview is refused.</summary>
     /// <param name="digest">The plan's digest.</param>

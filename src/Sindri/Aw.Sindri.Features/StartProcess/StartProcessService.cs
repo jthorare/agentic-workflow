@@ -15,7 +15,7 @@ namespace Aw.Sindri.Features.StartProcess;
 /// lease gives the lease back.
 /// </summary>
 internal sealed class StartProcessService(
-    ILease lease, IProcessProbe probe, HeldLease held, IApprovals approvals, ILedgerStore ledger, EventFactory events, ITemporalServer temporal)
+    ILease lease, IProcessProbe probe, HeldLease held, IApprovedProfile approvals, ILedgerStore ledger, EventFactory events, ITemporalServer temporal)
     : IService<StartProcessRequest, StartProcessResponse>
 {
     public async ValueTask<Result<StartProcessResponse>> Handle(StartProcessRequest request, CancellationToken cancellationToken)
