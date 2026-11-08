@@ -19,6 +19,11 @@ internal static class WorkflowRunSql
 
     internal const string SetStatus = "UPDATE workflow_run SET status = $status, outputs = COALESCE($outputs, outputs), error = $error, ended_at = $ended WHERE id = $id";
 
+    internal const string UpsertTick =
+        "INSERT INTO workflow_schedule_tick (workflow_id, last_tick) VALUES ($workflow, $tick) ON CONFLICT (workflow_id) DO UPDATE SET last_tick = excluded.last_tick WHERE excluded.last_tick > workflow_schedule_tick.last_tick";
+
+    internal const string SelectTick = "SELECT last_tick FROM workflow_schedule_tick WHERE workflow_id = $workflow";
+
     internal const string UpsertNodeRun =
         "INSERT INTO workflow_node_run (run_id, node_id, item_index, status, input, output, truncated, error, usage) VALUES ($run, $node, $item, $status, $input, $output, $truncated, $error, $usage) " +
         "ON CONFLICT (run_id, node_id, item_index) DO UPDATE SET status = excluded.status, input = excluded.input, output = excluded.output, truncated = excluded.truncated, error = excluded.error, usage = excluded.usage";

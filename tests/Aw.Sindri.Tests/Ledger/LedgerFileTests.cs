@@ -35,7 +35,7 @@ public sealed class LedgerFileTests : IDisposable
         Assert.Equal(["1 events", "2 lease", "3 outbox_commands", "4 recipes", "5 temporal_event_id", "6 workflow_claims", "7 pr_comment_marks", "8 workflows", "9 workflow_runs"],
             LedgerDatabase.Migrations.Select(m => string.Create(CultureInfo.InvariantCulture, $"{m.Version} {m.Name}")), StringComparer.Ordinal);
         Assert.Equal(SqliteOutboxSchema.CreateMigration(3).Checksum, LedgerDatabase.Migrations[2].Checksum);
-        Assert.Equal(["events", "lease", "outbox_commands", "pr_comment_marks", "recipe_approvals", "recipes", "workflow", "workflow_claims", "workflow_node_run", "workflow_revision", "workflow_run"], Tables(path));
+        Assert.Equal(["events", "lease", "outbox_commands", "pr_comment_marks", "recipe_approvals", "recipes", "workflow", "workflow_claims", "workflow_node_run", "workflow_revision", "workflow_run", "workflow_schedule_tick"], Tables(path));
     }
 
     [Fact, Trait("Lane", "integration")]

@@ -81,9 +81,26 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
         return latest.IsError ? latest.Error : latest.Value.Count == 0 ? (int?)null : latest.Value[0].Id.Occurrence;
     }
 
-    public ValueTask<Result<Unit>> MarkTick(WorkflowId workflow, DateTimeOffset tick, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public ValueTask<Result<Unit>> MarkTick(WorkflowId workflow, DateTimeOffset tick, CancellationToken cancellationToken) =>
+        RecipeSessions.Write(database, async ValueTask<Result<Unit>> (session, token) =>
+        {
+            // why: the SQL moves the tick forward only, so a late write of an earlier tick changes nothing.
+            var written = await RecipeSessions.Execute(session, new SqlStatement(WorkflowRunSql.UpsertTick, c => c.Bind("$workflow", workflow.Value).Bind("$tick", tick.ToUniversalTime())), token).ConfigureAwait(false);
+            return written.IsError ? written.Error : Unit.Value;
+        }, cancellationToken);
 
-    public ValueTask<Result<DateTimeOffset?>> LastTick(WorkflowId workflow, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public ValueTask<Result<DateTimeOffset?>> LastTick(WorkflowId workflow, CancellationToken cancellationToken) =>
+        RecipeSessions.Read(database, LedgerDatabase.WorkflowRunsVersion, empty: null,
+            async ValueTask<Result<DateTimeOffset?>> (session, token) =>
+            {
+                var rows = await RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.SelectTick, c => c.Bind("$workflow", workflow.Value)), TickMapper.Instance, token).ConfigureAwait(false);
+                if (rows.IsError)
+                {
+                    return rows.Error;
+                }
+
+                return rows.Value.Count == 0 ? (DateTimeOffset?)null : rows.Value[0];
+            }, cancellationToken);
 
     public ValueTask<Result<WorkflowRun>> SetStatus(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, CancellationToken cancellationToken) =>
         RecipeSessions.Write(database, async ValueTask<Result<WorkflowRun>> (session, token) =>

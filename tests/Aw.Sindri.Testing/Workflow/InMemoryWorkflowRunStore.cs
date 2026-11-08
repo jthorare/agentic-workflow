@@ -11,6 +11,7 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
 {
     private readonly Lock _gate = new();
     private readonly List<WorkflowRun> _runs = [];
+    private readonly Dictionary<WorkflowId, DateTimeOffset> _ticks = [];
     private readonly Dictionary<(WorkflowRunId Run, NodeId Node, int Item), NodeRun> _nodeRuns = [];
 
     /// <inheritdoc/>
@@ -87,10 +88,27 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     }
 
     /// <inheritdoc/>
-    public ValueTask<Result<Unit>> MarkTick(WorkflowId workflow, DateTimeOffset tick, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public ValueTask<Result<Unit>> MarkTick(WorkflowId workflow, DateTimeOffset tick, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            if (!_ticks.TryGetValue(workflow, out var last) || tick > last)
+            {
+                _ticks[workflow] = tick;
+            }
+
+            return Ok(Unit.Value);
+        }
+    }
 
     /// <inheritdoc/>
-    public ValueTask<Result<DateTimeOffset?>> LastTick(WorkflowId workflow, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public ValueTask<Result<DateTimeOffset?>> LastTick(WorkflowId workflow, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            return Ok<DateTimeOffset?>(_ticks.TryGetValue(workflow, out var last) ? last : null);
+        }
+    }
 
     /// <inheritdoc/>
     public ValueTask<Result<WorkflowRun>> SetStatus(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, CancellationToken cancellationToken)

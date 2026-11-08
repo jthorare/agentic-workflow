@@ -2,11 +2,14 @@ using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Graph.Schedule;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Scheduling;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aw.Sindri.Features.WorkflowSchedule;
 
@@ -14,15 +17,18 @@ namespace Aw.Sindri.Features.WorkflowSchedule;
 #pragma warning disable MA0182
 /// <summary>
 /// The 'workflow-schedule' background service (issue 2258, PR 6): each minute it starts one run for the latest tick a workflow's
-/// 'schedule' node has passed and not yet fired. Several missed ticks (a laptop asleep for days) fire only the latest. The last
-/// fired tick is read from the workflow's newest schedule run (its occurrence is the tick in whole minutes since the Unix epoch),
-/// so no state of its own is kept; the starter refuses a tick that already has a run (SND-GRAPH-100).
+/// 'schedule' node has passed and not yet handled. Several missed ticks (a laptop asleep for days) fire only the latest. A tick
+/// counts as handled once the starter started it, queued it or skipped it (a run was in flight): the store records it
+/// (<see cref="IWorkflowRunStore.MarkTick"/>), so a skipped tick is done and never fires late when the run before it ends. A tick whose
+/// launch failed is not recorded and is tried again on the next pass. The newest schedule run's occurrence (the tick in whole minutes
+/// since the Unix epoch) is a second floor, and the starter refuses a tick that already has a run (SND-GRAPH-100).
 /// </summary>
 /// <param name="workflows">The workflows and their revisions.</param>
 /// <param name="runs">The runs, which say whether a tick already fired.</param>
 /// <param name="starter">Starts, queues or skips the run.</param>
 /// <param name="clock">The time a tick is measured against.</param>
-internal sealed class WorkflowScheduleService(IWorkflowStore workflows, IWorkflowRunStore runs, IGraphRunStarter starter, TimeProvider clock) : IScheduledService
+/// <param name="logger">Where a launch that failed and will be tried again is logged.</param>
+internal sealed partial class WorkflowScheduleService(IWorkflowStore workflows, IWorkflowRunStore runs, IGraphRunStarter starter, TimeProvider clock, ILogger<WorkflowScheduleService>? logger = null) : IScheduledService
 {
     internal const string TriggerKind = "schedule";
 
@@ -47,15 +53,22 @@ internal sealed class WorkflowScheduleService(IWorkflowStore workflows, IWorkflo
 
         var now = clock.GetUtcNow();
         var started = 0;
+        Error? first = null;
         foreach (var record in listed.Value.Where(static r => r.ActiveRevision is not null))
         {
             var fired = await Fire(record, now, cancellationToken).ConfigureAwait(false);
             if (fired.IsError)
             {
-                return fired.Error;
+                first ??= fired.Error;   // why: one workflow's error must not keep the others from firing; the first is returned at the end
+                continue;
             }
 
             started += fired.Value ? 1 : 0;
+        }
+
+        if (first is { } failure)
+        {
+            return failure;
         }
 
         return started == 0 ? ScheduledResult.Quiet : new ScheduledResult(Idle: false, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"ok: started {started} scheduled run(s)"));
@@ -75,21 +88,34 @@ internal sealed class WorkflowScheduleService(IWorkflowStore workflows, IWorkflo
             return false;
         }
 
-        var last = await runs.LatestOccurrence(record.Id, TriggerKind, cancellationToken).ConfigureAwait(false);
-        if (last.IsError)
+        var floor = await Floor(record.Id, revision.Value, cancellationToken).ConfigureAwait(false);
+        if (floor.IsError)
         {
-            return last.Error;
+            return floor.Error;
         }
 
-        // why: no activation time is stored without a ledger migration, so the revision's save time is the floor; a tick between saving and activating can fire once on activation.
-        var after = revision.Value.CreatedAt;
-        if (last.Value is { } minutes && DateTimeOffset.UnixEpoch.AddMinutes(minutes) is var lastTick && lastTick > after)
-        {
-            after = lastTick;
-        }
-
-        var tick = LatestTick(node, after, now);
+        var tick = LatestTick(node, floor.Value, now);
         return tick is null ? false : await Start(record, revision.Value, tick.Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    // why: ticks at or before this are handled: the revision's save time (no activation time is stored without a ledger migration, so a tick between saving and
+    // activating can fire once on activation), the newest schedule run's tick, and the last tick the store recorded (a skipped or queued one has no run row).
+    private async ValueTask<Result<DateTimeOffset>> Floor(WorkflowId workflow, WorkflowRevision revision, CancellationToken cancellationToken)
+    {
+        var last = await runs.LatestOccurrence(workflow, TriggerKind, cancellationToken).ConfigureAwait(false);
+        var marked = await runs.LastTick(workflow, cancellationToken).ConfigureAwait(false);
+        if (last.IsError || marked.IsError)
+        {
+            return last.IsError ? last.Error : marked.Error;
+        }
+
+        var floor = revision.CreatedAt;
+        if (last.Value is { } minutes && DateTimeOffset.UnixEpoch.AddMinutes(minutes) is var lastTick && lastTick > floor)
+        {
+            floor = lastTick;
+        }
+
+        return marked.Value is { } handled && handled > floor ? handled : floor;
     }
 
     private async ValueTask<Result<bool>> Start(WorkflowRecord record, WorkflowRevision revision, DateTimeOffset tick, CancellationToken cancellationToken)
@@ -98,9 +124,25 @@ internal sealed class WorkflowScheduleService(IWorkflowStore workflows, IWorkflo
         var occurrence = (int)(tick.ToUnixTimeSeconds() / 60);
         var request = new GraphStartRequest(record.Id, record.Slug, revision.Revision, occurrence, trigger.ToJsonString(), Concurrency(revision.Spec.Concurrency));
         var started = await starter.Start(request, cancellationToken).ConfigureAwait(false);
-        // why: a tick that already has a run is done, not a failure.
-        return started.IsError ? started.Error.Code == SindriErrors.GraphRunIdTaken.Code ? false : started.Error : started.Value.Kind != GraphStartKind.Skipped;
+        if (started.IsError && started.Error.Code != SindriErrors.GraphRunIdTaken.Code)
+        {
+            // why: a launch that failed does not use up its tick; the next pass tries it again.
+            RetryNextPass(logger ?? NullLogger<WorkflowScheduleService>.Instance, record.Slug.Value, tick, started.Error.Code);
+            return started.Error;
+        }
+
+        // why: started, queued and skipped ticks are handled (a skipped one must not fire late), and a tick that already has a run is done, not a failure.
+        var marked = await runs.MarkTick(record.Id, tick, cancellationToken).ConfigureAwait(false);
+        if (marked.IsError)
+        {
+            return marked.Error;
+        }
+
+        return !started.IsError && started.Value.Kind != GraphStartKind.Skipped;
     }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Schedule tick {Tick} of workflow {Slug} did not start ({Code}); the next pass tries it again")]
+    private static partial void RetryNextPass(ILogger logger, string slug, DateTimeOffset tick, string code);
 
     private static GraphConcurrency Concurrency(string? mode) => mode switch
     {

@@ -65,10 +65,12 @@ registered yet: it lands with the Temporal launcher in the GraphWorkflow piece, 
 until then.
 
 1. For each active workflow, take the `schedule` node of its active revision.
-2. Compute the latest cron tick after the later of the revision's save time and the last fired tick, up to now (`CronExpression.LastTick`, in the node's timezone).
+2. Compute the latest cron tick after the latest of the revision's save time, the last schedule run's tick and the last handled tick, up to now (`CronExpression.LastTick`, in the node's timezone).
 3. Start one run through `IGraphRunStarter` with trigger `{"kind":"schedule","scheduledFor":"<tick>"}`. The starter decides start, queue or skip by the workflow's `concurrency`.
 
 - Three missed days fire one run, for the latest tick only.
 - **Occurrence** of a schedule run is the tick in whole minutes since the Unix epoch, so firing the same tick twice is SND-GRAPH-100 (one run row).
-- **Last fired tick** is the highest occurrence among the workflow's schedule runs (`IWorkflowRunStore.LatestOccurrence`), so the service keeps no state and needs no ledger migration.
+- **Handled ticks.** The store keeps the last handled tick per workflow (`IWorkflowRunStore.MarkTick` / `LastTick`, table `workflow_schedule_tick` in the run tables' migration; it only moves forward). The service marks a tick when the starter started it, queued it **or skipped it** (a run was in flight), and when the tick already has a run (SND-GRAPH-100). A skipped tick is therefore done: it is not retried each minute and does not fire late when the run in flight ends; the next cron tick fires on its own. The newest schedule run's occurrence (`IWorkflowRunStore.LatestOccurrence`) stays a second floor.
+- **A failed launch does not use up its tick.** When the starter returns any other error (the engine is down, say), the tick is not marked, the pass logs a warning, and the next pass tries the same tick again (as long as it is still the latest). A pass keeps going over the other workflows after one fails and returns the first error at the end.
+- **One schedule node.** A workflow has exactly one trigger (`GRAPH-TRIGGER-001`), so the service reads only the first `schedule` node (up to six crons inside it).
 - **Known gap:** nothing stores when a revision was activated, so the floor is `WorkflowRevision.CreatedAt`. A tick between saving and activating a revision can fire once on activation.
