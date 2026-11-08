@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Ids;
 
@@ -24,4 +26,20 @@ public sealed record WorkflowRun(
     string? Error,
     ItemId? ItemId,
     DateTimeOffset StartedAt,
-    DateTimeOffset? EndedAt);
+    DateTimeOffset? EndedAt)
+{
+    /// <summary>Why <paramref name="trigger"/> can't be a run's trigger: it must be a JSON object, since runs are found by its 'kind'.</summary>
+    /// <param name="trigger">The trigger text.</param>
+    /// <returns>The reason, or null when it is a JSON object.</returns>
+    public static string? TriggerProblem(string trigger)
+    {
+        try
+        {
+            return JsonNode.Parse(trigger) is JsonObject ? null : "a run's trigger must be a JSON object such as {\"kind\":\"manual\"}";
+        }
+        catch (JsonException)   // boundary: text that is not JSON at all is the same refusal
+        {
+            return "a run's trigger must be a JSON object such as {\"kind\":\"manual\"}, and this is not JSON";
+        }
+    }
+}

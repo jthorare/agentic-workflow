@@ -11,12 +11,18 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
 {
     private readonly Lock _gate = new();
     private readonly List<WorkflowRun> _runs = [];
+    private readonly Dictionary<WorkflowId, DateTimeOffset> _ticks = [];
     private readonly Dictionary<(WorkflowRunId Run, NodeId Node, int Item), NodeRun> _nodeRuns = [];
 
     /// <inheritdoc/>
     public ValueTask<Result<WorkflowRun>> Insert(WorkflowRun run, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(run);
+        if (WorkflowRun.TriggerProblem(run.Trigger) is { } badTrigger)
+        {
+            return Done<WorkflowRun>(SindriErrors.GraphInvalid.With(badTrigger));
+        }
+
         lock (_gate)
         {
             if (_runs.Exists(r => r.Id == run.Id))
@@ -33,6 +39,11 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     public ValueTask<Result<GraphStartKind>> Admit(WorkflowRun run, GraphConcurrency mode, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(run);
+        if (WorkflowRun.TriggerProblem(run.Trigger) is { } badTrigger)
+        {
+            return Done<GraphStartKind>(SindriErrors.GraphInvalid.With(badTrigger));
+        }
+
         lock (_gate)
         {
             if (_runs.Exists(r => r.Id == run.Id))
@@ -101,6 +112,29 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
             var matching = _runs.Where(r => r.WorkflowId == workflow && KindOf(r.Trigger) == triggerKind).ToList();
             int? latest = matching.Count == 0 ? null : matching.Max(static r => r.Id.Occurrence);
             return Ok(latest);
+        }
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<Unit>> MarkTick(WorkflowId workflow, DateTimeOffset tick, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            if (!_ticks.TryGetValue(workflow, out var last) || tick > last)
+            {
+                _ticks[workflow] = tick;
+            }
+
+            return Ok(Unit.Value);
+        }
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<DateTimeOffset?>> LastTick(WorkflowId workflow, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            return Ok<DateTimeOffset?>(_ticks.TryGetValue(workflow, out var last) ? last : null);
         }
     }
 

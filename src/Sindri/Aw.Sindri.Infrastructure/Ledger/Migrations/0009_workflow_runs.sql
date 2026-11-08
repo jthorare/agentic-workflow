@@ -28,3 +28,10 @@ CREATE TABLE workflow_node_run (
     usage TEXT,
     PRIMARY KEY (run_id, node_id, item_index)
 );
+
+-- The last schedule tick a workflow handled (fired, queued or skipped), so a skipped tick is not fired late and only later ticks fire.
+-- It moves forward only. A tick whose launch failed is not recorded, so the next pass tries it again.
+CREATE TABLE workflow_schedule_tick (
+    workflow_id TEXT PRIMARY KEY,
+    last_tick TEXT NOT NULL
+);

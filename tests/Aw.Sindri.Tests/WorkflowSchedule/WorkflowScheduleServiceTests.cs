@@ -126,10 +126,68 @@ public sealed class WorkflowScheduleServiceTests
         Assert.Equal(At("2026-11-10T07:00:00Z"), ScheduledFor(start));
     }
 
-    private async Task GoLive(GraphSpec spec)
+    [Fact]
+    public async Task A_run_in_flight_over_a_tick_that_ends_before_the_next_tick_fires_nothing_until_the_next_tick()
     {
-        _ = (await _workflows.Create(_id, _slug, spec, "owner", Token)).Value;
-        _ = (await _workflows.Activate(_id, 1, Token)).Value;
+        // daily 07:00; the Monday tick is skipped because a run is in flight; the run ends at 07:05, well before Tuesday
+        _clock.SetUtcNow(At("2026-11-09T06:00:00Z"));
+        await GoLive(Spec("schedule", new JsonObject { ["cron"] = "0 7 * * 1-5" }));
+        _clock.SetUtcNow(At("2026-11-09T07:00:30Z"));
+        _starter.Skip = true;
+        _ = await Tick();
+
+        _starter.Skip = false;
+        _clock.SetUtcNow(At("2026-11-09T07:05:00Z"));
+        var later = await Tick();
+        _clock.SetUtcNow(At("2026-11-09T07:30:00Z"));
+        _ = await Tick();
+
+        Assert.True(later.IsSuccess);
+        Assert.Empty(_starter.Requests);   // the skipped tick is done, not late-fired
+        _clock.SetUtcNow(At("2026-11-10T07:00:30Z"));
+        _ = await Tick();
+        Assert.Equal(At("2026-11-10T07:00:00Z"), ScheduledFor(Assert.Single(_starter.Requests)));
+    }
+
+    [Fact]
+    public async Task A_failed_launch_does_not_use_up_its_tick_so_the_next_pass_tries_again()
+    {
+        _clock.SetUtcNow(At("2026-11-09T06:00:00Z"));
+        await GoLive(Spec("schedule", new JsonObject { ["cron"] = "0 7 * * 1-5" }));
+        _clock.SetUtcNow(At("2026-11-09T07:00:30Z"));
+        _starter.FailSlug = _slug;
+
+        var failed = await Tick();
+        _starter.FailSlug = null;
+        _clock.Advance(TimeSpan.FromMinutes(1));
+        var retried = await Tick();
+
+        Assert.True(failed.IsError);
+        Assert.True(retried.IsSuccess);
+        Assert.Equal(At("2026-11-09T07:00:00Z"), ScheduledFor(Assert.Single(_starter.Requests)));
+    }
+
+    [Fact]
+    public async Task One_workflows_error_does_not_stop_the_others_and_the_first_error_is_returned()
+    {
+        _clock.SetUtcNow(At("2026-11-09T06:00:00Z"));
+        var broken = WorkflowSlug.From("a-broken");
+        await GoLive(Spec("schedule", new JsonObject { ["cron"] = "0 7 * * 1-5" }), WorkflowId.From("WF-00000000000000000000000000000002"), broken);
+        await GoLive(Spec("schedule", new JsonObject { ["cron"] = "0 7 * * 1-5" }));
+        _clock.SetUtcNow(At("2026-11-09T07:00:30Z"));
+        _starter.FailSlug = broken;
+
+        var ran = await Tick();
+
+        Assert.True(ran.IsError);
+        Assert.Equal(_slug, Assert.Single(_starter.Requests).Slug);   // 'morning-check' still started
+    }
+
+    private async Task GoLive(GraphSpec spec, WorkflowId? id = null, WorkflowSlug? slug = null)
+    {
+        var workflow = id ?? _id;
+        _ = (await _workflows.Create(workflow, slug ?? _slug, spec, "owner", Token)).Value;
+        _ = (await _workflows.Activate(workflow, 1, Token)).Value;
     }
 
     private ValueTask<Result<ScheduledResult>> Tick()
@@ -157,9 +215,16 @@ public sealed class WorkflowScheduleServiceTests
 
         public bool Skip { get; set; }
 
+        public WorkflowSlug? FailSlug { get; set; }
+
         public async ValueTask<Result<GraphStart>> Start(GraphStartRequest request, CancellationToken cancellationToken)
         {
             var id = WorkflowRunId.Of(request.Slug, request.Revision, request.Occurrence);
+            if (FailSlug is { } failing && failing == request.Slug)
+            {
+                return Core.SindriErrors.EngineUnavailable.With("the engine is down");
+            }
+
             if (Skip)
             {
                 return new GraphStart(GraphStartKind.Skipped, id);

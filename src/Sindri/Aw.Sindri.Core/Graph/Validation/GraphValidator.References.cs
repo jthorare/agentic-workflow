@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Interpolation;
 
@@ -15,7 +16,7 @@ public sealed partial class GraphValidator
         var seen = new HashSet<(string, string)>();
         foreach (var (field, text) in Strings(scope.Node.Config, "config"))
         {
-            if (Template.HasUnclosed(text))
+            if (Template.HasUnclosed(IsCondition(scope.Node, field) ? StringLiteral.Replace(text, "\"\"") : text))
             {
                 found.Add(Found.At("GRAPH-REF-004", scope.Node.Id.Value, field, "a '{{' is never closed by '}}', so it would stay as literal text", "close the reference as {{node.field}}, or remove the '{{'"));
             }
@@ -30,9 +31,12 @@ public sealed partial class GraphValidator
         }
     }
 
+    private static bool IsCondition(GraphNode node, string field) =>
+        string.Equals(node.Type, "condition", StringComparison.Ordinal) && string.Equals(field, "config.when", StringComparison.Ordinal);
+
     // why: in a condition the parser knows string literals; Template would read a '{{y.z}}' inside one as a reference
     private IReadOnlyList<string> Read(GraphNode node, string field, string text, List<GraphFinding> found) =>
-        string.Equals(node.Type, "condition", StringComparison.Ordinal) && string.Equals(field, "config.when", StringComparison.Ordinal)
+        IsCondition(node, field)
             ? Condition(node, field, text, found)
             : Template.References(text);
 
@@ -170,4 +174,8 @@ public sealed partial class GraphValidator
     private sealed record RefSite(NodeScope Scope, string Field, string Reference, BlockFieldType? Expected);
 
     private sealed record NodeScope(GraphNode Node, GraphStructure Structure, HashSet<string> Upstream);
+
+    // why: a double-quoted literal of a condition (with backslash escapes) is text, so a '{{' inside it is not an unclosed reference
+    [GeneratedRegex("\"(?:\\\\.|[^\"\\\\])*\"", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex StringLiteral { get; }
 }

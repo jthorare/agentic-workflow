@@ -22,7 +22,7 @@ namespace Aw.Sindri.Ui.Views.Shell;
 /// </summary>
 internal sealed partial class ShellWindow : Window
 {
-    private static readonly string[] _regions = ["TopBar", "Page", "Sheet"];
+    private static readonly string[] _regions = ["TopBar", "Page", "Sheet", "Toast"];
 
     // ⌘ on macOS, Ctrl elsewhere (§8: ⌘, opens Settings).
     private static readonly KeyModifiers _command = OperatingSystem.IsMacOS() ? KeyModifiers.Meta : KeyModifiers.Control;

@@ -20,14 +20,30 @@ internal sealed partial class ShellWindow
         if (on)
         {
             shell.NeedsYou.FocusRequested += OnNeedsYouFocus;
+            shell.HomeFocusRequested += OnHomeFocus;
             shell.NeedsYou.PropertyChanged += OnNeedsYouChanged;
             shell.NeedsYou.Seen.PropertyChanged += OnSeenChanged;
         }
         else
         {
             shell.NeedsYou.FocusRequested -= OnNeedsYouFocus;
+            shell.HomeFocusRequested -= OnHomeFocus;
             shell.NeedsYou.PropertyChanged -= OnNeedsYouChanged;
             shell.NeedsYou.Seen.PropertyChanged -= OnSeenChanged;
+        }
+    }
+
+    // The From elsewhere line's Needs you part: focus goes to the first row. G T and the palette's Todo row: the Todo panel's first row.
+    private void OnHomeFocus(object? sender, HomeFocusRequestedEventArgs request)
+    {
+        if (request.Target == HomeFocusTarget.Todo)
+        {
+            Dispatcher.UIThread.Post(FocusTodoPanel, DispatcherPriority.Loaded);
+        }
+        else if (request.Target == HomeFocusTarget.NeedsYou && Shell?.NeedsYou.Rows is { Count: > 0 } rows)
+        {
+            var id = rows[0].Id;
+            Dispatcher.UIThread.Post(() => FocusNeedsYouRow(id), DispatcherPriority.Loaded);
         }
     }
 

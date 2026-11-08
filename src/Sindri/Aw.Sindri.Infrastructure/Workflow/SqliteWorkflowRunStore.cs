@@ -16,6 +16,11 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
     public ValueTask<Result<WorkflowRun>> Insert(WorkflowRun run, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(run);
+        if (WorkflowRun.TriggerProblem(run.Trigger) is { } badTrigger)
+        {
+            return ValueTask.FromResult<Result<WorkflowRun>>(SindriErrors.GraphInvalid.With(badTrigger));
+        }
+
         return RecipeSessions.Write(database, async ValueTask<Result<WorkflowRun>> (session, token) =>
         {
             // why: checked in the insert's transaction, so a used id is SND-GRAPH-100 and never a primary-key error.
@@ -50,6 +55,11 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
     public ValueTask<Result<GraphStartKind>> Admit(WorkflowRun run, GraphConcurrency mode, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(run);
+        if (WorkflowRun.TriggerProblem(run.Trigger) is { } badTrigger)
+        {
+            return ValueTask.FromResult<Result<GraphStartKind>>(SindriErrors.GraphInvalid.With(badTrigger));
+        }
+
         // why: the in-flight read and the insert share one write transaction, so two triggers cannot both see "nothing in flight".
         return RecipeSessions.Write(database, async ValueTask<Result<GraphStartKind>> (session, token) =>
         {
@@ -106,6 +116,27 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
             (session, token) => RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.LatestOfKind, c => c.Bind("$workflow", workflow.Value).Bind("$kind", triggerKind)), WorkflowRunMapper.Instance, token), cancellationToken).ConfigureAwait(false);
         return latest.IsError ? latest.Error : latest.Value.Count == 0 ? (int?)null : latest.Value[0].Id.Occurrence;
     }
+
+    public ValueTask<Result<Unit>> MarkTick(WorkflowId workflow, DateTimeOffset tick, CancellationToken cancellationToken) =>
+        RecipeSessions.Write(database, async ValueTask<Result<Unit>> (session, token) =>
+        {
+            // why: the SQL moves the tick forward only, so a late write of an earlier tick changes nothing.
+            var written = await RecipeSessions.Execute(session, new SqlStatement(WorkflowRunSql.UpsertTick, c => c.Bind("$workflow", workflow.Value).Bind("$tick", tick.ToUniversalTime())), token).ConfigureAwait(false);
+            return written.IsError ? written.Error : Unit.Value;
+        }, cancellationToken);
+
+    public ValueTask<Result<DateTimeOffset?>> LastTick(WorkflowId workflow, CancellationToken cancellationToken) =>
+        RecipeSessions.Read(database, LedgerDatabase.WorkflowRunsVersion, empty: null,
+            async ValueTask<Result<DateTimeOffset?>> (session, token) =>
+            {
+                var rows = await RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.SelectTick, c => c.Bind("$workflow", workflow.Value)), TickMapper.Instance, token).ConfigureAwait(false);
+                if (rows.IsError)
+                {
+                    return rows.Error;
+                }
+
+                return rows.Value.Count == 0 ? (DateTimeOffset?)null : rows.Value[0];
+            }, cancellationToken);
 
     public ValueTask<Result<WorkflowRun>> SetStatus(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, CancellationToken cancellationToken) =>
         RecipeSessions.Write(database, async ValueTask<Result<WorkflowRun>> (session, token) =>

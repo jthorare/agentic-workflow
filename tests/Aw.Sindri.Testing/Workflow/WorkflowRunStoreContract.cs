@@ -267,4 +267,58 @@ public abstract class WorkflowRunStoreContract
         Expect.Equal(1, (await store.InFlight(_workflow, Token)).Value.Count(static r => r.Status == WorkflowRunStatus.Running));
         Expect.Equal(4, (await store.InFlight(_workflow, Token)).Value.Count(static r => r.Status == WorkflowRunStatus.Queued));
     }
+
+    /// <summary>No tick is recorded until one is marked, and a tick belongs to its workflow.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_workflow_has_no_last_tick_until_one_is_marked_and_ticks_are_per_workflow()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        var before = await store.LastTick(_workflow, Token);
+        var tick = KnownInstants.Epoch.AddHours(7);
+
+        _ = (await store.MarkTick(_workflow, tick, Token)).Value;
+
+        Expect.Equal(expected: null, before.Value);
+        Expect.Equal(tick, (await store.LastTick(_workflow, Token)).Value);
+        Expect.Equal(expected: null, (await store.LastTick(WorkflowId.From("WF-00000000000000000000000000000002"), Token)).Value);
+    }
+
+    /// <summary>A tick earlier than the one on record changes nothing: the last tick only moves forward.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Marking_an_earlier_tick_keeps_the_later_one()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        var later = KnownInstants.Epoch.AddDays(2);
+        _ = (await store.MarkTick(_workflow, later, Token)).Value;
+
+        _ = (await store.MarkTick(_workflow, KnownInstants.Epoch.AddDays(1), Token)).Value;
+        Expect.Equal(later, (await store.LastTick(_workflow, Token)).Value);
+
+        var latest = KnownInstants.Epoch.AddDays(3);
+        _ = (await store.MarkTick(_workflow, latest, Token)).Value;
+        Expect.Equal(latest, (await store.LastTick(_workflow, Token)).Value);
+    }
+
+    /// <summary>A trigger that is not a JSON object is refused when the run is recorded, so one bad row can't break the query that reads triggers by kind.</summary>
+    /// <param name="trigger">The trigger text.</param>
+    /// <returns>The test.</returns>
+    [Theory]
+    [InlineData("not json")]
+    [InlineData("[1]")]
+    [InlineData("42")]
+    [InlineData("")]
+    public async Task A_trigger_that_is_not_a_json_object_is_refused_by_insert_and_admit_and_nothing_is_stored(string trigger)
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+
+        var inserted = await store.Insert(Run(1) with { Trigger = trigger }, Token);
+        var admitted = await store.Admit(Run(2) with { Trigger = trigger }, GraphConcurrency.Unlimited, Token);
+
+        Expect.Equal(SindriErrors.GraphInvalid.Code, inserted.Error.Code);
+        Expect.Equal(SindriErrors.GraphInvalid.Code, admitted.Error.Code);
+        Expect.Equal(0, (await store.InFlight(_workflow, Token)).Value.Count);
+        Expect.Equal(expected: null, (await store.LatestOccurrence(_workflow, "manual", Token)).Value);
+    }
 }

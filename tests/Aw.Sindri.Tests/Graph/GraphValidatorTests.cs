@@ -291,6 +291,19 @@ public sealed class GraphValidatorTests
         Assert.False(result.Passed);
     }
 
+    [Theory]
+    [InlineData("agent.drifted == \"use {{ for references\"", false)]
+    [InlineData("agent.drifted == \"a \\\" {{ b\"", false)]
+    [InlineData("agent.drifted == \"x\" and {{agent.drifted", true)]
+    public void A_double_brace_inside_a_condition_string_literal_is_text_not_an_unclosed_reference(string when, bool refused)
+    {
+        var spec = Spec([Trigger("daily"), Agent("agent", "web"), Condition("check", when)], [Edge("daily", "agent"), Edge("agent", "check")]);
+
+        var result = Validator().Validate(spec, GraphMode.Activate);
+
+        Assert.Equal(refused, result.Findings.Any(f => f.Code == "GRAPH-REF-004"));
+    }
+
     [Fact]
     public void A_repo_the_profile_does_not_have_is_refused_and_one_it_cannot_check_yet_is_a_warning()
     {

@@ -29,12 +29,19 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
             var required = Required(config["output"]);
             foreach (var (name, schema) in properties)
             {
-                var type = schema?["type"]?.GetValue<string>() ?? "string";
+                var type = TypeOf(schema).Name ?? "string";
                 fields[name] = (string.Equals(type, "integer", StringComparison.Ordinal) ? "number" : type) + (required.Contains(name) ? string.Empty : "?");
             }
         }
 
         return new BlockOutputs(fields);
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<(string Field, string Problem)> CheckConfig(JsonObject config)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        return config["output"] is JsonObject schema && SchemaProblem(schema) is { } problem ? [("output", problem)] : [];
     }
 
     /// <inheritdoc />
@@ -47,6 +54,11 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
         }
 
         var schema = context.Config["output"] as JsonObject;
+        if (schema is not null && SchemaProblem(schema) is { } unusable)
+        {
+            return SindriErrors.GraphPromptAnswer.With($"the 'output' schema can't be used: {unusable}");
+        }
+
         var asked = await model.Ask(prompt, cancellationToken).ConfigureAwait(false);
         if (asked.IsError)
         {
@@ -91,8 +103,47 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
         }
     }
 
+    // why: an entry that is not text can't name a field, so it is left out here; SchemaProblem reports it
     private static HashSet<string> Required(JsonNode? schema) =>
-        schema?["required"] is JsonArray list ? [.. list.Select(static n => n?.GetValue<string>() ?? string.Empty)] : [];
+        schema?["required"] is JsonArray list ? [.. list.Select(Text).OfType<string>()] : [];
+
+    private static string? Text(JsonNode? node) => node is JsonValue value && value.TryGetValue<string>(out var text) ? text : null;
+
+    /// <summary>A property's type: a name, or the first non-null member of a list of names. No 'type' is no name and no problem.</summary>
+    private static (string? Name, string? Problem) TypeOf(JsonNode? spec)
+    {
+        var type = spec?["type"];
+        return type switch
+        {
+            null => (null, null),
+            JsonArray list => list.Select(Text).OfType<string>().FirstOrDefault(static t => !string.Equals(t, "null", StringComparison.Ordinal)) is { } first
+                ? (first, null)
+                : (null, "'type' lists no type name other than \"null\"; write a name such as \"string\""),
+            _ => Text(type) is { } name ? (name, null) : (null, "'type' must be a type name such as \"string\" or a list of names"),
+        };
+    }
+
+    /// <summary>What makes the schema unusable: a 'required' entry or a property 'type' that is not text.</summary>
+    private static string? SchemaProblem(JsonObject schema)
+    {
+        if (schema["required"] is JsonArray list && list.Any(static n => Text(n) is null))
+        {
+            return "'required' must list field names as text";
+        }
+
+        if (schema["properties"] is JsonObject properties)
+        {
+            foreach (var (name, spec) in properties)
+            {
+                if (TypeOf(spec).Problem is { } problem)
+                {
+                    return $"property '{name}': {problem}";
+                }
+            }
+        }
+
+        return null;
+    }
 
     // why: models often wrap JSON in a ``` fence; the text inside is still the answer
     private static string Unfenced(string text)
@@ -122,7 +173,7 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
         {
             foreach (var (name, spec) in properties)
             {
-                if (answer[name] is { } value && spec?["type"]?.GetValue<string>() is { } type && !Fits(value, type))
+                if (answer[name] is { } value && TypeOf(spec).Name is { } type && !Fits(value, type))
                 {
                     return $"the answer's field '{name}' must be {type}";
                 }

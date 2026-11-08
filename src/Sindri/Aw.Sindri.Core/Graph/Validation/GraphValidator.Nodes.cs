@@ -25,6 +25,11 @@ public sealed partial class GraphValidator
             found.Add(Found.At("GRAPH-CONFIG-001", id, "config." + field, $"'{field}' {problem}", $"fix it as the {node.Type} block's example shows: {block.Example}"));
         }
 
+        foreach (var (field, problem) in block.CheckConfig(node.Config))
+        {
+            found.Add(Found.At("GRAPH-CONFIG-001", id, "config." + field, $"'{field}' {problem}", $"fix it as the {node.Type} block's example shows: {block.Example}"));
+        }
+
         if (string.Equals(node.Type, "schedule", StringComparison.Ordinal))
         {
             Crons(node, found);

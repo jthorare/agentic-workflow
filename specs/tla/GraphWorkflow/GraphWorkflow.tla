@@ -2,7 +2,7 @@
 (* Graph run starts, the three concurrency modes, the end-of-run drain and cancel (issue 2258, PR 6).
    Triggers (some re-delivered with an already used run id) hit up to two workflows, each in one mode:
    "one" (one-per-workflow), "queue" or "unlimited".
-   Code: GraphRunStarter.Start / Launch, SqliteWorkflowRunStore.Insert / InFlight / SetStatus, and the end-of-run drain the
+   Code: GraphRunStarter.Start / Launch, SqliteWorkflowRunStore.Admit / InFlight / SetStatus, and the end-of-run drain the
    GraphWorkflow finish path owns (pr-06.card.md "Decided while building").  See README.md. *)
 EXTENDS Integers, Sequences, FiniteSets
 
@@ -57,15 +57,15 @@ Init ==
     /\ bz = [t \in Triggers |-> FALSE]
     /\ skipped = FALSE /\ refused = FALSE /\ drained = FALSE
 
-\* What GraphRunStarter.Start reads: another run of the workflow in flight (queued, running or waiting; GraphRunStarter.cs:36,
+\* What GraphRunStarter.Start reads: another run of the workflow in flight (queued, running or waiting; SqliteWorkflowRunStore.Admit,
 \* WorkflowRunSql.InFlight). The same id in flight is a re-delivery, so it is not "another run" (line 45). Unlimited never reads.
 Busy(t) == Mode(Wf(t)) # "unlimited" /\ \E i \in OpenOf(rows, Wf(t)) : rows[i].id # Id(t)
 
-\* GraphRunStarter.cs:49: one-per-workflow skips while a run is in flight.
+\* SqliteWorkflowRunStore.Decide: one-per-workflow skips while a run is in flight.
 Skips(t, b) == Mode(Wf(t)) = "one" /\ b
 
-\* SqliteWorkflowRunStore.Insert (:15): a used id is refused in the insert's transaction; else the row is appended.
-\* Queued when busy (queue mode), else Running and awaiting its launch (GraphRunStarter.cs:62).
+\* SqliteWorkflowRunStore.Admit: a used id is refused in the transaction; else the row is appended.
+\* Queued when busy (queue mode), else Running and awaiting its launch (Decide, SqliteWorkflowRunStore.cs:176).
 Insert(t, b) ==
     IF InsertChecksId /\ \E i \in Rows : rows[i].id = Id(t)
     THEN /\ rows' = rows /\ refused' = TRUE
@@ -82,7 +82,8 @@ StartAtomic1(t) ==
        ELSE /\ Insert(t, Busy(t)) /\ skipped' = skipped
     /\ UNCHANGED <<bz, drained>>
 
-\* GraphRunStarter.cs:36: the in-flight read is its own transaction (the gap: Insert comes later, in another one).
+\* The planted gap (StartAtomic = FALSE): the in-flight read is its own transaction and the insert comes later, in another one.
+\* The code does both in one Admit call.
 ReadInFlight(t) ==
     /\ ~StartAtomic /\ pc[t] = "idle"
     /\ bz' = [bz EXCEPT ![t] = Busy(t)]
@@ -96,7 +97,7 @@ InsertAfterRead(t) ==
     /\ Insert(t, bz[t])
     /\ UNCHANGED <<bz, skipped, drained>>
 
-\* GraphRunStarter.Launch (:75): the launcher starts the Temporal workflow, or fails. A failed launch marks the run Failed
+\* GraphRunStarter.Launch (GraphRunStarter.cs:56): the launcher starts the Temporal workflow, or fails. A failed launch marks the run Failed
 \* (a run that never started has no end path of its own, so the drain only happens here when LaunchFailDrains).
 Launch(i) ==
     /\ i \in Rows /\ rows[i].st = "running" /\ ~rows[i].launched

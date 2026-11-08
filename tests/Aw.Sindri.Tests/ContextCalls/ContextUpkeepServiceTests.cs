@@ -76,9 +76,9 @@ public sealed class ContextUpkeepServiceTests
         Assert.Equal("SND-CONTEXT-004", result.Error.Code);
     }
 
-    private sealed class NoStoreCheckpoints : Aw.Sindri.Core.Scheduling.IStoreCheckpoints
+    private sealed class NoStoreCheckpoints : IStoreCheckpoints
     {
-        public ValueTask<IReadOnlyList<Aw.Sindri.Core.Scheduling.StoreCheckpoint>> Run(CancellationToken cancellationToken) =>
-            ValueTask.FromResult<IReadOnlyList<Aw.Sindri.Core.Scheduling.StoreCheckpoint>>([]);
+        public ValueTask<IReadOnlyList<StoreCheckpoint>> Run(CancellationToken cancellationToken) =>
+            ValueTask.FromResult<IReadOnlyList<StoreCheckpoint>>([]);
     }
 }
