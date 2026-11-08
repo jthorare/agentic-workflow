@@ -39,6 +39,12 @@ using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Core.Todos;
+using Aw.Sindri.Features.MarkTodo;
+using Aw.Sindri.Features.ListTodos;
+using Aw.Sindri.Features.GetTodoNote;
+using Aw.Sindri.Features.GetTodo;
+using Aw.Sindri.Features.ChangeTodo;
+using Aw.Sindri.Features.AddTodo;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.ApproveAll;
 using Aw.Sindri.Core.Workflow.Blocks;
@@ -182,6 +188,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(SendReviewFixRequest)), JsonSerializable(typeof(SendReviewFixResponse)), JsonSerializable(typeof(ReviewFixBody)), JsonSerializable(typeof(ReviewFixSent))]
 [JsonSerializable(typeof(GetSetupRequest)), JsonSerializable(typeof(GetSetupResponse)), JsonSerializable(typeof(GetRepoStatusResponse)), JsonSerializable(typeof(RepoStatus))]
 [JsonSerializable(typeof(GetProfileResponse)), JsonSerializable(typeof(ProfilePack)), JsonSerializable(typeof(ProfileSummary)), JsonSerializable(typeof(RepoPreview)), JsonSerializable(typeof(RebuildViewsRequest)), JsonSerializable(typeof(CreateItemRequest)), JsonSerializable(typeof(ItemCreatedResponse))]
+[JsonSerializable(typeof(AddTodoRequest)), JsonSerializable(typeof(AddTodoBody)), JsonSerializable(typeof(ChangeTodoRequest)), JsonSerializable(typeof(ChangeTodoBody)), JsonSerializable(typeof(MarkTodoRequest)), JsonSerializable(typeof(MarkTodoBody)), JsonSerializable(typeof(TodoAccepted)), JsonSerializable(typeof(ListTodosRequest)), JsonSerializable(typeof(ListTodosResponse)), JsonSerializable(typeof(GetTodoResponse)), JsonSerializable(typeof(GetTodoNoteResponse)), JsonSerializable(typeof(TodoCounts)), JsonSerializable(typeof(TodoListState))]   // the todo writes and reads (todo spec §4.4)
 [JsonSerializable(typeof(AttachProjectRequest)), JsonSerializable(typeof(AttachProjectBody)), JsonSerializable(typeof(ProjectAccepted)), JsonSerializable(typeof(ChangeProjectBody)), JsonSerializable(typeof(DetachProjectBody)), JsonSerializable(typeof(HideProjectRequest))]
 [JsonSerializable(typeof(ListReviewsRequest)), JsonSerializable(typeof(ListReviewsResponse))]   // PR review page Ph5: the Reviews list
 [JsonSerializable(typeof(GetReviewPageRequest)), JsonSerializable(typeof(ReviewPageModel))]   // PR review page Ph5c: the PR page
