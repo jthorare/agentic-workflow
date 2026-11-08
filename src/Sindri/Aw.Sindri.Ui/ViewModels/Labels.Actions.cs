@@ -23,6 +23,7 @@ internal static partial class Labels
         ["AddConnection"] = "Add connection",
         ["RemoveConnection"] = "Remove connection",
         ["TestConnection"] = "Test connection",
+        ["SignInConnection"] = "Sign in to connection",
         ["OnboardRepo"] = "Onboard repo",
         ["InitProfile"] = "Create profile",
         ["SetProfileKey"] = "Set a profile key",
