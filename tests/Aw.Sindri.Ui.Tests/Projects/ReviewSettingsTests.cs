@@ -24,6 +24,9 @@ public sealed class ReviewSettingsTests
         return (await _f.Opened(ProjectSheetFixture.Attached, Token)).ReviewSettings;
     }
 
+    /// <summary>The project the review-settings goldens answer for; a save sends the project it read, not the sheet's id.</summary>
+    private const string ReadProject = "prj_0000000000000000000000000H";
+
     private ReviewSettingsSave OnlySave() => Assert.Single(_f.Server.ReviewSettingsSaves);
 
     [Fact]
@@ -123,7 +126,7 @@ public sealed class ReviewSettingsTests
         await settings.Save(Token);
 
         var save = OnlySave();
-        Assert.Equal((ProjectSheetFixture.Attached, "default", true), (save.Project, save.Settings, save.Approve));
+        Assert.Equal((ReadProject, "default", true), (save.Project, save.Settings, save.Approve));
         Assert.Equal(["jthorare/agentic-workflow"], save.Repos, StringComparer.Ordinal);
     }
 
@@ -641,7 +644,7 @@ public sealed class ReviewSettingsTests
 
         var body = Encoding.UTF8.GetString(AwJson.Serialize(OnlySave(), SindriApiClient.Json));
         Assert.Equal(
-            """{"project":"prj_00000000000000000000000008","repos":["jthorare/agentic-workflow"],"settings":"default","entry":{"collapse":["a/**"]},"approve":true,"ifHash":"221c8f3e6a76b02c68be447e853eae6439aa46a53e13a7939d313d95bd4817bd"}""",
+            """{"project":"prj_0000000000000000000000000H","repos":["jthorare/agentic-workflow"],"settings":"default","entry":{"collapse":["a/**"]},"approve":true,"ifHash":"221c8f3e6a76b02c68be447e853eae6439aa46a53e13a7939d313d95bd4817bd"}""",
             body);
     }
 
