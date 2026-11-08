@@ -1,3 +1,7 @@
+using System.Buffers.Text;
+using System.Security.Cryptography;
+using System.Text;
+
 namespace Aw.Sindri.Core.Connections.OAuth;
 
 /// <summary>
@@ -15,17 +19,35 @@ public sealed record PkceChallenge(string Verifier, string Challenge, string Sta
     /// <summary>Makes a pair from a byte source.</summary>
     /// <param name="randomBytes">Gives n random bytes (RandomNumberGenerator.GetBytes in production, a fixed source in tests).</param>
     /// <returns>The pair.</returns>
-    public static PkceChallenge Create(Func<int, byte[]> randomBytes) => throw new NotSupportedException();
+    public static PkceChallenge Create(Func<int, byte[]> randomBytes)
+    {
+        ArgumentNullException.ThrowIfNull(randomBytes);
+        var verifier = Base64Url.EncodeToString(randomBytes(32));
+        var state = Base64Url.EncodeToString(randomBytes(32));
+        return new PkceChallenge(verifier, ChallengeFor(verifier), state);
+    }
 
     /// <summary>The S256 challenge of a verifier.</summary>
     /// <param name="verifier">The verifier.</param>
     /// <returns>base64url(SHA-256(verifier)) without padding.</returns>
-    public static string ChallengeFor(string verifier) => throw new NotSupportedException();
+    public static string ChallengeFor(string verifier)
+    {
+        ArgumentNullException.ThrowIfNull(verifier);
+        return Base64Url.EncodeToString(SHA256.HashData(Encoding.ASCII.GetBytes(verifier)));
+    }
 
     /// <summary>Checks the state a callback returned, in constant time.</summary>
     /// <param name="state">The state from the callback.</param>
     /// <returns>True when it is this sign-in's state.</returns>
-    public bool Verify(string? state) => throw new NotSupportedException();
+    public bool Verify(string? state)
+    {
+        if (string.IsNullOrEmpty(state))
+        {
+            return false;
+        }
+
+        return CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(state), Encoding.UTF8.GetBytes(State));
+    }
 
     /// <summary>A fixed text: the verifier and the state are not in it.</summary>
     /// <returns>'PkceChallenge(redacted)'.</returns>

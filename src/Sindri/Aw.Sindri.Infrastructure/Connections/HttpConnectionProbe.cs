@@ -1,4 +1,7 @@
+using System.Globalization;
+using System.Net.Http.Headers;
 using Aw.Kernel;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Connections.OAuth;
 
@@ -10,12 +13,31 @@ internal sealed class HttpConnectionProbe(HttpClient http) : IConnectionProbe
 {
     private readonly HttpClient _http = http;
 
-    public ValueTask<Result<Unit>> Probe(string url, TokenSet tokens, CancellationToken cancellationToken) => throw Pending();
-
-    // A red stub: the ports are held so the tests build the class the way the green one is built.
-    private NotSupportedException Pending()
+    public async ValueTask<Result<Unit>> Probe(string url, TokenSet tokens, CancellationToken cancellationToken)
     {
-        _ = _http;
-        return new NotSupportedException();
+        ArgumentNullException.ThrowIfNull(tokens);
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokens.AccessToken);
+            using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            if (response.IsSuccessStatusCode)
+            {
+                return Unit.Value;
+            }
+
+            var status = ((int)response.StatusCode).ToString(CultureInfo.InvariantCulture);
+            return response.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden
+                ? SindriErrors.ConnectionNeedsSignIn.With($"the provider answered {status} to the probe")
+                : SindriErrors.ConnectionRefreshFailed.With($"the provider answered {status} to the probe");
+        }
+        catch (HttpRequestException)
+        {
+            return SindriErrors.ConnectionRefreshFailed.With("the provider could not be reached");
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return SindriErrors.ConnectionRefreshFailed.With("the provider did not answer in time");
+        }
     }
 }

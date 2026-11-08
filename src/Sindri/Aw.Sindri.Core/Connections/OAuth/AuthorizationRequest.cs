@@ -10,5 +10,20 @@ public sealed record AuthorizationRequest(ConnectionPreset Preset, string Client
 {
     /// <summary>Builds the consent URL: response_type=code, client_id, redirect_uri, scope (space-separated), state, code_challenge, code_challenge_method=S256.</summary>
     /// <returns>The URL.</returns>
-    public Uri ToUrl() => throw new NotSupportedException();
+    public Uri ToUrl()
+    {
+        var query = new (string Key, string Value)[]
+        {
+            ("response_type", "code"),
+            ("client_id", Client),
+            ("redirect_uri", RedirectUri),
+            ("scope", string.Join(' ', Scopes)),
+            ("state", Pkce.State),
+            ("code_challenge", Pkce.Challenge),
+            ("code_challenge_method", PkceChallenge.Method),
+        };
+        var text = string.Join('&', query.Select(static pair => Uri.EscapeDataString(pair.Key) + "=" + Uri.EscapeDataString(pair.Value)));
+        var separator = Preset.AuthorizeUrl.Contains('?', StringComparison.Ordinal) ? "&" : "?";
+        return new Uri(Preset.AuthorizeUrl + separator + text);
+    }
 }

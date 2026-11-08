@@ -6,14 +6,17 @@ namespace Aw.Sindri.Infrastructure.Connections;
 /// <param name="runner">Runs the opener.</param>
 internal sealed class BrowserOpener(IToolRunner runner) : IBrowserOpener
 {
-    private readonly IToolRunner _runner = runner;
+    private static readonly TimeSpan _timeout = TimeSpan.FromSeconds(10);
 
-    public bool Open(Uri url) => throw Pending();
-
-    // A red stub: the ports are held so the tests build the class the way the green one is built.
-    private NotSupportedException Pending()
+    public bool Open(Uri url)
     {
-        _ = _runner;
-        return new NotSupportedException();
+        ArgumentNullException.ThrowIfNull(url);
+        if (url.Scheme is not ("https" or "http"))
+        {
+            return false;
+        }
+
+        var run = runner.Run(OperatingSystem.IsMacOS() ? "open" : "xdg-open", [url.AbsoluteUri], _timeout);
+        return run is { Outcome: ToolOutcome.Exited, ExitCode: 0 };
     }
 }

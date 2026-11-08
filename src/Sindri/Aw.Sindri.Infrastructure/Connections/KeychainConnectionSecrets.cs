@@ -1,4 +1,7 @@
+using System.Buffers.Text;
+using System.Text.Json;
 using Aw.Kernel;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Connections.OAuth;
 using Aw.Sindri.Core.Secrets;
@@ -22,18 +25,116 @@ internal sealed class KeychainConnectionSecrets(ISecretWriter writer, ISecretPoi
     private readonly ISecretWriter _writer = writer;
     private readonly ISecretPointers _pointers = pointers;
     private readonly IToolRunner _runner = runner;
-    private readonly KeychainPlatform? _platform = platform;
+    private const string Service = "sindri-connection";
+    private static readonly TimeSpan _timeout = TimeSpan.FromSeconds(15);
 
-    public Result<SecretPointer> Store(ConnectionName name, TokenSet tokens) => throw Pending();
+    private readonly KeychainPlatform _platform = platform ?? (OperatingSystem.IsMacOS() ? KeychainPlatform.MacOS : OperatingSystem.IsLinux() ? KeychainPlatform.Linux : KeychainPlatform.Unsupported);
 
-    public Result<TokenSet> Read(SecretPointer pointer) => throw Pending();
-
-    public Result<Unit> Delete(SecretPointer pointer) => throw Pending();
-
-    // A red stub: the ports are held so the tests build the class the way the green one is built.
-    private NotSupportedException Pending()
+    public Result<SecretPointer> Store(ConnectionName name, TokenSet tokens)
     {
-        _ = (_writer, _pointers, _runner, _platform);
-        return new NotSupportedException();
+        ArgumentNullException.ThrowIfNull(tokens);
+        var stored = _writer.Store(Service, name.Service + "." + name.Label, Encode(tokens));
+        return stored.IsSuccess
+            ? stored.Value
+            : SindriErrors.ConnectionSecretUnavailable.With("the secret store would not take the connection's tokens (" + stored.Error.Code + ")");
+    }
+
+    public Result<TokenSet> Read(SecretPointer pointer)
+    {
+        ArgumentNullException.ThrowIfNull(pointer);
+        var read = _pointers.Resolve(pointer);
+        if (read.IsError)
+        {
+            return SindriErrors.ConnectionSecretUnavailable.With("the connection's tokens could not be read (" + read.Error.Code + ")");
+        }
+
+        var tokens = Decode(read.Value);
+        return tokens is null
+            ? SindriErrors.ConnectionSecretUnavailable.With("the stored connection secret is not a token set")
+            : tokens;
+    }
+
+    public Result<Unit> Delete(SecretPointer pointer)
+    {
+        ArgumentNullException.ThrowIfNull(pointer);
+        switch (pointer.Scheme)
+        {
+            case SecretScheme.Keychain:
+                return DeleteFromKeychain(pointer.Target.Split('/'));
+            case SecretScheme.File:
+                try
+                {
+                    File.Delete(pointer.Target);
+                    return Unit.Value;
+                }
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+                {
+                    return SindriErrors.ConnectionSecretUnavailable.With("the connection's secret file could not be deleted");
+                }
+
+            default:
+                return Unit.Value;   // an env or op pointer is not Sindri's to delete
+        }
+    }
+
+    private static string Encode(TokenSet tokens)
+    {
+        using var buffer = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(buffer))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("access", tokens.AccessToken);
+            if (tokens.RefreshToken is not null)
+            {
+                writer.WriteString("refresh", tokens.RefreshToken);
+            }
+
+            if (tokens.ExpiresAt is { } expires)
+            {
+                writer.WriteString("expiresAt", expires);
+            }
+
+            writer.WriteEndObject();
+        }
+
+        return Base64Url.EncodeToString(buffer.ToArray());
+    }
+
+    private static TokenSet? Decode(string text)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(Base64Url.DecodeFromChars(text.Trim()));
+            var root = document.RootElement;
+            if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty("access", out var access) || access.ValueKind != JsonValueKind.String)
+            {
+                return null;
+            }
+
+            var refresh = root.TryGetProperty("refresh", out var r) && r.ValueKind == JsonValueKind.String ? r.GetString() : null;
+            DateTimeOffset? expires = root.TryGetProperty("expiresAt", out var e) && e.ValueKind == JsonValueKind.String && e.TryGetDateTimeOffset(out var at) ? at : null;
+            return new TokenSet(access.GetString()!, refresh, expires);
+        }
+        catch (Exception e) when (e is FormatException or JsonException)
+        {
+            return null;
+        }
+    }
+
+    private Result<Unit> DeleteFromKeychain(string[] segments)
+    {
+        var service = segments[0];
+        var account = segments[1];
+        var run = _platform switch
+        {
+            KeychainPlatform.MacOS => _runner.Run("security", ["delete-generic-password", "-s", service, "-a", account], _timeout),
+            KeychainPlatform.Linux => _runner.Run("secret-tool", ["clear", "service", service, "account", account], _timeout),
+            _ => ToolRun.Missing,
+        };
+
+        // why: nothing stored counts as deleted: security exits 44, secret-tool 1 (or 0) for an entry that is not there
+        return run is { Outcome: ToolOutcome.Exited, ExitCode: 0 or 1 or 44 }
+            ? Unit.Value
+            : SindriErrors.ConnectionSecretUnavailable.With("the OS keychain would not delete the connection's secret (none installed, or locked)");
     }
 }

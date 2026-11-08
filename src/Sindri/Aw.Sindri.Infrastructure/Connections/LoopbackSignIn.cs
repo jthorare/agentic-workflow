@@ -1,4 +1,9 @@
+using System.Globalization;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
 using Aw.Kernel;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Connections.OAuth;
 
@@ -14,17 +19,130 @@ namespace Aw.Sindri.Infrastructure.Connections;
 /// <param name="randomBytes">The PKCE byte source.</param>
 internal sealed class LoopbackSignIn(IOAuthClient oauth, IBrowserOpener browser, TimeSpan timeout, Func<int, byte[]> randomBytes) : ISignInSession
 {
+    private const string CallbackPath = "/callback";
+
     private readonly IOAuthClient _oauth = oauth;
     private readonly IBrowserOpener _browser = browser;
     private readonly TimeSpan _timeout = timeout;
     private readonly Func<int, byte[]> _randomBytes = randomBytes;
 
-    public ValueTask<Result<SignInStarted>> Start(ConnectionPreset preset, string clientId, IReadOnlyList<string> scopes, CancellationToken cancellationToken) => throw Pending();
-
-    // A red stub: the ports are held so the tests build the class the way the green one is built.
-    private NotSupportedException Pending()
+    public ValueTask<Result<SignInStarted>> Start(ConnectionPreset preset, string clientId, IReadOnlyList<string> scopes, CancellationToken cancellationToken)
     {
-        _ = (_oauth, _browser, _timeout, _randomBytes);
-        return new NotSupportedException();
+        ArgumentNullException.ThrowIfNull(preset);
+        ArgumentNullException.ThrowIfNull(scopes);
+        var listener = Listen(out var port);
+        if (listener is null)
+        {
+            return ValueTask.FromResult<Result<SignInStarted>>(SindriErrors.ConnectionSecretUnavailable.With("no free loopback port to listen on for the sign-in callback"));
+        }
+
+        var redirect = $"http://127.0.0.1:{port.ToString(CultureInfo.InvariantCulture)}{CallbackPath}";
+        var pkce = PkceChallenge.Create(_randomBytes);
+        var request = new AuthorizationRequest(preset, clientId, redirect, scopes.Count > 0 ? scopes : preset.DefaultScopes, pkce);
+        var url = request.ToUrl();
+        var completion = Complete(listener, preset, clientId, redirect, pkce, cancellationToken);
+        _ = _browser.Open(url);
+        return ValueTask.FromResult<Result<SignInStarted>>(new SignInStarted(url, completion));
     }
+
+    private static HttpListener? Listen(out int port)
+    {
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            using var probe = new TcpListener(IPAddress.Loopback, 0);
+            probe.Start();
+            port = ((IPEndPoint)probe.LocalEndpoint).Port;
+            probe.Stop();
+            var listener = new HttpListener();
+            listener.Prefixes.Add($"http://127.0.0.1:{port.ToString(CultureInfo.InvariantCulture)}/");
+            try
+            {
+                listener.Start();
+                return listener;
+            }
+            catch (HttpListenerException)
+            {
+                listener.Close();   // the port was taken between the probe and the start: try another
+            }
+        }
+
+        port = 0;
+        return null;
+    }
+
+    private async Task<Result<TokenSet>> Complete(HttpListener listener, ConnectionPreset preset, string clientId, string redirect, PkceChallenge pkce, CancellationToken cancellationToken)
+    {
+        using var limit = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        limit.CancelAfter(_timeout);
+        try
+        {
+            var callback = await WaitForCallback(listener, limit.Token).ConfigureAwait(false);
+            if (!pkce.Verify(callback.Query["state"]))
+            {
+                await Reply(callback, 400, "Sindri: this sign-in did not match. Close this tab and run the command again.").ConfigureAwait(false);
+                return SindriErrors.ConnectionStateMismatch.With("the callback's state is not the one this sign-in made");
+            }
+
+            if (callback.Query["error"] is { Length: > 0 })
+            {
+                await Reply(callback, 200, "Sindri: consent was denied. You can close this tab.").ConfigureAwait(false);
+                return SindriErrors.ConnectionConsentDenied.With($"{preset.DisplayName} did not get consent");
+            }
+
+            if (callback.Query["code"] is not { Length: > 0 } code)
+            {
+                await Reply(callback, 400, "Sindri: the callback had no code.").ConfigureAwait(false);
+                return SindriErrors.ConnectionConsentDenied.With($"{preset.DisplayName} sent the callback without a code");
+            }
+
+            await Reply(callback, 200, "Sindri: signed in. You can close this tab.").ConfigureAwait(false);
+            return await _oauth.ExchangeCode(new CodeExchange(preset, clientId, code, redirect, pkce.Verifier), limit.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return SindriErrors.ConnectionSignInTimeout.With("the sign-in was cancelled");
+        }
+        catch (OperationCanceledException)
+        {
+            return SindriErrors.ConnectionSignInTimeout.With("nobody finished the sign-in in " + _timeout.TotalMinutes.ToString("0.##", CultureInfo.InvariantCulture) + " minutes");
+        }
+        finally
+        {
+            listener.Close();
+        }
+    }
+
+    // Takes requests until one hits the callback path; anything else (a favicon) gets a 404.
+    private static async Task<Callback> WaitForCallback(HttpListener listener, CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            var context = await listener.GetContextAsync().WaitAsync(cancellationToken).ConfigureAwait(false);
+            if (string.Equals(context.Request.Url?.AbsolutePath, CallbackPath, StringComparison.Ordinal))
+            {
+                return new Callback(context, System.Web.HttpUtility.ParseQueryString(context.Request.Url!.Query));
+            }
+
+            context.Response.StatusCode = 404;
+            context.Response.Close();
+        }
+    }
+
+    private static async Task Reply(Callback callback, int status, string text)
+    {
+        var bytes = Encoding.UTF8.GetBytes("<!doctype html><meta charset=utf-8><title>Sindri</title><p>" + System.Net.WebUtility.HtmlEncode(text));
+        try
+        {
+            callback.Context.Response.StatusCode = status;
+            callback.Context.Response.ContentType = "text/html; charset=utf-8";
+            await callback.Context.Response.OutputStream.WriteAsync(bytes).ConfigureAwait(false);
+            callback.Context.Response.Close();
+        }
+        catch (Exception e) when (e is HttpListenerException or IOException or ObjectDisposedException)
+        {
+            // the browser went away before the page was written: the sign-in's own result is unaffected
+        }
+    }
+
+    private sealed record Callback(HttpListenerContext Context, System.Collections.Specialized.NameValueCollection Query);
 }

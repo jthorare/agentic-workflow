@@ -24,5 +24,17 @@ public sealed record ConnectionView(
     /// <summary>Shows a stored connection.</summary>
     /// <param name="connection">The connection.</param>
     /// <returns>The view.</returns>
-    public static ConnectionView From(Connection connection) => throw new NotSupportedException();
+    public static ConnectionView From(Connection connection)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        return new ConnectionView(
+            connection.Name.ToString(),
+            ConnectionWire.Name(connection.Kind),
+            connection.Preset,
+            ConnectionWire.Name(connection.Status),
+            connection.StatusReason,
+            connection.Config,
+            connection.LastRefreshedAt,
+            connection.SecretPointer is not null);
+    }
 }
