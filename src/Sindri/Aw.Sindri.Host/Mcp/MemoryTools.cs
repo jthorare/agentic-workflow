@@ -25,7 +25,7 @@ internal static class MemoryTools
     /// <summary>memory_forget's name.</summary>
     internal const string Forget = "memory_forget";
 
-    private static JsonObject Name { get; } = ContextTools.Property("string", "The memory's name, e.g. team-notes");
+    private static JsonObject Name => ContextTools.Property("string", "The memory's name, e.g. team-notes");
 
     private static Tool ListTool { get; } = new()
     {

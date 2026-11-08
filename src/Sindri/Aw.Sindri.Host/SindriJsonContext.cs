@@ -27,6 +27,7 @@ using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Line;
 using Aw.Sindri.Core.Linear;
+using Aw.Sindri.Core.Memory;
 using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Profile;
@@ -58,12 +59,6 @@ using Aw.Sindri.Features.ApproveProfile;
 using Aw.Sindri.Features.ApproveRecipe;
 using Aw.Sindri.Features.AttachProject;
 using Aw.Sindri.Features.CancelJob;
-using Aw.Sindri.Features.CreateMemory;
-using Aw.Sindri.Features.ForgetMemoryFact;
-using Aw.Sindri.Features.ListMemories;
-using Aw.Sindri.Features.SearchMemory;
-using Aw.Sindri.Features.WriteMemoryFact;
-using Aw.Sindri.Core.Memory;
 using Aw.Sindri.Features.CheckPack;
 using Aw.Sindri.Features.CheckSandbox;
 using Aw.Sindri.Features.CloseItem;
@@ -71,11 +66,13 @@ using Aw.Sindri.Features.CodeIndexJobs;
 using Aw.Sindri.Features.CompleteStep;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Features.CreateItem;
+using Aw.Sindri.Features.CreateMemory;
 using Aw.Sindri.Features.Decide;
 using Aw.Sindri.Features.Docs;
 using Aw.Sindri.Features.EndLearnMode;
 using Aw.Sindri.Features.EvalRecipe;
 using Aw.Sindri.Features.FileRequest;
+using Aw.Sindri.Features.ForgetMemoryFact;
 using Aw.Sindri.Features.GetEventCatalog;
 using Aw.Sindri.Features.GetInstanceEvents;
 using Aw.Sindri.Features.GetInstanceFact;
@@ -114,6 +111,7 @@ using Aw.Sindri.Features.ListDenials;
 using Aw.Sindri.Features.ListItems;
 using Aw.Sindri.Features.ListJobs;
 using Aw.Sindri.Features.ListLinearProjects;
+using Aw.Sindri.Features.ListMemories;
 using Aw.Sindri.Features.ListOutbox;
 using Aw.Sindri.Features.ListProjects;
 using Aw.Sindri.Features.ListRecipes;
@@ -137,6 +135,7 @@ using Aw.Sindri.Features.RunDoctor;
 using Aw.Sindri.Features.RunService;
 using Aw.Sindri.Features.Scoping;
 using Aw.Sindri.Features.Scrub;
+using Aw.Sindri.Features.SearchMemory;
 using Aw.Sindri.Features.SendReviewFix;
 using Aw.Sindri.Features.SessionExit;
 using Aw.Sindri.Features.SessionHeartbeat;
@@ -146,6 +145,7 @@ using Aw.Sindri.Features.StartInstance;
 using Aw.Sindri.Features.StopProcess;
 using Aw.Sindri.Features.ValidateProfile;
 using Aw.Sindri.Features.ValidateRecipe;
+using Aw.Sindri.Features.WriteMemoryFact;
 using Aw.Sindri.Host.Commands.Line;
 using Aw.Sindri.Host.Commands.Probe;
 using Aw.Sindri.Host.Commands.Recipe;
@@ -196,7 +196,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(Commands.Library.LibraryValidateReport)), JsonSerializable(typeof(Commands.Library.LibraryFindingRow))]   // PR review page Ph5b: 'sindri library list' and 'validate'
 [JsonSerializable(typeof(ChangeLinearIssueRequest)), JsonSerializable(typeof(ChangeLinearIssueBody)), JsonSerializable(typeof(LinearChangeApplied)), JsonSerializable(typeof(LinearChangeResult)), JsonSerializable(typeof(LinearFieldConflict[]))]   // Linear hub Ph3 1b: the issue edit
 [JsonSerializable(typeof(ListProjectsRequest)), JsonSerializable(typeof(ListProjectsResponse)), JsonSerializable(typeof(GetProjectRequest)), JsonSerializable(typeof(GetProjectResponse)), JsonSerializable(typeof(ProjectCard)), JsonSerializable(typeof(ListLinearProjectsRequest)), JsonSerializable(typeof(ListLinearProjectsResponse)), JsonSerializable(typeof(LinearProjectChoice))]
-[JsonSerializable(typeof(CreateMemoryRequest)), JsonSerializable(typeof(CreateMemoryResponse)), JsonSerializable(typeof(ListMemoriesRequest)), JsonSerializable(typeof(ListMemoriesResponse)), JsonSerializable(typeof(SearchMemoryRequest)), JsonSerializable(typeof(SearchMemoryResponse)), JsonSerializable(typeof(WriteMemoryFactRequest)), JsonSerializable(typeof(WriteMemoryFactResponse)), JsonSerializable(typeof(Endpoints.WriteMemoryFactBody)), JsonSerializable(typeof(ForgetMemoryFactRequest)), JsonSerializable(typeof(ForgetMemoryFactResponse)), JsonSerializable(typeof(MemoryView)), JsonSerializable(typeof(MemoryFactView)), JsonSerializable(typeof(MemoryProvenance))]   // agent-first PR 13
+[JsonSerializable(typeof(CreateMemoryRequest)), JsonSerializable(typeof(CreateMemoryResponse)), JsonSerializable(typeof(ListMemoriesRequest)), JsonSerializable(typeof(ListMemoriesResponse)), JsonSerializable(typeof(SearchMemoryRequest)), JsonSerializable(typeof(SearchMemoryResponse)), JsonSerializable(typeof(WriteMemoryFactRequest)), JsonSerializable(typeof(WriteMemoryFactResponse)), JsonSerializable(typeof(WriteMemoryFactBody)), JsonSerializable(typeof(ForgetMemoryFactRequest)), JsonSerializable(typeof(ForgetMemoryFactResponse)), JsonSerializable(typeof(MemoryView)), JsonSerializable(typeof(MemoryFactView)), JsonSerializable(typeof(MemoryProvenance))]   // agent-first PR 13
 [JsonSerializable(typeof(ProjectLead)), JsonSerializable(typeof(ProjectLink)), JsonSerializable(typeof(ProjectFreshnessRow))]
 [JsonSerializable(typeof(CloseItemRequest)), JsonSerializable(typeof(CloseItemBody)), JsonSerializable(typeof(GetQueueRequest)), JsonSerializable(typeof(QueueResponse))]
 [JsonSerializable(typeof(QueueGroupView)), JsonSerializable(typeof(ItemSummary)), JsonSerializable(typeof(ListItemsRequest)), JsonSerializable(typeof(ListItemsResponse))]

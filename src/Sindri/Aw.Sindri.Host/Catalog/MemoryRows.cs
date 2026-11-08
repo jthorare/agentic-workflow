@@ -19,9 +19,9 @@ internal static class MemoryRows
             "POST", "/sindri/memories", ShellRows.Form("sindri memory create <name> [--description <text>]"), "ready", SessionOk: true),
         new(ActionId.From("WriteMemoryFact"), typeof(WriteMemoryFactRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
-            "POST", "/sindri/memories/{name}/facts", ShellRows.Form("sindri memory write <name> <text> [--tag <tag>]... [--expires-at <time>]"), "ready", SessionOk: true),
+            "POST", "/sindri/memories/{name}/facts", ShellRows.Form("sindri memory write <name> <text> [--tag <tag>] [--expires-at <time>]"), "ready", SessionOk: true),
         new(ActionId.From("ForgetMemoryFact"), typeof(ForgetMemoryFactRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: true, ReadsViews: false, Shortcut: null,
-            "DELETE", "/sindri/memories/{name}/facts", ShellRows.Form("sindri memory forget <name> (--fact <id> | --tag <tag> | --expired)"), "ready", SessionOk: true),
+            "DELETE", "/sindri/memories/{name}/facts", ShellRows.Form("sindri memory forget <name> [--fact <id>] [--tag <tag>] [--expired]"), "ready", SessionOk: true),
     ];
 }
