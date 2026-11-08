@@ -23,8 +23,11 @@ internal sealed class LinearFeed(EventKind kind, DateTimeOffset? after, string? 
     /// <summary>Gets the endCursor of the last page when Linear said there is another, else null.</summary>
     internal string? More { get; private set; }
 
-    /// <summary>Gets a value indicating whether some issue's comments or history had a next page that was not read (those lists are read 10 and 25 at a time).</summary>
+    /// <summary>Gets a value indicating whether some issue's comments or history had entries that were not read (those lists are read 10 and 25 at a time).</summary>
     internal bool NestedMore { get; private set; }
+
+    /// <summary>Gets why the history could not be trusted ("history order"), or null.</summary>
+    internal string? GapReason { get; private set; }
 
     internal Result<Unit> Add(string body)
     {
@@ -46,7 +49,7 @@ internal sealed class LinearFeed(EventKind kind, DateTimeOffset? after, string? 
                 }
 
                 Newest = LinearTimes.Newest(issue, Newest);
-                NestedMore |= LinearTimes.HasMore(issue);
+                NoteNested(issue);
             }
 
             var info = PollJson.Member(issues ?? default, "pageInfo") ?? default;
@@ -56,6 +59,16 @@ internal sealed class LinearFeed(EventKind kind, DateTimeOffset? after, string? 
         catch (JsonException)
         {
             return SindriErrors.ConnectionProviderChanged.With("the issues answer is not JSON");
+        }
+    }
+
+    private void NoteNested(JsonElement issue)
+    {
+        NestedMore |= LinearTimes.CommentsHaveMore(issue);
+        if (after is { } floor && LinearTimes.HistoryMissing(issue, floor, out var oldestFirst))
+        {
+            NestedMore = true;
+            GapReason = oldestFirst ? "Linear served the history oldest first (history order), so newer entries may be missing" : GapReason;
         }
     }
 }

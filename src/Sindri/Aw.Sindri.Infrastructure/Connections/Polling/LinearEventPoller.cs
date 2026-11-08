@@ -70,11 +70,12 @@ internal sealed class LinearEventPoller(HttpClient http, IConnectionSecrets secr
         }
     }
 
-    // Both nested lists only ask for entries newer than the cursor ($since), so a next page means real overflow and not old entries.
+    // Comments only ask for entries newer than the cursor ($since), so their next page means real overflow and not old entries.
     private static string Fields(bool since)
     {
-        var nested = since ? ", filter: { createdAt: { gt: $since } }" : string.Empty;
-        return "identifier title url createdAt comments(first: 10" + nested + ") { " + CommentNodes + " } history(first: 25" + nested + ") { " + HistoryNodes + " }";
+        // Issue.comments takes a filter; Issue.history takes none (a filter there is a GraphQL validation error), so history is cut on our side.
+        var comments = since ? ", filter: { createdAt: { gt: $since } }" : string.Empty;
+        return "identifier title url createdAt comments(first: 10" + comments + ") { " + CommentNodes + " } history(first: 25, orderBy: createdAt) { " + HistoryNodes + " }";
     }
 
     private static string Query(DateTimeOffset? after, string? endCursor)
@@ -110,6 +111,6 @@ internal sealed class LinearEventPoller(HttpClient http, IConnectionSecrets secr
     {
         var gap = feed.Reading && (capped || feed.NestedMore);
         var events = feed.Events.DistinctBy(static e => e.DeliveryKey, StringComparer.Ordinal).OrderBy(static e => e.OccurredAt).ThenBy(static e => e.DeliveryKey, StringComparer.Ordinal).ToList();
-        return new PollResult(events, feed.Newest.Text ?? PollCursorText.Now(clock.GetUtcNow()), RateLimited: false, RetryAfter: null, gap);
+        return new PollResult(events, feed.Newest.Text ?? PollCursorText.Now(clock.GetUtcNow()), RateLimited: false, RetryAfter: null, gap, Reason: feed.GapReason);
     }
 }
