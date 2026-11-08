@@ -34,9 +34,11 @@ internal sealed class GetLinearIssueService(ILinearIssueFacts facts, ILinearItem
         // why: a link read that fails must not hide the issue; the sheet then shows without its item and PR
         var linked = await links.For([r.Record], cancellationToken).ConfigureAwait(false);
         var link = linked.IsSuccess ? linked.Value.GetValueOrDefault(r.Record) : null;
-        var write = detail.Removed ? new LinearWriteGateView(Allowed: false, Code: null) : await gate.Read(cancellationToken).ConfigureAwait(false);
+        var write = detail.Removed ? new LinearWriteGateView(Allowed: false, Code: null) : View(await gate.Refusal(r.Team.Key, cancellationToken).ConfigureAwait(false));
         return new GetLinearIssueResponse(r.Key, r.Record, r.Url, r.Title, r.Team, r.State, r.Priority, r.Assignee, r.Project, r.Cycle, r.Labels, r.UpdatedAt, link?.Link, link?.Pr, viewer, detail.Description, detail.Comments, detail.Removed, write);
     }
+
+    private static LinearWriteGateView View(Error? refusal) => new(refusal is null, refusal?.Code);
 
     private static Error NotFound(string key) =>
         LinearHubErrors.IssueNotFound.With($"{key.Trim().ToUpperInvariant()} isn't stored: it isn't synced yet, or it's outside the teams Sindri reads (fix: Open in Linear, or wait for the next sync)");

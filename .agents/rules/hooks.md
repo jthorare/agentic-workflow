@@ -28,7 +28,7 @@ Put provider-specific parsing in the adapter, not the canonical hook. The one ex
 `setup.sh` runs `providers/<name>/install-hooks.sh` for each selected provider, then the lever installers (see `planning/PROVIDERS.md`).
 
 **Provider facts:**
-- **Codex** only runs hooks you have trusted. After installing, open `codex`, run `/hooks`, and trust the `aw:*` entries. Re-trust after a reinstall that changes a command.
+- **Codex** only runs hooks you have trusted. After installing, open `codex`, run `/hooks`, and trust the `aw:*` entries. Codex stores trust in `config.toml` as `[hooks.state."<hooks.json>:<event>:<group>:<handler>"] trusted_hash`, a key by position and a hash of the matcher, command text and timeout. So an installer must never move an entry or reword its command: `merge_hook` replaces an owned entry in place, and `aw_hook_set` quotes the adapter and script paths the same way for every installer. Change what a hook does by editing the script behind its path, not the command line; a changed command needs trust again (`providers/tests/codex-hooks-stable.test.sh`).
 - **Cursor** runs user hooks from `~/.cursor/`, so the adapter `cd`s to `cwd` → `workspace_roots[0]` → `$CURSOR_PROJECT_DIR`. Cursor blocks the action when a hook returns invalid or missing JSON, so the adapter always prints valid JSON and falls back to `allow` on its own errors.
 - Codex and Cursor copies of the scripts go to `~/.agentic-workflow/hooks/` (with `adapters/` and `lib/locks.sh`). Every entry ends in `# aw:<id>`, and `config/lib/merge-hook.sh` only touches entries carrying its own tag.
 

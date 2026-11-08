@@ -1,3 +1,4 @@
+using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptScan;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Map;
@@ -183,4 +184,12 @@ public interface IContextMap : IScopeProposals
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The view, or SND-CONTEXT-001/003/004/020.</returns>
     public ValueTask<Result<MapPublishView>> PublishStatus(ContextScope scope, CancellationToken cancellationToken);
+
+    /// <summary>What each pin gained and lost between two map versions (the pins read's 'moved' field), each version read with the owner's overrides applied (service use).</summary>
+    /// <param name="from">The earlier version (the one a refresh retained).</param>
+    /// <param name="to">The later version (the one it published).</param>
+    /// <param name="scope">The profile's context section and repos, and the caller.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>One move per pin the later version shows (none when the profile has no pins), or SND-CONTEXT-001/003/004/020/030/120.</returns>
+    public ValueTask<Result<IReadOnlyList<PinMove>>> PinMoves(MapVersion from, MapVersion to, ContextScope scope, CancellationToken cancellationToken);
 }

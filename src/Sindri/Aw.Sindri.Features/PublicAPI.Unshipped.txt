@@ -6219,3 +6219,5 @@ static Aw.Sindri.Features.ListTodos.ListTodosResponse.operator !=(Aw.Sindri.Feat
 static Aw.Sindri.Features.ListTodos.ListTodosResponse.operator ==(Aw.Sindri.Features.ListTodos.ListTodosResponse? left, Aw.Sindri.Features.ListTodos.ListTodosResponse? right) -> bool
 static Aw.Sindri.Features.MarkTodo.MarkTodoRequest.operator !=(Aw.Sindri.Features.MarkTodo.MarkTodoRequest? left, Aw.Sindri.Features.MarkTodo.MarkTodoRequest? right) -> bool
 static Aw.Sindri.Features.MarkTodo.MarkTodoRequest.operator ==(Aw.Sindri.Features.MarkTodo.MarkTodoRequest? left, Aw.Sindri.Features.MarkTodo.MarkTodoRequest? right) -> bool
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Moves.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinMove!>?
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Moves.init -> void

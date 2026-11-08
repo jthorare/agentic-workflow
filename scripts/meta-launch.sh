@@ -11,6 +11,8 @@
 # changes: the viewer (warp, the layout above; exec-template, one window per lane running the file's argv; print, one
 # `tmux attach` line per lane) and, when team.json has no "agent", each lane's agent (meta.lanesAgent, meta.lanes.<lane>;
 # Claude Code by default). team.json "agent" sets every lane, including the meta lane, and wins over those two fields.
+# team.json routing.lanes.<lane> {agent?, model?} (aw-meta route --apply) then puts that lane on its routed agent and model,
+# and a lane routed that way is exempt from the one-agent rule below.
 # Before it creates anything it looks (read-only: has-session) for `<team>-<lane>` sessions of the lanes it would start on tmux's
 # DEFAULT socket, where a team started before the switch still runs, and refuses (exit 1) if any exist: starting them again
 # would run a second claude on the same transcripts. The owner stops the old team, then relaunches; --allow-legacy skips the check (the meta session never passes it).
@@ -136,12 +138,33 @@ case "$repo" in /*) [ -d "$repo" ] || { echo "meta-launch: repo $repo not found"
 meta_lane="$(jq -r '.metaLane // "meta"' "$config")"
 launcher_load "$state_dir" || exit 1
 launcher_apply_team_agent "$config" "$meta_lane" || exit $?
+launcher_apply_routing "$config" "$meta_lane" || exit $?
 if [ -n "${AW_LAUNCHER_CONFIG:-}" ]; then   # lanes read the same file: pass it on, as an absolute path (their cwd is the repo)
   AW_LAUNCHER_CONFIG="$(cd "$(dirname "$launcher_file")" && pwd)/$(basename "$launcher_file")"; export AW_LAUNCHER_CONFIG
 fi
 viewer="$(launcher_viewer_kind)"
 lc_env=(); lc_str=""
 if [ -n "${AW_LAUNCHER_CONFIG:-}" ]; then lc_env=(-e "AW_LAUNCHER_CONFIG=$AW_LAUNCHER_CONFIG"); lc_str=" -e AW_LAUNCHER_CONFIG=$AW_LAUNCHER_CONFIG"; fi
+# The caller's PATH and login shell go to every lane (#2278): tmux runs a new session with the SERVER's environment, which on a
+# running server is stale. SHELL falls back to /bin/bash when unset or not executable. AW_META_CALLER_PATH carries the PATH past a
+# login profile that resets PATH; meta-lane.sh puts it back first.
+sh_bin="${SHELL:-}"; { [ -n "$sh_bin" ] && [ -x "$sh_bin" ]; } || sh_bin=/bin/bash
+# sh-quoted only when needed. A loop on a quote variable, not ${s//\'/...}: bash 3.2 (macOS) reads backslashes in that replacement differently (#2281).
+shq() {
+  case "$1" in
+    ''|*[!A-Za-z0-9_/.,:=@%+-]*)
+      local q="'" s="$1" out=""
+      while [[ "$s" == *"$q"* ]]; do out="$out${s%%"$q"*}'\\''"; s="${s#*"$q"}"; done
+      printf "'%s%s'" "$out" "$s" ;;
+    *) printf '%s' "$1" ;;
+  esac
+}
+env_args=(-e "PATH=$PATH" -e "SHELL=$sh_bin" -e "AW_META_CALLER_PATH=$PATH")
+env_str=" -e $(shq "PATH=$PATH") -e $(shq "SHELL=$sh_bin") -e $(shq "AW_META_CALLER_PATH=$PATH")"
+# tmux overwrites SHELL in a new session with its default-shell, so `env SHELL=` sets it again for the login shell and everything under it.
+# AW_META_LANE has to be in the session before the login profile runs (meta-lane.sh exports it too late for a guard like [ -z "$AW_META_LANE" ]).
+lane_env_str() { printf '%s -e AW_META_LANE=%s' "$env_str" "$1"; }
+lane_cmd() { printf 'exec env SHELL=%s %s -lc %s' "$(shq "$sh_bin")" "$(shq "$sh_bin")" "$(shq "$(shq "$here/meta-lane.sh") $team $1")"; }   # run by tmux through sh -c; fish takes -lc too
 agent_of() { launcher_lane_agent "$1" "$meta_lane"; }
 proc_of() { # lane: the process name a pane runs while the lane's agent is up
   local a pn; a="$(agent_of "$1")"; pn="$(launcher_agent_field "$a" processName)"
@@ -151,14 +174,23 @@ proc_of() { # lane: the process name a pane runs while the lane's agent is up
 for l in "${A[@]}" "${L[@]}"; do launcher_agent_ok "$(agent_of "$l")" || exit 1; done
 # A team runs one agent: every lane (not only the ones --lanes selects) resolves to the meta lane's agent. A Codex meta has no
 # Claude lane to deliver to and a Claude meta no Codex one (docs/csharp/meta.md "One agent per team"); refused before anything starts.
+# A lane that team.json routing.lanes names is exempt: routing it is the owner's decision to run it elsewhere (aw-meta route --apply).
 meta_agent="$(agent_of "$meta_lane")"; odd=""
 for l in "${A[@]}"; do
-  [ "$l" != "$meta_lane" ] && [ "$(agent_of "$l")" != "$meta_agent" ] && odd="${odd:+$odd, }$l ($(agent_of "$l"))"
+  [ "$l" != "$meta_lane" ] && ! launcher_lane_routed "$l" && [ "$(agent_of "$l")" != "$meta_agent" ] && odd="${odd:+$odd, }$l ($(agent_of "$l"))"
 done
 if [ -n "$odd" ]; then
   echo "meta-launch: a team runs one agent: the meta lane '$meta_lane' runs $meta_agent, but $odd do not. Fix launcher.json: set meta.lanes.$meta_lane to the lanes' agent, or put the lanes back on $meta_agent (meta.lanesAgent and meta.lanes.<lane>). Or set agent in team.json to one catalog id: it sets every lane, including the meta lane, and wins over launcher.json." >&2
   exit 1
 fi
+# A Claude lane is messaged with SendMessage, which only a Claude meta has (lane-send refuses a Claude lane): a lane routed to
+# Claude under a meta on another agent would come up unreachable.
+for l in "${A[@]}"; do
+  if [ "$l" != "$meta_lane" ] && launcher_lane_routed "$l" && [ "$(agent_of "$l")" = claude-code ] && [ "$meta_agent" != claude-code ]; then
+    echo "meta-launch: lane '$l' is routed to claude-code, but the meta lane '$meta_lane' runs $meta_agent: the meta can't message a Claude lane. Route the lane to $meta_agent, or run the meta on claude-code." >&2
+    exit 1
+  fi
+done
 if [ "$viewer" = exec-template ] && [ "$(jq -r '.viewer.argv | type' <<< "$LAUNCHER_DOC")" != array ]; then
   echo "meta-launch: SND-LAUNCH-011: viewer.argv is required for an exec-template viewer (in ${launcher_file:-launcher.json})" >&2; exit 1
 fi
@@ -248,17 +280,17 @@ for l in "${L[@]}"; do
     # Claude exited or crashed and the pane fell back to its shell (meta-lane.sh left <lane>.exited): start the lane
     # again in place, resumed by id. A pane still running claude is never touched.
     if [ ! -f "$meta_dir/lane-sessions/$l.exited" ] || claude_in_pane "$s" "$(proc_of "$l")"; then echo "tmux $s: running"
-    elif [ "$dry" = 1 ]; then echo "[dry-run] ${tmux_t[*]} respawn-pane -k -t $s $here/meta-lane.sh $team $l"
+    elif [ "$dry" = 1 ]; then echo "[dry-run] ${tmux_t[*]} respawn-pane -k -t $s -c $repo$(lane_env_str "$l") $(lane_cmd "$l")"
     else
       mark_start "$l"
-      "${tmux_t[@]}" respawn-pane -k -t "=$s:" -c "$repo" -e "AW_META_CONFIG=$config" ${lc_env[@]+"${lc_env[@]}"} "$here/meta-lane.sh $team $l"
+      "${tmux_t[@]}" respawn-pane -k -t "=$s:" -c "$repo" -e "AW_META_CONFIG=$config" "${env_args[@]}" -e "AW_META_LANE=$l" ${lc_env[@]+"${lc_env[@]}"} "$(lane_cmd "$l")"
       echo "tmux $s: restarted (claude had exited)"
       wait_reported "$l"
     fi
-  elif [ "$dry" = 1 ]; then echo "[dry-run] ${tmux_t[*]} new-session -d -s $s -c $repo $here/meta-lane.sh $team $l"
+  elif [ "$dry" = 1 ]; then echo "[dry-run] ${tmux_t[*]} new-session -d -s $s -c $repo$(lane_env_str "$l") $(lane_cmd "$l")"
   else
     mark_start "$l"
-    "${tmux_t[@]}" new-session -d -s "$s" -c "$repo" -e "AW_META_CONFIG=$config" ${lc_env[@]+"${lc_env[@]}"} "$here/meta-lane.sh $team $l"
+    "${tmux_t[@]}" new-session -d -s "$s" -c "$repo" -e "AW_META_CONFIG=$config" "${env_args[@]}" -e "AW_META_LANE=$l" ${lc_env[@]+"${lc_env[@]}"} "$(lane_cmd "$l")"
     echo "tmux $s: started"
     wait_reported "$l"
   fi
@@ -267,7 +299,7 @@ done
 # 2. Warp launch configuration: the first lane on the left, the others stacked on the right.
 # The pane attaches, or creates the session itself with the same command as step 1, so a session that is missing when
 # Warp opens (a --lanes run, a lane that exited) still runs the lane instead of a plain shell under its name.
-attach() { printf 'tmux -L %s new -A -s %s -c %s -e AW_META_CONFIG=%s%s %s' "$team" "$team-$1" "$repo" "$config" "$lc_str" "'$here/meta-lane.sh $team $1'"; }
+attach() { printf 'tmux -L %s new -A -s %s -c %s -e AW_META_CONFIG=%s%s%s %s' "$team" "$team-$1" "$repo" "$config" "$(lane_env_str "$1")" "$lc_str" "$(shq "$(lane_cmd "$1")")"; }
 pane() { # indent lane
   printf '%s- cwd: %s\n%s  commands:\n%s    - exec: %s\n' "$1" "$repo" "$1" "$1" "$(attach "$2")"
 }

@@ -6,6 +6,7 @@
 #                                         AW_HOOKS_INSTALL_DIR, AW_HOOKS_FLAT
 #   aw_hooks_stage                        copy canonical hooks + adapters + lib/locks.sh
 #                                         into AW_HOOKS_INSTALL_DIR (codex/cursor)
+#   aw_sq <text>                          single-quote one shell word
 #   aw_hook_set <event> <id> <script> [matcher] [timeout] [script-args...]
 #                                         install one owned entry, wrapped in the
 #                                         provider adapter (codex/cursor)
@@ -110,12 +111,16 @@ aw_hook_set_cmd() {
   fi
 }
 
+# aw_sq <text> — the text as one single-quoted shell word (a ' inside becomes '\''), so a path with a space, a $ or a
+# backtick still runs. Codex and Cursor entries quote the adapter and the script this way, in every installer.
+aw_sq() { printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"; }
+
 aw_hook_set() {
   local event="$1" id="$2" script="$3" matcher="${4:-}" timeout="${5:-}" cmd
   shift 3; [ $# -gt 0 ] && shift; [ $# -gt 0 ] && shift
   case "$AW_HOOK_PROVIDER" in
     claude) cmd="$AW_HOOKS_INSTALL_DIR/$script" ;;
-    *) cmd="$AW_HOOKS_INSTALL_DIR/adapters/$AW_HOOK_PROVIDER.sh ${AW_HOOK_ADAPTER_FLAGS:+$AW_HOOK_ADAPTER_FLAGS }$AW_HOOKS_INSTALL_DIR/$script" ;;
+    *) cmd="$(aw_sq "$AW_HOOKS_INSTALL_DIR/adapters/$AW_HOOK_PROVIDER.sh") ${AW_HOOK_ADAPTER_FLAGS:+$AW_HOOK_ADAPTER_FLAGS }$(aw_sq "$AW_HOOKS_INSTALL_DIR/$script")" ;;
   esac
   [ $# -gt 0 ] && cmd="$cmd $*"
   aw_hook_set_cmd "$event" "$id" "$cmd" "$matcher" "$timeout"
