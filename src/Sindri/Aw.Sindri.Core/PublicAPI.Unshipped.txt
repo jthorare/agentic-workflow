@@ -25654,3 +25654,5 @@ override Aw.Sindri.Core.Scheduling.StoreCheckpoint.ToString() -> string!
 static Aw.Sindri.Core.Scheduling.StoreCheckpoint.operator !=(Aw.Sindri.Core.Scheduling.StoreCheckpoint? left, Aw.Sindri.Core.Scheduling.StoreCheckpoint? right) -> bool
 static Aw.Sindri.Core.Scheduling.StoreCheckpoint.operator ==(Aw.Sindri.Core.Scheduling.StoreCheckpoint? left, Aw.Sindri.Core.Scheduling.StoreCheckpoint? right) -> bool
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.Admit(Aw.Sindri.Core.Graph.Runs.WorkflowRun! run, Aw.Sindri.Core.Graph.Runs.GraphConcurrency mode, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Runs.GraphStartKind>!>
+Aw.Sindri.Core.Graph.Blocks.IGraphBlockType.CheckConfig(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
+Aw.Sindri.Core.Graph.Blocks.PromptBlock.CheckConfig(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
