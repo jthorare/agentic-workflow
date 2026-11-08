@@ -13,6 +13,9 @@ internal sealed class FakeLinearConnectionApproval : ILinearConnectionApproval
     /// <summary>Gets how many times the approval was settled.</summary>
     public int Settles { get; private set; }
 
+    /// <summary>Gets the change the last settle was asked about.</summary>
+    public LinearConnectionChange? LastChange { get; private set; }
+
     /// <summary>Settles to <paramref name="approved"/>: false stands for other changes waiting.</summary>
     /// <param name="approved">Whether the profile is approved.</param>
     /// <returns>The same instance.</returns>
@@ -32,9 +35,10 @@ internal sealed class FakeLinearConnectionApproval : ILinearConnectionApproval
     }
 
     /// <inheritdoc/>
-    public ValueTask<Result<bool>> Settle(CancellationToken cancellationToken)
+    public ValueTask<Result<bool>> Settle(LinearConnectionChange change, CancellationToken cancellationToken)
     {
         Settles++;
+        LastChange = change;
         return ValueTask.FromResult(_answer);
     }
 }

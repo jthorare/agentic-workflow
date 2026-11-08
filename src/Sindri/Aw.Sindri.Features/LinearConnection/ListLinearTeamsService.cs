@@ -11,7 +11,8 @@ namespace Aw.Sindri.Features.LinearConnection;
 /// </summary>
 /// <param name="checks">Asks Linear.</param>
 /// <param name="callers">The current caller.</param>
-internal sealed class ListLinearTeamsService(ILinearKeyChecks checks, ICallerContextAccessor callers) : IService<ListLinearTeamsRequest, ListLinearTeamsResponse>
+/// <param name="urlGuard">Refuses while the Linear url has a change waiting.</param>
+internal sealed class ListLinearTeamsService(ILinearKeyChecks checks, ICallerContextAccessor callers, LinearUrlGuard urlGuard) : IService<ListLinearTeamsRequest, ListLinearTeamsResponse>
 {
     public async ValueTask<Result<ListLinearTeamsResponse>> Handle(ListLinearTeamsRequest request, CancellationToken cancellationToken)
     {
@@ -24,6 +25,11 @@ internal sealed class ListLinearTeamsService(ILinearKeyChecks checks, ICallerCon
         if (string.IsNullOrWhiteSpace(request.Key))
         {
             return SindriErrors.InvalidInput.With("paste a Linear API key (fix: make one at linear.app/settings/api)");
+        }
+
+        if (await urlGuard.Pending(cancellationToken).ConfigureAwait(false) is { } waiting)
+        {
+            return waiting;
         }
 
         var teams = await checks.Teams(request.Key.Trim(), cancellationToken).ConfigureAwait(false);
