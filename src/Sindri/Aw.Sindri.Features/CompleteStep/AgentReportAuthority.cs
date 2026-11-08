@@ -46,4 +46,12 @@ internal static class AgentReportAuthority
         var proven = files.Verify(launch, secret);
         return proven.IsError ? proven.Error : StepRuntime.Agent;
     }
+
+    /// <summary>Decides a non-human caller's report for a 'run_agent' node run: only the session launched for it, proven by its launch secret, and only while the node run isn't taken over.</summary>
+    /// <param name="launch">The node run's launch.</param>
+    /// <param name="takenOver">True while the node run is taken over (only the human reports then).</param>
+    /// <param name="secret">The secret the report carried, or null.</param>
+    /// <param name="files">The launches' stored secrets.</param>
+    /// <returns>Success with <see cref="StepRuntime.Agent"/>, or the refusal: SND-AUTH-002 for a taken-over node or no secret, SND-AUTH-003 for a secret that doesn't match.</returns>
+    internal static Result<StepRuntime> DecideNode(LaunchId launch, bool takenOver, LaunchSecret? secret, ILaunchFiles files) => throw new NotSupportedException();
 }
