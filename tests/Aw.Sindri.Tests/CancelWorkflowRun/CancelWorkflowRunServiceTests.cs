@@ -1,5 +1,6 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Features.CancelWorkflowRun;
@@ -18,12 +19,13 @@ public sealed class CancelWorkflowRunServiceTests
     private readonly FakeTimeProvider _clock = new();
     private readonly InMemoryWorkflowRunStore _runs;
     private readonly FakeGraphRunCanceller _canceller = new();
+    private readonly SliceHarness _h = new();
     private readonly CancelWorkflowRunService _service;
 
     public CancelWorkflowRunServiceTests()
     {
         _runs = new InMemoryWorkflowRunStore(_clock);
-        _service = new CancelWorkflowRunService(_runs, _canceller);
+        _service = new CancelWorkflowRunService(_runs, _canceller, _h.Store, _h.Held, _h.Events);
     }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -45,6 +47,7 @@ public sealed class CancelWorkflowRunServiceTests
     [Fact]
     public async Task Cancelling_a_queued_run_marks_it_cancelled_without_asking_temporal()
     {
+        _ = await _h.HoldLease();
         var run = await Insert(4, WorkflowRunStatus.Queued);   // a queued run has no Temporal workflow yet
 
         var result = await _service.Handle(new CancelWorkflowRunRequest(run.Id, "owner"), Token);
@@ -53,6 +56,22 @@ public sealed class CancelWorkflowRunServiceTests
         Assert.Equal(run.Id, result.Value.Run);
         Assert.Empty(_canceller.Cancelled);
         Assert.Equal(WorkflowRunStatus.Cancelled, (await _runs.Get(run.Id, Token)).Value.Status);
+        var recorded = Assert.Single(_h.Store.Events);   // the same event, with the same key, the workflow's own end would write
+        Assert.Equal(EventTypes.WorkflowRunCancelled, recorded.Envelope.Type);
+        Assert.Equal($"workflow.run.cancelled:{run.Id.Value}", recorded.IdempotencyKey);
+    }
+
+    [Fact]
+    public async Task Cancelling_a_queued_run_without_the_lease_is_refused_and_leaves_it_queued()
+    {
+        var run = await Insert(5, WorkflowRunStatus.Queued);
+
+        var result = await _service.Handle(new CancelWorkflowRunRequest(run.Id, "owner"), Token);
+
+        Assert.Equal(SindriErrors.NotRunning.Code, result.Error.Code);
+        Assert.Equal(WorkflowRunStatus.Queued, (await _runs.Get(run.Id, Token)).Value.Status);
+        Assert.Empty(_h.Store.Events);
+        Assert.Empty(_canceller.Cancelled);
     }
 
     [Fact]
