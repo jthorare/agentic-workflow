@@ -30,7 +30,27 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     }
 
     /// <inheritdoc/>
-    public ValueTask<Result<GraphStartKind>> Admit(WorkflowRun run, GraphConcurrency mode, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public ValueTask<Result<GraphStartKind>> Admit(WorkflowRun run, GraphConcurrency mode, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        lock (_gate)
+        {
+            if (_runs.Exists(r => r.Id == run.Id))
+            {
+                return Done<GraphStartKind>(SindriErrors.GraphRunIdTaken.With($"the run '{run.Id.Value}' already exists; a trigger that fires twice is one run"));
+            }
+
+            var busy = mode != GraphConcurrency.Unlimited
+                && _runs.Exists(r => r.WorkflowId == run.WorkflowId && r.Status is WorkflowRunStatus.Queued or WorkflowRunStatus.Running or WorkflowRunStatus.Waiting);
+            if (busy && mode == GraphConcurrency.OnePerWorkflow)
+            {
+                return Done<GraphStartKind>(GraphStartKind.Skipped);
+            }
+
+            _runs.Add(run with { Status = busy ? WorkflowRunStatus.Queued : WorkflowRunStatus.Running });
+            return Done<GraphStartKind>(busy ? GraphStartKind.Queued : GraphStartKind.Started);
+        }
+    }
 
     /// <inheritdoc/>
     public ValueTask<Result<WorkflowRun>> Get(WorkflowRunId id, CancellationToken cancellationToken)

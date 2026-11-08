@@ -47,7 +47,21 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
         }, cancellationToken);
     }
 
-    public ValueTask<Result<GraphStartKind>> Admit(WorkflowRun run, GraphConcurrency mode, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public ValueTask<Result<GraphStartKind>> Admit(WorkflowRun run, GraphConcurrency mode, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        // why: the in-flight read and the insert share one write transaction, so two triggers cannot both see "nothing in flight".
+        return RecipeSessions.Write(database, async ValueTask<Result<GraphStartKind>> (session, token) =>
+        {
+            var existing = await FindRun(session, run.Id, token).ConfigureAwait(false);
+            if (existing.IsError || existing.Value is not null)
+            {
+                return existing.IsError ? existing.Error : SindriErrors.GraphRunIdTaken.With($"the run '{run.Id.Value}' already exists; a trigger that fires twice is one run");
+            }
+
+            return await Decide(session, run, mode, token).ConfigureAwait(false);
+        }, cancellationToken);
+    }
 
     public async ValueTask<Result<WorkflowRun>> Get(WorkflowRunId id, CancellationToken cancellationToken)
     {
@@ -105,6 +119,34 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
     public ValueTask<Result<IReadOnlyList<NodeRun>>> NodeRuns(WorkflowRunId id, CancellationToken cancellationToken) =>
         RecipeSessions.Read(database, LedgerDatabase.WorkflowRunsVersion, [],
             (session, token) => RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.SelectNodeRuns, c => c.Bind("$run", id.Value)), NodeRunMapper.Instance, token), cancellationToken);
+
+    private static async ValueTask<Result<GraphStartKind>> Decide(ISqliteSession session, WorkflowRun run, GraphConcurrency mode, CancellationToken token)
+    {
+        var inFlight = mode == GraphConcurrency.Unlimited ? 0 : await CountInFlight(session, run.WorkflowId, token).ConfigureAwait(false);
+        if (inFlight < 0)
+        {
+            return SindriErrors.LedgerUnavailable.With("could not read the runs in flight");
+        }
+
+        var busy = inFlight > 0;
+        if (busy && mode == GraphConcurrency.OnePerWorkflow)
+        {
+            return GraphStartKind.Skipped;
+        }
+
+        var status = busy ? WorkflowRunStatus.Queued : WorkflowRunStatus.Running;
+        var inserted = await RecipeSessions.Execute(session, new SqlStatement(WorkflowRunSql.InsertRun,
+            c => c.Bind("$id", run.Id.Value).Bind("$workflow", run.WorkflowId.Value).Bind("$revision", run.Revision).Bind("$trigger", run.Trigger)
+                .Bind("$status", RunStatusText.Of(status)).Bind("$outputs", run.Outputs).Bind("$error", run.Error)
+                .Bind("$item", run.ItemId?.Value).Bind("$at", run.StartedAt), $"run {run.Id.Value}"), token).ConfigureAwait(false);
+        return inserted.IsError ? inserted.Error : busy ? GraphStartKind.Queued : GraphStartKind.Started;
+    }
+
+    private static async ValueTask<int> CountInFlight(ISqliteSession session, WorkflowId workflow, CancellationToken token)
+    {
+        var inFlight = await RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.InFlight, c => c.Bind("$workflow", workflow.Value)), WorkflowRunMapper.Instance, token).ConfigureAwait(false);
+        return inFlight.IsError ? -1 : inFlight.Value.Count;
+    }
 
     private static ValueTask<Result<WorkflowRun?>> FindRun(ISqliteSession session, WorkflowRunId id, CancellationToken token) =>
         RecipeSessions.First(session, new SqlStatement(WorkflowRunSql.ById, c => c.Bind("$id", id.Value)), WorkflowRunMapper.Instance, token);

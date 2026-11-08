@@ -184,7 +184,7 @@ public abstract class WorkflowRunStoreContract
     /// <summary>The check and the insert are one step: 20 triggers racing give one run and 19 skips.</summary>
     /// <returns>The test.</returns>
     [Fact]
-    public async Task Two_admits_racing_in_one_per_workflow_start_exactly_one()
+    public async Task Twenty_admits_racing_in_one_per_workflow_start_exactly_one()
     {
         var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
 
