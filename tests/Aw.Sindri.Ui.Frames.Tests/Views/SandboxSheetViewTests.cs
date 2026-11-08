@@ -95,7 +95,7 @@ public sealed class SandboxSheetViewTests : FrameHost
     });
 
     [Fact]
-    public Task Allow_keeps_focus_through_every_state_and_one_polite_zero_width_region_says_each_step() => OnUi(async () =>
+    public Task Allow_keeps_focus_and_one_polite_zero_width_region_says_it_is_allowed() => OnUi(async () =>
     {
         var window = await ItemSheetShown();
         var live = Named<TextBlock>(window, "ItemBlockedAnnouncement");
@@ -103,21 +103,13 @@ public sealed class SandboxSheetViewTests : FrameHost
         Assert.Equal((0d, 0d), (live.Width, live.Opacity));
         _ = allow.Focus();
 
-        allow.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        allow.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));   // the edit applies on save: allowed at once, no approval step
         Dispatcher.UIThread.RunJobs();
         Settle(window);
 
         Assert.Same(allow, window.FocusManager!.GetFocusedElement());
-        Assert.Equal("Needs your approval: open the approval to allow registry.example.org", live.Text);
-        Assert.True(Polite(live));
-
-        // The owner approved the edit: nothing is left to approve and the approved hash moved on.
-        Server.ProfileAnswer = new RouteAnswer(HttpStatusCode.OK, GoldenFiles.Api("profile", "approved").Replace("70e1581b3ecaf617318482f6b0844b67f79a287a7136b4e4b6ff5d26005e4261", "cc73e26e84c70b5c151d3b0ea90bb7f048a85174433c1b8620f8ba68d8479ee2", StringComparison.Ordinal));
-        await ((ItemSheetViewModel)((ItemSheet)window.Content!).DataContext!).Blocked.Read(_api, A.NewItem, Token);
-        Settle(window);
-
-        Assert.Same(allow, window.FocusManager.GetFocusedElement());
         Assert.Equal("Allowed", live.Text);
+        Assert.True(Polite(live));
         window.Close();
     });
 

@@ -18,7 +18,7 @@ namespace Aw.Sindri.Ui.Frames.Tests.Views;
 [Lane(TestLane.Integration)]
 public sealed class DecisionsFramesTests : FrameHost
 {
-    private const string Pending = "DEC-00000000000000000000000000000012";
+    private const string Pending = "DEC-00000000000000000000000000000009";
 
     private async Task<(Window Window, ViewModels.Shell.ShellViewModel Shell)> WithDecisionOpen()
     {

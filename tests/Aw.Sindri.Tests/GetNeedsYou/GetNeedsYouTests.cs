@@ -229,7 +229,7 @@ public sealed class GetNeedsYouTests
 
         var rows = (await Get()).Rows;
 
-        Expect.Equal(2, rows.Count);
+        Expect.Equal(3, rows.Count);   // both repos' decisions and the failure
         Assert.Contains(rows, r => r.Repo?.Value == "beta");
         Assert.Contains(rows, r => r.Kind == NeedsYouKind.Failure);
     }
@@ -281,7 +281,7 @@ public sealed class GetNeedsYouTests
 
         var rows = (await Get()).Rows;
 
-        Expect.Equal(3, rows.Count);
+        Expect.Equal(2, rows.Count);   // the failure and the decision; no profile row since edits apply on save
         foreach (var row in rows)
         {
             Assert.Matches("^sindri( [A-Za-z0-9][A-Za-z0-9:._-]*)+$", row.Cli);
