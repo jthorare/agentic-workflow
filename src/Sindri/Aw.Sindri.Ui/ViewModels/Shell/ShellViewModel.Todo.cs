@@ -10,9 +10,7 @@ internal sealed partial class ShellViewModel
     public TodoPanelViewModel Todo { get; private set; }
 
     /// <summary>False while Home's decisions filter (G D) is on: the panel is hidden then.</summary>
-#pragma warning disable CA1822, MA0041 // a stub until the green commit
-    public bool IsTodoShown => throw new NotSupportedException();
-#pragma warning restore CA1822, MA0041
+    public bool IsTodoShown => HomeFilter != HomeFilter.Decisions;
 
     [MemberNotNull(nameof(Todo))]
     private void InitTodo()
