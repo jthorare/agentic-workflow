@@ -562,5 +562,149 @@
       "idempotentHint": false,
       "openWorldHint": false
     }
+  },
+  {
+    "name": "connection_list",
+    "description": "Every connection: its name, kind, preset, status and whether a secret is stored. Never a token.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "description": "How many items to keep from each list (default 100)",
+          "minimum": 1
+        },
+        "offset": {
+          "type": "integer",
+          "description": "How many items to skip in each list (default 0)",
+          "minimum": 0
+        }
+      }
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "connection_get",
+    "description": "One connection by name (service:label). Never a token, a token prefix or the secret's location.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The connection name, e.g. linear:work"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "connection_add",
+    "description": "Add a connection. An oauth connection returns a consent URL to hand to the owner and finishes when they sign in; a rest or cli connection reads the named environment variable once and stores it as the secret.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The connection name, e.g. linear:work"
+        },
+        "preset": {
+          "type": "string",
+          "description": "A shipped preset: github, linear, slack, google or spotify"
+        },
+        "kind": {
+          "type": "string",
+          "description": "oauth, mcp, rest or cli; the preset's kind when left out",
+          "enum": [
+            "oauth",
+            "mcp",
+            "rest",
+            "cli"
+          ]
+        },
+        "clientId": {
+          "type": "string",
+          "description": "The OAuth client id (not secret); presets ship none"
+        },
+        "keyEnv": {
+          "type": "string",
+          "description": "The NAME of an environment variable in the environment of the running sindri serve (not your shell) that holds the key of a rest or cli connection; the error says when serve has no such variable"
+        },
+        "clientSecretEnv": {
+          "type": "string",
+          "description": "The NAME of an environment variable in the running sindri serve's environment that holds the OAuth client secret, for providers that want one (the github and google presets)"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "connection_test",
+    "description": "Test a connection: call its probe URL with the stored credential and report whether the provider accepted it.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The connection name"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "connection_remove",
+    "description": "Remove a connection and delete its stored secret.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The connection name"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
   }
 ]

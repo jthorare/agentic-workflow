@@ -290,5 +290,6 @@ public static partial class SindriErrors
         SkillResultUnreadable, SkillResultWrongSkill, SkillVerdictUnmapped, SkillOutputInvalid, SkillRequirementMissing, SkillPrInputInvalid, SkillAgentCopyDiffers, SkillPrFetchFailed,
         ReviewInvalid, ReviewProjectUnknown, ReviewCommandCheck, ReviewNotSynced, ReviewFixNotPosted, ReviewRepoUnsynced, ReviewNoLogin, ReviewPrNotFound, ReviewOfflineUncached,
         LibraryDocNotFound, LinearTeamNotPicked, LinearNothingStored, LinearNoWriteKey, LinearBadValue, LinearNoAnswer, LinearWriteKeySameAsRead, LinearNoKeychain, LinearUrlNotApproved,
+        ConnectionNotFound, ConnectionNeedsSignIn, ConnectionSignInTimeout, ConnectionStateMismatch, ConnectionRefreshFailed, ConnectionSecretUnavailable, ConnectionNeedsClientId, ConnectionNameInvalid, ConnectionConsentDenied, ConnectionExists,
     ];
 }

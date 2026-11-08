@@ -1,0 +1,14 @@
+{
+  "id": "spotify",
+  "displayName": "Spotify",
+  "kind": "oauth",
+  "authorizeUrl": "https://accounts.spotify.com/authorize",
+  "tokenUrl": "https://accounts.spotify.com/api/token",
+  "revokeUrl": null,
+  "defaultScopes": ["user-read-private"],
+  "hostGroup": "spotify",
+  "loopbackAllowed": true,
+  "signInNote": "Add the redirect URI http://127.0.0.1 (the IP literal, not localhost) to your Spotify app and pass its client id with --client-id.",
+  "pollableEvents": [],
+  "probeUrl": "https://api.spotify.com/v1/me"
+}
