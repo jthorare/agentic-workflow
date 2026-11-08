@@ -1,0 +1,44 @@
+using System.Text.Json.Nodes;
+
+namespace Aw.Sindri.Testing;
+
+/// <summary>
+/// What Linear does to an issue's nested lists: comments(first: 10) and history(first: 25) keep only entries created after the
+/// since filter when the query has one, return at most that many, and say hasNextPage when more were left (or the fixture already said so).
+/// </summary>
+internal static class LinearWindow
+{
+    private const int CommentLimit = 10;
+    private const int HistoryLimit = 25;
+
+    internal static string Apply(string issueJson, DateTimeOffset? since)
+    {
+        if (JsonNode.Parse(issueJson) is not JsonObject issue)
+        {
+            return issueJson;
+        }
+
+        Window(issue, "comments", CommentLimit, since);
+        Window(issue, "history", HistoryLimit, since);
+        return issue.ToJsonString();
+    }
+
+    private static void Window(JsonObject issue, string name, int limit, DateTimeOffset? since)
+    {
+        if (issue[name] is not JsonObject list || list["nodes"] is not JsonArray nodes)
+        {
+            return;
+        }
+
+        var kept = nodes.OfType<JsonObject>().Where(node => since is null || (DateTimeOffset.TryParse((string?)node["createdAt"], System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal, out var at) && at > since)).ToList();
+        var more = kept.Count > limit || (bool?)list["pageInfo"]?["hasNextPage"] == true;
+        var window = new JsonArray();
+        foreach (var node in kept.Take(limit))
+        {
+            window.Add(node.DeepClone());
+        }
+
+        list["nodes"] = window;
+        list["pageInfo"] = new JsonObject { ["hasNextPage"] = more };
+    }
+}

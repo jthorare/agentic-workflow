@@ -204,7 +204,7 @@ public sealed class LinearEventPollerTests
     }
 
     [Fact]
-    public async Task The_query_filters_comments_and_history_by_createdAt_so_a_next_page_means_real_overflow()
+    public async Task Eleven_old_comments_and_1_new_one_give_1_event_and_no_gap_because_the_query_filters_by_the_cursor()
     {
         var provider = new FakeProvider();
         provider.AddLinearIssue(ProviderFixtures.LinearManyComments("ENG-4", 12, hasNextPage: false, DateTimeOffset.Parse("2026-11-08T08:00:00Z", CultureInfo.InvariantCulture)));
@@ -212,16 +212,43 @@ public sealed class LinearEventPollerTests
 
         var polled = await h.Poller.Poll(h.Connection, EventKind.LinearCommentAdded, "2026-11-08T08:00:11Z", TestContext.Current.CancellationToken);
 
-        Assert.Equal("linear:comment:c-12", Assert.Single(polled.Value.Events).DeliveryKey);   // 11 old comments and 1 new one
+        Assert.Equal("linear:comment:c-12", Assert.Single(polled.Value.Events).DeliveryKey);
         Assert.False(polled.Value.Gap);
-        using var request = System.Text.Json.JsonDocument.Parse(Assert.Single(provider.Requests).Body);
-        var query = request.RootElement.GetProperty("query").GetString();
-        Assert.Contains("comments(first: 10, filter: { createdAt: { gt: \"2026-11-08T08:00:11", query, StringComparison.Ordinal);
-        Assert.Contains("history(first: 25, filter: { createdAt: { gt: \"2026-11-08T08:00:11", query, StringComparison.Ordinal);
     }
 
     [Fact]
-    public async Task A_baseline_query_has_no_nested_filter()
+    public async Task Twenty_six_old_history_entries_and_1_new_one_give_1_event_and_no_gap()
+    {
+        var provider = new FakeProvider();
+        provider.AddLinearIssue(ProviderFixtures.LinearManyLabels("ENG-5", 27, hasNextPage: false, DateTimeOffset.Parse("2026-11-08T08:00:00Z", CultureInfo.InvariantCulture)));
+        using var h = PollerHarness.For("linear", provider);
+
+        var polled = await h.Poller.Poll(h.Connection, EventKind.LinearIssueLabeled, "2026-11-08T08:00:26Z", TestContext.Current.CancellationToken);
+
+        Assert.Equal("linear:h-27:label:lbl-27", Assert.Single(polled.Value.Events).DeliveryKey);
+        Assert.False(polled.Value.Gap);
+    }
+
+    [Fact]
+    public async Task The_cursor_goes_to_the_query_as_a_variable_that_both_nested_lists_and_the_issues_filter_use()
+    {
+        var provider = new FakeProvider();
+        using var h = PollerHarness.For("linear", provider);
+
+        _ = await h.Poller.Poll(h.Connection, EventKind.LinearCommentAdded, "2026-11-08T08:00:11Z", TestContext.Current.CancellationToken);
+
+        using var request = System.Text.Json.JsonDocument.Parse(Assert.Single(provider.Requests).Body);
+        var query = request.RootElement.GetProperty("query").GetString();
+        Assert.Contains("$since: DateTimeOrDuration", query, StringComparison.Ordinal);
+        Assert.Contains("comments(first: 10, filter: { createdAt: { gt: $since } })", query, StringComparison.Ordinal);
+        Assert.Contains("history(first: 25, filter: { createdAt: { gt: $since } })", query, StringComparison.Ordinal);
+        Assert.Contains("filter: { updatedAt: { gt: $since } }", query, StringComparison.Ordinal);
+        Assert.DoesNotContain("2026-11-08", query, StringComparison.Ordinal);   // the instant travels in variables, never spliced into the text
+        Assert.StartsWith("2026-11-08T08:00:11", request.RootElement.GetProperty("variables").GetProperty("since").GetString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_baseline_query_has_no_since_variable_and_no_nested_filter()
     {
         var provider = new FakeProvider();
         using var h = PollerHarness.For("linear", provider);
@@ -229,6 +256,6 @@ public sealed class LinearEventPollerTests
         _ = await h.Poller.Poll(h.Connection, EventKind.LinearCommentAdded, cursor: null, TestContext.Current.CancellationToken);
 
         using var request = System.Text.Json.JsonDocument.Parse(Assert.Single(provider.Requests).Body);
-        Assert.DoesNotContain("createdAt: { gt:", request.RootElement.GetProperty("query").GetString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("$since", request.RootElement.GetProperty("query").GetString(), StringComparison.Ordinal);
     }
 }

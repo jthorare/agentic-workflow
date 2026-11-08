@@ -255,17 +255,20 @@ public sealed class FakeProvider : HttpMessageHandler
     private string LinearPage(string requestBody)
     {
         var offset = 0;
+        DateTimeOffset? since = null;
         if (requestBody.Length > 0)
         {
             using var document = System.Text.Json.JsonDocument.Parse(requestBody);
-            if (document.RootElement.TryGetProperty("variables", out var variables) && variables.TryGetProperty("after", out var after) && int.TryParse(after.GetString(), out var parsed))
+            if (document.RootElement.TryGetProperty("variables", out var variables))
             {
-                offset = parsed;
+                offset = variables.TryGetProperty("after", out var after) && int.TryParse(after.GetString(), out var parsed) ? parsed : 0;
+                since = variables.TryGetProperty("since", out var floor) && DateTimeOffset.TryParse(floor.GetString(), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal, out var when) ? when : null;
             }
         }
 
         var end = Math.Min(offset + LinearPageSize, _linearIssues.Count);
         var more = end < _linearIssues.Count ? "true" : "false";
-        return "{\"data\":{\"issues\":{\"nodes\":[" + string.Join(',', _linearIssues.Skip(offset).Take(LinearPageSize)) + "],\"pageInfo\":{\"hasNextPage\":" + more + ",\"endCursor\":\"" + end.ToString(System.Globalization.CultureInfo.InvariantCulture) + "\"}}}}";
+        var page = _linearIssues.Skip(offset).Take(LinearPageSize).Select(issue => LinearWindow.Apply(issue, since));
+        return "{\"data\":{\"issues\":{\"nodes\":[" + string.Join(',', page) + "],\"pageInfo\":{\"hasNextPage\":" + more + ",\"endCursor\":\"" + end.ToString(System.Globalization.CultureInfo.InvariantCulture) + "\"}}}}";
     }
 }
