@@ -48,6 +48,7 @@ internal static class ApiScenarios
         ["LinearReads"] = LinearReadScenarios.All,
         ["LinearWrite"] = LinearWriteScenarios.All,
         ["LinearConnection"] = LinearConnectionScenarios.All,
+        ["WorkflowRuns"] = WorkflowRunScenarios.All,
     };
 
     /// <summary>Every (route slug, scenario) pair, group by group.</summary>
@@ -145,7 +146,7 @@ internal static class ApiScenarios
         }
 
         var token = host.Token.Value;
-        if (Delegated(host, slug, scenario, ct) is { } delegated)
+        if (DelegatedOrWorkflow(host, slug, scenario, ct) is { } delegated)
         {
             return await delegated();
         }
@@ -168,6 +169,10 @@ internal static class ApiScenarios
             _ => await ApproveScenario(host, scenario, ct),
         };
     }
+
+    /// <summary>The scenario's body when the workflow-run class owns it, else <see cref="Delegated"/>'s.</summary>
+    private static Func<Task<string>>? DelegatedOrWorkflow(GoldenHost host, string slug, string scenario, CancellationToken ct) =>
+        WorkflowRunScenarios.Handles(slug, scenario) ? () => WorkflowRunScenarios.Body(host, slug, scenario, ct) : Delegated(host, slug, scenario, ct);
 
     /// <summary>The scenario's body when one of the scenario classes owns it, else null.</summary>
     private static Func<Task<string>>? Delegated(GoldenHost host, string slug, string scenario, CancellationToken ct) =>
