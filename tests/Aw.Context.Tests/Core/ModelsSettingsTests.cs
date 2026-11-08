@@ -110,6 +110,20 @@ public sealed class ModelsSettingsTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void Workflow_prompt_is_a_kind_with_its_own_route_that_inherits_the_default()
+    {
+        Assert.True(ModelKinds.TryParse("workflowPrompt", out var kind));
+        Assert.Equal(ModelKind.WorkflowPrompt, kind);
+        Assert.Equal("workflowPrompt", ModelKinds.Key(ModelKind.WorkflowPrompt));
+        Assert.Equal(ModelKind.WorkflowPrompt, ModelKinds.Of(ModelPurpose.WorkflowPrompt));
+        var models = Read("""{"models":{"default":{"harnesses":["codex","claude-code"],"tier":"strong"},"workflowPrompt":{"harnesses":["claude-code"]}}}""").Value.Models;
+
+        var routes = ModelRouting.Resolve(models, Request(ModelPurpose.WorkflowPrompt), [ModelHarness.Codex, ModelHarness.ClaudeCode]);
+
+        Assert.Equal([ModelHarness.ClaudeCode], routes.Select(r => r.Harness).ToArray());
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void The_unknown_kind_message_lists_product_surfaces_among_the_kinds() =>
         Assert.Contains("productSurfaces", Read("""{"models":{"summaries":{}}}""").Error.Message, StringComparison.Ordinal);
 

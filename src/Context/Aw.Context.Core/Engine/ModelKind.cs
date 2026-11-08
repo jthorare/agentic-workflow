@@ -25,4 +25,7 @@ public enum ModelKind
 
     /// <summary>'productSurfaces': Jev's decision on the map's product-surface candidates; it has a 'pick' and no harness, tier or model.</summary>
     ProductSurfaces,
+
+    /// <summary>'workflowPrompt': a workflow 'prompt' node's model call.</summary>
+    WorkflowPrompt,
 }

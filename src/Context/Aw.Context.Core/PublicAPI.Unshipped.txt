@@ -12450,3 +12450,5 @@ static Aw.Context.Core.Concepts.PinMoves.Between(int fromVersion, int toVersion,
 Aw.Context.Core.Concepts.PinMembership
 static Aw.Context.Core.Concepts.PinMembership.Moves(int fromVersion, int toVersion, Aw.Context.Core.Concepts.ConceptRead! before, Aw.Context.Core.Concepts.ConceptRead! after) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinMove!>!
 Aw.Context.Core.Facade.IContextMap.PinMoves(Aw.Context.Core.Map.MapVersion! from, Aw.Context.Core.Map.MapVersion! to, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinMove!>!>!>
+Aw.Context.Core.Engine.ModelKind.WorkflowPrompt = 7 -> Aw.Context.Core.Engine.ModelKind
+Aw.Context.Core.Models.ModelPurpose.WorkflowPrompt = 9 -> Aw.Context.Core.Models.ModelPurpose
