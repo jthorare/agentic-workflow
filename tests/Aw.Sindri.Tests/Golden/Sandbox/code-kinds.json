@@ -25,6 +25,7 @@
         "form-reserved",
         "tool-not-expressible",
         "bin-denied",
+        "path-hidden",
         "host-not-tmux",
         "worktree-outside-repo",
         "no-stored-plan"

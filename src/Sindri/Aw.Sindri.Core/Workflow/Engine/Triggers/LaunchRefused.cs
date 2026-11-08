@@ -1,3 +1,5 @@
+using Aw.Sindri.Core.Launch;
+
 namespace Aw.Sindri.Core.Workflow.Engine.Triggers;
 
 /// <summary>The launch was refused so that the instance parks as 'launch' (SND-LAUNCH-015, -016; sandbox spec SB16): the park's Resume starts a new run.</summary>

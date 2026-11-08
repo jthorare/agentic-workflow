@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Aw.Context.Core;
+using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Map;
 using Aw.Sindri.Core;
@@ -9,6 +10,8 @@ using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.Server;
+using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Tests.ContextCalls;
 
@@ -24,12 +27,12 @@ public sealed class RefreshContextMapServiceTests
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private async Task<Kernel.Result<RefreshContextMapResult>> Run()
+    private async Task<Kernel.Result<RefreshContextMapResult>> Run(ILogger<RefreshContextMapService>? logger = null)
     {
         _h.Clock.SetUtcNow(_now);
         _ = await _h.HoldLease();
         _ = await _h.Profiles.Save(SliceHarness.Profile(), Ct);
-        var service = new RefreshContextMapService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, _outlooks, new MapEventSource(_h.Held, _h.Store, _h.Events), _jobs, _h.Clock);
+        var service = new RefreshContextMapService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, _outlooks, new MapEventSource(_h.Held, _h.Store, _h.Events), _jobs, _h.Clock, logger);
         using var job = _jobs.Enter(new JobContext(JobId.New(_h.Ids), JobKind.From("RefreshContextMap"), new Progress(_progress)));
         using var caller = _h.Callers.EnterService("context-map-refresh");
         return await service.Handle(new RefreshContextMapRequest(), Ct);
@@ -48,11 +51,46 @@ public sealed class RefreshContextMapServiceTests
         var result = await Run();
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Code : null);
-        Assert.Equal(["MapHeads", "BuildMap", "ReviewQueue", "CleanDraft", "Held", "Promote"], _engine.Log);
+        Assert.Equal(["MapHeads", "BuildMap", "ReviewQueue", "CleanDraft", "Held", "Promote", "PinMoves"], _engine.Log);
         Assert.Equal([EventTypes.ContextMapBuilt, EventTypes.ContextMapPromoted, EventTypes.ContextMapPublished, EventTypes.ContextMapRefreshed], Types());
         var refreshed = result.Value;
         Assert.Equal(("app", 2, 5, 2, 1, "agent"), (refreshed.Repo, refreshed.Version, refreshed.Accepted, refreshed.Removed, refreshed.Dropped, refreshed.Cleanup));
         Assert.Equal(new Dictionary<string, string>(StringComparer.Ordinal) { ["app"] = "abc123" }, refreshed.Heads);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_promote_that_retained_an_earlier_version_puts_the_pin_moves_on_the_result()
+    {
+        _engine.Moved = new List<PinMove> { new(ConceptId.From("billing"), 1, 2, 4, 1, []) };
+
+        var result = await Run();
+
+        var move = Assert.Single(result.Value.Moves!);
+        Assert.Equal(("billing", 1, 2, 4, 1), (move.Pin.Value, move.FromVersion, move.ToVersion, move.Gained, move.Lost));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_first_publish_has_no_earlier_version_and_makes_no_pin_moves_call()
+    {
+        _engine.Promoted = new MapPromoted(_engine.Promoted.Value.Version, Retained: null);
+
+        var result = await Run();
+
+        Assert.Null(result.Value.Moves);
+        Assert.DoesNotContain("PinMoves", _engine.Log, StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_failed_pin_moves_read_leaves_moves_null_and_logs_a_warning_without_failing_the_refresh()
+    {
+        var log = new ListLogger<RefreshContextMapService>();
+
+        var result = await Run(log);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value.Moves);
+        Assert.Contains("PinMoves", _engine.Log, StringComparer.Ordinal);
+        Assert.Contains(log.Lines, l => l.Contains("reading what the pins moved failed", StringComparison.Ordinal));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -267,7 +305,7 @@ public sealed class RefreshContextMapServiceTests
         var result = await Run();
 
         Assert.False(result.Value.Held);
-        Assert.Equal(["MapHeads", "BuildMap", "ReviewQueue", "CleanDraft", "Held", "Hold", "Promote"], _engine.Log);
+        Assert.Equal(["MapHeads", "BuildMap", "ReviewQueue", "CleanDraft", "Held", "Hold", "Promote", "PinMoves"], _engine.Log);
         var published = Payload(EventTypes.ContextMapPublished);
         Assert.Equal(("TimedOut", 1, 1200, true), (published.GetProperty("reason").GetString(), published.GetProperty("staleRepos").GetInt32(), published.GetProperty("waitedSeconds").GetInt32(), published.GetProperty("anyStale").GetBoolean()));
     }

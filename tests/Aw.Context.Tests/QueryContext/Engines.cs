@@ -87,7 +87,7 @@ internal static class Engines
         return new ContextEngine(new QueryContextService(scrubbers, new SequentialIdGenerator(), clock, new LiveInputs(graphs, catalog, repos, new NoMapRebuild()), intents, new FakeModelPort(),
                 new RecordSearch(lexical ?? new FakeLexicalLeg(), recordStore, embedder ?? new FakeQueryEmbedder(), new FakeVectorMatrixCache(recordStore), new FakeVectorScan())),
             new ContextSources(new SourcesStatusService(docs, catalog, scrubbers, intents, recordStore, clock), new RefreshDocsService(docs, scrubbers), new SyncSourcesService(new RecordFeedSync(new FakeRecordFeedCatalog(), new FakeRecordStore(), clock), scrubbers, graphs, intents, new FakeModelPort(), clock), new EmbedRecordsService(new FakeRecordStore(), new FakeChunkEmbedder()),
-                (IIndexSync?)indexSync ?? new IndexSync(new RecordFeedSync(new FakeRecordFeedCatalog(), new FakeRecordStore(), clock), new FakeRecordStore(), scrubbers)), scrubbers, Map(clock, store, scrubbers),
+                (IIndexSync?)indexSync ?? new IndexSync(new RecordFeedSync(new FakeRecordFeedCatalog(), new FakeRecordStore(), clock), new FakeRecordStore(), scrubbers)), scrubbers, Map(clock, store, scrubbers, new ConceptReader(graphs, scrubbers)),
             new ContextGraph(new ShowNodeService(graphs, scrubbers, recordStore, new FakeRepoRemote()), new ListNeighborsService(graphs, scrubbers), new FindPathService(graphs, scrubbers),
                 new GetLensesService(graphs, new LensBasisReader(repos, clock), scrubbers, new NoCodeSymbolSource(), repos, recordStore, clock), new GetLensesSetService(graphs, new LensBasisReader(repos, clock), scrubbers, recordStore, clock), new GetFileMapService(graphs, repos, new NoCodeSymbolSource(), new RepoTreeCache()),
                 new ContextCodeHistory(new GetCodeService(graphs, new LensBasisReader(repos, clock), Lexical(repos, clock), new CodeSymbolSearch(new NoCodeSymbolSource(), repos), scrubbers),
@@ -118,7 +118,7 @@ internal static class Engines
     private static EvalProbesService Probes(TimeProvider clock) => new(new NoProbes(), new NoProbes(), clock);
 
     /// <summary>The map part over its fakes (S-3a); the query tests never touch it.</summary>
-    private static ContextMap Map(TimeProvider clock, FakeGraphStore store, FakeScrubberFactory scrubbers)
+    private static ContextMap Map(TimeProvider clock, FakeGraphStore store, FakeScrubberFactory scrubbers, ConceptReader concepts)
     {
         var exports = new FakeExportStore(clock);
         var reader = new FakeMapFileReader();
@@ -126,7 +126,7 @@ internal static class Engines
             new ShowMapStatusService(store), new CheckMapService(store), new MapHealthChecks(new CheckRetentionService(store, exports, clock, new Features.RunBacktest.UnconfiguredBacktest()), new CheckStoreService(new FakeStoreFiles()), new RunUpkeepService(new FakeStoreUpkeep())), new PurgeMapService(store, exports, clock));
         var review = new MapReview(new ReviewQueueService(store, scrubbers), new ReviewMapService(store, new FakeCurrentUser(), clock), new ReviewHistoryService(store), new ExportReviewService(store, scrubbers, new FakeReviewFileStore(), clock),
             new PreviewReviewFileService(new FakeReviewFileStore()), new ApplyReviewFileService(store, new FakeReviewFileStore(), new FakeCurrentUser(), clock), new PromoteMapService(store, clock));
-        return new ContextMap(admin, review, new MapProposals(Build(clock, store), new ProposeFromScopeService(store, store, clock), new GetProposalsService(store, store, scrubbers)), Publishing(store), new CleanMapService(store, scrubbers, new FakeModelPort(), new FakeCurrentUser(), clock),
+        return new ContextMap(admin, review, new MapProposals(Build(clock, store), new ProposeFromScopeService(store, store, clock), new GetProposalsService(store, store, scrubbers)), Publishing(store, concepts), new CleanMapService(store, scrubbers, new FakeModelPort(), new FakeCurrentUser(), clock),
             new Features.ScanConcepts.ScanConceptsService(store, scrubbers, new FakeModelPort(), new NoConceptSearch(), new FakeConceptHintStore(), clock),
             new CheckStructureService(store, Build(clock, store), new Testing.Locks.FakeHeavyJobLock()));
     }
@@ -138,8 +138,8 @@ internal static class Engines
             ValueTask.FromResult<Kernel.Result<MapSearchView>>(Context.Core.ContextErrors.StoreUnavailable.With("no search in this test"));
     }
 
-    private static MapPublishing Publishing(FakeGraphStore store) =>
-        new(new HeldMapService(store), new HoldMapService(store), new ReleaseMapService(store), new ShowPublishStatusService(store));
+    private static MapPublishing Publishing(FakeGraphStore store, ConceptReader concepts) =>
+        new(new HeldMapService(store), new HoldMapService(store), new ReleaseMapService(store), new ShowPublishStatusService(store), new Features.GetPinMoves.GetPinMovesService(concepts));
 
     /// <summary>The build slice over empty fakes (the query tests never build).</summary>
     private static BuildMapService Build(TimeProvider clock, FakeGraphStore store) =>

@@ -70,9 +70,7 @@ public sealed class NavTabClickTests : IDisposable
     [Theory]
     [InlineData(PageId.Home)]
     [InlineData(PageId.Projects)]
-    [InlineData(PageId.Workflows)]
     [InlineData(PageId.Work)]
-    [InlineData(PageId.Recipes)]
     [InlineData(PageId.Context)]
     [InlineData(PageId.Agents)]
     [InlineData(PageId.System)]
@@ -80,7 +78,7 @@ public sealed class NavTabClickTests : IDisposable
     {
         _records.Write(A.Record());
         var (window, shell) = await Show(ShellState.Normal);
-        shell.GoTo(target == PageId.Work ? PageId.Recipes : PageId.Work);
+        shell.GoTo(target == PageId.Work ? PageId.Agents : PageId.Work);
         Dispatcher.UIThread.RunJobs();
         window.UpdateLayout();
         var tab = window.GetVisualDescendants().OfType<ListBoxItem>().Single(i => string.Equals(AutomationProperties.GetName(i), Labels.Page(target), StringComparison.Ordinal));
@@ -101,7 +99,7 @@ public sealed class NavTabClickTests : IDisposable
             Assert.Equal("AnchorBox", (window.FocusManager?.GetFocusedElement() as Control)?.Name);
         }
 
-        if (target is not (PageId.Work or PageId.Workflows or PageId.Context or PageId.Agents or PageId.Projects) && Labels.ArrivesWith(target) is { } arrives)   // Work is the queue (U2), Workflows the list (U8) and Context the page (U9), Agents the sessions (U11a), not placeholders
+        if (target is not (PageId.Work or PageId.Context or PageId.Agents or PageId.Projects) && Labels.ArrivesWith(target) is { } arrives)   // Work is the queue (U2), Context the page (U9), Agents the sessions (U11a), not placeholders
         {
             var page = window.GetVisualDescendants().OfType<PlaceholderPage>().Single(p => p.Name == Own(target));
             Assert.Equal(arrives, page.Note);
@@ -149,9 +147,7 @@ public sealed class NavTabClickTests : IDisposable
     {
         PageId.Home => "HomePage",
         PageId.Projects => "ProjectsPage",
-        PageId.Workflows => "WorkflowsPage",
         PageId.Work => "QueuePage",
-        PageId.Recipes => "RecipesPage",
         PageId.Context => "ContextPage",
         PageId.Agents => "AgentsPage",
         PageId.System => "HealthPage",

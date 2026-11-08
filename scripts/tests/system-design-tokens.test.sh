@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # skills/system-design/scripts/tokens_to_css.py: known tokens map onto the semantic variables, unmapped ones are printed
-# and keep the neutral fallback, and a missing tokens file fails without writing a stylesheet.
+# and keep the Sindri fallback, and a missing tokens file fails without writing a stylesheet.
 set -euo pipefail
 . "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib/test-grep.sh"
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -40,8 +40,8 @@ test_prints_unmapped() {
   echo "$out" | has -F -e '--good' || fail "unmapped --good not printed: $out"
   echo "$out" | has -F -e '--radius' || fail "unmapped --radius not printed: $out"
   if echo "$out" | has -F -e '--bg'; then fail "--bg is mapped but was printed as unmapped: $out"; fi
-  # an unmapped variable keeps the neutral fallback from doc-base.css and gets no override in the :root block
-  has -F -e '--good: #2b8a3e;' "$TMP/b.css" || fail "neutral fallback for --good missing"
+  # an unmapped variable keeps the Sindri fallback from doc-base.css and gets no override in the :root block
+  has -F -e '--good: #27a644;' "$TMP/b.css" || fail "Sindri fallback for --good missing"
   echo "PASS: test_prints_unmapped"
 }
 
@@ -50,7 +50,7 @@ test_empty_tokens_use_fallbacks() {
   local out
   out="$(python3 -I "$SCRIPT" "$TMP/empty.json" "$TMP/c.css")"
   echo "$out" | has -F -e '--bg' || fail "empty tokens should list every variable as unmapped: $out"
-  has -F -e '--bg: #fafafa;' "$TMP/c.css" || fail "neutral --bg fallback missing"
+  has -F -e '--bg: #010102;' "$TMP/c.css" || fail "Sindri --bg fallback missing"
   echo "PASS: test_empty_tokens_use_fallbacks"
 }
 
@@ -65,7 +65,30 @@ test_missing_file_fails_without_output() {
   echo "PASS: test_missing_file_fails_without_output"
 }
 
+# assets/sindri-tokens.json is the default look: it maps every semantic variable, and each mapped value equals the
+# fallback the three base stylesheets carry, so a page with no tokens step and one built from the file look the same.
+test_sindri_tokens_match_the_base_css() {
+  local out TPL="$DIR/../../skills/system-design/templates"
+  out="$(python3 -I "$SCRIPT" "$DIR/../../skills/system-design/assets/sindri-tokens.json" "$TMP/s.css")"
+  echo "$out" | has -F -e 'unmapped (neutral fallback used): none' || fail "sindri-tokens.json leaves a variable unmapped: $out"
+  python3 -I - "$TMP/s.css" "$TPL/doc-base.css" "$TPL/share-base.css" <<'PY' || fail "a base stylesheet fallback differs from sindri-tokens.json"
+import re, sys
+css = open(sys.argv[1]).read()
+block = css.split("/* tokens */", 1)[1]
+want = dict(re.findall(r"(--[\w-]+):\s*([^;]+);", block))
+for path in sys.argv[2:]:
+    s = open(path).read()
+    first = re.search(r":root\s*\{([^}]*)\}", s).group(1)
+    have = dict(re.findall(r"(--[\w-]+):\s*([^;]+);", first))
+    for k, v in have.items():
+        if k in want and k not in ("--f-mono", "--f-body"):
+            assert want[k].lower() == v.strip().lower(), f"{path}: {k} is {v}, tokens say {want[k]}"
+PY
+  echo "PASS: test_sindri_tokens_match_the_base_css"
+}
+
 test_maps_known_tokens
 test_prints_unmapped
 test_empty_tokens_use_fallbacks
 test_missing_file_fails_without_output
+test_sindri_tokens_match_the_base_css

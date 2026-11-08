@@ -1,7 +1,7 @@
 {
   "kind": "style",
   "id": "plain",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "title": "Plain: the toolkit's own house style",
   "sections": [
     {
@@ -47,7 +47,10 @@
       "pursuant",
       "utilize",
       "in order to",
-      "TBD"
+      "TBD",
+      "handle",
+      "manage",
+      "deal with"
     ],
     "maxLines": 120,
     "tables": "allow",

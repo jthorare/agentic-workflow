@@ -27,7 +27,7 @@ public sealed class FleetChangeRulesTests
     [Fact, Trait("Lane", "unit")]
     public void Gone_carries_the_repo_host_and_launch_the_session_appeared_with()
     {
-        var s = Session("claude-code", "a1") with { Repo = Core.Ids.RepoName.From("api"), Host = new HostInfo("tmux", "tmux"), LaunchId = Core.Workflow.Engine.LaunchId.From("LCH-00000000000000000000000000000001") };
+        var s = Session("claude-code", "a1") with { Repo = Core.Ids.RepoName.From("api"), Host = new HostInfo("tmux", "tmux"), LaunchId = Core.Launch.LaunchId.From("LCH-00000000000000000000000000000001") };
         var seen = Pass(Pass(FleetTrackerState.Empty, T0, sessions: s).State, T0.AddSeconds(2), sessions: s);
 
         var gone = Assert.Single(Pass(seen.State, T0.AddSeconds(4)).Changes);

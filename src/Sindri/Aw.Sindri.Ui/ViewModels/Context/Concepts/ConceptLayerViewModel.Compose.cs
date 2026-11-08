@@ -45,7 +45,7 @@ internal sealed partial class ConceptLayerViewModel
 
     private PinCardState PinnedCard(PinView pin, ConceptTileViewModel? found, IReadOnlyList<PinView> earlier, MapRebuildView rebuild)
     {
-        var footer = PinLineRules.Of(pin, rebuild, PinCoverageRules.Problem(pin, found, earlier, MapFeatures), moved: null, _zone);
+        var footer = PinLineRules.Of(pin, rebuild, PinCoverageRules.Problem(pin, found, earlier, MapFeatures), PinMovedRules.Line(pin.Moved), _zone);
         return new PinCardState(Labels.ContextConceptSetByPerson, pin, footer.Lines, Offered(footer.Action), ShowPinThis: false, ShowEditPin: !string.Equals(pin.Change, "removed", StringComparison.Ordinal), Waiting: found is null);
     }
 

@@ -1,0 +1,38 @@
+{
+  "$description": "Sindri's design tokens, the default look of /system-design pages. Values are copied from src/Sindri/Aw.Sindri.Ui/Theme/Tokens.axaml (dark only). A repo's own design-tokens.json replaces them.",
+  "color": {
+    "background": { "$value": "#010102", "$type": "color", "$description": "Color.Canvas" },
+    "surface": { "$value": "#0f1011", "$type": "color", "$description": "Color.Surface1" },
+    "surface-raised": { "$value": "#141516", "$type": "color", "$description": "Color.Surface2" },
+    "surface-overlay": { "$value": "#18191a", "$type": "color", "$description": "Color.Surface3" },
+    "text": { "$value": "#f7f8f8", "$type": "color", "$description": "Color.Ink" },
+    "text-muted": { "$value": "#8a8f98", "$type": "color", "$description": "Color.InkSubtle" },
+    "text-soft": { "$value": "#d0d6e0", "$type": "color", "$description": "Color.InkMuted" },
+    "border": { "$value": "#34343a", "$type": "color", "$description": "Color.HairlineStrong" },
+    "border-soft": { "$value": "#23252a", "$type": "color", "$description": "Color.Hairline" },
+    "accent": { "$value": "#5e6ad2", "$type": "color", "$description": "Color.Primary" },
+    "accent-text": { "$value": "#828fff", "$type": "color", "$description": "Color.PrimaryHover, links and selected labels" },
+    "secondary": { "$value": "#a78bfa", "$type": "color", "$description": "Color.Violet" },
+    "success": { "$value": "#27a644", "$type": "color", "$description": "Color.Success" },
+    "warning": { "$value": "#f2994a", "$type": "color", "$description": "Color.Attention" },
+    "danger": { "$value": "#eb5757", "$type": "color", "$description": "Color.Error" }
+  },
+  "font": {
+    "family-body": { "$value": ["Inter", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"], "$type": "fontFamily" },
+    "family-mono": { "$value": ["JetBrains Mono", "ui-monospace", "SF Mono", "Menlo", "Consolas", "monospace"], "$type": "fontFamily" }
+  },
+  "radius": {
+    "xs": { "$value": "4px", "$type": "dimension" },
+    "sm": { "$value": "6px", "$type": "dimension" },
+    "md": { "$value": "12px", "$type": "dimension", "$description": "Radius.LG, panels and dialogs" }
+  },
+  "space": {
+    "xxs": { "$value": "4px", "$type": "dimension" },
+    "xs": { "$value": "8px", "$type": "dimension" },
+    "sm": { "$value": "12px", "$type": "dimension" },
+    "md": { "$value": "16px", "$type": "dimension" },
+    "lg": { "$value": "24px", "$type": "dimension" },
+    "xl": { "$value": "32px", "$type": "dimension" },
+    "xxl": { "$value": "48px", "$type": "dimension" }
+  }
+}

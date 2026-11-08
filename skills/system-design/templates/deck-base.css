@@ -2,17 +2,17 @@
    TDD's blocks (whys, pieces, tables, decisions, lanes) at presentation size. Each slide is a 1280x720 canvas scaled
    to the window; print gives one slide per page. */
 html, body.deck { height: 100%; }
-body.deck { padding: 0; overflow: hidden; background: color-mix(in srgb, var(--ink) 88%, var(--bg)); }
+body.deck { padding: 0; overflow: hidden; background: #000; }
 .deck .stagebox { position: fixed; inset: 0; }
 .slide {
   position: absolute; left: 50%; top: 50%; width: 1280px; height: 720px; transform: translate(-50%, -50%) scale(var(--k, 1));
   background: var(--bg); color: var(--ink); padding: 56px 72px 64px; display: none; flex-direction: column; gap: 22px;
-  overflow: hidden; border-radius: 6px; box-shadow: 0 20px 60px rgba(0, 0, 0, .35);
+  overflow: hidden; border-radius: 6px; border: 1px solid var(--line); box-shadow: 0 20px 60px rgba(0, 0, 0, .6);
 }
 .slide.on { display: flex; }
 .slide .eyebrow { font-size: 14px; }
 .slide h1 { font-size: 64px; line-height: 1.04; font-weight: 800; max-width: 20ch; }
-.slide h1 em { font-style: normal; color: var(--accent); }
+.slide h1 em { font-style: normal; color: var(--accent-ink); }
 .slide h2 { font-size: 42px; line-height: 1.12; }
 .slide .lede { font-size: 21px; max-width: 60ch; }
 .slide .body { flex: 1; min-height: 0; display: grid; gap: 18px; align-content: start; }
@@ -71,21 +71,21 @@ body.deck { padding: 0; overflow: hidden; background: color-mix(in srgb, var(--i
 /* presenter view (P opens it in a second window) */
 .presenter .stagebox, .presenter .hud, .presenter .notes-pane { display: none !important; }
 .pv { display: none; }
-.presenter .pv { display: grid; position: fixed; inset: 0; grid-template-columns: 1.6fr 1fr; grid-template-rows: auto minmax(0, 1fr); gap: 16px; padding: 16px; background: #111418; color: #e9ecf2; font-family: var(--f-body); }
+.presenter .pv { display: grid; position: fixed; inset: 0; grid-template-columns: 1.6fr 1fr; grid-template-rows: auto minmax(0, 1fr); gap: 16px; padding: 16px; background: var(--bg); color: var(--ink); font-family: var(--f-body); }
 .pv .bar { grid-column: 1 / -1; display: flex; gap: 24px; align-items: baseline; font: 600 18px var(--f-mono); }
 .pv .bar .t { font-size: 28px; }
 .pv .cur, .pv .nxt { position: relative; overflow: hidden; border-radius: 8px; background: #000; min-height: 0; }
 .pv .cur { grid-row: 2; }
 .pv .side { grid-row: 2; display: grid; grid-template-rows: 38% minmax(0, 1fr); gap: 16px; min-height: 0; }
-.pv .pnotes { overflow-y: auto; font-size: 20px; line-height: 1.5; background: #1b1f26; border-radius: 8px; padding: 16px 18px; white-space: pre-wrap; }
+.pv .pnotes { overflow-y: auto; font-size: 20px; line-height: 1.5; background: var(--surface); border-radius: 8px; padding: 16px 18px; white-space: pre-wrap; }
 .pv .slide { display: flex; box-shadow: none; }
 .pv .lbl { position: absolute; left: 8px; top: 6px; z-index: 1; font: 600 12px var(--f-mono); color: #9aa0aa; }
 
 @media print {
   @page { size: 1280px 720px; margin: 0; }
-  html, body.deck { height: auto; overflow: visible; background: #fff; }
+  html, body.deck { height: auto; overflow: visible; background: var(--bg); }
   .deck .stagebox { position: static; }
-  .slide { display: flex !important; position: relative; left: 0; top: 0; transform: none; border-radius: 0; box-shadow: none; break-after: page; }
+  .slide { display: flex !important; position: relative; left: 0; top: 0; transform: none; border: 0; border-radius: 0; box-shadow: none; break-after: page; }
   .hud, .notes-pane, .pv { display: none !important; }
 }
 @media (prefers-reduced-motion: reduce) { .slide { transition: none; } }

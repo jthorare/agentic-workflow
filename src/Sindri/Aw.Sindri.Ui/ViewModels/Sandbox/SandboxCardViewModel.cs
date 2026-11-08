@@ -1,7 +1,5 @@
-using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Sandbox;
-using Aw.Sindri.Ui.Api.Workflow;
 using Aw.Sindri.Ui.Platform;
 
 namespace Aw.Sindri.Ui.ViewModels.Sandbox;
@@ -16,16 +14,15 @@ internal sealed class SandboxCardViewModel : ObservableObject
     private readonly ISindriApi _api;
     private readonly TimeProvider _clock;
 
-    /// <summary>The card over the API, a clock, the endpoint, the command sender and the clipboard.</summary>
+    /// <summary>The card over the API, a clock, the endpoint and the clipboard.</summary>
     /// <param name="api">The API.</param>
     /// <param name="clock">For the days a learn window has left and the age of a check.</param>
     /// <param name="apiUrl">The API's base URL while connected, else null.</param>
-    /// <param name="commands">Sends the answer-resume of one instance.</param>
     /// <param name="clipboard">Where a blocker's command is copied.</param>
-    internal SandboxCardViewModel(ISindriApi api, TimeProvider clock, Func<Uri?> apiUrl, Func<ApplyCommandBody, Task<Result<ApplyCommandAccepted>?>> commands, IClipboard clipboard)
+    internal SandboxCardViewModel(ISindriApi api, TimeProvider clock, Func<Uri?> apiUrl, IClipboard clipboard)
     {
         (_api, _clock) = (api, clock);
-        Check = new SandboxCheckViewModel(api, clock, apiUrl, commands, clipboard);
+        Check = new SandboxCheckViewModel(api, clock, apiUrl, clipboard);
         RowText = Labels.SandboxRowNeverChecked;
         StateWord = StateWordOf(SandboxHealthState.NeverChecked, waiting: false);
     }
@@ -33,7 +30,7 @@ internal sealed class SandboxCardViewModel : ObservableObject
     /// <summary>The card's heading.</summary>
     public string Heading { get; } = Labels.SandboxHeading;
 
-    /// <summary>Check again, its outcome and the resume list; shared by every place that shows them.</summary>
+    /// <summary>Check again and its outcome; shared by every place that shows them.</summary>
     public SandboxCheckViewModel Check { get; }
 
     /// <summary>What the row says.</summary>

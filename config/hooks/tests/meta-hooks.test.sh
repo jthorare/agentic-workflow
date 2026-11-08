@@ -271,6 +271,15 @@ OUT="$(printf '%s' "$CSTOP" | STUB_RC=1 STUB_OUT="owes the meta a reply" AW_META
 check "codex Stop in a lane that owes a reply: blocked (exit 2), reason on stderr" "$RC:$OUT:$(cat "$WORK/err")" "2::owes the meta a reply"
 OUT="$(printf '%s' "$CSTOP" | AW_META_TEAM=t1 AW_META_LANE=api bash "$CODEX" "$HOOKS/meta-lane-gate.sh" 2> "$WORK/err")"; RC=$?
 check "codex Stop, nothing owed: allowed" "$RC:$OUT" "0:"
+# #2272: a Codex lane's reply reaches aw-meta through the real adapter, which blanks transcript_path for Stop (the reply comes from
+# last_assistant_message alone)
+unlink "$REPLIED" 2> /dev/null
+: > "$CALLS"; : > "$STDIN_SEEN"
+CREPLY='{"hook_event_name":"Stop","session_id":"s-3","turn_id":"t-1","transcript_path":"/t/rollout.jsonl","stop_hook_active":false,"last_assistant_message":"Done.\nREPLY TO META: codex reply\nmore"}'
+OUT="$(printf '%s' "$CREPLY" | AW_META_TEAM=t1 AW_META_LANE=api bash "$CODEX" "$HOOKS/meta-lane-gate.sh" 2> "$WORK/err")"; RC=$?
+check "codex Stop with a REPLY TO META: line, through the adapter: recorded, then the stop is checked" "$RC:$OUT:$(paste -sd'|' "$CALLS")" "0::lane-reply --stdin|lane-stop-check"
+check "codex Stop through the adapter: the reply text goes to lane-reply on stdin" "$(cat "$STDIN_SEEN")" "codex reply
+more"
 
 TR="$WORK/cursor-transcript.jsonl"
 echo '{"role":"assistant","message":{"content":[{"type":"text","text":"Done.\nREPLY TO META: cursor reply"}]}}' > "$TR"

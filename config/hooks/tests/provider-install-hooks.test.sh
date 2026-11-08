@@ -35,7 +35,7 @@ check "codex: image-paths.sh staged next to failopen.sh" "$([ -f "$AWH/lib/image
 check "codex: 4 owned PreToolUse commands" "$(jq '[.hooks.PreToolUse[].hooks[].command | select(test("# aw:"))] | length' "$CODEX_FILE")" "4"
 check "codex: commands go through the adapter" \
   "$(jq -r '.hooks.PreToolUse[].hooks[].command | select(endswith("# aw:block-destructive"))' "$CODEX_FILE")" \
-  "$AWH/adapters/codex.sh $AWH/block-destructive.sh # aw:block-destructive"
+  "'$AWH/adapters/codex.sh' '$AWH/block-destructive.sh' # aw:block-destructive"
 check "codex: SessionStart git-context + prism-context" "$(jq '[.hooks.SessionStart[].hooks[].command | select(test("# aw:(git|prism)-context$"))] | length' "$CODEX_FILE")" "2"
 check "codex: foreign hook kept first" "$(jq -r '.hooks.PreToolUse[0].hooks[0].command' "$CODEX_FILE")" "/usr/local/bin/theirs.sh"
 snap="$(jq -Sc . "$CODEX_FILE")"
@@ -55,7 +55,7 @@ q bash "$ROOT/providers/cursor/install-hooks.sh"
 check "cursor: 3 owned beforeShellExecution entries + foreign" "$(jq '.hooks.beforeShellExecution | length' "$CURSOR_FILE")" "4"
 check "cursor: flat entry shape" \
   "$(jq -c '.hooks.beforeShellExecution[] | select(.command | endswith("# aw:detect-secrets"))' "$CURSOR_FILE")" \
-  "$(jq -nc --arg c "$AWH/adapters/cursor.sh $AWH/detect-secrets.sh # aw:detect-secrets" '{command:$c}')"
+  "$(jq -nc --arg c "'$AWH/adapters/cursor.sh' '$AWH/detect-secrets.sh' # aw:detect-secrets" '{command:$c}')"
 check "cursor: rtk on preToolUse(Shell)" "$(jq -r '.hooks.preToolUse[] | select(.command | endswith("# aw:rtk-rewrite")) | .matcher' "$CURSOR_FILE")" "Shell"
 check "cursor: sessionStart context hooks" "$(jq '.hooks.sessionStart | length' "$CURSOR_FILE")" "2"
 check "cursor: version kept at 1" "$(jq '.version' "$CURSOR_FILE")" "1"
@@ -108,7 +108,7 @@ check "context-guard cursor: unsupported, nothing written" "$([ -f "$CURSOR_FILE
 q bash "$ROOT/scripts/install-done-gate.sh" --provider codex
 check "done-gate codex: Stop, timeout 12" "$(jq -c '.hooks.Stop[0].hooks[0].timeout' "$CODEX_FILE")" "12"
 q bash "$ROOT/scripts/install-done-gate.sh" --provider cursor
-check "done-gate cursor: stop" "$(jq -r '.hooks.stop[0].command | endswith("done-gate.sh # aw:done-gate")' "$CURSOR_FILE")" "true"
+check "done-gate cursor: stop" "$(jq -r '.hooks.stop[0].command | test("done-gate.sh.? # aw:done-gate$")' "$CURSOR_FILE")" "true"
 
 q bash "$ROOT/scripts/install-scope-gate.sh" --provider codex
 check "scope-gate codex: PreToolUse Agent matcher" "$(jq -r '.hooks.PreToolUse[] | select(.hooks[0].command | endswith("# aw:scope-gate")) | .matcher' "$CODEX_FILE")" '^(Agent|spawn_agent)$'

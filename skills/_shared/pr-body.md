@@ -3,6 +3,8 @@
 Literal PR-body template with evidence embedding rules (CD13). Referenced by shipRelease and specToProvenPR.
 Referenced via: SHARED_DIR pattern (CD2).
 
+Write the body in the toolkit's plain style, `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/config/packs/style/plain/voice.md`: short sentences, one term per meaning, steps as numbered lists, and a tldraw diagram where a picture explains it better.
+
 ```markdown
 ## Summary
 <what changed + why>

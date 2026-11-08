@@ -1,13 +1,11 @@
 using Avalonia;
 using Avalonia.Automation;
-using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.Threading;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.Api.Sandbox;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Sandbox;
@@ -18,7 +16,7 @@ using Aw.Sindri.Ui.Views.Sandbox;
 namespace Aw.Sindri.Ui.Tests.Sandbox;
 
 /// <summary>
-/// The sandbox views under the headless platform, one test per accessibility.json row this part owns: Park card, Check again, Resume list, and the
+/// The sandbox views under the headless platform, one test per accessibility.json row this part owns: Check again, and the
 /// Health row and Settings section (sandbox spec 8 Accessibility). Live regions are zero-width, in the tree before their state, and never "".
 /// </summary>
 [Lane(TestLane.Integration)]
@@ -72,8 +70,6 @@ public sealed class SandboxViewTests
         Find<Button>(window, name).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Settle(window);
     }
-
-    private static SandboxBlockerLineView Blocker() => new(Code: "SND-LAUNCH-014", Reason: "no-bwrap", Source: null, Text: "This machine has no sandbox tool, so this Step can't run by itself.", Command: "sudo apt install bubblewrap", State: null);
 
     private async Task<Window> ShowCheck(string[] blockers, string[] titles)
     {
@@ -132,46 +128,6 @@ public sealed class SandboxViewTests
         await _bed.Check.Check(Token);
         Settle(window);
         Assert.False(list.IsEffectivelyVisible);
-    });
-
-    [Fact]
-    public Task The_resume_list_is_read_before_its_buttons_resume_first_and_not_now_returns_focus_to_check_again() => OnUi(async () =>
-    {
-        var window = await ShowCheck([], ["Try the engine", "Fix the login timeout"]);
-        await _bed.Check.Check(Token);
-        Settle(window);
-
-        var list = Find<ItemsControl>(window, "SandboxResumeList");
-        var resume = Find<Button>(window, "SandboxResumeButton");
-        var notNow = Find<Button>(window, "SandboxNotNowButton");
-        Assert.True(Top(window, list) < Top(window, resume));
-        Assert.Equal("Resume", AutomationProperties.GetName(resume));
-        Assert.True(resume.Bounds.X < notNow.Bounds.X);
-
-        Click(window, "SandboxNotNowButton");
-        Dispatcher.UIThread.RunJobs();
-        Settle(window);
-
-        Assert.Same(Find<Button>(window, "SandboxCheckButton"), window.FocusManager?.GetFocusedElement());
-        Assert.False(Find<ItemsControl>(window, "SandboxResumeList").IsEffectivelyVisible);
-    });
-
-    // Park card: a focus-region group with a named peer, never the reason code, its fix text before its buttons.
-    [Fact]
-    public Task The_park_card_is_a_named_focus_region_group_with_its_fix_text_before_its_buttons() => OnUi(async () =>
-    {
-        var card = new SandboxParkCardViewModel(Blocker(), "Try the engine", _bed.Check);
-        var window = Show(new SandboxParkCard { DataContext = card });
-        var region = Find<Border>(window, "SandboxParkRegion");
-
-        Assert.Contains(region.Classes, c => string.Equals(c, "focus-region", StringComparison.Ordinal));
-        Assert.Equal((AutomationControlType.Group, true), (AutomationProperties.GetControlTypeOverride(region), region.Focusable));
-        Assert.Equal("Needs you: Step Try the engine can't start, This machine has no sandbox tool", AutomationProperties.GetName(region));
-        Assert.DoesNotContain("SND-", AutomationProperties.GetName(region), StringComparison.Ordinal);
-        Assert.True(Top(window, Find<TextBlock>(window, "SandboxParkSentence")) < Top(window, Find<Button>(window, "SandboxCheckButton")));
-        Assert.True(Find<TextBlock>(window, "SandboxParkSentence").TextWrapping == Avalonia.Media.TextWrapping.Wrap);
-        Assert.Equal("Blocked", Find<TextBlock>(window, "SandboxParkSeverity").Text);
-        await Task.CompletedTask;
     });
 
     // Health row: the name is "Sandbox: <state>" and wraps; the state is also a word and a mark.

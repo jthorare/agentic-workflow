@@ -75,7 +75,7 @@ internal sealed record UiPreferences(
     internal const string DefaultPage = "Home";
 
     /// <summary>The pages <see cref="LastPage"/> may name.</summary>
-    internal static IReadOnlyList<string> Pages { get; } = ["Home", "Workflows", "Work", "Recipes", "Context", "Agents", "System", "Settings"];
+    internal static IReadOnlyList<string> Pages { get; } = ["Home", "Work", "Context", "Agents", "System", "Settings"];
 
     /// <summary>The preferences of a first run.</summary>
     internal static UiPreferences Defaults { get; } = new(CurrentVersion, Window: null, DefaultSheetWidth, DefaultPage, [], [], TextScale: 1.0, ReduceMotion: false, new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal));

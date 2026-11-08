@@ -6,7 +6,6 @@ using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
-using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Features.GetLaunchPicks;
 using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Testing;

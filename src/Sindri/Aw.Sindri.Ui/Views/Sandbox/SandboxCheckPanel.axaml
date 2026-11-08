@@ -4,7 +4,7 @@
              xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
              x:Class="Aw.Sindri.Ui.Views.Sandbox.SandboxCheckPanel"
              x:DataType="sb:SandboxCheckViewModel">
-  <!-- Check again and what follows it (sandbox spec 8): the button, its outcome, every blocker, and the Steps a resume would start, listed before [Resume] [Not now].
+  <!-- Check again and what follows it (sandbox spec 8): the button, its outcome, every blocker.
        The polite live region is a zero-width TextBlock in the tree from the start, so assistive tech has read it before its text changes; its Text is never "".
        In flight the label stays and a spinner takes the icon's place, the button stays enabled for the keyboard and a second press does nothing. -->
   <UserControl.Styles>
@@ -53,21 +53,5 @@
         </DataTemplate>
       </ItemsControl.ItemTemplate>
     </ItemsControl>
-    <!-- The list is read before the buttons: its names come first in the tree. -->
-    <ItemsControl x:Name="SandboxResumeList" ItemsSource="{Binding ResumeRows}" IsVisible="{Binding ShowsResume}">
-      <ItemsControl.ItemTemplate>
-        <DataTemplate x:DataType="sb:SandboxResumeRow">
-          <TextBlock Classes="body" Text="{Binding Title}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Title}" />
-        </DataTemplate>
-      </ItemsControl.ItemTemplate>
-    </ItemsControl>
-    <StackPanel x:Name="SandboxResumeButtons" Orientation="Horizontal" Spacing="8" IsVisible="{Binding ShowsResume}">
-      <Button x:Name="SandboxResumeButton" Classes="bar-button primary" Click="OnResume" AutomationProperties.Name="Resume">
-        <TextBlock Classes="caption" Text="Resume" AutomationProperties.AccessibilityView="Raw" />
-      </Button>
-      <Button x:Name="SandboxNotNowButton" Classes="bar-button" Click="OnNotNow" AutomationProperties.Name="Not now">
-        <TextBlock Classes="caption" Text="Not now" AutomationProperties.AccessibilityView="Raw" />
-      </Button>
-    </StackPanel>
   </StackPanel>
 </UserControl>

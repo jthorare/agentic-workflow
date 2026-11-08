@@ -41,7 +41,7 @@ internal static class LaunchWorktree
     }
 
     /// <summary>Whether the launch is a skill trial's Step (its instance is a 'skill-trial' recipe's).</summary>
-    internal static bool IsTrial(LaunchRequest request) => !request.Attended && request.Instance is { } instance && SkillTrialRecipe.IsTrial(instance);
+    internal static bool IsTrial(LaunchRequest request) => !request.Attended && request.Instance is { } instance && SkillTrialRecipe.IsTrial(instance.Value);
 
     /// <summary>The origin's HEAD branch ('origin/main'), else a local 'main'; null when neither is there (the worktree then starts at HEAD).</summary>
     internal static async ValueTask<string?> DefaultBranch(string repoPath, CancellationToken cancellationToken)

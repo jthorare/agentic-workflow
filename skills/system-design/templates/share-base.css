@@ -1,40 +1,22 @@
 /* The shareable TDD (tdd-share.html): one reading column that flows story-first (the problem, why, the fix), then
    working demos (walkthrough, lifecycle, before/after), then the data and the build plan. build_share.py puts the
-   project's token block (from doc-style.css) after this file, so the fallbacks here only apply to tokens the project
-   does not define. The derived colors (soft fills, ink on accent) follow whatever the tokens set. */
+   project's token block (from doc-style.css) after this file, so the fallbacks here are the Sindri tokens
+   (assets/sindri-tokens.json) and apply to any token the project does not define. The derived colors (soft fills, ink on accent) follow whatever the tokens set. */
 :root {
-  --bg: #f5f6f8; --surface: #ffffff; --ink: #1f2124; --muted: #5e6168; --line: #dadde3;
-  --accent: #3b6fd9; --secondary: #7048e8; --good: #2b7a4b; --warn: #8a5a1e; --bad: #b0353a;
-  --f-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --f-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --bg: #010102; --surface: #0f1011; --ink: #f7f8f8; --muted: #8a8f98; --line: #34343a;
+  --accent: #5e6ad2; --secondary: #a78bfa; --good: #27a644; --warn: #f2994a; --bad: #eb5757;
+  --f-body: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --radius: 12px;
 }
 :root {
   --f-display: var(--f-heading, var(--f-body));
-  --surface-2: color-mix(in srgb, var(--ink) 6%, var(--surface));
-  --accent-ink: color-mix(in srgb, var(--accent) 72%, var(--ink));
-  --accent-soft: color-mix(in srgb, var(--accent) 11%, var(--surface));
-  --good-soft: color-mix(in srgb, var(--good) 14%, var(--surface));
-  --warn-soft: color-mix(in srgb, var(--warn) 16%, var(--surface));
-  --bad-soft: color-mix(in srgb, var(--bad) 12%, var(--surface));
-  --on-accent: #ffffff;
-  --shadow: 0 1px 2px rgba(20, 30, 50, .06), 0 8px 24px rgba(20, 30, 50, .06);
-  color-scheme: light;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #101318; --surface: #181c23; --ink: #e9ecf2; --muted: #a0a4ad; --line: #2d3340;
-    --accent-ink: color-mix(in srgb, var(--accent) 55%, #ffffff);
-    --good: color-mix(in srgb, #81d4a6 70%, var(--good)); --warn: color-mix(in srgb, #ffd977 70%, var(--warn));
-    --bad: color-mix(in srgb, #f37b78 70%, var(--bad));
-    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #101318; --surface: #181c23; --ink: #e9ecf2; --muted: #a0a4ad; --line: #2d3340;
+  --surface-2: color-mix(in srgb, var(--ink) 4%, var(--surface));
   --accent-ink: color-mix(in srgb, var(--accent) 55%, #ffffff);
-  --good: color-mix(in srgb, #81d4a6 70%, var(--good)); --warn: color-mix(in srgb, #ffd977 70%, var(--warn));
-  --bad: color-mix(in srgb, #f37b78 70%, var(--bad));
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, var(--bg));
+  --good-soft: color-mix(in srgb, var(--good) 14%, var(--bg));
+  --warn-soft: color-mix(in srgb, var(--warn) 14%, var(--bg));
+  --bad-soft: color-mix(in srgb, var(--bad) 14%, var(--bg));
+  --on-accent: #ffffff;
   --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
   color-scheme: dark;
 }
@@ -76,7 +58,7 @@ button { font: inherit; cursor: pointer; }
 /* hero */
 .hero { padding-top: 56px; display: grid; gap: 28px; }
 .hero h1 { font-size: clamp(34px, 6.2vw, 64px); line-height: 1.04; font-weight: 800; max-width: 18ch; }
-.hero h1 em { font-style: normal; color: var(--accent); }
+.hero h1 em { font-style: normal; color: var(--accent-ink); }
 .hero .lede { font-size: 19px; max-width: 58ch; }
 .meta { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; padding: 4px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
@@ -118,7 +100,7 @@ button { font: inherit; cursor: pointer; }
 
 /* the fix */
 .thesis { font: 700 clamp(22px, 3.2vw, 30px)/1.25 var(--f-display); max-width: 32ch; }
-.thesis mark { background: none; color: var(--accent); }
+.thesis mark { background: none; color: var(--accent-ink); }
 .pieces { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
 .piece { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; display: grid; gap: 10px; align-content: start; }
 .piece .n { font: 800 13px var(--f-mono); color: var(--accent-ink); }
@@ -245,7 +227,7 @@ button { font: inherit; cursor: pointer; }
 /* build plan */
 .lanes { display: grid; gap: 10px; }
 .lane { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 14px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
-.lane .n { font: 800 22px var(--f-display); color: var(--accent); }
+.lane .n { font: 800 22px var(--f-display); color: var(--accent-ink); }
 .lane p { color: var(--muted); font-size: 13.5px; }
 .lane .tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 @media (max-width: 640px) { .lane { grid-template-columns: 34px minmax(0, 1fr); } .lane .tags { grid-column: 2; justify-content: flex-start; } }
@@ -260,4 +242,4 @@ button { font: inherit; cursor: pointer; }
 footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 20px; display: flex; flex-wrap: wrap; gap: 8px 20px; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
-@media print { .nav, .stage-nav, .sim-ctrl, .tog { display: none; } body { background: #fff; } .wrap { gap: 48px; } }
+@media print { html { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .nav, .stage-nav, .sim-ctrl, .tog { display: none; } .wrap { gap: 48px; } }

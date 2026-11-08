@@ -9,6 +9,8 @@ using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.EngineReads;
 using Aw.Sindri.Core.Forge;
+using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Judge;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Lease;
@@ -159,7 +161,9 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IScriptRuns>(_ => new BashScriptRuns(new ProcessToolRunner()))   // the prove station's before/after scripts
             .AddSingleton<ITrackedFiles, GitTrackedFiles>()          // the docs-sync scope's file list
             .AddSingleton<IWorktrees, GitWorktrees>()               // per-run and phase worktrees (engine spec §6.5); nothing calls it until BS-10
-            .AddSingleton<IPrCommentMarks, SqlitePrCommentMarks>(); // the PR babysitter's comment marks (W26): pr_comment_marks in ledger.db
+            .AddSingleton<IPrCommentMarks, SqlitePrCommentMarks>() // the PR babysitter's comment marks (W26): pr_comment_marks in ledger.db
+            .AddSingleton<IWorkflowStore, SqliteWorkflowStore>()    // workflow graphs and their revisions (#2258, PR 5): workflow and workflow_revision in ledger.db
+            .AddSingleton<IGraphBlockCatalog, EmptyGraphBlockCatalog>(); // no graph blocks until PR 6 and 9
 
     private static IServiceCollection AddSindriAdapters(this IServiceCollection services, Func<string, string?> environment)
     {
@@ -226,7 +230,8 @@ public static class SindriInfrastructureServiceCollectionExtensions
     private static IServiceCollection AddLeftoverInfrastructure(this IServiceCollection services) => services
         .AddSingleton<IPurgeDocker>(static _ => new ToolPurgeDocker(new ProcessToolRunner()))
         .AddSingleton<IPurgeKeychain>(static _ => new ToolPurgeKeychain(new ProcessToolRunner()))
-        .AddSingleton<ILeftoverFiles, DiskLeftoverFiles>();
+        .AddSingleton<ILeftoverFiles, DiskLeftoverFiles>()
+        .AddSingleton<Core.Linear.ILinearCheckStore, Linear.FileLinearCheckStore>();   // what the last save found out about each Linear key, so Settings' read needs no key lookup
 
     // 'profile set' (#1740): the in-place key writer and the reader that checks its result before it is written.
     private static IServiceCollection AddProfileEditing(this IServiceCollection services, Func<string, string?> environment)
@@ -238,7 +243,10 @@ public static class SindriInfrastructureServiceCollectionExtensions
         => services
             .AddSingleton<ISindriHome, SettingsSindriHome>()
             .AddSingleton<ISecretWriter>(static sp => new KeychainSecretWriter(new ProcessToolRunner(), sp.GetRequiredService<ISindriHome>()))   // the key into the OS store, else an owner-only file
-            .AddSingleton<ISourceTokenProfileWriter, YamlSourceTokenProfileWriter>()
+            .AddSingleton<YamlSourceTokenProfileWriter>()
+            .AddSingleton<ISourceTokenProfileWriter>(static sp => sp.GetRequiredService<YamlSourceTokenProfileWriter>())
+            .AddSingleton<ILinearWriteTokenWriter>(static sp => sp.GetRequiredService<YamlSourceTokenProfileWriter>())
+            .AddSingleton<ILinearProfileEditCheck>(static sp => sp.GetRequiredService<YamlSourceTokenProfileWriter>())
             .AddSingleton<ISecretPrompts, TerminalSecretPrompts>();                                       // the owner at the terminal, no echo for the token                      // the source pointer line in the live profile
 
     /// <summary>
