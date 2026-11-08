@@ -25812,3 +25812,26 @@ Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.WorkflowRunCancelledPayload(Aw
 Aw.Sindri.Core.Events.WorkflowNodeStartedPayload.WorkflowNodeStartedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! By) -> void
 Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.WorkflowNodeFinishedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! Status, bool Truncated, string! By) -> void
 Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.WorkflowNodeFailedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! Error, string! By) -> void
+Aw.Sindri.Core.Events.WorkflowNotifyPayload
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.Body.get -> string?
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.Body.init -> void
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.By.get -> string!
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.By.init -> void
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowNotifyPayload!
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out Aw.Sindri.Core.Graph.Ids.NodeId Node, out string! Title, out string? Body, out string! By) -> void
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.Equals(Aw.Sindri.Core.Events.WorkflowNotifyPayload? other) -> bool
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.Node.init -> void
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.Run.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.Run.init -> void
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.Title.get -> string!
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.Title.init -> void
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.WorkflowNotifyPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, Aw.Sindri.Core.Graph.Ids.NodeId Node, string! Title, string? Body, string! By) -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouKind.WorkflowNotify = 6 -> Aw.Sindri.Core.NeedsYou.NeedsYouKind
+Aw.Sindri.Core.NeedsYou.SubjectKind.WorkflowRun = 8 -> Aw.Sindri.Core.NeedsYou.SubjectKind
+const Aw.Sindri.Core.Events.EventTypes.WorkflowNotify = "workflow.notify" -> string!
+override Aw.Sindri.Core.Events.WorkflowNotifyPayload.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.WorkflowNotifyPayload.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowNotifyPayload.ToString() -> string!
+static Aw.Sindri.Core.Events.WorkflowNotifyPayload.operator !=(Aw.Sindri.Core.Events.WorkflowNotifyPayload? left, Aw.Sindri.Core.Events.WorkflowNotifyPayload? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowNotifyPayload.operator ==(Aw.Sindri.Core.Events.WorkflowNotifyPayload? left, Aw.Sindri.Core.Events.WorkflowNotifyPayload? right) -> bool

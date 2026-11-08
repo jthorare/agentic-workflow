@@ -251,6 +251,9 @@ public static class EventTypes
     /// <summary>A graph node failed (issue 2258, PR 6).</summary>
     public const string WorkflowNodeFailed = "workflow.node.failed";
 
+    /// <summary>A graph 'notify' node posted a note for the owner (issue 2258, PR 6).</summary>
+    public const string WorkflowNotify = "workflow.notify";
+
     /// <summary>The event a background service records per run: 'service.&lt;name&gt;'.</summary>
     /// <param name="service">The service.</param>
     /// <returns>The event type, for example 'service.heartbeat'.</returns>

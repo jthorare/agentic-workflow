@@ -1,0 +1,7 @@
+{
+  "run": "nightly@3:12",
+  "node": "notify",
+  "title": "Drifted",
+  "body": "2 contracts changed",
+  "by": "service:workflow"
+}

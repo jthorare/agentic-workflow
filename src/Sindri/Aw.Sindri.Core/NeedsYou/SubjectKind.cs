@@ -38,4 +38,8 @@ public enum SubjectKind
     /// <summary>A workflow recipe; the id is the recipe's id.</summary>
     [JsonStringEnumMemberName("recipe")]
     Recipe,
+
+    /// <summary>A graph run, named by its run id.</summary>
+    [JsonStringEnumMemberName("workflow-run")]
+    WorkflowRun,
 }
