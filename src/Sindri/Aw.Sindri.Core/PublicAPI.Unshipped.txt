@@ -11611,6 +11611,7 @@ const Aw.Sindri.Core.Sandbox.SandboxReasons.NoUserNamespace = "no-user-namespace
 const Aw.Sindri.Core.Sandbox.SandboxReasons.Sessions = "sessions" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.SourceUnsupported = "source-unsupported" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.Timeout = "timeout" -> string!
+const Aw.Sindri.Core.Sandbox.SandboxReasons.PathHidden = "path-hidden" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.ToolNotExpressible = "tool-not-expressible" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.UnsupportedPlatform = "unsupported-platform" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.Wall = "wall" -> string!

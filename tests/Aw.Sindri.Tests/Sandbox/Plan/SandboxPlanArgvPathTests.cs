@@ -81,4 +81,15 @@ public sealed class SandboxPlanArgvPathTests : IDisposable
         Assert.Equal(SindriErrors.LaunchUnconfinable.Code, refusal.Code);
         Assert.Contains(hidden, refusal.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void The_hidden_path_refusal_carries_the_path_hidden_reason()
+    {
+        var plan = SandboxPlanner.Build(SandboxMechanism.PassThrough, Req.WriteScope).Value;
+
+        var refusal = PlanArgvPaths.Check(plan, ["claude", "--settings", "/tmp/x.json"]);
+
+        Assert.NotNull(refusal);
+        Assert.Equal(SandboxReasons.PathHidden, SandboxRefusal.ReasonOf(refusal));
+    }
 }
