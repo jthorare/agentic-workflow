@@ -2169,7 +2169,7 @@ override Aw.Meta.Core.Ports.BugfixCandidate.GetHashCode() -> int
 override Aw.Meta.Core.Ports.BugfixCandidate.ToString() -> string!
 static Aw.Meta.Core.Ports.BugfixCandidate.operator !=(Aw.Meta.Core.Ports.BugfixCandidate? left, Aw.Meta.Core.Ports.BugfixCandidate? right) -> bool
 static Aw.Meta.Core.Ports.BugfixCandidate.operator ==(Aw.Meta.Core.Ports.BugfixCandidate? left, Aw.Meta.Core.Ports.BugfixCandidate? right) -> bool
-static Aw.Meta.Core.Worktrees.WorktreeScope.ForPath(string! path, bool discarded) -> Aw.Meta.Core.Worktrees.WorktreeScope!
+static Aw.Meta.Core.Worktrees.WorktreeScope.ForPath(string! path, bool discarded, bool includeNoPr = false) -> Aw.Meta.Core.Worktrees.WorktreeScope!
 Aw.Meta.Core.Coordination.LaneBeats.LastCli(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.DateTimeOffset?>!>
 Aw.Meta.Core.Lanes.LaneHookTrace
 Aw.Meta.Core.Lanes.LaneHookTrace.At.get -> System.DateTimeOffset
