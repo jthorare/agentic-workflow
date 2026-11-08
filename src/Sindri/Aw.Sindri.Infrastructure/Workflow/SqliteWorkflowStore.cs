@@ -52,18 +52,18 @@ internal sealed class SqliteWorkflowStore(LedgerDatabase database, TimeProvider 
 
     public async ValueTask<Result<WorkflowRecord>> Get(WorkflowId id, CancellationToken cancellationToken)
     {
-        var found = await RecipeSessions.Read<WorkflowRecord?>(database, LedgerDatabase.WorkflowsVersion, empty: null, (session, token) => FindRecord(session, id, token), cancellationToken).ConfigureAwait(false);
+        var found = await RecipeSessions.Read(database, LedgerDatabase.WorkflowsVersion, empty: null, (session, token) => FindRecord(session, id, token), cancellationToken).ConfigureAwait(false);
         return Required(found, id);
     }
 
     public async ValueTask<Result<WorkflowRevision>> GetRevision(WorkflowId id, int? revision, CancellationToken cancellationToken)
     {
-        var found = await RecipeSessions.Read<WorkflowRevision?>(database, LedgerDatabase.WorkflowsVersion, empty: null, (session, token) => FindRevision(session, id, revision, token), cancellationToken).ConfigureAwait(false);
+        var found = await RecipeSessions.Read(database, LedgerDatabase.WorkflowsVersion, empty: null, (session, token) => FindRevision(session, id, revision, token), cancellationToken).ConfigureAwait(false);
         return Required(found, id);
     }
 
     public ValueTask<Result<IReadOnlyList<WorkflowRecord>>> List(bool includeArchived, CancellationToken cancellationToken) =>
-        RecipeSessions.Read<IReadOnlyList<WorkflowRecord>>(database, LedgerDatabase.WorkflowsVersion, [],
+        RecipeSessions.Read(database, LedgerDatabase.WorkflowsVersion, [],
             (session, token) => RecipeSessions.List(session, new SqlStatement(includeArchived ? WorkflowSql.ListAll : WorkflowSql.ListLive), WorkflowRecordMapper.Instance, token), cancellationToken);
 
     public ValueTask<Result<WorkflowRecord>> Activate(WorkflowId id, int revision, CancellationToken cancellationToken) =>

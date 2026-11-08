@@ -31,7 +31,7 @@ internal static class GraphFixtures
 
     public static GraphSpec Spec(IReadOnlyList<GraphNode> nodes, IReadOnlyList<GraphEdge> edges) => new(Version: 1, Name: "Test", Description: null, Concurrency: null, Resources: null, Nodes: nodes, Edges: edges);
 
-    private static IReadOnlyList<string> Template(string text) => Aw.Sindri.Core.Graph.Interpolation.Template.References(text);
+    private static IReadOnlyList<string> Template(string text) => Core.Graph.Interpolation.Template.References(text);
 
     private sealed record TestBlock(string Type, bool IsTrigger, BlockSchema Config, string Example, BlockOutputs Declared) : IGraphBlockType
     {
