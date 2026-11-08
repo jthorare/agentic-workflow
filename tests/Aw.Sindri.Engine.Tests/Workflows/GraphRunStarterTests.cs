@@ -98,4 +98,48 @@ public sealed class GraphRunStarterTests
         Assert.Equal(GraphStartKind.Started, second.Kind);
         Assert.Equal(2, w.Launcher.Launched.Count);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_failed_launch_starts_the_next_queued_run()
+    {
+        var clock = new FakeTimeProvider(KnownInstants.Epoch);
+        var runs = new InMemoryWorkflowRunStore(clock);
+        var launcher = new FailFirstLauncher();
+        var starter = new GraphRunStarter(runs, launcher, clock, new ListLogger<GraphRunStarter>());
+        // run 2 arrives while run 1 is in flight, so it queues; then run 1's launch fails
+        launcher.WhileLaunching = () => starter.Start(new GraphStartRequest(_workflow, _slug, Revision: 3, Occurrence: 2, Trigger, GraphConcurrency.Queue), Token);
+
+        var first = await starter.Start(new GraphStartRequest(_workflow, _slug, Revision: 3, Occurrence: 1, Trigger, GraphConcurrency.Queue), Token);
+
+        Assert.True(first.IsError);   // the launch error is still the answer
+        Assert.Equal(WorkflowRunStatus.Failed, (await runs.Get(WorkflowRunId.Of(_slug, 3, 1), Token)).Value.Status);
+        Assert.Equal(WorkflowRunStatus.Running, (await runs.Get(WorkflowRunId.Of(_slug, 3, 2), Token)).Value.Status);
+        Assert.Equal([WorkflowRunId.Of(_slug, 3, 1), WorkflowRunId.Of(_slug, 3, 2)], launcher.Launched.Select(static r => r.Id));
+    }
+
+    /// <summary>Fails the first launch only, after running <see cref="WhileLaunching"/> (which queues a trigger behind the run being launched).</summary>
+    private sealed class FailFirstLauncher : IGraphRunLauncher
+    {
+        private readonly List<WorkflowRun> _launched = [];
+
+        public IReadOnlyList<WorkflowRun> Launched => _launched;
+
+        public Func<ValueTask<Kernel.Result<GraphStart>>>? WhileLaunching { get; set; }
+
+        public async ValueTask<Kernel.Result<bool>> Launch(WorkflowRun run, CancellationToken cancellationToken)
+        {
+            _launched.Add(run);
+            if (_launched.Count > 1)
+            {
+                return true;
+            }
+
+            if (WhileLaunching is { } queue)
+            {
+                _ = await queue().ConfigureAwait(false);
+            }
+
+            return SindriErrors.EngineUnavailable.With("temporal is down");
+        }
+    }
 }
