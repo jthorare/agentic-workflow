@@ -55,14 +55,25 @@ public sealed class CheckProvenanceTests
         Assert.Empty(query.Databases);
     }
 
-    private static (FakeProvenanceQuery Query, FakeEvidenceSettings Settings, InMemoryRunFiles Files) SlotSetup(string slotFile)
+    [Fact, Trait("Lane", "unit")]
+    public async Task CheckProvenance_in_a_worktree_slot_with_no_database_template_is_unknown_and_never_queries_the_main_database()
+    {
+        var (query, settings, files) = SlotSetup("STACK_SLOT=2\n", database: null);
+
+        var result = await new CheckProvenanceService(query, settings, files).Handle(new CheckProvenanceRequest("/work/wt"), CancellationToken.None);
+
+        Assert.Equal((DbProvenance.Unknown, "no slot database configured (set UI_EVIDENCE_SLOT_DATABASE, e.g. app_{slot}; see SKILL.md \"Worktree stacks\")"), (result.Value.Provenance, result.Value.Reason));
+        Assert.Empty(query.Databases);
+    }
+
+    private static (FakeProvenanceQuery Query, FakeEvidenceSettings Settings, InMemoryRunFiles Files) SlotSetup(string slotFile, string? database = "app_{slot}")
     {
         var query = new FakeProvenanceQuery();
         query.Emails.Add("seed-1@seed.test");
         var settings = new FakeEvidenceSettings
         {
             SeedPolicy = new SeedPolicy(["seed.test"], "seed-%@seed.test"),
-            Slots = new SlotSettings(".stack-slot.env", "STACK_SLOT", Count: 3, PortStep: 10, Database: "app_{slot}"),
+            Slots = new SlotSettings(".stack-slot.env", "STACK_SLOT", Count: 3, PortStep: 10, Database: database),
         };
         var files = new InMemoryRunFiles().With("/work/wt/.stack-slot.env", Encoding.UTF8.GetBytes(slotFile));
         return (query, settings, files);
