@@ -19,9 +19,19 @@ internal sealed partial class ShellWindow
     private const string AttentionFormName = "TodoAttentionForm";
     private const string AttentionMoreName = "TodoAttentionMore";
 
-    // Enter opened an attention row: focus goes onto its first button once the form has drawn.
+    // Enter opened an attention row, or a redraw destroyed the focused button: focus goes onto the form's first button once it has drawn,
+    // but only when focus may move there (nowhere, detached, or already on an attention stop). A sync must not pull it off the quick-add box or another region.
     private void OnAttentionButtons(object? sender, EventArgs e) =>
-        Dispatcher.UIThread.Post(FocusAttentionButton, DispatcherPriority.Loaded);
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (FocusMayMoveToAttention())
+            {
+                FocusAttentionButton();
+            }
+        }, DispatcherPriority.Loaded);
+
+    private bool FocusMayMoveToAttention() =>
+        FocusManager?.GetFocusedElement() is not Visual focused || ReferenceEquals(focused, this) || TopLevel.GetTopLevel(focused) is null || AttentionStopOf(focused) is not null;
 
     // A pick took its row away: focus goes to the next attention line, else to the todo row the panel selected, else to the panel.
     private void OnTodoPicked(object? sender, TodoPickedEventArgs e) =>
