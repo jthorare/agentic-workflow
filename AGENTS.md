@@ -130,7 +130,7 @@ scripts/binaries-lock.sh check          # Shape of binaries.lock: six fields, on
 scripts/binaries-lock.sh fetch <name>   # Download this platform's row, verify its sha256, install under $AW_STATE_DIR/cache/bin/<name>-<version>/
 
 # TLA+ specs (specs/tla/<Name>/; TLC through skills/formal-verify/scripts/tlc.sh)
-scripts/tlc-check.sh [--root DIR] [--timeout SECONDS] [--witnesses] [<spec-dir>...]    # TLC on every specs/tla/*/ folder (or the given ones), once per *.cfg, on MC<Name>.tla when present; one summary line per check, TLC's output only when it isn't PASS; --root takes specs and models: paths from another repo, --timeout stops a check that runs too long (TIMEOUT line, exit 2), --witnesses also runs each <folder>/gaps/*.cfg and expects it to fail on the invariant its line 1 `\* witness: <Name>` names (WITNESS-CAUGHT, or WITNESS-WRONG / WITNESS-MISSED exit 1); Sindri's step.model.check runs the copy install-cs puts under bin/cs/<stamp>/tlc/; CI job "TLA+ specs (TLC)"; exit 0 all pass, 1 a violation, 2 an error (or a folder without <Name>.tla or .cfg), 3 java or the jar missing (`bash skills/formal-verify/scripts/tlc.sh fetch`)
+scripts/tlc-check.sh [--root DIR] [--timeout SECONDS] [--witnesses] [<spec-dir>...]    # TLC on every specs/tla/*/ folder (or the given ones), once per *.cfg, on MC<Name>.tla when present; one summary line per check, TLC's output only when it isn't PASS; --root takes specs and models: paths from another repo, --timeout stops a check that runs too long (TIMEOUT line, exit 2), --witnesses also runs each <folder>/gaps/*.cfg and expects it to fail on the invariant its line 1 `\* witness: <Name>` names (WITNESS-CAUGHT, or WITNESS-WRONG / WITNESS-MISSED exit 1); CI job "TLA+ specs (TLC)"; exit 0 all pass, 1 a violation, 2 an error (or a folder without <Name>.tla or .cfg), 3 java or the jar missing (`bash skills/formal-verify/scripts/tlc.sh fetch`)
 
 scripts/images-lock.sh check             # Shape of deploy/images.lock (every deployment image by index and per-platform digest; unresolved ones are `todo` rows) and that the Dockerfile names only pinned images; exit 0 ok, 1 a check failed
 
@@ -222,7 +222,6 @@ bash scripts/tests/sindri-prove.test.sh
 bash scripts/tests/evidence-one-path.test.sh   # cutover §3.4: Playwright only in src/Evidence, SKILL.md runs checks only through ui-evidence verbs
 bash scripts/tests/bugfix-worktree-sweep.test.sh   # #1992: skills/bugFixOrchestrator removes worktrees only outside a meta lane; a lane asks meta for aw-meta worktree-sweep
 bash scripts/tests/executable-script.test.sh   # tests that write a shell script and run it go through ExecutableScript.Write (ETXTBSY, #1251): a test .cs file with a `#!` line and a hand-set exec bit fails
-bash scripts/tests/sindri-sandbox-e2e.test.sh   # scripts/sindri-sandbox-e2e.sh: arguments, the --sindri apphost rewrite and the scratch guard (no serve)
 bash scripts/tests/sindri-ui-fixture.test.sh
 bash scripts/tests/sindri-ui-fixture-prs.test.sh   # the Projects fixture seeds the GitHub repos and three open PRs with their relates links, once (#1908)
 bash scripts/tests/sindri-ui-fixture-reviews.test.sh   # the reviews fixture: review.login and workflow.forge in the profile, the PR built in a forge world inside the home (stub aw-forge-fake), its Context record, serve restarted on the forge state, idempotent, down
