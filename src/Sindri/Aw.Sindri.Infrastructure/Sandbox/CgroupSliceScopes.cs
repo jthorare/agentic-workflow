@@ -4,11 +4,13 @@ namespace Aw.Sindri.Infrastructure.Sandbox;
 
 /// <summary>ISliceScopes over the cgroup v2 tree: each live scope is a '*.scope' directory under the slice's cgroup directory.</summary>
 /// <param name="sliceDirectory">The slice's directory, for example '/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/sindri.slice/sindri-steps.slice'.</param>
-internal sealed class CgroupSliceScopes(string sliceDirectory) : ISliceScopes
+/// <param name="processName">The name of a process id (null when it is gone); defaults to /proc/&lt;pid&gt;/comm.</param>
+internal sealed class CgroupSliceScopes(string sliceDirectory, Func<int, string?>? processName = null) : ISliceScopes
 {
     /// <inheritdoc/>
     public Task<IReadOnlyList<string>> Live(CancellationToken cancellationToken)
     {
+        _ = processName; // red stub: the fix reads each scope's processes through it.
         if (!Directory.Exists(sliceDirectory))
         {
             return Task.FromResult<IReadOnlyList<string>>([]);
