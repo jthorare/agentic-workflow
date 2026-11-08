@@ -1,4 +1,6 @@
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Todos;
 
 namespace Aw.Sindri.Features.AddTodo;
 
@@ -7,4 +9,5 @@ namespace Aw.Sindri.Features.AddTodo;
 /// <param name="Due">The due date, or null.</param>
 /// <param name="Links">The typed links (at most 10), or null.</param>
 /// <param name="ClientId">The caller's retry id: a retried add with the same one makes one todo and counts once, or null.</param>
-public sealed record AddTodoRequest(string Text, DateOnly? Due = null, IReadOnlyList<string>? Links = null, TodoClientId? ClientId = null);
+/// <param name="Piped">Whether the request came with fence=1 (the CLI had no terminal on stdout): the event records 'via: pipe' and the hourly limit counts it.</param>
+public sealed record AddTodoRequest(string Text, DateOnly? Due = null, IReadOnlyList<string>? Links = null, TodoClientId? ClientId = null, bool Piped = false) : ICommand<TodoAccepted>;

@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Todos;
 
@@ -7,4 +8,19 @@ namespace Aw.Sindri.Features.MarkTodo;
 /// <param name="Id">The todo.</param>
 /// <param name="Verb">What to do.</param>
 /// <param name="Version">The version the caller saw, or null; a stale one is SND-TODO-409.</param>
-public sealed record MarkTodoRequest(TodoId Id, TodoVerb Verb, long? Version = null);
+/// <param name="Piped">Whether the request came with fence=1 (the CLI had no terminal on stdout): the event records 'via: pipe'.</param>
+public sealed record MarkTodoRequest(TodoId Id, TodoVerb Verb, long? Version = null, bool Piped = false) : ICommand<TodoAccepted>, IClassifiedCommand
+{
+    /// <inheritdoc/>
+    public string? Variant => Verb switch
+    {
+        TodoVerb.Done => "done",
+        TodoVerb.Reopen => "reopen",
+        TodoVerb.Remove => "remove",
+        TodoVerb.Restore => "restore",
+        _ => throw new ArgumentOutOfRangeException(nameof(Verb), Verb, "not a todo verb"),
+    };
+
+    /// <inheritdoc/>
+    public bool CarriesProtectedFields => false;
+}

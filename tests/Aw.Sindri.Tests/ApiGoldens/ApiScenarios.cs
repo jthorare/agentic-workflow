@@ -42,6 +42,7 @@ internal static class ApiScenarios
         ["CodeIndex"] = CodeIndexScenarios.All,
         ["Sandbox"] = SandboxScenarios.All,
         ["Projects"] = ProjectScenarios.All,
+        ["Todos"] = TodoScenarios.All,
         ["Skills"] = SkillScenarios.All,
         ["LinearIssues"] = LinearIssueScenarios.All,
         ["Reviews"] = [.. ReviewScenarios.All, .. ReviewLoginScenarios.All, .. ReviewFixScenarios.All, .. LibraryScenarios.All, .. LibraryDocScenarios.All],
@@ -78,6 +79,8 @@ internal static class ApiScenarios
             ? await StartReviews(slug, scenario, ct)
             : ProjectScenarios.Handles(slug, scenario)
             ? await ProjectScenarios.Start(slug, scenario, ct)
+            : TodoScenarios.Handles(slug, scenario)
+            ? await TodoScenarios.Start(ct)
             : SandboxScenarios.Handles(slug, scenario)
             ? await SandboxScenarios.Start(slug, scenario, ct)
             : LaunchScenarios.Handles(slug, scenario)
@@ -191,6 +194,7 @@ internal static class ApiScenarios
         : WrapSessionScenarios.Handles(slug, scenario) ? () => WrapSessionScenarios.Body(host, slug, scenario, ct)
         : SandboxScenarios.Handles(slug, scenario) ? () => SandboxScenarios.Body(host, slug, scenario, ct)
         : ProjectScenarios.Handles(slug, scenario) ? () => ProjectScenarios.Body(host, slug, scenario, ct)
+        : TodoScenarios.Handles(slug, scenario) ? () => TodoScenarios.Body(host, slug, scenario, ct)
         : SkillScenarios.Handles(slug, scenario) ? () => SkillScenarios.Body(host, ct)
         : LinearBody(host, slug, scenario, ct);
 

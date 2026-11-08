@@ -24931,3 +24931,15 @@ static readonly Aw.Sindri.Core.SindriErrors.TodoNotFound -> Aw.Kernel.ErrorDefin
 static readonly Aw.Sindri.Core.SindriErrors.TodoConflict -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.TodoLocked -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.TodoRateLimited -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Todos.TodoDecisions
+const Aw.Sindri.Core.Todos.TodoDecisions.LockedText = "That todo changed in Sindri and in Obsidian. Pick which version to keep first." -> string!
+const Aw.Sindri.Core.Todos.TodoDecisions.StaleText = "That todo changed somewhere else. Reload and try again." -> string!
+static Aw.Sindri.Core.Todos.TodoDecisions.Fits(Aw.Sindri.Core.Todos.TodoRow! row, Aw.Sindri.Core.Todos.TodoVerb verb) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+static Aw.Sindri.Core.Todos.TodoDecisions.IsOpen(Aw.Sindri.Core.Todos.TodoRow! row) -> bool
+static Aw.Sindri.Core.Todos.TodoDecisions.Writable(Aw.Sindri.Core.Ids.TodoId id, Aw.Sindri.Core.Todos.TodoRow? row, long? seen) -> Aw.Kernel.Result<Aw.Sindri.Core.Todos.TodoRow!>!
+Aw.Sindri.Core.Todos.TodoWrite
+const Aw.Sindri.Core.Todos.TodoWrite.Pipe = "pipe" -> string!
+static Aw.Sindri.Core.Todos.TodoWrite.Append(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Lease.LeaseGrant! grant, Aw.Sindri.Core.Ledger.LedgerEntry! entry, Aw.Sindri.Core.Ids.CommandId command, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Commands.CommandAccepted!>!>
+static Aw.Sindri.Core.Todos.TodoWrite.Begin(Aw.Sindri.Core.Commands.ICallerContextAccessor! callers, Aw.Sindri.Core.Lease.HeldLease! held, string! action) -> Aw.Kernel.Result<(Aw.Sindri.Core.Commands.CallerContext! Caller, Aw.Sindri.Core.Lease.LeaseGrant! Grant)>!
+static Aw.Sindri.Core.Todos.TodoWrite.By(Aw.Sindri.Core.Commands.CallerContext! caller) -> string!
+static Aw.Sindri.Core.Todos.TodoWrite.Via(bool piped) -> string?

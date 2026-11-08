@@ -1,7 +1,9 @@
+using System.Text.RegularExpressions;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Todos;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.AddTodo;
@@ -16,10 +18,9 @@ using Aw.Sindri.Tests.Views;
 namespace Aw.Sindri.Tests.Todos;
 
 /// <summary>
-/// The todo services over an in-memory ledger and views. The services are stubs with no constructor parameters (the slice recipe's red step): when they gain their ports,
-/// the factories below pass them, and no test changes.
+/// The todo services over an in-memory ledger and views, with a scrubber that masks GitHub tokens.
 /// </summary>
-internal sealed class TodoHarness
+internal sealed partial class TodoHarness
 {
     internal static readonly TodoId First = TodoId.From("td_01jc5a8xq0n4w7ms2t9r3vbk6e");
     internal static readonly TodoId Second = TodoId.From("td_01jc5b2kz8m3r6tq1w9xh4dn7y");
@@ -31,19 +32,21 @@ internal sealed class TodoHarness
 
     internal SliceHarness Slice => Views.Slice;
 
-#pragma warning disable CA1822 // why: the factories take their ports from this harness once the services have them (the slice recipe's red step)
-    internal AddTodoService Add() => new();
+    private readonly TodoAddWindow _window = new();
 
-    internal ChangeTodoService Change() => new();
+    private TodoInput Input() => new(new MaskingScrubber(), Slice.Profiles);
 
-    internal MarkTodoService Mark() => new();
+    internal AddTodoService Add() => new(new TodoAdds(Views.Views, Slice.Store, Slice.Events, Slice.Clock, _window), Input(), Slice.Store, Slice.Held, Slice.Events, Slice.Ids, Slice.Callers);
 
-    internal ListTodosService List() => new();
+    internal ChangeTodoService Change() => new(Views.Views, Slice.Store, Slice.Held, Slice.Events, Input(), Slice.Callers);
 
-    internal GetTodoService Get() => new();
+    internal MarkTodoService Mark() => new(Views.Views, Slice.Store, Slice.Held, Slice.Events, Slice.Callers);
 
-    internal GetTodoNoteService Note() => new();
-#pragma warning restore CA1822
+    internal ListTodosService List() => new(Views.Views, Views.Progress, Slice.Callers);
+
+    internal GetTodoService Get() => new(Views.Views, Views.Progress, Slice.Callers);
+
+    internal GetTodoNoteService Note() => new(Views.Progress, Slice.Callers);
 
     internal async Task Lease() => _ = await Slice.HoldLease();
 
@@ -62,4 +65,12 @@ internal sealed class TodoHarness
     internal async Task<TodoRow?> Row(TodoId id) => (await Views.Views.Get<TodoRow>(ViewNames.Todo, id.Value, TestContext.Current.CancellationToken)).Value;
 
     internal T Payload<T>(LedgerEvent recorded) => Slice.Events.Payload<T>(recorded).Value;
+
+    private sealed partial class MaskingScrubber : ITextScrubber
+    {
+        public string Scrub(string text) => Token.Replace(text, "[redacted]");
+
+        [GeneratedRegex("ghp_[A-Za-z0-9]{20,}", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+        private static partial Regex Token { get; }
+    }
 }
