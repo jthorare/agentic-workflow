@@ -26,7 +26,8 @@
 #   AW_META_ID_GRACE     seconds a lane whose id timed out keeps the start lock for its late session file (default 10; tests)
 #   AW_META_NO_SHELL     1: exit when the agent exits instead of dropping to a shell (tests)
 set -u
-# The lane runs as `$SHELL -lc meta-lane.sh` (scripts/meta-launch.sh), so the login profile has loaded. A profile may reset PATH:
+# The lane runs as `$SHELL -lc meta-lane.sh` (scripts/meta-launch.sh), so the login profile has loaded; the agent then runs through
+# `$SHELL -ic` (launcher_run_in_shell), so the shell's rc file (aliases, functions) applies to it (#2274). A profile may reset PATH:
 # put the PATH of the aw-meta-launch caller (AW_META_CALLER_PATH) back first, each entry once (#2278).
 if [ -n "${AW_META_CALLER_PATH:-}" ]; then
   _np=""; _seen=":"
@@ -218,6 +219,23 @@ if [ -n "$routed_model" ]; then
     *) echo "meta-lane: lane $lane: agent $agent has no model flag the launcher applies; routed model '$routed_model' not passed" >&2 ;;
   esac
 fi
+# Codex runs hooks and tools in a shared app-server daemon unless told otherwise. The daemon keeps the environment of whoever started
+# it first (another team's AW_META_*, another lane script as the ancestor), so this lane's hooks would act as that team and
+# meta-lane-gate's own_agent check would reject them (#2286). --no-daemon keeps them under this lane's agent. It goes right after the
+# binary (before a resume subcommand), only when this Codex lists the flag: an older one would refuse to start. The result is recorded in
+# <lane>.agent (noDaemon) so aw-meta health can say which it is. Any Codex-derived catalog entry gets this, an alias included.
+if launcher_is_codex "$agent"; then
+  no_daemon=false
+  if printf '%s\n' "${args[@]}" | grep -qx -- '--no-daemon'; then
+    no_daemon=true
+  elif launcher_cli_has_flag "${args[0]}" --no-daemon; then
+    args=("${args[0]}" --no-daemon "${args[@]:1}"); no_daemon=true
+  else
+    echo "meta-lane: lane $lane: ${args[0]} has no --no-daemon; its hooks may run in a shared codex daemon under another team's identity" >&2
+  fi
+  jq -c --argjson nd "$no_daemon" '. + {codex: true, noDaemon: $nd}' "$ids/$lane.agent" > "$ids/$lane.agent.tmp" 2> /dev/null \
+    && mv "$ids/$lane.agent.tmp" "$ids/$lane.agent"
+fi
 # A launcher run from inside a Claude session (the meta recreating a dead lane) must not hand the lane that session's
 # identity: its id, pid, messaging socket and token. Only these are cleared; user settings such as model or
 # provider variables pass through.
@@ -261,7 +279,7 @@ stop_watcher() {
   watcher=""; recorder=""
 }
 if [ "$agent" = claude-code ]; then
-  "${args[@]}"
+  launcher_run_in_shell "${args[@]}"
 else
   # tmux names a pane after the foreground process group's leader. A script's children share its group, so the pane would read
   # "bash" and aw-meta's wake guard ("the pane runs the agent's processName") would call every non-Claude lane down. Job control
@@ -287,7 +305,7 @@ else
   ) > /dev/null 2>&1 &
   recorder=$!
   set -m
-  "${args[@]}"
+  launcher_run_in_shell "${args[@]}"
   set +m
 fi
 stop_watcher

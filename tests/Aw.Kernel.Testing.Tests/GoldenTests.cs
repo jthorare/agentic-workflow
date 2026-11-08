@@ -77,6 +77,32 @@ public sealed class GoldenTests : IDisposable
     }
 
     [Fact]
+    public void Update_mode_passes_and_rewrites_nothing_when_the_file_already_matches()
+    {
+        Write("same.txt", "at <timestamp>\n");
+        var path = Path.Combine(_dir, "same.txt");
+        var before = File.GetLastWriteTimeUtc(path);
+        File.SetLastWriteTimeUtc(path, before.AddHours(-1));
+        var stamped = File.GetLastWriteTimeUtc(path);
+
+        Golden.Match("at 2026-10-10T06:00:00Z\n", _dir, "same.txt", Declared, update: true, inCi: false);
+
+        Assert.Equal(stamped, File.GetLastWriteTimeUtc(path));
+    }
+
+    [Fact]
+    public void Update_mode_still_fails_the_run_when_the_file_differs()
+    {
+        Write("old.txt", "old\n");
+
+        var e = Assert.Throws<GoldenMismatchException>(
+            () => Golden.Match("new\n", _dir, "old.txt", Normalization.None, update: true, inCi: false));
+
+        Assert.Contains("updated", e.Message, StringComparison.Ordinal);
+        Assert.Equal("new\n", File.ReadAllText(Path.Combine(_dir, "old.txt")));
+    }
+
+    [Fact]
     public void Update_mode_is_refused_in_ci_and_writes_nothing()
     {
         var e = Assert.Throws<GoldenMismatchException>(

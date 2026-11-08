@@ -69,6 +69,21 @@ public sealed class ShellChordTests
     }
 
     [Fact]
+    public async Task The_shortcuts_sheet_names_no_cancel_or_take_over_key_nothing_binds()
+    {
+        // Shift+X (cancel the run), T and B (take over, hand back) have no binding yet (#2294): the sheet may name one only when
+        // pressing it through the shell does something.
+        string[] unbound = ["Shift+X", "T", "B"];
+        var named = Labels.FixedKeys.SelectMany(k => k.Keys.Split(" / ", StringSplitOptions.RemoveEmptyEntries)).Where(unbound.Contains).ToList();
+        var shell = await Shell();
+
+        foreach (var key in named)
+        {
+            Assert.True(shell.Press(key), $"the shortcuts sheet names {key}, but pressing it does nothing");
+        }
+    }
+
+    [Fact]
     public async Task A_chord_at_its_wait_has_expired()
     {
         var shell = await Shell();

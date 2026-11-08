@@ -38,6 +38,9 @@ public static partial class SandboxReasons
     /// <summary>-015: the agent's binary lives in a denied tree.</summary>
     public const string BinDenied = "bin-denied";
 
+    /// <summary>-015: a path on the agent's command line is hidden inside the sandbox.</summary>
+    public const string PathHidden = "path-hidden";
+
     /// <summary>-015: the host isn't tmux.</summary>
     public const string HostNotTmux = "host-not-tmux";
 
@@ -112,7 +115,7 @@ public static partial class SandboxReasons
     [
         (SindriErrors.LaunchSandboxUnavailable.Code, NoBwrap), (SindriErrors.LaunchSandboxUnavailable.Code, NoUserNamespace), (SindriErrors.LaunchSandboxUnavailable.Code, NoUserManager),
         (SindriErrors.LaunchSandboxUnavailable.Code, NoCgroupControllers), (SindriErrors.LaunchSandboxUnavailable.Code, NoForwarder), (SindriErrors.LaunchSandboxUnavailable.Code, UnsupportedPlatform), (SindriErrors.LaunchSandboxUnavailable.Code, NoSeatbelt),
-        (SindriErrors.LaunchUnconfinable.Code, FormNone), (SindriErrors.LaunchUnconfinable.Code, FormReserved), (SindriErrors.LaunchUnconfinable.Code, ToolNotExpressible), (SindriErrors.LaunchUnconfinable.Code, BinDenied),
+        (SindriErrors.LaunchUnconfinable.Code, FormNone), (SindriErrors.LaunchUnconfinable.Code, FormReserved), (SindriErrors.LaunchUnconfinable.Code, ToolNotExpressible), (SindriErrors.LaunchUnconfinable.Code, BinDenied), (SindriErrors.LaunchUnconfinable.Code, PathHidden),
         (SindriErrors.LaunchUnconfinable.Code, HostNotTmux), (SindriErrors.LaunchUnconfinable.Code, WorktreeOutsideRepo), (SindriErrors.LaunchUnconfinable.Code, NoStoredPlan),
         (SindriErrors.LaunchSelfCheckFailed.Code, FsDeny), (SindriErrors.LaunchSelfCheckFailed.Code, FsWrite), (SindriErrors.LaunchSelfCheckFailed.Code, GitRef), (SindriErrors.LaunchSelfCheckFailed.Code, Env), (SindriErrors.LaunchSelfCheckFailed.Code, Login),
         (SindriErrors.LaunchSelfCheckFailed.Code, HooksRun), (SindriErrors.LaunchSelfCheckFailed.Code, NetForward), (SindriErrors.LaunchSelfCheckFailed.Code, NetDeny),
