@@ -67,7 +67,7 @@ internal sealed class ContextProjectFacts(IApprovedProfile approvals, ICallerCon
         var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
         if (approved.IsError || approved.Value is not { } loaded)
         {
-            return approved.IsError ? approved.Error : SindriErrors.ProfileNotApproved.With("no profile is approved (fix: sindri profile approve)");
+            return approved.IsError ? approved.Error : SindriErrors.ProfileMissing.With("no profile yet (fix: sindri repo add <path>)");
         }
 
         // why: the projects read needs the audience rule and the repo, not each repo's index globs, so the entries carry name and path only

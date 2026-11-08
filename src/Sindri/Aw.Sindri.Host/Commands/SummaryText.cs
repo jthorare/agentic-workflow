@@ -58,21 +58,14 @@ internal static class SummaryText
 
     private static string Profile(ProfileStatus p) => p switch
     {
-        { Problem: { } problem, Approved: null } => $"{problem}",
-        { Approved: null } => $"{p.Source} (not approved; fix: sindri profile approve)",
-        { ChangedSinceApproval: true } => $"{p.Source} (changed since approval {p.Approved.Value.Abbreviated}; running with the approved one; fix: sindri profile approve)",
-        { Problem: { } problem } => $"saved approval {p.Approved.Value.Abbreviated}; the live file has a problem: {problem}",
-        { NeedsApproval: true } => $"{p.Source} ({NotLatest}; fix: sindri profile approve)",
-        _ => $"{p.Source} (approved, hash {p.Approved.Value.Abbreviated})",
+        { Problem: { } problem } => $"{problem}",
+        { Live: null } => $"{p.Source} (no hash)",
+        _ => $"{p.Source} (hash {p.Live.Value.Abbreviated})",
     };
-
-    /// <summary>What a saved approval that the ledger doesn't name as its latest 'profile.approved' event says.</summary>
-    private const string NotLatest = "approval not recorded in the ledger as the latest one";
 
     private static string Ready(ProfileStatus p) => p switch
     {
         { Problem: not null } => "running; the live profile file has a problem",
-        { NeedsApproval: true } => "running; the profile needs your approval",
         _ => "running",
     };
 

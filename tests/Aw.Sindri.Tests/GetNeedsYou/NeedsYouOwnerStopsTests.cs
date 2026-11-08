@@ -183,7 +183,7 @@ public sealed class NeedsYouOwnerStopsTests
     {
         var jobs = new InMemoryJobViews();
         var mcp = new Core.Setup.McpAutoGate(_q.Views.Slice.Profiles, new Core.Setup.McpEvents(_q.Views.Slice.Held, _q.Views.Slice.Store, _q.Views.Slice.Events, _q.Views.Slice.Callers), new NoSwitch(), jobs);
-        var notices = new SetupNotices(jobs, _q.Views.Slice.Profiles, new ApproveAllPlanReader(_q.Views.Slice.Profiles, new FakeShippedRecipes([])), new PassThroughScrubber(), TimeProvider.System, mcp, _q.Views.Slice.Profiles);
+        var notices = new SetupNotices(jobs, _q.Views.Slice.Profiles, new ApproveAllPlanReader(_q.Views.Slice.Profiles, new FakeShippedRecipes([])), new PassThroughScrubber(), TimeProvider.System, mcp);
         return new NeedsYouLiveRows(notices, new PassThroughScrubber(), ownerStops: stops);
     }
 

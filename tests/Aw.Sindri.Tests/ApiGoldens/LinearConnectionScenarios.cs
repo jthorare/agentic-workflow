@@ -12,7 +12,7 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 /// <summary>
 /// Settings, Connections, Linear (#2077 Ph3 1b; Linear hub spec 2026-11-04 §3; contract AGREED by api and ui): 'GET /linear/connection', 'POST /linear/connection/teams', 'POST /linear/connection' and
 /// 'DELETE /linear/connection/write'. The ports behind them are fakes seeded per scenario (<see cref="FakeLinearConnectionFacts"/>, <see cref="FakeLinearKeyChecks"/>, <see cref="FakeLinearConnectionStore"/>,
-/// <see cref="FakeLinearConnectionApproval"/>): nothing reaches Linear, a keychain or the profile file, so the profile hash is the item profile's. CheckedAt is the time of the last save, which the scenarios put two minutes before the clock (the epoch is midnight, so it reads 23:58 the day before).
+/// the fakes): nothing reaches Linear, a keychain or the profile file, so the profile hash is the item profile's. CheckedAt is the time of the last save, which the scenarios put two minutes before the clock (the epoch is midnight, so it reads 23:58 the day before).
 /// </summary>
 internal static class LinearConnectionScenarios
 {
@@ -25,9 +25,9 @@ internal static class LinearConnectionScenarios
     [
         ("linear-connection", "connected"), ("linear-connection", "not-connected"), ("linear-connection", "read-only"), ("linear-connection", "scope-unknown"),
         ("linear-connection", "pending"), ("linear-connection", "session-refused"),
-        ("linear-connection-teams", "two-teams"), ("linear-connection-teams", "refused"), ("linear-connection-teams", "unreachable"), ("linear-connection-teams", "url-waiting"),
+        ("linear-connection-teams", "two-teams"), ("linear-connection-teams", "refused"), ("linear-connection-teams", "unreachable"),
         ("linear-connect", "read-saved-approved"), ("linear-connect", "read-saved-waiting"), ("linear-connect", "write-saved"), ("linear-connect", "write-scope-unknown"),
-        ("linear-connect", "same-as-read"), ("linear-connect", "no-keychain"), ("linear-connect", "no-teams"), ("linear-connect", "session-refused"), ("linear-connect", "url-waiting"),
+        ("linear-connect", "same-as-read"), ("linear-connect", "no-keychain"), ("linear-connect", "no-teams"), ("linear-connect", "session-refused"),
         ("linear-disconnect-write", "removed"), ("linear-disconnect-write", "keychain-failed"),
     ];
 
@@ -41,7 +41,6 @@ internal static class LinearConnectionScenarios
             _ = services.Replace(ServiceDescriptor.Singleton<ILinearConnectionFacts>(Facts(scenario)));
             _ = services.Replace(ServiceDescriptor.Singleton<ILinearKeyChecks>(Checks(scenario)));
             _ = services.Replace(ServiceDescriptor.Singleton<ILinearConnectionStore>(Store(scenario)));
-            _ = services.Replace(ServiceDescriptor.Singleton<ILinearConnectionApproval>(new FakeLinearConnectionApproval().Settling(scenario != "read-saved-waiting")));
         });
 
     /// <summary>Runs the scenario against <paramref name="host"/> and returns the body to compare.</summary>
@@ -49,13 +48,6 @@ internal static class LinearConnectionScenarios
     {
         await ViewScenarios.Approve(host, ct);
         await ViewScenarios.CatchUp(host, ct);
-        if (scenario == "url-waiting")
-        {
-            // a Linear url added by hand after the approval: the save and the teams list refuse before the key goes anywhere (409 SND-LINEAR-016)
-            var file = Path.Combine(host.Home, "profile", "profile.yaml");
-            await File.AppendAllTextAsync(file, "context:\n  sources:\n    linear:\n      url: http://127.0.0.1:9/graphql\n", ct);
-        }
-
         var caller = scenario.StartsWith("session", StringComparison.Ordinal) ? ItemScenarios.Session("demo") : ItemScenarios.Human(host);
         var request = slug switch
         {
@@ -83,11 +75,11 @@ internal static class LinearConnectionScenarios
         LinearConnectionTeamView[] teams = [new("00000000-0000-4000-8000-0000000000e1", "ENG", "Engineering"), new("00000000-0000-4000-8000-0000000000e2", "OPS", "Operations")];
         var view = scenario switch
         {
-            "not-connected" => new LinearConnectionView(unset, unset, [], Pending: false),
-            "read-only" => new LinearConnectionView(resolves, unset, teams, Pending: false),
-            "pending" => new LinearConnectionView(resolves, unset, teams, Pending: true),
-            "scope-unknown" => new LinearConnectionView(resolves, new LinearKeyStateView("scopeUnknown", _checked), teams, Pending: false),
-            _ => new LinearConnectionView(resolves, resolves, teams, Pending: false),
+            "not-connected" => new LinearConnectionView(unset, unset, []),
+            "read-only" => new LinearConnectionView(resolves, unset, teams),
+            "pending" => new LinearConnectionView(resolves, unset, teams),
+            "scope-unknown" => new LinearConnectionView(resolves, new LinearKeyStateView("scopeUnknown", _checked), teams),
+            _ => new LinearConnectionView(resolves, resolves, teams),
         };
         return new FakeLinearConnectionFacts().Answering(view);
     }

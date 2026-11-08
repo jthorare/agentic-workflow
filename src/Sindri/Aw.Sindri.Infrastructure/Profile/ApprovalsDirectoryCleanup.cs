@@ -1,11 +1,12 @@
 using Aw.Kernel;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 
 namespace Aw.Sindri.Infrastructure.Profile;
 
-/// <summary>Once, at start: removes the old &lt;home&gt;/approved folder and appends one ledger note (#2258 PR 1). Red stub; the fix lands in the next commit.</summary>
+/// <summary>Once, at start: removes the old &lt;home&gt;/approved folder and appends one ledger note (#2258 PR 1). A start that finds no folder does nothing.</summary>
 /// <param name="settings">Where the folder is.</param>
 /// <param name="held">The lease this process holds.</param>
 /// <param name="ledger">Where the note goes.</param>
@@ -20,8 +21,36 @@ internal sealed class ApprovalsDirectoryCleanup(SindriSettings settings, HeldLea
 
     internal EventFactory Events { get; } = events;
 
-    /// <summary>Removes the folder when it is there, and says so in the ledger.</summary>
+    /// <summary>Removes the folder when it is there, and says so in the ledger. The note goes first: a crash between the two repeats the removal, never loses the note.</summary>
     /// <param name="cancellationToken">Cancels the operation.</param>
-    /// <returns>Success.</returns>
-    public ValueTask<Result<Unit>> Run(CancellationToken cancellationToken) => throw new NotSupportedException();
+    /// <returns>Success, or why the note or the removal failed.</returns>
+    public async ValueTask<Result<Unit>> Run(CancellationToken cancellationToken)
+    {
+        var directory = Settings.ApprovalsDirectory;
+        if (!Directory.Exists(directory))
+        {
+            return Unit.Value;
+        }
+
+        if (Held.Current is not { } grant)
+        {
+            return SindriErrors.NotRunning.With("the control plane doesn't hold the lease (fix: sindri)");
+        }
+
+        var appended = await Ledger.Append(Events.Entry(EventTypes.ProfileApprovalsRemoved, new ProfileApprovalsRemoved(directory), EventTypes.ProfileApprovalsRemoved), grant, cancellationToken).ConfigureAwait(false);
+        if (appended.IsError)
+        {
+            return appended.Error;
+        }
+
+        try
+        {
+            Directory.Delete(directory, recursive: true);
+            return Unit.Value;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return SindriErrors.ServiceFailed.With($"couldn't remove the old approvals folder {directory}: {e.Message} (fix: delete it by hand)");
+        }
+    }
 }

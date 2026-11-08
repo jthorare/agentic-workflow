@@ -53,24 +53,11 @@ public sealed class ContextScopesTests
     {
         var live = SliceHarness.Profile("5s");
         _h.Profiles.Live = live with { Profile = live.Profile with { Context = JsonDocument.Parse("""{"deadline":"soon"}""").RootElement.Clone() } };
-        var service = new ValidateProfileService(_h.Profiles, _h.Profiles, _h.Store, _h.Events, FakeContextEngine.Instance);
+        var service = new ValidateProfileService(_h.Profiles, FakeContextEngine.Instance);
 
         var validated = await service.Handle(new ValidateProfileRequest(), TestContext.Current.CancellationToken);
 
         Assert.Equal("SND-CONTEXT-001", validated.Error.Code);
         Assert.StartsWith("context.deadline:", validated.Error.Message, StringComparison.Ordinal);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task Approve_refuses_a_context_section_naming_a_repo_the_profile_lacks()
-    {
-        var live = SliceHarness.Profile("5s");
-        _h.Profiles.Live = live with { Profile = live.Profile with { Context = JsonDocument.Parse("""{"repos":["nope"]}""").RootElement.Clone() } };
-        var service = new Features.ApproveProfile.ApproveProfileService(_h.Profiles, _h.Profiles, _h.Held, _h.Store, _h.Events, new Features.ApproveProfile.ProfileChecks(FakeContextEngine.Instance, new Testing.FixedAgentCatalog()));
-
-        var approved = await service.Handle(new Features.ApproveProfile.ApproveProfileRequest(Hash: null, Answer: null), TestContext.Current.CancellationToken);
-
-        Assert.Equal("SND-CONTEXT-001", approved.Error.Code);
-        Assert.StartsWith("context.repos: 'nope' is not a profile repo", approved.Error.Message, StringComparison.Ordinal);
     }
 }

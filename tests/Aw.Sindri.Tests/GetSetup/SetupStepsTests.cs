@@ -22,21 +22,18 @@ public sealed class SetupStepsTests
     }
 
     [Theory, Trait("Lane", "unit")]
-    [InlineData(ProfilePresence.Missing, SetupState.Todo, null)]
-    [InlineData(ProfilePresence.Unapproved, SetupState.NeedsYou, SetupActions.ApproveProfile)]
-    [InlineData(ProfilePresence.Drifted, SetupState.NeedsYou, SetupActions.ApproveProfile)]
-    [InlineData(ProfilePresence.Approved, SetupState.Done, null)]
-    public void Profile_asks_the_human_when_it_is_waiting_or_has_changed(ProfilePresence presence, SetupState state, string? action)
+    [InlineData(ProfilePresence.Missing, SetupState.Todo)]
+    [InlineData(ProfilePresence.Present, SetupState.Done)]
+    public void Profile_is_done_once_the_file_is_there(ProfilePresence presence, SetupState state)
     {
         var step = SetupSteps.Profile(new ProfileFact(presence), Repos("demo"));
 
-        Assert.Equal((state, action), (step.State, step.Action));
+        Assert.Equal((state, null), (step.State, step.Action));
     }
 
     [Theory, Trait("Lane", "unit")]
-    [InlineData(ProfilePresence.Unapproved)]
-    [InlineData(ProfilePresence.Approved)]
-    [InlineData(ProfilePresence.Drifted)]
+    [InlineData(ProfilePresence.Present)]
+    [InlineData(ProfilePresence.Missing)]
     public void Profile_waits_for_a_first_repo_whatever_the_file_says(ProfilePresence presence)
     {
         var step = SetupSteps.Profile(new ProfileFact(presence), new RepoFact(0));
@@ -45,19 +42,11 @@ public sealed class SetupStepsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Profile_names_the_repo_the_owner_added_when_it_waits_for_approval()
-    {
-        var step = SetupSteps.Profile(new ProfileFact(ProfilePresence.Unapproved), Repos("demo"));
-
-        Assert.StartsWith("You added demo. ", step.Why, StringComparison.Ordinal);
-    }
-
-    [Fact, Trait("Lane", "unit")]
     public void Profile_carries_the_preview_it_was_given_and_none_without_one()
     {
         SetupPreviewLine[] lines = [new("repo", "Works in demo (/work/demo).")];
 
-        var with = SetupSteps.Profile(new ProfileFact(ProfilePresence.Unapproved) { Preview = lines }, Repos("demo"));
+        var with = SetupSteps.Profile(new ProfileFact(ProfilePresence.Present) { Preview = lines }, Repos("demo"));
         var without = SetupSteps.Profile(new ProfileFact(ProfilePresence.Missing), Repos("demo"));
 
         Assert.Equal(lines, with.Preview);

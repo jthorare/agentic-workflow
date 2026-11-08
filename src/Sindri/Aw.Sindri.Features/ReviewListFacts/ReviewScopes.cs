@@ -30,7 +30,7 @@ internal static class ReviewScopes
         var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
         if (approved.IsError || approved.Value is not { } loaded)
         {
-            return approved.IsError ? approved.Error : SindriErrors.ProfileNotApproved.With("no profile is approved (fix: sindri profile approve)");
+            return approved.IsError ? approved.Error : SindriErrors.ProfileMissing.With("no profile yet (fix: sindri repo add <path>)");
         }
 
         // why: the audience rule needs the repos' names, not each repo's index globs, so the entries carry name and path only

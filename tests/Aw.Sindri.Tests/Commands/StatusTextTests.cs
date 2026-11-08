@@ -16,7 +16,7 @@ public sealed class StatusTextTests
 
     private static GetStatusResponse Status(ViewsStatus views, HealthReport health, bool needsApproval = false) =>
         new(Running: true, 42, 3, KnownInstants.Epoch,
-            new ProfileStatus(_hash, _hash, ChangedSinceApproval: false, Problem: null, "/home/profile.yaml", needsApproval), [])
+            new ProfileStatus(_hash, Problem: needsApproval ? "p" : null, "/home/profile.yaml"), [])
         { Views = views, Health = health };
 
     private static ViewsStatus Fresh() => new(Cursor: 9, LedgerHead: 9, KnownInstants.Epoch, Rebuilding: false, Stalled: false, StalledAt: null, StalledType: null);

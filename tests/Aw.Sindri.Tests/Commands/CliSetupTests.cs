@@ -49,7 +49,7 @@ public sealed class CliSetupTests : IDisposable
     {
         var api = new Api(HttpStatusCode.OK, Body(
             SetupSteps.Repo(new RepoFact(1)),
-            SetupSteps.Profile(new ProfileFact(ProfilePresence.Unapproved), new RepoFact(1)),
+            SetupSteps.Profile(new ProfileFact(ProfilePresence.Missing), new RepoFact(1)),
             SetupSteps.Recipes(new RecipesFact(26, 20), profileApproved: true),
             SetupSteps.Map(new MapFact(MapPhase.Failed, FailureCode: "SND-CONTEXT-040"))));
 
@@ -79,7 +79,7 @@ public sealed class CliSetupTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Setup_exits_0_when_every_step_is_done()
     {
-        var api = new Api(HttpStatusCode.OK, Body(SetupSteps.Repo(new RepoFact(1)), SetupSteps.Profile(new ProfileFact(ProfilePresence.Approved), new RepoFact(1))));
+        var api = new Api(HttpStatusCode.OK, Body(SetupSteps.Repo(new RepoFact(1)), SetupSteps.Profile(new ProfileFact(ProfilePresence.Present), new RepoFact(1))));
 
         var code = await Verbs(_up, api).Run([], Token);
 

@@ -166,6 +166,6 @@ internal sealed partial class ContextPageWriteVerbs(ControlPlaneClient client, O
             _ = text.Append(page.Action).Append(' ').Append(page.Id.Value).Append(" (").Append(page.Name).AppendLine(")");
         }
 
-        return text.Append("waiting for your approval: sindri profile approve ").AppendLine(done.Hash.Value).ToString();
+        return text.Append("saved, profile hash ").AppendLine(done.Hash.Value).ToString();
     }
 }

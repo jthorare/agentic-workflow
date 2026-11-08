@@ -28,7 +28,7 @@ public static class StepApproval
 
         var reason = listed.Count == 0 ? "not-approved" : "hash-changed";
         return SindriErrors.LaunchNotApproved
-            .With($"{entry.Id.Value} isn't approved for unattended Steps ({reason}; fix: run `sindri launch show {entry.Id.Value}` and put its argvHash under agents.{entry.Id.Value}.stepArgvHash, then approve the profile)")
+            .With($"{entry.Id.Value} isn't approved for unattended Steps ({reason}; fix: run `sindri launch show {entry.Id.Value}` and put its argvHash under agents.{entry.Id.Value}.stepArgvHash)")
             .WithExtension("reason", Text(reason))
             .WithExtension("current", Text(entry.ArgvHash ?? string.Empty))
             .WithExtension("approved", Texts(listed));

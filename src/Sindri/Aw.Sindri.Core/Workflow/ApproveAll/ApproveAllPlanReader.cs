@@ -23,7 +23,7 @@ public sealed class ApproveAllPlanReader(IApprovedProfile profile, IShippedRecip
         }
 
         return approved.Value is null
-            ? SindriErrors.SetupProfileNotApproved.With("approve-all waits for an approved profile (fix: approve the profile first)")
+            ? SindriErrors.ProfileMissing.With("approve-all waits for an approved profile (fix: approve the profile first)")
             : await shipped.Plan(cancellationToken).ConfigureAwait(false);
     }
 }

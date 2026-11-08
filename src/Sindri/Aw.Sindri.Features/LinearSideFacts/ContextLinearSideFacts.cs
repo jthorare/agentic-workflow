@@ -57,7 +57,7 @@ internal sealed class ContextLinearSideFacts(IApprovedProfile approvals, ICaller
         var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
         if (approved.IsError || approved.Value is not { } loaded)
         {
-            return approved.IsError ? approved.Error : SindriErrors.ProfileNotApproved.With("no profile is approved (fix: sindri profile approve)");
+            return approved.IsError ? approved.Error : SindriErrors.ProfileMissing.With("no profile yet (fix: sindri repo add <path>)");
         }
 
         ProfileRepoEntry[] repos = [.. (loaded.Profile.Repos ?? []).Select(static r => new ProfileRepoEntry(r.Name, r.Path))];
@@ -191,7 +191,7 @@ internal sealed class ContextLinearSideFacts(IApprovedProfile approvals, ICaller
         var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
         if (approved.IsError || approved.Value is not { } loaded)
         {
-            return approved.IsError ? approved.Error : SindriErrors.ProfileNotApproved.With("no profile is approved (fix: sindri profile approve)");
+            return approved.IsError ? approved.Error : SindriErrors.ProfileMissing.With("no profile yet (fix: sindri repo add <path>)");
         }
 
         ProfileRepoEntry[] repos = [.. (loaded.Profile.Repos ?? []).Select(static r => new ProfileRepoEntry(r.Name, r.Path))];

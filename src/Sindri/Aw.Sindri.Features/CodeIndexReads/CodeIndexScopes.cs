@@ -26,7 +26,7 @@ internal sealed class CodeIndexScopes(IApprovedProfile approvals, IProfileSource
         var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
         if (approved.IsError || approved.Value is not { } loaded)
         {
-            return approved.IsError ? approved.Error : SindriErrors.ProfileNotApproved.With("no profile is approved, so no repo is indexed (fix: sindri profile approve)");
+            return approved.IsError ? approved.Error : SindriErrors.ProfileMissing.With("no profile yet, so no repo is indexed (fix: sindri repo add <path>)");
         }
 
         var file = await live.Load(cancellationToken).ConfigureAwait(false);

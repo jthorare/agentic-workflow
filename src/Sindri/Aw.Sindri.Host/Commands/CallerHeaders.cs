@@ -106,7 +106,7 @@ internal sealed class CallerHeaders
     /// <param name="directory">The working directory.</param>
     /// <param name="cancellationToken">Cancels the work.</param>
     /// <returns>The repo, or null (no approved profile, no repos, outside every repo).</returns>
-    internal static async ValueTask<RepoName?> RepoOf(IApprovals approvals, IRepoLocator locator, string directory, CancellationToken cancellationToken)
+    internal static async ValueTask<RepoName?> RepoOf(IApprovedProfile approvals, IRepoLocator locator, string directory, CancellationToken cancellationToken)
     {
         var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
         return approved is { IsSuccess: true, Value.Profile.Repos: { Count: > 0 } repos }

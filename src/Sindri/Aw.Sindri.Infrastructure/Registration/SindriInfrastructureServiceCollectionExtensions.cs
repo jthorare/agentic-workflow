@@ -178,10 +178,10 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IJobViews, SqliteJobViews>().AddSingleton<IServicePauses, ViewServicePauses>()
             .AddScoped<IRecipeStateCatalog, RecipeStateCatalog>()
             .AddSingleton<IProfileSource>(sp => new YamlProfileSource(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<JsonSerializerOptions>(), () => HeavyCap.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory)))
-            .AddSingleton<IApprovals, FileApprovals>().AddSingleton<LiveApprovedProfile>().AddSingleton<ApprovalsDirectoryCleanup>()   // #2258 PR 1: the last two are red stubs, not yet the IApprovedProfile nor run at start
+            .AddSingleton<ApprovalsDirectoryCleanup>()   // #2258 PR 1: run once at start by serve
             .AddSingleton<IBoxLimitsSource>(sp => new HeavyCapSource(environment, sp.GetRequiredService<SindriSettings>().StateDirectory))
             .AddSingleton<ILineSetupProbe>(new FileLineSetupProbe(environment))   // 'line doctor' (LN-L)
-            .AddSingleton<IApprovedProfile>(static sp => sp.GetRequiredService<IApprovals>())
+            .AddSingleton<IApprovedProfile>(static sp => new LiveApprovedProfile(sp.GetRequiredService<IProfileSource>()))   // #2258 PR 1: edits apply on save
             .AddSingleton<IEndpointFile, FileEndpoint>()
             .AddSingleton<IControlPlaneProbe, HttpControlPlaneProbe>()
             .AddSingleton<IControlPlaneLauncher, ServeLauncher>()

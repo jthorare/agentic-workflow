@@ -155,7 +155,7 @@ internal sealed class ContextPinVerbs(ControlPlaneClient client, Output output, 
     internal static string Text(PinConceptsResult done)
     {
         ArgumentNullException.ThrowIfNull(done);
-        var wait = $" (waiting for your approval: sindri profile approve {done.Hash.Value})\n";
+        var wait = $" (saved, profile hash {done.Hash.Value})\n";
         var text = new StringBuilder();
         var pinned = done.Pins.Where(static p => !string.Equals(p.Action, "removed", StringComparison.Ordinal)).Select(static p => p.Id.Value).ToList();
         var removed = done.Pins.Where(static p => string.Equals(p.Action, "removed", StringComparison.Ordinal)).Select(static p => p.Id.Value).ToList();

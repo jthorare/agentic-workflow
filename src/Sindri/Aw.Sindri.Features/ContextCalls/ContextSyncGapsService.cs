@@ -47,7 +47,7 @@ internal sealed partial class ContextSyncGapsService(ContextScopes scopes, ICont
         if (scope.IsError || scope.Value.Settings is null)
         {
             // no approved profile is nothing to sync, not a failed run (a failed run would land in needs-you every tick)
-            return scope.IsError && scope.Error.Code != SindriErrors.ProfileNotApproved.Code ? scope.Error : ScheduledResult.Quiet;
+            return scope.IsError && scope.Error.Code != SindriErrors.ProfileMissing.Code ? scope.Error : ScheduledResult.Quiet;
         }
 
         var gap = await engine.HasSyncGap(scope.Value, cancellationToken).ConfigureAwait(false);

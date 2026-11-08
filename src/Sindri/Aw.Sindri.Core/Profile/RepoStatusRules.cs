@@ -36,7 +36,7 @@ public static class RepoStatusRules
             RepoState.Onboarded => $"{status.Name} is onboarded.",
             RepoState.OutsideGit => "Not inside a git repo.",
             RepoState.NotOnboarded => NudgeLine(status),
-            RepoState.NoApprovedProfile => "No approved profile yet: sindri profile validate, then sindri profile approve.",
+            RepoState.NoApprovedProfile => "No profile yet: sindri profile init, then sindri repo add <path>.",
             _ => throw new ArgumentOutOfRangeException(nameof(status), status.State, "Not a repo state"),
         };
     }

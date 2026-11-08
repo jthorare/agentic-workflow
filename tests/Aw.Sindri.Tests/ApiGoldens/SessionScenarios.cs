@@ -74,9 +74,6 @@ internal static class SessionScenarios
         var (sessions, ended, problems) = Snapshot(scenario);
         host.App.Services.GetRequiredService<ISessionSnapshot>().Publish(new SessionSnapshot(sessions, ended, problems, SessionData.T0.AddMinutes(5)) { History = History() });
         var human = Human(host.Token.Value);
-        var hash = (await host.LiveHash(ct)).Value;   // the service reads repo paths from the approved profile, so approve it first
-        var approved = await host.Http.Ask(Post("/sindri/profile/approve", await ApiScenarios.Confirmed(host, hash), human));
-        Assert.True(approved.Status == System.Net.HttpStatusCode.OK, approved.Body);
         if (_engineLaunch.Contains(scenario, StringComparer.Ordinal))
         {
             // The Cursor row's launch is the engine's: its instance, Step and attempt come from the 'launches' view, folded from the ledger.

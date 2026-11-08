@@ -48,7 +48,7 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-PROFILE-003` | No such profile key. | See docs/sindri/profile.md for the keys. |
 | `SND-PROFILE-004` | No such repo in the profile. | Use a name listed under repos in profile.yaml. |
 | `SND-PROFILE-005` | The profile was written for a newer sindri. | Upgrade sindri (`git pull` then `scripts/install-cs.sh`). |
-| `SND-PROFILE-006` | The hash doesn't match the current profile. | Run `sindri profile approve` to see the current hash and diff, then approve that hash. |
+| `SND-PROFILE-006` | The hash doesn't match the current profile. | Run `sindri profile validate` for the current hash and retry with it. |
 | `SND-PROFILE-007` | A profile already exists there. | Edit it, or pass --force to overwrite it. |
 | `SND-PROFILE-008` | This repo has no plan files for --ring0. | Run --ring0 from a repo with docs/superpowers/plans, or run `sindri profile init` without it. |
 | `SND-PROFILE-009` | Not inside a git repo. | cd into the repo first. |

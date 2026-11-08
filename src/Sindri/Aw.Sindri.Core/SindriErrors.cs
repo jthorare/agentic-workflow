@@ -23,14 +23,8 @@ public static partial class SindriErrors
     /// <summary>SND-MODEL-001: a 'workflow.agent' model key names an agent or a state that isn't there, or a default that isn't in its list (model-pick spec §8); the message names the nearest id.</summary>
     public static readonly ErrorDefinition ModelKeyInvalid = new("SND-MODEL-001", ErrorKind.Invalid, "A model key doesn't match anything");
 
-    /// <summary>SND-PROFILE-003: the hash to approve isn't the live profile's hash.</summary>
+    /// <summary>SND-PROFILE-003: the --if-hash given isn't the live profile's hash.</summary>
     public static readonly ErrorDefinition ProfileHashMismatch = new("SND-PROFILE-003", ErrorKind.Conflict, "The hash doesn't match the profile");
-
-    /// <summary>SND-PROFILE-005: no profile has been approved yet.</summary>
-    public static readonly ErrorDefinition ProfileNotApproved = new("SND-PROFILE-005", ErrorKind.NotFound, "No profile is approved");
-
-    /// <summary>SND-PROFILE-006: the approved snapshots can't be read or written (permissions, a full disk).</summary>
-    public static readonly ErrorDefinition ApprovalsUnavailable = new("SND-PROFILE-006", ErrorKind.Unavailable, "The approvals can't be read or written");
 
     /// <summary>SND-LEDGER-001: the ledger's schema doesn't match this build.</summary>
     public static readonly ErrorDefinition LedgerSchema = new("SND-LEDGER-001", ErrorKind.Conflict, "The ledger schema doesn't match this build");
@@ -249,7 +243,6 @@ public static partial class SindriErrors
     public static readonly ErrorDefinition SetupRepoNotInProfile = new("SND-SETUP-004", ErrorKind.Conflict, "The approved profile does not name that repo (fix: add the repo, approve the profile, then try again)");
 
     /// <summary>SND-SETUP-007: the approve-all plan, or its challenge, was asked for before a profile is approved (setup-once spec §7.6).</summary>
-    public static readonly ErrorDefinition SetupProfileNotApproved = new("SND-SETUP-007", ErrorKind.Conflict, "No profile is approved yet (fix: approve the profile first)");
 
     /// <summary>SND-FORGE-001: a pull-request call while the approved profile names no forge ('workflow.forge.adapter' is absent).</summary>
     public static readonly ErrorDefinition NoForge = new("SND-FORGE-001", ErrorKind.Conflict, "No forge is configured (fix: set workflow.forge.adapter in the profile and approve it)");
@@ -276,18 +269,18 @@ public static partial class SindriErrors
     private static ErrorDefinition[] Every() =>
     [
         LeaseHeld, LeaseLost, LeaseStale, ProfileMissing, ProfileInvalid, ModelKeyInvalid, ProfileHashMismatch,
-        ProfileNotApproved, ApprovalsUnavailable, LedgerSchema, LedgerUnavailable, NotRunning, ApiTimeout, PortInUse, ApiNoCode, ApiInternal,
+        LedgerSchema, LedgerUnavailable, NotRunning, ApiTimeout, PortInUse, ApiNoCode, ApiInternal,
         CallerUnknown, OriginRefused, CommandBusy, AuthTokenRequired, AuthRefused, UnknownVerb, StartFailed,
         InvalidInput, ServiceFailed, ViewsRebuilding, ViewsBehind, StreamsFull, ViewsStalled, ItemNotFound, ItemConflict, RequestInvalid, RequestsRateLimited, DecisionNotFound, DecisionInvalid, JobNotFound, JobConflict, JobInterrupted, JobsRateLimited, JobNotWaiting, JobStalled, ServiceNotFound, SecretNotStored, SecretPointerInvalid, SecretUnresolved, SecretFileUnsafe, IndexTokenUnresolved, IndexRepoUnreadable, IndexNotInProfile, IndexOnyxLeftover, IndexOnyxInProfile,
         LaunchNotFound, LaunchViewerFailed, LaunchNoViewer, LaunchAgentMissing, LaunchRepoMissing, LaunchNoSession, LaunchInterrupted, LaunchInProgress, LaunchTimedOut, LaunchBudgetReached,
         LauncherInvalid, LaunchNotApproved, LaunchFormUnsupported, LaunchPrePushForeign, LaunchPushRefused, LaunchTrustUnavailable, LaunchFactFileTracked, LaunchT3Unavailable, LaunchT3NoProject, LaunchT3NoProvider,
         LaunchSandboxUnavailable, LaunchUnconfinable, LaunchSelfCheckFailed, LaunchLoginUnavailable, LaunchGitHubTokenFailed, LaunchLimitHit, LaunchSessionWait, LaunchPrepareFailed, SandboxAllowRefused, LaunchSessionIdTimedOut, LaunchNoUsableAgent, ModelNoneAllowed, ModelListUnavailable, AuthLaunchSecret, SessionSourceFailed, SessionsUnavailable, SessionsTestOverride, SessionNotFound, SessionConflict,
-        WorktreeInvalid, WorktreeConflict, WorktreeGitFailed, WorktreeDirty, SetupFolderInvalid, SetupRepoExists, SetupConfirmationRefused, SetupRepoNotInProfile, SetupProfileNotApproved,
-        NoForge, ForgeRefused, ForgeNotFound, ForgeUnavailable, EngineUnavailable, EngineNotFound, InvalidQuery,
+        WorktreeInvalid, WorktreeConflict, WorktreeGitFailed, WorktreeDirty, SetupFolderInvalid, SetupRepoExists, SetupConfirmationRefused, SetupRepoNotInProfile,
+        NoForge, ForgeRefused, ForgeNotFound, ForgeUnavailable, EngineUnavailable, EngineNotFound, InvalidQuery, RouteRemoved,
         ScrubStagedSecrets, ScrubForeignHook, ScrubNotARepo, ScrubGitFailed,
         ProjectAlreadyOnPage, ProjectFactsUnavailable, ProjectNotSynced, ProjectInvalid, ProjectNotFound, ProjectConflict,
         SkillResultUnreadable, SkillResultWrongSkill, SkillVerdictUnmapped, SkillOutputInvalid, SkillRequirementMissing, SkillPrInputInvalid, SkillAgentCopyDiffers, SkillPrFetchFailed,
         ReviewInvalid, ReviewProjectUnknown, ReviewCommandCheck, ReviewNotSynced, ReviewFixNotPosted, ReviewRepoUnsynced, ReviewNoLogin, ReviewPrNotFound, ReviewOfflineUncached,
-        LibraryDocNotFound, LinearTeamNotPicked, LinearNothingStored, LinearNoWriteKey, LinearBadValue, LinearNoAnswer, LinearWriteKeySameAsRead, LinearNoKeychain, LinearUrlNotApproved,
+        LibraryDocNotFound, LinearTeamNotPicked, LinearNothingStored, LinearNoWriteKey, LinearBadValue, LinearNoAnswer, LinearWriteKeySameAsRead, LinearNoKeychain,
     ];
 }
