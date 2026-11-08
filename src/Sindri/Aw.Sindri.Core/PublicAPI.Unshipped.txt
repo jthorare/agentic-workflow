@@ -24887,3 +24887,7 @@ static readonly Aw.Sindri.Core.SindriErrors.GraphSlugTaken -> Aw.Kernel.ErrorDef
 static readonly Aw.Sindri.Core.SindriErrors.GraphStaleRevision -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.GraphUnknownBlock -> Aw.Kernel.ErrorDefinition!
 static Aw.Sindri.Core.Graph.GraphJson.Write(Aw.Sindri.Core.Graph.GraphSpec! spec) -> string!
+Aw.Sindri.Core.Graph.Expressions.ConditionExpression
+Aw.Sindri.Core.Graph.Expressions.ConditionExpression.Evaluate(System.Func<string!, System.Text.Json.Nodes.JsonNode?>! resolve) -> bool
+Aw.Sindri.Core.Graph.Expressions.ConditionExpression.References.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Sindri.Core.Graph.Expressions.ConditionExpression.TryParse(string! text, out Aw.Sindri.Core.Graph.Expressions.ConditionExpression? expression, out string? error) -> bool
