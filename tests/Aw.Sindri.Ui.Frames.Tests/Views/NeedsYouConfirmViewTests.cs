@@ -1,7 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels.Shell;
 
@@ -28,24 +27,6 @@ public sealed class NeedsYouConfirmViewTests : FrameHost
         await Until(window, () => shell.Inbox.Bar.IsApproved, $"profileApprovals={Server.ProfileApprovals.Count} refusal={shell.Inbox.Bar.Refusal}; {State(shell)}");
 
         _ = Assert.Single(Server.ProfileApprovals);
-    });
-
-    [Fact]
-    public Task One_click_on_the_primary_approves_all_new_workflows() => OnUi(async () =>
-    {
-        Server.Catalog = RouteAnswer.SpecShaped("commands", "extra-approve-all-ready");
-        Server.NeedsYouView = RouteAnswer.SpecShaped("needs-you", "extra-setup-recipes");
-        var (window, shell) = await Connected(s => s.NeedsYou.Count > 0, 1440, 800);
-        shell.OpenNeedsYouInbox();
-        shell.Inbox.Select("setup:recipes");
-        await Until(window, () => shell.Inbox.Bar.PrimaryEnabled, State(shell));
-        Settle(window);
-        Assert.Empty(Server.Approvals);
-
-        Named<Button>(window, "NeedsYouApprove").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        await Until(window, () => shell.Inbox.Bar.IsApproved, $"approvals={Server.Approvals.Count} refusal={shell.Inbox.Bar.Refusal}; {State(shell)}");
-
-        _ = Assert.Single(Server.Approvals);
     });
 
     private static string State(ShellViewModel shell) =>

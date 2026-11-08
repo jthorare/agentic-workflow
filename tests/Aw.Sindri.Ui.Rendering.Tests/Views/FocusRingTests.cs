@@ -36,7 +36,7 @@ public sealed class FocusRingTests : IDisposable
     private readonly List<Window> _windows = [];
     private readonly CancellationTokenSource _stop = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
     private readonly InMemoryEndpointRecords _records = new();
-    private readonly FakeSindriApi _server = new() { WorkflowAnswer = RouteAnswer.Api("workflow-instances", "empty") };
+    private readonly FakeSindriApi _server = new();
     private readonly FakeTimeProvider _clock = new(A.Noon);
     private readonly InMemoryPreferencesStore _preferences = new();
 
