@@ -44,7 +44,7 @@ public static class MetaInfrastructureServiceCollectionExtensions
             .AddSingleton<ITranscriptReader, FileTranscriptReader>()
             .AddScoped<ILaneSessions>(sp => new PaneLaneSessions(sp.GetRequiredService<ILanePane>(), sp.GetRequiredService<IProcessTable>(), settings.SessionsDirectory))
             .AddSingleton<IClaudeTranscripts>(new ClaudeProjectsTranscripts(Path.Combine(settings.Paths.Home, ".claude", "projects")))
-            .AddSingleton<ICodexRollouts>(new CodexSessionRollouts(Path.Combine(settings.Paths.Home, ".codex", "sessions")))
+            .AddCodexFiles(settings.Paths.Home)
             .AddSingleton<IDigestFiles, FileDigestFiles>()
             .AddSingleton<ILaneFiles>(new DirectoryLaneFiles(settings.LaneSessionsDirectory))
             .AddScoped<ILanePane>(sp => new TmuxLanePane(sp.GetRequiredService<ICommandRunner>(), settings.Tmux, settings.TmuxSocket, sp.GetRequiredService<IMetaConfig>(), sp.GetRequiredService<IDelay>()))
@@ -65,4 +65,10 @@ public static class MetaInfrastructureServiceCollectionExtensions
                 return config.IsSuccess && config.Value.Log is { Length: > 0 } log ? log : Path.Combine(settings.StateDirectory, DefaultLogFile);
             }));
     }
+
+    // Codex's own files, read-only: its session rollouts and its model list.
+    private static IServiceCollection AddCodexFiles(this IServiceCollection services, string home) =>
+        services
+            .AddSingleton<ICodexRollouts>(new CodexSessionRollouts(Path.Combine(home, ".codex", "sessions")))
+            .AddSingleton<ICodexModels>(new CodexModelsCache(Path.Combine(home, ".codex", "models_cache.json")));
 }

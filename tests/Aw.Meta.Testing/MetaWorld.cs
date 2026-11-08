@@ -60,6 +60,9 @@ public sealed class MetaWorld
     /// <summary>Claude Code's session transcripts.</summary>
     public InMemoryClaudeTranscripts ClaudeTranscripts { get; } = new();
 
+    /// <summary>The model names Codex lists.</summary>
+    public InMemoryCodexModels CodexModels { get; } = new();
+
     /// <summary>Codex's session rollouts.</summary>
     public InMemoryCodexRollouts CodexRollouts { get; } = new();
 

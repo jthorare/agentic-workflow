@@ -62,8 +62,8 @@
     "RecipeApproveCliTests"
   ],
   "routing": {
-    "models": { "claude-code": ["opus", "sonnet", "haiku"], "codex": ["astra", "gpt-5.4", "luna"] },
-    "equivalents": { "opus": "astra", "sonnet": "gpt-5.4", "haiku": "luna" },
+    "models": { "claude-code": ["opus", "sonnet", "haiku"], "codex": ["gpt-5.5", "gpt-5.4", "gpt-5.4-mini"] },
+    "equivalents": { "opus": "gpt-5.5", "sonnet": "gpt-5.4", "haiku": "gpt-5.4-mini" },
     "defaultModel": "opus",
     "switchWhenLimited": true,
     "minRemainingPct": 10

@@ -23,7 +23,7 @@ public sealed class RouteWatcherTests
         var first = await Check();
         var second = await Check();
 
-        Assert.Equal(["ROUTE SUGGEST ui claude-code/opus -> codex/astra: limited: session limit, resets 2026-10-15 05:30:00Z; codex usage unknown"], first, StringComparer.Ordinal);
+        Assert.Equal(["ROUTE SUGGEST ui claude-code/opus -> codex/gpt-5.5: limited: session limit, resets 2026-10-15 05:30:00Z; codex usage unknown"], first, StringComparer.Ordinal);
         Assert.Empty(second);
     }
 
@@ -52,7 +52,7 @@ public sealed class RouteWatcherTests
 
         var lines = await Check();
 
-        Assert.StartsWith("ROUTE SUGGEST ui claude-code/haiku -> codex/luna", Assert.Single(lines), StringComparison.Ordinal);
+        Assert.StartsWith("ROUTE SUGGEST ui claude-code/haiku -> codex/gpt-5.4-mini", Assert.Single(lines), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -12,7 +12,8 @@ namespace Aw.Meta.Features.Routing;
 /// <param name="config">The team config.</param>
 /// <param name="reader">Looks at the lanes and the meta.</param>
 /// <param name="standings">Adds provider, model and usage windows.</param>
-internal sealed class RouteService(IMetaConfig config, UsageReader reader, LaneStandingReader standings) : IService<RouteRequest, RouteResponse>
+/// <param name="codexModels">The model names Codex lists, to catch a typo in the routing block.</param>
+internal sealed class RouteService(IMetaConfig config, UsageReader reader, LaneStandingReader standings, ICodexModels codexModels) : IService<RouteRequest, RouteResponse>
 {
     public async ValueTask<Result<RouteResponse>> Handle(RouteRequest request, CancellationToken cancellationToken)
     {
@@ -35,7 +36,7 @@ internal sealed class RouteService(IMetaConfig config, UsageReader reader, LaneS
         }
 
         var plan = RoutePlanner.Plan(team.Routing, await standings.Read(team, readings.Value, cancellationToken).ConfigureAwait(false));
-        var shown = new RouteResponse([.. plan.Suggestions.Where(s => Wanted(request, s.Lane))], [.. plan.Skipped.Where(s => Wanted(request, s.Lane))], Applied: false, Attention: false);
+        var shown = new RouteResponse([.. plan.Suggestions.Where(s => Wanted(request, s.Lane))], [.. plan.Skipped.Where(s => Wanted(request, s.Lane))], Applied: false, Attention: false, await Warnings(team.Routing, cancellationToken).ConfigureAwait(false));
         if (!request.Apply || shown.Suggestions.Count == 0)
         {
             return shown with { Attention = shown.Suggestions.Count > 0 };
@@ -49,6 +50,12 @@ internal sealed class RouteService(IMetaConfig config, UsageReader reader, LaneS
 
         var saved = await config.Save(team with { Routing = team.Routing with { Lanes = lanes } }, cancellationToken).ConfigureAwait(false);
         return saved.IsError ? saved.Error : shown with { Applied = true };
+    }
+
+    private async ValueTask<IReadOnlyList<string>> Warnings(RoutingConfig routing, CancellationToken cancellationToken)
+    {
+        var known = await codexModels.Known(cancellationToken).ConfigureAwait(false);
+        return known.IsSuccess && known.Value is { } slugs ? CodexModelCheck.Warnings(routing, slugs) : [];
     }
 
     private static bool Wanted(RouteRequest request, string lane) => request.Lane is null || string.Equals(lane, request.Lane, StringComparison.Ordinal);

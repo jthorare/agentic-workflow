@@ -89,21 +89,21 @@ public sealed class LaneStandingReaderTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_lane_entry_in_routing_sets_the_assigned_agent_and_model_and_marks_a_relaunch_due()
     {
-        await _w.Ready(RoutingWorld.Cfg() with { Lanes = new Dictionary<string, LaneRoute>(StringComparer.Ordinal) { ["ui"] = new("codex", "astra") } });
+        await _w.Ready(RoutingWorld.Cfg() with { Lanes = new Dictionary<string, LaneRoute>(StringComparer.Ordinal) { ["ui"] = new("codex", "gpt-5.5") } });
 
         var ui = (await Look()).Single(s => s.Lane == "ui");
 
-        Assert.Equal(("codex", "claude-code", "astra", true), (ui.Agent, ui.RunningAgent, ui.Model, ui.PendingRelaunch));
+        Assert.Equal(("codex", "claude-code", "gpt-5.5", true), (ui.Agent, ui.RunningAgent, ui.Model, ui.PendingRelaunch));
     }
 
     [Fact, Trait("Lane", "unit")]
     public async Task A_lane_entry_with_only_a_model_takes_the_agent_that_lists_it()
     {
-        await _w.Ready(RoutingWorld.Cfg() with { Lanes = new Dictionary<string, LaneRoute>(StringComparer.Ordinal) { ["api"] = new(Model: "luna") } });
+        await _w.Ready(RoutingWorld.Cfg() with { Lanes = new Dictionary<string, LaneRoute>(StringComparer.Ordinal) { ["api"] = new(Model: "gpt-5.4-mini") } });
 
         var api = (await Look()).Single(s => s.Lane == "api");
 
-        Assert.Equal(("codex", "luna"), (api.Agent, api.Model));
+        Assert.Equal(("codex", "gpt-5.4-mini"), (api.Agent, api.Model));
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -233,7 +233,7 @@ A Claude usage limit stops every lane and your own subagents at once ("You've hi
 
 ## Usage across providers
 
-`aw-meta usage` also shows, per lane, the agent and model it is assigned and what its provider says is left (Codex: 5h and weekly percent used; Claude Code: only the limit stop; Cursor: nothing, shown as unknown). `aw-meta route` turns that into moves, using `routing.equivalents` in the team config (for example opus to astra, haiku to luna).
+`aw-meta usage` also shows, per lane, the agent and model it is assigned and what its provider says is left (Codex: 5h and weekly percent used; Claude Code: only the limit stop; Cursor: nothing, shown as unknown). `aw-meta route` turns that into moves, using `routing.equivalents` in the team config (for example opus to gpt-5.5, haiku to gpt-5.4-mini).
 
 - Run `aw-meta route` when `watch` prints `ROUTE SUGGEST <lane> ...`, when `USAGE LIMITED` hits and the reset is hours away, and before you hand a lane new work.
 - It only prints. Read each `switch` line and each `keep` line (`keep` says why a limited lane cannot move: no equivalent model, the target provider is limited too, a relaunch is pending).

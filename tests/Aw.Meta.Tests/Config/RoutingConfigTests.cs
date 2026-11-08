@@ -24,7 +24,7 @@ public sealed class RoutingConfigTests
 
     [Fact, Trait("Lane", "unit")]
     public void A_good_routing_passes() =>
-        Assert.Null(Problem(Cfg() with { Lanes = new Dictionary<string, LaneRoute>(StringComparer.Ordinal) { ["ui"] = new("codex", "astra"), ["api"] = new(Model: "haiku") } }));
+        Assert.Null(Problem(Cfg() with { Lanes = new Dictionary<string, LaneRoute>(StringComparer.Ordinal) { ["ui"] = new("codex", "gpt-5.5"), ["api"] = new(Model: "haiku") } }));
 
     [Theory, Trait("Lane", "unit")]
     [InlineData(-1)]
@@ -65,10 +65,10 @@ public sealed class RoutingConfigTests
     {
         static string? With(string lane, LaneRoute route) => Problem(Cfg() with { Lanes = new Dictionary<string, LaneRoute>(StringComparer.Ordinal) { [lane] = route } });
 
-        Assert.Contains("routing.lanes.nope is not a lane of the team", With("nope", new("codex", "astra")), StringComparison.Ordinal);
-        Assert.Contains("routing.lanes.meta is the meta lane", With("meta", new("codex", "astra")), StringComparison.Ordinal);
+        Assert.Contains("routing.lanes.nope is not a lane of the team", With("nope", new("codex", "gpt-5.5")), StringComparison.Ordinal);
+        Assert.Contains("routing.lanes.meta is the meta lane", With("meta", new("codex", "gpt-5.5")), StringComparison.Ordinal);
         Assert.Contains("routing.lanes.ui.agent 'cursor' has no entry in routing.models", With("ui", new("cursor", Model: null)), StringComparison.Ordinal);
-        Assert.Contains("routing.lanes.ui: 'astra' is not offered by claude-code", With("ui", new("claude-code", "astra")), StringComparison.Ordinal);
+        Assert.Contains("routing.lanes.ui: 'gpt-5.5' is not offered by claude-code", With("ui", new("claude-code", "gpt-5.5")), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -78,13 +78,13 @@ public sealed class RoutingConfigTests
     [Fact, Trait("Lane", "unit")]
     public void The_equivalent_of_a_model_is_its_pair_either_way_unless_several_map_to_it()
     {
-        var routing = Cfg() with { Equivalents = new Dictionary<string, string>(StringComparer.Ordinal) { ["opus"] = "astra", ["sonnet"] = "luna", ["haiku"] = "luna" } };
+        var routing = Cfg() with { Equivalents = new Dictionary<string, string>(StringComparer.Ordinal) { ["opus"] = "gpt-5.5", ["sonnet"] = "gpt-5.4-mini", ["haiku"] = "gpt-5.4-mini" } };
 
-        Assert.Equal("astra", routing.EquivalentOf("opus"));
-        Assert.Equal("opus", routing.EquivalentOf("astra"));
-        Assert.Equal("luna", routing.EquivalentOf("haiku"));
-        Assert.Null(routing.EquivalentOf("luna"));
-        Assert.Equal("codex", routing.AgentOf("luna"));
+        Assert.Equal("gpt-5.5", routing.EquivalentOf("opus"));
+        Assert.Equal("opus", routing.EquivalentOf("gpt-5.5"));
+        Assert.Equal("gpt-5.4-mini", routing.EquivalentOf("haiku"));
+        Assert.Null(routing.EquivalentOf("gpt-5.4-mini"));
+        Assert.Equal("codex", routing.AgentOf("gpt-5.4-mini"));
         Assert.Null(routing.AgentOf("ghost"));
     }
 
@@ -94,18 +94,18 @@ public sealed class RoutingConfigTests
         using var dir = new TempDirectory();
         var path = Path.Combine(dir.Path, "team.json");
         var config = new FileMetaConfig(path, AwJson.CreateOptions(MetaJsonContext.Default));
-        await File.WriteAllTextAsync(path, """{"team":"t1","repo":"/w","lanes":["meta","ui"],"routing":{"models":{"claude-code":["opus"],"codex":["astra"]},"equivalents":{"opus":"astra"},"lanes":{"ui":{"agent":"codex","model":"astra"}},"defaultModel":"opus","switchWhenLimited":false,"minRemainingPct":25}}""", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(path, """{"team":"t1","repo":"/w","lanes":["meta","ui"],"routing":{"models":{"claude-code":["opus"],"codex":["gpt-5.5"]},"equivalents":{"opus":"gpt-5.5"},"lanes":{"ui":{"agent":"codex","model":"gpt-5.5"}},"defaultModel":"opus","switchWhenLimited":false,"minRemainingPct":25}}""", TestContext.Current.CancellationToken);
 
         var loaded = (await config.Load(CancellationToken.None)).Value.Routing;
 
         Assert.Equal(["opus"], loaded.Models["claude-code"], StringComparer.Ordinal);
-        Assert.Equal(("astra", new LaneRoute("codex", "astra"), "opus", false, 25), (loaded.Equivalents["opus"], loaded.Lanes["ui"], loaded.DefaultModel, loaded.SwitchWhenLimited, loaded.MinRemainingPct));
+        Assert.Equal(("gpt-5.5", new LaneRoute("codex", "gpt-5.5"), "opus", false, 25), (loaded.Equivalents["opus"], loaded.Lanes["ui"], loaded.DefaultModel, loaded.SwitchWhenLimited, loaded.MinRemainingPct));
 
         _ = await config.Save((await config.Load(CancellationToken.None)).Value, CancellationToken.None);
         var again = (await config.Load(CancellationToken.None)).Value.Routing;
 
-        Assert.Equal(new LaneRoute("codex", "astra"), again.Lanes["ui"]);
-        Assert.Equal("astra", again.Equivalents["opus"]);
+        Assert.Equal(new LaneRoute("codex", "gpt-5.5"), again.Lanes["ui"]);
+        Assert.Equal("gpt-5.5", again.Equivalents["opus"]);
 
         await File.WriteAllTextAsync(path, """{"team":"t1","repo":"/w","lanes":["meta"],"routing":{"minRemainingPct":500}}""", TestContext.Current.CancellationToken);
 

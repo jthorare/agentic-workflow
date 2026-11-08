@@ -71,7 +71,7 @@ public sealed class UsageServiceTests
         var (api, ui) = (result.Value.Subjects[0], result.Value.Subjects[1]);
         Assert.Equal(("claude-code", "opus", null), (api.Agent, api.Model, api.RemainingPct));
         Assert.Contains("Claude Code shows only the limit stop", api.SignalNote, StringComparison.Ordinal);
-        Assert.Equal(("codex", "astra", 12d), (ui.Agent, ui.Model, ui.RemainingPct));
+        Assert.Equal(("codex", "gpt-5.5", 12d), (ui.Agent, ui.Model, ui.RemainingPct));
         Assert.Equal(["5h", "weekly"], ui.Windows!.Select(w => w.Name), StringComparer.Ordinal);
     }
 }

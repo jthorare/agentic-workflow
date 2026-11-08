@@ -9,7 +9,7 @@ public sealed class StandingReadingsTests
     private static UsageReading Unknown(string lane) => new(lane, UsageState.Unknown, Stop: null, Idle: false, "no pane");
 
     private static LaneStanding Codex(string lane, ProviderSignal? signal) =>
-        new(lane, "codex", "codex", "astra", UsageState.Unknown, Kind: null, ResetsAt: null, signal, Note: null);
+        new(lane, "codex", "codex", "gpt-5.5", UsageState.Unknown, Kind: null, ResetsAt: null, signal, Note: null);
 
     [Fact, Trait("Lane", "unit")]
     public void A_provider_that_reports_its_limit_makes_the_lane_limited_until_the_latest_reset_of_the_full_windows()

@@ -13,7 +13,7 @@ internal static class RouteCommand
 
     private static string Text(RouteResponse response)
     {
-        var lines = response.Suggestions.Select(static s => s.ToString()).Concat(response.Skipped.Select(static s => $"keep {s.Lane}: {s.Reason}")).ToList();
+        var lines = (response.Warnings ?? []).Concat(response.Suggestions.Select(static s => s.ToString()).Concat(response.Skipped.Select(static s => $"keep {s.Lane}: {s.Reason}"))).ToList();
         if (response.Applied)
         {
             lines.Add("written to routing.lanes in the team config; relaunch the lanes (aw-meta-launch or lane-recycle) to start them on the new provider");

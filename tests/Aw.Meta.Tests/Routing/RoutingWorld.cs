@@ -9,7 +9,7 @@ using Aw.Meta.Tests.Usage;
 
 namespace Aw.Meta.Tests.Routing;
 
-/// <summary>The usage world (team t1, lanes meta, api, ui; the clock is 05:00 UTC on 2026-10-15) with a routing config: Claude offers opus, sonnet and haiku, Codex astra and luna.</summary>
+/// <summary>The usage world (team t1, lanes meta, api, ui; the clock is 05:00 UTC on 2026-10-15) with a routing config: Claude offers opus, sonnet and haiku, Codex gpt-5.5 and gpt-5.4-mini.</summary>
 internal sealed class RoutingWorld
 {
     internal static readonly DateTimeOffset Now = new(2026, 10, 15, 5, 0, 0, TimeSpan.Zero);
@@ -20,9 +20,9 @@ internal sealed class RoutingWorld
         models: new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)
         {
             ["claude-code"] = ["opus", "sonnet", "haiku"],
-            ["codex"] = ["astra", "luna"],
+            ["codex"] = ["gpt-5.5", "gpt-5.4-mini"],
         },
-        equivalents: new Dictionary<string, string>(StringComparer.Ordinal) { ["opus"] = "astra", ["haiku"] = "luna" },
+        equivalents: new Dictionary<string, string>(StringComparer.Ordinal) { ["opus"] = "gpt-5.5", ["haiku"] = "gpt-5.4-mini" },
         defaultModel: defaultModel,
         switchWhenLimited: switchWhenLimited,
         minRemainingPct: minRemainingPct);
@@ -70,5 +70,5 @@ internal sealed class RoutingWorld
             usedPct is { } used ? new ProviderSignal([new ProviderWindow("5h", used, Now.AddHours(1))], reached) : (reached ? new ProviderSignal([], LimitReached: true) : null),
             Note: null);
 
-    internal RouteService Service() => new(U.World.Config, U.Reader, U.Standings);
+    internal RouteService Service() => new(U.World.Config, U.Reader, U.Standings, U.World.CodexModels);
 }

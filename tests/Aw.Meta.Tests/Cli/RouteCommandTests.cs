@@ -12,7 +12,7 @@ public sealed class RouteCommandTests : IDisposable
         _cli.SetEnv("AW_META_CONFIG", path);
     }
 
-    private const string Pairs = ""","routing":{"models":{"claude-code":["opus"],"codex":["astra"]},"equivalents":{"opus":"astra"},"defaultModel":"opus"}""";
+    private const string Pairs = ""","routing":{"models":{"claude-code":["opus"],"codex":["gpt-5.5"]},"equivalents":{"opus":"gpt-5.5"},"defaultModel":"opus"}""";
 
     [Fact, Trait("Lane", "integration")]
     public async Task Route_with_nothing_to_move_says_so_and_exits_0()

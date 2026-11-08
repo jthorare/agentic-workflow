@@ -2378,3 +2378,8 @@ Aw.Meta.Core.Routing.RouteWatcher.Check(Aw.Meta.Core.Config.TeamConfig! team, Sy
 Aw.Meta.Core.Routing.RouteWatcher.RouteWatcher(Aw.Meta.Core.Ports.IKeyValueStore! values) -> void
 Aw.Meta.Core.Routing.StandingReadings
 static Aw.Meta.Core.Routing.StandingReadings.Merge(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Usage.UsageReading!>! readings, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.LaneStanding!>! standings) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Usage.UsageReading!>!
+Aw.Meta.Core.Ports.ICodexModels
+Aw.Meta.Core.Ports.ICodexModels.Known(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlySet<string!>?>!>
+Aw.Meta.Core.Routing.CodexModelCheck
+const Aw.Meta.Core.Routing.CodexModelCheck.Codex = "codex" -> string!
+static Aw.Meta.Core.Routing.CodexModelCheck.Warnings(Aw.Meta.Core.Config.RoutingConfig! routing, System.Collections.Generic.IReadOnlySet<string!>! known) -> System.Collections.Generic.IReadOnlyList<string!>!

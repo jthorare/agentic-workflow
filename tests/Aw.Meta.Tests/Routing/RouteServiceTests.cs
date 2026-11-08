@@ -17,7 +17,7 @@ public sealed class RouteServiceTests
 
         Assert.True(result.IsSuccess);
         var move = Assert.Single(result.Value.Suggestions);
-        Assert.Equal(("ui", "codex", "astra"), (move.Lane, move.ToAgent, move.ToModel));
+        Assert.Equal(("ui", "codex", "gpt-5.5"), (move.Lane, move.ToAgent, move.ToModel));
         Assert.True(result.Value.Attention);
         Assert.False(result.Value.Applied);
         Assert.Empty((await _w.U.World.Config.Load(CancellationToken.None)).Value.Routing.Lanes);
@@ -33,7 +33,7 @@ public sealed class RouteServiceTests
 
         Assert.True(applied.Value.Applied);
         Assert.False(applied.Value.Attention);
-        Assert.Equal(new LaneRoute("codex", "astra"), (await _w.U.World.Config.Load(CancellationToken.None)).Value.Routing.Lanes["ui"]);
+        Assert.Equal(new LaneRoute("codex", "gpt-5.5"), (await _w.U.World.Config.Load(CancellationToken.None)).Value.Routing.Lanes["ui"]);
 
         var again = await _w.Service().Handle(new RouteRequest(), CancellationToken.None);
 

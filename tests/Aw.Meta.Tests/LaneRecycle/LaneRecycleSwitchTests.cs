@@ -39,7 +39,7 @@ public sealed class LaneRecycleSwitchTests
     {
         await _world.Ready();
         var team = (await _world.Config.Load(CancellationToken.None)).Value;
-        _ = await _world.Config.Save(team with { Routing = routing ?? RoutingWorld.Cfg() with { Lanes = new Dictionary<string, LaneRoute>(StringComparer.Ordinal) { ["api"] = new("codex", "astra") } } }, CancellationToken.None);
+        _ = await _world.Config.Save(team with { Routing = routing ?? RoutingWorld.Cfg() with { Lanes = new Dictionary<string, LaneRoute>(StringComparer.Ordinal) { ["api"] = new("codex", "gpt-5.5") } } }, CancellationToken.None);
         _world.LaneFiles.Put(new LaneRecord("api", SessionId.From("s-old"), Agent: null, A.At(1)));
         _world.LaneSessions.Set("t1-api", "s-old");
         _world.Panes.Put("t1-api", "claude");
