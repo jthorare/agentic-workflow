@@ -3,12 +3,13 @@ namespace Aw.Meta.Core.Worktrees;
 /// <summary>Which worktrees an inspection looks at: all of them, or those that belong to some pull requests (their head branches and their gate trees).</summary>
 public sealed record WorktreeScope
 {
-    private WorktreeScope(IReadOnlySet<int>? prs, bool includeNoPr = false, string? path = null, bool discarded = false)
+    private WorktreeScope(IReadOnlySet<int>? prs, bool includeNoPr = false, string? path = null, bool discarded = false, bool done = false)
     {
         Prs = prs;
         IncludeNoPr = includeNoPr;
         Path = path;
         Discarded = discarded;
+        Done = done;
     }
 
     /// <summary>Every worktree of the repo.</summary>
@@ -26,6 +27,9 @@ public sealed record WorktreeScope
     /// <summary>Whether the tree may be removed although its commits are unpushed, when a finished bugfix run names it as a losing candidate at its HEAD.</summary>
     public bool Discarded { get; }
 
+    /// <summary>Whether the owning lane says it is done with this tree, so a detached one may be removed when its HEAD is in origin/main or on a pushed branch (--done).</summary>
+    public bool Done { get; }
+
     /// <summary>The pull requests, or null for every worktree.</summary>
     public IReadOnlySet<int>? Prs { get; }
 
@@ -41,10 +45,12 @@ public sealed record WorktreeScope
     /// <summary>One worktree.</summary>
     /// <param name="path">Its directory.</param>
     /// <param name="discarded">Whether a losing bugfix candidate may be removed with its unpushed commits (--discarded).</param>
+    /// <param name="includeNoPr">Whether a branch with no pull request may be removed (--include-no-pr).</param>
+    /// <param name="done">Whether a finished detached tree may be removed (--done).</param>
     /// <returns>The scope.</returns>
-    public static WorktreeScope ForPath(string path, bool discarded)
+    public static WorktreeScope ForPath(string path, bool discarded, bool includeNoPr = false, bool done = false)
     {
         ArgumentNullException.ThrowIfNull(path);
-        return new WorktreeScope(prs: null, path: path, discarded: discarded);
+        return new WorktreeScope(prs: null, includeNoPr: includeNoPr, path: path, discarded: discarded, done: done);
     }
 }

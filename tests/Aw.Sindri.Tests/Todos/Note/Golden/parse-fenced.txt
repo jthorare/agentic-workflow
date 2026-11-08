@@ -1,0 +1,8 @@
+01 line  | # Code
+02 line  | ```
+03 line  | - [ ] inside a fence ^td-01jc5a8xq0n4w7ms2t9r3v0001
+04 line  | ```
+05 line  | ~~~md
+06 line  | - [ ] inside a tilde fence
+07 line  | ~~~
+08 todo  | id=- done=no on=- due=- links=- bad=- break=None text=after the fences
