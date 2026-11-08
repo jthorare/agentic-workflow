@@ -24,9 +24,9 @@ internal static class LinearConnectionScenarios
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
         ("linear-connection", "connected"), ("linear-connection", "not-connected"), ("linear-connection", "read-only"), ("linear-connection", "scope-unknown"),
-        ("linear-connection", "pending"), ("linear-connection", "session-refused"),
+        ("linear-connection", "session-refused"),
         ("linear-connection-teams", "two-teams"), ("linear-connection-teams", "refused"), ("linear-connection-teams", "unreachable"),
-        ("linear-connect", "read-saved-approved"), ("linear-connect", "read-saved-waiting"), ("linear-connect", "write-saved"), ("linear-connect", "write-scope-unknown"),
+        ("linear-connect", "read-saved"), ("linear-connect", "write-saved"), ("linear-connect", "write-scope-unknown"),
         ("linear-connect", "same-as-read"), ("linear-connect", "no-keychain"), ("linear-connect", "no-teams"), ("linear-connect", "session-refused"),
         ("linear-disconnect-write", "removed"), ("linear-disconnect-write", "keychain-failed"),
     ];
@@ -67,7 +67,7 @@ internal static class LinearConnectionScenarios
         _ => $$"""{"kind":"read","key":"{{ReadKey}}","teams":["ENG","OPS"]}""",
     };
 
-    // 'connected' has both keys resolved, last saved at 23:58 the day before; 'pending' has a live profile that differs from the approved one; the others are one key short or unsure of the write key's scope
+    // 'connected' has both keys resolved, last saved at 23:58 the day before; the others are one key short or unsure of the write key's scope
     private static FakeLinearConnectionFacts Facts(string scenario)
     {
         var resolves = new LinearKeyStateView("resolves", _checked);
@@ -77,7 +77,6 @@ internal static class LinearConnectionScenarios
         {
             "not-connected" => new LinearConnectionView(unset, unset, []),
             "read-only" => new LinearConnectionView(resolves, unset, teams),
-            "pending" => new LinearConnectionView(resolves, unset, teams),
             "scope-unknown" => new LinearConnectionView(resolves, new LinearKeyStateView("scopeUnknown", _checked), teams),
             _ => new LinearConnectionView(resolves, resolves, teams),
         };

@@ -22,7 +22,7 @@ public sealed class ApiVersionTests(CallerHost host) : IClassFixture<CallerHost>
         };
 
         Assert.Equal(
-            [HttpStatusCode.OK, HttpStatusCode.OK, HttpStatusCode.NotFound, HttpStatusCode.BadRequest, HttpStatusCode.Forbidden, HttpStatusCode.Forbidden, HttpStatusCode.BadRequest],
+            [HttpStatusCode.OK, HttpStatusCode.OK, HttpStatusCode.NotFound, HttpStatusCode.BadRequest, HttpStatusCode.Forbidden, HttpStatusCode.Forbidden, HttpStatusCode.Gone],
             answers.Select(a => a.Status));
         Assert.All(answers, a => Assert.Equal("1", a.ApiVersion));
     }
