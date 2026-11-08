@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:todo="using:Aw.Sindri.Ui.ViewModels.Todo"
              xmlns:tv="using:Aw.Sindri.Ui.Views.Todo"
+             xmlns:shell="using:Aw.Sindri.Ui.ViewModels.Shell"
              x:Class="Aw.Sindri.Ui.Views.Todo.TodoPanel"
              x:DataType="todo:TodoPanelViewModel">
   <UserControl.Styles>
@@ -22,10 +23,10 @@
        Collapsed: up to five rows, overdue first, and "Show all N". Expanded: the groups in their own scroll (capped at half the
        window's height, TodoPanel.axaml.cs), the Show done toggle and Show less at the foot. Loading draws three skeleton rows as tall
        as a loaded row; an empty list says so. -->
-  <Border x:Name="TodoPanelFrame" Classes="panel" AutomationProperties.Name="{Binding Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+  <Border x:Name="TodoPanelFrame" Classes="panel" Focusable="True" IsTabStop="False" FocusAdorner="{x:Null}" AutomationProperties.Name="{Binding Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
     <!-- Header on top, the body (collapsed or expanded) in the rest: the frame is capped at half the window (TodoPanel.axaml.cs), so
          the expanded list's own scroll gets what the header and the foot leave. -->
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto,*,Auto">
       <Border Classes="phead">
         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
           <TextBlock x:Name="TodoTitle" Classes="body-strong" Text="{Binding Title}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Title}" />
@@ -145,8 +146,12 @@
         </Border>
       </Grid>
 
-      <!-- The "From elsewhere" line (2 PRs waiting on your review · 1 Linear issue assigned · 3 need you, below) goes here: its own
-           control, made in its own slice. Nothing draws here yet. -->
+      <!-- The "From elsewhere" line (2 PRs waiting on your review · 1 Linear issue assigned · 3 need you, below): read-only counts under the
+           rows, in a slot one row tall in every state (D13), so the collapsed panel's height never follows the line's words. Its view model
+           is the shell's, not the panel's. -->
+      <Border x:Name="TodoElsewhereSlot" Grid.Row="2" Height="{StaticResource Size.Row}" ClipToBounds="True" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0">
+        <tv:FromElsewhereLine x:Name="TodoElsewhere" VerticalAlignment="Center" DataContext="{Binding $parent[Window].((shell:ShellViewModel)DataContext).Elsewhere}" />
+      </Border>
     </Grid>
   </Border>
 </UserControl>

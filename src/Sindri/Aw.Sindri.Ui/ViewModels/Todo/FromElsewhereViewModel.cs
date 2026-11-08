@@ -123,17 +123,28 @@ internal sealed class FromElsewhereViewModel(ISindriApi api) : ObservableObject
         return Task.CompletedTask;
     }
 
+    // Nothing is raised when the words and every part are what they were: the view rebuilds its buttons (and loses the arrow-key stop) on every change.
     private void Show()
     {
         if (_reviews.Loading || _linear == LinearState.Loading)
         {
-            (IsLoading, Text, Parts) = (true, Labels.ElsewhereChecking, []);
+            Apply(isLoading: true, Labels.ElsewhereChecking, []);
             return;
         }
 
         var parts = new[] { ReviewsPart(), LinearPart(), NeedsYouPart() }.OfType<ElsewherePartViewModel>().ToList();
-        (IsLoading, Parts) = (false, parts);
-        Text = parts.Count == 0 ? Labels.ElsewhereNothing : string.Join(" · ", parts.Select(p => p.Text));
+        Apply(isLoading: false, parts.Count == 0 ? Labels.ElsewhereNothing : string.Join(" · ", parts.Select(p => p.Text)), parts);
+    }
+
+    private void Apply(bool isLoading, string text, IReadOnlyList<ElsewherePartViewModel> parts)
+    {
+        IsLoading = isLoading;
+        if (string.Equals(Text, text, StringComparison.Ordinal) && Parts.SequenceEqual(parts))
+        {
+            return;
+        }
+
+        (Text, Parts) = (text, parts);
     }
 
     private ElsewherePartViewModel? ReviewsPart() =>

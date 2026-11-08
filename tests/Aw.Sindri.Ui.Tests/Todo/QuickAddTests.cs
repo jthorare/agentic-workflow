@@ -269,4 +269,85 @@ public sealed class QuickAddTests : IDisposable
 
         Assert.Equal((true, false), (shell.QuickAdd.IsOpen, shell.Palette.IsOpen));
     }
+
+    [Fact]
+    public async Task Closing_during_a_save_and_opening_again_lets_Enter_send()
+    {
+        var box = Box();
+        _server.CommandGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        box.Text = "first";
+        var first = box.Save(Token);
+        Assert.True(box.IsSaving);
+
+        box.Close();
+        box.Open();
+        box.Text = "second";
+        var second = box.Save(Token);
+
+        Assert.Equal(2, _server.TodoWrites.Count);
+        _server.CommandGate.SetResult();
+        await Task.WhenAll(first, second);
+    }
+
+    [Fact]
+    public async Task A_saved_todo_shows_a_toast_with_the_day_word_and_Undo()
+    {
+        var shell = await Running();
+        shell.QuickAdd.Open();
+        shell.QuickAdd.Text = "call Sam fri";
+
+        await shell.QuickAdd.Save(Token);
+
+        Assert.Equal(("Added. Due Fri", true), (shell.Toast.Text, shell.Toast.HasUndo));
+    }
+
+    [Fact]
+    public async Task A_saved_todo_without_a_day_shows_just_Added()
+    {
+        var shell = await Running();
+        shell.QuickAdd.Open();
+        shell.QuickAdd.Text = "call Sam";
+
+        await shell.QuickAdd.Save(Token);
+
+        Assert.Equal(("Added", true), (shell.Toast.Text, shell.Toast.HasUndo));
+    }
+
+    [Fact]
+    public async Task Undo_removes_the_todo_just_added_at_the_version_the_answer_gave()
+    {
+        var shell = await Running();
+        shell.QuickAdd.Open();
+        shell.QuickAdd.Text = "call Sam";
+        await shell.QuickAdd.Save(Token);
+
+        Assert.True(await shell.Toast.Undo());
+
+        var removed = _server.TodoWrites[^1];
+        Assert.Equal((TodoRoutes.Remove("td_fake_added"), 1L), (removed.Route, Assert.IsType<TodoVersion>(removed.Body).Version));
+    }
+
+    [Fact]
+    public async Task A_refused_Undo_says_why_in_a_plain_toast()
+    {
+        var shell = await Running();
+        shell.QuickAdd.Open();
+        shell.QuickAdd.Text = "call Sam";
+        await shell.QuickAdd.Save(Token);
+        _server.TodoWriteAnswer = RouteAnswer.Problem(HttpStatusCode.Conflict, "SND-TODO-009", "Changed since.");
+
+        Assert.True(await shell.Toast.Undo());
+
+        Assert.Equal(("Couldn't undo: Changed since.", false), (shell.Toast.Text, shell.Toast.HasUndo));
+    }
+
+    [Fact]
+    public async Task N_while_sindri_is_not_running_shows_the_toast_without_Undo()
+    {
+        var shell = await Stopped();
+
+        Assert.True(shell.PressQuickAdd());
+
+        Assert.Equal(("Sindri isn't running. Start it, then add the todo.", false), (shell.Toast.Text, shell.Toast.HasUndo));
+    }
 }

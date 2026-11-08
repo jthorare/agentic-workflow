@@ -37,7 +37,7 @@ public sealed class SqliteConnectionStoreContractTests : ConnectionStoreContract
     public void The_migration_that_makes_the_table_is_number_9_named_connections_and_reads_start_there()
     {
         Assert.Contains(LedgerDatabase.Migrations, static m => m.Version == 9 && m.Name.Contains("connections", StringComparison.Ordinal));
-        Assert.Equal(9, LedgerDatabase.ConnectionsVersion);   // why: the constant the store's reads wait for is the migration that makes the table
+        Assert.Equal(10, LedgerDatabase.ConnectionsVersion);   // why: the constant the store's reads wait for is the migration that makes the table
     }
 
     [Fact]

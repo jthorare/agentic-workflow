@@ -22,6 +22,9 @@ internal sealed class QuickAddViewModel : ObservableObject
         (_api, _url, _clock) = (api, url, clock);
     }
 
+    /// <summary>Raised when Sindri took a todo from the box (before the box closes).</summary>
+    internal event EventHandler<QuickAddedEventArgs>? Added;
+
     /// <summary>The box's accessible name and its field's.</summary>
     public string Name { get; } = Labels.QuickAddName;
 
@@ -82,6 +85,7 @@ internal sealed class QuickAddViewModel : ObservableObject
     {
         _opening++;
         IsOpen = false;
+        IsSaving = false;   // an old answer is dropped by the opening counter, so it must not hold Enter
         Text = string.Empty;
     }
 
@@ -117,16 +121,19 @@ internal sealed class QuickAddViewModel : ObservableObject
             var saved = await _api.AddTodo(url, add, cancellationToken).ConfigureAwait(true);
             if (opening == _opening)   // closed while the answer was on its way: it belongs to nothing on screen
             {
-                Finish(saved);
+                Finish(saved, read.Due);
             }
         }
         finally
         {
-            IsSaving = false;
+            if (opening == _opening)
+            {
+                IsSaving = false;
+            }
         }
     }
 
-    private void Finish(Result<TodoAcceptedView> saved)
+    private void Finish(Result<TodoAcceptedView> saved, DateOnly? due)
     {
         if (saved.IsError)
         {
@@ -134,6 +141,7 @@ internal sealed class QuickAddViewModel : ObservableObject
             return;
         }
 
+        Added?.Invoke(this, new QuickAddedEventArgs(saved.Value, due));
         Close();
     }
 

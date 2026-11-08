@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
+using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
@@ -81,7 +82,7 @@ public sealed class ToastHostTests : IDisposable
         var live = Named<TextBlock>(window, "ToastLive");
         Assert.False(host.IsEffectivelyVisible);
 
-        shell.ShowToast(new ToastMessage("Done.", () => Task.CompletedTask));
+        shell.ShowToast(new ToastMessage("Done.", () => Task.FromResult<string?>(null)));
         Settle(window);
 
         Assert.True(host.IsEffectivelyVisible);
@@ -94,5 +95,106 @@ public sealed class ToastHostTests : IDisposable
         Assert.True(shell.Toast.PressEscape(focusOnToast: true));
         Settle(window);
         Assert.False(host.IsEffectivelyVisible);
+    });
+
+    [Fact]
+    public Task Ctrl_Z_in_a_text_field_does_not_run_the_toasts_Undo() => OnUi(async () =>
+    {
+        var (window, shell) = await Running();
+        var undone = 0;
+        shell.ShowToast(new ToastMessage("Done.", () =>
+        {
+            undone++;
+            return Task.FromResult<string?>(null);
+        }));
+        Assert.True(shell.PressQuickAdd());
+        Settle(window);
+        _ = Named<TextBox>(window, "QuickAddField").Focus();
+
+        window.KeyPressQwerty(PhysicalKey.Z, OperatingSystem.IsMacOS() ? RawInputModifiers.Meta : RawInputModifiers.Control);
+        Settle(window);
+
+        Assert.Equal((0, true), (undone, shell.Toast.IsShown));
+    });
+
+    [Fact]
+    public Task Ctrl_Z_with_the_palette_open_does_not_run_the_toasts_Undo() => OnUi(async () =>
+    {
+        var (window, shell) = await Running();
+        var undone = 0;
+        shell.ShowToast(new ToastMessage("Done.", () =>
+        {
+            undone++;
+            return Task.FromResult<string?>(null);
+        }));
+        shell.Palette.Open();
+        Settle(window);
+        _ = window.Focus();
+
+        window.KeyPressQwerty(PhysicalKey.Z, OperatingSystem.IsMacOS() ? RawInputModifiers.Meta : RawInputModifiers.Control);
+        Settle(window);
+
+        Assert.Equal((0, true), (undone, shell.Toast.IsShown));
+    });
+
+    [Fact]
+    public Task Ctrl_Z_over_the_page_runs_the_toasts_Undo_once() => OnUi(async () =>
+    {
+        var (window, shell) = await Running();
+        var undone = 0;
+        shell.ShowToast(new ToastMessage("Done.", () =>
+        {
+            undone++;
+            return Task.FromResult<string?>(null);
+        }));
+        Settle(window);
+
+        window.KeyPressQwerty(PhysicalKey.Z, OperatingSystem.IsMacOS() ? RawInputModifiers.Meta : RawInputModifiers.Control);
+        Settle(window);
+
+        Assert.Equal((1, false), (undone, shell.Toast.IsShown));
+    });
+
+    [Fact]
+    public Task F6_reaches_the_toast_only_while_it_shows() => OnUi(async () =>
+    {
+        var (window, shell) = await Running();
+        var host = Named<ToastHost>(window, "Toast");
+        for (var i = 0; i < 5; i++)
+        {
+            window.KeyPressQwerty(PhysicalKey.F6, RawInputModifiers.None);
+            Settle(window);
+            Assert.False(host.IsKeyboardFocusWithin);
+        }
+
+        shell.ShowToast(new ToastMessage("Done.", () => Task.FromResult<string?>(null)));
+        Settle(window);
+        var reached = false;
+        for (var i = 0; i < 5 && !reached; i++)
+        {
+            window.KeyPressQwerty(PhysicalKey.F6, RawInputModifiers.None);
+            Settle(window);
+            reached = host.IsKeyboardFocusWithin;
+        }
+
+        Assert.True(reached);
+    });
+
+    [Fact]
+    public Task Focus_leaves_the_toast_for_the_page_when_it_hides_under_it() => OnUi(async () =>
+    {
+        var (window, shell) = await Running();
+        shell.ShowToast(new ToastMessage("Done.", () => Task.FromResult<string?>(null)));
+        Settle(window);
+        var host = Named<ToastHost>(window, "Toast");
+        _ = Named<Button>(window, "ToastUndo").Focus();
+        Settle(window);
+        Assert.True(host.IsKeyboardFocusWithin);
+
+        Assert.True(await shell.Toast.Undo());
+        Settle(window);
+
+        Assert.False(host.IsKeyboardFocusWithin);
+        Assert.NotNull(window.FocusManager?.GetFocusedElement());
     });
 }

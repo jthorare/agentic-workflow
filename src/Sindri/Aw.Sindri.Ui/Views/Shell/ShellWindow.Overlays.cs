@@ -51,6 +51,7 @@ internal sealed partial class ShellWindow
 
     // N opens the quick-add box (never in a text field or over a layer), and so does Ctrl+Shift+N (⌘⇧N) over a page or the palette (todo spec §3.3).
     // Both reach the view model even while Sindri isn't running, which says so instead of opening the box.
+    // This runs before every other key handler, so a page that takes N itself (Workflows' N -> Start) must be guarded here.
     private bool QuickAddByKey(KeyEventArgs e)
     {
         if (e.Key != Key.N || Shell is not { IsChromeVisible: true } shell)
