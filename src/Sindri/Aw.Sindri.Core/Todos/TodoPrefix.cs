@@ -16,6 +16,17 @@ public static class TodoPrefix
     /// <returns>The id, SND-TODO-404 when none matches, or SND-TODO-010 naming the matches when several do.</returns>
     public static Result<TodoId> Resolve(string typed, TodoCliVerb verb, IReadOnlyList<TodoRow> rows)
     {
+        ArgumentNullException.ThrowIfNull(rows);
+        return Resolve(typed, verb, [.. rows.Select(static r => new TodoCandidate(r.Id, r.DoneAt is not null, r.Removed))]);
+    }
+
+    /// <summary>Resolves <paramref name="typed"/> among <paramref name="rows"/>, given only what the choice needs.</summary>
+    /// <param name="typed">What was typed.</param>
+    /// <param name="verb">The verb, which decides which rows count.</param>
+    /// <param name="rows">Every todo.</param>
+    /// <returns>The id, SND-TODO-404 when none matches, or SND-TODO-010 naming the matches when several do.</returns>
+    public static Result<TodoId> Resolve(string typed, TodoCliVerb verb, IReadOnlyList<TodoCandidate> rows)
+    {
         ArgumentNullException.ThrowIfNull(typed);
         ArgumentNullException.ThrowIfNull(rows);
         var wanted = typed.Trim().ToLowerInvariant();
@@ -35,12 +46,12 @@ public static class TodoPrefix
         };
     }
 
-    private static bool Acts(TodoCliVerb verb, TodoRow row) => verb switch
+    private static bool Acts(TodoCliVerb verb, TodoCandidate row) => verb switch
     {
         TodoCliVerb.Show => true,
-        TodoCliVerb.Reopen => row.DoneAt is not null && !row.Removed,
+        TodoCliVerb.Reopen => row.Done && !row.Removed,
         TodoCliVerb.Restore => row.Removed,
-        TodoCliVerb.Edit or TodoCliVerb.Done or TodoCliVerb.Remove or TodoCliVerb.Keep => row.DoneAt is null && !row.Removed,
+        TodoCliVerb.Edit or TodoCliVerb.Done or TodoCliVerb.Remove or TodoCliVerb.Keep => !row.Done && !row.Removed,
         _ => false,
     };
 }

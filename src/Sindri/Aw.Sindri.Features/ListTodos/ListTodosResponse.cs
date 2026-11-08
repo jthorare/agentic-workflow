@@ -8,4 +8,4 @@ namespace Aw.Sindri.Features.ListTodos;
 /// <param name="State">The state that was asked for.</param>
 /// <param name="Counts">How many todos each state holds.</param>
 /// <param name="Todos">The todos, oldest first.</param>
-public sealed record ListTodosResponse(AsOf AsOf, TodoListState State, TodoCounts Counts, IReadOnlyList<TodoRow> Todos);
+public sealed record ListTodosResponse(AsOf AsOf, TodoListState State, TodoCounts Counts, IReadOnlyList<TodoItem> Todos);

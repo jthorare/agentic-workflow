@@ -167,7 +167,7 @@ internal sealed class TodoVerbs(ControlPlaneClient client, Output output, Func<b
     private async Task<Result<TodoId>> Resolve(string typed, TodoCliVerb verb, CancellationToken ct)
     {
         var all = await client.GetView<ListTodosResponse>(Root + "?state=all", ct).ConfigureAwait(false);
-        return all.IsError ? all.Error : TodoPrefix.Resolve(typed, verb, all.Value.Value.Todos);
+        return all.IsError ? all.Error : TodoPrefix.Resolve(typed, verb, [.. all.Value.Value.Todos.Select(static t => new TodoCandidate(t.Id, t.DoneAt is not null, t.Removed))]);
     }
 
     /// <summary>The version a write sends: the one typed, or the todo's own, read now (as 'item close' does).</summary>
@@ -214,23 +214,32 @@ internal sealed class TodoVerbs(ControlPlaneClient client, Output output, Func<b
         return text.ToString();
     }
 
-    private static string RowLine(TodoRow row, bool withState)
+    private static string RowLine(TodoRow row, bool withState) =>
+        RowLine(new RowFields(row.Id, StateOf(row), row.Due, row.Text, row.Links, row.Conflict is not null), withState);
+
+    private static string RowLine(TodoItem row, bool withState) =>
+        RowLine(new RowFields(row.Id, row.Removed ? "removed" : row.DoneAt is not null ? "done" : "open", row.Due, row.Text, [.. row.Links.Select(static l => l.Href)], row.Conflict is not null), withState);
+
+    private sealed record RowFields(TodoId Id, string State, DateOnly? Due, string Text, IReadOnlyList<string> Links, bool Conflict);
+
+    private static string RowLine(RowFields row, bool withState)
     {
-        var line = new StringBuilder(row.Id.Value).Append("  ");
+        var (id, state, due, text, links, conflict) = row;
+        var line = new StringBuilder(id.Value).Append("  ");
         if (withState)
         {
-            _ = line.Append(StateOf(row).PadRight(7)).Append("  ");
+            _ = line.Append(state.PadRight(7)).Append("  ");
         }
 
-        _ = line.Append(row.Due is { } due ? due.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : "-").Append("  ").Append(row.Text);
-        if (row.Links.Count > 0)
+        _ = line.Append(due is { } day ? day.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : "-").Append("  ").Append(text);
+        if (links.Count > 0)
         {
-            _ = line.Append("  [").AppendJoin(' ', row.Links).Append(']');
+            _ = line.Append("  [").AppendJoin(' ', links).Append(']');
         }
 
-        if (row.Conflict is not null)
+        if (conflict)
         {
-            _ = line.Append("  (changed in both places: sindri todo show ").Append(row.Id.Value).Append(')');
+            _ = line.Append("  (changed in both places: sindri todo show ").Append(id.Value).Append(')');
         }
 
         return line.ToString();

@@ -35,6 +35,6 @@ internal sealed class ListTodosService(IViewReader views, IProjectorStatus statu
             TodoListState.All => true,
             _ => throw new ArgumentOutOfRangeException(nameof(request), request.State, "not a todo list state"),
         });
-        return new ListTodosResponse(status.Current.AsOf, request.State, counts, [.. shown.OrderBy(static r => r.AddedAt).ThenBy(static r => r.Id.Value, StringComparer.Ordinal)]);
+        return new ListTodosResponse(status.Current.AsOf, request.State, counts, [.. shown.OrderBy(static r => r.AddedAt).ThenBy(static r => r.Id.Value, StringComparer.Ordinal).Select(static r => TodoItem.From(r))]);
     }
 }

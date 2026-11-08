@@ -25854,3 +25854,21 @@ override Aw.Sindri.Core.Scheduling.StoreCheckpoint.GetHashCode() -> int
 override Aw.Sindri.Core.Scheduling.StoreCheckpoint.ToString() -> string!
 static Aw.Sindri.Core.Scheduling.StoreCheckpoint.operator !=(Aw.Sindri.Core.Scheduling.StoreCheckpoint? left, Aw.Sindri.Core.Scheduling.StoreCheckpoint? right) -> bool
 static Aw.Sindri.Core.Scheduling.StoreCheckpoint.operator ==(Aw.Sindri.Core.Scheduling.StoreCheckpoint? left, Aw.Sindri.Core.Scheduling.StoreCheckpoint? right) -> bool
+Aw.Sindri.Core.Todos.TodoCandidate
+Aw.Sindri.Core.Todos.TodoCandidate.<Clone>$() -> Aw.Sindri.Core.Todos.TodoCandidate!
+Aw.Sindri.Core.Todos.TodoCandidate.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out bool Done, out bool Removed) -> void
+Aw.Sindri.Core.Todos.TodoCandidate.Done.get -> bool
+Aw.Sindri.Core.Todos.TodoCandidate.Done.init -> void
+Aw.Sindri.Core.Todos.TodoCandidate.Equals(Aw.Sindri.Core.Todos.TodoCandidate? other) -> bool
+Aw.Sindri.Core.Todos.TodoCandidate.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Todos.TodoCandidate.Id.init -> void
+Aw.Sindri.Core.Todos.TodoCandidate.Removed.get -> bool
+Aw.Sindri.Core.Todos.TodoCandidate.Removed.init -> void
+Aw.Sindri.Core.Todos.TodoCandidate.TodoCandidate(Aw.Sindri.Core.Ids.TodoId Id, bool Done, bool Removed) -> void
+override Aw.Sindri.Core.Todos.TodoCandidate.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoCandidate.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoCandidate.ToString() -> string!
+static Aw.Sindri.Core.Todos.TodoCandidate.operator !=(Aw.Sindri.Core.Todos.TodoCandidate? left, Aw.Sindri.Core.Todos.TodoCandidate? right) -> bool
+static Aw.Sindri.Core.Todos.TodoCandidate.operator ==(Aw.Sindri.Core.Todos.TodoCandidate? left, Aw.Sindri.Core.Todos.TodoCandidate? right) -> bool
+static Aw.Sindri.Core.Todos.TodoLinks.Describe(string! deepLink) -> (string! Kind, string! Ref, string! Href)
+static Aw.Sindri.Core.Todos.TodoPrefix.Resolve(string! typed, Aw.Sindri.Core.Todos.TodoCliVerb verb, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.TodoCandidate!>! rows) -> Aw.Kernel.Result<Aw.Sindri.Core.Ids.TodoId>!

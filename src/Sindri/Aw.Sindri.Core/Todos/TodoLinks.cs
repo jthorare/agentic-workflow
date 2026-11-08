@@ -63,6 +63,33 @@ public static partial class TodoLinks
             : links;
     }
 
+    /// <summary>Describes one stored deep link for the wire: its kind, the short reference a chip shows and the deep link itself.</summary>
+    /// <param name="deepLink">A stored deep link: 'sindri://item/…', 'sindri://reviews/&lt;owner&gt;/&lt;repo&gt;/&lt;n&gt;', 'sindri://linear/…' or 'sindri://workflow/…'.</param>
+    /// <returns>Kind 'item', 'pr', 'linear' or 'workflow'; any other shape is kind 'link' with the deep link as its reference.</returns>
+    public static (string Kind, string Ref, string Href) Describe(string deepLink)
+    {
+        ArgumentNullException.ThrowIfNull(deepLink);
+        if (deepLink.StartsWith("sindri://item/", StringComparison.Ordinal) && deepLink.Length > "sindri://item/".Length)
+        {
+            return ("item", deepLink["sindri://item/".Length..], deepLink);
+        }
+
+        if (deepLink.StartsWith("sindri://linear/", StringComparison.Ordinal) && deepLink.Length > "sindri://linear/".Length)
+        {
+            return ("linear", deepLink["sindri://linear/".Length..], deepLink);
+        }
+
+        if (deepLink.StartsWith("sindri://workflow/", StringComparison.Ordinal) && deepLink.Length > "sindri://workflow/".Length)
+        {
+            return ("workflow", deepLink["sindri://workflow/".Length..], deepLink);
+        }
+
+        var review = ReviewLink.Match(deepLink);
+        return review.Success
+            ? ("pr", $"{review.Groups["owner"].Value}/{review.Groups["repo"].Value}#{review.Groups["n"].Value}", deepLink)
+            : ("link", deepLink, deepLink);
+    }
+
     private static string? ItemLink(string typed, IReadOnlyCollection<string> forgeHosts) =>
         ItemShape.IsMatch(typed) ? "sindri://item/" + typed : null;
 
@@ -98,6 +125,9 @@ public static partial class TodoLinks
         string.Create(CultureInfo.InvariantCulture, $"sindri://reviews/{owner}/{repo}/{long.Parse(number, CultureInfo.InvariantCulture)}");
 
     private static bool IsName(string part) => !string.Equals(part, ".", StringComparison.Ordinal) && !string.Equals(part, "..", StringComparison.Ordinal);
+
+    [GeneratedRegex("^sindri://reviews/(?<owner>[^/]+)/(?<repo>[^/]+)/(?<n>[0-9]+)\\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex ReviewLink { get; }
 
     [GeneratedRegex("^ITM-[0-9a-f]{32}\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex ItemShape { get; }

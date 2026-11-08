@@ -53,4 +53,20 @@ public sealed class TodoLinksTests
         Assert.True(eleven.IsError);
         Assert.Equal("SND-TODO-004", eleven.Error.Code);
     }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("sindri://item/ITM-0000000000000000000000000000000f", "item", "ITM-0000000000000000000000000000000f")]
+    [InlineData("sindri://reviews/acme/api/12", "pr", "acme/api#12")]
+    [InlineData("sindri://linear/ENG-12", "linear", "ENG-12")]
+    [InlineData("sindri://workflow/scoping/acme-api/fix-login", "workflow", "scoping/acme-api/fix-login")]
+    [InlineData("sindri://something/else", "link", "sindri://something/else")]   // an unknown shape stays a plain link
+    [InlineData("sindri://reviews/acme/api/x", "link", "sindri://reviews/acme/api/x")]
+    public void Describe_names_the_kind_and_the_ref_and_keeps_the_deep_link_as_href(string deepLink, string kind, string reference)
+    {
+        var (actualKind, actualRef, href) = TodoLinks.Describe(deepLink);
+
+        Assert.Equal(kind, actualKind);
+        Assert.Equal(reference, actualRef);
+        Assert.Equal(deepLink, href);
+    }
 }
