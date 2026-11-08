@@ -44,42 +44,23 @@ public sealed class SindriApiClientTodosTests
         Assert.Equal((HttpMethod.Get, "/sindri/todos", "?state=all"), (seen.Method, seen.Uri.AbsolutePath, seen.Uri.Query));
     }
 
+    // The served golden is minted by the server (its ids and times are its own), so it's read for shape only: every field of every todo.
     [Fact]
-    public async Task The_list_golden_reads_every_field_of_every_todo()
+    public async Task The_served_list_golden_reads_every_field_of_every_todo()
     {
-        var golden = GoldenFiles.Node("todos", "list");
-        var list = (await Client(new Canned(HttpStatusCode.OK, GoldenFiles.Api("todos", "list"))).Todos(_api, "all", Token)).Value;
+        var served = GoldenFiles.Api("todos", "list");
+
+        _ = await AssertReadsEveryField(served);
+    }
+
+    [Fact]
+    public async Task The_apps_todo_sample_reads_every_field_and_its_pinned_rows()
+    {
+        var list = await AssertReadsEveryField(TodoSample.List);
 
         Assert.Equal(("all", 5, 1, 1), (list.State, list.Counts.Open, list.Counts.Done, list.Counts.Removed));
         Assert.Equal((9, 9, false, false), (list.AsOf.Cursor, list.AsOf.LedgerHead, list.AsOf.Rebuilding, list.AsOf.Stalled));
         Assert.Equal(DateTimeOffset.Parse("2026-01-01T00:00:00Z", CultureInfo.InvariantCulture), list.AsOf.ProjectedAt);
-        var nodes = golden["todos"]!.AsArray();
-        Assert.Equal(nodes.Count, list.Todos.Count);
-        for (var i = 0; i < nodes.Count; i++)
-        {
-            var (n, t) = (nodes[i]!, list.Todos[i]);
-            Assert.Equal(n["id"]!.GetValue<string>(), t.Id);
-            Assert.Equal(n["text"]!.GetValue<string>(), t.Text);
-            Assert.Equal(Day(n["due"]), t.Due);
-            Assert.Equal(n["addedAt"]!.GetValue<string>(), t.AddedAt.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss.fffffff'Z'", CultureInfo.InvariantCulture));
-            Assert.Equal(n["addedBy"]!.GetValue<string>(), t.AddedBy);
-            Assert.Equal(n["addedVia"]?.GetValue<string>(), t.AddedVia);
-            Assert.Equal(Moment(n["doneAt"]), t.DoneAt);
-            Assert.Equal(n["removed"]!.GetValue<bool>(), t.Removed);
-            Assert.Equal(Moment(n["removedAt"]), t.RemovedAt);
-            Assert.Equal(n["removedBy"]?.GetValue<string>(), t.RemovedBy);
-            Assert.Equal(n["version"]!.GetValue<long>(), t.Version);
-            Assert.Equal(n["lastBy"]!.GetValue<string>(), t.LastBy);
-            Assert.Equal(n["lastVia"]?.GetValue<string>(), t.LastVia);
-            Assert.Null(t.Conflict);
-            var links = n["links"]!.AsArray();
-            Assert.Equal(links.Count, t.Links.Count);
-            for (var l = 0; l < links.Count; l++)
-            {
-                Assert.Equal((links[l]!["kind"]!.GetValue<string>(), links[l]!["ref"]!.GetValue<string>(), links[l]!["href"]!.GetValue<string>()), (t.Links[l].Kind, t.Links[l].Ref, t.Links[l].Href));
-            }
-        }
-
         var rotate = list.Todos[2];
         Assert.Equal(("rotate the staging key", new DateOnly(2025, 12, 31), "ENG-12", "sindri://linear/ENG-12"), (rotate.Text, rotate.Due, rotate.Links[1].Ref, rotate.Links[1].Href));
         Assert.Equal(("human:cli", "pipe", "session:mcp"), (list.Todos[5].AddedBy, list.Todos[5].AddedVia, list.Todos[5].LastBy));
@@ -89,7 +70,7 @@ public sealed class SindriApiClientTodosTests
     [Fact]
     public async Task An_open_conflict_reads_both_sides_and_the_note_hash()
     {
-        var golden = GoldenFiles.Node("todos", "list");
+        var golden = JsonNode.Parse(TodoSample.List)!;
         golden["todos"]![1]!["conflict"] = JsonNode.Parse("""{"sindri":{"text":"reply to Sam","due":"2026-01-02","done":false},"obsidian":{"text":"reply to Sam today","due":null,"done":true},"noteHash":"sha256:ab12"}""");
 
         var list = (await Client(new Canned(HttpStatusCode.OK, golden.ToJsonString())).Todos(_api, "all", Token)).Value;
@@ -173,6 +154,42 @@ public sealed class SindriApiClientTodosTests
         _ = await client.Todos(_api, "all", Token);
 
         Assert.Equal("41", canned.Seen[1].After);
+    }
+
+    private static async Task<TodoListView> AssertReadsEveryField(string json)
+    {
+        var golden = JsonNode.Parse(json)!;
+        var read = await Client(new Canned(HttpStatusCode.OK, json)).Todos(_api, "all", Token);
+        Assert.True(read.IsSuccess, read.IsError ? read.Error.Message : string.Empty);
+        var list = read.Value;
+        var nodes = golden["todos"]!.AsArray();
+        Assert.Equal(nodes.Count, list.Todos.Count);
+        for (var i = 0; i < nodes.Count; i++)
+        {
+            var (n, t) = (nodes[i]!, list.Todos[i]);
+            Assert.Equal(n["id"]!.GetValue<string>(), t.Id);
+            Assert.Equal(n["text"]!.GetValue<string>(), t.Text);
+            Assert.Equal(Day(n["due"]), t.Due);
+            Assert.Equal(DateTimeOffset.Parse(n["addedAt"]!.GetValue<string>(), CultureInfo.InvariantCulture), t.AddedAt);
+            Assert.Equal(n["addedBy"]!.GetValue<string>(), t.AddedBy);
+            Assert.Equal(n["addedVia"]?.GetValue<string>(), t.AddedVia);
+            Assert.Equal(Moment(n["doneAt"]), t.DoneAt);
+            Assert.Equal(n["removed"]!.GetValue<bool>(), t.Removed);
+            Assert.Equal(Moment(n["removedAt"]), t.RemovedAt);
+            Assert.Equal(n["removedBy"]?.GetValue<string>(), t.RemovedBy);
+            Assert.Equal(n["version"]!.GetValue<long>(), t.Version);
+            Assert.Equal(n["lastBy"]!.GetValue<string>(), t.LastBy);
+            Assert.Equal(n["lastVia"]?.GetValue<string>(), t.LastVia);
+            Assert.Null(t.Conflict);
+            var links = n["links"]!.AsArray();
+            Assert.Equal(links.Count, t.Links.Count);
+            for (var l = 0; l < links.Count; l++)
+            {
+                Assert.Equal((links[l]!["kind"]!.GetValue<string>(), links[l]!["ref"]!.GetValue<string>(), links[l]!["href"]!.GetValue<string>()), (t.Links[l].Kind, t.Links[l].Ref, t.Links[l].Href));
+            }
+        }
+
+        return list;
     }
 
     private static string Compact(string json) => JsonNode.Parse(json)!.ToJsonString();
