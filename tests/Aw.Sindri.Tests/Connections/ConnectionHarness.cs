@@ -121,10 +121,17 @@ internal sealed class ConnectionHarness
     public RefreshConnectionsService RefreshOver(IConnectionStore store)
         => new(store, Secrets, Presets, OAuth, new ConnectionStatusWriter(store, Secrets, Events(), new CommandGateAccess(Gate, Clock)), Clock, new TypedLog<RefreshConnectionsService>(Logs));
 
-    /// <summary>Takes the ledger's lease and builds the run a tick would hand the refresh service.</summary>
+    /// <summary>Takes the ledger's lease (once; later ticks reuse it) and builds the run a tick would hand the refresh service.</summary>
     /// <returns>The run, at the harness clock.</returns>
     public async Task<ScheduledRun> Tick()
-        => new(Held.Current ?? (await Ledger.Acquire(LedgerProbe.Self(), TestContext.Current.CancellationToken)).Value, Clock.GetUtcNow());
+    {
+        if (Held.Current is null)
+        {
+            await Hold();
+        }
+
+        return new(Held.Current!, Clock.GetUtcNow());
+    }
 
 
     /// <summary>The test slice over another probe, with the capturing log, so a probe that echoes the credential is seen by the log canary.</summary>
