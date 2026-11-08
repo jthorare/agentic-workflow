@@ -118,6 +118,18 @@ public sealed class ChangeLinearIssueTests
     }
 
     [Fact]
+    public async Task An_opened_key_holding_null_counts_as_opened_and_is_compared_with_linear()
+    {
+        _writes.SetLive(Live());
+
+        var answer = await Ok(Edit("ENG-12", """{"assigneeId":null}""", """{"assigneeId":null}"""));
+
+        var field = Expect.Only(answer.Conflict!.Fields);
+        Expect.Equal("assigneeId", field.Field);
+        Assert.DoesNotContain(_writes.Calls, static c => c.Method == "Change");
+    }
+
+    [Fact]
     public async Task A_cleared_assignee_cycle_and_project_need_no_lookup()
     {
         _writes.SetLive(Live());
