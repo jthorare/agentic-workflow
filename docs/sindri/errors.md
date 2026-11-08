@@ -80,6 +80,16 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-SECRET-001` | A secret pointer could not be resolved. | check the pointer in the profile and that the secret exists (env var, file, keychain item or 1Password item) |
 | `SND-SECRET-002` | A secret file is readable by other users. | chmod 600 &lt;file&gt; |
 | `SND-SECRET-004` | A secret couldn't be stored: neither the OS secret store nor the owner-only file took it. | on Linux install libsecret (secret-tool) or check the Sindri home is writable by you; on macOS unlock the login keychain; then run the command again |
+| `SND-CONN-001` | No connection has that name. | `sindri connection list` shows the names |
+| `SND-CONN-002` | The connection has to be signed in again. | run `sindri connection add &lt;name&gt;` again |
+| `SND-CONN-003` | Nobody finished the browser sign-in in 5 minutes. | run the command again and finish the consent page |
+| `SND-CONN-004` | The sign-in callback's state did not match this sign-in. | run the command again; do not reuse an old consent link |
+| `SND-CONN-005` | The provider refused to refresh the token. | sign in again |
+| `SND-CONN-006` | The connection's secret could not be stored, read or deleted. | see `SND-SECRET-004` |
+| `SND-CONN-007` | The preset needs a client id and none was given. | pass `--client-id` |
+| `SND-CONN-008` | The connection name is not `&lt;service&gt;:&lt;label&gt;` in lowercase. | use letters, digits and `-`, 1 to 32 characters per part |
+| `SND-CONN-009` | Consent was denied at the provider. | run the command again and allow access |
+| `SND-CONN-010` | A connection with that name exists. | pick another label, or `sindri connection remove` it first |
 | `SND-TRACKER-001` | The tracker's source is missing or unreadable (for plan-file: the repo path or plan dir). | Restore that directory, or fix `path` in repos/&lt;name&gt;.yaml and run `sindri profile approve`. |
 | `SND-TRACKER-002` | The tracker's source holds no items to read (for plan-file: no plan file matches tracker.include). | Fix tracker.include in profile.yaml (or restore the plan files), then run `sindri profile approve`. |
 | `SND-TRACKER-003` | A plan file is too big to read (over 2 MiB). | Split the plan file into smaller plans. |
