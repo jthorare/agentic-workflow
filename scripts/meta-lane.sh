@@ -52,6 +52,7 @@ meta_bin="${AW_META_BIN:-$state_dir/bin/aw-meta}"
 . "$here/launcher-lib.sh"
 launcher_load "$state_dir" || exit 1
 launcher_apply_team_agent "$config" "$meta_lane" || exit $?
+launcher_apply_routing "$config" "$meta_lane" || exit $?
 agent="$(launcher_lane_agent "$lane" "$meta_lane")"
 launcher_agent_ok "$agent" || exit 1
 field() { launcher_agent_field "$agent" "$1"; }
@@ -192,6 +193,17 @@ fi
 if [ "$agent" = claude-code ]; then
   [ "$mode" = resume ] && [[ "$tpl" != *'{name}'* ]] && args+=(-n "$name")
   args=("${args[0]}" ${claude_args[@]+"${claude_args[@]}"} "${args[@]:1}")
+fi
+# A model routed to this lane (team.json routing.lanes.<lane>.model) goes in as the CLI's own flag, right after the binary. A
+# catalog entry with another model form (cursor-flag is reserved) gets none.
+routed_model="$(launcher_lane_model "$lane")"
+if [ -n "$routed_model" ]; then
+  case "$routed_model" in -*) fail 1 "meta-lane: lane $lane: the routed model '$routed_model' starts with '-'; the agent was not started" ;; esac
+  case "$(field model)" in
+    claude-flag) args=("${args[0]}" --model "$routed_model" "${args[@]:1}") ;;
+    codex-flag) args=("${args[0]}" -m "$routed_model" "${args[@]:1}") ;;
+    *) echo "meta-lane: lane $lane: agent $agent has no model flag the launcher applies; routed model '$routed_model' not passed" >&2 ;;
+  esac
 fi
 # A launcher run from inside a Claude session (the meta recreating a dead lane) must not hand the lane that session's
 # identity: its id, pid, messaging socket and token. Only these are cleared; user settings such as model or

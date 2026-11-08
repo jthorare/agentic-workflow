@@ -1,9 +1,7 @@
 using System.Globalization;
 using Aw.Meta.Core;
 using Aw.Meta.Core.Commands;
-using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Health;
-using Aw.Meta.Core.Usage;
 using Aw.Meta.Features.Watch;
 using Aw.Meta.Testing;
 using Aw.Meta.Tests.Reserve;
@@ -22,7 +20,7 @@ public sealed class WatchTests
         _world.Values,
         _world.Delay,
         _world.Clock,
-        new UsageMonitor(new UsageReader(_world.LaneFiles, _world.LaneSessions, _world.ClaudeTranscripts, _world.Panes, _world.Messages, _world.Clock), new UsageWatcher(new PaneSubmitter(_world.Panes, _world.Delay), _world.Log, _world.Values, _world.Clock)));
+        _world.Monitor);
 
     private static string Pr(int number, string state, string head, string mergeable = "MERGEABLE", bool draft = false) =>
         string.Create(CultureInfo.InvariantCulture, $$"""{"number":{{number}},"state":"{{state}}","isDraft":{{(draft ? "true" : "false")}},"headRefOid":"{{head}}","mergeable":"{{mergeable}}","title":"t{{number}}"}""");

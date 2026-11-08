@@ -11,7 +11,8 @@ namespace Aw.Meta.Features.LaneRecycle;
 /// <param name="config">The team config.</param>
 /// <param name="guard">The refusals.</param>
 /// <param name="runner">The recycle itself.</param>
-internal sealed class LaneRecycleService(IMetaConfig config, RecycleGuard guard, RecycleRunner runner) : IService<LaneRecycleRequest, LaneRecycleResponse>
+/// <param name="switcher">The move to another agent, for a lane routing.lanes assigns elsewhere.</param>
+internal sealed class LaneRecycleService(IMetaConfig config, RecycleGuard guard, RecycleRunner runner, SwitchRunner switcher) : IService<LaneRecycleRequest, LaneRecycleResponse>
 {
     public async ValueTask<Result<LaneRecycleResponse>> Handle(LaneRecycleRequest request, CancellationToken cancellationToken)
     {
@@ -28,8 +29,14 @@ internal sealed class LaneRecycleService(IMetaConfig config, RecycleGuard guard,
             return plan.Error;
         }
 
-        return request.DryRun
-            ? new LaneRecycleResponse(plan.Value.Lane, DryRun: true, plan.Value.OldSession.Value, NewSession: null, plan.Value.OldTokens, plan.Value.Digest, RecycleRunner.Steps(plan.Value))
+        var switching = plan.Value.SwitchTo is not null;
+        if (request.DryRun)
+        {
+            return new LaneRecycleResponse(plan.Value.Lane, DryRun: true, plan.Value.OldSession.Value, NewSession: null, plan.Value.OldTokens, plan.Value.Digest, switching ? SwitchRunner.Steps(plan.Value) : RecycleRunner.Steps(plan.Value));
+        }
+
+        return switching
+            ? await switcher.Run(plan.Value, cancellationToken).ConfigureAwait(false)
             : await runner.Run(plan.Value, cancellationToken).ConfigureAwait(false);
     }
 }
