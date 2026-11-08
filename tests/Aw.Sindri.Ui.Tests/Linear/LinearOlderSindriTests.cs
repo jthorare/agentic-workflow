@@ -95,6 +95,16 @@ public sealed class LinearOlderSindriTests
     }
 
     [Fact]
+    public async Task A_500_on_an_issue_whose_key_holds_404_is_not_the_older_message()
+    {
+        _sheet.Server.LinearIssueAnswer = new RouteAnswer(HttpStatusCode.InternalServerError, string.Empty);
+
+        var sheet = await _sheet.Opened("ENG-404", Token);
+
+        Assert.NotEqual(Older, sheet.ProblemText, StringComparer.Ordinal);
+    }
+
+    [Fact]
     public async Task A_Sindri_that_is_really_down_still_says_it_is_not_answering_on_the_sheet()
     {
         _sheet.Server.GoDown();
