@@ -13,7 +13,7 @@ public sealed class GraphValidatorTests
     [Fact]
     public void A_spec_with_two_triggers_is_refused_naming_both_nodes()
     {
-        var spec = Spec([Schedule("daily"), Schedule("hourly"), Notify("tell", "hi")], [Edge("daily", "tell"), Edge("hourly", "tell")]);
+        var spec = Spec([Trigger("daily"), Trigger("hourly"), Notify("tell", "hi")], [Edge("daily", "tell"), Edge("hourly", "tell")]);
 
         var result = Validator().Validate(spec, GraphMode.Activate);
 
@@ -30,7 +30,7 @@ public sealed class GraphValidatorTests
     {
         // daily -> a -> c, and daily -> b: b is a sibling branch of c, and c is downstream of a
         var spec = Spec(
-            [Schedule("daily"), Search("a", "after {{c.facts}}"), Search("b"), Search("c", "before {{b.facts}}")],
+            [Trigger("daily"), Search("a", "after {{c.facts}}"), Search("b"), Search("c", "before {{b.facts}}")],
             [Edge("daily", "a"), Edge("daily", "b"), Edge("a", "c")]);
 
         var result = Validator().Validate(spec, GraphMode.Activate);
@@ -49,7 +49,7 @@ public sealed class GraphValidatorTests
     public void A_cycle_is_refused_with_the_path()
     {
         var spec = Spec(
-            [Schedule("daily"), Search("a"), Search("b"), Search("c")],
+            [Trigger("daily"), Search("a"), Search("b"), Search("c")],
             [Edge("daily", "a"), Edge("a", "b"), Edge("b", "c"), Edge("c", "a")]);
 
         var result = Validator().Validate(spec, GraphMode.Activate);
@@ -63,7 +63,7 @@ public sealed class GraphValidatorTests
     [Fact]
     public void A_draft_may_have_wiring_gaps_but_activation_refuses_every_finding()
     {
-        var unconnected = Spec([Schedule("daily"), Search("a"), Search("lonely")], [Edge("daily", "a")]);
+        var unconnected = Spec([Trigger("daily"), Search("a"), Search("lonely")], [Edge("daily", "a")]);
         var noTrigger = Spec([Search("a"), Search("b")], [Edge("a", "b")]);
 
         foreach (var (spec, code) in new[] { (unconnected, "GRAPH-WIRING-001"), (noTrigger, "GRAPH-TRIGGER-002") })
@@ -84,12 +84,33 @@ public sealed class GraphValidatorTests
     public void A_draft_still_refuses_what_is_not_a_wiring_gap()
     {
         var odd = new GraphNode(NodeId.From("odd"), "teleport", Title: null, Config: JsonNode.Parse("{}")!.AsObject());
-        var spec = Spec([Schedule("daily"), odd], [Edge("daily", "odd")]);
+        var spec = Spec([Trigger("daily"), odd], [Edge("daily", "odd")]);
 
         var draft = Validator().Validate(spec, GraphMode.Draft);
 
         var unknown = Assert.Single(draft.Findings, f => f.Code == "GRAPH-BLOCK-001");
         Assert.Equal(["odd"], unknown.Nodes);
         Assert.False(draft.Passed);
+    }
+
+    [Fact]
+    public void A_bad_cron_or_timezone_is_refused_naming_the_field()
+    {
+        var spec = Spec([Trigger("daily")], []);
+        static string? Problem(string cron, string? zone) => cron.Split(' ').Length != 5 ? "cron needs five fields" : zone == "Mars/Base" ? "unknown timezone 'Mars/Base'" : null;
+
+        var badCron = Validator(cron: Problem).Validate(Spec([new GraphNode(NodeId.From("daily"), "schedule", Title: null, Config: JsonNode.Parse("""{"cron":"* *"}""")!.AsObject())], []), GraphMode.Activate);
+        var badZone = Validator(cron: Problem).Validate(Spec([new GraphNode(NodeId.From("daily"), "schedule", Title: null, Config: JsonNode.Parse("""{"cron":"0 7 * * *","timezone":"Mars/Base"}""")!.AsObject())], []), GraphMode.Activate);
+
+        foreach (var result in new[] { badCron, badZone })
+        {
+            var finding = Assert.Single(result.Findings, f => f.Code == "GRAPH-CRON-001");
+            Assert.Equal(["daily"], finding.Nodes);
+            Assert.Equal("config.cron", finding.Field);
+        }
+
+        Assert.Contains("five fields", badCron.Findings[0].Message, StringComparison.Ordinal);
+        Assert.Contains("Mars/Base", badZone.Findings[0].Message, StringComparison.Ordinal);
+        Assert.Empty(Validator(cron: Problem).Validate(spec, GraphMode.Activate).Findings);
     }
 }

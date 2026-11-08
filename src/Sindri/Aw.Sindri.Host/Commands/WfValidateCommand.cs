@@ -3,6 +3,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Interpolation;
+using Aw.Sindri.Core.Graph.Schedule;
 using Aw.Sindri.Core.Graph.Validation;
 using Aw.Sindri.Core.Profile;
 
@@ -55,7 +56,7 @@ internal static class WfValidateCommand
         }
 
         var world = services.GetService<IGraphWorld>() ?? await ProfileGraphWorld.Load(services.GetService<IApprovedProfile>(), ct).ConfigureAwait(false);
-        var context = new GraphValidationContext(services.GetRequiredService<IGraphBlockCatalog>().Types, world, (_, _) => null, condition => new ConditionParse(Error: null, Template.References(condition)));
+        var context = new GraphValidationContext(services.GetRequiredService<IGraphBlockCatalog>().Types, world, (cron, zone) => CronExpression.TryParse(cron, zone, out _, out var problem) ? null : problem, condition => new ConditionParse(Error: null, Template.References(condition)));
         var result = new GraphValidator(context).Validate(spec.Value, GraphMode.Activate);
         return await Print(result.Findings, result.Passed ? GraphJson.Hash(spec.Value) : null, json, output).ConfigureAwait(false);
     }

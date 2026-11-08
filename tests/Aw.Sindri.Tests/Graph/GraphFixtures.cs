@@ -21,7 +21,7 @@ internal static class GraphFixtures
     public static GraphValidator Validator(IGraphWorld? world = null, Func<string, string?, string?>? cron = null, Func<string, ConditionParse>? condition = null) =>
         new(new GraphValidationContext(Blocks, world ?? new KnownWorld(), cron ?? ((_, _) => null), condition ?? (text => new ConditionParse(Error: null, References: Template(text)))));
 
-    public static GraphNode Schedule(string id) => new(NodeId.From(id), "schedule", Title: null, new JsonObject { ["cron"] = "0 7 * * 1-5", ["timezone"] = "America/Los_Angeles" });
+    public static GraphNode Trigger(string id) => new(NodeId.From(id), "schedule", Title: null, new JsonObject { ["cron"] = "0 7 * * 1-5", ["timezone"] = "America/Los_Angeles" });
 
     public static GraphNode Search(string id, string query = "last checked") => new(NodeId.From(id), "memory_search", Title: null, new JsonObject { ["memory"] = "drift", ["query"] = query });
 

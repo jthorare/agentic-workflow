@@ -117,6 +117,7 @@ internal static class Usage
         "       sindri context sources sync [<source>] [--detach] [--json]   sync the intent sources now as a job and follow it (Ctrl-C cancels the job, a second Ctrl-C leaves); --detach prints the job id and returns; a second start while one runs is SND-JOB-409",
         "       sindri pack check <dir> [--json]   check a lens pack in-process: schema, files, lens count, then its hash and the pin line to approve (exit 0 pass, 1 findings, 2 error)",
         "       sindri recipe validate <file> [--json] [--skills <dir>]   check a recipe in-process: rule lines, then its hash; --skills reads the skill blocks from <dir> instead of the usual folder (exit 0 pass, 1 fail, 2 error)",
+        "       sindri wf validate <file> [--json]   check a workflow graph in-process: findings naming node and field with the fix, or its hash (exit 0 pass, 1 findings, 2 error)",
         "       sindri recipe eval <file> [--json] [--skills <dir>]       run a recipe's eval cases in-process; --skills as for validate (exit 0 pass, 1 fail, 2 error)",
         "       sindri recipe eval --scaffold <file> [--out <dir>]   print a happy-path eval case for the recipe; a route recipe has a case per path, and --out writes each to <dir>/<case>.jsonl (it refuses to overwrite)",
         "       sindri recipe eval --record <address> --out <file>   an instance's history as an eval case, read from the ledger and the stored facts (no server needed)",
