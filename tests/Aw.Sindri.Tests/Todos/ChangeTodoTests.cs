@@ -24,7 +24,7 @@ public sealed class ChangeTodoTests
         Assert.True(changed.IsSuccess, changed.IsError ? changed.Error.ToString() : null);
         var recorded = Assert.Single(_h.Slice.Store.Events);
         var payload = _h.Payload<TodoChanged>(recorded);
-        Assert.Equal($"todo.changed:{_id.Value}:v2", recorded.IdempotencyKey);
+        Assert.Equal($"todo:{_id.Value}:v2", recorded.IdempotencyKey);
         Assert.Equal((2L, "reply to Sam about the offsite", null, false, "human:cli"), (payload.Version, payload.Text, payload.Due, payload.ClearDue, payload.By));
         Assert.Equal(["sindri://linear/ENG-12"], payload.Links);
         Assert.Equal((_id, 2L), (changed.Value.Id, changed.Value.Version));

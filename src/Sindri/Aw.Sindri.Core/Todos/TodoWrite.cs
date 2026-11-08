@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
@@ -35,6 +36,15 @@ public static class TodoWrite
     /// <param name="piped">Whether the CLI had no terminal on stdout.</param>
     /// <returns>The 'via'.</returns>
     public static string? Via(bool piped) => piped ? Pipe : null;
+
+    /// <summary>
+    /// The one idempotency key of every state change that moves <paramref name="id"/> to <paramref name="version"/>: 'todo:&lt;id&gt;:v&lt;n&gt;'. The event type is not in it, so two writers
+    /// that read the same version (a done and a remove, a change and a mark) share the key and only the first appends (todo spec D9).
+    /// </summary>
+    /// <param name="id">The todo.</param>
+    /// <param name="version">The version the change moves it to.</param>
+    /// <returns>The key.</returns>
+    public static string VersionKey(TodoId id, long version) => string.Create(CultureInfo.InvariantCulture, $"todo:{id.Value}:v{version}");
 
     /// <summary>Appends <paramref name="entry"/>.</summary>
     /// <param name="ledger">The ledger.</param>

@@ -1,9 +1,7 @@
-using System.Globalization;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
-using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Todos;
@@ -13,7 +11,7 @@ namespace Aw.Sindri.Features.MarkTodo;
 
 /// <summary>
 /// Checks off, reopens, removes or restores a todo (todo spec §4.1, §4.4, D8, D9; request class): reads its row, refuses an unknown todo, an open conflict, a stale version (when the caller sent one) and a verb the
-/// state doesn't fit, and appends the verb's event keyed by the todo and the version it moves to.
+/// state doesn't fit, and appends the verb's event under the todo's version key (TodoWrite.VersionKey, shared by every state change, so a done and a remove at one version can't both win).
 /// </summary>
 /// <param name="views">The todos.</param>
 /// <param name="ledger">Appends the event.</param>
@@ -61,13 +59,11 @@ internal sealed class MarkTodoService(IViewReader views, ILedgerStore ledger, He
         var via = TodoWrite.Via(request.Piped);
         return request.Verb switch
         {
-            TodoVerb.Done => events.Entry(EventTypes.TodoDone, new TodoDone(request.Id, version, by, via), Key(EventTypes.TodoDone, request.Id, version)),
-            TodoVerb.Reopen => events.Entry(EventTypes.TodoReopened, new TodoReopened(request.Id, version, by, via), Key(EventTypes.TodoReopened, request.Id, version)),
-            TodoVerb.Remove => events.Entry(EventTypes.TodoRemoved, new TodoRemoved(request.Id, version, by, via), Key(EventTypes.TodoRemoved, request.Id, version)),
-            TodoVerb.Restore => events.Entry(EventTypes.TodoRestored, new TodoRestored(request.Id, version, by, via), Key(EventTypes.TodoRestored, request.Id, version)),
+            TodoVerb.Done => events.Entry(EventTypes.TodoDone, new TodoDone(request.Id, version, by, via), TodoWrite.VersionKey(request.Id, version)),
+            TodoVerb.Reopen => events.Entry(EventTypes.TodoReopened, new TodoReopened(request.Id, version, by, via), TodoWrite.VersionKey(request.Id, version)),
+            TodoVerb.Remove => events.Entry(EventTypes.TodoRemoved, new TodoRemoved(request.Id, version, by, via), TodoWrite.VersionKey(request.Id, version)),
+            TodoVerb.Restore => events.Entry(EventTypes.TodoRestored, new TodoRestored(request.Id, version, by, via), TodoWrite.VersionKey(request.Id, version)),
             _ => throw new ArgumentOutOfRangeException(nameof(request), request.Verb, "not a todo verb"),
         };
     }
-
-    private static string Key(string type, TodoId id, long version) => string.Create(CultureInfo.InvariantCulture, $"{type}:{id.Value}:v{version}");
 }

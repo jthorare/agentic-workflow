@@ -45,7 +45,7 @@ public sealed class MarkTodoTests
         Assert.True(marked.IsSuccess, marked.IsError ? marked.Error.ToString() : null);
         var recorded = Assert.Single(_h.Slice.Store.Events);
         Assert.Equal(type, recorded.Envelope.Type);
-        Assert.Equal($"{type}:{_id.Value}:v{TodoHarness.Num(seen + 1)}", recorded.IdempotencyKey);
+        Assert.Equal($"todo:{_id.Value}:v{TodoHarness.Num(seen + 1)}", recorded.IdempotencyKey);
         Assert.Equal((_id, seen + 1), (marked.Value.Id, marked.Value.Version));
     }
 

@@ -1,4 +1,3 @@
-using System.Globalization;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Commands;
@@ -12,7 +11,7 @@ namespace Aw.Sindri.Features.ChangeTodo;
 
 /// <summary>
 /// Edits a todo (todo spec §4.1, §4.4, D9; request class): reads its row, refuses an unknown todo, an open conflict and a stale version, checks and scrubs the new text and links, and appends
-/// 'todo.changed' keyed by the todo and the version it moves to. Losing that key to another command is SND-TODO-409.
+/// 'todo.changed' under the todo's version key (TodoWrite.VersionKey, shared by every state change). Losing that key to another command is SND-TODO-409.
 /// </summary>
 /// <param name="views">The todos.</param>
 /// <param name="ledger">Appends the event.</param>
@@ -58,7 +57,7 @@ internal sealed class ChangeTodoService(IViewReader views, ILedgerStore ledger, 
 
         var version = row.Value.Version + 1;
         var changed = new TodoChanged(request.Id, version, fields.Value.Text, request.Due, request.ClearDue, fields.Value.Links, TodoWrite.By(caller), TodoWrite.Via(request.Piped));
-        var key = string.Create(CultureInfo.InvariantCulture, $"{EventTypes.TodoChanged}:{request.Id.Value}:v{version}");
+        var key = TodoWrite.VersionKey(request.Id, version);
         var appended = await TodoWrite.Append(ledger, grant, events.Entry(EventTypes.TodoChanged, changed, key), caller.CommandId, cancellationToken).ConfigureAwait(false);
         return appended.IsError ? appended.Error : new TodoAccepted(appended.Value, request.Id, version, request.ClearDue ? null : request.Due ?? row.Value.Due);
     }
