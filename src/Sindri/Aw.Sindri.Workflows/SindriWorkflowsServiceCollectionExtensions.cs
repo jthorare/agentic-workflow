@@ -52,7 +52,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
         services.TryAddSingleton<IModelPickSettings, NoModelPickSettings>();   // the profile adapter replaces these two
         services.TryAddSingleton<IModelPickHistory, NoModelPickHistory>();
         return services
-        .AddSingleton<AgentStepActivities>().AddSingleton<AgentLaunching>().AddSingleton<AgentLaunchWaiting>().AddSingleton<ModelPicker>().AddSingleton<ModelPickStore>().AddSingleton<ChallengerPick>().AddSingleton<AgentPlacing>()
+        .AddSingleton<AgentStepActivities>().AddSingleton<AgentLaunching>().AddSingleton<AgentLaunchWaiting>().AddSingleton<ModelPicker>().AddSingleton<ModelPickStore>().AddSingleton<ChallengerPick>().AddSingleton<AgentPlacing>().AddSingleton<AgentLaunchInputs>()
         .AddSingleton<AgentRecovering>().AddSingleton<SkillStepWatching>().AddSingleton<AgentStepSelection>().AddSingleton<IStepOutputs, DiskStepOutputs>()
         .AddSingleton<UsageFlush>(static provider => (launch, ct) => FlushScoped(provider, launch, ct))
         .AddSingleton<AgentTargetResolver>().AddSingleton<AgentLaunchRecorder>().AddSingleton(AgentRuntimeOptions.Default)
