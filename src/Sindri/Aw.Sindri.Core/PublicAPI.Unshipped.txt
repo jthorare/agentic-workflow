@@ -24884,6 +24884,8 @@ static readonly Aw.Sindri.Core.SindriErrors.GraphFindings -> Aw.Kernel.ErrorDefi
 static readonly Aw.Sindri.Core.SindriErrors.GraphInvalid -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.GraphNotFound -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.GraphSlugTaken -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphIdTaken -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphArchived -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.GraphStaleRevision -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.GraphUnknownBlock -> Aw.Kernel.ErrorDefinition!
 static Aw.Sindri.Core.Graph.GraphJson.Write(Aw.Sindri.Core.Graph.GraphSpec! spec) -> string!

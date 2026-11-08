@@ -30,4 +30,10 @@ public static partial class SindriErrors
 
     /// <summary>SND-GRAPH-009: another workflow already has that slug.</summary>
     public static readonly ErrorDefinition GraphSlugTaken = new("SND-GRAPH-009", ErrorKind.Conflict, "Another workflow already has that slug");
+
+    /// <summary>SND-GRAPH-010: a workflow with that id already exists.</summary>
+    public static readonly ErrorDefinition GraphIdTaken = new("SND-GRAPH-010", ErrorKind.Conflict, "A workflow with that id already exists");
+
+    /// <summary>SND-GRAPH-011: an archived workflow can't be activated.</summary>
+    public static readonly ErrorDefinition GraphArchived = new("SND-GRAPH-011", ErrorKind.Conflict, "This workflow is archived; it can't be activated");
 }

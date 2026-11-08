@@ -103,6 +103,38 @@ public abstract class WorkflowStoreContract
         Expect.Equal(_slug, Expect.Only((await store.List(includeArchived: true, Token)).Value).Slug);
     }
 
+    /// <summary>An id that is already used is refused before anything is written, so the workflow keeps its revisions.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Create_with_a_used_id_is_refused_and_keeps_the_revisions()
+    {
+        var store = Create();
+        _ = (await store.Create(_id, _slug, Spec("one"), "owner", Token)).Value;
+        _ = (await store.Save(_id, 1, Spec("two"), "owner", Token)).Value;
+
+        var again = await store.Create(_id, WorkflowSlug.From("another-slug"), Spec("three"), "owner", Token);
+
+        Expect.Equal(SindriErrors.GraphIdTaken.Code, again.Error.Code);
+        Expect.Equal(2, (await store.Get(_id, Token)).Value.LatestRevision);
+        Expect.Equal("one", (await store.GetRevision(_id, 1, Token)).Value.Spec.Name);
+        Expect.Equal(_slug, (await store.Get(_id, Token)).Value.Slug);
+    }
+
+    /// <summary>Archiving turns a workflow off for good, so activating it again is refused and nothing is pinned.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Activate_on_an_archived_workflow_is_refused()
+    {
+        var store = Create();
+        _ = (await store.Create(_id, _slug, Spec("one"), "owner", Token)).Value;
+        _ = (await store.Archive(_id, Token)).Value;
+
+        var pinned = await store.Activate(_id, 1, Token);
+
+        Expect.Equal(SindriErrors.GraphArchived.Code, pinned.Error.Code);
+        Expect.True((await store.Get(_id, Token)).Value.ActiveRevision is null);
+    }
+
     /// <summary>A workflow nobody created is not found.</summary>
     /// <returns>The test.</returns>
     [Fact]
