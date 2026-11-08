@@ -26360,3 +26360,195 @@ Aw.Sindri.Core.Graph.Blocks.PromptBlock.CheckConfig(System.Text.Json.Nodes.JsonO
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.MarkTick(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.DateTimeOffset tick, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.LastTick(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.DateTimeOffset?>!>
 static Aw.Sindri.Core.Graph.Runs.WorkflowRun.TriggerProblem(string! trigger) -> string?
+Aw.Sindri.Core.Graph.Blocks.IJevPort
+Aw.Sindri.Core.Graph.Blocks.IJevPort.Ask(Aw.Sindri.Core.Graph.Blocks.JevCall! call, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.JevOutcome!>!>
+Aw.Sindri.Core.Graph.Blocks.ILockfileSource
+Aw.Sindri.Core.Graph.Blocks.ILockfileSource.Read(string! repo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.VulnPackage!>!>!>
+Aw.Sindri.Core.Graph.Blocks.INewsProvider
+Aw.Sindri.Core.Graph.Blocks.INewsProvider.Name.get -> string!
+Aw.Sindri.Core.Graph.Blocks.INewsProvider.Read(Aw.Sindri.Core.Graph.Blocks.NewsRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.NewsItem!>!>!>
+Aw.Sindri.Core.Graph.Blocks.IVulnerabilityProvider
+Aw.Sindri.Core.Graph.Blocks.IVulnerabilityProvider.Name.get -> string!
+Aw.Sindri.Core.Graph.Blocks.IVulnerabilityProvider.Query(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.VulnPackage!>! packages, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.Vulnerability!>!>!>
+Aw.Sindri.Core.Graph.Blocks.JevAnswerValue
+Aw.Sindri.Core.Graph.Blocks.JevAnswerValue.Choice.get -> string?
+Aw.Sindri.Core.Graph.Blocks.JevAnswerValue.Choice.init -> void
+Aw.Sindri.Core.Graph.Blocks.JevAnswerValue.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.JevAnswerValue!
+Aw.Sindri.Core.Graph.Blocks.JevAnswerValue.Confidence.get -> double?
+Aw.Sindri.Core.Graph.Blocks.JevAnswerValue.Confidence.init -> void
+Aw.Sindri.Core.Graph.Blocks.JevAnswerValue.Deconstruct(out string! Type, out string? Choice, out double? Score, out double? Noul, out double? Confidence, out System.Collections.Generic.IReadOnlyDictionary<string!, double>? Probabilities) -> void
+Aw.Sindri.Core.Graph.Blocks.JevAnswerValue.Equals(Aw.Sindri.Core.Graph.Blocks.JevAnswerValue? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.JevAnswerValue.JevAnswerValue(string! Type, string? Choice, double? Score, double? Noul, double? Confidence, System.Collections.Generic.IReadOnlyDictionary<string!, double>? Probabilities) -> void
+Aw.Sindri.Core.Graph.Blocks.JevAnswerValue.Noul.get -> double?
+Aw.Sindri.Core.Graph.Blocks.JevAnswerValue.Noul.init -> void
+Aw.Sindri.Core.Graph.Blocks.JevAnswerValue.Probabilities.get -> System.Collections.Generic.IReadOnlyDictionary<string!, double>?
+Aw.Sindri.Core.Graph.Blocks.JevAnswerValue.Probabilities.init -> void
+Aw.Sindri.Core.Graph.Blocks.JevAnswerValue.Score.get -> double?
+Aw.Sindri.Core.Graph.Blocks.JevAnswerValue.Score.init -> void
+Aw.Sindri.Core.Graph.Blocks.JevAnswerValue.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.JevAnswerValue.Type.init -> void
+Aw.Sindri.Core.Graph.Blocks.JevBlock
+Aw.Sindri.Core.Graph.Blocks.JevBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.JevBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.JevBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.JevBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.JevBlock.JevBlock(Aw.Sindri.Core.Graph.Blocks.IJevPort! jev) -> void
+Aw.Sindri.Core.Graph.Blocks.JevBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.JevBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.JevCall
+Aw.Sindri.Core.Graph.Blocks.JevCall.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.JevCall!
+Aw.Sindri.Core.Graph.Blocks.JevCall.Deconstruct(out string? Model, out string! Text, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.JevQuestion!>! Questions) -> void
+Aw.Sindri.Core.Graph.Blocks.JevCall.Equals(Aw.Sindri.Core.Graph.Blocks.JevCall? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.JevCall.JevCall(string? Model, string! Text, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.JevQuestion!>! Questions) -> void
+Aw.Sindri.Core.Graph.Blocks.JevCall.Model.get -> string?
+Aw.Sindri.Core.Graph.Blocks.JevCall.Model.init -> void
+Aw.Sindri.Core.Graph.Blocks.JevCall.Questions.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.JevQuestion!>!
+Aw.Sindri.Core.Graph.Blocks.JevCall.Questions.init -> void
+Aw.Sindri.Core.Graph.Blocks.JevCall.Text.get -> string!
+Aw.Sindri.Core.Graph.Blocks.JevCall.Text.init -> void
+Aw.Sindri.Core.Graph.Blocks.JevOutcome
+Aw.Sindri.Core.Graph.Blocks.JevOutcome.Answers.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Graph.Blocks.JevAnswerValue!>!
+Aw.Sindri.Core.Graph.Blocks.JevOutcome.Answers.init -> void
+Aw.Sindri.Core.Graph.Blocks.JevOutcome.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.JevOutcome!
+Aw.Sindri.Core.Graph.Blocks.JevOutcome.Deconstruct(out string! Model, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Graph.Blocks.JevAnswerValue!>! Answers, out double? InputTokens, out double? OutputTokens) -> void
+Aw.Sindri.Core.Graph.Blocks.JevOutcome.Equals(Aw.Sindri.Core.Graph.Blocks.JevOutcome? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.JevOutcome.InputTokens.get -> double?
+Aw.Sindri.Core.Graph.Blocks.JevOutcome.InputTokens.init -> void
+Aw.Sindri.Core.Graph.Blocks.JevOutcome.JevOutcome(string! Model, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Graph.Blocks.JevAnswerValue!>! Answers, double? InputTokens, double? OutputTokens) -> void
+Aw.Sindri.Core.Graph.Blocks.JevOutcome.Model.get -> string!
+Aw.Sindri.Core.Graph.Blocks.JevOutcome.Model.init -> void
+Aw.Sindri.Core.Graph.Blocks.JevOutcome.OutputTokens.get -> double?
+Aw.Sindri.Core.Graph.Blocks.JevOutcome.OutputTokens.init -> void
+Aw.Sindri.Core.Graph.Blocks.JevQuestion
+Aw.Sindri.Core.Graph.Blocks.JevQuestion.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.JevQuestion!
+Aw.Sindri.Core.Graph.Blocks.JevQuestion.Criteria.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+Aw.Sindri.Core.Graph.Blocks.JevQuestion.Criteria.init -> void
+Aw.Sindri.Core.Graph.Blocks.JevQuestion.Deconstruct(out string! Name, out string! Type, out string! Instructions, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Criteria) -> void
+Aw.Sindri.Core.Graph.Blocks.JevQuestion.Equals(Aw.Sindri.Core.Graph.Blocks.JevQuestion? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.JevQuestion.Instructions.get -> string!
+Aw.Sindri.Core.Graph.Blocks.JevQuestion.Instructions.init -> void
+Aw.Sindri.Core.Graph.Blocks.JevQuestion.JevQuestion(string! Name, string! Type, string! Instructions, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Criteria) -> void
+Aw.Sindri.Core.Graph.Blocks.JevQuestion.Name.get -> string!
+Aw.Sindri.Core.Graph.Blocks.JevQuestion.Name.init -> void
+Aw.Sindri.Core.Graph.Blocks.JevQuestion.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.JevQuestion.Type.init -> void
+Aw.Sindri.Core.Graph.Blocks.NewsBlock
+Aw.Sindri.Core.Graph.Blocks.NewsBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.NewsBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.NewsBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.NewsBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.NewsBlock.NewsBlock(System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Graph.Blocks.INewsProvider!>! providers) -> void
+Aw.Sindri.Core.Graph.Blocks.NewsBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.NewsBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.NewsItem
+Aw.Sindri.Core.Graph.Blocks.NewsItem.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.NewsItem!
+Aw.Sindri.Core.Graph.Blocks.NewsItem.Comments.get -> int?
+Aw.Sindri.Core.Graph.Blocks.NewsItem.Comments.init -> void
+Aw.Sindri.Core.Graph.Blocks.NewsItem.Deconstruct(out string! Key, out string! Title, out string? Url, out string! Source, out int? Score, out int? Comments, out System.DateTimeOffset? PublishedAt) -> void
+Aw.Sindri.Core.Graph.Blocks.NewsItem.Equals(Aw.Sindri.Core.Graph.Blocks.NewsItem? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.NewsItem.Key.get -> string!
+Aw.Sindri.Core.Graph.Blocks.NewsItem.Key.init -> void
+Aw.Sindri.Core.Graph.Blocks.NewsItem.NewsItem(string! Key, string! Title, string? Url, string! Source, int? Score, int? Comments, System.DateTimeOffset? PublishedAt) -> void
+Aw.Sindri.Core.Graph.Blocks.NewsItem.PublishedAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Graph.Blocks.NewsItem.PublishedAt.init -> void
+Aw.Sindri.Core.Graph.Blocks.NewsItem.Score.get -> int?
+Aw.Sindri.Core.Graph.Blocks.NewsItem.Score.init -> void
+Aw.Sindri.Core.Graph.Blocks.NewsItem.Source.get -> string!
+Aw.Sindri.Core.Graph.Blocks.NewsItem.Source.init -> void
+Aw.Sindri.Core.Graph.Blocks.NewsItem.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.NewsItem.Title.init -> void
+Aw.Sindri.Core.Graph.Blocks.NewsItem.Url.get -> string?
+Aw.Sindri.Core.Graph.Blocks.NewsItem.Url.init -> void
+Aw.Sindri.Core.Graph.Blocks.NewsRequest
+Aw.Sindri.Core.Graph.Blocks.NewsRequest.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.NewsRequest!
+Aw.Sindri.Core.Graph.Blocks.NewsRequest.Deconstruct(out string! Feed, out string? Query, out int Limit, out System.DateTimeOffset? Since) -> void
+Aw.Sindri.Core.Graph.Blocks.NewsRequest.Equals(Aw.Sindri.Core.Graph.Blocks.NewsRequest? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.NewsRequest.Feed.get -> string!
+Aw.Sindri.Core.Graph.Blocks.NewsRequest.Feed.init -> void
+Aw.Sindri.Core.Graph.Blocks.NewsRequest.Limit.get -> int
+Aw.Sindri.Core.Graph.Blocks.NewsRequest.Limit.init -> void
+Aw.Sindri.Core.Graph.Blocks.NewsRequest.NewsRequest(string! Feed, string? Query, int Limit, System.DateTimeOffset? Since) -> void
+Aw.Sindri.Core.Graph.Blocks.NewsRequest.Query.get -> string?
+Aw.Sindri.Core.Graph.Blocks.NewsRequest.Query.init -> void
+Aw.Sindri.Core.Graph.Blocks.NewsRequest.Since.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Graph.Blocks.NewsRequest.Since.init -> void
+Aw.Sindri.Core.Graph.Blocks.VulnerabilitiesBlock
+Aw.Sindri.Core.Graph.Blocks.VulnerabilitiesBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.VulnerabilitiesBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.VulnerabilitiesBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.VulnerabilitiesBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.VulnerabilitiesBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.VulnerabilitiesBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.VulnerabilitiesBlock.VulnerabilitiesBlock(System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Graph.Blocks.IVulnerabilityProvider!>! providers, Aw.Sindri.Core.Graph.Blocks.ILockfileSource! lockfiles) -> void
+Aw.Sindri.Core.Graph.Blocks.Vulnerability
+Aw.Sindri.Core.Graph.Blocks.Vulnerability.Advisory.get -> string!
+Aw.Sindri.Core.Graph.Blocks.Vulnerability.Advisory.init -> void
+Aw.Sindri.Core.Graph.Blocks.Vulnerability.Aliases.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Blocks.Vulnerability.Aliases.init -> void
+Aw.Sindri.Core.Graph.Blocks.Vulnerability.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.Vulnerability!
+Aw.Sindri.Core.Graph.Blocks.Vulnerability.Deconstruct(out string! Advisory, out System.Collections.Generic.IReadOnlyList<string!>! Aliases, out string! Summary, out string? Severity, out string! Package, out string! Version, out string? FixedIn, out string! Url) -> void
+Aw.Sindri.Core.Graph.Blocks.Vulnerability.Equals(Aw.Sindri.Core.Graph.Blocks.Vulnerability? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.Vulnerability.FixedIn.get -> string?
+Aw.Sindri.Core.Graph.Blocks.Vulnerability.FixedIn.init -> void
+Aw.Sindri.Core.Graph.Blocks.Vulnerability.Package.get -> string!
+Aw.Sindri.Core.Graph.Blocks.Vulnerability.Package.init -> void
+Aw.Sindri.Core.Graph.Blocks.Vulnerability.Severity.get -> string?
+Aw.Sindri.Core.Graph.Blocks.Vulnerability.Severity.init -> void
+Aw.Sindri.Core.Graph.Blocks.Vulnerability.Summary.get -> string!
+Aw.Sindri.Core.Graph.Blocks.Vulnerability.Summary.init -> void
+Aw.Sindri.Core.Graph.Blocks.Vulnerability.Url.get -> string!
+Aw.Sindri.Core.Graph.Blocks.Vulnerability.Url.init -> void
+Aw.Sindri.Core.Graph.Blocks.Vulnerability.Version.get -> string!
+Aw.Sindri.Core.Graph.Blocks.Vulnerability.Version.init -> void
+Aw.Sindri.Core.Graph.Blocks.Vulnerability.Vulnerability(string! Advisory, System.Collections.Generic.IReadOnlyList<string!>! Aliases, string! Summary, string? Severity, string! Package, string! Version, string? FixedIn, string! Url) -> void
+Aw.Sindri.Core.Graph.Blocks.VulnPackage
+Aw.Sindri.Core.Graph.Blocks.VulnPackage.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.VulnPackage!
+Aw.Sindri.Core.Graph.Blocks.VulnPackage.Deconstruct(out string! Ecosystem, out string! Name, out string! Version) -> void
+Aw.Sindri.Core.Graph.Blocks.VulnPackage.Ecosystem.get -> string!
+Aw.Sindri.Core.Graph.Blocks.VulnPackage.Ecosystem.init -> void
+Aw.Sindri.Core.Graph.Blocks.VulnPackage.Equals(Aw.Sindri.Core.Graph.Blocks.VulnPackage? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.VulnPackage.Name.get -> string!
+Aw.Sindri.Core.Graph.Blocks.VulnPackage.Name.init -> void
+Aw.Sindri.Core.Graph.Blocks.VulnPackage.Version.get -> string!
+Aw.Sindri.Core.Graph.Blocks.VulnPackage.Version.init -> void
+Aw.Sindri.Core.Graph.Blocks.VulnPackage.VulnPackage(string! Ecosystem, string! Name, string! Version) -> void
+override Aw.Sindri.Core.Graph.Blocks.JevAnswerValue.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.JevAnswerValue.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.JevAnswerValue.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.JevCall.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.JevCall.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.JevCall.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.JevOutcome.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.JevOutcome.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.JevOutcome.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.JevQuestion.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.JevQuestion.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.JevQuestion.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.NewsItem.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.NewsItem.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.NewsItem.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.NewsRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.NewsRequest.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.NewsRequest.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.Vulnerability.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.Vulnerability.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.Vulnerability.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.VulnPackage.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.VulnPackage.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.VulnPackage.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.JevAnswerValue.operator !=(Aw.Sindri.Core.Graph.Blocks.JevAnswerValue? left, Aw.Sindri.Core.Graph.Blocks.JevAnswerValue? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.JevAnswerValue.operator ==(Aw.Sindri.Core.Graph.Blocks.JevAnswerValue? left, Aw.Sindri.Core.Graph.Blocks.JevAnswerValue? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.JevCall.operator !=(Aw.Sindri.Core.Graph.Blocks.JevCall? left, Aw.Sindri.Core.Graph.Blocks.JevCall? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.JevCall.operator ==(Aw.Sindri.Core.Graph.Blocks.JevCall? left, Aw.Sindri.Core.Graph.Blocks.JevCall? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.JevOutcome.operator !=(Aw.Sindri.Core.Graph.Blocks.JevOutcome? left, Aw.Sindri.Core.Graph.Blocks.JevOutcome? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.JevOutcome.operator ==(Aw.Sindri.Core.Graph.Blocks.JevOutcome? left, Aw.Sindri.Core.Graph.Blocks.JevOutcome? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.JevQuestion.operator !=(Aw.Sindri.Core.Graph.Blocks.JevQuestion? left, Aw.Sindri.Core.Graph.Blocks.JevQuestion? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.JevQuestion.operator ==(Aw.Sindri.Core.Graph.Blocks.JevQuestion? left, Aw.Sindri.Core.Graph.Blocks.JevQuestion? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.NewsItem.operator !=(Aw.Sindri.Core.Graph.Blocks.NewsItem? left, Aw.Sindri.Core.Graph.Blocks.NewsItem? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.NewsItem.operator ==(Aw.Sindri.Core.Graph.Blocks.NewsItem? left, Aw.Sindri.Core.Graph.Blocks.NewsItem? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.NewsRequest.operator !=(Aw.Sindri.Core.Graph.Blocks.NewsRequest? left, Aw.Sindri.Core.Graph.Blocks.NewsRequest? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.NewsRequest.operator ==(Aw.Sindri.Core.Graph.Blocks.NewsRequest? left, Aw.Sindri.Core.Graph.Blocks.NewsRequest? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.Vulnerability.operator !=(Aw.Sindri.Core.Graph.Blocks.Vulnerability? left, Aw.Sindri.Core.Graph.Blocks.Vulnerability? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.Vulnerability.operator ==(Aw.Sindri.Core.Graph.Blocks.Vulnerability? left, Aw.Sindri.Core.Graph.Blocks.Vulnerability? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.VulnPackage.operator !=(Aw.Sindri.Core.Graph.Blocks.VulnPackage? left, Aw.Sindri.Core.Graph.Blocks.VulnPackage? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.VulnPackage.operator ==(Aw.Sindri.Core.Graph.Blocks.VulnPackage? left, Aw.Sindri.Core.Graph.Blocks.VulnPackage? right) -> bool
