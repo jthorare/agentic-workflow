@@ -19,7 +19,7 @@ internal static class TodoQuickParse
         var cut = LastSpace(body);
         if (cut <= 0)
         {
-            return new QuickParsed(text, Due: null);   // one word, or none: nothing is left to save if it were a day
+            return new QuickParsed(quoted ? body : text, Due: null);   // one word, or none: nothing is left to save if it were a day
         }
 
         var head = body[..cut].TrimEnd();

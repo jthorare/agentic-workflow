@@ -20,6 +20,17 @@ internal static partial class Labels
     /// <summary>The reason shown when the save call itself failed (nothing answered).</summary>
     internal const string QuickAddNotAnswering = "Sindri isn't answering";
 
+    /// <summary>The toast after a save without a day.</summary>
+    internal const string QuickAddAdded = "Added";
+
+    /// <summary>The toast when N is pressed while Sindri isn't running.</summary>
+    internal const string QuickAddStopped = "Sindri isn't running. Start it, then add the todo.";
+
+    /// <summary>The toast after a save with a day.</summary>
+    /// <param name="due">The day that was saved.</param>
+    /// <returns>"Added. Due Fri".</returns>
+    internal static string QuickAddAddedDue(DateOnly due) => "Added. Due " + due.ToString("ddd", CultureInfo.InvariantCulture);
+
     /// <summary>The line under the field when the text ends in a day.</summary>
     /// <param name="due">The day that will be saved.</param>
     /// <returns>"Due Fri 11-13".</returns>

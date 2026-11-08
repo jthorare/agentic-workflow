@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Aw.Sindri.Ui.ViewModels.Shell;
@@ -22,6 +23,16 @@ internal sealed partial class ShellWindow
     private bool ToastUndoKey(KeyEventArgs e) =>
         Shell is { } shell && !OverlayOpen && IsToastUndoKey(e.Key, e.KeyModifiers, OperatingSystem.IsMacOS())
         && shell.Toast.PressUndoKey(inTextField: e.Source is TextBox);
+
+    // The toast hid (it timed out, or Undo was clicked): when focus was on it and so is nowhere now, it goes to the page region like after Esc.
+    internal void ToastHidden() =>
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (FocusManager?.GetFocusedElement() is null or Visual { IsEffectivelyVisible: false })
+            {
+                _ = PagePanel.Focus(NavigationMethod.Tab);
+            }
+        }, DispatcherPriority.Loaded);
 
     // Esc dismisses the toast only while focus is on it; focus then returns to the page region.
     private bool EscapeToast(ShellViewModel shell)

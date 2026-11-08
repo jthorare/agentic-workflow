@@ -85,6 +85,7 @@ internal sealed class QuickAddViewModel : ObservableObject
     {
         _opening++;
         IsOpen = false;
+        IsSaving = false;   // an old answer is dropped by the opening counter, so it must not hold Enter
         Text = string.Empty;
     }
 
@@ -125,7 +126,10 @@ internal sealed class QuickAddViewModel : ObservableObject
         }
         finally
         {
-            IsSaving = false;
+            if (opening == _opening)
+            {
+                IsSaving = false;
+            }
         }
     }
 
