@@ -9,7 +9,7 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.Memory;
 
-/// <summary>The 'memory' and 'memory_fact' tables of ledger.db (migration 9) against the store contract, on a fresh file.</summary>
+/// <summary>The 'memory' and 'memory_fact' tables of ledger.db (migration 11) against the store contract, on a fresh file.</summary>
 [Lane(TestLane.Integration)]
 public sealed class SqliteMemoryStoreContractTests : MemoryStoreContract, IDisposable
 {
