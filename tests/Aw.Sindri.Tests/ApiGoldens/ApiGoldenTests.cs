@@ -28,8 +28,8 @@ public sealed class ApiGoldenTests
 
         Assert.Equal(expected, files);
 
-        // the pending files are exactly the rows not yet registered (todos/list: todo Ph1a registers it, #2264)
-        var pendingRows = ((IEnumerable<(string Slug, string Scenario)>)[.. LibraryRootScenarios.All, .. ReviewSettingsScenarios.All, ("todos", "list")]).Select(r => $"{r.Slug}/{r.Scenario}.json").Order(StringComparer.Ordinal);
+        // the pending files are exactly the rows not yet registered (todos/list: todo Ph1a registers it; todos-note: todo Ph3b, #2264)
+        var pendingRows = ((IEnumerable<(string Slug, string Scenario)>)[.. LibraryRootScenarios.All, .. ReviewSettingsScenarios.All, ("todos", "list"), ("todos-note", "note"), ("todos-note", "hold"), ("todos-note", "conflict")]).Select(r => $"{r.Slug}/{r.Scenario}.json").Order(StringComparer.Ordinal);
         Assert.Equal(pendingRows, all.Where(IsPending).Order(StringComparer.Ordinal));
         Assert.DoesNotContain(ApiScenarios.All, r => _pendingGoldenFolders.Contains(r.Slug));
     }
