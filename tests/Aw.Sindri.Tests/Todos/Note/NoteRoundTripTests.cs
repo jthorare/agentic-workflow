@@ -13,7 +13,7 @@ public sealed class NoteRoundTripTests
     private static readonly string[] _words = ["reply", "to", "Sam", "ship", "the", "fix", "ünï", "日本", "a-b", "x_y", "100%", "#tag", "\"quoted\"", "e.g."];
 
     /// <summary>Every sequence <see cref="NoteRenderer.Escape"/> escapes, and the backslash that could be mistaken for one of its escapes.</summary>
-    private static readonly string[] _tricky = ["`", "<", "![[", "[[", "%%", "$=", "\\", "\\<", "\\`", "![", "[", "[[[", "%%%", "$"];
+    private static readonly string[] _tricky = ["`", "<", "![[", "[[", "%%", "$=", "\\", "\\<", "\\`", "![", "[", "[[[", "%%%", "$", "\\[[", "$==", "%%%%", "``"];
 
     private static readonly string[] _links =
     [
@@ -82,11 +82,22 @@ public sealed class NoteRoundTripTests
                 : text.Append(_words[random.Next(_words.Length)]);
         }
 
+        var edges = random.Next(4);
+        var run = _tricky[random.Next(_tricky.Length)] + _tricky[random.Next(_tricky.Length)] + _tricky[random.Next(_tricky.Length)];
+        var body = text.ToString();
+        body = edges switch
+        {
+            1 => _tricky[random.Next(_tricky.Length)] + body,
+            2 => body + _tricky[random.Next(_tricky.Length)],
+            3 => run + body + run,
+            _ => body,
+        };
+
         var done = random.Next(2) == 0;
         var links = Enumerable.Range(0, random.Next(0, 4)).Select(_ => _links[random.Next(_links.Length)]).Distinct(StringComparer.Ordinal).ToList();
         return new SindriTodo(
             Id(n),
-            text.ToString(),
+            body,
             random.Next(2) == 0 ? D("2026-11-01").AddDays(random.Next(0, 400)) : null,
             links,
             done,

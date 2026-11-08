@@ -30,4 +30,14 @@ public sealed class NoteMergeLineTests
         Same(["blocked 1 line 1: it ends in a block id (^…) of its own"], Intents(r));
         Assert.Empty(r.LineEdits);
     }
+
+    [Fact]
+    public void Text_with_a_trailing_space_in_sindri_is_not_a_change_on_every_pass()
+    {
+        var r = Run([L(1, "a")], [L(1, "a")], [S(1, "a ")]);
+
+        Assert.Empty(r.Intents);
+        Assert.Empty(r.LineEdits);
+        Same([L(1, "a")], r.NextBase);
+    }
 }

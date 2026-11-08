@@ -12,7 +12,7 @@ internal sealed record NoteFields(string Text, DateOnly? Due, IReadOnlyList<stri
     public IReadOnlyList<string> Hidden { get; init; } = [];
 
     public static NoteFields Of(SindriTodo todo) =>
-        new(todo.Text, todo.Due, NoteLinks.Renderable(todo.Links), todo.Done, todo.DoneOn) { Hidden = [.. todo.Links.Where(static l => !NoteLinks.IsTodoLink(l))] };
+        new(todo.Text.Trim(), todo.Due, NoteLinks.Renderable(todo.Links), todo.Done, todo.DoneOn) { Hidden = [.. todo.Links.Where(static l => !NoteLinks.IsTodoLink(l))] };
 
     public bool SameAs(NoteFields other) => Done == other.Done && !FieldsDiffer(other);
 

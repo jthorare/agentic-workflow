@@ -117,7 +117,7 @@ internal sealed partial class NotePass
     }
 
     private NoteFields FieldsOf(NoteTodoLine line) =>
-        new(_options.Scrubber.Scrub(line.Text), line.Due, line.Links, line.Done, line.DoneOn);
+        new(_options.Scrubber.Scrub(line.Text).Trim(), line.Due, line.Links, line.Done, line.DoneOn);
 
     private void SetBase(TodoId id, string? line)
     {
