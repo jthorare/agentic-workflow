@@ -118,4 +118,64 @@ public sealed class PinCardLinesTests
 
         Assert.Equal(["Pinned · the map rebuild starts within a minute", "P", "M"], lines.Lines);
     }
+
+    private static PinMovedView Moved(int gained = 0, int lost = 0, int? records = 0, bool failed = false, params PinMovedTo[] to) =>
+        new("v0", "v1", gained, lost, to, records, failed);
+
+    private static readonly PinMovedTo _signIn = new(Id: "auth", Name: "Sign in", Features: 2);
+    private static readonly PinMovedTo _nowhere = new(Id: null, Name: null, Features: 1);
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_pin_that_gained_features_and_records_shows_what_moved()
+    {
+        Assert.Equal("+4 features, 3 more records linked here", PinMovedRules.Line(Moved(gained: 4, records: 3)));
+        Assert.Equal("+1 feature, 1 more record linked here", PinMovedRules.Line(Moved(gained: 1, records: 1)));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void While_the_relink_runs_the_line_says_records_are_linking() =>
+        Assert.Equal("+4 features; records linking…", PinMovedRules.Line(Moved(gained: 4, records: null)));
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_pin_that_lost_features_names_where_they_went() =>
+        Assert.Equal("−2 features (now in Sign in)", PinMovedRules.Line(Moved(lost: 2, to: _signIn)));
+
+    [Fact, Trait("Lane", "unit")]
+    public void Lost_features_name_at_most_two_places()
+    {
+        var line = PinMovedRules.Line(Moved(lost: 6, to: [new(Id: "a", Name: "Notify", Features: 3), new(Id: "b", Name: "Sign in", Features: 2), new(Id: "c", Name: "Search", Features: 1)]));
+
+        Assert.Equal("−6 features (now in Notify and Sign in)", line);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Features_that_left_into_no_concept_say_so()
+    {
+        Assert.Equal("−1 feature (now in no concept)", PinMovedRules.Line(Moved(lost: 1, to: _nowhere)));
+        Assert.Equal("−3 features (now in Sign in)", PinMovedRules.Line(Moved(lost: 3, to: [_signIn, _nowhere])));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Fewer_records_linked_reads_as_fewer() =>
+        Assert.Equal("+2 features, −3 features (now in Sign in), 5 fewer records linked here", PinMovedRules.Line(Moved(gained: 2, lost: 3, records: -5, to: [_signIn, _nowhere])));
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_failed_relink_says_records_could_not_be_linked() =>
+        Assert.Equal("+2 features; couldn't link records", PinMovedRules.Line(Moved(gained: 2, records: null, failed: true)));
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_pin_that_did_not_move_has_no_line()
+    {
+        Assert.Null(PinMovedRules.Line(moved: null));
+        Assert.Null(PinMovedRules.Line(Moved(records: null)));
+        Assert.Null(PinMovedRules.Line(Moved(records: 0)));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_problem_line_comes_before_what_moved()
+    {
+        var lines = Of(Pin(change: null), Rebuild(), problem: "2 of its features are gone from the map", moved: "+4 features, 3 more records linked here");
+
+        Assert.Equal(["2 of its features are gone from the map", "+4 features, 3 more records linked here"], lines.Lines);
+    }
 }
