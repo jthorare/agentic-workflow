@@ -37,14 +37,18 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
     /// <param name="outcomes">The shell's region for a run whose palette closed before its outcome; null hands such a run back to its control.</param>
     /// <param name="createItem">Opens the Create item form (the CreateItem entry runs it); null leaves that entry unrunnable.</param>
     /// <param name="openTodo">Shows Home with focus on the Todo panel (the Todo entry, G T); null leaves that entry unrunnable.</param>
-    internal CommandPaletteViewModel(CatalogViewModel catalog, Action<PageId> goTo, Action<string> remember, CommandOutcomeRegion? outcomes = null, Action? createItem = null, Action? openTodo = null)
+    /// <param name="newTodo">Opens the quick-add box (the New todo entry runs it); null leaves that entry out.</param>
+    internal CommandPaletteViewModel(CatalogViewModel catalog, Action<PageId> goTo, Action<string> remember, CommandOutcomeRegion? outcomes = null, Action? createItem = null, Action? openTodo = null, Action? newTodo = null)
     {
-        (_catalog, _goTo, _remember, Outcomes, CreateItem, _openTodo) = (catalog, goTo, remember, outcomes, createItem, openTodo);
+        (_catalog, _goTo, _remember, Outcomes, CreateItem, _openTodo, NewTodo) = (catalog, goTo, remember, outcomes, createItem, openTodo, newTodo);
         _catalog.PropertyChanged += OnCatalogChanged;
     }
 
     /// <summary>Opens the Create item form, or null.</summary>
     internal Action? CreateItem { get; }
+
+    /// <summary>Opens the quick-add box, or null.</summary>
+    internal Action? NewTodo { get; }
 
     /// <summary>The shell's region for a run whose palette closed before its outcome, or null.</summary>
     internal CommandOutcomeRegion? Outcomes { get; }
@@ -157,24 +161,16 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
         }
 
         _remember(entry.Id);
+        if (RunsHere(entry))
+        {
+            return;
+        }
+
         switch (entry)
         {
-            case { Id: PaletteEntry.TodoId }:
-                _openTodo?.Invoke();
-                Close();
-                break;
             case { Page: { } page }:
                 // The page changes first, so the region the close hands focus back to already carries the new page's name.
                 _goTo(page);
-                Close();
-                break;
-            case { Control.Action: "StopProcess" }:
-                Close();
-                _goTo(PageId.System);
-                break;
-            case { Control.Action: "CreateItem" }:
-                // The form's or dialog's own control sends it; it opens first, so the window hands the palette's opener on to it.
-                CreateItem?.Invoke();
                 Close();
                 break;
             case { Control.IsCopyOnly: true }:
@@ -191,6 +187,11 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
     {
         var actions = _catalog.Controls.Where(c => !_sindri.Contains(c.Action, StringComparer.Ordinal)).OrderBy(c => c.IsCopyOnly && !OpensForm(c))
             .Select(c => PaletteEntry.For(c, Runs(c), NotRun(c), OpensForm(c)));
+        if (NewTodo is not null)
+        {
+            actions = actions.Append(PaletteEntry.NewTodo("N"));
+        }
+
         var sindri = _sindri.Select(_catalog.For).OfType<ControlViewModel>().Select(c => PaletteEntry.For(c, Runs(c), NotRun(c), OpensForm(c)))
             .Append(PaletteEntry.For(PageId.System, "G ."));
         return

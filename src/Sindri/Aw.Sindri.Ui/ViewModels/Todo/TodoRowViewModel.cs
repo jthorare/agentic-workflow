@@ -18,6 +18,11 @@ internal sealed class TodoRowViewModel : ObservableObject
     /// <summary>The todo's "td_…" id.</summary>
     public string Id { get; }
 
+    /// <summary>The checkbox's name ("Done"); the row's sentence carries the rest.</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string DoneBoxName => Labels.TodoDoneBoxName;
+#pragma warning restore CA1822, MA0041
+
     /// <summary>The text.</summary>
     public string Text { get; private set => Set(ref field, value); } = string.Empty;
 
