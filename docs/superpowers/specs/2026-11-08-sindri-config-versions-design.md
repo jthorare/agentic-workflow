@@ -76,6 +76,12 @@ $AW_SINDRI_HOME/config/
   `config.version.activated` event when serve sees `active` change (it already watches the file's stamp). The event
   is the audit trail and the UI's refresh signal, but the list never depends on it, because `config set` can run
   while serve is down.
+- **Catching up after serve was down.** On start, serve reads the last version the ledger named and replays the gap
+  from the files. It writes one `config.version.activated` per version created since then, in number order, each
+  with `reason: saved` and the `by` and `savedAt` from that version's record. When `active` then names a different
+  version than the newest one (a `use` while serve was down), it writes one more, `reason: activated`. The trail
+  has no gaps, but a `use` of an older version while serve was down shows only its last state: the files keep no
+  record of `active`'s earlier values.
 - **Retention.** Every version is kept (§9 Q2).
 
 ## 4. Migration
