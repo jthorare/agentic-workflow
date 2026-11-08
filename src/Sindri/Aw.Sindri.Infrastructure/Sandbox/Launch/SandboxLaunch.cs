@@ -73,7 +73,7 @@ internal sealed class SandboxLaunch(ISandbox sandbox, ISessionCap cap, ISandboxL
 
         var plan = planned.Value;
         _plans[plan.Launch] = plan;
-        var staged = await Stage(request, plan, cancellationToken).ConfigureAwait(false);
+        var staged = await Stage(request, plan, argv, cancellationToken).ConfigureAwait(false);
         if (staged.IsError)
         {
             return staged.Error;
@@ -129,7 +129,7 @@ internal sealed class SandboxLaunch(ISandbox sandbox, ISessionCap cap, ISandboxL
     }
 
     /// <summary>The host side before the self-check: the session home, the Step's policy files, and the egress.</summary>
-    private async ValueTask<Result<Staged>> Stage(SandboxRequest request, SandboxPlan plan, CancellationToken cancellationToken)
+    private async ValueTask<Result<Staged>> Stage(SandboxRequest request, SandboxPlan plan, IReadOnlyList<string> argv, CancellationToken cancellationToken)
     {
         var home = MakeHome(plan);
         if (home.IsError)
@@ -137,7 +137,7 @@ internal sealed class SandboxLaunch(ISandbox sandbox, ISessionCap cap, ISandboxL
             return home.Error;
         }
 
-        var mcp = MoveMcpConfig(plan, home.Value);
+        var mcp = MoveMcpConfig(plan, home.Value, argv);
         if (mcp.IsError)
         {
             return mcp.Error;
@@ -179,14 +179,20 @@ internal sealed class SandboxLaunch(ISandbox sandbox, ISessionCap cap, ISandboxL
     }
 
     // #2151: the launcher staged the MCP config under launch/ (hidden by the Sindri-home mask) and gave the agent its place in the session home; a launch without one has no staged file.
-    private Result<Unit> MoveMcpConfig(SandboxPlan plan, string sessionHome)
+    private Result<Unit> MoveMcpConfig(SandboxPlan plan, string sessionHome, IReadOnlyList<string> argv)
     {
         var from = McpLaunchConfig.PathFor(options.LaunchDirectory, plan.Launch);
+        var to = McpLaunchConfig.PathFor(sessionHome, plan.Launch);
         try
         {
             if (File.Exists(from))
             {
-                File.Move(from, McpLaunchConfig.PathFor(sessionHome, plan.Launch), overwrite: true);
+                File.Move(from, to, overwrite: true);
+            }
+            else if (argv.Contains(to, StringComparer.Ordinal))
+            {
+                // #2162: the argv already names the file; without it claude exits 1 on --mcp-config with no message.
+                return SandboxRefusal.For(SindriErrors.LaunchSelfCheckFailed, SandboxReasons.FsWrite, "the MCP config the agent is told to read was not staged: " + from);
             }
 
             return Unit.Value;

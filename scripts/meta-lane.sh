@@ -26,7 +26,8 @@
 #   AW_META_ID_GRACE     seconds a lane whose id timed out keeps the start lock for its late session file (default 10; tests)
 #   AW_META_NO_SHELL     1: exit when the agent exits instead of dropping to a shell (tests)
 set -u
-# The lane runs as `$SHELL -lc meta-lane.sh` (scripts/meta-launch.sh), so the login profile has loaded. A profile may reset PATH:
+# The lane runs as `$SHELL -lc meta-lane.sh` (scripts/meta-launch.sh), so the login profile has loaded; the agent then runs through
+# `$SHELL -ic` (launcher_run_in_shell), so the shell's rc file (aliases, functions) applies to it (#2274). A profile may reset PATH:
 # put the PATH of the aw-meta-launch caller (AW_META_CALLER_PATH) back first, each entry once (#2278).
 if [ -n "${AW_META_CALLER_PATH:-}" ]; then
   _np=""; _seen=":"
@@ -278,7 +279,7 @@ stop_watcher() {
   watcher=""; recorder=""
 }
 if [ "$agent" = claude-code ]; then
-  "${args[@]}"
+  launcher_run_in_shell "${args[@]}"
 else
   # tmux names a pane after the foreground process group's leader. A script's children share its group, so the pane would read
   # "bash" and aw-meta's wake guard ("the pane runs the agent's processName") would call every non-Claude lane down. Job control
@@ -304,7 +305,7 @@ else
   ) > /dev/null 2>&1 &
   recorder=$!
   set -m
-  "${args[@]}"
+  launcher_run_in_shell "${args[@]}"
   set +m
 fi
 stop_watcher
