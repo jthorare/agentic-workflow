@@ -103,7 +103,8 @@ public sealed class TodoPanelHomeTests : IDisposable
         _windows.Add(window);
         window.Show();
         _ = shell.Run(_stop.Token);
-        await Until(window, () => shell.State == ShellState.Normal && shell.Queue.Total > 0 && shell.Queue.Groups.Count > 0 && (!waitForTodos || !shell.Todo.IsLoading));
+        // The todo read is the first of Home's reads (D12): while a test holds it, the queue behind it hasn't loaded either.
+        await Until(window, () => shell.State == ShellState.Normal && (!waitForTodos || (shell.Queue.Total > 0 && shell.Queue.Groups.Count > 0 && !shell.Todo.IsLoading)));
         return (window, shell);
     }
 
@@ -340,8 +341,8 @@ public sealed class TodoPanelHomeTests : IDisposable
         await Until(window, () => shell.State == ShellState.NotRunning);
 
         Assert.True(Named<Control>(window, "NotRunningPanel").IsEffectivelyVisible);
-        Assert.False(Panel(window).IsEffectivelyVisible);
-        Assert.Empty(Rows(window));
+        Assert.False(Shown(window, "TodoPanelFrame"));   // the card replaces all of Home, so the panel isn't drawn at all
+        Assert.DoesNotContain(window.GetVisualDescendants().OfType<TodoRow>(), r => r.IsEffectivelyVisible);
     });
 
     [Fact]
