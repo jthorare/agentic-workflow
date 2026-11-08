@@ -48,7 +48,14 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
         }
 
         var launched = await Launch(run, cancellationToken).ConfigureAwait(false);
-        return launched.IsError ? launched.Error : new GraphStart(GraphStartKind.Started, id);
+        if (launched.IsError)
+        {
+            // why: the failed run is Failed now, so a run queued behind it must get its turn; the caller still sees this run's launch error
+            _ = await StartNextQueued(request.Workflow, cancellationToken).ConfigureAwait(false);
+            return launched.Error;
+        }
+
+        return new GraphStart(GraphStartKind.Started, id);
     }
 
     /// <inheritdoc />
