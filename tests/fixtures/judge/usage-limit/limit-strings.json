@@ -4,6 +4,11 @@
     "You've hit your weekly limit · resets Oct 19, 10pm (America/Los_Angeles)",
     "Claude usage limit reached. Your limit will reset at 5pm (UTC)"
   ],
+  "cursor": [
+    "You've hit your usage limit. Upgrade to Pro+ or switch to Auto to keep going.",
+    "You've reached your usage limit for premium models. Your limit resets on Nov 12.",
+    "Usage limit reached. Add on-demand usage to keep using Cursor."
+  ],
   "codex": {
     "message": "You've hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/codex/settings/usage to purchase more credits or try again at 9:52 PM.",
     "codexErrorInfo": "usage_limit_exceeded"
