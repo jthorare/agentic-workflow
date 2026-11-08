@@ -57,7 +57,7 @@ internal sealed partial class LinearConnectionViewModel
         if (sent is not null)
         {
             (Teams, _replacingRead) = ([], false);
-            await Settled(url, sent.Approved ? string.Empty : Labels.LinearConnWaitingRead, cancellationToken).ConfigureAwait(true);
+            await Settled(url, cancellationToken).ConfigureAwait(true);
         }
     }
 
@@ -75,7 +75,7 @@ internal sealed partial class LinearConnectionViewModel
         if (sent is not null)
         {
             _replacingWrite = false;
-            await Settled(url, sent.Approved ? string.Empty : Labels.LinearConnWaiting, cancellationToken).ConfigureAwait(true);
+            await Settled(url, cancellationToken).ConfigureAwait(true);
         }
     }
 
@@ -152,7 +152,7 @@ internal sealed partial class LinearConnectionViewModel
         }
 
         _replacingWrite = false;
-        await Settled(url, removed.Value.Approved ? string.Empty : Labels.LinearConnWaiting, cancellationToken).ConfigureAwait(true);
+        await Settled(url, cancellationToken).ConfigureAwait(true);
     }
 
     // One save of a key: the key is dropped from the box as it goes, and kept nowhere. Null when Sindri refused it (the refusal is shown, nothing was stored).
@@ -182,16 +182,16 @@ internal sealed partial class LinearConnectionViewModel
         return saved.Value;
     }
 
-    // A change Sindri took: said when it waits for the approval, and the connection is read again.
-    private Task Settled(Uri url, string waiting, CancellationToken cancellationToken)
+    // A change Sindri took: the connection is read again.
+    private Task Settled(Uri url, CancellationToken cancellationToken)
     {
-        (_waiting, _fresh) = (waiting, true);
+        _fresh = true;
         Changed();
-        return Read(url, settled: true, cancellationToken);
+        return Read(url, cancellationToken);
     }
 
     // The click's own answer is dropped by the next button press, not by a refresh.
-    private void ForgetAnswer() => (_waiting, _fresh) = (string.Empty, false);
+    private void ForgetAnswer() => _fresh = false;
 
     /// <summary>The Settings page was left: the click's own answer ("Saved.") is dropped, so the next open reads what is true then.</summary>
     internal void Leave()
