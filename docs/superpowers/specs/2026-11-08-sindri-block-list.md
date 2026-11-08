@@ -1,6 +1,6 @@
 # Sindri v2: the owner's block list replaces "Block catalog v1"
 
-**Owner:** joithor · **Date:** 2026-11-08 · **Amends:** #2258 (design.md "Block catalog v1", PR cards 6, 7, 9, 11, 12, 13, 16) · **Status:** draft for the owner's read
+**Owner:** joithor · **Date:** 2026-11-08 · **Amends:** #2258 (design.md "Block catalog v1", PR cards 6, 7, 9, 11, 12, 13, 16) · **Status:** approved by the owner, 2026-11-08
 
 ## Summary
 
@@ -13,8 +13,8 @@ requested, issue labelled, push) come in through Connection event on a GitHub co
 generic data blocks: News and Vulnerabilities.
 
 The owner answered the open questions on 2026-11-08; their answers are folded into the blocks below. Code runs C#, not
-JavaScript. HTTP call and Wait stay. Meetings reads two note-app connections. One question is left: how Sindri reaches
-Jev.
+JavaScript. HTTP call and Wait stay. Meetings reads two note-app connections. Jev is the same HTTP API the judge already
+calls. No question is left, and the owner approved the list.
 
 ## The list
 
@@ -34,7 +34,7 @@ Jev.
 | AI | Prompt | `prompt` | merged (#2336) |
 | AI | Sandbox | `run_agent` | v1 `run_agent`, label only |
 | AI | Run on machine | `run_on_machine` | new |
-| AI | Jev | `jev` | new (Q1) |
+| AI | Jev | `jev` | new; the judge's Jev client |
 | Logic | For each | `for_each` | v1 |
 | Logic | Code | `code` | new, C# |
 | Logic | Approval | `approval` | was `ask_owner` |
@@ -121,9 +121,21 @@ Config fields are the block's JSON schema. Outputs are the fields later nodes re
   repo or folder), `prompt`, `outputs`, `timeout`. The agent runs in the owner's own environment: no sandbox and no
   fresh worktree, with the owner's logins and tools. The report, outputs, attach and takeover work as in Sandbox. Use
   Sandbox for work that should touch only a copy; Run on machine when the job needs the owner's real setup.
-- **Jev** (`jev`, AI). Config: `connection` (a `rest` connection with a Jev preset), `model` (for example
-  `jev-1.14.0`), `text`, `questions[]` (named yes / no or label questions), `longContext` (bool). Outputs: one field per
-  question (for example `worth_sharing`), `model`, `usage`. Q1 covers how Sindri reaches it.
+- **Jev** (`jev`, AI). The same HTTP API the judge calls today (docs/csharp/judge.md "Jev"): `POST
+  https://api.typesafe.ai/v1/systemone` with `Authorization: Bearer <key>` and a body of `{state, model, questions}`.
+  Config: `connection` (the `jev` preset, below), `model` (default: the judge's pinned model, today `jev-1.13.0`; the
+  screenshot's `jev-1.14.0` is a valid value), `text` (the state; usually a reference such as `{{news.items}}`),
+  `questions[]` (each a `name`, a `type` Jev takes: `choice`, `score` or `noul`, `instructions`, and `criteria`: for a
+  choice, one criterion per answer, for example `yes` / `no`). Outputs: one field per question (for example
+  `worth_sharing`) holding `choice`, `confidence` and `probabilities`, plus `model` and `usage` (`input_tokens`,
+  `output_tokens`).
+  The **`jev` connection preset** is a `rest` connection with that URL and the judge's key: `TYPESAFE_API_KEY` from the
+  environment, else the keychain entry the judge reads. One key on the box serves both. The wire code is the judge's:
+  `JevRequest`, `JevResponse`, the question records and the input cap move out of `Aw.Judge.Infrastructure` (all
+  `internal` today) into a small shared package that the judge and Sindri both reference, the same move that made
+  `Aw.Redaction` out of the scrubbing code both copied. The block redacts and caps what it sends as `JevProvider` does
+  (`Aw.Redaction`, then 160,000 characters: Jev's 64k-token window), because Jev is a third party. Its errors read like
+  the judge's reason codes: `no-api-key`, `network-error`, `http-NNN`, `timeout`.
 - **Code** (`code`, logic). C#, not JavaScript. Config: `input` (a reference, for example `{{jev}}`), `code` (a C#
   method body: it gets `JsonNode input` and returns any value), `repo?` and `branch?` (the files the code may read, at
   that branch, read-only), `timeout` (default 5 s, max 60 s), `memoryMb` (default 256). Outputs: `result` (the returned
@@ -163,21 +175,18 @@ Config fields are the block's JSON schema. Outputs are the fields later nodes re
 | Card | Blocks | Change to the card |
 |---|---|---|
 | PR 6 (#2336, merged) + engine's PR 6 part 2 (open) | Schedule, If, Send notification, Prompt; `manual` -> When called | part 2 adds `title` + `group` on `IGraphBlockType` and the label of each merged block; `called` replaces `manual` with `manual` kept as an alias |
-| PR 7 | Sandbox, Run on machine | `run_on_machine` beside `run_agent` on the same launcher, without the sandbox wrap and worktree |
+| PR 7 | Sandbox, Run on machine | `run_on_machine` beside `run_agent` on the same launcher, without the sandbox wrap and worktree; folds in #1428 (Cursor can't run agent steps: its launcher entry has no policy or model form, SND-LAUNCH-013), so all three agents run in both blocks (owner) |
 | PR 8 | (all) | `workflow_blocks` groups by `group` and shows `title`; one doc page per block in the list above |
 | PR 9 | For each, Collect, Only new, Wait, HTTP call, Approval, Run workflow, Workflow result, Code, Offer job | drop `create_item`; `ask_owner` -> `approval`; `workflow_call` -> `called` (PR 6 part 2); Code brings the Roslyn compile, its cache and `sindri-code-runner` (big enough to split into its own PR 9c) |
-| PR 9b (new card) | News, Vulnerabilities, Jev | the public data providers (host allowlist, no sign-in) and Jev on a `rest` connection; can run beside PR 11 |
+| PR 9b (new card) | News, Vulnerabilities, Jev | the public data providers (host allowlist, no sign-in); Jev on the `jev` preset, with the judge's Jev wire code moved to a shared package (a new `deps.yaml` edge for Sindri); can run beside PR 11 |
 | PR 11 | Connection event | `poll` -> `connection_event` (GitHub's events stay in its catalog) |
 | After PR 10b (sign-in) | Meetings | the `granola` and `wispr-flow` presets and `IMeetingSource` |
 | PR 12 | Read conversation, Add to conversation, Link thread | `inbox` trigger -> `connection_event` on an inbox-role connection; the conversation port per connection kind |
 | PR 13 (#2326) + its blocks follow-up | Recall, Remember, Forget | labels only; the blocks follow-up is the one context already named after PR 6 + 7 |
 | PR 16 | Toolkit tool | `call_tool` also lists a connection's tools (MCP connections, `rest` presets' actions) |
 
-## Open questions for the owner
+## Owner's answers (2026-11-08)
 
-Answered on 2026-11-08 and folded in above: Inbox (fold into Connection event), Meetings (Granola and Wispr Flow
-connections), Conversations (as described), HTTP call (keep, in C#), Sandbox vs Run on machine (as described), Code (C#),
-Offer job (to the owner), Wait (keep).
-
-1. **Jev:** how does Sindri reach it: an HTTP API with a key (a `rest` connection preset), or a local binary? Where do
-   its docs live, so the preset can ship in this repo?
+None open. Folded in above: Inbox (fold into Connection event), Meetings (Granola and Wispr Flow connections),
+Conversations (as described), HTTP call (keep, in C#), Sandbox vs Run on machine (as described), Code (C#), Offer job (to
+the owner), Wait (keep), Jev (the judge's HTTP API and key). The owner approved the list.
