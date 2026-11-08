@@ -7,13 +7,17 @@ using Aw.Sindri.Features.AddTodo;
 using Aw.Sindri.Features.ChangeTodo;
 using Aw.Sindri.Features.GetTodo;
 using Aw.Sindri.Features.GetTodoNote;
+using Aw.Sindri.Features.KeepTodo;
+using Aw.Sindri.Features.KeepTodoUndo;
 using Aw.Sindri.Features.ListTodos;
 using Aw.Sindri.Features.MarkTodo;
+using Aw.Sindri.Features.PickTodoHold;
+using Aw.Sindri.Features.UndoTodoHold;
 
 namespace Aw.Sindri.Host.Endpoints;
 
 /// <summary>
-/// The todo routes (todo spec §4.4): GET /sindri/todos?state=, /todos/note and /todos/{todoId}; POST /sindri/todos, /todos/{todoId}/change and /done, /reopen, /remove, /restore. Each binds, calls one service and maps the result.
+/// The todo routes (todo spec §4.4): GET /sindri/todos?state=, /todos/note and /todos/{todoId}; POST /sindri/todos, /todos/{todoId}/change and /done, /reopen, /remove, /restore, /{todoId}/keep and /keep/undo, and /todos/note/hold/apply, /restore and /undo. Each binds, calls one service and maps the result.
 /// A session caller's answers, and any caller's that sends fence=1, have the todo text inside the untrusted fence. A write that came with fence=1 records 'via: pipe'.
 /// </summary>
 internal static class TodoEndpoints
@@ -65,12 +69,46 @@ internal static class TodoEndpoints
             var request = body.ToRequest(id.Value, TodoWire.Piped(fence));
             return request.IsError ? request.ToHttpResult() : (await service.Handle(request.Value, ct).ConfigureAwait(false)).ToHttpResult();
         });
+        _ = group.MapTodoPicks();
         _ = Mark(group, "done", TodoVerb.Done);
         _ = Mark(group, "reopen", TodoVerb.Reopen);
         _ = Mark(group, "remove", TodoVerb.Remove);
         _ = Mark(group, "restore", TodoVerb.Restore);
         return group;
     }
+
+    // the picks (todo spec D11, REQ-E7): a side of a both-places conflict, the note's held changes, and the Undo of each
+    private static RouteGroupBuilder MapTodoPicks(this RouteGroupBuilder group)
+    {
+        _ = group.MapPost("/todos/{todoId}/keep", static async (string todoId, KeepTodoBody? body, string? fence, IService<KeepTodoRequest, KeepTodoResponse> service, CancellationToken ct) =>
+        {
+            var id = TodoWire.Id(todoId);
+            if (id.IsError)
+            {
+                return id.ToHttpResult();
+            }
+
+            var request = (body ?? new KeepTodoBody()).ToRequest(id.Value, TodoWire.Piped(fence));
+            return request.IsError ? request.ToHttpResult() : KeepTodoWire.From(await service.Handle(request.Value, ct).ConfigureAwait(false)).ToHttpResult();
+        });
+        _ = group.MapPost("/todos/{todoId}/keep/undo", static async (string todoId, string? fence, IService<KeepTodoUndoRequest, KeepTodoUndoResponse> service, CancellationToken ct) =>
+        {
+            var id = TodoWire.Id(todoId);
+            return id.IsError ? id.ToHttpResult() : KeepTodoUndoWire.From(await service.Handle(new KeepTodoUndoRequest(id.Value, TodoWire.Piped(fence)), ct).ConfigureAwait(false)).ToHttpResult();
+        });
+        _ = HoldPick(group, "apply", restore: false);
+        _ = HoldPick(group, "restore", restore: true);
+        _ = group.MapPost("/todos/note/hold/undo", static async (string? fence, IService<UndoTodoHoldRequest, UndoTodoHoldResponse> service, CancellationToken ct)
+            => (await service.Handle(new UndoTodoHoldRequest(TodoWire.Piped(fence)), ct).ConfigureAwait(false)).ToHttpResult());
+        return group;
+    }
+
+    private static RouteHandlerBuilder HoldPick(RouteGroupBuilder group, string segment, bool restore) =>
+        group.MapPost("/todos/note/hold/" + segment, async (HoldPickBody? body, string? fence, IService<PickTodoHoldRequest, PickTodoHoldResponse> service, CancellationToken ct) =>
+        {
+            var request = (body ?? new HoldPickBody()).ToRequest(restore, TodoWire.Piped(fence));
+            return request.IsError ? request.ToHttpResult() : (await service.Handle(request.Value, ct).ConfigureAwait(false)).ToHttpResult();
+        });
 
     private static RouteHandlerBuilder Mark(RouteGroupBuilder group, string segment, TodoVerb verb) =>
         group.MapPost("/todos/{todoId}/" + segment, async (string todoId, MarkTodoBody? body, string? fence, IService<MarkTodoRequest, TodoAccepted> service, CancellationToken ct) =>
