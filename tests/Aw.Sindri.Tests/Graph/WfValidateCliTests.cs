@@ -62,6 +62,24 @@ public sealed class WfValidateCliTests : IDisposable
         Assert.Contains("SND-CLI-003", none.Stderr + missing.Stderr, StringComparison.Ordinal);
     }
 
+    [Theory, Trait("Lane", "integration")]
+    [InlineData("""{ "version": 1, "name": "x", "nodes": [ null ] }""", "nodes[0]")]
+    [InlineData("""{ "version": 1, "name": "x", "nodes": [ { "id": "daily", "type": "schedule", "config": { "cron": "0 7 * * *" } } ], "edges": [ null ] }""", "edges[0]")]
+    [InlineData("""{ "version": 1, "name": "x", "nodes": [ { "id": "daily", "type": "schedule", "config": { "cron": "0 7 * * *" } }, { "id": "tell", "config": { } } ] }""", "nodes[1].type")]
+    [InlineData("""{ "version": 1, "name": "x", "nodes": [ { "id": "tell", "type": "notify" } ] }""", "nodes[0].config")]
+    [InlineData("""{ "version": 1, "name": "x", "nodes": [ { "type": "notify", "config": { "title": "Hi" } } ] }""", "nodes[0].id")]
+    [InlineData("""{ "version": 1, "name": "x", "nodes": [ { "id": "tell", "type": "notify", "config": { "title": "Hi" } } ], "edges": [ { "to": "tell" } ] }""", "edges[0].from")]
+    [InlineData("""{ "version": 1, "name": "x", "nodes": [ { "id": "tell", "type": "notify", "config": { "title": "Hi" } } ], "edges": [ { "from": "tell" } ] }""", "edges[0].to")]
+    public async Task A_malformed_document_exits_1_with_SND_GRAPH_001_naming_the_path(string document, string path)
+    {
+        var run = await Run(Put("bad.json", document));
+
+        Assert.Equal(1, run.Exit);
+        Assert.Contains("SND-GRAPH-001", run.Stdout, StringComparison.Ordinal);
+        Assert.Contains(path, run.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, run.Stderr);
+    }
+
     private string Put(string name, string text)
     {
         var path = Path.Combine(_work.Path, name);
