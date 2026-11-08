@@ -312,4 +312,43 @@ public sealed class TodoAttentionFramesTests : IDisposable
         Assert.False(Shown(window, "TodoAttentionLine"));
         Assert.Equal(5, TodoRowCount(window));
     });
+
+    [Fact]
+    public Task After_a_409_redraws_the_open_form_a_digit_still_picks() => OnUi(async () =>
+    {
+        Serve(TodoNoteSample.WithConflicts("td_c1"), Conflicted("td_c1", "reply to Sam", Side("reply to Sam today")));
+        var (window, shell) = await Connected();
+        FocusAttention(window);
+        Key(window, PhysicalKey.Enter);
+        await Until(window, () => Focused(window) != "(nothing)" && window.FocusManager?.GetFocusedElement() is Button, "focus never reached the form's button");
+        Serve(TodoNoteSample.WithConflicts("td_c1"), Conflicted("td_c1", "reply to Sam", Side("reply to Sam by noon")));
+        _server.TodoPickAnswer = RouteAnswer.Problem(HttpStatusCode.Conflict, "SND-TODO-409", "The note's line changed since.");
+
+        Key(window, PhysicalKey.Digit2);
+        await Until(window, () => Texts(window, "TodoAttentionNotice").Length == 1);
+        await Until(window, () => window.FocusManager?.GetFocusedElement() is Button, "focus was lost with the redrawn form");
+        _server.TodoPickAnswer = null;
+        _clock.Advance(TimeSpan.FromSeconds(1));
+        Key(window, PhysicalKey.Digit2);
+        await Until(window, () => shell.Toast.Text == "Kept Obsidian's version.");
+
+        Assert.Equal(2, _server.TodoPicks.Count);
+    });
+
+    [Fact]
+    public Task Esc_with_focus_outside_the_panel_leaves_the_open_attention_row_open() => OnUi(async () =>
+    {
+        Serve(TodoNoteSample.WithConflicts("td_c1"), Conflicted("td_c1", "reply to Sam", Side("reply to Sam today")));
+        var (window, shell) = await Connected();
+        FocusAttention(window);
+        Key(window, PhysicalKey.Enter);
+        Assert.True(shell.Todo.IsAttentionOpen);
+        var outside = window.GetVisualDescendants().OfType<Border>().First(b => b.Name == "RowFrame" && b.Focusable && b.IsEffectivelyVisible);
+        _ = outside.Focus(NavigationMethod.Tab);
+        Settle(window);
+
+        Key(window, PhysicalKey.Escape);
+
+        Assert.True(shell.Todo.IsAttentionOpen);
+    });
 }
