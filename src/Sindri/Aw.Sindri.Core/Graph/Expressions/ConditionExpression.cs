@@ -9,25 +9,36 @@ namespace Aw.Sindri.Core.Graph.Expressions;
 /// </summary>
 public sealed class ConditionExpression
 {
-    private readonly List<string> _references = [];
+    private readonly Evaluator.Node _root;
 
-    private ConditionExpression()
+    private ConditionExpression(Evaluator.Node root, IReadOnlyList<string> references)
     {
+        _root = root;
+        References = references;
     }
 
     /// <summary>Each reference the expression reads, once, in order of first use.</summary>
-    public IReadOnlyList<string> References => _references.Count == 0 ? throw new NotSupportedException() : _references;
+    public IReadOnlyList<string> References { get; }
 
     /// <summary>Parses an expression.</summary>
     /// <param name="text">The expression text.</param>
     /// <param name="expression">The parsed expression, or null when the text does not parse.</param>
     /// <param name="error">The column and the fix, or null when it parses.</param>
     /// <returns>True when the text parses.</returns>
-    public static bool TryParse(string text, out ConditionExpression? expression, out string? error) =>
-        throw new NotSupportedException();
+    public static bool TryParse(string text, out ConditionExpression? expression, out string? error)
+    {
+        expression = null;
+        if (!Parser.TryParse(text, out var root, out var references, out error))
+        {
+            return false;
+        }
+
+        expression = new ConditionExpression(root, references);
+        return true;
+    }
 
     /// <summary>Evaluates the expression.</summary>
     /// <param name="resolve">Reads a reference's value; null for a missing one.</param>
     /// <returns>The truthiness of the result.</returns>
-    public bool Evaluate(Func<string, JsonNode?> resolve) => throw new NotSupportedException();
+    public bool Evaluate(Func<string, JsonNode?> resolve) => Evaluator.IsTrue(_root, resolve);
 }
