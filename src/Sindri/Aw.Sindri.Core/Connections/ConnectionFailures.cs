@@ -1,18 +1,17 @@
 using Aw.Kernel;
-using Aw.Sindri.Core;
 
-namespace Aw.Sindri.Features;
+namespace Aw.Sindri.Core.Connections;
 
 /// <summary>
 /// What a failed connection call may show. A provider, the keychain or a probe can put a credential into an error's free text (a 401 body that repeats
-/// the token, a denied-consent note), so the connection slices show only the code and its fixed title, never the instance text.
+/// the token, a denied-consent note), so connection calls show only the code and its fixed title, never the instance text.
 /// </summary>
-internal static class ConnectionFailures
+public static class ConnectionFailures
 {
     /// <summary>The error as the caller may see it: the same code and kind, the fixed title.</summary>
     /// <param name="error">The error from a port.</param>
     /// <returns>The error with no free text.</returns>
-    internal static Error Safe(Error error)
+    public static Error Safe(Error error)
     {
         ArgumentNullException.ThrowIfNull(error);
         if (error.Code == SindriErrors.ConnectionNotFound.Code)
@@ -26,7 +25,7 @@ internal static class ConnectionFailures
     /// <summary>One line saying why a test failed.</summary>
     /// <param name="error">The error from the probe or the secret store.</param>
     /// <returns>The code and its fixed title.</returns>
-    internal static string Reason(Error error)
+    public static string Reason(Error error)
     {
         var safe = Safe(error);
         return $"{safe.Message} ({safe.Code})";

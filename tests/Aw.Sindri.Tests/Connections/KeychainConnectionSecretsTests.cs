@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Connections.OAuth;
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Secrets;
 using Aw.Sindri.Infrastructure.Connections;
 using Aw.Sindri.Infrastructure.Processes;

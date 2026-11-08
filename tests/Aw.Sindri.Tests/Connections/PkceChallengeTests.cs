@@ -67,7 +67,12 @@ public sealed partial class PkceChallengeTests
     {
         using var server = new FakeOAuthServer();
         var preset = server.Preset();
-        var pkce = PkceChallenge.Create(static n => [.. Enumerable.Range(0, n).Select(static i => (byte)(i * 3))]);
+        var calls = 0;   // each draw differs, like RandomNumberGenerator: a source that repeats would make the state equal the verifier
+        var pkce = PkceChallenge.Create(n =>
+        {
+            var offset = calls++ * 101;
+            return [.. Enumerable.Range(0, n).Select(i => (byte)((i * 3) + offset))];
+        });
         var request = new AuthorizationRequest(preset, "client-123", "http://127.0.0.1:41999/callback", ["read", "write"], pkce);
 
         var url = request.ToUrl();

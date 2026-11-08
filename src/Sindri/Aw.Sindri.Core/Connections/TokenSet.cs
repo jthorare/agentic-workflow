@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Core.Connections.OAuth;
+namespace Aw.Sindri.Core.Connections;
 
 /// <summary>A connection's tokens. It never prints them: ToString and the record's printing show no value.</summary>
 /// <param name="AccessToken">The access token (or the API key of a rest connection).</param>

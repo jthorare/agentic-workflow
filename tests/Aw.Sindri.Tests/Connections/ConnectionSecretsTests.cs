@@ -134,7 +134,11 @@ public sealed class ConnectionSecretsTests
     {
         Assert.DoesNotContain(Access, text, StringComparison.Ordinal);
         Assert.DoesNotContain(Refresh, text, StringComparison.Ordinal);
-        Assert.DoesNotContain("SECRET", text, StringComparison.Ordinal);
+        // no prefix or tail of either token; the bare word "SECRET" would also match the SND-SECRET-004 error code
+        foreach (var part in new[] { "access-SECRET", "refresh-SECRET", "ABCDEF123456", "654321FEDCBA" })
+        {
+            Assert.DoesNotContain(part, text, StringComparison.Ordinal);
+        }
     }
 
     [Fact]

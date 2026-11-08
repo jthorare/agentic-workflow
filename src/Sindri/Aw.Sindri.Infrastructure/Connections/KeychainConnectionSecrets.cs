@@ -3,7 +3,6 @@ using System.Text.Json;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
-using Aw.Sindri.Core.Connections.OAuth;
 using Aw.Sindri.Core.Secrets;
 using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Secrets;

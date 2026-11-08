@@ -2,7 +2,7 @@ using System.Text.Json;
 using Aw.Kernel.Json;
 using Aw.Kernel.Services;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core.Connections.OAuth;
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Features.GetConnection;
 using Aw.Sindri.Features.ListConnections;
 using Aw.Sindri.Host;

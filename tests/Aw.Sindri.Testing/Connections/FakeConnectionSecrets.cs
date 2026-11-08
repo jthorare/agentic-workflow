@@ -1,7 +1,6 @@
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
-using Aw.Sindri.Core.Connections.OAuth;
 using Aw.Sindri.Core.Secrets;
 
 namespace Aw.Sindri.Testing.Connections;
