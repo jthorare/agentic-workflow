@@ -36,4 +36,10 @@ public static partial class SindriErrors
 
     /// <summary>SND-GRAPH-011: an archived workflow can't be activated.</summary>
     public static readonly ErrorDefinition GraphArchived = new("SND-GRAPH-011", ErrorKind.Conflict, "This workflow is archived; it can't be activated");
+
+    /// <summary>SND-GRAPH-100: a run with that id exists (a re-delivered trigger or a catch-up overlap).</summary>
+    public static readonly ErrorDefinition GraphRunIdTaken = new("SND-GRAPH-100", ErrorKind.Conflict, "A run with that id already exists");
+
+    /// <summary>SND-GRAPH-101: no such run.</summary>
+    public static readonly ErrorDefinition GraphRunNotFound = new("SND-GRAPH-101", ErrorKind.NotFound, "No such workflow run");
 }
