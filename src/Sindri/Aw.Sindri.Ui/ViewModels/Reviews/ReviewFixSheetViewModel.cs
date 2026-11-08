@@ -113,6 +113,9 @@ internal sealed partial class ReviewFixSheetViewModel : ObservableObject
     /// <summary>The server's words when the fix-task file wasn't written (the item exists, no session will see the task); empty otherwise.</summary>
     public string FileError { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>The retry button's words: "Retry post" after a half-done send, "Send again" when only the task file is missing.</summary>
+    public string RetryText { get; private set => Set(ref field, value); } = string.Empty;
+
     /// <summary>True while the sheet is open.</summary>
     public bool IsOpen { get; private set => Set(ref field, value); }
 
@@ -153,6 +156,7 @@ internal sealed partial class ReviewFixSheetViewModel : ObservableObject
         ThreadText = ThreadOf(source, target);
         GoesToText = Labels.ReviewFixGoesTo(target.Branch);
         (Outcome, OutcomeText, ItemId, ThreadResult, Code, CanRetry, IsSending, SendText, IsOpen) = (ReviewFixOutcome.None, string.Empty, string.Empty, string.Empty, string.Empty, false, false, Labels.ReviewFixSend, true);
+        (FileError, RetryText) = (string.Empty, Labels.ReviewFixRetry);
         OnChanged(nameof(HasOutcome));
         Text = source.Kind switch
         {
