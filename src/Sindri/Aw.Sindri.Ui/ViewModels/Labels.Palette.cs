@@ -54,7 +54,7 @@ internal static partial class Labels
         ("X / Shift+X", "Decline / cancel the run"),
         ("T / B", "Take over / hand back"),
         ("Y", "Copy the row's command"),
-        ("C / R", "New item / send a request"),
+        ("C / ⌘N / Ctrl+N", "New item"),
         ("/", "Filter this list"),
         ("?", "Shortcuts sheet"),
         ("⌘, / Ctrl+,", Settings),
