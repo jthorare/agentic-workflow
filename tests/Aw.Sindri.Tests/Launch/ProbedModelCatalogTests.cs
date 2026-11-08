@@ -11,7 +11,7 @@ public sealed class ProbedModelCatalogTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static ProbedModelCatalog Catalog(ProbedModelCatalog.Run run) => new(ProbedModelCatalog.Readers(run));
+    private static ProbedModelCatalog Catalog(ProbedModelCatalog.Run run, bool cursorInstalled = true) => new(ProbedModelCatalog.Readers(run, name => cursorInstalled || name != "cursor-agent"));
 
     private static ValueTask<string?> Never(string program, IReadOnlyList<string> arguments, CancellationToken cancellationToken) =>
         throw new InvalidOperationException($"nothing should run: {program}");
@@ -49,9 +49,59 @@ public sealed class ProbedModelCatalogTests
     }
 
     [Fact]
+    public async Task Cursor_lists_what_cursor_agent_list_models_prints()
+    {
+        var calls = new List<string>();
+        var catalog = Catalog((program, arguments, _) =>
+        {
+            calls.Add(program + " " + string.Join(' ', arguments));
+            return ValueTask.FromResult<string?>("Available models\n\nauto - Auto\ngpt-5 - GPT-5 (current)\nsonnet-4.5 - Claude 4.5 Sonnet (default)\n\nTip: use --model <id>\n");
+        });
+
+        var models = await catalog.ModelsOf(AgentId.From("cursor"), Token);
+
+        Expect.Equal("cursor-agent --list-models", string.Join(';', calls));
+        Expect.Equal("auto,gpt-5,sonnet-4.5", string.Join(',', models.Select(static m => m.Slug)));
+        Expect.Equal("GPT-5", models[1].DisplayName);
+        Expect.True(models.All(static m => m.Source == ModelSource.Discovered));
+    }
+
+    [Fact]
+    public async Task Cursor_strips_colour_codes_from_its_list()
+    {
+        var catalog = Catalog(static (_, _, _) => ValueTask.FromResult<string?>("\u001b[1mAvailable models\u001b[0m\n\u001b[32mgpt-5\u001b[0m - GPT-5\n"));
+
+        var models = await catalog.ModelsOf(AgentId.From("cursor"), Token);
+
+        Expect.Equal("gpt-5", string.Join(',', models.Select(static m => m.Slug)));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("Not logged in. Run `cursor-agent login`.")]
+    public async Task Cursor_without_a_live_list_falls_back_to_the_documented_one(string? output)
+    {
+        var models = await Catalog((_, _, _) => ValueTask.FromResult(output)).ModelsOf(AgentId.From("cursor"), Token);
+
+        Expect.True(models.Count > 0);
+        Expect.True(models.All(static m => m.Source == ModelSource.Catalog));
+        Expect.True(models.Any(static m => m.Slug == "gpt-5"));
+        Expect.True(models.Any(static m => m.Slug == "auto"));
+    }
+
+    [Fact]
+    public async Task Cursor_that_is_not_installed_offers_no_models_and_nothing_runs()
+    {
+        var models = await Catalog(Never, cursorInstalled: false).ModelsOf(AgentId.From("cursor"), Token);
+
+        Expect.Equal(0, models.Count);
+    }
+
+    [Fact]
     public async Task An_agent_with_no_reader_offers_no_models_and_nothing_runs()
     {
-        var models = await Catalog(Never).ModelsOf(AgentId.From("cursor"), Token);
+        var models = await Catalog(Never).ModelsOf(AgentId.From("some-other-agent"), Token);
 
         Expect.Equal(0, models.Count);
     }
