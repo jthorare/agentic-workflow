@@ -61,5 +61,6 @@ internal static partial class Labels
         ("⌘⇧N / Ctrl+Shift+N", "New todo from anywhere"),
         ("⌘Z / Ctrl+Z", "Undo the last action"),
         ("F6 / Shift+F6", "Next / previous area"),
+        .. TodoPanelKeys,
     ];
 }
