@@ -165,18 +165,24 @@ public sealed class LaneHealthReader(ILaneFiles files, LaneBeats beats, ILaneMai
         var seen = trace is null ? null : $"{trace.Event} at {Clock(trace.At)}";
         return trace?.Outcome switch
         {
-            "not-own-agent" => $"hooks ran but skipped the lane: the hook's process is not under the lane's agent ({seen})",
+            "not-own-agent" => $"hooks ran but skipped the lane: the hook's process is not under the lane's agent ({seen})"
+                + (agent.IsCodex && agent.NoDaemon == false ? "; codex's shared daemon runs hooks outside the lane (this lane started without --no-daemon)" : string.Empty),
             "aw-meta-missing" => "hooks ran but found no aw-meta binary (scripts/install-meta.sh)",
             "ran" => $"hooks ran ({seen}) but recorded no heartbeat",
             { } outcome when outcome.EndsWith("-failed", StringComparison.Ordinal) => $"hooks ran but aw-meta {outcome[..^"-failed".Length]} failed at {Clock(trace.At)} (see logs/failopen.log)",
-            _ => agent.Agent switch
+            _ => agent.IsCodex ? CodexNeverRan(agent) : agent.Agent switch
             {
-                "codex" => "hooks never ran: trust them with /hooks in codex (each install that changes a hook asks again)",
                 "cursor" => "hooks never ran: check ~/.cursor/hooks.json has the aw:meta-lane-gate entries (scripts/install-meta.sh)",
                 _ => "hooks never ran: check the " + agent.Agent + " hooks are installed",
             },
         };
     }
+
+    // A Codex alias (codex-yolo) gets the Codex line too. A lane started without --no-daemon may have its hooks run by Codex's shared
+    // daemon with another team's AW_META_* (#2286), which looks the same from here: no heartbeat in this team's state.
+    private static string CodexNeverRan(LaneAgent agent) =>
+        "hooks never ran: trust them with /hooks in codex (each install that changes a hook asks again)"
+        + (agent.NoDaemon == false ? "; if they are trusted, codex's shared daemon may be running them as another team (this lane started without --no-daemon: update codex, or stop the other team's codex)" : string.Empty);
 
     private static string Clock(DateTimeOffset at) => at.UtcDateTime.ToString("HH:mm:ss'Z'", System.Globalization.CultureInfo.InvariantCulture);
 }

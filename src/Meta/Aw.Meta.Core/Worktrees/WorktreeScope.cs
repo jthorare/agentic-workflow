@@ -41,10 +41,11 @@ public sealed record WorktreeScope
     /// <summary>One worktree.</summary>
     /// <param name="path">Its directory.</param>
     /// <param name="discarded">Whether a losing bugfix candidate may be removed with its unpushed commits (--discarded).</param>
+    /// <param name="includeNoPr">Whether a branch with no pull request may be removed (--include-no-pr).</param>
     /// <returns>The scope.</returns>
-    public static WorktreeScope ForPath(string path, bool discarded)
+    public static WorktreeScope ForPath(string path, bool discarded, bool includeNoPr = false)
     {
         ArgumentNullException.ThrowIfNull(path);
-        return new WorktreeScope(prs: null, path: path, discarded: discarded);
+        return new WorktreeScope(prs: null, includeNoPr: includeNoPr, path: path, discarded: discarded);
     }
 }
