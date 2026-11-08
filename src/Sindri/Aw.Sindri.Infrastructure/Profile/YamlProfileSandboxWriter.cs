@@ -12,8 +12,8 @@ namespace Aw.Sindri.Infrastructure.Profile;
 /// found or created, and the entry is appended once. The result must parse and hold the entry, and replaces the file only if the file is still the text that was read (one retry, as <see cref="YamlProfileRepoWriter"/>).
 /// </summary>
 /// <param name="settings">Where the profile is.</param>
-/// <param name="cache">Told right after a write, so the next read parses the file; null when nothing keeps the profile.</param>
-internal sealed class YamlProfileSandboxWriter(SindriSettings settings, IProfileCache? cache = null) : IProfileSandboxWriter
+/// <param name="cache">Told right after a write, so the next read parses the file.</param>
+internal sealed class YamlProfileSandboxWriter(SindriSettings settings, IProfileCache cache) : IProfileSandboxWriter
 {
     private const int Attempts = 2;
 
@@ -129,7 +129,7 @@ internal sealed class YamlProfileSandboxWriter(SindriSettings settings, IProfile
     // The file changed: tell the cache, then hand the answer back.
     private SandboxAllowed Applied(SandboxAllowed answer)
     {
-        cache?.Invalidate();
+        cache.Invalidate();
         return answer;
     }
 }

@@ -73,7 +73,7 @@ public sealed class RemoveLinearWriteKeyStoreTests : IDisposable
     {
         var profile = new SindriProfile(1, "me", Context: JsonDocument.Parse(contextJson).RootElement.Clone());
         var profiles = new InMemoryProfiles { Live = new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), ProfilePath) };
-        var yaml = new YamlSourceTokenProfileWriter(new SindriSettings(_home, ProfilePath));
+        var yaml = new YamlSourceTokenProfileWriter(new SindriSettings(_home, ProfilePath), Aw.Sindri.Testing.NoProfileCache.Instance);
         return new CoreLinearConnectionStore(profiles, _keychain, _keychain, yaml, yaml, yaml, _checks);
     }
 
