@@ -18,8 +18,8 @@ namespace Aw.Sindri.Tests.Views;
 /// </summary>
 public sealed class ViewRowShapeTests
 {
-    private const int PinnedVersion = 26;
-    private const string PinnedShape = "c0726bf676ea788b04f217652bcf271130a51634ad69f888990bb34baa1ed45e";
+    private const int PinnedVersion = 27;
+    private const string PinnedShape = "41aa83435d9c9c3deb4050d0f3608b5bbe1d63e6b173c0ed9a68c8f63f4e9227";
 
     private static readonly Type[] _rows =
     [
