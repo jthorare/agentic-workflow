@@ -58,10 +58,23 @@ public sealed class TodoNoteCheckRouteTests : IDisposable
         var json = Root(answer);
         Assert.Equal((true, 2, 1, 3, 1, 500, 0), (json.GetProperty("exists").GetBoolean(), json.GetProperty("open").GetInt32(), json.GetProperty("done").GetInt32(), json.GetProperty("other").GetInt32(), json.GetProperty("willImport").GetInt32(), json.GetProperty("cap").GetInt32(), json.GetProperty("sindriOpen").GetInt32()));
         var cant = Assert.Single(json.GetProperty("cantImport").EnumerateArray());
-        Assert.Equal((3, "it has a markdown link"), (cant.GetProperty("line").GetInt32(), cant.GetProperty("reason").GetString()));
+        Assert.Equal((3, "markdown link"), (cant.GetProperty("line").GetInt32(), cant.GetProperty("reason").GetString()));
+        Assert.Equal(("notes", "Todo.md"), (json.GetProperty("vault").GetString(), json.GetProperty("note").GetString()));
         Assert.Equal(Note, await File.ReadAllTextAsync(Path.Combine(_vault, "Todo.md"), Token));
         Assert.Equal(["Todo.md"], Directory.GetFileSystemEntries(_vault).Select(static p => Path.GetFileName(p)), StringComparer.Ordinal);   // the swap probe's two temporary files are gone
         Assert.Equal(before, await LedgerHead(host));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task Only_the_first_five_lines_that_cannot_import_are_listed()
+    {
+        await File.WriteAllTextAsync(Path.Combine(_vault, "Todo.md"), string.Concat(Enumerable.Range(1, 7).Select(static i => $"- [ ] item {i} [x](https://e.com)\n")), Token);
+        await using var host = await Start();
+
+        var json = Root(await host.Http.Ask(Post(Route, Body("notes", "Todo.md"), ItemScenarios.Human(host))));
+
+        Assert.Equal([1, 2, 3, 4, 5], json.GetProperty("cantImport").EnumerateArray().Select(static c => c.GetProperty("line").GetInt32()));
+        Assert.Equal((7, 0), (json.GetProperty("open").GetInt32(), json.GetProperty("willImport").GetInt32()));
     }
 
     [Fact, Trait("Lane", "integration")]

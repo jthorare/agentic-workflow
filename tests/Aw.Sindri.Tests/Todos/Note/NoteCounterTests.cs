@@ -15,7 +15,7 @@ public sealed class NoteCounterTests
 
         Assert.Equal((2, 1, 3, 1, 1), (counts.Open, counts.Done, counts.Other, counts.Importable, counts.CantImport.Count));
         Assert.Equal([3], counts.CantImport.Select(static c => c.Line));
-        Assert.Equal("it has a markdown link", counts.CantImport[0].Reason);
+        Assert.Equal("markdown link", counts.CantImport[0].Reason);
     }
 
     [Fact]

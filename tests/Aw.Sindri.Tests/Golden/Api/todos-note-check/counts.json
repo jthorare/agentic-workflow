@@ -1,4 +1,6 @@
 {
+  "vault": "notes",
+  "note": "Todo.md",
   "exists": true,
   "open": 3,
   "done": 1,
@@ -6,7 +8,7 @@
   "cantImport": [
     {
       "line": 4,
-      "reason": "it has a markdown link"
+      "reason": "markdown link"
     }
   ],
   "willImport": 2,

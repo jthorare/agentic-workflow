@@ -14,7 +14,7 @@ internal static class TodoScenarios
     private static readonly string[] _markSlugs = ["todos-done", "todos-reopen", "todos-remove", "todos-restore"];
 
     /// <summary>The (slug, scenario) pairs of this class.</summary>
-    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted"), ("todos-note-check", "counts"), ("todos-note-set", "changed"), ("todos-note-stop", "unchanged")];
+    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted"), ("todos-note-check", "counts"), ("todos-note-set", "changed"), ("todos-note-set", "unchanged"), ("todos-note-set", "stale"), ("todos-note-stop", "changed"), ("todos-note-stop", "unchanged")];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
     public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario));
@@ -53,8 +53,7 @@ internal static class TodoScenarios
 
         if (slug is "todos-note-set" or "todos-note-stop")
         {
-            var written = (await host.Http.Ask(Post("/sindri/" + slug.Replace("todos-note-", "todos/note/", StringComparison.Ordinal), Request(slug, scenario), human))).Body;
-            return Regex.Replace(written, "(?<=\"profileHash\"\\s*:\\s*\")[0-9a-f]{64}", new string('0', 64), RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));   // the hash follows the machine's profile text; the golden pins the shape
+            return await NoteWrite(host, slug, scenario, human);
         }
 
         if (slug == "todos-add")
@@ -103,6 +102,25 @@ internal static class TodoScenarios
         // why: done and remove take their version from the one shared request file; reopen and restore need version 2 (the state change before them was version 2), so each has its own
         var file = string.Equals(verb, "done", StringComparison.Ordinal) || string.Equals(verb, "remove", StringComparison.Ordinal) ? "todos-done" : slug;
         return (await host.Http.Ask(Post($"/sindri/todos/{made}/{verb}", Request(file, scenario), human))).Body;
+    }
+
+    // set: "changed" is the first write, "unchanged" repeats it, "stale" sends another hash; stop: "changed" follows a set, "unchanged" is a stop with no key. The profile hash follows the machine's profile text, so the golden pins its shape.
+    private static async Task<string> NoteWrite(GoldenHost host, string slug, string scenario, (string Name, string Value)[] human)
+    {
+        const string Set = "/sindri/todos/note/set";
+        var isSet = string.Equals(slug, "todos-note-set", StringComparison.Ordinal);
+        if (string.Equals(scenario, "unchanged", StringComparison.Ordinal) && isSet)
+        {
+            _ = await host.Http.Ask(Post(Set, Request("todos-note-set", "changed"), human));
+        }
+        else if (!isSet && string.Equals(scenario, "changed", StringComparison.Ordinal))
+        {
+            _ = await host.Http.Ask(Post(Set, Request("todos-note-set", "changed"), human));
+        }
+
+        var route = isSet ? Set : "/sindri/todos/note/stop";
+        var written = (await host.Http.Ask(Post(route, Request(slug, scenario), human))).Body;
+        return Regex.Replace(written, "(?<=\"profileHash\"\\s*:\\s*\")[0-9a-f]{64}", new string('0', 64), RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
     }
 
     /// <summary>The exact bytes the scenario posts: 'Golden/ApiRequests/&lt;slug&gt;/&lt;scenario&gt;.json', read as they are (no re-serializing), so the file is what the server is proven to read; the UI lanes build their client against the same file.</summary>

@@ -15,7 +15,7 @@ public static class NoteCounter
         var todos = note.Todos.ToList();
         var open = todos.Where(static t => !t.Done).ToList();
         var broken = open.Where(static t => t.Break != NoteBreak.None).ToList();
-        return new NoteCounts(open.Count, todos.Count - open.Count, note.Lines.Count - todos.Count, open.Count - broken.Count, [.. broken.Select(static t => new NoteCantImport(t.Number, NoteBreakReasons.Of(t.Break)))]);
+        return new NoteCounts(open.Count, todos.Count - open.Count, note.Lines.Count - todos.Count, open.Count - broken.Count, [.. broken.Select(static t => new NoteCantImport(t.Number, NoteBreakReasons.Short(t.Break)))]);
     }
 
     /// <summary>How many of the importable lines fit under the open cap beside the todos Sindri already holds.</summary>
