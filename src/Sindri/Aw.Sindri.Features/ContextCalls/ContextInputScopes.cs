@@ -34,7 +34,7 @@ internal sealed class ContextInputScopes(IApprovedProfile approvals)
         var scope = ContextScopes.For(loaded.Profile, new ContextCaller(ContextCallerKind.Service, Repo: null, ContextClient.Service));
         var repos = scope.Repos.Where(r => string.Equals(r.Name.Value, name.Value, StringComparison.Ordinal)).ToArray();
         return repos.Length == 0
-            ? ContextErrors.RepoOutsideScope.With($"repo {name.Value} is not in the approved profile, so nothing is mapped for it")
+            ? ContextErrors.RepoOutsideScope.With($"repo {name.Value} is not in the profile, so nothing is mapped for it")
             : scope with { Repos = repos };
     }
 }
