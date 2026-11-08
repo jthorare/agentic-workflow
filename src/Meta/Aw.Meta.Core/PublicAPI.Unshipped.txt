@@ -2073,8 +2073,8 @@ Aw.Meta.Core.Usage.UsageKind
 Aw.Meta.Core.Usage.UsageKind.Other = 3 -> Aw.Meta.Core.Usage.UsageKind
 Aw.Meta.Core.Usage.UsageKind.Session = 1 -> Aw.Meta.Core.Usage.UsageKind
 Aw.Meta.Core.Usage.UsageKind.Weekly = 2 -> Aw.Meta.Core.Usage.UsageKind
-Aw.Meta.Core.Usage.UsageMonitor
-Aw.Meta.Core.Usage.UsageMonitor.Check(Aw.Meta.Core.Config.TeamConfig! team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<string!>!>
+Aw.Meta.Core.Poll.UsageMonitor
+Aw.Meta.Core.Poll.UsageMonitor.Check(Aw.Meta.Core.Config.TeamConfig! team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<string!>!>
 Aw.Meta.Core.Usage.UsageReader
 Aw.Meta.Core.Usage.UsageReader.Read(Aw.Meta.Core.Config.TeamConfig! team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Usage.UsageReading!>!>!>
 Aw.Meta.Core.Usage.UsageReader.ReadOrNull(Aw.Meta.Core.Config.TeamConfig? team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Usage.UsageReading!>?>
@@ -2243,22 +2243,17 @@ Aw.Meta.Core.Routing.LaneStanding
 Aw.Meta.Core.Routing.LaneStanding.Agent.get -> string!
 Aw.Meta.Core.Routing.LaneStanding.Agent.init -> void
 Aw.Meta.Core.Routing.LaneStanding.<Clone>$() -> Aw.Meta.Core.Routing.LaneStanding!
-Aw.Meta.Core.Routing.LaneStanding.Deconstruct(out string! Lane, out string! Agent, out string! RunningAgent, out string? Model, out Aw.Meta.Core.Usage.UsageState State, out Aw.Meta.Core.Usage.UsageKind? Kind, out System.DateTimeOffset? ResetsAt, out Aw.Meta.Core.Routing.ProviderSignal? Signal, out string? Note) -> void
 Aw.Meta.Core.Routing.LaneStanding.Equals(Aw.Meta.Core.Routing.LaneStanding? other) -> bool
 Aw.Meta.Core.Routing.LaneStanding.Kind.get -> Aw.Meta.Core.Usage.UsageKind?
 Aw.Meta.Core.Routing.LaneStanding.Kind.init -> void
 Aw.Meta.Core.Routing.LaneStanding.Lane.get -> string!
 Aw.Meta.Core.Routing.LaneStanding.Lane.init -> void
-Aw.Meta.Core.Routing.LaneStanding.LaneStanding(string! Lane, string! Agent, string! RunningAgent, string? Model, Aw.Meta.Core.Usage.UsageState State, Aw.Meta.Core.Usage.UsageKind? Kind, System.DateTimeOffset? ResetsAt, Aw.Meta.Core.Routing.ProviderSignal? Signal, string? Note) -> void
 Aw.Meta.Core.Routing.LaneStanding.Limited.get -> bool
 Aw.Meta.Core.Routing.LaneStanding.Model.get -> string?
 Aw.Meta.Core.Routing.LaneStanding.Model.init -> void
 Aw.Meta.Core.Routing.LaneStanding.Note.get -> string?
 Aw.Meta.Core.Routing.LaneStanding.Note.init -> void
 Aw.Meta.Core.Routing.LaneStanding.PendingRelaunch.get -> bool
-Aw.Meta.Core.Routing.LaneStandingReader
-Aw.Meta.Core.Routing.LaneStandingReader.LaneStandingReader(Aw.Meta.Core.Ports.ILaneFiles! files, Aw.Meta.Core.Ports.ICodexRollouts! rollouts, System.TimeProvider! clock) -> void
-Aw.Meta.Core.Routing.LaneStandingReader.Read(Aw.Meta.Core.Config.TeamConfig! team, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Usage.UsageReading!>! readings, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.LaneStanding!>!>
 Aw.Meta.Core.Routing.LaneStanding.RemainingPct.get -> double?
 Aw.Meta.Core.Routing.LaneStanding.ResetsAt.get -> System.DateTimeOffset?
 Aw.Meta.Core.Routing.LaneStanding.ResetsAt.init -> void
@@ -2329,7 +2324,7 @@ Aw.Meta.Core.Routing.RouteSuggestion.ToModel.init -> void
 Aw.Meta.Core.Routing.RouteWatcher
 Aw.Meta.Core.Routing.RouteWatcher.Check(Aw.Meta.Core.Config.TeamConfig! team, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Usage.UsageReading!>! readings, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<string!>!>
 Aw.Meta.Core.Routing.RouteWatcher.RouteWatcher(Aw.Meta.Core.Routing.LaneStandingReader! standings, Aw.Meta.Core.Ports.IKeyValueStore! values) -> void
-Aw.Meta.Core.Usage.UsageMonitor.UsageMonitor(Aw.Meta.Core.Usage.UsageReader! reader, Aw.Meta.Core.Usage.UsageWatcher! watcher, Aw.Meta.Core.Routing.RouteWatcher! routes) -> void
+Aw.Meta.Core.Poll.UsageMonitor.UsageMonitor(Aw.Meta.Core.Usage.UsageReader! reader, Aw.Meta.Core.Usage.UsageWatcher! watcher, Aw.Meta.Core.Routing.RouteWatcher! routes) -> void
 const Aw.Meta.Core.KvKeys.RouteWatch = "route.watch" -> string!
 const Aw.Meta.Core.Routing.LaneStandingReader.TailBytes = 262144 -> int
 override Aw.Meta.Core.Config.LaneRoute.Equals(object? obj) -> bool
@@ -2374,3 +2369,10 @@ static Aw.Meta.Core.Routing.RouteSkip.operator !=(Aw.Meta.Core.Routing.RouteSkip
 static Aw.Meta.Core.Routing.RouteSkip.operator ==(Aw.Meta.Core.Routing.RouteSkip? left, Aw.Meta.Core.Routing.RouteSkip? right) -> bool
 static Aw.Meta.Core.Routing.RouteSuggestion.operator !=(Aw.Meta.Core.Routing.RouteSuggestion? left, Aw.Meta.Core.Routing.RouteSuggestion? right) -> bool
 static Aw.Meta.Core.Routing.RouteSuggestion.operator ==(Aw.Meta.Core.Routing.RouteSuggestion? left, Aw.Meta.Core.Routing.RouteSuggestion? right) -> bool
+Aw.Meta.Core.Routing.LaneStanding.Deconstruct(out string! Lane, out string! Agent, out string! RunningAgent, out string? Model, out Aw.Meta.Core.Usage.UsageState State, out Aw.Meta.Core.Usage.UsageKind? Kind, out System.DateTimeOffset? ResetsAt, out Aw.Meta.Core.Routing.ProviderSignal? Signal, out string? Note, out bool IsMeta) -> void
+Aw.Meta.Core.Routing.LaneStanding.IsMeta.get -> bool
+Aw.Meta.Core.Routing.LaneStanding.IsMeta.init -> void
+Aw.Meta.Core.Routing.LaneStanding.LaneStanding(string! Lane, string! Agent, string! RunningAgent, string? Model, Aw.Meta.Core.Usage.UsageState State, Aw.Meta.Core.Usage.UsageKind? Kind, System.DateTimeOffset? ResetsAt, Aw.Meta.Core.Routing.ProviderSignal? Signal, string? Note, bool IsMeta = false) -> void
+Aw.Meta.Core.Routing.LaneStandingReader
+Aw.Meta.Core.Routing.LaneStandingReader.LaneStandingReader(Aw.Meta.Core.Ports.ILaneFiles! files, Aw.Meta.Core.Ports.ICodexRollouts! rollouts, System.TimeProvider! clock) -> void
+Aw.Meta.Core.Routing.LaneStandingReader.Read(Aw.Meta.Core.Config.TeamConfig! team, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Usage.UsageReading!>! readings, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Routing.LaneStanding!>!>

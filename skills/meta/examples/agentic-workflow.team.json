@@ -60,5 +60,12 @@
     "CliStatusJsonTests",
     "RecipeRegistryCliTests",
     "RecipeApproveCliTests"
-  ]
+  ],
+  "routing": {
+    "models": { "claude-code": ["opus", "sonnet", "haiku"], "codex": ["astra", "luna"] },
+    "equivalents": { "opus": "astra", "haiku": "luna" },
+    "defaultModel": "opus",
+    "switchWhenLimited": true,
+    "minRemainingPct": 10
+  }
 }

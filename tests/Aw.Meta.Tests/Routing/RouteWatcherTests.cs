@@ -62,7 +62,7 @@ public sealed class RouteWatcherTests
         _w.U.LimitLane("ui");
 
         Assert.Empty(await Check());
-        Assert.Null((await _w.U.World.Values.Get(Aw.Meta.Core.KvKeys.RouteWatch, CancellationToken.None)).Value);
+        Assert.Null((await _w.U.World.Values.Get(Core.KvKeys.RouteWatch, CancellationToken.None)).Value);
     }
 
     [Fact, Trait("Lane", "unit")]

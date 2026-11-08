@@ -8,6 +8,10 @@ namespace Aw.Meta.Core.Config;
 /// </summary>
 public sealed record TeamConfig
 {
+#pragma warning disable IDE0032 // the deserializer skips the initializer of a property that is not a constructor parameter, so a file without "routing" must still read as the defaults
+    private RoutingConfig? _routing;
+#pragma warning restore IDE0032
+
     /// <summary>Creates a config.</summary>
     /// <param name="team">The team name; session names are "team-lane".</param>
     /// <param name="repo">The repository directory the gate and merge commands work in.</param>
@@ -111,5 +115,10 @@ public sealed record TeamConfig
     public string? Agent { get; init; }
 
     /// <summary>Which models each provider offers, which are equivalent, and when a lane should move.</summary>
-    public RoutingConfig Routing { get; init; } = new();
+    public RoutingConfig Routing
+    {
+        // A file without the block leaves the property unset: the deserializer skips initializers.
+        get => _routing ??= new RoutingConfig();
+        init => _routing = value;
+    }
 }

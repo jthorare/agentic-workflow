@@ -8,7 +8,7 @@ public sealed class RoutePlannerTests
     [Fact, Trait("Lane", "unit")]
     public void A_limited_Claude_lane_moves_to_the_Codex_model_of_equal_performance()
     {
-        var plan = RoutePlanner.Plan(Cfg(), [Standing("ui", "claude-code", "opus", limited: true)]);
+        var plan = RoutePlanner.Plan(Cfg(), [Standing("ui", "claude-code", "opus", limited: true), Standing("api", "codex", "luna", usedPct: 20)]);
 
         var move = Assert.Single(plan.Suggestions);
         Assert.Equal(("ui", "claude-code", "opus", "codex", "astra"), (move.Lane, move.FromAgent, move.FromModel, move.ToAgent, move.ToModel));
@@ -28,7 +28,7 @@ public sealed class RoutePlannerTests
     [Fact, Trait("Lane", "unit")]
     public void A_Codex_lane_under_the_remaining_share_moves_back_through_the_pair_read_the_other_way()
     {
-        var plan = RoutePlanner.Plan(Cfg(), [Standing("ui", "codex", "astra", usedPct: 95)]);
+        var plan = RoutePlanner.Plan(Cfg(), [Standing("ui", "codex", "astra", usedPct: 95), Standing("api", "claude-code", "opus")]);
 
         var move = Assert.Single(plan.Suggestions);
         Assert.Equal(("codex", "astra", "claude-code", "opus"), (move.FromAgent, move.FromModel, move.ToAgent, move.ToModel));
@@ -54,7 +54,7 @@ public sealed class RoutePlannerTests
     [Fact, Trait("Lane", "unit")]
     public void A_limit_the_provider_reports_moves_the_lane_even_without_a_limit_stop()
     {
-        var plan = RoutePlanner.Plan(Cfg(), [Standing("ui", "codex", "astra", usedPct: 40, reached: true)]);
+        var plan = RoutePlanner.Plan(Cfg(), [Standing("ui", "codex", "astra", usedPct: 40, reached: true), Standing("api", "claude-code", "opus")]);
 
         Assert.Equal("limited: codex reports its limit reached", Assert.Single(plan.Suggestions).Reason);
     }

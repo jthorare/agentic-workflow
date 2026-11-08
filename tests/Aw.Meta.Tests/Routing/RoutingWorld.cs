@@ -64,7 +64,7 @@ internal sealed class RoutingWorld
             agent,
             runningAgent ?? agent,
             model,
-            limited ? Aw.Meta.Core.Usage.UsageState.Limited : Aw.Meta.Core.Usage.UsageState.Ok,
+            limited ? Core.Usage.UsageState.Limited : Core.Usage.UsageState.Ok,
             limited ? Aw.Meta.Core.Usage.UsageKind.Session : null,
             limited ? Now.AddMinutes(30) : null,
             usedPct is { } used ? new ProviderSignal([new ProviderWindow("5h", used, Now.AddHours(1))], reached) : (reached ? new ProviderSignal([], LimitReached: true) : null),

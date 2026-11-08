@@ -231,6 +231,15 @@ A Claude usage limit stops every lane and your own subagents at once ("You've hi
   `aw-meta watch`, then run `aw-meta usage` and confirm every lane is `ok`. A lane still `limited` after the reset
   (`USAGE RESUME FAILED`, or it was busy or had a draft in its box) needs a nudge: SendMessage it (`aw-meta lane-send` only for a non-Claude lane; it refuses a Claude lane, AW-META-017).
 
+## Usage across providers
+
+`aw-meta usage` also shows, per lane, the agent and model it is assigned and what its provider says is left (Codex: 5h and weekly percent used; Claude Code: only the limit stop; Cursor: nothing, shown as unknown). `aw-meta route` turns that into moves, using `routing.equivalents` in the team config (for example opus to astra, haiku to luna).
+
+- Run `aw-meta route` when `watch` prints `ROUTE SUGGEST <lane> ...`, when `USAGE LIMITED` hits and the reset is hours away, and before you hand a lane new work.
+- It only prints. Read each `switch` line and each `keep` line (`keep` says why a limited lane cannot move: no equivalent model, the target provider is limited too, a relaunch is pending).
+- Switching a lane is your action. Run `aw-meta route --apply` (add `--lane <l>` for one lane), then log the decision: `aw-meta log-append --kind decision --text "route: moved <lane> from <from> to <to> because <reason>"`.
+- `--apply` writes `routing.lanes.<lane>` and starts nothing. A team runs one agent, so tell the owner which lane to relaunch on the new agent, and why. Do not move a lane whose provider shows `usage unknown` without saying so in the digest.
+
 ## The running log
 
 Merges, owner decisions, lane maps and kills are logged by the CLI. For anything else worth keeping:

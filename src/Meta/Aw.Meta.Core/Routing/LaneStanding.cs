@@ -12,7 +12,8 @@ namespace Aw.Meta.Core.Routing;
 /// <param name="ResetsAt">When the limit resets.</param>
 /// <param name="Signal">The provider's usage windows; null when the provider shows none.</param>
 /// <param name="Note">Why there is no signal, or what it rests on.</param>
-public sealed record LaneStanding(string Lane, string Agent, string RunningAgent, string? Model, UsageState State, UsageKind? Kind, DateTimeOffset? ResetsAt, ProviderSignal? Signal, string? Note)
+/// <param name="IsMeta">Whether this is the meta, which is read but never moved.</param>
+public sealed record LaneStanding(string Lane, string Agent, string RunningAgent, string? Model, UsageState State, UsageKind? Kind, DateTimeOffset? ResetsAt, ProviderSignal? Signal, string? Note, bool IsMeta = false)
 {
     /// <summary>Whether the lane is stopped, by a limit stop or by the provider saying so.</summary>
     public bool Limited => State == UsageState.Limited || Signal is { LimitReached: true };

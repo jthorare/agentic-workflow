@@ -1,8 +1,8 @@
-using Aw.Meta.Testing;
 using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Ids;
 using Aw.Meta.Core.Lanes;
 using Aw.Meta.Core.Usage;
+using Aw.Meta.Testing;
 
 namespace Aw.Meta.Tests.Routing;
 
@@ -10,7 +10,7 @@ public sealed class LaneStandingReaderTests
 {
     private readonly RoutingWorld _w = new();
 
-    private async Task<IReadOnlyList<Aw.Meta.Core.Routing.LaneStanding>> Look()
+    private async Task<IReadOnlyList<Core.Routing.LaneStanding>> Look()
     {
         var team = (await _w.U.World.Config.Load(CancellationToken.None)).Value;
         var readings = (await _w.U.Reader.Read(team, CancellationToken.None)).Value;

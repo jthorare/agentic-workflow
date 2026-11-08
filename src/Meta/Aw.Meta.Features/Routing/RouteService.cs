@@ -1,5 +1,7 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
+using Aw.Meta.Core;
+using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Ports;
 using Aw.Meta.Core.Routing;
 using Aw.Meta.Core.Usage;
@@ -12,5 +14,42 @@ namespace Aw.Meta.Features.Routing;
 /// <param name="standings">Adds provider, model and usage windows.</param>
 internal sealed class RouteService(IMetaConfig config, UsageReader reader, LaneStandingReader standings) : IService<RouteRequest, RouteResponse>
 {
-    public ValueTask<Result<RouteResponse>> Handle(RouteRequest request, CancellationToken cancellationToken) => throw new NotSupportedException($"{request}{config.GetType()}{reader.GetType()}{standings.GetType()}");
+    public async ValueTask<Result<RouteResponse>> Handle(RouteRequest request, CancellationToken cancellationToken)
+    {
+        var loaded = await config.Load(cancellationToken).ConfigureAwait(false);
+        if (loaded.IsError)
+        {
+            return loaded.Error;
+        }
+
+        var team = loaded.Value;
+        if (request.Lane is { } named && !team.Lanes.Contains(named, StringComparer.Ordinal))
+        {
+            return MetaErrors.UnknownLane.With($"'{named}' is not a lane of team {team.Team}");
+        }
+
+        var readings = await reader.Read(team, cancellationToken).ConfigureAwait(false);
+        if (readings.IsError)
+        {
+            return readings.Error;
+        }
+
+        var plan = RoutePlanner.Plan(team.Routing, await standings.Read(team, readings.Value, cancellationToken).ConfigureAwait(false));
+        var shown = new RouteResponse([.. plan.Suggestions.Where(s => Wanted(request, s.Lane))], [.. plan.Skipped.Where(s => Wanted(request, s.Lane))], Applied: false, Attention: false);
+        if (!request.Apply || shown.Suggestions.Count == 0)
+        {
+            return shown with { Attention = shown.Suggestions.Count > 0 };
+        }
+
+        var lanes = new Dictionary<string, LaneRoute>(team.Routing.Lanes, StringComparer.Ordinal);
+        foreach (var move in shown.Suggestions)
+        {
+            lanes[move.Lane] = new LaneRoute(move.ToAgent, move.ToModel);
+        }
+
+        var saved = await config.Save(team with { Routing = team.Routing with { Lanes = lanes } }, cancellationToken).ConfigureAwait(false);
+        return saved.IsError ? saved.Error : shown with { Applied = true };
+    }
+
+    private static bool Wanted(RouteRequest request, string lane) => request.Lane is null || string.Equals(lane, request.Lane, StringComparison.Ordinal);
 }

@@ -6,7 +6,7 @@ using Aw.Meta.Core.Usage;
 
 namespace Aw.Meta.Features.Usage;
 
-/// <summary>Reports which lanes and whether the meta stopped at a usage limit.</summary>
+/// <summary>Reports which lanes and whether the meta stopped at a usage limit, and what each lane runs on.</summary>
 /// <param name="config">The team config.</param>
 /// <param name="reader">Looks at the lanes and the meta.</param>
 /// <param name="standings">Adds provider, model and usage windows.</param>
@@ -14,7 +14,6 @@ internal sealed class UsageService(IMetaConfig config, UsageReader reader, LaneS
 {
     public async ValueTask<Result<UsageResponse>> Handle(UsageRequest request, CancellationToken cancellationToken)
     {
-        _ = standings;
         var team = await config.Load(cancellationToken).ConfigureAwait(false);
         if (team.IsError)
         {
@@ -22,10 +21,33 @@ internal sealed class UsageService(IMetaConfig config, UsageReader reader, LaneS
         }
 
         var readings = await reader.Read(team.Value, cancellationToken).ConfigureAwait(false);
-        return readings.IsError
-            ? readings.Error
-            : new UsageResponse([.. readings.Value.Select(Row)], readings.Value.Any(static r => r.State == UsageState.Limited));
+        if (readings.IsError)
+        {
+            return readings.Error;
+        }
+
+        var lanes = (await standings.Read(team.Value, readings.Value, cancellationToken).ConfigureAwait(false)).ToDictionary(static s => s.Lane, StringComparer.Ordinal);
+        var rows = readings.Value.Select(r => Row(r, lanes.GetValueOrDefault(r.Subject))).ToList();
+        return new UsageResponse(rows, rows.Exists(static r => r.State == UsageState.Limited));
     }
 
-    private static UsageRow Row(UsageReading reading) => new(reading.Subject, reading.State, reading.Stop?.Kind, reading.Stop?.ResetsAt, reading.Source, reading.Reason);
+    private static UsageRow Row(UsageReading reading, LaneStanding? lane)
+    {
+        var plain = new UsageRow(reading.Subject, reading.State, reading.Stop?.Kind, reading.Stop?.ResetsAt, reading.Source, reading.Reason);
+        return lane is null
+            ? plain
+            : With(plain, lane) with { Agent = lane.Agent, Model = lane.Model, RemainingPct = lane.RemainingPct, Windows = lane.Signal?.Windows, SignalNote = lane.Note };
+    }
+
+    // A provider that says its limit is reached stops the lane as surely as a limit stop does.
+    private static UsageRow With(UsageRow row, LaneStanding lane)
+    {
+        if (row.State == UsageState.Limited || lane.Signal is not { LimitReached: true } signal)
+        {
+            return row;
+        }
+
+        var resets = signal.Windows.Where(static w => w.UsedPct >= 100).Min(static w => w.ResetsAt);
+        return row with { State = UsageState.Limited, Kind = UsageKind.Other, ResetsAt = resets, Source = lane.RunningAgent + " rollout" };
+    }
 }

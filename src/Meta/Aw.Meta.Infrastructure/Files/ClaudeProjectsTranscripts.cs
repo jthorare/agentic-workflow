@@ -1,4 +1,3 @@
-using System.Text;
 using Aw.Kernel;
 using Aw.Meta.Core;
 using Aw.Meta.Core.Ids;
@@ -24,7 +23,7 @@ internal sealed class ClaudeProjectsTranscripts(string projects) : IClaudeTransc
         try
         {
             var path = Find(id + ".jsonl");
-            return path is null ? Results.Success<TranscriptTail?>(value: null) : await Read(path, maxBytes, cancellationToken).ConfigureAwait(false);
+            return path is null ? Results.Success<TranscriptTail?>(value: null) : await TailFile.Read(path, maxBytes, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
@@ -37,23 +36,4 @@ internal sealed class ClaudeProjectsTranscripts(string projects) : IClaudeTransc
         Directory.Exists(projects)
             ? Directory.EnumerateDirectories(projects).Select(d => Path.Combine(d, file)).Where(File.Exists).OrderByDescending(File.GetLastWriteTimeUtc).FirstOrDefault()
             : null;
-
-    private static async ValueTask<TranscriptTail?> Read(string path, int maxBytes, CancellationToken cancellationToken)
-    {
-        var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, useAsync: true);
-        await using (stream.ConfigureAwait(false))
-        {
-            var start = Math.Max(0, stream.Length - maxBytes);
-            _ = stream.Seek(start, SeekOrigin.Begin);
-            var bytes = new byte[stream.Length - start];
-            await stream.ReadExactlyAsync(bytes, cancellationToken).ConfigureAwait(false);
-            var lines = Encoding.UTF8.GetString(bytes).Split('\n').Select(static l => l.TrimEnd('\r')).ToList();
-            if (start > 0 && lines.Count > 0)
-            {
-                lines.RemoveAt(0);   // cut by the start of the window
-            }
-
-            return new TranscriptTail(path, new DateTimeOffset(File.GetLastWriteTimeUtc(path), TimeSpan.Zero), [.. lines.Where(static l => l.Length > 0)]);
-        }
-    }
 }

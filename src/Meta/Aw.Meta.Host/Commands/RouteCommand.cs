@@ -1,3 +1,5 @@
+using Aw.Meta.Features.Routing;
+
 namespace Aw.Meta.Host.Commands;
 
 /// <summary>The 'route' command: which lanes should move to another provider. Exit 1 while a suggestion waits.</summary>
@@ -7,5 +9,16 @@ internal static class RouteCommand
         "route",
         new CommandSpec("route [--lane <l>] [--apply] [--json]", [], ["lane"], ["apply"]),
         NeedsConfig: true,
-        static context => throw new NotSupportedException());
+        static context => CommandOutput.Call<RouteRequest, RouteResponse>(context, new RouteRequest(context.Line.Has("apply"), context.Line["lane"]), Text, static r => r.Attention));
+
+    private static string Text(RouteResponse response)
+    {
+        var lines = response.Suggestions.Select(static s => s.ToString()).Concat(response.Skipped.Select(static s => $"keep {s.Lane}: {s.Reason}")).ToList();
+        if (response.Applied)
+        {
+            lines.Add("written to routing.lanes in the team config; relaunch the lanes (aw-meta-launch or lane-recycle) to start them on the new provider");
+        }
+
+        return lines.Count == 0 ? "nothing to switch" : string.Join(Environment.NewLine, lines);
+    }
 }

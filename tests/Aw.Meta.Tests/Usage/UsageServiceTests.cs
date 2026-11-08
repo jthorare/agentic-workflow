@@ -62,8 +62,8 @@ public sealed class UsageServiceTests
     public async Task Each_row_carries_the_lane_s_agent_model_and_usage_signal()
     {
         await _w.Ready();
-        _ = await _w.World.Config.Save(new Aw.Meta.Core.Config.TeamConfig("t1", "/work", ["meta", "api", "ui"], "meta") { Routing = Routing.RoutingWorld.Cfg() }, CancellationToken.None);
-        _w.World.LaneFiles.Put(new Aw.Meta.Core.Lanes.LaneRecord("ui", Aw.Meta.Core.Ids.SessionId.From("codex-ui"), new Aw.Meta.Core.Lanes.LaneAgent("codex", "codex", Hooks: true), A.At(1)));
+        _ = await _w.World.Config.Save(new Core.Config.TeamConfig("t1", "/work", ["meta", "api", "ui"], "meta") { Routing = Routing.RoutingWorld.Cfg() }, CancellationToken.None);
+        _w.World.LaneFiles.Put(new Core.Lanes.LaneRecord("ui", Core.Ids.SessionId.From("codex-ui"), new Core.Lanes.LaneAgent("codex", "codex", Hooks: true), A.At(1)));
         _w.World.CodexRollouts.Put("codex-ui", Routing.RoutingWorld.Rollout(88, 48) + "\n", A.At(55));
 
         var result = await Service().Handle(new UsageRequest(), CancellationToken.None);
@@ -71,7 +71,7 @@ public sealed class UsageServiceTests
         var (api, ui) = (result.Value.Subjects[0], result.Value.Subjects[1]);
         Assert.Equal(("claude-code", "opus", null), (api.Agent, api.Model, api.RemainingPct));
         Assert.Contains("Claude Code shows only the limit stop", api.SignalNote, StringComparison.Ordinal);
-        Assert.Equal(("codex", "opus", 12d), (ui.Agent, ui.Model, ui.RemainingPct));
+        Assert.Equal(("codex", "astra", 12d), (ui.Agent, ui.Model, ui.RemainingPct));
         Assert.Equal(["5h", "weekly"], ui.Windows!.Select(w => w.Name), StringComparer.Ordinal);
     }
 }
