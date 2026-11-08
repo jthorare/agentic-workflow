@@ -25016,3 +25016,21 @@ Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckRemoveWriteToken(string! sou
 Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckSetTeams(string! source, System.Collections.Generic.IReadOnlyList<string!>! teams) -> Aw.Kernel.Result<bool>!
 Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckSetToken(string! source, string! secretPointer) -> Aw.Kernel.Result<bool>!
 Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckSetWriteToken(string! source, string! secretPointer) -> Aw.Kernel.Result<bool>!
+Aw.Sindri.Core.Scheduling.IStoreCheckpoints
+Aw.Sindri.Core.Scheduling.IStoreCheckpoints.Run(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Scheduling.StoreCheckpoint!>!>
+Aw.Sindri.Core.Scheduling.StoreCheckpoint
+Aw.Sindri.Core.Scheduling.StoreCheckpoint.<Clone>$() -> Aw.Sindri.Core.Scheduling.StoreCheckpoint!
+Aw.Sindri.Core.Scheduling.StoreCheckpoint.Deconstruct(out string! Store, out bool Truncated, out long LogBytes) -> void
+Aw.Sindri.Core.Scheduling.StoreCheckpoint.Equals(Aw.Sindri.Core.Scheduling.StoreCheckpoint? other) -> bool
+Aw.Sindri.Core.Scheduling.StoreCheckpoint.LogBytes.get -> long
+Aw.Sindri.Core.Scheduling.StoreCheckpoint.LogBytes.init -> void
+Aw.Sindri.Core.Scheduling.StoreCheckpoint.StoreCheckpoint(string! Store, bool Truncated, long LogBytes) -> void
+Aw.Sindri.Core.Scheduling.StoreCheckpoint.Store.get -> string!
+Aw.Sindri.Core.Scheduling.StoreCheckpoint.Store.init -> void
+Aw.Sindri.Core.Scheduling.StoreCheckpoint.Truncated.get -> bool
+Aw.Sindri.Core.Scheduling.StoreCheckpoint.Truncated.init -> void
+override Aw.Sindri.Core.Scheduling.StoreCheckpoint.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Scheduling.StoreCheckpoint.GetHashCode() -> int
+override Aw.Sindri.Core.Scheduling.StoreCheckpoint.ToString() -> string!
+static Aw.Sindri.Core.Scheduling.StoreCheckpoint.operator !=(Aw.Sindri.Core.Scheduling.StoreCheckpoint? left, Aw.Sindri.Core.Scheduling.StoreCheckpoint? right) -> bool
+static Aw.Sindri.Core.Scheduling.StoreCheckpoint.operator ==(Aw.Sindri.Core.Scheduling.StoreCheckpoint? left, Aw.Sindri.Core.Scheduling.StoreCheckpoint? right) -> bool
