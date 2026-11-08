@@ -192,7 +192,7 @@ internal sealed class TodoPanelViewModel : ObservableObject, IDisposable
     {
         var open = split.Open.Count;
         var listed = split.Done.Count + split.Removed.Count;
-        CountLine = Labels.TodoCountLine(open, split.Overdue.Count, split.Open.Count(t => t.Conflict is not null));
+        CountLine = Labels.TodoCountLine(open, split.Overdue.Count, todos.Count(t => t.Conflict is not null));
         (IsEmpty, EmptyText) = (open == 0, open == 0 ? Labels.TodoEmpty : string.Empty);
         (ShowsShowAll, ShowAllText) = (!IsExpanded && open > CollapsedRows, Labels.TodoShowAll(open));
         DoneToggleText = ShowsDone ? Labels.TodoHideDone : Labels.TodoShowDone;

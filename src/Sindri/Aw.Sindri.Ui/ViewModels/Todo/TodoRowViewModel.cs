@@ -113,7 +113,7 @@ internal sealed class TodoRowViewModel : ObservableObject
             var open = !todo.Removed && todo.DoneAt is null;
             var days = todo.Due is { } due ? due.DayNumber - today.DayNumber : 0;
             var addedByAgent = todo.AddedBy.StartsWith("session:", StringComparison.Ordinal) || string.Equals(todo.AddedVia, "pipe", StringComparison.Ordinal);
-            return new Facts(open, todo.Due, days, Overdue: open && days < 0, addedByAgent, EditedByAgent: !addedByAgent && todo.LastBy.StartsWith("session:", StringComparison.Ordinal));
+            return new Facts(open, todo.Due, days, Overdue: open && days < 0, addedByAgent, EditedByAgent: !addedByAgent && (todo.LastBy.StartsWith("session:", StringComparison.Ordinal) || string.Equals(todo.LastVia, "pipe", StringComparison.Ordinal)));
         }
     }
 }
