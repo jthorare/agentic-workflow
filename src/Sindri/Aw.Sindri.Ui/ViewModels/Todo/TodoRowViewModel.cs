@@ -65,6 +65,11 @@ internal sealed class TodoRowViewModel : ObservableObject
     internal void Update(TodoView todo, DateOnly today)
     {
         var facts = Facts.Of(todo, today);
+        if (todo.Version != Version)
+        {
+            Notice = string.Empty;   // the todo moved on (a later write, an edit from elsewhere): the old failure no longer holds
+        }
+
         Text = todo.Text;
         Version = todo.Version;
         Chips = [.. todo.Links.Take(ChipsDrawn).Select(l => l.Ref)];

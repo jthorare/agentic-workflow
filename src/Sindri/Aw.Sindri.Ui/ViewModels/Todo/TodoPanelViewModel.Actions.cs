@@ -43,6 +43,11 @@ internal sealed partial class TodoPanelViewModel
             return;
         }
 
+        if (_rows.TryGetValue(before.Id, out var shown))
+        {
+            shown.Notice = string.Empty;   // a new try: the last one's "Couldn't save" goes
+        }
+
         var next = NeighbourOf(before.Id);
         var applied = Applied(move, before);
         _inFlight[before.Id] = applied;
@@ -51,6 +56,7 @@ internal sealed partial class TodoPanelViewModel
         OnFocusRequested(next);
         var sent = await Send(move, url, before.Id, before.Version).ConfigureAwait(true);
         _ = _inFlight.Remove(before.Id);
+        StaleReads();
         if (sent.IsError)
         {
             Put(before.Id, before);
@@ -68,6 +74,7 @@ internal sealed partial class TodoPanelViewModel
     {
         var back = Opposite(move);
         var sent = await Send(back, url, before.Id, version).ConfigureAwait(true);
+        StaleReads();
         if (sent.IsError)
         {
             if (string.Equals(sent.Error.Code, "SND-TODO-409", StringComparison.Ordinal))
@@ -96,6 +103,9 @@ internal sealed partial class TodoPanelViewModel
         _todos = [.. todos.Select(t => string.Equals(t.Id, id, StringComparison.Ordinal) ? now : t)];
         Show();
     }
+
+    // A read asked for before Sindri answered a write shows the todo as it was: it is dropped, and the write's event reads again.
+    private void StaleReads() => _reads++;
 
     // A read that lands while a write is in flight keeps the todo as the key left it.
     private IReadOnlyList<TodoView> Overlaid(IReadOnlyList<TodoView> read) =>

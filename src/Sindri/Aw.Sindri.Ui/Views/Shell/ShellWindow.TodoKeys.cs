@@ -1,3 +1,4 @@
+using System.Runtime.ExceptionServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -115,7 +116,18 @@ internal sealed partial class ShellWindow
     {
         if (row is not null)
         {
-            _ = act(row.Id);
+            // A fault is thrown again on the UI thread, as an event handler's would be, instead of being dropped.
+            _ = act(row.Id).ContinueWith(
+                static done =>
+                {
+                    if (done.Exception?.GetBaseException() is { } fault)
+                    {
+                        ExceptionDispatchInfo.Throw(fault);
+                    }
+                },
+                CancellationToken.None,
+                TaskContinuationOptions.OnlyOnFaulted,
+                TaskScheduler.FromCurrentSynchronizationContext());
         }
 
         return true;
