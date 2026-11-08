@@ -38,8 +38,8 @@ public readonly partial struct WorkflowInstanceId : ITypedId<WorkflowInstanceId,
         return For(new Guid(bytes, bigEndian: true));
     }
 
-    private static Vogen.Validation Validate(string value) =>
-        Shape.IsMatch(value) ? Vogen.Validation.Ok : Vogen.Validation.Invalid("An instance id is 'WFI-' and 32 lower-case hex digits");
+    private static Validation Validate(string value) =>
+        Shape.IsMatch(value) ? Validation.Ok : Validation.Invalid("An instance id is 'WFI-' and 32 lower-case hex digits");
 
     [GeneratedRegex("^WFI-[0-9a-f]{32}\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }

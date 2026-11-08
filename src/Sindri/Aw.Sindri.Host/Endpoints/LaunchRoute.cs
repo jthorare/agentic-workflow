@@ -1,6 +1,6 @@
 using Aw.Kernel;
-using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Text;
 
 namespace Aw.Sindri.Host.Endpoints;

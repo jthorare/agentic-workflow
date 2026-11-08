@@ -1,11 +1,11 @@
 using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox.Denials;
 using Aw.Sindri.Core.Setup;

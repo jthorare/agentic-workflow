@@ -19,8 +19,8 @@ public readonly partial struct LaunchId : ITypedId<LaunchId, string>
     /// <returns>The id.</returns>
     public static LaunchId For(Guid value) => From("LCH-" + value.ToString("N"));
 
-    private static Vogen.Validation Validate(string value) =>
-        Shape.IsMatch(value) ? Vogen.Validation.Ok : Vogen.Validation.Invalid("A launch id is 'LCH-' and 32 lower-case hex digits");
+    private static Validation Validate(string value) =>
+        Shape.IsMatch(value) ? Validation.Ok : Validation.Invalid("A launch id is 'LCH-' and 32 lower-case hex digits");
 
     [GeneratedRegex("^LCH-[0-9a-f]{32}\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }

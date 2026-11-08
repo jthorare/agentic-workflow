@@ -1,5 +1,5 @@
-using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Xunit;
 

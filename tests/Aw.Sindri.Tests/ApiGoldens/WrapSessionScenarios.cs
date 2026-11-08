@@ -44,7 +44,7 @@ internal static class WrapSessionScenarios
         await ViewScenarios.CatchUp(host, ct);
         var launch = A.FirstLaunchId;
         await LaunchScenarios.Request(host, launch, ItemId.From(item), ct);
-        await LaunchScenarios.Started(host, launch, item, Core.Launch.ViewerOutcomeKind.Skipped, ct);
+        await LaunchScenarios.Started(host, launch, item, ViewerOutcomeKind.Skipped, ct);
         await ViewScenarios.CatchUp(host, ct);
         LaunchSecrets.Write(new LauncherOptions(host.Home).SecretsDirectory, launch, Proof);
         return launch;

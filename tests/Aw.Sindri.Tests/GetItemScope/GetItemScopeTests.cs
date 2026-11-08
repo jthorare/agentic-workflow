@@ -1,9 +1,9 @@
 using Aw.Kernel;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Scoping;
 using Aw.Sindri.Features.GetItemScope;

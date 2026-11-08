@@ -1,9 +1,9 @@
 using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Doctor;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Plan;

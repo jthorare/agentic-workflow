@@ -1,7 +1,7 @@
 using System.Globalization;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Features.GetEngineHistory;
 using Aw.Sindri.Testing.Engine;
 

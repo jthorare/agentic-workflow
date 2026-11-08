@@ -1,6 +1,6 @@
 using System.Globalization;
-using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sandbox.Denials;
 using Aw.Sindri.Features.ListDenials;
 
