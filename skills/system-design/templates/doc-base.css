@@ -1,10 +1,12 @@
 /* Base layout for /system-design pages. Colors, fonts and radius come from the :root block tokens_to_css.py puts above this;
-   the fallbacks here are neutral and only apply to tokens the project does not define. Light theme. */
+   the fallbacks here are the Sindri tokens (assets/sindri-tokens.json) and apply to any token the project does not define. Dark. */
 :root {
-  --bg: #fafafa; --surface: #ffffff; --ink: #1c1c1e; --muted: #6b6b70; --line: #dcdce0;
-  --accent: #3b5bdb; --secondary: #7048e8; --good: #2b8a3e; --warn: #b7791f; --bad: #c92a2a;
-  --f-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --f-mono: ui-monospace, "SF Mono", Menlo, monospace;
-  --radius: 8px;
+  --bg: #010102; --surface: #0f1011; --ink: #f7f8f8; --muted: #8a8f98; --line: #34343a;
+  --accent: #5e6ad2; --secondary: #a78bfa; --good: #27a644; --warn: #f2994a; --bad: #eb5757;
+  --f-body: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --radius: 12px;
+  --accent-ink: color-mix(in srgb, var(--accent) 55%, #ffffff);
+  color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -16,6 +18,7 @@ h2 { font-size: 1.375rem; line-height: 1.25; font-weight: 600; }
 h3 { font-size: 1.0625rem; line-height: 1.3; font-weight: 600; }
 p { margin: 0; max-width: 68ch; }
 b, strong { font-weight: 600; }
+a { color: var(--accent-ink); }
 .eyebrow { font: 500 0.75rem/1.2 var(--f-body); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .muted { color: var(--muted); }
 .mono { font-family: var(--f-mono); font-size: 0.85em; }
