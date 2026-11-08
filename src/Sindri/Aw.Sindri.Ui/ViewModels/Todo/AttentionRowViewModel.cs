@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Sindri.Ui.Api;
 
 namespace Aw.Sindri.Ui.ViewModels.Todo;
@@ -15,6 +16,9 @@ internal sealed class AttentionRowViewModel : ObservableObject
 
     /// <summary>The key a todo's hold row goes by in <see cref="Id"/>.</summary>
     internal const string HoldId = "hold";
+
+    private const int SummaryChanges = 3;
+    private const int ListedChanges = 5;
 
     /// <summary>A conflict or a hold.</summary>
     public AttentionKind Kind { get; }
@@ -72,18 +76,115 @@ internal sealed class AttentionRowViewModel : ObservableObject
     /// <summary>The sentence a screen reader gets for the row (§3.5).</summary>
     public string AccessibleName { get; private set; } = string.Empty;
 
+    /// <summary>What decides whether a read changed the row: the same signature keeps the row (its open form and notice) as it is.</summary>
+    internal string Signature { get; private set; } = string.Empty;
+
     /// <summary>The row of a todo with an open both-places conflict.</summary>
     /// <param name="todo">The todo; its <see cref="TodoView.Conflict"/> is not null.</param>
-    /// <param name="today">Today's day in local time (the due words).</param>
     /// <returns>The row.</returns>
-    internal static AttentionRowViewModel ForConflict(TodoView todo, DateOnly today)
+    internal static AttentionRowViewModel ForConflict(TodoView todo)
     {
-        _ = (new AttentionRowViewModel(AttentionKind.Conflict, todo.Id), today);
-        throw new NotSupportedException();
+        var conflict = todo.Conflict ?? throw new ArgumentException("The todo has no open conflict.", nameof(todo));
+        var (mine, theirs) = (conflict.Sindri, conflict.Obsidian);
+        var (sindriFields, obsidianFields, same) = Compare(mine, theirs);
+        var row = new AttentionRowViewModel(AttentionKind.Conflict, todo.Id)
+        {
+            Line = Labels.TodoAttnConflictLine(todo.Text),
+            EnterHint = Labels.TodoAttnSortOutHint,
+            Title = Labels.TodoAttnConflictTitle,
+            Meta = same.Count == 0 ? string.Empty : string.Join(" · ", same) + ", " + Labels.TodoAttnSameInBoth,
+            Version = todo.Version,
+            AccessibleName = Labels.TodoAttnConflictName(todo.Text),
+            Choices =
+            [
+                new AttentionChoiceViewModel(
+                    "1",
+                    Labels.TodoAttnSindri,
+                    mine.Removed ? Labels.TodoAttnKeepRemoved : Labels.TodoAttnKeepSindri,
+                    Labels.TodoAttnKeepName("Sindri's", mine.Removed ? null : mine.Text),
+                    sindriFields,
+                    mine.Removed),
+                new AttentionChoiceViewModel(
+                    "2",
+                    Labels.TodoAttnObsidian,
+                    theirs.Removed ? Labels.TodoAttnRemoveIt : Labels.TodoAttnKeepObsidian,
+                    theirs.Removed ? Labels.TodoAttnRemoveName(todo.Text) : Labels.TodoAttnKeepName("Obsidian's", theirs.Text),
+                    obsidianFields,
+                    theirs.Removed),
+            ],
+        };
+        row.Signature = string.Join('\u001f', row.Kind, row.Id, row.Line, row.Meta, row.Version, conflict.NoteHash, string.Join('\u001e', row.Choices.SelectMany(c => c.Fields.Select(f => f.Label + f.Value))));
+        return row;
     }
 
     /// <summary>The row of the open hold.</summary>
     /// <param name="hold">The hold.</param>
     /// <returns>The row.</returns>
-    internal static AttentionRowViewModel ForHold(TodoHoldView hold) => throw new NotSupportedException();
+    internal static AttentionRowViewModel ForHold(TodoHoldView hold)
+    {
+        var count = hold.Changes.Count;
+        var summary = Labels.TodoAttnHoldSummary([.. hold.Changes.Take(SummaryChanges).Select(c => Labels.TodoAttnHoldChange(c.Kind, c.Text))], Math.Max(count - SummaryChanges, 0));
+        var row = new AttentionRowViewModel(AttentionKind.Hold, HoldId)
+        {
+            Line = Labels.TodoAttnHoldTitle(count),
+            EnterHint = Labels.TodoAttnLookHint,
+            Title = Labels.TodoAttnHoldTitle(count),
+            Meta = summary,
+            Changes = [.. hold.Changes.Take(ListedChanges).Select(c => Labels.TodoAttnHoldChangeLine(c.Kind, c.Text))],
+            MoreChanges = count > ListedChanges ? Labels.TodoAttnHoldMore(count - ListedChanges) : string.Empty,
+            HeldCount = count,
+            NoteHash = hold.NoteHash,
+            AccessibleName = Labels.TodoAttnHoldName(count, summary),
+            Choices =
+            [
+                new AttentionChoiceViewModel("1", string.Empty, Labels.TodoAttnPutBack, Labels.TodoAttnPutBackName(count), [], isRemoved: false),
+                new AttentionChoiceViewModel("2", string.Empty, Labels.TodoAttnApply, Labels.TodoAttnApplyName(count), [], isRemoved: false),
+            ],
+        };
+        row.Signature = string.Join('\u001f', row.Kind, row.Id, row.Line, row.Meta, hold.NoteHash, string.Join('\u001e', row.Changes));
+        return row;
+    }
+
+    // The fields where the two versions differ, per column, and the values they share (shown once, dimmed). A removal makes the removed column say so and the other show its own words.
+    private static (List<AttentionFieldViewModel> Sindri, List<AttentionFieldViewModel> Obsidian, List<string> Same) Compare(TodoSideView mine, TodoSideView theirs)
+    {
+        if (mine.Removed || theirs.Removed)
+        {
+            return (OneSide(mine), OneSide(theirs), []);
+        }
+
+        Columns columns = new([], [], []);
+        Field(Labels.TodoAttnText, mine.Text ?? string.Empty, theirs.Text ?? string.Empty, columns);
+        Field(Labels.TodoAttnDue, DueWord(mine.Due), DueWord(theirs.Due), columns);
+        Field(Labels.TodoAttnLinks, LinksWord(mine), LinksWord(theirs), columns, dimWhenEmpty: true);
+        Field(Labels.TodoAttnState, StateWord(mine), StateWord(theirs), columns);
+        return (columns.Left, columns.Right, columns.Same);
+    }
+
+    private static List<AttentionFieldViewModel> OneSide(TodoSideView side) =>
+        side.Removed
+            ? [new AttentionFieldViewModel(Labels.TodoAttnState, Labels.TodoAttnRemoved)]
+            : [new AttentionFieldViewModel(Labels.TodoAttnText, side.Text ?? string.Empty), new AttentionFieldViewModel(Labels.TodoAttnState, StateWord(side))];
+
+    private static void Field(string label, string mine, string theirs, Columns columns, bool dimWhenEmpty = false)
+    {
+        if (!string.Equals(mine, theirs, StringComparison.Ordinal))
+        {
+            columns.Left.Add(new AttentionFieldViewModel(label, mine));
+            columns.Right.Add(new AttentionFieldViewModel(label, theirs));
+        }
+        else if (!(dimWhenEmpty && string.Equals(mine, Labels.TodoAttnNoLinks, StringComparison.Ordinal)))
+        {
+            columns.Same.Add(mine);
+        }
+    }
+
+    // The two columns' differing fields and the values both versions share, filled one field at a time.
+    private sealed record Columns(List<AttentionFieldViewModel> Left, List<AttentionFieldViewModel> Right, List<string> Same);
+
+    private static string DueWord(DateOnly? due) => due is { } day ? day.ToString("ddd MM-dd", CultureInfo.InvariantCulture) : Labels.TodoAttnNoDue;
+
+    private static string LinksWord(TodoSideView side) => side.Links is { Count: > 0 } links ? string.Join(", ", links) : Labels.TodoAttnNoLinks;
+
+    private static string StateWord(TodoSideView side) => side.Removed ? Labels.TodoAttnRemoved : side.Done ? Labels.TodoAttnDone : Labels.TodoAttnNotDone;
 }

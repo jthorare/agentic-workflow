@@ -17,10 +17,12 @@ internal sealed partial class TodoPanel : UserControl
     private const double DefaultRowHeight = 36;   // Size.Row, should the resource be missing
 
     private IDisposable? _height;
+    private TodoPanelViewModel? _watched;
 
     public TodoPanel()
     {
         InitializeComponent();
+        DataContextChanged += OnDataContext;
     }
 
     private TodoPanelViewModel? Panel => DataContext as TodoPanelViewModel;
@@ -59,7 +61,24 @@ internal sealed partial class TodoPanel : UserControl
         var row = this.TryFindResource("Size.Row", ActualThemeVariant, out var found) && found is double height ? height : DefaultRowHeight;
         if (this.FindControl<Grid>("TodoCollapsed") is { } collapsed)
         {
-            collapsed.Height = row * CollapsedSlots;
+            collapsed.Height = Panel is { IsAttentionOpen: true } ? double.NaN : row * CollapsedSlots;
+        }
+    }
+
+    // An open attention row is drawn at its full height, which grows the panel on the owner's key (D13); folded, the body is five slots again.
+    private void OnDataContext(object? sender, EventArgs e)
+    {
+        _watched?.PropertyChanged -= OnPanelChanged;
+        _watched = Panel;
+        _watched?.PropertyChanged += OnPanelChanged;
+        FixCollapsedHeight();
+    }
+
+    private void OnPanelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (string.Equals(e.PropertyName, nameof(TodoPanelViewModel.IsAttentionOpen), StringComparison.Ordinal))
+        {
+            FixCollapsedHeight();
         }
     }
 

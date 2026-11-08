@@ -33,15 +33,17 @@ public sealed class TodoAttentionPicksTests
         return await _a.Read(Token);
     }
 
-    [Fact]
-    public async Task One_keeps_Sindri_s_version_and_two_keeps_Obsidian_s()
+    [Theory]
+    [InlineData(1, "sindri")]
+    [InlineData(2, "obsidian")]
+    public async Task One_keeps_Sindri_s_version_and_two_keeps_Obsidian_s(int digit, string side)
     {
         var panel = await OneConflict();
 
-        await panel.Pick(1);
-        await panel.Pick(2);
+        await panel.Pick(digit);
 
-        Assert.Equal([(TodoRoutes.Keep("td_c1"), new TodoKeepBody("sindri")), (TodoRoutes.Keep("td_c1"), new TodoKeepBody("obsidian"))], Server.TodoPicks.Select(p => (p.Route, (TodoKeepBody)p.Body!)));
+        var sent = Assert.Single(Server.TodoPicks);
+        Assert.Equal((TodoRoutes.Keep("td_c1"), new TodoKeepBody(side)), (sent.Route, sent.Body));
     }
 
     [Fact]
@@ -161,16 +163,17 @@ public sealed class TodoAttentionPicksTests
         Assert.Empty(Server.TodoWrites);
     }
 
-    [Fact]
-    public async Task A_hold_pick_one_puts_the_lines_back_with_the_note_hash_and_two_applies()
+    [Theory]
+    [InlineData(1, "/sindri/todos/note/hold/restore")]
+    [InlineData(2, "/sindri/todos/note/hold/apply")]
+    public async Task A_hold_pick_one_puts_the_lines_back_and_two_applies_each_with_the_note_hash(int digit, string route)
     {
         var panel = await OneHold();
 
-        await panel.Pick(1);
-        await panel.Pick(2);
+        await panel.Pick(digit);
 
-        Assert.Equal([TodoRoutes.HoldRestore, TodoRoutes.HoldApply], Server.TodoPicks.Select(p => p.Route), StringComparer.Ordinal);
-        Assert.All(Server.TodoPicks, p => Assert.Equal(new TodoHoldBody("sha256:3f1c"), p.Body));
+        var sent = Assert.Single(Server.TodoPicks);
+        Assert.Equal((route, new TodoHoldBody("sha256:3f1c")), (sent.Route, sent.Body));
     }
 
     [Fact]

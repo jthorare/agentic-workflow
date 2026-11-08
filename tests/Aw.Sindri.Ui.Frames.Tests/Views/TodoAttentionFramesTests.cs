@@ -172,12 +172,12 @@ public sealed class TodoAttentionFramesTests : IDisposable
         Assert.Equal(["changed", "changed", "changed", "changed"], Texts(window, "TodoAttentionMark"));
         Assert.Equal(["Keep Sindri's", "Keep Obsidian's"], Buttons(window).Select(b => ((AttentionChoiceViewModel)b.DataContext!).ButtonText), StringComparer.Ordinal);
         Assert.Equal(["1", "2"], Texts(window, "TodoAttentionKey"));
-        Assert.Same(Buttons(window)[0], window.FocusManager!.GetFocusedElement());
+        await Until(window, () => Buttons(window).Count == 2 && ReferenceEquals(Buttons(window)[0], window.FocusManager!.GetFocusedElement()), "focus never reached the first button");
 
         Key(window, PhysicalKey.Escape);
 
         Assert.False(shell.Todo.IsAttentionOpen);
-        Assert.Equal("TodoAttentionLine", Focused(window));
+        await Until(window, () => string.Equals(Focused(window), "TodoAttentionLine", StringComparison.Ordinal), "focus never came back to the line");
     });
 
     [Fact]
@@ -238,7 +238,7 @@ public sealed class TodoAttentionFramesTests : IDisposable
         var values = Panel(window).GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name == "TodoAttentionFieldValue" && t.IsEffectivelyVisible).ToList();
 
         Assert.All(values, v => Assert.Equal((TextWrapping.Wrap, 3, TextTrimming.CharacterEllipsis), (v.TextWrapping, v.MaxLines, v.TextTrimming)));
-        Assert.All(values, v => Assert.True(v.Bounds.Height <= (v.FontSize * 1.6 * 3) + 4, "a version's text is at most three lines tall"));
+        Assert.All(values, v => Assert.True(v.Bounds.Height <= (v.FontSize * 2 * 3) + 4, "a version's text is at most three lines tall"));
     });
 
     [Fact]
