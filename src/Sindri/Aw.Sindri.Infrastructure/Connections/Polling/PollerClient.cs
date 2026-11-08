@@ -65,7 +65,9 @@ internal sealed class PollerClient(HttpClient http, IConnectionSecrets secrets, 
 
             if (IsRateLimited(response, status))
             {
-                return new PollerAnswer(Body: null, RateLimited: true, RetryAfter: WaitOf(response), Reason: Limiting);
+                // a 5xx is the provider failing, not limiting us: the wording names the status, the backoff is the same
+                var reason = status >= 500 ? $"the provider answered {status.ToString(CultureInfo.InvariantCulture)}" : Limiting;
+                return new PollerAnswer(Body: null, RateLimited: true, RetryAfter: WaitOf(response), Reason: reason);
             }
 
             return await Classify(response, status, cursorSent, cancellationToken).ConfigureAwait(false);
