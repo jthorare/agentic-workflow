@@ -69,9 +69,9 @@ public sealed class ShellInboxTests
     [Fact]
     public Task A_link_to_a_row_the_list_does_not_have_still_opens_the_inbox_on_the_first_row() => UiThread.Run(async () =>
     {
-        var shell = await Shell(NeedsYouRows.Park("desk:WFI-1"));
+        var shell = await Shell(NeedsYouRows.Decision());
 
-        shell.Navigate(new DeepLink(DeepLinkKind.NeedsYou, "desk:gone"));
+        shell.Navigate(new DeepLink(DeepLinkKind.NeedsYou, "decision:gone"));
 
         Assert.True(shell.IsNeedsYouInbox);
         Assert.Equal("decision:DEC-1", shell.NeedsYou.SelectedId);
