@@ -207,11 +207,11 @@ public sealed class GoldenContractTests
 
         Assert.Equal((true, 4242, 1L, 1), (running.Running, running.Pid, running.Epoch, running.ApiVersion));
         _ = Assert.NotNull(running.LeaseExpiresAt);
-        _ = Assert.NotNull(running.Profile.Live);
+        Assert.NotNull(running.Profile.Live);
         Assert.Null(running.Profile.Problem);
         Assert.EndsWith("profile.yaml", running.Profile.Source, StringComparison.Ordinal);
         Assert.Equal(("heartbeat", "5s"), (running.Services[0].Name, running.Services[0].Every));
-        Assert.Equal("healthy", running.Health.Word);
+        Assert.Equal("healthy", running.Health?.Word);
     }
 
     [Fact]

@@ -3,6 +3,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Infrastructure;
 using Aw.Sindri.Infrastructure.Profile;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Profile;
 
 namespace Aw.Sindri.Tests.AddRepo;
@@ -27,7 +28,7 @@ public sealed class YamlProfileRepoWriterTests : IDisposable
         }
     }
 
-    private YamlProfileRepoWriter Writer() => new(new SindriSettings(_dir, ProfilePath));
+    private YamlProfileRepoWriter Writer() => new(new SindriSettings(_dir, ProfilePath), NoProfileCache.Instance);
 
     private string Put(string text)
     {

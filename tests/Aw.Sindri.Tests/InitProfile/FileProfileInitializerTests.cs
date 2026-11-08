@@ -1,6 +1,7 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Infrastructure;
 using Aw.Sindri.Infrastructure.Profile;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Profile;
 
 namespace Aw.Sindri.Tests.InitProfile;
@@ -25,7 +26,7 @@ public sealed class FileProfileInitializerTests : IDisposable
         }
     }
 
-    private FileProfileInitializer Initializer() => new(new SindriSettings(_dir, ProfilePath));
+    private FileProfileInitializer Initializer() => new(new SindriSettings(_dir, ProfilePath), NoProfileCache.Instance);
 
     [Fact]
     public async Task It_creates_the_folder_and_a_profile_that_loads_with_the_effects_and_no_repos()

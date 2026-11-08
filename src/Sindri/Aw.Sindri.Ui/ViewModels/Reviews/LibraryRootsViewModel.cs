@@ -26,7 +26,7 @@ internal sealed class LibraryRootsViewModel : ObservableObject
     internal LibraryRootsViewModel(Func<Uri?> url, ISindriApi api, IFolderPicker folders, TimeProvider clock)
     {
         (_url, _api, _clock) = (url, api, clock);
-        Form = new LibraryRootFormViewModel(url, api, folders, Applied);
+        Form = new LibraryRootFormViewModel(url, api, folders, (_, ct) => Applied(ct));
     }
 
 #pragma warning disable CA1822, MA0041 // why: the view binds these as instance properties of the view model
