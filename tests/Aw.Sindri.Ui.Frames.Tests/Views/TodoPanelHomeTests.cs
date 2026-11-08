@@ -167,6 +167,31 @@ public sealed class TodoPanelHomeTests : IDisposable
         Assert.Equal(skeletonHeight, Named<Control>(Rows(window)[0], "TodoRowFrame").Bounds.Height);
     });
 
+    // The collapsed panel's height with the todos the server now answers (the skeleton when `hold`), on a fresh window.
+    private async Task<double> CollapsedHeight(bool hold, params JsonNode[] todos)
+    {
+        Serve(todos);
+        _server.TodosGate = hold ? new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously) : null;
+        var (window, shell) = await Connected(waitForTodos: !hold);
+        Assert.Equal(hold, shell.Todo.IsLoading);
+        var height = Panel(window).Bounds.Height;
+        _server.TodosGate?.SetResult();
+        window.Close();
+        return height;
+    }
+
+    [Fact]
+    public Task The_collapsed_panel_keeps_one_height_whatever_it_holds() => OnUi(async () =>
+    {
+        var skeleton = await CollapsedHeight(hold: true, Eight());
+        var empty = await CollapsedHeight(hold: false);
+        var two = await CollapsedHeight(hold: false, Eight()[..2]);
+        var six = await CollapsedHeight(hold: false, Eight()[..6]);
+
+        Assert.True(skeleton > 0);
+        Assert.Equal([skeleton, skeleton, skeleton], [empty, two, six]);
+    });
+
     [Fact]
     public Task An_empty_list_says_so_and_offers_nothing_to_expand() => OnUi(async () =>
     {
