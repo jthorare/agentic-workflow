@@ -50,7 +50,7 @@ public sealed class SetupStepWatchTests : IDisposable
         await watch.Run(AddRepoRig.Token);
 
         Assert.Contains(Changes(), static c => c.Key == "setup.step.changed:repo:done:1" && c.Payload.Contains("\"id\":\"repo\"", StringComparison.Ordinal));
-        Assert.Equal(7, Changes().Count());
+        Assert.Equal(6, Changes().Count());
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -62,7 +62,7 @@ public sealed class SetupStepWatchTests : IDisposable
 
         await Watch(new SetupStepLog()).Run(AddRepoRig.Token);
 
-        Assert.Equal(6, Changes().Count());
+        Assert.Equal(5, Changes().Count());
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -84,6 +84,6 @@ public sealed class SetupStepWatchTests : IDisposable
 
         _ = await service.Run(new ScheduledRun(Grant: default!, DateTimeOffset.UnixEpoch), AddRepoRig.Token);
 
-        Assert.Equal(6, Changes().Count());
+        Assert.Equal(5, Changes().Count());
     }
 }

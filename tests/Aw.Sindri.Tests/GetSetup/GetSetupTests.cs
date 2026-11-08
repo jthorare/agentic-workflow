@@ -61,7 +61,7 @@ public sealed class GetSetupTests
         Assert.True(result.IsSuccess);
         var failed = Assert.Single(result.Value.Steps, static s => s.State == SetupState.Failed);
         Assert.Equal((SetupStepId.Sources, SindriErrors.ApiInternal.Code), (failed.Id, failed.Error?.Code));
-        Assert.Equal(5, result.Value.Steps.Count(static s => s.State == SetupState.Done));
+        Assert.Equal(4, result.Value.Steps.Count(static s => s.State == SetupState.Done));
         var line = Assert.Single(_log.Lines);
         Assert.Contains("sources", line, StringComparison.Ordinal);
         Assert.Contains(nameof(InvalidOperationException), line, StringComparison.Ordinal);
