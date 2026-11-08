@@ -57,6 +57,9 @@ internal static partial class Labels
         ("/", "Filter this list"),
         ("?", "Shortcuts sheet"),
         ("⌘, / Ctrl+,", Settings),
+        ("N", "New todo"),
+        ("⌘⇧N / Ctrl+Shift+N", "New todo from anywhere"),
+        ("⌘Z / Ctrl+Z", "Undo the last action"),
         ("F6 / Shift+F6", "Next / previous area"),
     ];
 }

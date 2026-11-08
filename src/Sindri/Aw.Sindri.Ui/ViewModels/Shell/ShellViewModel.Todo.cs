@@ -9,6 +9,9 @@ internal sealed partial class ShellViewModel
     /// <summary>The Todo panel at the top of Home.</summary>
     public TodoPanelViewModel Todo { get; private set; }
 
+    /// <summary>False while Home's decisions filter (G D) is on: the panel is hidden then.</summary>
+    public bool IsTodoShown => HomeFilter != HomeFilter.Decisions;
+
     [MemberNotNull(nameof(Todo))]
     private void InitTodo()
     {

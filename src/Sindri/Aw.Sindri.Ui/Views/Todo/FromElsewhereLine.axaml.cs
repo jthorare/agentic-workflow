@@ -1,12 +1,11 @@
 using System.ComponentModel;
+using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Aw.Sindri.Ui.ViewModels.Todo;
 
 namespace Aw.Sindri.Ui.Views.Todo;
-
-#pragma warning disable MA0182 // until the Todo panel's view places the line (the panel and this line merge separately)
 
 /// <summary>
 /// The Todo panel's From elsewhere line (todo spec §3.1, §3.4, §3.5): it draws the view model's parts as links and calls its methods; it decides nothing.
@@ -17,6 +16,7 @@ internal sealed partial class FromElsewhereLine : UserControl
     private readonly List<(Button Button, Action Press)> _stops = [];
     private FromElsewhereViewModel? _line;
     private int _active;
+    private bool _attached;
 
     public FromElsewhereLine()
     {
@@ -29,10 +29,42 @@ internal sealed partial class FromElsewhereLine : UserControl
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
-        _line?.PropertyChanged -= OnLineChanged;
+        Listen(on: false);
         _line = DataContext as FromElsewhereViewModel;
-        _line?.PropertyChanged += OnLineChanged;
+        Listen(on: _attached);
         Rebuild();
+    }
+
+    /// <inheritdoc />
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        _attached = true;
+        Listen(on: true);
+        Rebuild();   // the line may have changed while it was away
+    }
+
+    /// <inheritdoc />
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        _attached = false;
+        Listen(on: false);
+        base.OnDetachedFromVisualTree(e);
+    }
+
+    // The view model outlives the view (the shell owns it), so the view follows it only while it is in the tree. Off first, then on: never twice.
+    private void Listen(bool on)
+    {
+        if (_line is null)
+        {
+            return;
+        }
+
+        _line.PropertyChanged -= OnLineChanged;
+        if (on)
+        {
+            _line.PropertyChanged += OnLineChanged;
+        }
     }
 
     /// <inheritdoc />

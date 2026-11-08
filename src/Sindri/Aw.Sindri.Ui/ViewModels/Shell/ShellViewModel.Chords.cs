@@ -108,6 +108,7 @@ internal sealed partial class ShellViewModel
 
         HomeFilter = filter;
         OnChanged(nameof(HomeFilter));
+        OnChanged(nameof(IsTodoShown));
         UpdateNeedsYou();
         Reattend();   // Home's summary counts the rows the filter lets through
     }
