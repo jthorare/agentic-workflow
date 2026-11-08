@@ -1,0 +1,6 @@
+01 line  | # Todo
+02 line  |
+03 todo  | id=td_01jc5a8xq0n4w7ms2t9r3vbk6e done=no on=- due=2026-11-14 links=- bad=- break=None text=reply to Sam about the offsite
+04 todo  | id=td_01jc5b2kz8m3r6tq1w9xh4dn7y done=no on=- due=2026-11-10 links=sindri://reviews/jthorare/agentic-workflow/12,sindri://linear/ENG-12 bad=- break=None text=rotate the staging key
+05 todo  | id=td_01jc5c90a2b7k4m8q1r6t3w9xz done=no on=- due=- links=- bad=- break=None text=call the dentist
+06 todo  | id=td_01jc5917f3h8n2p5s9v4x1z6bq done=yes on=2026-11-07 due=- links=- bad=- break=None text=renew the cert

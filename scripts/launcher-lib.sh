@@ -217,6 +217,31 @@ launcher_agent_ok() { # id: 0 when launchable
   fi
 }
 
+# launcher_is_codex <id>: whether the catalog entry is a Codex CLI: the built-in id, or an entry derived from it (an alias that keeps
+# its process name, model form or policy form, or whose binary is named codex). A shared-daemon rule (#2286) keys on this, not on the id.
+launcher_is_codex() {
+  jq -e --arg id "$1" '.[$id] | $id == "codex" or (.processName // "") == "codex" or (.model // "") == "codex-flag"
+    or (.policy // "") == "codex-overrides" or ((.bin // "") | split("/") | last) == "codex"' <<< "$LAUNCHER_CAT" > /dev/null 2>&1
+}
+
+# launcher_cli_has_flag <bin> <flag>: whether `<bin> --help` names the flag. One run, output to a temp file, ended after
+# AW_LAUNCHER_PROBE_SECONDS (default 5) so a CLI that hangs never stops a lane (no `timeout` on macOS). A CLI that does not run answers no.
+launcher_cli_has_flag() {
+  local bin="$1" flag="$2" out pid i found=1
+  out="$(mktemp "${TMPDIR:-/tmp}/aw-probe.XXXXXX")" || return 1
+  "$bin" --help > "$out" 2>&1 < /dev/null &
+  pid=$!
+  for ((i = 0; i < ${AW_LAUNCHER_PROBE_SECONDS:-5} * 10; i++)); do
+    kill -0 "$pid" 2> /dev/null || break
+    sleep 0.1
+  done
+  if kill -0 "$pid" 2> /dev/null; then kill "$pid" 2> /dev/null; fi
+  wait "$pid" 2> /dev/null
+  grep -q -- "$flag" "$out" 2> /dev/null && found=0
+  unlink "$out" 2> /dev/null
+  return "$found"
+}
+
 launcher_agent_field() { # id field
   jq -r --arg id "$1" --arg f "$2" '.[$id][$f] | if . == null then empty elif type == "string" then . else tojson end' <<< "$LAUNCHER_CAT"
 }
@@ -244,4 +269,35 @@ launcher_expand() {
         | gsub("\\{(?<n>[A-Za-z]+)\\}"; $v[.n] // "{\(.n)}")
       end
     | ., "\u0000"' <<< "$tpl"
+}
+
+# sh-quoted only when needed. A loop on a quote variable, not ${s//\'/...}: bash 3.2 (macOS) reads backslashes in that replacement differently (#2281).
+shq() {
+  case "$1" in
+    ''|*[!A-Za-z0-9_/.,:=@%+-]*)
+      local q="'" s="$1" out=""
+      while [[ "$s" == *"$q"* ]]; do out="$out${s%%"$q"*}'\\''"; s="${s#*"$q"}"; done
+      printf "'%s%s'" "$out" "$s" ;;
+    *) printf '%s' "$1" ;;
+  esac
+}
+
+# launcher_run_in_shell <word...>: run the words as one command through the user's interactive shell ($SHELL, /bin/bash when unset or
+# not executable), so an alias or function from its rc file applies to the first word (#2274). The lane already runs under a login shell
+# (`$SHELL -lc`, scripts/meta-launch.sh), so this one is only interactive (-i): zsh reads .zshrc, bash .bashrc, fish config.fish, and
+# the login profile does not run twice. The first word stays a bare name for the shell to resolve; the others are quoted byte for byte.
+# An rc file that prints, prompts or execs runs here too: guard it with AW_META_LANE, which meta-launch.sh sets before any profile.
+launcher_run_in_shell() {
+  local sh_bin="${SHELL:-}" cmd="" a
+  { [ -n "$sh_bin" ] && [ -x "$sh_bin" ]; } || sh_bin=/bin/bash
+  for a in "$@"; do cmd="$cmd $(shq "$a")"; done
+  # An interactive zsh with no startup file at all starts its first-run wizard and waits for a key: such a user has no alias to load, so
+  # that shell gets a plain -c.
+  local flags=-ic z
+  case "$sh_bin" in
+    */zsh|zsh)
+      flags=-c
+      for z in .zshenv .zprofile .zshrc .zlogin; do [ -e "${ZDOTDIR:-$HOME}/$z" ] && { flags=-ic; break; }; done ;;
+  esac
+  "$sh_bin" "$flags" "${cmd# }"
 }

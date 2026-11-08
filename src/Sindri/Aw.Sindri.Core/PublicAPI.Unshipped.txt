@@ -1048,6 +1048,9 @@ Aw.Sindri.Core.Events.WorkflowEventPayload.To.init -> void
 Aw.Sindri.Core.Events.WorkflowEventPayload.Trigger.get -> string!
 Aw.Sindri.Core.Events.WorkflowEventPayload.Trigger.init -> void
 Aw.Sindri.Core.Events.WorkflowEventPayload.WorkflowEventPayload(string! Instance, string! From, string! To, string! Trigger, string? Outcome, string? Run, Aw.Sindri.Core.Events.WorkflowEventDetail? Detail = null) -> void
+Aw.Sindri.Core.Graph.Schedule.CronExpression
+Aw.Sindri.Core.Graph.Schedule.CronExpression.LastTick(System.DateTimeOffset after, System.DateTimeOffset upTo) -> System.DateTimeOffset?
+Aw.Sindri.Core.Graph.Schedule.CronExpression.Next(System.DateTimeOffset after) -> System.DateTimeOffset
 Aw.Sindri.Core.Health.HealthProblem
 Aw.Sindri.Core.Health.HealthProblem.<Clone>$() -> Aw.Sindri.Core.Health.HealthProblem!
 Aw.Sindri.Core.Health.HealthProblem.Clause.get -> string!
@@ -1705,6 +1708,7 @@ override Aw.Sindri.Core.LensPacks.LensWhen.ToString() -> string!
 override Aw.Sindri.Core.LensPacks.PackLens.Equals(object? obj) -> bool
 override Aw.Sindri.Core.LensPacks.PackLens.GetHashCode() -> int
 override Aw.Sindri.Core.LensPacks.PackLens.ToString() -> string!
+static Aw.Sindri.Core.Graph.Schedule.CronExpression.TryParse(string! cron, string? timezone, out Aw.Sindri.Core.Graph.Schedule.CronExpression? expression, out string? error) -> bool
 static Aw.Sindri.Core.LensPacks.LensId.From(string! value) -> Aw.Sindri.Core.LensPacks.LensId
 static Aw.Sindri.Core.LensPacks.LensId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.LensPacks.LensId
 static Aw.Sindri.Core.LensPacks.LensId.TryFrom(string? value, out Aw.Sindri.Core.LensPacks.LensId vo) -> bool
@@ -11611,6 +11615,7 @@ const Aw.Sindri.Core.Sandbox.SandboxReasons.NoUserNamespace = "no-user-namespace
 const Aw.Sindri.Core.Sandbox.SandboxReasons.Sessions = "sessions" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.SourceUnsupported = "source-unsupported" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.Timeout = "timeout" -> string!
+const Aw.Sindri.Core.Sandbox.SandboxReasons.PathHidden = "path-hidden" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.ToolNotExpressible = "tool-not-expressible" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.UnsupportedPlatform = "unsupported-platform" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.Wall = "wall" -> string!
@@ -24547,6 +24552,862 @@ Aw.Sindri.Core.Launch.LaunchRequest.GithubPushApproved.get -> bool
 Aw.Sindri.Core.Launch.LaunchRequest.GithubPushApproved.init -> void
 Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.GithubPushApproved.get -> bool
 Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.GithubPushApproved.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockField
+Aw.Sindri.Core.Graph.Blocks.BlockField.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.BlockField!
+Aw.Sindri.Core.Graph.Blocks.BlockField.BlockField(string! Name, Aw.Sindri.Core.Graph.Blocks.BlockFieldType Type, bool Required = true) -> void
+Aw.Sindri.Core.Graph.Blocks.BlockField.Deconstruct(out string! Name, out Aw.Sindri.Core.Graph.Blocks.BlockFieldType Type, out bool Required) -> void
+Aw.Sindri.Core.Graph.Blocks.BlockField.Equals(Aw.Sindri.Core.Graph.Blocks.BlockField? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.BlockField.Name.get -> string!
+Aw.Sindri.Core.Graph.Blocks.BlockField.Name.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockField.Required.get -> bool
+Aw.Sindri.Core.Graph.Blocks.BlockField.Required.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockField.Type.get -> Aw.Sindri.Core.Graph.Blocks.BlockFieldType
+Aw.Sindri.Core.Graph.Blocks.BlockField.Type.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockFieldType
+Aw.Sindri.Core.Graph.Blocks.BlockFieldType.Boolean = 2 -> Aw.Sindri.Core.Graph.Blocks.BlockFieldType
+Aw.Sindri.Core.Graph.Blocks.BlockFieldType.Map = 5 -> Aw.Sindri.Core.Graph.Blocks.BlockFieldType
+Aw.Sindri.Core.Graph.Blocks.BlockFieldType.Number = 3 -> Aw.Sindri.Core.Graph.Blocks.BlockFieldType
+Aw.Sindri.Core.Graph.Blocks.BlockFieldType.Text = 1 -> Aw.Sindri.Core.Graph.Blocks.BlockFieldType
+Aw.Sindri.Core.Graph.Blocks.BlockFieldType.TextList = 4 -> Aw.Sindri.Core.Graph.Blocks.BlockFieldType
+Aw.Sindri.Core.Graph.Blocks.BlockOutputs
+Aw.Sindri.Core.Graph.Blocks.BlockOutputs.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.BlockOutputs.BlockOutputs(System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Fields, System.Collections.Generic.IReadOnlyList<string!>? Branches = null) -> void
+Aw.Sindri.Core.Graph.Blocks.BlockOutputs.BranchNames.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Blocks.BlockOutputs.Branches.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Graph.Blocks.BlockOutputs.Branches.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockOutputs.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Fields, out System.Collections.Generic.IReadOnlyList<string!>? Branches) -> void
+Aw.Sindri.Core.Graph.Blocks.BlockOutputs.Equals(Aw.Sindri.Core.Graph.Blocks.BlockOutputs? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.BlockOutputs.Fields.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Graph.Blocks.BlockOutputs.Fields.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockSchema
+Aw.Sindri.Core.Graph.Blocks.BlockSchema.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.BlockSchema.BlockSchema(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.BlockField!>! Fields) -> void
+Aw.Sindri.Core.Graph.Blocks.BlockSchema.Check(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
+Aw.Sindri.Core.Graph.Blocks.BlockSchema.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.BlockField!>! Fields) -> void
+Aw.Sindri.Core.Graph.Blocks.BlockSchema.Equals(Aw.Sindri.Core.Graph.Blocks.BlockSchema? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.BlockSchema.Fields.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.BlockField!>!
+Aw.Sindri.Core.Graph.Blocks.BlockSchema.Fields.init -> void
+Aw.Sindri.Core.Graph.Blocks.IGraphBlockCatalog
+Aw.Sindri.Core.Graph.Blocks.IGraphBlockCatalog.Types.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Graph.Blocks.IGraphBlockType!>!
+Aw.Sindri.Core.Graph.Blocks.IGraphBlockType
+Aw.Sindri.Core.Graph.Blocks.IGraphBlockType.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.IGraphBlockType.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.IGraphBlockType.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.IGraphBlockType.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.IGraphBlockType.Type.get -> string!
+Aw.Sindri.Core.Graph.GraphDatabase
+Aw.Sindri.Core.Graph.GraphDatabase.<Clone>$() -> Aw.Sindri.Core.Graph.GraphDatabase!
+Aw.Sindri.Core.Graph.GraphDatabase.Deconstruct(out string! Name) -> void
+Aw.Sindri.Core.Graph.GraphDatabase.Equals(Aw.Sindri.Core.Graph.GraphDatabase? other) -> bool
+Aw.Sindri.Core.Graph.GraphDatabase.GraphDatabase(string! Name) -> void
+Aw.Sindri.Core.Graph.GraphDatabase.Name.get -> string!
+Aw.Sindri.Core.Graph.GraphDatabase.Name.init -> void
+Aw.Sindri.Core.Graph.GraphEdge
+Aw.Sindri.Core.Graph.GraphEdge.<Clone>$() -> Aw.Sindri.Core.Graph.GraphEdge!
+Aw.Sindri.Core.Graph.GraphEdge.Deconstruct(out Aw.Sindri.Core.Graph.Ids.NodeId From, out string? Output, out Aw.Sindri.Core.Graph.Ids.NodeId To) -> void
+Aw.Sindri.Core.Graph.GraphEdge.Equals(Aw.Sindri.Core.Graph.GraphEdge? other) -> bool
+Aw.Sindri.Core.Graph.GraphEdge.From.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.GraphEdge.From.init -> void
+Aw.Sindri.Core.Graph.GraphEdge.GraphEdge(Aw.Sindri.Core.Graph.Ids.NodeId From, string? Output, Aw.Sindri.Core.Graph.Ids.NodeId To) -> void
+Aw.Sindri.Core.Graph.GraphEdge.Output.get -> string?
+Aw.Sindri.Core.Graph.GraphEdge.Output.init -> void
+Aw.Sindri.Core.Graph.GraphEdge.To.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.GraphEdge.To.init -> void
+Aw.Sindri.Core.Graph.GraphJson
+Aw.Sindri.Core.Graph.GraphNode
+Aw.Sindri.Core.Graph.GraphNode.<Clone>$() -> Aw.Sindri.Core.Graph.GraphNode!
+Aw.Sindri.Core.Graph.GraphNode.Config.get -> System.Text.Json.Nodes.JsonObject!
+Aw.Sindri.Core.Graph.GraphNode.Config.init -> void
+Aw.Sindri.Core.Graph.GraphNode.Deconstruct(out Aw.Sindri.Core.Graph.Ids.NodeId Id, out string! Type, out string? Title, out System.Text.Json.Nodes.JsonObject! Config) -> void
+Aw.Sindri.Core.Graph.GraphNode.Equals(Aw.Sindri.Core.Graph.GraphNode? other) -> bool
+Aw.Sindri.Core.Graph.GraphNode.GraphNode(Aw.Sindri.Core.Graph.Ids.NodeId Id, string! Type, string? Title, System.Text.Json.Nodes.JsonObject! Config) -> void
+Aw.Sindri.Core.Graph.GraphNode.Id.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.GraphNode.Id.init -> void
+Aw.Sindri.Core.Graph.GraphNode.Title.get -> string?
+Aw.Sindri.Core.Graph.GraphNode.Title.init -> void
+Aw.Sindri.Core.Graph.GraphNode.Type.get -> string!
+Aw.Sindri.Core.Graph.GraphNode.Type.init -> void
+Aw.Sindri.Core.Graph.GraphResources
+Aw.Sindri.Core.Graph.GraphResources.<Clone>$() -> Aw.Sindri.Core.Graph.GraphResources!
+Aw.Sindri.Core.Graph.GraphResources.Database.get -> Aw.Sindri.Core.Graph.GraphDatabase?
+Aw.Sindri.Core.Graph.GraphResources.Database.init -> void
+Aw.Sindri.Core.Graph.GraphResources.Deconstruct(out Aw.Sindri.Core.Graph.GraphDatabase? Database, out Aw.Sindri.Core.Graph.GraphSandbox? Sandbox) -> void
+Aw.Sindri.Core.Graph.GraphResources.Equals(Aw.Sindri.Core.Graph.GraphResources? other) -> bool
+Aw.Sindri.Core.Graph.GraphResources.GraphResources(Aw.Sindri.Core.Graph.GraphDatabase? Database = null, Aw.Sindri.Core.Graph.GraphSandbox? Sandbox = null) -> void
+Aw.Sindri.Core.Graph.GraphResources.Sandbox.get -> Aw.Sindri.Core.Graph.GraphSandbox?
+Aw.Sindri.Core.Graph.GraphResources.Sandbox.init -> void
+Aw.Sindri.Core.Graph.GraphSandbox
+Aw.Sindri.Core.Graph.GraphSandbox.<Clone>$() -> Aw.Sindri.Core.Graph.GraphSandbox!
+Aw.Sindri.Core.Graph.GraphSandbox.Deconstruct(out string? Memory, out string? Wall) -> void
+Aw.Sindri.Core.Graph.GraphSandbox.Equals(Aw.Sindri.Core.Graph.GraphSandbox? other) -> bool
+Aw.Sindri.Core.Graph.GraphSandbox.GraphSandbox(string? Memory = null, string? Wall = null) -> void
+Aw.Sindri.Core.Graph.GraphSandbox.Memory.get -> string?
+Aw.Sindri.Core.Graph.GraphSandbox.Memory.init -> void
+Aw.Sindri.Core.Graph.GraphSandbox.Wall.get -> string?
+Aw.Sindri.Core.Graph.GraphSandbox.Wall.init -> void
+Aw.Sindri.Core.Graph.GraphSpec
+Aw.Sindri.Core.Graph.GraphSpec.<Clone>$() -> Aw.Sindri.Core.Graph.GraphSpec!
+Aw.Sindri.Core.Graph.GraphSpec.Concurrency.get -> string?
+Aw.Sindri.Core.Graph.GraphSpec.Concurrency.init -> void
+Aw.Sindri.Core.Graph.GraphSpec.Deconstruct(out int Version, out string! Name, out string? Description, out string? Concurrency, out Aw.Sindri.Core.Graph.GraphResources? Resources, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.GraphNode!>! Nodes, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.GraphEdge!>! Edges) -> void
+Aw.Sindri.Core.Graph.GraphSpec.Description.get -> string?
+Aw.Sindri.Core.Graph.GraphSpec.Description.init -> void
+Aw.Sindri.Core.Graph.GraphSpec.Edges.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.GraphEdge!>!
+Aw.Sindri.Core.Graph.GraphSpec.Edges.init -> void
+Aw.Sindri.Core.Graph.GraphSpec.Equals(Aw.Sindri.Core.Graph.GraphSpec? other) -> bool
+Aw.Sindri.Core.Graph.GraphSpec.GraphSpec(int Version, string! Name, string? Description, string? Concurrency, Aw.Sindri.Core.Graph.GraphResources? Resources, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.GraphNode!>! Nodes, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.GraphEdge!>! Edges) -> void
+Aw.Sindri.Core.Graph.GraphSpec.Name.get -> string!
+Aw.Sindri.Core.Graph.GraphSpec.Name.init -> void
+Aw.Sindri.Core.Graph.GraphSpec.Nodes.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.GraphNode!>!
+Aw.Sindri.Core.Graph.GraphSpec.Nodes.init -> void
+Aw.Sindri.Core.Graph.GraphSpec.Resources.get -> Aw.Sindri.Core.Graph.GraphResources?
+Aw.Sindri.Core.Graph.GraphSpec.Resources.init -> void
+Aw.Sindri.Core.Graph.GraphSpec.Version.get -> int
+Aw.Sindri.Core.Graph.GraphSpec.Version.init -> void
+Aw.Sindri.Core.Graph.IWorkflowStore
+Aw.Sindri.Core.Graph.IWorkflowStore.Activate(Aw.Sindri.Core.Graph.Ids.WorkflowId id, int revision, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.WorkflowRecord!>!>
+Aw.Sindri.Core.Graph.IWorkflowStore.Archive(Aw.Sindri.Core.Graph.Ids.WorkflowId id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.WorkflowRecord!>!>
+Aw.Sindri.Core.Graph.IWorkflowStore.Create(Aw.Sindri.Core.Graph.Ids.WorkflowId id, Aw.Sindri.Core.Graph.Ids.WorkflowSlug slug, Aw.Sindri.Core.Graph.GraphSpec! spec, string! createdBy, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.WorkflowRevision!>!>
+Aw.Sindri.Core.Graph.IWorkflowStore.Get(Aw.Sindri.Core.Graph.Ids.WorkflowId id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.WorkflowRecord!>!>
+Aw.Sindri.Core.Graph.IWorkflowStore.GetRevision(Aw.Sindri.Core.Graph.Ids.WorkflowId id, int? revision, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.WorkflowRevision!>!>
+Aw.Sindri.Core.Graph.IWorkflowStore.List(bool includeArchived, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.WorkflowRecord!>!>!>
+Aw.Sindri.Core.Graph.IWorkflowStore.Save(Aw.Sindri.Core.Graph.Ids.WorkflowId id, int baseRevision, Aw.Sindri.Core.Graph.GraphSpec! spec, string! createdBy, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.WorkflowRevision!>!>
+Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Ids.NodeId.Equals(Aw.Sindri.Core.Graph.Ids.NodeId other) -> bool
+Aw.Sindri.Core.Graph.Ids.NodeId.Equals(Aw.Sindri.Core.Graph.Ids.NodeId other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Graph.Ids.NodeId>! comparer) -> bool
+Aw.Sindri.Core.Graph.Ids.NodeId.GetTypeCode() -> System.TypeCode
+Aw.Sindri.Core.Graph.Ids.NodeId.IsInitialized() -> bool
+Aw.Sindri.Core.Graph.Ids.NodeId.NodeId() -> void
+Aw.Sindri.Core.Graph.Ids.NodeId.ToString(System.IFormatProvider? provider) -> string!
+Aw.Sindri.Core.Graph.Ids.NodeId.Value.get -> string!
+Aw.Sindri.Core.Graph.Ids.WorkflowId
+Aw.Sindri.Core.Graph.Ids.WorkflowId.Equals(Aw.Sindri.Core.Graph.Ids.WorkflowId other) -> bool
+Aw.Sindri.Core.Graph.Ids.WorkflowId.Equals(Aw.Sindri.Core.Graph.Ids.WorkflowId other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Graph.Ids.WorkflowId>! comparer) -> bool
+Aw.Sindri.Core.Graph.Ids.WorkflowId.GetTypeCode() -> System.TypeCode
+Aw.Sindri.Core.Graph.Ids.WorkflowId.IsInitialized() -> bool
+Aw.Sindri.Core.Graph.Ids.WorkflowId.ToString(System.IFormatProvider? provider) -> string!
+Aw.Sindri.Core.Graph.Ids.WorkflowId.Value.get -> string!
+Aw.Sindri.Core.Graph.Ids.WorkflowId.WorkflowId() -> void
+Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Graph.Ids.WorkflowRunId.Equals(Aw.Sindri.Core.Graph.Ids.WorkflowRunId other) -> bool
+Aw.Sindri.Core.Graph.Ids.WorkflowRunId.Equals(Aw.Sindri.Core.Graph.Ids.WorkflowRunId other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Graph.Ids.WorkflowRunId>! comparer) -> bool
+Aw.Sindri.Core.Graph.Ids.WorkflowRunId.GetTypeCode() -> System.TypeCode
+Aw.Sindri.Core.Graph.Ids.WorkflowRunId.IsInitialized() -> bool
+Aw.Sindri.Core.Graph.Ids.WorkflowRunId.ToString(System.IFormatProvider? provider) -> string!
+Aw.Sindri.Core.Graph.Ids.WorkflowRunId.Value.get -> string!
+Aw.Sindri.Core.Graph.Ids.WorkflowRunId.WorkflowRunId() -> void
+Aw.Sindri.Core.Graph.Ids.WorkflowSlug
+Aw.Sindri.Core.Graph.Ids.WorkflowSlug.Equals(Aw.Sindri.Core.Graph.Ids.WorkflowSlug other) -> bool
+Aw.Sindri.Core.Graph.Ids.WorkflowSlug.Equals(Aw.Sindri.Core.Graph.Ids.WorkflowSlug other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Graph.Ids.WorkflowSlug>! comparer) -> bool
+Aw.Sindri.Core.Graph.Ids.WorkflowSlug.GetTypeCode() -> System.TypeCode
+Aw.Sindri.Core.Graph.Ids.WorkflowSlug.IsInitialized() -> bool
+Aw.Sindri.Core.Graph.Ids.WorkflowSlug.ToString(System.IFormatProvider? provider) -> string!
+Aw.Sindri.Core.Graph.Ids.WorkflowSlug.Value.get -> string!
+Aw.Sindri.Core.Graph.Ids.WorkflowSlug.WorkflowSlug() -> void
+Aw.Sindri.Core.Graph.Interpolation.Template
+Aw.Sindri.Core.Graph.Validation.ConditionParse
+Aw.Sindri.Core.Graph.Validation.ConditionParse.<Clone>$() -> Aw.Sindri.Core.Graph.Validation.ConditionParse!
+Aw.Sindri.Core.Graph.Validation.ConditionParse.ConditionParse(string? Error, System.Collections.Generic.IReadOnlyList<string!>! References) -> void
+Aw.Sindri.Core.Graph.Validation.ConditionParse.Deconstruct(out string? Error, out System.Collections.Generic.IReadOnlyList<string!>! References) -> void
+Aw.Sindri.Core.Graph.Validation.ConditionParse.Equals(Aw.Sindri.Core.Graph.Validation.ConditionParse? other) -> bool
+Aw.Sindri.Core.Graph.Validation.ConditionParse.Error.get -> string?
+Aw.Sindri.Core.Graph.Validation.ConditionParse.Error.init -> void
+Aw.Sindri.Core.Graph.Validation.ConditionParse.References.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Validation.ConditionParse.References.init -> void
+Aw.Sindri.Core.Graph.Validation.GraphFinding
+Aw.Sindri.Core.Graph.Validation.GraphFinding.<Clone>$() -> Aw.Sindri.Core.Graph.Validation.GraphFinding!
+Aw.Sindri.Core.Graph.Validation.GraphFinding.Code.get -> string!
+Aw.Sindri.Core.Graph.Validation.GraphFinding.Code.init -> void
+Aw.Sindri.Core.Graph.Validation.GraphFinding.Deconstruct(out string! Code, out Aw.Sindri.Core.Graph.Validation.GraphSeverity Severity, out System.Collections.Generic.IReadOnlyList<string!>! Nodes, out string? Field, out string! Message, out string! Fix, out bool WiringGap) -> void
+Aw.Sindri.Core.Graph.Validation.GraphFinding.Equals(Aw.Sindri.Core.Graph.Validation.GraphFinding? other) -> bool
+Aw.Sindri.Core.Graph.Validation.GraphFinding.Field.get -> string?
+Aw.Sindri.Core.Graph.Validation.GraphFinding.Field.init -> void
+Aw.Sindri.Core.Graph.Validation.GraphFinding.Fix.get -> string!
+Aw.Sindri.Core.Graph.Validation.GraphFinding.Fix.init -> void
+Aw.Sindri.Core.Graph.Validation.GraphFinding.GraphFinding(string! Code, Aw.Sindri.Core.Graph.Validation.GraphSeverity Severity, System.Collections.Generic.IReadOnlyList<string!>! Nodes, string? Field, string! Message, string! Fix, bool WiringGap = false) -> void
+Aw.Sindri.Core.Graph.Validation.GraphFinding.Message.get -> string!
+Aw.Sindri.Core.Graph.Validation.GraphFinding.Message.init -> void
+Aw.Sindri.Core.Graph.Validation.GraphFinding.Nodes.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Validation.GraphFinding.Nodes.init -> void
+Aw.Sindri.Core.Graph.Validation.GraphFinding.Severity.get -> Aw.Sindri.Core.Graph.Validation.GraphSeverity
+Aw.Sindri.Core.Graph.Validation.GraphFinding.Severity.init -> void
+Aw.Sindri.Core.Graph.Validation.GraphFinding.WiringGap.get -> bool
+Aw.Sindri.Core.Graph.Validation.GraphFinding.WiringGap.init -> void
+Aw.Sindri.Core.Graph.Validation.GraphLookup
+Aw.Sindri.Core.Graph.Validation.GraphLookup.Known = 1 -> Aw.Sindri.Core.Graph.Validation.GraphLookup
+Aw.Sindri.Core.Graph.Validation.GraphLookup.Unavailable = 3 -> Aw.Sindri.Core.Graph.Validation.GraphLookup
+Aw.Sindri.Core.Graph.Validation.GraphLookup.Unknown = 2 -> Aw.Sindri.Core.Graph.Validation.GraphLookup
+Aw.Sindri.Core.Graph.Validation.GraphMode
+Aw.Sindri.Core.Graph.Validation.GraphMode.Activate = 2 -> Aw.Sindri.Core.Graph.Validation.GraphMode
+Aw.Sindri.Core.Graph.Validation.GraphMode.Draft = 1 -> Aw.Sindri.Core.Graph.Validation.GraphMode
+Aw.Sindri.Core.Graph.Validation.GraphSeverity
+Aw.Sindri.Core.Graph.Validation.GraphSeverity.Error = 1 -> Aw.Sindri.Core.Graph.Validation.GraphSeverity
+Aw.Sindri.Core.Graph.Validation.GraphSeverity.Warning = 2 -> Aw.Sindri.Core.Graph.Validation.GraphSeverity
+Aw.Sindri.Core.Graph.Validation.GraphValidation
+Aw.Sindri.Core.Graph.Validation.GraphValidation.<Clone>$() -> Aw.Sindri.Core.Graph.Validation.GraphValidation!
+Aw.Sindri.Core.Graph.Validation.GraphValidation.Blocking.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Validation.GraphFinding!>!
+Aw.Sindri.Core.Graph.Validation.GraphValidation.Deconstruct(out Aw.Sindri.Core.Graph.Validation.GraphMode Mode, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Validation.GraphFinding!>! Findings) -> void
+Aw.Sindri.Core.Graph.Validation.GraphValidation.Equals(Aw.Sindri.Core.Graph.Validation.GraphValidation? other) -> bool
+Aw.Sindri.Core.Graph.Validation.GraphValidation.Findings.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Validation.GraphFinding!>!
+Aw.Sindri.Core.Graph.Validation.GraphValidation.Findings.init -> void
+Aw.Sindri.Core.Graph.Validation.GraphValidation.GraphValidation(Aw.Sindri.Core.Graph.Validation.GraphMode Mode, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Validation.GraphFinding!>! Findings) -> void
+Aw.Sindri.Core.Graph.Validation.GraphValidation.Mode.get -> Aw.Sindri.Core.Graph.Validation.GraphMode
+Aw.Sindri.Core.Graph.Validation.GraphValidation.Mode.init -> void
+Aw.Sindri.Core.Graph.Validation.GraphValidation.Passed.get -> bool
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.<Clone>$() -> Aw.Sindri.Core.Graph.Validation.GraphValidationContext!
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.Blocks.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Graph.Blocks.IGraphBlockType!>!
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.Blocks.init -> void
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.Condition.get -> System.Func<string!, Aw.Sindri.Core.Graph.Validation.ConditionParse!>!
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.Condition.init -> void
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.CronProblem.get -> System.Func<string!, string?, string?>!
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.CronProblem.init -> void
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Graph.Blocks.IGraphBlockType!>! Blocks, out Aw.Sindri.Core.Graph.Validation.IGraphWorld! World, out System.Func<string!, string?, string?>! CronProblem, out System.Func<string!, Aw.Sindri.Core.Graph.Validation.ConditionParse!>! Condition) -> void
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.Equals(Aw.Sindri.Core.Graph.Validation.GraphValidationContext? other) -> bool
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.GraphValidationContext(System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Graph.Blocks.IGraphBlockType!>! Blocks, Aw.Sindri.Core.Graph.Validation.IGraphWorld! World, System.Func<string!, string?, string?>! CronProblem, System.Func<string!, Aw.Sindri.Core.Graph.Validation.ConditionParse!>! Condition) -> void
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.World.get -> Aw.Sindri.Core.Graph.Validation.IGraphWorld!
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.World.init -> void
+Aw.Sindri.Core.Graph.Validation.GraphValidator
+Aw.Sindri.Core.Graph.Validation.GraphValidator.GraphValidator(Aw.Sindri.Core.Graph.Validation.GraphValidationContext! context) -> void
+Aw.Sindri.Core.Graph.Validation.GraphValidator.Validate(Aw.Sindri.Core.Graph.GraphSpec! spec, Aw.Sindri.Core.Graph.Validation.GraphMode mode) -> Aw.Sindri.Core.Graph.Validation.GraphValidation!
+Aw.Sindri.Core.Graph.Validation.IGraphWorld
+Aw.Sindri.Core.Graph.Validation.IGraphWorld.Connection(string! name) -> Aw.Sindri.Core.Graph.Validation.GraphLookup
+Aw.Sindri.Core.Graph.Validation.IGraphWorld.Memory(string! name) -> Aw.Sindri.Core.Graph.Validation.GraphLookup
+Aw.Sindri.Core.Graph.Validation.IGraphWorld.Repo(string! name) -> Aw.Sindri.Core.Graph.Validation.GraphLookup
+Aw.Sindri.Core.Graph.WorkflowRecord
+Aw.Sindri.Core.Graph.WorkflowRecord.<Clone>$() -> Aw.Sindri.Core.Graph.WorkflowRecord!
+Aw.Sindri.Core.Graph.WorkflowRecord.ActiveRevision.get -> int?
+Aw.Sindri.Core.Graph.WorkflowRecord.ActiveRevision.init -> void
+Aw.Sindri.Core.Graph.WorkflowRecord.ArchivedAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Graph.WorkflowRecord.ArchivedAt.init -> void
+Aw.Sindri.Core.Graph.WorkflowRecord.CreatedBy.get -> string!
+Aw.Sindri.Core.Graph.WorkflowRecord.CreatedBy.init -> void
+Aw.Sindri.Core.Graph.WorkflowRecord.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowId Id, out Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, out string! Name, out int? ActiveRevision, out int LatestRevision, out System.DateTimeOffset? ArchivedAt, out string! CreatedBy) -> void
+Aw.Sindri.Core.Graph.WorkflowRecord.Equals(Aw.Sindri.Core.Graph.WorkflowRecord? other) -> bool
+Aw.Sindri.Core.Graph.WorkflowRecord.Id.get -> Aw.Sindri.Core.Graph.Ids.WorkflowId
+Aw.Sindri.Core.Graph.WorkflowRecord.Id.init -> void
+Aw.Sindri.Core.Graph.WorkflowRecord.LatestRevision.get -> int
+Aw.Sindri.Core.Graph.WorkflowRecord.LatestRevision.init -> void
+Aw.Sindri.Core.Graph.WorkflowRecord.Name.get -> string!
+Aw.Sindri.Core.Graph.WorkflowRecord.Name.init -> void
+Aw.Sindri.Core.Graph.WorkflowRecord.Slug.get -> Aw.Sindri.Core.Graph.Ids.WorkflowSlug
+Aw.Sindri.Core.Graph.WorkflowRecord.Slug.init -> void
+Aw.Sindri.Core.Graph.WorkflowRecord.WorkflowRecord(Aw.Sindri.Core.Graph.Ids.WorkflowId Id, Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, string! Name, int? ActiveRevision, int LatestRevision, System.DateTimeOffset? ArchivedAt, string! CreatedBy) -> void
+Aw.Sindri.Core.Graph.WorkflowRevision
+Aw.Sindri.Core.Graph.WorkflowRevision.<Clone>$() -> Aw.Sindri.Core.Graph.WorkflowRevision!
+Aw.Sindri.Core.Graph.WorkflowRevision.CreatedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Graph.WorkflowRevision.CreatedAt.init -> void
+Aw.Sindri.Core.Graph.WorkflowRevision.CreatedBy.get -> string!
+Aw.Sindri.Core.Graph.WorkflowRevision.CreatedBy.init -> void
+Aw.Sindri.Core.Graph.WorkflowRevision.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, out int Revision, out Aw.Sindri.Core.Graph.GraphSpec! Spec, out string! SpecHash, out string! CreatedBy, out System.DateTimeOffset CreatedAt) -> void
+Aw.Sindri.Core.Graph.WorkflowRevision.Equals(Aw.Sindri.Core.Graph.WorkflowRevision? other) -> bool
+Aw.Sindri.Core.Graph.WorkflowRevision.Revision.get -> int
+Aw.Sindri.Core.Graph.WorkflowRevision.Revision.init -> void
+Aw.Sindri.Core.Graph.WorkflowRevision.Spec.get -> Aw.Sindri.Core.Graph.GraphSpec!
+Aw.Sindri.Core.Graph.WorkflowRevision.Spec.init -> void
+Aw.Sindri.Core.Graph.WorkflowRevision.SpecHash.get -> string!
+Aw.Sindri.Core.Graph.WorkflowRevision.SpecHash.init -> void
+Aw.Sindri.Core.Graph.WorkflowRevision.WorkflowId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowId
+Aw.Sindri.Core.Graph.WorkflowRevision.WorkflowId.init -> void
+Aw.Sindri.Core.Graph.WorkflowRevision.WorkflowRevision(Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, int Revision, Aw.Sindri.Core.Graph.GraphSpec! Spec, string! SpecHash, string! CreatedBy, System.DateTimeOffset CreatedAt) -> void
+override Aw.Sindri.Core.Graph.Blocks.BlockField.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.BlockField.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.BlockField.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.BlockOutputs.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.BlockOutputs.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.BlockOutputs.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.BlockSchema.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.BlockSchema.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.BlockSchema.ToString() -> string!
+override Aw.Sindri.Core.Graph.GraphDatabase.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.GraphDatabase.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.GraphDatabase.ToString() -> string!
+override Aw.Sindri.Core.Graph.GraphEdge.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.GraphEdge.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.GraphEdge.ToString() -> string!
+override Aw.Sindri.Core.Graph.GraphNode.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.GraphNode.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.GraphNode.ToString() -> string!
+override Aw.Sindri.Core.Graph.GraphResources.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.GraphResources.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.GraphResources.ToString() -> string!
+override Aw.Sindri.Core.Graph.GraphSandbox.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.GraphSandbox.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.GraphSandbox.ToString() -> string!
+override Aw.Sindri.Core.Graph.GraphSpec.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.GraphSpec.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.GraphSpec.ToString() -> string!
+override Aw.Sindri.Core.Graph.Ids.NodeId.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Ids.NodeId.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Ids.NodeId.ToString() -> string!
+override Aw.Sindri.Core.Graph.Ids.WorkflowId.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Ids.WorkflowId.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Ids.WorkflowId.ToString() -> string!
+override Aw.Sindri.Core.Graph.Ids.WorkflowRunId.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Ids.WorkflowRunId.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Ids.WorkflowRunId.ToString() -> string!
+override Aw.Sindri.Core.Graph.Ids.WorkflowSlug.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Ids.WorkflowSlug.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Ids.WorkflowSlug.ToString() -> string!
+override Aw.Sindri.Core.Graph.Validation.ConditionParse.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Validation.ConditionParse.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Validation.ConditionParse.ToString() -> string!
+override Aw.Sindri.Core.Graph.Validation.GraphFinding.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Validation.GraphFinding.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Validation.GraphFinding.ToString() -> string!
+override Aw.Sindri.Core.Graph.Validation.GraphValidation.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Validation.GraphValidation.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Validation.GraphValidation.ToString() -> string!
+override Aw.Sindri.Core.Graph.Validation.GraphValidationContext.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Validation.GraphValidationContext.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Validation.GraphValidationContext.ToString() -> string!
+override Aw.Sindri.Core.Graph.WorkflowRecord.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.WorkflowRecord.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.WorkflowRecord.ToString() -> string!
+override Aw.Sindri.Core.Graph.WorkflowRevision.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.WorkflowRevision.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.WorkflowRevision.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.BlockField.operator !=(Aw.Sindri.Core.Graph.Blocks.BlockField? left, Aw.Sindri.Core.Graph.Blocks.BlockField? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.BlockField.operator ==(Aw.Sindri.Core.Graph.Blocks.BlockField? left, Aw.Sindri.Core.Graph.Blocks.BlockField? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.BlockOutputs.operator !=(Aw.Sindri.Core.Graph.Blocks.BlockOutputs? left, Aw.Sindri.Core.Graph.Blocks.BlockOutputs? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.BlockOutputs.operator ==(Aw.Sindri.Core.Graph.Blocks.BlockOutputs? left, Aw.Sindri.Core.Graph.Blocks.BlockOutputs? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.BlockSchema.operator !=(Aw.Sindri.Core.Graph.Blocks.BlockSchema? left, Aw.Sindri.Core.Graph.Blocks.BlockSchema? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.BlockSchema.operator ==(Aw.Sindri.Core.Graph.Blocks.BlockSchema? left, Aw.Sindri.Core.Graph.Blocks.BlockSchema? right) -> bool
+static Aw.Sindri.Core.Graph.GraphDatabase.operator !=(Aw.Sindri.Core.Graph.GraphDatabase? left, Aw.Sindri.Core.Graph.GraphDatabase? right) -> bool
+static Aw.Sindri.Core.Graph.GraphDatabase.operator ==(Aw.Sindri.Core.Graph.GraphDatabase? left, Aw.Sindri.Core.Graph.GraphDatabase? right) -> bool
+static Aw.Sindri.Core.Graph.GraphEdge.operator !=(Aw.Sindri.Core.Graph.GraphEdge? left, Aw.Sindri.Core.Graph.GraphEdge? right) -> bool
+static Aw.Sindri.Core.Graph.GraphEdge.operator ==(Aw.Sindri.Core.Graph.GraphEdge? left, Aw.Sindri.Core.Graph.GraphEdge? right) -> bool
+static Aw.Sindri.Core.Graph.GraphJson.Hash(Aw.Sindri.Core.Graph.GraphSpec! spec) -> string!
+static Aw.Sindri.Core.Graph.GraphJson.Parse(string! json) -> Aw.Kernel.Result<Aw.Sindri.Core.Graph.GraphSpec!>!
+static Aw.Sindri.Core.Graph.GraphNode.operator !=(Aw.Sindri.Core.Graph.GraphNode? left, Aw.Sindri.Core.Graph.GraphNode? right) -> bool
+static Aw.Sindri.Core.Graph.GraphNode.operator ==(Aw.Sindri.Core.Graph.GraphNode? left, Aw.Sindri.Core.Graph.GraphNode? right) -> bool
+static Aw.Sindri.Core.Graph.GraphResources.operator !=(Aw.Sindri.Core.Graph.GraphResources? left, Aw.Sindri.Core.Graph.GraphResources? right) -> bool
+static Aw.Sindri.Core.Graph.GraphResources.operator ==(Aw.Sindri.Core.Graph.GraphResources? left, Aw.Sindri.Core.Graph.GraphResources? right) -> bool
+static Aw.Sindri.Core.Graph.GraphSandbox.operator !=(Aw.Sindri.Core.Graph.GraphSandbox? left, Aw.Sindri.Core.Graph.GraphSandbox? right) -> bool
+static Aw.Sindri.Core.Graph.GraphSandbox.operator ==(Aw.Sindri.Core.Graph.GraphSandbox? left, Aw.Sindri.Core.Graph.GraphSandbox? right) -> bool
+static Aw.Sindri.Core.Graph.GraphSpec.operator !=(Aw.Sindri.Core.Graph.GraphSpec? left, Aw.Sindri.Core.Graph.GraphSpec? right) -> bool
+static Aw.Sindri.Core.Graph.GraphSpec.operator ==(Aw.Sindri.Core.Graph.GraphSpec? left, Aw.Sindri.Core.Graph.GraphSpec? right) -> bool
+static Aw.Sindri.Core.Graph.Ids.NodeId.From(string! value) -> Aw.Sindri.Core.Graph.Ids.NodeId
+static Aw.Sindri.Core.Graph.Ids.NodeId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Graph.Ids.NodeId
+static Aw.Sindri.Core.Graph.Ids.NodeId.TryFrom(string? value, out Aw.Sindri.Core.Graph.Ids.NodeId vo) -> bool
+static Aw.Sindri.Core.Graph.Ids.NodeId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Graph.Ids.NodeId result) -> bool
+static Aw.Sindri.Core.Graph.Ids.NodeId.operator !=(Aw.Sindri.Core.Graph.Ids.NodeId left, Aw.Sindri.Core.Graph.Ids.NodeId right) -> bool
+static Aw.Sindri.Core.Graph.Ids.NodeId.operator ==(Aw.Sindri.Core.Graph.Ids.NodeId left, Aw.Sindri.Core.Graph.Ids.NodeId right) -> bool
+static Aw.Sindri.Core.Graph.Ids.WorkflowId.From(string! value) -> Aw.Sindri.Core.Graph.Ids.WorkflowId
+static Aw.Sindri.Core.Graph.Ids.WorkflowId.New(Aw.Kernel.Ids.IIdGenerator! ids) -> Aw.Sindri.Core.Graph.Ids.WorkflowId
+static Aw.Sindri.Core.Graph.Ids.WorkflowId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Graph.Ids.WorkflowId
+static Aw.Sindri.Core.Graph.Ids.WorkflowId.TryFrom(string? value, out Aw.Sindri.Core.Graph.Ids.WorkflowId vo) -> bool
+static Aw.Sindri.Core.Graph.Ids.WorkflowId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Graph.Ids.WorkflowId result) -> bool
+static Aw.Sindri.Core.Graph.Ids.WorkflowId.operator !=(Aw.Sindri.Core.Graph.Ids.WorkflowId left, Aw.Sindri.Core.Graph.Ids.WorkflowId right) -> bool
+static Aw.Sindri.Core.Graph.Ids.WorkflowId.operator ==(Aw.Sindri.Core.Graph.Ids.WorkflowId left, Aw.Sindri.Core.Graph.Ids.WorkflowId right) -> bool
+static Aw.Sindri.Core.Graph.Ids.WorkflowRunId.From(string! value) -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+static Aw.Sindri.Core.Graph.Ids.WorkflowRunId.Of(Aw.Sindri.Core.Graph.Ids.WorkflowSlug slug, int revision, int occurrence) -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+static Aw.Sindri.Core.Graph.Ids.WorkflowRunId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+static Aw.Sindri.Core.Graph.Ids.WorkflowRunId.TryFrom(string? value, out Aw.Sindri.Core.Graph.Ids.WorkflowRunId vo) -> bool
+static Aw.Sindri.Core.Graph.Ids.WorkflowRunId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Graph.Ids.WorkflowRunId result) -> bool
+static Aw.Sindri.Core.Graph.Ids.WorkflowRunId.operator !=(Aw.Sindri.Core.Graph.Ids.WorkflowRunId left, Aw.Sindri.Core.Graph.Ids.WorkflowRunId right) -> bool
+static Aw.Sindri.Core.Graph.Ids.WorkflowRunId.operator ==(Aw.Sindri.Core.Graph.Ids.WorkflowRunId left, Aw.Sindri.Core.Graph.Ids.WorkflowRunId right) -> bool
+static Aw.Sindri.Core.Graph.Ids.WorkflowSlug.From(string! value) -> Aw.Sindri.Core.Graph.Ids.WorkflowSlug
+static Aw.Sindri.Core.Graph.Ids.WorkflowSlug.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Graph.Ids.WorkflowSlug
+static Aw.Sindri.Core.Graph.Ids.WorkflowSlug.TryFrom(string? value, out Aw.Sindri.Core.Graph.Ids.WorkflowSlug vo) -> bool
+static Aw.Sindri.Core.Graph.Ids.WorkflowSlug.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Graph.Ids.WorkflowSlug result) -> bool
+static Aw.Sindri.Core.Graph.Ids.WorkflowSlug.operator !=(Aw.Sindri.Core.Graph.Ids.WorkflowSlug left, Aw.Sindri.Core.Graph.Ids.WorkflowSlug right) -> bool
+static Aw.Sindri.Core.Graph.Ids.WorkflowSlug.operator ==(Aw.Sindri.Core.Graph.Ids.WorkflowSlug left, Aw.Sindri.Core.Graph.Ids.WorkflowSlug right) -> bool
+static Aw.Sindri.Core.Graph.Interpolation.Template.HasUnclosed(string! text) -> bool
+static Aw.Sindri.Core.Graph.Interpolation.Template.References(string! text) -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Sindri.Core.Graph.Interpolation.Template.Render(string! text, System.Func<string!, System.Text.Json.Nodes.JsonNode?>! lookup) -> System.Text.Json.Nodes.JsonNode?
+static Aw.Sindri.Core.Graph.Validation.ConditionParse.operator !=(Aw.Sindri.Core.Graph.Validation.ConditionParse? left, Aw.Sindri.Core.Graph.Validation.ConditionParse? right) -> bool
+static Aw.Sindri.Core.Graph.Validation.ConditionParse.operator ==(Aw.Sindri.Core.Graph.Validation.ConditionParse? left, Aw.Sindri.Core.Graph.Validation.ConditionParse? right) -> bool
+static Aw.Sindri.Core.Graph.Validation.GraphFinding.operator !=(Aw.Sindri.Core.Graph.Validation.GraphFinding? left, Aw.Sindri.Core.Graph.Validation.GraphFinding? right) -> bool
+static Aw.Sindri.Core.Graph.Validation.GraphFinding.operator ==(Aw.Sindri.Core.Graph.Validation.GraphFinding? left, Aw.Sindri.Core.Graph.Validation.GraphFinding? right) -> bool
+static Aw.Sindri.Core.Graph.Validation.GraphValidation.operator !=(Aw.Sindri.Core.Graph.Validation.GraphValidation? left, Aw.Sindri.Core.Graph.Validation.GraphValidation? right) -> bool
+static Aw.Sindri.Core.Graph.Validation.GraphValidation.operator ==(Aw.Sindri.Core.Graph.Validation.GraphValidation? left, Aw.Sindri.Core.Graph.Validation.GraphValidation? right) -> bool
+static Aw.Sindri.Core.Graph.Validation.GraphValidationContext.operator !=(Aw.Sindri.Core.Graph.Validation.GraphValidationContext? left, Aw.Sindri.Core.Graph.Validation.GraphValidationContext? right) -> bool
+static Aw.Sindri.Core.Graph.Validation.GraphValidationContext.operator ==(Aw.Sindri.Core.Graph.Validation.GraphValidationContext? left, Aw.Sindri.Core.Graph.Validation.GraphValidationContext? right) -> bool
+static Aw.Sindri.Core.Graph.WorkflowRecord.operator !=(Aw.Sindri.Core.Graph.WorkflowRecord? left, Aw.Sindri.Core.Graph.WorkflowRecord? right) -> bool
+static Aw.Sindri.Core.Graph.WorkflowRecord.operator ==(Aw.Sindri.Core.Graph.WorkflowRecord? left, Aw.Sindri.Core.Graph.WorkflowRecord? right) -> bool
+static Aw.Sindri.Core.Graph.WorkflowRevision.operator !=(Aw.Sindri.Core.Graph.WorkflowRevision? left, Aw.Sindri.Core.Graph.WorkflowRevision? right) -> bool
+static Aw.Sindri.Core.Graph.WorkflowRevision.operator ==(Aw.Sindri.Core.Graph.WorkflowRevision? left, Aw.Sindri.Core.Graph.WorkflowRevision? right) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.GraphBadCron -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphBadExpression -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphBadReference -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphFindings -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphInvalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphNotFound -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphSlugTaken -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphIdTaken -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphArchived -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphStaleRevision -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphUnknownBlock -> Aw.Kernel.ErrorDefinition!
+static Aw.Sindri.Core.Graph.GraphJson.Write(Aw.Sindri.Core.Graph.GraphSpec! spec) -> string!
+Aw.Sindri.Core.Graph.Expressions.ConditionExpression
+Aw.Sindri.Core.Graph.Expressions.ConditionExpression.Evaluate(System.Func<string!, System.Text.Json.Nodes.JsonNode?>! resolve) -> bool
+Aw.Sindri.Core.Graph.Expressions.ConditionExpression.References.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Sindri.Core.Graph.Expressions.ConditionExpression.TryParse(string! text, out Aw.Sindri.Core.Graph.Expressions.ConditionExpression? expression, out string? error) -> bool
+Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Ids.TodoId.Equals(Aw.Sindri.Core.Ids.TodoId other) -> bool
+Aw.Sindri.Core.Ids.TodoId.Equals(Aw.Sindri.Core.Ids.TodoId other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Ids.TodoId>! comparer) -> bool
+Aw.Sindri.Core.Ids.TodoId.GetTypeCode() -> System.TypeCode
+Aw.Sindri.Core.Ids.TodoId.IsInitialized() -> bool
+Aw.Sindri.Core.Ids.TodoId.TodoId() -> void
+Aw.Sindri.Core.Ids.TodoId.ToString(System.IFormatProvider? provider) -> string!
+Aw.Sindri.Core.Ids.TodoId.Value.get -> string!
+override Aw.Sindri.Core.Ids.TodoId.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Ids.TodoId.GetHashCode() -> int
+override Aw.Sindri.Core.Ids.TodoId.ToString() -> string!
+static Aw.Sindri.Core.Ids.TodoId.From(string! value) -> Aw.Sindri.Core.Ids.TodoId
+static Aw.Sindri.Core.Ids.TodoId.New(Aw.Kernel.Ids.IIdGenerator! ids) -> Aw.Sindri.Core.Ids.TodoId
+static Aw.Sindri.Core.Ids.TodoId.operator !=(Aw.Sindri.Core.Ids.TodoId left, Aw.Sindri.Core.Ids.TodoId right) -> bool
+static Aw.Sindri.Core.Ids.TodoId.operator ==(Aw.Sindri.Core.Ids.TodoId left, Aw.Sindri.Core.Ids.TodoId right) -> bool
+static Aw.Sindri.Core.Ids.TodoId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Ids.TodoId
+static Aw.Sindri.Core.Ids.TodoId.TryFrom(string? value, out Aw.Sindri.Core.Ids.TodoId vo) -> bool
+static Aw.Sindri.Core.Ids.TodoId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Ids.TodoId result) -> bool
+abstract Aw.Sindri.Core.Todos.Note.NoteIntent.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteIntent!
+Aw.Sindri.Core.Todos.Note.HeldChange
+Aw.Sindri.Core.Todos.Note.HeldChange.<Clone>$() -> Aw.Sindri.Core.Todos.Note.HeldChange!
+Aw.Sindri.Core.Todos.Note.HeldChange.Equals(Aw.Sindri.Core.Todos.Note.HeldChange? other) -> bool
+Aw.Sindri.Core.Todos.Note.HeldChange.Id.init -> void
+Aw.Sindri.Core.Todos.Note.HeldChange.Kind.get -> Aw.Sindri.Core.Todos.Note.HeldKind
+Aw.Sindri.Core.Todos.Note.HeldChange.Kind.init -> void
+Aw.Sindri.Core.Todos.Note.HeldChange.NoteLine.get -> string?
+Aw.Sindri.Core.Todos.Note.HeldChange.NoteLine.init -> void
+Aw.Sindri.Core.Todos.Note.HeldKind
+Aw.Sindri.Core.Todos.Note.HeldKind.Edited = 1 -> Aw.Sindri.Core.Todos.Note.HeldKind
+Aw.Sindri.Core.Todos.Note.HeldKind.Removed = 0 -> Aw.Sindri.Core.Todos.Note.HeldKind
+Aw.Sindri.Core.Todos.Note.HeldKind.Reopened = 2 -> Aw.Sindri.Core.Todos.Note.HeldKind
+Aw.Sindri.Core.Todos.Note.HoldDecision
+Aw.Sindri.Core.Todos.Note.HoldDecision.Changes.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>!
+Aw.Sindri.Core.Todos.Note.HoldDecision.Changes.init -> void
+Aw.Sindri.Core.Todos.Note.HoldDecision.<Clone>$() -> Aw.Sindri.Core.Todos.Note.HoldDecision!
+Aw.Sindri.Core.Todos.Note.HoldDecision.Deconstruct(out bool Held, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>! Changes) -> void
+Aw.Sindri.Core.Todos.Note.HoldDecision.Equals(Aw.Sindri.Core.Todos.Note.HoldDecision? other) -> bool
+Aw.Sindri.Core.Todos.Note.HoldDecision.Held.get -> bool
+Aw.Sindri.Core.Todos.Note.HoldDecision.Held.init -> void
+Aw.Sindri.Core.Todos.Note.HoldDecision.HoldDecision(bool Held, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>! Changes) -> void
+Aw.Sindri.Core.Todos.Note.NoteAdd
+Aw.Sindri.Core.Todos.Note.NoteAdd.Done.get -> bool
+Aw.Sindri.Core.Todos.Note.NoteAdd.Done.init -> void
+Aw.Sindri.Core.Todos.Note.NoteAdd.DoneOn.get -> System.DateOnly?
+Aw.Sindri.Core.Todos.Note.NoteAdd.DoneOn.init -> void
+Aw.Sindri.Core.Todos.Note.NoteAdd.Due.get -> System.DateOnly?
+Aw.Sindri.Core.Todos.Note.NoteAdd.Due.init -> void
+Aw.Sindri.Core.Todos.Note.NoteAdd.Equals(Aw.Sindri.Core.Todos.Note.NoteAdd? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteAdd.Links.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Todos.Note.NoteAdd.Links.init -> void
+Aw.Sindri.Core.Todos.Note.NoteAdd.Text.get -> string!
+Aw.Sindri.Core.Todos.Note.NoteAdd.Text.init -> void
+Aw.Sindri.Core.Todos.Note.NoteAdopt
+Aw.Sindri.Core.Todos.Note.NoteAdopt.Done.get -> bool
+Aw.Sindri.Core.Todos.Note.NoteAdopt.Done.init -> void
+Aw.Sindri.Core.Todos.Note.NoteAdopt.DoneOn.get -> System.DateOnly?
+Aw.Sindri.Core.Todos.Note.NoteAdopt.DoneOn.init -> void
+Aw.Sindri.Core.Todos.Note.NoteAdopt.Due.get -> System.DateOnly?
+Aw.Sindri.Core.Todos.Note.NoteAdopt.Due.init -> void
+Aw.Sindri.Core.Todos.Note.NoteAdopt.Equals(Aw.Sindri.Core.Todos.Note.NoteAdopt? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteAdopt.LineNumber.get -> int
+Aw.Sindri.Core.Todos.Note.NoteAdopt.LineNumber.init -> void
+Aw.Sindri.Core.Todos.Note.NoteAdopt.Links.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Todos.Note.NoteAdopt.Links.init -> void
+Aw.Sindri.Core.Todos.Note.NoteAdopt.Text.get -> string!
+Aw.Sindri.Core.Todos.Note.NoteAdopt.Text.init -> void
+Aw.Sindri.Core.Todos.Note.NoteBase
+Aw.Sindri.Core.Todos.Note.NoteBase.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteBase!
+Aw.Sindri.Core.Todos.Note.NoteBase.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Lines) -> void
+Aw.Sindri.Core.Todos.Note.NoteBase.Equals(Aw.Sindri.Core.Todos.Note.NoteBase? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteBase.Lines.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Todos.Note.NoteBase.Lines.init -> void
+Aw.Sindri.Core.Todos.Note.NoteBase.NoteBase(System.Collections.Generic.IReadOnlyList<string!>! Lines) -> void
+Aw.Sindri.Core.Todos.Note.NoteBreak
+Aw.Sindri.Core.Todos.Note.NoteBreak.EmptyText = 6 -> Aw.Sindri.Core.Todos.Note.NoteBreak
+Aw.Sindri.Core.Todos.Note.NoteBreak.ForbiddenCharacter = 5 -> Aw.Sindri.Core.Todos.Note.NoteBreak
+Aw.Sindri.Core.Todos.Note.NoteBreak.ForeignLink = 4 -> Aw.Sindri.Core.Todos.Note.NoteBreak
+Aw.Sindri.Core.Todos.Note.NoteBreak.MarkerInText = 3 -> Aw.Sindri.Core.Todos.Note.NoteBreak
+Aw.Sindri.Core.Todos.Note.NoteBreak.None = 0 -> Aw.Sindri.Core.Todos.Note.NoteBreak
+Aw.Sindri.Core.Todos.Note.NoteBreakReasons
+Aw.Sindri.Core.Todos.Note.NoteBreak.TextTooLong = 7 -> Aw.Sindri.Core.Todos.Note.NoteBreak
+Aw.Sindri.Core.Todos.Note.NoteBreak.TwoDueMarkers = 2 -> Aw.Sindri.Core.Todos.Note.NoteBreak
+Aw.Sindri.Core.Todos.Note.NoteBreak.TwoIds = 1 -> Aw.Sindri.Core.Todos.Note.NoteBreak
+Aw.Sindri.Core.Todos.Note.NoteChange
+Aw.Sindri.Core.Todos.Note.NoteChange.DueChanged.get -> bool
+Aw.Sindri.Core.Todos.Note.NoteChange.DueChanged.init -> void
+Aw.Sindri.Core.Todos.Note.NoteChange.Due.get -> System.DateOnly?
+Aw.Sindri.Core.Todos.Note.NoteChange.Due.init -> void
+Aw.Sindri.Core.Todos.Note.NoteChange.Equals(Aw.Sindri.Core.Todos.Note.NoteChange? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteChange.Links.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Todos.Note.NoteChange.Links.init -> void
+Aw.Sindri.Core.Todos.Note.NoteChange.Text.get -> string?
+Aw.Sindri.Core.Todos.Note.NoteChange.Text.init -> void
+Aw.Sindri.Core.Todos.Note.NoteConflict
+Aw.Sindri.Core.Todos.Note.NoteConflict.Equals(Aw.Sindri.Core.Todos.Note.NoteConflict? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteConflict.Obsidian.get -> Aw.Sindri.Core.Todos.Note.NoteSide!
+Aw.Sindri.Core.Todos.Note.NoteConflict.Obsidian.init -> void
+Aw.Sindri.Core.Todos.Note.NoteConflict.Sindri.get -> Aw.Sindri.Core.Todos.Note.NoteSide!
+Aw.Sindri.Core.Todos.Note.NoteConflict.Sindri.init -> void
+Aw.Sindri.Core.Todos.Note.NoteDocument
+Aw.Sindri.Core.Todos.Note.NoteDocument.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteDocument!
+Aw.Sindri.Core.Todos.Note.NoteDocument.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteLine!>! Lines) -> void
+Aw.Sindri.Core.Todos.Note.NoteDocument.Equals(Aw.Sindri.Core.Todos.Note.NoteDocument? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteDocument.Lines.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteLine!>!
+Aw.Sindri.Core.Todos.Note.NoteDocument.Lines.init -> void
+Aw.Sindri.Core.Todos.Note.NoteDocument.NoteDocument(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteLine!>! Lines) -> void
+Aw.Sindri.Core.Todos.Note.NoteDocument.Render() -> string!
+Aw.Sindri.Core.Todos.Note.NoteDocument.Todos.get -> System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Todos.Note.NoteTodoLine!>!
+Aw.Sindri.Core.Todos.Note.NoteDone
+Aw.Sindri.Core.Todos.Note.NoteDone.Equals(Aw.Sindri.Core.Todos.Note.NoteDone? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteDone.On.get -> System.DateOnly?
+Aw.Sindri.Core.Todos.Note.NoteDone.On.init -> void
+Aw.Sindri.Core.Todos.Note.NoteHold
+Aw.Sindri.Core.Todos.Note.NoteHold.Changes.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>!
+Aw.Sindri.Core.Todos.Note.NoteHold.Changes.init -> void
+Aw.Sindri.Core.Todos.Note.NoteHold.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteHold!
+Aw.Sindri.Core.Todos.Note.NoteHold.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>! Changes) -> void
+Aw.Sindri.Core.Todos.Note.NoteHold.Equals(Aw.Sindri.Core.Todos.Note.NoteHold? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteHold.NoteHold(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>! Changes) -> void
+Aw.Sindri.Core.Todos.Note.NoteHoldOutcome
+Aw.Sindri.Core.Todos.Note.NoteHoldOutcome.Dissolved = 4 -> Aw.Sindri.Core.Todos.Note.NoteHoldOutcome
+Aw.Sindri.Core.Todos.Note.NoteHoldOutcome.None = 0 -> Aw.Sindri.Core.Todos.Note.NoteHoldOutcome
+Aw.Sindri.Core.Todos.Note.NoteHoldOutcome.Opened = 1 -> Aw.Sindri.Core.Todos.Note.NoteHoldOutcome
+Aw.Sindri.Core.Todos.Note.NoteHoldOutcome.Replaced = 3 -> Aw.Sindri.Core.Todos.Note.NoteHoldOutcome
+Aw.Sindri.Core.Todos.Note.NoteHoldOutcome.Unchanged = 2 -> Aw.Sindri.Core.Todos.Note.NoteHoldOutcome
+Aw.Sindri.Core.Todos.Note.NoteHold.StillTrue(Aw.Sindri.Core.Todos.Note.NoteDocument! current) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>!
+Aw.Sindri.Core.Todos.Note.NoteIntent
+Aw.Sindri.Core.Todos.Note.NoteIntent.Id.init -> void
+Aw.Sindri.Core.Todos.Note.NoteIntent.NoteIntent(Aw.Sindri.Core.Todos.Note.NoteIntent! original) -> void
+Aw.Sindri.Core.Todos.Note.NoteLine
+Aw.Sindri.Core.Todos.Note.NoteLineBlocked
+Aw.Sindri.Core.Todos.Note.NoteLineBlocked.Equals(Aw.Sindri.Core.Todos.Note.NoteLineBlocked? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteLineBlocked.LineNumber.get -> int
+Aw.Sindri.Core.Todos.Note.NoteLineBlocked.LineNumber.init -> void
+Aw.Sindri.Core.Todos.Note.NoteLineBlocked.Reason.get -> string!
+Aw.Sindri.Core.Todos.Note.NoteLineBlocked.Reason.init -> void
+Aw.Sindri.Core.Todos.Note.NoteLine.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteLine!
+Aw.Sindri.Core.Todos.Note.NoteLine.Deconstruct(out int Number, out string! Text, out string! Eol, out Aw.Sindri.Core.Todos.Note.NoteTodoLine? Todo) -> void
+Aw.Sindri.Core.Todos.Note.NoteLineEdit
+Aw.Sindri.Core.Todos.Note.NoteLineEdit.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteLineEdit!
+Aw.Sindri.Core.Todos.Note.NoteLineEdit.Deconstruct(out Aw.Sindri.Core.Todos.Note.NoteLineEditKind Kind, out int Number, out string? Line) -> void
+Aw.Sindri.Core.Todos.Note.NoteLineEdit.Equals(Aw.Sindri.Core.Todos.Note.NoteLineEdit? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteLineEditKind
+Aw.Sindri.Core.Todos.Note.NoteLineEditKind.Append = 2 -> Aw.Sindri.Core.Todos.Note.NoteLineEditKind
+Aw.Sindri.Core.Todos.Note.NoteLineEdit.Kind.get -> Aw.Sindri.Core.Todos.Note.NoteLineEditKind
+Aw.Sindri.Core.Todos.Note.NoteLineEdit.Kind.init -> void
+Aw.Sindri.Core.Todos.Note.NoteLineEditKind.Remove = 1 -> Aw.Sindri.Core.Todos.Note.NoteLineEditKind
+Aw.Sindri.Core.Todos.Note.NoteLineEditKind.Replace = 0 -> Aw.Sindri.Core.Todos.Note.NoteLineEditKind
+Aw.Sindri.Core.Todos.Note.NoteLineEdit.Line.get -> string?
+Aw.Sindri.Core.Todos.Note.NoteLineEdit.Line.init -> void
+Aw.Sindri.Core.Todos.Note.NoteLineEdit.NoteLineEdit(Aw.Sindri.Core.Todos.Note.NoteLineEditKind Kind, int Number, string? Line) -> void
+Aw.Sindri.Core.Todos.Note.NoteLineEdit.Number.get -> int
+Aw.Sindri.Core.Todos.Note.NoteLineEdit.Number.init -> void
+Aw.Sindri.Core.Todos.Note.NoteLine.Eol.get -> string!
+Aw.Sindri.Core.Todos.Note.NoteLine.Eol.init -> void
+Aw.Sindri.Core.Todos.Note.NoteLine.Equals(Aw.Sindri.Core.Todos.Note.NoteLine? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteLineHash
+Aw.Sindri.Core.Todos.Note.NoteLine.NoteLine(int Number, string! Text, string! Eol, Aw.Sindri.Core.Todos.Note.NoteTodoLine? Todo) -> void
+Aw.Sindri.Core.Todos.Note.NoteLine.Number.get -> int
+Aw.Sindri.Core.Todos.Note.NoteLine.Number.init -> void
+Aw.Sindri.Core.Todos.Note.NoteLine.Text.get -> string!
+Aw.Sindri.Core.Todos.Note.NoteLine.Text.init -> void
+Aw.Sindri.Core.Todos.Note.NoteLine.Todo.get -> Aw.Sindri.Core.Todos.Note.NoteTodoLine?
+Aw.Sindri.Core.Todos.Note.NoteLine.Todo.init -> void
+Aw.Sindri.Core.Todos.Note.NoteMerge
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteMergeOptions!
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.Deconstruct(out Aw.Sindri.Core.Todos.Note.PassIdMinter! Minter, out Aw.Sindri.Core.Text.ITextScrubber! Scrubber) -> void
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.Equals(Aw.Sindri.Core.Todos.Note.NoteMergeOptions? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.LeaveAlone.init -> void
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.MaxAdoptions.get -> int
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.MaxAdoptions.init -> void
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.Minter.get -> Aw.Sindri.Core.Todos.Note.PassIdMinter!
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.Minter.init -> void
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.NoteMergeOptions(Aw.Sindri.Core.Todos.Note.PassIdMinter! Minter, Aw.Sindri.Core.Text.ITextScrubber! Scrubber) -> void
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.OpenConflicts.init -> void
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.OpenHold.get -> Aw.Sindri.Core.Todos.Note.NoteHold?
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.OpenHold.init -> void
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.PickBases.init -> void
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.Scrubber.get -> Aw.Sindri.Core.Text.ITextScrubber!
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.Scrubber.init -> void
+Aw.Sindri.Core.Todos.Note.NoteMergeResult
+Aw.Sindri.Core.Todos.Note.NoteMergeResult.Adopted.get -> int
+Aw.Sindri.Core.Todos.Note.NoteMergeResult.Adopted.init -> void
+Aw.Sindri.Core.Todos.Note.NoteMergeResult.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteMergeResult!
+Aw.Sindri.Core.Todos.Note.NoteMergeResult.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteIntent!>! Intents, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteLineEdit!>! LineEdits, out System.Collections.Generic.IReadOnlyList<string!>! NextBase, out Aw.Sindri.Core.Todos.Note.NoteHoldOutcome Hold, out Aw.Sindri.Core.Todos.Note.NoteHold? HoldNow, out int Adopted, out int Deferred) -> void
+Aw.Sindri.Core.Todos.Note.NoteMergeResult.Deferred.get -> int
+Aw.Sindri.Core.Todos.Note.NoteMergeResult.Deferred.init -> void
+Aw.Sindri.Core.Todos.Note.NoteMergeResult.Equals(Aw.Sindri.Core.Todos.Note.NoteMergeResult? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteMergeResult.Hold.get -> Aw.Sindri.Core.Todos.Note.NoteHoldOutcome
+Aw.Sindri.Core.Todos.Note.NoteMergeResult.Hold.init -> void
+Aw.Sindri.Core.Todos.Note.NoteMergeResult.HoldNow.get -> Aw.Sindri.Core.Todos.Note.NoteHold?
+Aw.Sindri.Core.Todos.Note.NoteMergeResult.HoldNow.init -> void
+Aw.Sindri.Core.Todos.Note.NoteMergeResult.Intents.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteIntent!>!
+Aw.Sindri.Core.Todos.Note.NoteMergeResult.Intents.init -> void
+Aw.Sindri.Core.Todos.Note.NoteMergeResult.LineEdits.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteLineEdit!>!
+Aw.Sindri.Core.Todos.Note.NoteMergeResult.LineEdits.init -> void
+Aw.Sindri.Core.Todos.Note.NoteMergeResult.NextBase.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Todos.Note.NoteMergeResult.NextBase.init -> void
+Aw.Sindri.Core.Todos.Note.NoteMergeResult.NoteMergeResult(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteIntent!>! Intents, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteLineEdit!>! LineEdits, System.Collections.Generic.IReadOnlyList<string!>! NextBase, Aw.Sindri.Core.Todos.Note.NoteHoldOutcome Hold, Aw.Sindri.Core.Todos.Note.NoteHold? HoldNow, int Adopted, int Deferred) -> void
+Aw.Sindri.Core.Todos.Note.NoteOrigin
+Aw.Sindri.Core.Todos.Note.NoteOrigin.Obsidian = 1 -> Aw.Sindri.Core.Todos.Note.NoteOrigin
+Aw.Sindri.Core.Todos.Note.NoteOrigin.Sindri = 0 -> Aw.Sindri.Core.Todos.Note.NoteOrigin
+Aw.Sindri.Core.Todos.Note.NoteParser
+Aw.Sindri.Core.Todos.Note.NoteRemove
+Aw.Sindri.Core.Todos.Note.NoteRemove.Equals(Aw.Sindri.Core.Todos.Note.NoteRemove? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteRenderer
+Aw.Sindri.Core.Todos.Note.NoteReopen
+Aw.Sindri.Core.Todos.Note.NoteReopen.Equals(Aw.Sindri.Core.Todos.Note.NoteReopen? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteRestore
+Aw.Sindri.Core.Todos.Note.NoteRestore.Equals(Aw.Sindri.Core.Todos.Note.NoteRestore? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteSide
+Aw.Sindri.Core.Todos.Note.NoteSide.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteSide!
+Aw.Sindri.Core.Todos.Note.NoteSide.Deconstruct(out string? Text, out System.DateOnly? Due, out System.Collections.Generic.IReadOnlyList<string!>! Links, out bool Done, out bool Removed) -> void
+Aw.Sindri.Core.Todos.Note.NoteSide.Done.get -> bool
+Aw.Sindri.Core.Todos.Note.NoteSide.Done.init -> void
+Aw.Sindri.Core.Todos.Note.NoteSide.Due.get -> System.DateOnly?
+Aw.Sindri.Core.Todos.Note.NoteSide.Due.init -> void
+Aw.Sindri.Core.Todos.Note.NoteSide.Equals(Aw.Sindri.Core.Todos.Note.NoteSide? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteSide.Links.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Todos.Note.NoteSide.Links.init -> void
+Aw.Sindri.Core.Todos.Note.NoteSide.NoteSide(string? Text, System.DateOnly? Due, System.Collections.Generic.IReadOnlyList<string!>! Links, bool Done, bool Removed) -> void
+Aw.Sindri.Core.Todos.Note.NoteSide.Removed.get -> bool
+Aw.Sindri.Core.Todos.Note.NoteSide.Removed.init -> void
+Aw.Sindri.Core.Todos.Note.NoteSide.Text.get -> string?
+Aw.Sindri.Core.Todos.Note.NoteSide.Text.init -> void
+Aw.Sindri.Core.Todos.Note.NoteTodoLine
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.Break.get -> Aw.Sindri.Core.Todos.Note.NoteBreak
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.Break.init -> void
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteTodoLine!
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.Done.get -> bool
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.Done.init -> void
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.DoneOn.get -> System.DateOnly?
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.DoneOn.init -> void
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.Due.get -> System.DateOnly?
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.Due.init -> void
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.Equals(Aw.Sindri.Core.Todos.Note.NoteTodoLine? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.Id.init -> void
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.Links.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.Links.init -> void
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.Number.get -> int
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.Number.init -> void
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.Raw.get -> string!
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.Raw.init -> void
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.RejectedBlock.get -> string?
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.RejectedBlock.init -> void
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.Text.get -> string!
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.Text.init -> void
+Aw.Sindri.Core.Todos.Note.PassIdMinter
+Aw.Sindri.Core.Todos.Note.SindriTodo
+Aw.Sindri.Core.Todos.Note.SindriTodo.<Clone>$() -> Aw.Sindri.Core.Todos.Note.SindriTodo!
+Aw.Sindri.Core.Todos.Note.SindriTodo.Done.get -> bool
+Aw.Sindri.Core.Todos.Note.SindriTodo.Done.init -> void
+Aw.Sindri.Core.Todos.Note.SindriTodo.DoneOn.get -> System.DateOnly?
+Aw.Sindri.Core.Todos.Note.SindriTodo.DoneOn.init -> void
+Aw.Sindri.Core.Todos.Note.SindriTodo.Due.get -> System.DateOnly?
+Aw.Sindri.Core.Todos.Note.SindriTodo.Due.init -> void
+Aw.Sindri.Core.Todos.Note.SindriTodo.Equals(Aw.Sindri.Core.Todos.Note.SindriTodo? other) -> bool
+Aw.Sindri.Core.Todos.Note.SindriTodo.Id.init -> void
+Aw.Sindri.Core.Todos.Note.SindriTodo.LastLineHash.get -> string?
+Aw.Sindri.Core.Todos.Note.SindriTodo.LastLineHash.init -> void
+Aw.Sindri.Core.Todos.Note.SindriTodo.Links.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Todos.Note.SindriTodo.Links.init -> void
+Aw.Sindri.Core.Todos.Note.SindriTodo.RemovedBy.get -> Aw.Sindri.Core.Todos.Note.NoteOrigin?
+Aw.Sindri.Core.Todos.Note.SindriTodo.RemovedBy.init -> void
+Aw.Sindri.Core.Todos.Note.SindriTodo.Removed.get -> bool
+Aw.Sindri.Core.Todos.Note.SindriTodo.Removed.init -> void
+Aw.Sindri.Core.Todos.Note.SindriTodo.Text.get -> string!
+Aw.Sindri.Core.Todos.Note.SindriTodo.Text.init -> void
+Aw.Sindri.Core.Todos.Note.SindriTodo.Version.get -> long
+Aw.Sindri.Core.Todos.Note.SindriTodo.Version.init -> void
+override Aw.Sindri.Core.Todos.Note.HeldChange.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.HeldChange.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.HeldChange.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.HoldDecision.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.HoldDecision.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.HoldDecision.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteAdd.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteAdd!
+override Aw.Sindri.Core.Todos.Note.NoteAdd.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteAdd.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteAdd.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteAdopt.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteAdopt!
+override Aw.Sindri.Core.Todos.Note.NoteAdopt.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteAdopt.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteAdopt.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteBase.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteBase.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteBase.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteChange.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteChange!
+override Aw.Sindri.Core.Todos.Note.NoteChange.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteChange.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteChange.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteConflict.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteConflict!
+override Aw.Sindri.Core.Todos.Note.NoteConflict.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteConflict.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteConflict.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteDocument.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteDocument.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteDocument.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteDone.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteDone!
+override Aw.Sindri.Core.Todos.Note.NoteDone.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteDone.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteDone.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteHold.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteHold.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteHold.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteIntent.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteIntent.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteIntent.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteLineBlocked.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteLineBlocked!
+override Aw.Sindri.Core.Todos.Note.NoteLineBlocked.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteLineBlocked.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteLineBlocked.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteLineEdit.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteLineEdit.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteLineEdit.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteLine.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteLine.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteLine.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteMergeOptions.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteMergeOptions.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteMergeOptions.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteMergeResult.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteMergeResult.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteMergeResult.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteRemove.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteRemove!
+override Aw.Sindri.Core.Todos.Note.NoteRemove.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteRemove.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteRemove.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteReopen.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteReopen!
+override Aw.Sindri.Core.Todos.Note.NoteReopen.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteReopen.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteReopen.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteRestore.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteRestore!
+override Aw.Sindri.Core.Todos.Note.NoteRestore.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteRestore.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteRestore.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteSide.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteSide.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteSide.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteTodoLine.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteTodoLine.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteTodoLine.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.SindriTodo.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.SindriTodo.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.SindriTodo.ToString() -> string!
+override sealed Aw.Sindri.Core.Todos.Note.NoteAdd.Equals(Aw.Sindri.Core.Todos.Note.NoteIntent? other) -> bool
+override sealed Aw.Sindri.Core.Todos.Note.NoteAdopt.Equals(Aw.Sindri.Core.Todos.Note.NoteIntent? other) -> bool
+override sealed Aw.Sindri.Core.Todos.Note.NoteChange.Equals(Aw.Sindri.Core.Todos.Note.NoteIntent? other) -> bool
+override sealed Aw.Sindri.Core.Todos.Note.NoteConflict.Equals(Aw.Sindri.Core.Todos.Note.NoteIntent? other) -> bool
+override sealed Aw.Sindri.Core.Todos.Note.NoteDone.Equals(Aw.Sindri.Core.Todos.Note.NoteIntent? other) -> bool
+override sealed Aw.Sindri.Core.Todos.Note.NoteLineBlocked.Equals(Aw.Sindri.Core.Todos.Note.NoteIntent? other) -> bool
+override sealed Aw.Sindri.Core.Todos.Note.NoteRemove.Equals(Aw.Sindri.Core.Todos.Note.NoteIntent? other) -> bool
+override sealed Aw.Sindri.Core.Todos.Note.NoteReopen.Equals(Aw.Sindri.Core.Todos.Note.NoteIntent? other) -> bool
+override sealed Aw.Sindri.Core.Todos.Note.NoteRestore.Equals(Aw.Sindri.Core.Todos.Note.NoteIntent? other) -> bool
+static Aw.Sindri.Core.Todos.Note.HeldChange.operator !=(Aw.Sindri.Core.Todos.Note.HeldChange? left, Aw.Sindri.Core.Todos.Note.HeldChange? right) -> bool
+static Aw.Sindri.Core.Todos.Note.HeldChange.operator ==(Aw.Sindri.Core.Todos.Note.HeldChange? left, Aw.Sindri.Core.Todos.Note.HeldChange? right) -> bool
+static Aw.Sindri.Core.Todos.Note.HoldDecision.Decide(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>! counted, int baseOpenTodos) -> Aw.Sindri.Core.Todos.Note.HoldDecision!
+static Aw.Sindri.Core.Todos.Note.HoldDecision.operator !=(Aw.Sindri.Core.Todos.Note.HoldDecision? left, Aw.Sindri.Core.Todos.Note.HoldDecision? right) -> bool
+static Aw.Sindri.Core.Todos.Note.HoldDecision.operator ==(Aw.Sindri.Core.Todos.Note.HoldDecision? left, Aw.Sindri.Core.Todos.Note.HoldDecision? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteAdd.operator !=(Aw.Sindri.Core.Todos.Note.NoteAdd? left, Aw.Sindri.Core.Todos.Note.NoteAdd? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteAdd.operator ==(Aw.Sindri.Core.Todos.Note.NoteAdd? left, Aw.Sindri.Core.Todos.Note.NoteAdd? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteAdopt.operator !=(Aw.Sindri.Core.Todos.Note.NoteAdopt? left, Aw.Sindri.Core.Todos.Note.NoteAdopt? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteAdopt.operator ==(Aw.Sindri.Core.Todos.Note.NoteAdopt? left, Aw.Sindri.Core.Todos.Note.NoteAdopt? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteBase.operator !=(Aw.Sindri.Core.Todos.Note.NoteBase? left, Aw.Sindri.Core.Todos.Note.NoteBase? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteBase.operator ==(Aw.Sindri.Core.Todos.Note.NoteBase? left, Aw.Sindri.Core.Todos.Note.NoteBase? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteBreakReasons.Of(Aw.Sindri.Core.Todos.Note.NoteBreak reason) -> string!
+static Aw.Sindri.Core.Todos.Note.NoteChange.operator !=(Aw.Sindri.Core.Todos.Note.NoteChange? left, Aw.Sindri.Core.Todos.Note.NoteChange? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteChange.operator ==(Aw.Sindri.Core.Todos.Note.NoteChange? left, Aw.Sindri.Core.Todos.Note.NoteChange? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteConflict.operator !=(Aw.Sindri.Core.Todos.Note.NoteConflict? left, Aw.Sindri.Core.Todos.Note.NoteConflict? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteConflict.operator ==(Aw.Sindri.Core.Todos.Note.NoteConflict? left, Aw.Sindri.Core.Todos.Note.NoteConflict? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteDocument.operator !=(Aw.Sindri.Core.Todos.Note.NoteDocument? left, Aw.Sindri.Core.Todos.Note.NoteDocument? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteDocument.operator ==(Aw.Sindri.Core.Todos.Note.NoteDocument? left, Aw.Sindri.Core.Todos.Note.NoteDocument? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteDone.operator !=(Aw.Sindri.Core.Todos.Note.NoteDone? left, Aw.Sindri.Core.Todos.Note.NoteDone? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteDone.operator ==(Aw.Sindri.Core.Todos.Note.NoteDone? left, Aw.Sindri.Core.Todos.Note.NoteDone? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteHold.operator !=(Aw.Sindri.Core.Todos.Note.NoteHold? left, Aw.Sindri.Core.Todos.Note.NoteHold? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteHold.operator ==(Aw.Sindri.Core.Todos.Note.NoteHold? left, Aw.Sindri.Core.Todos.Note.NoteHold? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteIntent.operator !=(Aw.Sindri.Core.Todos.Note.NoteIntent? left, Aw.Sindri.Core.Todos.Note.NoteIntent? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteIntent.operator ==(Aw.Sindri.Core.Todos.Note.NoteIntent? left, Aw.Sindri.Core.Todos.Note.NoteIntent? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteLineBlocked.operator !=(Aw.Sindri.Core.Todos.Note.NoteLineBlocked? left, Aw.Sindri.Core.Todos.Note.NoteLineBlocked? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteLineBlocked.operator ==(Aw.Sindri.Core.Todos.Note.NoteLineBlocked? left, Aw.Sindri.Core.Todos.Note.NoteLineBlocked? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteLineEdit.Append(string! line) -> Aw.Sindri.Core.Todos.Note.NoteLineEdit!
+static Aw.Sindri.Core.Todos.Note.NoteLineEdit.operator !=(Aw.Sindri.Core.Todos.Note.NoteLineEdit? left, Aw.Sindri.Core.Todos.Note.NoteLineEdit? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteLineEdit.operator ==(Aw.Sindri.Core.Todos.Note.NoteLineEdit? left, Aw.Sindri.Core.Todos.Note.NoteLineEdit? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteLineEdit.Remove(int number) -> Aw.Sindri.Core.Todos.Note.NoteLineEdit!
+static Aw.Sindri.Core.Todos.Note.NoteLineEdit.Replace(int number, string! line) -> Aw.Sindri.Core.Todos.Note.NoteLineEdit!
+static Aw.Sindri.Core.Todos.Note.NoteLineHash.Of(string! line) -> string!
+static Aw.Sindri.Core.Todos.Note.NoteLine.operator !=(Aw.Sindri.Core.Todos.Note.NoteLine? left, Aw.Sindri.Core.Todos.Note.NoteLine? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteLine.operator ==(Aw.Sindri.Core.Todos.Note.NoteLine? left, Aw.Sindri.Core.Todos.Note.NoteLine? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteMerge.Merge(Aw.Sindri.Core.Todos.Note.NoteBase? noteBase, Aw.Sindri.Core.Todos.Note.NoteDocument! note, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.SindriTodo!>! sindri, Aw.Sindri.Core.Todos.Note.NoteMergeOptions! options) -> Aw.Sindri.Core.Todos.Note.NoteMergeResult!
+static Aw.Sindri.Core.Todos.Note.NoteMergeOptions.operator !=(Aw.Sindri.Core.Todos.Note.NoteMergeOptions? left, Aw.Sindri.Core.Todos.Note.NoteMergeOptions? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteMergeOptions.operator ==(Aw.Sindri.Core.Todos.Note.NoteMergeOptions? left, Aw.Sindri.Core.Todos.Note.NoteMergeOptions? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteMergeResult.operator !=(Aw.Sindri.Core.Todos.Note.NoteMergeResult? left, Aw.Sindri.Core.Todos.Note.NoteMergeResult? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteMergeResult.operator ==(Aw.Sindri.Core.Todos.Note.NoteMergeResult? left, Aw.Sindri.Core.Todos.Note.NoteMergeResult? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteParser.Parse(string! note) -> Aw.Sindri.Core.Todos.Note.NoteDocument!
+static Aw.Sindri.Core.Todos.Note.NoteRemove.operator !=(Aw.Sindri.Core.Todos.Note.NoteRemove? left, Aw.Sindri.Core.Todos.Note.NoteRemove? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteRemove.operator ==(Aw.Sindri.Core.Todos.Note.NoteRemove? left, Aw.Sindri.Core.Todos.Note.NoteRemove? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteRenderer.Escape(string! text) -> string!
+static Aw.Sindri.Core.Todos.Note.NoteRenderer.Rebuild(Aw.Sindri.Core.Todos.Note.NoteDocument! document, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteLineEdit!>! edits) -> string!
+static Aw.Sindri.Core.Todos.Note.NoteRenderer.RenderLine(Aw.Sindri.Core.Todos.Note.SindriTodo! todo) -> string!
+static Aw.Sindri.Core.Todos.Note.NoteRenderer.Unescape(string! text) -> string!
+static Aw.Sindri.Core.Todos.Note.NoteReopen.operator !=(Aw.Sindri.Core.Todos.Note.NoteReopen? left, Aw.Sindri.Core.Todos.Note.NoteReopen? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteReopen.operator ==(Aw.Sindri.Core.Todos.Note.NoteReopen? left, Aw.Sindri.Core.Todos.Note.NoteReopen? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteRestore.operator !=(Aw.Sindri.Core.Todos.Note.NoteRestore? left, Aw.Sindri.Core.Todos.Note.NoteRestore? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteRestore.operator ==(Aw.Sindri.Core.Todos.Note.NoteRestore? left, Aw.Sindri.Core.Todos.Note.NoteRestore? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteSide.operator !=(Aw.Sindri.Core.Todos.Note.NoteSide? left, Aw.Sindri.Core.Todos.Note.NoteSide? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteSide.operator ==(Aw.Sindri.Core.Todos.Note.NoteSide? left, Aw.Sindri.Core.Todos.Note.NoteSide? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteTodoLine.operator !=(Aw.Sindri.Core.Todos.Note.NoteTodoLine? left, Aw.Sindri.Core.Todos.Note.NoteTodoLine? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteTodoLine.operator ==(Aw.Sindri.Core.Todos.Note.NoteTodoLine? left, Aw.Sindri.Core.Todos.Note.NoteTodoLine? right) -> bool
+static Aw.Sindri.Core.Todos.Note.SindriTodo.operator !=(Aw.Sindri.Core.Todos.Note.SindriTodo? left, Aw.Sindri.Core.Todos.Note.SindriTodo? right) -> bool
+static Aw.Sindri.Core.Todos.Note.SindriTodo.operator ==(Aw.Sindri.Core.Todos.Note.SindriTodo? left, Aw.Sindri.Core.Todos.Note.SindriTodo? right) -> bool
+virtual Aw.Sindri.Core.Todos.Note.NoteIntent.EqualityContract.get -> System.Type!
+virtual Aw.Sindri.Core.Todos.Note.NoteIntent.Equals(Aw.Sindri.Core.Todos.Note.NoteIntent? other) -> bool
+virtual Aw.Sindri.Core.Todos.Note.NoteIntent.PrintMembers(System.Text.StringBuilder! builder) -> bool
+Aw.Sindri.Core.Todos.Note.HeldChange.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out Aw.Sindri.Core.Todos.Note.HeldKind Kind, out string? NoteLine) -> void
+Aw.Sindri.Core.Todos.Note.HeldChange.HeldChange(Aw.Sindri.Core.Ids.TodoId Id, Aw.Sindri.Core.Todos.Note.HeldKind Kind, string? NoteLine) -> void
+Aw.Sindri.Core.Todos.Note.HeldChange.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Todos.Note.NoteAdd.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out string! Text, out System.DateOnly? Due, out System.Collections.Generic.IReadOnlyList<string!>! Links, out bool Done, out System.DateOnly? DoneOn) -> void
+Aw.Sindri.Core.Todos.Note.NoteAdd.NoteAdd(Aw.Sindri.Core.Ids.TodoId Id, string! Text, System.DateOnly? Due, System.Collections.Generic.IReadOnlyList<string!>! Links, bool Done, System.DateOnly? DoneOn) -> void
+Aw.Sindri.Core.Todos.Note.NoteAdopt.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out string! Text, out System.DateOnly? Due, out System.Collections.Generic.IReadOnlyList<string!>! Links, out bool Done, out System.DateOnly? DoneOn, out int LineNumber) -> void
+Aw.Sindri.Core.Todos.Note.NoteAdopt.NoteAdopt(Aw.Sindri.Core.Ids.TodoId Id, string! Text, System.DateOnly? Due, System.Collections.Generic.IReadOnlyList<string!>! Links, bool Done, System.DateOnly? DoneOn, int LineNumber) -> void
+Aw.Sindri.Core.Todos.Note.NoteChange.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out string? Text, out bool DueChanged, out System.DateOnly? Due, out System.Collections.Generic.IReadOnlyList<string!>? Links) -> void
+Aw.Sindri.Core.Todos.Note.NoteChange.NoteChange(Aw.Sindri.Core.Ids.TodoId Id, string? Text, bool DueChanged, System.DateOnly? Due, System.Collections.Generic.IReadOnlyList<string!>? Links) -> void
+Aw.Sindri.Core.Todos.Note.NoteConflict.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out Aw.Sindri.Core.Todos.Note.NoteSide! Sindri, out Aw.Sindri.Core.Todos.Note.NoteSide! Obsidian) -> void
+Aw.Sindri.Core.Todos.Note.NoteConflict.NoteConflict(Aw.Sindri.Core.Ids.TodoId Id, Aw.Sindri.Core.Todos.Note.NoteSide! Sindri, Aw.Sindri.Core.Todos.Note.NoteSide! Obsidian) -> void
+Aw.Sindri.Core.Todos.Note.NoteDone.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out System.DateOnly? On) -> void
+Aw.Sindri.Core.Todos.Note.NoteDone.NoteDone(Aw.Sindri.Core.Ids.TodoId Id, System.DateOnly? On) -> void
+Aw.Sindri.Core.Todos.Note.NoteIntent.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id) -> void
+Aw.Sindri.Core.Todos.Note.NoteIntent.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Todos.Note.NoteIntent.NoteIntent(Aw.Sindri.Core.Ids.TodoId Id) -> void
+Aw.Sindri.Core.Todos.Note.NoteLineBlocked.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out int LineNumber, out string! Reason) -> void
+Aw.Sindri.Core.Todos.Note.NoteLineBlocked.NoteLineBlocked(Aw.Sindri.Core.Ids.TodoId Id, int LineNumber, string! Reason) -> void
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.LeaveAlone.get -> System.Collections.Generic.IReadOnlySet<Aw.Sindri.Core.Ids.TodoId>!
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.OpenConflicts.get -> System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Ids.TodoId, Aw.Sindri.Core.Todos.Note.NoteSide!>!
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.PickBases.get -> System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Ids.TodoId, string!>!
+Aw.Sindri.Core.Todos.Note.NoteRemove.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id) -> void
+Aw.Sindri.Core.Todos.Note.NoteRemove.NoteRemove(Aw.Sindri.Core.Ids.TodoId Id) -> void
+Aw.Sindri.Core.Todos.Note.NoteReopen.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id) -> void
+Aw.Sindri.Core.Todos.Note.NoteReopen.NoteReopen(Aw.Sindri.Core.Ids.TodoId Id) -> void
+Aw.Sindri.Core.Todos.Note.NoteRestore.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id) -> void
+Aw.Sindri.Core.Todos.Note.NoteRestore.NoteRestore(Aw.Sindri.Core.Ids.TodoId Id) -> void
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.Deconstruct(out int Number, out string! Raw, out Aw.Sindri.Core.Ids.TodoId? Id, out string? RejectedBlock, out string! Text, out System.DateOnly? Due, out bool Done, out System.DateOnly? DoneOn, out System.Collections.Generic.IReadOnlyList<string!>! Links, out Aw.Sindri.Core.Todos.Note.NoteBreak Break) -> void
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.Id.get -> Aw.Sindri.Core.Ids.TodoId?
+Aw.Sindri.Core.Todos.Note.NoteTodoLine.NoteTodoLine(int Number, string! Raw, Aw.Sindri.Core.Ids.TodoId? Id, string? RejectedBlock, string! Text, System.DateOnly? Due, bool Done, System.DateOnly? DoneOn, System.Collections.Generic.IReadOnlyList<string!>! Links, Aw.Sindri.Core.Todos.Note.NoteBreak Break) -> void
+Aw.Sindri.Core.Todos.Note.PassIdMinter.Mint(string! key) -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Todos.Note.PassIdMinter.PassIdMinter(System.Func<Aw.Sindri.Core.Ids.TodoId>! source) -> void
+Aw.Sindri.Core.Todos.Note.PassIdMinter.Source.get -> System.Func<Aw.Sindri.Core.Ids.TodoId>!
+Aw.Sindri.Core.Todos.Note.SindriTodo.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out string! Text, out System.DateOnly? Due, out System.Collections.Generic.IReadOnlyList<string!>! Links, out bool Done, out System.DateOnly? DoneOn, out bool Removed, out Aw.Sindri.Core.Todos.Note.NoteOrigin? RemovedBy, out string? LastLineHash, out long Version) -> void
+Aw.Sindri.Core.Todos.Note.SindriTodo.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Core.Todos.Note.SindriTodo.SindriTodo(Aw.Sindri.Core.Ids.TodoId Id, string! Text, System.DateOnly? Due, System.Collections.Generic.IReadOnlyList<string!>! Links, bool Done = false, System.DateOnly? DoneOn = null, bool Removed = false, Aw.Sindri.Core.Todos.Note.NoteOrigin? RemovedBy = null, string? LastLineHash = null, long Version = 1) -> void
+Aw.Sindri.Core.Todos.Note.NoteConflictSettled
+Aw.Sindri.Core.Todos.Note.NoteConflictSettled.Equals(Aw.Sindri.Core.Todos.Note.NoteConflictSettled? other) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteConflictSettled.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteConflictSettled!
+override Aw.Sindri.Core.Todos.Note.NoteConflictSettled.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteConflictSettled.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteConflictSettled.ToString() -> string!
+override sealed Aw.Sindri.Core.Todos.Note.NoteConflictSettled.Equals(Aw.Sindri.Core.Todos.Note.NoteIntent? other) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteConflictSettled.operator !=(Aw.Sindri.Core.Todos.Note.NoteConflictSettled? left, Aw.Sindri.Core.Todos.Note.NoteConflictSettled? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteConflictSettled.operator ==(Aw.Sindri.Core.Todos.Note.NoteConflictSettled? left, Aw.Sindri.Core.Todos.Note.NoteConflictSettled? right) -> bool
+Aw.Sindri.Core.Todos.Note.NoteConflictSettled.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id) -> void
+Aw.Sindri.Core.Todos.Note.NoteConflictSettled.NoteConflictSettled(Aw.Sindri.Core.Ids.TodoId Id) -> void
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.PickedRemoved.get -> System.Collections.Generic.IReadOnlySet<Aw.Sindri.Core.Ids.TodoId>!
+Aw.Sindri.Core.Todos.Note.NoteMergeOptions.PickedRemoved.init -> void
+Aw.Sindri.Core.Todos.Note.NoteBreak.ForeignBlockId = 8 -> Aw.Sindri.Core.Todos.Note.NoteBreak
 Aw.Sindri.Core.Secrets.ILinearProfileEditCheck
 Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckRemoveWriteToken(string! source) -> Aw.Kernel.Result<bool>!
 Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckSetTeams(string! source, System.Collections.Generic.IReadOnlyList<string!>! teams) -> Aw.Kernel.Result<bool>!

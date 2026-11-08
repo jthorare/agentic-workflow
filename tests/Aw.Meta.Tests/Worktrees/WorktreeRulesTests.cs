@@ -85,6 +85,17 @@ public sealed class WorktreeRulesTests
         AssertKept(Judge(detached with { HeadMerged = false }), "detached, not a gate tree");
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public void A_detached_worktree_marked_done_is_judged_by_the_other_rules()
+    {
+        var done = new WorktreeFacts { Path = "/wt/detached", Done = true };
+
+        Assert.Equal(WorktreeDecision.Removable, Judge(done).Decision);
+        AssertKept(Judge(done with { UnpushedCommits = 1, HeadMerged = false }), "no remote branch");
+        AssertKept(Judge(done with { NoPreviousSweep = true }), "no previous sweep");
+        AssertKept(Judge(done with { ChangedSinceSweep = true }), "changed since the last sweep");
+    }
+
     private static WorktreeFacts NoPr() => new() { Path = "/wt/idea", Branch = "docs/idea", HeadMerged = false };
 
     [Fact, Trait("Lane", "unit")]
