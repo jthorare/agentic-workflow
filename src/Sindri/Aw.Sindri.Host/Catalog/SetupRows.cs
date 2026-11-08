@@ -8,7 +8,7 @@ namespace Aw.Sindri.Host.Catalog;
 
 /// <summary>
 /// The setup-once rows (setup-once spec §7.4) (AddRepo, OnboardRepo, RegisterMcp and the sources step's ConnectIndexSource), so the app and doctor can list them.
-/// All are for a human; the automatic registration is the setup service's through ServiceGrants. The protected rows (ApproveProfile, ApproveRecipe, ApproveAllRecipes) are in their own lanes' rows.
+/// All are for a human; the automatic registration is the setup service's through ServiceGrants. The protected rows (ApproveProfile) are in their own lanes' rows.
 /// </summary>
 internal static class SetupRows
 {

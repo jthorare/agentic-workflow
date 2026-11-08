@@ -64,7 +64,6 @@ internal sealed class SetupDoctor(ISetupFacts facts, IRepoHookStates? hooks = nu
     {
         SetupStepId.Repo => "sindri repo add <path>",
         SetupStepId.Profile => "sindri profile approve <hash>",
-        SetupStepId.Recipes => "sindri recipe approve-all",
         SetupStepId.Mcp => "sindri mcp register --apply",
         SetupStepId.Map => "sindri context map refresh",
         SetupStepId.Sources => "sindri index connect <source>",

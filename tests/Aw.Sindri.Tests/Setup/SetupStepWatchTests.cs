@@ -23,7 +23,7 @@ public sealed class SetupStepWatchTests : IDisposable
         _rig.Slice.Store.Events.Where(static e => e.Envelope.Type == EventTypes.SetupStepChanged).Select(static e => (e.IdempotencyKey, e.Envelope.Payload));
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_first_look_records_all_six_steps_and_a_second_look_records_nothing()
+    public async Task A_first_look_records_all_five_steps_and_a_second_look_records_nothing()
     {
         _ = await _rig.Slice.HoldLease();
         _rig.Enter();
@@ -33,7 +33,7 @@ public sealed class SetupStepWatchTests : IDisposable
         await watch.Run(AddRepoRig.Token);
 
         Assert.Equal(
-            ["setup.step.changed:repo:needs-you:0", "setup.step.changed:profile:todo:0", "setup.step.changed:recipes:skipped:0", "setup.step.changed:mcp:todo:0", "setup.step.changed:map:todo:0", "setup.step.changed:sources:todo:0"],
+            ["setup.step.changed:repo:needs-you:0", "setup.step.changed:profile:todo:0", "setup.step.changed:mcp:todo:0", "setup.step.changed:map:todo:0", "setup.step.changed:sources:todo:0"],
             Changes().Select(static c => c.Key),
             StringComparer.Ordinal);
     }

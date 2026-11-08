@@ -8592,7 +8592,6 @@ Aw.Sindri.Core.Setup.ISetupFacts
 Aw.Sindri.Core.Setup.ISetupFacts.Map(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Setup.MapFact!>!>
 Aw.Sindri.Core.Setup.ISetupFacts.Mcp(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Setup.McpFact!>!>
 Aw.Sindri.Core.Setup.ISetupFacts.Profile(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Setup.ProfileFact!>!>
-Aw.Sindri.Core.Setup.ISetupFacts.Recipes(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Setup.RecipesFact!>!>
 Aw.Sindri.Core.Setup.ISetupFacts.Repos(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Setup.RepoFact!>!>
 Aw.Sindri.Core.Setup.MapFact
 Aw.Sindri.Core.Setup.MapFact.<Clone>$() -> Aw.Sindri.Core.Setup.MapFact!
@@ -8630,15 +8629,6 @@ Aw.Sindri.Core.Setup.ProfilePresence.Approved = 3 -> Aw.Sindri.Core.Setup.Profil
 Aw.Sindri.Core.Setup.ProfilePresence.Drifted = 2 -> Aw.Sindri.Core.Setup.ProfilePresence
 Aw.Sindri.Core.Setup.ProfilePresence.Missing = 0 -> Aw.Sindri.Core.Setup.ProfilePresence
 Aw.Sindri.Core.Setup.ProfilePresence.Unapproved = 1 -> Aw.Sindri.Core.Setup.ProfilePresence
-Aw.Sindri.Core.Setup.RecipesFact
-Aw.Sindri.Core.Setup.RecipesFact.<Clone>$() -> Aw.Sindri.Core.Setup.RecipesFact!
-Aw.Sindri.Core.Setup.RecipesFact.Approved.get -> int
-Aw.Sindri.Core.Setup.RecipesFact.Approved.init -> void
-Aw.Sindri.Core.Setup.RecipesFact.Deconstruct(out int Total, out int Approved) -> void
-Aw.Sindri.Core.Setup.RecipesFact.Equals(Aw.Sindri.Core.Setup.RecipesFact? other) -> bool
-Aw.Sindri.Core.Setup.RecipesFact.RecipesFact(int Total, int Approved) -> void
-Aw.Sindri.Core.Setup.RecipesFact.Total.get -> int
-Aw.Sindri.Core.Setup.RecipesFact.Total.init -> void
 Aw.Sindri.Core.Setup.RepoFact
 Aw.Sindri.Core.Setup.RepoFact.<Clone>$() -> Aw.Sindri.Core.Setup.RepoFact!
 Aw.Sindri.Core.Setup.RepoFact.Count.get -> int
@@ -8692,14 +8682,12 @@ Aw.Sindri.Core.Setup.SetupStep.Title.init -> void
 Aw.Sindri.Core.Setup.SetupStep.Why.get -> string!
 Aw.Sindri.Core.Setup.SetupStep.Why.init -> void
 Aw.Sindri.Core.Setup.SetupStepId
-Aw.Sindri.Core.Setup.SetupStepId.Map = 4 -> Aw.Sindri.Core.Setup.SetupStepId
-Aw.Sindri.Core.Setup.SetupStepId.Mcp = 3 -> Aw.Sindri.Core.Setup.SetupStepId
+Aw.Sindri.Core.Setup.SetupStepId.Map = 3 -> Aw.Sindri.Core.Setup.SetupStepId
+Aw.Sindri.Core.Setup.SetupStepId.Mcp = 2 -> Aw.Sindri.Core.Setup.SetupStepId
 Aw.Sindri.Core.Setup.SetupStepId.Profile = 1 -> Aw.Sindri.Core.Setup.SetupStepId
-Aw.Sindri.Core.Setup.SetupStepId.Recipes = 2 -> Aw.Sindri.Core.Setup.SetupStepId
 Aw.Sindri.Core.Setup.SetupStepId.Repo = 0 -> Aw.Sindri.Core.Setup.SetupStepId
 Aw.Sindri.Core.Setup.SetupSteps
 const Aw.Sindri.Core.Setup.SetupActions.AddRepo = "AddRepo" -> string!
-const Aw.Sindri.Core.Setup.SetupActions.ApproveAllRecipes = "ApproveAllRecipes" -> string!
 const Aw.Sindri.Core.Setup.SetupActions.ApproveProfile = "ApproveProfile" -> string!
 const Aw.Sindri.Core.Setup.SetupActions.RegisterMcp = "RegisterMcp" -> string!
 override Aw.Sindri.Core.Setup.MapFact.Equals(object? obj) -> bool
@@ -8711,9 +8699,6 @@ override Aw.Sindri.Core.Setup.McpFact.ToString() -> string!
 override Aw.Sindri.Core.Setup.ProfileFact.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Setup.ProfileFact.GetHashCode() -> int
 override Aw.Sindri.Core.Setup.ProfileFact.ToString() -> string!
-override Aw.Sindri.Core.Setup.RecipesFact.Equals(object? obj) -> bool
-override Aw.Sindri.Core.Setup.RecipesFact.GetHashCode() -> int
-override Aw.Sindri.Core.Setup.RecipesFact.ToString() -> string!
 override Aw.Sindri.Core.Setup.RepoFact.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Setup.RepoFact.GetHashCode() -> int
 override Aw.Sindri.Core.Setup.RepoFact.ToString() -> string!
@@ -8732,8 +8717,6 @@ static Aw.Sindri.Core.Setup.McpFact.operator !=(Aw.Sindri.Core.Setup.McpFact? le
 static Aw.Sindri.Core.Setup.McpFact.operator ==(Aw.Sindri.Core.Setup.McpFact? left, Aw.Sindri.Core.Setup.McpFact? right) -> bool
 static Aw.Sindri.Core.Setup.ProfileFact.operator !=(Aw.Sindri.Core.Setup.ProfileFact? left, Aw.Sindri.Core.Setup.ProfileFact? right) -> bool
 static Aw.Sindri.Core.Setup.ProfileFact.operator ==(Aw.Sindri.Core.Setup.ProfileFact? left, Aw.Sindri.Core.Setup.ProfileFact? right) -> bool
-static Aw.Sindri.Core.Setup.RecipesFact.operator !=(Aw.Sindri.Core.Setup.RecipesFact? left, Aw.Sindri.Core.Setup.RecipesFact? right) -> bool
-static Aw.Sindri.Core.Setup.RecipesFact.operator ==(Aw.Sindri.Core.Setup.RecipesFact? left, Aw.Sindri.Core.Setup.RecipesFact? right) -> bool
 static Aw.Sindri.Core.Setup.RepoFact.operator !=(Aw.Sindri.Core.Setup.RepoFact? left, Aw.Sindri.Core.Setup.RepoFact? right) -> bool
 static Aw.Sindri.Core.Setup.RepoFact.operator ==(Aw.Sindri.Core.Setup.RepoFact? left, Aw.Sindri.Core.Setup.RepoFact? right) -> bool
 static Aw.Sindri.Core.Setup.SetupError.operator !=(Aw.Sindri.Core.Setup.SetupError? left, Aw.Sindri.Core.Setup.SetupError? right) -> bool
@@ -8798,7 +8781,6 @@ static Aw.Sindri.Core.Setup.SetupItems.None.get -> Aw.Sindri.Core.Setup.SetupIte
 static Aw.Sindri.Core.Setup.SetupItems.operator !=(Aw.Sindri.Core.Setup.SetupItems? left, Aw.Sindri.Core.Setup.SetupItems? right) -> bool
 static Aw.Sindri.Core.Setup.SetupItems.operator ==(Aw.Sindri.Core.Setup.SetupItems? left, Aw.Sindri.Core.Setup.SetupItems? right) -> bool
 static Aw.Sindri.Core.Setup.SetupSteps.Profile(Aw.Sindri.Core.Setup.ProfileFact! fact, Aw.Sindri.Core.Setup.RepoFact! repos) -> Aw.Sindri.Core.Setup.SetupStep!
-static Aw.Sindri.Core.Setup.SetupSteps.Recipes(Aw.Sindri.Core.Setup.RecipesFact! fact, bool profileApproved) -> Aw.Sindri.Core.Setup.SetupStep!
 Aw.Sindri.Core.Workflow.Blocks.IRunArea.PathFor(string! address, string! name) -> Aw.Kernel.Result<string!>!
 static readonly Aw.Sindri.Core.Workflow.WorkflowErrors.HoldoutSetMissing -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.Workflow.WorkflowErrors.HoldoutStoreUnavailable -> Aw.Kernel.ErrorDefinition!
@@ -13617,7 +13599,7 @@ Aw.Sindri.Core.Setup.SourcesFact.Equals(Aw.Sindri.Core.Setup.SourcesFact? other)
 Aw.Sindri.Core.Setup.SourcesFact.Items.get -> Aw.Sindri.Core.Setup.SetupItems!
 Aw.Sindri.Core.Setup.SourcesFact.Items.init -> void
 Aw.Sindri.Core.Setup.SourcesFact.SourcesFact(int Count) -> void
-Aw.Sindri.Core.Setup.SetupStepId.Sources = 5 -> Aw.Sindri.Core.Setup.SetupStepId
+Aw.Sindri.Core.Setup.SetupStepId.Sources = 4 -> Aw.Sindri.Core.Setup.SetupStepId
 const Aw.Sindri.Core.Setup.SetupActions.ConnectIndexSource = "ConnectIndexSource" -> string!
 override Aw.Sindri.Core.Setup.SourcesFact.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Setup.SourcesFact.GetHashCode() -> int

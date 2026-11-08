@@ -17,9 +17,6 @@ internal sealed class SetupFacts(ProfileSetupReader profile, SourcesSetupReader 
 
     public ValueTask<Result<ProfileFact>> Profile(CancellationToken cancellationToken) => profile.Presence(cancellationToken);
 
-    // why: the recipe engine is gone, so no workflow waits for an approval; the step reads as skipped
-    public ValueTask<Result<RecipesFact>> Recipes(CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success(new RecipesFact(0, 0)));
-
     public ValueTask<Result<McpFact>> Mcp(CancellationToken cancellationToken) => mcp.Read(cancellationToken);
 
     public ValueTask<Result<MapFact>> Map(CancellationToken cancellationToken) => map.Read(cancellationToken);
