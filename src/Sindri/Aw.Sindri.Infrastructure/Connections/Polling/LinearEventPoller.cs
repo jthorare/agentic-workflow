@@ -23,7 +23,8 @@ internal sealed class LinearEventPoller(HttpClient http, IConnectionSecrets secr
 {
     private const string Host = "api.linear.app";
 
-    private const string Fields = "identifier title url createdAt comments(first: 10) { nodes { id createdAt body user { name } } pageInfo { hasNextPage } } history(first: 25) { nodes { id createdAt addedLabels { id name } fromState { id name } toState { id name } } pageInfo { hasNextPage } }";
+    private const string HistoryNodes = "nodes { id createdAt addedLabels { id name } fromState { id name } toState { id name } } pageInfo { hasNextPage }";
+    private const string CommentNodes = "nodes { id createdAt body user { name } } pageInfo { hasNextPage }";
 
     private readonly PollerClient _client = new(http, secrets, Host, clock, bareKeys: true);
 
@@ -69,10 +70,17 @@ internal sealed class LinearEventPoller(HttpClient http, IConnectionSecrets secr
         }
     }
 
+    // Both nested lists only ask for entries newer than the cursor, so a next page means real overflow and not old entries.
+    private static string Fields(DateTimeOffset? after)
+    {
+        var nested = after is { } floor ? ", filter: { createdAt: { gt: \"" + floor.UtcDateTime.ToString("O", CultureInfo.InvariantCulture) + "\" } }" : string.Empty;
+        return "identifier title url createdAt comments(first: 10" + nested + ") { " + CommentNodes + " } history(first: 25" + nested + ") { " + HistoryNodes + " }";
+    }
+
     private static string Query(DateTimeOffset? after, string? endCursor)
     {
         var filter = after is { } floor ? $"filter: {{ updatedAt: {{ gt: \"{floor.UtcDateTime.ToString("O", CultureInfo.InvariantCulture)}\" }} }}, " : string.Empty;
-        var query = "query($after: String) { issues(after: $after, " + filter + "first: 50, orderBy: updatedAt) { nodes { " + Fields + " } pageInfo { hasNextPage endCursor } } }";
+        var query = "query($after: String) { issues(after: $after, " + filter + "first: 50, orderBy: updatedAt) { nodes { " + Fields(after) + " } pageInfo { hasNextPage endCursor } } }";
         using var buffer = new MemoryStream();
         using (var writer = new Utf8JsonWriter(buffer))
         {
