@@ -13,5 +13,5 @@ internal sealed class TodoGroupViewModel(string heading) : ObservableObject
 
     /// <summary>Shows these rows.</summary>
     /// <param name="rows">The rows, kept in place when already shown.</param>
-    internal void Show(IReadOnlyList<TodoRowViewModel> rows) => throw new NotSupportedException();
+    internal void Show(IReadOnlyList<TodoRowViewModel> rows) => Patch.To(Rows, rows);
 }
