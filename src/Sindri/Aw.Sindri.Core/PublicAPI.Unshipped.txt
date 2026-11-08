@@ -26000,6 +26000,258 @@ Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckRemoveWriteToken(string! sou
 Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckSetTeams(string! source, System.Collections.Generic.IReadOnlyList<string!>! teams) -> Aw.Kernel.Result<bool>!
 Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckSetToken(string! source, string! secretPointer) -> Aw.Kernel.Result<bool>!
 Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckSetWriteToken(string! source, string! secretPointer) -> Aw.Kernel.Result<bool>!
+Aw.Sindri.Core.Memory.FactSelector
+Aw.Sindri.Core.Memory.FactSelector.<Clone>$() -> Aw.Sindri.Core.Memory.FactSelector!
+Aw.Sindri.Core.Memory.FactSelector.Deconstruct(out string? Key, out string? Tag, out System.DateTimeOffset? ExpiredAt) -> void
+Aw.Sindri.Core.Memory.FactSelector.Equals(Aw.Sindri.Core.Memory.FactSelector? other) -> bool
+Aw.Sindri.Core.Memory.FactSelector.ExpiredAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Memory.FactSelector.ExpiredAt.init -> void
+Aw.Sindri.Core.Memory.FactSelector.FactSelector(string? Key, string? Tag, System.DateTimeOffset? ExpiredAt) -> void
+Aw.Sindri.Core.Memory.FactSelector.Key.get -> string?
+Aw.Sindri.Core.Memory.FactSelector.Key.init -> void
+Aw.Sindri.Core.Memory.FactSelector.Tag.get -> string?
+Aw.Sindri.Core.Memory.FactSelector.Tag.init -> void
+Aw.Sindri.Core.Memory.MemoryFactView
+Aw.Sindri.Core.Memory.MemoryFactView.<Clone>$() -> Aw.Sindri.Core.Memory.MemoryFactView!
+Aw.Sindri.Core.Memory.MemoryFactView.Deconstruct(out string! Key, out string! Text, out System.Collections.Generic.IReadOnlyList<string!>! Tags, out Aw.Sindri.Core.Memory.MemoryProvenance! Provenance, out System.DateTimeOffset? ExpiresAt, out System.DateTimeOffset RefreshedAt, out float? Score) -> void
+Aw.Sindri.Core.Memory.MemoryFactView.Equals(Aw.Sindri.Core.Memory.MemoryFactView? other) -> bool
+Aw.Sindri.Core.Memory.MemoryFactView.ExpiresAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Memory.MemoryFactView.ExpiresAt.init -> void
+Aw.Sindri.Core.Memory.MemoryFactView.MemoryFactView(string! Key, string! Text, System.Collections.Generic.IReadOnlyList<string!>! Tags, Aw.Sindri.Core.Memory.MemoryProvenance! Provenance, System.DateTimeOffset? ExpiresAt, System.DateTimeOffset RefreshedAt, float? Score) -> void
+Aw.Sindri.Core.Memory.MemoryFactView.Key.get -> string!
+Aw.Sindri.Core.Memory.MemoryFactView.Key.init -> void
+Aw.Sindri.Core.Memory.MemoryFactView.Provenance.get -> Aw.Sindri.Core.Memory.MemoryProvenance!
+Aw.Sindri.Core.Memory.MemoryFactView.Provenance.init -> void
+Aw.Sindri.Core.Memory.MemoryFactView.RefreshedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Memory.MemoryFactView.RefreshedAt.init -> void
+Aw.Sindri.Core.Memory.MemoryFactView.Score.get -> float?
+Aw.Sindri.Core.Memory.MemoryFactView.Score.init -> void
+Aw.Sindri.Core.Memory.MemoryFactView.Tags.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Memory.MemoryFactView.Tags.init -> void
+Aw.Sindri.Core.Memory.MemoryFactView.Text.get -> string!
+Aw.Sindri.Core.Memory.MemoryFactView.Text.init -> void
+Aw.Sindri.Core.Memory.IMemoryEmbedder
+Aw.Sindri.Core.Memory.IMemoryEmbedder.Embed(System.Collections.Generic.IReadOnlyList<string!>! texts, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Memory.MemoryEmbedding!>
+Aw.Sindri.Core.Memory.IMemoryStore
+Aw.Sindri.Core.Memory.IMemoryStore.Add(Aw.Sindri.Core.Memory.MemoryFact! fact, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Memory.IMemoryStore.Counts(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyDictionary<string!, int>!>!>
+Aw.Sindri.Core.Memory.IMemoryStore.Create(Aw.Sindri.Core.Memory.MemoryInfo! memory, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Memory.IMemoryStore.Delete(Aw.Sindri.Core.Memory.MemoryName memory, Aw.Sindri.Core.Memory.FactSelector! selector, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Sindri.Core.Memory.IMemoryStore.DeleteExpired(System.DateTimeOffset now, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Sindri.Core.Memory.IMemoryStore.Facts(Aw.Sindri.Core.Memory.MemoryName name, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Memory.MemoryFact!>!>!>
+Aw.Sindri.Core.Memory.IMemoryStore.Get(Aw.Sindri.Core.Memory.MemoryName name, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Memory.MemoryInfo!>!>
+Aw.Sindri.Core.Memory.IMemoryStore.List(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Memory.MemoryInfo!>!>!>
+Aw.Sindri.Core.Memory.IMemoryStore.Refresh(Aw.Sindri.Core.Memory.MemoryName memory, string! key, System.DateTimeOffset refreshedAt, System.DateTimeOffset? expiresAt, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+Aw.Sindri.Core.Memory.KeywordRank
+Aw.Sindri.Core.Memory.MatchLevel
+Aw.Sindri.Core.Memory.MatchLevel.Balanced = 2 -> Aw.Sindri.Core.Memory.MatchLevel
+Aw.Sindri.Core.Memory.MatchLevel.Loose = 1 -> Aw.Sindri.Core.Memory.MatchLevel
+Aw.Sindri.Core.Memory.MatchLevel.Strict = 3 -> Aw.Sindri.Core.Memory.MatchLevel
+Aw.Sindri.Core.Memory.MatchLevels
+Aw.Sindri.Core.Memory.MemoryDedupe
+Aw.Sindri.Core.Memory.MemoryEmbedding
+Aw.Sindri.Core.Memory.MemoryEmbedding.<Clone>$() -> Aw.Sindri.Core.Memory.MemoryEmbedding!
+Aw.Sindri.Core.Memory.MemoryEmbedding.Equals(Aw.Sindri.Core.Memory.MemoryEmbedding? other) -> bool
+Aw.Sindri.Core.Memory.MemoryEmbedding.IsAvailable.get -> bool
+Aw.Sindri.Core.Memory.MemoryEmbedding.Reason.get -> string?
+Aw.Sindri.Core.Memory.MemoryEmbedding.Reason.init -> void
+Aw.Sindri.Core.Memory.MemoryEmbedding.Vectors.get -> System.Collections.Generic.IReadOnlyList<System.ReadOnlyMemory<float>>?
+Aw.Sindri.Core.Memory.MemoryEmbedding.Vectors.init -> void
+Aw.Sindri.Core.Memory.MemoryFact
+Aw.Sindri.Core.Memory.MemoryFact.<Clone>$() -> Aw.Sindri.Core.Memory.MemoryFact!
+Aw.Sindri.Core.Memory.MemoryFact.CreatedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Memory.MemoryFact.CreatedAt.init -> void
+Aw.Sindri.Core.Memory.MemoryFact.Embedding.get -> System.ReadOnlyMemory<float>
+Aw.Sindri.Core.Memory.MemoryFact.Embedding.init -> void
+Aw.Sindri.Core.Memory.MemoryFact.Equals(Aw.Sindri.Core.Memory.MemoryFact? other) -> bool
+Aw.Sindri.Core.Memory.MemoryFact.ExpiresAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Memory.MemoryFact.ExpiresAt.init -> void
+Aw.Sindri.Core.Memory.MemoryFact.IsExpired(System.DateTimeOffset now) -> bool
+Aw.Sindri.Core.Memory.MemoryFact.Key.get -> string!
+Aw.Sindri.Core.Memory.MemoryFact.Key.init -> void
+Aw.Sindri.Core.Memory.MemoryFact.Provenance.get -> Aw.Sindri.Core.Memory.MemoryProvenance!
+Aw.Sindri.Core.Memory.MemoryFact.Provenance.init -> void
+Aw.Sindri.Core.Memory.MemoryFact.RefreshedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Memory.MemoryFact.RefreshedAt.init -> void
+Aw.Sindri.Core.Memory.MemoryFact.Store.get -> Aw.Sindri.Core.Memory.MemoryName
+Aw.Sindri.Core.Memory.MemoryFact.Store.init -> void
+Aw.Sindri.Core.Memory.MemoryFact.Tags.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Memory.MemoryFact.Tags.init -> void
+Aw.Sindri.Core.Memory.MemoryFact.Text.get -> string!
+Aw.Sindri.Core.Memory.MemoryFact.Text.init -> void
+Aw.Sindri.Core.Memory.MemoryInfo
+Aw.Sindri.Core.Memory.MemoryInfo.<Clone>$() -> Aw.Sindri.Core.Memory.MemoryInfo!
+Aw.Sindri.Core.Memory.MemoryInfo.CreatedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Memory.MemoryInfo.CreatedAt.init -> void
+Aw.Sindri.Core.Memory.MemoryInfo.CreatedBy.get -> string!
+Aw.Sindri.Core.Memory.MemoryInfo.CreatedBy.init -> void
+Aw.Sindri.Core.Memory.MemoryInfo.Deconstruct(out Aw.Sindri.Core.Memory.MemoryName Name, out string? Description, out string! CreatedBy, out System.DateTimeOffset CreatedAt) -> void
+Aw.Sindri.Core.Memory.MemoryInfo.Description.get -> string?
+Aw.Sindri.Core.Memory.MemoryInfo.Description.init -> void
+Aw.Sindri.Core.Memory.MemoryInfo.Equals(Aw.Sindri.Core.Memory.MemoryInfo? other) -> bool
+Aw.Sindri.Core.Memory.MemoryInfo.MemoryInfo(Aw.Sindri.Core.Memory.MemoryName Name, string? Description, string! CreatedBy, System.DateTimeOffset CreatedAt) -> void
+Aw.Sindri.Core.Memory.MemoryInfo.Name.get -> Aw.Sindri.Core.Memory.MemoryName
+Aw.Sindri.Core.Memory.MemoryInfo.Name.init -> void
+Aw.Sindri.Core.Memory.MemoryName
+Aw.Sindri.Core.Memory.MemoryName.Equals(Aw.Sindri.Core.Memory.MemoryName other) -> bool
+Aw.Sindri.Core.Memory.MemoryName.MemoryName() -> void
+Aw.Sindri.Core.Memory.MemoryName.Value.get -> string!
+Aw.Sindri.Core.Memory.MemoryName.Value.init -> void
+Aw.Sindri.Core.Memory.MemoryProvenance
+Aw.Sindri.Core.Memory.MemoryProvenance.<Clone>$() -> Aw.Sindri.Core.Memory.MemoryProvenance!
+Aw.Sindri.Core.Memory.MemoryProvenance.Deconstruct(out string? Workflow, out string? Run, out string? Item, out string? Session) -> void
+Aw.Sindri.Core.Memory.MemoryProvenance.Equals(Aw.Sindri.Core.Memory.MemoryProvenance? other) -> bool
+Aw.Sindri.Core.Memory.MemoryProvenance.Item.get -> string?
+Aw.Sindri.Core.Memory.MemoryProvenance.Item.init -> void
+Aw.Sindri.Core.Memory.MemoryProvenance.MemoryProvenance(string? Workflow, string? Run, string? Item, string? Session) -> void
+Aw.Sindri.Core.Memory.MemoryProvenance.Run.get -> string?
+Aw.Sindri.Core.Memory.MemoryProvenance.Run.init -> void
+Aw.Sindri.Core.Memory.MemoryProvenance.Session.get -> string?
+Aw.Sindri.Core.Memory.MemoryProvenance.Session.init -> void
+Aw.Sindri.Core.Memory.MemoryProvenance.Workflow.get -> string?
+Aw.Sindri.Core.Memory.MemoryProvenance.Workflow.init -> void
+Aw.Sindri.Core.Memory.MemoryRecall
+Aw.Sindri.Core.Memory.MemoryRecall.<Clone>$() -> Aw.Sindri.Core.Memory.MemoryRecall!
+Aw.Sindri.Core.Memory.MemoryRecall.Equals(Aw.Sindri.Core.Memory.MemoryRecall? other) -> bool
+Aw.Sindri.Core.Memory.MemoryRecall.Facts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Memory.RecalledFact!>!
+Aw.Sindri.Core.Memory.MemoryRecall.Facts.init -> void
+Aw.Sindri.Core.Memory.MemoryRecall.Mode.get -> Aw.Sindri.Core.Memory.RecallMode
+Aw.Sindri.Core.Memory.MemoryRecall.Mode.init -> void
+Aw.Sindri.Core.Memory.MemoryView
+Aw.Sindri.Core.Memory.MemoryView.<Clone>$() -> Aw.Sindri.Core.Memory.MemoryView!
+Aw.Sindri.Core.Memory.MemoryView.CreatedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Memory.MemoryView.CreatedAt.init -> void
+Aw.Sindri.Core.Memory.MemoryView.CreatedBy.get -> string!
+Aw.Sindri.Core.Memory.MemoryView.CreatedBy.init -> void
+Aw.Sindri.Core.Memory.MemoryView.Deconstruct(out string! Name, out string? Description, out string! CreatedBy, out System.DateTimeOffset CreatedAt, out int Facts) -> void
+Aw.Sindri.Core.Memory.MemoryView.Description.get -> string?
+Aw.Sindri.Core.Memory.MemoryView.Description.init -> void
+Aw.Sindri.Core.Memory.MemoryView.Equals(Aw.Sindri.Core.Memory.MemoryView? other) -> bool
+Aw.Sindri.Core.Memory.MemoryView.Facts.get -> int
+Aw.Sindri.Core.Memory.MemoryView.Facts.init -> void
+Aw.Sindri.Core.Memory.MemoryView.MemoryView(string! Name, string? Description, string! CreatedBy, System.DateTimeOffset CreatedAt, int Facts) -> void
+Aw.Sindri.Core.Memory.MemoryView.Name.get -> string!
+Aw.Sindri.Core.Memory.MemoryView.Name.init -> void
+Aw.Sindri.Core.Memory.RecallMode
+Aw.Sindri.Core.Memory.RecallMode.Keyword = 2 -> Aw.Sindri.Core.Memory.RecallMode
+Aw.Sindri.Core.Memory.RecallMode.Semantic = 1 -> Aw.Sindri.Core.Memory.RecallMode
+Aw.Sindri.Core.Memory.RecalledFact
+Aw.Sindri.Core.Memory.RecalledFact.<Clone>$() -> Aw.Sindri.Core.Memory.RecalledFact!
+Aw.Sindri.Core.Memory.RecalledFact.Deconstruct(out Aw.Sindri.Core.Memory.MemoryFact! Fact, out float Score) -> void
+Aw.Sindri.Core.Memory.RecalledFact.Equals(Aw.Sindri.Core.Memory.RecalledFact? other) -> bool
+Aw.Sindri.Core.Memory.RecalledFact.Fact.get -> Aw.Sindri.Core.Memory.MemoryFact!
+Aw.Sindri.Core.Memory.RecalledFact.Fact.init -> void
+Aw.Sindri.Core.Memory.RecalledFact.RecalledFact(Aw.Sindri.Core.Memory.MemoryFact! Fact, float Score) -> void
+Aw.Sindri.Core.Memory.RecalledFact.Score.get -> float
+Aw.Sindri.Core.Memory.RecalledFact.Score.init -> void
+const Aw.Sindri.Core.Memory.MemoryDedupe.Threshold = 0.9 -> float
+const Aw.Sindri.Core.Memory.MemoryFact.MaxTextLength = 2000 -> int
+override Aw.Sindri.Core.Memory.FactSelector.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Memory.FactSelector.GetHashCode() -> int
+override Aw.Sindri.Core.Memory.FactSelector.ToString() -> string!
+override Aw.Sindri.Core.Memory.MemoryFactView.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Memory.MemoryFactView.GetHashCode() -> int
+override Aw.Sindri.Core.Memory.MemoryFactView.ToString() -> string!
+override Aw.Sindri.Core.Memory.MemoryEmbedding.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Memory.MemoryEmbedding.GetHashCode() -> int
+override Aw.Sindri.Core.Memory.MemoryEmbedding.ToString() -> string!
+override Aw.Sindri.Core.Memory.MemoryFact.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Memory.MemoryFact.GetHashCode() -> int
+override Aw.Sindri.Core.Memory.MemoryFact.ToString() -> string!
+override Aw.Sindri.Core.Memory.MemoryInfo.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Memory.MemoryInfo.GetHashCode() -> int
+override Aw.Sindri.Core.Memory.MemoryInfo.ToString() -> string!
+override Aw.Sindri.Core.Memory.MemoryName.GetHashCode() -> int
+override Aw.Sindri.Core.Memory.MemoryName.ToString() -> string!
+override Aw.Sindri.Core.Memory.MemoryProvenance.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Memory.MemoryProvenance.GetHashCode() -> int
+override Aw.Sindri.Core.Memory.MemoryProvenance.ToString() -> string!
+override Aw.Sindri.Core.Memory.MemoryRecall.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Memory.MemoryRecall.GetHashCode() -> int
+override Aw.Sindri.Core.Memory.MemoryRecall.ToString() -> string!
+override Aw.Sindri.Core.Memory.MemoryView.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Memory.MemoryView.GetHashCode() -> int
+override Aw.Sindri.Core.Memory.MemoryView.ToString() -> string!
+override Aw.Sindri.Core.Memory.RecalledFact.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Memory.RecalledFact.GetHashCode() -> int
+override Aw.Sindri.Core.Memory.RecalledFact.ToString() -> string!
+static Aw.Sindri.Core.Memory.FactSelector.ByKey(string! key) -> Aw.Sindri.Core.Memory.FactSelector!
+static Aw.Sindri.Core.Memory.FactSelector.ByTag(string! tag) -> Aw.Sindri.Core.Memory.FactSelector!
+static Aw.Sindri.Core.Memory.FactSelector.Expired(System.DateTimeOffset now) -> Aw.Sindri.Core.Memory.FactSelector!
+static Aw.Sindri.Core.Memory.FactSelector.operator !=(Aw.Sindri.Core.Memory.FactSelector? left, Aw.Sindri.Core.Memory.FactSelector? right) -> bool
+static Aw.Sindri.Core.Memory.FactSelector.operator ==(Aw.Sindri.Core.Memory.FactSelector? left, Aw.Sindri.Core.Memory.FactSelector? right) -> bool
+static Aw.Sindri.Core.Memory.MemoryFactView.From(Aw.Sindri.Core.Memory.MemoryFact! fact, float? score) -> Aw.Sindri.Core.Memory.MemoryFactView!
+static Aw.Sindri.Core.Memory.MemoryFactView.operator !=(Aw.Sindri.Core.Memory.MemoryFactView? left, Aw.Sindri.Core.Memory.MemoryFactView? right) -> bool
+static Aw.Sindri.Core.Memory.MemoryFactView.operator ==(Aw.Sindri.Core.Memory.MemoryFactView? left, Aw.Sindri.Core.Memory.MemoryFactView? right) -> bool
+static Aw.Sindri.Core.Memory.KeywordRank.Rank(string! query, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Memory.MemoryFact!>! facts, int limit) -> Aw.Sindri.Core.Memory.MemoryRecall!
+static Aw.Sindri.Core.Memory.MatchLevels.Default.get -> Aw.Sindri.Core.Memory.MatchLevel
+static Aw.Sindri.Core.Memory.MatchLevels.Parse(string? text) -> Aw.Kernel.Result<Aw.Sindri.Core.Memory.MatchLevel>!
+static Aw.Sindri.Core.Memory.MatchLevels.Threshold(Aw.Sindri.Core.Memory.MatchLevel level) -> float
+static Aw.Sindri.Core.Memory.MatchLevels.Wire(Aw.Sindri.Core.Memory.MatchLevel level) -> string!
+static Aw.Sindri.Core.Memory.MemoryDedupe.FindDuplicate(System.ReadOnlyMemory<float> vector, System.Collections.Generic.IReadOnlyList<string!>! tags, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Memory.MemoryFact!>! existing) -> Aw.Sindri.Core.Memory.MemoryFact?
+static Aw.Sindri.Core.Memory.MemoryDedupe.SameTags(System.Collections.Generic.IReadOnlyList<string!>! left, System.Collections.Generic.IReadOnlyList<string!>! right) -> bool
+static Aw.Sindri.Core.Memory.MemoryDedupe.Similarity(System.ReadOnlyMemory<float> left, System.ReadOnlyMemory<float> right) -> float
+static Aw.Sindri.Core.Memory.MemoryEmbedding.Unavailable(string! reason) -> Aw.Sindri.Core.Memory.MemoryEmbedding!
+static Aw.Sindri.Core.Memory.MemoryEmbedding.operator !=(Aw.Sindri.Core.Memory.MemoryEmbedding? left, Aw.Sindri.Core.Memory.MemoryEmbedding? right) -> bool
+static Aw.Sindri.Core.Memory.MemoryEmbedding.operator ==(Aw.Sindri.Core.Memory.MemoryEmbedding? left, Aw.Sindri.Core.Memory.MemoryEmbedding? right) -> bool
+static Aw.Sindri.Core.Memory.MemoryFact.CheckText(string! text) -> Aw.Kernel.Result<string!>!
+static Aw.Sindri.Core.Memory.MemoryFact.operator !=(Aw.Sindri.Core.Memory.MemoryFact? left, Aw.Sindri.Core.Memory.MemoryFact? right) -> bool
+static Aw.Sindri.Core.Memory.MemoryFact.operator ==(Aw.Sindri.Core.Memory.MemoryFact? left, Aw.Sindri.Core.Memory.MemoryFact? right) -> bool
+static Aw.Sindri.Core.Memory.MemoryInfo.operator !=(Aw.Sindri.Core.Memory.MemoryInfo? left, Aw.Sindri.Core.Memory.MemoryInfo? right) -> bool
+static Aw.Sindri.Core.Memory.MemoryInfo.operator ==(Aw.Sindri.Core.Memory.MemoryInfo? left, Aw.Sindri.Core.Memory.MemoryInfo? right) -> bool
+static Aw.Sindri.Core.Memory.MemoryName.Parse(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Memory.MemoryName>!
+static Aw.Sindri.Core.Memory.MemoryName.operator !=(Aw.Sindri.Core.Memory.MemoryName left, Aw.Sindri.Core.Memory.MemoryName right) -> bool
+static Aw.Sindri.Core.Memory.MemoryName.operator ==(Aw.Sindri.Core.Memory.MemoryName left, Aw.Sindri.Core.Memory.MemoryName right) -> bool
+static Aw.Sindri.Core.Memory.MemoryProvenance.None.get -> Aw.Sindri.Core.Memory.MemoryProvenance!
+static Aw.Sindri.Core.Memory.MemoryProvenance.operator !=(Aw.Sindri.Core.Memory.MemoryProvenance? left, Aw.Sindri.Core.Memory.MemoryProvenance? right) -> bool
+static Aw.Sindri.Core.Memory.MemoryProvenance.operator ==(Aw.Sindri.Core.Memory.MemoryProvenance? left, Aw.Sindri.Core.Memory.MemoryProvenance? right) -> bool
+static Aw.Sindri.Core.Memory.MemoryRecall.Semantic(System.ReadOnlyMemory<float> query, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Memory.MemoryFact!>! facts, Aw.Sindri.Core.Memory.MatchLevel level, int limit) -> Aw.Sindri.Core.Memory.MemoryRecall!
+static Aw.Sindri.Core.Memory.MemoryRecall.operator !=(Aw.Sindri.Core.Memory.MemoryRecall? left, Aw.Sindri.Core.Memory.MemoryRecall? right) -> bool
+static Aw.Sindri.Core.Memory.MemoryRecall.operator ==(Aw.Sindri.Core.Memory.MemoryRecall? left, Aw.Sindri.Core.Memory.MemoryRecall? right) -> bool
+static Aw.Sindri.Core.Memory.MemoryView.From(Aw.Sindri.Core.Memory.MemoryInfo! memory, int facts) -> Aw.Sindri.Core.Memory.MemoryView!
+static Aw.Sindri.Core.Memory.MemoryView.operator !=(Aw.Sindri.Core.Memory.MemoryView? left, Aw.Sindri.Core.Memory.MemoryView? right) -> bool
+static Aw.Sindri.Core.Memory.MemoryView.operator ==(Aw.Sindri.Core.Memory.MemoryView? left, Aw.Sindri.Core.Memory.MemoryView? right) -> bool
+static Aw.Sindri.Core.Memory.RecalledFact.operator !=(Aw.Sindri.Core.Memory.RecalledFact? left, Aw.Sindri.Core.Memory.RecalledFact? right) -> bool
+static Aw.Sindri.Core.Memory.RecalledFact.operator ==(Aw.Sindri.Core.Memory.RecalledFact? left, Aw.Sindri.Core.Memory.RecalledFact? right) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.MemoryEmbedUnavailable -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.MemoryFactInvalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.MemoryMatchLevelInvalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.MemoryNameInvalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.MemoryNameTaken -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.MemoryNotFound -> Aw.Kernel.ErrorDefinition!
+~override Aw.Sindri.Core.Memory.MemoryName.Equals(object obj) -> bool
+Aw.Sindri.Core.Memory.FactWritten
+Aw.Sindri.Core.Memory.FactWritten.<Clone>$() -> Aw.Sindri.Core.Memory.FactWritten!
+Aw.Sindri.Core.Memory.FactWritten.Deconstruct(out string! Key, out bool Refreshed) -> void
+Aw.Sindri.Core.Memory.FactWritten.Equals(Aw.Sindri.Core.Memory.FactWritten? other) -> bool
+Aw.Sindri.Core.Memory.FactWritten.FactWritten(string! Key, bool Refreshed) -> void
+Aw.Sindri.Core.Memory.FactWritten.Key.get -> string!
+Aw.Sindri.Core.Memory.FactWritten.Key.init -> void
+Aw.Sindri.Core.Memory.FactWritten.Refreshed.get -> bool
+Aw.Sindri.Core.Memory.FactWritten.Refreshed.init -> void
+Aw.Sindri.Core.Memory.IMemoryStore.AddOrRefresh(Aw.Sindri.Core.Memory.MemoryFact! fact, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Memory.FactWritten!>!>
+Aw.Sindri.Core.Memory.IMemoryStore.SetEmbedding(Aw.Sindri.Core.Memory.MemoryName memory, string! key, System.ReadOnlyMemory<float> vector, string? model, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+Aw.Sindri.Core.Memory.IMemoryStore.Unembedded(int limit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Memory.MemoryFact!>!>!>
+Aw.Sindri.Core.Memory.MemoryEmbedding.Deconstruct(out System.Collections.Generic.IReadOnlyList<System.ReadOnlyMemory<float>>? Vectors, out string? Reason, out string? Model) -> void
+Aw.Sindri.Core.Memory.MemoryEmbedding.MemoryEmbedding(System.Collections.Generic.IReadOnlyList<System.ReadOnlyMemory<float>>? Vectors, string? Reason, string? Model = null) -> void
+Aw.Sindri.Core.Memory.MemoryEmbedding.Model.get -> string?
+Aw.Sindri.Core.Memory.MemoryEmbedding.Model.init -> void
+Aw.Sindri.Core.Memory.MemoryFact.Deconstruct(out string! Key, out Aw.Sindri.Core.Memory.MemoryName Store, out string! Text, out System.Collections.Generic.IReadOnlyList<string!>! Tags, out Aw.Sindri.Core.Memory.MemoryProvenance! Provenance, out System.DateTimeOffset? ExpiresAt, out System.DateTimeOffset CreatedAt, out System.DateTimeOffset RefreshedAt, out System.ReadOnlyMemory<float> Embedding, out string? Model) -> void
+Aw.Sindri.Core.Memory.MemoryFact.Dimension.get -> int
+Aw.Sindri.Core.Memory.MemoryFact.MemoryFact(string! Key, Aw.Sindri.Core.Memory.MemoryName Store, string! Text, System.Collections.Generic.IReadOnlyList<string!>! Tags, Aw.Sindri.Core.Memory.MemoryProvenance! Provenance, System.DateTimeOffset? ExpiresAt, System.DateTimeOffset CreatedAt, System.DateTimeOffset RefreshedAt, System.ReadOnlyMemory<float> Embedding, string? Model = null) -> void
+Aw.Sindri.Core.Memory.MemoryFact.Model.get -> string?
+Aw.Sindri.Core.Memory.MemoryFact.Model.init -> void
+Aw.Sindri.Core.Memory.MemoryRecall.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Memory.RecalledFact!>! Facts, out Aw.Sindri.Core.Memory.RecallMode Mode, out int Skipped) -> void
+Aw.Sindri.Core.Memory.MemoryRecall.MemoryRecall(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Memory.RecalledFact!>! Facts, Aw.Sindri.Core.Memory.RecallMode Mode, int Skipped = 0) -> void
+Aw.Sindri.Core.Memory.MemoryRecall.Skipped.get -> int
+Aw.Sindri.Core.Memory.MemoryRecall.Skipped.init -> void
+override Aw.Sindri.Core.Memory.FactWritten.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Memory.FactWritten.GetHashCode() -> int
+override Aw.Sindri.Core.Memory.FactWritten.ToString() -> string!
+static Aw.Sindri.Core.Memory.FactWritten.operator !=(Aw.Sindri.Core.Memory.FactWritten? left, Aw.Sindri.Core.Memory.FactWritten? right) -> bool
+static Aw.Sindri.Core.Memory.FactWritten.operator ==(Aw.Sindri.Core.Memory.FactWritten? left, Aw.Sindri.Core.Memory.FactWritten? right) -> bool
+static Aw.Sindri.Core.Memory.MemoryEmbedding.Of(System.Collections.Generic.IReadOnlyList<System.ReadOnlyMemory<float>>! vectors, string? model = null) -> Aw.Sindri.Core.Memory.MemoryEmbedding!
+static readonly Aw.Sindri.Core.SindriErrors.MemoryExpiryPast -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.TodoText -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.TodoNoteKey -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.TodoDate -> Aw.Kernel.ErrorDefinition!
