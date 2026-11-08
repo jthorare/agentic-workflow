@@ -9,9 +9,6 @@ internal enum DispatchOutcome
     /// <summary>The command was sent and the server refused it (or no endpoint was known).</summary>
     Refused = 2,
 
-    /// <summary>The action needs a choice the row cannot make: the row's sheet opens.</summary>
-    OpenSheet = 3,
-
     /// <summary>The app has no send for the action yet: the row says so.</summary>
     Unhandled = 4,
 

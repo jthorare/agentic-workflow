@@ -12,7 +12,7 @@ namespace Aw.Sindri.Ui.Tests.Shell;
 public sealed class ShellSpokenTests
 {
     private readonly InMemoryEndpointRecords _records = new();
-    private readonly FakeSindriApi _server = new() { Catalog = RouteAnswer.Api("commands", "catalog"), NeedsYouView = RouteAnswer.Api("needs-you", "empty"), WorkflowAnswer = RouteAnswer.Api("workflow-instances", "empty") };
+    private readonly FakeSindriApi _server = new() { Catalog = RouteAnswer.Api("commands", "catalog"), NeedsYouView = RouteAnswer.Api("needs-you", "empty") };
     private readonly FakeTimeProvider _clock = new(A.Noon);
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -80,20 +80,6 @@ public sealed class ShellSpokenTests
         shell.ShowNeedsYou(Feed(NeedsYouRows.Failure(), NeedsYouRows.Decision("decision:DEC-1"), NeedsYouRows.Decision("decision:DEC-2")));
 
         Assert.Equal(["ITM-01JC8 cleared, 3 now need you"], spoken);
-    }, Token);
-
-    [Fact]
-    public Task A_selected_instance_that_finishes_is_spoken() => UiThread.Run(async () =>
-    {
-        var (shell, spoken) = await Listening();
-        shell.Strip.Update(FixtureInstances.Root);
-        var row = shell.Strip.Rows[0];
-        shell.SelectStripRow(row.Address);
-        var rest = FixtureInstances.Root with { Instances = [.. FixtureInstances.Root.Instances.Where(i => !string.Equals(i.Address, row.Address, StringComparison.Ordinal))] };
-
-        shell.Strip.Update(rest);
-
-        Assert.Equal([Labels.StripDone(row.Address)], spoken);
     }, Token);
 
     [Fact]

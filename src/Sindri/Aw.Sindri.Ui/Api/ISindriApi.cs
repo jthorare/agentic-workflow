@@ -2,7 +2,6 @@ using Aw.Kernel;
 using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Api.Jobs;
 using Aw.Sindri.Ui.Api.Sessions;
-using Aw.Sindri.Ui.Api.Workflow;
 
 namespace Aw.Sindri.Ui.Api;
 
@@ -27,17 +26,6 @@ internal partial interface ISindriApi
     /// <param name="cancellationToken">Ends the stream.</param>
     /// <returns>The events, in order.</returns>
     public IAsyncEnumerable<EventView> Events(Uri api, long after, CancellationToken cancellationToken);
-
-    /// <summary>
-    /// GET /sindri/events?types=workflow.instance-changed[&amp;instance=ADDRESS]: the frames that say an instance's view changed. The first item says the
-    /// stream is open; it opens at the ledger head, so a change while the app was away is lost and the caller re-reads what it shows once it is open.
-    /// The frames carry no id: they never move the cursor of <see cref="Events"/>. Ends when the connection does.
-    /// </summary>
-    /// <param name="api">The base URL.</param>
-    /// <param name="instance">One instance's address, or null for every instance.</param>
-    /// <param name="cancellationToken">Ends the stream.</param>
-    /// <returns>The open signal, then the changes.</returns>
-    public IAsyncEnumerable<InstanceStreamItem> InstanceChanges(Uri api, string? instance, CancellationToken cancellationToken);
 
     /// <summary>GET /sindri/commands: the command catalog (read on connect and on a new epoch, UI spec §9.1).</summary>
     /// <param name="api">The base URL.</param>
@@ -95,36 +83,6 @@ internal partial interface ISindriApi
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The accepted command, SND-ITEM-409 when the item changed, another refusal, or SND-UI-002/003.</returns>
     public Task<Result<CommandAcceptedView>> CloseItem(Uri api, string itemId, CloseItemRequest request, CancellationToken cancellationToken);
-    /// <summary>GET /sindri/workflow/instances (API §3.8, E-20): the instance rows and the root-wide counts, narrowed by the query.</summary>
-    /// <param name="api">The base URL.</param>
-    /// <param name="query">What to ask for: root, open, recipe, subject or one address.</param>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>The list, the API's refusal, or SND-UI-002/003.</returns>
-    public Task<Result<InstanceList>> Instances(Uri api, InstanceQuery query, CancellationToken cancellationToken);
-
-    /// <summary>GET /sindri/workflow/instances/{id} (API §3.8, Q-API-2): one instance by its opaque id. An address is never a path segment: resolve it with <see cref="Instances"/>.</summary>
-    /// <param name="api">The base URL.</param>
-    /// <param name="id">The instance id (WFI-…) as served.</param>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>The instance, the API's refusal (SND-ITEM-404 and the like), or SND-UI-002/003.</returns>
-    public Task<Result<InstanceDetail>> Instance(Uri api, string id, CancellationToken cancellationToken);
-
-    /// <summary>GET /sindri/workflow/instances/{id}/facts/{key}: the body behind one fact row, capped by the API (truncated says so).</summary>
-    /// <param name="api">The base URL.</param>
-    /// <param name="id">The instance id.</param>
-    /// <param name="key">The fact row's key in its fact: form.</param>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>The fact, the API's refusal, or SND-UI-002/003.</returns>
-    public Task<Result<FactView>> InstanceFact(Uri api, string id, string key, CancellationToken cancellationToken);
-
-    /// <summary>GET /sindri/workflow/recipes/{id}[@{hash}] (API §3.8, E-22): what a recipe declares.</summary>
-    /// <param name="api">The base URL.</param>
-    /// <param name="recipe">The recipe id.</param>
-    /// <param name="hash">The approved hash, or null for the approved one.</param>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>The recipe, the API's refusal, or SND-UI-002/003.</returns>
-    public Task<Result<RecipeView>> Recipe(Uri api, string recipe, string? hash, CancellationToken cancellationToken);
-
     /// <summary>GET /sindri/needs-you (API P4): what waits on the human, in the API's order.</summary>
     /// <param name="api">The base URL.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
@@ -164,19 +122,6 @@ internal partial interface ISindriApi
 
     // LANE ANCHOR U3': the Needs you, decision and request reads and the Decide and FileRequest sends, one method each (the client's are in SindriApiClient.NeedsYou.cs). Insert immediately above this marker, never between the markers.
     // LANE ANCHOR U8: the command sends (nonce, commands, complete), once API P11 serves their shapes (Q-API-7/8); none is declared before. Insert immediately below this marker, never between the markers.
-
-    /// <summary>GET /sindri/workflow/recipes (API §3.8): every registered recipe with its standing. The Start form uses it only to pick one.</summary>
-    /// <param name="api">The base URL.</param>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>The list, the API's refusal, or SND-UI-002/003.</returns>
-    public Task<Result<RecipeList>> Recipes(Uri api, CancellationToken cancellationToken);
-
-    /// <summary>POST /sindri/workflow/instances (StartInstance, desk, engine P6): sent once, never retried by the app, and it takes no nonce.</summary>
-    /// <param name="api">The base URL.</param>
-    /// <param name="request">The recipe, the item and the input facts.</param>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>The started (or existing) instance, the API's refusal (SND-WF-012, SND-WF-014, SND-RECIPE-001/005/006, SND-CLI-003) as served, or SND-UI-002/003.</returns>
-    public Task<Result<StartedView>> StartInstance(Uri api, StartInstanceRequest request, CancellationToken cancellationToken);
 
     // LANE ANCHOR U9: the context reads and the review send, one method each (the client's are in SindriApiClient.Context.cs, the routes in ContextRoutes); U9e adds Subgraph. Insert immediately below this marker, never between the markers.
 
@@ -268,13 +213,6 @@ internal partial interface ISindriApi
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The accepted command with its launch, the API's refusal (SND-LAUNCH-001/002/006/008/009, SND-ITEM-409, SND-AUTH-002), or SND-UI-002/003.</returns>
     public Task<Result<OpenAcceptedView>> OpenItem(Uri api, string itemId, OpenItemRequest request, CancellationToken cancellationToken);
-
-    /// <summary>GET /sindri/workflow/instances/{id}/events?after=N: the instance's events, oldest first.</summary>
-    /// <param name="api">The base URL.</param>
-    /// <param name="id">The instance id (WFI-…).</param>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>The events, the API's refusal, or SND-UI-002/003.</returns>
-    public Task<Result<InstanceEventsView>> InstanceEvents(Uri api, string id, CancellationToken cancellationToken);
 
     /// <summary>GET /sindri/jobs?state=&amp;kind= (API P6): the jobs, newest first. A view read: it waits on the views.</summary>
     /// <param name="api">The base URL.</param>

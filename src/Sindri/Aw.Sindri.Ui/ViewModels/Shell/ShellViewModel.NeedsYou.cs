@@ -21,7 +21,7 @@ internal sealed partial class ShellViewModel
 
         var decisions = await _api.Decisions(url, pending: true, item: null, cancellationToken).ConfigureAwait(true);
         var catalog = Health.Catalog.Listed ?? new CommandList([]);
-        ShowNeedsYou(NeedsYouMapper.Map(list.Value, catalog, decisions.IsSuccess ? decisions.Value : null, CountsFor(Queue), _clock.GetUtcNow()));
+        ShowNeedsYou(NeedsYouMapper.Map(list.Value, catalog, decisions.IsSuccess ? decisions.Value : null, CountsFor(Queue)));
     }
 
     // Home's other totals are the queue's groups as the queue view (read just before this one) shows them.
