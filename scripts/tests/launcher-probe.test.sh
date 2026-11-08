@@ -51,4 +51,22 @@ probe_sh="$(pgrep -P "$caller" | head -1)"
 kill -HUP "$probe_sh" "$caller" 2> /dev/null; wait "$caller" 2> /dev/null
 sleep 0.5
 check "a hangup during the probe: the child is gone too" "$(kill -0 "$kid" 2> /dev/null && echo running || echo gone)" "gone"
+
+# A CLI that ignores TERM is ended by KILL: the probe is not held until the CLI exits on its own.
+cat > "$WORK/deaf" <<EOF
+#!/usr/bin/env bash
+trap '' TERM
+sleep 20 &
+echo \$! >> "$KIDS"
+echo "no flags here"
+wait
+EOF
+chmod +x "$WORK/deaf"
+: > "$KIDS"
+t0=$SECONDS
+AW_LAUNCHER_PROBE_SECONDS=1 launcher_cli_has_flag "$WORK/deaf" --no-daemon; rc=$?
+check "a CLI that ignores TERM: no, within the cap + 2 s" "$rc:$([ $((SECONDS - t0)) -le 3 ] && echo fast || echo "slow $((SECONDS - t0))s")" "1:fast"
+sleep 0.3
+kid="$(head -1 "$KIDS")"
+check "a CLI that ignores TERM: nothing left running" "$(kill -0 "$kid" 2> /dev/null && echo running || echo gone)" "gone"
 exit "$fail"
