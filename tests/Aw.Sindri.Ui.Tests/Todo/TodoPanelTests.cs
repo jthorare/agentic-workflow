@@ -187,7 +187,7 @@ public sealed class TodoPanelTests
         _f.Server.TodosAnswer = RouteAnswer.Problem(System.Net.HttpStatusCode.ServiceUnavailable, "SND-API-011", "The views are behind.");
         var panel = _f.Panel();
         await panel.Refresh(Url, Token);
-        _f.Server.TodosAnswer = RouteAnswer.Api("todos", "list");
+        _f.Server.TodosAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, TodoSample.List);
 
         await panel.Refresh(Url, Token);
 

@@ -8,7 +8,7 @@ with other servers' `memory_search`: the tool descriptions here say "Sindri memo
 - A **store** has a unique name (lowercase letters, digits and `-`, 1 to 48 characters, starting with a letter or digit), an optional description and who made it.
 - A **fact** is 1 to 2,000 characters of text, tags, an optional expiry and where it came from (workflow, run, item, session).
 - Text, tags and the description are **scrubbed** (secrets redacted) before anything stores them or sends them to the embedding model.
-- Facts live in `ledger.db` (`memory`, `memory_fact`, migration `0009_memory.sql` on this branch; the number moves at merge). They are not rebuilt from events, and the migration runner backs them up with the rest of the ledger.
+- Facts live in `ledger.db` (`memory`, `memory_fact`, migration `0011_memory.sql`). They are not rebuilt from events, and the migration runner backs them up with the rest of the ledger.
 
 ## Writing: dedupe
 

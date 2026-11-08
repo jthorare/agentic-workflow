@@ -20,6 +20,9 @@ public readonly partial struct WorkflowRunId : ITypedId<WorkflowRunId, string>
     public static WorkflowRunId Of(WorkflowSlug slug, int revision, int occurrence) =>
         From(string.Create(CultureInfo.InvariantCulture, $"{slug.Value}@{revision}:{occurrence}"));
 
+    /// <summary>The run's number among its revision's runs (the part after the ':').</summary>
+    public int Occurrence => int.Parse(Value.AsSpan(Value.IndexOf(':', StringComparison.Ordinal) + 1), NumberStyles.None, CultureInfo.InvariantCulture);
+
     private static Vogen.Validation Validate(string value) =>
         Shape.IsMatch(value) ? Vogen.Validation.Ok : Vogen.Validation.Invalid("A run id is '<slug>@<revision>:<occurrence>', both numbers 1 or more");
 

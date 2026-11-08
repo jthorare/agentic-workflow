@@ -16,7 +16,7 @@ namespace Aw.Sindri.Host.Mcp;
 internal static class McpToolTable
 {
     private static readonly IReadOnlyList<Tool> _tools = [ContextTools.QueryTool, ContextTools.SourcesTool, ContextTools.LensesTool, ConceptTools.Tool, PageTools.Tool, GraphTools.NodeTool, GraphTools.NeighborsTool,
-        SindriTools.StatusTool, SindriTools.QueueTool, SindriTools.ItemTool, SindriTools.TimelineTool, SindriTools.PendingDecisionsTool, SindriTools.JobTool, SindriTools.ProjectsTool, SindriTools.RequestTool, .. MemoryTools.All];
+        SindriTools.StatusTool, SindriTools.QueueTool, SindriTools.ItemTool, SindriTools.TimelineTool, SindriTools.PendingDecisionsTool, SindriTools.JobTool, SindriTools.ProjectsTool, SindriTools.RequestTool, .. ConnectionTools.All, .. MemoryTools.All];
 
     // why: only the context and graph tools read one repo's map; the sindri_* tools answer for every repo, as the same call does for a human
     private static readonly FrozenSet<string> _repoScoped = FrozenSet.Create(StringComparer.Ordinal,
@@ -67,6 +67,11 @@ internal static class McpToolTable
             SindriTools.Job => SindriTools.CallJob(services, call.Arguments, cancellationToken),
             SindriTools.Projects => SindriTools.CallProjects(services, call.Arguments, cancellationToken),
             SindriTools.Request => SindriTools.CallRequest(services, call.Arguments, cancellationToken),
+            ConnectionTools.List => ConnectionTools.CallList(services, call.Arguments, cancellationToken),
+            ConnectionTools.Get => ConnectionTools.CallGet(services, call.Arguments, cancellationToken),
+            ConnectionTools.Add => ConnectionTools.CallAdd(services, call.Arguments, cancellationToken),
+            ConnectionTools.Test => ConnectionTools.CallTest(services, call.Arguments, cancellationToken),
+            ConnectionTools.Remove => ConnectionTools.CallRemove(services, call.Arguments, cancellationToken),
             MemoryTools.List => MemoryTools.CallList(services, call.Arguments, cancellationToken),
             MemoryTools.Create => MemoryTools.CallCreate(services, call.Arguments, cancellationToken),
             MemoryTools.Search => MemoryTools.CallSearch(services, call.Arguments, cancellationToken),

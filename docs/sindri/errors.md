@@ -80,6 +80,16 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-SECRET-001` | A secret pointer could not be resolved. | check the pointer in the profile and that the secret exists (env var, file, keychain item or 1Password item) |
 | `SND-SECRET-002` | A secret file is readable by other users. | chmod 600 &lt;file&gt; |
 | `SND-SECRET-004` | A secret couldn't be stored: neither the OS secret store nor the owner-only file took it. | on Linux install libsecret (secret-tool) or check the Sindri home is writable by you; on macOS unlock the login keychain; then run the command again |
+| `SND-CONN-001` | No connection has that name. | `sindri connection list` shows the names |
+| `SND-CONN-002` | The connection has to be signed in again. | run `sindri connection add &lt;name&gt;` again |
+| `SND-CONN-003` | Nobody finished the browser sign-in in 5 minutes. | run the command again and finish the consent page |
+| `SND-CONN-004` | The sign-in callback's state did not match this sign-in. | run the command again; do not reuse an old consent link |
+| `SND-CONN-005` | The provider refused to refresh the token. | sign in again |
+| `SND-CONN-006` | The connection's secret could not be stored, read or deleted. | see `SND-SECRET-004` |
+| `SND-CONN-007` | The preset needs a client id and none was given. | pass `--client-id` |
+| `SND-CONN-008` | The connection name is not `&lt;service&gt;:&lt;label&gt;` in lowercase. | use letters, digits and `-`, 1 to 32 characters per part |
+| `SND-CONN-009` | Consent was denied at the provider. | run the command again and allow access |
+| `SND-CONN-010` | A connection with that name exists. | pick another label, or `sindri connection remove` it first |
 | `SND-MEM-001` | No memory has that name. | `sindri memory list` shows the names |
 | `SND-MEM-002` | A memory with that name exists. | pick another name |
 | `SND-MEM-003` | A fact is empty or longer than 2,000 characters. | shorten the text |
@@ -129,3 +139,7 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-GRAPH-009` | Another workflow already has that slug |
 | `SND-GRAPH-010` | A workflow with that id already exists |
 | `SND-GRAPH-011` | This workflow is archived; it can't be activated |
+| `SND-GRAPH-100` | A run with that id already exists |
+| `SND-GRAPH-101` | No such workflow run |
+| `SND-GRAPH-102` | A block could not finish |
+| `SND-GRAPH-103` | The model's answer does not fit the prompt's output schema |

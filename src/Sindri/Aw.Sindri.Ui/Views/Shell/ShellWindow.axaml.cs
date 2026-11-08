@@ -22,7 +22,7 @@ namespace Aw.Sindri.Ui.Views.Shell;
 /// </summary>
 internal sealed partial class ShellWindow : Window
 {
-    private static readonly string[] _regions = ["TopBar", "Page", "Sheet"];
+    private static readonly string[] _regions = ["TopBar", "Page", "Sheet", "Toast"];
 
     // ⌘ on macOS, Ctrl elsewhere (§8: ⌘, opens Settings).
     private static readonly KeyModifiers _command = OperatingSystem.IsMacOS() ? KeyModifiers.Meta : KeyModifiers.Control;
@@ -135,9 +135,12 @@ internal sealed partial class ShellWindow : Window
         // Esc with a chord waiting is spent on cancelling it: whatever Esc would close stays open.
         e.Handled = RegionStep(e.Key, e.KeyModifiers, OperatingSystem.IsMacOS()) is { } step ? CycleRegion(back: step < 0)
             : e.Key == Key.Escape ? chordWaiting || Escape()
-            : TabOutOfOpenRow(e) || OpenByKey(e) || (!OverlayOpen && PageKey(e));
+            : RowKeys(e) || OpenByKey(e) || (!OverlayOpen && PageKey(e));
         base.OnKeyDown(e);
     }
+
+    // The Todo panel's keys and Tab out of the open row.
+    private bool RowKeys(KeyEventArgs e) => TodoKey(e) || TabOutOfOpenRow(e);
 
     // A chord's keys are the plain letters and '.'; a modifier pressed alone is part of typing a key, not another key.
     private static bool IsChordStep(KeyEventArgs e) =>

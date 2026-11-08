@@ -1,0 +1,103 @@
+using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Connections;
+using Aw.Sindri.Core.Connections.OAuth;
+using Aw.Sindri.Features.AddConnection;
+using Aw.Sindri.Features.GetConnection;
+using Aw.Sindri.Features.ListConnections;
+using Aw.Sindri.Features.RemoveConnection;
+using Aw.Sindri.Features.TestConnection;
+using Aw.Sindri.Testing;
+using Aw.Sindri.Testing.Connections;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Time.Testing;
+
+namespace Aw.Sindri.Tests.Connections;
+
+/// <summary>The in-memory ports the connection slices need, and the slices built on them.</summary>
+internal sealed class ConnectionHarness
+{
+    public ConnectionHarness()
+    {
+        Callers = new AsyncLocalCallerContextAccessor(Ids);
+        Presets = new FakeConnectionPresets(Linear);
+    }
+
+    /// <summary>A linear-shaped preset (no client id, https endpoints, a probe URL).</summary>
+    public static ConnectionPreset Linear { get; } = new(
+        "linear",
+        "Linear",
+        ConnectionKind.OAuth,
+        AuthorizeUrl: "https://linear.example.test/oauth/authorize",
+        TokenUrl: "https://api.linear.example.test/oauth/token",
+        RevokeUrl: "https://api.linear.example.test/oauth/revoke",
+        DefaultScopes: ["read", "write"],
+        HostGroup: "linear",
+        LoopbackAllowed: true,
+        SignInNote: "Create an OAuth application first.",
+        PollableEvents: [],
+        ProbeUrl: "https://api.linear.example.test/me");
+
+    public InMemoryConnectionStore Store { get; } = new();
+
+    public FakeConnectionSecrets Secrets { get; } = new();
+
+    public FakeConnectionPresets Presets { get; set; }
+
+    public FakeSignInSession SignIn { get; } = new();
+
+    /// <summary>Gets the memory of failed sign-ins the add flow writes and the get slice reads.</summary>
+    public SignInOutcomes Outcomes { get; } = new();
+
+    public FakeEnvironment Environment { get; } = new();
+
+    public FakeConnectionProbe Probe { get; } = new();
+
+    public FakeTimeProvider Clock { get; } = new(KnownInstants.Epoch);
+
+    /// <summary>Gets the ledger the connection slices append to (the green wires it in; the secret-leak tests read every event from it).</summary>
+    public InMemorySindriStore Ledger { get; } = new(new FakeTimeProvider(KnownInstants.Epoch), new FakeProcessProbe());
+
+    /// <summary>Gets the log every connection slice writes to (the green wires it in; the secret-leak tests read every line from it).</summary>
+    public CapturingConnectionLog Logs { get; } = new();
+
+    public SequentialIdGenerator Ids { get; } = new();
+
+    public ICallerContextAccessor Callers { get; }
+
+    public AddConnectionService Add(ISignInSession? signIn = null)
+        => new(Store, Secrets, Presets, Environment, Clock, Callers, new OAuthSignInFlow(Store, Secrets, signIn ?? SignIn, Clock, Outcomes, new TypedLog<OAuthSignInFlow>(Logs)));
+
+    public ListConnectionsService List() => new(Store);
+
+    public GetConnectionService Get() => new(Store, Outcomes);
+
+    public RemoveConnectionService Remove() => new(Store, Secrets);
+
+    /// <summary>The test slice over another probe, with the capturing log, so a probe that echoes the credential is seen by the log canary.</summary>
+    /// <param name="probe">The probe.</param>
+    /// <returns>The service.</returns>
+    public TestConnectionService TestWith(IConnectionProbe probe) => new(Store, Secrets, Presets, probe, Clock, new TypedLog<TestConnectionService>(Logs));
+
+    public TestConnectionService Test() => new(Store, Secrets, Presets, Probe, Clock, new TypedLog<TestConnectionService>(Logs));
+
+    /// <summary>Lends the capturing log to a service that wants an ILogger of its own type.</summary>
+    /// <typeparam name="T">The service.</typeparam>
+    /// <param name="inner">The capturing log.</param>
+    private sealed class TypedLog<T>(ILogger inner) : ILogger<T>
+    {
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull => inner.BeginScope(state);
+
+        public bool IsEnabled(LogLevel logLevel) => inner.IsEnabled(logLevel);
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+            => inner.Log(logLevel, eventId, state, exception, formatter);
+    }
+
+    public static AddConnectionRequest Oauth(string name = "linear:work", string? client = "client-123", bool wait = true)
+        => new(name, Preset: "linear", Kind: null, Client: client, KeyEnv: null, Scopes: [], Wait: wait);
+
+    public static AddConnectionRequest Rest(string name = "acme:key", string keyEnv = "ACME_KEY")
+        => new(name, Preset: null, Kind: "rest", Client: null, KeyEnv: keyEnv, Scopes: [], Wait: true);
+}

@@ -14,6 +14,11 @@ internal sealed partial class ShellWindow
     // §8: single keys never fire while typing in a field, over a layer, or with a modifier other than Shift ('.').
     private bool PageKey(KeyEventArgs e)
     {
+        if (ToastUndoKey(e))
+        {
+            return true;
+        }
+
         if (Shell is not { } shell || KeysBlocked(shell, e))
         {
             return false;
@@ -47,7 +52,7 @@ internal sealed partial class ShellWindow
 
     private static bool KeysBlocked(ViewModels.Shell.ShellViewModel shell, KeyEventArgs e) =>
         shell is not { IsChromeVisible: true, IsNavigationEnabled: true } || e.Source is TextBox
-        || shell.Palette.IsOpen || shell.Shortcuts.IsOpen || shell.Create.IsOpen || shell.NewIssue.IsOpen
+        || shell.Palette.IsOpen || shell.Shortcuts.IsOpen || shell.Create.IsOpen || shell.NewIssue.IsOpen || shell.QuickAdd.IsOpen
         || (e.KeyModifiers & ~KeyModifiers.Shift) != KeyModifiers.None;
 
     // §11.2: with the sheet beside the page and open on the selected row's item (the row drawn on this page), Enter again moves into its first action
@@ -98,7 +103,7 @@ internal sealed partial class ShellWindow
     private static bool IsLastStopOf(Border frame, Visual focused) =>
         frame.GetVisualDescendants().OfType<InputElement>().LastOrDefault(c => c.Focusable && c.IsTabStop && c.IsEffectivelyVisible && c.IsEffectivelyEnabled) is not { } last || ReferenceEquals(last, focused);
 
-    private static bool AnyLayerOpen(ViewModels.Shell.ShellViewModel shell) => shell.Palette.IsOpen || shell.Shortcuts.IsOpen || shell.Create.IsOpen || shell.NewIssue.IsOpen;
+    private static bool AnyLayerOpen(ViewModels.Shell.ShellViewModel shell) => shell.Palette.IsOpen || shell.Shortcuts.IsOpen || shell.Create.IsOpen || shell.NewIssue.IsOpen || shell.QuickAdd.IsOpen;
 
     // The frame of the row that the focused control is in, when that row is the one the sheet shows.
     private Border? OpenRowFrame(Visual focused) =>
@@ -174,6 +179,11 @@ internal sealed partial class ShellWindow
     // Esc's U2 layers, above the sheet (§8 "the topmost layer"): the new issue form, the create form, then a destructive control's question.
     private bool EscapeItemLayer(ViewModels.Shell.ShellViewModel shell)
     {
+        if (EscapeToast(shell))
+        {
+            return true;
+        }
+
         if (EscapeForm(shell))
         {
             return true;

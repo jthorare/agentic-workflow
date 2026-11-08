@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Aw.Sindri.Ui.ViewModels.Toast;
 using Aw.Sindri.Ui.ViewModels.Todo;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
@@ -9,10 +10,22 @@ internal sealed partial class ShellViewModel
     /// <summary>The Todo panel at the top of Home.</summary>
     public TodoPanelViewModel Todo { get; private set; }
 
+    /// <summary>False while Home's decisions filter (G D) is on: the panel is hidden then.</summary>
+    public bool IsTodoShown => HomeFilter != HomeFilter.Decisions;
+
+    /// <summary>True while focus is inside Home's Needs you panel (the other focus region, spec D6); the view sets it.</summary>
+    public bool IsNeedsYouFocused { get; internal set => Set(ref field, value); }
+
     [MemberNotNull(nameof(Todo))]
     private void InitTodo()
     {
         Todo = new TodoPanelViewModel(_api, _clock);
         Health.Follow(Todo.Refresh);
+        Todo.Acted += (_, acted) => ShowToast(new ToastMessage(acted.Text, acted.Undo));
     }
+
+    // The keys Needs you acts on (J, K, A, X, Y, Enter) belong to the panel alone while focus is inside it (D6): the shell spends them, so X there can never reject a decision.
+    private static readonly HashSet<string> _panelKeys = new(["J", "K", "A", "X", "Y", "Enter"], StringComparer.Ordinal);
+
+    private bool TodoOwns(string key, bool inSheet) => Todo.HasFocus && !inSheet && IsHomeShown && _panelKeys.Contains(key);
 }

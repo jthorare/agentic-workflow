@@ -1,6 +1,6 @@
 namespace Aw.Sindri.Infrastructure.Memory;
 
-/// <summary>The memory SQL (ledger.db, migration 0009_memory). A memory's id is its name and a fact's id is its key.</summary>
+/// <summary>The memory SQL (ledger.db, migration 0011_memory). A memory's id is its name and a fact's id is its key.</summary>
 internal static class MemorySql
 {
     internal const string MemoryColumns = "name, description, created_by, created_at";

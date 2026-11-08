@@ -1,0 +1,56 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:todo="using:Aw.Sindri.Ui.ViewModels.Todo"
+             x:Class="Aw.Sindri.Ui.Views.Todo.TodoRow"
+             x:DataType="todo:TodoRowViewModel">
+  <UserControl.Styles>
+    <!-- A ticked or removed todo reads quiet and struck through (words carry the state too: the row's sentence says "done" or "removed"). -->
+    <Style Selector="Border.todo-row.done TextBlock.todo-text, Border.todo-row.removed TextBlock.todo-text">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
+      <Setter Property="TextDecorations" Value="Strikethrough" />
+    </Style>
+    <!-- Overdue is words ("Overdue · Mon") in the error colour, never colour alone. -->
+    <Style Selector="TextBlock.todo-due.overdue">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Error}" />
+    </Style>
+  </UserControl.Styles>
+  <!-- One todo row (todo spec §3.1, §3.5): the checkbox, the text, up to three link chips and "+N", the agent tag, the due word. The
+       row is the one focus stop and carries the sentence; the checkbox is raw for a screen reader and takes no focus (its check-off is
+       a later slice, and so are the row's keys). The row draws its own focus border (item-row), as every list row does. -->
+  <Border x:Name="TodoRowFrame" Classes="item-row todo-row" Classes.done="{Binding IsDone}" Classes.removed="{Binding IsRemoved}" Focusable="True"
+          AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+    <Grid ColumnDefinitions="Auto,*,Auto,Auto" VerticalAlignment="Center">
+      <CheckBox x:Name="TodoDone" MinWidth="0" MinHeight="0" Padding="0" Margin="0,0,12,0" VerticalAlignment="Center" Focusable="False" IsHitTestVisible="False"
+                IsChecked="{Binding IsDone, Mode=OneWay}" AutomationProperties.Name="{Binding DoneBoxName}" AutomationProperties.AccessibilityView="Raw" />
+      <TextBlock x:Name="TodoText" Grid.Column="1" Classes="body todo-text" Text="{Binding Text}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                 ToolTip.Tip="{Binding Text}" AutomationProperties.AccessibilityView="Raw" />
+      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" Margin="12,0" VerticalAlignment="Center">
+        <!-- A key's write was refused: the row came back and says why, in words (the error colour), until the next change. -->
+        <TextBlock x:Name="TodoNotice" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding Notice}"
+                   IsVisible="{Binding Notice, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.LiveSetting="Polite" />
+        <ItemsControl x:Name="TodoChips" ItemsSource="{Binding Chips}" AutomationProperties.AccessibilityView="Raw">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Orientation="Horizontal" Spacing="8" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="x:String">
+              <Border Classes="phrase-chip">
+                <TextBlock x:Name="TodoChip" Classes="caption mono" Text="{Binding}" AutomationProperties.AccessibilityView="Raw" />
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <Border x:Name="TodoMoreChipsFrame" Classes="phrase-chip" IsVisible="{Binding MoreChips, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+          <TextBlock x:Name="TodoMoreChips" Classes="caption" Text="{Binding MoreChips}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Border x:Name="TodoTagFrame" Classes="phrase-chip" IsVisible="{Binding Tag, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+          <TextBlock x:Name="TodoTag" Classes="caption" Text="{Binding Tag}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+      </StackPanel>
+      <TextBlock x:Name="TodoDue" Grid.Column="3" Classes="caption subtle todo-due" Classes.overdue="{Binding IsOverdue}" Text="{Binding DueWord}" MinWidth="104"
+                 TextAlignment="Right" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+    </Grid>
+  </Border>
+</UserControl>
