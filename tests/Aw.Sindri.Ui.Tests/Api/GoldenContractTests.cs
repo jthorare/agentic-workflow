@@ -329,6 +329,18 @@ public sealed class GoldenContractTests
         Assert.Equal("ready", Assert.Single(catalog.Rows, r => r.Action == "ApproveProfile").Ui);
     }
 
+    [Fact]
+    public void The_relink_failed_pins_golden_reads_every_field_of_moved_and_a_pin_without_it_has_none()
+    {
+        var pins = Read<PinsView>("context-pins", "moved-relink-failed");
+
+        var moved = Assert.IsType<PinMovedView>(pins.Pins[0].Moved);
+        Assert.Equal(("v0", "v1", 2, 3, null, true), (moved.FromVersion, moved.ToVersion, moved.Gained, moved.Lost, moved.RecordsLinked, moved.RelinkFailed));
+        Assert.Equal([("auth", "Sign in", 2), (null, null, 1)], [.. moved.To.Select(t => (t.Id, t.Name, t.Features))]);
+        Assert.Null(pins.Pins[1].Moved);
+        Assert.All(Read<PinsView>("context-pins", "approved").Pins, p => Assert.Null(p.Moved));
+    }
+
     // A refusal's ProblemDetails names its SND code in title; any other body has none.
     private static T Read<T>(string slug, string scenario)
         where T : class =>

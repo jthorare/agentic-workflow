@@ -149,6 +149,15 @@ public sealed class ConceptLayerPinTests
     }
 
     [Fact]
+    public void A_pin_the_last_refresh_moved_puts_the_what_moved_line_into_its_card()
+    {
+        var moved = new PinMovedView("v0", "v1", Gained: 4, Lost: 0, To: [], RecordsLinked: 3);
+        var layer = Layer([AConcepts.Concept("concept:billing", "Billing", source: "override")], pins: Pins(_idle, Pin("billing", "Billing") with { Change = null, Moved = moved }));
+
+        Assert.Equal(["+4 features, 3 more records linked here"], layer.Tiles[0].Lines);
+    }
+
+    [Fact]
     public void A_concept_a_person_set_that_no_pin_row_names_offers_Pin_this_and_no_Unpinned_line()
     {
         var stale = new MapRebuildView(MapRebuildPhases.Idle, Progress: null, RetryAt: null, Stale: true, Failed: null);
