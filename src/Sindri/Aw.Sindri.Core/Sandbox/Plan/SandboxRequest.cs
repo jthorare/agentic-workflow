@@ -55,4 +55,7 @@ public sealed record SandboxRequest(
 
     /// <summary>Null for a Step that is not a skill block; else whether the block pushes and the run is not a trial. False leaves the Step without the agent GitHub token (<see cref="GithubCredentialResolver"/>).</summary>
     public bool? SkillPushes { get; init; }
+
+    /// <summary>True when the owner's approval for this repo covers the Step's <see cref="StepPolicy.Github"/> ask (skill flows spec D7). Nothing sets it yet, so an ask stays scrubbed.</summary>
+    public bool GithubPushApproved { get; init; }
 }
