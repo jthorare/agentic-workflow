@@ -33,11 +33,25 @@ public static class ProviderFixtures
     /// <param name="title">The title.</param>
     /// <param name="historyId">The history entry id ('h-55').</param>
     /// <param name="label">The label added.</param>
+    /// <param name="labelId">The label's id.</param>
     /// <param name="createdAt">ISO time of the history entry.</param>
     /// <returns>The JSON object.</returns>
-    public static string LinearLabelAdded(string identifier, string title, string historyId, string label, string createdAt)
+    public static string LinearLabelAdded(string identifier, string title, string historyId, string label, string labelId, string createdAt)
         => $$$"""
-            {"identifier":"{{{identifier}}}","title":"{{{title}}}","url":"https://linear.app/acme/issue/{{{identifier}}}","history":{"nodes":[{"id":"{{{historyId}}}","createdAt":"{{{createdAt}}}","addedLabels":[{"name":"{{{label}}}"}],"fromState":null,"toState":null}]}}
+            {"identifier":"{{{identifier}}}","title":"{{{title}}}","url":"https://linear.app/acme/issue/{{{identifier}}}","history":{"nodes":[{"id":"{{{historyId}}}","createdAt":"{{{createdAt}}}","addedLabels":[{"id":"{{{labelId}}}","name":"{{{label}}}"}],"fromState":null,"toState":null}]}}
+            """;
+
+    /// <summary>A Linear issue (the 'issues' query) with one history entry that moved it to a state.</summary>
+    /// <param name="identifier">'ENG-7'.</param>
+    /// <param name="title">The title.</param>
+    /// <param name="historyId">The history entry id.</param>
+    /// <param name="stateId">The new state's id.</param>
+    /// <param name="stateName">The new state's name.</param>
+    /// <param name="createdAt">ISO time of the history entry.</param>
+    /// <returns>The JSON object.</returns>
+    public static string LinearStateChanged(string identifier, string title, string historyId, string stateId, string stateName, string createdAt)
+        => $$$"""
+            {"identifier":"{{{identifier}}}","title":"{{{title}}}","url":"https://linear.app/acme/issue/{{{identifier}}}","history":{"nodes":[{"id":"{{{historyId}}}","createdAt":"{{{createdAt}}}","addedLabels":[],"fromState":{"id":"s-0","name":"Todo"},"toState":{"id":"{{{stateId}}}","name":"{{{stateName}}}"}}]}}
             """;
 
     /// <summary>A Linear issue created at a time, with no history.</summary>

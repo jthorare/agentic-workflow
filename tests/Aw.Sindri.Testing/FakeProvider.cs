@@ -24,6 +24,9 @@ public sealed class FakeProvider : HttpMessageHandler
     /// <summary>The Google API host.</summary>
     public const string GoogleHost = "www.googleapis.com";
 
+    private const int GitHubPageSize = 100;
+    private const int LinearPageSize = 50;
+
     private readonly Lock _gate = new();
     private readonly List<string> _githubEvents = [];
     private readonly List<string> _linearIssues = [];
@@ -32,6 +35,8 @@ public sealed class FakeProvider : HttpMessageHandler
     private readonly List<ProviderRequest> _requests = [];
     private string? _slackError;
     private int _limitedLeft;
+    private IReadOnlyDictionary<string, string>? _limitHeaders;
+    private string? _limitBody;
     private HttpStatusCode _limitStatus = HttpStatusCode.TooManyRequests;
     private TimeSpan? _limitRetryAfter;
     private Uri? _redirect;
@@ -111,10 +116,14 @@ public sealed class FakeProvider : HttpMessageHandler
     /// <param name="times">How many requests fail.</param>
     /// <param name="retryAfter">The Retry-After header, or null for none.</param>
     /// <param name="status">The status (429 by default; 503 for a 5xx).</param>
-    public void RateLimit(int times, TimeSpan? retryAfter, HttpStatusCode status = HttpStatusCode.TooManyRequests)
+    /// <param name="headers">Extra response headers ('x-ratelimit-remaining'), or null.</param>
+    /// <param name="body">The response body, or null for none.</param>
+    public void RateLimit(int times, TimeSpan? retryAfter, HttpStatusCode status = HttpStatusCode.TooManyRequests, IReadOnlyDictionary<string, string>? headers = null, string? body = null)
     {
         lock (_gate)
         {
+            _limitHeaders = headers;
+            _limitBody = body;
             _limitedLeft = times;
             _limitRetryAfter = retryAfter;
             _limitStatus = status;
@@ -139,11 +148,11 @@ public sealed class FakeProvider : HttpMessageHandler
         lock (_gate)
         {
             _requests.Add(new ProviderRequest(request.RequestUri!, request.Method.Method, request.Headers.Authorization?.ToString(), body));   // why: HttpClient always sets the URI before the handler runs
-            return Answer(request.RequestUri!);   // why: same
+            return Answer(request.RequestUri!, body);   // why: same
         }
     }
 
-    private HttpResponseMessage Answer(Uri uri)
+    private HttpResponseMessage Answer(Uri uri, string requestBody)
     {
         if (_redirect is not null)
         {
@@ -155,27 +164,79 @@ public sealed class FakeProvider : HttpMessageHandler
         if (_limitedLeft > 0)
         {
             _limitedLeft--;
-            var limited = new HttpResponseMessage(_limitStatus);
-            if (_limitRetryAfter is { } wait)
-            {
-                limited.Headers.RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(wait);
-            }
-
-            return limited;
+            return Limited();
         }
 
+        string? link = null;
         var json = uri.Host switch
         {
-            GitHubHost => "[" + string.Join(',', Enumerable.Reverse(_githubEvents)) + "]",
-            LinearHost => "{\"data\":{\"issues\":{\"nodes\":[" + string.Join(',', _linearIssues) + "]}}}",
+            GitHubHost => GitHubPage(uri, out link),
+            LinearHost => LinearPage(requestBody),
             SlackHost => _slackError is { } code
                 ? "{\"ok\":false,\"error\":\"" + code + "\"}"
                 : "{\"ok\":true,\"messages\":[" + string.Join(',', Enumerable.Reverse(_slackMessages)) + "]}",
             GoogleHost => "{\"items\":[" + string.Join(',', _calendarEvents) + "]}",
             _ => null,
         };
-        return json is null
-            ? new HttpResponseMessage(HttpStatusCode.NotFound)
-            : new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
+        if (json is null)
+        {
+            return new HttpResponseMessage(HttpStatusCode.NotFound);
+        }
+
+        var ok = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
+        if (link is not null)
+        {
+            _ = ok.Headers.TryAddWithoutValidation("Link", link);
+        }
+
+        return ok;
+    }
+
+    private HttpResponseMessage Limited()
+    {
+        var limited = new HttpResponseMessage(_limitStatus);
+        if (_limitRetryAfter is { } wait)
+        {
+            limited.Headers.RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(wait);
+        }
+
+        foreach (var (name, value) in _limitHeaders ?? new Dictionary<string, string>(StringComparer.Ordinal))
+        {
+            _ = limited.Headers.TryAddWithoutValidation(name, value);
+        }
+
+        if (_limitBody is { } text)
+        {
+            limited.Content = new StringContent(text, Encoding.UTF8, "application/json");
+        }
+
+        return limited;
+    }
+
+    // GitHub: newest first, 100 to a page, a Link header while more remain.
+    private string GitHubPage(Uri uri, out string? link)
+    {
+        var page = int.TryParse(System.Web.HttpUtility.ParseQueryString(uri.Query)["page"], out var asked) && asked > 0 ? asked : 1;
+        var all = Enumerable.Reverse(_githubEvents).ToList();
+        link = page * GitHubPageSize < all.Count ? $"<https://{GitHubHost}{uri.AbsolutePath}?per_page={GitHubPageSize}&page={(page + 1).ToString(System.Globalization.CultureInfo.InvariantCulture)}>; rel=\"next\"" : null;
+        return "[" + string.Join(',', all.Skip((page - 1) * GitHubPageSize).Take(GitHubPageSize)) + "]";
+    }
+
+    // Linear: issues in the order added, 50 to a page, variables.after is the offset the last page's endCursor named.
+    private string LinearPage(string requestBody)
+    {
+        var offset = 0;
+        if (requestBody.Length > 0)
+        {
+            using var document = System.Text.Json.JsonDocument.Parse(requestBody);
+            if (document.RootElement.TryGetProperty("variables", out var variables) && variables.TryGetProperty("after", out var after) && int.TryParse(after.GetString(), out var parsed))
+            {
+                offset = parsed;
+            }
+        }
+
+        var end = Math.Min(offset + LinearPageSize, _linearIssues.Count);
+        var more = end < _linearIssues.Count ? "true" : "false";
+        return "{\"data\":{\"issues\":{\"nodes\":[" + string.Join(',', _linearIssues.Skip(offset).Take(LinearPageSize)) + "],\"pageInfo\":{\"hasNextPage\":" + more + ",\"endCursor\":\"" + end.ToString(System.Globalization.CultureInfo.InvariantCulture) + "\"}}}}";
     }
 }

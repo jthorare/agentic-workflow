@@ -34,4 +34,16 @@ public sealed class PollBackoffTests
         Assert.Equal(now + PollBackoff.MaxDelay, long_run.Until);
         Assert.Equal(21, long_run.Failures);
     }
+
+    [Fact]
+    public void A_Retry_After_over_the_cap_is_honored_as_given()
+    {
+        var now = KnownInstants.Epoch;
+
+        var first = PollBackoff.Next(previousFailures: 0, retryAfter: TimeSpan.FromHours(2), now);
+        var second = PollBackoff.Next(first.Failures, retryAfter: TimeSpan.FromHours(2), now);
+
+        Assert.Equal(now.AddHours(2), first.Until);
+        Assert.Equal(now.AddHours(2), second.Until);
+    }
 }

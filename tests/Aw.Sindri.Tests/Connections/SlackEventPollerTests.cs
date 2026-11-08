@@ -7,6 +7,8 @@ namespace Aw.Sindri.Tests.Connections;
 [Lane(TestLane.Unit)]
 public sealed class SlackEventPollerTests
 {
+    private const string Before = "1731059999.000000";
+
     [Fact]
     public async Task A_message_matching_the_filter_and_a_mention_of_the_owner_map_to_their_catalog_events_with_stable_delivery_keys()
     {
@@ -17,9 +19,9 @@ public sealed class SlackEventPollerTests
         using var h = PollerHarness.For("slack", provider);
         var ct = TestContext.Current.CancellationToken;
 
-        var message = await h.Poller.Poll(h.Connection, EventKind.SlackMessage, cursor: null, ct);
-        var mention = await h.Poller.Poll(h.Connection, EventKind.SlackMention, cursor: null, ct);
-        var again = await h.Poller.Poll(h.Connection, EventKind.SlackMessage, cursor: null, ct);
+        var message = await h.Poller.Poll(h.Connection, EventKind.SlackMessage, cursor: Before, ct);
+        var mention = await h.Poller.Poll(h.Connection, EventKind.SlackMention, cursor: Before, ct);
+        var again = await h.Poller.Poll(h.Connection, EventKind.SlackMessage, cursor: Before, ct);
         var caughtUp = await h.Poller.Poll(h.Connection, EventKind.SlackMessage, cursor: "1731060000.000300", ct);
 
         var matched = Assert.Single(message.Value.Events);
@@ -49,7 +51,7 @@ public sealed class SlackEventPollerTests
         provider.AddSlackMessage(ProviderFixtures.SlackMessage("1731060000.000100", "U2", "anything"));
         using var h = PollerHarness.For("slack", provider, new Dictionary<string, string>(StringComparer.Ordinal) { ["filter"] = string.Empty });
 
-        var message = await h.Poller.Poll(h.Connection, EventKind.SlackMessage, cursor: null, TestContext.Current.CancellationToken);
+        var message = await h.Poller.Poll(h.Connection, EventKind.SlackMessage, Before, TestContext.Current.CancellationToken);
 
         _ = Assert.Single(message.Value.Events);
     }
@@ -84,5 +86,23 @@ public sealed class SlackEventPollerTests
         Assert.True(polled.IsError);
         Assert.Equal(code, polled.Error.Code);
         Assert.DoesNotContain(PollerHarness.Token, polled.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task The_first_poll_is_a_baseline_with_no_events_and_the_newest_ts_as_the_cursor()
+    {
+        var provider = new FakeProvider();
+        provider.AddSlackMessage(ProviderFixtures.SlackMessage("1731060000.000100", "U2", "deploy failed on prod"));
+        using var h = PollerHarness.For("slack", provider);
+        using var empty = PollerHarness.For("slack", new FakeProvider());
+        var ct = TestContext.Current.CancellationToken;
+
+        var baseline = await h.Poller.Poll(h.Connection, EventKind.SlackMessage, cursor: null, ct);
+        var onEmpty = await empty.Poller.Poll(empty.Connection, EventKind.SlackMessage, cursor: null, ct);
+
+        Assert.Empty(baseline.Value.Events);
+        Assert.Equal("1731060000.000100", baseline.Value.NextCursor);
+        Assert.Empty(onEmpty.Value.Events);
+        Assert.Equal("1767225600.000000", onEmpty.Value.NextCursor);   // 2026-01-01T00:00:00Z, the test clock
     }
 }

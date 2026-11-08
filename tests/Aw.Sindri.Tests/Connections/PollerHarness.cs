@@ -25,8 +25,9 @@ internal sealed record PollerHarness(IEventPoller Poller, Connection Connection,
     /// <param name="preset">'github', 'linear', 'slack' or 'google'.</param>
     /// <param name="provider">The fake provider.</param>
     /// <param name="settings">Connection settings to add or override, or null.</param>
+    /// <param name="pageCap">The most pages one GitHub or Linear poll reads.</param>
     /// <returns>The harness. The Google poller's clock stands at <see cref="KnownInstants.Epoch"/>.</returns>
-    public static PollerHarness For(string preset, FakeProvider provider, IReadOnlyDictionary<string, string>? settings = null)
+    public static PollerHarness For(string preset, FakeProvider provider, IReadOnlyDictionary<string, string>? settings = null, int pageCap = PollLimits.DefaultPageCap)
     {
         var secrets = new FakeConnectionSecrets();
         var name = ConnectionSamples.Name(preset, "work");
@@ -39,12 +40,13 @@ internal sealed record PollerHarness(IEventPoller Poller, Connection Connection,
 
         var connection = ConnectionSamples.Oauth(name) with { Config = config };
         var http = new HttpClient(provider, disposeHandler: false);
+        var clock = new FakeTimeProvider(KnownInstants.Epoch);
         return preset switch
         {
-            "github" => new PollerHarness(new GitHubEventPoller(http, secrets), connection, EventKind.GitHubPrMerged, http),
-            "linear" => new PollerHarness(new LinearEventPoller(http, secrets), connection, EventKind.LinearIssueLabeled, http),
-            "slack" => new PollerHarness(new SlackEventPoller(http, secrets), connection, EventKind.SlackMessage, http),
-            _ => new PollerHarness(new GoogleCalendarPoller(http, secrets, new FakeTimeProvider(KnownInstants.Epoch)), connection, EventKind.GoogleCalendarEventStarting, http),
+            "github" => new PollerHarness(new GitHubEventPoller(http, secrets, clock, pageCap), connection, EventKind.GitHubPrMerged, http),
+            "linear" => new PollerHarness(new LinearEventPoller(http, secrets, clock, pageCap), connection, EventKind.LinearIssueLabeled, http),
+            "slack" => new PollerHarness(new SlackEventPoller(http, secrets, clock), connection, EventKind.SlackMessage, http),
+            _ => new PollerHarness(new GoogleCalendarPoller(http, secrets, clock), connection, EventKind.GoogleCalendarEventStarting, http),
         };
     }
 }

@@ -21,7 +21,7 @@ internal sealed class GoogleCalendarPoller(HttpClient http, IConnectionSecrets s
     private const string Host = "www.googleapis.com";
     private const int DefaultMinutes = 15;
 
-    private readonly PollerClient _client = new(http, secrets, Host);
+    private readonly PollerClient _client = new(http, secrets, Host, clock);
     private readonly TimeProvider _clock = clock;
 
     public string Preset => "google";

@@ -256,9 +256,9 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IOAuthClient>(static sp => new HttpOAuthClient(new HttpClient(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IBrowserOpener>(static _ => new BrowserOpener(new ProcessToolRunner()))
             .AddSingleton<IPollCursors, SqlitePollCursors>()   // PR 11: poll cursors in ledger.db
-            .AddSingleton<IEventPoller>(static sp => new GitHubEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>()))
-            .AddSingleton<IEventPoller>(static sp => new LinearEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>()))
-            .AddSingleton<IEventPoller>(static sp => new SlackEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>()))
+            .AddSingleton<IEventPoller>(static sp => new GitHubEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<TimeProvider>()))
+            .AddSingleton<IEventPoller>(static sp => new LinearEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<TimeProvider>()))
+            .AddSingleton<IEventPoller>(static sp => new SlackEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IEventPoller>(static sp => new GoogleCalendarPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<ISignInSession>(static sp => new LoopbackSignIn(sp.GetRequiredService<IOAuthClient>(), sp.GetRequiredService<IBrowserOpener>(), TimeSpan.FromMinutes(5), System.Security.Cryptography.RandomNumberGenerator.GetBytes));
 

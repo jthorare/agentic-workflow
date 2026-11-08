@@ -11,8 +11,12 @@ namespace Aw.Sindri.Infrastructure.Connections.Polling;
 /// The one place a poller sends a request, for one provider host. The token goes only to the preset's host over https, a redirect is refused and never
 /// followed, and no error or message holds the token or the response body.
 /// </summary>
-internal sealed class PollerClient(HttpClient http, IConnectionSecrets secrets, string host)
+internal sealed class PollerClient(HttpClient http, IConnectionSecrets secrets, string host, TimeProvider clock, bool bareKeys = false)
 {
+    internal TimeProvider Clock { get; } = clock;
+
+    internal bool BareKeys { get; } = bareKeys;
+
     internal async ValueTask<Result<PollerAnswer>> Send(Connection connection, HttpRequestMessage request, bool cursorSent, CancellationToken cancellationToken)
     {
         using (request)

@@ -14,11 +14,15 @@ namespace Aw.Sindri.Infrastructure.Connections.Polling;
 /// </summary>
 /// <param name="http">The HTTP client; it must not follow redirects on its own.</param>
 /// <param name="secrets">The connection secrets.</param>
-internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secrets) : IEventPoller
+/// <param name="clock">The clock a baseline falls back to when the provider has no events.</param>
+/// <param name="pageCap">The most pages one poll reads.</param>
+internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secrets, TimeProvider clock, int pageCap = PollLimits.DefaultPageCap) : IEventPoller
 {
     private const string Host = "api.github.com";
 
-    private readonly PollerClient _client = new(http, secrets, Host);
+    private readonly PollerClient _client = new(http, secrets, Host, clock);
+
+    internal int PageCap { get; } = pageCap;
 
     public string Preset => "github";
 

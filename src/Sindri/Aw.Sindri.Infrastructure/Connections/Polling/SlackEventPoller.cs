@@ -15,11 +15,12 @@ namespace Aw.Sindri.Infrastructure.Connections.Polling;
 /// </summary>
 /// <param name="http">The HTTP client; it must not follow redirects on its own.</param>
 /// <param name="secrets">The connection secrets.</param>
-internal sealed class SlackEventPoller(HttpClient http, IConnectionSecrets secrets) : IEventPoller
+/// <param name="clock">The clock a baseline falls back to when the channel has no messages.</param>
+internal sealed class SlackEventPoller(HttpClient http, IConnectionSecrets secrets, TimeProvider clock) : IEventPoller
 {
     private const string Host = "slack.com";
 
-    private readonly PollerClient _client = new(http, secrets, Host);
+    private readonly PollerClient _client = new(http, secrets, Host, clock);
 
     public string Preset => "slack";
 

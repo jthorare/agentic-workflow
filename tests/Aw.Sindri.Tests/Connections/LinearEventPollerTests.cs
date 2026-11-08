@@ -1,4 +1,7 @@
+using System.Globalization;
+using System.Net;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Connections.Polling;
 using Aw.Sindri.Testing;
 
@@ -7,20 +10,22 @@ namespace Aw.Sindri.Tests.Connections;
 [Lane(TestLane.Unit)]
 public sealed class LinearEventPollerTests
 {
+    private const string Before = "2026-11-08T09:00:00Z";
+
     [Fact]
     public async Task A_label_change_maps_to_the_catalog_event_with_a_stable_delivery_id()
     {
         var provider = new FakeProvider();
-        provider.AddLinearIssue(ProviderFixtures.LinearLabelAdded("ENG-7", "Crash on save", "h-55", "bug", "2026-11-08T10:05:00Z"));
+        provider.AddLinearIssue(ProviderFixtures.LinearLabelAdded("ENG-7", "Crash on save", "h-55", "bug", "lbl-1", "2026-11-08T10:05:00Z"));
         using var h = PollerHarness.For("linear", provider);
         var ct = TestContext.Current.CancellationToken;
 
-        var labeled = await h.Poller.Poll(h.Connection, EventKind.LinearIssueLabeled, cursor: null, ct);
-        var again = await h.Poller.Poll(h.Connection, EventKind.LinearIssueLabeled, cursor: null, ct);
-        var otherKind = await h.Poller.Poll(h.Connection, EventKind.LinearIssueStateChanged, cursor: null, ct);
+        var labeled = await h.Poller.Poll(h.Connection, EventKind.LinearIssueLabeled, Before, ct);
+        var again = await h.Poller.Poll(h.Connection, EventKind.LinearIssueLabeled, Before, ct);
+        var otherKind = await h.Poller.Poll(h.Connection, EventKind.LinearIssueStateChanged, Before, ct);
 
         var polled = Assert.Single(labeled.Value.Events);
-        Assert.Equal("linear:h-55:label:bug", polled.DeliveryKey);
+        Assert.Equal("linear:h-55:label:lbl-1", polled.DeliveryKey);   // the label's id, not its name
         Assert.Equal(EventKind.LinearIssueLabeled, polled.Kind);
         Assert.Equal("ENG-7", polled.Fields["identifier"]);
         Assert.Equal("Crash on save", polled.Fields["title"]);
@@ -37,6 +42,39 @@ public sealed class LinearEventPollerTests
     }
 
     [Fact]
+    public async Task A_state_change_is_keyed_by_the_state_id()
+    {
+        var provider = new FakeProvider();
+        provider.AddLinearIssue(ProviderFixtures.LinearStateChanged("ENG-8", "Slow list", "h-60", "s-2", "Done", "2026-11-08T10:06:00Z"));
+        using var h = PollerHarness.For("linear", provider);
+
+        var changed = await h.Poller.Poll(h.Connection, EventKind.LinearIssueStateChanged, Before, TestContext.Current.CancellationToken);
+
+        var polled = Assert.Single(changed.Value.Events);
+        Assert.Equal("linear:h-60:state:s-2", polled.DeliveryKey);
+        Assert.Equal("Done", polled.Fields["to"]);
+        Assert.Equal("Todo", polled.Fields["from"]);
+    }
+
+    [Fact]
+    public async Task The_first_poll_is_a_baseline_with_no_events_and_the_newest_time_as_the_cursor()
+    {
+        var provider = new FakeProvider();
+        provider.AddLinearIssue(ProviderFixtures.LinearLabelAdded("ENG-7", "Crash on save", "h-55", "bug", "lbl-1", "2026-11-08T10:05:00Z"));
+        using var h = PollerHarness.For("linear", provider);
+        using var empty = PollerHarness.For("linear", new FakeProvider());
+        var ct = TestContext.Current.CancellationToken;
+
+        var baseline = await h.Poller.Poll(h.Connection, EventKind.LinearIssueLabeled, cursor: null, ct);
+        var onEmpty = await empty.Poller.Poll(empty.Connection, EventKind.LinearIssueLabeled, cursor: null, ct);
+
+        Assert.Empty(baseline.Value.Events);
+        Assert.Equal("2026-11-08T10:05:00Z", baseline.Value.NextCursor);
+        Assert.Empty(onEmpty.Value.Events);
+        Assert.Equal("2026-01-01T00:00:00Z", onEmpty.Value.NextCursor);
+    }
+
+    [Fact]
     public async Task A_new_issue_maps_to_the_created_event_with_a_stable_delivery_key()
     {
         var provider = new FakeProvider();
@@ -44,8 +82,8 @@ public sealed class LinearEventPollerTests
         using var h = PollerHarness.For("linear", provider);
         var ct = TestContext.Current.CancellationToken;
 
-        var created = await h.Poller.Poll(h.Connection, EventKind.LinearIssueCreated, cursor: null, ct);
-        var again = await h.Poller.Poll(h.Connection, EventKind.LinearIssueCreated, cursor: null, ct);
+        var created = await h.Poller.Poll(h.Connection, EventKind.LinearIssueCreated, Before, ct);
+        var again = await h.Poller.Poll(h.Connection, EventKind.LinearIssueCreated, Before, ct);
         var caughtUp = await h.Poller.Poll(h.Connection, EventKind.LinearIssueCreated, cursor: "2026-11-08T11:00:00Z", ct);
 
         var polled = Assert.Single(created.Value.Events);
@@ -67,7 +105,7 @@ public sealed class LinearEventPollerTests
         using var h = PollerHarness.For("linear", provider);
         var ct = TestContext.Current.CancellationToken;
 
-        var added = await h.Poller.Poll(h.Connection, EventKind.LinearCommentAdded, cursor: null, ct);
+        var added = await h.Poller.Poll(h.Connection, EventKind.LinearCommentAdded, Before, ct);
         var otherKind = await h.Poller.Poll(h.Connection, EventKind.LinearIssueCreated, cursor: "2025-06-01T00:00:00Z", ct);
 
         var polled = Assert.Single(added.Value.Events);
@@ -77,5 +115,57 @@ public sealed class LinearEventPollerTests
         Assert.Equal("Ada", polled.Fields["author"]);
         Assert.Equal("2026-11-08T12:00:00Z", added.Value.NextCursor);
         Assert.Empty(otherKind.Value.Events);   // the issue itself was created before that cursor
+    }
+
+    [Fact]
+    public async Task A_feed_of_120_issues_between_two_polls_are_read_page_by_page_and_a_page_cap_reports_a_gap()
+    {
+        var provider = new FakeProvider();
+        for (var i = 1; i <= 120; i++)
+        {
+            var at = DateTimeOffset.Parse("2026-11-08T10:00:00Z", CultureInfo.InvariantCulture).AddSeconds(i).ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture);
+            provider.AddLinearIssue(ProviderFixtures.LinearLabelAdded("ENG-" + i.ToString(CultureInfo.InvariantCulture), "t", "h-" + i.ToString(CultureInfo.InvariantCulture), "bug", "lbl-1", at));
+        }
+
+        using var all = PollerHarness.For("linear", provider);
+        using var capped = PollerHarness.For("linear", provider, pageCap: 2);
+        var ct = TestContext.Current.CancellationToken;
+
+        var whole = await all.Poller.Poll(all.Connection, EventKind.LinearIssueLabeled, Before, ct);
+        var cut = await capped.Poller.Poll(capped.Connection, EventKind.LinearIssueLabeled, Before, ct);
+
+        Assert.False(whole.Value.Gap);
+        Assert.Equal(120, whole.Value.Events.Count);
+        Assert.Equal("linear:h-1:label:lbl-1", whole.Value.Events[0].DeliveryKey);
+        Assert.Equal("linear:h-120:label:lbl-1", whole.Value.Events[^1].DeliveryKey);
+        Assert.True(cut.Value.Gap);
+        Assert.Equal(100, cut.Value.Events.Count);
+    }
+
+    [Fact]
+    public async Task A_400_that_says_RATELIMITED_is_rate_limited_and_not_a_rejected_cursor()
+    {
+        var provider = new FakeProvider();
+        provider.RateLimit(times: 1, retryAfter: null, HttpStatusCode.BadRequest, body: """{"errors":[{"message":"Rate limit exceeded","extensions":{"code":"RATELIMITED"}}]}""");
+        using var h = PollerHarness.For("linear", provider);
+
+        var polled = await h.Poller.Poll(h.Connection, EventKind.LinearIssueLabeled, Before, TestContext.Current.CancellationToken);
+
+        Assert.True(polled.IsSuccess);
+        Assert.True(polled.Value.RateLimited);
+        Assert.Equal(Before, polled.Value.NextCursor);
+    }
+
+    [Fact]
+    public async Task A_personal_API_key_goes_bare_in_Authorization_and_an_OAuth_token_keeps_Bearer()
+    {
+        var provider = new FakeProvider();
+        using var h = PollerHarness.For("linear", provider);
+        var ct = TestContext.Current.CancellationToken;
+
+        _ = await h.Poller.Poll(h.Connection with { Kind = ConnectionKind.Rest }, EventKind.LinearIssueLabeled, Before, ct);
+        _ = await h.Poller.Poll(h.Connection, EventKind.LinearIssueLabeled, Before, ct);
+
+        Assert.Equal([PollerHarness.Token, "Bearer " + PollerHarness.Token], provider.Requests.Select(static r => r.Authorization), StringComparer.Ordinal);
     }
 }
