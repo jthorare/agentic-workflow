@@ -798,5 +798,49 @@ reset; rm -f "$ids"/rf*; t0=$SECONDS
 OUT="$(AW_META_CONFIG="$WORK/team4.json" AW_LAUNCHER_CONFIG="$WORK/new.json" AW_META_ID_WAIT=8 bash "$DIR/meta-launch.sh" --no-open --lanes rf 2>&1)"; RC=$?
 check "a refused reported lane: the launcher prints SND-LAUNCH-011 at once, not the timeout" "$RC:$(grep -c 'lane rf failed to start: SND-LAUNCH-011' <<< "$OUT"):$(grep -c 'has not reported' <<< "$OUT"):$([ $((SECONDS - t0)) -lt 5 ] && echo fast || echo slow)" "0:1:0:fast"
 tmux kill-server 2> /dev/null; rm -f "$WORK/prompts/rf.md"
+
+# 4. Lanes run in the caller's login shell with the caller's PATH and SHELL (#2278), on a fresh or an already-running server.
+mkdir -p "$WORK/callerbin"
+printf '#!/usr/bin/env bash\nprintf "%%s|%%s\\n" "$PATH" "$SHELL" > "%s"\n' "$WORK/lane-env" > "$WORK/envclaude"
+chmod +x "$WORK/envclaude"
+printf '#!/usr/bin/env bash\necho "$*" >> "%s"\nexec bash "$@"\n' "$WORK/fakesh.log" > "$WORK/fakesh"; chmod +x "$WORK/fakesh"
+login_lane() { # <env words for the launcher...>: relaunch lane api through meta-launch.sh and print the PATH|SHELL the agent saw
+  rm -f "$WORK/lane-env"
+  env "$@" bash "$DIR/meta-launch.sh" --no-open --lanes api > /dev/null 2>&1
+  waitfor '[ -s "$WORK/lane-env" ]'; cat "$WORK/lane-env" 2> /dev/null
+}
+fresh_server() { tmux kill-server 2> /dev/null; sleep 0.3; PATH="$ORIG_PATH" tmux new-session -d -s keepalive "sleep 600"; tmux set-environment -g AW_META_CLAUDE "$WORK/envclaude"; tmux set-environment -g AW_META_NO_SHELL 1; }
+ORIG_PATH="$PATH"
+fresh_server
+GOT="$(login_lane PATH="$WORK/callerbin:$ORIG_PATH" SHELL=/bin/bash)"
+check "lane sees the caller's PATH entry first and SHELL (fresh server)" "${GOT%%:*}|${GOT#*|}" "$WORK/callerbin|/bin/bash"
+# the server above was started without callerbin: a second caller with another entry reaches the same, already-running server
+mkdir -p "$WORK/callerbin2"; tmux kill-session -t t1-api 2> /dev/null
+GOT="$(login_lane PATH="$WORK/callerbin2:$ORIG_PATH" SHELL=/bin/bash)"
+check "lane sees the caller's PATH on an already-running server started with another PATH" "${GOT%%:*}" "$WORK/callerbin2"
+# a fake login shell stands in for $SHELL: the lane is run as `$SHELL -lc '<lane script> t1 api'`
+tmux kill-session -t t1-api 2> /dev/null; rm -f "$WORK/fakesh.log"
+GOT="$(login_lane PATH="$WORK/callerbin:$ORIG_PATH" SHELL="$WORK/fakesh")"
+check "SHELL is the user's shell inside the lane" "${GOT#*|}" "$WORK/fakesh"
+check "the lane runs through \$SHELL -lc '<meta-lane.sh> t1 api'" "$(head -1 "$WORK/fakesh.log" 2> /dev/null)" "-lc $DIR/meta-lane.sh t1 api"
+# no SHELL, or one that is not executable: /bin/bash
+tmux kill-session -t t1-api 2> /dev/null
+GOT="$(login_lane -u SHELL PATH="$WORK/callerbin:$ORIG_PATH")"
+check "an unset SHELL falls back to /bin/bash" "${GOT#*|}" "/bin/bash"
+tmux kill-session -t t1-api 2> /dev/null
+GOT="$(login_lane PATH="$WORK/callerbin:$ORIG_PATH" SHELL="$WORK/nonexistent-shell")"
+check "a SHELL that is not executable falls back to /bin/bash" "${GOT#*|}" "/bin/bash"
+# a login profile that resets PATH must not drop the caller's entries
+printf 'export PATH=/usr/bin:/bin\n' > "$HOME/.bash_profile"; tmux kill-session -t t1-api 2> /dev/null
+GOT="$(login_lane PATH="$WORK/callerbin:$ORIG_PATH" SHELL=/bin/bash)"
+check "the caller's PATH goes first after the login profile reset PATH" "${GOT%%:*}" "$WORK/callerbin"
+check "the caller's PATH has no duplicate entries" "$(tr ':' '\n' <<< "${GOT%|*}" | sort | uniq -d | wc -l | tr -d ' ')" "0"
+rm -f "$HOME/.bash_profile"
+# the Warp pane and the dry run carry the same environment and login-shell wrapper
+tmux kill-session -t t1-api 2> /dev/null
+OUT="$(PATH="$WORK/callerbin:$ORIG_PATH" SHELL=/bin/bash bash "$DIR/meta-launch.sh" --no-open --dry-run 2>&1)"
+check "dry run shows the -lc wrapper and the caller's PATH and SHELL" "$(grep -c "new-session .* -e PATH=.* -e SHELL=/bin/bash .*-lc" <<< "$OUT")" "1"
+check "the Warp pane's attach line carries them too" "$(grep -c "new -A -s t1-api .* -e SHELL=/bin/bash .*-lc" "$AW_WARP_LAUNCH_DIR/t1-team.yaml")" "1"
+tmux kill-server 2> /dev/null
 tmux kill-server 2> /dev/null
 exit $fail
