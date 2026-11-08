@@ -1,15 +1,15 @@
 using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core.Events;
-using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Commands;
-using Aw.Sindri.Testing;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Infrastructure.Workflows;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Workflow;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
@@ -25,8 +25,9 @@ namespace Aw.Sindri.Tests.Workflows;
 /// </summary>
 internal sealed class GraphRig : IAsyncDisposable
 {
-    private const string TaskQueue = "graph-test";
+    private static int _count;
     private static readonly TimeSpan _patience = TimeSpan.FromSeconds(30);
+    private readonly string _taskQueue;
     private readonly CancellationTokenSource _stop = new();
     private readonly TemporalWorker _worker;
     private readonly Task _loop;
@@ -35,6 +36,10 @@ internal sealed class GraphRig : IAsyncDisposable
 
     private GraphRig(WorkflowEnvironment environment)
     {
+        // why: the test server is shared by the class, and a run id or task queue can be used once on it
+        var number = Interlocked.Increment(ref _count).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        Slug = $"walk-test-{number}";
+        _taskQueue = $"graph-test-{number}";
         var clock = new FakeTimeProvider(KnownInstants.Epoch);
         Runs = new InMemoryWorkflowRunStore(clock);
         Workflows = new InMemoryWorkflowStore(clock);
@@ -47,10 +52,10 @@ internal sealed class GraphRig : IAsyncDisposable
         held.Hold(_ledger.Acquire(probe.Self(), Token).AsTask().GetAwaiter().GetResult().Value);
         var ids = new SequentialIdGenerator();
         var mirror = new GraphMirror(_ledger, held, new EventFactory(EventScope.ControlPlane, clock, ids, SliceHarness.Json, new AsyncLocalCallerContextAccessor(ids)));
-        var launcher = new TemporalGraphRunLauncher(_ => ValueTask.FromResult(Results.Success<Temporalio.Client.ITemporalClient>(Client)), TaskQueue);
+        var launcher = new TemporalGraphRunLauncher(_ => ValueTask.FromResult(Results.Success(Client)), _taskQueue);
         var starter = new GraphRunStarter(Runs, launcher, clock, NullLogger<GraphRunStarter>.Instance);
         _starter = starter;
-        var options = new TemporalWorkerOptions(TaskQueue)
+        var options = new TemporalWorkerOptions(_taskQueue)
             .AddWorkflow<GraphWorkflow>()
             .AddAllActivities(new GraphRunActivities(Runs, Workflows, starter, mirror))
             .AddAllActivities(new GraphBlockActivities(registry, Runs, Workflows));
@@ -61,6 +66,8 @@ internal sealed class GraphRig : IAsyncDisposable
     public InMemoryWorkflowRunStore Runs { get; }
 
     public InMemoryWorkflowStore Workflows { get; }
+
+    public string Slug { get; }
 
     public GraphTestBlocks Blocks { get; }
 
@@ -82,7 +89,7 @@ internal sealed class GraphRig : IAsyncDisposable
     public async Task<(WorkflowId Id, WorkflowSlug Slug)> Define(GraphSpec spec)
     {
         var id = WorkflowId.From("WF-00000000000000000000000000000001");
-        var slug = WorkflowSlug.From("walk-test");
+        var slug = WorkflowSlug.From(Slug);
         _ = (await Workflows.Create(id, slug, spec, "owner", Token)).Value;
         return (id, slug);
     }

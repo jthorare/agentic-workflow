@@ -28,18 +28,18 @@ public sealed class GraphWorkflowTests(SindriTimeSkippingServer server) : IClass
         var run = await rig.Final(started.RunId);
 
         Assert.Equal(WorkflowRunStatus.Succeeded, run.Status);
-        Assert.Equal(["walk-test@1:1/a", "walk-test@1:1/b", "walk-test@1:1/c"], rig.Blocks.Log);
+        Assert.Equal([$"{rig.Slug}@1:1/a", $"{rig.Slug}@1:1/b", $"{rig.Slug}@1:1/c"], rig.Blocks.Log);
         Assert.All(await rig.NodeStatuses(started.RunId), static s => Assert.Equal(NodeRunStatus.Succeeded, s.Value));
         Assert.Equal(4, (await rig.NodeStatuses(started.RunId)).Count);
         Assert.Equal(
             [
-                "workflow.run.started workflow.run.started:walk-test@1:1",
-                .. _walked.SelectMany(static n => new[]
+                $"workflow.run.started workflow.run.started:{rig.Slug}@1:1",
+                .. _walked.SelectMany(n => new[]
                 {
-                    $"workflow.node.started workflow.node.started:walk-test@1:1:{n}:0",
-                    $"workflow.node.finished workflow.node.finished:walk-test@1:1:{n}:0",
+                    $"workflow.node.started workflow.node.started:{rig.Slug}@1:1:{n}:0",
+                    $"workflow.node.finished workflow.node.finished:{rig.Slug}@1:1:{n}:0",
                 }),
-                "workflow.run.finished workflow.run.finished:walk-test@1:1",
+                $"workflow.run.finished workflow.run.finished:{rig.Slug}@1:1",
             ],
             await rig.Rows());
     }
@@ -58,7 +58,7 @@ public sealed class GraphWorkflowTests(SindriTimeSkippingServer server) : IClass
 
         Assert.Equal(WorkflowRunStatus.Failed, run.Status);
         Assert.Contains("boom", run.Error, StringComparison.Ordinal);
-        Assert.Equal(["walk-test@1:1/a", "walk-test@1:1/bad"], rig.Blocks.Log);
+        Assert.Equal([$"{rig.Slug}@1:1/a", $"{rig.Slug}@1:1/bad"], rig.Blocks.Log);
         Assert.Equal(NodeRunStatus.Failed, nodes["bad"]);
         Assert.Equal(NodeRunStatus.Skipped, nodes["c"]);
         Assert.Equal(NodeRunStatus.Skipped, nodes["d"]);
@@ -77,7 +77,7 @@ public sealed class GraphWorkflowTests(SindriTimeSkippingServer server) : IClass
         var nodes = await rig.NodeStatuses(started.RunId);
 
         Assert.Equal(WorkflowRunStatus.Succeeded, run.Status);   // why: every node ran or was skipped, and no 'stop' node failed
-        Assert.Equal(["walk-test@1:1/bad", "walk-test@1:1/c"], rig.Blocks.Log);
+        Assert.Equal([$"{rig.Slug}@1:1/bad", $"{rig.Slug}@1:1/c"], rig.Blocks.Log);
         Assert.Equal(NodeRunStatus.Failed, nodes["bad"]);
         Assert.Equal(NodeRunStatus.Succeeded, nodes["c"]);
     }
@@ -95,7 +95,7 @@ public sealed class GraphWorkflowTests(SindriTimeSkippingServer server) : IClass
         var nodes = await rig.NodeStatuses(started.RunId);
 
         Assert.Equal(WorkflowRunStatus.Succeeded, run.Status);
-        Assert.Equal(["walk-test@1:1/no"], rig.Blocks.Log);
+        Assert.Equal([$"{rig.Slug}@1:1/no"], rig.Blocks.Log);
         Assert.Equal(NodeRunStatus.Skipped, nodes["yes"]);
         Assert.Equal(NodeRunStatus.Succeeded, nodes["no"]);
     }
@@ -117,12 +117,12 @@ public sealed class GraphWorkflowTests(SindriTimeSkippingServer server) : IClass
         Assert.Equal(WorkflowRunStatus.Cancelled, run.Status);
         Assert.Equal(NodeRunStatus.Cancelled, nodes["wait"]);
         Assert.Equal(NodeRunStatus.Skipped, nodes["after"]);
-        Assert.DoesNotContain(rig.Blocks.Log, static l => string.Equals(l, "walk-test@1:1/after", StringComparison.Ordinal));
+        Assert.DoesNotContain(rig.Blocks.Log, l => string.Equals(l, $"{rig.Slug}@1:1/after", StringComparison.Ordinal));
         var rows = await rig.Rows();
-        Assert.Contains("workflow.run.cancelled workflow.run.cancelled:walk-test@1:1", rows, StringComparer.Ordinal);
+        Assert.Contains($"workflow.run.cancelled workflow.run.cancelled:{rig.Slug}@1:1", rows, StringComparer.Ordinal);
         Assert.DoesNotContain(rows, static r => r.StartsWith("workflow.run.finished", StringComparison.Ordinal));
-        Assert.Contains("workflow.node.finished workflow.node.finished:walk-test@1:1:wait:0", rows, StringComparer.Ordinal);   // 'cancelled' status
-        Assert.Contains("workflow.node.finished workflow.node.finished:walk-test@1:1:after:0", rows, StringComparer.Ordinal);   // 'skipped' status
+        Assert.Contains($"workflow.node.finished workflow.node.finished:{rig.Slug}@1:1:wait:0", rows, StringComparer.Ordinal);   // 'cancelled' status
+        Assert.Contains($"workflow.node.finished workflow.node.finished:{rig.Slug}@1:1:after:0", rows, StringComparer.Ordinal);   // 'skipped' status
     }
 
     [Fact]
@@ -145,7 +145,7 @@ public sealed class GraphWorkflowTests(SindriTimeSkippingServer server) : IClass
         Assert.Equal(WorkflowRunStatus.Queued, queued.Status);
         Assert.Equal(WorkflowRunStatus.Succeeded, firstEnded.Status);
         Assert.Equal(WorkflowRunStatus.Succeeded, secondEnded.Status);
-        Assert.Equal(["start walk-test@1:1/wait", "done walk-test@1:1/wait", "start walk-test@1:2/wait", "done walk-test@1:2/wait"], rig.Blocks.Log);
+        Assert.Equal([$"start {rig.Slug}@1:1/wait", $"done {rig.Slug}@1:1/wait", $"start {rig.Slug}@1:2/wait", $"done {rig.Slug}@1:2/wait"], rig.Blocks.Log);
     }
 
     [Fact]
