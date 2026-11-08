@@ -1,6 +1,7 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Views;
@@ -38,7 +39,7 @@ public sealed class WorkflowNotifyRowsTests
 
         Assert.Equal("workflow-notify:nightly@3:12:notify", row.Row.Id.Value);
         Assert.Equal(NeedsYouKind.WorkflowNotify, row.Row.Kind);
-        Assert.Equal(new NeedsYouSubject(SubjectKind.WorkflowRun, Aw.Sindri.Core.Ids.SubjectId.From("nightly.3:12")), row.Row.Subject);
+        Assert.Equal(new NeedsYouSubject(SubjectKind.WorkflowRun, SubjectId.From("nightly.3:12")), row.Row.Subject);
         Assert.Equal("Drifted", row.Row.Title);
         Assert.Equal("2 contracts changed", row.Row.Reason);
         Assert.Equal(notify.Sequence, row.Sequence);
