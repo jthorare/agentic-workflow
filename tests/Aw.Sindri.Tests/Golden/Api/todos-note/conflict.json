@@ -1,0 +1,44 @@
+{
+  "asOf": {
+    "cursor": 14,
+    "ledgerHead": 14,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "todo": {
+    "id": "td_01jc5a8xq0n4w7ms2t9r3vbk6e",
+    "text": "reply to Sam about the offsite",
+    "due": "2026-01-02",
+    "links": [],
+    "addedAt": "2025-12-30T09:15:00.0000000Z",
+    "addedBy": "human:ui",
+    "addedVia": null,
+    "doneAt": null,
+    "removed": false,
+    "removedAt": null,
+    "removedBy": null,
+    "version": 3,
+    "lastBy": "human:ui",
+    "lastVia": null,
+    "conflict": {
+      "sindri": {
+        "text": "reply to Sam about the offsite",
+        "due": "2026-01-02",
+        "links": [],
+        "done": true,
+        "removed": false
+      },
+      "obsidian": {
+        "text": "reply to Sam about the offsite venue",
+        "due": "2026-01-03",
+        "links": [
+          "sindri://linear/ENG-12"
+        ],
+        "done": false,
+        "removed": false
+      },
+      "noteHash": "sha256:9b2d4f6e8a0c1b3d5f7e9a2c4b6d8f0e1a3f1c0a9e5b7d2c4e6a8b0d1f3e5c7a"
+    }
+  }
+}
