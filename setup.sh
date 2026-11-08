@@ -583,9 +583,9 @@ if [ "$WITH_META" = "1" ]; then
   if aw_dry; then
     for _p in $PROVIDERS; do echo "  [dry-run] would run scripts/install-meta.sh --provider $_p"; done
   else
-    # install-meta exits 3 when it refuses the tree (a worktree or a tree that is not the team's repo): setup warns and goes on;
-    # any other failure (an unsupported OS, a failed publish) fails setup at its end with install-meta's message: there is no quiet
-    # skip, so a reinstall never leaves an old binary in place without saying so
+    # any install-meta failure (exit 3, a refused worktree or a tree that is not the team's repo, an unsupported OS, a failed
+    # publish) fails setup at its end with install-meta's message: there is no quiet skip, so a reinstall never leaves an old
+    # binary in place without saying so (#2283)
     # (set -e must not end setup here: the rc is kept, the rest of setup runs, and the exit code and message come last)
     aw_setup_meta_step "$SCRIPT_DIR" $PROVIDERS || META_RC=$?
   fi

@@ -25,26 +25,26 @@ public sealed class ShellTextScaleTests
     }
 
     [Fact]
-    public async Task The_stored_text_scale_reaches_both_lists_when_settings_load()
+    public async Task The_stored_text_scale_reaches_the_list_when_settings_load()
     {
         await new Preferences(_store).Update(_ => UiPreferences.Defaults with { TextScale = 1.3 });
         var (shell, settings) = Wired();
 
         await settings.Load(Token);
 
-        Assert.Equal((1.3, 1.3), (shell.NeedsYou.TextScale, shell.Strip.TextScale));
+        Assert.Equal(1.3, shell.NeedsYou.TextScale);
     }
 
     [Fact]
-    public async Task A_change_in_settings_reaches_both_lists_at_once()
+    public async Task A_change_in_settings_reaches_the_list_at_once()
     {
         var (shell, settings) = Wired();
         await settings.Load(Token);
 
         settings.TextScale = 1.3;
-        Assert.Equal((1.3, 1.3), (shell.NeedsYou.TextScale, shell.Strip.TextScale));
+        Assert.Equal(1.3, shell.NeedsYou.TextScale);
 
         settings.TextScale = 1.1;
-        Assert.Equal((1.1, 1.1), (shell.NeedsYou.TextScale, shell.Strip.TextScale));
+        Assert.Equal(1.1, shell.NeedsYou.TextScale);
     }
 }

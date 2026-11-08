@@ -156,10 +156,10 @@ internal sealed partial class ReviewsPageViewModel : ObservableObject, IDisposab
 
     /// <summary>Enter on a row (or a click): asks the shell to open the PR's review page.</summary>
     /// <param name="row">The row.</param>
-    internal void OpenRow(ReviewRowViewModel row) => OpenRequested?.Invoke(this, new Workflows.OpenRequestedEventArgs(Navigation.DeepLink.ForReview(row.Repo, row.Number)));
+    internal void OpenRow(ReviewRowViewModel row) => OpenRequested?.Invoke(this, new ReviewOpenRequestedEventArgs(Navigation.DeepLink.ForReview(row.Repo, row.Number)));
 
     /// <summary>A row asked for its review page: the link is 'reviews/&lt;owner&gt;/&lt;repo&gt;/&lt;number&gt;'.</summary>
-    internal event EventHandler<Workflows.OpenRequestedEventArgs>? OpenRequested;
+    internal event EventHandler<ReviewOpenRequestedEventArgs>? OpenRequested;
 
     /// <summary>True while the page is the one shown.</summary>
     internal bool IsActive { get; private set; }

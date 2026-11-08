@@ -173,21 +173,6 @@ public sealed class SetupRepoFormTests
         Assert.Equal((false, true), (empty, typed));
     }
 
-    [Fact]
-    public async Task A_step_button_never_sends_a_protected_approval()
-    {
-        _f.Serve(With("all-done", "recipes", "needs-you", "ApproveAllRecipes"));
-        var setup = await _f.Read(Token);
-
-        foreach (var step in setup.Steps.Where(s => s.Action is not null))
-        {
-            step.Action!.Open();
-        }
-
-        Assert.Equal((0, 0, 0), (_f.Server.AddedRepos.Count, _f.Server.RegisteredMcp.Count, _f.Server.ApproveAllJobCalls));
-        Assert.Equal(0, _f.Server.RefreshContextMapCalls);
-    }
-
     private static System.Text.Json.Nodes.JsonNode WithError(System.Text.Json.Nodes.JsonNode list, string step, string code, string sentence)
     {
         var served = list["steps"]!.AsArray().Single(s => (string)s!["id"]! == step)!;

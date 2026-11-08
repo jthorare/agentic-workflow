@@ -9,7 +9,7 @@ using Aw.Sindri.Ui.ViewModels.Controls;
 namespace Aw.Sindri.Ui.ViewModels.Setup;
 
 /// <summary>
-/// The setup checklist, the first section of Settings, and Home's one line while any step is open (setup spec §2.4): the six steps in the app's own words, the progress strip, and
+/// The setup checklist, the first section of Settings, and Home's one line while any step is open (setup spec §2.4): the steps in the app's own words (five since the recipes step went; an old server's "recipes" step is dropped), the progress strip, and
 /// which rows are open. The list is read on connect and with every event, and the steps are kept by id across reads. It decides nothing: states, sentences and actions are the
 /// API's; what the app adds is words, order, and the one button the map shows when it failed.
 /// </summary>
@@ -17,7 +17,7 @@ internal sealed partial class SetupViewModel : ObservableObject
 {
     private const string MapStep = "map";
     private const string McpStep = "mcp";
-    private const string RecipesStep = "recipes";
+    private const string RetiredRecipesStep = "recipes";
     private const string MapRefresh = "RefreshContextMap";
     private const string RegisterAction = "RegisterMcp";
     private const string ConflictRefusal = "SND-JOB-409";
@@ -129,17 +129,6 @@ internal sealed partial class SetupViewModel : ObservableObject
         RevealRequested?.Invoke(this, new SetupRevealEventArgs(step));
     }
 
-    /// <summary>Has the next reveal bring one step into view and open it (the Recipes page's Approve new workflows lands on the workflows row).</summary>
-    /// <param name="id">The step's id.</param>
-    internal void RevealStepNext(string id)
-    {
-        _revealStep = id;
-        if (_rows.TryGetValue(id, out var row))
-        {
-            row.IsOpen = true;
-        }
-    }
-
     /// <summary>The first step still to do (or being worked on), as Home's line names it; empty when setup is finished or before the first list.</summary>
     public string HomeStepText { get; private set => Set(ref field, value); } = string.Empty;
 
@@ -196,7 +185,6 @@ internal sealed partial class SetupViewModel : ObservableObject
         {
             row.Rederive();
             row.Repo?.Refresh();
-            Confirm(row);
         }
     }
 

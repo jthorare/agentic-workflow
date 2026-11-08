@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # tests/ui-checks/ux-a6-needs-you-count.sh — regression check for the UX-pass finding A-6: Home's Needs-you header says "5 need you" while
 # the card shows 4 rows and there is no "all 5" link. The header counts every row the API serves (AttentionSummary.For: feed.Rows.Count);
-# the card leaves out the setup rows ("Approve all new workflows", "Turn on for your repos") while Home's setup line stands for them
+# the card leaves out the setup rows ("Turn on for your repos") while Home's setup line stands for them
 # (ShellViewModel.Setup.cs ShownOnHome), so with three decisions (under the card's cap, so no overflow link) the two disagree.
 # It drives the REAL sindri-ui (UI driver, docs/csharp/ui-driver.md) against a guarded fixture home (scripts/sindri-ui-fixture.sh through
 # scripts/sindri-prove.sh): three decisions open on the approved fixture profile (its setup rows are in the feed), then one is decided at the CLI.

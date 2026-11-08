@@ -1,5 +1,4 @@
 using Aw.Sindri.Ui.Api.Setup;
-using Aw.Sindri.Ui.ViewModels.Approvals;
 
 namespace Aw.Sindri.Ui.ViewModels.Setup;
 
@@ -31,10 +30,9 @@ internal sealed partial class SetupViewModel
             ? string.Equals(step.State, "failed", StringComparison.Ordinal) ? MapRefresh : null
             : step.Action is { Length: > 0 } served && !HasForm(step, served) ? served : null;
 
-    // The repo form and the workflows row confirm in the row when the catalog lets the app; otherwise they keep the terminal copy of the action.
+    // The repo form is in the row when the catalog lets the app send what it sends; otherwise the step keeps the terminal copy of the action.
     private bool HasForm(SetupStepView step, string action) =>
-        Ready(action) && (string.Equals(step.Id, "repo", StringComparison.Ordinal)
-            || (string.Equals(step.Id, RecipesStep, StringComparison.Ordinal) && string.Equals(action, ApproveAllViewModel.Action, StringComparison.Ordinal)));
+        Ready(action) && string.Equals(step.Id, "repo", StringComparison.Ordinal);
 
     private bool Ready(string action) => _catalog.IsReady(action);
 
@@ -65,10 +63,6 @@ internal sealed partial class SetupViewModel
             row.Repo = new SetupRepoFormViewModel(() => _url, _api, _folders, () => Ready("AddRepo"), note => Started(row, note));
             row.Repo.Update(row.Step);
         }
-        else if (string.Equals(row.Id, RecipesStep, StringComparison.Ordinal))
-        {
-            row.Workflows = new ApproveAllViewModel(_catalog, () => _url, _api, _clock);
-        }
     }
 
     private void Started(SetupStepViewModel row, string note)
@@ -78,23 +72,4 @@ internal sealed partial class SetupViewModel
     }
 
     private bool Knows(string action, bool inApp) => inApp || _catalog.Row(action) is not null || Labels.SetupCli(action).Length > 0;
-
-    // The confirmation in the workflows row follows their step: asked for while it needs the person, dropped when it does not. An approval under way is left to finish.
-    private static void Confirm(SetupStepViewModel row)
-    {
-        if (row.Workflows is { } all)
-        {
-            if (row.NeedsYou)
-            {
-                if (!all.IsOpen)
-                {
-                    _ = all.Open(CancellationToken.None);
-                }
-            }
-            else if (all.IsOpen && all.Phase is not (ApproveAllPhase.Applying or ApproveAllPhase.Done))
-            {
-                all.Close();
-            }
-        }
-    }
 }

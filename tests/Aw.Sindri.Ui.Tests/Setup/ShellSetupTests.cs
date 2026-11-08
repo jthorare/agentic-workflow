@@ -2,7 +2,6 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
-using Aw.Sindri.Ui.ViewModels.Approvals;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Microsoft.Extensions.Time.Testing;
 
@@ -42,7 +41,7 @@ public sealed class ShellSetupTests
 
         Assert.True(before >= 1);
         Assert.True(_server.SetupCalls > before);
-        Assert.Equal(["repo", "profile", "recipes", "mcp", "map"], shell.Setup.Steps.Select(s => s.Id), StringComparer.Ordinal);
+        Assert.Equal(["repo", "profile", "mcp", "map"], shell.Setup.Steps.Select(s => s.Id), StringComparer.Ordinal);
     }, Token);
 
     [Fact]
@@ -98,20 +97,6 @@ public sealed class ShellSetupTests
     }, Token);
 
     [Fact]
-    public Task The_workflows_row_reads_its_plan_in_the_row_and_approves_nothing() => UiThread.Run(async () =>
-    {
-        var list = SetupFixture.With("profile-needs-approval", "recipes", "needs-you", "ApproveAllRecipes");
-        _server.SetupAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, list.ToJsonString());
-        var shell = await Connected();
-        await ShellWait.Until(shell, () => shell.Setup.Steps.Any(s => s.Id == "recipes" && s.Workflows!.Phase == ApproveAllPhase.Plan), Token);
-        var row = shell.Setup.Steps.Single(s => s.Id == "recipes");
-
-        Assert.Null(row.Action);   // the catalog lets the app confirm: the plan and hold stand in for the button
-        Assert.False(shell.ApproveAll.IsOpen);   // and the dialog stays shut
-        Assert.Empty(_server.Approvals);
-    }, Token);
-
-    [Fact]
     public Task Home_hides_only_the_setup_row_the_line_names_and_shows_them_all_again_when_setup_is_finished() => UiThread.Run(async () =>
     {
         _server.NeedsYouView = RouteAnswer.SpecShaped("needs-you", "extra-setup-rows");
@@ -123,9 +108,9 @@ public sealed class ShellSetupTests
 
         _server.SetupAnswer = RouteAnswer.Api("setup", "all-done");
         await shell.Health.RefreshViews(new Uri("http://127.0.0.1:7410/"), Token);
-        await ShellWait.Until(shell, () => shell.NeedsYou.Rows.Count == 2, Token);
+        await ShellWait.Until(shell, () => shell.NeedsYou.Rows.Count == 1, Token);
 
-        Assert.Equal(["setup:mcp", "setup:recipes"], shell.NeedsYou.Rows.Select(r => r.Id).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["setup:mcp"], shell.NeedsYou.Rows.Select(r => r.Id).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }, Token);
 
     [Fact]
@@ -139,20 +124,7 @@ public sealed class ShellSetupTests
         var ids = shell.NeedsYou.Rows.Select(r => r.Id).Order(StringComparer.Ordinal).ToArray();
 
         Assert.Equal(shell.Setup.Steps.Single(s => s.Id == "repo").Title, shell.Setup.HomeStepText);
-        Assert.Equal(["setup:mcp", "setup:recipes"], ids, StringComparer.Ordinal);   // setup:repo is the line's, the rest stay
+        Assert.Equal(["setup:mcp"], ids, StringComparer.Ordinal);   // setup:repo is the line's, setup:recipes is a retired ghost, the rest stay
     }, Token);
 
-    [Fact]
-    public Task Approve_nudge_lands_on_the_outdated_list() => UiThread.Run(async () =>
-    {
-        _server.RecipeListAnswer = FakeSindriApi.OutdatedRecipeList();
-        _server.SetupAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, SetupFixture.With("extra-priority-mix", "recipes", "done").ToJsonString());
-        var shell = await Connected();
-        var landed = "none";
-        shell.Setup.RevealRequested += (_, e) => landed = e.StepId;
-
-        shell.RecipesPage.RequestApproveNew();
-
-        Assert.Equal((PageId.Settings, "recipes", true), (shell.CurrentPage, landed, shell.Setup.Steps.Single(s => s.Id == "recipes").IsOpen));
-    }, Token);
 }
