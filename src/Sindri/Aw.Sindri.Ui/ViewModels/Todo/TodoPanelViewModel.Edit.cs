@@ -58,7 +58,7 @@ internal sealed partial class TodoPanelViewModel
             return;
         }
 
-        edit.Message = string.Empty;
+        (edit.Message, edit.Latest) = (string.Empty, string.Empty);
         var (change, problem) = ChangeOf(edit);
         if (change is null)
         {
@@ -139,7 +139,9 @@ internal sealed partial class TodoPanelViewModel
             await Refresh(url, CancellationToken.None).ConfigureAwait(true);
             if (_todos?.FirstOrDefault(t => string.Equals(t.Id, edit.Id, StringComparison.Ordinal)) is { } latest)
             {
-                (edit.Version, edit.Message) = (latest.Version, Labels.TodoEditChanged);   // the next Enter saves against the latest
+                IReadOnlyList<string> refs = [.. latest.Links.Select(l => l.Ref)];
+                edit.Rebase(latest, refs, Labels.TodoEditNow(latest.Text, latest.Due, refs));   // the next Enter saves against the latest, shown beside the fields
+                edit.Message = Labels.TodoEditChanged;
             }
         }
         else if (string.Equals(error.Code, "SND-TODO-423", StringComparison.Ordinal))

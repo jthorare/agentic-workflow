@@ -9,6 +9,14 @@ internal static partial class Labels
     /// <summary>The line after "SND-TODO-409": the row was read again, the typed text stays.</summary>
     internal const string TodoEditChanged = "Changed somewhere else. Here's the latest";
 
+    /// <summary>Beside the fields after "SND-TODO-409": the todo as it is now, its text, day and links.</summary>
+    /// <param name="text">The latest text.</param>
+    /// <param name="due">The latest day, if any.</param>
+    /// <param name="refs">The latest link refs.</param>
+    /// <returns>"Now: reply to Sam · 2026-11-13 · ENG-12".</returns>
+    internal static string TodoEditNow(string text, DateOnly? due, IReadOnlyList<string> refs) =>
+        "Now: " + string.Join(" · ", new[] { text, due?.ToString("yyyy-MM-dd", global::System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty, string.Join(", ", refs) }.Where(p => p.Length > 0));
+
     /// <summary>The line after "SND-TODO-423": a both-places conflict is open on the todo.</summary>
     internal const string TodoEditBoth = "Changed in both places. Pick a version first";
 

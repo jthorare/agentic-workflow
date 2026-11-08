@@ -9,7 +9,7 @@ internal sealed class TodoEditViewModel : ObservableObject
     internal TodoEditViewModel(string id, long version, string text, DateOnly? due, IReadOnlyList<string> refs)
     {
         (Id, Version, OriginalText, OriginalDue, OriginalRefs) = (id, version, text, due, refs);
-        (Text, Due, Links) = (text, due?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty, string.Join(", ", refs));
+        (Text, Due, Links) = (text, Iso(due), string.Join(", ", refs));
     }
 
     /// <summary>Saves what changed (Enter in a field); the panel sets it.</summary>
@@ -63,11 +63,37 @@ internal sealed class TodoEditViewModel : ObservableObject
     public bool IsSaving { get; internal set => Set(ref field, value); }
 
     /// <summary>The text when the edit opened.</summary>
-    internal string OriginalText { get; }
+    internal string OriginalText { get; private set; }
 
     /// <summary>The due day when the edit opened.</summary>
-    internal DateOnly? OriginalDue { get; }
+    internal DateOnly? OriginalDue { get; private set; }
 
     /// <summary>The link refs when the edit opened.</summary>
-    internal IReadOnlyList<string> OriginalRefs { get; }
+    internal IReadOnlyList<string> OriginalRefs { get; private set; }
+
+    /// <summary>After "changed somewhere else": a field the owner didn't touch takes the latest value, a typed one stays, and the next save diffs against the latest.</summary>
+    /// <param name="latest">The todo as Sindri has it now.</param>
+    /// <param name="refs">Its link refs.</param>
+    /// <param name="now">The "Now: …" line.</param>
+    internal void Rebase(Api.TodoView latest, IReadOnlyList<string> refs, string now)
+    {
+        if (string.Equals(Text, OriginalText, StringComparison.Ordinal))
+        {
+            Text = latest.Text;
+        }
+
+        if (string.Equals(Due, Iso(OriginalDue), StringComparison.Ordinal))
+        {
+            Due = Iso(latest.Due);
+        }
+
+        if (string.Equals(Links, string.Join(", ", OriginalRefs), StringComparison.Ordinal))
+        {
+            Links = string.Join(", ", refs);
+        }
+
+        (Version, OriginalText, OriginalDue, OriginalRefs, Latest) = (latest.Version, latest.Text, latest.Due, refs, now);
+    }
+
+    private static string Iso(DateOnly? day) => day?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
 }
