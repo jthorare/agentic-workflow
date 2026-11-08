@@ -12,7 +12,7 @@ namespace Aw.Sindri.Features.AddTodo;
 
 /// <summary>
 /// Adds a todo (todo spec §4.1, §4.4; request class): checks and scrubs the text and links, then inside one lock per actor lets <see cref="TodoAdds"/> clear it (a retried client id returns the todo it made and doesn't count,
-/// then the 500 open todos cap and the hourly limit), and appends 'todo.added' keyed by the client id (else by the new todo id).
+/// then the 500 open todos cap and the hourly limit), and appends 'todo.added' keyed by the actor and the client id (else by the new todo id).
 /// </summary>
 /// <param name="adds">What an add must clear.</param>
 /// <param name="input">Checks and scrubs the fields.</param>
@@ -63,7 +63,7 @@ internal sealed class AddTodoService(TodoAdds adds, TodoInput input, ILedgerStor
     {
         var id = TodoId.New(ids);
         var added = new TodoAdded(id, fields.Text ?? request.Text, request.Due, fields.Links ?? [], request.ClientId, who.By, TodoWrite.Via(request.Piped));
-        var key = request.ClientId is { } named ? $"{EventTypes.TodoAdded}:client:{named.Value}" : $"{EventTypes.TodoAdded}:{id.Value}";
+        var key = request.ClientId is { } named ? $"{EventTypes.TodoAdded}:{who.By}:client:{named.Value}" : $"{EventTypes.TodoAdded}:{id.Value}";
         var appended = await TodoWrite.Append(ledger, who.Grant, events.Entry(EventTypes.TodoAdded, added, key), who.Caller.CommandId, cancellationToken).ConfigureAwait(false);
         return appended.IsError ? appended.Error : new TodoAccepted(appended.Value, id, 1, request.Due);
     }

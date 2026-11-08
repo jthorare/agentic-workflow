@@ -25786,6 +25786,7 @@ static Aw.Sindri.Core.Todos.TodoWrite.Append(Aw.Sindri.Core.Ledger.ILedgerStore!
 static Aw.Sindri.Core.Todos.TodoWrite.Begin(Aw.Sindri.Core.Commands.ICallerContextAccessor! callers, Aw.Sindri.Core.Lease.HeldLease! held, string! action) -> Aw.Kernel.Result<(Aw.Sindri.Core.Commands.CallerContext! Caller, Aw.Sindri.Core.Lease.LeaseGrant! Grant)>!
 static Aw.Sindri.Core.Todos.TodoWrite.By(Aw.Sindri.Core.Commands.CallerContext! caller) -> string!
 static Aw.Sindri.Core.Todos.TodoWrite.Via(bool piped) -> string?
+static Aw.Sindri.Core.Todos.TodoWrite.VersionKey(Aw.Sindri.Core.Ids.TodoId id, long version) -> string!
 Aw.Sindri.Core.Todos.TodoAddWindow
 Aw.Sindri.Core.Todos.TodoAddWindow.Lock(string! actor) -> System.Threading.SemaphoreSlim!
 Aw.Sindri.Core.Todos.TodoAddWindow.Refresh(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, System.DateTimeOffset now, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
@@ -25802,7 +25803,7 @@ Aw.Sindri.Core.Todos.TodoInput.TodoInput(Aw.Sindri.Core.Text.ITextScrubber! scru
 static Aw.Sindri.Core.Todos.TodoDecisions.NoEdit(string? text, System.DateOnly? due, bool clearDue, System.Collections.Generic.IReadOnlyList<string!>? links) -> Aw.Kernel.Error?
 static readonly Aw.Sindri.Core.Todos.TodoAddWindow.Span -> System.TimeSpan
 Aw.Sindri.Core.Todos.TodoAddWindow.Dispose() -> void
-Aw.Sindri.Core.Todos.TodoAddWindow.Find(Aw.Sindri.Core.Ids.TodoClientId clientId) -> Aw.Sindri.Core.Todos.TodoEarlierAdd?
+Aw.Sindri.Core.Todos.TodoAddWindow.Find(string! by, Aw.Sindri.Core.Ids.TodoClientId clientId) -> Aw.Sindri.Core.Todos.TodoEarlierAdd?
 Aw.Sindri.Core.Todos.TodoAddWindow.Within(string! by, bool pipeOnly, System.DateTimeOffset now) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.TodoRecentAdd!>!
 Aw.Sindri.Core.Todos.TodoEarlierAdd
 Aw.Sindri.Core.Todos.TodoEarlierAdd.<Clone>$() -> Aw.Sindri.Core.Todos.TodoEarlierAdd!

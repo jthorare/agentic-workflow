@@ -15,6 +15,12 @@ public sealed class DueWordsTests
     [InlineData("wed", "2026-11-18")]   // the next Wednesday, never today
     [InlineData("sun", "2026-11-15")]
     [InlineData("Fri", "2026-11-13")]
+    [InlineData("thurs", "2026-11-12")]   // the long and alternate names the quick-add box takes too
+    [InlineData("thur", "2026-11-12")]
+    [InlineData("tues", "2026-11-17")]
+    [InlineData("weds", "2026-11-18")]
+    [InlineData("Friday", "2026-11-13")]
+    [InlineData("sunday", "2026-11-15")]
     [InlineData("11-20", "2026-11-20")]
     [InlineData("11-11", "2026-11-11")]   // today hasn't passed
     [InlineData("11-10", "2027-11-10")]   // passed: next year

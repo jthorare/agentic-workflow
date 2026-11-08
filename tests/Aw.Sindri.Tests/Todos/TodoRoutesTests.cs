@@ -26,7 +26,7 @@ public sealed partial class TodoRoutesTests
     {
         var host = await GoldenHost.Start(temporary: true, Token, ItemScenarios.ProfileYaml);
         await ViewScenarios.Approve(host, Token);
-        _ = KeepViewsCaughtUp(host);
+        host.Own(new Awaited(KeepViewsCaughtUp(host)));
         return host;
     }
 
@@ -48,6 +48,12 @@ public sealed partial class TodoRoutesTests
         {
             // the host stopped
         }
+    }
+
+    // why: the loop ends when the host stops, and the host awaits it on dispose (after StopAsync), so an exception in it fails the test instead of going unobserved
+    private sealed class Awaited(Task task) : IAsyncDisposable
+    {
+        public async ValueTask DisposeAsync() => await task;
     }
 
     private static async Task<Answer> Add(GoldenHost host, (string Name, string Value)[] caller, string text, string? clientId = null, string query = "") =>

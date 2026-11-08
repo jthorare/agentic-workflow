@@ -1,3 +1,4 @@
+using Aw.Kernel;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
@@ -26,7 +27,7 @@ public sealed class AddTodoTests
         var recorded = Assert.Single(_h.Slice.Store.Events);
         var payload = _h.Payload<TodoAdded>(recorded);
         Assert.Equal(EventTypes.TodoAdded, recorded.Envelope.Type);
-        Assert.Equal("todo.added:client:c-1", recorded.IdempotencyKey);
+        Assert.Equal("todo.added:human:cli:client:c-1", recorded.IdempotencyKey);
         Assert.Equal(("rotate the staging key", new DateOnly(2026, 11, 10), "human:cli"), (payload.Text, payload.Due, payload.By));
         Assert.Equal(["sindri://linear/ENG-12"], payload.Links);
         Assert.Equal((payload.Id, 1L, new DateOnly(2026, 11, 10)), (added.Value.Id, added.Value.Version, added.Value.Due));
@@ -57,6 +58,25 @@ public sealed class AddTodoTests
         Assert.True(first.IsSuccess && retry.IsSuccess);
         Assert.Equal(first.Value.Id, retry.Value.Id);
         _ = Assert.Single(_h.Slice.Store.Events);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Another_actor_reusing_a_client_id_gets_its_own_todo()
+    {
+        await _h.Lease();
+        var request = new AddTodoRequest("rotate the staging key", ClientId: TodoClientId.From("c-1"));
+        Result<TodoAccepted> mine;
+        using (_h.Cli())
+        {
+            mine = await _h.Add().Handle(request, Token);
+        }
+
+        using var session = _h.Session();
+        var theirs = await _h.Add().Handle(request, Token);
+
+        Assert.True(mine.IsSuccess && theirs.IsSuccess, theirs.IsError ? theirs.Error.ToString() : null);
+        Assert.NotEqual(mine.Value.Id, theirs.Value.Id);
+        Assert.Equal(2, _h.Slice.Store.Events.Count);
     }
 
     [Fact, Trait("Lane", "unit")]

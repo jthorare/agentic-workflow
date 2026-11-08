@@ -78,14 +78,15 @@ public sealed class TodoAddWindow : IDisposable
         }
     }
 
-    /// <summary>The todo an earlier add with this client id made.</summary>
+    /// <summary>The todo an earlier add by <paramref name="by"/> with this client id made. Another actor's client id never matches (todo spec §4.1).</summary>
+    /// <param name="by">Who writes ('by' of the event).</param>
     /// <param name="clientId">The client id.</param>
     /// <returns>The todo, or null when none did.</returns>
-    public TodoEarlierAdd? Find(TodoClientId clientId)
+    public TodoEarlierAdd? Find(string by, TodoClientId clientId)
     {
         lock (_byClient)
         {
-            return _byClient.GetValueOrDefault(clientId.Value);
+            return _byClient.GetValueOrDefault(ClientKey(by, clientId));
         }
     }
 
@@ -103,13 +104,16 @@ public sealed class TodoAddWindow : IDisposable
         }
     }
 
+    // one actor's client ids: "<by>\n<clientId>" (a newline is in neither)
+    private static string ClientKey(string by, TodoClientId clientId) => by + "\n" + clientId.Value;
+
     private void Note(LedgerEvent recorded, TodoAdded added, DateTimeOffset now)
     {
         if (added.ClientId is { } client)
         {
             lock (_byClient)
             {
-                _ = _byClient.TryAdd(client.Value, new TodoEarlierAdd(added.Id, recorded.Sequence, added.Due));
+                _ = _byClient.TryAdd(ClientKey(added.By, client), new TodoEarlierAdd(added.Id, recorded.Sequence, added.Due));
             }
         }
 

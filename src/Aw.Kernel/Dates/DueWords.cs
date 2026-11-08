@@ -7,7 +7,7 @@ public static class DueWords
 {
     private const string Hint = "Use today, tomorrow, mon..sun, MM-dd or yyyy-MM-dd.";
 
-    /// <summary>Takes a trailing due word off <paramref name="typed"/>: 'today', 'tomorrow', 'mon'..'sun' (the next one, never today), 'MM-dd' (the next one, so next year once passed) or 'yyyy-MM-dd'. A trailing quote mark keeps the word as text.</summary>
+    /// <summary>Takes a trailing due word off <paramref name="typed"/>: 'today', 'tomorrow', a weekday, short or long ('mon', 'thurs', 'friday'; the next one, never today), 'MM-dd' (the next one, so next year once passed) or 'yyyy-MM-dd'. A trailing quote mark keeps the word as text.</summary>
     /// <param name="typed">The typed text.</param>
     /// <param name="today">The local date today.</param>
     /// <returns>The text and the date, or SND-TODO-003 for a word that looks like a date and isn't one.</returns>
@@ -116,13 +116,13 @@ public static class DueWords
 
     private static DayOfWeek? Weekday(string w) => w switch
     {
-        "mon" => DayOfWeek.Monday,
-        "tue" => DayOfWeek.Tuesday,
-        "wed" => DayOfWeek.Wednesday,
-        "thu" => DayOfWeek.Thursday,
-        "fri" => DayOfWeek.Friday,
-        "sat" => DayOfWeek.Saturday,
-        "sun" => DayOfWeek.Sunday,
+        "mon" or "monday" => DayOfWeek.Monday,
+        "tue" or "tues" or "tuesday" => DayOfWeek.Tuesday,
+        "wed" or "weds" or "wednesday" => DayOfWeek.Wednesday,
+        "thu" or "thur" or "thurs" or "thursday" => DayOfWeek.Thursday,
+        "fri" or "friday" => DayOfWeek.Friday,
+        "sat" or "saturday" => DayOfWeek.Saturday,
+        "sun" or "sunday" => DayOfWeek.Sunday,
         _ => null,
     };
 }

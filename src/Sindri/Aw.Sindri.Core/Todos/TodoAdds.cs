@@ -20,6 +20,7 @@ namespace Aw.Sindri.Core.Todos;
 /// <param name="window">What the ledger says about earlier adds.</param>
 public sealed class TodoAdds(IViewReader views, ILedgerStore ledger, EventFactory events, TimeProvider clock, TodoAddWindow window)
 {
+    // the cap is read from the views inside the per-actor lock, so two actors at 499 can both add (501): a small overshoot the spec accepts (§4.4)
     private const int MaxOpen = 500;
     private const int MaxPerHour = 20;
 
@@ -45,7 +46,7 @@ public sealed class TodoAdds(IViewReader views, ILedgerStore ledger, EventFactor
             return seen.Error;
         }
 
-        if (clientId is { } client && window.Find(client) is { } earlier)
+        if (clientId is { } client && window.Find(by, client) is { } earlier)
         {
             return await Replay(earlier, caller, cancellationToken).ConfigureAwait(false);
         }
