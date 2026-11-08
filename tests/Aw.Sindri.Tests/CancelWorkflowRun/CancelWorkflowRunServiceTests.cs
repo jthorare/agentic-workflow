@@ -31,7 +31,6 @@ public sealed class CancelWorkflowRunServiceTests
     [Theory]
     [InlineData(WorkflowRunStatus.Running)]
     [InlineData(WorkflowRunStatus.Waiting)]
-    [InlineData(WorkflowRunStatus.Queued)]
     public async Task A_run_in_flight_is_cancelled_through_the_canceller(WorkflowRunStatus status)
     {
         var run = await Insert(1, status);
@@ -41,6 +40,19 @@ public sealed class CancelWorkflowRunServiceTests
         Assert.True(result.IsSuccess);
         Assert.Equal(run.Id, result.Value.Run);
         Assert.Equal([run.Id], _canceller.Cancelled);
+    }
+
+    [Fact]
+    public async Task Cancelling_a_queued_run_marks_it_cancelled_without_asking_temporal()
+    {
+        var run = await Insert(4, WorkflowRunStatus.Queued);   // a queued run has no Temporal workflow yet
+
+        var result = await _service.Handle(new CancelWorkflowRunRequest(run.Id, "owner"), Token);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(run.Id, result.Value.Run);
+        Assert.Empty(_canceller.Cancelled);
+        Assert.Equal(WorkflowRunStatus.Cancelled, (await _runs.Get(run.Id, Token)).Value.Status);
     }
 
     [Fact]
