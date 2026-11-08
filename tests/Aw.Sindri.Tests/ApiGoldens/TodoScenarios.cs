@@ -13,13 +13,26 @@ internal static class TodoScenarios
     private static readonly string[] _markSlugs = ["todos-done", "todos-reopen", "todos-remove", "todos-restore"];
 
     /// <summary>The (slug, scenario) pairs of this class.</summary>
-    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted")];
+    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted"), ("todos-note-check", "counts")];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
     public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario));
 
     /// <summary>Starts the scenario's host: the item profile, approved by the body.</summary>
-    public static Task<GoldenHost> Start(CancellationToken ct) => GoldenHost.Start(temporary: true, ct, ItemScenarios.ProfileYaml);
+    /// <param name="slug">The route; the note check's host also maps a library vault holding the sample note.</param>
+    /// <param name="ct">Cancellation.</param>
+    /// <returns>The started host.</returns>
+    public static Task<GoldenHost> Start(string slug, CancellationToken ct) =>
+        GoldenHost.Start(temporary: true, ct, string.Equals(slug, "todos-note-check", StringComparison.Ordinal) ? NoteVaultProfile() : ItemScenarios.ProfileYaml);
+
+    // a vault folder at a fixed place under the temp folder with the note the golden counts (3 open, one with a pasted link, 1 done); the answer carries no path
+    private static string NoteVaultProfile()
+    {
+        var vault = Path.Combine(Path.GetTempPath(), "aw-golden-todo-vault");
+        _ = Directory.CreateDirectory(vault);
+        File.WriteAllText(Path.Combine(vault, "Todo.md"), "# Todo\n- [ ] reply to Sam\n- [ ] rotate the staging key\n- [ ] read [the docs](https://example.com)\n- [x] pay rent\n\nnotes\n");
+        return ItemScenarios.ProfileYaml + $"context:\n  sources:\n    library:\n      vaults:\n        - {{ name: notes, path: {vault} }}\n";
+    }
 
     /// <summary>Runs the scenario against <paramref name="host"/> and returns the body to compare.</summary>
     public static async Task<string> Body(GoldenHost host, string slug, string scenario, CancellationToken ct)
@@ -27,6 +40,11 @@ internal static class TodoScenarios
         await ViewScenarios.Approve(host, ct);
         await ViewScenarios.CatchUp(host, ct);
         var human = ItemScenarios.Human(host);
+        if (slug == "todos-note-check")
+        {
+            return (await host.Http.Ask(Post("/sindri/todos/note/check", Request(slug, scenario), human))).Body;
+        }
+
         if (slug == "todos-add")
         {
             return (await host.Http.Ask(Post("/sindri/todos", Request(slug, scenario), human))).Body;
