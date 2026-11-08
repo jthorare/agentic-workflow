@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using Aw.Sindri.Core.Ledger;
@@ -68,7 +69,7 @@ public sealed class TodoNoteCheckRouteTests : IDisposable
     [Fact, Trait("Lane", "integration")]
     public async Task Only_the_first_five_lines_that_cannot_import_are_listed()
     {
-        await File.WriteAllTextAsync(Path.Combine(_vault, "Todo.md"), string.Concat(Enumerable.Range(1, 7).Select(static i => $"- [ ] item {i} [x](https://e.com)\n")), Token);
+        await File.WriteAllTextAsync(Path.Combine(_vault, "Todo.md"), string.Concat(Enumerable.Range(1, 7).Select(static i => string.Create(CultureInfo.InvariantCulture, $"- [ ] item {i} [x](https://e.com)\n"))), Token);
         await using var host = await Start();
 
         var json = Root(await host.Http.Ask(Post(Route, Body("notes", "Todo.md"), ItemScenarios.Human(host))));

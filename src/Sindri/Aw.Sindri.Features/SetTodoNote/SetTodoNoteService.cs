@@ -1,6 +1,6 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
-using Aw.Sindri.Features.TodoNoteProfile;
+using Aw.Sindri.Core.Todos;
 
 namespace Aw.Sindri.Features.SetTodoNote;
 

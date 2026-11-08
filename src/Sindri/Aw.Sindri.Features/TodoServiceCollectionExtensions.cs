@@ -1,8 +1,8 @@
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Todos;
 using Aw.Sindri.Features.AddTodo;
-using Aw.Sindri.Features.CheckTodoNote;
 using Aw.Sindri.Features.ChangeTodo;
+using Aw.Sindri.Features.CheckTodoNote;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.GetTodo;
 using Aw.Sindri.Features.GetTodoNote;
@@ -10,7 +10,6 @@ using Aw.Sindri.Features.ListTodos;
 using Aw.Sindri.Features.MarkTodo;
 using Aw.Sindri.Features.SetTodoNote;
 using Aw.Sindri.Features.StopTodoNote;
-using Aw.Sindri.Features.TodoNoteProfile;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Features;

@@ -1,5 +1,5 @@
 using Aw.Sindri.Core.Commands;
-using Aw.Sindri.Features.TodoNoteProfile;
+using Aw.Sindri.Core.Todos;
 
 namespace Aw.Sindri.Features.StopTodoNote;
 

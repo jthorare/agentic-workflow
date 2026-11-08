@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Features.TodoNoteProfile;
+namespace Aw.Sindri.Core.Todos;
 
 /// <summary>The answer of POST /sindri/todos/note/set and /stop (todo spec §4.4).</summary>
 /// <param name="Changed">False when the profile already had that state and the file was left alone.</param>

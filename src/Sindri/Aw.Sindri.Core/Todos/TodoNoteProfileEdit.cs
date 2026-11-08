@@ -1,14 +1,13 @@
 using Aw.Kernel;
-using Aw.Sindri.Core;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
 
-namespace Aw.Sindri.Features.TodoNoteProfile;
+namespace Aw.Sindri.Core.Todos;
 
 /// <summary>
 /// The one edit of the live profile's 'todo.obsidian' behind 'sindri todo note set' and 'stop' (run in process, no control plane) and the routes POST /sindri/todos/note/set and /stop (todo spec §4.4, §4.5): it plans the edit with
 /// <see cref="IProfileKeyWriter"/> (comments and order kept), has the edited text read and checked before anything is written (a bad vault or note is SND-TODO-002 with the key path), writes it atomically and reads the live hash back.
-/// An <c>ifHash</c> that isn't the live profile's hash is SND-TODO-409 and nothing is written. Live at once: nothing is approved.
+/// An <c xml:lang="en">ifHash</c> that isn't the live profile's hash is SND-TODO-409 and nothing is written. Live at once: nothing is approved.
 /// </summary>
 /// <param name="writer">Plans and writes the edit.</param>
 /// <param name="parser">Reads the edited text.</param>

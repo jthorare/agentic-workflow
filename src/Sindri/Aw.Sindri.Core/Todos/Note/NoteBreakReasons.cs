@@ -23,7 +23,7 @@ public static class NoteBreakReasons
     /// <summary>The reason in a few words, for a list ("markdown link", "due marker inside the text").</summary>
     /// <param name="reason">The break; <see cref="NoteBreak.None"/> is refused.</param>
     /// <returns>For example "markdown link".</returns>
-    public static string Short(NoteBreak reason) => reason switch
+    public static string Brief(NoteBreak reason) => reason switch
     {
         NoteBreak.TwoIds => "two ids",
         NoteBreak.TwoDueMarkers => "two due dates",

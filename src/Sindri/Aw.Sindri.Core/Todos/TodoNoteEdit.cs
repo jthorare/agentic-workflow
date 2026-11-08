@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Features.TodoNoteProfile;
+namespace Aw.Sindri.Core.Todos;
 
 /// <summary>What an edit of 'todo.obsidian' did to the live profile.</summary>
 /// <param name="Path">The profile file.</param>

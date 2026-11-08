@@ -26387,17 +26387,12 @@ Aw.Sindri.Core.Todos.Note.ITodoNoteDisk.Probe(string! vaultRoot, string! note) -
 Aw.Sindri.Core.Todos.Note.NoteCounter
 Aw.Sindri.Core.Todos.Note.NoteCounts
 Aw.Sindri.Core.Todos.Note.NoteCounts.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteCounts!
-Aw.Sindri.Core.Todos.Note.NoteCounts.CantImport.get -> int
 Aw.Sindri.Core.Todos.Note.NoteCounts.CantImport.init -> void
-Aw.Sindri.Core.Todos.Note.NoteCounts.CantImportLines.get -> System.Collections.Generic.IReadOnlyList<int>!
-Aw.Sindri.Core.Todos.Note.NoteCounts.CantImportLines.init -> void
-Aw.Sindri.Core.Todos.Note.NoteCounts.Deconstruct(out int Open, out int Done, out int Other, out int Importable, out int CantImport, out System.Collections.Generic.IReadOnlyList<int>! CantImportLines) -> void
 Aw.Sindri.Core.Todos.Note.NoteCounts.Done.get -> int
 Aw.Sindri.Core.Todos.Note.NoteCounts.Done.init -> void
 Aw.Sindri.Core.Todos.Note.NoteCounts.Equals(Aw.Sindri.Core.Todos.Note.NoteCounts? other) -> bool
 Aw.Sindri.Core.Todos.Note.NoteCounts.Importable.get -> int
 Aw.Sindri.Core.Todos.Note.NoteCounts.Importable.init -> void
-Aw.Sindri.Core.Todos.Note.NoteCounts.NoteCounts(int Open, int Done, int Other, int Importable, int CantImport, System.Collections.Generic.IReadOnlyList<int>! CantImportLines) -> void
 Aw.Sindri.Core.Todos.Note.NoteCounts.Open.get -> int
 Aw.Sindri.Core.Todos.Note.NoteCounts.Open.init -> void
 Aw.Sindri.Core.Todos.Note.NoteCounts.Other.get -> int
@@ -26426,7 +26421,6 @@ Aw.Sindri.Core.Todos.Note.NoteFolderFacts.Equals(Aw.Sindri.Core.Todos.Note.NoteF
 Aw.Sindri.Core.Todos.Note.NoteFolderFacts.NoteFolderFacts(bool Writable, bool CanSwap) -> void
 Aw.Sindri.Core.Todos.Note.NoteFolderFacts.Writable.get -> bool
 Aw.Sindri.Core.Todos.Note.NoteFolderFacts.Writable.init -> void
-const Aw.Sindri.Core.Todos.Note.NoteCounter.ListedLines = 5 -> int
 const Aw.Sindri.Core.Todos.Note.NoteCounter.MaxOpen = 500 -> int
 override Aw.Sindri.Core.Profile.TodoObsidianSettings.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Profile.TodoObsidianSettings.GetHashCode() -> int
@@ -26457,3 +26451,55 @@ static Aw.Sindri.Core.Todos.Note.NoteFileFacts.operator !=(Aw.Sindri.Core.Todos.
 static Aw.Sindri.Core.Todos.Note.NoteFileFacts.operator ==(Aw.Sindri.Core.Todos.Note.NoteFileFacts? left, Aw.Sindri.Core.Todos.Note.NoteFileFacts? right) -> bool
 static Aw.Sindri.Core.Todos.Note.NoteFolderFacts.operator !=(Aw.Sindri.Core.Todos.Note.NoteFolderFacts? left, Aw.Sindri.Core.Todos.Note.NoteFolderFacts? right) -> bool
 static Aw.Sindri.Core.Todos.Note.NoteFolderFacts.operator ==(Aw.Sindri.Core.Todos.Note.NoteFolderFacts? left, Aw.Sindri.Core.Todos.Note.NoteFolderFacts? right) -> bool
+Aw.Sindri.Core.Todos.Note.NoteCantImport
+Aw.Sindri.Core.Todos.Note.NoteCantImport.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteCantImport!
+Aw.Sindri.Core.Todos.Note.NoteCantImport.Deconstruct(out int Line, out string! Reason) -> void
+Aw.Sindri.Core.Todos.Note.NoteCantImport.Equals(Aw.Sindri.Core.Todos.Note.NoteCantImport? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteCantImport.Line.get -> int
+Aw.Sindri.Core.Todos.Note.NoteCantImport.Line.init -> void
+Aw.Sindri.Core.Todos.Note.NoteCantImport.NoteCantImport(int Line, string! Reason) -> void
+Aw.Sindri.Core.Todos.Note.NoteCantImport.Reason.get -> string!
+Aw.Sindri.Core.Todos.Note.NoteCantImport.Reason.init -> void
+Aw.Sindri.Core.Todos.Note.NoteCounts.CantImport.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteCantImport!>!
+Aw.Sindri.Core.Todos.Note.NoteCounts.Deconstruct(out int Open, out int Done, out int Other, out int Importable, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteCantImport!>! CantImport) -> void
+Aw.Sindri.Core.Todos.Note.NoteCounts.NoteCounts(int Open, int Done, int Other, int Importable, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteCantImport!>! CantImport) -> void
+override Aw.Sindri.Core.Todos.Note.NoteCantImport.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteCantImport.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteCantImport.ToString() -> string!
+static Aw.Sindri.Core.Todos.Note.NoteBreakReasons.Brief(Aw.Sindri.Core.Todos.Note.NoteBreak reason) -> string!
+static Aw.Sindri.Core.Todos.Note.NoteCantImport.operator !=(Aw.Sindri.Core.Todos.Note.NoteCantImport? left, Aw.Sindri.Core.Todos.Note.NoteCantImport? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteCantImport.operator ==(Aw.Sindri.Core.Todos.Note.NoteCantImport? left, Aw.Sindri.Core.Todos.Note.NoteCantImport? right) -> bool
+Aw.Sindri.Core.Todos.TodoNoteEdit
+Aw.Sindri.Core.Todos.TodoNoteEdit.<Clone>$() -> Aw.Sindri.Core.Todos.TodoNoteEdit!
+Aw.Sindri.Core.Todos.TodoNoteEdit.Changed.get -> bool
+Aw.Sindri.Core.Todos.TodoNoteEdit.Changed.init -> void
+Aw.Sindri.Core.Todos.TodoNoteEdit.Deconstruct(out string! Path, out bool Changed, out string! ProfileHash) -> void
+Aw.Sindri.Core.Todos.TodoNoteEdit.Equals(Aw.Sindri.Core.Todos.TodoNoteEdit? other) -> bool
+Aw.Sindri.Core.Todos.TodoNoteEdit.Path.get -> string!
+Aw.Sindri.Core.Todos.TodoNoteEdit.Path.init -> void
+Aw.Sindri.Core.Todos.TodoNoteEdit.ProfileHash.get -> string!
+Aw.Sindri.Core.Todos.TodoNoteEdit.ProfileHash.init -> void
+Aw.Sindri.Core.Todos.TodoNoteEdit.TodoNoteEdit(string! Path, bool Changed, string! ProfileHash) -> void
+Aw.Sindri.Core.Todos.TodoNoteProfileEdit
+Aw.Sindri.Core.Todos.TodoNoteProfileEdit.Set(string! vault, string! note, string? ifHash, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Todos.TodoNoteEdit!>!>
+Aw.Sindri.Core.Todos.TodoNoteProfileEdit.Stop(string? ifHash, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Todos.TodoNoteEdit!>!>
+Aw.Sindri.Core.Todos.TodoNoteProfileEdit.TodoNoteProfileEdit(Aw.Sindri.Core.Setup.IProfileKeyWriter! writer, Aw.Sindri.Core.Profile.IProfileTextParser! parser, Aw.Sindri.Core.Profile.IProfileSource! live) -> void
+Aw.Sindri.Core.Todos.TodoNoteWritten
+Aw.Sindri.Core.Todos.TodoNoteWritten.<Clone>$() -> Aw.Sindri.Core.Todos.TodoNoteWritten!
+Aw.Sindri.Core.Todos.TodoNoteWritten.Changed.get -> bool
+Aw.Sindri.Core.Todos.TodoNoteWritten.Changed.init -> void
+Aw.Sindri.Core.Todos.TodoNoteWritten.Deconstruct(out bool Changed, out string! ProfileHash) -> void
+Aw.Sindri.Core.Todos.TodoNoteWritten.Equals(Aw.Sindri.Core.Todos.TodoNoteWritten? other) -> bool
+Aw.Sindri.Core.Todos.TodoNoteWritten.ProfileHash.get -> string!
+Aw.Sindri.Core.Todos.TodoNoteWritten.ProfileHash.init -> void
+Aw.Sindri.Core.Todos.TodoNoteWritten.TodoNoteWritten(bool Changed, string! ProfileHash) -> void
+override Aw.Sindri.Core.Todos.TodoNoteEdit.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoNoteEdit.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoNoteEdit.ToString() -> string!
+override Aw.Sindri.Core.Todos.TodoNoteWritten.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoNoteWritten.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoNoteWritten.ToString() -> string!
+static Aw.Sindri.Core.Todos.TodoNoteEdit.operator !=(Aw.Sindri.Core.Todos.TodoNoteEdit? left, Aw.Sindri.Core.Todos.TodoNoteEdit? right) -> bool
+static Aw.Sindri.Core.Todos.TodoNoteEdit.operator ==(Aw.Sindri.Core.Todos.TodoNoteEdit? left, Aw.Sindri.Core.Todos.TodoNoteEdit? right) -> bool
+static Aw.Sindri.Core.Todos.TodoNoteWritten.operator !=(Aw.Sindri.Core.Todos.TodoNoteWritten? left, Aw.Sindri.Core.Todos.TodoNoteWritten? right) -> bool
+static Aw.Sindri.Core.Todos.TodoNoteWritten.operator ==(Aw.Sindri.Core.Todos.TodoNoteWritten? left, Aw.Sindri.Core.Todos.TodoNoteWritten? right) -> bool

@@ -46,14 +46,11 @@ internal static class TodoScenarios
         await ViewScenarios.Approve(host, ct);
         await ViewScenarios.CatchUp(host, ct);
         var human = ItemScenarios.Human(host);
-        if (slug == "todos-note-check")
+        if (slug.StartsWith("todos-note-", StringComparison.Ordinal))
         {
-            return (await host.Http.Ask(Post("/sindri/todos/note/check", Request(slug, scenario), human))).Body;
-        }
-
-        if (slug is "todos-note-set" or "todos-note-stop")
-        {
-            return await NoteWrite(host, slug, scenario, human);
+            return string.Equals(slug, "todos-note-check", StringComparison.Ordinal)
+                ? (await host.Http.Ask(Post("/sindri/todos/note/check", Request(slug, scenario), human))).Body
+                : await NoteWrite(host, slug, scenario, human);
         }
 
         if (slug == "todos-add")

@@ -12,7 +12,6 @@ using Aw.Sindri.Features.ListTodos;
 using Aw.Sindri.Features.MarkTodo;
 using Aw.Sindri.Features.SetTodoNote;
 using Aw.Sindri.Features.StopTodoNote;
-using Aw.Sindri.Features.TodoNoteProfile;
 
 namespace Aw.Sindri.Host.Endpoints;
 

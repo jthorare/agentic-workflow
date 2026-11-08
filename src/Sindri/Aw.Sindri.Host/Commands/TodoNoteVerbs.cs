@@ -1,6 +1,5 @@
 using Aw.Sindri.Core;
-using Aw.Sindri.Features.TodoNoteProfile;
-using Microsoft.Extensions.DependencyInjection;
+using Aw.Sindri.Core.Todos;
 
 namespace Aw.Sindri.Host.Commands;
 

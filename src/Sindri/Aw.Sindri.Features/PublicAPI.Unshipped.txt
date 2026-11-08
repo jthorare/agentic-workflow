@@ -6442,27 +6442,18 @@ Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse
 Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.<Clone>$() -> Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse!
 Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.CanSwap.get -> bool
 Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.CanSwap.init -> void
-Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.CantImport.get -> int
 Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.CantImport.init -> void
-Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.CantImportLines.get -> System.Collections.Generic.IReadOnlyList<int>!
-Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.CantImportLines.init -> void
-Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.CheckTodoNoteResponse(string! Vault, string! Note, bool Exists, int Open, int Done, int Other, int Importable, int CantImport, System.Collections.Generic.IReadOnlyList<int>! CantImportLines, int SindriOpen, int WillImport, bool OverCap, bool CanSwap) -> void
-Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.Deconstruct(out string! Vault, out string! Note, out bool Exists, out int Open, out int Done, out int Other, out int Importable, out int CantImport, out System.Collections.Generic.IReadOnlyList<int>! CantImportLines, out int SindriOpen, out int WillImport, out bool OverCap, out bool CanSwap) -> void
 Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.Done.get -> int
 Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.Done.init -> void
 Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.Equals(Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse? other) -> bool
 Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.Exists.get -> bool
 Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.Exists.init -> void
-Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.Importable.get -> int
-Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.Importable.init -> void
 Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.Note.get -> string!
 Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.Note.init -> void
 Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.Open.get -> int
 Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.Open.init -> void
 Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.Other.get -> int
 Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.Other.init -> void
-Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.OverCap.get -> bool
-Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.OverCap.init -> void
 Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.SindriOpen.get -> int
 Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.SindriOpen.init -> void
 Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.Vault.get -> string!
@@ -6471,41 +6462,14 @@ Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.WillImport.get -> int
 Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.WillImport.init -> void
 Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest
 Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest.<Clone>$() -> Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest!
-Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest.Deconstruct(out string! Vault, out string! Note) -> void
 Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest.Equals(Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest? other) -> bool
 Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest.Note.get -> string!
 Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest.Note.init -> void
-Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest.SetTodoNoteRequest(string! Vault, string! Note) -> void
 Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest.Vault.get -> string!
 Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest.Vault.init -> void
-Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse
-Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse.<Clone>$() -> Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse!
-Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse.Changed.get -> bool
-Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse.Changed.init -> void
-Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse.Deconstruct(out string! Path, out string! Vault, out string! Note, out bool Changed) -> void
-Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse.Equals(Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse? other) -> bool
-Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse.Note.get -> string!
-Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse.Note.init -> void
-Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse.Path.get -> string!
-Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse.Path.init -> void
-Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse.SetTodoNoteResponse(string! Path, string! Vault, string! Note, bool Changed) -> void
-Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse.Vault.get -> string!
-Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse.Vault.init -> void
 Aw.Sindri.Features.StopTodoNote.StopTodoNoteRequest
 Aw.Sindri.Features.StopTodoNote.StopTodoNoteRequest.<Clone>$() -> Aw.Sindri.Features.StopTodoNote.StopTodoNoteRequest!
 Aw.Sindri.Features.StopTodoNote.StopTodoNoteRequest.Equals(Aw.Sindri.Features.StopTodoNote.StopTodoNoteRequest? other) -> bool
-Aw.Sindri.Features.StopTodoNote.StopTodoNoteRequest.StopTodoNoteRequest() -> void
-Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse
-Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse.<Clone>$() -> Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse!
-Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse.Changed.get -> bool
-Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse.Changed.init -> void
-Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse.Deconstruct(out string! Path, out System.Collections.Generic.IReadOnlyList<string!>! Keys, out bool Changed) -> void
-Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse.Equals(Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse? other) -> bool
-Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse.Keys.get -> System.Collections.Generic.IReadOnlyList<string!>!
-Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse.Keys.init -> void
-Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse.Path.get -> string!
-Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse.Path.init -> void
-Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse.StopTodoNoteResponse(string! Path, System.Collections.Generic.IReadOnlyList<string!>! Keys, bool Changed) -> void
 override Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteRequest.Equals(object? obj) -> bool
 override Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteRequest.GetHashCode() -> int
 override Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteRequest.ToString() -> string!
@@ -6515,24 +6479,27 @@ override Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.ToString() -> st
 override Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest.Equals(object? obj) -> bool
 override Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest.GetHashCode() -> int
 override Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest.ToString() -> string!
-override Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse.Equals(object? obj) -> bool
-override Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse.GetHashCode() -> int
-override Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse.ToString() -> string!
 override Aw.Sindri.Features.StopTodoNote.StopTodoNoteRequest.Equals(object? obj) -> bool
 override Aw.Sindri.Features.StopTodoNote.StopTodoNoteRequest.GetHashCode() -> int
 override Aw.Sindri.Features.StopTodoNote.StopTodoNoteRequest.ToString() -> string!
-override Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse.Equals(object? obj) -> bool
-override Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse.GetHashCode() -> int
-override Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse.ToString() -> string!
 static Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteRequest.operator !=(Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteRequest? left, Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteRequest? right) -> bool
 static Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteRequest.operator ==(Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteRequest? left, Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteRequest? right) -> bool
 static Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.operator !=(Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse? left, Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse? right) -> bool
 static Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.operator ==(Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse? left, Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse? right) -> bool
 static Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest.operator !=(Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest? left, Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest? right) -> bool
 static Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest.operator ==(Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest? left, Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest? right) -> bool
-static Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse.operator !=(Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse? left, Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse? right) -> bool
-static Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse.operator ==(Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse? left, Aw.Sindri.Features.SetTodoNote.SetTodoNoteResponse? right) -> bool
 static Aw.Sindri.Features.StopTodoNote.StopTodoNoteRequest.operator !=(Aw.Sindri.Features.StopTodoNote.StopTodoNoteRequest? left, Aw.Sindri.Features.StopTodoNote.StopTodoNoteRequest? right) -> bool
 static Aw.Sindri.Features.StopTodoNote.StopTodoNoteRequest.operator ==(Aw.Sindri.Features.StopTodoNote.StopTodoNoteRequest? left, Aw.Sindri.Features.StopTodoNote.StopTodoNoteRequest? right) -> bool
-static Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse.operator !=(Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse? left, Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse? right) -> bool
-static Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse.operator ==(Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse? left, Aw.Sindri.Features.StopTodoNote.StopTodoNoteResponse? right) -> bool
+Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.CantImport.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteCantImport!>!
+Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.Cap.get -> int
+Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.Cap.init -> void
+Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.CheckTodoNoteResponse(string! Vault, string! Note, bool Exists, int Open, int Done, int Other, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteCantImport!>! CantImport, int WillImport, int Cap, int SindriOpen, bool CanSwap) -> void
+Aw.Sindri.Features.CheckTodoNote.CheckTodoNoteResponse.Deconstruct(out string! Vault, out string! Note, out bool Exists, out int Open, out int Done, out int Other, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteCantImport!>! CantImport, out int WillImport, out int Cap, out int SindriOpen, out bool CanSwap) -> void
+Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest.Deconstruct(out string! Vault, out string! Note, out string? IfHash) -> void
+Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest.IfHash.get -> string?
+Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest.IfHash.init -> void
+Aw.Sindri.Features.SetTodoNote.SetTodoNoteRequest.SetTodoNoteRequest(string! Vault, string! Note, string? IfHash = null) -> void
+Aw.Sindri.Features.StopTodoNote.StopTodoNoteRequest.Deconstruct(out string? IfHash) -> void
+Aw.Sindri.Features.StopTodoNote.StopTodoNoteRequest.IfHash.get -> string?
+Aw.Sindri.Features.StopTodoNote.StopTodoNoteRequest.IfHash.init -> void
+Aw.Sindri.Features.StopTodoNote.StopTodoNoteRequest.StopTodoNoteRequest(string? IfHash = null) -> void
