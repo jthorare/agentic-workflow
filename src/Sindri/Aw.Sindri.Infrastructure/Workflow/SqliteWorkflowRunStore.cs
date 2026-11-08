@@ -57,6 +57,14 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
         RecipeSessions.Read(database, LedgerDatabase.WorkflowRunsVersion, [],
             (session, token) => RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.InFlight, c => c.Bind("$workflow", workflow.Value)), WorkflowRunMapper.Instance, token), cancellationToken);
 
+    public async ValueTask<Result<int?>> LatestOccurrence(WorkflowId workflow, string triggerKind, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(triggerKind);
+        var latest = await RecipeSessions.Read(database, LedgerDatabase.WorkflowRunsVersion, [],
+            (session, token) => RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.LatestOfKind, c => c.Bind("$workflow", workflow.Value).Bind("$kind", triggerKind)), WorkflowRunMapper.Instance, token), cancellationToken).ConfigureAwait(false);
+        return latest.IsError ? latest.Error : latest.Value.Count == 0 ? (int?)null : latest.Value[0].Id.Occurrence;
+    }
+
     public ValueTask<Result<WorkflowRun>> SetStatus(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, CancellationToken cancellationToken) =>
         RecipeSessions.Write(database, async ValueTask<Result<WorkflowRun>> (session, token) =>
         {

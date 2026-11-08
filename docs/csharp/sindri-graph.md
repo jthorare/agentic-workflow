@@ -57,3 +57,18 @@ saving on a revision that is no longer the latest is `SND-GRAPH-007`; `Activate`
 A run is a row in `workflow_run` (ledger migration `0009_workflow_runs`; the number is renumbered at the final main merge). Its id is `<slug>@<revision>:<occurrence>`, the primary key, so a second insert of the same id is refused with `SND-GRAPH-100`. Statuses: `queued`, `running`, `waiting`, `succeeded`, `failed`, `cancelled`. `workflow_node_run` holds one row per node and item index; a node's input and output are each cut at 64 KB (UTF-8) and `truncated` is set.
 
 `GraphRunStarter.Start` turns a trigger into a run by the workflow's `concurrency`: `one-per-workflow` (the default) skips and logs a trigger while another run is in flight, `queue` records it as `queued` without starting it, `unlimited` starts every trigger. A failed launch marks the run `failed`.
+
+## Schedules
+
+The built-in service `workflow-schedule` (`Features/WorkflowSchedule`, every minute) starts runs for `schedule` nodes. It is not
+registered yet: it lands with the Temporal launcher in the GraphWorkflow piece, because `IGraphRunLauncher` has no implementation
+until then.
+
+1. For each active workflow, take the `schedule` node of its active revision.
+2. Compute the latest cron tick after the later of the revision's save time and the last fired tick, up to now (`CronExpression.LastTick`, in the node's timezone).
+3. Start one run through `IGraphRunStarter` with trigger `{"kind":"schedule","scheduledFor":"<tick>"}`. The starter decides start, queue or skip by the workflow's `concurrency`.
+
+- Three missed days fire one run, for the latest tick only.
+- **Occurrence** of a schedule run is the tick in whole minutes since the Unix epoch, so firing the same tick twice is SND-GRAPH-100 (one run row).
+- **Last fired tick** is the highest occurrence among the workflow's schedule runs (`IWorkflowRunStore.LatestOccurrence`), so the service keeps no state and needs no ledger migration.
+- **Known gap:** nothing stores when a revision was activated, so the floor is `WorkflowRevision.CreatedAt`. A tick between saving and activating a revision can fire once on activation.

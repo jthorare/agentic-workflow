@@ -53,6 +53,17 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     }
 
     /// <inheritdoc/>
+    public ValueTask<Result<int?>> LatestOccurrence(WorkflowId workflow, string triggerKind, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            var matching = _runs.Where(r => r.WorkflowId == workflow && KindOf(r.Trigger) == triggerKind).ToList();
+            int? latest = matching.Count == 0 ? null : matching.Max(static r => r.Id.Occurrence);
+            return Ok(latest);
+        }
+    }
+
+    /// <inheritdoc/>
     public ValueTask<Result<WorkflowRun>> SetStatus(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, CancellationToken cancellationToken)
     {
         lock (_gate)
@@ -100,6 +111,8 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
             return Ok(rows);
         }
     }
+
+    private static string? KindOf(string trigger) => System.Text.Json.Nodes.JsonNode.Parse(trigger)?["kind"]?.GetValue<string>();
 
     private static ValueTask<Result<T>> Ok<T>(T value) => ValueTask.FromResult<Result<T>>(value);
 

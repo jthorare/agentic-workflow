@@ -24,6 +24,13 @@ public interface IWorkflowRunStore
     /// <returns>The runs.</returns>
     public ValueTask<Result<IReadOnlyList<WorkflowRun>>> InFlight(WorkflowId workflow, CancellationToken cancellationToken);
 
+    /// <summary>The highest occurrence among a workflow's runs started by one kind of trigger, over every revision and every status (a schedule reads its last fired tick from it).</summary>
+    /// <param name="workflow">The workflow.</param>
+    /// <param name="triggerKind">The trigger's 'kind', such as 'schedule'.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The occurrence, or null when no such run exists.</returns>
+    public ValueTask<Result<int?>> LatestOccurrence(WorkflowId workflow, string triggerKind, CancellationToken cancellationToken);
+
     /// <summary>Moves a run to a new status; a final status also sets its end time.</summary>
     /// <param name="id">The run.</param>
     /// <param name="status">The new status.</param>

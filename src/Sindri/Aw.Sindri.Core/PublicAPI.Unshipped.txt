@@ -25080,3 +25080,5 @@ static Aw.Sindri.Core.Graph.Runs.GraphStartRequest.operator ==(Aw.Sindri.Core.Gr
 static Aw.Sindri.Core.Graph.Runs.NodeRunLimits.Cap(string? text, out bool truncated) -> string?
 Aw.Sindri.Core.Graph.Runs.IGraphRunStarter
 Aw.Sindri.Core.Graph.Runs.IGraphRunStarter.Start(Aw.Sindri.Core.Graph.Runs.GraphStartRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Runs.GraphStart!>!>
+Aw.Sindri.Core.Graph.Ids.WorkflowRunId.Occurrence.get -> int
+Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.LatestOccurrence(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, string! triggerKind, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int?>!>

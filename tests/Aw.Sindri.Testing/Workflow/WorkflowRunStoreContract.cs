@@ -148,4 +148,21 @@ public abstract class WorkflowRunStoreContract
 
         Expect.Equal(SindriErrors.GraphRunNotFound.Code, result.Error.Code);
     }
+
+    /// <summary>The newest occurrence of one trigger kind, whatever the run's status; other kinds and other workflows do not count.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task The_latest_occurrence_is_the_highest_number_among_runs_of_one_trigger_kind()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        Expect.Equal<int?>(expected: null, (await store.LatestOccurrence(_workflow, "schedule", Token)).Value);
+        _ = (await store.Insert(Run(40) with { Trigger = "{\"kind\":\"schedule\"}", Status = WorkflowRunStatus.Succeeded }, Token)).Value;
+        _ = (await store.Insert(Run(9) with { Trigger = "{\"kind\":\"schedule\"}" }, Token)).Value;
+        _ = (await store.Insert(Run(99), Token)).Value;
+
+        var latest = (await store.LatestOccurrence(_workflow, "schedule", Token)).Value;
+
+        Expect.Equal(40, latest);
+        Expect.Equal<int?>(expected: null, (await store.LatestOccurrence(WorkflowId.From("WF-00000000000000000000000000000002"), "schedule", Token)).Value);
+    }
 }
