@@ -10,7 +10,7 @@ public sealed class ApiGoldenTests
 {
     // hand-written before their routes (#2076): the Library roots writes in their own slot and the review settings in Ph9's api slot, each registering its rows and leaving this list;
     // the Linear hub's rows (#2077 Ph3) all left it when api served them
-    private static readonly string[] _pendingGoldenFolders = ["library-roots", "review-settings", "review-settings-save", "todos"];
+    private static readonly string[] _pendingGoldenFolders = ["library-roots", "review-settings", "review-settings-save", "todos", "todos-note"];
 
     private static bool IsPending(string file) => _pendingGoldenFolders.Any(p => file.StartsWith(p + "/", StringComparison.Ordinal));
 
