@@ -1,5 +1,14 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Aw.Kernel.Services;
+using Aw.Sindri.Core.Connections;
+using Aw.Sindri.Features.AddConnection;
+using Aw.Sindri.Features.GetConnection;
+using Aw.Sindri.Features.ListConnections;
+using Aw.Sindri.Features.RemoveConnection;
+using Aw.Sindri.Features.TestConnection;
+using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
 
 namespace Aw.Sindri.Host.Mcp;
@@ -82,33 +91,107 @@ internal static class ConnectionTools
     /// <param name="arguments">The call's arguments.</param>
     /// <param name="ct">Cancels the call.</param>
     /// <returns>The tool result.</returns>
-    internal static ValueTask<CallToolResult> CallList(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct) => throw new NotSupportedException();
+    internal static async ValueTask<CallToolResult> CallList(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
+    {
+        if (McpArguments.Only(List, arguments, [.. McpArguments.PageNames]) is { } refused)
+        {
+            return McpResults.Failure(services, refused);
+        }
+
+        var page = McpArguments.ReadPage(arguments);
+        if (page.IsError)
+        {
+            return McpResults.Failure(services, page.Error);
+        }
+
+        var answer = await services.GetRequiredService<IService<ListConnectionsRequest, ListConnectionsResponse>>().Handle(new ListConnectionsRequest(), ct).ConfigureAwait(false);
+        return McpResults.From(services, answer, static listed => string.Create(CultureInfo.InvariantCulture, $"{listed.Connections.Count} connections"), page: page.Value);
+    }
 
     /// <summary>Runs connection_get.</summary>
     /// <param name="services">The request's services.</param>
     /// <param name="arguments">The call's arguments.</param>
     /// <param name="ct">Cancels the call.</param>
     /// <returns>The tool result.</returns>
-    internal static ValueTask<CallToolResult> CallGet(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct) => throw new NotSupportedException();
+    internal static async ValueTask<CallToolResult> CallGet(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
+    {
+        var name = Name(Get, arguments);
+        if (name.IsError)
+        {
+            return McpResults.Failure(services, name.Error);
+        }
+
+        var answer = await services.GetRequiredService<IService<GetConnectionRequest, GetConnectionResponse>>().Handle(new GetConnectionRequest(name.Value), ct).ConfigureAwait(false);
+        return McpResults.From(services, answer, static got => Summary(got.Connection));
+    }
 
     /// <summary>Runs connection_add.</summary>
     /// <param name="services">The request's services.</param>
     /// <param name="arguments">The call's arguments.</param>
     /// <param name="ct">Cancels the call.</param>
     /// <returns>The tool result.</returns>
-    internal static ValueTask<CallToolResult> CallAdd(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct) => throw new NotSupportedException();
+    internal static async ValueTask<CallToolResult> CallAdd(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
+    {
+        if (McpArguments.Only(Add, arguments, "name", "preset", "kind", "clientId", "keyEnv") is { } refused)
+        {
+            return McpResults.Failure(services, refused);
+        }
+
+        var name = McpArguments.RequiredString(Add, arguments, "name", "linear:work");
+        var preset = McpArguments.OptionalString(Add, arguments, "preset");
+        var kind = McpArguments.OptionalString(Add, arguments, "kind");
+        var client = McpArguments.OptionalString(Add, arguments, "clientId");
+        var keyEnv = McpArguments.OptionalString(Add, arguments, "keyEnv");
+        foreach (var bad in new[] { name.IsError ? name.Error : null, preset.IsError ? preset.Error : null, kind.IsError ? kind.Error : null, client.IsError ? client.Error : null, keyEnv.IsError ? keyEnv.Error : null })
+        {
+            if (bad is not null)
+            {
+                return McpResults.Failure(services, bad);
+            }
+        }
+
+        // why: an agent cannot wait minutes for a browser; it gets the consent URL at once and the sign-in finishes in the background
+        var request = new AddConnectionRequest(name.Value, preset.Value, kind.Value, client.Value, keyEnv.Value, [], Wait: false);
+        var answer = await services.GetRequiredService<IService<AddConnectionRequest, AddConnectionResponse>>().Handle(request, ct).ConfigureAwait(false);
+        return McpResults.From(services, answer, static added => added.ConsentUrl is null ? Summary(added.Connection) : "Sign-in started. Give the consentUrl to the owner; the connection finishes when they sign in.");
+    }
 
     /// <summary>Runs connection_test.</summary>
     /// <param name="services">The request's services.</param>
     /// <param name="arguments">The call's arguments.</param>
     /// <param name="ct">Cancels the call.</param>
     /// <returns>The tool result.</returns>
-    internal static ValueTask<CallToolResult> CallTest(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct) => throw new NotSupportedException();
+    internal static async ValueTask<CallToolResult> CallTest(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
+    {
+        var name = Name(Test, arguments);
+        if (name.IsError)
+        {
+            return McpResults.Failure(services, name.Error);
+        }
+
+        var answer = await services.GetRequiredService<IService<TestConnectionRequest, TestConnectionResponse>>().Handle(new TestConnectionRequest(name.Value), ct).ConfigureAwait(false);
+        return McpResults.From(services, answer, static tested => tested.Ok ? "The provider accepted the credential." : "The provider did not accept the credential; see reason.");
+    }
 
     /// <summary>Runs connection_remove.</summary>
     /// <param name="services">The request's services.</param>
     /// <param name="arguments">The call's arguments.</param>
     /// <param name="ct">Cancels the call.</param>
     /// <returns>The tool result.</returns>
-    internal static ValueTask<CallToolResult> CallRemove(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct) => throw new NotSupportedException();
+    internal static async ValueTask<CallToolResult> CallRemove(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
+    {
+        var name = Name(Remove, arguments);
+        if (name.IsError)
+        {
+            return McpResults.Failure(services, name.Error);
+        }
+
+        var answer = await services.GetRequiredService<IService<RemoveConnectionRequest, RemoveConnectionResponse>>().Handle(new RemoveConnectionRequest(name.Value), ct).ConfigureAwait(false);
+        return McpResults.From(services, answer, static removed => removed.SecretDeleted ? "Removed the connection and its secret." : "Removed the connection (it had no stored secret).");
+    }
+
+    private static Result<string> Name(string tool, IDictionary<string, JsonElement>? arguments) =>
+        McpArguments.Only(tool, arguments, "name") is { } refused ? refused : McpArguments.RequiredString(tool, arguments, "name", "linear:work");
+
+    private static string Summary(ConnectionView view) => $"{view.Name} ({view.Kind}): {view.Status}";
 }

@@ -9,6 +9,7 @@ using Aw.Sindri.Features.RemoveConnection;
 using Aw.Sindri.Features.TestConnection;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Connections;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.Connections;
@@ -62,7 +63,7 @@ internal sealed class ConnectionHarness
     public ICallerContextAccessor Callers { get; }
 
     public AddConnectionService Add(ISignInSession? signIn = null)
-        => new(Store, Secrets, Presets, signIn ?? SignIn, Environment, Clock, Callers);
+        => new(Store, Secrets, Presets, signIn ?? SignIn, Environment, Clock, Callers, new TypedLog<AddConnectionService>(Logs));
 
     public ListConnectionsService List() => new(Store);
 
@@ -70,7 +71,21 @@ internal sealed class ConnectionHarness
 
     public RemoveConnectionService Remove() => new(Store, Secrets);
 
-    public TestConnectionService Test() => new(Store, Secrets, Presets, Probe, Clock);
+    public TestConnectionService Test() => new(Store, Secrets, Presets, Probe, Clock, new TypedLog<TestConnectionService>(Logs));
+
+    /// <summary>Lends the capturing log to a service that wants an ILogger of its own type.</summary>
+    /// <typeparam name="T">The service.</typeparam>
+    /// <param name="inner">The capturing log.</param>
+    private sealed class TypedLog<T>(ILogger inner) : ILogger<T>
+    {
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull => inner.BeginScope(state);
+
+        public bool IsEnabled(LogLevel logLevel) => inner.IsEnabled(logLevel);
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+            => inner.Log(logLevel, eventId, state, exception, formatter);
+    }
 
     public static AddConnectionRequest Oauth(string name = "linear:work", string? client = "client-123", bool wait = true)
         => new(name, Preset: "linear", Kind: null, Client: client, KeyEnv: null, Scopes: [], Wait: wait);

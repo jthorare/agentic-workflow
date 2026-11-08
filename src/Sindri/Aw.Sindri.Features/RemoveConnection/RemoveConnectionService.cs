@@ -12,12 +12,34 @@ internal sealed class RemoveConnectionService(IConnectionStore store, IConnectio
     private readonly IConnectionStore _store = store;
     private readonly IConnectionSecrets _secrets = secrets;
 
-    public ValueTask<Result<RemoveConnectionResponse>> Handle(RemoveConnectionRequest request, CancellationToken cancellationToken) => throw Pending();
-
-    // A red stub: the ports are held so the tests build the class the way the green one is built.
-    private NotSupportedException Pending()
+    public async ValueTask<Result<RemoveConnectionResponse>> Handle(RemoveConnectionRequest request, CancellationToken cancellationToken)
     {
-        _ = (_store, _secrets);
-        return new NotSupportedException();
+        ArgumentNullException.ThrowIfNull(request);
+        var name = ConnectionName.Parse(request.Name);
+        if (name.IsError)
+        {
+            return name.Error;
+        }
+
+        var found = await _store.Get(name.Value, cancellationToken).ConfigureAwait(false);
+        if (found.IsError)
+        {
+            return ConnectionFailures.Safe(found.Error);
+        }
+
+        var secretDeleted = false;
+        if (found.Value.SecretPointer is { } pointer)
+        {
+            var deleted = _secrets.Delete(pointer);
+            if (deleted.IsError)
+            {
+                return ConnectionFailures.Safe(deleted.Error);   // the row stays, so the pointer is not lost
+            }
+
+            secretDeleted = true;
+        }
+
+        var removed = await _store.Remove(name.Value, cancellationToken).ConfigureAwait(false);
+        return removed.IsError ? ConnectionFailures.Safe(removed.Error) : new RemoveConnectionResponse(name.Value.ToString(), secretDeleted);
     }
 }

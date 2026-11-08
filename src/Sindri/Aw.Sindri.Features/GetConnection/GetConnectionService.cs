@@ -10,12 +10,16 @@ internal sealed class GetConnectionService(IConnectionStore store) : IService<Ge
 {
     private readonly IConnectionStore _store = store;
 
-    public ValueTask<Result<GetConnectionResponse>> Handle(GetConnectionRequest request, CancellationToken cancellationToken) => throw Pending();
-
-    // A red stub: the ports are held so the tests build the class the way the green one is built.
-    private NotSupportedException Pending()
+    public async ValueTask<Result<GetConnectionResponse>> Handle(GetConnectionRequest request, CancellationToken cancellationToken)
     {
-        _ = _store;
-        return new NotSupportedException();
+        ArgumentNullException.ThrowIfNull(request);
+        var name = ConnectionName.Parse(request.Name);
+        if (name.IsError)
+        {
+            return name.Error;
+        }
+
+        var found = await _store.Get(name.Value, cancellationToken).ConfigureAwait(false);
+        return found.IsError ? ConnectionFailures.Safe(found.Error) : new GetConnectionResponse(ConnectionView.From(found.Value));
     }
 }

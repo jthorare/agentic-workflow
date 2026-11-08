@@ -10,12 +10,11 @@ internal sealed class ListConnectionsService(IConnectionStore store) : IService<
 {
     private readonly IConnectionStore _store = store;
 
-    public ValueTask<Result<ListConnectionsResponse>> Handle(ListConnectionsRequest request, CancellationToken cancellationToken) => throw Pending();
-
-    // A red stub: the ports are held so the tests build the class the way the green one is built.
-    private NotSupportedException Pending()
+    public async ValueTask<Result<ListConnectionsResponse>> Handle(ListConnectionsRequest request, CancellationToken cancellationToken)
     {
-        _ = _store;
-        return new NotSupportedException();
+        var listed = await _store.List(cancellationToken).ConfigureAwait(false);
+        return listed.IsError
+            ? ConnectionFailures.Safe(listed.Error)
+            : new ListConnectionsResponse([.. listed.Value.Select(ConnectionView.From)]);
     }
 }
