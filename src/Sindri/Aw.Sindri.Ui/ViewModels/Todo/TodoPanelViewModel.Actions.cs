@@ -13,7 +13,19 @@ internal sealed partial class TodoPanelViewModel
     private Uri? _url;
 
     /// <summary>True while focus is inside the panel (the Todo region, spec D6); the view sets it.</summary>
-    public bool HasFocus { get; internal set => Set(ref field, value); }
+    public bool HasFocus
+    {
+        get;
+        internal set
+        {
+            if (!value)
+            {
+                _ = LinkList.Close();   // the link list is the panel's: it goes when focus leaves
+            }
+
+            Set(ref field, value);
+        }
+    }
 
     /// <summary>Raised after a key changed a todo and Sindri accepted it: the toast with its Undo.</summary>
     internal event EventHandler<TodoActedEventArgs>? Acted;
@@ -34,7 +46,7 @@ internal sealed partial class TodoPanelViewModel
     internal Task Remove(string id) => Find(id) is { Removed: false } todo ? Act(todo, TodoMove.Remove) : Task.CompletedTask;
 
     // The todo as the panel shows it; a row with an open conflict takes no key here (its picks are another slice).
-    private TodoView? Find(string id) => _todos?.FirstOrDefault(t => string.Equals(t.Id, id, StringComparison.Ordinal)) is { Conflict: null } todo && !_inFlight.ContainsKey(id) ? todo : null;
+    private TodoView? Find(string id) => _todos?.FirstOrDefault(t => string.Equals(t.Id, id, StringComparison.Ordinal)) is { Conflict: null } todo && !_inFlight.ContainsKey(id) && !string.Equals(Editing?.Id, id, StringComparison.Ordinal) ? todo : null;
 
     private async Task Act(TodoView before, TodoMove move)
     {

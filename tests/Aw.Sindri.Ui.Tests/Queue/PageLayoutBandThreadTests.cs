@@ -14,7 +14,9 @@ namespace Aw.Sindri.Ui.Tests.Queue;
 [Collection(HeadlessWindows.Name)]
 public sealed class PageLayoutBandThreadTests
 {
+    private const int MinDispatches = 20;
     private static readonly TimeSpan _window = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan _cap = TimeSpan.FromSeconds(10);   // a busy box gets longer to reach MinDispatches (#2346)
 
     private static Task<T> OnUi<T>(Func<T> body) =>
         HeadlessUnitTestSession.GetOrStartForAssembly(typeof(PageLayoutBandThreadTests).Assembly).Dispatch(body, TestContext.Current.CancellationToken);
@@ -23,9 +25,10 @@ public sealed class PageLayoutBandThreadTests
     public async Task The_band_tests_never_take_the_ui_thread_from_the_headless_session()
     {
         var clock = Stopwatch.StartNew();
+        using var stop = new CancellationTokenSource();
         var bandLoop = Task.Run(async () =>
         {
-            while (clock.Elapsed < _window)
+            while (!stop.IsCancellationRequested)
             {
                 await Invoke(nameof(PageLayoutBandTests.The_compact_band_keeps_title_status_and_age));
                 await Invoke(nameof(PageLayoutBandTests.The_columns_beside_the_title_leave_it_160_px_at_the_start_of_each_tier), "Narrow", 760d);
@@ -35,19 +38,12 @@ public sealed class PageLayoutBandThreadTests
         var dispatched = 0;
         var failed = 0;
         string? firstMessage = null;
-        while (clock.Elapsed < _window)
+        while ((clock.Elapsed < _window || dispatched < MinDispatches) && clock.Elapsed < _cap)
         {
             dispatched++;
             try
             {
-                _ = await OnUi(() =>
-                {
-                    var window = new Window { Content = new Border(), Width = 200, Height = 100 };
-                    window.Show();
-                    Dispatcher.UIThread.RunJobs();
-                    window.Close();
-                    return true;
-                });
+                _ = await ShowAndClose();
             }
             catch (InvalidOperationException e)
             {
@@ -56,11 +52,22 @@ public sealed class PageLayoutBandThreadTests
             }
         }
 
+        await stop.CancelAsync();
         await bandLoop;
 
-        Assert.True(dispatched >= 20, string.Create(CultureInfo.InvariantCulture, $"only {dispatched} dispatches ran"));
+        Assert.True(dispatched >= MinDispatches, string.Create(CultureInfo.InvariantCulture, $"only {dispatched} dispatches ran"));
         Assert.True(failed == 0, string.Create(CultureInfo.InvariantCulture, $"{failed} of {dispatched} dispatches failed; first: {firstMessage}"));
     }
+
+    // One window shown and closed on the session's thread: it throws when another thread took the UI thread.
+    private static Task<bool> ShowAndClose() => OnUi(() =>
+    {
+        var window = new Window { Content = new Border(), Width = 200, Height = 100 };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        window.Close();
+        return true;
+    });
 
     private static async Task Invoke(string method, params object[] args)
     {
