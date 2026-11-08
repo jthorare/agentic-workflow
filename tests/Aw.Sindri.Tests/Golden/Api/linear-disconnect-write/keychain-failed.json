@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc4918#section-11.2",
+  "title": "SND-LINEAR-014",
+  "status": 422,
+  "detail": "Couldn't remove the write key from your keychain (the OS keychain would not delete the key); nothing changed (fix: unlock your keychain and press Remove again)",
+  "traceId": "<trace>"
+}

@@ -18,13 +18,15 @@ namespace Aw.Sindri.Host.IndexSources;
 /// <param name="pointers">Reads the stored key back, to prove the pointer resolves.</param>
 /// <param name="profile">Writes the pointer into the profile.</param>
 /// <param name="readers">Makes a team reader for the endpoint and the key.</param>
+/// <param name="recorder">Keeps the check for Settings.</param>
 internal sealed class LinearConnect(
     ISecretPrompts prompts,
     IProfileSource profiles,
     ISecretWriter writer,
     ISecretPointers pointers,
     ISourceTokenProfileWriter profile,
-    Func<Uri, string, ILinearTeamReader> readers)
+    Func<Uri, string, ILinearTeamReader> readers,
+    LinearCheckRecorder recorder)
 {
     private const string Service = "sindri-index";
     private const string Account = "linear";
@@ -71,7 +73,7 @@ internal sealed class LinearConnect(
 
         var url = settings.Value.Linear?.Url ?? DefaultUrl;
         var checkedTeams = await CheckTeams(settings.Value.LinearTeams, url, key.Value, cancellationToken).ConfigureAwait(false);
-        return checkedTeams.IsError ? checkedTeams.Error : Save(key.Value, url, checkedTeams.Value);
+        return checkedTeams.IsError ? checkedTeams.Error : await Save(key.Value, url, checkedTeams.Value, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<string>> AskKey(CancellationToken cancellationToken)
@@ -88,7 +90,7 @@ internal sealed class LinearConnect(
     }
 
     // A loopback Linear (the fixture's fake) takes only a file: pointer (LinearSettings, SND-CONTEXT-070), so its key never goes to the keychain.
-    private Result<LinearConnected> Save(string key, Uri url, CheckedTeams teams)
+    private async ValueTask<Result<LinearConnected>> Save(string key, Uri url, CheckedTeams teams, CancellationToken cancellationToken)
     {
         var stored = url == DefaultUrl ? writer.Store(Service, Account, key) : writer.StoreInFile(Service, Account, key);
         if (stored.IsError)
@@ -107,6 +109,9 @@ internal sealed class LinearConnect(
         {
             return written.Error;
         }
+
+        // why: the key was just read against Linear, so Settings shows it as checked now; the key is saved by here, so a check that can't be kept only leaves Settings at 'unchecked'
+        _ = await recorder.ReadResolved(stored.Value.ToString(), cancellationToken).ConfigureAwait(false);
 
         // No teams listed: list the ones the key reads, or the Projects page (which shows only listed teams) would stay empty. The owner still approves the profile.
         if (teams.Added.Count > 0)
