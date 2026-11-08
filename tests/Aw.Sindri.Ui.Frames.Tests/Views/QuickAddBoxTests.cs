@@ -102,8 +102,9 @@ public sealed class QuickAddBoxTests : IDisposable
         shell.QuickAdd.Text = "check flaky test fri";
         Settle(window);
 
+        // The shell's clock is A.Noon, Sunday 2026-10-11, so "fri" is the 16th.
         var preview = Named<TextBlock>(window, "QuickAddPreview");
-        Assert.Equal(("Due Fri 11-13", AutomationLiveSetting.Polite), (preview.Text, AutomationProperties.GetLiveSetting(preview)));
+        Assert.Equal(("Due Fri 10-16", AutomationLiveSetting.Polite), (preview.Text, AutomationProperties.GetLiveSetting(preview)));
     });
 
     [Fact]
