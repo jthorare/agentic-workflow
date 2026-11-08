@@ -17,7 +17,7 @@ public sealed class LinearConnectionTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static string CheckedAt => DateTimeOffset.Parse("2026-01-01T09:58:00Z", CultureInfo.InvariantCulture).ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture);
+    private static string CheckedAt => DateTimeOffset.Parse((string)GoldenFiles.Node("linear-connection", "connected")["read"]!["checkedAt"]!, CultureInfo.InvariantCulture).ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture);
 
     private LinearConnectionViewModel Card() => new(() => _api, _server);
 
