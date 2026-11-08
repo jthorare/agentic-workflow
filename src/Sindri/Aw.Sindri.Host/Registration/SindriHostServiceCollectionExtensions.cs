@@ -25,6 +25,7 @@ internal static class SindriHostServiceCollectionExtensions
         .AddSingleton<IEmbeddedRecipes>(static _ => new ManifestEmbeddedRecipes(typeof(ManifestEmbeddedRecipes).Assembly))   // the recipes this build ships; nothing at run time reads recipes/sindri from disk
         .AddSingleton<Projector>()
         .AddSingleton<Endpoints.IProjectFencing, Mcp.ProjectFencing>()   // a session's Projects answer is fenced like sindri_projects' (the fence is in Mcp; Endpoints cannot name it)
+        .AddSingleton<Endpoints.IMemoryFencing, Mcp.MemoryFencing>()   // a session memory read is fenced like the memory tools answers
         .AddSingleton<Endpoints.IReviewFencing, Mcp.ReviewFencing>()   // a session's Reviews list is fenced the same way
         .AddSingleton<Endpoints.ILibraryDocFencing, Mcp.LibraryDocFencing>()   // and a design doc's title, path and error text
         .AddSingleton<Endpoints.ILinearIssueFencing, Mcp.LinearIssueFencing>()   // and the Linear issue list's titles and names
