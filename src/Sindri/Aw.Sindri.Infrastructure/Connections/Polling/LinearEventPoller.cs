@@ -70,29 +70,36 @@ internal sealed class LinearEventPoller(HttpClient http, IConnectionSecrets secr
         }
     }
 
-    // Both nested lists only ask for entries newer than the cursor, so a next page means real overflow and not old entries.
-    private static string Fields(DateTimeOffset? after)
+    // Both nested lists only ask for entries newer than the cursor ($since), so a next page means real overflow and not old entries.
+    private static string Fields(bool since)
     {
-        var nested = after is { } floor ? ", filter: { createdAt: { gt: \"" + floor.UtcDateTime.ToString("O", CultureInfo.InvariantCulture) + "\" } }" : string.Empty;
+        var nested = since ? ", filter: { createdAt: { gt: $since } }" : string.Empty;
         return "identifier title url createdAt comments(first: 10" + nested + ") { " + CommentNodes + " } history(first: 25" + nested + ") { " + HistoryNodes + " }";
     }
 
     private static string Query(DateTimeOffset? after, string? endCursor)
     {
-        var filter = after is { } floor ? $"filter: {{ updatedAt: {{ gt: \"{floor.UtcDateTime.ToString("O", CultureInfo.InvariantCulture)}\" }} }}, " : string.Empty;
-        var query = "query($after: String) { issues(after: $after, " + filter + "first: 50, orderBy: updatedAt) { nodes { " + Fields(after) + " } pageInfo { hasNextPage endCursor } } }";
+        var since = after is not null;
+        var filter = since ? "filter: { updatedAt: { gt: $since } }, " : string.Empty;
+        var declared = since ? "query($after: String, $since: DateTimeOrDuration)" : "query($after: String)";
+        var query = declared + " { issues(after: $after, " + filter + "first: 50, orderBy: updatedAt) { nodes { " + Fields(since) + " } pageInfo { hasNextPage endCursor } } }";
         using var buffer = new MemoryStream();
         using (var writer = new Utf8JsonWriter(buffer))
         {
             writer.WriteStartObject();
             writer.WriteString("query", query);
+            writer.WriteStartObject("variables");
             if (endCursor is not null)
             {
-                writer.WriteStartObject("variables");
                 writer.WriteString("after", endCursor);
-                writer.WriteEndObject();
             }
 
+            if (after is { } floor)
+            {
+                writer.WriteString("since", floor.UtcDateTime.ToString("O", CultureInfo.InvariantCulture));
+            }
+
+            writer.WriteEndObject();
             writer.WriteEndObject();
         }
 
