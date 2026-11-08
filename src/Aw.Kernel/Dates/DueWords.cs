@@ -1,6 +1,4 @@
-using Aw.Kernel;
-
-namespace Aw.Sindri.Core.Todos;
+namespace Aw.Kernel.Dates;
 
 /// <summary>The one due-word parser (todo spec D7): the quick-add box and the CLI read a trailing word, with the machine's local date passed in.</summary>
 public static class DueWords

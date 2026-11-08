@@ -1,4 +1,4 @@
-using Aw.Sindri.Core.Todos;
+using Aw.Kernel.Dates;
 
 namespace Aw.Sindri.Tests.Todos;
 

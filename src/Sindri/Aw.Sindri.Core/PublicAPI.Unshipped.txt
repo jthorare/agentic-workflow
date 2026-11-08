@@ -24790,16 +24790,6 @@ static Aw.Sindri.Core.Ids.TodoClientId.operator ==(Aw.Sindri.Core.Ids.TodoClient
 static Aw.Sindri.Core.Ids.TodoClientId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Ids.TodoClientId
 static Aw.Sindri.Core.Ids.TodoClientId.TryFrom(string? value, out Aw.Sindri.Core.Ids.TodoClientId vo) -> bool
 static Aw.Sindri.Core.Ids.TodoClientId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Ids.TodoClientId result) -> bool
-Aw.Sindri.Core.Todos.DueSplit
-Aw.Sindri.Core.Todos.DueSplit.<Clone>$() -> Aw.Sindri.Core.Todos.DueSplit!
-Aw.Sindri.Core.Todos.DueSplit.Deconstruct(out string! Text, out System.DateOnly? Due) -> void
-Aw.Sindri.Core.Todos.DueSplit.Due.get -> System.DateOnly?
-Aw.Sindri.Core.Todos.DueSplit.Due.init -> void
-Aw.Sindri.Core.Todos.DueSplit.DueSplit(string! Text, System.DateOnly? Due) -> void
-Aw.Sindri.Core.Todos.DueSplit.Equals(Aw.Sindri.Core.Todos.DueSplit? other) -> bool
-Aw.Sindri.Core.Todos.DueSplit.Text.get -> string!
-Aw.Sindri.Core.Todos.DueSplit.Text.init -> void
-Aw.Sindri.Core.Todos.DueWords
 Aw.Sindri.Core.Todos.TodoAccepted
 Aw.Sindri.Core.Todos.TodoAccepted.Accepted.get -> Aw.Sindri.Core.Commands.CommandAccepted!
 Aw.Sindri.Core.Todos.TodoAccepted.Accepted.init -> void
@@ -24899,9 +24889,6 @@ Aw.Sindri.Core.Todos.TodoVerb.Restore = 3 -> Aw.Sindri.Core.Todos.TodoVerb
 const Aw.Sindri.Core.Todos.TodoLinks.Max = 10 -> int
 const Aw.Sindri.Core.Todos.TodoText.MaxLength = 280 -> int
 const Aw.Sindri.Core.Views.ViewNames.Todo = "todo" -> string!
-override Aw.Sindri.Core.Todos.DueSplit.Equals(object? obj) -> bool
-override Aw.Sindri.Core.Todos.DueSplit.GetHashCode() -> int
-override Aw.Sindri.Core.Todos.DueSplit.ToString() -> string!
 override Aw.Sindri.Core.Todos.TodoAccepted.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Todos.TodoAccepted.GetHashCode() -> int
 override Aw.Sindri.Core.Todos.TodoAccepted.ToString() -> string!
@@ -24914,10 +24901,6 @@ override Aw.Sindri.Core.Todos.TodoOpenConflict.ToString() -> string!
 override Aw.Sindri.Core.Todos.TodoRow.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Todos.TodoRow.GetHashCode() -> int
 override Aw.Sindri.Core.Todos.TodoRow.ToString() -> string!
-static Aw.Sindri.Core.Todos.DueSplit.operator !=(Aw.Sindri.Core.Todos.DueSplit? left, Aw.Sindri.Core.Todos.DueSplit? right) -> bool
-static Aw.Sindri.Core.Todos.DueSplit.operator ==(Aw.Sindri.Core.Todos.DueSplit? left, Aw.Sindri.Core.Todos.DueSplit? right) -> bool
-static Aw.Sindri.Core.Todos.DueWords.Resolve(string! word, System.DateOnly today) -> Aw.Kernel.Result<System.DateOnly>!
-static Aw.Sindri.Core.Todos.DueWords.Split(string! typed, System.DateOnly today) -> Aw.Kernel.Result<Aw.Sindri.Core.Todos.DueSplit!>!
 static Aw.Sindri.Core.Todos.TodoAccepted.operator !=(Aw.Sindri.Core.Todos.TodoAccepted? left, Aw.Sindri.Core.Todos.TodoAccepted? right) -> bool
 static Aw.Sindri.Core.Todos.TodoAccepted.operator ==(Aw.Sindri.Core.Todos.TodoAccepted? left, Aw.Sindri.Core.Todos.TodoAccepted? right) -> bool
 static Aw.Sindri.Core.Todos.TodoCounts.operator !=(Aw.Sindri.Core.Todos.TodoCounts? left, Aw.Sindri.Core.Todos.TodoCounts? right) -> bool

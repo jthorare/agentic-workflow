@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Core.Todos;
+namespace Aw.Kernel.Dates;
 
 /// <summary>Typed todo text with its trailing due word taken off (todo spec D7).</summary>
 /// <param name="Text">The text without the due word.</param>
