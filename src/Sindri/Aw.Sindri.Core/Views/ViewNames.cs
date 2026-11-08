@@ -55,5 +55,5 @@ public static class ViewNames
     public const string Todo = "todo";
 
     /// <summary>Every view that has a table.</summary>
-    public static IReadOnlyList<string> All { get; } = [CodeIndex, Services, Profile, Items, ItemAliases, ItemTimeline, Requests, Decisions, NeedsYou, Jobs, Launches, RecipeStats, ModelHistory, ModelRuns, ProjectAttached, ProjectHidden];
+    public static IReadOnlyList<string> All { get; } = [CodeIndex, Services, Profile, Items, ItemAliases, ItemTimeline, Requests, Decisions, NeedsYou, Jobs, Launches, RecipeStats, ModelHistory, ModelRuns, ProjectAttached, ProjectHidden, Todo];
 }

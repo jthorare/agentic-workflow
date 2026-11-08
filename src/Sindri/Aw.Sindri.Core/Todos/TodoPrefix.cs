@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Core.Ids;
 
@@ -6,6 +7,8 @@ namespace Aw.Sindri.Core.Todos;
 /// <summary>Resolves the id a CLI user typed (todo spec §4.4 "Ids"): a full id, a unique prefix among the todos the verb acts on, or the note's '^td-…' form.</summary>
 public static class TodoPrefix
 {
+    private const string NotePrefix = "^td-";
+
     /// <summary>Resolves <paramref name="typed"/> among <paramref name="rows"/>.</summary>
     /// <param name="typed">What was typed: 'td_01jc5a', 'td_01jc5a8xq0n4w7ms2t9r3vbk6e' or '^td-01jc5a'.</param>
     /// <param name="verb">The verb, which decides which rows count.</param>
@@ -15,6 +18,29 @@ public static class TodoPrefix
     {
         ArgumentNullException.ThrowIfNull(typed);
         ArgumentNullException.ThrowIfNull(rows);
-        throw new NotSupportedException($"TodoPrefix.Resolve({verb}): make TodoPrefixTests pass");
+        var wanted = typed.Trim().ToLowerInvariant();
+        if (wanted.StartsWith(NotePrefix, StringComparison.Ordinal))
+        {
+            wanted = "td_" + wanted[NotePrefix.Length..];
+        }
+
+        var seen = rows.Where(row => Acts(verb, row)).Select(row => row.Id).ToList();
+        var exact = seen.Where(id => string.Equals(id.Value, wanted, StringComparison.Ordinal)).ToList();
+        var matches = exact.Count == 1 ? exact : [.. seen.Where(id => wanted.Length > 0 && id.Value.StartsWith(wanted, StringComparison.Ordinal))];
+        return matches.Count switch
+        {
+            0 => SindriErrors.TodoNotFound.With($"No todo {typed}."),
+            1 => matches[0],
+            _ => SindriErrors.TodoAmbiguous.With(string.Create(CultureInfo.InvariantCulture, $"{typed} matches {matches.Count} todos: {string.Join(", ", matches.Select(id => id.Value))}")),
+        };
     }
+
+    private static bool Acts(TodoCliVerb verb, TodoRow row) => verb switch
+    {
+        TodoCliVerb.Show => true,
+        TodoCliVerb.Reopen => row.DoneAt is not null && !row.Removed,
+        TodoCliVerb.Restore => row.Removed,
+        TodoCliVerb.Edit or TodoCliVerb.Done or TodoCliVerb.Remove or TodoCliVerb.Keep => row.DoneAt is null && !row.Removed,
+        _ => false,
+    };
 }

@@ -272,3 +272,5 @@ static Aw.Kernel.Dates.DueSplit.operator !=(Aw.Kernel.Dates.DueSplit? left, Aw.K
 static Aw.Kernel.Dates.DueSplit.operator ==(Aw.Kernel.Dates.DueSplit? left, Aw.Kernel.Dates.DueSplit? right) -> bool
 static Aw.Kernel.Dates.DueWords.Resolve(string! word, System.DateOnly today) -> Aw.Kernel.Result<System.DateOnly>!
 static Aw.Kernel.Dates.DueWords.Split(string! typed, System.DateOnly today) -> Aw.Kernel.Result<Aw.Kernel.Dates.DueSplit!>!
+static readonly Aw.Kernel.Dates.DueErrors.BadDue -> Aw.Kernel.ErrorDefinition!
+Aw.Kernel.Dates.DueErrors

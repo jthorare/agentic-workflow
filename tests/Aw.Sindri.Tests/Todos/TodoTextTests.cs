@@ -29,6 +29,20 @@ public sealed class TodoTextTests
         Assert.Equal("SND-TODO-001", over.Error.Code);
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public void The_limit_counts_characters_not_UTF16_units()
+    {
+        // U+1F600 is two UTF-16 units: 280 of them are 560 units but 280 characters.
+        var emoji = "\U0001F600";
+
+        Assert.True(TodoText.Check(string.Concat(Enumerable.Repeat(emoji, TodoText.MaxLength))).IsSuccess);
+
+        var over = TodoText.Check(string.Concat(Enumerable.Repeat(emoji, TodoText.MaxLength + 1)));
+
+        Assert.True(over.IsError);
+        Assert.Equal("SND-TODO-001", over.Error.Code);
+    }
+
     [Theory, Trait("Lane", "unit")]
     [InlineData("")]
     [InlineData("   ")]

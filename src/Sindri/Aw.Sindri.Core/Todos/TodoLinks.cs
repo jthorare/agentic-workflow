@@ -1,12 +1,19 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
 using Aw.Kernel;
 
 namespace Aw.Sindri.Core.Todos;
 
 /// <summary>A todo's links (todo spec §4.3): items, PRs and Linear issues, each stored as the deep link the app opens. One parser per kind, one list of kinds, so a new kind is a row here.</summary>
-public static class TodoLinks
+public static partial class TodoLinks
 {
     /// <summary>The most links a todo takes.</summary>
     public const int Max = 10;
+
+    private delegate string? KindParser(string typed, IReadOnlyCollection<string> forgeHosts);
+
+    // One row per link kind: a new kind is a parser added here.
+    private static readonly KindParser[] _kinds = [ItemLink, ShortPrLink, PrUrlLink, LinearLink];
 
     /// <summary>Reads one typed link: 'ITM-…' (to 'sindri://item/…'), '&lt;owner&gt;/&lt;repo&gt;#&lt;n&gt;' or an https PR url on a configured forge host (to 'sindri://reviews/&lt;owner&gt;/&lt;repo&gt;/&lt;n&gt;'), or a Linear key 'ENG-12' (to 'sindri://linear/ENG-12'). Checks the shape only.</summary>
     /// <param name="typed">The typed link.</param>
@@ -16,7 +23,16 @@ public static class TodoLinks
     {
         ArgumentNullException.ThrowIfNull(typed);
         ArgumentNullException.ThrowIfNull(forgeHosts);
-        throw new NotSupportedException("TodoLinks.Parse: make TodoLinksTests pass");
+        var word = typed.Trim();
+        foreach (var kind in _kinds)
+        {
+            if (kind(word, forgeHosts) is { } link)
+            {
+                return link;
+            }
+        }
+
+        return SindriErrors.TodoLink.With($"'{typed}' isn't an item, PR, Linear key or workflow.");
     }
 
     /// <summary>Reads a whole list: each link parsed, duplicates dropped, at most <see cref="Max"/>.</summary>
@@ -27,6 +43,71 @@ public static class TodoLinks
     {
         ArgumentNullException.ThrowIfNull(typed);
         ArgumentNullException.ThrowIfNull(forgeHosts);
-        throw new NotSupportedException("TodoLinks.ParseAll: make TodoLinksTests pass");
+        var links = new List<string>();
+        foreach (var one in typed)
+        {
+            var parsed = Parse(one, forgeHosts);
+            if (parsed.IsError)
+            {
+                return parsed.Error;
+            }
+
+            if (!links.Contains(parsed.Value, StringComparer.Ordinal))
+            {
+                links.Add(parsed.Value);
+            }
+        }
+
+        return links.Count > Max
+            ? SindriErrors.TodoLink.With($"A todo takes at most {Max} links.")
+            : links;
     }
+
+    private static string? ItemLink(string typed, IReadOnlyCollection<string> forgeHosts) =>
+        ItemShape.IsMatch(typed) ? "sindri://item/" + typed : null;
+
+    private static string? ShortPrLink(string typed, IReadOnlyCollection<string> forgeHosts)
+    {
+        var match = ShortPr.Match(typed);
+        return match.Success && IsName(match.Groups["owner"].Value) && IsName(match.Groups["repo"].Value)
+            ? Review(match.Groups["owner"].Value, match.Groups["repo"].Value, match.Groups["n"].Value)
+            : null;
+    }
+
+    private static string? PrUrlLink(string typed, IReadOnlyCollection<string> forgeHosts)
+    {
+        if (!Uri.TryCreate(typed, UriKind.Absolute, out var url)
+            || !string.Equals(url.Scheme, "https", StringComparison.Ordinal)
+            || url.UserInfo.Length > 0
+            || !url.IsDefaultPort
+            || !forgeHosts.Contains(url.Host, StringComparer.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var match = PrPath.Match(url.AbsolutePath);
+        return match.Success && IsName(match.Groups["owner"].Value) && IsName(match.Groups["repo"].Value)
+            ? Review(match.Groups["owner"].Value, match.Groups["repo"].Value, match.Groups["n"].Value)
+            : null;
+    }
+
+    private static string? LinearLink(string typed, IReadOnlyCollection<string> forgeHosts) =>
+        LinearKey.IsMatch(typed) ? "sindri://linear/" + typed : null;
+
+    private static string Review(string owner, string repo, string number) =>
+        string.Create(CultureInfo.InvariantCulture, $"sindri://reviews/{owner}/{repo}/{long.Parse(number, CultureInfo.InvariantCulture)}");
+
+    private static bool IsName(string part) => !string.Equals(part, ".", StringComparison.Ordinal) && !string.Equals(part, "..", StringComparison.Ordinal);
+
+    [GeneratedRegex("^ITM-[0-9a-f]{32}\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex ItemShape { get; }
+
+    [GeneratedRegex("^(?<owner>[A-Za-z0-9._-]+)/(?<repo>[A-Za-z0-9._-]+)#(?<n>[0-9]{1,9})\\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex ShortPr { get; }
+
+    [GeneratedRegex("^/(?<owner>[A-Za-z0-9._-]+)/(?<repo>[A-Za-z0-9._-]+)/pull/(?<n>[0-9]{1,9})/?\\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex PrPath { get; }
+
+    [GeneratedRegex("^[A-Z][A-Z0-9]{1,9}-[0-9]{1,9}\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex LinearKey { get; }
 }
