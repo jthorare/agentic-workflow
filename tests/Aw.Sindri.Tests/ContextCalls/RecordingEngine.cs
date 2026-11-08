@@ -207,6 +207,8 @@ internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller 
 
     public ValueTask<Result<MapPublishView>> PublishStatus(ContextScope scope, CancellationToken cancellationToken) => inner.PublishStatus(scope, cancellationToken);
 
+    public ValueTask<Result<IReadOnlyList<PinMove>>> PinMoves(MapVersion from, MapVersion to, ContextScope scope, CancellationToken cancellationToken) => inner.PinMoves(from, to, scope, cancellationToken);
+
     public ValueTask<Result<IReadOnlyList<RepoHead>>> MapHeads(ContextScope scope, CancellationToken cancellationToken) => inner.MapHeads(scope, cancellationToken);
 
     public ValueTask<Result<RelinkPinAliasesResult>> RelinkPinAliases(ContextScope scope, CancellationToken cancellationToken) => inner.RelinkPinAliases(scope, cancellationToken);
