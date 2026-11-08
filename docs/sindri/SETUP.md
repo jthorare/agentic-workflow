@@ -376,7 +376,6 @@ Fix: run Sindri first (`sindri`), then run the command.
 | `SND-LEASE-001` | Another live process holds the host lease | One control plane per box: use the running one, or `sindri stop` |
 | `SND-CLI-002` | `serve` didn't come up, or Temporal didn't | `logs/serve.log`, `logs/temporal.log`; `scripts/binaries-lock.sh fetch temporal` |
 | `SND-PROFILE-003` | The `--if-hash` you passed isn't the live profile's: the file changed since you read it | Run `sindri profile validate` and use the new hash |
-
 | `SND-VIEW-001` | The views stalled | `sindri views rebuild` |
 | `SND-INDEX-009` | A source's token pointer doesn't resolve, or the source refused the token | `sindri index connect <source>` again |
 | `SND-INDEX-010` | A listed repo can't be read with that token | Give the token access to it, or take it out of the profile |
