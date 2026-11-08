@@ -140,7 +140,7 @@ public sealed class RepoVerbsTests : IDisposable
         Assert.Contains("sandbox   bubblewrap is missing\n", text, StringComparison.Ordinal);
         Assert.Contains("          sudo apt install bubblewrap\n", text, StringComparison.Ordinal);
         Assert.Contains("offered   Python (pyproject.toml): hosts pypi.org, files.pythonhosted.org; cache paths .cache/pip\n", text, StringComparison.Ordinal);
-        Assert.Contains("Paste this into your profile and approve it (onboarding never edits the profile):\nsandbox:\n  repos:\n    demo:\n      hosts: [pypi.org, files.pythonhosted.org]\n", text, StringComparison.Ordinal);
+        Assert.Contains("Paste this into your profile (onboarding never edits the profile):\nsandbox:\n  repos:\n    demo:\n      hosts: [pypi.org, files.pythonhosted.org]\n", text, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -205,7 +205,7 @@ public sealed class RepoVerbsTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Without_detach_the_verb_follows_the_job_and_says_the_profile_waits_for_approval()
+    public async Task Without_detach_the_verb_follows_the_job_and_says_the_repo_is_live()
     {
         var result = JsonDocument.Parse("""{"repo":"demo","created":true}""").RootElement.Clone();
         var api = new JobApi().Ok("POST", "/sindri/setup/repos", Body(Started)).Ok("GET", "/sindri/jobs/" + Id, View(JobState.Succeeded, rounds: 2, summary: "added demo", result: result));
@@ -220,7 +220,7 @@ public sealed class RepoVerbsTests : IDisposable
         var text = _rig.Out.ToString().ReplaceLineEndings("\n");
         Assert.Contains("checking\n", text, StringComparison.Ordinal);
         Assert.Contains("succeeded: added demo\n", text, StringComparison.Ordinal);
-        Assert.Contains("added demo; your profile waits for your approval: sindri profile approve\n", text, StringComparison.Ordinal);
+        Assert.Contains("added demo; it is live now\n", text, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

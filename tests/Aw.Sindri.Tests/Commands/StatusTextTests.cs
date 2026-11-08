@@ -14,9 +14,9 @@ public sealed class StatusTextTests
     private static readonly ProfileHash _hash = ProfileHash.From("3f1c2a" + new string('0', 58));
     private static readonly ControlEndpoint _endpoint = new(new Uri("http://127.0.0.1:7410"), 42, 3);
 
-    private static GetStatusResponse Status(ViewsStatus views, HealthReport health, bool needsApproval = false) =>
+    private static GetStatusResponse Status(ViewsStatus views, HealthReport health) =>
         new(Running: true, 42, 3, KnownInstants.Epoch,
-            new ProfileStatus(_hash, Problem: needsApproval ? "p" : null, "/home/profile.yaml"), [])
+            new ProfileStatus(_hash, Problem: null, "/home/profile.yaml"), [])
         { Views = views, Health = health };
 
     private static ViewsStatus Fresh() => new(Cursor: 9, LedgerHead: 9, KnownInstants.Epoch, Rebuilding: false, Stalled: false, StalledAt: null, StalledType: null);
@@ -61,31 +61,23 @@ public sealed class StatusTextTests
     {
         var health = new HealthReport(HealthWord.Degraded,
             [new("SND-SCHED-001", "Service heartbeat failed 1 min ago", "service heartbeat failed"),
-             new("SND-PROFILE-005", "Not approved: run `sindri profile approve`", "the profile isn't approved")],
-            "Sindri is degraded: service heartbeat failed and the profile isn't approved.");
+             new("SND-VIEW-001", "Views can't be updated: run `sindri views rebuild`", "the views can't be updated")],
+            "Sindri is degraded: service heartbeat failed and the views can't be updated.");
 
         var text = Render(Status(Fresh(), health));
 
-        Assert.Contains("  health    degraded\n              SND-SCHED-001 Service heartbeat failed 1 min ago\n              SND-PROFILE-005 Not approved: run `sindri profile approve`\n", text, StringComparison.Ordinal);
+        Assert.Contains("  health    degraded\n              SND-SCHED-001 Service heartbeat failed 1 min ago\n              SND-VIEW-001 Views can't be updated: run `sindri views rebuild`\n", text, StringComparison.Ordinal);
     }
 
     [Theory, Trait("Lane", "unit")]
-    [InlineData(HealthWord.Healthy, false, 0)]
-    [InlineData(HealthWord.Degraded, false, 1)]
-    [InlineData(HealthWord.Stalled, false, 1)]
-    [InlineData(HealthWord.Rebuilding, false, 1)]
-    public void Status_exits_1_unless_the_health_word_is_healthy(HealthWord word, bool needsApproval, int expected)
+    [InlineData(HealthWord.Healthy, 0)]
+    [InlineData(HealthWord.Degraded, 1)]
+    [InlineData(HealthWord.Stalled, 1)]
+    [InlineData(HealthWord.Rebuilding, 1)]
+    public void Status_exits_1_unless_the_health_word_is_healthy(HealthWord word, int expected)
     {
-        var status = Status(Fresh(), new HealthReport(word, [], Sentence: null), needsApproval);
+        var status = Status(Fresh(), new HealthReport(word, [], Sentence: null));
 
         Assert.Equal(expected, Verbs.StatusExitCode(status));
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public void A_server_without_health_still_exits_1_for_a_profile_that_needs_approval()
-    {
-        var status = Status(Fresh(), Healthy(), needsApproval: true) with { Health = null };
-
-        Assert.Equal(1, Verbs.StatusExitCode(status));
     }
 }

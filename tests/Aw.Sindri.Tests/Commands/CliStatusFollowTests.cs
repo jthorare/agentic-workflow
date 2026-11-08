@@ -22,8 +22,8 @@ public sealed class CliStatusFollowTests : IDisposable
 
         Assert.Equal(0, await FollowRig.Finished(run));
         var text = _rig.Out.ToString().ReplaceLineEndings("\n");
-        Assert.Contains("the profile needs your approval", text, StringComparison.Ordinal);
-        Assert.Contains("(approved, hash", text, StringComparison.Ordinal);
+        Assert.Contains("the live profile file has a problem", text, StringComparison.Ordinal);
+        Assert.Contains("(hash", text, StringComparison.Ordinal);
         Assert.Contains("\n\n  profile", text, StringComparison.Ordinal);   // a blank line between the two summaries
         Assert.Equal("?after=0", api.StreamQuery);
         Assert.Equal("2", api.LastAfterHeader);
@@ -88,7 +88,7 @@ public sealed class CliStatusFollowTests : IDisposable
         await _rig.Interrupt();
 
         Assert.Equal(0, await FollowRig.Finished(run));
-        Assert.Contains("(approved, hash", _rig.Out.ToString(), StringComparison.Ordinal);
+        Assert.Contains("(hash", _rig.Out.ToString(), StringComparison.Ordinal);
         Assert.Equal(1, api.Streams);   // it didn't ask for another stream
     }
 
