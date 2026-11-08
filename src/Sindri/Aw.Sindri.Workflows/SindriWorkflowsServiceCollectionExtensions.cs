@@ -119,8 +119,6 @@ public static class SindriWorkflowsServiceCollectionExtensions
     /// <summary>The graph engine (issue 2258, PR 6): the run starter and its Temporal launcher, the queue advance, the blocks and the activities of <see cref="GraphWorkflow"/>.</summary>
     private static IServiceCollection AddGraphEngine(this IServiceCollection services)
     {
-        services.TryAddSingleton<INotifyPort, NoNotifyPort>();   // the host's adapters replace these two
-        services.TryAddSingleton<IGraphModelPort, NoGraphModelPort>();
         return services
             .AddSingleton<GraphMirror>()
             .AddSingleton(static provider => GraphBlockRegistry.Standard(provider.GetRequiredService<INotifyPort>(), provider.GetRequiredService<IGraphModelPort>()))

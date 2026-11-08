@@ -8,8 +8,6 @@ using Aw.Sindri.Core.Graph.Runs;
 
 namespace Aw.Sindri.Features.RunWorkflow;
 
-// why: registered with the starter in the GraphWorkflow piece, as the starter itself is.
-#pragma warning disable MA0182
 /// <summary>
 /// Starts a run of a workflow's active revision by hand: refuses an unknown workflow (SND-GRAPH-008), one with no active revision (SND-GRAPH-105)
 /// and a payload that is not a JSON object (SND-GRAPH-106), then asks <see cref="IGraphRunStarter"/>, which starts, queues or skips by the workflow's concurrency.
@@ -119,4 +117,3 @@ internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunS
 
     private sealed record Trigger(WorkflowRecord Record, WorkflowRevision Revision, string Json);
 }
-#pragma warning restore MA0182

@@ -21,6 +21,7 @@ using Aw.Sindri.Features.ApproveProfile;
 using Aw.Sindri.Features.ApproveRecipe;
 using Aw.Sindri.Features.Blocks;
 using Aw.Sindri.Features.CancelJob;
+using Aw.Sindri.Features.CancelWorkflowRun;
 using Aw.Sindri.Features.CheckProfile;
 using Aw.Sindri.Features.CloseItem;
 using Aw.Sindri.Features.Commands;
@@ -81,6 +82,7 @@ using Aw.Sindri.Features.ResumeJob;
 using Aw.Sindri.Features.ResumeService;
 using Aw.Sindri.Features.RevokeRecipe;
 using Aw.Sindri.Features.RunDoctor;
+using Aw.Sindri.Features.RunWorkflow;
 using Aw.Sindri.Features.SampleSessionUsage;
 using Aw.Sindri.Features.Scoping;
 using Aw.Sindri.Features.Scrub;
@@ -121,6 +123,7 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<IItemResolver, ViewItemResolver>()
             .AddScoped<RequestTarget>()
             .AddScoped<IService<StartProcessRequest, StartProcessResponse>, StartProcessService>()
+            .AddScoped<IService<RunWorkflowRequest, RunWorkflowResponse>, RunWorkflowService>().AddScoped<IService<CancelWorkflowRunRequest, CancelWorkflowRunResponse>, CancelWorkflowRunService>()   // 'sindri wf run' and 'wf cancel' (#2258, PR 6)
             .AddScoped<IService<RecordHeartbeatRequest, RecordHeartbeatResponse>, RecordHeartbeatService>()
             .AddRecordServiceRun()
             .AddScoped<IService<CheckProfileRequest, CheckProfileResponse>, CheckProfileService>()

@@ -9,8 +9,6 @@ using Aw.Sindri.Core.Ledger;
 
 namespace Aw.Sindri.Host.Models;
 
-// why: registered with the rest of the workflow piece; until then only tests build it.
-#pragma warning disable MA0182
 /// <summary>Posts a 'notify' node's note as a 'workflow.notify' event, which the needs-you view shows until the run ends. The key is the run and node, so posting the same note again adds nothing.</summary>
 /// <param name="ledger">Appends the event.</param>
 /// <param name="held">The lease this process holds.</param>
@@ -32,4 +30,3 @@ internal sealed class LedgerNotifyPort(ILedgerStore ledger, HeldLease held, Even
         return appended.IsError ? appended.Error : Unit.Value;
     }
 }
-#pragma warning restore MA0182
