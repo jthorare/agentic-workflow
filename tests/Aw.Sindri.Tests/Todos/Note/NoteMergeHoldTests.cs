@@ -171,6 +171,33 @@ public sealed class NoteMergeHoldTests
     }
 
     [Fact]
+    public void Four_removed_of_fifty_open_apply_without_a_hold()
+    {
+        var fifty = Enumerable.Range(1, 50).Select(static n => L(n, Txt("t", n))).ToArray();
+        var sindri = Enumerable.Range(1, 50).Select(static n => S(n, Txt("t", n))).ToArray();
+
+        var r = Run(fifty, fifty[4..], sindri);
+
+        SameSet(["remove 1", "remove 2", "remove 3", "remove 4"], Intents(r));
+        Assert.Equal(NoteHoldOutcome.None, r.Hold);
+    }
+
+    [Fact]
+    public void A_held_line_edited_again_replaces_the_hold_with_the_new_text()
+    {
+        var first = _ten.Select(static (l, i) => i < 4 ? L(i + 1, Txt("edited ", i + 1)) : l).ToArray();
+        var opened = Run(_ten, first, _tenInSindri).HoldNow!;
+        var again = first.Select(static (l, i) => i == 0 ? L(1, "edited again") : l).ToArray();
+
+        var r = Run(_ten, again, _tenInSindri, Options(o => o with { OpenHold = opened }));
+
+        Assert.Equal(NoteHoldOutcome.Replaced, r.Hold);
+        Assert.Empty(r.Intents);
+        Assert.Contains(new HeldChange(Id(1), HeldKind.Edited, L(1, "edited again")), r.HoldNow!.Changes);
+        Assert.True(opened.Changes.Select(static c => c.Id).ToHashSet().SetEquals(r.HoldNow.Changes.Select(static c => c.Id)));
+    }
+
+    [Fact]
     public void A_different_set_replaces_the_open_hold()
     {
         var open = HoldOn(1, 2, 3, 4);

@@ -6,16 +6,16 @@ namespace Aw.Sindri.Core.Todos.Note;
 public sealed record HoldDecision(bool Held, IReadOnlyList<HeldChange> Changes)
 {
     private const int MaxApplied = 3;
-    private const int HalfRuleFrom = 6;
+    private const int MaxAppliedPercent = 10;
 
-    /// <summary>Decides. Held when there are more than 3 counted changes, or, with 6 or more open todos in the base, more than half of them (the half rule can't bind once the first has not fired, since half of 6 is 3; it is kept as the spec words it).</summary>
+    /// <summary>Decides. Held only when there are more than 3 counted changes AND they are more than 10% of the base's open todos (owner, 2026-11-07; 10% is provisional). Exactly 10% is not more than 10%.</summary>
     /// <param name="counted">The removals and edits of open todos and the reopened done ones the note made; ticks, adds and changes to lines that stay '[x]' are not counted by the caller.</param>
     /// <param name="baseOpenTodos">How many open todos the base has.</param>
     /// <returns>The decision.</returns>
     public static HoldDecision Decide(IReadOnlyList<HeldChange> counted, int baseOpenTodos)
     {
         ArgumentNullException.ThrowIfNull(counted);
-        var held = counted.Count > MaxApplied || (baseOpenTodos >= HalfRuleFrom && counted.Count * 2 > baseOpenTodos);
+        var held = counted.Count > MaxApplied && counted.Count * 100 > baseOpenTodos * MaxAppliedPercent;
         return new HoldDecision(held, counted);
     }
 }

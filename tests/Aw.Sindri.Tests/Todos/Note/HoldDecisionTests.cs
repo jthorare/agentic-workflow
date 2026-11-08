@@ -4,7 +4,7 @@ using static Aw.Sindri.Tests.Todos.Note.NoteSamples;
 
 namespace Aw.Sindri.Tests.Todos.Note;
 
-/// <summary>When a pass holds what it counted (todo spec §4.5 "The hold", REQ-E7): more than 3, or more than half the base's open todos when the base has 6 or more.</summary>
+/// <summary>When a pass holds what it counted (todo spec §4.5 "The hold", REQ-E7): more than 3 AND more than 10% of the base's open todos (exactly 10% applies).</summary>
 [Lane(TestLane.Unit)]
 public sealed class HoldDecisionTests
 {
@@ -14,16 +14,18 @@ public sealed class HoldDecisionTests
     [Theory]
     [InlineData(0, 10, false)]
     [InlineData(1, 1, false)]
-    [InlineData(3, 10, false)]
-    [InlineData(4, 10, true)]
-    [InlineData(4, 100, true)]
-    [InlineData(3, 4, false)]
-    [InlineData(3, 5, false)]
     [InlineData(3, 6, false)]
-    [InlineData(4, 6, true)]
+    [InlineData(3, 10, false)]
     [InlineData(4, 4, true)]
-    [InlineData(2, 2, false)]
-    public void More_than_three_is_held_and_exactly_three_is_not(int count, int baseOpen, bool held)
+    [InlineData(4, 6, true)]
+    [InlineData(4, 10, true)]
+    [InlineData(4, 50, false)]
+    [InlineData(8, 100, false)]
+    [InlineData(10, 100, false)]
+    [InlineData(11, 100, true)]
+    [InlineData(40, 400, false)]
+    [InlineData(41, 400, true)]
+    public void Held_only_past_three_and_past_ten_percent_of_open_todos(int count, int baseOpen, bool held)
         => Assert.Equal(held, HoldDecision.Decide(Counted(count), baseOpen).Held);
 
     [Fact]
