@@ -337,7 +337,7 @@ public sealed class GoldenContractTests
         var moved = Assert.IsType<PinMovedView>(pins.Pins[0].Moved);
         Assert.Equal(("v0", "v1", 2, 3, null, true), (moved.FromVersion, moved.ToVersion, moved.Gained, moved.Lost, moved.RecordsLinked, moved.RelinkFailed));
         Assert.Equal([("auth", "Sign in", 2), (null, null, 1)], [.. moved.To.Select(t => (t.Id, t.Name, t.Features))]);
-        Assert.Empty(Assert.IsType<PinMovedView>(pins.Pins[1].Moved).To);
+        Assert.Null(pins.Pins[1].Moved);
         Assert.All(Read<PinsView>("context-pins", "approved").Pins, p => Assert.Null(p.Moved));
     }
 
