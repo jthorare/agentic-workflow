@@ -336,6 +336,34 @@ public sealed class TodoAttentionFramesTests : IDisposable
     });
 
     [Fact]
+    public Task A_sync_that_changes_the_open_row_leaves_focus_in_the_quick_add_box_and_a_digit_types_there() => OnUi(async () =>
+    {
+        Serve(TodoNoteSample.WithConflicts("td_c1"), Conflicted("td_c1", "reply to Sam", Side("reply to Sam today")));
+        var (window, shell) = await Connected();
+        FocusAttention(window);
+        Key(window, PhysicalKey.Enter);
+        await Until(window, () => window.FocusManager?.GetFocusedElement() is Button, "focus never reached the form's button");
+        Assert.True(shell.PressQuickAdd());
+        Settle(window);
+        var field = window.GetVisualDescendants().OfType<TextBox>().First(t => t.Name == "QuickAddField" && t.IsEffectivelyVisible);
+        _ = field.Focus();
+        Settle(window);
+        Serve(TodoNoteSample.WithConflicts("td_c1"), Conflicted("td_c1", "reply to Sam", Side("reply to Sam by noon")));
+
+        await shell.Todo.Refresh(new Uri("http://127.0.0.1:7410/"), Token);
+        Settle(window);
+        await Task.Delay(50, Token);
+        Settle(window);
+        _clock.Advance(TimeSpan.FromSeconds(1));
+        window.KeyTextInput("2");
+        Settle(window);
+
+        Assert.Same(field, window.FocusManager?.GetFocusedElement());
+        Assert.Contains("2", field.Text, StringComparison.Ordinal);
+        Assert.Empty(_server.TodoPicks);
+    });
+
+    [Fact]
     public Task Esc_with_focus_outside_the_panel_leaves_the_open_attention_row_open() => OnUi(async () =>
     {
         Serve(TodoNoteSample.WithConflicts("td_c1"), Conflicted("td_c1", "reply to Sam", Side("reply to Sam today")));
