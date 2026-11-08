@@ -18,6 +18,11 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     public ValueTask<Result<WorkflowRun>> Insert(WorkflowRun run, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(run);
+        if (WorkflowRun.TriggerProblem(run.Trigger) is { } badTrigger)
+        {
+            return Done<WorkflowRun>(SindriErrors.GraphInvalid.With(badTrigger));
+        }
+
         lock (_gate)
         {
             if (_runs.Exists(r => r.Id == run.Id))
@@ -34,6 +39,11 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     public ValueTask<Result<GraphStartKind>> Admit(WorkflowRun run, GraphConcurrency mode, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(run);
+        if (WorkflowRun.TriggerProblem(run.Trigger) is { } badTrigger)
+        {
+            return Done<GraphStartKind>(SindriErrors.GraphInvalid.With(badTrigger));
+        }
+
         lock (_gate)
         {
             if (_runs.Exists(r => r.Id == run.Id))

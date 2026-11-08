@@ -16,6 +16,11 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
     public ValueTask<Result<WorkflowRun>> Insert(WorkflowRun run, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(run);
+        if (WorkflowRun.TriggerProblem(run.Trigger) is { } badTrigger)
+        {
+            return ValueTask.FromResult<Result<WorkflowRun>>(SindriErrors.GraphInvalid.With(badTrigger));
+        }
+
         return RecipeSessions.Write(database, async ValueTask<Result<WorkflowRun>> (session, token) =>
         {
             // why: checked in the insert's transaction, so a used id is SND-GRAPH-100 and never a primary-key error.
@@ -50,6 +55,11 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
     public ValueTask<Result<GraphStartKind>> Admit(WorkflowRun run, GraphConcurrency mode, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(run);
+        if (WorkflowRun.TriggerProblem(run.Trigger) is { } badTrigger)
+        {
+            return ValueTask.FromResult<Result<GraphStartKind>>(SindriErrors.GraphInvalid.With(badTrigger));
+        }
+
         // why: the in-flight read and the insert share one write transaction, so two triggers cannot both see "nothing in flight".
         return RecipeSessions.Write(database, async ValueTask<Result<GraphStartKind>> (session, token) =>
         {
