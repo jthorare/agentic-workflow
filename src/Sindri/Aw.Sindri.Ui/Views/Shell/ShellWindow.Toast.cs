@@ -1,5 +1,5 @@
-using Avalonia.Controls;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Aw.Sindri.Ui.ViewModels.Shell;

@@ -1,8 +1,8 @@
+using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using System.ComponentModel;
 using Avalonia.Threading;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.ViewModels.Toast;

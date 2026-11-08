@@ -1,6 +1,6 @@
 using Aw.Sindri.Ui.Api;
-using Aw.Sindri.Ui.ViewModels.Todo;
 using Aw.Sindri.Ui.ViewModels.Toast;
+using Aw.Sindri.Ui.ViewModels.Todo;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
 
