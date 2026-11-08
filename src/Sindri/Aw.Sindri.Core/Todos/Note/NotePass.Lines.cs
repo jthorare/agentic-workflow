@@ -74,16 +74,7 @@ internal sealed partial class NotePass
         var noteLine = LineOf(line, id, note);
         if (_options.OpenConflicts.TryGetValue(id, out var open))
         {
-            // D11: nothing about the todo syncs until the owner picks. The note's side or Sindri's moving again re-asks; the two agreeing closes it.
-            if (note.Is(open))
-            {
-                KeepBase(id);
-            }
-            else
-            {
-                Settle(id, note.SameAs(sindri), sindri.ToSide(), note, noteLine);
-            }
-
+            OpenConflictLive(id, open, sindri, note, noteLine);
             return;
         }
 
@@ -98,16 +89,26 @@ internal sealed partial class NotePass
         }
         else if (sindri.SameAs(from))
         {
-            FromNote(line, id, from, note, noteLine, sindri.Hidden);
+            FromNote(line, id, from, note, sindri.Hidden);
         }
         else if (note.SameAs(from))
         {
-            // why: the owner's own text stays as typed until Sindri changes the text (an adopted `[[link]]` is not escaped by a tick)
-            var rendered = string.Equals(todo.Text, line.Text, StringComparison.Ordinal)
-                ? NoteRenderer.RenderLine(todo, NoteTodoLineReader.RawTextOf(line.Raw))
-                : NoteRenderer.RenderLine(todo);
+            var rendered = SindriLine(line, todo);
             _edits.Add(NoteLineEdit.Replace(line.Number, rendered));
             SetBase(id, rendered);
+        }
+        else
+        {
+            Settle(id, note.SameAs(sindri), sindri.ToSide(), note, noteLine);
+        }
+    }
+
+    /// <summary>D11: nothing about the todo syncs until the owner picks. The note's side or Sindri's moving again re-asks; the two agreeing closes the conflict.</summary>
+    private void OpenConflictLive(TodoId id, NoteSide open, NoteFields sindri, NoteFields note, string noteLine)
+    {
+        if (note.Is(open))
+        {
+            KeepBase(id);
         }
         else
         {
@@ -131,7 +132,7 @@ internal sealed partial class NotePass
         }
     }
 
-    private void FromNote(NoteTodoLine line, TodoId id, NoteFields from, NoteFields note, string noteLine, IReadOnlyList<string> hidden)
+    private void FromNote(NoteTodoLine line, TodoId id, NoteFields from, NoteFields note, IReadOnlyList<string> hidden)
     {
         HeldChange? candidate = null;
         if (!note.Done && from.Done)
@@ -143,7 +144,7 @@ internal sealed partial class NotePass
             candidate = new HeldChange(id, HeldKind.Edited, line.Raw);
         }
 
-        AddSlot(id, note.IntentsFrom(id, from, hidden), candidate, noteLine);
+        AddSlot(id, note.IntentsFrom(id, from, hidden), candidate, LineOf(line, id, note));
     }
 
     private void RemovedInSindri(NoteTodoLine line, TodoId id, SindriTodo todo, NoteFields note)
@@ -204,15 +205,7 @@ internal sealed partial class NotePass
 
         if (!_sindri.TryGetValue(id, out var todo) || todo.Removed)
         {
-            if (_options.OpenConflicts.ContainsKey(id))
-            {
-                AddSlot(id, [new NoteConflictSettled(id)], candidate: null, newBaseLine: null);
-            }
-            else
-            {
-                SetBase(id, line: null);
-            }
-
+            RemovedOnBothSides(id);
             return;
         }
 
@@ -236,6 +229,19 @@ internal sealed partial class NotePass
         else
         {
             AddSlot(id, [new NoteConflict(id, sindri.ToSide(), _removedSide)], candidate: null, OldBaseLine(id));
+        }
+    }
+
+    /// <summary>The note has no line and Sindri has no live todo: the base forgets it, and an open conflict over it closes.</summary>
+    private void RemovedOnBothSides(TodoId id)
+    {
+        if (_options.OpenConflicts.ContainsKey(id))
+        {
+            AddSlot(id, [new NoteConflictSettled(id)], candidate: null, newBaseLine: null);
+        }
+        else
+        {
+            SetBase(id, line: null);
         }
     }
 
@@ -278,23 +284,4 @@ internal sealed partial class NotePass
     }
 
     private string? OldBaseLine(TodoId id) => _base.TryGetValue(id, out var entry) ? entry.Line : null;
-
-    /// <summary>The line to save as base for a note line: the note's own text when the scrubber left it alone, else the line written from the scrubbed fields.</summary>
-    private static string LineOf(NoteTodoLine line, TodoId id, NoteFields note) =>
-        string.Equals(note.Text, line.Text, StringComparison.Ordinal) ? line.Raw : Render(id, note);
-
-    private static string Render(TodoId id, NoteFields note) =>
-        NoteRenderer.RenderLine(new SindriTodo(id, note.Text, note.Due, note.Links, note.Done, note.DoneOn));
-
-    /// <summary>The owner's line with its id (a bad or repeated one, or none) replaced by the minted one, the rest kept as typed.</summary>
-    private static string WithId(NoteTodoLine line, TodoId id)
-    {
-        var raw = line.Raw.TrimEnd();
-        if (line.Id is not null || line.RejectedBlock is not null)
-        {
-            raw = raw[..raw.AsSpan().LastIndexOfAny(" \t")].TrimEnd();
-        }
-
-        return raw + " " + NoteTodoLineReader.IdMarker + id.Value["td_".Length..];
-    }
 }
