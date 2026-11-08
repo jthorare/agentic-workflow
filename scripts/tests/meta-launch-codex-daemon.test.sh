@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# Tests for #2286: a Codex lane keeps its own team identity when Codex runs hooks and tools in a shared daemon.
+# A fake codex mimics the daemon topology: unless it was started with --no-daemon, its hook runs in a detached process whose
+# ancestry does not include the lane script and whose environment carries ANOTHER team's AW_META_* (team A). With --no-daemon
+# the hook runs under the fake, as in the default direct topology. The hook is the real config/hooks/meta-lane-gate.sh.
+# Run: bash scripts/tests/meta-launch-codex-daemon.test.sh
+set -uo pipefail
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT="$(cd "$DIR/.." && pwd)"
+fail=0
+check() {
+  if [ "$2" == "$3" ]; then echo "ok - $1"; else
+    echo "not ok - $1"; echo "  expected: $3"; echo "  actual:   $2"; fail=1
+  fi
+}
+command -v jq > /dev/null || { echo "ok - skipped: jq not installed"; exit 0; }
+WORK="$(mktemp -d)"
+KEEP=""
+trap '[ -z "$KEEP" ] || kill "$KEEP" 2> /dev/null; rm -r "$WORK"' EXIT
+export HOME="$WORK/home" AW_STATE_DIR="$WORK/state"
+unset TMUX AW_LAUNCHER_CONFIG AW_META_CONFIG AW_META_TEAM AW_META_LANE AW_META_DIR AW_META_LANE_PID AW_META_NO_STALE_CHECK
+mkdir -p "$HOME" "$WORK/repo" "$AW_STATE_DIR/meta/teams/t1" "$WORK/teamA/lane-sessions"
+jq -n --arg r "$WORK/repo" '{team:"t1", repo:$r, metaLane:"meta", lanes:["api"]}' > "$AW_STATE_DIR/meta/teams/t1/team.json"
+ids="$AW_STATE_DIR/meta/teams/t1/lane-sessions"
+printf '#!/usr/bin/env bash\necho "inbox"\n' > "$WORK/aw-meta"; chmod +x "$WORK/aw-meta"
+export AW_META_BIN="$WORK/aw-meta" AW_META_NO_SHELL=1 AW_META_ID_WAIT=5 AW_META_ID_GRACE=1
+sleep 600 & KEEP=$!   # team A's lane script stand-in: alive, and never an ancestor of anything
+
+cat > "$WORK/codex" <<'EOS'
+#!/usr/bin/env bash
+if [ "${1:-}" = --help ]; then
+  echo "Usage: codex [OPTIONS] [PROMPT]"
+  [ ! -e "$FAKE/has-no-daemon" ] || echo "      --no-daemon   Run without the shared app-server daemon"
+  exit 0
+fi
+printf '%s\n' "$*" >> "$FAKE/argv"
+id="$(cat /proc/sys/kernel/random/uuid 2> /dev/null || uuidgen | tr '[:upper:]' '[:lower:]')"
+if [ "${1:-}" != resume ] && [ "${2:-}" != resume ]; then
+  mkdir -p "$HOME/.codex/sessions/2026/11/08"
+  : > "$HOME/.codex/sessions/2026/11/08/rollout-2026-11-08T00-00-00-$id.jsonl"
+fi
+hook() { printf '{"hook_event_name":"UserPromptSubmit"}' | bash "$ROOT/config/hooks/meta-lane-gate.sh" > /dev/null 2>&1; }
+case " $* " in
+  *" --no-daemon "*) hook ;;   # direct topology: the hook is this process's child, under the lane script
+  *)  # shared daemon: a double fork reparents the hook away from the lane script, and the environment is team A's
+    ( ( AW_META_TEAM=teamA AW_META_LANE=meta AW_META_DIR="$FAKE/teamA" AW_META_LANE_PID="$KEEP" hook & ) & )
+    for _ in $(seq 50); do [ -e "$FAKE/teamA/lane-sessions/meta.hook" ] && break; sleep 0.1; done ;;
+esac
+EOS
+chmod +x "$WORK/codex"
+
+# A catalog alias derived from the built-in codex entry, as a user's launcher.json would add it.
+LCFG="$WORK/launcher.json"
+jq --arg c "$WORK/codex" '{schema:1, agents:{
+    codex: {override:true, bin:$c},
+    "codex-yolo": (.agents.codex + {label:"Codex yolo", bin:$c})}}' "$ROOT/config/launcher/builtins.json" > "$LCFG"
+
+run_lane() { # <agent> <fresh|resume> <yes|no: does this codex have --no-daemon>
+  local agent="$1" mode="$2" support="$3" rid=""
+  rm -rf "$ids" "$WORK/teamA/lane-sessions"/* "$WORK/argv"; mkdir -p "$ids" "$WORK/teamA/lane-sessions"
+  rm -f "$WORK/has-no-daemon"; [ "$support" = yes ] && : > "$WORK/has-no-daemon"
+  jq --arg a "$agent" '.agent = $a' "$AW_STATE_DIR/meta/teams/t1/team.json" > "$WORK/team.tmp" && mv "$WORK/team.tmp" "$AW_STATE_DIR/meta/teams/t1/team.json"
+  if [ "$mode" = resume ]; then
+    rid="11111111-2222-3333-4444-555555555555"
+    mkdir -p "$HOME/.codex/sessions/2026/11/08"; : > "$HOME/.codex/sessions/2026/11/08/rollout-2026-11-08T00-00-00-$rid.jsonl"
+    printf '%s\n' "$rid" > "$ids/api"
+  fi
+  FAKE="$WORK" ROOT="$ROOT" KEEP="$KEEP" AW_LAUNCHER_CONFIG="$LCFG" timeout 30 bash "$DIR/meta-lane.sh" t1 api > "$WORK/out" 2>&1 || true
+  sleep 0.3
+}
+export FAKE="$WORK"
+state() { # the lane's trace in team B's dir, and how many files team A's dir got
+  echo "B=$(awk '{print $NF}' "$ids/api.hook" 2> /dev/null):A=$(ls "$WORK/teamA/lane-sessions" 2> /dev/null | wc -l | tr -d ' ')"
+}
+
+for agent in codex codex-yolo; do
+  for mode in fresh resume; do
+    run_lane "$agent" "$mode" yes
+    check "$agent $mode: --no-daemon goes right after the binary" "$(head -1 "$WORK/argv" | awk '{print $1}')" "--no-daemon"
+    check "$agent $mode: the hook ran under the lane (team B trace 'ran') and team A's state is untouched" "$(state)" "B=ran:A=0"
+  done
+done
+run_lane codex resume yes
+check "resume argv: --no-daemon before the resume subcommand" "$(head -1 "$WORK/argv" | cut -d' ' -f1-2)" "--no-daemon resume"
+
+# An older codex that has no --no-daemon still launches, with its argv unchanged.
+run_lane codex-yolo fresh no
+check "a codex without --no-daemon: argv carries no such flag and the lane starts" "$(grep -c -- '--no-daemon' "$WORK/argv"):$(wc -l < "$WORK/argv" | tr -d ' ')" "0:1"
+check "that lane's .agent record says the daemon is not turned off" "$(jq -c '[.agent, .noDaemon]' "$ids/api.agent")" '["codex-yolo",false]'
+run_lane codex-yolo fresh yes
+check "a codex with --no-daemon: the .agent record says so" "$(jq -c '[.agent, .noDaemon]' "$ids/api.agent")" '["codex-yolo",true]'
+
+# Other agents are untouched.
+jq -n --arg c "$WORK/codex" '{schema:1, agents:{plain:{bin:$c, open:["{bin}","{seed}"], processName:"plain", sessionId:"none"}}}' > "$LCFG"
+run_lane plain fresh yes
+check "a non-Codex agent never gets --no-daemon" "$(grep -c -- '--no-daemon' "$WORK/argv" 2> /dev/null)" "0"
+exit "$fail"
