@@ -17,7 +17,8 @@ namespace Aw.Sindri.Features.TestConnection;
 /// <param name="probe">Calls the probe URL.</param>
 /// <param name="time">The clock.</param>
 /// <param name="logger">Where a refused test is reported (code only); null logs nothing.</param>
-internal sealed partial class TestConnectionService(IConnectionStore store, IConnectionSecrets secrets, IConnectionPresetCatalog presets, IConnectionProbe probe, TimeProvider time, ILogger<TestConnectionService>? logger = null)
+/// <param name="mcp">Lists an mcp server's tools (the test of an mcp connection); the host always supplies it.</param>
+internal sealed partial class TestConnectionService(IConnectionStore store, IConnectionSecrets secrets, IConnectionPresetCatalog presets, IConnectionProbe probe, TimeProvider time, ILogger<TestConnectionService>? logger = null, IMcpConnectionClient? mcp = null)
     : IService<TestConnectionRequest, TestConnectionResponse>
 {
     private readonly IConnectionStore _store = store;
@@ -26,6 +27,7 @@ internal sealed partial class TestConnectionService(IConnectionStore store, ICon
     private readonly IConnectionProbe _probe = probe;
     private readonly TimeProvider _time = time;
     private readonly ILogger? _logger = logger;
+    private readonly IMcpConnectionClient? _mcp = mcp;
 
     public async ValueTask<Result<TestConnectionResponse>> Handle(TestConnectionRequest request, CancellationToken cancellationToken)
     {
@@ -42,7 +44,13 @@ internal sealed partial class TestConnectionService(IConnectionStore store, ICon
             return ConnectionFailures.Safe(found.Error);
         }
 
-        var connection = found.Value;
+        return found.Value.Kind == ConnectionKind.Mcp
+            ? await TestMcp(found.Value, cancellationToken).ConfigureAwait(false)
+            : await TestKeyed(found.Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Result<TestConnectionResponse>> TestKeyed(Connection connection, CancellationToken cancellationToken)
+    {
         if (connection.SecretPointer is null)
         {
             return await Record(connection, ConnectionStatus.NeedsSignIn, "no secret is stored yet (the sign-in did not finish)", cancellationToken).ConfigureAwait(false);
@@ -64,6 +72,13 @@ internal sealed partial class TestConnectionService(IConnectionStore store, ICon
         return probed.IsError
             ? await Failed(connection, probed.Error, cancellationToken).ConfigureAwait(false)
             : await Record(connection, ConnectionStatus.Connected, reason: null, cancellationToken, ok: true).ConfigureAwait(false);
+    }
+
+    // An mcp connection: read the secret, connect to its 'serverUrl' and list the tools (Ok true, Tools set), or Ok false with the SND code as the reason. Written in the green.
+    private ValueTask<Result<TestConnectionResponse>> TestMcp(Connection connection, CancellationToken cancellationToken)
+    {
+        _ = (connection, cancellationToken, _mcp);
+        throw new NotSupportedException();
     }
 
     private async ValueTask<Result<TestConnectionResponse>> Failed(Connection connection, Error error, CancellationToken cancellationToken)

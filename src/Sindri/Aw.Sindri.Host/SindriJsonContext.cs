@@ -168,6 +168,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(ServicePaused)), JsonSerializable(typeof(ServiceResumed)), JsonSerializable(typeof(JobRow)), JsonSerializable(typeof(JobLine))]
 [JsonSerializable(typeof(ContextModelCalled)), JsonSerializable(typeof(ModelCallTry)), JsonSerializable(typeof(ModelCallAnswerer)), JsonSerializable(typeof(ModelCallHow)), JsonSerializable(typeof(ModelTotals)), JsonSerializable(typeof(ModelAnsweredCount))]
 [JsonSerializable(typeof(SetupStepChanged)), JsonSerializable(typeof(RepoAdded)), JsonSerializable(typeof(RepoAddedPublic)), JsonSerializable(typeof(RepoOnboarded)), JsonSerializable(typeof(ContextPinWritten)), JsonSerializable(typeof(ContextPageWritten)), JsonSerializable(typeof(RecipeRegistrationCompleted))]
+[JsonSerializable(typeof(ConnectionNeedsSignIn)), JsonSerializable(typeof(ConnectionSignedIn))]   // connections PR 10b
 [JsonSerializable(typeof(McpRegistered)), JsonSerializable(typeof(McpProviderOutcome)), JsonSerializable(typeof(SetupConsentGiven))]
 [JsonSerializable(typeof(JobLinks)), JsonSerializable(typeof(JobStartedResponse)), JsonSerializable(typeof(RunServiceRequest)), JsonSerializable(typeof(PauseServiceRequest))]
 [JsonSerializable(typeof(ResumeServiceRequest)), JsonSerializable(typeof(CancelJobRequest)), JsonSerializable(typeof(ResumeJobRequest)), JsonSerializable(typeof(GetJobRequest)), JsonSerializable(typeof(JobView))]

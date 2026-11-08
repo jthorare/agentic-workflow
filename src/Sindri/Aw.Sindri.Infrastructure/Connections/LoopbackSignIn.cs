@@ -47,6 +47,12 @@ internal sealed class LoopbackSignIn(IOAuthClient oauth, IBrowserOpener browser,
         return ValueTask.FromResult<Result<SignInStarted>>(new SignInStarted(url, completion));
     }
 
+    public ValueTask<Result<SignInStarted>> StartMcp(Uri server, CancellationToken cancellationToken)
+    {
+        _ = (server, cancellationToken);
+        throw new NotSupportedException();
+    }
+
     private static HttpListener? Listen(out int port)
     {
         for (var attempt = 0; attempt < 5; attempt++)

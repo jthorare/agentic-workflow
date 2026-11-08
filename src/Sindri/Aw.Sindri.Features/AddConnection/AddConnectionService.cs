@@ -67,7 +67,7 @@ internal sealed class AddConnectionService(IConnectionStore store, IConnectionSe
         {
             ConnectionKind.OAuth => await AddOAuth(name.Value, request, preset.Value, cancellationToken).ConfigureAwait(false),
             ConnectionKind.Rest or ConnectionKind.Cli => await AddKey(name.Value, kind.Value, request, preset.Value, cancellationToken).ConfigureAwait(false),
-            ConnectionKind.Mcp => SindriErrors.InvalidInput.With("the mcp connection kind arrives in a later release (fix: use --kind rest or --kind cli with --key-env)"),
+            ConnectionKind.Mcp => await AddMcp(name.Value, request, cancellationToken).ConfigureAwait(false),
             _ => SindriErrors.InvalidInput.With("the mcp connection kind arrives in a later release (fix: use --kind rest or --kind cli with --key-env)"),
         };
     }
@@ -176,6 +176,14 @@ internal sealed class AddConnectionService(IConnectionStore store, IConnectionSe
         sign.Created,
         sign.Created,
         LastRefreshedAt: null);
+
+    // An mcp connection takes --url and either --key-env (a key, stored like a rest one) or no key (the server's own OAuth sign-in through ISignInSession.StartMcp,
+    // with a client registered on the spot). The row's config holds 'serverUrl'. Written in the green.
+    private static ValueTask<Result<AddConnectionResponse>> AddMcp(ConnectionName name, AddConnectionRequest request, CancellationToken cancellationToken)
+    {
+        _ = (name, request, cancellationToken);
+        throw new NotSupportedException();
+    }
 
     private async ValueTask<Result<AddConnectionResponse>> AddKey(ConnectionName name, ConnectionKind kind, AddConnectionRequest request, ConnectionPreset? preset, CancellationToken cancellationToken)
     {

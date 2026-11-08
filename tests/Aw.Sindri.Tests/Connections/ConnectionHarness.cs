@@ -1,5 +1,8 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Scheduling;
+using Aw.Sindri.Features.RefreshConnections;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Connections.OAuth;
 using Aw.Sindri.Features.AddConnection;
@@ -19,6 +22,7 @@ internal sealed class ConnectionHarness
 {
     public ConnectionHarness()
     {
+        Ledger = new InMemorySindriStore(new FakeTimeProvider(KnownInstants.Epoch), LedgerProbe);
         Callers = new AsyncLocalCallerContextAccessor(Ids);
         Presets = new FakeConnectionPresets(Linear);
     }
@@ -38,6 +42,12 @@ internal sealed class ConnectionHarness
         PollableEvents: [],
         ProbeUrl: "https://api.linear.example.test/me");
 
+    /// <summary>Gets the process probe the ledger's lease reads.</summary>
+    public FakeProcessProbe LedgerProbe { get; } = new();
+
+    /// <summary>Gets the token client the refresh service calls.</summary>
+    public FakeOAuthClient OAuth { get; } = new();
+
     public InMemoryConnectionStore Store { get; } = new();
 
     public FakeConnectionSecrets Secrets { get; } = new();
@@ -53,7 +63,7 @@ internal sealed class ConnectionHarness
     public FakeTimeProvider Clock { get; } = new(KnownInstants.Epoch);
 
     /// <summary>Gets the ledger the connection slices append to (the green wires it in; the secret-leak tests read every event from it).</summary>
-    public InMemorySindriStore Ledger { get; } = new(new FakeTimeProvider(KnownInstants.Epoch), new FakeProcessProbe());
+    public InMemorySindriStore Ledger { get; }
 
     /// <summary>Gets the log every connection slice writes to (the green wires it in; the secret-leak tests read every line from it).</summary>
     public CapturingConnectionLog Logs { get; } = new();
@@ -71,7 +81,17 @@ internal sealed class ConnectionHarness
 
     public RemoveConnectionService Remove() => new(Store, Secrets);
 
-    public TestConnectionService Test() => new(Store, Secrets, Presets, Probe, Clock, new TypedLog<TestConnectionService>(Logs));
+    /// <summary>The refresh service over the harness's ports, with the ledger and an event factory on the harness clock.</summary>
+    /// <returns>The service.</returns>
+    public RefreshConnectionsService Refresh()
+        => new(Store, Secrets, Presets, OAuth, Ledger, new EventFactory(EventScope.ControlPlane, Clock, Ids, SliceHarness.Json, Callers), Clock);
+
+    /// <summary>Takes the ledger's lease and builds the run a tick would hand the refresh service.</summary>
+    /// <returns>The run, at the harness clock.</returns>
+    public async Task<ScheduledRun> Tick()
+        => new((await Ledger.Acquire(LedgerProbe.Self(), TestContext.Current.CancellationToken)).Value, Clock.GetUtcNow());
+
+    public TestConnectionService Test(IMcpConnectionClient? mcp = null) => new(Store, Secrets, Presets, Probe, Clock, new TypedLog<TestConnectionService>(Logs), mcp);
 
     /// <summary>Lends the capturing log to a service that wants an ILogger of its own type.</summary>
     /// <typeparam name="T">The service.</typeparam>

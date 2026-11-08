@@ -11,4 +11,5 @@ namespace Aw.Sindri.Features.AddConnection;
 /// <param name="KeyEnv">The environment variable that holds the key of a rest or cli connection.</param>
 /// <param name="Scopes">The scopes; empty takes the preset's defaults.</param>
 /// <param name="Wait">True (the CLI): return when the callback landed. False (an agent): return the consent URL at once and finish in the background.</param>
-public sealed record AddConnectionRequest(string Name, string? Preset, string? Kind, string? Client, string? KeyEnv, IReadOnlyList<string> Scopes, bool Wait);
+/// <param name="Url">The MCP server's URL; an mcp connection needs it (stored as the connection's 'serverUrl').</param>
+public sealed record AddConnectionRequest(string Name, string? Preset, string? Kind, string? Client, string? KeyEnv, IReadOnlyList<string> Scopes, bool Wait, string? Url = null);

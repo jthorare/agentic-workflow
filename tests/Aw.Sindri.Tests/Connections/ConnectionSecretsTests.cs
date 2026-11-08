@@ -67,6 +67,13 @@ public sealed class ConnectionSecretsTests
             }
         }
 
+        // a refresh the provider refuses, whose error text repeats the canary: the event it writes must hold the code only
+        world.OAuth.RefuseWith = "invalid_grant";
+        var expiring = ConnectionSamples.Name("linear", "expiring");
+        var expiringPointer = world.Secrets.Store(expiring, new TokenSet(_canary, _canary + "-refresh", world.Clock.GetUtcNow().AddMinutes(1))).Value;
+        _ = await world.Store.Upsert(ConnectionSamples.Oauth(expiring) with { SecretPointer = expiringPointer }, Token);
+        _ = await world.Refresh().Run(await world.Tick(), Token);
+
         var pending = world.Add().Handle(ConnectionHarness.Oauth(name: "linear:other"), Token).AsTask();
         world.SignIn.Fail(SindriErrors.ConnectionConsentDenied.With($"denied for {_canary}"));
         var failed = await pending;
@@ -80,6 +87,7 @@ public sealed class ConnectionSecretsTests
         var (world, _) = await DriveEveryPath();
 
         var events = world.Ledger.Events;
+        Assert.NotEmpty(events);   // a failed refresh wrote 'connection.needs-sign-in': the leak check below reads real events (10a passed with none)
         Assert.All(events, e => Assert.DoesNotContain(_canary, JsonSerializer.Serialize(e.Envelope) + e.IdempotencyKey + e.Item, StringComparison.Ordinal));
         Assert.All(events, e => Assert.DoesNotContain(_canary, e.Envelope.Payload, StringComparison.Ordinal));
     }

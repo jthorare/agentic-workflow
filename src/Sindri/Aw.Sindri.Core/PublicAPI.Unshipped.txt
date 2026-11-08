@@ -25661,3 +25661,42 @@ Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckSetWriteToken(string! source
 Aw.Sindri.Core.Connections.ConnectionFailures
 static Aw.Sindri.Core.Connections.ConnectionFailures.Reason(Aw.Kernel.Error! error) -> string!
 static Aw.Sindri.Core.Connections.ConnectionFailures.Safe(Aw.Kernel.Error! error) -> Aw.Kernel.Error!
+Aw.Sindri.Core.Connections.IMcpConnectionClient
+Aw.Sindri.Core.Connections.IMcpConnectionClient.ListTools(System.Uri! server, Aw.Sindri.Core.Connections.TokenSet! tokens, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
+Aw.Sindri.Core.Connections.OAuth.ISignInSession.StartMcp(System.Uri! server, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Connections.OAuth.SignInStarted!>!>
+Aw.Sindri.Core.Events.ConnectionNeedsSignIn
+Aw.Sindri.Core.Events.ConnectionNeedsSignIn.<Clone>$() -> Aw.Sindri.Core.Events.ConnectionNeedsSignIn!
+Aw.Sindri.Core.Events.ConnectionNeedsSignIn.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Events.ConnectionNeedsSignIn.At.init -> void
+Aw.Sindri.Core.Events.ConnectionNeedsSignIn.Connection.get -> string!
+Aw.Sindri.Core.Events.ConnectionNeedsSignIn.Connection.init -> void
+Aw.Sindri.Core.Events.ConnectionNeedsSignIn.ConnectionNeedsSignIn(string! Connection, string! Reason, System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.ConnectionNeedsSignIn.Deconstruct(out string! Connection, out string! Reason, out System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.ConnectionNeedsSignIn.Equals(Aw.Sindri.Core.Events.ConnectionNeedsSignIn? other) -> bool
+Aw.Sindri.Core.Events.ConnectionNeedsSignIn.Reason.get -> string!
+Aw.Sindri.Core.Events.ConnectionNeedsSignIn.Reason.init -> void
+Aw.Sindri.Core.Events.ConnectionSignedIn
+Aw.Sindri.Core.Events.ConnectionSignedIn.<Clone>$() -> Aw.Sindri.Core.Events.ConnectionSignedIn!
+Aw.Sindri.Core.Events.ConnectionSignedIn.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Events.ConnectionSignedIn.At.init -> void
+Aw.Sindri.Core.Events.ConnectionSignedIn.Connection.get -> string!
+Aw.Sindri.Core.Events.ConnectionSignedIn.Connection.init -> void
+Aw.Sindri.Core.Events.ConnectionSignedIn.ConnectionSignedIn(string! Connection, System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.ConnectionSignedIn.Deconstruct(out string! Connection, out System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.ConnectionSignedIn.Equals(Aw.Sindri.Core.Events.ConnectionSignedIn? other) -> bool
+Aw.Sindri.Core.NeedsYou.NeedsYouKind.Connection = 6 -> Aw.Sindri.Core.NeedsYou.NeedsYouKind
+Aw.Sindri.Core.NeedsYou.SubjectKind.Connection = 8 -> Aw.Sindri.Core.NeedsYou.SubjectKind
+const Aw.Sindri.Core.Events.EventTypes.ConnectionNeedsSignIn = "connection.needs-sign-in" -> string!
+const Aw.Sindri.Core.Events.EventTypes.ConnectionSignedIn = "connection.signed-in" -> string!
+const Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Connections = "connections" -> string!
+override Aw.Sindri.Core.Events.ConnectionNeedsSignIn.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.ConnectionNeedsSignIn.GetHashCode() -> int
+override Aw.Sindri.Core.Events.ConnectionNeedsSignIn.ToString() -> string!
+override Aw.Sindri.Core.Events.ConnectionSignedIn.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.ConnectionSignedIn.GetHashCode() -> int
+override Aw.Sindri.Core.Events.ConnectionSignedIn.ToString() -> string!
+static Aw.Sindri.Core.Events.ConnectionNeedsSignIn.operator !=(Aw.Sindri.Core.Events.ConnectionNeedsSignIn? left, Aw.Sindri.Core.Events.ConnectionNeedsSignIn? right) -> bool
+static Aw.Sindri.Core.Events.ConnectionNeedsSignIn.operator ==(Aw.Sindri.Core.Events.ConnectionNeedsSignIn? left, Aw.Sindri.Core.Events.ConnectionNeedsSignIn? right) -> bool
+static Aw.Sindri.Core.Events.ConnectionSignedIn.operator !=(Aw.Sindri.Core.Events.ConnectionSignedIn? left, Aw.Sindri.Core.Events.ConnectionSignedIn? right) -> bool
+static Aw.Sindri.Core.Events.ConnectionSignedIn.operator ==(Aw.Sindri.Core.Events.ConnectionSignedIn? left, Aw.Sindri.Core.Events.ConnectionSignedIn? right) -> bool
+static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForConnection(Aw.Sindri.Core.Connections.ConnectionName name, string! reasonCode, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>!

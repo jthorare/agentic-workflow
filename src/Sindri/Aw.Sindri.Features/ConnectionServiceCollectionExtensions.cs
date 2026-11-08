@@ -1,8 +1,10 @@
 using Aw.Kernel.Services;
+using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.GetConnection;
 using Aw.Sindri.Features.ListConnections;
+using Aw.Sindri.Features.RefreshConnections;
 using Aw.Sindri.Features.RemoveConnection;
 using Aw.Sindri.Features.TestConnection;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,6 +21,8 @@ internal static class ConnectionServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         return services
+            .AddScoped<IScheduledService, RefreshConnectionsService>()
+            .AddSingleton(RefreshConnectionsService.BuiltIn)
             .AddScoped<IService<AddConnectionRequest, AddConnectionResponse>, AddConnectionService>()
             .AddScoped<IService<TestConnectionRequest, TestConnectionResponse>, TestConnectionService>()
             .AddScoped<IService<RemoveConnectionRequest, RemoveConnectionResponse>, RemoveConnectionService>()

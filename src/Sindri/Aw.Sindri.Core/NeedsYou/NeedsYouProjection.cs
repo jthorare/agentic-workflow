@@ -25,17 +25,15 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
 
     public IReadOnlyList<string> Views => [ViewNames.NeedsYou];
 
-    public bool Handles(string eventType) =>
-        string.Equals(eventType, EventTypes.RequestFiled, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.DecisionRecorded, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.ItemStateChanged, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.ServiceRan, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.ProfileChecked, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.ProfileApproved, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.WorkflowStarted, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.WorkflowTransition, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.WorkflowRefused, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.WorkflowNotified, StringComparison.Ordinal);
+    private static readonly HashSet<string> _handled = new(StringComparer.Ordinal)
+    {
+        EventTypes.RequestFiled, EventTypes.DecisionRecorded, EventTypes.ItemStateChanged, EventTypes.ServiceRan, EventTypes.ProfileChecked, EventTypes.ProfileApproved,
+        EventTypes.WorkflowStarted, EventTypes.WorkflowTransition, EventTypes.WorkflowRefused, EventTypes.WorkflowNotified,
+        EventTypes.ConnectionNeedsSignIn, EventTypes.ConnectionSignedIn,
+    };
+
+    /// <inheritdoc />
+    public bool Handles(string eventType) => _handled.Contains(eventType);
 
     public async ValueTask<Result<Unit>> Apply(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
     {
@@ -49,6 +47,7 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
             EventTypes.ServiceRan => await Ran(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ProfileChecked => await Checked(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ProfileApproved => await Approved(recorded, rows, cancellationToken).ConfigureAwait(false),
+            EventTypes.ConnectionNeedsSignIn or EventTypes.ConnectionSignedIn => await ConnectionRow(recorded, rows, cancellationToken).ConfigureAwait(false),
             _ => await Engine(recorded, rows, cancellationToken).ConfigureAwait(false),
         };
     }
