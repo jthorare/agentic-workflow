@@ -1,6 +1,9 @@
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
+using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Validation;
 
 namespace Aw.Sindri.Tests.Graph.Blocks;
 
@@ -56,5 +59,55 @@ public sealed class PromptBlockTests
         Assert.Equal("number", outputs.Fields["score"]);
         Assert.Equal("prompt", block.Type);
         Assert.False(block.IsTrigger);
+    }
+
+    [Fact]
+    public async Task A_type_array_is_read_as_its_first_non_null_member()
+    {
+        var block = new PromptBlock(new BlockFakes.ScriptedModelPort("""{"name":"x"}"""));
+        var config = new JsonObject { ["prompt"] = "go", ["output"] = JsonNode.Parse("""{"type":"object","required":["name"],"properties":{"name":{"type":["null","string"]}}}""") };
+
+        var outputs = block.OutputsFor(config);
+        var result = await block.Execute(BlockFakes.Context(config), TestContext.Current.CancellationToken);
+
+        Assert.Equal("string", outputs.Fields["name"]);
+        Assert.True(result.IsSuccess);
+    }
+
+    [Theory]
+    [InlineData("""{"type":"object","properties":{"name":{"type":["null"]}}}""")]
+    [InlineData("""{"type":"object","properties":{"name":{"type":3}}}""")]
+    [InlineData("""{"type":"object","required":[1],"properties":{"name":{"type":"string"}}}""")]
+    public async Task A_schema_with_an_unusable_type_or_a_non_text_required_entry_fails_the_node_with_SND_GRAPH_103(string output)
+    {
+        var port = new BlockFakes.ScriptedModelPort("""{"name":"x"}""");
+        var config = new JsonObject { ["prompt"] = "go", ["output"] = JsonNode.Parse(output) };
+
+        var outputs = new PromptBlock(port).OutputsFor(config);
+        var result = await new PromptBlock(port).Execute(BlockFakes.Context(config), TestContext.Current.CancellationToken);
+
+        Assert.NotNull(outputs);   // reading the outputs of an odd schema does not throw
+        Assert.True(result.IsError);
+        Assert.Equal("SND-GRAPH-103", result.Error.Code);
+        Assert.Empty(port.Prompts);   // the model is not asked for a schema that can't be checked
+    }
+
+    [Theory]
+    [InlineData("""{"type":"object","properties":{"name":{"type":["null"]}}}""", true)]
+    [InlineData("""{"type":"object","required":[1],"properties":{"name":{"type":"string"}}}""", true)]
+    [InlineData("""{"type":"object","properties":{"name":{"type":["string","null"]}}}""", false)]
+    public void The_validator_returns_a_finding_for_an_odd_schema_instead_of_throwing(string output, bool refused)
+    {
+        var blocks = new Dictionary<string, IGraphBlockType>(StringComparer.Ordinal)
+        {
+            ["schedule"] = GraphFixtures.Blocks["schedule"],
+            ["prompt"] = new PromptBlock(new BlockFakes.ScriptedModelPort("{}")),
+        };
+        var prompt = new GraphNode(NodeId.From("ask"), "prompt", Title: null, new JsonObject { ["prompt"] = "go", ["output"] = JsonNode.Parse(output) });
+        var spec = GraphFixtures.Spec([GraphFixtures.Trigger("daily"), prompt], [GraphFixtures.Edge("daily", "ask")]);
+
+        var result = GraphFixtures.Validator(blocks: blocks).Validate(spec, GraphMode.Activate);
+
+        Assert.Equal(refused, result.Findings.Any(f => f.Code == "GRAPH-CONFIG-001" && f.Field == "config.output"));
     }
 }
