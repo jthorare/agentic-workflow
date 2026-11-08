@@ -23,7 +23,6 @@ internal sealed class SaveLinearConnectionService(ILinearKeyChecks checks, ILine
     public async ValueTask<Result<SaveLinearConnectionResponse>> Handle(SaveLinearConnectionRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        _ = urlGuard;   // red stub: not wired yet
         if (!LinearConnectionRules.IsOwner(callers))
         {
             return LinearConnectionRules.Refused(LinearConnectionRules.ChangeRefusal);
@@ -33,6 +32,11 @@ internal sealed class SaveLinearConnectionService(ILinearKeyChecks checks, ILine
         if (key.Length == 0 || key.Any(static c => char.IsControl(c) || char.IsWhiteSpace(c)))
         {
             return SindriErrors.InvalidInput.With("paste only the Linear API key, with no spaces (fix: copy it again from linear.app/settings/api)");
+        }
+
+        if (await urlGuard.Pending(cancellationToken).ConfigureAwait(false) is { } waiting)
+        {
+            return waiting;
         }
 
         var saved = request.Kind switch

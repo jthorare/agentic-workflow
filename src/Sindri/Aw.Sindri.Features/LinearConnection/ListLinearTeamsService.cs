@@ -17,7 +17,6 @@ internal sealed class ListLinearTeamsService(ILinearKeyChecks checks, ICallerCon
     public async ValueTask<Result<ListLinearTeamsResponse>> Handle(ListLinearTeamsRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        _ = urlGuard;   // red stub: not wired yet
         if (!LinearConnectionRules.IsOwner(callers))
         {
             return LinearConnectionRules.Refused(LinearConnectionRules.ChangeRefusal);
@@ -26,6 +25,11 @@ internal sealed class ListLinearTeamsService(ILinearKeyChecks checks, ICallerCon
         if (string.IsNullOrWhiteSpace(request.Key))
         {
             return SindriErrors.InvalidInput.With("paste a Linear API key (fix: make one at linear.app/settings/api)");
+        }
+
+        if (await urlGuard.Pending(cancellationToken).ConfigureAwait(false) is { } waiting)
+        {
+            return waiting;
         }
 
         var teams = await checks.Teams(request.Key.Trim(), cancellationToken).ConfigureAwait(false);
