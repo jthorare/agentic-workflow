@@ -18,6 +18,13 @@ internal sealed class SqliteWorkflowStore(LedgerDatabase database, TimeProvider 
         ArgumentNullException.ThrowIfNull(spec);
         return RecipeSessions.Write(database, async ValueTask<Result<WorkflowRevision>> (session, token) =>
         {
+            // why: checked in the insert's transaction, so a used id is SND-GRAPH-010 and never a primary-key error.
+            var existing = await FindRecord(session, id, token).ConfigureAwait(false);
+            if (existing.IsError || existing.Value is not null)
+            {
+                return existing.IsError ? existing.Error : SindriErrors.GraphIdTaken.With($"the id '{id.Value}' belongs to another workflow; read it or pick a new id");
+            }
+
             var taken = await RecipeSessions.Exists(session, new SqlStatement(WorkflowSql.SlugTaken, c => c.Bind("$slug", slug.Value)), token).ConfigureAwait(false);
             if (taken.IsError || taken.Value)
             {
@@ -73,6 +80,12 @@ internal sealed class SqliteWorkflowStore(LedgerDatabase database, TimeProvider 
             if (exists.IsError || exists.Value is null)
             {
                 return exists.IsError ? exists.Error : NotFound(id, string.Create(CultureInfo.InvariantCulture, $"revision {revision}"));
+            }
+
+            var record = await RecordIn(session, id, token).ConfigureAwait(false);
+            if (record.IsError || record.Value.ArchivedAt is not null)
+            {
+                return record.IsError ? record.Error : SindriErrors.GraphArchived.With($"'{id.Value}' is archived; create a new workflow from its spec to run it again");
             }
 
             var pinned = await RecipeSessions.Execute(session, new SqlStatement(WorkflowSql.Pin, c => c.Bind("$id", id.Value).Bind("$revision", revision)), token).ConfigureAwait(false);

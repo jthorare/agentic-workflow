@@ -19,6 +19,11 @@ public sealed class InMemoryWorkflowStore(TimeProvider clock) : IWorkflowStore
         ArgumentNullException.ThrowIfNull(spec);
         lock (_gate)
         {
+            if (_workflows.ContainsKey(id))
+            {
+                return Done<WorkflowRevision>(IdTaken(id));
+            }
+
             if (_workflows.Values.Any(e => e.Slug == slug))
             {
                 return Done<WorkflowRevision>(SindriErrors.GraphSlugTaken.With($"the slug '{slug.Value}' belongs to another workflow; pick another"));
@@ -94,6 +99,11 @@ public sealed class InMemoryWorkflowStore(TimeProvider clock) : IWorkflowStore
                 return Done<WorkflowRecord>(NotFound(id));
             }
 
+            if (entry.ArchivedAt is not null)
+            {
+                return Done<WorkflowRecord>(Archived(id));
+            }
+
             entry.Active = revision;
             return Ok(entry.Record(id));
         }
@@ -114,6 +124,10 @@ public sealed class InMemoryWorkflowStore(TimeProvider clock) : IWorkflowStore
             return Ok(entry.Record(id));
         }
     }
+
+    private static Error IdTaken(WorkflowId id) => SindriErrors.GraphIdTaken.With($"the id '{id.Value}' belongs to another workflow; read it or pick a new id");
+
+    private static Error Archived(WorkflowId id) => SindriErrors.GraphArchived.With($"'{id.Value}' is archived; create a new workflow from its spec to run it again");
 
     private static Error NotFound(WorkflowId id) => SindriErrors.GraphNotFound.With($"no workflow or revision for '{id.Value}'; list the workflows to see what exists");
 

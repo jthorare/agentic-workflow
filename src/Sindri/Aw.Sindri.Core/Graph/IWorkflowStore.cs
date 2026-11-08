@@ -15,7 +15,7 @@ public interface IWorkflowStore
     /// <param name="spec">The first graph.</param>
     /// <param name="createdBy">'owner' or 'session:&lt;id&gt;'.</param>
     /// <param name="cancellationToken">Cancels the write.</param>
-    /// <returns>Revision 1.</returns>
+    /// <returns>Revision 1, or SND-GRAPH-010 when the id is used, or SND-GRAPH-009 when the slug is.</returns>
     public ValueTask<Result<WorkflowRevision>> Create(WorkflowId id, WorkflowSlug slug, GraphSpec spec, string createdBy, CancellationToken cancellationToken);
 
     /// <summary>Saves <paramref name="spec"/> as the next revision of a workflow.</summary>
@@ -46,11 +46,11 @@ public interface IWorkflowStore
     /// <returns>The records.</returns>
     public ValueTask<Result<IReadOnlyList<WorkflowRecord>>> List(bool includeArchived, CancellationToken cancellationToken);
 
-    /// <summary>Pins the revision triggers run.</summary>
+    /// <summary>Pins the revision triggers run. An archived workflow is refused with SND-GRAPH-011: archiving turns it off for good.</summary>
     /// <param name="id">The workflow.</param>
     /// <param name="revision">An existing revision.</param>
     /// <param name="cancellationToken">Cancels the write.</param>
-    /// <returns>The record after the change, or SND-GRAPH-008.</returns>
+    /// <returns>The record after the change, SND-GRAPH-008 or SND-GRAPH-011.</returns>
     public ValueTask<Result<WorkflowRecord>> Activate(WorkflowId id, int revision, CancellationToken cancellationToken);
 
     /// <summary>Archives a workflow: it leaves the list and turns off.</summary>
