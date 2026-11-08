@@ -22,6 +22,7 @@ internal sealed partial class ShellViewModel
     {
         Todo = new TodoPanelViewModel(_api, _clock);
         Health.Follow(Todo.Refresh);
+        Health.Follow(Todo.RefreshSyncLine);
         Todo.LinkOpened += (_, link) => OpenTodoLink(link.Href);
         Todo.Acted += (_, acted) => ShowToast(new ToastMessage(acted.Text, acted.Undo));
     }
