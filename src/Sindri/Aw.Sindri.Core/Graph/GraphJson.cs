@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
+using Vogen;
 
 namespace Aw.Sindri.Core.Graph;
 
@@ -21,10 +22,16 @@ public static class GraphJson
         GraphSpec? spec;
         try
         {
+            if (Missing(JsonNode.Parse(json)) is { } missing)
+            {
+                return SindriErrors.GraphInvalid.With(missing);
+            }
+
             spec = JsonSerializer.Deserialize(json, GraphJsonContext.Default.GraphSpec);
         }
-        catch (JsonException ex)
+        catch (Exception ex) when (ex is JsonException or ValueObjectValidationException or ArgumentException or InvalidOperationException)
         {
+            // why: an id that fails its shape throws from the id's converter, not as a JsonException; Parse never throws on any text.
             return SindriErrors.GraphInvalid.With(ex.Message);
         }
 
@@ -38,6 +45,41 @@ public static class GraphJson
             : SindriErrors.GraphInvalid.With($"version {spec.Version.ToString(CultureInfo.InvariantCulture)} is not a graph version this build reads; use 1");
     }
 
+    // why: the typed read gives a null or default value for a missing member and throws later, far from the JSON; name the path here instead.
+    private static string? Missing(JsonNode? root)
+    {
+        if (root is not JsonObject doc)
+        {
+            return null;
+        }
+
+        return Missing(doc["nodes"], "nodes", ["id", "type", "config"]) ?? Missing(doc["edges"], "edges", ["from", "to"]);
+    }
+
+    private static string? Missing(JsonNode? list, string name, string[] required)
+    {
+        if (list is not JsonArray items)
+        {
+            return null;
+        }
+
+        for (var i = 0; i < items.Count; i++)
+        {
+            var path = name + "[" + i.ToString(CultureInfo.InvariantCulture) + "]";
+            if (items[i] is not JsonObject item)
+            {
+                return $"{path} must be an object";
+            }
+
+            if (required.FirstOrDefault(key => item[key] is null) is { } key)
+            {
+                return $"{path}.{key} is required";
+            }
+        }
+
+        return null;
+    }
+
     /// <summary>The spec as JSON text, as a revision stores it.</summary>
     /// <param name="spec">The spec.</param>
     /// <returns>The JSON.</returns>
@@ -47,7 +89,7 @@ public static class GraphJson
         return JsonSerializer.Serialize(spec, GraphJsonContext.Default.GraphSpec);
     }
 
-    /// <summary>The spec's hash, 'sha256:' and 64 hex digits over its canonical JSON: the same graph hashes the same whatever its spacing or member order.</summary>
+    /// <summary>The spec's hash, 'sha256:' and 64 hex digits over its canonical JSON: canonical over spacing and object member order only: `1` and `1.0` hash differently, and so do different node and edge orders.</summary>
     /// <param name="spec">The spec.</param>
     /// <returns>The hash.</returns>
     public static string Hash(GraphSpec spec)

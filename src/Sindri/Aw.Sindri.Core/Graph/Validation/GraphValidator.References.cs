@@ -14,6 +14,11 @@ public sealed partial class GraphValidator
         foreach (var (field, text) in Strings(scope.Node.Config, "config"))
         {
             var refs = Template.References(text).ToList();
+            if (Template.HasUnclosed(text))
+            {
+                found.Add(Found.At("GRAPH-REF-004", scope.Node.Id.Value, field, "a '{{' is never closed by '}}', so it would stay as literal text", "close the reference as {{node.field}}, or remove the '{{'"));
+            }
+
             if (string.Equals(scope.Node.Type, "condition", StringComparison.Ordinal) && string.Equals(field, "config.when", StringComparison.Ordinal))
             {
                 refs.AddRange(Condition(scope.Node, field, text, found));

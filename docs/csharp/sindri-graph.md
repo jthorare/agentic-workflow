@@ -25,11 +25,17 @@ A workflow is a JSON document Sindri stores as revisions. This page covers what 
 | `GRAPH-TRIGGER-001` / `-002` | more than one trigger (names all) / none |
 | `GRAPH-WIRING-001` | a node no trigger reaches |
 | `GRAPH-CYCLE-001` | a loop, with its path in spec order (`a -> b -> c -> a`) |
-| `GRAPH-REF-001` / `-002` / `-003` | a reference to a node that is not upstream / to a field the node does not output / to no node |
+| `GRAPH-REF-001` / `-002` / `-003` / `-004` | a reference to a node that is not upstream / to an output name the node does not have / to no node / a `{{` that is never closed |
 | `GRAPH-BLOCK-001`, `GRAPH-CONFIG-001` | unknown block type, config that fails the block's schema |
 | `GRAPH-CRON-001`, `GRAPH-COND-001` | unreadable cron or timezone, unreadable condition |
 | `GRAPH-REPO-001`, `GRAPH-NAME-001` | repo, connection or memory that does not exist (`-002` is the warning when nobody can answer yet) |
-| `GRAPH-NODE-001`, `GRAPH-EDGE-001` / `-002` | repeated node id, edge to a missing node, edge by an output the block lacks |
+| `GRAPH-NODE-001` / `-002`, `GRAPH-EDGE-001` / `-002` | repeated node id / a node id that is `trigger`, `item` or `workflow` (reserved reference roots), edge to a missing node, edge by an output the block lacks (an edge with no `output` leaves by `out`) |
+
+`GRAPH-TRIGGER-001` / `-002`, `GRAPH-CYCLE-001` and `GRAPH-WIRING-001` are node-level findings: they name nodes and have no field.
+
+The validator checks that a referenced output exists, not its type; type checks come with the typed block configs in PR 6.
+
+A document with a missing or null node, edge, `id`, `type`, `config`, `from` or `to` is refused by `GraphJson.Parse` as `SND-GRAPH-001` naming the JSON path (such as `nodes[2].type`); neither `Parse` nor `wf validate` throws on any text.
 
 `wf validate` reads `config.when` with `ConditionExpression` (references, comparisons, `and`/`or`/`not`, `exists(x)`); a parse error comes back with its column as `GRAPH-COND-001`, and the references it reads are checked for being upstream like any other.
 
