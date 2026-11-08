@@ -45,16 +45,25 @@ internal sealed partial class ShellWindow
 
     private static bool FormOpen(ShellViewModel shell) => shell.Create.IsOpen || shell.NewIssue.IsOpen;
 
-    // ⌘K opens the palette: one layer at a time, so the one open goes first (focus goes back to the original opener first, OnOverlayChanged).
+    // ⌘K opens the palette, ⌘N the Create form (like C): one layer at a time, so the one open goes first (focus goes back to the original opener first, OnOverlayChanged).
     private static bool OpenLayerByChord(KeyEventArgs e, ShellViewModel shell)
     {
-        if (e.KeyModifiers != _command || e.Key != Key.K)
+        if (e.KeyModifiers != _command || e.Key is not (Key.K or Key.N))
         {
             return false;
         }
 
         shell.Shortcuts.Close();
-        shell.Palette.Open();
+        if (e.Key == Key.K)
+        {
+            shell.Palette.Open();
+        }
+        else
+        {
+            shell.Palette.Close();
+            shell.Create.Open();
+        }
+
         return true;
     }
 

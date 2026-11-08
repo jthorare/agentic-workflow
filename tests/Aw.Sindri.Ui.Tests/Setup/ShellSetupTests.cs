@@ -123,9 +123,9 @@ public sealed class ShellSetupTests
 
         _server.SetupAnswer = RouteAnswer.Api("setup", "all-done");
         await shell.Health.RefreshViews(new Uri("http://127.0.0.1:7410/"), Token);
-        await ShellWait.Until(shell, () => shell.NeedsYou.Rows.Count == 2, Token);
+        await ShellWait.Until(shell, () => shell.NeedsYou.Rows.Count == 1, Token);
 
-        Assert.Equal(["setup:mcp", "setup:recipes"], shell.NeedsYou.Rows.Select(r => r.Id).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["setup:mcp"], shell.NeedsYou.Rows.Select(r => r.Id).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }, Token);
 
     [Fact]
@@ -139,7 +139,7 @@ public sealed class ShellSetupTests
         var ids = shell.NeedsYou.Rows.Select(r => r.Id).Order(StringComparer.Ordinal).ToArray();
 
         Assert.Equal(shell.Setup.Steps.Single(s => s.Id == "repo").Title, shell.Setup.HomeStepText);
-        Assert.Equal(["setup:mcp", "setup:recipes"], ids, StringComparer.Ordinal);   // setup:repo is the line's, the rest stay
+        Assert.Equal(["setup:mcp"], ids, StringComparer.Ordinal);   // setup:repo is the line's, setup:recipes is a retired ghost, the rest stay
     }, Token);
 
 }

@@ -17,6 +17,13 @@
 #                                   team.json "agent" sets every lane, including the meta lane, and replaces this
 #                                   launch's meta.lanesAgent and meta.lanes. Absent or null changes nothing. Returns 2
 #                                   when the value is not an agent id.
+#   launcher_apply_routing <team.json> <meta-lane>
+#                                   team.json routing.lanes.<lane> {agent?, model?} (what `aw-meta route --apply` writes) puts that lane
+#                                   on its routed agent (a model with no agent takes the agent routing.models lists it under) and
+#                                   records its model. Runs after launcher_apply_team_agent; a lane with no entry changes nothing.
+#                                   The meta lane is never routed. Returns 2 when the block cannot be read.
+#   launcher_lane_routed <lane>     0 when routing.lanes names the lane's agent
+#   launcher_lane_model <lane>      the lane's routed model as text, empty when it has none
 #   launcher_lane_agent <lane> <meta-lane>   the lane's agent id (the meta lane's is meta.lanes.<meta-lane>, else claude-code: lanesAgent never reaches it)
 #   launcher_agent_ok <id>          0 when the catalog has a usable entry, else prints SND-LAUNCH-003/-011 and returns 1
 #   launcher_agent_field <id> <f>   one catalog field as text (empty for null/absent); arrays and objects as JSON
@@ -171,6 +178,25 @@ launcher_apply_team_agent() { # <team.json> <meta-lane>
   LAUNCHER_DOC="$(jq -c --arg a "$id" --arg m "$2" '.meta = ((.meta // {}) | .lanesAgent = $a | .lanes = {($m): $a})' <<< "$LAUNCHER_DOC")"
 }
 
+# shellcheck disable=SC2016
+launcher_apply_routing() { # <team.json> <meta-lane>
+  [ -f "$1" ] || return 0
+  local routed
+  routed="$(jq -c --arg meta "$2" '
+    (.routing // {}) as $r
+    | ($r.models // {}) as $models
+    | reduce (($r.lanes // {}) | to_entries[] | select(.key != $meta and (.value | type) == "object")) as $e ({agents: {}, models: {}};
+        ($e.value.agent // (if ($e.value.model | type) == "string" then ($models | to_entries | map(select(.value | index($e.value.model))) | .[0].key) else null end)) as $a
+        | (if $a then .agents[$e.key] = $a else . end)
+        | (if ($e.value.model | type) == "string" then .models[$e.key] = $e.value.model else . end))
+  ' "$1")" || { echo "launcher: $1: could not read routing" >&2; return 2; }
+  LAUNCHER_DOC="$(jq -c --argjson r "$routed" '.meta = ((.meta // {}) | .lanes = ((.lanes // {}) + $r.agents) | .routed = ($r.agents | keys) | .laneModels = $r.models)' <<< "$LAUNCHER_DOC")"
+}
+
+launcher_lane_routed() { jq -e --arg l "$1" '(.meta.routed // []) | index($l) != null' <<< "$LAUNCHER_DOC" > /dev/null; }
+
+launcher_lane_model() { jq -r --arg l "$1" '.meta.laneModels[$l] // empty' <<< "$LAUNCHER_DOC"; }
+
 launcher_lane_agent() { # lane meta-lane
   # The meta's own pane stays Claude Code unless meta.lanes names it (spec section 9): lanesAgent is the lanes' default, never the
   # meta's, so a launcher.json written for Codex lanes under a Claude meta is refused by meta-launch.sh (one agent per team), not
@@ -189,6 +215,31 @@ launcher_agent_ok() { # id: 0 when launchable
   if [ "$(jq -r --arg id "$1" '.[$id] | (.bin | type) == "string" and (.open | type) == "array"' <<< "$LAUNCHER_CAT")" != true ]; then
     echo "SND-LAUNCH-011: agent '$1' needs bin and open" >&2; return 1
   fi
+}
+
+# launcher_is_codex <id>: whether the catalog entry is a Codex CLI: the built-in id, or an entry derived from it (an alias that keeps
+# its process name, model form or policy form, or whose binary is named codex). A shared-daemon rule (#2286) keys on this, not on the id.
+launcher_is_codex() {
+  jq -e --arg id "$1" '.[$id] | $id == "codex" or (.processName // "") == "codex" or (.model // "") == "codex-flag"
+    or (.policy // "") == "codex-overrides" or ((.bin // "") | split("/") | last) == "codex"' <<< "$LAUNCHER_CAT" > /dev/null 2>&1
+}
+
+# launcher_cli_has_flag <bin> <flag>: whether `<bin> --help` names the flag. One run, output to a temp file, ended after
+# AW_LAUNCHER_PROBE_SECONDS (default 5) so a CLI that hangs never stops a lane (no `timeout` on macOS). A CLI that does not run answers no.
+launcher_cli_has_flag() {
+  local bin="$1" flag="$2" out pid i found=1
+  out="$(mktemp "${TMPDIR:-/tmp}/aw-probe.XXXXXX")" || return 1
+  "$bin" --help > "$out" 2>&1 < /dev/null &
+  pid=$!
+  for ((i = 0; i < ${AW_LAUNCHER_PROBE_SECONDS:-5} * 10; i++)); do
+    kill -0 "$pid" 2> /dev/null || break
+    sleep 0.1
+  done
+  if kill -0 "$pid" 2> /dev/null; then kill "$pid" 2> /dev/null; fi
+  wait "$pid" 2> /dev/null
+  grep -q -- "$flag" "$out" 2> /dev/null && found=0
+  unlink "$out" 2> /dev/null
+  return "$found"
 }
 
 launcher_agent_field() { # id field

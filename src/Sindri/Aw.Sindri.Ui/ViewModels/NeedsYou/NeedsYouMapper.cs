@@ -19,7 +19,7 @@ internal static class NeedsYouMapper
         ArgumentNullException.ThrowIfNull(catalog);
         var readiness = catalog.Rows.ToDictionary(r => r.Action, r => (r.Cli, Protected: string.Equals(r.Class, "protected", StringComparison.Ordinal)), StringComparer.Ordinal);
         var read = catalog.Rows.Count > 0;
-        return new NeedsYouFeed([.. list.Rows.Where(row => !NeedsYouKinds.Retired.Contains(row.Kind, StringComparer.Ordinal)).Select(row => Entry(row, readiness, decisions, read))], list.Empty ?? string.Empty)
+        return new NeedsYouFeed([.. list.Rows.Where(row => !NeedsYouKinds.Retired.Contains(row.Kind, StringComparer.Ordinal) && !string.Equals(row.Id, NeedsYouKinds.RetiredRecipesRowId, StringComparison.Ordinal)).Select(row => Entry(row, readiness, decisions, read))], list.Empty ?? string.Empty)
         {
             Stalled = list.AsOf.Stalled,
             Rebuilding = list.AsOf.Rebuilding,

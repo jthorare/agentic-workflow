@@ -53,6 +53,22 @@ public sealed class ShellChordTests
     }
 
     [Fact]
+    public async Task The_shortcuts_sheet_names_exactly_the_G_chords_that_exist()
+    {
+        const string prefix = "G then ";
+        var line = Labels.FixedKeys.Single(k => k.Keys.StartsWith(prefix, StringComparison.Ordinal)).Keys;
+        var named = line[prefix.Length..].Split(' ', StringSplitOptions.RemoveEmptyEntries).ToHashSet(StringComparer.Ordinal);
+
+        foreach (var key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ.".Select(c => c.ToString()))
+        {
+            var shell = await Shell();
+            _ = shell.PressKey("G");
+
+            Assert.Equal(named.Contains(key), shell.PressKey(key));
+        }
+    }
+
+    [Fact]
     public async Task A_chord_at_its_wait_has_expired()
     {
         var shell = await Shell();

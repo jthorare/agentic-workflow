@@ -46,8 +46,8 @@ public sealed class ShellSetupCountTests
         _server.SetupGate = new TaskCompletionSource();
         var shell = await Connected(s => s.NeedsYou.Count > 0 && s.Setup.IsReading);
 
-        Assert.Equal((5, 5), (shell.NeedsYou.Count, shell.NeedsYou.Rows.Count));   // a read that has not answered holds nothing back: the header can't jump when it does
-        Assert.StartsWith("5 need you", shell.Attention.SummaryLine, StringComparison.Ordinal);
+        Assert.Equal((4, 4), (shell.NeedsYou.Count, shell.NeedsYou.Rows.Count));   // a read that has not answered holds nothing back: the header can't jump when it does
+        Assert.StartsWith("4 need you", shell.Attention.SummaryLine, StringComparison.Ordinal);
         _server.SetupGate.SetResult();
     }, Token);
 
@@ -59,8 +59,8 @@ public sealed class ShellSetupCountTests
         var shell = await Connected(s => s.Setup.IsHomeLineShown);
 
         Assert.Equal("mcp", shell.Setup.HomeStepId);
-        Assert.Equal((4, 4), (shell.NeedsYou.Count, shell.NeedsYou.Rows.Count));   // setup:mcp is the line's; setup:recipes stays
-        Assert.StartsWith("4 need you", shell.Attention.SummaryLine, StringComparison.Ordinal);
+        Assert.Equal((3, 3), (shell.NeedsYou.Count, shell.NeedsYou.Rows.Count));   // setup:mcp is the line's; setup:recipes never shows
+        Assert.StartsWith("3 need you", shell.Attention.SummaryLine, StringComparison.Ordinal);
     }, Token);
 
     [Fact]
@@ -70,7 +70,19 @@ public sealed class ShellSetupCountTests
         _server.SetupAnswer = RouteAnswer.Api("setup", "all-done");
         var shell = await Connected(s => s.Setup.IsFinished);
 
-        Assert.Equal((5, 5), (shell.NeedsYou.Count, shell.NeedsYou.Rows.Count));
-        Assert.StartsWith("5 need you", shell.Attention.SummaryLine, StringComparison.Ordinal);
+        Assert.Equal((4, 4), (shell.NeedsYou.Count, shell.NeedsYou.Rows.Count));
+        Assert.StartsWith("4 need you", shell.Attention.SummaryLine, StringComparison.Ordinal);
+    }, Token);
+
+    [Fact]
+    public Task The_retired_setup_recipes_row_is_in_no_row_and_no_count_while_another_setup_row_stays() => UiThread.Run(async () =>
+    {
+        _server.NeedsYouView = ThreeAndTwoSetup();
+        _server.SetupAnswer = RouteAnswer.Api("setup", "all-done");
+        var shell = await Connected(s => s.Setup.IsFinished);
+
+        Assert.DoesNotContain(shell.NeedsYou.Rows, r => r.Id == "setup:recipes");
+        Assert.Contains(shell.NeedsYou.Rows, r => r.Id == "setup:mcp");
+        Assert.Equal(shell.NeedsYou.Rows.Count, shell.NeedsYou.Count);   // the badge and tray read this count
     }, Token);
 }

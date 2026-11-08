@@ -12392,3 +12392,61 @@ static Aw.Context.Core.Linear.LinearIssueParent.operator !=(Aw.Context.Core.Line
 static Aw.Context.Core.Linear.LinearIssueParent.operator ==(Aw.Context.Core.Linear.LinearIssueParent? left, Aw.Context.Core.Linear.LinearIssueParent? right) -> bool
 const Aw.Context.Core.ContextErrors.StoreHint = " (fix: run sindri doctor; never delete context.db)" -> string!
 static Aw.Context.Core.ContextErrors.DoctorDetail(Aw.Kernel.Error! error) -> string!
+Aw.Context.Core.Concepts.PinMove
+Aw.Context.Core.Concepts.PinMove.<Clone>$() -> Aw.Context.Core.Concepts.PinMove!
+Aw.Context.Core.Concepts.PinMove.Pin.get -> Aw.Context.Core.Engine.ConceptId
+Aw.Context.Core.Concepts.PinMove.Pin.init -> void
+Aw.Context.Core.Concepts.PinMove.FromVersion.get -> int
+Aw.Context.Core.Concepts.PinMove.FromVersion.init -> void
+Aw.Context.Core.Concepts.PinMove.ToVersion.get -> int
+Aw.Context.Core.Concepts.PinMove.ToVersion.init -> void
+Aw.Context.Core.Concepts.PinMove.Gained.get -> int
+Aw.Context.Core.Concepts.PinMove.Gained.init -> void
+Aw.Context.Core.Concepts.PinMove.Lost.get -> int
+Aw.Context.Core.Concepts.PinMove.Lost.init -> void
+Aw.Context.Core.Concepts.PinMove.To.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinMoveTo!>!
+Aw.Context.Core.Concepts.PinMove.To.init -> void
+Aw.Context.Core.Concepts.PinMove.Deconstruct(out Aw.Context.Core.Engine.ConceptId Pin, out int FromVersion, out int ToVersion, out int Gained, out int Lost, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinMoveTo!>! To) -> void
+Aw.Context.Core.Concepts.PinMove.Equals(Aw.Context.Core.Concepts.PinMove? other) -> bool
+Aw.Context.Core.Concepts.PinMove.PinMove(Aw.Context.Core.Engine.ConceptId Pin, int FromVersion, int ToVersion, int Gained, int Lost, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinMoveTo!>! To) -> void
+override Aw.Context.Core.Concepts.PinMove.Equals(object? obj) -> bool
+override Aw.Context.Core.Concepts.PinMove.GetHashCode() -> int
+override Aw.Context.Core.Concepts.PinMove.ToString() -> string!
+static Aw.Context.Core.Concepts.PinMove.operator !=(Aw.Context.Core.Concepts.PinMove? left, Aw.Context.Core.Concepts.PinMove? right) -> bool
+static Aw.Context.Core.Concepts.PinMove.operator ==(Aw.Context.Core.Concepts.PinMove? left, Aw.Context.Core.Concepts.PinMove? right) -> bool
+Aw.Context.Core.Concepts.PinMoveTo
+Aw.Context.Core.Concepts.PinMoveTo.<Clone>$() -> Aw.Context.Core.Concepts.PinMoveTo!
+Aw.Context.Core.Concepts.PinMoveTo.Id.get -> Aw.Context.Core.Engine.ConceptId?
+Aw.Context.Core.Concepts.PinMoveTo.Id.init -> void
+Aw.Context.Core.Concepts.PinMoveTo.Name.get -> string?
+Aw.Context.Core.Concepts.PinMoveTo.Name.init -> void
+Aw.Context.Core.Concepts.PinMoveTo.Features.get -> int
+Aw.Context.Core.Concepts.PinMoveTo.Features.init -> void
+Aw.Context.Core.Concepts.PinMoveTo.Deconstruct(out Aw.Context.Core.Engine.ConceptId? Id, out string? Name, out int Features) -> void
+Aw.Context.Core.Concepts.PinMoveTo.Equals(Aw.Context.Core.Concepts.PinMoveTo? other) -> bool
+Aw.Context.Core.Concepts.PinMoveTo.PinMoveTo(Aw.Context.Core.Engine.ConceptId? Id, string? Name, int Features) -> void
+override Aw.Context.Core.Concepts.PinMoveTo.Equals(object? obj) -> bool
+override Aw.Context.Core.Concepts.PinMoveTo.GetHashCode() -> int
+override Aw.Context.Core.Concepts.PinMoveTo.ToString() -> string!
+static Aw.Context.Core.Concepts.PinMoveTo.operator !=(Aw.Context.Core.Concepts.PinMoveTo? left, Aw.Context.Core.Concepts.PinMoveTo? right) -> bool
+static Aw.Context.Core.Concepts.PinMoveTo.operator ==(Aw.Context.Core.Concepts.PinMoveTo? left, Aw.Context.Core.Concepts.PinMoveTo? right) -> bool
+Aw.Context.Core.Concepts.FeaturePlace
+Aw.Context.Core.Concepts.FeaturePlace.<Clone>$() -> Aw.Context.Core.Concepts.FeaturePlace!
+Aw.Context.Core.Concepts.FeaturePlace.Id.get -> Aw.Context.Core.Engine.ConceptId
+Aw.Context.Core.Concepts.FeaturePlace.Id.init -> void
+Aw.Context.Core.Concepts.FeaturePlace.Name.get -> string!
+Aw.Context.Core.Concepts.FeaturePlace.Name.init -> void
+Aw.Context.Core.Concepts.FeaturePlace.Deconstruct(out Aw.Context.Core.Engine.ConceptId Id, out string! Name) -> void
+Aw.Context.Core.Concepts.FeaturePlace.Equals(Aw.Context.Core.Concepts.FeaturePlace? other) -> bool
+Aw.Context.Core.Concepts.FeaturePlace.FeaturePlace(Aw.Context.Core.Engine.ConceptId Id, string! Name) -> void
+override Aw.Context.Core.Concepts.FeaturePlace.Equals(object? obj) -> bool
+override Aw.Context.Core.Concepts.FeaturePlace.GetHashCode() -> int
+override Aw.Context.Core.Concepts.FeaturePlace.ToString() -> string!
+static Aw.Context.Core.Concepts.FeaturePlace.operator !=(Aw.Context.Core.Concepts.FeaturePlace? left, Aw.Context.Core.Concepts.FeaturePlace? right) -> bool
+static Aw.Context.Core.Concepts.FeaturePlace.operator ==(Aw.Context.Core.Concepts.FeaturePlace? left, Aw.Context.Core.Concepts.FeaturePlace? right) -> bool
+Aw.Context.Core.Concepts.PinMoves
+const Aw.Context.Core.Concepts.PinMoves.MaxPlaces = 2 -> int
+static Aw.Context.Core.Concepts.PinMoves.Between(int fromVersion, int toVersion, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlySet<string!>!>! before, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlySet<string!>!>! after, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.FeaturePlace!>!>! placesAfter) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinMove!>!
+Aw.Context.Core.Concepts.PinMembership
+static Aw.Context.Core.Concepts.PinMembership.Moves(int fromVersion, int toVersion, Aw.Context.Core.Concepts.ConceptRead! before, Aw.Context.Core.Concepts.ConceptRead! after) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinMove!>!
+Aw.Context.Core.Facade.IContextMap.PinMoves(Aw.Context.Core.Map.MapVersion! from, Aw.Context.Core.Map.MapVersion! to, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinMove!>!>!>
