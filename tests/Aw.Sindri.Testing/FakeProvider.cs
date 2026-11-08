@@ -26,6 +26,7 @@ public sealed class FakeProvider : HttpMessageHandler
 
     private const int GitHubPageSize = 100;
     private const int LinearPageSize = 50;
+    private const int SlackPageSize = 100;
 
     private readonly Lock _gate = new();
     private readonly List<string> _githubEvents = [];
@@ -187,9 +188,7 @@ public sealed class FakeProvider : HttpMessageHandler
         {
             GitHubHost => GitHubPage(uri, out link),
             LinearHost => LinearPage(requestBody),
-            SlackHost => _slackError is { } code
-                ? "{\"ok\":false,\"error\":\"" + code + "\"}"
-                : "{\"ok\":true,\"messages\":[" + string.Join(',', Enumerable.Reverse(_slackMessages)) + "]}",
+            SlackHost => SlackPage(uri),
             GoogleHost => "{\"items\":[" + string.Join(',', _calendarEvents) + "]}",
             _ => null,
         };
@@ -235,6 +234,21 @@ public sealed class FakeProvider : HttpMessageHandler
         var all = Enumerable.Reverse(_githubEvents).ToList();
         link = page * GitHubPageSize < all.Count ? $"<https://{GitHubHost}{uri.AbsolutePath}?per_page={GitHubPageSize}&page={(page + 1).ToString(System.Globalization.CultureInfo.InvariantCulture)}>; rel=\"next\"" : null;
         return "[" + string.Join(',', all.Skip((page - 1) * GitHubPageSize).Take(GitHubPageSize)) + "]";
+    }
+
+    // Slack: newest first, 100 to a page, response_metadata.next_cursor is the next offset while more remain.
+    private string SlackPage(Uri uri)
+    {
+        if (_slackError is { } code)
+        {
+            return "{\"ok\":false,\"error\":\"" + code + "\"}";
+        }
+
+        var offset = int.TryParse(System.Web.HttpUtility.ParseQueryString(uri.Query)["cursor"], out var asked) && asked > 0 ? asked : 0;
+        var all = Enumerable.Reverse(_slackMessages).ToList();
+        var end = Math.Min(offset + SlackPageSize, all.Count);
+        var next = end < all.Count ? end.ToString(System.Globalization.CultureInfo.InvariantCulture) : string.Empty;
+        return "{\"ok\":true,\"messages\":[" + string.Join(',', all.Skip(offset).Take(SlackPageSize)) + "],\"response_metadata\":{\"next_cursor\":\"" + next + "\"}}";
     }
 
     // Linear: issues in the order added, 50 to a page, variables.after is the offset the last page's endCursor named.

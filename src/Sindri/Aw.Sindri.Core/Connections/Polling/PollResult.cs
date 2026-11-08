@@ -8,6 +8,6 @@ namespace Aw.Sindri.Core.Connections.Polling;
 /// <param name="NextCursor">The cursor to save once the runs for these events started; the asked-for cursor when rate limited.</param>
 /// <param name="RateLimited">True when the provider answered 429 or 5xx.</param>
 /// <param name="RetryAfter">The provider's Retry-After (or the wait until its rate-limit reset), or null.</param>
-/// <param name="Gap">True when the poller hit its page cap before reaching the saved cursor: events older than the pages it read are not in <paramref name="Events"/>, and the cursor moved past them. The caller logs it (catchup.capped).</param>
+/// <param name="Gap">True when the poller hit its page cap before reaching the saved cursor: events older than the pages it read are not in <paramref name="Events"/>, and the cursor moved past them. The caller logs it (catchup.capped). On a gap the cursor still moves to the newest event read; older events are skipped, and the caller logs catchup.capped.</param>
 /// <param name="Reason">Why the result is rate limited: "the provider is rate limiting this connection" or "the provider could not be reached"; null otherwise.</param>
 public sealed record PollResult(IReadOnlyList<PolledEvent> Events, string? NextCursor, bool RateLimited, TimeSpan? RetryAfter, bool Gap = false, string? Reason = null);

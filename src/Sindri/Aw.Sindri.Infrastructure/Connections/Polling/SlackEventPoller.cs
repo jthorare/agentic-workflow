@@ -16,13 +16,16 @@ namespace Aw.Sindri.Infrastructure.Connections.Polling;
 /// <param name="http">The HTTP client; it must not follow redirects on its own.</param>
 /// <param name="secrets">The connection secrets.</param>
 /// <param name="clock">The clock a baseline falls back to when the channel has no messages.</param>
-internal sealed class SlackEventPoller(HttpClient http, IConnectionSecrets secrets, TimeProvider clock) : IEventPoller
+/// <param name="pageCap">The most pages one poll reads.</param>
+internal sealed class SlackEventPoller(HttpClient http, IConnectionSecrets secrets, TimeProvider clock, int pageCap = PollLimits.DefaultPageCap) : IEventPoller
 {
     private const string Host = "slack.com";
 
     private readonly PollerClient _client = new(http, secrets, Host, clock);
 
     private readonly TimeProvider _clock = clock;
+
+    internal int PageCap { get; } = pageCap;
 
     public string Preset => "slack";
 

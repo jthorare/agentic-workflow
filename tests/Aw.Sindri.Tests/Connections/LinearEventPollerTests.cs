@@ -168,4 +168,38 @@ public sealed class LinearEventPollerTests
 
         Assert.Equal([PollerHarness.Token, "Bearer " + PollerHarness.Token], provider.Requests.Select(static r => r.Authorization), StringComparer.Ordinal);
     }
+
+    [Fact]
+    public async Task A_comment_list_with_a_next_page_reports_a_gap_and_one_without_does_not()
+    {
+        var first = DateTimeOffset.Parse("2026-11-08T10:00:00Z", CultureInfo.InvariantCulture);
+        var more = new FakeProvider();
+        more.AddLinearIssue(ProviderFixtures.LinearManyComments("ENG-4", 10, hasNextPage: true, first));
+        var whole = new FakeProvider();
+        whole.AddLinearIssue(ProviderFixtures.LinearManyComments("ENG-4", 3, hasNextPage: false, first));
+        using var cut = PollerHarness.For("linear", more);
+        using var done = PollerHarness.For("linear", whole);
+        var ct = TestContext.Current.CancellationToken;
+
+        var capped = await cut.Poller.Poll(cut.Connection, EventKind.LinearCommentAdded, Before, ct);
+        var complete = await done.Poller.Poll(done.Connection, EventKind.LinearCommentAdded, Before, ct);
+
+        Assert.True(capped.Value.Gap);
+        Assert.Equal(10, capped.Value.Events.Count);
+        Assert.False(complete.Value.Gap);
+        Assert.Equal(3, complete.Value.Events.Count);
+    }
+
+    [Fact]
+    public async Task A_history_list_with_a_next_page_reports_a_gap()
+    {
+        var provider = new FakeProvider();
+        provider.AddLinearIssue(ProviderFixtures.LinearManyLabels("ENG-5", 25, hasNextPage: true, DateTimeOffset.Parse("2026-11-08T10:00:00Z", CultureInfo.InvariantCulture)));
+        using var h = PollerHarness.For("linear", provider);
+
+        var polled = await h.Poller.Poll(h.Connection, EventKind.LinearIssueLabeled, Before, TestContext.Current.CancellationToken);
+
+        Assert.True(polled.Value.Gap);
+        Assert.Equal(25, polled.Value.Events.Count);
+    }
 }

@@ -97,6 +97,41 @@ public static class ProviderFixtures
             {"id":"{{{eventId}}}","summary":"{{{summary}}}","htmlLink":"https://calendar.google.com/event?eid={{{eventId}}}","start":{"dateTime":"{{{start}}}"}}
             """;
 
+    /// <summary>A Linear issue created long ago with <paramref name="count"/> comments, one second apart from <paramref name="firstAt"/>; the comments list says whether it has a next page.</summary>
+    /// <param name="identifier">'ENG-4'.</param>
+    /// <param name="count">How many comments the page holds.</param>
+    /// <param name="hasNextPage">Whether Linear says more comments exist.</param>
+    /// <param name="firstAt">Time of the first comment.</param>
+    /// <returns>The JSON object.</returns>
+    public static string LinearManyComments(string identifier, int count, bool hasNextPage, DateTimeOffset firstAt)
+    {
+        var nodes = string.Join(',', Enumerable.Range(1, count).Select(i =>
+            "{\"id\":\"c-" + Num(i) + "\",\"createdAt\":\"" + At(firstAt, i) + "\",\"body\":\"b\",\"user\":{\"name\":\"Ada\"}}"));
+        return Issue(identifier, "\"history\":{\"nodes\":[]},\"comments\":{\"nodes\":[" + nodes + "],\"pageInfo\":{\"hasNextPage\":" + Flag(hasNextPage) + "}}");
+    }
+
+    /// <summary>A Linear issue with <paramref name="count"/> history entries that each added a label, one second apart from <paramref name="firstAt"/>; the history list says whether it has a next page.</summary>
+    /// <param name="identifier">'ENG-5'.</param>
+    /// <param name="count">How many history entries the page holds.</param>
+    /// <param name="hasNextPage">Whether Linear says more history exists.</param>
+    /// <param name="firstAt">Time of the first entry.</param>
+    /// <returns>The JSON object.</returns>
+    public static string LinearManyLabels(string identifier, int count, bool hasNextPage, DateTimeOffset firstAt)
+    {
+        var nodes = string.Join(',', Enumerable.Range(1, count).Select(i =>
+            "{\"id\":\"h-" + Num(i) + "\",\"createdAt\":\"" + At(firstAt, i) + "\",\"addedLabels\":[{\"id\":\"lbl-" + Num(i) + "\",\"name\":\"bug\"}],\"fromState\":null,\"toState\":null}"));
+        return Issue(identifier, "\"history\":{\"nodes\":[" + nodes + "],\"pageInfo\":{\"hasNextPage\":" + Flag(hasNextPage) + "}},\"comments\":{\"nodes\":[]}");
+    }
+
+    private static string Num(int value) => value.ToString(CultureInfo.InvariantCulture);
+
+    private static string At(DateTimeOffset first, int seconds) => first.AddSeconds(seconds).ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture);
+
+    private static string Flag(bool value) => value ? "true" : "false";
+
+    private static string Issue(string identifier, string rest)
+        => "{\"identifier\":\"" + identifier + "\",\"title\":\"t\",\"url\":\"https://linear.app/acme/issue/" + identifier + "\",\"createdAt\":\"2025-01-01T00:00:00Z\"," + rest + "}";
+
     private static string GitHubPr(string eventId, string repo, int number, string title, string author, string createdAt, string action, bool merged, string? reviewer)
     {
         var requested = reviewer is null ? string.Empty : $$$""","requested_reviewer":{"login":"{{{reviewer}}}"}""";

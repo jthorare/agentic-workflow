@@ -105,4 +105,30 @@ public sealed class SlackEventPollerTests
         Assert.Empty(onEmpty.Value.Events);
         Assert.Equal("1767225600.000000", onEmpty.Value.NextCursor);   // 2026-01-01T00:00:00Z, the test clock
     }
+
+    [Fact]
+    public async Task A_channel_of_150_new_messages_is_read_through_next_cursor_and_a_page_cap_reports_a_gap()
+    {
+        var provider = new FakeProvider();
+        for (var i = 1; i <= 350; i++)
+        {
+            provider.AddSlackMessage(ProviderFixtures.SlackMessage("1731060000." + i.ToString("D6", System.Globalization.CultureInfo.InvariantCulture), "U2", "m"));
+        }
+
+        var filterOff = new Dictionary<string, string>(StringComparer.Ordinal) { ["filter"] = string.Empty };
+        using var all = PollerHarness.For("slack", provider, filterOff);
+        using var capped = PollerHarness.For("slack", provider, filterOff, pageCap: 2);
+        var ct = TestContext.Current.CancellationToken;
+
+        var whole = await all.Poller.Poll(all.Connection, EventKind.SlackMessage, Before, ct);
+        var cut = await capped.Poller.Poll(capped.Connection, EventKind.SlackMessage, Before, ct);
+
+        Assert.False(whole.Value.Gap);
+        Assert.Equal(350, whole.Value.Events.Count);
+        Assert.Equal("slack:C123:1731060000.000001", whole.Value.Events[0].DeliveryKey);
+        Assert.Equal("slack:C123:1731060000.000350", whole.Value.Events[^1].DeliveryKey);
+        Assert.True(cut.Value.Gap);
+        Assert.Equal(200, cut.Value.Events.Count);
+        Assert.Equal("1731060000.000350", cut.Value.NextCursor);
+    }
 }

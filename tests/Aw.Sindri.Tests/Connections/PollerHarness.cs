@@ -45,7 +45,7 @@ internal sealed record PollerHarness(IEventPoller Poller, Connection Connection,
         {
             "github" => new PollerHarness(new GitHubEventPoller(http, secrets, clock, pageCap), connection, EventKind.GitHubPrMerged, http),
             "linear" => new PollerHarness(new LinearEventPoller(http, secrets, clock, pageCap), connection, EventKind.LinearIssueLabeled, http),
-            "slack" => new PollerHarness(new SlackEventPoller(http, secrets, clock), connection, EventKind.SlackMessage, http),
+            "slack" => new PollerHarness(new SlackEventPoller(http, secrets, clock, pageCap), connection, EventKind.SlackMessage, http),
             _ => new PollerHarness(new GoogleCalendarPoller(http, secrets, clock), connection, EventKind.GoogleCalendarEventStarting, http),
         };
     }

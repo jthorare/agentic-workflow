@@ -159,6 +159,18 @@ public sealed class GitHubEventPollerTests
         Assert.Equal("github:4001", Assert.Single(polled.Value.Events).DeliveryKey);
     }
 
+    [Fact]
+    public async Task A_400_is_a_provider_error_and_never_a_rejected_cursor_because_GitHub_gets_no_cursor()
+    {
+        var provider = new FakeProvider();
+        provider.RateLimit(times: 1, retryAfter: null, HttpStatusCode.BadRequest);
+        using var h = PollerHarness.For("github", provider);
+
+        var polled = await h.Poller.Poll(h.Connection, EventKind.GitHubPrMerged, Before, TestContext.Current.CancellationToken);
+
+        Assert.Equal("SND-CONN-012", polled.Error.Code);
+    }
+
     private static void AddMerged(FakeProvider provider, int count)
     {
         for (var i = 1; i <= count; i++)
