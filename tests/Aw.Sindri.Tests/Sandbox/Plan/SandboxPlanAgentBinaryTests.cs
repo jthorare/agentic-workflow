@@ -48,4 +48,12 @@ public sealed class SandboxPlanAgentBinaryTests
         Assert.Equal(SindriErrors.LaunchUnconfinable.Code, result.Error.Code);
         Assert.Equal(SandboxReasons.BinDenied, SandboxRefusal.ReasonOf(result.Error));
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_binary_outside_the_share_folder_binds_the_first_folder_under_the_home()
+    {
+        var tree = AgentBinaryTree.Of(Req.Home, Req.Home + "/.npm-global/lib/node_modules/claude/bin/claude");
+
+        Assert.Equal(Req.Home + "/.npm-global", tree);
+    }
 }

@@ -17,14 +17,13 @@ internal sealed partial class NeedsYouPageViewModel : ObservableObject
     private NeedsYouRowViewModel? _lastRow;   // the row the card last showed as selected
     private NeedsYouRowViewModel? _cleared;   // that row, once it left the list under the card, until the user moves on
 
-    internal NeedsYouPageViewModel(NeedsYouViewModel list, TimeProvider clock, IClipboard clipboard, DeskReporter desk, NeedsYouConfirm? confirm = null, PausedAnswerViewModel? answer = null, TakeoverViewModel? takeover = null)
+    internal NeedsYouPageViewModel(NeedsYouViewModel list, TimeProvider clock, IClipboard clipboard, ILauncher launcher, NeedsYouConfirm? confirm = null)
     {
-        (Answer, Takeover) = (answer, takeover);
         _list = list;
         _clock = clock;
         _clipboard = clipboard;
-        Bar = new NeedsYouBarViewModel(desk, clock, confirm);
-        PrLaunch = new LinkLaunch(desk.Launcher);
+        Bar = new NeedsYouBarViewModel(confirm);
+        PrLaunch = new LinkLaunch(launcher);
         _list.PropertyChanged += OnListChanged;
         Rebuild();
         _lastRow = Selected;
@@ -72,7 +71,7 @@ internal sealed partial class NeedsYouPageViewModel : ObservableObject
     public string CopyWord { get; } = Labels.Copy;
 
     /// <summary>The header's count: "3 waiting, 1 runs".</summary>
-    public string CountText => Labels.NeedsYouWaiting(_list.Seen.Rows.Count, _list.Seen.Rows.Count(r => NeedsYouGrouping.KindOf(r.Entry) == NeedsYouGroupKind.Runs));
+    public string CountText => Labels.NeedsYouWaiting(_list.Seen.Rows.Count);
 
     /// <summary>True while the stalled or rebuilding banner shows.</summary>
     public bool HasBanner => _list.HasBanner;
@@ -130,7 +129,7 @@ internal sealed partial class NeedsYouPageViewModel : ObservableObject
     public string Reference => Card is { } row ? (row.ShownId.Length > 0 ? row.ShownId : row.Id) : "";
 
     /// <summary>The first section: why the request needs the user, as the row serves it.</summary>
-    public string Why => Bar.DeskWhy.Length > 0 ? Bar.DeskWhy : Card?.Entry is { } entry ? (entry.Reason.Length > 0 ? entry.Reason : entry.Label) : "";
+    public string Why => Card?.Entry is { } entry ? (entry.Reason.Length > 0 ? entry.Reason : entry.Label) : "";
 
     /// <summary>What a decision asks; empty for any other row.</summary>
     public string Question => Card?.Entry.Question ?? "";
@@ -201,10 +200,8 @@ internal sealed partial class NeedsYouPageViewModel : ObservableObject
 
     private static string KindWordOf(NeedsYouEntry entry) => NeedsYouGrouping.KindOf(entry) switch
     {
-        NeedsYouGroupKind.Approvals => entry.Stop is { } stop ? Labels.NeedsYouApprovalStop(stop.N, stop.Of, Workflows.WorkflowNames.Of(stop.State, displayName: null)) : Labels.NeedsYouKindApproval,
-        NeedsYouGroupKind.Runs => Labels.NeedsYouKindRun,
         NeedsYouGroupKind.Decisions => Labels.NeedsYouKindDecision,
-        NeedsYouGroupKind.Settings => entry.Id.StartsWith("profile:", StringComparison.Ordinal) ? Labels.NeedsYouKindSettings : Labels.NeedsYouKindWorkflow,
+        NeedsYouGroupKind.Settings => Labels.NeedsYouKindSettings,
         NeedsYouGroupKind.Failures => Labels.NeedsYouKindFailure,
         NeedsYouGroupKind.Other => entry.Kind,
         _ => throw new InvalidOperationException("a group the app doesn't know"),
@@ -212,7 +209,7 @@ internal sealed partial class NeedsYouPageViewModel : ObservableObject
 
     private static readonly string[] _cardProperties =
     [
-        nameof(ShowsRequest), nameof(IsDone), nameof(Selected), nameof(Card), nameof(IsCleared), nameof(ClearedText), nameof(FooterName), nameof(HasSelected), nameof(KindWord), nameof(CardName), nameof(Reference), nameof(Why), nameof(Question), nameof(FooterRight), nameof(ShowsAnswer), nameof(ShowsTakeover), nameof(ShowsBarButtons), nameof(Park),
+        nameof(ShowsRequest), nameof(IsDone), nameof(Selected), nameof(Card), nameof(IsCleared), nameof(ClearedText), nameof(FooterName), nameof(HasSelected), nameof(KindWord), nameof(CardName), nameof(Reference), nameof(Why), nameof(Question), nameof(FooterRight), nameof(ShowsBarButtons),
     ];
 
     private static readonly string[] _listProperties =
@@ -246,7 +243,6 @@ internal sealed partial class NeedsYouPageViewModel : ObservableObject
         _list.Select(id);
         _lastRow = Selected ?? _lastRow;
         Report(_cardProperties);
-        PickedPark();
     }
 
     // The list moved the selection on its own because the row under the card left: the card keeps that row, cleared, until the user moves.
@@ -273,7 +269,6 @@ internal sealed partial class NeedsYouPageViewModel : ObservableObject
         {
             Bar.Show(Card);   // before the card's words are read: another request starts a fresh bar
             Bar.Enabled = !IsCleared;
-            ShowPausedRun();
         }
 
         foreach (var name in names)

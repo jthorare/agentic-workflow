@@ -1,9 +1,7 @@
-using System.Net;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
-using Aw.Sindri.Ui.ViewModels.Instance;
 using Aw.Sindri.Ui.ViewModels.NeedsYou;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Microsoft.Extensions.Time.Testing;
@@ -98,25 +96,18 @@ public sealed class ShellIssueSheetLeaveTests
     }, Token);
 
     [Fact]
-    public Task Back_with_unsaved_edits_then_Discard_returns_along_the_trail_like_Back_with_none() => UiThread.Run(async () =>
+    public Task Back_with_unsaved_edits_then_Discard_closes_the_sheet_like_Back_with_none() => UiThread.Run(async () =>
     {
-        var golden = GoldenFiles.Node("workflow-instance", "project-build");
-        golden["open"]!["route"] = "linear/ENG-12";
-        _server.InstanceBody = _ => new RouteAnswer(HttpStatusCode.OK, golden.ToJsonString());
         var shell = await Shell();
-        shell.OpenInstance((string)golden["address"]!, (string)golden["id"]!);
-        await ShellWait.Until(shell, () => shell.Instance.Phase == FramePhase.Shown, Token);
-        shell.Instance.OpenServed();
+        shell.Navigate(Link("linear/ENG-12"));
         await Editing(shell);
-        var onTheTrail = (shell.IsIssueSheet, shell.HasTrail);
 
         shell.Back();
         var asked = (shell.IssueSheet.IsConfirmingDiscard, shell.IsIssueSheet);
         shell.IssueSheet.Discard();
 
-        Assert.Equal((true, true), onTheTrail);
         Assert.Equal((true, true), asked);
-        Assert.Equal((true, false, (string)golden["address"]!), (shell.IsInstanceSheet, shell.HasTrail, shell.Instance.Address));
+        Assert.False(shell.IsSheetOpen);
     }, Token);
 
     [Fact]

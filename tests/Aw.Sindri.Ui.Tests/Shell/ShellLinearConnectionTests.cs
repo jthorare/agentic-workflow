@@ -23,7 +23,6 @@ public sealed class ShellLinearConnectionTests
             Catalog = RouteAnswer.Api("commands", "catalog"),
             QueueView = RouteAnswer.SpecShaped("queue", "extra-p4-waiting"),
             NeedsYouView = RouteAnswer.Api("needs-you", "empty"),
-            WorkflowAnswer = RouteAnswer.Api("workflow-instances", "empty"),
             LinearConnectAnswer = RouteAnswer.Api("linear-connect", "write-scope-unknown"),
             LinearConnectionAnswer = RouteAnswer.Api("linear-connection", "scope-unknown"),
         };

@@ -1,7 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ny="using:Aw.Sindri.Ui.ViewModels.NeedsYou"
-             xmlns:wf="using:Aw.Sindri.Ui.Views.Workflows"
              xmlns:ctl="using:Aw.Sindri.Ui.Views.Controls"
              x:Class="Aw.Sindri.Ui.Views.NeedsYou.NeedsYouRow"
              x:DataType="ny:NeedsYouRowViewModel">
@@ -23,8 +22,6 @@
         <TextBlock Grid.Column="4" Classes="caption subtle" Text="{Binding Age}" VerticalAlignment="Center" TextAlignment="Right" AutomationProperties.AccessibilityView="Raw" />
       </Grid>
       <DockPanel LastChildFill="True">
-        <wf:ChildAnswerButton x:Name="NeedsYouChildAnswer" DockPanel.Dock="Right" Margin="12,0,0,0" DataContext="{Binding ChildAnswer}"
-                               IsVisible="{Binding $parent[UserControl].((ny:NeedsYouRowViewModel)DataContext).ChildAnswer, Converter={x:Static ObjectConverters.IsNotNull}}" />
         <ItemsControl x:Name="NeedsYouControls" DockPanel.Dock="Right" Margin="12,0,0,0" ItemsSource="{Binding Controls}">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>

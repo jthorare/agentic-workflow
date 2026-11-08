@@ -64,24 +64,19 @@ internal sealed partial class ShellWindow
         }
 
         ListenNeedsYou(shell, on);
-        ListenStrip(shell, on);
-        ListenWorkflows(shell, on);
         ListenAgents(shell, on);
-        ListenSandbox(shell, on);
         ListenLinear(shell, on);
         if (on)
         {
             shell.Queue.FocusRequested += OnFocusRow;
-            shell.SheetStacked += OnSheetStacked;
         }
         else
         {
             shell.Queue.FocusRequested -= OnFocusRow;
-            shell.SheetStacked -= OnSheetStacked;
         }
 
-        PropertyChangedEventHandler[] handlers = [OnShellChanged, OnBannerChanged, OnOverlayChanged, OnOverlayChanged, OnOverlayChanged, OnOverlayChanged, OnOverlayChanged, OnOverlayChanged, OnQueueChanged];
-        INotifyPropertyChanged[] sources = [shell, shell.Health.Banner, shell.Palette, shell.Shortcuts, shell.Create, shell.NewIssue, shell.Start, shell.ApproveAll, shell.Queue];
+        PropertyChangedEventHandler[] handlers = [OnShellChanged, OnBannerChanged, OnOverlayChanged, OnOverlayChanged, OnOverlayChanged, OnOverlayChanged, OnQueueChanged];
+        INotifyPropertyChanged[] sources = [shell, shell.Health.Banner, shell.Palette, shell.Shortcuts, shell.Create, shell.NewIssue, shell.Queue];
         for (var i = 0; i < sources.Length; i++)
         {
             if (on)
@@ -245,11 +240,6 @@ internal sealed partial class ShellWindow
     // accessibility-tester-0): then the heading gets it too, never a hidden control.
     private void FocusOpenedSheet()
     {
-        if (Shell is { Start.IsOpen: true } or { ApproveAll.IsOpen: true })
-        {
-            return;   // the Start form is modal: an instance it opened (an existing attempt) stays behind it, and focus stays in the form
-        }
-
         if (Shell is { IsSheetShown: true, IsFixTaskSheet: true })
         {
             return;   // the fix sheet puts focus on its text box itself
@@ -260,17 +250,9 @@ internal sealed partial class ShellWindow
             return;   // the page sheet puts focus on its Name box itself, once its page is read
         }
 
-        if (Shell is { IsSheetShown: true } shell && (Covering || !HasRealFocus))
+        if (Shell is { IsSheetShown: true } && (Covering || !HasRealFocus))
         {
             _ = this.Get<Border>("SheetTitle").Focus(Method());
-            if (NoOpener(shell))
-            {
-                EnterOpenedFrame(shell);   // a link with no row behind it goes on to the frame; a row's open stays on the heading (§11.2)
-            }
-        }
-        else if (Shell is { IsSheetShown: true, IsInstanceSheet: true } opened && NoOpener(opened))
-        {
-            EnterOpenedFrame(opened);   // a link with no row behind it (a deep link, a pointer): nothing on the page to stay on
         }
     }
 
