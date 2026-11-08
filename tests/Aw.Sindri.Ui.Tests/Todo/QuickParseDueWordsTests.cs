@@ -55,6 +55,6 @@ public sealed class QuickParseDueWordsTests
 
         var read = TodoQuickParse.Parse("call the dentist " + word, _today);
 
-        Assert.Equal(("call the dentist " + word, (DateOnly?)null), (read.Text, read.Due));
+        Assert.Equal(("call the dentist " + word, null), (read.Text, read.Due));
     }
 }
