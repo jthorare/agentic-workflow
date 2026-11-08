@@ -10,13 +10,16 @@ internal static class UsageLimitStrings
     /// <summary>What Claude prints at its limit.</summary>
     public static IReadOnlyList<string> Claude { get; } = [.. _file["claude"]!.AsArray().Select(node => node!.GetValue<string>())];
 
+    /// <summary>What Cursor's CLI prints at its limit: best-known wording from Cursor's docs and forum posts, not captured from a live session (#2110).</summary>
+    public static IReadOnlyList<string> Cursor { get; } = [.. _file["cursor"]!.AsArray().Select(node => node!.GetValue<string>())];
+
     /// <summary>The Codex limit message.</summary>
     public static string CodexMessage { get; } = _file["codex"]!["message"]!.GetValue<string>();
 
     /// <summary>The Codex limit's codex_error_info.</summary>
     public static string CodexErrorInfo { get; } = _file["codex"]!["codexErrorInfo"]!.GetValue<string>();
 
-    /// <summary>Every real string, for the theories.</summary>
+    /// <summary>Every Claude and Codex string, for the shared matcher's theories (Cursor's are matched by MatchCursor only).</summary>
     public static IEnumerable<string> All => [.. Claude, CodexMessage];
 
     /// <summary>The same strings as theory data.</summary>
