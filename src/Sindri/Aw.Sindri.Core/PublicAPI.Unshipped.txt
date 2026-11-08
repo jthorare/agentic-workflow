@@ -16460,8 +16460,6 @@ Aw.Sindri.Core.Events.ReviewFixSent.Thread.init -> void
 Aw.Sindri.Core.Events.ReviewFixSent.Went.get -> string!
 Aw.Sindri.Core.Events.ReviewFixSent.Went.init -> void
 Aw.Sindri.Core.Reviews.FixHead
-Aw.Sindri.Core.Reviews.IFixBabysitters
-Aw.Sindri.Core.Reviews.IFixBabysitters.Watching(string! link, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
 Aw.Sindri.Core.Reviews.IFixSessions
 Aw.Sindri.Core.Reviews.IFixSessions.OnBranch(string! headRepo, string! branch, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
 override Aw.Sindri.Core.Events.ReviewFixSent.Equals(object? obj) -> bool
@@ -16502,10 +16500,6 @@ Aw.Sindri.Core.Reviews.CachedReviewPage.Equals(Aw.Sindri.Core.Reviews.CachedRevi
 Aw.Sindri.Core.Reviews.CachedReviewPage.Page.get -> Aw.Sindri.Core.Reviews.ReviewPageModel!
 Aw.Sindri.Core.Reviews.CachedReviewPage.Page.init -> void
 Aw.Sindri.Core.Reviews.CiData
-Aw.Sindri.Core.Reviews.CiData.Babysitter.get -> Aw.Sindri.Core.Reviews.ReviewPageBabysitter?
-Aw.Sindri.Core.Reviews.CiData.Babysitter.init -> void
-Aw.Sindri.Core.Reviews.CiData.CiData(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPageRun!>! Runs, Aw.Sindri.Core.Reviews.ReviewPageBabysitter? Babysitter) -> void
-Aw.Sindri.Core.Reviews.CiData.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPageRun!>! Runs, out Aw.Sindri.Core.Reviews.ReviewPageBabysitter? Babysitter) -> void
 Aw.Sindri.Core.Reviews.CiData.Equals(Aw.Sindri.Core.Reviews.CiData? other) -> bool
 Aw.Sindri.Core.Reviews.CiData.Runs.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPageRun!>!
 Aw.Sindri.Core.Reviews.CiData.Runs.init -> void
@@ -16546,13 +16540,6 @@ Aw.Sindri.Core.Reviews.RequiredChecksData.Checks.init -> void
 Aw.Sindri.Core.Reviews.RequiredChecksData.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPageCheck!>! Checks) -> void
 Aw.Sindri.Core.Reviews.RequiredChecksData.Equals(Aw.Sindri.Core.Reviews.RequiredChecksData? other) -> bool
 Aw.Sindri.Core.Reviews.RequiredChecksData.RequiredChecksData(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPageCheck!>! Checks) -> void
-Aw.Sindri.Core.Reviews.ReviewPageBabysitter
-Aw.Sindri.Core.Reviews.ReviewPageBabysitter.<Clone>$() -> Aw.Sindri.Core.Reviews.ReviewPageBabysitter!
-Aw.Sindri.Core.Reviews.ReviewPageBabysitter.Deconstruct(out string! Outcome) -> void
-Aw.Sindri.Core.Reviews.ReviewPageBabysitter.Equals(Aw.Sindri.Core.Reviews.ReviewPageBabysitter? other) -> bool
-Aw.Sindri.Core.Reviews.ReviewPageBabysitter.Outcome.get -> string!
-Aw.Sindri.Core.Reviews.ReviewPageBabysitter.Outcome.init -> void
-Aw.Sindri.Core.Reviews.ReviewPageBabysitter.ReviewPageBabysitter(string! Outcome) -> void
 Aw.Sindri.Core.Reviews.ReviewPageBuilder
 Aw.Sindri.Core.Reviews.ReviewPageCheck
 Aw.Sindri.Core.Reviews.ReviewPageCheck.<Clone>$() -> Aw.Sindri.Core.Reviews.ReviewPageCheck!
@@ -17093,9 +17080,6 @@ override Aw.Sindri.Core.Reviews.RequiredChecksData.<Clone>$() -> Aw.Sindri.Core.
 override Aw.Sindri.Core.Reviews.RequiredChecksData.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Reviews.RequiredChecksData.GetHashCode() -> int
 override Aw.Sindri.Core.Reviews.RequiredChecksData.ToString() -> string!
-override Aw.Sindri.Core.Reviews.ReviewPageBabysitter.Equals(object? obj) -> bool
-override Aw.Sindri.Core.Reviews.ReviewPageBabysitter.GetHashCode() -> int
-override Aw.Sindri.Core.Reviews.ReviewPageBabysitter.ToString() -> string!
 override Aw.Sindri.Core.Reviews.ReviewPageCheck.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Reviews.ReviewPageCheck.GetHashCode() -> int
 override Aw.Sindri.Core.Reviews.ReviewPageCheck.ToString() -> string!
@@ -17227,8 +17211,6 @@ static Aw.Sindri.Core.Reviews.EvidenceData.operator !=(Aw.Sindri.Core.Reviews.Ev
 static Aw.Sindri.Core.Reviews.EvidenceData.operator ==(Aw.Sindri.Core.Reviews.EvidenceData? left, Aw.Sindri.Core.Reviews.EvidenceData? right) -> bool
 static Aw.Sindri.Core.Reviews.RequiredChecksData.operator !=(Aw.Sindri.Core.Reviews.RequiredChecksData? left, Aw.Sindri.Core.Reviews.RequiredChecksData? right) -> bool
 static Aw.Sindri.Core.Reviews.RequiredChecksData.operator ==(Aw.Sindri.Core.Reviews.RequiredChecksData? left, Aw.Sindri.Core.Reviews.RequiredChecksData? right) -> bool
-static Aw.Sindri.Core.Reviews.ReviewPageBabysitter.operator !=(Aw.Sindri.Core.Reviews.ReviewPageBabysitter? left, Aw.Sindri.Core.Reviews.ReviewPageBabysitter? right) -> bool
-static Aw.Sindri.Core.Reviews.ReviewPageBabysitter.operator ==(Aw.Sindri.Core.Reviews.ReviewPageBabysitter? left, Aw.Sindri.Core.Reviews.ReviewPageBabysitter? right) -> bool
 static Aw.Sindri.Core.Reviews.ReviewPageBuilder.Build(Aw.Sindri.Core.Reviews.ReviewPageFacts! facts) -> Aw.Sindri.Core.Reviews.ReviewPageModel!
 static Aw.Sindri.Core.Reviews.ReviewPageCheck.operator !=(Aw.Sindri.Core.Reviews.ReviewPageCheck? left, Aw.Sindri.Core.Reviews.ReviewPageCheck? right) -> bool
 static Aw.Sindri.Core.Reviews.ReviewPageCheck.operator ==(Aw.Sindri.Core.Reviews.ReviewPageCheck? left, Aw.Sindri.Core.Reviews.ReviewPageCheck? right) -> bool
@@ -19061,3 +19043,5 @@ Aw.Sindri.Core.Events.ItemLinked.Deconstruct(out Aw.Sindri.Core.Ids.CommandId Co
 Aw.Sindri.Core.Events.ItemLinked.Url.get -> string?
 Aw.Sindri.Core.Events.ItemLinked.Url.init -> void
 Aw.Sindri.Core.Events.ItemLinked.ItemLinked(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Ids.RecordKey Record, Aw.Sindri.Core.Ids.ItemAlias? Alias, string? Url = null) -> void
+Aw.Sindri.Core.Reviews.CiData.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPageRun!>! Runs) -> void
+Aw.Sindri.Core.Reviews.CiData.CiData(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPageRun!>! Runs) -> void

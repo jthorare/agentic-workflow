@@ -40,8 +40,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<IInstanceReader>(static sp => sp.GetRequiredService<NoInstances>())
             .AddSingleton<HomeFactStore>()
             .AddSingleton<IFactStore>(static sp => sp.GetRequiredService<HomeFactStore>())
-            .AddSingleton<IFactContents>(static sp => sp.GetRequiredService<HomeFactStore>())   // the agent target resolver and the Linear item links read stored facts
-            .AddScoped<Core.Reviews.IFixBabysitters, NoFixBabysitters>();   // PR review page: no pull request has a babysitter now
+            .AddSingleton<IFactContents>(static sp => sp.GetRequiredService<HomeFactStore>());   // the agent target resolver reads stored facts
     }
 
     // Engine P8 U3: LaunchAgentStep, WatchAgentStep, CloseAgentStep and what they use, and the worker's set of activity classes.

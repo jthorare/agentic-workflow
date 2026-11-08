@@ -1,37 +1,22 @@
 using System.Globalization;
-using System.Text.Json;
 using Aw.Kernel;
 using Aw.Sindri.Core.Items.Vocabulary;
-using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Reviews;
 using Aw.Sindri.Core.Views;
-using Aw.Sindri.Core.Workflow.Engine;
-using Aw.Sindri.Core.Workflow.Engine.Runtime;
 
 namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>
-/// The items and pull requests of a list's issues. An item is linked to a record in the 'items' view (its Link); its pull request is the <c language="text">pr</c> fact of the item's workflow instance, when it has one,
+/// The items and pull requests of a list's issues. An item is linked to a record in the 'items' view (its Link); its pull request is the newest <c language="text">pr</c> row the 'item-links' view holds for it, when it has one,
 /// shown with the Reviews list's word for it: <b>waiting</b> when the stored PR record waits on the owner (the 'Waiting on you' group's rule), <b>open</b> for any other stored open PR, <b>closed</b> when the stored
 /// open PRs no longer hold it, <b>unknown</b> when the stored PRs can't be read. Anything that can't be read leaves that issue without a PR; nothing here fails the list.
 /// </summary>
-/// <param name="views">The 'items' view.</param>
-/// <param name="instances">The workflow instances.</param>
-/// <param name="contents">The stored fact contents.</param>
+/// <param name="views">The 'items' and 'item-links' views.</param>
 /// <param name="pulls">The stored PR records.</param>
 /// <param name="approvals">The approved profile, for the review login.</param>
-internal sealed class ViewLinearItemLinks(IViewReader views, IInstanceReader instances, IFactContents contents, IReviewFacts pulls, IApprovedProfile approvals) : ILinearItemLinks
+internal sealed class ViewLinearItemLinks(IViewReader views, IReviewFacts pulls, IApprovedProfile approvals) : ILinearItemLinks
 {
-    /// <summary>Reads PR chips from the item-links view only. Red stub: it still reads the instance path until the green commit drops <c language="text">instances</c> and <c language="text">contents</c>.</summary>
-    /// <param name="views">The 'items' and 'item-links' views.</param>
-    /// <param name="pulls">The stored PR records.</param>
-    /// <param name="approvals">The approved profile, for the review login.</param>
-    public ViewLinearItemLinks(IViewReader views, IReviewFacts pulls, IApprovedProfile approvals)
-        : this(views, instances: null!, contents: null!, pulls, approvals)   // why: red stub; the instance path only runs for an item with an instance, which the tests don't make, and the green commit deletes both parameters
-    {
-    }
-
     public async ValueTask<Result<IReadOnlyDictionary<string, LinearIssueLinks>>> For(IReadOnlyList<string> records, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(records);
@@ -47,7 +32,8 @@ internal sealed class ViewLinearItemLinks(IViewReader views, IInstanceReader ins
             .Where(p => wanted.Contains(p.Record))
             .GroupBy(static p => p.Record, StringComparer.Ordinal)
             .ToDictionary(static g => g.Key, static g => g.Select(static p => p.Item).OrderByDescending(static i => i.UpdatedAt).First(), StringComparer.Ordinal);
-        var prs = await Prs(linked, cancellationToken).ConfigureAwait(false);
+        var links = await views.List<ItemLinkRow>(ViewNames.ItemLinks, cancellationToken).ConfigureAwait(false);
+        var prs = Prs(linked, links.IsError ? [] : links.Value);   // unreadable links leave the issues without a PR chip; the list still shows
         var words = prs.Count == 0 ? null : await ReviewStates(cancellationToken).ConfigureAwait(false);
         return linked.ToDictionary(
             static l => l.Key,
@@ -57,12 +43,13 @@ internal sealed class ViewLinearItemLinks(IViewReader views, IInstanceReader ins
             StringComparer.Ordinal);
     }
 
-    private async ValueTask<Dictionary<string, (int Number, string Url, string Repo)>> Prs(Dictionary<string, ItemRow> linked, CancellationToken cancellationToken)
+    private static Dictionary<string, (int Number, string Url, string Repo)> Prs(Dictionary<string, ItemRow> linked, IReadOnlyList<ItemLinkRow> links)
     {
         var prs = new Dictionary<string, (int Number, string Url, string Repo)>(StringComparer.Ordinal);
         foreach (var (record, item) in linked)
         {
-            if (await Pr(item, cancellationToken).ConfigureAwait(false) is { } pr)
+            var newest = links.Where(l => l.Kind == ItemLinkKind.Pr && l.Item == item.Id).OrderByDescending(static l => l.UpdatedAt).ThenByDescending(static l => l.Sequence);
+            if (newest.Select(Pr).FirstOrDefault(static p => p is not null) is { } pr)
             {
                 prs[record] = pr;
             }
@@ -71,40 +58,14 @@ internal sealed class ViewLinearItemLinks(IViewReader views, IInstanceReader ins
         return prs;
     }
 
-    private async ValueTask<(int Number, string Url, string Repo)?> Pr(ItemRow item, CancellationToken cancellationToken)
+    // the forge link when the row has one; else the short name 'owner/repo#number'
+    private static (int Number, string Url, string Repo)? Pr(ItemLinkRow row) => Parse(row.Url) ?? Short(row);
+
+    private static (int Number, string Url, string Repo)? Short(ItemLinkRow row)
     {
-        if (item.Instance is not { } text || !InstanceAddress.TryParse(text, provider: null, out var address))
-        {
-            return null;
-        }
-
-        var view = await instances.Get(address, cancellationToken).ConfigureAwait(false);
-        if (view.IsError || view.Value.FactShas?.GetValueOrDefault("fact:pr") is not { } sha)
-        {
-            return null;
-        }
-
-        var bytes = await contents.Read(new FactValue("fact:sha256:" + sha, sha, HeadSha: null), cancellationToken).ConfigureAwait(false);
-        if (bytes.IsError)
-        {
-            return null;
-        }
-
-        try
-        {
-            using var document = JsonDocument.Parse(bytes.Value);
-            var root = document.RootElement;
-            var link = root.ValueKind == JsonValueKind.String ? root.GetString() : Named(root, "url") ?? Named(root, "link") ?? Named(root, "pr");
-            return Parse(link);
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
+        var hash = row.Ref.LastIndexOf('#');
+        return hash > 0 && row.Url is { } url && int.TryParse(row.Ref.AsSpan(hash + 1), NumberStyles.None, CultureInfo.InvariantCulture, out var number) ? (number, url, row.Ref[..hash]) : null;
     }
-
-    private static string? Named(JsonElement root, string name) =>
-        root.ValueKind == JsonValueKind.Object && root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
 
     // a forge PR link: https://<host>/<owner>/<repo>/pull/<number>
     private static (int Number, string Url, string Repo)? Parse(string? link)

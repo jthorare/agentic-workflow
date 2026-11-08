@@ -1,22 +1,16 @@
 using Aw.Kernel;
-using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Views;
-using Aw.Sindri.Core.Workflow.Engine.Runtime;
 
 namespace Aw.Sindri.Features.Launching;
 
 /// <summary>
-/// Takes the item's active instances over before a session opens beside them (UI spec E-1, E-6). The launcher first waits for the item view to reach the
-/// request, then sends every live instance the 'open-request' trigger (a no-op on one already taken over) and waits for each recorded result; it then
-/// looks again at the ledger head, so an instance that started after the first look is taken over too. The whole wait is inside the request's deadline.
+/// Waits for the views to reach a launch request before a session opens (UI spec E-1, E-6). It then looks again at the ledger head, so a later write is seen too. No workflow instance exists to take over now. The whole wait is inside the request's deadline.
 /// </summary>
 /// <param name="views">The projector's progress.</param>
 /// <param name="ledger">The ledger head.</param>
-/// <param name="reader">Reads the item's instances.</param>
-/// <param name="runtime">Sends the 'open-request' trigger.</param>
 /// <param name="timings">The limits.</param>
-internal sealed class TakeoverWait(IProjectorStatus views, ILedgerStore ledger, IViewReader reader, IInstanceRuntime runtime, LaunchTimings timings)
+internal sealed class TakeoverWait(IProjectorStatus views, ILedgerStore ledger, LaunchTimings timings)
 {
     /// <summary>Waits until no instance of the request's item runs automation beside the session that is about to open.</summary>
     /// <param name="pending">The request.</param>
@@ -58,37 +52,6 @@ internal sealed class TakeoverWait(IProjectorStatus views, ILedgerStore ledger, 
             return false;   // the views can't say whether automation runs, so nothing opens
         }
 
-        var item = await reader.Get<ItemRow>(ViewNames.Items, pending.Request.Item.Value, cancellationToken).ConfigureAwait(false);
-        if (item.IsError)
-        {
-            return false;
-        }
-
-        foreach (var address in Live(item.Value?.Engine))
-        {
-            var taken = await runtime.OpenRequest(address, pending.Request.Launch, cancellationToken).ConfigureAwait(false);
-            if (taken.IsError)
-            {
-                return taken.Error;
-            }
-        }
-
-        return true;
-    }
-
-    private static IEnumerable<InstanceAddress> Live(EngineItemPart? part)
-    {
-        if (part is null)
-        {
-            yield break;
-        }
-
-        foreach (var each in (part.Ended ? [] : new[] { part }).Concat(part.Earlier?.Where(static e => !e.Ended) ?? []))
-        {
-            if (InstanceAddress.TryFrom(each.Address, out var address))
-            {
-                yield return address;
-            }
-        }
+        return true;   // no workflow instance exists to take over; graph runs bring that back (v2 PR 6, 7)
     }
 }
