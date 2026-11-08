@@ -48,7 +48,7 @@ public sealed class RefreshContextMapServiceTests
         var result = await Run();
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Code : null);
-        Assert.Equal(["MapHeads", "BuildMap", "ReviewQueue", "CleanDraft", "Held", "Promote"], _engine.Log);
+        Assert.Equal(["MapHeads", "BuildMap", "ReviewQueue", "CleanDraft", "Held", "Promote", "PinMoves"], _engine.Log);
         Assert.Equal([EventTypes.ContextMapBuilt, EventTypes.ContextMapPromoted, EventTypes.ContextMapPublished, EventTypes.ContextMapRefreshed], Types());
         var refreshed = result.Value;
         Assert.Equal(("app", 2, 5, 2, 1, "agent"), (refreshed.Repo, refreshed.Version, refreshed.Accepted, refreshed.Removed, refreshed.Dropped, refreshed.Cleanup));
@@ -267,7 +267,7 @@ public sealed class RefreshContextMapServiceTests
         var result = await Run();
 
         Assert.False(result.Value.Held);
-        Assert.Equal(["MapHeads", "BuildMap", "ReviewQueue", "CleanDraft", "Held", "Hold", "Promote"], _engine.Log);
+        Assert.Equal(["MapHeads", "BuildMap", "ReviewQueue", "CleanDraft", "Held", "Hold", "Promote", "PinMoves"], _engine.Log);
         var published = Payload(EventTypes.ContextMapPublished);
         Assert.Equal(("TimedOut", 1, 1200, true), (published.GetProperty("reason").GetString(), published.GetProperty("staleRepos").GetInt32(), published.GetProperty("waitedSeconds").GetInt32(), published.GetProperty("anyStale").GetBoolean()));
     }
