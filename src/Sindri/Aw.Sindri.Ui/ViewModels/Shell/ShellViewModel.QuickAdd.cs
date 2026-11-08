@@ -1,3 +1,5 @@
+using Aw.Sindri.Ui.Api;
+using Aw.Sindri.Ui.ViewModels.Toast;
 using Aw.Sindri.Ui.ViewModels.Todo;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
@@ -10,6 +12,32 @@ internal sealed partial class ShellViewModel
 
     /// <summary>Raised when N or Ctrl+Shift+N is pressed while Sindri isn't running: the box doesn't open (the toast that says so is another view's).</summary>
     internal event EventHandler? QuickAddWhileStopped;
+
+    // The toasts the box asks for: "Added" with Undo after a save, and the stopped note when it can't open.
+    private void WireQuickAddToasts()
+    {
+        QuickAdd.Added += (_, added) => ShowToast(new ToastMessage(
+            added.Due is { } due ? Labels.QuickAddAddedDue(due) : Labels.QuickAddAdded,
+            () => UndoAdded(added.Saved)));
+        QuickAddWhileStopped += (_, _) => ShowToast(new ToastMessage(Labels.QuickAddStopped));
+    }
+
+    // Undo removes the todo just added, at the version Sindri answered with; null when it worked, else why not.
+    private async Task<string?> UndoAdded(TodoAcceptedView saved)
+    {
+        if (Health.ApiUrl() is not { } url)
+        {
+            return Labels.QuickAddNotAnswering;
+        }
+
+        var removed = await _api.RemoveTodo(url, saved.Id, saved.Version, CancellationToken.None).ConfigureAwait(true);
+        if (!removed.IsError)
+        {
+            return null;
+        }
+
+        return removed.Error.Code.StartsWith("SND-UI-", StringComparison.Ordinal) ? Labels.QuickAddNotAnswering : removed.Error.Message;
+    }
 
     /// <summary>The N key or Ctrl+Shift+N.</summary>
     /// <returns>True when the key was taken. A form held open (Create, New issue) takes neither key.</returns>
