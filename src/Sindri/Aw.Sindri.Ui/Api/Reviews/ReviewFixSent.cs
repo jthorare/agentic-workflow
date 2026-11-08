@@ -7,4 +7,5 @@ namespace Aw.Sindri.Ui.Api.Reviews;
 /// <param name="PostError">The half-done text ("Item 01J9… created in Work; posting to #318 failed: GitHub answered 502"); null otherwise.</param>
 /// <param name="Went">session or waiting: who took the task (an older Sindri may also say babysitter, which reads as waiting). always present.</param>
 /// <param name="Session">The session that took it ("claude, ~/repos/aw-wt/harbor-slot-hold"); set only when <paramref name="Went"/> is session; null otherwise.</param>
-internal sealed record ReviewFixSent(string ItemId, bool Posted, string? PostCode, string? PostError, string Went, string? Session);
+/// <param name="FileError">The text when the fix-task file couldn't be written, so no session will hear of the task until a send writes it; null otherwise (an older Sindri never says).</param>
+internal sealed record ReviewFixSent(string ItemId, bool Posted, string? PostCode, string? PostError, string Went, string? Session, string? FileError = null);

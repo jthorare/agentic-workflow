@@ -110,6 +110,9 @@ internal sealed partial class ReviewFixSheetViewModel : ObservableObject
     /// <summary>True after a half-done send: Retry post reuses the item and the same marker.</summary>
     public bool CanRetry { get; private set => Set(ref field, value); }
 
+    /// <summary>The server's words when the fix-task file wasn't written (the item exists, no session will see the task); empty otherwise.</summary>
+    public string FileError { get; private set => Set(ref field, value); } = string.Empty;
+
     /// <summary>True while the sheet is open.</summary>
     public bool IsOpen { get; private set => Set(ref field, value); }
 
