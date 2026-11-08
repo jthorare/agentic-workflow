@@ -24,7 +24,7 @@ public sealed class PacketSchemaUpdateModeTests : IDisposable
     public void Update_mode_rewrites_a_stale_file_and_fails_once_so_the_diff_gets_reviewed()
     {
         Seed("packet");
-        var path = Path.Combine(_root, "schemas", "packets", "api-script.schema.json");
+        var path = Path.Combine(_root, "schemas", "packets", "packet.schema.json");
         File.WriteAllText(path, "{}\n");
 
         var failure = Record.Exception(() => PacketSchemaTests.Verify("packet", _root, update: true, inCi: false));
