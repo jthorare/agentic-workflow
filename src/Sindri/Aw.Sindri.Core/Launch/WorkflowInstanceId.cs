@@ -4,10 +4,9 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
-using Aw.Sindri.Core.Launch;
 using Vogen;
 
-namespace Aw.Sindri.Core.Workflow.Engine;
+namespace Aw.Sindri.Core.Launch;
 
 /// <summary>
 /// An instance's opaque id (spec §5.1, §6.3): 'WFI-' and 32 lower-case hex digits. The CLI's '/'-separated

@@ -8,7 +8,6 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Scoping;
-using Aw.Sindri.Core.Workflow.Engine;
 using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Features.GetItemScope;

@@ -1,6 +1,6 @@
-using Aw.Sindri.Core.Workflow.Engine;
+using Aw.Sindri.Core.Sandbox;
 
-namespace Aw.Sindri.Core.Sandbox;
+namespace Aw.Sindri.Core.Launch;
 
 /// <summary>What Check again found (sandbox spec §6): every blocker on one card, and the parked instances that may resume now.</summary>
 /// <param name="Blockers">Every blocker found, none when the box can confine a Step.</param>

@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Core.Sandbox;
+namespace Aw.Sindri.Core.Launch;
 
 /// <summary>Runs the probe, the form check, the login probes and a fixture plan's self-check together (Check again, <c lang="text">sindri sandbox check</c>, doctor).</summary>
 public interface ISandboxChecks

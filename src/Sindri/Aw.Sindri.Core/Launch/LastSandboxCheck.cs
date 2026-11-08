@@ -1,4 +1,5 @@
-namespace Aw.Sindri.Core.Sandbox;
+
+namespace Aw.Sindri.Core.Launch;
 
 /// <summary>The newest sandbox check this serve ran, kept in memory so the status read never runs a probe (sandbox spec §8). Nothing is written to disk: after a restart no check has run.</summary>
 public sealed class LastSandboxCheck

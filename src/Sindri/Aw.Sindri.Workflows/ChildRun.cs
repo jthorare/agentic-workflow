@@ -1,5 +1,4 @@
 using Aw.Sindri.Core.Launch;
-using Aw.Sindri.Core.Workflow.Engine;
 using Temporalio.Workflows;
 
 namespace Aw.Sindri.Infrastructure.Workflows;

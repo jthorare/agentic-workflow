@@ -6,7 +6,6 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Scoping;
-using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Features.GetItemScope;
 using Aw.Sindri.Features.Items;
 using Aw.Sindri.Testing;

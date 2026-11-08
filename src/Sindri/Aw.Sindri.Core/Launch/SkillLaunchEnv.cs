@@ -1,6 +1,5 @@
-using Aw.Sindri.Core.Launch;
 
-namespace Aw.Sindri.Core.Skills;
+namespace Aw.Sindri.Core.Launch;
 
 /// <summary>The environment a skill session gets (skill flows spec §3.3, D8).</summary>
 public static class SkillLaunchEnv

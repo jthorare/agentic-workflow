@@ -1,6 +1,5 @@
-using Aw.Sindri.Core.Workflow.Engine;
 
-namespace Aw.Sindri.Core.Sandbox;
+namespace Aw.Sindri.Core.Launch;
 
 /// <summary>One instance parked on a sandbox code.</summary>
 /// <param name="Instance">The instance.</param>

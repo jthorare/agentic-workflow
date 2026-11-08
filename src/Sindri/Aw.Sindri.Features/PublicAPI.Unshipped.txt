@@ -81,12 +81,12 @@ Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.AlreadyApproved.get -> bo
 Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.AlreadyApproved.init -> void
 Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.Approval.get -> Aw.Sindri.Core.Workflow.Registry.RecipeApproval!
 Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.Approval.init -> void
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.ApproveRecipeResponse(Aw.Sindri.Core.Commands.CommandAccepted! Accepted, Aw.Sindri.Core.Workflow.Registry.RecipeApproval! Approval, Aw.Sindri.Core.Workflow.Registry.ApprovalPreview! Preview, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId>! Resumed, bool AlreadyApproved = false) -> void
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.Deconstruct(out Aw.Sindri.Core.Commands.CommandAccepted! Accepted, out Aw.Sindri.Core.Workflow.Registry.RecipeApproval! Approval, out Aw.Sindri.Core.Workflow.Registry.ApprovalPreview! Preview, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId>! Resumed, out bool AlreadyApproved) -> void
+Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.ApproveRecipeResponse(Aw.Sindri.Core.Commands.CommandAccepted! Accepted, Aw.Sindri.Core.Workflow.Registry.RecipeApproval! Approval, Aw.Sindri.Core.Workflow.Registry.ApprovalPreview! Preview, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.WorkflowInstanceId>! Resumed, bool AlreadyApproved = false) -> void
+Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.Deconstruct(out Aw.Sindri.Core.Commands.CommandAccepted! Accepted, out Aw.Sindri.Core.Workflow.Registry.RecipeApproval! Approval, out Aw.Sindri.Core.Workflow.Registry.ApprovalPreview! Preview, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.WorkflowInstanceId>! Resumed, out bool AlreadyApproved) -> void
 Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.Equals(Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse? other) -> bool
 Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.Preview.get -> Aw.Sindri.Core.Workflow.Registry.ApprovalPreview!
 Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.Preview.init -> void
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.Resumed.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId>!
+Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.Resumed.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.WorkflowInstanceId>!
 Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.Resumed.init -> void
 Aw.Sindri.Features.CancelJob.CancelJobRequest
 Aw.Sindri.Features.CancelJob.CancelJobRequest.<Clone>$() -> Aw.Sindri.Features.CancelJob.CancelJobRequest!
@@ -653,10 +653,10 @@ Aw.Sindri.Features.GetInstanceFact.FactView.Type.get -> Aw.Sindri.Core.Workflow.
 Aw.Sindri.Features.GetInstanceFact.FactView.Type.init -> void
 Aw.Sindri.Features.GetInstanceFact.GetInstanceFactRequest
 Aw.Sindri.Features.GetInstanceFact.GetInstanceFactRequest.<Clone>$() -> Aw.Sindri.Features.GetInstanceFact.GetInstanceFactRequest!
-Aw.Sindri.Features.GetInstanceFact.GetInstanceFactRequest.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Instance, out string! Key) -> void
+Aw.Sindri.Features.GetInstanceFact.GetInstanceFactRequest.Deconstruct(out Aw.Sindri.Core.Launch.WorkflowInstanceId Instance, out string! Key) -> void
 Aw.Sindri.Features.GetInstanceFact.GetInstanceFactRequest.Equals(Aw.Sindri.Features.GetInstanceFact.GetInstanceFactRequest? other) -> bool
-Aw.Sindri.Features.GetInstanceFact.GetInstanceFactRequest.GetInstanceFactRequest(Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Instance, string! Key) -> void
-Aw.Sindri.Features.GetInstanceFact.GetInstanceFactRequest.Instance.get -> Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId
+Aw.Sindri.Features.GetInstanceFact.GetInstanceFactRequest.GetInstanceFactRequest(Aw.Sindri.Core.Launch.WorkflowInstanceId Instance, string! Key) -> void
+Aw.Sindri.Features.GetInstanceFact.GetInstanceFactRequest.Instance.get -> Aw.Sindri.Core.Launch.WorkflowInstanceId
 Aw.Sindri.Features.GetInstanceFact.GetInstanceFactRequest.Instance.init -> void
 Aw.Sindri.Features.GetInstanceFact.GetInstanceFactRequest.Key.get -> string!
 Aw.Sindri.Features.GetInstanceFact.GetInstanceFactRequest.Key.init -> void
@@ -3012,11 +3012,11 @@ Aw.Sindri.Features.ReadInjection.InjectionView.Sections.get -> System.Collection
 Aw.Sindri.Features.ReadInjection.InjectionView.Sections.init -> void
 Aw.Sindri.Features.ReadInjection.ReadInjectionRequest
 Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.<Clone>$() -> Aw.Sindri.Features.ReadInjection.ReadInjectionRequest!
-Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Instance, out string? Section) -> void
+Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.Deconstruct(out Aw.Sindri.Core.Launch.WorkflowInstanceId Instance, out string? Section) -> void
 Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.Equals(Aw.Sindri.Features.ReadInjection.ReadInjectionRequest? other) -> bool
-Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.Instance.get -> Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId
+Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.Instance.get -> Aw.Sindri.Core.Launch.WorkflowInstanceId
 Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.Instance.init -> void
-Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.ReadInjectionRequest(Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Instance, string? Section = null) -> void
+Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.ReadInjectionRequest(Aw.Sindri.Core.Launch.WorkflowInstanceId Instance, string? Section = null) -> void
 Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.Section.get -> string?
 Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.Section.init -> void
 override Aw.Sindri.Features.ReadInjection.InjectionSectionView.Equals(object? obj) -> bool
@@ -3543,10 +3543,10 @@ virtual Aw.Sindri.Features.GetSessionPreview.GetSessionPreviewResponse.Equals(Aw
 virtual Aw.Sindri.Features.GetSessionPreview.GetSessionPreviewResponse.PrintMembers(System.Text.StringBuilder! builder) -> bool
 Aw.Sindri.Features.Scoping.GetInstanceScopingRequest
 Aw.Sindri.Features.Scoping.GetInstanceScopingRequest.<Clone>$() -> Aw.Sindri.Features.Scoping.GetInstanceScopingRequest!
-Aw.Sindri.Features.Scoping.GetInstanceScopingRequest.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Instance) -> void
+Aw.Sindri.Features.Scoping.GetInstanceScopingRequest.Deconstruct(out Aw.Sindri.Core.Launch.WorkflowInstanceId Instance) -> void
 Aw.Sindri.Features.Scoping.GetInstanceScopingRequest.Equals(Aw.Sindri.Features.Scoping.GetInstanceScopingRequest? other) -> bool
-Aw.Sindri.Features.Scoping.GetInstanceScopingRequest.GetInstanceScopingRequest(Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Instance) -> void
-Aw.Sindri.Features.Scoping.GetInstanceScopingRequest.Instance.get -> Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId
+Aw.Sindri.Features.Scoping.GetInstanceScopingRequest.GetInstanceScopingRequest(Aw.Sindri.Core.Launch.WorkflowInstanceId Instance) -> void
+Aw.Sindri.Features.Scoping.GetInstanceScopingRequest.Instance.get -> Aw.Sindri.Core.Launch.WorkflowInstanceId
 Aw.Sindri.Features.Scoping.GetInstanceScopingRequest.Instance.init -> void
 override Aw.Sindri.Features.Scoping.GetInstanceScopingRequest.Equals(object? obj) -> bool
 override Aw.Sindri.Features.Scoping.GetInstanceScopingRequest.GetHashCode() -> int
@@ -3557,10 +3557,10 @@ Aw.Sindri.Features.Scoping.ScopingFactKeys
 static Aw.Sindri.Features.Scoping.ScopingFactKeys.All.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Sindri.Features.Scoping.GetPacketFileRequest
 Aw.Sindri.Features.Scoping.GetPacketFileRequest.<Clone>$() -> Aw.Sindri.Features.Scoping.GetPacketFileRequest!
-Aw.Sindri.Features.Scoping.GetPacketFileRequest.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Instance, out string! Hash, out string! Name) -> void
+Aw.Sindri.Features.Scoping.GetPacketFileRequest.Deconstruct(out Aw.Sindri.Core.Launch.WorkflowInstanceId Instance, out string! Hash, out string! Name) -> void
 Aw.Sindri.Features.Scoping.GetPacketFileRequest.Equals(Aw.Sindri.Features.Scoping.GetPacketFileRequest? other) -> bool
-Aw.Sindri.Features.Scoping.GetPacketFileRequest.GetPacketFileRequest(Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Instance, string! Hash, string! Name) -> void
-Aw.Sindri.Features.Scoping.GetPacketFileRequest.Instance.get -> Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId
+Aw.Sindri.Features.Scoping.GetPacketFileRequest.GetPacketFileRequest(Aw.Sindri.Core.Launch.WorkflowInstanceId Instance, string! Hash, string! Name) -> void
+Aw.Sindri.Features.Scoping.GetPacketFileRequest.Instance.get -> Aw.Sindri.Core.Launch.WorkflowInstanceId
 Aw.Sindri.Features.Scoping.GetPacketFileRequest.Instance.init -> void
 Aw.Sindri.Features.Scoping.GetPacketFileRequest.Hash.get -> string!
 Aw.Sindri.Features.Scoping.GetPacketFileRequest.Hash.init -> void
@@ -3817,10 +3817,10 @@ Aw.Sindri.Features.Design.DesignShowRequest.Facts.get -> System.Collections.Gene
 Aw.Sindri.Features.Design.DesignShowRequest.Facts.init -> void
 Aw.Sindri.Features.Design.GetInstanceDesignStopRequest
 Aw.Sindri.Features.Design.GetInstanceDesignStopRequest.<Clone>$() -> Aw.Sindri.Features.Design.GetInstanceDesignStopRequest!
-Aw.Sindri.Features.Design.GetInstanceDesignStopRequest.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Instance) -> void
+Aw.Sindri.Features.Design.GetInstanceDesignStopRequest.Deconstruct(out Aw.Sindri.Core.Launch.WorkflowInstanceId Instance) -> void
 Aw.Sindri.Features.Design.GetInstanceDesignStopRequest.Equals(Aw.Sindri.Features.Design.GetInstanceDesignStopRequest? other) -> bool
-Aw.Sindri.Features.Design.GetInstanceDesignStopRequest.GetInstanceDesignStopRequest(Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Instance) -> void
-Aw.Sindri.Features.Design.GetInstanceDesignStopRequest.Instance.get -> Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId
+Aw.Sindri.Features.Design.GetInstanceDesignStopRequest.GetInstanceDesignStopRequest(Aw.Sindri.Core.Launch.WorkflowInstanceId Instance) -> void
+Aw.Sindri.Features.Design.GetInstanceDesignStopRequest.Instance.get -> Aw.Sindri.Core.Launch.WorkflowInstanceId
 Aw.Sindri.Features.Design.GetInstanceDesignStopRequest.Instance.init -> void
 override Aw.Sindri.Features.Design.DesignShowRequest.Equals(object? obj) -> bool
 override Aw.Sindri.Features.Design.DesignShowRequest.GetHashCode() -> int
@@ -4563,11 +4563,11 @@ static Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.operator !=(Aw.Si
 static Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.operator ==(Aw.Sindri.Features.ContextCalls.SearchContextMapRequest? left, Aw.Sindri.Features.ContextCalls.SearchContextMapRequest? right) -> bool
 Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest
 Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.<Clone>$() -> Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest!
-Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.Instance.get -> Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId
+Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.Instance.get -> Aw.Sindri.Core.Launch.WorkflowInstanceId
 Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.Instance.init -> void
-Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Instance) -> void
+Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.Deconstruct(out Aw.Sindri.Core.Launch.WorkflowInstanceId Instance) -> void
 Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.Equals(Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest? other) -> bool
-Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.GetInstanceLineRequest(Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Instance) -> void
+Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.GetInstanceLineRequest(Aw.Sindri.Core.Launch.WorkflowInstanceId Instance) -> void
 override Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.Equals(object? obj) -> bool
 override Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.GetHashCode() -> int
 override Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.ToString() -> string!
@@ -5113,13 +5113,13 @@ override Aw.Sindri.Features.CheckSandbox.CheckSandboxRequest.GetHashCode() -> in
 override Aw.Sindri.Features.CheckSandbox.CheckSandboxRequest.ToString() -> string!
 static Aw.Sindri.Features.CheckSandbox.CheckSandboxRequest.operator !=(Aw.Sindri.Features.CheckSandbox.CheckSandboxRequest? left, Aw.Sindri.Features.CheckSandbox.CheckSandboxRequest? right) -> bool
 static Aw.Sindri.Features.CheckSandbox.CheckSandboxRequest.operator ==(Aw.Sindri.Features.CheckSandbox.CheckSandboxRequest? left, Aw.Sindri.Features.CheckSandbox.CheckSandboxRequest? right) -> bool
-Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.ReadyToResume.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId>!
+Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.ReadyToResume.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.WorkflowInstanceId>!
 Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.ReadyToResume.init -> void
 Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.Ready.get -> bool
 Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.Ready.init -> void
-Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.CheckSandboxResponse(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.SandboxBlockerLine!>! Blockers, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId>! ReadyToResume, bool Ready) -> void
+Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.CheckSandboxResponse(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.SandboxBlockerLine!>! Blockers, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.WorkflowInstanceId>! ReadyToResume, bool Ready) -> void
 Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.<Clone>$() -> Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse!
-Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.SandboxBlockerLine!>! Blockers, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId>! ReadyToResume, out bool Ready) -> void
+Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.SandboxBlockerLine!>! Blockers, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.WorkflowInstanceId>! ReadyToResume, out bool Ready) -> void
 Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.Equals(Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse? other) -> bool
 Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse
 override Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.Equals(object? obj) -> bool
@@ -5186,13 +5186,13 @@ Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.NotChecked.get -> System.Co
 Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.NotChecked.init -> void
 Aw.Sindri.Features.CheckSandbox.SandboxResumeLine
 Aw.Sindri.Features.CheckSandbox.SandboxResumeLine.<Clone>$() -> Aw.Sindri.Features.CheckSandbox.SandboxResumeLine!
-Aw.Sindri.Features.CheckSandbox.SandboxResumeLine.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Instance, out string? Item, out string? Title, out System.DateTimeOffset Since) -> void
+Aw.Sindri.Features.CheckSandbox.SandboxResumeLine.Deconstruct(out Aw.Sindri.Core.Launch.WorkflowInstanceId Instance, out string? Item, out string? Title, out System.DateTimeOffset Since) -> void
 Aw.Sindri.Features.CheckSandbox.SandboxResumeLine.Equals(Aw.Sindri.Features.CheckSandbox.SandboxResumeLine? other) -> bool
-Aw.Sindri.Features.CheckSandbox.SandboxResumeLine.Instance.get -> Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId
+Aw.Sindri.Features.CheckSandbox.SandboxResumeLine.Instance.get -> Aw.Sindri.Core.Launch.WorkflowInstanceId
 Aw.Sindri.Features.CheckSandbox.SandboxResumeLine.Instance.init -> void
 Aw.Sindri.Features.CheckSandbox.SandboxResumeLine.Item.get -> string?
 Aw.Sindri.Features.CheckSandbox.SandboxResumeLine.Item.init -> void
-Aw.Sindri.Features.CheckSandbox.SandboxResumeLine.SandboxResumeLine(Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Instance, string? Item, string? Title, System.DateTimeOffset Since) -> void
+Aw.Sindri.Features.CheckSandbox.SandboxResumeLine.SandboxResumeLine(Aw.Sindri.Core.Launch.WorkflowInstanceId Instance, string? Item, string? Title, System.DateTimeOffset Since) -> void
 Aw.Sindri.Features.CheckSandbox.SandboxResumeLine.Since.get -> System.DateTimeOffset
 Aw.Sindri.Features.CheckSandbox.SandboxResumeLine.Since.init -> void
 Aw.Sindri.Features.CheckSandbox.SandboxResumeLine.Title.get -> string?

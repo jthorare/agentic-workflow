@@ -5,4 +5,4 @@ namespace Aw.Sindri.Features.CheckSandbox;
 /// <param name="Item">The item it runs for, or null when the instance can't be read.</param>
 /// <param name="Title">The item's title, or null when it can't be read.</param>
 /// <param name="Since">When the instance parked.</param>
-public sealed record SandboxResumeLine(Core.Workflow.Engine.WorkflowInstanceId Instance, string? Item, string? Title, DateTimeOffset Since);
+public sealed record SandboxResumeLine(Core.Launch.WorkflowInstanceId Instance, string? Item, string? Title, DateTimeOffset Since);

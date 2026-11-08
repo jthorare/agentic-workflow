@@ -96,7 +96,7 @@ public sealed class CloseItemActiveInstanceTests
     private static WorkflowEventPayload Row(string to, FrameSummary frame, string? outcome, string trigger = "step.completed", string? address = null)
     {
         var delta = new WorkflowEventDelta(frame, Suspension: null, PendingPark: null, Loops: null, TokensSpent: null, TokensGranted: null, Facts: null, outcome);
-        var detail = new WorkflowEventDetail(Core.Workflow.Engine.TriggerKey.For(Core.Workflow.Engine.WorkflowInstanceId.From("WFI-" + new string('a', 32)), "t"), "human:cli",
+        var detail = new WorkflowEventDetail(Core.Workflow.Engine.TriggerKey.For(Core.Launch.WorkflowInstanceId.From("WFI-" + new string('a', 32)), "t"), "human:cli",
             SourceSequence: null, ArgumentsSha256: null, ReportSha256: null, Answer: null, Amount: null, Reason: null, [], [], Grant: null, Override: null, Refusal: null, [], delta);
         return new WorkflowEventPayload(address ?? Address, "from", to, trigger, Outcome: null, Run: null, detail);
     }

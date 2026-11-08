@@ -1,6 +1,6 @@
-using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sandbox;
 
-namespace Aw.Sindri.Core.Sandbox;
+namespace Aw.Sindri.Core.Launch;
 
 /// <summary>Reads what a sandboxed session's plan file and cgroup scope say about it (sandbox spec §8); the files are the adapter's, Core bans System.IO.</summary>
 public interface ISessionSandboxes

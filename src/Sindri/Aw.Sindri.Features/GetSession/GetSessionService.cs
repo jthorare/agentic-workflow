@@ -5,7 +5,6 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Profile;
-using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sessions;
 
 namespace Aw.Sindri.Features.GetSession;
