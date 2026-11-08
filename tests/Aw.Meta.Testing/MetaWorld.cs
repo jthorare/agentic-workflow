@@ -57,6 +57,9 @@ public sealed class MetaWorld
     /// <summary>Claude Code's session transcripts.</summary>
     public InMemoryClaudeTranscripts ClaudeTranscripts { get; } = new();
 
+    /// <summary>Codex's session rollouts.</summary>
+    public InMemoryCodexRollouts CodexRollouts { get; } = new();
+
     /// <summary>The session each Claude lane runs now (Claude Code's sessions directory).</summary>
     public InMemoryLaneSessions LaneSessions { get; } = new();
 

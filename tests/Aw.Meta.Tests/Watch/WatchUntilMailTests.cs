@@ -22,7 +22,7 @@ public sealed class WatchUntilMailTests
         _world.Values,
         _world.Delay,
         _world.Clock,
-        new UsageMonitor(new UsageReader(_world.LaneFiles, _world.LaneSessions, _world.ClaudeTranscripts, _world.Panes, _world.Messages, _world.Clock), new UsageWatcher(new PaneSubmitter(_world.Panes, _world.Delay), _world.Log, _world.Values, _world.Clock)));
+        new UsageMonitor(new UsageReader(_world.LaneFiles, _world.LaneSessions, _world.ClaudeTranscripts, _world.Panes, _world.Messages, _world.Clock), new UsageWatcher(new PaneSubmitter(_world.Panes, _world.Delay), _world.Log, _world.Values, _world.Clock), new Aw.Meta.Core.Routing.RouteWatcher(new Aw.Meta.Core.Routing.LaneStandingReader(_world.LaneFiles, _world.CodexRollouts, _world.Clock), _world.Values)));
 
     // Mail arrives while poll number `mailAtPoll` (from 0) runs, so that poll sees it; -1 sends none.
     private void Script(int mailAtPoll)

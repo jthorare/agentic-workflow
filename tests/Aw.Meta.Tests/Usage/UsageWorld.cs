@@ -1,6 +1,7 @@
 using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Ids;
 using Aw.Meta.Core.Lanes;
+using Aw.Meta.Core.Routing;
 using Aw.Meta.Core.Usage;
 using Aw.Meta.Testing;
 
@@ -17,7 +18,11 @@ internal sealed class UsageWorld
 
     internal UsageReader Reader => new(World.LaneFiles, World.LaneSessions, World.ClaudeTranscripts, World.Panes, World.Messages, World.Clock);
 
-    internal UsageMonitor Monitor => new(Reader, Watcher);
+    internal LaneStandingReader Standings => new(World.LaneFiles, World.CodexRollouts, World.Clock);
+
+    internal RouteWatcher Routes => new(Standings, World.Values);
+
+    internal UsageMonitor Monitor => new(Reader, Watcher, Routes);
 
     internal UsageWatcher Watcher => new(new PaneSubmitter(World.Panes, World.Delay), World.Log, World.Values, World.Clock);
 

@@ -44,6 +44,7 @@ public static class MetaInfrastructureServiceCollectionExtensions
             .AddSingleton<ITranscriptReader, FileTranscriptReader>()
             .AddScoped<ILaneSessions>(sp => new PaneLaneSessions(sp.GetRequiredService<ILanePane>(), sp.GetRequiredService<IProcessTable>(), settings.SessionsDirectory))
             .AddSingleton<IClaudeTranscripts>(new ClaudeProjectsTranscripts(Path.Combine(settings.Paths.Home, ".claude", "projects")))
+            .AddSingleton<ICodexRollouts>(new CodexSessionRollouts(Path.Combine(settings.Paths.Home, ".codex", "sessions")))
             .AddSingleton<IDigestFiles, FileDigestFiles>()
             .AddSingleton<ILaneFiles>(new DirectoryLaneFiles(settings.LaneSessionsDirectory))
             .AddScoped<ILanePane>(sp => new TmuxLanePane(sp.GetRequiredService<ICommandRunner>(), settings.Tmux, settings.TmuxSocket, sp.GetRequiredService<IMetaConfig>(), sp.GetRequiredService<IDelay>()))

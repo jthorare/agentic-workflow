@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Meta.Core.Ports;
+using Aw.Meta.Core.Routing;
 using Aw.Meta.Core.Usage;
 
 namespace Aw.Meta.Features.Usage;
@@ -8,10 +9,12 @@ namespace Aw.Meta.Features.Usage;
 /// <summary>Reports which lanes and whether the meta stopped at a usage limit.</summary>
 /// <param name="config">The team config.</param>
 /// <param name="reader">Looks at the lanes and the meta.</param>
-internal sealed class UsageService(IMetaConfig config, UsageReader reader) : IService<UsageRequest, UsageResponse>
+/// <param name="standings">Adds provider, model and usage windows.</param>
+internal sealed class UsageService(IMetaConfig config, UsageReader reader, LaneStandingReader standings) : IService<UsageRequest, UsageResponse>
 {
     public async ValueTask<Result<UsageResponse>> Handle(UsageRequest request, CancellationToken cancellationToken)
     {
+        _ = standings;
         var team = await config.Load(cancellationToken).ConfigureAwait(false);
         if (team.IsError)
         {

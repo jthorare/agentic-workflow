@@ -109,4 +109,7 @@ public sealed record TeamConfig
 
     /// <summary>The catalog agent every lane runs, including the meta lane. Null leaves the choice to launcher.json.</summary>
     public string? Agent { get; init; }
+
+    /// <summary>Which models each provider offers, which are equivalent, and when a lane should move.</summary>
+    public RoutingConfig Routing { get; init; } = new();
 }

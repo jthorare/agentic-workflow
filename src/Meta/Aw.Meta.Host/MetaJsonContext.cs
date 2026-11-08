@@ -30,6 +30,7 @@ using Aw.Meta.Features.Status;
 using Aw.Meta.Features.StopCheck;
 using Aw.Meta.Features.SyncInbox;
 using Aw.Meta.Features.Team;
+using Aw.Meta.Features.Routing;
 using Aw.Meta.Features.Usage;
 using Aw.Meta.Features.Watch;
 using Aw.Meta.Features.WorktreeList;
@@ -74,6 +75,7 @@ namespace Aw.Meta.Host;
 [JsonSerializable(typeof(LaneStopCheckResponse))]
 [JsonSerializable(typeof(LaneReplyResponse))]
 [JsonSerializable(typeof(UsageResponse))]
+[JsonSerializable(typeof(RouteResponse))]
 [JsonSerializable(typeof(UsageWaitResponse))]
 [JsonSerializable(typeof(SyncInboxRequest))]
 [JsonSerializable(typeof(SyncInboxResponse))]
