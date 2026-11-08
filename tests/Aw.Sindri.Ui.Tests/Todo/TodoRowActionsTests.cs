@@ -183,4 +183,50 @@ public sealed class TodoRowActionsTests
         Assert.Equal(["td_a", "td_done", "td_gone"], Ids(panel.Groups.SelectMany(g => g.Rows)).Order(StringComparer.Ordinal), StringComparer.Ordinal);
         Assert.DoesNotContain(panel.Groups, g => string.Equals(g.Heading, "Done", StringComparison.Ordinal) || string.Equals(g.Heading, "Removed", StringComparison.Ordinal));
     }
+
+    [Fact]
+    public async Task A_failed_write_then_a_saved_one_leaves_no_notice_on_the_row()
+    {
+        _f.ServeTodos(Open("td_a", "first"), Open("td_b", "second"));
+        var panel = await _f.Expanded(Token);
+        panel.ToggleDone();
+        _f.Server.TodoWriteAnswer = RouteAnswer.Problem(HttpStatusCode.InternalServerError, "SND-TODO-001", "Try again.");
+        await panel.Toggle("td_b");
+        _f.Server.TodoWriteAnswer = null;
+
+        await panel.Toggle("td_b");
+
+        var row = panel.Groups.SelectMany(g => g.Rows).Single(r => r.Id == "td_b");
+        Assert.True(row.IsDone);
+        Assert.Equal(string.Empty, row.Notice);
+    }
+
+    [Fact]
+    public async Task A_read_that_brings_a_newer_version_clears_the_notice()
+    {
+        var panel = await Three();
+        _f.Server.TodoWriteAnswer = RouteAnswer.Problem(HttpStatusCode.InternalServerError, "SND-TODO-001", "Try again.");
+        await panel.Toggle("td_b");
+        var edited = Open("td_b", "second, edited elsewhere");
+        edited["version"] = panel.Rows.Single(r => r.Id == "td_b").Version + 1;
+        _f.ServeTodos(Open("td_a", "first", "2026-01-01"), edited, Open("td_c", "third"));
+
+        await panel.Refresh(Url, Token);
+
+        Assert.Equal(string.Empty, panel.Rows.Single(r => r.Id == "td_b").Notice);
+    }
+
+    [Fact]
+    public async Task A_read_asked_for_before_the_write_answered_does_not_bring_the_old_state_back()
+    {
+        var panel = await Three();
+        _f.Server.TodosGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var old = panel.Refresh(Url, Token);   // answers with td_a still open
+
+        await panel.Toggle("td_a");
+        _f.Server.TodosGate.SetResult();
+        await old;
+
+        Assert.Equal(["td_b", "td_c"], Ids(panel.Rows));
+    }
 }
