@@ -244,4 +244,25 @@ public abstract class WorkflowRunStoreContract
         _ = (await store.MarkTick(_workflow, latest, Token)).Value;
         Expect.Equal<DateTimeOffset?>(latest, (await store.LastTick(_workflow, Token)).Value);
     }
+
+    /// <summary>A trigger that is not a JSON object is refused when the run is recorded, so one bad row can't break the query that reads triggers by kind.</summary>
+    /// <param name="trigger">The trigger text.</param>
+    /// <returns>The test.</returns>
+    [Theory]
+    [InlineData("not json")]
+    [InlineData("[1]")]
+    [InlineData("42")]
+    [InlineData("")]
+    public async Task A_trigger_that_is_not_a_json_object_is_refused_by_insert_and_admit_and_nothing_is_stored(string trigger)
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+
+        var inserted = await store.Insert(Run(1) with { Trigger = trigger }, Token);
+        var admitted = await store.Admit(Run(2) with { Trigger = trigger }, GraphConcurrency.Unlimited, Token);
+
+        Expect.Equal(SindriErrors.GraphInvalid.Code, inserted.Error.Code);
+        Expect.Equal(SindriErrors.GraphInvalid.Code, admitted.Error.Code);
+        Expect.Equal(0, (await store.InFlight(_workflow, Token)).Value.Count);
+        Expect.Equal<int?>(expected: null, (await store.LatestOccurrence(_workflow, "manual", Token)).Value);
+    }
 }
