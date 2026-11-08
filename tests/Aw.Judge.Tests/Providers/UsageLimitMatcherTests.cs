@@ -26,6 +26,23 @@ public sealed class UsageLimitMatcherTests
     [InlineData("You've hit a snag")]
     public void Other_text_is_not_a_limit(string message) => Assert.Null(UsageLimitMatcher.Match(message));
 
+    [Theory]
+    [InlineData("You've reached your usage limit.")]
+    [InlineData("You have reached your monthly limit for this plan")]
+    [InlineData("YOU'VE EXCEEDED YOUR USAGE LIMIT")]
+    [InlineData("You've run out of premium requests. Upgrade to continue.")]
+    [InlineData("⎿ You’ve reached the usage limit for your plan")]
+    public void Cursor_wordings_match_loosely(string message) => Assert.NotNull(UsageLimitMatcher.Match(message));
+
+    [Fact]
+    public void Every_cursor_string_is_caught() => Assert.All(UsageLimitStrings.Cursor, message => Assert.NotNull(UsageLimitMatcher.Match(message)));
+
+    [Theory]
+    [InlineData("You've reached the end of the file")]
+    [InlineData("You've exceeded the maximum line length")]
+    [InlineData("You've run out of patience")]
+    public void Cursor_patterns_do_not_catch_other_errors(string message) => Assert.Null(UsageLimitMatcher.Match(message));
+
     [Fact]
     public void Null_is_not_a_limit() => Assert.Null(UsageLimitMatcher.Match(message: null));
 
