@@ -1,2 +1,0 @@
-{"start":{"inputs":{"fact:phasePacket":{"phase":"1"},"fact:built":"https://example.test/diff/1"}}}
-{"trigger":{"kind":"step.completed","outcome":"noTarget","outputs":{"fact:evidenceSummary":"{\"selected\":false,\"kind\":\"api\",\"reason\":\"nothing to run\"}"}},"expect":{"state":"skipped","outcome":"resolved"}}

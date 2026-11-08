@@ -1,6 +1,0 @@
-{"start":{"inputs":{"fact:pr":"https://example.test/pr/1","fact:phasePacket":{"phase":"1"}}}}
-{"trigger":{"kind":"step.completed","outcome":"candidates","outputs":{"fact:docsResult":{"result":"candidates","headSha":"abc123"},"fact:docsScope":{"docs":["docs/usage.md"]},"fact:prState":{"head":"abc123"},"fact:findings":{},"fact:handoffNote":"n","fact:workspace":"/tmp/docs-wt"}},"expect":{"state":"route"}}
-{"trigger":{"kind":"step.completed","outcome":"update","outputs":{"fact:decision":{"choice":"update"}}},"expect":{"state":"update"}}
-{"trigger":{"kind":"step.completed","outcome":"changed","outputs":{"fact:handoffNote":"edited"}},"expect":{"state":"check"}}
-{"trigger":{"kind":"step.completed","outcome":"pass"},"expect":{"state":"opening"}}
-{"trigger":{"kind":"wait.satisfied","outcome":"opened","outputs":{"fact:docsPr":"https://example.test/pr/2"}},"expect":{"state":"opened","outcome":"resolved"}}

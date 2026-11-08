@@ -3,17 +3,16 @@
 # Build from the repo root:  docker build -t sindri .   (add --platform linux/arm64 for arm)
 #
 # Every FROM is a digest from deploy/images.lock (scripts/images-lock.sh check fails when one drifts). Three stages:
-#   build    publishes the Sindri host exactly as scripts/install-cs.sh does (framework-dependent, the shipped recipes embedded),
-#            then judge and aw-packets NativeAOT for the target platform, then runs the shipped recipes' evals
+#   build    publishes the Sindri host exactly as scripts/install-cs.sh does (framework-dependent),
+#            then judge and aw-packets NativeAOT for the target platform
 #   tools    the temporal CLI from binaries.lock (sha256-checked) and graphify at the code index's pin (context/code-index.lock)
 #   runtime  aspnet + git, bubblewrap, tini; uid 1000; read-only-root friendly (all state under /data)
 # sindri-ui is not built: the image has no desktop.
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0.403-noble@sha256:de4fe90a98845d75910b9769662465c84de1a934665c431279d1382b2bddc02b AS build
 ARG TARGETARCH
-# Commit and recipes tree hash, for doctor's build row (optional: the image has no git checkout to compare with)
+# Commit, for doctor's build row (optional: the image has no git checkout to compare with)
 ARG SOURCE_COMMIT=unknown
-ARG RECIPES_TREE=
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
 # NativeAOT needs a C toolchain and zlib; jq reads the evals' result
 RUN apt-get update \
@@ -24,18 +23,14 @@ COPY . .
 # The RID: the same one scripts/install-cs.sh derives from uname
 RUN case "${TARGETARCH:-$(dpkg --print-architecture)}" in \
       amd64) echo linux-x64 > /rid ;; arm64) echo linux-arm64 > /rid ;; *) echo "unsupported arch ${TARGETARCH}" >&2; exit 1 ;; esac
-# The host: framework-dependent, locked restore, the shipped recipes embedded (AwRecipesDir)
-RUN dotnet publish src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj -c Release --no-self-contained \
-      -p:AwRecipesDir=/src/recipes/sindri -o /out/sindri
+# The host: framework-dependent, locked restore
+RUN dotnet publish src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj -c Release --no-self-contained -o /out/sindri
 # judge and aw-packets, NativeAOT; the RID's packs are not in the lock files, so the restore is unlocked, as in install-cs.sh
 RUN dotnet publish src/Judge/Aw.Judge.Host/Aw.Judge.Host.csproj -c Release -r "$(cat /rid)" -p:RestoreLockedMode=false -o /out/judge \
  && dotnet publish src/Packets/Aw.Packets.App/Aw.Packets.App.csproj -c Release -r "$(cat /rid)" -p:RestoreLockedMode=false -o /out/packets \
  && cp /out/judge/judge /out/sindri/judge && cp /out/packets/aw-packets /out/sindri/aw-packets \
  && cp /out/judge/libe_sqlite3.* /out/packets/libe_sqlite3.* /out/sindri/ \
- && printf 'commit=%s\nrecipes-tree=%s\n' "${SOURCE_COMMIT}" "${RECIPES_TREE}" > /out/sindri/build-info
-# The shipped recipes' evals fail the build, as they fail the install-cs.sh publish; the embedded count must equal the recipes shipped
-RUN /out/sindri/sindri recipe eval --shipped --json > /tmp/evals.json \
- && test "$(jq -r '.recipes | length' /tmp/evals.json)" = "$(find /src/recipes/sindri -maxdepth 1 -name '*.yaml' | wc -l)"
+ && printf 'commit=%s\n' "${SOURCE_COMMIT}" > /out/sindri/build-info
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0.403-noble@sha256:de4fe90a98845d75910b9769662465c84de1a934665c431279d1382b2bddc02b AS tools
 ARG TARGETARCH

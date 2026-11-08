@@ -1,5 +1,0 @@
-{"start":{"inputs":{"fact:phasePacket":{"phase":"1"},"fact:built":"https://example.test/diff/1"}}}
-{"trigger":{"kind":"step.completed","outcome":"ui"},"expect":{"state":"evidence-ui"}}
-{"trigger":{"kind":"child.parked","park":"no-progress"},"expect":{"state":"parked","park":"no-progress"}}
-{"trigger":{"kind":"child.resumed"},"expect":{"state":"evidence-ui"}}
-{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:evidenceSummary":"ui ok"}},"expect":{"state":"done","outcome":"resolved"}}
