@@ -42,6 +42,15 @@ internal static partial class NoteTodoLineReader
         return new NoteTodoLine(number, raw, id, rejected, text, tail.Due, raw[3] != ' ', tail.DoneOn, tail.Links, reason);
     }
 
+    /// <summary>The text of a task line as written (escapes still in), with the id, markers and links peeled off.</summary>
+    /// <param name="raw">The line without its ending; <see cref="IsTaskLine"/> holds for it.</param>
+    /// <returns>The text segment.</returns>
+    public static string RawTextOf(string raw)
+    {
+        var rest = (raw.Length > PrefixLength ? raw[PrefixLength..] : string.Empty).Trim();
+        return PeelTail(PeelBlock(rest, out _, out _)).Text;
+    }
+
     private static string PeelBlock(string rest, out TodoId? id, out string? rejected)
     {
         id = null;

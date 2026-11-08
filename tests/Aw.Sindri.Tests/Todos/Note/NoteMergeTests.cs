@@ -115,6 +115,49 @@ public sealed class NoteMergeTests
     }
 
     [Fact]
+    public void Sindri_ticking_an_adopted_line_keeps_its_raw_text()
+    {
+        var raw = $"- [ ] read [[a link]] {Block(1)}";
+        var done = S(1, "read [[a link]]") with { Done = true };
+
+        var r = Run([raw], [raw], [done]);
+
+        Same([$"replace 1: - [x] read [[a link]] {Block(1)}"], Edits(r));
+        Same([$"- [x] read [[a link]] {Block(1)}"], r.NextBase);
+    }
+
+    [Fact]
+    public void Sindri_setting_a_due_date_on_an_adopted_line_keeps_its_raw_text()
+    {
+        var raw = $"- [ ] read [[a link]] {Block(1)}";
+
+        var r = Run([raw], [raw], [S(1, "read [[a link]]", "2026-11-14")]);
+
+        Same([$"replace 1: - [ ] read [[a link]] \U0001F4C5 2026-11-14 {Block(1)}"], Edits(r));
+    }
+
+    [Fact]
+    public void Sindri_adding_a_link_to_an_adopted_line_keeps_its_raw_text()
+    {
+        var raw = $"- [ ] read [[a link]] {Block(1)}";
+        var linked = S(1, "read [[a link]]") with { Links = ["sindri://linear/ENG-12"] };
+
+        var r = Run([raw], [raw], [linked]);
+
+        Same([$"replace 1: - [ ] read [[a link]] [ENG-12](sindri://linear/ENG-12) {Block(1)}"], Edits(r));
+    }
+
+    [Fact]
+    public void Sindri_changing_the_text_of_an_adopted_line_writes_the_escaped_text()
+    {
+        var raw = $"- [ ] read [[a link]] {Block(1)}";
+
+        var r = Run([raw], [raw], [S(1, "read [[b link]]")]);
+
+        Same([$"replace 1: - [ ] read \\[[b link]] {Block(1)}"], Edits(r));
+    }
+
+    [Fact]
     public void Sindri_removed_the_todo_so_the_line_is_removed()
     {
         var removed = S(1, "a") with { Removed = true, RemovedBy = NoteOrigin.Sindri };

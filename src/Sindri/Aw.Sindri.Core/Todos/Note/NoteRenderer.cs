@@ -15,7 +15,16 @@ public static class NoteRenderer
     public static string RenderLine(SindriTodo todo)
     {
         ArgumentNullException.ThrowIfNull(todo);
-        var line = new StringBuilder(todo.Done ? "- [x] " : "- [ ] ").Append(Escape(todo.Text));
+        return RenderLine(todo, Escape(todo.Text));
+    }
+
+    /// <summary>The line for a todo with its text segment given as it is to be written: an adopted line's own raw text stays until the text changes in Sindri (todo spec §4.5).</summary>
+    /// <param name="todo">The todo.</param>
+    /// <param name="textSegment">The text as written on the line, escapes included.</param>
+    /// <returns>The line without a line ending.</returns>
+    internal static string RenderLine(SindriTodo todo, string textSegment)
+    {
+        var line = new StringBuilder(todo.Done ? "- [x] " : "- [ ] ").Append(textSegment);
         if (todo.Due is { } due)
         {
             _ = line.Append(' ').Append(NoteTodoLineReader.DueMarker).Append(' ').Append(Format(due));

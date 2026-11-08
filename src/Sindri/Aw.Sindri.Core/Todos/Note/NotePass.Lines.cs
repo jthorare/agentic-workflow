@@ -93,7 +93,10 @@ internal sealed partial class NotePass
         }
         else if (note.SameAs(from))
         {
-            var rendered = NoteRenderer.RenderLine(todo);
+            // why: the owner's own text stays as typed until Sindri changes the text (an adopted `[[link]]` is not escaped by a tick)
+            var rendered = string.Equals(todo.Text, line.Text, StringComparison.Ordinal)
+                ? NoteRenderer.RenderLine(todo, NoteTodoLineReader.RawTextOf(line.Raw))
+                : NoteRenderer.RenderLine(todo);
             _edits.Add(NoteLineEdit.Replace(line.Number, rendered));
             SetBase(id, rendered);
         }
