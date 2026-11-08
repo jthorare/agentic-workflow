@@ -1,4 +1,7 @@
+using Aw.Kernel;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Forge;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Reviews;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Forge;
@@ -24,7 +27,7 @@ internal static class ReviewFixScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("reviews-fix", "done"), ("reviews-fix", "half-done"), ("reviews-fix", "item-only"), ("reviews-fix", "to-babysitter"), ("reviews-fix", "to-session"), ("reviews-fix", "waiting"), ("reviews-fix", "old-side"), ("reviews-fix", "session-refused"),
+        ("reviews-fix", "done"), ("reviews-fix", "half-done"), ("reviews-fix", "item-only"), ("reviews-fix", "to-babysitter"), ("reviews-fix", "to-session"), ("reviews-fix", "waiting"), ("reviews-fix", "old-side"), ("reviews-fix", "session-refused"), ("reviews-fix", "file-not-written"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -44,6 +47,11 @@ internal static class ReviewFixScenarios
             _ = services.Replace(ServiceDescriptor.Singleton<IPullRequests>(forge));
             _ = services.Replace(ServiceDescriptor.Singleton<IReviewFacts>(new FakeReviewFacts().With(new ReviewFactsSnapshot([Pull(1, Owner), Pull(2, "sam-dev")], Github: null, new ReviewLibraryFacts(Reading: false, Docs: 0, WithErrors: 0, [])))));
             _ = services.Replace(ServiceDescriptor.Singleton<IFixBabysitters>(new Babysitters(scenario == "to-babysitter")));
+            if (string.Equals(scenario, "file-not-written", StringComparison.Ordinal))
+            {
+                _ = services.Replace(ServiceDescriptor.Singleton<IFixTaskFiles>(new UnwritableTaskFiles()));
+            }
+
             _ = services.Replace(ServiceDescriptor.Singleton<IFixSessions>(new Sessions(string.Equals(scenario, "to-session", StringComparison.Ordinal) || string.Equals(scenario, "done", StringComparison.Ordinal) ? "claude-code, ~/repos/aw-wt/api-retry" : null)));
         });
 
@@ -71,6 +79,14 @@ internal static class ReviewFixScenarios
     private sealed class Babysitters(bool watching) : IFixBabysitters
     {
         public ValueTask<bool> Watching(string link, CancellationToken cancellationToken) => ValueTask.FromResult(watching);
+    }
+
+    private sealed class UnwritableTaskFiles : IFixTaskFiles
+    {
+        public ValueTask<Result<bool>> Add(string head, ItemId item, int pr, CancellationToken cancellationToken) =>
+            ValueTask.FromResult<Result<bool>>(SindriErrors.ServiceFailed.With("the fix-task files can't be written: disk full"));
+
+        public ValueTask<Result<bool>> Remove(ItemId item, CancellationToken cancellationToken) => ValueTask.FromResult<Result<bool>>(false);
     }
 
     private sealed class Sessions(string? session) : IFixSessions

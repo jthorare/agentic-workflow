@@ -270,3 +270,34 @@ launcher_expand() {
       end
     | ., "\u0000"' <<< "$tpl"
 }
+
+# sh-quoted only when needed. A loop on a quote variable, not ${s//\'/...}: bash 3.2 (macOS) reads backslashes in that replacement differently (#2281).
+shq() {
+  case "$1" in
+    ''|*[!A-Za-z0-9_/.,:=@%+-]*)
+      local q="'" s="$1" out=""
+      while [[ "$s" == *"$q"* ]]; do out="$out${s%%"$q"*}'\\''"; s="${s#*"$q"}"; done
+      printf "'%s%s'" "$out" "$s" ;;
+    *) printf '%s' "$1" ;;
+  esac
+}
+
+# launcher_run_in_shell <word...>: run the words as one command through the user's interactive shell ($SHELL, /bin/bash when unset or
+# not executable), so an alias or function from its rc file applies to the first word (#2274). The lane already runs under a login shell
+# (`$SHELL -lc`, scripts/meta-launch.sh), so this one is only interactive (-i): zsh reads .zshrc, bash .bashrc, fish config.fish, and
+# the login profile does not run twice. The first word stays a bare name for the shell to resolve; the others are quoted byte for byte.
+# An rc file that prints, prompts or execs runs here too: guard it with AW_META_LANE, which meta-launch.sh sets before any profile.
+launcher_run_in_shell() {
+  local sh_bin="${SHELL:-}" cmd="" a
+  { [ -n "$sh_bin" ] && [ -x "$sh_bin" ]; } || sh_bin=/bin/bash
+  for a in "$@"; do cmd="$cmd $(shq "$a")"; done
+  # An interactive zsh with no startup file at all starts its first-run wizard and waits for a key: such a user has no alias to load, so
+  # that shell gets a plain -c.
+  local flags=-ic z
+  case "$sh_bin" in
+    */zsh|zsh)
+      flags=-c
+      for z in .zshenv .zprofile .zshrc .zlogin; do [ -e "${ZDOTDIR:-$HOME}/$z" ] && { flags=-ic; break; }; done ;;
+  esac
+  "$sh_bin" "$flags" "${cmd# }"
+}
