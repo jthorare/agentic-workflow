@@ -1,5 +1,4 @@
 using System.Globalization;
-using Aw.Sindri.Core.Events;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using Aw.Kernel.Services;
@@ -7,6 +6,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Auth;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Control;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Features.RetireInstancesOnStart;

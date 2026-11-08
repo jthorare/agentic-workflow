@@ -30,8 +30,8 @@ public readonly partial struct RecipeDuration : ITypedId<RecipeDuration, string>
         }
     }
 
-    private static Vogen.Validation Validate(string value) =>
-        Shape.IsMatch(value) ? Vogen.Validation.Ok : Vogen.Validation.Invalid("A duration is a whole number and m, h or d ('10m', '4h', '2d'), at least 1m");
+    private static Validation Validate(string value) =>
+        Shape.IsMatch(value) ? Validation.Ok : Validation.Invalid("A duration is a whole number and m, h or d ('10m', '4h', '2d'), at least 1m");
 
     [GeneratedRegex("^[1-9][0-9]{0,5}[mhd]\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }

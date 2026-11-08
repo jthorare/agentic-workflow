@@ -1,7 +1,7 @@
 using Aw.Sindri.Core.Auth;
-using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Control;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Launches;

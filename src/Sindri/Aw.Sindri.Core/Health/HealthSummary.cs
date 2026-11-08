@@ -1,6 +1,6 @@
 using System.Globalization;
-using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Doctor;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Views;
 

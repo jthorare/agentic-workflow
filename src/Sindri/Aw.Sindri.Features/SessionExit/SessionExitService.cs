@@ -1,6 +1,6 @@
 using Aw.Kernel;
-using Aw.Sindri.Core.Events;
 using Aw.Kernel.Services;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 

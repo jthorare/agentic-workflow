@@ -1,6 +1,6 @@
 using Aw.Context.Core.Engine;
-using Aw.Sindri.Core.Events;
 using Aw.Context.Core.Models;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Jobs;
 
 namespace Aw.Sindri.Host.Models;

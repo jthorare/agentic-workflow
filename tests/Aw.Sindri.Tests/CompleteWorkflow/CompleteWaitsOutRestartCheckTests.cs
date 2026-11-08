@@ -76,7 +76,7 @@ public sealed class CompleteWaitsOutRestartCheckTests : IDisposable
         var desk = new RecipeDesk(client, TextReader.Null, Ensure,
             launched ? static name => name == "AW_SINDRI_LAUNCH_SECRET" ? "a-secret" : null : null);
         await using var services = new ServiceCollection().AddSingleton<TimeProvider>(_clock).BuildServiceProvider();
-        var run = Host.Commands.CompleteCommand.Run(Args(), desk, services, new Output(_out, _errorShared, SliceHarness.Json), Token);
+        var run = CompleteCommand.Run(Args(), desk, services, new Output(_out, _errorShared, SliceHarness.Json), Token);
         await Drive(run, started);
         return await run.WaitAsync(_realBound, TimeProvider.System, Token);   // why: a real bound; the fake clock stops moving once the drive ends
     }
