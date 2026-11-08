@@ -16,7 +16,7 @@ public sealed class TodoSyncLineTests
     {
         _f.Server.TodoNoteAnswer = new RouteAnswer(HttpStatusCode.OK, noteJson);
         var panel = _f.Panel();
-        await panel.RefreshSyncLine(TodoFixture.Url, Token);
+        await panel.Refresh(TodoFixture.Url, Token);
         return (panel.SyncQuiet, panel.SyncLive, panel.SyncIsWarning, panel.HasSync);
     }
 
@@ -65,11 +65,11 @@ public sealed class TodoSyncLineTests
     {
         var panel = _f.Panel();
         _f.Server.TodoNoteAnswer = new RouteAnswer(HttpStatusCode.OK, TodoNoteSetupSample.NoteIn("syncing"));
-        await panel.RefreshSyncLine(TodoFixture.Url, Token);
+        await panel.Refresh(TodoFixture.Url, Token);
         Assert.True(panel.HasSync);
 
         _f.Server.TodoNoteAnswer = new RouteAnswer(HttpStatusCode.NotFound, string.Empty);
-        await panel.RefreshSyncLine(TodoFixture.Url, Token);
+        await panel.Refresh(TodoFixture.Url, Token);
 
         Assert.False(panel.HasSync);
     }
@@ -79,10 +79,10 @@ public sealed class TodoSyncLineTests
     {
         var panel = _f.Panel();
         _f.Server.TodoNoteAnswer = new RouteAnswer(HttpStatusCode.OK, TodoNoteSetupSample.NoteIn("syncing"));
-        await panel.RefreshSyncLine(TodoFixture.Url, Token);
+        await panel.Refresh(TodoFixture.Url, Token);
 
         _f.Server.TodoNoteAnswer = RouteAnswer.Problem(HttpStatusCode.ServiceUnavailable, "SND-API-503", "Sindri is busy (fix: wait)");
-        await panel.RefreshSyncLine(TodoFixture.Url, Token);
+        await panel.Refresh(TodoFixture.Url, Token);
 
         Assert.Equal("Synced with Obsidian 09:58", panel.SyncQuiet);
     }
