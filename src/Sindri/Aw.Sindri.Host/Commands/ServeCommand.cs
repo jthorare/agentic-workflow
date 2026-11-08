@@ -9,6 +9,7 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Lease;
+using Aw.Sindri.Features.RetireInstancesOnStart;
 using Aw.Sindri.Features.StartProcess;
 using Aw.Sindri.Features.StopProcess;
 using Aw.Sindri.Host.Registration;
@@ -82,6 +83,7 @@ internal static class ServeCommand
         }
 
         app.Services.GetRequiredService<HeldHumanToken>().Hold(minted.Value);
+        _ = await Call<RetireInstancesOnStartRequest, RetireInstancesOnStartResponse>(app, new RetireInstancesOnStartRequest()).ConfigureAwait(false);   // best effort: the notes are history, never a reason not to serve
         return true;
     }
 

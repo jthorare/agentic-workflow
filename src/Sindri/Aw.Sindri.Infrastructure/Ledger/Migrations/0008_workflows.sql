@@ -1,6 +1,6 @@
 -- Workflow graphs and their revisions (issue 2258, PR 5). The source of truth for what a workflow is, so they live in
 -- ledger.db and are not rebuilt from events. A save is a new immutable revision; 'active_revision' (null = off) is the one
--- triggers run; 'name' is the latest revision's. Run tables follow in 0009 and 0010.
+-- triggers run; 'name' is the latest revision's. Run tables follow in later migrations.
 CREATE TABLE workflow (
     id TEXT PRIMARY KEY,
     slug TEXT NOT NULL UNIQUE,
