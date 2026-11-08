@@ -84,8 +84,7 @@
       "state": "empty",
       "text": "No CI runs on a1b2c3d yet",
       "data": {
-        "runs": [],
-        "babysitter": null
+        "runs": []
       }
     },
     {
