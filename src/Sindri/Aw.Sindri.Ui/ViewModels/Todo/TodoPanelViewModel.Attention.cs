@@ -13,7 +13,7 @@ internal sealed partial class TodoPanelViewModel
 
     private TodoNoteView? _note;
     private List<AttentionRowViewModel> _queue = [];
-    private HashSet<string>? _queueIds;
+    private Dictionary<string, string>? _queueSignatures;
     private string? _shownId;
     private string? _openId;
     private DateTimeOffset _queueChangedAt = DateTimeOffset.MinValue;
@@ -140,6 +140,7 @@ internal sealed partial class TodoPanelViewModel
             queue[i] = KeptRow(queue[i]);
         }
 
+        var before = Attention;
         _queue = queue;
         var row = queue.Find(r => string.Equals(r.Id, _shownId, StringComparison.Ordinal)) ?? queue.FirstOrDefault();
         _shownId = row?.Id;
@@ -152,18 +153,31 @@ internal sealed partial class TodoPanelViewModel
         OnChanged(nameof(HasAttention));
         OnChanged(nameof(IsAttentionOpen));
         OnChanged(nameof(HasMore));
+        if (!ReferenceEquals(row, before))
+        {
+            RefocusOpenForm();   // the redraw destroyed the button that had focus
+        }
     }
 
-    // A sync or an agent changed what needs sorting out: the digits are quiet for a moment (D13). The first read of the note is not a change.
+    // A pick was refused: the form may have been redrawn under the focused button, so focus goes to its first button again.
+    private void RefocusOpenForm()
+    {
+        if (Attention is { IsOpen: true })
+        {
+            AttentionButtonsRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    // A sync or an agent changed what needs sorting out (a row came or went, or the words or the count inside one changed): the digits are quiet for a moment (D13). The first read of the note is not a change.
     private void NoteQueueChange(List<AttentionRowViewModel> queue)
     {
-        var ids = new HashSet<string>(queue.Select(r => r.Id), StringComparer.Ordinal);
-        if (_queueIds is not null && !ids.SetEquals(_queueIds))
+        var signatures = queue.ToDictionary(r => r.Id, r => r.Signature, StringComparer.Ordinal);
+        if (_queueSignatures is not null && (signatures.Count != _queueSignatures.Count || signatures.Any(s => !_queueSignatures.TryGetValue(s.Key, out var was) || !string.Equals(was, s.Value, StringComparison.Ordinal))))
         {
             _queueChangedAt = _clock.GetUtcNow();
         }
 
-        _queueIds = ids;
+        _queueSignatures = signatures;
     }
 
     // The row already shown for that id when its words did not change (it keeps its open form and its notice), else the new one.

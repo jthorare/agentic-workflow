@@ -119,14 +119,14 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
             return;
         }
 
-        // The note: an older Sindri (a bare 404) and any other failure mean no attention rows and no error line; the todos stand on their own.
+        // The note: an older Sindri (a bare 404) means no attention rows; any other failure keeps the last note, so an open form stays. Neither shows an error line.
         var note = await _api.TodoNote(url, cancellationToken).ConfigureAwait(true);
         if (read != _reads)
         {
             return;
         }
 
-        (Error, _todos, _note) = (string.Empty, Overlaid(list.Value.Todos), note.IsSuccess ? note.Value : null);
+        (Error, _todos, _note) = (string.Empty, Overlaid(list.Value.Todos), note.IsSuccess ? note.Value : Linear.OlderSindri.IsNotServed(note.Error) ? null : _note);
         Show();
         ScheduleMidnight();
     }

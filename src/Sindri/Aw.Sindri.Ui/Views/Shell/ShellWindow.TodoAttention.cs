@@ -5,6 +5,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.ViewModels.Todo;
+using Aw.Sindri.Ui.Views.Todo;
 
 namespace Aw.Sindri.Ui.Views.Shell;
 
@@ -41,7 +42,7 @@ internal sealed partial class ShellWindow
             return false;
         }
 
-        _ = shell.Todo.Pick(key is Key.D1 or Key.NumPad1 ? 1 : 2);
+        TaskFaults.Rethrow(shell.Todo.Pick(key is Key.D1 or Key.NumPad1 ? 1 : 2));
         return true;
     }
 

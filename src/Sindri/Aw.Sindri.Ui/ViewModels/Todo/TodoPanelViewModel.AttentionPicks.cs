@@ -51,6 +51,11 @@ internal sealed partial class TodoPanelViewModel
         var kept = digit == 1 ? conflict.Sindri : conflict.Obsidian;
         _openId = null;
         Put(row.Id, sent.Value.Todo is { Conflict: null } served ? served : Kept(todo, kept));   // the todo as Sindri answers it, else as the pick leaves it
+        if (sent.Value.Todo is null)
+        {
+            await Refresh(url, CancellationToken.None).ConfigureAwait(true);   // no links or version came back: read them
+        }
+
         _queueChangedAt = DateTimeOffset.MinValue;   // the owner's own change
         Picked?.Invoke(this, new TodoPickedEventArgs(KeptToast(kept, digit), () => UndoConflict(url, row.Id), Window(sent.Value.UndoUntil)));
     }
@@ -66,9 +71,14 @@ internal sealed partial class TodoPanelViewModel
 
         if (Attention is { } now && string.Equals(now.Id, row.Id, StringComparison.Ordinal))
         {
-            now.Notice = lineMoved ? Labels.TodoAttnLineChanged : Labels.TodoCouldntSave(Refusal(error));
+            now.Notice = lineMoved ? Labels.TodoAttnLineChanged : Unsaved(error);
         }
+
+        RefocusOpenForm();
     }
+
+    // Why a pick was not saved: a bare 404 means the running Sindri has no such route yet.
+    private static string Unsaved(Error error) => Linear.OlderSindri.IsNotServed(error) ? Labels.TodoAttnSindriOlder : Labels.TodoCouldntSave(Refusal(error));
 
     private static string KeptToast(TodoSideView kept, int digit) =>
         kept.Removed ? (digit == 1 ? Labels.TodoAttnKeptRemoved : Labels.TodoAttnRemovedIt) : (digit == 1 ? Labels.TodoAttnKeptSindri : Labels.TodoAttnKeptObsidian);
@@ -103,10 +113,12 @@ internal sealed partial class TodoPanelViewModel
                 hold.Notice = string.Equals(code, "SND-TODO-409", StringComparison.Ordinal) ? Labels.TodoAttnHoldChangedAgain(hold.HeldCount) : Labels.TodoAttnNoHold;
             }
 
+            RefocusOpenForm();
             return;
         }
 
-        row.Notice = Labels.TodoCouldntSave(Refusal(error));
+        row.Notice = Unsaved(error);
+        RefocusOpenForm();
     }
 
     // Undo of a conflict pick: the conflict is open again from its stored versions, and the next read shows it. null when it worked, else why not.

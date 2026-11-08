@@ -1,4 +1,3 @@
-using System.Runtime.ExceptionServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -7,6 +6,7 @@ using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.ViewModels.Todo;
 using Aw.Sindri.Ui.Views.NeedsYou;
+using Aw.Sindri.Ui.Views.Todo;
 
 namespace Aw.Sindri.Ui.Views.Shell;
 
@@ -168,18 +168,7 @@ internal sealed partial class ShellWindow
     {
         if (row is not null)
         {
-            // A fault is thrown again on the UI thread, as an event handler's would be, instead of being dropped.
-            _ = act(row.Id).ContinueWith(
-                static done =>
-                {
-                    if (done.Exception?.GetBaseException() is { } fault)
-                    {
-                        ExceptionDispatchInfo.Throw(fault);
-                    }
-                },
-                CancellationToken.None,
-                TaskContinuationOptions.OnlyOnFaulted,
-                TaskScheduler.FromCurrentSynchronizationContext());
+            TaskFaults.Rethrow(act(row.Id));
         }
 
         return true;
@@ -213,7 +202,7 @@ internal sealed partial class ShellWindow
             return false;
         }
 
-        if (shell.Todo.CloseAttention())
+        if (FocusManager?.GetFocusedElement() is Visual focused && TodoPanelOf(focused) is not null && shell.Todo.CloseAttention())
         {
             Dispatcher.UIThread.Post(() => FocusAttentionLine(fallback: true), DispatcherPriority.Loaded);
             return true;

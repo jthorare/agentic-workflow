@@ -31,6 +31,11 @@ internal sealed partial class TodoPanel : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        if (_watched is null && Panel is { } panel)
+        {
+            (_watched = panel).PropertyChanged += OnPanelChanged;
+        }
+
         _height = TopLevel.GetTopLevel(this)?.GetObservable(TopLevel.ClientSizeProperty).Subscribe(new HeightObserver(this));
         FixCollapsedHeight();
         Cap();
@@ -41,6 +46,8 @@ internal sealed partial class TodoPanel : UserControl
     {
         _height?.Dispose();
         _height = null;
+        _watched?.PropertyChanged -= OnPanelChanged;   // Home may build the panel again: a view that is gone must not stay on the view model
+        _watched = null;
         base.OnDetachedFromVisualTree(e);
     }
 

@@ -62,6 +62,7 @@ public sealed class TodoAttentionRedrawTests
     {
         var panel = await OneConflict();
         var reads = Server.TodosCalls;
+        Server.TodoPickAnswer = new RouteAnswer(HttpStatusCode.OK, """{"undoUntil":"2026-01-01T00:00:10.0000000Z"}""");
 
         await panel.Pick(1);
 

@@ -23,7 +23,7 @@ internal sealed partial class AttentionArea : UserControl
             && int.TryParse(choice.Key, NumberStyles.None, CultureInfo.InvariantCulture, out var digit))
         {
             e.Handled = true;
-            _ = panel.Pick(digit);
+            TaskFaults.Rethrow(panel.Pick(digit));
         }
     }
 }

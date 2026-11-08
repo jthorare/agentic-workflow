@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
 
@@ -32,7 +33,26 @@ internal sealed partial class FakeSindriApi
     }
 
     public Task<Result<TodoKeepAcceptedView>> KeepTodo(Uri api, string id, string side, CancellationToken cancellationToken) =>
-        TodoPick<TodoKeepAcceptedView>(api, TodoRoutes.Keep(id), new TodoKeepBody(side), """{"undoUntil":"2026-01-01T00:00:10.0000000Z"}""", cancellationToken);
+        TodoPick<TodoKeepAcceptedView>(api, TodoRoutes.Keep(id), new TodoKeepBody(side), KeptAnswer(id, side), cancellationToken);
+
+    // What Sindri answers to a keep: the todo with the picked version and no conflict, as the served list has it (the todo is optional, so a test can answer without it).
+    private string KeptAnswer(string id, string side)
+    {
+        const string window = "\"undoUntil\":\"2026-01-01T00:00:10.0000000Z\"";
+        var todo = JsonNode.Parse(TodosAnswer.Body)?["todos"]?.AsArray().FirstOrDefault(t => string.Equals((string?)t?["id"], id, StringComparison.Ordinal))?.DeepClone();
+        return todo?["conflict"]?[side] is JsonObject picked ? "{\"todo\":" + Kept(todo, picked).ToJsonString() + "," + window + "}" : "{" + window + "}";
+    }
+
+    private static JsonNode Kept(JsonNode todo, JsonObject picked)
+    {
+        var (removed, done) = ((bool?)picked["removed"] == true, (bool?)picked["done"] == true);
+        const string at = "2026-01-01T00:00:00Z";
+        todo["conflict"] = null;
+        todo["text"] = picked["text"]?.DeepClone() ?? todo["text"]?.DeepClone();
+        todo["due"] = removed ? todo["due"]?.DeepClone() : picked["due"]?.DeepClone();
+        (todo["doneAt"], todo["removed"], todo["removedAt"]) = (done && !removed ? at : null, removed, removed ? at : null);
+        return todo;
+    }
 
     public Task<Result<TodoKeepUndoneView>> UndoKeepTodo(Uri api, string id, CancellationToken cancellationToken) =>
         TodoPick<TodoKeepUndoneView>(api, TodoRoutes.KeepUndo(id), body: null, "{}", cancellationToken);
