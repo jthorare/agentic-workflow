@@ -23,7 +23,7 @@ public sealed class RouteStartableGateTests
         var stopped = await Evaluate(_valid with { Workflow = new(Route: new("none")) });
 
         Assert.Equal(GateVerdict.Fail, stopped.Verdict);
-        Assert.Equal(["workflow.route.startable is 'none' in the approved profile, so the router stops this item (fix: set it to 'all', approve the profile, then resume)"], stopped.Reasons);
+        Assert.Equal(["workflow.route.startable is 'none' in the profile, so the router stops this item (fix: set it to 'all', then resume)"], stopped.Reasons);
     }
 
     [Fact, Trait("Lane", "unit")]

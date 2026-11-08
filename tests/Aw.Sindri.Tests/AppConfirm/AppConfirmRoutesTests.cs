@@ -83,13 +83,13 @@ public sealed class AppConfirmRoutesTests
     }
 
     [Fact, Trait("Lane", "integration")]
-    public async Task Approve_all_before_a_profile_is_approved_has_no_app_challenge()
+    public async Task Approve_all_with_no_profile_has_no_app_challenge()
     {
         await using var host = await Started(approved: false);
 
         var challenge = await host.Http.Ask(Post(AppChallenge, """{"action":"approve-all c41e07"}""", App(host)));
 
-        Assert.Equal((HttpStatusCode.Conflict, "SND-SETUP-007"), (challenge.Status, challenge.Code));
+        Assert.Equal((HttpStatusCode.NotFound, "SND-PROFILE-001"), (challenge.Status, challenge.Code));
     }
 
 }

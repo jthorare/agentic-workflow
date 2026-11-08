@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
@@ -10,7 +11,7 @@ using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.OnboardRepo;
 
-/// <summary>The OnboardRepo job (setup-once spec §5.1): the start checks the approved snapshot (SND-SETUP-007, 004) before any job exists, the work records 'repo.onboarded' for the approved hash, and nothing here approves a profile.</summary>
+/// <summary>The OnboardRepo job (setup-once spec §5.1): the start checks the approved snapshot (SND-PROFILE-001, SND-SETUP-004) before any job exists, the work records 'repo.onboarded' for the approved hash, and nothing here approves a profile.</summary>
 [Lane(TestLane.Unit)]
 public sealed class OnboardRepoJobTests : IDisposable
 {
@@ -58,13 +59,13 @@ public sealed class OnboardRepoJobTests : IDisposable
     }
 
     [Fact]
-    public async Task No_approved_profile_is_SND_SETUP_007_even_when_the_live_file_names_the_repo()
+    public async Task No_profile_is_SND_PROFILE_001()
     {
-        _slice.Profiles.Live = new LoadedProfile(new SindriProfile(1, "thor", Repos: [new RepoEntry("demo", "/work/demo")]), _hash, "/home/profile.yaml");
+        _slice.Profiles.Live = SindriErrors.ProfileMissing.With("no profile in this test");
 
         var admitted = await Admission().Admit(new OnboardRepoRequest("/work/demo"), Token);
 
-        Assert.Equal("SND-SETUP-007", admitted.Error.Code);
+        Assert.Equal("SND-PROFILE-001", admitted.Error.Code);
     }
 
     [Fact]

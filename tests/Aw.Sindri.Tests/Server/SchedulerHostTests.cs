@@ -95,7 +95,7 @@ public sealed class SchedulerHostTests
 
         await Run(approvals, () => Heartbeats() >= 1);
 
-        _ = Assert.Single(_log.Lines, l => l.Contains("SND-SCHED-001 the approved profile couldn't be read", StringComparison.Ordinal));
+        _ = Assert.Single(_log.Lines, l => l.Contains("SND-SCHED-001 the profile couldn't be read", StringComparison.Ordinal));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -118,7 +118,7 @@ public sealed class SchedulerHostTests
 
         await Run(approvals, () => Heartbeats() >= 1);
 
-        _ = Assert.Single(_log.Lines, l => l.Contains("SND-SCHED-001 the approved profile couldn't be read", StringComparison.Ordinal));
+        _ = Assert.Single(_log.Lines, l => l.Contains("SND-SCHED-001 the profile couldn't be read", StringComparison.Ordinal));
     }
 
     [Fact, Trait("Lane", "unit")]

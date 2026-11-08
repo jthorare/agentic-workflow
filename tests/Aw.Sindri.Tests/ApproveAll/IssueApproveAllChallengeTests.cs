@@ -39,11 +39,11 @@ public sealed class IssueApproveAllChallengeTests
     }
 
     [Fact]
-    public async Task Before_a_profile_is_approved_there_is_no_challenge()
+    public async Task With_no_profile_there_is_no_challenge()
     {
         var issued = await Service().Handle(new IssueChallengeRequest("approve-all " + await Digest()), Token);
 
-        Assert.Equal("SND-SETUP-007", issued.Error.Code);
+        Assert.Equal("SND-PROFILE-001", issued.Error.Code);
     }
 
     [Fact]

@@ -8,7 +8,7 @@ using Aw.Sindri.Core.Workflow.ApproveAll;
 namespace Aw.Sindri.Features.ApproveAllRecipes;
 
 /// <summary>
-/// The checks an approve-all start makes inside the gate, in the spec's order (setup-once spec §5.3): the profile is approved (SND-SETUP-007), no approve-all job runs
+/// The checks an approve-all start makes inside the gate, in the spec's order (setup-once spec §5.3): there is a profile (SND-PROFILE-001), no approve-all job runs
 /// (SND-JOB-409 with 'runningJob'), then the plan as it is now is kept for the job under the caller's command id. Rollback drops it when the claim fails. Nothing is
 /// written here.
 /// </summary>

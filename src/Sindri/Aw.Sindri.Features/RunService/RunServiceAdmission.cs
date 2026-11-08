@@ -13,7 +13,7 @@ namespace Aw.Sindri.Features.RunService;
 /// profile's or a built-in (SND-SVC-404; a built-in runs by name though the profile does not name it, so the failure row's `sindri services run` works), this build has it (SND-SVC-404), and no scheduled run
 /// of it is in flight (SND-JOB-409 without a running job). Two manual runs of one service are the registry's SND-JOB-409.
 /// </summary>
-/// <param name="approvals">The approved profile.</param>
+/// <param name="approvals">The profile.</param>
 /// <param name="scheduled">Every service this build has.</param>
 /// <param name="builtIns">The services the build runs without a profile entry.</param>
 /// <param name="guard">Says whether a run of the service is in flight.</param>
@@ -43,7 +43,7 @@ internal sealed class RunServiceAdmission(IApprovedProfile approvals, IEnumerabl
 
         if (!ServiceActions.CanRun(approved.Value?.Profile.Services?.ContainsKey(name.Value) == true, builtIns.Any(b => b.Name == name)))
         {
-            return SindriErrors.ServiceNotFound.With($"The approved profile has no service '{name.Value}' (fix: sindri services)");
+            return SindriErrors.ServiceNotFound.With($"The profile has no service '{name.Value}' (fix: sindri services)");
         }
 
         if (!scheduled.Any(s => s.Identity() == name))

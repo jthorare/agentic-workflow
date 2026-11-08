@@ -136,7 +136,7 @@ internal sealed partial class IssueChallengeService(ShippedApprovalPlans approva
 
     private static Error Unknown(string text) => SindriErrors.InvalidInput.With($"'{text}' isn't an action a challenge is issued for; use {Forms}");
 
-    /// <summary>An approve-all's challenge (setup-once spec §4 item 1): bound to the plan's digest, with the plan as its preview. Refused before a profile is approved (SND-SETUP-007), when nothing waits, or when the digest is not the plan's.</summary>
+    /// <summary>An approve-all's challenge (setup-once spec §4 item 1): bound to the plan's digest, with the plan as its preview. Refused when there is no profile (SND-PROFILE-001), when nothing waits, or when the digest is not the plan's.</summary>
     private async ValueTask<Result<IssueChallengeResponse>> ApproveAll(string digest, ChallengeChannel channel, CancellationToken cancellationToken)
     {
         if (approveAll is null)

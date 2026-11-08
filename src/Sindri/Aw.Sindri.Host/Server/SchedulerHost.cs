@@ -283,7 +283,7 @@ internal sealed partial class SchedulerHost(
     [LoggerMessage(Level = LogLevel.Information, Message = "Schedule loaded from approved profile {Profile}: {Count} services")]
     private static partial void LogSchedule(ILogger logger, string profile, int count);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "SND-SCHED-001 the approved profile couldn't be read: {Code} {Detail}; keeping the current schedule")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "SND-SCHED-001 the profile couldn't be read: {Code} {Detail}; keeping the current schedule")]
     private static partial void LogRefreshFailed(ILogger logger, string code, string detail);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "SND-SCHED-001 the paused services couldn't be read ({Detail}); keeping the last known set")]

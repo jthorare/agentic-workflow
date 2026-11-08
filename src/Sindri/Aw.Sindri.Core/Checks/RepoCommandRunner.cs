@@ -24,9 +24,9 @@ public sealed class RepoCommandRunner(IBuildCommandSource source, ICheckCommands
     /// <returns>The time the slot wait and every command share.</returns>
     public static TimeSpan BudgetFor(TimeSpan maxDuration) => maxDuration > _reportMargin ? maxDuration - _reportMargin : TimeSpan.Zero;
 
-    /// <summary>The commands the approved profile lists, in the profile's order.</summary>
+    /// <summary>The commands the profile lists, in the profile's order.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>The commands; none when no profile is approved or it lists none.</returns>
+    /// <returns>The commands; none when no profile yet or it lists none.</returns>
     public ValueTask<Result<CommandSet>> For(CancellationToken cancellationToken) => source.Read(cancellationToken);
 
     /// <summary>Runs every command in order, in <paramref name="workingDirectory"/>, under one heavy slot. A failing command does not stop the rest.</summary>
