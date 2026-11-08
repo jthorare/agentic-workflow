@@ -1,0 +1,31 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:todo="using:Aw.Sindri.Ui.ViewModels.Todo"
+             x:Class="Aw.Sindri.Ui.Views.Todo.QuickAddBox"
+             x:DataType="todo:QuickAddViewModel">
+  <!-- The quick-add box (todo spec §3.2; N, Ctrl+Shift+N, the palette's New todo): a 560 px card under the top bar, over the page, which stays
+       visible behind it (no scrim). One field; the line under it says what will be saved and is a polite live region; Enter saves, Esc closes
+       (QuickAddBox.axaml.cs). A failed save keeps the box open and says why. It is a dialog with a labelled field. -->
+  <UserControl.Styles>
+    <Style Selector="Border.quick-add">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="{StaticResource Radius.LG}" />
+      <Setter Property="Padding" Value="{StaticResource Space.LG.Thickness}" />
+    </Style>
+  </UserControl.Styles>
+  <Panel>
+    <Border x:Name="QuickAddCard" Classes="quick-add" Width="560" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,56,0,0"
+            KeyboardNavigation.TabNavigation="Cycle" AutomationProperties.Name="{Binding Name}"
+            AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Window">
+      <StackPanel Spacing="6">
+        <TextBox x:Name="QuickAddField" Text="{Binding Text}" PlaceholderText="{Binding Placeholder}" AutomationProperties.Name="{Binding Name}" />
+        <TextBlock x:Name="QuickAddPreview" Classes="caption subtle" Text="{Binding Preview}" AutomationProperties.Name="{Binding Preview}"
+                   AutomationProperties.LiveSetting="Polite" />
+        <TextBlock x:Name="QuickAddError" Classes="caption error" Text="{Binding Error}" IsVisible="{Binding HasError}" TextWrapping="Wrap"
+                   AutomationProperties.Name="{Binding Error}" AutomationProperties.LiveSetting="Assertive" />
+      </StackPanel>
+    </Border>
+  </Panel>
+</UserControl>

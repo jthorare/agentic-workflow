@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.ViewModels.Controls;
 
 namespace Aw.Sindri.Ui.ViewModels.Palette;
@@ -147,5 +148,32 @@ internal sealed partial class CommandPaletteViewModel
         }
 
         Announcement = text;
+    }
+
+    // The entries the palette runs itself, with no send: each closes it. They have no page, so the page case can't take them.
+    private bool RunsHere(PaletteEntry entry)
+    {
+        switch (entry)
+        {
+            case { Id: PaletteEntry.TodoId }:
+                _openTodo?.Invoke();
+                Close();
+                return true;
+            case { Control.Action: "StopProcess" }:
+                Close();
+                _goTo(PageId.System);
+                return true;
+            case { Control.Action: "CreateItem" }:
+                // The form's or dialog's own control sends it; it opens first, so the window hands the palette's opener on to it.
+                CreateItem?.Invoke();
+                Close();
+                return true;
+            case { Id: PaletteEntry.NewTodoId }:
+                NewTodo?.Invoke();
+                Close();
+                return true;
+            default:
+                return false;
+        }
     }
 }
