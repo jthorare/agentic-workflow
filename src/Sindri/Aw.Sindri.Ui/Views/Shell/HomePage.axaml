@@ -13,6 +13,15 @@
   <!-- Home (UI spec §3.2, §4.2): four panels in a fixed order. Each panel is a header row (the eyebrow over a hairline,
        home.html .phead) and a body. Running and With you, and Queued, are GET /queue's groups (U2: at most five rows, then
        "Show all N in Queue"; each group's own empty sentence, E-18); Needs you is the served list (U3'). The health strip is the status as labelled cells and opens Health. -->
+  <UserControl.Styles>
+    <!-- The two focus regions of Home (todo spec D6, §3.3): the one with focus draws its edge in the accent colour and its heading with it. -->
+    <Style Selector="Border.panel.region-focus">
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
+    </Style>
+    <Style Selector="TextBlock.region-focus">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Primary}" />
+    </Style>
+  </UserControl.Styles>
   <StackPanel Spacing="{StaticResource Size.PanelGap}">
     <TextBlock Classes="page-title" Text="{Binding Text.Home}" AutomationProperties.Name="{Binding Text.Home}" />
 
@@ -44,13 +53,13 @@
          Under 1100 px the columns stack (HomePage.axaml.cs). -->
     <Grid x:Name="HomeColumns" ColumnDefinitions="*,16,*">
       <StackPanel x:Name="HomeLeft" Spacing="{StaticResource Size.PanelGap}">
-        <Border x:Name="NeedsYouPanel" Classes="panel" PointerEntered="OnNeedsYouPanelEntered" PointerExited="OnNeedsYouPanelExited" AutomationProperties.Name="{Binding Text.NeedsYouPanel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+        <Border x:Name="NeedsYouPanel" Classes="panel" Classes.region-focus="{Binding IsNeedsYouFocused}" PointerEntered="OnNeedsYouPanelEntered" PointerExited="OnNeedsYouPanelExited" AutomationProperties.Name="{Binding Text.NeedsYouPanel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
           <StackPanel>
             <Border Classes="phead">
               <Grid ColumnDefinitions="*,Auto">
                 <!-- A Grid, not a StackPanel: a horizontal StackPanel measures the summary at its full width, so in a narrow cell it was drawn under the right cell (#1061). -->
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                  <TextBlock Classes="eyebrow" Text="{Binding Text.NeedsYouPanel}" AutomationProperties.Name="{Binding Text.NeedsYouPanel}" />
+                  <TextBlock Classes="eyebrow" Classes.region-focus="{Binding IsNeedsYouFocused}" Text="{Binding Text.NeedsYouPanel}" AutomationProperties.Name="{Binding Text.NeedsYouPanel}" />
                   <TextBlock x:Name="NeedsYouSummary" Grid.Column="1" Classes="caption subtle" Text="{Binding Attention.SummaryLine}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                              ToolTip.Tip="{Binding Attention.SummaryLine}" AutomationProperties.Name="{Binding Attention.SummaryLine}" />
                 </Grid>

@@ -23,13 +23,13 @@
        Collapsed: up to five rows, overdue first, and "Show all N". Expanded: the groups in their own scroll (capped at half the
        window's height, TodoPanel.axaml.cs), the Show done toggle and Show less at the foot. Loading draws three skeleton rows as tall
        as a loaded row; an empty list says so. -->
-  <Border x:Name="TodoPanelFrame" Classes="panel" Focusable="True" IsTabStop="False" FocusAdorner="{x:Null}" AutomationProperties.Name="{Binding Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+  <Border x:Name="TodoPanelFrame" Classes="panel" Classes.region-focus="{Binding HasFocus}" Focusable="True" IsTabStop="False" FocusAdorner="{x:Null}" AutomationProperties.Name="{Binding Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
     <!-- Header on top, the body (collapsed or expanded) in the rest: the frame is capped at half the window (TodoPanel.axaml.cs), so
          the expanded list's own scroll gets what the header and the foot leave. -->
     <Grid RowDefinitions="Auto,*,Auto">
       <Border Classes="phead">
         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-          <TextBlock x:Name="TodoTitle" Classes="body-strong" Text="{Binding Title}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Title}" />
+          <TextBlock x:Name="TodoTitle" Classes="body-strong" Classes.region-focus="{Binding HasFocus}" Text="{Binding Title}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Title}" />
           <TextBlock x:Name="TodoCount" Grid.Column="1" Classes="caption subtle" Text="{Binding CountLine}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                      ToolTip.Tip="{Binding CountLine}" AutomationProperties.Name="{Binding CountLine}" />
           <!-- The quick-add hint (Home only): a keycap and its words. The key itself is the quick-add slice's. -->
