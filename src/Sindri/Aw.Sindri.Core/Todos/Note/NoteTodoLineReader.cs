@@ -1,4 +1,6 @@
+using System.Buffers;
 using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Aw.Sindri.Core.Todos.Note;
@@ -111,7 +113,17 @@ internal static partial class NoteTodoLineReader
 
     private static bool TryPeelLink(ref string rest, out string url)
     {
-        var match = TrailingLink.Match(rest);
+        Match match;
+        try
+        {
+            match = TrailingLink.Match(rest);
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            url = string.Empty;
+            return false;
+        }
+
         url = match.Groups["url"].Value;
         if (!match.Success || !NoteLinks.IsTodoLink(url))
         {
@@ -145,12 +157,12 @@ internal static partial class NoteTodoLineReader
 
     private static NoteBreak ClassifyText(string raw, string text)
     {
-        if (MarkdownLink.IsMatch(raw))
+        if (HasMarkdownLink(raw))
         {
             return NoteBreak.ForeignLink;
         }
 
-        if (text.Any(IsForbidden))
+        if (HasForbidden(text))
         {
             return NoteBreak.ForbiddenCharacter;
         }
@@ -158,8 +170,37 @@ internal static partial class NoteTodoLineReader
         return text.Length == 0 ? NoteBreak.EmptyText : text.Length > MaxTextLength ? NoteBreak.TextTooLong : NoteBreak.None;
     }
 
-    private static bool IsForbidden(char c) =>
-        char.GetUnicodeCategory(c) is UnicodeCategory.Control or UnicodeCategory.Format or UnicodeCategory.LineSeparator or UnicodeCategory.ParagraphSeparator;
+    /// <summary>True when the text is link-shaped, or so tangled the link check timed out (a line the regex can't judge isn't synced).</summary>
+    private static bool HasMarkdownLink(string raw)
+    {
+        try
+        {
+            return MarkdownLink.IsMatch(raw);
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            return true;
+        }
+    }
+
+    /// <summary>True when a code point is a control, format (tag characters included) or line or paragraph separator, or a surrogate stands alone.</summary>
+    private static bool HasForbidden(string text)
+    {
+        var at = 0;
+        while (at < text.Length)
+        {
+            var status = Rune.DecodeFromUtf16(text.AsSpan(at), out var rune, out var consumed);
+            if (status != OperationStatus.Done
+                || Rune.GetUnicodeCategory(rune) is UnicodeCategory.Control or UnicodeCategory.Format or UnicodeCategory.LineSeparator or UnicodeCategory.ParagraphSeparator)
+            {
+                return true;
+            }
+
+            at += consumed;
+        }
+
+        return false;
+    }
 
     [GeneratedRegex("(?:^|(?<=\\s))\\[[^\\[\\]]*\\]\\((?<url>sindri://[^()\\s]+)\\)\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex TrailingLink { get; }
