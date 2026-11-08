@@ -50,22 +50,24 @@ internal sealed partial class TodoPanelViewModel
 
         var kept = digit == 1 ? conflict.Sindri : conflict.Obsidian;
         _openId = null;
-        Put(row.Id, Kept(todo, kept));
+        Put(row.Id, sent.Value.Todo is { Conflict: null } served ? served : Kept(todo, kept));   // the todo as Sindri answers it, else as the pick leaves it
         _queueChangedAt = DateTimeOffset.MinValue;   // the owner's own change
-        Picked?.Invoke(this, new TodoPickedEventArgs(KeptToast(kept, digit), () => UndoConflict(url, row.Id)));
+        Picked?.Invoke(this, new TodoPickedEventArgs(KeptToast(kept, digit), () => UndoConflict(url, row.Id), Window(sent.Value.UndoUntil)));
     }
 
     // -409: the note's line moved since the row was drawn, so it is read again and the row says so. Anything else keeps the row with the reason.
     private async Task ConflictRefused(Uri url, AttentionRowViewModel row, Error error)
     {
         var lineMoved = string.Equals(error.Code, "SND-TODO-409", StringComparison.Ordinal);
-        if (lineMoved)
+        if (lineMoved || string.Equals(error.Code, "SND-TODO-404", StringComparison.Ordinal))
         {
-            await Refresh(url, CancellationToken.None).ConfigureAwait(true);
+            await Refresh(url, CancellationToken.None).ConfigureAwait(true);   // -404: the todo is gone, so the re-read drops the row
         }
 
-        var shown = Attention is { } now && string.Equals(now.Id, row.Id, StringComparison.Ordinal) ? now : row;
-        shown.Notice = lineMoved ? Labels.TodoAttnLineChanged : Labels.TodoCouldntSave(Refusal(error));
+        if (Attention is { } now && string.Equals(now.Id, row.Id, StringComparison.Ordinal))
+        {
+            now.Notice = lineMoved ? Labels.TodoAttnLineChanged : Labels.TodoCouldntSave(Refusal(error));
+        }
     }
 
     private static string KeptToast(TodoSideView kept, int digit) =>
@@ -86,7 +88,7 @@ internal sealed partial class TodoPanelViewModel
         Show();
         _queueChangedAt = DateTimeOffset.MinValue;
         var toast = digit == 1 ? Labels.TodoAttnPuttingBack(row.HeldCount) : Labels.TodoAttnApplied(row.HeldCount);
-        Picked?.Invoke(this, new TodoPickedEventArgs(toast, () => UndoHold(url)));
+        Picked?.Invoke(this, new TodoPickedEventArgs(toast, () => UndoHold(url), Window(sent.Value.UndoUntil)));
     }
 
     // -409: the note changed since the row was drawn, so the row is read again and says the new count. -005: nothing is held any more. Anything else keeps the row with the reason.
@@ -112,24 +114,31 @@ internal sealed partial class TodoPanelViewModel
     {
         var sent = await _api.UndoKeepTodo(url, id, CancellationToken.None).ConfigureAwait(true);
         StaleReads();
-        return await Reopened(url, sent, id).ConfigureAwait(true);
+        return await Reopened(url, sent.IsError ? sent.Error : null, id).ConfigureAwait(true);
     }
 
     private async Task<string?> UndoHold(Uri url)
     {
         var sent = await _api.UndoHold(url, CancellationToken.None).ConfigureAwait(true);
         StaleReads();
-        return await Reopened(url, sent, AttentionRowViewModel.HoldId).ConfigureAwait(true);
+        return await Reopened(url, sent.IsError ? sent.Error : null, AttentionRowViewModel.HoldId).ConfigureAwait(true);
     }
 
-    private async Task<string?> Reopened(Uri url, Result<TodoPickAcceptedView> sent, string id)
+    // The window the toast counts: until Sindri's undoUntil when that is within 10 s of now, else the full 10 s (the two clocks may differ).
+    private int? Window(DateTimeOffset? until)
     {
-        if (sent.IsError)
+        var seconds = until is { } at ? (int)Math.Ceiling((at - _clock.GetUtcNow()).TotalSeconds) : 0;
+        return seconds is > 0 and <= 10 ? seconds : null;
+    }
+
+    private async Task<string?> Reopened(Uri url, Error? error, string id)
+    {
+        if (error is { } refused)
         {
             await Refresh(url, CancellationToken.None).ConfigureAwait(true);
-            return string.Equals(sent.Error.Code, "SND-TODO-409", StringComparison.Ordinal) ? Labels.TodoUndoChanged
-                : string.Equals(sent.Error.Code, "SND-TODO-005", StringComparison.Ordinal) ? Labels.TodoAttnNothingToUndo
-                : Refusal(sent.Error);
+            return string.Equals(refused.Code, "SND-TODO-409", StringComparison.Ordinal) ? Labels.TodoUndoChanged
+                : string.Equals(refused.Code, "SND-TODO-005", StringComparison.Ordinal) ? Labels.TodoAttnNothingToUndo
+                : Refusal(refused);
         }
 
         _shownId = id;

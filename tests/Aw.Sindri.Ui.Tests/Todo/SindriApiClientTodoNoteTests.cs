@@ -101,12 +101,13 @@ public sealed class SindriApiClientTodoNoteTests
     [Fact]
     public async Task Keep_posts_the_side_to_the_todos_keep_route_and_reads_the_accepted_pick()
     {
-        var handler = new Canned(HttpStatusCode.OK, """{"accepted":{"commandId":"cmd_1","sequence":43},"undoUntil":"2026-01-01T10:00:10.0000000Z"}""");
+        var todo = GoldenFiles.Node("todos-note", "conflict")["todo"]!.ToJsonString();
+        var handler = new Canned(HttpStatusCode.OK, $$"""{"todo":{{todo}},"undoUntil":"2026-01-01T10:00:10.0000000Z"}""");
 
         var kept = await Client(handler).KeepTodo(_api, "td_x", "obsidian", Token);
 
         Assert.True(kept.IsSuccess, kept.IsError ? kept.Error.Message : string.Empty);
-        Assert.Equal(43, kept.Value.Accepted!.Sequence);
+        Assert.Equal(("td_01jc5a8xq0n4w7ms2t9r3vbk6e", DateTimeOffset.Parse("2026-01-01T10:00:10Z", CultureInfo.InvariantCulture)), (kept.Value.Todo!.Id, kept.Value.UndoUntil));
         var seen = Assert.Single(handler.Seen);
         Assert.Equal((HttpMethod.Post, "/sindri/todos/td_x/keep", """{"side":"obsidian"}"""), (seen.Method, seen.Uri.AbsolutePath, Compact(seen.Body)));
     }
@@ -114,7 +115,7 @@ public sealed class SindriApiClientTodoNoteTests
     [Fact]
     public async Task The_undo_calls_post_with_no_body_and_the_hold_picks_send_the_note_hash()
     {
-        var handler = new Canned(HttpStatusCode.OK, "{}");
+        var handler = new Canned(HttpStatusCode.OK, """{"kept":null}""");
         var client = Client(handler);
 
         _ = await client.UndoKeepTodo(_api, "td_x", Token);

@@ -119,7 +119,6 @@ internal sealed partial class SindriApiClient
         ProjectAcceptedView p => p.Accepted.Sequence,
         OpenAcceptedView o => o.Accepted.Sequence,
         TodoAcceptedView t => t.Accepted.Sequence,
-        TodoPickAcceptedView k => k.Accepted?.Sequence,
         _ => null,
     };
 

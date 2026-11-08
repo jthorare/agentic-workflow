@@ -11,25 +11,25 @@ internal sealed partial class SindriApiClient
         Get<TodoNoteView>(api, TodoRoutes.Note, cancellationToken, view: true);
 
     /// <inheritdoc />
-    public Task<Result<TodoPickAcceptedView>> KeepTodo(Uri api, string id, string side, CancellationToken cancellationToken) =>
-        TodoPick(api, TodoRoutes.Keep(id), AwJson.Serialize(new TodoKeepBody(side), Json), cancellationToken);
+    public Task<Result<TodoKeepAcceptedView>> KeepTodo(Uri api, string id, string side, CancellationToken cancellationToken) =>
+        TodoPick<TodoKeepAcceptedView>(api, TodoRoutes.Keep(id), AwJson.Serialize(new TodoKeepBody(side), Json), cancellationToken);
 
     /// <inheritdoc />
-    public Task<Result<TodoPickAcceptedView>> UndoKeepTodo(Uri api, string id, CancellationToken cancellationToken) =>
-        TodoPick(api, TodoRoutes.KeepUndo(id), body: null, cancellationToken);
+    public Task<Result<TodoKeepUndoneView>> UndoKeepTodo(Uri api, string id, CancellationToken cancellationToken) =>
+        TodoPick<TodoKeepUndoneView>(api, TodoRoutes.KeepUndo(id), body: null, cancellationToken);
 
     /// <inheritdoc />
-    public Task<Result<TodoPickAcceptedView>> ApplyHold(Uri api, string noteHash, CancellationToken cancellationToken) =>
-        TodoPick(api, TodoRoutes.HoldApply, AwJson.Serialize(new TodoHoldBody(noteHash), Json), cancellationToken);
+    public Task<Result<TodoHoldPickedView>> ApplyHold(Uri api, string noteHash, CancellationToken cancellationToken) =>
+        TodoPick<TodoHoldPickedView>(api, TodoRoutes.HoldApply, AwJson.Serialize(new TodoHoldBody(noteHash), Json), cancellationToken);
 
     /// <inheritdoc />
-    public Task<Result<TodoPickAcceptedView>> RestoreHold(Uri api, string noteHash, CancellationToken cancellationToken) =>
-        TodoPick(api, TodoRoutes.HoldRestore, AwJson.Serialize(new TodoHoldBody(noteHash), Json), cancellationToken);
+    public Task<Result<TodoHoldPickedView>> RestoreHold(Uri api, string noteHash, CancellationToken cancellationToken) =>
+        TodoPick<TodoHoldPickedView>(api, TodoRoutes.HoldRestore, AwJson.Serialize(new TodoHoldBody(noteHash), Json), cancellationToken);
 
     /// <inheritdoc />
-    public Task<Result<TodoPickAcceptedView>> UndoHold(Uri api, CancellationToken cancellationToken) =>
-        TodoPick(api, TodoRoutes.HoldUndo, body: null, cancellationToken);
+    public Task<Result<TodoHoldUndoneView>> UndoHold(Uri api, CancellationToken cancellationToken) =>
+        TodoPick<TodoHoldUndoneView>(api, TodoRoutes.HoldUndo, body: null, cancellationToken);
 
-    private Task<Result<TodoPickAcceptedView>> TodoPick(Uri api, string route, byte[]? body, CancellationToken cancellationToken) =>
-        Call<TodoPickAcceptedView>(api, HttpMethod.Post, route, cancellationToken, new CallOptions(Content: body));
+    private Task<Result<T>> TodoPick<T>(Uri api, string route, byte[]? body, CancellationToken cancellationToken) =>
+        Call<T>(api, HttpMethod.Post, route, cancellationToken, new CallOptions(Content: body));
 }

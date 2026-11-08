@@ -27,7 +27,7 @@ internal sealed partial class ShellViewModel
         Health.Follow(Todo.Refresh);
         Todo.LinkOpened += (_, link) => OpenTodoLink(link.Href);
         Todo.Acted += (_, acted) => ShowToast(new ToastMessage(acted.Text, acted.Undo));
-        Todo.Picked += (_, picked) => ShowToast(new ToastMessage(picked.Text, picked.Undo, ToastKind.Pick, PickWindowSeconds));
+        Todo.Picked += (_, picked) => ShowToast(new ToastMessage(picked.Text, picked.Undo, ToastKind.Pick, picked.Seconds ?? PickWindowSeconds));
     }
 
     // A todo's link goes where the same link goes anywhere in the app ("sindri://linear/ENG-12" is the deep link "linear/ENG-12"); a link no page opens does nothing.
