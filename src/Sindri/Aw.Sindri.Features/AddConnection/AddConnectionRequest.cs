@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Aw.Sindri.Core.Commands;
 
 namespace Aw.Sindri.Features.AddConnection;
 
@@ -33,7 +34,7 @@ public sealed record AddConnectionRequest(
     string? ClientSecretEnv = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Key = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? ClientSecret = null,
-    string? Url = null)
+    string? Url = null) : ICommand<AddConnectionResponse>
 {
     /// <summary>A fixed text with the name only: the key and the client secret are not in it.</summary>
     /// <returns>'AddConnectionRequest(&lt;name&gt;)'.</returns>

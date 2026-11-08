@@ -31,6 +31,11 @@ internal sealed partial class ShellWindow
             return true;
         }
 
+        if (EscapeTodoPanel(shell))
+        {
+            return true;
+        }
+
         if (EscapeSheetOrInbox(shell))
         {
             return true;
@@ -45,7 +50,7 @@ internal sealed partial class ShellWindow
         return true;
     }
 
-    // The palette, then the ? sheet, then the quick-add box (todo spec §3.3).
+    // The palette, then the ? sheet, then the quick-add box, then the Todo panel's link list (todo spec §3.3).
     private static bool EscapeOverlay(ShellViewModel shell)
     {
         if (shell.Palette.IsOpen)
@@ -59,6 +64,10 @@ internal sealed partial class ShellWindow
         else if (shell.QuickAdd.IsOpen)
         {
             shell.QuickAdd.Close();
+        }
+        else if (shell.IsHomeShown && shell.Todo.LinkList.Close())
+        {
+            return true;   // the Todo panel's link list: the innermost layer there is (todo spec §3.3)
         }
         else
         {

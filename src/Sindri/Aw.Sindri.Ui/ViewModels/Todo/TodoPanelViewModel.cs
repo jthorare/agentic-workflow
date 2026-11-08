@@ -7,7 +7,7 @@ namespace Aw.Sindri.Ui.ViewModels.Todo;
 /// The Todo panel on Home (todo spec §3.1, §5): the owner's open todos grouped by day, collapsed to five rows or expanded to the groups
 /// with a Show done toggle. It reads on connect and on every event, and regroups at local midnight.
 /// </summary>
-internal sealed class TodoPanelViewModel : ObservableObject, IDisposable
+internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
 {
     private const int CollapsedRows = 5;
     private static readonly TimeSpan _doneWithin = TimeSpan.FromDays(7);
@@ -105,6 +105,7 @@ internal sealed class TodoPanelViewModel : ObservableObject, IDisposable
     internal async Task Refresh(Uri url, CancellationToken cancellationToken)
     {
         var read = ++_reads;
+        _url = url;
         var list = await _api.Todos(url, "all", cancellationToken).ConfigureAwait(true);
         if (read != _reads)
         {
@@ -118,7 +119,7 @@ internal sealed class TodoPanelViewModel : ObservableObject, IDisposable
             return;
         }
 
-        (Error, _todos) = (string.Empty, list.Value.Todos);
+        (Error, _todos) = (string.Empty, Overlaid(list.Value.Todos));
         Show();
         ScheduleMidnight();
     }
@@ -154,6 +155,8 @@ internal sealed class TodoPanelViewModel : ObservableObject, IDisposable
     {
         _midnight?.Dispose();
         _midnight = null;
+        _savingTimer?.Dispose();
+        _savingTimer = null;
     }
 
     // One shot at the next local midnight; the callback regroups and sets the next one.
@@ -191,6 +194,7 @@ internal sealed class TodoPanelViewModel : ObservableObject, IDisposable
         foreach (var gone in _rows.Keys.Where(k => !wanted.Contains(k)).ToList())
         {
             _ = _rows.Remove(gone);
+            Editing = string.Equals(Editing?.Id, gone, StringComparison.Ordinal) ? null : Editing;   // the todo went elsewhere: its edit goes with it
         }
 
         Patch.To(Rows, [.. split.Overdue.Concat(split.Due).Concat(split.Upcoming).Concat(split.Undated).Take(CollapsedRows).Select(t => Row(t, today))]);

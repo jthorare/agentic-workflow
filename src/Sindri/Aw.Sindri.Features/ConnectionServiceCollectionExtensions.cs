@@ -15,7 +15,7 @@ namespace Aw.Sindri.Features;
 /// <summary>Registers the connection slices (connections PR 10a).</summary>
 internal static class ConnectionServiceCollectionExtensions
 {
-    /// <summary>Adds AddConnection, TestConnection and RemoveConnection as plain services and ListConnections and GetConnection behind the query chain. Agent sessions are allowed (owner decision D2), so no authorization decorator.</summary>
+    /// <summary>Adds AddConnection, TestConnection, RemoveConnection and SignInConnection behind the command chain and ListConnections and GetConnection behind the query chain (ARCH-CQRS-001, #2344). Agent sessions are allowed by the catalog rows' SessionOk (owner decision D2).</summary>
     /// <param name="services">The service collection.</param>
     /// <returns>The same collection.</returns>
     internal static IServiceCollection AddConnectionSlices(this IServiceCollection services)
@@ -27,10 +27,10 @@ internal static class ConnectionServiceCollectionExtensions
             .AddScoped<ConnectionEvents>()
             .AddSingleton<SignInOutcomes>()
             .AddScoped<OAuthSignInFlow>()
-            .AddScoped<IService<AddConnectionRequest, AddConnectionResponse>, AddConnectionService>()
-            .AddScoped<IService<TestConnectionRequest, TestConnectionResponse>, TestConnectionService>()
-            .AddScoped<IService<RemoveConnectionRequest, RemoveConnectionResponse>, RemoveConnectionService>()
-            .AddScoped<IService<SignInConnectionRequest, AddConnectionResponse>, SignInConnectionService>()
+            .AddScoped<IValidator<AddConnectionRequest>, AcceptAllValidator<AddConnectionRequest>>().AddCommand<AddConnectionRequest, AddConnectionResponse, AddConnectionService>()
+            .AddScoped<IValidator<TestConnectionRequest>, AcceptAllValidator<TestConnectionRequest>>().AddCommand<TestConnectionRequest, TestConnectionResponse, TestConnectionService>()
+            .AddScoped<IValidator<RemoveConnectionRequest>, AcceptAllValidator<RemoveConnectionRequest>>().AddCommand<RemoveConnectionRequest, RemoveConnectionResponse, RemoveConnectionService>()
+            .AddScoped<IValidator<SignInConnectionRequest>, AcceptAllValidator<SignInConnectionRequest>>().AddCommand<SignInConnectionRequest, AddConnectionResponse, SignInConnectionService>()
             .AddScoped<IValidator<ListConnectionsRequest>, AcceptAllValidator<ListConnectionsRequest>>().AddQuery<ListConnectionsRequest, ListConnectionsResponse, ListConnectionsService>()
             .AddScoped<IValidator<GetConnectionRequest>, AcceptAllValidator<GetConnectionRequest>>().AddQuery<GetConnectionRequest, GetConnectionResponse, GetConnectionService>();
     }

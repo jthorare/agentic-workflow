@@ -28,6 +28,11 @@ internal sealed partial class ShellViewModel
             return true;
         }
 
+        if (TodoOwns(key, inSheet))
+        {
+            return true;
+        }
+
         return LinearKeyPressed(key, inSheet) || PageKeyPressed(key, inSheet) || Single(key, inSheet) || RowKey(key, inSheet);
     }
 

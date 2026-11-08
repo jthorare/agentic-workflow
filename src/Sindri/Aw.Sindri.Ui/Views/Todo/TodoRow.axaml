@@ -19,12 +19,33 @@
        a later slice, and so are the row's keys). The row draws its own focus border (item-row), as every list row does. -->
   <Border x:Name="TodoRowFrame" Classes="item-row todo-row" Classes.done="{Binding IsDone}" Classes.removed="{Binding IsRemoved}" Focusable="True"
           AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-    <Grid ColumnDefinitions="Auto,*,Auto,Auto" VerticalAlignment="Center">
+    <Panel>
+    <!-- Enter edits in place (todo spec §3.3, §3.4): the same one-line row becomes three fields, Tab walks them, Enter saves and Esc cancels
+         (TodoRow.axaml.cs). The fields belong to the edit, not to the row, so a read that lands meanwhile leaves them alone. -->
+    <Border x:Name="TodoEditFrame" IsVisible="{Binding IsEditing}">
+      <Grid x:Name="TodoEdit" DataContext="{Binding Edit}" x:DataType="todo:TodoEditViewModel" ColumnDefinitions="*,112,200,Auto" ColumnSpacing="8" VerticalAlignment="Center"
+            KeyboardNavigation.TabNavigation="Cycle">
+        <TextBox x:Name="TodoEditText" MinHeight="28" Padding="8,2" Text="{Binding Text}" AutomationProperties.Name="{Binding TextName}" />
+        <TextBox x:Name="TodoEditDue" Grid.Column="1" MinHeight="28" Padding="8,2" Text="{Binding Due}" PlaceholderText="{Binding DuePlaceholder}" AutomationProperties.Name="{Binding DueName}" />
+        <TextBox x:Name="TodoEditLinks" Grid.Column="2" MinHeight="28" Padding="8,2" Text="{Binding Links}" PlaceholderText="{Binding LinksPlaceholder}" AutomationProperties.Name="{Binding LinksName}" />
+        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <TextBlock x:Name="TodoEditSaving" Classes="caption subtle" Text="{Binding SavingText}" IsVisible="{Binding IsSaving}" AutomationProperties.LiveSetting="Polite" />
+          <TextBlock x:Name="TodoEditLatest" Classes="caption" Text="{Binding Latest}" MaxWidth="260" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Latest}"
+                     IsVisible="{Binding Latest, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.LiveSetting="Polite" />
+          <TextBlock x:Name="TodoEditMessage" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding Message}" MaxWidth="260" TextTrimming="CharacterEllipsis"
+                     ToolTip.Tip="{Binding Message}" IsVisible="{Binding Message, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.LiveSetting="Assertive" />
+        </StackPanel>
+      </Grid>
+    </Border>
+    <Grid x:Name="TodoReading" ColumnDefinitions="Auto,*,Auto,Auto" VerticalAlignment="Center" IsVisible="{Binding IsReading}">
       <CheckBox x:Name="TodoDone" MinWidth="0" MinHeight="0" Padding="0" Margin="0,0,12,0" VerticalAlignment="Center" Focusable="False" IsHitTestVisible="False"
                 IsChecked="{Binding IsDone, Mode=OneWay}" AutomationProperties.Name="{Binding DoneBoxName}" AutomationProperties.AccessibilityView="Raw" />
       <TextBlock x:Name="TodoText" Grid.Column="1" Classes="body todo-text" Text="{Binding Text}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                  ToolTip.Tip="{Binding Text}" AutomationProperties.AccessibilityView="Raw" />
       <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" Margin="12,0" VerticalAlignment="Center">
+        <!-- A key's write was refused: the row came back and says why, in words (the error colour), until the next change. -->
+        <TextBlock x:Name="TodoNotice" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding Notice}"
+                   IsVisible="{Binding Notice, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.LiveSetting="Polite" />
         <ItemsControl x:Name="TodoChips" ItemsSource="{Binding Chips}" AutomationProperties.AccessibilityView="Raw">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
@@ -49,5 +70,6 @@
       <TextBlock x:Name="TodoDue" Grid.Column="3" Classes="caption subtle todo-due" Classes.overdue="{Binding IsOverdue}" Text="{Binding DueWord}" MinWidth="104"
                  TextAlignment="Right" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
     </Grid>
+    </Panel>
   </Border>
 </UserControl>
