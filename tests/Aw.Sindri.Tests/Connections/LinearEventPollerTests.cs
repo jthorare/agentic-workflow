@@ -202,4 +202,33 @@ public sealed class LinearEventPollerTests
         Assert.True(polled.Value.Gap);
         Assert.Equal(25, polled.Value.Events.Count);
     }
+
+    [Fact]
+    public async Task The_query_filters_comments_and_history_by_createdAt_so_a_next_page_means_real_overflow()
+    {
+        var provider = new FakeProvider();
+        provider.AddLinearIssue(ProviderFixtures.LinearManyComments("ENG-4", 12, hasNextPage: false, DateTimeOffset.Parse("2026-11-08T08:00:00Z", CultureInfo.InvariantCulture)));
+        using var h = PollerHarness.For("linear", provider);
+
+        var polled = await h.Poller.Poll(h.Connection, EventKind.LinearCommentAdded, "2026-11-08T08:00:11Z", TestContext.Current.CancellationToken);
+
+        Assert.Equal("linear:comment:c-12", Assert.Single(polled.Value.Events).DeliveryKey);   // 11 old comments and 1 new one
+        Assert.False(polled.Value.Gap);
+        using var request = System.Text.Json.JsonDocument.Parse(Assert.Single(provider.Requests).Body);
+        var query = request.RootElement.GetProperty("query").GetString();
+        Assert.Contains("comments(first: 10, filter: { createdAt: { gt: \"2026-11-08T08:00:11", query, StringComparison.Ordinal);
+        Assert.Contains("history(first: 25, filter: { createdAt: { gt: \"2026-11-08T08:00:11", query, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_baseline_query_has_no_nested_filter()
+    {
+        var provider = new FakeProvider();
+        using var h = PollerHarness.For("linear", provider);
+
+        _ = await h.Poller.Poll(h.Connection, EventKind.LinearCommentAdded, cursor: null, TestContext.Current.CancellationToken);
+
+        using var request = System.Text.Json.JsonDocument.Parse(Assert.Single(provider.Requests).Body);
+        Assert.DoesNotContain("createdAt: { gt:", request.RootElement.GetProperty("query").GetString(), StringComparison.Ordinal);
+    }
 }
