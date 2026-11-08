@@ -843,4 +843,49 @@ check "dry run shows the -lc wrapper and the caller's PATH and SHELL" "$(grep -c
 check "the Warp pane's attach line carries them too" "$(grep -c "new -A -s t1-api .* -e SHELL=/bin/bash .*-lc" "$AW_WARP_LAUNCH_DIR/t1-team.yaml")" "1"
 tmux kill-server 2> /dev/null
 tmux kill-server 2> /dev/null
+
+# 5. Follow-ups (#2278): odd PATH entries, the login-profile guard, zsh and fish.
+# 5a. A PATH entry with a space and one with a single quote reach the lane intact, through a real launch and in the printed forms.
+SPQ="$WORK/path with space"; QQ="$WORK/it's here"; mkdir -p "$SPQ" "$QQ"
+fresh_server; tmux kill-session -t t1-api 2> /dev/null
+GOT="$(login_lane PATH="$SPQ:$QQ:$ORIG_PATH" SHELL=/bin/bash)"
+check "PATH entries with a space and a single quote reach the lane in order" "$(IFS=: read -r a b _ <<< "${GOT%|*}"; printf '%s|%s' "$a" "$b")" "$SPQ|$QQ"
+tmux kill-session -t t1-api 2> /dev/null
+OUT="$(PATH="$SPQ:$QQ:$ORIG_PATH" SHELL=/bin/bash bash "$DIR/meta-launch.sh" --no-open --dry-run --lanes api 2>&1)"
+printed="$(sed -n 's/^\[dry-run\] tmux -L t1 new-session -d -s t1-api -c [^ ]* //p' <<< "$OUT")"
+check "dry run: the printed new-session arguments, read back by sh, carry the PATH exactly" "$(eval "set -- $printed"; printf '%s' "$2" | cut -d: -f1-2)" "PATH=$SPQ:$QQ"
+yaml="$AW_WARP_LAUNCH_DIR/t1-team.yaml"
+PATH="$SPQ:$QQ:$ORIG_PATH" SHELL=/bin/bash bash "$DIR/meta-launch.sh" --no-open --lanes api > /dev/null 2>&1
+wline="$(grep 'new -A -s t1-api' "$yaml" | sed 's/^ *- exec: //')"
+check "Warp line: read back by sh, the PATH entries are intact" "$(eval "set -- $wline"; for a in "$@"; do case "$a" in PATH=*) printf '%s' "$a" | cut -d: -f1-2 ;; esac; done)" "PATH=$SPQ:$QQ"
+
+# 5b. The login profile runs before meta-lane.sh exports anything, so AW_META_LANE has to come from tmux -e.
+printf 'echo "${AW_META_LANE:-unset}" > "%s/profile-lane"\n' "$WORK" > "$HOME/.bash_profile"
+rm -f "$WORK/profile-lane"; tmux kill-session -t t1-api 2> /dev/null
+login_lane PATH="$ORIG_PATH" SHELL=/bin/bash > /dev/null
+check "AW_META_LANE is set when the login profile runs (so a [ -z \"\$AW_META_LANE\" ] guard works)" "$(cat "$WORK/profile-lane" 2> /dev/null)" "api"
+rm -f "$HOME/.bash_profile"
+
+# 5c. zsh and fish as the user's shell, with scratch config dirs so the real ones are never read.
+shell_rows() { # name: the lane runs through <name> -lc with the caller's PATH first, and the pane drops to <name> when the agent exits
+  local sh; sh="$(command -v "$1" 2> /dev/null)"
+  if [ -z "$sh" ]; then echo "ok - SKIP $1 not installed"; return; fi
+  local cfg="$WORK/$1-config"; mkdir -p "$cfg/fish"
+  : > "$cfg/.zshrc"; : > "$cfg/.zprofile"
+  local envs=(ZDOTDIR="$cfg" XDG_CONFIG_HOME="$cfg")
+  tmux kill-session -t t1-api 2> /dev/null
+  GOT="$(login_lane "${envs[@]}" PATH="$WORK/callerbin:$ORIG_PATH" SHELL="$sh")"
+  check "$1: the lane sees the caller's PATH first and SHELL=$sh" "${GOT%%:*}|${GOT#*|}" "$WORK/callerbin|$sh"
+  tmux kill-session -t t1-api 2> /dev/null
+  tmux set-environment -g AW_META_NO_SHELL 0
+  rm -f "$WORK/lane-env"
+  env "${envs[@]}" PATH="$WORK/callerbin:$ORIG_PATH" SHELL="$sh" bash "$DIR/meta-launch.sh" --no-open --lanes api > /dev/null 2>&1
+  waitfor '[ -s "$WORK/lane-env" ]'
+  waitfor '[ "$(tmux display-message -p -t =t1-api: "#{pane_current_command}" 2> /dev/null)" = "$(basename "$sh")" ]'
+  check "$1: when the agent exits the pane is in $1" "$(tmux display-message -p -t =t1-api: '#{pane_current_command}' 2> /dev/null)" "$(basename "$sh")"
+  tmux set-environment -g AW_META_NO_SHELL 1; tmux kill-session -t t1-api 2> /dev/null
+}
+shell_rows zsh
+shell_rows fish
+tmux kill-server 2> /dev/null
 exit $fail
