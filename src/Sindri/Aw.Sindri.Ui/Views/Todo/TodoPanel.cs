@@ -1,0 +1,14 @@
+using Avalonia.Controls;
+
+namespace Aw.Sindri.Ui.Views.Todo;
+
+/// <summary>A stub until the green commit.</summary>
+#pragma warning disable MA0182 // why: HomePage.axaml places it in XAML, which the analyzer cannot see
+internal sealed class TodoPanel : UserControl
+{
+    public TodoPanel()
+    {
+        throw new NotSupportedException();
+    }
+}
+#pragma warning restore MA0182

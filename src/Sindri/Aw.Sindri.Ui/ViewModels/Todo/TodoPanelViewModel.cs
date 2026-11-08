@@ -30,6 +30,21 @@ internal sealed class TodoPanelViewModel : ObservableObject, IDisposable
     /// <summary>The panel's name.</summary>
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     public string Title => Labels.TodoTitle;
+
+    /// <summary>The key of the quick-add hint ("N").</summary>
+    public string NewKey => Labels.TodoNewKey;
+
+    /// <summary>The quick-add hint's words ("New todo").</summary>
+    public string NewText => Labels.TodoNewText;
+
+    /// <summary>The quick-add hint for a screen reader ("New todo, press N").</summary>
+    public string NewName => Labels.TodoNewName;
+
+    /// <summary>"Show less".</summary>
+    public string ShowLessText => Labels.TodoShowLess;
+
+    /// <summary>The key beside "Show less" ("Esc").</summary>
+    public string EscKey => Labels.TodoEscKey;
 #pragma warning restore CA1822, MA0041
 
     /// <summary>True until the first answer.</summary>
