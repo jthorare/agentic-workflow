@@ -51,6 +51,9 @@ public static class ViewNames
     /// <summary>Whether a led Linear project is hidden, keyed by its Linear key (projects page spec §5.2).</summary>
     public const string ProjectHidden = "project-hidden";
 
+    /// <summary>Graph runs, keyed by run id (issue 2258, PR 6), folded from the six 'workflow.run.*' and 'workflow.node.*' events.</summary>
+    public const string WorkflowRuns = "workflow-runs";
+
     /// <summary>Every view that has a table.</summary>
-    public static IReadOnlyList<string> All { get; } = [CodeIndex, Services, Profile, Items, ItemAliases, ItemTimeline, Requests, Decisions, NeedsYou, Jobs, Launches, RecipeStats, ModelHistory, ModelRuns, ProjectAttached, ProjectHidden];
+    public static IReadOnlyList<string> All { get; } = [CodeIndex, Services, Profile, Items, ItemAliases, ItemTimeline, Requests, Decisions, NeedsYou, Jobs, Launches, RecipeStats, ModelHistory, ModelRuns, ProjectAttached, ProjectHidden, WorkflowRuns];
 }

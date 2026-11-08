@@ -233,6 +233,24 @@ public static class EventTypes
     /// <summary>The owner agreed that Sindri may register itself and build the map on its own (setup-once spec §7.5).</summary>
     public const string SetupConsentGiven = "setup.consent.given";
 
+    /// <summary>A graph run was recorded and its workflow started (issue 2258, PR 6).</summary>
+    public const string WorkflowRunStarted = "workflow.run.started";
+
+    /// <summary>A graph run ended, succeeded or failed (issue 2258, PR 6).</summary>
+    public const string WorkflowRunFinished = "workflow.run.finished";
+
+    /// <summary>A graph run was cancelled (issue 2258, PR 6).</summary>
+    public const string WorkflowRunCancelled = "workflow.run.cancelled";
+
+    /// <summary>A graph node started (issue 2258, PR 6).</summary>
+    public const string WorkflowNodeStarted = "workflow.node.started";
+
+    /// <summary>A graph node finished or was skipped (issue 2258, PR 6).</summary>
+    public const string WorkflowNodeFinished = "workflow.node.finished";
+
+    /// <summary>A graph node failed (issue 2258, PR 6).</summary>
+    public const string WorkflowNodeFailed = "workflow.node.failed";
+
     /// <summary>The event a background service records per run: 'service.&lt;name&gt;'.</summary>
     /// <param name="service">The service.</param>
     /// <returns>The event type, for example 'service.heartbeat'.</returns>

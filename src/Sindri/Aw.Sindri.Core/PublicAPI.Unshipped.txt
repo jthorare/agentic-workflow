@@ -21092,7 +21092,7 @@ const Aw.Sindri.Core.Events.ModelCallOutcome.NotAsked = "not-asked" -> string!
 const Aw.Sindri.Core.Events.ModelCallOutcome.Skipped = "skipped" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Estimated = "estimated" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Reported = "reported" -> string!
-const Aw.Sindri.Core.Views.ViewSchema.Version = 25 -> int
+const Aw.Sindri.Core.Views.ViewSchema.Version = 26 -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Events.ContextModelCalled.GetHashCode() -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.ToString() -> string!
@@ -25659,3 +25659,156 @@ Aw.Sindri.Core.Graph.Runs.IGraphRunCanceller.Cancel(Aw.Sindri.Core.Graph.Ids.Wor
 static readonly Aw.Sindri.Core.SindriErrors.GraphNotActive -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.GraphBadPayload -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.GraphRunEnded -> Aw.Kernel.ErrorDefinition!
+const Aw.Sindri.Core.Views.ViewNames.WorkflowRuns = "workflow-runs" -> string!
+Aw.Sindri.Core.Views.WorkflowRunRow
+Aw.Sindri.Core.Views.WorkflowRunRow.Id.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+override Aw.Sindri.Core.Views.WorkflowRunRow.ToString() -> string!
+Aw.Sindri.Core.Views.WorkflowRunRow.Id.init -> void
+Aw.Sindri.Core.Views.WorkflowRunRow.WorkflowId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowId
+static Aw.Sindri.Core.Views.WorkflowRunRow.operator !=(Aw.Sindri.Core.Views.WorkflowRunRow? left, Aw.Sindri.Core.Views.WorkflowRunRow? right) -> bool
+Aw.Sindri.Core.Views.WorkflowRunRow.WorkflowId.init -> void
+static Aw.Sindri.Core.Views.WorkflowRunRow.operator ==(Aw.Sindri.Core.Views.WorkflowRunRow? left, Aw.Sindri.Core.Views.WorkflowRunRow? right) -> bool
+Aw.Sindri.Core.Views.WorkflowRunRow.Revision.get -> int
+Aw.Sindri.Core.Views.WorkflowRunRow.Revision.init -> void
+override Aw.Sindri.Core.Views.WorkflowRunRow.GetHashCode() -> int
+Aw.Sindri.Core.Views.WorkflowRunRow.Trigger.get -> string!
+override Aw.Sindri.Core.Views.WorkflowRunRow.Equals(object? obj) -> bool
+Aw.Sindri.Core.Views.WorkflowRunRow.Equals(Aw.Sindri.Core.Views.WorkflowRunRow? other) -> bool
+Aw.Sindri.Core.Views.WorkflowRunRow.Trigger.init -> void
+Aw.Sindri.Core.Views.WorkflowRunRow.<Clone>$() -> Aw.Sindri.Core.Views.WorkflowRunRow!
+Aw.Sindri.Core.Views.WorkflowRunRow.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Id, out Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, out int Revision, out string! Trigger, out string! Status, out string? Error, out System.DateTimeOffset StartedAt, out System.DateTimeOffset? EndedAt, out Aw.Sindri.Core.Graph.Ids.NodeId? LastNodeId, out Aw.Sindri.Core.Ids.ItemId? ItemId, out long Sequence) -> void
+Aw.Sindri.Core.Views.WorkflowRunRow.Status.get -> string!
+Aw.Sindri.Core.Views.WorkflowRunRow.Error.get -> string?
+Aw.Sindri.Core.Views.WorkflowRunRow.Status.init -> void
+Aw.Sindri.Core.Views.WorkflowRunRow.Error.init -> void
+Aw.Sindri.Core.Views.WorkflowRunRow.StartedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Views.WorkflowRunRow.EndedAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Views.WorkflowRunRow.StartedAt.init -> void
+Aw.Sindri.Core.Views.WorkflowRunRow.EndedAt.init -> void
+Aw.Sindri.Core.Views.WorkflowRunRow.LastNodeId.get -> Aw.Sindri.Core.Graph.Ids.NodeId?
+Aw.Sindri.Core.Views.WorkflowRunRow.LastNodeId.init -> void
+Aw.Sindri.Core.Views.WorkflowRunRow.ItemId.get -> Aw.Sindri.Core.Ids.ItemId?
+Aw.Sindri.Core.Views.WorkflowRunRow.Sequence.get -> long
+Aw.Sindri.Core.Views.WorkflowRunRow.ItemId.init -> void
+Aw.Sindri.Core.Views.WorkflowRunRow.Sequence.init -> void
+const Aw.Sindri.Core.Events.EventTypes.WorkflowRunFinished = "workflow.run.finished" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowRunStarted = "workflow.run.started" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowRunCancelled = "workflow.run.cancelled" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowNodeStarted = "workflow.node.started" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowNodeFailed = "workflow.node.failed" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowNodeFinished = "workflow.node.finished" -> string!
+Aw.Sindri.Core.Events.WorkflowNodeFailedPayload
+override Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.ToString() -> string!
+static Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.operator !=(Aw.Sindri.Core.Events.WorkflowNodeFailedPayload? left, Aw.Sindri.Core.Events.WorkflowNodeFailedPayload? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.operator ==(Aw.Sindri.Core.Events.WorkflowNodeFailedPayload? left, Aw.Sindri.Core.Events.WorkflowNodeFailedPayload? right) -> bool
+override Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.Equals(object? obj) -> bool
+Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.Equals(Aw.Sindri.Core.Events.WorkflowNodeFailedPayload? other) -> bool
+Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowNodeFailedPayload!
+Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, out Aw.Sindri.Core.Graph.Ids.NodeId NodeId, out int ItemIndex, out string! Error, out string! By) -> void
+Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.RunId.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.NodeId.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.NodeId.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.ItemIndex.get -> int
+Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.ItemIndex.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.Error.get -> string!
+Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.Error.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.By.get -> string!
+Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.By.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.NodeId.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.ItemIndex.get -> int
+Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.RunId.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.ItemIndex.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.Status.get -> string!
+Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload
+Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.Status.init -> void
+override Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.ToString() -> string!
+Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.NodeId.init -> void
+static Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.operator !=(Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload? left, Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload? right) -> bool
+Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.Truncated.get -> bool
+static Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.operator ==(Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload? left, Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload? right) -> bool
+Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.By.get -> string!
+override Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.GetHashCode() -> int
+Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.Truncated.init -> void
+override Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.Equals(object? obj) -> bool
+Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.By.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.Equals(Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload? other) -> bool
+Aw.Sindri.Core.Events.WorkflowNodeStartedPayload.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload!
+Aw.Sindri.Core.Events.WorkflowNodeStartedPayload.RunId.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, out Aw.Sindri.Core.Graph.Ids.NodeId NodeId, out int ItemIndex, out string! Status, out bool Truncated, out string! By) -> void
+Aw.Sindri.Core.Events.WorkflowNodeStartedPayload.NodeId.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Events.WorkflowNodeStartedPayload.ItemIndex.get -> int
+Aw.Sindri.Core.Events.WorkflowNodeStartedPayload.ItemIndex.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeStartedPayload.NodeId.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeStartedPayload.By.get -> string!
+Aw.Sindri.Core.Events.WorkflowNodeStartedPayload
+override Aw.Sindri.Core.Events.WorkflowNodeStartedPayload.ToString() -> string!
+Aw.Sindri.Core.Events.WorkflowNodeStartedPayload.By.init -> void
+static Aw.Sindri.Core.Events.WorkflowNodeStartedPayload.operator !=(Aw.Sindri.Core.Events.WorkflowNodeStartedPayload? left, Aw.Sindri.Core.Events.WorkflowNodeStartedPayload? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowNodeStartedPayload.operator ==(Aw.Sindri.Core.Events.WorkflowNodeStartedPayload? left, Aw.Sindri.Core.Events.WorkflowNodeStartedPayload? right) -> bool
+Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.Reason.get -> string?
+override Aw.Sindri.Core.Events.WorkflowNodeStartedPayload.GetHashCode() -> int
+Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.Reason.init -> void
+override Aw.Sindri.Core.Events.WorkflowNodeStartedPayload.Equals(object? obj) -> bool
+Aw.Sindri.Core.Events.WorkflowRunCancelledPayload
+Aw.Sindri.Core.Events.WorkflowNodeStartedPayload.Equals(Aw.Sindri.Core.Events.WorkflowNodeStartedPayload? other) -> bool
+override Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.ToString() -> string!
+Aw.Sindri.Core.Events.WorkflowNodeStartedPayload.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowNodeStartedPayload!
+Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.By.get -> string!
+static Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.operator !=(Aw.Sindri.Core.Events.WorkflowRunCancelledPayload? left, Aw.Sindri.Core.Events.WorkflowRunCancelledPayload? right) -> bool
+Aw.Sindri.Core.Events.WorkflowNodeStartedPayload.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, out Aw.Sindri.Core.Graph.Ids.NodeId NodeId, out int ItemIndex, out string! By) -> void
+static Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.operator ==(Aw.Sindri.Core.Events.WorkflowRunCancelledPayload? left, Aw.Sindri.Core.Events.WorkflowRunCancelledPayload? right) -> bool
+Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.By.init -> void
+override Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.Equals(object? obj) -> bool
+Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.Equals(Aw.Sindri.Core.Events.WorkflowRunCancelledPayload? other) -> bool
+Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowRunCancelledPayload!
+Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, out string? Reason, out string! By) -> void
+Aw.Sindri.Core.Events.WorkflowRunFinishedPayload.Status.get -> string!
+Aw.Sindri.Core.Events.WorkflowRunFinishedPayload.Status.init -> void
+Aw.Sindri.Core.Events.WorkflowRunFinishedPayload.Error.get -> string?
+Aw.Sindri.Core.Events.WorkflowRunFinishedPayload
+Aw.Sindri.Core.Events.WorkflowRunFinishedPayload.Error.init -> void
+override Aw.Sindri.Core.Events.WorkflowRunFinishedPayload.ToString() -> string!
+Aw.Sindri.Core.Events.WorkflowRunFinishedPayload.By.get -> string!
+static Aw.Sindri.Core.Events.WorkflowRunFinishedPayload.operator !=(Aw.Sindri.Core.Events.WorkflowRunFinishedPayload? left, Aw.Sindri.Core.Events.WorkflowRunFinishedPayload? right) -> bool
+Aw.Sindri.Core.Events.WorkflowRunFinishedPayload.By.init -> void
+static Aw.Sindri.Core.Events.WorkflowRunFinishedPayload.operator ==(Aw.Sindri.Core.Events.WorkflowRunFinishedPayload? left, Aw.Sindri.Core.Events.WorkflowRunFinishedPayload? right) -> bool
+override Aw.Sindri.Core.Events.WorkflowRunFinishedPayload.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowRunFinishedPayload.Equals(object? obj) -> bool
+Aw.Sindri.Core.Events.WorkflowRunFinishedPayload.Equals(Aw.Sindri.Core.Events.WorkflowRunFinishedPayload? other) -> bool
+Aw.Sindri.Core.Events.WorkflowRunFinishedPayload.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowRunFinishedPayload!
+Aw.Sindri.Core.Events.WorkflowRunFinishedPayload.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, out string! Status, out string? Error, out string! By) -> void
+Aw.Sindri.Core.Events.WorkflowRunStartedPayload.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowRunStartedPayload
+override Aw.Sindri.Core.Events.WorkflowRunStartedPayload.ToString() -> string!
+Aw.Sindri.Core.Events.WorkflowRunStartedPayload.RunId.init -> void
+static Aw.Sindri.Core.Events.WorkflowRunStartedPayload.operator !=(Aw.Sindri.Core.Events.WorkflowRunStartedPayload? left, Aw.Sindri.Core.Events.WorkflowRunStartedPayload? right) -> bool
+Aw.Sindri.Core.Events.WorkflowRunStartedPayload.WorkflowId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowId
+static Aw.Sindri.Core.Events.WorkflowRunStartedPayload.operator ==(Aw.Sindri.Core.Events.WorkflowRunStartedPayload? left, Aw.Sindri.Core.Events.WorkflowRunStartedPayload? right) -> bool
+Aw.Sindri.Core.Events.WorkflowRunStartedPayload.WorkflowId.init -> void
+Aw.Sindri.Core.Events.WorkflowRunStartedPayload.Revision.get -> int
+override Aw.Sindri.Core.Events.WorkflowRunStartedPayload.GetHashCode() -> int
+Aw.Sindri.Core.Events.WorkflowRunStartedPayload.Revision.init -> void
+Aw.Sindri.Core.Events.WorkflowRunStartedPayload.Trigger.get -> string!
+override Aw.Sindri.Core.Events.WorkflowRunStartedPayload.Equals(object? obj) -> bool
+Aw.Sindri.Core.Events.WorkflowRunStartedPayload.Trigger.init -> void
+Aw.Sindri.Core.Events.WorkflowRunStartedPayload.By.get -> string!
+Aw.Sindri.Core.Events.WorkflowRunStartedPayload.Equals(Aw.Sindri.Core.Events.WorkflowRunStartedPayload? other) -> bool
+Aw.Sindri.Core.Events.WorkflowRunStartedPayload.By.init -> void
+Aw.Sindri.Core.Events.WorkflowRunStartedPayload.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowRunStartedPayload!
+Aw.Sindri.Core.Events.WorkflowRunStartedPayload.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, out Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, out int Revision, out string! Trigger, out string! By) -> void
+Aw.Sindri.Core.Events.WorkflowRunFinishedPayload.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowRunFinishedPayload.RunId.init -> void
+Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.RunId.init -> void
+Aw.Sindri.Core.Views.WorkflowRunRow.WorkflowRunRow(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Id, Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, int Revision, string! Trigger, string! Status, string? Error, System.DateTimeOffset StartedAt, System.DateTimeOffset? EndedAt, Aw.Sindri.Core.Graph.Ids.NodeId? LastNodeId, Aw.Sindri.Core.Ids.ItemId? ItemId, long Sequence) -> void
+Aw.Sindri.Core.Events.WorkflowRunStartedPayload.WorkflowRunStartedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, int Revision, string! Trigger, string! By) -> void
+Aw.Sindri.Core.Events.WorkflowRunFinishedPayload.WorkflowRunFinishedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, string! Status, string? Error, string! By) -> void
+Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.WorkflowRunCancelledPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, string? Reason, string! By) -> void
+Aw.Sindri.Core.Events.WorkflowNodeStartedPayload.WorkflowNodeStartedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! By) -> void
+Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.WorkflowNodeFinishedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! Status, bool Truncated, string! By) -> void
+Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.WorkflowNodeFailedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! Error, string! By) -> void
