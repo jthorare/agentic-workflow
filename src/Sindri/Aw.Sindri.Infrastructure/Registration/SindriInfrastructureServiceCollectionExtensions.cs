@@ -23,6 +23,7 @@ using Aw.Sindri.Core.LensPacks;
 using Aw.Sindri.Core.Line;
 using Aw.Sindri.Core.Locks;
 using Aw.Sindri.Core.Mcp;
+using Aw.Sindri.Core.Memory;
 using Aw.Sindri.Core.ModelCheck;
 using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.Packets;
@@ -62,6 +63,7 @@ using Aw.Sindri.Infrastructure.LensPacks;
 using Aw.Sindri.Infrastructure.Line;
 using Aw.Sindri.Infrastructure.Locks;
 using Aw.Sindri.Infrastructure.Mcp;
+using Aw.Sindri.Infrastructure.Memory;
 using Aw.Sindri.Infrastructure.ModelCheck;
 using Aw.Sindri.Infrastructure.Notifications;
 using Aw.Sindri.Infrastructure.Packets;
@@ -169,6 +171,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IWorkflowStore, SqliteWorkflowStore>()    // workflow graphs and their revisions (#2258, PR 5): workflow and workflow_revision in ledger.db
             .AddSingleton<IWorkflowRunStore, SqliteWorkflowRunStore>()    // workflow runs and node runs (#2258, PR 6): workflow_run and workflow_node_run in ledger.db
             .AddSingleton<IGraphBlockCatalog, EmptyGraphBlockCatalog>() // no graph blocks until PR 6 and 9
+            .AddSingleton<IMemoryStore, SqliteMemoryStore>()       // memory stores and facts (agent-first PR 13): memory and memory_fact in ledger.db
             .AddConnections();
 
     private static IServiceCollection AddSindriAdapters(this IServiceCollection services, Func<string, string?> environment)
