@@ -11,7 +11,7 @@ namespace Aw.Sindri.Ui.ViewModels.Todo;
 /// </summary>
 internal sealed class FromElsewhereViewModel(ISindriApi api) : ObservableObject
 {
-    private const int LinearLimit = 100;
+    internal const int LinearLimit = 100;
 
     private readonly ISindriApi _api = api;
     private (bool Loading, int Waiting, bool Failed) _reviews = (Loading: true, Waiting: 0, Failed: false);
