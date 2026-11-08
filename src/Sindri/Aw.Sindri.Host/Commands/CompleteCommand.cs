@@ -5,7 +5,6 @@ using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Features.CompleteStep;
-using Aw.Sindri.Host.Endpoints;
 
 namespace Aw.Sindri.Host.Commands;
 
@@ -57,17 +56,7 @@ internal static class CompleteCommand
     private static Task<Result<ApiAnswer<CompleteStepResponse>>> Attempt(RecipeDesk desk, CompleteStepRequest request, TimeProvider clock, Output output, CancellationToken ct)
     {
         var nonce = request.Nonce;
-        async Task<Result<ApiAnswer<CompleteStepResponse>>> Once()
-        {
-            var target = await InstanceTarget.Resolve(desk, request.Instance, nonce, ct).ConfigureAwait(false);
-            if (target.IsError)
-            {
-                return target.Error;
-            }
-
-            nonce = target.Value.Nonce;
-            return await Send(desk, target.Value, request, ct).ConfigureAwait(false);
-        }
+        Task<Result<ApiAnswer<CompleteStepResponse>>> Once() => Send(desk, request with { Nonce = nonce }, ct);
 
         return desk.Environment?.Invoke(SecretVariable) is { Length: > 0 } ? ConnectRetry.Run(Once, ConnectRetry.WindowOf(desk.Environment), clock, output.Notice, ct) : Once();
     }
@@ -87,10 +76,10 @@ internal static class CompleteCommand
     }
 
     /// <summary>Posts the report; a launched session's carries AW_SINDRI_LAUNCH_SECRET as the X-Sindri-Launch-Secret header (never in the body).</summary>
-    private static Task<Result<ApiAnswer<CompleteStepResponse>>> Send(RecipeDesk desk, (WorkflowInstanceId Id, CommandNonce Nonce) target, CompleteStepRequest request, CancellationToken ct)
+    private static Task<Result<ApiAnswer<CompleteStepResponse>>> Send(RecipeDesk desk, CompleteStepRequest request, CancellationToken ct)
     {
-        var route = $"/sindri/workflow/instances/{target.Id.Value}/runs/{InstanceRoute.Segment(request.Run.Value)}/complete";
-        var report = request with { Nonce = target.Nonce };
+        var route = $"/sindri/workflow/instances/{Uri.EscapeDataString(request.Instance)}/runs/{Uri.EscapeDataString(request.Run.Value)}/complete";
+        var report = request;
         return desk.Environment?.Invoke(SecretVariable) is { Length: > 0 } secret
             ? desk.Client.PostProven<CompleteStepRequest, CompleteStepResponse>(route, report, secret, ct)
             : desk.Client.Post<CompleteStepRequest, CompleteStepResponse>(route, report, ct);

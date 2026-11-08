@@ -140,10 +140,7 @@ using Aw.Sindri.Features.StartInstance;
 using Aw.Sindri.Features.StopProcess;
 using Aw.Sindri.Features.ValidateProfile;
 using Aw.Sindri.Features.ValidateRecipe;
-using Aw.Sindri.Host.Commands.Line;
 using Aw.Sindri.Host.Commands.Probe;
-using Aw.Sindri.Host.Commands.Recipe;
-using Aw.Sindri.Host.Commands.Scoping;
 using Aw.Sindri.Host.Endpoints;
 using Aw.Sindri.Host.Mcp;
 
@@ -201,9 +198,9 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(CheckPackResponse)), JsonSerializable(typeof(PackFinding))]
 [JsonSerializable(typeof(WrapLimits))]   // SB-3a: the wrap limits file
 [JsonSerializable(typeof(EvalRecipeResponse)), JsonSerializable(typeof(WorkflowEvent)), JsonSerializable(typeof(EvalStartLine)), JsonSerializable(typeof(EvalStepLine))]
-[JsonSerializable(typeof(RecipeValidationView)), JsonSerializable(typeof(CompleteStepResponse)), JsonSerializable(typeof(InstanceView)), JsonSerializable(typeof(ListOutboxResponse))]
-[JsonSerializable(typeof(ScopingApproved)), JsonSerializable(typeof(ScopingEscape)), JsonSerializable(typeof(ScopingView)), JsonSerializable(typeof(ScopingCheckResponse)), JsonSerializable(typeof(ScopingDeskReport))]   // SC-K: the scoping verbs
-[JsonSerializable(typeof(LineCheckResponse)), JsonSerializable(typeof(LineDeskReport)), JsonSerializable(typeof(DesignStopView)), JsonSerializable(typeof(LineView))]   // LN-K: the line verbs; LN-API1
+[JsonSerializable(typeof(CompleteStepResponse)), JsonSerializable(typeof(InstanceView)), JsonSerializable(typeof(ListOutboxResponse))]
+[JsonSerializable(typeof(ScopingApproved)), JsonSerializable(typeof(ScopingEscape)), JsonSerializable(typeof(ScopingView)), JsonSerializable(typeof(ScopingCheckResponse))]   // SC-K: the scoping verbs
+[JsonSerializable(typeof(LineCheckResponse)), JsonSerializable(typeof(DesignStopView)), JsonSerializable(typeof(LineView))]   // LN-K: the line verbs; LN-API1
 [JsonSerializable(typeof(DocsCheckResponse)), JsonSerializable(typeof(DocsCheckFinding))]   // API17: 'docs check'
 [JsonSerializable(typeof(LineDoctorResponse))]   // LN-L: 'line doctor'
 [JsonSerializable(typeof(RequestKind))]   // API P8: the sindri_request kind argument binds through it
@@ -216,7 +213,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(RoutedItem))]           // engine P7 plan D8: the router stub's item.routed event
 [JsonSerializable(typeof(EffectReply))]          // engine P6 unit (a): an effect's reply event (notify.delivered, claim.created)
 [JsonSerializable(typeof(GetInstanceEventsResponse)), JsonSerializable(typeof(InstanceEventView)), JsonSerializable(typeof(InstanceEventFields)), JsonSerializable(typeof(StartInstanceResponse))]
-[JsonSerializable(typeof(StartInstanceRequest)), JsonSerializable(typeof(RerunInstanceRequest)), JsonSerializable(typeof(DeskRecommendation)), JsonSerializable(typeof(ApplyCommandRequest)), JsonSerializable(typeof(ApplyCommandBody)), JsonSerializable(typeof(CompleteStepRequest)), JsonSerializable(typeof(ApplyCommandResponse))]
+[JsonSerializable(typeof(StartInstanceRequest)), JsonSerializable(typeof(RerunInstanceRequest)), JsonSerializable(typeof(DeskRecommendation)), JsonSerializable(typeof(ApplyCommandRequest)), JsonSerializable(typeof(CompleteStepRequest)), JsonSerializable(typeof(ApplyCommandResponse))]
 [JsonSerializable(typeof(IssueNonceResponse)), JsonSerializable(typeof(RecipeRegistered)), JsonSerializable(typeof(RecipeApproved)), JsonSerializable(typeof(RecipeRevoked))]
 [JsonSerializable(typeof(RegisterRecipeRequest)), JsonSerializable(typeof(RegisterRecipeResponse)), JsonSerializable(typeof(ListRecipesResponse)), JsonSerializable(typeof(ApproveRecipeRequest))]
 [JsonSerializable(typeof(RegisterMcpJobRequest))]   // setup-once §5.4: register Sindri in a repo from the app
@@ -272,7 +269,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(ListDenialsRequest)), JsonSerializable(typeof(ListDenialsResponse)), JsonSerializable(typeof(Core.Sandbox.Denials.DenialFile)), JsonSerializable(typeof(Core.Sandbox.Plan.SandboxPlan))]   // SB-4b: the denials read and the plan file `sandbox explain` reads
 [JsonSerializable(typeof(AllowDenialRequest)), JsonSerializable(typeof(AllowDenialResponse))]   // SB-6a: the Allow button
 [JsonSerializable(typeof(CheckSandboxRequest)), JsonSerializable(typeof(CheckSandboxResponse)), JsonSerializable(typeof(SandboxBlockerLine)), JsonSerializable(typeof(SandboxResumeLine))]   // SB-5a: Check again
-[JsonSerializable(typeof(Features.GetSkills.GetSkillsRequest)), JsonSerializable(typeof(Features.GetSkills.GetSkillsResponse)), JsonSerializable(typeof(Features.GetSkills.SkillBlockView)), JsonSerializable(typeof(Features.GetSkills.SkillInputView)), JsonSerializable(typeof(Features.GetSkills.SkillNotLoadedView)), JsonSerializable(typeof(Features.StartSkillRun.StartSkillRunRequest)), JsonSerializable(typeof(Features.StartSkillRun.StartSkillRunResponse)), JsonSerializable(typeof(StartSkillRunBody)), JsonSerializable(typeof(SkillRunReport)), JsonSerializable(typeof(SkillRunFact))]   // F-1: the loaded skill blocks
+[JsonSerializable(typeof(Features.GetSkills.GetSkillsRequest)), JsonSerializable(typeof(Features.GetSkills.GetSkillsResponse)), JsonSerializable(typeof(Features.GetSkills.SkillBlockView)), JsonSerializable(typeof(Features.GetSkills.SkillInputView)), JsonSerializable(typeof(Features.GetSkills.SkillNotLoadedView)), JsonSerializable(typeof(Features.StartSkillRun.StartSkillRunRequest)), JsonSerializable(typeof(Features.StartSkillRun.StartSkillRunResponse))]   // F-1: the loaded skill blocks
 [JsonSerializable(typeof(Features.GetSandboxStatus.GetSandboxStatusRequest)), JsonSerializable(typeof(Features.GetSandboxStatus.SandboxStatusResponse)), JsonSerializable(typeof(Features.GetSandboxStatus.SandboxLearnLine))]   // SB-6a: the sandbox status
 [JsonSerializable(typeof(SessionHeartbeatBody)), JsonSerializable(typeof(SessionHeartbeatResponse)), JsonSerializable(typeof(SessionExitBody)), JsonSerializable(typeof(SessionExitResponse)), JsonSerializable(typeof(CaptureRule))]   // API P10a (U10)
 // Two LaunchId types meet here: the collector's looser one (Core.Launch) and the engine's 'LCH-…' one the launch events carry (SYSLIB1031).

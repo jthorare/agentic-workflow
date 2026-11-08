@@ -8,7 +8,6 @@ using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Views;
 using Aw.Sindri.Features.CompleteStep;
 using Aw.Sindri.Host.Commands;
-using Aw.Sindri.Host.Endpoints;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Commands;
 using Aw.Sindri.Tests.Layout;
@@ -62,7 +61,7 @@ public sealed class CompleteWaitsOutRestartCheckTests : IDisposable
         var answered = new CompleteStepResponse(new CommandResult(DevInstances.All[0].View, "-> checks"), CommandNonce.From(new string('a', 32)), AlreadyApplied: false);
         return new RoutedApi()
             .On("/sindri/workflow/instances", HttpStatusCode.OK, new InstanceList([instance], new ListCounts(1, 0, 0, 0, 0), Empty: null, DevInstances.AsOf))
-            .OnPost($"/sindri/workflow/instances/{instance.Id.Value}/runs/{InstanceRoute.Segment("1.1")}/complete", HttpStatusCode.OK, answered);
+            .OnPost($"/sindri/workflow/instances/{instance.Id.Value}/runs/{Uri.EscapeDataString("1.1")}/complete", HttpStatusCode.OK, answered);
     }
 
     // The start rule of a session: it never starts the control plane, it only finds it down until the fake time says it is back.
