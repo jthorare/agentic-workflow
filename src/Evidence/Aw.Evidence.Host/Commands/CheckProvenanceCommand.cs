@@ -1,11 +1,12 @@
 using System.Text.Json;
+using Aw.Evidence.Core.Settings;
 using Aw.Evidence.Features.CheckProvenance;
 using Aw.Kernel.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Evidence.Host.Commands;
 
-/// <summary>The 'provenance' command: prints whether the local database holds seed data only.</summary>
+/// <summary>The 'provenance' command: prints whether the local database holds seed data only (the worktree slot's database when doctor would check that slot).</summary>
 internal static class CheckProvenanceCommand
 {
     internal const string Name = "provenance";
@@ -21,7 +22,7 @@ internal static class CheckProvenanceCommand
         }
 
         var service = services.GetRequiredService<IService<CheckProvenanceRequest, CheckProvenanceResponse>>();
-        var result = await service.Handle(new CheckProvenanceRequest(), cancellationToken).ConfigureAwait(false);
+        var result = await service.Handle(new CheckProvenanceRequest(WorktreeArgument.Resolve(services.GetRequiredService<IEvidenceSettings>())), cancellationToken).ConfigureAwait(false);
         return result.IsError ? CommandOutput.Error(result.Error) : CommandOutput.Json(result.Value, json);
     }
 }

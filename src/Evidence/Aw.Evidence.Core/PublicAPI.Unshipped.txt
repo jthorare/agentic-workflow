@@ -849,8 +849,8 @@ Aw.Evidence.Core.Scripts.ViewportKind
 Aw.Evidence.Core.Scripts.ViewportKind.Desktop = 0 -> Aw.Evidence.Core.Scripts.ViewportKind
 Aw.Evidence.Core.Scripts.ViewportKind.Phone = 1 -> Aw.Evidence.Core.Scripts.ViewportKind
 Aw.Evidence.Core.Stack.IProvenanceQuery
-Aw.Evidence.Core.Stack.IProvenanceQuery.AllEmailsAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
-Aw.Evidence.Core.Stack.IProvenanceQuery.EmailsLikeAsync(string! likePattern, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
+Aw.Evidence.Core.Stack.IProvenanceQuery.AllEmailsAsync(string? database, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
+Aw.Evidence.Core.Stack.IProvenanceQuery.EmailsLikeAsync(string! likePattern, string? database, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
 Aw.Evidence.Core.Stack.IStackProbe
 Aw.Evidence.Core.Stack.IStackProbe.DatabaseReadyAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Evidence.Core.Stack.IStackProbe.PageTitleAsync(System.Uri! url, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
@@ -1461,7 +1461,7 @@ static Aw.Evidence.Core.Scripts.UiScript.operator !=(Aw.Evidence.Core.Scripts.Ui
 static Aw.Evidence.Core.Scripts.UiScript.operator ==(Aw.Evidence.Core.Scripts.UiScript? left, Aw.Evidence.Core.Scripts.UiScript? right) -> bool
 static Aw.Evidence.Core.Scripts.UrlPath.operator !=(Aw.Evidence.Core.Scripts.UrlPath? left, Aw.Evidence.Core.Scripts.UrlPath? right) -> bool
 static Aw.Evidence.Core.Scripts.UrlPath.operator ==(Aw.Evidence.Core.Scripts.UrlPath? left, Aw.Evidence.Core.Scripts.UrlPath? right) -> bool
-static Aw.Evidence.Core.Stack.ProvenanceCheck.RunAsync(Aw.Evidence.Core.Stack.IProvenanceQuery! query, Aw.Evidence.Core.Stack.SeedPolicy! policy, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Evidence.Core.Stack.ProvenanceFinding!>
+static Aw.Evidence.Core.Stack.ProvenanceCheck.RunAsync(Aw.Evidence.Core.Stack.IProvenanceQuery! query, Aw.Evidence.Core.Stack.SeedPolicy! policy, string? database, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Evidence.Core.Stack.ProvenanceFinding!>
 static Aw.Evidence.Core.Stack.ProvenanceFinding.operator !=(Aw.Evidence.Core.Stack.ProvenanceFinding? left, Aw.Evidence.Core.Stack.ProvenanceFinding? right) -> bool
 static Aw.Evidence.Core.Stack.ProvenanceFinding.operator ==(Aw.Evidence.Core.Stack.ProvenanceFinding? left, Aw.Evidence.Core.Stack.ProvenanceFinding? right) -> bool
 static Aw.Evidence.Core.Stack.SeedPolicy.Default.get -> Aw.Evidence.Core.Stack.SeedPolicy!
@@ -2380,6 +2380,18 @@ Aw.Evidence.Core.Settings.SlotSettings.Key.init -> void
 Aw.Evidence.Core.Settings.SlotSettings.PortStep.get -> int
 Aw.Evidence.Core.Settings.SlotSettings.PortStep.init -> void
 Aw.Evidence.Core.Settings.SlotSettings.SlotSettings(string! FileName, string! Key, int Count, int PortStep, string? Database) -> void
+Aw.Evidence.Core.Settings.WorktreeSlot
+Aw.Evidence.Core.Settings.WorktreeSlot.<Clone>$() -> Aw.Evidence.Core.Settings.WorktreeSlot!
+Aw.Evidence.Core.Settings.WorktreeSlot.Database.get -> string?
+Aw.Evidence.Core.Settings.WorktreeSlot.Database.init -> void
+Aw.Evidence.Core.Settings.WorktreeSlot.Deconstruct(out int Number, out string? Database, out int PortStep) -> void
+Aw.Evidence.Core.Settings.WorktreeSlot.Equals(Aw.Evidence.Core.Settings.WorktreeSlot? other) -> bool
+Aw.Evidence.Core.Settings.WorktreeSlot.Number.get -> int
+Aw.Evidence.Core.Settings.WorktreeSlot.Number.init -> void
+Aw.Evidence.Core.Settings.WorktreeSlot.PortFor(int mainPort) -> int
+Aw.Evidence.Core.Settings.WorktreeSlot.PortStep.get -> int
+Aw.Evidence.Core.Settings.WorktreeSlot.PortStep.init -> void
+Aw.Evidence.Core.Settings.WorktreeSlot.WorktreeSlot(int Number, string? Database, int PortStep) -> void
 Aw.Evidence.Core.Stack.IStackProbe.DatabaseExistsAsync(string! database, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Evidence.Core.Stack.IStackProbe.ListenerDirectoryAsync(int port, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string?>!>
 override Aw.Evidence.Core.Publishing.GhCall.Equals(object? obj) -> bool
@@ -2391,12 +2403,18 @@ override Aw.Evidence.Core.Publishing.GhOutcome.ToString() -> string!
 override Aw.Evidence.Core.Settings.SlotSettings.Equals(object? obj) -> bool
 override Aw.Evidence.Core.Settings.SlotSettings.GetHashCode() -> int
 override Aw.Evidence.Core.Settings.SlotSettings.ToString() -> string!
+override Aw.Evidence.Core.Settings.WorktreeSlot.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Settings.WorktreeSlot.GetHashCode() -> int
+override Aw.Evidence.Core.Settings.WorktreeSlot.ToString() -> string!
 static Aw.Evidence.Core.Publishing.GhCall.operator !=(Aw.Evidence.Core.Publishing.GhCall? left, Aw.Evidence.Core.Publishing.GhCall? right) -> bool
 static Aw.Evidence.Core.Publishing.GhCall.operator ==(Aw.Evidence.Core.Publishing.GhCall? left, Aw.Evidence.Core.Publishing.GhCall? right) -> bool
 static Aw.Evidence.Core.Publishing.GhOutcome.operator !=(Aw.Evidence.Core.Publishing.GhOutcome? left, Aw.Evidence.Core.Publishing.GhOutcome? right) -> bool
 static Aw.Evidence.Core.Publishing.GhOutcome.operator ==(Aw.Evidence.Core.Publishing.GhOutcome? left, Aw.Evidence.Core.Publishing.GhOutcome? right) -> bool
 static Aw.Evidence.Core.Settings.SlotSettings.operator !=(Aw.Evidence.Core.Settings.SlotSettings? left, Aw.Evidence.Core.Settings.SlotSettings? right) -> bool
 static Aw.Evidence.Core.Settings.SlotSettings.operator ==(Aw.Evidence.Core.Settings.SlotSettings? left, Aw.Evidence.Core.Settings.SlotSettings? right) -> bool
+static Aw.Evidence.Core.Settings.WorktreeSlot.ReadAsync(Aw.Evidence.Core.Settings.SlotSettings? slots, Aw.Evidence.Core.Files.IRunFiles! files, string! worktree, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Evidence.Core.Settings.WorktreeSlot!>!>
+static Aw.Evidence.Core.Settings.WorktreeSlot.operator !=(Aw.Evidence.Core.Settings.WorktreeSlot? left, Aw.Evidence.Core.Settings.WorktreeSlot? right) -> bool
+static Aw.Evidence.Core.Settings.WorktreeSlot.operator ==(Aw.Evidence.Core.Settings.WorktreeSlot? left, Aw.Evidence.Core.Settings.WorktreeSlot? right) -> bool
 static readonly Aw.Evidence.Core.EvidenceErrors.GhPublishFailed -> Aw.Kernel.ErrorDefinition!
 Aw.Evidence.Core.Data.ResolvedTargets.Desktop.get -> Aw.Evidence.Core.Data.ResolvedDesktop?
 Aw.Evidence.Core.Data.ResolvedTargets.Desktop.init -> void
