@@ -10,5 +10,5 @@ internal static class OlderSindri
     /// <param name="error">The failed call's error.</param>
     /// <returns>True when the running Sindri has no such route.</returns>
     internal static bool IsNotServed(Error error) =>
-        string.Equals(error.Code, SindriUiErrors.BadStatus.Code, StringComparison.Ordinal) && error.Message.Contains("404", StringComparison.Ordinal);
+        string.Equals(error.Code, SindriUiErrors.BadStatus.Code, StringComparison.Ordinal) && error.Message.EndsWith(" answered 404", StringComparison.Ordinal);
 }
