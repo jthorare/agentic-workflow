@@ -43,6 +43,12 @@ internal static class AgentReportAuthority
             return SindriErrors.AuthLaunchSecret.With("the run has no launch the secret could belong to");
         }
 
+        return Prove(launch, secret, files);
+    }
+
+    // The launch's secret, checked and never kept: the agent runtime, or the refusal (SND-AUTH-003).
+    private static Result<StepRuntime> Prove(LaunchId launch, LaunchSecret secret, ILaunchFiles files)
+    {
         var proven = files.Verify(launch, secret);
         return proven.IsError ? proven.Error : StepRuntime.Agent;
     }
@@ -53,5 +59,15 @@ internal static class AgentReportAuthority
     /// <param name="secret">The secret the report carried, or null.</param>
     /// <param name="files">The launches' stored secrets.</param>
     /// <returns>Success with <see cref="StepRuntime.Agent"/>, or the refusal: SND-AUTH-002 for a taken-over node or no secret, SND-AUTH-003 for a secret that doesn't match.</returns>
-    internal static Result<StepRuntime> DecideNode(LaunchId launch, bool takenOver, LaunchSecret? secret, ILaunchFiles files) => throw new NotSupportedException();
+    internal static Result<StepRuntime> DecideNode(LaunchId launch, bool takenOver, LaunchSecret? secret, ILaunchFiles files)
+    {
+        if (takenOver)
+        {
+            return SindriErrors.AuthRefused.With("the node run is taken over: only the human reports it (fix: run 'sindri wf complete' in a terminal or the Sindri app, or hand it back)");
+        }
+
+        return secret is { } proof
+            ? Prove(launch, proof, files)
+            : SindriErrors.AuthRefused.With("a node run reports only from the session launched for it, with its launch secret");
+    }
 }
