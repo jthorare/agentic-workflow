@@ -2,6 +2,7 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Kernel;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Linear;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Secrets;
 
@@ -17,7 +18,10 @@ namespace Aw.Sindri.Features.LinearConnection;
 /// <param name="pointers">Reads a stored key back.</param>
 /// <param name="tokens">Writes the read key's pointer and the teams.</param>
 /// <param name="writeTokens">Writes the write key's pointer.</param>
-internal sealed class CoreLinearConnectionStore(IProfileSource live, IContextEngine engine, ISecretWriter writer, ISecretPointers pointers, ISourceTokenProfileWriter tokens, ILinearWriteTokenWriter writeTokens)
+/// <param name="editChecks">Says whether a profile edit would apply, before a secret is touched.</param>
+/// <param name="checks">Keeps the last check of each key; the write check goes when its key does.</param>
+#pragma warning disable AW1007, CS9113 // red commit: the stubs' parameters are read by the fix that follows
+internal sealed class CoreLinearConnectionStore(IProfileSource live, IContextEngine engine, ISecretWriter writer, ISecretPointers pointers, ISourceTokenProfileWriter tokens, ILinearWriteTokenWriter writeTokens, ILinearProfileEditCheck editChecks, ILinearCheckStore checks)
     : ILinearConnectionStore
 {
     private const string Service = "sindri-index";

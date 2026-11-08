@@ -10,7 +10,7 @@ namespace Aw.Sindri.Infrastructure.Profile;
 /// otherwise one is added as the block's first line. The source's block must already exist in block style (its repos are the owner's to write); a flow-style entry is a layout Sindri won't edit. The result is parsed again before it
 /// is written, and the file is written atomically.
 /// </summary>
-internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : ISourceTokenProfileWriter, ILinearWriteTokenWriter
+internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : ISourceTokenProfileWriter, ILinearWriteTokenWriter, ILinearProfileEditCheck
 {
     /// <inheritdoc />
     public Result<bool> SetToken(string source, string secretPointer)
@@ -34,6 +34,18 @@ internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : IS
         ArgumentNullException.ThrowIfNull(source);
         return Apply(source, "writeToken:", line: null, yaml => HoldsKey(yaml, source, "writeToken", pointer: null));
     }
+
+    /// <inheritdoc />
+    public Result<bool> CheckSetToken(string source, string secretPointer) => throw new NotSupportedException();
+
+    /// <inheritdoc />
+    public Result<bool> CheckSetTeams(string source, IReadOnlyList<string> teams) => throw new NotSupportedException();
+
+    /// <inheritdoc />
+    public Result<bool> CheckSetWriteToken(string source, string secretPointer) => throw new NotSupportedException();
+
+    /// <inheritdoc />
+    public Result<bool> CheckRemoveWriteToken(string source) => throw new NotSupportedException();
 
     // Reads the live profile, sets one `key: value` line under the source's block, checks the result parses back to the intended value and writes it.
     private Result<bool> Apply(string source, string key, string? line, Func<string, bool> holds)
