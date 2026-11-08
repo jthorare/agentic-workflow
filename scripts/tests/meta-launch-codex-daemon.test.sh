@@ -20,14 +20,24 @@ trap '[ -z "$KEEP" ] || kill "$KEEP" 2> /dev/null; rm -r "$WORK"' EXIT
 export HOME="$WORK/home" AW_STATE_DIR="$WORK/state"
 unset TMUX AW_LAUNCHER_CONFIG AW_META_CONFIG AW_META_TEAM AW_META_LANE AW_META_DIR AW_META_LANE_PID AW_META_NO_STALE_CHECK
 mkdir -p "$HOME" "$WORK/repo" "$AW_STATE_DIR/meta/teams/t1" "$WORK/teamA/lane-sessions"
-jq -n --arg r "$WORK/repo" '{team:"t1", repo:$r, metaLane:"meta", lanes:["api"]}' > "$AW_STATE_DIR/meta/teams/t1/team.json"
+jq -n --arg r "$WORK/repo" '{team:"t1", repo:$r, metaLane:"meta", lanes:["api","ui"]}' > "$AW_STATE_DIR/meta/teams/t1/team.json"
 ids="$AW_STATE_DIR/meta/teams/t1/lane-sessions"
-printf '#!/usr/bin/env bash\necho "inbox"\n' > "$WORK/aw-meta"; chmod +x "$WORK/aw-meta"
+cat > "$WORK/aw-meta" <<'EOS'
+#!/usr/bin/env bash
+# Logs which team and lane each hook call resolved, and the reply text a Stop hook records.
+in=""; [ "${2:-}" = --stdin ] && in="$(cat)"
+echo "${AW_META_HOOK:-}|${AW_META_TEAM:-}/${AW_META_LANE:-}|$1|$in" >> "$FAKE/calls"
+[ "$1" != lane-inbox ] || echo inbox
+exit 0
+EOS
+chmod +x "$WORK/aw-meta"
 export AW_META_BIN="$WORK/aw-meta" AW_META_NO_SHELL=1 AW_META_ID_WAIT=5 AW_META_ID_GRACE=1
 sleep 600 & KEEP=$!   # team A's lane script stand-in: alive, and never an ancestor of anything
 
 cat > "$WORK/codex" <<'EOS'
 #!/usr/bin/env bash
+# Show up in ps as "codex" (a native codex binary's name), as the hooks' own_agent check matches the agent by name.
+if [ -z "${FAKE_REEXEC:-}" ]; then FAKE_REEXEC=1 exec -a codex bash "$0" "$@"; fi
 if [ "${1:-}" = --help ]; then
   echo "Usage: codex [OPTIONS] [PROMPT]"
   [ ! -e "$FAKE/has-no-daemon" ] || echo "      --no-daemon   Run without the shared app-server daemon"
@@ -39,9 +49,15 @@ if [ "${1:-}" != resume ] && [ "${2:-}" != resume ]; then
   mkdir -p "$HOME/.codex/sessions/2026/11/08"
   : > "$HOME/.codex/sessions/2026/11/08/rollout-2026-11-08T00-00-00-$id.jsonl"
 fi
-hook() { printf '{"hook_event_name":"UserPromptSubmit"}' | bash "$ROOT/config/hooks/meta-lane-gate.sh" > /dev/null 2>&1; }
+hook() { # a turn: a prompt, then a Stop that answers with a REPLY TO META line
+  printf '{"hook_event_name":"UserPromptSubmit"}' | bash "$ROOT/config/hooks/meta-lane-gate.sh" > /dev/null 2>&1
+  jq -nc --arg m "REPLY TO META: hi from $AW_META_LANE" '{hook_event_name:"Stop", last_assistant_message:$m}' | bash "$ROOT/config/hooks/meta-lane-gate.sh" > /dev/null 2>&1
+}
+nested_hook() { # a `codex exec` the agent's shell tool starts: named like the agent, below a shell, inheriting the lane variables
+  bash -c 'exec -a codex bash -c "printf %s \"\$0\" | bash \"\$1\" > /dev/null 2>&1" "{\"hook_event_name\":\"UserPromptSubmit\"}" "$ROOT/config/hooks/meta-lane-gate.sh"'
+}
 case " $* " in
-  *" --no-daemon "*) hook ;;   # direct topology: the hook is this process's child, under the lane script
+  *" --no-daemon "*) [ ! -e "$FAKE/nested" ] || nested_hook; hook ;;   # direct topology: the hook is this process's child, under the lane script
   *)  # shared daemon: a double fork reparents the hook away from the lane script, and the environment is team A's
     ( ( AW_META_TEAM=teamA AW_META_LANE=meta AW_META_DIR="$FAKE/teamA" AW_META_LANE_PID="$KEEP" hook & ) & )
     for _ in $(seq 50); do [ -e "$FAKE/teamA/lane-sessions/meta.hook" ] && break; sleep 0.1; done ;;
@@ -55,9 +71,10 @@ jq --arg c "$WORK/codex" '{schema:1, agents:{
     codex: {override:true, bin:$c},
     "codex-yolo": (.agents.codex + {label:"Codex yolo", bin:$c})}}' "$ROOT/config/launcher/builtins.json" > "$LCFG"
 
+# run_lane starts the lanes in $LANES (default: api) one after the other, as meta-launch does.
 run_lane() { # <agent> <fresh|resume> <yes|no: does this codex have --no-daemon>
   local agent="$1" mode="$2" support="$3" rid=""
-  rm -rf "$ids" "$WORK/teamA/lane-sessions"/* "$WORK/argv"; mkdir -p "$ids" "$WORK/teamA/lane-sessions"
+  rm -rf "$ids" "$WORK/teamA/lane-sessions"/* "$WORK/argv"; rm -f "$WORK/nested"; [ -z "${NESTED:-}" ] || : > "$WORK/nested"; mkdir -p "$ids" "$WORK/teamA/lane-sessions"
   rm -f "$WORK/has-no-daemon"; [ "$support" = yes ] && : > "$WORK/has-no-daemon"
   jq --arg a "$agent" '.agent = $a' "$AW_STATE_DIR/meta/teams/t1/team.json" > "$WORK/team.tmp" && mv "$WORK/team.tmp" "$AW_STATE_DIR/meta/teams/t1/team.json"
   if [ "$mode" = resume ]; then
@@ -65,7 +82,10 @@ run_lane() { # <agent> <fresh|resume> <yes|no: does this codex have --no-daemon>
     mkdir -p "$HOME/.codex/sessions/2026/11/08"; : > "$HOME/.codex/sessions/2026/11/08/rollout-2026-11-08T00-00-00-$rid.jsonl"
     printf '%s\n' "$rid" > "$ids/api"
   fi
-  FAKE="$WORK" ROOT="$ROOT" KEEP="$KEEP" AW_LAUNCHER_CONFIG="$LCFG" timeout 30 bash "$DIR/meta-lane.sh" t1 api > "$WORK/out" 2>&1 || true
+  : > "$WORK/calls"
+  for lane in ${LANES:-api}; do
+    FAKE="$WORK" ROOT="$ROOT" KEEP="$KEEP" AW_LAUNCHER_CONFIG="$LCFG" timeout 30 bash "$DIR/meta-lane.sh" t1 "$lane" > "$WORK/out" 2>&1 || true
+  done
   sleep 0.3
 }
 export FAKE="$WORK"
@@ -82,6 +102,22 @@ for agent in codex codex-yolo; do
 done
 run_lane codex resume yes
 check "resume argv: --no-daemon before the resume subcommand" "$(head -1 "$WORK/argv" | cut -d' ' -f1-2)" "--no-daemon resume"
+
+# Two lanes of team B: every hook call resolves its own lane and team, and a reply is recorded for that lane.
+LANES="api ui" run_lane codex fresh yes
+check "two lanes: each lane's prompt hook and reply resolved that lane in team t1" \
+  "$(sort -u "$WORK/calls" | tr '\n' ';')" \
+  "Stop|t1/api|lane-reply|hi from api;Stop|t1/api|lane-stop-check|;Stop|t1/ui|lane-reply|hi from ui;Stop|t1/ui|lane-stop-check|;UserPromptSubmit|t1/api|lane-inbox|;UserPromptSubmit|t1/ui|lane-inbox|;"
+check "two lanes: team A's state stays empty" "$(ls "$WORK/teamA/lane-sessions" | wc -l | tr -d ' ')" "0"
+run_lane codex fresh no
+check "without --no-daemon (the bug): no hook call is accepted for team t1 (or anyone: the daemon's hooks are not under the lane)" \
+  "$(cut -d'|' -f2 "$WORK/calls" | sort -u | tr '\n' ';')" ""
+
+# Nested agent: a codex exec started by the lane's agent is still rejected under --no-daemon; the lane's own hook still acts.
+NESTED=1 run_lane codex fresh yes
+check "nested codex exec: its hook makes no aw-meta call, the lane's own turn is recorded once" \
+  "$(grep -c 'UserPromptSubmit|t1/api|lane-inbox' "$WORK/calls"):$(grep -c 'lane-reply' "$WORK/calls")" "1:1"
+check "nested codex exec: the lane's trace still ends 'ran'" "$(state)" "B=ran:A=0"
 
 # An older codex that has no --no-daemon still launches, with its argv unchanged.
 run_lane codex-yolo fresh no
