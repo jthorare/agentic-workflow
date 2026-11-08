@@ -14,8 +14,8 @@ internal static class TodoRows
 {
     internal static IReadOnlyList<CommandRow> All { get; } =
     [
-        Row("AddTodo", typeof(AddTodoRequest), variant: null, "/sindri/todos", "sindri todo add <text> [--due <day>] [--link <ref>]... [--client-id <id>]"),
-        Row("ChangeTodo", typeof(ChangeTodoRequest), variant: null, "/sindri/todos/{todoId}/change", "sindri todo edit <id> [--text <text>] [--due <day> | --no-due] [--link <ref>]... [--no-links] [--version <n>]"),
+        Row("AddTodo", typeof(AddTodoRequest), variant: null, "/sindri/todos", "sindri todo add <text> [--due <day>] [--link <ref>] [--client-id <id>]"),
+        Row("ChangeTodo", typeof(ChangeTodoRequest), variant: null, "/sindri/todos/{todoId}/change", "sindri todo edit <id> [--text <text>] [--due <day>] [--no-due] [--link <ref>] [--no-links] [--version <n>]"),
         Mark("done", "sindri todo done <id> [--version <n>]"),
         Mark("reopen", "sindri todo reopen <id> [--version <n>]"),
         Mark("remove", "sindri todo remove <id> [--version <n>]"),
