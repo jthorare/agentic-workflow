@@ -87,8 +87,9 @@ internal sealed class ConnectionHarness
 
     /// <summary>The refresh service over the harness's ports, with the ledger and an event factory on the harness clock.</summary>
     /// <returns>The service.</returns>
-    public RefreshConnectionsService Refresh()
-        => new(Store, Secrets, Presets, OAuth, Ledger, new EventFactory(EventScope.ControlPlane, Clock, Ids, SliceHarness.Json, Callers), Clock);
+    /// <param name="oauth">The token client; the scripted one when null.</param>
+    public RefreshConnectionsService Refresh(IOAuthClient? oauth = null)
+        => new(Store, Secrets, Presets, oauth ?? OAuth, Ledger, new EventFactory(EventScope.ControlPlane, Clock, Ids, SliceHarness.Json, Callers), Clock);
 
     /// <summary>Takes the ledger's lease and builds the run a tick would hand the refresh service.</summary>
     /// <returns>The run, at the harness clock.</returns>
