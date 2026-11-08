@@ -120,6 +120,9 @@ internal static partial class Labels
     internal static string TodoCardChanged(string note, int open) =>
         string.Create(CultureInfo.InvariantCulture, $"{NoteFile(note)} changed: now {open} open {(open == 1 ? "task" : "tasks")}");
 
+    /// <summary>A set or stop was refused because the profile changed since the card last saw it; the card read it again.</summary>
+    internal const string TodoCardProfileMoved = "Settings changed somewhere else, so Sindri read them again. Try again if it still looks right.";
+
     /// <summary>The settled card.</summary>
     /// <param name="vault">The vault's name.</param>
     /// <param name="note">The note's path.</param>

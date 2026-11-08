@@ -9,6 +9,9 @@ internal sealed partial class TodoNoteCardViewModel
 {
     private const string TodoConflict = "SND-TODO-409";
 
+    // The live profile's hash as the last set or stop answered it; sent back as ifHash so a profile edited somewhere else is refused (409) instead of overwritten. Null until a call answered one.
+    private string? _profileHash;
+
     /// <summary>Reads where the sync stands and the library's vaults. A shown check, or a call in flight, is not disturbed.</summary>
     /// <param name="url">The API's base URL.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
@@ -181,7 +184,7 @@ internal sealed partial class TodoNoteCardViewModel
         Result<TodoNoteChangedView> stopped;
         try
         {
-            stopped = await _api.StopTodoNote(url, ifHash: null, cancellationToken).ConfigureAwait(true);
+            stopped = await _api.StopTodoNote(url, _profileHash, cancellationToken).ConfigureAwait(true);
         }
         finally
         {
@@ -189,12 +192,17 @@ internal sealed partial class TodoNoteCardViewModel
         }
 
         StatusText = string.Empty;
-        if (stopped.IsError)
+        if (stopped.IsError && IsProfileMoved(stopped.Error))
+        {
+            await StopMoved(url, cancellationToken).ConfigureAwait(true);
+        }
+        else if (stopped.IsError)
         {
             ErrorText = Labels.TodoCardError(stopped.Error);
         }
         else
         {
+            _profileHash = stopped.Value.ProfileHash;
             (_note, _check, IsConfirmingStop, _changing) = (null, null, false, false);
             Stage = Vaults.Count > 0 ? TodoNoteCardStage.Form : TodoNoteCardStage.NoVaults;
         }
@@ -221,25 +229,25 @@ internal sealed partial class TodoNoteCardViewModel
         Changed();
         try
         {
-            var set = await _api.SetTodoNote(url, vault, note, ifHash: null, cancellationToken).ConfigureAwait(true);
+            var set = await _api.SetTodoNote(url, vault, note, _profileHash, cancellationToken).ConfigureAwait(true);
             if (set.IsError)
             {
+                if (IsProfileMoved(set.Error))
+                {
+                    await SetMoved(url, vault, note, cancellationToken).ConfigureAwait(true);
+                    return;
+                }
+
                 ErrorText = Labels.TodoCardError(set.Error);
                 StatusText = string.Empty;
                 return;
             }
 
-            if (import)
+            _profileHash = set.Value.ProfileHash;
+
+            if (import && !await ImportChecked(url, check.Open, set.Value.Changed, cancellationToken).ConfigureAwait(true))
             {
-                StatusText = Labels.TodoCardImporting;
-                Changed();
-                var imported = await _api.ImportTodoNote(url, vault, note, check.Open, cancellationToken).ConfigureAwait(true);
-                if (imported.IsError)
-                {
-                    await TakeBack(url, set.Value.Changed).ConfigureAwait(true);
-                    await Refused(url, vault, note, imported.Error, cancellationToken).ConfigureAwait(true);
-                    return;
-                }
+                return;
             }
 
             await Settle(url, cancellationToken).ConfigureAwait(true);
@@ -249,47 +257,5 @@ internal sealed partial class TodoNoteCardViewModel
             IsBusy = false;
             Changed();
         }
-    }
-
-    // The import was refused after the key was saved: put the profile back as it was (the old note while Change edits one, else no key).
-    private async Task TakeBack(Uri url, bool changed)
-    {
-        if (!changed)
-        {
-            return;
-        }
-
-        _ = _changing && _note is { Vault: { } vault, Note: { } note }
-            ? await _api.SetTodoNote(url, vault, note, ifHash: null, CancellationToken.None).ConfigureAwait(true)
-            : await _api.StopTodoNote(url, ifHash: null, CancellationToken.None).ConfigureAwait(true);
-    }
-
-    // SND-TODO-409: the note's open count is not the one shown. Read it again, say the new count, and ask again. Any other refusal is shown as it came.
-    private async Task Refused(Uri url, string vault, string note, Error error, CancellationToken cancellationToken)
-    {
-        if (!string.Equals(error.Code, TodoConflict, StringComparison.Ordinal))
-        {
-            (ErrorText, StatusText) = (Labels.TodoCardError(error), string.Empty);
-            return;
-        }
-
-        var again = await _api.CheckTodoNote(url, vault, note, cancellationToken).ConfigureAwait(true);
-        if (again.IsError)
-        {
-            (ErrorText, StatusText, _check) = (Labels.TodoCardError(again.Error), string.Empty, null);
-            Stage = TodoNoteCardStage.Form;
-            return;
-        }
-
-        (_check, StatusText) = (again.Value, Labels.TodoCardChanged(note, again.Value.Open));
-    }
-
-    // The key is saved: read the note's state for the settled line (its last sync) and show it.
-    private async Task Settle(Uri url, CancellationToken cancellationToken)
-    {
-        var read = await _api.TodoNote(url, cancellationToken).ConfigureAwait(true);
-        _note = read.IsSuccess && read.Value.Note is not null ? read.Value : null;
-        (_check, StatusText, IsConfirmingStop, _changing) = (null, string.Empty, false, false);
-        Stage = TodoNoteCardStage.Syncing;
     }
 }
