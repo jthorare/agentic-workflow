@@ -1,6 +1,5 @@
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api.Linear;
-using Aw.Sindri.Ui.ViewModels.Instance;
 
 namespace Aw.Sindri.Ui.ViewModels.Linear;
 
@@ -80,16 +79,19 @@ internal sealed partial class LinearIssueSheetViewModel
         if (IsShown && (!notSynced || HasUnsaved || IsLocked || IsCommentLocked))
         {
             // The fields stay: they are the last read's. A not-synced answer only says Sindri lost the issue; typed edits, a typed comment or a write out are not thrown away for it.
-            Note = notSynced ? string.Empty : Labels.LinearSindriDown;
+            Note = notSynced ? string.Empty : Unanswered(error);
             return;
         }
 
         Clear();
         _linearAddress = notSynced ? LinearAddress(error) : null;
-        ProblemText = notSynced ? Labels.LinearIssueNotSynced(Key) : Labels.LinearSindriDown;
+        ProblemText = notSynced ? Labels.LinearIssueNotSynced(Key) : Unanswered(error);
         Phase = notSynced ? FramePhase.NotFound : FramePhase.Refused;
         OnChanged(nameof(CanOpenInLinear));
     }
+
+    // An older running Sindri has no issue route (a bare 404): it needs a restart. Anything else that fails is Sindri not answering.
+    private static string Unanswered(Error error) => OlderSindri.IsNotServed(error) ? Labels.LinearSindriOlder : Labels.LinearSindriDown;
 
     private void Clear()
     {

@@ -27,26 +27,22 @@ internal sealed partial class ShellViewModel
     /// <summary>The link the sheet was opened by (its kind and subject); null before the first.</summary>
     public DeepLink? SheetLink { get; private set; }
 
-    /// <summary>True when the sheet's last subject was a child pushed on a frame, or Back to the frame it came from: such a change keeps the sheet's scroll.</summary>
-    public bool SheetChangeIsStacked { get; private set; }
-
     /// <summary>True when the closed sheet shows its edge tab (a subject was opened before).</summary>
     public bool HasEdgeTab => SheetSubject.Length > 0;
 
     /// <summary>The sheet shows when it's open over a visible page.</summary>
     public bool IsSheetShown => IsSheetOpen && IsConnected;
 
-    /// <summary>The sheet's accessible name: the kind's noun and the subject ("Workflow X"); an id that names itself stays bare.</summary>
+    /// <summary>The sheet's accessible name: the kind's noun and the subject ("Session X"); an id that names itself stays bare.</summary>
     public string SheetName => SheetLink is { } link && Labels.KindNoun(link.Kind) is { Length: > 0 } noun ? noun + " " + NamedSubject : SheetLink?.Kind == DeepLinkKind.ProjectAdd ? Labels.ProjectAddHeading : SheetLink?.Kind is DeepLinkKind.PinSheet or DeepLinkKind.PageSheet or DeepLinkKind.AddSeveralPages or DeepLinkKind.LibrarySheet ? NamedSubject : SheetSubject;
 
-    /// <summary>The edge tab's accessible name: "Reopen" and the sheet's name, its kind's noun in lower case; an item or workflow reads its title, or the bare noun while it loads, never the raw address.</summary>
+    /// <summary>The edge tab's accessible name: "Reopen" and the sheet's name, its kind's noun in lower case; an item reads its title, or the bare noun while it loads, never the raw address.</summary>
     public string EdgeTabName => Labels.Reopen + " " + EdgeTabSubject;
 
 #pragma warning disable IDE0072 // every other kind falls to the noun arm
     private string EdgeTabSubject => SheetLink?.Kind switch
     {
         DeepLinkKind.Item => Joined("item", Item.Title),
-        DeepLinkKind.Workflow => Joined("workflow", Instance.Title),
         { } kind when Labels.KindNoun(kind) is { Length: > 0 } noun => char.ToLowerInvariant(noun[0]) + noun[1..] + " " + NamedSubject,
         _ => SheetSubject,
     };
@@ -54,13 +50,11 @@ internal sealed partial class ShellViewModel
 
     private static string Joined(string noun, string title) => title.Length > 0 ? noun + " " + title : noun;
 
-    /// <summary>The edge tab's text: the item's, workflow run's or workflow type's readable title once read, else the sheet kind's plain word; never a raw address.</summary>
+    /// <summary>The edge tab's text: the item's readable title once read, else the sheet kind's plain word; never a raw address.</summary>
 #pragma warning disable IDE0072 // the kinds whose subject is already a readable name keep it
     public string EdgeTabText => SheetLink?.Kind switch
     {
         DeepLinkKind.Item => Item.Title.Length > 0 ? Item.Title : Labels.EdgeTabItem,
-        DeepLinkKind.Workflow => Instance.Title.Length > 0 ? Instance.Title : Labels.EdgeTabWorkflowRun,
-        DeepLinkKind.Recipe => Recipe.Title.Length > 0 ? Recipe.Title : SheetSubject,
         DeepLinkKind.NeedsYou => Labels.EdgeTabNeedsYou,
         DeepLinkKind.Decision => Labels.EdgeTabDecision,
         DeepLinkKind.Job => Labels.EdgeTabJob,
@@ -84,10 +78,6 @@ internal sealed partial class ShellViewModel
         DeepLinkKind.Item => false,
         DeepLinkKind.NeedsYou or DeepLinkKind.Decision => false,
         // LANE ANCHOR U3': one `DeepLinkKind.X or … => false` arm claims the kinds from the placeholder (kinds: NeedsYou, Decision), as screens spec §8 assigns them. `Item` is U2's item sheet (#197): its arm, `DeepLinkKind.Item => false`, is written above both markers. `HomeNeedsYou` is a page link, not a sheet. Insert immediately above this marker, never between the markers.
-        // LANE ANCHOR U8: one `DeepLinkKind.X or … => false` arm claims the kinds (kinds: Workflow); U8b re-bases the item sheet (§4.7), which is content and adds no arm. Insert immediately below this marker, never between the markers.
-        DeepLinkKind.Workflow => false,
-        // LANE ANCHOR U10: one `DeepLinkKind.X or … => false` arm claims the kinds (kinds: Recipe), U10a's read-only recipe sheet (UI spec §4.3). System, Service and Job are claimed later, at this switch, by the phase that renders them (screens spec §8). Insert immediately below this marker, never between the markers.
-        DeepLinkKind.Recipe => false,
         // LANE ANCHOR U9: one `DeepLinkKind.X or … => false` arm claims the kinds (kinds: Node), the node card of the Context page (U9b writes the arm; until then Node still shows the placeholder). System, Service and Job are claimed later, at this switch, by the phase that renders them (screens spec §8). Insert immediately below this marker, never between the markers.
         // LANE ANCHOR U11a: one `DeepLinkKind.X or … => false` arm claims the kinds (kinds: Session), U11a's session sheet (collector spec CU-3); the arm is written by the sheet's builder (T4), not by the contract. Insert immediately below this marker, never between the markers.
         DeepLinkKind.Session => false,
@@ -109,7 +99,6 @@ internal sealed partial class ShellViewModel
     internal void OpenSheet(DeepLink link)
     {
         SheetLink = link;
-        SheetChangeIsStacked = _stacking;
         IsSheetOpen = true;
         ForgetRowSheetUnless(link);
         OnSheetOpened(link);
@@ -143,8 +132,7 @@ internal sealed partial class ShellViewModel
             return;
         }
 
-        SheetChangeIsStacked = false;
-        (IsSheetOpen, OpenerRow, OpenerStrip, OpenerRecipeGroup, OpenerSession) = (true, null, null, null, null);
+        (IsSheetOpen, OpenerRow, OpenerSession) = (true, null, null);
         OnJobSheetReopened();
         OnProjectSheetReopened();
         Changed(nameof(IsSheetOpen), nameof(IsSheetShown), nameof(IsEdgeTabShown));

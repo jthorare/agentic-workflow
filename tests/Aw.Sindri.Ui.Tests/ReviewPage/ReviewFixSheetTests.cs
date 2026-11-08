@@ -88,7 +88,20 @@ public sealed class ReviewFixSheetTests
 
         Assert.Equal("Review comment on #2071 (the review body, no diff line), from Sindri, marker sindri.fix:<item id>", check.ThreadText);
         Assert.Equal("Line comment on src/Api/A/A.Core/X.cs:11, from Sindri (verdict comment, marker sindri.fix:<item id>)", line.ThreadText);
-        Assert.Equal("The babysitter watching #2071, else a live session on feat/retry-budget, else the item waits in Work", check.GoesToText);
+        Assert.Equal("A live session on feat/retry-budget, else the item waits in Work", check.GoesToText);
+    }
+
+    [Fact]
+    public async Task The_fix_sheet_has_no_babysitter_route()
+    {
+        _f.Server.ReviewFixAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, ReviewFixBodies.Babysitter);
+        var sheet = Opened(_check);
+
+        await sheet.Send(Token);
+
+        Assert.DoesNotContain("babysitter", sheet.GoesToText, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("babysitter", sheet.OutcomeText, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("Waiting", sheet.Outcome.ToString());   // an old server's "babysitter" reads as no session: the item waits in Work
     }
 
     [Fact]
@@ -217,7 +230,6 @@ public sealed class ReviewFixSheetTests
     }
 
     [Theory]
-    [InlineData(ReviewFixBodies.Babysitter, "Babysitter", "Fix task sent to the babysitter on #2071. It takes the thread as work and closes the item when it's fixed.", "#2071 · review comment")]
     [InlineData(ReviewFixBodies.Session, "Session", "Fix task sent to the session on feat/retry-budget (claude, ~/repos/aw-wt/retry-budget).", "#2071 · review comment")]
     [InlineData(ReviewFixBodies.Waiting, "Waiting", "No session is on feat/retry-budget. The item waits in Work as \"Waiting on feat/retry-budget\", and the first session on that branch is told.", "#2071 · review comment")]
     public async Task A_sent_task_says_who_took_it_and_focus_goes_to_that_text(string body, string outcome, string words, string thread)
@@ -280,7 +292,33 @@ public sealed class ReviewFixSheetTests
         await sheet.Retry(Token);
 
         Assert.Equal([null, "01J9Z3T7KQ"], _f.Server.ReviewFixSends.Select(s => s.Item), StringComparer.Ordinal);
-        Assert.Equal((ReviewFixOutcome.Babysitter, "Fix task sent", false), (sheet.Outcome, sheet.Heading, sheet.CanRetry));
+        Assert.Equal((ReviewFixOutcome.Waiting, "Fix task sent", false), (sheet.Outcome, sheet.Heading, sheet.CanRetry));
+    }
+
+    [Fact]
+    public async Task A_send_whose_task_file_was_not_written_shows_the_servers_words_and_can_be_sent_again()
+    {
+        _f.Server.ReviewFixAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, ReviewFixBodies.FileNotWritten);
+        var sheet = Opened(_check);
+
+        await sheet.Send(Token);
+
+        Assert.Equal(("The fix-task file wasn't written (disk full); send it again to write it.", true), (sheet.FileError, sheet.CanRetry));
+        Assert.Equal(ReviewFixOutcome.Waiting, sheet.Outcome);
+    }
+
+    [Fact]
+    public async Task Sending_again_after_a_file_error_reuses_the_item_and_clears_the_error()
+    {
+        _f.Server.ReviewFixAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, ReviewFixBodies.FileNotWritten);
+        var sheet = Opened(_check);
+        await sheet.Send(Token);
+        _f.Server.ReviewFixAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, ReviewFixBodies.Waiting);
+
+        await sheet.Retry(Token);
+
+        Assert.Equal([null, "01J9Z3T7KQ"], _f.Server.ReviewFixSends.Select(s => s.Item), StringComparer.Ordinal);
+        Assert.Equal((string.Empty, false), (sheet.FileError, sheet.CanRetry));
     }
 
     [Fact]
@@ -311,7 +349,7 @@ public sealed class ReviewFixSheetTests
         _ = Assert.Single(_f.Server.ReviewFixSends);
         _f.Server.ReviewFixGate.SetResult();
         await first;
-        Assert.Equal((ReviewFixOutcome.Babysitter, false), (sheet.Outcome, sheet.IsSending));
+        Assert.Equal((ReviewFixOutcome.Waiting, false), (sheet.Outcome, sheet.IsSending));
     }
 
     [Fact]

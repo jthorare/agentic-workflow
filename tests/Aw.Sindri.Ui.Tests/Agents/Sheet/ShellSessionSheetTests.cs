@@ -3,7 +3,6 @@ using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Agents;
-using Aw.Sindri.Ui.ViewModels.Instance;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Microsoft.Extensions.Time.Testing;
 
@@ -61,7 +60,6 @@ public sealed class ShellSessionSheetTests
 
         Assert.Equal((PageId.Agents, true, false, Ref, FramePhase.Loading), (shell.CurrentPage, shell.IsSessionSheet, shell.IsSheetPlaceholderShown, shell.AgentSheet.Ref, shell.AgentSheet.Phase));
         Assert.Equal("Session " + Ref, shell.SheetName);
-        Assert.False(shell.IsRecipeSheet);
     }, Token);
 
     [Fact]

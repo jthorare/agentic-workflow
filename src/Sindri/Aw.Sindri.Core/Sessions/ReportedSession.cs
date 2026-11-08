@@ -14,5 +14,5 @@ public sealed record ReportedSession(int? Pid, long? StartTicks, bool AskingRepo
     public string HostKind { get; init; } = "unknown";
 
     /// <summary>The Sindri launch it appeared with.</summary>
-    public Workflow.Engine.LaunchId? LaunchId { get; init; }
+    public Launch.LaunchId? LaunchId { get; init; }
 }

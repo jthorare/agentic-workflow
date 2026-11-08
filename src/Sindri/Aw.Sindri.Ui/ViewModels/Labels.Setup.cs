@@ -1,7 +1,7 @@
 using System.Collections.Frozen;
 using System.Globalization;
 using Aw.Kernel;
-using Aw.Sindri.Ui.Api.Workflow;
+using Aw.Sindri.Ui.Api;
 
 namespace Aw.Sindri.Ui.ViewModels;
 
@@ -35,7 +35,7 @@ internal static partial class Labels
     internal const string SetupLeadDone = "Sindri is set up";
 
     /// <summary>The one line under the lead (hidden once setup is finished).</summary>
-    internal const string SetupSubline = "Six steps. Sindri does most of them for you; you decide the ones that give it access.";
+    internal const string SetupSubline = "Five steps. Sindri does most of them for you; you decide the ones that give it access.";
 
     /// <summary>The line that says what the person already ran.</summary>
     internal const string SetupRunLine = "You've run";

@@ -74,7 +74,7 @@ public sealed partial class CommandPaletteViewModelTests
         _palette.Open();
 
         Assert.Equal(
-            ["Home G H", "Projects G P", "Workflows G W", "Work G Q", "Workflow types G R", "Context G C", "Agents G A", "System G .", "Reviews G V", "Jobs G J", "Settings ⌘,"],
+            ["Home G H", "Projects G P", "Work G Q", "Context G C", "Agents G A", "System G .", "Reviews G V", "Jobs G J", "Settings ⌘,"],
             _palette.Sections[1].Entries.Select(e => e.Label + " " + e.Key),
             StringComparer.Ordinal);
     }
@@ -617,12 +617,12 @@ public sealed partial class CommandPaletteViewModelTests
     public async Task A_go_to_entry_shows_its_page()
     {
         _palette.Open();
-        _palette.Query = "recipes";
+        _palette.Query = "context";
 
         await _palette.Run(_palette.Selected, Token);
 
-        Assert.Equal([PageId.Recipes], _pages);
-        Assert.Equal(["go:Recipes"], _history, StringComparer.Ordinal);
+        Assert.Equal([PageId.Context], _pages);
+        Assert.Equal(["go:Context"], _history, StringComparer.Ordinal);
         Assert.False(_palette.IsOpen);
     }
 
@@ -659,8 +659,8 @@ public sealed partial class CommandPaletteViewModelTests
         Assert.Contains(_palette.Selected!.Name, _palette.Announcement, StringComparison.Ordinal);
         Assert.Contains("2 of", _palette.Announcement, StringComparison.Ordinal);
 
-        _palette.Query = "workflow types";
-        Assert.Contains("Workflow types", _palette.Announcement, StringComparison.Ordinal);
+        _palette.Query = "context";
+        Assert.Contains(_palette.Selected!.Name, _palette.Announcement, StringComparison.Ordinal);
 
         _palette.Query = "zzzz";
         Assert.Equal("Nothing matches", _palette.Announcement);

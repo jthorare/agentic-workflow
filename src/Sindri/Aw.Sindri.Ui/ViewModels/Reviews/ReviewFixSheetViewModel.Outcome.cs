@@ -8,6 +8,7 @@ internal sealed partial class ReviewFixSheetViewModel
         var (source, target) = (request.Source, request.Target);
         (ItemId, _item) = (sent.ItemId, sent.ItemId);
         CanSend = false;
+        (FileError, RetryText) = (string.Empty, Labels.ReviewFixRetry);
         if (sent.PostError is { } error)
         {
             (Outcome, Heading, OutcomeText, Code, ThreadResult, CanRetry) = (ReviewFixOutcome.HalfDone, Labels.ReviewFixHalfHeading, error, sent.PostCode ?? string.Empty, Labels.ReviewFixNotPosted, true);
@@ -21,11 +22,15 @@ internal sealed partial class ReviewFixSheetViewModel
             var where = source.Kind == ReviewFixKind.Line && !source.Removed ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{Path.GetFileName(source.Path)}:{source.Line}") : Labels.ReviewFixReviewComment;
             var (outcome, text) = sent.Went switch
             {
-                "babysitter" => (ReviewFixOutcome.Babysitter, Labels.ReviewFixBabysitter(target.Number)),
                 "session" => (ReviewFixOutcome.Session, Labels.ReviewFixSession(target.Branch, sent.Session ?? string.Empty)),
                 _ => (ReviewFixOutcome.Waiting, Labels.ReviewFixWaiting(target.Branch)),
             };
             (Outcome, Heading, OutcomeText, ThreadResult, Code, CanRetry) = (outcome, Labels.ReviewFixSentHeading, text, Labels.ReviewFixThread(target.Number, where), string.Empty, false);
+        }
+
+        if (sent.FileError is { Length: > 0 } fileError)
+        {
+            (FileError, CanRetry, RetryText) = (fileError, true, sent.PostError is not null ? Labels.ReviewFixRetry : Labels.ReviewFixSendAgain);
         }
 
         OnChanged(nameof(HasOutcome));

@@ -24,8 +24,8 @@ public sealed class PlainWordsTests
     [Fact]
     public void The_session_sheet_labels_are_plain() =>
         Assert.Equal(
-            ["Agent session", "Run", "Step", "Open the run", "In this status since", "How this was detected", "History", "Details"],
-            [Labels.SheetLaunch, Labels.SheetInstance, Labels.SheetStep, Labels.OpenStepFrame, Labels.SheetSince, Labels.SheetStateSource, Labels.SheetHistory, Labels.SheetDetails]);
+            ["Agent session", "Run", "Step", "In this status since", "How this was detected", "History", "Details"],
+            [Labels.SheetLaunch, Labels.SheetInstance, Labels.SheetStep, Labels.SheetSince, Labels.SheetStateSource, Labels.SheetHistory, Labels.SheetDetails]);
 
     [Fact]
     public void The_context_page_words_are_plain() =>
@@ -42,10 +42,10 @@ public sealed class PlainWordsTests
     {
         var go = Labels.FixedKeys.Single(k => k.Keys.StartsWith("G then", StringComparison.Ordinal));
 
-        Assert.Equal("Go to a page: H or N Home, D Decisions on Home, P Projects, W Workflows, Q Work, R Workflow types, C Context, A Agents, . or S System, V Reviews, J Jobs, U Settings", go.Action);
+        Assert.Equal("Go to a page: H or N Home, D Decisions on Home, P Projects, Q Work, C Context, A Agents, . or S System, V Reviews, J Jobs, U Settings", go.Action);
         Assert.Contains(("O", "Open the linked page"), Labels.FixedKeys);
         Assert.Contains(("Y", "Copy the row's command"), Labels.FixedKeys);
-        Assert.Contains(("X / Shift+X", "Decline / cancel the run"), Labels.FixedKeys);
+        Assert.Contains(("X", "Decline"), Labels.FixedKeys);
         Assert.Contains(("F6 / Shift+F6", "Next / previous area"), Labels.FixedKeys);
     }
 }

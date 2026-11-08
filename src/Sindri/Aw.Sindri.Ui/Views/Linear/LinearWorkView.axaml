@@ -63,6 +63,10 @@
       <icons:StateIcon Glyph="Down" Classes="error" VerticalAlignment="Top" />
       <TextBlock Classes="caption error" Text="{Binding FeedText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding FeedText}" />
     </StackPanel>
+    <StackPanel x:Name="LinearSindriOlder" Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsSindriOlder}">
+      <icons:StateIcon Glyph="Stale" VerticalAlignment="Top" />
+      <TextBlock Classes="caption subtle" Text="{Binding OlderText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding OlderText}" />
+    </StackPanel>
     <StackPanel x:Name="LinearSindriDown" Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsSindriDown}">
       <icons:StateIcon Glyph="Stale" VerticalAlignment="Center" />
       <TextBlock Classes="caption subtle" Text="{Binding SindriDownText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding SindriDownText}" />

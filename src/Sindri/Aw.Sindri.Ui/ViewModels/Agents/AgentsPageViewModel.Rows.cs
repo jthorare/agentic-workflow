@@ -26,7 +26,6 @@ internal sealed partial class AgentsPageViewModel
         }
 
         var row = new SessionRowViewModel(served, catalog.Row("FocusSession"), Clipboard, _clock);
-        row.FrameRequested += (_, e) => FrameRequested?.Invoke(this, e);
         row.SetCompact(IsCompact);   // a row that arrives after the page narrowed is narrow too
         _rows[served.Ref] = row;
         return row;

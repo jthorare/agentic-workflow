@@ -9,14 +9,8 @@ internal enum PageId
     /// <summary>The projects Sindri's work belongs to (Projects page spec §7). A tab, second after Home; G P and 'projects' open it.</summary>
     Projects,
 
-    /// <summary>Open root instances grouped by recipe, and the instance frame (screens spec §4.2).</summary>
-    Workflows,
-
     /// <summary>Items (screens spec §3, chord G Q).</summary>
     Work,
-
-    /// <summary>Recipes (screens spec §4.3).</summary>
-    Recipes,
 
     /// <summary>The context lens stack (screens spec §4.4).</summary>
     Context,
@@ -27,7 +21,7 @@ internal enum PageId
     /// <summary>Dependencies, services and health (screens spec §4.6).</summary>
     System,
 
-    /// <summary>The owner's PRs and the ones waiting on the owner (review page spec §6.1). The ninth tab, after System; G V opens it, its badge is the waiting count.</summary>
+    /// <summary>The owner's PRs and the ones waiting on the owner (review page spec §6.1). The seventh tab, after System; G V opens it, its badge is the waiting count.</summary>
     Reviews,
 
     /// <summary>The background jobs Sindri ran (API P6). Not a tab: G J, the palette and System's Jobs link open it.</summary>

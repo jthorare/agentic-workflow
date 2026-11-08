@@ -6,7 +6,7 @@ namespace Aw.Kernel.Testing;
 /// <summary>
 /// Golden-file (snapshot) checks for CLI output and JSON contracts (spec §4b.5). A golden file holds normalized output and
 /// lives in the test project's source tree. Set 'AW_GOLDEN_UPDATE=1' locally to rewrite it from the current output:
-/// the run then fails so the diff gets reviewed. Update mode is refused in CI, and writes never leave the source root.
+/// the run then fails for each file it created or changed, so the diff gets reviewed; a file that already matches passes. Update mode is refused in CI, and writes never leave the source root.
 /// </summary>
 public static class Golden
 {
@@ -61,6 +61,14 @@ public static class Golden
             {
                 throw new GoldenMismatchException(
                     $"{UpdateVariable}=1 is refused in CI: golden files are updated locally and reviewed, never accepted by a CI run.");
+            }
+
+            // A file that already holds this output needs no rewrite and no review, so the run passes it: an update pass then
+            // fails only on rows whose file it created or changed, and a failure of another kind stands out (#2236).
+            if (File.Exists(path)
+                && string.Equals(File.ReadAllText(path).Replace("\r\n", "\n", StringComparison.Ordinal), normalized, StringComparison.Ordinal))
+            {
+                return;
             }
 
             _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!); // why: Resolve returns a full path under the root

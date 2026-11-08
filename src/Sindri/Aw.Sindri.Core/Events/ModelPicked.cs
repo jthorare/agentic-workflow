@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
-using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Triggers;
 
 namespace Aw.Sindri.Core.Events;
