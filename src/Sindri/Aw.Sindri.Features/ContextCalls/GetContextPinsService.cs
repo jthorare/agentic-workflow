@@ -44,7 +44,7 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
         }
 
         var changes = new PinChanges(MapRuleset.RunningPins(scope), state.Value.CurrentPinHashes);
-        var pins = Rows(loaded.Value.Profile, latest.Value?.Profile, repo, changes, state.Value.CurrentHeads);
+        var pins = await WithMoved(Rows(loaded.Value.Profile, latest.Value?.Profile, repo, changes, state.Value.CurrentHeads), state.Value.Current, cancellationToken).ConfigureAwait(false);
         var progress = await rebuild.Read(service, cancellationToken).ConfigureAwait(false);
         var failed = await LastFailure(cancellationToken).ConfigureAwait(false);
         // a refresh covers every repo and its retry line carries the error text of a failed build, which can name another repo: a session reads the phase, never the line
@@ -126,6 +126,20 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
         var refreshes = await jobs.List(state: null, ContextMapRefreshService.RefreshKind, cancellationToken).ConfigureAwait(false);
         var newest = refreshes.IsError ? null : refreshes.Value.Where(static j => j.EndedAt is not null).MaxBy(static j => j.EndedAt);
         return newest is { State: JobState.Failed } ? newest.Code : null;
+    }
+
+    // What the newest refresh moved in and out of each pin (a pin only the map still has is a bare id: nothing to say about it). Jobs that can't be listed leave the field out.
+    private async ValueTask<List<ContextPinRow>> WithMoved(List<ContextPinRow> rows, int? current, CancellationToken cancellationToken)
+    {
+        var refreshes = await jobs.List(state: null, ContextMapRefreshService.RefreshKind, cancellationToken).ConfigureAwait(false);
+        var relinks = await jobs.List(state: null, ContextMapRefreshService.RelinkKind, cancellationToken).ConfigureAwait(false);
+        if (refreshes.IsError || relinks.IsError)
+        {
+            return rows;
+        }
+
+        var moved = PinMovedRead.Of(refreshes.Value, relinks.Value, current, rows.Where(static r => r.Change != PinChanges.Removed).Select(static r => r.Id));
+        return moved is null ? rows : [.. rows.Select(r => moved.TryGetValue(r.Id, out var m) && r.Change != PinChanges.Removed ? r with { Moved = m } : r)];
     }
 
     private static string Phase(MapRebuildPhase phase) => phase switch
