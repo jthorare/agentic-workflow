@@ -18,7 +18,7 @@ public sealed class LaunchRequestNodeTests
         new(LaunchId.From("LCH-00000000000000000000000000000001"), ItemId.From("ITM-" + new string('a', 32)), AgentId.From("claude-code"), LaunchMode.Open, Attended: false, "/work/app", Instance: null, Worktree: null, Step: null, Run: null, NodeRun: run, Task: task);
 
     [Fact, Trait("Lane", "unit")]
-    public void A_request_with_a_node_run_and_task_round_trips_and_keeps_them_at_the_end()
+    public void A_request_with_a_node_run_and_task_round_trips_and_they_follow_every_old_field()
     {
         var task = new AgentTask("check drift", new Dictionary<string, string>(StringComparer.Ordinal) { ["drifted"] = "boolean" }, Model: null);
 
@@ -29,7 +29,9 @@ public sealed class LaunchRequestNodeTests
         Assert.Equal("check drift", back.Task?.Brief);
         Assert.Equal("boolean", back.Task?.Outputs["drifted"]);
         var names = JsonNode.Parse(payload.Data.ToStringUtf8())!.AsObject().Select(p => p.Key).ToList();   // why: the test parses its own output
-        Assert.Equal(["NodeRun", "Task"], names.TakeLast(2), StringComparer.Ordinal);
+        var oldFields = new[] { "Launch", "Item", "Agent", "Mode", "Attended", "RepoPath", "Instance", "Worktree", "Step", "Run", "Resume", "Evaluator" };
+        var firstNew = Math.Min(names.IndexOf("NodeRun"), names.IndexOf("Task"));
+        Assert.All(oldFields, f => Assert.True(names.IndexOf(f) is >= 0 && names.IndexOf(f) < firstNew, f));   // the wire rule: new fields come after the old ones
     }
 
     [Fact, Trait("Lane", "unit")]

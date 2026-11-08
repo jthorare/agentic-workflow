@@ -61,7 +61,28 @@ internal static class AgentRecovery
     /// <param name="files">The names of the files in the output folder.</param>
     /// <param name="folder">The output folder's path, for the reason.</param>
     /// <returns>Complete with the files found, else a park whose reason names the folder.</returns>
-    public static NodeRecoveryDecision DecideNode(RunAgentConfig config, IReadOnlyCollection<string> files, string folder) => throw new NotSupportedException();
+    public static NodeRecoveryDecision DecideNode(RunAgentConfig config, IReadOnlyCollection<string> files, string folder)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        ArgumentNullException.ThrowIfNull(files);
+        var found = new Dictionary<string, string>(StringComparer.Ordinal);
+        var missing = false;
+        foreach (var (name, type) in config.Outputs)
+        {
+            if (files.FirstOrDefault(n => string.Equals(n, name, StringComparison.Ordinal)) is { } file)
+            {
+                found[name] = file;
+            }
+            else if (!type.EndsWith('?'))
+            {
+                missing = true;
+            }
+        }
+
+        return found.Count > 0 && !missing
+            ? new NodeRecoveryDecision(found, Reason: null)
+            : new NodeRecoveryDecision(new Dictionary<string, string>(StringComparer.Ordinal), $"the agent finished but its result was not recorded: {folder} (fix: read the outputs there and report with 'sindri wf complete')");
+    }
 
     /// <summary>The file an agent writes a fact to: the fact's name without its 'fact:' prefix.</summary>
     /// <param name="fact">The fact.</param>
