@@ -91,13 +91,16 @@ public sealed class NoteParserTests
         Golden.Match(Dump(NoteParser.Parse(note)), _tests, "Todos/Note/Golden/parse-d3-breaks.txt", Normalization.None);
     }
 
+    // why: the text is built here from code units; xUnit's argument serialization turns a lone surrogate into U+FFFD.
     [Theory]
-    [InlineData("hi\U000E0041")]
-    [InlineData("hi\uD800")]
-    [InlineData("hi\uDC00x")]
-    [InlineData("hi\u200B")]
-    public void A_tag_character_or_a_lone_surrogate_in_the_text_breaks_D3(string text)
+    [InlineData(new[] { 0x68, 0x69, 0xDB40, 0xDC41 })]
+    [InlineData(new[] { 0x68, 0x69, 0xD800 })]
+    [InlineData(new[] { 0x68, 0x69, 0xDC00, 0x78 })]
+    [InlineData(new[] { 0x68, 0x69, 0x200B })]
+    public void A_tag_character_or_a_lone_surrogate_in_the_text_breaks_D3(int[] units)
     {
+        ArgumentNullException.ThrowIfNull(units);
+        var text = new string([.. units.Select(static u => (char)u)]);
         var todo = NoteParser.Parse($"- [ ] {text} {Block(1)}\n").Todos.Single();
 
         Assert.Equal(NoteBreak.ForbiddenCharacter, todo.Break);
