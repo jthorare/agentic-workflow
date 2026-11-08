@@ -350,4 +350,76 @@ public sealed class QuickAddTests : IDisposable
 
         Assert.Equal(("Sindri isn't running. Start it, then add the todo.", false), (shell.Toast.Text, shell.Toast.HasUndo));
     }
+
+    private async Task<(Task Save, TaskCompletionSource Gate)> SaveClosedMidAdd(QuickAddViewModel box, string text)
+    {
+        var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _server.CommandGate = gate;
+        box.Text = text;
+        var save = box.Save(Token);
+        box.Close();
+        await Task.Yield();
+        return (save, gate);
+    }
+
+    [Fact]
+    public async Task Closed_mid_add_then_accepted_raises_Added_once_and_the_box_stays_closed_with_no_error()
+    {
+        var box = Box();
+        var added = new List<QuickAddedEventArgs>();
+        box.Added += (_, e) => added.Add(e);
+        var (save, gate) = await SaveClosedMidAdd(box, "call Sam fri");
+
+        gate.SetResult();
+        await save;
+
+        _ = Assert.Single(added);
+        Assert.Equal((false, string.Empty, false), (box.IsOpen, box.Error, box.IsSaving));
+    }
+
+    [Fact]
+    public async Task Closed_mid_add_then_refused_raises_the_failure_with_the_text_and_reason_and_the_box_shows_nothing()
+    {
+        var box = Box();
+        var failed = new List<QuickAddFailedEventArgs>();
+        box.AddFailed += (_, e) => failed.Add(e);
+        _server.TodoWriteAnswer = RouteAnswer.Problem(HttpStatusCode.BadRequest, "SND-TODO-007", "A todo can't contain hidden or control characters.");
+        var (save, gate) = await SaveClosedMidAdd(box, "bad text fri");
+
+        gate.SetResult();
+        await save;
+
+        var one = Assert.Single(failed);
+        Assert.Equal(("bad text", "A todo can't contain hidden or control characters."), (one.Text, one.Reason));
+        Assert.Equal((false, string.Empty, false), (box.IsOpen, box.Error, box.IsSaving));
+    }
+
+    [Fact]
+    public async Task Reopened_mid_add_the_new_box_shows_nothing_from_the_old_answer()
+    {
+        var box = Box();
+        _server.TodoWriteAnswer = RouteAnswer.Problem(HttpStatusCode.BadRequest, "SND-TODO-007", "Nope.");
+        var (save, gate) = await SaveClosedMidAdd(box, "old");
+        box.Open();
+        box.Text = "new";
+
+        gate.SetResult();
+        await save;
+
+        Assert.Equal((true, "new", string.Empty, false), (box.IsOpen, box.Text, box.Error, box.IsSaving));
+    }
+
+    [Fact]
+    public async Task A_refused_add_after_close_shows_a_toast_without_Undo()
+    {
+        var shell = await Running();
+        shell.QuickAdd.Open();
+        _server.TodoWriteAnswer = RouteAnswer.Problem(HttpStatusCode.BadRequest, "SND-TODO-007", "Nope.");
+        var (save, gate) = await SaveClosedMidAdd(shell.QuickAdd, "call Sam");
+
+        gate.SetResult();
+        await save;
+
+        Assert.Equal(("Couldn't add \"call Sam\": Nope.", false), (shell.Toast.Text, shell.Toast.HasUndo));
+    }
 }

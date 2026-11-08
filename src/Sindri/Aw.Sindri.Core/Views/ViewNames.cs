@@ -54,6 +54,9 @@ public static class ViewNames
     /// <summary>Graph runs, keyed by run id (issue 2258, PR 6), folded from the six 'workflow.run.*' and 'workflow.node.*' events.</summary>
     public const string WorkflowRuns = "workflow-runs";
 
+    /// <summary>The owner's todos (todo spec §4.2): a row per todo, keyed by its id.</summary>
+    public const string Todo = "todo";
+
     /// <summary>Every view that has a table.</summary>
-    public static IReadOnlyList<string> All { get; } = [CodeIndex, Services, Profile, Items, ItemAliases, ItemTimeline, Requests, Decisions, NeedsYou, Jobs, Launches, RecipeStats, ModelHistory, ModelRuns, ProjectAttached, ProjectHidden, WorkflowRuns];
+    public static IReadOnlyList<string> All { get; } = [CodeIndex, Services, Profile, Items, ItemAliases, ItemTimeline, Requests, Decisions, NeedsYou, Jobs, Launches, RecipeStats, ModelHistory, ModelRuns, ProjectAttached, ProjectHidden, WorkflowRuns, Todo];
 }
