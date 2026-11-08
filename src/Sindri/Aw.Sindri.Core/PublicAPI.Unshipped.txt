@@ -25082,3 +25082,4 @@ Aw.Sindri.Core.Graph.Runs.IGraphRunStarter
 Aw.Sindri.Core.Graph.Runs.IGraphRunStarter.Start(Aw.Sindri.Core.Graph.Runs.GraphStartRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Runs.GraphStart!>!>
 Aw.Sindri.Core.Graph.Ids.WorkflowRunId.Occurrence.get -> int
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.LatestOccurrence(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, string! triggerKind, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int?>!>
+Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.Admit(Aw.Sindri.Core.Graph.Runs.WorkflowRun! run, Aw.Sindri.Core.Graph.Runs.GraphConcurrency mode, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Runs.GraphStartKind>!>

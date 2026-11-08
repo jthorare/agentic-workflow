@@ -12,6 +12,16 @@ public interface IWorkflowRunStore
     /// <returns>The stored run, or SND-GRAPH-100 when the id is used (a re-delivered trigger or a catch-up overlap).</returns>
     public ValueTask<Result<WorkflowRun>> Insert(WorkflowRun run, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Decides and records a trigger's run in one write: refuses a used id, then by <paramref name="mode"/> inserts the run as running (nothing else in flight, or 'unlimited'),
+    /// inserts it as queued ('queue' with a run in flight) or inserts nothing ('one-per-workflow' with a run in flight).
+    /// </summary>
+    /// <param name="run">The run, with status running; its id is the primary key.</param>
+    /// <param name="mode">The workflow's concurrency mode.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>What happened, or SND-GRAPH-100 when the id is used.</returns>
+    public ValueTask<Result<GraphStartKind>> Admit(WorkflowRun run, GraphConcurrency mode, CancellationToken cancellationToken);
+
     /// <summary>One run.</summary>
     /// <param name="id">The run.</param>
     /// <param name="cancellationToken">Cancels the read.</param>

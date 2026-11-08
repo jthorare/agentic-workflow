@@ -30,37 +30,23 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
     {
         ArgumentNullException.ThrowIfNull(request);
         var id = WorkflowRunId.Of(request.Slug, request.Revision, request.Occurrence);
-        var busy = false;
-        if (request.Concurrency != GraphConcurrency.Unlimited)
+        var run = new WorkflowRun(id, request.Workflow, request.Revision, request.Trigger, WorkflowRunStatus.Running,
+            Outputs: null, Error: null, ItemId: null, _clock.GetUtcNow(), EndedAt: null);
+        // why: the in-flight check and the insert are one store call, so concurrent triggers cannot both start.
+        var admitted = await _runs.Admit(run, request.Concurrency, cancellationToken).ConfigureAwait(false);
+        if (admitted.IsError)
         {
-            var inFlight = await _runs.InFlight(request.Workflow, cancellationToken).ConfigureAwait(false);
-            if (inFlight.IsError)
-            {
-                return inFlight.Error;
-            }
-
-            // why: the same id in flight is a re-delivered trigger, which the insert below refuses; it is not "another run".
-            busy = inFlight.Value.Any(r => r.Id != id);
+            return admitted.Error;
         }
 
-        if (busy && request.Concurrency == GraphConcurrency.OnePerWorkflow)
+        if (admitted.Value == GraphStartKind.Skipped)
         {
             Skipped(_logger, id.Value, request.Slug.Value);
-            return new GraphStart(GraphStartKind.Skipped, id);
         }
 
-        var queued = busy;
-        var run = new WorkflowRun(id, request.Workflow, request.Revision, request.Trigger, queued ? WorkflowRunStatus.Queued : WorkflowRunStatus.Running,
-            Outputs: null, Error: null, ItemId: null, _clock.GetUtcNow(), EndedAt: null);
-        var inserted = await _runs.Insert(run, cancellationToken).ConfigureAwait(false);
-        if (inserted.IsError)
+        if (admitted.Value != GraphStartKind.Started)
         {
-            return inserted.Error;
-        }
-
-        if (queued)
-        {
-            return new GraphStart(GraphStartKind.Queued, id);
+            return new GraphStart(admitted.Value, id);
         }
 
         var launched = await Launch(run, cancellationToken).ConfigureAwait(false);
