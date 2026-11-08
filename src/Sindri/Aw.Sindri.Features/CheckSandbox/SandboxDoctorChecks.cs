@@ -1,5 +1,6 @@
 using System.Globalization;
 using Aw.Sindri.Core.Doctor;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Plan;
