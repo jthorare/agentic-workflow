@@ -57,6 +57,13 @@ This spec changes none of it.
     the file change. Its last copied line number lives in views.db, so the ledger has every change exactly once,
     including the ones made while serve was down.
 
+- **What the person sees:**
+  - Settings shows one line under its heading: "Last changed by you at 14:02" or "Last changed by <session name>
+    at 14:02". It comes from the newest `settings.changed` and reads "Not changed since setup" when there is none.
+  - A save that hits the busy lock shows "Another change is being saved. Try again in a moment." with a **Try again**
+    button. The code (`SND-SETTINGS-409`) appears only in the CLI's `--json` output and the logs.
+  - A broken file shows "Your settings file has a mistake: <problem>", with the file path and the line.
+
 ## 4. Renames
 
 | Today | After |
