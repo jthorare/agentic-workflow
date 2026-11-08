@@ -7,7 +7,7 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Todo;
 
-/// <summary>What the Todo panel tests share: the API's list golden as the served list, a clock at 2026-01-01 (the golden's "now", Thursday), and edits of the golden as JSON.</summary>
+/// <summary>What the Todo panel tests share: the app's todo sample (TodoSample) as the served list, a clock at 2026-01-01 (the golden's "now", Thursday), and edits of the golden as JSON.</summary>
 internal sealed class TodoFixture
 {
     internal static readonly Uri Url = new("http://127.0.0.1:7410/");
@@ -16,7 +16,7 @@ internal sealed class TodoFixture
 
     internal FakeTimeProvider Clock { get; } = new(DateTimeOffset.Parse("2026-01-01T00:00:00Z", CultureInfo.InvariantCulture));
 
-    internal static JsonNode Golden() => JsonNode.Parse(GoldenFiles.Api("todos", "list"))!; // why: the golden is a JSON document
+    internal static JsonNode Golden() => JsonNode.Parse(TodoSample.List)!; // why: the sample is a JSON document
 
     internal void Serve(JsonNode list) => Server.TodosAnswer = new RouteAnswer(HttpStatusCode.OK, list.ToJsonString());
 

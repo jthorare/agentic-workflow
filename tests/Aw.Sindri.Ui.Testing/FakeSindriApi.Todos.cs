@@ -10,8 +10,8 @@ internal sealed partial class FakeSindriApi
     private readonly List<TodoWriteSent> _todoWrites = [];
     private int _todosCalls;
 
-    /// <summary>GET /sindri/todos's answer for every state: the "list" golden by default.</summary>
-    public RouteAnswer TodosAnswer { get; set; } = RouteAnswer.Api("todos", "list");
+    /// <summary>GET /sindri/todos's answer for every state: <see cref="TodoSample.List"/> by default.</summary>
+    public RouteAnswer TodosAnswer { get; set; } = new(System.Net.HttpStatusCode.OK, TodoSample.List);
 
     /// <summary>The answer of every todo write; null answers an accepted write for the todo, one version on.</summary>
     public RouteAnswer? TodoWriteAnswer { get; set; }
