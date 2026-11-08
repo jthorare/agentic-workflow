@@ -57,7 +57,6 @@ public sealed class IssueAppChallengeTests
     [InlineData("approve workflow.step@9ab2d40c1e77")]
     [InlineData("approve-all")]
     [InlineData("approve profile")]   // the profile form went with the approval
-    [InlineData("approve profile abc123")]
     [InlineData("stop")]
     [InlineData("")]
     public async Task Any_other_action_is_refused_as_a_human_decision(string action)

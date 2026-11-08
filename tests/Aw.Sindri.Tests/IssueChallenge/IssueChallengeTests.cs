@@ -76,23 +76,6 @@ public sealed class IssueChallengeTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Profile_approval_gets_a_challenge_bound_to_the_live_hash()
-    {
-        await using var r = new RegistryHarness();
-        _ = await r.H.HoldLease();
-        r.H.Profiles.Live = SliceHarness.Profile();
-        var hash = r.H.Profiles.Live.Value.Hash;
-
-        var issued = (await r.Issue($"approve profile {hash.Abbreviated}")).Value;
-        var other = await r.Issue("approve profile 000000");
-
-        Assert.Equal("approve profile " + hash.Abbreviated, issued.Action);
-        Assert.Null(issued.Approve);
-        Assert.Null(issued.Revoke);
-        Assert.Equal(SindriErrors.ProfileHashMismatch.Code, other.Error.Code);
-    }
-
-    [Fact, Trait("Lane", "unit")]
     public async Task Revoke_by_a_hash_prefix_names_the_twelve_digit_form()
     {
         await using var r = new RegistryHarness();

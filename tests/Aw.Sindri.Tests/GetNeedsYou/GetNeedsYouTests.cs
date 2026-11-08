@@ -1,5 +1,4 @@
 using Aw.Kernel;
-using Aw.Kernel.Ids;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
@@ -115,7 +114,8 @@ public sealed class GetNeedsYouTests
         _q.Views.Slice.Profiles.Live = SetupFactsRigProfile();
         using var entered = _q.Human();
 
-        Assert.Empty((await Get()).Rows);
+        // the live profile names a repo and no consent is recorded, so the "connect your agents" row stands
+        Assert.Equal(["setup:mcp"], [.. (await Get()).Rows.Select(static r => r.Id.Value)]);
     }
 
     [Fact]
@@ -130,46 +130,6 @@ public sealed class GetNeedsYouTests
     }
 
     private static Result<Core.Profile.LoadedProfile> SetupFactsRigProfile() => SetupSources.SetupFactsRig.ProfileWithRepos();
-
-    [Fact]
-    public async Task A_live_profile_that_drifted_from_the_approved_one_is_the_profile_drift_row_without_waiting_for_a_check()
-    {
-        // B-21: the pill reads the live profile at once; the row must not wait for the next profile.checked.
-        _ = await _q.Views.Slice.Profiles.Save(SliceHarness.Profile(), RequestQueryHarness.Token);
-        _q.Views.Slice.Profiles.Live = SetupFactsRigProfile();
-        using var entered = _q.Human();
-
-        var row = Assert.Single((await Get()).Rows);
-
-        Expect.Equal(("profile:drift", NeedsYouKind.Profile), (row.Id.Value, row.Kind));
-    }
-
-    [Fact]
-    public async Task A_stored_profile_drift_row_beats_the_live_one_with_its_id()
-    {
-        var approved = SliceHarness.Profile();
-        var live = SetupFactsRigProfile();
-        _ = await _q.Views.Slice.Profiles.Save(approved, RequestQueryHarness.Token);
-        _q.Views.Slice.Profiles.Live = live;
-        await _q.Views.Fold(EventTypes.ProfileChecked, new ProfileChecked(_q.Views.Slice.Ids.New<CommandId>(), approved.Hash, live.Value.Hash, Drifted: true, ["stored.path"], []));
-        using var entered = _q.Human();
-
-        var row = Assert.Single((await Get()).Rows);
-
-        Expect.Equal(("profile:drift", "1 key path changed: stored.path"), (row.Id.Value, row.Reason));
-    }
-
-    [Fact]
-    public async Task A_live_profile_equal_to_the_approved_one_has_no_profile_drift_row()
-    {
-        var profile = SetupFactsRigProfile();
-        _ = await _q.Views.Slice.Profiles.Save(profile.Value, RequestQueryHarness.Token);
-        _q.Views.Slice.Profiles.Live = profile;
-        using var entered = _q.Human();
-
-        // not Assert.Empty: this approved profile names repos, so the unrelated "turn on Sindri for your repos" setup row stands
-        Assert.DoesNotContain((await Get()).Rows, r => r.Id.Value == "profile:drift");
-    }
 
     [Fact]
     public async Task GetNeedsYou_shows_the_setup_recipes_row_and_the_own_approval_rows_to_a_human_and_to_a_session()
@@ -207,16 +167,15 @@ public sealed class GetNeedsYouTests
     [Fact]
     public async Task GetNeedsYou_drops_only_the_recipe_rows_when_the_plan_cannot_be_read()
     {
-        await _q.Drift();
         _shipped = new UnreadableShippedRecipes(throws: false);
         using var entered = _q.Human();
         _ = await _q.Views.Slice.Profiles.Save(SliceHarness.Profile(), RequestQueryHarness.Token);
 
-        Expect.Sequence(["profile:drift"], [.. (await Get()).Rows.Select(static r => r.Id.Value)]);
+        Assert.Empty((await Get()).Rows);
 
         _shipped = new UnreadableShippedRecipes(throws: true);
 
-        Expect.Sequence(["profile:drift"], [.. (await Get()).Rows.Select(static r => r.Id.Value)]);
+        Assert.Empty((await Get()).Rows);
     }
 
     [Fact]
@@ -231,7 +190,6 @@ public sealed class GetNeedsYouTests
     [Fact]
     public async Task GetNeedsYou_lists_rows_by_urgency_then_since_then_id()
     {
-        await _q.Drift();
         await _q.Ran("heartbeat", ServiceOutcome.Failed, "SND-SCHED-001");
         var first = await _q.File("first");
         var second = await _q.File("second");
@@ -240,8 +198,8 @@ public sealed class GetNeedsYouTests
         var result = await Service().Handle(A.GetNeedsYouRequest().Build(), RequestQueryHarness.Token);
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
-        Expect.Sequence(["decision:" + first.Value, "decision:" + second.Value, "failure:service:heartbeat", "profile:drift"], [.. result.Value.Rows.Select(r => r.Id.Value)]);
-        Expect.Sequence([NeedsYouKind.Decision, NeedsYouKind.Decision, NeedsYouKind.Failure, NeedsYouKind.Profile], [.. result.Value.Rows.Select(r => r.Kind)]);
+        Expect.Sequence(["decision:" + first.Value, "decision:" + second.Value, "failure:service:heartbeat"], [.. result.Value.Rows.Select(r => r.Id.Value)]);
+        Expect.Sequence([NeedsYouKind.Decision, NeedsYouKind.Decision, NeedsYouKind.Failure], [.. result.Value.Rows.Select(r => r.Kind)]);
         Assert.Null(result.Value.Empty);
         Expect.Equal(_q.Views.Progress.Current.AsOf, result.Value.AsOf);
     }
@@ -271,7 +229,7 @@ public sealed class GetNeedsYouTests
 
         var rows = (await Get()).Rows;
 
-        Expect.Equal(3, rows.Count);
+        Expect.Equal(2, rows.Count);
         Assert.Contains(rows, r => r.Repo?.Value == "beta");
         Assert.Contains(rows, r => r.Kind == NeedsYouKind.Failure);
     }
@@ -317,7 +275,6 @@ public sealed class GetNeedsYouTests
     [Fact]
     public async Task Every_cli_is_a_filled_CliForm()
     {
-        await _q.Drift();
         await _q.Ran("heartbeat", ServiceOutcome.Failed);
         _ = await _q.File("one");
         using var entered = _q.Human();

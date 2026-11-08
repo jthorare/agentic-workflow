@@ -10,7 +10,7 @@ using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.OnboardRepo;
 
-/// <summary>The OnboardRepo job (setup-once spec §5.1): the start checks the approved snapshot (SND-SETUP-007, 004) before any job exists, the work records 'repo.onboarded' for the approved hash, and nothing here approves a profile.</summary>
+/// <summary>The OnboardRepo job (setup-once spec §5.1): the start checks the live profile (SND-SETUP-004) before any job exists, the work records 'repo.onboarded' for the approved hash, and nothing here approves a profile.</summary>
 [Lane(TestLane.Unit)]
 public sealed class OnboardRepoJobTests : IDisposable
 {
@@ -55,16 +55,6 @@ public sealed class OnboardRepoJobTests : IDisposable
         var admitted = await Admission().Admit(new OnboardRepoRequest("/work/elsewhere"), Token);
 
         Assert.Equal("SND-SETUP-004", admitted.Error.Code);
-    }
-
-    [Fact]
-    public async Task No_approved_profile_is_SND_SETUP_007_even_when_the_live_file_names_the_repo()
-    {
-        _slice.Profiles.Live = new LoadedProfile(new SindriProfile(1, "thor", Repos: [new RepoEntry("demo", "/work/demo")]), _hash, "/home/profile.yaml");
-
-        var admitted = await Admission().Admit(new OnboardRepoRequest("/work/demo"), Token);
-
-        Assert.Equal("SND-SETUP-007", admitted.Error.Code);
     }
 
     [Fact]

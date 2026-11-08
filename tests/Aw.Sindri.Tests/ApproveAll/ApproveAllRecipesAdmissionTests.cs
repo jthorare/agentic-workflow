@@ -35,11 +35,11 @@ public sealed class ApproveAllRecipesAdmissionTests : IDisposable
     private async Task Approved() => _ = await _slice.Profiles.Save(SliceHarness.Profile(), Token);
 
     [Fact]
-    public async Task Before_a_profile_is_approved_the_start_is_refused_and_the_hold_is_not_burned()
+    public async Task With_no_profile_the_start_is_refused_and_the_hold_is_not_burned()
     {
         var admitted = await Admission().Admit(new ApproveAllRecipesRequest(), Token);
 
-        Assert.Equal("SND-SETUP-007", admitted.Error.Code);
+        Assert.Equal("SND-PROFILE-001", admitted.Error.Code);
     }
 
     [Fact]
