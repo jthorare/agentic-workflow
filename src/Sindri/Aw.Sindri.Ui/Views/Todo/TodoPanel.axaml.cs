@@ -6,13 +6,16 @@ using Aw.Sindri.Ui.ViewModels.Todo;
 namespace Aw.Sindri.Ui.Views.Todo;
 
 /// <summary>
-/// The Todo panel on Home (todo spec §3.1): buttons for Show all, Show less and Show done, and the expanded list's height, capped at half
-/// the window's (D13), which follows the window.
+/// The Todo panel on Home (todo spec §3.1): buttons for Show all, Show less and Show done, and the panel's heights: fixed while collapsed, capped at half
+/// the window's while expanded (D13), which follows the window.
 /// </summary>
 #pragma warning disable MA0182 // why: HomePage.axaml places it, which the analyzer cannot see
 [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
 internal sealed partial class TodoPanel : UserControl
 {
+    private const int CollapsedSlots = 5 + 1;   // five rows and the Show all slot
+    private const double DefaultRowHeight = 36;   // Size.Row, should the resource be missing
+
     private IDisposable? _height;
 
     public TodoPanel()
@@ -27,6 +30,7 @@ internal sealed partial class TodoPanel : UserControl
     {
         base.OnAttachedToVisualTree(e);
         _height = TopLevel.GetTopLevel(this)?.GetObservable(TopLevel.ClientSizeProperty).Subscribe(new HeightObserver(this));
+        FixCollapsedHeight();
         Cap();
     }
 
@@ -38,12 +42,24 @@ internal sealed partial class TodoPanel : UserControl
         base.OnDetachedFromVisualTree(e);
     }
 
-    // Half the page height: the window's client height, so the list scrolls inside the panel instead of pushing Needs you off the page.
+    // The whole expanded panel (header, list, foot) is capped at half the page height: the window's client height. The list scrolls
+    // inside what the header and the foot leave, so it never pushes Needs you off the page.
     private void Cap()
     {
-        if (this.FindControl<ScrollViewer>("TodoScroll") is { } scroll && TopLevel.GetTopLevel(this) is { } top)
+        if (this.FindControl<Border>("TodoPanelFrame") is { } frame && TopLevel.GetTopLevel(this) is { } top)
         {
-            scroll.MaxHeight = top.ClientSize.Height / 2;
+            frame.MaxHeight = top.ClientSize.Height / 2;
+        }
+    }
+
+    // The collapsed body is five row slots and the Show all slot tall in every state (D13): one row height, Size.Row, the one the
+    // skeleton bars and the rows already use.
+    private void FixCollapsedHeight()
+    {
+        var row = this.TryFindResource("Size.Row", ActualThemeVariant, out var found) && found is double height ? height : DefaultRowHeight;
+        if (this.FindControl<Grid>("TodoCollapsed") is { } collapsed)
+        {
+            collapsed.Height = row * CollapsedSlots;
         }
     }
 

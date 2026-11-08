@@ -251,7 +251,7 @@ public sealed class TodoPanelHomeTests : IDisposable
     });
 
     [Fact]
-    public Task Show_all_expands_in_place_to_the_groups_with_their_own_scroll_capped_at_half_the_window() => OnUi(async () =>
+    public Task Show_all_expands_in_place_to_the_groups_with_their_own_scroll_the_panel_capped_at_half_the_window() => OnUi(async () =>
     {
         Serve(Eight());
         var (window, shell) = await Connected();
@@ -264,9 +264,7 @@ public sealed class TodoPanelHomeTests : IDisposable
         Assert.False(Shown(Panel(window), "TodoShowAll"));
         Assert.True(Shown(Panel(window), "TodoShowLess"));
         Assert.True(Shown(Panel(window), "TodoDoneToggle"));
-        var scroll = Named<ScrollViewer>(window, "TodoScroll");
-        Assert.True(scroll.MaxHeight <= window.ClientSize.Height / 2, "the list is capped at half the page height");
-        Assert.True(scroll.Bounds.Height <= window.ClientSize.Height / 2);
+        Assert.True(Panel(window).Bounds.Height <= window.ClientSize.Height / 2, "the whole panel (header, list and foot) is capped at half the page height");
     });
 
     [Fact]

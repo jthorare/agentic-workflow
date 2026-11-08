@@ -23,7 +23,9 @@
        window's height, TodoPanel.axaml.cs), the Show done toggle and Show less at the foot. Loading draws three skeleton rows as tall
        as a loaded row; an empty list says so. -->
   <Border x:Name="TodoPanelFrame" Classes="panel" AutomationProperties.Name="{Binding Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
-    <StackPanel>
+    <!-- Header on top, the body (collapsed or expanded) in the rest: the frame is capped at half the window (TodoPanel.axaml.cs), so
+         the expanded list's own scroll gets what the header and the foot leave. -->
+    <Grid RowDefinitions="Auto,*">
       <Border Classes="phead">
         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
           <TextBlock x:Name="TodoTitle" Classes="body-strong" Text="{Binding Title}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Title}" />
@@ -40,53 +42,60 @@
         </Grid>
       </Border>
 
-      <TextBlock x:Name="TodoError" Classes="caption" Text="{Binding Error}" Margin="16,6" TextWrapping="Wrap"
-                 Foreground="{DynamicResource Brush.Attention}" IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                 AutomationProperties.Name="{Binding Error}" />
+      <!-- Collapsed: one body of a fixed height in every state (spec D13, §3.4): five row slots on top, the Show all slot below
+           (Show all on the left, the error line on the right). The rows, the skeleton and the empty sentence draw in the slots;
+           none of them changes the height, so Needs you below never moves. TodoPanel.axaml.cs sets the height from Size.Row. -->
+      <Grid x:Name="TodoCollapsed" Grid.Row="1" RowDefinitions="*,Auto" ClipToBounds="True" IsVisible="{Binding !IsExpanded}">
+        <StackPanel>
+          <!-- First load: three skeleton rows, each as tall as a loaded row (the same item-row), no shimmer. -->
+          <StackPanel x:Name="TodoSkeleton" IsVisible="{Binding IsLoading}" AutomationProperties.AccessibilityView="Raw">
+            <Border Classes="item-row">
+              <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                <Border Classes="skeleton" Width="20" Height="20" Margin="0,0,12,0" />
+                <Border Grid.Column="1" Classes="skeleton" Width="300" />
+                <Border Grid.Column="2" Classes="skeleton" Width="64" />
+              </Grid>
+            </Border>
+            <Border Classes="item-row">
+              <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                <Border Classes="skeleton" Width="20" Height="20" Margin="0,0,12,0" />
+                <Border Grid.Column="1" Classes="skeleton" Width="220" />
+                <Border Grid.Column="2" Classes="skeleton" Width="48" />
+              </Grid>
+            </Border>
+            <Border Classes="item-row">
+              <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                <Border Classes="skeleton" Width="20" Height="20" Margin="0,0,12,0" />
+                <Border Grid.Column="1" Classes="skeleton" Width="260" />
+                <Border Grid.Column="2" Classes="skeleton" Width="56" />
+              </Grid>
+            </Border>
+          </StackPanel>
 
-      <!-- First load: three skeleton rows, each as tall as a loaded row (the same item-row), no shimmer. -->
-      <StackPanel x:Name="TodoSkeleton" IsVisible="{Binding IsLoading}" AutomationProperties.AccessibilityView="Raw">
-        <Border Classes="item-row">
-          <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
-            <Border Classes="skeleton" Width="20" Height="20" Margin="0,0,12,0" />
-            <Border Grid.Column="1" Classes="skeleton" Width="300" />
-            <Border Grid.Column="2" Classes="skeleton" Width="64" />
-          </Grid>
-        </Border>
-        <Border Classes="item-row">
-          <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
-            <Border Classes="skeleton" Width="20" Height="20" Margin="0,0,12,0" />
-            <Border Grid.Column="1" Classes="skeleton" Width="220" />
-            <Border Grid.Column="2" Classes="skeleton" Width="48" />
-          </Grid>
-        </Border>
-        <Border Classes="item-row">
-          <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
-            <Border Classes="skeleton" Width="20" Height="20" Margin="0,0,12,0" />
-            <Border Grid.Column="1" Classes="skeleton" Width="260" />
-            <Border Grid.Column="2" Classes="skeleton" Width="56" />
-          </Grid>
-        </Border>
-      </StackPanel>
+          <TextBlock x:Name="TodoEmpty" Classes="caption quiet" Text="{Binding EmptyText}" Margin="16,12" HorizontalAlignment="Left" TextAlignment="Left"
+                     IsVisible="{Binding EmptyText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding EmptyText}" />
 
-      <TextBlock x:Name="TodoEmpty" Classes="caption quiet" Text="{Binding EmptyText}" Margin="16,12" HorizontalAlignment="Left" TextAlignment="Left"
-                 IsVisible="{Binding EmptyText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding EmptyText}" />
-
-      <!-- Collapsed: the first five rows. -->
-      <ItemsControl x:Name="TodoRows" ItemsSource="{Binding Rows}" IsVisible="{Binding !IsExpanded}">
-        <ItemsControl.ItemTemplate>
-          <DataTemplate x:DataType="todo:TodoRowViewModel">
-            <tv:TodoRow />
-          </DataTemplate>
-        </ItemsControl.ItemTemplate>
-      </ItemsControl>
-      <Button x:Name="TodoShowAll" HorizontalAlignment="Left" Classes="copy" Click="OnShowAll" IsVisible="{Binding ShowsShowAll}" Margin="16,6"
-              AutomationProperties.Name="{Binding ShowAllText}">
-        <TextBlock x:Name="TodoShowAllText" Classes="caption" Text="{Binding ShowAllText}" AutomationProperties.AccessibilityView="Raw" />
-      </Button>
+          <ItemsControl x:Name="TodoRows" ItemsSource="{Binding Rows}" IsVisible="{Binding !IsExpanded}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="todo:TodoRowViewModel">
+                <tv:TodoRow />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+        <Grid x:Name="TodoShowAllSlot" Grid.Row="1" ColumnDefinitions="Auto,*" Height="{StaticResource Size.Row}">
+          <Button x:Name="TodoShowAll" HorizontalAlignment="Left" VerticalAlignment="Center" Classes="copy" Click="OnShowAll" IsVisible="{Binding ShowsShowAll}" Margin="16,0"
+                  AutomationProperties.Name="{Binding ShowAllText}">
+            <TextBlock x:Name="TodoShowAllText" Classes="caption" Text="{Binding ShowAllText}" AutomationProperties.AccessibilityView="Raw" />
+          </Button>
+          <TextBlock x:Name="TodoError" Grid.Column="1" Classes="caption" Text="{Binding Error}" Margin="16,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                     TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.Attention}" ToolTip.Tip="{Binding Error}"
+                     IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Error}" />
+        </Grid>
+      </Grid>
 
       <!-- Expanded: the groups in their own scroll, then the foot. -->
-      <StackPanel x:Name="TodoExpanded" IsVisible="{Binding IsExpanded}">
+      <Grid x:Name="TodoExpanded" Grid.Row="1" RowDefinitions="*,Auto" IsVisible="{Binding IsExpanded}">
         <ScrollViewer x:Name="TodoScroll" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
           <StackPanel>
             <ItemsControl x:Name="TodoGroups" ItemsSource="{Binding Groups}">
@@ -115,12 +124,15 @@
                        IsVisible="{Binding DoneEmptyText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding DoneEmptyText}" />
           </StackPanel>
         </ScrollViewer>
-        <Border BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0">
+        <Border Grid.Row="1" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0">
           <Grid ColumnDefinitions="Auto,*,Auto" Margin="8,4">
             <ToggleButton x:Name="TodoDoneToggle" Classes="done-toggle" Click="OnToggleDone" IsChecked="{Binding ShowsDone, Mode=OneWay}"
                           AutomationProperties.Name="{Binding DoneToggleName}">
               <TextBlock x:Name="TodoDoneToggleText" Classes="caption" Text="{Binding DoneToggleText}" AutomationProperties.AccessibilityView="Raw" />
             </ToggleButton>
+            <TextBlock x:Name="TodoErrorExpanded" Grid.Column="1" Classes="caption" Text="{Binding Error}" Margin="12,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.Attention}" ToolTip.Tip="{Binding Error}"
+                       IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Error}" />
             <Button x:Name="TodoShowLess" Grid.Column="2" Classes="copy" Click="OnShowLess" AutomationProperties.Name="{Binding ShowLessText}">
               <StackPanel Orientation="Horizontal" Spacing="6">
                 <TextBlock Classes="caption" Text="{Binding ShowLessText}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
@@ -131,10 +143,10 @@
             </Button>
           </Grid>
         </Border>
-      </StackPanel>
+      </Grid>
 
       <!-- The "From elsewhere" line (2 PRs waiting on your review · 1 Linear issue assigned · 3 need you, below) goes here: its own
            control, made in its own slice. Nothing draws here yet. -->
-    </StackPanel>
+    </Grid>
   </Border>
 </UserControl>
