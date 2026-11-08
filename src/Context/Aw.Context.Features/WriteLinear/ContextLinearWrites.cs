@@ -47,7 +47,7 @@ internal sealed class ContextLinearWrites(ILinearWrites writes, ILinearLiveReads
 
         var written = (draft.AssigneeId is null ? LinearWrittenFields.None : LinearWrittenFields.Assignee) | (draft.StateId is null ? LinearWrittenFields.None : LinearWrittenFields.State);
         var sent = await writes.CreateIssue(settings.Value, draft, clientId, cancellationToken).ConfigureAwait(false);
-        return await Finish(scope, sent, written, () => ReadIssue(settings.Value, clientId.Value, cancellationToken), cancellationToken).ConfigureAwait(false);
+        return await Finish(scope, sent, written, () => ReadIssue(settings.Value, clientId.Value, cancellationToken), cancellationToken, retriedWithClientId: true).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -84,7 +84,7 @@ internal sealed class ContextLinearWrites(ILinearWrites writes, ILinearLiveReads
         {
             var comment = await reads.Comment(settings, ExternalId.From(clientId.Value), cancellationToken).ConfigureAwait(false);
             return comment.IsSuccess && comment.Value is { } found && found.IssueId == issue.Id ? issue : null;
-        }, cancellationToken).ConfigureAwait(false);
+        }, cancellationToken, retriedWithClientId: true).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -201,21 +201,26 @@ internal sealed class ContextLinearWrites(ILinearWrites writes, ILinearLiveReads
         return read.IsSuccess ? read.Value : null;
     }
 
-    private async ValueTask<Result<LinearWriteOutcome>> Finish(ContextScope scope, Result<LinearIssueView> sent, LinearWrittenFields written, Func<ValueTask<LinearIssueView?>> reread, CancellationToken cancellationToken)
+    private async ValueTask<Result<LinearWriteOutcome>> Finish(ContextScope scope, Result<LinearIssueView> sent, LinearWrittenFields written, Func<ValueTask<LinearIssueView?>> reread, CancellationToken cancellationToken, bool retriedWithClientId = false)
     {
         if (sent.IsSuccess)
         {
             return await Store(scope, sent.Value, written, foundOnReread: false, cancellationToken).ConfigureAwait(false);
         }
 
-        if (sent.Error.Code != LinearHubErrors.NoAnswer.Code)
+        // why: a retry of a write with a client id whose first send landed is refused by Linear for the repeated id (SND-LINEAR-015): the same re-read finds it, and when it isn't there the refusal stands (#2223)
+        var noAnswer = sent.Error.Code == LinearHubErrors.NoAnswer.Code;
+        if (!noAnswer && !(retriedWithClientId && sent.Error.Code == LinearHubErrors.Rejected.Code))
         {
             return sent.Error;
         }
 
-        return await reread().ConfigureAwait(false) is { } found
-            ? await Store(scope, found, written, foundOnReread: true, cancellationToken).ConfigureAwait(false)
-            : new LinearWriteUnknown();
+        if (await reread().ConfigureAwait(false) is not { } found)
+        {
+            return noAnswer ? new LinearWriteUnknown() : sent.Error;
+        }
+
+        return await Store(scope, found, written, foundOnReread: true, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<LinearWriteOutcome>> Store(ContextScope scope, LinearIssueView issue, LinearWrittenFields written, bool foundOnReread, CancellationToken cancellationToken) =>
