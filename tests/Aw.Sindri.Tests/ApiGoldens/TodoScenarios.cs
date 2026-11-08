@@ -13,7 +13,7 @@ internal static class TodoScenarios
     private static readonly string[] _markSlugs = ["todos-done", "todos-reopen", "todos-remove", "todos-restore"];
 
     /// <summary>The (slug, scenario) pairs of this class.</summary>
-    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted")];
+    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-id", "show"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted")];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
     public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario));
@@ -43,6 +43,11 @@ internal static class TodoScenarios
             return await Mark(host, human, slug, scenario, ct);
         }
 
+        if (slug == "todos-id")
+        {
+            return await Show(host, human, ct);
+        }
+
         var cert = await Add(host, human, """{"text":"renew the cert","due":"2025-12-30","clientId":"c-1"}""", string.Empty, ct);
         var offsite = await Add(host, human, """{"text":"reply to Sam","due":"2026-01-02","clientId":"c-2"}""", string.Empty, ct);
         _ = await Add(host, human, """{"text":"rotate the staging key","due":"2025-12-31","links":["acme/api#12","ENG-12"],"clientId":"c-3"}""", string.Empty, ct);
@@ -56,6 +61,17 @@ internal static class TodoScenarios
         _ = await host.Http.Ask(Post($"/sindri/todos/{room}/remove", "{}", human));
         await ViewScenarios.CatchUp(host, ct);
         return (await host.Http.Ask(Get("/sindri/todos?state=all", human))).Body;
+    }
+
+    // GET /sindri/todos/{id} for a todo with two links and an open both-places conflict (#2355): the answer must be the list's TodoItem shape, links described, no internal fields
+    private static async Task<string> Show(GoldenHost host, (string Name, string Value)[] human, CancellationToken ct)
+    {
+        var made = await Add(host, human, """{"text":"rotate the staging key","due":"2025-12-31","links":["acme/api#12","ENG-12"],"clientId":"c-1"}""", string.Empty, ct);
+        var sindri = new Core.Events.TodoSide("rotate the staging key", new DateOnly(2025, 12, 31), ["acme/api#12", "ENG-12"], Done: false, Removed: false);
+        var obsidian = sindri with { Text = "rotate the prod key" };
+        await ViewScenarios.Append(host, Core.Events.EventTypes.TodoConflicted, new Core.Events.TodoConflicted(Core.Ids.TodoId.From(made), sindri, obsidian, NoteHash: "ab12"), "todo.conflicted:golden", ct);
+        await ViewScenarios.CatchUp(host, ct);
+        return (await host.Http.Ask(Get($"/sindri/todos/{made}", human))).Body;
     }
 
     // puts a todo into the state the verb needs (reopen: done, restore: removed), then posts the verb with the request file's bytes; a done or remove starts from the open todo at version 1, the others from version 2

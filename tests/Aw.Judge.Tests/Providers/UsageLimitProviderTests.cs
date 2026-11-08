@@ -223,14 +223,14 @@ public sealed class UsageLimitProviderTests
         Assert.Equal(new ProviderUnavailable("timeout"), await Decide("codex"));
     }
 
-    // ---- Cursor has no pattern yet ----
+    // ---- Cursor also reads the shared wording ----
 
     [Fact]
-    public async Task Cursor_an_error_envelope_is_never_flagged_until_its_pattern_is_captured()
+    public async Task Cursor_an_error_envelope_with_the_shared_wording_is_a_limit()
     {
         Install("cursor-agent", ClaudeEnvelope(isError: true, UsageLimitStrings.Claude[0]));
 
-        Assert.Equal(new ProviderErrored("cli-reported-error"), await Decide("cursor-agent"));
+        Assert.True(Assert.IsType<ProviderErrored>(await Decide("cursor-agent")).UsageLimit);
     }
 
     // ---- Usage ----
@@ -332,6 +332,54 @@ public sealed class UsageLimitProviderTests
         _ = await new ClaudeCliProvider(_runner) { Options = ClaudeCliOptions.Adjudicator }.Decide(Questions.Text, Questions.Input, Questions.Budget, TestContext.Current.CancellationToken);
 
         Assert.NotNull(Assert.Single(_runner.Calls).Request.InheritOnly);
+    }
+
+    // ---- Cursor wording stays with Cursor ----
+
+    [Theory]
+    [InlineData("You've reached your usage limit. Upgrade to Pro+.")]
+    [InlineData("You've run out of premium requests.")]
+    public async Task Cursor_a_non_zero_exit_with_its_wording_on_standard_error_is_a_limit(string message)
+    {
+        Install("cursor-agent", new FakeProgram { ExitCode = 1, StandardError = message });
+
+        var result = Assert.IsType<ProviderErrored>(await Decide("cursor-agent"));
+
+        Assert.True(result.UsageLimit);
+        Assert.Equal("exit-1", result.ReasonCode);
+    }
+
+    [Fact]
+    public async Task Cursor_an_error_envelope_with_its_wording_is_a_limit_with_the_old_reason()
+    {
+        Install("cursor-agent", ClaudeEnvelope(isError: true, UsageLimitStrings.Cursor[1]));
+
+        var result = Assert.IsType<ProviderErrored>(await Decide("cursor-agent"));
+
+        Assert.True(result.UsageLimit);
+        Assert.Equal("cli-reported-error", result.ReasonCode);
+    }
+
+    [Theory]
+    [InlineData("You have exceeded the rate limit")]
+    [InlineData("You've reached the context window limit")]
+    public async Task Cursor_a_rate_or_context_limit_is_not_a_usage_limit(string message)
+    {
+        Install("cursor-agent", ClaudeEnvelope(isError: true, message));
+
+        Assert.Equal(new ProviderErrored("cli-reported-error"), await Decide("cursor-agent"));
+    }
+
+    [Theory]
+    [InlineData("claude", "You've reached your usage limit.")]
+    [InlineData("codex", "You've reached your usage limit.")]
+    [InlineData("claude", "You have exceeded the rate limit")]
+    [InlineData("codex", "You've reached the context window limit")]
+    public async Task Claude_and_codex_do_not_read_cursor_wording(string binary, string message)
+    {
+        Install(binary, new FakeProgram { ExitCode = 1, StandardError = message });
+
+        Assert.Equal(new ProviderErrored("exit-1"), await Decide(binary));
     }
 
     // ---- helpers ----

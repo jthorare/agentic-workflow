@@ -7,7 +7,7 @@ namespace Aw.Evidence.Tests.Stack;
 public sealed class ProvenanceCheckTests
 {
     private static async Task<ProvenanceFinding> Check(FakeProvenanceQuery query, SeedPolicy? policy = null) =>
-        await ProvenanceCheck.RunAsync(query, policy ?? SeedPolicy.Default, CancellationToken.None);
+        await ProvenanceCheck.RunAsync(query, policy ?? SeedPolicy.Default, database: null, CancellationToken.None);
 
     [Fact, Trait("Lane", "unit")]
     public async Task Only_seed_rows_on_seed_domains_are_seeded()
