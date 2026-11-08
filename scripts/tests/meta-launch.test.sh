@@ -39,7 +39,8 @@ golden_transcript() {
     printf '#!/usr/bin/env bash\nexec sleep 600\n' > "$G/claude-noop"
     printf '#!/usr/bin/env bash\necho "$*" >> "$CALLS.meta"\n' > "$G/aw-meta"
     for o in open xdg-open; do printf '#!/usr/bin/env bash\nexit 0\n' > "$G/shim/$o"; chmod +x "$G/shim/$o"; done   # never the real Warp
-    chmod +x "$G/shim/tmux" "$G/claude" "$G/claude-noop" "$G/aw-meta"
+    printf '#!/usr/bin/env bash\nexec bash -c "$2"\n' > "$G/shell"   # stands in for the user's shell ($SHELL -ic '<agent>'): a real interactive bash with no terminal prints job-control noise, which is not what the golden is about
+    chmod +x "$G/shim/tmux" "$G/claude" "$G/claude-noop" "$G/aw-meta" "$G/shell"
     export PATH="$G/shim:$PATH" AW_META_BIN="$G/aw-meta" AW_META_NO_SHELL=1 AW_META_CLAUDE="$G/claude-noop"
     local cfg="$AW_STATE_DIR/meta/team.json"
     jq -n --arg r "$G/repo" --arg p "$G/prompts" '{team:"t1", repo:$r, prompts:$p, metaLane:"meta", lanes:["api","ui"]}' > "$cfg"
@@ -54,7 +55,7 @@ golden_transcript() {
     echo "== tmux calls"; cat "$G/tmux-calls"
     tmux kill-server 2> /dev/null; sleep 0.3
     find "$AW_STATE_DIR/meta/lane-sessions" -type f -delete
-    rm -f "$CALLS.meta"; export AW_META_CLAUDE="$G/claude"
+    rm -f "$CALLS.meta"; export AW_META_CLAUDE="$G/claude" SHELL="$G/shell"
     echo "== lane api, fresh"; bash "$S/meta-lane.sh" t1 api; cat "$CALLS"; : > "$CALLS"
     touch "$HOME/.claude/projects/p/$(cat "$AW_STATE_DIR/meta/lane-sessions/api").jsonl"
     echo "== lane api, resumed"; bash "$S/meta-lane.sh" t1 api; cat "$CALLS"; : > "$CALLS"
@@ -921,7 +922,7 @@ alias_row zsh-function "fakeagent() { command fakeagent --from-alias \"\$@\"; }"
 tmux kill-server 2> /dev/null
 
 # 6. Quoting does not depend on the bash version (#2281): bash 3.2 (macOS) read the backslashes in ${s//\'/...} differently from bash 5.
-eval "$(sed -n '/^shq() {/,/^}/p' "$DIR/meta-launch.sh")"
+eval "$(sed -n '/^shq() {/,/^}/p' "$DIR/launcher-lib.sh")"
 Q1="$(shq "it's")"; Q2="$(shq "$Q1")"
 check "shq of a string holding a single quote: exact bytes" "$Q1" "'it'\\''s'"
 check "shq of shq of it: exact bytes" "$Q2" "''\\''it'\\''\\'\\'''\\''s'\\'''"
