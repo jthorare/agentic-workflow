@@ -51,7 +51,7 @@ public static partial class TodoText
 
     private static bool HasMarker(string text) =>
         text.Contains("📅", StringComparison.Ordinal)
-        || text.Contains('✅')
+        || text.Contains('✅', StringComparison.Ordinal)
         || text.Contains("^td-", StringComparison.Ordinal)
         || MarkdownLink.IsMatch(text);
 

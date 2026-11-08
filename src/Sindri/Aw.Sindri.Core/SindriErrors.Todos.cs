@@ -10,8 +10,8 @@ public static partial class SindriErrors
     /// <summary>SND-TODO-002: a bad 'todo.obsidian' key (todo spec §6).</summary>
     public static readonly ErrorDefinition TodoNoteKey = new("SND-TODO-002", ErrorKind.Invalid, "The todo note must be a .md file inside one of your library vaults. Pick one in Settings → Connections → Obsidian todo note (todo.obsidian).");
 
-    /// <summary>SND-TODO-003: a bad date or due word (todo spec §6).</summary>
-    public static readonly ErrorDefinition TodoDate = new("SND-TODO-003", ErrorKind.Invalid, "Dates are YYYY-MM-DD, or \"\" to clear.");
+    /// <summary>SND-TODO-003: a bad date or due word (todo spec §6); the same definition the due-word parser in Aw.Kernel.Dates answers with.</summary>
+    public static readonly ErrorDefinition TodoDate = Aw.Kernel.Dates.DueErrors.BadDue;
 
     /// <summary>SND-TODO-004: a link of no known shape, a PR url on another host, or more than 10 links (todo spec §6).</summary>
     public static readonly ErrorDefinition TodoLink = new("SND-TODO-004", ErrorKind.Invalid, "That link isn't an item, PR, Linear key or workflow.");

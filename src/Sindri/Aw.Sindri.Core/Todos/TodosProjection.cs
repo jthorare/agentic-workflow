@@ -23,26 +23,26 @@ internal sealed class TodosProjection(EventFactory events) : IProjection
         return type switch
         {
             EventTypes.TodoAdded => Added(recorded, rows, cancellationToken),
-            EventTypes.TodoChanged => Edit<TodoChanged>(recorded, rows, cancellationToken, static p => p.Id, (row, p) => Moved(row, p.Version, p.By, p.Via, recorded) with
+            EventTypes.TodoChanged => Edit<TodoChanged>(recorded, rows, static p => p.Id, (row, p) => Moved(row, p.Version, p.By, p.Via, recorded) with
             {
                 Text = p.Text ?? row.Text,
                 Due = p.ClearDue ? null : p.Due ?? row.Due,
                 Links = p.Links ?? row.Links,
-            }),
-            EventTypes.TodoDone => Edit<TodoDone>(recorded, rows, cancellationToken, static p => p.Id, (row, p) => Moved(row, p.Version, p.By, p.Via, recorded) with { DoneAt = recorded.Envelope.OccurredAt }),
-            EventTypes.TodoReopened => Edit<TodoReopened>(recorded, rows, cancellationToken, static p => p.Id, (row, p) => Moved(row, p.Version, p.By, p.Via, recorded) with { DoneAt = null }),
-            EventTypes.TodoRemoved => Edit<TodoRemoved>(recorded, rows, cancellationToken, static p => p.Id, (row, p) => Moved(row, p.Version, p.By, p.Via, recorded) with
+            }, cancellationToken),
+            EventTypes.TodoDone => Edit<TodoDone>(recorded, rows, static p => p.Id, (row, p) => Moved(row, p.Version, p.By, p.Via, recorded) with { DoneAt = recorded.Envelope.OccurredAt }, cancellationToken),
+            EventTypes.TodoReopened => Edit<TodoReopened>(recorded, rows, static p => p.Id, (row, p) => Moved(row, p.Version, p.By, p.Via, recorded) with { DoneAt = null }, cancellationToken),
+            EventTypes.TodoRemoved => Edit<TodoRemoved>(recorded, rows, static p => p.Id, (row, p) => Moved(row, p.Version, p.By, p.Via, recorded) with
             {
                 Removed = true,
                 RemovedAt = recorded.Envelope.OccurredAt,
                 RemovedBy = p.By,
-            }),
-            EventTypes.TodoRestored => Edit<TodoRestored>(recorded, rows, cancellationToken, static p => p.Id, (row, p) => Moved(row, p.Version, p.By, p.Via, recorded) with
+            }, cancellationToken),
+            EventTypes.TodoRestored => Edit<TodoRestored>(recorded, rows, static p => p.Id, (row, p) => Moved(row, p.Version, p.By, p.Via, recorded) with
             {
                 Removed = false,
                 RemovedAt = null,
                 RemovedBy = null,
-            }),
+            }, cancellationToken),
             _ => Conflicts(recorded, rows, cancellationToken),
         };
     }
@@ -50,12 +50,12 @@ internal sealed class TodosProjection(EventFactory events) : IProjection
     // a conflict event moves no version: the todo is the same todo, with a question open on it
     private ValueTask<Result<Unit>> Conflicts(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken) => recorded.Envelope.Type switch
     {
-        EventTypes.TodoConflicted => Edit<TodoConflicted>(recorded, rows, cancellationToken, static p => p.Id, (row, p) =>
-            row with { Conflict = new TodoOpenConflict(p.Sindri, p.Obsidian, p.NoteHash), Sequence = recorded.Sequence }),
-        EventTypes.TodoConflictResolved => Edit<TodoConflictResolved>(recorded, rows, cancellationToken, static p => p.Id, (row, _) =>
-            row with { Conflict = null, PickedConflict = row.Conflict ?? row.PickedConflict, Sequence = recorded.Sequence }),
-        EventTypes.TodoConflictReopened => Edit<TodoConflictReopened>(recorded, rows, cancellationToken, static p => p.Id, (row, _) =>
-            row with { Conflict = row.PickedConflict ?? row.Conflict, PickedConflict = null, Sequence = recorded.Sequence }),
+        EventTypes.TodoConflicted => Edit<TodoConflicted>(recorded, rows, static p => p.Id, (row, p) =>
+            row with { Conflict = new TodoOpenConflict(p.Sindri, p.Obsidian, p.NoteHash), Sequence = recorded.Sequence }, cancellationToken),
+        EventTypes.TodoConflictResolved => Edit<TodoConflictResolved>(recorded, rows, static p => p.Id, (row, _) =>
+            row with { Conflict = null, PickedConflict = row.Conflict ?? row.PickedConflict, Sequence = recorded.Sequence }, cancellationToken),
+        EventTypes.TodoConflictReopened => Edit<TodoConflictReopened>(recorded, rows, static p => p.Id, (row, _) =>
+            row with { Conflict = row.PickedConflict ?? row.Conflict, PickedConflict = null, Sequence = recorded.Sequence }, cancellationToken),
         _ => ValueTask.FromResult<Result<Unit>>(Unit.Value),
     };
 
@@ -77,7 +77,7 @@ internal sealed class TodosProjection(EventFactory events) : IProjection
         return await rows.Put(ViewNames.Todo, p.Id.Value, row, cancellationToken).ConfigureAwait(false);
     }
 
-    private async ValueTask<Result<Unit>> Edit<TPayload>(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken, Func<TPayload, TodoId> id, Func<TodoRow, TPayload, TodoRow> fold)
+    private async ValueTask<Result<Unit>> Edit<TPayload>(LedgerEvent recorded, IViewRows rows, Func<TPayload, TodoId> id, Func<TodoRow, TPayload, TodoRow> fold, CancellationToken cancellationToken)
     {
         var payload = events.Payload<TPayload>(recorded);
         if (payload.IsError)
