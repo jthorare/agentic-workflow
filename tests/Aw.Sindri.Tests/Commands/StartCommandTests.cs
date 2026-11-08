@@ -140,7 +140,7 @@ public sealed class StartCommandTests : IDisposable
 
     private static Features.GetStatus.GetStatusResponse Status(bool needsApproval) =>
         new(Running: true, 42, 3, LeaseExpiresAt: null,
-            new Features.GetStatus.ProfileStatus(Approved: null, Live: null, ChangedSinceApproval: false, Problem: "p", Source: null, NeedsApproval: needsApproval), []);
+            new Features.GetStatus.ProfileStatus(Live: null, Problem: needsApproval ? "p" : null, Source: null), []);
 
     private StartCommand Command(FakeControlPlaneLauncher launcher) =>
         new(_probe, launcher, _client, new Output(TextWriter.Null, TextWriter.Null, SliceHarness.Json), _clock);

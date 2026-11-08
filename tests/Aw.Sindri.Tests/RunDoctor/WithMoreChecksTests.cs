@@ -36,11 +36,11 @@ public sealed class WithMoreChecksTests
     public async Task A_core_error_passes_through_and_no_more_checks_run()
     {
         var more = new More(_ok);
-        var doctor = new WithMoreChecks(new Core(SindriErrors.ProfileNotApproved.With("x")), [more]);
+        var doctor = new WithMoreChecks(new Core(SindriErrors.ProfileMissing.With("x")), [more]);
 
         var report = await doctor.Handle(new RunDoctorRequest(), TestContext.Current.CancellationToken);
 
-        Assert.Equal(SindriErrors.ProfileNotApproved.Code, report.Error.Code);
+        Assert.Equal(SindriErrors.ProfileMissing.Code, report.Error.Code);
         Assert.False(more.Ran);
     }
 

@@ -31,13 +31,11 @@ public sealed class SetupFactsTests
         await using var rig = new SetupFactsRig();
         var missing = (await rig.Facts.Profile(Token)).Value.Presence;
         rig.Profiles.Live = SetupFactsRig.ProfileWithRepos();
-        var unapproved = (await rig.Facts.Profile(Token)).Value.Presence;
-        await rig.Approve(SetupFactsRig.ProfileWithRepos());
-        var approved = (await rig.Facts.Profile(Token)).Value.Presence;
+        var present = (await rig.Facts.Profile(Token)).Value.Presence;
         rig.Profiles.Live = SetupFactsRig.ProfileWithRepos(2);
-        var drifted = (await rig.Facts.Profile(Token)).Value.Presence;
+        var edited = (await rig.Facts.Profile(Token)).Value.Presence;   // no approval to drift from: an edit is live
 
-        Assert.Equal([ProfilePresence.Missing, ProfilePresence.Unapproved, ProfilePresence.Approved, ProfilePresence.Drifted], [missing, unapproved, approved, drifted]);
+        Assert.Equal([ProfilePresence.Missing, ProfilePresence.Present, ProfilePresence.Present], [missing, present, edited]);
     }
 
     [Fact, Trait("Lane", "unit")]

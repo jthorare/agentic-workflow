@@ -12,7 +12,7 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 /// <summary>
 /// Settings, Connections, Linear (#2077 Ph3 1b; Linear hub spec 2026-11-04 §3; contract AGREED by api and ui): 'GET /linear/connection', 'POST /linear/connection/teams', 'POST /linear/connection' and
 /// 'DELETE /linear/connection/write'. The ports behind them are fakes seeded per scenario (<see cref="FakeLinearConnectionFacts"/>, <see cref="FakeLinearKeyChecks"/>, <see cref="FakeLinearConnectionStore"/>,
-/// <see cref="FakeLinearConnectionApproval"/>): nothing reaches Linear, a keychain or the profile file, so the profile hash is the item profile's. CheckedAt is the time of the last save, which the scenarios put two minutes before the clock (the epoch is midnight, so it reads 23:58 the day before).
+/// the fakes): nothing reaches Linear, a keychain or the profile file, so the profile hash is the item profile's. CheckedAt is the time of the last save, which the scenarios put two minutes before the clock (the epoch is midnight, so it reads 23:58 the day before).
 /// </summary>
 internal static class LinearConnectionScenarios
 {
@@ -41,7 +41,6 @@ internal static class LinearConnectionScenarios
             _ = services.Replace(ServiceDescriptor.Singleton<ILinearConnectionFacts>(Facts(scenario)));
             _ = services.Replace(ServiceDescriptor.Singleton<ILinearKeyChecks>(Checks(scenario)));
             _ = services.Replace(ServiceDescriptor.Singleton<ILinearConnectionStore>(Store(scenario)));
-            _ = services.Replace(ServiceDescriptor.Singleton<ILinearConnectionApproval>(new FakeLinearConnectionApproval().Settling(scenario != "read-saved-waiting")));
         });
 
     /// <summary>Runs the scenario against <paramref name="host"/> and returns the body to compare.</summary>
@@ -83,11 +82,11 @@ internal static class LinearConnectionScenarios
         LinearConnectionTeamView[] teams = [new("00000000-0000-4000-8000-0000000000e1", "ENG", "Engineering"), new("00000000-0000-4000-8000-0000000000e2", "OPS", "Operations")];
         var view = scenario switch
         {
-            "not-connected" => new LinearConnectionView(unset, unset, [], Pending: false),
-            "read-only" => new LinearConnectionView(resolves, unset, teams, Pending: false),
-            "pending" => new LinearConnectionView(resolves, unset, teams, Pending: true),
-            "scope-unknown" => new LinearConnectionView(resolves, new LinearKeyStateView("scopeUnknown", _checked), teams, Pending: false),
-            _ => new LinearConnectionView(resolves, resolves, teams, Pending: false),
+            "not-connected" => new LinearConnectionView(unset, unset, []),
+            "read-only" => new LinearConnectionView(resolves, unset, teams),
+            "pending" => new LinearConnectionView(resolves, unset, teams),
+            "scope-unknown" => new LinearConnectionView(resolves, new LinearKeyStateView("scopeUnknown", _checked), teams),
+            _ => new LinearConnectionView(resolves, resolves, teams),
         };
         return new FakeLinearConnectionFacts().Answering(view);
     }

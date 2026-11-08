@@ -391,7 +391,7 @@ public sealed class BlockStepRunnerTests
     private sealed class UnreadableProfile : IApprovedProfile
     {
         public ValueTask<Result<LoadedProfile?>> Latest(CancellationToken cancellationToken) =>
-            ValueTask.FromResult<Result<LoadedProfile?>>(SindriErrors.ApprovalsUnavailable.With("the approvals file is locked"));
+            ValueTask.FromResult<Result<LoadedProfile?>>(SindriErrors.ServiceFailed.With("the approvals file is locked"));
     }
 
     private sealed class FailingStore : IFactStore

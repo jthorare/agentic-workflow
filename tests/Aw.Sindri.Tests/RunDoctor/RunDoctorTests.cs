@@ -4,7 +4,6 @@ using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Views;
-using Aw.Sindri.Features.ApproveProfile;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Features.RunDoctor;
 using Aw.Sindri.Infrastructure.Processes;
@@ -22,8 +21,8 @@ public sealed class RunDoctorTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private RunDoctorService Service(ILedgerStore? ledger = null) =>
-        new(_h.Store, _h.Probe, new LedgerFacts(_h.Store, _views), new ProfileFacts(_h.Profiles, _h.Profiles, ledger ?? _h.Store, _h.Events,
+    private RunDoctorService Service() =>
+        new(_h.Store, _h.Probe, new LedgerFacts(_h.Store, _views), new ProfileFacts(_h.Profiles,
             new ContextEngineChecks(FakeContextEngine.Instance, new MapPublishDoctorCheck(new MapPublishStatusReader(FakeContextEngine.Instance, new NoIndexOutlooks(), _h.Store, _h.Clock), _h.Clock), new LinearDoctor(FakeContextEngine.Instance, new PointerSecrets(_ => null, new FakeToolRunner(ToolRun.Missing))), new Features.CodeIndexJobs.CodeIndexDoctor(new CodeIndex.Testing.FakeCodeIndex(), new CodeIndex.Testing.FakeRepoHeads(), new InMemoryJobViews(), new CodeIndex.Testing.FakeEmbedder(), new CodeIndex.Testing.FakePins(), _h.Clock, _h.Profiles))), new RuntimeFacts(_api, _temporal), _h.Clock);
 
     [Fact, Trait("Lane", "unit")]
@@ -32,7 +31,6 @@ public sealed class RunDoctorTests
         var approved = SliceHarness.Profile();
         _h.Profiles.Live = approved;
         var grant = await _h.HoldLease();
-        _ = await new ApproveProfileService(_h.Profiles, _h.Profiles, _h.Held, _h.Store, _h.Events, new ProfileChecks(FakeContextEngine.Instance, new FixedAgentCatalog())).Handle(new ApproveProfileRequest(approved.Hash, _h.Confirm(approved.Hash)), Token);
         _api.Answer = (new ControlEndpoint(new Uri("http://127.0.0.1:7410"), grant.Holder.Pid, grant.Epoch), new Ping(grant.Holder.Pid, grant.Epoch));
         _ = await _temporal.Ensure(Token);
         _ = await _views.Open(ViewSchema.Version, Token);
@@ -70,46 +68,19 @@ public sealed class RunDoctorTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task RunDoctor_fails_the_lease_when_its_holder_died_and_warns_on_a_changed_profile()
+    public async Task RunDoctor_fails_the_lease_when_its_holder_died_and_the_edited_profile_is_fine()
     {
         var dead = FakeProcessProbe.Holder(300);
         _h.Probe.Start(dead);
         _ = await _h.Store.Acquire(dead, Token);
         _h.Probe.Kill(300);
-        _ = await _h.Profiles.Save(SliceHarness.Profile("5s"), Token);
         _h.Profiles.Live = SliceHarness.Profile("7s");
 
         var report = (await Service().Handle(new RunDoctorRequest(), Token)).Value;
 
         Assert.Equal(CheckState.Fail, report.Checks.Single(c => c.Name == "lease").State);
         var profile = report.Checks.Single(c => c.Name == "profile");
-        Assert.Equal(CheckState.Warn, profile.State);
-        Assert.Equal("sindri profile approve", profile.Fix);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task RunDoctor_warns_when_the_saved_approval_isnt_recorded_in_the_ledger()
-    {
-        var live = SliceHarness.Profile("5s");
-        _h.Profiles.Live = live;
-        _ = await _h.Profiles.Save(live, Token);   // saved, but its event never reached the ledger
-
-        var profile = (await Service().Handle(new RunDoctorRequest(), Token)).Value.Checks.Single(c => c.Name == "profile");
-
-        Assert.Equal((CheckState.Warn, "sindri profile approve"), (profile.State, profile.Fix));
-        Assert.Equal($"approval {live.Hash.Abbreviated} is saved but not recorded in the ledger", profile.Detail);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task RunDoctor_fails_the_profile_check_when_the_ledger_cant_be_read()
-    {
-        var live = SliceHarness.Profile("5s");
-        _h.Profiles.Live = live;
-        _ = await _h.Profiles.Save(live, Token);
-
-        var profile = (await Service(new ReadFailingLedger(_h.Store)).Handle(new RunDoctorRequest(), Token)).Value.Checks.Single(c => c.Name == "profile");
-
-        Assert.Equal((CheckState.Fail, ReadFailingLedger.Failure.Message), (profile.State, profile.Detail));
+        Assert.Equal(CheckState.Ok, profile.State);   // an edit is live: nothing to approve
     }
 
     [Fact, Trait("Lane", "unit")]

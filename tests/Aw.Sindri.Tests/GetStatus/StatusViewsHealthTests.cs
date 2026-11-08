@@ -1,4 +1,3 @@
-using Aw.Context.Testing.Engine;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core.Events;
@@ -7,7 +6,6 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Views;
-using Aw.Sindri.Features.ApproveProfile;
 using Aw.Sindri.Features.GetStatus;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Views;
@@ -23,14 +21,13 @@ public sealed class StatusViewsHealthTests
 
     private SliceHarness H => _v.Slice;
 
-    private GetStatusService Service() => new(H.Held, new ProfileReads(H.Profiles, H.Profiles), H.Store, H.Events, _v.Progress, new HealthServiceRows(_v.Views, []), new InMemorySessionSnapshot());
+    private GetStatusService Service() => new(H.Held, new ProfileReads(H.Profiles, H.Profiles), H.Store, _v.Progress, new HealthServiceRows(_v.Views, []), new InMemorySessionSnapshot());
 
     private async Task RunningAndApproved()
     {
         var approved = SliceHarness.Profile("5s");
         H.Profiles.Live = approved;
         _ = await H.HoldLease();
-        _ = await new ApproveProfileService(H.Profiles, H.Profiles, H.Held, H.Store, H.Events, new ProfileChecks(FakeContextEngine.Instance, new FixedAgentCatalog())).Handle(new ApproveProfileRequest(approved.Hash, H.Confirm(approved.Hash)), Token);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -92,7 +89,7 @@ public sealed class StatusViewsHealthTests
         await RunningAndApproved();
         var gaps = ServiceName.From("sync-gaps");   // the approved profile does not name it
         await _v.Fold(EventTypes.ServiceRan, new ServiceRan(H.Ids.New<CommandId>(), gaps, H.Clock.GetUtcNow(), ServiceOutcome.Failed, "SND-SCHED-001"));
-        var service = new GetStatusService(H.Held, new ProfileReads(H.Profiles, H.Profiles), H.Store, H.Events, _v.Progress,
+        var service = new GetStatusService(H.Held, new ProfileReads(H.Profiles, H.Profiles), H.Store, _v.Progress,
             new HealthServiceRows(_v.Views, [new BuiltInService(gaps, new Cadence(TimeSpan.FromMinutes(1)))]), new InMemorySessionSnapshot());
 
         var status = (await service.Handle(new GetStatusRequest(), Token)).Value;
@@ -106,7 +103,7 @@ public sealed class StatusViewsHealthTests
     {
         await RunningAndApproved();
         var codeIndex = new FixedCodeIndexHealth(new HealthProblem("SND-CODEIDX-014", "demo: code index is behind main; rebuild it from the System page", "the code index for demo is behind main"));
-        var service = new GetStatusService(H.Held, new ProfileReads(H.Profiles, H.Profiles), H.Store, H.Events, _v.Progress, new HealthServiceRows(_v.Views, [], codeIndex), new InMemorySessionSnapshot());
+        var service = new GetStatusService(H.Held, new ProfileReads(H.Profiles, H.Profiles), H.Store, _v.Progress, new HealthServiceRows(_v.Views, [], codeIndex), new InMemorySessionSnapshot());
 
         var status = (await service.Handle(new GetStatusRequest(), Token)).Value;
 
@@ -145,7 +142,7 @@ public sealed class StatusViewsHealthTests
         _v.Publish(stalledAt: null);
         var unreadable = new FlakyViewStore(_v.Views) { FailReads = true };
 
-        var status = (await new GetStatusService(H.Held, new ProfileReads(H.Profiles, H.Profiles), H.Store, H.Events, _v.Progress, new HealthServiceRows(unreadable, []), new InMemorySessionSnapshot()).Handle(new GetStatusRequest(), Token)).Value;
+        var status = (await new GetStatusService(H.Held, new ProfileReads(H.Profiles, H.Profiles), H.Store, _v.Progress, new HealthServiceRows(unreadable, []), new InMemorySessionSnapshot()).Handle(new GetStatusRequest(), Token)).Value;
 
         Assert.NotEqual(HealthWord.Healthy, status.Health!.Word);
         Assert.Contains(status.Health.Problems, p => p.Code == "SND-VIEW-001");

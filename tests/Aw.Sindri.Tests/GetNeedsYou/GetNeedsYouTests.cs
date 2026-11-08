@@ -28,7 +28,7 @@ public sealed class GetNeedsYouTests
     private readonly InMemoryJobViews _jobs = new();
     private IShippedRecipes _shipped = new FakeShippedRecipes([]);
 
-    private GetNeedsYouService Service() => new(_q.Views.Views, _q.Views.Progress, _q.Views.Slice.Callers, new NeedsYouLiveRows(new SetupNotices(_jobs, _q.Views.Slice.Profiles, new ApproveAllPlanReader(_q.Views.Slice.Profiles, _shipped), new PassThroughScrubber(), TimeProvider.System, new Core.Setup.McpAutoGate(_q.Views.Slice.Profiles, new Core.Setup.McpEvents(_q.Views.Slice.Held, _q.Views.Slice.Store, _q.Views.Slice.Events, _q.Views.Slice.Callers), new NoSwitch(), _jobs), _q.Views.Slice.Profiles), new PassThroughScrubber()), TimeProvider.System, new NeedsYouJoins(new SomeInstances(), new SomeInstances(), new Core.Workflow.Registry.RecipeRegistryReader(new Testing.Workflow.Registry.InMemoryRecipeStore(), new Testing.Workflow.Registry.InMemoryRecipeApprovals(), EngineFixture.Catalog, SliceHarness.Json, new NoProfileFacts()), EngineFixture.Catalog));
+    private GetNeedsYouService Service() => new(_q.Views.Views, _q.Views.Progress, _q.Views.Slice.Callers, new NeedsYouLiveRows(new SetupNotices(_jobs, _q.Views.Slice.Profiles, new ApproveAllPlanReader(_q.Views.Slice.Profiles, _shipped), new PassThroughScrubber(), TimeProvider.System, new Core.Setup.McpAutoGate(_q.Views.Slice.Profiles, new Core.Setup.McpEvents(_q.Views.Slice.Held, _q.Views.Slice.Store, _q.Views.Slice.Events, _q.Views.Slice.Callers), new NoSwitch(), _jobs)), new PassThroughScrubber()), TimeProvider.System, new NeedsYouJoins(new SomeInstances(), new SomeInstances(), new Core.Workflow.Registry.RecipeRegistryReader(new Testing.Workflow.Registry.InMemoryRecipeStore(), new Testing.Workflow.Registry.InMemoryRecipeApprovals(), EngineFixture.Catalog, SliceHarness.Json, new NoProfileFacts()), EngineFixture.Catalog));
 
     private sealed class NoSwitch : Core.Setup.IMcpAutoSwitch
     {
@@ -346,7 +346,7 @@ public sealed class GetNeedsYouTests
     private sealed class UnreadableShippedRecipes(bool throws) : IShippedRecipes
     {
         public ValueTask<Result<ShippedRecipePlan>> Plan(CancellationToken cancellationToken) =>
-            throws ? throw new InvalidOperationException("the registry is unreadable") : ValueTask.FromResult<Result<ShippedRecipePlan>>(SindriErrors.ProfileNotApproved.With("the registry is unreadable"));
+            throws ? throw new InvalidOperationException("the registry is unreadable") : ValueTask.FromResult<Result<ShippedRecipePlan>>(SindriErrors.ProfileMissing.With("the registry is unreadable"));
 
         public ValueTask<Result<ApproveAllResult>> Approve(RedeemedPlan plan, IProgress<string> progress, CancellationToken cancellationToken) => throw new NotSupportedException();
     }

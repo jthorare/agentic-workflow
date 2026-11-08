@@ -45,7 +45,7 @@ public sealed class CompleteStepRetryTests
         var request = Report();
         _instance.LoseNextResponse();
         _ = await service.Handle(request, TestContext.Current.CancellationToken);
-        _instance.GetFails = Core.SindriErrors.ApprovalsUnavailable.With("no worker (test)");
+        _instance.GetFails = Core.SindriErrors.ServiceFailed.With("no worker (test)");
 
         var retry = await service.Handle(request, TestContext.Current.CancellationToken);
 
@@ -92,7 +92,7 @@ public sealed class CompleteStepRetryTests
     {
         var facts = new InMemoryFactStore();
         var service = new CompleteStepService(_instance, _instance, _instance, facts, _nonces, _instance, new EngineFilledReport(EvalComposition.Catalog, EvalComposition.Options, new FakeLaunchFiles(), new ReportOutputTypes(_instance, new FakeLauncher(), new ReportRefusals())));
-        var failure = Core.SindriErrors.ApprovalsUnavailable.With("approved/latest can't be read (test)");
+        var failure = Core.SindriErrors.ServiceFailed.With("approved/latest can't be read (test)");
         _instance.GetFails = instanceQueryFails ? failure : null;
         _instance.CheckFails = instanceQueryFails ? null : failure;
 

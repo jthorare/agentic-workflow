@@ -118,7 +118,7 @@ public sealed class ContextReviewFactsTests
 
         var read = await Facts().Read(Ct);
 
-        Assert.Equal(SindriErrors.ProfileNotApproved.Code, read.Error.Code);
+        Assert.Equal(SindriErrors.ProfileMissing.Code, read.Error.Code);
     }
 
     [Fact]

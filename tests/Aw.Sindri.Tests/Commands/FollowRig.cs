@@ -32,7 +32,7 @@ internal sealed class FollowRig : IDisposable
 
     public static string Status(bool needsApproval) =>
         Encoding.UTF8.GetString(AwJson.Serialize(new GetStatusResponse(Running: true, 42, 3, LeaseExpiresAt: null,
-            new ProfileStatus(needsApproval ? null : _hash, _hash, ChangedSinceApproval: false, Problem: null, "/p.yaml", needsApproval), []), SliceHarness.Json));
+            new ProfileStatus(_hash, Problem: needsApproval ? "p" : null, "/p.yaml"), []), SliceHarness.Json));
 
     public Task<int> Start(FollowApi api, bool json)
     {

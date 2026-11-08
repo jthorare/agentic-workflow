@@ -17,7 +17,7 @@ public sealed class CliTextTests
     public void The_summary_names_each_part_in_words()
     {
         var status = new GetStatusResponse(Running: true, 42, 3, KnownInstants.Epoch,
-            new ProfileStatus(_hash, _hash, ChangedSinceApproval: false, Problem: null, "/home/profile.yaml", NeedsApproval: false),
+            new ProfileStatus(_hash, Problem: null, "/home/profile.yaml"),
             [new ServiceStatus(ServiceName.From("heartbeat"), "5s", KnownInstants.Epoch)]);
 
         var text = SummaryText.Render(status, _endpoint, ui: "opened (sindri-ui, pid 77)");
@@ -36,7 +36,7 @@ public sealed class CliTextTests
     [Fact, Trait("Lane", "unit")]
     public void An_unapproved_profile_needs_attention_and_says_the_fix()
     {
-        var status = new GetStatusResponse(Running: true, 42, 3, LeaseExpiresAt: null, new ProfileStatus(Approved: null, _hash, ChangedSinceApproval: false, Problem: null, "/p.yaml", NeedsApproval: true), []);
+        var status = new GetStatusResponse(Running: true, 42, 3, LeaseExpiresAt: null, new ProfileStatus(_hash, Problem: "p", "/p.yaml"), []);
 
         var text = SummaryText.Render(status, _endpoint, ui: null);
 

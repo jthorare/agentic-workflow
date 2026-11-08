@@ -34,7 +34,7 @@ public sealed class CliClientTests : IDisposable
     public async Task Json_prints_the_api_body_unchanged()
     {
         var h = new SliceHarness();
-        var status = (await new GetStatusService(h.Held, new ProfileReads(h.Profiles, h.Profiles), h.Store, h.Events, FirstPass.Progress(h.Clock), new HealthServiceRows(new InMemoryViewStore(SliceHarness.Json), []), new InMemorySessionSnapshot()).Handle(new GetStatusRequest(), Token)).Value;
+        var status = (await new GetStatusService(h.Held, new ProfileReads(h.Profiles, h.Profiles), h.Store, FirstPass.Progress(h.Clock), new HealthServiceRows(new InMemoryViewStore(SliceHarness.Json), []), new InMemorySessionSnapshot()).Handle(new GetStatusRequest(), Token)).Value;
         var body = "{ " + Encoding.UTF8.GetString(AwJson.Serialize(status, SliceHarness.Json))[1..].Replace(",", ",\n  ", StringComparison.Ordinal);   // spaced as no serializer here would write it
         using var client = Client(new CliStubApi(HttpStatusCode.OK, body));
 
