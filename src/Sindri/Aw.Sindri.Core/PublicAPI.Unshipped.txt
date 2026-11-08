@@ -25658,6 +25658,11 @@ Aw.Sindri.Core.Graph.GraphNode.OnFailure.get -> string?
 Aw.Sindri.Core.Graph.GraphNode.OnFailure.init -> void
 Aw.Sindri.Core.Graph.Runs.IGraphQueueAdvance
 Aw.Sindri.Core.Graph.Runs.IGraphQueueAdvance.StartNextQueued(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Ids.WorkflowRunId?>!>
+Aw.Sindri.Core.Graph.Runs.IGraphRunCanceller
+Aw.Sindri.Core.Graph.Runs.IGraphRunCanceller.Cancel(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+static readonly Aw.Sindri.Core.SindriErrors.GraphNotActive -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphBadPayload -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphRunEnded -> Aw.Kernel.ErrorDefinition!
 const Aw.Sindri.Core.Views.ViewNames.WorkflowRuns = "workflow-runs" -> string!
 Aw.Sindri.Core.Views.WorkflowRunRow
 Aw.Sindri.Core.Views.WorkflowRunRow.Id.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
@@ -25813,3 +25818,29 @@ Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.WorkflowNodeFinishedPayload(Aw
 Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.WorkflowNodeFailedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! Error, string! By) -> void
 static readonly Aw.Sindri.Core.SindriErrors.GraphOutputTruncated -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.PromoteOldestQueued(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Runs.WorkflowRun?>!>
+Aw.Sindri.Core.Events.WorkflowNotifyPayload
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.Body.get -> string?
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.Body.init -> void
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.By.get -> string!
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.By.init -> void
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowNotifyPayload!
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out Aw.Sindri.Core.Graph.Ids.NodeId Node, out string! Title, out string? Body, out string! By) -> void
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.Equals(Aw.Sindri.Core.Events.WorkflowNotifyPayload? other) -> bool
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.Node.init -> void
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.Run.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.Run.init -> void
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.Title.get -> string!
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.Title.init -> void
+Aw.Sindri.Core.Events.WorkflowNotifyPayload.WorkflowNotifyPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, Aw.Sindri.Core.Graph.Ids.NodeId Node, string! Title, string? Body, string! By) -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouKind.WorkflowNotify = 6 -> Aw.Sindri.Core.NeedsYou.NeedsYouKind
+Aw.Sindri.Core.NeedsYou.SubjectKind.WorkflowRun = 8 -> Aw.Sindri.Core.NeedsYou.SubjectKind
+const Aw.Sindri.Core.Events.EventTypes.WorkflowNotify = "workflow.notify" -> string!
+override Aw.Sindri.Core.Events.WorkflowNotifyPayload.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.WorkflowNotifyPayload.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowNotifyPayload.ToString() -> string!
+static Aw.Sindri.Core.Events.WorkflowNotifyPayload.operator !=(Aw.Sindri.Core.Events.WorkflowNotifyPayload? left, Aw.Sindri.Core.Events.WorkflowNotifyPayload? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowNotifyPayload.operator ==(Aw.Sindri.Core.Events.WorkflowNotifyPayload? left, Aw.Sindri.Core.Events.WorkflowNotifyPayload? right) -> bool
+static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.WorkflowRun(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run) -> string!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRowIds.WorkflowNotify(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, Aw.Sindri.Core.Graph.Ids.NodeId node) -> Aw.Sindri.Core.Ids.NeedsYouRowId
+static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForWorkflowNotify(Aw.Sindri.Core.Events.WorkflowNotifyPayload! note, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>!

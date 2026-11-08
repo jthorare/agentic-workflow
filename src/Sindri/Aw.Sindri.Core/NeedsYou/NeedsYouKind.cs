@@ -30,4 +30,8 @@ public enum NeedsYouKind
     /// <summary>A changed workflow that waits for its own approval (setup-once spec §5.3, §7.3).</summary>
     [JsonStringEnumMemberName("recipe")]
     Recipe,
+
+    /// <summary>A note a graph 'notify' node posted; it clears when its run ends.</summary>
+    [JsonStringEnumMemberName("workflow-notify")]
+    WorkflowNotify,
 }
