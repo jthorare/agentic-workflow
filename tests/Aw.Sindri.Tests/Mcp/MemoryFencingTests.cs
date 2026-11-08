@@ -32,7 +32,7 @@ public sealed class MemoryFencingTests
 
     private static AsyncLocalCallerContextAccessor Callers(CallerContext caller)
     {
-        var accessor = new AsyncLocalCallerContextAccessor(new Aw.Kernel.Testing.SequentialIdGenerator());
+        var accessor = new AsyncLocalCallerContextAccessor(new Kernel.Testing.SequentialIdGenerator());
         _ = accessor.Enter(caller);
         return accessor;
     }

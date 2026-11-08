@@ -43,7 +43,7 @@ internal sealed class SqliteMemoryStore(LedgerDatabase database) : IMemoryStore
 
     public async ValueTask<Result<MemoryInfo>> Get(MemoryName name, CancellationToken cancellationToken)
     {
-        var read = await RecipeSessions.Read<MemoryInfo?>(_database, LedgerDatabase.MemoryVersion, empty: null,
+        var read = await RecipeSessions.Read(_database, LedgerDatabase.MemoryVersion, empty: null,
             (session, token) => RecipeSessions.First(session, Named(MemorySql.SelectMemory, name), MemoryInfoMapper.Instance, token), cancellationToken).ConfigureAwait(false);
         return read.IsError ? read.Error : read.Value is { } found ? found : NotFound(name);
     }
@@ -61,7 +61,7 @@ internal sealed class SqliteMemoryStore(LedgerDatabase database) : IMemoryStore
 
     public async ValueTask<Result<IReadOnlyList<MemoryFact>>> Facts(MemoryName name, CancellationToken cancellationToken)
     {
-        var read = await RecipeSessions.Read<IReadOnlyList<MemoryFact>?>(_database, LedgerDatabase.MemoryVersion, empty: null, async (session, token) =>
+        var read = await RecipeSessions.Read(_database, LedgerDatabase.MemoryVersion, empty: null, async (session, token) =>
         {
             var exists = await RecipeSessions.Exists(session, Named(MemorySql.MemoryExists, name), token).ConfigureAwait(false);
             if (exists.IsError)

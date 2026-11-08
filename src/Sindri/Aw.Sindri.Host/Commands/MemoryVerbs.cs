@@ -39,15 +39,15 @@ internal sealed class MemoryVerbs(ControlPlaneClient client, Output output, Func
 
         return parsed.Value.Verb switch
         {
-            "list" => await Show<ListMemoriesResponse>(await _client.Get<ListMemoriesResponse>("/sindri/memories", ct).ConfigureAwait(false), parsed.Value.Json, Lines).ConfigureAwait(false),
-            "create" => await Show<CreateMemoryResponse>(await _client.Post<CreateMemoryRequest, CreateMemoryResponse>("/sindri/memories", new CreateMemoryRequest(parsed.Value.Name, parsed.Value.Description), ct).ConfigureAwait(false),
+            "list" => await Show(await _client.Get<ListMemoriesResponse>("/sindri/memories", ct).ConfigureAwait(false), parsed.Value.Json, Lines).ConfigureAwait(false),
+            "create" => await Show(await _client.Post<CreateMemoryRequest, CreateMemoryResponse>("/sindri/memories", new CreateMemoryRequest(parsed.Value.Name, parsed.Value.Description), ct).ConfigureAwait(false),
                 parsed.Value.Json, static a => $"made {a.Store.Name}\n").ConfigureAwait(false),
-            "search" => await Show<SearchMemoryResponse>(await _client.Get<SearchMemoryResponse>(
+            "search" => await Show(await _client.Get<SearchMemoryResponse>(
                 $"/sindri/memories/{Uri.EscapeDataString(parsed.Value.Name)}/search" + UrlQuery.Of([("query", parsed.Value.Text), ("level", parsed.Value.Level), ("limit", parsed.Value.Limit)]), ct).ConfigureAwait(false), parsed.Value.Json, Lines).ConfigureAwait(false),
-            "write" => await Show<WriteMemoryFactResponse>(await _client.Post<WriteMemoryFactBody, WriteMemoryFactResponse>(
+            "write" => await Show(await _client.Post<WriteMemoryFactBody, WriteMemoryFactResponse>(
                 $"/sindri/memories/{Uri.EscapeDataString(parsed.Value.Name)}/facts", new WriteMemoryFactBody(parsed.Value.Text, parsed.Value.Tags.Count == 0 ? null : parsed.Value.Tags, parsed.Value.ExpiresAt, Provenance: null), ct).ConfigureAwait(false),
                 parsed.Value.Json, static a => $"{a.Action} {a.Key}\n").ConfigureAwait(false),
-            _ => await Show<ForgetMemoryFactResponse>(await _client.Delete<ForgetMemoryFactResponse>(
+            _ => await Show(await _client.Delete<ForgetMemoryFactResponse>(
                 $"/sindri/memories/{Uri.EscapeDataString(parsed.Value.Name)}/facts" + UrlQuery.Of([("fact", parsed.Value.Fact), ("tag", parsed.Value.Tag), ("expired", parsed.Value.Expired ? "true" : null)]), ct).ConfigureAwait(false),
                 parsed.Value.Json, static a => string.Create(CultureInfo.InvariantCulture, $"forgot {a.Deleted}\n")).ConfigureAwait(false),
         };

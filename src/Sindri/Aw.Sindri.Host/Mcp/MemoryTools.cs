@@ -213,11 +213,11 @@ internal static class MemoryTools
     {
         if (arguments is null || !arguments.TryGetValue("tags", out var raw) || raw.ValueKind == JsonValueKind.Null)
         {
-            return Aw.Kernel.Results.Success<IReadOnlyList<string>?>(value: null);
+            return Kernel.Results.Success<IReadOnlyList<string>?>(value: null);
         }
 
         return raw.ValueKind == JsonValueKind.Array && raw.EnumerateArray().All(static t => t.ValueKind == JsonValueKind.String)
-            ? Aw.Kernel.Results.Success<IReadOnlyList<string>?>(value: [.. raw.EnumerateArray().Select(static t => t.GetString() ?? string.Empty)])
+            ? Kernel.Results.Success<IReadOnlyList<string>?>(value: [.. raw.EnumerateArray().Select(static t => t.GetString() ?? string.Empty)])
             : ContextErrors.McpArgumentsInvalid.With("'tags' must be an array of strings (fix: see memory_write's input schema)");
     }
 
