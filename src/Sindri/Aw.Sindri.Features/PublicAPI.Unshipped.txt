@@ -4585,6 +4585,132 @@ static Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.operator !=(Aw.Sind
 static Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.operator ==(Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest? left, Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest? right) -> bool
 static Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.operator !=(Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse? left, Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse? right) -> bool
 static Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.operator ==(Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse? left, Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse? right) -> bool
+Aw.Sindri.Features.AddTodo.AddTodoRequest
+Aw.Sindri.Features.AddTodo.AddTodoRequest.ClientId.get -> Aw.Sindri.Core.Ids.TodoClientId?
+Aw.Sindri.Features.AddTodo.AddTodoRequest.ClientId.init -> void
+Aw.Sindri.Features.AddTodo.AddTodoRequest.<Clone>$() -> Aw.Sindri.Features.AddTodo.AddTodoRequest!
+Aw.Sindri.Features.AddTodo.AddTodoRequest.Due.get -> System.DateOnly?
+Aw.Sindri.Features.AddTodo.AddTodoRequest.Due.init -> void
+Aw.Sindri.Features.AddTodo.AddTodoRequest.Equals(Aw.Sindri.Features.AddTodo.AddTodoRequest? other) -> bool
+Aw.Sindri.Features.AddTodo.AddTodoRequest.Links.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Features.AddTodo.AddTodoRequest.Links.init -> void
+Aw.Sindri.Features.AddTodo.AddTodoRequest.Text.get -> string!
+Aw.Sindri.Features.AddTodo.AddTodoRequest.Text.init -> void
+Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest
+Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.ClearDue.get -> bool
+Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.ClearDue.init -> void
+Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.<Clone>$() -> Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest!
+Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.Due.get -> System.DateOnly?
+Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.Due.init -> void
+Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.Equals(Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest? other) -> bool
+Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.Id.init -> void
+Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.Links.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.Links.init -> void
+Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.Text.get -> string?
+Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.Text.init -> void
+Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.Version.get -> long
+Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.Version.init -> void
+Aw.Sindri.Features.GetTodo.GetTodoRequest
+Aw.Sindri.Features.GetTodo.GetTodoRequest.<Clone>$() -> Aw.Sindri.Features.GetTodo.GetTodoRequest!
+Aw.Sindri.Features.GetTodo.GetTodoRequest.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id) -> void
+Aw.Sindri.Features.GetTodo.GetTodoRequest.Equals(Aw.Sindri.Features.GetTodo.GetTodoRequest? other) -> bool
+Aw.Sindri.Features.GetTodo.GetTodoRequest.GetTodoRequest(Aw.Sindri.Core.Ids.TodoId Id) -> void
+Aw.Sindri.Features.GetTodo.GetTodoRequest.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Features.GetTodo.GetTodoRequest.Id.init -> void
+Aw.Sindri.Features.GetTodo.GetTodoResponse
+Aw.Sindri.Features.GetTodo.GetTodoResponse.AsOf.get -> Aw.Sindri.Core.Views.AsOf!
+Aw.Sindri.Features.GetTodo.GetTodoResponse.AsOf.init -> void
+Aw.Sindri.Features.GetTodo.GetTodoResponse.<Clone>$() -> Aw.Sindri.Features.GetTodo.GetTodoResponse!
+Aw.Sindri.Features.GetTodo.GetTodoResponse.Deconstruct(out Aw.Sindri.Core.Views.AsOf! AsOf, out Aw.Sindri.Core.Todos.TodoRow! Todo) -> void
+Aw.Sindri.Features.GetTodo.GetTodoResponse.Equals(Aw.Sindri.Features.GetTodo.GetTodoResponse? other) -> bool
+Aw.Sindri.Features.GetTodo.GetTodoResponse.GetTodoResponse(Aw.Sindri.Core.Views.AsOf! AsOf, Aw.Sindri.Core.Todos.TodoRow! Todo) -> void
+Aw.Sindri.Features.GetTodo.GetTodoResponse.Todo.get -> Aw.Sindri.Core.Todos.TodoRow!
+Aw.Sindri.Features.GetTodo.GetTodoResponse.Todo.init -> void
+Aw.Sindri.Features.GetTodoNote.GetTodoNoteRequest
+Aw.Sindri.Features.GetTodoNote.GetTodoNoteRequest.<Clone>$() -> Aw.Sindri.Features.GetTodoNote.GetTodoNoteRequest!
+Aw.Sindri.Features.GetTodoNote.GetTodoNoteRequest.Equals(Aw.Sindri.Features.GetTodoNote.GetTodoNoteRequest? other) -> bool
+Aw.Sindri.Features.GetTodoNote.GetTodoNoteRequest.GetTodoNoteRequest() -> void
+Aw.Sindri.Features.GetTodoNote.GetTodoNoteResponse
+Aw.Sindri.Features.GetTodoNote.GetTodoNoteResponse.AsOf.get -> Aw.Sindri.Core.Views.AsOf!
+Aw.Sindri.Features.GetTodoNote.GetTodoNoteResponse.AsOf.init -> void
+Aw.Sindri.Features.GetTodoNote.GetTodoNoteResponse.<Clone>$() -> Aw.Sindri.Features.GetTodoNote.GetTodoNoteResponse!
+Aw.Sindri.Features.GetTodoNote.GetTodoNoteResponse.Deconstruct(out Aw.Sindri.Core.Views.AsOf! AsOf, out string! State) -> void
+Aw.Sindri.Features.GetTodoNote.GetTodoNoteResponse.Equals(Aw.Sindri.Features.GetTodoNote.GetTodoNoteResponse? other) -> bool
+Aw.Sindri.Features.GetTodoNote.GetTodoNoteResponse.GetTodoNoteResponse(Aw.Sindri.Core.Views.AsOf! AsOf, string! State) -> void
+Aw.Sindri.Features.GetTodoNote.GetTodoNoteResponse.State.get -> string!
+Aw.Sindri.Features.GetTodoNote.GetTodoNoteResponse.State.init -> void
+Aw.Sindri.Features.ListTodos.ListTodosRequest
+Aw.Sindri.Features.ListTodos.ListTodosRequest.<Clone>$() -> Aw.Sindri.Features.ListTodos.ListTodosRequest!
+Aw.Sindri.Features.ListTodos.ListTodosRequest.Deconstruct(out Aw.Sindri.Core.Todos.TodoListState State) -> void
+Aw.Sindri.Features.ListTodos.ListTodosRequest.Equals(Aw.Sindri.Features.ListTodos.ListTodosRequest? other) -> bool
+Aw.Sindri.Features.ListTodos.ListTodosRequest.ListTodosRequest(Aw.Sindri.Core.Todos.TodoListState State = Aw.Sindri.Core.Todos.TodoListState.Open) -> void
+Aw.Sindri.Features.ListTodos.ListTodosRequest.State.get -> Aw.Sindri.Core.Todos.TodoListState
+Aw.Sindri.Features.ListTodos.ListTodosRequest.State.init -> void
+Aw.Sindri.Features.ListTodos.ListTodosResponse
+Aw.Sindri.Features.ListTodos.ListTodosResponse.AsOf.get -> Aw.Sindri.Core.Views.AsOf!
+Aw.Sindri.Features.ListTodos.ListTodosResponse.AsOf.init -> void
+Aw.Sindri.Features.ListTodos.ListTodosResponse.<Clone>$() -> Aw.Sindri.Features.ListTodos.ListTodosResponse!
+Aw.Sindri.Features.ListTodos.ListTodosResponse.Counts.get -> Aw.Sindri.Core.Todos.TodoCounts!
+Aw.Sindri.Features.ListTodos.ListTodosResponse.Counts.init -> void
+Aw.Sindri.Features.ListTodos.ListTodosResponse.Equals(Aw.Sindri.Features.ListTodos.ListTodosResponse? other) -> bool
+Aw.Sindri.Features.ListTodos.ListTodosResponse.State.get -> Aw.Sindri.Core.Todos.TodoListState
+Aw.Sindri.Features.ListTodos.ListTodosResponse.State.init -> void
+Aw.Sindri.Features.ListTodos.ListTodosResponse.Todos.init -> void
+Aw.Sindri.Features.MarkTodo.MarkTodoRequest
+Aw.Sindri.Features.MarkTodo.MarkTodoRequest.<Clone>$() -> Aw.Sindri.Features.MarkTodo.MarkTodoRequest!
+Aw.Sindri.Features.MarkTodo.MarkTodoRequest.Equals(Aw.Sindri.Features.MarkTodo.MarkTodoRequest? other) -> bool
+Aw.Sindri.Features.MarkTodo.MarkTodoRequest.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Features.MarkTodo.MarkTodoRequest.Id.init -> void
+Aw.Sindri.Features.MarkTodo.MarkTodoRequest.Verb.get -> Aw.Sindri.Core.Todos.TodoVerb
+Aw.Sindri.Features.MarkTodo.MarkTodoRequest.Verb.init -> void
+Aw.Sindri.Features.MarkTodo.MarkTodoRequest.Version.get -> long?
+Aw.Sindri.Features.MarkTodo.MarkTodoRequest.Version.init -> void
+override Aw.Sindri.Features.AddTodo.AddTodoRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.AddTodo.AddTodoRequest.GetHashCode() -> int
+override Aw.Sindri.Features.AddTodo.AddTodoRequest.ToString() -> string!
+override Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.ToString() -> string!
+override Aw.Sindri.Features.GetTodo.GetTodoRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetTodo.GetTodoRequest.GetHashCode() -> int
+override Aw.Sindri.Features.GetTodo.GetTodoRequest.ToString() -> string!
+override Aw.Sindri.Features.GetTodo.GetTodoResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetTodo.GetTodoResponse.GetHashCode() -> int
+override Aw.Sindri.Features.GetTodo.GetTodoResponse.ToString() -> string!
+override Aw.Sindri.Features.GetTodoNote.GetTodoNoteRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetTodoNote.GetTodoNoteRequest.GetHashCode() -> int
+override Aw.Sindri.Features.GetTodoNote.GetTodoNoteRequest.ToString() -> string!
+override Aw.Sindri.Features.GetTodoNote.GetTodoNoteResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetTodoNote.GetTodoNoteResponse.GetHashCode() -> int
+override Aw.Sindri.Features.GetTodoNote.GetTodoNoteResponse.ToString() -> string!
+override Aw.Sindri.Features.ListTodos.ListTodosRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListTodos.ListTodosRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ListTodos.ListTodosRequest.ToString() -> string!
+override Aw.Sindri.Features.ListTodos.ListTodosResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListTodos.ListTodosResponse.GetHashCode() -> int
+override Aw.Sindri.Features.ListTodos.ListTodosResponse.ToString() -> string!
+override Aw.Sindri.Features.MarkTodo.MarkTodoRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.MarkTodo.MarkTodoRequest.GetHashCode() -> int
+override Aw.Sindri.Features.MarkTodo.MarkTodoRequest.ToString() -> string!
+static Aw.Sindri.Features.AddTodo.AddTodoRequest.operator !=(Aw.Sindri.Features.AddTodo.AddTodoRequest? left, Aw.Sindri.Features.AddTodo.AddTodoRequest? right) -> bool
+static Aw.Sindri.Features.AddTodo.AddTodoRequest.operator ==(Aw.Sindri.Features.AddTodo.AddTodoRequest? left, Aw.Sindri.Features.AddTodo.AddTodoRequest? right) -> bool
+static Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.operator !=(Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest? left, Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest? right) -> bool
+static Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.operator ==(Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest? left, Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest? right) -> bool
+static Aw.Sindri.Features.GetTodo.GetTodoRequest.operator !=(Aw.Sindri.Features.GetTodo.GetTodoRequest? left, Aw.Sindri.Features.GetTodo.GetTodoRequest? right) -> bool
+static Aw.Sindri.Features.GetTodo.GetTodoRequest.operator ==(Aw.Sindri.Features.GetTodo.GetTodoRequest? left, Aw.Sindri.Features.GetTodo.GetTodoRequest? right) -> bool
+static Aw.Sindri.Features.GetTodo.GetTodoResponse.operator !=(Aw.Sindri.Features.GetTodo.GetTodoResponse? left, Aw.Sindri.Features.GetTodo.GetTodoResponse? right) -> bool
+static Aw.Sindri.Features.GetTodo.GetTodoResponse.operator ==(Aw.Sindri.Features.GetTodo.GetTodoResponse? left, Aw.Sindri.Features.GetTodo.GetTodoResponse? right) -> bool
+static Aw.Sindri.Features.GetTodoNote.GetTodoNoteRequest.operator !=(Aw.Sindri.Features.GetTodoNote.GetTodoNoteRequest? left, Aw.Sindri.Features.GetTodoNote.GetTodoNoteRequest? right) -> bool
+static Aw.Sindri.Features.GetTodoNote.GetTodoNoteRequest.operator ==(Aw.Sindri.Features.GetTodoNote.GetTodoNoteRequest? left, Aw.Sindri.Features.GetTodoNote.GetTodoNoteRequest? right) -> bool
+static Aw.Sindri.Features.GetTodoNote.GetTodoNoteResponse.operator !=(Aw.Sindri.Features.GetTodoNote.GetTodoNoteResponse? left, Aw.Sindri.Features.GetTodoNote.GetTodoNoteResponse? right) -> bool
+static Aw.Sindri.Features.GetTodoNote.GetTodoNoteResponse.operator ==(Aw.Sindri.Features.GetTodoNote.GetTodoNoteResponse? left, Aw.Sindri.Features.GetTodoNote.GetTodoNoteResponse? right) -> bool
+static Aw.Sindri.Features.ListTodos.ListTodosRequest.operator !=(Aw.Sindri.Features.ListTodos.ListTodosRequest? left, Aw.Sindri.Features.ListTodos.ListTodosRequest? right) -> bool
+static Aw.Sindri.Features.ListTodos.ListTodosRequest.operator ==(Aw.Sindri.Features.ListTodos.ListTodosRequest? left, Aw.Sindri.Features.ListTodos.ListTodosRequest? right) -> bool
+static Aw.Sindri.Features.ListTodos.ListTodosResponse.operator !=(Aw.Sindri.Features.ListTodos.ListTodosResponse? left, Aw.Sindri.Features.ListTodos.ListTodosResponse? right) -> bool
+static Aw.Sindri.Features.ListTodos.ListTodosResponse.operator ==(Aw.Sindri.Features.ListTodos.ListTodosResponse? left, Aw.Sindri.Features.ListTodos.ListTodosResponse? right) -> bool
+static Aw.Sindri.Features.MarkTodo.MarkTodoRequest.operator !=(Aw.Sindri.Features.MarkTodo.MarkTodoRequest? left, Aw.Sindri.Features.MarkTodo.MarkTodoRequest? right) -> bool
+static Aw.Sindri.Features.MarkTodo.MarkTodoRequest.operator ==(Aw.Sindri.Features.MarkTodo.MarkTodoRequest? left, Aw.Sindri.Features.MarkTodo.MarkTodoRequest? right) -> bool
 Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Moves.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinMove!>?
 Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Moves.init -> void
 Aw.Sindri.Features.IssueChallenge.IssueChallengeResponse.Deconstruct(out Aw.Sindri.Core.Challenges.ChallengeId Challenge, out string! Action, out System.DateTimeOffset ExpiresAt) -> void
@@ -4607,6 +4733,80 @@ static Aw.Sindri.Features.IssueChallenge.IssueChallengeRequest.operator !=(Aw.Si
 static Aw.Sindri.Features.IssueChallenge.IssueChallengeRequest.operator ==(Aw.Sindri.Features.IssueChallenge.IssueChallengeRequest? left, Aw.Sindri.Features.IssueChallenge.IssueChallengeRequest? right) -> bool
 Aw.Sindri.Features.GetProfile.GetProfileResponse.Deconstruct(out Aw.Sindri.Core.Ids.ProfileHash? Approved, out System.DateTimeOffset? ApprovedAt, out Aw.Sindri.Core.Ids.ProfileHash? Live, out Aw.Sindri.Core.Ids.ProfileHash? FileHash, out System.DateTimeOffset? CheckedAt, out bool Changed, out System.Collections.Generic.IReadOnlyList<string!>! ChangedPaths, out Aw.Sindri.Core.Views.AsOf! AsOf, out Aw.Sindri.Features.GetProfile.ProfileSummary? Summary) -> void
 Aw.Sindri.Features.GetProfile.GetProfileResponse.GetProfileResponse(Aw.Sindri.Core.Ids.ProfileHash? Approved, System.DateTimeOffset? ApprovedAt, Aw.Sindri.Core.Ids.ProfileHash? Live, Aw.Sindri.Core.Ids.ProfileHash? FileHash, System.DateTimeOffset? CheckedAt, bool Changed, System.Collections.Generic.IReadOnlyList<string!>! ChangedPaths, Aw.Sindri.Core.Views.AsOf! AsOf, Aw.Sindri.Features.GetProfile.ProfileSummary? Summary = null) -> void
+Aw.Sindri.Features.AddTodo.AddTodoRequest.AddTodoRequest(string! Text, System.DateOnly? Due = null, System.Collections.Generic.IReadOnlyList<string!>? Links = null, Aw.Sindri.Core.Ids.TodoClientId? ClientId = null, bool Piped = false) -> void
+Aw.Sindri.Features.AddTodo.AddTodoRequest.Deconstruct(out string! Text, out System.DateOnly? Due, out System.Collections.Generic.IReadOnlyList<string!>? Links, out Aw.Sindri.Core.Ids.TodoClientId? ClientId, out bool Piped) -> void
+Aw.Sindri.Features.AddTodo.AddTodoRequest.Piped.get -> bool
+Aw.Sindri.Features.AddTodo.AddTodoRequest.Piped.init -> void
+Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.ChangeTodoRequest(Aw.Sindri.Core.Ids.TodoId Id, long Version, string? Text = null, System.DateOnly? Due = null, bool ClearDue = false, System.Collections.Generic.IReadOnlyList<string!>? Links = null, bool Piped = false) -> void
+Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out long Version, out string? Text, out System.DateOnly? Due, out bool ClearDue, out System.Collections.Generic.IReadOnlyList<string!>? Links, out bool Piped) -> void
+Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.Piped.get -> bool
+Aw.Sindri.Features.ChangeTodo.ChangeTodoRequest.Piped.init -> void
+Aw.Sindri.Features.MarkTodo.MarkTodoRequest.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out Aw.Sindri.Core.Todos.TodoVerb Verb, out long? Version, out bool Piped) -> void
+Aw.Sindri.Features.MarkTodo.MarkTodoRequest.MarkTodoRequest(Aw.Sindri.Core.Ids.TodoId Id, Aw.Sindri.Core.Todos.TodoVerb Verb, long? Version = null, bool Piped = false) -> void
+Aw.Sindri.Features.MarkTodo.MarkTodoRequest.Piped.get -> bool
+Aw.Sindri.Features.MarkTodo.MarkTodoRequest.Piped.init -> void
+Aw.Sindri.Features.MarkTodo.MarkTodoRequest.CarriesProtectedFields.get -> bool
+Aw.Sindri.Features.MarkTodo.MarkTodoRequest.Variant.get -> string?
+Aw.Sindri.Features.ListTodos.ListTodosResponse.Deconstruct(out Aw.Sindri.Core.Views.AsOf! AsOf, out Aw.Sindri.Core.Todos.TodoListState State, out Aw.Sindri.Core.Todos.TodoCounts! Counts, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ListTodos.TodoItem!>! Todos) -> void
+Aw.Sindri.Features.ListTodos.ListTodosResponse.ListTodosResponse(Aw.Sindri.Core.Views.AsOf! AsOf, Aw.Sindri.Core.Todos.TodoListState State, Aw.Sindri.Core.Todos.TodoCounts! Counts, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ListTodos.TodoItem!>! Todos) -> void
+Aw.Sindri.Features.ListTodos.ListTodosResponse.Todos.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ListTodos.TodoItem!>!
+Aw.Sindri.Features.ListTodos.TodoItem
+Aw.Sindri.Features.ListTodos.TodoItem.<Clone>$() -> Aw.Sindri.Features.ListTodos.TodoItem!
+Aw.Sindri.Features.ListTodos.TodoItem.AddedAt.get -> System.DateTimeOffset
+Aw.Sindri.Features.ListTodos.TodoItem.AddedAt.init -> void
+Aw.Sindri.Features.ListTodos.TodoItem.AddedBy.get -> string!
+Aw.Sindri.Features.ListTodos.TodoItem.AddedBy.init -> void
+Aw.Sindri.Features.ListTodos.TodoItem.AddedVia.get -> string?
+Aw.Sindri.Features.ListTodos.TodoItem.AddedVia.init -> void
+Aw.Sindri.Features.ListTodos.TodoItem.Conflict.get -> Aw.Sindri.Core.Todos.TodoOpenConflict?
+Aw.Sindri.Features.ListTodos.TodoItem.Conflict.init -> void
+Aw.Sindri.Features.ListTodos.TodoItem.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out string! Text, out System.DateOnly? Due, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ListTodos.TodoLinkItem!>! Links, out System.DateTimeOffset AddedAt, out string! AddedBy, out string? AddedVia, out System.DateTimeOffset? DoneAt, out bool Removed, out System.DateTimeOffset? RemovedAt, out string? RemovedBy, out long Version, out string! LastBy, out string? LastVia, out Aw.Sindri.Core.Todos.TodoOpenConflict? Conflict) -> void
+Aw.Sindri.Features.ListTodos.TodoItem.DoneAt.get -> System.DateTimeOffset?
+Aw.Sindri.Features.ListTodos.TodoItem.DoneAt.init -> void
+Aw.Sindri.Features.ListTodos.TodoItem.Due.get -> System.DateOnly?
+Aw.Sindri.Features.ListTodos.TodoItem.Due.init -> void
+Aw.Sindri.Features.ListTodos.TodoItem.Equals(Aw.Sindri.Features.ListTodos.TodoItem? other) -> bool
+Aw.Sindri.Features.ListTodos.TodoItem.Id.get -> Aw.Sindri.Core.Ids.TodoId
+Aw.Sindri.Features.ListTodos.TodoItem.Id.init -> void
+Aw.Sindri.Features.ListTodos.TodoItem.LastBy.get -> string!
+Aw.Sindri.Features.ListTodos.TodoItem.LastBy.init -> void
+Aw.Sindri.Features.ListTodos.TodoItem.LastVia.get -> string?
+Aw.Sindri.Features.ListTodos.TodoItem.LastVia.init -> void
+Aw.Sindri.Features.ListTodos.TodoItem.Links.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ListTodos.TodoLinkItem!>!
+Aw.Sindri.Features.ListTodos.TodoItem.Links.init -> void
+Aw.Sindri.Features.ListTodos.TodoItem.Removed.get -> bool
+Aw.Sindri.Features.ListTodos.TodoItem.Removed.init -> void
+Aw.Sindri.Features.ListTodos.TodoItem.RemovedAt.get -> System.DateTimeOffset?
+Aw.Sindri.Features.ListTodos.TodoItem.RemovedAt.init -> void
+Aw.Sindri.Features.ListTodos.TodoItem.RemovedBy.get -> string?
+Aw.Sindri.Features.ListTodos.TodoItem.RemovedBy.init -> void
+Aw.Sindri.Features.ListTodos.TodoItem.Text.get -> string!
+Aw.Sindri.Features.ListTodos.TodoItem.Text.init -> void
+Aw.Sindri.Features.ListTodos.TodoItem.TodoItem(Aw.Sindri.Core.Ids.TodoId Id, string! Text, System.DateOnly? Due, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ListTodos.TodoLinkItem!>! Links, System.DateTimeOffset AddedAt, string! AddedBy, string? AddedVia, System.DateTimeOffset? DoneAt, bool Removed, System.DateTimeOffset? RemovedAt, string? RemovedBy, long Version, string! LastBy, string? LastVia, Aw.Sindri.Core.Todos.TodoOpenConflict? Conflict) -> void
+Aw.Sindri.Features.ListTodos.TodoItem.Version.get -> long
+Aw.Sindri.Features.ListTodos.TodoItem.Version.init -> void
+Aw.Sindri.Features.ListTodos.TodoLinkItem
+Aw.Sindri.Features.ListTodos.TodoLinkItem.<Clone>$() -> Aw.Sindri.Features.ListTodos.TodoLinkItem!
+Aw.Sindri.Features.ListTodos.TodoLinkItem.Deconstruct(out string! Kind, out string! Ref, out string! Href) -> void
+Aw.Sindri.Features.ListTodos.TodoLinkItem.Equals(Aw.Sindri.Features.ListTodos.TodoLinkItem? other) -> bool
+Aw.Sindri.Features.ListTodos.TodoLinkItem.Href.get -> string!
+Aw.Sindri.Features.ListTodos.TodoLinkItem.Href.init -> void
+Aw.Sindri.Features.ListTodos.TodoLinkItem.Kind.get -> string!
+Aw.Sindri.Features.ListTodos.TodoLinkItem.Kind.init -> void
+Aw.Sindri.Features.ListTodos.TodoLinkItem.Ref.get -> string!
+Aw.Sindri.Features.ListTodos.TodoLinkItem.Ref.init -> void
+Aw.Sindri.Features.ListTodos.TodoLinkItem.TodoLinkItem(string! Kind, string! Ref, string! Href) -> void
+override Aw.Sindri.Features.ListTodos.TodoItem.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListTodos.TodoItem.GetHashCode() -> int
+override Aw.Sindri.Features.ListTodos.TodoItem.ToString() -> string!
+override Aw.Sindri.Features.ListTodos.TodoLinkItem.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListTodos.TodoLinkItem.GetHashCode() -> int
+override Aw.Sindri.Features.ListTodos.TodoLinkItem.ToString() -> string!
+static Aw.Sindri.Features.ListTodos.TodoItem.From(Aw.Sindri.Core.Todos.TodoRow! row) -> Aw.Sindri.Features.ListTodos.TodoItem!
+static Aw.Sindri.Features.ListTodos.TodoItem.operator !=(Aw.Sindri.Features.ListTodos.TodoItem? left, Aw.Sindri.Features.ListTodos.TodoItem? right) -> bool
+static Aw.Sindri.Features.ListTodos.TodoItem.operator ==(Aw.Sindri.Features.ListTodos.TodoItem? left, Aw.Sindri.Features.ListTodos.TodoItem? right) -> bool
+static Aw.Sindri.Features.ListTodos.TodoLinkItem.operator !=(Aw.Sindri.Features.ListTodos.TodoLinkItem? left, Aw.Sindri.Features.ListTodos.TodoLinkItem? right) -> bool
+static Aw.Sindri.Features.ListTodos.TodoLinkItem.operator ==(Aw.Sindri.Features.ListTodos.TodoLinkItem? left, Aw.Sindri.Features.ListTodos.TodoLinkItem? right) -> bool
 Aw.Sindri.Features.AddConnection.AddConnectionRequest
 Aw.Sindri.Features.AddConnection.AddConnectionRequest.<Clone>$() -> Aw.Sindri.Features.AddConnection.AddConnectionRequest!
 Aw.Sindri.Features.AddConnection.AddConnectionRequest.Client.get -> string?
