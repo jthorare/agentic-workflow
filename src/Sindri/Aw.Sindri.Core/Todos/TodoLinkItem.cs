@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Features.ListTodos;
+namespace Aw.Sindri.Core.Todos;
 
 /// <summary>One link on a todo, as the list serves it.</summary>
 /// <param name="Kind">"item", "pr", "linear", "workflow" or "link".</param>

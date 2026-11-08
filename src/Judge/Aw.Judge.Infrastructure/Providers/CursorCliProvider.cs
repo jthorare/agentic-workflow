@@ -50,13 +50,20 @@ internal sealed class CursorCliProvider(IProcessRunner runner, IInputRedactor re
 
         if (envelope.IsError == true)
         {
-            return new ProviderErrored(ProviderReasons.CliReportedError);
+            return Errored(ProviderReasons.CliReportedError, Match(envelope.Result));
         }
 
         return envelope.Result is { } text
             ? ProviderUsageReader.Attach(AgentAnswer.Read(AgentAnswer.LastObject(text), question), ProviderUsageReader.FromEnvelope(envelope))
             : new ProviderErrored(ProviderReasons.UnparseableAnswer);
     }
+
+    /// <inheritdoc />
+    protected override string? Match(string? message) => UsageLimitMatcher.MatchCursor(message);
+
+    /// <inheritdoc />
+    protected override string? LimitIn(string output) =>
+        WireJson.Read<CliEnvelope>(output) is { IsError: true } envelope ? Match(envelope.Result) : null;
 
     // Redact before capping, as everywhere else, so a secret cut at the cap can't survive.
     private string Redacted(string prompt) => redactor.Redact(JsonValue.Create(prompt))?.GetValue<string>() ?? "";

@@ -138,6 +138,13 @@ case "$*" in
   "context map build") echo "build-env prover=${AW_SINDRI_PROVER:-} tty=$([ -t 0 ] && echo 1 || echo 0)" >> "$STUB_LOG.env" ;;
   "context map import "*) IFS= read -r line; echo "typed=$line" >> "$STUB_LOG"; echo "import-env prover=${AW_SINDRI_PROVER:-} tty=$([ -t 0 ] && echo 1 || echo 0)" >> "$STUB_LOG.env"; [ -z "${STUB_FAIL_IMPORT:-}" ] || { echo "SND-AUTH-002 refused" >&2; exit 1; } ;;
   "item add "*) n=$(($(cat "$STUB_LOG.n" 2>/dev/null || echo 0) + 1)); echo "$n" > "$STUB_LOG.n"; echo "added ITM-0$n" ;;
+  "todo add "*)
+    cid=""; prev=""; for a in "$@"; do [ "$prev" = "--client-id" ] && cid="$a"; prev="$a"; done
+    grep -qx "td_$cid" "$STUB_LOG.todos" 2>/dev/null || echo "td_$cid" >> "$STUB_LOG.todos"
+    echo "{\"accepted\":{},\"id\":\"td_$cid\",\"version\":1,\"due\":null}" ;;
+  "todos --json --no-fence")
+    printf '{"todos":['; sep=""; while IFS= read -r t; do grep -qx "$t" "$STUB_LOG.todos.done" 2>/dev/null || { printf '%s{"id":"%s"}' "$sep" "$t"; sep=","; }; done < "$STUB_LOG.todos"; echo ']}' ;;
+  "todo done "*) echo "$3" >> "$STUB_LOG.todos.done" ;;
   "workflow start "*)
     for a in "$@"; do case "$a" in fact:*=*) echo "fact ${a%%=*} $(cat "${a#*=}")" >> "$STUB_LOG" ;; esac; done
     if [ -n "${STUB_FAIL_START:-}" ]; then echo "SND-CLI-003 refused" >&2; exit 2; fi ;;
@@ -684,5 +691,26 @@ check "a second context sources keeps one record row and one origin" "$(sqlq "$S
 check "a second context sources adds the team to the profile once" "$(grep -c 'teams: \[SPL\]' "$SX/profile/profile.yaml")" "1"
 absent "a second context sources imports nothing" "$(cat "$STUB_LOG")" "context map import"
 
+# --- todos: the todo panel's data (todo spec §10 Ph2), added through the CLI with fixed client ids ---
+contains "the usage lists todos" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh todos"
+TD="$TMPDIR/todos"
+mkdir -p "$TD/profile"
+printf 'schemaVersion: 1\nuser: fixture\nservices:\n  heartbeat: { every: 5s }\n' > "$TD/profile/profile.yaml"
+tds() { AW_SINDRI_HOME="$TD" SINDRI="$STUB" bash "$FIXTURE" todos "$@"; }
+AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" todos >/dev/null 2>&1; check "todos refuses outside a guarded home" "$?" "2"
+tds extra >/dev/null 2>&1; check "todos takes no arguments (exit 2)" "$?" "2"
+: > "$STUB_LOG"; : > "$STUB_LOG.todos"; : > "$STUB_LOG.todos.done"
+tds >/dev/null 2>&1; check "todos exits 0" "$?" "0"
+check "todos adds 11 todos" "$(grep -c '^todo add' "$STUB_LOG")" "11"
+check "every add carries a fixed client id" "$(grep -c -- '--client-id ui-fixture-todo-' "$STUB_LOG")" "11"
+contains "todos adds an overdue one (a past date)" "$(cat "$STUB_LOG")" "todo add renew the staging cert --client-id ui-fixture-todo-01 --json --due 2020-01-01"
+check "todos adds two due today" "$(grep -c -- '--due today' "$STUB_LOG")" "2"
+contains "todos gives one todo two links" "$(cat "$STUB_LOG")" "--link acme/api#12 --link ENG-12"
+check "todos adds three with no date" "$(grep '^todo add' "$STUB_LOG" | grep -vc -- '--due')" "3"
+check "todos marks exactly one done" "$(grep -c '^todo done' "$STUB_LOG")" "1"
+: > "$STUB_LOG"
+tds >/dev/null 2>&1; check "a second todos exits 0" "$?" "0"
+check "a second todos leaves 11 todos (same client ids)" "$(wc -l < "$STUB_LOG.todos" | tr -d ' ')" "11"
+absent "a second todos marks nothing done again" "$(cat "$STUB_LOG")" "todo done"
 
 exit "$fail"
