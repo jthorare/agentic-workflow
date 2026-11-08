@@ -19,6 +19,7 @@ internal sealed partial class ShellViewModel
         QuickAdd.Added += (_, added) => ShowToast(new ToastMessage(
             added.Due is { } due ? Labels.QuickAddAddedDue(due) : Labels.QuickAddAdded,
             () => UndoAdded(added.Saved)));
+        QuickAdd.AddFailed += (_, failed) => ShowToast(new ToastMessage(Labels.QuickAddFailed(failed.Text, failed.Reason)));
         QuickAddWhileStopped += (_, _) => ShowToast(new ToastMessage(Labels.QuickAddStopped));
     }
 

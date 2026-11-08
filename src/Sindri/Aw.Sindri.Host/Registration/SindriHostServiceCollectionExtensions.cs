@@ -26,6 +26,7 @@ internal static class SindriHostServiceCollectionExtensions
         .AddSingleton<Projector>()
         .AddSingleton<Endpoints.IProjectFencing, Mcp.ProjectFencing>()   // a session's Projects answer is fenced like sindri_projects' (the fence is in Mcp; Endpoints cannot name it)
         .AddSingleton<Endpoints.IMemoryFencing, Mcp.MemoryFencing>()   // a session memory read is fenced like the memory tools answers
+        .AddSingleton<Endpoints.ITodoFencing, Mcp.TodoFencing>()   // a session's todo text, a piped CLI's and the ledger's todo events are fenced (todo spec §4.4)
         .AddSingleton<Endpoints.IReviewFencing, Mcp.ReviewFencing>()   // a session's Reviews list is fenced the same way
         .AddSingleton<Endpoints.ILibraryDocFencing, Mcp.LibraryDocFencing>()   // and a design doc's title, path and error text
         .AddSingleton<Endpoints.ILinearIssueFencing, Mcp.LinearIssueFencing>()   // and the Linear issue list's titles and names
