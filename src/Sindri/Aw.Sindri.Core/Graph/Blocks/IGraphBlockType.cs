@@ -11,7 +11,7 @@ public interface IGraphBlockType
     /// <summary>The name a node's 'type' uses, such as 'run_agent'.</summary>
     public string Type { get; }
 
-    /// <summary>True for a block that starts a run (schedule, poll, inbox, workflow_call): a workflow has exactly one.</summary>
+    /// <summary>True for a block that starts a run (schedule, connection_event, inbox, workflow_call): a workflow has exactly one.</summary>
     public bool IsTrigger { get; }
 
     /// <summary>The fields the config takes.</summary>

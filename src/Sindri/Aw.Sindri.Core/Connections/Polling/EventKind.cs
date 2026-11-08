@@ -1,7 +1,7 @@
 namespace Aw.Sindri.Core.Connections.Polling;
 
 /// <summary>
-/// One pollable event, named by its catalog id ('github.pr.merged'): '&lt;preset&gt;.&lt;thing&gt;.&lt;what happened&gt;'. A poll trigger names a
+/// One pollable event, named by its catalog id ('github.pr.merged'): '&lt;preset&gt;.&lt;thing&gt;.&lt;what happened&gt;'. A Connection event block (connection_event) names a
 /// connection and one of these; the poller makes one provider call per (connection, event kind).
 /// </summary>
 /// <param name="Key">The catalog id.</param>
