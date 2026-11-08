@@ -22,7 +22,13 @@ internal static class PollJson
             { ValueKind: JsonValueKind.Number } e => e.GetRawText(),
             _ => null,
         };
-        return text is { Length: > MaxText } ? text[..MaxText] : text;
+        if (text is not { Length: > MaxText })
+        {
+            return text;
+        }
+
+        // never end on the first half of a surrogate pair
+        return char.IsHighSurrogate(text[MaxText - 1]) ? text[..(MaxText - 1)] : text[..MaxText];
     }
 
     internal static DateTimeOffset? Time(string? text)

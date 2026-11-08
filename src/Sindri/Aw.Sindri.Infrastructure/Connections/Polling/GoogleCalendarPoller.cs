@@ -47,7 +47,7 @@ internal sealed class GoogleCalendarPoller(HttpClient http, IConnectionSecrets s
 
         return answer.Value.Body is { } body
             ? Read(body, from, to, cursor)
-            : new PollResult([], cursor, RateLimited: true, answer.Value.RetryAfter);
+            : new PollResult([], cursor, RateLimited: true, answer.Value.RetryAfter, Reason: answer.Value.Reason);
     }
 
     private static string Iso(DateTimeOffset value) => value.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture);

@@ -49,7 +49,7 @@ internal sealed class SlackEventPoller(HttpClient http, IConnectionSecrets secre
 
         return answer.Value.Body is { } body
             ? Read(body, new SlackFilter(kind, channel, connection.Config.GetValueOrDefault("filter", string.Empty), connection.Config.GetValueOrDefault("userId", string.Empty)), cursor, _clock.GetUtcNow())
-            : new PollResult([], cursor, RateLimited: true, answer.Value.RetryAfter);
+            : new PollResult([], cursor, RateLimited: true, answer.Value.RetryAfter, Reason: answer.Value.Reason);
     }
 
     private static Result<PollResult> Read(string body, SlackFilter filter, string? cursor, DateTimeOffset now)
@@ -107,7 +107,7 @@ internal sealed class SlackEventPoller(HttpClient http, IConnectionSecrets secre
 
     private static Result<PollResult> Failure(string? slackError, string? cursor) => (slackError ?? "unknown") switch
     {
-        "ratelimited" => new PollResult([], cursor, RateLimited: true, RetryAfter: null),
+        "ratelimited" => new PollResult([], cursor, RateLimited: true, RetryAfter: null, Reason: "the provider is rate limiting this connection"),
         "invalid_auth" or "token_revoked" or "not_authed" or "account_inactive" => SindriErrors.ConnectionNeedsSignIn.With($"Slack answered {slackError}"),
         _ => SindriErrors.ConnectionProviderChanged.With($"Slack answered {slackError ?? "ok=false"}"),
     };

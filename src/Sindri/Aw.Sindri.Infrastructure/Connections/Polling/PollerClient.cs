@@ -13,6 +13,9 @@ namespace Aw.Sindri.Infrastructure.Connections.Polling;
 /// </summary>
 internal sealed class PollerClient(HttpClient http, IConnectionSecrets secrets, string host, TimeProvider clock, bool bareKeys = false)
 {
+    private const string Limiting = "the provider is rate limiting this connection";
+    private const string Unreachable = "the provider could not be reached";
+
     internal TimeProvider Clock { get; } = clock;
 
     internal bool BareKeys { get; } = bareKeys;
@@ -62,18 +65,18 @@ internal sealed class PollerClient(HttpClient http, IConnectionSecrets secrets, 
 
             if (IsRateLimited(response, status))
             {
-                return new PollerAnswer(Body: null, RateLimited: true, RetryAfter: WaitOf(response));
+                return new PollerAnswer(Body: null, RateLimited: true, RetryAfter: WaitOf(response), Reason: Limiting);
             }
 
             return await Classify(response, status, cursorSent, cancellationToken).ConfigureAwait(false);
         }
         catch (HttpRequestException)
         {
-            return new PollerAnswer(Body: null, RateLimited: true, RetryAfter: null);
+            return new PollerAnswer(Body: null, RateLimited: true, RetryAfter: null, Reason: Unreachable);
         }
         catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            return new PollerAnswer(Body: null, RateLimited: true, RetryAfter: null);
+            return new PollerAnswer(Body: null, RateLimited: true, RetryAfter: null, Reason: Unreachable);
         }
     }
 
@@ -87,7 +90,7 @@ internal sealed class PollerClient(HttpClient http, IConnectionSecrets secrets, 
 
         if (status == (int)HttpStatusCode.BadRequest && (await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false)).Contains("RATELIMITED", StringComparison.Ordinal))
         {
-            return new PollerAnswer(Body: null, RateLimited: true, RetryAfter: WaitOf(response));
+            return new PollerAnswer(Body: null, RateLimited: true, RetryAfter: WaitOf(response), Reason: Limiting);
         }
 
         var code = status.ToString(CultureInfo.InvariantCulture);

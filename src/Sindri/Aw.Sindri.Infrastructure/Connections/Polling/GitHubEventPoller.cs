@@ -57,7 +57,7 @@ internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secr
             var answer = await _client.Send(connection, new HttpRequestMessage(HttpMethod.Get, next), cursor is not null, cancellationToken).ConfigureAwait(false);
             if (answer.IsError || answer.Value.Body is not { } body)
             {
-                return answer.IsError ? answer.Error : new PollResult([], cursor, RateLimited: true, answer.Value.RetryAfter);
+                return answer.IsError ? answer.Error : new PollResult([], cursor, RateLimited: true, answer.Value.RetryAfter, Reason: answer.Value.Reason);
             }
 
             var added = feed.Add(body);
@@ -83,7 +83,7 @@ internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secr
     private Result<PollResult> Finish(GitHubFeed feed, string? cursor, DateTimeOffset? after, bool gap)
     {
         var newest = feed.Newest.Later(cursor);
-        var events = after is null ? [] : feed.Events.OrderBy(static e => e.OccurredAt).ThenBy(static e => e.DeliveryKey, StringComparer.Ordinal).ToList();
+        var events = after is null ? [] : feed.Events.DistinctBy(static e => e.DeliveryKey, StringComparer.Ordinal).OrderBy(static e => e.OccurredAt).ThenBy(static e => e.DeliveryKey, StringComparer.Ordinal).ToList();
         return new PollResult(events, newest.Text ?? PollCursorText.Now(clock.GetUtcNow()), RateLimited: false, RetryAfter: null, gap);
     }
 }

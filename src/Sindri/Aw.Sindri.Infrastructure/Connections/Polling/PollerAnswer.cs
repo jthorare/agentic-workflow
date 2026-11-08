@@ -5,4 +5,5 @@ namespace Aw.Sindri.Infrastructure.Connections.Polling;
 /// <param name="RateLimited">True for a rate limit, 5xx and a provider that could not be reached.</param>
 /// <param name="RetryAfter">How long the provider asked to wait (Retry-After, or until its rate-limit reset), or null.</param>
 /// <param name="NextUrl">The URL of the next page (Link header rel="next"), or null.</param>
-internal sealed record PollerAnswer(string? Body, bool RateLimited, TimeSpan? RetryAfter, string? NextUrl = null);
+/// <param name="Reason">Why it is rate limited, in words for the owner, or null.</param>
+internal sealed record PollerAnswer(string? Body, bool RateLimited, TimeSpan? RetryAfter, string? NextUrl = null, string? Reason = null);

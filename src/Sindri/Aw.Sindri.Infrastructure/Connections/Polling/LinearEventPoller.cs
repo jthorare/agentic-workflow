@@ -46,7 +46,7 @@ internal sealed class LinearEventPoller(HttpClient http, IConnectionSecrets secr
             var answer = await _client.Send(connection, request, cursor is not null, cancellationToken).ConfigureAwait(false);
             if (answer.IsError || answer.Value.Body is not { } body)
             {
-                return answer.IsError ? answer.Error : new PollResult([], cursor, RateLimited: true, answer.Value.RetryAfter);
+                return answer.IsError ? answer.Error : new PollResult([], cursor, RateLimited: true, answer.Value.RetryAfter, Reason: answer.Value.Reason);
             }
 
             var added = feed.Add(body);
@@ -93,7 +93,7 @@ internal sealed class LinearEventPoller(HttpClient http, IConnectionSecrets secr
 
     private Result<PollResult> Finish(LinearFeed feed, bool gap)
     {
-        var events = feed.Events.OrderBy(static e => e.OccurredAt).ThenBy(static e => e.DeliveryKey, StringComparer.Ordinal).ToList();
+        var events = feed.Events.DistinctBy(static e => e.DeliveryKey, StringComparer.Ordinal).OrderBy(static e => e.OccurredAt).ThenBy(static e => e.DeliveryKey, StringComparer.Ordinal).ToList();
         return new PollResult(events, feed.Newest.Text ?? PollCursorText.Now(clock.GetUtcNow()), RateLimited: false, RetryAfter: null, gap);
     }
 }
