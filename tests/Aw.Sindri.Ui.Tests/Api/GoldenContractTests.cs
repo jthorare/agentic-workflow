@@ -201,16 +201,16 @@ public sealed class GoldenContractTests
     [Fact]
     public void The_status_goldens_carry_every_field_the_health_page_reads()
     {
-        var approved = Read<StatusView>("status", "running-approved");
-        var unapproved = Read<StatusView>("status", "running-unapproved");
+        // The one running scenario keeps its pre-#2258 name 'running-unapproved'; with no approval its profile is just the live file.
+        var running = Read<StatusView>("status", "running-unapproved");
 
-        Assert.Equal((true, 4242, 1L, 1), (approved.Running, approved.Pid, approved.Epoch, approved.ApiVersion));
-        _ = Assert.NotNull(approved.LeaseExpiresAt);
-        Assert.Equal((false, false, approved.Profile.Approved), (approved.Profile.NeedsApproval, approved.Profile.ChangedSinceApproval, approved.Profile.Live));
-        Assert.EndsWith("profile.yaml", approved.Profile.Source, StringComparison.Ordinal);
-        Assert.Equal(("heartbeat", "5s"), (approved.Services[0].Name, approved.Services[0].Every));
-        Assert.Equal((null, true), (unapproved.Profile.Approved, unapproved.Profile.NeedsApproval));
-        Assert.Empty(unapproved.Services);
+        Assert.Equal((true, 4242, 1L, 1), (running.Running, running.Pid, running.Epoch, running.ApiVersion));
+        _ = Assert.NotNull(running.LeaseExpiresAt);
+        _ = Assert.NotNull(running.Profile.Live);
+        Assert.Null(running.Profile.Problem);
+        Assert.EndsWith("profile.yaml", running.Profile.Source, StringComparison.Ordinal);
+        Assert.Equal(("heartbeat", "5s"), (running.Services[0].Name, running.Services[0].Every));
+        Assert.Equal("healthy", running.Health.Word);
     }
 
     [Fact]
@@ -247,7 +247,7 @@ public sealed class GoldenContractTests
     [Fact]
     public void The_fake_handler_writes_the_goldens_status_ping_and_event_shapes()
     {
-        foreach (var scenario in (string[])["running-approved", "running-unapproved"])
+        foreach (var scenario in (string[])["running-unapproved"])
         {
             var golden = GoldenFiles.Api("status", scenario);
             Assert.True(JsonNode.DeepEquals(JsonNode.Parse(golden), JsonNode.Parse(FakeSindriHandler.Status(Read<StatusView>("status", scenario)))), scenario);
