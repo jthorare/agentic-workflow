@@ -223,9 +223,9 @@ public abstract class WorkflowRunStoreContract
 
         _ = (await store.MarkTick(_workflow, tick, Token)).Value;
 
-        Expect.Equal<DateTimeOffset?>(expected: null, before.Value);
-        Expect.Equal<DateTimeOffset?>(tick, (await store.LastTick(_workflow, Token)).Value);
-        Expect.Equal<DateTimeOffset?>(expected: null, (await store.LastTick(WorkflowId.From("WF-00000000000000000000000000000002"), Token)).Value);
+        Expect.Equal(expected: null, before.Value);
+        Expect.Equal(tick, (await store.LastTick(_workflow, Token)).Value);
+        Expect.Equal(expected: null, (await store.LastTick(WorkflowId.From("WF-00000000000000000000000000000002"), Token)).Value);
     }
 
     /// <summary>A tick earlier than the one on record changes nothing: the last tick only moves forward.</summary>
@@ -238,11 +238,11 @@ public abstract class WorkflowRunStoreContract
         _ = (await store.MarkTick(_workflow, later, Token)).Value;
 
         _ = (await store.MarkTick(_workflow, KnownInstants.Epoch.AddDays(1), Token)).Value;
-        Expect.Equal<DateTimeOffset?>(later, (await store.LastTick(_workflow, Token)).Value);
+        Expect.Equal(later, (await store.LastTick(_workflow, Token)).Value);
 
         var latest = KnownInstants.Epoch.AddDays(3);
         _ = (await store.MarkTick(_workflow, latest, Token)).Value;
-        Expect.Equal<DateTimeOffset?>(latest, (await store.LastTick(_workflow, Token)).Value);
+        Expect.Equal(latest, (await store.LastTick(_workflow, Token)).Value);
     }
 
     /// <summary>A trigger that is not a JSON object is refused when the run is recorded, so one bad row can't break the query that reads triggers by kind.</summary>
@@ -263,6 +263,6 @@ public abstract class WorkflowRunStoreContract
         Expect.Equal(SindriErrors.GraphInvalid.Code, inserted.Error.Code);
         Expect.Equal(SindriErrors.GraphInvalid.Code, admitted.Error.Code);
         Expect.Equal(0, (await store.InFlight(_workflow, Token)).Value.Count);
-        Expect.Equal<int?>(expected: null, (await store.LatestOccurrence(_workflow, "manual", Token)).Value);
+        Expect.Equal(expected: null, (await store.LatestOccurrence(_workflow, "manual", Token)).Value);
     }
 }

@@ -222,7 +222,7 @@ public sealed class WorkflowScheduleServiceTests
             var id = WorkflowRunId.Of(request.Slug, request.Revision, request.Occurrence);
             if (FailSlug is { } failing && failing == request.Slug)
             {
-                return Aw.Sindri.Core.SindriErrors.EngineUnavailable.With("the engine is down");
+                return Core.SindriErrors.EngineUnavailable.With("the engine is down");
             }
 
             if (Skip)
