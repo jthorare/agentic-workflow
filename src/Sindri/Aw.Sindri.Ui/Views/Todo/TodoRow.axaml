@@ -25,6 +25,9 @@
       <TextBlock x:Name="TodoText" Grid.Column="1" Classes="body todo-text" Text="{Binding Text}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                  ToolTip.Tip="{Binding Text}" AutomationProperties.AccessibilityView="Raw" />
       <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" Margin="12,0" VerticalAlignment="Center">
+        <!-- A key's write was refused: the row came back and says why, in words (the error colour), until the next change. -->
+        <TextBlock x:Name="TodoNotice" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding Notice}"
+                   IsVisible="{Binding Notice, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.LiveSetting="Polite" />
         <ItemsControl x:Name="TodoChips" ItemsSource="{Binding Chips}" AutomationProperties.AccessibilityView="Raw">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
