@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:pvm="using:Aw.Sindri.Ui.ViewModels.Projects"
-             xmlns:wf="using:Aw.Sindri.Ui.Api.Workflow"
+             xmlns:wf="using:Aw.Sindri.Ui.Api"
              xmlns:views="using:Aw.Sindri.Ui.Views.Projects"
              x:Class="Aw.Sindri.Ui.Views.Projects.ProjectSheetView"
              x:DataType="pvm:ProjectSheetViewModel">

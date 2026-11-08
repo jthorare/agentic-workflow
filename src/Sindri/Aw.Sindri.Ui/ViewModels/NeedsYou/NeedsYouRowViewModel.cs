@@ -1,4 +1,4 @@
-using Aw.Sindri.Ui.Api.Workflow;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 

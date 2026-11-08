@@ -59,7 +59,7 @@ public sealed class ShellOpenTargetTests
         parked["chip"] = JsonNode.Parse("""{"word":"PARKED","tone":"neutral"}""");
         _server.InstanceBody = _ => new RouteAnswer(HttpStatusCode.OK, instance.ToJsonString());
         var detail = FixtureInstances.Detail("project-build");
-        var summary = FixtureInstances.List("open").Instances.First(r => string.Equals(r.Id, detail.Id, StringComparison.Ordinal)) with { Chip = new Ui.Api.Workflow.StateChip("PARKED", Ui.Api.Workflow.ChipTone.Neutral) };
+        var summary = FixtureInstances.List("open").Instances.First(r => string.Equals(r.Id, detail.Id, StringComparison.Ordinal)) with { Chip = new Ui.Api.StateChip("PARKED", Ui.Api.ChipTone.Neutral) };
         var inspector = shell.Workflows.Inspector;
         await inspector.Show(new Uri("http://127.0.0.1:7410/"), new ViewModels.Workflows.InstanceRowViewModel(summary, new FakeClipboard(), _clock), Token);
 

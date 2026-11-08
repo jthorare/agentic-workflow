@@ -1,6 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
-using Aw.Sindri.Ui.Api.Workflow;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.ViewModels.Controls;
 
 namespace Aw.Sindri.Ui.Views.Controls;

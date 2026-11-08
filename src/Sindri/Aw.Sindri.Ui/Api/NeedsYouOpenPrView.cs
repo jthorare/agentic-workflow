@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Ui.Api.Workflow;
+namespace Aw.Sindri.Ui.Api;
 
 /// <summary>A pull request an 'open' target names.</summary>
 /// <param name="Url">Its address.</param>

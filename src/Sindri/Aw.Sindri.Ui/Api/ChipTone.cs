@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Aw.Sindri.Ui.Api.Workflow;
+namespace Aw.Sindri.Ui.Api;
 
 /// <summary>The tone class of a served chip. A tone this build doesn't know reads as <see cref="Neutral"/> (API rev 8).</summary>
 [JsonConverter(typeof(ChipToneJsonConverter))]

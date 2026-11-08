@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Aw.Sindri.Ui.Api.Workflow;
+namespace Aw.Sindri.Ui.Api;
 
 /// <summary>
 /// Reads and writes an enum as its wire word. A word this build doesn't know (or a value that is not a string) reads as

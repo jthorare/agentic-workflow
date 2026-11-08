@@ -1,8 +1,9 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Workflow;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels.Controls;
-using Served = Aw.Sindri.Ui.Api.Workflow.StateChip;
+using Served = Aw.Sindri.Ui.Api.StateChip;
 
 namespace Aw.Sindri.Ui.Tests.Controls;
 

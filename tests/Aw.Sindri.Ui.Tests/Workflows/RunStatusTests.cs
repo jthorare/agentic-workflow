@@ -1,6 +1,6 @@
 using System.Xml.Linq;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.Api.Workflow;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Tests.Theme;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 

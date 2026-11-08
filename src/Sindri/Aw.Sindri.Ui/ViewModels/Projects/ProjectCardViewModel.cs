@@ -1,7 +1,6 @@
 using System.Globalization;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Projects;
-using Aw.Sindri.Ui.Api.Workflow;
 using Aw.Sindri.Ui.Navigation;
 
 namespace Aw.Sindri.Ui.ViewModels.Projects;

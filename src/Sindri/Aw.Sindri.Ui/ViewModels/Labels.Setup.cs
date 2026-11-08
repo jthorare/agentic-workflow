@@ -1,7 +1,7 @@
 using System.Collections.Frozen;
 using System.Globalization;
 using Aw.Kernel;
-using Aw.Sindri.Ui.Api.Workflow;
+using Aw.Sindri.Ui.Api;
 
 namespace Aw.Sindri.Ui.ViewModels;
 

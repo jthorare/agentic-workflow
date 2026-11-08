@@ -1,5 +1,5 @@
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.Api.Workflow;
+using Aw.Sindri.Ui.Api;
 
 namespace Aw.Sindri.Ui.Tests.Projects;
 

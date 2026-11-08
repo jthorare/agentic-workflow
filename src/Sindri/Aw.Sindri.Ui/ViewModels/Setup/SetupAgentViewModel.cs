@@ -1,4 +1,4 @@
-using Aw.Sindri.Ui.Api.Workflow;
+using Aw.Sindri.Ui.Api;
 
 namespace Aw.Sindri.Ui.ViewModels.Setup;
 

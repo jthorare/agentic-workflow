@@ -34,13 +34,13 @@ public sealed class RunStatesTests
     {
         var chip = RunFixtures.Chip("DIDN'T WORK OUT");
 
-        Assert.Equal(Ui.Api.Workflow.ChipTone.Attn, chip.Tone);
+        Assert.Equal(Ui.Api.ChipTone.Attn, chip.Tone);
         Assert.Equal("Brush.Attention", RunStates.Brushes(RunStates.FromChip(chip)).Text);
     }
 
     [Fact]
     public void A_word_this_build_does_not_know_reads_as_not_started() =>
-        Assert.Equal(RunNodeState.NotStarted, RunStates.FromChip(new Ui.Api.Workflow.StateChip("SOMETHING NEW", Ui.Api.Workflow.ChipTone.Neutral)));
+        Assert.Equal(RunNodeState.NotStarted, RunStates.FromChip(new Ui.Api.StateChip("SOMETHING NEW", Ui.Api.ChipTone.Neutral)));
 
     [Fact]
     public void Every_state_has_a_word_and_a_distinct_glyph_word_pair()

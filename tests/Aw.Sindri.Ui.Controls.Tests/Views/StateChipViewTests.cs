@@ -5,8 +5,8 @@ using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Views;
 using Aw.Sindri.Ui.Views.Controls;
-using ChipTone = Aw.Sindri.Ui.Api.Workflow.ChipTone;
-using Served = Aw.Sindri.Ui.Api.Workflow.StateChip;
+using ChipTone = Aw.Sindri.Ui.Api.ChipTone;
+using Served = Aw.Sindri.Ui.Api.StateChip;
 
 namespace Aw.Sindri.Ui.Controls.Tests.Views;
 

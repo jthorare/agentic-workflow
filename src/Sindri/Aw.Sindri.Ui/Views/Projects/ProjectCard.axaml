@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:pvm="using:Aw.Sindri.Ui.ViewModels.Projects"
-             xmlns:wf="using:Aw.Sindri.Ui.Api.Workflow"
+             xmlns:wf="using:Aw.Sindri.Ui.Api"
              x:Class="Aw.Sindri.Ui.Views.Projects.ProjectCard"
              x:DataType="pvm:ProjectCardViewModel">
   <!-- One project (mockup B): the name with its origin chip and the health dot and word, the open counts large, the first line of the owner's note inset,
