@@ -10,7 +10,7 @@ namespace Aw.Sindri.Ui.Tests.Settings;
 [Lane(TestLane.Unit)]
 public sealed class LinearConnectionUncheckedTests
 {
-    private const string Words = "Not checked yet. Save to check.";
+    private const string Words = "Not checked yet. Replace key to check it.";
 
     private static readonly Uri _api = new("http://127.0.0.1:7410/");
 

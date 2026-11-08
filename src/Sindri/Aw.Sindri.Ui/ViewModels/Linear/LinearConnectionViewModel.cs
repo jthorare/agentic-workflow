@@ -66,7 +66,7 @@ internal sealed partial class LinearConnectionViewModel : ObservableObject
     /// <summary>True when the "Read access: connected" line (or its "Not checked yet" form) is drawn.</summary>
     public bool ShowReadSet => ReadHasKey && !_replacingRead;
 
-    /// <summary>"Read access: connected · checked 10:05", or "Read access: Not checked yet. Save to check." for a key no save has checked.</summary>
+    /// <summary>"Read access: connected · checked 10:05", or "Read access: Not checked yet. Replace key to check it." for a key no save has checked.</summary>
     public string ReadAccessText => ReadIs(Unchecked) ? Labels.LinearConnNotChecked("Read") : Labels.LinearConnAccess("Read", _connection?.Read.CheckedAt);
 
     /// <summary>The pasted read key; empty after it is sent.</summary>
@@ -116,7 +116,7 @@ internal sealed partial class LinearConnectionViewModel : ObservableObject
     /// <summary>True when that Cancel can be pressed: not while the key is checked and stored.</summary>
     public bool CanCancelWrite => ShowCancelWrite && !IsBusy;
 
-    /// <summary>"Write access: connected · checked 10:05", or "Write access: Not checked yet. Save to check." for a key no save has checked.</summary>
+    /// <summary>"Write access: connected · checked 10:05", or "Write access: Not checked yet. Replace key to check it." for a key no save has checked.</summary>
     public string WriteAccessText => WriteIs(Unchecked) ? Labels.LinearConnNotChecked("Write") : Labels.LinearConnAccess("Write", _connection?.Write.CheckedAt);
 
     /// <summary>The pasted write key; empty after it is sent.</summary>
