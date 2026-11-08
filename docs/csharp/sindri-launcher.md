@@ -278,7 +278,7 @@ viewers, detection, `launch init` and `show`) and `Aw.Sindri.Features/Launching`
   would block an open now.
 - **Doctor** prints `launcher` (viewer and config problems), `launcher:agents` (each entry's resolved bin, the Steps that would park) and
   `launcher:adoption` (opens of the last 30 days by viewer and agent).
-- **`profile approve`** previews, for each added or changed `agents.<id>.stepArgvHash`, the entry on this box that has the hash, or "no entry on this box
+- **The old `profile approve` preview** (gone with the approval step, #2258) showed, for each added or changed `agents.<id>.stepArgvHash`, the entry on this box that has the hash, or "no entry on this box
   has the hash" (L-16).
 
 ## Stop ends the session

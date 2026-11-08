@@ -1310,7 +1310,7 @@ Unit (d), as built:
   works; default 10s). `ProfileRules.Check` refuses an entry that isn't an `effect.*` id (`workflow.effects[i]`) and a
   delay outside that grammar; `ProfileDiff` names both keys. Both are left out of the canonical JSON when absent, so an
   approval made before P6 keeps its hash.
-- **The approved snapshot everywhere:** the recheck (unit (b)) now reads the allowlist through `EffectSettings.Of` on
+- **The profile Sindri reads everywhere (was "the approved snapshot", before #2258):** the recheck (unit (b)) now reads the allowlist through `EffectSettings.Of` on
   `IApprovedProfile.Latest`; `LoadRecipe` takes `workflow.dispatchDelay` from the approved profile too
   (`ProfileWorkflowTimes.DispatchDelay`; a read that fails is retried, none approved is 10s), so the undo window is the
   one the owner approved, and a replay sees it from history. `RCP-EFFECT-001` reads the same snapshot, both in
