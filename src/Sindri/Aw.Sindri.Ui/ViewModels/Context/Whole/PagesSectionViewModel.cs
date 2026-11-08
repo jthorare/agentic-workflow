@@ -1,4 +1,3 @@
-using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.ViewModels.Run;
 
@@ -13,10 +12,8 @@ internal sealed class PagesSectionViewModel : ObservableObject
     /// <summary>The most pages listed before Show all.</summary>
     internal const int Cap = 20;
 
-    private readonly Dictionary<string, string> _savedIds = new(StringComparer.Ordinal);
     private List<PageRowViewModel> _all = [];
     private bool _showingAll;
-    private ProfileWaiting? _waiting;
 
     /// <summary>Raised when a row's button or New page is pressed: the value is the page's node key, or null for a new page.</summary>
     internal event EventHandler<ValueEventArgs<string?>>? SheetRequested;
@@ -119,10 +116,6 @@ internal sealed class PagesSectionViewModel : ObservableObject
         _all = Dress(noConcept ? [.. rows.Select(static r => r with { Actions = [.. r.Actions.Select(static a => a with { Opens = false })] })] : rows);
         (CanClose, _showingAll, IsLoading, IsFailed) = (noConcept, false, false, false);
         Changed();
-        if (Writes is not null)
-        {
-            _ = MarkWaiting(CancellationToken.None);
-        }
     }
 
     /// <summary>Asks for a row's sheet: Name this page on a suggested row, Edit page on an owner row.</summary>
@@ -144,32 +137,8 @@ internal sealed class PagesSectionViewModel : ObservableObject
     /// <returns>The other pages' names.</returns>
     internal IReadOnlyList<string> NamesExcept(string? key) => [.. _all.Where(r => !string.Equals(r.Key, key, StringComparison.Ordinal)).Select(static r => r.Name)];
 
-    /// <summary>Remembers that a page was written from this row, so its row can wear the Waiting for approval mark once the map is read again.</summary>
-    /// <param name="key">The node key the sheet opened from.</param>
-    /// <param name="id">The page id it wrote.</param>
-    internal void Remember(string key, string id) => _savedIds[key] = id;
-
-    /// <summary>Reads which pages wait for approval and marks their rows. Only the rows it can match are marked: a page this session saved, a page the map says an owner page named, and an owner page whose key carries its id.</summary>
-    /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>When the rows are marked.</returns>
-    internal async Task MarkWaiting(CancellationToken cancellationToken)
-    {
-        if (Writes is null)
-        {
-            return;
-        }
-
-        _waiting = await Writes.Waiting(cancellationToken).ConfigureAwait(true);
-        _all = Dress(_all);
-        Changed();
-    }
-
-    // Each row says whether the sheet is wired, and wears Waiting for approval when its page id waits.
-    private List<PageRowViewModel> Dress(List<PageRowViewModel> rows) =>
-        [.. rows.Select(r => r with { CanWrite = CanWrite, Marks = Waits(r) && !r.Marks.Contains(Labels.ContextPagesWaiting, StringComparer.Ordinal) ? [.. r.Marks, Labels.ContextPagesWaiting] : r.Marks })];
-
-    private bool Waits(PageRowViewModel row) =>
-        _waiting is { } waiting && (_savedIds.TryGetValue(row.Key, out var saved) ? saved : row.PageId ?? (row.Owner ? PageRows.OwnerId(row.Key) : null)) is { } id && waiting.Waits(id);
+    // Each row says whether the sheet is wired.
+    private List<PageRowViewModel> Dress(List<PageRowViewModel> rows) => [.. rows.Select(r => r with { CanWrite = CanWrite })];
 
     /// <summary>Lists every page past the cap.</summary>
     internal void ShowAll()

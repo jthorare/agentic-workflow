@@ -43,14 +43,13 @@ internal static partial class ActionCommand
         return open || !Placeholder.IsMatch(group.Groups["body"].Value) ? group.Value : filled;
     }
 
-    // <name> is the service's name, <itemId> the row's item, <decisionId> a decision's id, <hash> a profile's. The catalog's
+    // <name> is the service's name, <itemId> the row's item, <decisionId> a decision's id. The catalog's
     // <id> means a context-map review operation and <item> is not a catalog word, so neither is the row's item.
     private static string? Value(string placeholder, NeedsYouSubject? subject, string? itemId) => placeholder switch
     {
         "name" when subject?.Kind == NeedsYouKinds.Service => subject.Id,
         "itemId" when !string.IsNullOrEmpty(itemId) => itemId,
         "decisionId" when subject?.DecisionId is { } decision => decision,
-        "hash" when subject?.Kind == NeedsYouKinds.Profile => subject.Id,
         _ => null,
     };
 

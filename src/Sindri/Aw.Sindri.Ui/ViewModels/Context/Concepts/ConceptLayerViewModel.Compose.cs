@@ -18,7 +18,7 @@ internal sealed partial class ConceptLayerViewModel
         }
 
         var byKey = _all.ToDictionary(t => KeyOf(t.Id), StringComparer.Ordinal);
-        var live = pins.Pins.Where(p => !string.Equals(p.State, PinStates.Removing, StringComparison.Ordinal) || byKey.ContainsKey(p.Id)).ToList();
+        List<PinView> live = [.. pins.Pins];
         var pinned = new List<ConceptTileViewModel>();
         for (var i = 0; i < live.Count; i++)
         {
@@ -61,10 +61,9 @@ internal sealed partial class ConceptLayerViewModel
     // The button is offered only when something can answer it: Open review waits for the held-map review to be built.
     private PinCardAction Offered(PinCardAction action) => action switch
     {
-        PinCardAction.ReviewAndApprove when ReviewAndApprove is null => PinCardAction.None,
         PinCardAction.OpenReview when OpenReview is null => PinCardAction.None,
         PinCardAction.TryAgain when TryAgain is null => PinCardAction.None,
-        PinCardAction.None or PinCardAction.ReviewAndApprove or PinCardAction.OpenReview or PinCardAction.TryAgain => action,
+        PinCardAction.None or PinCardAction.OpenReview or PinCardAction.TryAgain => action,
         _ => PinCardAction.None,
     };
 

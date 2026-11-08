@@ -7,24 +7,23 @@ using Aw.Sindri.Ui.ViewModels.Controls;
 namespace Aw.Sindri.Ui.ViewModels.NeedsYou;
 
 /// <summary>
-/// The approvals the inbox's action bar does (F3 needs-you spec §8.3): a drifted profile, a changed workflow and approve-all (the approve-all dialog's own
+/// The approvals the inbox's action bar does (F3 needs-you spec §8.3): a changed workflow and approve-all (the approve-all dialog's own
 /// <see cref="ApproveAllViewModel"/>: its plan and job, not a second copy). Each is one plain click that calls the route with no challenge; a refusal the
 /// server gives is shown in words. An approval is sent once.
 /// </summary>
 internal sealed partial class NeedsYouConfirm : ObservableObject
 {
-    private const string ProfileAction = "ApproveProfile";
     private const string RecipeAction = "ApproveRecipe";
     private const string SessionRefusal = "SND-AUTH-002";
 
-    private static readonly string[] _approvals = [ProfileAction, RecipeAction, ApproveAllViewModel.Action];
+    private static readonly string[] _approvals = [RecipeAction, ApproveAllViewModel.Action];
     private static readonly string[] _allShown = [nameof(ApproveAllViewModel.Phase), nameof(ApproveAllViewModel.Error), nameof(ApproveAllViewModel.Notice), nameof(ApproveAllViewModel.CanApprove)];
 
     private readonly Func<Uri?> _url;
     private readonly ISindriApi _api;
     private string _hash = "";
     private string _cli = "";   // the row's served command: the working way to do it, named with every refusal
-    private bool _approved;   // the profile or workflow approval went through
+    private bool _approved;   // the workflow approval went through
     private bool _sending;
     private string ProfileRefusal { get; set; } = "";
     private int _session;   // which row this is; an answer is for the one that asked
@@ -60,13 +59,13 @@ internal sealed partial class NeedsYouConfirm : ObservableObject
     /// <summary>True when the shown row can be approved now: there is something to approve and no approval is on its way.</summary>
     internal bool CanApprove => Kind switch
     {
-        NeedsYouConfirmKind.Profile or NeedsYouConfirmKind.Recipe => !_sending && !_approved,
+        NeedsYouConfirmKind.Recipe => !_sending && !_approved,
         NeedsYouConfirmKind.All => All.CanApprove,
         NeedsYouConfirmKind.None => false,
         _ => throw new InvalidOperationException("a kind the bar doesn't know"),
     };
 
-    /// <summary>True when the row's primary is one of the three approvals the app does.</summary>
+    /// <summary>True when the row's primary is one of the two approvals the app does.</summary>
     /// <param name="entry">The row.</param>
     /// <returns>True when it is.</returns>
     internal static bool IsApproval(NeedsYouEntry entry)
@@ -85,9 +84,9 @@ internal sealed partial class NeedsYouConfirm : ObservableObject
         (_hash, _cli, _approved, _sending) = ("", row?.Entry.Cli ?? "", false, false);
         ProfileRefusal = "";
         Kind = KindOf(row);
-        if (Kind is NeedsYouConfirmKind.Profile or NeedsYouConfirmKind.Recipe)
+        if (Kind is NeedsYouConfirmKind.Recipe)
         {
-            _hash = row!.Entry.Subject!.Id;   // why: the kind is Profile or Recipe only for a row with that subject (the id is the hash or the recipe's id)
+            _hash = row!.Entry.Subject!.Id;   // why: the kind is Recipe only for a row with that subject (the id is the recipe's id)
         }
 
         Changed?.Invoke(this, EventArgs.Empty);
@@ -151,7 +150,7 @@ internal sealed partial class NeedsYouConfirm : ObservableObject
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
-    // The kind a row offers: the profile only with the hash to approve, a workflow only with its recipe.
+    // The kind a row offers: a workflow only with its recipe.
     private static NeedsYouConfirmKind KindOf(NeedsYouRowViewModel? row)
     {
         if (row is null || !IsApproval(row.Entry))
@@ -159,11 +158,8 @@ internal sealed partial class NeedsYouConfirm : ObservableObject
             return NeedsYouConfirmKind.None;
         }
 
-        var (action, subject) = (row.Entry.PrimaryAction, row.Entry.Subject);
-        return string.Equals(action, RecipeAction, StringComparison.Ordinal) ? (IsRecipe(row) ? NeedsYouConfirmKind.Recipe : NeedsYouConfirmKind.None)
-            : string.Equals(action, ProfileAction, StringComparison.Ordinal)
-                ? subject is { Id.Length: > 0 } && string.Equals(subject.Kind, NeedsYouKinds.Profile, StringComparison.Ordinal) ? NeedsYouConfirmKind.Profile : NeedsYouConfirmKind.None
-                : NeedsYouConfirmKind.All;
+        var action = row.Entry.PrimaryAction;
+        return string.Equals(action, RecipeAction, StringComparison.Ordinal) ? (IsRecipe(row) ? NeedsYouConfirmKind.Recipe : NeedsYouConfirmKind.None) : NeedsYouConfirmKind.All;
     }
 
     /// <summary>The words for a refused approval: the sentence, its code and the row's own command.</summary>

@@ -27,8 +27,8 @@ internal sealed partial class PageSheetViewModel
     /// <summary>Gets a value indicating whether the save button can be pressed.</summary>
     public bool CanSave => IsReady && !IsSaving && _hash is not null;   // no hash, no write: a null ifHash writes over the file unchecked
 
-    /// <summary>Gets the save button's words: "Saving…", "Save and approve" when only this page waits, else "Save".</summary>
-    public string SaveText => IsSaving ? Labels.PageSheetSaving : _approve ? Labels.PageSheetSaveAndApprove : Labels.PageSheetSave;
+    /// <summary>Gets the save button's words: "Saving…" or "Save".</summary>
+    public string SaveText => IsSaving ? Labels.PageSheetSaving : Labels.PageSheetSave;
 
     /// <summary>Gets the line under the buttons: the clash, a failure, or a refusal that names no field.</summary>
     public string Note { get; private set; } = string.Empty;
@@ -89,7 +89,7 @@ internal sealed partial class PageSheetViewModel
             Name = Name.Trim(),
             Actions = [.. kept.Select(static a => new PageActionDraft(a.Id, a.Name.Trim(), a.Action, a.TickedIds))],
         };
-        _ = await Write(new PageSave([draft], []) { Before = _before }, id, kept, cancellationToken).ConfigureAwait(true);
+        _ = await Write(new PageSave([draft], []), id, kept, cancellationToken).ConfigureAwait(true);
     }
 
     /// <summary>Asks before removing the page (Edit page only); focus goes to Cancel.</summary>
@@ -119,7 +119,7 @@ internal sealed partial class PageSheetViewModel
         RemovePageFocusRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>Removes the page, with the same approve rule as the save.</summary>
+    /// <summary>Removes the page.</summary>
     /// <param name="cancellationToken">Cancels the wait.</param>
     /// <returns>When the answer is drawn.</returns>
     internal async Task Remove(CancellationToken cancellationToken)
@@ -200,7 +200,7 @@ internal sealed partial class PageSheetViewModel
         PageSaved saved;
         try
         {
-            saved = await _writes.Save(save, _hash, _approve, cancellationToken).ConfigureAwait(true);
+            saved = await _writes.Save(save, _hash, cancellationToken).ConfigureAwait(true);
         }
         finally
         {
@@ -216,13 +216,13 @@ internal sealed partial class PageSheetViewModel
     {
         switch (saved.State)
         {
-            case PageSavedState.Approved or PageSavedState.Waiting:
+            case PageSavedState.Applied:
                 SavedId = id;
                 Saved?.Invoke(this, EventArgs.Empty);
                 Close();
                 return true;
             case PageSavedState.Clash:
-                await Clashed(id, cancellationToken).ConfigureAwait(true);
+                await Clashed(cancellationToken).ConfigureAwait(true);
                 return false;
             case PageSavedState.Refused:
                 Refuse(saved.Message ?? string.Empty, rows);
@@ -235,9 +235,9 @@ internal sealed partial class PageSheetViewModel
     }
 
     // A clash re-reads the hash, so Save again lands on top; a re-read that fails leaves Save off, never a second write without the check.
-    private async Task Clashed(string? id, CancellationToken cancellationToken)
+    private async Task Clashed(CancellationToken cancellationToken)
     {
-        await ReadProfile(id is null ? [] : [id], cancellationToken).ConfigureAwait(true);
+        await ReadProfile(cancellationToken).ConfigureAwait(true);
         Say(_hash is null ? Labels.PageSheetNoHash : Labels.PageSheetClash);
         OnChanged(nameof(SaveText));
         OnChanged(nameof(CanSave));

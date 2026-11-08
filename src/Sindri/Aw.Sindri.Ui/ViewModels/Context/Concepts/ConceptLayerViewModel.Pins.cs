@@ -22,9 +22,6 @@ internal sealed partial class ConceptLayerViewModel
         (_openPin, _repo, _zone) = (openPin, repo, zone ?? TimeZoneInfo.Local);
     }
 
-    /// <summary>Opens the needs-you review the setup step uses (a pinned card's Review and approve).</summary>
-    internal Action? ReviewAndApprove { get; set; }
-
     /// <summary>Opens the held map's review (a pinned card's Open review); the button is hidden while there is none.</summary>
     internal Action? OpenReview { get; set; }
 
@@ -116,7 +113,6 @@ internal sealed partial class ConceptLayerViewModel
         ArgumentNullException.ThrowIfNull(tile);
         var action = tile.Card.Action switch
         {
-            PinCardAction.ReviewAndApprove => ReviewAndApprove,
             PinCardAction.OpenReview => OpenReview,
             PinCardAction.TryAgain => TryAgain,
             PinCardAction.None => null,

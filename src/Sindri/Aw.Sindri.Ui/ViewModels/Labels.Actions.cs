@@ -32,7 +32,6 @@ internal static partial class Labels
         ["ListLinearTeams"] = "List Linear teams",
         ["SaveLinearConnection"] = "Save Linear key",
         ["RemoveLinearWriteKey"] = "Remove Linear write key",
-        ["ApproveProfile"] = "Approve profile",
         ["ApproveAllRecipes"] = ApproveAllTitle,
         ["ApproveRecipe"] = "Approve recipe",
         ["AttachProject"] = "Add project",

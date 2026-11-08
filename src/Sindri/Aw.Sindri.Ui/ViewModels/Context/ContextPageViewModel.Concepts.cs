@@ -26,14 +26,10 @@ internal sealed partial class ContextPageViewModel
     /// <summary>The back button's words.</summary>
     public string BackText { get; } = Labels.ContextConceptsBack;
 
-    /// <summary>A pinned card's Review and approve was pressed: the shell opens the needs-you review the setup step uses.</summary>
-    internal event EventHandler? ReviewAndApproveRequested;
-
     // Registered once: the whole map's crumbs and back button ask the page to go up; the layer's pin side opens the sheet and answers its footer buttons.
     private void InitConcepts()
     {
         Concepts.WirePins(Ports.OpenPin, () => _repo ?? string.Empty);
-        Concepts.ReviewAndApprove = () => ReviewAndApproveRequested?.Invoke(this, EventArgs.Empty);
         Concepts.TryAgain = () => _ = TryRefreshAgain();
         Ports.Follow(RefreshPins);
         Whole.ConceptsRequested += (_, _) => CloseConcept();
