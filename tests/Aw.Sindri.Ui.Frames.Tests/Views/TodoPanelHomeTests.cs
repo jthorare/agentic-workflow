@@ -56,14 +56,14 @@ public sealed class TodoPanelHomeTests : IDisposable
     // The todos the server answers, written against the clock's day (2026-10-11).
     private void Serve(params JsonNode[] todos)
     {
-        var list = JsonNode.Parse(GoldenFiles.Api("todos", "list"))!;   // why: the golden is a JSON document
+        var list = JsonNode.Parse(TodoSample.List)!;   // why: the sample is a JSON document
         list["todos"] = new JsonArray(todos);
         _server.TodosAnswer = new RouteAnswer(HttpStatusCode.OK, list.ToJsonString());
     }
 
     private static JsonNode Todo(string id, string text, string? due = null, int links = 0, string addedBy = "human:ui", string? doneAt = null, bool removed = false, string? removedAt = null)
     {
-        var todo = JsonNode.Parse(GoldenFiles.Api("todos", "list"))!["todos"]![3]!.DeepClone();   // "call the dentist": open, no date, no links
+        var todo = JsonNode.Parse(TodoSample.List)!["todos"]![3]!.DeepClone();   // "call the dentist": open, no date, no links
         todo["id"] = id;
         todo["text"] = text;
         todo["due"] = due;
