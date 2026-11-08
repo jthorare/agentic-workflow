@@ -121,6 +121,9 @@ internal sealed class LedgerDatabase : IDisposable
     /// <summary>The first migration with 'workflow_run' and 'workflow_node_run' (issue 2258, PR 6); reads of an older file find no run. The number is renumbered at the final main merge.</summary>
     internal const int WorkflowRunsVersion = 9;
 
+    /// <summary>The first migration with 'connection' (connections PR 10a); reads of an older file find no connection.</summary>
+    internal const int ConnectionsVersion = 10;
+
     private static IReadOnlyList<Migration> LoadMigrations()
     {
         var own = EmbeddedMigrations.Load(typeof(LedgerDatabase).Assembly, "Aw.Sindri.Infrastructure.Ledger.Migrations.").Value;

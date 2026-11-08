@@ -92,18 +92,66 @@ internal sealed partial class ShellWindow
             return false;
         }
 
+        if (shell.Todo.LinkList.IsOpen && LinkListKey(shell, e.Key))
+        {
+            return true;
+        }
+
         if (StepOf(e.Key) is { } step)
         {
             return MoveInPanel(panel, focused, step);
         }
 
         var row = RowOf(focused);
+        if (e.Key is Key.Enter or Key.O)
+        {
+            return RowOpen(shell, row, e.Key);
+        }
+
         if (e.Key is not (Key.X or Key.Delete or Key.Back) && (e.Key != Key.Space || row is null))
         {
             return false;
         }
 
         return Act(row, e.Key is Key.Delete or Key.Back ? shell.Todo.Remove : shell.Todo.Toggle);
+    }
+
+    // Enter edits the row in place, O opens its links; on any other stop of the panel O is spent (Needs you's O must not see it) and Enter keeps its own meaning.
+    private static bool RowOpen(ShellViewModel shell, TodoRowViewModel? row, Key key)
+    {
+        if (row is null)
+        {
+            return key == Key.O;
+        }
+
+        if (key == Key.O)
+        {
+            shell.Todo.OpenLinks(row.Id);
+        }
+        else
+        {
+            _ = shell.Todo.BeginEdit(row.Id);
+        }
+
+        return true;
+    }
+
+    // While the link list shows, J, K and the arrows move in it and Enter opens the selected link; the row keeps focus.
+    private static bool LinkListKey(ShellViewModel shell, Key key)
+    {
+        if (StepOf(key) is { } step)
+        {
+            shell.Todo.LinkList.Move(step);
+            return true;
+        }
+
+        if (key != Key.Enter)
+        {
+            return false;
+        }
+
+        shell.Todo.OpenSelectedLink();
+        return true;
     }
 
     private static int? StepOf(Key key) => key is Key.J or Key.Down ? 1 : key is Key.K or Key.Up ? -1 : null;

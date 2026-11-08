@@ -17,6 +17,7 @@ using Aw.Context.Core.WholeMap;
 using Aw.Kernel;
 using Aw.Sindri.Core.Challenges;
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.EngineReads;
 using Aw.Sindri.Core.Events;
@@ -50,6 +51,7 @@ using Aw.Sindri.Core.Workflow.Registry;
 using Aw.Sindri.Core.Workflow.Shipped;
 using Aw.Sindri.Core.Workflow.Stats;
 using Aw.Sindri.Core.Workflow.Views;
+using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.AddRepo;
 using Aw.Sindri.Features.AllowDenial;
 using Aw.Sindri.Features.ApplyCommand;
@@ -69,6 +71,7 @@ using Aw.Sindri.Features.Docs;
 using Aw.Sindri.Features.EndLearnMode;
 using Aw.Sindri.Features.EvalRecipe;
 using Aw.Sindri.Features.FileRequest;
+using Aw.Sindri.Features.GetConnection;
 using Aw.Sindri.Features.GetEventCatalog;
 using Aw.Sindri.Features.GetInstanceEvents;
 using Aw.Sindri.Features.GetInstanceFact;
@@ -102,6 +105,7 @@ using Aw.Sindri.Features.LinearIssues;
 using Aw.Sindri.Features.LineDoctor;
 using Aw.Sindri.Features.LineHoldout;
 using Aw.Sindri.Features.ListCommands;
+using Aw.Sindri.Features.ListConnections;
 using Aw.Sindri.Features.ListDecisions;
 using Aw.Sindri.Features.ListDenials;
 using Aw.Sindri.Features.ListItems;
@@ -123,6 +127,7 @@ using Aw.Sindri.Features.RebuildViews;
 using Aw.Sindri.Features.RecordLimitHit;
 using Aw.Sindri.Features.RegisterMcp;
 using Aw.Sindri.Features.RegisterRecipe;
+using Aw.Sindri.Features.RemoveConnection;
 using Aw.Sindri.Features.ResumeJob;
 using Aw.Sindri.Features.ResumeService;
 using Aw.Sindri.Features.RevokeRecipe;
@@ -137,6 +142,7 @@ using Aw.Sindri.Features.SetProfileKey;
 using Aw.Sindri.Features.SetReviewLogin;
 using Aw.Sindri.Features.StartInstance;
 using Aw.Sindri.Features.StopProcess;
+using Aw.Sindri.Features.TestConnection;
 using Aw.Sindri.Features.ValidateProfile;
 using Aw.Sindri.Features.ValidateRecipe;
 using Aw.Sindri.Host.Commands.Line;
@@ -155,6 +161,8 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(ProfileApproved)), JsonSerializable(typeof(ProfileApprovalsRemoved)), JsonSerializable(typeof(Heartbeat)), JsonSerializable(typeof(CommandHandled)), JsonSerializable(typeof(ServiceRan))]
 [JsonSerializable(typeof(ProfileChecked)), JsonSerializable(typeof(ViewsRebuilt)), JsonSerializable(typeof(ItemCreated)), JsonSerializable(typeof(ItemCreatedPublic))]
 [JsonSerializable(typeof(ProjectAttached)), JsonSerializable(typeof(ProjectChanged)), JsonSerializable(typeof(ProjectDetached)), JsonSerializable(typeof(ProjectHidden)), JsonSerializable(typeof(ProjectLedNoted)), JsonSerializable(typeof(ProjectAttachedRow)), JsonSerializable(typeof(ProjectHiddenRow))]   // projects page Ph3: the owner-state events and their views
+[JsonSerializable(typeof(TodoAdded)), JsonSerializable(typeof(TodoChanged)), JsonSerializable(typeof(TodoDone)), JsonSerializable(typeof(TodoReopened)), JsonSerializable(typeof(TodoRemoved)), JsonSerializable(typeof(TodoRestored))]   // the ledger events of the todos spec (§4.1)
+[JsonSerializable(typeof(TodoConflicted)), JsonSerializable(typeof(TodoConflictResolved)), JsonSerializable(typeof(TodoConflictReopened)), JsonSerializable(typeof(TodoSide)), JsonSerializable(typeof(Core.Todos.TodoRow)), JsonSerializable(typeof(Core.Todos.TodoOpenConflict))]
 [JsonSerializable(typeof(ItemStateChanged)), JsonSerializable(typeof(ItemLinked)), JsonSerializable(typeof(RequestFiled)), JsonSerializable(typeof(RequestFiledPublic))]
 [JsonSerializable(typeof(DecisionFact)), JsonSerializable(typeof(DecisionRecorded)), JsonSerializable(typeof(DecisionRecordedPublic)), JsonSerializable(typeof(JobStarted))]
 [JsonSerializable(typeof(JobProgress)), JsonSerializable(typeof(JobFinished)), JsonSerializable(typeof(JobFinishedPublic)), JsonSerializable(typeof(JobCancelled)), JsonSerializable(typeof(JobWaiting)), JsonSerializable(typeof(JobResumed))]
@@ -178,6 +186,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(SendReviewFixRequest)), JsonSerializable(typeof(SendReviewFixResponse)), JsonSerializable(typeof(ReviewFixBody)), JsonSerializable(typeof(ReviewFixSent))]
 [JsonSerializable(typeof(GetSetupRequest)), JsonSerializable(typeof(GetSetupResponse)), JsonSerializable(typeof(GetRepoStatusResponse)), JsonSerializable(typeof(RepoStatus))]
 [JsonSerializable(typeof(GetProfileResponse)), JsonSerializable(typeof(ProfilePack)), JsonSerializable(typeof(ProfileSummary)), JsonSerializable(typeof(RepoPreview)), JsonSerializable(typeof(RebuildViewsRequest)), JsonSerializable(typeof(CreateItemRequest)), JsonSerializable(typeof(ItemCreatedResponse))]
+[JsonSerializable(typeof(Features.AddTodo.AddTodoRequest)), JsonSerializable(typeof(AddTodoBody)), JsonSerializable(typeof(Features.ChangeTodo.ChangeTodoRequest)), JsonSerializable(typeof(ChangeTodoBody)), JsonSerializable(typeof(Features.MarkTodo.MarkTodoRequest)), JsonSerializable(typeof(MarkTodoBody)), JsonSerializable(typeof(Core.Todos.TodoAccepted)), JsonSerializable(typeof(Features.ListTodos.ListTodosRequest)), JsonSerializable(typeof(Features.ListTodos.ListTodosResponse)), JsonSerializable(typeof(Features.GetTodo.GetTodoResponse)), JsonSerializable(typeof(Features.GetTodoNote.GetTodoNoteResponse)), JsonSerializable(typeof(Core.Todos.TodoCounts)), JsonSerializable(typeof(Core.Todos.TodoListState)), JsonSerializable(typeof(Features.ListTodos.TodoItem)), JsonSerializable(typeof(Features.ListTodos.TodoLinkItem))]   // the todo writes and reads (todo spec §4.4)
 [JsonSerializable(typeof(AttachProjectRequest)), JsonSerializable(typeof(AttachProjectBody)), JsonSerializable(typeof(ProjectAccepted)), JsonSerializable(typeof(ChangeProjectBody)), JsonSerializable(typeof(DetachProjectBody)), JsonSerializable(typeof(HideProjectRequest))]
 [JsonSerializable(typeof(ListReviewsRequest)), JsonSerializable(typeof(ListReviewsResponse))]   // PR review page Ph5: the Reviews list
 [JsonSerializable(typeof(GetReviewPageRequest)), JsonSerializable(typeof(ReviewPageModel))]   // PR review page Ph5c: the PR page
@@ -189,6 +198,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(Commands.Library.LibraryValidateReport)), JsonSerializable(typeof(Commands.Library.LibraryFindingRow))]   // PR review page Ph5b: 'sindri library list' and 'validate'
 [JsonSerializable(typeof(ChangeLinearIssueRequest)), JsonSerializable(typeof(ChangeLinearIssueBody)), JsonSerializable(typeof(LinearChangeApplied)), JsonSerializable(typeof(LinearChangeResult)), JsonSerializable(typeof(LinearFieldConflict[]))]   // Linear hub Ph3 1b: the issue edit
 [JsonSerializable(typeof(ListProjectsRequest)), JsonSerializable(typeof(ListProjectsResponse)), JsonSerializable(typeof(GetProjectRequest)), JsonSerializable(typeof(GetProjectResponse)), JsonSerializable(typeof(ProjectCard)), JsonSerializable(typeof(ListLinearProjectsRequest)), JsonSerializable(typeof(ListLinearProjectsResponse)), JsonSerializable(typeof(LinearProjectChoice))]
+[JsonSerializable(typeof(AddConnectionRequest)), JsonSerializable(typeof(AddConnectionResponse)), JsonSerializable(typeof(TestConnectionRequest)), JsonSerializable(typeof(TestConnectionResponse)), JsonSerializable(typeof(ListConnectionsRequest)), JsonSerializable(typeof(ListConnectionsResponse)), JsonSerializable(typeof(GetConnectionRequest)), JsonSerializable(typeof(GetConnectionResponse)), JsonSerializable(typeof(RemoveConnectionRequest)), JsonSerializable(typeof(RemoveConnectionResponse)), JsonSerializable(typeof(ConnectionView))]   // connections PR 10a
 [JsonSerializable(typeof(ProjectLead)), JsonSerializable(typeof(ProjectLink)), JsonSerializable(typeof(ProjectFreshnessRow))]
 [JsonSerializable(typeof(CloseItemRequest)), JsonSerializable(typeof(CloseItemBody)), JsonSerializable(typeof(GetQueueRequest)), JsonSerializable(typeof(QueueResponse))]
 [JsonSerializable(typeof(QueueGroupView)), JsonSerializable(typeof(ItemSummary)), JsonSerializable(typeof(ListItemsRequest)), JsonSerializable(typeof(ListItemsResponse))]
