@@ -6,4 +6,5 @@ namespace Aw.Meta.Features.WorktreeSweep;
 /// <param name="IncludeNoPr">Also remove a branch with no pull request when every other rule holds; without it such a worktree is always kept.</param>
 /// <param name="Path">Only this worktree; null for every worktree.</param>
 /// <param name="Discarded">With <paramref name="Path"/>: the tree may be removed although its commits are unpushed, when a finished bugfix run names it as a losing candidate at its HEAD.</param>
-public sealed record SweepWorktreesRequest(bool DryRun = false, int? Pr = null, bool IncludeNoPr = false, string? Path = null, bool Discarded = false);
+/// <param name="Done">With <paramref name="Path"/>: the owning lane is finished with this tree; a detached one (not a gate tree) may be removed when its HEAD is in origin/main or on a pushed branch and every other rule holds.</param>
+public sealed record SweepWorktreesRequest(bool DryRun = false, int? Pr = null, bool IncludeNoPr = false, string? Path = null, bool Discarded = false, bool Done = false);

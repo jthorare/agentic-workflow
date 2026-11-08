@@ -19,6 +19,16 @@ internal sealed class SweepWorktreesValidator : IValidator<SweepWorktreesRequest
             return MetaErrors.Invalid.With("--discarded needs --path");
         }
 
+        if (value.Done && value.Path is null)
+        {
+            return MetaErrors.Invalid.With("--done needs --path");
+        }
+
+        if (value.Done && value.Discarded)
+        {
+            return MetaErrors.Invalid.With("--done and --discarded can't be combined");
+        }
+
         return value.Path is not null && value.Pr is not null ? MetaErrors.Invalid.With("--path and --pr can't be combined") : Unit.Value;
     }
 }

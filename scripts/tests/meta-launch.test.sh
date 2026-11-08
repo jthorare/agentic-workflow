@@ -39,7 +39,8 @@ golden_transcript() {
     printf '#!/usr/bin/env bash\nexec sleep 600\n' > "$G/claude-noop"
     printf '#!/usr/bin/env bash\necho "$*" >> "$CALLS.meta"\n' > "$G/aw-meta"
     for o in open xdg-open; do printf '#!/usr/bin/env bash\nexit 0\n' > "$G/shim/$o"; chmod +x "$G/shim/$o"; done   # never the real Warp
-    chmod +x "$G/shim/tmux" "$G/claude" "$G/claude-noop" "$G/aw-meta"
+    printf '#!/usr/bin/env bash\nexec bash -c "$2"\n' > "$G/shell"   # stands in for the user's shell ($SHELL -ic '<agent>'): a real interactive bash with no terminal prints job-control noise, which is not what the golden is about
+    chmod +x "$G/shim/tmux" "$G/claude" "$G/claude-noop" "$G/aw-meta" "$G/shell"
     export PATH="$G/shim:$PATH" AW_META_BIN="$G/aw-meta" AW_META_NO_SHELL=1 AW_META_CLAUDE="$G/claude-noop"
     local cfg="$AW_STATE_DIR/meta/team.json"
     jq -n --arg r "$G/repo" --arg p "$G/prompts" '{team:"t1", repo:$r, prompts:$p, metaLane:"meta", lanes:["api","ui"]}' > "$cfg"
@@ -54,7 +55,7 @@ golden_transcript() {
     echo "== tmux calls"; cat "$G/tmux-calls"
     tmux kill-server 2> /dev/null; sleep 0.3
     find "$AW_STATE_DIR/meta/lane-sessions" -type f -delete
-    rm -f "$CALLS.meta"; export AW_META_CLAUDE="$G/claude"
+    rm -f "$CALLS.meta"; export AW_META_CLAUDE="$G/claude" SHELL="$G/shell"
     echo "== lane api, fresh"; bash "$S/meta-lane.sh" t1 api; cat "$CALLS"; : > "$CALLS"
     touch "$HOME/.claude/projects/p/$(cat "$AW_STATE_DIR/meta/lane-sessions/api").jsonl"
     echo "== lane api, resumed"; bash "$S/meta-lane.sh" t1 api; cat "$CALLS"; : > "$CALLS"
@@ -892,8 +893,36 @@ shell_rows zsh
 shell_rows fish
 tmux kill-server 2> /dev/null
 
+# 5d. The agent runs through the user's interactive shell (#2274), so an alias or function from the shell's rc file applies to it.
+# The agent is a bare name on PATH (the default is `claude`), which is what an alias is keyed on. Scratch config only: the real rc files are never read.
+printf '#!/usr/bin/env bash\nprintf "%%s\\n" "$*" > "%s"\n' "$WORK/alias-args" > "$WORK/callerbin/fakeagent"
+chmod +x "$WORK/callerbin/fakeagent"
+alias_row() { # name rc-line [shell]: the lane's agent got the extra flag the rc file adds
+  local n="$1" rcline="$2" sh; sh="$(command -v "${3:-$1}" 2> /dev/null)"
+  if [ -z "$sh" ]; then echo "ok - SKIP $n not installed"; return; fi
+  local cfg="$WORK/alias-$n"; rm -rf "$cfg"; mkdir -p "$cfg/fish"
+  case "$n" in
+    zsh*) printf '%s\n' "$rcline" > "$cfg/.zshrc" ;;
+    bash) printf '%s\n' "$rcline" > "$cfg/.bashrc" ;;
+    fish) printf '%s\n' "$rcline" > "$cfg/fish/config.fish" ;;
+  esac
+  fresh_server; tmux set-environment -g AW_META_CLAUDE fakeagent
+  tmux set-environment -g ZDOTDIR "$cfg"; tmux set-environment -g XDG_CONFIG_HOME "$cfg"
+  [ "$n" != bash ] || tmux set-environment -g HOME "$cfg"
+  rm -f "$WORK/alias-args"
+  env ZDOTDIR="$cfg" XDG_CONFIG_HOME="$cfg" PATH="$WORK/callerbin:$ORIG_PATH" SHELL="$sh" bash "$DIR/meta-launch.sh" --no-open --lanes api > /dev/null 2>&1
+  waitfor '[ -s "$WORK/alias-args" ]'
+  check "$n: the rc file's alias or function applies to the agent command" "$(grep -c -- '--from-alias' "$WORK/alias-args" 2> /dev/null)" "1"
+  tmux kill-session -t t1-api 2> /dev/null
+}
+alias_row zsh "alias fakeagent='fakeagent --from-alias'"
+alias_row bash "alias fakeagent='fakeagent --from-alias'"
+alias_row fish "alias fakeagent 'fakeagent --from-alias'"
+alias_row zsh-function "fakeagent() { command fakeagent --from-alias \"\$@\"; }" zsh
+tmux kill-server 2> /dev/null
+
 # 6. Quoting does not depend on the bash version (#2281): bash 3.2 (macOS) read the backslashes in ${s//\'/...} differently from bash 5.
-eval "$(sed -n '/^shq() {/,/^}/p' "$DIR/meta-launch.sh")"
+eval "$(sed -n '/^shq() {/,/^}/p' "$DIR/launcher-lib.sh")"
 Q1="$(shq "it's")"; Q2="$(shq "$Q1")"
 check "shq of a string holding a single quote: exact bytes" "$Q1" "'it'\\''s'"
 check "shq of shq of it: exact bytes" "$Q2" "''\\''it'\\''\\'\\'''\\''s'\\'''"
