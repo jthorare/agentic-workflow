@@ -4,7 +4,7 @@ using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
 using Vogen;
 
-namespace Aw.Sindri.Core.Todos;
+namespace Aw.Sindri.Core.Ids;
 
 /// <summary>
 /// A todo's id (todo spec §4.1): 'td_' and a 26-character ULID in Crockford base32, lowercase (the note writes it as the block id '^td-…'). The ULID is the

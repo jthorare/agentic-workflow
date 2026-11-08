@@ -1,3 +1,5 @@
+using Aw.Sindri.Core.Ids;
+
 namespace Aw.Sindri.Core.Todos.Note;
 
 /// <summary>The two sides of an open conflict now agree (both edited to the same values, or both removed): the conflict closes with no pick (D11).</summary>

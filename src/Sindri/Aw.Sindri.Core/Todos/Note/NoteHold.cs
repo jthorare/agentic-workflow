@@ -1,3 +1,5 @@
+using Aw.Sindri.Core.Ids;
+
 namespace Aw.Sindri.Core.Todos.Note;
 
 /// <summary>An open hold: the changes the note made that wait for the owner (todo spec §4.5; the payload of 'todo.note.held').</summary>

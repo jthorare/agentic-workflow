@@ -1,3 +1,5 @@
+using Aw.Sindri.Core.Ids;
+
 namespace Aw.Sindri.Core.Todos.Note;
 
 /// <summary>One merge: the state of a pass over the base, the note and Sindri (todo spec §4.5). Built and run once by <see cref="NoteMerge"/>.</summary>

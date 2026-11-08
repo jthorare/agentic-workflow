@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Text;
-using Aw.Sindri.Core.Todos;
 using Aw.Sindri.Core.Todos.Note;
 
 namespace Aw.Sindri.Tests.Todos.Note;

@@ -1,3 +1,5 @@
+using Aw.Sindri.Core.Ids;
+
 namespace Aw.Sindri.Core.Todos.Note;
 
 /// <summary>The fields of a todo the merge compares, whichever side they came from. The done date is carried but never compared: ticking in the note without a date and in Sindri with today's is the same tick.</summary>

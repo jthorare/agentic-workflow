@@ -2,6 +2,7 @@ using System.Buffers;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+using Aw.Sindri.Core.Ids;
 
 namespace Aw.Sindri.Core.Todos.Note;
 
