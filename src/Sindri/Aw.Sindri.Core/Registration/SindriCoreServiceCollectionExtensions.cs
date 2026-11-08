@@ -14,6 +14,7 @@ using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Core.Scheduling;
+using Aw.Sindri.Core.Todos;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
@@ -87,7 +88,8 @@ public static class SindriCoreServiceCollectionExtensions
             .AddSingleton<IProjection, RecipeStatsProjection>()
             .AddSingleton<IProjection, ModelHistoryProjection>()
             .AddSingleton<IProjection, CodeIndexProjection>()
-            .AddSingleton<IProjection, ProjectsProjection>();
+            .AddSingleton<IProjection, ProjectsProjection>()
+            .AddSingleton<IProjection, TodosProjection>();
 
     /// <summary>
     /// The sandbox port and the credential registry (sandbox spec SB12, SB18). The product registers only <see cref="UnavailableSandbox"/> until SB-5a; test hosts replace it
