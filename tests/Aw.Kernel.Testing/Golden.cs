@@ -49,7 +49,18 @@ public static class Golden
             update: string.Equals(Environment.GetEnvironmentVariable(UpdateVariable), "1", StringComparison.Ordinal),
             inCi: IsCi(Environment.GetEnvironmentVariable));
 
-    internal static void Match(string actual, string sourceRoot, string relativePath, Normalization normalization, bool update, bool inCi)
+    /// <summary>
+    /// Checks output against a golden file under an explicit root, for files outside the test project's own tree (a committed
+    /// schema under the repo's schemas/ folder). Same rules as the assembly overload; the caller supplies update mode and CI.
+    /// </summary>
+    /// <param name="actual">The output.</param>
+    /// <param name="sourceRoot">The root directory the golden path is relative to.</param>
+    /// <param name="relativePath">The golden file, relative to <paramref name="sourceRoot"/>. No '..', not rooted.</param>
+    /// <param name="normalization">The declared normalization, applied to the output only.</param>
+    /// <param name="update">Whether update mode is on.</param>
+    /// <param name="inCi">Whether this is a CI run; update mode is refused there.</param>
+    /// <exception cref="GoldenMismatchException">The output differs, the file is missing, update mode just rewrote it, or update mode was asked for in CI.</exception>
+    public static void Match(string actual, string sourceRoot, string relativePath, Normalization normalization, bool update, bool inCi)
     {
         ArgumentNullException.ThrowIfNull(actual);
         ArgumentNullException.ThrowIfNull(normalization);
