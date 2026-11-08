@@ -60,6 +60,12 @@ internal sealed partial class LinearWorkViewModel
     /// <summary>True when the last read could not reach the API (the rows shown are the last good ones).</summary>
     public bool IsSindriDown { get; private set => Set(ref field, value); }
 
+    /// <summary>True when the running Sindri answers but has no Linear routes (an older build than the app).</summary>
+    public bool IsSindriOlder { get; private set => Set(ref field, value); }
+
+    /// <summary>The line for that: the running Sindri is older and needs a restart.</summary>
+    public string OlderText => IsSindriOlder ? Labels.LinearSindriOlder : string.Empty;
+
     /// <summary>"as of 10:05" while Sindri is not answering and rows are shown; empty otherwise.</summary>
     public string AsOfText { get; private set => Set(ref field, value); } = string.Empty;
 
