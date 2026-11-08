@@ -15,6 +15,7 @@ namespace Aw.Sindri.Infrastructure.Linear;
 internal sealed class FileLinearCheckStore(ISindriHome home) : ILinearCheckStore
 {
     private static readonly JsonSerializerOptions _json = AwJson.CreateOptions(LinearChecksJsonContext.Default);
+    // why: the lock is per process; `sindri index connect linear` runs in another process and can write this file at the same time, so a lost update is possible. The impact is low: the worst case is a check showing an older time or state until the next save. No file lock.
     private static readonly Lock _gate = new();
 
     private readonly string _filePath = Path.Combine(home.Path, "linear-checks.json");

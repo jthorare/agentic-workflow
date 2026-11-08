@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Aw.Context.Core;
-using Aw.Context.Core.Facade;
 using Aw.Context.Core.Models;
 using Aw.Context.Features;
 using Aw.Context.Infrastructure;
@@ -75,7 +74,7 @@ public sealed class RemoveLinearWriteKeyStoreTests : IDisposable
         var profile = new SindriProfile(1, "me", Context: JsonDocument.Parse(contextJson).RootElement.Clone());
         var profiles = new InMemoryProfiles { Live = new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), ProfilePath) };
         var yaml = new YamlSourceTokenProfileWriter(new SindriSettings(_home, ProfilePath));
-        return new CoreLinearConnectionStore(profiles, _scope.ServiceProvider.GetRequiredService<IContextEngine>(), _keychain, _keychain, yaml, yaml, yaml, _checks);
+        return new CoreLinearConnectionStore(profiles, _keychain, _keychain, yaml, yaml, yaml, _checks);
     }
 
     [Fact]
