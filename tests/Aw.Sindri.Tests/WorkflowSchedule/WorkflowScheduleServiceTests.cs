@@ -104,6 +104,28 @@ public sealed class WorkflowScheduleServiceTests
         Assert.Empty(_starter.Requests);
     }
 
+    [Fact]
+    public async Task A_skipped_tick_is_not_counted_and_the_next_tick_fires_its_own_latest_tick()
+    {
+        _clock.SetUtcNow(At("2026-11-09T06:00:00Z"));
+        await GoLive(Spec("schedule", new JsonObject { ["cron"] = "0 7 * * 1-5" }));
+        _clock.SetUtcNow(At("2026-11-09T07:00:30Z"));
+        _starter.Skip = true;   // one-per-workflow with a run in flight
+
+        var skipped = await Tick();
+
+        Assert.True(skipped.Value.Idle);
+        Assert.Empty(_starter.Requests);
+
+        // the run in flight has ended; Tuesday's tick fires, Monday's skipped one is not retried
+        _starter.Skip = false;
+        _clock.SetUtcNow(At("2026-11-10T07:00:30Z"));
+        _ = await Tick();
+
+        var start = Assert.Single(_starter.Requests);
+        Assert.Equal(At("2026-11-10T07:00:00Z"), ScheduledFor(start));
+    }
+
     private async Task GoLive(GraphSpec spec)
     {
         _ = (await _workflows.Create(_id, _slug, spec, "owner", Token)).Value;
@@ -133,9 +155,16 @@ public sealed class WorkflowScheduleServiceTests
     {
         public List<GraphStartRequest> Requests { get; } = [];
 
+        public bool Skip { get; set; }
+
         public async ValueTask<Result<GraphStart>> Start(GraphStartRequest request, CancellationToken cancellationToken)
         {
             var id = WorkflowRunId.Of(request.Slug, request.Revision, request.Occurrence);
+            if (Skip)
+            {
+                return new GraphStart(GraphStartKind.Skipped, id);
+            }
+
             var inserted = await runs.Insert(new WorkflowRun(id, request.Workflow, request.Revision, request.Trigger, WorkflowRunStatus.Running, Outputs: null, Error: null, ItemId: null, clock.GetUtcNow(), EndedAt: null), cancellationToken);
             if (inserted.IsError)
             {
