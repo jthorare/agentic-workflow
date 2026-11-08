@@ -55,8 +55,7 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
         var problems = await healthRows.CodeIndexProblems(approved, cancellationToken).ConfigureAwait(false);
         var standing = profile.ChangedSinceApproval ? ProfileApproval.Changed : profile.NeedsApproval ? ProfileApproval.NeedsApproval : ProfileApproval.Approved;
         var health = HealthSummary.For(running, views, rows, standing, healthRows.Context(problems));
-        var stuck = HealthSummary.WithStuck(health, await healthRows.Stuck(cancellationToken).ConfigureAwait(false));   // API P13: stuck workflow instances make it degraded
-        var parked = HealthSummary.WithUnavailable(stuck, await healthRows.Unavailable(cancellationToken).ConfigureAwait(false));   // a Step whose dependency is down parks asking no one: health shows it
+        var parked = HealthSummary.WithUnavailable(health, await healthRows.Unavailable(cancellationToken).ConfigureAwait(false));   // a Step whose dependency is down parks asking no one: health shows it
         var stalled = HealthSummary.WithStalledAgents(parked, await healthRows.Stalled(cancellationToken).ConfigureAwait(false));   // issue #1000: so do agent runs idle past their launch's idle time
         return HealthSummary.WithIdleAgents(stalled, await healthRows.IdleAgents(cancellationToken).ConfigureAwait(false));   // issue #1265: and sessions ended as idle that no retry replaced (ended launches, so no overlap with the live count above)
     }

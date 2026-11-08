@@ -2,7 +2,6 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Ids;
-using Aw.Sindri.Features.CompleteStep;
 using Aw.Sindri.Infrastructure.Workflows;
 using Aw.Sindri.Testing.Workflow;
 
@@ -74,17 +73,6 @@ public sealed class AgentRecoveringTests
 
         Assert.Null(recovered.Outcome);
         Assert.Contains("fact:output breaks its schema", recovered.Reason, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void The_shared_checker_applies_a_facts_schema_as_well_as_the_payload_type()
-    {
-        var outputs = new Dictionary<FactKey, ReadOnlyMemory<byte>> { [FactKey.From("fact:scopeMap")] = System.Text.Encoding.UTF8.GetBytes("""{"bogus":true}""") };
-
-        var wrong = new ReportOutputChecker().Violations(outputs, new HashSet<FactKey> { FactKey.From("fact:scopeMap") }, scopingQuestions: false);
-
-        Assert.NotEmpty(wrong);
-        Assert.Contains("fact:scopeMap", wrong[0], StringComparison.Ordinal);
     }
 
     private sealed class RefusingChecks : IReportOutputChecks

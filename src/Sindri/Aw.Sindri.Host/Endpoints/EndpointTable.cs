@@ -41,7 +41,6 @@ internal static class EndpointTable
         _ = queries.MapGetStatus();
         _ = queries.MapListCommands();
         _ = queries.MapListItems();
-        _ = queries.MapListOutbox();
         _ = queries.MapListServices();
         _ = queries.MapListSessions();
         _ = queries.MapPingProcess();
@@ -140,8 +139,8 @@ internal static class EndpointTable
         _ = commands.MapAddRepo();
         _ = commands.MapRegisterMcp();
         _ = commands.MapOnboardRepo();
-        _ = commands.MapIssueChallenge();
         _ = commands.MapIssueAppChallenge();
+        _ = commands.MapIssueChallenge();
         _ = commands.MapCompleteStep().MapLinearCommentCreate();
         _ = commands.MapSessionHeartbeat();
         _ = commands.MapSessionExit().MapRecordLimitHit();   // the wrap's calls, proven by the launch secret

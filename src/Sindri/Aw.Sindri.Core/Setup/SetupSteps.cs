@@ -60,7 +60,7 @@ public static class SetupSteps
         ArgumentNullException.ThrowIfNull(fact);
         if (fact.Total == 0)
         {
-            return new SetupStep(SetupStepId.Recipes, RecipesTitle, SetupState.Todo, "No workflows are registered yet. Sindri registers them when it starts.", Detail: null, Error: null, Action: null, Progress: null);
+            return new SetupStep(SetupStepId.Recipes, RecipesTitle, SetupState.Skipped, "No workflows wait for an approval.", Detail: null, Error: null, Action: null, Progress: null);
         }
 
         if (!profileApproved)

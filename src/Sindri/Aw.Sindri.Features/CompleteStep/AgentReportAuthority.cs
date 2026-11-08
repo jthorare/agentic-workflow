@@ -12,6 +12,7 @@ namespace Aw.Sindri.Features.CompleteStep;
 /// while the run isn't taken over. While it is taken over only the human may, via the desk, whose report the service never reads the view for. A secret on
 /// a report for a run that no agent runs is refused too. The secret is checked, never stored, logged or echoed.
 /// </summary>
+#pragma warning disable MA0182 // until the graph engine's agent block (PR 7) reports through it
 internal static class AgentReportAuthority
 {
     /// <summary>Decides a non-human caller's report.</summary>
@@ -47,3 +48,4 @@ internal static class AgentReportAuthority
         return proven.IsError ? proven.Error : StepRuntime.Agent;
     }
 }
+#pragma warning restore MA0182

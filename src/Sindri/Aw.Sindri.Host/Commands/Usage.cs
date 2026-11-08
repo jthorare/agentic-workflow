@@ -115,7 +115,6 @@ internal static class Usage
         "       sindri context filemap --repo <repo> [--path <dir>] [--unmapped] [--draft] [--json]   a directory's children with their map status; filemap accept|reject <link-id> decides a suggested file link",
         "       sindri context sources sync [<source>] [--detach] [--json]   sync the intent sources now as a job and follow it (Ctrl-C cancels the job, a second Ctrl-C leaves); --detach prints the job id and returns; a second start while one runs is SND-JOB-409",
         "       sindri wf validate <file> [--json]   check a workflow graph in-process: findings naming node and field with the fix, or its hash (exit 0 pass, 1 findings, 2 error)",
-        "       sindri outbox list [--pending | --dispatched] [--json]   one line per effect, from the ledger's effect rows",
         "       sindri workflow takeover <address> [--nonce <n>] [--json]   take the instance over: its timer pauses",
         "       sindri workflow handback <address> [--nonce <n>] [--json]   hand a taken-over instance back: its timer resumes",
         "       sindri takeover <item-or-address> [--nonce <n>] [--json]   short form of 'workflow takeover' (a bare item is its latest attempt)",

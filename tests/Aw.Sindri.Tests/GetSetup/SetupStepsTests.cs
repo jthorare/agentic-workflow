@@ -72,7 +72,7 @@ public sealed class SetupStepsTests
         var waiting = SetupSteps.Recipes(new RecipesFact(26, 20), profileApproved: true);
         var done = SetupSteps.Recipes(new RecipesFact(26, 26), profileApproved: true);
 
-        Assert.Equal((SetupState.Todo, null), (none.State, none.Action));
+        Assert.Equal((SetupState.Skipped, null), (none.State, none.Action));
         Assert.Equal((SetupState.Todo, null, null, "After the profile is approved.", "26 workflows registered."), (early.State, early.Action, early.Progress, early.Why, early.Detail));
         Assert.Equal((SetupState.NeedsYou, SetupActions.ApproveAllRecipes, new SetupProgress(20, 26, "workflows"), "6 workflows wait for your approval."), (waiting.State, waiting.Action, waiting.Progress, waiting.Why));
         Assert.Equal((SetupState.Done, null, new SetupProgress(26, 26, "workflows")), (done.State, done.Action, done.Progress));

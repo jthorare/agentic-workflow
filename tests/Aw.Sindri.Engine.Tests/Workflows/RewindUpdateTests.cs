@@ -13,7 +13,7 @@ namespace Aw.Sindri.Tests.Workflows;
 
 /// <summary>
 /// The 'rewind' Update on a real workflow (#1270): an instance that moved on from 'export' to 'import' goes back to 'export' with a new run and its facts
-/// kept; a target that ends the instance is refused by the validator, recording nothing. Modelled on <see cref="PhaseFiveSignalTests"/>.
+/// kept; a target that ends the instance is refused by the validator, recording nothing.
 /// </summary>
 [Lane(TestLane.Integration)]
 public sealed class RewindUpdateTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>, IDisposable

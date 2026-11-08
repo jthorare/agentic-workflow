@@ -5,7 +5,6 @@ using Aw.Sindri.Core.LensPacks;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Core.Views;
-using Aw.Sindri.Core.Workflow.Blocks;
 
 namespace Aw.Sindri.Features.GetProfile;
 
@@ -15,7 +14,7 @@ namespace Aw.Sindri.Features.GetProfile;
 /// While there is something to approve (nothing approved yet, or the live profile changed) it also carries the plain-words summary of what
 /// the approval would allow (setup-once spec §5.2 "Preview"); the repos' file facts come from the cached <see cref="RepoGitCache"/>, so no git runs per request.
 /// </summary>
-internal sealed class GetProfileService(IViewReader views, IProjectorStatus status, ILensPacks lensPacks, IApprovedProfile approved, IProfileSource live, RepoGitCache git, IBlockSentences sentences) : IService<GetProfileRequest, GetProfileResponse>
+internal sealed class GetProfileService(IViewReader views, IProjectorStatus status, ILensPacks lensPacks, IApprovedProfile approved, IProfileSource live, RepoGitCache git) : IService<GetProfileRequest, GetProfileResponse>
 {
     private const double MebiByte = 1024 * 1024;
 
@@ -47,7 +46,7 @@ internal sealed class GetProfileService(IViewReader views, IProjectorStatus stat
             return null;
         }
 
-        var changes = ProfileChanges.Between(approvedProfile, loaded.Value.Profile, sentences);
+        var changes = ProfileChanges.Between(approvedProfile, loaded.Value.Profile);
         if (changes.IsEmpty)
         {
             return null;

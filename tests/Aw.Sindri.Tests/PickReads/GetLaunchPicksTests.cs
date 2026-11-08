@@ -7,10 +7,11 @@ using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.Workflow.Engine;
+using Aw.Sindri.Core.Workflow.Engine.Runtime;
+using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Features.GetLaunchPicks;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Workflow;
-using Aw.Sindri.Tests.GetInstance;
 using Aw.Sindri.Tests.StreamEvents;
 
 namespace Aw.Sindri.Tests.PickReads;
@@ -33,10 +34,17 @@ public sealed class GetLaunchPicksTests
 
     private async Task<LaunchPicks> Read(GetLaunchPicksRequest? request = null, params ModelHistoryRow[] history)
     {
-        var service = new GetLaunchPicksService(_h.Store, _h.Events, new NoItems(), StreamEventsServices.Repos(_h), _h.Callers, new FakeModelHistory(history), new OneInstance(StatusCases.View("done") with { Address = _one, Id = WorkflowInstanceId.Of(_one) }));
+        var service = new GetLaunchPicksService(_h.Store, _h.Events, new NoItems(), StreamEventsServices.Repos(_h), _h.Callers, new FakeModelHistory(history), new OneInstance(Done()));
         using var entered = _h.Callers.Enter(new CallerContextBuilder().Human().Build());
         return (await service.Handle(request ?? new GetLaunchPicksRequest(), Ct)).Value;
     }
+
+    // why: the picks read an instance only for the recipe and version its model history is keyed by
+    private static InstanceView Done() =>
+        new(_one, new RecipeVersion(FakeModelHistory.Recipe, 1, RecipeHash.From("sha256:" + new string('0', 64))), "done", Detail: null, DateTimeOffset.UnixEpoch, Next: string.Empty, [], Question: null, Task: null, Run: null, [], Outcome: null)
+        {
+            Id = WorkflowInstanceId.Of(_one),
+        };
 
     private async Task Add<TPayload>(string type, TPayload payload, string key, string? item = null)
     {

@@ -6,7 +6,6 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.LensPacks;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
-using Aw.Sindri.Features.Blocks;
 using Aw.Sindri.Features.GetProfile;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.LensPacks;
@@ -88,7 +87,7 @@ public sealed class GetProfileTests
         var repo = Assert.Single(summary!.Repos);
         Assert.Equal(("web", "/work/web", 120, 5.3), (repo.Name, repo.Path, repo.Files, repo.Megabytes));
         Assert.Equal(ProfileChanges.RepoSentences("web", "/work/web"), repo.Sentences);
-        Assert.Equal(["Reserves a work item so no other run starts on it"], summary.Allowance);
+        Assert.Equal(["Allows the effect \"claim ref\""], summary.Allowance);
         Assert.Empty(summary.Connections);
         Assert.Empty(summary.HumanOnly);
     }
@@ -138,7 +137,7 @@ public sealed class GetProfileTests
     private static LoadedProfile LiveProfile(SindriProfile profile) => new(profile, _b, "/live.yaml");
 
     private GetProfileService Service(FakeLensPacks? packs = null, LoadedProfile? profile = null, LoadedProfile? live = null) =>
-        new(_v.Views, _v.Progress, packs ?? Packs(), new Approved(profile), new Live(live), new RepoGitCache(_git, _v.Slice.Clock), new ShippedBlockSentences());
+        new(_v.Views, _v.Progress, packs ?? Packs(), new Approved(profile), new Live(live), new RepoGitCache(_git, _v.Slice.Clock));
 
     private static FakeLensPacks Packs() => new FakeLensPacks().With(Pack("design-five", LensPackKind.Design, 'd')).With(Pack("code-review", LensPackKind.Review, 'r'));
 

@@ -1,32 +1,24 @@
 using Aw.Kernel;
 using Aw.Sindri.Core.Setup;
-using Aw.Sindri.Core.Workflow.ApproveAll;
-using Aw.Sindri.Core.Workflow.Registry;
 
 namespace Aw.Sindri.Features.SetupSources;
 
 /// <summary>
-/// <see cref="ISetupFacts"/> over what Sindri already keeps: the profile (live and approved), the recipe registry, Claude Code's config, the context engine and its build jobs, and the
+/// <see cref="ISetupFacts"/> over what Sindri already keeps: the profile (live and approved), Claude Code's config, the context engine and its build jobs, and the
 /// index sources' token pointers. Every member is a read; none of them starts, registers or approves anything.
 /// </summary>
 /// <param name="profile">The profile reads.</param>
-/// <param name="recipes">The recipe registry.</param>
-/// <param name="shipped">The recipes this build ships, whose plan says which are approved.</param>
 /// <param name="sources">The index sources read.</param>
 /// <param name="mcp">The MCP registration read.</param>
 /// <param name="map">The map read.</param>
-internal sealed class SetupFacts(ProfileSetupReader profile, RecipeRegistryReader recipes, IShippedRecipes shipped, SourcesSetupReader sources, McpSetupReader mcp, MapSetupReader map) : ISetupFacts
+internal sealed class SetupFacts(ProfileSetupReader profile, SourcesSetupReader sources, McpSetupReader mcp, MapSetupReader map) : ISetupFacts
 {
     public ValueTask<Result<RepoFact>> Repos(CancellationToken cancellationToken) => profile.Repos(cancellationToken);
 
     public ValueTask<Result<ProfileFact>> Profile(CancellationToken cancellationToken) => profile.Presence(cancellationToken);
 
-    public async ValueTask<Result<RecipesFact>> Recipes(CancellationToken cancellationToken)
-    {
-        var lines = await recipes.Summaries(cancellationToken).ConfigureAwait(false);
-        var plan = lines.IsError ? lines.Error : await shipped.Plan(cancellationToken).ConfigureAwait(false);
-        return plan.IsError ? plan.Error : SetupRecipes.Count(lines.Value, plan.Value);
-    }
+    // why: the recipe engine is gone, so no workflow waits for an approval; the step reads as skipped
+    public ValueTask<Result<RecipesFact>> Recipes(CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success(new RecipesFact(0, 0)));
 
     public ValueTask<Result<McpFact>> Mcp(CancellationToken cancellationToken) => mcp.Read(cancellationToken);
 

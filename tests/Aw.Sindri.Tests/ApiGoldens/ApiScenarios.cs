@@ -38,7 +38,7 @@ internal static class ApiScenarios
         ["Jobs"] = [.. JobScenarios.All, .. JobScopeScenarios.All],
         ["Launches"] = [.. LaunchScenarios.All, .. WrapSessionScenarios.All],
         ["Setup"] = [.. SetupScenarios.All, .. SetupRepoScenarios.All],
-        ["Recipes"] = [.. ApproveAllScenarios.All, .. RecipeApprovedVersionScenarios.All],
+        ["Recipes"] = AppChallengeScenarios.All,
         ["CodeIndex"] = CodeIndexScenarios.All,
         ["Sandbox"] = SandboxScenarios.All,
         ["Projects"] = ProjectScenarios.All,
@@ -82,8 +82,8 @@ internal static class ApiScenarios
             ? await SandboxScenarios.Start(slug, scenario, ct)
             : LaunchScenarios.Handles(slug, scenario)
             ? await LaunchScenarios.Start(scenario, ct)
-            : ApproveAllScenarios.Handles(slug, scenario)
-            ? await ApproveAllScenarios.Start(scenario, ct)
+            : AppChallengeScenarios.Handles(slug, scenario)
+            ? await GoldenHost.Start(temporary: true, ct)
             : ItemScopeScenarios.Handles(slug, scenario)
             ? await ItemScopeScenarios.Start(ct)
             : WrapSessionScenarios.Handles(slug, scenario)
@@ -182,10 +182,9 @@ internal static class ApiScenarios
         : LaunchScenarios.Handles(slug, scenario) ? () => LaunchScenarios.Body(host, slug, scenario, ct)
         : SessionBody(host, slug, scenario, ct);
 
-    /// <summary>The body of an approve-all (recipes), collector (sessions) or wrap (launch) session scenario, else null.</summary>
+    /// <summary>The body of an app-challenge (recipes group), collector (sessions) or wrap (launch) session scenario, else null.</summary>
     private static Func<Task<string>>? SessionBody(GoldenHost host, string slug, string scenario, CancellationToken ct) =>
-        ApproveAllScenarios.Handles(slug, scenario) ? () => ApproveAllScenarios.Body(host, slug, scenario, ct)
-        : RecipeApprovedVersionScenarios.Handles(slug, scenario) ? () => RecipeApprovedVersionScenarios.Body(host, ct)
+        AppChallengeScenarios.Handles(slug, scenario) ? () => AppChallengeScenarios.Body(host, scenario, ct)
         : SetupRepoScenarios.Handles(slug, scenario) ? () => SetupRepoScenarios.Body(host, slug, scenario)
         : SessionScenarios.Handles(slug, scenario) ? () => SessionScenarios.Body(host, slug, scenario, ct)
         : WrapSessionScenarios.Handles(slug, scenario) ? () => WrapSessionScenarios.Body(host, slug, scenario, ct)

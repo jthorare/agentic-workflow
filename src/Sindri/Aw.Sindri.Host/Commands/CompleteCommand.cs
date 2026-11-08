@@ -44,9 +44,8 @@ internal static class CompleteCommand
         }
 
         var answer = done.Value.Value;
-        var happened = answer.AlreadyApplied ? $"already applied ({answer.Result.Happened})" : answer.Result.Happened;
-        var header = InstanceHeader.Line(answer.Result.Instance, services.GetRequiredService<TimeProvider>().GetUtcNow());
-        return await output.Text($"{header}\n  {happened}\n", 0).ConfigureAwait(false);
+        var happened = answer.AlreadyApplied ? $"already applied ({answer.Happened})" : answer.Happened;
+        return await output.Text($"  {happened}\n", 0).ConfigureAwait(false);
     }
 
     /// <summary>

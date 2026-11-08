@@ -45,8 +45,6 @@
 
   <ItemGroup>
     <!-- Helpers the suites moved to Aw.Sindri.Engine.Tests still share with this project, compiled into both. -->
-    <Compile Include="../Aw.Sindri.Engine.Tests/ApplyCommand/Served.cs" Link="Shared/ApplyCommand/Served.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/CompleteStep/CliRun.cs" Link="Shared/CompleteStep/CliRun.cs" />
     <Compile Include="../Aw.Sindri.Engine.Tests/CompleteStep/DevServer.cs" Link="Shared/CompleteStep/DevServer.cs" />
     <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/PinnedTemporal.cs" Link="Shared/Workflows/PinnedTemporal.cs" />
     <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/AsyncCompletionProbeWorkflow.cs" Link="Shared/Workflows/Spike/AsyncCompletionProbeWorkflow.cs" />

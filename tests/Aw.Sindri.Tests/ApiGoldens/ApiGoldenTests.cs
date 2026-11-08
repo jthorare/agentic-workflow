@@ -24,7 +24,7 @@ public sealed class ApiGoldenTests
         var files = all
             .Where(f => !IsPending(f))
             .Order(StringComparer.Ordinal);
-        var expected = ApiScenarios.All.Concat(WorkflowViewGoldenTests.All).Concat(ServedWorkflowRoutesTests.Goldens).Select(r => $"{r.Slug}/{r.Scenario}.json").Order(StringComparer.Ordinal);
+        var expected = ApiScenarios.All.Select(r => $"{r.Slug}/{r.Scenario}.json").Order(StringComparer.Ordinal);
 
         Assert.Equal(expected, files);
 
