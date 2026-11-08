@@ -3,6 +3,7 @@ using System.Text;
 using Aw.Kernel.Outbox;
 using Aw.Redaction;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Profile;

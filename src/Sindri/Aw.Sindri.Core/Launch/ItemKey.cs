@@ -4,7 +4,7 @@ using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
 using Vogen;
 
-namespace Aw.Sindri.Core.Workflow.Engine;
+namespace Aw.Sindri.Core.Launch;
 
 /// <summary>
 /// The item an instance works on (spec §5.1), as the engine names it: API P3's 'ITM-…' id, or a tracker key such as

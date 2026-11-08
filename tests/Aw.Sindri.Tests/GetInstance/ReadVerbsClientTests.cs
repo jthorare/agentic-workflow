@@ -124,9 +124,9 @@ public sealed class ReadVerbsClientTests
     [Fact(Timeout = 30_000)]
     public async Task List_needs_me_prints_decisions_then_tasks_each_by_address_and_the_line_is_the_pinned_text()
     {
-        var task = StatusCases.View("desk-task") with { Address = Core.Workflow.Engine.InstanceAddress.From("T-1/step/1") };
-        var parked = StatusCases.View("parked-rounds") with { Address = Core.Workflow.Engine.InstanceAddress.From("T-9/step/1") };
-        var escalated = StatusCases.View("escalated-gate") with { Address = Core.Workflow.Engine.InstanceAddress.From("T-2/step/1") };
+        var task = StatusCases.View("desk-task") with { Address = Core.Launch.InstanceAddress.From("T-1/step/1") };
+        var parked = StatusCases.View("parked-rounds") with { Address = Core.Launch.InstanceAddress.From("T-9/step/1") };
+        var escalated = StatusCases.View("escalated-gate") with { Address = Core.Launch.InstanceAddress.From("T-2/step/1") };
         using var api = ReadApi.Over(new OneInstance(task), services => services.AddSingleton<IService<ListInstancesRequest, InstanceList>>(new FixedList(Listed(task, parked, escalated))));
 
         var (exit, stdout, _) = await Run(api, TestContext.Current.CancellationToken, "list", "--needs-me");

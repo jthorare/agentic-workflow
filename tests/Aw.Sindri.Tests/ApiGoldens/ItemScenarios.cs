@@ -309,7 +309,7 @@ internal static class ItemScenarios
 
     private static WorkflowEventPayload ActiveInstance(string item)
     {
-        var delta = new WorkflowEventDelta(new FrameSummary("produce", 1, "1.1", Child: null, Core.Workflow.Engine.StepRuntime.Desk), Suspension: null, PendingPark: null, Loops: null, TokensSpent: null, TokensGranted: null, Facts: null, Outcome: null);
+        var delta = new WorkflowEventDelta(new FrameSummary("produce", 1, "1.1", Child: null, Core.Launch.StepRuntime.Desk), Suspension: null, PendingPark: null, Loops: null, TokensSpent: null, TokensGranted: null, Facts: null, Outcome: null);
         var detail = new WorkflowEventDetail(Core.Workflow.Engine.TriggerKey.For(Core.Workflow.Engine.WorkflowInstanceId.From("WFI-" + new string('a', 32)), "t"), "human:cli",
             SourceSequence: null, ArgumentsSha256: null, ReportSha256: null, Answer: null, Amount: null, Reason: null, [], [], Grant: null, Override: null, Refusal: null, [], delta);
         return new WorkflowEventPayload(item + "/step/1", "start", "produce", "start", Outcome: null, Run: null, detail);

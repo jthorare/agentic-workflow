@@ -6,6 +6,7 @@ using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Line;
 using Aw.Sindri.Core.Packets;

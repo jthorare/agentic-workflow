@@ -3,7 +3,6 @@ using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Core.Sessions;
-using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Host;
 using Aw.Sindri.Tests.ListSessions;
 using Aw.Sindri.Tests.Sandbox.Plan;

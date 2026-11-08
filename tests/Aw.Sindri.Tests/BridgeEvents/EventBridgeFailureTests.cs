@@ -2,6 +2,7 @@ using System.Globalization;
 using Aw.Kernel;
 using Aw.Kernel.Events;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;

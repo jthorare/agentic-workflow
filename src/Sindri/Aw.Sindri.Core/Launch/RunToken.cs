@@ -5,7 +5,7 @@ using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
 using Vogen;
 
-namespace Aw.Sindri.Core.Workflow.Engine;
+namespace Aw.Sindri.Core.Launch;
 
 /// <summary>
 /// A Step run's token (spec §5.1, §5.3): '{entry}.{n}', the frame entry and the run's number within it. A public

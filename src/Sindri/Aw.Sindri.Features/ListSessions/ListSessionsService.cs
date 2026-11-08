@@ -7,7 +7,6 @@ using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sessions;
-using Aw.Sindri.Core.Workflow.Engine;
 
 namespace Aw.Sindri.Features.ListSessions;
 

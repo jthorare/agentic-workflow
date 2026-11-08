@@ -4,6 +4,7 @@ using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.OpenTargets;
 using Aw.Sindri.Core.Views;

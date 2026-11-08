@@ -2,6 +2,7 @@ using System.Text;
 using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Scoping;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Workflow.Engine;

@@ -56,7 +56,7 @@ public sealed class LauncherTests : IDisposable
     [Fact]
     public async Task Stop_ends_the_session_through_the_end_seam_after_the_host_stopped_it()
     {
-        var ended = new List<Core.Workflow.Engine.LaunchId>();
+        var ended = new List<Core.Launch.LaunchId>();
         var launcher = new Launcher(new LauncherParts(new AgentCatalog([AgentEntries.ClaudeCode]), _ => _host, _viewer, Options, _clock)
         {
             ResolveBin = static (_, _) => ValueTask.FromResult<string?>(null),

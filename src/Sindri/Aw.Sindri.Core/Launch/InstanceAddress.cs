@@ -7,7 +7,7 @@ using Aw.Kernel.Json;
 using Aw.Sindri.Core.Workflow.Ids;
 using Vogen;
 
-namespace Aw.Sindri.Core.Workflow.Engine;
+namespace Aw.Sindri.Core.Launch;
 
 /// <summary>
 /// An instance's CLI address (spec §5.1, §6.1): a root is '{item}/{recipe name}/{attempt}' ('T-3/item/1'); a child

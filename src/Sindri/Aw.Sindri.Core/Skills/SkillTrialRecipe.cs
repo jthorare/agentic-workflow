@@ -32,7 +32,7 @@ public static class SkillTrialRecipe
     /// <summary>Whether <paramref name="instance"/> is a trial run, from its address ('&lt;item&gt;/skill-trial-&lt;block&gt;/&lt;attempt&gt;', or a child of one).</summary>
     /// <param name="instance">The instance address.</param>
     /// <returns>True for a trial's.</returns>
-    public static bool IsTrial(Workflow.Engine.InstanceAddress instance) =>
+    public static bool IsTrial(Launch.InstanceAddress instance) =>
         instance.Value.Split('/') is [_, var recipe, ..] && recipe.StartsWith(IdPrefix["workflow.".Length..], StringComparison.Ordinal);
 
     /// <summary>The fact an input arrives in: 'fact:&lt;key&gt;'.</summary>

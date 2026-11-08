@@ -18,7 +18,7 @@ public sealed class LauncherTrustTests : IDisposable
     private readonly FakeTimeProvider _clock = new(KnownInstants.Epoch);
     private readonly FakeSessionHost _host = new();
     private readonly RecordingTrust _trust = new();
-    private readonly List<Core.Workflow.Engine.LaunchId> _ended = [];
+    private readonly List<Core.Launch.LaunchId> _ended = [];
 
     public void Dispose() => Directory.Delete(_home, recursive: true);
 
@@ -72,8 +72,8 @@ public sealed class LauncherTrustTests : IDisposable
     public async Task Stop_all_ends_every_tmux_session_it_launched_and_records_each()
     {
         var launcher = Make();
-        var one = Step() with { Launch = Core.Workflow.Engine.LaunchId.For(new Guid(1, 0, 0, new byte[8])) };
-        var two = Step() with { Launch = Core.Workflow.Engine.LaunchId.For(new Guid(2, 0, 0, new byte[8])) };
+        var one = Step() with { Launch = Core.Launch.LaunchId.For(new Guid(1, 0, 0, new byte[8])) };
+        var two = Step() with { Launch = Core.Launch.LaunchId.For(new Guid(2, 0, 0, new byte[8])) };
         _ = await launcher.Launch(one, CancellationToken.None);
         _ = await launcher.Launch(two, CancellationToken.None);
 

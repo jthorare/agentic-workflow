@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Aw.Sindri.Core.Workflow.Engine;
+namespace Aw.Sindri.Core.Launch;
 
 /// <summary>Who runs a Step (spec §5.1, W20): the desk runtime until the agent runtime (§6.5, P8) runs it.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<StepRuntime>))]
@@ -14,7 +14,7 @@ public enum StepRuntime
     [JsonStringEnumMemberName("agent")]
     Agent = 2,
 
-    /// <summary>The engine's block runtime (DT spec §8.2): an activity runs the Step's <see cref="Blocks.IBlockStep"/> and reports for it; outcomes are labelled 'via: block'.</summary>
+    /// <summary>The engine's block runtime (DT spec §8.2): an activity runs the Step's <see cref="Workflow.Blocks.IBlockStep"/> and reports for it; outcomes are labelled 'via: block'.</summary>
     [JsonStringEnumMemberName("block")]
     Block = 3,
 }

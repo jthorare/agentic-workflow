@@ -28,7 +28,7 @@ public sealed class CloseItemActiveInstanceTests
     public async Task CloseItem_is_refused_while_an_instance_is_active()
     {
         await Seed();
-        await Fold(EventTypes.WorkflowStarted, Row("produce", new FrameSummary("produce", 1, "1.1", Child: null, Core.Workflow.Engine.StepRuntime.Desk), outcome: null));
+        await Fold(EventTypes.WorkflowStarted, Row("produce", new FrameSummary("produce", 1, "1.1", Child: null, Core.Launch.StepRuntime.Desk), outcome: null));
         using var entered = _h.Slice.Callers.Enter(A.Caller().Human().Build());
 
         var result = await Service().Handle(A.CloseItemRequest().Build(), Token);
@@ -43,7 +43,7 @@ public sealed class CloseItemActiveInstanceTests
     public async Task CloseItem_once_the_instance_ended_is_the_ordinary_already_closed_refusal()
     {
         await Seed();
-        await Fold(EventTypes.WorkflowStarted, Row("produce", new FrameSummary("produce", 1, "1.1", Child: null, Core.Workflow.Engine.StepRuntime.Desk), outcome: null));
+        await Fold(EventTypes.WorkflowStarted, Row("produce", new FrameSummary("produce", 1, "1.1", Child: null, Core.Launch.StepRuntime.Desk), outcome: null));
         await Fold(EventTypes.WorkflowTransition, Row("done", new FrameSummary("done", 2, Run: null, Child: null), outcome: "resolved", trigger: "cancel"));
         using var entered = _h.Slice.Callers.Enter(A.Caller().Human().Build());
 
@@ -58,8 +58,8 @@ public sealed class CloseItemActiveInstanceTests
     public async Task CloseItem_is_refused_until_every_root_instance_ended()
     {
         await Seed();
-        await Fold(EventTypes.WorkflowStarted, Row("produce", new FrameSummary("produce", 1, "1.1", Child: null, Core.Workflow.Engine.StepRuntime.Desk), outcome: null));
-        await Fold(EventTypes.WorkflowStarted, Row("review", new FrameSummary("review", 1, "2.1", Child: null, Core.Workflow.Engine.StepRuntime.Desk), outcome: null, address: Other));
+        await Fold(EventTypes.WorkflowStarted, Row("produce", new FrameSummary("produce", 1, "1.1", Child: null, Core.Launch.StepRuntime.Desk), outcome: null));
+        await Fold(EventTypes.WorkflowStarted, Row("review", new FrameSummary("review", 1, "2.1", Child: null, Core.Launch.StepRuntime.Desk), outcome: null, address: Other));
         await Fold(EventTypes.WorkflowTransition, Row("done", new FrameSummary("done", 2, Run: null, Child: null), outcome: "cancelled", trigger: "cancel"));   // the earlier root ends; the latest is live
         using var entered = _h.Slice.Callers.Enter(A.Caller().Human().Build());
 
@@ -75,8 +75,8 @@ public sealed class CloseItemActiveInstanceTests
     public async Task CloseItem_names_a_live_earlier_root_even_after_the_latest_ended()
     {
         await Seed();
-        await Fold(EventTypes.WorkflowStarted, Row("produce", new FrameSummary("produce", 1, "1.1", Child: null, Core.Workflow.Engine.StepRuntime.Desk), outcome: null));
-        await Fold(EventTypes.WorkflowStarted, Row("review", new FrameSummary("review", 1, "2.1", Child: null, Core.Workflow.Engine.StepRuntime.Desk), outcome: null, address: Other));
+        await Fold(EventTypes.WorkflowStarted, Row("produce", new FrameSummary("produce", 1, "1.1", Child: null, Core.Launch.StepRuntime.Desk), outcome: null));
+        await Fold(EventTypes.WorkflowStarted, Row("review", new FrameSummary("review", 1, "2.1", Child: null, Core.Launch.StepRuntime.Desk), outcome: null, address: Other));
         await Fold(EventTypes.WorkflowTransition, Row("done", new FrameSummary("done", 2, Run: null, Child: null), outcome: "resolved", address: Other));   // the latest ends: the item reads done, the first root is live
         using var entered = _h.Slice.Callers.Enter(A.Caller().Human().Build());
 

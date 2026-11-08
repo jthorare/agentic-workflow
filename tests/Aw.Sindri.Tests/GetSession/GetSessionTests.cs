@@ -1,7 +1,6 @@
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sessions;
-using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Features.GetSession;
 using Aw.Sindri.Tests.ListSessions;
 using Aw.Sindri.Tests.Sessions;

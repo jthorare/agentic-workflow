@@ -23,7 +23,7 @@ public sealed class SeparateLoginCredentialSourceContractTests : IModelCredentia
         var target = AgentId.From(agent);
         var expected = AgentHomes.For(home.SindriHome, target);
 
-        var prepared = (await home.Source().Prepare(target, Core.Workflow.Engine.LaunchId.From("LCH-" + new string('c', 32)), TestContext.Current.CancellationToken)).Value;
+        var prepared = (await home.Source().Prepare(target, Core.Launch.LaunchId.From("LCH-" + new string('c', 32)), TestContext.Current.CancellationToken)).Value;
 
         Assert.Equal(new LoginMount(expected, expected, MountMode.ReadWrite), prepared.Mounts.Single());
         Assert.Equal(expected, prepared.Environment[variable]);
@@ -50,7 +50,7 @@ public sealed class SeparateLoginCredentialSourceContractTests : IModelCredentia
         using var home = new FakeSeparateHome(LoginState.Ready);
         var source = home.Source();
 
-        var prepared = (await source.Prepare(AgentId.From("claude-code"), Core.Workflow.Engine.LaunchId.From("LCH-" + new string('c', 32)), TestContext.Current.CancellationToken)).Value;
+        var prepared = (await source.Prepare(AgentId.From("claude-code"), Core.Launch.LaunchId.From("LCH-" + new string('c', 32)), TestContext.Current.CancellationToken)).Value;
         source.Release(prepared.Handle);
 
         Assert.True(File.Exists(home.ClaudeHome + "/.credentials.json"));

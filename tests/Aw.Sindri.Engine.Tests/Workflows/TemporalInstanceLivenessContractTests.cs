@@ -47,7 +47,7 @@ public sealed class TemporalInstanceLivenessContractTests(SindriTimeSkippingServ
         _handle = await WorkflowsHarness.Start(server.Environment.Client, start);
     }
 
-    private static string ItemOf(Core.Workflow.Engine.InstanceAddress address) => address.Value.Split('/')[0];
+    private static string ItemOf(Core.Launch.InstanceAddress address) => address.Value.Split('/')[0];
 
     protected override async Task End() => await _handle!.TerminateAsync("test over");
 }
