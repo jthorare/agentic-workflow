@@ -29,7 +29,7 @@ public sealed class GraphRunStarterTests
         return new World(new GraphRunStarter(runs, launcher, clock, log), runs, launcher, log);
     }
 
-    private static ValueTask<Aw.Kernel.Result<GraphStart>> Start(World w, int occurrence, GraphConcurrency mode) =>
+    private static ValueTask<Kernel.Result<GraphStart>> Start(World w, int occurrence, GraphConcurrency mode) =>
         w.Starter.Start(new GraphStartRequest(_workflow, _slug, Revision: 3, occurrence, Trigger, mode), Token);
 
     [Fact, Trait("Lane", "unit")]

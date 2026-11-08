@@ -1,7 +1,7 @@
+using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
-using Aw.Kernel.Testing;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
@@ -155,7 +155,7 @@ public abstract class WorkflowRunStoreContract
     public async Task The_latest_occurrence_is_the_highest_number_among_runs_of_one_trigger_kind()
     {
         var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
-        Expect.Equal<int?>(expected: null, (await store.LatestOccurrence(_workflow, "schedule", Token)).Value);
+        Expect.Equal(expected: null, (await store.LatestOccurrence(_workflow, "schedule", Token)).Value);
         _ = (await store.Insert(Run(40) with { Trigger = "{\"kind\":\"schedule\"}", Status = WorkflowRunStatus.Succeeded }, Token)).Value;
         _ = (await store.Insert(Run(9) with { Trigger = "{\"kind\":\"schedule\"}" }, Token)).Value;
         _ = (await store.Insert(Run(99), Token)).Value;
@@ -163,7 +163,7 @@ public abstract class WorkflowRunStoreContract
         var latest = (await store.LatestOccurrence(_workflow, "schedule", Token)).Value;
 
         Expect.Equal(40, latest);
-        Expect.Equal<int?>(expected: null, (await store.LatestOccurrence(WorkflowId.From("WF-00000000000000000000000000000002"), "schedule", Token)).Value);
+        Expect.Equal(expected: null, (await store.LatestOccurrence(WorkflowId.From("WF-00000000000000000000000000000002"), "schedule", Token)).Value);
     }
 
     /// <summary>'one-per-workflow' with a run in flight inserts nothing.</summary>
