@@ -1,15 +1,10 @@
-using System.Net;
-using Aw.Kernel;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.Api.Workflow;
-using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
-using Aw.Sindri.Ui.ViewModels.NeedsYou;
 using Aw.Sindri.Ui.ViewModels.Sandbox;
 
 namespace Aw.Sindri.Ui.Tests.Sandbox;
 
-/// <summary>Check again and the resume list, one test per states.json checkAgain row (sandbox spec §8 States; accessibility rows Check again and Resume list).</summary>
+/// <summary>Check again, one test per states.json checkAgain row (sandbox spec §8 States; accessibility row Check again).</summary>
 [Lane(TestLane.Unit)]
 public sealed class SandboxCheckTests
 {
@@ -90,76 +85,13 @@ public sealed class SandboxCheckTests
     }
 
     [Fact]
-    public async Task All_clear_lists_the_steps_before_it_acts_and_sends_nothing()
-    {
-        _bed.Server.SandboxCheckAnswer = SandboxTestBed.CheckBody([], ["Try the engine", "Fix the login timeout"]);
-
-        await Check.Check(Token);
-
-        Assert.Equal(SandboxCheckPhase.AllClear, Check.Phase);
-        Assert.Equal(SandboxTestBed.Text("checkAgain", "all-clear").Replace("<n>", "2", StringComparison.Ordinal), Check.Result);
-        Assert.Equal("Try the engine | Fix the login timeout", SandboxTestBed.J(Check.ResumeRows.Select(r => r.Title)));
-        Assert.True(Check.ShowsResume);
-        Assert.Empty(_bed.Server.CommandCalls);
-        var buttons = ((System.Text.Json.Nodes.JsonArray)SandboxTestBed.Row("checkAgain", "all-clear")["buttons"]!).Select(b => (string)b!);
-        Assert.Equal(SandboxTestBed.J(buttons), SandboxTestBed.J([Labels.SandboxResume, Labels.SandboxNotNow]));
-    }
-
-    [Fact]
     public async Task All_clear_with_nothing_parked_just_says_ready()
     {
         _bed.Server.SandboxCheckAnswer = SandboxTestBed.CheckBody([], []);
 
         await Check.Check(Token);
 
-        Assert.Equal((Labels.SandboxReadyNothingWaiting, false), (Check.Result, Check.ShowsResume));
-    }
-
-    [Fact]
-    public async Task Resume_answers_each_instance_as_resume_in_order_announces_resuming_then_says_resumed()
-    {
-        _bed.Server.SandboxCheckAnswer = SandboxTestBed.CheckBody([], ["Try the engine", "Fix the login timeout"]);
-        await Check.Check(Token);
-        var resolved = 0;
-        Check.Resolved += (_, _) => resolved++;
-        var spoken = new List<string>();
-        Check.Live.PropertyChanged += (_, _) => spoken.Add(Check.Live.Text);
-
-        await Check.Resume(Token);
-
-        Assert.Equal(SandboxTestBed.J([SandboxTestBed.Instance(0), SandboxTestBed.Instance(1)]), SandboxTestBed.J(_bed.Server.CommandCalls.Select(c => c.Instance)));
-        Assert.All(_bed.Server.CommandCalls, c => Assert.Equal((CommandKind.Answer, AnswerVariant.Resume), (c.Body.Kind, c.Body.Answer)));
-        Assert.Contains(spoken, said => string.Equals(said, SandboxTestBed.Announce("checkAgain", "all-clear").Replace("<n>", "2", StringComparison.Ordinal), StringComparison.Ordinal));
-        Assert.Equal((SandboxCheckPhase.Resumed, SandboxTestBed.Text("checkAgain", "resumed").Replace("<n>", "2", StringComparison.Ordinal), 1), (Check.Phase, Check.Result, resolved));
-        Assert.False(Check.ShowsResume);
-    }
-
-    [Fact]
-    public async Task A_step_that_moved_on_makes_it_partial_and_the_rest_stay_parked()
-    {
-        _bed.Server.SandboxCheckAnswer = SandboxTestBed.CheckBody([], ["Try the engine", "Fix the login timeout"]);
-        _ = _bed.Server.MovedOnInstances.Add(SandboxTestBed.Instance(1));
-        await Check.Check(Token);
-
-        await Check.Resume(Token);
-
-        var text = SandboxTestBed.Text("checkAgain", "resumed-partial").Replace("<n>", "1", StringComparison.Ordinal).Replace("<m>", "2", StringComparison.Ordinal).Replace("<item>", "Fix the login timeout", StringComparison.Ordinal);
-        Assert.Equal((SandboxCheckPhase.ResumedPartial, text), (Check.Phase, Check.Result));
-        Assert.Equal(SandboxTestBed.Announce("checkAgain", "resumed-partial").Replace("<n>", "1", StringComparison.Ordinal).Replace("<m>", "2", StringComparison.Ordinal), Check.Live.Text);
-    }
-
-    [Fact]
-    public async Task Not_now_drops_the_list_sends_nothing_and_asks_for_focus_back_on_check_again()
-    {
-        _bed.Server.SandboxCheckAnswer = SandboxTestBed.CheckBody([], ["Try the engine"]);
-        await Check.Check(Token);
-        var focus = 0;
-        Check.FocusCheckRequested += (_, _) => focus++;
-
-        Check.NotNow();
-
-        Assert.Equal((false, 1, SandboxCheckPhase.Idle), (Check.ShowsResume, focus, Check.Phase));
-        Assert.Empty(_bed.Server.CommandCalls);
+        Assert.Equal(Labels.SandboxReadyNothingWaiting, Check.Result);
     }
 
     [Fact]
@@ -204,40 +136,4 @@ public sealed class SandboxCheckTests
         Assert.Equal("fix 0", _bed.Clipboard.Text);
     }
 
-    [Fact]
-    public async Task A_resume_row_without_an_item_or_title_reads_as_a_parked_Step()
-    {
-        _bed.Server.SandboxCheckAnswer = ResumeBody("""{"instance":"ITM-0/step/1","item":null,"title":null,"since":"2026-10-28T08:00:00.0000000Z"}""");
-
-        await Check.Check(Token);
-
-        Assert.Equal((SandboxCheckPhase.AllClear, Labels.SandboxResumeNoTitle), (Check.Phase, Assert.Single(Check.ResumeRows).Title));
-    }
-
-    [Fact]
-    public async Task A_resume_row_without_a_title_shows_its_item()
-    {
-        _bed.Server.SandboxCheckAnswer = ResumeBody("""{"instance":"ITM-0/step/1","item":"ITM-0000000000000000000000000000000f","title":null,"since":"2026-10-28T08:00:00.0000000Z"}""");
-
-        await Check.Check(Token);
-
-        Assert.Equal("ITM-0000000000000000000000000000000f", Assert.Single(Check.ResumeRows).Title);
-    }
-
-    [Fact]
-    public async Task Resume_keeps_the_unsent_rows_when_a_send_is_refused_locally()
-    {
-        _bed.Server.SandboxCheckAnswer = SandboxTestBed.CheckBody([], ["One", "Two", "Three"]);
-        var commander = new InstanceCommander(_bed.Server, () => SandboxTestBed.Api);
-        var sends = 0;
-        var check = new SandboxCheckViewModel(_bed.Server, _bed.Clock, () => SandboxTestBed.Api, body => ++sends == 2 ? Task.FromResult<Result<ApplyCommandAccepted>?>(null) : commander.Send(body), _bed.Clipboard);
-        await check.Check(Token);
-
-        await check.Resume(Token);
-
-        Assert.Equal(("Two | Three", true, Labels.SandboxResumeNotSent, SandboxCheckPhase.AllClear), (SandboxTestBed.J(check.ResumeRows.Select(r => r.Title)), check.ShowsResume, check.Live.Text, check.Phase));
-    }
-
-    private static RouteAnswer ResumeBody(string row) =>
-        new(HttpStatusCode.OK, $$"""{"blockers":[],"ready":true,"resume":[{{row}}],"checkedAt":"2026-10-28T09:00:00.0000000Z"}""");
 }

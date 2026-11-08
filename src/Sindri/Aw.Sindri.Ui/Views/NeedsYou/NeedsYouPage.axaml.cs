@@ -66,7 +66,6 @@ internal sealed partial class NeedsYouPage : UserControl
             _page.Bar.ReasonRequested -= OnReasonRequested;
             _page.Bar.PropertyChanged -= OnBarChanged;
             _page.CardFocusRequested -= OnCardFocusRequested;
-            _page.ParkFocusRequested -= OnParkFocusRequested;
         }
 
         _page = DataContext as NeedsYouPageViewModel;
@@ -77,8 +76,6 @@ internal sealed partial class NeedsYouPage : UserControl
             _page.Bar.PropertyChanged += OnBarChanged;
             _mode = _page.Bar.Mode;
             _page.CardFocusRequested += OnCardFocusRequested;
-            _page.ParkFocusRequested += OnParkFocusRequested;
-            NeedsYouDropItem.Header = _page.Bar.DropWord;   // a flyout's items do not take the page's data context
         }
     }
 
@@ -123,7 +120,7 @@ internal sealed partial class NeedsYouPage : UserControl
         {
             Dispatcher.UIThread.Post(() => _ = _page?.Selected is { } row && FocusRow(row.Id), DispatcherPriority.Loaded);
         }
-        else if (now == NeedsYouBarMode.Pending && was is NeedsYouBarMode.SendingBack or NeedsYouBarMode.ConfirmingDrop or NeedsYouBarMode.Confirming)
+        else if (now == NeedsYouBarMode.Pending && was is NeedsYouBarMode.SendingBack or NeedsYouBarMode.Confirming)
         {
             Dispatcher.UIThread.Post(() => FocusBar(was), DispatcherPriority.Loaded);
         }
@@ -136,9 +133,6 @@ internal sealed partial class NeedsYouPage : UserControl
     }
 
     // Enter on the list: focus goes to the card, where the arrow keys scroll it.
-    // A picked sandbox park row: the card has just been bound, so focus goes to its heading once it is laid out.
-    private void OnParkFocusRequested(object? sender, EventArgs e) => Dispatcher.UIThread.Post(NeedsYouSandboxPark.FocusHeading, DispatcherPriority.Loaded);
-
     private void OnCardFocusRequested(object? sender, EventArgs e) => _ = NeedsYouCardScroll.Focus(NavigationMethod.Tab);
 
     // Ctrl+Enter sends the reason and Esc closes the box; any other key is the box's own. The shell's single keys never see a key typed in a field.
@@ -158,63 +152,13 @@ internal sealed partial class NeedsYouPage : UserControl
 
     private void OnPr(object? sender, RoutedEventArgs e) => _page?.OpenPr();
 
-    private void OnOpenPr(object? sender, RoutedEventArgs e) => _ = _page?.Bar.MergeCard?.Open(CancellationToken.None);
-
-    private void OnVerb(object? sender, RoutedEventArgs e) => _ = sender is Control { DataContext: DeskVerbViewModel verb } ? verb.Press() : Task.CompletedTask;
-
-    private void OnVerbConfirm(object? sender, RoutedEventArgs e) => _ = sender is Control { DataContext: DeskVerbViewModel verb } ? verb.Confirm() : Task.CompletedTask;
-
-    private void OnVerbKeep(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Control { DataContext: DeskVerbViewModel verb })
-        {
-            verb.Keep();
-        }
-    }
-
     private void OnApprove(object? sender, RoutedEventArgs e) => _ = _page?.Bar.PressApprove();
 
-    private void OnReview(object? sender, RoutedEventArgs e) => _ = ((sender as Button)?.DataContext as ViewModels.Components.DeskReviewViewModel)?.Open();
-
-    private void OnSession(object? sender, RoutedEventArgs e) => _page?.Bar.OpenSession();
-
     private void OnSendBack(object? sender, RoutedEventArgs e) => _ = _page?.Bar.PressSendBack();
-
-    private void OnScopingChoice(object? sender, RoutedEventArgs e) => ((sender as Button)?.DataContext as ScopingChoiceViewModel)?.Choose();
-
-    private void OnDoneAsking(object? sender, RoutedEventArgs e) => _ = _page?.Bar.PressDoneAsking();
-
-    private void OnChooseOption(object? sender, RoutedEventArgs e) => ((sender as Button)?.DataContext as DeskQuestionOptionViewModel)?.Choose();
 
     private void OnSend(object? sender, RoutedEventArgs e) => _ = _page?.Bar.Send();
 
     private void OnCancel(object? sender, RoutedEventArgs e) => _page?.Bar.Cancel();
-
-    private void OnAnswerMoreTries(object? sender, RoutedEventArgs e) => _page?.Answer?.Choose(PausedAnswerOption.MoreTries);
-
-    private void OnAnswerHint(object? sender, RoutedEventArgs e) => _page?.Answer?.Choose(PausedAnswerOption.Hint);
-
-    private void OnAnswerStop(object? sender, RoutedEventArgs e) => _page?.Answer?.Choose(PausedAnswerOption.Stop);
-
-    private void OnAnswerFewer(object? sender, RoutedEventArgs e) => _page?.Answer?.Decrease();
-
-    private void OnAnswerMore(object? sender, RoutedEventArgs e) => _page?.Answer?.Increase();
-
-    private void OnAnswerSend(object? sender, RoutedEventArgs e) => _ = _page?.Answer?.Send();
-
-    private void OnHandBack(object? sender, RoutedEventArgs e) => _ = _page?.Takeover?.HandBack();
-
-    private void OnNotYet(object? sender, RoutedEventArgs e) => _page?.Takeover?.NotYet();
-
-    private void OnCancelRun(object? sender, RoutedEventArgs e) => _page?.Takeover?.AskCancel();
-
-    private void OnCancelConfirm(object? sender, RoutedEventArgs e) => _ = _page?.Takeover?.ConfirmCancel();
-
-    private void OnCancelBackOut(object? sender, RoutedEventArgs e) => _page?.Takeover?.BackOutOfCancel();
-
-    private void OnDropItem(object? sender, RoutedEventArgs e) => _ = _page?.Bar.RequestDrop();
-
-    private void OnDropConfirm(object? sender, RoutedEventArgs e) => _ = _page?.Bar.ConfirmDrop();
 
     // A row is seen once it has been on screen and focused, in the active window, for a second (the list's rule, as on Home).
     private void Look(RoutedEventArgs e, bool looking)

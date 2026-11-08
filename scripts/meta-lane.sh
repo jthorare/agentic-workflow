@@ -218,6 +218,23 @@ if [ -n "$routed_model" ]; then
     *) echo "meta-lane: lane $lane: agent $agent has no model flag the launcher applies; routed model '$routed_model' not passed" >&2 ;;
   esac
 fi
+# Codex runs hooks and tools in a shared app-server daemon unless told otherwise. The daemon keeps the environment of whoever started
+# it first (another team's AW_META_*, another lane script as the ancestor), so this lane's hooks would act as that team and
+# meta-lane-gate's own_agent check would reject them (#2286). --no-daemon keeps them under this lane's agent. It goes right after the
+# binary (before a resume subcommand), only when this Codex lists the flag: an older one would refuse to start. The result is recorded in
+# <lane>.agent (noDaemon) so aw-meta health can say which it is. Any Codex-derived catalog entry gets this, an alias included.
+if launcher_is_codex "$agent"; then
+  no_daemon=false
+  if printf '%s\n' "${args[@]}" | grep -qx -- '--no-daemon'; then
+    no_daemon=true
+  elif launcher_cli_has_flag "${args[0]}" --no-daemon; then
+    args=("${args[0]}" --no-daemon "${args[@]:1}"); no_daemon=true
+  else
+    echo "meta-lane: lane $lane: ${args[0]} has no --no-daemon; its hooks may run in a shared codex daemon under another team's identity" >&2
+  fi
+  jq -c --argjson nd "$no_daemon" '. + {codex: true, noDaemon: $nd}' "$ids/$lane.agent" > "$ids/$lane.agent.tmp" 2> /dev/null \
+    && mv "$ids/$lane.agent.tmp" "$ids/$lane.agent"
+fi
 # A launcher run from inside a Claude session (the meta recreating a dead lane) must not hand the lane that session's
 # identity: its id, pid, messaging socket and token. Only these are cleared; user settings such as model or
 # provider variables pass through.

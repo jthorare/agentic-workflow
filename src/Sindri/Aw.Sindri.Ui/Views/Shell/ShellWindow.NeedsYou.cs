@@ -32,12 +32,8 @@ internal sealed partial class ShellWindow
     }
 
     // Esc closed a row's sheet: focus goes back to the row it was opened from.
-    // When the sheet was opened from a strip row (Answer), that row is the one it goes back to.
-    private void OnNeedsYouFocus(object? sender, NeedsYouRowEventArgs request)
-    {
-        var strip = Shell?.OpenerStrip;
-        Dispatcher.UIThread.Post(() => (strip is null ? (Action)(() => FocusNeedsYouRow(request.RowId)) : () => FocusStripRow(strip))(), DispatcherPriority.Loaded);
-    }
+    private void OnNeedsYouFocus(object? sender, NeedsYouRowEventArgs request) =>
+        Dispatcher.UIThread.Post(() => FocusNeedsYouRow(request.RowId), DispatcherPriority.Loaded);
 
     // J / K (or the row after a cleared one) moved the selection: the row's frame takes focus, on the keyboard's ring. A refresh that
     // cleared the selected row moves the selection on its own: focus follows only if it was in that row, or is lost by now, never
