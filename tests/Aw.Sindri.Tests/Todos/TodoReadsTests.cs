@@ -70,6 +70,18 @@ public sealed class TodoReadsTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task One_todo_answers_the_TodoItem_wire_record_with_link_objects()
+    {
+        await _h.Seed(_open);
+        using var cli = _h.Cli();
+
+        var got = await _h.Get().Handle(new GetTodoRequest(_open), Token);
+
+        Assert.True(got.IsSuccess, got.IsError ? got.Error.ToString() : null);
+        _ = Assert.IsType<Aw.Sindri.Features.ListTodos.TodoItem>(got.Value.Todo);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task An_unknown_todo_is_SND_TODO_404()
     {
         using var cli = _h.Cli();
