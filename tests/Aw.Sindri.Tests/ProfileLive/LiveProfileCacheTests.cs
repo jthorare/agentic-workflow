@@ -47,6 +47,27 @@ public sealed class LiveProfileCacheTests : IDisposable
         Assert.True(third.IsSuccess);
     }
 
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_write_by_sindri_is_seen_even_when_the_last_write_time_and_length_do_not_change()
+    {
+        var path = _files.Settings.ProfilePath;
+        _files.Write("schemaVersion: 1\nuser: me\nrepos: []\ncontext:\n  models:\n    labeling:\n      pick: off\n");
+        var live = new LiveApprovedProfile(_files.Source, path);
+        var before = (await live.Latest(Token)).Value!.Hash;
+        var stamp = File.GetLastWriteTimeUtc(path);
+        var length = new FileInfo(path).Length;
+
+        var writer = new YamlProfileKeyWriter(_files.Settings, live);
+        var edit = writer.Plan("context.models.labeling.pick", "jev").Value;   // same length as "off"
+        Assert.True(writer.Save(edit).IsSuccess);
+        File.SetLastWriteTimeUtc(path, stamp);   // one clock tick: nothing but the invalidate tells the cache
+
+        Assert.Equal(length, new FileInfo(path).Length);
+        var after = (await live.Latest(Token)).Value!.Hash;
+
+        Assert.NotEqual(before, after);
+    }
+
     private sealed class CountingSource(IProfileSource inner) : IProfileSource
     {
         public int Loads { get; private set; }

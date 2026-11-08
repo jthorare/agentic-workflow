@@ -11,7 +11,8 @@ namespace Aw.Sindri.Infrastructure.Profile;
 /// file only if the file is still the text that was read; on a conflict it re-reads and tries once more, and a second conflict is an error that says to try again. A missing file is created with the defaults.
 /// </summary>
 /// <param name="settings">Where the profile is.</param>
-internal sealed class YamlProfileRepoWriter(SindriSettings settings) : IProfileRepoWriter
+/// <param name="cache">Told right after a write, so the next read parses the file; null when nothing keeps the profile.</param>
+internal sealed class YamlProfileRepoWriter(SindriSettings settings, IProfileCache? cache = null) : IProfileRepoWriter
 {
     private const string Conflict = "The profile changed while Sindri was writing it. Try again.";
     private const int Attempts = 2;
@@ -66,6 +67,11 @@ internal sealed class YamlProfileRepoWriter(SindriSettings settings) : IProfileR
 
         BeforeWrite?.Invoke(path, attempt);
         var (written, reason) = Write(path, read.Value, after);
+        if (written == Written.Done)
+        {
+            cache?.Invalidate();
+        }
+
         if (written == Written.Conflict)
         {
             return null;
