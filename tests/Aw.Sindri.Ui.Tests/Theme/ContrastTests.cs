@@ -37,7 +37,7 @@ public sealed partial class ContrastTests
         { "OnPrimary", "PrimaryHoverFill", 5.5, TextAa },
         { "OnPrimary", "PrimaryPressed", 6.2, TextAa },
         { "Error", "Canvas", 6.0, TextAa },
-        { "Error", "Surface1", 5.5, TextAa },
+        { "Error", "Surface1", 5.5, TextAa },   // the todo row's Overdue due word on the panel (todo spec §3.5)
         { "Success", "Canvas", 6.6, TextAa },
         { "Attention", "Canvas", 9.4, TextAa },
         { "Attention", "Surface1", 8.6, TextAa },
@@ -59,6 +59,16 @@ public sealed partial class ContrastTests
         { "RingAnchor", "Surface1", 13.0, NonText },
     };
 
+    // The todo panel's colours (todo spec D6, §3.5). The theme is dark only, so there is one set of rows.
+    public static TheoryData<string, string, double, double> TodoPairs => new()
+    {
+        // The region focus ring (todo spec D6): Todo panel and Home's Needs you panel draw a 1 px Primary border on the panel (Surface1).
+        // The border is a shape cue beside the accent heading, so it needs the non-text 3.0.
+        { "Primary", "Surface1", 4.05, NonText },
+        { "Primary", "Canvas", 4.4, NonText },   // the ring where a panel border meets the page
+        { "Error", "Surface2", 5.3, TextAa },   // the Overdue word on a selected todo row (item-row.selected is Surface2)
+    };
+
     // The workflow run statuses (F3 workflows spec §2), drawn on a board card (Surface2) and in the run drawer (Surface1).
     public static TheoryData<string, string, double, double> StatusPairs => new()
     {
@@ -78,6 +88,7 @@ public sealed partial class ContrastTests
     [Theory]
     [MemberData(nameof(Pairs))]
     [MemberData(nameof(StatusPairs))]
+    [MemberData(nameof(TodoPairs))]
     public void Each_pair_has_the_recorded_ratio_and_meets_its_threshold(string foreground, string background, double recorded, double minimum)
     {
         var ratio = _tokens.Contrast(foreground, background);
