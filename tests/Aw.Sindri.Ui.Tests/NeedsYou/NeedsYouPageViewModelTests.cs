@@ -215,7 +215,7 @@ public sealed class NeedsYouPageViewModelTests
         await page.Bar.PressApprove();
 
         Assert.Equal((true, false, Labels.NeedsYouApprovedTitle(NeedsYouRows.ProfileReady().Title)), (page.IsDone, page.ShowsRequest, page.Bar.DoneTitle));
-        _ = page.Move(1);
+        _ = page.Move(-1);   // the decisions group is listed before the settings one, so the approved profile is the last row and the other way is up
         Assert.Equal((false, true), (page.IsDone, page.ShowsRequest));
     }
 

@@ -3,8 +3,8 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Projects;
 using Aw.Sindri.Ui.Testing;
-using Aw.Sindri.Ui.ViewModels.Projects;
 using Aw.Sindri.Ui.ViewModels;
+using Aw.Sindri.Ui.ViewModels.Projects;
 
 namespace Aw.Sindri.Ui.Tests.Projects;
 

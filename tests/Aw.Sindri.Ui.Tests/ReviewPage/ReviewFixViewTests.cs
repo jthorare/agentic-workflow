@@ -69,7 +69,7 @@ public sealed class ReviewFixViewTests : FrameHost
         Named<Button>(window, "ReviewFixSend").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
         await Until(window, () => Visible(window, "ReviewFixOutcome") && ReferenceEquals(Focused(window), Named<TextBlock>(window, "ReviewFixOutcome")), "focus never went to the outcome text");
-        Assert.Equal("Fix task sent to the babysitter on #2071. It takes the thread as work and closes the item when it's fixed.", Named<TextBlock>(window, "ReviewFixOutcome").Text);
+        Assert.Equal("No session is on feat/retry-budget. The item waits in Work as \"Waiting on feat/retry-budget\", and the first session on that branch is told.", Named<TextBlock>(window, "ReviewFixOutcome").Text);
     });
 
     [Fact]

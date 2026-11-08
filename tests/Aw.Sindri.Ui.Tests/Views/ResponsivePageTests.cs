@@ -154,7 +154,7 @@ public sealed class ResponsivePageTests : IDisposable
         shell.CloseSheet();
         Settle(window);
 
-        Assert.True(Left(Named(window, "WorkflowsPanel"), window) > Left(Named(window, "NeedsYouPanel"), window) + 100); // why: F3 home spec: Needs you left, Running and Queued right
+        Assert.True(Left(Named(window, "RunningPanel"), window) > Left(Named(window, "NeedsYouPanel"), window) + 100); // why: F3 home spec: Needs you left, Running and Queued right
     });
 
     [Fact]

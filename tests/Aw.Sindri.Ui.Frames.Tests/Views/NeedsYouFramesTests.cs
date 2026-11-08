@@ -200,7 +200,7 @@ public sealed class NeedsYouFramesTests : FrameHost
 
         Assert.True(Visible(window, "NeedsYouInbox"));
         Assert.False(Visible(window, "NeedsYouPanel"));
-        Assert.Equal(["Agent decisions", "Workflow and settings approvals", "Something failed"], Named<Control>(window, "NeedsYouGroups").GetVisualDescendants().OfType<Border>().Where(b => b.Classes.Contains("group-header")).Select(b => b.GetVisualDescendants().OfType<TextBlock>().First().Text), StringComparer.Ordinal);
+        Assert.Equal(["Agent decisions", "Settings approvals", "Something failed"], Named<Control>(window, "NeedsYouGroups").GetVisualDescendants().OfType<Border>().Where(b => b.Classes.Contains("group-header")).Select(b => b.GetVisualDescendants().OfType<TextBlock>().First().Text), StringComparer.Ordinal);
         Assert.True(Visible(window, "NeedsYouCard"));
         Assert.Equal(shell.Inbox.Selected?.Title, Named<TextBlock>(window, "NeedsYouCardTitle").Text);
         Assert.Equal(shell.Inbox.FooterLeft, Named<TextBlock>(window, "NeedsYouFooterLeft").Text);

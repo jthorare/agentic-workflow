@@ -5,9 +5,9 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Jobs;
 using Aw.Sindri.Ui.ViewModels.Shell;
-using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.Views.Shell;
 using static Aw.Sindri.Ui.Tests.Jobs.JobsFixture;
 
