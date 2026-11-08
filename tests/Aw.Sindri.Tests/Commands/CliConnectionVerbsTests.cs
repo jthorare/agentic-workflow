@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Features.AddConnection;
+using Aw.Sindri.Features.GetConnection;
 using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Testing;
 
@@ -122,7 +123,7 @@ public sealed class CliConnectionVerbsTests : IDisposable
         var after = before with { Status = "connected", StatusReason = null, LastRefreshedAt = DateTimeOffset.UnixEpoch.AddHours(1) };
         var api = new RoutedApi()
             .OnPost("/sindri/connections/linear%3Awork/signin", HttpStatusCode.OK, new AddConnectionResponse(before, "https://provider.example.test/authorize?state=x"))
-            .On("/sindri/connections/linear%3Awork", HttpStatusCode.OK, new Aw.Sindri.Features.GetConnection.GetConnectionResponse(after));
+            .On("/sindri/connections/linear%3Awork", HttpStatusCode.OK, new GetConnectionResponse(after));
 
         var code = await Verbs(api).Run(["connection", "signin", "linear:work"], Token);
 

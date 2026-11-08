@@ -26419,3 +26419,7 @@ Aw.Sindri.Core.Graph.Blocks.PromptBlock.CheckConfig(System.Text.Json.Nodes.JsonO
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.MarkTick(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.DateTimeOffset tick, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.LastTick(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.DateTimeOffset?>!>
 static Aw.Sindri.Core.Graph.Runs.WorkflowRun.TriggerProblem(string! trigger) -> string?
+Aw.Sindri.Core.Connections.ConnectionEvents
+Aw.Sindri.Core.Connections.ConnectionEvents.ConnectionEvents(Aw.Sindri.Core.Lease.HeldLease! held, Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, System.TimeProvider! clock) -> void
+Aw.Sindri.Core.Connections.ConnectionEvents.Now.get -> System.DateTimeOffset
+Aw.Sindri.Core.Connections.ConnectionEvents.SignedIn(Aw.Sindri.Core.Connections.ConnectionName name, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask

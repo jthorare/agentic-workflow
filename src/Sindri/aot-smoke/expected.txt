@@ -194,6 +194,7 @@ heartbeat paused (sequence SEQ)
 ## sindri services
 code-index-embed  every 1m  last: ok  next: TIME
 code-index-main-move  every 1m  last: ok  next: TIME
+connection-refresh  every 5m  last: ok  next: TIME
 context-concept-scan  every 1m  last: ok  next: TIME
 context-map-refresh  every 1m  last: ok  next: TIME
 context-sync-gaps  every 1m  last: ok  next: TIME
@@ -211,6 +212,7 @@ heartbeat resumed (sequence SEQ)
 ## sindri services
 code-index-embed  every 1m  last: ok  next: TIME
 code-index-main-move  every 1m  last: ok  next: TIME
+connection-refresh  every 5m  last: ok  next: TIME
 context-concept-scan  every 1m  last: ok  next: TIME
 context-map-refresh  every 1m  last: ok  next: TIME
 context-sync-gaps  every 1m  last: ok  next: TIME
