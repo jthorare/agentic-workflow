@@ -1,7 +1,7 @@
 {
   "asOf": {
-    "cursor": 3,
-    "ledgerHead": 3,
+    "cursor": 8,
+    "ledgerHead": 8,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

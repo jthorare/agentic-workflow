@@ -78,7 +78,7 @@ public sealed class TodoReadsTests
         var got = await _h.Get().Handle(new GetTodoRequest(_open), Token);
 
         Assert.True(got.IsSuccess, got.IsError ? got.Error.ToString() : null);
-        _ = Assert.IsType<Aw.Sindri.Features.ListTodos.TodoItem>(got.Value.Todo);
+        _ = Assert.IsType<Aw.Sindri.Core.Todos.TodoItem>(got.Value.Todo);
     }
 
     [Fact, Trait("Lane", "unit")]
