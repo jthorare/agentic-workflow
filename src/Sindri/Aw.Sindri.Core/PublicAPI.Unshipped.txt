@@ -18414,15 +18414,15 @@ Aw.Sindri.Core.NeedsYou.StatusTimeout.StatusTimeout(Aw.Sindri.Core.NeedsYou.Time
 Aw.Sindri.Core.NeedsYou.TimeoutKind
 Aw.Sindri.Core.NeedsYou.TimeoutKind.Escalates = 2 -> Aw.Sindri.Core.NeedsYou.TimeoutKind
 Aw.Sindri.Core.NeedsYou.TimeoutKind.Parks = 1 -> Aw.Sindri.Core.NeedsYou.TimeoutKind
-Aw.Sindri.Core.Profile.RecipeDuration
-Aw.Sindri.Core.Profile.RecipeDuration.Equals(Aw.Sindri.Core.Profile.RecipeDuration other) -> bool
-Aw.Sindri.Core.Profile.RecipeDuration.Equals(Aw.Sindri.Core.Profile.RecipeDuration other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Profile.RecipeDuration>! comparer) -> bool
-Aw.Sindri.Core.Profile.RecipeDuration.GetTypeCode() -> System.TypeCode
-Aw.Sindri.Core.Profile.RecipeDuration.IsInitialized() -> bool
-Aw.Sindri.Core.Profile.RecipeDuration.RecipeDuration() -> void
-Aw.Sindri.Core.Profile.RecipeDuration.Span.get -> System.TimeSpan
-Aw.Sindri.Core.Profile.RecipeDuration.ToString(System.IFormatProvider? provider) -> string!
-Aw.Sindri.Core.Profile.RecipeDuration.Value.get -> string!
+Aw.Sindri.Core.Ids.RecipeDuration
+Aw.Sindri.Core.Ids.RecipeDuration.Equals(Aw.Sindri.Core.Ids.RecipeDuration other) -> bool
+Aw.Sindri.Core.Ids.RecipeDuration.Equals(Aw.Sindri.Core.Ids.RecipeDuration other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Ids.RecipeDuration>! comparer) -> bool
+Aw.Sindri.Core.Ids.RecipeDuration.GetTypeCode() -> System.TypeCode
+Aw.Sindri.Core.Ids.RecipeDuration.IsInitialized() -> bool
+Aw.Sindri.Core.Ids.RecipeDuration.RecipeDuration() -> void
+Aw.Sindri.Core.Ids.RecipeDuration.Span.get -> System.TimeSpan
+Aw.Sindri.Core.Ids.RecipeDuration.ToString(System.IFormatProvider? provider) -> string!
+Aw.Sindri.Core.Ids.RecipeDuration.Value.get -> string!
 Aw.Sindri.Core.Workflow.Engine.Events.EvidenceExpectation
 Aw.Sindri.Core.Workflow.Engine.Events.EvidenceExpectation.Fail = 2 -> Aw.Sindri.Core.Workflow.Engine.Events.EvidenceExpectation
 Aw.Sindri.Core.Workflow.Engine.Events.EvidenceExpectation.Pass = 1 -> Aw.Sindri.Core.Workflow.Engine.Events.EvidenceExpectation
@@ -18491,9 +18491,9 @@ override Aw.Sindri.Core.NeedsYou.StatusSandbox.ToString() -> string!
 override Aw.Sindri.Core.NeedsYou.StatusTimeout.Equals(object? obj) -> bool
 override Aw.Sindri.Core.NeedsYou.StatusTimeout.GetHashCode() -> int
 override Aw.Sindri.Core.NeedsYou.StatusTimeout.ToString() -> string!
-override Aw.Sindri.Core.Profile.RecipeDuration.Equals(object? obj) -> bool
-override Aw.Sindri.Core.Profile.RecipeDuration.GetHashCode() -> int
-override Aw.Sindri.Core.Profile.RecipeDuration.ToString() -> string!
+override Aw.Sindri.Core.Ids.RecipeDuration.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Ids.RecipeDuration.GetHashCode() -> int
+override Aw.Sindri.Core.Ids.RecipeDuration.ToString() -> string!
 override Aw.Sindri.Core.Workflow.Engine.WithValue.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Workflow.Engine.WithValue.GetHashCode() -> int
 override Aw.Sindri.Core.Workflow.Engine.WithValue.ToString() -> string!
@@ -18516,12 +18516,12 @@ static Aw.Sindri.Core.NeedsYou.StatusSandbox.operator !=(Aw.Sindri.Core.NeedsYou
 static Aw.Sindri.Core.NeedsYou.StatusSandbox.operator ==(Aw.Sindri.Core.NeedsYou.StatusSandbox? left, Aw.Sindri.Core.NeedsYou.StatusSandbox? right) -> bool
 static Aw.Sindri.Core.NeedsYou.StatusTimeout.operator !=(Aw.Sindri.Core.NeedsYou.StatusTimeout? left, Aw.Sindri.Core.NeedsYou.StatusTimeout? right) -> bool
 static Aw.Sindri.Core.NeedsYou.StatusTimeout.operator ==(Aw.Sindri.Core.NeedsYou.StatusTimeout? left, Aw.Sindri.Core.NeedsYou.StatusTimeout? right) -> bool
-static Aw.Sindri.Core.Profile.RecipeDuration.From(string! value) -> Aw.Sindri.Core.Profile.RecipeDuration
-static Aw.Sindri.Core.Profile.RecipeDuration.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Profile.RecipeDuration
-static Aw.Sindri.Core.Profile.RecipeDuration.TryFrom(string? value, out Aw.Sindri.Core.Profile.RecipeDuration vo) -> bool
-static Aw.Sindri.Core.Profile.RecipeDuration.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Profile.RecipeDuration result) -> bool
-static Aw.Sindri.Core.Profile.RecipeDuration.operator !=(Aw.Sindri.Core.Profile.RecipeDuration left, Aw.Sindri.Core.Profile.RecipeDuration right) -> bool
-static Aw.Sindri.Core.Profile.RecipeDuration.operator ==(Aw.Sindri.Core.Profile.RecipeDuration left, Aw.Sindri.Core.Profile.RecipeDuration right) -> bool
+static Aw.Sindri.Core.Ids.RecipeDuration.From(string! value) -> Aw.Sindri.Core.Ids.RecipeDuration
+static Aw.Sindri.Core.Ids.RecipeDuration.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Ids.RecipeDuration
+static Aw.Sindri.Core.Ids.RecipeDuration.TryFrom(string? value, out Aw.Sindri.Core.Ids.RecipeDuration vo) -> bool
+static Aw.Sindri.Core.Ids.RecipeDuration.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Ids.RecipeDuration result) -> bool
+static Aw.Sindri.Core.Ids.RecipeDuration.operator !=(Aw.Sindri.Core.Ids.RecipeDuration left, Aw.Sindri.Core.Ids.RecipeDuration right) -> bool
+static Aw.Sindri.Core.Ids.RecipeDuration.operator ==(Aw.Sindri.Core.Ids.RecipeDuration left, Aw.Sindri.Core.Ids.RecipeDuration right) -> bool
 static Aw.Sindri.Core.Workflow.Engine.WithValue.operator !=(Aw.Sindri.Core.Workflow.Engine.WithValue? left, Aw.Sindri.Core.Workflow.Engine.WithValue? right) -> bool
 static Aw.Sindri.Core.Workflow.Engine.WithValue.operator ==(Aw.Sindri.Core.Workflow.Engine.WithValue? left, Aw.Sindri.Core.Workflow.Engine.WithValue? right) -> bool
 Aw.Sindri.Core.Workflow.Blocks.BlockCatalog

@@ -5,7 +5,7 @@ using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
 using Vogen;
 
-namespace Aw.Sindri.Core.Profile;
+namespace Aw.Sindri.Core.Ids;
 
 /// <summary>
 /// A recipe duration (spec §3.3): a whole number without leading zeros and 'm', 'h' or 'd' ('10m', '4h', '7d'), so
