@@ -6212,6 +6212,153 @@ static Aw.Sindri.Features.MarkTodo.MarkTodoRequest.operator !=(Aw.Sindri.Feature
 static Aw.Sindri.Features.MarkTodo.MarkTodoRequest.operator ==(Aw.Sindri.Features.MarkTodo.MarkTodoRequest? left, Aw.Sindri.Features.MarkTodo.MarkTodoRequest? right) -> bool
 Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Moves.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinMove!>?
 Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Moves.init -> void
+Aw.Sindri.Features.CreateMemory.CreateMemoryRequest
+Aw.Sindri.Features.CreateMemory.CreateMemoryRequest.<Clone>$() -> Aw.Sindri.Features.CreateMemory.CreateMemoryRequest!
+Aw.Sindri.Features.CreateMemory.CreateMemoryRequest.CreateMemoryRequest(string! Name, string? Description = null) -> void
+Aw.Sindri.Features.CreateMemory.CreateMemoryRequest.Deconstruct(out string! Name, out string? Description) -> void
+Aw.Sindri.Features.CreateMemory.CreateMemoryRequest.Description.get -> string?
+Aw.Sindri.Features.CreateMemory.CreateMemoryRequest.Description.init -> void
+Aw.Sindri.Features.CreateMemory.CreateMemoryRequest.Equals(Aw.Sindri.Features.CreateMemory.CreateMemoryRequest? other) -> bool
+Aw.Sindri.Features.CreateMemory.CreateMemoryRequest.Name.get -> string!
+Aw.Sindri.Features.CreateMemory.CreateMemoryRequest.Name.init -> void
+Aw.Sindri.Features.CreateMemory.CreateMemoryResponse
+Aw.Sindri.Features.CreateMemory.CreateMemoryResponse.<Clone>$() -> Aw.Sindri.Features.CreateMemory.CreateMemoryResponse!
+Aw.Sindri.Features.CreateMemory.CreateMemoryResponse.CreateMemoryResponse(Aw.Sindri.Core.Memory.MemoryView! Store) -> void
+Aw.Sindri.Features.CreateMemory.CreateMemoryResponse.Deconstruct(out Aw.Sindri.Core.Memory.MemoryView! Store) -> void
+Aw.Sindri.Features.CreateMemory.CreateMemoryResponse.Equals(Aw.Sindri.Features.CreateMemory.CreateMemoryResponse? other) -> bool
+Aw.Sindri.Features.CreateMemory.CreateMemoryResponse.Store.get -> Aw.Sindri.Core.Memory.MemoryView!
+Aw.Sindri.Features.CreateMemory.CreateMemoryResponse.Store.init -> void
+Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest
+Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest.<Clone>$() -> Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest!
+Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest.Deconstruct(out string! Name, out string? Fact, out string? Tag, out bool Expired) -> void
+Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest.Equals(Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest? other) -> bool
+Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest.Expired.get -> bool
+Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest.Expired.init -> void
+Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest.Fact.get -> string?
+Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest.Fact.init -> void
+Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest.ForgetMemoryFactRequest(string! Name, string? Fact, string? Tag, bool Expired) -> void
+Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest.Name.get -> string!
+Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest.Name.init -> void
+Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest.Tag.get -> string?
+Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest.Tag.init -> void
+Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactResponse
+Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactResponse.<Clone>$() -> Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactResponse!
+Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactResponse.Deconstruct(out int Deleted) -> void
+Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactResponse.Deleted.get -> int
+Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactResponse.Deleted.init -> void
+Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactResponse.Equals(Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactResponse? other) -> bool
+Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactResponse.ForgetMemoryFactResponse(int Deleted) -> void
+Aw.Sindri.Features.ListMemories.ListMemoriesRequest
+Aw.Sindri.Features.ListMemories.ListMemoriesRequest.<Clone>$() -> Aw.Sindri.Features.ListMemories.ListMemoriesRequest!
+Aw.Sindri.Features.ListMemories.ListMemoriesRequest.Equals(Aw.Sindri.Features.ListMemories.ListMemoriesRequest? other) -> bool
+Aw.Sindri.Features.ListMemories.ListMemoriesRequest.ListMemoriesRequest() -> void
+Aw.Sindri.Features.ListMemories.ListMemoriesResponse
+Aw.Sindri.Features.ListMemories.ListMemoriesResponse.<Clone>$() -> Aw.Sindri.Features.ListMemories.ListMemoriesResponse!
+Aw.Sindri.Features.ListMemories.ListMemoriesResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Memory.MemoryView!>! Memories) -> void
+Aw.Sindri.Features.ListMemories.ListMemoriesResponse.Equals(Aw.Sindri.Features.ListMemories.ListMemoriesResponse? other) -> bool
+Aw.Sindri.Features.ListMemories.ListMemoriesResponse.ListMemoriesResponse(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Memory.MemoryView!>! Memories) -> void
+Aw.Sindri.Features.ListMemories.ListMemoriesResponse.Memories.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Memory.MemoryView!>!
+Aw.Sindri.Features.ListMemories.ListMemoriesResponse.Memories.init -> void
+Aw.Sindri.Features.SearchMemory.SearchMemoryRequest
+Aw.Sindri.Features.SearchMemory.SearchMemoryRequest.<Clone>$() -> Aw.Sindri.Features.SearchMemory.SearchMemoryRequest!
+Aw.Sindri.Features.SearchMemory.SearchMemoryRequest.Deconstruct(out string! Name, out string! Query, out string? Level, out int? Limit) -> void
+Aw.Sindri.Features.SearchMemory.SearchMemoryRequest.Equals(Aw.Sindri.Features.SearchMemory.SearchMemoryRequest? other) -> bool
+Aw.Sindri.Features.SearchMemory.SearchMemoryRequest.Level.get -> string?
+Aw.Sindri.Features.SearchMemory.SearchMemoryRequest.Level.init -> void
+Aw.Sindri.Features.SearchMemory.SearchMemoryRequest.Limit.get -> int?
+Aw.Sindri.Features.SearchMemory.SearchMemoryRequest.Limit.init -> void
+Aw.Sindri.Features.SearchMemory.SearchMemoryRequest.Name.get -> string!
+Aw.Sindri.Features.SearchMemory.SearchMemoryRequest.Name.init -> void
+Aw.Sindri.Features.SearchMemory.SearchMemoryRequest.Query.get -> string!
+Aw.Sindri.Features.SearchMemory.SearchMemoryRequest.Query.init -> void
+Aw.Sindri.Features.SearchMemory.SearchMemoryRequest.SearchMemoryRequest(string! Name, string! Query, string? Level, int? Limit) -> void
+Aw.Sindri.Features.SearchMemory.SearchMemoryResponse
+Aw.Sindri.Features.SearchMemory.SearchMemoryResponse.<Clone>$() -> Aw.Sindri.Features.SearchMemory.SearchMemoryResponse!
+Aw.Sindri.Features.SearchMemory.SearchMemoryResponse.Count.get -> int
+Aw.Sindri.Features.SearchMemory.SearchMemoryResponse.Count.init -> void
+Aw.Sindri.Features.SearchMemory.SearchMemoryResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Memory.MemoryFactView!>! Facts, out int Count, out string! Mode, out string? Note) -> void
+Aw.Sindri.Features.SearchMemory.SearchMemoryResponse.Equals(Aw.Sindri.Features.SearchMemory.SearchMemoryResponse? other) -> bool
+Aw.Sindri.Features.SearchMemory.SearchMemoryResponse.Facts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Memory.MemoryFactView!>!
+Aw.Sindri.Features.SearchMemory.SearchMemoryResponse.Facts.init -> void
+Aw.Sindri.Features.SearchMemory.SearchMemoryResponse.Mode.get -> string!
+Aw.Sindri.Features.SearchMemory.SearchMemoryResponse.Mode.init -> void
+Aw.Sindri.Features.SearchMemory.SearchMemoryResponse.Note.get -> string?
+Aw.Sindri.Features.SearchMemory.SearchMemoryResponse.Note.init -> void
+Aw.Sindri.Features.SearchMemory.SearchMemoryResponse.SearchMemoryResponse(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Memory.MemoryFactView!>! Facts, int Count, string! Mode, string? Note) -> void
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest.<Clone>$() -> Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest!
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest.Deconstruct(out string! Name, out string! Text, out System.Collections.Generic.IReadOnlyList<string!>? Tags, out System.DateTimeOffset? ExpiresAt, out Aw.Sindri.Core.Memory.MemoryProvenance? Provenance) -> void
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest.Equals(Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest? other) -> bool
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest.ExpiresAt.get -> System.DateTimeOffset?
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest.ExpiresAt.init -> void
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest.Name.get -> string!
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest.Name.init -> void
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest.Provenance.get -> Aw.Sindri.Core.Memory.MemoryProvenance?
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest.Provenance.init -> void
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest.Tags.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest.Tags.init -> void
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest.Text.get -> string!
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest.Text.init -> void
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest.WriteMemoryFactRequest(string! Name, string! Text, System.Collections.Generic.IReadOnlyList<string!>? Tags, System.DateTimeOffset? ExpiresAt, Aw.Sindri.Core.Memory.MemoryProvenance? Provenance) -> void
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactResponse
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactResponse.<Clone>$() -> Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactResponse!
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactResponse.Action.get -> string!
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactResponse.Action.init -> void
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactResponse.Deconstruct(out string! Key, out string! Action) -> void
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactResponse.Equals(Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactResponse? other) -> bool
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactResponse.Key.get -> string!
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactResponse.Key.init -> void
+Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactResponse.WriteMemoryFactResponse(string! Key, string! Action) -> void
+override Aw.Sindri.Features.CreateMemory.CreateMemoryRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.CreateMemory.CreateMemoryRequest.GetHashCode() -> int
+override Aw.Sindri.Features.CreateMemory.CreateMemoryRequest.ToString() -> string!
+override Aw.Sindri.Features.CreateMemory.CreateMemoryResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.CreateMemory.CreateMemoryResponse.GetHashCode() -> int
+override Aw.Sindri.Features.CreateMemory.CreateMemoryResponse.ToString() -> string!
+override Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest.ToString() -> string!
+override Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactResponse.GetHashCode() -> int
+override Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactResponse.ToString() -> string!
+override Aw.Sindri.Features.ListMemories.ListMemoriesRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListMemories.ListMemoriesRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ListMemories.ListMemoriesRequest.ToString() -> string!
+override Aw.Sindri.Features.ListMemories.ListMemoriesResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListMemories.ListMemoriesResponse.GetHashCode() -> int
+override Aw.Sindri.Features.ListMemories.ListMemoriesResponse.ToString() -> string!
+override Aw.Sindri.Features.SearchMemory.SearchMemoryRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.SearchMemory.SearchMemoryRequest.GetHashCode() -> int
+override Aw.Sindri.Features.SearchMemory.SearchMemoryRequest.ToString() -> string!
+override Aw.Sindri.Features.SearchMemory.SearchMemoryResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.SearchMemory.SearchMemoryResponse.GetHashCode() -> int
+override Aw.Sindri.Features.SearchMemory.SearchMemoryResponse.ToString() -> string!
+override Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest.GetHashCode() -> int
+override Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest.ToString() -> string!
+override Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactResponse.GetHashCode() -> int
+override Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactResponse.ToString() -> string!
+static Aw.Sindri.Features.CreateMemory.CreateMemoryRequest.operator !=(Aw.Sindri.Features.CreateMemory.CreateMemoryRequest? left, Aw.Sindri.Features.CreateMemory.CreateMemoryRequest? right) -> bool
+static Aw.Sindri.Features.CreateMemory.CreateMemoryRequest.operator ==(Aw.Sindri.Features.CreateMemory.CreateMemoryRequest? left, Aw.Sindri.Features.CreateMemory.CreateMemoryRequest? right) -> bool
+static Aw.Sindri.Features.CreateMemory.CreateMemoryResponse.operator !=(Aw.Sindri.Features.CreateMemory.CreateMemoryResponse? left, Aw.Sindri.Features.CreateMemory.CreateMemoryResponse? right) -> bool
+static Aw.Sindri.Features.CreateMemory.CreateMemoryResponse.operator ==(Aw.Sindri.Features.CreateMemory.CreateMemoryResponse? left, Aw.Sindri.Features.CreateMemory.CreateMemoryResponse? right) -> bool
+static Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest.operator !=(Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest? left, Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest? right) -> bool
+static Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest.operator ==(Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest? left, Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactRequest? right) -> bool
+static Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactResponse.operator !=(Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactResponse? left, Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactResponse? right) -> bool
+static Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactResponse.operator ==(Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactResponse? left, Aw.Sindri.Features.ForgetMemoryFact.ForgetMemoryFactResponse? right) -> bool
+static Aw.Sindri.Features.ListMemories.ListMemoriesRequest.operator !=(Aw.Sindri.Features.ListMemories.ListMemoriesRequest? left, Aw.Sindri.Features.ListMemories.ListMemoriesRequest? right) -> bool
+static Aw.Sindri.Features.ListMemories.ListMemoriesRequest.operator ==(Aw.Sindri.Features.ListMemories.ListMemoriesRequest? left, Aw.Sindri.Features.ListMemories.ListMemoriesRequest? right) -> bool
+static Aw.Sindri.Features.ListMemories.ListMemoriesResponse.operator !=(Aw.Sindri.Features.ListMemories.ListMemoriesResponse? left, Aw.Sindri.Features.ListMemories.ListMemoriesResponse? right) -> bool
+static Aw.Sindri.Features.ListMemories.ListMemoriesResponse.operator ==(Aw.Sindri.Features.ListMemories.ListMemoriesResponse? left, Aw.Sindri.Features.ListMemories.ListMemoriesResponse? right) -> bool
+static Aw.Sindri.Features.SearchMemory.SearchMemoryRequest.operator !=(Aw.Sindri.Features.SearchMemory.SearchMemoryRequest? left, Aw.Sindri.Features.SearchMemory.SearchMemoryRequest? right) -> bool
+static Aw.Sindri.Features.SearchMemory.SearchMemoryRequest.operator ==(Aw.Sindri.Features.SearchMemory.SearchMemoryRequest? left, Aw.Sindri.Features.SearchMemory.SearchMemoryRequest? right) -> bool
+static Aw.Sindri.Features.SearchMemory.SearchMemoryResponse.operator !=(Aw.Sindri.Features.SearchMemory.SearchMemoryResponse? left, Aw.Sindri.Features.SearchMemory.SearchMemoryResponse? right) -> bool
+static Aw.Sindri.Features.SearchMemory.SearchMemoryResponse.operator ==(Aw.Sindri.Features.SearchMemory.SearchMemoryResponse? left, Aw.Sindri.Features.SearchMemory.SearchMemoryResponse? right) -> bool
+static Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest.operator !=(Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest? left, Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest? right) -> bool
+static Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest.operator ==(Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest? left, Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactRequest? right) -> bool
+static Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactResponse.operator !=(Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactResponse? left, Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactResponse? right) -> bool
+static Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactResponse.operator ==(Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactResponse? left, Aw.Sindri.Features.WriteMemoryFact.WriteMemoryFactResponse? right) -> bool
 Aw.Sindri.Features.AddTodo.AddTodoRequest.AddTodoRequest(string! Text, System.DateOnly? Due = null, System.Collections.Generic.IReadOnlyList<string!>? Links = null, Aw.Sindri.Core.Ids.TodoClientId? ClientId = null, bool Piped = false) -> void
 Aw.Sindri.Features.AddTodo.AddTodoRequest.Deconstruct(out string! Text, out System.DateOnly? Due, out System.Collections.Generic.IReadOnlyList<string!>? Links, out Aw.Sindri.Core.Ids.TodoClientId? ClientId, out bool Piped) -> void
 Aw.Sindri.Features.AddTodo.AddTodoRequest.Piped.get -> bool
