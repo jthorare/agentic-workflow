@@ -25,6 +25,9 @@ internal sealed class QuickAddViewModel : ObservableObject
     /// <summary>Raised when Sindri took a todo from the box (before the box closes).</summary>
     internal event EventHandler<QuickAddedEventArgs>? Added;
 
+    /// <summary>Raised when a todo the box sent after it closed was refused (the box shows nothing for it, so the shell toasts).</summary>
+    internal event EventHandler<QuickAddFailedEventArgs>? AddFailed;
+
     /// <summary>The box's accessible name and its field's.</summary>
     public string Name { get; } = Labels.QuickAddName;
 
@@ -119,10 +122,7 @@ internal sealed class QuickAddViewModel : ObservableObject
         try
         {
             var saved = await _api.AddTodo(url, add, cancellationToken).ConfigureAwait(true);
-            if (opening == _opening)   // closed while the answer was on its way: it belongs to nothing on screen
-            {
-                Finish(saved, read.Due);
-            }
+            Answer(opening, saved, read);
         }
         finally
         {
@@ -133,17 +133,45 @@ internal sealed class QuickAddViewModel : ObservableObject
         }
     }
 
+    // Closed or reopened while the answer was on its way: the box shows nothing, the shell toasts.
+    private void Answer(int opening, Result<TodoAcceptedView> saved, QuickParsed read)
+    {
+        if (opening == _opening)
+        {
+            Finish(saved, read.Due);
+        }
+        else
+        {
+            FinishAfterClose(saved, read);
+        }
+    }
+
     private void Finish(Result<TodoAcceptedView> saved, DateOnly? due)
     {
         if (saved.IsError)
         {
-            Error = saved.Error.Code.StartsWith("SND-UI-", StringComparison.Ordinal) ? Labels.QuickAddNotAnswering : saved.Error.Message;
+            Error = ReasonOf(saved.Error);
             return;
         }
 
         Added?.Invoke(this, new QuickAddedEventArgs(saved.Value, due));
         Close();
     }
+
+    // The box this add came from is gone, so nothing here touches the box's own fields (a new box may be open).
+    private void FinishAfterClose(Result<TodoAcceptedView> saved, QuickParsed read)
+    {
+        if (saved.IsError)
+        {
+            AddFailed?.Invoke(this, new QuickAddFailedEventArgs(read.Text, ReasonOf(saved.Error)));
+            return;
+        }
+
+        Added?.Invoke(this, new QuickAddedEventArgs(saved.Value, read.Due));
+    }
+
+    private static string ReasonOf(Error error) =>
+        error.Code.StartsWith("SND-UI-", StringComparison.Ordinal) ? Labels.QuickAddNotAnswering : error.Message;
 
     private DateOnly Today() => DateOnly.FromDateTime(_clock.GetLocalNow().DateTime);
 
