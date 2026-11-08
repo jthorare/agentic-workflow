@@ -101,7 +101,7 @@ public sealed class SetupViewModelTests
         var setup = await _f.Read(Token);
 
         Assert.Equal(
-            ["Add your repository", "Approve your settings", "Connect your coding agents", "Build the product map"],
+            ["Add your repository", "Your settings", "Connect your coding agents", "Build the product map"],
             setup.Steps.Take(4).Select(s => s.Title),
             StringComparer.Ordinal);
         Assert.Equal([1, 2, 3, 4], setup.Steps.Take(4).Select(s => s.Number));
@@ -216,7 +216,7 @@ public sealed class SetupViewModelTests
         setup.ChecklistRequested += (_, _) => asked++;
         Step(setup, "profile").IsOpen = false;
 
-        Assert.Equal(("Approve your settings", "Continue", "Finish setting up Sindri, 1 of 5 done. Next: Approve your settings"), (setup.HomeStepText, setup.ContinueText, setup.HomeLineName));
+        Assert.Equal(("Your settings", "Continue", "Finish setting up Sindri, 1 of 5 done. Next: Your settings"), (setup.HomeStepText, setup.ContinueText, setup.HomeLineName));
         setup.Continue();
 
         Assert.Equal((1, true), (asked, Step(setup, "profile").IsOpen));
@@ -287,7 +287,7 @@ public sealed class SetupViewModelTests
         _f.Serve("profile-needs-approval");
         await setup.Refresh(Url, Token);
 
-        Assert.Equal((true, "Add your repository: done. Approve your settings: needs you"), (setup.Live.IsAnnouncing, setup.Live.Announcement));
+        Assert.Equal((true, "Add your repository: done. Your settings: needs you"), (setup.Live.IsAnnouncing, setup.Live.Announcement));
     }
 
     [Fact]

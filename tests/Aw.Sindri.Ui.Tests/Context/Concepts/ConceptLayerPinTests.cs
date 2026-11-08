@@ -5,6 +5,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Context;
 using Aw.Sindri.Ui.ViewModels.Context.Concepts;
 using Aw.Sindri.Ui.ViewModels.Controls;
@@ -77,17 +78,18 @@ public sealed class ConceptLayerPinTests
     }
 
     [Fact]
-    public void A_pin_with_no_node_in_the_map_is_a_waiting_card_in_its_own_profile_order_slot()
+    public void A_pin_with_no_node_in_the_map_is_a_card_waiting_on_the_rebuild_in_its_own_profile_order_slot()
     {
+        var stale = new MapRebuildView(MapRebuildPhases.Idle, Progress: null, RetryAt: null, Stale: true, Failed: null);
         var layer = Layer(
             [AConcepts.Concept("concept:billing", "Billing", source: "override"), AConcepts.Concept("concept:auth", "Auth")],
-            pins: Pins(rebuild: null, Pin("billing", "Billing"), Pin("refunds", "Refunds", "approved")));
+            pins: Pins(stale, Pin("billing", "Billing"), Pin("refunds", "Refunds", "approved", "created")));
 
         var waiting = layer.Tiles[1];
         Assert.Equal(["Billing", "Refunds", "Auth"], [.. layer.Tiles.Select(t => t.Name)]);
         Assert.Equal(("Set by a person", "PinCard.refunds", "def of Refunds"), (waiting.MarkText, waiting.AutomationId, waiting.Summary));
         Assert.Equal(["word"], waiting.Terms);
-        Assert.Equal(["Pinned, not approved yet", "Other changes are waiting, so this needs your review."], waiting.Lines);
+        Assert.Equal([Labels.PinStateLine("created", Labels.PinRestStartsSoon)], waiting.Lines);
     }
 
     [Fact]

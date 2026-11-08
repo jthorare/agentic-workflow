@@ -375,17 +375,15 @@ public sealed class SindriApiClientLinearTests
         Assert.Equal((HttpMethod.Post, "/sindri/linear/connection"), (read.Methods[0], read.Seen[0].AbsolutePath));
         Assert.Equal("""{"kind":"read","key":"k1","teams":["ENG","OPS"]}""", read.Bodies[0]);
         Assert.Equal("""{"kind":"write","key":"k2"}""", write.Bodies[0]);
-        Assert.Equal((true, true, null), (saved.Saved, saved.Approved, saved.Write));
+        Assert.Equal((true, null), (saved.Saved, saved.Write));
         Assert.Equal("resolves", wrote.Write!.State);
     }
 
     [Fact]
-    public async Task LinearConnect_reads_a_save_that_waits_on_other_profile_changes_and_a_write_key_of_unknown_scope()
+    public async Task LinearConnect_reads_a_write_key_of_unknown_scope()
     {
-        var waiting = (await Client(Served("linear-connect", "read-saved-waiting")).LinearConnect(_api, "read", "k", ["ENG"], Token)).Value;
         var scope = (await Client(Served("linear-connect", "write-scope-unknown")).LinearConnect(_api, "write", "k", teams: null, Token)).Value;
 
-        Assert.Equal((true, false, 64), (waiting.Saved, waiting.Approved, waiting.ProfileHash.Length));
         Assert.Equal("scopeUnknown", scope.Write!.State);
     }
 
@@ -409,7 +407,7 @@ public sealed class SindriApiClientLinearTests
         var removed = (await Client(canned).LinearDisconnectWrite(_api, Token)).Value;
 
         Assert.Equal((HttpMethod.Delete, "/sindri/linear/connection/write", null), (canned.Methods[0], canned.Seen[0].AbsolutePath, canned.Bodies[0]));
-        Assert.Equal((true, true), (removed.Removed, removed.Approved));
+        Assert.True(removed.Removed);
     }
 
     [Fact]
