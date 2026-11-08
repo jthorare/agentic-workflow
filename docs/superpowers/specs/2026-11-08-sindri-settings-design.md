@@ -34,28 +34,47 @@ This spec changes none of it.
 - **One file:** `$AW_SINDRI_HOME/settings/settings.yaml`, edited in place, comments kept, as `profile.yaml` is today.
 - **A save applies at once.** Whatever a save writes is live when the write returns. There is no draft, approval or
   history.
-- **The write guard is a file lock, not a hash.** Every write takes an exclusive `flock` on `settings/.lock` and
-  holds it while it reads the file, applies its edit, validates, writes a temp file and renames it over
-  `settings.yaml`. A writer that can't get the lock within 5 s fails with `SND-SETTINGS-409` ("another change is
-  being saved; try again").
-  - The lock keeps two writers from losing each other's edits. Every write is a key-level edit (one key, one repo,
-    one page, one pin set) applied to the current text, so two saves to different keys both land.
-  - Two saves to the same key: the later one wins. That's the right answer for one person's app. The hash check
-    existed for approval (the approved text must not shift under you), and approval is gone.
-  - Why a file lock: `sindri settings set` runs without the control plane, so a guard inside serve wouldn't cover
-    it.
+- **The write guard is a file lock, not a hash.** Every write takes an exclusive `flock` on `settings/.lock`. In
+  order, while it holds the lock:
+  1. Read `settings.yaml`.
+  2. Apply its edit and validate the result. When the edit is invalid or changes nothing, stop: nothing is written.
+  3. Write the result to a temp file and rename it over `settings.yaml`. This is the save.
+  4. Append one JSON line `{ at, by, keys[] }` to `settings/changes.jsonl` (below).
+
+  A crash between steps 3 and 4 loses one audit line, but never logs a save that didn't land. A writer that can't
+  get the lock within 5 s fails with `SND-SETTINGS-409`. Why a file lock: `sindri settings set` runs without the
+  control plane, so a guard inside serve wouldn't cover it.
+- **Every write is item-level.** Each write changes one item of the current text:
+  - one scalar key (`settings set <key> <value>`)
+  - one repo (add or remove by path)
+  - one page by id (set or remove)
+  - one pin by id (set or remove)
+  - one sandbox host (add or remove)
+
+  No write replaces a whole list. `context page set --from-file` and `context pin set --from-file` become one
+  set per item in the file, and they never remove an item the file leaves out: removing is `remove <id>` only.
+  With item-level writes, two saves only collide on the same item, and then the later one wins. That's the right
+  answer for one person's app. Without that rule, a stale app form that replaces the whole pages list would drop
+  a page an agent added in between. The hash check existed for approval (the approved text must not shift under
+  you), and approval is gone.
+- **Hand edits.** An editor's save doesn't take the lock, so a writer that read the file before it can rename over
+  it and drop the hand edit. The docs say: while agents run, change settings with `sindri settings set` or the app.
+  Edit the file by hand only when nothing else is writing.
 - **Nothing runs on a broken file.** Validation stays before the rename, as today. A hand edit that breaks the file
   is read as `unreadable` with its problem (the `SND-SETTINGS-*` code) until it's fixed.
 - **Who may write:** any session, agents included (agent-first D2). The `SND-AUTH-002` refusal leaves `settings set`,
   `settings init`, the page and pin writes and the repo add.
-- **Who changed what:** every save writes one ledger event, `settings.changed { by, keys[] }`.
+- **Who changed what:** the ledger gets one `settings.changed { line, by, keys[] }` event per save.
   - `by` is `person` or the session's id.
-  - `keys[]` is the key paths the save touched (`repos[2].path`, `index.pages`).
-  - Serve owns the ledger, and `settings set` can run while serve is down (today `profile set` writes no event
-    at all). So every writer appends one JSON line `{ at, by, keys[] }` to `settings/changes.jsonl` while it holds
-    the lock. Serve copies the lines it hasn't seen into `settings.changed` events: at start, and each time it sees
-    the file change. Its last copied line number lives in views.db, so the ledger has every change exactly once,
-    including the ones made while serve was down.
+  - `keys[]` lists the item paths the save touched (`repos[2].path`, `index.pages[checkout]`).
+  - Serve owns the ledger, and `settings set` can run while serve is down. Today `profile set` writes no event at
+    all.
+  - So each writer appends its line to `settings/changes.jsonl` (step 4 above). Serve copies every line into a
+    `settings.changed` event, at start and each time it sees the file change.
+  - Each event's idempotency key is `settings.changed:<line>`, where `<line>` is the line's number in the file.
+    Copying is exactly-once by key: a re-copy after `views rebuild` (which wipes any cursor in views.db) changes
+    nothing.
+  - `changes.jsonl` is never trimmed. It holds one short line per save, so line numbers stay stable.
 
 - **What the person sees:**
   - Settings shows one line under its heading: "Last changed by you at 14:02" or "Last changed by <session name>
@@ -72,10 +91,11 @@ This spec changes none of it.
 | `GET /sindri/profile` | `GET /sindri/settings` (`text`, `problem`, `source`) |
 | `status.profile { live, problem, source, modelPick, labelPick, surfacePick }` | `status.settings { problem, source, modelPick, labelPick, surfacePick }` |
 | `profileHash` in responses, `ifHash` in writes | gone |
-| events `profile.approved`, `profile.checked` | `settings.changed { by, keys[] }` |
+| events `profile.approved`, `profile.checked` | `settings.changed { line, by, keys[] }`, key `settings.changed:<line>` |
 | `SND-PROFILE-*` | `SND-SETTINGS-*`, same numbers |
 | `sindri profile init \| set \| validate` | `sindri settings init \| set \| validate` |
 | `IProfileSource`, `IApprovedProfile`, `LoadedProfile`, `SindriProfile`, `ProfileHash`, `Profile/` folders | `ISettingsSource`, `ISettings`, `LoadedSettings`, `SindriSettings`, gone, `Settings/` folders |
+| the existing Infrastructure `SindriSettings(Home, ProfilePath)` (142 uses) | `SindriPaths(Home, SettingsPath)`, renamed first in its own commit so `SindriSettings` is free for the settings document |
 | Setup step `profile` | removed: the list is repo, mcp, map, sources |
 | NeedsYou: the profile drift row and the "approved before auto registration" row | removed; the MCP consent row keys on `setup.consent.given` alone |
 | Health "Profile" row | "Settings" row: `ok` with the file, or `unreadable` with the problem; the three picks |
@@ -114,9 +134,13 @@ After `settings cleanup` it finds none and starts as a fresh install.
   - An invalid edit writes nothing.
   - A save writes one `settings.changed` with its `by` and `keys[]`.
   - A session's save is accepted, with `by` set to its id.
+  - A crash after the rename and before the append leaves the save in place and no line in the file.
+  - Copying `changes.jsonl` twice, the second time after `views rebuild`, writes each event once.
 - Two writers (real child processes, Lane=integration):
   - Saves to different keys both land.
   - Saves to the same key: the later one wins.
+  - An app page save and an agent's page add on different page ids both land.
+  - A `--from-file` with fewer pages than the file holds removes none of them.
   - A writer kept off the lock for 5 s gets `SND-SETTINGS-409`.
 - Integration:
   - The migration on a home with `profile/profile.yaml`, run twice.
