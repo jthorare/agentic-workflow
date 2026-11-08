@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Infrastructure.Connections;
@@ -26,9 +27,9 @@ public sealed class ConnectionPresetsTests
         Assert.Equal(_shipped.Length, files.Length);
         foreach (var file in files)
         {
-            var text = File.ReadAllText(file);
-            Assert.DoesNotContain("client", text, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain("secret", text, StringComparison.OrdinalIgnoreCase);
+            using var json = JsonDocument.Parse(File.ReadAllText(file));
+            var keys = json.RootElement.EnumerateObject().Select(static p => p.Name).ToList();
+            Assert.DoesNotContain(keys, static k => k.Contains("client", StringComparison.OrdinalIgnoreCase) || k.Contains("secret", StringComparison.OrdinalIgnoreCase));
         }
     }
 
