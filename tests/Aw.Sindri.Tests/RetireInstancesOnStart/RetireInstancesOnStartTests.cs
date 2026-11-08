@@ -14,7 +14,7 @@ public sealed class RetireInstancesOnStartTests
     {
         var grant = await _h.HoldLease();
         _ = await _h.Store.Append(_h.Events.Entry(EventTypes.WorkflowStarted, new WorkflowEventPayload("T-1/item/1", "", "produce", "start", Outcome: null, Run: null), "workflow:T-1/item/1:run-a:1", item: "T-1"), grant, Token);
-        var service = new RetireInstancesOnStartService();
+        var service = new RetireInstancesOnStartService(_h.Store, _h.Held, _h.Events);
 
         var first = (await service.Handle(new RetireInstancesOnStartRequest(), Token)).Value;
         var restart = (await service.Handle(new RetireInstancesOnStartRequest(), Token)).Value;
