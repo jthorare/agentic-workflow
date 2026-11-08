@@ -31,7 +31,7 @@ internal sealed class LineDispatchStep(IApprovedProfile profile) : IBlockStep, I
         var approved = await profile.Latest(cancellationToken).ConfigureAwait(false);
         if (approved.IsError)
         {
-            return BlockStepResult.Failed($"{Id.Value} can't read the approved profile: {approved.Error.Message}");
+            return BlockStepResult.Failed($"{Id.Value} can't read the profile: {approved.Error.Message}");
         }
 
         board.Fold(StepFacts.Read(context, "fact:phaseEvent"));

@@ -125,8 +125,8 @@ public static partial class SindriErrors
     /// <summary>SND-JOB-004: a refresh job wrote no progress line for 30 min and was ended as timed out (#2106); it is never retried. A job that keeps writing lines is never cut off.</summary>
     public static readonly ErrorDefinition JobStalled = new("SND-JOB-004", ErrorKind.Timeout, "The job wrote no progress line for 30 min");
 
-    /// <summary>SND-SVC-404: no service of the approved profile, and no built-in, has that name (API spec §9).</summary>
-    public static readonly ErrorDefinition ServiceNotFound = new("SND-SVC-404", ErrorKind.NotFound, "No such service in the approved profile");
+    /// <summary>SND-SVC-404: no service of the profile, and no built-in, has that name (API spec §9).</summary>
+    public static readonly ErrorDefinition ServiceNotFound = new("SND-SVC-404", ErrorKind.NotFound, "No such service in the profile");
 
     /// <summary>SND-LAUNCH-001: the terminal viewer didn't open the launch; on a tmux host the session keeps running (API P10a, UI E-5).</summary>
     public static readonly ErrorDefinition LaunchViewerFailed = new("SND-LAUNCH-001", ErrorKind.Unavailable, "The terminal didn't open the launch");
@@ -239,13 +239,11 @@ public static partial class SindriErrors
     /// <summary>SND-SETUP-003: the app's confirmation was not given: a hold that was too short, an answer less than 2 seconds after the challenge, or the wrong kind of answer.</summary>
     public static readonly ErrorDefinition SetupConfirmationRefused = new("SND-SETUP-003", ErrorKind.Forbidden, "The confirmation was not given (fix: for a held one, hold the button for the full time or type the text; for a typed one, type the text exactly)");
 
-    /// <summary>SND-SETUP-004: RegisterMcp for a repo the approved profile does not name.</summary>
-    public static readonly ErrorDefinition SetupRepoNotInProfile = new("SND-SETUP-004", ErrorKind.Conflict, "The approved profile does not name that repo (fix: add the repo, approve the profile, then try again)");
+    /// <summary>SND-SETUP-004: RegisterMcp for a repo the profile does not name.</summary>
+    public static readonly ErrorDefinition SetupRepoNotInProfile = new("SND-SETUP-004", ErrorKind.Conflict, "The profile does not name that repo (fix: add the repo, then try again)");
 
-    /// <summary>SND-SETUP-007: the approve-all plan, or its challenge, was asked for before a profile is approved (setup-once spec §7.6).</summary>
-
-    /// <summary>SND-FORGE-001: a pull-request call while the approved profile names no forge ('workflow.forge.adapter' is absent).</summary>
-    public static readonly ErrorDefinition NoForge = new("SND-FORGE-001", ErrorKind.Conflict, "No forge is configured (fix: set workflow.forge.adapter in the profile and approve it)");
+    /// <summary>SND-FORGE-001: a pull-request call while the profile names no forge ('workflow.forge.adapter' is absent).</summary>
+    public static readonly ErrorDefinition NoForge = new("SND-FORGE-001", ErrorKind.Conflict, "No forge is configured (fix: set workflow.forge.adapter in the profile)");
 
     /// <summary>SND-FORGE-002: the forge port refused the call: a host outside 'workflow.forge.hosts', a missing or rejected credential, input the forge doesn't accept.</summary>
     public static readonly ErrorDefinition ForgeRefused = new("SND-FORGE-002", ErrorKind.Forbidden, "The forge refused the call");

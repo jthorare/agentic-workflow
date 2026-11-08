@@ -12,7 +12,7 @@ namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
 /// 'sindri context page set|remove' (pages spec §3.6, "CLI"). Both start the SetPages job and follow it as 'context pin set' does (Ctrl-C cancels the job, a second Ctrl-C leaves; --detach prints the job id and returns); a human
-/// starts the control plane unless --no-start, a session never does. They only write the profile and never approve: the last line names the hash to approve. '--dry-run' plans and checks exactly as a write does and prints the rows that
+/// starts the control plane unless --no-start, a session never does. They only write the profile and save without a separate approval: the last line names the saved profile hash. '--dry-run' plans and checks exactly as a write does and prints the rows that
 /// would change. Exit 0 written, 1 attention (an unknown name or key, no map, Sindri not running, a session refused), 2 invalid input or a refused write.
 /// </summary>
 /// <param name="client">The API client.</param>

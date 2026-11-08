@@ -26,7 +26,7 @@ internal sealed class PrWatchDoctorChecks(IViewReader views) : IDoctorChecks
 
     private static DoctorCheck Failed(LastRun run) => run.Code switch
     {
-        var code when code == SindriErrors.NoForge.Code => new DoctorCheck(Name, CheckState.Warn, "the watcher can't poll: no forge is configured, so pull requests are not watched", "set workflow.forge.adapter in the profile and approve it"),
+        var code when code == SindriErrors.NoForge.Code => new DoctorCheck(Name, CheckState.Warn, "the watcher can't poll: no forge is configured, so pull requests are not watched", "set workflow.forge.adapter in the profile"),
         var code when code == SindriErrors.ForgeRefused.Code => new DoctorCheck(Name, CheckState.Fail, "the forge refused the watcher's credential or host, so pull requests are not watched", "check workflow.forge.credential and workflow.forge.hosts (the forge:credential check shows the credential)"),
         var code when code == SindriErrors.ForgeUnavailable.Code => new DoctorCheck(Name, CheckState.Warn, "the forge did not answer three polls in a row; the watcher backs off to 15 minutes", "check the network and workflow.forge.hosts"),
         _ => new DoctorCheck(Name, CheckState.Warn, $"the watcher's last run failed with {run.Code}", "sindri services (the pr-watch row shows the error)"),

@@ -10,9 +10,9 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// <summary>
 /// Doctor's 'library' row (PR review page spec 2026-11-04 §4.1, §5.2): how many design docs the roots hold, a root that can't be read with its path and why (a warning: nothing is removed from it
 /// until a later pass lists it again), and the files that look like design docs but aren't read (<c language="text">aw-doc:</c> present but not the number 1). It reads what the library feed's last pass left
-/// (<see cref="IContextLibrary.Roots"/>) and reads no folder itself. With no approved profile the row is 'ok: not configured'.
+/// (<see cref="IContextLibrary.Roots"/>) and reads no folder itself. With no profile the row is 'ok: not configured'.
 /// </summary>
-/// <param name="approvals">The approved profile.</param>
+/// <param name="approvals">The profile.</param>
 /// <param name="scopes">The engine's scope for the read.</param>
 /// <param name="engine">The context engine.</param>
 internal sealed class LibraryDoctorChecks(IApprovedProfile approvals, ContextScopes scopes, IContextEngine engine) : IDoctorChecks
@@ -27,7 +27,7 @@ internal sealed class LibraryDoctorChecks(IApprovedProfile approvals, ContextSco
         var scope = latest.IsError || latest.Value is null ? null : await scopes.Current(cancellationToken).ConfigureAwait(false);
         if (scope is not { IsSuccess: true } current)
         {
-            return [new DoctorCheck(Name, CheckState.Ok, "not configured (no profile is approved)", Fix: null)];
+            return [new DoctorCheck(Name, CheckState.Ok, "not configured (no profile yet)", Fix: null)];
         }
 
         var roots = await engine.Roots(current.Value, cancellationToken).ConfigureAwait(false);

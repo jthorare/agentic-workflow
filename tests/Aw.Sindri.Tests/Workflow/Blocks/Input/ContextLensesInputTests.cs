@@ -191,14 +191,14 @@ public sealed class ContextLensesInputTests
     }
 
     [Fact]
-    public async Task No_approved_profile_is_a_section_not_an_exception()
+    public async Task No_profile_is_a_section_not_an_exception()
     {
         var lenses = new StubLenses(a => ContextInputFixtures.SmallSet([.. a]));
 
         var filled = await Input(lenses, profile: false).Fill(Context(ContextInputFixtures.Web, "feature:a"), TestContext.Current.CancellationToken);
 
         Assert.Empty(lenses.Calls);
-        Assert.Contains("SND-PROFILE-005", filled.Value.Sections["lenses"], StringComparison.Ordinal);
+        Assert.Contains("SND-PROFILE-001", filled.Value.Sections["lenses"], StringComparison.Ordinal);
     }
 
     [Fact]

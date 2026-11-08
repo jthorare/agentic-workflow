@@ -56,6 +56,7 @@ public sealed class ContextLinearWriteGateTests
     public async Task With_no_profile_the_gate_answers_SND_PROFILE_001()
     {
         using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
+        _profiles.Live = SindriErrors.ProfileMissing.With("no profile in this test");
         var gate = new ContextLinearWriteGate(new LinearScopes(_profiles, _slice.Callers), _writes, _facts);
 
         var refusal = await gate.Refusal("ENG", Token);

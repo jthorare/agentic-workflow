@@ -11,7 +11,7 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// The scope a context Step input reads under (scoping spec C1, C3, C5): the engine as a service, never as the caller, cut to the one repo the
 /// instance's item belongs to. The repo comes from <see cref="Core.Workflow.Blocks.StepInputContext.Repo"/> (the ledger), never from a caller.
 /// </summary>
-/// <param name="approvals">The approved profiles.</param>
+/// <param name="approvals">The profile.</param>
 internal sealed class ContextInputScopes(IApprovedProfile approvals)
 {
     /// <summary>The service scope for <paramref name="repo"/>.</summary>
@@ -34,7 +34,7 @@ internal sealed class ContextInputScopes(IApprovedProfile approvals)
         var scope = ContextScopes.For(loaded.Profile, new ContextCaller(ContextCallerKind.Service, Repo: null, ContextClient.Service));
         var repos = scope.Repos.Where(r => string.Equals(r.Name.Value, name.Value, StringComparison.Ordinal)).ToArray();
         return repos.Length == 0
-            ? ContextErrors.RepoOutsideScope.With($"repo {name.Value} is not in the approved profile, so nothing is mapped for it")
+            ? ContextErrors.RepoOutsideScope.With($"repo {name.Value} is not in the profile, so nothing is mapped for it")
             : scope with { Repos = repos };
     }
 }

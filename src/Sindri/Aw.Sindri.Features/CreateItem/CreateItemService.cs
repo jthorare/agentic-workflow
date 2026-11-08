@@ -15,7 +15,7 @@ namespace Aw.Sindri.Features.CreateItem;
 /// Creates an item (API spec §3.2; desk): a new id, then 'item.created' keyed by that id and about it. The repo is the body's, else the
 /// caller's X-Sindri-Repo, and must be a repo of the profile (G9) or the call is SND-CLI-003 and records nothing.
 /// </summary>
-/// <param name="approvals">The approved profile, whose repos a new item may name.</param>
+/// <param name="approvals">The profile, whose repos a new item may name.</param>
 /// <param name="held">The lease this process holds.</param>
 /// <param name="ledger">Appends 'item.created'.</param>
 /// <param name="events">Builds the entry.</param>
@@ -61,7 +61,7 @@ internal sealed class CreateItemService(IApprovedProfile approvals, HeldLease he
 
         var known = latest.Value?.Profile.Repos?.Any(r => string.Equals(r.Name, repo.Value, StringComparison.Ordinal)) ?? false;
         return known ? null
-            : fromHeader ? SindriErrors.InvalidInput.With($"this checkout, {repo.Value}, isn't a repo of the profile (fix: pass --repo <name>, or add it to the profile and approve it)")
+            : fromHeader ? SindriErrors.InvalidInput.With($"this checkout, {repo.Value}, isn't a repo of the profile (fix: pass --repo <name>, or add it to the profile)")
             : SindriErrors.InvalidInput.With($"'{repo.Value}' isn't a repo of the profile (fix: sindri repo add <path>, or name one of its repos)");
     }
 }

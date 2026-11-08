@@ -29,7 +29,7 @@ internal sealed class AgentRules : IRecipeRules
         if (agent.Use is { } use && !Approved(use, context.Profile))
         {
             yield return context.Profile.StepAgents is null
-                ? source.Finding("RCP-AGENT-001", $"states.{name}.agent", $"agent '{use}' wasn't checked against the agents approved for Steps, since there is no approved profile", "approve a profile; until then the launch refuses an agent that isn't approved", FindingSeverity.Skipped)
+                ? source.Finding("RCP-AGENT-001", $"states.{name}.agent", $"agent '{use}' wasn't checked against the agents approved for Steps, since there is no profile", "add a profile; until then the launch refuses an agent that isn't approved", FindingSeverity.Skipped)
                 : source.Finding("RCP-AGENT-001", $"states.{name}.agent", $"agent '{use}' isn't approved for Steps", $"run `sindri launch show {use}`, put its argvHash under agents.{use}.stepArgvHash in the profile and approve it, or name another agent (stepArgvHash)");
         }
 

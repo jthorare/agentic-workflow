@@ -115,6 +115,6 @@ public sealed class PauseServiceTests
 
         var result = await Service().Handle(A.PauseServiceRequest().ForService(ServiceName.From("ghost")).Build(), Token);
 
-        Expect.Equal("The approved profile has no service 'ghost' (fix: sindri services)", result.Error.Message);
+        Expect.Equal("The profile has no service 'ghost' (fix: sindri services)", result.Error.Message);
     }
 }
