@@ -366,7 +366,7 @@ public sealed class SindriApiClientLinearTests
     [Fact]
     public async Task LinearConnect_posts_a_read_key_with_its_teams_and_a_write_key_without()
     {
-        var read = Served("linear-connect", "read-saved-approved");
+        var read = Served("linear-connect", "read-saved");
         var write = Served("linear-connect", "write-saved");
 
         var saved = (await Client(read).LinearConnect(_api, "read", "k1", ["ENG", "OPS"], Token)).Value;

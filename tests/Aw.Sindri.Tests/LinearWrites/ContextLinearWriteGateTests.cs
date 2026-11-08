@@ -53,7 +53,7 @@ public sealed class ContextLinearWriteGateTests
     }
 
     [Fact]
-    public async Task With_no_approved_profile_the_gate_answers_SND_PROFILE_NOT_APPROVED()
+    public async Task With_no_profile_the_gate_answers_SND_PROFILE_001()
     {
         using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
         var gate = new ContextLinearWriteGate(new LinearScopes(_profiles, _slice.Callers), _writes, _facts);
@@ -61,7 +61,7 @@ public sealed class ContextLinearWriteGateTests
         var refusal = await gate.Refusal("ENG", Token);
 
         Assert.NotNull(refusal);
-        Expect.Equal(SindriErrors.ProfileNotApproved.Code, refusal.Code);
+        Expect.Equal(SindriErrors.ProfileMissing.Code, refusal.Code);
         Assert.Empty(_facts.AskedTeams);
     }
 

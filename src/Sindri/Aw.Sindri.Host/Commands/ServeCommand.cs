@@ -10,10 +10,10 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Features.StartProcess;
-using Aw.Sindri.Infrastructure.Profile;
 using Aw.Sindri.Features.StopProcess;
 using Aw.Sindri.Host.Registration;
 using Aw.Sindri.Host.Server;
+using Aw.Sindri.Infrastructure.Profile;
 
 namespace Aw.Sindri.Host.Commands;
 

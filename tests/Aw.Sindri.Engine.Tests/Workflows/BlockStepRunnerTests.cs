@@ -20,7 +20,7 @@ using Aw.Sindri.Tests.Workflows.Inputs;
 
 namespace Aw.Sindri.Tests.Workflows;
 
-/// <summary>What the 'RunBlockStep' activity does (DT spec §8.2): the providers come from the approved profile, a '{ fact }' argument reads the stored content, and every error path becomes a failed outcome.</summary>
+/// <summary>What the 'RunBlockStep' activity does (DT spec §8.2): the providers come from the live profile (Sindri v2 PR1), a '{ fact }' argument reads the stored content, and every error path becomes a failed outcome.</summary>
 [Lane(TestLane.Unit)]
 public sealed class BlockStepRunnerTests
 {
@@ -36,32 +36,30 @@ public sealed class BlockStepRunnerTests
     private StepContext? _seen;
 
     [Fact]
-    public async Task A_live_only_edit_that_adds_jev_does_not_reach_the_Step()
+    public async Task The_live_profiles_providers_reach_the_Step_with_rules_last()
     {
         _profiles.Live = new LoadedProfile(Profile(new WorkflowSettings(Judge: new JudgeSettings(Providers: ["jev", "claude-cli"]))), Hash('1'), "/live.yaml");
 
         var outcome = await Runner(_profiles).Run(await RunOf(repo: null), TestContext.Current.CancellationToken);
 
         Assert.Null(outcome.Failure);
+        Assert.Equal(["jev", "claude-cli", "rules"], Providers());
+    }
+
+    [Fact]
+    public async Task A_profile_without_judge_providers_gives_the_Step_the_defaults()
+    {
+        await Approve(Profile(workflow: null));
+
+        _ = await Runner(_profiles).Run(await RunOf(repo: null), TestContext.Current.CancellationToken);
+
         Assert.Equal(_defaults, Providers());
     }
 
     [Fact]
-    public async Task The_approved_profiles_providers_reach_the_Step_and_the_live_file_is_not_read()
-    {
-        await Approve(Profile(new WorkflowSettings(Judge: new JudgeSettings(Providers: ["jev", "codex-cli"]))));
-        _profiles.Live = SindriErrors.ProfileInvalid.With("the live file is broken");
-
-        _ = await Runner(_profiles).Run(await RunOf(repo: null), TestContext.Current.CancellationToken);
-
-        Assert.Equal(["jev", "codex-cli", "rules"], Providers());
-    }
-
-    [Fact]
-    public async Task A_repo_list_of_rules_stays_rules_when_the_live_file_is_broken()
+    public async Task A_repo_list_of_rules_stays_rules()
     {
         await Approve(Profile(workflow: null) with { Repos = [new RepoEntry("app", "/a", Workflow: new RepoWorkflowSettings(Judge: new JudgeSettings(Providers: ["rules"])))] });
-        _profiles.Live = SindriErrors.ProfileInvalid.With("the live file is broken");
 
         _ = await Runner(_profiles).Run(await RunOf("app"), TestContext.Current.CancellationToken);
 
