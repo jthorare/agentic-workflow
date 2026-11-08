@@ -86,6 +86,38 @@ public sealed class LedgerFileTests : IDisposable
     }
 
     [Fact, Trait("Lane", "integration")]
+    public async Task Migration_0009_drops_the_recipe_tables_and_keeps_events_after_a_backup()
+    {
+        // Issue 2258 PR 3: the retiring migration is the last of the set and drops the four recipe-era tables (0004, 0006, 0007).
+        var retiring = LedgerDatabase.Migrations[^1];
+        Assert.Equal("retire_recipes", retiring.Name);
+
+        var previous = Path.Combine(_home.Path, "previous.db");
+        var runner = new MigrationRunner(new SqliteConnectionFactory(new SqliteOptions(previous)), new FakeTimeProvider(), backupBeforeUpgrade: false);
+        Assert.True((await runner.Migrate(LedgerDatabase.Migrations, TestContext.Current.CancellationToken, targetVersion: retiring.Version - 1)).IsSuccess);
+        const string at = "'2026-10-10T07:05:07.0000000Z'";
+        Execute(previous, "INSERT INTO recipes (hash, id, version, text, registered_at) VALUES ('sha256:" + new string('a', 64) + "', 'workflow.step', 1, '{}', " + at + ")");
+        Execute(previous, "INSERT INTO recipe_approvals (id, version, hash, approver, approved_at, via, blocks_json, children_json) " +
+            "VALUES ('workflow.step', 1, 'sha256:" + new string('a', 64) + "', 'human:owner', " + at + ", 'desk', '{}', '{}')");
+        Execute(previous, "INSERT INTO workflow_claims (item, owner, attempt, claimed_at) VALUES ('T-3', 'T-3/item/1', 1, " + at + ")");
+        Execute(previous, "INSERT INTO pr_comment_marks (forge, repo, pr, comment_id, edited_at, instance, outcome, at, effect) " +
+            "VALUES ('github', 'o/r', 7, 'c1', " + at + ", 'T-3/item/1', 'posted', " + at + ", 'e1')");
+        Execute(previous, "INSERT INTO events (id, type, schema_version, occurred_at, actor, tenant, ring, correlation_id, epoch, idempotency_key, payload_json) " +
+            "VALUES ('evt-1', 'workflow.started', 1, " + at + ", 'host:sindri', 't', 0, 'c-1', 1, 'k-1', '{}')");
+        var home = Path.Combine(_home.Path, "home");
+        _ = Directory.CreateDirectory(home);
+        var ledger = Path.Combine(home, "ledger.db");
+        File.Copy(previous, ledger);
+        using var database = new LedgerDatabase(new SindriSettings(home, Path.Combine(home, "profile.yaml")), new FakeTimeProvider());
+
+        Assert.True((await database.Writable(TestContext.Current.CancellationToken)).IsSuccess);
+
+        Assert.Equal(["events", "lease", "outbox_commands"], Tables(ledger));
+        Assert.Equal("evt-1", Scalar(ledger, "SELECT id FROM events"));
+        Assert.True(File.Exists($"{ledger}.bak-v{(retiring.Version - 1).ToString(CultureInfo.InvariantCulture)}"));
+    }
+
+    [Fact, Trait("Lane", "integration")]
     [System.Runtime.Versioning.UnsupportedOSPlatform("windows")]
     public async Task The_first_write_creates_an_owner_only_file_and_reads_never_create_one()
     {

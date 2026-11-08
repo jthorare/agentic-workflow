@@ -5912,6 +5912,7 @@ const Aw.Sindri.Core.Events.EventTypes.WorkflowExpired = "workflow.expired" -> s
 const Aw.Sindri.Core.Events.EventTypes.WorkflowNotified = "workflow.notified" -> string!
 const Aw.Sindri.Core.Events.EventTypes.WorkflowRefused = "workflow.refused" -> string!
 const Aw.Sindri.Core.Events.EventTypes.WorkflowShifted = "workflow.shifted" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowRetired = "workflow.retired" -> string!
 const Aw.Sindri.Core.Events.EventTypes.WorkflowStarted = "workflow.started" -> string!
 const Aw.Sindri.Core.Events.EventTypes.WorkflowTransition = "workflow.transition" -> string!
 const Aw.Sindri.Core.Events.StreamLimits.Total = 64 -> int

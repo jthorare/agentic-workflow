@@ -11,6 +11,9 @@ public static class EventTypes
     /// <summary>The control plane released the lease and stopped.</summary>
     public const string ProcessStopped = "process.stopped";
 
+    /// <summary>An instance still open when the recipe engine was removed was cancelled, once, with this note (issue 2258 PR 3).</summary>
+    public const string WorkflowRetired = "workflow.retired";
+
     /// <summary>A recipe instance started (mirrored from its RecipeWorkflow; engine spec rev 8.1 §5.6).</summary>
     public const string WorkflowStarted = "workflow.started";
 

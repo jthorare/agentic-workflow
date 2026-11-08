@@ -69,4 +69,15 @@ public sealed class ArchitectureTests
     public void Every_id_and_every_id_property_follows_the_typed_id_recipe() =>
         Verify.None(TypedIdGuard.CheckTypes(Production.Assemblies.SelectMany(a => a.GetTypes()))
             .Select(m => new Violation(TypedIdIds.TypesId, m, "follow docs/csharp/typed-ids.md (a user-code [JsonConverter], ITypedId<,>, required id properties)")));
+
+    [Fact]
+    public void Sindri_has_no_reference_to_the_deleted_recipe_namespaces()
+    {
+        // Issue 2258 PR 3: the recipe engine, its registry and validation, the factory line and scoping are gone.
+        string[] deleted = ["Aw.Sindri.Core.Workflow.Recipes", "Aw.Sindri.Core.Workflow.Registry", "Aw.Sindri.Core.Workflow.Validation", "Aw.Sindri.Core.Line", "Aw.Sindri.Core.Scoping"];
+
+        Verify.None(Production.Architecture.Types.Select(TypeNames.Qualified)
+            .Where(name => deleted.Any(ns => name.StartsWith(ns + ".", StringComparison.Ordinal)))
+            .Select(name => new Violation("ARCH-RECIPES-GONE", $"{name} still lives in a deleted recipe namespace", "delete it with the recipe engine (issue 2258 PR 3)")));
+    }
 }
