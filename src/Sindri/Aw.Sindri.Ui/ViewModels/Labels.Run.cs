@@ -1,30 +1,11 @@
-using System.Globalization;
-
 namespace Aw.Sindri.Ui.ViewModels;
 
 /// <summary>The app's own copy (<see cref="Labels"/>, continued): an agent running a Step, and Attach to it.</summary>
 internal static partial class Labels
 {
-    /// <summary>Shown while Attach waits on the item's launch block.</summary>
-    internal const string AttachChecking = "Checking whether the agent is running";
-
-    /// <summary>Why Attach is not ready when the item serves no live session and no blocker.</summary>
-    internal const string AttachNoLiveSession = "The agent isn't running, so there's nothing to watch";
-
-    /// <summary>Why Attach is not ready while a launch is still starting.</summary>
-    internal const string AttachLaunchStarting = "The agent session is still starting";
-
-    /// <summary>Why Attach is not ready when the item could not be read.</summary>
-    internal const string AttachItemUnreadable = "Can't check on the agent right now";
 
     /// <summary>Why Attach is not ready while its send is in flight.</summary>
     internal const string AttachSending = "Sending…";
-
-    /// <summary>Why Attach is not ready after a send, until the item is read again.</summary>
-    internal const string AttachSent = "Opening the agent's terminal…";
-
-    /// <summary>The launch could not be read.</summary>
-    internal const string LaunchUnreadable = "The agent session can't be read now.";
 
     /// <summary>The launch was asked for and has not started.</summary>
     internal const string LaunchRequested = "The agent session is starting.";
@@ -34,24 +15,6 @@ internal static partial class Labels
 
     /// <summary>The print viewer opens nothing; the attach command is shown to copy.</summary>
     internal const string AttachRunThis = "No viewer is set up. Run this to watch the agent:";
-
-    /// <summary>The run line: who is on the step. The launch id is in the stage details.</summary>
-    internal const string RunLine = "An agent is working on this step";
-
-    /// <summary>Accessible name of the run line.</summary>
-    /// <param name="launch">The launch id (opaque).</param>
-    /// <returns>The name.</returns>
-    internal static string RunName(string launch) => $"{RunLine}, agent session {launch}";
-
-    /// <summary>The launch id as the stage details show it.</summary>
-    /// <param name="launch">The launch id (opaque).</param>
-    /// <returns>The line.</returns>
-    internal static string RunDetailLine(string launch) => $"Agent session {launch}";
-
-    /// <summary>Accessible name of the attach command's Copy.</summary>
-    /// <param name="address">The instance address (opaque).</param>
-    /// <returns>The name.</returns>
-    internal static string CopyAttachName(string address) => $"Copy the command to watch the agent for {address}";
 
     /// <summary>A launch that started with a viewer that opened.</summary>
     /// <param name="viewer">The viewer's label.</param>
@@ -100,12 +63,6 @@ internal static partial class Labels
         _ => null,
     };
 
-    /// <summary>A completed agent Step.</summary>
-    /// <param name="tokens">The tokens spent, when served.</param>
-    /// <returns>The words.</returns>
-    internal static string ViaAgent(int? tokens) =>
-        tokens is { } spent ? string.Create(CultureInfo.InvariantCulture, $"via agent · {spent:N0} tokens") : "via agent";
-
     /// <summary>A failed agent Step.</summary>
     /// <param name="reason">The served reason (launch, lost, exit, limit).</param>
     /// <param name="to">The state the instance moved to, when served.</param>
@@ -124,11 +81,4 @@ internal static partial class Labels
         return string.IsNullOrEmpty(to) ? why + "." : $"{why}. The run moved to {to}.";
     }
 
-    /// <summary>The visible words of the link from an agent Step to its session.</summary>
-    internal const string SessionLink = "Open the agent session";
-
-    /// <summary>The session link's accessible name.</summary>
-    /// <param name="sessionRef">The session's ref.</param>
-    /// <returns>The words.</returns>
-    internal static string SessionLinkName(string sessionRef) => $"{SessionLink} {sessionRef}, opens it on the Agents page";
 }

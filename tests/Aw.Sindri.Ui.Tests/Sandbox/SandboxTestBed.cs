@@ -1,7 +1,6 @@
 using System.Net;
 using System.Text.Json.Nodes;
 using Aw.Sindri.Ui.Testing;
-using Aw.Sindri.Ui.ViewModels.NeedsYou;
 using Aw.Sindri.Ui.ViewModels.Sandbox;
 using Microsoft.Extensions.Time.Testing;
 
@@ -15,7 +14,7 @@ internal sealed class SandboxTestBed
 
     internal SandboxTestBed()
     {
-        Card = new SandboxCardViewModel(Server, Clock, () => Api, new InstanceCommander(Server, () => Api).Send, Clipboard);
+        Card = new SandboxCardViewModel(Server, Clock, () => Api, Clipboard);
     }
 
     internal FakeSindriApi Server { get; } = new();

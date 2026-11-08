@@ -61,6 +61,11 @@ internal static class WorktreeRules
             reasons.Add(string.IsNullOrWhiteSpace(facts.LockReason) ? "locked (git worktree lock)" : "locked (git worktree lock): " + facts.LockReason);
         }
 
+        if (facts.Done && facts.Branch is not null && facts.GatePr is null)
+        {
+            reasons.Add("--done: the tree is on a branch, not detached");
+        }
+
         if (facts.DirectoryMissing)
         {
             reasons.Add("its directory is missing (git worktree prune clears the entry)");
@@ -107,12 +112,12 @@ internal static class WorktreeRules
         }
     }
 
-    // Rule 1: a detached worktree that is not a gate tree is never removed; a branch with a pull request only when it ended (merged, or closed with everything on the remote); a branch with none when everything of it is pushed or in origin/main.
+    // Rule 1: a detached worktree that is not a gate tree is removed only by --done (see DetachedReasons); a branch with a pull request only when it ended (merged, or closed with everything on the remote); a branch with none when everything of it is pushed or in origin/main.
     private static void Merged(WorktreeFacts facts, List<string> reasons)
     {
         if (facts.Branch is null)
         {
-            reasons.Add("detached, not a gate tree");
+            DetachedReasons(facts, reasons);
             return;
         }
 
@@ -142,6 +147,15 @@ internal static class WorktreeRules
         else
         {
             reasons.Add($"not merged into origin/main ({pr}{(facts.PrState is { } state ? " is " + state.ToString().ToLowerInvariant() : string.Empty)})");
+        }
+    }
+
+    // Only the owning lane's --done frees a detached tree (the unpushed-commits reason in Judge checks its HEAD); rule 7 needs a recorded sweep.
+    private static void DetachedReasons(WorktreeFacts facts, List<string> reasons)
+    {
+        if (!facts.Done || facts.NoPreviousSweep)
+        {
+            reasons.Add(facts.Done ? "no previous sweep to compare with" : "detached, not a gate tree");
         }
     }
 

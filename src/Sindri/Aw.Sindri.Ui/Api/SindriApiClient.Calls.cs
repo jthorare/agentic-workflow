@@ -4,7 +4,6 @@ using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Api.Jobs;
-using Aw.Sindri.Ui.Api.Workflow;
 
 namespace Aw.Sindri.Ui.Api;
 
@@ -115,9 +114,7 @@ internal sealed partial class SindriApiClient
         CommandAcceptedView a => a.Sequence,
         ItemCreatedView c => c.Accepted.Sequence,
         RequestFiledView f => f.Accepted.Sequence,
-        RecipeApproved r => r.Accepted.Sequence,
         JobStarted j => j.Accepted.Sequence,
-        ApproveAllStarted s => s.Accepted.Sequence,
         JobResumedView r => r.Accepted.Sequence,
         ProjectAcceptedView p => p.Accepted.Sequence,
         OpenAcceptedView o => o.Accepted.Sequence,

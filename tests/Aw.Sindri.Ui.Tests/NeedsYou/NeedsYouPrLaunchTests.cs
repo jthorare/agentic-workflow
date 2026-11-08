@@ -18,7 +18,7 @@ public sealed class NeedsYouPrLaunchTests
         var list = new NeedsYouViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), clock);
         await list.Restore(TestContext.Current.CancellationToken);
         list.Update(new NeedsYouFeed([NeedsYouRows.Decision()], string.Empty));
-        return new NeedsYouPageViewModel(list, clock, new FakeClipboard(), new DeskReporter(new FakeSindriApi(), () => new Uri("http://127.0.0.1:7410/"), launcher));
+        return new NeedsYouPageViewModel(list, clock, new FakeClipboard(), launcher);
     }
 
     [Fact]

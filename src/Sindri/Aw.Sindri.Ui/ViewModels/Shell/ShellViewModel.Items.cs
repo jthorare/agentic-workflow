@@ -54,9 +54,7 @@ internal sealed partial class ShellViewModel
     // The item sheet's part of opening the sheet (OpenSheet): the item is fetched; any other kind leaves it alone.
     private void OnSheetOpened(DeepLink link)
     {
-        (OpenerRow, OpenerStrip) = (null, null);
-        OnInstanceSheetOpened(link);
-        OnRecipeSheetOpened(link);
+        OpenerRow = null;
         OnAgentSheetOpened(link);
         OnJobSheetOpened(link);
         OnProjectSheetOpened(link);
