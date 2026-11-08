@@ -24498,3 +24498,21 @@ Aw.Sindri.Core.Launch.LaunchRequest.GithubPushApproved.get -> bool
 Aw.Sindri.Core.Launch.LaunchRequest.GithubPushApproved.init -> void
 Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.GithubPushApproved.get -> bool
 Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.GithubPushApproved.init -> void
+Aw.Sindri.Core.Todos.TodoId
+Aw.Sindri.Core.Todos.TodoId.Equals(Aw.Sindri.Core.Todos.TodoId other) -> bool
+Aw.Sindri.Core.Todos.TodoId.Equals(Aw.Sindri.Core.Todos.TodoId other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Todos.TodoId>! comparer) -> bool
+Aw.Sindri.Core.Todos.TodoId.GetTypeCode() -> System.TypeCode
+Aw.Sindri.Core.Todos.TodoId.IsInitialized() -> bool
+Aw.Sindri.Core.Todos.TodoId.TodoId() -> void
+Aw.Sindri.Core.Todos.TodoId.ToString(System.IFormatProvider? provider) -> string!
+Aw.Sindri.Core.Todos.TodoId.Value.get -> string!
+override Aw.Sindri.Core.Todos.TodoId.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoId.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoId.ToString() -> string!
+static Aw.Sindri.Core.Todos.TodoId.From(string! value) -> Aw.Sindri.Core.Todos.TodoId
+static Aw.Sindri.Core.Todos.TodoId.New(Aw.Kernel.Ids.IIdGenerator! ids) -> Aw.Sindri.Core.Todos.TodoId
+static Aw.Sindri.Core.Todos.TodoId.operator !=(Aw.Sindri.Core.Todos.TodoId left, Aw.Sindri.Core.Todos.TodoId right) -> bool
+static Aw.Sindri.Core.Todos.TodoId.operator ==(Aw.Sindri.Core.Todos.TodoId left, Aw.Sindri.Core.Todos.TodoId right) -> bool
+static Aw.Sindri.Core.Todos.TodoId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Todos.TodoId
+static Aw.Sindri.Core.Todos.TodoId.TryFrom(string? value, out Aw.Sindri.Core.Todos.TodoId vo) -> bool
+static Aw.Sindri.Core.Todos.TodoId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Todos.TodoId result) -> bool
