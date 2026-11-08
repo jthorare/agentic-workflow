@@ -193,4 +193,39 @@ public sealed class NoteMergeHoldTests
         SameSet(["remove 1", "remove 2"], Intents(r));
         Same(_ten.Skip(2), r.NextBase);
     }
+
+    [Fact]
+    public void Held_edits_keep_their_old_base_lines()
+    {
+        var note = _ten.Select(static (l, i) => i < 4 ? L(i + 1, Txt("edited ", i + 1)) : l).ToArray();
+
+        var r = Run(_ten, note, _tenInSindri);
+
+        Same(_ten, r.NextBase);
+    }
+
+    [Fact]
+    public void Held_reopened_todos_keep_their_old_base_lines()
+    {
+        var baseLines = Enumerable.Range(1, 4).Select(static n => X(n, "d")).Concat(Enumerable.Range(5, 6).Select(static n => L(n, Txt("t", n)))).ToArray();
+        var note = Enumerable.Range(1, 4).Select(static n => L(n, "d")).Concat(baseLines.Skip(4)).ToArray();
+        var sindri = Enumerable.Range(1, 4).Select(static n => S(n, "d") with { Done = true }).Concat(_tenInSindri.Skip(4)).ToArray();
+
+        var r = Run(baseLines, note, sindri);
+
+        Same(baseLines, r.NextBase);
+    }
+
+    [Fact]
+    public void A_hold_that_shrinks_but_stays_over_the_threshold_is_replaced_with_the_smaller_set()
+    {
+        var open = HoldOn(1, 2, 3, 4, 5);
+
+        var r = Run(_ten, Without(2, 3, 4, 5), _tenInSindri, Options(o => o with { OpenHold = open }));
+
+        Assert.Equal(NoteHoldOutcome.Replaced, r.Hold);
+        Assert.Equal(HoldOn(2, 3, 4, 5).Changes, r.HoldNow!.Changes);
+        Assert.Empty(r.Intents);
+        Same(_ten, r.NextBase);
+    }
 }

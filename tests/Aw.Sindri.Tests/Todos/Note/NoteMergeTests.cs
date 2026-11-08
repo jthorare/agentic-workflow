@@ -474,4 +474,128 @@ public sealed class NoteMergeTests
 
         Same(["change 1 text=\"pw ***\""], Intents(r));
     }
+
+    [Fact]
+    public void Sindri_changed_only_the_due_date_so_the_line_is_rewritten()
+    {
+        var r = Run([L(1, "a")], [L(1, "a")], [S(1, "a", "2026-11-14")]);
+
+        Assert.Empty(r.Intents);
+        Same([$"replace 1: {L(1, "a", "2026-11-14")}"], Edits(r));
+        Same([L(1, "a", "2026-11-14")], r.NextBase);
+    }
+
+    [Fact]
+    public void Sindri_changed_only_the_links_so_the_line_is_rewritten()
+    {
+        var linked = S(1, "a") with { Links = ["sindri://linear/ENG-12"] };
+
+        var r = Run([L(1, "a")], [L(1, "a")], [linked]);
+
+        Assert.Empty(r.Intents);
+        Same([$"replace 1: - [ ] a [ENG-12](sindri://linear/ENG-12) {Block(1)}"], Edits(r));
+    }
+
+    [Fact]
+    public void Both_sides_removed_the_todo_does_nothing_and_the_base_forgets_it()
+    {
+        var r = Run([L(1, "a"), L(2, "b")], [L(2, "b")], [GoneBySindri(1), S(2, "b")]);
+
+        Assert.Empty(r.Intents);
+        Assert.Empty(r.LineEdits);
+        Same([L(2, "b")], r.NextBase);
+    }
+
+    [Fact]
+    public void Both_sides_ticked_the_todo_does_nothing_and_the_base_catches_up()
+    {
+        var done = S(1, "a") with { Done = true };
+
+        var r = Run([L(1, "a")], [X(1, "a")], [done]);
+
+        Assert.Empty(r.Intents);
+        Assert.Empty(r.LineEdits);
+        Same([X(1, "a")], r.NextBase);
+    }
+
+    [Theory]
+    [InlineData("- [ ] a ^td-01jc5a8xq0n4w7ms2t9r3vaaaa {B}", "it has two ids")]
+    [InlineData("- [ ] a \U0001F4C5 2026-11-10 \U0001F4C5 2026-11-11 {B}", "it has two due dates")]
+    [InlineData("- [ ] a \U0001F4C5 text {B}", "it has a \U0001F4C5, \u2705 or ^td- marker inside the text")]
+    [InlineData("- [ ] a [docs](https://x.example/y) {B}", "it has a markdown link")]
+    [InlineData("- [ ] a\U000E0041 {B}", "it has a character Sindri can't store")]
+    [InlineData("- [ ] {B}", "it has no text")]
+    public void Each_D3_break_on_a_known_id_is_blocked_and_changes_nothing(string template, string reason)
+    {
+        var line = template.Replace("{B}", Block(1), StringComparison.Ordinal);
+
+        var r = Run([L(1, "a")], [line], [S(1, "a")]);
+
+        Same([$"blocked 1 line 1: {reason}"], Intents(r));
+        Assert.Empty(r.LineEdits);
+        Same([L(1, "a")], r.NextBase);
+    }
+
+    [Fact]
+    public void A_text_over_280_characters_on_a_known_id_is_blocked()
+    {
+        var r = Run([L(1, "a")], [L(1, new string('a', 281))], [S(1, "a")]);
+
+        Same(["blocked 1 line 1: it is longer than 280 characters"], Intents(r));
+    }
+
+    [Fact]
+    public void A_break_line_for_a_todo_sindri_removed_is_still_reported()
+    {
+        var pasted = $"- [ ] a [docs](https://x.example/y) {Block(1)}";
+
+        var r = Run([], [pasted], [GoneBySindri(1)]);
+
+        Same(["blocked 1 line 1: it has a markdown link"], Intents(r));
+        Assert.Empty(r.LineEdits);
+    }
+
+    [Fact]
+    public void When_the_first_copy_of_an_id_is_a_break_line_it_stays_blocked_and_the_next_copy_is_adopted()
+    {
+        var pasted = $"- [ ] a [docs](https://x.example/y) {Block(1)}";
+
+        var r = Run([L(1, "a")], [pasted, L(1, "a")], [S(1, "a")]);
+
+        Same(["blocked 1 line 1: it has a markdown link", "adopt 9000 \"a\" line 2"], Intents(r));
+        Same([$"replace 2: {L(9000, "a")}"], Edits(r));
+    }
+
+    [Fact]
+    public void Three_copies_of_an_id_keep_it_on_the_first_and_adopt_the_others_with_their_own()
+    {
+        var r = Run([L(1, "a")], [L(1, "a"), L(1, "a"), L(1, "a")], [S(1, "a")]);
+
+        Same(["adopt 9000 \"a\" line 2", "adopt 9001 \"a\" line 3"], Intents(r));
+        Same([$"replace 2: {L(9000, "a")}", $"replace 3: {L(9001, "a")}"], Edits(r));
+        Same([L(1, "a"), L(9000, "a"), L(9001, "a")], r.NextBase);
+    }
+
+    [Fact]
+    public void A_stale_copy_of_a_removed_line_with_no_base_is_not_dropped_and_enters_the_base()
+    {
+        var removed = GoneBySindri(1) with { LastLineHash = NoteLineHash.Of(L(1, "a")) };
+
+        var r = NoteMerge.Merge(noteBase: null, Doc(L(1, "a")), [removed], Options());
+
+        Assert.Empty(r.Intents);
+        Assert.Empty(r.LineEdits);
+        Same([L(1, "a")], r.NextBase);
+    }
+
+    [Fact]
+    public void A_line_for_a_todo_sindri_removed_with_no_last_line_hash_is_an_owner_re_add()
+    {
+        var r = Run([], [L(1, "a")], [GoneBySindri(1)]);
+
+        Same(["restore 1"], Intents(r));
+        Assert.Empty(r.LineEdits);
+    }
+
+    private static SindriTodo GoneBySindri(int n) => S(n, "a") with { Removed = true, RemovedBy = NoteOrigin.Sindri };
 }
