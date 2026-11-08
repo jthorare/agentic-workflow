@@ -22,6 +22,9 @@ internal static class NeedsYouKinds
     /// <summary>The kinds of row a server from before the recipe engine went still sends (a desk task, a parked run, a skill wait, a changed recipe): the app does not show them.</summary>
     internal static readonly string[] Retired = ["desk", "park", "skillWaiting", "recipe"];
 
+    /// <summary>The id of the setup row a server from before PR4b still sends for the recipes (action ApproveAllRecipes): the recipe pages are gone, so the app does not show it. Other setup rows stay.</summary>
+    internal const string RetiredRecipesRowId = "setup:recipes";
+
     /// <summary>The queue's running group.</summary>
     internal const string Running = "running";
 
