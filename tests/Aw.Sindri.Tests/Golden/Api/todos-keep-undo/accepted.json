@@ -1,0 +1,35 @@
+{
+  "todo": {
+    "id": "td_0000000000000000000000000h",
+    "text": "call the dentist",
+    "due": null,
+    "links": [],
+    "addedAt": "2026-01-01T00:00:00.0000000Z",
+    "addedBy": "human:cli",
+    "addedVia": null,
+    "doneAt": null,
+    "removed": false,
+    "removedAt": null,
+    "removedBy": null,
+    "version": 1,
+    "lastBy": "human:cli",
+    "lastVia": null,
+    "conflict": {
+      "sindri": {
+        "text": "call the dentist",
+        "due": null,
+        "links": [],
+        "done": false,
+        "removed": false
+      },
+      "obsidian": {
+        "text": "call the dentist about the crown",
+        "due": "2026-01-05",
+        "links": [],
+        "done": false,
+        "removed": false
+      },
+      "noteHash": "sha256:3f1c0a9e5b7d2c4e6a8b0d1f3e5c7a9b2d4f6e8a0c1b3d5f7e9a2c4b6d8f0e1a"
+    }
+  }
+}
