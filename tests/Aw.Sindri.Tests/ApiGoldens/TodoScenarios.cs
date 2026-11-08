@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Aw.Sindri.Testing;
+using Aw.Kernel.Testing;
 using static Aw.Sindri.Tests.Callers.CallerRequests;
 
 namespace Aw.Sindri.Tests.ApiGoldens;
@@ -10,8 +10,10 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 /// </summary>
 internal static class TodoScenarios
 {
+    private static readonly string[] _markSlugs = ["todos-done", "todos-reopen", "todos-remove", "todos-restore"];
+
     /// <summary>The (slug, scenario) pairs of this class.</summary>
-    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-add", "accepted")];
+    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted")];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
     public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario));
@@ -27,7 +29,18 @@ internal static class TodoScenarios
         var human = ItemScenarios.Human(host);
         if (slug == "todos-add")
         {
-            return (await host.Http.Ask(Post("/sindri/todos", """{"text":"rotate the staging key","due":"2026-11-13","links":["ENG-12"],"clientId":"c-1"}""", human))).Body;
+            return (await host.Http.Ask(Post("/sindri/todos", Request(slug, scenario), human))).Body;
+        }
+
+        if (slug == "todos-change")
+        {
+            var made = await Add(host, human, """{"text":"call the dentist","due":"2026-11-13","clientId":"c-1"}""", string.Empty, ct);
+            return (await host.Http.Ask(Post($"/sindri/todos/{made}/change", Request(slug, scenario), human))).Body;
+        }
+
+        if (_markSlugs.Contains(slug))
+        {
+            return await Mark(host, human, slug, scenario, ct);
         }
 
         var cert = await Add(host, human, """{"text":"renew the cert","due":"2025-12-30","clientId":"c-1"}""", string.Empty, ct);
@@ -44,6 +57,27 @@ internal static class TodoScenarios
         await ViewScenarios.CatchUp(host, ct);
         return (await host.Http.Ask(Get("/sindri/todos?state=all", human))).Body;
     }
+
+    // puts a todo into the state the verb needs (reopen: done, restore: removed), then posts the verb with the request file's bytes; a done or remove starts from the open todo at version 1, the others from version 2
+    private static async Task<string> Mark(GoldenHost host, (string Name, string Value)[] human, string slug, string scenario, CancellationToken ct)
+    {
+        var made = await Add(host, human, """{"text":"call the dentist","clientId":"c-1"}""", string.Empty, ct);
+        var first = string.Equals(slug, "todos-reopen", StringComparison.Ordinal) ? "done" : string.Equals(slug, "todos-restore", StringComparison.Ordinal) ? "remove" : null;
+        if (first is not null)
+        {
+            _ = await host.Http.Ask(Post($"/sindri/todos/{made}/{first}", "{}", human));
+            await ViewScenarios.CatchUp(host, ct);
+        }
+
+        var verb = slug["todos-".Length..];
+        // why: done and remove take their version from the one shared request file; reopen and restore need version 2 (the state change before them was version 2), so each has its own
+        var file = string.Equals(verb, "done", StringComparison.Ordinal) || string.Equals(verb, "remove", StringComparison.Ordinal) ? "todos-done" : slug;
+        return (await host.Http.Ask(Post($"/sindri/todos/{made}/{verb}", Request(file, scenario), human))).Body;
+    }
+
+    /// <summary>The exact bytes the scenario posts: 'Golden/ApiRequests/&lt;slug&gt;/&lt;scenario&gt;.json', read as they are (no re-serializing), so the file is what the server is proven to read; the UI lanes build their client against the same file.</summary>
+    internal static string Request(string slug, string scenario) =>
+        File.ReadAllText(Golden.SourcePath(typeof(TodoScenarios).Assembly, $"Golden/ApiRequests/{slug}/{scenario}.json"));
 
     // why: each write reads the todo views, which wait for the writes before it, so the views catch up after each one
     private static async Task<string> Add(GoldenHost host, (string Name, string Value)[] caller, string json, string query, CancellationToken ct)
