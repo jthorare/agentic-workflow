@@ -403,3 +403,13 @@ sandbox off. `deps.yaml` declares the host-tool edges; `scripts/install-deps.sh`
 
 - **`GET /sindri/sandbox/denials?item=<item>`** adds an item filter: only the launches of that item (`launch.started` names the item, `item.created` its repo; `ILaunchOwners` is the Core port, `LedgerLaunchOwners` reads the ledger, never `views.db`). Every file now carries its `repo` and `item`, and every entry its `fix`: `allow` (a host, or a not-bound home path), `never` with a `reason` (a path on the permanent deny list, a private address, a hit cap) or `own-terminal` (a policy refusal). `DenialFixes.Decide` is the one place that decides it; the counter file on disk stays as it was (the new fields are left out when null).
 - **`POST /sindri/sandbox/allow { launch, kind: network|path, target }`** (`AllowDenial`, catalog action `AllowDenial`, desk class: a launched session is refused `SND-AUTH-002`). It checks that the run was blocked on exactly that target and that its fix is `allow`, then edits the **live** profile file (the draft, not the approved snapshot) through `IProfileSandboxWriter` (`YamlProfileSandboxWriter`): `sandbox.repos.<repo>.hosts` gets the host, `sandbox.repos.<repo>.homeAllow` gets `{ path: <relative to $HOME>, mode: ro }`. The edit is line by line, so the rest of the file and its comments stay; a flow-style list with entries is a layout it leaves alone (`SND-PROFILE-002` names the lines to add by hand). Answer `{ state: "needs-approval" | "allowed", repo, entry }`: `allowed` only when the approved profile already lists it; otherwise the live profile now differs from the approved one and the usual drift and approval flow takes over. Allowing twice writes one entry. Refusals are `SND-SANDBOX-001`.
+
+## A `run_agent` node's network (issue #2258, PR 7)
+
+The host groups of a node launch come from the node, not from an approval. `HostGroups.Resolve` takes three more inputs on `GroupsInput` (`NodeRepo`, `Connections`, `ConnectionHosts`):
+
+- A node with a `repo` always gets the `github` group, so its session can push and open a PR.
+- Each connection the node names adds one group, `connection-<name>`, holding that connection's hosts. A connection with no preset adds nothing; connection presets arrive with the connections work, so until then only the repo's group applies.
+- Nothing else is opened. A node that names no connection and has no repo gets no node group.
+
+Not built yet (lands with the launcher wiring): the launcher filling these inputs from the node's config, the env passing only the named connections' tokens, and the macOS proof of an unattended `run_agent` run (SB-10 stays open until then).
