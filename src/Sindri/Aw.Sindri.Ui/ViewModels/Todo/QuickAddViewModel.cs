@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
 
 namespace Aw.Sindri.Ui.ViewModels.Todo;
@@ -125,7 +126,7 @@ internal sealed class QuickAddViewModel : ObservableObject
         }
     }
 
-    private void Finish(Aw.Kernel.Result<TodoAcceptedView> saved)
+    private void Finish(Result<TodoAcceptedView> saved)
     {
         if (saved.IsError)
         {

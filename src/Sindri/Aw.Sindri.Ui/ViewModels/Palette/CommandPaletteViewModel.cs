@@ -161,28 +161,16 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
         }
 
         _remember(entry.Id);
+        if (RunsHere(entry))
+        {
+            return;
+        }
+
         switch (entry)
         {
-            case { Id: PaletteEntry.TodoId }:
-                _openTodo?.Invoke();
-                Close();
-                break;
             case { Page: { } page }:
                 // The page changes first, so the region the close hands focus back to already carries the new page's name.
                 _goTo(page);
-                Close();
-                break;
-            case { Control.Action: "StopProcess" }:
-                Close();
-                _goTo(PageId.System);
-                break;
-            case { Control.Action: "CreateItem" }:
-                // The form's or dialog's own control sends it; it opens first, so the window hands the palette's opener on to it.
-                CreateItem?.Invoke();
-                Close();
-                break;
-            case { Id: PaletteEntry.NewTodoId }:
-                NewTodo?.Invoke();
                 Close();
                 break;
             case { Control.IsCopyOnly: true }:
