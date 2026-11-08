@@ -565,12 +565,17 @@ Aw.Meta.Core.Lanes.LaneAgent
 Aw.Meta.Core.Lanes.LaneAgent.<Clone>$() -> Aw.Meta.Core.Lanes.LaneAgent!
 Aw.Meta.Core.Lanes.LaneAgent.Agent.get -> string!
 Aw.Meta.Core.Lanes.LaneAgent.Agent.init -> void
-Aw.Meta.Core.Lanes.LaneAgent.Deconstruct(out string! Agent, out string! ProcessName, out bool Hooks, out string? Transcripts) -> void
+Aw.Meta.Core.Lanes.LaneAgent.Deconstruct(out string! Agent, out string! ProcessName, out bool Hooks, out string? Transcripts, out bool Codex, out bool? NoDaemon) -> void
 Aw.Meta.Core.Lanes.LaneAgent.Equals(Aw.Meta.Core.Lanes.LaneAgent? other) -> bool
 Aw.Meta.Core.Lanes.LaneAgent.Hooks.get -> bool
 Aw.Meta.Core.Lanes.LaneAgent.Hooks.init -> void
 Aw.Meta.Core.Lanes.LaneAgent.IsClaude.get -> bool
-Aw.Meta.Core.Lanes.LaneAgent.LaneAgent(string! Agent, string! ProcessName, bool Hooks, string? Transcripts = null) -> void
+Aw.Meta.Core.Lanes.LaneAgent.IsCodex.get -> bool
+Aw.Meta.Core.Lanes.LaneAgent.Codex.get -> bool
+Aw.Meta.Core.Lanes.LaneAgent.Codex.init -> void
+Aw.Meta.Core.Lanes.LaneAgent.NoDaemon.get -> bool?
+Aw.Meta.Core.Lanes.LaneAgent.NoDaemon.init -> void
+Aw.Meta.Core.Lanes.LaneAgent.LaneAgent(string! Agent, string! ProcessName, bool Hooks, string? Transcripts = null, bool Codex = false, bool? NoDaemon = null) -> void
 Aw.Meta.Core.Lanes.LaneAgent.ProcessName.get -> string!
 Aw.Meta.Core.Lanes.LaneAgent.ProcessName.init -> void
 Aw.Meta.Core.Lanes.LaneAgent.Transcripts.get -> string?
