@@ -37,6 +37,7 @@ internal sealed class ViewsHarness
             new CodeIndexProjection(Slice.Events),
             new ModelHistoryProjection(Slice.Events),
             new ProjectsProjection(Slice.Events),
+            new RunsProjection(Slice.Events),
         ];
     }
 
