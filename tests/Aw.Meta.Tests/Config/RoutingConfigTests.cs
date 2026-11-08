@@ -72,6 +72,16 @@ public sealed class RoutingConfigTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_Codex_meta_team_refuses_a_lane_routed_to_Claude_and_a_Claude_team_allows_it()
+    {
+        var routing = Cfg() with { Lanes = new Dictionary<string, LaneRoute>(StringComparer.Ordinal) { ["ui"] = new("claude-code", "sonnet") } };
+
+        Assert.Contains("routing.lanes.ui: a codex meta can't message a Claude lane", ThresholdChecks.Problem(_team with { Agent = "codex", Routing = routing }), StringComparison.Ordinal);
+        Assert.Null(ThresholdChecks.Problem(_team with { Routing = routing }));
+        Assert.Null(ThresholdChecks.Problem(_team with { Agent = "claude-code", Routing = routing }));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void The_default_model_must_be_listed() =>
         Assert.Contains("routing.defaultModel 'ghost' is not listed under routing.models", Problem(Cfg(defaultModel: "ghost")), StringComparison.Ordinal);
 

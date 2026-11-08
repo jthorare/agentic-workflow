@@ -29,7 +29,7 @@ public sealed class RouteServiceTests
         await _w.Ready();
         _w.U.LimitLane("ui");
 
-        var applied = await _w.Service().Handle(new RouteRequest(Apply: true), CancellationToken.None);
+        var applied = await _w.Service().Handle(new RouteRequest(Apply: true, Force: true), CancellationToken.None);
 
         Assert.True(applied.Value.Applied);
         Assert.False(applied.Value.Attention);
@@ -47,7 +47,7 @@ public sealed class RouteServiceTests
         await _w.Ready(RoutingWorld.Cfg() with { Lanes = new Dictionary<string, LaneRoute>(StringComparer.Ordinal) { ["api"] = new(Model: "haiku") } });
         _w.U.LimitLane("ui");
 
-        _ = await _w.Service().Handle(new RouteRequest(Apply: true), CancellationToken.None);
+        _ = await _w.Service().Handle(new RouteRequest(Apply: true, Force: true), CancellationToken.None);
 
         var lanes = (await _w.U.World.Config.Load(CancellationToken.None)).Value.Routing.Lanes;
         Assert.Equal(["api", "ui"], lanes.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
@@ -60,7 +60,7 @@ public sealed class RouteServiceTests
         _w.U.LimitLane("ui");
         _w.U.LimitLane("api");
 
-        var result = await _w.Service().Handle(new RouteRequest(Apply: true, Lane: "api"), CancellationToken.None);
+        var result = await _w.Service().Handle(new RouteRequest(Apply: true, Lane: "api", Force: true), CancellationToken.None);
 
         Assert.Equal(["api"], result.Value.Suggestions.Select(s => s.Lane), StringComparer.Ordinal);
         Assert.Equal(["api"], (await _w.U.World.Config.Load(CancellationToken.None)).Value.Routing.Lanes.Keys, StringComparer.Ordinal);
@@ -95,5 +95,31 @@ public sealed class RouteServiceTests
         var result = await _w.Service().Handle(new RouteRequest(), CancellationToken.None);
 
         Assert.True(result.IsError);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Apply_to_a_provider_with_unknown_usage_is_refused_without_force_and_writes_nothing()
+    {
+        await _w.Ready();
+        _w.U.LimitLane("ui");
+
+        var refused = await _w.Service().Handle(new RouteRequest(Apply: true), CancellationToken.None);
+
+        Assert.True(refused.IsError);
+        Assert.Contains("--force", refused.Error.Message, StringComparison.Ordinal);
+        Assert.Empty((await _w.U.World.Config.Load(CancellationToken.None)).Value.Routing.Lanes);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Apply_to_a_provider_that_shows_room_needs_no_force_and_reminds_about_the_target_hooks()
+    {
+        await _w.Ready();
+        _w.U.LimitLane("ui");
+        _w.CodexLane("api", RoutingWorld.Rollout(10, 10));
+
+        var result = await _w.Service().Handle(new RouteRequest(Apply: true), CancellationToken.None);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Contains(result.Value.Warnings!, w => w.Contains("scripts/install-meta.sh --provider codex", StringComparison.Ordinal) && w.Contains("/hooks", StringComparison.Ordinal));
     }
 }

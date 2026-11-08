@@ -58,7 +58,7 @@ internal sealed class RoutingWorld
         }
     }
 
-    internal static LaneStanding Standing(string lane, string agent, string? model, bool limited = false, double? usedPct = null, string? runningAgent = null, bool reached = false) =>
+    internal static LaneStanding Standing(string lane, string agent, string? model, bool limited = false, double? usedPct = null, string? runningAgent = null, bool reached = false, bool isMeta = false) =>
         new(
             lane,
             agent,
@@ -68,7 +68,8 @@ internal sealed class RoutingWorld
             limited ? Aw.Meta.Core.Usage.UsageKind.Session : null,
             limited ? Now.AddMinutes(30) : null,
             usedPct is { } used ? new ProviderSignal([new ProviderWindow("5h", used, Now.AddHours(1))], reached) : (reached ? new ProviderSignal([], LimitReached: true) : null),
-            Note: null);
+            Note: null,
+            isMeta);
 
     internal RouteService Service() => new(U.World.Config, U.Reader, U.Standings, U.World.CodexModels);
 }

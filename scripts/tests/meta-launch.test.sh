@@ -335,6 +335,13 @@ check "a lane with no routing entry keeps the one-agent rule: only ui is named, 
 jq '.routing.lanes = {api:{agent:"nonesuch"}}' "$cfg" > "$WORK/cfg.m" && mv "$WORK/cfg.m" "$cfg"
 OUT="$(AW_LAUNCHER_CONFIG="$LCFG" bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
 check "a routed agent the catalog lacks: exit 1 with SND-LAUNCH-003" "$RC:$(grep -c 'SND-LAUNCH-003' <<< "$OUT")" "1:1"
+jq '.agent = "codex" | .routing = {models:{"claude-code":["opus"],codex:["gpt-5.5"]}, lanes:{api:{agent:"claude-code"}}}' "$WORK/cfg.route" > "$cfg"
+jq -n --arg c "$WORK/codex-route" '{schema:1, agents:{codex:{override:true, bin:$c}}}' > "$LCFG"
+OUT="$(AW_LAUNCHER_CONFIG="$LCFG" bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
+check "a codex meta refuses a lane routed to Claude: the meta can't message it" "$RC:$(grep -c "the meta can't message a Claude lane" <<< "$OUT"):$(grep -c 'api' <<< "$OUT")" "1:1:1"
+jq '.agent = "codex" | .routing = {models:{"claude-code":["opus"],codex:["gpt-5.5"]}, lanes:{api:{agent:"codex"}}}' "$WORK/cfg.route" > "$cfg"
+OUT="$(AW_LAUNCHER_CONFIG="$LCFG" bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
+check "a codex meta accepts a lane routed to codex" "$RC:$(grep -c "can't message" <<< "$OUT")" "0:0"
 # The lane script: the routed agent's argv, with the routed model as the CLI's own flag (codex -m, claude --model) right after the binary.
 cat > "$WORK/agent-model" <<'EOF2'
 #!/usr/bin/env bash

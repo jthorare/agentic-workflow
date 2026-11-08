@@ -116,4 +116,27 @@ public sealed class LaneRecycleSwitchTests
         Assert.Equal([("t1-api", "/clear"), ("t1-api", $"Read and continue from {Digest}")], _world.Panes.Woken);
         Assert.Empty(_world.Runner.Requests);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_pane_error_after_exit_names_the_launch_command()
+    {
+        await Ready();
+        _world.Panes.WakeFailure = "no such session: t1-api";
+
+        var result = await Service(ClaudeIsGone).Handle(new LaneRecycleRequest("api", Digest, DryRun: false), CancellationToken.None);
+
+        Assert.True(result.IsError);
+        Assert.Contains("aw-meta-launch --team t1 --lanes api --no-open", result.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_switch_warning_reminds_to_install_and_trust_the_target_agents_hooks()
+    {
+        await Ready();
+
+        var result = await Service(ClaudeIsGone).Handle(new LaneRecycleRequest("api", Digest, DryRun: false), CancellationToken.None);
+
+        Assert.Contains("scripts/install-meta.sh --provider codex", result.Value.Warning, StringComparison.Ordinal);
+        Assert.Contains("/hooks", result.Value.Warning, StringComparison.Ordinal);
+    }
 }

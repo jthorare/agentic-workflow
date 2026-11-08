@@ -2305,7 +2305,6 @@ Aw.Meta.Core.Routing.RouteSkip.Reason.init -> void
 Aw.Meta.Core.Routing.RouteSkip.RouteSkip(string! Lane, string! Reason) -> void
 Aw.Meta.Core.Routing.RouteSuggestion
 Aw.Meta.Core.Routing.RouteSuggestion.<Clone>$() -> Aw.Meta.Core.Routing.RouteSuggestion!
-Aw.Meta.Core.Routing.RouteSuggestion.Deconstruct(out string! Lane, out string! FromAgent, out string! FromModel, out string! ToAgent, out string! ToModel, out string! Reason) -> void
 Aw.Meta.Core.Routing.RouteSuggestion.Equals(Aw.Meta.Core.Routing.RouteSuggestion? other) -> bool
 Aw.Meta.Core.Routing.RouteSuggestion.FromAgent.get -> string!
 Aw.Meta.Core.Routing.RouteSuggestion.FromAgent.init -> void
@@ -2316,7 +2315,6 @@ Aw.Meta.Core.Routing.RouteSuggestion.Lane.get -> string!
 Aw.Meta.Core.Routing.RouteSuggestion.Lane.init -> void
 Aw.Meta.Core.Routing.RouteSuggestion.Reason.get -> string!
 Aw.Meta.Core.Routing.RouteSuggestion.Reason.init -> void
-Aw.Meta.Core.Routing.RouteSuggestion.RouteSuggestion(string! Lane, string! FromAgent, string! FromModel, string! ToAgent, string! ToModel, string! Reason) -> void
 Aw.Meta.Core.Routing.RouteSuggestion.ToAgent.get -> string!
 Aw.Meta.Core.Routing.RouteSuggestion.ToAgent.init -> void
 Aw.Meta.Core.Routing.RouteSuggestion.ToModel.get -> string!
@@ -2383,3 +2381,7 @@ Aw.Meta.Core.Ports.ICodexModels.Known(System.Threading.CancellationToken cancell
 Aw.Meta.Core.Routing.CodexModelCheck
 const Aw.Meta.Core.Routing.CodexModelCheck.Codex = "codex" -> string!
 static Aw.Meta.Core.Routing.CodexModelCheck.Warnings(Aw.Meta.Core.Config.RoutingConfig! routing, System.Collections.Generic.IReadOnlySet<string!>! known) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Meta.Core.Routing.RouteSuggestion.Deconstruct(out string! Lane, out string! FromAgent, out string! FromModel, out string! ToAgent, out string! ToModel, out string! Reason, out bool TargetKnown) -> void
+Aw.Meta.Core.Routing.RouteSuggestion.RouteSuggestion(string! Lane, string! FromAgent, string! FromModel, string! ToAgent, string! ToModel, string! Reason, bool TargetKnown = true) -> void
+Aw.Meta.Core.Routing.RouteSuggestion.TargetKnown.get -> bool
+Aw.Meta.Core.Routing.RouteSuggestion.TargetKnown.init -> void

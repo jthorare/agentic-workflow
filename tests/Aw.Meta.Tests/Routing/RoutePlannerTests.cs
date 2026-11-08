@@ -129,4 +129,29 @@ public sealed class RoutePlannerTests
 
         Assert.Contains("ghost is not listed under routing.models", plan.Skipped[0].Reason, StringComparison.Ordinal);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_Codex_meta_does_not_send_a_lane_to_Claude_because_it_cannot_message_one()
+    {
+        var plan = RoutePlanner.Plan(Cfg(), [Standing("meta", "codex", model: null, isMeta: true), Standing("ui", "codex", "gpt-5.5", limited: true)]);
+
+        Assert.Empty(plan.Suggestions);
+        Assert.Contains("the meta can't message a Claude lane", Assert.Single(plan.Skipped).Reason, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_Claude_meta_may_send_a_lane_to_Claude()
+    {
+        var plan = RoutePlanner.Plan(Cfg(), [Standing("meta", "claude-code", model: null, isMeta: true), Standing("ui", "codex", "gpt-5.5", limited: true)]);
+
+        Assert.Equal("claude-code", Assert.Single(plan.Suggestions).ToAgent);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_Codex_meta_still_moves_a_Claude_lane_to_Codex()
+    {
+        var plan = RoutePlanner.Plan(Cfg(), [Standing("meta", "codex", model: null, isMeta: true), Standing("ui", "claude-code", "opus", limited: true)]);
+
+        Assert.Equal("codex", Assert.Single(plan.Suggestions).ToAgent);
+    }
 }

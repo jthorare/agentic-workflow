@@ -44,4 +44,31 @@ public sealed class CodexRateLimitsTests
         Assert.True(CodexRateLimits.Read([RoutingWorld.Rollout(100, 10)], _now)!.LimitReached);
         Assert.False(CodexRateLimits.Read([RoutingWorld.Rollout(100, 10, primaryResets: _now.AddMinutes(-1))], _now)!.LimitReached);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_reached_type_that_names_an_expired_window_is_not_a_limit_while_the_other_window_is_current()
+    {
+        var line = RoutingWorld.Rollout(100, 20, primaryResets: _now.AddHours(-1), reached: "\"primary\"");
+
+        Assert.False(CodexRateLimits.Read([line], _now)!.LimitReached);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_reached_type_that_names_no_window_is_dropped_once_any_window_has_expired()
+    {
+        var line = RoutingWorld.Rollout(100, 20, primaryResets: _now.AddHours(-1), reached: "\"rate_limit\"");
+
+        Assert.False(CodexRateLimits.Read([line], _now)!.LimitReached);
+        Assert.True(CodexRateLimits.Read([RoutingWorld.Rollout(100, 20, reached: "\"rate_limit\"")], _now)!.LimitReached);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_reset_time_in_milliseconds_gives_no_figure_for_that_window_and_does_not_throw()
+    {
+        var line = RoutingWorld.Rollout(40, 20).Replace(_now.AddHours(2).ToUnixTimeSeconds().ToString(System.Globalization.CultureInfo.InvariantCulture), _now.AddHours(2).ToUnixTimeMilliseconds().ToString(System.Globalization.CultureInfo.InvariantCulture), StringComparison.Ordinal);
+
+        var signal = CodexRateLimits.Read([line], _now);
+
+        Assert.Equal(["weekly"], signal!.Windows.Select(w => w.Name), StringComparer.Ordinal);
+    }
 }

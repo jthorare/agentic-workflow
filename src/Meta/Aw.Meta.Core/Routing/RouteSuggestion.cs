@@ -7,7 +7,8 @@ namespace Aw.Meta.Core.Routing;
 /// <param name="ToAgent">The agent to move to.</param>
 /// <param name="ToModel">The equivalent model there.</param>
 /// <param name="Reason">Why.</param>
-public sealed record RouteSuggestion(string Lane, string FromAgent, string FromModel, string ToAgent, string ToModel, string Reason)
+/// <param name="TargetKnown">Whether any lane on the target provider showed a reading.</param>
+public sealed record RouteSuggestion(string Lane, string FromAgent, string FromModel, string ToAgent, string ToModel, string Reason, bool TargetKnown = true)
 {
     /// <summary>What identifies the suggestion across polls (the reason is left out: a limit's reset time changes).</summary>
     public string Key => $"{Lane}:{ToAgent}/{ToModel}";
