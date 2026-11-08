@@ -75,6 +75,19 @@ public sealed class DirectoryLaneFilesContractTests : LaneFilesContract, IDispos
         Assert.Null(record.Value);
     }
 
+    [Theory]
+    [InlineData("{\"agent\":\"codex-yolo\",\"codex\":true,\"hooks\":true,\"noDaemon\":true,\"processName\":\"codex\"}", true, true)]
+    [InlineData("{\"agent\":\"codex-yolo\",\"codex\":true,\"hooks\":true,\"noDaemon\":false,\"processName\":\"codex\"}", true, false)]
+    [InlineData("{\"agent\":\"codex\",\"hooks\":true,\"processName\":\"codex\"}", false, null)]
+    public async Task The_codex_and_noDaemon_fields_of_an_agent_file_are_read_and_an_older_file_has_neither(string json, bool codex, bool? noDaemon)
+    {
+        await File.WriteAllTextAsync(Path.Combine(_dir.Path, "api.agent"), json, TestContext.Current.CancellationToken);
+
+        var record = await new DirectoryLaneFiles(_dir.Path).Record("api", CancellationToken.None);
+
+        Assert.Equal((codex, noDaemon), (record.Value!.Agent!.Codex, record.Value.Agent.NoDaemon));
+    }
+
     [Fact]
     public async Task A_hook_trace_line_reads_back_with_its_four_fields()
     {

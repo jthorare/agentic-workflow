@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Sindri.Ui.Api.Context;
 
 namespace Aw.Sindri.Ui.ViewModels;
 
@@ -81,6 +82,47 @@ internal static partial class Labels
     /// <param name="code">The failure's code.</param>
     /// <returns>"Couldn't rebuild the map with this pin (SND-CONTEXT-040). Try again.".</returns>
     internal static string PinRestFailed(string code) => $"Couldn't rebuild the map with this pin ({code}). Try again.";
+
+    /// <summary>The what-moved part for features the pin gained.</summary>
+    /// <param name="count">How many.</param>
+    /// <returns>"+4 features".</returns>
+    internal static string PinMovedGained(int count) => string.Create(CultureInfo.InvariantCulture, $"+{count} {(count == 1 ? "feature" : "features")}");
+
+    /// <summary>The what-moved part for features the pin lost.</summary>
+    /// <param name="count">How many.</param>
+    /// <param name="to">Where they went; an entry with no name, or no entry at all, is "no concept".</param>
+    /// <returns>"−3 features (now in Sign in)", "−3 features (2 now in Sign in, 1 in no concept)" or "−6 features (now in Notify, Sign in and 1 other)".</returns>
+    internal static string PinMovedLost(int count, IReadOnlyList<PinMovedTo> to)
+    {
+        var head = string.Create(CultureInfo.InvariantCulture, $"\u2212{count} {(count == 1 ? "feature" : "features")}");
+        return to.Count switch
+        {
+            0 => $"{head} (now in {PinNoConcept})",
+            1 => $"{head} (now in {PlaceName(to[0])})",
+            2 => string.Create(CultureInfo.InvariantCulture, $"{head} ({to[0].Features} now in {PlaceName(to[0])}, {to[1].Features} in {PlaceName(to[1])})"),
+            _ => string.Create(CultureInfo.InvariantCulture, $"{head} (now in {PlaceName(to[0])}, {PlaceName(to[1])} and {to.Count - 2} {(to.Count == 3 ? "other" : "others")})"),
+        };
+    }
+
+    private const string PinNoConcept = "no concept";
+
+    private static string PlaceName(PinMovedTo place) => place.Name ?? PinNoConcept;
+
+    /// <summary>The what-moved part for the net change in linked records.</summary>
+    /// <param name="net">Positive for more records, negative for fewer; never 0.</param>
+    /// <returns>"3 more records linked here" or "5 fewer records linked here".</returns>
+    internal static string PinMovedRecords(int net) =>
+        string.Create(CultureInfo.InvariantCulture, $"{Math.Abs(net)} {(net > 0 ? "more" : "fewer")} {(Math.Abs(net) == 1 ? "record" : "records")} linked here");
+
+    /// <summary>The what-moved line while the relink still runs.</summary>
+    /// <param name="features">The feature parts.</param>
+    /// <returns>"+4 features; records linking…".</returns>
+    internal static string PinMovedRecordsLinking(string features) => $"{features}; records linking\u2026";
+
+    /// <summary>The what-moved line when the relink failed.</summary>
+    /// <param name="features">The feature parts; empty when no feature moved.</param>
+    /// <returns>"+4 features; records not linked yet, retrying", or "Records not linked yet, retrying" alone.</returns>
+    internal static string PinMovedRecordsFailed(string features) => features.Length == 0 ? "Records not linked yet, retrying" : $"{features}; records not linked yet, retrying";
 
     /// <summary>The problem line for features the map no longer has.</summary>
     /// <param name="gone">How many.</param>

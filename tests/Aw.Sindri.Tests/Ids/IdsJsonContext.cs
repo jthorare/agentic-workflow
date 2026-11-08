@@ -22,5 +22,6 @@ namespace Aw.Sindri.Tests.Ids;
 [JsonSerializable(typeof(RequestIdHolder))]
 [JsonSerializable(typeof(RepoNameHolder))]
 [JsonSerializable(typeof(SubjectIdHolder))]
+[JsonSerializable(typeof(TodoIdHolder))]
 [JsonSerializable(typeof(TraceIdHolder))]
 internal sealed partial class IdsJsonContext : JsonSerializerContext;

@@ -3,7 +3,7 @@
   "title": "SND-LINEAR-011",
   "status": 504,
   "detail": "Linear didn't confirm the comment on ENG-12 (fix: retry; the same client id is never posted twice)",
-  "traceId": "<trace>",
   "outcome": "unknown",
-  "clientId": "5d0a4f6e-3b1c-4c0e-9a57-2f1d8c9b7e01"
+  "clientId": "5d0a4f6e-3b1c-4c0e-9a57-2f1d8c9b7e01",
+  "traceId": "<trace>"
 }

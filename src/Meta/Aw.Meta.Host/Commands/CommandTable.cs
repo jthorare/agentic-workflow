@@ -50,6 +50,7 @@ internal static class CommandTable
         LaneStopCheckCommand.Entry,
         LaneReplyCommand.Entry,
         UsageCommand.Entry,
+        RouteCommand.Entry,
         UsageWaitCommand.Entry,
     ];
 
