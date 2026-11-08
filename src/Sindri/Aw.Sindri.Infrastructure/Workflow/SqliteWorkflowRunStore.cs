@@ -63,7 +63,31 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
         }, cancellationToken);
     }
 
-    public ValueTask<Result<WorkflowRun?>> PromoteOldestQueued(WorkflowId workflow, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public ValueTask<Result<WorkflowRun?>> PromoteOldestQueued(WorkflowId workflow, CancellationToken cancellationToken) =>
+        // why: the in-flight read and the status change share one write transaction, so two runs ending together cannot both promote one.
+        RecipeSessions.Write(database, async ValueTask<Result<WorkflowRun?>> (session, token) =>
+        {
+            var inFlight = await RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.InFlight, c => c.Bind("$workflow", workflow.Value)), WorkflowRunMapper.Instance, token).ConfigureAwait(false);
+            if (inFlight.IsError)
+            {
+                return inFlight.Error;
+            }
+
+            if (inFlight.Value.Count == 0 || inFlight.Value.Any(static r => r.Status != WorkflowRunStatus.Queued))
+            {
+                return (WorkflowRun?)null;
+            }
+
+            var oldest = inFlight.Value[0];
+            var moved = await RecipeSessions.Execute(session, new SqlStatement(WorkflowRunSql.SetStatus,
+                c => c.Bind("$id", oldest.Id.Value).Bind("$status", RunStatusText.Of(WorkflowRunStatus.Running)).Bind("$outputs", (string?)null).Bind("$error", (string?)null).Bind("$ended", (string?)null)), token).ConfigureAwait(false);
+            if (moved.IsError)
+            {
+                return moved.Error;
+            }
+
+            return (WorkflowRun?)(oldest with { Status = WorkflowRunStatus.Running });
+        }, cancellationToken);
 
     public async ValueTask<Result<WorkflowRun>> Get(WorkflowRunId id, CancellationToken cancellationToken)
     {

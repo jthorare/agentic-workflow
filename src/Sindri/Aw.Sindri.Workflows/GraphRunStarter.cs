@@ -56,30 +56,22 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
     {
         while (true)
         {
-            var inFlight = await _runs.InFlight(workflow, cancellationToken).ConfigureAwait(false);
-            if (inFlight.IsError)
+            // why: one store call checks that nothing of the workflow is in flight and starts the oldest queued run, so two runs ending together cannot both promote one
+            var promoted = await _runs.PromoteOldestQueued(workflow, cancellationToken).ConfigureAwait(false);
+            if (promoted.IsError)
             {
-                return inFlight.Error;
+                return promoted.Error;
             }
 
-            // why: only when nothing of the workflow is running or waiting does the oldest queued run get its turn
-            if (inFlight.Value.Count == 0 || inFlight.Value.Any(static r => r.Status != WorkflowRunStatus.Queued))
+            if (promoted.Value is not { } run)
             {
                 return (WorkflowRunId?)null;
             }
 
-            var oldest = inFlight.Value[0];
-
-            var running = await _runs.SetStatus(oldest.Id, WorkflowRunStatus.Running, outputs: null, error: null, cancellationToken).ConfigureAwait(false);
-            if (running.IsError)
-            {
-                return running.Error;
-            }
-
             // why: a run whose start fails is marked failed by Launch; the next queued run then gets the turn
-            if (!(await Launch(running.Value, cancellationToken).ConfigureAwait(false)).IsError)
+            if (!(await Launch(run, cancellationToken).ConfigureAwait(false)).IsError)
             {
-                return (WorkflowRunId?)oldest.Id;
+                return (WorkflowRunId?)run.Id;
             }
         }
     }

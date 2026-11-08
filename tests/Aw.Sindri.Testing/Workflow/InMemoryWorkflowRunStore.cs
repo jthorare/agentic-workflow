@@ -53,7 +53,22 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     }
 
     /// <inheritdoc/>
-    public ValueTask<Result<WorkflowRun?>> PromoteOldestQueued(WorkflowId workflow, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public ValueTask<Result<WorkflowRun?>> PromoteOldestQueued(WorkflowId workflow, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            var inFlight = _runs.Where(r => r.WorkflowId == workflow && r.Status is WorkflowRunStatus.Queued or WorkflowRunStatus.Running or WorkflowRunStatus.Waiting).ToList();
+            if (inFlight.Count == 0 || inFlight.Exists(static r => r.Status != WorkflowRunStatus.Queued))
+            {
+                return Ok<WorkflowRun?>(null);
+            }
+
+            var oldest = inFlight.OrderBy(static r => r.StartedAt).ThenBy(static r => r.Id.Value, StringComparer.Ordinal).First();
+            var at = _runs.FindIndex(r => r.Id == oldest.Id);
+            _runs[at] = oldest with { Status = WorkflowRunStatus.Running };
+            return Ok<WorkflowRun?>(_runs[at]);
+        }
+    }
 
     /// <inheritdoc/>
     public ValueTask<Result<WorkflowRun>> Get(WorkflowRunId id, CancellationToken cancellationToken)
