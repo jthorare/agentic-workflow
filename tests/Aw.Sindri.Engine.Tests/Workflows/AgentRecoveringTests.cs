@@ -77,7 +77,15 @@ public sealed class AgentRecoveringTests
 
     private sealed class RecoveryChecks : IReportOutputChecks
     {
-        public IReadOnlyList<string> Violations(IReadOnlyDictionary<FactKey, ReadOnlyMemory<byte>> outputs, IReadOnlySet<FactKey> payloads, bool scopingQuestions) => [];
+        // The one rule main's checker applied to a payload fact: its output is a JSON object or array.
+        public IReadOnlyList<string> Violations(IReadOnlyDictionary<FactKey, ReadOnlyMemory<byte>> outputs, IReadOnlySet<FactKey> payloads, bool scopingQuestions) =>
+            [.. payloads.Where(key => outputs.TryGetValue(key, out var bytes) && !IsObjectOrArray(bytes.Span)).Select(static key => $"{key.Value} is not a JSON object or array")];
+
+        private static bool IsObjectOrArray(ReadOnlySpan<byte> bytes)
+        {
+            var text = System.Text.Encoding.UTF8.GetString(bytes).TrimStart();
+            return text.StartsWith('{') || text.StartsWith('[');
+        }
     }
 
     private sealed class RefusingChecks : IReportOutputChecks
