@@ -92,7 +92,7 @@ public sealed class WatchUsageTests
     public async Task A_Codex_lane_at_its_weekly_limit_is_announced_once_and_back_when_the_window_resets_and_is_never_typed_into()
     {
         await _u.Ready();
-        _u.World.LaneFiles.Put(new Aw.Meta.Core.Lanes.LaneRecord("ui", Aw.Meta.Core.Ids.SessionId.From("codex-ui"), new Aw.Meta.Core.Lanes.LaneAgent("codex", "codex", Hooks: true), Testing.A.At(1)));
+        _u.World.LaneFiles.Put(new Core.Lanes.LaneRecord("ui", Core.Ids.SessionId.From("codex-ui"), new Core.Lanes.LaneAgent("codex", "codex", Hooks: true), Testing.A.At(1)));
         _u.World.CodexRollouts.Put("codex-ui", Routing.RoutingWorld.Rollout(10, 100) + "\n", Testing.A.At(55));
 
         await Watch(TimeSpan.FromMinutes(20));
@@ -111,7 +111,7 @@ public sealed class WatchUsageTests
     public async Task A_Codex_lane_at_its_5h_limit_reads_as_a_session_limit()
     {
         await _u.Ready();
-        _u.World.LaneFiles.Put(new Aw.Meta.Core.Lanes.LaneRecord("ui", Aw.Meta.Core.Ids.SessionId.From("codex-ui"), new Aw.Meta.Core.Lanes.LaneAgent("codex", "codex", Hooks: true), Testing.A.At(1)));
+        _u.World.LaneFiles.Put(new Core.Lanes.LaneRecord("ui", Core.Ids.SessionId.From("codex-ui"), new Core.Lanes.LaneAgent("codex", "codex", Hooks: true), Testing.A.At(1)));
         _u.World.CodexRollouts.Put("codex-ui", Routing.RoutingWorld.Rollout(100, 30) + "\n", Testing.A.At(55));
 
         await Watch(TimeSpan.FromMinutes(10));

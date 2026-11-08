@@ -238,7 +238,7 @@ A Claude usage limit stops every lane and your own subagents at once ("You've hi
 - Run `aw-meta route` when `watch` prints `ROUTE SUGGEST <lane> ...`, when `USAGE LIMITED` hits and the reset is hours away, and before you hand a lane new work.
 - It only prints. Read each `switch` line and each `keep` line (`keep` says why a limited lane cannot move: no equivalent model, the target provider is limited too, a relaunch is pending).
 - Switching a lane is your action. Run `aw-meta route --apply` (add `--lane <l>` for one lane), then log the decision: `aw-meta log-append --kind decision --text "route: moved <lane> from <from> to <to> because <reason>"`.
-- `--apply` writes `routing.lanes.<lane>` and starts nothing. A team runs one agent, so tell the owner which lane to relaunch on the new agent, and why. Do not move a lane whose provider shows `usage unknown` without saying so in the digest.
+- `--apply` writes `routing.lanes.<lane>` and starts nothing. The lane moves at its next start: for a Claude lane run `aw-meta lane-recycle <lane> --digest <path>` (it exits the Claude and relaunches the lane on the routed agent and model instead of clearing), then `aw-meta lane-send --lane <lane>` the digest line it prints (the new agent starts from its kickoff prompt). A lane already on Codex or Cursor: exit it and run `aw-meta-launch --lanes <lane>`. Do not move a lane whose provider shows `usage unknown` without saying so in the digest.
 
 ## The running log
 

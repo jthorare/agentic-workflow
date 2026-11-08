@@ -2,11 +2,12 @@ using Aw.Kernel;
 using Aw.Meta.Core;
 using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Coordination;
+using Aw.Meta.Core.Lanes;
 using Aw.Meta.Core.Ports;
 
 namespace Aw.Meta.Features.LaneRecycle;
 
-/// <summary>The refusals before a recycle: an unknown lane, a lane that isn't Claude Code, a lane with no session, and a digest that is missing, empty or old.</summary>
+/// <summary>The refusals before a recycle, and whether routing.lanes sends the lane to another agent. The refusals: an unknown lane, a lane that isn't Claude Code, a lane with no session, and a digest that is missing, empty or old.</summary>
 /// <param name="files">The lane records.</param>
 /// <param name="sessions">The session the lane's Claude runs now.</param>
 /// <param name="digests">The digest files.</param>
@@ -49,7 +50,21 @@ internal sealed class RecycleGuard(ILaneFiles files, ILaneSessions sessions, IDi
         }
 
         var before = await context.ReadLane(team.Team, name, team.Context.RecycleAt, cancellationToken).ConfigureAwait(false);
-        return new RecyclePlan(team.Team, name, session, before.IsSuccess ? before.Value.Tokens : null, Path.GetFullPath(request.Digest));
+        var (to, model) = Routed(team, name, record.Value);
+        return new RecyclePlan(team.Team, name, session, before.IsSuccess ? before.Value.Tokens : null, Path.GetFullPath(request.Digest), to, model);
+    }
+
+    // The agent routing.lanes assigns when it differs from the one the lane runs (the lane is Claude Code here), else none.
+    private static (string? Agent, string? Model) Routed(TeamConfig team, string lane, LaneRecord? record)
+    {
+        if (!team.Routing.Lanes.TryGetValue(lane, out var route))
+        {
+            return (null, null);
+        }
+
+        var running = record?.Agent?.Agent ?? team.Agent ?? LaneAgent.ClaudeCode;
+        var assigned = route.Agent ?? (route.Model is { } model ? team.Routing.AgentOf(model) : null);
+        return assigned is not null && !string.Equals(assigned, running, StringComparison.Ordinal) ? (assigned, route.Model) : (null, null);
     }
 
     private async ValueTask<Result<Unit>> CheckDigest(string path, CancellationToken cancellationToken)
