@@ -34,6 +34,15 @@ public sealed class ConnectionSecretsTests
     // then searches that surface's raw text. A provider that echoes the token back in an error body is part of the setup.
     private static readonly string _canary = "aw-canary-tok-" + RealTime.NewGuid().ToString("N");
 
+    // The OAuth client secret has a canary of its own: the CLI posts it beside the key, and a leak of one must not hide behind the other.
+    private static readonly string _secretCanary = "aw-canary-clientsecret-" + RealTime.NewGuid().ToString("N");
+
+    private static void AssertNoCanary(string text)
+    {
+        Assert.DoesNotContain(_canary, text, StringComparison.Ordinal);
+        Assert.DoesNotContain(_secretCanary, text, StringComparison.Ordinal);
+    }
+
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     /// <summary>A provider whose refusal body repeats the credential it was sent.</summary>
@@ -46,6 +55,39 @@ public sealed class ConnectionSecretsTests
         }
     }
 
+    /// <summary>An oauth add that succeeds with a client secret: it is stored with the tokens and must be in no row.</summary>
+    private static async Task<string> DriveOauthSuccess(ConnectionHarness world)
+    {
+        var signed = new FakeSignInSession();
+        var okAdd = world.Add(signed).Handle(ConnectionHarness.Oauth(name: "linear:ok") with { ClientSecret = _secretCanary }, Token).AsTask();
+        signed.Succeed(new TokenSet("access-ok", "refresh-ok", ExpiresAt: null));
+        return JsonSerializer.Serialize((await okAdd).Value, SindriJsonContext.Default.AddConnectionResponse);
+    }
+
+    /// <summary>The MCP adds: a key and a client secret named by the variables of serve's environment, one add that fails because the secret store is down, and a remove.</summary>
+    private static async Task<List<ModelContextProtocol.Protocol.CallToolResult>> DriveMcpAdds(IServiceProvider services, ConnectionHarness world)
+    {
+        var results = new List<ModelContextProtocol.Protocol.CallToolResult>();
+        world.Environment.Set("ACME_MCP_KEY", _canary);
+        world.Environment.Set("GH_MCP_SECRET", _secretCanary);
+        var addArguments = new Dictionary<string, JsonElement>(StringComparer.Ordinal) { ["name"] = JsonSerializer.SerializeToElement("acme:mcp"), ["kind"] = JsonSerializer.SerializeToElement("rest"), ["keyEnv"] = JsonSerializer.SerializeToElement("ACME_MCP_KEY") };
+        results.Add(await ConnectionTools.CallAdd(services, addArguments, Token));
+        var oauthArguments = new Dictionary<string, JsonElement>(StringComparer.Ordinal)
+        {
+            ["name"] = JsonSerializer.SerializeToElement("linear:mcp"),
+            ["preset"] = JsonSerializer.SerializeToElement("linear"),
+            ["clientId"] = JsonSerializer.SerializeToElement("client-123"),
+            ["clientSecretEnv"] = JsonSerializer.SerializeToElement("GH_MCP_SECRET"),
+        };
+        results.Add(await ConnectionTools.CallAdd(services, oauthArguments, Token));
+        world.Secrets.Fails = true;
+        addArguments["name"] = JsonSerializer.SerializeToElement("acme:mcpdown");
+        results.Add(await ConnectionTools.CallAdd(services, addArguments, Token));
+        world.Secrets.Fails = false;
+        results.Add(await ConnectionTools.CallRemove(services, new Dictionary<string, JsonElement>(StringComparer.Ordinal) { ["name"] = JsonSerializer.SerializeToElement("acme:mcp") }, Token));
+        return results;
+    }
+
     /// <summary>The CLI path: the key and the client secret ride in the request, read from the CLI's own environment.</summary>
     private static async Task<string> DriveCliPath(ConnectionHarness world)
     {
@@ -53,7 +95,7 @@ public sealed class ConnectionSecretsTests
         var sent = await world.Add().Handle(request, Token);
         return JsonSerializer.Serialize(sent.IsSuccess ? sent.Value : null, SindriJsonContext.Default.AddConnectionResponse)
             + (sent.IsError ? sent.Error.Message : string.Empty)
-            + (request with { ClientSecret = _canary });
+            + (request with { ClientSecret = _secretCanary });
     }
 
     /// <summary>Plants the canary as a rest key and an oauth token set, then runs add, a refused test and a failed sign-in.</summary>
@@ -82,10 +124,12 @@ public sealed class ConnectionSecretsTests
             }
         }
 
-        var pending = world.Add().Handle(ConnectionHarness.Oauth(name: "linear:other") with { ClientSecret = _canary }, Token).AsTask();
-        world.SignIn.Fail(SindriErrors.ConnectionConsentDenied.With($"denied for {_canary}"));
+        var pending = world.Add().Handle(ConnectionHarness.Oauth(name: "linear:other") with { ClientSecret = _secretCanary }, Token).AsTask();
+        world.SignIn.Fail(SindriErrors.ConnectionConsentDenied.With($"denied for {_canary} and {_secretCanary}"));
         var failed = await pending;
         outputs.Add(failed.IsError ? failed.Error.Message : string.Empty);
+
+        outputs.Add(await DriveOauthSuccess(world));
 
         // an add that fails after the key was read: the secret store is down
         world.Secrets.Fails = true;
@@ -104,8 +148,8 @@ public sealed class ConnectionSecretsTests
         // 10a writes no ledger events, so this canary has nothing to check yet. PR 10b flips it to NotEmpty with its
         // connection.needs-sign-in event; until then a 10a change that starts writing events fails here instead of passing quietly.
         Assert.Empty(events);
-        Assert.All(events, e => Assert.DoesNotContain(_canary, JsonSerializer.Serialize(e.Envelope) + e.IdempotencyKey + e.Item, StringComparison.Ordinal));
-        Assert.All(events, e => Assert.DoesNotContain(_canary, e.Envelope.Payload, StringComparison.Ordinal));
+        Assert.All(events, e => AssertNoCanary(JsonSerializer.Serialize(e.Envelope) + e.IdempotencyKey + e.Item));
+        Assert.All(events, e => AssertNoCanary(e.Envelope.Payload));
     }
 
     [Fact]
@@ -113,7 +157,7 @@ public sealed class ConnectionSecretsTests
     {
         var (world, outputs) = await DriveEveryPath();
 
-        Assert.All(world.Logs.Lines, line => Assert.DoesNotContain(_canary, line, StringComparison.Ordinal));
+        Assert.All(world.Logs.Lines, AssertNoCanary);
         Assert.NotEmpty(outputs);   // the paths ran: a stub that throws fails above, never here
     }
 
@@ -140,20 +184,12 @@ public sealed class ConnectionSecretsTests
             results.Add(await ConnectionTools.CallTest(services, arguments, Token));
         }
 
-        // add (serve's environment holds the canary), an add that fails because the secret store is down, and remove
-        world.Environment.Set("ACME_MCP_KEY", _canary);
-        var addArguments = new Dictionary<string, JsonElement>(StringComparer.Ordinal) { ["name"] = JsonSerializer.SerializeToElement("acme:mcp"), ["kind"] = JsonSerializer.SerializeToElement("rest"), ["keyEnv"] = JsonSerializer.SerializeToElement("ACME_MCP_KEY") };
-        results.Add(await ConnectionTools.CallAdd(services, addArguments, Token));
-        world.Secrets.Fails = true;
-        addArguments["name"] = JsonSerializer.SerializeToElement("acme:mcpdown");
-        results.Add(await ConnectionTools.CallAdd(services, addArguments, Token));
-        world.Secrets.Fails = false;
-        results.Add(await ConnectionTools.CallRemove(services, new Dictionary<string, JsonElement>(StringComparer.Ordinal) { ["name"] = JsonSerializer.SerializeToElement("acme:mcp") }, Token));
+        results.AddRange(await DriveMcpAdds(services, world));
 
         Assert.All(results, result =>
         {
             var text = (result.StructuredContent?.GetRawText() ?? string.Empty) + string.Concat(result.Content.OfType<ModelContextProtocol.Protocol.TextContentBlock>().Select(static t => t.Text));
-            Assert.DoesNotContain(_canary, text, StringComparison.Ordinal);
+            AssertNoCanary(text);
         });
     }
 
@@ -163,7 +199,7 @@ public sealed class ConnectionSecretsTests
         // the answers the CLI prints and the route serializes, one per path; the CLI's own stdout and stderr only print these fields
         var (_, outputs) = await DriveEveryPath();
 
-        Assert.All(outputs, output => Assert.DoesNotContain(_canary, output, StringComparison.Ordinal));
+        Assert.All(outputs, AssertNoCanary);
         Assert.Contains(outputs, static output => output.Contains("acme:key", StringComparison.Ordinal));   // the answers are not empty
     }
 
@@ -175,7 +211,7 @@ public sealed class ConnectionSecretsTests
         foreach (var row in world.Store.Rows)
         {
             var fields = string.Join('\n', [row.Name.ToString(), row.Preset, row.StatusReason, row.SecretPointer?.ToString(), row.CreatedBy, .. row.Config.Select(static p => p.Key + "=" + p.Value)]);
-            Assert.DoesNotContain(_canary, fields, StringComparison.Ordinal);
+            AssertNoCanary(fields);
         }
 
         Assert.Contains(world.Store.Rows, static r => r.Name.ToString() == "acme:cli");   // the CLI-sent key was stored (in the secret store), so the scan above read a real row
@@ -192,16 +228,25 @@ public sealed class ConnectionSecretsTests
         var service = new Features.AddConnection.AddConnectionService(store, world.Secrets, world.Presets, world.Environment, world.Clock, world.Callers, oauth);
 
         var added = await service.Handle(ConnectionHarness.Rest("acme:sql") with { KeyEnv = null, Key = _canary }, Token);
+        var signed = new FakeSignInSession();
+        var oauthService = new Features.AddConnection.AddConnectionService(store, world.Secrets, world.Presets, world.Environment, world.Clock, world.Callers, new Features.AddConnection.OAuthSignInFlow(store, world.Secrets, signed, world.Clock, world.Outcomes));
+        var oauthAdd = oauthService.Handle(ConnectionHarness.Oauth(name: "linear:sql") with { ClientSecret = _secretCanary }, Token).AsTask();
+        signed.Succeed(new TokenSet("access-sql", "refresh-sql", ExpiresAt: null));
+        var oauthAdded = await oauthAdd;
 
         Assert.True(added.IsSuccess, added.IsError ? added.Error.Message : null);
+        Assert.True(oauthAdded.IsSuccess, oauthAdded.IsError ? oauthAdded.Error.Message : null);
         var file = Path.Combine(home.Path, "ledger.db");
         await using var connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={file};Mode=ReadOnly;Pooling=False");
         await connection.OpenAsync(Token);
         await using var command = connection.CreateCommand();
-        command.CommandText = "SELECT name || ' ' || kind || ' ' || ifnull(preset, '') || ' ' || config_json || ' ' || ifnull(secret_pointer, '') || ' ' || status || ' ' || ifnull(status_reason, '') || ' ' || created_by FROM connection";
+        command.CommandText = "SELECT group_concat(name || ' ' || kind || ' ' || ifnull(preset, '') || ' ' || config_json || ' ' || ifnull(secret_pointer, '') || ' ' || status || ' ' || ifnull(status_reason, '') || ' ' || created_by, char(10)) FROM connection";
         var text = Convert.ToString(await command.ExecuteScalarAsync(Token), System.Globalization.CultureInfo.InvariantCulture);
+        command.CommandText = "SELECT group_concat(config_json, char(10)) FROM connection";
+        var config = Convert.ToString(await command.ExecuteScalarAsync(Token), System.Globalization.CultureInfo.InvariantCulture);
         Assert.Contains("acme:sql", text, StringComparison.Ordinal);
-        Assert.DoesNotContain(_canary, text, StringComparison.Ordinal);
+        AssertNoCanary(text ?? string.Empty);
+        AssertNoCanary(config ?? string.Empty);   // config_json alone: neither value lands there
     }
 
     private static void AssertClean(string text)
