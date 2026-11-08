@@ -1,5 +1,4 @@
 using Aw.Sindri.Ui.Api;
-using Aw.Sindri.Ui.ViewModels.Linear;
 
 namespace Aw.Sindri.Ui.ViewModels.Todo;
 
@@ -23,26 +22,6 @@ internal sealed partial class TodoPanelViewModel
 
     /// <summary>True when any sync line is drawn.</summary>
     public bool HasSync => SyncQuiet.Length > 0 || SyncLive.Length > 0;
-
-    /// <summary>Reads the note's state for the sync line (on connect and after every event). A failed read leaves the last line; an older Sindri's bare 404 hides it.</summary>
-    /// <param name="url">The API's base URL.</param>
-    /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>A task that completes when the line is shown.</returns>
-    internal async Task RefreshSyncLine(Uri url, CancellationToken cancellationToken)
-    {
-        var read = await _api.TodoNote(url, cancellationToken).ConfigureAwait(true);
-        if (read.IsError)
-        {
-            if (OlderSindri.IsNotServed(read.Error))
-            {
-                ShowSync(note: null);
-            }
-
-            return;
-        }
-
-        ShowSync(read.Value);
-    }
 
     /// <summary>Shows the sync line for a note read; null (no note route, or none read) hides it.</summary>
     /// <param name="note">The note's state, or null.</param>
