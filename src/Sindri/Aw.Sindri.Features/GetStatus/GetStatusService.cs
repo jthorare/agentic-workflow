@@ -51,8 +51,7 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
     {
         var rows = await healthRows.Read(approved, cancellationToken).ConfigureAwait(false);
         var problems = await healthRows.CodeIndexProblems(approved, cancellationToken).ConfigureAwait(false);
-        const ProfileApproval standing = ProfileApproval.Approved;   // #2258 PR 1: nothing waits for approval; the enum goes in a later cleanup
-        var health = HealthSummary.For(running, views, rows, standing, healthRows.Context(problems));
+        var health = HealthSummary.For(running, views, rows, healthRows.Context(problems));
         var stuck = HealthSummary.WithStuck(health, await healthRows.Stuck(cancellationToken).ConfigureAwait(false));   // API P13: stuck workflow instances make it degraded
         var parked = HealthSummary.WithUnavailable(stuck, await healthRows.Unavailable(cancellationToken).ConfigureAwait(false));   // a Step whose dependency is down parks asking no one: health shows it
         var stalled = HealthSummary.WithStalledAgents(parked, await healthRows.Stalled(cancellationToken).ConfigureAwait(false));   // issue #1000: so do agent runs idle past their launch's idle time
