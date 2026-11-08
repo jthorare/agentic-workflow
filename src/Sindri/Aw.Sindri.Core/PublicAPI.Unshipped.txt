@@ -25685,3 +25685,8 @@ Aw.Sindri.Core.Connections.TokenSet.ClientSecret.get -> string?
 Aw.Sindri.Core.Connections.TokenSet.ClientSecret.init -> void
 Aw.Sindri.Core.Connections.TokenSet.Deconstruct(out string! AccessToken, out string? RefreshToken, out System.DateTimeOffset? ExpiresAt, out string? ClientSecret) -> void
 Aw.Sindri.Core.Connections.TokenSet.TokenSet(string! AccessToken, string? RefreshToken, System.DateTimeOffset? ExpiresAt, string? ClientSecret = null) -> void
+Aw.Sindri.Core.Connections.SignInOutcomes
+Aw.Sindri.Core.Connections.SignInOutcomes.SignInOutcomes() -> void
+Aw.Sindri.Core.Connections.SignInOutcomes.Clear(string! name) -> void
+Aw.Sindri.Core.Connections.SignInOutcomes.Failed(string! name, Aw.Kernel.Error! error) -> void
+Aw.Sindri.Core.Connections.SignInOutcomes.Last(string! name) -> Aw.Kernel.Error?

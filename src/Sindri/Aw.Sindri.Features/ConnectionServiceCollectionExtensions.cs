@@ -1,4 +1,5 @@
 using Aw.Kernel.Services;
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.GetConnection;

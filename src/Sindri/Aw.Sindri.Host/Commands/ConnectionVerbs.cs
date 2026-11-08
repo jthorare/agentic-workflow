@@ -187,7 +187,7 @@ internal sealed class ConnectionVerbs(ControlPlaneClient client, Output output, 
     {
         if (string.IsNullOrWhiteSpace(variable))
         {
-            return Aw.Kernel.Results.Success<string?>(value: null);
+            return Kernel.Results.Success<string?>(value: null);
         }
 
         return _environment(variable) is { Length: > 0 } value

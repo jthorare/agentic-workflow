@@ -643,7 +643,11 @@
         },
         "keyEnv": {
           "type": "string",
-          "description": "The environment variable that holds the key of a rest or cli connection"
+          "description": "The NAME of an environment variable in the environment of the running sindri serve (not your shell) that holds the key of a rest or cli connection; the error says when serve has no such variable"
+        },
+        "clientSecretEnv": {
+          "type": "string",
+          "description": "The NAME of an environment variable in the running sindri serve's environment that holds the OAuth client secret, for providers that want one (the github and google presets)"
         }
       },
       "required": [
