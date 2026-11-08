@@ -32,7 +32,7 @@ internal static class TodoWire
     /// <param name="text">The text, or null.</param>
     /// <returns>The id (null for none), or SND-TODO-001.</returns>
     internal static Result<TodoClientId?> Client(string? text) =>
-        text is null ? Aw.Kernel.Results.Success<TodoClientId?>(value: null)
-        : TodoClientId.TryFrom(text, out var id) ? Aw.Kernel.Results.Success<TodoClientId?>(id)
+        text is null ? Kernel.Results.Success<TodoClientId?>(value: null)
+        : TodoClientId.TryFrom(text, out var id) ? Kernel.Results.Success<TodoClientId?>(id)
         : SindriErrors.TodoText.With("A client id is 1 to 64 of A-Z, a-z, 0-9, '_' and '-'.");
 }

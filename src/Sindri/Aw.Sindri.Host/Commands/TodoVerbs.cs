@@ -273,7 +273,7 @@ internal sealed class TodoVerbs(ControlPlaneClient client, Output output, Func<b
         return text.ToString();
     }
 
-    private static string Side(Aw.Sindri.Core.Events.TodoSide side) =>
+    private static string Side(Core.Events.TodoSide side) =>
         side.Removed ? "removed" : $"{(side.Done ? "[done] " : string.Empty)}{side.Text}{(side.Due is { } due ? " due " + due.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : string.Empty)}";
 
     private static string Instant(DateTimeOffset at) => at.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture);

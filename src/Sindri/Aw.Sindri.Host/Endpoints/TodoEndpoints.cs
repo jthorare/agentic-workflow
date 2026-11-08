@@ -87,6 +87,6 @@ internal static class TodoEndpoints
         null or "open" => TodoListState.Open,
         "done" => TodoListState.Done,
         "all" => TodoListState.All,
-        _ => SindriErrors.InvalidInput.With($"state is open, done or all, not '{Aw.Sindri.Core.Text.SafeText.Line(Aw.Sindri.Core.Text.SafeText.Escape(state), 40)}' (fix: ?state=open)"),
+        _ => SindriErrors.InvalidInput.With($"state is open, done or all, not '{Core.Text.SafeText.Line(Core.Text.SafeText.Escape(state), 40)}' (fix: ?state=open)"),
     };
 }
