@@ -76,4 +76,28 @@ if merge_hook "$f" Stop aw:x '{"hooks":[{"type":"command","command":"x.sh"}]}' 2
 check "rejected merge leaves no leftover temp files beside settings.json" \
   "$(find "$(dirname "$f")" -maxdepth 1 -name ".$(basename "$f").*" | wc -l | tr -d ' ')" "0"
 
+# #2275: a re-merge replaces the owned entry where it stands (Codex keys hook trust by event and position)
+mk() { jq -nc --arg c "$1 # aw:$2" '{hooks:[{type:"command",command:$c}]}'; }
+f=$(work empty.json)
+merge_hook "$f" Stop aw:a "$(mk /a.sh a)"; merge_hook "$f" Stop aw:b "$(mk /b.sh b)"; merge_hook "$f" Stop aw:c "$(mk /c.sh c)"
+merge_hook "$f" Stop aw:a "$(mk /a2.sh a)"
+check "nested: re-merging the first entry keeps its position and takes the new text" \
+  "$(jq -r '[.hooks.Stop[].hooks[0].command] | join(",")' "$f")" "/a2.sh # aw:a,/b.sh # aw:b,/c.sh # aw:c"
+merge_hook "$f" Stop aw:b "$(mk /b.sh b)"
+check "nested: an unchanged re-merge in the middle keeps the order" \
+  "$(jq -r '[.hooks.Stop[].hooks[0].command] | join(",")' "$f")" "/a2.sh # aw:a,/b.sh # aw:b,/c.sh # aw:c"
+jq '.hooks.Stop += [.hooks.Stop[0]]' "$f" > "$f.dup" && mv "$f.dup" "$f"
+merge_hook "$f" Stop aw:a "$(mk /a3.sh a)"
+check "nested: a duplicate of an owned entry is dropped, the first one kept in place" \
+  "$(jq -r '[.hooks.Stop[].hooks[0].command] | join(",")' "$f")" "/a3.sh # aw:a,/b.sh # aw:b,/c.sh # aw:c"
+g=$(work empty.json)
+echo '{"hooks":{"Stop":[{"hooks":[{"type":"command","command":"/own.sh # mine"},{"type":"command","command":"/a.sh # aw:a"}]}]}}' > "$g"
+merge_hook "$g" Stop aw:a "$(mk /a2.sh a)"
+check "nested: a group that also holds a foreign hook keeps it; the entry is appended" \
+  "$(jq -c '[.hooks.Stop[].hooks[].command]' "$g")" '["/own.sh # mine","/a2.sh # aw:a"]'
+h=$(mktemp); echo '{"version":1,"hooks":{}}' > "$h"
+for i in a b c; do merge_hook_flat "$h" stop "aw:$i" "{\"command\":\"/$i.sh # aw:$i\"}"; done
+merge_hook_flat "$h" stop aw:a '{"command":"/a2.sh # aw:a"}'
+check "flat: re-merging the first entry keeps its position" "$(jq -r '[.hooks.stop[].command] | join(",")' "$h")" "/a2.sh # aw:a,/b.sh # aw:b,/c.sh # aw:c"
+
 exit $fail

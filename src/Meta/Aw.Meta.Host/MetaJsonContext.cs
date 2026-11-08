@@ -26,6 +26,7 @@ using Aw.Meta.Features.OwnerAsk;
 using Aw.Meta.Features.QueueDrop;
 using Aw.Meta.Features.QueueGate;
 using Aw.Meta.Features.Roles;
+using Aw.Meta.Features.Routing;
 using Aw.Meta.Features.Status;
 using Aw.Meta.Features.StopCheck;
 using Aw.Meta.Features.SyncInbox;
@@ -74,6 +75,7 @@ namespace Aw.Meta.Host;
 [JsonSerializable(typeof(LaneStopCheckResponse))]
 [JsonSerializable(typeof(LaneReplyResponse))]
 [JsonSerializable(typeof(UsageResponse))]
+[JsonSerializable(typeof(RouteResponse))]
 [JsonSerializable(typeof(UsageWaitResponse))]
 [JsonSerializable(typeof(SyncInboxRequest))]
 [JsonSerializable(typeof(SyncInboxResponse))]

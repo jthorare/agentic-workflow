@@ -44,4 +44,7 @@ public static class KvKeys
 
     /// <summary>The usage-limit stops the watch has announced (so a re-armed watch does not repeat them).</summary>
     public const string UsageWatch = "usage.watch";
+
+    /// <summary>The route suggestions the watch has announced (so a re-armed watch does not repeat them).</summary>
+    public const string RouteWatch = "route.watch";
 }

@@ -206,6 +206,8 @@ internal sealed class ContextEngine(
 
     public ValueTask<Result<MapPublishView>> PublishStatus(ContextScope scope, CancellationToken cancellationToken) => map.PublishStatus(scope, cancellationToken);
 
+    public ValueTask<Result<IReadOnlyList<PinMove>>> PinMoves(MapVersion from, MapVersion to, ContextScope scope, CancellationToken cancellationToken) => map.PinMoves(from, to, scope, cancellationToken);
+
     public ValueTask<Result<IReadOnlyList<RepoHead>>> MapHeads(ContextScope scope, CancellationToken cancellationToken) =>
         reads.Heads(scope, cancellationToken);
 

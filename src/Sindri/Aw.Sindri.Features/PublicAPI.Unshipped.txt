@@ -6084,3 +6084,5 @@ static Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.operator !=(Aw.Sind
 static Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest.operator ==(Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest? left, Aw.Sindri.Features.SendReviewFix.SendReviewFixRequest? right) -> bool
 static Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.operator !=(Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse? left, Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse? right) -> bool
 static Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse.operator ==(Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse? left, Aw.Sindri.Features.SendReviewFix.SendReviewFixResponse? right) -> bool
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Moves.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinMove!>?
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Moves.init -> void

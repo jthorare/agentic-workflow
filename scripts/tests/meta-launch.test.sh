@@ -63,7 +63,7 @@ golden_transcript() {
     echo "== lane ui, fresh, AW_META_CLAUDE_ARGS"; rm "$AW_STATE_DIR/meta/lane-sessions/ui"; AW_META_CLAUDE_ARGS="--model x" bash "$S/meta-lane.sh" t1 ui; cat "$CALLS"; : > "$CALLS"
     echo "== lane meta"; bash "$S/meta-lane.sh" t1 meta; cat "$CALLS.meta"
     echo "== bad lane"; bash "$S/meta-lane.sh" t1 'Bad Lane' 2>&1; echo "rc=$?"
-  ) 2>&1 | sed -E -e "s#$G#@WORK@#g" -e "s#$S#@SCRIPTS@#g" -e 's/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/@ID@/g'
+  ) 2>&1 | sed -E -e "s#$(printf '%s' "$G/shim:$PATH" | sed 's/[][\.*^$+?(){}|#]/\\&/g')#@PATH@#g" -e "s#$G#@WORK@#g" -e "s#$S#@SCRIPTS@#g" -e 's/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/@ID@/g'
   rm -r "$G"
 }
 if [ "${1:-}" = "--print-golden" ]; then golden_transcript "${2:?--print-golden <scripts dir>}"; exit 0; fi
@@ -149,7 +149,7 @@ check "launch: three sessions started" "$(printf '%s\n' "$OUT" | grep -c ': star
 yaml="$AW_WARP_LAUNCH_DIR/t1-team.yaml"
 check "launch: warp yaml written" "$(test -s "$yaml" && echo yes)" "yes"
 check "launch: one attach per lane" "$(grep -c 'exec: tmux -L t1 new -A -s t1-' "$yaml")" "3"
-check "launch: a pane that creates its session runs the lane, not a shell" "$(grep -c "exec: tmux -L t1 new -A -s t1-api -c $WORK/repo -e AW_META_CONFIG=$cfg '$DIR/meta-lane.sh t1 api'" "$yaml")" "1"
+check "launch: a pane that creates its session runs the lane, not a shell" "$(grep -c "exec: tmux -L t1 new -A -s t1-api -c $WORK/repo -e AW_META_CONFIG=$cfg .*'exec env SHELL=[^ ]* [^ ]* -lc .*$DIR/meta-lane.sh t1 api" "$yaml")" "1"
 check "launch: absolute cwd everywhere" "$(grep -c "cwd: $WORK/repo" "$yaml")" "3"
 check "launch: meta pane first" "$(grep -m1 -o 't1-[a-z]*' "$yaml")" "t1-meta"
 # A live lane: a script running a child, as meta-lane.sh runs claude (tmux reports the pane's command as bash).
@@ -191,7 +191,7 @@ check "relative repo refused (Warp needs absolute cwd)" "$RC" "1"
 tmux kill-server 2> /dev/null   # the stub lane may still be winding down: no session may exist for this dry run
 mkdir -p "$WORK/bin"; ln -s "$DIR/meta-launch.sh" "$WORK/bin/aw-meta-launch"   # as install-meta.sh links it
 OUT="$("$WORK/bin/aw-meta-launch" --no-open --dry-run --lanes api)"
-check "run through a symlink: finds meta-lane.sh beside the real script" "$(printf '%s\n' "$OUT" | grep -c "^\[dry-run\] tmux -L t1 new-session .* $DIR/meta-lane.sh t1 api")" "1"
+check "run through a symlink: finds meta-lane.sh beside the real script" "$(printf '%s\n' "$OUT" | grep -c "^\[dry-run\] tmux -L t1 new-session .* -lc '$DIR/meta-lane.sh t1 api'\$")" "1"
 jq '.lanes = ["meta", "api"]' "$cfg" > "$WORK/dup.json"   # team-init lists the meta lane in lanes too
 OUT="$(AW_META_CONFIG="$WORK/dup.json" bash "$DIR/meta-launch.sh" --no-open --dry-run)"
 check "meta lane listed in lanes: one pane, not two" "$(printf '%s\n' "$OUT" | grep -c 'exec: tmux -L t1 new -A -s t1-meta')" "1"
@@ -314,6 +314,63 @@ kill "$rp" 2> /dev/null; pkill -f "$WORK/cursor" 2> /dev/null; wait "$rp" 2> /de
 check "meta-lane.sh runs the cursor stub from team.json agent, with no AW_LAUNCHER_CONFIG" "$(cat "$CALLS.events")" "start api agent=cursor"
 check "the lane's .agent record names cursor" "$(jq -r .agent "$AW_STATE_DIR/meta/lane-sessions/api.agent")" "cursor"
 mv "$WORK/cfg.bak" "$cfg"
+unlink "$AW_STATE_DIR/launcher.json"
+rm -f "$LCFG"
+
+# team.json routing.lanes (aw-meta route --apply): a lane starts on its routed agent and model, and a team that routes a lane
+# may run mixed agents. A lane with no entry keeps the one-agent rule.
+cp "$cfg" "$WORK/cfg.route"
+jq -n --arg c "$WORK/codex-route" '{schema:1, agents:{codex:{override:true, bin:$c}}}' > "$LCFG"
+reset
+jq '.routing = {models:{"claude-code":["opus","sonnet"],codex:["gpt-5.5"]}, lanes:{api:{agent:"codex",model:"gpt-5.5"}}}' "$WORK/cfg.route" > "$cfg"
+OUT="$(AW_LAUNCHER_CONFIG="$LCFG" bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
+check "routing.lanes puts api on codex under a Claude meta: accepted, api noted as a hook lane, ui stays Claude" "$RC:$(grep -c -x 'lane api: codex, takes part in the obligations through its hooks (scripts/install-meta.sh installs them)' <<< "$OUT"):$(grep -c 'a team runs one agent' <<< "$OUT"):$(grep -c '^lane ui' <<< "$OUT")" "0:1:0:0"
+jq '.routing.lanes = {ui:{model:"gpt-5.5"}}' "$cfg" > "$WORK/cfg.m" && mv "$WORK/cfg.m" "$cfg"
+OUT="$(AW_LAUNCHER_CONFIG="$LCFG" bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
+check "a routing entry with only a model takes the agent that lists the model" "$RC:$(grep -c -x 'lane ui: codex, takes part in the obligations through its hooks (scripts/install-meta.sh installs them)' <<< "$OUT")" "0:1"
+jq -n --arg c "$WORK/codex-route" '{schema:1, agents:{codex:{override:true, bin:$c}}, meta:{lanesAgent:"codex"}}' > "$LCFG"
+jq '.routing.lanes = {api:{agent:"codex"}}' "$cfg" > "$WORK/cfg.m" && mv "$WORK/cfg.m" "$cfg"
+OUT="$(AW_LAUNCHER_CONFIG="$LCFG" bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
+check "a lane with no routing entry keeps the one-agent rule: only ui is named, api (routed) is not" "$RC:$(grep -c "the meta lane 'meta' runs claude-code, but ui (codex) do not" <<< "$OUT")" "1:1"
+jq '.routing.lanes = {api:{agent:"nonesuch"}}' "$cfg" > "$WORK/cfg.m" && mv "$WORK/cfg.m" "$cfg"
+OUT="$(AW_LAUNCHER_CONFIG="$LCFG" bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
+check "a routed agent the catalog lacks: exit 1 with SND-LAUNCH-003" "$RC:$(grep -c 'SND-LAUNCH-003' <<< "$OUT")" "1:1"
+jq '.agent = "codex" | .routing = {models:{"claude-code":["opus"],codex:["gpt-5.5"]}, lanes:{api:{agent:"claude-code"}}}' "$WORK/cfg.route" > "$cfg"
+jq -n --arg c "$WORK/codex-route" '{schema:1, agents:{codex:{override:true, bin:$c}}}' > "$LCFG"
+OUT="$(AW_LAUNCHER_CONFIG="$LCFG" bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
+check "a codex meta refuses a lane routed to Claude: the meta can't message it" "$RC:$(grep -c "the meta can't message a Claude lane" <<< "$OUT"):$(grep -c 'api' <<< "$OUT")" "1:1:1"
+jq '.agent = "codex" | .routing = {models:{"claude-code":["opus"],codex:["gpt-5.5"]}, lanes:{api:{agent:"codex"}}}' "$WORK/cfg.route" > "$cfg"
+OUT="$(AW_LAUNCHER_CONFIG="$LCFG" bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
+check "a codex meta accepts a lane routed to codex" "$RC:$(grep -c "can't message" <<< "$OUT")" "0:0"
+# The lane script: the routed agent's argv, with the routed model as the CLI's own flag (codex -m, claude --model) right after the binary.
+cat > "$WORK/agent-model" <<'EOF2'
+#!/usr/bin/env bash
+printf '%s|' "$@" > "$CALLS.model"
+echo "$$" > "$CALLS.modelpid"
+exec sleep 600
+EOF2
+chmod +x "$WORK/agent-model"
+run_model_lane() { # lane: run meta-lane.sh against the stub until it has recorded its argv, then stop the stub by its recorded pid
+  rm -f "$CALLS.model" "$CALLS.modelpid"
+  AW_META_CLAUDE="$WORK/agent-model" AW_META_ID_WAIT=1 AW_META_ID_GRACE=0 AW_META_NO_SHELL=1 bash "$DIR/meta-lane.sh" t1 "$1" > "$WORK/lane.out" 2>&1 &
+  local rp=$!
+  waitfor '[ -s "$CALLS.modelpid" ]'
+  [ -s "$CALLS.modelpid" ] && kill "$(cat "$CALLS.modelpid")" 2> /dev/null
+  wait "$rp" 2> /dev/null
+}
+jq -n --arg c "$WORK/agent-model" '{schema:1, agents:{codex:{override:true, bin:$c}}}' > "$AW_STATE_DIR/launcher.json"
+jq '.routing = {models:{"claude-code":["opus"],codex:["gpt-5.5"]}, lanes:{api:{agent:"codex",model:"gpt-5.5"}}}' "$WORK/cfg.route" > "$cfg"
+run_model_lane api
+check "meta-lane.sh starts the routed codex lane with -m <model> before the other arguments" "$(grep -c '^-m|gpt-5.5|-C|' "$CALLS.model")" "1"
+check "the routed lane's .agent record names codex" "$(jq -r .agent "$AW_STATE_DIR/meta/lane-sessions/api.agent")" "codex"
+jq -n --arg c "$WORK/agent-model" '{schema:1, agents:{"claude-code":{override:true, bin:$c}}}' > "$AW_STATE_DIR/launcher.json"
+jq '.routing = {models:{"claude-code":["opus","sonnet"]}, lanes:{ui:{agent:"claude-code",model:"sonnet"}}}' "$WORK/cfg.route" > "$cfg"
+run_model_lane ui
+check "meta-lane.sh starts a routed Claude lane with --model <model> before the session flags" "$(grep -c '^--model|sonnet|--session-id|' "$CALLS.model")" "1"
+cp "$WORK/cfg.route" "$cfg"
+run_model_lane ui
+check "a Claude lane with no routing entry gets no model flag" "$(grep -c -- '--model' "$CALLS.model")" "0"
+cp "$WORK/cfg.route" "$cfg"
 unlink "$AW_STATE_DIR/launcher.json"
 rm -f "$LCFG"
 
@@ -741,5 +798,118 @@ reset; rm -f "$ids"/rf*; t0=$SECONDS
 OUT="$(AW_META_CONFIG="$WORK/team4.json" AW_LAUNCHER_CONFIG="$WORK/new.json" AW_META_ID_WAIT=8 bash "$DIR/meta-launch.sh" --no-open --lanes rf 2>&1)"; RC=$?
 check "a refused reported lane: the launcher prints SND-LAUNCH-011 at once, not the timeout" "$RC:$(grep -c 'lane rf failed to start: SND-LAUNCH-011' <<< "$OUT"):$(grep -c 'has not reported' <<< "$OUT"):$([ $((SECONDS - t0)) -lt 5 ] && echo fast || echo slow)" "0:1:0:fast"
 tmux kill-server 2> /dev/null; rm -f "$WORK/prompts/rf.md"
+
+# 4. Lanes run in the caller's login shell with the caller's PATH and SHELL (#2278), on a fresh or an already-running server.
+mkdir -p "$WORK/callerbin"
+printf '#!/usr/bin/env bash\nprintf "%%s|%%s\\n" "$PATH" "$SHELL" > "%s"\n' "$WORK/lane-env" > "$WORK/envclaude"
+chmod +x "$WORK/envclaude"
+printf '#!/usr/bin/env bash\necho "$*" >> "%s"\nexec bash "$@"\n' "$WORK/fakesh.log" > "$WORK/fakesh"; chmod +x "$WORK/fakesh"
+login_lane() { # <env words for the launcher...>: relaunch lane api through meta-launch.sh and print the PATH|SHELL the agent saw
+  rm -f "$WORK/lane-env"
+  env "$@" bash "$DIR/meta-launch.sh" --no-open --lanes api > /dev/null 2>&1
+  waitfor '[ -s "$WORK/lane-env" ]'; cat "$WORK/lane-env" 2> /dev/null
+}
+fresh_server() { tmux kill-server 2> /dev/null; sleep 0.3; PATH="$ORIG_PATH" tmux new-session -d -s keepalive "sleep 600"; tmux set-environment -g AW_META_CLAUDE "$WORK/envclaude"; tmux set-environment -g AW_META_NO_SHELL 1; }
+ORIG_PATH="$PATH"
+fresh_server
+GOT="$(login_lane PATH="$WORK/callerbin:$ORIG_PATH" SHELL=/bin/bash)"
+check "lane sees the caller's PATH entry first and SHELL (fresh server)" "${GOT%%:*}|${GOT#*|}" "$WORK/callerbin|/bin/bash"
+# the server above was started without callerbin: a second caller with another entry reaches the same, already-running server
+mkdir -p "$WORK/callerbin2"; tmux kill-session -t t1-api 2> /dev/null
+GOT="$(login_lane PATH="$WORK/callerbin2:$ORIG_PATH" SHELL=/bin/bash)"
+check "lane sees the caller's PATH on an already-running server started with another PATH" "${GOT%%:*}" "$WORK/callerbin2"
+# a fake login shell stands in for $SHELL: the lane is run as `$SHELL -lc '<lane script> t1 api'`
+tmux kill-session -t t1-api 2> /dev/null; rm -f "$WORK/fakesh.log"
+GOT="$(login_lane PATH="$WORK/callerbin:$ORIG_PATH" SHELL="$WORK/fakesh")"
+check "SHELL is the user's shell inside the lane" "${GOT#*|}" "$WORK/fakesh"
+check "the lane runs through \$SHELL -lc '<meta-lane.sh> t1 api'" "$(head -1 "$WORK/fakesh.log" 2> /dev/null)" "-lc $DIR/meta-lane.sh t1 api"
+# no SHELL, or one that is not executable: /bin/bash
+tmux kill-session -t t1-api 2> /dev/null
+GOT="$(login_lane -u SHELL PATH="$WORK/callerbin:$ORIG_PATH")"
+check "an unset SHELL falls back to /bin/bash" "${GOT#*|}" "/bin/bash"
+tmux kill-session -t t1-api 2> /dev/null
+GOT="$(login_lane PATH="$WORK/callerbin:$ORIG_PATH" SHELL="$WORK/nonexistent-shell")"
+check "a SHELL that is not executable falls back to /bin/bash" "${GOT#*|}" "/bin/bash"
+# a login profile that resets PATH must not drop the caller's entries
+printf 'export PATH=/usr/bin:/bin\n' > "$HOME/.bash_profile"; tmux kill-session -t t1-api 2> /dev/null
+GOT="$(login_lane PATH="$WORK/callerbin:$ORIG_PATH" SHELL=/bin/bash)"
+check "the caller's PATH goes first after the login profile reset PATH" "${GOT%%:*}" "$WORK/callerbin"
+check "the caller's PATH has no duplicate entries" "$(tr ':' '\n' <<< "${GOT%|*}" | sort | uniq -d | wc -l | tr -d ' ')" "0"
+rm -f "$HOME/.bash_profile"
+# the Warp pane and the dry run carry the same environment and login-shell wrapper
+tmux kill-session -t t1-api 2> /dev/null
+OUT="$(PATH="$WORK/callerbin:$ORIG_PATH" SHELL=/bin/bash bash "$DIR/meta-launch.sh" --no-open --dry-run --lanes api 2>&1)"
+check "dry run shows the -lc wrapper and the caller's PATH and SHELL" "$(grep -c "new-session .* -e PATH=.* -e SHELL=/bin/bash .*-lc" <<< "$OUT")" "1"
+check "the Warp pane's attach line carries them too" "$(grep -c "new -A -s t1-api .* -e SHELL=/bin/bash .*-lc" "$AW_WARP_LAUNCH_DIR/t1-team.yaml")" "1"
+tmux kill-server 2> /dev/null
+tmux kill-server 2> /dev/null
+
+# 5. Follow-ups (#2278): odd PATH entries, the login-profile guard, zsh and fish.
+# 5a. A PATH entry with a space and one with a single quote reach the lane intact, through a real launch and in the printed forms.
+SPQ="$WORK/path with space"; QQ="$WORK/it's here"; mkdir -p "$SPQ" "$QQ"
+fresh_server; tmux kill-session -t t1-api 2> /dev/null
+GOT="$(login_lane PATH="$SPQ:$QQ:$ORIG_PATH" SHELL=/bin/bash)"
+check "PATH entries with a space and a single quote reach the lane in order" "$(IFS=: read -r a b _ <<< "${GOT%|*}"; printf '%s|%s' "$a" "$b")" "$SPQ|$QQ"
+tmux kill-session -t t1-api 2> /dev/null
+OUT="$(PATH="$SPQ:$QQ:$ORIG_PATH" SHELL=/bin/bash bash "$DIR/meta-launch.sh" --no-open --dry-run --lanes api 2>&1)"
+printed="$(sed -n 's/^\[dry-run\] tmux -L t1 new-session -d -s t1-api -c [^ ]* //p' <<< "$OUT")"
+check "dry run: the printed new-session arguments, read back by sh, carry the PATH exactly" "$(eval "set -- $printed"; printf '%s' "$2" | cut -d: -f1-2)" "PATH=$SPQ:$QQ"
+yaml="$AW_WARP_LAUNCH_DIR/t1-team.yaml"
+PATH="$SPQ:$QQ:$ORIG_PATH" SHELL=/bin/bash bash "$DIR/meta-launch.sh" --no-open --lanes api > /dev/null 2>&1
+wline="$(grep 'new -A -s t1-api' "$yaml" | sed 's/^ *- exec: //')"
+check "Warp line: read back by sh, the PATH entries are intact" "$(eval "set -- $wline"; for a in "$@"; do case "$a" in PATH=*) printf '%s' "$a" | cut -d: -f1-2 ;; esac; done)" "PATH=$SPQ:$QQ"
+
+# 5b. The login profile runs before meta-lane.sh exports anything, so AW_META_LANE has to come from tmux -e.
+printf 'echo "${AW_META_LANE:-unset}" > "%s/profile-lane"\n' "$WORK" > "$HOME/.bash_profile"
+rm -f "$WORK/profile-lane"; tmux kill-session -t t1-api 2> /dev/null
+login_lane PATH="$ORIG_PATH" SHELL=/bin/bash > /dev/null
+check "AW_META_LANE is set when the login profile runs (so a [ -z \"\$AW_META_LANE\" ] guard works)" "$(cat "$WORK/profile-lane" 2> /dev/null)" "api"
+rm -f "$HOME/.bash_profile"
+
+# 5c. zsh and fish as the user's shell, with scratch config dirs so the real ones are never read.
+shell_rows() { # name: the lane runs through <name> -lc with the caller's PATH first, and the pane drops to <name> when the agent exits
+  local sh; sh="$(command -v "$1" 2> /dev/null)"
+  if [ -z "$sh" ]; then echo "ok - SKIP $1 not installed"; return; fi
+  local cfg="$WORK/$1-config"; mkdir -p "$cfg/fish"
+  : > "$cfg/.zshrc"; : > "$cfg/.zprofile"
+  local envs=(ZDOTDIR="$cfg" XDG_CONFIG_HOME="$cfg")
+  tmux kill-session -t t1-api 2> /dev/null
+  GOT="$(login_lane "${envs[@]}" PATH="$WORK/callerbin:$ORIG_PATH" SHELL="$sh")"
+  check "$1: the lane sees the caller's PATH first and SHELL=$sh" "${GOT%%:*}|${GOT#*|}" "$WORK/callerbin|$sh"
+  tmux kill-session -t t1-api 2> /dev/null
+  tmux set-environment -g AW_META_NO_SHELL 0
+  rm -f "$WORK/lane-env"
+  env "${envs[@]}" PATH="$WORK/callerbin:$ORIG_PATH" SHELL="$sh" bash "$DIR/meta-launch.sh" --no-open --lanes api > /dev/null 2>&1
+  waitfor '[ -s "$WORK/lane-env" ]'
+  waitfor '[ "$(tmux display-message -p -t =t1-api: "#{pane_current_command}" 2> /dev/null)" = "$(basename "$sh")" ]'
+  check "$1: when the agent exits the pane is in $1" "$(tmux display-message -p -t =t1-api: '#{pane_current_command}' 2> /dev/null)" "$(basename "$sh")"
+  tmux set-environment -g AW_META_NO_SHELL 1; tmux kill-session -t t1-api 2> /dev/null
+}
+shell_rows zsh
+shell_rows fish
+tmux kill-server 2> /dev/null
+
+# 6. Quoting does not depend on the bash version (#2281): bash 3.2 (macOS) read the backslashes in ${s//\'/...} differently from bash 5.
+eval "$(sed -n '/^shq() {/,/^}/p' "$DIR/meta-launch.sh")"
+Q1="$(shq "it's")"; Q2="$(shq "$Q1")"
+check "shq of a string holding a single quote: exact bytes" "$Q1" "'it'\\''s'"
+check "shq of shq of it: exact bytes" "$Q2" "''\\''it'\\''\\'\\'''\\''s'\\'''"
+check "shq of shq reads back through sh to the first quoting" "$(sh -c "printf '%s' $Q2")" "$Q1"
+check "shq of shq of shq reads back to shq of shq" "$(sh -c "printf '%s' $(shq "$Q2")")" "$Q2"
+check "shq leaves a plain word alone, quotes a space, an empty string and a lone quote" "$(shq abc/d-e):$(shq 'a b'):$(shq ''):$(shq "'")" "abc/d-e:'a b':'':''\\'''"
+fresh_server; tmux kill-session -t t1-api 2> /dev/null
+PATH="$SPQ:$QQ:$ORIG_PATH" SHELL=/bin/bash bash "$DIR/meta-launch.sh" --no-open --lanes api > /dev/null 2>&1
+wline="$(grep 'new -A -s t1-api' "$yaml" | sed 's/^ *- exec: //')"
+for sh in sh bash zsh; do
+  if ! command -v "$sh" > /dev/null; then echo "ok - SKIP $sh not installed"; continue; fi
+  "$sh" -n -c "$wline" 2> "$WORK/syntax.err"; check "the Warp attach line passes $sh -n" "$?:$(cat "$WORK/syntax.err")" "0:"
+done
+if command -v zsh > /dev/null; then
+  # run the printed line under zsh as Warp does (new-session -d instead of new -A: there is no terminal here) until it reaches meta-lane.sh
+  tmux kill-session -t t1-api 2> /dev/null; rm -f "$WORK/lane-env"
+  ZDOTDIR="$WORK/zsh-config" zsh -f -c "${wline/ new -A / new-session -d }" > "$WORK/zsh-run.out" 2>&1
+  waitfor '[ -s "$WORK/lane-env" ]'
+  check "the Warp line run by zsh reaches meta-lane.sh with the odd PATH first" "$(cut -d: -f1-2 "$WORK/lane-env" 2> /dev/null)" "$SPQ:$QQ"
+else echo "ok - SKIP zsh not installed"; fi
 tmux kill-server 2> /dev/null
 exit $fail

@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Map;
@@ -8,6 +9,8 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Scheduling;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aw.Sindri.Features.ContextCalls;
 
@@ -25,7 +28,8 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// <param name="source">Opens the recorder of the map's events under the held lease.</param>
 /// <param name="jobs">The running job: its progress takes the step lines.</param>
 /// <param name="clock">Dates the build's slot and the start of a wait.</param>
-internal sealed class RefreshContextMapService(ContextScopes scopes, IContextEngine engine, IIndexOutlooks outlooks, MapEventSource source, IJobContextAccessor jobs, TimeProvider clock)
+/// <param name="logger">Where a failed read of the pins' moves is recorded (the refresh still succeeds), or null.</param>
+internal sealed partial class RefreshContextMapService(ContextScopes scopes, IContextEngine engine, IIndexOutlooks outlooks, MapEventSource source, IJobContextAccessor jobs, TimeProvider clock, ILogger<RefreshContextMapService>? logger = null)
     : IService<RefreshContextMapRequest, RefreshContextMapResult>
 {
     public async ValueTask<Result<RefreshContextMapResult>> Handle(RefreshContextMapRequest request, CancellationToken cancellationToken)
@@ -104,13 +108,17 @@ internal sealed class RefreshContextMapService(ContextScopes scopes, IContextEng
             return settled.Error;
         }
 
-        var (repo, version, report, held) = settled.Value;
-        var result = new RefreshContextMapResult(repo, version,
-            heads.Value.ToDictionary(static h => h.Repo.Value, static h => h.Head, StringComparer.Ordinal),
-            report.Accepted, report.Removed, report.Dropped, Mode(report.Mode), held);
+        var result = ResultOf(heads.Value, settled.Value);
         var refreshed = await recorder.Refreshed(result, cancellationToken).ConfigureAwait(false);
         return refreshed.IsError ? refreshed.Error : result;
     }
+
+    private static RefreshContextMapResult ResultOf(IReadOnlyList<RepoHead> heads, Settled settled) =>
+        new(settled.Repo, settled.Version, heads.ToDictionary(static h => h.Repo.Value, static h => h.Head, StringComparer.Ordinal),
+            settled.Report.Accepted, settled.Report.Removed, settled.Report.Dropped, Mode(settled.Report.Mode), settled.Held)
+        {
+            Moves = settled.Moves,
+        };
 
     private async ValueTask<Result<MapBuildReport>> Build(ContextMapEvents recorder, IProgress<string>? progress, ContextScope scope, CancellationToken cancellationToken)
     {
@@ -132,7 +140,7 @@ internal sealed class RefreshContextMapService(ContextScopes scopes, IContextEng
         if (report.Draft.Status == MapVersionStatus.Current)
         {
             progress?.Report("already current");
-            return new Settled(report.Draft.Repo.Value, report.Draft.Number, new CleanupReport(0, 0, 0, CleanupMode.None), Held: false);
+            return new Settled(report.Draft.Repo.Value, report.Draft.Number, new CleanupReport(0, 0, 0, CleanupMode.None), Held: false, Moves: null);
         }
 
         var cleaned = await Clean(progress, scope, report.Draft.Number, cancellationToken).ConfigureAwait(false);
@@ -150,12 +158,18 @@ internal sealed class RefreshContextMapService(ContextScopes scopes, IContextEng
         if (gate.Value.Publish is not { } publish)
         {
             progress?.Report("held for the code index");
-            return new Settled(report.Draft.Repo.Value, report.Draft.Number, cleaned.Value, Held: true);
+            return new Settled(report.Draft.Repo.Value, report.Draft.Number, cleaned.Value, Held: true, Moves: null);
         }
 
         progress?.Report("promoting");
         var promoted = await Promote(recorder, scope, publish, gate.Value, cancellationToken).ConfigureAwait(false);
-        return promoted.IsError ? promoted.Error : new Settled(promoted.Value.Repo.Value, promoted.Value.Number, cleaned.Value, Held: false);
+        if (promoted.IsError)
+        {
+            return promoted.Error;
+        }
+
+        var moves = await MovesOf(promoted.Value, scope, cancellationToken).ConfigureAwait(false);
+        return new Settled(promoted.Value.Version.Repo.Value, promoted.Value.Version.Number, cleaned.Value, Held: false, moves);
     }
 
     private async ValueTask<Result<CleanupReport>> Clean(IProgress<string>? progress, ContextScope scope, int draft, CancellationToken cancellationToken)
@@ -170,7 +184,7 @@ internal sealed class RefreshContextMapService(ContextScopes scopes, IContextEng
         return await engine.CleanDraft(scope, cancellationToken, draft).ConfigureAwait(false);
     }
 
-    private async ValueTask<Result<MapVersion>> Promote(ContextMapEvents recorder, ContextScope scope, MapPublish publish, RefreshGate.Outcome gate, CancellationToken cancellationToken)
+    private async ValueTask<Result<MapPromoted>> Promote(ContextMapEvents recorder, ContextScope scope, MapPublish publish, RefreshGate.Outcome gate, CancellationToken cancellationToken)
     {
         var promoted = await engine.Promote(scope, cancellationToken, gate.Hold.Version).ConfigureAwait(false);
         if (promoted.IsError)
@@ -185,8 +199,29 @@ internal sealed class RefreshContextMapService(ContextScopes scopes, IContextEng
         }
 
         var published = await recorder.Published(MapGate.Published(promoted.Value.Version, publish, "refresh", gate.Hold, gate.Now), cancellationToken).ConfigureAwait(false);
-        return published.IsError ? published.Error : promoted.Value.Version;
+        return published.IsError ? published.Error : promoted.Value;
     }
+
+    // The pins' moves are a nicety on the result: a read that fails is logged and leaves them null, never failing a refresh that already published.
+    private async ValueTask<IReadOnlyList<PinMove>?> MovesOf(MapPromoted promoted, ContextScope scope, CancellationToken cancellationToken)
+    {
+        if (promoted.Retained is not { } earlier)
+        {
+            return null;
+        }
+
+        var moves = await engine.PinMoves(earlier, promoted.Version, scope, cancellationToken).ConfigureAwait(false);
+        if (moves.IsError)
+        {
+            LogMovesFailed(logger ?? NullLogger<RefreshContextMapService>.Instance, moves.Error.Code, earlier.Number, promoted.Version.Number);
+            return null;
+        }
+
+        return moves.Value;
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "context map refresh: reading what the pins moved failed with {Code} (v{From} to v{To}); the refresh result has no 'moved' data")]
+    private static partial void LogMovesFailed(ILogger logger, string code, int from, int to);
 
     private static string Mode(CleanupMode mode) => mode switch
     {
@@ -197,5 +232,5 @@ internal sealed class RefreshContextMapService(ContextScopes scopes, IContextEng
         _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, message: null),
     };
 
-    private sealed record Settled(string Repo, int Version, CleanupReport Report, bool Held);
+    private sealed record Settled(string Repo, int Version, CleanupReport Report, bool Held, IReadOnlyList<PinMove>? Moves);
 }
