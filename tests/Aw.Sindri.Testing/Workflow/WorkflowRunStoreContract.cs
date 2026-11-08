@@ -85,7 +85,7 @@ public abstract class WorkflowRunStoreContract
 
         var inFlight = (await store.InFlight(_workflow, Token)).Value;
 
-        Expect.Equal([Run(2).Id, Run(3).Id], inFlight.Select(static r => r.Id).ToList());
+        Expect.Sequence([Run(2).Id, Run(3).Id], inFlight.Select(static r => r.Id));
     }
 
     /// <summary>A final status sets the end time from the clock and keeps the outputs and the error given.</summary>
@@ -132,7 +132,7 @@ public abstract class WorkflowRunStoreContract
         _ = (await store.RecordNodeRun(started with { Status = NodeRunStatus.Succeeded, Output = "{\"n\":3}" }, Token)).Value;
 
         var rows = (await store.NodeRuns(Run(1).Id, Token)).Value;
-        Expect.Equal([(0, NodeRunStatus.Succeeded), (1, NodeRunStatus.Running)], rows.Select(static r => (r.ItemIndex, r.Status)).ToList());
+        Expect.Sequence([(0, NodeRunStatus.Succeeded), (1, NodeRunStatus.Running)], rows.Select(static r => (r.ItemIndex, r.Status)));
         Expect.Equal("{\"n\":3}", rows[0].Output);
     }
 
