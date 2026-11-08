@@ -71,10 +71,17 @@ This spec changes none of it.
     all.
   - So each writer appends its line to `settings/changes.jsonl` (step 4 above). Serve copies every line into a
     `settings.changed` event, at start and each time it sees the file change.
-  - Each event's idempotency key is `settings.changed:<line>`, where `<line>` is the line's number in the file.
+  - Each event's idempotency key is `settings.changed:<file>:<line>` (below), where `<line>` is the line's number in the file.
     Copying is exactly-once by key: a re-copy after `views rebuild` (which wipes any cursor in views.db) changes
     nothing.
-  - `changes.jsonl` is never trimmed. It holds one short line per save, so line numbers stay stable.
+  - `changes.jsonl` is never trimmed or deleted, by Sindri or by `settings cleanup`. It holds one short line per
+    save, so line numbers stay stable.
+  - **A file id in the key.** Line 1 of `changes.jsonl` is `{ "file": "<ulid>" }`, written when the file is first
+    created. The key is `settings.changed:<file>:<line>`. If someone deletes the file by hand anyway, the next save
+    starts a new file id, so its events never collide with the old keys and are never dropped as duplicates.
+  - **Torn lines.** A crash during an append can leave a partial last line. Before it appends, the writer adds `\n`
+    when the file doesn't end in one. Serve skips any line that isn't valid JSON but still counts it, so line
+    numbers stay stable. A skipped line is one lost audit entry, logged once as a warning.
 
 - **What the person sees:**
   - Settings shows one line under its heading: "Last changed by you at 14:02" or "Last changed by <session name>
@@ -91,7 +98,7 @@ This spec changes none of it.
 | `GET /sindri/profile` | `GET /sindri/settings` (`text`, `problem`, `source`) |
 | `status.profile { live, problem, source, modelPick, labelPick, surfacePick }` | `status.settings { problem, source, modelPick, labelPick, surfacePick }` |
 | `profileHash` in responses, `ifHash` in writes | gone |
-| events `profile.approved`, `profile.checked` | `settings.changed { line, by, keys[] }`, key `settings.changed:<line>` |
+| events `profile.approved`, `profile.checked` | `settings.changed { file, line, by, keys[] }`, key `settings.changed:<file>:<line>` |
 | `SND-PROFILE-*` | `SND-SETTINGS-*`, same numbers |
 | `sindri profile init \| set \| validate` | `sindri settings init \| set \| validate` |
 | `IProfileSource`, `IApprovedProfile`, `LoadedProfile`, `SindriProfile`, `ProfileHash`, `Profile/` folders | `ISettingsSource`, `ISettings`, `LoadedSettings`, `SindriSettings`, gone, `Settings/` folders |
