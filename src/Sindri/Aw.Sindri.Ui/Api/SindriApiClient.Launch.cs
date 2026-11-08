@@ -1,6 +1,5 @@
 using Aw.Kernel;
 using Aw.Kernel.Json;
-using Aw.Sindri.Ui.Api.Workflow;
 
 namespace Aw.Sindri.Ui.Api;
 
@@ -15,7 +14,4 @@ internal sealed partial class SindriApiClient
     public Task<Result<OpenAcceptedView>> OpenItem(Uri api, string itemId, OpenItemRequest request, CancellationToken cancellationToken) =>
         Call<OpenAcceptedView>(api, HttpMethod.Post, "/sindri/items/" + Uri.EscapeDataString(itemId) + "/open", cancellationToken, new CallOptions(Content: AwJson.Serialize(request, Json)));
 
-    /// <inheritdoc />
-    public Task<Result<InstanceEventsView>> InstanceEvents(Uri api, string id, CancellationToken cancellationToken) =>
-        Get<InstanceEventsView>(api, WorkflowRoutes.Events(id), cancellationToken);
 }

@@ -1,5 +1,4 @@
 using Aw.Sindri.Ui.Api;
-using Aw.Sindri.Ui.Api.Workflow;
 
 namespace Aw.Sindri.Ui.ViewModels.Takeover;
 
@@ -7,6 +6,7 @@ namespace Aw.Sindri.Ui.ViewModels.Takeover;
 /// Sends "ApplyCommand:takeover" for a surface that has no Attach control (the run inspectors): once per press, never retried, and says
 /// what came of it: the viewer's outcome, or the refusal with its code. A server that served no viewer is asked for the launch.
 /// </summary>
+#pragma warning disable MA0182 // why: PR 17's attach and take over control uses it
 internal sealed class TakeoverSender(ISindriApi api, Func<Uri?> apiUrl)
 {
     private bool _pressed;
@@ -60,3 +60,4 @@ internal sealed class TakeoverSender(ISindriApi api, Func<Uri?> apiUrl)
         return new TakeoverView(line, command);
     }
 }
+#pragma warning restore MA0182

@@ -72,7 +72,7 @@ public sealed class HomeLayoutTests
     {
         await OnHome(1440, window =>
         {
-            Rect needs = Box(window, "NeedsYouPanel"), running = Box(window, "WorkflowsPanel"), queued = Box(window, "QueuedPanel"), health = Box(window, "HealthStrip");
+            Rect needs = Box(window, "NeedsYouPanel"), running = Box(window, "RunningPanel"), queued = Box(window, "QueuedPanel"), health = Box(window, "HealthStrip");
 
             Assert.True(running.Left >= needs.Right, "Running should sit to the right of Needs you");
             Assert.True(queued.Left >= needs.Right, "Queued should sit to the right of Needs you");
@@ -87,7 +87,7 @@ public sealed class HomeLayoutTests
     {
         await OnHome(1000, window =>
         {
-            Rect needs = Box(window, "NeedsYouPanel"), running = Box(window, "WorkflowsPanel"), queued = Box(window, "QueuedPanel");
+            Rect needs = Box(window, "NeedsYouPanel"), running = Box(window, "RunningPanel"), queued = Box(window, "QueuedPanel");
 
             Assert.True(running.Top >= needs.Bottom - 0.5, "Running sits under Needs you");
             Assert.True(queued.Top >= running.Bottom - 0.5, "Queued sits under Running");

@@ -27,7 +27,6 @@ internal static partial class Labels
     internal const string ClearFilters = "Clear filters";
 
     /// <summary>The button on the empty page that goes to the Workflows page.</summary>
-    internal const string OpenWorkflows = "Open Workflows";
 
     /// <summary>The amber line over a list that could not be read again.</summary>
     internal const string AgentsOutOfDate = "Out of date: showing the last list Sindri read.";
@@ -116,10 +115,10 @@ internal static partial class Labels
     internal static string SessionStep(string? state, int? attempt) =>
         string.Join(" · ", new[] { "On a workflow step", state ?? string.Empty, attempt is > 1 ? "attempt " + attempt.Value.ToString(CultureInfo.InvariantCulture) : string.Empty }.Where(p => p.Length > 0));
 
-    /// <summary>The step button's accessible name: its visible words, then what it opens ("On a workflow step · build: open the run at build").</summary>
-    /// <param name="visible">The button's visible words.</param>
+    /// <summary>The step's accessible name: its visible words, then its state ("On a workflow step · build: at build").</summary>
+    /// <param name="visible">The step's visible words.</param>
     /// <param name="state">The Step's state, or null.</param>
     /// <returns>The words.</returns>
     internal static string SessionStepName(string visible, string? state) =>
-        state is { Length: > 0 } ? $"{visible}: open the run at {state}" : $"{visible}: open the run";
+        state is { Length: > 0 } ? $"{visible}: at {state}" : visible;
 }

@@ -14,7 +14,7 @@ public sealed class ShellFilterSeenTests
 {
     private readonly InMemoryEndpointRecords _records = new();
     private readonly InMemoryPreferencesStore _store = new();
-    private readonly FakeSindriApi _server = new() { Catalog = RouteAnswer.Api("commands", "catalog"), NeedsYouView = RouteAnswer.Api("needs-you", "empty"), WorkflowAnswer = RouteAnswer.Api("workflow-instances", "empty") };
+    private readonly FakeSindriApi _server = new() { Catalog = RouteAnswer.Api("commands", "catalog"), NeedsYouView = RouteAnswer.Api("needs-you", "empty") };
     private readonly FakeTimeProvider _clock = new(A.Noon);
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;

@@ -2,7 +2,6 @@ using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.ViewModels.Controls;
-using Aw.Sindri.Ui.ViewModels.Instance;
 
 namespace Aw.Sindri.Ui.ViewModels.Agents;
 
@@ -286,11 +285,10 @@ internal sealed partial class SessionSheetViewModel(ISindriApi api) : Observable
     private void Clear()
     {
         (Heading, StateLine, EndedText, EndedDetail, ProblemText, Note) = (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
-        (Fields, HostFields, History, IsEnded, _step) = ([], [], [], false, null);
+        (Fields, HostFields, History, IsEnded) = ([], [], [], false);
         (Sections, IsAsking, InStatusText, RefCopy, StartedText) = ([], false, string.Empty, null, string.Empty);
         EndedResumeText = string.Empty;
         ClearSandbox();
-        OnChanged(nameof(HasStep));
     }
 
     private static string Number(int value) => value.ToString(CultureInfo.InvariantCulture);

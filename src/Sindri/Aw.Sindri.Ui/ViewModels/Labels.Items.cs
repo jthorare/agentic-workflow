@@ -54,7 +54,7 @@ internal static partial class Labels
     internal const string ColumnSince = "Age";
 
     /// <summary>What an empty cell reads (the same dash a blocked stage shows).</summary>
-    internal const string EmptyCell = BlockedMark;
+    internal const string EmptyCell = "—";
 
     /// <summary>The stage of an item that has no step yet.</summary>
     internal const string NotStarted = "Not started";
@@ -68,7 +68,7 @@ internal static partial class Labels
         "scoping" => ("Scoping", false),
         "design" => ("Design", false),
         "plan" => ("Plan", false),
-        "phase" => (WorkflowsLaneBuild, false),
+        "phase" => ("Build and prove", false),
         "merge" => ("Merge", false),
         _ => (step, true),
     };

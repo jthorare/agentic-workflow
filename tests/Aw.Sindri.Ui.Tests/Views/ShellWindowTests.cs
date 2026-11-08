@@ -1534,12 +1534,12 @@ public sealed class ShellWindowTests : IDisposable
         }
     });
 
-    // The Projects page spec §7: eight tabs at the 1,000 px minimum, each label whole (not trimmed, not past the window's edge)
+    // The Projects page spec §7: seven tabs at the 1,000 px minimum, each label whole (not trimmed, not past the window's edge)
     // at text scale 1.0 and 1.3. The counts may give way first (TopBar.Counts); the labels never do.
     [Theory]
     [InlineData(1.0)]
     [InlineData(1.3)]
-    public Task At_the_1000_px_minimum_all_nine_tab_labels_are_whole(double scale) => OnUi(async () =>
+    public Task At_the_1000_px_minimum_all_seven_tab_labels_are_whole(double scale) => OnUi(async () =>
     {
         await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, 1000, 600) });
         var window = await ShowIn(BarState.Normal);
@@ -1552,7 +1552,7 @@ public sealed class ShellWindowTests : IDisposable
             var labels = Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("nav-label")).ToList();
 
             Assert.Equal(shell.Navigation.Select(n => n.DisplayLabel), labels.Select(t => t.Text), StringComparer.Ordinal);   // the short label where the tab has one
-            Assert.Equal(9, labels.Count);
+            Assert.Equal(7, labels.Count);
             foreach (var label in labels)
             {
                 using var layout = new TextLayout(label.Text, new Typeface(label.FontFamily, label.FontStyle, label.FontWeight), label.FontSize, foreground: null);
@@ -1570,11 +1570,11 @@ public sealed class ShellWindowTests : IDisposable
         }
     });
 
-    // Below 1,100 px the Workflows and Reviews tabs draw "Flows" and "PRs"; their names for assistive tech stay full. With room they draw the full labels.
+    // Below 1,100 px the Reviews tab draws "PRs"; its name for assistive tech stays full. With room it draws the full label.
     [Theory]
-    [InlineData(1000, "Flows", "PRs")]
-    [InlineData(1440, "Workflows", "Reviews")]
-    public Task Narrow_windows_shorten_the_Workflows_and_Reviews_tabs_and_keep_their_names(int width, string workflows, string reviews) => OnUi(async () =>
+    [InlineData(1000, "PRs")]
+    [InlineData(1440, "Reviews")]
+    public Task Narrow_windows_shorten_the_Reviews_tab_and_keep_its_name(int width, string reviews) => OnUi(async () =>
     {
         await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, width, 600) });
         var window = await ShowIn(BarState.Normal);
@@ -1582,10 +1582,8 @@ public sealed class ShellWindowTests : IDisposable
 
         var labels = Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("nav-label")).ToList();
         string[] shown = [.. labels.Select(t => t.Text!)];
-        Assert.Contains(workflows, shown, StringComparer.Ordinal);
         Assert.Contains(reviews, shown, StringComparer.Ordinal);
         var names = labels.Select(t => AutomationProperties.GetName(t)).ToList();
-        Assert.Contains(Labels.Workflows, names, StringComparer.Ordinal);
         Assert.Contains(Labels.ReviewsTab, names, StringComparer.Ordinal);
     });
 
@@ -1963,13 +1961,13 @@ public sealed class ShellWindowTests : IDisposable
         Assert.Equal(shell.PageName, peer.GetName());
     });
 
-    // W4 (a11y-1): the sheet title's peer is named for the kind noun and subject ("Workflow WFI-1"), not the bare subject.
+    // W4 (a11y-1): the sheet title's peer is named for the kind noun and subject ("Service serena"), not the bare subject.
     [Fact]
     public Task The_sheet_title_focus_target_is_text_named_for_the_kind_and_subject() => OnUi(async () =>
     {
         _records.Write(A.Record());
         var (window, shell) = await Show(s => s.State == ShellState.Normal);
-        Assert.True(DeepLink.TryParse("workflow/WFI-1", out var link));
+        Assert.True(DeepLink.TryParse("service/serena", out var link));
         shell.Navigate(link);
         Settle(window);
         var title = window.Get<Border>("SheetTitle");
@@ -1978,7 +1976,7 @@ public sealed class ShellWindowTests : IDisposable
 
         Assert.True(peer.IsControlElement());
         Assert.Equal(Avalonia.Automation.Peers.AutomationControlType.Text, peer.GetAutomationControlType());
-        Assert.Equal("Workflow WFI-1", peer.GetName());
+        Assert.Equal("Service serena", peer.GetName());
         Assert.NotEqual(shell.SheetSubject, peer.GetName(), StringComparer.Ordinal);
         Assert.Equal(shell.SheetSubject, title.GetVisualDescendants().OfType<TextBlock>().Single().Text);
     });

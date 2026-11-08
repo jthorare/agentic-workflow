@@ -60,8 +60,6 @@
         <TextBlock Classes="body" Text="{Binding CalloutText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
 
-      <Button x:Name="SessionOpenStep" Content="{Binding OpenFrameLabel}" Click="OnOpenFrame" IsVisible="{Binding HasStep}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding OpenFrameName}" />
-
       <!-- The technical detail (F3): closed by default. The fields, the host, the history and Watch the agent are for the person who needs them. -->
       <Expander x:Name="SessionDetails" Header="{Binding DetailsLabel}" IsExpanded="False" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding DetailsLabel}">
         <StackPanel Spacing="{StaticResource Space.MD}">

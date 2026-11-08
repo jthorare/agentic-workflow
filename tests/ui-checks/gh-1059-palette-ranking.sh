@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # tests/ui-checks/gh-1059-palette-ranking.sh — frozen regression check for issue #1059 (UX-pass finding A-4).
-# Typing "work" in the command palette must select a page match first (the Work page), never "Approve all workflows" (Enter
-# would open the approve dialog), (the list order is covered by the unit tests). The palette's polite live region says the
+# Typing "work" in the command palette must select a page match first (the Work page), never a mutating command entry (Enter
+# would run it), (the list order is covered by the unit tests). The palette's polite live region says the
 # selected entry as "<name>, N of M", so it is read from there.
 # It drives the REAL sindri-ui (UI driver, docs/csharp/ui-driver.md) against a guarded fixture home. Takes well under a minute.
 #   bash tests/ui-checks/gh-1059-palette-ranking.sh        exit 0 pass; 1 FAIL (one line on stderr); 2 the setup broke
@@ -69,11 +69,7 @@ timeout 120 "$DRIVER" screenshot --out "$OUT/work.png" >/dev/null 2>&1
 selected="$(timeout 120 "$DRIVER" search --name PaletteAnnouncer 2>"$OUT/search.err" | jq -r '.matches[0].text // empty')"
 [ -n "$selected" ] || setup_fail "the palette's live region has no text (see $OUT/search.err)"
 
-# 1. The selected entry is never the mutating Approve all.
-case "$selected" in
-  "Approve all workflows"*) fail "typing 'work' selects '$selected': Enter would open the approve dialog (screenshot in $OUT)" ;;
-esac
-# 2. A page match ranks first: the Work page.
+# A page match ranks first: the Work page.
 case "$selected" in
   "Work, "*) ;;
   *) fail "typing 'work' selects '$selected', not the Work page (screenshot in $OUT)" ;;
