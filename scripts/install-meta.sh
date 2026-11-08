@@ -8,7 +8,7 @@
 #   --allow-worktree  install from this tree although it is not the canonical checkout: a linked worktree, a second clone, or any
 #                     tree other than the team config's repo (the name is historical; it covers all three)
 #   Exit codes: 0 installed; 1 failed (usage, an unsupported OS, a missing binary, a failed publish); 3 refused because this tree is not the
-#   canonical checkout (setup.sh --with-meta warns on 3 and carries on, and stops on every other non-zero exit)
+#   canonical checkout (setup.sh --with-meta treats 3 like any failure: it finishes the rest of setup, then exits non-zero, #2283)
 #   AW_DRY_RUN=1     print what would happen, write nothing
 #   AW_SKIP_BUILD=1  don't publish; install the binary already in $AW_STATE_DIR/bin (tests)
 #   CLAUDE_LOCAL_BIN where the aw-meta and aw-meta-launch links go (default ~/.local/bin)
@@ -73,6 +73,15 @@ LAUNCH_DIR="$SCRIPT_DIR"
 . "$SCRIPT_DIR/scripts/meta-team-lib.sh"
 meta_amb=0
 meta_resolve "$STATE" "${AW_META_TEAM:-}" 2> /dev/null || meta_amb=1   # several teams and none selected: which team's repo to check is unknown
+# Several teams that all name the same repo are not ambiguous for this check (it only decides which tree to install from): use that repo.
+if [ "$meta_amb" = 1 ]; then
+  uniq_repos="$(jq -r '.repo // empty' "$STATE"/meta/teams/*/team.json 2> /dev/null | sort -u)"
+  if [ -n "$uniq_repos" ] && [ -f "$uniq_repos/scripts/meta-launch.sh" ] && [ "$(printf '%s\n' "$uniq_repos" | wc -l | tr -d ' ')" = 1 ]; then
+    for f in "$STATE"/meta/teams/*/team.json; do
+      if [ "$(jq -r '.repo // empty' "$f" 2> /dev/null)" = "$uniq_repos" ]; then META_DIR="$(dirname "$f")"; META_CONFIG="$f"; meta_amb=0; break; fi
+    done
+  fi
+fi
 if [ "$meta_amb" = 1 ] && [ "$allow_worktree" != 1 ]; then
   echo "install-meta: several teams exist and none is selected, so the team's repo to install from is unknown." >&2
   echo "  Set AW_META_TEAM=<name> (aw-meta team-list shows them), or pass --allow-worktree to install from this tree on purpose." >&2
@@ -207,4 +216,14 @@ else
   ln -sfn "$LAUNCH_DIR/scripts/meta-launch.sh" "$LOCAL_BIN/aw-meta-launch"
   echo "  meta: aw-meta and aw-meta-launch in $LOCAL_BIN"
   [ -f "$META_CONFIG" ] || [ "$meta_amb" = 1 ] || echo "  meta: next, write a team config: aw-meta team-init --team <t> --repo <dir> --lanes a,b,c (example: skills/meta/examples/agentic-workflow.team.json)"
+fi
+
+# Last line: a checkout behind origin/main installs old code. Only refs already on disk count (no fetch: it could hang), so the
+# number is as fresh as the last fetch.
+behind="$(git -C "$SCRIPT_DIR" rev-list --count HEAD..origin/main 2> /dev/null || true)"
+if [ -n "$behind" ] && [ "$behind" -gt 0 ] 2> /dev/null; then
+  behind_msg="  meta: WARNING this tree is behind origin/main by $behind commit$([ "$behind" = 1 ] || echo s) (as of its last fetch): the installed aw-meta is older than main; git pull, then rerun"
+  echo "$behind_msg" >&2
+  # setup.sh --with-meta gives a file here and repeats the line as setup's last line (the install output scrolls past)
+  [ -z "${AW_META_NOTE_FILE:-}" ] || echo "$behind_msg" >> "$AW_META_NOTE_FILE" 2> /dev/null || true
 fi

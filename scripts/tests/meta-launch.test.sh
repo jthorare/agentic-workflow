@@ -858,7 +858,9 @@ check "dry run: the printed new-session arguments, read back by sh, carry the PA
 yaml="$AW_WARP_LAUNCH_DIR/t1-team.yaml"
 PATH="$SPQ:$QQ:$ORIG_PATH" SHELL=/bin/bash bash "$DIR/meta-launch.sh" --no-open --lanes api > /dev/null 2>&1
 wline="$(grep 'new -A -s t1-api' "$yaml" | sed 's/^ *- exec: //')"
-check "Warp line: read back by sh, the PATH entries are intact" "$(eval "set -- $wline"; for a in "$@"; do case "$a" in PATH=*) printf '%s' "$a" | cut -d: -f1-2 ;; esac; done)" "PATH=$SPQ:$QQ"
+# (a `case` inside $( ) is parsed wrongly by bash 3.2: the loop is a function)
+path_arg() { local a; for a in "$@"; do case "$a" in PATH=*) printf '%s' "$a" | cut -d: -f1-2 ;; esac; done; }
+check "Warp line: read back by sh, the PATH entries are intact" "$(eval "set -- $wline"; path_arg "$@")" "PATH=$SPQ:$QQ"
 
 # 5b. The login profile runs before meta-lane.sh exports anything, so AW_META_LANE has to come from tmux -e.
 printf 'echo "${AW_META_LANE:-unset}" > "%s/profile-lane"\n' "$WORK" > "$HOME/.bash_profile"
