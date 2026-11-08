@@ -242,7 +242,38 @@ rm -f "$CLAUDE_LOCAL_BIN/aw-meta-launch" "$AW_STATE_DIR/meta/team.json"
 OUT="$(bash "$WORK/tree/scripts/install-meta.sh" --provider claude 2>&1)"; RC=$?
 check "normal checkout, no team repo: linked into that checkout" "$RC:$(link)" "0:$WORK/tree/scripts/meta-launch.sh"
 
-# setup.sh --with-meta (config/lib/setup-meta-step.sh): exit 3 from the installer (a refused tree) only warns; any other failure fails the step
+# Several teams on disk (teams/<name>/team.json, no flat team.json) and no AW_META_TEAM (#2283): when every team names the
+# same repo and this tree is that repo, the install goes ahead; when they name different repos it is still refused (exit 3)
+rm -f "$CLAUDE_LOCAL_BIN/aw-meta-launch"
+mkdir -p "$AW_STATE_DIR/meta/teams/v2" "$AW_STATE_DIR/meta/teams/old"
+jq -n --arg r "$WORK/tree" '{team:"old",repo:$r}' > "$AW_STATE_DIR/meta/teams/old/team.json"
+jq -n --arg r "$WORK/tree" '{team:"v2",repo:$r}' > "$AW_STATE_DIR/meta/teams/v2/team.json"
+OUT="$(bash "$WORK/tree/scripts/install-meta.sh" --provider claude 2>&1)"; RC=$?
+check "two teams naming the same repo, run from it: installs, linked into it" "$RC:$(link)" "0:$WORK/tree/scripts/meta-launch.sh"
+rm -f "$CLAUDE_LOCAL_BIN/aw-meta-launch"
+OUT="$(bash "$WORK/wt/scripts/install-meta.sh" --provider claude 2>&1)"; RC=$?
+check "two teams naming the same repo, run from another tree: still refused" "$RC:$(link)" "3:none"
+jq -n --arg r "$WORK/canon2" '{team:"v2",repo:$r}' > "$AW_STATE_DIR/meta/teams/v2/team.json"
+OUT="$(bash "$WORK/tree/scripts/install-meta.sh" --provider claude 2>&1)"; RC=$?
+check "two teams naming different repos: refused, exit 3, nothing linked" "$RC:$(link)" "3:none"
+rm -rf "$AW_STATE_DIR/meta/teams" "$AW_STATE_DIR/meta/team.json"
+
+# A checkout behind origin/main says so on the last line (no fetch is made: only refs that are already there count)
+git init -q --bare "$WORK/origin.git"
+git clone -q "$WORK/origin.git" "$WORK/behind" 2> /dev/null
+cp -r "$WORK/tree/scripts" "$WORK/tree/config" "$WORK/tree/global.json" "$WORK/behind/"
+git -C "$WORK/behind" add -A && git -C "$WORK/behind" -c user.email=t@t -c user.name=t commit -qm one && git -C "$WORK/behind" push -q origin HEAD:main 2> /dev/null
+git -C "$WORK/behind" fetch -q origin 2> /dev/null
+OUT="$(bash "$WORK/behind/scripts/install-meta.sh" --provider claude 2>&1)"; RC=$?
+check "up to date with origin/main: no behind warning" "$RC:$(printf '%s' "$OUT" | grep -c 'behind origin/main')" "0:0"
+git -C "$WORK/behind" -c user.email=t@t -c user.name=t commit -q --allow-empty -m two
+git -C "$WORK/behind" push -q origin HEAD:main 2> /dev/null; git -C "$WORK/behind" fetch -q origin 2> /dev/null
+git -C "$WORK/behind" reset -q --hard HEAD~1
+OUT="$(bash "$WORK/behind/scripts/install-meta.sh" --provider claude 2>&1)"; RC=$?
+check "1 commit behind origin/main: installs, and the last line says so" "$RC:$(printf '%s' "$OUT" | tail -1 | grep -c 'behind origin/main by 1 commit')" "0:1"
+rm -f "$CLAUDE_LOCAL_BIN/aw-meta-launch"
+
+# setup.sh --with-meta (config/lib/setup-meta-step.sh): exit 3 from the installer (a refused tree) fails the step too (#2283); any other failure fails the step
 mkdir -p "$WORK/fake/scripts" "$WORK/fake/config/lib"
 step() { # step <installer exit code> -> "<step rc>:<warnings>:<installer calls>"
   printf '#!/usr/bin/env bash\necho "$*" >> "%s/calls"\nexit %s\n' "$WORK" "$1" > "$WORK/fake/scripts/install-meta.sh"
@@ -251,7 +282,7 @@ step() { # step <installer exit code> -> "<step rc>:<warnings>:<installer calls>
   out="$( ( source "$DIR/../config/lib/setup-meta-step.sh"; aw_setup_meta_step "$WORK/fake" claude codex ) 2>&1 )" || rc=$?
   echo "$rc:$(printf '%s' "$out" | grep -c 'NOT installed'):$(wc -l < "$WORK/calls" | tr -d ' ')"
 }
-check "setup step: a tree refusal (3) warns for each provider and returns 0" "$(step 3)" "0:2:2"
+check "setup step: a tree refusal (3) warns for each provider and fails the step with 3 (#2283: never a quiet exit 0)" "$(step 3)" "3:2:2"
 check "setup step: a publish failure (1) fails the step, after the remaining providers were tried" "$(step 1)" "1:0:2"
 # one provider failing does not leave the later ones uninstalled: the first failure's code is returned at the end
 per_provider() { # per_provider <exit code for claude> <exit code for codex> -> "<step rc>:<providers tried>"
@@ -278,7 +309,7 @@ finish() { # finish <installer exit code> -> "<exit>:<registry written>:<last li
   echo "$rc:$(printf '%s' "$out" | grep -c '^registry written$'):$(printf '%s' "$out" | tail -1 | grep -c 'meta install failed')"
 }
 check "setup finish: a failed meta step still writes the registry, then exits with the installer's code and the message last" "$(finish 1)" "1:1:1"
-check "setup finish: a refused tree (3) and a success end setup with 0 and no failure message" "$(finish 3):$(finish 0)" "0:1:0:0:1:0"
+check "setup finish: a refused tree (3) fails setup at the end like any failure; a success ends with 0 and no message" "$(finish 3):$(finish 0)" "3:1:1:0:1:0"
 SETUP_SRC="$DIR/../setup.sh"
 check "setup.sh runs the meta step with '|| META_RC=\$?' and finishes after the registry is written" "$(grep -c 'aw_setup_meta_step .* || META_RC=\$?' "$SETUP_SRC"):$([ "$(grep -n 'aw_setup_meta_finish' "$SETUP_SRC" | tail -1 | cut -d: -f1)" -gt "$(grep -n 'aw_write_provider_registry "' "$SETUP_SRC" | tail -1 | cut -d: -f1)" ] && echo after)" "1:after"
 
