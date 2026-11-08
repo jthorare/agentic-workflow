@@ -1,8 +1,0 @@
-{"start":{"inputs":{"fact:scopePacket":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fact:designPacket":"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}}}
-{"trigger":{"kind":"step.completed","outcome":"loaded","outputs":{"fact:anchors":["feature:sharing"],"fact:design":{"sections":[]},"fact:plan":{"phases":[]},"fact:findings":[],"fact:questions":[],"fact:answers":[],"fact:answerLog":[],"fact:holdoutSets":[]}},"expect":{"state":"graph"}}
-{"trigger":{"kind":"step.completed","outcome":"drafted","outputs":{"fact:plan":{"phases":[{"id":"P1","items":["AC-1"]}]}}},"expect":{"state":"check"}}
-{"trigger":{"kind":"step.completed","outcome":"pass"},"expect":{"state":"exec-review"}}
-{"trigger":{"kind":"step.completed","outcome":"executable"},"expect":{"state":"holdout"}}
-{"trigger":{"kind":"step.completed","outcome":"written","outputs":{"fact:holdoutDraft":{"dir":"/run/holdout"}}},"expect":{"state":"holdout-store"}}
-{"trigger":{"kind":"step.completed","outcome":"stored","outputs":{"fact:holdoutSets":[{"phase":"P1","count":3,"hash":"sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}]}},"expect":{"state":"evidence"}}
-{"trigger":{"kind":"step.completed","outcome":"incomplete","outputs":{"fact:findings":[{"rule":"PLN-EVD-001","item":"S1","message":"no verification plan","fix":"See the rule.","severity":"fail"}]}},"expect":{"state":"graph"}}

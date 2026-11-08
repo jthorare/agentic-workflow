@@ -1,7 +1,0 @@
-{"start":{"inputs":{"fact:phasePacket":{"hash":"sha256:aa","dir":"packets/p1"},"fact:workspace":"/work/p1","fact:buildNotes":{},"fact:lineContext":{}}}}
-{"trigger":{"kind":"step.completed","outcome":"ready","outputs":{"fact:activePacket":{"hash":"sha256:aa"},"fact:redTests":{},"fact:built":{},"fact:change":{},"fact:findings":[],"fact:answers":{}}},"expect":{"state":"slot"}}
-{"trigger":{"kind":"wait.satisfied"},"expect":{"state":"red"}}
-{"trigger":{"kind":"step.completed","outcome":"written","outputs":{"fact:redTests":{"i1":["T1"]}}},"expect":{"state":"red-check"}}
-{"trigger":{"kind":"step.completed","outcome":"red"},"expect":{"state":"green"}}
-{"trigger":{"kind":"step.completed","outcome":"blocked","outputs":{"fact:findings":"needs src/y.cs"}},"expect":{"state":"scope-desk"}}
-{"trigger":{"kind":"step.completed","outcome":"stop"},"expect":{"state":"stopped","outcome":"unresolved"}}

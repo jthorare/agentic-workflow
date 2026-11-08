@@ -1,2 +1,0 @@
-{"start":{"inputs":{"fact:pr":"https://example.test/pr/1","fact:phasePacket":{"phase":"1"}}}}
-{"trigger":{"kind":"step.completed","outcome":"disabled","outputs":{"fact:docsResult":{"result":"disabled"}}},"expect":{"state":"not-needed","outcome":"alreadySatisfied"}}

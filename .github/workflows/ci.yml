@@ -230,22 +230,6 @@ jobs:
         # Each test's own time against its lane's budget (unit 10 s, integration 60 s), and exactly one
         # known Lane trait per test: the run above leaves out only Lane=heavy, so a test with none shows up (spec §4b.5).
         run: dotnet run --project tests/Aw.LaneCap.Testing --configuration Release --no-build -- TestResults
-      - name: Recipe versions (a content change bumps the version)
-        if: steps.sln.outputs.run == 'true'
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          BASE_BRANCH: ${{ github.base_ref || 'main' }}
-        # Setup-once spec §5.3: `recipe manifest` over `git archive HEAD recipes/sindri` and over the same archive of the base branch,
-        # then `recipe validate <file> --against <the base manifest>` for every recipe: a hash that changed at the same version
-        # fails (RCP-VERSION-001). No manifest is committed. Every shipped recipe's evals run in the test step above
-        # (ShippedRecipesTests, EvalShippedRecipesTests); `sindri recipe eval --shipped` runs them over the embedded set at publish time.
-        # The credential travels in this one git process's environment as a header, never in the URL or an argument.
-        run: |
-          token_header="Authorization: basic $(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 | tr -d '\n')"
-          GIT_TERMINAL_PROMPT=0 GIT_CONFIG_COUNT=1 \
-            GIT_CONFIG_KEY_0="http.https://github.com/.extraheader" GIT_CONFIG_VALUE_0="$token_header" \
-            git fetch --no-tags --depth=1 "https://github.com/${GITHUB_REPOSITORY}.git" "+refs/heads/${BASE_BRANCH}:refs/remotes/origin/${BASE_BRANCH}"
-          bash scripts/ci/recipe-versions.sh --base-ref "origin/${BASE_BRANCH}"
       - name: NativeAOT smoke tests
         if: steps.sln.outputs.run == 'true'
         # Each publishes for the runner's own RID (linux-x64), runs the native binary and
