@@ -37,9 +37,34 @@ public sealed class PacketSchemaTests
 
     [Theory, Trait("Lane", "integration")]   // reads (and in update mode writes) schemas/packets/
     [MemberData(nameof(Files))]
-    public void The_committed_schema_is_generated_from_the_record(string name)
+    public void The_committed_schema_is_generated_from_the_record(string name) =>
+        Verify(
+            name,
+            RepoRoot(),
+            update: string.Equals(Environment.GetEnvironmentVariable(Golden.UpdateVariable), "1", StringComparison.Ordinal),
+            inCi: string.Equals(Environment.GetEnvironmentVariable("CI"), "true", StringComparison.Ordinal));
+
+    /// <summary>Checks one schema file under <paramref name="repoRoot"/>; in update mode writes it and fails only when its content changed.</summary>
+    internal static void Verify(string name, string repoRoot, bool update, bool inCi)
     {
-        var type = name switch
+        var actual = Render(Generate(TypeOf(name), name));
+        var path = Path.Combine(repoRoot, "schemas", "packets", $"{name}.schema.json");
+
+        if (update && !inCi)
+        {
+            File.WriteAllText(path, actual);
+            Assert.Fail($"{path} regenerated; review the diff, then run again without {Golden.UpdateVariable}.");
+        }
+
+        Assert.True(File.Exists(path), $"{path} is missing; generate it with {Golden.UpdateVariable}=1.");
+        Assert.Equal(File.ReadAllText(path), actual);
+    }
+
+    internal static string RepoRoot() =>
+        Path.GetFullPath(Path.Combine(Golden.SourcePath(typeof(PacketSchemaTests).Assembly, "Schemas"), "..", "..", ".."));
+
+    private static Type TypeOf(string name) =>
+        name switch
         {
             "packet" => typeof(PacketManifest),
             "decisions" => typeof(DecisionLog),
@@ -60,19 +85,6 @@ public sealed class PacketSchemaTests
             "sizes" => typeof(SizesFile),
             _ => typeof(FreezeRecord),
         };
-        var actual = Render(Generate(type, name));
-        var path = Path.GetFullPath(Path.Combine(Golden.SourcePath(typeof(PacketSchemaTests).Assembly, "Schemas"), "..", "..", "..", "schemas", "packets", $"{name}.schema.json"));
-
-        if (string.Equals(Environment.GetEnvironmentVariable(Golden.UpdateVariable), "1", StringComparison.Ordinal)
-            && !string.Equals(Environment.GetEnvironmentVariable("CI"), "true", StringComparison.Ordinal))
-        {
-            File.WriteAllText(path, actual);
-            Assert.Fail($"{path} regenerated; review the diff, then run again without {Golden.UpdateVariable}.");
-        }
-
-        Assert.True(File.Exists(path), $"{path} is missing; generate it with {Golden.UpdateVariable}=1.");
-        Assert.Equal(File.ReadAllText(path), actual);
-    }
 
     private static JsonObject Generate(Type type, string name)
     {

@@ -24,13 +24,20 @@ public sealed class EvidenceSchemaTests
 
     [Theory, Trait("Lane", "integration")]   // reads (and in update mode writes) schemas/evidence/
     [MemberData(nameof(Files))]
-    public void The_committed_schema_is_generated_from_the_record(string name)
+    public void The_committed_schema_is_generated_from_the_record(string name) =>
+        Verify(
+            name,
+            RepoRoot(),
+            update: string.Equals(Environment.GetEnvironmentVariable(Golden.UpdateVariable), "1", StringComparison.Ordinal),
+            inCi: string.Equals(Environment.GetEnvironmentVariable("CI"), "true", StringComparison.Ordinal));
+
+    /// <summary>Checks one schema file under <paramref name="repoRoot"/>; in update mode writes it and fails only when its content changed.</summary>
+    internal static void Verify(string name, string repoRoot, bool update, bool inCi)
     {
         var actual = Render(Generate(TypeOf(name), name));
-        var path = PathOf(name);
+        var path = Path.Combine(repoRoot, "schemas", "evidence", $"{name}.schema.json");
 
-        if (string.Equals(Environment.GetEnvironmentVariable(Golden.UpdateVariable), "1", StringComparison.Ordinal)
-            && !string.Equals(Environment.GetEnvironmentVariable("CI"), "true", StringComparison.Ordinal))
+        if (update && !inCi)
         {
             _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             File.WriteAllText(path, actual);
@@ -40,6 +47,9 @@ public sealed class EvidenceSchemaTests
         Assert.True(File.Exists(path), $"{path} is missing; generate it with {Golden.UpdateVariable}=1.");
         Assert.Equal(File.ReadAllText(path), actual);
     }
+
+    internal static string RepoRoot() =>
+        Path.GetFullPath(Path.Combine(Golden.SourcePath(typeof(EvidenceSchemaTests).Assembly, "Schemas"), "..", "..", ".."));
 
     private static Type TypeOf(string name) => name switch
     {
@@ -58,7 +68,7 @@ public sealed class EvidenceSchemaTests
     };
 
     private static string PathOf(string name) =>
-        Path.GetFullPath(Path.Combine(Golden.SourcePath(typeof(EvidenceSchemaTests).Assembly, "Schemas"), "..", "..", "..", "schemas", "evidence", $"{name}.schema.json"));
+        Path.Combine(RepoRoot(), "schemas", "evidence", $"{name}.schema.json");
 
     private static JsonObject Generate(Type type, string name)
     {
