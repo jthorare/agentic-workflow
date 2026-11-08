@@ -1048,6 +1048,9 @@ Aw.Sindri.Core.Events.WorkflowEventPayload.To.init -> void
 Aw.Sindri.Core.Events.WorkflowEventPayload.Trigger.get -> string!
 Aw.Sindri.Core.Events.WorkflowEventPayload.Trigger.init -> void
 Aw.Sindri.Core.Events.WorkflowEventPayload.WorkflowEventPayload(string! Instance, string! From, string! To, string! Trigger, string? Outcome, string? Run, Aw.Sindri.Core.Events.WorkflowEventDetail? Detail = null) -> void
+Aw.Sindri.Core.Graph.Schedule.CronExpression
+Aw.Sindri.Core.Graph.Schedule.CronExpression.LastTick(System.DateTimeOffset after, System.DateTimeOffset upTo) -> System.DateTimeOffset?
+Aw.Sindri.Core.Graph.Schedule.CronExpression.Next(System.DateTimeOffset after) -> System.DateTimeOffset
 Aw.Sindri.Core.Health.HealthProblem
 Aw.Sindri.Core.Health.HealthProblem.<Clone>$() -> Aw.Sindri.Core.Health.HealthProblem!
 Aw.Sindri.Core.Health.HealthProblem.Clause.get -> string!
@@ -1705,6 +1708,7 @@ override Aw.Sindri.Core.LensPacks.LensWhen.ToString() -> string!
 override Aw.Sindri.Core.LensPacks.PackLens.Equals(object? obj) -> bool
 override Aw.Sindri.Core.LensPacks.PackLens.GetHashCode() -> int
 override Aw.Sindri.Core.LensPacks.PackLens.ToString() -> string!
+static Aw.Sindri.Core.Graph.Schedule.CronExpression.TryParse(string! cron, string? timezone, out Aw.Sindri.Core.Graph.Schedule.CronExpression? expression, out string? error) -> bool
 static Aw.Sindri.Core.LensPacks.LensId.From(string! value) -> Aw.Sindri.Core.LensPacks.LensId
 static Aw.Sindri.Core.LensPacks.LensId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.LensPacks.LensId
 static Aw.Sindri.Core.LensPacks.LensId.TryFrom(string? value, out Aw.Sindri.Core.LensPacks.LensId vo) -> bool
