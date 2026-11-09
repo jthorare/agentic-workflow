@@ -53,6 +53,16 @@ public sealed class McpSurfaceTests
         typeof(PickTodoHoldRequest).FullName!,
         typeof(UndoTodoHoldRequest).FullName!,
         typeof(ImportTodoNoteRequest).FullName!,
+        // why: issue 2258 Part 1 (every verb for agents): an agent session builds, edits, validates, activates, pauses, archives, runs and cancels workflows through the workflow_* tools; each write is desk class and names the launch as its actor (WriteAttributionTests); the requests are internal to Features, so they're named by full name
+        "Aw.Sindri.Features.ActivateWorkflow.ActivateWorkflowRequest",
+        "Aw.Sindri.Features.ApplyWorkflowOps.ApplyWorkflowOpsRequest",
+        "Aw.Sindri.Features.CancelWorkflowRun.CancelWorkflowRunRequest",
+        "Aw.Sindri.Features.CreateWorkflow.CreateWorkflowRequest",
+        "Aw.Sindri.Features.DeleteWorkflow.DeleteWorkflowRequest",
+        "Aw.Sindri.Features.PauseWorkflow.PauseWorkflowRequest",
+        "Aw.Sindri.Features.ReplaceWorkflow.ReplaceWorkflowRequest",
+        "Aw.Sindri.Features.RunWorkflow.RunWorkflowRequest",
+        "Aw.Sindri.Features.ValidateWorkflow.ValidateWorkflowRequest",
     };
 
     private static readonly string[] _launchSecretMarkers = ["LAUNCH_SECRET", "Launch-Secret", "LaunchSecret"];
