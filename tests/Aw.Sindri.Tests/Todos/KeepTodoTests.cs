@@ -175,6 +175,30 @@ public sealed class KeepTodoTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Undo_that_marks_the_todo_done_again_keeps_its_original_done_time()
+    {
+        await _h.Lease();
+        await _h.Seed(_id, "call the dentist");
+        await _h.Fold(EventTypes.TodoDone, new TodoDone(_id, 2, "human:ui"));
+        var doneAt = (await _h.Row(_id))!.DoneAt;
+        _ = Assert.NotNull(doneAt);
+        var done = _mine with { Done = true };
+        await _h.Fold(EventTypes.TodoConflicted, new TodoConflicted(_id, done, _mine, NoteHash: "sha256:aa"));
+        using var cli = _h.Cli();
+        _ = await _h.Keep().Handle(new KeepTodoRequest(_id, TodoSideName.Obsidian), Token);
+        await _h.Fold(EventTypes.TodoReopened, new TodoReopened(_id, 3, "obsidian"));
+        await _h.Fold(EventTypes.TodoConflictResolved, new TodoConflictResolved(_id, TodoSideName.Obsidian, string.Empty, "human:cli"));
+        _h.Slice.Clock.Advance(TimeSpan.FromSeconds(5));
+
+        var undone = await _h.KeepUndo().Handle(new KeepTodoUndoRequest(_id), Token);
+
+        Assert.True(undone.IsSuccess, undone.IsError ? undone.Error.ToString() : null);
+        var again = _h.Slice.Store.Events.Single(e => e.Envelope.Type == "todo.done" && e.Sequence > 0);
+        await _h.Fold(EventTypes.TodoDone, _h.Payload<TodoDone>(again));
+        Assert.Equal(doneAt, (await _h.Row(_id))!.DoneAt);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Undo_after_the_ten_seconds_is_SND_TODO_005()
     {
         await Conflicted();
