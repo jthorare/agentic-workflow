@@ -287,6 +287,21 @@ export const CASES: readonly Case[] = [
     mutate: (c) => { write(c, "build/agents/README.md", "header\n"); write(c, "build/agents/locked.md", "secret\n");
       write(c, "build/agents/tokens.json", JSON.stringify({ files: { "locked.md": { sha256: "0" } } })); },
     times: (c) => chmodSync(P(c, "build/agents/locked.md"), 0o000) },
+  // a malformed tokens.json: write_agents.check raises (it catches only OSError and ValueError), lint_packet.py reports it
+  ...([
+    ["files-list", { files: ["README.md"] }],
+    ["root-list", [1, 2]],
+    ["root-null", null],
+    ["record-str", { files: { "README.md": "nope" } }],
+    ["files-str", { files: "README.md" }],
+  ] as const).map(([tag, tokens]): Case => ({
+    name: `agents-tokens-${tag}`, expect: ["AGENTS/check-failed"],
+    mutate: (c) => { write(c, "build/agents/README.md", "<!-- agents lane · content 2020-01-01T00:00:00Z page none · write_agents/0 -->\n");
+      write(c, "build/agents/tokens.json", JSON.stringify(tokens)); },
+  })),
+  { name: "agents-tokens-skip-check-failed", expect: [], args: () => ["demo-packet", "--skip", "AGENTS/check-failed"], code: 0,
+    mutate: (c) => { write(c, "build/agents/README.md", "<!-- agents lane · content 2020-01-01T00:00:00Z page none · write_agents/0 -->\n");
+      write(c, "build/agents/tokens.json", JSON.stringify({ files: ["README.md"] })); } },
 
   // ------------------------------------------------------------------ XDOC
   { name: "xdoc-glossary-conflict", expect: ["XDOC/glossary-conflict"],
