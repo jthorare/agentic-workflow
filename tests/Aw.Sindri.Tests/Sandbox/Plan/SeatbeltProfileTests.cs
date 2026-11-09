@@ -47,9 +47,8 @@ public sealed class SeatbeltProfileTests
     [Fact, Trait("Lane", "unit")]
     public void A_process_profile_names_the_resolved_path_of_its_run_area() =>
         Assert.Contains(
-            "(allow file-read* file-write* (subpath \"/private/var/run-area/tmp\"))",
             Lines(SeatbeltProfile.RenderProcess(ProcessPlan() with { Mounts = [.. ProcessPlan().Mounts.Select(m => SeatbeltProcessPlan.IsPrivateTmp(m) ? m with { Source = "/var/run-area/tmp" } : m)] }, "/var/run-area", p => p.StartsWith("/var", StringComparison.Ordinal) ? "/private" + p : p)),
-            StringComparer.Ordinal);
+            l => l.StartsWith("(allow ", StringComparison.Ordinal) && l.EndsWith("(subpath \"/private/var/run-area/tmp\"))", StringComparison.Ordinal));   // why: no deny covers /var here, so the rule is the write-only form; the point is the resolved path
 
     [Fact, Trait("Lane", "unit")]
     public void A_process_with_no_connection_opens_no_loopback_port()

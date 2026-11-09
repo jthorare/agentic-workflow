@@ -1,1 +1,50 @@
-placeholder: filled when the process rewrite lands
+(version 1)
+(allow default)
+; no network namespace on macOS: everything is denied, then only Sindri's port and the egress proxy's, on this machine
+(deny network*)
+(allow network-outbound (remote ip "localhost:41235"))
+; unix sockets under the run area and the launch's short temp directory only
+(allow network-bind (local unix-socket (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1")))
+(allow network-inbound (local unix-socket (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1")))
+(allow network-outbound (remote unix-socket (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1")))
+(allow network-bind (local unix-socket (subpath "/private/tmp/aw-cccccccc")))
+(allow network-inbound (local unix-socket (subpath "/private/tmp/aw-cccccccc")))
+(allow network-outbound (remote unix-socket (subpath "/private/tmp/aw-cccccccc")))
+; the Keychain service: a Step never reads the owner's Keychain, its login comes from its credential source
+(deny mach-lookup (global-name "com.apple.SecurityServer") (global-name "com.apple.securityd"))
+; nothing is writable until a rule below says so
+(deny file-write* (subpath "/"))
+; the terminal and the null device
+(allow file-write* (literal "/dev/null"))
+(allow file-write* (literal "/dev/tty"))
+(allow file-write* (regex #"^/dev/ttys[0-9]+$"))
+; an empty /run: the user sockets and the Docker socket are gone
+(deny file-read* file-write* (subpath "/run"))
+; an empty home: nothing of the owner's is visible
+(deny file-read* file-write* (subpath "/home/owner"))
+; DOTNET_ROOT, for a framework-dependent binary
+(allow file-read* (subpath "/home/owner/.dotnet"))
+; always blocked: the ledger, profile, tokens and other runs' areas live here
+(deny file-read* file-write* (subpath "/home/owner/.agentic-workflow"))
+; always blocked: Sindri's own state
+(deny file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app"))
+; always blocked: the Docker socket is root on the host
+(deny file-read* file-write* (subpath "/private/var/run/docker.sock"))
+; always blocked: the Podman socket is root on the host
+(deny file-read* file-write* (subpath "/run/podman"))
+; always blocked: the ssh, gpg and dbus agent sockets sign as the owner
+(deny file-read* file-write* (subpath "/run/user/1000"))
+; always blocked: host keys
+(deny file-read* file-write* (subpath "/private/etc/ssh"))
+; always blocked: not the process's
+(deny file-read* file-write* (subpath "/root"))
+; always blocked: other users' files
+(deny file-read* file-write* (subpath "/home/other"))
+; the binary of toolkit:triage
+(allow file-read* (subpath "/home/owner/.agentic-workflow/sindri-app/toolkits/triage/bin"))
+; the state resource of toolkit:triage
+(allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/resources/toolkit/triage/db/state.sqlite"))
+; the sockets to the egress proxy: the only way out
+(allow file-read* (subpath "/run/sindri/net"))
+; private scratch and home, removed with the process's run area
+(allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/tmp"))
