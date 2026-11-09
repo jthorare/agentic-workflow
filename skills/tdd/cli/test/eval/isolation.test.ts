@@ -83,7 +83,11 @@ describe.skipIf(!PACKETS.length)("the program keeps the other scorers when one t
       const f = byName(read("faulty", kind));
       const c = byName(read("clean", kind));
       expect([...f.keys()]).toEqual([...c.keys()]);
-      for (const [name, rec] of f) if (name !== "artifact_check" && name !== "lint") expect(rec).toEqual(c.get(name)!);
+      // Timings differ run to run; the Python's own volatile fields (seconds, at) are not part of the comparison.
+      const stable = (v: unknown): unknown => Array.isArray(v) ? v.map(stable)
+        : v && typeof v === "object" ? Object.fromEntries(Object.entries(v as Record<string, unknown>).filter(([k]) => k !== "seconds" && k !== "at").map(([k, x]) => [k, stable(x)]))
+        : v;
+      for (const [name, rec] of f) if (name !== "artifact_check" && name !== "lint") expect(stable(rec)).toEqual(stable(c.get(name)!));
     }
   }, 120_000);
 });
