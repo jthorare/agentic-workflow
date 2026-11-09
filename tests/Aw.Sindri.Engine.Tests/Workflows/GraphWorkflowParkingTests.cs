@@ -36,6 +36,17 @@ public sealed class GraphWorkflowParkingTests(SindriTimeSkippingServer server) :
         return await rig.Client.GetWorkflowHandle(run.Value).GetResultAsync<GraphWorkflowResult>(rpcOptions: new RpcOptions { CancellationToken = limit.Token });
     }
 
+    // why: the server did not skip time on its own while GetResultAsync waited (both timer tests hung), so the test skips it; again until the run ends, because the timer may start after the first skip
+    private async Task SkipUntilEnded(GraphRig rig, WorkflowRunId run, TimeSpan step)
+    {
+        using var limit = Limit();
+        while ((await rig.Runs.Get(run, limit.Token)).Value.Status is not (WorkflowRunStatus.Succeeded or WorkflowRunStatus.Failed or WorkflowRunStatus.Cancelled))
+        {
+            await server.Environment.DelayAsync(step);
+            await Task.Delay(TimeSpan.FromMilliseconds(100), limit.Token);
+        }
+    }
+
     private static CancellationTokenSource Limit()
     {
         var limit = CancellationTokenSource.CreateLinkedTokenSource(Token);
@@ -56,6 +67,7 @@ public sealed class GraphWorkflowParkingTests(SindriTimeSkippingServer server) :
             [GraphRig.Edge("start", "hold"), GraphRig.Edge("hold", "after")]));
 
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
+        await SkipUntilEnded(rig, started.RunId, TimeSpan.FromMinutes(16));
         var result = await Result(rig, started.RunId);
         var run = await rig.Final(started.RunId);
 
@@ -92,6 +104,7 @@ public sealed class GraphWorkflowParkingTests(SindriTimeSkippingServer server) :
         var workflow = await rig.Define(AskSpec());
 
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
+        await SkipUntilEnded(rig, started.RunId, TimeSpan.FromMinutes(61));
         var result = await Result(rig, started.RunId);
         var nodes = await rig.NodeStatuses(started.RunId);
         var ask = (await rig.Runs.NodeRuns(started.RunId, Token)).Value.Single(static n => n.NodeId.Value == "ask");
