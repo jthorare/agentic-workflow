@@ -28,23 +28,11 @@ internal static partial class ReferenceRename
             var c = text[i];
             if (c is '"' or '\'')
             {
-                var end = text.IndexOf(c, i + 1);
-                var stop = end < 0 ? text.Length : end + 1;
-                result.Append(text, i, stop - i);
-                i = stop;
+                i = CopyLiteral(text, i, result);
             }
-            else if (IsIdentStart(c) && (i == 0 || (!IsIdentPart(text[i - 1]) && text[i - 1] != '.')))
+            else if (StartsWord(text, i))
             {
-                var j = i;
-                while (j < text.Length && IsIdentPart(text[j]))
-                {
-                    j++;
-                }
-
-                var word = text.AsSpan(i, j - i);
-                var isReference = j < text.Length && text[j] == '.' && word.SequenceEqual(old);
-                result.Append(isReference ? next : word.ToString());
-                i = j;
+                i = RewriteWord(text, i, old, next, result);
             }
             else
             {
@@ -56,9 +44,35 @@ internal static partial class ReferenceRename
         return result.ToString();
     }
 
+    // why: a word starts at a lower-case letter that neither continues another word nor follows a dot (a field name)
+    private static bool StartsWord(string text, int i) =>
+        IsIdentStart(text[i]) && (i == 0 || (!IsIdentPart(text[i - 1]) && text[i - 1] != '.'));
+
+    private static int CopyLiteral(string text, int i, System.Text.StringBuilder result)
+    {
+        var end = text.IndexOf(text[i], i + 1);
+        var stop = end < 0 ? text.Length : end + 1;
+        result.Append(text, i, stop - i);
+        return stop;
+    }
+
+    private static int RewriteWord(string text, int i, string old, string next, System.Text.StringBuilder result)
+    {
+        var j = i;
+        while (j < text.Length && IsIdentPart(text[j]))
+        {
+            j++;
+        }
+
+        var word = text.AsSpan(i, j - i);
+        var isReference = j < text.Length && text[j] == '.' && word.SequenceEqual(old);
+        result.Append(isReference ? next : word.ToString());
+        return j;
+    }
+
     private static bool IsIdentStart(char c) => c is >= 'a' and <= 'z';
 
-    private static bool IsIdentPart(char c) => c is >= 'a' and <= 'z' or >= '0' and <= '9' or '_';
+    private static bool IsIdentPart(char c) => c is (>= 'a' and <= 'z') or (>= '0' and <= '9') or '_';
 
     // why: the '{{old.field}}' form follows in every config string; the bare form in a condition's 'when' follows through ApplyWhen
     public static void Apply(JsonNode? node, string old, string next)
