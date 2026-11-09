@@ -68,6 +68,8 @@ public sealed class WorkflowReadFencingTests : IAsyncLifetime
         AssertFenced(leaves, "spec.nodes[1].title", Fence);
         AssertFenced(leaves, "spec.description", Fence);
         AssertFenced(leaves, "spec.name", Fence);
+        AssertFenced(leaves, "spec.resources.sandbox", Fence);
+        AssertFenced(leaves, "spec.resources.database", Fence);
         AssertEverywhereFenced(leaves);
     }
 
