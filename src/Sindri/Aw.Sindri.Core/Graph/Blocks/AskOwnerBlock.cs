@@ -5,7 +5,7 @@ using Aw.Kernel;
 namespace Aw.Sindri.Core.Graph.Blocks;
 
 /// <summary>
-/// The 'ask_owner' block: posts a question as a Needs-you row. The node leaves by 'answered' when someone answers ('answeredBy' is 'owner' or 'session:&lt;id&gt;') and by 'timeout'
+/// The 'ask_owner' block: posts a question as a Needs-you row. The node leaves by 'answered' when someone answers ('answeredBy' is the caller's actor: 'human:&lt;client&gt;', 'session:launch:&lt;launch id&gt;' or 'session:&lt;client&gt;') and by 'timeout'
 /// when its 'timeout' passes first, handing on the 'default' (empty text when there is none) as 'answer' and 'timeout' as 'answeredBy'. Without a 'timeout' it waits for an answer for ever, until its run is cancelled.
 /// The workflow does the waiting; this block writes the question and holds the rules the workflow applies.
 /// </summary>
@@ -103,7 +103,7 @@ public sealed class AskOwnerBlock(IQuestionPort questions, TimeProvider clock) :
     /// <summary>What the node hands on once it is answered or has timed out.</summary>
     /// <param name="config">The node's config.</param>
     /// <param name="answer">The answer, or null when the timeout passed with none.</param>
-    /// <param name="answeredBy">Who answered ('owner', 'session:&lt;id&gt;'); ignored when <paramref name="answer"/> is null.</param>
+    /// <param name="answeredBy">Who answered (the caller's actor: 'human:&lt;client&gt;', 'session:launch:&lt;launch id&gt;' or 'session:&lt;client&gt;'); ignored when <paramref name="answer"/> is null.</param>
     /// <returns>The outputs and the branch taken.</returns>
     public static AskOwnerOutcome Resolve(JsonObject config, string? answer, string? answeredBy)
     {

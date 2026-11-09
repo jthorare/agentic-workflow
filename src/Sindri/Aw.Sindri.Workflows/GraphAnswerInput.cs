@@ -4,5 +4,5 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="Node">The node's id.</param>
 /// <param name="Text">A free-text answer, or null.</param>
 /// <param name="Choice">A picked choice, or null.</param>
-/// <param name="By">Who answers: 'owner' or 'session:&lt;id&gt;'.</param>
+/// <param name="By">Who answers: the caller's actor: 'human:&lt;client&gt;', 'session:launch:&lt;launch id&gt;' or 'session:&lt;client&gt;'.</param>
 internal sealed record GraphAnswerInput(string Node, string? Text, string? Choice, string By);

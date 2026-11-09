@@ -7,5 +7,5 @@ namespace Aw.Sindri.Core.Graph.Runs;
 /// <param name="Node">The 'ask_owner' node.</param>
 /// <param name="Text">A free-text answer, or null.</param>
 /// <param name="Choice">A picked choice, or null.</param>
-/// <param name="By">Who answers: 'owner' or 'session:&lt;id&gt;'.</param>
+/// <param name="By">Who answers: the caller's actor: 'human:&lt;client&gt;', 'session:launch:&lt;launch id&gt;' or 'session:&lt;client&gt;'.</param>
 public sealed record GraphAnswer(WorkflowRunId Run, NodeId Node, string? Text, string? Choice, string By);
