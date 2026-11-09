@@ -50,14 +50,14 @@ public sealed class EndLearnModeTests
     }
 
     [Fact]
-    public void Learn_off_is_refused_for_an_agent_session()
+    public void A_launched_session_may_end_learn_mode_like_the_human()
     {
         var row = new CommandCatalog().Rows.Single(r => string.Equals(r.Action.Value, "EndLearnMode", StringComparison.Ordinal));
 
         var launched = Authorization.Decide(row.Class, A.Caller().Launched().Build(), row);
         var human = Authorization.Decide(row.Class, A.Caller().Human().Build(), row);
 
-        Expect.Equal(SindriErrors.AuthRefused.Code, launched.Refusal?.Code);
+        Expect.True(launched.Refusal is null);
         Expect.True(human.Refusal is null);
     }
 }

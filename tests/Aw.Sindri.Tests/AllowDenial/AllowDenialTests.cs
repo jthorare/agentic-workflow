@@ -125,14 +125,14 @@ public sealed class AllowDenialTests
     }
 
     [Fact]
-    public void Allow_is_a_human_verb_a_launched_session_is_refused()
+    public void A_launched_session_may_allow_a_denial_like_the_human()
     {
         var row = new CommandCatalog().Rows.Single(r => string.Equals(r.Action.Value, "AllowDenial", StringComparison.Ordinal));
 
         var launched = Authorization.Decide(row.Class, A.Caller().Launched().Build(), row);
         var human = Authorization.Decide(row.Class, A.Caller().Human().Build(), row);
 
-        Expect.Equal(SindriErrors.AuthRefused.Code, launched.Refusal?.Code);
+        Expect.True(launched.Refusal is null);
         Expect.True(human.Refusal is null);
     }
 
