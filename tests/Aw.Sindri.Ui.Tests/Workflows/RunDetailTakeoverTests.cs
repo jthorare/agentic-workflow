@@ -104,4 +104,27 @@ public sealed class RunDetailTakeoverTests
         Assert.Equal(reads + 1, _f.Server.WorkflowRunCalls);
         Assert.Equal((Labels.WfHandBackDone, false), (page.Run.NoticeText, node.IsBusy));
     }
+
+    // The run's read can lag the call: the engine writes its marker late (#2472). What Sindri answered to the call wins over the re-read.
+    [Fact]
+    public async Task A_take_over_keeps_the_answered_state_when_the_re_read_still_says_waiting()
+    {
+        var (page, node) = await Opened("waiting");   // the fake keeps serving "waiting" after the call
+
+        await node.TakeOver(Token);
+
+        var row = page.Run.Groups.Single(g => g.Node == "agent").Runs[0];
+        Assert.Equal((true, false), (row.CanHandBack, row.CanTakeOver));
+    }
+
+    [Fact]
+    public async Task A_hand_back_keeps_the_answered_state_when_the_re_read_still_says_taken_over()
+    {
+        var (page, node) = await Opened("taken_over");   // the fake keeps serving "taken_over" after the call
+
+        await node.HandBack(Token);
+
+        var row = page.Run.Groups.Single(g => g.Node == "agent").Runs[0];
+        Assert.Equal((true, false), (row.CanTakeOver, row.CanHandBack));
+    }
 }
