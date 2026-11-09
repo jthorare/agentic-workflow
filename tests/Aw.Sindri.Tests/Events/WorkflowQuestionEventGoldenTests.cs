@@ -21,12 +21,12 @@ public sealed class WorkflowQuestionEventGoldenTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void The_event_is_catalogued_privately_under_its_key_shape()
+    public void The_event_is_catalogued_publicly_under_its_key_shape()
     {
         var entry = Assert.Single(EventCatalog.All, static e => e.Type == EventTypes.WorkflowQuestion);
 
-        Assert.False(entry.Public);
-        Assert.Null(entry.PublicPayload);
+        Assert.True(entry.Public);
+        Assert.Equal(typeof(WorkflowQuestionPublic), entry.PublicPayload);
         Assert.Equal("workflow.question:<run id>:<node id>", entry.KeyShape);
     }
 
