@@ -137,20 +137,28 @@ internal static class CallerRequests
             _ = request.Headers.TryAddWithoutValidation(name, value);
         }
 
-        // why: under AsLaunchedSession a scenario's hand-built session headers (not from Human) are the launched session's too; a call proven by a launch's own secret stays that launch's
+        AddLaunch(request, headers);
+        Record(request);
+        return request;
+    }
+
+    // why: under AsLaunchedSession a scenario's hand-built session headers (not from Human) are the launched session's too; a call proven by a launch's own secret stays that launch's
+    private static void AddLaunch(HttpRequestMessage request, (string Name, string Value)[] headers)
+    {
         if (_launch.Value is { } launch && headers.Any(static h => string.Equals(h.Name, SindriHeaders.Caller, StringComparison.Ordinal) && string.Equals(h.Value, "session", StringComparison.Ordinal))
             && !headers.Any(static h => string.Equals(h.Name, SindriHeaders.Launch, StringComparison.Ordinal) || string.Equals(h.Name, SindriHeaders.LaunchSecret, StringComparison.Ordinal)))
         {
             _ = request.Headers.TryAddWithoutValidation(SindriHeaders.Launch, launch);
         }
+    }
 
-        // why: only a request that really goes out as the launch counts; seeding as the human (AsHuman) or a launch-secret call carries no X-Sindri-Launch of this launch
+    // why: only a request that really goes out as the launch counts; seeding as the human (AsHuman) or a launch-secret call carries no X-Sindri-Launch of this launch
+    private static void Record(HttpRequestMessage request)
+    {
         if (_launch.Value is { } sentAs && request.Headers.TryGetValues(SindriHeaders.Launch, out var launches) && launches.Contains(sentAs, StringComparer.Ordinal))
         {
             _sent.Value?.Enqueue(new SentRequest(request.Method.Method, PathOf(request.RequestUri), _head.Value?.Invoke() ?? Task.FromResult(0L)));
         }
-
-        return request;
     }
 
     private static string PathOf(Uri? uri)
