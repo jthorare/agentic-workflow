@@ -31,7 +31,8 @@ function spawnRun(cmd: readonly string[], opts: RunOpts = {}): Effect.Effect<Run
       proc = Bun.spawn([...cmd], { ...(opts.cwd ? { cwd: opts.cwd } : {}), stdin: "ignore", stdout: "pipe", stderr: "pipe" });
     } catch (e) {
       const msg = (e as Error).message ?? String(e);
-      const missing = /not found|ENOENT|No such file/i.test(msg);
+      // Bun sets code ENOENT for a missing executable ("Executable not found in $PATH") and a missing path alike
+      const missing = (e as { code?: string }).code === "ENOENT" || msg.includes("ENOENT");
       resume(Effect.succeed({
         code: null, out: "", seconds: elapsed(t0), timeout: false,
         err: missing ? `FileNotFoundError: [Errno 2] No such file or directory: ${strRepr(cmd[0] ?? "")}` : `OSError: ${msg}`,
