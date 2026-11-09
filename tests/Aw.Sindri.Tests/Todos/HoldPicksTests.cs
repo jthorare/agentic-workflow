@@ -161,6 +161,30 @@ public sealed class HoldPicksTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Put_them_back_after_a_failed_apply_returns_every_todo_the_failed_try_changed_to_before_that_try()
+    {
+        await Held();
+        using var cli = _h.Cli();
+        var foreign = new TodoChanged(_second, 2, "call the dentist today", Due: null, ClearDue: false, Links: null, "human:ui");
+        await _h.Record(EventTypes.TodoChanged, foreign, TodoWrite.VersionKey(_second, 2));
+        var failed = await _h.PickHold().Handle(new PickTodoHoldRequest(Restore: false, Hash), Token);
+        Assert.Equal("SND-TODO-409", failed.Error.Code);
+        // the view catches up with both writes (rows fold at sequence 0: this test is about the restore, not about edits after the hold)
+        await _h.FoldAt(EventTypes.TodoRemoved, new TodoRemoved(_first, 2, "obsidian"), 0);
+        await _h.FoldAt(EventTypes.TodoChanged, foreign, 0);
+
+        var restored = await _h.PickHold().Handle(new PickTodoHoldRequest(Restore: true, Hash), Token);
+
+        Assert.True(restored.IsSuccess, restored.IsError ? restored.Error.ToString() : null);
+        // the first todo, which the failed try removed, is back (version 3); the second was never touched by the try, so it gets no event
+        var after = _h.Slice.Store.Events.Select(e => e.Envelope.Type).TakeLast(2).ToList();
+        Assert.Equal(["todo.restored", "todo.note.held.resolved"], after, StringComparer.Ordinal);
+        var back = _h.Payload<TodoRestored>(_h.Slice.Store.Events[^2]);
+        Assert.Equal((_first, 3L), (back.Id, back.Version));
+        Assert.DoesNotContain(_h.Slice.Store.Events.Skip(3), e => e.Envelope.Type == "todo.changed");
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_todo_changed_in_sindri_after_the_hold_is_conflicted_not_overwritten_and_the_others_apply()
     {
         await Held();
