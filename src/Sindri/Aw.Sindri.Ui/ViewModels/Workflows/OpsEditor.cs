@@ -43,6 +43,9 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
     /// <summary>The prompt under the editor when the workflow changed elsewhere; empty otherwise.</summary>
     public string ReloadPromptText { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>Holds every edit until a reload: the workflow changed since the page read it.</summary>
+    internal void MarkChangedElsewhere() => (NeedsReload, ReloadPromptText) = (true, Labels.WfEditChangedElsewhere);
+
     /// <summary>The Reload command's words.</summary>
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     public string ReloadText => Labels.WfReload;

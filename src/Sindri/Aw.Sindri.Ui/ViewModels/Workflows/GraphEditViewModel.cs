@@ -29,6 +29,7 @@ internal sealed partial class GraphEditViewModel : ObservableObject
     private readonly Func<Uri?> _url;
     private WorkflowGraphViewModel? _watched;
     private Mode _mode;
+    private string _slug = string.Empty;
 
     internal GraphEditViewModel(OpsEditor editor, RunsViewModel runs, Func<Uri?> url)
     {
@@ -36,6 +37,11 @@ internal sealed partial class GraphEditViewModel : ObservableObject
         editor.PropertyChanged += (_, _) => NotifyAll();
         runs.PropertyChanged += (_, _) =>
         {
+            if (!string.Equals(runs.Slug, _slug, StringComparison.Ordinal))
+            {
+                (_slug, _mode) = (runs.Slug, Mode.None);   // another workflow: a picker, list or confirm open for the old one would send to the new one
+            }
+
             Watch(runs.Graph);
             NotifyAll();
         };
@@ -44,7 +50,6 @@ internal sealed partial class GraphEditViewModel : ObservableObject
 
     /// <summary>The editor the ops go through.</summary>
     public OpsEditor Editor { get; }
-
 
     /// <summary>True when an edit may be sent now: a workflow is open and not archived, no edit is on the way and the workflow did not change elsewhere.</summary>
     public bool CanEdit => _url() is not null && _runs.Slug.Length > 0 && _runs.Graph is not null && _runs.Shown is { ArchivedAt: null } && !Editor.IsSending && !Editor.NeedsReload;
@@ -188,6 +193,13 @@ internal sealed partial class GraphEditViewModel : ObservableObject
         if (!string.Equals(Editor.Slug, _runs.Slug, StringComparison.Ordinal) || Editor.BaseRevision != _runs.Shown?.LatestRevision || Editor.Groups.Count == 0)
         {
             await Editor.Load(url, _runs.Slug, cancellationToken).ConfigureAwait(true);
+            if (Editor.BaseRevision > 0 && Editor.BaseRevision != _runs.Shown?.LatestRevision)
+            {
+                Editor.MarkChangedElsewhere();   // the workflow moved on since the page read it: nothing is sent on a revision the person never saw
+                SetMode(Mode.None);
+                await ReadPage(_runs.Slug, cancellationToken).ConfigureAwait(true);
+                return false;
+            }
         }
 
         return Editor.Groups.Count > 0 && Editor.BaseRevision > 0;
