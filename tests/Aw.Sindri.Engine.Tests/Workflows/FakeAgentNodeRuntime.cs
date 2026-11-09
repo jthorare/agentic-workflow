@@ -56,6 +56,8 @@ internal sealed class FakeAgentNodeRuntime : IAgentNodeRuntime
         _ = _watching.TrySetResult();
         while (!_ended.Task.IsCompleted)
         {
+            // why: a cancelled Task.Delay completes at once and WhenAny doesn't throw, so without this a cancelled watch spins on heartbeat() for ever
+            cancellationToken.ThrowIfCancellationRequested();
             heartbeat();
             _ = await Task.WhenAny(_ended.Task, Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken)).ConfigureAwait(false);
         }
