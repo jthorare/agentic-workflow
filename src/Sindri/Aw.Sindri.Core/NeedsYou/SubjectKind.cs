@@ -39,6 +39,10 @@ public enum SubjectKind
     [JsonStringEnumMemberName("recipe")]
     Recipe,
 
+    /// <summary>A connection (connections PR 10b).</summary>
+    [JsonStringEnumMemberName("connection")]
+    Connection,
+
     /// <summary>A graph run, named by its run id.</summary>
     [JsonStringEnumMemberName("workflow-run")]
     WorkflowRun,

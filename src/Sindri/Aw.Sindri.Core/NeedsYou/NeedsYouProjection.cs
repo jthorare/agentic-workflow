@@ -29,9 +29,11 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
     {
         EventTypes.RequestFiled, EventTypes.DecisionRecorded, EventTypes.ItemStateChanged, EventTypes.ServiceRan, EventTypes.ProfileChecked, EventTypes.ProfileApproved,
         EventTypes.WorkflowStarted, EventTypes.WorkflowTransition, EventTypes.WorkflowRefused, EventTypes.WorkflowNotified,
+        EventTypes.ConnectionNeedsSignIn, EventTypes.ConnectionSignedIn,
         EventTypes.WorkflowNotify, EventTypes.WorkflowRunFinished, EventTypes.WorkflowRunCancelled,
     };
 
+    /// <inheritdoc />
     public bool Handles(string eventType) => _handled.Contains(eventType);
 
     public async ValueTask<Result<Unit>> Apply(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
@@ -46,6 +48,7 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
             EventTypes.ServiceRan => await Ran(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ProfileChecked => await Checked(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ProfileApproved => await Approved(recorded, rows, cancellationToken).ConfigureAwait(false),
+            EventTypes.ConnectionNeedsSignIn or EventTypes.ConnectionSignedIn => await ConnectionRow(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.WorkflowNotify => await Notified(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.WorkflowRunFinished or EventTypes.WorkflowRunCancelled => await RunEnded(recorded, rows, cancellationToken).ConfigureAwait(false),
             _ => await Engine(recorded, rows, cancellationToken).ConfigureAwait(false),

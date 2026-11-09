@@ -33,4 +33,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-CONN-010: a connection with that name exists.</summary>
     public static readonly ErrorDefinition ConnectionExists = new("SND-CONN-010", ErrorKind.Conflict, "A connection with that name already exists");
+
+    /// <summary>SND-CONN-011: the connection is key-based and has no browser sign-in to run again.</summary>
+    public static readonly ErrorDefinition ConnectionKindNoSignIn = new("SND-CONN-011", ErrorKind.Invalid, "This connection uses a key, not a browser sign-in");
 }

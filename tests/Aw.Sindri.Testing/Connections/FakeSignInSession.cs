@@ -24,6 +24,9 @@ public sealed class FakeSignInSession : ISignInSession
     /// <summary>Gets the scopes of the last start.</summary>
     public IReadOnlyList<string> LastScopes { get; private set; } = [];
 
+    /// <summary>Gets the MCP servers the sign-ins were started for.</summary>
+    public IList<Uri> McpServers { get; } = [];
+
     /// <summary>Ends the sign-in with these tokens.</summary>
     /// <param name="tokens">The tokens.</param>
     public void Succeed(TokenSet tokens) => _completion.SetResult(tokens);
@@ -39,6 +42,13 @@ public sealed class FakeSignInSession : ISignInSession
         LastScopes = scopes;
         LastClientSecret = clientSecret;
         LastToken = cancellationToken;
+        return ValueTask.FromResult<Result<SignInStarted>>(new SignInStarted(ConsentUrl, _completion.Task));
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<SignInStarted>> StartMcp(Uri server, CancellationToken cancellationToken)
+    {
+        McpServers.Add(server);
         return ValueTask.FromResult<Result<SignInStarted>>(new SignInStarted(ConsentUrl, _completion.Task));
     }
 }

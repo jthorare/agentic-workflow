@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Text.Json;
 using Aw.Kernel;
 using Aw.Sindri.Core;
@@ -12,6 +13,8 @@ namespace Aw.Sindri.Infrastructure.Connections;
 /// <param name="time">The clock, for ExpiresAt.</param>
 internal sealed class HttpOAuthClient(HttpClient http, TimeProvider time) : IOAuthClient
 {
+    private const string NoCode = "no error code";
+
     private readonly HttpClient _http = http;
     private readonly TimeProvider _time = time;
 
@@ -45,9 +48,12 @@ internal sealed class HttpOAuthClient(HttpClient http, TimeProvider time) : IOAu
         AddSecret(form, clientSecret);
         var answer = await Post(preset.TokenUrl, form, cancellationToken).ConfigureAwait(false);
         return answer.IsError
-            ? SindriErrors.ConnectionRefreshFailed.With($"{preset.Key}: {answer.Error.Message}")
+            ? SindriErrors.ConnectionRefreshFailed.With($"{preset.Key}: {answer.Error.Message}") with { Extensions = answer.Error.Extensions }   // the provider's own code rides along
             : Tokens(answer.Value, previousRefresh: refreshToken, clientSecret);
     }
+
+    public ValueTask<Result<McpSignInTarget>> RegisterMcpClient(Uri server, string redirectUri, CancellationToken cancellationToken)
+        => new McpOAuthDiscovery(_http).Register(server, redirectUri, cancellationToken);
 
     public async ValueTask<Result<Unit>> Revoke(ConnectionPreset preset, string client, string token, CancellationToken cancellationToken)
     {
@@ -70,7 +76,7 @@ internal sealed class HttpOAuthClient(HttpClient http, TimeProvider time) : IOAu
         }
     }
 
-    // Returns the answer's JSON text on a 2xx; otherwise an error naming the status and the provider's error code (a short [a-z_] word) only.
+    // Returns the answer's JSON text on a 2xx; otherwise an error naming the status and the provider's error code (a short [a-z_] word) only. The 'providerCode' extension is set only on a 400 or 401.
     private async ValueTask<Result<string>> Post(string url, Dictionary<string, string> form, CancellationToken cancellationToken)
     {
         try
@@ -84,7 +90,10 @@ internal sealed class HttpOAuthClient(HttpClient http, TimeProvider time) : IOAu
                 return body;
             }
 
-            return SindriErrors.ConnectionRefreshFailed.With($"the token endpoint answered {((int)response.StatusCode).ToString(CultureInfo.InvariantCulture)} ({ProviderCode(body)})");
+            var code = ProviderCode(body);
+            var refused = SindriErrors.ConnectionRefreshFailed.With($"the token endpoint answered {((int)response.StatusCode).ToString(CultureInfo.InvariantCulture)} ({code})");
+            // only a 400 or 401 is the provider refusing the grant; a 429 or 5xx is it being busy, and its code ('temporarily_unavailable') is not a verdict on the token
+            return code == NoCode || response.StatusCode is not (HttpStatusCode.BadRequest or HttpStatusCode.Unauthorized) ? refused : refused.WithExtension("providerCode", Text(code));
         }
         catch (HttpRequestException)
         {
@@ -94,6 +103,13 @@ internal sealed class HttpOAuthClient(HttpClient http, TimeProvider time) : IOAu
         {
             return SindriErrors.ConnectionRefreshFailed.With("the token endpoint did not answer in time");
         }
+    }
+
+    // ProviderCode checked the word is [a-z_] only, so it needs no escaping.
+    private static JsonElement Text(string word)
+    {
+        using var document = JsonDocument.Parse("\"" + word + "\"");
+        return document.RootElement.Clone();
     }
 
     private static string ProviderCode(string body)
@@ -115,7 +131,7 @@ internal sealed class HttpOAuthClient(HttpClient http, TimeProvider time) : IOAu
             // not JSON: no provider code to name
         }
 
-        return "no error code";
+        return NoCode;
     }
 
     private Result<TokenSet> Tokens(string json, string? previousRefresh, string? clientSecret)

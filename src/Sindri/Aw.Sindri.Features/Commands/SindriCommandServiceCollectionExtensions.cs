@@ -47,6 +47,28 @@ public static class SindriCommandServiceCollectionExtensions
                 new StoppingGate<TCommand, TResult>(Awaiting<TCommand, TResult, TService>(sp), sp.GetRequiredService<CommandGateLock>())));
     }
 
+    /// <summary>
+    /// Adds <typeparamref name="TService"/> as a command's service behind the command chain without its gate: audited, authorized and validated like
+    /// any command, but it does not hold the gate while it runs. For a command that waits on a secret store or a provider (the connection test, #2349);
+    /// its handler takes the <see cref="ICommandGate"/> itself, around the writes only, so a slow call can't make every other command fail SND-API-009.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <typeparam name="TCommand">The command record.</typeparam>
+    /// <typeparam name="TResult">What it answers.</typeparam>
+    /// <typeparam name="TService">The handler.</typeparam>
+    /// <returns>The same collection.</returns>
+    internal static IServiceCollection AddUngatedCommand<TCommand, TResult, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService>(this IServiceCollection services)
+        where TCommand : ICommand<TResult>
+        where TService : class, IService<TCommand, TResult>
+    {
+        services.TryAddSingleton<CommandGateLock>();
+        services.TryAddSingleton<ICommandGate, CommandGateAccess>();
+        services.TryAddSingleton<AuditTrail>();
+        return services
+            .AddScoped<TService>()
+            .AddScoped<IService<TCommand, TResult>>(static sp => Audited(sp, Awaiting<TCommand, TResult, TService>(sp)));
+    }
+
     /// <summary>Adds <typeparamref name="TService"/> as the query <typeparamref name="TQuery"/>'s service, behind validation.</summary>
     /// <param name="services">The service collection.</param>
     /// <typeparam name="TQuery">The query record.</typeparam>

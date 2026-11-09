@@ -260,6 +260,12 @@ public static class EventTypes
     /// <summary>The owner agreed that Sindri may register itself and build the map on its own (setup-once spec §7.5).</summary>
     public const string SetupConsentGiven = "setup.consent.given";
 
+    /// <summary>A connection's token could not be refreshed, so the owner has to sign in again (connections PR 10b). Keyed by the connection and the time; no token in it.</summary>
+    public const string ConnectionNeedsSignIn = "connection.needs-sign-in";
+
+    /// <summary>A connection that needed a new sign-in is connected again (connections PR 10b); it clears the connection's needs-you row.</summary>
+    public const string ConnectionSignedIn = "connection.signed-in";
+
     /// <summary>A graph run was recorded and its workflow started (issue 2258, PR 6).</summary>
     public const string WorkflowRunStarted = "workflow.run.started";
 

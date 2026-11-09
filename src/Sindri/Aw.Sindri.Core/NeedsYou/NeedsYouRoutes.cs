@@ -13,6 +13,9 @@ public static class NeedsYouRoutes
     /// <summary>The setup screen.</summary>
     public const string Setup = "setup";
 
+    /// <summary>The connections page (connections PR 10b).</summary>
+    public const string Connections = "connections";
+
     /// <summary>The instance at <paramref name="address"/>: 'workflow/&lt;address&gt;'.</summary>
     /// <param name="address">The instance's address.</param>
     /// <returns>The route.</returns>
