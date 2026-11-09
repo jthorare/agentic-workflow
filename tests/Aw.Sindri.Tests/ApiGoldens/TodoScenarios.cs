@@ -15,7 +15,7 @@ internal static class TodoScenarios
     private static readonly string[] _markSlugs = ["todos-done", "todos-reopen", "todos-remove", "todos-restore"];
 
     /// <summary>The (slug, scenario) pairs of this class.</summary>
-    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-id", "show"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted"), ("todos-note-check", "counts"), ("todos-note-set", "changed"), ("todos-note-set", "unchanged"), ("todos-note-set", "stale"), ("todos-note-stop", "changed"), ("todos-note-stop", "unchanged"), ("todos-keep", "sindri"), ("todos-keep-undo", "accepted"), ("todos-hold-apply", "accepted"), ("todos-hold-undo", "accepted")];
+    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-id", "show"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted"), ("todos-note-check", "counts"), ("todos-note-set", "changed"), ("todos-note-set", "unchanged"), ("todos-note-set", "stale"), ("todos-note-stop", "changed"), ("todos-note-stop", "unchanged"), ("todos-keep", "sindri"), ("todos-keep", "obsidian"), ("todos-keep-undo", "accepted"), ("todos-hold-apply", "accepted"), ("todos-hold-undo", "accepted")];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
     public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario));
@@ -67,7 +67,7 @@ internal static class TodoScenarios
 
         if (slug.StartsWith("todos-keep", StringComparison.Ordinal) || slug.StartsWith("todos-hold", StringComparison.Ordinal))
         {
-            return await Pick(host, human, slug, ct);
+            return await Pick(host, human, slug, scenario, ct);
         }
 
         if (_markSlugs.Contains(slug))
@@ -102,7 +102,7 @@ internal static class TodoScenarios
     }
 
     // the picks (todo spec D11, REQ-E7): a todo changed in both places, or a hold of the note's changes, written to the ledger the way the sync will; the keep and the hold pick post the request file's bytes, and each Undo follows its pick inside the 10 s
-    private static async Task<string> Pick(GoldenHost host, (string Name, string Value)[] human, string slug, CancellationToken ct)
+    private static async Task<string> Pick(GoldenHost host, (string Name, string Value)[] human, string slug, string scenario, CancellationToken ct)
     {
         const string Hash = "sha256:3f1c0a9e5b7d2c4e6a8b0d1f3e5c7a9b2d4f6e8a0c1b3d5f7e9a2c4b6d8f0e1a";
         var made = await Add(host, human, """{"text":"call the dentist","clientId":"c-1"}""", string.Empty, ct);
@@ -113,7 +113,7 @@ internal static class TodoScenarios
             var theirs = new TodoSide("call the dentist about the crown", new DateOnly(2026, 1, 5), Links: [], Done: false, Removed: false);
             await ViewScenarios.Append(host, EventTypes.TodoConflicted, new TodoConflicted(id, mine, theirs, Hash), $"todo.conflicted:{made}:{Hash}", ct);
             await ViewScenarios.CatchUp(host, ct);
-            var kept = await host.Http.Ask(Post($"/sindri/todos/{made}/keep", Request("todos-keep", "sindri"), human));
+            var kept = await host.Http.Ask(Post($"/sindri/todos/{made}/keep", Request("todos-keep", scenario is "obsidian" ? "obsidian" : "sindri"), human));
             if (slug == "todos-keep")
             {
                 return kept.Body;
