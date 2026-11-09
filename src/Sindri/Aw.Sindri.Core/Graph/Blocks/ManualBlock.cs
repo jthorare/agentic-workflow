@@ -20,12 +20,6 @@ public sealed class ManualBlock : IGraphBlock
     /// <inheritdoc />
     public bool IsTrigger => true;
 
-    /// <inheritdoc/>
-    public string Group => "Triggers";
-
-    /// <inheritdoc/>
-    public string Title => "Manual";
-
     /// <inheritdoc />
     public BlockSchema Config { get; } = new([]);
 

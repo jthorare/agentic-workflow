@@ -21,12 +21,6 @@ public sealed class ConditionBlock : IGraphBlock
     /// <inheritdoc />
     public bool IsTrigger => false;
 
-    /// <inheritdoc/>
-    public string Group => "Logic";
-
-    /// <inheritdoc/>
-    public string Title => "Condition";
-
     /// <inheritdoc />
     public BlockSchema Config { get; } = new([new("when", BlockFieldType.Text)]);
 

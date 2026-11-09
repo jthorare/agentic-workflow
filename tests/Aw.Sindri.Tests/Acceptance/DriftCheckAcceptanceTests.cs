@@ -25,7 +25,7 @@ public sealed class DriftCheckAcceptanceTests : IDisposable
     [Theory]
     [InlineData("in-sync")]
     [InlineData("drifted")]
-    public async Task A_sentence_becomes_an_active_workflow_through_the_write_slices_only(string client)
+    public async Task A_sentence_becomes_an_active_workflow_through_MCP_writes(string client)
     {
         _ = await _rig.Harness.HoldLease();
         var prompt = Prompt(client);

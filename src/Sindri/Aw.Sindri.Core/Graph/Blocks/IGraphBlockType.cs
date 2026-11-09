@@ -20,12 +20,6 @@ public interface IGraphBlockType
     /// <summary>True for a block that starts a run (schedule, poll, inbox, workflow_call): a workflow has exactly one.</summary>
     public bool IsTrigger { get; }
 
-    /// <summary>The picker group the block sits under: 'Triggers', 'Data', 'AI', 'Logic' or 'Outputs'. A block that does not say is 'Logic'.</summary>
-    public string Group => "Logic";
-
-    /// <summary>The label the picker shows. A block that does not say shows its type.</summary>
-    public string Title => Type;
-
     /// <summary>The fields the config takes.</summary>
     public BlockSchema Config { get; }
 

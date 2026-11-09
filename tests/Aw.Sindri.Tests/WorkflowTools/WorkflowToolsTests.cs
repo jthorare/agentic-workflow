@@ -45,8 +45,8 @@ public sealed class WorkflowToolsTests
     [Fact]
     public async Task workflow_blocks_groups_blocks_by_group_and_shows_each_title()
     {
-        var catalog = new Catalog([new Block("schedule", "Schedule", "Triggers"), new Block("memory_search", "Search memory", "Data"), new Block("prompt", "Ask the model", "AI"), new Block("condition", "Condition", "Logic"), new Block("notify", "Notify me", "Outputs"), new Block("manual", "Manual", "Triggers")]);
-        await using var services = Services(s => s.AddSingleton<IService<ListWorkflowBlocksRequest, ListWorkflowBlocksResponse>>(new ListWorkflowBlocksService(catalog)));
+        var catalog = new Catalog([new Block("schedule", "Schedule", BlockGroup.Triggers), new Block("memory_search", "Search memory", BlockGroup.Data), new Block("prompt", "Ask the model", BlockGroup.AI), new Block("condition", "Condition", BlockGroup.Logic), new Block("notify", "Notify me", BlockGroup.Outputs), new Block("manual", "Manual", BlockGroup.Triggers)]);
+        await using var services = Services(s => s.AddSingleton<IService<ListWorkflowBlocksRequest, ListWorkflowBlocksResponse>>(new ListWorkflowBlocksService(catalog, new Docs([]))));
 
         var result = await Host.Mcp.WorkflowTools.Call(Host.Mcp.WorkflowTools.Blocks, services, arguments: null, Token);
 
@@ -104,15 +104,15 @@ public sealed class WorkflowToolsTests
         public IReadOnlyDictionary<string, IGraphBlockType> Types { get; } = blocks.ToDictionary(static b => b.Type, StringComparer.Ordinal);
     }
 
-    private sealed class Block(string type, string title, string group) : IGraphBlockType
+    private sealed class Block(string type, string title, BlockGroup group) : IGraphBlockType
     {
         public string Type => type;
 
         public string Title => title;
 
-        public string Group => group;
+        public BlockGroup Group => group;
 
-        public bool IsTrigger => group == "Triggers";
+        public bool IsTrigger => group == BlockGroup.Triggers;
 
         public BlockSchema Config { get; } = new([new BlockField("name", BlockFieldType.Text)]);
 

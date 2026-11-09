@@ -20,12 +20,6 @@ public sealed class ScheduleBlock : IGraphBlock
     /// <inheritdoc />
     public bool IsTrigger => true;
 
-    /// <inheritdoc/>
-    public string Group => "Triggers";
-
-    /// <inheritdoc/>
-    public string Title => "Schedule";
-
     /// <inheritdoc />
     public BlockSchema Config { get; } = new([new("cron", BlockFieldType.Text), new("timezone", BlockFieldType.Text, Required: false)]);
 
