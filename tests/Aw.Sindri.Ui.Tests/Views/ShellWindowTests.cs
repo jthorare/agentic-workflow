@@ -1532,12 +1532,12 @@ public sealed class ShellWindowTests : IDisposable
         }
     });
 
-    // The Projects page spec §7: seven tabs at the 1,000 px minimum, each label whole (not trimmed, not past the window's edge)
+    // The Projects page spec §7: every tab (eight since Connections, PR 18a) at the 1,000 px minimum, each label whole (not trimmed, not past the window's edge)
     // at text scale 1.0 and 1.3. The counts may give way first (TopBar.Counts); the labels never do.
     [Theory]
     [InlineData(1.0)]
     [InlineData(1.3)]
-    public Task At_the_1000_px_minimum_all_seven_tab_labels_are_whole(double scale) => OnUi(async () =>
+    public Task At_the_1000_px_minimum_all_eight_tab_labels_are_whole(double scale) => OnUi(async () =>
     {
         await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, 1000, 600) });
         var window = await ShowIn(BarState.Normal);
@@ -1550,7 +1550,7 @@ public sealed class ShellWindowTests : IDisposable
             var labels = Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("nav-label")).ToList();
 
             Assert.Equal(shell.Navigation.Select(n => n.DisplayLabel), labels.Select(t => t.Text), StringComparer.Ordinal);   // the short label where the tab has one
-            Assert.Equal(7, labels.Count);
+            Assert.Equal(8, labels.Count);
             foreach (var label in labels)
             {
                 using var layout = new TextLayout(label.Text, new Typeface(label.FontFamily, label.FontStyle, label.FontWeight), label.FontSize, foreground: null);

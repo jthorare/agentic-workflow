@@ -9,6 +9,8 @@
         xmlns:queue="using:Aw.Sindri.Ui.Views.Queue"
         xmlns:agv="using:Aw.Sindri.Ui.Views.Agents"
         xmlns:jv="using:Aw.Sindri.Ui.Views.Jobs"
+        xmlns:cxv="using:Aw.Sindri.Ui.Views.Connections"
+        xmlns:mmv="using:Aw.Sindri.Ui.Views.Memory"
         xmlns:pv="using:Aw.Sindri.Ui.Views.Projects"
         xmlns:lnv="using:Aw.Sindri.Ui.Views.Linear"
         xmlns:rwv="using:Aw.Sindri.Ui.Views.Reviews"
@@ -235,7 +237,26 @@
                     <Button x:Name="JobsLink" Classes="row-title" Click="OnJobsLink" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Text.JobsLinkName}">
                       <TextBlock Classes="body" Text="{Binding Text.JobsLink}" AutomationProperties.AccessibilityView="Raw" />
                     </Button>
+                    <!-- Memory is not a tab either: System leads to it (G M and the palette too). -->
+                    <Button x:Name="MemoryLink" Classes="row-title" Click="OnMemoryLink" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Text.MemoryLinkName}">
+                      <TextBlock Classes="body" Text="{Binding Text.MemoryLink}" AutomationProperties.AccessibilityView="Raw" />
+                    </Button>
                   </StackPanel>
+                </Panel>
+                <Panel IsVisible="{Binding IsConnections}">
+                  <controls:Deferred DataContext="{Binding Connections}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><cxv:ConnectionsPage x:Name="ConnectionsPage" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
+                </Panel>
+                <!-- The Memory page (PR 18a): not a tab; G M, the palette, System's Memory link and a memory/<name> link open it. -->
+                <Panel IsVisible="{Binding IsMemory}">
+                  <controls:Deferred DataContext="{Binding MemoryPage}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><mmv:MemoryPage x:Name="MemoryPage" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
                 </Panel>
                 <Panel IsVisible="{Binding IsJobs}">
                   <controls:Deferred DataContext="{Binding Jobs}">
@@ -338,6 +359,13 @@
                   <controls:Deferred DataContext="{Binding JobSheet}">
                     <controls:Deferred.Template>
                       <DataTemplate><jv:JobSheetView x:Name="JobSheetContent" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
+                </ScrollViewer>
+                <ScrollViewer x:Name="ConnectionSheetScroll" IsVisible="{Binding IsConnectionSheet}">
+                  <controls:Deferred DataContext="{Binding ConnectionSheet}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><cxv:ConnectionSheetView x:Name="ConnectionSheetContent" /></DataTemplate>
                     </controls:Deferred.Template>
                   </controls:Deferred>
                 </ScrollViewer>
