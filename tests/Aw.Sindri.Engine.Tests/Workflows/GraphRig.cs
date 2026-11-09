@@ -34,7 +34,7 @@ internal sealed class GraphRig : IAsyncDisposable
     private readonly GraphRunStarter _starter;
     private readonly InMemorySindriStore _ledger;
 
-    private GraphRig(WorkflowEnvironment environment, IAgentNodeRuntime? agents)
+    private GraphRig(WorkflowEnvironment environment, IAgentNodeRuntime? agents, ForEachLimits? forEachLimits)
     {
         // why: the test server is shared by the class, and a run id or task queue can be used once on it
         var number = Interlocked.Increment(ref _count).ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -45,7 +45,7 @@ internal sealed class GraphRig : IAsyncDisposable
         Workflows = new InMemoryWorkflowStore(clock);
         Blocks = new GraphTestBlocks();
         Client = environment.Client;
-        var registry = new GraphBlockRegistry([new ManualBlock(), new ConditionBlock(), .. Blocks.All()]);
+        var registry = new GraphBlockRegistry([new ManualBlock(), new ConditionBlock(), new ForEachBlock(forEachLimits is { } limits ? new FixedForEachLimits(limits) : new DefaultForEachLimits()), new CollectBlock(), .. Blocks.All()]);
         var probe = new FakeProcessProbe();
         _ledger = new InMemorySindriStore(clock, probe);
         var held = new HeldLease();
@@ -57,6 +57,7 @@ internal sealed class GraphRig : IAsyncDisposable
         _starter = starter;
         var options = new TemporalWorkerOptions(_taskQueue)
             .AddWorkflow<GraphWorkflow>()
+            .AddWorkflow<GraphIterationWorkflow>()
             .AddAllActivities(new GraphRunActivities(Runs, Workflows, starter, mirror))
             .AddAllActivities(new GraphBlockActivities(registry, Runs, Workflows));
         if (agents is not null)
@@ -84,7 +85,18 @@ internal sealed class GraphRig : IAsyncDisposable
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    public static GraphRig Start(WorkflowEnvironment environment, IAgentNodeRuntime? agents = null) => new(environment, agents);
+    public static GraphRig Start(WorkflowEnvironment environment, IAgentNodeRuntime? agents = null) => new(environment, agents, forEachLimits: null);
+
+    /// <summary>A rig whose for_each blocks read <paramref name="forEachLimits"/> as the profile's limits.</summary>
+    /// <param name="environment">The shared Temporal test server.</param>
+    /// <param name="forEachLimits">The profile's item cap and batch size.</param>
+    /// <returns>The started rig.</returns>
+    public static GraphRig Start(WorkflowEnvironment environment, ForEachLimits forEachLimits) => new(environment, agents: null, forEachLimits);
+
+    private sealed class FixedForEachLimits(ForEachLimits limits) : IForEachLimitSource
+    {
+        public ValueTask<ForEachLimits> Current(CancellationToken cancellationToken) => ValueTask.FromResult(limits);
+    }
 
     public static GraphNode Node(string id, string type, string? onFailure = null, JsonObject? config = null) =>
         new(NodeId.From(id), type, Title: null, config ?? [], onFailure);
@@ -108,10 +120,10 @@ internal sealed class GraphRig : IAsyncDisposable
         (await _starter.Start(new GraphStartRequest(workflow.Id, workflow.Slug, Revision: 1, occurrence, trigger, mode), Token)).Value;
 
     /// <summary>Waits until the run has a final status.</summary>
-    public async Task<WorkflowRun> Final(WorkflowRunId id)
+    public async Task<WorkflowRun> Final(WorkflowRunId id, TimeSpan? patience = null)
     {
         using var limit = CancellationTokenSource.CreateLinkedTokenSource(Token);
-        limit.CancelAfter(_patience);
+        limit.CancelAfter(patience ?? _patience);
         while (true)
         {
             var run = (await Runs.Get(id, limit.Token)).Value;
@@ -152,6 +164,10 @@ internal sealed class GraphRig : IAsyncDisposable
 
     public async Task<IReadOnlyDictionary<string, NodeRunStatus>> NodeStatuses(WorkflowRunId id) =>
         (await Runs.NodeRuns(id, Token)).Value.ToDictionary(static n => n.NodeId.Value, static n => n.Status, StringComparer.Ordinal);
+
+    /// <summary>Every row of one node, by item index (0 is the node's own row).</summary>
+    public async Task<IReadOnlyDictionary<int, NodeRun>> ItemRuns(WorkflowRunId id, string node) =>
+        (await Runs.NodeRuns(id, Token)).Value.Where(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal)).ToDictionary(static n => n.ItemIndex);
 
     /// <summary>The ledger rows the run wrote, as '&lt;type&gt; &lt;idempotency key&gt;', oldest first.</summary>
     public async Task<IReadOnlyList<string>> Rows()

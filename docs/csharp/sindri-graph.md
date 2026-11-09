@@ -15,7 +15,7 @@ A workflow is a JSON document Sindri stores as revisions. This page covers what 
 - `version` is 1. Unknown members are refused (`SND-GRAPH-001`).
 - A node id is a lowercase letter, then lowercase letters, digits and `_` (at most 64), because references use it.
 - An edge leaves by `output` (default `out`; a `condition` has `true` and `false`).
-- Config strings take `{{node.field}}`, `{{trigger.*}}`, `{{item}}` and `{{workflow.*}}`. A string that is exactly one
+- Config strings take `{{node.field}}`, `{{trigger.*}}`, `{{item}}` and `{{itemIndex}}` (inside a `for_each`; `itemIndex` counts from 1) and `{{workflow.*}}`. A string that is exactly one
   reference keeps the referenced value's type; inside other text, objects and arrays render as compact JSON and null as nothing.
 
 ## Validation (`GraphValidator`, `sindri wf validate <file> [--json]`)
@@ -29,7 +29,8 @@ A workflow is a JSON document Sindri stores as revisions. This page covers what 
 | `GRAPH-BLOCK-001`, `GRAPH-CONFIG-001` | unknown block type, config that fails the block's schema |
 | `GRAPH-CRON-001`, `GRAPH-COND-001` | unreadable cron or timezone, unreadable condition |
 | `GRAPH-REPO-001`, `GRAPH-NAME-001` | repo, connection or memory that does not exist (`-002` is the warning when nobody can answer yet) |
-| `GRAPH-NODE-001` / `-002`, `GRAPH-EDGE-001` / `-002` | repeated node id / a node id that is `trigger`, `item` or `workflow` (reserved reference roots), edge to a missing node, edge by an output the block lacks (an edge with no `output` leaves by `out`) |
+| `GRAPH-LOOP-001` / `-002` | a `for_each` that can't run as a loop: no `collect` after it, more than one, a loop inside it, or a node of the loop also fed from outside it / a `collect` no `for_each` reaches |
+| `GRAPH-NODE-001` / `-002`, `GRAPH-EDGE-001` / `-002` | repeated node id / a node id that is `trigger`, `item`, `itemIndex` or `workflow` (reserved reference roots), edge to a missing node, edge by an output the block lacks (an edge with no `output` leaves by `out`) |
 
 `GRAPH-TRIGGER-001` / `-002`, `GRAPH-CYCLE-001` and `GRAPH-WIRING-001` are node-level findings: they name nodes and have no field.
 
@@ -111,3 +112,22 @@ The built-in service `workflow-schedule` (`Features/WorkflowSchedule`, every min
 - **A failed launch does not use up its tick.** When the starter returns any other error (the engine is down, say), the tick is not marked, the pass logs a warning, and the next pass tries the same tick again (as long as it is still the latest). A pass keeps going over the other workflows after one fails and returns the first error at the end.
 - **One schedule node.** A workflow has exactly one trigger (`GRAPH-TRIGGER-001`), so the service reads only the first `schedule` node (up to six crons inside it).
 - **Known gap:** nothing stores when a revision was activated, so the floor is `WorkflowRevision.CreatedAt`. A tick between saving and activating a revision can fire once on activation.
+
+## Loops (`for_each`, `collect`; PR 9)
+
+Pages: `docs/workflows/blocks/for_each.md` and `collect.md`. A `for_each` node and the one `collect` it reaches bound a loop; the loop is every node between them (`LoopBody.Find`).
+
+How it runs, in order:
+
+1. `GraphRunBlock` runs the `for_each` like any block: it checks that `items` is a list of at most `maxItems` and outputs `count` and `batchSize`. A spec whose loop can't be found fails the `for_each` here, before any item.
+2. `GraphWorkflow` starts one child workflow, `GraphIteration`, per batch of `batchSize` items (`GraphWorkflow.Loop.cs`), one after the other, so items run in order. The parent holds one entry per batch, never one per item, and the items themselves are never in its history: each activity re-reads the list from the stored output the `for_each` read.
+3. `GraphIteration` (`GraphIterationWorkflow.cs`) loads the spec and, for each item of its batch, walks the loop's nodes with the same two rules as the run's walk (`GraphWalkRules`): one `GraphRunBlock` activity per node, a `workflow_node_run` row per node and item. The row's item index is the item's position counted from 1; the `for_each` and `collect` rows of the loop as a whole are at index 0. A failing `stop` node ends the batch and the nodes left for that item are `skipped`.
+4. After the last batch the `GraphCollect` activity reads the `collect` rows of items 1 to N, in item order, and writes the `collect` node's own row (`items`, `count`). Values never pass through workflow history.
+
+Limits: `forEach.maxItems` (profile `workflow.forEach.maxItems`, default 200, at most 10,000; this is the cap, not a default: a node's own `maxItems` can lower it and never raise it, so the effective limit is the smaller of the two, and a list over it fails the `for_each` naming the profile key) and `batchSize` (default 20, at most 100). Temporal stops a workflow at 51,200 events; the parent adds about 12 events per batch (child initiated, started, completed, and the parent's own workflow task events), so 10,000 items at the default batch size are 500 batches, about 6,000 events. A batch's own history grows with its items times the loop's nodes (about 9 events per node per item). `ForEachWorkflowTests.Five_hundred_items_stay_under_the_history_budget` asserts the parent stays under 500 events for 500 items; it measured 298 (25 batches, 2026-11-09).
+
+`GraphRunBlock` reads `IWorkflowRunStore.NodeRunsForItem` (every index 0 row plus the current item's rows), not the whole run, so a loop of N items reads O(N) rows in all. It still re-interpolates the `for_each` config (the whole `items` list) once per call, which costs CPU, not row reads.
+
+**Sizes.** A block's input and output are cut at 64 KB before they enter workflow history (`GraphBlockActivities.Fit`): an activity result over Temporal's 2 MB limit fails the workflow task, which Temporal retries without end. A cut value keeps one extra character so the store still flags it `truncated`. The `collect` node's own output (all the values together) must also fit in 64 KB: when it does not, `GraphCollect` fails the `collect` and the message names the collected size and the cap (for example 200 items of 400 bytes are about 80 KB).
+
+**Failures in a body node.** A failing body node (item 25 of a batch of 20 is in the second batch) stops the loop and lands on the `collect` node: the `collect` row is `failed` and the run's error names the item. Only the `collect`'s `onFailure` decides what happens next (`continue` lets the walk go on to the nodes after the loop; anything else fails the run). `ForEachLaterBatchTests` covers item 25 of 30 with the default batch size, both ways.

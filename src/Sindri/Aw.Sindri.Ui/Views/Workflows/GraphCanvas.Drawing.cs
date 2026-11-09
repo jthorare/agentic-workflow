@@ -17,6 +17,7 @@ internal sealed partial class GraphCanvas
     public override void Render(DrawingContext context)
     {
         base.Render(context);
+        RenderCount++;
         context.DrawRectangle(Brushes.Transparent, pen: null, new Rect(Bounds.Size));   // so a drag on empty space hits this control
         if (Graph is not { } graph)
         {

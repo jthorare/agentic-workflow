@@ -9,11 +9,11 @@ public sealed class GraphBlockRegistryTests
     private static GraphBlockRegistry Standard() => GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"));
 
     [Fact]
-    public void The_standard_registry_lists_the_seven_block_types()
+    public void The_standard_registry_lists_its_block_types()
     {
         var registry = Standard();
 
-        Assert.Equal(["condition", "connection_event", "manual", "notify", "prompt", "run_agent", "schedule"], registry.Types.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["collect", "condition", "connection_event", "for_each", "manual", "notify", "prompt", "run_agent", "schedule"], registry.Types.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
         Assert.Equal(["connection_event", "manual", "schedule"], registry.Types.Values.Where(t => t.IsTrigger).Select(t => t.Type).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }
 

@@ -1,5 +1,4 @@
 using Aw.Sindri.Core.Graph.Ids;
-using Temporalio.Common;
 using Temporalio.Exceptions;
 using Temporalio.Workflows;
 
@@ -12,22 +11,9 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 [Workflow("GraphWorkflow")]
 internal sealed partial class GraphWorkflow
 {
-    private static readonly RetryPolicy _unbounded = new()
-    {
-        InitialInterval = TimeSpan.FromMilliseconds(100),
-        BackoffCoefficient = 2,
-        MaximumInterval = TimeSpan.FromSeconds(30),
-        MaximumAttempts = 0,
-    };
-
-    // why: store and ledger writes retry until they work, like RecordEvent
-    private static readonly ActivityOptions _write = new() { StartToCloseTimeout = TimeSpan.FromMinutes(1), RetryPolicy = _unbounded };
-
-    // why: the same writes after a cancel must not be cancelled with the workflow
-    private static readonly ActivityOptions _detached = new() { StartToCloseTimeout = TimeSpan.FromMinutes(1), RetryPolicy = _unbounded, CancellationToken = CancellationToken.None };
-
-    // why: one attempt, because a block may have side effects (notify); a failure is the node's failure
-    private static readonly ActivityOptions _block = new() { StartToCloseTimeout = TimeSpan.FromHours(1), RetryPolicy = new RetryPolicy { MaximumAttempts = 1 } };
+    private static readonly ActivityOptions _write = GraphActivityOptions.Write;
+    private static readonly ActivityOptions _detached = GraphActivityOptions.Detached;
+    private static readonly ActivityOptions _block = GraphActivityOptions.Block;
 
     // why: a launch hands back after its slice when the session cap is full, and the workflow asks again; the one-shot reads and the close are retried without end like the writes
     private static readonly ActivityOptions _agentLaunch = new() { StartToCloseTimeout = TimeSpan.FromMinutes(10), RetryPolicy = _unbounded };

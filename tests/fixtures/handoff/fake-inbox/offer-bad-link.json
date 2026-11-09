@@ -1,0 +1,1 @@
+{ "id": "o-5", "title": "Bad link", "repo": "web", "links": [{ "label": "Ticket", "url": "javascript:alert(1)" }], "labels": [] }

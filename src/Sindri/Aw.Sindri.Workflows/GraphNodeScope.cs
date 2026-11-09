@@ -1,11 +1,15 @@
 using System.Text.Json.Nodes;
 using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Loops;
 using Aw.Sindri.Core.Graph.Runs;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
 
-/// <summary>What a reference can read in one run: the trigger, the workflow's own facts and the outputs of the nodes that succeeded.</summary>
-internal sealed class GraphNodeScope(WorkflowRun run, GraphSpec spec, IReadOnlyList<NodeRun> nodeRuns)
+/// <summary>The loop a node execution runs in: its shape, the item's position counted from 1 and the item.</summary>
+internal sealed record GraphLoopContext(LoopShape Shape, int ItemIndex, JsonNode? Item);
+
+/// <summary>What a reference can read in one run: the trigger, the workflow's own facts, the item inside a loop and the outputs of the nodes that succeeded.</summary>
+internal sealed class GraphNodeScope(WorkflowRun run, GraphSpec spec, IReadOnlyList<NodeRun> nodeRuns, GraphLoopContext? loop = null)
 {
     private readonly JsonObject? _trigger = JsonNode.Parse(run.Trigger) as JsonObject;
 
@@ -28,12 +32,16 @@ internal sealed class GraphNodeScope(WorkflowRun run, GraphSpec spec, IReadOnlyL
     {
         "trigger" => _trigger,
         "workflow" => new JsonObject { ["name"] = spec.Name, ["runId"] = run.Id.Value, ["revision"] = run.Revision },
+        "item" => loop?.Item,
+        "itemIndex" => loop is null ? null : JsonValue.Create(loop.ItemIndex),
         _ => Output(name),
     };
 
     private JsonNode? Output(string node)
     {
-        var found = nodeRuns.FirstOrDefault(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal) && n.ItemIndex == 0 && n.Status == NodeRunStatus.Succeeded);
+        // why: a node of the loop's body has one row per item and is read at this item's; every other node has its one row at index 0
+        var index = loop is not null && loop.Shape.Body.Any(b => string.Equals(b.Id.Value, node, StringComparison.Ordinal)) ? loop.ItemIndex : 0;
+        var found = nodeRuns.FirstOrDefault(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal) && n.ItemIndex == index && n.Status == NodeRunStatus.Succeeded);
         if (found is null)
         {
             return null;

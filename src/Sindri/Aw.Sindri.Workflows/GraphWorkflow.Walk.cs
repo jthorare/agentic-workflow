@@ -1,5 +1,6 @@
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Loops;
 using Aw.Sindri.Core.Graph.Runs;
 using Temporalio.Exceptions;
 using Temporalio.Workflows;
@@ -27,7 +28,7 @@ internal sealed partial class GraphWorkflow
                 continue;
             }
 
-            var outcome = await Execute(node).ConfigureAwait(true);
+            var outcome = await Execute(spec, node).ConfigureAwait(true);
             _ = _decided.Add(node.Id);
             if (outcome.Status == NodeRunStatus.Failed && !string.Equals(node.OnFailure, "continue", StringComparison.Ordinal))
             {
@@ -35,26 +36,57 @@ internal sealed partial class GraphWorkflow
             }
 
             _taken[node.Id] = outcome.Status == NodeRunStatus.Succeeded ? outcome.Taken : ["out"];
+            if (await AfterForEach(spec, node, outcome).ConfigureAwait(true) is { } ended)
+            {
+                return ended;
+            }
         }
 
         return await End(WorkflowRunStatus.Succeeded, error: null).ConfigureAwait(true);
     }
 
-    // why: every edge into the node leaves a node that is already decided (ran or was skipped)
-    private bool Ready(GraphSpec spec, GraphNode node) => spec.Edges.Where(e => e.To == node.Id).All(e => _decided.Contains(e.From));
-
-    // why: a trigger has no edge into it and always runs; any other node runs when some edge into it left by a branch its source took
-    private bool Live(GraphSpec spec, GraphNode node)
+    /// <summary>After a for_each node: a succeeded one runs its loop, any other skips its body and collect. Null when the walk goes on.</summary>
+    private async Task<GraphWorkflowResult?> AfterForEach(GraphSpec spec, GraphNode node, GraphBlockOutcome outcome)
     {
-        var incoming = spec.Edges.Where(e => e.To == node.Id).ToList();
-        return incoming.Count == 0 || incoming.Exists(e => _taken.TryGetValue(e.From, out var branches) && branches.Contains(e.Output ?? "out", StringComparer.Ordinal));
+        if (!string.Equals(node.Type, LoopBody.ForEachType, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        if (outcome.Status == NodeRunStatus.Succeeded)
+        {
+            return await RunLoop(spec, node, outcome).ConfigureAwait(true);
+        }
+
+        if (LoopBody.Find(spec, node.Id) is { IsSuccess: true } loop)
+        {
+            await SkipLoop(loop.Value).ConfigureAwait(true);
+        }
+
+        return null;
     }
 
-    private async Task<GraphBlockOutcome> Execute(GraphNode node)
+    // why: a for_each that failed and said 'continue' ran no item, so its body and collect must not run once as plain nodes with no item; they are 'skipped' and the walk goes on after the collect
+    private async Task SkipLoop(LoopShape shape)
+    {
+        foreach (var node in shape.PerItem)
+        {
+            _ = _pending.RemoveAll(n => n.Id == node.Id);
+            await Record(Row(node, NodeRunStatus.Skipped), _write).ConfigureAwait(true);
+            _ = _decided.Add(node.Id);
+            _taken[node.Id] = ["out"];
+        }
+    }
+
+    private bool Ready(GraphSpec spec, GraphNode node) => GraphWalkRules.Ready(spec, node, _decided);
+
+    private bool Live(GraphSpec spec, GraphNode node) => GraphWalkRules.Live(spec, node, _taken);
+
+    private async Task<GraphBlockOutcome> Execute(GraphSpec spec, GraphNode node)
     {
         _current = node;
         await Record(Row(node, NodeRunStatus.Running), _write).ConfigureAwait(true);
-        var outcome = await RunBlock(node).ConfigureAwait(true);
+        var outcome = await RunBlock(spec, node).ConfigureAwait(true);
 
         // why: once the block has answered, the node's result is decided; clearing _current first and writing detached means a cancel now cannot overwrite 'succeeded' with 'cancelled'
         _current = null;
@@ -62,8 +94,14 @@ internal sealed partial class GraphWorkflow
         return outcome;
     }
 
-    private async Task<GraphBlockOutcome> RunBlock(GraphNode node)
+    private async Task<GraphBlockOutcome> RunBlock(GraphSpec spec, GraphNode node)
     {
+        // why: a loop that can't run (no collect, a nested loop) fails its for_each before any item does
+        if (string.Equals(node.Type, LoopBody.ForEachType, StringComparison.Ordinal) && LoopBody.Find(spec, node.Id) is { IsError: true } refused)
+        {
+            return new GraphBlockOutcome(NodeRunStatus.Failed, Input: null, Output: null, [], $"{refused.Error.Code}: {refused.Error.Message}");
+        }
+
         try
         {
             return string.Equals(node.Type, "run_agent", StringComparison.Ordinal)
