@@ -4,16 +4,18 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Ids;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Features.CreateItem;
 
 /// <summary>
 /// <see cref="ICreateItemPort"/> over the create-item handler itself, not its command chain (as <see cref="FixItemMaker"/> does): a 'create_item' node makes its item the way 'sindri item add'
 /// does, as 'service:workflow'. The node's run is already audited, and a workflow's owner approved it.
+/// Scoped, like the handler: <see cref="ScopedCreateItemPort"/> is the engine's singleton port and runs this one in a scope per item.
 /// </summary>
-/// <param name="scopes">Makes a scope per item; the handler is scoped and the engine's blocks are not.</param>
-internal sealed class WorkflowItemMaker(IServiceScopeFactory scopes) : ICreateItemPort
+/// <param name="service">The create-item handler.</param>
+/// <param name="callers">Enters 'service:workflow' for the handler.</param>
+/// <param name="runs">Links the run to the item it made.</param>
+internal sealed class WorkflowItemMaker(CreateItemService service, ICallerContextAccessor callers, IWorkflowRunStore runs) : ICreateItemPort
 {
     public async ValueTask<Result<string>> Create(ItemToCreate item, CancellationToken cancellationToken)
     {
@@ -26,15 +28,14 @@ internal sealed class WorkflowItemMaker(IServiceScopeFactory scopes) : ICreateIt
 
         var request = parsed.Value;
         var run = item.Run;
-        using var scope = scopes.CreateScope();   // why: the handler is scoped; the run store is a singleton
-        using var entered = scope.ServiceProvider.GetRequiredService<ICallerContextAccessor>().EnterService("workflow");
-        var made = await scope.ServiceProvider.GetRequiredService<CreateItemService>().Handle(request, cancellationToken).ConfigureAwait(false);
+        using var entered = callers.EnterService("workflow");
+        var made = await service.Handle(request, cancellationToken).ConfigureAwait(false);
         if (made.IsError)
         {
             return made.Error;
         }
 
-        var linked = await scope.ServiceProvider.GetRequiredService<IWorkflowRunStore>().SetItem(run, made.Value.ItemId, cancellationToken).ConfigureAwait(false);
+        var linked = await runs.SetItem(run, made.Value.ItemId, cancellationToken).ConfigureAwait(false);
         return linked.IsError ? linked.Error : made.Value.ItemId.Value;
     }
 

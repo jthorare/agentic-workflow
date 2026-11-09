@@ -14,7 +14,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 
 /// <summary>
 /// Starts the workflow a 'run_workflow' node names (agent-first PR 9) and, with 'wait', polls its run until it ends. The callee's run id is made from the caller's run, node and index
-/// (<see cref="CallOccurrence"/>), so a node that runs twice for one run starts one callee run. The callee must declare a 'workflow_call' trigger.
+/// (<see cref="CallOccurrence"/>), so a node that runs twice for one run starts one callee run; an id held by a different call is retried with a salt. The callee must declare a 'workflow_call' trigger.
 /// </summary>
 /// <param name="workflows">The workflows and their revisions.</param>
 /// <param name="runs">The runs; a waiting node reads its called run here.</param>
@@ -24,6 +24,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 internal sealed class GraphWorkflowCaller(IWorkflowStore workflows, IWorkflowRunStore runs, IGraphRunStarter starter, IApprovedProfile profile, TimeProvider clock) : IGraphCallPort
 {
     private const string TriggerKind = "workflow_call";
+    private const int MaxIdTries = 8;
 
     private static readonly TimeSpan _poll = TimeSpan.FromSeconds(1);
 
@@ -43,18 +44,36 @@ internal sealed class GraphWorkflowCaller(IWorkflowStore workflows, IWorkflowRun
         }
 
         var (record, revision) = callee.Value;
-        var occurrence = CallOccurrence.Of(call.Caller.Value, call.Node.Value, call.Index);
-        var request = new GraphStartRequest(record.Id, record.Slug, revision.Revision, occurrence, Trigger(call), Concurrency(revision.Spec.Concurrency));
-        var started = await starter.Start(request, cancellationToken).ConfigureAwait(false);
-        if (started.IsSuccess)
+        for (var attempt = 0; attempt < MaxIdTries; attempt++)
         {
-            return new GraphCalled(started.Value.RunId, Status(started.Value.Kind));
+            var occurrence = CallOccurrence.Of(call.Caller.Value, call.Node.Value, call.Index, attempt);
+            var request = new GraphStartRequest(record.Id, record.Slug, revision.Revision, occurrence, Trigger(call), Concurrency(revision.Spec.Concurrency));
+            var started = await starter.Start(request, cancellationToken).ConfigureAwait(false);
+            if (started.IsSuccess)
+            {
+                return new GraphCalled(started.Value.RunId, Status(started.Value.Kind));
+            }
+
+            if (!string.Equals(started.Error.Code, SindriErrors.GraphRunIdTaken.Code, StringComparison.Ordinal))
+            {
+                return started.Error;
+            }
+
+            // why: a taken id is the same call's own earlier run (one run for a node that runs twice) or, rarely, another caller's run that hashed to it: only the first is the answer
+            var id = WorkflowRunId.Of(record.Slug, revision.Revision, occurrence);
+            var held = await runs.Get(id, cancellationToken).ConfigureAwait(false);
+            if (held.IsError)
+            {
+                return held.Error;
+            }
+
+            if (IsSameCall(held.Value.Trigger, call))
+            {
+                return new GraphCalled(id, held.Value.Status == WorkflowRunStatus.Queued ? "queued" : "started");
+            }
         }
 
-        // why: the same call twice is one run: the id is taken, so the run the first call started is the answer
-        return string.Equals(started.Error.Code, SindriErrors.GraphRunIdTaken.Code, StringComparison.Ordinal)
-            ? await Existing(WorkflowRunId.Of(record.Slug, revision.Revision, occurrence), cancellationToken).ConfigureAwait(false)
-            : started.Error;
+        return SindriErrors.GraphBlockFailed.With(string.Create(CultureInfo.InvariantCulture, $"could not find a free run id for the call to '{call.Target.Value}' after {MaxIdTries} tries; every id was held by another workflow's call (fix: start the call again)"));
     }
 
     public async ValueTask<Result<GraphCallEnd>> Wait(WorkflowRunId run, TimeSpan timeout, CancellationToken cancellationToken)
@@ -115,10 +134,19 @@ internal sealed class GraphWorkflowCaller(IWorkflowStore workflows, IWorkflowRun
         return callee;
     }
 
-    private async ValueTask<Result<GraphCalled>> Existing(WorkflowRunId id, CancellationToken cancellationToken)
+    private static bool IsSameCall(string trigger, GraphCall call)
     {
-        var row = await runs.Get(id, cancellationToken).ConfigureAwait(false);
-        return row.IsError ? row.Error : new GraphCalled(id, row.Value.Status == WorkflowRunStatus.Queued ? "queued" : "started");
+        try
+        {
+            return JsonNode.Parse(trigger) is JsonObject o
+                && o["parentRun"] is JsonValue parent && parent.TryGetValue<string>(out var p) && string.Equals(p, call.Caller.Value, StringComparison.Ordinal)
+                && o["node"] is JsonValue node && node.TryGetValue<string>(out var n) && string.Equals(n, call.Node.Value, StringComparison.Ordinal)
+                && o["index"] is JsonValue index && index.TryGetValue<int>(out var i) && i == call.Index;
+        }
+        catch (JsonException)   // boundary: a stored trigger that is not JSON names no call
+        {
+            return false;
+        }
     }
 
     private static string Trigger(GraphCall call) => new JsonObject
@@ -127,6 +155,8 @@ internal sealed class GraphWorkflowCaller(IWorkflowStore workflows, IWorkflowRun
         ["payload"] = call.Payload?.DeepClone(),
         ["callDepth"] = call.Depth,
         ["parentRun"] = call.Caller.Value,
+        ["node"] = call.Node.Value,
+        ["index"] = call.Index,
         ["by"] = "workflow:" + CallDepth.SlugOf(call.Caller.Value),
     }.ToJsonString();
 

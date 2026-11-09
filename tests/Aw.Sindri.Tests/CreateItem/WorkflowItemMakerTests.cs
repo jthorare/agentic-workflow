@@ -8,7 +8,6 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.CreateItem;
 using Aw.Sindri.Testing.Workflow;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.CreateItem;
@@ -23,12 +22,7 @@ public sealed class WorkflowItemMakerTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private WorkflowItemMaker Maker()
-    {
-        var services = new ServiceCollection();
-        _ = services.AddSingleton(_h.Callers).AddSingleton<IWorkflowRunStore>(_runs).AddScoped(_ => new CreateItemService(_h.Profiles, _h.Held, _h.Store, _h.Events, _h.Ids, _h.Callers));
-        return new WorkflowItemMaker(services.BuildServiceProvider().GetRequiredService<IServiceScopeFactory>());
-    }
+    private WorkflowItemMaker Maker() => new(new CreateItemService(_h.Profiles, _h.Held, _h.Store, _h.Events, _h.Ids, _h.Callers), _h.Callers, _runs);
 
     private async Task Seed() =>
         _ = (await _runs.Insert(new WorkflowRun(_run, WorkflowId.From("WF-" + new string('1', 32)), 1, """{"kind":"manual"}""", WorkflowRunStatus.Running, Outputs: null, Error: null, ItemId: null, KnownInstants.Epoch, EndedAt: null), Token)).Value;

@@ -8,7 +8,7 @@ namespace Aw.Sindri.Tests.Graph.Blocks;
 [Lane(TestLane.Unit)]
 public sealed class CreateItemBlockTests
 {
-    private static Task<Aw.Kernel.Result<BlockResult>> Run(CreateItemBlock block, JsonObject config) =>
+    private static Task<Kernel.Result<BlockResult>> Run(CreateItemBlock block, JsonObject config) =>
         block.Execute(BlockFakes.Context(config), TestContext.Current.CancellationToken).AsTask();
 
     [Fact]
@@ -35,7 +35,7 @@ public sealed class CreateItemBlockTests
         _ = await Run(block, new JsonObject { ["title"] = "a", ["linearIssue"] = "abc-1" });
         _ = await Run(block, new JsonObject { ["title"] = "b", ["linearIssue"] = "linear:issue/abc-2" });
 
-        Assert.Equal(["linear:issue/abc-1", "linear:issue/abc-2"], port.Created.Select(static c => c.Link!), StringComparer.Ordinal);
+        Assert.Equal(["linear:issue/abc-1", "linear:issue/abc-2"], port.Created.Select(static c => c.Link), StringComparer.Ordinal);
     }
 
     [Fact]

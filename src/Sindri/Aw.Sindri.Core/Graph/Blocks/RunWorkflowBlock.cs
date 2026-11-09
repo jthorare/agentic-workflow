@@ -16,6 +16,7 @@ public sealed class RunWorkflowBlock(IGraphCallPort calls) : IGraphBlock
 
     private const int MaxWaitSeconds = 3500;   // why: a node's activity is cut at one hour
 
+    // why: 'outputs' is the called run's WorkflowRun.Outputs: an object keyed by node id with each succeeded node's outputs (an array per item for a node that ran per item), null when over 64 KB
     private static readonly BlockOutputs _outputs = new(new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["runId"] = "string",

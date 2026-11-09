@@ -71,9 +71,9 @@ public sealed class FlowSettingsTests
     [Fact, Trait("Lane", "unit")]
     public void The_hash_changes_with_either_key()
     {
-        var none = ProfileHashing.Of(Aw.Kernel.Json.AwJson.Serialize(ProfileRules.Check(_valid).Value, SliceHarness.Json));
-        var hosts = ProfileHashing.Of(Aw.Kernel.Json.AwJson.Serialize(ProfileRules.Check(With(["a.example.com"])).Value, SliceHarness.Json));
-        var depth = ProfileHashing.Of(Aw.Kernel.Json.AwJson.Serialize(ProfileRules.Check(With(depth: 2)).Value, SliceHarness.Json));
+        var none = ProfileHashing.Of(Kernel.Json.AwJson.Serialize(ProfileRules.Check(_valid).Value, SliceHarness.Json));
+        var hosts = ProfileHashing.Of(Kernel.Json.AwJson.Serialize(ProfileRules.Check(With(["a.example.com"])).Value, SliceHarness.Json));
+        var depth = ProfileHashing.Of(Kernel.Json.AwJson.Serialize(ProfileRules.Check(With(depth: 2)).Value, SliceHarness.Json));
 
         Assert.NotEqual(none, hosts);
         Assert.NotEqual(none, depth);

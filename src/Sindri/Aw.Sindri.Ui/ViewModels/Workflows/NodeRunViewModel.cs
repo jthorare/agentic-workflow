@@ -1,3 +1,4 @@
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Workflows;
 
 namespace Aw.Sindri.Ui.ViewModels.Workflows;
@@ -10,6 +11,7 @@ internal sealed class NodeRunViewModel : ObservableObject
         TitleText = count > 1 || run.ItemIndex > 0 ? Labels.WfItemTitle(run.ItemIndex, count) : run.Node;
         var (glyph, word) = Labels.WfChip(run.Status);
         ChipText = glyph + " " + word;
+        Tone = RunStatus.Tone(run.Status);
         InputText = WorkflowJson.Pretty(run.Input);
         OutputText = WorkflowJson.Pretty(run.Output);
         IsTruncated = run.Truncated;
@@ -22,6 +24,18 @@ internal sealed class NodeRunViewModel : ObservableObject
 
     /// <summary>The status: glyph and word.</summary>
     public string ChipText { get; }
+
+    /// <summary>The chip's tone; the glyph and word carry the status too.</summary>
+    public ChipTone Tone { get; }
+
+    /// <summary>True for a succeeded or running node (the ok colour).</summary>
+    public bool IsOk => Tone == ChipTone.Ok;
+
+    /// <summary>True for a waiting node (the attention colour).</summary>
+    public bool IsAttention => Tone == ChipTone.Attn;
+
+    /// <summary>True for a failed node (the error colour).</summary>
+    public bool IsError => Tone == ChipTone.Fail;
 
     /// <summary>The interpolated config the block got, as indented JSON; empty for none.</summary>
     public string InputText { get; }

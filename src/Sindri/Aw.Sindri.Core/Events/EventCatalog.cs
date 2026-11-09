@@ -40,6 +40,7 @@ public static class EventCatalog
         new(EventTypes.RecipeRevoked, Public: true, typeof(RecipeRevoked), "recipe.revoked:<hash>"),
         new(EventTypes.ItemCreated, Public: true, typeof(ItemCreatedPublic), "item.created:<itemId>") { Invalidates = [ApiViews.Queue, ApiViews.Items, ApiViews.Item, ApiViews.Timeline] },
         new(EventTypes.ItemStateChanged, Public: true, typeof(ItemStateChanged), "item.state-changed:<itemId>:v<version>") { Invalidates = [ApiViews.Queue, ApiViews.Items, ApiViews.Item, ApiViews.Timeline, ApiViews.NeedsYou, ApiViews.Requests, ApiViews.Decisions] },
+        new(EventTypes.ItemHandoff, Public: false, PublicPayload: null, "item.handoff:<itemId>"),
         new(EventTypes.ItemLinked, Public: true, typeof(ItemLinked), "item.linked:<itemId>:<record>") { Invalidates = [ApiViews.Items, ApiViews.Item, ApiViews.Timeline] },
         new(EventTypes.ProjectAttached, Public: true, typeof(ProjectAttached), "project.attached:<projectId>") { Invalidates = [ApiViews.Projects] },
         new(EventTypes.ProjectChanged, Public: true, typeof(ProjectChanged), "project.changed:<projectId>:v<version>") { Invalidates = [ApiViews.Projects] },
@@ -111,6 +112,9 @@ public static class EventCatalog
         new(EventTypes.SetupConsentGiven, Public: true, typeof(SetupConsentGiven), "setup.consent.given:<profileHash>") { Invalidates = [ApiViews.Setup] },
         new(EventTypes.ConnectionNeedsSignIn, Public: true, typeof(ConnectionNeedsSignIn), "connection.needs-sign-in:<name>:<atTicks>") { Invalidates = [ApiViews.NeedsYou] },
         new(EventTypes.ConnectionSignedIn, Public: true, typeof(ConnectionSignedIn), "connection.signed-in:<name>:<atTicks>") { Invalidates = [ApiViews.NeedsYou] },
+        new(EventTypes.ConnectionPolled, Public: false, PublicPayload: null, "connection.polled:<name>:<kind>:<atTicks>"),
+        new(EventTypes.WorkflowTriggerSkipped, Public: false, PublicPayload: null, "workflow.trigger.skipped:<workflow>:<deliveryKey>:<reason>"),
+        new(EventTypes.CatchUpCapped, Public: false, PublicPayload: null, "catchup.capped:<name>:<kind>:<atTicks>"),
         new(EventTypes.ViewsRebuilt, Public: false, PublicPayload: null, "views.rebuilt:<commandId>"),
     ];
 }

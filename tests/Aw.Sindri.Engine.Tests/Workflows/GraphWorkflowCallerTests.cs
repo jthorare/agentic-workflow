@@ -89,6 +89,29 @@ public sealed class GraphWorkflowCallerTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_call_whose_id_is_held_by_another_callers_run_starts_its_own_run_and_never_returns_the_foreign_one()
+    {
+        var w = await Build();
+        await Define(w, "triage", concurrency: "unlimited");
+        var record = (await w.Workflows.List(includeArchived: false, Token)).Value.Single(r => r.Slug == WorkflowSlug.From("triage"));
+        var taken = WorkflowRunId.Of(record.Slug, 1, CallOccurrence.Of(_caller.Value, "call", 0));
+        var foreign = new WorkflowRun(taken, record.Id, 1, "{\"kind\":\"workflow_call\",\"parentRun\":\"other@1:9\",\"node\":\"call\",\"index\":0}", WorkflowRunStatus.Running, Outputs: null, Error: null, ItemId: null, KnownInstants.Epoch, EndedAt: null);
+        _ = (await w.Runs.Insert(foreign, Token)).Value;
+
+        var called = await w.Caller.Start(Call(), Token);
+
+        Assert.True(called.IsSuccess, called.IsError ? called.Error.ToString() : null);
+        Assert.NotEqual(taken, called.Value.Run);
+        var run = (await w.Runs.Get(called.Value.Run, Token)).Value;
+        Assert.Equal("nightly@2:5", JsonNode.Parse(run.Trigger)!["parentRun"]!.GetValue<string>());
+        _ = Assert.Single(w.Launcher.Launched);
+        // why: a retried node must land on the same salted id it took before
+        var again = (await w.Caller.Start(Call(), Token)).Value;
+        Assert.Equal(called.Value.Run, again.Run);
+        _ = Assert.Single(w.Launcher.Launched);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task An_unknown_workflow_one_with_no_active_revision_and_one_without_a_workflow_call_trigger_are_refused()
     {
         var w = await Build();

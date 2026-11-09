@@ -1,10 +1,16 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:wf="using:Aw.Sindri.Ui.ViewModels.Workflows"
+             xmlns:wv="using:Aw.Sindri.Ui.Views.Workflows"
              x:Class="Aw.Sindri.Ui.Views.Workflows.WorkflowsPage"
              x:DataType="wf:WorkflowsPageViewModel">
   <!-- The Workflows page, read-only (#2258 PR 17 part 1), three levels in one place: the workflow list, one workflow's runs, one run's detail. Back goes up a level.
        Every status is a glyph and a word. Every named line is a Border wrapper (a TextBlock's peer ignores AutomationProperties.Name). -->
+  <UserControl.Styles>
+    <Style Selector="TextBlock.wf-chip.ok"><Setter Property="Foreground" Value="{DynamicResource Brush.Success}" /></Style>
+    <Style Selector="TextBlock.wf-chip.attention"><Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" /></Style>
+    <Style Selector="TextBlock.wf-chip.error"><Setter Property="Foreground" Value="{DynamicResource Brush.Error}" /></Style>
+  </UserControl.Styles>
   <StackPanel x:Name="WorkflowsRoot" Spacing="{StaticResource Size.PanelGap}">
     <StackPanel x:Name="WorkflowsHeadRegion" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
       <TextBlock Classes="page-title" Text="{Binding Title}" AutomationProperties.Name="{Binding Title}" />
@@ -43,7 +49,7 @@
                       <TextBlock Classes="body-strong" Text="{Binding NameText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
                     </Button>
                     <Border Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding StateText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-                      <TextBlock Classes="body-strong mono" Text="{Binding StateText}" AutomationProperties.AccessibilityView="Raw" />
+                      <TextBlock Classes="body-strong mono wf-chip" Classes.ok="{Binding IsOk}" Classes.attention="{Binding IsAttention}" Classes.error="{Binding IsError}" Text="{Binding StateText}" AutomationProperties.AccessibilityView="Raw" />
                     </Border>
                     <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" Margin="0,0,0,6" AutomationProperties.AccessibilityView="Raw">
                       <TextBlock Classes="caption subtle" Text="{Binding RevisionText}" />
@@ -63,16 +69,32 @@
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
         <TextBlock x:Name="RunsTitle" Classes="body-strong" Text="{Binding Runs.Title}" AutomationProperties.Name="{Binding Runs.Title}" />
         <TextBlock x:Name="RunsHead" Classes="caption subtle" Text="{Binding Runs.Head}" VerticalAlignment="Center" />
+        <Button x:Name="RunNow" Content="{Binding Runs.RunNowText}" Click="OnRunNow" IsEnabled="{Binding Runs.CanPressRunNow}" AutomationProperties.Name="{Binding Runs.RunNowText}" />
       </StackPanel>
+      <Border x:Name="RunsNoticeName" IsVisible="{Binding Runs.HasNotice}" AutomationProperties.Name="{Binding Runs.NoticeText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="caption" Text="{Binding Runs.NoticeText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
       <TextBlock x:Name="RunsDetail" Classes="caption subtle" Text="{Binding Runs.DetailText}" TextWrapping="Wrap" />
+      <!-- The graph at the positions Sindri served (the app lays nothing out); a node with no position is named, not drawn. -->
+      <StackPanel x:Name="RunsGraph" Spacing="4" IsVisible="{Binding Runs.Graph, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <Border Classes="panel" Height="320">
+          <wv:GraphCanvas x:Name="RunsCanvas" Graph="{Binding Runs.Graph}" />
+        </Border>
+        <Border x:Name="RunsUnplacedName" IsVisible="{Binding Runs.Graph.HasUnplaced}" AutomationProperties.Name="{Binding Runs.Graph.UnplacedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption subtle" Text="{Binding Runs.Graph.UnplacedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+      </StackPanel>
       <Border x:Name="RunsPanel" Classes="panel" AutomationProperties.Name="{Binding Runs.Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
         <StackPanel>
           <Border x:Name="RunsReadingName" Margin="16,8" IsVisible="{Binding Runs.IsReading}" AutomationProperties.Name="{Binding Runs.ReadingText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
             <TextBlock Classes="caption quiet" Text="{Binding Runs.ReadingText}" AutomationProperties.AccessibilityView="Raw" />
           </Border>
-          <Border x:Name="RunsFailedName" Margin="16,8" IsVisible="{Binding Runs.IsFailed}" AutomationProperties.Name="{Binding Runs.FailedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-            <TextBlock Classes="caption quiet" Text="{Binding Runs.FailedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
-          </Border>
+          <StackPanel x:Name="RunsFailed" Margin="16,8" Spacing="8" IsVisible="{Binding Runs.IsFailed}">
+            <Border x:Name="RunsFailedName" AutomationProperties.Name="{Binding Runs.FailedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+              <TextBlock Classes="caption quiet" Text="{Binding Runs.FailedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+            </Border>
+            <Button x:Name="RunsRetry" Content="{Binding Runs.RetryText}" Click="OnRetryRuns" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Runs.RetryText}" />
+          </StackPanel>
           <Border x:Name="RunsEmptyName" Margin="16,8" IsVisible="{Binding Runs.IsEmpty}" AutomationProperties.Name="{Binding Runs.EmptyText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
             <TextBlock Classes="caption quiet" Text="{Binding Runs.EmptyText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
           </Border>
@@ -85,7 +107,7 @@
                       <TextBlock Classes="body-strong mono" Text="{Binding Id}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
                     </Button>
                     <Border Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding ChipText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-                      <TextBlock Classes="body-strong mono" Text="{Binding ChipText}" AutomationProperties.AccessibilityView="Raw" />
+                      <TextBlock Classes="body-strong mono wf-chip" Classes.ok="{Binding IsOk}" Classes.attention="{Binding IsAttention}" Classes.error="{Binding IsError}" Text="{Binding ChipText}" AutomationProperties.AccessibilityView="Raw" />
                     </Border>
                     <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" AutomationProperties.AccessibilityView="Raw">
                       <TextBlock Classes="caption subtle" Text="{Binding TriggerText}" />
@@ -107,9 +129,13 @@
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
         <TextBlock x:Name="RunTitle" Classes="body-strong mono" Text="{Binding Run.TitleText}" AutomationProperties.Name="{Binding Run.TitleText}" />
         <Border x:Name="RunChipName" AutomationProperties.Name="{Binding Run.ChipText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-          <TextBlock x:Name="RunChip" Classes="body-strong mono" Text="{Binding Run.ChipText}" AutomationProperties.AccessibilityView="Raw" />
+          <TextBlock x:Name="RunChip" Classes="body-strong mono wf-chip" Classes.ok="{Binding Run.IsOk}" Classes.attention="{Binding Run.IsAttention}" Classes.error="{Binding Run.IsError}" Text="{Binding Run.ChipText}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
+        <Button x:Name="RunCancel" Content="{Binding Run.CancelText}" Click="OnCancelRun" IsVisible="{Binding Run.CanCancel}" IsEnabled="{Binding Run.CanPressCancel}" AutomationProperties.Name="{Binding Run.CancelText}" />
       </StackPanel>
+      <Border x:Name="RunNoticeName" IsVisible="{Binding Run.HasNotice}" AutomationProperties.Name="{Binding Run.NoticeText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="caption" Text="{Binding Run.NoticeText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
       <StackPanel Orientation="Horizontal" Spacing="12" AutomationProperties.AccessibilityView="Raw">
         <TextBlock Classes="caption subtle" Text="{Binding Run.TriggerText}" />
         <TextBlock Classes="caption subtle" Text="{Binding Run.RevisionText}" />
@@ -118,15 +144,27 @@
       <Border x:Name="RunReadingName" IsVisible="{Binding Run.IsReading}" AutomationProperties.Name="{Binding Run.ReadingText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption quiet" Text="{Binding Run.ReadingText}" AutomationProperties.AccessibilityView="Raw" />
       </Border>
-      <Border x:Name="RunFailedName" IsVisible="{Binding Run.IsFailed}" AutomationProperties.Name="{Binding Run.FailedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-        <TextBlock Classes="caption quiet" Text="{Binding Run.FailedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
-      </Border>
+      <StackPanel x:Name="RunFailed" Spacing="8" IsVisible="{Binding Run.IsFailed}">
+        <Border x:Name="RunFailedName" AutomationProperties.Name="{Binding Run.FailedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption quiet" Text="{Binding Run.FailedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Button x:Name="RunRetry" Content="{Binding Run.RetryText}" Click="OnRetryRun" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Run.RetryText}" />
+      </StackPanel>
       <Border x:Name="RunErrorName" IsVisible="{Binding Run.HasError}" AutomationProperties.Name="{Binding Run.ErrorText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <SelectableTextBlock Classes="caption" Text="{Binding Run.ErrorText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
       <StackPanel x:Name="RunOutputs" Spacing="4" IsVisible="{Binding Run.HasOutputs}">
         <TextBlock Classes="caption subtle" Text="{Binding Run.OutputsHeading}" />
         <SelectableTextBlock Classes="mono" Text="{Binding Run.OutputsText}" TextWrapping="Wrap" />
+      </StackPanel>
+      <!-- The graph at the positions Sindri served (the app lays nothing out); a node with no position is named, not drawn. -->
+      <StackPanel x:Name="RunGraph" Spacing="4" IsVisible="{Binding Run.Graph, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <Border Classes="panel" Height="320">
+          <wv:GraphCanvas x:Name="RunCanvas" Graph="{Binding Run.Graph}" />
+        </Border>
+        <Border x:Name="RunUnplacedName" IsVisible="{Binding Run.Graph.HasUnplaced}" AutomationProperties.Name="{Binding Run.Graph.UnplacedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption subtle" Text="{Binding Run.Graph.UnplacedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
       </StackPanel>
       <ItemsControl x:Name="RunGroups" ItemsSource="{Binding Run.Groups}">
         <ItemsControl.ItemTemplate>
@@ -141,7 +179,7 @@
                         <StackPanel Spacing="4" Margin="0,4">
                           <StackPanel Orientation="Horizontal" Spacing="12" AutomationProperties.AccessibilityView="Raw">
                             <TextBlock Classes="body-strong" Text="{Binding TitleText}" />
-                            <TextBlock Classes="body-strong mono" Text="{Binding ChipText}" />
+                            <TextBlock Classes="body-strong mono wf-chip" Classes.ok="{Binding IsOk}" Classes.attention="{Binding IsAttention}" Classes.error="{Binding IsError}" Text="{Binding ChipText}" />
                           </StackPanel>
                           <TextBlock Classes="caption" Text="{Binding ErrorText}" IsVisible="{Binding HasError}" TextWrapping="Wrap" />
                           <TextBlock Classes="caption subtle" Text="{Binding TruncatedText}" IsVisible="{Binding IsTruncated}" TextWrapping="Wrap" />

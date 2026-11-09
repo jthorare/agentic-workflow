@@ -11,7 +11,7 @@ public sealed class RunWorkflowBlockTests
 {
     private static BlockContext Caller(JsonObject config, int? depth = null, string? parentRun = null, string run = "nightly@2:5")
     {
-        var values = new Dictionary<string, System.Text.Json.Nodes.JsonNode?>(StringComparer.Ordinal);
+        var values = new Dictionary<string, JsonNode?>(StringComparer.Ordinal);
         if (depth is { } d)
         {
             values["trigger.callDepth"] = d;
@@ -25,7 +25,7 @@ public sealed class RunWorkflowBlockTests
         return new BlockContext(WorkflowRunId.From(run), NodeId.From("call"), config, (JsonObject)config.DeepClone(), reference => values.GetValueOrDefault(reference)?.DeepClone());
     }
 
-    private static Task<Aw.Kernel.Result<BlockResult>> Run(IGraphCallPort port, BlockContext context) =>
+    private static Task<Kernel.Result<BlockResult>> Run(IGraphCallPort port, BlockContext context) =>
         new RunWorkflowBlock(port).Execute(context, TestContext.Current.CancellationToken).AsTask();
 
     [Fact]

@@ -38,13 +38,13 @@ public sealed class OnlyNewBlockTests
     }
 
     [Fact]
-    public async Task A_failed_run_does_not_mark_its_items_as_seen()
+    public async Task Execute_alone_does_not_mark_its_items_as_seen()
     {
         var store = new FlowFakes.MemorySeenStore();
         var block = new OnlyNewBlock(store);
         var context = Context(Items(1, 2));
 
-        _ = await Run(block, context);   // the node's outputs were made, but its node never succeeded: Commit is not called
+        _ = await Run(block, context);   // Execute alone writes nothing; the run-level proof (a failed run later in the graph) is GraphCommitTests.A_run_that_fails_after_only_new_gives_its_items_back_to_the_next_run
         var again = await Run(block, context);
 
         Assert.Equal(0, store.Writes);

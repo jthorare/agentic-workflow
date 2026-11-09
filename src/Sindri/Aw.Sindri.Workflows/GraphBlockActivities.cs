@@ -3,6 +3,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Loops;
 using Aw.Sindri.Core.Graph.Runs;
 using Temporalio.Activities;
 using Temporalio.Exceptions;
@@ -36,7 +37,15 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
             return Failed(input: null, SindriErrors.GraphUnknownBlock.With($"this build has no block '{graphNode.Type}'"));
         }
 
-        var scope = new Scope(row, spec, GraphFailures.Value(await runs.NodeRuns(run, cancel).ConfigureAwait(false)));
+        // why: a node reads index 0 rows and its own item's rows only, so a loop of N items reads O(N) rows in all, not O(N squared)
+        var nodeRuns = GraphFailures.Value(await runs.NodeRunsForItem(run, itemIndex, cancel).ConfigureAwait(false));
+        var (loop, loopFailure) = itemIndex > 0 ? Loop(new Scope(row, spec, nodeRuns, loop: null), spec, node, itemIndex) : (null, null);
+        if (loopFailure is not null)
+        {
+            return loopFailure;
+        }
+
+        var scope = new Scope(row, spec, nodeRuns, loop);
         var config = GraphConfig.Interpolate(graphNode.Config, scope.Lookup);
         if (Cut(scope, config) is { } cutConfig)
         {
@@ -55,9 +64,87 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
             return Failed(config, result.Error);
         }
 
-        // why: a block that remembers something (only_new) does it here, once its node worked: a node that failed leaves nothing behind
-        var committed = await block.Commit(context, result.Value, cancel).ConfigureAwait(false);
-        return committed.IsError ? Failed(config, committed.Error) : Succeeded(config, result.Value);
+        return Succeeded(config, result.Value);   // why: Commit waits for the run's end (CommitRunAsync): a later node can still fail the run
+    }
+
+    /// <summary>
+    /// Runs the after-success step of every block whose node succeeded, once the whole run has succeeded ('only_new' records its keys here). A run that failed or was cancelled never gets here,
+    /// so what a node passed on is not marked done while a later node lost it. The call can repeat after a retry: the blocks make their commit safe to run twice.
+    /// </summary>
+    /// <param name="run">The run, already walked to the end with every node succeeded, skipped or continued past.</param>
+    /// <returns>Null when every commit worked, or the reason the first one failed.</returns>
+    [Activity("GraphCommitBlocks")]
+    public async Task<string?> CommitRunAsync(WorkflowRunId run)
+    {
+        var cancel = ActivityExecutionContext.Current.CancellationToken;
+        var row = GraphFailures.Value(await runs.Get(run, cancel).ConfigureAwait(false));
+        var spec = GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancel).ConfigureAwait(false)).Spec;
+        var nodeRuns = GraphFailures.Value(await runs.NodeRuns(run, cancel).ConfigureAwait(false));
+        var outer = new Scope(row, spec, nodeRuns, loop: null);
+        foreach (var graphNode in spec.Nodes)
+        {
+            if (blocks.Find(graphNode.Type) is not { } block)
+            {
+                continue;
+            }
+
+            // why: a node inside a for_each body has one row per item (ItemIndex 1..N); each item's row is committed with that item's scope, as Execute read it
+            foreach (var stored in nodeRuns.Where(n => n.NodeId == graphNode.Id && n.Status == NodeRunStatus.Succeeded))
+            {
+                if (ItemScope(outer, row, spec, nodeRuns, stored) is { } scope && await CommitNode(graphNode, stored, block, scope, cancel).ConfigureAwait(false) is { } failure)
+                {
+                    return failure;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    // why: a loop that can't be read again (its list was cut) leaves that item's keys unseen: they come back on the next run (a repeat, never a loss)
+    private static Scope? ItemScope(Scope outer, WorkflowRun row, GraphSpec spec, IReadOnlyList<NodeRun> nodeRuns, NodeRun stored)
+    {
+        if (stored.ItemIndex == 0)
+        {
+            return outer;
+        }
+
+        var (loop, failure) = Loop(outer, spec, stored.NodeId, stored.ItemIndex);
+        return failure is null && loop is not null ? new Scope(row, spec, nodeRuns, loop) : null;
+    }
+
+    private static async Task<string?> CommitNode(GraphNode graphNode, NodeRun stored, IGraphBlock block, Scope scope, CancellationToken cancel)
+    {
+        // why: a cut output is not what the block gave, so committing it would remember the wrong keys; the items stay unseen and come back on the next run (a repeat, never a loss)
+        if (stored.Output is null || stored.Truncated)
+        {
+            return null;
+        }
+
+        var config = GraphConfig.Interpolate(graphNode.Config, scope.Lookup);
+        if (scope.Cut is not null || JsonNode.Parse(stored.Output) is not JsonObject output)
+        {
+            return null;   // why: the config read a cut output, so the keys it names are unknown
+        }
+
+        var result = new BlockResult(output.ToDictionary(static p => p.Key, static p => p.Value?.DeepClone(), StringComparer.Ordinal), Branches: null);
+        var context = new BlockContext(stored.RunId, graphNode.Id, config, (JsonObject)graphNode.Config.DeepClone(), scope.Lookup);
+        var committed = await block.Commit(context, result, cancel).ConfigureAwait(false);
+        return committed.IsError ? $"node '{graphNode.Id.Value}' could not record what it passed on: {committed.Error.Code}: {committed.Error.Message}" : null;
+    }
+
+    // why: inside a 'for_each' a reference reads the item and the loop's nodes of the same item; the list is read the way the 'for_each' read it, from outputs that never change
+    private static (LoopContext? Loop, GraphBlockOutcome? Failure) Loop(Scope outer, GraphSpec spec, NodeId node, int itemIndex)
+    {
+        var shape = LoopBody.Enclosing(spec, node) ?? throw new ApplicationFailureException($"node '{node.Value}' is not inside a for_each", nonRetryable: true);
+        var config = GraphConfig.Interpolate(shape.ForEach.Config, outer.Lookup);
+        if (Cut(outer, config) is { } cut)
+        {
+            return (null, cut);
+        }
+
+        var item = config["items"] is JsonArray items && itemIndex <= items.Count ? items[itemIndex - 1]?.DeepClone() : null;
+        return (new LoopContext(shape, itemIndex, item), null);
     }
 
     private static GraphBlockOutcome? Cut(Scope scope, JsonObject config) => scope.Cut is { } cut
@@ -65,7 +152,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         : null;
 
     private static GraphBlockOutcome Failed(JsonObject? input, Kernel.Error error) =>
-        new(NodeRunStatus.Failed, input?.ToJsonString(), Output: null, [], $"{error.Code}: {error.Message}");
+        new(NodeRunStatus.Failed, Fit(input?.ToJsonString()), Output: null, [], NodeRunLimits.Cap($"{error.Code}: {error.Message}", out _));
 
     private static GraphBlockOutcome Succeeded(JsonObject input, BlockResult result)
     {
@@ -75,11 +162,26 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
             output[name] = value?.DeepClone();
         }
 
-        return new GraphBlockOutcome(NodeRunStatus.Succeeded, input.ToJsonString(), output.ToJsonString(), result.Taken, Error: null);
+        return new GraphBlockOutcome(NodeRunStatus.Succeeded, Fit(input.ToJsonString()), Fit(output.ToJsonString()), result.Taken, Error: null);
     }
 
-    /// <summary>What a reference can read in one run: the trigger, the workflow's own facts and the outputs of the nodes that succeeded.</summary>
-    private sealed class Scope(WorkflowRun run, GraphSpec spec, IReadOnlyList<NodeRun> nodeRuns)
+    /// <summary>
+    /// Cuts a block's input or output before it enters the workflow's history: an activity result over Temporal's 2 MB payload limit fails the workflow task, and Temporal retries it forever.
+    /// A cut text keeps one character past the store's 64 KB cap, so the store still cuts it and sets 'Truncated' (a later node that reads it fails with SND-GRAPH-108 instead of reading a half value).
+    /// </summary>
+    /// <param name="text">The input or output text, or null.</param>
+    /// <returns>The text when it fits, otherwise its first 64 KB and an ellipsis.</returns>
+    internal static string? Fit(string? text)
+    {
+        var cut = NodeRunLimits.Cap(text, out var truncated);
+        return truncated ? cut + "\u2026" : text;
+    }
+
+    /// <summary>The loop a node execution runs in: its shape, the item's position counted from 1 and the item.</summary>
+    private sealed record LoopContext(LoopShape Shape, int ItemIndex, JsonNode? Item);
+
+    /// <summary>What a reference can read in one run: the trigger, the workflow's own facts, the item inside a loop and the outputs of the nodes that succeeded.</summary>
+    private sealed class Scope(WorkflowRun run, GraphSpec spec, IReadOnlyList<NodeRun> nodeRuns, LoopContext? loop)
     {
         private readonly JsonObject? _trigger = JsonNode.Parse(run.Trigger) as JsonObject;
 
@@ -102,12 +204,16 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         {
             "trigger" => _trigger,
             "workflow" => new JsonObject { ["name"] = spec.Name, ["runId"] = run.Id.Value, ["revision"] = run.Revision, ["id"] = run.WorkflowId.Value },
+            "item" => loop?.Item,
+            "itemIndex" => loop is null ? null : JsonValue.Create(loop.ItemIndex),
             _ => Output(name),
         };
 
         private JsonNode? Output(string node)
         {
-            var found = nodeRuns.FirstOrDefault(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal) && n.ItemIndex == 0 && n.Status == NodeRunStatus.Succeeded);
+            // why: a node of the loop's body has one row per item and is read at this item's; every other node has its one row at index 0
+            var index = loop is not null && loop.Shape.Body.Any(b => string.Equals(b.Id.Value, node, StringComparison.Ordinal)) ? loop.ItemIndex : 0;
+            var found = nodeRuns.FirstOrDefault(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal) && n.ItemIndex == index && n.Status == NodeRunStatus.Succeeded);
             if (found is null)
             {
                 return null;

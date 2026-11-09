@@ -89,7 +89,7 @@ public sealed class NoteImportTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_note_that_grows_between_the_count_and_the_adopting_pass_is_reported_as_409()
+    public async Task A_note_that_grows_between_the_count_and_the_adopting_pass_records_the_lines_it_took_and_warns()
     {
         var rig = await WithOpenNote();
         var once = true;
@@ -102,9 +102,10 @@ public sealed class NoteImportTests
             }
         };
 
-        var refused = await rig.Sync.Import(Ask(expect: 2), TestContext.Current.CancellationToken);
+        var imported = await rig.Sync.Import(Ask(expect: 2), TestContext.Current.CancellationToken);
 
-        Assert.Equal(SindriErrors.TodoConflict.Code, refused.Error.Code);
-        Assert.Empty(await rig.Events(EventTypes.TodoNoteImported));
+        Assert.Equal(3, imported.Value.Imported);   // #2429: the lines are already taken, so the import is recorded with the real count
+        Assert.Contains("2 lines to import when you checked and 3", imported.Value.Warning, StringComparison.Ordinal);
+        _ = Assert.Single(await rig.Events(EventTypes.TodoNoteImported));
     }
 }

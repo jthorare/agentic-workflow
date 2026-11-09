@@ -1,0 +1,218 @@
+openapi: 3.1.0
+info:
+  title: Sindri handoff inbox
+  version: "1"
+  description: >
+    The small HTTP API an outside system implements so Sindri can pull work from it. Sindri lists the offers made to one owner,
+    claims one (exactly one caller wins) and, when the work is done, submits a result. Every text field an offer carries is
+    untrusted on Sindri's side. Nothing here names a particular system.
+servers:
+  - url: https://inbox.example.test
+    description: Any https host the owner's connection points at (http is accepted for loopback only).
+security:
+  - bearer: []
+paths:
+  /offers:
+    get:
+      operationId: listOffers
+      summary: List the unclaimed offers made to one owner, oldest first.
+      parameters:
+        - name: owner
+          in: query
+          required: true
+          schema: { type: string, minLength: 1 }
+        - name: pageToken
+          in: query
+          required: false
+          description: The nextPageToken of the previous page. Absent for the first page.
+          schema: { type: string, minLength: 1 }
+      responses:
+        "200":
+          description: One page. nextPageToken is null on the last page.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OfferPage" }
+              examples:
+                twoOffers:
+                  value:
+                    offers:
+                      - id: o-1
+                        title: Fix the login timeout
+                        repo: web
+                        branch: fix/login-timeout
+                        prompt: Users are logged out after 5 minutes. Make it 30.
+                        links: [{ label: Ticket, url: "https://tickets.example.test/T-1" }]
+                        labels: [bug]
+                      - id: o-2
+                        title: Add a CSV export
+                        repo: web
+                        branch: null
+                        prompt: null
+                        links: []
+                        labels: []
+                    nextPageToken: null
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Unauthorized" }
+  /offers/{id}/claim:
+    post:
+      operationId: claimOffer
+      summary: Claim one offer for the calling owner. Exactly one caller wins.
+      description: >
+        Sindri never retries this call: a claim that timed out may have won, and a second try would lose to the first.
+        A server may also expire offers (410).
+      parameters:
+        - { $ref: "#/components/parameters/OfferId" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ClaimRequest" }
+            examples:
+              claim:
+                value: { owner: me }
+      responses:
+        "200":
+          description: The caller won. claimId names this claim from now on.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ClaimResponse" }
+              examples:
+                won:
+                  value:
+                    claimId: c-1
+                    offer:
+                      id: o-1
+                      title: Fix the login timeout
+                      repo: web
+                      branch: fix/login-timeout
+                      prompt: Users are logged out after 5 minutes. Make it 30.
+                      links: []
+                      labels: [bug]
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: No such offer.
+        "409":
+          description: Another caller claimed it first. Nothing starts.
+        "410":
+          description: The offer expired or was withdrawn.
+  /offers/{id}/result:
+    post:
+      operationId: submitResult
+      summary: Submit the result of a claimed offer.
+      description: >
+        Idempotent on claimId: the same result sent again answers 200 and changes nothing. A claimId that is not the one
+        the claim returned is 409. Sindri retries this call.
+      parameters:
+        - { $ref: "#/components/parameters/OfferId" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ResultRequest" }
+            examples:
+              finished:
+                value:
+                  claimId: c-1
+                  succeeded: true
+                  markdown: "Made the timeout 30 minutes. See the PR."
+                  links: [{ label: PR, url: "https://github.example.test/acme/web/pull/7" }]
+      responses:
+        "200":
+          description: Taken (or already taken).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResultAccepted" }
+              examples:
+                taken:
+                  value: { accepted: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: No such offer.
+        "409":
+          description: The claimId is not the one this offer's claim returned.
+        "410":
+          description: The offer expired or was withdrawn.
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      description: "The key of the Sindri connection, sent as 'Authorization: Bearer <key>'."
+  parameters:
+    OfferId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, minLength: 1, maxLength: 128 }
+  responses:
+    Unauthorized:
+      description: The key is missing, wrong or not allowed to act for that owner.
+  schemas:
+    Link:
+      type: object
+      additionalProperties: false
+      required: [label, url]
+      properties:
+        label: { type: string, minLength: 1, maxLength: 200 }
+        url: { type: string, format: uri, pattern: "^https?://", maxLength: 2048 }
+    Offer:
+      type: object
+      additionalProperties: false
+      required: [id, title, repo, links, labels]
+      properties:
+        id: { type: string, minLength: 1, maxLength: 128 }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        repo: { type: string, maxLength: 100, pattern: "^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$" }
+        branch: { type: [string, "null"], minLength: 1, maxLength: 255 }
+        prompt: { type: [string, "null"], maxLength: 65536 }
+        links:
+          type: array
+          maxItems: 50
+          items: { $ref: "#/components/schemas/Link" }
+        labels:
+          type: array
+          maxItems: 20
+          items: { type: string, minLength: 1, maxLength: 64 }
+    OfferPage:
+      type: object
+      additionalProperties: false
+      required: [offers, nextPageToken]
+      properties:
+        offers:
+          type: array
+          maxItems: 200
+          items: { $ref: "#/components/schemas/Offer" }
+        nextPageToken: { type: [string, "null"], minLength: 1, maxLength: 1000 }
+    ClaimRequest:
+      type: object
+      additionalProperties: false
+      required: [owner]
+      properties:
+        owner: { type: string, minLength: 1 }
+    ClaimResponse:
+      type: object
+      additionalProperties: false
+      required: [claimId, offer]
+      properties:
+        claimId: { type: string, minLength: 1, maxLength: 200 }
+        offer: { $ref: "#/components/schemas/Offer" }
+    ResultRequest:
+      type: object
+      additionalProperties: false
+      required: [claimId, succeeded, markdown, links]
+      properties:
+        claimId: { type: string, minLength: 1, maxLength: 200 }
+        succeeded: { type: boolean }
+        markdown: { type: string, maxLength: 200000 }
+        links:
+          type: array
+          maxItems: 50
+          items: { $ref: "#/components/schemas/Link" }
+    ResultAccepted:
+      type: object
+      additionalProperties: false
+      required: [accepted]
+      properties:
+        accepted: { const: true }

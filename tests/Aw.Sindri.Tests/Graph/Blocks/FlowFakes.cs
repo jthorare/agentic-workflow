@@ -23,7 +23,7 @@ internal static class FlowFakes
         public Error? FailWrites { get; init; }
 
         public ValueTask<Result<IReadOnlySet<string>>> Seen(WorkflowId workflow, IReadOnlyList<string> keys, CancellationToken cancellationToken) =>
-            ValueTask.FromResult<Result<IReadOnlySet<string>>>(Results.Success<IReadOnlySet<string>>(keys.Where(k => _seen.Contains((workflow.Value, k))).ToHashSet(StringComparer.Ordinal)));
+            ValueTask.FromResult(Results.Success<IReadOnlySet<string>>(keys.Where(k => _seen.Contains((workflow.Value, k))).ToHashSet(StringComparer.Ordinal)));
 
         public ValueTask<Result<Unit>> Record(WorkflowId workflow, IReadOnlyList<string> keys, CancellationToken cancellationToken)
         {
