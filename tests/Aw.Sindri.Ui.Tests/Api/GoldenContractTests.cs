@@ -178,6 +178,7 @@ public sealed class GoldenContractTests
         "code-index-symbols", "code-index-callers", "code-index-callees",   // the code-index reads (CI-10a) are the CLI's; status is read below for the Health card (CI-10b)
         "events-catalog",   // API P5 (E-15): the app reads each type's invalidates once it switches from re-querying every view on each event (UI lane)
         "todos-note-import",   // POST /todos/note/import (todo Ph3b): dry-run, imported and the stale 409; the app's Import and start syncing reads it with its own view once the card's golden contract lists it
+        "resources", "resources-purge",   // #2258 PR14 part 2: GET /sindri/resources and POST /sindri/resources/purge; the Resources page (PR18b, UI lane) reads them with its own views
         "library-doc",   // PR review page Ph5b: GET /sindri/library/{doc} is the CLI's `library show` for now; the app reads it when its doc sheet lands (UI lane)
     };
 
