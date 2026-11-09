@@ -1,0 +1,648 @@
+{
+  "groups": [
+    {
+      "group": "Triggers",
+      "blocks": [
+        {
+          "type": "workflow_call",
+          "title": "Called by a workflow",
+          "isTrigger": true,
+          "config": [],
+          "outputs": {
+            "payload": "object?",
+            "parentRun": "string",
+            "callDepth": "number",
+            "by": "string"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {},
+          "exampleSpec": null
+        },
+        {
+          "type": "connection_event",
+          "title": "Connection event",
+          "isTrigger": true,
+          "config": [
+            {
+              "name": "connection",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "event",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "filter",
+              "type": "text",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "deliveryId": "string",
+            "occurredAt": "string",
+            "connection": "string",
+            "event": "string",
+            "repo?": "string",
+            "number?": "string",
+            "title?": "string",
+            "url?": "string",
+            "author?": "string",
+            "ref?": "string",
+            "identifier?": "string",
+            "label?": "string",
+            "to?": "string",
+            "channel?": "string",
+            "ts?": "string",
+            "user?": "string",
+            "text?": "string",
+            "start?": "string"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "connection": "github:work",
+            "event": "github.pr.merged",
+            "filter": "trigger.repo == \"acme/api\""
+          },
+          "exampleSpec": null
+        },
+        {
+          "type": "schedule",
+          "title": "Schedule",
+          "isTrigger": true,
+          "config": [
+            {
+              "name": "cron",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "timezone",
+              "type": "text",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "scheduledFor": "string"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "cron": "0 7 * * 1-5",
+            "timezone": "America/Los_Angeles"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Weekday morning ping",
+            "nodes": [
+              {
+                "id": "daily",
+                "type": "schedule",
+                "config": {
+                  "cron": "0 7 * * 1-5",
+                  "timezone": "America/Los_Angeles"
+                }
+              },
+              {
+                "id": "hello",
+                "type": "notify",
+                "config": {
+                  "title": "Good morning",
+                  "body": "Tick for {{daily.scheduledFor}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "daily",
+                "to": "hello"
+              }
+            ]
+          }
+        },
+        {
+          "type": "manual",
+          "title": "When called",
+          "isTrigger": true,
+          "config": [],
+          "outputs": {
+            "payload": "object?"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {},
+          "exampleSpec": {
+            "version": 1,
+            "name": "Echo the payload",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "echo",
+                "type": "notify",
+                "config": {
+                  "title": "Started by hand",
+                  "body": "Payload: {{trigger.payload}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "echo"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "group": "Data",
+      "blocks": [
+        {
+          "type": "http",
+          "title": "HTTP request",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "url",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "method",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "headers",
+              "type": "object",
+              "required": false
+            },
+            {
+              "name": "body",
+              "type": "object",
+              "required": false
+            },
+            {
+              "name": "expect",
+              "type": "text",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "status": "number",
+            "body": "any?",
+            "text": "string"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "url": "https://api.example.com/items",
+            "method": "POST",
+            "body": {
+              "name": "{{triage.summary}}"
+            },
+            "expect": "200,201"
+          },
+          "exampleSpec": null
+        }
+      ]
+    },
+    {
+      "group": "AI",
+      "blocks": [
+        {
+          "type": "prompt",
+          "title": "Prompt",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "prompt",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "output",
+              "type": "object",
+              "required": true
+            }
+          ],
+          "outputs": {
+            "summary": "string"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "prompt": "Summarize {{search.facts}}",
+            "output": {
+              "type": "object",
+              "required": [
+                "summary"
+              ],
+              "properties": {
+                "summary": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Ask the model for a summary",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "summarize",
+                "type": "prompt",
+                "config": {
+                  "prompt": "Summarize this: {{trigger.payload}}",
+                  "output": {
+                    "type": "object",
+                    "required": [
+                      "summary"
+                    ],
+                    "properties": {
+                      "summary": {
+                        "type": "string"
+                      },
+                      "score": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Summary",
+                  "body": "{{summarize.summary}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "summarize"
+              },
+              {
+                "from": "summarize",
+                "to": "tell"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "group": "Logic",
+      "blocks": [
+        {
+          "type": "collect",
+          "title": "Collect",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "value",
+              "type": "text",
+              "required": true
+            }
+          ],
+          "outputs": {
+            "items": "array",
+            "count": "number"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "value": "{{summarize.text}}"
+          },
+          "exampleSpec": null
+        },
+        {
+          "type": "for_each",
+          "title": "For each",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "items",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "maxItems",
+              "type": "number",
+              "required": false
+            },
+            {
+              "name": "batchSize",
+              "type": "number",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "count": "number",
+            "batchSize": "number"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "items": "{{search.results}}",
+            "maxItems": 100
+          },
+          "exampleSpec": null
+        },
+        {
+          "type": "condition",
+          "title": "If",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "when",
+              "type": "text",
+              "required": true
+            }
+          ],
+          "outputs": {
+            "result": "boolean"
+          },
+          "branches": [
+            "true",
+            "false"
+          ],
+          "exampleConfig": {
+            "when": "agent.drifted"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Notify only when urgent",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "ask",
+                "type": "prompt",
+                "config": {
+                  "prompt": "Is this urgent? {{trigger.payload}}",
+                  "output": {
+                    "type": "object",
+                    "required": [
+                      "urgent"
+                    ],
+                    "properties": {
+                      "urgent": {
+                        "type": "boolean"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "id": "gate",
+                "type": "condition",
+                "config": {
+                  "when": "ask.urgent"
+                }
+              },
+              {
+                "id": "page",
+                "type": "notify",
+                "config": {
+                  "title": "Urgent",
+                  "body": "Look at this now."
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "ask"
+              },
+              {
+                "from": "ask",
+                "to": "gate"
+              },
+              {
+                "from": "gate",
+                "output": "true",
+                "to": "page"
+              }
+            ]
+          }
+        },
+        {
+          "type": "only_new",
+          "title": "Only new",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "items",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "key",
+              "type": "text",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "items": "array",
+            "count": "number",
+            "skipped": "number"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "items": "{{search.results}}",
+            "key": "id"
+          },
+          "exampleSpec": null
+        },
+        {
+          "type": "run_workflow",
+          "title": "Run workflow",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "workflow",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "payload",
+              "type": "object",
+              "required": false
+            },
+            {
+              "name": "wait",
+              "type": "boolean",
+              "required": false
+            },
+            {
+              "name": "waitSeconds",
+              "type": "number",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "runId": "string",
+            "status": "string",
+            "outputs": "any?"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "workflow": "triage",
+            "payload": {
+              "pr": "{{trigger.payload.pr}}"
+            },
+            "wait": true
+          },
+          "exampleSpec": null
+        }
+      ]
+    },
+    {
+      "group": "Outputs",
+      "blocks": [
+        {
+          "type": "create_item",
+          "title": "Create item",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "title",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "repo",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "body",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "linearIssue",
+              "type": "text",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "itemId": "string"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "title": "Fix {{triage.summary}}",
+            "repo": "web",
+            "body": "{{triage.details}}"
+          },
+          "exampleSpec": null
+        },
+        {
+          "type": "notify",
+          "title": "Send notification",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "title",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "body",
+              "type": "text",
+              "required": false
+            }
+          ],
+          "outputs": {},
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "title": "Drifted",
+            "body": "{{agent.summary}}"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Summarize and notify",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "summarize",
+                "type": "prompt",
+                "config": {
+                  "prompt": "Summarize this in one line: {{trigger.payload}}",
+                  "output": {
+                    "type": "object",
+                    "required": [
+                      "summary"
+                    ],
+                    "properties": {
+                      "summary": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Summary ready",
+                  "body": "{{summarize.summary}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "summarize"
+              },
+              {
+                "from": "summarize",
+                "to": "tell"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
