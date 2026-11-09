@@ -11,7 +11,7 @@ public sealed class SchedulerHostWakeTests
     private readonly SliceHarness _h = new();
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_wake_jump_makes_the_next_workflow_poll_run_a_catch_up()
+    public async Task A_wake_jump_asks_PollWake_for_a_catch_up()
     {
         var ct = TestContext.Current.CancellationToken;
         _ = await _h.Profiles.Save(SliceHarness.Profile("5s"), ct);
