@@ -157,6 +157,21 @@ public sealed class ApplyOpsTests
     }
 
     [Fact]
+    public void Rename_follows_the_node_into_a_condition_when_text_but_not_into_its_quoted_literals()
+    {
+        // the weekday-check template's shape: weekdays -> check -> gate(when check.flagged) -> tell
+        var spec = Spec(
+            [Trigger("weekdays"), Search("check"), Condition("gate", "check.flagged and note == \"check.flagged\" and recheck.flagged"), Notify("tell", "{{check.summary}}")],
+            [Edge("weekdays", "check"), Edge("check", "gate"), Edge("gate", "tell", "true")]);
+
+        var result = Apply(spec, new RenameOp(Id("check"), Id("inspect")));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("inspect.flagged and note == \"check.flagged\" and recheck.flagged", result.Value.Nodes[2].Config["when"]!.GetValue<string>());
+        Assert.Equal("{{inspect.summary}}", result.Value.Nodes[3].Config["body"]!.GetValue<string>());
+    }
+
+    [Fact]
     public void Rename_to_a_used_id_or_from_a_missing_node_is_refused()
     {
         Assert.Equal("SND-GRAPH-012", Apply(Base(), new RenameOp(Id("a"), Id("tell"))).Error.Code);

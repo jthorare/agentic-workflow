@@ -210,10 +210,14 @@ internal sealed class GraphEditSession(GraphSpec spec)
             };
         }
 
-        // why: only '{{old.field}}' references follow; a bare name inside a condition's 'when' text is left for the validator to flag.
+        // why: '{{old.field}}' follows in every config string, and so does the bare 'old.field' in a condition's 'when' text
         foreach (var node in _nodes)
         {
             ReferenceRename.Apply(node.Config, old, rename.To.Value);
+            if (string.Equals(node.Type, "condition", StringComparison.Ordinal))
+            {
+                ReferenceRename.ApplyWhen(node.Config, old, rename.To.Value);
+            }
         }
 
         return null;
