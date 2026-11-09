@@ -17,7 +17,7 @@ public sealed class GraphValidatorLoopTests
         ["collect"] = new CollectBlock(),
     };
 
-    private static GraphNode Each(string id) => new(NodeId.From(id), "for_each", Title: null, new JsonObject { ["items"] = "{{trigger.items}}" });
+    private static GraphNode Each(string id) => new(NodeId.From(id), "for_each", Title: null, new JsonObject { ["items"] = "{{search.facts}}" });
 
     private static GraphNode Gather(string id) => new(NodeId.From(id), "collect", Title: null, new JsonObject { ["value"] = "{{item}}" });
 
@@ -25,8 +25,8 @@ public sealed class GraphValidatorLoopTests
     public void A_for_each_wired_to_one_collect_passes_and_may_read_item_and_item_index()
     {
         var spec = Spec(
-            [Trigger("daily"), Each("each"), Notify("tell", "{{item}} is number {{itemIndex}}"), Gather("gather")],
-            [Edge("daily", "each"), Edge("each", "tell"), Edge("tell", "gather")]);
+            [Trigger("daily"), Search("search"), Each("each"), Notify("tell", "{{item}} is number {{itemIndex}}"), Gather("gather")],
+            [Edge("daily", "search"), Edge("search", "each"), Edge("each", "tell"), Edge("tell", "gather")]);
 
         var result = Validator(blocks: _blocks).Validate(spec, GraphMode.Activate);
 
