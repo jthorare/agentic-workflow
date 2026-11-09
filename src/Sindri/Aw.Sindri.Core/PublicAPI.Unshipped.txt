@@ -18089,11 +18089,13 @@ Aw.Sindri.Core.Events.TodoDone
 Aw.Sindri.Core.Events.TodoDone.By.get -> string!
 Aw.Sindri.Core.Events.TodoDone.By.init -> void
 Aw.Sindri.Core.Events.TodoDone.<Clone>$() -> Aw.Sindri.Core.Events.TodoDone!
-Aw.Sindri.Core.Events.TodoDone.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out long Version, out string! By, out string? Via) -> void
+Aw.Sindri.Core.Events.TodoDone.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out long Version, out string! By, out string? Via, out System.DateTimeOffset? DoneAt) -> void
 Aw.Sindri.Core.Events.TodoDone.Equals(Aw.Sindri.Core.Events.TodoDone? other) -> bool
 Aw.Sindri.Core.Events.TodoDone.Id.get -> Aw.Sindri.Core.Ids.TodoId
 Aw.Sindri.Core.Events.TodoDone.Id.init -> void
-Aw.Sindri.Core.Events.TodoDone.TodoDone(Aw.Sindri.Core.Ids.TodoId Id, long Version, string! By, string? Via = null) -> void
+Aw.Sindri.Core.Events.TodoDone.TodoDone(Aw.Sindri.Core.Ids.TodoId Id, long Version, string! By, string? Via = null, System.DateTimeOffset? DoneAt = null) -> void
+Aw.Sindri.Core.Events.TodoDone.DoneAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Events.TodoDone.DoneAt.init -> void
 Aw.Sindri.Core.Events.TodoDone.Version.get -> long
 Aw.Sindri.Core.Events.TodoDone.Version.init -> void
 Aw.Sindri.Core.Events.TodoDone.Via.get -> string?
@@ -20148,7 +20150,7 @@ static Aw.Sindri.Core.Todos.TodoPick.operator ==(Aw.Sindri.Core.Todos.TodoPick? 
 static Aw.Sindri.Core.Todos.TodoPickWindow.Until(System.DateTimeOffset at) -> System.DateTimeOffset
 static readonly Aw.Sindri.Core.Todos.TodoPickWindow.Span -> System.TimeSpan
 Aw.Sindri.Core.Todos.TodoConverger
-Aw.Sindri.Core.Todos.TodoConverger.Apply(Aw.Sindri.Core.Todos.TodoRow! row, Aw.Sindri.Core.Events.TodoSide! target, string! by, Aw.Sindri.Core.Todos.TodoPickCaller! who, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<long>!>
+Aw.Sindri.Core.Todos.TodoConverger.Apply(Aw.Sindri.Core.Todos.TodoRow! row, Aw.Sindri.Core.Events.TodoSide! target, string! by, Aw.Sindri.Core.Todos.TodoPickCaller! who, System.Threading.CancellationToken cancellationToken, System.DateTimeOffset? doneAt = null) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<long>!>
 Aw.Sindri.Core.Todos.TodoConverger.TodoConverger(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, Aw.Sindri.Core.Todos.TodoInput! input) -> void
 Aw.Sindri.Core.Todos.TodoPickCaller
 Aw.Sindri.Core.Todos.TodoPickCaller.<Clone>$() -> Aw.Sindri.Core.Todos.TodoPickCaller!
@@ -20168,6 +20170,7 @@ Aw.Sindri.Core.Todos.TodoPickWrites
 Aw.Sindri.Core.Todos.TodoPickWrites.Append<TPayload>(Aw.Sindri.Core.Todos.TodoPickCaller! who, string! type, TPayload payload, string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Commands.CommandAccepted!>!>
 Aw.Sindri.Core.Todos.TodoPickWrites.Begin(string! action, bool piped) -> Aw.Kernel.Result<Aw.Sindri.Core.Todos.TodoPickCaller!>!
 Aw.Sindri.Core.Todos.TodoPickWrites.Key(string! prefix) -> string!
+Aw.Sindri.Core.Todos.TodoPickWrites.Revert(Aw.Sindri.Core.Todos.TodoConverger! converger, Aw.Sindri.Core.Todos.TodoRow! prior, long versionAfter, Aw.Sindri.Core.Todos.TodoPickCaller! who, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Error?>
 Aw.Sindri.Core.Todos.TodoPickWrites.Row(Aw.Sindri.Core.Ids.TodoId id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Todos.TodoRow!>!>
 Aw.Sindri.Core.Todos.TodoPickWrites.TodoPickWrites(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Lease.HeldLease! held, Aw.Sindri.Core.Events.EventFactory! events, Aw.Sindri.Core.Commands.ICallerContextAccessor! callers, System.TimeProvider! clock, Aw.Kernel.Ids.IIdGenerator! ids, Aw.Sindri.Core.Views.IViewReader! views) -> void
 override Aw.Sindri.Core.Todos.TodoPickCaller.Equals(object? obj) -> bool

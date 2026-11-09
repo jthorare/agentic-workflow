@@ -57,6 +57,28 @@ public sealed class TodoPickWrites(ILedgerStore ledger, HeldLease held, Events.E
         return TodoWrite.Append(ledger, who.Grant, events.Entry(type, payload, key), who.Caller.CommandId, cancellationToken);
     }
 
+    /// <summary>Puts a todo back to <paramref name="prior"/> (an Undo, or a restore after a failed apply): a todo that moved since the change, or is gone, is left as it is.</summary>
+    /// <param name="converger">Appends the reverse events.</param>
+    /// <param name="prior">The todo as it was before the change.</param>
+    /// <param name="versionAfter">The version the change left it at.</param>
+    /// <param name="who">The caller.</param>
+    /// <param name="cancellationToken">Cancels the read and the appends.</param>
+    /// <returns>The first error, or null.</returns>
+    public async ValueTask<Error?> Revert(TodoConverger converger, TodoRow prior, long versionAfter, TodoPickCaller who, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(converger);
+        ArgumentNullException.ThrowIfNull(prior);
+        ArgumentNullException.ThrowIfNull(who);
+        var read = await Row(prior.Id, cancellationToken).ConfigureAwait(false);
+        if (read.IsError || read.Value.Version != versionAfter)
+        {
+            return null;
+        }
+
+        var back = await converger.Apply(read.Value, TodoNoteSides.Of(prior), who.By, who, cancellationToken, prior.DoneAt).ConfigureAwait(false);
+        return back.IsError ? back.Error : null;
+    }
+
     /// <summary>A key no other pick shares: <paramref name="prefix"/> and a fresh id.</summary>
     /// <param name="prefix">The key's fixed part.</param>
     /// <returns>The key.</returns>
