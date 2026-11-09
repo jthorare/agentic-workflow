@@ -131,6 +131,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IWorkflowRunStore, SqliteWorkflowRunStore>()    // workflow runs and node runs (#2258, PR 6): workflow_run and workflow_node_run in ledger.db
             .AddSingleton<IGraphBlockCatalog, EmptyGraphBlockCatalog>() // no graph blocks until PR 6 and 9
             .AddSingleton<IResourceFiles>(static sp => new ResourceFiles(Path.Combine(sp.GetRequiredService<ISindriHome>().Path, "resources")))   // provisioned resources (agent-first PR 14): the files under <home>/resources
+            .AddSingleton<IResourceProvisioner>(static sp => new ResourceProvisioner(new ResourceStore(Path.Combine(sp.GetRequiredService<ISindriHome>().Path, "resources")), sp.GetRequiredService<LedgerDatabase>(), sp.GetRequiredService<TimeProvider>()))   // makes an owner's resources exist before a run and books them in ledger.db
             .AddSingleton<IMemoryStore, SqliteMemoryStore>()       // memory stores and facts (agent-first PR 13): memory and memory_fact in ledger.db
             .AddSingleton<IGraphSeenStore, SqliteSeenStore>()      // what 'only_new' nodes have passed on (agent-first PR 9): workflow_seen in ledger.db
             .AddSingleton<IGraphHttpPort>(static sp => new GraphHttpClient(GraphHttpHandler.Create(), ct => GraphHttpClient.HostsOf(sp.GetRequiredService<IApprovedProfile>(), ct)))   // the 'http' block's client: only 'workflow.http.hosts'
