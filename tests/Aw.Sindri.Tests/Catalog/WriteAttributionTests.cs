@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Globalization;
 using Aw.Kernel.Events;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
@@ -100,8 +101,13 @@ public sealed class WriteAttributionTests
         Assert.Equal("things/refused (item.created)", sweep.Covered["POST /sindri/other"]);
     }
 
-    private static LedgerEvent Event(long sequence, string type) =>
-        new(sequence, Epoch: 1, new EventEnvelope<string>(Guid.NewGuid(), type, 1, DateTimeOffset.UnixEpoch, "session:launch:" + Launch, "local", 0, Guid.NewGuid(), null, null, "{}"), $"{type}:{sequence}", null);
+    private static LedgerEvent Event(long sequence, string type)
+    {
+        var envelope = new EventEnvelope<string>(
+            Id: Guid.Empty, Type: type, SchemaVersion: 1, OccurredAt: DateTimeOffset.UnixEpoch, Actor: "session:launch:" + Launch, Tenant: "local", Ring: 0,
+            CorrelationId: Guid.Empty, CausationId: null, TraceId: null, Payload: "{}");
+        return new LedgerEvent(sequence, Epoch: 1, envelope, IdempotencyKey: type + ":" + sequence.ToString(CultureInfo.InvariantCulture), Item: null);
+    }
 
     private static List<string> Problems(Sweep sweep, HashSet<string> catalog)
     {
