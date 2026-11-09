@@ -21567,3 +21567,104 @@ static Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.operator !=(Aw.Sindri.C
 static Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.operator ==(Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest? left, Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest? right) -> bool
 override Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.GetHashCode() -> int
 override Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Equals(object? obj) -> bool
+Aw.Sindri.Core.Toolkits.ToolNames
+Aw.Sindri.Core.Toolkits.Toolkit
+Aw.Sindri.Core.Toolkits.Toolkit.<Clone>$() -> Aw.Sindri.Core.Toolkits.Toolkit!
+Aw.Sindri.Core.Toolkits.Toolkit.BuiltAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Toolkits.Toolkit.BuiltAt.init -> void
+Aw.Sindri.Core.Toolkits.Toolkit.CreatedBy.get -> string!
+Aw.Sindri.Core.Toolkits.Toolkit.CreatedBy.init -> void
+Aw.Sindri.Core.Toolkits.Toolkit.Deconstruct(out string! Name, out string! Dir, out Aw.Sindri.Core.Toolkits.ToolkitState State, out string? SourceHash, out System.DateTimeOffset? BuiltAt, out Aw.Sindri.Core.Toolkits.ToolkitManifest? Manifest, out string! CreatedBy) -> void
+Aw.Sindri.Core.Toolkits.Toolkit.Dir.get -> string!
+Aw.Sindri.Core.Toolkits.Toolkit.Dir.init -> void
+Aw.Sindri.Core.Toolkits.Toolkit.Equals(Aw.Sindri.Core.Toolkits.Toolkit? other) -> bool
+Aw.Sindri.Core.Toolkits.Toolkit.IsBuiltFor(string! currentSourceHash) -> bool
+Aw.Sindri.Core.Toolkits.Toolkit.Manifest.get -> Aw.Sindri.Core.Toolkits.ToolkitManifest?
+Aw.Sindri.Core.Toolkits.Toolkit.Manifest.init -> void
+Aw.Sindri.Core.Toolkits.Toolkit.Name.get -> string!
+Aw.Sindri.Core.Toolkits.Toolkit.Name.init -> void
+Aw.Sindri.Core.Toolkits.Toolkit.SourceHash.get -> string?
+Aw.Sindri.Core.Toolkits.Toolkit.SourceHash.init -> void
+Aw.Sindri.Core.Toolkits.Toolkit.State.get -> Aw.Sindri.Core.Toolkits.ToolkitState
+Aw.Sindri.Core.Toolkits.Toolkit.State.init -> void
+Aw.Sindri.Core.Toolkits.Toolkit.Toolkit(string! Name, string! Dir, Aw.Sindri.Core.Toolkits.ToolkitState State, string? SourceHash, System.DateTimeOffset? BuiltAt, Aw.Sindri.Core.Toolkits.ToolkitManifest? Manifest, string! CreatedBy) -> void
+Aw.Sindri.Core.Toolkits.ToolkitManifest
+Aw.Sindri.Core.Toolkits.ToolkitManifest.<Clone>$() -> Aw.Sindri.Core.Toolkits.ToolkitManifest!
+Aw.Sindri.Core.Toolkits.ToolkitManifest.Deconstruct(out string! Name, out string! Version, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Toolkits.ToolkitResource!>! Resources, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Toolkits.ToolkitTool!>! Tools) -> void
+Aw.Sindri.Core.Toolkits.ToolkitManifest.Equals(Aw.Sindri.Core.Toolkits.ToolkitManifest? other) -> bool
+Aw.Sindri.Core.Toolkits.ToolkitManifest.Name.get -> string!
+Aw.Sindri.Core.Toolkits.ToolkitManifest.Name.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitManifest.Resources.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Toolkits.ToolkitResource!>!
+Aw.Sindri.Core.Toolkits.ToolkitManifest.Resources.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitManifest.ToolkitManifest(string! Name, string! Version, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Toolkits.ToolkitResource!>! Resources, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Toolkits.ToolkitTool!>! Tools) -> void
+Aw.Sindri.Core.Toolkits.ToolkitManifest.Tools.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Toolkits.ToolkitTool!>!
+Aw.Sindri.Core.Toolkits.ToolkitManifest.Tools.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitManifest.Version.get -> string!
+Aw.Sindri.Core.Toolkits.ToolkitManifest.Version.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitResource
+Aw.Sindri.Core.Toolkits.ToolkitResource.<Clone>$() -> Aw.Sindri.Core.Toolkits.ToolkitResource!
+Aw.Sindri.Core.Toolkits.ToolkitResource.Deconstruct(out string! Kind, out string! Name, out string? Size, out string! Variable) -> void
+Aw.Sindri.Core.Toolkits.ToolkitResource.Equals(Aw.Sindri.Core.Toolkits.ToolkitResource? other) -> bool
+Aw.Sindri.Core.Toolkits.ToolkitResource.Kind.get -> string!
+Aw.Sindri.Core.Toolkits.ToolkitResource.Kind.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitResource.Name.get -> string!
+Aw.Sindri.Core.Toolkits.ToolkitResource.Name.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitResource.Size.get -> string?
+Aw.Sindri.Core.Toolkits.ToolkitResource.Size.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitResource.ToolkitResource(string! Kind, string! Name, string? Size, string! Variable) -> void
+Aw.Sindri.Core.Toolkits.ToolkitResource.Variable.get -> string!
+Aw.Sindri.Core.Toolkits.ToolkitResource.Variable.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitState
+Aw.Sindri.Core.Toolkits.ToolkitState.Built = 2 -> Aw.Sindri.Core.Toolkits.ToolkitState
+Aw.Sindri.Core.Toolkits.ToolkitState.Failed = 5 -> Aw.Sindri.Core.Toolkits.ToolkitState
+Aw.Sindri.Core.Toolkits.ToolkitState.Off = 1 -> Aw.Sindri.Core.Toolkits.ToolkitState
+Aw.Sindri.Core.Toolkits.ToolkitState.Paused = 4 -> Aw.Sindri.Core.Toolkits.ToolkitState
+Aw.Sindri.Core.Toolkits.ToolkitState.Running = 3 -> Aw.Sindri.Core.Toolkits.ToolkitState
+Aw.Sindri.Core.Toolkits.ToolkitTool
+Aw.Sindri.Core.Toolkits.ToolkitTool.<Clone>$() -> Aw.Sindri.Core.Toolkits.ToolkitTool!
+Aw.Sindri.Core.Toolkits.ToolkitTool.Deconstruct(out string! Name, out string! Description, out string! InputSchema, out string! OutputSchema) -> void
+Aw.Sindri.Core.Toolkits.ToolkitTool.Description.get -> string!
+Aw.Sindri.Core.Toolkits.ToolkitTool.Description.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitTool.Equals(Aw.Sindri.Core.Toolkits.ToolkitTool? other) -> bool
+Aw.Sindri.Core.Toolkits.ToolkitTool.InputSchema.get -> string!
+Aw.Sindri.Core.Toolkits.ToolkitTool.InputSchema.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitTool.Name.get -> string!
+Aw.Sindri.Core.Toolkits.ToolkitTool.Name.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitTool.OutputSchema.get -> string!
+Aw.Sindri.Core.Toolkits.ToolkitTool.OutputSchema.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitTool.ToolkitTool(string! Name, string! Description, string! InputSchema, string! OutputSchema) -> void
+const Aw.Sindri.Core.Toolkits.ToolNames.MaxLength = 64 -> int
+const Aw.Sindri.Core.Toolkits.ToolNames.Separator = "__" -> string!
+override Aw.Sindri.Core.Toolkits.Toolkit.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Toolkits.Toolkit.GetHashCode() -> int
+override Aw.Sindri.Core.Toolkits.Toolkit.ToString() -> string!
+override Aw.Sindri.Core.Toolkits.ToolkitManifest.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Toolkits.ToolkitManifest.GetHashCode() -> int
+override Aw.Sindri.Core.Toolkits.ToolkitManifest.ToString() -> string!
+override Aw.Sindri.Core.Toolkits.ToolkitResource.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Toolkits.ToolkitResource.GetHashCode() -> int
+override Aw.Sindri.Core.Toolkits.ToolkitResource.ToString() -> string!
+override Aw.Sindri.Core.Toolkits.ToolkitTool.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Toolkits.ToolkitTool.GetHashCode() -> int
+override Aw.Sindri.Core.Toolkits.ToolkitTool.ToString() -> string!
+static Aw.Sindri.Core.Toolkits.ToolNames.For(string! toolkit, string! tool) -> Aw.Kernel.Result<string!>!
+static Aw.Sindri.Core.Toolkits.ToolNames.TryParse(string? name, out string! toolkit, out string! tool) -> bool
+static Aw.Sindri.Core.Toolkits.Toolkit.operator !=(Aw.Sindri.Core.Toolkits.Toolkit? left, Aw.Sindri.Core.Toolkits.Toolkit? right) -> bool
+static Aw.Sindri.Core.Toolkits.Toolkit.operator ==(Aw.Sindri.Core.Toolkits.Toolkit? left, Aw.Sindri.Core.Toolkits.Toolkit? right) -> bool
+static Aw.Sindri.Core.Toolkits.ToolkitManifest.Parse(string! json) -> Aw.Kernel.Result<Aw.Sindri.Core.Toolkits.ToolkitManifest!>!
+static Aw.Sindri.Core.Toolkits.ToolkitManifest.operator !=(Aw.Sindri.Core.Toolkits.ToolkitManifest? left, Aw.Sindri.Core.Toolkits.ToolkitManifest? right) -> bool
+static Aw.Sindri.Core.Toolkits.ToolkitManifest.operator ==(Aw.Sindri.Core.Toolkits.ToolkitManifest? left, Aw.Sindri.Core.Toolkits.ToolkitManifest? right) -> bool
+static Aw.Sindri.Core.Toolkits.ToolkitResource.operator !=(Aw.Sindri.Core.Toolkits.ToolkitResource? left, Aw.Sindri.Core.Toolkits.ToolkitResource? right) -> bool
+static Aw.Sindri.Core.Toolkits.ToolkitResource.operator ==(Aw.Sindri.Core.Toolkits.ToolkitResource? left, Aw.Sindri.Core.Toolkits.ToolkitResource? right) -> bool
+static Aw.Sindri.Core.Toolkits.ToolkitTool.operator !=(Aw.Sindri.Core.Toolkits.ToolkitTool? left, Aw.Sindri.Core.Toolkits.ToolkitTool? right) -> bool
+static Aw.Sindri.Core.Toolkits.ToolkitTool.operator ==(Aw.Sindri.Core.Toolkits.ToolkitTool? left, Aw.Sindri.Core.Toolkits.ToolkitTool? right) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.ToolkitCallTimedOut -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ToolkitManifestInvalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ToolkitNameInvalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ToolkitNotBuilt -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ToolkitNotFound -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ToolkitPaused -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ToolkitProcessDied -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ToolkitSandboxUnavailable -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ToolkitTestsFailed -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ToolkitToolUnknown -> Aw.Kernel.ErrorDefinition!
