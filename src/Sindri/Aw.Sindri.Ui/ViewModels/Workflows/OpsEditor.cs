@@ -61,6 +61,13 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
     /// <returns>A task that completes when both are read.</returns>
     internal async Task Load(Uri url, string slug, CancellationToken cancellationToken)
     {
+        if (!string.Equals(Slug, slug, StringComparison.Ordinal))
+        {
+            // another workflow: nothing of the old one stays to be saved to this one, even when this read fails
+            Fields.Clear();
+            (Nodes, BaseRevision, _selected) = ([], 0, null);
+        }
+
         (_url, Slug) = (url, slug);
         var read = ++_reads;
         var workflowRead = api.Workflow(url, slug, cancellationToken);

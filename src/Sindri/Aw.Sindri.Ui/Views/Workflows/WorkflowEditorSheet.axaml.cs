@@ -28,7 +28,7 @@ internal sealed partial class WorkflowEditorSheet : UserControl
     {
         if (DataContext is WorkflowsPageViewModel page)
         {
-            await page.Editor.Reload(CancellationToken.None).ConfigureAwait(true);
+            await page.ReloadEditor(CancellationToken.None).ConfigureAwait(true);
         }
     }
 #pragma warning restore MA0155

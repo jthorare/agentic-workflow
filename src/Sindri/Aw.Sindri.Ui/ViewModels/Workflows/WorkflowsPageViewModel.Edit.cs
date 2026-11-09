@@ -40,8 +40,8 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>"Save", or "Saving..." while an edit is on the way.</summary>
     public string SaveText => Editor.IsSending ? Labels.WfEditSaving : Labels.WfEditSave;
 
-    /// <summary>True when Save does something: the form has fields, no edit is on the way and no reload is due.</summary>
-    public bool CanSave => Editor.Fields.Count > 0 && !Editor.IsSending && !Editor.NeedsReload;
+    /// <summary>True when Save does something: the form has fields read for the workflow the page shows (and it is not archived), no edit is on the way and no reload is due.</summary>
+    public bool CanSave => Editor.Fields.Count > 0 && !Editor.IsSending && !Editor.NeedsReload && CanEdit && Editor.BaseRevision > 0 && string.Equals(Editor.Slug, Runs.Slug, StringComparison.Ordinal);
 
     /// <summary>Opens the sheet on the selected graph node's fields.</summary>
     /// <param name="cancellationToken">Cancels the reads.</param>
@@ -53,7 +53,7 @@ internal sealed partial class WorkflowsPageViewModel
             return;
         }
 
-        IsEditing = true;
+        (IsEditing, GraphEdit.SheetOpen) = (true, true);
         var (edit, slug) = (++_edits, Runs.Slug);
         var node = Runs.Graph?.SelectedId ?? string.Empty;
         EditorNodeText = node.Length == 0 ? string.Empty : Labels.WfEditorNode(node);
@@ -77,11 +77,31 @@ internal sealed partial class WorkflowsPageViewModel
         }
 
         var changed = Editor.Fields.Where(f => f.IsChanged).Select(f => (f.Name, f.Text)).ToList();
+        var slug = Runs.Slug;
         await Editor.EditFields(changed, cancellationToken).ConfigureAwait(true);
+        await RereadRuns(slug, cancellationToken).ConfigureAwait(true);   // the page shows the revision Sindri holds now, so a graph edit next is not held as "never showed"
+    }
+
+    /// <summary>Reads the workflow again from the sheet's Reload button.</summary>
+    /// <param name="cancellationToken">Cancels the reads.</param>
+    /// <returns>A task that completes when the workflow is read.</returns>
+    internal async Task ReloadEditor(CancellationToken cancellationToken)
+    {
+        var slug = Runs.Slug;
+        await Editor.Reload(cancellationToken).ConfigureAwait(true);
+        await RereadRuns(slug, cancellationToken).ConfigureAwait(true);
+    }
+
+    private async Task RereadRuns(string slug, CancellationToken cancellationToken)
+    {
+        if (_url is { } url && slug.Length > 0 && string.Equals(Runs.Slug, slug, StringComparison.Ordinal))
+        {
+            await Runs.Read(url, slug, Runs.Title, cancellationToken).ConfigureAwait(true);
+        }
     }
 
     /// <summary>Closes the sheet.</summary>
-    internal void CloseEditor() => IsEditing = false;
+    internal void CloseEditor() => (IsEditing, GraphEdit.SheetOpen) = (false, false);
 
     private void WatchEditor()
     {
@@ -92,6 +112,7 @@ internal sealed partial class WorkflowsPageViewModel
             if (string.Equals(e.PropertyName, nameof(RunsViewModel.Graph), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(RunsViewModel.IsReading), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(RunsViewModel.Shown), StringComparison.Ordinal))
             {
                 OnChanged(nameof(CanEdit));
+                OnChanged(nameof(CanSave));
                 OnChanged(nameof(EditorHeading));
             }
         };
@@ -102,6 +123,11 @@ internal sealed partial class WorkflowsPageViewModel
         if (string.Equals(e.PropertyName, nameof(OpsEditor.BaseRevision), StringComparison.Ordinal))
         {
             OnChanged(nameof(EditorHeading));
+            OnChanged(nameof(CanSave));
+        }
+        else if (string.Equals(e.PropertyName, nameof(OpsEditor.Slug), StringComparison.Ordinal))
+        {
+            OnChanged(nameof(CanSave));
         }
         else if (string.Equals(e.PropertyName, nameof(OpsEditor.IsSending), StringComparison.Ordinal))
         {

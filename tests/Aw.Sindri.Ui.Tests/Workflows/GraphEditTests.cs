@@ -179,6 +179,36 @@ public sealed class GraphEditTests
     }
 
     [Fact]
+    public async Task An_add_step_on_a_revision_the_page_never_showed_sends_nothing_and_asks_to_reload()
+    {
+        var page = await Open("agent");
+        await page.GraphEdit.BeginAdd(Token);
+        var newer = Golden("workflows-slug", "found");
+        newer["latestRevision"] = 3;
+        _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, newer.ToJsonString());
+
+        await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[0], Token);
+
+        Assert.Empty(_f.Server.AppliedWorkflowOps);
+        Assert.True(page.GraphEdit.HasReloadPrompt);
+    }
+
+    [Fact]
+    public async Task A_connect_on_a_revision_the_page_never_showed_sends_nothing_and_asks_to_reload()
+    {
+        var page = await Open("agent");
+        var newer = Golden("workflows-slug", "found");
+        newer["latestRevision"] = 3;
+        _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, newer.ToJsonString());
+
+        page.GraphEdit.BeginConnect();
+        await page.GraphEdit.ConnectTo("start", Token);
+
+        Assert.Empty(_f.Server.AppliedWorkflowOps);
+        Assert.True(page.GraphEdit.HasReloadPrompt);
+    }
+
+    [Fact]
     public async Task The_block_picker_closes_when_another_workflow_opens()
     {
         const string other = "evening-check";
