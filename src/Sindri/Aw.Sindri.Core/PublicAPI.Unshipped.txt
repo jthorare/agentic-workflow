@@ -27400,3 +27400,24 @@ static Aw.Sindri.Core.Todos.TodoNoteImportRequest.operator ==(Aw.Sindri.Core.Tod
 static Aw.Sindri.Core.Todos.TodoNoteStatus.NotSet.get -> Aw.Sindri.Core.Todos.TodoNoteStatus!
 static Aw.Sindri.Core.Todos.TodoNoteStatus.operator !=(Aw.Sindri.Core.Todos.TodoNoteStatus? left, Aw.Sindri.Core.Todos.TodoNoteStatus? right) -> bool
 static Aw.Sindri.Core.Todos.TodoNoteStatus.operator ==(Aw.Sindri.Core.Todos.TodoNoteStatus? left, Aw.Sindri.Core.Todos.TodoNoteStatus? right) -> bool
+Aw.Sindri.Core.Todos.Note.NotePlace
+Aw.Sindri.Core.Todos.Note.NotePlace.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NotePlace!
+Aw.Sindri.Core.Todos.Note.NotePlace.Deconstruct(out string! Vault, out string! Note, out string! Root) -> void
+Aw.Sindri.Core.Todos.Note.NotePlace.Equals(Aw.Sindri.Core.Todos.Note.NotePlace? other) -> bool
+Aw.Sindri.Core.Todos.Note.NotePlace.NotePlace(string! Vault, string! Note, string! Root) -> void
+Aw.Sindri.Core.Todos.Note.NotePlace.Vault.get -> string!
+Aw.Sindri.Core.Todos.Note.NotePlace.Vault.init -> void
+Aw.Sindri.Core.Todos.Note.NotePlace.Note.get -> string!
+Aw.Sindri.Core.Todos.Note.NotePlace.Note.init -> void
+Aw.Sindri.Core.Todos.Note.NotePlace.Root.get -> string!
+Aw.Sindri.Core.Todos.Note.NotePlace.Root.init -> void
+override Aw.Sindri.Core.Todos.Note.NotePlace.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NotePlace.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NotePlace.ToString() -> string!
+static Aw.Sindri.Core.Todos.Note.NotePlace.operator !=(Aw.Sindri.Core.Todos.Note.NotePlace? left, Aw.Sindri.Core.Todos.Note.NotePlace? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NotePlace.operator ==(Aw.Sindri.Core.Todos.Note.NotePlace? left, Aw.Sindri.Core.Todos.Note.NotePlace? right) -> bool
+Aw.Sindri.Core.Todos.Note.NotePlace.Path.get -> string!
+Aw.Sindri.Core.Todos.Note.INoteLocator
+Aw.Sindri.Core.Todos.Note.INoteLocator.Locate(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Todos.Note.NotePlace?>!>
+Aw.Sindri.Core.Todos.TodoNoteWords
+static Aw.Sindri.Core.Todos.TodoNoteWords.Of(Aw.Sindri.Core.Todos.TodoNoteState state) -> string!

@@ -72,7 +72,11 @@ internal sealed partial class TodoHarness
 
     internal GetTodoService Get() => new(Views.Views, Views.Progress, Slice.Callers);
 
-    internal GetTodoNoteService Note() => new(Views.Progress, Slice.Callers);
+    internal GetTodoNoteService Note() => new(Views.Progress, Slice.Callers, NoteSync, NoteLocator, Slice.Store, Views.Views);
+
+    internal TodoNoteSyncStub NoteSync { get; } = new();
+
+    internal NoteLocatorStub NoteLocator { get; } = new();
 
     internal async Task Lease() => _ = await Slice.HoldLease();
 

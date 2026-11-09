@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using Aw.Sindri.Core.Todos;
+using Aw.Sindri.Core.Todos.Note;
 
 namespace Aw.Sindri.Features.SyncTodoNote;
 

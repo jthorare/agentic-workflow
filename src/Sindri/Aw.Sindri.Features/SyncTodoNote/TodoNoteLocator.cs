@@ -3,6 +3,7 @@ using Aw.Context.Core.Facade;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Todos.Note;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Features.SyncTodoNote;

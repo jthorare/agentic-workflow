@@ -1,3 +1,4 @@
+using Aw.Kernel.Ids;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
@@ -5,7 +6,6 @@ using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Todos;
 using Aw.Sindri.Core.Todos.Note;
 using Aw.Sindri.Core.Views;
-using Aw.Kernel.Ids;
 using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Features.SyncTodoNote;

@@ -1,8 +1,8 @@
+using Aw.Sindri.Core.Todos.Note;
 using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Todos;
-using Aw.Sindri.Features.SyncTodoNote;
 using Aw.Sindri.Host.Server;
 using Aw.Sindri.Tests.Todos;
 using Aw.Sindri.Tests.Todos.Sync;

@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Todos.Note;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Todos;
@@ -101,5 +102,37 @@ public sealed class TodoReadsTests
 
         Assert.True(note.IsSuccess, note.IsError ? note.Error.ToString() : null);
         Assert.Equal("not set", note.Value.State);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_note_answers_the_syncs_status_the_last_sync_and_the_open_conflicts_once_a_key_is_set()
+    {
+        using var cli = _h.Cli();
+        await _h.Lease();
+        _h.NoteLocator.Place = new NotePlace("notes", "Todo.md", "/vault");
+        var checkedAt = _h.Slice.Clock.GetUtcNow();
+        _h.NoteSync.Status = new TodoNoteStatus(TodoNoteState.CantRead, checkedAt, "the note is over 1 MB", FailedInARow: 3, NotAdopted: 0);
+        await _h.Record(EventTypes.TodoNoteSynced, new TodoNoteSynced("notes", "Todo.md", "h", "b", 1, 1, "service:todo-note"), "todo.note.synced:1");
+        await _h.Seed(_open);
+        var side = new TodoSide("x", Due: null, Links: [], Done: false, Removed: false);
+        await _h.Fold(EventTypes.TodoConflicted, new TodoConflicted(_open, side, side with { Text = "y" }, NoteHash: "ab12"));
+
+        var note = await _h.Note().Handle(new GetTodoNoteRequest(), Token);
+
+        Assert.True(note.IsSuccess, note.IsError ? note.Error.ToString() : null);
+        Assert.Equal(("can't read", "notes", "Todo.md", checkedAt, "the note is over 1 MB"), (note.Value.State, note.Value.Vault, note.Value.Note, note.Value.LastCheckAt, note.Value.LastError));
+        _ = Assert.NotNull(note.Value.LastSyncAt);
+        Assert.Equal([_open.Value], note.Value.Conflicts);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_key_that_has_not_had_a_pass_in_this_process_reads_as_syncing()
+    {
+        using var cli = _h.Cli();
+        _h.NoteLocator.Place = new NotePlace("notes", "Todo.md", "/vault");
+
+        var note = await _h.Note().Handle(new GetTodoNoteRequest(), Token);
+
+        Assert.Equal("syncing", note.Value.State);
     }
 }

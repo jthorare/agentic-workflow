@@ -24,7 +24,6 @@ using Aw.Sindri.Features.StopTodoNote;
 using Aw.Sindri.Features.SyncTodoNote;
 using Aw.Sindri.Features.UndoTodoHold;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Features;
@@ -41,7 +40,7 @@ internal static class TodoServiceCollectionExtensions
         return services
             .AddSingleton<TodoAddWindow>()
             .AddSingleton<TodoPickWindow>()
-            .TryAddNoteSource()
+            .AddSingleton<ITodoNoteSource, TodoNoteSource>()
             .AddScoped<TodoHolds>()
             .AddScoped<TodoConverger>()
             .AddScoped<TodoPickWrites>()
@@ -65,13 +64,6 @@ internal static class TodoServiceCollectionExtensions
             .AddScoped<TodoNoteProfileEdit>()
             .AddScoped<IValidator<SetTodoNoteRequest>, AcceptAllValidator<SetTodoNoteRequest>>().AddCommand<SetTodoNoteRequest, TodoNoteWritten, SetTodoNoteService>()
             .AddScoped<IValidator<StopTodoNoteRequest>, AcceptAllValidator<StopTodoNoteRequest>>().AddCommand<StopTodoNoteRequest, TodoNoteWritten, StopTodoNoteService>();
-    }
-
-    // why: the note service (todo Ph3b's sync PR) registers the real source before this runs or replaces it; until then no note is set
-    private static IServiceCollection TryAddNoteSource(this IServiceCollection services)
-    {
-        services.TryAddSingleton<ITodoNoteSource, UnsetTodoNoteSource>();
-        return services;
     }
 
     // why: the sync is one singleton (it serializes its passes); it builds its own TodoHolds, which only reads the ledger. ITodoNoteFiles and ITodoNoteDisk come from Infrastructure: the lead resolves the sync only where they are registered

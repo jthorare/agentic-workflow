@@ -1,4 +1,4 @@
-using Aw.Sindri.Features.SyncTodoNote;
+using Aw.Sindri.Core.Todos.Note;
 
 namespace Aw.Sindri.Host.Server;
 

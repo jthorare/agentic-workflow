@@ -1,9 +1,9 @@
 using Aw.Kernel;
 
-namespace Aw.Sindri.Features.SyncTodoNote;
+namespace Aw.Sindri.Core.Todos.Note;
 
 /// <summary>Finds the note the live profile names (todo spec §4.5): a port, so the sync's tests need no profile, context engine or vault folder.</summary>
-internal interface INoteLocator
+public interface INoteLocator
 {
     /// <summary>Reads the live profile's 'todo.obsidian' and resolves its vault.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>

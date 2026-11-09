@@ -2,6 +2,7 @@ using Aw.Kernel;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Todos;
+using Aw.Sindri.Core.Todos.Note;
 using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Features.SyncTodoNote;
