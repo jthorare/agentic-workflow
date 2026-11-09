@@ -248,4 +248,26 @@ public sealed class WorkflowsWritesTests
         Assert.Equal((ok, attention, error), (row.IsOk, row.IsAttention, row.IsError));
         Assert.Contains(" ", row.ChipText, StringComparison.Ordinal);   // a glyph and a word
     }
+
+    [Theory]
+    [InlineData("succeeded", true, false, false)]
+    [InlineData("waiting", false, true, false)]
+    [InlineData("failed", false, false, true)]
+    [InlineData("skipped", false, false, false)]
+    public void A_node_runs_chip_has_a_tone_besides_its_glyph_and_word(string status, bool ok, bool attention, bool error)
+    {
+        var run = new NodeRunViewModel(new NodeRunView("n", 0, status, Input: null, Output: null, Truncated: false, Error: null), 1);
+
+        Assert.Equal((ok, attention, error), (run.IsOk, run.IsAttention, run.IsError));
+    }
+
+    [Theory]
+    [InlineData(1, true)]
+    [InlineData(null, false)]
+    public void A_workflows_chip_is_ok_only_while_it_is_on(int? active, bool ok)
+    {
+        var row = new WorkflowRowViewModel(new WorkflowRowView("a", "A", active, 1, "owner", Now), _f.Clock);
+
+        Assert.Equal((ok, false, false), (row.IsOk, row.IsAttention, row.IsError));
+    }
 }
