@@ -66,4 +66,33 @@ public sealed class WorkflowsFramesTests : FrameHost
         Assert.True(Visible(window, "RunGroups"));
         Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"run-{width}"), Prefix);
     });
+
+    // The light theme: the runs (status chips in the ok and error tones, Run now) and a running run's detail (Cancel run), each beside its dark frame above.
+    [Fact]
+    public Task A_workflows_runs_in_the_light_theme() => OnUi(async () =>
+    {
+        var (window, shell) = await OnWorkflows(1440);
+        window.RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Light;
+
+        await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
+        await Until(window, () => shell.Workflows.Runs.Rows.Count > 0, "the runs never showed");
+
+        Assert.True(Visible(window, "RunNow"));
+        Frame(window, "runs-light-1440", Prefix);
+    });
+
+    [Fact]
+    public Task A_running_runs_detail_in_the_light_theme() => OnUi(async () =>
+    {
+        var (window, shell) = await OnWorkflows(1440);
+        Server.WorkflowRunAnswers[RunId] = RouteAnswer.Api("workflow-runs-run", "running");   // after OnWorkflows, which serves the finished run
+        window.RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Light;
+
+        await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
+        await shell.Workflows.OpenRun(RunId, CancellationToken.None);
+        await Until(window, () => shell.Workflows.Run.Groups.Count > 0, "the run never showed");
+
+        Assert.True(Visible(window, "RunCancel"));
+        Frame(window, "run-light-1440", Prefix);
+    });
 }

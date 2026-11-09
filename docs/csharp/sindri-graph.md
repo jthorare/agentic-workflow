@@ -108,6 +108,10 @@ Seven writes, each one slice (`Features/CreateWorkflow`, `ApplyWorkflowOps`, `Re
 
 **Loop guard.** `workflow_run` refuses with `SND-GRAPH-109` (naming the run) when the calling session was launched by a run of the same workflow (`WorkflowLoopGuard`, `IGraphLaunchRuns`). Until PR 9's agent blocks record which launch belongs to which run, `NoGraphLaunchRuns` answers "none", so the guard cannot fire in production yet.
 
+## Connection events
+
+The built-in service `workflow-poll` (`Features/PollConnections`, every 30 seconds) starts runs for `connection_event` nodes. What the node takes, the intervals and what a catch-up does are in [workflows/blocks/poll.md](../workflows/blocks/poll.md).
+
 ## Schedules
 
 The built-in service `workflow-schedule` (`Features/WorkflowSchedule`, every minute) starts runs for `schedule` nodes.

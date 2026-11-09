@@ -282,7 +282,7 @@ public static partial class SindriErrors
         ReviewInvalid, ReviewProjectUnknown, ReviewCommandCheck, ReviewNotSynced, ReviewFixNotPosted, ReviewRepoUnsynced, ReviewNoLogin, ReviewPrNotFound, ReviewOfflineUncached,
         LibraryDocNotFound, LinearTeamNotPicked, LinearNothingStored, LinearNoWriteKey, LinearBadValue, LinearNoAnswer, LinearWriteKeySameAsRead, LinearNoKeychain,
         ConnectionNotFound, ConnectionNeedsSignIn, ConnectionSignInTimeout, ConnectionStateMismatch, ConnectionRefreshFailed, ConnectionSecretUnavailable, ConnectionNeedsClientId, ConnectionNameInvalid, ConnectionConsentDenied, ConnectionExists, ConnectionKindNoSignIn,
-        ConnectionRateLimited, ConnectionProviderChanged, ConnectionCursorRejected,
+        ConnectionRateLimited, ConnectionProviderChanged, ConnectionCursorRejected, ConnectionRunIdsHeld,
         MemoryNotFound, MemoryNameTaken, MemoryFactInvalid, MemoryEmbedUnavailable, MemoryMatchLevelInvalid, MemoryNameInvalid, MemoryExpiryPast,
         .. EveryTodo(),
     ];
