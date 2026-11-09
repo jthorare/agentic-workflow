@@ -27,7 +27,8 @@ internal sealed class CatchUpDoctorChecks(ILedgerReader ledger, EventFactory eve
             return [new DoctorCheck(Name, CheckState.Warn, $"{capped.Error.Code}: {capped.Error.Message}", Fix: null)];
         }
 
-        // why: only the (rare) capped pairs are looked at; each gets one indexed lookup of its newest poll, so the cost never grows with the polls in the ledger (#2480)
+        // why: only the (rare) capped pairs are looked at; each gets one index seek for its newest poll (the key ends in fixed-width UtcTicks, so the greatest key is the newest), so the cost never grows with the polls in the ledger (#2480).
+        // A ':' inside a connection name can make a longer-named neighbour's polls match the prefix: that gives a false warn at worst, never a missed one.
         var open = new List<CatchUpCapped>();
         foreach (var (cap, sequence) in capped.Value.Values.OrderBy(static c => c.Cap.Connection, StringComparer.Ordinal).ThenBy(static c => c.Cap.Kind, StringComparer.Ordinal))
         {
