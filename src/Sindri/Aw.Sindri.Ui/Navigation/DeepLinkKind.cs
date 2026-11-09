@@ -65,6 +65,12 @@ internal enum DeepLinkKind
     /// <summary>'reviews/fix': the fix-task sheet over the review page (review page spec §8.2); it has no subject, the page's request carries the finding.</summary>
     FixTaskSheet,
 
+    /// <summary>'connection/&lt;name&gt;': a connection's sheet over the Connections page (PR 18a), such as 'connection/linear:work'.</summary>
+    Connection,
+
+    /// <summary>'memory/&lt;name&gt;': the Memory page, on one store (PR 18a); a page link, so it opens no sheet.</summary>
+    Memory,
+
     /// <summary>'linear/&lt;KEY&gt;': a Linear issue's read-only sheet (Linear hub spec §3), such as 'linear/ENG-12'; the same text as the sindri://linear/ENG-12 link.</summary>
     Issue,
 }

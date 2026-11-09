@@ -27,11 +27,12 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
     /// <summary>workflow_list: each workflow's name, by whoever saved its newest revision.</summary>
     internal static FencePlan WorkflowList { get; } = new("sindri:workflow", [new("workflows[].name", "changedBy")]);
 
-    /// <summary>workflow_get: the names, the description, each node's title and every string of each node's config (prompts, templates, URLs).</summary>
+    /// <summary>workflow_get: the names, the description, each node's title, every string of each node's config (prompts, templates, URLs) and the resource names (the graph validator checks a node type and an edge's output against the known blocks, but not these).</summary>
     internal static FencePlan WorkflowGet { get; } = new("sindri:workflow",
     [
         new("name", "changedBy"), new("spec.name"), new("spec.description"),
         new("spec.nodes[].title"), new("spec.nodes[].config", EveryString: true),
+        new("spec.resources.database.name"), new("spec.resources.sandbox.memory"), new("spec.resources.sandbox.wall"),
     ]);
 
     /// <summary>workflow_validate: each finding's message, fix, field and node ids (they quote the spec).</summary>

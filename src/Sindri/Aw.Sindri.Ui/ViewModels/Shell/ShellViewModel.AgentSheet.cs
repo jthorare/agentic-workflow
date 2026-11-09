@@ -17,6 +17,7 @@ internal sealed partial class ShellViewModel
     {
         DeepLinkKind.Session => AgentSheet.Heading,
         DeepLinkKind.Job => JobSheet.Heading,
+        DeepLinkKind.Connection => ConnectionSheet.Heading,
         DeepLinkKind.Project => ProjectSheet.Heading,
         DeepLinkKind.ProjectAdd => Labels.ProjectAddHeading,
         DeepLinkKind.PageSheet => ActivePageSheet?.Title ?? string.Empty,

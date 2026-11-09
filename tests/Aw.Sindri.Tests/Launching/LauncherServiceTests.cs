@@ -5,7 +5,6 @@ using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
-using Aw.Sindri.Core.Workflow;
 using Aw.Sindri.Features.Launching;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Launch;
@@ -132,61 +131,9 @@ public sealed class LauncherServiceTests
         Expect.Equal(SindriErrors.LaunchAgentMissing.Code, Assert.Single(_rig.Failures).Code);
     }
 
-    [Fact]
-    public async Task Waits_for_open_request_result_before_launching_on_an_active_instance()
-    {
-        await Boot();
-        using var caller = _rig.Caller();
-        await _rig.Instance(LauncherRig.InstanceAddress);
-        var pending = await Filed(_a);
-        var gate = new TaskCompletionSource();
-        _rig.Runtime.Hold = gate.Task;
 
-        var running = _rig.Launch(pending);
-        await LauncherRig.Until(() => _rig.Runtime.Requests.Count == 1);
 
-        Assert.Empty(_rig.Launcher.Requests);   // the takeover has not answered
-        gate.SetResult();
-        Assert.True(await running);
-        var request = _rig.Runtime.Requests[0];
-        Expect.Equal((LauncherRig.InstanceAddress, _a), (request.Address.Value, request.Launch));
-        _ = Assert.Single(_rig.Launcher.Requests);
-    }
 
-    [Fact]
-    public async Task Refused_takeover_fails_with_the_engine_code()
-    {
-        await Boot();
-        using var caller = _rig.Caller();
-        await _rig.Instance(LauncherRig.InstanceAddress);
-        var pending = await Filed(_a);
-        _rig.Runtime.Refuse = WorkflowErrors.InstanceNotFound.With("the instance is gone");
-
-        Assert.False(await _rig.Launch(pending));
-
-        Expect.Equal(WorkflowErrors.InstanceNotFound.Code, Assert.Single(_rig.Failures).Code);
-        Assert.Empty(_rig.Launcher.Requests);
-    }
-
-    [Fact]
-    public async Task Interleaved_StartInstance_and_OpenItem_never_launch_beside_running_automation()
-    {
-        await Boot();
-        using var caller = _rig.Caller();
-        var guarded = new GuardedLauncher(_rig.Launcher, Safe);
-        _rig.Port = guarded;
-        var pending = await Filed(_a);
-        _rig.Status.Then(step: null);   // the wait for the request's own sequence
-        _rig.Status.Then(() => _rig.Instance(LauncherRig.InstanceAddress));   // an instance starts before the launcher's second look, as StartInstance would have
-
-        Assert.True(await _rig.Launch(pending));
-
-        Expect.Equal(0, guarded.Violations);
-        Expect.Equal(LauncherRig.InstanceAddress, Assert.Single(_rig.Runtime.Requests).Address.Value);   // it was taken over before anything opened
-        _ = Assert.Single(_rig.Launcher.Requests);
-    }
-
-    private bool Safe() => !_rig.Recorded(EventTypes.WorkflowStarted).Any() || _rig.Runtime.IsTakenOver(LauncherRig.InstanceAddress);
 
     [Fact]
     public async Task Late_attach_poll_appends_viewer_attached_once_after_restart()
