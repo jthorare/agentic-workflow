@@ -1,0 +1,199 @@
+using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels;
+using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
+
+namespace Aw.Sindri.Ui.Tests.Workflows;
+
+/// <summary>Run now on a workflow's runs and Cancel run on a run's detail (#2258 PR 17 part 2a): each is sent once, shows what Sindri answered in words, and reads again.</summary>
+[Lane(TestLane.Unit)]
+public sealed class WorkflowsWritesTests
+{
+    private const string NewRun = "morning-check@1:4";
+
+    private readonly WorkflowsFixture _f = new();
+
+    private static CancellationToken Token => TestContext.Current.CancellationToken;
+
+    private async Task<Aw.Sindri.Ui.ViewModels.Workflows.WorkflowsPageViewModel> OnRuns()
+    {
+        var page = await _f.Shown(Token);
+        await page.OpenWorkflow(Slug, Token);
+        return page;
+    }
+
+    [Fact]
+    public async Task Run_now_posts_once_reads_the_runs_again_and_opens_the_new_run()
+    {
+        _f.Server.WorkflowRunAnswers[NewRun] = RouteAnswer.Api("workflow-runs-run", "running");
+        var page = await OnRuns();
+        var reads = _f.Server.WorkflowRunsCalls;
+
+        await page.RunNow(Token);
+
+        Assert.Equal([Slug], _f.Server.StartedWorkflows);
+        Assert.Equal(reads + 1, _f.Server.WorkflowRunsCalls);
+        Assert.Equal((true, NewRun, false), (page.IsRun, page.Run.Id, page.Runs.IsStarting));
+        Assert.Equal("Run now", page.Runs.RunNowText);
+    }
+
+    [Fact]
+    public async Task Run_now_on_a_workflow_that_is_off_says_the_refusal_in_words_and_stays_on_the_runs()
+    {
+        var page = await OnRuns();
+        _f.Server.StartWorkflowRunAnswer = RouteAnswer.Problem("workflows-slug-runs", "not-active");
+
+        await page.RunNow(Token);
+
+        Assert.Equal((true, string.Empty), (page.IsRuns, page.Run.Id));
+        Assert.StartsWith("Couldn't start a run. 'morning-check' has no active revision; activate one first", page.Runs.NoticeText, StringComparison.Ordinal);
+        Assert.True(page.Runs.HasNotice);
+        Assert.False(page.Runs.IsStarting);
+    }
+
+    [Theory]
+    [InlineData("queued", "The run was queued: another run of this workflow is still going")]
+    [InlineData("skipped", "The run was skipped: another run of this workflow is still going")]
+    public async Task A_queued_or_skipped_run_says_so_and_is_not_opened(string scenario, string note)
+    {
+        var page = await OnRuns();
+        _f.Server.StartWorkflowRunAnswer = RouteAnswer.SpecShaped("workflows-slug-runs", scenario);
+
+        await page.RunNow(Token);
+
+        Assert.Equal((true, note), (page.IsRuns, page.Runs.NoticeText));
+    }
+
+    [Fact]
+    public async Task A_second_press_while_the_call_is_on_the_way_sends_nothing()
+    {
+        var page = await OnRuns();
+        _f.Server.StartWorkflowRunGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _f.Server.StartWorkflowRunAnswer = RouteAnswer.SpecShaped("workflows-slug-runs", "skipped");
+
+        var first = page.RunNow(Token);
+        Assert.True(page.Runs.IsStarting);
+        Assert.Equal(("Starting…", false), (page.Runs.RunNowText, page.Runs.CanPressRunNow));
+        await page.RunNow(Token);
+        _f.Server.StartWorkflowRunGate.SetResult();
+        await first;
+
+        Assert.Equal([Slug], _f.Server.StartedWorkflows);
+        Assert.False(page.Runs.IsStarting);
+    }
+
+    [Fact]
+    public async Task A_workflow_that_is_off_cannot_be_run_from_the_runs_level()
+    {
+        _f.Server.WorkflowRunsAnswers[Slug] = RouteAnswer.Problem("workflows-slug-runs", "not-active");
+        var page = await OnRuns();
+
+        await page.RunNow(Token);
+
+        Assert.Equal((false, false), (page.Runs.CanRun, page.Runs.CanPressRunNow));
+        Assert.Empty(_f.Server.StartedWorkflows);
+    }
+
+    [Fact]
+    public async Task Cancel_shows_only_while_the_run_is_running_or_waiting()
+    {
+        var finished = await _f.OpenedRun(Token);
+        Assert.False(finished.CanCancel);
+
+        _f.ServeRun("running");
+        var running = await _f.OpenedRun(Token);
+        Assert.Equal((true, true, "Cancel run"), (running.CanCancel, running.CanPressCancel, running.CancelText));
+    }
+
+    [Fact]
+    public async Task Cancel_posts_once_says_it_was_sent_and_reads_the_run_again()
+    {
+        _f.ServeRun("running");
+        var page = await _f.Shown(Token);
+        await page.OpenWorkflow(Slug, Token);
+        await page.OpenRun(RunId, Token);
+        var reads = _f.Server.WorkflowRunCalls;
+
+        await page.CancelRun(Token);
+
+        Assert.Equal([RunId], _f.Server.CancelledWorkflowRuns);
+        Assert.Equal(reads + 1, _f.Server.WorkflowRunCalls);
+        Assert.Equal((Labels.WfCancelSent, false), (page.Run.NoticeText, page.Run.IsCancelling));
+    }
+
+    [Fact]
+    public async Task Cancel_of_a_run_that_already_ended_says_so_in_words_and_reads_the_run_again()
+    {
+        _f.ServeRun("running");
+        var page = await _f.Shown(Token);
+        await page.OpenWorkflow(Slug, Token);
+        await page.OpenRun(RunId, Token);
+        _f.Server.CancelWorkflowRunAnswer = RouteAnswer.Problem("workflow-runs-run-cancel", "already-ended");
+        _f.ServeRun("finished");
+
+        await page.CancelRun(Token);
+
+        Assert.Equal("That run already ended, so there was nothing to cancel.", page.Run.NoticeText);
+        Assert.Equal(("✓ Succeeded", false), (page.Run.ChipText, page.Run.CanCancel));
+    }
+
+    [Fact]
+    public async Task Cancel_that_is_refused_for_another_reason_shows_the_message_and_does_not_read_again()
+    {
+        _f.ServeRun("running");
+        var page = await _f.Shown(Token);
+        await page.OpenWorkflow(Slug, Token);
+        await page.OpenRun(RunId, Token);
+        var reads = _f.Server.WorkflowRunCalls;
+        _f.Server.CancelWorkflowRunAnswer = RouteAnswer.Problem("workflow-runs-run-cancel", "not-found");
+
+        await page.CancelRun(Token);
+
+        Assert.StartsWith("Couldn't cancel the run. no run 'morning-check@1:1'", page.Run.NoticeText, StringComparison.Ordinal);
+        Assert.Equal(reads, _f.Server.WorkflowRunCalls);
+    }
+
+    [Fact]
+    public async Task A_failed_runs_read_offers_Try_again_that_reads_again()
+    {
+        _f.Server.WorkflowRunsAnswers.Remove(Slug);
+        var page = await OnRuns();
+        Assert.Equal(("Try again", true), (page.Runs.RetryText, page.Runs.IsFailed));
+
+        _f.ServeRuns("list-three");
+        await page.RetryRuns(Token);
+
+        Assert.Equal((false, 3), (page.Runs.IsFailed, page.Runs.Rows.Count));
+    }
+
+    [Fact]
+    public async Task A_failed_run_read_offers_Try_again_that_reads_again()
+    {
+        _f.Server.WorkflowRunAnswers.Remove(RunId);
+        var page = await _f.Shown(Token);
+        await page.OpenWorkflow(Slug, Token);
+        await page.OpenRun(RunId, Token);
+        Assert.Equal(("Try again", true), (page.Run.RetryText, page.Run.IsFailed));
+
+        _f.ServeRun("finished");
+        await page.RetryRun(Token);
+
+        Assert.Equal((false, "✓ Succeeded"), (page.Run.IsFailed, page.Run.ChipText));
+    }
+
+    [Theory]
+    [InlineData("succeeded", true, false, false)]
+    [InlineData("running", true, false, false)]
+    [InlineData("waiting", false, true, false)]
+    [InlineData("failed", false, false, true)]
+    [InlineData("cancelled", false, false, false)]
+    [InlineData("skipped", false, false, false)]
+    [InlineData("queued", false, false, false)]
+    public void A_status_has_a_tone_besides_its_glyph_and_word(string status, bool ok, bool attention, bool error)
+    {
+        var row = new Aw.Sindri.Ui.ViewModels.Workflows.RunRowViewModel(new Aw.Sindri.Ui.Api.Workflows.WorkflowRunRowView("a@1:1", 1, status, "manual", Now, null, null), _f.Clock);
+
+        Assert.Equal((ok, attention, error), (row.IsOk, row.IsAttention, row.IsError));
+        Assert.Contains(' ', row.ChipText, StringComparison.Ordinal);   // a glyph and a word
+    }
+}

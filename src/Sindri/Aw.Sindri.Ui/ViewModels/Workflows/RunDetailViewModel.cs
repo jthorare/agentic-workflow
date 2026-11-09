@@ -18,6 +18,39 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     /// <summary>The status: glyph and word.</summary>
     public string ChipText { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>The served status word; empty before the first answer.</summary>
+    public string Status { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>The chip's tone; the glyph and word carry the status too.</summary>
+    public ChipTone Tone { get; private set => Set(ref field, value); } = ChipTone.Neutral;
+
+    /// <summary>True for a succeeded or running run (the ok colour).</summary>
+    public bool IsOk => Tone == ChipTone.Ok;
+
+    /// <summary>True for a waiting run (the attention colour).</summary>
+    public bool IsAttention => Tone == ChipTone.Attn;
+
+    /// <summary>True for a failed run (the error colour).</summary>
+    public bool IsError => Tone == ChipTone.Fail;
+
+    /// <summary>True while the run is running or waiting: Cancel run shows only then.</summary>
+    public bool CanCancel => RunStatus.CanCancel(Status);
+
+    /// <summary>True while Cancel's call is on the way; a second press does nothing.</summary>
+    public bool IsCancelling { get; private set { Set(ref field, value); OnChanged(nameof(CancelText)); OnChanged(nameof(CanPressCancel)); } }
+
+    /// <summary>True when Cancel run can be pressed.</summary>
+    public bool CanPressCancel => CanCancel && !IsCancelling;
+
+    /// <summary>The Cancel button's words: "Cancel run", or "Cancelling…" while its call is on the way.</summary>
+    public string CancelText => IsCancelling ? Labels.WfCancelRunBusy : Labels.WfCancelRun;
+
+    /// <summary>What the last cancel said, in words; empty otherwise.</summary>
+    public string NoticeText { get; private set { Set(ref field, value); OnChanged(nameof(HasNotice)); } } = string.Empty;
+
+    /// <summary>True when there is a note under the run's title.</summary>
+    public bool HasNotice => NoticeText.Length > 0;
+
     /// <summary>"Started by manual".</summary>
     public string TriggerText { get; private set => Set(ref field, value); } = string.Empty;
 
@@ -41,6 +74,8 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
 
     /// <summary>The heading over the outputs.</summary>
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string RetryText => Labels.WfTryAgain;
+
     public string OutputsHeading => Labels.WfOutputsHeading;
 
     /// <summary>"Reading the run…" until the first answer.</summary>
@@ -71,6 +106,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         {
             Id = runId;
             Groups = [];   // another run: nothing of the old one stays
+            (Status, Tone, NoticeText) = (string.Empty, ChipTone.Neutral, string.Empty);
             (IsFailed, FailedText) = (false, string.Empty);
             (TitleText, ChipText, TriggerText, RevisionText, WhenText, ErrorText, OutputsText) = (Labels.WfRunTitle(runId), string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
             Changed();
@@ -99,6 +135,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         var (glyph, word) = Labels.WfChip(run.Status);
         TitleText = Labels.WfRunTitle(run.Id);
         ChipText = glyph + " " + word;
+        (Status, Tone) = (run.Status, RunStatus.Tone(run.Status));
         TriggerText = Labels.WfStartedBy(KindOf(run.Trigger));
         RevisionText = Labels.WfRunRevision(run.Revision);
         var live = RunStatus.IsLive(run.Status);
@@ -111,10 +148,23 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         Changed();
     }
 
+    /// <summary>Marks Cancel's call as on the way, or as done.</summary>
+    /// <param name="cancelling">True while the call is on the way.</param>
+    internal void SetCancelling(bool cancelling) => IsCancelling = cancelling;
+
+    /// <summary>Shows what Cancel said, in words.</summary>
+    /// <param name="text">The note; empty clears it.</param>
+    internal void Note(string text) => NoticeText = text;
+
     private void Changed()
     {
         OnChanged(nameof(HasError));
         OnChanged(nameof(HasOutputs));
+        OnChanged(nameof(IsOk));
+        OnChanged(nameof(IsAttention));
+        OnChanged(nameof(IsError));
+        OnChanged(nameof(CanCancel));
+        OnChanged(nameof(CanPressCancel));
     }
 
     // The trigger is the stored object; its "kind" names it. One without a kind reads as an unknown trigger rather than failing the run.

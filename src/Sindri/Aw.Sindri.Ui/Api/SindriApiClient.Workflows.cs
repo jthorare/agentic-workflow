@@ -1,9 +1,10 @@
 using Aw.Kernel;
+using Aw.Kernel.Json;
 using Aw.Sindri.Ui.Api.Workflows;
 
 namespace Aw.Sindri.Ui.Api;
 
-/// <summary>The workflow reads (<see cref="SindriApiClient"/>, continued; #2258 PR 8a): reads only, sent as GETs.</summary>
+/// <summary>The workflow reads (<see cref="SindriApiClient"/>, continued; #2258 PR 8a): the reads are GETs; Run now and Cancel run are POSTs, each sent once.</summary>
 internal sealed partial class SindriApiClient
 {
     /// <inheritdoc />
@@ -21,4 +22,12 @@ internal sealed partial class SindriApiClient
     /// <inheritdoc />
     public Task<Result<WorkflowRunView>> WorkflowRun(Uri api, string runId, CancellationToken cancellationToken) =>
         Get<WorkflowRunView>(api, WorkflowRoutes.Run(runId), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<WorkflowRunStarted>> StartWorkflowRun(Uri api, string slug, CancellationToken cancellationToken) =>
+        Call<WorkflowRunStarted>(api, HttpMethod.Post, WorkflowRoutes.Runs(slug), cancellationToken, new CallOptions(Content: AwJson.Serialize(new RunWorkflowBody(Payload: null), Json)));
+
+    /// <inheritdoc />
+    public Task<Result<WorkflowRunCancelled>> CancelWorkflowRun(Uri api, string runId, CancellationToken cancellationToken) =>
+        Call<WorkflowRunCancelled>(api, HttpMethod.Post, WorkflowRoutes.Cancel(runId), cancellationToken);
 }
