@@ -62,7 +62,7 @@ public sealed class ItemLinksProjectionTests
         var kinds = Enum.GetValues<ItemLinkKind>();
         for (var i = 0; i < kinds.Length; i++)
         {
-            await Link(RecordKey.From("sindri:" + KindWord(kinds[i]) + "/x" + i), alias: null, sequence: i + 1);
+            await Link(RecordKey.From("sindri:" + KindWord(kinds[i]) + "/x" + i.ToString(System.Globalization.CultureInfo.InvariantCulture)), alias: null, sequence: i + 1);
         }
 
         var rows = (await _views.List<ItemLinkRow>(ViewNames.ItemLinks, Token)).Value.OrderBy(static r => r.Sequence).ToList();
