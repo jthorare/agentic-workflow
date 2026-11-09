@@ -32,7 +32,7 @@ internal sealed class GetTodoNoteService(IProjectorStatus status, ICallerContext
         var current = note.Status;
         if (located.IsSuccess && located.Value is null)
         {
-            return new GetTodoNoteResponse(asOf, TodoNoteWords.Of(TodoNoteState.NotSet), Vault: null, Note: null, current.LastCheckAt, LastSyncAt: null, LastError: null, [], [], []);
+            return new GetTodoNoteResponse(asOf, TodoNoteWords.Of(TodoNoteState.NotSet), Vault: null, Note: null, current.LastCheckAt, LastSyncAt: null, LastError: null, [], Hold: null, [], []);
         }
 
         var rows = await views.List<TodoRow>(ViewNames.Todo, cancellationToken).ConfigureAwait(false);
@@ -51,6 +51,6 @@ internal sealed class GetTodoNoteService(IProjectorStatus status, ICallerContext
         var place = located.IsSuccess ? located.Value : null;
         var state = located.IsError ? TodoNoteState.CantRead : current.State == TodoNoteState.NotSet ? TodoNoteState.Syncing : current.State;   // a key with no pass yet in this process is about to sync
         var error = located.IsError ? located.Error.Message : current.LastError;
-        return new GetTodoNoteResponse(asOf, TodoNoteWords.Of(state), place?.Vault, place?.Note, current.LastCheckAt, lastSync, error, conflicts, [], []);
+        return new GetTodoNoteResponse(asOf, TodoNoteWords.Of(state), place?.Vault, place?.Note, current.LastCheckAt, lastSync, error, conflicts, Hold: null, [], []);
     }
 }

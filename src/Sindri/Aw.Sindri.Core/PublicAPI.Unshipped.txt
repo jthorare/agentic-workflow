@@ -20146,13 +20146,15 @@ Aw.Sindri.Core.Todos.TodoHoldPick
 Aw.Sindri.Core.Todos.TodoHoldPick.<Clone>$() -> Aw.Sindri.Core.Todos.TodoHoldPick!
 Aw.Sindri.Core.Todos.TodoHoldPick.At.get -> System.DateTimeOffset
 Aw.Sindri.Core.Todos.TodoHoldPick.At.init -> void
-Aw.Sindri.Core.Todos.TodoHoldPick.Deconstruct(out System.DateTimeOffset At, out string! Kept, out System.Collections.Generic.IReadOnlyList<(Aw.Sindri.Core.Todos.TodoRow! Prior, long VersionAfter)>! Priors) -> void
+Aw.Sindri.Core.Todos.TodoHoldPick.By.get -> string!
+Aw.Sindri.Core.Todos.TodoHoldPick.By.init -> void
+Aw.Sindri.Core.Todos.TodoHoldPick.Deconstruct(out System.DateTimeOffset At, out string! Kept, out System.Collections.Generic.IReadOnlyList<(Aw.Sindri.Core.Todos.TodoRow! Prior, long VersionAfter)>! Priors, out string! By) -> void
 Aw.Sindri.Core.Todos.TodoHoldPick.Equals(Aw.Sindri.Core.Todos.TodoHoldPick? other) -> bool
 Aw.Sindri.Core.Todos.TodoHoldPick.Kept.get -> string!
 Aw.Sindri.Core.Todos.TodoHoldPick.Kept.init -> void
 Aw.Sindri.Core.Todos.TodoHoldPick.Priors.get -> System.Collections.Generic.IReadOnlyList<(Aw.Sindri.Core.Todos.TodoRow! Prior, long VersionAfter)>!
 Aw.Sindri.Core.Todos.TodoHoldPick.Priors.init -> void
-Aw.Sindri.Core.Todos.TodoHoldPick.TodoHoldPick(System.DateTimeOffset At, string! Kept, System.Collections.Generic.IReadOnlyList<(Aw.Sindri.Core.Todos.TodoRow! Prior, long VersionAfter)>! Priors) -> void
+Aw.Sindri.Core.Todos.TodoHoldPick.TodoHoldPick(System.DateTimeOffset At, string! Kept, System.Collections.Generic.IReadOnlyList<(Aw.Sindri.Core.Todos.TodoRow! Prior, long VersionAfter)>! Priors, string! By = "") -> void
 Aw.Sindri.Core.Todos.TodoHolds
 Aw.Sindri.Core.Todos.TodoHolds.Open(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Todos.TodoOpenHold?>!>
 Aw.Sindri.Core.Todos.TodoHolds.TodoHolds(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events) -> void
@@ -20181,11 +20183,15 @@ Aw.Sindri.Core.Todos.TodoPick
 Aw.Sindri.Core.Todos.TodoPick.<Clone>$() -> Aw.Sindri.Core.Todos.TodoPick!
 Aw.Sindri.Core.Todos.TodoPick.At.get -> System.DateTimeOffset
 Aw.Sindri.Core.Todos.TodoPick.At.init -> void
-Aw.Sindri.Core.Todos.TodoPick.Deconstruct(out System.DateTimeOffset At, out Aw.Sindri.Core.Todos.TodoRow! Prior, out long VersionAfter) -> void
+Aw.Sindri.Core.Todos.TodoPick.By.get -> string!
+Aw.Sindri.Core.Todos.TodoPick.By.init -> void
+Aw.Sindri.Core.Todos.TodoPick.Kept.get -> string!
+Aw.Sindri.Core.Todos.TodoPick.Kept.init -> void
+Aw.Sindri.Core.Todos.TodoPick.Deconstruct(out System.DateTimeOffset At, out Aw.Sindri.Core.Todos.TodoRow! Prior, out long VersionAfter, out string! Kept, out string! By) -> void
 Aw.Sindri.Core.Todos.TodoPick.Equals(Aw.Sindri.Core.Todos.TodoPick? other) -> bool
 Aw.Sindri.Core.Todos.TodoPick.Prior.get -> Aw.Sindri.Core.Todos.TodoRow!
 Aw.Sindri.Core.Todos.TodoPick.Prior.init -> void
-Aw.Sindri.Core.Todos.TodoPick.TodoPick(System.DateTimeOffset At, Aw.Sindri.Core.Todos.TodoRow! Prior, long VersionAfter) -> void
+Aw.Sindri.Core.Todos.TodoPick.TodoPick(System.DateTimeOffset At, Aw.Sindri.Core.Todos.TodoRow! Prior, long VersionAfter, string! Kept = "", string! By = "") -> void
 Aw.Sindri.Core.Todos.TodoPick.VersionAfter.get -> long
 Aw.Sindri.Core.Todos.TodoPick.VersionAfter.init -> void
 Aw.Sindri.Core.Todos.TodoPickWindow
