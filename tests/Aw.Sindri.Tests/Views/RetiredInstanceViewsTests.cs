@@ -16,9 +16,9 @@ using Aw.Sindri.Tests.Ledger;
 namespace Aw.Sindri.Tests.Views;
 
 /// <summary>
-/// A 'workflow.retired' note ends the recipe-era instance it names (#2258): an item whose root instance was parked or waiting at a desk when the
-/// recipe engine went does not stay "parked" or "needs an answer" for ever, and its needs-you rows are gone, both folded one event at a time and
-/// after a views rebuild (the schema bump replays the whole ledger).
+/// The recipe engine's 'workflow.*' events are history only (#2258, v2 PR 4b): an item whose root instance was parked or waiting at a desk when the
+/// recipe engine went reads plain open, never "parked" or "needs an answer", and no needs-you row comes from those events, before and after the
+/// 'workflow.retired' note, folded one event at a time and after a views rebuild (the schema bump replays the whole ledger).
 /// </summary>
 [Lane(TestLane.Integration)]
 public sealed class RetiredInstanceViewsTests : IDisposable
@@ -33,23 +33,17 @@ public sealed class RetiredInstanceViewsTests : IDisposable
 
     public void Dispose() => _home.Dispose();
 
-    [Fact(Timeout = 60_000)]
-    public async Task Before_the_retired_note_the_parked_item_is_parked_and_the_desk_item_needs_an_answer()
+    [Theory(Timeout = 60_000)]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Recipe_era_instance_events_leave_both_items_open_with_no_needs_you_row_incrementally_and_after_a_rebuild(bool retire)
     {
-        var (incremental, _) = await Both(Ledger(retire: false), TestContext.Current.CancellationToken);
-
-        Assert.Equal(ItemState.Parked, incremental.Items[_parkedItem.Value].State);
-        Assert.Equal(ItemState.NeedsAnswer, incremental.Items[_deskItem.Value].State);
-    }
-
-    [Fact(Timeout = 60_000)]
-    public async Task After_the_retired_note_neither_item_is_running_and_no_needs_you_row_remains_incrementally_and_after_a_rebuild()
-    {
-        var (incremental, rebuilt) = await Both(Ledger(retire: true), TestContext.Current.CancellationToken);
+        var (incremental, rebuilt) = await Both(Ledger(retire), TestContext.Current.CancellationToken);
 
         foreach (var (items, needs) in new[] { incremental, rebuilt }.Select(static r => (r.Items, r.NeedsYou)))
         {
-            Assert.All(items.Values, static row => Assert.Equal(ItemState.Cancelled, row.State));
+            Assert.Equal(2, items.Count);
+            Assert.All(items.Values, static row => Assert.Equal(ItemState.New, row.State));
             Assert.Empty(needs);
         }
 
