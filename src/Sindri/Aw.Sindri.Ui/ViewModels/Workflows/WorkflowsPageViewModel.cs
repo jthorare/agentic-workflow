@@ -18,6 +18,8 @@ internal sealed class WorkflowsPageViewModel : ObservableObject
         Run,
     }
 
+    private const string RunAlreadyEnded = "SND-GRAPH-107";
+
     private readonly TimeProvider _clock;
     private int _reads;
     private Uri? _url;
@@ -117,6 +119,108 @@ internal sealed class WorkflowsPageViewModel : ObservableObject
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>A task that completes when the list is shown.</returns>
     internal Task Retry(CancellationToken cancellationToken) => _url is { } url ? ReadList(url, cancellationToken) : Task.CompletedTask;
+
+    /// <summary>Reads the open workflow's runs again (the runs level's Try again).</summary>
+    /// <param name="cancellationToken">Cancels the reads.</param>
+    /// <returns>A task that completes when the runs are shown or the failure is.</returns>
+    internal Task RetryRuns(CancellationToken cancellationToken) => _url is { } url ? Runs.Read(url, Runs.Slug, Runs.Title, cancellationToken) : Task.CompletedTask;
+
+    /// <summary>Reads the open run again (the run level's Try again).</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>A task that completes when the run is shown or the failure is.</returns>
+    internal Task RetryRun(CancellationToken cancellationToken) => _url is { } url ? Run.Read(url, Run.Id, cancellationToken) : Task.CompletedTask;
+
+    /// <summary>
+    /// Run now: starts a run of the open workflow by hand. The call is sent once (a human action, never retried) and a second press while it is on the way does nothing. A run that
+    /// started is opened; a queued or skipped one says so under the button; a refusal shows its message. The runs are read again after any answer that reached Sindri.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the call and the reads.</param>
+    /// <returns>A task that completes when the answer is shown.</returns>
+    internal async Task RunNow(CancellationToken cancellationToken)
+    {
+        if (_url is not { } url || Runs.IsStarting || !Runs.CanRun || Runs.Slug.Length == 0)
+        {
+            return;
+        }
+
+        var slug = Runs.Slug;
+        Runs.SetStarting(true);
+        Runs.Note(string.Empty);
+        try
+        {
+            var started = await Api.StartWorkflowRun(url, slug, cancellationToken).ConfigureAwait(true);
+            if (started.IsError)
+            {
+                Runs.Note(Labels.WfRunNowRefused(started.Error));
+                return;
+            }
+
+            if (!string.Equals(Runs.Slug, slug, StringComparison.Ordinal))
+            {
+                return;   // the page moved to another workflow meanwhile: its note and list are not this answer's
+            }
+
+            await Runs.Read(url, slug, Runs.Title, cancellationToken).ConfigureAwait(true);
+            switch (started.Value.Status)
+            {
+                case "started":
+                    if (_level == Level.Runs)
+                    {
+                        await OpenRun(started.Value.Run, cancellationToken).ConfigureAwait(true);
+                    }
+
+                    break;
+                case "queued":
+                    Runs.Note(Labels.WfRunQueued(started.Value.Reason));
+                    break;
+                default:
+                    Runs.Note(Labels.WfRunSkipped(started.Value.Reason));
+                    break;
+            }
+        }
+        finally
+        {
+            Runs.SetStarting(false);
+        }
+    }
+
+    /// <summary>
+    /// Cancel run: asks the open run to stop. Sent once. "Already ended" is shown in words and the run is read again, so its chip says how it ended; a delivered cancel is read again
+    /// too, and the run ends as cancelled when its workflow stops.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the call and the read.</param>
+    /// <returns>A task that completes when the answer is shown.</returns>
+    internal async Task CancelRun(CancellationToken cancellationToken)
+    {
+        if (_url is not { } url || Run.IsCancelling || !Run.CanCancel)
+        {
+            return;
+        }
+
+        var id = Run.Id;
+        Run.SetCancelling(true);
+        Run.Note(string.Empty);
+        try
+        {
+            var cancelled = await Api.CancelWorkflowRun(url, id, cancellationToken).ConfigureAwait(true);
+            var ended = cancelled.IsError && string.Equals(cancelled.Error.Code, RunAlreadyEnded, StringComparison.Ordinal);
+            var note = cancelled.IsSuccess ? Labels.WfCancelSent : ended ? Labels.WfCancelEnded : Labels.WfCancelRefused(cancelled.Error);
+            if (!string.Equals(Run.Id, id, StringComparison.Ordinal))
+            {
+                return;   // another run is open now
+            }
+
+            Run.Note(note);
+            if (cancelled.IsSuccess || ended)
+            {
+                await Run.Read(url, id, cancellationToken).ConfigureAwait(true);
+            }
+        }
+        finally
+        {
+            Run.SetCancelling(false);
+        }
+    }
 
     /// <summary>The page was left: it returns to its list and a read on its way is not wanted.</summary>
     internal void Leave()

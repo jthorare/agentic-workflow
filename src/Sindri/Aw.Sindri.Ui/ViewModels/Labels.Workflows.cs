@@ -189,4 +189,42 @@ internal static partial class Labels
     /// <param name="error">Why it failed, or empty.</param>
     /// <returns>The words.</returns>
     internal static string WfNodeRunName(string title, string word, string error) => string.Join(", ", new[] { title, word, error }.Where(p => p.Length > 0));
+
+    /// <summary>The button on a workflow's runs that starts a run by hand.</summary>
+    internal const string WfRunNow = "Run now";
+
+    /// <summary>The same button while its call is on the way.</summary>
+    internal const string WfRunNowBusy = "Starting…";
+
+    /// <summary>The runs level's note when Run now was refused or failed: the reason follows.</summary>
+    /// <param name="error">The failure.</param>
+    /// <returns>The words.</returns>
+    internal static string WfRunNowRefused(Error error) => "Couldn't start a run. " + InstanceRefused(error);
+
+    /// <summary>The note when a manual run was queued behind another.</summary>
+    /// <param name="reason">Why, as served, or null.</param>
+    /// <returns>The words.</returns>
+    internal static string WfRunQueued(string? reason) => string.IsNullOrEmpty(reason) ? "The run was queued." : "The run was queued: " + reason;
+
+    /// <summary>The note when a manual run was skipped.</summary>
+    /// <param name="reason">Why, as served, or null.</param>
+    /// <returns>The words.</returns>
+    internal static string WfRunSkipped(string? reason) => string.IsNullOrEmpty(reason) ? "The run was skipped." : "The run was skipped: " + reason;
+
+    /// <summary>The button on a live run that asks it to stop.</summary>
+    internal const string WfCancelRun = "Cancel run";
+
+    /// <summary>The same button while its call is on the way.</summary>
+    internal const string WfCancelRunBusy = "Cancelling…";
+
+    /// <summary>The note after a cancel was delivered.</summary>
+    internal const string WfCancelSent = "Cancel sent. The run ends as cancelled when its workflow stops.";
+
+    /// <summary>The note when the run had already ended by the time the cancel arrived.</summary>
+    internal const string WfCancelEnded = "That run already ended, so there was nothing to cancel.";
+
+    /// <summary>The note when a cancel was refused or failed: the reason follows.</summary>
+    /// <param name="error">The failure.</param>
+    /// <returns>The words.</returns>
+    internal static string WfCancelRefused(Error error) => "Couldn't cancel the run. " + InstanceRefused(error);
 }

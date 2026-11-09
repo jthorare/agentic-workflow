@@ -104,11 +104,12 @@ internal sealed partial class ShellViewModel : ObservableObject
     /// <summary>The connection and the Health page's status card.</summary>
     public HealthViewModel Health { get; }
 
-    /// <summary>The top bar's segments, in order: Home, Projects, Work, Context, Agents, System, Reviews, Connections (screens spec §3, Projects page spec §7).</summary>
+    /// <summary>The top bar's segments, in order: Home, Projects, Workflows, Work, Context, Agents, System, Reviews, Connections (screens spec §3, Projects page spec §7).</summary>
     public IReadOnlyList<NavEntry> Navigation { get; } =
     [
         new(PageId.Home, Labels.Home, "H", string.Empty),
         new(PageId.Projects, Labels.Projects, "P", string.Empty),
+        new(PageId.Workflows, Labels.Workflows, "W", string.Empty, Labels.WorkflowsTabShort),
         new(PageId.Work, Labels.Work, "Q", string.Empty),
         new(PageId.Context, Labels.Context, "C", string.Empty),
         new(PageId.Agents, Labels.Agents, "A", string.Empty),
