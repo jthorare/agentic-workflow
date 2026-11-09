@@ -28,19 +28,19 @@ public sealed class TodoHolds(ILedgerStore ledger, EventFactory events)
         }
 
         var opened = Math.Max(Sequence(held), Sequence(reopened));
-        return held.Value is { } latest && opened >= Sequence(resolved) ? Read(latest) : Results.Success<TodoOpenHold?>(value: null);
+        return held.Value is { } latest && opened >= Sequence(resolved) ? Read(latest, opened) : Results.Success<TodoOpenHold?>(value: null);
     }
 
     private static long Sequence(Result<LedgerEvent?> latest) => latest.Value?.Sequence ?? 0;
 
     private async ValueTask<Result<LedgerEvent?>> Newest(string type, CancellationToken cancellationToken) => await ledger.Latest(type, cancellationToken).ConfigureAwait(false);
 
-    private Result<TodoOpenHold?> Read(LedgerEvent latest)
+    private Result<TodoOpenHold?> Read(LedgerEvent latest, long opened)
     {
         var payload = events.Payload<TodoNoteHeld>(latest);
         return payload.IsError
             ? payload.Error
-            : Results.Success<TodoOpenHold?>(new TodoOpenHold([.. payload.Value.Changes.Select(Held).OfType<HeldChange>()], payload.Value.NoteHash));
+            : Results.Success<TodoOpenHold?>(new TodoOpenHold([.. payload.Value.Changes.Select(Held).OfType<HeldChange>()], payload.Value.NoteHash, opened));
     }
 
     private static HeldChange? Held(TodoHeldChange change) => change.Kind switch

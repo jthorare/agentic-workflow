@@ -86,6 +86,13 @@ internal sealed partial class TodoHarness
     internal Task Seed(TodoId id, string text = "reply to Sam", string by = "human:ui", DateOnly? due = null, string? via = null) =>
         Views.Fold(EventTypes.TodoAdded, new TodoAdded(id, text, due, Links: [], ClientId: null, by, via));
 
+    /// <summary>Puts an open todo at version 1 in the view with the ledger sequence <paramref name="sequence"/> (the row's 'Sequence'; the hold picks compare it with the hold's).</summary>
+    internal Task SeedAt(TodoId id, string text, long sequence) =>
+        Views.Apply([Recorded.Of(Slice.Events, EventTypes.TodoAdded, new TodoAdded(id, text, Due: null, Links: [], ClientId: null, "human:ui", Via: null), sequence)]);
+
+    /// <summary>Folds <paramref name="payload"/> into the view as the ledger event at <paramref name="sequence"/>.</summary>
+    internal Task FoldAt<TPayload>(string type, TPayload payload, long sequence) => Views.Apply([Recorded.Of(Slice.Events, type, payload, sequence)]);
+
     internal Task Fold<TPayload>(string type, TPayload payload) => Views.Fold(type, payload);
 
     internal async Task<TodoRow?> Row(TodoId id) => (await Views.Views.Get<TodoRow>(ViewNames.Todo, id.Value, TestContext.Current.CancellationToken)).Value;

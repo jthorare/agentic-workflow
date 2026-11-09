@@ -23,8 +23,9 @@ public sealed class HoldPicksTests
     private async Task Held(bool seedHold = true)
     {
         await _h.Lease();
-        await _h.Seed(_first, "reply to Sam");
-        await _h.Seed(_second, "call the dentist");
+        // why: the rows sit at sequence 0, before the hold (the first ledger event); a row written later than the hold was changed after it was drawn
+        await _h.SeedAt(_first, "reply to Sam", sequence: 0);
+        await _h.SeedAt(_second, "call the dentist", sequence: 0);
         if (seedHold)
         {
             await _h.Record(
@@ -145,17 +146,34 @@ public sealed class HoldPicksTests
         Assert.DoesNotContain(_h.Slice.Store.Events, e => e.Envelope.Type == "todo.note.held.resolved");
 
         // the view catches up with both writes; the retry skips the removed todo and applies the second
-        await _h.Fold(EventTypes.TodoRemoved, new TodoRemoved(_first, 2, "obsidian"));
-        await _h.Fold(EventTypes.TodoChanged, foreign);
+        // (the view rows fold at sequence 0 here: this test is about the retry, not about edits after the hold)
+        await _h.FoldAt(EventTypes.TodoRemoved, new TodoRemoved(_first, 2, "obsidian"), 0);
+        await _h.FoldAt(EventTypes.TodoChanged, foreign, 0);
         var retried = await _h.PickHold().Handle(new PickTodoHoldRequest(Restore: false, Hash), Token);
         Assert.True(retried.IsSuccess, retried.IsError ? retried.Error.ToString() : null);
-        await _h.Fold(EventTypes.TodoChanged, new TodoChanged(_second, 3, "call the dentist about the crown", Due: null, ClearDue: false, Links: null, "obsidian"));
+        await _h.FoldAt(EventTypes.TodoChanged, new TodoChanged(_second, 3, "call the dentist about the crown", Due: null, ClearDue: false, Links: null, "obsidian"), 0);
 
         var undone = await _h.UndoHold().Handle(new UndoTodoHoldRequest(), Token);
 
         Assert.True(undone.IsSuccess, undone.IsError ? undone.Error.ToString() : null);
         var undoTypes = _h.Slice.Store.Events.Select(e => e.Envelope.Type).TakeLast(3).ToList();
         Assert.Equal(["todo.restored", "todo.changed", "todo.note.held.reopened"], undoTypes, StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_todo_changed_in_sindri_after_the_hold_is_conflicted_not_overwritten_and_the_others_apply()
+    {
+        await Held();
+        // the second todo was edited in Sindri after the hold was drawn (the ledger is at sequence 1 for the hold; this edit is later)
+        await _h.FoldAt(EventTypes.TodoChanged, new TodoChanged(_second, 2, "call the dentist today", Due: null, ClearDue: false, Links: null, "human:ui"), 50);
+        using var cli = _h.Cli();
+
+        var applied = await _h.PickHold().Handle(new PickTodoHoldRequest(Restore: false, Hash), Token);
+
+        Assert.True(applied.IsSuccess, applied.IsError ? applied.Error.ToString() : null);
+        Assert.Equal(["todo.note.held", "todo.removed", "todo.conflicted", "todo.note.held.resolved"], _h.Slice.Store.Events.Select(e => e.Envelope.Type), StringComparer.Ordinal);
+        var conflicted = _h.Payload<TodoConflicted>(_h.Slice.Store.Events[2]);
+        Assert.Equal((_second, "call the dentist today", "call the dentist about the crown", Hash), (conflicted.Id, conflicted.Sindri.Text, conflicted.Obsidian.Text, conflicted.NoteHash));
     }
 
     [Fact, Trait("Lane", "unit")]

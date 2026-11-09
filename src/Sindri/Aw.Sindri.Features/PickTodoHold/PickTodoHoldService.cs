@@ -91,32 +91,57 @@ internal sealed class PickTodoHoldService(TodoHolds holds, TodoPickWrites writes
     {
         foreach (var change in hold.Changes)
         {
-            if (priors.Exists(p => p.Prior.Id == change.Id))
-            {
-                // changed by the try that failed: already at the held version
-                continue;
-            }
-
-            var read = await writes.Row(change.Id, cancellationToken).ConfigureAwait(false);
-            if (read.IsError)
-            {
-                // a held change for a todo that is gone has nothing to apply
-                continue;
-            }
-
-            var target = change.Kind == HeldKind.Removed || change.NoteLine is null
-                ? new TodoSide(Text: null, Due: null, Links: [], Done: false, Removed: true)
-                : TodoNoteSides.FromLine(change.NoteLine, read.Value.Links);
-            var version = await converger.Apply(read.Value, target, "obsidian", who, cancellationToken).ConfigureAwait(false);
-            if (version.IsError)
+            // a todo changed by the try that failed is already at the held version
+            var failed = priors.Exists(p => p.Prior.Id == change.Id) ? null : await ApplyOne(change, hold, who, priors, cancellationToken).ConfigureAwait(false);
+            if (failed is not null)
             {
                 window.RememberPartial(hold.NoteHash, priors);
-                return version.Error;
+                return failed;
             }
-
-            priors.Add((read.Value, version.Value));
         }
 
         return null;
+    }
+
+    private async ValueTask<Error?> ApplyOne(HeldChange change, TodoOpenHold hold, TodoPickCaller who, List<(TodoRow Prior, long VersionAfter)> priors, CancellationToken cancellationToken)
+    {
+        var read = await writes.Row(change.Id, cancellationToken).ConfigureAwait(false);
+        if (read.IsError)
+        {
+            // a held change for a todo that is gone has nothing to apply
+            return null;
+        }
+
+        var row = read.Value;
+        var target = change.Kind == HeldKind.Removed || change.NoteLine is null
+            ? new TodoSide(Text: null, Due: null, Links: [], Done: false, Removed: true)
+            : TodoNoteSides.FromLine(change.NoteLine, row.Links);
+        if (row.Sequence > hold.Sequence && !TodoNoteSides.Same(target, TodoNoteSides.Of(row)))
+        {
+            // D11, no silent winner: the todo was written after the hold was drawn, so the note's older line is not applied over it; the two sides go to the todo's conflict
+            return await Conflict(row, target, hold, who, cancellationToken).ConfigureAwait(false);
+        }
+
+        var version = await converger.Apply(row, target, "obsidian", who, cancellationToken).ConfigureAwait(false);
+        if (version.IsError)
+        {
+            return version.Error;
+        }
+
+        priors.Add((row, version.Value));
+        return null;
+    }
+
+    // a todo that already has a conflict open keeps it
+    private async ValueTask<Error?> Conflict(TodoRow row, TodoSide target, TodoOpenHold hold, TodoPickCaller who, CancellationToken cancellationToken)
+    {
+        if (row.Conflict is not null)
+        {
+            return null;
+        }
+
+        var key = $"todo.conflicted:{row.Id.Value}:{hold.NoteHash}";
+        var appended = await writes.Append(who, EventTypes.TodoConflicted, new TodoConflicted(row.Id, TodoNoteSides.Of(row), target, hold.NoteHash), key, cancellationToken).ConfigureAwait(false);
+        return appended.IsError ? appended.Error : null;
     }
 }
