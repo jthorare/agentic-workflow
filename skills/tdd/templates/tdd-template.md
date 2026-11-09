@@ -1,6 +1,6 @@
 <!-- House TDD template (tdd skill). Syntax: the docstring of the tdd skill's scripts/build_tdd.py; how to write each part: the tdd skill's SKILL.md. Ticket {{ticket}}; evidence read at {{sha}} ({{sha_date}}), recorded in meta.json. -->
 <!-- Comment rules: build_tdd.py drops a comment only when it sits on ONE line; a comment split over lines renders as text. Never put a comment inside ::::: options, directly inside :::: cols, or before the first #### of a cards box. Delete each guidance comment once its part is written. -->
-<!-- Keep the six sections in this order. Placeholders are in <angle brackets>; replace every one. The scaffold also wrote placeholder images marked "PLACEHOLDER · REPLACE ME" (diagrams/redesign.svg, flow.svg and schema.svg; mockups/*.svg) so the page builds and lints clean from the start: the page shows them until you replace each one, so never publish one. Reference tokens (R1, Q1, D1, PR 3, ...) must link to an anchor on the page: the compiler links what it can find, and the linter fails the rest. -->
+<!-- Keep the six sections in this order. Placeholders are in <angle brackets>; replace every one. The scaffold also wrote placeholder images marked "PLACEHOLDER · REPLACE ME" (diagrams/redesign.svg, flow.svg and schema.svg; mockups/*.svg) so the page builds and renders from the start: the page shows them until you replace each one, so never publish one. Until then the linter reports each placeholder image (FILES/placeholder) and every line of this file or status.md that still carries a prompt, the YYYY-MM-DD date or the marker (FILES/placeholder-text): those errors are expected in a fresh packet, and the page is ready to publish only when they are gone. Reference tokens (R1, Q1, D1, PR 3, ...) must link to an anchor on the page: the compiler links what it can find, and the linter fails the rest. -->
 
 # {{title}}
 
@@ -107,7 +107,7 @@ Requirements from <the PRD, the ticket and the threads, each with the date read>
 ::::
 :::
 
-<!-- 5 · Decisions and open questions. Open questions first (Q-numbers), then what is decided. A D-number is only ever the owner's answer, in the owner's words, with the date; status.md carries the same line. Ask one question at a time; when it is answered, rename Q<n> to the next D-number everywhere in this file and move its card under Decided. D1 below is a placeholder dated the day this packet was made, so it renders as decided: replace it with the owner's first answer and the date of that answer (YYYY-MM-DD), or delete it until there is one. -->
+<!-- 5 · Decisions and open questions. Open questions first (Q-numbers), then what is decided. A D-number is only ever the owner's answer, in the owner's words, with the date; status.md carries the same line. Ask one question at a time; when it is answered, rename Q<n> to the next D-number everywhere in this file and move its card under Decided. D1 below is a placeholder dated the day this packet was made, so it renders as decided: replace it with the owner's first answer and the date of that answer (YYYY-MM-DD), or delete it until there is one (its <Owner> is a lint error until then). -->
 ## Decisions and open questions {#questions; lead: no}
 
 Still open first, then what's decided.
@@ -146,7 +146,7 @@ Still open first, then what's decided.
 - <Out of scope, with the PRD non-goal it matches>
 
 #### Acceptance (EARS)
-- When <trigger>, the <system> shall <response>.
+- When <trigger>, the <system name> shall <system response>.
 :::::
 ::::
 
@@ -179,13 +179,13 @@ Still open first, then what's decided.
 
 ```sql
 CREATE TABLE <new_table> (
-  id          uuid        PRIMARY KEY,
-  <column>    <type>      NOT NULL,                  -- <what it holds>
-  created_at  timestamptz NOT NULL DEFAULT now()
+  id           uuid        PRIMARY KEY,
+  <new_column> <type>      NOT NULL,                  -- <what it holds>
+  created_at   timestamptz NOT NULL DEFAULT now()
 );
 ```
 
-| id | <column> | created_at | reads as |
+| id | <new_column> | created_at | reads as |
 |---|---|---|---|
 | `<example id>` | <value> | <YYYY-MM-DD hh:mm> | <What this row means> |
 ::::
