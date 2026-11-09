@@ -24,7 +24,7 @@ internal static class WorkflowWriteScenarios
         ("workflows-slug", "replace-stale"), ("workflows-slug", "archived"), ("workflows-slug", "archive-not-found"),
         ("workflows-slug-ops", "ops-stale"), ("workflows-slug-ops", "ops-missing-fields"),
         ("workflows-slug-pause", "paused"), ("workflows-slug-activate", "not-found"),
-        ("workflows-slug-ops", "ops-applied"), ("workflows-slug-activate", "activated"), ("workflows-blocks", "listed"), ("workflows-slug", "replaced"),
+        ("workflows-slug-ops", "ops-applied"), ("workflows-slug-activate", "activated"), ("workflows-blocks", "listed"), ("workflows-slug", "replaced"), ("workflows", "created"),
     ];
 
     /// <summary>Whether this class owns the scenario.</summary>
@@ -63,6 +63,7 @@ internal static class WorkflowWriteScenarios
     private static readonly Dictionary<(string Slug, string Scenario), Scenario> _bodies = new()
     {
         [("workflows", "create-nothing-to-create")] = Plain(h => Post("/sindri/workflows", $"{{\"slug\":\"{_slug.Value}\"}}", h)),
+        [("workflows", "created")] = Plain(h => Post("/sindri/workflows", $"{{\"slug\":\"{_slug.Value}\",\"template\":\"manual-notify\"}}", h)),   // why: the one create that succeeds, so the write sweep sees workflow.created by the launched session
         [("workflows-validate", "validate-nothing-to-check")] = Plain(h => Post("/sindri/workflows/validate", "{}", h)),
         [("workflows-slug", "replace-stale")] = Seeded(newerRevision: true, h => Put(Route, "{\"baseRevision\":1,\"spec\":{\"version\":1,\"name\":\"Morning check\",\"nodes\":[],\"edges\":[]}}", h)),
         [("workflows-slug", "archived")] = Seeded(newerRevision: false, h => Delete(Route, h)),
