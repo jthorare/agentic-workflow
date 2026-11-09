@@ -89,7 +89,7 @@ public interface IWorkflowRunStore
     /// <returns>The run after the call (changed or not), or SND-GRAPH-101.</returns>
     public ValueTask<Result<WorkflowRun>> SetStatus(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, CancellationToken cancellationToken);
 
-    /// <summary>Links a run to the item its work made (a 'create_item' node). It replaces an earlier link and applies to a run in any status.</summary>
+    /// <summary>Links a run to the item its work made (a 'create_item' node). The first link wins: a run that already has an item keeps it (a 'create_item' in a loop links the first item made). It applies to a run in any status.</summary>
     /// <param name="id">The run.</param>
     /// <param name="item">The item.</param>
     /// <param name="cancellationToken">Cancels the write.</param>
