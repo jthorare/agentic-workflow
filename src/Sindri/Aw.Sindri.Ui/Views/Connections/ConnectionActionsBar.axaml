@@ -1,0 +1,22 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:cb="using:Aw.Sindri.Ui.ViewModels.Connections"
+             x:Class="Aw.Sindri.Ui.Views.Connections.ConnectionActionsBar"
+             x:DataType="cb:ConnectionRowViewModel">
+  <!-- A connection's actions, the MCP tools' and no more (G8): Test, Sign in again (oauth and mcp only; a key connection has no browser sign-in) and Remove, which asks first.
+       The same bar sits in a row and in the sheet. -->
+  <Panel>
+    <StackPanel x:Name="ConnActions" Orientation="Horizontal" Spacing="6" IsVisible="{Binding ShowActions}">
+      <Button x:Name="ConnTest" Content="{Binding Text.Test}" Click="OnTest" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding TestName}" />
+      <Button x:Name="ConnSignIn" Content="{Binding Text.SignIn}" Click="OnSignIn" IsVisible="{Binding CanSignIn}" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding SignInName}" />
+      <Button x:Name="ConnRemove" Content="{Binding Text.Remove}" Click="OnRemove" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding RemoveName}" />
+    </StackPanel>
+    <StackPanel x:Name="ConnConfirm" Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsConfirmingRemove}">
+      <Border x:Name="ConnConfirmAsk" VerticalAlignment="Center" AutomationProperties.Name="{Binding RemoveAsk}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="body" Text="{Binding RemoveAsk}" TextWrapping="Wrap" MaxWidth="320" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <Button x:Name="ConnConfirmRemove" Content="{Binding Text.RemoveConfirm}" Click="OnConfirm" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding RemoveConfirmName}" />
+      <Button x:Name="ConnKeep" Content="{Binding Text.Keep}" Click="OnKeep" AutomationProperties.Name="{Binding Text.Keep}" />
+    </StackPanel>
+  </Panel>
+</UserControl>

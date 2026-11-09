@@ -8,4 +8,7 @@ namespace Aw.Sindri.Ui.Views.Shell;
 internal sealed partial class ShellWindow
 {
     private void OnJobsLink(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.GoTo(PageId.Jobs);
+
+    // Memory is not a tab either: System's link goes to it.
+    private void OnMemoryLink(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.GoTo(PageId.Memory);
 }
