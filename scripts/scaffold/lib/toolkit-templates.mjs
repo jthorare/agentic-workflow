@@ -84,9 +84,11 @@ export const directoryBuildProps = () => `<Project>
 
 export const directoryPackagesProps = (t) => `<Project>
   <!-- Scaffolded by /new-toolkit. Exact pins, copied from the agentic-workflow repo's Directory.Packages.props at the
-       time of scaffolding. Aw.Sindri.Toolkit comes from the folder feed in nuget.config. -->
+       time of scaffolding. Aw.Sindri.Toolkit comes from the folder feed in nuget.config and floats to the newest
+       local build (its packages.lock.json records the exact one), which central management allows only when asked. -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageFloatingVersionsEnabled>true</CentralPackageFloatingVersionsEnabled>
     <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <ItemGroup Label="Analyzers">
