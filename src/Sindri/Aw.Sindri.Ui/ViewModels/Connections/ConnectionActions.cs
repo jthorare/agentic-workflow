@@ -13,6 +13,7 @@ namespace Aw.Sindri.Ui.ViewModels.Connections;
 /// <param name="url">The API's base URL, or null while it isn't known.</param>
 /// <param name="launcher">Opens the consent page.</param>
 /// <param name="clock">The clock the poll waits on.</param>
+#pragma warning disable CA1001 // why: the source has no timer and holds no resource; Close disposes it and makes the next
 internal sealed class ConnectionActions(ISindriApi api, Func<Uri?> url, ILauncher launcher, TimeProvider clock)
 {
     /// <summary>How often the sign-in poll reads the connection.</summary>
@@ -27,6 +28,21 @@ internal sealed class ConnectionActions(ISindriApi api, Func<Uri?> url, ILaunche
 
     // The consent page goes through the one launch helper, so the system's answer is kept.
     private readonly LinkLaunch _launch = new(launcher);
+
+    // Cancelled when the page or sheet that owns these actions closes: a row action still running (a sign-in's browser wait) stops then.
+    private CancellationTokenSource _closing = new();
+
+    /// <summary>The owner's open token: cancelled by <see cref="Close"/>, renewed for the next opening. A row ties each action to it.</summary>
+    internal CancellationToken Closing => _closing.Token;
+
+    /// <summary>The owner (the page or the sheet) closed: every row action still running stops.</summary>
+    internal void Close()
+    {
+        var closing = _closing;
+        _closing = new CancellationTokenSource();
+        closing.Cancel();
+        closing.Dispose();
+    }
 
     /// <summary>Reads one connection (connection_get).</summary>
     /// <param name="name">The connection's name.</param>
@@ -123,3 +139,4 @@ internal sealed class ConnectionActions(ISindriApi api, Func<Uri?> url, ILaunche
     private Task<Result<T>> With<T>(Func<Uri, Task<Result<T>>> call) =>
         url() is { } target ? call(target) : Task.FromResult<Result<T>>(SindriUiErrors.Unreachable.With("Sindri isn't reachable yet"));
 }
+#pragma warning restore CA1001

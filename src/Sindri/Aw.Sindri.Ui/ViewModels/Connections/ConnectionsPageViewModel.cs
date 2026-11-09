@@ -126,9 +126,10 @@ internal sealed class ConnectionsPageViewModel : ObservableObject, IDisposable
         }
     }
 
-    /// <summary>Cancels the read the page started when it was shown.</summary>
+    /// <summary>Cancels the read the page started when it was shown, and every row action still running (a sign-in's browser wait).</summary>
     public void Dispose()
     {
+        _actions.Close();
         _shown?.Cancel();
         _shown?.Dispose();
         _shown = null;

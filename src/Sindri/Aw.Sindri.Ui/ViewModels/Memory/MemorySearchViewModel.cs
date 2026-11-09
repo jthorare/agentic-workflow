@@ -39,7 +39,7 @@ internal sealed class MemorySearchViewModel : ObservableObject
     /// <summary>The match level chosen.</summary>
     public string SelectedLevel { get; set => Set(ref field, value); } = Labels.MemoryDefaultLevel;
 
-    /// <summary>The most facts a search returns.</summary>
+    /// <summary>The most facts a search returns (memory_search's limit); the API's default is not sent.</summary>
     public int SelectedLimit { get; set => Set(ref field, value); } = Labels.MemoryDefaultLimit;
 
     /// <summary>The levels to choose from.</summary>
@@ -57,6 +57,9 @@ internal sealed class MemorySearchViewModel : ObservableObject
 
     /// <summary>The level choice's accessible name.</summary>
     public string LevelName => Labels.MemoryLevelField;
+
+    /// <summary>The limit choice's accessible name.</summary>
+    public string LimitName => Labels.MemoryLimitField;
 #pragma warning restore CA1822, MA0041
 
     /// <summary>The facts the last search found.</summary>
@@ -101,7 +104,7 @@ internal sealed class MemorySearchViewModel : ObservableObject
         }
 
         var search = ++_searches;
-        var answer = await _api.SearchMemory(url, new MemorySearch(_store, query, SelectedLevel), cancellationToken).ConfigureAwait(true);
+        var answer = await _api.SearchMemory(url, new MemorySearch(_store, query, SelectedLevel, Limit()), cancellationToken).ConfigureAwait(true);
         if (search != _searches)
         {
             return;   // a newer search is the one to show
@@ -128,6 +131,9 @@ internal sealed class MemorySearchViewModel : ObservableObject
 
         ResultText = Rows.Count == 0 ? Labels.MemoryNothingFound : Labels.MemoryFound(Rows.Count);
     }
+
+    // The limit sent: none for the API's own default, so a search at the default asks what it always asked.
+    private int? Limit() => SelectedLimit == Labels.MemoryDefaultLimit ? null : SelectedLimit;
 
     /// <summary>Takes the rows the API confirmed forgotten out of the list.</summary>
     /// <param name="forgotten">Which rows are gone.</param>

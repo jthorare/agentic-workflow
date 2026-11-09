@@ -99,6 +99,7 @@ internal sealed class ConnectionSheetViewModel : ObservableObject
         if (Row is { } old)
         {
             old.Removed -= OnRemoved;
+            _actions.Close();   // the old connection's action still running stops with it
         }
 
         (Row, KindLine, SecretLine, ProblemText, Note, SettingLines) = (null, string.Empty, string.Empty, string.Empty, string.Empty, []);
@@ -129,7 +130,7 @@ internal sealed class ConnectionSheetViewModel : ObservableObject
     }
 
     /// <summary>The sheet was closed: a row action still waiting (a sign-in's browser wait) stops.</summary>
-    internal void Close() => throw new NotSupportedException(Heading);
+    internal void Close() => _actions.Close();
 
     private async Task Read(CancellationToken cancellationToken)
     {

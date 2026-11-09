@@ -69,7 +69,7 @@ The same services answer HTTP (`GET /sindri/memories`, `GET /sindri/memories/{na
 
 ## In the app
 
-The app's Memory page (`G M`, or System's "Memory stores" link) lists the stores with their fact counts and lets you create a store, search (it shows the recall mode), write and forget, the same verbs as above. See `docs/csharp/sindri-ui.md` "PR 18a".
+The app's Memory page (`G M`, or System's "Memory stores" link) lists the stores with their fact counts and lets you create a store, search (with the match level and how many facts to show, 10, 25 or 50; it shows the recall mode), write and forget, the same verbs as above. See `docs/csharp/sindri-ui.md` "PR 18a".
 
 ## Not here yet
 
