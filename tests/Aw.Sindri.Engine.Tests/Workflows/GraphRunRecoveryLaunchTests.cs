@@ -82,6 +82,7 @@ public sealed class GraphRunRecoveryLaunchTests
 
         Assert.Equal(0, ended.Value);
         Assert.Equal(WorkflowRunStatus.Running, (await w.Runs.Get(queued, Token)).Value.Status);
+        launcher.Release();
         _ = await promote;
     }
 
