@@ -8,6 +8,7 @@ using Aw.Sindri.Features.ChangeTodo;
 using Aw.Sindri.Features.CheckTodoNote;
 using Aw.Sindri.Features.GetTodo;
 using Aw.Sindri.Features.GetTodoNote;
+using Aw.Sindri.Features.ImportTodoNote;
 using Aw.Sindri.Features.KeepTodo;
 using Aw.Sindri.Features.KeepTodoUndo;
 using Aw.Sindri.Features.ListTodos;
@@ -21,7 +22,7 @@ namespace Aw.Sindri.Host.Endpoints;
 
 /// <summary>
 /// The todo routes (todo spec §4.4): GET /sindri/todos?state=, /todos/note and /todos/{todoId}; POST /sindri/todos, /todos/{todoId}/change and /done, /reopen, /remove, /restore, /{todoId}/keep and /keep/undo, and /todos/note/hold/apply, /restore and /undo. Each binds, calls one service and maps the result.
-/// The todo routes (todo spec §4.4): GET /sindri/todos?state=, /todos/note and /todos/{todoId}; POST /sindri/todos, /todos/{todoId}/change and /done, /reopen, /remove, /restore, and /todos/note/check (writes nothing). Each binds, calls one service and maps the result.
+/// The todo routes (todo spec §4.4): GET /sindri/todos?state=, /todos/note and /todos/{todoId}; POST /sindri/todos, /todos/{todoId}/change and /done, /reopen, /remove, /restore, /todos/note/check (writes nothing) and /todos/note/import. Each binds, calls one service and maps the result.
 /// A session caller's answers, and any caller's that sends fence=1, have the todo text inside the untrusted fence. A write that came with fence=1 records 'via: pipe'.
 /// </summary>
 internal static class TodoEndpoints
@@ -76,6 +77,8 @@ internal static class TodoEndpoints
         _ = group.MapTodoPicks();
         _ = group.MapPost("/todos/note/check", static async (CheckTodoNoteBody? body, IService<CheckTodoNoteRequest, CheckTodoNoteResponse> service, CancellationToken ct) =>
             (await service.Handle((body ?? new CheckTodoNoteBody()).ToRequest(), ct).ConfigureAwait(false)).ToHttpResult());
+        _ = group.MapPost("/todos/note/import", static async (ImportTodoNoteBody? body, string? fence, IService<ImportTodoNoteRequest, ImportTodoNoteResponse> service, CancellationToken ct) =>
+            (await service.Handle((body ?? new ImportTodoNoteBody()).ToRequest(TodoWire.Piped(fence)), ct).ConfigureAwait(false)).ToHttpResult());
         _ = group.MapPost("/todos/note/set", static async (SetTodoNoteBody? body, IService<SetTodoNoteRequest, TodoNoteWritten> service, CancellationToken ct) =>
             (await service.Handle((body ?? new SetTodoNoteBody()).ToRequest(), ct).ConfigureAwait(false)).ToHttpResult());
         _ = group.MapPost("/todos/note/stop", static async (StopTodoNoteBody? body, IService<StopTodoNoteRequest, TodoNoteWritten> service, CancellationToken ct) =>
