@@ -1,7 +1,10 @@
+using Aw.Context.Core.Engine;
+using Aw.Context.Core.Facade;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Lease;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Text;
@@ -58,7 +61,14 @@ internal static class TodoServiceCollectionExtensions
             .AddScoped<IValidator<GetTodoRequest>, AcceptAllValidator<GetTodoRequest>>().AddQuery<GetTodoRequest, GetTodoResponse, GetTodoService>()
             .AddScoped<IValidator<GetTodoNoteRequest>, AcceptAllValidator<GetTodoNoteRequest>>().AddQuery<GetTodoNoteRequest, GetTodoNoteResponse, GetTodoNoteService>()
             .AddScoped<IValidator<CheckTodoNoteRequest>, AcceptAllValidator<CheckTodoNoteRequest>>().AddCommand<CheckTodoNoteRequest, CheckTodoNoteResponse, CheckTodoNoteService>()
-            .AddSingleton<INoteLocator, TodoNoteLocator>()
+            .AddSingleton<INoteLocator>(static sp => new TodoNoteLocator(
+                sp.GetRequiredService<IProfileSource>(),
+                (context, repos) =>
+                {
+                    using var scope = sp.CreateScope();   // why: the locator is a singleton, the context engine is scoped
+                    return scope.ServiceProvider.GetRequiredService<IContextEngine>().CheckSettings(context, repos);
+                },
+                sp.GetRequiredService<LibraryHost>()))
             .AddNoteSync()
             .AddScoped<IScheduledService, TodoNoteService>()
             .AddSingleton(TodoNoteService.BuiltIn)   // runs without a profile entry, so PauseService refuses it
