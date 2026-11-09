@@ -284,6 +284,8 @@ public sealed class HealthViewModelTests : IDisposable
         await Eventually(() => _vm.Headline == "Not running", "down");
 
         _server.ComeUp();
+        var streamGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _server.BeforeStreamOpens = () => streamGate.Task;
         _server.Pong = new(4242, 8);
         _server.Current = A.Status(epoch: 8);
         _records.Write(A.Record(epoch: 8));
