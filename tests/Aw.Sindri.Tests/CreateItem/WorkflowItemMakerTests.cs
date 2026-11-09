@@ -94,6 +94,6 @@ public sealed class WorkflowItemMakerTests
         Assert.True(made.IsSuccess, made.IsError ? made.Error.ToString() : null);
         var linked = Assert.Single(_h.Store.Events, static e => e.Envelope.Type == EventTypes.ItemLinked);
         var payload = _h.Events.Payload<ItemLinked>(linked).Value;
-        Assert.Equal((made.Value, true), (payload.Item.Value, payload.Record.Value.StartsWith("sindri:run/", StringComparison.Ordinal)));
+        Assert.Equal((made.Value, "sindri:run/" + _run.Value), (payload.Item.Value, payload.Record.Value));
     }
 }

@@ -40,4 +40,11 @@ public sealed class RecordKeyTests
         Assert.True(RecordKey.TryParse("linear:issue/3f2a-91bc", provider: null, out _));
         Assert.False(RecordKey.TryParse("Linear:issue/3f2a", provider: null, out _));
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_workflow_run_id_with_at_and_colon_is_a_valid_run_record()
+    {
+        Assert.True(RecordKey.TryParse("sindri:run/nightly@1:1", provider: null, out var key));
+        Assert.Equal("sindri:run/nightly@1:1", key.Value);
+    }
 }

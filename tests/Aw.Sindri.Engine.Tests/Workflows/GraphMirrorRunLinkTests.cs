@@ -27,7 +27,7 @@ public sealed class GraphMirrorRunLinkTests
 
         var linked = Assert.Single(harness.Store.Events, static e => e.Envelope.Type == EventTypes.ItemLinked);
         var payload = harness.Events.Payload<ItemLinked>(linked).Value;
-        Assert.Equal((A.FirstItemId, true), (payload.Item, payload.Record.Value.StartsWith("sindri:run/", StringComparison.Ordinal)));
+        Assert.Equal((A.FirstItemId, "sindri:run/nightly@1:1"), (payload.Item, payload.Record.Value));
     }
 
     [Fact, Trait("Lane", "unit")]
