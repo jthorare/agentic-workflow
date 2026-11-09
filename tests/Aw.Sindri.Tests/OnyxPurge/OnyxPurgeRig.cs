@@ -40,11 +40,11 @@ internal sealed class OnyxPurgeRig : IDisposable
         File.WriteAllText(Path.Combine(OnyxDirectory, ".env"), "SECRET=1");
     }
 
-    internal Task<int> Run(string? answer)
+    internal Task<int> Run(string? answer, bool terminal = true)
     {
         Docker.Calls = Calls;
         Keychain.Calls = Calls;
-        var command = new OnyxPurgeCommand(Home, Docker, Keychain, new DiskLeftoverFiles(), new Output(_out, _error, SliceHarness.Json), new StringReader(answer is null ? "" : answer + "\n"), _error);
+        var command = new OnyxPurgeCommand(Home, Docker, Keychain, new DiskLeftoverFiles(), new Output(_out, _error, SliceHarness.Json), new StringReader(answer is null ? "" : answer + "\n"), _error, terminal);
         return command.Run(TestContext.Current.CancellationToken);
     }
 

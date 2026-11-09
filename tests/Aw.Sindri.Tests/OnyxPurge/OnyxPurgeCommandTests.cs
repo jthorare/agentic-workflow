@@ -65,6 +65,18 @@ public sealed class OnyxPurgeCommandTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_piped_yes_without_a_terminal_is_refused_and_deletes_nothing()
+    {
+        Seed();
+
+        var exit = await _rig.Run(answer: "yes", terminal: false);
+
+        Assert.Equal((2, true, 3), (exit, _rig.Error.Contains("needs a terminal", StringComparison.Ordinal), _rig.Docker.Containers.Count));
+        Assert.Empty(_rig.Calls);
+        Assert.True(File.Exists(Path.Combine(_rig.OnyxDirectory, ".env")));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Yes_deletes_containers_then_volumes_then_the_keychain_entry_then_the_directory()
     {
         Seed();

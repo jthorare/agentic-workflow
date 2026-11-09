@@ -120,7 +120,7 @@ internal static partial class CommandTable
             ["ledger", .. var rest] => await new LedgerVerbs(client, output, (launch, c) => start.EnsureRunning(launch, c)).Run(rest, ct).ConfigureAwait(false),
             ["launch" or "session", ..] => await LaunchOrSession(args, client, (output, environment), services, (ct, interrupt.Again)).ConfigureAwait(false),
             ["doctor", ..] => await Doctor(args, verbs, new ProbeCommands(services.GetRequiredService<IProcessAncestry>(), services.GetRequiredService<IHarnessVersions>(), environment, Interactive()), output, ct).ConfigureAwait(false),
-            ["onyx", "down", "--purge"] => await OnyxPurgeCommand.Create(services, output, Console.In, Console.Error).Run(ct).ConfigureAwait(false),
+            ["onyx", "down", "--purge"] => await OnyxPurgeCommand.Create(services, output, Console.In, Console.Error, Interactive()).Run(ct).ConfigureAwait(false),
             ["sandbox", ..] => await Sandbox(args, client, output, services, ct).ConfigureAwait(false),
             ["mcp", .. var rest] => await new McpVerbs(services, output).Run(rest, ct).ConfigureAwait(false),
             ["context", ..] => await ContextOrPin(args, (client, output), (services, start), (ct, interrupt.Again)).ConfigureAwait(false),
