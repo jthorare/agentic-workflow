@@ -21,8 +21,9 @@ public sealed class ForEachRunWorkflowTests(SindriTimeSkippingServer server) : I
                 GraphRig.Node("start", "manual"),
                 GraphRig.Node("each", "for_each", config: new JsonObject { ["items"] = "{{trigger.items}}" }),
                 GraphRig.Node("call", "run_workflow", config: new JsonObject { ["workflow"] = callee, ["wait"] = true, ["payload"] = new JsonObject { ["item"] = "{{item}}" } }),
+                GraphRig.Node("gather", "collect", config: new JsonObject { ["value"] = "{{item}}" }),
             ],
-            [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "call")]));
+            [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "call"), GraphRig.Edge("call", "gather")]));
         var trigger = new JsonObject { ["kind"] = "manual", ["items"] = new JsonArray("a", "b", "c") }.ToJsonString();
 
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited, trigger);

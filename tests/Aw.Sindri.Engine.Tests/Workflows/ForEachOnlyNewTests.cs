@@ -21,8 +21,9 @@ public sealed class ForEachOnlyNewTests(SindriTimeSkippingServer server) : IClas
                 GraphRig.Node("start", "manual"),
                 GraphRig.Node("each", "for_each", config: new JsonObject { ["items"] = "{{trigger.repos}}" }),
                 GraphRig.Node("fresh", "only_new", config: new JsonObject { ["items"] = "{{item.issues}}", ["key"] = "id" }),
+                GraphRig.Node("gather", "collect", config: new JsonObject { ["value"] = "{{fresh.count}}" }),
             ],
-            [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "fresh")]));
+            [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "fresh"), GraphRig.Edge("fresh", "gather")]));
         var trigger = """{"kind":"manual","repos":[{"issues":[{"id":1},{"id":2}]},{"issues":[{"id":3}]}]}""";
 
         var first = await rig.Final((await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited, trigger)).RunId, TimeSpan.FromMinutes(2));
