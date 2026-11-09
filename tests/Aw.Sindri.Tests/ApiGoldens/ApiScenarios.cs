@@ -49,6 +49,7 @@ internal static class ApiScenarios
         ["ConnectionSignIn"] = ConnectionSignInScenarios.All,
         ["WorkflowRuns"] = WorkflowRunScenarios.All,
         ["WorkflowReads"] = WorkflowReadScenarios.All,
+        ["WorkflowWrites"] = WorkflowWriteScenarios.All,
     };
 
     /// <summary>Every (route slug, scenario) pair, group by group.</summary>
@@ -178,6 +179,7 @@ internal static class ApiScenarios
     private static Func<Task<string>>? DelegatedOrWorkflow(GoldenHost host, string slug, string scenario, CancellationToken ct) =>
         WorkflowRunScenarios.Handles(slug, scenario) ? () => WorkflowRunScenarios.Body(host, slug, scenario, ct)
         : WorkflowReadScenarios.Handles(slug, scenario) ? () => WorkflowReadScenarios.Body(host, slug, scenario, ct)
+        : WorkflowWriteScenarios.Handles(slug, scenario) ? () => WorkflowWriteScenarios.Body(host, slug, scenario, ct)
         : Delegated(host, slug, scenario, ct);
 
     /// <summary>The scenario's body when one of the scenario classes owns it, else null.</summary>
