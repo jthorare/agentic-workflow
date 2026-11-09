@@ -1,6 +1,4 @@
 using Aw.Sindri.Core.Events;
-using Aw.Sindri.Core.Items;
-using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Core.Launches;
 
@@ -40,55 +38,5 @@ public static class StalledLaunches
         }
 
         return [.. stalled.OrderBy(static s => s.EndedAt)];
-    }
-
-    /// <summary>
-    /// The launches of <paramref name="stalled"/> whose instance has not moved past them (<see cref="MovedPast"/>), judged from the 'items' view's engine part
-    /// of each launch's item. An item the view can't give, or that holds no engine part, leaves its launches in: nothing says they were left behind.
-    /// </summary>
-    /// <param name="stalled">The candidates from <see cref="Find"/>.</param>
-    /// <param name="views">The views reader; null keeps every candidate.</param>
-    /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>The launches still waiting, in the same order.</returns>
-    public static async ValueTask<IReadOnlyList<StalledLaunch>> Open(IReadOnlyList<StalledLaunch> stalled, IViewReader? views, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(stalled);
-        if (views is null || stalled.Count == 0)
-        {
-            return stalled;
-        }
-
-        var engines = new Dictionary<string, EngineItemPart?>(StringComparer.Ordinal);
-        foreach (var item in stalled.Select(static s => s.Item.Value).Distinct(StringComparer.Ordinal))
-        {
-            var row = await views.Get<ItemRow>(ViewNames.Items, item, cancellationToken).ConfigureAwait(false);
-            engines[item] = row.IsSuccess ? row.Value?.Engine : null;
-        }
-
-        return [.. stalled.Where(s => !MovedPast(s, engines[s.Item.Value]))];
-    }
-
-    /// <summary>
-    /// Whether the instance left the stalled launch behind: its root ended (done, failed or cancelled) or is no longer one of the item's live roots, or the instance is
-    /// the root itself and sits in another state than the launch's Step. A newer launch of the Step is <see cref="Find"/>'s rule, not this one.
-    /// </summary>
-    /// <param name="launch">The stalled launch.</param>
-    /// <param name="engine">The engine part of the launch's item; null when the item has none.</param>
-    /// <returns>True when the launch no longer counts.</returns>
-    public static bool MovedPast(StalledLaunch launch, EngineItemPart? engine)
-    {
-        ArgumentNullException.ThrowIfNull(launch);
-        if (engine is null)
-        {
-            return false;
-        }
-
-        var root = string.Join('/', launch.Instance.Value.Split('/').Take(3));
-        if (EngineItemStates.PartOf(engine, root) is not { } part)
-        {
-            return true;
-        }
-
-        return part.Ended || (string.Equals(root, launch.Instance.Value, StringComparison.Ordinal) && launch.State is { } state && !string.Equals(part.State, state, StringComparison.Ordinal));
     }
 }
