@@ -24,6 +24,7 @@ internal sealed class RoutedApi : HttpMessageHandler
     };
     private readonly Dictionary<string, (HttpStatusCode Status, string Body)> _posts = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Dictionary<long, string>> _pages = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Queue<string>> _sequences = new(StringComparer.Ordinal);
     private long? _cursor;
     public List<Call> Calls { get; } = [];
 
@@ -54,6 +55,13 @@ internal sealed class RoutedApi : HttpMessageHandler
         return this;
     }
 
+    /// <summary>Answers the GETs of <paramref name="path"/> with <paramref name="bodies"/> in order (200 each), the last one for every call after.</summary>
+    public RoutedApi OnSequence<T>(string path, IEnumerable<T> bodies)
+    {
+        _sequences[path] = new Queue<string>(bodies.Select(b => Encoding.UTF8.GetString(AwJson.Serialize(b, SliceHarness.Json))));
+        return this;
+    }
+
     public RoutedApi OnRaw(string path, HttpStatusCode status, string body)
     {
         _routes[path] = (status, body);
@@ -66,7 +74,9 @@ internal sealed class RoutedApi : HttpMessageHandler
             .ToDictionary(h => h.Key, h => string.Join(',', h.Value), StringComparer.OrdinalIgnoreCase);
 
     private string? PageFor(HttpMethod method, Uri uri) =>
-        method == HttpMethod.Get && _pages.TryGetValue(uri.AbsolutePath, out var pages) && pages.TryGetValue(AfterOf(uri.Query), out var page) ? page : null;
+        method != HttpMethod.Get ? null
+        : _sequences.TryGetValue(uri.AbsolutePath, out var sequence) ? (sequence.Count > 1 ? sequence.Dequeue() : sequence.Peek())
+        : _pages.TryGetValue(uri.AbsolutePath, out var pages) && pages.TryGetValue(AfterOf(uri.Query), out var page) ? page : null;
 
     private static long AfterOf(string query) =>
         query.TrimStart('?').Split('&').Select(static p => p.Split('=', 2)).Where(static p => p is ["after", _]).Select(static p => long.Parse(p[1], System.Globalization.CultureInfo.InvariantCulture)).FirstOrDefault();

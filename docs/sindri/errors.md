@@ -90,6 +90,7 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-CONN-008` | The connection name is not `&lt;service&gt;:&lt;label&gt;` in lowercase. | use letters, digits and `-`, 1 to 32 characters per part |
 | `SND-CONN-009` | Consent was denied at the provider. | run the command again and allow access |
 | `SND-CONN-010` | A connection with that name exists. | pick another label, or `sindri connection remove` it first |
+| `SND-CONN-011` | The connection uses a key, so it has no browser sign-in to run again. | `sindri connection remove` it, then add it with a new `--key-env` |
 | `SND-MEM-001` | No memory has that name. | `sindri memory list` shows the names |
 | `SND-MEM-002` | A memory with that name exists. | pick another name |
 | `SND-MEM-003` | A fact is empty or longer than 2,000 characters. | shorten the text |

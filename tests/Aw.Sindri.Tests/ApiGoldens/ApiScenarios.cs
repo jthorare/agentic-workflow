@@ -47,6 +47,7 @@ internal static class ApiScenarios
         ["LinearReads"] = LinearReadScenarios.All,
         ["LinearWrite"] = LinearWriteScenarios.All,
         ["LinearConnection"] = LinearConnectionScenarios.All,
+        ["ConnectionSignIn"] = ConnectionSignInScenarios.All,
     };
 
     /// <summary>Every (route slug, scenario) pair, group by group.</summary>
@@ -59,6 +60,8 @@ internal static class ApiScenarios
     public static async Task<GoldenHost> Start(string slug, string scenario, CancellationToken ct) =>
         CodeIndexScenarios.Handles(slug, scenario)
             ? await CodeIndexScenarios.Start(ct, demoBehindMain: scenario == CodeIndexScenarios.StaleScenario)
+            : ConnectionSignInScenarios.Handles(slug, scenario)
+            ? await ConnectionSignInScenarios.Start(scenario, ct)
             : ContextApiScenarios.Handles(slug)
             ? await ContextApiScenarios.Start(slug, scenario, ct)
             : (slug, scenario) is ("profile", "repo-added")
@@ -214,6 +217,7 @@ internal static class ApiScenarios
         : ReviewFixScenarios.Handles(slug, scenario) ? () => ReviewFixScenarios.Body(host, scenario, ct)
         : LibraryScenarios.Handles(slug, scenario) ? () => LibraryScenarios.Body(host, scenario, ct)
         : LibraryDocScenarios.Handles(slug, scenario) ? () => LibraryDocScenarios.Body(host, scenario, ct)
+        : ConnectionSignInScenarios.Handles(slug, scenario) ? () => ConnectionSignInScenarios.Body(host, scenario, ct)
         : null;
 
 

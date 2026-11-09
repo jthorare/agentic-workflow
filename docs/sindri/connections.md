@@ -42,7 +42,15 @@ What happens when you run `sindri connection add linear:work --preset linear --c
 4. Sindri checks the callback's `state`, trades the code for tokens (PKCE, S256) and stores them in the keychain. Only then is the connection row written.
 5. The listener closes. It also closes after 5 minutes, on a denied consent, and on a state mismatch.
 
-A sign-in that fails leaves **no row and no secret**: denied consent is `SND-CONN-009`, no callback in 5 minutes `SND-CONN-003`, a callback that is not this sign-in's `SND-CONN-004`. The CLI shows the failure as soon as it happens. An agent that started the sign-in without waiting can ask `connection_get` for that name and gets the same failure code until the name is added again (Sindri keeps it in memory; a restart forgets it).
+**Signing in again.** `sindri connection signin <name>` (POST `/sindri/connections/{name}/signin`, MCP `connection_signin`) runs the same loopback sign-in for a stored oauth or mcp connection, from the row's own preset, client id, scopes (or server address) and the client secret kept beside its tokens. The row stays (name, creator, creation time); its tokens are replaced when the callback lands, and the Needs-you row clears. A failed try leaves the row and its old secret as they were, and `connection show` reports the failure until the next try. `connection signin` waits for its own sign-in (the row's `signedInAt` setting changes), so a background refresh of the same connection does not end the wait early.
+
+**MCP connections do not refresh on their own.** Only oauth connections are refreshed in the background (the `connection-refresh` service, every 5 minutes, for tokens that end within 10 minutes). An `mcp` connection keeps only its server address, so when its token expires the test shows `needs-sign-in` and you sign in again by hand: `sindri connection signin <name>`.
+
+**An agent's `connection_signin` opens your browser.** The consent address comes from the MCP server's own metadata (or the preset), not from the agent. It is allowed for agent sessions because the sign-in still needs you to approve it in that browser page; the tokens go to the keychain, never to the agent.
+
+**What moves a connection to `needs-sign-in`.** Only the provider refusing the grant: an `invalid_grant`, `invalid_client` or `unauthorized_client` answer (or any other error code on a 400 or 401), or no refresh token stored. A provider that cannot be reached, a timeout, a 429, a 5xx or `temporarily_unavailable` leaves the connection `connected` and the next tick tries again. The move adds one Needs-you row, whichever of the test, the sign-in or the refresh made it. A rest or cli connection is `SND-CONN-011`. Removing a connection that needed a sign-in clears its Needs-you row too.
+
+A sign-in that fails leaves **no row and no secret** (for a new connection): denied consent is `SND-CONN-009`, no callback in 5 minutes `SND-CONN-003`, a callback that is not this sign-in's `SND-CONN-004`. The CLI shows the failure as soon as it happens. An agent that started the sign-in without waiting can ask `connection_get` for that name and gets the same failure code until the name is added again (Sindri keeps it in memory; a restart forgets it).
 
 ### Per preset
 
@@ -91,8 +99,8 @@ The row in `ledger.db` (table `connection`) has the name, kind, preset, non-secr
 
 ## Errors
 
-`SND-CONN-001` to `SND-CONN-010` are listed in [errors.md](errors.md): not found, needs sign-in, sign-in timeout, state mismatch, refresh failed, secret store unavailable, preset needs a client id, invalid name, consent denied, already exists.
+`SND-CONN-001` to `SND-CONN-011` are listed in [errors.md](errors.md): not found, needs sign-in, sign-in timeout, state mismatch, refresh failed, secret store unavailable, preset needs a client id, invalid name, consent denied, already exists, key-based (no browser sign-in).
 
 ## What this release does not do yet
 
-Refreshing tokens before they expire, the Needs-you row for a connection that has to sign in again, the `mcp` kind, and passing a connection to the nodes of a workflow come in the next changes. Until then a token that expires is replaced by running `connection remove` and `connection add` again.
+The `mcp` kind refreshing on its own, and passing a connection to the nodes of a workflow come in the next changes. Until then an expired mcp token is replaced with `connection signin`.

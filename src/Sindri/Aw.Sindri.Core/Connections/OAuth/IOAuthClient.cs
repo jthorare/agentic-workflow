@@ -27,4 +27,11 @@ public interface IOAuthClient
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>Unit, or the provider's refusal without the token.</returns>
     public ValueTask<Result<Unit>> Revoke(ConnectionPreset preset, string client, string token, CancellationToken cancellationToken);
+
+    /// <summary>Finds an MCP server's OAuth endpoints from its metadata and registers Sindri as a client there (RFC 9728, RFC 8414, RFC 7591).</summary>
+    /// <param name="server">The MCP server's URL.</param>
+    /// <param name="redirectUri">The loopback callback the registration names.</param>
+    /// <param name="cancellationToken">Cancels the calls.</param>
+    /// <returns>The sign-in target, or the failure when the server offers no sign-in or no registration. The text holds nothing the server sent.</returns>
+    public ValueTask<Result<McpSignInTarget>> RegisterMcpClient(Uri server, string redirectUri, CancellationToken cancellationToken);
 }
