@@ -20563,7 +20563,7 @@ Aw.Sindri.Core.Todos.Note.ITodoNoteFiles.ReadIntent() -> string?
 Aw.Sindri.Core.Todos.Note.ITodoNoteFiles.ReadQuiet(string! path, System.TimeSpan quiet, System.TimeSpan max, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<(Aw.Sindri.Core.Todos.Note.NoteRead! Read, bool Settled)>
 Aw.Sindri.Core.Todos.Note.ITodoNoteFiles.Read(string! note) -> Aw.Sindri.Core.Todos.Note.NoteRead!
 Aw.Sindri.Core.Todos.Note.ITodoNoteFiles.SaveBase(Aw.Sindri.Core.Todos.Note.NoteBase! noteBase) -> string!
-Aw.Sindri.Core.Todos.Note.ITodoNoteFiles.Swap(string! note, string! text) -> Aw.Sindri.Core.Todos.Note.NoteSwap!
+Aw.Sindri.Core.Todos.Note.ITodoNoteFiles.Swap(string! note, string! text, string! vaultRoot) -> Aw.Sindri.Core.Todos.Note.NoteSwap!
 Aw.Sindri.Core.Todos.Note.ITodoNoteFiles.WriteIntent(string! hash) -> void
 Aw.Sindri.Core.Todos.Note.NoteRead
 Aw.Sindri.Core.Todos.Note.NoteRead.Bytes.get -> long

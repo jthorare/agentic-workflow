@@ -126,7 +126,7 @@ public sealed class TodoNoteFilesTests : IDisposable
             File.SetUnixFileMode(_note, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.GroupRead);
         }
 
-        var swap = _files.Swap(_note, "new");
+        var swap = _files.Swap(_note, "new", _vault);
 
         Assert.Null(swap.Problem);
         Assert.Equal(Path.Combine(_vault, ".Todo.md.sindri-tmp"), swap.CameOut);
@@ -140,10 +140,30 @@ public sealed class TodoNoteFilesTests : IDisposable
     [Fact, Trait("Lane", "integration")]
     public async Task Swapping_a_missing_note_creates_it_and_nothing_came_out()
     {
-        var swap = _files.Swap(_note, "fresh");
+        var swap = _files.Swap(_note, "fresh", _vault);
 
         Assert.Equal((null, null, "fresh"), (swap.CameOut, swap.Problem, await File.ReadAllTextAsync(_note, TestContext.Current.CancellationToken)));
         Assert.False(File.Exists(Path.Combine(_vault, ".Todo.md.sindri-tmp")));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_symlinked_folder_between_the_vault_and_the_note_refuses_the_swap_and_the_target_is_untouched()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var outside = Directory.CreateDirectory(Path.Combine(_root, "outside")).FullName;
+        await File.WriteAllTextAsync(Path.Combine(outside, "Todo.md"), "old", TestContext.Current.CancellationToken);
+        Directory.CreateSymbolicLink(Path.Combine(_vault, "linked"), outside);
+
+        var swap = _files.Swap(Path.Combine(_vault, "linked", "Todo.md"), "new", _vault);
+
+        Assert.NotNull(swap.Problem);
+        Assert.Null(swap.CameOut);
+        Assert.Equal("old", await File.ReadAllTextAsync(Path.Combine(outside, "Todo.md"), TestContext.Current.CancellationToken));
+        Assert.Equal(["Todo.md"], Directory.EnumerateFileSystemEntries(outside).Select(Path.GetFileName));
     }
 
     [Fact, Trait("Lane", "integration")]
@@ -152,7 +172,7 @@ public sealed class TodoNoteFilesTests : IDisposable
         await File.WriteAllTextAsync(_note, "old", TestContext.Current.CancellationToken);
         await File.WriteAllTextAsync(Path.Combine(_vault, ".Todo.md.sindri-tmp"), "left", TestContext.Current.CancellationToken);
 
-        var swap = _files.Swap(_note, "new");
+        var swap = _files.Swap(_note, "new", _vault);
 
         Assert.Equal((null, "a tmp file is already there", "old", "left"), (swap.CameOut, swap.Problem, await File.ReadAllTextAsync(_note, TestContext.Current.CancellationToken), await File.ReadAllTextAsync(Path.Combine(_vault, ".Todo.md.sindri-tmp"), TestContext.Current.CancellationToken)));
     }

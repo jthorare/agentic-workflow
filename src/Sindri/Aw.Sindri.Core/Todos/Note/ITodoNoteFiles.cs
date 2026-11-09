@@ -36,8 +36,9 @@ public interface ITodoNoteFiles
     /// </summary>
     /// <param name="note">The note's path.</param>
     /// <param name="text">The new note.</param>
+    /// <param name="vaultRoot">The vault's folder: no folder from it down to the note may be a symlink.</param>
     /// <returns>Where what was at the note's path went, or why the write didn't happen.</returns>
-    public NoteSwap Swap(string note, string text);
+    public NoteSwap Swap(string note, string text, string vaultRoot);
 
     /// <summary>The leftover tmp file beside the note from an earlier run, or null.</summary>
     /// <param name="note">The note's path.</param>

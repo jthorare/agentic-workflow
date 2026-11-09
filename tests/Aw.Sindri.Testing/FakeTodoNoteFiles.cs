@@ -98,7 +98,7 @@ public sealed class FakeTodoNoteFiles : ITodoNoteFiles
     public void ClearIntent() => Intent = null;
 
     /// <inheritdoc/>
-    public NoteSwap Swap(string note, string text)
+    public NoteSwap Swap(string note, string text, string vaultRoot)
     {
         ArgumentNullException.ThrowIfNull(note);
         ArgumentNullException.ThrowIfNull(text);

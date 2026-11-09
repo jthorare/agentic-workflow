@@ -88,7 +88,7 @@ public abstract class TodoNoteFilesContract
         var files = Create();
         Put(NotePath, "old");
 
-        var swap = files.Swap(NotePath, "new");
+        var swap = files.Swap(NotePath, "new", Path.GetDirectoryName(NotePath)!);
 
         Expect.Equal((Tmp, null, "new", "old"), (swap.CameOut, swap.Problem, Text(NotePath), Text(Tmp)));
     }
@@ -99,7 +99,7 @@ public abstract class TodoNoteFilesContract
     {
         var files = Create();
 
-        var swap = files.Swap(NotePath, "fresh");
+        var swap = files.Swap(NotePath, "fresh", Path.GetDirectoryName(NotePath)!);
 
         Expect.Equal((null, null, "fresh", null), (swap.CameOut, swap.Problem, Text(NotePath), Text(Tmp)));
     }
@@ -112,7 +112,7 @@ public abstract class TodoNoteFilesContract
         Put(NotePath, "old");
         Put(Tmp, "left");
 
-        var swap = files.Swap(NotePath, "new");
+        var swap = files.Swap(NotePath, "new", Path.GetDirectoryName(NotePath)!);
 
         Expect.Equal((null, "a tmp file is already there", "old", "left"), (swap.CameOut, swap.Problem, Text(NotePath), Text(Tmp)));
     }

@@ -43,7 +43,7 @@ internal sealed partial class SyncPass
         var text = NoteRenderer.Rebuild(state.Doc, state.Result.LineEdits);
         var built = new Built(text, RowMapping.HashOf(text));
         d.Files.WriteIntent(built.Hash);
-        var swap = d.Files.Swap(place.Path, text);
+        var swap = d.Files.Swap(place.Path, text, place.Root);
         if (swap.Problem is { } problem)
         {
             d.Files.ClearIntent();

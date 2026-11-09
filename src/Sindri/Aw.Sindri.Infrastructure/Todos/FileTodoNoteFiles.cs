@@ -94,10 +94,11 @@ internal sealed partial class FileTodoNoteFiles(ISindriHome home, TimeProvider c
         }
     }
 
-    public NoteSwap Swap(string note, string text)
+    public NoteSwap Swap(string note, string text, string vaultRoot)
     {
         ArgumentNullException.ThrowIfNull(note);
         ArgumentNullException.ThrowIfNull(text);
+        ArgumentNullException.ThrowIfNull(vaultRoot);
         var tmp = TmpPath(note);
         var exists = File.Exists(note) || new FileInfo(note).LinkTarget is not null;
         try
