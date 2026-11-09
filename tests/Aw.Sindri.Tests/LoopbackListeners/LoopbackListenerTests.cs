@@ -55,34 +55,38 @@ public sealed partial class LoopbackListenerTests
     }
 
     [Fact]
-    public void No_fake_in_Testing_builds_its_own_HttpListener()
+    public void No_test_fake_builds_its_own_HttpListener()
     {
-        var testing = Path.Combine(RepoRoot(), "tests", "Aw.Sindri.Testing");
+        var root = RepoRoot();
         var pattern = OwnListener;
         var sep = Path.DirectorySeparatorChar;
         var hits = new List<string>();
 
-        foreach (var file in Directory.EnumerateFiles(testing, "*.cs", SearchOption.AllDirectories))
+        foreach (var project in new[] { "Aw.Sindri.Testing", "Aw.Sindri.Engine.Tests", "Aw.Evidence.Tests" })
         {
-            var relative = Path.GetRelativePath(testing, file);
-            if (Path.GetFileName(file) == "LoopbackListener.cs"
-                || relative.StartsWith("bin" + sep, StringComparison.Ordinal)
-                || relative.StartsWith("obj" + sep, StringComparison.Ordinal))
+            var dir = Path.Combine(root, "tests", project);
+            foreach (var file in Directory.EnumerateFiles(dir, "*.cs", SearchOption.AllDirectories))
             {
-                continue;
-            }
-
-            var lines = File.ReadAllLines(file);
-            for (var i = 0; i < lines.Length; i++)
-            {
-                if (pattern.IsMatch(lines[i]))
+                var relative = Path.GetRelativePath(dir, file);
+                if (Path.GetFileName(file) == "LoopbackListener.cs"
+                    || relative.StartsWith("bin" + sep, StringComparison.Ordinal)
+                    || relative.StartsWith("obj" + sep, StringComparison.Ordinal))
                 {
-                    hits.Add(relative + ":" + (i + 1).ToString(System.Globalization.CultureInfo.InvariantCulture));
+                    continue;
+                }
+
+                var lines = File.ReadAllLines(file);
+                for (var i = 0; i < lines.Length; i++)
+                {
+                    if (pattern.IsMatch(lines[i]))
+                    {
+                        hits.Add(project + sep + relative + ":" + (i + 1).ToString(System.Globalization.CultureInfo.InvariantCulture));
+                    }
                 }
             }
         }
 
-        Assert.True(hits.Count == 0, "These files build their own HttpListener instead of LoopbackListener.Start: " + string.Join(", ", hits));
+        Assert.True(hits.Count == 0, "These files build their own HttpListener instead of a LoopbackListener.Start: " + string.Join(", ", hits));
     }
 
     private static int FreePort()

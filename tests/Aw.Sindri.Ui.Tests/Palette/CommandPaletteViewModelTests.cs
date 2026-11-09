@@ -74,7 +74,7 @@ public sealed partial class CommandPaletteViewModelTests
         _palette.Open();
 
         Assert.Equal(
-            ["Home G H", "Todo G T", "Projects G P", "Work G Q", "Context G C", "Agents G A", "System G .", "Reviews G V", "Jobs G J", "Workflows G W", "Settings ⌘,"],
+            ["Home G H", "Todo G T", "Projects G P", "Work G Q", "Context G C", "Agents G A", "System G .", "Reviews G V", "Jobs G J", "Connections G O", "Memory G M", "Workflows G W", "Settings ⌘,"],
             _palette.Sections[1].Entries.Select(e => e.Label + " " + e.Key),
             StringComparer.Ordinal);
     }
@@ -93,6 +93,17 @@ public sealed partial class CommandPaletteViewModelTests
 
         Assert.Equal(ids, _palette.Entries.Select(e => e.Id), StringComparer.Ordinal);
         Assert.All(_palette.Sections, s => Assert.NotEmpty(s.Entries));
+    }
+
+    // a partial phrase with a space ranks the label that starts with it first (#2385)
+    [Fact]
+    public void Typing_stop_sin_ranks_stop_sindri_first()
+    {
+        _palette.Open();
+
+        _palette.Query = "stop sin";
+
+        Assert.Equal("StopProcess", _palette.Entries[0].Id);
     }
 
     [Fact]

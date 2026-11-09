@@ -105,16 +105,30 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     }
 
     /// <inheritdoc/>
-    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Recent(WorkflowId workflow, int limit, CancellationToken cancellationToken)
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Recent(WorkflowId workflow, int offset, int limit, CancellationToken cancellationToken)
     {
         lock (_gate)
         {
             IReadOnlyList<WorkflowRun> recent = [.. _runs
                 .Where(r => r.WorkflowId == workflow)
                 .OrderByDescending(static r => r.StartedAt)
-                .ThenByDescending(static r => r.Id.Value, StringComparer.Ordinal)
+                .ThenByDescending(static r => r.Id.Occurrence)
+                .Skip(Math.Max(offset, 0))
                 .Take(Math.Max(limit, 1))];
             return Ok(recent);
+        }
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Running(CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            IReadOnlyList<WorkflowRun> running = [.. _runs
+                .Where(static r => r.Status == WorkflowRunStatus.Running)
+                .OrderBy(static r => r.StartedAt)
+                .ThenBy(static r => r.Id.Value, StringComparer.Ordinal)];
+            return Ok(running);
         }
     }
 

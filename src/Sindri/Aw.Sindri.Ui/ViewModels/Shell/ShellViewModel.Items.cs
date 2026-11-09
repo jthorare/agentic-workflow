@@ -57,6 +57,7 @@ internal sealed partial class ShellViewModel
         OpenerRow = null;
         OnAgentSheetOpened(link);
         OnJobSheetOpened(link);
+        OnConnectionSheetOpened(link);
         OnProjectSheetOpened(link);
         OnIssueSheetOpened(link);
         OnPageSheetOpened();

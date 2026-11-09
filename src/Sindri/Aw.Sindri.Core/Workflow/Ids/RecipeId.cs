@@ -14,8 +14,8 @@ public readonly partial struct RecipeId : ITypedId<RecipeId, string>
     /// <summary>The name after 'workflow.' ('step' in 'workflow.step'); the CLI's addresses use it.</summary>
     public string Name => Value["workflow.".Length..];
 
-    private static Vogen.Validation Validate(string value) =>
-        Shape.IsMatch(value) ? Vogen.Validation.Ok : Vogen.Validation.Invalid("A recipe id is 'workflow.<name>' with a kebab-case name, at most 64 characters");
+    private static Validation Validate(string value) =>
+        Shape.IsMatch(value) ? Validation.Ok : Validation.Invalid("A recipe id is 'workflow.<name>' with a kebab-case name, at most 64 characters");
 
     [GeneratedRegex("^workflow\\.[a-z][a-z0-9]*(-[a-z0-9]+)*\\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }

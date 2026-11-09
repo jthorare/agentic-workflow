@@ -21,7 +21,7 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
     private static readonly (PageId Page, string Key)[] _pages =
     [
         (PageId.Home, "G H"), (PageId.Projects, "G P"), (PageId.Work, "G Q"), (PageId.Context, "G C"), (PageId.Agents, "G A"),
-        (PageId.System, "G ."), (PageId.Reviews, "G V"), (PageId.Jobs, "G J"), (PageId.Workflows, "G W"), (PageId.Settings, "⌘,"),
+        (PageId.System, "G ."), (PageId.Reviews, "G V"), (PageId.Jobs, "G J"), (PageId.Connections, "G O"), (PageId.Memory, "G M"), (PageId.Workflows, "G W"), (PageId.Settings, "⌘,"),
     ];
 
     private readonly CatalogViewModel _catalog;
@@ -217,10 +217,9 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
         (control.IsSendable && !control.IsDestructive) || control.Action == "StopProcess"
         || OpensForm(control) || (control.IsCopyOnly && control.CanCopy && !NeedsForm(control) && !ItemSheetViewModel.IsSheetAction(control.Action));
 
-    // Create item, Start workflow and Approve all are done in a form or dialog of the app: with none to open (no shell) they are not a command to copy here, and not runnable.
+    // Create item and Start workflow are done in a form or dialog of the app: with none to open (no shell) they are not a command to copy here, and not runnable.
     private static bool NeedsForm(ControlViewModel control) => string.Equals(control.Action, "CreateItem", StringComparison.Ordinal)
-        || string.Equals(control.Action, "StartInstance", StringComparison.Ordinal)
-        || string.Equals(control.Action, "ApproveAllRecipes", StringComparison.Ordinal);
+        || string.Equals(control.Action, "StartInstance", StringComparison.Ordinal);
 
     // Create item opens its form (when the shell has one).
     private bool OpensForm(ControlViewModel control) =>
