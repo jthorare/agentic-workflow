@@ -35,6 +35,9 @@ internal static partial class Labels
     /// <summary>The button that reads the note and writes nothing.</summary>
     internal const string TodoCardCheck = "Check note";
 
+    /// <summary>The line while the card reads the note setting for the first time.</summary>
+    internal const string TodoCardReading = "Reading the todo note setting…";
+
     /// <summary>The live line while the note is read.</summary>
     internal const string TodoCardChecking = "Checking the note…";
 

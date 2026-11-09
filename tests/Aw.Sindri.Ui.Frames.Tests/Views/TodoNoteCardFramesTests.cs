@@ -233,7 +233,7 @@ public sealed class TodoNoteCardFramesTests : IDisposable
         Press(window, "TodoNoteCheck");
         await Until(window, () => card.HasError);
 
-        Assert.Equal("The note is outside the vault. todo.obsidian.note", Said(window, "TodoNoteError"));
+        Assert.Equal("That vault or note path isn't valid. Pick a note inside the vault.", Said(window, "TodoNoteError"));
     });
 
     [Fact]
@@ -259,5 +259,113 @@ public sealed class TodoNoteCardFramesTests : IDisposable
         Assert.Equal("Stop syncing with Todo.md? The note stays as it is.", Said(window, "TodoNoteStopAsk"));
         Assert.True(Shown(window, "TodoNoteKeep"));
         Assert.Empty(_server.TodoNoteSetup);
+    });
+
+    [Fact]
+    public Task The_vault_and_note_fields_are_off_while_a_call_runs() => OnUi(async () =>
+    {
+        var (window, card) = await Show();
+        _server.TodoNoteCheckGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        Press(window, "TodoNoteCheck");
+        await Until(window, () => card.IsBusy);
+
+        Assert.False(Find<ComboBox>(window, "TodoNoteVault").IsEnabled);
+        Assert.False(Find<TextBox>(window, "TodoNoteField").IsEnabled);
+        _server.TodoNoteCheckGate.SetResult();
+        await Until(window, () => !card.IsBusy);
+        Assert.True(Find<TextBox>(window, "TodoNoteField").IsEnabled);
+    });
+
+    [Fact]
+    public Task A_card_that_has_not_read_yet_shows_the_reading_line() => OnUi(async () =>
+    {
+        var card = new TodoNoteCardViewModel(() => _api, _server, _clock);
+        var settings = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), _ => { }) { TodoNoteCard = card };
+        var window = new Window { Width = 900, Height = 1200, Content = new SettingsView { DataContext = settings } };
+        _windows.Add(window);
+        window.Show();
+        Settle(window);
+
+        Assert.Equal("Reading the todo note setting…", Said(window, "TodoNoteReading"));
+        Assert.True(Shown(window, "TodoNoteReading"));
+        Assert.False(Shown(window, "TodoNoteCheck"));
+        await Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task A_card_whose_first_read_failed_shows_the_error_and_not_the_reading_line() => OnUi(async () =>
+    {
+        _server.TodoNoteAnswer = RouteAnswer.Problem(HttpStatusCode.InternalServerError, "SND-API-500", "boom");
+        var (window, card) = await Show();
+
+        Assert.False(Shown(window, "TodoNoteReading"));
+        Assert.Equal("Sindri refused that (SND-API-500). Run `sindri doctor` for details.", Said(window, "TodoNoteError"));
+        Assert.True(card.HasError);
+    });
+
+    [Fact]
+    public Task After_Check_note_focus_moves_to_the_first_button_of_the_result() => OnUi(async () =>
+    {
+        var (window, card) = await Show();
+
+        Press(window, "TodoNoteCheck");
+        await Until(window, () => card.Stage == TodoNoteCardStage.Checked);
+
+        Assert.True(Find<Button>(window, "TodoNoteStart").IsFocused);
+    });
+
+    [Fact]
+    public Task After_Cancel_focus_returns_to_the_note_field() => OnUi(async () =>
+    {
+        var (window, _) = await Checked(TodoNoteSetupSample.Check());
+
+        Press(window, "TodoNoteCancel");
+
+        Assert.True(Find<TextBox>(window, "TodoNoteField").IsFocused);
+    });
+
+    [Fact]
+    public Task After_Stop_syncing_is_asked_focus_moves_to_Keep_syncing() => OnUi(async () =>
+    {
+        _server.TodoNoteAnswer = new RouteAnswer(HttpStatusCode.OK, TodoNoteSetupSample.NoteIn("syncing"));
+        var (window, _) = await Show();
+
+        Press(window, "TodoNoteStop");
+
+        Assert.True(Find<Button>(window, "TodoNoteKeep").IsFocused);
+    });
+
+    [Fact]
+    public Task After_Start_syncing_focus_moves_to_Change() => OnUi(async () =>
+    {
+        var (window, card) = await Checked(TodoNoteSetupSample.NewNote);
+        _server.OnTodoNoteSetup = _ => _server.TodoNoteAnswer = new RouteAnswer(HttpStatusCode.OK, TodoNoteSetupSample.NoteIn("syncing"));
+
+        Press(window, "TodoNoteStart");
+        await Until(window, () => card.Stage == TodoNoteCardStage.Syncing);
+
+        Assert.True(Find<Button>(window, "TodoNoteChange").IsFocused);
+    });
+
+    [Fact]
+    public Task The_first_load_does_not_take_focus() => OnUi(async () =>
+    {
+        var (window, _) = await Show();
+
+        Assert.False(Find<TextBox>(window, "TodoNoteField").IsFocused);
+    });
+
+    [Fact]
+    public Task Closing_the_window_takes_the_library_handler_off_the_long_lived_card() => OnUi(async () =>
+    {
+        var (window, card) = await Show();
+        var field = typeof(TodoNoteCardViewModel).GetField(nameof(TodoNoteCardViewModel.LibraryRequested), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;   // why: the field-like event's delegate, to count its handlers
+        Assert.Equal(1, ((Delegate?)field.GetValue(card))?.GetInvocationList().Length);
+
+        window.Close();
+        Settle(window);
+
+        Assert.Null((Delegate?)field.GetValue(card));
     });
 }

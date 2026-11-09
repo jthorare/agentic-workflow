@@ -49,8 +49,8 @@ public sealed class TodoSyncLineTests
         Assert.Equal((string.Empty, "Obsidian → Sindri only: can't write to this disk", true, true), await Line(TodoNoteSetupSample.NoteIn("one way")));
 
     [Fact]
-    public async Task A_note_that_cannot_be_read_gives_the_reason() =>
-        Assert.Equal((string.Empty, "Obsidian note: can't read, Todo.md is missing", true, true), await Line(TodoNoteSetupSample.NoteIn("can't read", lastError: "Todo.md is missing")));
+    public async Task A_note_that_cannot_be_read_points_at_doctor_and_never_shows_the_servers_text() =>
+        Assert.Equal((string.Empty, "Obsidian note: can't read. Run `sindri doctor` to see why.", true, true), await Line(TodoNoteSetupSample.NoteIn("can't read", lastError: "Todo.md is missing")));
 
     [Fact]
     public async Task A_busy_note_says_it_is_trying_again() =>

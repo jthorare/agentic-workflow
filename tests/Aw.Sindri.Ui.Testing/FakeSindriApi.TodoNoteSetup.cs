@@ -24,6 +24,9 @@ internal sealed partial class FakeSindriApi
     /// <summary>When set, each check waits for it before it answers.</summary>
     public TaskCompletionSource? TodoNoteCheckGate { get; set; }
 
+    /// <summary>Makes the check throw this after it is recorded (a bug in the app's own code, not a refusal); null answers as <see cref="TodoNoteCheckAnswer"/> says.</summary>
+    public Exception? TodoNoteCheckFailure { get; set; }
+
     /// <summary>Runs after an accepted set, import or stop with its route (a test moves the note's next answer here, as the control plane would).</summary>
     public Action<string>? OnTodoNoteSetup { get; set; }
 
@@ -39,6 +42,11 @@ internal sealed partial class FakeSindriApi
 
         Record(TodoRoutes.NoteCheck, new TodoNoteTarget(vault, note));
         await WaitFor(TodoNoteCheckGate, cancellationToken).ConfigureAwait(false);
+        if (TodoNoteCheckFailure is { } failure)
+        {
+            throw failure;
+        }
+
         return Answer<TodoNoteCheckView>(api, TodoRoutes.NoteCheck, TodoNoteCheckAnswer);
     }
 

@@ -116,11 +116,11 @@ public sealed class TodoSyncLineFramesTests : IDisposable
     });
 
     [Fact]
-    public Task A_note_that_cannot_be_read_gives_the_reason() => OnUi(async () =>
+    public Task A_note_that_cannot_be_read_points_at_doctor() => OnUi(async () =>
     {
         var window = await Home(TodoNoteSetupSample.NoteIn("can't read", lastError: "Todo.md is missing"));
 
-        await Reads(window, "TodoSyncLive", "Obsidian note: can't read, Todo.md is missing");
+        await Reads(window, "TodoSyncLive", "Obsidian note: can't read. Run `sindri doctor` to see why.");
     });
 
     [Fact]

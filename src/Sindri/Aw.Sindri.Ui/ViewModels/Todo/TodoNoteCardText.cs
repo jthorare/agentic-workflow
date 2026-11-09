@@ -36,6 +36,9 @@ internal sealed class TodoNoteCardText
     /// <summary>Check note.</summary>
     public string Check { get; } = Labels.TodoCardCheck;
 
+    /// <summary>The line while the first read runs.</summary>
+    public string Reading { get; } = Labels.TodoCardReading;
+
     /// <summary>Start syncing.</summary>
     public string Start { get; } = Labels.TodoCardStart;
 

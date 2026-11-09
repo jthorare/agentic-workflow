@@ -51,6 +51,9 @@ internal sealed partial class TodoNoteCardViewModel : ObservableObject
     /// <summary>The library's vault names.</summary>
     public IReadOnlyList<string> Vaults { get; private set; } = [];
 
+    /// <summary>True while the first read of the setting has no answer yet.</summary>
+    public bool ShowReading => Stage == TodoNoteCardStage.Form && false;   // stub
+
     /// <summary>True when the library has no vault.</summary>
     public bool ShowNoVaults => Stage == TodoNoteCardStage.NoVaults;
 

@@ -202,7 +202,7 @@ public sealed class TodoNoteCardTests
 
         await card.Check(Token);
 
-        Assert.Equal(("The note is outside the vault. todo.obsidian.note", true, TodoNoteCardStage.Form), (card.ErrorText, card.HasError, card.Stage));
+        Assert.Equal(("That vault or note path isn't valid. Pick a note inside the vault.", true, TodoNoteCardStage.Form), (card.ErrorText, card.HasError, card.Stage));
     }
 
     [Fact]
@@ -238,7 +238,7 @@ public sealed class TodoNoteCardTests
 
         await card.Start(Token);
 
-        Assert.Equal(("Couldn't read the profile (fix: sindri doctor)", TodoNoteCardStage.Checked), (card.ErrorText, card.Stage));
+        Assert.Equal(("Sindri couldn't read its settings. Run `sindri doctor` to see why.", TodoNoteCardStage.Checked), (card.ErrorText, card.Stage));
     }
 
     [Fact]
