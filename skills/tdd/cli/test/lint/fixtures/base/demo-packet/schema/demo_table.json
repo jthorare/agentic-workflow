@@ -1,0 +1,19 @@
+{
+  "table": "demo_table",
+  "state": "new",
+  "summary": "One row per retried job.",
+  "columns": [
+    { "name": "id", "type": "uuid PRIMARY KEY", "change": "new", "note": "" },
+    { "name": "attempts", "type": "integer NOT NULL", "change": "new", "note": "retries so far" }
+  ],
+  "sample_rows": [
+    { "id": "a1", "attempts": 2 }
+  ],
+  "sample_source": "synthetic, shaped like the DDL",
+  "measured": {
+    "rows": { "value": 0, "unit": "rows", "source": "new table", "date": "2026-01-02" }
+  },
+  "expected": {
+    "writes": { "value": "+1", "unit": "INSERT per retry", "note": "one row per retried job" }
+  }
+}

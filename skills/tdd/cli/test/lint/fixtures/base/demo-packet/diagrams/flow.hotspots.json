@@ -1,0 +1,39 @@
+{
+ "svg": "flow.svg",
+ "viewBox": [
+  0.0,
+  0.0,
+  400.0,
+  200.0
+ ],
+ "boxes": [
+  {
+   "label": "Queue",
+   "kind": "box",
+   "tone": "green",
+   "x": 20.0,
+   "y": 30.0,
+   "w": 120.0,
+   "h": 60.0,
+   "text": "Queue\nholds the jobs",
+   "href": "#flow",
+   "image": "",
+   "note": "Holds the jobs.",
+   "table": ""
+  },
+  {
+   "label": "Retry lane",
+   "kind": "box",
+   "tone": "blue",
+   "x": 220.0,
+   "y": 30.0,
+   "w": 140.0,
+   "h": 60.0,
+   "text": "Retry lane\ndemo_table rows",
+   "href": "",
+   "image": "",
+   "note": "",
+   "table": "demo_table"
+  }
+ ]
+}
