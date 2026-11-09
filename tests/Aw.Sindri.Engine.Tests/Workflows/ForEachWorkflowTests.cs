@@ -154,5 +154,29 @@ public sealed class ForEachWorkflowTests(SindriTimeSkippingServer server) : ICla
         Assert.Contains("collect", each.Error, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task Cancelling_during_an_item_leaves_no_running_row_and_marks_the_rest_skipped()
+    {
+        await using var rig = GraphRig.Start(server.Environment);
+        var workflow = await rig.Define(GraphRig.Spec("unlimited",
+            [GraphRig.Node("start", "manual"), GraphRig.Node("each", "for_each", config: Each()), GraphRig.Node("wait", "hold"), GraphRig.Node("gather", "collect", config: new JsonObject { ["value"] = "{{item}}" })],
+            [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "wait"), GraphRig.Edge("wait", "gather")]));
+        var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited, Trigger(Numbers(3)));
+        await rig.Blocks.Entered.WaitAsync(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken);
+
+        await rig.Client.GetWorkflowHandle(started.RunId.Value).CancelAsync();
+        var run = await rig.Final(started.RunId);
+        var waits = await rig.ItemRuns(started.RunId, "wait");
+        var gathers = await rig.ItemRuns(started.RunId, "gather");
+
+        Assert.Equal(WorkflowRunStatus.Cancelled, run.Status);
+        Assert.Equal(NodeRunStatus.Cancelled, waits[1].Status);   // the item whose body was running
+        Assert.Equal(NodeRunStatus.Skipped, waits[2].Status);
+        Assert.Equal(NodeRunStatus.Skipped, waits[3].Status);
+        Assert.Equal(NodeRunStatus.Skipped, gathers[1].Status);
+        var all = (await rig.Runs.NodeRuns(started.RunId, TestContext.Current.CancellationToken)).Value;
+        Assert.DoesNotContain(all, static n => n.Status is NodeRunStatus.Running or NodeRunStatus.Waiting);
+    }
+
     private static JsonObject Item(int n, bool keep) => new() { ["n"] = n, ["keep"] = keep };
 }
