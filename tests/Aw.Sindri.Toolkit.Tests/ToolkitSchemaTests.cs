@@ -24,6 +24,18 @@ public sealed class ToolkitSchemaTests
         Assert.Contains("null", schema["properties"]!["note"]!["type"]!.AsArray().Select(n => n!.GetValue<string>()), StringComparer.Ordinal);
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public void A_tool_whose_response_is_not_an_object_is_refused_with_the_declaration_code()
+    {
+        var toolkit = Toolkit.Named("bare").UseJson(StringResponseJson.Default);
+
+        var failure = Assert.Throws<ToolkitException>(() =>
+            toolkit.Tool<DiffRequest, string>("t", "d", (_, _, _) => Task.FromResult("x")));
+
+        Assert.Equal(ToolkitErrors.InvalidDeclaration, failure.Definition);
+        Assert.Contains("object schema", failure.Message, StringComparison.Ordinal);
+    }
+
     private static string[] Required(JsonObject schema) =>
         [.. schema["required"]!.AsArray().Select(n => n!.GetValue<string>()).Order(StringComparer.Ordinal)];
 }

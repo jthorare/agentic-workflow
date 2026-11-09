@@ -36,7 +36,8 @@ internal sealed class RequestSchema
                 $"The JSON context of {typeInfo.Type.Name} must set RespectNullableAnnotations and RespectRequiredConstructorParameters: add them to its [JsonSourceGenerationOptions].");
         }
 
-        if (JsonSchemaExporter.GetJsonSchemaAsNode(typeInfo, _exporter) is not JsonObject schema)
+        if (JsonSchemaExporter.GetJsonSchemaAsNode(typeInfo, _exporter) is not JsonObject schema
+            || !(schema["type"] is JsonValue kind && kind.TryGetValue<string>(out var text) && string.Equals(text, "object", StringComparison.Ordinal)))
         {
             throw new ToolkitException(ToolkitErrors.InvalidDeclaration, $"{typeInfo.Type.Name} has no object schema: use a record.");
         }
