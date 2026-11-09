@@ -141,7 +141,7 @@ public sealed class SindriTodoToolsTests
         var stale = await mcp.Call("sindri_todo", $$"""{"action":"change","id":"{{id}}","version":1,"text":"z"}""", ct);
 
         Assert.Equal("SND-TODO-409", Code(stale));
-        Assert.Equal<string>(["code", "message"], stale.StructuredContent!.Value.EnumerateObject().Select(p => p.Name).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["code", "message"], stale.StructuredContent!.Value.EnumerateObject().Select(p => p.Name).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
