@@ -9,99 +9,192 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Aw.Sindri.Tests.Catalog;
 
 /// <summary>
-/// Once every verb is open to agent sessions (PR 2 of the agent-first spec), the ledger's actor is the only record of who did a write. For every write
-/// route of the command catalog this runs the API golden scenarios of that route (their real bodies and seeding) as a session Sindri launched, then
-/// reads the events the call appended: every one must carry 'session:launch:&lt;launch id&gt;', never the human's, the host's default 'host:sindri'
-/// or an unlabelled 'session:...'; and each route must have appended at least one such event in some scenario. A write that records no event, or
-/// records the wrong actor, fails here.
+/// Once every verb is open to agent sessions (PR 2 of the agent-first spec), the ledger's actor is the only record of who did a write. This runs every
+/// API golden scenario (their real bodies and seeding) as a session Sindri launched and records the method and path of each request it really sent.
+/// A sent request is matched to a catalog write route by method and route template (a '{x}' segment matches any one segment; the template with the
+/// most literal segments wins). Every event the calls appended must carry 'session:launch:&lt;launch id&gt;', never the human's, the host's default
+/// 'host:sindri' or an unlabelled 'session:...'; and a catalog write counts as covered only when some scenario sent that method and template and
+/// appended an event by the launch. A write that records no event, or records the wrong actor, fails here.
 /// </summary>
 public sealed class WriteAttributionTests
 {
     private const string Launch = "LCH-0000000000000000000000000000ff01";
 
-    // Write routes (slug, as ApiGolden.Slug names it) this check skips, each with the reason; only a route that writes no ledger event belongs here.
+    // Write routes ("METHOD /route/template") this check skips, each with the reason; only a route that writes no ledger event belongs here.
     private static readonly Dictionary<string, string> _notSwept = new(StringComparer.Ordinal)
     {
-        ["stop"] = "stops the host, so the ledger can't be read after it; its actor is covered by the stop tests",
-        ["profile-approve"] = "removed (410, #2258 PR 1): the route writes nothing",
-        ["profile"] = "the profile write stays the owner's until the settings PR (#2374), and it writes the profile file, not a ledger event",
-        ["linear-connect"] = "a connection setting outside PR 2's list (LinearConnectionRules): the owner's",
-        ["linear-disconnect-write"] = "a connection setting outside PR 2's list (LinearConnectionRules): the owner's",
-        ["views-rebuild"] = "replays the ledger into views.db: it appends no event",
+        ["POST /sindri/stop"] = "stops the host, so the ledger can't be read after it; its actor is covered by the stop tests",
+        ["POST /sindri/linear/connection"] = "a connection setting outside PR 2's list (LinearConnectionRules): the owner's",
+        ["DELETE /sindri/linear/connection/write"] = "a connection setting outside PR 2's list (LinearConnectionRules): the owner's",
+        ["POST /sindri/views/rebuild"] = "replays the ledger into views.db: it appends no event",
+        ["POST /sindri/todos/note/check"] = "a dry check: writes nothing to the vault, the profile or the ledger (CheckTodoNoteService.cs:16)",
     };
+
+    // Write routes that do append events but whose caller is proven another way than a launched session's header; not swept here.
+    private static readonly Dictionary<string, string> _otherProof = new(StringComparer.Ordinal)
+    {
+        ["POST /sindri/sessions/{launchId}/heartbeat"] = WrapReason,
+        ["POST /sindri/sessions/{launchId}/exit"] = WrapReason,
+    };
+
+    private const string WrapReason = "the caller is the wrapper of the route's own launch, proven by that launch's secret; actor follow-up #2430";
+
+    // Write routes no API golden scenario sends yet; the follow-up is #2434. A route here that a scenario now sends must move into the sweep.
+    private static readonly Dictionary<string, string> _noGolden = new(StringComparer.Ordinal)
+    {
+        ["POST /sindri/context/map/checks"] = NoGoldenReason,
+        ["POST /sindri/context/map/import"] = NoGoldenReason,
+        ["POST /sindri/index/purge"] = NoGoldenReason,
+        ["POST /sindri/sandbox/learn-off"] = NoGoldenReason,
+        ["POST /sindri/sessions/{provider}/{id}/focus"] = NoGoldenReason,
+        ["POST /sindri/launches/{launchId}/limit-hit"] = NoGoldenReason,
+        ["POST /sindri/workflow/challenges"] = NoGoldenReason,
+        ["POST /sindri/workflow/instances/{instanceId}/runs/{run}/complete"] = NoGoldenReason,
+        ["POST /sindri/jobs/{jobId}/resume"] = NoGoldenReason,
+        ["POST /sindri/workflows/{slug}/runs"] = NoGoldenReason,
+        ["POST /sindri/todos/note/hold/restore"] = NoGoldenReason,
+        ["POST /sindri/context/map/build"] = NoGoldenReason,
+        ["POST /sindri/context/map/refresh"] = NoGoldenReason,
+        ["POST /sindri/context/eval/backtest"] = NoGoldenReason,
+        ["POST /sindri/context/sources/sync"] = NoGoldenReason,
+        ["POST /sindri/index/sync"] = NoGoldenReason,
+        ["POST /sindri/context/pages"] = NoGoldenReason,
+        ["POST /sindri/context/pins"] = NoGoldenReason,
+    };
+
+    private const string NoGoldenReason = "no API golden scenario sends it yet (#2434)";
 
     [Fact(Timeout = 900_000), Trait("Lane", "integration")]
     public async Task Every_write_a_launched_session_makes_records_that_launch_as_its_actor()
     {
         var ct = TestContext.Current.CancellationToken;
-        var catalogRows = await CatalogWriteSlugs(ct);
-        var scenarios = ApiScenarios.All.Where(r => catalogRows.Contains(r.Slug) && !_notSwept.ContainsKey(r.Slug) && !IsNotASessionCall(r)).ToList();
-        var launched = new ConcurrentDictionary<string, bool>(StringComparer.Ordinal);   // slug -> a scenario appended an event by the launch
-        var strays = new ConcurrentBag<string>();
-        var broken = new ConcurrentBag<string>();
+        var templates = await CatalogWriteTemplates(ct);
+        var scenarios = ApiScenarios.All.Where(r => !IsNotASessionCall(r)).ToList();
+        var sweep = new Sweep(templates);
 
         // why: each case starts its own host with file watchers; two at a time keeps the run under the box's inotify limit (128 per user)
         await Parallel.ForEachAsync(scenarios, new ParallelOptions { MaxDegreeOfParallelism = 2, CancellationToken = ct }, async (row, token) =>
-            await RunAsLaunchedSession(row, launched, strays, broken, token));
-
-        var silent = scenarios.Select(r => r.Slug).Distinct(StringComparer.Ordinal).Where(slug => !launched.ContainsKey(slug)).Order(StringComparer.Ordinal).ToList();
-        var noScenario = catalogRows.Where(slug => !_notSwept.ContainsKey(slug) && !ApiScenarios.All.Any(r => string.Equals(r.Slug, slug, StringComparison.Ordinal))).Order(StringComparer.Ordinal).ToList();
+            await RunAsLaunchedSession(row, sweep, token));
 
         Assert.True(scenarios.Count > 0, "the sweep reached no scenario");
-        Assert.True(broken.IsEmpty, "these scenarios threw as a launched session:\n" + string.Join('\n', broken.Order(StringComparer.Ordinal)));
-        Assert.True(strays.IsEmpty, $"these events were written during a launched session's calls without 'session:launch:{Launch}' as actor:\n" + string.Join('\n', strays.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)));
-        Assert.True(silent.Count == 0, "these write routes appended no event by the launched session in any scenario (no event, or another actor; a route that writes no event goes in _notSwept with its reason):\n" + string.Join('\n', silent));
-        var staleSkips = _notSwept.Keys.Where(slug => !catalogRows.Contains(slug)).Order(StringComparer.Ordinal).ToList();
-        Assert.True(staleSkips.Count == 0, "these _notSwept keys name no catalog write route (misspelt, or the route is gone):\n" + string.Join('\n', staleSkips));
-        Assert.True(noScenario.Count == 0, "these catalog write routes have no API golden scenario to run (add one, or list the route in _notSwept with its reason):\n" + string.Join('\n', noScenario));
+        var report = Problems(sweep, templates.Select(t => t.Key).ToHashSet(StringComparer.Ordinal));
+        Assert.True(report.Count == 0, string.Join("\n\n", report));
     }
 
-    private static async Task RunAsLaunchedSession((string Slug, string Scenario) row, ConcurrentDictionary<string, bool> launched, ConcurrentBag<string> strays, ConcurrentBag<string> broken, CancellationToken token)
+    private static List<string> Problems(Sweep sweep, HashSet<string> catalog)
+    {
+        var sections = new List<(string Heading, List<string> Items)>
+        {
+            ("these scenarios threw as a launched session:", Sorted(sweep.Broken)),
+            ($"these events were written during a launched session's calls without 'session:launch:{Launch}' as actor:", Sorted(sweep.Strays)),
+            ("UNCOVERED: these catalog write routes appended no event by the launched session in any scenario that sent them (no event, no scenario, or another actor; a route that writes no event goes in _notSwept with its reason, one no golden sends goes in _noGolden with #2434):",
+                Sorted(catalog.Where(k => !_notSwept.ContainsKey(k) && !_noGolden.ContainsKey(k) && !_otherProof.ContainsKey(k) && !sweep.Covered.ContainsKey(k)))),
+            ("these _notSwept and _otherProof keys name no catalog write route (misspelt, or the route is gone):",
+                Sorted(_notSwept.Keys.Concat(_otherProof.Keys).Where(k => !catalog.Contains(k)))),
+            ("_noGolden guard: these entries are not a catalog write, or a scenario now sends them; move them into the sweep (delete the entry):",
+                Sorted(_noGolden.Keys.Where(k => !catalog.Contains(k) || sweep.Sent.ContainsKey(k)))),
+            ("these _noGolden entries do not name #2434:",
+                Sorted(_noGolden.Where(e => !e.Value.Contains("#2434", StringComparison.Ordinal)).Select(e => e.Key))),
+        };
+
+        return [.. sections.Where(s => s.Items.Count > 0).Select(s => s.Heading + "\n" + string.Join('\n', s.Items))];
+    }
+
+    private static List<string> Sorted(IEnumerable<string> items) => [.. items.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
+
+    private static async Task RunAsLaunchedSession((string Slug, string Scenario) row, Sweep sweep, CancellationToken token)
     {
         await using var host = await ApiScenarios.Start(row.Slug, row.Scenario, token);
         var ledger = host.App.Services.GetRequiredService<ILedgerStore>();
         LaunchSecrets.Write(host.App.Services.GetRequiredService<LauncherOptions>().SecretsDirectory, LaunchId.From(Launch), "proof");
         var before = (await ledger.ReadAfter(0, 100_000, token)).Value.Count;
-        try
+        Exception? failure = null;
+        IReadOnlyCollection<(string Method, string Path)> sent;
+        using (Callers.CallerRequests.AsLaunchedSession(Launch, out sent))   // the scenario's own call, with the seeding it does through Human(), as the launched session
         {
-            using (Callers.CallerRequests.AsLaunchedSession(Launch))   // the scenario's own call, with the seeding it does through Human(), as the launched session
+            try
             {
                 _ = await ApiScenarios.Body(host, row.Slug, row.Scenario, token);
             }
+            catch (Exception e) when (e is not OperationCanceledException)   // why: one run lists every broken case, not just the first
+            {
+                failure = e;
+            }
         }
-        catch (Exception e) when (e is not OperationCanceledException)   // why: one run lists every broken case, not just the first
+
+        var keys = sent.Select(s => MatchTemplate(sweep.Templates, s.Method, s.Path)).OfType<string>().Distinct(StringComparer.Ordinal).ToList();
+        keys.ForEach(k => sweep.Sent[k] = true);
+        if (failure is not null)
         {
-            broken.Add($"{row.Slug}/{row.Scenario}: {e.GetType().Name}: {e.Message.ReplaceLineEndings(" ")}");
+            sweep.Broken.Add($"{row.Slug}/{row.Scenario}: {failure.GetType().Name}: {failure.Message.ReplaceLineEndings(" ")}");
             return;
         }
 
         var written = (await ledger.ReadAfter(0, 100_000, token)).Value.Skip(before).Select(e => e.Envelope).ToList();
         if (written.Exists(e => IsByLaunch(e.Actor)))
         {
-            launched[row.Slug] = true;
+            keys.ForEach(k => sweep.Covered[k] = true);
         }
 
         foreach (var envelope in written.Where(e => IsWrongActor(e.Actor)))
         {
-            strays.Add($"{row.Slug}/{row.Scenario}: {envelope.Type} by {envelope.Actor}");
+            sweep.Strays.Add($"{row.Slug}/{row.Scenario}: {envelope.Type} by {envelope.Actor}");
         }
     }
 
-    private static async Task<HashSet<string>> CatalogWriteSlugs(CancellationToken ct)
+    /// <summary>The catalog template a sent request belongs to: same method, same segment count, every literal segment equal; the most literal segments win.</summary>
+    private static string? MatchTemplate(IReadOnlyList<Template> templates, string method, string path)
+    {
+        var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        return templates
+            .Where(t => string.Equals(t.Method, method, StringComparison.Ordinal) && t.Matches(segments))
+            .OrderByDescending(static t => t.Literals)
+            .Select(static t => t.Key)
+            .FirstOrDefault();
+    }
+
+    private static async Task<List<Template>> CatalogWriteTemplates(CancellationToken ct)
     {
         await using var host = await GoldenHost.Start(temporary: true, ct);
-        return host.App.Services.GetRequiredService<ICommandCatalog>().Rows
+        return [.. host.App.Services.GetRequiredService<ICommandCatalog>().Rows
             .Where(IsWrite)
-            .Select(static row => row.Route)
-            .OfType<string>()
-            .Select(ApiGolden.Slug)
-            .ToHashSet(StringComparer.Ordinal);
+            .Select(static row => new Template(row.Method!, row.Route!))
+            .DistinctBy(static t => t.Key, StringComparer.Ordinal)];
     }
 
     private static bool IsWrite(CommandRow row) =>
         (string.Equals(row.Method, "POST", StringComparison.Ordinal) || string.Equals(row.Method, "PUT", StringComparison.Ordinal) || string.Equals(row.Method, "DELETE", StringComparison.Ordinal) || string.Equals(row.Method, "PATCH", StringComparison.Ordinal))
         && row.Route is { Length: > 1 }
         && row.Class is not (ActionClass.Local or ActionClass.StepReport);
+
+    private sealed record Template(string Method, string Route)
+    {
+        private readonly string[] _segments = Route.Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+        public string Key => Method + " " + Route;
+
+        public int Literals => _segments.Count(static s => !IsParameter(s));
+
+        public bool Matches(string[] sent) =>
+            sent.Length == _segments.Length && _segments.Zip(sent).All(static p => IsParameter(p.First) || string.Equals(p.First, p.Second, StringComparison.Ordinal));
+
+        private static bool IsParameter(string segment) => segment.StartsWith('{') && segment.EndsWith('}');
+    }
+
+    private sealed class Sweep(IReadOnlyList<Template> templates)
+    {
+        public IReadOnlyList<Template> Templates { get; } = templates;
+
+        /// <summary>Catalog write keys some scenario sent, whether or not the call appended an event.</summary>
+        public ConcurrentDictionary<string, bool> Sent { get; } = new(StringComparer.Ordinal);
+
+        /// <summary>Catalog write keys sent by a scenario whose calls appended an event by the launch.</summary>
+        public ConcurrentDictionary<string, bool> Covered { get; } = new(StringComparer.Ordinal);
+
+        public ConcurrentBag<string> Strays { get; } = [];
+
+        public ConcurrentBag<string> Broken { get; } = [];
+    }
 
     /// <summary>
     /// Scenarios about the human's own credentials or an app origin: a launched session has no such reading. Also the 'session wrap' routes: the

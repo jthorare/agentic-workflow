@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text.Json;
 using Aw.Context.Testing.Map;
 using Aw.Sindri.Host;
@@ -50,10 +51,21 @@ internal static class CallerRequests
     /// Like <see cref="AsSession"/>, and the session also carries <paramref name="launchId"/> in X-Sindri-Launch: a session Sindri itself launched
     /// (the launch must be open: its hash file written). Its writes record the actor 'session:launch:&lt;id&gt;'.
     /// </summary>
-    public static IDisposable AsLaunchedSession(string launchId)
+    public static IDisposable AsLaunchedSession(string launchId) => AsLaunchedSession(launchId, out _);
+
+    private static readonly AsyncLocal<ConcurrentQueue<(string Method, string Path)>?> _sent = new();
+
+    /// <summary>
+    /// As <see cref="AsLaunchedSession(string)"/>, and <paramref name="sent"/> collects the method and path (no query string) of every request built
+    /// through this class on this async flow while the scope is open, seeding calls included. It keeps filling until the scope is disposed.
+    /// </summary>
+    public static IDisposable AsLaunchedSession(string launchId, out IReadOnlyCollection<(string Method, string Path)> sent)
     {
+        var queue = new ConcurrentQueue<(string Method, string Path)>();
+        sent = queue;
         _humanAsSession.Value = true;
         _launch.Value = launchId;
+        _sent.Value = queue;
         return new Scope(clearLaunch: true);
     }
 
@@ -65,6 +77,7 @@ internal static class CallerRequests
             if (clearLaunch)
             {
                 _launch.Value = null;
+                _sent.Value = null;
             }
         }
     }
@@ -122,6 +135,23 @@ internal static class CallerRequests
             _ = request.Headers.TryAddWithoutValidation(SindriHeaders.Launch, launch);
         }
 
+        if (_launch.Value is not null)
+        {
+            _sent.Value?.Enqueue((request.Method.Method, PathOf(request.RequestUri)));
+        }
+
         return request;
+    }
+
+    private static string PathOf(Uri? uri)
+    {
+        if (uri is null)
+        {
+            return string.Empty;
+        }
+
+        var path = uri.IsAbsoluteUri ? uri.AbsolutePath : uri.OriginalString;
+        var query = path.IndexOf('?', StringComparison.Ordinal);
+        return query < 0 ? path : path[..query];
     }
 }
