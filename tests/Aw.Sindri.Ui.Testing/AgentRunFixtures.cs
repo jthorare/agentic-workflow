@@ -1,4 +1,3 @@
-using System.Text.Json.Nodes;
 using Aw.Kernel.Json;
 using Aw.Sindri.Ui.Api;
 
@@ -25,21 +24,6 @@ internal static class AgentRunFixtures
     /// <returns>The record.</returns>
     internal static T Golden<T>(string slug, string scenario)
         where T : class => Read<T>(GoldenFiles.Api(slug, scenario));
-
-    /// <summary>The running item's body with its launch block edited.</summary>
-    /// <param name="launch">Edits the launch block.</param>
-    /// <returns>The body as served.</returns>
-    internal static string ItemBody(Action<JsonObject> launch)
-    {
-        var body = GoldenFiles.Node("items-id", "running");
-        launch(body["launch"]!.AsObject());
-        return body.ToJsonString();
-    }
-
-    /// <summary>The running item with its launch block edited.</summary>
-    /// <param name="launch">Edits the launch block.</param>
-    /// <returns>The item.</returns>
-    internal static ItemView Item(Action<JsonObject> launch) => Read<ItemView>(ItemBody(launch));
 
     /// <summary>The item with a live session to attach to: the API's items-id/live-session golden.</summary>
     /// <returns>The body as served.</returns>

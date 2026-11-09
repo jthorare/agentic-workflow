@@ -171,6 +171,20 @@ public sealed class GraphRunStarterTests
         Assert.Empty(harness.Store.Events);
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_launch_the_launcher_calls_started_keeps_its_row_running_and_the_same_tick_is_one_run()
+    {
+        var w = await Build();
+
+        var first = await Start(w, 5, GraphConcurrency.OnePerWorkflow);
+        var again = await Start(w, 5, GraphConcurrency.OnePerWorkflow);   // the schedule's next pass sees the same tick
+
+        Assert.Equal(GraphStartKind.Started, first.Value.Kind);
+        Assert.Equal(SindriErrors.GraphRunIdTaken.Code, again.Error.Code);   // the store refuses the duplicate; Temporal is not asked twice
+        _ = Assert.Single(w.Launcher.Launched);
+        Assert.Equal(WorkflowRunStatus.Running, (await w.Runs.Get(WorkflowRunId.Of(_slug, 3, 5), Token)).Value.Status);
+    }
+
     /// <summary>Fails with the error the first launch only (every launch with failEvery), after running <see cref="WhileLaunching"/> (which queues a trigger behind the run being launched).</summary>
     private sealed class FailFirstLauncher(Kernel.Error error, bool failEvery = false) : IGraphRunLauncher
     {

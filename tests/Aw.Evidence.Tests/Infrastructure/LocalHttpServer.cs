@@ -12,7 +12,7 @@ namespace Aw.Evidence.Tests.Infrastructure;
 /// </summary>
 internal sealed class LocalHttpServer : IDisposable
 {
-    private readonly HttpListener _listener = new();
+    private readonly HttpListener _listener;
     private readonly IReadOnlyDictionary<string, string> _pages;
     private readonly IReadOnlyDictionary<string, string> _redirects;
 
@@ -20,9 +20,8 @@ internal sealed class LocalHttpServer : IDisposable
     {
         _pages = pages;
         _redirects = redirects ?? new Dictionary<string, string>(StringComparer.Ordinal);
-        Port = FreePort();
-        _listener.Prefixes.Add(Origin + "/");
-        _listener.Start();
+        (_listener, var port) = LoopbackListener.Start();
+        Port = port;
         _ = Task.Run(ServeAsync, CancellationToken.None);
     }
 
@@ -41,12 +40,7 @@ internal sealed class LocalHttpServer : IDisposable
 
     public void Dispose() => _listener.Close();
 
-    internal static int FreePort()
-    {
-        using var probe = new TcpListener(IPAddress.Loopback, 0);
-        probe.Start();
-        return ((IPEndPoint)probe.LocalEndpoint).Port;
-    }
+    internal static int FreePort() => LoopbackListener.FreePort();
 
     /// <summary>
     /// Binds a loopback port without Listen(), so it stays ours and a connect is refused until the socket is disposed. A freed

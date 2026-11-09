@@ -155,18 +155,18 @@ public static partial class ReviewPageBuilder
         const string id = "ci";
         if (!f.Runs.Ok)
         {
-            return (Error(id, "Couldn't read CI: " + f.Runs.Error, new CiData([], Babysitter: null)), null);
+            return (Error(id, "Couldn't read CI: " + f.Runs.Error, new CiData([])), null);
         }
 
         var runs = f.Runs.Value;
         if (runs.Count == 0)
         {
-            return (Empty(id, $"No CI runs on {Short(f.Pr.HeadSha)} yet", new CiData([], Babysitter: null)), null);
+            return (Empty(id, $"No CI runs on {Short(f.Pr.HeadSha)} yet", new CiData([])), null);
         }
 
         var views = runs.Select(r => new ReviewPageRun(r.Name, r.App ?? "status", IsRunning(r.Conclusion) ? "in_progress" : "completed", IsRunning(r.Conclusion) ? null : r.Conclusion, Short(r.Sha), f.Pr.Url + "/checks")).ToList();
         var failing = runs.Count(r => Failed(r.Conclusion));
-        return (Ready(id, new CiData(views, Babysitter: null)), failing > 0 ? string.Create(CultureInfo.InvariantCulture, $"{failing} failing") : null);
+        return (Ready(id, new CiData(views)), failing > 0 ? string.Create(CultureInfo.InvariantCulture, $"{failing} failing") : null);
     }
 
     // ---- evidence

@@ -61,7 +61,7 @@ internal sealed class YamlProfileKeyWriter(SindriSettings settings, Core.Profile
         }
 
         var edited = edit(before);
-        return edited.IsError ? edited.Error : new ProfileKeyEdit(path, edited.Value, !string.Equals(before, edited.Value, StringComparison.Ordinal));
+        return edited.IsError ? edited.Error : new ProfileKeyEdit(path, edited.Value, !string.Equals(before, edited.Value, StringComparison.Ordinal), before);
     }
 
     public Result<string> Save(ProfileKeyEdit edit)
@@ -74,6 +74,12 @@ internal sealed class YamlProfileKeyWriter(SindriSettings settings, Core.Profile
 
         try
         {
+            // why: a hand edit or 'profile set' that landed after the plan read must not be overwritten
+            if (edit.Before is not null && !string.Equals(File.ReadAllText(edit.Path), edit.Before, StringComparison.Ordinal))
+            {
+                return SindriErrors.ProfileHashMismatch.With($"{edit.Path} changed since it was read (fix: reload and try again)");
+            }
+
             YamlProfileLines.WriteKeepingMode(edit.Path, edit.Text);
             cache.Invalidate();
             return edit.Path;

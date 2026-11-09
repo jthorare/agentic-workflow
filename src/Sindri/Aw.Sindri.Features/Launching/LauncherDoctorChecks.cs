@@ -1,7 +1,6 @@
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
-using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Features.Launching;
 
@@ -10,8 +9,7 @@ namespace Aw.Sindri.Features.Launching;
 /// <param name="launches">The launches projection.</param>
 /// <param name="targets">The last probe of the viewer, host and agents.</param>
 /// <param name="clock">Now.</param>
-/// <param name="items">The items view, to tell a stalled launch whose instance moved on; none keeps every one.</param>
-internal sealed class LauncherDoctorChecks(ILaunchSetup setup, ILaunchViews launches, LaunchTargetsReader targets, TimeProvider clock, IViewReader? items = null) : IDoctorChecks
+internal sealed class LauncherDoctorChecks(ILaunchSetup setup, ILaunchViews launches, LaunchTargetsReader targets, TimeProvider clock) : IDoctorChecks
 {
     public async ValueTask<IReadOnlyList<DoctorCheck>> Run(CancellationToken cancellationToken)
     {
@@ -32,7 +30,7 @@ internal sealed class LauncherDoctorChecks(ILaunchSetup setup, ILaunchViews laun
             Agents(report),
             new("launcher:adoption", CheckState.Ok, rows.IsError ? "the launches view couldn't be read" : LaunchAdoption.Line(rows.Value), Fix: null),
         };
-        if (!rows.IsError && await StalledLaunches.Open(StalledLaunches.Find(rows.Value, now), items, cancellationToken).ConfigureAwait(false) is { Count: > 0 } stalled)
+        if (!rows.IsError && StalledLaunches.Find(rows.Value, now) is { Count: > 0 } stalled)
         {
             checks.Add(Stalled(stalled));
         }

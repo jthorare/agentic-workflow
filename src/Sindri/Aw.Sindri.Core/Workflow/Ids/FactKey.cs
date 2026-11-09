@@ -20,10 +20,10 @@ public readonly partial struct FactKey : ITypedId<FactKey, string>
     /// <summary>Whether this is an 'evidence:' key rather than a 'fact:' key.</summary>
     public bool IsEvidence => Value.StartsWith("evidence:", StringComparison.Ordinal);
 
-    private static Vogen.Validation Validate(string value) =>
+    private static Validation Validate(string value) =>
         Shape.IsMatch(value)
-            ? Vogen.Validation.Ok
-            : Vogen.Validation.Invalid("A fact key is 'fact:<camelCaseName>' or 'evidence:<kind>@<base|head>', at most 64 characters");
+            ? Validation.Ok
+            : Validation.Invalid("A fact key is 'fact:<camelCaseName>' or 'evidence:<kind>@<base|head>', at most 64 characters");
 
     [GeneratedRegex("^(fact:[a-z][A-Za-z0-9]*|evidence:[a-z][a-z0-9]*([.-][a-z0-9]+)*@(base|head))\\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }

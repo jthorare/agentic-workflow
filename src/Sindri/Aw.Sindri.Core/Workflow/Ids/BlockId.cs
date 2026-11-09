@@ -18,10 +18,10 @@ public readonly partial struct BlockId : ITypedId<BlockId, string>
     /// <summary>The kind prefix: 'gate', 'step', 'effect', 'evidence' or 'input'.</summary>
     public string Prefix => Value[..Value.IndexOf('.', StringComparison.Ordinal)];
 
-    private static Vogen.Validation Validate(string value) =>
+    private static Validation Validate(string value) =>
         Shape.IsMatch(value)
-            ? Vogen.Validation.Ok
-            : Vogen.Validation.Invalid("A block id is '<gate|step|effect|evidence|input>.[<area>.]<name>', kebab-case, at most 64 characters");
+            ? Validation.Ok
+            : Validation.Invalid("A block id is '<gate|step|effect|evidence|input>.[<area>.]<name>', kebab-case, at most 64 characters");
 
     [GeneratedRegex("^(gate|step|effect|evidence|input)(\\.[a-z][a-z0-9]*(-[a-z0-9]+)*){1,2}\\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }

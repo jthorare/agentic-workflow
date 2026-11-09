@@ -36,7 +36,7 @@ public sealed class FileReviewPagesTests : IDisposable
             new ReviewPagePr("acme/api", 7, title, "sam-dev", Yours: false, Draft: false, "open", new ReviewPageHead(sha, sha[..7], "feat/x"), "main", "https://github.com/acme/api/pull/7", [], PostsFixThreads: false),
             new ReviewPageSettings("default", "default", Pick: null), Moving: null, Offline: null, [new ReviewPageStrip("ci", "1 failing")],
             [
-                new ReviewPagePanel("ci", "ready", Text: null, new CiData([new ReviewPageRun("ui", "actions", "completed", "failure", sha[..7], "https://github.com/acme/api/pull/7/checks")], Babysitter: null)),
+                new ReviewPagePanel("ci", "ready", Text: null, new CiData([new ReviewPageRun("ui", "actions", "completed", "failure", sha[..7], "https://github.com/acme/api/pull/7/checks")])),
                 new ReviewPagePanel("risk", "empty", "No risky paths touched", new RiskData([])),
             ],
             new ReviewPageDiff("empty", "This PR changes no files", 0, Capped: false, []));

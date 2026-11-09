@@ -96,4 +96,21 @@ public sealed class TodoObsidianRulesTests
     [Fact]
     public void A_dot_file_name_in_a_normal_folder_is_still_a_md_file_but_a_bare_dot_md_is_not() =>
         Assert.Null(TodoObsidianRules.NotePath("a/.Todo.md"));
+
+    [Theory]
+    [InlineData("Private/**", "private/Todo.md", true, true)]
+    [InlineData("Private/**", "private/Todo.md", false, false)]
+    [InlineData("*.SECRET.md", "x.secret.md", true, true)]
+    [InlineData("*.SECRET.md", "x.secret.md", false, false)]
+    [InlineData("private/**", "private/Todo.md", false, true)]
+    public void A_deny_glob_ignores_case_only_where_the_platform_does(string glob, string path, bool ignoreCase, bool matches) =>
+        Assert.Equal(matches, PathGlob.Matches(glob, path, ignoreCase));
+
+    [Theory]
+    [InlineData("a:b.md", true, "must be relative to the vault, not an absolute path")]
+    [InlineData("a:b.md", false, null)]
+    [InlineData("C:/Todo.md", false, "must be relative to the vault, not an absolute path")]
+    [InlineData("C:/Todo.md", true, "must be relative to the vault, not an absolute path")]
+    public void A_drive_letter_is_refused_for_a_colon_name_only_on_windows(string note, bool windows, string? reason) =>
+        Assert.Equal(reason, TodoObsidianRules.NotePath(note, windows));
 }
