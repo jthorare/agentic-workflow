@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Aw.Kernel.Testing;
 using static Aw.Sindri.Tests.Callers.CallerRequests;
 
@@ -13,13 +14,31 @@ internal static class TodoScenarios
     private static readonly string[] _markSlugs = ["todos-done", "todos-reopen", "todos-remove", "todos-restore"];
 
     /// <summary>The (slug, scenario) pairs of this class.</summary>
-    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-id", "show"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted")];
+    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-id", "show"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted"), ("todos-note-check", "counts"), ("todos-note-set", "changed"), ("todos-note-set", "unchanged"), ("todos-note-set", "stale"), ("todos-note-stop", "changed"), ("todos-note-stop", "unchanged")];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
     public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario));
 
     /// <summary>Starts the scenario's host: the item profile, approved by the body.</summary>
-    public static Task<GoldenHost> Start(CancellationToken ct) => GoldenHost.Start(temporary: true, ct, ItemScenarios.ProfileYaml);
+    /// <param name="slug">The route; the note check's host also maps a library vault holding the sample note.</param>
+    /// <param name="ct">Cancellation.</param>
+    /// <returns>The started host.</returns>
+    public static Task<GoldenHost> Start(string slug, CancellationToken ct) =>
+        GoldenHost.Start(temporary: true, ct, slug switch
+        {
+            "todos-note-check" => NoteVaultProfile(),
+            "todos-note-set" or "todos-note-stop" => ItemScenarios.ProfileYaml + "context:\n  sources:\n    library:\n      vaults:\n        - { name: notes, path: /work/notes }\n",
+            _ => ItemScenarios.ProfileYaml,
+        });
+
+    // a vault folder at a fixed place under the temp folder with the note the golden counts (3 open, one with a pasted link, 1 done); the answer carries no path
+    private static string NoteVaultProfile()
+    {
+        var vault = Path.Combine(Path.GetTempPath(), "aw-golden-todo-vault");
+        _ = Directory.CreateDirectory(vault);
+        File.WriteAllText(Path.Combine(vault, "Todo.md"), "# Todo\n- [ ] reply to Sam\n- [ ] rotate the staging key\n- [ ] read [the docs](https://example.com)\n- [x] pay rent\n\nnotes\n");
+        return ItemScenarios.ProfileYaml + $"context:\n  sources:\n    library:\n      vaults:\n        - {{ name: notes, path: {vault} }}\n";
+    }
 
     /// <summary>Runs the scenario against <paramref name="host"/> and returns the body to compare.</summary>
     public static async Task<string> Body(GoldenHost host, string slug, string scenario, CancellationToken ct)
@@ -27,6 +46,13 @@ internal static class TodoScenarios
         await ViewScenarios.Approve(host, ct);
         await ViewScenarios.CatchUp(host, ct);
         var human = ItemScenarios.Human(host);
+        if (slug.StartsWith("todos-note-", StringComparison.Ordinal))
+        {
+            return string.Equals(slug, "todos-note-check", StringComparison.Ordinal)
+                ? (await host.Http.Ask(Post("/sindri/todos/note/check", Request(slug, scenario), human))).Body
+                : await NoteWrite(host, slug, scenario, human);
+        }
+
         if (slug == "todos-add")
         {
             return (await host.Http.Ask(Post("/sindri/todos", Request(slug, scenario), human))).Body;
@@ -48,6 +74,12 @@ internal static class TodoScenarios
             return await Show(host, human, ct);
         }
 
+        return await List(host, human, ct);
+    }
+
+    // the list golden: six todos across states (one done, one changed, one removed, one from an agent session, one fenced), then GET ?state=all
+    private static async Task<string> List(GoldenHost host, (string Name, string Value)[] human, CancellationToken ct)
+    {
         var cert = await Add(host, human, """{"text":"renew the cert","due":"2025-12-30","clientId":"c-1"}""", string.Empty, ct);
         var offsite = await Add(host, human, """{"text":"reply to Sam","due":"2026-01-02","clientId":"c-2"}""", string.Empty, ct);
         _ = await Add(host, human, """{"text":"rotate the staging key","due":"2025-12-31","links":["acme/api#12","ENG-12"],"clientId":"c-3"}""", string.Empty, ct);
@@ -89,6 +121,25 @@ internal static class TodoScenarios
         // why: done and remove take their version from the one shared request file; reopen and restore need version 2 (the state change before them was version 2), so each has its own
         var file = string.Equals(verb, "done", StringComparison.Ordinal) || string.Equals(verb, "remove", StringComparison.Ordinal) ? "todos-done" : slug;
         return (await host.Http.Ask(Post($"/sindri/todos/{made}/{verb}", Request(file, scenario), human))).Body;
+    }
+
+    // set: "changed" is the first write, "unchanged" repeats it, "stale" sends another hash; stop: "changed" follows a set, "unchanged" is a stop with no key. The profile hash follows the machine's profile text, so the golden pins its shape.
+    private static async Task<string> NoteWrite(GoldenHost host, string slug, string scenario, (string Name, string Value)[] human)
+    {
+        const string Set = "/sindri/todos/note/set";
+        var isSet = string.Equals(slug, "todos-note-set", StringComparison.Ordinal);
+        if (string.Equals(scenario, "unchanged", StringComparison.Ordinal) && isSet)
+        {
+            _ = await host.Http.Ask(Post(Set, Request("todos-note-set", "changed"), human));
+        }
+        else if (!isSet && string.Equals(scenario, "changed", StringComparison.Ordinal))
+        {
+            _ = await host.Http.Ask(Post(Set, Request("todos-note-set", "changed"), human));
+        }
+
+        var route = isSet ? Set : "/sindri/todos/note/stop";
+        var written = (await host.Http.Ask(Post(route, Request(slug, scenario), human))).Body;
+        return Regex.Replace(written, "(?<=\"profileHash\"\\s*:\\s*\")[0-9a-f]{64}", new string('0', 64), RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
     }
 
     /// <summary>The exact bytes the scenario posts: 'Golden/ApiRequests/&lt;slug&gt;/&lt;scenario&gt;.json', read as they are (no re-serializing), so the file is what the server is proven to read; the UI lanes build their client against the same file.</summary>
