@@ -118,8 +118,9 @@ specification; system-design and the vendor copy are never edited.
   [-- <compiler flags>]` compiles the packet twice into the same temporary out path with `TDD_GENERATED` and `TZ`
   pinned, `build_tdd.py` as A and `bin/build-tdd.ts` as B by default, and compares `content.json`,
   `content.files.json`, every file by sha256 (the dashed SVGs included), stdout and stderr. Flags after `--`
-  (`--no-copy`, `--strict`) go to both compilers. CPython's own interpreter warnings on stderr (today one
-  `DeprecationWarning` for `build_tdd.py`'s positional `maxsplit`) are printed as notes and not compared. Exit 0
+  (`--no-copy`, `--strict`) go to both compilers. One CPython interpreter warning is printed as a note and not
+  compared: the `DeprecationWarning` for `build_tdd.py`'s positional `re.split` maxsplit, exactly its two lines, on
+  Python runs only (found by content in the current `build_tdd.py`); every other stderr line is compared. Exit 0
   green, 1 red, 2 usage.
 - The packet tests read `$TDD_PARITY_PACKETS` (packet folders separated by `:`) and skip when it is unset:
   `TDD_PARITY_PACKETS=<a>:<b> bun test`.

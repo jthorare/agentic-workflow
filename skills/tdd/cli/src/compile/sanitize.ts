@@ -48,6 +48,8 @@ function rebuild_tag(m: Match): string {
 /** build_tdd.sanitize_html(h) */
 export function sanitize_html(h: string): string {
   if (!h || !h.includes("<")) return h;
-  h = SCRIPT_TAG.sub("", h);
+  let prev: string | null = null;
+  // until stable: stripping an inner tag can reassemble an outer one (<ifr<script>ame ...>)
+  while (h !== prev) [prev, h] = [h, SCRIPT_TAG.sub("", h)];
   return TAG.sub(rebuild_tag, h);
 }

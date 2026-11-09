@@ -5,7 +5,7 @@
 export { DOC, parse_args, type Args } from "./args";
 export { ATTRS, BOX, parse_attrs, parse_ext, split_title, type Attrs, type Block, type BoxBlock } from "./attrs";
 export { Compiler, compile, type Ctx, type Node, type Summary } from "./compiler";
-export { SystemExit, isSystemExit } from "./errors";
+export { PyOSError, SystemExit, isSystemExit, makedirs, osError } from "./errors";
 export { PR_FILE, load_prs, type Pr } from "./prs";
 export { link_refs, type Link, type Stats } from "./refs";
 export { sanitize_html } from "./sanitize";
@@ -14,4 +14,4 @@ export { sanitize_html } from "./sanitize";
  * sha256 of the scripts/build_tdd.py this port reproduces (the twin rule, research/bun-port-2026.md section 5.3): a
  * change to the Python lands with the same change here and a new pin, or test/compile/pin.test.ts fails.
  */
-export const BUILD_TDD_SHA256 = "8911e1f88b906b73ea1d9ec29ab0074a0b30179172a43d07522fbba14d385b18";
+export const BUILD_TDD_SHA256 = "630ce50128deb1e0bdb89681c07242e1f0e42aa2ab385aca8bb17af0f38cf9aa";

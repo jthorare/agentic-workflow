@@ -279,7 +279,9 @@ def _rebuild_tag(m):
 def sanitize_html(h):
     if not h or "<" not in h:
         return h
-    h = _SCRIPT_TAG.sub("", h)
+    prev = None
+    while h != prev:  # until stable: stripping an inner tag can reassemble an outer one (<ifr<script>ame ...>)
+        prev, h = h, _SCRIPT_TAG.sub("", h)
     return _TAG.sub(_rebuild_tag, h)
 
 

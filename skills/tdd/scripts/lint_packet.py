@@ -1112,8 +1112,22 @@ class Lint:
         ctx = lambda x: x[max(0, i - 30):i + 30].decode("utf-8", "replace")
         return f"first difference at byte {i} (line {line}; {len(a)} vs {len(b)} bytes): {ctx(a)!r} vs {ctx(b)!r}"
 
+    @staticmethod
+    def _manifest_diffs(ma, mb):
+        """The manifest fields PARITY compares (files paths, missing, warnings) that differ, described."""
+        diffs = []
+        for k, f in (("files", lambda m: list((m.get("files") or {}).keys())), ("missing", lambda m: m.get("missing")), ("warnings", lambda m: m.get("warnings"))):
+            x, y = f(ma), f(mb)
+            if x != y:
+                xs, ys = list(x or []), list(y or [])
+                j = next((i for i in range(min(len(xs), len(ys))) if xs[i] != ys[i]), min(len(xs), len(ys)))
+                diffs.append(f"{k} ({len(xs)} vs {len(ys)}; first at {j}: {xs[j] if j < len(xs) else None!r} vs {ys[j] if j < len(ys) else None!r})")
+        return diffs
+
     def r_parity(self):
-        """During the bun port's overlap period (D19) the TypeScript compiler must agree with build_tdd.py byte for byte."""
+        """During the bun port's overlap period (D19) the TypeScript compiler must agree with build_tdd.py byte for byte.
+        The build is the first reference; whenever it differs from the TypeScript compile (or the TypeScript compile fails),
+        a fresh build_tdd.py compile, spelled the same way, decides whether the difference is the TypeScript's."""
         bun, ts = shutil.which("bun"), os.path.join(CLI, "bin", "build-tdd.ts")
         if not bun or not os.path.isfile(ts):
             self.note(f"PARITY: {'bun is not on PATH' if not bun else self.rel(ts) + ' is absent'}; the TypeScript compiler was not compared")
@@ -1129,50 +1143,60 @@ class Lint:
             return
         where = "(compiled) content.json" if self.compiled else self.rel(cpath)
         mfile = "(compiled) content.files.json" if self.compiled else self.rel(mpath)
-        tmps = []
+        src = self.rel(self.src)
+        tmps, fresh = [], []
+
+        def python_fresh():
+            if not fresh:
+                pout, perr = self._compile_to([sys.executable, "-I", os.path.join(HERE, "build_tdd.py")], generated)
+                tmps.append(pout)
+                fresh.append((pout, perr))
+            return fresh[0]
+
+        def read_manifest(path):
+            try:
+                return json.load(open(path, encoding="utf-8"))
+            except (OSError, ValueError):
+                return None
+
         try:
             tout, err = self._compile_to([bun, "--no-install", ts], generated)
             tmps.append(tout)
             if err:
-                self.add("PARITY", "content", "error", f"the TypeScript compiler failed on {self.rel(self.src)} where build_tdd.py did not ({err})", self.rel(self.src))
-                return
-            ref, mine = open(cpath, "rb").read(), open(os.path.join(tout, "content.json"), "rb").read()
-            ref_m = mpath
-            if ref != mine:
-                # a stale build (or files only under build/) differs from any fresh compile: compare two fresh compiles
-                pout, perr = self._compile_to([sys.executable, "-I", os.path.join(HERE, "build_tdd.py")], generated)
-                tmps.append(pout)
+                pout, perr = python_fresh()
                 if perr:
-                    self.add("PARITY", "content", "error", f"{where} differs from the TypeScript compile, and a fresh build_tdd.py compile failed ({perr})", self.rel(self.src))
+                    self.note(f"PARITY: build_tdd.py fails on the current source too ({perr}); the compilers were not compared")
                     return
-                fresh = open(os.path.join(pout, "content.json"), "rb").read()
-                if fresh != mine:
-                    self.add("PARITY", "content", "error", f"the TypeScript compiler's content.json differs from build_tdd.py's on {self.rel(self.src)}: "
-                             f"{self._first_diff(fresh, mine)}; fix cli/src/compile (build_tdd.py stays the reference until the cutover)", self.rel(self.src))
-                    return
-                self.note(f"PARITY: {where} differs from a fresh compile of the source (a stale build: rebuild); the TypeScript and Python compilers "
-                          f"agree on the fresh compile")
-                ref_m, where, mfile = os.path.join(pout, "content.files.json"), "a fresh build_tdd.py compile's content.json", "(fresh compile) content.files.json"
-            if not os.path.isfile(ref_m):
-                self.note(f"PARITY: the TypeScript compiler reproduced {where} byte for byte; no {mfile} to compare manifests with")
+                self.add("PARITY", "content", "error", f"the TypeScript compiler failed on {src} where build_tdd.py did not ({err})", src)
                 return
-            try:
-                ma, mb = json.load(open(ref_m, encoding="utf-8")), json.load(open(os.path.join(tout, "content.files.json"), encoding="utf-8"))
-            except (OSError, ValueError) as e:
-                self.add("PARITY", "manifest", "warn", f"the manifests could not be compared: {e}", mfile)
+            mine, mine_m = open(os.path.join(tout, "content.json"), "rb").read(), read_manifest(os.path.join(tout, "content.files.json"))
+            ref_m = read_manifest(mpath)
+            same_c = open(cpath, "rb").read() == mine
+            m_diffs = self._manifest_diffs(ref_m, mine_m) if ref_m is not None and mine_m is not None else None
+            if same_c and m_diffs == []:
+                self.note(f"PARITY: the TypeScript compiler (cli/bin/build-tdd.ts) reproduced {where} byte for byte with TDD_GENERATED={generated}, "
+                          f"and the manifest's files, missing and warnings")
                 return
-            diffs = []
-            for k, f in (("files", lambda m: list((m.get("files") or {}).keys())), ("missing", lambda m: m.get("missing")), ("warnings", lambda m: m.get("warnings"))):
-                x, y = f(ma), f(mb)
-                if x != y:
-                    xs, ys = list(x or []), list(y or [])
-                    j = next((i for i in range(min(len(xs), len(ys))) if xs[i] != ys[i]), min(len(xs), len(ys)))
-                    diffs.append(f"{k} ({len(xs)} vs {len(ys)}; first at {j}: {xs[j] if j < len(xs) else None!r} vs {ys[j] if j < len(ys) else None!r})")
-            if diffs:
-                self.add("PARITY", "manifest", "warn", f"the TypeScript compiler's manifest differs from build_tdd.py's: {'; '.join(diffs)}", mfile)
+            # the build differs from the TypeScript compile: a fresh build_tdd.py compile decides whose difference it is
+            pout, perr = python_fresh()
+            if perr:
+                self.add("PARITY", "content", "error", f"build_tdd.py fails on {src} ({perr}) where the TypeScript compiler succeeded", src)
                 return
-            self.note(f"PARITY: the TypeScript compiler (cli/bin/build-tdd.ts) reproduced {where} byte for byte with TDD_GENERATED={generated}, "
-                      f"and the manifest's files, missing and warnings")
+            fresh_c, fresh_m = open(os.path.join(pout, "content.json"), "rb").read(), read_manifest(os.path.join(pout, "content.files.json"))
+            if fresh_c != mine:
+                self.add("PARITY", "content", "error", f"the TypeScript compiler's content.json differs from build_tdd.py's on {src}: "
+                         f"{self._first_diff(fresh_c, mine)}; fix cli/src/compile (build_tdd.py stays the reference until the cutover)", src)
+                return
+            d = self._manifest_diffs(fresh_m or {}, mine_m or {})
+            if d:
+                self.add("PARITY", "manifest", "warn", f"the TypeScript compiler's manifest differs from build_tdd.py's on {src}: {'; '.join(d)}", src)
+                return
+            why = (f"{where} differs from a fresh compile of the source (a stale build: rebuild)" if not same_c else
+                   f"{mfile} is missing or unreadable" if m_diffs is None else
+                   f"{mfile} differs from a fresh compile's ({'; '.join(m_diffs)}): a stale build, files found only under the build folder, "
+                   f"or another spelling of the packet path")
+            self.note(f"PARITY: {why}; the TypeScript compiler (cli/bin/build-tdd.ts) reproduced a fresh build_tdd.py compile byte for byte "
+                      f"with TDD_GENERATED={generated}, and its manifest's files, missing and warnings")
         finally:
             for t in tmps:
                 shutil.rmtree(t, ignore_errors=True)

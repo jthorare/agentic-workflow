@@ -3,11 +3,11 @@
 // sanitizer, a CRLF SVG that dash_proposed rewrites) and on $TDD_PARITY_PACKETS, with --no-copy and --strict too;
 // argv errors (exit code, stdout, stderr); the vocabulary against build_tdd.py's own objects; the sha256 pin.
 import { describe, expect, test } from "bun:test";
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { spawnSync } from "bun";
-import { gate, splitStderr } from "../../parity/gate";
+import { deprecationPair, gate, splitStderr } from "../../parity/gate";
 import { BUILD_TDD_SHA256, DOC } from "../../src/compile";
 import { sha256Hex } from "../../src/py/io";
 import { CITE_SOURCE, LEGEND_TONES, LINK_KEYS, MARK_SOURCE, SKIP_TAGS, SQL_KW, TOKEN_SOURCE, token_id } from "../../src/vocab";
@@ -67,6 +67,31 @@ describe.skipIf(!hasPython)("the TypeScript compiler matches build_tdd.py", () =
     }
   }, T);
 
+  test("bare attribute flags ({id}, {chip}, {state} ... are True): gate green, ids print as Python's True-2", () => {
+    const r = gate(join(CLI, "test", "compile", "fixtures", "bare"));
+    expect(r.problems).toEqual([]);
+    expect(r.summary).toBe("3 sections, 0 diagrams, 1 decisions, 0 PRs, 0 schema tables, 0 reference links (1 unlinked), 0 citations, 0 files (0 missing)");
+  }, T);
+
+  test("the gate compares a compiler line that looks like an interpreter warning (a TS mutant of it turns it red)", () => {
+    const { dir, packet } = edgeCopy();
+    try {
+      const hs = join(packet, "diagrams", "flow.hotspots.json");
+      const spec = JSON.parse(readFileSync(hs, "utf8"));
+      spec.boxes.push({ label: "x:1: Warning: y", x: 1, y: 1, w: 1, h: 1, href: "#nowhere2" });
+      writeFileSync(hs, JSON.stringify(spec));
+      expect(gate(packet).problems).toEqual([]);
+      const mutant = join(dir, "ts-mutant.sh");
+      writeFileSync(mutant, `#!/bin/bash\n"${process.execPath}" --no-install "${join(CLI, "bin", "build-tdd.ts")}" "$@" 2>"${dir}/err"; c=$?\nsed 's/Warning: y/Warning: z/' "${dir}/err" >&2\nexit $c\n`);
+      chmodSync(mutant, 0o755);
+      const r = gate(packet, { b: mutant });
+      expect(r.problems.some((p) => p.startsWith("stderr differs") && p.includes("Warning: z"))).toBe(true);
+      expect(r.notes.every((n) => n.includes("DeprecationWarning: 'maxsplit' is passed as positional argument"))).toBe(true);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }, T);
+
   for (const packet of PACKETS) {
     const name = basename(packet);
     test(`${name}: gate green, python vs ts`, () => {
@@ -98,7 +123,7 @@ describe.skipIf(!hasPython)("the TypeScript compiler matches build_tdd.py", () =
       try {
         const run = (cmd: string[]) => {
           const r = spawnSync(cmd, { cwd: packet, env: { ...process.env, TDD_GENERATED: "2000-01-01T00:00:00Z" }, stdout: "pipe", stderr: "pipe" });
-          return { exit: r.exitCode, stdout: r.stdout.toString(), stderr: splitStderr(r.stderr.toString()).own };
+          return { exit: r.exitCode, stdout: r.stdout.toString(), stderr: splitStderr(r.stderr.toString(), cmd[0] === "python3" ? "python" : "ts").own };
         };
         const a = argv(join(dir, "a"));
         const b = argv(join(dir, "b"));
@@ -138,6 +163,31 @@ describe.skipIf(!hasPython)("the TypeScript compiler matches build_tdd.py", () =
     }
   }, T);
 
+  test("bad output folders: the same exit code and traceback line as CPython, no bun stack dump", () => {
+    const { dir, packet } = edgeCopy();
+    const ro = join(dir, "ro");
+    try {
+      writeFileSync(join(dir, "afile"), "x");
+      mkdirSync(ro);
+      chmodSync(ro, 0o555);
+      const last = (s: string) => s.trimEnd().split("\n").pop();
+      for (const out of ["afile", "afile/sub", "ro/out", "ro/out/deeper"])
+        for (const flags of [[], ["--no-copy"]]) {
+          const o = join(dir, out);
+          const run = (cmd: string[]) => spawnSync([...cmd, "edge.md", o, ...flags], { cwd: packet, stdout: "pipe", stderr: "pipe" });
+          const py = run(["python3", "-I", "-B", "-W", "ignore", BUILD_TDD]);
+          const ts = run([process.execPath, "--no-install", join(CLI, "bin", "build-tdd.ts")]);
+          const tsErr = ts.stderr.toString();
+          expect({ out, flags, exit: ts.exitCode, last: last(tsErr) }).toEqual({ out, flags, exit: py.exitCode, last: last(py.stderr.toString()) });
+          expect(py.exitCode).toBe(1);
+          expect(/Bun v|\n\s+at /.test(tsErr)).toBe(false);
+        }
+    } finally {
+      chmodSync(ro, 0o755);
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }, T);
+
   test("vocab.ts is build_tdd.py's vocabulary (and eval/ev_common.py's TOKEN)", () => {
     const code = `
 import importlib.util, json, os, sys
@@ -163,6 +213,19 @@ print(json.dumps({"token": bt.TOKEN.pattern, "ev_token": ev.TOKEN.pattern, "cite
     expect(SQL_KW).toBe(g.sql);
     expect(["D7", "PR 7", "PR12a", "F3.2", "D-7", "OS-01", " pr 3 "].map(token_id)).toEqual(g.ids);
   }, T);
+});
+
+describe("the gate's stderr filter", () => {
+  test("only build_tdd.py's DeprecationWarning pair, only on Python runs", () => {
+    const pair = deprecationPair()!;
+    expect(pair[0]).toMatch(/build_tdd\.py:\d+: DeprecationWarning: 'maxsplit' is passed as positional argument$/);
+    const look = "warning: hotspot flow/'x:1: Warning: y': anchor #nowhere2 is not defined on the page";
+    const other = "/elsewhere/build_tdd.py:1: SyntaxWarning: invalid escape sequence";
+    const err = [pair[0], pair[1], look, other, ""].join("\n");
+    expect(splitStderr(err, "python")).toEqual({ own: [look, other, ""].join("\n"), interpreter: [pair[0], pair[1]] });
+    expect(splitStderr(err, "ts")).toEqual({ own: err, interpreter: [] });
+    expect(splitStderr([pair[0], "  something else", ""].join("\n"), "python").interpreter).toEqual([]);
+  });
 });
 
 describe("the port's pins", () => {

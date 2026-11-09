@@ -5,6 +5,9 @@
 // argument is provably a RegExp: a regex literal, new RegExp(...) / RegExp(...), a name this file binds to one of
 // those (and to nothing else), or an expression cast `as RegExp` (which tsc rejects for a string).
 
+import { readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
+
 type Kind = "id" | "str" | "tmpl" | "regex" | "num" | "punct";
 interface Tok {
   kind: Kind;
@@ -253,4 +256,20 @@ export function scan(src: string): Hit[] {
     hits.push({ line: t.line, why });
   }
   return hits;
+}
+
+/** The files the ban walks: every .ts / .tsx / .js / .mjs / .cjs under these folders of the cli, recursively. */
+export const SCANNED = ["src", "bin", "parity"];
+
+export function scannedFiles(root: string): string[] {
+  const out: string[] = [];
+  const walk = (dir: string) => {
+    for (const name of readdirSync(dir)) {
+      const p = join(dir, name);
+      if (statSync(p).isDirectory()) walk(p);
+      else if (/\.(ts|tsx|js|mjs|cjs)$/.test(name)) out.push(p);
+    }
+  };
+  for (const d of SCANNED) walk(join(root, d));
+  return out;
 }

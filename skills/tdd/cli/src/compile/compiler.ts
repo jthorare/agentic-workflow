@@ -3,7 +3,6 @@
 // asset references), because content.json, content.files.json and the summary line depend on that order.
 // Node dicts are plain objects (their keys are fixed words, so insertion order is kept); every dict whose keys come
 // from the source (defs, glossary, refs families, meta passthrough) is a Map, as Python's dict.
-import { mkdirSync } from "node:fs";
 import * as py from "../py";
 import { PyError } from "../py/errors";
 import { float as floatOf } from "../py/num";
@@ -15,6 +14,7 @@ import * as sd from "../sd";
 import { CITE, LEGEND_TONES, LINK_KEYS, SQL_KW, TOKEN, token_id } from "../vocab";
 import type { Args } from "./args";
 import { parse_attrs, parse_ext, split_title, type Attrs, type Block, type BoxBlock } from "./attrs";
+import { makedirs } from "./errors";
 import { load_prs } from "./prs";
 import { link_refs, type Stats } from "./refs";
 import { sanitize_html } from "./sanitize";
@@ -144,7 +144,7 @@ export class Compiler {
     let i = 2;
     let cand = b;
     while (this.ids.has(cand)) {
-      cand = `${b}-${i}`;
+      cand = `${pyStr(b)}-${i}`; // f"{base}-{i}": a bare {id} flag is True, which Python prints as "True-2"
       i += 1;
     }
     this.ids.add(cand);
@@ -798,7 +798,7 @@ export class Compiler {
   // -- page
   structure(text: string): [string | null, Block[], Section[]] {
     text = py.replace(py.replace(py.replace(text, "\r\n", "\n"), "&#91;", "["), "&#93;", "]");
-    const blocks = parse_ext(text.split("\n"));
+    const blocks = parse_ext(py.str.split(text, "\n"));
     let title: string | null = null;
     const pre: Block[] = [];
     const sections: Section[] = [];
@@ -919,7 +919,7 @@ export class Compiler {
         readingMinutes: Math.max(1, py.roundInt(words / 230)),
       },
     };
-    mkdirSync(this.out_dir, { recursive: true });
+    makedirs(this.out_dir, true);
     const cpath = py.path.join(this.out_dir, "content.json");
     py.io.writeText(cpath, py.json.dumps(content, { indent: 1, ensureAscii: false }));
     const over: string[] = [];
