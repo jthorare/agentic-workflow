@@ -1,0 +1,6 @@
+{"schema": "tdd-eval-output/1", "kind": "artifact", "packet": "org-web-app/sample-ranking@rev4", "generated": "2026-01-08T10:05:00Z",
+ "scores": [
+  {"name": "page_exists", "value": 1.0, "status": "ok", "method": "the page file exists"},
+  {"name": "page_size", "value": null, "status": "ok", "method": "page bytes", "metrics": {"bytes": 120, "limit": 16777216}},
+  {"name": "artifact_check", "value": null, "status": "not run", "method": "render check", "reason": "no browser here"}
+ ]}

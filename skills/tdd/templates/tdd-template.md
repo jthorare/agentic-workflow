@@ -1,4 +1,4 @@
-<!-- House TDD template (tdd skill). Syntax: ~/.claude/skills/tdd/scripts/build_tdd.py docstring; how to write each part: ~/.claude/skills/tdd/SKILL.md. Ticket {{ticket}}; evidence read at {{sha}} ({{sha_date}}), recorded in meta.json. -->
+<!-- House TDD template (tdd skill). Syntax: the docstring of the tdd skill's scripts/build_tdd.py; how to write each part: the tdd skill's SKILL.md. Ticket {{ticket}}; evidence read at {{sha}} ({{sha_date}}), recorded in meta.json. -->
 <!-- Comment rules: build_tdd.py drops a comment only when it sits on ONE line; a comment split over lines renders as text. Never put a comment inside ::::: options, directly inside :::: cols, or before the first #### of a cards box. Delete each guidance comment once its part is written. -->
 <!-- Keep the six sections in this order. Placeholders are in <angle brackets>; replace every one. Reference tokens (R1, Q1, D1, PR 3, ...) must link to an anchor on the page: the compiler links what it can find, and the linter fails the rest. -->
 
@@ -191,7 +191,7 @@ CREATE TABLE <new_table> (
 ::::
 
 :::: fold PR order · Each PR with its proof and rollback {#prs}
-<!-- One prs/pr-NN.md per PR (front matter: milestone, title, change, rollback; shape: ~/.claude/skills/system-design/templates/pr-cards.md). The marker comment below becomes the milestone-grouped PR cards, and "PR 3" anywhere on the page then links to its card. -->
+<!-- One prs/pr-NN.md per PR (front matter: milestone, title, change, rollback; shape: templates/pr-cards.md in the system-design scripts the tdd skill resolves, by default its vendor/system-design). The marker comment below becomes the milestone-grouped PR cards, and "PR 3" anywhere on the page then links to its card. -->
 Sized by dependency, not by date. Each PR merges dark behind the flag, or adds no behavior. {small; muted}
 
 <!-- PR-CARDS -->

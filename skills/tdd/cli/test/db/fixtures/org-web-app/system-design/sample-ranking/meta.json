@@ -1,0 +1,12 @@
+{
+  "title": "Sample ranking TDD",
+  "people": [{"role": "Author", "name": "Owner"}, {"role": "Reviewer", "name": "Reviewer"}],
+  "updated": "2026-01-06",
+  "rev": 4,
+  "rev_note": "synthetic fixture for the load-db tests",
+  "status": "Draft for review",
+  "sha": "0123456789",
+  "artifact_url": "https://example.com/artifact/sample-ranking",
+  "notion_url": "https://example.com/notion/sample-ranking",
+  "published": "2026-01-10"
+}

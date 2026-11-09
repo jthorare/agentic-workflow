@@ -61,16 +61,17 @@ The eval runs as part of the work, not after it (`../SKILL.md`, step 5; `../refe
 
 ## Proof commands (every worker runs what applies, records output in its return)
 ```
-cd ~/.claude/skills/tdd/app && bun install && bunx tsc -p . --noEmit            # TypeScript 7
+T="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/tdd"; S="${SYSTEM_DESIGN_SKILL:-$T/vendor/system-design}"   # T and S as SKILL.md sets them
+cd "$T/app" && bun install && bunx tsc -p . --noEmit                         # TypeScript 7
 bun run build.ts ~/.system-design/<org>-web-app/system-design/<slug>/build
 bun run check_hydrate.ts  <same build dir>/tdd.html                                # jsdom hydrate: zero console errors
-node ~/.claude/skills/system-design/scripts/artifact_check.mjs <build dir>/tdd.html  # contract + 1440/390 light/dark renders
-python3 -I ~/.claude/skills/tdd/scripts/build_tdd.py <slug>.md build  # in the reference packet dir
-~/.local/share/tdd-skill/venv/bin/python -I ~/.claude/skills/tdd/scripts/eval_packet.py <packet dir>   # eval lane -> <packet>/build/eval/ (D18: every worker, every reviewer)
+node "$S/scripts/artifact_check.mjs" <build dir>/tdd.html                        # contract + 1440/390 light/dark renders
+python3 -I "$T/scripts/build_tdd.py" <slug>.md build  # in the reference packet dir
+~/.local/share/tdd-skill/venv/bin/python -I "$T/scripts/eval_packet.py" <packet dir>   # eval lane -> <packet>/build/eval/ (D18: every worker, every reviewer)
 ```
 Screenshots: playwright-core is installed under `~/.local/share/system-design-skills/node_modules`; the helper `<scratchpad>/shoot.mjs (a playwright-core screenshot helper; any equivalent works) <file.html> <out-prefix> [width]` writes `<prefix>-top.png` and `<prefix>-full.png`. Reference screenshots to match: `~/.system-design/house/system-design/tdd-system/shots/reference-1440-*.png`.
 
 ## Rules for every worker
-- Commit nothing, push nothing, switch no branch. `~/.claude/skills` has other sessions' uncommitted edits: do not touch files outside your scope.
+- Commit nothing, push nothing, switch no branch. The skill folder may hold other sessions' uncommitted edits: do not touch files outside your scope.
 - Never invent a measurement, a screenshot, a count or a test result. Unverified claims are marked unverified in the return.
 - Typed return at the end: `DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED | NEEDS_HUMAN`, with the files written, the proof output (counts, not prose), the eval summary line and the scorers that moved (a reviewer: the score diff), and open requests for other owners.

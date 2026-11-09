@@ -13,7 +13,7 @@ Status **{{status}}** · rev {{rev}} ({{rev_note}}) · updated {{updated}} · co
 - Slices are under ~{{budget}} tokens (estimate: chars/4). `tokens.json` has the count for every file.
 
 ## Scores
-The eval lane scores this packet into `build/eval/` (`../eval/` from this folder) when it has run: `output.artifact.json`, `output.packet.json`, `output.implementation.json`, `output.qa.json`, `output.bugs.json`, `output.tokens.json`, plus `probe.json` and `history.jsonl` (one line per run). Read the ones your task touches before you start. If you change the packet, rebuild, rerun `write_agents.py`, then run `~/.local/share/tdd-skill/venv/bin/python -I ~/.claude/skills/tdd/scripts/eval_packet.py <packet>` and leave your own scores: the summary line and every scorer that moved, in your return. A reviewer returns the score diff. Never pass `--push`.
+The eval lane scores this packet into `build/eval/` (`../eval/` from this folder) when it has run: `output.artifact.json`, `output.packet.json`, `output.implementation.json`, `output.qa.json`, `output.bugs.json`, `output.tokens.json`, plus `probe.json` and `history.jsonl` (one line per run). Read the ones your task touches before you start. If you change the packet, rebuild, rerun `write_agents.py`, then run `~/.local/share/tdd-skill/venv/bin/python -I <tdd skill>/scripts/eval_packet.py <packet>` (`<tdd skill>`: the folder the tdd skill is installed in) and leave your own scores: the summary line and every scorer that moved, in your return. A reviewer returns the score diff. Never pass `--push`.
 
 ## Which file for which task
 | Task | Read |

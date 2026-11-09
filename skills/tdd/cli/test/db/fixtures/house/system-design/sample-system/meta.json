@@ -1,0 +1,10 @@
+{
+  "title": "Sample system",
+  "people": [{"role": "Author", "name": "Owner"}],
+  "updated": "2026-01-08",
+  "rev": 2,
+  "rev_note": "synthetic fixture: the older compiler and linter",
+  "status": "As built",
+  "artifact_url": "https://example.com/artifact/sample-system",
+  "published": "2026-01-08"
+}

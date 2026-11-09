@@ -5,7 +5,7 @@ The published claude.ai artifact is the source of truth for a TDD. `<slug>.md` a
 ## 1 · Before the first publish
 
 - [ ] `build_tdd.py`, `build.ts`, `write_agents.py` ran on the current source (SKILL.md step 5); `lint_packet.py <packet>` reports 0 errors.
-- [ ] `node ~/.claude/skills/system-design/scripts/artifact_check.mjs build/tdd.html shots` exits 0, and you opened its 1440 and 390 px, light and dark screenshots.
+- [ ] `node "$S/scripts/artifact_check.mjs" build/tdd.html shots` exits 0 (`S`: the system-design scripts the skill resolves, see `sd_root` in `scripts/build_tdd.py`), and you opened its 1440 and 390 px, light and dark screenshots.
 - [ ] `build/content.files.json` has an empty `missing` list and an empty `over_15mb` list.
 - [ ] You read `build/tdd.html` in full. The Artifact tool does not publish a file Claude has not read, and a script wrote this one (it is a few hundred KB: the inline React bundle plus the content; read it with `allow_large` or in parts).
 - [ ] The packet folder is inside this session's working directories (add `~/.system-design` as one if it is not). The tool takes `files` sources only from the working directories or the scratchpad.

@@ -55,7 +55,7 @@ Every reference token on the page links to its definition (D5): D-numbers, Q-num
 
 ## 7 · What the linter checks
 
-`python3 -I ~/.claude/skills/tdd/scripts/lint_packet.py <packet>` reads the source, `meta.json`, `prs/`, `diagrams/`, `mockups/`, `schema/`, the build (`build/content.json`, `content.files.json`) and the repo through read-only git. `references/validators.md` (the lint worker's) is the authority on each rule, its severity and its fix; the ids below are the ones `lint_packet.py` declared on 2026-11-08.
+`python3 -I "$T/scripts/lint_packet.py" <packet>` (`T` as SKILL.md sets it) reads the source, `meta.json`, `prs/`, `diagrams/`, `mockups/`, `schema/`, the build (`build/content.json`, `content.files.json`) and the repo through read-only git. `references/validators.md` (the lint worker's) is the authority on each rule, its severity and its fix; the ids below are the ones `lint_packet.py` declared on 2026-11-08.
 
 | Rule | Evidence it guards | Checks (id: severity) |
 |---|---|---|

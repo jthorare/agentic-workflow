@@ -1,0 +1,10 @@
+{
+ "packet": "(rewritten by the test)",
+ "build": "(rewritten by the test)",
+ "compiled": false,
+ "notes": [],
+ "counts": {"errors": 0, "warnings": 1, "by_rule": {"CITES": 1}},
+ "findings": [
+  {"rule": "CITES", "check": "CITES/no-line", "severity": "warn", "file": "sample-system.md", "line": 12, "message": "`lib/c.py` cites a code file without a line"}
+ ]
+}

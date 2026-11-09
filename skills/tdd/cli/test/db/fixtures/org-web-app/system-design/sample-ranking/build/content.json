@@ -1,0 +1,39 @@
+{
+ "template": "tdd/1",
+ "generated": "2026-01-08T10:00:00Z",
+ "titleText": "Sample ranking TDD",
+ "meta": {"rev": 4},
+ "stats": {"sections": 2, "diagrams": 1, "prs": 3, "decisions": 5},
+ "sections": [{"id": "design"}, {"id": "questions"}],
+ "schema": [{"table": "sample_a"}, {"table": "sample_b"}],
+ "decisions": [
+  {"id": "D1", "anchor": "d1", "question": "Keep it local first", "status": "Owner, 2026-01-05 · in chat", "state": "done", "section": "questions",
+   "quote": "\"We can  keep it local first.\"", "reading": "Read as: a local database first, hosted later.", "decidedOn": "2026-01-05", "decidedBy": "Owner"},
+  {"id": "D2", "anchor": "d2", "question": "Defer the second source", "status": "Deferred · Owner, 2026-01-06", "state": "done", "section": "questions",
+   "quote": "", "reading": "", "decidedOn": "2026-01-06", "decidedBy": "Deferred"},
+  {"id": "D3", "anchor": "d3", "question": "Where do the dates come from?", "status": "Open · needs the vendor", "state": "open", "section": "questions",
+   "quote": "", "reading": "", "decidedOn": null, "decidedBy": "Open"},
+  {"id": "D4", "anchor": "d4", "question": "A direction", "status": "Owner, 2026-01-07 · direction, not built", "state": "open", "section": "questions",
+   "quote": "\"go this way\"", "reading": "", "decidedOn": "2026-01-07", "decidedBy": "Owner"},
+  {"id": "R2", "anchor": "r2", "question": "A provisional rule", "status": "Provisional · Owner, 2026-01-06", "state": "open", "section": "questions",
+   "quote": "", "reading": "", "decidedOn": "2026-01-06", "decidedBy": "Provisional"}
+ ],
+ "refs": {
+  "linked": 5,
+  "unlinked": ["R4"],
+  "links": [
+   {"token": "D1", "family": "D", "section": "design", "anchor": "d1", "linked": true},
+   {"token": "D1", "family": "D", "section": "questions", "anchor": "d1", "linked": true},
+   {"token": "PR 2", "family": "PR", "section": "design", "anchor": "pr-2", "linked": true},
+   {"token": "R2", "family": "R", "section": "questions", "anchor": "r2", "linked": true},
+   {"token": "M1", "family": "M", "section": "design", "anchor": "m1", "linked": true},
+   {"token": "R4", "family": "R", "section": "questions", "anchor": null, "linked": false}
+  ]
+ },
+ "cites": [
+  {"text": "src/a.ts:10-20", "path": "src/a.ts", "from": 10, "to": 20, "section": "design", "anchor": "design"},
+  {"text": "src/a.ts:10-20", "path": "src/a.ts", "from": 10, "to": 20, "section": "questions", "anchor": "d1"},
+  {"text": "docs/notes.md", "path": "docs/notes.md", "from": null, "to": null, "section": "design", "anchor": "design"},
+  {"text": "Short.ts:5", "path": "Short.ts", "from": 5, "to": null, "section": "questions", "anchor": "d3"}
+ ]
+}

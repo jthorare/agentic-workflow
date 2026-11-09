@@ -11,7 +11,7 @@
 .pr .k { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--bg); border: 1px solid var(--line); font: 600 0.8125rem/1 var(--f-body); font-variant-numeric: tabular-nums; }
 .pr .t b { display: block; }
 .pr .t span { font-size: 0.8125rem; color: var(--muted); }
-.pr .t::after { content: "Open the deep dive \2192"; display: block; font: 500 0.75rem var(--f-body); color: var(--accent); margin-top: 4px; }
+.pr .t::after { content: "Open the deep dive \2192"; display: block; font: 500 0.75rem var(--f-body); color: var(--accent-ink); margin-top: 4px; }
 .pr .rb { font-size: 0.8125rem; background: var(--bg); border-radius: 6px; padding: 8px 10px; }
 .pr .rb b { display: block; font: 500 0.6875rem/1.5 var(--f-body); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 dialog.prd { width: min(1100px, 100vw - 32px); max-height: calc(100vh - 32px); border: 1px solid var(--line); border-radius: 12px; padding: 0; background: var(--surface); color: var(--ink); }

@@ -1,0 +1,5 @@
+{"schema": "tdd-eval-output/1", "kind": "artifact", "packet": "house/sample-system@rev1", "generated": "2026-01-07T09:10:00Z",
+ "scores": [
+  {"name": "page_exists", "value": 1.0, "status": "ok", "method": "the page file exists"},
+  {"name": "lint", "value": 0.9, "status": "ok", "method": "lint score"}
+ ]}
