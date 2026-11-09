@@ -16,13 +16,14 @@ using Aw.Sindri.Tests.Sandbox.Denials;
 
 namespace Aw.Sindri.Tests.AllowDenial;
 
-/// <summary>The Allow button (sandbox spec §3.6): a draft profile edit under the blocked run's repo, then the owner's approval. Only a host or a not-bound home path can be allowed.</summary>
+/// <summary>The Allow button (sandbox spec §3.6): a live-profile edit under the blocked run's repo, recorded as 'sandbox.allowed' with the caller's actor; it takes effect once the profile is approved. Only a host or a not-bound home path can be allowed.</summary>
 [Lane(TestLane.Unit)]
 public sealed class AllowDenialTests
 {
     private static readonly DateTimeOffset _noon = new(2026, 10, 27, 12, 0, 0, TimeSpan.Zero);
     private static readonly LaunchId _launch = LaunchId.From(DenialsRendererTests.LaunchOne);
 
+    private readonly SliceHarness _slice = new();
     private readonly FakeWriter _writer = new();
     private readonly InMemoryProfiles _profiles = new();
     private readonly List<DenialEntry> _entries =
@@ -37,16 +38,23 @@ public sealed class AllowDenialTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
+    private async Task<IDisposable> AsHuman()
+    {
+        _ = await _slice.HoldLease();
+        return _slice.Callers.Enter(A.Caller().Human().Build());
+    }
+
     private AllowDenialService Service()
     {
         var files = new StubFiles(new DenialFile(_launch, _noon, _entries, []));
         var owners = new StubOwners(_repo is { } repo ? new Dictionary<LaunchId, LaunchOwner> { [_launch] = new(A.FirstItemId, repo) } : []);
-        return new AllowDenialService(files, owners, _writer, _profiles);
+        return new AllowDenialService(files, owners, _writer, _profiles, _slice.Callers, _slice.Store, _slice.Held, _slice.Events);
     }
 
     [Fact]
     public async Task Allowing_a_host_edits_the_live_profile_under_the_runs_repo_and_waits_for_approval()
     {
+        using var entered = await AsHuman();
         var result = await Service().Handle(new AllowDenialRequest(_launch, DenialKind.Network, "github.com"), Token);
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
@@ -57,6 +65,7 @@ public sealed class AllowDenialTests
     [Fact]
     public async Task Allowing_a_home_path_writes_it_as_the_profile_holds_it()
     {
+        using var entered = await AsHuman();
         _writer.Stored = ".cache/tool";
 
         var result = await Service().Handle(new AllowDenialRequest(_launch, DenialKind.Path, "/home/o/.cache/tool"), Token);
@@ -68,6 +77,7 @@ public sealed class AllowDenialTests
     [Fact]
     public async Task An_entry_the_approved_profile_already_holds_is_allowed()
     {
+        using var entered = await AsHuman();
         var approved = new SindriProfile(1, "o", Sandbox: new SandboxSettings(Repos: new Dictionary<string, SandboxRepoSettings>(StringComparer.Ordinal) { ["web"] = new(Hosts: ["github.com"]) }));
         _ = await _profiles.Save(new LoadedProfile(approved, ProfileHashing.Of(AwJson.Serialize(approved, SliceHarness.Json)), "/home/profile.yaml"), Token);
 
@@ -80,6 +90,7 @@ public sealed class AllowDenialTests
     [Fact]
     public async Task Allowing_twice_asks_for_approval_twice_and_writes_one_entry()
     {
+        using var entered = await AsHuman();
         _ = await Service().Handle(new AllowDenialRequest(_launch, DenialKind.Network, "github.com"), Token);
         _writer.Added = false;   // the live profile already held it
 
@@ -95,6 +106,7 @@ public sealed class AllowDenialTests
     [InlineData(DenialKind.Network, "never-blocked.example")]
     public async Task What_cannot_be_allowed_is_refused_and_the_profile_is_untouched(DenialKind kind, string target)
     {
+        using var entered = await AsHuman();
         var result = await Service().Handle(new AllowDenialRequest(_launch, kind, target), Token);
 
         Assert.True(result.IsError);
@@ -105,6 +117,7 @@ public sealed class AllowDenialTests
     [Fact]
     public async Task An_unknown_launch_is_refused()
     {
+        using var entered = await AsHuman();
         var result = await Service().Handle(new AllowDenialRequest(LaunchId.From(DenialsRendererTests.LaunchTwo), DenialKind.Network, "github.com"), Token);
 
         Assert.True(result.IsError);
@@ -115,6 +128,7 @@ public sealed class AllowDenialTests
     [Fact]
     public async Task A_run_whose_item_has_no_repo_is_refused()
     {
+        using var entered = await AsHuman();
         _repo = null;
 
         var result = await Service().Handle(new AllowDenialRequest(_launch, DenialKind.Network, "github.com"), Token);
@@ -122,6 +136,32 @@ public sealed class AllowDenialTests
         Assert.True(result.IsError);
         Assert.Equal(SindriErrors.SandboxAllowRefused.Code, result.Error.Code);
         Assert.Empty(_writer.Calls);
+    }
+
+    [Fact]
+    public async Task A_launched_session_allows_a_denial_and_the_event_names_that_session()
+    {
+        _ = await _slice.HoldLease();
+        using var entered = _slice.Callers.Enter(A.Caller().Launched().Build());
+
+        var result = await Service().Handle(new AllowDenialRequest(_launch, DenialKind.Network, "github.com"), Token);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        Assert.Equal([("web", DenialKind.Network, "github.com")], _writer.Calls);
+        var recorded = Assert.Single(_slice.Store.Events);
+        var payload = _slice.Events.Payload<SandboxAllowed>(recorded).Value;
+        Expect.Equal((EventTypes.SandboxAllowed, "session:launch:LCH-00000000000000000000000000000001"), (recorded.Envelope.Type, recorded.Envelope.Actor));
+        Expect.Equal((_launch, "web", "Network", "github.com"), (payload.Launch, payload.Repo.Value, payload.Kind, payload.Entry));
+    }
+
+    [Fact]
+    public async Task A_refusal_records_no_event()
+    {
+        using var entered = await AsHuman();
+
+        _ = await Service().Handle(new AllowDenialRequest(_launch, DenialKind.Policy, "git push"), Token);
+
+        Assert.Empty(_slice.Store.Events);
     }
 
     [Fact]
