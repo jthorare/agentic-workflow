@@ -8,8 +8,9 @@ namespace Aw.Sindri.Features.PollConnections;
 
 /// <summary>
 /// Reads one (connection, event kind) forward: a regular poll is one provider call; a catch-up (on control-plane start and after a wake) repeats the call, saving the cursor after each, until a call brings
-/// nothing new or <c language="text">pages</c> calls are done. Each provider call itself reads up to its own page cap (<see cref="PollLimits.DefaultPageCap"/>). A read that is still getting new events at the cap, or whose
-/// poller reported a gap, records ONE catchup.capped and leaves the cursor where it stopped; the next poll goes on from there. A repeat of an event (a poller may overlap) is told apart by its delivery id
+/// nothing new or <c language="text">pages</c> calls are done. Each provider call itself reads up to its own page cap (<see cref="PollLimits.DefaultPageCap"/>). A read that is still getting new events at the cap
+/// records ONE catchup.capped and leaves the cursor where it stopped; the next poll goes on from there. A poller that reported a gap also records ONE catchup.capped, but its cursor has moved to the newest event
+/// read (<see cref="PollResult.Gap"/>): the older events start no run. A repeat of an event (a poller may overlap) is told apart by its delivery id
 /// and never counts as new, so an overlap cannot keep the loop going and starts no second run. Records 'connection.polled' once when the read saw events.
 /// </summary>
 /// <param name="round">One provider call and its fan-out.</param>

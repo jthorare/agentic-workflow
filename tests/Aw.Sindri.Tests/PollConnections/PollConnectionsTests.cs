@@ -66,6 +66,69 @@ public sealed class PollConnectionsTests
     }
 
     [Fact]
+    public async Task A_failed_start_saves_the_backoff_so_the_next_tick_leaves_the_provider_alone()
+    {
+        await Seeded("c0");
+        _ = await _world.GoLive("all-labels");
+        var poller = new ScriptedEventPoller("linear", (_, _) => PollWorld.Page("c1", PollWorld.Event("linear:h-1")));
+        var clock = _world.Connections.Clock;
+        _world.Starter.Unreachable = true;
+
+        _ = await _world.Tick(poller);
+        var saved = (await _world.Cursors.Get(PollWorld.Name, PollWorld.Kind, PollWorld.Token)).Value!;
+
+        Assert.Equal("c0", saved.Value);
+        Assert.Equal(1, saved.Failures);
+        Assert.Equal(clock.GetUtcNow() + PollBackoff.BaseDelay, saved.BackoffUntil);
+
+        clock.Advance(TimeSpan.FromSeconds(30));   // the service's next tick
+        _ = await _world.Tick(poller);
+
+        Assert.Equal(1, poller.Calls);
+    }
+
+    [Fact]
+    public async Task A_delivery_whose_launch_failed_is_a_duplicate_on_the_next_poll_so_the_group_moves_on()
+    {
+        await Seeded("c0");
+        _ = await _world.GoLive("all-labels");
+        var poller = new ScriptedEventPoller("linear", (_, _) => PollWorld.Page("c1", PollWorld.Event("linear:h-1"), PollWorld.Event("linear:h-2")));
+        _world.Starter.FailNextLaunch = true;
+
+        _ = await _world.Tick(poller);
+
+        Assert.Equal("c0", (await _world.Cursors.Get(PollWorld.Name, PollWorld.Kind, PollWorld.Token)).Value!.Value);
+
+        _world.Connections.Clock.Advance(_interval);
+        _ = await _world.Tick(poller);
+
+        Assert.Equal("c1", (await _world.Cursors.Get(PollWorld.Name, PollWorld.Kind, PollWorld.Token)).Value!.Value);
+        _ = Assert.Single(_world.Starter.Requests);   // h-2; h-1 keeps its failed run and is skipped as a duplicate
+        Assert.Contains(EventTypes.WorkflowTriggerSkipped, _world.Recorded(), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_trigger_that_watches_a_group_again_starts_nothing_for_the_events_in_between()
+    {
+        await Seeded("c0");
+        _ = await _world.GoLive("first");
+        var poller = new ScriptedEventPoller("linear", (cursor, _) => cursor is null ? PollWorld.Page("c9") : PollWorld.Page("c9", PollWorld.Event("linear:h-7")));
+        var clock = _world.Connections.Clock;
+
+        _ = await _world.Tick(poller);
+        await _world.Archive("first");
+        clock.Advance(_interval);
+        _ = await _world.Tick(poller);   // nothing watches the group: its cursor loses its value
+        _ = await _world.GoLive("second");
+        clock.Advance(_interval);
+        _ = await _world.Tick(poller);
+
+        Assert.DoesNotContain(_world.Starter.Requests, static r => r.Slug.Value == "second");
+        Assert.Null(poller.Cursors[^1]);   // the second trigger's first poll is a baseline
+        Assert.Equal("c9", (await _world.Cursors.Get(PollWorld.Name, PollWorld.Kind, PollWorld.Token)).Value!.Value);
+    }
+
+    [Fact]
     public async Task A_catch_up_that_fails_is_asked_for_again()
     {
         await _world.Connect();   // the wake request starts pending: this first run is the catch-up of a start

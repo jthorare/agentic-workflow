@@ -14,7 +14,8 @@ namespace Aw.Sindri.Features.PollConnections;
 /// takes it; the run's occurrence is the delivery id (<see cref="DeliveryOccurrence"/>), and the cursor is saved only after the runs started (<see cref="PollRound"/>).
 /// On the first run after a control-plane start and after <see cref="PollWake"/> was requested (the machine woke) every group is read forward at once (<see cref="CatchUp"/>), interval or not, but never inside a backoff.
 /// An error on one group (token unreadable, answer in a shape the poller doesn't know, a failed start) is logged by code, counted in the run's summary and leaves the others to run; when it came during a catch-up, the
-/// catch-up is asked for again. A group whose connection is missing, not connected, or has no poller for its preset is skipped.
+/// catch-up is asked for again. A group whose connection is missing, not connected, or has no poller for its preset is skipped. A saved cursor that no active trigger watches any more loses its value,
+/// so a trigger that watches it later starts with a baseline and nothing for the events in between.
 /// </summary>
 /// <param name="source">Collects the active workflows' triggers into groups.</param>
 /// <param name="reader">Reads one group, once or forward.</param>
@@ -48,12 +49,6 @@ internal sealed partial class PollConnectionsService(
             return groups.Error;
         }
 
-        if (groups.Value.Count == 0)
-        {
-            return ScheduledResult.Quiet;
-        }
-
-        var settings = await Settings(cancellationToken).ConfigureAwait(false);
         var list = await cursors.List(cancellationToken).ConfigureAwait(false);
         if (list.IsError)
         {
@@ -61,9 +56,22 @@ internal sealed partial class PollConnectionsService(
             return list.Error;
         }
 
+        var now = clock.GetUtcNow();
+        var forgot = await Forget(groups.Value, list.Value, now, cancellationToken).ConfigureAwait(false);
+        if (forgot.IsError)
+        {
+            RequestAgain(catchUp);
+            return forgot.Error;
+        }
+
+        if (groups.Value.Count == 0)
+        {
+            return ScheduledResult.Quiet;
+        }
+
+        var settings = await Settings(cancellationToken).ConfigureAwait(false);
         var byKey = list.Value.ToDictionary(static c => (c.Connection, c.Kind.Key));
         var totals = new Totals();
-        var now = clock.GetUtcNow();
         foreach (var group in groups.Value)
         {
             var cursor = byKey.GetValueOrDefault((group.Connection, group.Kind.Key));
@@ -75,6 +83,23 @@ internal sealed partial class PollConnectionsService(
         }
 
         return totals.ToResult();
+    }
+
+    // why: a cursor whose group has no active trigger left would, once a trigger watches it again, read forward from where the last one stopped and start runs for every event since
+    // (an archived workflow, a revision without the trigger, then a new one). Its value is dropped, so the next poll of the group is a baseline that starts nothing; the backoff stays.
+    private async ValueTask<Result<Unit>> Forget(IReadOnlyList<PollGroup> groups, IReadOnlyList<PollCursor> saved, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        var watched = groups.Select(static g => (g.Connection, g.Kind.Key)).ToHashSet();
+        foreach (var cursor in saved.Where(c => c.Value is not null && !watched.Contains((c.Connection, c.Kind.Key))))
+        {
+            var written = await cursors.Save(cursor with { Value = null, UpdatedAt = now }, cancellationToken).ConfigureAwait(false);
+            if (written.IsError)
+            {
+                return written.Error;
+            }
+        }
+
+        return Unit.Value;
     }
 
     // An error counts and asks for the catch-up again; a null value (no usable connection or poller) counts for nothing.

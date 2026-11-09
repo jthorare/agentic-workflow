@@ -71,6 +71,13 @@ internal sealed class PollWorld
         return WorkflowSlug.From(slug);
     }
 
+    /// <summary>Archives the workflow with this slug: it leaves the list and its trigger stops watching.</summary>
+    public async Task Archive(string slug)
+    {
+        var record = (await Workflows.List(includeArchived: false, Token)).Value.Single(r => r.Slug.Value == slug);
+        _ = (await Workflows.Archive(record.Id, Token)).Value;
+    }
+
     public static PolledEvent Event(string key, params (string Name, string Value)[] fields) =>
         new(key, Kind, KnownInstants.Epoch, fields.ToDictionary(static f => f.Name, static f => f.Value, StringComparer.Ordinal));
 
@@ -104,6 +111,9 @@ internal sealed class PollWorld
 
         public bool Skip { get; set; }
 
+        /// <summary>When true, the next start records its run and then fails its launch, as the real starter does for a launch error other than Temporal down (the run stays, failed).</summary>
+        public bool FailNextLaunch { get; set; }
+
         public async ValueTask<Result<GraphStart>> Start(GraphStartRequest request, CancellationToken cancellationToken)
         {
             var id = WorkflowRunId.Of(request.Slug, request.Revision, request.Occurrence);
@@ -121,6 +131,12 @@ internal sealed class PollWorld
             if (inserted.IsError)
             {
                 return inserted.Error;
+            }
+
+            if (FailNextLaunch)
+            {
+                FailNextLaunch = false;
+                return SindriErrors.InvalidQuery.With("the workflow refused its input");
             }
 
             Requests.Add(request);

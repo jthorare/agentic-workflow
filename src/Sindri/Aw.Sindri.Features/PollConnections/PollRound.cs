@@ -12,7 +12,8 @@ namespace Aw.Sindri.Features.PollConnections;
 /// <summary>
 /// One provider call for one (connection, event kind) and what follows it: the events fan out to the triggers that watch the group, each trigger starts a run whose occurrence is the delivery id,
 /// and only then is the cursor saved. A start that fails for a reason other than "this delivery already has its run" (a Temporal outage, a store error) stops the round with the cursor where it was,
-/// so the next poll reads the same events again; the runs that did start are refused there as duplicates. A rate-limited answer or an error saves the backoff and keeps the cursor value.
+/// so the next poll reads the same events again after the backoff; the runs that did start are refused there as duplicates. A launch that fails for any other reason keeps its failed run under the delivery's id
+/// (<c>GraphRunStarter</c>), so that event is a duplicate on the next poll and cannot hold the group back. A rate-limited answer, a poller error or a failed start saves the backoff and keeps the cursor value.
 /// </summary>
 /// <param name="starter">Starts, queues or skips a run.</param>
 /// <param name="cursors">Where cursors are saved.</param>
@@ -37,9 +38,7 @@ internal sealed class PollRound(IGraphRunStarter starter, IPollCursors cursors, 
         var now = clock.GetUtcNow();
         if (answered.IsError)
         {
-            var failed = PollBackoff.Next(cursor.Failures, retryAfter: null, now);
-            _ = await cursors.Save(cursor with { LastPollAt = now, BackoffUntil = failed.Until, Failures = failed.Failures }, cancellationToken).ConfigureAwait(false);
-            return answered.Error;
+            return await Failed(cursor, answered.Error, now, cancellationToken).ConfigureAwait(false);
         }
 
         var poll = answered.Value;
@@ -49,7 +48,17 @@ internal sealed class PollRound(IGraphRunStarter starter, IPollCursors cursors, 
         }
 
         var fanned = await FanOut(group, poll, grant, cancellationToken).ConfigureAwait(false);
-        return fanned.IsError ? fanned.Error : await Advance(cursor, poll, fanned.Value, now, cancellationToken).ConfigureAwait(false);
+        return fanned.IsError
+            ? await Failed(cursor, fanned.Error, now, cancellationToken).ConfigureAwait(false)
+            : await Advance(cursor, poll, fanned.Value, now, cancellationToken).ConfigureAwait(false);
+    }
+
+    // A poller error or a failed start: the cursor value stays and the backoff is saved, so a Temporal outage or a store error is not retried against the provider every 30 s tick.
+    private async ValueTask<Result<RoundOutcome>> Failed(PollCursor cursor, Error error, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        var failed = PollBackoff.Next(cursor.Failures, retryAfter: null, now);
+        _ = await cursors.Save(cursor with { LastPollAt = now, BackoffUntil = failed.Until, Failures = failed.Failures }, cancellationToken).ConfigureAwait(false);
+        return error;
     }
 
     // A rate-limited answer saves the backoff and keeps the cursor value.
