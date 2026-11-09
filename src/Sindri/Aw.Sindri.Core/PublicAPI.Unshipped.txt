@@ -20406,3 +20406,28 @@ Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.WorkflowDocPage(string! slug, string! 
 Aw.Sindri.Core.Graph.Docs.WorkflowDocSearch
 const Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.BlockPrefix = "block-" -> string!
 static Aw.Sindri.Core.Graph.Docs.WorkflowDocSearch.Search(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Docs.WorkflowDocPage!>! pages, string! question, int max = 5) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Docs.WorkflowDocHit!>!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowCreated = "workflow.created" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowRevised = "workflow.revised" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowActivated = "workflow.activated" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowPaused = "workflow.paused" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowArchived = "workflow.archived" -> string!
+Aw.Sindri.Core.Events.WorkflowChangedPayload
+Aw.Sindri.Core.Events.WorkflowChangedPayload.WorkflowId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowId
+Aw.Sindri.Core.Events.WorkflowChangedPayload.WorkflowId.init -> void
+Aw.Sindri.Core.Events.WorkflowChangedPayload.Slug.get -> Aw.Sindri.Core.Graph.Ids.WorkflowSlug
+Aw.Sindri.Core.Events.WorkflowChangedPayload.Slug.init -> void
+Aw.Sindri.Core.Events.WorkflowChangedPayload.Revision.get -> int
+Aw.Sindri.Core.Events.WorkflowChangedPayload.Revision.init -> void
+Aw.Sindri.Core.Events.WorkflowChangedPayload.SpecHash.get -> string?
+Aw.Sindri.Core.Events.WorkflowChangedPayload.SpecHash.init -> void
+Aw.Sindri.Core.Events.WorkflowChangedPayload.By.get -> string!
+Aw.Sindri.Core.Events.WorkflowChangedPayload.By.init -> void
+override Aw.Sindri.Core.Events.WorkflowChangedPayload.ToString() -> string!
+static Aw.Sindri.Core.Events.WorkflowChangedPayload.operator !=(Aw.Sindri.Core.Events.WorkflowChangedPayload? left, Aw.Sindri.Core.Events.WorkflowChangedPayload? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowChangedPayload.operator ==(Aw.Sindri.Core.Events.WorkflowChangedPayload? left, Aw.Sindri.Core.Events.WorkflowChangedPayload? right) -> bool
+override Aw.Sindri.Core.Events.WorkflowChangedPayload.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowChangedPayload.Equals(object? obj) -> bool
+Aw.Sindri.Core.Events.WorkflowChangedPayload.Equals(Aw.Sindri.Core.Events.WorkflowChangedPayload? other) -> bool
+Aw.Sindri.Core.Events.WorkflowChangedPayload.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowChangedPayload!
+Aw.Sindri.Core.Events.WorkflowChangedPayload.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, out Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, out int Revision, out string? SpecHash, out string! By) -> void
+Aw.Sindri.Core.Events.WorkflowChangedPayload.WorkflowChangedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, int Revision, string? SpecHash, string! By) -> void
