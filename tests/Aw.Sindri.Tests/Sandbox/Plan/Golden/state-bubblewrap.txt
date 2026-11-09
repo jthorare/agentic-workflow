@@ -138,11 +138,8 @@
 /home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/sandbox-plan.json
 /home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/sandbox-plan.json
 --bind
-/home/owner/.agentic-workflow/sindri-app/resources/workflow/web/notes.db
-/home/owner/.agentic-workflow/sindri-app/resources/workflow/web/notes.db
---bind
-/home/owner/.agentic-workflow/sindri-app/resources/workflow/web/scratch
-/home/owner/.agentic-workflow/sindri-app/resources/workflow/web/scratch
+/home/owner/.agentic-workflow/sindri-app/resources/workflow/web
+/home/owner/.agentic-workflow/sindri-app/resources/workflow/web
 --bind
 /home/owner/.agentic-workflow/sindri-app/workflow/runs/x/s/1
 /home/owner/.agentic-workflow/sindri-app/workflow/runs/x/s/1
