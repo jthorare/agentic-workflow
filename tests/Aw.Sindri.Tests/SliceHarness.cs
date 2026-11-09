@@ -1,10 +1,8 @@
 using System.Text.Json;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core.Challenges;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
-using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Host;
@@ -49,13 +47,6 @@ internal sealed class SliceHarness
 
     /// <summary>The server's challenges on <see cref="Clock"/> (engine spec §4.2, S1-D5).</summary>
     public InMemoryChallenges Challenges { get; }
-
-    /// <summary>A human's answer to a fresh 'approve profile &lt;hash6&gt;' challenge for <paramref name="hash"/>, typed exactly (S1-D5).</summary>
-    public ChallengeAnswer Confirm(ProfileHash hash)
-    {
-        var issued = Challenges.Issue(ChallengeAction.ApproveProfile(hash), ChallengeSubject.ForProfile(hash));
-        return new ChallengeAnswer(issued.Id, issued.Action.Text);
-    }
 
     /// <summary>Takes the lease for this process and holds it, as StartProcess does.</summary>
     public async Task<LeaseGrant> HoldLease()

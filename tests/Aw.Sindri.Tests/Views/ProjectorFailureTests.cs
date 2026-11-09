@@ -40,7 +40,7 @@ public sealed class ProjectorFailureTests
         var shown = _progress.Current;
         Assert.True(shown is { Stalled: true, LedgerHead: 2 });
         Assert.Contains("SND-VIEW-001", shown.StalledType, StringComparison.Ordinal);
-        var health = HealthSummary.For(running: true, shown, [], ProfileApproval.Approved);
+        var health = HealthSummary.For(running: true, shown, []);
         Assert.NotEqual(HealthWord.Healthy, health.Word);
         Assert.Contains(health.Problems, p => p.Code == "SND-VIEW-001");
 

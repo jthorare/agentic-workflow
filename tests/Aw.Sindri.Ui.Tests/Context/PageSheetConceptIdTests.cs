@@ -19,7 +19,7 @@ public sealed class PageSheetConceptIdTests
 
     private static async Task<(ContextPageViewModel Page, FakePageWrites Writes)> Shown(bool withOther = false)
     {
-        var writes = new FakePageWrites { Profile = new ProfileWaiting("live", [], "file") };
+        var writes = new FakePageWrites { Profile = new ProfileHashes("live", "file") };
         writes.Add(Key, new PageDraft(Id: null, "Billing overview", "web", Key, Owner: false,
             [new PageActionDraft(Id: null, "Pay", Action: null, ["scheduling"])]));
         var api = new FakeSindriApi

@@ -57,7 +57,7 @@ context:
 | `clusters: no sandbox`, `graphify did not start under the sandbox` | Install `bwrap` (Linux) or check `sandbox-exec` (macOS) |
 | `labels` | Labeling is off or no agent CLI answered: clusters stay unnamed |
 
-A limit change is a profile change: validate, then `profile approve` (**Human-only**), then build again. A second
+A limit change is a profile change: validate, then build again (it applies on save). A second
 build keeps every decision you already made.
 
 ### Review and promote
@@ -92,7 +92,7 @@ What is left of the old verbs:
 
 ## Model choice and what Jev reads
 
-With `workflow.agent.pick: on` in the approved profile, each agent step's brief and input files (up to 100,000 characters, secrets and denied paths removed), and for the concept scan its map summary, are sent to Jev to pick a model. `sindri profile approve` shows this as a line in its preview when the profile turns the pick on. With it off, nothing is sent and every step runs on the agent's default. Retention is the provider's. Settings in the app shows whether model choice is on and how to change it (the profile; it takes effect once you approve).
+With `workflow.agent.pick: on` in the live profile, each agent step's brief and input files (up to 100,000 characters, secrets and denied paths removed), and for the concept scan its map summary, are sent to Jev to pick a model. The app's Settings shows it. With it off, nothing is sent and every step runs on the agent's default. Retention is the provider's. Settings in the app shows whether model choice is on and how to change it (the profile; it takes effect on save).
 
 ## Codes you may meet here
 

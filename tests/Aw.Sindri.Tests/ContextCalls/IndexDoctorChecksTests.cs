@@ -32,7 +32,7 @@ public sealed class IndexDoctorChecksTests
         var rows = await Checks(_noSecrets, new FakeProbe(Answer: Unit.Value)).Run(Token);
 
         Assert.Equal(["context:index-store", "context:index-github", "context:index-linear", "context:index-linear-projects", "context:index-slack", "context:index-ollama", "context:index-sync"], rows.Select(r => r.Name), StringComparer.Ordinal);
-        Assert.All(rows, r => Assert.Equal((CheckState.Ok, "not configured (no profile is approved)", null), (r.State, r.Detail, r.Fix)));
+        Assert.All(rows, r => Assert.Equal((CheckState.Ok, "not configured (no profile yet)", null), (r.State, r.Detail, r.Fix)));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -91,7 +91,7 @@ public sealed class IndexDoctorChecksTests
 
         var rows = await Checks(_githubOnly, new FakeProbe(Answer: Unit.Value)).Run(Token);
 
-        Assert.Equal((CheckState.Ok, "not configured (the approved profile names no context.sources.slack)"), (rows.Single(r => r.Name == "context:index-slack").State, rows.Single(r => r.Name == "context:index-slack").Detail));
+        Assert.Equal((CheckState.Ok, "not configured (the profile names no context.sources.slack)"), (rows.Single(r => r.Name == "context:index-slack").State, rows.Single(r => r.Name == "context:index-slack").Detail));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -198,7 +198,7 @@ public sealed class IndexDoctorChecksTests
 
         var row = (await Checks(_githubOnly, new FakeProbe(Answer: Unit.Value)).Run(Token)).Single(r => r.Name == "context:index-linear-projects");
 
-        Assert.Equal((CheckState.Ok, "not configured (the approved profile names no context.sources.linear)"), (row.State, row.Detail));
+        Assert.Equal((CheckState.Ok, "not configured (the profile names no context.sources.linear)"), (row.State, row.Detail));
     }
 
     [Fact, Trait("Lane", "unit")]

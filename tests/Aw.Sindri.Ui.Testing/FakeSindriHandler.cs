@@ -95,7 +95,7 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
         {
             // LANE ANCHOR U3': add the Needs you routes as arms above the workflow-read arm, each a RouteAnswer from the goldens. Insert immediately above this marker, never between the markers.
             // LANE ANCHOR U8: add the workflow command routes as arms above the workflow-read arm, each a RouteAnswer from the goldens. Insert immediately below this marker, never between the markers.
-            var path when IsProfile(request, path) => await ProfileRoute(request, path, cancellationToken),
+            var path when IsProfile(request, path) => await ProfileRoute(request, cancellationToken),
             var path when IsServiceCommand(request, path) => await ServiceCommand(request, path, cancellationToken),
             "/sindri/context/map/refresh" when request.Method == HttpMethod.Post => Answer(Counted(await server.RefreshContextMap(uri, cancellationToken), server.RefreshContextMapAnswer)),
             { } path when path.StartsWith("/sindri/context/", StringComparison.Ordinal) => await ContextRoute(request, cancellationToken),
@@ -427,7 +427,7 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
 
     /// <summary>A status body as this handler writes it.</summary>
     internal static string Status(StatusView s) => string.Create(CultureInfo.InvariantCulture,
-        $$"""{"running":{{Bool(s.Running)}},"pid":{{s.Pid}},"epoch":{{s.Epoch}},"leaseExpiresAt":{{Quoted(s.LeaseExpiresAt)}},"profile":{"approved":{{Quoted(s.Profile.Approved)}},"live":{{Quoted(s.Profile.Live)}},"changedSinceApproval":{{Bool(s.Profile.ChangedSinceApproval)}},"problem":{{Quoted(s.Profile.Problem)}},"source":{{Quoted(s.Profile.Source)}},"needsApproval":{{Bool(s.Profile.NeedsApproval)}},"modelPick":{{Quoted(s.Profile.ModelPick)}},"labelPick":{{Quoted(s.Profile.LabelPick)}},"surfacePick":{{Quoted(s.Profile.SurfacePick)}}},"services":[{{string.Join(',', s.Services.Select(Service))}}]{{ApiVersion(s.ApiVersion)}}{{Views(s.Views)}}{{Health(s.Health)}}{{Sessions(s.Sessions)}}}""");
+        $$"""{"running":{{Bool(s.Running)}},"pid":{{s.Pid}},"epoch":{{s.Epoch}},"leaseExpiresAt":{{Quoted(s.LeaseExpiresAt)}},"profile":{"live":{{Quoted(s.Profile.Live)}},"problem":{{Quoted(s.Profile.Problem)}},"source":{{Quoted(s.Profile.Source)}},"modelPick":{{Quoted(s.Profile.ModelPick)}},"labelPick":{{Quoted(s.Profile.LabelPick)}},"surfacePick":{{Quoted(s.Profile.SurfacePick)}}},"services":[{{string.Join(',', s.Services.Select(Service))}}]{{ApiVersion(s.ApiVersion)}}{{Views(s.Views)}}{{Health(s.Health)}}{{Sessions(s.Sessions)}}}""");
 
     // Absent before API P1 (the field doesn't exist on S1's status), so the app must read a status without it.
     private static string ApiVersion(int? version) => version is { } v ? string.Create(CultureInfo.InvariantCulture, $",\"apiVersion\":{v}") : string.Empty;

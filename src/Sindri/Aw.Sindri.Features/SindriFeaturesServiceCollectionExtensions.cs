@@ -10,7 +10,6 @@ using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Reviews;
 using Aw.Sindri.Core.Scheduling;
-using Aw.Sindri.Features.ApproveProfile;
 using Aw.Sindri.Features.CancelJob;
 using Aw.Sindri.Features.CheckProfile;
 using Aw.Sindri.Features.CloseItem;
@@ -143,7 +142,7 @@ public static class SindriFeaturesServiceCollectionExtensions
         _ = services.AddProjectCommands().AddConnectionSlices().AddMemorySlices().AddTodoSlices().AddLinearReads().AddLinearConnection().AddReviewCommands().AddScoped<IValidator<CreateItemRequest>, CreateItemValidator>().AddCommand<CreateItemRequest, ItemCreatedResponse, CreateItemService>();
         _ = services.AddScoped<IValidator<RebuildViewsRequest>, AcceptAllValidator<RebuildViewsRequest>>().AddCommand<RebuildViewsRequest, CommandAccepted, RebuildViewsService>();
         _ = services.AddScoped<IValidator<ImportContextMapRequest>, AcceptAllValidator<ImportContextMapRequest>>().AddCommand<ImportContextMapRequest, ImportContextMapResponse, ImportContextMapService>();
-        _ = services.AddScoped<IValidator<ApproveProfileRequest>, AcceptAllValidator<ApproveProfileRequest>>().AddCommand<ApproveProfileRequest, ApproveProfileResponse, ApproveProfileService>().AddScoped<ProfileChecks>().AddScoped<Core.Profile.ModelKeyChecks>();
+        _ = services.AddScoped<Core.Profile.ModelKeyChecks>();
         _ = services.AddScoped<IValidator<StopProcessRequest>, AcceptAllValidator<StopProcessRequest>>().AddStopCommand<StopProcessRequest, StopProcessResponse, StopProcessService>();   // never behind the gate: a stop cancels its holder
         return services;
     }
@@ -193,7 +192,7 @@ public static class SindriFeaturesServiceCollectionExtensions
     private static IServiceCollection AddEngineSlices(this IServiceCollection services)
     {
         _ = services.AddScoped<IValidator<CompleteStepRequest>, AcceptAllValidator<CompleteStepRequest>>().AddCommand<CompleteStepRequest, CompleteStepResponse, CompleteStepService>();
-        _ = services.AddScoped<IValidator<IssueChallengeRequest>, AcceptAllValidator<IssueChallengeRequest>>().AddIssue<IssueChallengeRequest, IssueChallengeResponse, IssueChallengeService>();   // 'approve profile', the one action left
+        _ = services.AddScoped<IValidator<IssueChallengeRequest>, AcceptAllValidator<IssueChallengeRequest>>().AddIssue<IssueChallengeRequest, IssueChallengeResponse, IssueChallengeService>();   // refuses every action until #2373 removes the route
         return services;
     }
 

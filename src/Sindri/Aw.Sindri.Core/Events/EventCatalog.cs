@@ -12,6 +12,7 @@ public static class EventCatalog
         new(EventTypes.ProcessStarted, Public: true, typeof(ProcessStarted), "process.started:<epoch>") { Invalidates = [ApiViews.Status] },
         new(EventTypes.ProcessStopped, Public: true, typeof(ProcessStopped), "process.stopped:<epoch>") { Invalidates = [ApiViews.Status] },
         new(EventTypes.ProfileApproved, Public: true, typeof(ProfileApproved), "profile.approved:<hash>:after:<seq>") { Invalidates = [ApiViews.Status, ApiViews.Profile, ApiViews.Services, ApiViews.NeedsYou] },
+        new(EventTypes.ProfileApprovalsRemoved, Public: false, PublicPayload: null, "profile.approvals.removed"),
         new("service.heartbeat", Public: true, typeof(Heartbeat), "service.heartbeat:<epoch>:<slot>") { Invalidates = [ApiViews.Status] },
         new(EventTypes.ContextSourcesSynced, Public: true, typeof(ContextSourcesSynced), "context.sources.synced:<epoch>:<source>:<slot>"),
         new(EventTypes.ContextMapImported, Public: true, typeof(ContextMapImported), "context.map.imported:<hash>:v<version>"),

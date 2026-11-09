@@ -1,8 +1,5 @@
 using Aw.Sindri.Core.Auth;
 using Aw.Sindri.Core.Control;
-using Aw.Sindri.Core.Events;
-using Aw.Sindri.Core.Ledger;
-using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Ledger;
@@ -34,21 +31,14 @@ public sealed class CliEndToEndTests : IDisposable
     {
         var ct = TestContext.Current.CancellationToken;
         await using var app = await Started(ct);
-        var hash = (await app.Services.GetRequiredService<IProfileSource>().Load(ct)).Value.Hash;
-        var stale = SliceHarness.Profile("9s").Hash;
         await using var scope = app.Services.CreateAsyncScope();
         using var client = Client(app, human: true);
         var verbs = Verbs(app, client, scope.ServiceProvider);
 
-        var staleCode = await verbs.Approve(stale.Value, ct);
-        var staleError = _error.ToString();
-        var approved = await verbs.Approve(hash.Value, ct);
+        var code = await verbs.RebuildViews(ct);
 
-        Assert.Equal(2, staleCode);
-        Assert.StartsWith("SND-PROFILE-003 ", staleError, StringComparison.Ordinal);   // the service answered: the middleware let the human in
-        Assert.Equal(0, approved);
-        var recorded = (await app.Services.GetRequiredService<ILedgerStore>().Latest(EventTypes.ProfileApproved, ct)).Value;
-        Assert.Equal("human:cli", recorded?.Envelope.Actor);
+        Assert.Equal(0, code);   // the service answered: the middleware let the human in (a verb that needs no approval, which is gone)
+        Assert.StartsWith("views rebuild requested (sequence ", _out.ToString(), StringComparison.Ordinal);
         await app.StopAsync(ct);
     }
 

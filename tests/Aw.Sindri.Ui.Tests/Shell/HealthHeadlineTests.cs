@@ -55,17 +55,6 @@ public sealed class HealthHeadlineTests
     }
 
     [Fact]
-    public async Task A_profile_that_needs_approval_is_amber_with_the_command_to_run()
-    {
-        var system = new SystemTestHarness();
-
-        await system.Show(With(new HealthView("healthy", []), A.ChangedProfile()));
-
-        Assert.Equal((true, false, true), (system.Vm.ToneWarn, system.Vm.ToneError, system.Vm.HasProfileFix));
-        Assert.Equal(Labels.ProfileNeedsApproval, system.Vm.Sentence);
-    }
-
-    [Fact]
     public void Not_running_is_red()
     {
         var system = new SystemTestHarness();

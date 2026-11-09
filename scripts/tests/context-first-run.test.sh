@@ -47,11 +47,10 @@ flag() { [ -e "$AW_SINDRI_HOME/stub/$1" ]; }
 case "$*" in
   "profile init") printf 'schemaVersion: 1\nuser: "thor"\nworkflow:\n  effects: []\n' > "$AW_SINDRI_HOME/profile/profile.yaml" ;;
   "profile validate --json")
-    printf '{"valid":true,"hash":"%s"}\n' "$(printf 'ab%.0s' $(seq 1 32))"
-    flag approved && exit 0; exit 1 ;;
-  "--headless") touch "$AW_SINDRI_HOME/stub/serving" ;;
+    printf '{"valid":true,"hash":"%s"}\n' "$(printf 'ab%.0s' $(seq 1 32))" ;;
+  "--headless") mkdir -p "$AW_SINDRI_HOME/stub"; touch "$AW_SINDRI_HOME/stub/serving" ;;
   "status --json")
-    if flag serving; then echo '{"running":true,"profile":{"needsApproval":false}}'; else echo '{"running":false}'; fi; exit 1 ;;
+    if flag serving; then echo '{"running":true}'; else echo '{"running":false}'; fi; exit 1 ;;
   "status") echo "running" ;;
   "code-index status --repo agentic-workflow --json") flag indexed && { echo '{"repos":[{"state":"ok"}]}'; exit 0; }; echo '{"repos":[{"state":"missing"}]}'; exit 1 ;;
   "code-index status --repo agentic-workflow") echo "agentic-workflow ok" ;;
@@ -82,7 +81,7 @@ cmds="$(printf '%s\n' "$OUT" | grep -E '^\+ AW_SINDRI_HOME=[^ ]+ AW_SINDRI_PORT=
 want="profile init|profile validate|--headless |status --json|code-index status|services run|context map|context map|context map|"
 if [ "$cmds" = "$want" ]; then ok "the commands come in the documented order"; else fail "the commands come in the documented order (got: $cmds)"; fi
 OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_REPO_PATH="$REPO" "$SCRIPT" up --dry-run 2>&1)"; CODE=$?
-expect "the dry run prints the approval command for the owner and keeps going" 0 "profile approve <hash>"
+expect "the dry run asks for no approval and keeps going" 0 "edits apply on save"
 OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_REPO_PATH="$REPO" FIRST_RUN_CONTEXT_EXTRA="  models: { default: { harnesses: [codex] } }" "$SCRIPT" up --dry-run --stop-after 5 2>&1)"; CODE=$?
 expect "--stop-after 5 ends after the index build, and FIRST_RUN_CONTEXT_EXTRA lands in the context: section (exit 0)" 0 "stopped after step 5" "|   publish: { waitForIndexMinutes: 15 }
     |   models: { default: { harnesses: [codex] } }"
@@ -133,7 +132,7 @@ expect "with no origin the name falls back to the path's basename" 0 "--repo fir
 echo "context-first-run: the checkout preflight"
 # A real (non-dry) run reaches the preflight; --no-embeddings --no-graph keep it to git, jq and temporal. Only the repo checks matter here.
 pf() { # pf <repo path>: sets OUT and CODE of a real up against that repo
-  OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_REPO_PATH="$1" SINDRI="$T/stub-sindri" "$SCRIPT" up --no-embeddings --no-graph --no-ui 2>&1)"; CODE=$?
+  OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_REPO_PATH="$1" SINDRI="$T/stub-sindri" "$SCRIPT" up --stop-after 0 --no-embeddings --no-graph --no-ui 2>&1)"; CODE=$?
 }
 G() { git -C "$1" -c user.name=t -c user.email=t@t "${@:2}"; }
 if command -v jq >/dev/null 2>&1; then
@@ -159,7 +158,7 @@ if command -v jq >/dev/null 2>&1; then
   rm -f "$REPO/stray.txt"
   pf "$REPO"
   case "$OUT" in
-    *"tools ok; agentic-workflow at $REPO"*|*"profile approve"*) ok "FIRST_RUN_REPO_PATH still overrides the default repo" ;;
+    *"tools ok; agentic-workflow at $REPO"*) ok "FIRST_RUN_REPO_PATH still overrides the default repo" ;;
     *) fail "FIRST_RUN_REPO_PATH still overrides the default repo"; printf '%s\n' "$OUT" | sed 's/^/       | /' ;;
   esac
   rm -rf "$STATE/sindri-app-firstrun"
@@ -167,27 +166,25 @@ else
   echo "  skip the checkout preflight cases: jq isn't installed"
 fi
 
-echo "context-first-run: stop at approval, then a whole run"
+echo "context-first-run: no approval stop, a whole run"
 # jq is a real dependency of the script; the real-run cases need it.
 if ! command -v jq >/dev/null 2>&1; then
   echo "  skip the real-run cases: jq isn't installed"
 else
   mkdir -p "$STATE/cache/bin/temporal-1.9.1"
   run up --no-embeddings --no-graph --no-ui
-  expect "up writes the profile, then stops for approval with the exact command (exit 3)" 3 "profile approve abababab" "approve profile ababab" "continue"
-  lacks "nothing past the approval stop ran" "--headless"
+  expect "up writes the profile, serves, indexes and maps (exit 0)" 0 "context-first-run up: done"
+  lacks "no profile approval is asked for" "profile approve"
+  lacks "no recipe approval is asked for" "approve-all"
   if [ -f "$STATE/sindri-app-firstrun/.first-run-scratch" ]; then ok "the home carries the scratch marker"; else fail "the home carries the scratch marker"; fi
   P="$STATE/sindri-app-firstrun/profile/profile.yaml"
   if grep -q "path: $REPO" "$P" && grep -q 'context-docs-refresh' "$P" && grep -q 'enabled: false' "$P" && grep -q '^context:' "$P" && grep -q '^index:' "$P"; then ok "the profile onboards the repo with services, index and context"; else fail "the profile onboards the repo with services, index and context"; sed 's/^/       | /' "$P"; fi
   if logged "home=sindri-app-firstrun port=7481" && ! logged "port=7480" && ! logged "port=7410"; then ok "every call used the scratch home and port 7481"; else fail "every call used the scratch home and port 7481"; fi
   before="$(wc -l < "$P")"
   run up --no-embeddings --no-graph --no-ui
-  expect "a second up before approval stops again (exit 3)" 3 "profile approve"
+  expect "a second up finishes too (exit 0)" 0 "context-first-run up: done"
   if [ "$(wc -l < "$P")" = "$before" ]; then ok "the profile isn't written twice"; else fail "the profile isn't written twice"; fi
 
-  mkdir -p "$STATE/sindri-app-firstrun/stub"; : > "$STATE/sindri-app-firstrun/stub/approved"
-  run continue --no-embeddings --no-graph --no-ui
-  expect "after approval, continue serves, indexes and maps (exit 0)" 0 "context-first-run up: done"
   if logged '--headless' && logged 'services run code-index-main-move' && logged 'context map refresh'; then ok "serve, the index build and the map refresh ran"; else fail "serve, the index build and the map refresh ran"; fi
   if [ -s "$STUB_LOG.mcp" ] && [ "$(sort -u "$STUB_LOG.mcp")" = 1 ]; then ok "every sindri call runs with AW_SINDRI_APP_NO_MCP=1 (no MCP registration in ~/.claude.json)"; else fail "every sindri call runs with AW_SINDRI_APP_NO_MCP=1"; sort "$STUB_LOG.mcp" | uniq -c | sed 's/^/       | /'; fi
   : > "$STUB_LOG"

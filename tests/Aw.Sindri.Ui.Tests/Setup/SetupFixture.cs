@@ -138,10 +138,7 @@ internal sealed class SetupFixture
         return list;
     }
 
-    /// <summary>The live profile's hash the typed approval is tied to; none until a test sets it.</summary>
-    internal string? Hash { get; set; }
-
-    internal SetupViewModel Setup() => new(Server, Catalog, Clock, InApp.Contains, Folders, () => Hash);
+    internal SetupViewModel Setup() => new(Server, Catalog, Clock, InApp.Contains, Folders);
 
     /// <summary>A view model that has read the list once.</summary>
     internal async Task<SetupViewModel> Read(CancellationToken token)

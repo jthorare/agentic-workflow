@@ -19,7 +19,6 @@
       <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}" IsVisible="{Binding HasAttention}">
         <TextBlock x:Name="LinearAttention" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding AttentionText}" TextWrapping="Wrap" VerticalAlignment="Center"
                    AutomationProperties.Name="{Binding AttentionText}" />
-        <Button x:Name="LinearReview" Classes="command-control" Content="{Binding Text.Review}" IsVisible="{Binding HasWaiting}" Click="OnReview" AutomationProperties.Name="{Binding Text.Review}" />
       </StackPanel>
 
       <StackPanel Spacing="{StaticResource Space.XS}">

@@ -208,6 +208,6 @@ internal sealed class ModelPicker(IModelPickSettings settings, IModelCatalog cat
     {
         var removed = string.Join(", ", selection.Removed.Select(static r => $"{r.Model.Model.Slug} ({r.Constraint.ToString().ToLowerInvariant()})"));
         return SindriErrors.ModelNoneAllowed.With(
-            $"No model is allowed for step '{state}' on {agent.Value}. The rules removed every model: {removed}. Fix: raise workflow.agent.cap, lower the step's floor, or give the agent more models in workflow.agent.models; then approve the profile and run the step again with 'sindri workflow answer <address> --resume'.");
+            $"No model is allowed for step '{state}' on {agent.Value}. The rules removed every model: {removed}. Fix: raise workflow.agent.cap, lower the step's floor, or give the agent more models in workflow.agent.models; then run the step again with 'sindri workflow answer <address> --resume'.");
     }
 }

@@ -8,13 +8,12 @@
     "sourcesTotal": 1,
     "startedAt": "2026-01-01T00:00:00.0000000Z",
     "lastSyncAt": "2026-01-01T00:00:00.0000000Z",
-    "jobId": "JOB-00000000000000000000000000000011"
+    "jobId": "JOB-00000000000000000000000000000008"
   },
   "noMap": {
     "repos": [
       "aw-split-panes"
     ],
-    "approvedAt": "2026-01-01T00:00:00.0000000Z",
     "firstRunStartedAt": "2026-01-01T00:00:00.0000000Z"
   },
   "traceId": "<trace>"

@@ -15,8 +15,6 @@ public sealed class NeedsYouRowsTests
 {
     private static readonly DateTimeOffset _t = KnownInstants.Epoch;
     private static readonly ServiceName _service = ServiceName.From("heartbeat");
-    private static readonly ProfileHash _approved = ProfileHash.From(new string('a', 64));
-    private static readonly ProfileHash _live = ProfileHash.From("3f1c2a" + new string('0', 58));
     private readonly PassThroughScrubber _plain = new();
 
     [Fact]
@@ -124,37 +122,6 @@ public sealed class NeedsYouRowsTests
     }
 
     [Fact]
-    public void A_drifted_profile_is_a_calm_row_that_approves_the_live_hash()
-    {
-        var drifted = Profile(drifted: true, "services.heartbeat.every", "services.index");
-
-        var row = NeedsYouRows.ForProfile(drifted, _t, _plain).Value!;
-
-        Expect.Equal(
-            (NeedsYouRowId.From("profile:drift"), NeedsYouKind.Profile, "profile · drifted", new NeedsYouSubject(SubjectKind.Profile, SubjectId.From(_live.Value))),
-            (row.Id, row.Kind, row.Label, row.Subject));
-        Expect.Equal(("The profile changed since approval", "2 key paths changed: services.heartbeat.every, services.index", Urgency.Calm, _t), (row.Title, row.Reason, row.Urgency, row.Since));
-        Expect.Equal((ActionId.From("ApproveProfile"), "sindri profile approve " + _live.Value, false), (row.PrimaryAction, row.Cli, row.RecordedOnly));
-        Expect.Sequence([ActionId.From("ApproveProfile")], row.Actions);
-    }
-
-    [Fact]
-    public void A_drifted_profile_lists_only_the_first_three_paths()
-    {
-        var row = NeedsYouRows.ForProfile(Profile(drifted: true, "a", "b", "c", "d", "e"), _t, _plain).Value!;
-
-        Expect.Equal("5 key paths changed: a, b, c", row.Reason);
-        Expect.Equal("1 key path changed: a", NeedsYouRows.ForProfile(Profile(drifted: true, "a"), _t, _plain).Value!.Reason);
-    }
-
-    [Fact]
-    public void A_profile_that_matches_or_has_no_live_hash_has_no_row()
-    {
-        Expect.True(NeedsYouRows.ForProfile(Profile(drifted: false), _t, _plain).Value is null);
-        Expect.True(NeedsYouRows.ForProfile(Profile(drifted: true) with { Live = null }, _t, _plain).Value is null);
-    }
-
-    [Fact]
     public void Every_row_primary_action_is_one_of_its_actions_and_never_copy()
     {
         var failed = new ServiceRow(_service, new LastRun(_t, ServiceOutcome.Failed, "SND-SCHED-001", _t), Paused: false, Sequence: 4);
@@ -162,7 +129,6 @@ public sealed class NeedsYouRowsTests
         {
             NeedsYouRows.ForDecision(A.Decision().Build(), _plain).Value,
             NeedsYouRows.ForFailure(failed, _t, _plain).Value,
-            NeedsYouRows.ForProfile(Profile(drifted: true, "a"), _t, _plain).Value!,
         };
 
         foreach (var row in rows)
@@ -181,9 +147,6 @@ public sealed class NeedsYouRowsTests
 
         Expect.Equal("[masked]\\x1B[31m", reason);
     }
-
-    private static ProfileRow Profile(bool drifted, params string[] paths) =>
-        new(_approved, _t, _live, _t, drifted, paths, [_service], Sequence: 5);
 
     private sealed class MaskScrubber(string secret) : ITextScrubber
     {

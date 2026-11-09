@@ -60,14 +60,10 @@ internal static partial class Labels
     internal const string ReviewSettingsDiscard = "Discard changes";
 
     /// <summary>The primary button.</summary>
-    internal const string ReviewSettingsSaveApprove = "Save and approve";
+    internal const string ReviewSettingsSaveButton = "Save";
 
     /// <summary>Said once a save took effect.</summary>
-    internal const string ReviewSettingsSavedApproved = "Review settings saved and approved";
-
-    /// <summary>The note after a save that waits for a profile approval; <paramref name="waiting"/> changes wait in all.</summary>
-    internal static string ReviewSettingsPending(int waiting) =>
-        waiting > 1 ? ReviewsLoginPending + string.Create(CultureInfo.InvariantCulture, $" ({waiting} profile changes wait)") : ReviewsLoginPending;
+    internal const string ReviewSettingsSaved = "Review settings saved";
 
     /// <summary>Under the settings after a 403.</summary>
     internal const string ReviewSettingsReadOnly = "These settings are read-only here: only the owner changes them.";

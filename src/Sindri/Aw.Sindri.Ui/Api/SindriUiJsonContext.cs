@@ -69,8 +69,6 @@ namespace Aw.Sindri.Ui.Api;
 [JsonSerializable(typeof(LaunchView))]
 [JsonSerializable(typeof(OpenItemRequest))]
 [JsonSerializable(typeof(OpenAcceptedView))]
-[JsonSerializable(typeof(ApproveProfileRequest))]
-[JsonSerializable(typeof(ProfileApproved))]
 [JsonSerializable(typeof(Jobs.JobList))]
 [JsonSerializable(typeof(Jobs.JobView))]
 [JsonSerializable(typeof(Jobs.JobResumedView))]

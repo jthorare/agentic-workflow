@@ -1,12 +1,12 @@
 {
   "rows": [
     {
-      "id": "decision:DEC-0000000000000000000000000000001a",
+      "id": "decision:DEC-0000000000000000000000000000000c",
       "kind": "decision",
       "label": "decision · re-scope",
       "subject": {
         "kind": "decision",
-        "id": "DEC-0000000000000000000000000000001a"
+        "id": "DEC-0000000000000000000000000000000c"
       },
       "item": null,
       "title": "Split the checkout work into two items.",
@@ -21,9 +21,9 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-0000000000000000000000000000001a accept",
+      "cli": "sindri decide DEC-0000000000000000000000000000000c accept",
       "open": {
-        "route": "decision/DEC-0000000000000000000000000000001a",
+        "route": "decision/DEC-0000000000000000000000000000000c",
         "label": "Review and decide"
       }
     },
@@ -56,37 +56,37 @@
       }
     },
     {
-      "id": "profile:drift",
-      "kind": "profile",
-      "label": "profile · drifted",
+      "id": "setup:mcp",
+      "kind": "setup",
+      "label": "setup · connect your agents",
       "subject": {
-        "kind": "profile",
-        "id": "932d876195e0684a7eef2cfb155d03297bc90219dd98257fb87549114040c79a"
+        "kind": "setup",
+        "id": "mcp"
       },
       "item": null,
-      "title": "The profile changed since approval",
-      "reason": "1 key path changed: services.scorer.every",
+      "title": "Turn on for your repos",
+      "reason": "Sindri can connect your agents to itself in each of your repos, and keep that up to date. Turn it on once and it does it for you.",
       "repo": null,
-      "urgency": "calm",
+      "urgency": "colour",
       "since": "2026-01-01T00:00:00.0000000Z",
       "recordedOnly": false,
       "notice": null,
       "answerKind": null,
-      "primaryAction": "ApproveProfile",
+      "primaryAction": "RegisterMcp",
       "actions": [
-        "ApproveProfile"
+        "RegisterMcp"
       ],
-      "cli": "sindri profile approve 932d876195e0684a7eef2cfb155d03297bc90219dd98257fb87549114040c79a",
+      "cli": "sindri mcp register --apply",
       "open": {
-        "route": "needs-you/profile:drift",
-        "label": "Approve the profile"
+        "route": "setup",
+        "label": "Open setup"
       }
     }
   ],
   "empty": null,
   "asOf": {
-    "cursor": 9,
-    "ledgerHead": 9,
+    "cursor": 4,
+    "ledgerHead": 4,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

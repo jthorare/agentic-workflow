@@ -24,8 +24,6 @@ internal sealed partial class PinSheetViewModel : ObservableObject
     private string? _self;
     private string _repo = string.Empty;
     private string? _ifHash;
-    private bool _approve;
-    private bool _neverApproved;
     private int _folderRules;
     private bool _filling;
 
@@ -125,11 +123,11 @@ internal sealed partial class PinSheetViewModel : ObservableObject
     /// <summary>True while a write is in flight.</summary>
     public bool IsWriting { get; private set; }
 
-    /// <summary>The submit button's word: "Pin and approve", "Pin", "Save and approve", "Save", or "Pinning…" / "Saving…" while the write runs.</summary>
-    public string SubmitText => IsWriting && !IsConfirmingUnpin ? Labels.PinSheetSubmitting(IsEdit) : Labels.PinSheetSubmit(IsEdit, _approve);
+    /// <summary>The submit button's word: "Pin", "Save", or "Pinning…" / "Saving…" while the write runs.</summary>
+    public string SubmitText => IsWriting && !IsConfirmingUnpin ? Labels.PinSheetSubmitting(IsEdit) : Labels.PinSheetSubmit(IsEdit);
 
-    /// <summary>The Unpin question's confirm button: "Unpin and approve", "Unpin", or "Unpinning…" while the write runs.</summary>
-    public string UnpinConfirmText => IsWriting ? Labels.PinSheetUnpinning : Labels.PinSheetUnpinConfirm(_approve);
+    /// <summary>The Unpin question's confirm button: "Unpin", or "Unpinning…" while the write runs.</summary>
+    public string UnpinConfirmText => IsWriting ? Labels.PinSheetUnpinning : Labels.PinSheetUnpinConfirm;
 
     /// <summary>True when the submit button can be pressed: not while writing, and a name is there.</summary>
     public bool CanSubmit => !IsWriting && _ifHash is not null && Name.Trim().Length > 0;

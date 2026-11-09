@@ -93,14 +93,14 @@ public abstract partial class SindriApiContract
     }
 
     [Fact]
-    public async Task SandboxAllow_sends_the_request_and_answers_needs_approval()
+    public async Task SandboxAllow_sends_the_request_and_answers_allowed()
     {
         var server = new FakeSindriApi();
         var request = new AllowRequest("LCH-00000000000000000000000000000001", "network", "registry.example.org");
 
         var allowed = (await Reach(server).SandboxAllow(_api, request, Token)).Value;
 
-        Expect.Equal(("needs-approval", "api", "registry.example.org"), (allowed.State, allowed.Repo, allowed.Entry));
+        Expect.Equal(("allowed", "api", "registry.example.org"), (allowed.State, allowed.Repo, allowed.Entry));
         Expect.Sequence([request], server.Allowed);
     }
 

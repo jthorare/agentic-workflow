@@ -16,47 +16,15 @@ public sealed class SaveLinearConnectionServiceTests
     private readonly SliceHarness _slice = new();
     private readonly FakeLinearKeyChecks _checks = new();
     private readonly FakeLinearConnectionStore _store = new();
-    private readonly FakeLinearConnectionApproval _approval = new();
     private readonly InMemoryProfiles _profiles = LinearConnectionTestSupport.Profiles();
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private SaveLinearConnectionService Service() => new(_checks, _store, _approval, _slice.Callers, new FakeLinearCheckStore(), TimeProvider.System, LinearConnectionTestSupport.Guard(_profiles));
+    private SaveLinearConnectionService Service() => new(_checks, _store, _slice.Callers, new FakeLinearCheckStore(), TimeProvider.System, _profiles);
 
     private IDisposable Owner() => _slice.Callers.Enter(A.Caller().Human().Build());
 
     private static SaveLinearConnectionRequest Read(params string[] teams) => new("read", ReadKey, teams);
-
-    [Theory]
-    [InlineData("read")]
-    [InlineData("write")]
-    public async Task A_Linear_url_that_waits_for_approval_refuses_the_save_before_the_key_goes_anywhere(string kind)
-    {
-        using var entered = Owner();
-        var service = new SaveLinearConnectionService(_checks, _store, _approval, _slice.Callers, new FakeLinearCheckStore(), TimeProvider.System, LinearConnectionTestSupport.Pending(_profiles));
-
-        var result = await service.Handle(new SaveLinearConnectionRequest(kind, kind == "read" ? ReadKey : WriteKey, ["ENG"]), Token);
-
-        Expect.Equal(SindriErrors.LinearUrlNotApproved.Code, result.Error.Code);
-        Expect.Equal(LinearUrlGuard.Waiting, result.Error.Message);
-        Assert.Empty(_checks.Asked);
-        Assert.Empty(_store.ReadSaves);
-        Assert.Empty(_store.WriteSaves);
-        Expect.Equal(0, _approval.Settles);
-    }
-
-    [Fact]
-    public async Task With_no_approved_profile_at_all_the_save_is_refused_the_same_way()
-    {
-        using var entered = Owner();
-        var service = new SaveLinearConnectionService(_checks, _store, _approval, _slice.Callers, new FakeLinearCheckStore(), TimeProvider.System, new LinearUrlGuard(_profiles, _profiles));
-
-        var result = await service.Handle(Read("ENG"), Token);
-
-        Expect.Equal(SindriErrors.LinearUrlNotApproved.Code, result.Error.Code);
-        Assert.Empty(_checks.Asked);
-        Assert.Empty(_store.ReadSaves);
-    }
 
     [Fact]
     public async Task A_session_is_refused_SND_AUTH_002_and_nothing_is_asked_or_stored()
@@ -98,7 +66,7 @@ public sealed class SaveLinearConnectionServiceTests
     }
 
     [Fact]
-    public async Task A_read_key_is_stored_with_its_teams_and_the_profile_is_approved_when_that_is_all_that_waits()
+    public async Task A_read_key_is_stored_with_its_teams()
     {
         using var entered = Owner();
         _ = _checks.Reading(new LinearConnectionTeamView("e1", "ENG", "Engineering"), new LinearConnectionTeamView("e2", "OPS", "Operations"));
@@ -107,25 +75,11 @@ public sealed class SaveLinearConnectionServiceTests
 
         Assert.True(result.IsSuccess);
         Assert.True(result.Value.Saved);
-        Assert.True(result.Value.Approved);
         Assert.Null(result.Value.Write);
         Expect.Equal(_profiles.Live.Value.Hash.Value, result.Value.ProfileHash);
         var (key, teams) = Expect.Only([.. _store.ReadSaves]);
         Expect.Equal(ReadKey, key);
         Expect.Sequence(["ENG", "OPS"], teams);
-    }
-
-    [Fact]
-    public async Task A_read_save_with_other_changes_waiting_is_saved_but_not_approved()
-    {
-        using var entered = Owner();
-        _ = _checks.Reading(new LinearConnectionTeamView("e1", "ENG", "Engineering"));
-        _ = _approval.Settling(approved: false);
-
-        var result = await Service().Handle(Read("ENG"), Token);
-
-        Assert.True(result.Value.Saved);
-        Assert.False(result.Value.Approved);
     }
 
     [Fact]
@@ -174,7 +128,6 @@ public sealed class SaveLinearConnectionServiceTests
         var result = await Service().Handle(new SaveLinearConnectionRequest("write", WriteKey), Token);
 
         Expect.Equal(SindriErrors.LinearNoKeychain.Code, result.Error.Code);
-        Expect.Equal(0, _approval.Settles);
     }
 
     [Fact]

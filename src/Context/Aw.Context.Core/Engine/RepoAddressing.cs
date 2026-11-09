@@ -26,7 +26,7 @@ public static class RepoAddressing
 
         var named = repos.FirstOrDefault(r => string.Equals(r.Name.Value, asked, StringComparison.Ordinal));
         return named is null
-            ? ContextErrors.RepoOutsideScope.With("that repo isn't one this caller can read (fix: name a repo of the approved profile; a session names its own X-Sindri-Repo)")
+            ? ContextErrors.RepoOutsideScope.With("that repo isn't one this caller can read (fix: name a repo of the profile; a session names its own X-Sindri-Repo)")
             : new RepoChoice(named.Name.Value, repos.Count > 1 && scope.Caller.Kind != ContextCallerKind.Session ? named.Name : null);
     }
 }

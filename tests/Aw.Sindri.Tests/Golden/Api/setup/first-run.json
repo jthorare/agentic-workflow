@@ -13,7 +13,7 @@
     },
     {
       "id": "profile",
-      "title": "Approve the profile",
+      "title": "Save the profile",
       "state": "todo",
       "why": "Waits for your first repo.",
       "detail": null,
@@ -23,10 +23,21 @@
       "items": []
     },
     {
+      "id": "recipes",
+      "title": "Approve the workflows",
+      "state": "todo",
+      "why": "After the profile is saved.",
+      "detail": "26 workflows registered.",
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": []
+    },
+    {
       "id": "mcp",
       "title": "Connect your agents",
       "state": "todo",
-      "why": "Waits for an approved profile with a repo.",
+      "why": "Waits for a profile with a repo.",
       "detail": null,
       "error": null,
       "action": null,
@@ -37,7 +48,7 @@
       "id": "map",
       "title": "Build the map",
       "state": "todo",
-      "why": "Waits for an approved profile with a repo.",
+      "why": "Waits for a profile with a repo.",
       "detail": null,
       "error": null,
       "action": null,

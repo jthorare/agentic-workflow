@@ -158,10 +158,10 @@
       "description": "Keeps the setup checklist in step with the profile."
     }
   ],
-  "empty": "Rebuilding views (cursor 5 of 5)…",
+  "empty": "Rebuilding views (cursor 1 of 1)…",
   "asOf": {
-    "cursor": 5,
-    "ledgerHead": 5,
+    "cursor": 1,
+    "ledgerHead": 1,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": true,
     "stalled": false

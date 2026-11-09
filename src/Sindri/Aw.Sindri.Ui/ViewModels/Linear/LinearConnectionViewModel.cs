@@ -19,7 +19,7 @@ internal sealed partial class LinearConnectionViewModel : ObservableObject
     [
         nameof(IsAvailable), nameof(Summary), nameof(ReadIsSet), nameof(ShowReadPaste), nameof(ShowReadSet), nameof(ReadAccessText), nameof(CanListTeams), nameof(Teams), nameof(ShowTeams),
         nameof(CanSaveRead), nameof(SaveHint), nameof(ShowWrite), nameof(ShowWritePaste), nameof(ShowWriteSet), nameof(WriteAccessText), nameof(CanCheckWrite), nameof(IsConfirmingRemove),
-        nameof(StatusText), nameof(ErrorText), nameof(HasError), nameof(AttentionText), nameof(HasAttention), nameof(HasWaiting), nameof(ShowCancelRead), nameof(CanCancelRead), nameof(ShowCancelWrite), nameof(CanCancelWrite),
+        nameof(StatusText), nameof(ErrorText), nameof(HasError), nameof(AttentionText), nameof(HasAttention), nameof(ShowCancelRead), nameof(CanCancelRead), nameof(ShowCancelWrite), nameof(CanCancelWrite),
     ];
 
     private readonly Func<Uri?> _url;
@@ -29,7 +29,6 @@ internal sealed partial class LinearConnectionViewModel : ObservableObject
     private string _writeKey = string.Empty;
     private string _error = string.Empty;
     private string _readError = string.Empty;
-    private string _waiting = string.Empty;
     private bool _fresh;
     private bool _replacingRead;
     private bool _replacingWrite;
@@ -150,18 +149,13 @@ internal sealed partial class LinearConnectionViewModel : ObservableObject
     /// <summary>True when there is a refusal to show.</summary>
     public bool HasError => ErrorText.Length > 0;
 
-    /// <summary>The note that needs a look but is not a refusal (the click's own answer, scope unknown, a change waiting for approval, a stored key Linear now refuses); empty otherwise.</summary>
+    /// <summary>The note that needs a look but is not a refusal (the click's own answer, scope unknown, a stored key Linear now refuses); empty otherwise.</summary>
     public string AttentionText =>
-        _waiting.Length > 0 ? _waiting
-        : WriteIs(ScopeUnknown) ? (_fresh ? Labels.LinearConnScopeUnknown : Labels.LinearConnScopeUnknownRead)
-        : _connection?.Pending == true ? Labels.LinearConnPending
+        WriteIs(ScopeUnknown) ? (_fresh ? Labels.LinearConnScopeUnknown : Labels.LinearConnScopeUnknownRead)
         : StaleText;
 
     /// <summary>True when there is a note to show.</summary>
     public bool HasAttention => AttentionText.Length > 0;
-
-    /// <summary>True when a change waits for the profile approval, so Review changes is drawn.</summary>
-    public bool HasWaiting => _waiting.Length > 0 || _connection?.Pending == true;
 
     private string StaleText =>
         string.Equals(_connection?.Read.State, Refused, StringComparison.Ordinal) ? Labels.LinearConnReadStale
@@ -185,7 +179,4 @@ internal sealed partial class LinearConnectionViewModel : ObservableObject
 
     /// <summary>Raised when the card should be brought into view and given focus, once it has been read.</summary>
     internal event EventHandler? RevealRequested;
-
-    /// <summary>Raised when Review changes is pressed.</summary>
-    internal event EventHandler? ReviewRequested;
 }

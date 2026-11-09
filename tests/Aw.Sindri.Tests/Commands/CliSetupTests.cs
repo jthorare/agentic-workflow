@@ -49,7 +49,7 @@ public sealed class CliSetupTests : IDisposable
     {
         var api = new Api(HttpStatusCode.OK, Body(
             SetupSteps.Repo(new RepoFact(1)),
-            SetupSteps.Profile(new ProfileFact(ProfilePresence.Unapproved), new RepoFact(1)),
+            SetupSteps.Profile(new ProfileFact(ProfilePresence.Present), new RepoFact(1)),
             SetupSteps.Map(new MapFact(MapPhase.Failed, FailureCode: "SND-CONTEXT-040"))));
 
         var code = await Verbs(_up, api).Run([], Token);
@@ -57,9 +57,9 @@ public sealed class CliSetupTests : IDisposable
         Assert.Equal((1, "/sindri/setup"), (code, api.Path));
         Assert.Equal(
             "done      Add your repo: 1 repository\n"
-            + "needs-you Approve the profile: Sindri waits for you to approve the profile before it uses it.\n"
+            + "done      Save the profile: Your profile is saved and live.\n"
             + "failed    Build the map: The last try at building the map didn't finish.\n"
-            + "1 of 3 steps done.\n",
+            + "2 of 3 steps done.\n",
             _out.ToString().ReplaceLineEndings("\n"));
     }
 
@@ -77,7 +77,7 @@ public sealed class CliSetupTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Setup_exits_0_when_every_step_is_done()
     {
-        var api = new Api(HttpStatusCode.OK, Body(SetupSteps.Repo(new RepoFact(1)), SetupSteps.Profile(new ProfileFact(ProfilePresence.Approved), new RepoFact(1))));
+        var api = new Api(HttpStatusCode.OK, Body(SetupSteps.Repo(new RepoFact(1)), SetupSteps.Profile(new ProfileFact(ProfilePresence.Present), new RepoFact(1))));
 
         var code = await Verbs(_up, api).Run([], Token);
 

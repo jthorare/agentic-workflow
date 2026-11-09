@@ -17,7 +17,6 @@ cd ~/code/agentic-workflow
 ./setup.sh                              # publishes the C# binaries (scripts/install-cs.sh) and links ~/.local/bin/sindri
 $EDITOR ~/.agentic-workflow/sindri-app/profile/profile.yaml   # your repos and the context section
 sindri profile validate
-sindri profile approve <hash>           # in your own terminal: type the challenge it shows
 sindri                                  # start the control plane and open the app (--headless: no app)
 sindri doctor                           # one line per check: ok / warn / fail with a fix
 ```
@@ -75,7 +74,7 @@ It doesn't replace your terminal or your agent tool. Agent work, yours and the f
 
 `sindri` starts the control-plane process under the host lease, starts the UI app and prints what's running: the approved profile, the index, intake sources, background services, the API address and what needs you. `sindri --headless` starts it without the UI, for the always-on box. Every other `sindri <verb>` is a client call to the running process, and starts the process first if needed.
 
-Config is the profile (`profile.md`); changes still go through `sindri profile approve`. Background services run inside the process on the profile's cadence: the code index (watch, quick builds on change, nightly full build), intake polling and webhook listeners (the scorer's reports and the weekly evolve job return later as recipes). launchd only keeps the process alive (A §17.29.1).
+Config is the profile (`profile.md`); edits apply on save (there is no approval step). Background services run inside the process on the profile's cadence: the code index (watch, quick builds on change, nightly full build), intake polling and webhook listeners (the scorer's reports and the weekly evolve job return later as recipes). launchd only keeps the process alive (A §17.29.1).
 
 ### The factory line
 

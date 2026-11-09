@@ -29,7 +29,7 @@ public sealed class InMemorySetupFacts : ISetupFacts
     public static InMemorySetupFacts AllDone() => new()
     {
         RepoAnswer = OneRepo,
-        ProfileAnswer = new ProfileFact(ProfilePresence.Approved),
+        ProfileAnswer = new ProfileFact(ProfilePresence.Present),
         McpAnswer = new McpFact(1, 1, "Claude Code") { Items = new SetupItems([new SetupItem("demo", SetupState.Done, "Claude Code") { Providers = [new McpProviderState("claude", McpConnection.Connected)] }]) },
         MapAnswer = new MapFact(MapPhase.Built) { Items = new SetupItems([new SetupItem("demo", SetupState.Done, Detail: null)]) },
         SourcesAnswer = NamedSources(("github", true), ("slack", true)),

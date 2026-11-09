@@ -238,24 +238,6 @@
       "confirm": null
     },
     {
-      "action": "ApproveProfile",
-      "class": "protected",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/profile/approve",
-      "cli": "sindri profile approve [<hash>]",
-      "ui": "ready",
-      "destructive": false,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
       "action": "ApproveRecipe",
       "class": "protected",
       "allowedCallers": [

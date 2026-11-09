@@ -15,7 +15,7 @@ public sealed class AcceptAllSuggestedTests
 
     private static (AddSeveralPagesViewModel Sheet, FakePageWrites Writes) Sheet(int pages, int owners = 0)
     {
-        var writes = new FakePageWrites { Owners = owners, Profile = new ProfileWaiting("live-1", [], "file-1") };
+        var writes = new FakePageWrites { Owners = owners, Profile = new ProfileHashes("live-1", "file-1") };
         List<string> keys = [];
         for (var i = 1; i <= pages; i++)
         {
@@ -75,7 +75,7 @@ public sealed class AcceptAllSuggestedTests
         sheet.Rows[1].Ticked = false;
         writes.Reverse = true;
         writes.Answer(new PageSaved(PageSavedState.Clash));
-        writes.Profile = new ProfileWaiting("live-2", [], "file-2");
+        writes.Profile = new ProfileHashes("live-2", "file-2");
 
         await sheet.SaveAll(Token);
 
@@ -106,7 +106,7 @@ public sealed class AcceptAllSuggestedTests
     [Fact]
     public async Task A_concept_page_with_no_actions_is_not_added_and_says_why()
     {
-        var writes = new FakePageWrites { Profile = new ProfileWaiting("live", [], "file") };
+        var writes = new FakePageWrites { Profile = new ProfileHashes("live", "file") };
         writes.Add("surface:empty", new PageDraft(Id: null, "Empty", "web", "surface:empty", Owner: false, []));
         var sheet = AddSeveralPagesViewModel.AcceptAll(writes, "concept:scheduling", ["surface:empty"]);
 

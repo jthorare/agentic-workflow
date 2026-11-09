@@ -2,9 +2,8 @@
 # scripts/sindri-pod.sh — the owner's door to a Sindri that runs in a Kubernetes pod (deployable-context spec K8, §C.3).
 #
 #   sindri-pod.sh connect [--port PORT] [--check] [--dry-run] [FLAGS]
-#   sindri-pod.sh profile edit [--no-approve] [FLAGS]
+#   sindri-pod.sh profile edit [FLAGS]
 #   sindri-pod.sh repo add <name> <url> [--credential env:NAME] [FLAGS]
-#   sindri-pod.sh approve [FLAGS]
 #   sindri-pod.sh doctor [FLAGS]
 #
 # FLAGS, taken by every verb: --context C, --namespace N (kubectl's own defaults when omitted) and the pod: --pod P, or
@@ -13,13 +12,13 @@
 # Exit codes are per verb (spec §C.3): only 0 and 2 mean the same everywhere (0 done; 2 cannot start: usage, a prerequisite
 # or the pod unreachable).
 #   connect                   0 a normal end (Ctrl-C); 2 a prerequisite or start failure; 3 gave up reconnecting
-#   profile edit              0 changed and approved, or unchanged, or --no-approve done; 1 approve refused or declined;
+#   profile edit              0 changed and in place, or unchanged;
 #                             2 usage or the pod unreachable; 3 an invalid edit aborted (your file is kept); 4 conflict: the
 #                             pod's copy changed meanwhile (your edit is kept)
-#   repo add, approve, doctor the wrapped command's own exit code, except 2 for this script's own failures
+#   repo add, doctor          the wrapped command's own exit code, except 2 for this script's own failures
 #
-# repo add, approve and doctor are thin wrappers: `kubectl exec -it <pod> -c sindri -- sindri repo add --url <url> --name <name>
-# [--credential env:NAME]`, `... sindri profile approve` and `... sindri doctor`.
+# repo add and doctor are thin wrappers: `kubectl exec -it <pod> -c sindri -- sindri repo add --url <url> --name <name>
+# [--credential env:NAME]` and `... sindri doctor`.
 #
 # profile edit changes the pod's profile. The profile is a file on the pod's volume (the path the pod's Sindri reads:
 # AW_SINDRI_PROFILE, else <AW_SINDRI_HOME>/profile/profile.yaml) and the image has no editor. With no profile in the pod it
@@ -27,9 +26,8 @@
 # opens it in $EDITOR (vi when unset) and stops with "unchanged" when you change nothing. Otherwise it copies the edit to a
 # temp path next to the profile in the pod and validates it there (`sindri profile validate`; exit 2 is invalid: the errors
 # are put at the top of the file as comments and the editor reopens; leaving it as it was aborts with exit 3). A valid edit
-# replaces the live file only if the pod's copy still has the hash it had (exit 4 otherwise, nothing replaced), then
-# `kubectl exec -it <pod> -c sindri -- sindri profile approve` runs at this terminal: the approval is the protected verb you
-# type. --no-approve stops after the profile is in place. Your edited copy stays under
+# replaces the live file only if the pod's copy still has the hash it had (exit 4 otherwise, nothing replaced). Edits apply on
+# save: there is no approval step. Your edited copy stays under
 # $AW_STATE_DIR/sindri-pod/<context>-<namespace>/profile-edit/ on any failure (its path is printed) and is removed on success.
 #
 # connect opens the desktop app on the pod. The app only follows a control.json in a home on this machine, so the script
@@ -65,7 +63,7 @@ say() { echo "sindri-pod: $*" >&2; }
 die() { say "$*"; exit 2; }
 give_up() { say "$*"; exit 3; }
 usage() {
-  say "usage: sindri-pod.sh connect [--port PORT] [--check] [--dry-run] | profile edit [--no-approve] | repo add <name> <url> [--credential env:NAME] | approve | doctor"
+  say "usage: sindri-pod.sh connect [--port PORT] [--check] [--dry-run] | profile edit | repo add <name> <url> [--credential env:NAME] | doctor"
   say "       every verb takes [--context C] [--namespace N] [--pod P | --release R]"
   exit 2
 }
@@ -75,11 +73,10 @@ case "${1:-}" in
   connect) verb=connect; shift ;;
   profile) [ "${2:-}" = edit ] || usage; verb=edit; shift 2 ;;
   repo) [ "${2:-}" = add ] || usage; verb=repo-add; shift 2 ;;
-  approve) verb=approve; shift ;;
   doctor) verb=doctor; shift ;;
   *) usage ;;
 esac
-ctx="" ns="" pod="" release="" lport="" dry=0 check=0 noapprove=0 cred=""
+ctx="" ns="" pod="" release="" lport="" dry=0 check=0 cred=""
 pos=()
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -90,7 +87,6 @@ while [ $# -gt 0 ]; do
     --port) [ $# -ge 2 ] || usage; lport="$2"; shift 2 ;;
     --credential) [ $# -ge 2 ] || usage; cred="$2"; shift 2 ;;
     --check) check=1; shift ;;
-    --no-approve) noapprove=1; shift ;;
     --dry-run) dry=1; shift ;;
     -*) say "unknown argument '$1'"; usage ;;
     *) pos+=("$1"); shift ;;
@@ -99,7 +95,6 @@ done
 [ -z "$pod" ] || [ -z "$release" ] || { say "--pod and --release name the same thing: pass one"; usage; }
 [ -n "$pod" ] || pod="${release:-sindri}-0"
 [ "$verb" = connect ] || [ "$dry$check$lport" = 00 ] || usage
-[ "$verb" = edit ] || [ "$noapprove" = 0 ] || usage
 [ "$verb" = repo-add ] || [ -z "$cred" ] || usage
 if [ "$verb" = repo-add ]; then [ "${#pos[@]}" = 2 ] || usage; else [ "${#pos[@]}" = 0 ] || usage; fi
 case "$lport" in ''|*[!0-9]*) [ -z "$lport" ] || die "--port must be a number" ;; esac
@@ -125,7 +120,7 @@ kube_setup() {
 }
 pod_reachable() { kc get pod "$pod" -o name >/dev/null 2>&1 || die "can't reach pod $pod in $ctx/$ns (kubectl get pod failed)"; }
 
-# repo add, approve, doctor: the wrapped command's own exit code
+# repo add, doctor: the wrapped command's own exit code
 thin() {
   kube_setup; pod_reachable
   kc exec -it "$pod" -c sindri -- sindri "$@"
@@ -177,7 +172,7 @@ profile_edit() {
     grep -v "^$errmark" "$edit" > "$up"
     if cmp -s "$orig" "$up"; then
       rm -r "$dir"
-      say "profile unchanged; nothing to validate or approve"
+      say "profile unchanged; nothing to validate"
       return 0
     fi
     kc exec -i "$pod" -c sindri -- sh -c 'cat > "$1"' _ "$tmp_remote" < "$up" || { cp "$up" "$edit"; say "can't copy the edit into $pod; your copy is at $edit"; return 2; }
@@ -207,24 +202,12 @@ profile_edit() {
     return 2
   fi
   lines="$(diff "$orig" "$edit" | grep -c '^[<>]')"
-  if [ "$noapprove" = 1 ]; then
-    rm -r "$dir"
-    say "profile changed, not yet approved ($lines lines differ, valid, in place in $pod); next: kubectl exec -it $pod -c sindri -- sindri profile approve"
-    return 0
-  fi
-  kc exec -it "$pod" -c sindri -- sindri profile approve; rc=$?
-  if [ "$rc" -ne 0 ]; then
-    say "the profile is in place in $pod but not approved (sindri profile approve exit $rc); your edited copy is at $edit"
-    say "next: kubectl exec -it $pod -c sindri -- sindri profile approve"
-    return 1
-  fi
   rm -r "$dir"
-  say "profile changed ($lines lines differ) and approved in $pod; next: sindri-pod.sh connect, or 'kubectl exec $pod -c sindri -- sindri status' to see it take effect"
+  say "profile changed ($lines lines differ) and in place in $pod; edits apply on save. Next: sindri-pod.sh connect, or 'kubectl exec $pod -c sindri -- sindri status' to see it take effect"
 }
 
 case "$verb" in
   edit) profile_edit; exit $? ;;
-  approve) thin profile approve ;;
   doctor) thin doctor ;;
   repo-add)
     if [ -n "$cred" ]; then thin repo add --url "${pos[1]}" --name "${pos[0]}" --credential "$cred"

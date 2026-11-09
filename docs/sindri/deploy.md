@@ -136,9 +136,7 @@ in `$EDITOR` (`vi` if unset).
 - Valid: the live file is replaced only if the pod's copy still has the hash it had. If a `repo add` or another
   edit changed it meanwhile, nothing is replaced and it prints "The profile on the pod changed while you were editing (<the
   top-level keys that differ>). Nothing was replaced; your edit is kept at <path>. Run profile edit again and make the change on
-  top of the new copy." (exit 4). Otherwise it runs `kubectl exec -it <pod> -c sindri -- sindri profile approve` at your terminal,
-  where the preview and the typed word are yours. `--no-approve` stops after the file is in place (the first install, where the one
-  approval comes last).
+  top of the new copy." (exit 4). Otherwise the new file is in place and applies on save.
 
 `repo-pull.allowedHosts`, `index.graph.enabled` and every switch are read from the approved profile, so an edit, and an undo, take effect when
 you approve, not when the file is saved.
@@ -153,7 +151,6 @@ Thin wrappers, each `kubectl exec -it <pod> -c sindri -- sindri ...`, and each r
 this script's own failures: usage, the pod unreachable):
 
 - `scripts/sindri-pod.sh repo add <name> <url> [--credential env:NAME]` runs `sindri repo add --url <url> --name <name> [--credential ...]`.
-  It records the repo in the profile and clones nothing; it refuses an unlisted host (`SND-REPO-005`), so run `profile edit
-  --no-approve` first. The clone runs after you approve.
-- `scripts/sindri-pod.sh approve` runs `sindri profile approve`. Once, after `repo add`.
+  It records the repo in the profile and clones nothing; it refuses an unlisted host (`SND-REPO-005`), so run `profile edit`
+  first.
 - `scripts/sindri-pod.sh doctor` runs `sindri doctor`.

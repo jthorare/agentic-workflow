@@ -1,14 +1,14 @@
 {
-  "approved": "70e1581b3ecaf617318482f6b0844b67f79a287a7136b4e4b6ff5d26005e4261",
-  "approvedAt": "2026-01-01T00:00:00.0000000Z",
+  "approved": null,
+  "approvedAt": null,
   "live": null,
   "fileHash": "70e1581b3ecaf617318482f6b0844b67f79a287a7136b4e4b6ff5d26005e4261",
   "checkedAt": null,
   "changed": false,
   "changedPaths": [],
   "asOf": {
-    "cursor": 5,
-    "ledgerHead": 5,
+    "cursor": 1,
+    "ledgerHead": 1,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

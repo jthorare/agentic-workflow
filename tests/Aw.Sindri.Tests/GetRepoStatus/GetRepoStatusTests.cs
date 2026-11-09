@@ -47,19 +47,10 @@ public sealed class GetRepoStatusTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task GetRepoStatus_names_the_live_entry_of_a_repo_waiting_for_approval()
-    {
-        _ = await _profiles.Save(Profile(new RepoEntry("other", "/work/other")), Token);
-        _profiles.Live = Profile(new RepoEntry("other", "/work/other"), new RepoEntry("demo", "/work/demo"));
-
-        Assert.Equal(new RepoStatus(RepoState.NotOnboarded, "/work/demo", "demo"), await Status("/work/demo/src"));
-    }
-
-    [Fact, Trait("Lane", "unit")]
     public void The_nudge_is_one_line_only_for_a_repo_that_is_not_onboarded()
     {
         Assert.Equal("sindri: demo is not onboarded (no secret scan or index); run: sindri repo onboard", RepoStatusRules.NudgeLine(new RepoStatus(RepoState.NotOnboarded, "/work/demo", Name: null)));
-        Assert.Equal("sindri: demo is waiting for approval; run: sindri repo onboard", RepoStatusRules.NudgeLine(new RepoStatus(RepoState.NotOnboarded, "/work/demo", "demo")));
+        Assert.Equal("sindri: demo is not onboarded yet; run: sindri repo onboard", RepoStatusRules.NudgeLine(new RepoStatus(RepoState.NotOnboarded, "/work/demo", "demo")));
         Assert.All(
             [new RepoStatus(RepoState.Onboarded, "/work/demo", "demo"), new RepoStatus(RepoState.NoApprovedProfile, "/work/demo", Name: null), new RepoStatus(RepoState.OutsideGit, Path: null, Name: null)],
             static s => Assert.Equal(string.Empty, RepoStatusRules.NudgeLine(s)));

@@ -1,5 +1,4 @@
 using System.Globalization;
-using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Workflow.Ids;
 
 namespace Aw.Sindri.Core.Challenges;
@@ -23,11 +22,6 @@ public sealed record ChallengeAction(string Text)
     /// <param name="hash">The hash to revoke.</param>
     /// <returns>The action.</returns>
     public static ChallengeAction Revoke(RecipeId id, RecipeHash hash) => new($"revoke {id.Value}@{hash.Display}");
-
-    /// <summary>'approve profile &lt;hash6&gt;' (S1-D5: replaces profile approve's 'confirmed' flag).</summary>
-    /// <param name="hash">The profile hash to approve.</param>
-    /// <returns>The action.</returns>
-    public static ChallengeAction ApproveProfile(ProfileHash hash) => new("approve profile " + hash.Abbreviated);
 
     /// <summary>'approve-all &lt;digest6&gt;' (setup-once spec §5.3): one hold approves the shipped recipes of a plan.</summary>
     /// <param name="digest">The plan's digest (six hex characters).</param>

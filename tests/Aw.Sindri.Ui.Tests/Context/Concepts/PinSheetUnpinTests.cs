@@ -36,23 +36,12 @@ public sealed class PinSheetUnpinTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_pin_never_approved_is_dropped_and_folder_rules_are_named()
+    public async Task Unpin_removes_the_pin_with_its_folder_rules_and_closes()
     {
         var kit = new PinSheetFixtures();
-        var (sheet, _) = await Edited(kit, Pin("billing", "Billing", folderRules: 2, state: PinStates.Waiting));
-
-        sheet.AskUnpin();
-
-        Assert.Equal("Drop the pin Billing? It was never approved, so nothing in the map changes. It also has 2 folder rules set outside the app; Unpin removes them too.", sheet.UnpinQuestion);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task Unpin_and_approve_removes_the_pin_with_its_folder_rules_and_closes()
-    {
-        var kit = new PinSheetFixtures("index.concepts.billing");
         var (sheet, closed) = await Edited(kit, Pin("billing", "Billing", folderRules: 1));
         sheet.AskUnpin();
-        Assert.Equal("Unpin and approve", sheet.UnpinConfirmText);
+        Assert.Equal("Unpin", sheet.UnpinConfirmText);
 
         await sheet.Unpin(Token);
 
@@ -60,7 +49,6 @@ public sealed class PinSheetUnpinTests
         Assert.Equal(["billing"], body.Remove, StringComparer.Ordinal);
         Assert.Equal((true, FileHash), (body.WithFolderRules, body.IfHash));
         Assert.Null(body.Set);
-        Assert.Equal("h1", Assert.Single(kit.Api.ProfileApprovals).Hash);
         Assert.True(Assert.Single(closed).Written);
     }
 

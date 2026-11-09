@@ -19,8 +19,7 @@
 #         --services names them; context.labeling.enabled true with --labeling, else false where set;
 #         context.sessions.enabled true with --session, else false where set. The edits are tried on a temp
 #         copy before step 1, so a profile they can't edit stops before anything is built. Then starts the instance
-#         (sindri --headless), and stops for the terminal steps: `sindri profile approve <hash>` (you type the
-#         hash's first 6 characters) and, with --seed, `sindri context map import <seed>`.
+#         (sindri --headless), and stops for the terminal step, with --seed, `sindri context map import <seed>`.
 #      With --session it writes the MCP config for step 5 (only `sindri-ownercheck`, on this port, with the
 #      X-Sindri-Repo header: --repo, else the directory name of the current repo's main checkout, also from a
 #      linked worktree) and prints the claude command.
@@ -197,17 +196,12 @@ up() {
       || { rm -f "$home/seed.json"; broke "step 3: the export failed; then scripts/owner-check.sh $stage down"; }
   fi
 
-  echo "== 4. profile, start, approve"
+  echo "== 4. profile, start"
   local p="$home/profile/profile.yaml" rc
   (umask 077 && cp "$edited" "$p") || broke "step 4: can't copy the edited profile into $home"
   rc=0; bounded "${in_scratch[@]}" "$bin" --headless || rc=$?
-  # Exit 1 is "needs approval" or "went away before its status answered" (S1); only a listener tells them apart.
+  # Exit 1 is "unhealthy" or "went away before its status answered" (S1); only a listener tells them apart.
   [ "$rc" -le 1 ] && listening || broke "step 4: the scratch instance isn't running on port $port (exit $rc); see $home/logs/serve.log, then scripts/owner-check.sh $stage down"
-  local hash
-  hash="$({ bounded "${in_scratch[@]}" "$bin" profile validate --json || true; } | sed -nE 's/.*"hash":"([0-9a-f]{64})".*/\1/p')"
-  [ -n "$hash" ] || broke "step 4: profile validate gave no hash; run: AW_SINDRI_HOME=$home AW_SINDRI_PORT=$port $bin profile validate"
-  echo "-- approve at this terminal: type the first 6 characters of the hash when asked"
-  "${in_scratch[@]}" "$bin" profile approve "$hash" || broke "step 4: approval failed; retry: AW_SINDRI_HOME=$home AW_SINDRI_PORT=$port $bin profile approve $hash, or scripts/owner-check.sh $stage down"
   if [ "$seed" = 1 ]; then
     echo "-- import the seed at this terminal"
     "${in_scratch[@]}" "$bin" context map import "$home/seed.json" \

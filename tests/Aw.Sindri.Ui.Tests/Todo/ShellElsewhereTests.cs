@@ -13,7 +13,7 @@ namespace Aw.Sindri.Ui.Tests.Todo;
 public sealed class ShellElsewhereTests
 {
     private readonly InMemoryEndpointRecords _records = new();
-    private readonly FakeSindriApi _server = new() { Catalog = RouteAnswer.Api("commands", "catalog"), NeedsYouView = RouteAnswer.Api("needs-you", "empty") };
+    private readonly FakeSindriApi _server = new() { Catalog = RouteAnswer.Api("commands", "catalog"), NeedsYouView = RouteAnswer.SpecShaped("needs-you", "extra-nothing") };
     private readonly FakeTimeProvider _clock = new(DateTimeOffset.Parse("2026-01-01T09:00:00Z", System.Globalization.CultureInfo.InvariantCulture));
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;

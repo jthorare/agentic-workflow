@@ -138,7 +138,7 @@ internal sealed partial class ReviewsPageViewModel : ObservableObject, IDisposab
             return;
         }
 
-        (LoginError, LoginNote) = (string.Empty, saved.Value.Approved ? string.Empty : Labels.ReviewsLoginPending);   // not approved: written, but the prompt stays until the owner approves
+        (LoginError, LoginNote) = (string.Empty, string.Empty);
         await Read(url, cancellationToken).ConfigureAwait(true);
     }
 

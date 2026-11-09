@@ -13,7 +13,7 @@ namespace Aw.Sindri.Features.OnboardRepo;
 /// Onboarding after approval (setup-once spec §5.1): the hook slot runs, then 'repo.onboarded' is recorded under the key of the repo and the approved hash, so it is recorded once per approval however often it runs.
 /// The setup service calls <see cref="Ensure"/> on every tick; the OnboardRepo job calls <see cref="Onboard"/> for one repo. Neither approves anything.
 /// </summary>
-/// <param name="approvals">The approved profile.</param>
+/// <param name="approvals">The profile.</param>
 /// <param name="hooks">The hook slot.</param>
 /// <param name="recorder">Records the event.</param>
 /// <param name="known">The (repo, hash) pairs known to be recorded, so a tick does not run them again.</param>
@@ -39,8 +39,8 @@ internal sealed class RepoOnboarding(IApprovedProfile approvals, IRepoHooks hook
         }
     }
 
-    /// <summary>Onboards one repo of the approved profile.</summary>
-    /// <param name="hash">The approved profile's hash.</param>
+    /// <summary>Onboards one repo of the profile.</summary>
+    /// <param name="hash">The profile's hash.</param>
     /// <param name="entry">The repo's entry.</param>
     /// <param name="name">Its name.</param>
     /// <param name="cancellationToken">Cancels the work.</param>

@@ -116,7 +116,7 @@ public sealed class ModelRoutingDoctorChecksTests
 
         var row = await Row(checks);
 
-        Expect.Equal((CheckState.Ok, "not configured (no profile is approved)"), (row.State, row.Detail));
+        Expect.Equal((CheckState.Ok, "not configured (no profile yet)"), (row.State, row.Detail));
         Assert.Null(row.Fix);
     }
 

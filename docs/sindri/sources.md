@@ -41,8 +41,7 @@ sign-off first.
    `$AW_SINDRI_HOME/secrets/` when there is no keychain) and writes the pointer into the profile's `token` key. A wrong
    scope fails here, not hours into a sync. It is the human's verb: an agent session is refused with `SND-AUTH-002`.
 
-3. **Approve the profile:** `$SINDRI profile approve`. The sources and the token pointers are profile changes, so Sindri
-   waits for your approval before it reads anything.
+3. **Nothing to approve:** the sources and the token pointers are profile changes, and a valid change applies on save.
 
 4. **Sync:** the built-in `index-sync` service runs every 5 minutes while `serve` runs. To run it now and follow it:
 

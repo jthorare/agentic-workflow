@@ -51,11 +51,14 @@ public abstract partial class SindriApiContract
     }
 
     [Fact]
-    public async Task Setup_reads_the_profile_waiting_for_approval()
+    public async Task Setup_reads_the_saved_profile_as_done_and_the_recipes_as_the_open_step()
     {
-        var waiting = (await Reach(new FakeSindriApi { SetupAnswer = RouteAnswer.Api("setup", "profile-needs-approval") }).Setup(_api, Token)).Value.Steps.Single(s => s.Id == "profile");
+        var steps = (await Reach(new FakeSindriApi { SetupAnswer = RouteAnswer.Api("setup", "profile-needs-approval") }).Setup(_api, Token)).Value.Steps;
 
-        Expect.Equal(("needs-you", "ApproveProfile"), (waiting.State, waiting.Action));
+        var profile = steps.Single(s => s.Id == "profile");
+        var recipes = steps.Single(s => s.Id == "recipes");
+        Expect.Equal(("done", null), (profile.State, profile.Action));
+        Expect.Equal(("needs-you", "ApproveAllRecipes"), (recipes.State, recipes.Action));
     }
 
     [Fact]

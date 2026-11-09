@@ -485,7 +485,6 @@ post_link() {
   if [ "$removed" -gt 0 ] || [ -n "$inc" ] || [ "$LOG_NEW" = 1 ]; then
     L "next steps:"
     L "sindri profile init"
-    L "sindri profile approve"
     grep '^repo ' "$LOG" 2> /dev/null | while read -r _ name path; do L "sindri repo onboard $path   # $name"; done
     L "sindri doctor"
     say "next steps (the C# profile starts empty):"

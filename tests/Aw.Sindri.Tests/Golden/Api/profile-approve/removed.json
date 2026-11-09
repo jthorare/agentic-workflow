@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.11",
+  "title": "SND-API-014",
+  "status": 410,
+  "detail": "removed: edits apply on save",
+  "traceId": "<trace>"
+}

@@ -53,7 +53,7 @@ public sealed class SetupServiceTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_tick_onboards_the_repos_the_approved_profile_names_once_and_not_before_the_approval()
+    public async Task A_tick_onboards_the_repos_the_live_profile_names_once()
     {
         _ = await _rig.Slice.HoldLease();
         _rig.Enter();
@@ -61,11 +61,7 @@ public sealed class SetupServiceTests : IDisposable
         var onboarding = new Features.OnboardRepo.RepoOnboarding(_rig.Slice.Profiles, new Features.OnboardRepo.NoSecretCheckHook(), _rig.Recorder, new Core.Setup.KnownRepoEvents(), _rig.Git);
         var service = new SetupService(_rig.Slice.Profiles, _rig.Backfill, mcp: null, onboarding: onboarding);
 
-        _ = await Tick(service);
-        Assert.DoesNotContain(_rig.Slice.Store.Events, static e => e.Envelope.Type == EventTypes.RepoOnboarded);
-
         var live = _rig.Slice.Profiles.Live.Value;
-        _ = await _rig.Slice.Profiles.Save(live, TestContext.Current.CancellationToken);
         _ = await Tick(service);
         _ = await Tick(service);
 

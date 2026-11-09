@@ -14,7 +14,6 @@ internal sealed partial class ShellViewModel
     {
         var card = new LinearConnectionViewModel(Health.ApiUrl, api);
         Health.Follow((url, token) => CurrentPage == PageId.Settings ? card.Refresh(url, token) : Task.CompletedTask);   // leaving Settings already dropped the click's answer (ShowPage)
-        card.ReviewRequested += (_, _) => Navigate(LinkOf(ProfileDriftRow));   // the needs-you review the setup step and a pinned card use
         return card;
     }
 

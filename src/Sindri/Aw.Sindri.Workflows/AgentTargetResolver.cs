@@ -37,7 +37,7 @@ internal sealed class AgentTargetResolver(IApprovedProfile approved, IFactConten
 
         if (latest.Value?.Profile.Workflow?.Agent?.Target is not { } agent)
         {
-            return SindriErrors.LaunchAgentMissing.With("the approved profile has no workflow.agent.target (fix: set it and approve the profile)");
+            return SindriErrors.LaunchAgentMissing.With("the profile has no workflow.agent.target (fix: set it)");
         }
 
         var read = await ReadItem(item, address, cancellationToken).ConfigureAwait(false);
@@ -58,7 +58,7 @@ internal sealed class AgentTargetResolver(IApprovedProfile approved, IFactConten
 
         var path = profile.Repos?.FirstOrDefault(r => string.Equals(r.Name, item.Repo, StringComparison.Ordinal))?.Path;
         return path is null
-            ? SindriErrors.LaunchRepoMissing.With($"the item's repo '{item.Repo}' is not in the approved profile's repos (fix: add it and approve the profile)")
+            ? SindriErrors.LaunchRepoMissing.With($"the item's repo '{item.Repo}' is not in the profile's repos (fix: add it)")
             : new AgentStepTarget(id, agent, path, RepoName.TryFrom(item.Repo, out var repo) ? repo : null);
     }
 

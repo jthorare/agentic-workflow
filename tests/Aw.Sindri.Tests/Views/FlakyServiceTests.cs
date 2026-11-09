@@ -9,7 +9,6 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Lease;
-using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.ListServices;
@@ -89,8 +88,6 @@ public sealed class FlakyServiceTests : IDisposable
                 .Handle(new StartProcessRequest(), Token)).Value;
         }
 
-        var live = (await app.Services.GetRequiredService<IProfileSource>().Load(Token)).Value;
-        _ = (await app.Services.GetRequiredService<IApprovals>().Save(live, Token)).Value;
         _ = Pipeline.Configure(app);
         FirstPass.Publish(app.Services);
         await app.StartAsync(Token);

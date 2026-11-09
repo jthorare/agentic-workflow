@@ -9,6 +9,7 @@ using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Lease;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.RetireInstancesOnStart;
 using Aw.Sindri.Features.StartProcess;
 using Aw.Sindri.Features.StopProcess;
@@ -71,9 +72,23 @@ internal static class ServeCommand
         }
     }
 
+    /// <summary>Removes the old approved-snapshot folder once, after its ledger note (#2258 PR 1); best effort, since a leftover folder harms nothing.</summary>
+    private static async Task RemoveOldApprovals(WebApplication app, TextWriter error)
+    {
+        using (app.Services.GetRequiredService<ICallerContextAccessor>().EnterService("host"))
+        {
+            var removed = await app.Services.GetRequiredService<IOldApprovalsCleanup>().Run(CancellationToken.None).ConfigureAwait(false);
+            if (removed.IsError)
+            {
+                await error.WriteLineAsync($"{removed.Error.Code} warning: {removed.Error.Message}").ConfigureAwait(false);   // the start goes on: a leftover folder harms nothing
+            }
+        }
+    }
+
     /// <summary>Mints this start's human token and holds it; on failure records the stop and releases the lease.</summary>
     private static async Task<bool> MintToken(WebApplication app, TextWriter error)
     {
+        await RemoveOldApprovals(app, error).ConfigureAwait(false);   // the lease is held by now
         var minted = await app.Services.GetRequiredService<IHumanTokenStore>().Mint(CancellationToken.None).ConfigureAwait(false);
         if (minted.IsError)
         {

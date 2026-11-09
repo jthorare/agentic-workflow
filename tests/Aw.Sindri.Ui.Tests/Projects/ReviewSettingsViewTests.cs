@@ -20,7 +20,7 @@ public sealed class ReviewSettingsViewTests : FrameHost
     {
         Server.ReviewSettingsAnswer = RouteAnswer.Api("review-settings", scenario);
         var (window, shell) = await Connected();
-        shell.Navigate(new DeepLink(DeepLinkKind.Project, "prj_0000000000000000000000000H"));
+        shell.Navigate(new DeepLink(DeepLinkKind.Project, "prj_00000000000000000000000008"));
         await Until(window, () => shell.ProjectSheet.ReviewSettings.IsShown && Visible<Border>(window, "ReviewSettingsEntryLine") is not null, "the Review settings never showed");
         return (window, shell);
     }
@@ -51,7 +51,7 @@ public sealed class ReviewSettingsViewTests : FrameHost
         var (window, _) = await Sheet();
 
         Assert.Equal(Labels.ReviewSettingsReset, Heard.Name(Visible<Button>(window, "ReviewSettingsCollapseReset")!));
-        Assert.Equal(Labels.ReviewSettingsSaveApprove, Heard.Name(Visible<Button>(window, "ReviewSettingsSave")!));
+        Assert.Equal(Labels.ReviewSettingsSaveButton, Heard.Name(Visible<Button>(window, "ReviewSettingsSave")!));
         Assert.Equal(Labels.ReviewSettingsMoveUp("Design doc map"), Heard.Name(All<Button>(window, "PanelUp")[1]));
         Assert.Equal(Labels.ReviewSettingsShowPanel("Test plan"), Heard.Name(All<CheckBox>(window, "PanelVisible")[5]));
         Assert.Equal(["Group 1, name", "Group 2, name", "Group 3, name", "Group 4, name"], All<TextBox>(window, "GroupName").Select(Heard.Name), StringComparer.Ordinal);

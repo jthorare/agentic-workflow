@@ -125,7 +125,7 @@ public sealed class ProjectsPageViewTests : FrameHost
     {
         var (window, shell) = await OnProjects("empty-no-linear");
 
-        await shell.Projects.Settled(new ViewModels.Projects.ProjectDoneEventArgs(ViewModels.Projects.ProjectDone.Removed, "prj_0000000000000000000000000H", "Mobile app removed", wentToFinished: false), Token);
+        await shell.Projects.Settled(new ViewModels.Projects.ProjectDoneEventArgs(ViewModels.Projects.ProjectDone.Removed, "prj_00000000000000000000000008", "Mobile app removed", wentToFinished: false), Token);
 
         await Until(window, () => Named<Button>(window, "ProjectsAdd").IsFocused, "focus never reached Add project");
     });
@@ -134,7 +134,7 @@ public sealed class ProjectsPageViewTests : FrameHost
     public Task Esc_on_the_Remove_question_keeps_the_sheet_open_and_focus_on_Remove() => OnUi(async () =>
     {
         var (window, shell) = await OnProjects();
-        shell.Navigate(new DeepLink(DeepLinkKind.Project, "prj_0000000000000000000000000H"));
+        shell.Navigate(new DeepLink(DeepLinkKind.Project, "prj_00000000000000000000000008"));
         await Until(window, () => shell.ProjectSheet.IsShown && shell.ProjectSheet.CanRemove, "the sheet never offered Remove");
         shell.ProjectSheet.AskRemove();
         await Until(window, () => Named<Button>(window, "ProjectKeep").IsFocused, "focus never reached Keep");
