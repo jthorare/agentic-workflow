@@ -10,14 +10,14 @@ namespace Aw.Sindri.Features.LinearIssues;
 /// The write gate over Context (Linear hub spec §5.1): the owner or an agent session (agent-first PR 2) can write once the write key resolves (SND-LINEAR-002 when it is not set, is refused or is the read key) and the issue's team
 /// is one the profile picked (SND-LINEAR-003: the team's lookups are stored only for picked teams, as the lookups read finds). Context failing reads as that error's own code.
 /// </summary>
-/// <param name="scopes">The owner's scope.</param>
+/// <param name="scopes">The write scope: the owner's, behind the caller's own check.</param>
 /// <param name="engine">Context's facade.</param>
 /// <param name="teams">The stored lookups: a team that has none is not picked.</param>
 internal sealed class ContextLinearWriteGate(LinearScopes scopes, IContextLinearWrites engine, ILinearSideFacts teams) : ILinearWriteGate
 {
     public async ValueTask<Error?> Refusal(string teamKey, CancellationToken cancellationToken)
     {
-        var scope = await scopes.Read(owner: true, cancellationToken).ConfigureAwait(false);
+        var scope = await scopes.Write(cancellationToken).ConfigureAwait(false);
         if (scope.IsError)
         {
             return scope.Error;
@@ -34,7 +34,7 @@ internal sealed class ContextLinearWriteGate(LinearScopes scopes, IContextLinear
             return LinearWriteRefusals.NoWriteKey();
         }
 
-        var lookups = await teams.Lookups(teamKey, cancellationToken).ConfigureAwait(false);
+        var lookups = await teams.LookupsForWrite(teamKey, cancellationToken).ConfigureAwait(false);
         return lookups.IsError ? lookups.Error : lookups.Value is null ? LinearWriteRefusals.TeamNotPicked(teamKey) : null;
     }
 }
