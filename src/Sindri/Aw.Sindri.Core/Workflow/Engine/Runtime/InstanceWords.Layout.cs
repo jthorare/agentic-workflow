@@ -55,8 +55,8 @@ internal sealed partial record InstanceWords
     public StatusCommand? ApproveRow() => Instance.Suspension is { Kind: SuspensionKind.Park, Reason: ParkReason.SpecConflict, ParkKind: { } kind }
         ? kind switch
         {
-            ParkKind.Drift => new StatusCommand(StatusVerb.Approve, ActionId.From("ApproveRecipe"), ActionClass.Protected, $"sindri recipe approve {Pinned}", Confirm: null),
-            ParkKind.ChildRevoked => new StatusCommand(StatusVerb.Approve, ActionId.From("ApproveRecipe"), ActionClass.Protected, $"sindri recipe approve {Recipe.Version.Id.Value}", Confirm: null),
+            ParkKind.Drift => new StatusCommand(StatusVerb.Approve, ActionId.From("ApproveRecipe"), ActionClass.Desk, $"sindri recipe approve {Pinned}", Confirm: null),
+            ParkKind.ChildRevoked => new StatusCommand(StatusVerb.Approve, ActionId.From("ApproveRecipe"), ActionClass.Desk, $"sindri recipe approve {Recipe.Version.Id.Value}", Confirm: null),
             ParkKind.Revoked or ParkKind.Dispatch or ParkKind.Loop or ParkKind.Refusal or ParkKind.Step or ParkKind.Wait or ParkKind.Unconfinable or ParkKind.SelfCheck or _ => null,
         }
         : null;

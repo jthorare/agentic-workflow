@@ -322,10 +322,10 @@ public sealed class InstanceViewProducerTests
     }
 
     [Theory]
-    [InlineData("parked-rounds", AnswerKind.Grant, "ApplyCommand:answer-grant", ActionClass.Protected, "sindri workflow answer T-3/step/1 --grant 1", true)]
-    [InlineData("parked-no-progress-child", AnswerKind.Grant, "ApplyCommand:answer-grant", ActionClass.Protected, "sindri workflow answer T-3/step/1 --grant 1", true)]
-    [InlineData("parked-budget", AnswerKind.GrantTokens, "ApplyCommand:answer-grant-tokens", ActionClass.Protected, "sindri workflow answer T-3/step/1 --grant-tokens 5M", true)]
-    [InlineData("escalated-gate", AnswerKind.Accept, "ApplyCommand:answer-accept", ActionClass.Protected, "sindri workflow answer T-3/step/1 --accept", true)]
+    [InlineData("parked-rounds", AnswerKind.Grant, "ApplyCommand:answer-grant", ActionClass.Desk, "sindri workflow answer T-3/step/1 --grant 1", true)]
+    [InlineData("parked-no-progress-child", AnswerKind.Grant, "ApplyCommand:answer-grant", ActionClass.Desk, "sindri workflow answer T-3/step/1 --grant 1", true)]
+    [InlineData("parked-budget", AnswerKind.GrantTokens, "ApplyCommand:answer-grant-tokens", ActionClass.Desk, "sindri workflow answer T-3/step/1 --grant-tokens 5M", true)]
+    [InlineData("escalated-gate", AnswerKind.Accept, "ApplyCommand:answer-accept", ActionClass.Desk, "sindri workflow answer T-3/step/1 --accept", true)]
     [InlineData("parked-needs-answer-step", AnswerKind.Text, "ApplyCommand:answer-text", ActionClass.Desk, "sindri workflow answer T-3/step/1 --text <answer>", false)]
     [InlineData("parked-needs-answer-wait", AnswerKind.Resume, "ApplyCommand:answer-resume", ActionClass.Desk, "sindri workflow answer T-3/step/1 --resume [--text <answer>]", false)]
     [InlineData("parked-timeout", AnswerKind.Resume, "ApplyCommand:answer-resume", ActionClass.Desk, "sindri workflow answer T-3/step/1 --resume", false)]
@@ -349,7 +349,7 @@ public sealed class InstanceViewProducerTests
         Assert.Null(status.Drift);   // the text has no 'drift' line either: the park's own next sentence names the block
         Assert.Equal([StatusVerb.Takeover, StatusVerb.Cancel, StatusVerb.Approve], status.Commands.Select(static c => c.Verb));
         Assert.Equal(
-            new StatusCommand(StatusVerb.Approve, Core.Ids.ActionId.From("ApproveRecipe"), ActionClass.Protected, $"sindri recipe approve workflow.step@{StatusText.Hash12(EngineFixture.Step.Hash!.Value.Value)}", Confirm: null),
+            new StatusCommand(StatusVerb.Approve, Core.Ids.ActionId.From("ApproveRecipe"), ActionClass.Desk, $"sindri recipe approve workflow.step@{StatusText.Hash12(EngineFixture.Step.Hash!.Value.Value)}", Confirm: null),
             status.Commands[^1]);
         Assert.Contains("step.produce changed since", status.Text, StringComparison.Ordinal);
     }

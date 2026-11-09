@@ -22,9 +22,9 @@ internal sealed record AnswerRow(AnswerVariant Variant, string Id, ActionClass C
         AnswerVariant.Text => new(variant, "answer-text", ActionClass.Desk, "--text <answer>"),
         AnswerVariant.Resume => new(variant, "answer-resume", ActionClass.Desk, "--resume"),
         AnswerVariant.Reject => new(variant, "answer-reject", ActionClass.Desk, "--reject"),
-        AnswerVariant.Grant => new(variant, "answer-grant", ActionClass.Protected, "--grant 1"),
-        AnswerVariant.GrantTokens => new(variant, "answer-grant-tokens", ActionClass.Protected, $"--grant-tokens {grantTokens}"),
-        AnswerVariant.Accept => new(variant, "answer-accept", ActionClass.Protected, "--accept"),
+        AnswerVariant.Grant => new(variant, "answer-grant", ActionClass.Desk, "--grant 1"),
+        AnswerVariant.GrantTokens => new(variant, "answer-grant-tokens", ActionClass.Desk, $"--grant-tokens {grantTokens}"),
+        AnswerVariant.Accept => new(variant, "answer-accept", ActionClass.Desk, "--accept"),
         _ => throw new UnreachableException($"no answer row for {variant}"),
     };
 

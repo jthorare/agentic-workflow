@@ -17,7 +17,6 @@ public sealed class AuthorizationTests
         [ActionClass.Job] = "haslv",
         [ActionClass.Decision] = "hasl",
         [ActionClass.Desk] = "hasl",         // plus a service the row grants
-        [ActionClass.Protected] = "hasl",
         [ActionClass.Local] = "",            // never through the API
         [ActionClass.Issue] = "hasl",        // its nonce, heartbeat and exit
     };
@@ -141,7 +140,7 @@ public sealed class AuthorizationTests
         Assert.Equal(["human+terminal", "human", "session", "service"], Table.CallersFor(ActionClass.Request, []));
         Assert.Equal(["human+terminal", "human", "session", "service:host"], Table.CallersFor(ActionClass.Desk, ["host"]));
         Assert.Equal(["human+terminal", "human", "session"], Table.CallersFor(ActionClass.Decision, ["host"]));
-        Assert.Equal(["human+terminal", "human", "session"], Table.CallersFor(ActionClass.Protected, []));
+        Assert.Equal(["human+terminal", "human", "session"], Table.CallersFor(ActionClass.Desk, []));
         Assert.Equal(["session"], Table.CallersFor(ActionClass.StepReport, []));
         Assert.Empty(Table.CallersFor(ActionClass.Local, []));
     }

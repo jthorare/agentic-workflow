@@ -35,8 +35,8 @@ public sealed class EngineRowTests
     private static readonly (string Action, ActionClass Class, string Ui)[] _expected =
     [
         ("RegisterRecipe", ActionClass.Desk, "ready"),
-        ("ApproveRecipe", ActionClass.Protected, "ready"),
-        ("RevokeRecipe", ActionClass.Protected, "ready"),
+        ("ApproveRecipe", ActionClass.Desk, "ready"),
+        ("RevokeRecipe", ActionClass.Desk, "ready"),
         ("IssueChallenge", ActionClass.Issue, "ready"),
         ("StartInstance", ActionClass.Desk, "ready"),
         ("RerunInstance", ActionClass.Desk, "ready"),
@@ -44,9 +44,9 @@ public sealed class EngineRowTests
         ("ApplyCommand:answer-text", ActionClass.Desk, "ready"),
         ("ApplyCommand:answer-resume", ActionClass.Desk, "ready"),
         ("ApplyCommand:answer-reject", ActionClass.Desk, "ready"),
-        ("ApplyCommand:answer-grant", ActionClass.Protected, "ready"),
-        ("ApplyCommand:answer-grant-tokens", ActionClass.Protected, "ready"),
-        ("ApplyCommand:answer-accept", ActionClass.Protected, "ready"),
+        ("ApplyCommand:answer-grant", ActionClass.Desk, "ready"),
+        ("ApplyCommand:answer-grant-tokens", ActionClass.Desk, "ready"),
+        ("ApplyCommand:answer-accept", ActionClass.Desk, "ready"),
         ("ApplyCommand:takeover", ActionClass.Pause, "ready"),
         ("ApplyCommand:handback", ActionClass.Desk, "ready"),
         ("ApplyCommand:rewind", ActionClass.Desk, "ready"),

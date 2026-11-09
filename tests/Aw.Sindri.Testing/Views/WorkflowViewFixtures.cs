@@ -262,13 +262,13 @@ public static class WorkflowViewFixtures
                 "complete" => (ActionClass.Desk, open.CompleteCli!, null),
                 "takeover" => (ActionClass.Pause, $"sindri workflow takeover {row.Address.Value}", null),
                 "handback" => (ActionClass.Desk, $"sindri workflow handback {row.Address.Value}", null),
-                "approve" => (ActionClass.Protected, $"sindri recipe approve {Pinned(row)}", null),
+                "approve" => (ActionClass.Desk, $"sindri recipe approve {Pinned(row)}", null),
                 _ => throw new InvalidOperationException($"no command line for the verb {verb}"),
             };
             commands.Add(new StatusCommand(Enum.Parse<StatusVerb>(verb, ignoreCase: true), found[0], actionClass, cli, confirm));
             foreach (var more in verb == "answer" ? found.Skip(1) : [])   // the engine serves one entry per fitting answer variant
             {
-                commands.Add(new StatusCommand(StatusVerb.Answer, more, VariantClass(more.Value), $"sindri workflow answer {row.Address.Value} {VariantOption(more.Value)}", Confirm: null));
+                commands.Add(new StatusCommand(StatusVerb.Answer, more, ActionClass.Desk, $"sindri workflow answer {row.Address.Value} {VariantOption(more.Value)}", Confirm: null));
             }
         }
 
@@ -286,9 +286,6 @@ public static class WorkflowViewFixtures
         _ => throw new InvalidOperationException($"{action} is not an answer variant"),
     };
 
-    private static ActionClass VariantClass(string action) =>
-        action is "ApplyCommand:answer-grant" or "ApplyCommand:answer-grant-tokens" or "ApplyCommand:answer-accept" ? ActionClass.Protected : ActionClass.Desk;
-
     private static string? VerbOf(string action) => action switch
     {
         "CompleteStep" => "complete",
@@ -301,9 +298,9 @@ public static class WorkflowViewFixtures
     /// <summary>The answer a park takes, with the catalog's action id and class for its kind (grant, grantTokens and accept are protected, at a terminal).</summary>
     private static StatusAnswer Answer(AnswerKind kind, string address, string? arguments = null) => kind switch
     {
-        AnswerKind.Grant => new(kind, Act("ApplyCommand:answer-grant"), ActionClass.Protected, $"sindri workflow answer {address} {arguments ?? "--grant 1"}", AtTerminal: true),
-        AnswerKind.GrantTokens => new(kind, Act("ApplyCommand:answer-grant-tokens"), ActionClass.Protected, $"sindri workflow answer {address} {arguments ?? "--grant-tokens 5M"}", AtTerminal: true),
-        AnswerKind.Accept => new(kind, Act("ApplyCommand:answer-accept"), ActionClass.Protected, $"sindri workflow answer {address} {arguments ?? "--accept"}", AtTerminal: true),
+        AnswerKind.Grant => new(kind, Act("ApplyCommand:answer-grant"), ActionClass.Desk, $"sindri workflow answer {address} {arguments ?? "--grant 1"}", AtTerminal: true),
+        AnswerKind.GrantTokens => new(kind, Act("ApplyCommand:answer-grant-tokens"), ActionClass.Desk, $"sindri workflow answer {address} {arguments ?? "--grant-tokens 5M"}", AtTerminal: true),
+        AnswerKind.Accept => new(kind, Act("ApplyCommand:answer-accept"), ActionClass.Desk, $"sindri workflow answer {address} {arguments ?? "--accept"}", AtTerminal: true),
         AnswerKind.Resume => new(kind, Act("ApplyCommand:answer-resume"), ActionClass.Desk, $"sindri workflow answer {address} {arguments ?? "--resume"}", AtTerminal: false),
         AnswerKind.Text => new(kind, Act("ApplyCommand:answer-text"), ActionClass.Desk, $"sindri workflow answer {address} {arguments ?? "--text <answer>"}", AtTerminal: false),
         AnswerKind.CancelOnly => throw new ArgumentOutOfRangeException(nameof(kind), kind, "no answer for this kind"),

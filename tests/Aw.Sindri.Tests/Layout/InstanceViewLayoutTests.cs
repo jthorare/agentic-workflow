@@ -39,10 +39,10 @@ public sealed class InstanceViewLayoutTests
             [
                 new StateCell("build", Order: null, BranchOf: "intake", StateGlyph.Pending, badge, round, [new LoopPair("verify", 1, 3)], Desk: true, Child: true, progress, Outcome: null, Terminal: false),
             ],
-            AnswerLine = new StatusAnswer(AnswerKind.GrantTokens, ActionId.From("ApplyCommand:answer"), ActionClass.Protected, "sindri workflow answer", AtTerminal: true),
+            AnswerLine = new StatusAnswer(AnswerKind.GrantTokens, ActionId.From("ApplyCommand:answer"), ActionClass.Desk, "sindri workflow answer", AtTerminal: true),
             ChildPark = park,
             DriftNote = new StatusDrift(BlockId.From("step.produce"), NeedsReapproval: true),
-            ApproveRow = new StatusCommand(StatusVerb.Approve, ActionId.From("ApproveRecipe"), ActionClass.Protected, "sindri recipe approve workflow.step", Confirm: null),
+            ApproveRow = new StatusCommand(StatusVerb.Approve, ActionId.From("ApproveRecipe"), ActionClass.Desk, "sindri recipe approve workflow.step", Confirm: null),
             Activity = "import the design output",
             Budget = new BudgetView(1, StateCap: null, 2, InstanceCap: 3),
             Paused = TimeSpan.FromSeconds(40),
@@ -103,7 +103,7 @@ public sealed class InstanceViewLayoutTests
         HasExactly(Prop(status, "header"), "address", "recipe", "hash12", "version", "state", "detail", "since", "ageSeconds");
         HasExactly(Prop(status, "answer"), "kind", "actionId", "class", "cli", "atTerminal");
         Assert.Equal("grantTokens", Prop(Prop(status, "answer"), "kind").GetString());
-        Assert.Equal("protected", Prop(Prop(status, "answer"), "class").GetString());
+        Assert.Equal("desk", Prop(Prop(status, "answer"), "class").GetString());
         HasExactly(Prop(status, "child"), "id", "address", "state", "reason");
         HasExactly(Prop(status, "drift"), "block", "needsReapproval");
         HasExactly(Prop(status, "inputs")[0], "key", "name", "hash");

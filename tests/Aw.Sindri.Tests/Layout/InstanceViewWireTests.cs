@@ -39,7 +39,7 @@ public sealed class InstanceViewWireTests
         Assert.Equal(["input", "output"], Wire<FactDirection>(), StringComparer.Ordinal);
         Assert.Equal(["produced", "in-progress", "pending"], Wire<FactStatus>(), StringComparer.Ordinal);
         Assert.Equal(
-            ["request", "step-report", "pause", "job", "decision", "desk", "protected", "local", "issue"],
+            ["request", "step-report", "pause", "job", "decision", "desk", "local", "issue"],
             Wire<ActionClass>(),
             StringComparer.Ordinal);
     }

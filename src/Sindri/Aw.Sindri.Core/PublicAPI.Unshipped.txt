@@ -69,11 +69,10 @@ Aw.Sindri.Core.Challenges.IssuedChallenge.Subject.init -> void
 Aw.Sindri.Core.Commands.ActionClass
 Aw.Sindri.Core.Commands.ActionClass.Decision = 4 -> Aw.Sindri.Core.Commands.ActionClass
 Aw.Sindri.Core.Commands.ActionClass.Desk = 5 -> Aw.Sindri.Core.Commands.ActionClass
-Aw.Sindri.Core.Commands.ActionClass.Issue = 8 -> Aw.Sindri.Core.Commands.ActionClass
+Aw.Sindri.Core.Commands.ActionClass.Issue = 7 -> Aw.Sindri.Core.Commands.ActionClass
 Aw.Sindri.Core.Commands.ActionClass.Job = 3 -> Aw.Sindri.Core.Commands.ActionClass
-Aw.Sindri.Core.Commands.ActionClass.Local = 7 -> Aw.Sindri.Core.Commands.ActionClass
+Aw.Sindri.Core.Commands.ActionClass.Local = 6 -> Aw.Sindri.Core.Commands.ActionClass
 Aw.Sindri.Core.Commands.ActionClass.Pause = 2 -> Aw.Sindri.Core.Commands.ActionClass
-Aw.Sindri.Core.Commands.ActionClass.Protected = 6 -> Aw.Sindri.Core.Commands.ActionClass
 Aw.Sindri.Core.Commands.ActionClass.Request = 0 -> Aw.Sindri.Core.Commands.ActionClass
 Aw.Sindri.Core.Commands.ActionClass.StepReport = 1 -> Aw.Sindri.Core.Commands.ActionClass
 Aw.Sindri.Core.Commands.ActionClassifier

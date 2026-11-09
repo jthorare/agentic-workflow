@@ -19,7 +19,7 @@ public sealed class WorkflowViewStatusWordsTests
         Assert.Null(status.Answer);
         Assert.Equal(["takeover", "cancel", "approve"], status.Commands.Select(c => StatusVerbNames.Of(c.Verb)), StringComparer.Ordinal);
         var approve = Assert.Single(status.Commands, c => c.Verb == StatusVerb.Approve);
-        Assert.Equal(ActionClass.Protected, approve.Class);
+        Assert.Equal(ActionClass.Desk, approve.Class);
         Assert.Equal("ApproveRecipe", approve.ActionId.Value);
         Assert.Equal($"sindri recipe approve {status.Header.Recipe.Value}@{status.Header.Hash12}", approve.Cli);
         Assert.Null(approve.Confirm);
