@@ -47,7 +47,7 @@ public sealed record SandboxPlan(
 {
     /// <summary>The paths the session can write: every read-write bind and per-launch directory.</summary>
     public IReadOnlyList<string> Writable =>
-        [.. Mounts.Where(m => m.Kind is PlanMountKind.ReadWrite or PlanMountKind.PerLaunchDir).Select(m => m.Path).Distinct(StringComparer.Ordinal)];
+        [.. Mounts.Where(m => m.Kind is PlanMountKind.ReadWrite or PlanMountKind.PerLaunchDir or PlanMountKind.State).Select(m => m.Path).Distinct(StringComparer.Ordinal)];
 
     /// <summary>The value-free summary the engine copies onto 'launch.started'.</summary>
     /// <returns>The summary.</returns>
