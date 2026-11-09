@@ -139,7 +139,10 @@ finished: seven placeholder images copied from `templates/packet/` (each says "P
 source and `status.md` full of prompts. A fresh packet therefore lints with errors: one `FILES/placeholder` per
 placeholder image and one `FILES/placeholder-text` per line that still carries a placeholder (about 70 in all). They
 are expected while the author writes, they list what is left to replace, and the page is ready to publish only when
-they are gone. The tokens are matched exactly, case and spacing included (`lint_packet.PLACEHOLDER_MARK`,
+they are gone. They do not stop `tdd rev`: its lint step records the findings in `build/lint.json` (and the database)
+and fails only when the linter cannot run, so the draft page still builds; the publish run (`--strict`, below) is what
+they block. To lint a draft you know still has placeholders, and see only the other findings, pass
+`--skip FILES/placeholder,FILES/placeholder-text`. Never skip them on the publish run. The tokens are matched exactly, case and spacing included (`lint_packet.PLACEHOLDER_MARK`,
 `PLACEHOLDER_DATE` and `PLACEHOLDER_PROMPTS`, mirrored in `cli/src/lint/patterns.ts`):
 - the marker `PLACEHOLDER · REPLACE ME`, and the date `YYYY-MM-DD`;
 - every `<angle-bracket>` prompt of `templates/tdd-template.md` outside its one-line comments, plus the title a
