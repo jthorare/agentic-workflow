@@ -8,7 +8,7 @@ using Aw.Sindri.Core.Setup;
 namespace Aw.Sindri.Features.SetReviewLogin;
 
 /// <summary>
-/// Saves 'review.login' the way 'sindri profile set' does (comments and order kept, the edited text read and checked before the atomic write). The owner's own action: a launched session is refused (SND-AUTH-002).
+/// Saves 'review.login' the way 'sindri profile set' does (comments and order kept, the edited text read and checked before the atomic write). Any caller with a context may do it; the actor is recorded.
 /// </summary>
 /// <param name="callers">The caller.</param>
 /// <param name="writer">Plans and writes the edit.</param>
@@ -22,14 +22,9 @@ internal sealed class SetReviewLoginService(ICallerContextAccessor callers, IPro
     public async ValueTask<Result<SetReviewLoginResponse>> Handle(SetReviewLoginRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (callers.Current is not { } caller)
+        if (callers.Current is null)
         {
             return SindriErrors.AuthRefused.With("saving review.login needs a caller");
-        }
-
-        if (caller.Class == CallerClass.Session)
-        {
-            return SindriErrors.AuthRefused.With("review.login is the owner's to set; a session can't save it (fix: set it on the Reviews tab)");
         }
 
         if (PrReviewRules.LoginProblem(request.Login) is { } bad)

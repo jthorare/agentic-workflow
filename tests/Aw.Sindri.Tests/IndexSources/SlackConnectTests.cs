@@ -45,23 +45,11 @@ public sealed class SlackConnectTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_session_is_refused_before_anything_is_asked_or_saved()
-    {
-        var result = await Connect().Run(human: false, Ct);
-
-        Assert.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
-        Assert.Empty(_prompts.Asked);
-        Assert.Empty(_secrets.Stored);
-        Assert.Empty(_written.Pointers);
-        Assert.Empty(_built);
-    }
-
-    [Fact, Trait("Lane", "unit")]
     public async Task A_profile_with_no_slack_channels_asks_nothing_and_sends_nothing()
     {
         _profiles.Live = Profile("""{"sources":{}}""");
 
-        var result = await Connect().Run(human: true, Ct);
+        var result = await Connect().Run(Ct);
 
         Assert.Equal(SindriErrors.IndexNotInProfile.Code, result.Error.Code);
         Assert.Empty(_prompts.Asked);
@@ -71,7 +59,7 @@ public sealed class SlackConnectTests
     [Fact, Trait("Lane", "unit")]
     public async Task The_token_is_asked_with_the_echo_off_every_listed_channel_is_probed_then_it_is_stored_and_pointed_to()
     {
-        var result = await Connect().Run(human: true, Ct);
+        var result = await Connect().Run(Ct);
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : null);
         Assert.Equal(1, _prompts.SecretsAsked);
@@ -89,7 +77,7 @@ public sealed class SlackConnectTests
     {
         _profiles.Live = Profile("""{"sources":{"slack":{"channels":[{"id":"C0001GEN","name":"general"},{"id":"D0003DMX","name":"a-dm"}],"workspace":"example"}}}""");
 
-        var result = await Connect().Run(human: true, Ct);
+        var result = await Connect().Run(Ct);
 
         // The settings reader refuses a D… id at load (SND-CONTEXT-001), earlier than connect and for every caller; connect's own 013 check is the second line.
         Assert.Equal("SND-CONTEXT-001", result.Error.Code);
@@ -103,7 +91,7 @@ public sealed class SlackConnectTests
     {
         _reader.Failures["G0002OPS"] = ConnectorsErrors.ChannelNotAllowed.With("not in the profile");
 
-        var result = await Connect().Run(human: true, Ct);
+        var result = await Connect().Run(Ct);
 
         Assert.Equal("SND-INDEX-013", result.Error.Code);
         Assert.Empty(_secrets.Stored);
@@ -115,7 +103,7 @@ public sealed class SlackConnectTests
     {
         _reader.Failures["G0002OPS"] = ConnectorsErrors.AccessDenied.With("not_in_channel");
 
-        var result = await Connect().Run(human: true, Ct);
+        var result = await Connect().Run(Ct);
 
         Assert.Equal(SindriErrors.IndexRepoUnreadable.Code, result.Error.Code);
         Assert.Contains("ops", result.Error.Message, StringComparison.Ordinal);
@@ -129,7 +117,7 @@ public sealed class SlackConnectTests
     {
         _reader.Failures["C0001GEN"] = ConnectorsErrors.Unauthorized.With("invalid_auth " + Planted);
 
-        var result = await Connect().Run(human: true, Ct);
+        var result = await Connect().Run(Ct);
 
         Assert.Equal(SindriErrors.IndexTokenUnresolved.Code, result.Error.Code);
         Assert.DoesNotContain(Planted, result.Error.Message, StringComparison.Ordinal);
@@ -144,7 +132,7 @@ public sealed class SlackConnectTests
     {
         _reader.LimitedUntil = new DateTimeOffset(2026, 10, 28, 10, 0, 0, TimeSpan.Zero);
 
-        var result = await Connect().Run(human: true, Ct);
+        var result = await Connect().Run(Ct);
 
         Assert.Equal(ConnectorsErrors.RateLimited.Code, result.Error.Code);
         Assert.Empty(_secrets.Stored);
@@ -156,7 +144,7 @@ public sealed class SlackConnectTests
         var prompts = new FakeSecretPrompts();
         prompts.Answer("   ");
 
-        var result = await Connect(prompts).Run(human: true, Ct);
+        var result = await Connect(prompts).Run(Ct);
 
         Assert.Equal(SindriErrors.InvalidInput.Code, result.Error.Code);
         Assert.Empty(_reader.Probed);
