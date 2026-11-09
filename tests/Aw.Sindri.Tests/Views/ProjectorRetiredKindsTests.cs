@@ -34,9 +34,11 @@ public sealed class ProjectorRetiredKindsTests
         await v.Fold("line.phaseChanged", Dummy(), _item, static _ => """{"line":"L-1","phase":"build","to":"review"}""");
         await v.Fold("scope.frozen", Dummy(), _item, static _ => """{"packet":"P-1","hash":"sha256:bbbb"}""");
         await v.Fold("recipe.approved", Dummy(), _item, static _ => """{"id":"workflow.step","version":1,"hash":"sha256:aaaa"}""");
+        await v.Fold(EventTypes.WorkflowRetired, Dummy(), _item, static _ => """{"instance":"ITM-1/step/1","from":"","to":"retired","trigger":"retire","outcome":"retired","run":null}""");
 
         var timeline = (await v.Views.Range<TimelineRow>(ViewNames.ItemTimeline, _item.Value + "/", _item.Value + "0", 10, Token)).Value;
-        Assert.Equal(["item.created", "workflow.started", "line.phaseChanged", "scope.frozen", "recipe.approved"], timeline.Select(static t => t.Type), StringComparer.Ordinal);
+        Assert.Equal(["item.created", "workflow.started", "line.phaseChanged", "scope.frozen", "recipe.approved", "workflow.retired"], timeline.Select(static t => t.Type), StringComparer.Ordinal);
+        Assert.Equal(TimelineLine.WorkflowRetired, timeline[^1].Line);
         var row = (await v.Views.Get<ItemRow>(ViewNames.Items, _item.Value, Token)).Value!;
         Assert.Equal((ItemState.New, null, 1L), (row.State, row.Instance, row.Version));
         Assert.Empty((await v.Views.List<NeedsYouRowRecord>(ViewNames.NeedsYou, Token)).Value);

@@ -12,6 +12,9 @@ namespace Aw.Sindri.Core.Items;
 /// <summary>The one line an item's timeline shows for an event (API spec §3.1).</summary>
 public static class TimelineLine
 {
+    /// <summary>The line for a 'workflow.retired' note: the item's old recipe workflow ended because that engine was removed.</summary>
+    public const string WorkflowRetired = "stub";
+
     /// <summary>The line for <paramref name="recorded"/>: 'Created: &lt;title&gt;', 'new → done', 'Linked to &lt;record&gt; (&lt;alias&gt;)', 're-scope request filed by session:cli', 'decision DEC-… accepted by human:prover', or the event type.</summary>
     /// <param name="recorded">The ledger event.</param>
     /// <param name="json">The options its payload reads with.</param>
