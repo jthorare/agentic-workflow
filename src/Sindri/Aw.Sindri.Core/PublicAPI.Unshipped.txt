@@ -20693,7 +20693,6 @@ override Aw.Sindri.Core.Profile.ForEachSettings.ToString() -> string!
 Aw.Sindri.Core.Graph.Blocks.CollectBlock.IsTrigger.get -> bool
 Aw.Sindri.Core.Graph.Blocks.ForEachLimits.BatchSize.get -> int
 static Aw.Sindri.Core.Graph.Blocks.ForEachLimits.operator ==(Aw.Sindri.Core.Graph.Blocks.ForEachLimits? left, Aw.Sindri.Core.Graph.Blocks.ForEachLimits? right) -> bool
-static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.Standard(Aw.Sindri.Core.Graph.Blocks.INotifyPort! notify, Aw.Sindri.Core.Graph.Blocks.IGraphModelPort! model, Aw.Sindri.Core.Graph.Blocks.IForEachLimitSource? forEachLimits = null) -> Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry!
 static Aw.Sindri.Core.Graph.Loops.LoopBody.Find(Aw.Sindri.Core.Graph.GraphSpec! spec, Aw.Sindri.Core.Graph.Ids.NodeId forEach) -> Aw.Kernel.Result<Aw.Sindri.Core.Graph.Loops.LoopShape!>!
 Aw.Sindri.Core.Graph.Blocks.ForEachBlock.ForEachBlock(Aw.Sindri.Core.Graph.Blocks.IForEachLimitSource! limits) -> void
 Aw.Sindri.Core.Graph.Blocks.ForEachBlock.Type.get -> string!
@@ -21145,3 +21144,67 @@ static Aw.Sindri.Core.Connections.SignInTry.operator !=(Aw.Sindri.Core.Connectio
 static Aw.Sindri.Core.Connections.SignInTry.operator ==(Aw.Sindri.Core.Connections.SignInTry? left, Aw.Sindri.Core.Connections.SignInTry? right) -> bool
 Aw.Sindri.Core.Todos.TodoNoteImport.Warning.get -> string?
 Aw.Sindri.Core.Todos.TodoNoteImport.Warning.init -> void
+Aw.Sindri.Core.Graph.Blocks.IMeetingSource
+Aw.Sindri.Core.Graph.Blocks.IMeetingSource.Preset.get -> string!
+Aw.Sindri.Core.Graph.Blocks.IMeetingSource.Read(Aw.Sindri.Core.Connections.ConnectionName connection, System.DateTimeOffset from, System.DateTimeOffset to, bool withTranscript, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.Meeting!>!>!>
+Aw.Sindri.Core.Graph.Blocks.Meeting
+Aw.Sindri.Core.Graph.Blocks.Meeting.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.Meeting!
+Aw.Sindri.Core.Graph.Blocks.Meeting.Attendees.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Blocks.Meeting.Attendees.init -> void
+Aw.Sindri.Core.Graph.Blocks.Meeting.Deconstruct(out string! Title, out System.DateTimeOffset Start, out System.DateTimeOffset End, out System.Collections.Generic.IReadOnlyList<string!>! Attendees, out string! Notes, out string? Transcript, out string! Link, out string! Source) -> void
+Aw.Sindri.Core.Graph.Blocks.Meeting.End.get -> System.DateTimeOffset
+Aw.Sindri.Core.Graph.Blocks.Meeting.End.init -> void
+Aw.Sindri.Core.Graph.Blocks.Meeting.Equals(Aw.Sindri.Core.Graph.Blocks.Meeting? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.Meeting.Link.get -> string!
+Aw.Sindri.Core.Graph.Blocks.Meeting.Link.init -> void
+Aw.Sindri.Core.Graph.Blocks.Meeting.Meeting(string! Title, System.DateTimeOffset Start, System.DateTimeOffset End, System.Collections.Generic.IReadOnlyList<string!>! Attendees, string! Notes, string? Transcript, string! Link, string! Source) -> void
+Aw.Sindri.Core.Graph.Blocks.Meeting.Notes.get -> string!
+Aw.Sindri.Core.Graph.Blocks.Meeting.Notes.init -> void
+Aw.Sindri.Core.Graph.Blocks.Meeting.Source.get -> string!
+Aw.Sindri.Core.Graph.Blocks.Meeting.Source.init -> void
+Aw.Sindri.Core.Graph.Blocks.Meeting.Start.get -> System.DateTimeOffset
+Aw.Sindri.Core.Graph.Blocks.Meeting.Start.init -> void
+Aw.Sindri.Core.Graph.Blocks.Meeting.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.Meeting.Title.init -> void
+Aw.Sindri.Core.Graph.Blocks.Meeting.Transcript.get -> string?
+Aw.Sindri.Core.Graph.Blocks.Meeting.Transcript.init -> void
+Aw.Sindri.Core.Graph.Blocks.MeetingInclude
+Aw.Sindri.Core.Graph.Blocks.MeetingInclude.Notes = 1 -> Aw.Sindri.Core.Graph.Blocks.MeetingInclude
+Aw.Sindri.Core.Graph.Blocks.MeetingInclude.Transcript = 2 -> Aw.Sindri.Core.Graph.Blocks.MeetingInclude
+Aw.Sindri.Core.Graph.Blocks.MeetingsBlock
+Aw.Sindri.Core.Graph.Blocks.MeetingsBlock.CheckConfig(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
+Aw.Sindri.Core.Graph.Blocks.MeetingsBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.MeetingsBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.MeetingsBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.MeetingsBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.MeetingsBlock.MeetingsBlock(System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Graph.Blocks.IMeetingSource!>! sources, Aw.Sindri.Core.Graph.Blocks.IGraphModelPort! model, System.TimeProvider! clock, System.TimeZoneInfo! zone) -> void
+Aw.Sindri.Core.Graph.Blocks.MeetingsBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.MeetingsBlock.Type.get -> string!
+override Aw.Sindri.Core.Graph.Blocks.Meeting.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.Meeting.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.Meeting.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.Meeting.operator !=(Aw.Sindri.Core.Graph.Blocks.Meeting? left, Aw.Sindri.Core.Graph.Blocks.Meeting? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.Meeting.operator ==(Aw.Sindri.Core.Graph.Blocks.Meeting? left, Aw.Sindri.Core.Graph.Blocks.Meeting? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.MeetingsBlock.Group.get -> string!
+static Aw.Sindri.Core.Graph.Blocks.MeetingsBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.MeetingsConfig
+Aw.Sindri.Core.Graph.Blocks.MeetingsConfig.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.MeetingsConfig!
+Aw.Sindri.Core.Graph.Blocks.MeetingsConfig.Connection.get -> Aw.Sindri.Core.Connections.ConnectionName
+Aw.Sindri.Core.Graph.Blocks.MeetingsConfig.Connection.init -> void
+Aw.Sindri.Core.Graph.Blocks.MeetingsConfig.Day.get -> System.DateOnly?
+Aw.Sindri.Core.Graph.Blocks.MeetingsConfig.Day.init -> void
+Aw.Sindri.Core.Graph.Blocks.MeetingsConfig.Deconstruct(out Aw.Sindri.Core.Connections.ConnectionName Connection, out System.DateOnly? Day, out int MinMinutes, out Aw.Sindri.Core.Graph.Blocks.MeetingInclude Include) -> void
+Aw.Sindri.Core.Graph.Blocks.MeetingsConfig.Equals(Aw.Sindri.Core.Graph.Blocks.MeetingsConfig? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.MeetingsConfig.Include.get -> Aw.Sindri.Core.Graph.Blocks.MeetingInclude
+Aw.Sindri.Core.Graph.Blocks.MeetingsConfig.Include.init -> void
+Aw.Sindri.Core.Graph.Blocks.MeetingsConfig.MeetingsConfig(Aw.Sindri.Core.Connections.ConnectionName Connection, System.DateOnly? Day, int MinMinutes, Aw.Sindri.Core.Graph.Blocks.MeetingInclude Include) -> void
+Aw.Sindri.Core.Graph.Blocks.MeetingsConfig.MinMinutes.get -> int
+Aw.Sindri.Core.Graph.Blocks.MeetingsConfig.MinMinutes.init -> void
+override Aw.Sindri.Core.Graph.Blocks.MeetingsConfig.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.MeetingsConfig.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.MeetingsConfig.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.Standard(Aw.Sindri.Core.Graph.Blocks.INotifyPort! notify, Aw.Sindri.Core.Graph.Blocks.IGraphModelPort! model, Aw.Sindri.Core.Graph.Blocks.IForEachLimitSource? forEachLimits = null, Aw.Sindri.Core.Graph.Blocks.MeetingsBlock? meetings = null) -> Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry!
+static Aw.Sindri.Core.Graph.Blocks.MeetingsConfig.Parse(System.Text.Json.Nodes.JsonObject! config) -> Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.MeetingsConfig!>!
+static Aw.Sindri.Core.Graph.Blocks.MeetingsConfig.Problem(System.Text.Json.Nodes.JsonObject! config) -> (string! Field, string! Text)?
+static Aw.Sindri.Core.Graph.Blocks.MeetingsConfig.operator !=(Aw.Sindri.Core.Graph.Blocks.MeetingsConfig? left, Aw.Sindri.Core.Graph.Blocks.MeetingsConfig? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.MeetingsConfig.operator ==(Aw.Sindri.Core.Graph.Blocks.MeetingsConfig? left, Aw.Sindri.Core.Graph.Blocks.MeetingsConfig? right) -> bool

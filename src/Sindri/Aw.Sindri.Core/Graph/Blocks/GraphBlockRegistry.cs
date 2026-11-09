@@ -28,11 +28,12 @@ public sealed class GraphBlockRegistry : IGraphBlockCatalog
     /// <param name="notify">Where 'notify' writes.</param>
     /// <param name="model">What 'prompt' asks.</param>
     /// <param name="forEachLimits">Where 'for_each' reads its defaults; null takes <see cref="ForEachLimits.Defaults"/>.</param>
+    /// <param name="meetings">The 'meetings' block (PR 10d); null leaves it out, as a build with no note-app sources does.</param>
     /// <returns>The registry.</returns>
-    public static GraphBlockRegistry Standard(INotifyPort notify, IGraphModelPort model, IForEachLimitSource? forEachLimits = null) =>
+    public static GraphBlockRegistry Standard(INotifyPort notify, IGraphModelPort model, IForEachLimitSource? forEachLimits = null, MeetingsBlock? meetings = null) =>
         new([
             new ScheduleBlock(), new ConnectionEventBlock(), new ManualBlock(), new ConditionBlock(), new NotifyBlock(notify), new PromptBlock(model),
-            new ForEachBlock(forEachLimits ?? new DefaultForEachLimits()), new CollectBlock(),
+            new ForEachBlock(forEachLimits ?? new DefaultForEachLimits()), new CollectBlock(), .. meetings is null ? [] : new IGraphBlock[] { meetings },
         ]);
 
     /// <summary>Finds the block of a type.</summary>
