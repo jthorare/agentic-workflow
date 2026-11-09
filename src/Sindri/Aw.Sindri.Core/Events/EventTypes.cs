@@ -248,6 +248,15 @@ public static partial class EventTypes
     /// <summary>A connection that needed a new sign-in is connected again (connections PR 10b); it clears the connection's needs-you row.</summary>
     public const string ConnectionSignedIn = "connection.signed-in";
 
+    /// <summary>A poll of a connection for one event kind returned events (#2258, PR 11). Counts only. Not public.</summary>
+    public const string ConnectionPolled = "connection.polled";
+
+    /// <summary>A polled event matched a workflow's trigger but started no run: a run is in flight, or the delivery already had its run (#2258, PR 11). Not public.</summary>
+    public const string WorkflowTriggerSkipped = "workflow.trigger.skipped";
+
+    /// <summary>A catch-up hit its page cap, so older events were skipped (#2258, PR 11). Not public.</summary>
+    public const string CatchUpCapped = "catchup.capped";
+
     /// <summary>The event a background service records per run: 'service.&lt;name&gt;'.</summary>
     /// <param name="service">The service.</param>
     /// <returns>The event type, for example 'service.heartbeat'.</returns>

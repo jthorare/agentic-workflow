@@ -138,6 +138,7 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
     internal void Event(EventView e)
     {
         LastEvent = StatusText.Event(e);
+        CountWorkflowEvent(e.Type);
         Heard();
     }
 
