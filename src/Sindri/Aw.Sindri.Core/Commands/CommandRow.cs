@@ -11,7 +11,7 @@ namespace Aw.Sindri.Core.Commands;
 /// <param name="Variant">The variant, or null for a plain command.</param>
 /// <param name="Class">The action class.</param>
 /// <param name="ServiceGrants">The in-process services allowed to run a desk row ('host' for StopProcess).</param>
-/// <param name="NeedsTerminal">True only on the line holdout read (a group-F guard: hidden scenarios stay from the agent); no other row is held to a terminal (owner decision q93).</param>
+/// <param name="NeedsTerminal">True only on the line holdout read. The authorization table no longer enforces it (agent-first PR 2); PR 3 retires the flag with the holdout guard.</param>
 /// <param name="SelfAudited">True when its accepted path writes its own audit (StopProcess's 'process.stopped').</param>
 /// <param name="Destructive">True when the UI confirms it first.</param>
 /// <param name="ReadsViews">True when it waits for the views to reach the ledger head.</param>

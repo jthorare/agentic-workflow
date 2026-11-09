@@ -6,12 +6,13 @@ using Aw.Context.Core.Sources;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Linear;
 
 namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>
-/// Edits a stored Linear issue (Linear hub spec 2026-11-04 §3, §5.3, D6), in this order: the write gate (a session, the write key, a picked team); the set fields read and every id checked against the team's stored lookups
+/// Edits a stored Linear issue (Linear hub spec 2026-11-04 §3, §5.3, D6), in this order: the write gate (the write key, a picked team); the set fields read and every id checked against the team's stored lookups
 /// (SND-LINEAR-006, nothing is sent); Linear's live read; a change Linear already holds is applied with nothing sent; a field Linear changed since the sheet opened is a conflict with nothing sent; then Context's Change.
 /// What Context answers is the ending: applied (the stored issue is re-read for the answer), applied but stored late (the same, with SND-LINEAR-013), unknown (SND-LINEAR-011, the one re-read already ran) or its error.
 /// </summary>
@@ -21,13 +22,15 @@ namespace Aw.Sindri.Features.LinearIssues;
 /// <param name="issues">The stored issues: a parent key resolves through them.</param>
 /// <param name="writes">Context's Linear writes.</param>
 /// <param name="reread">The sheet's read: the issue the answer carries.</param>
+/// <param name="recorder">Records the write under the caller's actor.</param>
 internal sealed class ChangeLinearIssueService(
     ILinearWriteGate gate,
     ILinearWriteScope scope,
     ILinearSideFacts lookups,
     ILinearIssueFacts issues,
     IContextLinearWrites writes,
-    IService<GetLinearIssueRequest, GetLinearIssueResponse> reread) : IService<ChangeLinearIssueRequest, LinearChangeResult>
+    IService<GetLinearIssueRequest, GetLinearIssueResponse> reread,
+    ILinearWriteRecorder recorder) : IService<ChangeLinearIssueRequest, LinearChangeResult>
 {
     private const string IssuePrefix = "linear:issue/";
 
@@ -56,15 +59,21 @@ internal sealed class ChangeLinearIssueService(
         var differing = Conflicts(live, opened);
         return differing.Count > 0
             ? await Conflict(key, live, differing, cancellationToken).ConfigureAwait(false)
-            : await Send(key, LinearChangeFields.ToChange(set, parent), owner, cancellationToken).ConfigureAwait(false);
+            : await Send(key, LinearChangeFields.ToChange(set, parent), string.Join(',', set.Select(static f => f.Key)), owner, cancellationToken).ConfigureAwait(false);
     }
 
-    private async ValueTask<Result<LinearChangeResult>> Send(LinearIssueKey key, LinearIssueChange change, ContextScope owner, CancellationToken cancellationToken)
+    private async ValueTask<Result<LinearChangeResult>> Send(LinearIssueKey key, LinearIssueChange change, string fields, ContextScope owner, CancellationToken cancellationToken)
     {
         var outcome = await writes.Change(key, change, owner, cancellationToken).ConfigureAwait(false);
         if (outcome.IsError)
         {
             return RateLimit(outcome.Error);
+        }
+
+        if (outcome.Value is LinearWriteApplied or LinearWriteAppliedNotStored
+            && await recorder.Record(new LinearWrite(EventTypes.LinearIssueChanged, key.Team, key.ToString(), ClientId: null, fields), cancellationToken).ConfigureAwait(false) is { } failed)
+        {
+            return failed;
         }
 
         return outcome.Value switch
@@ -100,7 +109,7 @@ internal sealed class ChangeLinearIssueService(
             return unopened;
         }
 
-        var owner = await scope.Owner(cancellationToken).ConfigureAwait(false);
+        var owner = await scope.Write(cancellationToken).ConfigureAwait(false);
         if (owner.IsError)
         {
             return owner.Error;
@@ -134,7 +143,7 @@ internal sealed class ChangeLinearIssueService(
     // why: the ids the owner sends come from the lookups the app read; one that is not in them is a stale sheet or a typo, and Linear's own refusal would say less about which
     private async ValueTask<Result<ExternalId?>> Checked(LinearIssueKey key, IReadOnlyList<KeyValuePair<string, object?>> set, CancellationToken cancellationToken)
     {
-        var team = await lookups.Lookups(key.Team, cancellationToken).ConfigureAwait(false);
+        var team = await lookups.LookupsForWrite(key.Team, cancellationToken).ConfigureAwait(false);
         if (team.IsError || team.Value is not { } found)
         {
             return team.IsError ? team.Error : LinearWriteRefusals.TeamNotPicked(key.Team);
@@ -198,7 +207,7 @@ internal sealed class ChangeLinearIssueService(
     private async ValueTask<Result<LinearChangeResult>> Conflict(LinearIssueKey key, LinearIssueView live, List<LinearFieldConflict> fields, CancellationToken cancellationToken)
     {
         var stored = await reread.Handle(new GetLinearIssueRequest(key.ToString()), cancellationToken).ConfigureAwait(false);
-        var team = await lookups.Lookups(key.Team, cancellationToken).ConfigureAwait(false);
+        var team = await lookups.LookupsForWrite(key.Team, cancellationToken).ConfigureAwait(false);
         if (stored.IsError || team.IsError)
         {
             return stored.IsError ? stored.Error : team.Error;
