@@ -86,6 +86,59 @@ public sealed class HttpBlockTests
     }
 
     [Fact]
+    public async Task A_streamed_body_with_no_length_over_one_megabyte_fails_the_node_and_stops_reading_near_the_cap()
+    {
+        var endless = new EndlessStream();
+        var block = Block(new FlowFakes.ScriptedHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(endless) }), "api.example.com");
+
+        var result = await Run(block, new JsonObject { ["url"] = "https://api.example.com/x" });
+
+        Assert.Equal(SindriErrors.GraphHttpFailed.Code, result.Error.Code);
+        Assert.Contains("1 MB", result.Error.Message, StringComparison.Ordinal);
+        Assert.InRange(endless.BytesRead, GraphHttpClient.MaxBodyBytes + 1, GraphHttpClient.MaxBodyBytes + (64 * 1024));   // one chunk past the cap, never the whole (endless) stream
+    }
+
+    /// <summary>A non-seekable stream with no end: no Content-Length, and a read that never stops on its own.</summary>
+    private sealed class EndlessStream : Stream
+    {
+        public long BytesRead { get; private set; }
+
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            var n = Math.Min(count, 4096);
+            Array.Fill(buffer, (byte)'x', offset, n);
+            BytesRead += n;
+            return n;
+        }
+
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            var n = Math.Min(buffer.Length, 4096);
+            buffer.Span[..n].Fill((byte)'x');
+            BytesRead += n;
+            return ValueTask.FromResult(n);
+        }
+
+        public override void Flush() { }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
+
+    [Fact]
     public async Task The_status_text_and_json_body_come_back_and_a_status_outside_expect_fails_the_node()
     {
         var block = Block(new FlowFakes.ScriptedHandler(request => request.Method == HttpMethod.Post
