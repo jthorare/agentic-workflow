@@ -1,7 +1,7 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-  "title": "SND-CLI-003",
-  "status": 400,
-  "detail": "'approve profile 70e158' isn't an action a challenge is issued for; use 'approve <recipe> <version>', 'revoke <recipe>@<hash>', 'approve-all <digest6>', 'grant <n> <address>', 'grant-tokens <n> <address>' or 'accept <address>'",
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
+  "title": "SND-AUTH-002",
+  "status": 403,
+  "detail": "The app confirms no action now; 'approve profile 70e158' is a human decision at a terminal",
   "traceId": "<trace>"
 }
