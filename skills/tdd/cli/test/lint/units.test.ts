@@ -12,6 +12,7 @@ import { Packet } from "../../src/lint/packet";
 import { decodeSurrogateEscape } from "../../src/lint/pyops";
 import { lintJson, report } from "../../src/lint/report";
 import { TsCompiler, firstDiff } from "../../src/lint/rules/parity";
+import { PyError } from "../../src/py/errors";
 import type { RuleId } from "../../src/lint/patterns";
 import { AllLive, RULE_EFFECTS, lintEffect, type Rule } from "../../src/lint/run";
 import { Agents, Compiler, Git, gitLive, liveFs, timeoutText } from "../../src/lint/services";
@@ -142,6 +143,12 @@ describe.skipIf(!HAVE_PYTHON)("services swapped by layer", () => {
     expect(r.notes.some((n) => n.startsWith("XDOC: compared"))).toBe(true);
     const skipped = await run(pk, null, table, ["STRUCT/check-failed"]);
     expect(skipped.findings.some((f) => f.check === "STRUCT/check-failed")).toBe(false);
+  });
+
+  test("a rule that raises what lint_packet.py raises (a PyError) ends the run instead of being isolated", async () => {
+    const pk = join(caseFrom(template, ROOT, "py-raise"), "demo-packet");
+    const table = { ...RULE_EFFECTS, FILES: Effect.sync(() => { throw new PyError("AttributeError", "'list' object has no attribute 'get'"); }) as Rule };
+    await expect(run(pk, null, table)).rejects.toThrow("'list' object has no attribute 'get'");
   });
 
   test("PARITY: the TypeScript compiler fails where build_tdd.py does not, worded as lint_packet.py words it", async () => {

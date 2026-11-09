@@ -27,6 +27,8 @@ export interface Case {
   readonly pyScript?: (c: Ctx) => string;
   readonly env?: (c: Ctx) => Record<string, string>;
   readonly code?: number;
+  /** the run ends as lint_packet.py's does (a traceback): this is its last line, and there is no report or lint.json */
+  readonly crash?: string;
 }
 
 const P = (c: Ctx, f: string) => join(c.pk, f);
@@ -318,6 +320,29 @@ export const CASES: readonly Case[] = [
   { name: "parity-manifest-only-under-build", expect: [], mutate: (c) => json(c, MANIFEST, (m) => void (m.warnings = ["an old warning"])) },
   { name: "parity-manifest-unreadable", expect: ["FILES/bad-json"], args: () => ["demo-packet", "--skip", "FILES/no-manifest"],
     mutate: (c) => write(c, MANIFEST, "{") },
+
+  // ------------------------------------------------------------------ fail closed: a JSON root of the wrong type
+  // lint_packet.py calls .get on these roots unguarded and ends with a traceback (exit 1, no report, no lint.json)
+  { name: "crash-content-list", expect: [], mutate: (c) => write(c, CONTENT, "[]\n"), crash: "AttributeError: 'list' object has no attribute 'get'" },
+  { name: "crash-content-str", expect: [], mutate: (c) => write(c, CONTENT, "\"x\"\n"), crash: "AttributeError: 'str' object has no attribute 'get'" },
+  { name: "crash-content-int", expect: [], mutate: (c) => write(c, CONTENT, "1\n"), crash: "AttributeError: 'int' object has no attribute 'get'" },
+  { name: "crash-content-defs-int", expect: [], mutate: (c) => json(c, CONTENT, (v) => void (v.defs = 3)), crash: "TypeError: 'int' object is not iterable" },
+  { name: "content-null", expect: [], mutate: (c) => write(c, CONTENT, "null\n") },
+  { name: "crash-manifest-list", expect: [], mutate: (c) => write(c, MANIFEST, "[]\n"), crash: "AttributeError: 'list' object has no attribute 'get'" },
+  { name: "crash-manifest-bool", expect: [], mutate: (c) => write(c, MANIFEST, "true\n"), crash: "AttributeError: 'bool' object has no attribute 'get'" },
+  { name: "crash-manifest-list-parity", expect: [], args: () => ["demo-packet", "--skip", "FILES"], mutate: (c) => write(c, MANIFEST, "[]\n"),
+    crash: "AttributeError: 'list' object has no attribute 'get'" },
+  { name: "crash-manifest-files-list", expect: [], mutate: (c) => json(c, MANIFEST, (m) => void (m.files = ["x"])),
+    crash: "AttributeError: 'list' object has no attribute 'items'" },
+  { name: "crash-sibling-manifest", expect: [], mutate: (c) => write(c, "page.files.json", "[1]\n"), crash: "AttributeError: 'list' object has no attribute 'get'" },
+  { name: "sibling-manifest-empty-list", expect: [], mutate: (c) => write(c, "page.files.json", "[]\n") },
+  { name: "crash-packet-json", expect: [], mutate: (c) => { json(c, "meta.json", (m) => void (m.status = "Reviewed")); write(c, "packet.json", "[]\n"); },
+    crash: "AttributeError: 'list' object has no attribute 'get'" },
+  { name: "packet-json-draft", expect: [], mutate: (c) => write(c, "packet.json", "[]\n") },
+  { name: "crash-meta-list", expect: [], mutate: (c) => write(c, "meta.json", "[]\n"), crash: "AttributeError: 'list' object has no attribute 'get'" },
+  { name: "crash-meta-truthy-list", expect: [], mutate: (c) => write(c, "meta.json", "[1]\n"), crash: "AttributeError: 'list' object has no attribute 'get'" },
+  { name: "crash-hotspots-list", expect: [], mutate: (c) => write(c, HS, "[1]\n"), crash: "AttributeError: 'list' object has no attribute 'get'" },
+  { name: "crash-cite-record", expect: [], mutate: (c) => json(c, CONTENT, (v) => void v.cites.push("x")), crash: "AttributeError: 'str' object has no attribute 'get'" },
 ];
 
 /** Usage cases: argv only, no packet needed beyond the template copy. */

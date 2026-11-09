@@ -4,7 +4,7 @@ import { Effect } from "effect";
 import * as py from "../../py";
 import { Packet } from "../packet";
 import { LINK_KEYS, TOKEN, token_id } from "../patterns";
-import { type PyDict, type PyValue, get, has, items, iter, kind_of, nodes, or, plain, repr, startsPR, str, truthy, unlinked_text, walk } from "../pyops";
+import { type PyDict, type PyValue, dget, get, has, items, iter, kind_of, nodes, or, plain, repr, startsPR, str, truthy, unlinked_text, walk } from "../pyops";
 
 const re = py.re;
 const HREF = re.compile(`href="#([^"]*)"`);
@@ -51,7 +51,7 @@ export const refs = Effect.gen(function* () {
     }
   }
   const mp = py.path.join(p.root, "meta.json");
-  const fams = or(get(or(p.meta, new Map()), "refs"), new Map());
+  const fams = or(dget(or(p.meta, new Map()), "refs"), new Map());
   for (const [fam, href] of items(fams)) {
     if (typeof href !== "string" || !href.startsWith("#") || !ids.has(href.slice(1))) {
       const [f, l] = p.locate('"' + fam + '"', [mp]);
