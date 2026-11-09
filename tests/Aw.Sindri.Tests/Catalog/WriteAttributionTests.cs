@@ -131,9 +131,11 @@ public sealed class WriteAttributionTests
         }
 
         var written = (await ledger.ReadAfter(0, 100_000, token)).Value.Skip(before).Select(e => e.Envelope).ToList();
-        if (written.Exists(e => IsByLaunch(e.Actor)))
+        // why: only the scenario's own call (its last request) covers a route; seeding before it marks Sent only, or a seeding write would cover a silent route
+        var own = sent.Count == 0 ? null : MatchTemplate(sweep.Templates, sent.Last().Method, sent.Last().Path);
+        if (own is not null && written.Exists(e => IsByLaunch(e.Actor)))
         {
-            keys.ForEach(k => sweep.Covered[k] = true);
+            sweep.Covered[own] = true;
         }
 
         foreach (var envelope in written.Where(e => IsWrongActor(e.Actor)))
