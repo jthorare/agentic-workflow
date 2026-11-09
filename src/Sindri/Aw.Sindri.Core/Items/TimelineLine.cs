@@ -13,9 +13,9 @@ namespace Aw.Sindri.Core.Items;
 public static class TimelineLine
 {
     /// <summary>The line for a 'workflow.retired' note: the item's old recipe workflow ended because that engine was removed.</summary>
-    public const string WorkflowRetired = "stub";
+    public const string WorkflowRetired = "Old workflow retired: Sindri no longer runs recipes";
 
-    /// <summary>The line for <paramref name="recorded"/>: 'Created: &lt;title&gt;', 'new → done', 'Linked to &lt;record&gt; (&lt;alias&gt;)', 're-scope request filed by session:cli', 'decision DEC-… accepted by human:prover', or the event type.</summary>
+    /// <summary>The line for <paramref name="recorded"/>: 'Created: &lt;title&gt;', 'new → done', 'Linked to &lt;record&gt; (&lt;alias&gt;)', 're-scope request filed by session:cli', 'decision DEC-… accepted by human:prover', the retired-workflow line, or the event type.</summary>
     /// <param name="recorded">The ledger event.</param>
     /// <param name="json">The options its payload reads with.</param>
     /// <returns>The line, before scrubbing.</returns>
@@ -31,6 +31,7 @@ public static class TimelineLine
             EventTypes.ItemLinked => AwJson.Deserialize<ItemLinked>(bytes, json).Map(static linked => linked.Alias is { } alias ? $"Linked to {linked.Record.Value} ({alias.Value})" : $"Linked to {linked.Record.Value}"),
             EventTypes.RequestFiled => AwJson.Deserialize<RequestFiled>(bytes, json).Map(filed => $"{RequestKindWords.Of(filed.Kind)} request filed by {recorded.Envelope.Actor}"),
             EventTypes.DecisionRecorded => AwJson.Deserialize<DecisionRecorded>(bytes, json).Map(DecisionLine),
+            EventTypes.WorkflowRetired => WorkflowRetired,
             _ => type,
         };
         return line.IsError ? type : line.Value;

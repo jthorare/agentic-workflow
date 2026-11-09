@@ -1296,7 +1296,7 @@ Aw.Sindri.Core.Items.ItemSummary.Title.init -> void
 Aw.Sindri.Core.Items.ItemTimelineKeys
 Aw.Sindri.Core.Items.QueueGroups
 Aw.Sindri.Core.Items.TimelineLine
-const Aw.Sindri.Core.Items.TimelineLine.WorkflowRetired = "stub" -> string!
+const Aw.Sindri.Core.Items.TimelineLine.WorkflowRetired = "Old workflow retired: Sindri no longer runs recipes" -> string!
 Aw.Sindri.Core.Items.ViewedPage
 Aw.Sindri.Core.Items.ViewedPage.<Clone>$() -> Aw.Sindri.Core.Items.ViewedPage!
 Aw.Sindri.Core.Items.ViewedPage.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.PublicEvent!>! Events, out long ScannedTo) -> void
