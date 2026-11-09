@@ -16,14 +16,11 @@ public sealed class TodoNoteLocatorTests : IDisposable
     private readonly string _home = Directory.CreateTempSubdirectory("aw-locator-").FullName;
     private readonly InMemoryProfiles _profiles = new();
 
-    public void Dispose()
-    {
-        Directory.Delete(_home, recursive: true);
-    }
+    public void Dispose() => Directory.Delete(_home, recursive: true);
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private TodoNoteLocator Locator() => new(_profiles, (c, r) => FakeContextEngine.Instance.CheckSettings(c, r), new LibraryHost { Home = _home, StateDefault = Path.Combine(_home, ".agentic-workflow") });
+    private TodoNoteLocator Locator() => new(_profiles, FakeContextEngine.Instance.CheckSettings, new LibraryHost { Home = _home, StateDefault = Path.Combine(_home, ".agentic-workflow") });
 
     private void Profile(string? vault, string? note, string vaultPath)
     {
