@@ -17,7 +17,7 @@ internal static class ItemRows
             "POST", "/sindri/items", ShellRows.Form("sindri item add <title> [--repo <repo>]"), "ready"),
         new(ActionId.From("CreateHandoffItem"), typeof(CreateHandoffItemRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
-            "POST", "/sindri/handoff", ShellRows.Form("sindri handoff send <title> --source <name> [--repo <repo>] [--branch <b>] [--prompt <text>] [--link <url>] [--label <l>]"), "ready"),
+            "POST", "/sindri/handoff", ShellRows.Form("sindri handoff send <title> [--source <name>] [--repo <repo>] [--branch <b>] [--prompt <text>] [--link <url>] [--label <l>]"), "ready"),
         new(ActionId.From("CloseItem:done"), typeof(CloseItemRequest), "done", ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: true, Shortcut: null,
             "POST", "/sindri/items/{itemId}/close", ShellRows.Form("sindri item close <itemId> [--version <n>]"), "ready"),
