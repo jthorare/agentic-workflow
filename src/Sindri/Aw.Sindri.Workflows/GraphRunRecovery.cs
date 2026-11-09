@@ -1,20 +1,26 @@
 using Aw.Kernel;
+using Aw.Sindri.Core;
+using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
 
 /// <summary>
-/// Issue 2367, red stub: at serve start, ends every 'running' run that Temporal has no workflow for and starts the next queued run of its workflow. No logic yet.
+/// Issue 2367: at serve start, ends every 'running' run that Temporal has no workflow for (serve died between the store moving the run to running and the launch) as failed
+/// ('lost at restart'), appends its 'workflow.run.started' and 'workflow.run.finished', then starts the next queued run of each affected workflow. A run Temporal knows is left alone, and a
+/// second pass finds nothing. When Temporal cannot be asked the pass returns the error and the host tries again.
 /// </summary>
 /// <param name="runs">Where runs are recorded.</param>
 /// <param name="probe">Asks Temporal whether a run's workflow exists.</param>
 /// <param name="mirror">Appends the events of an ended run.</param>
 /// <param name="queue">Starts the next queued run of a workflow.</param>
 /// <param name="logger">Where an ended run is logged.</param>
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Meziantou.Analyzer", "MA0182:Avoid unused internal types", Justification = "Red stub for issue 2367: the fix registers it with the host.")]
-internal sealed class GraphRunRecovery(IWorkflowRunStore runs, IGraphRunProbe probe, GraphMirror mirror, IGraphQueueAdvance queue, ILogger<GraphRunRecovery> logger)
+internal sealed partial class GraphRunRecovery(IWorkflowRunStore runs, IGraphRunProbe probe, GraphMirror mirror, IGraphQueueAdvance queue, ILogger<GraphRunRecovery> logger) : IGraphRunRecovery
 {
+    internal const string Reason = "lost at restart: serve stopped before the run's workflow started";
+
     private readonly IWorkflowRunStore _runs = runs;
     private readonly IGraphRunProbe _probe = probe;
     private readonly GraphMirror _mirror = mirror;
@@ -24,9 +30,102 @@ internal sealed class GraphRunRecovery(IWorkflowRunStore runs, IGraphRunProbe pr
     /// <summary>Ends every running run Temporal has no workflow for.</summary>
     /// <param name="cancellationToken">Cancels the pass.</param>
     /// <returns>How many runs it ended, or the reason it could not finish.</returns>
-    public ValueTask<Result<int>> Run(CancellationToken cancellationToken)
+    public async ValueTask<Result<int>> Run(CancellationToken cancellationToken)
     {
-        _ = (_runs, _probe, _mirror, _queue, _logger, cancellationToken);
-        throw new NotSupportedException("GraphRunRecovery is not built yet (issue 2367).");
+        var running = await _runs.Running(cancellationToken).ConfigureAwait(false);
+        if (running.IsError)
+        {
+            return running.Error;
+        }
+
+        var ended = 0;
+        var workflows = new List<WorkflowId>();
+        Error? failure = null;
+        foreach (var run in running.Value)
+        {
+            var outcome = await EndIfLost(run, cancellationToken).ConfigureAwait(false);
+            if (outcome.IsError)
+            {
+                return outcome.Error;   // why: Temporal can't be asked or a write failed; the host retries the whole pass
+            }
+
+            if (outcome.Value is not { } failed)
+            {
+                continue;
+            }
+
+            ended++;
+            if (!workflows.Contains(run.WorkflowId))
+            {
+                workflows.Add(run.WorkflowId);
+            }
+
+            failure ??= await Record(failed, cancellationToken).ConfigureAwait(false);
+        }
+
+        var advanced = await AdvanceQueues(workflows, cancellationToken).ConfigureAwait(false);
+        return advanced ?? failure ?? (Result<int>)ended;
     }
+
+    private async ValueTask<Error?> AdvanceQueues(List<WorkflowId> workflows, CancellationToken cancellationToken)
+    {
+        foreach (var workflow in workflows)
+        {
+            var next = await _queue.StartNextQueued(workflow, cancellationToken).ConfigureAwait(false);
+            if (next.IsError)
+            {
+                return next.Error;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Fails one run when Temporal has no workflow for it.</summary>
+    /// <returns>The failed row; null when Temporal knows the run or another writer ended it first; or the error.</returns>
+    private async ValueTask<Result<WorkflowRun?>> EndIfLost(WorkflowRun run, CancellationToken cancellationToken)
+    {
+        var known = await _probe.Exists(run.Id, cancellationToken).ConfigureAwait(false);
+        if (known.IsError)
+        {
+            return known.Error;
+        }
+
+        if (known.Value)
+        {
+            return (WorkflowRun?)null;
+        }
+
+        var done = await _runs.SetStatus(run.Id, WorkflowRunStatus.Failed, outputs: null, Reason, cancellationToken).ConfigureAwait(false);
+        if (done.IsError)
+        {
+            return done.Error;
+        }
+
+        if (done.Value.Status != WorkflowRunStatus.Failed)
+        {
+            return (WorkflowRun?)null;
+        }
+
+        Lost(_logger, run.Id.Value, run.WorkflowId.Value);
+        return done.Value;
+    }
+
+    private async ValueTask<Error?> Record(WorkflowRun failed, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _mirror.AppendStarted(failed, cancellationToken).ConfigureAwait(false);
+            await _mirror.Append(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(failed.Id, GraphMirror.Name(WorkflowRunStatus.Failed), _mirror.Clean(Reason), GraphMirror.By),
+                $"{EventTypes.WorkflowRunFinished}:{failed.Id.Value}", failed.ItemId?.Value, cancellationToken).ConfigureAwait(false);
+            return null;
+        }
+        catch (InvalidOperationException e)   // boundary: GraphMirror throws when the lease is gone or the append fails; the queue still advances, the pass reports the error
+        {
+            return SindriErrors.NotRunning.With(e.Message);
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Run {Run} of workflow {Workflow} was left running with no Temporal workflow; ended as failed (lost at restart)")]
+    private static partial void Lost(ILogger logger, string run, string workflow);
 }
