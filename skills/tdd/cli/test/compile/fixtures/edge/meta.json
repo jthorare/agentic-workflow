@@ -1,0 +1,38 @@
+{
+ "eyebrow": "Technical design · edge",
+ "project": {
+  "label": "[Edge](https://edge.example/p)"
+ },
+ "people": [
+  {
+   "name": "Rev",
+   "role": "Reviewer"
+  },
+  {
+   "name": "Ana",
+   "role": "Author"
+  }
+ ],
+ "updated": "2026-01-03",
+ "rev": 3,
+ "rev_note": "third",
+ "status": "Reviewed 2026-01-03",
+ "repo_url": "https://git.example/org/edge/",
+ "sha": "abc1234",
+ "sha_date": "2026-01-01",
+ "repo_path": "~/src/edge",
+ "path_aliases": {
+  "LEG": "legacy/src/",
+  "app": "apps/web"
+ },
+ "refs": {
+  "Q": "#overview",
+  "R": "#nowhere-family"
+ },
+ "data_sources": [
+  {
+   "name": "db",
+   "ratio": 1.0
+  }
+ ]
+}

@@ -1,0 +1,83 @@
+{
+ "viewBox": [
+  0,
+  0,
+  800,
+  400
+ ],
+ "boxes": [
+  {
+   "label": "Shifts table",
+   "x": 0,
+   "y": 0,
+   "w": 100,
+   "h": 50,
+   "table": "shifts",
+   "tone": "green"
+  },
+  {
+   "label": "Nope table",
+   "x": 10.5,
+   "y": 20.25,
+   "w": 33.3,
+   "h": 12,
+   "table": "nope"
+  },
+  {
+   "label": "Shot",
+   "x": 400,
+   "y": 200,
+   "w": 1,
+   "h": 1,
+   "image": "mockups/wide.png",
+   "note": "a note"
+  },
+  {
+   "label": "Missing shot",
+   "x": 1,
+   "y": 2,
+   "w": 3,
+   "h": 4,
+   "image": "mockups/none.png"
+  },
+  {
+   "label": "Anchor ok",
+   "x": 5,
+   "y": 5,
+   "w": 5,
+   "h": 5,
+   "href": "#overview"
+  },
+  {
+   "label": "it's \"quoted\"",
+   "x": 6,
+   "y": 6,
+   "w": 6,
+   "h": 6,
+   "href": "#nowhere"
+  },
+  {
+   "label": "Note only",
+   "x": 7,
+   "y": 7,
+   "w": 7,
+   "h": 7,
+   "note": "just a note"
+  },
+  {
+   "label": "Skipped",
+   "x": 8,
+   "y": 8,
+   "w": 8,
+   "h": 8
+  },
+  {
+   "label": "Ext",
+   "x": 9,
+   "y": 9,
+   "w": 9,
+   "h": 9,
+   "href": "https://example.com"
+  }
+ ]
+}
