@@ -51,8 +51,16 @@
 # (mode 755, part of the stamp, checked by verify), --link points $AW_STATE_DIR/bin-r1b/meta-gate-reserve at
 # bin/cs/current/meta-gate-reserve, refuses a build without it, and moves a real file there to meta-gate-reserve.pre-repo.
 #
+# The toolkit SDK (src/Toolkit/Aw.Sindri.Toolkit, package id Aw.Sindri.Toolkit): after the publish step (also when the build is
+# current) it is `dotnet pack`ed from a copy of the sources into the folder feed $AW_SINDRI_SDK_FEED (default
+# $AW_SINDRI_HOME/sdk/packages) as version 0.1.0-local.<UTC yyyyMMddHHmmss>, but only when its own inputs (src/Toolkit, the
+# Kernel and Redaction sources it may reference, the root build files) changed since the stamp in <feed>/.sdk-stamp. The two
+# newest packages stay in the feed. Toolkits made by /new-toolkit restore it from there (floating 0.1.0-local.*). A checkout
+# without src/Toolkit/Aw.Sindri.Toolkit skips the step. `--dry-run` prints it. --link does not pack.
+#
 # Environment: AW_STATE_DIR (default ~/.agentic-workflow), CLAUDE_LOCAL_BIN (default ~/.local/bin), DOTNET_ROOT,
 #   AW_SINDRI_HOME (control.json for the running-serve guard; default $AW_STATE_DIR/sindri-app),
+#   AW_SINDRI_SDK_FEED (the toolkit SDK folder feed; default $AW_SINDRI_HOME/sdk/packages),
 #   AW_CS_SKIP_DOWNLOADS=1 skip the network steps (SDK install, temporal fetch, Chromium); the test's seam.
 set -euo pipefail
 
@@ -431,6 +439,50 @@ link_through_current() { # link_through_current <name> <target path>; through cu
   say "$name -> $want"
 }
 
-if [ "$do_publish" = 1 ]; then publish; fi
+# --- toolkit SDK package ---------------------------------------------------------------------------------------------
+sdk_feed="${AW_SINDRI_SDK_FEED:-${AW_SINDRI_HOME:-$state/sindri-app}/sdk/packages}"
+SDK_PROJECT=src/Toolkit/Aw.Sindri.Toolkit/Aw.Sindri.Toolkit.csproj
+SDK_PATHSPECS=(global.json nuget.config .editorconfig 'Directory.*' 'BannedSymbols*.txt' CodeMetricsConfig.txt src/Toolkit src/Aw.Kernel src/Aw.Kernel.Telemetry src/Redaction src/Aw.Analyzers)
+pack_sdk() {
+  [ -f "$root/$SDK_PROJECT" ] || return 0   # a checkout without the SDK has nothing to pack
+  if [ "$dry" = 1 ]; then
+    say "[dry-run] would pack $SDK_PROJECT into $sdk_feed (only when src/Toolkit or its build inputs changed since the last pack)"
+    return 0
+  fi
+  local list want have
+  list="$(mktemp "${TMPDIR:-/tmp}/install-cs-sdk.XXXXXX")"
+  git -C "$root" ls-files -z --cached --others --exclude-standard -- "${SDK_PATHSPECS[@]}" \
+    | while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done | LC_ALL=C sort -u > "$list"
+  want="$( { printf '%s\n' "$sdk"; cat "$list"; (cd "$root" && git hash-object --stdin-paths < "$list"); } | sha256 | cut -c1-16)"
+  have="$(cat "$sdk_feed/.sdk-stamp" 2> /dev/null || true)"
+  if [ "$rebuild" = 0 ] && [ "$want" = "$have" ] && ls "$sdk_feed"/Aw.Sindri.Toolkit.*.nupkg > /dev/null 2>&1; then
+    say "toolkit SDK package is current ($sdk_feed)"
+    rm -f "$list"; return 0
+  fi
+  export DOTNET_ROOT="${DOTNET_ROOT:-$HOME/.dotnet}"
+  export PATH="$DOTNET_ROOT:$PATH"
+  mkdir -p "$cache" "$sdk_feed"
+  local ptree version out="$cache/pack-sdk.log" pre=()
+  ptree="$(mktemp -d "$cache/sdk-tree.XXXXXX")"
+  version="0.1.0-local.$(date -u +%Y%m%d%H%M%S)"
+  (cd "$root" && tar -cf - -T "$list") | tar -xf - -C "$ptree"
+  rm -f "$list"
+  if [ -x "$heavy" ]; then pre=("$heavy" --expensive); fi
+  say "packing the toolkit SDK $version"
+  if ! (cd "$ptree" && ${pre[@]+"${pre[@]}"} dotnet pack "$SDK_PROJECT" -c Release -p:Version="$version" -p:RestoreLockedMode=false -o "$ptree/out") < /dev/null > "$out" 2>&1; then
+    tail -20 "$out" >&2; rm -rf "$ptree"; die "packing the toolkit SDK failed (log: $out)"
+  fi
+  ls "$ptree"/out/Aw.Sindri.Toolkit."$version".nupkg > /dev/null 2>&1 || { rm -rf "$ptree"; die "the pack left no Aw.Sindri.Toolkit.$version.nupkg (log: $out)"; }
+  cp "$ptree"/out/*.nupkg "$sdk_feed/"
+  printf '%s\n' "$want" > "$sdk_feed/.sdk-stamp"
+  rm -rf "$ptree"
+  # keep the two newest Aw.Sindri.Toolkit packages (the version sorts by its timestamp)
+  local old
+  old="$(ls "$sdk_feed"/Aw.Sindri.Toolkit.*.nupkg | LC_ALL=C sort | sed '$d' | sed '$d')"
+  if [ -n "$old" ]; then printf '%s\n' "$old" | while IFS= read -r f; do rm -f "$f"; done; fi
+  say "packed Aw.Sindri.Toolkit $version into $sdk_feed"
+}
+
+if [ "$do_publish" = 1 ]; then publish; pack_sdk; fi
 if [ "$do_link" = 1 ]; then link; fi
 exit 0

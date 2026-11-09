@@ -57,6 +57,13 @@ cat > "$WORK/fakebin/dotnet" <<'FD'
 case "${1:-}" in
   --list-sdks) echo "$FAKE_SDK [$DOTNET_ROOT/sdk]"; exit 0 ;;
   publish) ;;
+  pack)
+    # pack <project> ... -p:Version=V -o OUT: writes OUT/Aw.Sindri.Toolkit.V.nupkg (FAKE_PACK_FAIL=1 fails), and logs the call
+    shift 2; out="" ver=""
+    while [ $# -gt 0 ]; do case "$1" in -o) out="$2"; shift ;; -p:Version=*) ver="${1#*=}" ;; esac; shift; done
+    echo "pack version=$ver" >> "$FAKE_LOG"
+    [ -z "${FAKE_PACK_FAIL:-}" ] || { echo "boom packing" >&2; exit 1; }
+    mkdir -p "$out"; : > "$out/Aw.Sindri.Toolkit.$ver.nupkg"; exit 0 ;;
   *) exit 0 ;;
 esac
 proj="$2"; shift 2
@@ -340,5 +347,52 @@ check "staged heavy runs from its build folder alone: no 'No such file' (heavy-c
 check "staged meta-gate-reserve runs from its build folder alone: exit 0" "$rc" "0"
 check "staged meta-gate-reserve runs from its build folder alone: no 'command not found'" "$(grep -c 'command not found' "$errf")" "0"
 check "staged meta-gate-reserve runs from its build folder alone: no 'No such file'" "$(grep -c 'No such file' "$errf")" "0"
+
+
+# --- the toolkit SDK package (PR 15) ---
+# Expected: with src/Toolkit/Aw.Sindri.Toolkit in the checkout, a publish also packs it into the folder feed
+# ($AW_SINDRI_SDK_FEED, default $AW_SINDRI_HOME/sdk/packages) as 0.1.0-local.<timestamp>; a second run, with the sources
+# unchanged, packs nothing; a change under src/Toolkit packs again (two newest packages stay); --dry-run prints the step and
+# writes nothing; a failed pack fails the run and leaves the feed as it was; without the SDK project the step is silent.
+FEED="$WORK/sdk-feed"
+export AW_SINDRI_SDK_FEED="$FEED"
+packs() { grep -c '^pack ' "$FAKE_LOG" | tr -d ' '; }
+out="$(bash "$INSTALL" --publish 2>&1)"
+check "no SDK project: no pack call" "$(packs)" "0"
+check "no SDK project: no feed folder" "$([ -e "$FEED" ] && echo yes || echo no)" "no"
+mkdir -p "$REPO/src/Toolkit/Aw.Sindri.Toolkit"
+echo '<Project Sdk="Microsoft.NET.Sdk" />' > "$REPO/src/Toolkit/Aw.Sindri.Toolkit/Aw.Sindri.Toolkit.csproj"
+echo 'class A {}' > "$REPO/src/Toolkit/Aw.Sindri.Toolkit/A.cs"
+g add -A; ccommit -m "sdk project"
+out="$(bash "$INSTALL" --dry-run 2>&1)"
+has "dry run prints the pack step" "$out" "[dry-run] would pack src/Toolkit/Aw.Sindri.Toolkit/Aw.Sindri.Toolkit.csproj into $FEED"
+check "dry run writes no feed" "$([ -e "$FEED" ] && echo yes || echo no)" "no"
+out="$(bash "$INSTALL" --publish 2>&1)"; rc=$?
+check "--publish with the SDK exits 0" "$rc" "0"
+has "--publish says it packed" "$out" "packed Aw.Sindri.Toolkit 0.1.0-local."
+check "--publish packs once" "$(packs)" "1"
+check "the feed holds one package" "$(ls "$FEED"/Aw.Sindri.Toolkit.*.nupkg | wc -l | tr -d ' ')" "1"
+check "the feed's stamp file exists" "$([ -s "$FEED/.sdk-stamp" ] && echo yes || echo no)" "yes"
+check "the pack copy did not touch the checkout" "$(git -C "$REPO" status --porcelain | wc -l | tr -d ' ')" "0"
+out="$(bash "$INSTALL" --publish 2>&1)"
+has "second run says the SDK package is current" "$out" "toolkit SDK package is current"
+check "second run packs nothing" "$(packs)" "1"
+echo 'class B {}' >> "$REPO/src/Toolkit/Aw.Sindri.Toolkit/A.cs"
+sleep 1
+bash "$INSTALL" --publish > /dev/null 2>&1
+check "a source change packs again" "$(packs)" "2"
+echo 'class C {}' >> "$REPO/src/Toolkit/Aw.Sindri.Toolkit/A.cs"
+sleep 1
+bash "$INSTALL" --publish > /dev/null 2>&1
+check "a third pack keeps only the two newest packages" "$(ls "$FEED"/Aw.Sindri.Toolkit.*.nupkg | wc -l | tr -d ' ')" "2"
+before="$(ls "$FEED" | tr '\n' ' ')"
+echo 'class D {}' >> "$REPO/src/Toolkit/Aw.Sindri.Toolkit/A.cs"
+out="$(FAKE_PACK_FAIL=1 bash "$INSTALL" --publish 2>&1)"; rc=$?
+check "a failed pack exits 1" "$rc" "1"
+has "a failed pack names the step" "$out" "packing the toolkit SDK failed"
+check "a failed pack leaves the feed as it was" "$(ls "$FEED" | tr '\n' ' ')" "$before"
+out="$(bash "$INSTALL" --link 2>&1)"
+check "--link alone packs nothing" "$(packs)" "4"
+unset AW_SINDRI_SDK_FEED
 
 [ "$fail" = 0 ] && echo "all install-cs tests passed" || { echo "install-cs tests FAILED"; exit 1; }
