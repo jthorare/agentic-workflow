@@ -442,7 +442,8 @@ link_through_current() { # link_through_current <name> <target path>; through cu
 # --- toolkit SDK package ---------------------------------------------------------------------------------------------
 sdk_feed="${AW_SINDRI_SDK_FEED:-${AW_SINDRI_HOME:-$state/sindri-app}/sdk/packages}"
 SDK_PROJECT=src/Toolkit/Aw.Sindri.Toolkit/Aw.Sindri.Toolkit.csproj
-SDK_PATHSPECS=(global.json nuget.config .editorconfig 'Directory.*' 'BannedSymbols*.txt' CodeMetricsConfig.txt src/Toolkit)
+# why: Directory.Build.targets gives every production project an analyzer reference to src/Aw.Analyzers, so the copy needs it
+SDK_PATHSPECS=(global.json nuget.config .editorconfig 'Directory.*' 'BannedSymbols*.txt' CodeMetricsConfig.txt src/Aw.Analyzers src/Toolkit)
 pack_sdk() {
   [ -f "$root/$SDK_PROJECT" ] || return 0   # a checkout without the SDK has nothing to pack
   if [ "$dry" = 1 ]; then
@@ -470,9 +471,9 @@ pack_sdk() {
   if [ -x "$heavy" ]; then pre=("$heavy" --expensive); fi
   say "packing the toolkit SDK $version"
   if ! (cd "$ptree" && ${pre[@]+"${pre[@]}"} dotnet pack "$SDK_PROJECT" -c Release -p:Version="$version" -p:RestoreLockedMode=false -o "$ptree/out") < /dev/null > "$out" 2>&1; then
-    tail -20 "$out" >&2; rm -rf "$ptree"; die "packing the toolkit SDK failed (log: $out)"
+    tail -20 "$out" >&2; rm -rf "$ptree"; warn "packing the toolkit SDK failed; the next install retries (log: $out)"; return 0
   fi
-  ls "$ptree"/out/Aw.Sindri.Toolkit."$version".nupkg > /dev/null 2>&1 || { rm -rf "$ptree"; die "the pack left no Aw.Sindri.Toolkit.$version.nupkg (log: $out)"; }
+  ls "$ptree"/out/Aw.Sindri.Toolkit."$version".nupkg > /dev/null 2>&1 || { rm -rf "$ptree"; warn "the pack left no Aw.Sindri.Toolkit.$version.nupkg; the next install retries (log: $out)"; return 0; }
   cp "$ptree"/out/*.nupkg "$sdk_feed/"
   printf '%s\n' "$want" > "$sdk_feed/.sdk-stamp"
   rm -rf "$ptree"
@@ -483,6 +484,9 @@ pack_sdk() {
   say "packed Aw.Sindri.Toolkit $version into $sdk_feed"
 }
 
-if [ "$do_publish" = 1 ]; then publish; pack_sdk; fi
+if [ "$do_publish" = 1 ]; then publish; fi
 if [ "$do_link" = 1 ]; then link; fi
+# why: the SDK package is optional and packs after the link, so a failed pack (a warning; the stamp stays, so the next
+# install retries) never leaves a box without its wrappers
+if [ "$do_publish" = 1 ]; then pack_sdk; fi
 exit 0
