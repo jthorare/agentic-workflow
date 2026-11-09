@@ -84,7 +84,7 @@ public sealed class ProfileLiveTests : IDisposable
     [Fact, Trait("Lane", "integration")]
     public async Task IfHash_refuses_a_write_when_the_file_moved()
     {
-        var writer = new YamlProfileIndexWriter(_files.Settings, ProfileFiles.Options, Aw.Sindri.Testing.NoProfileCache.Instance);
+        var writer = new YamlProfileIndexWriter(_files.Settings, ProfileFiles.Options, Testing.NoProfileCache.Instance);
         IndexEdit[] edit = [new ConceptEdit(ConceptPinId.From("billing"), new ConceptSettings(Name: "Billing"))];
         var stale = await FileHash();
         Assert.True((await writer.Write(edit, ifHash: null, Token)).IsSuccess);   // the file moves under the caller's hash

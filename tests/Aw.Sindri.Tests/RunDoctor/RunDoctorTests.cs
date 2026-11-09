@@ -95,7 +95,7 @@ public sealed class RunDoctorTests
     [Fact, Trait("Lane", "unit")]
     public async Task RunDoctor_names_the_code_and_the_file_when_the_live_profile_is_invalid()
     {
-        _h.Profiles.Live = Aw.Sindri.Core.SindriErrors.ProfileInvalid.With("/home/thor/profile.yaml: line 3: unknown key 'tennant'");
+        _h.Profiles.Live = Core.SindriErrors.ProfileInvalid.With("/home/thor/profile.yaml: line 3: unknown key 'tennant'");
 
         var profile = (await Service().Handle(new RunDoctorRequest(), Token)).Value.Checks.Single(c => c.Name == "profile");
 

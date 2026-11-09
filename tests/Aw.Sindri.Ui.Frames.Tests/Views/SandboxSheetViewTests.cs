@@ -107,7 +107,7 @@ public sealed class SandboxSheetViewTests : FrameHost
         Dispatcher.UIThread.RunJobs();
         Settle(window);
 
-        Assert.Same(allow, window.FocusManager!.GetFocusedElement());
+        Assert.Same(allow, window.FocusManager.GetFocusedElement());
         Assert.Equal("Allowed", live.Text);
         Assert.True(Polite(live));
         window.Close();
