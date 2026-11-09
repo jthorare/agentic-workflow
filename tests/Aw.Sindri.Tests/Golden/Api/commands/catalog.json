@@ -75,6 +75,24 @@
       "confirm": null
     },
     {
+      "action": "AnswerQuestion",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflow-runs/{run}/nodes/{node}/answer",
+      "cli": "sindri answer <question> [--text <text>] [--choice <choice>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "AttachProject",
       "class": "desk",
       "allowedCallers": [

@@ -1,12 +1,13 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Graph.Blocks;
+using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.Graph.Blocks;
 
 [Lane(TestLane.Unit)]
 public sealed class GraphBlockRegistryTests
 {
-    private static GraphBlockRegistry Standard() => GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"), new BlockFakes.RecordingQuestionPort());
+    private static GraphBlockRegistry Standard() => GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"), new BlockFakes.RecordingQuestionPort(), new FakeTimeProvider());
 
     [Fact]
     public void The_standard_registry_lists_its_block_types()

@@ -37,7 +37,7 @@ public sealed class AskOwnerBlockTests
     {
         var port = new BlockFakes.RecordingQuestionPort { Fail = KernelErrors.Invalid.With("the ledger is read-only") };
 
-        var result = await new AskOwnerBlock(port).Execute(BlockFakes.Context(Config()), TestContext.Current.CancellationToken);
+        var result = await new AskOwnerBlock(port, new FakeTimeProvider(_now)).Execute(BlockFakes.Context(Config()), TestContext.Current.CancellationToken);
 
         Assert.True(result.IsError);
         Assert.Contains("the ledger is read-only", result.Error.Message, StringComparison.Ordinal);
@@ -115,7 +115,7 @@ public sealed class AskOwnerBlockTests
     [Fact]
     public void The_ask_owner_block_declares_its_config_outputs_branches_and_a_valid_example()
     {
-        IGraphBlockType block = new AskOwnerBlock(new BlockFakes.RecordingQuestionPort());
+        IGraphBlockType block = new AskOwnerBlock(new BlockFakes.RecordingQuestionPort(), new FakeTimeProvider(_now));
         var example = JsonNode.Parse(block.Example)!.AsObject();
 
         Assert.Equal("ask_owner", block.Type);
@@ -130,7 +130,7 @@ public sealed class AskOwnerBlockTests
     [Fact]
     public void A_default_that_is_not_a_choice_and_a_bad_timeout_are_refused()
     {
-        IGraphBlockType block = new AskOwnerBlock(new BlockFakes.RecordingQuestionPort());
+        IGraphBlockType block = new AskOwnerBlock(new BlockFakes.RecordingQuestionPort(), new FakeTimeProvider(_now));
         var config = Config();
         config["default"] = "maybe";
         config["timeout"] = "soon";

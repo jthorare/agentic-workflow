@@ -124,7 +124,7 @@ public sealed class WaitBlockTests
     [Fact]
     public void The_wait_block_declares_its_config_outputs_and_a_valid_example()
     {
-        IGraphBlockType block = new WaitBlock();
+        IGraphBlockType block = new WaitBlock(new FakeTimeProvider(_now));
         var example = JsonNode.Parse(block.Example)!.AsObject();
 
         Assert.Equal("wait", block.Type);

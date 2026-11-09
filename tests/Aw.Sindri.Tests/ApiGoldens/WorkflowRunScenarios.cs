@@ -7,7 +7,7 @@ using static Aw.Sindri.Tests.Callers.CallerRequests;
 namespace Aw.Sindri.Tests.ApiGoldens;
 
 /// <summary>
-/// The goldens of 'POST /sindri/workflows/{slug}/runs' and 'POST /sindri/workflow-runs/{run}/cancel' (issue 2258, PR 6): the refusals, which need no Temporal
+/// The goldens of 'POST /sindri/workflows/{slug}/runs', 'POST /sindri/workflow-runs/{run}/cancel' (issue 2258, PR 6) and 'POST /sindri/workflow-runs/{run}/nodes/{node}/answer' (PR 9): the refusals, which need no Temporal
 /// server. A started run needs one, so its answer is pinned by the service tests. Each scenario seeds the workflow or run it needs through the host's stores.
 /// </summary>
 internal static class WorkflowRunScenarios
@@ -15,12 +15,15 @@ internal static class WorkflowRunScenarios
     private static readonly WorkflowId _id = WorkflowId.From("WF-00000000000000000000000000000001");
     private static readonly WorkflowSlug _slug = WorkflowSlug.From("morning-check");
     private static readonly WorkflowRunId _ended = WorkflowRunId.Of(_slug, 1, 1);
+    private const string AnswerSlug = "workflow-runs-run-nodes-node-answer";
+    private const string AnswerBody = "{\"text\":\"yes\"}";
 
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
         ("workflows-slug-runs", "unknown-workflow"), ("workflows-slug-runs", "bad-slug"), ("workflows-slug-runs", "not-active"), ("workflows-slug-runs", "bad-payload"),
         ("workflow-runs-run-cancel", "not-found"), ("workflow-runs-run-cancel", "bad-id"), ("workflow-runs-run-cancel", "already-ended"),
+        (AnswerSlug, "not-found"), (AnswerSlug, "bad-id"), (AnswerSlug, "already-ended"),
     ];
 
     /// <summary>Whether this class owns the scenario.</summary>
@@ -38,6 +41,11 @@ internal static class WorkflowRunScenarios
     public static async Task<string> Body(GoldenHost host, string slug, string scenario, CancellationToken ct)
     {
         var human = Human(host.Token.Value);
+        if (string.Equals(slug, AnswerSlug, StringComparison.Ordinal))
+        {
+            return await Answer(host, scenario, human, ct);
+        }
+
         switch ((slug, scenario))
         {
             case ("workflows-slug-runs", "unknown-workflow"):
@@ -57,6 +65,20 @@ internal static class WorkflowRunScenarios
                 return await Ask(host, Post($"/sindri/workflow-runs/{Uri.EscapeDataString(_ended.Value)}/cancel", json: null, human));
             default:
                 return await Ask(host, Post($"/sindri/workflow-runs/{Uri.EscapeDataString(_ended.Value)}/cancel", json: null, human));
+        }
+    }
+
+    private static async Task<string> Answer(GoldenHost host, string scenario, (string Name, string Value)[] human, CancellationToken ct)
+    {
+        switch (scenario)
+        {
+            case "bad-id":
+                return await Ask(host, Post("/sindri/workflow-runs/not-a-run/nodes/ask/answer", AnswerBody, human));
+            case "already-ended":
+                await EndedRun(host, ct);
+                return await Ask(host, Post($"/sindri/workflow-runs/{Uri.EscapeDataString(_ended.Value)}/nodes/ask/answer", AnswerBody, human));
+            default:
+                return await Ask(host, Post($"/sindri/workflow-runs/{Uri.EscapeDataString(_ended.Value)}/nodes/ask/answer", AnswerBody, human));
         }
     }
 

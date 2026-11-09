@@ -45,7 +45,8 @@ internal sealed class GraphRig : IAsyncDisposable
         Workflows = new InMemoryWorkflowStore(clock);
         Blocks = new GraphTestBlocks();
         Client = environment.Client;
-        var registry = new GraphBlockRegistry([new ManualBlock(), new ConditionBlock(), .. Blocks.All()]);
+        Questions = new GraphTestQuestions();
+        var registry = new GraphBlockRegistry([new ManualBlock(), new ConditionBlock(), new WaitBlock(clock), new AskOwnerBlock(Questions, clock), .. Blocks.All()]);
         var probe = new FakeProcessProbe();
         _ledger = new InMemorySindriStore(clock, probe);
         var held = new HeldLease();
@@ -70,6 +71,9 @@ internal sealed class GraphRig : IAsyncDisposable
     public string Slug { get; }
 
     public GraphTestBlocks Blocks { get; }
+
+    /// <summary>What the ask_owner blocks asked.</summary>
+    public GraphTestQuestions Questions { get; }
 
     public ITemporalClient Client { get; }
 
