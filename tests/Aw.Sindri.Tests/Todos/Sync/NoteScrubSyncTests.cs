@@ -1,5 +1,4 @@
 using Aw.Sindri.Core.Events;
-using Aw.Sindri.Core.Todos;
 using Aw.Sindri.Tests.Todos.Note;
 
 namespace Aw.Sindri.Tests.Todos.Sync;

@@ -100,46 +100,18 @@ internal sealed partial class FileTodoNoteFiles(ISindriHome home, TimeProvider c
         ArgumentNullException.ThrowIfNull(note);
         ArgumentNullException.ThrowIfNull(text);
         ArgumentNullException.ThrowIfNull(vaultRoot);
-        var relative = Path.GetRelativePath(vaultRoot, note).Replace('\\', '/');
-        if (relative.StartsWith("..", StringComparison.Ordinal) || Path.IsPathRooted(relative))
+        var refused = PathProblem(note, vaultRoot);
+        if (refused is not null)
         {
-            return new NoteSwap(CameOut: null, Problem: "the note is outside the vault");
-        }
-
-        // every write re-checks the way to the note, not only its own link: a folder swapped for a symlink since the last check would send the write elsewhere
-        if (FileTodoNoteDisk.AnySymlink(vaultRoot, relative))
-        {
-            return new NoteSwap(CameOut: null, Problem: "the note or a folder on the way to it is a symlink");
+            return new NoteSwap(CameOut: null, Problem: refused);
         }
 
         var tmp = TmpPath(note);
-        var fresh = tmp + NewSuffix;
         var exists = File.Exists(note) || new FileInfo(note).LinkTarget is not null;
-        try
+        var problem = WriteTmp(note, tmp, text, exists);
+        if (problem is not null)
         {
-            if (File.Exists(tmp) || new FileInfo(tmp).LinkTarget is not null)
-            {
-                return new NoteSwap(CameOut: null, Problem: "a tmp file is already there");
-            }
-
-            var mode = (exists ? FileModes.TryRead(note) : null) ?? (UnixFileMode.UserRead | UnixFileMode.UserWrite);
-            using (var stream = CreateNew(fresh, mode))
-            {
-                stream.Write(_utf8.GetBytes(text));
-                stream.Flush(flushToDisk: true);   // why: a kill after the rename must not leave a truncated tmp that Leftover merges as an edit
-            }
-
-            if (!OperatingSystem.IsWindows())
-            {
-                File.SetUnixFileMode(fresh, mode);   // the create mode went through the umask
-            }
-
-            File.Move(fresh, tmp, overwrite: false);
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-        {
-            File.Delete(fresh);   // ours: the exclusive create made it, or the rename left it
-            return new NoteSwap(CameOut: null, Problem: File.Exists(tmp) ? "a tmp file is already there" : e.Message);
+            return new NoteSwap(CameOut: null, Problem: problem);
         }
 
         return exists ? SwapIn(tmp, note) : MoveIn(tmp, note);
@@ -165,6 +137,50 @@ internal sealed partial class FileTodoNoteFiles(ISindriHome home, TimeProvider c
         var kept = path + ".keep-" + at.UtcDateTime.ToString("yyyyMMdd'T'HHmmss'Z'", CultureInfo.InvariantCulture);
         File.Move(path, kept);
         return kept;
+    }
+
+    private static string? PathProblem(string note, string vaultRoot)
+    {
+        var relative = Path.GetRelativePath(vaultRoot, note).Replace('\\', '/');
+        if (relative.StartsWith("..", StringComparison.Ordinal) || Path.IsPathRooted(relative))
+        {
+            return "the note is outside the vault";
+        }
+
+        // every write re-checks the way to the note, not only its own link: a folder swapped for a symlink since the last check would send the write elsewhere
+        return FileTodoNoteDisk.AnySymlink(vaultRoot, relative) ? "the note or a folder on the way to it is a symlink" : null;
+    }
+
+    private static string? WriteTmp(string note, string tmp, string text, bool exists)
+    {
+        var fresh = tmp + NewSuffix;
+        try
+        {
+            if (File.Exists(tmp) || new FileInfo(tmp).LinkTarget is not null)
+            {
+                return "a tmp file is already there";
+            }
+
+            var mode = (exists ? FileModes.TryRead(note) : null) ?? (UnixFileMode.UserRead | UnixFileMode.UserWrite);
+            using (var stream = CreateNew(fresh, mode))
+            {
+                stream.Write(_utf8.GetBytes(text));
+                stream.Flush(flushToDisk: true);   // why: a kill after the rename must not leave a truncated tmp that Leftover merges as an edit
+            }
+
+            if (!OperatingSystem.IsWindows())
+            {
+                File.SetUnixFileMode(fresh, mode);   // the create mode went through the umask
+            }
+
+            File.Move(fresh, tmp, overwrite: false);
+            return null;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            File.Delete(fresh);   // ours: the exclusive create made it, or the rename left it
+            return File.Exists(tmp) ? "a tmp file is already there" : e.Message;
+        }
     }
 
     private static NoteSwap SwapIn(string tmp, string note)

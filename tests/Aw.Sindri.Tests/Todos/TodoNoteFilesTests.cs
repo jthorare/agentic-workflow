@@ -156,14 +156,14 @@ public sealed class TodoNoteFilesTests : IDisposable
 
         var outside = Directory.CreateDirectory(Path.Combine(_root, "outside")).FullName;
         await File.WriteAllTextAsync(Path.Combine(outside, "Todo.md"), "old", TestContext.Current.CancellationToken);
-        Directory.CreateSymbolicLink(Path.Combine(_vault, "linked"), outside);
+        _ = Directory.CreateSymbolicLink(Path.Combine(_vault, "linked"), outside);
 
         var swap = _files.Swap(Path.Combine(_vault, "linked", "Todo.md"), "new", _vault);
 
         Assert.NotNull(swap.Problem);
         Assert.Null(swap.CameOut);
         Assert.Equal("old", await File.ReadAllTextAsync(Path.Combine(outside, "Todo.md"), TestContext.Current.CancellationToken));
-        Assert.Equal(["Todo.md"], Directory.EnumerateFileSystemEntries(outside).Select(Path.GetFileName));
+        Assert.Equal("Todo.md", Path.GetFileName(Assert.Single(Directory.EnumerateFileSystemEntries(outside))));
     }
 
     [Fact, Trait("Lane", "integration")]

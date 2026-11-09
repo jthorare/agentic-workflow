@@ -1,5 +1,3 @@
-using Aw.Sindri.Core.Todos.Note;
-
 namespace Aw.Sindri.Tests.Todos.Sync;
 
 /// <summary>A disk error in a pass is a failed pass in the status (doctor and the panel show why), never an exception out of the watch's call.</summary>
