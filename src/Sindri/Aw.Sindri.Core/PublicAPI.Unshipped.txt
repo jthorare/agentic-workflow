@@ -21720,3 +21720,21 @@ static Aw.Sindri.Core.Graph.Blocks.CallableTool.operator ==(Aw.Sindri.Core.Graph
 static Aw.Sindri.Core.Graph.Blocks.ConnectionTool.operator !=(Aw.Sindri.Core.Graph.Blocks.ConnectionTool? left, Aw.Sindri.Core.Graph.Blocks.ConnectionTool? right) -> bool
 static Aw.Sindri.Core.Graph.Blocks.ConnectionTool.operator ==(Aw.Sindri.Core.Graph.Blocks.ConnectionTool? left, Aw.Sindri.Core.Graph.Blocks.ConnectionTool? right) -> bool
 static readonly Aw.Sindri.Core.SindriErrors.ToolkitManagementUnavailable -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Connections.IMcpConnectionClient.CallTool(System.Uri! server, Aw.Sindri.Core.Connections.TokenSet! tokens, string! tool, string! argumentsJson, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Sindri.Core.Connections.IMcpConnectionClient.Describe(System.Uri! server, Aw.Sindri.Core.Connections.TokenSet! tokens, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Connections.McpToolInfo!>!>!>
+Aw.Sindri.Core.Connections.McpToolInfo
+Aw.Sindri.Core.Connections.McpToolInfo.<Clone>$() -> Aw.Sindri.Core.Connections.McpToolInfo!
+Aw.Sindri.Core.Connections.McpToolInfo.Deconstruct(out string! Name, out string! Description, out string! InputSchemaJson) -> void
+Aw.Sindri.Core.Connections.McpToolInfo.Description.get -> string!
+Aw.Sindri.Core.Connections.McpToolInfo.Description.init -> void
+Aw.Sindri.Core.Connections.McpToolInfo.Equals(Aw.Sindri.Core.Connections.McpToolInfo? other) -> bool
+Aw.Sindri.Core.Connections.McpToolInfo.InputSchemaJson.get -> string!
+Aw.Sindri.Core.Connections.McpToolInfo.InputSchemaJson.init -> void
+Aw.Sindri.Core.Connections.McpToolInfo.McpToolInfo(string! Name, string! Description, string! InputSchemaJson) -> void
+Aw.Sindri.Core.Connections.McpToolInfo.Name.get -> string!
+Aw.Sindri.Core.Connections.McpToolInfo.Name.init -> void
+override Aw.Sindri.Core.Connections.McpToolInfo.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Connections.McpToolInfo.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.McpToolInfo.ToString() -> string!
+static Aw.Sindri.Core.Connections.McpToolInfo.operator !=(Aw.Sindri.Core.Connections.McpToolInfo? left, Aw.Sindri.Core.Connections.McpToolInfo? right) -> bool
+static Aw.Sindri.Core.Connections.McpToolInfo.operator ==(Aw.Sindri.Core.Connections.McpToolInfo? left, Aw.Sindri.Core.Connections.McpToolInfo? right) -> bool

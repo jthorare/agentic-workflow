@@ -55,6 +55,10 @@ internal sealed class McpConnectionClient(HttpClient http) : IMcpConnectionClien
         }
     }
 
+    public ValueTask<Result<IReadOnlyList<McpToolInfo>>> Describe(Uri server, TokenSet tokens, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    public ValueTask<Result<string>> CallTool(Uri server, TokenSet tokens, string tool, string argumentsJson, CancellationToken cancellationToken) => throw new NotSupportedException();
+
     // A 401 or 403 anywhere in the chain is the credential's refusal (SND-CONN-002); anything else is the server being out of reach (SND-CONN-005). No message of the exception is copied.
     private static Error Refused(Exception error)
     {
