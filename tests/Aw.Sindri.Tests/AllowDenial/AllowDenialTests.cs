@@ -149,7 +149,7 @@ public sealed class AllowDenialTests
         Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
         Assert.Equal([("web", DenialKind.Network, "github.com")], _writer.Calls);
         var recorded = Assert.Single(_slice.Store.Events);
-        var payload = _slice.Events.Payload<SandboxAllowed>(recorded).Value;
+        var payload = _slice.Events.Payload<SandboxEntryAllowed>(recorded).Value;
         Expect.Equal((EventTypes.SandboxAllowed, "session:launch:LCH-00000000000000000000000000000001"), (recorded.Envelope.Type, recorded.Envelope.Actor));
         Expect.Equal((_launch, "web", "Network", "github.com"), (payload.Launch, payload.Repo.Value, payload.Kind, payload.Entry));
     }

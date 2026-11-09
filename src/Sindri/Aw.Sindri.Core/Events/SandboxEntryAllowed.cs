@@ -9,4 +9,4 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="Repo">The repo the entry was allowed for.</param>
 /// <param name="Kind">'network' or 'path', as the denial's kind is named.</param>
 /// <param name="Entry">The entry as the profile holds it.</param>
-public sealed record SandboxAllowed(CommandId CommandId, LaunchId Launch, RepoName Repo, string Kind, string Entry);
+public sealed record SandboxEntryAllowed(CommandId CommandId, LaunchId Launch, RepoName Repo, string Kind, string Entry);

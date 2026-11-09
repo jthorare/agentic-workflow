@@ -99,7 +99,7 @@ public static class EventCatalog
         new(EventTypes.LaunchViewerAttached, Public: true, typeof(LaunchViewerAttached), "launch.viewer-attached:<launch>") { Invalidates = [ApiViews.Launch, ApiViews.Item] },
         new(EventTypes.SandboxDenied, Public: true, typeof(SandboxDenied), "sandbox.denied:<launch>:<kind>:<targetHash>:<count>") { Invalidates = [ApiViews.Launch, ApiViews.Item] },
         new(EventTypes.SandboxLimitHit, Public: true, typeof(SandboxLimitHit), "sandbox.limit-hit:<launch>:<kind>:<n>") { Invalidates = [ApiViews.Launch, ApiViews.Item] },
-        new(EventTypes.SandboxAllowed, Public: true, typeof(SandboxAllowed), "sandbox.allowed:<command id>"),
+        new(EventTypes.SandboxAllowed, Public: true, typeof(SandboxEntryAllowed), "sandbox.allowed:<command id>"),
         new(EventTypes.ReviewLoginSet, Public: true, typeof(ReviewLoginSet), "review.login-set:<command id>"),
         new(EventTypes.SandboxLearnEnded, Public: true, typeof(SandboxLearnEnded), "sandbox.learn-ended:<repo|all>:<atTicks>"),
         new(EventTypes.LaunchTakeoverOpened, Public: true, typeof(LaunchTakeoverOpened), "launch.takeover-opened:<nonce>") { Invalidates = [ApiViews.Launch, ApiViews.Item] },

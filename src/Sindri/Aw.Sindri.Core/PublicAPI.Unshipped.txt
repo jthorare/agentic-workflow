@@ -20575,26 +20575,26 @@ override Aw.Sindri.Core.Events.ReviewLoginSet.GetHashCode() -> int
 override Aw.Sindri.Core.Events.ReviewLoginSet.ToString() -> string!
 static Aw.Sindri.Core.Events.ReviewLoginSet.operator !=(Aw.Sindri.Core.Events.ReviewLoginSet? left, Aw.Sindri.Core.Events.ReviewLoginSet? right) -> bool
 static Aw.Sindri.Core.Events.ReviewLoginSet.operator ==(Aw.Sindri.Core.Events.ReviewLoginSet? left, Aw.Sindri.Core.Events.ReviewLoginSet? right) -> bool
-Aw.Sindri.Core.Events.SandboxAllowed
-Aw.Sindri.Core.Events.SandboxAllowed.<Clone>$() -> Aw.Sindri.Core.Events.SandboxAllowed!
-Aw.Sindri.Core.Events.SandboxAllowed.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out Aw.Sindri.Core.Launch.LaunchId Launch, out Aw.Sindri.Core.Ids.RepoName Repo, out string! Kind, out string! Entry) -> void
-Aw.Sindri.Core.Events.SandboxAllowed.Equals(Aw.Sindri.Core.Events.SandboxAllowed? other) -> bool
-Aw.Sindri.Core.Events.SandboxAllowed.CommandId.get -> Aw.Sindri.Core.Ids.CommandId
-Aw.Sindri.Core.Events.SandboxAllowed.CommandId.init -> void
-Aw.Sindri.Core.Events.SandboxAllowed.Launch.get -> Aw.Sindri.Core.Launch.LaunchId
-Aw.Sindri.Core.Events.SandboxAllowed.Launch.init -> void
-Aw.Sindri.Core.Events.SandboxAllowed.Repo.get -> Aw.Sindri.Core.Ids.RepoName
-Aw.Sindri.Core.Events.SandboxAllowed.Repo.init -> void
-Aw.Sindri.Core.Events.SandboxAllowed.Kind.get -> string!
-Aw.Sindri.Core.Events.SandboxAllowed.Kind.init -> void
-Aw.Sindri.Core.Events.SandboxAllowed.Entry.get -> string!
-Aw.Sindri.Core.Events.SandboxAllowed.Entry.init -> void
-Aw.Sindri.Core.Events.SandboxAllowed.SandboxAllowed(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Launch.LaunchId Launch, Aw.Sindri.Core.Ids.RepoName Repo, string! Kind, string! Entry) -> void
-override Aw.Sindri.Core.Events.SandboxAllowed.Equals(object? obj) -> bool
-override Aw.Sindri.Core.Events.SandboxAllowed.GetHashCode() -> int
-override Aw.Sindri.Core.Events.SandboxAllowed.ToString() -> string!
-static Aw.Sindri.Core.Events.SandboxAllowed.operator !=(Aw.Sindri.Core.Events.SandboxAllowed? left, Aw.Sindri.Core.Events.SandboxAllowed? right) -> bool
-static Aw.Sindri.Core.Events.SandboxAllowed.operator ==(Aw.Sindri.Core.Events.SandboxAllowed? left, Aw.Sindri.Core.Events.SandboxAllowed? right) -> bool
+Aw.Sindri.Core.Events.SandboxEntryAllowed
+Aw.Sindri.Core.Events.SandboxEntryAllowed.<Clone>$() -> Aw.Sindri.Core.Events.SandboxEntryAllowed!
+Aw.Sindri.Core.Events.SandboxEntryAllowed.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out Aw.Sindri.Core.Launch.LaunchId Launch, out Aw.Sindri.Core.Ids.RepoName Repo, out string! Kind, out string! Entry) -> void
+Aw.Sindri.Core.Events.SandboxEntryAllowed.Equals(Aw.Sindri.Core.Events.SandboxEntryAllowed? other) -> bool
+Aw.Sindri.Core.Events.SandboxEntryAllowed.CommandId.get -> Aw.Sindri.Core.Ids.CommandId
+Aw.Sindri.Core.Events.SandboxEntryAllowed.CommandId.init -> void
+Aw.Sindri.Core.Events.SandboxEntryAllowed.Launch.get -> Aw.Sindri.Core.Launch.LaunchId
+Aw.Sindri.Core.Events.SandboxEntryAllowed.Launch.init -> void
+Aw.Sindri.Core.Events.SandboxEntryAllowed.Repo.get -> Aw.Sindri.Core.Ids.RepoName
+Aw.Sindri.Core.Events.SandboxEntryAllowed.Repo.init -> void
+Aw.Sindri.Core.Events.SandboxEntryAllowed.Kind.get -> string!
+Aw.Sindri.Core.Events.SandboxEntryAllowed.Kind.init -> void
+Aw.Sindri.Core.Events.SandboxEntryAllowed.Entry.get -> string!
+Aw.Sindri.Core.Events.SandboxEntryAllowed.Entry.init -> void
+Aw.Sindri.Core.Events.SandboxEntryAllowed.SandboxEntryAllowed(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Launch.LaunchId Launch, Aw.Sindri.Core.Ids.RepoName Repo, string! Kind, string! Entry) -> void
+override Aw.Sindri.Core.Events.SandboxEntryAllowed.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.SandboxEntryAllowed.GetHashCode() -> int
+override Aw.Sindri.Core.Events.SandboxEntryAllowed.ToString() -> string!
+static Aw.Sindri.Core.Events.SandboxEntryAllowed.operator !=(Aw.Sindri.Core.Events.SandboxEntryAllowed? left, Aw.Sindri.Core.Events.SandboxEntryAllowed? right) -> bool
+static Aw.Sindri.Core.Events.SandboxEntryAllowed.operator ==(Aw.Sindri.Core.Events.SandboxEntryAllowed? left, Aw.Sindri.Core.Events.SandboxEntryAllowed? right) -> bool
 const Aw.Sindri.Core.Events.EventTypes.ReviewLoginSet = "review.login-set" -> string!
 const Aw.Sindri.Core.Events.EventTypes.SandboxAllowed = "sandbox.allowed" -> string!
 Aw.Sindri.Core.Events.LinearWriteRecorded

@@ -57,7 +57,7 @@ internal sealed class AllowDenialService(IDenialFiles files, ILaunchOwners owner
             return latest.Error;
         }
 
-        var allowed = new SandboxAllowed(caller.CommandId, request.Launch, RepoName.From(repo.Value), request.Kind.ToString(), written.Value.Entry);
+        var allowed = new SandboxEntryAllowed(caller.CommandId, request.Launch, RepoName.From(repo.Value), request.Kind.ToString(), written.Value.Entry);
         var appended = await ledger.Append(events.Entry(EventTypes.SandboxAllowed, allowed, $"{EventTypes.SandboxAllowed}:{caller.CommandId.Value}"), grant, cancellationToken).ConfigureAwait(false);
         if (appended.IsError)
         {
