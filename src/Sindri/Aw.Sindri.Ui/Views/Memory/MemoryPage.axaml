@@ -74,7 +74,7 @@
                           <DataTemplate x:DataType="mm:MemoryFactRowViewModel">
                             <Border x:Name="MemoryFactFrame" Classes="item-row" Padding="0,6" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
                               <DockPanel LastChildFill="True">
-                                <Button x:Name="MemoryFactForget" DockPanel.Dock="Right" Content="{Binding ForgetText}" Click="OnForgetFact" VerticalAlignment="Top" AutomationProperties.Name="{Binding ForgetName}" />
+                                <Button x:Name="MemoryFactForget" DockPanel.Dock="Right" Content="{Binding ForgetText}" Click="OnForgetFact" IsEnabled="{Binding CanForget}" VerticalAlignment="Top" AutomationProperties.Name="{Binding ForgetName}" />
                                 <StackPanel Spacing="2">
                                   <TextBlock x:Name="MemoryFactText" Classes="body" Text="{Binding Text}" TextWrapping="Wrap" />
                                   <ItemsControl x:Name="MemoryFactTags" ItemsSource="{Binding Tags}" IsVisible="{Binding HasTags}">
@@ -83,7 +83,7 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                       <DataTemplate x:DataType="mm:MemoryTagViewModel">
-                                        <Button x:Name="MemoryTagForget" Classes="caption" Content="{Binding Tag}" Click="OnForgetTag" Margin="0,0,6,0" AutomationProperties.Name="{Binding ForgetText}" />
+                                        <Button x:Name="MemoryTagForget" Classes="caption" Content="{Binding Tag}" Click="OnForgetTag" IsEnabled="{Binding CanForget}" Margin="0,0,6,0" AutomationProperties.Name="{Binding ForgetText}" />
                                       </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                   </ItemsControl>
@@ -104,7 +104,7 @@
                     <Border x:Name="MemoryForgetResultName" IsVisible="{Binding HasForgetResult}" AutomationProperties.Name="{Binding ForgetResult}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
                       <TextBlock Classes="caption" Text="{Binding ForgetResult}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
                     </Border>
-                    <Button x:Name="MemoryForgetExpired" Content="{Binding ForgetExpiredText}" Click="OnForgetExpired" HorizontalAlignment="Left" AutomationProperties.Name="{Binding ForgetExpiredText}" />
+                    <Button x:Name="MemoryForgetExpired" Content="{Binding ForgetExpiredText}" Click="OnForgetExpired" IsEnabled="{Binding CanForget}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding ForgetExpiredText}" />
 
                     <StackPanel Spacing="6">
                       <TextBlock Classes="body-strong" Text="{Binding WriteHeading}" />
@@ -112,7 +112,7 @@
                       <TextBox x:Name="MemoryTagsBox" Text="{Binding WriteTags, Mode=TwoWay}" PlaceholderText="{Binding TagsFieldName}" AutomationProperties.Name="{Binding TagsFieldName}" />
                       <TextBox x:Name="MemoryExpiresBox" Text="{Binding WriteExpires, Mode=TwoWay}" PlaceholderText="{Binding ExpiresFieldName}" AutomationProperties.Name="{Binding ExpiresFieldName}" />
                       <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button x:Name="MemoryWriteButton" Content="{Binding WriteActionText}" Click="OnWrite" AutomationProperties.Name="{Binding WriteActionText}" />
+                        <Button x:Name="MemoryWriteButton" Content="{Binding WriteActionText}" Click="OnWrite" IsEnabled="{Binding CanWrite}" AutomationProperties.Name="{Binding WriteActionText}" />
                         <Border x:Name="MemoryWriteResultName" IsVisible="{Binding HasWriteResult}" VerticalAlignment="Center" AutomationProperties.Name="{Binding WriteResult}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
                           <TextBlock Classes="caption" Text="{Binding WriteResult}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
                         </Border>
@@ -132,7 +132,7 @@
         <TextBlock Classes="body-strong" Text="{Binding CreateHeading}" />
         <TextBox x:Name="MemoryNewName" Text="{Binding NewName, Mode=TwoWay}" PlaceholderText="{Binding NameFieldName}" AutomationProperties.Name="{Binding NameFieldName}" />
         <TextBox x:Name="MemoryNewDescription" Text="{Binding NewDescription, Mode=TwoWay}" PlaceholderText="{Binding DescriptionFieldName}" AutomationProperties.Name="{Binding DescriptionFieldName}" />
-        <Button x:Name="MemoryCreateButton" Content="{Binding CreateText}" Click="OnCreate" HorizontalAlignment="Left" AutomationProperties.Name="{Binding CreateText}" />
+        <Button x:Name="MemoryCreateButton" Content="{Binding CreateText}" Click="OnCreate" IsEnabled="{Binding CanCreate}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding CreateText}" />
         <Border x:Name="MemoryCreateErrorName" IsVisible="{Binding HasCreateError}" AutomationProperties.Name="{Binding CreateError}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption" Text="{Binding CreateError}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>

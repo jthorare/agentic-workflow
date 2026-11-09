@@ -16,6 +16,7 @@ internal sealed class MemorySearchViewModel : ObservableObject
     private readonly TimeProvider _clock;
     private readonly Func<string, CancellationToken, Task> _forgetFact;
     private readonly Func<string, CancellationToken, Task> _forgetTag;
+    private readonly BusyFlag _forgetBusy;
     private int _searches;
 
     /// <summary>The search over its ports.</summary>
@@ -25,9 +26,11 @@ internal sealed class MemorySearchViewModel : ObservableObject
     /// <param name="clock">The clock expiry is read against.</param>
     /// <param name="forgetFact">Sends the forget for one fact id.</param>
     /// <param name="forgetTag">Sends the forget for one tag.</param>
-    internal MemorySearchViewModel(ISindriApi api, Func<Uri?> url, string store, TimeProvider clock, Func<string, CancellationToken, Task> forgetFact, Func<string, CancellationToken, Task> forgetTag)
+    /// <param name="forgetBusy">The store's forget flag, shared with its rows; a new one when none is given.</param>
+    internal MemorySearchViewModel(ISindriApi api, Func<Uri?> url, string store, TimeProvider clock, Func<string, CancellationToken, Task> forgetFact, Func<string, CancellationToken, Task> forgetTag, BusyFlag? forgetBusy = null)
     {
         (_api, _url, _store, _clock, _forgetFact, _forgetTag) = (api, url, store, clock, forgetFact, forgetTag);
+        _forgetBusy = forgetBusy ?? new BusyFlag();
     }
 
     /// <summary>The search box's text.</summary>
@@ -114,7 +117,7 @@ internal sealed class MemorySearchViewModel : ObservableObject
         Rows.Clear();
         foreach (var fact in view.Facts)
         {
-            Rows.Add(new MemoryFactRowViewModel(fact, _clock, _forgetFact, _forgetTag));
+            Rows.Add(new MemoryFactRowViewModel(fact, _clock, _forgetFact, _forgetTag, _forgetBusy));
         }
 
         ResultText = Rows.Count == 0 ? Labels.MemoryNothingFound : Labels.MemoryFound(Rows.Count);
@@ -124,6 +127,7 @@ internal sealed class MemorySearchViewModel : ObservableObject
     /// <param name="forgotten">Which rows are gone.</param>
     internal void Remove(Func<MemoryFactRowViewModel, bool> forgotten)
     {
+        _searches++;   // a search still on its way was asked before this forget; its answer may hold the forgotten fact
         for (var i = Rows.Count - 1; i >= 0; i--)
         {
             if (forgotten(Rows[i]))
