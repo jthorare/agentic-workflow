@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Globalization;
 using Aw.Sindri.Ui.Api.Workflows;
 
 namespace Aw.Sindri.Ui.ViewModels.Workflows;
@@ -14,7 +13,7 @@ internal sealed partial class GraphEditViewModel : ObservableObject
     private static readonly string[] _watchedNames =
     [
         nameof(CanEdit), nameof(CanAdd), nameof(CanRemove), nameof(CanConnect), nameof(Groups), nameof(Targets), nameof(ReloadPromptText), nameof(HasReloadPrompt), nameof(FailureText), nameof(HasFailure),
-        nameof(IsAdding), nameof(IsConnecting), nameof(IsConfirmingRemove), nameof(ConfirmText),
+        nameof(IsAdding), nameof(IsConnecting), nameof(IsConfirmingRemove), nameof(ConfirmText), nameof(SheetOpen), nameof(SheetOpenText),
     ];
 
     private readonly RunsViewModel _runs;
@@ -43,8 +42,8 @@ internal sealed partial class GraphEditViewModel : ObservableObject
     /// <summary>The editor the ops go through.</summary>
     public OpsEditor Editor { get; }
 
-    /// <summary>True when an edit may be sent now: a workflow is open and not archived, no edit is on the way and the workflow did not change elsewhere.</summary>
-    public bool CanEdit => _url() is not null && _runs.Slug.Length > 0 && _runs.Graph is not null && _runs.Shown is { ArchivedAt: null } && !Editor.IsSending && !Editor.NeedsReload;
+    /// <summary>True when an edit may be sent now: a workflow is open and not archived, no edit is on the way, the editor sheet is closed and the workflow did not change elsewhere.</summary>
+    public bool CanEdit => _url() is not null && _runs.Slug.Length > 0 && _runs.Graph is not null && _runs.Shown is { ArchivedAt: null } && !Editor.IsSending && !Editor.NeedsReload && !SheetOpen;
 
     /// <summary>True when Add step is offered.</summary>
     public bool CanAdd => CanEdit;
@@ -107,7 +106,7 @@ internal sealed partial class GraphEditViewModel : ObservableObject
     /// <returns>A task that completes when the answer is shown.</returns>
     internal async Task AddStep(WorkflowBlock block, CancellationToken cancellationToken)
     {
-        if (!CanAdd || !await EnsureLoaded(cancellationToken).ConfigureAwait(true))
+        if (!CanAdd || !await EnsureLoaded(cancellationToken).ConfigureAwait(true) || !StillSame)
         {
             return;
         }
@@ -130,7 +129,7 @@ internal sealed partial class GraphEditViewModel : ObservableObject
     /// <returns>A task that completes when the answer is shown.</returns>
     internal async Task ConfirmRemove(CancellationToken cancellationToken)
     {
-        if (_mode != Mode.Remove || !CanRemove || Selected is not { } node || !await EnsureLoaded(cancellationToken).ConfigureAwait(true))
+        if (_mode != Mode.Remove || !CanRemove || Selected is not { } node || !await EnsureLoaded(cancellationToken).ConfigureAwait(true) || !StillSame)
         {
             return;
         }
@@ -153,7 +152,7 @@ internal sealed partial class GraphEditViewModel : ObservableObject
     /// <returns>A task that completes when the answer is shown.</returns>
     internal async Task ConnectTo(string id, CancellationToken cancellationToken)
     {
-        if (!CanConnect || _runs.Graph?.SelectedId is not { } from || Targets.All(t => !string.Equals(t.Id, id, StringComparison.Ordinal)) || !await EnsureLoaded(cancellationToken).ConfigureAwait(true))
+        if (!CanConnect || _runs.Graph?.SelectedId is not { } from || Targets.All(t => !string.Equals(t.Id, id, StringComparison.Ordinal)) || !await EnsureLoaded(cancellationToken).ConfigureAwait(true) || !StillSame)
         {
             return;
         }
@@ -173,6 +172,9 @@ internal sealed partial class GraphEditViewModel : ObservableObject
         await Editor.Reload(cancellationToken).ConfigureAwait(true);
         await ReadPage(_runs.Slug, cancellationToken).ConfigureAwait(true);
     }
+
+    // The reads inside EnsureLoaded awaited: the person may have opened the sheet, the workflow may have been archived or another one opened since the command was allowed.
+    private bool StillSame => CanEdit && string.Equals(_runs.Slug, Editor.Slug, StringComparison.Ordinal);
 
     // The editor holds the revision its edits are sent on: it reads the workflow again when it has none for this one, or when the page shows another revision than it read.
     private async Task<bool> EnsureLoaded(CancellationToken cancellationToken)
@@ -224,27 +226,6 @@ internal sealed partial class GraphEditViewModel : ObservableObject
             await _runs.Read(url, slug, _runs.Title, cancellationToken).ConfigureAwait(true);
         }
     }
-
-    // the block type and the first number no node has: "run_agent_1", "run_agent_2", ...
-    private string FreshId(string type)
-    {
-        var used = new HashSet<string>(Editor.Nodes.Select(n => n.Id), StringComparer.Ordinal);
-        if (_runs.Graph is { } graph)
-        {
-            used.UnionWith(graph.Nodes.Select(n => n.Id));
-            used.UnionWith(graph.Unplaced);
-        }
-
-        var number = 1;
-        while (used.Contains(Candidate(type, number)))
-        {
-            number++;
-        }
-
-        return Candidate(type, number);
-    }
-
-    private static string Candidate(string type, int number) => type + "_" + number.ToString(CultureInfo.InvariantCulture);
 
     private void SetMode(Mode mode)
     {
