@@ -3,30 +3,20 @@
 // (src/py/str.ts) or passes a RegExp; replace-scan.ts tokenizes each file, so a pattern on the next line, a const
 // holding a string, s["replace"](...) or .replace.call(...) is caught too. No file is exempt.
 import { expect, test } from "bun:test";
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
-import { scan } from "./replace-scan";
+import { readFileSync } from "node:fs";
+import { relative } from "node:path";
+import { scan, scannedFiles } from "./replace-scan";
 
 const ROOT = new URL("../..", import.meta.url).pathname;
-const SCANNED = ["src", "bin", "parity"];
-
-function* files(dir: string): Generator<string> {
-  for (const name of readdirSync(dir)) {
-    const p = join(dir, name);
-    if (statSync(p).isDirectory()) yield* files(p);
-    else if (/\.(ts|tsx|js|mjs|cjs)$/.test(name)) yield p;
-  }
-}
 
 test("no .replace( with a pattern that is not provably a RegExp in src/, bin/ or parity/", () => {
   const hits: string[] = [];
   let n = 0;
-  for (const d of SCANNED)
-    for (const f of files(join(ROOT, d))) {
-      n++;
-      const text = readFileSync(f, "utf8");
-      for (const h of scan(text)) hits.push(`${relative(ROOT, f)}:${h.line}: ${h.why}: ${text.split("\n")[h.line - 1]!.trim()}`);
-    }
+  for (const f of scannedFiles(ROOT)) {
+    n++;
+    const text = readFileSync(f, "utf8");
+    for (const h of scan(text)) hits.push(`${relative(ROOT, f)}:${h.line}: ${h.why}: ${text.split("\n")[h.line - 1]!.trim()}`);
+  }
   expect(n).toBeGreaterThan(30); // the walk found the tree
   expect(hits).toEqual([]);
 });

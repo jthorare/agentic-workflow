@@ -798,7 +798,7 @@ export class Compiler {
   // -- page
   structure(text: string): [string | null, Block[], Section[]] {
     text = py.replace(py.replace(py.replace(text, "\r\n", "\n"), "&#91;", "["), "&#93;", "]");
-    const blocks = parse_ext(text.split("\n"));
+    const blocks = parse_ext(py.str.split(text, "\n"));
     let title: string | null = null;
     const pre: Block[] = [];
     const sections: Section[] = [];

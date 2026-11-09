@@ -27,7 +27,7 @@ export function parse_attrs(text: string): [string, Attrs] {
   const attrs: Attrs = new Map();
   const m = ATTRS.search(text);
   if (!m) return [text, attrs];
-  for (let part of m.group(1)!.split(";")) {
+  for (let part of py.str.split(m.group(1)!, ";")) {
     part = py.str.strip(part);
     if (!part) continue;
     if (part.startsWith("#")) attrs.set("id", py.str.strip(part.slice(1)));
