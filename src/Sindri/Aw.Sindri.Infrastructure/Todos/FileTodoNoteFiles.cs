@@ -16,6 +16,7 @@ namespace Aw.Sindri.Infrastructure.Todos;
 internal sealed partial class FileTodoNoteFiles(ISindriHome home, TimeProvider clock) : ITodoNoteFiles
 {
     private const long MaxBytes = 1024 * 1024;
+    private const string NewSuffix = "-new";
     private static readonly UTF8Encoding _utf8 = new(encoderShouldEmitUTF8Identifier: false);
     private static readonly TimeSpan _poll = TimeSpan.FromMilliseconds(100);
 
@@ -112,29 +113,33 @@ internal sealed partial class FileTodoNoteFiles(ISindriHome home, TimeProvider c
         }
 
         var tmp = TmpPath(note);
+        var fresh = tmp + NewSuffix;
         var exists = File.Exists(note) || new FileInfo(note).LinkTarget is not null;
         try
         {
+            if (File.Exists(tmp) || new FileInfo(tmp).LinkTarget is not null)
+            {
+                return new NoteSwap(CameOut: null, Problem: "a tmp file is already there");
+            }
+
             var mode = (exists ? FileModes.TryRead(note) : null) ?? (UnixFileMode.UserRead | UnixFileMode.UserWrite);
-            using (var stream = CreateNew(tmp, mode))
+            using (var stream = CreateNew(fresh, mode))
             {
                 stream.Write(_utf8.GetBytes(text));
+                stream.Flush(flushToDisk: true);   // why: a kill after the rename must not leave a truncated tmp that Leftover merges as an edit
             }
 
             if (!OperatingSystem.IsWindows())
             {
-                File.SetUnixFileMode(tmp, mode);   // the create mode went through the umask
+                File.SetUnixFileMode(fresh, mode);   // the create mode went through the umask
             }
+
+            File.Move(fresh, tmp, overwrite: false);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            if (File.Exists(tmp) || new FileInfo(tmp).LinkTarget is not null)
-            {
-                // not ours when the open itself failed: the exclusive create refuses a tmp that was there before, so leave it
-                return new NoteSwap(CameOut: null, Problem: "a tmp file is already there");
-            }
-
-            return new NoteSwap(CameOut: null, Problem: e.Message);
+            File.Delete(fresh);   // ours: the exclusive create made it, or the rename left it
+            return new NoteSwap(CameOut: null, Problem: File.Exists(tmp) ? "a tmp file is already there" : e.Message);
         }
 
         return exists ? SwapIn(tmp, note) : MoveIn(tmp, note);
@@ -144,6 +149,7 @@ internal sealed partial class FileTodoNoteFiles(ISindriHome home, TimeProvider c
     {
         ArgumentNullException.ThrowIfNull(note);
         var tmp = TmpPath(note);
+        File.Delete(tmp + NewSuffix);   // an unfinished write (never flushed and renamed): never read, never merged
         return File.Exists(tmp) ? tmp : null;
     }
 

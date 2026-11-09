@@ -119,6 +119,12 @@ internal sealed partial class TodoNoteSync(SyncDeps deps) : ITodoNoteSync, IDisp
             return SindriErrors.TodoConflict.With(ran.Value.Error ?? $"The note can't be imported now ({ran.Value.State}). Try again.");
         }
 
+        if (ran.Value.Adopted != counts.Importable)
+        {
+            // why: the count was read without the quiet wait, the adopting pass reads after it; the note grew or shrank in between
+            return SindriErrors.TodoConflict.With(string.Create(CultureInfo.InvariantCulture, $"The note had {counts.Importable} lines to import when you checked and {ran.Value.Adopted} when they were taken. Check the note again."));
+        }
+
         var events = new NoteEvents(deps, new Dictionary<Core.Ids.TodoId, long>(), string.Empty);
         var recorded = await events.Imported(new TodoNoteImported(place.Vault, place.Note, ran.Value.Adopted, request.By, request.Via), cancellationToken).ConfigureAwait(false);
         return recorded.IsError ? recorded.Error : new TodoNoteImport(counts, ran.Value.Adopted, DryRun: false);

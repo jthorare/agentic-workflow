@@ -87,4 +87,24 @@ public sealed class NoteImportTests
         Assert.Equal((SyncRig.Vault, SyncRig.NoteName, 2, "human:cli"), (imported.Vault, imported.Note, imported.Count, imported.By));
         Assert.Equal(TodoNoteState.Syncing, (await rig.Pass()).State);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_note_that_grows_between_the_count_and_the_adopting_pass_is_reported_as_409()
+    {
+        var rig = await WithOpenNote();
+        var once = true;
+        rig.Files.AfterRead = path =>
+        {
+            if (once && path == SyncRig.Path)
+            {
+                once = false;
+                rig.Files.Files[path] += "- [ ] three\n";
+            }
+        };
+
+        var refused = await rig.Sync.Import(Ask(expect: 2), TestContext.Current.CancellationToken);
+
+        Assert.Equal(SindriErrors.TodoConflict.Code, refused.Error.Code);
+        Assert.Empty(await rig.Events(EventTypes.TodoNoteImported));
+    }
 }
