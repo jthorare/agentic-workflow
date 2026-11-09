@@ -21,4 +21,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-RES-006: an owner, name or size is malformed.</summary>
     public static readonly ErrorDefinition ResourceInvalid = new("SND-RES-006", ErrorKind.Invalid, "A resource owner, name or size is malformed");
+
+    /// <summary>SND-RES-007: a disk holds too many files and folders to measure.</summary>
+    public static readonly ErrorDefinition ResourceDiskUnmeasured = new("SND-RES-007", ErrorKind.Conflict, "A disk holds too many files to measure");
 }

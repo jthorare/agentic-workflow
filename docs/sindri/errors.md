@@ -102,6 +102,13 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-MEM-005` | The match level is not loose, balanced or strict. | use one of the three |
 | `SND-MEM-006` | The memory name is not lowercase letters, digits and `-`. | use 1 to 48 of them, starting with a letter or digit |
 | `SND-MEM-007` | A fact's expiry is not in the future. | give a later `--expires-at`, or none |
+| `SND-RES-001` | A disk holds more than its size limit (the message names the bytes used and the limit). | delete files from the disk, or raise its `size` |
+| `SND-RES-002` | Two databases, disks or connections of one owner share a name. | rename one |
+| `SND-RES-003` | A purge was refused: the owner is still active or has a run going. | archive the owner, or wait for the run to end |
+| `SND-RES-004` | A resource path leaves its owner's folder, or a symlink sits where a resource folder or file goes. | remove the symlink or the stray path, then run again |
+| `SND-RES-005` | A sandbox size is above the box's cap. | lower the `sandbox` memory or cpu in the declaration |
+| `SND-RES-006` | A resource owner, name or size is malformed, or a path exists as the wrong type (a folder where a database goes). | fix the declaration, or move the stray path away |
+| `SND-RES-007` | A disk holds too many files and folders to measure (over 100,000). | delete files you don't need from the disk |
 | `SND-TRACKER-001` | The tracker's source is missing or unreadable (for plan-file: the repo path or plan dir). | Restore that directory, or fix `path` in repos/&lt;name&gt;.yaml. |
 | `SND-TRACKER-002` | The tracker's source holds no items to read (for plan-file: no plan file matches tracker.include). | Fix tracker.include in profile.yaml (or restore the plan files). |
 | `SND-TRACKER-003` | A plan file is too big to read (over 2 MiB). | Split the plan file into smaller plans. |

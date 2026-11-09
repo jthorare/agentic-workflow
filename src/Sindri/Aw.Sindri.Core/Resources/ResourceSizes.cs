@@ -9,7 +9,7 @@ public static partial class ResourceSizes
     /// <summary>Parses a size.</summary>
     /// <param name="text">The size as written.</param>
     /// <param name="bytes">The size in bytes when it parses.</param>
-    /// <returns>True when <paramref name="text"/> is a size.</returns>
+    /// <returns>True when <paramref name="text"/> is a size that fits in a long.</returns>
     public static bool TryParse(string? text, out long bytes)
     {
         bytes = 0;
@@ -25,7 +25,13 @@ public static partial class ResourceSizes
             "GiB" or "g" => 1L << 30,
             _ => 1L << 40,
         };
-        bytes = long.Parse(match.Groups["number"].Value, NumberStyles.None, CultureInfo.InvariantCulture) * unit;
+        var number = long.Parse(match.Groups["number"].Value, NumberStyles.None, CultureInfo.InvariantCulture);
+        if (number > long.MaxValue / unit)
+        {
+            return false;   // over ~8.4 million TiB: refused, never a wrapped negative size
+        }
+
+        bytes = number * unit;
         return true;
     }
 
