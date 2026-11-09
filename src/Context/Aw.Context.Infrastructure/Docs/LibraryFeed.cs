@@ -31,11 +31,10 @@ internal sealed class LibraryFeed(LibrarySetup setup, IRecordStore store, Scrubb
         var reports = new List<LibraryRootReport>();
         foreach (var root in setup.Roots)
         {
-            _ = skips is null ? null : await skips.In(root.Name, cancellationToken).ConfigureAwait(false);   // why: red stub, the next commit passes them to the reader
-            _ = skips is null ? null : await skips.In(root.Name, cancellationToken).ConfigureAwait(false);   // why: red stub, the next commit passes them to the reader
+            var skipped = skips is null ? [] : await skips.In(root.Name, cancellationToken).ConfigureAwait(false);
             var last = before.GetValueOrDefault(root.Name);
             var trusted = last is { Problem: null } ? known.GetValueOrDefault(root.Name) : null;   // the "nothing changed" shortcut needs a good last report to copy: after a failed pass or a lost status file the root is diffed again
-            var pass = await _reader.Run(root, trusted, Math.Max(pull.Limit, 1) - items.Count, cancellationToken).ConfigureAwait(false);
+            var pass = await _reader.Run(root, trusted, Math.Max(pull.Limit, 1) - items.Count, skipped, cancellationToken).ConfigureAwait(false);
             if (pass.IsError)
             {
                 return pass.Error;

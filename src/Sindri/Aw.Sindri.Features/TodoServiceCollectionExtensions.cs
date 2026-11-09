@@ -1,5 +1,6 @@
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
+using Aw.Context.Core.Library;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Events;
@@ -70,6 +71,7 @@ internal static class TodoServiceCollectionExtensions
                     return scope.ServiceProvider.GetRequiredService<IContextEngine>().CheckSettings(context, repos);
                 },
                 sp.GetRequiredService<LibraryHost>()))
+            .AddSingleton<ILibrarySkips, TodoNoteLibrarySkips>()   // the library feed leaves the note out
             .AddNoteSync()
             .AddScoped<IScheduledService, TodoNoteService>()
             .AddSingleton(TodoNoteService.BuiltIn)   // runs without a profile entry, so PauseService refuses it
