@@ -122,6 +122,8 @@ public static class ObligationEvaluator
                 string.Create(CultureInfo.InvariantCulture, $"owner answer q{a.Question} not relayed to {a.AskedBy}"),
                 string.Create(CultureInfo.InvariantCulture, $"SendMessage \"OWNER ANSWER q{a.Question}: {a.Text}\" to {a.AskedBy}")));
 
+    private const string WatchCommand = "aw-meta watch --until-mail (Codex/Cursor: run it in the foreground and rearm after each exit; Claude: run it with Monitor, persistent)";
+
     private static IEnumerable<Obligation> Rearm(ObligationFacts facts)
     {
         if (facts.Heartbeat is { } beat && facts.Now - beat > facts.WatchInterval * 2)
@@ -130,7 +132,15 @@ public static class ObligationEvaluator
                 ObligationKind.RearmWatch,
                 "watch",
                 string.Create(CultureInfo.InvariantCulture, $"the watch last beat at {beat:HH:mm}, over two intervals ago"),
-                "aw-meta watch (run it with Monitor, persistent)");
+                WatchCommand);
+        }
+        else if (facts.Heartbeat is null && Replies(facts).Count() is var waiting and > 0)
+        {
+            yield return new Obligation(
+                ObligationKind.RearmWatch,
+                "watch",
+                string.Create(CultureInfo.InvariantCulture, $"no active coordinator consumer: watch last beat never, {waiting} waiting"),
+                WatchCommand);
         }
     }
 }

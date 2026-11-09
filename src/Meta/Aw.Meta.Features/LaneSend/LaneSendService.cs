@@ -76,7 +76,7 @@ internal sealed class LaneSendService(IMetaConfig config, ILaneFiles files, ILan
 
         var (woken, skipped, viewer) = attention.Value is null
             ? await Wake(target, TimeSpan.FromSeconds(request.WakeConfirmSeconds), cancellationToken).ConfigureAwait(false)
-            : (false, "the lane's hooks can't take part, so the message waits", false);
+            : (false, "the lane's hooks can't take part, so the message is stored and waits: the worker runs `aw-meta lane-inbox` by hand, or the owner trusts its hooks (Codex: /hooks)", false);
         return new LaneSendResponse(target.Lane, id, woken, skipped, attention.Value) { ViewerAttached = viewer };
     }
 
