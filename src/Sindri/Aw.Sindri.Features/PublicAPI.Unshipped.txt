@@ -1,93 +1,4 @@
 #nullable enable
-Aw.Sindri.Features.ApproveProfile.ApproveProfileRequest
-Aw.Sindri.Features.ApproveProfile.ApproveProfileRequest.<Clone>$() -> Aw.Sindri.Features.ApproveProfile.ApproveProfileRequest!
-Aw.Sindri.Features.ApproveProfile.ApproveProfileRequest.Answer.get -> Aw.Sindri.Core.Challenges.ChallengeAnswer?
-Aw.Sindri.Features.ApproveProfile.ApproveProfileRequest.Answer.init -> void
-Aw.Sindri.Features.ApproveProfile.ApproveProfileRequest.ApproveProfileRequest(Aw.Sindri.Core.Ids.ProfileHash? Hash, Aw.Sindri.Core.Challenges.ChallengeAnswer? Answer = null) -> void
-Aw.Sindri.Features.ApproveProfile.ApproveProfileRequest.Deconstruct(out Aw.Sindri.Core.Ids.ProfileHash? Hash, out Aw.Sindri.Core.Challenges.ChallengeAnswer? Answer) -> void
-Aw.Sindri.Features.ApproveProfile.ApproveProfileRequest.Equals(Aw.Sindri.Features.ApproveProfile.ApproveProfileRequest? other) -> bool
-Aw.Sindri.Features.ApproveProfile.ApproveProfileRequest.Hash.get -> Aw.Sindri.Core.Ids.ProfileHash?
-Aw.Sindri.Features.ApproveProfile.ApproveProfileRequest.Hash.init -> void
-Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse
-Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.<Clone>$() -> Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse!
-Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Approved.get -> bool
-Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Approved.init -> void
-Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.ApproveProfileResponse(Aw.Sindri.Core.Ids.ProfileHash Hash, System.Collections.Generic.IReadOnlyList<string!>! Changes, bool Approved, long? Sequence) -> void
-Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Changes.get -> System.Collections.Generic.IReadOnlyList<string!>!
-Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Changes.init -> void
-Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Deconstruct(out Aw.Sindri.Core.Ids.ProfileHash Hash, out System.Collections.Generic.IReadOnlyList<string!>! Changes, out bool Approved, out long? Sequence) -> void
-Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Equals(Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse? other) -> bool
-Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Hash.get -> Aw.Sindri.Core.Ids.ProfileHash
-Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Hash.init -> void
-Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Sequence.get -> long?
-Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Sequence.init -> void
-Aw.Sindri.Features.ApplyCommand.ApplyCommandChallenge
-Aw.Sindri.Features.ApplyCommand.ApplyCommandKind
-Aw.Sindri.Features.ApplyCommand.ApplyCommandKind.Answer = 1 -> Aw.Sindri.Features.ApplyCommand.ApplyCommandKind
-Aw.Sindri.Features.ApplyCommand.ApplyCommandKind.Cancel = 3 -> Aw.Sindri.Features.ApplyCommand.ApplyCommandKind
-Aw.Sindri.Features.ApplyCommand.ApplyCommandKind.Command = 2 -> Aw.Sindri.Features.ApplyCommand.ApplyCommandKind
-Aw.Sindri.Features.ApplyCommand.ApplyCommandKind.Handback = 5 -> Aw.Sindri.Features.ApplyCommand.ApplyCommandKind
-Aw.Sindri.Features.ApplyCommand.ApplyCommandKind.Takeover = 4 -> Aw.Sindri.Features.ApplyCommand.ApplyCommandKind
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.<Clone>$() -> Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest!
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Amount.get -> int?
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Amount.init -> void
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Answer.get -> Aw.Sindri.Core.Workflow.Engine.Triggers.AnswerVariant?
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Answer.init -> void
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.CarriesProtectedFields.get -> bool
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Challenge.get -> Aw.Sindri.Core.Challenges.ChallengeAnswer?
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Challenge.init -> void
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Equals(Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest? other) -> bool
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Instance.get -> string!
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Instance.init -> void
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Kind.get -> Aw.Sindri.Features.ApplyCommand.ApplyCommandKind
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Kind.init -> void
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Nonce.get -> Aw.Sindri.Core.Workflow.Engine.CommandNonce?
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Nonce.init -> void
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Text.get -> string?
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Text.init -> void
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.FromRoute.get -> bool
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.FromRoute.init -> void
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Variant.get -> string!
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Verb.get -> Aw.Sindri.Core.Workflow.Engine.CommandVerb?
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Verb.init -> void
-Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse
-Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse.<Clone>$() -> Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse!
-Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse.AlreadyApplied.get -> bool
-Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse.AlreadyApplied.init -> void
-Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse.ApplyCommandResponse(Aw.Sindri.Core.Workflow.Engine.Runtime.CommandResult! Result, Aw.Sindri.Core.Workflow.Engine.CommandNonce Nonce, bool AlreadyApplied) -> void
-Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.Runtime.CommandResult! Result, out Aw.Sindri.Core.Workflow.Engine.CommandNonce Nonce, out bool AlreadyApplied) -> void
-Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse.Equals(Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse? other) -> bool
-Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse.Nonce.get -> Aw.Sindri.Core.Workflow.Engine.CommandNonce
-Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse.Nonce.init -> void
-Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse.Result.get -> Aw.Sindri.Core.Workflow.Engine.Runtime.CommandResult!
-Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse.Result.init -> void
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest.<Clone>$() -> Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest!
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest.Answer.get -> Aw.Sindri.Core.Challenges.ChallengeAnswer?
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest.Answer.init -> void
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest.ApproveRecipeRequest(Aw.Sindri.Core.Workflow.Ids.RecipeId Id, Aw.Sindri.Core.Workflow.Ids.RecipeHash Hash, Aw.Sindri.Core.Challenges.ChallengeAnswer? Answer = null) -> void
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest.Deconstruct(out Aw.Sindri.Core.Workflow.Ids.RecipeId Id, out Aw.Sindri.Core.Workflow.Ids.RecipeHash Hash, out Aw.Sindri.Core.Challenges.ChallengeAnswer? Answer) -> void
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest.Equals(Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest? other) -> bool
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest.Hash.get -> Aw.Sindri.Core.Workflow.Ids.RecipeHash
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest.Hash.init -> void
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest.Id.get -> Aw.Sindri.Core.Workflow.Ids.RecipeId
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest.Id.init -> void
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.<Clone>$() -> Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse!
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.Accepted.get -> Aw.Sindri.Core.Commands.CommandAccepted!
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.Accepted.init -> void
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.AlreadyApproved.get -> bool
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.AlreadyApproved.init -> void
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.Approval.get -> Aw.Sindri.Core.Workflow.Registry.RecipeApproval!
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.Approval.init -> void
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.ApproveRecipeResponse(Aw.Sindri.Core.Commands.CommandAccepted! Accepted, Aw.Sindri.Core.Workflow.Registry.RecipeApproval! Approval, Aw.Sindri.Core.Workflow.Registry.ApprovalPreview! Preview, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.WorkflowInstanceId>! Resumed, bool AlreadyApproved = false) -> void
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.Deconstruct(out Aw.Sindri.Core.Commands.CommandAccepted! Accepted, out Aw.Sindri.Core.Workflow.Registry.RecipeApproval! Approval, out Aw.Sindri.Core.Workflow.Registry.ApprovalPreview! Preview, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.WorkflowInstanceId>! Resumed, out bool AlreadyApproved) -> void
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.Equals(Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse? other) -> bool
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.Preview.get -> Aw.Sindri.Core.Workflow.Registry.ApprovalPreview!
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.Preview.init -> void
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.Resumed.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.WorkflowInstanceId>!
-Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.Resumed.init -> void
 Aw.Sindri.Features.CancelJob.CancelJobRequest
 Aw.Sindri.Features.CancelJob.CancelJobRequest.<Clone>$() -> Aw.Sindri.Features.CancelJob.CancelJobRequest!
 Aw.Sindri.Features.CancelJob.CancelJobRequest.CancelJobRequest(Aw.Sindri.Core.Ids.JobId Job) -> void
@@ -1062,48 +973,6 @@ Aw.Sindri.Features.ValidateProfile.ValidateProfileResponse.Hash.get -> Aw.Sindri
 Aw.Sindri.Features.ValidateProfile.ValidateProfileResponse.Hash.init -> void
 Aw.Sindri.Features.ValidateProfile.ValidateProfileResponse.Source.get -> string!
 Aw.Sindri.Features.ValidateProfile.ValidateProfileResponse.Source.init -> void
-Aw.Sindri.Features.ValidateProfile.ValidateProfileResponse.ValidateProfileResponse(Aw.Sindri.Core.Ids.ProfileHash Hash, string! Source, bool Approved) -> void
-override Aw.Sindri.Features.ApproveProfile.ApproveProfileRequest.Equals(object? obj) -> bool
-override Aw.Sindri.Features.ApproveProfile.ApproveProfileRequest.GetHashCode() -> int
-override Aw.Sindri.Features.ApproveProfile.ApproveProfileRequest.ToString() -> string!
-override Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Equals(object? obj) -> bool
-override Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.GetHashCode() -> int
-override Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.ToString() -> string!
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeRequest
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeRequest.<Clone>$() -> Aw.Sindri.Features.ValidateRecipe.ValidateRecipeRequest!
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeRequest.Deconstruct(out string? Path, out string? Text, out string? File) -> void
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeRequest.Equals(Aw.Sindri.Features.ValidateRecipe.ValidateRecipeRequest? other) -> bool
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeRequest.File.get -> string?
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeRequest.File.init -> void
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeRequest.Path.get -> string?
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeRequest.Path.init -> void
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeRequest.Text.get -> string?
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeRequest.Text.init -> void
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeRequest.ValidateRecipeRequest(string? Path, string? Text, string? File) -> void
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeResponse
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeResponse.<Clone>$() -> Aw.Sindri.Features.ValidateRecipe.ValidateRecipeResponse!
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Validation.RecipeFinding!>! Findings, out Aw.Sindri.Core.Workflow.Ids.RecipeHash? Hash) -> void
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeResponse.Equals(Aw.Sindri.Features.ValidateRecipe.ValidateRecipeResponse? other) -> bool
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeResponse.Findings.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Validation.RecipeFinding!>!
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeResponse.Findings.init -> void
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeResponse.Hash.get -> Aw.Sindri.Core.Workflow.Ids.RecipeHash?
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeResponse.Hash.init -> void
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeResponse.Normalized.get -> Aw.Sindri.Core.Workflow.Recipes.Recipe?
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeResponse.Normalized.init -> void
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeResponse.Passed.get -> bool
-Aw.Sindri.Features.ValidateRecipe.ValidateRecipeResponse.ValidateRecipeResponse(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Validation.RecipeFinding!>! Findings, Aw.Sindri.Core.Workflow.Ids.RecipeHash? Hash) -> void
-override Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Equals(object? obj) -> bool
-override Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.GetHashCode() -> int
-override Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.ToString() -> string!
-override Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse.Equals(object? obj) -> bool
-override Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse.GetHashCode() -> int
-override Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse.ToString() -> string!
-override Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest.Equals(object? obj) -> bool
-override Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest.GetHashCode() -> int
-override Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest.ToString() -> string!
-override Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.Equals(object? obj) -> bool
-override Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.GetHashCode() -> int
-override Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.ToString() -> string!
 override Aw.Sindri.Features.ContextCalls.ContextChallenge.Equals(object? obj) -> bool
 override Aw.Sindri.Features.ContextCalls.ContextChallenge.GetHashCode() -> int
 override Aw.Sindri.Features.ContextCalls.ContextChallenge.ToString() -> string!
@@ -1278,25 +1147,6 @@ override Aw.Sindri.Features.ValidateProfile.ValidateProfileRequest.ToString() ->
 override Aw.Sindri.Features.ValidateProfile.ValidateProfileResponse.Equals(object? obj) -> bool
 override Aw.Sindri.Features.ValidateProfile.ValidateProfileResponse.GetHashCode() -> int
 override Aw.Sindri.Features.ValidateProfile.ValidateProfileResponse.ToString() -> string!
-static Aw.Sindri.Features.ApproveProfile.ApproveProfileRequest.operator !=(Aw.Sindri.Features.ApproveProfile.ApproveProfileRequest? left, Aw.Sindri.Features.ApproveProfile.ApproveProfileRequest? right) -> bool
-static Aw.Sindri.Features.ApproveProfile.ApproveProfileRequest.operator ==(Aw.Sindri.Features.ApproveProfile.ApproveProfileRequest? left, Aw.Sindri.Features.ApproveProfile.ApproveProfileRequest? right) -> bool
-static Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.operator !=(Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse? left, Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse? right) -> bool
-static Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.operator ==(Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse? left, Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse? right) -> bool
-override Aw.Sindri.Features.ValidateRecipe.ValidateRecipeRequest.Equals(object? obj) -> bool
-override Aw.Sindri.Features.ValidateRecipe.ValidateRecipeRequest.GetHashCode() -> int
-override Aw.Sindri.Features.ValidateRecipe.ValidateRecipeRequest.ToString() -> string!
-override Aw.Sindri.Features.ValidateRecipe.ValidateRecipeResponse.Equals(object? obj) -> bool
-override Aw.Sindri.Features.ValidateRecipe.ValidateRecipeResponse.GetHashCode() -> int
-override Aw.Sindri.Features.ValidateRecipe.ValidateRecipeResponse.ToString() -> string!
-static Aw.Sindri.Features.ApplyCommand.ApplyCommandChallenge.IsProtected(Aw.Sindri.Features.ApplyCommand.ApplyCommandKind kind, Aw.Sindri.Core.Workflow.Engine.Triggers.AnswerVariant? answer) -> bool
-static Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.operator !=(Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest? left, Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest? right) -> bool
-static Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.operator ==(Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest? left, Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest? right) -> bool
-static Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse.operator !=(Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse? left, Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse? right) -> bool
-static Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse.operator ==(Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse? left, Aw.Sindri.Features.ApplyCommand.ApplyCommandResponse? right) -> bool
-static Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest.operator !=(Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest? left, Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest? right) -> bool
-static Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest.operator ==(Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest? left, Aw.Sindri.Features.ApproveRecipe.ApproveRecipeRequest? right) -> bool
-static Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.operator !=(Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse? left, Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse? right) -> bool
-static Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse.operator ==(Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse? left, Aw.Sindri.Features.ApproveRecipe.ApproveRecipeResponse? right) -> bool
 static Aw.Sindri.Features.Commands.SindriCommandServiceCollectionExtensions.AddCommand<TCommand, TResult, TService>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static Aw.Sindri.Features.Commands.SindriCommandServiceCollectionExtensions.AddIssue<TIssue, TResult, TService>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static Aw.Sindri.Features.Commands.SindriCommandServiceCollectionExtensions.AddQuery<TQuery, TView, TService>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
@@ -2376,66 +2226,6 @@ Aw.Sindri.Features.GetItem.ItemView.Launch.get -> Aw.Sindri.Core.Launches.ItemLa
 Aw.Sindri.Features.GetItem.ItemView.Launch.init -> void
 Aw.Sindri.Features.GetStatus.IJevKeyProbe
 Aw.Sindri.Features.GetStatus.ProfileStatus.LabelPick.init -> void
-override Aw.Sindri.Features.ApproveProfile.StepArgvEntry.Equals(object? obj) -> bool
-override Aw.Sindri.Features.ApproveProfile.StepArgvEntry.GetHashCode() -> int
-override Aw.Sindri.Features.ApproveProfile.StepArgvEntry.ToString() -> string!
-override Aw.Sindri.Features.ApproveProfile.StepArgvLine.Equals(object? obj) -> bool
-override Aw.Sindri.Features.ApproveProfile.StepArgvLine.GetHashCode() -> int
-override Aw.Sindri.Features.ApproveProfile.StepArgvLine.ToString() -> string!
-static Aw.Sindri.Features.ApproveProfile.StepArgvEntry.operator !=(Aw.Sindri.Features.ApproveProfile.StepArgvEntry? left, Aw.Sindri.Features.ApproveProfile.StepArgvEntry? right) -> bool
-static Aw.Sindri.Features.ApproveProfile.StepArgvEntry.operator ==(Aw.Sindri.Features.ApproveProfile.StepArgvEntry? left, Aw.Sindri.Features.ApproveProfile.StepArgvEntry? right) -> bool
-static Aw.Sindri.Features.ApproveProfile.StepArgvLine.operator !=(Aw.Sindri.Features.ApproveProfile.StepArgvLine? left, Aw.Sindri.Features.ApproveProfile.StepArgvLine? right) -> bool
-static Aw.Sindri.Features.ApproveProfile.StepArgvLine.operator ==(Aw.Sindri.Features.ApproveProfile.StepArgvLine? left, Aw.Sindri.Features.ApproveProfile.StepArgvLine? right) -> bool
-Aw.Sindri.Features.ReadInjection.InjectionSectionView
-Aw.Sindri.Features.ReadInjection.InjectionSectionView.<Clone>$() -> Aw.Sindri.Features.ReadInjection.InjectionSectionView!
-Aw.Sindri.Features.ReadInjection.InjectionSectionView.Bytes.get -> int
-Aw.Sindri.Features.ReadInjection.InjectionSectionView.Bytes.init -> void
-Aw.Sindri.Features.ReadInjection.InjectionSectionView.Deconstruct(out string! Section, out string! Input, out int Bytes, out string! Sha256, out string! Text) -> void
-Aw.Sindri.Features.ReadInjection.InjectionSectionView.Equals(Aw.Sindri.Features.ReadInjection.InjectionSectionView? other) -> bool
-Aw.Sindri.Features.ReadInjection.InjectionSectionView.InjectionSectionView(string! Section, string! Input, int Bytes, string! Sha256, string! Text) -> void
-Aw.Sindri.Features.ReadInjection.InjectionSectionView.Input.get -> string!
-Aw.Sindri.Features.ReadInjection.InjectionSectionView.Input.init -> void
-Aw.Sindri.Features.ReadInjection.InjectionSectionView.Section.get -> string!
-Aw.Sindri.Features.ReadInjection.InjectionSectionView.Section.init -> void
-Aw.Sindri.Features.ReadInjection.InjectionSectionView.Sha256.get -> string!
-Aw.Sindri.Features.ReadInjection.InjectionSectionView.Sha256.init -> void
-Aw.Sindri.Features.ReadInjection.InjectionSectionView.Text.get -> string!
-Aw.Sindri.Features.ReadInjection.InjectionSectionView.Text.init -> void
-Aw.Sindri.Features.ReadInjection.InjectionView
-Aw.Sindri.Features.ReadInjection.InjectionView.<Clone>$() -> Aw.Sindri.Features.ReadInjection.InjectionView!
-Aw.Sindri.Features.ReadInjection.InjectionView.Deconstruct(out string! Run, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ReadInjection.InjectionSectionView!>! Sections) -> void
-Aw.Sindri.Features.ReadInjection.InjectionView.Equals(Aw.Sindri.Features.ReadInjection.InjectionView? other) -> bool
-Aw.Sindri.Features.ReadInjection.InjectionView.InjectionView(string! Run, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ReadInjection.InjectionSectionView!>! Sections) -> void
-Aw.Sindri.Features.ReadInjection.InjectionView.Run.get -> string!
-Aw.Sindri.Features.ReadInjection.InjectionView.Run.init -> void
-Aw.Sindri.Features.ReadInjection.InjectionView.Sections.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ReadInjection.InjectionSectionView!>!
-Aw.Sindri.Features.ReadInjection.InjectionView.Sections.init -> void
-Aw.Sindri.Features.ReadInjection.ReadInjectionRequest
-Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.<Clone>$() -> Aw.Sindri.Features.ReadInjection.ReadInjectionRequest!
-Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.Deconstruct(out Aw.Sindri.Core.Launch.WorkflowInstanceId Instance, out string? Section) -> void
-Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.Equals(Aw.Sindri.Features.ReadInjection.ReadInjectionRequest? other) -> bool
-Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.Instance.get -> Aw.Sindri.Core.Launch.WorkflowInstanceId
-Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.Instance.init -> void
-Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.ReadInjectionRequest(Aw.Sindri.Core.Launch.WorkflowInstanceId Instance, string? Section = null) -> void
-Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.Section.get -> string?
-Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.Section.init -> void
-override Aw.Sindri.Features.ReadInjection.InjectionSectionView.Equals(object? obj) -> bool
-override Aw.Sindri.Features.ReadInjection.InjectionSectionView.GetHashCode() -> int
-override Aw.Sindri.Features.ReadInjection.InjectionSectionView.ToString() -> string!
-override Aw.Sindri.Features.ReadInjection.InjectionView.Equals(object? obj) -> bool
-override Aw.Sindri.Features.ReadInjection.InjectionView.GetHashCode() -> int
-override Aw.Sindri.Features.ReadInjection.InjectionView.ToString() -> string!
-override Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.Equals(object? obj) -> bool
-override Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.GetHashCode() -> int
-override Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.ToString() -> string!
-static Aw.Sindri.Features.ReadInjection.InjectionSectionView.operator !=(Aw.Sindri.Features.ReadInjection.InjectionSectionView? left, Aw.Sindri.Features.ReadInjection.InjectionSectionView? right) -> bool
-static Aw.Sindri.Features.ReadInjection.InjectionSectionView.operator ==(Aw.Sindri.Features.ReadInjection.InjectionSectionView? left, Aw.Sindri.Features.ReadInjection.InjectionSectionView? right) -> bool
-static Aw.Sindri.Features.ReadInjection.InjectionView.operator !=(Aw.Sindri.Features.ReadInjection.InjectionView? left, Aw.Sindri.Features.ReadInjection.InjectionView? right) -> bool
-static Aw.Sindri.Features.ReadInjection.InjectionView.operator ==(Aw.Sindri.Features.ReadInjection.InjectionView? left, Aw.Sindri.Features.ReadInjection.InjectionView? right) -> bool
-static Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.operator !=(Aw.Sindri.Features.ReadInjection.ReadInjectionRequest? left, Aw.Sindri.Features.ReadInjection.ReadInjectionRequest? right) -> bool
-static Aw.Sindri.Features.ReadInjection.ReadInjectionRequest.operator ==(Aw.Sindri.Features.ReadInjection.ReadInjectionRequest? left, Aw.Sindri.Features.ReadInjection.ReadInjectionRequest? right) -> bool
-Aw.Sindri.Features.SindriProveFeaturesServiceCollectionExtensions
-static Aw.Sindri.Features.SindriProveFeaturesServiceCollectionExtensions.AddSindriProveBlocks(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 Aw.Sindri.Features.ContextCalls.GetContextCodeRequest
 Aw.Sindri.Features.ContextCalls.GetContextCodeRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.GetContextCodeRequest!
 Aw.Sindri.Features.ContextCalls.GetContextCodeRequest.Anchors.get -> System.Collections.Generic.IReadOnlyList<string!>!
