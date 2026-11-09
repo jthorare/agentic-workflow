@@ -41,9 +41,8 @@ internal sealed partial class WorkflowsPage : UserControl
     {
         if (DataContext is WorkflowsPageViewModel page)
         {
-            var open = page.Edit(CancellationToken.None);
+            await page.Edit(CancellationToken.None).ConfigureAwait(true);   // the fields exist only once the form is read: focus the first one after
             Dispatcher.UIThread.Post(() => _ = (FirstTarget(WorkflowEditor, static c => c is TextBox or CheckBox or Button) ?? WorkflowEditor).Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
-            await open.ConfigureAwait(true);
         }
     }
 

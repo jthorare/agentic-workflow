@@ -3,7 +3,7 @@ using System.ComponentModel;
 
 namespace Aw.Sindri.Ui.ViewModels.Workflows;
 
-/// <summary>The Workflows page (<see cref="WorkflowsPageViewModel"/>, continued): the editor sheet (#2258 PR 17 part 3a). The sheet shows the form of the node selected on the graph; Save sends each changed field as its own edit.</summary>
+/// <summary>The Workflows page (<see cref="WorkflowsPageViewModel"/>, continued): the editor sheet (#2258 PR 17 part 3a). The sheet shows the form of the node selected on the graph; Save sends every changed field in one call on the revision read.</summary>
 internal sealed partial class WorkflowsPageViewModel
 {
     /// <summary>The editor over the page's API.</summary>
@@ -63,7 +63,7 @@ internal sealed partial class WorkflowsPageViewModel
     /// <returns>A task that completes when the answers are shown.</returns>
     internal async Task Save(CancellationToken cancellationToken)
     {
-        if (!CanSave)
+        if (!IsEditing || !CanSave)
         {
             return;
         }
@@ -81,7 +81,7 @@ internal sealed partial class WorkflowsPageViewModel
         Editor.Fields.CollectionChanged += OnFieldsChanged;
         Runs.PropertyChanged += (_, e) =>
         {
-            if (string.Equals(e.PropertyName, nameof(RunsViewModel.Graph), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(RunsViewModel.IsReading), StringComparison.Ordinal))
+            if (string.Equals(e.PropertyName, nameof(RunsViewModel.Graph), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(RunsViewModel.IsReading), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(RunsViewModel.Shown), StringComparison.Ordinal))
             {
                 OnChanged(nameof(CanEdit));
                 OnChanged(nameof(EditorHeading));

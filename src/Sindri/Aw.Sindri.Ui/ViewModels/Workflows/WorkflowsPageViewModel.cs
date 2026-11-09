@@ -147,6 +147,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     internal Task OpenWorkflow(string slug, CancellationToken cancellationToken)
     {
         SetLevel(Level.Runs);
+        CloseEditor();
         var name = Rows.FirstOrDefault(r => string.Equals(r.Slug, slug, StringComparison.Ordinal))?.NameText ?? slug;
         if (_url is not { } url)
         {
@@ -180,6 +181,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         }
 
         _level = level;
+        CloseEditor();   // the sheet edits the workflow it was opened on: leaving the runs level ends it, so Save never writes to the wrong one
         OnChanged(nameof(IsList));
         OnChanged(nameof(IsRuns));
         OnChanged(nameof(IsRun));

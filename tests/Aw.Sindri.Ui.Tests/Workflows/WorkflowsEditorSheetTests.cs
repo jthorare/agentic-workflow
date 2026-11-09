@@ -137,4 +137,51 @@ public sealed class WorkflowsEditorSheetTests
         var closed = _f.Page();
         Assert.False(closed.CanEdit);
     }
+
+    [Fact]
+    public async Task Leaving_the_workflow_closes_the_sheet_and_Save_sends_nothing_for_it()
+    {
+        const string other = "evening-check";
+        _f.Server.WorkflowAnswers[other] = RouteAnswer.Api("workflows-slug", "found");
+        var page = await OnRuns();
+        _ = page.Runs.Graph!.SelectNode("agent");
+        await page.Edit(Token);
+        page.Editor.Fields[0].Text = "Check twice";
+
+        page.Back();
+        await page.OpenWorkflow(other, Token);
+        await page.Save(Token);
+
+        Assert.False(page.IsEditing);
+        Assert.Empty(_f.Server.AppliedWorkflowOps);
+    }
+
+    [Fact]
+    public async Task Opening_a_run_closes_the_sheet()
+    {
+        var page = await OnRuns();
+        _ = page.Runs.Graph!.SelectNode("agent");
+        await page.Edit(Token);
+
+        await page.OpenRun(RunId, Token);
+
+        Assert.False(page.IsEditing);
+    }
+
+    [Fact]
+    public async Task CanEdit_is_raised_when_the_shown_workflow_is_archived_on_a_reread()
+    {
+        var page = await OnRuns();
+        Assert.True(page.CanEdit);
+        var raised = new List<string>();
+        page.PropertyChanged += (_, e) => raised.Add(e.PropertyName ?? string.Empty);
+        var golden = Golden("workflows-slug", "found");
+        golden["archivedAt"] = "2026-01-01T00:00:00Z";
+        _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, golden.ToJsonString());
+
+        await page.Runs.Read(Url, Slug, "Morning check", Token);
+
+        Assert.False(page.CanEdit);
+        Assert.Contains(nameof(WorkflowsPageViewModel.CanEdit), raised, StringComparer.Ordinal);
+    }
 }
