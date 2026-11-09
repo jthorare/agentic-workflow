@@ -34,7 +34,7 @@ Paths are relative to `agents/`; every path inside a JSON file is relative to `a
 
 | Path | What it holds | Budget |
 | --- | --- | --- |
-| `README.md` | front door: what the doc is, status, rev, sha, the rules, which file for which task, section and decision index, counts, build warnings | <= 8 KB (hard) |
+| `README.md` | front door: what the doc is, status, rev, sha, the rules, where the eval scores are and the duty to leave your own (Scores), which file for which task, section and decision index, counts, build warnings | <= 8 KB (hard) |
 | `llms.txt` | the same index in llmstxt.org shape: H1, blockquote summary, link lists with one-line notes, `## Optional` | small |
 | `tdd.md` | the whole document as clean markdown: `{#id}` on headings and anchored blocks, tables, lists, code fences, decisions in place, citations as `path:line` | exempt (whole doc) |
 | `tdd.txt` | the whole document as plain text, one paragraph per line, `#` heading markers, table rows as `a \| b` | exempt |
@@ -67,6 +67,14 @@ Paths are relative to `agents/`; every path inside a JSON file is relative to `a
 | Check citations | `citations.md` (by file) or `citations.json`; re-read each file at the sha. |
 | Follow a reference (D3, E1, F3.2, PR 7) | `refs.json` -> anchor -> slice. |
 | Tooling over the design | `map.json` with jq; `decisions.json`, `prs.json`, `images/index.json` for typed lists. |
+
+**Scores (D18).** The eval lane writes beside this one, in `build/eval/` (`../eval/` from `agents/`):
+`output.{artifact,packet,implementation,qa,bugs,tokens}.json`, `probe.json`, `lint.json` and `history.jsonl`
+(`scripts/eval_packet.py`; `references/eval-loop.md`). The README's Scores paragraph tells a subagent that opens the lane
+that they exist, and that when it changes the packet it rebuilds, reruns `write_agents.py` and `eval_packet.py`, and
+leaves its own scores: its line in `history.jsonl`, and the summary line and moved scorers in its return. A reviewer
+returns the score diff (eval-loop.md, Who runs it and when). The lane holds no scores itself, so `--check` stays a
+check of the lane.
 
 ## Conventions
 - **Header.** Every text file names its source in one line: `agents lane · from <slug>.md · rev N · sha <sha> · content <generated> · page <sha256-12> · write_agents/1 · generated, do not edit`. As `> ...` on line 1 of markdown without front matter, as `generated:` in front matter, as a comment in sql and code, as `_generated` (first key) in JSON, as a YAML comment on line 2 of the PR copies.

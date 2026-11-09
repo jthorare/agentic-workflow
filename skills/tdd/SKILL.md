@@ -90,8 +90,10 @@ python3 -I "$T/scripts/write_agents.py" build                        # -> build/
 python3 -I "$T/scripts/annotate_hotspots.py" "$SD" --apply           # proposes hover links/images for diagram boxes (D4); read the table before --apply
 python3 -I "$T/scripts/lint_packet.py" "$SD"                         # validators: references/validators.md
 node "$S/scripts/artifact_check.mjs" build/tdd.html shots            # contract + 1440/390, light/dark renders
-~/.local/share/tdd-skill/venv/bin/python -I "$T/scripts/eval_packet.py" "$SD"   # eval lane -> build/eval/ (D10, D12; references/eval-loop.md); --push only with the owner's go
+~/.local/share/tdd-skill/venv/bin/python -I "$T/scripts/eval_packet.py" "$SD"   # eval lane -> build/eval/ (D10, D12, D18): every build and every review, never skipped; no --push here
 ```
+
+**Eval duty (D18).** The eval is part of every build and every review, not a step someone runs later. The owner, 2026-11-09: "claude agents as they build / implement, review.  should be built into. both the agent description, implementation docs, and skills". The writer of a PR (the packet, the skill code, or code that implements the design) runs `eval_packet.py` for the packet after its last rebuild and puts the summary line (`scored N · metrics N · not run N · errors N`) and every scorer that moved in its return. The reviewer of record runs it again on the same tree and returns the score diff against the writer's run (the last two lines of `build/eval/history.jsonl`), not prose alone. A score that drops is fixed or explained; a scorer that turns `not run` is a missing tool or key, named as such. Only the integrating session passes `--push`, and only when `BRAINTRUST_API_KEY` is in the environment (never in a file) and the owner has said go. Who runs which scorers, and when: `references/eval-loop.md` (Who runs it and when).
 
 The eval venv is created once with `python3 -m venv ~/.local/share/tdd-skill/venv && ~/.local/share/tdd-skill/venv/bin/pip install braintrust autoevals anthropic boto3`. Every PR, commit and Linear issue that implements the design carries the tagging convention from `references/eval-loop.md` (a `TDD: <slug> PR <n>` trailer; Linear label `tdd:<slug>`), which is what joins implementation, QA and bugs back to the document. Read every `build_tdd.py` warning: a missing diagram, image, PR folder, table or anchor is a gap in the page. Open the `artifact_check` screenshots and look at them; the metrics are not the review.
 
@@ -105,7 +107,7 @@ Read `build/tdd.html` in full, then publish it with the Artifact tool as a priva
 
 ### 8 · Close-out
 
-Every published change bumps `rev` by one, sets `updated` to today and says what changed in `rev_note` (a line under Revisions in `status.md`, and the Notion row's last-change summary). Rebuild, lint green, `artifact_check` clean, republish, refresh the mirror. Finish with a typed return: `DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED | NEEDS_HUMAN`, the artifact URL, the packet paths (`<slug>.md`, `status.md`, `build/tdd.html`, the agents lane), what is unverified, and the open questions waiting on the owner.
+Every published change bumps `rev` by one, sets `updated` to today and says what changed in `rev_note` (a line under Revisions in `status.md`, and the Notion row's last-change summary). Rebuild, lint green, `artifact_check` clean, eval run, republish, refresh the mirror. Finish with a typed return: `DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED | NEEDS_HUMAN`, the artifact URL, the packet paths (`<slug>.md`, `status.md`, `build/tdd.html`, the agents lane), the eval summary line and the scorers that moved (a reviewer: the score diff), what is unverified, and the open questions waiting on the owner.
 
 ## References
 
@@ -120,6 +122,7 @@ Every published change bumps `rev` by one, sets `updated` to today and says what
 | `references/publish-and-mirror.md` | the Artifact call, `artifact_url`, the Notion row, rev bump rules |
 | `references/schema-lane.md`, `templates/schema.template.json` | `schema/<table>.json` and the drawer |
 | `references/agents-lane.md` | the `agents/` files and their mappings |
+| `references/eval-loop.md` | the eval lane: setup, flags, the six outputs and their scorers, who runs it and when, the push model |
 | `references/validators.md` | lint rule ids, severities and fixes |
 | `scripts/build_tdd.py` (docstring) | the source syntax: containers, markers, attributes, tokens |
 

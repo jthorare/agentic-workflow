@@ -14,15 +14,29 @@ The page is React 19.3.1, server-rendered by `build.ts` under bun into the claud
 No doctype/html/head/body (the host wraps the file). External scripts: none (React is inline). Stylesheets: only the Google Fonts @import already in tdd.css. No iframes, alert, print, download links. 16 MB limit. Must read correctly with JavaScript off: every block is real HTML, `<details>` are native and uncontrolled (never pass a changing `open` prop), the rail is plain `<a href="#id">`.
 
 ## Files and owners
-| Path | Owner | Notes |
-|---|---|---|
-| `build.ts`, `check_hydrate.ts`, `package.json`, `tsconfig.json`, `src/App.tsx`, `src/client.tsx`, `src/components/{Blocks,Diagram,Shot,Prs,Rail,Masthead,Overlays}.tsx`, `src/lib/*` | app-core worker | overlays = RefPop, RefPanel, HsPop, Lightbox; delegation lives in App |
-| `src/components/SchemaDrawer.tsx`, `src/schema.css`, `harness/**` | schema worker (D7) | the drawer; harness renders it standalone for screenshots |
-| `../templates/tdd-system/tdd.css` | app-core worker | small additive fixes only; the generated FONTS/TOKENS blocks are never hand-edited |
-| `../scripts/write_agents.py`, `../scripts/strip_page.py`, `../references/agents-lane.md`, `../templates/agents/**` | agents-lane worker (D6, D8) | reads content.json and the built page; writes `agents/` |
-| `../scripts/lint_packet.py`, `../references/validators.md` | lint worker | reads content.json, content.files.json, the packet on disk, git |
-| `SKILL.md`, `../templates/tdd-template.md`, `../templates/meta.template.json`, `../scripts/new_packet.py`, `../references/{evidence-rules,diagram-conventions,mock-conventions,publish-and-mirror}.md`, `../templates/tdd-system/README.md` | skill-docs worker | documents the CLIs as declared here and in each script's docstring |
+| Path | Owner | Notes | Eval duty (D18): what it scores, when |
+|---|---|---|---|
+| `build.ts`, `check_hydrate.ts`, `package.json`, `tsconfig.json`, `src/App.tsx`, `src/client.tsx`, `src/components/{Blocks,Diagram,Shot,Prs,Rail,Masthead,Overlays}.tsx`, `src/lib/*` | app-core worker | overlays = RefPop, RefPanel, HsPop, Lightbox; delegation lives in App | output 1 (`scripts/eval/ev_artifact.py`): `page_exists`, `page_size`, `check_hydrate`, `artifact_check`, `refs_linked`, `diagram_hotspots`; after every change, before returning |
+| `src/components/SchemaDrawer.tsx`, `src/schema.css`, `harness/**` | schema worker (D7) | the drawer; harness renders it standalone for screenshots | `schema_ddl` (output 1), `schema_md` (output 2, `ev_packet.py`), the table and column questions in `probe_answerable` (`ev_probe.py`); after every drawer or harness change |
+| `../templates/tdd-system/tdd.css` | app-core worker | small additive fixes only; the generated FONTS/TOKENS blocks are never hand-edited | `artifact_check` (its 1440/390 light/dark renders) and `check_hydrate`; after every stylesheet change |
+| `../scripts/write_agents.py`, `../scripts/strip_page.py`, `../references/agents-lane.md`, `../templates/agents/**` | agents-lane worker (D6, D8) | reads content.json and the built page; writes `agents/` | output 2 (`ev_packet.py`): `agents_present`, `agents_current`, `readme_bytes`, `largest_slice`, `anchors_sliced_once`, `sql_extracted`, `map_edges_resolve`, `images_indexed`, `prs_copied`, `probe_answerable`; `lane_size` and `build_sizes` (output 6, `ev_tokens.py`); after every generator or template change |
+| `../scripts/lint_packet.py`, `../references/validators.md` | lint worker | reads content.json, content.files.json, the packet on disk, git | `lint` (output 1; the eval writes `build/eval/lint.json`), and `refs_linked` or `cites_href` when a rule about them changes; after every rule change |
+| `SKILL.md`, `../templates/tdd-template.md`, `../templates/meta.template.json`, `../scripts/new_packet.py`, `../references/{evidence-rules,diagram-conventions,mock-conventions,publish-and-mirror}.md`, `../templates/tdd-system/README.md` | skill-docs worker | documents the CLIs as declared here and in each script's docstring | `sections_house`, `decisions_status`, `refs_linked`, `cites_href` (output 1) when a template changes; runs the eval exactly as SKILL.md step 5 writes it, so the documented command is the one that ran; after every doc or template change |
+| `../scripts/eval_packet.py`, `../scripts/eval/**`, `../references/eval-loop.md`, `../templates/eval/**` | eval worker (D10, D12) | scores are measurements, not gates; `--push` is gated (below) | all six outputs, before and after its change; no scorer turns `not run` or `error` without a stated reason; never `--push` |
 Nobody edits another owner's files; a needed change in another scope is written into the return as a request.
+
+## Eval duty (D18)
+The eval runs as part of the work, not after it (`../SKILL.md`, step 5; `../references/eval-loop.md`, Who runs it and when).
+- **Writer** (every row above, and any agent that changes a packet or implements its design): after the last rebuild,
+  run the eval for the reference packet and for any packet the change rebuilt. Return the summary line
+  (`scored N · metrics N · not run N · errors N`) and every scorer that moved since the previous `history.jsonl` line.
+  A drop is fixed or explained; a new `not run` names the missing tool or key.
+- **Reviewer of record** (fresh context): run the same command on the writer's tree and return a score diff, not just
+  prose: per output and scorer, the writer's value, the reviewer's value, the delta; whether the input `digest` matched;
+  any scorer that changed status. The jq for it is in eval-loop.md. A review without the diff is incomplete.
+- **Integrator** (the session that merges): runs it once more on the merged tree. Only it passes `--push`, and only when
+  `BRAINTRUST_API_KEY` is in the environment (never in a file) and the owner has said go.
+- Never pass `--run-tests` unattended where the repo's test command loads secrets (eval-loop.md, output 4).
 
 ## Bus events (src/lib/bus.ts), emitted only in the browser
 | Event | Payload | Who emits | Who listens |
@@ -52,10 +66,11 @@ bun run build.ts ~/.system-design/<org>-web-app/system-design/<slug>/build
 bun run check_hydrate.ts  <same build dir>/tdd.html                                # jsdom hydrate: zero console errors
 node ~/.claude/skills/system-design/scripts/artifact_check.mjs <build dir>/tdd.html  # contract + 1440/390 light/dark renders
 python3 -I ~/.claude/skills/tdd/scripts/build_tdd.py <slug>.md build  # in the reference packet dir
+~/.local/share/tdd-skill/venv/bin/python -I ~/.claude/skills/tdd/scripts/eval_packet.py <packet dir>   # eval lane -> <packet>/build/eval/ (D18: every worker, every reviewer)
 ```
 Screenshots: playwright-core is installed under `~/.local/share/system-design-skills/node_modules`; the helper `<scratchpad>/shoot.mjs (a playwright-core screenshot helper; any equivalent works) <file.html> <out-prefix> [width]` writes `<prefix>-top.png` and `<prefix>-full.png`. Reference screenshots to match: `~/.system-design/house/system-design/tdd-system/shots/reference-1440-*.png`.
 
 ## Rules for every worker
 - Commit nothing, push nothing, switch no branch. `~/.claude/skills` has other sessions' uncommitted edits: do not touch files outside your scope.
 - Never invent a measurement, a screenshot, a count or a test result. Unverified claims are marked unverified in the return.
-- Typed return at the end: `DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED | NEEDS_HUMAN`, with the files written, the proof output (counts, not prose), and open requests for other owners.
+- Typed return at the end: `DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED | NEEDS_HUMAN`, with the files written, the proof output (counts, not prose), the eval summary line and the scorers that moved (a reviewer: the score diff), and open requests for other owners.

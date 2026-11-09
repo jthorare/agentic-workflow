@@ -1483,6 +1483,8 @@ class PageLane:
         secs = "\n".join(f"- [{s['title']}]({s['path']}) ~{s['tokens']} tok" for s in self.slices)
         self.emit("README.md", f"> {self.head}\n\n# {title} · agents lane (from the page)\n\nBuilt from tdd.html because content.json was missing: "
                                "no decisions index beyond the page's decision cards, no citation index, no map. Rebuild with build_tdd.py for the full lane.\n\n"
+                               "Eval scores, when the eval has run, are in `../eval/output.*.json`. If you change the packet, rebuild, rerun the eval "
+                               "(`eval_packet.py`) and leave your own scores in your return; never pass `--push`.\n\n"
                                f"## Sections\n{secs}\n\n## Files\n- [tdd.md](tdd.md), [tdd.txt](tdd.txt): the whole page\n- [page/plain.html](page/plain.html), [page/outline.json](page/outline.json)\n"
                                f"- sql/ ({n_sql}), code/ ({n_code}), decisions/ ({len(decisions)}), [images/index.json](images/index.json) ({len(self.image_rows)})\n- [refs.json](refs.json): every id and its slice\n")
         self.emit("llms.txt", f"# {title}\n\n> Agents lane built from the page alone. {self.head}\n\n## Sections\n" +
@@ -1629,6 +1631,9 @@ Status **{{status}}** · rev {{rev}} ({{rev_note}}) · updated {{updated}} · co
 - A decision whose state is `open` needs its owner. Do not build past it; stop and ask.
 - Slices are under ~{{budget}} tokens (estimate: chars/4). `tokens.json` has the count for every file.
 
+## Scores
+The eval lane scores this packet into `build/eval/` (`../eval/` from this folder) when it has run: `output.artifact.json`, `output.packet.json`, `output.implementation.json`, `output.qa.json`, `output.bugs.json`, `output.tokens.json`, plus `probe.json` and `history.jsonl` (one line per run). Read the ones your task touches before you start. If you change the packet, rebuild, rerun `write_agents.py`, then run `~/.local/share/tdd-skill/venv/bin/python -I ~/.claude/skills/tdd/scripts/eval_packet.py <packet>` and leave your own scores: the summary line and every scorer that moved, in your return. A reviewer returns the score diff. Never pass `--push`.
+
 ## Which file for which task
 | Task | Read |
 | --- | --- |
@@ -1666,7 +1671,7 @@ DEFAULT_LLMS = """# {{title}}
 
 > {{summary}} Status {{status}}, rev {{rev}}, code base at {{sha}}. Generated: {{head_raw}}
 
-The agents lane of a technical design document. Read README.md first, then only the slice your task needs. Citations are path:line at sha {{sha}}.
+The agents lane of a technical design document. Read README.md first, then only the slice your task needs. Citations are path:line at sha {{sha}}. Eval scores, when the eval has run, are in ../eval/output.*.json; an agent that changes the packet reruns the eval and reports its own scores (README.md, Scores).
 
 ## Sections
 {{llm_sections}}

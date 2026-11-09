@@ -5,7 +5,8 @@ and across TDDs. It captures the **input** (the packet as a schema, plus labeled
 the artifact page, the agent-handoff packet, implementation, QA, errors and bugs, and token usage. Everything is
 written under `<build>/eval/`; nothing leaves the machine unless `--push` is given.
 
-Run order after an edit: `build_tdd.py` -> `bun run app/build.ts` -> `write_agents.py` -> `eval_packet.py`.
+Run order after an edit: `build_tdd.py` -> `bun run app/build.ts` -> `write_agents.py` -> `eval_packet.py`. The last
+step is part of every build and every review (D18; Who runs it and when, below).
 
 ## Setup (once per machine)
 
@@ -37,6 +38,35 @@ send), `history.jsonl` (one appended line per run), and `push.json` after a push
 Every score record has the same shape: `{name, value (0..1 or null), status ok | not run | error, reason, method,
 source, metrics{}, detail}`. `method` says how the number was computed. A scorer whose tool, key or data is missing
 says `not run: <reason>`; it is never a zero.
+
+## Who runs it and when (D18)
+
+D18 (owner, 2026-11-09): agents score as they build, implement and review; the eval is never a step someone runs
+later. Every role runs the command above. The roles differ in flags, in the scorers they answer for, and in `--push`.
+
+| Who | When | Flags | Answers for | `--push` |
+|---|---|---|---|---|
+| Writer, packet or skill code (edits a TDD source or a file in this skill) | after the last rebuild, before returning | the local run; `--session <id>` when it knows its session id, so output 6 counts its tokens | the scorers its files feed (`app/CONTRACTS.md`, owners table); a source edit moves outputs 1, 2 and 6 | never |
+| Writer, implementation (a PR in the code repo that builds part of the design) | before returning the PR | the local run; `--run-tests` only after reading the test command, never where it loads secrets (output 4) | the trailer `TDD: <slug> PR <n>` and a test file in the PR, so `implementation_merged` and `qa_tests_touched` count it once merged; output 6 with `--session` | never |
+| Reviewer of record (fresh context) | after reading the diff, on the writer's tree | the writer's flags | a score diff against the writer's run (below), not prose alone | never |
+| Integrator (the session that merges) | after merge, on the merged tree | the local run; `--with-judge` and `--with-agent-probe` only when their keys are set (cost notes under Push model) | outputs 3 to 5: a PR counts as implemented only once merged | only when `BRAINTRUST_API_KEY` is in the environment (never in a file) and the owner has said go |
+| Scheduled routine (when one exists; `references/ops-loop.md` installs none) | on its schedule, with no packet edit | the local run; never `--run-tests` (unattended) | outputs 3, 4 and 5, which change without a packet edit (merges, Linear issues, alarms); outputs 1 and 2 should not move while `digest` is unchanged, so a move there is a finding | never; it reports, the integrator pushes |
+
+A local scheduled task can run the eval; a cloud routine cannot, because it sees no local file and so no packet
+(`references/ops-loop.md`, section 0, What exists today).
+
+**The score diff.** When writer and reviewer use the same build folder, the last two lines of `history.jsonl` are the
+writer's run, then the reviewer's:
+```
+jq -s '.[-2:] as [$a,$b] | {digest_same: ($a.digest == $b.digest),
+  moved: [($a.scores + $b.scores | keys[]) as $k | (($a.scores[$k] // {}) + ($b.scores[$k] // {}) | keys[]) as $n
+          | {output: $k, scorer: $n, before: $a.scores[$k][$n], after: $b.scores[$k][$n]} | select(.before != .after)],
+  not_run_after: $b.not_run}' build/eval/history.jsonl
+```
+`history.jsonl` keeps only scores with a value, so a scorer that turned `not run` shows `after: null` and is listed in
+`not_run_after`. With two build folders, put the writer's line first in a two-line file and run the same jq. The
+reviewer returns `moved` as a table (output, scorer, writer, reviewer, delta), whether the digest matched, and any new
+not-run names.
 
 ## What is captured (input.json)
 
@@ -274,9 +304,7 @@ Verified:
 - gh 2.102.1: `pr list` / `pr view` JSON fields include reviews, files, mergedAt, additions, deletions, mergeCommit.
 
 From memory or unexercised (marked so in the code):
-- The push path has not run against the Braintrust API (no key). An offline harness bound every call's arguments to the
-  installed SDK's signatures and ran the SDK's own log validator and attachment extraction on the real run.json; the
-  server's behaviour (name collisions on re-runs, metric key rules, attachment size limits) is not verified.
+- The push path ran for the first time on 2026-11-09 with a key from the environment: `init_dataset`, `init`, `log`, `summarize` and `flush` behaved as the SDK docs say (one dataset record, six experiments, URLs in push.json). Known quirk: when the base experiment named by `--base` (or the previous rev) does not exist, the SDK compares to the most recent experiment in the project instead, so a first revision's six experiments compare to one another.
 - Braintrust's handling of a reused experiment name (whether the server suffixes it) is not verified; the printed URL
   comes from the server's answer.
 - Linear: the `containsIgnoreCase` comparator on `title` and `description`, and Relay pagination (`first`, `after`,

@@ -2,7 +2,7 @@
 
 > {{summary}} Status {{status}}, rev {{rev}}, code base at {{sha}}. Generated: {{head_raw}}
 
-The agents lane of a technical design document. Read README.md first, then only the slice your task needs. Citations are path:line at sha {{sha}}.
+The agents lane of a technical design document. Read README.md first, then only the slice your task needs. Citations are path:line at sha {{sha}}. Eval scores, when the eval has run, are in ../eval/output.*.json; an agent that changes the packet reruns the eval and reports its own scores (README.md, Scores).
 
 ## Sections
 {{llm_sections}}

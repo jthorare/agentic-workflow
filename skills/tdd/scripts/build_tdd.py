@@ -344,6 +344,22 @@ class Compiler:
                 tables.append(t)
         return tables
 
+    # -- E4: draw_diagrams.mjs (system-design, unchanged per D1) paints every box solid, while the legend swatch for a
+    # proposed box is dashed. Dash the tldraw-orange strokes (the proposed tone) in every copied diagram SVG.
+    PROPOSED_STROKE = re.compile(r'<path\b(?![^>]*stroke-dasharray)([^>]*\bstroke="#e16919"[^>]*)/>')
+
+    def dash_proposed(self, files):
+        for published in files:
+            if not published.endswith(".svg") or not published.startswith("diagrams/"):
+                continue
+            dest = os.path.join(self.out_dir, published)
+            if not os.path.isfile(dest):
+                continue
+            svg = open(dest, encoding="utf-8").read()
+            out, n = self.PROPOSED_STROKE.subn(r'<path stroke-dasharray="9 6"\1/>', svg)
+            if n:
+                open(dest, "w", encoding="utf-8").write(out)
+
     # -- figures
     def diagram_src(self, key):
         cands = [os.path.join(d, key + ext) for d in (self.diagram_dir, os.path.join(self.md_dir, "diagrams")) if d for ext in (".svg", ".png")]
@@ -858,6 +874,7 @@ class Compiler:
         for u in sorted(set(stats["unlinked"])):
             self.warn.append(f"reference token {u} has no definition on the page (no element with id {token_id(u)}, no refs family in meta.json)")
         files = self.assets.finish()
+        self.dash_proposed(files)
         content = {
             "template": "tdd/1", "generated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "source": os.path.basename(a.src),
             "title": self.inline(h1), "titleText": self.text_of(h1), "tabTitle": tab_title,

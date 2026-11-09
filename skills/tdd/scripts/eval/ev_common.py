@@ -11,7 +11,7 @@ CHARS_PER_TOKEN = 3.6          # the agents-lane convention (research/agent-file
 IMAGE_EXT = (".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif")
 SQL_LANGS = ("sql", "psql", "postgres")
 # Mirror of build_tdd.TOKEN (also mirrored in lint_packet.py): reference tokens such as D7, E3, F3.2, R2, PR 7, OS-01.
-TOKEN = re.compile(r"(?<![\w#/.\-])((?:D|E|F|R|A|M|Q|G|OS|LN|SS|NFR|ADR)-?\d+(?:\.\d+)?|PR\s?\d+)(?![\w.\-]|\.\d)")
+TOKEN = re.compile(r"(?<![\w#/.\-])((?:D|E|F|R|A|M|Q|G|OS|LN|SS|NFR|ADR)-?\d+(?:\.\d+)?|PR\s?\d+[a-z]?)(?![\w\-]|\.\d)")
 LINK_KEYS = ("html", "caption", "reading", "one", "sub", "bodyHtml", "summary", "status", "change", "rollback", "title")
 
 
