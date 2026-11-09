@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Eval;
@@ -136,7 +137,6 @@ using Aw.Sindri.Features.ValidateWorkflow;
 using Aw.Sindri.Host.Commands.Probe;
 using Aw.Sindri.Host.Endpoints;
 using Aw.Sindri.Host.Mcp;
-using System.Text.Json.Serialization;
 
 namespace Aw.Sindri.Host;
 

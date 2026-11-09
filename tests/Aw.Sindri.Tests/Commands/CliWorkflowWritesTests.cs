@@ -108,7 +108,7 @@ public sealed class CliWorkflowWritesTests : IDisposable
     public async Task The_writes_exit_1_when_serve_cannot_start_and_call_nothing()
     {
         var api = new Api(HttpStatusCode.OK, "{}");
-        var down = Aw.Sindri.Core.SindriErrors.NotRunning.With("not running");
+        var down = Core.SindriErrors.NotRunning.With("not running");
 
         var code = await Verbs(new FakeControlPlaneProbe(), api, down).Pause(["drift-check"], Token);
 
