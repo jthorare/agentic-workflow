@@ -13,7 +13,7 @@ namespace Aw.Sindri.Infrastructure.Todos;
 /// and Sindri's own folder '$AW_SINDRI_HOME/todo/' (mode 0700) holding the intent file and the base files (0600). This part is the note side; the other is in
 /// FileTodoNoteFiles.Own.cs.
 /// </summary>
-internal sealed partial class FileTodoNoteFiles(ISindriHome home, TimeProvider clock) : ITodoNoteFiles
+internal sealed partial class FileTodoNoteFiles(ISindriHome home, TimeProvider clock, NoteLinkCounter linkCounter) : ITodoNoteFiles
 {
     private const long MaxBytes = 1024 * 1024;
     private const string NewSuffix = "-new";
@@ -21,6 +21,11 @@ internal sealed partial class FileTodoNoteFiles(ISindriHome home, TimeProvider c
     private static readonly TimeSpan _poll = TimeSpan.FromMilliseconds(100);
 
     private readonly string _folder = Path.Combine(home.Path, "todo");
+
+    public FileTodoNoteFiles(ISindriHome home, TimeProvider clock)
+        : this(home, clock, new NoteLinkCounter(new Sandbox.SandboxProcesses()))
+    {
+    }
 
     public NoteRead Read(string note)
     {
@@ -37,7 +42,7 @@ internal sealed partial class FileTodoNoteFiles(ISindriHome home, TimeProvider c
                 return new NoteRead(Text: null, Hash: null, Bytes: 0, Missing: true, Problem: null);
             }
 
-            var links = FileTodoNoteDisk.Links(note);
+            var links = linkCounter.Count(note);
             if (links is null)
             {
                 return Problem("its hard links can't be counted");
