@@ -18,23 +18,13 @@ internal sealed class ActivateWorkflowService(IWorkflowStore workflows, IWorkflo
     public async ValueTask<Result<ActivateWorkflowResponse>> Handle(ActivateWorkflowRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var listed = await workflows.List(includeArchived: true, cancellationToken).ConfigureAwait(false);
-        if (listed.IsError)
+        var found = await FindActive(request.Slug, cancellationToken).ConfigureAwait(false);
+        if (found.IsError)
         {
-            return listed.Error;
+            return found.Error;
         }
 
-        var record = listed.Value.FirstOrDefault(r => r.Slug == request.Slug);
-        if (record is null)
-        {
-            return SindriErrors.GraphNotFound.With($"no workflow '{request.Slug.Value}'; list the workflows to see what exists");
-        }
-
-        if (record.ArchivedAt is not null)
-        {
-            return SindriErrors.GraphArchived.With($"'{request.Slug.Value}' is archived; create a new workflow from its spec to run it again");
-        }
-
+        var record = found.Value;
         var revision = await workflows.GetRevision(record.Id, request.Revision ?? record.LatestRevision, cancellationToken).ConfigureAwait(false);
         if (revision.IsError)
         {
@@ -48,18 +38,42 @@ internal sealed class ActivateWorkflowService(IWorkflowStore workflows, IWorkflo
             return SindriErrors.GraphFindings.With(string.Join("; ", result.Blocking.Select(static f => f.ToString())));
         }
 
+        return await ActivateAndRecord(record, revision.Value, request.By, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Result<WorkflowRecord>> FindActive(WorkflowSlug slug, CancellationToken cancellationToken)
+    {
+        var listed = await workflows.List(includeArchived: true, cancellationToken).ConfigureAwait(false);
+        if (listed.IsError)
+        {
+            return listed.Error;
+        }
+
+        var record = listed.Value.FirstOrDefault(r => r.Slug == slug);
+        if (record is null)
+        {
+            return SindriErrors.GraphNotFound.With($"no workflow '{slug.Value}'; list the workflows to see what exists");
+        }
+
+        return record.ArchivedAt is not null
+            ? SindriErrors.GraphArchived.With($"'{slug.Value}' is archived; create a new workflow from its spec to run it again")
+            : record;
+    }
+
+    private async ValueTask<Result<ActivateWorkflowResponse>> ActivateAndRecord(WorkflowRecord record, WorkflowRevision revision, string by, CancellationToken cancellationToken)
+    {
         if (log.LeaseProblem() is { } down)
         {
             return down;
         }
 
-        var activated = await workflows.Activate(record.Id, revision.Value.Revision, cancellationToken).ConfigureAwait(false);
+        var activated = await workflows.Activate(record.Id, revision.Revision, cancellationToken).ConfigureAwait(false);
         if (activated.IsError)
         {
             return activated.Error;
         }
 
-        var recorded = await log.Record(EventTypes.WorkflowActivated, new WorkflowChangedPayload(record.Id, record.Slug, revision.Value.Revision, revision.Value.SpecHash, request.By), cancellationToken).ConfigureAwait(false);
-        return recorded.IsError ? recorded.Error : new ActivateWorkflowResponse(record.Slug, revision.Value.Revision, revision.Value.SpecHash);
+        var recorded = await log.Record(EventTypes.WorkflowActivated, new WorkflowChangedPayload(record.Id, record.Slug, revision.Revision, revision.SpecHash, by), cancellationToken).ConfigureAwait(false);
+        return recorded.IsError ? recorded.Error : new ActivateWorkflowResponse(record.Slug, revision.Revision, revision.SpecHash);
     }
 }

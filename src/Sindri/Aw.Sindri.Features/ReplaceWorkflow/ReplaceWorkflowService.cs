@@ -27,29 +27,16 @@ internal sealed class ReplaceWorkflowService(IWorkflowStore workflows, IWorkflow
             return spec.Error;
         }
 
-        var listed = await workflows.List(includeArchived: true, cancellationToken).ConfigureAwait(false);
-        if (listed.IsError)
+        var found = await FindActive(request.Slug, cancellationToken).ConfigureAwait(false);
+        if (found.IsError)
         {
-            return listed.Error;
+            return found.Error;
         }
 
-        var record = listed.Value.FirstOrDefault(r => r.Slug == request.Slug);
-        if (record is null)
-        {
-            return SindriErrors.GraphNotFound.With($"no workflow '{request.Slug.Value}'; list the workflows to see what exists");
-        }
-
-        if (record.ArchivedAt is not null)
-        {
-            return SindriErrors.GraphArchived.With($"'{request.Slug.Value}' is archived; create a new workflow from its spec to edit it");
-        }
-
+        var record = found.Value;
         if (request.BaseRevision != record.LatestRevision)
         {
-            var current = record.LatestRevision.ToString(CultureInfo.InvariantCulture);
-            return SindriErrors.GraphStaleRevision
-                .With($"This workflow is at revision {current}, and this replace was made on revision {request.BaseRevision.ToString(CultureInfo.InvariantCulture)}. Read it again (current revision {current}) and retry.")
-                .WithExtension("currentRevision", JsonDocument.Parse(current).RootElement.Clone());
+            return StaleRevision(record.LatestRevision, request.BaseRevision);
         }
 
         var validator = await checker.Validator(cancellationToken).ConfigureAwait(false);
@@ -59,12 +46,44 @@ internal sealed class ReplaceWorkflowService(IWorkflowStore workflows, IWorkflow
             return SindriErrors.GraphFindings.With(string.Join("; ", validation.Blocking.Select(static f => f.ToString())));
         }
 
+        return await SaveAndRecord(record, spec.Value, request, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static Error StaleRevision(int latest, int baseRevision)
+    {
+        var current = latest.ToString(CultureInfo.InvariantCulture);
+        return SindriErrors.GraphStaleRevision
+            .With($"This workflow is at revision {current}, and this replace was made on revision {baseRevision.ToString(CultureInfo.InvariantCulture)}. Read it again (current revision {current}) and retry.")
+            .WithExtension("currentRevision", JsonDocument.Parse(current).RootElement.Clone());
+    }
+
+    private async ValueTask<Result<WorkflowRecord>> FindActive(WorkflowSlug slug, CancellationToken cancellationToken)
+    {
+        var listed = await workflows.List(includeArchived: true, cancellationToken).ConfigureAwait(false);
+        if (listed.IsError)
+        {
+            return listed.Error;
+        }
+
+        var record = listed.Value.FirstOrDefault(r => r.Slug == slug);
+        if (record is null)
+        {
+            return SindriErrors.GraphNotFound.With($"no workflow '{slug.Value}'; list the workflows to see what exists");
+        }
+
+        return record.ArchivedAt is not null
+            ? SindriErrors.GraphArchived.With($"'{slug.Value}' is archived; create a new workflow from its spec to edit it")
+            : record;
+    }
+
+    private async ValueTask<Result<ReplaceWorkflowResponse>> SaveAndRecord(WorkflowRecord record, GraphSpec spec, ReplaceWorkflowRequest request, CancellationToken cancellationToken)
+    {
         if (log.LeaseProblem() is { } down)
         {
             return down;
         }
 
-        var saved = await workflows.Save(record.Id, request.BaseRevision, spec.Value, request.By, cancellationToken).ConfigureAwait(false);
+        var saved = await workflows.Save(record.Id, request.BaseRevision, spec, request.By, cancellationToken).ConfigureAwait(false);
         if (saved.IsError)
         {
             return saved.Error;

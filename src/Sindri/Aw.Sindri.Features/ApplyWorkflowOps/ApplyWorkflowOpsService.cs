@@ -26,23 +26,13 @@ internal sealed class ApplyWorkflowOpsService(IWorkflowStore workflows, IWorkflo
             return ops.Error;
         }
 
-        var listed = await workflows.List(includeArchived: true, cancellationToken).ConfigureAwait(false);
-        if (listed.IsError)
+        var found = await FindActive(request.Slug, cancellationToken).ConfigureAwait(false);
+        if (found.IsError)
         {
-            return listed.Error;
+            return found.Error;
         }
 
-        var record = listed.Value.FirstOrDefault(r => r.Slug == request.Slug);
-        if (record is null)
-        {
-            return SindriErrors.GraphNotFound.With($"no workflow '{request.Slug.Value}'; list the workflows to see what exists");
-        }
-
-        if (record.ArchivedAt is not null)
-        {
-            return SindriErrors.GraphArchived.With($"'{request.Slug.Value}' is archived; create a new workflow from its spec to edit it");
-        }
-
+        var record = found.Value;
         var current = await workflows.GetRevision(record.Id, record.LatestRevision, cancellationToken).ConfigureAwait(false);
         if (current.IsError)
         {
@@ -56,18 +46,42 @@ internal sealed class ApplyWorkflowOpsService(IWorkflowStore workflows, IWorkflo
             return edited.Error;
         }
 
+        return await SaveAndRecord(record, edited.Value, request.By, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Result<WorkflowRecord>> FindActive(WorkflowSlug slug, CancellationToken cancellationToken)
+    {
+        var listed = await workflows.List(includeArchived: true, cancellationToken).ConfigureAwait(false);
+        if (listed.IsError)
+        {
+            return listed.Error;
+        }
+
+        var record = listed.Value.FirstOrDefault(r => r.Slug == slug);
+        if (record is null)
+        {
+            return SindriErrors.GraphNotFound.With($"no workflow '{slug.Value}'; list the workflows to see what exists");
+        }
+
+        return record.ArchivedAt is not null
+            ? SindriErrors.GraphArchived.With($"'{slug.Value}' is archived; create a new workflow from its spec to edit it")
+            : record;
+    }
+
+    private async ValueTask<Result<ApplyWorkflowOpsResponse>> SaveAndRecord(WorkflowRecord record, GraphSpec edited, string by, CancellationToken cancellationToken)
+    {
         if (log.LeaseProblem() is { } down)
         {
             return down;
         }
 
-        var saved = await workflows.Save(record.Id, record.LatestRevision, edited.Value, request.By, cancellationToken).ConfigureAwait(false);
+        var saved = await workflows.Save(record.Id, record.LatestRevision, edited, by, cancellationToken).ConfigureAwait(false);
         if (saved.IsError)
         {
             return saved.Error;
         }
 
-        var recorded = await log.Record(EventTypes.WorkflowRevised, new WorkflowChangedPayload(record.Id, record.Slug, saved.Value.Revision, saved.Value.SpecHash, request.By), cancellationToken).ConfigureAwait(false);
+        var recorded = await log.Record(EventTypes.WorkflowRevised, new WorkflowChangedPayload(record.Id, record.Slug, saved.Value.Revision, saved.Value.SpecHash, by), cancellationToken).ConfigureAwait(false);
         return recorded.IsError ? recorded.Error : new ApplyWorkflowOpsResponse(record.Slug, saved.Value.Revision, saved.Value.SpecHash);
     }
 }
