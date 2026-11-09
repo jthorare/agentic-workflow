@@ -87,6 +87,10 @@ internal sealed class ResourceStore(string root)
             _ = Directory.CreateDirectory(path, FolderMode);
             File.SetUnixFileMode(path, FolderMode);
         }
+        else
+        {
+            _ = Directory.CreateDirectory(path);
+        }
 
         return null;
     }
