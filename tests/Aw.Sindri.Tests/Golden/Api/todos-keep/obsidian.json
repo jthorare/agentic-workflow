@@ -1,0 +1,20 @@
+{
+  "todo": {
+    "id": "td_00000000000000000000000008",
+    "text": "call the dentist about the crown",
+    "due": "2026-01-05",
+    "links": [],
+    "addedAt": "2026-01-01T00:00:00.0000000Z",
+    "addedBy": "human:cli",
+    "addedVia": null,
+    "doneAt": null,
+    "removed": false,
+    "removedAt": null,
+    "removedBy": null,
+    "version": 2,
+    "lastBy": "obsidian",
+    "lastVia": null,
+    "conflict": null
+  },
+  "undoUntil": "2026-01-01T00:00:10.0000000Z"
+}

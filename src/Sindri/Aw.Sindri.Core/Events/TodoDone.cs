@@ -8,4 +8,10 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="Version">Its version after the change.</param>
 /// <param name="By">Who wrote it.</param>
 /// <param name="Via">'pipe' when the CLI had no terminal on stdout, else null.</param>
-public sealed record TodoDone(TodoId Id, long Version, string By, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Via = null);
+/// <param name="DoneAt">The done time to keep, or null for the time of this event. An Undo that marks a todo done again passes the time it had before.</param>
+public sealed record TodoDone(
+    TodoId Id,
+    long Version,
+    string By,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Via = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] DateTimeOffset? DoneAt = null);

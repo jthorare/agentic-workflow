@@ -166,7 +166,7 @@ public sealed class QueueFocusTests : IDisposable
     // The queue served with one queued item moved to the running group (its row is rebuilt in the other group).
     private static RouteAnswer Moved(string id)
     {
-        var view = System.Text.Json.Nodes.JsonNode.Parse(GoldenFiles.SpecShaped("queue", "fixture"))!.AsObject();
+        var view = JsonNode.Parse(GoldenFiles.SpecShaped("queue", "fixture"))!.AsObject();
         var groups = view["groups"]!.AsArray();
         var queued = groups.First(g => g!["group"]!.GetValue<string>() == "queued")!["items"]!.AsArray();
         var running = groups.First(g => g!["group"]!.GetValue<string>() == "running")!["items"]!.AsArray();
@@ -226,7 +226,7 @@ public sealed class QueueFocusTests : IDisposable
         var queued = shell.Queue.QueuedRows.Select(r => r.Id).ToList();
         var next = queued[queued.IndexOf(gone) + 1];
 
-        var view = System.Text.Json.Nodes.JsonNode.Parse(GoldenFiles.SpecShaped("queue", "fixture"))!;
+        var view = JsonNode.Parse(GoldenFiles.SpecShaped("queue", "fixture"))!;
         foreach (var group in view["groups"]!.AsArray())
         {
             var items = group!["items"]!.AsArray();

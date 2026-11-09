@@ -14,8 +14,8 @@ namespace Aw.Sindri.Core.Workflow.Engine;
 [JsonConverter(typeof(StringIdJsonConverter<CommandVerb>))]
 public readonly partial struct CommandVerb : ITypedId<CommandVerb, string>
 {
-    private static Vogen.Validation Validate(string value) =>
-        Shape.IsMatch(value) ? Vogen.Validation.Ok : Vogen.Validation.Invalid("A command verb is a lower-case letter, then 1 to 31 lower-case letters or hyphens");
+    private static Validation Validate(string value) =>
+        Shape.IsMatch(value) ? Validation.Ok : Validation.Invalid("A command verb is a lower-case letter, then 1 to 31 lower-case letters or hyphens");
 
     [GeneratedRegex("^[a-z][a-z-]{1,31}\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }
