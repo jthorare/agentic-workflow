@@ -9,6 +9,8 @@ namespace Aw.Sindri.Tests.Workflows;
 [Lane(TestLane.Integration)]
 public sealed class ForEachRunWorkflowTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
 {
+    private static readonly string[] _items = ["a", "b", "c"];
+
     [Fact]
     public async Task A_run_workflow_inside_for_each_starts_one_callee_run_per_item()
     {
@@ -33,7 +35,7 @@ public sealed class ForEachRunWorkflowTests(SindriTimeSkippingServer server) : I
         var triggers = callees.Select(static c => JsonNode.Parse(c.Trigger)!.AsObject()).OrderBy(static t => t["index"]!.GetValue<int>()).ToList();
         Assert.Equal([1, 2, 3], triggers.Select(static t => t["index"]!.GetValue<int>()));   // an item's index counts from 1 inside a loop
         Assert.All(triggers, t => Assert.Equal(run.Id.Value, t["parentRun"]!.GetValue<string>()));
-        Assert.Equal(["a", "b", "c"], triggers.Select(static t => t["payload"]!["item"]!.GetValue<string>()));
+        Assert.Equal(_items, triggers.Select(static t => t["payload"]!["item"]!.GetValue<string>()), StringComparer.Ordinal);
         // why: a repeat of one call is one run (GraphWorkflowCallerTests.The_same_call_twice_is_one_run_and_another_index_is_another_run), so a retried activity adds no callee run
     }
 }

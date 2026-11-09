@@ -9,6 +9,9 @@ namespace Aw.Sindri.Tests.Workflows;
 [Lane(TestLane.Integration)]
 public sealed class ForEachOnlyNewTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
 {
+    private static readonly int[] _firstCounts = [2, 1];
+    private static readonly int[] _secondCounts = [0, 0];
+
     [Fact]
     public async Task An_only_new_inside_for_each_records_every_items_keys_so_the_next_run_passes_none()
     {
@@ -28,8 +31,8 @@ public sealed class ForEachOnlyNewTests(SindriTimeSkippingServer server) : IClas
         Assert.Equal(WorkflowRunStatus.Succeeded, first.Status);
         Assert.Equal(WorkflowRunStatus.Succeeded, second.Status);
         Assert.Equal(3, rig.Seen.Count);
-        Assert.Equal([2, 1], await Counts(rig, first.Id));
-        Assert.Equal([0, 0], await Counts(rig, second.Id));
+        Assert.Equal(_firstCounts, await Counts(rig, first.Id));
+        Assert.Equal(_secondCounts, await Counts(rig, second.Id));
     }
 
     private static async Task<int[]> Counts(GraphRig rig, WorkflowRunId run)
