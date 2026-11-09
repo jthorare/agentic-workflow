@@ -12807,6 +12807,7 @@ static Aw.Sindri.Core.Sandbox.RuntimeCeiling.Next(System.TimeSpan elapsedReal, S
 Aw.Sindri.Core.Workflow.Engine.Runtime.IRunSuspensions
 Aw.Sindri.Core.Workflow.Engine.Runtime.IRunSuspensions.IsSuspended(Aw.Sindri.Core.Launch.LaunchId launch, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
 Aw.Sindri.Core.Ledger.ILedgerReader.ByKey(string! idempotencyKey, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Ledger.LedgerEvent?>!>
+Aw.Sindri.Core.Ledger.ILedgerReader.LatestByKeyPrefix(string! keyPrefix, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Ledger.LedgerEvent?>!>
 Aw.Sindri.Core.Workflow.Engine.Instances.Suspension.Sandbox.init -> void
 Aw.Sindri.Core.Workflow.Engine.ParkKind.SelfCheck = 10 -> Aw.Sindri.Core.Workflow.Engine.ParkKind
 Aw.Sindri.Core.Workflow.Engine.ParkKind.Unconfinable = 9 -> Aw.Sindri.Core.Workflow.Engine.ParkKind
@@ -20630,6 +20631,8 @@ static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Parse(System.Text.Json.Nodes.J
 static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Problems(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
 static Aw.Sindri.Core.Graph.Blocks.RunAgentBrief.Render(Aw.Sindri.Core.Launch.NodeRunAddress! address, Aw.Sindri.Core.Launch.RunToken token, Aw.Sindri.Core.Graph.Blocks.RunAgentConfig! config) -> string!
 Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
 Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.IsTrigger.get -> bool
 Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
 static Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Standard.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
@@ -21062,6 +21065,8 @@ Aw.Sindri.Core.Graph.Blocks.DefaultForEachLimits
 override Aw.Sindri.Core.Profile.ForEachSettings.GetHashCode() -> int
 Aw.Sindri.Core.Graph.Blocks.ForEachLimits.ForEachLimits(int MaxItems, int BatchSize) -> void
 override Aw.Sindri.Core.Graph.Loops.LoopShape.Equals(object? obj) -> bool
+Aw.Sindri.Core.Graph.Blocks.CollectBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.CollectBlock.Title.get -> string!
 Aw.Sindri.Core.Graph.Blocks.CollectBlock.Type.get -> string!
 Aw.Sindri.Core.Graph.Loops.LoopShape
 Aw.Sindri.Core.Graph.Loops.LoopShape.Deconstruct(out Aw.Sindri.Core.Graph.GraphNode! ForEach, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.GraphNode!>! Body, out Aw.Sindri.Core.Graph.GraphNode! Collect) -> void
@@ -21096,6 +21101,8 @@ static Aw.Sindri.Core.Graph.Blocks.ForEachLimits.operator ==(Aw.Sindri.Core.Grap
 static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.Standard(Aw.Sindri.Core.Graph.Blocks.INotifyPort! notify, Aw.Sindri.Core.Graph.Blocks.IGraphModelPort! model, Aw.Sindri.Core.Graph.Blocks.IForEachLimitSource? forEachLimits = null, System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Graph.Blocks.IGraphBlock!>? more = null) -> Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry!
 static Aw.Sindri.Core.Graph.Loops.LoopBody.Find(Aw.Sindri.Core.Graph.GraphSpec! spec, Aw.Sindri.Core.Graph.Ids.NodeId forEach) -> Aw.Kernel.Result<Aw.Sindri.Core.Graph.Loops.LoopShape!>!
 Aw.Sindri.Core.Graph.Blocks.ForEachBlock.ForEachBlock(Aw.Sindri.Core.Graph.Blocks.IForEachLimitSource! limits) -> void
+Aw.Sindri.Core.Graph.Blocks.ForEachBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.ForEachBlock.Title.get -> string!
 Aw.Sindri.Core.Graph.Blocks.ForEachBlock.Type.get -> string!
 Aw.Sindri.Core.Profile.ForEachSettings.Deconstruct(out int? MaxItems, out int? BatchSize) -> void
 static Aw.Sindri.Core.Graph.Loops.LoopBody.Enclosing(Aw.Sindri.Core.Graph.GraphSpec! spec, Aw.Sindri.Core.Graph.Ids.NodeId node) -> Aw.Sindri.Core.Graph.Loops.LoopShape?
@@ -21341,6 +21348,244 @@ override Aw.Sindri.Core.Graph.Layout.GraphPosition.ToString() -> string!
 static Aw.Sindri.Core.Graph.Layout.GraphLayout.Compute(Aw.Sindri.Core.Graph.GraphSpec! spec) -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Graph.Layout.GraphPosition!>!
 static Aw.Sindri.Core.Graph.Layout.GraphPosition.operator !=(Aw.Sindri.Core.Graph.Layout.GraphPosition? left, Aw.Sindri.Core.Graph.Layout.GraphPosition? right) -> bool
 static Aw.Sindri.Core.Graph.Layout.GraphPosition.operator ==(Aw.Sindri.Core.Graph.Layout.GraphPosition? left, Aw.Sindri.Core.Graph.Layout.GraphPosition? right) -> bool
+abstract Aw.Sindri.Core.Graph.Ops.GraphOp.<Clone>$() -> Aw.Sindri.Core.Graph.Ops.GraphOp!
+Aw.Sindri.Core.Graph.Ops.AddNodeOp
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.AddNodeOp(Aw.Sindri.Core.Graph.Ids.NodeId Id, string! Type, string? Title = null, System.Text.Json.Nodes.JsonObject? Config = null, string? OnFailure = null) -> void
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.Config.get -> System.Text.Json.Nodes.JsonObject?
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.Config.init -> void
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.Deconstruct(out Aw.Sindri.Core.Graph.Ids.NodeId Id, out string! Type, out string? Title, out System.Text.Json.Nodes.JsonObject? Config, out string? OnFailure) -> void
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.Equals(Aw.Sindri.Core.Graph.Ops.AddNodeOp? other) -> bool
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.Id.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.Id.init -> void
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.OnFailure.get -> string?
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.OnFailure.init -> void
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.Title.get -> string?
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.Title.init -> void
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.Type.get -> string!
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.Type.init -> void
+Aw.Sindri.Core.Graph.Ops.ConnectOp
+Aw.Sindri.Core.Graph.Ops.ConnectOp.ConnectOp(Aw.Sindri.Core.Graph.Ids.NodeId From, Aw.Sindri.Core.Graph.Ids.NodeId To, string? Output = null) -> void
+Aw.Sindri.Core.Graph.Ops.ConnectOp.Deconstruct(out Aw.Sindri.Core.Graph.Ids.NodeId From, out Aw.Sindri.Core.Graph.Ids.NodeId To, out string? Output) -> void
+Aw.Sindri.Core.Graph.Ops.ConnectOp.Equals(Aw.Sindri.Core.Graph.Ops.ConnectOp? other) -> bool
+Aw.Sindri.Core.Graph.Ops.ConnectOp.From.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Ops.ConnectOp.From.init -> void
+Aw.Sindri.Core.Graph.Ops.ConnectOp.Output.get -> string?
+Aw.Sindri.Core.Graph.Ops.ConnectOp.Output.init -> void
+Aw.Sindri.Core.Graph.Ops.ConnectOp.To.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Ops.ConnectOp.To.init -> void
+Aw.Sindri.Core.Graph.Ops.DisconnectOp
+Aw.Sindri.Core.Graph.Ops.DisconnectOp.Deconstruct(out Aw.Sindri.Core.Graph.Ids.NodeId From, out Aw.Sindri.Core.Graph.Ids.NodeId To, out string? Output) -> void
+Aw.Sindri.Core.Graph.Ops.DisconnectOp.DisconnectOp(Aw.Sindri.Core.Graph.Ids.NodeId From, Aw.Sindri.Core.Graph.Ids.NodeId To, string? Output = null) -> void
+Aw.Sindri.Core.Graph.Ops.DisconnectOp.Equals(Aw.Sindri.Core.Graph.Ops.DisconnectOp? other) -> bool
+Aw.Sindri.Core.Graph.Ops.DisconnectOp.From.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Ops.DisconnectOp.From.init -> void
+Aw.Sindri.Core.Graph.Ops.DisconnectOp.Output.get -> string?
+Aw.Sindri.Core.Graph.Ops.DisconnectOp.Output.init -> void
+Aw.Sindri.Core.Graph.Ops.DisconnectOp.To.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Ops.DisconnectOp.To.init -> void
+Aw.Sindri.Core.Graph.Ops.GraphOp
+Aw.Sindri.Core.Graph.Ops.GraphOp.GraphOp(Aw.Sindri.Core.Graph.Ops.GraphOp! original) -> void
+Aw.Sindri.Core.Graph.Ops.GraphOpJson
+Aw.Sindri.Core.Graph.Ops.GraphOps
+Aw.Sindri.Core.Graph.Ops.RemoveNodeOp
+Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.Deconstruct(out Aw.Sindri.Core.Graph.Ids.NodeId Node) -> void
+Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.Equals(Aw.Sindri.Core.Graph.Ops.RemoveNodeOp? other) -> bool
+Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.Node.init -> void
+Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.RemoveNodeOp(Aw.Sindri.Core.Graph.Ids.NodeId Node) -> void
+Aw.Sindri.Core.Graph.Ops.RenameOp
+Aw.Sindri.Core.Graph.Ops.RenameOp.Deconstruct(out Aw.Sindri.Core.Graph.Ids.NodeId Node, out Aw.Sindri.Core.Graph.Ids.NodeId To) -> void
+Aw.Sindri.Core.Graph.Ops.RenameOp.Equals(Aw.Sindri.Core.Graph.Ops.RenameOp? other) -> bool
+Aw.Sindri.Core.Graph.Ops.RenameOp.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Ops.RenameOp.Node.init -> void
+Aw.Sindri.Core.Graph.Ops.RenameOp.RenameOp(Aw.Sindri.Core.Graph.Ids.NodeId Node, Aw.Sindri.Core.Graph.Ids.NodeId To) -> void
+Aw.Sindri.Core.Graph.Ops.RenameOp.To.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Ops.RenameOp.To.init -> void
+Aw.Sindri.Core.Graph.Ops.SetConfigOp
+Aw.Sindri.Core.Graph.Ops.SetConfigOp.Deconstruct(out Aw.Sindri.Core.Graph.Ids.NodeId Node, out string! Path, out System.Text.Json.Nodes.JsonNode? Value) -> void
+Aw.Sindri.Core.Graph.Ops.SetConfigOp.Equals(Aw.Sindri.Core.Graph.Ops.SetConfigOp? other) -> bool
+Aw.Sindri.Core.Graph.Ops.SetConfigOp.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Ops.SetConfigOp.Node.init -> void
+Aw.Sindri.Core.Graph.Ops.SetConfigOp.Path.get -> string!
+Aw.Sindri.Core.Graph.Ops.SetConfigOp.Path.init -> void
+Aw.Sindri.Core.Graph.Ops.SetConfigOp.SetConfigOp(Aw.Sindri.Core.Graph.Ids.NodeId Node, string! Path, System.Text.Json.Nodes.JsonNode? Value) -> void
+Aw.Sindri.Core.Graph.Ops.SetConfigOp.Value.get -> System.Text.Json.Nodes.JsonNode?
+Aw.Sindri.Core.Graph.Ops.SetConfigOp.Value.init -> void
+Aw.Sindri.Core.Graph.Ops.SetMetaOp
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.Concurrency.get -> string?
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.Concurrency.init -> void
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.Deconstruct(out string? Name, out string? Description, out string? Concurrency) -> void
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.Description.get -> string?
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.Description.init -> void
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.Equals(Aw.Sindri.Core.Graph.Ops.SetMetaOp? other) -> bool
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.Name.get -> string?
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.Name.init -> void
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.SetMetaOp(string? Name = null, string? Description = null, string? Concurrency = null) -> void
+Aw.Sindri.Core.Graph.Templates.GraphTemplate
+Aw.Sindri.Core.Graph.Templates.GraphTemplate.<Clone>$() -> Aw.Sindri.Core.Graph.Templates.GraphTemplate!
+Aw.Sindri.Core.Graph.Templates.GraphTemplate.Deconstruct(out string! Name, out string! Description, out Aw.Sindri.Core.Graph.GraphSpec! Spec) -> void
+Aw.Sindri.Core.Graph.Templates.GraphTemplate.Description.get -> string!
+Aw.Sindri.Core.Graph.Templates.GraphTemplate.Description.init -> void
+Aw.Sindri.Core.Graph.Templates.GraphTemplate.Equals(Aw.Sindri.Core.Graph.Templates.GraphTemplate? other) -> bool
+Aw.Sindri.Core.Graph.Templates.GraphTemplate.GraphTemplate(string! Name, string! Description, Aw.Sindri.Core.Graph.GraphSpec! Spec) -> void
+Aw.Sindri.Core.Graph.Templates.GraphTemplate.Name.get -> string!
+Aw.Sindri.Core.Graph.Templates.GraphTemplate.Name.init -> void
+Aw.Sindri.Core.Graph.Templates.GraphTemplates
+Aw.Sindri.Core.Graph.Templates.GraphTemplate.Spec.get -> Aw.Sindri.Core.Graph.GraphSpec!
+Aw.Sindri.Core.Graph.Templates.GraphTemplate.Spec.init -> void
+override Aw.Sindri.Core.Graph.Ops.AddNodeOp.<Clone>$() -> Aw.Sindri.Core.Graph.Ops.AddNodeOp!
+override Aw.Sindri.Core.Graph.Ops.AddNodeOp.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Ops.AddNodeOp.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Ops.AddNodeOp.ToString() -> string!
+override Aw.Sindri.Core.Graph.Ops.ConnectOp.<Clone>$() -> Aw.Sindri.Core.Graph.Ops.ConnectOp!
+override Aw.Sindri.Core.Graph.Ops.ConnectOp.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Ops.ConnectOp.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Ops.ConnectOp.ToString() -> string!
+override Aw.Sindri.Core.Graph.Ops.DisconnectOp.<Clone>$() -> Aw.Sindri.Core.Graph.Ops.DisconnectOp!
+override Aw.Sindri.Core.Graph.Ops.DisconnectOp.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Ops.DisconnectOp.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Ops.DisconnectOp.ToString() -> string!
+override Aw.Sindri.Core.Graph.Ops.GraphOp.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Ops.GraphOp.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Ops.GraphOp.ToString() -> string!
+override Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.<Clone>$() -> Aw.Sindri.Core.Graph.Ops.RemoveNodeOp!
+override Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.ToString() -> string!
+override Aw.Sindri.Core.Graph.Ops.RenameOp.<Clone>$() -> Aw.Sindri.Core.Graph.Ops.RenameOp!
+override Aw.Sindri.Core.Graph.Ops.RenameOp.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Ops.RenameOp.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Ops.RenameOp.ToString() -> string!
+override Aw.Sindri.Core.Graph.Ops.SetConfigOp.<Clone>$() -> Aw.Sindri.Core.Graph.Ops.SetConfigOp!
+override Aw.Sindri.Core.Graph.Ops.SetConfigOp.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Ops.SetConfigOp.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Ops.SetConfigOp.ToString() -> string!
+override Aw.Sindri.Core.Graph.Ops.SetMetaOp.<Clone>$() -> Aw.Sindri.Core.Graph.Ops.SetMetaOp!
+override Aw.Sindri.Core.Graph.Ops.SetMetaOp.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Ops.SetMetaOp.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Ops.SetMetaOp.ToString() -> string!
+override Aw.Sindri.Core.Graph.Templates.GraphTemplate.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Templates.GraphTemplate.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Templates.GraphTemplate.ToString() -> string!
+override sealed Aw.Sindri.Core.Graph.Ops.AddNodeOp.Equals(Aw.Sindri.Core.Graph.Ops.GraphOp? other) -> bool
+override sealed Aw.Sindri.Core.Graph.Ops.ConnectOp.Equals(Aw.Sindri.Core.Graph.Ops.GraphOp? other) -> bool
+override sealed Aw.Sindri.Core.Graph.Ops.DisconnectOp.Equals(Aw.Sindri.Core.Graph.Ops.GraphOp? other) -> bool
+override sealed Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.Equals(Aw.Sindri.Core.Graph.Ops.GraphOp? other) -> bool
+override sealed Aw.Sindri.Core.Graph.Ops.RenameOp.Equals(Aw.Sindri.Core.Graph.Ops.GraphOp? other) -> bool
+override sealed Aw.Sindri.Core.Graph.Ops.SetConfigOp.Equals(Aw.Sindri.Core.Graph.Ops.GraphOp? other) -> bool
+override sealed Aw.Sindri.Core.Graph.Ops.SetMetaOp.Equals(Aw.Sindri.Core.Graph.Ops.GraphOp? other) -> bool
+static Aw.Sindri.Core.Graph.Ops.AddNodeOp.operator !=(Aw.Sindri.Core.Graph.Ops.AddNodeOp? left, Aw.Sindri.Core.Graph.Ops.AddNodeOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.AddNodeOp.operator ==(Aw.Sindri.Core.Graph.Ops.AddNodeOp? left, Aw.Sindri.Core.Graph.Ops.AddNodeOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.ConnectOp.operator !=(Aw.Sindri.Core.Graph.Ops.ConnectOp? left, Aw.Sindri.Core.Graph.Ops.ConnectOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.ConnectOp.operator ==(Aw.Sindri.Core.Graph.Ops.ConnectOp? left, Aw.Sindri.Core.Graph.Ops.ConnectOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.DisconnectOp.operator !=(Aw.Sindri.Core.Graph.Ops.DisconnectOp? left, Aw.Sindri.Core.Graph.Ops.DisconnectOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.DisconnectOp.operator ==(Aw.Sindri.Core.Graph.Ops.DisconnectOp? left, Aw.Sindri.Core.Graph.Ops.DisconnectOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.GraphOpJson.Parse(string! json) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Ops.GraphOp!>!>!
+static Aw.Sindri.Core.Graph.Ops.GraphOpJson.Write(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Ops.GraphOp!>! ops) -> string!
+static Aw.Sindri.Core.Graph.Ops.GraphOp.operator !=(Aw.Sindri.Core.Graph.Ops.GraphOp? left, Aw.Sindri.Core.Graph.Ops.GraphOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.GraphOp.operator ==(Aw.Sindri.Core.Graph.Ops.GraphOp? left, Aw.Sindri.Core.Graph.Ops.GraphOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.GraphOps.Apply(Aw.Sindri.Core.Graph.GraphSpec! spec, int baseRevision, int currentRevision, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Ops.GraphOp!>! ops, Aw.Sindri.Core.Graph.Validation.GraphValidator! validator) -> Aw.Kernel.Result<Aw.Sindri.Core.Graph.GraphSpec!>!
+static Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.operator !=(Aw.Sindri.Core.Graph.Ops.RemoveNodeOp? left, Aw.Sindri.Core.Graph.Ops.RemoveNodeOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.operator ==(Aw.Sindri.Core.Graph.Ops.RemoveNodeOp? left, Aw.Sindri.Core.Graph.Ops.RemoveNodeOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.RenameOp.operator !=(Aw.Sindri.Core.Graph.Ops.RenameOp? left, Aw.Sindri.Core.Graph.Ops.RenameOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.RenameOp.operator ==(Aw.Sindri.Core.Graph.Ops.RenameOp? left, Aw.Sindri.Core.Graph.Ops.RenameOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.SetConfigOp.operator !=(Aw.Sindri.Core.Graph.Ops.SetConfigOp? left, Aw.Sindri.Core.Graph.Ops.SetConfigOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.SetConfigOp.operator ==(Aw.Sindri.Core.Graph.Ops.SetConfigOp? left, Aw.Sindri.Core.Graph.Ops.SetConfigOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.SetMetaOp.operator !=(Aw.Sindri.Core.Graph.Ops.SetMetaOp? left, Aw.Sindri.Core.Graph.Ops.SetMetaOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.SetMetaOp.operator ==(Aw.Sindri.Core.Graph.Ops.SetMetaOp? left, Aw.Sindri.Core.Graph.Ops.SetMetaOp? right) -> bool
+static Aw.Sindri.Core.Graph.Templates.GraphTemplate.operator !=(Aw.Sindri.Core.Graph.Templates.GraphTemplate? left, Aw.Sindri.Core.Graph.Templates.GraphTemplate? right) -> bool
+static Aw.Sindri.Core.Graph.Templates.GraphTemplate.operator ==(Aw.Sindri.Core.Graph.Templates.GraphTemplate? left, Aw.Sindri.Core.Graph.Templates.GraphTemplate? right) -> bool
+static Aw.Sindri.Core.Graph.Templates.GraphTemplates.All.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Templates.GraphTemplate!>!
+static Aw.Sindri.Core.Graph.Templates.GraphTemplates.Find(string! name) -> Aw.Sindri.Core.Graph.Templates.GraphTemplate?
+static readonly Aw.Sindri.Core.SindriErrors.GraphOpInvalid -> Aw.Kernel.ErrorDefinition!
+virtual Aw.Sindri.Core.Graph.Ops.GraphOp.EqualityContract.get -> System.Type!
+virtual Aw.Sindri.Core.Graph.Ops.GraphOp.Equals(Aw.Sindri.Core.Graph.Ops.GraphOp? other) -> bool
+virtual Aw.Sindri.Core.Graph.Ops.GraphOp.PrintMembers(System.Text.StringBuilder! builder) -> bool
+Aw.Sindri.Core.Graph.Docs.WorkflowDocHit
+Aw.Sindri.Core.Graph.Docs.WorkflowDocHit.Page.get -> Aw.Sindri.Core.Graph.Docs.WorkflowDocPage!
+Aw.Sindri.Core.Graph.Docs.WorkflowDocHit.Score.get -> double
+Aw.Sindri.Core.Graph.Docs.WorkflowDocHit.WorkflowDocHit(Aw.Sindri.Core.Graph.Docs.WorkflowDocPage! page, double score) -> void
+Aw.Sindri.Core.Graph.Docs.WorkflowDocPage
+Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.BlockType.get -> string?
+Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.Slug.get -> string!
+Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.JsonExamples() -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.Text.get -> string!
+Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.Title.get -> string!
+Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.WorkflowDocPage(string! slug, string! title, string! text) -> void
+Aw.Sindri.Core.Graph.Docs.WorkflowDocSearch
+const Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.BlockPrefix = "block-" -> string!
+static Aw.Sindri.Core.Graph.Docs.WorkflowDocSearch.Search(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Docs.WorkflowDocPage!>! pages, string! question, int max = 5) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Docs.WorkflowDocHit!>!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowCreated = "workflow.created" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowRevised = "workflow.revised" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowActivated = "workflow.activated" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowPaused = "workflow.paused" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowArchived = "workflow.archived" -> string!
+Aw.Sindri.Core.Events.WorkflowChangedPayload
+Aw.Sindri.Core.Events.WorkflowChangedPayload.WorkflowId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowId
+Aw.Sindri.Core.Events.WorkflowChangedPayload.WorkflowId.init -> void
+Aw.Sindri.Core.Events.WorkflowChangedPayload.Slug.get -> Aw.Sindri.Core.Graph.Ids.WorkflowSlug
+Aw.Sindri.Core.Events.WorkflowChangedPayload.Slug.init -> void
+Aw.Sindri.Core.Events.WorkflowChangedPayload.Revision.get -> int
+Aw.Sindri.Core.Events.WorkflowChangedPayload.Revision.init -> void
+Aw.Sindri.Core.Events.WorkflowChangedPayload.SpecHash.get -> string?
+Aw.Sindri.Core.Events.WorkflowChangedPayload.SpecHash.init -> void
+Aw.Sindri.Core.Events.WorkflowChangedPayload.By.get -> string!
+Aw.Sindri.Core.Events.WorkflowChangedPayload.By.init -> void
+override Aw.Sindri.Core.Events.WorkflowChangedPayload.ToString() -> string!
+static Aw.Sindri.Core.Events.WorkflowChangedPayload.operator !=(Aw.Sindri.Core.Events.WorkflowChangedPayload? left, Aw.Sindri.Core.Events.WorkflowChangedPayload? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowChangedPayload.operator ==(Aw.Sindri.Core.Events.WorkflowChangedPayload? left, Aw.Sindri.Core.Events.WorkflowChangedPayload? right) -> bool
+override Aw.Sindri.Core.Events.WorkflowChangedPayload.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowChangedPayload.Equals(object? obj) -> bool
+Aw.Sindri.Core.Events.WorkflowChangedPayload.Equals(Aw.Sindri.Core.Events.WorkflowChangedPayload? other) -> bool
+Aw.Sindri.Core.Events.WorkflowChangedPayload.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowChangedPayload!
+Aw.Sindri.Core.Events.WorkflowChangedPayload.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, out Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, out int Revision, out string? SpecHash, out string! By) -> void
+Aw.Sindri.Core.Events.WorkflowChangedPayload.WorkflowChangedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, int Revision, string? SpecHash, string! By) -> void
+Aw.Sindri.Core.Graph.WorkflowChangeLog
+Aw.Sindri.Core.Graph.WorkflowChangeLog.LeaseProblem() -> Aw.Kernel.Error?
+Aw.Sindri.Core.Graph.WorkflowChangeLog.Record(string! type, Aw.Sindri.Core.Events.WorkflowChangedPayload! payload, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Graph.WorkflowChangeLog.WorkflowChangeLog(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Lease.HeldLease! held, Aw.Sindri.Core.Events.EventFactory! events, Aw.Sindri.Core.Commands.ICallerContextAccessor! callers) -> void
+Aw.Sindri.Core.Graph.Validation.IWorkflowChecker
+Aw.Sindri.Core.Graph.IWorkflowStore.Pause(Aw.Sindri.Core.Graph.Ids.WorkflowId id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.WorkflowRecord!>!>
+Aw.Sindri.Core.Graph.Validation.IWorkflowChecker.Validator(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Graph.Validation.GraphValidator!>
+static readonly Aw.Sindri.Core.SindriErrors.GraphRunLoop -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Graph.Runs.IGraphLaunchRuns
+Aw.Sindri.Core.Graph.Runs.IGraphLaunchRuns.RunOf(Aw.Sindri.Core.Launch.LaunchId launch, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Ids.WorkflowRunId?>!>
+Aw.Sindri.Core.Graph.Docs.IWorkflowDocs
+Aw.Sindri.Core.Graph.Docs.IWorkflowDocs.Pages.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Docs.WorkflowDocPage!>!
+Aw.Sindri.Core.Graph.Blocks.ScheduleBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.ManualBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.ConditionBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.NotifyBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.PromptBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.IGraphBlockType.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.BlockGroup.Triggers = 1 -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.BlockGroup.Data = 2 -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.BlockGroup.AI = 3 -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.BlockGroup.Logic = 4 -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.BlockGroup.Outputs = 5 -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.GraphBlockEntry(Aw.Sindri.Core.Graph.Blocks.IGraphBlockType! block, string? exampleSpec) -> void
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.ExampleConfig.get -> string!
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.Outputs.get -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.ExampleSpec.get -> string?
+Aw.Sindri.Core.Graph.Blocks.GraphBlockGroup
+Aw.Sindri.Core.Graph.Blocks.GraphBlockGroup.GraphBlockGroup(Aw.Sindri.Core.Graph.Blocks.BlockGroup group, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry!>! blocks) -> void
+Aw.Sindri.Core.Graph.Blocks.GraphBlockGroup.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.GraphBlockGroup.Blocks.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry!>!
+Aw.Sindri.Core.Graph.Blocks.GraphBlockListing
+static Aw.Sindri.Core.Graph.Blocks.GraphBlockListing.Group(Aw.Sindri.Core.Graph.Blocks.IGraphBlockCatalog! catalog, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Docs.WorkflowDocPage!>! pages) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.GraphBlockGroup!>!
+Aw.Sindri.Core.Graph.Blocks.IGraphBlockType.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ScheduleBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ManualBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ConditionBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.NotifyBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.PromptBlock.Title.get -> string!
 Aw.Sindri.Core.Todos.TodoConverger.Apply(Aw.Sindri.Core.Todos.TodoRow! row, Aw.Sindri.Core.Todos.TodoConvergeTarget! to, Aw.Sindri.Core.Todos.TodoPickCaller! who, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<long>!>
 Aw.Sindri.Core.Todos.TodoConvergeTarget
 Aw.Sindri.Core.Todos.TodoConvergeTarget.By.get -> string!
@@ -21548,6 +21793,8 @@ Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.CheckConfig(System.Text.Json.No
 Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
 Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.ConnectionEventBlock() -> void
 Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.Title.get -> string!
 Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
 Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.IsTrigger.get -> bool
 Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
@@ -21634,6 +21881,16 @@ static Aw.Sindri.Core.Connections.SignInTry.operator !=(Aw.Sindri.Core.Connectio
 static Aw.Sindri.Core.Connections.SignInTry.operator ==(Aw.Sindri.Core.Connections.SignInTry? left, Aw.Sindri.Core.Connections.SignInTry? right) -> bool
 Aw.Sindri.Core.Todos.TodoNoteImport.Warning.get -> string?
 Aw.Sindri.Core.Todos.TodoNoteImport.Warning.init -> void
+Aw.Sindri.Core.Graph.Blocks.OnlyNewBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.OnlyNewBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.HttpBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.HttpBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.CreateItemBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.CreateItemBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.WorkflowCallTrigger.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.WorkflowCallTrigger.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RunWorkflowBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.RunWorkflowBlock.Title.get -> string!
 const Aw.Sindri.Core.Graph.Loops.LoopBody.RunAgentType = "run_agent" -> string!
 const Aw.Sindri.Core.Graph.Loops.LoopBody.AgentInLoopCode = "GRAPH-LOOP-003" -> string!
 static Aw.Sindri.Core.Graph.Loops.LoopBody.AgentRefusal(Aw.Sindri.Core.Graph.Loops.LoopShape! shape) -> string?

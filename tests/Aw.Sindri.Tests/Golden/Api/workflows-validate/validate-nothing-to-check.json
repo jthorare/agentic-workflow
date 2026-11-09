@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-CLI-003",
+  "status": 400,
+  "detail": "give either a workflow slug or a spec, not both and not neither",
+  "traceId": "<trace>"
+}

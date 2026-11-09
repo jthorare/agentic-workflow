@@ -37,6 +37,7 @@ public sealed class WriteAttributionTests
         ["POST /sindri/workflow-runs/{run}/nodes/{node}/takeover"] = TakeoverReason,
         ["POST /sindri/workflow-runs/{run}/nodes/{node}/handback"] = TakeoverReason,
         ["POST /sindri/workflow/challenges/app"] = "refuses every text (IssueAppChallengeService.cs:17, no ports) and its endpoint appends nothing: writes no event",
+        ["POST /sindri/workflows/validate"] = "checks a stored spec and returns its findings (ValidateWorkflowService): stores nothing and writes no event",
     };
 
     // Write routes that do append events but whose caller is proven another way than a launched session's header; not swept here.

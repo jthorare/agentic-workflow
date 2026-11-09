@@ -70,6 +70,12 @@ public static partial class SindriErrors
     /// <summary>SND-GRAPH-108: a reference read the output of a node that the store cut at 64 KB.</summary>
     public static readonly ErrorDefinition GraphOutputTruncated = new("SND-GRAPH-108", ErrorKind.Invalid, "A referenced node output was cut at 64 KB");
 
+    /// <summary>SND-GRAPH-109: a session that a run of this workflow launched tried to start the workflow again (a loop); the message names the run.</summary>
+    public static readonly ErrorDefinition GraphRunLoop = new("SND-GRAPH-109", ErrorKind.Conflict, "A run of this workflow can't start the workflow again");
+
+    /// <summary>SND-GRAPH-012: an edit op can't apply (an unknown node, an id already used, an edge that is missing or doubled); nothing was changed.</summary>
+    public static readonly ErrorDefinition GraphOpInvalid = new("SND-GRAPH-012", ErrorKind.Invalid, "A graph edit could not be applied");
+
     /// <summary>SND-GRAPH-120: a workflow start would be a fourth call deep (or deeper than 'workflow.callDepth' allows).</summary>
     public static readonly ErrorDefinition GraphCallDepth = new("SND-GRAPH-120", ErrorKind.Invalid, "A workflow call is nested too deep");
 

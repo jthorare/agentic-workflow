@@ -1,7 +1,7 @@
 using Aw.Sindri.Core.Graph.Validation;
 using Aw.Sindri.Core.Profile;
 
-namespace Aw.Sindri.Host.Commands;
+namespace Aw.Sindri.Host;
 
 /// <summary>What 'wf validate' knows about names outside the document: the repos of the profile, when one can be read. Connections and memory stores don't exist yet, so those are unavailable.</summary>
 internal sealed class ProfileGraphWorld : IGraphWorld
