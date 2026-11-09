@@ -75,7 +75,7 @@ public sealed class TodoPickWrites(ILedgerStore ledger, HeldLease held, Events.E
             return null;
         }
 
-        var back = await converger.Apply(read.Value, TodoNoteSides.Of(prior), who.By, who, cancellationToken, prior.DoneAt).ConfigureAwait(false);
+        var back = await converger.Apply(read.Value, new TodoConvergeTarget(TodoNoteSides.Of(prior), who.By, prior.DoneAt), who, cancellationToken).ConfigureAwait(false);
         return back.IsError ? back.Error : null;
     }
 

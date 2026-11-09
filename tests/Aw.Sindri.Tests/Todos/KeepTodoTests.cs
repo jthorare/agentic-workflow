@@ -181,7 +181,7 @@ public sealed class KeepTodoTests
         await _h.Seed(_id, "call the dentist");
         await _h.Fold(EventTypes.TodoDone, new TodoDone(_id, 2, "human:ui"));
         var doneAt = (await _h.Row(_id))!.DoneAt;
-        Assert.NotNull(doneAt);
+        _ = Assert.NotNull(doneAt);
         var done = _mine with { Done = true };
         await _h.Fold(EventTypes.TodoConflicted, new TodoConflicted(_id, done, _mine, NoteHash: "sha256:aa"));
         using var cli = _h.Cli();

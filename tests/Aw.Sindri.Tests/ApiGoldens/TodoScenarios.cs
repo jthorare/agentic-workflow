@@ -113,7 +113,7 @@ internal static class TodoScenarios
             var theirs = new TodoSide("call the dentist about the crown", new DateOnly(2026, 1, 5), Links: [], Done: false, Removed: false);
             await ViewScenarios.Append(host, EventTypes.TodoConflicted, new TodoConflicted(id, mine, theirs, Hash), $"todo.conflicted:{made}:{Hash}", ct);
             await ViewScenarios.CatchUp(host, ct);
-            var kept = await host.Http.Ask(Post($"/sindri/todos/{made}/keep", Request("todos-keep", scenario is "obsidian" ? "obsidian" : "sindri"), human));
+            var kept = await host.Http.Ask(Post($"/sindri/todos/{made}/keep", Request("todos-keep", string.Equals(scenario, "obsidian", StringComparison.Ordinal) ? "obsidian" : "sindri"), human));
             if (slug == "todos-keep")
             {
                 return kept.Body;

@@ -20150,7 +20150,7 @@ static Aw.Sindri.Core.Todos.TodoPick.operator ==(Aw.Sindri.Core.Todos.TodoPick? 
 static Aw.Sindri.Core.Todos.TodoPickWindow.Until(System.DateTimeOffset at) -> System.DateTimeOffset
 static readonly Aw.Sindri.Core.Todos.TodoPickWindow.Span -> System.TimeSpan
 Aw.Sindri.Core.Todos.TodoConverger
-Aw.Sindri.Core.Todos.TodoConverger.Apply(Aw.Sindri.Core.Todos.TodoRow! row, Aw.Sindri.Core.Events.TodoSide! target, string! by, Aw.Sindri.Core.Todos.TodoPickCaller! who, System.Threading.CancellationToken cancellationToken, System.DateTimeOffset? doneAt = null) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<long>!>
+Aw.Sindri.Core.Todos.TodoConverger.Apply(Aw.Sindri.Core.Todos.TodoRow! row, Aw.Sindri.Core.Events.TodoSide! target, string! by, Aw.Sindri.Core.Todos.TodoPickCaller! who, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<long>!>
 Aw.Sindri.Core.Todos.TodoConverger.TodoConverger(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, Aw.Sindri.Core.Todos.TodoInput! input) -> void
 Aw.Sindri.Core.Todos.TodoPickCaller
 Aw.Sindri.Core.Todos.TodoPickCaller.<Clone>$() -> Aw.Sindri.Core.Todos.TodoPickCaller!
@@ -20408,3 +20408,20 @@ static Aw.Sindri.Core.Todos.TodoItem.operator !=(Aw.Sindri.Core.Todos.TodoItem? 
 static Aw.Sindri.Core.Todos.TodoItem.operator ==(Aw.Sindri.Core.Todos.TodoItem? left, Aw.Sindri.Core.Todos.TodoItem? right) -> bool
 static Aw.Sindri.Core.Todos.TodoLinkItem.operator !=(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
 static Aw.Sindri.Core.Todos.TodoLinkItem.operator ==(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
+Aw.Sindri.Core.Todos.TodoConverger.Apply(Aw.Sindri.Core.Todos.TodoRow! row, Aw.Sindri.Core.Todos.TodoConvergeTarget! to, Aw.Sindri.Core.Todos.TodoPickCaller! who, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<long>!>
+Aw.Sindri.Core.Todos.TodoConvergeTarget
+Aw.Sindri.Core.Todos.TodoConvergeTarget.By.get -> string!
+Aw.Sindri.Core.Todos.TodoConvergeTarget.By.init -> void
+Aw.Sindri.Core.Todos.TodoConvergeTarget.Deconstruct(out Aw.Sindri.Core.Events.TodoSide! Side, out string! By, out System.DateTimeOffset? DoneAt) -> void
+Aw.Sindri.Core.Todos.TodoConvergeTarget.DoneAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Todos.TodoConvergeTarget.DoneAt.init -> void
+Aw.Sindri.Core.Todos.TodoConvergeTarget.Side.get -> Aw.Sindri.Core.Events.TodoSide!
+Aw.Sindri.Core.Todos.TodoConvergeTarget.Side.init -> void
+Aw.Sindri.Core.Todos.TodoConvergeTarget.TodoConvergeTarget(Aw.Sindri.Core.Events.TodoSide! Side, string! By, System.DateTimeOffset? DoneAt) -> void
+Aw.Sindri.Core.Todos.TodoConvergeTarget.Equals(Aw.Sindri.Core.Todos.TodoConvergeTarget? other) -> bool
+override Aw.Sindri.Core.Todos.TodoConvergeTarget.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoConvergeTarget.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoConvergeTarget.ToString() -> string!
+static Aw.Sindri.Core.Todos.TodoConvergeTarget.operator !=(Aw.Sindri.Core.Todos.TodoConvergeTarget? left, Aw.Sindri.Core.Todos.TodoConvergeTarget? right) -> bool
+static Aw.Sindri.Core.Todos.TodoConvergeTarget.operator ==(Aw.Sindri.Core.Todos.TodoConvergeTarget? left, Aw.Sindri.Core.Todos.TodoConvergeTarget? right) -> bool
+Aw.Sindri.Core.Todos.TodoConvergeTarget.<Clone>$() -> Aw.Sindri.Core.Todos.TodoConvergeTarget!

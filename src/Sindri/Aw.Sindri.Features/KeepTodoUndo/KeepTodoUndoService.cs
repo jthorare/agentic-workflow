@@ -44,7 +44,7 @@ internal sealed class KeepTodoUndoService(TodoPickWrites writes, TodoConverger c
     private async ValueTask<Result<KeepTodoUndoResponse>> Undo(KeepTodoUndoRequest request, TodoPickCaller who, TodoRow row, TodoPick pick, CancellationToken cancellationToken)
     {
         var via = who.Via;
-        var back = await converger.Apply(row, TodoNoteSides.Of(pick.Prior), who.By, who, cancellationToken, pick.Prior.DoneAt).ConfigureAwait(false);
+        var back = await converger.Apply(row, new TodoConvergeTarget(TodoNoteSides.Of(pick.Prior), who.By, pick.Prior.DoneAt), who, cancellationToken).ConfigureAwait(false);
         if (back.IsError)
         {
             return back.Error;

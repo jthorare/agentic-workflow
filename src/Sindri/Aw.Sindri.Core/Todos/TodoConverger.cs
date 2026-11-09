@@ -20,13 +20,22 @@ public sealed class TodoConverger(ILedgerStore ledger, EventFactory events, Todo
     /// <param name="by">The 'by' of each event.</param>
     /// <param name="who">The caller, its 'via' and its lease grant.</param>
     /// <param name="cancellationToken">Cancels the appends.</param>
-    /// <param name="doneAt">The done time a 'todo.done' step keeps (an Undo passes the one the todo had before); null for the time of the event.</param>
     /// <returns>The version the todo is at after the events, or the first error.</returns>
-    public async ValueTask<Result<long>> Apply(TodoRow row, TodoSide target, string by, TodoPickCaller who, CancellationToken cancellationToken, DateTimeOffset? doneAt = null)
+    public ValueTask<Result<long>> Apply(TodoRow row, TodoSide target, string by, TodoPickCaller who, CancellationToken cancellationToken)
+        => Apply(row, new TodoConvergeTarget(target, by, DoneAt: null), who, cancellationToken);
+
+    /// <summary>Appends the events that take <paramref name="row"/> to <paramref name="to"/>'s side, keeping its done time.</summary>
+    /// <param name="row">The todo as it is.</param>
+    /// <param name="to">What it should be, the 'by' of each event and the done time a 'todo.done' step keeps (an Undo passes the one the todo had before; null for the time of the event).</param>
+    /// <param name="who">The caller, its 'via' and its lease grant.</param>
+    /// <param name="cancellationToken">Cancels the appends.</param>
+    /// <returns>The version the todo is at after the events, or the first error.</returns>
+    public async ValueTask<Result<long>> Apply(TodoRow row, TodoConvergeTarget to, TodoPickCaller who, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(row);
-        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(to);
         ArgumentNullException.ThrowIfNull(who);
+        var (target, by, doneAt) = to;
         var planned = Steps(row, target, doneAt);
         if (planned.IsError)
         {
@@ -47,7 +56,7 @@ public sealed class TodoConverger(ILedgerStore ledger, EventFactory events, Todo
         return version;
     }
 
-    /// <summary>The row as the events of <see cref="Apply"/> leave it, for an answer that can't wait for the views.</summary>
+    /// <summary>The row as the events of <see cref="Apply(TodoRow, TodoConvergeTarget, TodoPickCaller, CancellationToken)"/> leave it, for an answer that can't wait for the views.</summary>
     /// <param name="row">The todo before.</param>
     /// <param name="target">What it was taken to.</param>
     /// <param name="version">The version after the events.</param>
