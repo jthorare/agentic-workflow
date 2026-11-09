@@ -49,7 +49,7 @@ for want in "mutation.issueCreate: yes" "mutation.issueUpdate: yes" "mutation.co
   "schema.IssueUpdateInput.conditional: none" "key.scope: read,write" "ratelimit.read.requests_limit: 1500" \
   "ratelimit.read.complexity_limit: 3000000" "ratelimit.read.complexity: 4" \
   "ratelimit.write: skipped (no write key)" "ratelimit.shared_between_keys: unknown" "mention.scanned: 6" "mention.at_name: 2" \
-  "mention.profile_url: 1" "mention.other: 1" "paste this into the Ph0 PR"; do has "read-only: $want" "$out" "$want"; done
+  "mention.profile_url: 1" "mention.other: 1" "history.entries: 3" "history.order: newest-first" "paste this into the Ph0 PR"; do has "read-only: $want" "$out" "$want"; done
 check "read-only: no mutation sent" "$(count '^MUTATION' "$STUB_LOG")" 0
 check "read-only: no cleanup lines" "$(countin '^cleanup' "$out")" 0
 check "read key never in output" "$(countin "$RKEY" "$out")" 0

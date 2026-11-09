@@ -127,15 +127,14 @@ internal sealed partial class TodoNoteSync(SyncDeps deps) : ITodoNoteSync, IDisp
             return SindriErrors.TodoConflict.With(ran.Value.Error ?? $"The note can't be imported now ({ran.Value.State}). Try again.");
         }
 
-        if (ran.Value.Adopted != willTake)
-        {
-            // why: the count was read without the quiet wait, the adopting pass reads after it; the note grew or shrank in between
-            return SindriErrors.TodoConflict.With(string.Create(CultureInfo.InvariantCulture, $"The note had {willTake} lines to import when you checked and {ran.Value.Adopted} when they were taken. Check the note again."));
-        }
-
+        // why: the count was read without the quiet wait, the adopting pass reads after it, so the note can grow or shrink in between. The pass already took
+        // its lines into Sindri, so a refusal here would leave the import half done (#2429): record what was taken and say the number moved.
+        var warning = ran.Value.Adopted == willTake
+            ? null
+            : string.Create(CultureInfo.InvariantCulture, $"The note had {willTake} lines to import when you checked and {ran.Value.Adopted} when they were taken.");
         var events = new NoteEvents(deps, new Dictionary<Core.Ids.TodoId, long>(), string.Empty);
         var recorded = await events.Imported(new TodoNoteImported(place.Vault, place.Note, ran.Value.Adopted, request.By, request.Via), cancellationToken).ConfigureAwait(false);
-        return recorded.IsError ? recorded.Error : new TodoNoteImport(counts, ran.Value.Adopted, DryRun: false);
+        return recorded.IsError ? recorded.Error : new TodoNoteImport(counts, ran.Value.Adopted, DryRun: false, warning);
     }
 
     private async ValueTask<Result<SyncOutcome>> Run(NotePlace place, PassMode mode, CancellationToken cancellationToken)

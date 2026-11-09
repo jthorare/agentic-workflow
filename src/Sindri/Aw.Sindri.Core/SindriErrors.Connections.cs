@@ -45,4 +45,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-CONN-013: the provider rejected the saved cursor; a full re-read is refused unless the owner asks.</summary>
     public static readonly ErrorDefinition ConnectionCursorRejected = new("SND-CONN-013", ErrorKind.Conflict, "The provider rejected the saved poll cursor");
+
+    /// <summary>SND-CONN-101: five run ids in a row, from one delivery's occurrence on, are held by runs of other deliveries; the cursor stays and the next poll tries again (a real event is never dropped).</summary>
+    public static readonly ErrorDefinition ConnectionRunIdsHeld = new("SND-CONN-101", ErrorKind.Conflict, "The run ids for a polled event are all held by other events");
 }

@@ -189,9 +189,24 @@ public static class ProfileRules
             : null;
     }
 
-    private static Error? Workflow(SindriProfile profile) => DurationsAndAgent(profile.Workflow) ?? Effects(profile.Workflow) ?? Judges(profile) ?? ForgeRules.Check(profile.Workflow?.Forge) ?? PrRules.Check(profile.Workflow?.Pr, profile.Workflow?.Docs) ?? Route(profile.Workflow?.Route);
+    private static Error? Workflow(SindriProfile profile) => DurationsAndAgent(profile.Workflow) ?? Effects(profile.Workflow) ?? Judges(profile) ?? ForgeRules.Check(profile.Workflow?.Forge) ?? PrRules.Check(profile.Workflow?.Pr, profile.Workflow?.Docs) ?? RouteAndPoll(profile.Workflow);
+
+    private static Error? RouteAndPoll(WorkflowSettings? workflow) => Route(workflow?.Route) ?? Poll(workflow?.Poll);
 
     private static Error? DurationsAndAgent(WorkflowSettings? workflow) => Durations(workflow) ?? ModelKeyRules.Shape(workflow?.Agent) ?? ForEachRules.Check(workflow?.ForEach);
+
+    /// <summary>The poll keys (#2258, PR 11): 'workflow.poll.intervalSeconds' is at least 30, 'workflow.poll.catchUpPages' is 1 to 100.</summary>
+    private static Error? Poll(PollSettings? poll)
+    {
+        if (poll?.IntervalSeconds is < PollSettings.MinIntervalSeconds)
+        {
+            return Invalid("workflow.poll.intervalSeconds", string.Create(CultureInfo.InvariantCulture, $"{poll.IntervalSeconds} is below the least interval, {PollSettings.MinIntervalSeconds} seconds"));
+        }
+
+        return poll?.CatchUpPages is < 1 or > PollSettings.MaxCatchUpPages
+            ? Invalid("workflow.poll.catchUpPages", string.Create(CultureInfo.InvariantCulture, $"{poll.CatchUpPages} is not between 1 and {PollSettings.MaxCatchUpPages}"))
+            : null;
+    }
 
     /// <summary>The router stub's key (engine P7 plan D8): 'workflow.route.startable' is all or none.</summary>
     private static Error? Route(RouteSettings? route) =>

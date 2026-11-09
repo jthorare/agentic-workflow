@@ -29,6 +29,6 @@ internal sealed class ImportTodoNoteService(ITodoNoteSync sync, ICallerContextAc
         }
 
         var counts = imported.Value.Counts;
-        return new ImportTodoNoteResponse(imported.Value.Imported, counts.CantImport.Count, counts.Open, counts.Done, counts.Other, counts.Importable, counts.CantImport, imported.Value.DryRun);
+        return new ImportTodoNoteResponse(imported.Value.Imported, counts.CantImport.Count, counts.Open, counts.Done, counts.Other, counts.Importable, counts.CantImport, imported.Value.DryRun, imported.Value.Warning);
     }
 }

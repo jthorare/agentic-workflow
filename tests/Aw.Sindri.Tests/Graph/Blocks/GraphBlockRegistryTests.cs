@@ -13,8 +13,8 @@ public sealed class GraphBlockRegistryTests
     {
         var registry = Standard();
 
-        Assert.Equal(["collect", "condition", "for_each", "manual", "notify", "prompt", "schedule"], registry.Types.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
-        Assert.Equal(["manual", "schedule"], registry.Types.Values.Where(t => t.IsTrigger).Select(t => t.Type).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["collect", "condition", "connection_event", "for_each", "manual", "notify", "prompt", "schedule"], registry.Types.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["connection_event", "manual", "schedule"], registry.Types.Values.Where(t => t.IsTrigger).Select(t => t.Type).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }
 
     [Fact]
