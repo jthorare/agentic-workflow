@@ -49,7 +49,7 @@ public sealed class DriftCheckRunAcceptanceTests(SindriTimeSkippingServer server
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    // why: the tick that starts the run is the scheduler's, not the session's: it runs with no caller, so the run's events name the host ('host:sindri' envelope actor, 'service:workflow' payload By), not the launch.
+    // why: the tick that starts the run is the scheduler's, not the session's: it runs with no caller, so GraphMirror records the run's events as 'service:workflow' (envelope actor and payload By), not the launch.
     // The workflow.* writes made through the tools do name the launch. Both are asserted as recorded; a run the session's launch is meant to own would be a product decision, not a test change.
     [Fact]
     public async Task A_workflow_a_session_made_runs_on_its_tick_and_every_event_names_who_wrote_it()
@@ -78,7 +78,7 @@ public sealed class DriftCheckRunAcceptanceTests(SindriTimeSkippingServer server
         Assert.Equal(EventTypes.WorkflowRunStarted, runEvents[0].Envelope.Type);
         Assert.Equal(EventTypes.WorkflowRunFinished, runEvents[^1].Envelope.Type);
         Assert.Equal(8, runEvents.Count(static e => e.Envelope.Type.StartsWith("workflow.node.", StringComparison.Ordinal)));
-        Assert.All(runEvents, e => Assert.Equal(("host:sindri", GraphMirror.By), (e.Envelope.Actor, By(e))));
+        Assert.All(runEvents, static e => Assert.Equal((GraphMirror.By, GraphMirror.By), (e.Envelope.Actor, By(e))));
         Assert.DoesNotContain(runEvents, e => e.Envelope.Actor == actor);
     }
 
