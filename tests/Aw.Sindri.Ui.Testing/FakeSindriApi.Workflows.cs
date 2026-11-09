@@ -128,6 +128,9 @@ internal sealed partial class FakeSindriApi
     /// <summary>POST .../ops's answer.</summary>
     public RouteAnswer ApplyWorkflowOpsAnswer { get; set; } = new(System.Net.HttpStatusCode.OK, """{"slug":"morning-check","revision":3,"specHash":"sha256:x"}""");
 
+    /// <summary>Holds POST .../ops until a test releases it (the call is recorded first).</summary>
+    public TaskCompletionSource? ApplyWorkflowOpsGate { get; set; }
+
     /// <summary>POST .../activate's answer.</summary>
     public RouteAnswer ActivateWorkflowAnswer { get; set; } = new(System.Net.HttpStatusCode.OK, """{"slug":"morning-check","revision":2,"specHash":"sha256:x"}""");
 
@@ -149,14 +152,15 @@ internal sealed partial class FakeSindriApi
     public Task<Result<WorkflowBlockList>> WorkflowBlocks(Uri api, CancellationToken cancellationToken) =>
         Task.FromResult(Answer<WorkflowBlockList>(api, WorkflowRoutes.Blocks(), WorkflowBlocksAnswer));
 
-    public Task<Result<WorkflowOpsApplied>> ApplyWorkflowOps(Uri api, string slug, int baseRevision, string opsJson, CancellationToken cancellationToken)
+    public async Task<Result<WorkflowOpsApplied>> ApplyWorkflowOps(Uri api, string slug, int baseRevision, string opsJson, CancellationToken cancellationToken)
     {
         lock (_gate)
         {
             _appliedOps.Add(new AppliedOps(slug, baseRevision, opsJson));
         }
 
-        return Task.FromResult(Answer<WorkflowOpsApplied>(api, WorkflowRoutes.Ops(slug), ApplyWorkflowOpsAnswer));
+        await WaitFor(ApplyWorkflowOpsGate, cancellationToken).ConfigureAwait(false);
+        return Answer<WorkflowOpsApplied>(api, WorkflowRoutes.Ops(slug), ApplyWorkflowOpsAnswer);
     }
 
     public async Task<Result<WorkflowActivated>> ActivateWorkflow(Uri api, string slug, CancellationToken cancellationToken)
