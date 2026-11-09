@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Kernel.Ids;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
@@ -5,9 +6,12 @@ using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Items.Vocabulary;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Views;
+using Aw.Sindri.Host;
 using Aw.Sindri.Host.Server;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Server;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.Views;
 
@@ -18,6 +22,7 @@ namespace Aw.Sindri.Tests.Views;
 public sealed class ProjectorRetiredKindsTests
 {
     private static readonly ItemId _item = ItemId.From("ITM-" + new string('1', 32));
+    private static readonly string _stateRoot = Path.Combine(Path.GetTempPath(), "aw-sindri-di-test");
     private readonly SliceHarness _h = new();
     private readonly InMemoryViewStore _views = new(SliceHarness.Json);
     private readonly ListLogger<Projector> _log = new();
@@ -47,11 +52,7 @@ public sealed class ProjectorRetiredKindsTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_rebuild_over_an_old_ledger_ends_with_no_stall()
     {
-        await Append(EventTypes.ItemCreated, new ItemCreated(_h.Ids.New<CommandId>(), _item, "old work", Repo: null, Link: null, Body: null, Owner: null), "c1");
-        await Append(EventTypes.WorkflowStarted, Dummy(), "w1", static _ => """{"instance":"ITM-1/step/1","from":"","to":"produce","trigger":"start","outcome":null,"run":null}""");
-        await Append("line.phaseChanged", Dummy(), "l1", static _ => """{"line":"L-1","phase":"build","to":"review"}""");
-        await Append(EventTypes.ItemLinked, new ItemLinked(_h.Ids.New<CommandId>(), _item, RecordKey.From("linear:issue/abc-123"), ItemAlias.From("ENG-142")), "k1");
-        await Append("recipe.approved", Dummy(), "r1", static _ => """{"id":"workflow.step","version":1,"hash":"sha256:aaaa"}""");
+        var head = await AppendOldLedger();
         var progress = new ProjectorProgress(_h.Clock);
         var projector = new Projector(new CountingLedgerReader(_h.Store), _views, Projections(), progress, _h.Callers, _h.Clock, _log);
 
@@ -59,9 +60,69 @@ public sealed class ProjectorRetiredKindsTests
         var pass = await projector.CatchUp(Token);
 
         Assert.Equal(ProjectorPass.CaughtUp, pass);
-        Assert.True(progress.Current is { Cursor: 5, LedgerHead: 5, Stalled: false, Rebuilding: false });
+        Assert.True(progress.Current is { Stalled: false, Rebuilding: false } && progress.Current.Cursor == head && progress.Current.LedgerHead == head);
         var link = Assert.Single((await _views.List<ItemLinkRow>(ViewNames.ItemLinks, Token)).Value);
         Assert.Equal((_item, "ENG-142"), (link.Item, link.Ref));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_rebuild_over_an_old_ledger_through_every_registered_projection_ends_with_no_stall()
+    {
+        var head = await AppendOldLedger();
+        using var provider = Compose().BuildServiceProvider();
+        var progress = new ProjectorProgress(_h.Clock);
+        var projector = new Projector(new CountingLedgerReader(_h.Store), _views, provider.GetServices<IProjection>().ToList(), progress, _h.Callers, _h.Clock, _log);
+
+        progress.RequestRebuild();
+        var pass = await projector.CatchUp(Token);
+
+        Assert.Equal(ProjectorPass.CaughtUp, pass);
+        Assert.True(progress.Current is { Stalled: false, Rebuilding: false } && progress.Current.Cursor == head && progress.Current.LedgerHead == head);
+    }
+
+    private static IServiceCollection Compose()
+        => Composition.Compose(
+            new ServiceCollection(),
+            name => name switch { "AW_STATE_DIR" => _stateRoot, _ => null },
+            new FakeTimeProvider());
+
+    // every retired kind the engines wrote, at least once, between an item.created and an item.linked; returns the ledger head
+    private async Task<long> AppendOldLedger()
+    {
+        const string step = "ITM-1/step/1";
+        static string Row(string from, string to, string trigger, string? outcome) =>
+            "{\"instance\":\"" + step + "\",\"from\":\"" + from + "\",\"to\":\"" + to + "\",\"trigger\":\"" + trigger + "\",\"outcome\":" + (outcome is null ? "null" : "\"" + outcome + "\"") + ",\"run\":null}";
+        var hash = "sha256:" + new string('a', 64);
+        (string Type, string Json)[] rows =
+        [
+            (EventTypes.WorkflowStarted, Row("", "produce", "start", null)),
+            (EventTypes.WorkflowTransition, Row("produce", "review", "report", null)),
+            (EventTypes.WorkflowRefused, Row("produce", "produce", "report", null)),
+            (EventTypes.WorkflowNotified, Row("review", "review", "notify", null)),
+            (EventTypes.WorkflowShifted, Row("review", "review", "shift", null)),
+            (EventTypes.WorkflowExpired, Row("review", "expired", "timer", "expired")),
+            (EventTypes.WorkflowHeavy, Row("review", "review", "heavy", null)),
+            (EventTypes.WorkflowInjection, Row("review", "review", "injection", null)),
+            (EventTypes.WorkflowRetired, Row("review", "retired", "retire", "retired")),
+            (EventTypes.WorkflowRetireDone, Row("retired", "retired", "retire.done", "retired")),
+            (EventTypes.RecipeRegistered, "{\"id\":\"workflow.step\",\"version\":1,\"hash\":\"" + hash + "\"}"),
+            (EventTypes.RecipeApproved, "{\"id\":\"workflow.step\",\"version\":1,\"hash\":\"" + hash + "\"}"),
+            (EventTypes.RecipeRevoked, "{\"id\":\"workflow.step\",\"version\":1,\"hash\":\"" + hash + "\"}"),
+            (EventTypes.RecipeRegistrationCompleted, "{\"registered\":1}"),
+            ("line.phaseChanged", "{\"line\":\"L-1\",\"phase\":\"build\",\"to\":\"review\"}"),
+            ("scope.frozen", "{\"packet\":\"P-1\",\"hash\":\"sha256:bbbb\"}"),
+        ];
+
+        await Append(EventTypes.ItemCreated, new ItemCreated(_h.Ids.New<CommandId>(), _item, "old work", Repo: null, Link: null, Body: null, Owner: null), "c1");
+        var n = 0;
+        foreach (var (type, json) in rows)
+        {
+            n++;
+            await Append(type, Dummy(), "r" + n.ToString(CultureInfo.InvariantCulture), _ => json);
+        }
+
+        await Append(EventTypes.ItemLinked, new ItemLinked(_h.Ids.New<CommandId>(), _item, RecordKey.From("linear:issue/abc-123"), ItemAlias.From("ENG-142")), "k1");
+        return rows.Length + 2;
     }
 
     private IReadOnlyList<IProjection> Projections() =>
