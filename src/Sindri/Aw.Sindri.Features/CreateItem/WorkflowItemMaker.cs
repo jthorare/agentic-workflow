@@ -26,8 +26,8 @@ internal sealed class WorkflowItemMaker(CreateItemService service, ICallerContex
             return parsed.Error;
         }
 
-        var request = parsed.Value;
         var run = item.Run;
+        var request = parsed.Value with { RunRecord = RecordKey.TryFrom("sindri:run/" + run.Value, out var runRecord) ? runRecord : null };
         using var entered = callers.EnterService("workflow");
         var made = await service.Handle(request, cancellationToken).ConfigureAwait(false);
         if (made.IsError)

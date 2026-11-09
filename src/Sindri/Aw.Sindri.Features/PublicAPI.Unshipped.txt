@@ -5314,3 +5314,5 @@ static Aw.Sindri.Features.GetConnection.SignInFailureView.operator !=(Aw.Sindri.
 static Aw.Sindri.Features.GetConnection.SignInFailureView.operator ==(Aw.Sindri.Features.GetConnection.SignInFailureView? left, Aw.Sindri.Features.GetConnection.SignInFailureView? right) -> bool
 Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Warning.get -> string?
 Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Warning.init -> void
+Aw.Sindri.Features.CreateItem.CreateItemRequest.RunRecord.get -> Aw.Sindri.Core.Ids.RecordKey?
+Aw.Sindri.Features.CreateItem.CreateItemRequest.RunRecord.init -> void

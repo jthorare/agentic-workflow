@@ -43,7 +43,7 @@ public sealed class WorkflowItemMakerTests
         var made = await Maker().Create(new ItemToCreate(_run, "  Fix login  ", "web", "details", "linear:issue/abc-1"), Token);
 
         Assert.True(made.IsSuccess, made.IsError ? made.Error.ToString() : null);
-        var recorded = Assert.Single(_h.Store.Events);
+        var recorded = Assert.Single(_h.Store.Events, static e => e.Envelope.Type == EventTypes.ItemCreated);
         Assert.Equal(EventTypes.ItemCreated, recorded.Envelope.Type);
         Assert.Equal(made.Value, recorded.Item);
         Assert.Equal(made.Value, (await _runs.Get(_run, Token)).Value.ItemId?.Value);   // the run is linked to its item
@@ -74,7 +74,7 @@ public sealed class WorkflowItemMakerTests
         var made = await Maker().Create(new ItemToCreate(_run, "Loose end", Repo: null, Body: null, LinearIssue: null), Token);
 
         Assert.True(made.IsSuccess, made.IsError ? made.Error.ToString() : null);
-        Assert.Null(_h.Events.Payload<ItemCreated>(Assert.Single(_h.Store.Events)).Value.Repo);
+        Assert.Null(_h.Events.Payload<ItemCreated>(Assert.Single(_h.Store.Events, static e => e.Envelope.Type == EventTypes.ItemCreated)).Value.Repo);
     }
 
     [Fact, Trait("Lane", "unit")]
