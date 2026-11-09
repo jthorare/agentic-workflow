@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Avalonia;
 using Avalonia.Automation;
+using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Aw.Sindri.Ui.ViewModels.Workflows;
@@ -20,6 +21,8 @@ internal sealed partial class GraphCanvas : Control
     /// <summary>The largest zoom.</summary>
     internal const double MaxZoom = 2;
 
+    private static readonly Point _defaultPan = new(24, 24);
+
     /// <summary>The graph drawn.</summary>
     internal static readonly StyledProperty<WorkflowGraphViewModel?> GraphProperty = AvaloniaProperty.Register<GraphCanvas, WorkflowGraphViewModel?>(nameof(Graph));
 
@@ -27,8 +30,9 @@ internal sealed partial class GraphCanvas : Control
     internal static readonly StyledProperty<double> ZoomProperty = AvaloniaProperty.Register<GraphCanvas, double>(nameof(Zoom), 1, coerce: (_, v) => Math.Clamp(v, MinZoom, MaxZoom));
 
     /// <summary>Where the world's origin sits in this control.</summary>
-    internal static readonly StyledProperty<Point> PanProperty = AvaloniaProperty.Register<GraphCanvas, Point>(nameof(Pan), new Point(24, 24));
+    internal static readonly StyledProperty<Point> PanProperty = AvaloniaProperty.Register<GraphCanvas, Point>(nameof(Pan), _defaultPan);
 
+    private const double ViewMargin = 24;
     private const double MinHandle = 40;
     private const double ZoomStep = 1.1;
 
@@ -90,6 +94,18 @@ internal sealed partial class GraphCanvas : Control
         var world = ToWorld(point);
         return Graph?.Nodes.LastOrDefault(n => WorldRect(n).Contains(world))?.Id;
     }
+
+    /// <summary>How many times the canvas has drawn: a test reads it to see that a theme switch redrew.</summary>
+    internal int RenderCount { get; private set; }
+
+    /// <summary>Initializes a new instance of the <see cref="GraphCanvas"/> class.</summary>
+    public GraphCanvas()
+    {
+        ActualThemeVariantChanged += (_, _) => InvalidateVisual();   // the brushes are looked up while drawing, so a theme switch needs a new pass
+    }
+
+    /// <inheritdoc/>
+    protected override AutomationPeer OnCreateAutomationPeer() => new GraphCanvasAutomationPeer(this);
 
     /// <inheritdoc/>
     protected override Size MeasureOverride(Size availableSize) =>
@@ -178,16 +194,43 @@ internal sealed partial class GraphCanvas : Control
             _ => false,
         };
 #pragma warning restore IDE0072
+        if (e.Handled && graph.SelectedId is { } id)
+        {
+            ScrollIntoView(id);
+        }
+    }
+
+    /// <summary>Pans the least that brings a node's card fully into view, with a margin; does nothing when it is already inside.</summary>
+    /// <param name="id">The node's id.</param>
+    internal void ScrollIntoView(string id)
+    {
+        if (NodeRect(id) is not { } card || (new Rect(Bounds.Size).Contains(card.TopLeft) && new Rect(Bounds.Size).Contains(card.BottomRight)))
+        {
+            return;
+        }
+
+        static double Shift(double near, double far, double size) =>
+            near < 0 || far - near > size ? ViewMargin - near : far > size ? size - ViewMargin - far : 0;
+
+        Pan = new Point(Pan.X + Shift(card.Left, card.Right, Bounds.Width), Pan.Y + Shift(card.Top, card.Bottom, Bounds.Height));
     }
 
     private void OnGraphChanged(WorkflowGraphViewModel? old, WorkflowGraphViewModel? graph)
     {
         old?.PropertyChanged -= OnGraphProperty;
 
+        // A live refresh reads the same workflow again and keeps the view; another workflow (or one after none) starts at the corner, unzoomed.
+        if (old is null || graph is null || !string.Equals(old.Slug, graph.Slug, StringComparison.Ordinal))
+        {
+            Zoom = 1;
+            Pan = _defaultPan;
+        }
+
         _watched = graph;
         graph?.PropertyChanged += OnGraphProperty;
 
         AutomationProperties.SetName(this, graph?.Name ?? string.Empty);
+        (ControlAutomationPeer.FromElement(this) as GraphCanvasAutomationPeer)?.Refresh();
         InvalidateVisual();
     }
 

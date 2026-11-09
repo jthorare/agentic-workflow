@@ -219,6 +219,44 @@ public sealed class WorkflowsWritesTests
     }
 
     [Fact]
+    public async Task A_failed_runs_read_hides_its_failure_line_while_it_reads_again()
+    {
+        _ = _f.Server.WorkflowRunsAnswers.Remove(Slug);
+        var page = await OnRuns();
+        Assert.True(page.Runs.IsFailed);
+        var gate = new TaskCompletionSource();
+        _f.Server.WorkflowGates[Slug] = gate;
+        _f.ServeRuns("list-three");
+
+        var retrying = page.RetryRuns(Token);
+
+        Assert.Equal((true, false), (page.Runs.IsReading, page.Runs.IsFailed));
+        gate.SetResult();
+        await retrying;
+        Assert.False(page.Runs.IsFailed);
+    }
+
+    [Fact]
+    public async Task A_failed_run_read_hides_its_failure_line_while_it_reads_again()
+    {
+        _ = _f.Server.WorkflowRunAnswers.Remove(RunId);
+        var page = await _f.Shown(Token);
+        await page.OpenWorkflow(Slug, Token);
+        await page.OpenRun(RunId, Token);
+        Assert.True(page.Run.IsFailed);
+        var gate = new TaskCompletionSource();
+        _f.Server.WorkflowRunGates[RunId] = gate;
+        _f.ServeRun("finished");
+
+        var retrying = page.RetryRun(Token);
+
+        Assert.Equal((true, false), (page.Run.IsReading, page.Run.IsFailed));
+        gate.SetResult();
+        await retrying;
+        Assert.False(page.Run.IsFailed);
+    }
+
+    [Fact]
     public async Task A_failed_run_read_offers_Try_again_that_reads_again()
     {
         _ = _f.Server.WorkflowRunAnswers.Remove(RunId);
@@ -247,5 +285,27 @@ public sealed class WorkflowsWritesTests
 
         Assert.Equal((ok, attention, error), (row.IsOk, row.IsAttention, row.IsError));
         Assert.Contains(" ", row.ChipText, StringComparison.Ordinal);   // a glyph and a word
+    }
+
+    [Theory]
+    [InlineData("succeeded", true, false, false)]
+    [InlineData("waiting", false, true, false)]
+    [InlineData("failed", false, false, true)]
+    [InlineData("skipped", false, false, false)]
+    public void A_node_runs_chip_has_a_tone_besides_its_glyph_and_word(string status, bool ok, bool attention, bool error)
+    {
+        var run = new NodeRunViewModel(new NodeRunView("n", 0, status, Input: null, Output: null, Truncated: false, Error: null), 1);
+
+        Assert.Equal((ok, attention, error), (run.IsOk, run.IsAttention, run.IsError));
+    }
+
+    [Theory]
+    [InlineData(1, true)]
+    [InlineData(null, false)]
+    public void A_workflows_chip_is_ok_only_while_it_is_on(int? active, bool ok)
+    {
+        var row = new WorkflowRowViewModel(new WorkflowRowView("a", "A", active, 1, "owner", Now), _f.Clock);
+
+        Assert.Equal((ok, false, false), (row.IsOk, row.IsAttention, row.IsError));
     }
 }

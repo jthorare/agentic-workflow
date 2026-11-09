@@ -49,7 +49,7 @@
                       <TextBlock Classes="body-strong" Text="{Binding NameText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
                     </Button>
                     <Border Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding StateText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-                      <TextBlock Classes="body-strong mono" Text="{Binding StateText}" AutomationProperties.AccessibilityView="Raw" />
+                      <TextBlock Classes="body-strong mono wf-chip" Classes.ok="{Binding IsOk}" Classes.attention="{Binding IsAttention}" Classes.error="{Binding IsError}" Text="{Binding StateText}" AutomationProperties.AccessibilityView="Raw" />
                     </Border>
                     <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" Margin="0,0,0,6" AutomationProperties.AccessibilityView="Raw">
                       <TextBlock Classes="caption subtle" Text="{Binding RevisionText}" />
@@ -179,7 +179,7 @@
                         <StackPanel Spacing="4" Margin="0,4">
                           <StackPanel Orientation="Horizontal" Spacing="12" AutomationProperties.AccessibilityView="Raw">
                             <TextBlock Classes="body-strong" Text="{Binding TitleText}" />
-                            <TextBlock Classes="body-strong mono" Text="{Binding ChipText}" />
+                            <TextBlock Classes="body-strong mono wf-chip" Classes.ok="{Binding IsOk}" Classes.attention="{Binding IsAttention}" Classes.error="{Binding IsError}" Text="{Binding ChipText}" />
                           </StackPanel>
                           <TextBlock Classes="caption" Text="{Binding ErrorText}" IsVisible="{Binding HasError}" TextWrapping="Wrap" />
                           <TextBlock Classes="caption subtle" Text="{Binding TruncatedText}" IsVisible="{Binding IsTruncated}" TextWrapping="Wrap" />
