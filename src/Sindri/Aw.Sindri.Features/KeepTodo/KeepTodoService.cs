@@ -34,6 +34,9 @@ internal sealed class KeepTodoService(TodoPickWrites writes, TodoConverger conve
         }
 
         var row = read.Value;
+
+        // why: the second-keep guard (window.Find) and the row read above are only safe because every command runs one at a time through CommandGate. Whoever moves the sync service's writes
+        // outside the gate must give this pick a version key of its own.
         if (row.Conflict is not { } conflict || window.Find(request.Id, who.Value.Now) is not null)
         {
             return SindriErrors.TodoNothingToPick.With("That todo has nothing to sort out.");

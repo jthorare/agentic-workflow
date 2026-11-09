@@ -13,6 +13,8 @@ public sealed class TodoPickWindow
     public static readonly TimeSpan Span = TimeSpan.FromSeconds(10);
 
     private readonly ConcurrentDictionary<TodoId, TodoPick> _picks = new();
+    // why: one slot, because there is one hold. This and Find's second-keep guard rely on every command running one at a time through CommandGate; whoever moves the sync service's writes outside
+    // the gate must give these picks a version key of their own.
     private TodoHoldPick? _hold;
     private PartialApply? _partial;
 
