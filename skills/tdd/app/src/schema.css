@@ -349,3 +349,123 @@ dialog.drawer.expanded .dg-cap { flex: none; }
   box-shadow: 0 1px 2px var(--shadow);
 }
 .hs.has-table:hover::after, .hs.has-table:focus-visible::after { color: var(--plate); background: var(--sw-blue-line); }
+.hs.tnode::after { content: none; }
+
+/* ---------------------------------------------------------------- table cards over schema-diagram boxes (D26, TableNode.tsx)
+   The card covers its box exactly and scales with the drawing: .hs.tnode is a size container and .tn-in sets 1em to
+   16 px of the drawing's own coordinates (--fs, from the box's width in drawing px), so every size below is in em and
+   matches the line heights TableNode.tsx fits the column list with. The diagram plate stays light in both themes, so
+   the cards use the theme-invariant plate and swatch tokens (dark ink on light fills), as the drawing does. */
+.hs.tnode {
+  --tn-line: var(--sw-grey-line); --tn-fill: var(--sw-grey-fill);
+  --tn-ink: var(--media);
+  --tn-mute: color-mix(in srgb, var(--media) 68%, var(--plate));
+  --tn-body: color-mix(in srgb, var(--tn-fill) 26%, var(--plate));
+  --tn-up-ink: color-mix(in srgb, var(--sw-red-line) 60%, var(--media));
+  --tn-up-bg: color-mix(in srgb, var(--sw-red-fill) 85%, var(--plate));
+  --tn-down-ink: color-mix(in srgb, var(--sw-green-line) 62%, var(--media));
+  --tn-down-bg: color-mix(in srgb, var(--sw-green-fill) 90%, var(--plate));
+  --tn-fk-ink: color-mix(in srgb, var(--sw-blue-line) 66%, var(--media));
+  --fs: 4; /* 1em as a percent of the card's width; TableNode.tsx sets it per card from the drawing's own size */
+  container-type: size; border: 0; border-radius: 0; color: var(--tn-ink); background: none; text-decoration: none;
+}
+.hs.tnode.tone-green { --tn-line: var(--sw-green-line); --tn-fill: var(--sw-green-fill); }
+.hs.tnode.tone-blue { --tn-line: var(--sw-blue-line); --tn-fill: var(--sw-blue-fill); }
+.hs.tnode.tone-amber { --tn-line: var(--sw-amber-line); --tn-fill: var(--sw-amber-fill); }
+.hs.tnode.tone-red { --tn-line: var(--sw-red-line); --tn-fill: var(--sw-red-fill); }
+.hs.tnode.tone-violet { --tn-line: var(--sw-violet-line); --tn-fill: var(--sw-violet-fill); }
+.hs.tnode:hover, .hs.tnode:focus-visible { background: none; }
+.tn-in {
+  font-size: calc(var(--fs) * 1cqw); box-sizing: border-box; display: flex; flex-direction: column; width: 100%; height: 100%;
+  padding: 0 .65em .4em; overflow: hidden; text-align: left; line-height: 1.4;
+  background: var(--tn-body); border: .125em solid var(--tn-line); border-radius: .45em;
+  box-shadow: 0 .1em .5em color-mix(in srgb, var(--media) 14%, transparent);
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+.hs.tnode.dashed .tn-in { border-style: dashed; }
+.hs.tnode:hover .tn-in, .hs.tnode:focus-visible .tn-in { border-color: var(--accent); box-shadow: 0 0 0 .2em color-mix(in srgb, var(--accent) 30%, transparent), 0 .3em 1em color-mix(in srgb, var(--media) 18%, transparent); }
+
+.tn-head {
+  flex: none; display: flex; align-items: center; gap: .45em; height: 2em; box-sizing: border-box; min-width: 0;
+  margin: 0 -.65em .3em; padding: 0 .65em; white-space: nowrap;
+  background: var(--tn-fill); border-bottom: .0625em solid color-mix(in srgb, var(--tn-line) 45%, var(--tn-fill));
+}
+.tn-name { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font: 700 1.15em/1 var(--font-mono); color: var(--tn-ink); letter-spacing: -0.01em; }
+.tn-chip {
+  flex: none; font: 650 .66em/1 var(--font-body); padding: .3em .6em; border-radius: var(--r-pill);
+  color: var(--tn-ink); background: var(--plate); border: .1em solid var(--sw-grey-line);
+}
+.tn-chip.new { color: var(--tn-down-ink); border-color: var(--sw-green-line); }
+.tn-chip.changed { color: color-mix(in srgb, var(--sw-orange-line) 62%, var(--media)); border-color: var(--sw-amber-line); }
+.tn-desc { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font: 400 .78em/1.2 var(--font-body); color: var(--tn-mute); }
+.tn-hidden { flex: none; margin-left: auto; font: 650 .7em/1 var(--font-mono); color: var(--tn-mute); }
+
+.tn-cols { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.tn-col {
+  flex: none; display: flex; align-items: center; gap: .4em; height: 1.4em; min-width: 0; white-space: nowrap;
+  margin: 0 -.35em; padding: 0 .35em; border-radius: .25em;
+}
+.tn-col.key { font-size: 1.1em; }
+.tn-cn { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; padding: 0; background: none; font: 500 .9em/1 var(--font-mono); color: var(--tn-ink); }
+.tn-col.key .tn-cn { font-weight: 700; }
+.tn-k {
+  flex: none; font: 700 .6em/1 var(--font-mono); font-style: normal; letter-spacing: .03em; padding: .3em .4em; border-radius: .3em;
+  color: var(--tn-ink); background: color-mix(in srgb, var(--sw-amber-line) 70%, var(--plate)); border: .08em solid var(--sw-amber-line);
+}
+.tn-k.fk { color: var(--tn-fk-ink); background: var(--sw-blue-fill); border-color: color-mix(in srgb, var(--sw-blue-line) 55%, var(--sw-blue-fill)); }
+.tn-ref { flex: 0 1 auto; min-width: 2em; overflow: hidden; text-overflow: ellipsis; font: 500 .74em/1 var(--font-mono); color: var(--tn-fk-ink); }
+.tn-ty { flex: 0 3 auto; min-width: 0; margin-left: auto; padding-left: .4em; overflow: hidden; text-overflow: ellipsis; font: 400 .72em/1 var(--font-mono); color: var(--tn-mute); }
+.tn-tag { flex: none; font: 700 .58em/1 var(--font-body); text-transform: uppercase; letter-spacing: .05em; padding: .25em .4em; border-radius: .25em; color: var(--tn-ink); background: var(--plate); }
+.tn-col.ch-new { background: var(--tn-down-bg); box-shadow: inset .2em 0 0 var(--sw-green-line); }
+.tn-col.ch-changed { background: color-mix(in srgb, var(--sw-amber-fill) 85%, var(--sw-amber-line)); box-shadow: inset .2em 0 0 var(--sw-amber-line); }
+.tn-col.ch-dropped { background: var(--tn-up-bg); box-shadow: inset .2em 0 0 var(--sw-red-line); }
+.tn-col.ch-dropped .tn-cn { text-decoration: line-through; color: var(--tn-mute); }
+.tn-tag.new { color: var(--tn-down-ink); }
+.tn-tag.changed { color: color-mix(in srgb, var(--sw-orange-line) 62%, var(--media)); }
+.tn-tag.dropped { color: var(--tn-up-ink); }
+.tn-more { flex: none; height: 1.5em; font: 500 .8em/1.5 var(--font-body); color: var(--tn-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* the sizing strip: rows, cols, writes, cost. Each tile: icon and label, the production value (or "not measured"), then
+   the expected change after the design as a pill (red rises, green falls or stays, grey when the card states no
+   direction; "not estimated" when absent). Rows are .962em + 1.25em + 1.118em, padding .4em, borders .125em. */
+.tn-strip { flex: none; margin-top: .3em; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .3em; }
+.tn-tile {
+  display: flex; flex-direction: column; min-width: 0; padding: .2em .34em; border-radius: .35em; cursor: help;
+  background: var(--plate); border: .0625em solid color-mix(in srgb, var(--tn-line) 55%, var(--plate));
+}
+.tn-tile:hover { border-color: var(--tn-line); }
+.tn-l {
+  display: flex; align-items: center; gap: .35em; height: 1.3em; min-width: 0; white-space: nowrap; overflow: hidden;
+  font: 750 .74em/1 var(--font-body); text-transform: uppercase; letter-spacing: .07em; color: var(--tn-mute);
+}
+.tn-ico { flex: none; width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.tn-t1 { display: flex; align-items: baseline; gap: .3em; height: 1.25em; line-height: 1.25em; min-width: 0; white-space: nowrap; }
+.tn-v { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font: 750 1em/1.25 var(--font-body); color: var(--tn-ink); font-variant-numeric: tabular-nums; }
+.tn-v.none { font-weight: 500; font-style: italic; font-size: .8em; color: var(--tn-mute); padding-right: .2em; }
+.tn-u { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; font: 400 .76em/1.25 var(--font-body); color: var(--tn-mute); }
+.tn-t2 { display: flex; align-items: center; height: 1.3em; font-size: .86em; min-width: 0; white-space: nowrap; }
+.tn-d {
+  flex: 0 1 auto; min-width: 0; display: inline-flex; align-items: center; gap: .25em; overflow: hidden;
+  padding: .12em .45em; border-radius: var(--r-pill); font: 650 1em/1 var(--font-body); color: var(--tn-ink);
+  background: color-mix(in srgb, var(--sw-grey-fill) 80%, var(--sw-grey-line));
+}
+.tn-d b { flex: none; font-weight: 750; font-variant-numeric: tabular-nums; }
+.tn-du { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 450; }
+.tn-d.up { color: var(--tn-up-ink); background: var(--tn-up-bg); }
+.tn-d.down, .tn-d.same { color: var(--tn-down-ink); background: var(--tn-down-bg); }
+.tn-d.none { background: none; padding: 0 .2em 0 0; font-size: .94em; font-weight: 500; font-style: italic; color: var(--tn-mute); }
+.tn-dir-ico { flex: none; width: .78em; height: .78em; fill: currentColor; stroke: currentColor; stroke-width: 1.2; stroke-linejoin: round; }
+.tn-d.same .tn-dir-ico, .tn-d.unknown .tn-dir-ico { fill: none; stroke-width: 1.5; stroke-linecap: round; }
+
+/* the tile tooltip (Overlays.tsx TipPop): page-sized text, placed by the tile like the hotspot card */
+.tn-tip {
+  position: absolute; z-index: 31; display: none; width: min(340px, 86vw); padding: 9px 12px; pointer-events: none;
+  background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: var(--r-md);
+  box-shadow: 0 10px 30px var(--shadow); font-size: var(--fs-xs); line-height: 1.45; text-align: left;
+}
+.tn-tip.show { display: grid; gap: 3px; }
+.tn-tip b { font-size: var(--fs-sm); }
+.tn-tip .k { color: var(--muted); font-weight: 600; }
+.tn-tip .up { color: var(--danger); font-weight: 600; }
+.tn-tip .down, .tn-tip .same { color: var(--good); font-weight: 600; }
+

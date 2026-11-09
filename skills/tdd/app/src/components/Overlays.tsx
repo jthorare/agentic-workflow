@@ -1,5 +1,6 @@
 // The overlays the delegation in App drives through the bus: RefPop (hover card), RefPanel (mobile-sized dialog),
-// HsPop (diagram hotspot card), Lightbox (shot zoom), plus the schema worker's SchemaDrawer. All render empty on the
+// HsPop (diagram hotspot card), TipPop (sizing-tile tooltip on table cards), Lightbox (shot zoom), plus the schema
+// worker's SchemaDrawer. All render empty on the
 // server and on the first client render, so hydration matches; content arrives only through bus events.
 import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { useContent } from "../lib/context";
@@ -200,6 +201,58 @@ export function HsPop() {
   );
 }
 
+/** The sizing-tile tooltip on schema-diagram table cards (D26): any [data-tip] element under the pointer shows its
+ *  lines (title, then "Label: text") at page size beside it, and hides the hotspot card while it shows. The server
+ *  render also puts the text in `title` so a page read without JavaScript keeps a native tooltip; it is removed here. */
+export function TipPop() {
+  const pop = useRef<HTMLDivElement>(null);
+  const [el, setEl] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    document.querySelectorAll<HTMLElement>("[data-tip][title]").forEach((e) => e.removeAttribute("title"));
+    let cur: HTMLElement | null = null, timer = 0;
+    const over = (e: PointerEvent) => {
+      if (e.pointerType === "touch") return;
+      const t = e.target instanceof Element ? (e.target.closest("[data-tip]") as HTMLElement | null) : null;
+      if (t === cur) return;
+      cur = t;
+      clearTimeout(timer);
+      if (t) timer = window.setTimeout(() => { bus.emit("hs", { el: null }); setEl(t); }, 90);
+      else timer = window.setTimeout(() => setEl(null), 90);
+    };
+    const hide = () => { clearTimeout(timer); cur = null; setEl(null); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") hide(); };
+    document.addEventListener("pointerover", over);
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("scroll", hide, { passive: true });
+    const offTable = bus.on("table", hide);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("pointerover", over);
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("scroll", hide);
+      offTable();
+    };
+  }, []);
+  useLayoutEffect(() => {
+    if (el && pop.current) place(pop.current, el.getBoundingClientRect(), 6);
+  }, [el]);
+  const lines = (el?.dataset.tip || "").split("\n").filter(Boolean);
+  return (
+    <div className={cx("tn-tip", el && "show")} ref={pop} role="tooltip">
+      {lines.map((l, i) => {
+        if (!i) return <b key={i}>{l}</b>;
+        const m = /^([^:]{1,40}):\s(.*)$/.exec(l);
+        if (!m) return <span key={i}>{l}</span>;
+        const d = /\((rises|falls|stays the same)\)$/.exec(m[2]);
+        const tone = d ? (d[1] === "rises" ? "up" : d[1] === "falls" ? "down" : "same") : "";
+        return (
+          <span key={i}><span className="k">{m[1]}:</span> {d ? <>{m[2].slice(0, d.index)}<span className={tone}>({d[1]})</span></> : m[2]}</span>
+        );
+      })}
+    </div>
+  );
+}
+
 /** Click a mock to see it large: scrim plus figure.shot.big; Esc, a click on it or on the scrim closes. */
 export function Lightbox() {
   const [shot, setShot] = useState<{ src: string; alt: string; caption: string } | null>(null);
@@ -240,6 +293,7 @@ export function Overlays() {
       <Guard name="reference card"><RefPop /></Guard>
       <Guard name="reference panel"><RefPanel /></Guard>
       <Guard name="hotspot card"><HsPop /></Guard>
+      <Guard name="sizing tooltip"><TipPop /></Guard>
       <Guard name="lightbox"><Lightbox /></Guard>
       <Guard name="schema drawer"><SchemaDrawer /></Guard>
     </>

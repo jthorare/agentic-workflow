@@ -1,5 +1,5 @@
 // Schema drawer harness (D7): renders a standalone page for screenshots and interaction checks. The page holds the
-// packet's schema diagram (with its table hotspots and their "rows" badges) and the real <SchemaDrawer/>, server-rendered
+// packet's schema diagram (its table boxes drawn as table cards, D26) and the real <SchemaDrawer/>, server-rendered
 // closed and hydrated by a bundled client, styled by templates/tdd-system/tdd.css + src/schema.css exactly as the
 // artifact page is.
 //
@@ -21,6 +21,7 @@ import { pathToFileURL } from "node:url";
 import { renderToStaticMarkup, renderToString } from "react-dom/server";
 import { ContentCtx } from "../src/lib/context";
 import { SchemaDrawer } from "../src/components/SchemaDrawer";
+import { TableNode } from "../src/components/TableNode";
 import { cx } from "../src/lib/raw";
 import type { Content, Hotspot, Node } from "../src/types";
 
@@ -100,15 +101,18 @@ function findDiagram(n: any): Node | null {
   return null;
 }
 
-/** The same figure markup Diagram.tsx renders (classes from tdd.css), static, so the harness owns no app-core file. */
+/** The same figure markup Diagram.tsx renders (classes from tdd.css), static, so the harness owns no app-core file:
+ *  a box whose table has a schema card is that table's card (TableNode, D26), any other box a plain hotspot. */
 function Fig({ n, base }: { n: Node; base: string }) {
+  const natW = Number(n.width) || 1600, natH = Number(n.height) || natW / 2;
+  const card = (h: Hotspot) => (h.table ? content.schema.find((t) => t.id === h.table || t.table === h.table) : undefined);
   return (
     <figure className={cx("diagram", n.fit && "fit")} id={n.id}>
       <div className="bar"><span className="fig-title" dangerouslySetInnerHTML={{ __html: n.title }} /></div>
       <div className="view">
         <div className="stage">
           <img src={base + n.src} alt={n.alt} width={n.width || undefined} height={n.height || undefined} />
-          {(n.hotspots || []).map((h: Hotspot, i: number) => (
+          {(n.hotspots || []).map((h: Hotspot, i: number) => card(h) ? <TableNode key={i} h={h} t={card(h)!} natW={natW} natH={natH} /> : (
             <a key={i} className={cx("hs", h.table && "has-table", h.image && "has-image")} href={h.href || (h.table ? `#${h.table}` : undefined)}
               style={{ left: `${h.x}%`, top: `${h.y}%`, width: `${h.w}%`, height: `${h.h}%` }}
               data-hs="" data-label={h.label} data-note={h.note || undefined} data-table={h.table || undefined}
@@ -125,7 +129,7 @@ const base = pathToFileURL(buildDir).href + "/";
 const page = renderToStaticMarkup(
   <section>
     <h2>Schema drawer harness</h2>
-    <p className="small muted">{content.titleText} · {content.schema.length} schema tables · boxes with a "rows" badge open the drawer.</p>
+    <p className="small muted">{content.titleText} · {content.schema.length} schema tables · the table cards open the drawer.</p>
     {diagram ? <Fig n={diagram} base={base} /> : <p className="callout warn">No diagram "{key}" in content.json; open tables with window.__harness.emit(id).</p>}
   </section>,
 );

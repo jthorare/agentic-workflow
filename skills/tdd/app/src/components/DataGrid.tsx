@@ -404,7 +404,7 @@ function Preview({ t, keys, byName, stats, mode, onBands }: {
           <div className="dg-band" key={b.s}>
             {bands.length > 1 ? (
               <p className="dg-band-cap">
-                <b>Columns {b.s + 1}–{b.s + b.keys.length}</b> of {keys.length}
+                <b>{b.keys.length === 1 ? `Column ${b.s + 1}` : `Columns ${b.s + 1}–${b.s + b.keys.length}`}</b> of {keys.length}
                 <span className="dg-band-names"> · {b.keys[0]}{b.keys.length > 1 ? ` … ${b.keys[b.keys.length - 1]}` : ""}</span>
               </p>
             ) : null}

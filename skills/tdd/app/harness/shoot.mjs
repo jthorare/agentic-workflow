@@ -7,7 +7,8 @@
 // grow the viewport to the drawer's full height and write <png dir>/<prefix>-<table>-<width>-<scheme>-<tab>.png. With
 // --chat (needs a page rendered with --stub-claude) it also asks the docked chat the question and writes
 // <prefix>-chat-<table>-<width>-<scheme>.png once the stub's streamed reply is done. Also writes
-// <prefix>-hotspots-<width>-<scheme>.png (the diagram with its "rows" badges, drawer closed) for the first width, and
+// <prefix>-hotspots-<width>-<scheme>.png (the diagram with its table cards or "rows" badges, drawer closed) for the
+// first width, and
 // prints the checks as JSON: opened by click, tabs, sticky typed header, stats row, sort, filter, expand a long value,
 // Close focused on open, bands or a sideways-scrolling grid on phones, chat dock, Esc
 // closes, backdrop click closes, #tbl- hash opens, drawer width, no horizontal page overflow, hydration and console
@@ -75,8 +76,8 @@ try {
           const p = join(outDir, `${prefix}-hotspots-${tag}.png`);
           await fig.screenshot({ path: p });
           results.shots.push(p);
-          const badges = await page.evaluate(() => [...document.querySelectorAll(".hs.has-table")].filter((a) => getComputedStyle(a, "::after").content.includes("rows")).length);
-          check(`hotspot badges visible (${tag})`, badges > 0, `${badges} boxes`);
+          const badges = await page.evaluate(() => [...document.querySelectorAll(".hs.has-table")].filter((a) => a.classList.contains("tnode") || getComputedStyle(a, "::after").content.includes("rows")).length);
+          check(`table boxes marked: cards or "rows" badges (${tag})`, badges > 0, `${badges} boxes`);
         }
       }
 
