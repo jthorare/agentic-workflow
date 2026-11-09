@@ -162,4 +162,34 @@ public sealed class GraphEditTests
 
         Assert.Equal((true, true, true), (page.GraphEdit.CanAdd, page.GraphEdit.CanRemove, page.GraphEdit.CanConnect));
     }
+
+    [Fact]
+    public async Task An_edit_on_a_revision_the_page_never_showed_sends_nothing_and_asks_to_reload()
+    {
+        var page = await Open("agent");
+        var newer = Golden("workflows-slug", "found");
+        newer["latestRevision"] = 3;
+        _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, newer.ToJsonString());   // saved elsewhere after the page read revision 2
+
+        page.GraphEdit.RequestRemove();
+        await page.GraphEdit.ConfirmRemove(Token);
+
+        Assert.Empty(_f.Server.AppliedWorkflowOps);
+        Assert.True(page.GraphEdit.HasReloadPrompt);
+    }
+
+    [Fact]
+    public async Task The_block_picker_closes_when_another_workflow_opens()
+    {
+        const string other = "evening-check";
+        _f.Server.WorkflowAnswers[other] = RouteAnswer.Api("workflows-slug", "found");
+        var page = await Open("start");
+        await page.GraphEdit.BeginAdd(Token);
+        Assert.True(page.GraphEdit.IsAdding);
+
+        page.Back();
+        await page.OpenWorkflow(other, Token);
+
+        Assert.False(page.GraphEdit.IsAdding);
+    }
 }
