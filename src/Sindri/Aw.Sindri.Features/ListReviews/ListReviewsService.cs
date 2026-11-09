@@ -46,7 +46,7 @@ internal sealed class ListReviewsService(IApprovedProfile approvals, IReviewFact
     private async ValueTask<ListReviewsResponse> LoginPrompt(Header header, CancellationToken cancellationToken)
     {
         var suggested = await forge.Self(cancellationToken).ConfigureAwait(false);
-        return new ListReviewsResponse(status.Current.AsOf, Login: null, ReviewLoginPrompt.For(suggested.IsError ? null : suggested.Value), Notice: null, header.Freshness, header.Stale, header.Library, WaitingCount: 0, Groups: [], Empty: null);
+        return new ListReviewsResponse(status.Current.AsOf, Login: null, ReviewLoginPrompt.For(suggested.IsError ? null : suggested.Value), Notice: null, header.Freshness, header.Stale, header.Library, WaitingCount: 0, Groups: [], Empty: null, Connect: null);
     }
 
     private async ValueTask<ListReviewsResponse> Rows(string login, PrReviewSettings review, ReviewFactsSnapshot snapshot, Header header, CancellationToken cancellationToken)
@@ -55,7 +55,7 @@ internal sealed class ListReviewsService(IApprovedProfile approvals, IReviewFact
         var summary = await summaries.Read(shown, review, cancellationToken).ConfigureAwait(false);
         var names = await projects.Names(cancellationToken).ConfigureAwait(false);
         var parts = ReviewListBuilder.Build(login, snapshot.Pulls, p => summary.GetValueOrDefault((p.Repo, p.Number)), repo => ProjectOf(review, names.IsError ? null : names.Value, repo));
-        return new ListReviewsResponse(status.Current.AsOf, login, LoginPrompt: null, parts.Notice, header.Freshness, header.Stale, header.Library, parts.WaitingCount, parts.Groups, parts.Empty);
+        return new ListReviewsResponse(status.Current.AsOf, login, LoginPrompt: null, parts.Notice, header.Freshness, header.Stale, header.Library, parts.WaitingCount, parts.Groups, parts.Empty, Connect: null);
     }
 
     // why: a repo named by a project the Projects page doesn't have reads as a repo section, since the section needs the project's name

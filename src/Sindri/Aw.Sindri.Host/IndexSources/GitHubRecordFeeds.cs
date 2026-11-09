@@ -3,6 +3,7 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Sync;
 using Aw.Context.Core.Trust;
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Secrets;
 
 namespace Aw.Sindri.Host.IndexSources;
@@ -13,14 +14,17 @@ namespace Aw.Sindri.Host.IndexSources;
 /// </summary>
 /// <param name="pointers">Resolves the token pointer.</param>
 /// <param name="connectors">Makes the connector.</param>
+/// <param name="connections">The Connections page's rows (the GitHub connection whose token the feed reads with when the profile has no pointer).</param>
+/// <param name="connectionSecrets">Reads a connection's tokens.</param>
 /// <param name="readers">Makes the GitHub reader for a host, the private-host switch and the token.</param>
-internal sealed class GitHubRecordFeeds(ISecretPointers pointers, IGitHubConnectorFactory connectors, Func<string?, bool, string, IGitHubReader> readers) : IExternalRecordFeeds
+internal sealed class GitHubRecordFeeds(ISecretPointers pointers, IGitHubConnectorFactory connectors, IConnectionStore connections, IConnectionSecrets connectionSecrets, Func<string?, bool, string, IGitHubReader> readers) : IExternalRecordFeeds
 {
     /// <inheritdoc />
     public IReadOnlyList<RecordFeed> For(ContextSettings settings, IReadOnlyList<ContextRepo> repos, Scrubbers scrubbers)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(repos);
+        _ = (connections, connectionSecrets);   // red stub for #2499: the fix reads the GitHub connection's token here
         if (settings.GitHub is not { Repos.Count: > 0, Token: { } pointer } github
             || SecretPointer.Parse(pointer) is not { IsSuccess: true } parsed
             || pointers.Resolve(parsed.Value) is not { IsSuccess: true } token
