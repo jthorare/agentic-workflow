@@ -14386,8 +14386,12 @@ override Aw.Sindri.Core.Jobs.JobModelCall.ToString() -> string!
 static Aw.Sindri.Core.Jobs.JobModelCall.operator !=(Aw.Sindri.Core.Jobs.JobModelCall? left, Aw.Sindri.Core.Jobs.JobModelCall? right) -> bool
 static Aw.Sindri.Core.Jobs.JobModelCall.operator ==(Aw.Sindri.Core.Jobs.JobModelCall? left, Aw.Sindri.Core.Jobs.JobModelCall? right) -> bool
 static Aw.Sindri.Core.Projects.Cards.ProjectCards.StateOf(string? raw) -> Aw.Sindri.Core.Projects.Vocabulary.ProjectState?
+Aw.Sindri.Core.Sandbox.Plan.SeatbeltProcessPlan
+static Aw.Sindri.Core.Sandbox.Plan.SeatbeltProcessPlan.IsPrivateTmp(Aw.Sindri.Core.Sandbox.Plan.PlanMount! m) -> bool
+static Aw.Sindri.Core.Sandbox.Plan.SeatbeltProcessPlan.Rewrite(Aw.Sindri.Core.Sandbox.Plan.SandboxPlan! plan) -> Aw.Sindri.Core.Sandbox.Plan.SandboxPlan!
 Aw.Sindri.Core.Sandbox.Plan.SeatbeltProfile
 static Aw.Sindri.Core.Sandbox.Plan.SeatbeltProfile.MacOsCanonical(string! path) -> string!
+static Aw.Sindri.Core.Sandbox.Plan.SeatbeltProfile.RenderProcess(Aw.Sindri.Core.Sandbox.Plan.SandboxPlan! plan, string! runArea, System.Func<string!, string!>? canonical = null) -> string!
 static Aw.Sindri.Core.Sandbox.Plan.SeatbeltProfile.Render(Aw.Sindri.Core.Sandbox.Plan.SandboxPlan! plan, string! runArea, System.Func<string!, string!>? canonical = null) -> string!
 Aw.Sindri.Core.Setup.ProfileKeyEdit
 Aw.Sindri.Core.Setup.ProfileKeyEdit.<Clone>$() -> Aw.Sindri.Core.Setup.ProfileKeyEdit!

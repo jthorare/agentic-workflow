@@ -64,14 +64,34 @@ internal sealed class SeatbeltSandbox(SeatbeltOptions options, ISandboxProcesses
     }
 
     /// <inheritdoc />
-    public Result<SandboxPlan> PlanProcess(ProcessSandboxRequest request) => ProcessRefusal();
+    public Result<SandboxPlan> PlanProcess(ProcessSandboxRequest request) => ProcessSandboxPlanner.Build(SandboxMechanism.Seatbelt, request);
 
     /// <inheritdoc />
-    public Result<IReadOnlyList<string>> WrapProcess(SandboxPlan plan, IReadOnlyList<string> argv) => ProcessRefusal();
+    public Result<IReadOnlyList<string>> WrapProcess(SandboxPlan plan, IReadOnlyList<string> argv)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        ArgumentNullException.ThrowIfNull(argv);
+        var tmp = plan.Mounts.FirstOrDefault(SeatbeltProcessPlan.IsPrivateTmp)?.Source;
+        if (tmp is null || Path.GetDirectoryName(tmp) is not { Length: > 0 } area)
+        {
+            return SandboxRefusal.For(SindriErrors.LaunchSelfCheckFailed, SandboxReasons.FsWrite, "the process plan names no private /tmp in a run area");
+        }
 
-    // The Seatbelt profile of a plain process (no PlanContext, no per-launch proxy port from an agent launch) is not built yet: refused loudly, never run unconfined.
-    private static Error ProcessRefusal() =>
-        SandboxRefusal.For(SindriErrors.LaunchSandboxUnavailable, SandboxReasons.UnsupportedPlatform, "toolkits cannot run on macOS yet: the Seatbelt variant for a plain process is not built");
+        try
+        {
+            // The process's private /tmp and home are the only per-process folders; stdin and stdout stay the caller's pipes and no launch secret exists, so there is no shell wrapper.
+            _ = Directory.CreateDirectory(tmp + "/home");
+            var profile = Path.Combine(area, "seatbelt.sb");
+            OwnerOnly.WriteAtomically(profile, Encoding.UTF8.GetBytes(SeatbeltProfile.RenderProcess(plan, area)));
+            var rewritten = SeatbeltProcessPlan.Rewrite(plan);
+            List<string> env = [Env, "-i", .. rewritten.Environment.Where(e => e.Value is not null).Select(e => $"{e.Name}={e.Value}")];
+            return Results.Success<IReadOnlyList<string>>([.. env, options.SandboxExec, "-f", profile, .. argv]);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return SandboxRefusal.For(SindriErrors.LaunchSelfCheckFailed, SandboxReasons.FsWrite, "the process's profile could not be written: " + e.Message);
+        }
+    }
 
     /// <inheritdoc />
     public async Task<Result<Unit>> SelfCheck(SandboxPlan plan, CancellationToken ct)
