@@ -96,7 +96,11 @@ Seven writes, each one slice (`Features/CreateWorkflow`, `ApplyWorkflowOps`, `Re
 | Turn triggers on at a revision (newest by default) | `POST /sindri/workflows/{slug}/activate` | `workflow_activate` | `sindri wf activate <slug> [--revision <n>]` |
 | Turn triggers off; revisions stay | `POST /sindri/workflows/{slug}/pause` | `workflow_pause` | `sindri wf pause <slug>` |
 | Archive (hidden, off for good; revisions and runs stay) | `DELETE /sindri/workflows/{slug}` | `workflow_delete` | `sindri wf delete <slug>` |
+| The block types, grouped as the picker shows them (Triggers, Data, AI, Logic, Outputs), with titles, config fields, outputs, branches and examples | `GET /sindri/workflows/blocks` | `workflow_blocks` | `sindri wf blocks` |
+| The workflow docs: rank a question, read a page (`--page block-schedule`) or list the pages | `GET /sindri/workflows/docs?question=&page=` | `workflow_docs` | `sindri wf docs [<words>] [--page <slug>]` |
 | Start / stop a run | `POST /sindri/workflows/{slug}/runs`, `POST /sindri/workflow-runs/{run}/cancel` | `workflow_run`, `workflow_cancel` | `sindri wf run`, `sindri wf cancel` |
+
+**Docs and blocks.** The pages in `docs/workflows/*.md` are embedded in the binary (`IWorkflowDocs`) and searched by `WorkflowDocSearch`; `blocks` and `docs` are reserved, since the literal routes win over `/workflows/{slug}`. Each block says its picker `Group` and `Title` (`IGraphBlockType`; a block that says nothing is Logic, shown by its type), and the block list is read from the block definitions only.
 
 **Conflicts.** An edit or replace names the newest revision it read. If a newer one exists, nothing is written and the answer is `409 SND-GRAPH-007` with `currentRevision`; the caller reads the workflow again and retries. A batch of ops applies all or none (`SND-GRAPH-012` names the failing op). Create, edit and replace check the graph in draft mode and refuse blocking findings (`SND-GRAPH` findings); activate checks in activate mode. The checks use the running Sindri's block catalog and the repos of the approved profile (`IWorkflowChecker`, `Host/Commands/ProfileWorkflowChecker.cs`).
 
