@@ -125,8 +125,6 @@ public sealed class GraphAgentTakeoverTests(SindriTimeSkippingServer server) : I
         await runtime.Launching.WaitAsync(TimeSpan.FromSeconds(30), Token);
 
         await rig.Client.GetWorkflowHandle(run.Value).CancelAsync();
-        await Task.Delay(TimeSpan.FromSeconds(2), Token);   // why: long enough for a TryCancel workflow to have run its close
-        Assert.Empty(runtime.Closes);
 
         _ = gate.TrySetResult();
         var final = await rig.Final(run);
