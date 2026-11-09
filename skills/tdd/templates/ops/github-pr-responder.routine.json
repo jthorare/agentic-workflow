@@ -1,0 +1,41 @@
+{
+  "_template": [
+    "UNTESTED. Body for RemoteTrigger {action: 'create', body: <this object without the _template key>}.",
+    "Shape from the schedule skill's create-body notes (2026-11-08). Create requires exactly one of cron_expression or run_once_at; whether a webhook-only routine may omit it is unverified, so the daily cron doubles as a sweep for missed events (16:00 UTC = 08:00 PST / 09:00 PDT).",
+    "Fill before sending: {{OWNER}}, {{REPO}}, {{UUIDV4}} (a fresh lowercase v4 uuid), the message content (the text of github-pr-responder.prompt.md below its template comment, with its own {{...}} filled), and the Linear connector's uuid, name and url as the schedule skill lists them (name: letters, digits, '-' and '_' only).",
+    "environment_id: the 'Default' cloud environment listed for the account signed in on this Mac on 2026-11-08; check it with the schedule skill before use.",
+    "Model: Opus for the answers (D15: more model resources than the publishing session). After create, attach github-pr-responder.trigger.json. Creating it is the owner's step; this session created nothing."
+  ],
+  "name": "TDD PR responder ({{OWNER}}/{{REPO}})",
+  "cron_expression": "0 16 * * *",
+  "enabled": true,
+  "job_config": {
+    "ccr": {
+      "environment_id": "env_019gnjqk7ji37FPgK2iUZYm3",
+      "session_context": {
+        "model": "claude-opus-5-5",
+        "sources": [
+          { "git_repository": { "url": "https://github.com/{{OWNER}}/{{REPO}}" } }
+        ],
+        "allowed_tools": ["Bash", "Read", "Write", "Glob", "Grep"]
+      },
+      "events": [
+        {
+          "data": {
+            "uuid": "{{UUIDV4}}",
+            "session_id": "",
+            "type": "user",
+            "parent_tool_use_id": null,
+            "message": {
+              "role": "user",
+              "content": "{{TEXT OF github-pr-responder.prompt.md, FILLED}}"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "mcp_connections": [
+    { "connector_uuid": "{{LINEAR_CONNECTOR_UUID}}", "name": "Linear", "url": "{{LINEAR_CONNECTOR_URL}}" }
+  ]
+}

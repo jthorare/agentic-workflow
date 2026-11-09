@@ -1,0 +1,27 @@
+# {{title}}
+
+> {{summary}} Status {{status}}, rev {{rev}}, code base at {{sha}}. Generated: {{head_raw}}
+
+The agents lane of a technical design document. Read README.md first, then only the slice your task needs. Citations are path:line at sha {{sha}}.
+
+## Sections
+{{llm_sections}}
+
+## Decisions
+{{llm_decisions}}
+
+## PRs
+{{llm_prs}}
+
+## Reference
+- [README.md](README.md): which file for which task
+- [prs/prs.md](prs/prs.md): PR order with change and rollback
+- [citations.md](citations.md): every path:line by file
+- [refs.json](refs.json): reference token -> anchor -> slice
+- [images/index.json](images/index.json): what each diagram and mock shows
+- [map.json](map.json): entities and edges
+
+## Optional
+- [tdd.md](tdd.md): the whole document, ~{{tdd_md_tokens}} tokens
+- [tdd.txt](tdd.txt): the whole document as plain text, ~{{tdd_txt_tokens}} tokens
+- [page/plain.html](page/plain.html): the built page with scripts, styles and overlays removed

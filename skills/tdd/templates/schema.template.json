@@ -1,0 +1,48 @@
+{
+  "_about": {
+    "what": "An annotated example of one schema-lane file (D7). Copy it to <packet>/schema/<table>.json, one file per table the design adds, changes or leans on, then delete this _about block and every EXAMPLE value. The compiler (scripts/build_tdd.py) reads every *.json in schema/, gives each an id tbl-<table slug>, and the page's drawer (app/src/components/SchemaDrawer.tsx) shows it when a diagram box with a matching table field, or a link to the id, is clicked. references/schema-lane.md explains each field.",
+    "table": "the real table name; defaults to the file name",
+    "state": "new (the design adds it) | changed (the design alters it) | existing (unchanged, shown for context); defaults to existing",
+    "columns[].change": "new | changed | dropped | unchanged. Set it on every column of a changed table: the compiler defaults a missing change to unchanged only when state is existing, and to new otherwise",
+    "columns[].type": "the SQL type and nullability as the source states them; leave it \"\" when the source does not state it (the drawer prints 'not stated'), never guess",
+    "columns[].was": "for a changed column, the previous definition; the drawer shows it struck through",
+    "sample_rows": "a few rows keyed by column name, shaped like the DDL. Synthetic unless a reviewed, scrubbed export says otherwise; never personal data",
+    "sample_source": "says where the rows came from, e.g. 'synthetic, shaped like the DDL; not production data'",
+    "measured": "recorded facts only: each { value, unit, source, date, note?, label? }. source names the query, dashboard, research file or document section; date is when it was measured (the source's date when it gives none, and say so in note). Leave a key out when nothing was measured: the drawer prints 'not measured'. reads, writes, rows and storage always show; any other key is added after them",
+    "expected": "the design's own reasoning about load after the change: each { value?, unit?, note, label? }. note quotes or cites the basis. A key with a note and no value prints 'not estimated' plus the note",
+    "ddl": "the CREATE or ALTER statements, verbatim from the design",
+    "indexes": "keys, indexes and constraints, one string each",
+    "notes": "short facts a reviewer needs; `backticks` render as code"
+  },
+  "table": "example_shift_swap",
+  "state": "changed",
+  "summary": "EXAMPLE ONLY. A staff member offering a shift to a colleague. The design adds a withdrawn status and its time, and drops a legacy flag nothing reads.",
+  "columns": [
+    { "name": "id", "type": "uuid PRIMARY KEY", "change": "unchanged", "note": "" },
+    { "name": "requester_id", "type": "uuid NOT NULL", "change": "unchanged", "note": "→ profile(id) ON DELETE CASCADE" },
+    { "name": "status", "type": "text NOT NULL CHECK (status IN ('open', 'taken', 'withdrawn'))", "change": "changed", "was": "text NOT NULL CHECK (status IN ('open', 'taken'))", "note": "gains withdrawn" },
+    { "name": "withdrawn_at", "type": "timestamptz NULL", "change": "new", "note": "set with status withdrawn" },
+    { "name": "legacy_flag", "type": "boolean NULL", "change": "dropped", "note": "no reader since the 2025 migration (cite the grep)" }
+  ],
+  "sample_rows": [
+    { "id": "1a2b…3c", "requester_id": "9d8e…7f", "status": "open", "withdrawn_at": null },
+    { "id": "4d5e…6f", "requester_id": "0a1b…2c", "status": "withdrawn", "withdrawn_at": "2026-01-02 08:15:00+00" }
+  ],
+  "sample_source": "synthetic, shaped like the DDL; not production data",
+  "measured": {
+    "writes": { "value": "EXAMPLE 40", "unit": "inserts/day", "source": "EXAMPLE: the query, dashboard or research file that produced it", "date": "YYYY-MM-DD", "note": "what the count includes (all tenants? test tenants?)" },
+    "read_p99": { "label": "Read p99", "value": "EXAMPLE 3", "unit": "ms", "source": "EXAMPLE: pg_stat_statements on the primary", "date": "YYYY-MM-DD" }
+  },
+  "expected": {
+    "writes": { "value": "+1", "unit": "UPDATE per withdrawal", "note": "EXAMPLE: quote the design line that implies it" },
+    "storage": { "note": "EXAMPLE: no estimate; a key with only a note prints 'not estimated'" }
+  },
+  "ddl": "ALTER TABLE example_shift_swap DROP COLUMN legacy_flag;\nALTER TABLE example_shift_swap ADD COLUMN withdrawn_at timestamptz NULL;\nALTER TABLE example_shift_swap DROP CONSTRAINT example_shift_swap_status_check,\n  ADD CONSTRAINT example_shift_swap_status_check CHECK (status IN ('open', 'taken', 'withdrawn'));",
+  "indexes": [
+    "PRIMARY KEY (id)",
+    "CHECK example_shift_swap_status_check: status IN ('open', 'taken', 'withdrawn')"
+  ],
+  "notes": [
+    "EXAMPLE: only the columns the design names are listed; say so when the live table has more."
+  ]
+}

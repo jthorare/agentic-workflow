@@ -25,9 +25,13 @@ def front(md):
 
 def inline(s):
     s = esc(s, quote=False)
-    s = re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
+    codes = []
+    def keep(m):
+        codes.append(m.group(1)); return f"\x00{len(codes)-1}\x00"
+    s = re.sub(r"`([^`]+)`", keep, s)  # code spans first, so * inside them is never bold or italic
     s = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", s)
     s = re.sub(r"(?<![\w*])\*([^*\n]+)\*(?![\w*])", r"<i>\1</i>", s)
+    s = re.sub(r"\x00(\d+)\x00", lambda m: f"<code>{codes[int(m.group(1))]}</code>", s)
     return re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", r'<a href="\2">\1</a>', s)
 
 def split_row(r):

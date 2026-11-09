@@ -1,0 +1,51 @@
+{
+  "_doc": {
+    "_about": "Header fields for one TDD page. build_tdd.py reads meta.json beside the source (or --meta) and ignores keys it does not know, this _doc block included; new_packet.py drops _doc when it writes a packet's meta.json. Types matter: the keys marked 'string, never null' crash the compiler when null.",
+    "title": "Browser-tab title: a name of two to four words ('Hold Ranking TDD'), never 'Name: explainer'. Required by the linter (META). new_packet.py derives it from --title the way build_doc.page_title does (else from the slug); rename it if that reads badly. Keep it the same across redeploys.",
+    "h1": "Optional override for the page title shown in the masthead. null: the source's '# ' line. Use it only when the H1 must differ from the source.",
+    "eyebrow": "String, never null. The small upper-case line above the title, e.g. 'Technical design · Foundations Pod'. Inline markdown allowed. Default when the key is absent: 'Technical design'.",
+    "project": "The ticket or project chip in the masthead: {label, href}. label is the ticket id (P-XXX-NNN); href its tracker URL, or null when unknown. null hides it.",
+    "people": "List, never null, of {role, name}, in masthead order. The entry whose role is 'Author' (any case) names the author in the default footer. Names only as the people use them; never invent a reviewer.",
+    "updated": "String, YYYY-MM-DD: the date of this revision. Set it to today on every published change (references/publish-and-mirror.md).",
+    "rev": "Revision number, an integer starting at 1. +1 on every published change.",
+    "rev_note": "A few words on what this revision changed ('as built through PR 7; R2 provisional'). Shown beside the date in the masthead.",
+    "status": "String, never null. The status chip: 'Draft for review', 'In review', 'Approved', 'As built', 'Superseded'. The chip tone is derived from it unless status_tone is set.",
+    "status_tone": "Optional chip tone override: draft | proposed | done | held. null: derived (Draft... = draft; As built/Reviewed/Approved/Accepted = done; Superseded/Withdrawn = held; anything else with 'review' in it = proposed; else draft).",
+    "footer": "Optional footer text. null: 'Draft by <Author>, <updated>.' plus the D-number rule.",
+    "repo_url": "Web URL of the code repo, https://github.com/<owner>/<repo>. With sha set, every path:line citation links to <repo_url>/blob/<sha>/<path>#L<a>-L<b>. null: citations render as plain code (still recorded in content.json cites).",
+    "sha": "The commit every path:line and every code claim was read at (10 hex characters). new_packet.py records origin/HEAD, else HEAD. Change it, with sha_date, when you read at another commit.",
+    "sha_date": "YYYY-MM-DD commit date of sha (git show -s --format=%cs <sha>).",
+    "repo_path": "Where the repo is checked out on this machine (~-relative). Recorded for agents and the linter; not shown on the page.",
+    "path_aliases": "Object, never null. Short prefixes for long paths in citations: {\"SVC\": \"packages/services/src\"}, so `SVC/Area/File.ts:12-40` resolves to packages/services/src/Area/File.ts. Alias keys are 2 to 5 capital letters. Name the aliases in prose once, in the Engineering reference group.",
+    "refs": "Object, never null. Families of reference tokens that link to one anchor instead of one each: {\"OS\": \"#coverage\"} links OS-01, OS-27 to the coverage section. The anchor must exist on the page (the compiler warns otherwise).",
+    "artifact_url": "Not read by build_tdd.py. The claude.ai artifact URL once published; also the first line of status.md.",
+    "notion_url": "Not read by build_tdd.py. The Notion mirror row's URL, when there is one."
+  },
+  "title": "<Tab title, two to four words>",
+  "h1": null,
+  "eyebrow": "Technical design",
+  "project": {
+    "label": "<P-XXX-NNN>",
+    "href": null
+  },
+  "people": [
+    {
+      "role": "Author",
+      "name": "<author>"
+    }
+  ],
+  "updated": "<YYYY-MM-DD>",
+  "rev": 1,
+  "rev_note": "first draft",
+  "status": "Draft for review",
+  "status_tone": null,
+  "footer": null,
+  "repo_url": null,
+  "sha": null,
+  "sha_date": null,
+  "repo_path": null,
+  "path_aliases": {},
+  "refs": {},
+  "artifact_url": null,
+  "notion_url": null
+}

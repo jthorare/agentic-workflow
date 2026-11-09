@@ -1,0 +1,20 @@
+{
+  "name": "tdd-app",
+  "private": true,
+  "type": "module",
+  "description": "Renders a TDD packet's content.json (from scripts/build_tdd.py) to the claude.ai artifact page: React 19 server-rendered with bun, hydrated by an inline production bundle.",
+  "scripts": {
+    "build": "bun run build.ts",
+    "check": "bun run check_hydrate.ts"
+  },
+  "dependencies": {
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.2.3",
+    "jsdom": "31.0.0",
+    "typescript": "7.0.2"
+  }
+}

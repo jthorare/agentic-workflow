@@ -1,0 +1,40 @@
+{
+  "_template": [
+    "UNTESTED. Body for RemoteTrigger {action: 'create', body: <this object without the _template key>}: the hourly cloud fallback for the Linear poll (cron minimum is one hour, in UTC). The primary poll is the local scheduled task running the same prompt in LOCAL mode every 15 minutes.",
+    "Fill before sending: {{UUIDV4}} (a fresh lowercase v4 uuid), the message content (the text of linear-poll.prompt.md below its template comment, MODE set to cloud, its {{...}} filled), the Linear connector's uuid, name and url as the schedule skill lists them, and optionally the repo the TDDs belong to under sources (omit sources to run without a checkout).",
+    "environment_id: the 'Default' cloud environment listed for the account signed in on this Mac on 2026-11-08; check it before use.",
+    "Model: Opus answers in place; a pass that finds nothing ends early. Creating it is the owner's step; this session created nothing."
+  ],
+  "name": "TDD Linear poll (hourly fallback)",
+  "cron_expression": "7 * * * *",
+  "enabled": true,
+  "job_config": {
+    "ccr": {
+      "environment_id": "env_019gnjqk7ji37FPgK2iUZYm3",
+      "session_context": {
+        "model": "claude-opus-5-5",
+        "sources": [
+          { "git_repository": { "url": "https://github.com/{{OWNER}}/{{REPO}}" } }
+        ],
+        "allowed_tools": ["Bash", "Read", "Glob", "Grep"]
+      },
+      "events": [
+        {
+          "data": {
+            "uuid": "{{UUIDV4}}",
+            "session_id": "",
+            "type": "user",
+            "parent_tool_use_id": null,
+            "message": {
+              "role": "user",
+              "content": "{{TEXT OF linear-poll.prompt.md, MODE cloud, FILLED}}"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "mcp_connections": [
+    { "connector_uuid": "{{LINEAR_CONNECTOR_UUID}}", "name": "Linear", "url": "{{LINEAR_CONNECTOR_URL}}" }
+  ]
+}

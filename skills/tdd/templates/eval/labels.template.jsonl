@@ -1,0 +1,10 @@
+// Owner review notes for one TDD packet: copy to <packet>/eval/labels.jsonl (or pass --labels <file>). One JSON object per line;
+// lines starting with // or # are ignored. Fields: target (artifact | packet | implementation | qa | bugs | tokens), anchor (an id on
+// the page such as #d4, a file under agents/ such as agents/prs/pr-03.md, a PR such as PR 3, or "*" for the whole target), verdict
+// (pass | fail | needs-work | question), note (what you saw, in your words), date (YYYY-MM-DD), author (optional). Each note becomes a
+// label in input.json (labels.review_notes), the expected field of the target's Braintrust row, and the target's owner_review score
+// (pass / (pass + fail + needs-work)). Delete these example lines before use.
+{"target": "artifact", "anchor": "#d4", "verdict": "needs-work", "note": "The override-reason list should name the CHECK constraint it maps to.", "date": "2026-11-08", "author": "the owner"}
+{"target": "artifact", "anchor": "#fig-schema", "verdict": "pass", "note": "Schema drawer shows sample rows and measured load for every new table.", "date": "2026-11-08", "author": "the owner"}
+{"target": "packet", "anchor": "agents/prs/pr-03.md", "verdict": "pass", "note": "An agent built PR 3 from this slice without opening the page.", "date": "2026-11-08", "author": "the owner"}
+{"target": "implementation", "anchor": "PR 6", "verdict": "question", "note": "Merged as two PRs; should the plan show the split?", "date": "2026-11-08", "author": "the owner"}

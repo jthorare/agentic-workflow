@@ -1,0 +1,100 @@
+{
+  "_doc": {
+    "what": "The ops loop's watchlist (design: ~/.claude/skills/tdd/references/ops-loop.md). Copy to ~/.system-design/ops/watchlist.json and fill it. Read by the dispatcher session on start and by the local scheduled tasks on every run; none of them ever edits it. Keys starting with _ are notes and are ignored.",
+    "version": "Shape version; readers refuse a version they do not know.",
+    "defaults": "Merged under every entry; grants merge key by key.",
+    "defaults.host": "LocalHostName (scutil --get LocalHostName) of the machine that serves an entry. Exactly one machine serves an artifact, so two dispatchers never answer one thread.",
+    "defaults.model": "Model pinned on each responder subagent (opus | sonnet). The dispatcher's own model caps start_session side sessions (same family or cheaper).",
+    "defaults.max_parallel": "Responder subagents at once, and candidate threads per artifact per scheduled run.",
+    "defaults.max_replies_per_hour": "Per artifact; counted from the run log.",
+    "defaults.usage_ceiling_pct": "Weekly usage at or over this: reply to nothing, log 'skipped: usage ceiling' (95 is the lead's standing ceiling since 2026-11-05).",
+    "defaults.stale_minutes": "For responder 'dispatcher' entries, the scheduled task answers a thread only after it has waited this long (the dispatcher missed it).",
+    "defaults.grants": "What a responder may do. answer = reply, resolve, log. edit_source = edit the packet's source files, rebuild, lint, check (never build/ by hand). republish = publish the rebuilt page to the same private artifact URL. draft_pr = push a feature branch and open a draft PR. github_comment, linear_comment = post there. Never grantable: deploy or launch, merge, push to main, sharing or permission changes, account settings, database writes, recording a D-number, creating or changing scheduled tasks or routines.",
+    "state_file": "Local cursors (linear_cursor). Written by the local Linear poll.",
+    "run_log_dir": "One <YYYY-MM-DD>.jsonl per UTC day: one object per handled signal.",
+    "artifacts[].url": "The artifact_url line of the packet's status.md. Placeholder until the TDD is published.",
+    "artifacts[].account": "personal | work: the claude.ai account that owns the artifact; the serving machine must be signed in with it.",
+    "artifacts[].owner_edits": "true only when the owner can edit the artifact (an Artifact read says 'writer'). Auto-replies are armed only then.",
+    "artifacts[].responder": "dispatcher = a live dispatcher session holds the watch and the scheduled task is the safety net; poll = only the scheduled task answers.",
+    "artifacts[].packet": "The packet root. status_doc and agents_lane are relative to it; write_agents.py writes the lane to build/agents by default.",
+    "artifacts[].repo": "Local checkout the design cites; responders read it at meta.json's sha.",
+    "artifacts[].mcps": "MCP servers a responder may call, read-only unless a grant says otherwise. host:<name> servers are reachable only on the serving machine (and from a page only for the owner, in the desktop app).",
+    "artifacts[].github": "repo (owner/name), tokens that summon the responder on a PR, desk_label the cloud routine adds when it routes a question to the local desk.",
+    "artifacts[].linear": "team, label and tokens the Linear poll matches (tokens also match the slug with a D- or Q-number in a comment)."
+  },
+  "version": 1,
+  "defaults": {
+    "host": "{{MAC_MINI_LOCAL_HOST_NAME}}",
+    "model": "opus",
+    "max_parallel": 3,
+    "max_replies_per_hour": 12,
+    "usage_ceiling_pct": 95,
+    "stale_minutes": 20,
+    "grants": {
+      "answer": true,
+      "edit_source": false,
+      "republish": false,
+      "draft_pr": false,
+      "github_comment": true,
+      "linear_comment": true
+    }
+  },
+  "state_file": "~/.system-design/ops/state.json",
+  "run_log_dir": "~/.system-design/ops/runs",
+  "artifacts": [
+    {
+      "slug": "tdd-system",
+      "title": "The house TDD system",
+      "enabled": true,
+      "account": "personal",
+      "url": "https://claude.ai/code/artifact/{{ARTIFACT_ID: not published yet on 2026-11-08}}",
+      "owner_edits": true,
+      "responder": "dispatcher",
+      "packet": "~/.system-design/house/system-design/tdd-system",
+      "status_doc": "status.md",
+      "agents_lane": "build/agents",
+      "repo": "~/.claude/skills",
+      "mcps": ["Linear", "Notion"],
+      "github": {
+        "repo": "<org>/agentic-workflow",
+        "tokens": ["tdd:tdd-system"],
+        "desk_label": "tdd:desk"
+      },
+      "linear": {
+        "team": null,
+        "label": "tdd:tdd-system",
+        "tokens": ["tdd:tdd-system", "tdd-system"]
+      },
+      "grants": {
+        "edit_source": true
+      }
+    },
+    {
+      "slug": "<slug>",
+      "title": "Holds: rank the requesters by the library's loan rules",
+      "enabled": false,
+      "_why_disabled": "A work artifact: it belongs on the work machine, signed in with the work account, with agentic-workflow installed; this account could not read it on 2026-11-08. The packet has no status.md yet, so the responder would log to the run log only.",
+      "host": "{{WORK_MAC_LOCAL_HOST_NAME}}",
+      "account": "work",
+      "url": "https://claude.ai/code/artifact/<artifact-id>",
+      "owner_edits": true,
+      "responder": "poll",
+      "packet": "~/.system-design/<org>-web-app/system-design/<slug>",
+      "status_doc": "status.md",
+      "agents_lane": "build/agents",
+      "repo": "~/<org>/web-app",
+      "mcps": ["Linear", "Notion", "host:postgres-local"],
+      "github": {
+        "repo": "{{WORK_GITHUB_OWNER}}/web-app",
+        "tokens": ["tdd:<slug>"],
+        "desk_label": "tdd:desk"
+      },
+      "linear": {
+        "team": "{{WORK_LINEAR_TEAM}}",
+        "label": "tdd:<slug>",
+        "tokens": ["tdd:<slug>", "<slug>", "P-XXX-000"]
+      },
+      "grants": {}
+    }
+  ]
+}

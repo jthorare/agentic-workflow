@@ -1,0 +1,118 @@
+{
+ "schema": "tdd-eval-probe/1",
+ "about": "Fixed handoff-probe questions. scripts/eval/ev_probe.py fills each kind from the packet's content.json with a deterministic extractor (same content.json -> same questions and expected answers) and writes build/eval/probe.json. A packet may override this file with <packet>/eval/probe-questions.json (same shape).",
+ "budget_tokens": 20000,
+ "budget_note": "The handoff loader reads agents/README.md, then the files it links (skipping ## Optional and images), then one more level of links, until this many estimated tokens (chars / 3.6) are loaded.",
+ "match_kinds": {
+  "token": "the expected id appears as a whole token (case-insensitive; 'PR 3', 'PR3', 'pr-3' are equal)",
+  "oneof": "the answer contains one of the accepted words for the expected value and none for the others",
+  "all": "every expected item appears (case-insensitive substring)",
+  "numbers": "every number in the expected value appears among the answer's numbers (thousands separators ignored)",
+  "contains": "the expected value appears with whitespace and case ignored",
+  "prefix": "the first 7 characters of the expected value appear (commit shas)"
+ },
+ "kinds": [
+  {
+   "kind": "decision-by-question",
+   "limit": 4,
+   "match": "token",
+   "template": "Which decision settles this question: \"{question}\"? Answer with the decision id only (for example D3).",
+   "extractor": "content.decisions sorted by id (letters, then number); expected = id; evidence = the question's first 48 characters"
+  },
+  {
+   "kind": "decision-state",
+   "limit": 4,
+   "match": "oneof",
+   "template": "Is decision {id} decided by its owner, or still open? Answer 'decided' or 'open'.",
+   "accept": {
+    "decided": [
+     "decided",
+     "done",
+     "settled",
+     "ruled",
+     "closed",
+     "made",
+     "resolved"
+    ],
+    "open": [
+     "open",
+     "pending",
+     "provisional",
+     "proposed",
+     "undecided",
+     "unresolved"
+    ],
+    "held": [
+     "held",
+     "blocked",
+     "rejected"
+    ]
+   },
+   "extractor": "content.decisions sorted by id, taking every other one from the end so both states are sampled; expected = done -> decided, open -> open, held -> held"
+  },
+  {
+   "kind": "new-tables",
+   "limit": 1,
+   "match": "all",
+   "template": "Which database tables are new in this design? List the table names.",
+   "extractor": "content.schema where state == new; expected = their table names"
+  },
+  {
+   "kind": "changed-tables",
+   "limit": 1,
+   "match": "all",
+   "template": "Which existing database tables does this design change? List the table names.",
+   "extractor": "content.schema where state == changed; expected = their table names"
+  },
+  {
+   "kind": "pr-introduces-table",
+   "limit": 3,
+   "match": "token",
+   "template": "Which PR first introduces the table {table}? Answer as 'PR n'.",
+   "extractor": "for each new table: the lowest-numbered PR whose title, change line or body names the table; skipped when none does (a derived answer: an owner label can override it)"
+  },
+  {
+   "kind": "pr-by-title",
+   "limit": 3,
+   "match": "token",
+   "template": "Which PR is titled \"{title}\"? Answer as 'PR n'.",
+   "extractor": "the PR plan's first, middle and last PRs; expected = PR n"
+  },
+  {
+   "kind": "pr-count",
+   "limit": 1,
+   "match": "numbers",
+   "template": "How many PRs does the implementation plan have? Answer with a number.",
+   "extractor": "count of PRs in content.json's prs node"
+  },
+  {
+   "kind": "stat-card",
+   "limit": 4,
+   "match": "numbers",
+   "template": "What figure does the design give for: \"{what}\"?",
+   "extractor": "stat cards (::: cards {stat}) in document order; expected = the card's figure (its title); what = the first clause of the card's text"
+  },
+  {
+   "kind": "column-type",
+   "limit": 3,
+   "match": "contains",
+   "template": "In the table {table}, what is the SQL type of the column {column}?",
+   "extractor": "new tables in schema order; per table the first column whose change is new and whose name is not id or *_id (else the first new column); expected = its SQL type without constraints (PRIMARY KEY, NOT NULL, DEFAULT ... removed)"
+  },
+  {
+   "kind": "measured",
+   "limit": 2,
+   "match": "numbers",
+   "template": "What is the measured {label} for the table {table}, and in what unit?",
+   "extractor": "schema[].measured entries in schema order whose value carries a digit; expected = the value"
+  },
+  {
+   "kind": "base-sha",
+   "limit": 1,
+   "match": "prefix",
+   "template": "At which commit sha are the design's code citations pinned?",
+   "extractor": "meta.sha (content.meta.sha)"
+  }
+ ],
+ "answerable_note": "probe_answerable (no model): the expected answer must sit next to the question's evidence in one loaded file: same line for oneof, anywhere in the file for all, within 600 characters of the first evidence string otherwise; a 'PR n' answer also counts on a table row whose number cell or pr-NN.md link names n. Evidence strings are the decision question's first 48 characters, the PR title's first 60, the table or column name, the stat card's first 40."
+}

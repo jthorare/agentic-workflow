@@ -1,0 +1,21 @@
+{
+  "_template": [
+    "UNTESTED, AND THE FIELD NAMES ARE A GUESS. RemoteTrigger's create_webhook_trigger attaches an event source such as a GitHub event with a filter to a routine (fact relayed by the lead, 2026-11-08); its body schema was not loadable in the session that wrote this.",
+    "Before use: load RemoteTrigger, read its create_webhook_trigger schema, and map these intentions onto its real fields: fire on new PR comments and PR review comments in {{OWNER}}/{{REPO}} whose body contains 'tdd:{{SLUG}}' (and '@claude' only if no Claude GitHub app or claude-code-action already answers @claude there), from authors with OWNER, MEMBER or COLLABORATOR association, never from a body containing '[tdd-ops'.",
+    "Check too: whether the Claude GitHub app must be installed on the repo for the event to arrive, and how the event payload reaches the run (the prompt reads it below a line '--- event ---' and falls back to a sweep).",
+    "Attaching it is the owner's step; this session created nothing."
+  ],
+  "action": "create_webhook_trigger",
+  "trigger_id": "{{ROUTINE_ID from the create result}}",
+  "body": {
+    "source": "github",
+    "repository": "{{OWNER}}/{{REPO}}",
+    "events": ["issue_comment.created", "pull_request_review_comment.created"],
+    "filter": {
+      "issue_is_pull_request": true,
+      "body_contains_any": ["tdd:{{SLUG}}"],
+      "body_contains_none": ["[tdd-ops"],
+      "author_association_in": ["OWNER", "MEMBER", "COLLABORATOR"]
+    }
+  }
+}

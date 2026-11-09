@@ -1,0 +1,299 @@
+/* schema.css: the D7 table drawer (src/components/SchemaDrawer.tsx) drawn the Snowsight way (D14a, DataGrid.tsx), its
+   docked chat (D14c, DataChat.tsx), and the diagram-hotspot badge for boxes that open it. Loaded after
+   templates/tdd-system/tdd.css; tokens only, so light and dark both come from the token blocks there.
+   Classes: dialog.drawer.schema, .drawer-head, .drawer-title, .drawer-close, .drawer-body, .drawer-sec, .drawer-summary;
+   tabs .dg-tabs, .dg-tab(.on), .dg-count, .dg-panel; Data preview .dg-bar, .dg-filter, .dg-btn(.on), .dg-grid (thead
+   tr.dg-head th.h-new|h-changed, .dg-h, .dg-glyph.g-<kind>, tr.dg-hstats, th.rn, td.null, td.num, td.long, .dg-more),
+   .dg-cap; stats .dg-mini, .dg-meter, .dg-hist, .dg-freq; Columns .schema-legend (.lg), .dg-cols (tr.col-new|changed|
+   dropped; td.cn, .cnote, td.ct, .was, td.rg .dg-range, td.ds); Details .dg-kv, .load-grid, .load-card (.measured,
+   .expected; .k, .u, .src, .none "not measured"), pre.ddl, .mono-list, .drawer-notes, .where; chat .dchat(.off),
+   .dchat-off, .dchat-log, .dchat-msg.user|assistant, .dchat-steps, .dchat-note, .dchat-form, .dchat-btn, .dchat-src;
+   .hs.has-table::after. */
+
+/* ---------------------------------------------------------------- the dialog: right-side panel, full height */
+html:has(dialog.drawer[open]) { overflow: hidden; }
+dialog.drawer {
+  position: fixed; inset: 0 0 0 auto; margin: 0; padding: 0;
+  width: min(720px, 100vw); max-width: 100vw; height: 100dvh; max-height: 100dvh;
+  color: var(--fg); background: var(--surface);
+  border: 0; border-left: 1px solid var(--line); border-radius: var(--r-lg) 0 0 var(--r-lg);
+  box-shadow: -24px 0 64px var(--shadow); overflow: hidden;
+}
+dialog.drawer[open] { display: flex; flex-direction: column; }
+dialog.drawer::backdrop { background: var(--scrim); }
+@media (prefers-reduced-motion: no-preference) {
+  dialog.drawer[open] { animation: drawer-in .18s ease-out; }
+  @keyframes drawer-in { from { transform: translateX(28px); opacity: 0; } }
+}
+@media (max-width: 640px) {
+  dialog.drawer { width: 100vw; border-left: 0; border-radius: 0; }
+}
+
+.drawer-head {
+  flex: none; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  padding: 14px max(20px, env(safe-area-inset-right, 0px)) 12px 20px;
+  padding-top: max(14px, env(safe-area-inset-top, 0px));
+  background: var(--surface); border-bottom: 1px solid var(--line);
+}
+.drawer-title { display: grid; gap: 4px; min-width: 0; }
+.drawer-head h2 { margin: 0; padding: 0; border: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 1.1rem; }
+.drawer-head h2 code { font: 650 1.1rem/1.3 var(--font-mono); background: none; padding: 0; color: var(--fg); overflow-wrap: anywhere; }
+.drawer-close {
+  flex: none; font: 500 var(--fs-xs)/1 var(--font-body); padding: 7px 12px; border-radius: var(--r-pill);
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--fg); cursor: pointer;
+}
+.drawer-close:hover { background: var(--surface-2); }
+
+.drawer-body {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  padding: 16px max(20px, env(safe-area-inset-right, 0px)) 24px 20px;
+  display: grid; gap: 14px; align-content: start;
+}
+.drawer-body > * { min-width: 0; }
+.drawer-summary { font-size: var(--fs-sm); max-width: none; margin: 0; color: var(--fg); }
+.drawer-sec { display: grid; gap: 8px; min-width: 0; }
+.drawer-sec > h3 { margin: 0; font: 650 var(--fs-xs)/1.3 var(--font-body); text-transform: uppercase; letter-spacing: var(--tr-label); color: var(--muted); }
+.drawer-body .none { color: var(--muted); font-style: italic; }
+.drawer-body p.none { font-size: var(--fs-sm); }
+
+/* state and change chips (tdd.css already has .chip.new for the good tone) */
+.schema .chip.changed { --chip: var(--warn); }
+.schema .chip.dropped { --chip: var(--danger); }
+
+/* ---------------------------------------------------------------- tabs: fixed under the head, like Snowsight's object tabs */
+.dg-tabs {
+  flex: none; display: flex; gap: 22px; align-items: flex-end; overflow-x: auto; scrollbar-width: none;
+  padding: 0 max(20px, env(safe-area-inset-right, 0px)) 0 20px; background: var(--surface); border-bottom: 1px solid var(--line);
+}
+.dg-tabs::-webkit-scrollbar { display: none; }
+.dg-tab {
+  flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 10px 0 9px; margin-bottom: -1px;
+  font: 600 var(--fs-sm)/1.2 var(--font-body); color: var(--muted); background: none; border: 0; border-bottom: 2px solid transparent;
+  cursor: pointer; white-space: nowrap;
+}
+.dg-tab:hover { color: var(--fg); }
+.dg-tab.on { color: var(--fg); border-bottom-color: var(--accent); }
+.dg-count {
+  font: 600 0.66rem/1 var(--font-mono); padding: 3px 6px; border-radius: var(--r-pill);
+  color: var(--muted); background: var(--surface-2); border: 1px solid var(--line);
+}
+.dg-tab.on .dg-count { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 35%, var(--surface)); background: color-mix(in srgb, var(--accent) 9%, var(--surface)); }
+.dg-panel { display: grid; gap: 16px; min-width: 0; }
+.dg-panel[hidden] { display: none; }
+.dg-panel > * { min-width: 0; }
+.dg-cap { font-size: var(--fs-xs); line-height: 1.5; color: var(--muted); max-width: none; margin: 0; }
+.dg-cap b { color: var(--fg); font-weight: 600; }
+.dg-cap code { font-size: 0.95em; }
+
+/* ---------------------------------------------------------------- Data preview: filter bar, then the grid */
+.dg-preview { display: grid; gap: 8px; min-width: 0; }
+.dg-bar { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.dg-filter input {
+  width: min(220px, 52vw); font: 400 var(--fs-sm)/1.2 var(--font-body); color: var(--fg); background: var(--surface);
+  padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md);
+}
+.dg-filter input::placeholder { color: var(--muted); }
+.dg-shown { font: 500 var(--fs-xs)/1.2 var(--font-body); color: var(--muted); font-variant-numeric: tabular-nums; }
+.dg-actions { margin-left: auto; display: inline-flex; gap: 6px; }
+.dg-btn {
+  font: 500 var(--fs-xs)/1 var(--font-body); padding: 6px 10px; border-radius: var(--r-pill); cursor: pointer;
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--fg); white-space: nowrap;
+}
+.dg-btn:hover { background: var(--surface-2); }
+.dg-btn.on { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--surface)); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.dg-btn:disabled { opacity: 0.5; cursor: default; }
+.dg-toast { position: absolute; right: 0; top: calc(100% + 4px); z-index: 4; font-size: var(--fs-xs); padding: 4px 8px; border-radius: var(--r-sm); color: var(--good); background: var(--surface); border: 1px solid var(--line); box-shadow: 0 4px 12px var(--shadow); }
+
+.dg-grid {
+  overflow: auto; overscroll-behavior: contain; max-height: min(58dvh, 560px);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
+}
+.dg-grid:focus-visible { outline-offset: 0; }
+.dg-grid table { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font: 400 0.75rem/1.45 var(--font-mono); font-variant-numeric: tabular-nums; }
+.dg-grid th, .dg-grid td { padding: 5px 10px; white-space: nowrap; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); }
+.dg-grid th:last-child, .dg-grid td:last-child { border-right: 0; }
+.dg-grid tbody tr:last-child > * { border-bottom: 0; }
+.dg-grid thead th { position: sticky; z-index: 2; background: var(--surface-2); }
+.dg-grid tr.dg-head th { top: 0; height: 34px; box-sizing: border-box; padding: 0 10px; vertical-align: middle; }
+.dg-grid tr.dg-hstats th { top: 34px; padding: 5px 10px 6px; font: 400 0.66rem/1.3 var(--font-body); color: var(--muted); }
+.dg-grid tr.dg-head th.h-new { box-shadow: inset 0 -2px 0 var(--good); }
+.dg-grid tr.dg-head th.h-changed { box-shadow: inset 0 -2px 0 var(--warn); }
+.dg-grid .rn { position: sticky; left: 0; z-index: 1; min-width: 3ch; text-align: right; color: var(--muted); background: var(--surface-2); font-weight: 400; }
+.dg-grid thead .rn { z-index: 3; }
+.dg-grid tbody tr:hover > td { background: color-mix(in srgb, var(--accent) 5%, var(--surface)); }
+.dg-grid td.null { color: var(--muted); font-style: italic; }
+.dg-grid td.num { text-align: right; }
+.dg-grid td.long { max-width: 46ch; }
+.dg-grid td.long.open { white-space: normal; }
+.dg-empty { color: var(--muted); font-style: italic; }
+.dg-h {
+  display: inline-flex; align-items: center; gap: 6px; padding: 0; margin: 0; border: 0; background: none; cursor: pointer;
+  font: 600 0.72rem/1 var(--font-mono); color: var(--fg); white-space: nowrap;
+}
+.dg-h:hover .nm { text-decoration: underline; text-underline-offset: 3px; }
+.dg-h .chip { font-size: 0.62rem; line-height: 1.35; padding: 1px 6px; font-family: var(--font-body); }
+.dg-sort { font-size: 0.6rem; color: var(--accent); }
+.dg-more { display: block; width: 100%; padding: 0; margin: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.dg-more .ell { margin-left: 1px; padding: 0 4px; border-radius: var(--r-sm); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+.dg-more pre { margin: 0; padding: 0; background: none; border: 0; font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; max-width: 56ch; }
+
+/* type glyphs (house reading; see references/data-view.md) */
+.dg-glyph {
+  --g: var(--muted);
+  flex: none; display: inline-grid; place-items: center; min-width: 18px; height: 16px; padding: 0 3px; box-sizing: border-box;
+  font: 700 0.6rem/1 var(--font-mono); letter-spacing: -0.02em; color: var(--g); border-radius: 3px;
+  background: color-mix(in srgb, var(--g) 12%, var(--surface)); border: 1px solid color-mix(in srgb, var(--g) 30%, var(--surface));
+}
+.dg-glyph.g-num { --g: var(--accent); }
+.dg-glyph.g-text { --g: var(--secondary); }
+.dg-glyph.g-json, .dg-glyph.g-array { --g: var(--warn); }
+.dg-glyph.g-date, .dg-glyph.g-time { --g: var(--good); }
+.dg-glyph.g-bool { --g: var(--brand); }
+.dg-glyph.g-none { border-style: dashed; background: none; }
+
+/* ---------------------------------------------------------------- statistics from sample rows: meter, histogram, frequency */
+.dg-mini { display: grid; gap: 3px; width: 84px; height: 25px; align-content: start; }
+.dg-meter { display: block; height: 4px; border-radius: 2px; overflow: hidden; background: color-mix(in srgb, var(--muted) 22%, var(--surface)); }
+.dg-meter i { display: block; height: 100%; background: var(--good); }
+.dg-hist { display: flex; align-items: flex-end; gap: 2px; height: 18px; border-bottom: 1px solid var(--line-strong); }
+.dg-hist i { flex: 1 1 0; background: color-mix(in srgb, var(--accent) 72%, var(--surface)); border-radius: 1px 1px 0 0; }
+.dg-freq { display: flex; gap: 1px; height: 8px; border-radius: 2px; overflow: hidden; }
+.dg-freq i { min-width: 3px; background: var(--accent); }
+.dg-freq i.s1 { background: color-mix(in srgb, var(--accent) 66%, var(--surface)); }
+.dg-freq i.s2 { background: color-mix(in srgb, var(--accent) 44%, var(--surface)); }
+.dg-freq i.s3 { background: color-mix(in srgb, var(--accent) 28%, var(--surface)); }
+.dg-freq i.s-rest { background: color-mix(in srgb, var(--muted) 30%, var(--surface)); }
+.dg-st-t { display: block; margin-top: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* ---------------------------------------------------------------- Columns: change indicator per row, stats beside the type */
+.schema-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: var(--fs-xs); color: var(--muted); max-width: none; margin: 0; }
+.schema-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.schema-legend .lg { flex: none; width: 14px; height: 12px; border-radius: 2px; border: 1px solid var(--line); background: var(--surface); }
+.schema-legend .lg.new { background: color-mix(in srgb, var(--good) 14%, var(--surface)); border-color: var(--good); border-left-width: 3px; }
+.schema-legend .lg.changed { background: color-mix(in srgb, var(--warn) 16%, var(--surface)); border-color: var(--warn); border-left-width: 3px; }
+.schema-legend .lg.dropped { background: color-mix(in srgb, var(--danger) 14%, var(--surface)); border-color: var(--danger); border-left-width: 3px; }
+
+.dg-cols table { font-size: var(--fs-sm); }
+.dg-cols th, .dg-cols td { padding: 7px 10px; }
+.dg-cols th.num, .dg-cols td.num { text-align: right; }
+.dg-cols td.cn { min-width: 20ch; max-width: 30ch; }
+.dg-cols .cn-h { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.dg-cols td.cn code { font-weight: 600; background: none; padding: 0; white-space: nowrap; color: var(--fg); }
+.dg-cols .cnote { display: block; margin-top: 4px; font-size: var(--fs-xs); line-height: 1.45; color: var(--muted); }
+.dg-cols td.ct { font: 400 0.74rem/1.45 var(--font-mono); overflow-wrap: anywhere; min-width: 14ch; max-width: 28ch; }
+.dg-cols td.num { font: 500 0.78rem/1.45 var(--font-mono); white-space: nowrap; }
+.dg-cols td.rg { min-width: 15ch; }
+.dg-range { display: grid; gap: 2px; font-size: var(--fs-xs); line-height: 1.4; }
+.dg-range i { font-style: normal; font: 600 0.6rem/1 var(--font-body); text-transform: uppercase; letter-spacing: var(--tr-label); color: var(--muted); margin-right: 2px; }
+.dg-range code { font-size: 0.72rem; background: none; padding: 0; overflow-wrap: anywhere; }
+.dg-cols td.ds { width: 88px; padding-top: 10px; }
+.dg-cols tr.col-new td { background: color-mix(in srgb, var(--good) 7%, var(--surface)); }
+.dg-cols tr.col-changed td { background: color-mix(in srgb, var(--warn) 10%, var(--surface)); }
+.dg-cols tr.col-dropped td { background: color-mix(in srgb, var(--danger) 8%, var(--surface)); }
+.dg-cols tr.col-new td:first-child { box-shadow: inset 3px 0 0 var(--good); }
+.dg-cols tr.col-changed td:first-child { box-shadow: inset 3px 0 0 var(--warn); }
+.dg-cols tr.col-dropped td:first-child { box-shadow: inset 3px 0 0 var(--danger); }
+.dg-cols tr.col-dropped td.cn code { color: var(--muted); }
+.dg-cols del { text-decoration-thickness: 1.5px; }
+.was { display: block; margin-top: 3px; font-size: 0.75rem; color: var(--muted); }
+.was del { color: var(--muted); text-decoration-color: color-mix(in srgb, var(--danger) 70%, transparent); text-decoration-thickness: 1px; }
+/* phones: each column becomes a card (name and chip, note, type, then the stats in two columns) */
+@media (max-width: 560px) {
+  .dg-cols table, .dg-cols tbody { display: block; }
+  .dg-cols thead { display: none; }
+  .dg-cols tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .dg-cols tr:last-child { border-bottom: 0; }
+  .dg-cols td { border-bottom: 0; padding-block: 2px; min-width: 0; max-width: none; }
+  .dg-cols td.cn, .dg-cols td.ct, .dg-cols td.rg { grid-column: 1 / -1; }
+  .dg-cols td.num { text-align: left; }
+  .dg-cols td.num::before { content: attr(data-l) " "; font: 600 0.6rem/1 var(--font-body); text-transform: uppercase; letter-spacing: var(--tr-label); color: var(--muted); }
+  .dg-cols td.ds { grid-column: 1 / -1; width: auto; padding-top: 4px; }
+  .dg-cols td.ct { overflow-wrap: break-word; }
+  .dg-cols tr.col-new td, .dg-cols tr.col-changed td, .dg-cols tr.col-dropped td { background: none; box-shadow: none; }
+  .dg-cols tr.col-new { background: color-mix(in srgb, var(--good) 7%, var(--surface)); box-shadow: inset 3px 0 0 var(--good); }
+  .dg-cols tr.col-changed { background: color-mix(in srgb, var(--warn) 10%, var(--surface)); box-shadow: inset 3px 0 0 var(--warn); }
+  .dg-cols tr.col-dropped { background: color-mix(in srgb, var(--danger) 8%, var(--surface)); box-shadow: inset 3px 0 0 var(--danger); }
+  .dg-grid { max-height: 52dvh; }
+  .dg-actions { margin-left: 0; }
+}
+
+/* ---------------------------------------------------------------- Details: table facts, load (measured beside expected) */
+.dg-details { display: grid; gap: 22px; }
+.dg-kv { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px 16px; }
+.dg-kv > div { display: grid; gap: 2px; min-width: 0; }
+.dg-kv dt { font: 600 var(--fs-xs)/1.3 var(--font-body); text-transform: uppercase; letter-spacing: var(--tr-label); color: var(--muted); }
+.dg-kv dd { margin: 0; font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.dg-kv dd code { background: none; padding: 0; font-weight: 600; }
+.load-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
+.load-card { gap: 10px; border-top-width: 3px; }
+.load-card.measured { border-top-color: var(--accent); }
+.load-card.expected { border-top-color: var(--secondary); }
+.load-h { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.load-h b { font-size: var(--fs-sm); }
+.load-h span { font-size: var(--fs-xs); color: var(--muted); }
+.load-card dl { margin: 0; display: grid; gap: 12px; }
+.load-card .m { display: grid; gap: 2px; min-width: 0; }
+.load-card dt { font: 600 var(--fs-xs)/1.3 var(--font-body); text-transform: uppercase; letter-spacing: var(--tr-label); color: var(--muted); }
+.load-card dd { margin: 0; min-width: 0; }
+.load-card .k { font-size: 1.05rem; font-weight: 650; line-height: 1.3; color: var(--brand); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.load-card .k .u { margin-left: 6px; font-size: var(--fs-sm); font-weight: 400; color: var(--fg); }
+.load-card .none { font-size: var(--fs-sm); }
+.load-card .src { font-size: var(--fs-xs); line-height: 1.45; color: var(--muted); }
+.load-card .src code { font-size: 0.95em; }
+@media (max-width: 560px) { .load-grid { grid-template-columns: 1fr; } }
+
+/* ---------------------------------------------------------------- DDL, indexes, notes, where it appears */
+.drawer-body pre.ddl { max-height: 440px; font-size: 0.74rem; line-height: 1.5; background: var(--code-bg); }
+.mono-list { font: 400 0.76rem/1.5 var(--font-mono); gap: 3px; }
+.mono-list li, .drawer-notes li, .where li { max-width: none; }
+.drawer-notes { font-size: var(--fs-sm); }
+.where { list-style: none; padding: 0; gap: 6px; font-size: var(--fs-sm); }
+.where .kind { margin-left: 6px; font: 600 0.66rem/1 var(--font-body); text-transform: uppercase; letter-spacing: var(--tr-label); color: var(--muted); }
+.where .more { color: var(--muted); }
+
+/* ---------------------------------------------------------------- the docked chat (DataChat.tsx) */
+.dchat {
+  flex: none; display: grid; gap: 8px; min-width: 0;
+  padding: 10px max(20px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) 20px;
+  background: color-mix(in srgb, var(--accent) 4%, var(--surface)); border-top: 1px solid var(--line);
+}
+.dchat-off, .dchat-src { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; margin: 0; max-width: none; font-size: var(--fs-xs); line-height: 1.45; color: var(--muted); }
+.dchat-off b, .dchat-src b { color: var(--fg); font-weight: 600; }
+.dchat-src code { font-size: 0.95em; }
+.dchat-src .warn { color: var(--warn); }
+.dchat-src .linkish { margin-left: auto; font-size: var(--fs-xs); }
+.dchat-log { display: grid; gap: 8px; align-content: start; max-height: min(34dvh, 320px); overflow-y: auto; overscroll-behavior: contain; padding: 2px 2px 2px 0; }
+.dchat-msg { min-width: 0; font-size: var(--fs-sm); line-height: 1.5; border-radius: var(--r-md); }
+.dchat-msg.user { justify-self: end; max-width: 85%; padding: 6px 11px; color: var(--fg); background: color-mix(in srgb, var(--accent) 13%, var(--surface)); }
+.dchat-msg.assistant { padding: 8px 12px; background: var(--surface); border: 1px solid var(--line); display: grid; gap: 6px; }
+.dchat-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.dchat-steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; font: 400 0.7rem/1.4 var(--font-mono); color: var(--muted); }
+.dchat-steps li::before { content: "↳ "; }
+.dchat-note { font-size: var(--fs-xs); color: var(--muted); }
+.dchat-msg.failed .dchat-note { color: var(--danger); }
+.dchat-form { display: flex; gap: 8px; align-items: flex-end; }
+.dchat-form textarea {
+  flex: 1 1 auto; min-width: 0; min-height: 36px; max-height: 120px; field-sizing: content; resize: none; box-sizing: border-box;
+  font: 400 var(--fs-sm)/1.45 var(--font-body); color: var(--fg); background: var(--surface);
+  padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md);
+}
+.dchat-form textarea::placeholder { color: var(--muted); }
+.dchat-form textarea:disabled { opacity: 0.6; }
+.dchat-btn {
+  flex: none; height: 36px; padding: 0 16px; border-radius: var(--r-pill); cursor: pointer;
+  font: 600 var(--fs-sm)/1 var(--font-body); color: var(--bg); background: var(--accent); border: 1px solid var(--accent);
+}
+.dchat-btn:disabled { opacity: 0.45; cursor: default; }
+.dchat-btn.stop { color: var(--fg); background: var(--surface); border-color: var(--line-strong); }
+
+/* ---------------------------------------------------------------- diagram boxes that open the drawer
+   A small "rows" badge in the box's top-right corner, visible without hover. The diagram plate stays light in both
+   themes, so the badge uses the theme-invariant swatch tokens (dark text on the light blue swatch). */
+.hs.has-table::after {
+  content: "rows"; position: absolute; top: 4px; right: 4px; pointer-events: none;
+  padding: 2px 6px; border-radius: var(--r-sm);
+  font: 600 10px/1.3 var(--font-mono); letter-spacing: 0.02em;
+  color: var(--media); background: var(--sw-blue-fill); border: 1px solid var(--sw-blue-line);
+  box-shadow: 0 1px 2px var(--shadow);
+}
+.hs.has-table:hover::after, .hs.has-table:focus-visible::after { color: var(--plate); background: var(--sw-blue-line); }
