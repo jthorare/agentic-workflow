@@ -209,6 +209,12 @@ public static partial class EventTypes
     /// <summary>A sandbox limit was reached without ending the session: pids, memory high or disk growth (sandbox spec §8).</summary>
     public const string SandboxLimitHit = "sandbox.limit-hit";
 
+    /// <summary>A caller saved 'review.login' in the live profile (PR review page spec); the actor says who.</summary>
+    public const string ReviewLoginSet = "review.login-set";
+
+    /// <summary>A caller allowed a blocked host or home path for a run's repo in the live profile (sandbox spec §3.6); the actor says who.</summary>
+    public const string SandboxAllowed = "sandbox.allowed";
+
     /// <summary>The owner ended network learn mode early, for one repo or every repo (sandbox spec §3.6).</summary>
     public const string SandboxLearnEnded = "sandbox.learn-ended";
 

@@ -9671,7 +9671,7 @@ static Aw.Sindri.Core.Challenges.IssuedChallenge.MinHoldMs.get -> int
 static Aw.Sindri.Core.Commands.Authorization.CallersFor(Aw.Sindri.Core.Commands.CommandRow! row) -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Sindri.Core.Challenges.ChallengeConfirmation
 static Aw.Sindri.Core.Challenges.ChallengeConfirmation.Refusal(Aw.Sindri.Core.Challenges.IssuedChallenge! issued, Aw.Sindri.Core.Challenges.ChallengeAnswer! answer, System.DateTimeOffset now) -> Aw.Kernel.Error?
-static Aw.Sindri.Core.Commands.CallerContext.ActorOf(Aw.Sindri.Core.Commands.CallerClass caller, Aw.Sindri.Core.Commands.ClientLabel client) -> string!
+static Aw.Sindri.Core.Commands.CallerContext.ActorOf(Aw.Sindri.Core.Commands.CallerClass caller, Aw.Sindri.Core.Commands.ClientLabel client, Aw.Sindri.Core.Launch.LaunchId? launch = null) -> string!
 Aw.Sindri.Core.Control.IRepoLocator.Place(string! directory, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.RepoEntry!>! repos, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Control.RepoPlacement?>
 Aw.Sindri.Core.Control.RepoPlacement
 Aw.Sindri.Core.Control.RepoPlacement.<Clone>$() -> Aw.Sindri.Core.Control.RepoPlacement!
@@ -20539,3 +20539,39 @@ Aw.Sindri.Core.Graph.Runs.IGraphRunRecovery
 Aw.Sindri.Core.Graph.Runs.IGraphRunRecovery.Run(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.Running(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.WorkflowRun!>!>!>
 Aw.Sindri.Core.Graph.Runs.IGraphRunRecovery.Run(System.DateTimeOffset startedBefore, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Sindri.Core.Events.ReviewLoginSet
+Aw.Sindri.Core.Events.ReviewLoginSet.<Clone>$() -> Aw.Sindri.Core.Events.ReviewLoginSet!
+Aw.Sindri.Core.Events.ReviewLoginSet.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out string! Login) -> void
+Aw.Sindri.Core.Events.ReviewLoginSet.Equals(Aw.Sindri.Core.Events.ReviewLoginSet? other) -> bool
+Aw.Sindri.Core.Events.ReviewLoginSet.CommandId.get -> Aw.Sindri.Core.Ids.CommandId
+Aw.Sindri.Core.Events.ReviewLoginSet.CommandId.init -> void
+Aw.Sindri.Core.Events.ReviewLoginSet.Login.get -> string!
+Aw.Sindri.Core.Events.ReviewLoginSet.Login.init -> void
+Aw.Sindri.Core.Events.ReviewLoginSet.ReviewLoginSet(Aw.Sindri.Core.Ids.CommandId CommandId, string! Login) -> void
+override Aw.Sindri.Core.Events.ReviewLoginSet.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.ReviewLoginSet.GetHashCode() -> int
+override Aw.Sindri.Core.Events.ReviewLoginSet.ToString() -> string!
+static Aw.Sindri.Core.Events.ReviewLoginSet.operator !=(Aw.Sindri.Core.Events.ReviewLoginSet? left, Aw.Sindri.Core.Events.ReviewLoginSet? right) -> bool
+static Aw.Sindri.Core.Events.ReviewLoginSet.operator ==(Aw.Sindri.Core.Events.ReviewLoginSet? left, Aw.Sindri.Core.Events.ReviewLoginSet? right) -> bool
+Aw.Sindri.Core.Events.SandboxAllowed
+Aw.Sindri.Core.Events.SandboxAllowed.<Clone>$() -> Aw.Sindri.Core.Events.SandboxAllowed!
+Aw.Sindri.Core.Events.SandboxAllowed.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out Aw.Sindri.Core.Launch.LaunchId Launch, out Aw.Sindri.Core.Ids.RepoName Repo, out string! Kind, out string! Entry) -> void
+Aw.Sindri.Core.Events.SandboxAllowed.Equals(Aw.Sindri.Core.Events.SandboxAllowed? other) -> bool
+Aw.Sindri.Core.Events.SandboxAllowed.CommandId.get -> Aw.Sindri.Core.Ids.CommandId
+Aw.Sindri.Core.Events.SandboxAllowed.CommandId.init -> void
+Aw.Sindri.Core.Events.SandboxAllowed.Launch.get -> Aw.Sindri.Core.Launch.LaunchId
+Aw.Sindri.Core.Events.SandboxAllowed.Launch.init -> void
+Aw.Sindri.Core.Events.SandboxAllowed.Repo.get -> Aw.Sindri.Core.Ids.RepoName
+Aw.Sindri.Core.Events.SandboxAllowed.Repo.init -> void
+Aw.Sindri.Core.Events.SandboxAllowed.Kind.get -> string!
+Aw.Sindri.Core.Events.SandboxAllowed.Kind.init -> void
+Aw.Sindri.Core.Events.SandboxAllowed.Entry.get -> string!
+Aw.Sindri.Core.Events.SandboxAllowed.Entry.init -> void
+Aw.Sindri.Core.Events.SandboxAllowed.SandboxAllowed(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Launch.LaunchId Launch, Aw.Sindri.Core.Ids.RepoName Repo, string! Kind, string! Entry) -> void
+override Aw.Sindri.Core.Events.SandboxAllowed.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.SandboxAllowed.GetHashCode() -> int
+override Aw.Sindri.Core.Events.SandboxAllowed.ToString() -> string!
+static Aw.Sindri.Core.Events.SandboxAllowed.operator !=(Aw.Sindri.Core.Events.SandboxAllowed? left, Aw.Sindri.Core.Events.SandboxAllowed? right) -> bool
+static Aw.Sindri.Core.Events.SandboxAllowed.operator ==(Aw.Sindri.Core.Events.SandboxAllowed? left, Aw.Sindri.Core.Events.SandboxAllowed? right) -> bool
+const Aw.Sindri.Core.Events.EventTypes.ReviewLoginSet = "review.login-set" -> string!
+const Aw.Sindri.Core.Events.EventTypes.SandboxAllowed = "sandbox.allowed" -> string!

@@ -27,15 +27,19 @@ public sealed record CallerContext(CallerClass Class, bool Terminal, string Acto
     {
         ArgumentNullException.ThrowIfNull(caller);
         var human = caller.Class == CallerClass.Human;
-        return new CallerContext(human ? CallerClass.Human : CallerClass.Session, human && caller.Terminal, ActorOf(caller.Class, caller.Client), ids.New<CommandId>(), ids.New<CorrelationId>(), caller.Repo, human ? null : caller.Launch);
+        var launch = human ? null : caller.Launch;
+        return new CallerContext(human ? CallerClass.Human : CallerClass.Session, human && caller.Terminal, ActorOf(caller.Class, caller.Client, launch), ids.New<CommandId>(), ids.New<CorrelationId>(), caller.Repo, launch);
     }
 
-    /// <summary>The actor an HTTP caller of <paramref name="caller"/> labelled <paramref name="client"/> is: 'human:prover', 'session:mcp' and the like.</summary>
+    /// <summary>The actor an HTTP caller of <paramref name="caller"/> labelled <paramref name="client"/> is: 'human:prover', 'session:mcp' and the like; a session Sindri launched is 'session:launch:&lt;launch id&gt;', so two launched sessions can be told apart.</summary>
     /// <param name="caller">Human, else a session.</param>
     /// <param name="client">The X-Sindri-Client label.</param>
+    /// <param name="launch">The launch of a session Sindri started, or null (ignored for a human).</param>
     /// <returns>The actor.</returns>
-    public static string ActorOf(CallerClass caller, ClientLabel client) =>
-        caller == CallerClass.Human ? "human:" + HumanLabel(client) : "session:" + SessionLabel(client);
+    public static string ActorOf(CallerClass caller, ClientLabel client, LaunchId? launch = null) =>
+        caller == CallerClass.Human ? "human:" + HumanLabel(client)
+        : launch is { } started ? "session:launch:" + started.Value
+        : "session:" + SessionLabel(client);
 
     /// <summary>An in-process caller, 'service:&lt;name&gt;'.</summary>
     /// <param name="name">The service, for example 'host' or 'heartbeat'.</param>
