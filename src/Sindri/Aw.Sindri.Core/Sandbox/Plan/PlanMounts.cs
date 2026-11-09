@@ -203,12 +203,12 @@ internal static class PlanMounts
         Beneath(m, new PlanMount($"{c.StateDir}/bugfix/{directory[(directory.LastIndexOf('/') + 1)..]}", PlanMountKind.ReadWrite, Reason: "bugfix-state's own folder for this repo"));
     }
 
-    // PR 14: a resource's folder or file, read-write at its own path. Like the skill folders it goes above the masks over its parent (a resource lives under Sindri's home).
+    // PR 14: the owner's resource folder, read-write at its own path. Like the skill folders it goes above the masks over its parent (a resource lives under Sindri's home).
     private static void AddResourceState(List<PlanMount> m, PlanContext c)
     {
         foreach (var resource in c.Request.ResourceMounts ?? [])
         {
-            Beneath(m, new PlanMount(resource.HostPath.TrimEnd('/'), PlanMountKind.State, Reason: $"the {resource.Name} resource of this run's owner"));
+            Beneath(m, new PlanMount(resource.HostPath.TrimEnd('/'), PlanMountKind.State, Reason: $"the {resource.Name} folder of this run's owner"));
         }
     }
 

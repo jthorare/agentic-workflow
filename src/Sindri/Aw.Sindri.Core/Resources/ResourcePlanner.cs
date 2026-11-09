@@ -21,19 +21,19 @@ public static partial class ResourcePlanner
         var home = $"{resourcesRoot.TrimEnd('/')}/{owner.Folder}";
         var create = new List<PlannedResource>();
         var env = new Dictionary<string, string>(StringComparer.Ordinal);
-        var mounts = new List<ResourceMount>();
-
-        var bad = AddDatabases(spec, home, create, env, mounts) ?? AddDisks(spec, home, create, env, mounts) ?? AddConnections(spec, env);
+        var bad = AddDatabases(spec, home, create, env) ?? AddDisks(spec, home, create, env) ?? AddConnections(spec, env);
         if (bad is not null)
         {
             return bad;
         }
 
+        // why: SQLite writes <name>.db-journal, -wal and -shm next to the file, so a lone file mount can't take a write; the owner's own folder holds only its resources
+        List<ResourceMount> mounts = create.Count == 0 ? [] : [new ResourceMount("resources", home)];
         var limits = Limits(spec.Sandbox);
         return limits.IsError ? limits.Error : new ResourcePlan(create, env, mounts, limits.Value);
     }
 
-    private static Error? AddDatabases(ResourceSpec spec, string home, List<PlannedResource> create, Dictionary<string, string> env, List<ResourceMount> mounts)
+    private static Error? AddDatabases(ResourceSpec spec, string home, List<PlannedResource> create, Dictionary<string, string> env)
     {
         foreach (var name in spec.Databases.Select(static d => d.Name))
         {
@@ -45,13 +45,12 @@ public static partial class ResourcePlanner
             var path = $"{home}/{name}.db";
             create.Add(new PlannedResource(ResourceKind.Database, name, path, SizeLimit: null));
             env[ResourceEnv.Database(name)] = path;
-            mounts.Add(new ResourceMount(name, path));
         }
 
         return null;
     }
 
-    private static Error? AddDisks(ResourceSpec spec, string home, List<PlannedResource> create, Dictionary<string, string> env, List<ResourceMount> mounts)
+    private static Error? AddDisks(ResourceSpec spec, string home, List<PlannedResource> create, Dictionary<string, string> env)
     {
         foreach (var disk in spec.Disks)
         {
@@ -68,7 +67,6 @@ public static partial class ResourcePlanner
             var path = $"{home}/{disk.Name}";
             create.Add(new PlannedResource(ResourceKind.Disk, disk.Name, path, limit));
             env[ResourceEnv.Disk(disk.Name)] = path;
-            mounts.Add(new ResourceMount(disk.Name, path));
         }
 
         return null;

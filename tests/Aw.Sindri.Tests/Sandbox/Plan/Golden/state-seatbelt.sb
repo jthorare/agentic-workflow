@@ -121,10 +121,8 @@
 (allow file-read* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/gitconfig.empty"))
 ; the value-free summary 'sandbox explain' reads
 (allow file-read* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/sandbox-plan.json"))
-; the notes resource of this run's owner
-(allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/resources/workflow/web/notes.db"))
-; the scratch resource of this run's owner
-(allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/resources/workflow/web/scratch"))
+; the resources folder of this run's owner
+(allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/resources/workflow/web"))
 ; the Step's outputs
 (allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/runs/x/s/1"))
 ; the run's worktree

@@ -193,7 +193,7 @@ public static class ProfileRules
 
     private static Error? RouteAndPoll(WorkflowSettings? workflow) => Route(workflow?.Route) ?? Poll(workflow?.Poll);
 
-    private static Error? DurationsAndAgent(WorkflowSettings? workflow) => Durations(workflow) ?? ModelKeyRules.Shape(workflow?.Agent) ?? ForEachRules.Check(workflow?.ForEach);
+    private static Error? DurationsAndAgent(WorkflowSettings? workflow) => Durations(workflow) ?? ModelKeyRules.Shape(workflow?.Agent) ?? ForEachRules.Check(workflow?.ForEach) ?? FlowRules.Check(workflow);
 
     /// <summary>The poll keys (#2258, PR 11): 'workflow.poll.intervalSeconds' is at least 30, 'workflow.poll.catchUpPages' is 1 to 100.</summary>
     private static Error? Poll(PollSettings? poll)

@@ -12,7 +12,7 @@ public sealed class ResourcePlannerTests
     private static ResourceOwner Owner(string text) => ResourceOwner.Parse(text).Value;
 
     [Fact, Trait("Lane", "unit")]
-    public void A_spec_with_a_database_and_a_disk_yields_env_names_and_two_rw_mounts()
+    public void A_spec_with_a_database_and_a_disk_yields_env_names_and_one_rw_mount_of_the_owner_folder()
     {
         var spec = new ResourceSpec([new DatabaseResource("state")], [new DiskResource("scratch-pad", "512MiB")], Sandbox: null, []);
 
@@ -20,8 +20,33 @@ public sealed class ResourcePlannerTests
 
         Assert.Equal($"{Root}/workflow/triage/state.db", plan.Env[ResourceEnv.Database("state")]);
         Assert.Equal($"{Root}/workflow/triage/scratch-pad", plan.Env["SINDRI_DISK_SCRATCH_PAD"]);
-        Assert.Equal([new ResourceMount("state", $"{Root}/workflow/triage/state.db"), new ResourceMount("scratch-pad", $"{Root}/workflow/triage/scratch-pad")], plan.Mounts);
+        Assert.Equal([new ResourceMount("resources", $"{Root}/workflow/triage")], plan.Mounts);
         Assert.Equal([new PlannedResource(ResourceKind.Database, "state", $"{Root}/workflow/triage/state.db", SizeLimit: null), new PlannedResource(ResourceKind.Disk, "scratch-pad", $"{Root}/workflow/triage/scratch-pad", SizeLimit: 512L << 20)], plan.Create);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_database_mount_covers_the_files_SQLite_writes_beside_it()
+    {
+        var spec = new ResourceSpec([new DatabaseResource("notes")], [], Sandbox: null, []);
+
+        var plan = ResourcePlanner.Plan(Owner("workflow:web"), spec, Root).Value;
+
+        var db = plan.Env[ResourceEnv.Database("notes")];
+        foreach (var file in new[] { db, $"{db}-journal", $"{db}-wal", $"{db}-shm" })
+        {
+            Assert.Contains(plan.Mounts, m => file.StartsWith(m.HostPath + "/", StringComparison.Ordinal));
+        }
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("8388607TiB", true)]
+    [InlineData("8388608TiB", false)]
+    [InlineData("9999999TiB", false)]
+    [InlineData("9999999GiB", true)]
+    public void A_size_that_would_overflow_a_long_does_not_parse(string text, bool parses)
+    {
+        Assert.Equal(parses, ResourceSizes.TryParse(text, out var bytes));
+        Assert.True(bytes >= 0);
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -3,6 +3,7 @@ using Aw.Context.Core.Linear;
 using Aw.Context.Core.Sources;
 using Aw.Context.Testing.Linear;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Linear;
 using Aw.Sindri.Features.LinearIssues;
 using Aw.Sindri.Testing;
@@ -26,6 +27,7 @@ public sealed class ChangeLinearIssueTests
 
     private readonly FakeContextLinearWrites _writes = new();
     private readonly FakeLinearWriteGate _gate = new();
+    private readonly FakeLinearWriteRecorder _recorder = new();
     private readonly FakeLinearSideFacts _side = new FakeLinearSideFacts().WithTeam(Lookups()).WithTeamsPicked(picked: true);
     private readonly FakeLinearIssueFacts _facts = new FakeLinearIssueFacts().WithSource(Connected(Viewer)).WithDetails(new LinearIssueDetailFacts(Row("ENG-12", Viewer), "The description", Removed: false, []));
 
@@ -35,7 +37,7 @@ public sealed class ChangeLinearIssueTests
 
     private static string? Member(Kernel.Error error, string name) => error.Extensions!.First(m => m.Key == name).Value.GetString();
 
-    private ChangeLinearIssueService Service() => new(_gate, new FakeLinearWriteScope(), _side, _facts, _writes, new GetLinearIssueService(_facts, new FakeLinearItemLinks(), _gate));
+    private ChangeLinearIssueService Service() => new(_gate, new FakeLinearWriteScope(), _side, _facts, _writes, new GetLinearIssueService(_facts, new FakeLinearItemLinks(), _gate), _recorder);
 
     private static LinearLookupsResponse Lookups() => new(
         new LinearTeamRef(EngId, "ENG", "Engineering"), KnownInstants.Epoch,
@@ -173,6 +175,18 @@ public sealed class ChangeLinearIssueTests
         var change = _writes.Calls[1].Change!;
         Expect.Equal(Review, change.StateId.Value.Value);
         Assert.False(change.Title.IsSet || change.Description.IsSet || change.LabelIds.IsSet);
+        Expect.Equal(("linear.issue.changed", "ENG", "ENG-12", null, "stateId"), Expect.Only(_recorder.Recorded));
+    }
+
+    [Fact]
+    public async Task A_change_the_recorder_cannot_append_is_that_error_not_a_silent_success()
+    {
+        _writes.SetLive(Live());
+        _recorder.Failing = SindriErrors.NotRunning.With("no lease in this test");
+
+        var result = await Service().Handle(ToReview(), Token);
+
+        Expect.Equal(SindriErrors.NotRunning.Code, result.Error.Code);
     }
 
     [Fact]
@@ -184,6 +198,7 @@ public sealed class ChangeLinearIssueTests
         var applied = (await Ok(ToReview())).Applied!;
 
         Expect.Equal(("applied", "SND-LINEAR-013"), (applied.Outcome, applied.Warning));
+        _ = Expect.Only(_recorder.Recorded);   // why: Linear took the change, so it is recorded whatever the store holds
     }
 
     [Fact]
@@ -197,6 +212,7 @@ public sealed class ChangeLinearIssueTests
         Expect.Equal("SND-LINEAR-011", result.Error.Code);
         Expect.Equal(Kernel.ErrorKind.Timeout, result.Error.Kind);
         Expect.Equal("unknown", Member(result.Error, "outcome"));
+        Assert.Empty(_recorder.Recorded);   // why: nobody knows it landed, so nothing is claimed
     }
 
     [Fact]
@@ -243,6 +259,7 @@ public sealed class ChangeLinearIssueTests
 
         Expect.Equal(("applied", true), (applied.Outcome, applied.AlreadyApplied));
         Expect.Equal("Live", Expect.Only(_writes.Calls).Method);
+        Assert.Empty(_recorder.Recorded);   // why: nothing was sent, so there is no write to attribute
     }
 
     [Fact]
