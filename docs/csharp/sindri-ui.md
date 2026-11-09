@@ -527,7 +527,7 @@ The rev-8 contract unit gives the shell its screens' skeleton; the pages fill in
 U3'.
 
 - **Navigation.** The top bar has six tabs, in order: Home, Projects, Work, Context, Agents, System. Settings is
-  not a tab (⌘, opens it). `PageId` names the ten pages (Jobs is reached by G J, the palette and System's link; Workflows, read-only in part 1 of PR 17 (list, a workflow's runs, a run's detail), by G W and the palette, and is not a tab; Projects shows only its heading until its content lands); a page with no screen yet shows a placeholder that says what it
+  not a tab (⌘, opens it). `PageId` names the ten pages (Jobs is reached by G J, the palette and System's link; Workflows (PR 17: list, a workflow's runs, a run's detail) is a tab, third after Home and Projects (key W, short label "Flows"), and G W and the palette open it too; Projects shows only its heading until its content lands); a page with no screen yet shows a placeholder that says what it
   waits for. The last page is remembered in the preferences.
 - **Chords.** `G`, then a page's key within `ShellViewModel.ChordWait` (1 s): `H` or `N` Home, `D` Home filtered to
   decisions (`HomeFilter.Decisions`), `P` Projects (link `sindri://projects`), `Q` Work, `C` Context, `A` Agents, `.` or `S` System.

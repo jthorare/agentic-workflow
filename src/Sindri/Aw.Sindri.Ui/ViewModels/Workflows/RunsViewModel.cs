@@ -11,7 +11,8 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// </summary>
 internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : ObservableObject
 {
-    private const string NotActive = "SND-GRAPH-105";
+    /// <summary>The refusal code for a workflow with no active revision.</summary>
+    internal const string NotActive = "SND-GRAPH-105";
     private int _reads;
 
     /// <summary>The workflow's slug.</summary>
@@ -26,13 +27,40 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     /// <summary>"1 running · 3 runs"; empty until the first answer.</summary>
     public string Head { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>The shown revision as a graph at the positions Sindri served, or null until the workflow is read.</summary>
+    public WorkflowGraphViewModel? Graph { get; private set => Set(ref field, value); }
+
+    /// <summary>The workflow as last read, or null: run detail draws its graph when the run walked this revision.</summary>
+    internal WorkflowView? Shown { get; private set; }
+
     /// <summary>The runs, newest first.</summary>
     public ObservableCollection<RunRowViewModel> Rows { get; } = [];
 
     /// <summary>"Reading runs…" until the first answer.</summary>
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     public string ReadingText => Labels.WfRunsReading;
+
+    /// <summary>The retry action's words.</summary>
+    public string RetryText => Labels.WfTryAgain;
 #pragma warning restore CA1822, MA0041
+
+    /// <summary>The Run now button's words: "Run now", or "Starting…" while its call is on the way.</summary>
+    public string RunNowText => IsStarting ? Labels.WfRunNowBusy : Labels.WfRunNow;
+
+    /// <summary>True while Run now's call is on the way; a second press does nothing.</summary>
+    public bool IsStarting { get; private set { Set(ref field, value); OnChanged(nameof(RunNowText)); OnChanged(nameof(CanPressRunNow)); } }
+
+    /// <summary>True when the workflow has an active revision to run: false until the runs read lands, and once it or Run now said the workflow is off.</summary>
+    public bool CanRun { get; private set { Set(ref field, value); OnChanged(nameof(CanPressRunNow)); } }
+
+    /// <summary>True when Run now can be pressed: the workflow is on and no call is on the way.</summary>
+    public bool CanPressRunNow => CanRun && !IsStarting;
+
+    /// <summary>What the last Run now said (queued, skipped or refused), in words; empty otherwise.</summary>
+    public string NoticeText { get; private set { Set(ref field, value); OnChanged(nameof(HasNotice)); } } = string.Empty;
+
+    /// <summary>True when there is a note under the Run now button.</summary>
+    public bool HasNotice => NoticeText.Length > 0;
 
     /// <summary>True until the answer.</summary>
     public bool IsReading { get; private set => Set(ref field, value); }
@@ -63,6 +91,8 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
             Rows.Clear();   // another workflow: none of the old runs stay
             (Head, DetailText) = (string.Empty, string.Empty);
             (IsFailed, FailedText, IsEmpty, EmptyText) = (false, string.Empty, false, string.Empty);   // nor does the old one's failure or "off" line
+            (CanRun, NoticeText) = (false, string.Empty);   // until this one's runs read says it is on
+            (Graph, Shown) = (null, null);
         }
 
         (Slug, Title) = (slug, name);
@@ -78,14 +108,17 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
 
         IsReading = false;
         DetailText = detail.IsSuccess ? Detail(detail.Value) : string.Empty;
+        (Shown, Graph) = detail.IsSuccess ? (detail.Value, WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(detail.Value))) : (Shown, Graph);
         if (runs.IsSuccess)
         {
+            CanRun = true;
             Show(runs.Value);
         }
         else if (string.Equals(runs.Error.Code, NotActive, StringComparison.Ordinal))
         {
             Rows.Clear();
             (IsFailed, FailedText, IsEmpty, EmptyText, Head) = (false, string.Empty, true, Labels.WfRunsOff, string.Empty);
+            CanRun = false;
         }
         else
         {
@@ -93,9 +126,20 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
         }
     }
 
+    /// <summary>Turns Run now off: Sindri said the workflow has no active revision.</summary>
+    internal void TurnOff() => CanRun = false;
+
+    /// <summary>Marks Run now's call as on the way, or as done.</summary>
+    /// <param name="starting">True while the call is on the way.</param>
+    internal void SetStarting(bool starting) => IsStarting = starting;
+
+    /// <summary>Shows what Run now said, in words.</summary>
+    /// <param name="text">The note; empty clears it.</param>
+    internal void Note(string text) => NoticeText = text;
+
     private void Show(WorkflowRunList list)
     {
-        (IsFailed, FailedText) = (false, string.Empty);
+        (IsFailed, FailedText, CanRun) = (false, string.Empty, true);
         Rows.Clear();
         foreach (var run in list.Runs)
         {
