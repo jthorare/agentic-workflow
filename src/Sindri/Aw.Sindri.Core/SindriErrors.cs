@@ -283,6 +283,7 @@ public static partial class SindriErrors
         LibraryDocNotFound, LinearTeamNotPicked, LinearNothingStored, LinearNoWriteKey, LinearBadValue, LinearNoAnswer, LinearWriteKeySameAsRead, LinearNoKeychain,
         ConnectionNotFound, ConnectionNeedsSignIn, ConnectionSignInTimeout, ConnectionStateMismatch, ConnectionRefreshFailed, ConnectionSecretUnavailable, ConnectionNeedsClientId, ConnectionNameInvalid, ConnectionConsentDenied, ConnectionExists, ConnectionKindNoSignIn,
         MemoryNotFound, MemoryNameTaken, MemoryFactInvalid, MemoryEmbedUnavailable, MemoryMatchLevelInvalid, MemoryNameInvalid, MemoryExpiryPast,
+        ResourceDiskOverSize, ResourceNameClash, ResourcePurgeRefused, ResourcePathEscapes, ResourceSandboxOverCap, ResourceInvalid,
         .. EveryTodo(),
     ];
 }
