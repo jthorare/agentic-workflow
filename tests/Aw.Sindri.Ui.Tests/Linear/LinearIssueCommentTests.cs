@@ -212,7 +212,7 @@ public sealed class LinearIssueCommentTests
     public async Task A_session_refusal_keeps_the_text_and_turns_the_box_off()
     {
         var sheet = await _f.Opened(Token);
-        _f.Server.QueueLinearComment(RouteAnswer.Problem("linear-comment", "session-refused"));
+        _f.Server.QueueLinearComment(RouteAnswer.Refused("Linear comments are the owner's to post (fix: use the app)"));
         sheet.CommentText = Note;
 
         await sheet.Post(Token);
