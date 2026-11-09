@@ -7,7 +7,7 @@ namespace Aw.Meta.Core.Worktrees;
 /// The rules that decide whether a worktree may be removed. All must hold, so every failing one is reported. The work must be
 /// proven finished: an ended pull request, or, with no pull request, everything pushed or in origin/main (a live tree on a fresh branch is protected by rules 4 and 7).
 /// Nothing about age is among them (a worktree untouched for weeks may still be work in progress); the one time rule is a change
-/// trigger, "changed since the last full sweep (<when it started>)".
+/// trigger, "changed since the last full sweep (when it started)".
 /// </summary>
 internal static class WorktreeRules
 {
