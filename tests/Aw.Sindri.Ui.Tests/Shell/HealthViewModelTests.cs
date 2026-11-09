@@ -283,6 +283,7 @@ public sealed class HealthViewModelTests : IDisposable
         _server.GoDown();
         await Eventually(() => _vm.Headline == "Not running", "down");
 
+        var before = _server.StreamCursors.Count;
         _server.ComeUp();
         var streamGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         _server.BeforeStreamOpens = () => streamGate.Task;
@@ -294,6 +295,8 @@ public sealed class HealthViewModelTests : IDisposable
             _clock.Advance(HealthViewModel.RetryEvery);
             return _vm.Lease == "pid 4242 · epoch 8";
         }, "reconnected");
+        streamGate.SetResult();
+        await Eventually(() => _server.StreamCursors.Count > before, "reconnect stream opened");
         Assert.Equal(30, _server.StreamCursors[^1]);
     }
 
