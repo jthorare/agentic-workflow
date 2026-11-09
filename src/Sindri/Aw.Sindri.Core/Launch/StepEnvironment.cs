@@ -20,6 +20,15 @@ public static class StepEnvironment
     public static string? RunDirectoryOf(LaunchRequest request, string? sindriHome)
     {
         ArgumentNullException.ThrowIfNull(request);
+        return request.Node is not null ? NodeRunDirectory(request, sindriHome) : StepRunDirectory(request, sindriHome);
+    }
+
+    // why: a node run's directory is keyed by its launch, whose id has no ':' or '@'
+    private static string? NodeRunDirectory(LaunchRequest request, string? sindriHome) =>
+        request.Step is not { } step ? null : sindriHome is not null ? RunDirectoryAtNode(request.Launch, sindriHome) : step.Policy?.WritablePath ?? request.Worktree;
+
+    private static string? StepRunDirectory(LaunchRequest request, string? sindriHome)
+    {
         if (request.Step is not { } step || request.Instance is not { } instance)
         {
             return null;
@@ -41,6 +50,13 @@ public static class StepEnvironment
             : null;
     }
 
+    /// <summary>A graph node run's run directory (PR 7): $AW_SINDRI_HOME/workflow/nodes/&lt;launch&gt;/, one per launch so a relaunch starts empty.</summary>
+    /// <param name="launch">The node run's launch.</param>
+    /// <param name="sindriHome">Sindri's own home.</param>
+    /// <returns>The absolute path.</returns>
+    public static string RunDirectoryAtNode(LaunchId launch, string sindriHome)
+        => $"{sindriHome.TrimEnd('/')}/workflow/nodes/{launch.Value}";
+
     /// <summary>The same directory from its parts, for the caller that has no request yet (a skill launch's seed names it).</summary>
     /// <param name="workflow">The instance.</param>
     /// <param name="state">The Step's state name.</param>
@@ -58,6 +74,11 @@ public static class StepEnvironment
     {
         ArgumentNullException.ThrowIfNull(request);
         Dictionary<string, string> env = new(StringComparer.Ordinal);
+        if (request is { Step: not null, Node: not null } && RunDirectoryOf(request, sindriHome) is { } nodeDirectory)
+        {
+            env[RunDirectory] = nodeDirectory;
+        }
+
         if (request.Step is not null && request.Instance is { } instance)
         {
             env[Instance] = instance.Value;
