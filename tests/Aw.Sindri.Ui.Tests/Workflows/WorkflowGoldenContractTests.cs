@@ -34,7 +34,7 @@ public sealed class WorkflowGoldenContractTests
         Assert.Equal(("owner", "session:golden"), (one.CreatedBy, one.ChangedBy));
         Assert.Null(one.ArchivedAt);
         Assert.Equal(2, one.Spec.GetProperty("nodes").GetArrayLength());
-        Assert.Empty(one.Positions);
+        Assert.Equal(new[] { new NodePositionView("start", 0, 0), new NodePositionView("agent", 280, 0) }, one.Positions);
 
         var runs = Read<WorkflowRunList>("workflows-slug-runs", "list-three");
         Assert.Equal(("morning-check", 3), (runs.Slug, runs.Runs.Count));
