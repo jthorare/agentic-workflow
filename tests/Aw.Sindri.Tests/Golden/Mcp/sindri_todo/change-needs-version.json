@@ -1,0 +1,10 @@
+{
+  "isError": true,
+  "structuredContent": {
+    "code": "SND-TODO-001",
+    "message": "change needs a version and at least one of text, due, links."
+  },
+  "content": [
+    "SND-TODO-001 change needs a version and at least one of text, due, links."
+  ]
+}

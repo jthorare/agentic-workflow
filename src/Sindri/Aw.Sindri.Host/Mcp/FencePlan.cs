@@ -108,4 +108,7 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
 
     /// <summary>GET /sindri/todos/{id} for a fenced caller: the todo's text and the two texts of an open conflict.</summary>
     internal static FencePlan OneTodo { get; } = new("sindri:todo", [new("todo.text", "lastBy"), new("todo.conflict.sindri.text"), new("todo.conflict.obsidian.text")]);
+
+    /// <summary>sindri_todo's answer: the accepted write holds ids, numbers and a date, so this fences the one field an echoed todo would carry (todo spec §4.4).</summary>
+    internal static FencePlan TodoWrite { get; } = new("sindri:todo", [new("text", "by")]);
 }
