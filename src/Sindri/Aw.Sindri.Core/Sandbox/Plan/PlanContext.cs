@@ -37,7 +37,7 @@ internal sealed record PlanContext(
         var writable = request.Attended ? request.Paths.Worktree : request.Policy!.WritablePath;   // why: Build checks a Step carries its policy
         var github = GithubCredentialResolver.For(request.Attended, settings, request.SkillPushes, request.Policy, request.GithubPushApproved);
         var limits = LimitsResolver.Resolve(new LimitsInput(
-            settings?.Limits, settings?.Attended, request.Attended, request.StepTimeout, request.LongMax, request.Host.TotalMemoryBytes, request.Host.CpuCores));
+            settings?.Limits, settings?.Attended, request.Attended, request.StepTimeout, request.LongMax, request.Host.TotalMemoryBytes, request.Host.CpuCores, request.ResourceLimits));
         var groups = HostGroups.Resolve(new GroupsInput(settings, repo, request.Target, writable is not null, request.Attended, github, request.OmitGroups) { AddGroups = request.AddGroups });
         return new PlanContext(request, writable, LoginSourceResolver.Resolve(settings, request.Target, request.Repo, request.Policy?.LoginSource), github, limits, groups, repo);
     }
