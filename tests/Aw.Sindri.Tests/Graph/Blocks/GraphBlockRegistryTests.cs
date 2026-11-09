@@ -52,14 +52,14 @@ public sealed class GraphBlockRegistryTests
         GraphBlockRegistry.FlowBlocks(new FlowFakes.MemorySeenStore(), new FlowFakes.RecordingItemPort(), new FlowFakes.ScriptedCallPort(), new FlowFakes.ScriptedHttpPort()));
 
     [Fact]
-    public void The_flow_blocks_register_beside_the_standard_five_and_workflow_call_is_a_trigger()
+    public void The_flow_blocks_register_beside_the_standard_six_and_workflow_call_is_a_trigger()
     {
         var registry = WithFlowBlocks();
 
         Assert.Equal(
-            ["condition", "create_item", "http", "manual", "notify", "only_new", "prompt", "run_workflow", "schedule", "workflow_call"],
+            ["condition", "connection_event", "create_item", "http", "manual", "notify", "only_new", "prompt", "run_workflow", "schedule", "workflow_call"],
             registry.Types.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
-        Assert.Equal(["manual", "schedule", "workflow_call"], registry.Types.Values.Where(t => t.IsTrigger).Select(t => t.Type).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["connection_event", "manual", "schedule", "workflow_call"], registry.Types.Values.Where(t => t.IsTrigger).Select(t => t.Type).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }
 
     [Fact]
