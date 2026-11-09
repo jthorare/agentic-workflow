@@ -11,7 +11,7 @@
       "terminal": false,
       "method": "POST",
       "route": "/sindri/connections",
-      "cli": "sindri connection add <name> [--preset <preset>] [--kind <kind>] [--client-id <id>] [--client-secret-env <name>] [--key-env <name>]",
+      "cli": "sindri connection add <name> [--preset <preset>] [--kind <kind>] [--client-id <id>] [--client-secret-env <name>] [--key-env <name>] [--url <address>]",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,

@@ -32,4 +32,12 @@ internal static class TodoRoutes
     internal static string HoldRestore => Note + "/hold/restore";
 
     internal static string HoldUndo => Note + "/hold/undo";
+
+    internal static string NoteCheck => Note + "/check";
+
+    internal static string NoteImport => Note + "/import";
+
+    internal static string NoteSet => Note + "/set";
+
+    internal static string NoteStop => Note + "/stop";
 }
