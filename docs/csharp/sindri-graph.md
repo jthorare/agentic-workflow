@@ -52,7 +52,7 @@ saving on a revision that is no longer the latest is `SND-GRAPH-007`; `Activate`
 
 ## Error codes
 
-`SND-GRAPH-001..011` (definitions) and `SND-GRAPH-100..108` (runs, below), listed in `docs/sindri/errors.md`.
+`SND-GRAPH-001..011` (definitions) and `SND-GRAPH-100..111` (runs, below), listed in `docs/sindri/errors.md`.
 
 ## The `prompt` block's `output` schema
 
@@ -70,7 +70,7 @@ A run is a row in `workflow_run` (ledger migration `0009_workflow_runs`; the num
 
 **By hand.** `sindri wf run <slug> [--payload JSON] [--json]` (`POST /sindri/workflows/{slug}/runs`) starts a run of the active revision with trigger `{"kind":"manual",...}`: it answers started, queued or skipped by the concurrency. `sindri wf cancel <run> [--json]` (`POST /sindri/workflow-runs/{run}/cancel`) asks a run in flight to stop (Temporal cancel); a queued run is cancelled in place and never starts. `sindri wf takeover <run> <node> [--item <index>] [--json]` (`POST /sindri/workflow-runs/{run}/nodes/{node}/takeover`) takes over the `run_agent` node the run waits on (its timeout pauses, only the human reports it) and `sindri wf handback ...` (`.../handback`) gives it back; both answer `{"run","node","itemIndex","agent"}` with `agent` `taken_over` or `waiting`, and both are open to a human and to an agent session alike. A node the run isn't waiting on is `SND-GRAPH-110`, a handback of a node nobody holds `SND-GRAPH-111`. `GET /sindri/workflow-runs/{run}` marks such a node row with `agent`: `waiting`, `taken_over` or null.
 
-**Codes.** `SND-GRAPH-100` the run id is used, `101` no such run, `102` a block could not finish, `103` a prompt answer does not fit its schema, `105` the workflow is not active, `106` a manual payload is not a JSON object, `107` the run already ended, `108` a referenced node output was cut at 64 KB.
+**Codes.** `SND-GRAPH-100` the run id is used, `101` no such run, `102` a block could not finish, `103` a prompt answer does not fit its schema, `105` the workflow is not active, `106` a manual payload is not a JSON object, `107` the run already ended, `108` a referenced node output was cut at 64 KB, `109` a run of this workflow can't start the workflow again, `110` the run is not waiting on an agent at that node, `111` that agent node is not taken over.
 
 ## The `run_agent` block (PR 7)
 
