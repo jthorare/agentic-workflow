@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Aw.Sindri.Core.Todos.Note;
 
 namespace Aw.Sindri.Features.ImportTodoNote;
@@ -11,4 +12,5 @@ namespace Aw.Sindri.Features.ImportTodoNote;
 /// <param name="Importable">Open lines an import adopts: the number to pass as 'expectOpen'.</param>
 /// <param name="CantImportLines">Every open task line that breaks the todo text rules, with its line number and reason.</param>
 /// <param name="DryRun">Whether nothing was written.</param>
-public sealed record ImportTodoNoteResponse(int Imported, int CantImport, int Open, int Done, int Other, int Importable, IReadOnlyList<NoteCantImport> CantImportLines, bool DryRun);
+/// <param name="Warning">Set when the note changed between the check and the import and a different number of lines was taken (#2429); left out of the JSON otherwise.</param>
+public sealed record ImportTodoNoteResponse(int Imported, int CantImport, int Open, int Done, int Other, int Importable, IReadOnlyList<NoteCantImport> CantImportLines, bool DryRun, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Warning = null);

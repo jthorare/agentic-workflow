@@ -20591,7 +20591,7 @@ Aw.Sindri.Core.Todos.TodoNoteImport
 Aw.Sindri.Core.Todos.TodoNoteImport.<Clone>$() -> Aw.Sindri.Core.Todos.TodoNoteImport!
 Aw.Sindri.Core.Todos.TodoNoteImport.Counts.get -> Aw.Sindri.Core.Todos.Note.NoteCounts!
 Aw.Sindri.Core.Todos.TodoNoteImport.Counts.init -> void
-Aw.Sindri.Core.Todos.TodoNoteImport.Deconstruct(out Aw.Sindri.Core.Todos.Note.NoteCounts! Counts, out int Imported, out bool DryRun) -> void
+Aw.Sindri.Core.Todos.TodoNoteImport.Deconstruct(out Aw.Sindri.Core.Todos.Note.NoteCounts! Counts, out int Imported, out bool DryRun, out string? Warning) -> void
 Aw.Sindri.Core.Todos.TodoNoteImport.DryRun.get -> bool
 Aw.Sindri.Core.Todos.TodoNoteImport.DryRun.init -> void
 Aw.Sindri.Core.Todos.TodoNoteImport.Equals(Aw.Sindri.Core.Todos.TodoNoteImport? other) -> bool
@@ -20612,7 +20612,7 @@ Aw.Sindri.Core.Todos.TodoNoteImportRequest.Vault.get -> string!
 Aw.Sindri.Core.Todos.TodoNoteImportRequest.Vault.init -> void
 Aw.Sindri.Core.Todos.TodoNoteImportRequest.Via.get -> string?
 Aw.Sindri.Core.Todos.TodoNoteImportRequest.Via.init -> void
-Aw.Sindri.Core.Todos.TodoNoteImport.TodoNoteImport(Aw.Sindri.Core.Todos.Note.NoteCounts! Counts, int Imported, bool DryRun) -> void
+Aw.Sindri.Core.Todos.TodoNoteImport.TodoNoteImport(Aw.Sindri.Core.Todos.Note.NoteCounts! Counts, int Imported, bool DryRun, string? Warning = null) -> void
 Aw.Sindri.Core.Todos.TodoNoteState
 Aw.Sindri.Core.Todos.TodoNoteState.Busy = 5 -> Aw.Sindri.Core.Todos.TodoNoteState
 Aw.Sindri.Core.Todos.TodoNoteState.CantRead = 3 -> Aw.Sindri.Core.Todos.TodoNoteState
@@ -20775,3 +20775,5 @@ override Aw.Sindri.Core.Connections.SignInTry.GetHashCode() -> int
 override Aw.Sindri.Core.Connections.SignInTry.ToString() -> string!
 static Aw.Sindri.Core.Connections.SignInTry.operator !=(Aw.Sindri.Core.Connections.SignInTry? left, Aw.Sindri.Core.Connections.SignInTry? right) -> bool
 static Aw.Sindri.Core.Connections.SignInTry.operator ==(Aw.Sindri.Core.Connections.SignInTry? left, Aw.Sindri.Core.Connections.SignInTry? right) -> bool
+Aw.Sindri.Core.Todos.TodoNoteImport.Warning.get -> string?
+Aw.Sindri.Core.Todos.TodoNoteImport.Warning.init -> void
