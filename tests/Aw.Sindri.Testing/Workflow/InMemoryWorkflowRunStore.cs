@@ -182,7 +182,7 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
                 return Done<WorkflowRun>(NotFound(id));
             }
 
-            _runs[at] = _runs[at] with { ItemId = item };
+            _runs[at] = _runs[at] with { ItemId = _runs[at].ItemId ?? item };
             return Done<WorkflowRun>(_runs[at]);
         }
     }
