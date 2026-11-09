@@ -39,6 +39,7 @@ using Aw.Sindri.Infrastructure.Auth;
 using Aw.Sindri.Infrastructure.Challenges;
 using Aw.Sindri.Infrastructure.Checks;
 using Aw.Sindri.Infrastructure.Connections;
+using Aw.Sindri.Infrastructure.Connections.Meetings;
 using Aw.Sindri.Infrastructure.Connections.Polling;
 using Aw.Sindri.Infrastructure.Control;
 using Aw.Sindri.Infrastructure.Deploy;
@@ -206,6 +207,8 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IConnectionStore, SqliteConnectionStore>()
             .AddSingleton<IConnectionSecrets>(static sp => new KeychainConnectionSecrets(sp.GetRequiredService<ISecretWriter>(), sp.GetRequiredService<ISecretPointers>(), new ProcessToolRunner()))
             .AddSingleton<IConnectionPresetCatalog, EmbeddedConnectionPresets>()
+            .AddSingleton<IMeetingSource, GranolaMeetingSource>()   // PR 10d: stubs until the probe shows each app's API
+            .AddSingleton<IMeetingSource, WisprFlowMeetingSource>()
             .AddSingleton<IEnvironmentReader, ProcessEnvironmentReader>()
             .AddSingleton<IConnectionProbe>(static _ => new HttpConnectionProbe(new HttpClient()))
             .AddSingleton<IOAuthClient>(static sp => new HttpOAuthClient(new HttpClient(), sp.GetRequiredService<TimeProvider>()))

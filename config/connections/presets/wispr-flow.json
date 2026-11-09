@@ -1,0 +1,13 @@
+{
+  "id": "wispr-flow",
+  "displayName": "Wispr Flow",
+  "kind": "oauth",
+  "authorizeUrl": "https://api.wisprflow.ai/oauth/authorize",
+  "tokenUrl": "https://api.wisprflow.ai/oauth/token",
+  "revokeUrl": null,
+  "defaultScopes": ["openid", "offline_access"],
+  "hostGroup": "wispr-flow",
+  "loopbackAllowed": true,
+  "signInNote": "Unconfirmed endpoints: scripts/probe-meeting-apps.sh checks them. Pass the client id of your Wispr Flow OAuth app with --client-id and allow the redirect http://127.0.0.1.",
+  "probeUrl": null
+}

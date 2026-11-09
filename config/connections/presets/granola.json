@@ -1,0 +1,13 @@
+{
+  "id": "granola",
+  "displayName": "Granola",
+  "kind": "oauth",
+  "authorizeUrl": "https://mcp-auth.granola.ai/oauth2/authorize",
+  "tokenUrl": "https://mcp-auth.granola.ai/oauth2/token",
+  "revokeUrl": null,
+  "defaultScopes": ["openid", "offline_access"],
+  "hostGroup": "granola",
+  "loopbackAllowed": true,
+  "signInNote": "Unconfirmed endpoints: scripts/probe-meeting-apps.sh checks them. Pass the client id of your Granola OAuth app with --client-id and allow the redirect http://127.0.0.1.",
+  "probeUrl": null
+}

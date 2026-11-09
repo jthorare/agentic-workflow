@@ -52,7 +52,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
         return services
             .AddSingleton<GraphMirror>()
             .AddSingleton<IForEachLimitSource, ProfileForEachLimits>()
-            .AddSingleton(static provider => GraphBlockRegistry.Standard(provider.GetRequiredService<INotifyPort>(), provider.GetRequiredService<IGraphModelPort>(), provider.GetRequiredService<IForEachLimitSource>()))
+            .AddSingleton(static provider => GraphBlockRegistry.Standard(provider.GetRequiredService<INotifyPort>(), provider.GetRequiredService<IGraphModelPort>(), provider.GetRequiredService<IForEachLimitSource>(), Meetings(provider)))
             .AddSingleton(static provider => new TemporalGraphRunLauncher(provider.GetRequiredService<TemporalFrontend>(), provider.GetRequiredService<TemporalSettings>()))
             .AddSingleton<IGraphBlockCatalog>(static provider => provider.GetRequiredService<GraphBlockRegistry>())   // the validator reads what the engine runs, replacing the empty catalog
             .AddSingleton<IGraphRunLauncher>(static provider => provider.GetRequiredService<TemporalGraphRunLauncher>())
@@ -64,6 +64,13 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<GraphRunRecovery>()
             .AddSingleton<IGraphRunRecovery>(static provider => provider.GetRequiredService<GraphRunRecovery>())
             .AddSingleton<GraphRunActivities>().AddSingleton<GraphBlockActivities>().AddSingleton<GraphActivities>();
+    }
+
+    // PR 10d: the 'meetings' block, when a note-app source is registered. why: the profile has no timezone key yet, so the day is read in the machine's zone; a profile key replaces TimeZoneInfo.Local.
+    private static MeetingsBlock? Meetings(IServiceProvider provider)
+    {
+        var sources = provider.GetServices<IMeetingSource>().ToArray();
+        return sources.Length == 0 ? null : new MeetingsBlock(sources, provider.GetRequiredService<IGraphModelPort>(), provider.GetService<TimeProvider>() ?? TimeProvider.System, TimeZoneInfo.Local);
     }
 
     // Engine P8 U3: LaunchAgentStep, WatchAgentStep, CloseAgentStep and what they use, and the worker's set of activity classes.
