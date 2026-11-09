@@ -1,6 +1,10 @@
+using System.Globalization;
 using Avalonia;
+using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.Headless;
+using Avalonia.Input;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Views.Workflows;
@@ -20,6 +24,7 @@ public sealed class GraphCanvasTests
     {
         Dispatcher.UIThread.RunJobs();
         window.UpdateLayout();
+        AvaloniaHeadlessPlatform.ForceRenderTimerTick();   // an InvalidateVisual draws only on a render tick, which headless never fires by itself
         Dispatcher.UIThread.RunJobs();
     }
 
@@ -74,5 +79,127 @@ public sealed class GraphCanvasTests
         });
 
         Assert.Equal((2d, 0.5d), zooms);
+    }
+
+    [Fact]
+    public async Task The_canvas_peer_has_one_child_per_node_named_by_its_name()
+    {
+        var graph = await WorkflowGraphViewModelTests.GraphOf(
+            new WorkflowsFixture(),
+            """[{"id":"check","type":"branch","config":{}},{"id":"yes","type":"run_agent","title":"Say yes","config":{}}]""",
+            """[{"from":"check","to":"yes","output":"true"}]""",
+            """[{"node":"check","x":0,"y":100},{"node":"yes","x":300,"y":0}]""");
+
+        var names = await OnUi(() =>
+        {
+            var canvas = new GraphCanvas { Graph = graph };
+            var window = new Window { Content = canvas, Width = 800, Height = 500 };
+            window.Show();
+            Settle(window);
+            try
+            {
+                return ControlAutomationPeer.CreatePeerForElement(canvas).GetChildren().Select(c => c.GetName()).ToArray();
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+
+        Assert.Equal(graph.Nodes.Select(n => n.Name), names, StringComparer.Ordinal);
+        Assert.Equal(2, names.Length);
+    }
+
+    [Fact]
+    public async Task Pan_and_zoom_reset_for_another_workflow_and_stay_when_the_same_one_is_read_again()
+    {
+        const string Nodes = """[{"id":"a","type":"x","config":{}}]""";
+        const string Positions = """[{"node":"a","x":0,"y":0}]""";
+        var f = new WorkflowsFixture();
+        var first = await WorkflowGraphViewModelTests.GraphOf(f, Nodes, "[]", Positions, slug: "one");
+        var again = await WorkflowGraphViewModelTests.GraphOf(f, Nodes, "[]", Positions, slug: "one");
+        var other = await WorkflowGraphViewModelTests.GraphOf(f, Nodes, "[]", Positions, slug: "two");
+
+        var (kept, reset, afterNull) = await OnUi(() =>
+        {
+            var canvas = new GraphCanvas { Graph = first, Zoom = 1.5, Pan = new Point(90, 70) };
+            canvas.Graph = again;
+            var kept = (canvas.Zoom, canvas.Pan);
+            canvas.Graph = other;
+            var reset = (canvas.Zoom, canvas.Pan);
+            canvas.Zoom = 2;
+            canvas.Pan = new Point(5, 5);
+            canvas.Graph = null;
+            canvas.Graph = other;
+            return (kept, reset, (canvas.Zoom, canvas.Pan));
+        });
+
+        Assert.Equal((1.5, new Point(90, 70)), kept);
+        Assert.Equal((1d, new Point(Margin, Margin)), reset);
+        Assert.Equal((1d, new Point(Margin, Margin)), afterNull);
+    }
+
+    [Fact]
+    public async Task Moving_the_selection_with_the_keys_pans_a_card_that_is_off_screen_into_view()
+    {
+        var graph = await WorkflowGraphViewModelTests.GraphOf(
+            new WorkflowsFixture(),
+            """[{"id":"a","type":"x","config":{}},{"id":"b","type":"x","config":{}}]""",
+            "[]",
+            """[{"node":"a","x":0,"y":0},{"node":"b","x":2000,"y":900}]""");
+
+        var (before, card, size) = await OnUi(() =>
+        {
+            var canvas = new GraphCanvas { Graph = graph };
+            var window = new Window { Content = canvas, Width = 800, Height = 500 };
+            window.Show();
+            Settle(window);
+            try
+            {
+                _ = canvas.Focus();
+                window.KeyPress(Key.Right, RawInputModifiers.None, PhysicalKey.ArrowRight, keySymbol: null);   // selects a: already in view
+                var before = canvas.Pan;
+                window.KeyPress(Key.Right, RawInputModifiers.None, PhysicalKey.ArrowRight, keySymbol: null);   // selects b: far off
+                return (before, canvas.NodeRect("b")!.Value, canvas.Bounds.Size);
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+
+        Assert.Equal(new Point(Margin, Margin), before);
+        Assert.True(card.Left >= 0 && card.Right <= size.Width && card.Top >= 0 && card.Bottom <= size.Height, $"the card {card} is inside {size}");
+    }
+
+    [Fact]
+    public async Task A_theme_switch_redraws_the_canvas()
+    {
+        var graph = await WorkflowGraphViewModelTests.GraphOf(
+            new WorkflowsFixture(),
+            """[{"id":"a","type":"x","config":{}}]""",
+            "[]",
+            """[{"node":"a","x":0,"y":0}]""");
+
+        var (before, after) = await OnUi(() =>
+        {
+            var canvas = new GraphCanvas { Graph = graph };
+            var window = new Window { Content = canvas, Width = 800, Height = 500, RequestedThemeVariant = ThemeVariant.Dark };
+            window.Show();
+            Settle(window);
+            try
+            {
+                var before = canvas.RenderCount;
+                window.RequestedThemeVariant = ThemeVariant.Light;
+                Settle(window);
+                return (before, canvas.RenderCount);
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+
+        Assert.True(after > before, string.Create(CultureInfo.InvariantCulture, $"drew {before} times before the switch and {after} after"));
     }
 }

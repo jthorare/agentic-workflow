@@ -198,7 +198,7 @@ public sealed class WorktreeInspectorTests
         var report = await LaneReport();
 
         Assert.Equal(WorktreeDecision.Kept, report.Decision);
-        Assert.Contains(report.Reasons, r => r.Contains("changed since the last sweep", StringComparison.Ordinal));
+        Assert.Contains(report.Reasons, r => r.Contains("changed since the last full sweep", StringComparison.Ordinal));
     }
 
     [Fact, Trait("Lane", "unit")]
