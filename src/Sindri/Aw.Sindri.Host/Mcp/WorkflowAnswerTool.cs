@@ -12,7 +12,7 @@ namespace Aw.Sindri.Host.Mcp;
 
 /// <summary>
 /// workflow_answer (agent-first PR 9): answers an 'ask_owner' node's question, one call to the AnswerQuestion service 'POST /sindri/workflow-runs/{run}/nodes/{node}/answer' calls.
-/// Any caller may answer; the answer is attributed to the caller, so a session that answers its own run's question shows as 'session:&lt;id&gt;' on the timeline.
+/// Any caller may answer; the answer is attributed to the caller, so a launched session that answers its own run's question shows as 'session:launch:&lt;launch id&gt;' on the timeline.
 /// </summary>
 internal static class WorkflowAnswerTool
 {
@@ -62,7 +62,7 @@ internal static class WorkflowAnswerTool
             return McpResults.Failure(services, SindriErrors.InvalidInput.With($"'{node.Value}' is not a node id (a lowercase letter, then lowercase letters, digits and '_')"));
         }
 
-        var by = services.GetRequiredService<ICallerContextAccessor>().Current?.Actor ?? "owner";
+        var by = services.GetRequiredService<ICallerContextAccessor>().Current?.Actor ?? "service:host";
         var answer = await services.GetRequiredService<IService<AnswerQuestionRequest, AnswerQuestionResponse>>()
             .Handle(new AnswerQuestionRequest(parsedRun, parsedNode, text.Value, choice.Value, by), ct).ConfigureAwait(false);
         return McpResults.From(services, answer, static a => $"answered {a.Run.Value}/{a.Node.Value} as {a.AnsweredBy}");

@@ -6,5 +6,5 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="Run">The run.</param>
 /// <param name="Node">The 'ask_owner' node.</param>
 /// <param name="Answer">The answer.</param>
-/// <param name="By">Who answered: 'owner' or 'session:&lt;id&gt;' (an agent answering its own run's question is shown as that session).</param>
+/// <param name="By">Who answered: the caller's actor: 'human:&lt;client&gt;' for a person, 'session:launch:&lt;launch id&gt;' for a session Sindri launched, 'session:&lt;client&gt;' for any other session.</param>
 public sealed record WorkflowAnsweredPayload(WorkflowRunId Run, NodeId Node, string Answer, string By);

@@ -11,7 +11,7 @@ namespace Aw.Sindri.Features.AnswerQuestion;
 
 /// <summary>
 /// Answers a question: an answer is a text or a choice (not both), the run must still be going, and the workflow decides whether the node is waiting and takes it as one of its choices.
-/// Once the workflow took the answer, 'workflow.answered' records who gave it ('owner', or 'session:&lt;launch id&gt;' for a session Sindri launched, including one answering its own run's question).
+/// Once the workflow took the answer, 'workflow.answered' records who gave it (the caller's actor: 'human:&lt;client&gt;' for a person, 'session:launch:&lt;launch id&gt;' for a session Sindri launched, 'session:&lt;client&gt;' for any other session).
 /// </summary>
 /// <param name="runs">The runs.</param>
 /// <param name="answerer">Delivers the answer to the run's workflow.</param>
