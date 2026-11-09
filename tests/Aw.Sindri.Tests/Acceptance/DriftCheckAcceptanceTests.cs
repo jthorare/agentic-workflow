@@ -70,11 +70,11 @@ public sealed class DriftCheckAcceptanceTests : IDisposable
         Assert.All(findings, static f => Assert.StartsWith("<untrusted source=\"sindri:workflow\">", f!["message"]!.GetValue<string>(), StringComparison.Ordinal));
     }
 
-    private static string BrokenSpec()
+    private static JsonNode BrokenSpec()
     {
         var spec = JsonNode.Parse(GraphJson.Write(GraphTemplates.Find("weekday-check")!.Spec))!;
         spec["nodes"]![0]!["type"] = "no_such_block";
-        return spec.ToJsonString();
+        return spec;
     }
 
     private static JsonNode Structured(CallToolResult result) => JsonNode.Parse(result.StructuredContent!.Value.GetRawText())!;   // why: every tool result carries structuredContent
