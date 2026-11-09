@@ -35,7 +35,47 @@ internal sealed class ResourceRowViewModel : ObservableObject
     public string SizeLine => View.LimitBytes is { } limit ? Labels.ResourceSizeOf(SizeText, ByteSize.Format(limit)) : SizeText;
 
     /// <summary>True while the row asks "Purge?" and waits for the answer.</summary>
-    public bool IsConfirming { get; private set => Set(ref field, value); }
+    public bool IsConfirming
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(ShowActions));
+        }
+    }
+
+    /// <summary>True when the Purge action shows (not while the row asks).</summary>
+    public bool ShowActions => !IsConfirming;
+
+    /// <summary>True when the resource has a limit, so the bar shows.</summary>
+    public bool HasFill => Fill is not null;
+
+    /// <summary>The bar's value, 0 to 1.</summary>
+    public double FillValue => Fill ?? 0;
+
+    /// <summary>The row's accessible name: owner, kind, name and the size line.</summary>
+    public string AccessibleName => $"{OwnerText}, {KindText}, {NameText}, {SizeLine}";
+
+#pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
+    /// <summary>The Purge action's words.</summary>
+    public string PurgeText => Labels.ResourcePurge;
+
+    /// <summary>The confirm button's words.</summary>
+    public string ConfirmButtonText => Labels.ResourcePurgeConfirm;
+
+    /// <summary>The Keep button's words.</summary>
+    public string KeepText => Labels.ResourcePurgeKeep;
+#pragma warning restore CA1822, MA0041
+
+    /// <summary>The Purge action's accessible name.</summary>
+    public string PurgeName => Labels.ResourceActionName(Labels.ResourcePurge, OwnerText);
+
+    /// <summary>The confirm button's accessible name.</summary>
+    public string ConfirmName => Labels.ResourceActionName(Labels.ResourcePurgeConfirm, OwnerText);
+
+    /// <summary>The Keep button's accessible name.</summary>
+    public string KeepName => Labels.ResourceActionName(Labels.ResourcePurgeKeep, OwnerText);
 
     /// <summary>The confirm's question; names the owner.</summary>
     public string ConfirmText => Labels.ResourcePurgeAsk(View.Owner);

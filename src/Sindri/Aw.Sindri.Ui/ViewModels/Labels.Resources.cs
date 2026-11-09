@@ -46,4 +46,29 @@ internal static partial class Labels
     /// <param name="limit">The limit in words.</param>
     /// <returns>The words.</returns>
     internal static string ResourceSizeOf(string size, string limit) => size + " of " + limit;
+
+    /// <summary>The page's one-line purpose.</summary>
+    internal const string ResourcesPurpose = "What each owner holds: databases and folders, with their size. Purge deletes everything one owner holds, and is refused while that owner is active.";
+
+    /// <summary>System's link to the Resources page.</summary>
+    internal const string ResourcesLink = "Resources";
+
+    /// <summary>The link's accessible name: its visible words first.</summary>
+    internal const string ResourcesLinkName = "Resources, opens the Resources page";
+
+    /// <summary>The head: "3 resources".</summary>
+    /// <param name="count">How many resources.</param>
+    /// <returns>The words.</returns>
+    internal static string ResourcesHead(int count) => string.Create(CultureInfo.InvariantCulture, $"{count} {(count == 1 ? "resource" : "resources")}");
+
+    /// <summary>A read that failed: the reason follows. The rows stay.</summary>
+    /// <param name="error">The failure.</param>
+    /// <returns>The words.</returns>
+    internal static string ResourcesFailed(Error error) => "Couldn't read the resources just now. " + InstanceRefused(error);
+
+    /// <summary>An action's accessible name: "Purge workflow:triage".</summary>
+    /// <param name="action">The action's visible words.</param>
+    /// <param name="owner">The owner.</param>
+    /// <returns>The words.</returns>
+    internal static string ResourceActionName(string action, string owner) => action + " " + owner;
 }
