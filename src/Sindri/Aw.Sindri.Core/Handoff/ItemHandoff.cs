@@ -1,7 +1,6 @@
-using Aw.Sindri.Core.Handoff;
 using Aw.Sindri.Core.Ids;
 
-namespace Aw.Sindri.Core.Events;
+namespace Aw.Sindri.Core.Handoff;
 
 /// <summary>
 /// The 'item.handoff' payload (#2258 PR 12): an outside system or a local script handed Sindri work. It follows the 'item.created' of the item it made and

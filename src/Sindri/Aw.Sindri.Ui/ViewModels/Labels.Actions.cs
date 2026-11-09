@@ -73,6 +73,7 @@ internal static partial class Labels
         ["CompleteStep"] = "Complete",
         ["CompleteStep:report"] = "Report agent run",
         ["ConnectIndexSource"] = "Connect a source",
+        ["CreateHandoffItem"] = "Hand off work",
         ["CreateItem"] = "Create item",
         ["Decide"] = "Decide",
         ["DetachProject"] = "Remove project",
