@@ -18411,7 +18411,7 @@ Aw.Sindri.Core.Todos.Note.NoteHoldOutcome.None = 0 -> Aw.Sindri.Core.Todos.Note.
 Aw.Sindri.Core.Todos.Note.NoteHoldOutcome.Opened = 1 -> Aw.Sindri.Core.Todos.Note.NoteHoldOutcome
 Aw.Sindri.Core.Todos.Note.NoteHoldOutcome.Replaced = 3 -> Aw.Sindri.Core.Todos.Note.NoteHoldOutcome
 Aw.Sindri.Core.Todos.Note.NoteHoldOutcome.Unchanged = 2 -> Aw.Sindri.Core.Todos.Note.NoteHoldOutcome
-Aw.Sindri.Core.Todos.Note.NoteHold.StillTrue(Aw.Sindri.Core.Todos.Note.NoteDocument! current) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>!
+Aw.Sindri.Core.Todos.Note.NoteHold.StillTrue(Aw.Sindri.Core.Todos.Note.NoteDocument! current, Aw.Sindri.Core.Text.ITextScrubber? scrubber = null) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>!
 Aw.Sindri.Core.Todos.Note.NoteIntent
 Aw.Sindri.Core.Todos.Note.NoteIntent.Id.init -> void
 Aw.Sindri.Core.Todos.Note.NoteIntent.NoteIntent(Aw.Sindri.Core.Todos.Note.NoteIntent! original) -> void
