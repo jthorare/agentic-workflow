@@ -37,8 +37,15 @@ internal sealed partial class TodoNoteSync(SyncDeps deps) : ITodoNoteSync, IDisp
             }
             else if (located.Value is not { } place)
             {
-                deps.Files.DeleteBases(keep: null);
-                Volatile.Write(ref _status, TodoNoteStatus.NotSet);
+                try
+                {
+                    deps.Files.DeleteBases(keep: null);
+                    Volatile.Write(ref _status, TodoNoteStatus.NotSet);
+                }
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+                {
+                    Fail(e.Message);
+                }
             }
             else
             {
@@ -107,7 +114,7 @@ internal sealed partial class TodoNoteSync(SyncDeps deps) : ITodoNoteSync, IDisp
             return ran.Error;
         }
 
-        if (ran.Value.State != TodoNoteState.Syncing)
+        if (ran.Value.State != TodoNoteState.Syncing || ran.Value.Error is not null)
         {
             return SindriErrors.TodoConflict.With(ran.Value.Error ?? $"The note can't be imported now ({ran.Value.State}). Try again.");
         }
@@ -121,7 +128,7 @@ internal sealed partial class TodoNoteSync(SyncDeps deps) : ITodoNoteSync, IDisp
     {
         using var span = _source.StartActivity("todo.note.pass");
         var started = deps.Clock.GetTimestamp();
-        var ran = await new SyncPass(deps, place, mode).Run(cancellationToken).ConfigureAwait(false);
+        var ran = await Attempt(place, mode, cancellationToken).ConfigureAwait(false);
         var outcome = ran.IsError ? new SyncOutcome(Status.State == TodoNoteState.NotSet ? TodoNoteState.Syncing : Status.State, ran.Error.Message) : ran.Value;
         var line = outcome.Line(place, (long)deps.Clock.GetElapsedTime(started).TotalMilliseconds);
         _ = span?.SetTag("outcome", outcome.State.ToString());
@@ -140,6 +147,19 @@ internal sealed partial class TodoNoteSync(SyncDeps deps) : ITodoNoteSync, IDisp
         }
 
         return ran.IsError ? ran.Error : outcome;
+    }
+
+    // a disk error (a full disk, a folder that lost its permissions) is a failed pass in the status, not an exception out of the watch's call
+    private async ValueTask<Result<SyncOutcome>> Attempt(NotePlace place, PassMode mode, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await new SyncPass(deps, place, mode).Run(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return new SyncOutcome(Status.State == TodoNoteState.NotSet ? TodoNoteState.Syncing : Status.State, e.Message);
+        }
     }
 
     private void Record(SyncOutcome outcome)
