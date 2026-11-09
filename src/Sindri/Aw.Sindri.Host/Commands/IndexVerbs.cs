@@ -12,7 +12,7 @@ namespace Aw.Sindri.Host.Commands;
 /// 'sindri index sync [source] | status [--json] | purge &lt;source&gt;' (owned-index spec §5.5, §5.8, §10): clients of the control plane. <b>sync</b> without a source runs the 'index-sync' service as a job and follows it as
 /// 'services run' does (it ticks every feed). With a source it checks the name against the feeds, then starts that source's own job (POST /sindri/index/sync): only that feed ticks, the scheduled
 /// run being in flight does not refuse it, and a source that ended with a code (down, capped, already syncing) exits 1. <b>status</b> reads GET /sindri/index/status and never starts the control plane.
-/// <b>purge</b> is a human's verb: it asks for the counts (the preview is refused to a session, SND-AUTH-002), shows them and deletes only after a typed yes at a terminal.
+/// <b>purge</b> asks for the counts (any caller may, agent-first PR 2), shows them and deletes only after a typed yes at a terminal.
 /// Exit codes are the context verbs': 0 ok, 1 attention (a source ended with a code, not running, refused, a purge not confirmed), 2 a usage or tool error.
 /// </summary>
 /// <param name="client">The API client.</param>

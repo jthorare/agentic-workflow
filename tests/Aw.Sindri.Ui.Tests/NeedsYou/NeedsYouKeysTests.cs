@@ -6,7 +6,7 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.NeedsYou;
 
-/// <summary>The Needs-you list's keys (U3' T3): they act on the selected row and never run a protected action.</summary>
+/// <summary>The Needs-you list's keys (U3' T3): they act on the selected row.</summary>
 [Lane(TestLane.Unit)]
 public sealed class NeedsYouKeysTests
 {
@@ -73,12 +73,10 @@ public sealed class NeedsYouKeysTests
     }
 
     [Fact]
-    public async Task A_runs_the_single_ready_primary_and_never_a_protected_one()
+    public async Task A_runs_the_single_ready_primary_and_not_a_pending_one()
     {
         var list = await List(NeedsYouRows.Park(), NeedsYouRows.Failure(), Runnable());
 
-        list.Select("park:ITM-01JC8");
-        Assert.False(list.Press(NeedsYouKey.A));   // protected
         list.Select("failure:service:index");
         Assert.False(list.Press(NeedsYouKey.A));   // pending
         Assert.Empty(_actions);
@@ -168,7 +166,7 @@ public sealed class NeedsYouKeysTests
     }
 
     [Fact]
-    public async Task Y_copies_the_rows_cli_even_for_a_protected_row()
+    public async Task Y_copies_the_rows_cli_and_copies_nothing_when_none_is_served()
     {
         var list = await List(NeedsYouRows.Profile(), NeedsYouRows.Park() with { Cli = "" });
 

@@ -1,7 +1,9 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Memory;
 using Aw.Sindri.Features.CreateMemory;
 using Aw.Sindri.Features.ListMemories;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Memory;
 
 namespace Aw.Sindri.Tests.Memory;
@@ -10,6 +12,21 @@ namespace Aw.Sindri.Tests.Memory;
 public sealed class MemoryReadsAndCreateTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
+
+    [Fact]
+    public async Task A_launched_session_creating_a_memory_is_its_creator()
+    {
+        var h = new MemoryHarness();
+        var caller = A.Caller().Launched("LCH-0000000000000000000000000000ff01").Build();
+        using var entered = h.Callers.Enter(caller);
+
+        var created = await h.Create().Handle(new CreateMemoryRequest("team-notes", Description: null), Token);
+
+        Assert.True(created.IsSuccess);
+        var stored = await h.Store.Get(MemoryName.Parse("team-notes").Value, Token);
+        Assert.Equal(caller.Actor, stored.Value.CreatedBy);
+        Assert.Contains("LCH-0000000000000000000000000000ff01", stored.Value.CreatedBy, StringComparison.Ordinal);
+    }
 
     [Fact]
     public async Task CreateMemory_makes_a_store_and_a_second_one_with_the_name_is_SND_MEM_002()
