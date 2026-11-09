@@ -236,9 +236,7 @@ export const testsCsproj = (t) => `<Project Sdk="Microsoft.NET.Sdk">
 </Project>
 `;
 
-export const sampleTest = (t) => `using Toolkits.${t.name};
-
-namespace Toolkits.${t.name}.Tests;
+export const sampleTest = (t) => `namespace Toolkits.${t.name}.Tests;
 
 public sealed class ${t.toolPascal}Tests
 {
@@ -246,7 +244,7 @@ public sealed class ${t.toolPascal}Tests
     [Trait("Lane", "unit")]
     public async Task ${t.toolPascal}_answers_the_subject_it_was_given()
     {
-        var response = await ${t.name}Tools.${t.toolPascal}(new ${t.toolPascal}Request("hello"), null!, TestContext.Current.CancellationToken);
+        ${t.toolPascal}Response response = await ${t.name}Tools.${t.toolPascal}(new ${t.toolPascal}Request("hello"), null!, TestContext.Current.CancellationToken);
 
         Assert.Equal("hello", response.Result);
     }
