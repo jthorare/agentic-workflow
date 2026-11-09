@@ -14435,14 +14435,16 @@ static Aw.Sindri.Core.Sandbox.Plan.SeatbeltProfile.MacOsCanonical(string! path) 
 static Aw.Sindri.Core.Sandbox.Plan.SeatbeltProfile.Render(Aw.Sindri.Core.Sandbox.Plan.SandboxPlan! plan, string! runArea, System.Func<string!, string!>? canonical = null) -> string!
 Aw.Sindri.Core.Setup.ProfileKeyEdit
 Aw.Sindri.Core.Setup.ProfileKeyEdit.<Clone>$() -> Aw.Sindri.Core.Setup.ProfileKeyEdit!
-Aw.Sindri.Core.Setup.ProfileKeyEdit.ProfileKeyEdit(string! Path, string! Text, bool Changed) -> void
-Aw.Sindri.Core.Setup.ProfileKeyEdit.Deconstruct(out string! Path, out string! Text, out bool Changed) -> void
+Aw.Sindri.Core.Setup.ProfileKeyEdit.ProfileKeyEdit(string! Path, string! Text, bool Changed, string? Before = null) -> void
+Aw.Sindri.Core.Setup.ProfileKeyEdit.Deconstruct(out string! Path, out string! Text, out bool Changed, out string? Before) -> void
 Aw.Sindri.Core.Setup.ProfileKeyEdit.Path.get -> string!
 Aw.Sindri.Core.Setup.ProfileKeyEdit.Path.init -> void
 Aw.Sindri.Core.Setup.ProfileKeyEdit.Text.get -> string!
 Aw.Sindri.Core.Setup.ProfileKeyEdit.Text.init -> void
 Aw.Sindri.Core.Setup.ProfileKeyEdit.Changed.get -> bool
 Aw.Sindri.Core.Setup.ProfileKeyEdit.Changed.init -> void
+Aw.Sindri.Core.Setup.ProfileKeyEdit.Before.get -> string?
+Aw.Sindri.Core.Setup.ProfileKeyEdit.Before.init -> void
 Aw.Sindri.Core.Setup.ProfileKeyEdit.Equals(Aw.Sindri.Core.Setup.ProfileKeyEdit? other) -> bool
 override Aw.Sindri.Core.Setup.ProfileKeyEdit.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Setup.ProfileKeyEdit.GetHashCode() -> int
