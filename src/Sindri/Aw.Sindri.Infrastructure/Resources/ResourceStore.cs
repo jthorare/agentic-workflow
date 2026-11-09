@@ -4,8 +4,10 @@ using Aw.Sindri.Core.Resources;
 
 namespace Aw.Sindri.Infrastructure.Resources;
 
+#pragma warning disable MA0182 // until the launch path provisions resources before a launch (agent-first PR 14 wires only the tests)
+
 /// <summary>Creates an owner's resource folders and files under the resources root: directories 0700, files 0600.</summary>
-/// <param name="root">The resources root, <c>$AW_SINDRI_HOME/resources</c>.</param>
+/// <param name="root">The resources root, <c language="text">$AW_SINDRI_HOME/resources</c>.</param>
 internal sealed class ResourceStore(string root)
 {
     /// <summary>Gets the resources root.</summary>
@@ -58,3 +60,4 @@ internal sealed class ResourceStore(string root)
         }
     }
 }
+#pragma warning restore MA0182
