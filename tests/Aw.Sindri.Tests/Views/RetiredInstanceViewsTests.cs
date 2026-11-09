@@ -64,7 +64,7 @@ public sealed class RetiredInstanceViewsTests : IDisposable
             Assert.Equal(ItemState.Cancelled, items[_cancelledItem.Value].State);
             Assert.Equal(ItemState.Cancelled, items[_scrubbedItem.Value].State);
             Assert.Equal(ItemState.New, items[_parkedItem.Value].State);
-            Assert.All<ItemId>([_doneItem, _cancelledItem, _scrubbedItem], id => Assert.Null(QueueGroups.GroupOf(items[id.Value].State)));
+            Assert.All([_doneItem, _cancelledItem, _scrubbedItem], id => Assert.Null(QueueGroups.GroupOf(items[id.Value].State)));
         }
 
         Assert.Empty(incremental.NeedsYou);
