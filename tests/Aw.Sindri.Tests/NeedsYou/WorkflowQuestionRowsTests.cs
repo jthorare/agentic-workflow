@@ -42,7 +42,8 @@ public sealed class WorkflowQuestionRowsTests
         Assert.Equal(new NeedsYouSubject(SubjectKind.WorkflowRun, SubjectId.From("nightly.3:12")), row.Row.Subject);
         Assert.Equal("Ship the release?", row.Row.Title);
         Assert.Contains("yes", row.Row.Reason, StringComparison.Ordinal);
-        Assert.Contains("sindri answer", row.Row.Cli, StringComparison.Ordinal);
+        Assert.Contains("sindri answer <run>/<node>", row.Row.Cli, StringComparison.Ordinal);
+        Assert.Contains("nightly@3:12/ask", row.Row.Reason, StringComparison.Ordinal);
         Assert.Equal(asked.Sequence, row.Sequence);
     }
 

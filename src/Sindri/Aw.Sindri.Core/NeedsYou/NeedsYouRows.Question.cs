@@ -20,13 +20,13 @@ public static partial class NeedsYouRows
     {
         ArgumentNullException.ThrowIfNull(question);
         ArgumentNullException.ThrowIfNull(scrubber);
-        var cli = CliForm.Parse("sindri answer <question> [--text <text>] [--choice <choice>]");   // why: the form is a template; the run and node are written '<run>/<node>' by hand
+        var cli = CliForm.Parse("sindri answer <run>/<node> [--text <text>] [--choice <choice>]");   // why: the form is a template (a run id holds an '@', which a filled form refuses); the reason names the real run and node
         if (cli.IsError)
         {
             return cli.Error;
         }
 
-        var reason = new List<string>();
+        var reason = new List<string> { $"Answer {question.Run.Value}/{question.Node.Value}." };
         if (question.Choices.Count > 0)
         {
             reason.Add("Choices: " + string.Join(", ", question.Choices) + ".");
