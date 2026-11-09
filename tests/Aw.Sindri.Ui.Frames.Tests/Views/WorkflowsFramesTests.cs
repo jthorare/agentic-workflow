@@ -98,8 +98,7 @@ public sealed class WorkflowsFramesTests : FrameHost
         Assert.True(Visible(window, "RunNow"));
         await Until(window, () => window.ActualThemeVariant == ThemeVariant.Light, "the window never took the light theme");
         var chip = window.GetVisualDescendants().OfType<TextBlock>().First(t => t.IsEffectivelyVisible && t.Classes.Contains("wf-chip") && t.Classes.Contains("ok"));
-        Assert.Equal(ThemeColor(window, "Brush.Success", ThemeVariant.Light), ChipColor(chip));   // the light token, not the dark run's
-        Assert.NotEqual(ThemeColor(window, "Brush.Success", ThemeVariant.Dark), ChipColor(chip));
+        Assert.Equal(ThemeColor(window, "Brush.Success", ThemeVariant.Light), ChipColor(chip));   // the theme token (Success is one colour in both variants, Theme/Tokens.axaml)
         Frame(window, "runs-light-1440", Prefix);
     });
 
@@ -118,7 +117,6 @@ public sealed class WorkflowsFramesTests : FrameHost
         await Until(window, () => window.ActualThemeVariant == ThemeVariant.Light, "the window never took the light theme");
         var chip = Named<TextBlock>(window, "RunChip");   // a running run: the ok tone
         Assert.Equal(ThemeColor(window, "Brush.Success", ThemeVariant.Light), ChipColor(chip));
-        Assert.NotEqual(ThemeColor(window, "Brush.Success", ThemeVariant.Dark), ChipColor(chip));
         Frame(window, "run-light-1440", Prefix);
     });
 
