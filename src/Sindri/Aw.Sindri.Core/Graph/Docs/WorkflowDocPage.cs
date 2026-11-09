@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace Aw.Sindri.Core.Graph.Docs;
 
 /// <summary>One page of the workflow docs: a concept ('references') or one block type ('block-schedule').</summary>
@@ -34,5 +36,28 @@ public sealed class WorkflowDocPage
 
     /// <summary>The bodies of the page's fenced json blocks, in order. Each one is a whole workflow spec.</summary>
     /// <returns>The JSON texts; empty when the page has none.</returns>
-    public IReadOnlyList<string> JsonExamples() => throw new NotSupportedException();
+    public IReadOnlyList<string> JsonExamples()
+    {
+        var found = new List<string>();
+        StringBuilder? open = null;
+        foreach (var raw in Text.Split('\n'))
+        {
+            var line = raw.TrimEnd('\r');
+            if (open is null)
+            {
+                open = string.Equals(line.Trim(), "```json", StringComparison.Ordinal) ? new StringBuilder() : null;
+            }
+            else if (string.Equals(line.Trim(), "```", StringComparison.Ordinal))
+            {
+                found.Add(open.ToString().TrimEnd('\n'));
+                open = null;
+            }
+            else
+            {
+                open.Append(line).Append('\n');
+            }
+        }
+
+        return found;
+    }
 }
