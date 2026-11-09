@@ -31,13 +31,22 @@ public static class WorkflowDocSearch
         }
 
         var indexed = pages.Select(Index).ToList();
+        var rarities = new Dictionary<string, double>(StringComparer.Ordinal);
+        foreach (var term in terms)
+        {
+            var seen = indexed.Count(p => p.Seen(term));
+            if (seen > 0)   // why: a term no page has would divide by zero (Infinity * weight 0 = NaN) and empty every score
+            {
+                rarities[term] = Math.Log(1 + ((double)indexed.Count / seen));
+            }
+        }
+
         var hits = new List<WorkflowDocHit>();
         foreach (var page in indexed)
         {
             var score = 0.0;
-            foreach (var term in terms)
+            foreach (var (term, rarity) in rarities)
             {
-                var rarity = Math.Log(1 + ((double)indexed.Count / indexed.Count(p => p.Seen(term))));
                 score += rarity * page.Weight(term);
             }
 
