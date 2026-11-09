@@ -116,6 +116,9 @@ public static class EventCatalog
         new(EventTypes.SetupConsentGiven, Public: true, typeof(SetupConsentGiven), "setup.consent.given:<profileHash>") { Invalidates = [ApiViews.Setup] },
         new(EventTypes.ConnectionNeedsSignIn, Public: true, typeof(ConnectionNeedsSignIn), "connection.needs-sign-in:<name>:<atTicks>") { Invalidates = [ApiViews.NeedsYou] },
         new(EventTypes.ConnectionSignedIn, Public: true, typeof(ConnectionSignedIn), "connection.signed-in:<name>:<atTicks>") { Invalidates = [ApiViews.NeedsYou] },
+        new(EventTypes.ConnectionPolled, Public: false, PublicPayload: null, "connection.polled:<name>:<kind>:<atTicks>"),
+        new(EventTypes.WorkflowTriggerSkipped, Public: false, PublicPayload: null, "workflow.trigger.skipped:<workflow>:<deliveryKey>:<reason>"),
+        new(EventTypes.CatchUpCapped, Public: false, PublicPayload: null, "catchup.capped:<name>:<kind>:<atTicks>"),
         new(EventTypes.ViewsRebuilt, Public: false, PublicPayload: null, "views.rebuilt:<commandId>"),
     ];
 }

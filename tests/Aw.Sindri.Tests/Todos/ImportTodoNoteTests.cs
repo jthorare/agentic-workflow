@@ -38,6 +38,26 @@ public sealed class ImportTodoNoteTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task An_import_whose_note_grew_after_the_check_records_the_lines_it_took_and_warns()
+    {
+        var (rig, service) = await Start();
+        using var cli = rig.Harness.Cli();
+        rig.Files.AfterRead = path =>
+        {
+            rig.Files.AfterRead = null;   // once: a line typed between the import's count and the adopting pass's read
+            rig.Files.Files[path] += "- [ ] three\n";
+        };
+
+        var answer = await service.Handle(Ask(expect: 2), Token);
+
+        Assert.False(answer.IsError, answer.IsError ? answer.Error.Message : null);
+        Assert.Equal(3, answer.Value.Imported);
+        Assert.Equal("The note had 2 lines to import when you checked and 3 when they were taken.", answer.Value.Warning);
+        var imported = Assert.Single(await rig.Payloads<TodoNoteImported>(EventTypes.TodoNoteImported));
+        Assert.Equal(3, imported.Count);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_dry_run_counts_and_writes_nothing()
     {
         var (rig, service) = await Start();
