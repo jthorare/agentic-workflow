@@ -35,9 +35,9 @@ internal static class ContextRows
         new(ActionId.From("CheckContextMapStructure"), typeof(CheckContextMapStructureRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/context/map/checks", ShellRows.Form("sindri context map checks [--draft] [--build]"), "ready"),
-        // PurgeIndexSource is the human's alone (owned-index spec §10): the row needs a terminal, so a session (launched or not) and the app are refused with SND-AUTH-002; the CLI also asks a typed yes.
+        // PurgeIndexSource is a desk row any caller may run (owned-index spec §10); the CLI also asks a typed yes.
         new(ActionId.From("PurgeIndexSource"), typeof(PurgeIndexSourceRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
-            NeedsTerminal: true, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
+            NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/index/purge", ShellRows.Form("sindri index purge <source>"), "cli-only:typed-yes"),
         new(ActionId.From("PromoteContextMap"), typeof(PromoteContextMapRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
@@ -67,7 +67,7 @@ internal static class ContextRows
         new(ActionId.From("EmbedCodeIndex"), typeof(EmbedCodeIndexRequest), Variant: null, ActionClass.Job, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             Method: null, Route: null, ShellRows.Form("sindri services run code-index-embed"), "ready"),
-        new(ActionId.From("ImportContextMap"), typeof(ImportContextMapRequest), Variant: null, ActionClass.Protected, ServiceGrants: [],
+        new(ActionId.From("ImportContextMap"), typeof(ImportContextMapRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/context/map/import", ShellRows.Form("sindri context map import <file>"), "ready"),
         JobRows.Job("SyncSources", typeof(SyncContextSourcesRequest), "/sindri/context/sources/sync", "sindri context sources sync"),

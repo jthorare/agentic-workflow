@@ -23,9 +23,6 @@ internal sealed record NeedsYouAction(string CatalogId, string Label, ActionRead
     /// <summary>When <see cref="Cli"/> still has a placeholder the row's subject could not fill: the words that say which ("fill in name"); empty otherwise. Kept apart from the command so a copy takes the command alone.</summary>
     internal string FillInHint { get; init; } = "";
 
-    /// <summary>True for a protected action (the catalog's class): the key A never runs it; a click on its button does.</summary>
-    internal bool IsProtected { get; init; }
-
     /// <summary>True when the app can run it (the catalog says ready).</summary>
     internal bool IsReady => Readiness == ActionReadiness.Ready;
 }

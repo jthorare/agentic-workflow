@@ -188,7 +188,7 @@ A 560 px box under the top bar, over the page, which stays visible behind it. On
 |---|---|---|
 | `todo.added` | `id` (`td_<ulid>`), `text`, `due` (date or null), `links` (§4.3, 0 to 10), `clientId` (for retry), `by` | Add |
 | `todo.changed` | `id`, `version`, the changed fields (`text`, `due`, `links`; null clears `due`, `[]` clears `links`), `by` | Edit |
-| `todo.done` / `todo.reopened` | `id`, `version`, `by` | Check off / Undo or reopen |
+| `todo.done` / `todo.reopened` | `id`, `version`, `by`; `todo.done` also carries the optional `doneAt` (an Undo that puts back a done todo keeps its earlier done time) | Check off / Undo or reopen |
 | `todo.removed` / `todo.restored` | `id`, `version`, `by` | Delete / Undo |
 | `todo.conflicted` | `id`, `sindri` and `obsidian` (each the todo's text, due, links, done, or `removed: true`; text scrubbed), `noteHash` | A sync finds a both-places change (D11). One open conflict per todo: a later pass that sees a different Obsidian side appends a new `todo.conflicted` that replaces it; the same side again appends nothing |
 | `todo.conflict.resolved` | `id`, `kept` (`sindri` or `obsidian`), `baseLine` (the note line the pick was made against, which becomes that id's base line, D11), `by` (always the owner) | The owner picks. `keep obsidian` re-reads the note's line first: if it no longer matches the conflict's Obsidian side, the pick is refused (`SND-TODO-409`) and the conflict refreshes. The kept version, when it's Obsidian's, follows as a normal `todo.changed`/`done`/`removed` with `by: obsidian` |
