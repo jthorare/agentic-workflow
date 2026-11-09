@@ -6,7 +6,7 @@ using Aw.Sindri.Features.RunWorkflow;
 
 namespace Aw.Sindri.Host.Catalog;
 
-/// <summary>The graph run commands (issue 2258, PR 6): starting a run of a workflow's active revision by hand and cancelling a run (an agent session may run both: Part 1, every verb for agents), and taking over and handing back the 'run_agent' node a run waits on (#2472: the human's, so the service refuses an agent session with SND-AUTH-002).</summary>
+/// <summary>The graph run commands (issue 2258, PR 6): starting a run of a workflow's active revision by hand and cancelling a run (an agent session may run both: Part 1, every verb for agents), and taking over and handing back the 'run_agent' node a run waits on (#2472). Desk class, open to agent sessions too.</summary>
 internal static class WorkflowRunRows
 {
     internal static IReadOnlyList<CommandRow> All { get; } =

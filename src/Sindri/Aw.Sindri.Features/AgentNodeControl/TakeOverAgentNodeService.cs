@@ -6,7 +6,7 @@ using Aw.Sindri.Core.Graph.Runs;
 namespace Aw.Sindri.Features.AgentNodeControl;
 
 /// <summary>
-/// The human takes the 'run_agent' node a run waits on: its timeout pauses and only the human reports it. Refused for an agent session, an unknown or ended run and a node the run is not waiting on;
+/// A person or an agent session takes the 'run_agent' node a run waits on: its timeout pauses and only the human reports it. Refused for a request with no caller, an unknown or ended run and a node the run is not waiting on;
 /// a node already held answers 'taken_over' again. The workflow alone holds the node's state, so nothing is written here.
 /// </summary>
 /// <param name="runs">The runs.</param>

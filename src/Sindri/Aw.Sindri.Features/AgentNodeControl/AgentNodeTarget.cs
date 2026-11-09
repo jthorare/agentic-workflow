@@ -6,25 +6,25 @@ using Aw.Sindri.Core.Graph.Runs;
 
 namespace Aw.Sindri.Features.AgentNodeControl;
 
-/// <summary>What a takeover and a handback check before they ask Temporal: the caller is the human, the run is known and running, and the run waits on that 'run_agent' node.</summary>
+/// <summary>What a takeover and a handback check before they ask Temporal: the caller is set, the run is known and running, and the run waits on that 'run_agent' node.</summary>
 internal static class AgentNodeTarget
 {
     internal const string Waiting = "waiting";
     internal const string TakenOver = "taken_over";
 
     /// <summary>Finds the node the run waits on.</summary>
-    /// <param name="callers">The caller: an agent session is refused (SND-AUTH-002), the human of the node is the person at the app or the terminal.</param>
+    /// <param name="callers">The caller: a human or an agent session may take a node over and hand it back (agent-first D2); a request with no caller at all is refused.</param>
     /// <param name="runs">The runs.</param>
     /// <param name="control">Says which node the run waits on.</param>
     /// <param name="ask">The run, the node and the item's position.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
-    /// <returns>The node's state; SND-AUTH-002, SND-GRAPH-101 (unknown run), SND-GRAPH-107 (ended run), SND-GRAPH-109 (not waiting on that node), SND-API-001 (Temporal down) or invalid input for a negative index.</returns>
+    /// <returns>The node's state; SND-AUTH-002 (no caller), SND-GRAPH-101 (unknown run), SND-GRAPH-107 (ended run), SND-GRAPH-110 (not waiting on that node), SND-API-001 (Temporal down) or invalid input for a negative index.</returns>
     internal static async ValueTask<Result<RunningAgentNode>> Find(ICallerContextAccessor callers, IWorkflowRunStore runs, IAgentNodeControl control, AgentNodeAsk ask, CancellationToken cancellationToken)
     {
         var (run, node, itemIndex) = ask;
-        if (callers.Current is not { Class: CallerClass.Human })
+        if (callers.Current is null)
         {
-            return SindriErrors.AuthRefused.With("taking over and handing back an agent node is the human's: an agent session can't do it (fix: the owner does it in the app or at a terminal)");
+            return SindriErrors.AuthRefused.With("taking over and handing back an agent node needs a caller");
         }
 
         if (itemIndex < 0)
