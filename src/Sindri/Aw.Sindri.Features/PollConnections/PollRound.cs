@@ -131,7 +131,7 @@ internal sealed class PollRound(IGraphRunStarter starter, IPollCursors cursors, 
             return true;
         }
 
-        return SindriErrors.GraphRunIdTaken.With($"{Probes} run ids in a row are held by other deliveries; the cursor stays and the next poll tries again");   // why: never drop a real event silently
+        return SindriErrors.ConnectionRunIdsHeld.With($"{Probes} run ids in a row are held by other deliveries; the cursor stays and the next poll tries again");   // why: never drop a real event silently
     }
 
     private static string? DeliveryOf(string trigger)

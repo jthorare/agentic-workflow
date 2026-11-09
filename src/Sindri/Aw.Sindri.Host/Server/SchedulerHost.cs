@@ -45,6 +45,7 @@ internal sealed partial class SchedulerHost(
             if (_wakes.Observe())
             {
                 pollWake?.Request();   // the machine slept: the poll service reads every cursor forward on its next run (#2258, PR 11)
+                RunWakeServicesNow();
             }
 
             await Refresh(stoppingToken).ConfigureAwait(false);
@@ -59,6 +60,16 @@ internal sealed partial class SchedulerHost(
         }
 
         await InFlight().ConfigureAwait(false);
+    }
+
+    // why: after a sleep the slots of these services are in the past or far ahead; they run now (workflow-schedule fires its latest missed tick, connection-refresh renews tokens that expired asleep, workflow-poll catches up)
+    private static readonly string[] _wakeServices = ["workflow-poll", "workflow-schedule", "connection-refresh"];
+
+    private void RunWakeServicesNow()
+    {
+        var now = clock.GetUtcNow();
+        _schedules = [.. _schedules.Select(s => _wakeServices.Contains(s.Name.Value, StringComparer.Ordinal) && s.NextSlot > now ? s with { NextSlot = now } : s)];
+        inputs.Live.Publish(_schedules);
     }
 
     /// <summary>Waits for the runs still in flight; they see the stop's cancellation.</summary>
