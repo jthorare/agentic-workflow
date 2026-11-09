@@ -82,6 +82,18 @@ public sealed class WorkflowGraphViewModelTests
     }
 
     [Fact]
+    public async Task A_graph_whose_nodes_all_lack_positions_is_not_empty_and_a_spec_with_no_nodes_is()
+    {
+        var unplaced = await GraphOf(_f, """[{"id":"a","type":"x","config":{}},{"id":"b","type":"x","config":{}}]""", "[]", "[]");
+        var none = await GraphOf(_f, "[]", "[]", "[]");
+
+        Assert.False(unplaced.IsEmpty);   // only the "2 nodes have no position" line shows, not "no steps"
+        Assert.True(unplaced.HasUnplaced);
+        Assert.True(none.IsEmpty);
+        Assert.False(none.HasUnplaced);
+    }
+
+    [Fact]
     public async Task Selection_moves_left_to_right_then_top_to_bottom_and_raises_the_node_id()
     {
         var graph = await GraphOf(

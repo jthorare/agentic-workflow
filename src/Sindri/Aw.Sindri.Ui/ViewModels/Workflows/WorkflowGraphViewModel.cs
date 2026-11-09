@@ -79,8 +79,8 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     public string EmptyText => Labels.WfGraphEmpty;
 #pragma warning restore CA1822, MA0041
 
-    /// <summary>Gets a value indicating whether the workflow has no nodes.</summary>
-    public bool IsEmpty => Nodes.Count == 0;
+    /// <summary>Gets a value indicating whether the spec has no nodes at all; nodes without a position are not "no steps", the unplaced line names them.</summary>
+    public bool IsEmpty => Nodes.Count == 0 && Unplaced.Count == 0;
 
     /// <summary>The nodes in position order: left to right, then top to bottom.</summary>
     internal IReadOnlyList<GraphNodeViewModel> Order { get; }
