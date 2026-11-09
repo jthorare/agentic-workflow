@@ -28,6 +28,9 @@ public sealed class FakeTodoNoteFiles : ITodoNoteFiles
     /// <summary>Gets or sets what runs just after a swap, with the tmp path that now holds what was at the note.</summary>
     public Action<string>? AfterSwap { get; set; }
 
+    /// <summary>Gets or sets what runs just after a plain <see cref="Read"/> answered, with the path: a person's edit that lands after the pass read.</summary>
+    public Action<string>? AfterRead { get; set; }
+
     /// <summary>Gets how many swaps happened.</summary>
     public int Swaps { get; private set; }
 
@@ -65,9 +68,11 @@ public sealed class FakeTodoNoteFiles : ITodoNoteFiles
             return new NoteRead(Text: null, Hash: null, Bytes: 0, Missing: false, problem);
         }
 
-        return Files.TryGetValue(note, out var text)
+        var read = Files.TryGetValue(note, out var text)
             ? new NoteRead(text, HashOf(text), Encoding.UTF8.GetByteCount(text), Missing: false, Problem: null)
             : new NoteRead(Text: null, Hash: null, Bytes: 0, Missing: true, Problem: null);
+        AfterRead?.Invoke(note);
+        return read;
     }
 
     /// <inheritdoc/>
