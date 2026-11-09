@@ -5,7 +5,7 @@ import * as py from "../../py";
 import { Packet } from "../packet";
 import { ISO_DATE } from "../patterns";
 import { Clock } from "../services";
-import { type PyValue, eq, get, isDict, iter, repr, str, truthy } from "../pyops";
+import { type PyValue, dget, eq, get, isDict, isOsOrValueError, iter, repr, str, truthy } from "../pyops";
 
 const re = py.re;
 const { join } = py.path;
@@ -20,22 +20,22 @@ export const meta = Effect.gen(function* () {
     return;
   }
   const at = (k: string) => p.locate('"' + k + '"', [mp])[1];
-  const title = get(m, "title");
+  const title = dget(m, "title");
   if (!(typeof title === "string" && py.str.strip(title))) {
     p.add("META", "field", "error", "meta.json has no title (the browser tab title)", "meta.json", at("title"));
   }
-  const people = get(m, "people");
+  const people = dget(m, "people");
   const hasAuthor = Array.isArray(people) && people.some((q) => isDict(q) && py.lower(str(get(q, "role", ""))) === "author" && truthy(get(q, "name")));
   if (!hasAuthor) p.add("META", "field", "error", "meta.json people has no Author (people: [{role: Author, name: ...}])", "meta.json", at("people"));
-  const updated = get(m, "updated");
+  const updated = dget(m, "updated");
   if (!(typeof updated === "string" && ISO_DATE.match(updated))) {
     p.add("META", "field", "error", `meta.json updated ${repr(updated)} is not an ISO date (YYYY-MM-DD)`, "meta.json", at("updated"));
   }
-  const rev = get(m, "rev");
+  const rev = dget(m, "rev");
   if (!(typeof rev === "number" || typeof rev === "bigint")) {
     p.add("META", "field", "error", `meta.json rev ${repr(rev)} is not an integer`, "meta.json", at("rev"));
   }
-  const status = get(m, "status");
+  const status = dget(m, "status");
   if (!(typeof status === "string" && py.str.strip(status))) {
     p.add("META", "field", "error", "meta.json has no status (e.g. 'Draft for review', 'Reviewed', 'As built')", "meta.json", at("status"));
   }
@@ -57,16 +57,16 @@ export const meta = Effect.gen(function* () {
       p.add("META", "stale-build", "warn", `${names} changed after the last build (${clock.localMinute(built)}): ` +
         `rebuild before publishing (this lint read the old build)`, p.rel(cpath));
       const text_changed = newer.filter((q) => q.endsWith(".md"));
-      const cm = get(p.content, "meta", new Map());
-      if (text_changed.length && eq(get(cm, "rev"), get(m, "rev")) && eq(get(cm, "updated"), get(m, "updated"))) {
-        p.add("META", "rev-not-moved", "warn", `the source changed since the build of rev ${str(get(m, "rev"))} (${str(get(m, "updated"))}) but meta.json ` +
+      const cm = dget(p.content, "meta", new Map());
+      if (text_changed.length && eq(dget(cm, "rev"), dget(m, "rev")) && eq(dget(cm, "updated"), dget(m, "updated"))) {
+        p.add("META", "rev-not-moved", "warn", `the source changed since the build of rev ${str(dget(m, "rev"))} (${str(dget(m, "updated"))}) but meta.json ` +
           `rev and updated did not move: bump rev and set updated (and rev_note) for this revision`, "meta.json", at("rev"));
       }
     }
   }
   // a published (non-draft) doc names its artifact
   if (typeof status === "string" && py.str.strip(status) && !py.lower(py.str.strip(status)).startsWith("draft")) {
-    const urls: PyValue[] = [get(m, "artifact_url")];
+    const urls: PyValue[] = [dget(m, "artifact_url")];
     const st = join(p.root, "status.md");
     if (p.fs.isfile(st)) {
       const mm = re.search(String.raw`artifact_url:\s*(https?://\S+)`, p.fs.readText(st));
@@ -75,9 +75,9 @@ export const meta = Effect.gen(function* () {
     const pk = join(p.root, "packet.json");
     if (p.fs.isfile(pk)) {
       try {
-        urls.push(get(py.json.loads(p.fs.readText(pk)), "artifact_url"));
-      } catch {
-        /* ValueError / OSError: no url from packet.json */
+        urls.push(dget(py.json.loads(p.fs.readText(pk)), "artifact_url"));
+      } catch (e) {
+        if (!isOsOrValueError(e)) throw e;   // a packet.json root that is not a dict raises, as in the Python
       }
     }
     if (!urls.some((u) => typeof u === "string" && u.startsWith("http"))) {

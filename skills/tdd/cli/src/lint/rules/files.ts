@@ -5,7 +5,7 @@ import * as py from "../../py";
 import { formatFixed } from "../../py/num";
 import { Packet } from "../packet";
 import { FILE_LIMIT, MEDIA_EXT, PAGE_LIMIT } from "../patterns";
-import { type PyValue, get, isDict, items, iter, or, str, truthy } from "../pyops";
+import { type PyValue, dget, get, isDict, isOsOrValueError, items, iter, or, str, truthy } from "../pyops";
 
 const re = py.re;
 const { join, basename } = py.path;
@@ -17,8 +17,8 @@ export const files = Effect.gen(function* () {
   const man = p.manifest;
   if (man === null) return;
   const mrel = !p.compiled ? "build/content.files.json" : "(compiled) content.files.json";
-  const filesMap = or(get(man, "files"), new Map());
-  for (const m of iter(or(get(man, "missing"), []))) {
+  const filesMap = or(dget(man, "files"), new Map());
+  for (const m of iter(or(dget(man, "missing"), []))) {
     const ms = str(m);
     const [f, l] = p.locate(ms);
     p.add("FILES", "missing", "error", `${ms} is referenced by the page but not found`, f || mrel, l);
@@ -30,18 +30,18 @@ export const files = Effect.gen(function* () {
       p.add("FILES", "too-big", "error", `${pub} is ${mb(p.fs.getsize(str(src)))} MB; the artifact limit per file is 15 MB`, mrel);
     }
   }
-  for (const x of iter(or(get(man, "over_15mb"), []))) {
+  for (const x of iter(or(dget(man, "over_15mb"), []))) {
     if (!(typeof x === "string" && filesMap instanceof Map && filesMap.has(x))) p.add("FILES", "too-big", "error", `${str(x)} is over 15 MB`, mrel);
   }
   if (!p.compiled) {
-    const page = join(p.build, str(or(get(man, "page"), "tdd.html")));
+    const page = join(p.build, str(or(dget(man, "page"), "tdd.html")));
     if (p.fs.isfile(page)) {
       const size = p.fs.getsize(page);
       if (size > PAGE_LIMIT) p.add("FILES", "page-size", "error", `${p.rel(page)} is ${mb(size)} MB; the page limit is 16 MB`, p.rel(page));
     } else {
       p.note(`FILES: ${p.rel(page)} is not built yet (app/build.ts writes it); page size not checked`);
     }
-    const pb = get(man, "page_bytes");
+    const pb = dget(man, "page_bytes");
     const pbn = typeof pb === "number" ? pb : typeof pb === "bigint" ? Number(pb) : pb instanceof py.PyFloat ? pb.value : typeof pb === "boolean" ? (pb ? 1 : 0) : null;
     if (pbn !== null && pbn > PAGE_LIMIT) p.add("FILES", "page-size", "error", `page_bytes ${str(pb)} is over 16 MB`, mrel);
   }
@@ -50,7 +50,7 @@ export const files = Effect.gen(function* () {
   const manifests: PyValue[] = [man];
   for (const f of p.fs.listdir(p.root)) if (f.endsWith(".files.json")) manifests.push(p.load_json(join(p.root, f), "FILES"));
   for (const m of manifests) {
-    for (const [pub, src] of items(or(get(or(m, new Map()), "files"), new Map()))) {
+    for (const [pub, src] of items(or(dget(or(m, new Map()), "files"), new Map()))) {
       used.add(p.fs.realpath(join(p.root, pub)));
       if (truthy(src)) used.add(p.fs.realpath(str(src)));
     }
@@ -62,10 +62,12 @@ export const files = Effect.gen(function* () {
       let spec: PyValue;
       try {
         spec = py.json.loads(p.fs.readText(join(ddir, f)));
-      } catch {
+      } catch (e) {
+        if (!isOsOrValueError(e)) throw e;
         continue;
       }
-      for (const b of iter(get(spec, "boxes", []))) if (truthy(get(b, "image"))) used.add(p.fs.realpath(join(p.root, str(get(b, "image")))));
+      // outside the Python's try only in form: its handler catches ValueError and OSError, which these lines never raise
+      for (const b of iter(dget(spec, "boxes", []))) if (truthy(dget(b, "image"))) used.add(p.fs.realpath(join(p.root, str(dget(b, "image")))));
     }
   }
   for (const sub of ["mockups", "diagrams"]) {

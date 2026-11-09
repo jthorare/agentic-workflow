@@ -157,21 +157,30 @@ codes. Modules:
 - `rules/*.ts`: one Effect per rule family (`struct`, `dnum`, `refs`, `cites`, `diag`, `schema`, `files`, `meta`,
   `agents`, `xdoc`, `parity`), each in Python's order. CITES counts lines with `git show` eight at a time and reads
   the counts back in Python's order. DIAG reads labels through src/hotspots `Shapes`. PARITY is reversed: in-process
-  TypeScript against `python3 build_tdd.py`.
-- `run.ts`: the rules in `RULES` order, each isolated (a rule that dies is `RULE/check-failed`, the run goes on). The
-  compile folder lives in the run's scope. `report.ts`: the text report, `lint.json` and the exit code.
+  TypeScript against `python3 build_tdd.py`, with the Python rule's steps (the build first, then a fresh
+  `build_tdd.py` compile to decide whose difference it is) and its texts.
+- `run.ts`: the rules in `RULES` order, each isolated. An exception the Python raises too (a kernel `PyError` or a
+  file-system error) ends the run as `lint_packet.py`'s ends: no report, no `lint.json`, the traceback's last line,
+  exit 1. Any other exception is a defect of this linter and becomes `RULE/check-failed`. `--skip RULE/check-failed`
+  cannot hide it, and the run goes on. The compile folder lives in the run's scope. `report.ts`: the text report,
+  `lint.json` and the exit code.
 - `pyops.ts`: what the rules need on top of the kernel (dict access, `==`, iteration, `str()`, the content walkers,
-  surrogateescape, Python's exception names for a thrown error).
+  surrogateescape, Python's exception names for a thrown error). Where `lint_packet.py` calls `.get` unguarded on a
+  value read from a file, the rules use `dget` (AttributeError on a non-dict), so a corrupt JSON file fails closed.
 
 Tests (`test/lint`):
-- `corpus.test.ts`: 84 mutations of a neutral base packet (`fixtures/base`, `fixtures/mutations.ts`) with a git
+- `corpus.test.ts`: 118 mutations of a neutral base packet (`fixtures/base`, `fixtures/mutations.ts`) with a git
   repository built per run (`fixtures/repo`), and 7 usage cases. Each runs both linters from the same cwd with `TZ` and
   `TDD_GENERATED` pinned. Exit code, stdout, stderr and lint.json must be identical, and every check id that
-  `lint_packet.py` declares (read from its source, 69 today) must fire at least once.
+  `lint_packet.py` declares (read from its source, 69 today) must fire at least once. The PARITY cases lint a packet
+  built by a copy of the skill whose `build_tdd.py` differs on purpose (`harness.skillCopy`, `TDD_SCRIPTS` for the
+  TypeScript run). Where `lint_packet.py` ends with a traceback (a JSON root of the wrong type), the case compares the
+  exit code, the missing report and `lint.json`, and the traceback's last line.
   `TDD_LINT_COVERAGE_OUT=<file>` writes, for each check id, the cases that fired it.
 - `packets.test.ts`: `$TDD_PARITY_PACKETS`, on the build and with `--compile`.
-- `units.test.ts`: the Git, realpath, getmtime, surrogateescape and first_diff texts against CPython; rule isolation;
-  services swapped by layer (a Git answering from a table, a raising Agents check, an absent Compiler).
+- `units.test.ts`: the Git, realpath, getmtime, surrogateescape and first_diff texts against CPython; rule isolation
+  and `--skip RULE/check-failed` against `lint_packet.py` with the same raise injected; services swapped by layer (a
+  Git answering from a table, a raising Agents check, an absent Compiler, a TypeScript compiler that fails).
 
 One Python behaviour cannot be matched. DNUM/none sorts the D-numbers by their digits. When two tokens share a number
 (`D2` and `D-2`), Python breaks the tie in set order, which depends on the hash seed and so varies from run to run.

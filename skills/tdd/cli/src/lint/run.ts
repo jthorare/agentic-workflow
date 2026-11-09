@@ -5,7 +5,7 @@ import { Cause, Effect, Layer } from "effect";
 import { Finding } from "./finding";
 import { Packet, makePacket, type LintOptions, type LintPacket } from "./packet";
 import { RULES, type RuleId } from "./patterns";
-import { pyException, type PyDict } from "./pyops";
+import { mirrorsPython, pyException, type PyDict } from "./pyops";
 import { agents } from "./rules/agents";
 import { cites } from "./rules/cites";
 import { diag } from "./rules/diag";
@@ -38,16 +38,23 @@ export interface LintResult {
   readonly rules: readonly RuleId[];
 }
 
-/** A rule whose fiber dies reports RULE/check-failed (error) instead of ending the run. */
+/**
+ * Rule isolation. An exception lint_packet.py raises too (a kernel PyError or a file-system error: the same input makes
+ * the Python rule raise at the same place) ends the run as it ends lint_packet.py's: no report, no lint.json, the
+ * exception on stderr, exit 1. Any other exception is a defect of this linter: RULE/check-failed (error, never filtered
+ * by --skip RULE/check-failed), and the other rules run.
+ */
 export const isolate = (id: RuleId, rule: Rule): Rule =>
   rule.pipe(
-    Effect.catchCause((cause) =>
-      Effect.gen(function* () {
+    Effect.catchCause((cause) => {
+      const e = Cause.squash(cause);
+      if (mirrorsPython(e)) return Effect.failCause(cause);
+      return Effect.gen(function* () {
         const p = yield* Packet;
-        const [name, msg] = pyException(Cause.squash(cause));
-        p.add(id, "check-failed", "error", `the ${id} rule raised ${name}: ${msg}; the other rules ran (a linter defect: please report it)`, null);
-      }),
-    ),
+        const [name, msg] = pyException(e);
+        p.defect(id, `the ${id} rule raised ${name}: ${msg}; the other rules ran (a linter defect: please report it)`);
+      });
+    }),
   );
 
 /** lint_packet's Lint(packet, build, compile, skip).run(): the rules not skipped, in order, isolated. */
