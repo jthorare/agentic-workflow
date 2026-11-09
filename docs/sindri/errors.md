@@ -161,3 +161,7 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-GRAPH-107` | This run already ended |
 | `SND-GRAPH-108` | A referenced node output was cut at 64 KB |
 | `SND-GRAPH-109` | A run of this workflow can't start the workflow again |
+| `SND-GRAPH-120` | A workflow call is nested too deep: the call would be past `workflow.callDepth` (default 3) |
+| `SND-GRAPH-121` | A run can't start its own workflow, or the workflow that called it |
+| `SND-GRAPH-122` | An `http` node's request was refused before it was sent: host not on `workflow.http.hosts`, an address that is this machine, plain http, or a credential header |
+| `SND-GRAPH-123` | An `http` node's request got no acceptable answer: status outside `expect`, a redirect loop, an answer over 1 MB, or a network failure |

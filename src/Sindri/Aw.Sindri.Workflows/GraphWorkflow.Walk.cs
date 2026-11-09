@@ -121,6 +121,16 @@ internal sealed partial class GraphWorkflow
     {
         // why: the walk has decided how the run ends, so the end is written detached; a cancel that arrives now finds the run already final (the store refuses a second end)
         await SkipRest(_detached).ConfigureAwait(true);
+        if (status == WorkflowRunStatus.Succeeded && Workflow.Patched("graph-commit-run-end"))
+        {
+            // why: a block remembers what it passed on (only_new) only when the whole run worked; a failed commit fails the run, and the items come back on the next one
+            if (await Workflow.ExecuteActivityAsync((GraphBlockActivities a) => a.CommitRunAsync(_run), _detached).ConfigureAwait(true) is { } why)
+            {
+                status = WorkflowRunStatus.Failed;
+                error = why;
+            }
+        }
+
         await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.FinishAsync(new GraphFinish(_run, status, error)), _detached).ConfigureAwait(true);
         return new GraphWorkflowResult(status);
     }
