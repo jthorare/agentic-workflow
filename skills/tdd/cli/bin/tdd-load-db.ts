@@ -3,6 +3,7 @@
 // never before: a build without a current build/lint.json is refused. The compiler never writes to the database.
 import { applySchema, connect, writePlan, type Counts } from "../src/db/load";
 import { planLoad, SURFACES, type Plan, type Surface } from "../src/db/plan";
+import { replace as pyReplace } from "../src/py/str";
 
 const USAGE = `usage: tdd load-db <packet-dir> [--build <dir>] [--database-url <url>] [--dry-run] [--json]
        tdd load-db <packet-dir> --published <artifact|notion|other> <url> [--build <dir>] [--database-url <url>] [--dry-run] [--json]
@@ -78,7 +79,7 @@ export async function main(argv: string[]): Promise<number> {
 
   const plan = planLoad(args.packet, { build: args.build });
   if (!plan.ok) return refused(plan.reason);
-  const name = `${plan.packet.repo_slug}/${plan.packet.slug} rev ${plan.revision.rev} (build ${plan.revision.generated.replace(".000Z", "Z")})`;
+  const name = `${plan.packet.repo_slug}/${plan.packet.slug} rev ${plan.revision.rev} (build ${pyReplace(plan.revision.generated, ".000Z", "Z")})`;
   const base = { packet: `${plan.packet.repo_slug}/${plan.packet.slug}`, rev: plan.revision.rev, generated: plan.revision.generated, notes: plan.notes };
   if (args.dryRun) {
     const c = countsOf(plan);

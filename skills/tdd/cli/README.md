@@ -42,8 +42,9 @@ Plain TypeScript, no Effect. CPython 3.13 is the specification: every module has
 **Traps the port must route through the kernel** (each has golden tests):
 
 1. `s.replace("a", "b")` changes the first occurrence in JS and every occurrence in Python: call `py.replace(s, old,
-   new, count?)`, or use a regex with `/g`. `test/py/replace-ban.test.ts` fails on any string-pattern `.replace(` in
-   `src/` outside `src/py`.
+   new, count?)`, or use a regex with `/g`. `test/py/replace-ban.test.ts` tokenizes every file under `src/` (`src/py`
+   included), `bin/` and `parity/` and fails on any `.replace(` whose pattern is not provably a RegExp (a regex
+   literal, `new RegExp`, a name bound only to one, or a cast `as RegExp`), wherever the argument sits.
 2. `[]`, `{}` and `""` are falsy in Python and `[]`/`{}` truthy in JS (and NaN the other way round): a ported `if x:`
    is `if (py.truthy(x))`.
 3. `int("١٢")` is 12 in Python (any Unicode decimal digit, Unicode whitespace around it, `_` between digits) while
