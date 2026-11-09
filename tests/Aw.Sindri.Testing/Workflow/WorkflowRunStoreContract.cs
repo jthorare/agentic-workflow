@@ -100,12 +100,30 @@ public abstract class WorkflowRunStoreContract
         var other = WorkflowId.From("WF-00000000000000000000000000000002");
         _ = (await store.Insert(Run(4) with { WorkflowId = other, Id = WorkflowRunId.Of(WorkflowSlug.From("another"), 1, 1) }, Token)).Value;
 
-        var all = (await store.Recent(_workflow, 10, Token)).Value;
-        var two = (await store.Recent(_workflow, 2, Token)).Value;
+        var all = (await store.Recent(_workflow, 0, 10, Token)).Value;
+        var two = (await store.Recent(_workflow, 0, 2, Token)).Value;
 
         Expect.Sequence([Run(3).Id, Run(2).Id, Run(1).Id], all.Select(static r => r.Id));
         Expect.Sequence([Run(3).Id, Run(2).Id], two.Select(static r => r.Id));
-        Expect.Equal(0, (await store.Recent(WorkflowId.From("WF-00000000000000000000000000000009"), 10, Token)).Value.Count);
+        Expect.Equal(0, (await store.Recent(WorkflowId.From("WF-00000000000000000000000000000009"), 0, 10, Token)).Value.Count);
+    }
+
+    /// <summary>An offset skips the newest runs: of three, offset 1 and limit 1 is the middle one, and an offset past the end is empty.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Recent_pages_with_an_offset()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        for (var n = 1; n <= 3; n++)
+        {
+            _ = (await store.Insert(Run(n, WorkflowRunStatus.Succeeded) with { StartedAt = KnownInstants.Epoch + TimeSpan.FromMinutes(n) }, Token)).Value;
+        }
+
+        var middle = (await store.Recent(_workflow, 1, 1, Token)).Value;
+        var past = (await store.Recent(_workflow, 3, 5, Token)).Value;
+
+        Expect.Sequence([Run(2).Id], middle.Select(static r => r.Id));
+        Expect.Equal(0, past.Count);
     }
 
     /// <summary>Runs that started at the same instant list by occurrence number, so 10 comes before 9 (text order would put 9 first).</summary>
@@ -117,7 +135,7 @@ public abstract class WorkflowRunStoreContract
         _ = (await store.Insert(Run(9, WorkflowRunStatus.Succeeded), Token)).Value;
         _ = (await store.Insert(Run(10, WorkflowRunStatus.Succeeded), Token)).Value;
 
-        var runs = (await store.Recent(_workflow, 10, Token)).Value;
+        var runs = (await store.Recent(_workflow, 0, 10, Token)).Value;
 
         Expect.Sequence([Run(10).Id, Run(9).Id], runs.Select(static r => r.Id));
     }

@@ -75,6 +75,25 @@ public sealed class ListWorkflowRunsServiceTests
     }
 
     [Fact]
+    public async Task An_offset_past_fifty_still_returns_rows_and_more_says_whether_older_runs_follow()
+    {
+        await Create();
+        for (var n = 1; n <= 120; n++)
+        {
+            _ = await Insert(n, WorkflowRunStatus.Succeeded, "manual", error: null);
+        }
+
+        var middle = await _service.Handle(new ListWorkflowRunsRequest(_slug, Offset: 100, Limit: 10), Token);
+        var last = await _service.Handle(new ListWorkflowRunsRequest(_slug, Offset: 110, Limit: 10), Token);
+
+        Assert.Equal(10, middle.Value.Runs.Count);
+        Assert.Equal(WorkflowRunId.Of(_slug, 1, 20), middle.Value.Runs[0].Id);
+        Assert.True(middle.Value.More);
+        Assert.Equal(10, last.Value.Runs.Count);
+        Assert.False(last.Value.More);
+    }
+
+    [Fact]
     public async Task An_unknown_slug_is_not_found()
     {
         var result = await _service.Handle(new ListWorkflowRunsRequest(WorkflowSlug.From("nope")), Token);

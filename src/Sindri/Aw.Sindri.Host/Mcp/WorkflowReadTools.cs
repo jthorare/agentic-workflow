@@ -134,8 +134,8 @@ internal static class WorkflowReadTools
             return McpResults.Failure(services, slug.Error);
         }
 
-        var answer = await services.GetRequiredService<IService<ListWorkflowRunsRequest, ListWorkflowRunsResponse>>().Handle(new ListWorkflowRunsRequest(slug.Value), ct).ConfigureAwait(false);
-        return McpResults.From(services, answer, static listed => string.Create(CultureInfo.InvariantCulture, $"{listed.Runs.Count} runs of {listed.Slug.Value}, newest first\n{Fenced}"), FencePlan.WorkflowRuns, page.Value);
+        var answer = await services.GetRequiredService<IService<ListWorkflowRunsRequest, ListWorkflowRunsResponse>>().Handle(new ListWorkflowRunsRequest(slug.Value, page.Value.Offset, page.Value.Limit), ct).ConfigureAwait(false);
+        return McpResults.From(services, answer, static listed => string.Create(CultureInfo.InvariantCulture, $"{listed.Runs.Count} runs of {listed.Slug.Value}, newest first\n{Fenced}"), FencePlan.WorkflowRuns);
     }
 
     private static async ValueTask<CallToolResult> CallRunGet(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
