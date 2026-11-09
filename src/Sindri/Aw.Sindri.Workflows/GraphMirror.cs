@@ -1,6 +1,7 @@
 using Aw.Redaction;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 
@@ -65,12 +66,22 @@ internal sealed class GraphMirror(ILedgerStore ledger, HeldLease lease, EventFac
     /// <param name="run">The run row.</param>
     /// <param name="cancellationToken">Cancels the append.</param>
     /// <returns>Completes when the event is in the ledger.</returns>
-    public Task AppendStarted(WorkflowRun run, CancellationToken cancellationToken)
+    public async Task AppendStarted(WorkflowRun run, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(run);
         var payload = new WorkflowRunStartedPayload(run.Id, run.WorkflowId, run.Revision, Clean(run.Trigger) ?? string.Empty, By);
-        return Append(EventTypes.WorkflowRunStarted, payload, $"{EventTypes.WorkflowRunStarted}:{run.Id.Value}", run.ItemId?.Value, cancellationToken);
+        await Append(EventTypes.WorkflowRunStarted, payload, $"{EventTypes.WorkflowRunStarted}:{run.Id.Value}", run.ItemId?.Value, cancellationToken).ConfigureAwait(false);
+        if (run.ItemId is { } item && RecordKey.TryFrom("sindri:run/" + run.Id.Value, out var record))
+        {
+            // the item shows the run it works for (issue 2433); keyed by item and record, so a repeat is recorded once
+            var linked = new ItemLinked(CommandFor(record), item, record, Alias: null);
+            await Append(EventTypes.ItemLinked, linked, $"{EventTypes.ItemLinked}:{item.Value}:{record.Value}", item.Value, cancellationToken).ConfigureAwait(false);
+        }
     }
+
+    // no command made this link: a stable id taken from the run's record, so a repeat carries the same one
+    private static CommandId CommandFor(RecordKey record) =>
+        CommandId.From(new Guid(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(record.Value)).AsSpan(0, 16)));
 
     /// <summary>Appends one event.</summary>
     /// <param name="type">The event type.</param>

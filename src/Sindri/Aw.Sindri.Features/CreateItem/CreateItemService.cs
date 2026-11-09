@@ -47,7 +47,22 @@ internal sealed class CreateItemService(IApprovedProfile approvals, HeldLease he
         var created = new ItemCreated(caller.CommandId, item, request.Title.Trim(), repo, request.Link, request.Body, Owner: null);
         var entry = events.Entry(EventTypes.ItemCreated, created, $"{EventTypes.ItemCreated}:{item.Value}", item.Value);
         var appended = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
-        return appended.IsError ? appended.Error : new ItemCreatedResponse(new CommandAccepted(caller.CommandId, appended.Value.Sequence), item);
+        if (appended.IsError)
+        {
+            return appended.Error;
+        }
+
+        if (request.RunRecord is { } run)
+        {
+            var linked = new ItemLinked(caller.CommandId, item, run, Alias: null);
+            var link = await ledger.Append(events.Entry(EventTypes.ItemLinked, linked, $"{EventTypes.ItemLinked}:{item.Value}:{run.Value}", item.Value), grant, cancellationToken).ConfigureAwait(false);
+            if (link.IsError)
+            {
+                return link.Error;
+            }
+        }
+
+        return new ItemCreatedResponse(new CommandAccepted(caller.CommandId, appended.Value.Sequence), item);
     }
 
     /// <summary>The refusal when <paramref name="repo"/> isn't a repo of the profile; null when it is. A header repo is the checkout the human ran from, so its message says that.</summary>
