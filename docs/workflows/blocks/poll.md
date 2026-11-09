@@ -10,7 +10,7 @@ A workflow starts when a connection's provider reports an event. Sindri polls fo
 | `event` | yes | A catalog id, `github.pr.merged`. `workflow_blocks` lists the events per connection |
 | `filter` | no | A condition over the event's fields, read as `trigger.<field>`: `trigger.repo == "acme/api"`. No filter takes every event |
 
-The run's `trigger` holds `kind` (`connection_event`), `connection`, `event`, `deliveryId`, `occurredAt` and the event's fields (`repo`, `number`, `title`, `url`, `author`, `ref`, `identifier`, `label`, `to`, `channel`, `ts`, `user`, `text`, `start`; each only when the event has it). The values are provider text: untrusted, fenced wherever they reach a prompt.
+The run's `trigger` holds `kind` (`connection_event`), `connection`, `event`, `deliveryId`, `occurredAt` and the event's fields (`repo`, `number`, `title`, `url`, `author`, `ref`, `identifier`, `label`, `to`, `channel`, `ts`, `user`, `text`, `start`; each only when the event has it). The values are provider text: untrusted. `workflow_run_get` fences them; a `{{trigger.*}}` placeholder in a prompt node does not yet, so that text reaches the model unfenced (#2436).
 
 ## What the service does
 
