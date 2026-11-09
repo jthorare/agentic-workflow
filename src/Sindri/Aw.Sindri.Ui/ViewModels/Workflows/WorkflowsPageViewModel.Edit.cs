@@ -6,6 +6,8 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// <summary>The Workflows page (<see cref="WorkflowsPageViewModel"/>, continued): the editor sheet (#2258 PR 17 part 3a). The sheet shows the form of the node selected on the graph; Save sends every changed field in one call on the revision read.</summary>
 internal sealed partial class WorkflowsPageViewModel
 {
+    private int _edits;   // counts Edit calls: only the newest one selects its node
+
     /// <summary>The editor over the page's API.</summary>
     internal OpsEditor Editor { get; }
 
@@ -52,9 +54,15 @@ internal sealed partial class WorkflowsPageViewModel
         }
 
         IsEditing = true;
+        var (edit, slug) = (++_edits, Runs.Slug);
         var node = Runs.Graph?.SelectedId ?? string.Empty;
         EditorNodeText = node.Length == 0 ? string.Empty : Labels.WfEditorNode(node);
-        await Editor.Load(url, Runs.Slug, cancellationToken).ConfigureAwait(true);
+        await Editor.Load(url, slug, cancellationToken).ConfigureAwait(true);
+        if (edit != _edits || !IsEditing || !string.Equals(Editor.Slug, slug, StringComparison.Ordinal))
+        {
+            return;   // a newer Edit started or the sheet closed while this one read: its node belongs to an older sheet
+        }
+
         Editor.Select(node);
     }
 
