@@ -62,7 +62,11 @@ internal sealed partial class GraphWorkflow
         }
         finally
         {
-            await stop.CancelAsync().ConfigureAwait(true);   // why: the watch has done its job (or the workflow was cancelled); this stops its heartbeats, and TryCancel does not wait for the activity
+            // why: the watch has done its job (or the workflow was cancelled); this stops its heartbeats, and TryCancel does not wait for the activity.
+            // Cancel, not CancelAsync: CancelAsync runs the callbacks on the thread pool, outside the workflow's scheduler, so a workflow cancel never reached the watch (Temporal .NET docs)
+#pragma warning disable MA0042
+            stop.Cancel();
+#pragma warning restore MA0042
         }
 
         await Observe(watch).ConfigureAwait(true);
