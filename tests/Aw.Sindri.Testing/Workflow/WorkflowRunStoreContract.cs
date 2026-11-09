@@ -2,6 +2,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Ids;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
@@ -185,6 +186,27 @@ public abstract class WorkflowRunStoreContract
         var result = await store.SetStatus(Run(9).Id, WorkflowRunStatus.Succeeded, outputs: null, error: null, Token);
 
         Expect.Equal(SindriErrors.GraphRunNotFound.Code, result.Error.Code);
+    }
+
+    /// <summary>A run is linked to the item its work made; linking a run that does not exist is SND-GRAPH-101.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Setting_the_item_of_a_run_reads_back_and_a_missing_run_is_not_found()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        var run = Run(1);
+        _ = (await store.Insert(run, Token)).Value;
+        var first = ItemId.From("ITM-" + new string('a', 32));
+        var second = ItemId.From("ITM-" + new string('b', 32));
+
+        var set = await store.SetItem(run.Id, first, Token);
+        var replaced = await store.SetItem(run.Id, second, Token);
+        var missing = await store.SetItem(Run(9).Id, first, Token);
+
+        Expect.Equal(first.Value, set.Value.ItemId?.Value);
+        Expect.Equal(second.Value, (await store.Get(run.Id, Token)).Value.ItemId?.Value);
+        Expect.Equal(second.Value, replaced.Value.ItemId?.Value);
+        Expect.Equal(SindriErrors.GraphRunNotFound.Code, missing.Error.Code);
     }
 
     /// <summary>Writing a node run twice for one node and item keeps the second; another item is another row.</summary>
