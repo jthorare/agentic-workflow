@@ -31,6 +31,15 @@ credential chain plus `AWS_REGION` (bugs).
 `--help` prints every flag. Exit 0 after a run (scores are measurements, not gates), 1 when `--push` fails, 2 on bad
 usage. A full local run on the reference packet takes about 17 s (artifact_check with screenshots is most of it).
 
+During the bun port's overlap period the same command also runs as TypeScript: `bun "$T/cli/bin/eval-packet.ts"
+<packet-dir> [flags]`, or `tdd eval <packet-dir> [flags]`, with the same flags, files, table and exit codes (proved
+equal to the Python's on the real packets, PR 15). Its optional SDKs (`@anthropic-ai/sdk`, `autoevals`, `braintrust`,
+`@aws-sdk/client-cloudwatch-logs`, `@aws-sdk/client-cloudwatch`) are not dependencies of the cli package: add one with
+`bun add --no-save <pkg>` in `$T/cli` when a flag needs it. Keys come from the environment only, as above, and AWS
+credentials only from the `AWS_*` variables (no shared credentials file). Where the Python uses its own interpreter
+(lint, pytest), the TypeScript uses `$TDD_PYTHON`, else the venv's python above, else `python3` on PATH. The Python script stays the documented path,
+and the first TypeScript `--push` waits for the owner (D10, D18).
+
 Files written to `<build>/eval/`: `input.json`, `output.{artifact,packet,implementation,qa,bugs,tokens}.json`,
 `probe.json`, `lint.json`, `shots/` (artifact_check renders and its report), `run.json` (exactly what a push would
 send), `history.jsonl` (one appended line per run), and `push.json` after a push.
