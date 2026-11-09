@@ -30,7 +30,13 @@ internal sealed partial class GraphRunRecovery(IWorkflowRunStore runs, IGraphRun
     /// <summary>Ends every running run Temporal has no workflow for.</summary>
     /// <param name="cancellationToken">Cancels the pass.</param>
     /// <returns>How many runs it ended, or the reason it could not finish.</returns>
-    public async ValueTask<Result<int>> Run(CancellationToken cancellationToken)
+    public ValueTask<Result<int>> Run(CancellationToken cancellationToken) => Run(DateTimeOffset.MaxValue, cancellationToken);
+
+    /// <summary>Ends every running run that started before <paramref name="startedBefore"/> and Temporal has no workflow for; a later one may be a launch still in flight.</summary>
+    /// <param name="startedBefore">The cutoff: runs that started at or after it are left alone.</param>
+    /// <param name="cancellationToken">Cancels the pass.</param>
+    /// <returns>How many runs it ended, or the reason it could not finish.</returns>
+    public async ValueTask<Result<int>> Run(DateTimeOffset startedBefore, CancellationToken cancellationToken)
     {
         var running = await _runs.Running(cancellationToken).ConfigureAwait(false);
         if (running.IsError)
@@ -38,15 +44,23 @@ internal sealed partial class GraphRunRecovery(IWorkflowRunStore runs, IGraphRun
             return running.Error;
         }
 
-        var ended = 0;
         var workflows = new List<WorkflowId>();
+        var (ended, failure) = await EndLost(running.Value.Where(r => r.StartedAt < startedBefore), workflows, cancellationToken).ConfigureAwait(false);
+        // why: rows already failed are no longer 'running', so a retry never sees them; their queues advance now, even when the pass stopped on an error
+        var advanced = await AdvanceQueues(workflows, cancellationToken).ConfigureAwait(false);
+        return failure ?? advanced ?? (Result<int>)ended;
+    }
+
+    private async ValueTask<(int Ended, Error? Failure)> EndLost(IEnumerable<WorkflowRun> candidates, List<WorkflowId> workflows, CancellationToken cancellationToken)
+    {
+        var ended = 0;
         Error? failure = null;
-        foreach (var run in running.Value)
+        foreach (var run in candidates)
         {
             var outcome = await EndIfLost(run, cancellationToken).ConfigureAwait(false);
             if (outcome.IsError)
             {
-                return outcome.Error;   // why: Temporal can't be asked or a write failed; the host retries the whole pass
+                return (ended, outcome.Error);   // why: Temporal can't be asked or a write failed; the host retries the pass
             }
 
             if (outcome.Value is not { } failed)
@@ -63,8 +77,7 @@ internal sealed partial class GraphRunRecovery(IWorkflowRunStore runs, IGraphRun
             failure ??= await Record(failed, cancellationToken).ConfigureAwait(false);
         }
 
-        var advanced = await AdvanceQueues(workflows, cancellationToken).ConfigureAwait(false);
-        return advanced ?? failure ?? (Result<int>)ended;
+        return (ended, failure);
     }
 
     private async ValueTask<Error?> AdvanceQueues(List<WorkflowId> workflows, CancellationToken cancellationToken)

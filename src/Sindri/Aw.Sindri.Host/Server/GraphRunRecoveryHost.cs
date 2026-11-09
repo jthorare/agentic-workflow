@@ -13,13 +13,16 @@ internal sealed partial class GraphRunRecoveryHost(IGraphRunRecovery recovery, H
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        DateTimeOffset? tookLease = null;
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
                 if (held.Current is not null)
                 {
-                    var ended = await recovery.Run(stoppingToken).ConfigureAwait(false);
+                    // why: a trigger can admit a run in the window after the lease is taken; only runs from before it can be orphans of the previous process
+                    tookLease ??= clock.GetUtcNow();
+                    var ended = await recovery.Run(tookLease.Value, stoppingToken).ConfigureAwait(false);
                     if (ended.IsSuccess)
                     {
                         if (ended.Value > 0)
