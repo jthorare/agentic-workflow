@@ -42,6 +42,16 @@ public sealed class TemporalGraphRunLauncherTests(SindriTimeSkippingServer serve
     }
 
     [Fact]
+    public async Task An_unavailable_reply_after_Temporal_accepted_the_start_is_launched()
+    {
+        var launcher = LauncherThatLoses(RpcException.StatusCode.Unavailable, Loss.ReplyLostAfterAccept);
+
+        var launched = await launcher.Launch(NewRun(), Token);
+
+        Assert.True(launched.IsSuccess, launched.IsError ? launched.Error.Code : null);
+    }
+
+    [Fact]
     public async Task An_unavailable_server_is_nothing_ran()
     {
         var launcher = LauncherThatLoses(RpcException.StatusCode.Unavailable, Loss.FailsBeforeStart);
