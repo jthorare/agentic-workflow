@@ -171,6 +171,7 @@ bash scripts/tests/test-grep.test.sh
 bash scripts/tests/check-deps.test.sh
 bash scripts/tests/check-rules.test.sh
 bash scripts/tests/check-launcher.test.sh   # launcher.json schema, fixtures, built-ins and argvHash goldens (node scripts/check-launcher.mjs; Ajv is a dev dependency of scripts/)
+bash scripts/tests/check-handoff-schema.test.sh   # schemas/handoff/inbox.openapi.yaml (the handoff inbox contract, docs/sindri/handoff.md): it parses, its operations and status codes are all there, its examples and every file in tests/fixtures/handoff/fake-inbox/ get their verdicts (node scripts/check-handoff-schema.mjs; Ajv and yaml as the other checkers)
 bash scripts/tests/check-fleet.test.sh      # fleet state schema, its valid and invalid fixtures, and the /proc-shaped sessions tree (node scripts/check-fleet.mjs; Ajv as above)
 bash scripts/tests/check-library-schemas.test.sh # schemas/library/design-doc.schema.json (the parsed design doc, docs/conventions/design-docs.md): it compiles, its examples get their verdicts, each invalid one fails at its own path (node scripts/check-library-schemas.mjs; Ajv as above)
 bash scripts/tests/check-library-fixtures.test.sh # tests/fixtures/library/ (made-up design docs) against its expected.json, the contract the C# parser's tests share: every .md listed, every SND-LIB-010..019 has a fixture, good front matter passes $defs/frontMatter, broken fails, generated shas match (node scripts/check-library-fixtures.mjs; Ajv as above)
