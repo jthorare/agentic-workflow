@@ -5,19 +5,21 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.Text;
 
 namespace Aw.Sindri.Features.AnswerQuestion;
 
 /// <summary>
 /// Answers a question: an answer is a text or a choice (not both), the run must still be going, and the workflow decides whether the node is waiting and takes it as one of its choices.
-/// Once the workflow took the answer, 'workflow.answered' records who gave it ('owner', or 'session:&lt;id&gt;' for an agent session, including one answering its own run's question).
+/// Once the workflow took the answer, 'workflow.answered' records who gave it ('owner', or 'session:&lt;launch id&gt;' for a session Sindri launched, including one answering its own run's question).
 /// </summary>
 /// <param name="runs">The runs.</param>
 /// <param name="answerer">Delivers the answer to the run's workflow.</param>
 /// <param name="ledger">Appends 'workflow.answered'.</param>
 /// <param name="held">The lease this process holds.</param>
 /// <param name="events">Builds the entry.</param>
-internal sealed class AnswerQuestionService(IWorkflowRunStore runs, IGraphRunAnswerer answerer, ILedgerStore ledger, HeldLease held, EventFactory events) : IService<AnswerQuestionRequest, AnswerQuestionResponse>
+/// <param name="scrubber">Scrubs the answer before the ledger stores it; the workflow gets the answer as given.</param>
+internal sealed class AnswerQuestionService(IWorkflowRunStore runs, IGraphRunAnswerer answerer, ILedgerStore ledger, HeldLease held, EventFactory events, ITextScrubber scrubber) : IService<AnswerQuestionRequest, AnswerQuestionResponse>
 {
     private const int AnswerMax = 4000;
 
@@ -47,7 +49,7 @@ internal sealed class AnswerQuestionService(IWorkflowRunStore runs, IGraphRunAns
             return delivered.Error;
         }
 
-        var entry = events.Entry(EventTypes.WorkflowAnswered, new WorkflowAnsweredPayload(request.Run, request.Node, answer.Value, request.By), $"{EventTypes.WorkflowAnswered}:{request.Run.Value}:{request.Node.Value}");
+        var entry = events.Entry(EventTypes.WorkflowAnswered, new WorkflowAnsweredPayload(request.Run, request.Node, scrubber.Scrub(answer.Value), request.By), $"{EventTypes.WorkflowAnswered}:{request.Run.Value}:{request.Node.Value}");
         var appended = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
         return appended.IsError
             ? SindriErrors.ServiceFailed.With($"the workflow took the answer but the ledger could not record it: {appended.Error.Message}")

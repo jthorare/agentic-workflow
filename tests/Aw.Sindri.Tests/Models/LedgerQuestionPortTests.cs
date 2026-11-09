@@ -3,7 +3,9 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Redaction;
 using Aw.Sindri.Host.Models;
+using Aw.Sindri.Infrastructure.Text;
 
 namespace Aw.Sindri.Tests.Models;
 
@@ -18,7 +20,7 @@ public sealed class LedgerQuestionPortTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private LedgerQuestionPort Port() => new(_h.Store, _h.Held, _h.Events, _h.Callers);
+    private LedgerQuestionPort Port() => new(_h.Store, _h.Held, _h.Events, _h.Callers, new RedactingScrubber(Redactor.Default));
 
     [Fact]
     public async Task A_post_appends_one_event_with_the_question_choices_default_and_deadline()
@@ -35,6 +37,18 @@ public sealed class LedgerQuestionPortTests
         var payload = JsonNode.Parse(recorded.Envelope.Payload)!;
         Assert.Equal(("nightly@3:12", "ask", "Ship the release?", "no"), (payload["run"]!.GetValue<string>(), payload["node"]!.GetValue<string>(), payload["question"]!.GetValue<string>(), payload["default"]!.GetValue<string>()));
         Assert.Equal(["yes", "no"], payload["choices"]!.AsArray().Select(static n => n!.GetValue<string>()), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_secret_in_the_question_choices_or_default_is_scrubbed_in_the_ledger_row()
+    {
+        _ = await _h.HoldLease();
+        var secret = "ghp_" + new string('a', 36);
+
+        _ = await Port().Post(new QuestionAsk(_run, _node, $"Use {secret}?", [$"yes {secret}", "no"], $"no {secret}", TimeoutAt: null), Token);
+
+        var stored = Assert.Single(_h.Store.Events).Envelope.Payload;
+        Assert.DoesNotContain(secret, stored, StringComparison.Ordinal);
     }
 
     [Fact]

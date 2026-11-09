@@ -4,7 +4,9 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Redaction;
 using Aw.Sindri.Features.AnswerQuestion;
+using Aw.Sindri.Infrastructure.Text;
 using Aw.Sindri.Testing.Workflow;
 using Microsoft.Extensions.Time.Testing;
 
@@ -27,7 +29,7 @@ public sealed class AnswerQuestionServiceTests
     public AnswerQuestionServiceTests()
     {
         _runs = new InMemoryWorkflowRunStore(_clock);
-        _service = new AnswerQuestionService(_runs, _answerer, _h.Store, _h.Held, _h.Events);
+        _service = new AnswerQuestionService(_runs, _answerer, _h.Store, _h.Held, _h.Events, new RedactingScrubber(Redactor.Default));
     }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -63,6 +65,20 @@ public sealed class AnswerQuestionServiceTests
         Assert.Equal("session:abc123", Assert.Single(_answerer.Answers).By);
         var payload = JsonNode.Parse(Assert.Single(_h.Store.Events).Envelope.Payload)!;
         Assert.Equal("session:abc123", payload["by"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public async Task A_secret_in_the_answer_is_scrubbed_in_the_ledger_row_but_reaches_the_workflow_as_given()
+    {
+        _ = await _h.HoldLease();
+        var run = await Insert(4, WorkflowRunStatus.Running);
+        var secret = "ghp_" + new string('a', 36);
+
+        var result = await _service.Handle(new AnswerQuestionRequest(run.Id, _ask, $"token is {secret}", Choice: null, "owner"), Token);
+
+        Assert.True(result.IsSuccess);
+        Assert.DoesNotContain(secret, Assert.Single(_h.Store.Events).Envelope.Payload, StringComparison.Ordinal);
+        Assert.Equal($"token is {secret}", Assert.Single(_answerer.Answers).Text);
     }
 
     [Theory]
