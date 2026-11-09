@@ -78,7 +78,7 @@ internal sealed partial class WorkflowsPage : UserControl
     }
 #pragma warning restore MA0155
 
-    // Back lands on the level it returns to: the first row of the list or of the runs, else the Back button when that level has no row.
+    // Back lands on the level it returns to: the first row's button, else the first thing on that level that takes focus (Try again, Run now), never the Back button it just hid.
     private void OnBack(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not WorkflowsPageViewModel page)
@@ -88,8 +88,14 @@ internal sealed partial class WorkflowsPage : UserControl
 
         page.Back();
         var rows = page.IsList ? WorkflowRows : RunRows;
-        Dispatcher.UIThread.Post(() => _ = (rows.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.IsEffectivelyVisible) ?? (Control)WorkflowsBack).Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
+        Control level = page.IsList ? WorkflowsListLevel : WorkflowRunsLevel;
+        Dispatcher.UIThread.Post(
+            () => _ = (FirstTarget(rows, static b => b is Button) ?? FirstTarget(level, static c => c.Focusable) ?? level).Focus(NavigationMethod.Tab),
+            DispatcherPriority.Loaded);
     }
+
+    private static Control? FirstTarget(Control within, Func<Control, bool> wanted) =>
+        within.GetVisualDescendants().OfType<Control>().FirstOrDefault(c => wanted(c) && c.Focusable && c.IsEffectivelyVisible && c.IsEffectivelyEnabled);
 
     private static void FocusLater(Control control) => Dispatcher.UIThread.Post(() => _ = control.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
 }
