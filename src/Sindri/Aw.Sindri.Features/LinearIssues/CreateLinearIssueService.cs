@@ -9,7 +9,7 @@ using Aw.Sindri.Core.Linear;
 namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>
-/// Creates an issue as the owner (Linear hub spec §5.2; desk). In order: a session is refused (SND-AUTH-002); the client id is read (SND-CLI-003); the team must be a picked one (SND-LINEAR-003); every id in the body must be one of the team's stored
+/// Creates an issue as the owner (Linear hub spec §5.2; desk). In order (an agent session may create too, agent-first PR 2): the client id is read (SND-CLI-003); the team must be a picked one (SND-LINEAR-003); every id in the body must be one of the team's stored
 /// lookups (SND-LINEAR-006), the parent key a stored issue; then Context creates it with the client id, so a retry never creates twice. The answer is the new issue as the list shows it, read back through <see cref="GetLinearIssueService"/>.
 /// A write that Linear never confirmed is SND-LINEAR-011 with the client id to retry with.
 /// </summary>
@@ -27,11 +27,6 @@ internal sealed class CreateLinearIssueService(LinearScopes scopes, IContextLine
     public async ValueTask<Result<CreateLinearIssueResponse>> Handle(CreateLinearIssueRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (scopes.IsSession())
-        {
-            return SindriErrors.AuthRefused.With(LinearWriteFailures.Refusal);
-        }
-
         var client = LinearClientId.Parse(request.ClientId);
         if (client.IsError)
         {

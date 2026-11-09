@@ -11,7 +11,7 @@ using Aw.Sindri.Tests.LinearReads;
 
 namespace Aw.Sindri.Tests.LinearWrites;
 
-/// <summary>The real write gate over Context (Linear hub spec §5.1), not a fake of it: allowed for the owner with a resolving write key and a picked team, and each refusal with its own code (#2261).</summary>
+/// <summary>The real write gate over Context (Linear hub spec §5.1), not a fake of it: allowed for the owner or a session with a resolving write key and a picked team, and each refusal with its own code (#2261).</summary>
 [Lane(TestLane.Unit)]
 public sealed class ContextLinearWriteGateTests
 {
@@ -40,16 +40,14 @@ public sealed class ContextLinearWriteGateTests
     }
 
     [Fact]
-    public async Task A_session_is_refused_SND_AUTH_002_before_the_key_or_the_team_is_read()
+    public async Task A_session_with_a_resolving_key_and_a_picked_team_is_allowed_like_the_owner()
     {
-        using var entered = _slice.Callers.Enter(A.Caller().Build());
+        using var entered = _slice.Callers.Enter(A.Caller().Build());   // why: the builder's default caller is an agent session
 
         var refusal = await Gate().Refusal("ENG", Token);
 
-        Assert.NotNull(refusal);
-        Expect.Equal(SindriErrors.AuthRefused.Code, refusal.Code);
-        Assert.Empty(_facts.AskedTeams);
-        Assert.Empty(_writes.Calls);
+        Assert.Null(refusal);
+        Expect.Sequence(["ENG"], _facts.AskedTeams);
     }
 
     [Fact]

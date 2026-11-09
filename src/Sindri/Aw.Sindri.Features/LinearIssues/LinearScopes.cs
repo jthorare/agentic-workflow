@@ -6,14 +6,11 @@ using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Features.LinearIssues;
 
-/// <summary>The scopes the Linear reads run under: the current caller's (a session sees only the teams mapped to its repo) and the owner's (names, the viewer, the write key: a session is refused some of them and only decides which rows it sees).</summary>
+/// <summary>The scopes the Linear reads run under: the current caller's (a session sees only the teams mapped to its repo) and the owner's (names, the viewer, the write key: a session only decides which rows it sees).</summary>
 /// <param name="approvals">The profiles.</param>
 /// <param name="callers">The current caller.</param>
 internal sealed class LinearScopes(IApprovedProfile approvals, ICallerContextAccessor callers)
 {
-    /// <summary>Whether the current caller is an agent session.</summary>
-    internal bool IsSession() => callers.Current?.Class == CallerClass.Session;
-
     /// <summary>Builds a scope over the profile.</summary>
     /// <param name="owner">True for the owner's scope, false for the current caller's.</param>
     /// <param name="cancellationToken">Cancels the read.</param>

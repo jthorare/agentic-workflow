@@ -7,7 +7,7 @@ using Aw.Sindri.Core.Linear;
 namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>
-/// The write gate over Context (Linear hub spec §5.1): a session never writes (SND-AUTH-002); the owner can once the write key resolves (SND-LINEAR-002 when it is not set, is refused or is the read key) and the issue's team
+/// The write gate over Context (Linear hub spec §5.1): the owner or an agent session (agent-first PR 2) can write once the write key resolves (SND-LINEAR-002 when it is not set, is refused or is the read key) and the issue's team
 /// is one the profile picked (SND-LINEAR-003: the team's lookups are stored only for picked teams, as the lookups read finds). Context failing reads as that error's own code.
 /// </summary>
 /// <param name="scopes">The owner's scope.</param>
@@ -17,11 +17,6 @@ internal sealed class ContextLinearWriteGate(LinearScopes scopes, IContextLinear
 {
     public async ValueTask<Error?> Refusal(string teamKey, CancellationToken cancellationToken)
     {
-        if (scopes.IsSession())
-        {
-            return LinearWriteRefusals.Session();
-        }
-
         var scope = await scopes.Read(owner: true, cancellationToken).ConfigureAwait(false);
         if (scope.IsError)
         {

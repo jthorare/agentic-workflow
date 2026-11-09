@@ -7,7 +7,7 @@ using Aw.Sindri.Core;
 namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>
-/// Posts a comment as the owner (Linear hub spec §5.3; desk). In order: a session is refused (SND-AUTH-002); the key and client id are read (SND-CLI-003); the issue's team must be a picked one (SND-LINEAR-003); Context posts it with the client id,
+/// Posts a comment as the owner (Linear hub spec §5.3; desk). In order (an agent session may post too, agent-first PR 2): the key and client id are read (SND-CLI-003); the issue's team must be a picked one (SND-LINEAR-003); Context posts it with the client id,
 /// so a retry never posts twice. The answer is the comment as the issue now holds it, read back through <see cref="GetLinearIssueService"/>; when the store missed it (SND-LINEAR-013) the answer carries the text just sent.
 /// A write that Linear never confirmed is SND-LINEAR-011 with the client id to retry with.
 /// </summary>
@@ -24,11 +24,6 @@ internal sealed class CommentLinearIssueService(LinearScopes scopes, IContextLin
     public async ValueTask<Result<CommentLinearIssueResponse>> Handle(CommentLinearIssueRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (scopes.IsSession())
-        {
-            return SindriErrors.AuthRefused.With(LinearWriteFailures.Refusal);
-        }
-
         var key = LinearIssueKey.Parse(request.Key);
         var client = LinearClientId.Parse(request.ClientId);
         if (key.IsError || client.IsError)
