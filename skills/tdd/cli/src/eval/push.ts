@@ -5,16 +5,17 @@
 // after the owner's go (D10, D18).
 //
 // SDK calls (the braintrust JavaScript SDK's documented surface, written from its docs and NOT exercised here: there
-// was no key and no install in this lane; check them against the installed SDK before the first push):
+// was no key and no install in this lane; the N8 review checked these names against braintrust 3.43.0's
+// dist/index.d.ts; check them against the installed SDK before the first push):
 //   login({apiKey}); initDataset({project, dataset, description}) -> Dataset; Dataset.insert({id, input, expected,
 //   metadata, tags}); Dataset.summarize() -> {datasetUrl}; init({project, experiment, description, baseExperiment,
-//   metadata, gitMetadataSettings: {collect: "none"}, setCurrent: false}) -> Experiment; Experiment.log({input,
+//   metadata, tags, gitMetadataSettings: {collect: "none"}, setCurrent: false}) -> Experiment; Experiment.log({input,
 //   output, expected, scores, metrics, metadata, tags}); new Attachment({data: <path>, filename, contentType});
 //   Experiment.summarize() -> {experimentName, experimentUrl, comparisonExperimentName, scores}; flush().
 import { Data, Effect, Option } from "effect";
 import * as py from "../py";
 import { pyStr } from "../py/repr";
-import { type Py } from "./common";
+import { type Py, importOptional } from "./common";
 import { type Keys, reveal } from "./config";
 import { type Run } from "./plan";
 
@@ -30,7 +31,9 @@ const SPEC = "braintrust";
 
 export const push = (run: Run, keys: Pick<Keys, "braintrust">) => Effect.gen(function* () {
   if (Option.isNone(keys.braintrust)) return yield* new PushExit({ message: "--push needs BRAINTRUST_API_KEY in the environment (never in a file)" });
-  const bt: Py = yield* Effect.promise(() => import(SPEC).catch(() => null));
+  // ev_push imports braintrust inside push(): ImportError and any other failure end as "push failed: <Type>: <msg>"
+  const bt: Py = yield* Effect.tryPromise({ try: () => importOptional(SPEC),
+    catch: (e) => new PushFailed({ type: (e as Error)?.name ?? "Error", message: String((e as Error)?.message ?? e) }) });
   if (!bt) return yield* new PushFailed({ type: "ModuleNotFoundError", message: `No module named '${SPEC}' (bun add --no-save braintrust in skills/tdd/cli)` });
   const call = <A>(f: () => Promise<A> | A) => Effect.tryPromise({
     try: async () => f(),
@@ -46,7 +49,7 @@ export const push = (run: Run, keys: Pick<Keys, "braintrust">) => Effect.gen(fun
   for (const e of run.experiments) {
     const exp: Py = yield* call(() => bt.init({ project: e.project, experiment: e.name,
       description: `TDD eval: ${pyStr(e.row.metadata.packet)} (${pyStr(e.row.metadata.kind)})`, baseExperiment: e.base_experiment ?? undefined,
-      metadata: plain(e.row.metadata), gitMetadataSettings: { collect: "none" }, setCurrent: false, apiKey }));
+      metadata: plain(e.row.metadata), tags: e.row.tags, gitMetadataSettings: { collect: "none" }, setCurrent: false, apiKey }));
     const output: Py = plain(e.row.output);
     if (e.attachments.length)
       output.files = e.attachments.map((a) => new bt.Attachment({ data: a.path, filename: py.path.basename(a.path), contentType: a.content_type }));

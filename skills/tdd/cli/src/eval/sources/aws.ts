@@ -10,7 +10,7 @@
 import { Effect, Option } from "effect";
 import * as py from "../../py";
 import { strRepr } from "../../py/repr";
-import { type Py } from "../common";
+import { type Py, importOptional } from "../common";
 import { type Keys, reveal } from "../config";
 
 const re = py.re;
@@ -20,7 +20,7 @@ export const insightsQuery = (slug: string): string =>
   `fields @timestamp | filter tdd = "${slug}" and (level = "error" or level = "ERROR" or severity = "error") ` +
   "| stats count(*) as errors by bin(1d) as day | sort day asc";
 
-const optional = (spec: string): Effect.Effect<Py | null> => Effect.promise(() => import(spec).catch(() => null));
+const optional = (spec: string): Effect.Effect<Py | null> => Effect.promise(() => importOptional(spec));
 const LOGS = "@aws-sdk/client-cloudwatch-logs";
 const CW = "@aws-sdk/client-cloudwatch";
 

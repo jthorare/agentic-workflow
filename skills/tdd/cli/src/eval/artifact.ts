@@ -31,8 +31,22 @@ export const HOUSE_SLOTS: Slot[] = [
 const DDL_NAME = re.compile(String.raw`(?i)\b(?:CREATE\s+(?:UNLOGGED\s+)?TABLE(?:\s+IF\s+NOT\s+EXISTS)?|ALTER\s+TABLE(?:\s+IF\s+EXISTS)?(?:\s+ONLY)?)\s+("?[\w.]+"?)`);
 const HYDRATE_LINE = re.compile(String.raw`console errors (\d+) \| console warnings (\d+) \(hydration (\d+)\) \| failed steps (\d+)`);
 
-/** The python3 that runs lint_packet.py (the Python eval uses its own interpreter: sys.executable). */
-export const python = (): string => process.env.TDD_PYTHON || "python3";
+/** The tdd-skill venv's interpreter (references/eval-loop.md, Setup), the documented way to run eval_packet.py. */
+export const VENV_PYTHON = "~/.local/share/tdd-skill/venv/bin/python";
+
+/**
+ * The interpreter the Python eval uses for lint_packet.py and pytest: its own `sys.executable`, an absolute path. The
+ * TypeScript has no interpreter of its own, so it takes the one the Python eval would have been run with: $TDD_PYTHON
+ * when set, else the tdd-skill venv's python when it exists, else python3 on PATH; each resolved on PATH to an absolute
+ * path, as sys.executable is (symlinks kept).
+ */
+export function python(env: Record<string, string | undefined> = process.env): string {
+  const home = env.HOME || "";
+  const venv = home ? path.join(home, VENV_PYTHON.slice(2)) : "";
+  const pick = env.TDD_PYTHON || (venv && py.io.isfile(venv) ? venv : "python3");
+  if (path.isabs(pick)) return pick;
+  return Bun.which(pick, { PATH: env.PATH ?? "" }) ?? pick;
+}
 
 /** Mirror of build_tdd.sd_root(): the first candidate that has scripts/artifact_check.mjs. */
 export function artifactCheckPath(): string | null {

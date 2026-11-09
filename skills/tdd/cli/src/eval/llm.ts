@@ -7,7 +7,7 @@
 // never installed by this package (`bun add --no-save @anthropic-ai/sdk autoevals` in skills/tdd/cli to use them).
 import { Effect, Option } from "effect";
 import * as py from "../py";
-import { type Py, PyFloat, fl, get, n, now } from "./common";
+import { type Py, PyFloat, fl, get, importOptional, n, now } from "./common";
 import { type Keys, reveal } from "./config";
 
 export const JUDGE_MODEL = "claude-sonnet-5-5"; // ev_llm.JUDGE_MODEL
@@ -71,9 +71,9 @@ export type LlmKeys = Pick<Keys, "anthropic" | "openai" | "braintrust">;
 
 const SDK = "@anthropic-ai/sdk";
 const AUTOEVALS = "autoevals";
-/** A lazily imported optional module, or null when it is not installed. The specifier is a variable so neither the
- * type checker nor the bundler pulls the SDK in. */
-export const optional = (spec: string): Effect.Effect<Py | null> => Effect.promise(() => import(spec).catch(() => null));
+/** A lazily imported optional module, or null when it is not installed (common.importOptional; another load failure
+ * is a defect the scorer's settle records as "raised ..."). */
+export const optional = (spec: string): Effect.Effect<Py | null> => Effect.promise(() => importOptional(spec));
 
 export const claudeAvailable = (keys: LlmKeys): Effect.Effect<[boolean, string | null]> => Effect.gen(function* () {
   if (Option.isNone(keys.anthropic)) return [false, "no ANTHROPIC_API_KEY"];
