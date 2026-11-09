@@ -165,7 +165,7 @@ public sealed class CliAgentNodeTests : IDisposable
     private static string Answer(string agent, int item) =>
         Encoding.UTF8.GetString(AwJson.Serialize(new AgentNodeControlled(_run, NodeId.From("agent"), item, agent), SliceHarness.Json));
 
-    private async Task<int> Run(Recorder api, Aw.Kernel.Error? ensure, Func<(RecipeDesk Desk, Output Output), Task<int>> call, bool human = true)
+    private async Task<int> Run(Recorder api, Kernel.Error? ensure, Func<(RecipeDesk Desk, Output Output), Task<int>> call, bool human = true)
     {
         var client = new ControlPlaneClient(_up, SliceHarness.Json,
             CallerHeaders.For(new AgentSession(Terminal: true, Prover: false), human ? InMemoryHumanTokenStore.WithToken() : new InMemoryHumanTokenStore(), _ => ValueTask.FromResult((Core.Ids.RepoName?)null)), handler: api);

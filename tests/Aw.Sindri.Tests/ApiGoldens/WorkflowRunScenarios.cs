@@ -11,7 +11,7 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 /// <summary>
 /// The goldens of 'POST /sindri/workflows/{slug}/runs' and 'POST /sindri/workflow-runs/{run}/cancel' (issue 2258, PR 6): the refusals, which need no Temporal
 /// server. A started run needs one, so its answer is pinned by the service tests. Each scenario seeds the workflow or run it needs through the host's stores.
-/// The takeover and handback of a 'run_agent' node (#2472) run on a host whose <see cref="Aw.Sindri.Core.Graph.Runs.IAgentNodeControl"/> is a <see cref="FakeAgentNodeControl"/>,
+/// The takeover and handback of a 'run_agent' node (#2472) run on a host whose <see cref="IAgentNodeControl"/> is a <see cref="FakeAgentNodeControl"/>,
 /// so their success answers need no Temporal either.
 /// </summary>
 internal static class WorkflowRunScenarios
@@ -45,7 +45,7 @@ internal static class WorkflowRunScenarios
         {
             var control = new FakeAgentNodeControl();
             _ = services.AddSingleton(control);
-            _ = services.Replace(ServiceDescriptor.Singleton<Aw.Sindri.Core.Graph.Runs.IAgentNodeControl>(control));
+            _ = services.Replace(ServiceDescriptor.Singleton<IAgentNodeControl>(control));
         });
 
     /// <summary>Whether this class owns the scenario.</summary>
@@ -108,7 +108,7 @@ internal static class WorkflowRunScenarios
                 return await Ask(host, Post(AgentRoute(_ended, "agent", route), "{\"itemIndex\":0}", human));
             case "temporal-down":
                 await QueuedRun(host, ct, WorkflowRunStatus.Running);
-                control.Fail = Aw.Sindri.Core.SindriErrors.EngineUnavailable.With("the Temporal server is not reachable");
+                control.Fail = Core.SindriErrors.EngineUnavailable.With("the Temporal server is not reachable");
                 return await Ask(host, Post(AgentRoute(_queued, "agent", route), "{\"itemIndex\":0}", human));
             case "not-waiting":
                 await QueuedRun(host, ct, WorkflowRunStatus.Running);
