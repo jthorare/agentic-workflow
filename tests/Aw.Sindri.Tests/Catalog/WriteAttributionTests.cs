@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
+using Aw.Kernel.Events;
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Infrastructure.Launch;
@@ -85,6 +87,22 @@ public sealed class WriteAttributionTests
         Assert.True(report.Count == 0, string.Join("\n\n", report));
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public void A_route_whose_only_event_by_the_launch_is_its_audit_row_stays_uncovered()
+    {
+        var sweep = new Sweep([new Template("POST", "/sindri/things/{id}"), new Template("POST", "/sindri/other")]);
+        List<Callers.CallerRequests.SentRequest> sent = [new("POST", "/sindri/things/a", Task.FromResult(0L)), new("POST", "/sindri/other", Task.FromResult(2L))];
+        List<LedgerEvent> events = [Event(1, EventTypes.CommandHandled), Event(2, "item.created"), Event(3, EventTypes.CommandHandled), Event(4, "item.created")];
+
+        Cover(sweep, ("things", "refused"), sent, [0L, 1L], events);
+
+        Assert.False(sweep.Covered.ContainsKey("POST /sindri/things/{id}"), "an audit row alone covered the route");
+        Assert.Equal("things/refused (item.created)", sweep.Covered["POST /sindri/other"]);
+    }
+
+    private static LedgerEvent Event(long sequence, string type) =>
+        new(sequence, Epoch: 1, new EventEnvelope<string>(Guid.NewGuid(), type, 1, DateTimeOffset.UnixEpoch, "session:launch:" + Launch, "local", 0, Guid.NewGuid(), null, null, "{}"), $"{type}:{sequence}", null);
+
     private static List<string> Problems(Sweep sweep, HashSet<string> catalog)
     {
         var sections = new List<(string Heading, List<string> Items)>
@@ -162,12 +180,16 @@ public sealed class WriteAttributionTests
         for (var i = 0; i < sent.Count; i++)
         {
             var (start, end) = (marks[i], i + 1 < marks.Length ? marks[i + 1] : long.MaxValue);
-            if (MatchTemplate(sweep.Templates, sent[i].Method, sent[i].Path) is { } key && events.Find(e => e.Sequence > start && e.Sequence <= end && IsByLaunch(e.Envelope.Actor)) is { } by)
+            if (MatchTemplate(sweep.Templates, sent[i].Method, sent[i].Path) is { } key && events.Find(e => e.Sequence > start && e.Sequence <= end && IsByLaunch(e.Envelope.Actor) && !IsAuditRow(e)) is { } by)
             {
                 sweep.Covered[key] = $"{row.Slug}/{row.Scenario} ({by.Envelope.Type})";
             }
         }
     }
+
+    // why: every attempt, a refused one too, appends its 'command.handled' audit row with the caller's actor (AuditTrail.Record), so that row proves
+    // nothing about the route's own write; strays still count it, so an audit row by the wrong actor fails
+    private static bool IsAuditRow(LedgerEvent e) => string.Equals(e.Envelope.Type, EventTypes.CommandHandled, StringComparison.Ordinal);
 
     /// <summary>The catalog template a sent request belongs to: same method, same segment count, every literal segment equal; the most literal segments win.</summary>
     private static string? MatchTemplate(IReadOnlyList<Template> templates, string method, string path)
