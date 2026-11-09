@@ -1,15 +1,18 @@
 // Scorer isolation: scorers run side by side, each settled to a typed outcome (scored | not_run(reason) |
 // failed(error)) under its own time limit. One that throws and one that hangs past its limit leave the others'
 // results intact, first on bare effects, then through the whole program with a Tools layer whose node (artifact_check)
-// throws and whose python3 lint never returns.
-import { describe, expect, test } from "bun:test";
+// throws and whose lint is a real process that never ends (a sleep piped through cat, run by ToolsLive), so the hang
+// goes through the live kill path: the scorer's limit interrupts it and its process group is gone afterwards.
+import { afterAll, describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Effect, Layer } from "effect";
 import { runEval, LIMITS } from "../../src/eval/run";
 import { Failed, NotRun, type ScoreRec, notRun, score, scorer, settle } from "../../src/eval/score";
 import { Tools, ToolsLive } from "../../src/eval/tools";
-import { HAVE_PYTHON, packets, snapshot, tmp } from "./harness";
+import { cleanup, HAVE_PYTHON, leftover, packets, snapshot, tmp } from "./harness";
+
+afterAll(cleanup);
 
 const spec = (name: string) => ({ name, method: `${name} method`, source: `${name} source` });
 const plain = (r: ScoreRec) => JSON.parse(JSON.stringify(r, (_k, v) => (v && typeof v === "object" && "value" in v && Object.keys(v).length === 1 ? v.value : v)));
@@ -57,7 +60,7 @@ describe.skipIf(!PACKETS.length)("the program keeps the other scorers when one t
       which: live.which,
       run: (cmd, opts) => {
         if (cmd.some((c) => c.endsWith("artifact_check.mjs"))) return Effect.sync(() => { throw new Error("boom in artifact_check"); });
-        if (cmd.some((c) => c.endsWith("lint_packet.py"))) return Effect.never;
+        if (cmd.some((c) => c.endsWith("lint_packet.py"))) return live.run(["sh", "-c", "sleep 30.53 | cat"], opts);
         return live.run(cmd, opts);
       },
     });
@@ -67,6 +70,7 @@ describe.skipIf(!PACKETS.length)("the program keeps the other scorers when one t
       faulty, { ...LIMITS, lint: 0.5 });
     expect(code).toBe(0);
     expect(performance.now() - t0).toBeLessThan(60_000);
+    expect(await leftover("sleep 30.53")).toEqual([]);
     expect(await runEval({ packet: pk, out: join(base, "clean"), no_shots: true, no_gh: true, skip: "artifact_check,lint" }, quiet,
       { PATH: process.env.PATH, HOME: process.env.HOME })).toBe(0);
     const read = (dir: string, kind: string) => JSON.parse(readFileSync(join(base, dir, `output.${kind}.json`), "utf8"));

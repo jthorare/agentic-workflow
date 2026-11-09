@@ -1,18 +1,24 @@
 // Shared helpers for the eval tests: find the parity packets, snapshot one into a temp tree, run the Python eval and
 // the TypeScript eval one after the other into the same out path, and compare the written files with the volatile
 // fields removed.
-import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, renameSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as py from "../../src/py";
+import { python } from "../../src/eval/artifact";
+
+export { python };
 
 export const SKILL = fileURLToPath(new URL("../../../", import.meta.url)).replace(/\/$/, "");
 export const CLI = join(SKILL, "cli");
 export const PY_EVAL = join(SKILL, "scripts", "eval_packet.py");
 export const TS_EVAL = join(CLI, "bin", "eval-packet.ts");
 export const ORACLE = join(CLI, "test", "eval", "oracle_eval.py");
-export const PYTHON = process.env.TDD_PYTHON || "python3";
+/** The interpreter the eval's rule picks for this environment ($TDD_PYTHON, else the tdd-skill venv, else python3 on
+ * PATH): the oracle runs under it, and `both` runs eval_packet.py under python(env) for the env it is given, so the
+ * Python's sys.executable and the TypeScript's choice are each derived, never assumed equal. */
+export const PYTHON = python();
 export const HAVE_PYTHON = Bun.spawnSync([PYTHON, "-I", "-c", "pass"]).exitCode === 0 && existsSync(PY_EVAL);
 
 /** The volatile fields eval_packet.py names in its records: timestamps (captured, generated, at) and durations
@@ -38,13 +44,25 @@ export function snapshot(packet: string, tmp: string): string {
   return dst;
 }
 
-export const tmp = (tag: string): string => mkdtempSync(join(tmpdir(), `tdd-eval-${tag}-`));
+const made: string[] = [];
+/** A fresh temp folder; each test file removes its own in `afterAll(cleanup)` (TDD_EVAL_KEEP=1 keeps them). */
+export const tmp = (tag: string): string => {
+  const d = mkdtempSync(join(tmpdir(), `tdd-eval-${tag}-`));
+  made.push(d);
+  return d;
+};
+/** Remove the temp folders made so far (only folders this harness created with mkdtemp). */
+export function cleanup(): void {
+  if (process.env.TDD_EVAL_KEEP) return;
+  for (const d of made.splice(0)) rmSync(d, { recursive: true, force: true });
+}
 
 export interface Run { code: number; out: string; err: string; dir: string }
 
-/** A clean environment: PATH, HOME, TZ and LANG only (no key of any kind), plus `extra`. */
+/** A clean environment: PATH, HOME, TZ, LANG and TDD_PYTHON when set (no key of any kind), plus `extra`. */
 export function cleanEnv(extra: Record<string, string> = {}): Record<string, string> {
-  return { PATH: process.env.PATH ?? "", HOME: process.env.HOME ?? "", TZ: "UTC", LANG: "en_US.UTF-8", ...extra };
+  return { PATH: process.env.PATH ?? "", HOME: process.env.HOME ?? "", TZ: "UTC", LANG: "en_US.UTF-8",
+    ...(process.env.TDD_PYTHON ? { TDD_PYTHON: process.env.TDD_PYTHON } : {}), ...extra };
 }
 
 function run(cmd: string[], env: Record<string, string>): Omit<Run, "dir"> {
@@ -55,7 +73,7 @@ function run(cmd: string[], env: Record<string, string>): Omit<Run, "dir"> {
 /** Python then TypeScript, each into <tmp>/out, moved to <tmp>/py and <tmp>/ts afterwards. */
 export function both(packet: string, base: string, args: string[], env: Record<string, string> = cleanEnv()): { py: Run; ts: Run } {
   const out = join(base, "out");
-  const p = run([PYTHON, "-I", "-B", PY_EVAL, packet, "--out", out, ...args], env);
+  const p = run([python(env), "-I", "-B", PY_EVAL, packet, "--out", out, ...args], env);
   if (existsSync(out)) renameSync(out, join(base, "py"));
   const t = run(["bun", TS_EVAL, packet, "--out", out, ...args], env);
   if (existsSync(out)) renameSync(out, join(base, "ts"));
@@ -91,8 +109,42 @@ export function lastHistory(dir: string): string {
 }
 
 /** The golden JSON of one oracle_eval.py suite. */
-export function oracle<T = any>(suite: string, args: string[] = [], env: Record<string, string> = cleanEnv()): T { // eslint-disable-line @typescript-eslint/no-explicit-any
-  const r = Bun.spawnSync([PYTHON, "-I", "-B", ORACLE, suite, ...args], { env, stdout: "pipe", stderr: "pipe" });
+export function oracle<T = any>(suite: string, args: string[] = [], env: Record<string, string> = cleanEnv(), interp: string = PYTHON): T { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const r = Bun.spawnSync([interp, "-I", "-B", ORACLE, suite, ...args], { env, stdout: "pipe", stderr: "pipe" });
   if (r.exitCode !== 0) throw new Error(`oracle ${suite}: ${r.stderr.toString()}`);
   return JSON.parse(r.stdout.toString()) as T;
+}
+
+/** Commands still running whose line contains `marker`, polled for up to `waitMs` until none is left (a SIGKILLed
+ * group is reaped within milliseconds; the wait only absorbs a slow `ps`). */
+export async function leftover(marker: string, waitMs = 2000): Promise<string[]> {
+  const t0 = performance.now();
+  for (;;) {
+    const hits = Bun.spawnSync(["ps", "-axo", "command"]).stdout.toString().split("\n").filter((l) => l.includes(marker));
+    if (!hits.length || performance.now() - t0 > waitMs) return hits;
+    await Bun.sleep(50);
+  }
+}
+
+/** Point a snapshot's meta.json at another repo (a scratch repo: never a real one with --run-tests). */
+export function withRepo(packet: string, repoPath: string): void {
+  const f = join(packet, "meta.json");
+  const meta = py.json.loads(readFileSync(f, "utf8")) as Map<string, unknown>;
+  meta.set("repo_path", repoPath);
+  meta.delete("repo_url");
+  writeFileSync(f, py.json.dumps(meta, { indent: 2, ensureAscii: false }) + "\n");
+}
+
+/** A scratch git repo on branch main with `files`, one commit. */
+export function scratchRepo(dir: string, files: Record<string, string>): string {
+  for (const [name, body] of Object.entries(files)) writeFileSync(join(dir, name), body);
+  const git = (...a: string[]) => {
+    const r = Bun.spawnSync(["git", "-C", dir, ...a], { env: cleanEnv({ GIT_AUTHOR_NAME: "t", GIT_AUTHOR_EMAIL: "t@example.invalid",
+      GIT_COMMITTER_NAME: "t", GIT_COMMITTER_EMAIL: "t@example.invalid", GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" }) });
+    if (r.exitCode !== 0) throw new Error(`git ${a.join(" ")}: ${r.stderr.toString()}`);
+  };
+  git("init", "-q", "-b", "main");
+  git("add", "-A");
+  git("commit", "-q", "-m", "fixture");
+  return dir;
 }

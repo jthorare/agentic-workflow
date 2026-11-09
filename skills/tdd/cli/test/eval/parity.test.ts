@@ -5,10 +5,12 @@
 // (the table, the counts, the cost line and the "not pushed" line), stderr and the exit code identical.
 // Variants on the first packet cover the judge and agent probe without keys, owner review labels, --session over a
 // fixture transcript, --skip, --json and the experiment naming flags. Nothing is pushed, no model is called.
-import { describe, expect, test } from "bun:test";
+import { afterAll, describe, expect, test } from "bun:test";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { HAVE_PYTHON, both, canonical, cleanEnv, firstDiff, jsonFiles, label, lastHistory, packets, snapshot, tmp } from "./harness";
+import { both, canonical, cleanEnv, cleanup, firstDiff, HAVE_PYTHON, jsonFiles, label, lastHistory, packets, python, scratchRepo, snapshot, tmp, withRepo } from "./harness";
+
+afterAll(cleanup);
 
 const PACKETS = HAVE_PYTHON ? packets() : [];
 const OUTPUTS = ["input.json", "lint.json", "output.artifact.json", "output.bugs.json", "output.implementation.json", "output.packet.json",
@@ -84,4 +86,69 @@ describe.skipIf(!PACKETS.length)("eval parity: Python and TypeScript on the real
     expectSame(r);
     expect(r.ts.out).toContain("API-equivalent");
   }, 240_000);
+
+  // review fixes (M2, M3, M1): only scratch repos and fixture transcripts; --run-tests never touches a real repo
+  const FAST = ["--no-shots", "--no-gh", "--skip", "artifact_check,check_hydrate,lint,linear,aws"];
+
+  test("the review's three-message --session: the cost line is the Python's ($38.0697)", () => {
+    const base = tmp("three");
+    const pk = snapshot(PACKETS[0]!, base);
+    const home = join(base, "home");
+    const proj = join(home, ".claude", "projects", "p1");
+    mkdirSync(proj, { recursive: true });
+    const rec = (id: string, model: string, input: number) => JSON.stringify({ type: "assistant", message: { id, model, usage: { input_tokens: input, output_tokens: 0 } } });
+    writeFileSync(join(proj, "sess-r.jsonl"), [rec("m1", "claude-opus-5-5", 920875), rec("m2", "claude-sonnet-5-5", 8411685),
+      rec("m3", "claude-haiku-5-5", 175627800)].join("\n") + "\n");
+    const r = both(pk, base, [...FAST, "--session", "sess-r"], cleanEnv({ HOME: home }));
+    expect(r.py.code).toBe(0);
+    expectSame(r);
+    expect(r.ts.out).toContain("$38.0697 API-equivalent (session $38.0697;");
+  }, 240_000);
+
+  test("a pytest repo: the declared command names the Python eval's interpreter, string for string", () => {
+    const base = tmp("pytest");
+    const pk = snapshot(PACKETS[0]!, base);
+    const repo = join(base, "pyrepo");
+    mkdirSync(repo);
+    withRepo(pk, scratchRepo(repo, { "pyproject.toml": "[tool.pytest.ini_options]\n" }));
+    const r = both(pk, base, FAST);
+    expect(r.py.code).toBe(0);
+    expectSame(r);
+    const qa = JSON.parse(readFileSync(join(r.ts.dir, "output.qa.json"), "utf8"));
+    const tc = qa.scores.find((x: { name: string }) => x.name === "qa_test_command");
+    expect(tc.reason).toBe(`pass --run-tests to run \`${python(cleanEnv())} -m pytest -q\` (pyproject.toml [tool.pytest]) in ${repo}`);
+  }, 240_000);
+
+  test("--run-tests on a scratch repo with a dummy test command", () => {
+    const base = tmp("runtests");
+    const pk = snapshot(PACKETS[0]!, base);
+    const repo = join(base, "jsrepo");
+    mkdirSync(repo);
+    withRepo(pk, scratchRepo(repo, { "package.json": `{"name": "fixture", "scripts": {"test": "echo qa-ok && exit 0"}}\n`, "bun.lock": "" }));
+    const r = both(pk, base, [...FAST, "--run-tests"]);
+    expect(r.py.code).toBe(0);
+    expectSame(r);
+    const qa = JSON.parse(readFileSync(join(r.ts.dir, "output.qa.json"), "utf8"));
+    expect(qa.scores.find((x: { name: string }) => x.name === "qa_test_command")).toMatchObject({ value: 1, status: "ok" });
+  }, 240_000);
+});
+
+// Opt-in (about 4 minutes): TDD_EVAL_SLOW=1. A scratch repo whose test command pipes a 170 s sleep through cat: both
+// evals must stop at the 120 s cap ("too slow"); before the M1 fix the TypeScript waited the full 170 s.
+describe.skipIf(!PACKETS.length || !process.env.TDD_EVAL_SLOW)("--run-tests: the 120 s cap is a deadline", () => {
+  test("a test command whose grandchild holds the pipes", () => {
+    const base = tmp("slow");
+    const pk = snapshot(PACKETS[0]!, base);
+    const repo = join(base, "slowrepo");
+    mkdirSync(repo);
+    withRepo(pk, scratchRepo(repo, { "package.json": `{"name": "fixture", "scripts": {"test": "sleep 170.3 | cat"}}\n`, "bun.lock": "" }));
+    const t0 = performance.now();
+    const r = both(pk, base, ["--no-shots", "--no-gh", "--skip", "artifact_check,check_hydrate,lint,linear,aws", "--run-tests"]);
+    const wall = (performance.now() - t0) / 1000;
+    expect(r.py.code).toBe(0);
+    expectSame(r);
+    expect(wall).toBeLessThan(2 * 120 + 40); // two evals at the cap; with the old wait it was over 290 s
+    const qa = JSON.parse(readFileSync(join(r.ts.dir, "output.qa.json"), "utf8"));
+    expect(qa.scores.find((x: { name: string }) => x.name === "qa_test_command")).toMatchObject({ status: "not run", reason: "too slow (> 120 s)" });
+  }, 400_000);
 });

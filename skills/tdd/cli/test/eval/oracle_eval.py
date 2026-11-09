@@ -67,5 +67,32 @@ def suite_glob():
     return {sid: list(T.session_files(sid)) for sid in sys.argv[2:]}
 
 
+def suite_sum():
+    """sum() over each list in argv[2] (a JSON file; ints stay ints, floats floats, Infinity/NaN allowed), as
+    "<type>:<repr>" or "error:<exception>"; plus the declared test command for each repo path in argv[3:]."""
+    I = ev("ev_impl")
+    out = []
+    for xs in json.load(open(sys.argv[2], encoding="utf-8")):
+        try:
+            r = sum(xs)
+            out.append(f"{type(r).__name__}:{r!r}")
+        except Exception as e:
+            out.append(f"error:{type(e).__name__}")
+    return {"sums": out, "commands": [list(I.declared_test_command(p)) for p in sys.argv[3:]], "executable": sys.executable}
+
+
+def suite_run():
+    """ev_common.run over each [cmd, timeout] in argv[2] (a JSON file): the record, with its wall time beside it."""
+    import time
+    C = ev("ev_common")
+    out = []
+    for cmd, timeout in json.load(open(sys.argv[2], encoding="utf-8")):
+        t0 = time.time()
+        r = C.run(cmd, timeout=timeout)
+        out.append({"record": r, "wall": round(time.time() - t0, 2)})
+    return out
+
+
 if __name__ == "__main__":
-    print(json.dumps({"constants": suite_constants, "funcs": suite_funcs, "glob": suite_glob}[sys.argv[1]](), ensure_ascii=False))
+    print(json.dumps({"constants": suite_constants, "funcs": suite_funcs, "glob": suite_glob, "sum": suite_sum, "run": suite_run}[sys.argv[1]](),
+                     ensure_ascii=False))

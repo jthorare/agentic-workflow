@@ -2,7 +2,7 @@
 // path): the usage text, flags, the TOKEN pattern (from src/vocab.ts), prices, the judge and probe prompts and schemas,
 // the house slots, the writer's limits; unicode_escape, str.format, date differences, SequenceMatcher similarity,
 // cost(), base_type, the probe matcher, README link reading; the transcript glob order; argv errors; redacted keys.
-import { describe, expect, test } from "bun:test";
+import { afterAll, describe, expect, test } from "bun:test";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { Effect, Option, Redacted } from "effect";
@@ -18,7 +18,9 @@ import * as P from "../../src/eval/probe";
 import { EVAL_PACKET_DOC } from "../../src/eval/texts";
 import { sessionFiles } from "../../src/eval/tokens";
 import { TOKEN_SOURCE } from "../../src/vocab";
-import { HAVE_PYTHON, PY_EVAL, PYTHON, SKILL, cleanEnv, oracle, tmp } from "./harness";
+import { cleanEnv, cleanup, HAVE_PYTHON, oracle, PY_EVAL, PYTHON, SKILL, tmp } from "./harness";
+
+afterAll(cleanup);
 
 const toPy = (v: unknown): unknown => py.json.loads(JSON.stringify(v));
 const plain = (v: unknown): unknown => JSON.parse(py.json.dumps(v));

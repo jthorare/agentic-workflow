@@ -2,10 +2,12 @@
 // TypeScript eval runs under a preload that traps fetch, sockets, TLS, DNS and Bun.connect; the trap log stays empty,
 // no push.json is written, run.json says pushed: false, stdout ends with the "not pushed" line, and the key's value
 // appears in no written file and no output (keys are Redacted config). The trap itself is checked first.
-import { describe, expect, test } from "bun:test";
+import { afterAll, describe, expect, test } from "bun:test";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { CLI, HAVE_PYTHON, TS_EVAL, cleanEnv, packets, snapshot, tmp } from "./harness";
+import { cleanEnv, cleanup, CLI, HAVE_PYTHON, packets, snapshot, tmp, TS_EVAL } from "./harness";
+
+afterAll(cleanup);
 
 const PRELOAD = join(CLI, "test", "eval", "no-network.ts");
 const PACKETS = HAVE_PYTHON ? packets() : [];
