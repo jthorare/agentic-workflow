@@ -44,11 +44,7 @@ internal sealed class TemporalGraphRunLauncher(Func<CancellationToken, ValueTask
         {
             return true;
         }
-        catch (RpcException e) when (e.Code == RpcException.StatusCode.Unavailable)   // boundary: the connect failed, nothing ran
-        {
-            return SindriErrors.EngineUnavailable.With(e.Message);
-        }
-        catch (RpcException e)   // boundary: Temporal may have accepted the start before the reply was lost
+        catch (RpcException e)   // boundary: Temporal may have accepted the start before the reply was lost; that includes Unavailable, which a connection reset after the accept also returns
         {
             return await WasStarted(client.Value, run, e).ConfigureAwait(false);
         }
