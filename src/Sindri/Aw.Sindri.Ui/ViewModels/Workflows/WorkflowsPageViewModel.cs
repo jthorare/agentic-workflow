@@ -145,7 +145,14 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     {
         SetLevel(Level.Runs);
         var name = Rows.FirstOrDefault(r => string.Equals(r.Slug, slug, StringComparison.Ordinal))?.NameText ?? slug;
-        return _url is { } url ? Runs.Read(url, slug, name, cancellationToken) : Task.CompletedTask;
+        if (_url is not { } url)
+        {
+            return Task.CompletedTask;
+        }
+
+        var read = Runs.Read(url, slug, name, cancellationToken);   // sets the slug before its first await, so the buttons below read the right row
+        ForgetStateNote();
+        return read;
     }
 
     /// <summary>Opens a run's detail.</summary>
@@ -173,6 +180,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         OnChanged(nameof(IsList));
         OnChanged(nameof(IsRuns));
         OnChanged(nameof(IsRun));
+        NotifyStateButtons();
     }
 
     private async Task ReadList(Uri url, CancellationToken cancellationToken)
@@ -207,5 +215,6 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         Patch.To(Rows, rows);
         Head = rows.Count == 0 ? Labels.WfHeadNone : Labels.WfHead(rows.Count, rows.Count(r => r.IsActive));
         (IsEmpty, EmptyText) = rows.Count == 0 ? (true, Labels.WfNone) : (false, string.Empty);
+        NotifyStateButtons();
     }
 }
