@@ -15,7 +15,9 @@ internal sealed class TodoNoteCardFixture
 
     internal FakeTimeProvider Clock { get; } = new(DateTimeOffset.Parse("2026-01-01T10:00:00Z", System.Globalization.CultureInfo.InvariantCulture));
 
-    internal TodoNoteCardViewModel Card() => new(() => Url, Server, Clock);
+    /// <summary>A card; the import route counts as served unless a test says it is not.</summary>
+    /// <param name="importServed">Whether the server serves note import.</param>
+    internal TodoNoteCardViewModel Card(bool importServed = true) => new(() => Url, Server, Clock, importServed);
 
     /// <summary>The routes of every setup call the card has sent, in order, with their last path segment ("check", "set", "import", "stop").</summary>
     internal string[] Calls => [.. Server.TodoNoteSetup.Select(c => c.Route[(c.Route.LastIndexOf('/') + 1)..])];
@@ -37,10 +39,10 @@ internal sealed class TodoNoteCardFixture
     internal void ServeNote(string state, string? lastError = null) => Server.TodoNoteAnswer = new RouteAnswer(HttpStatusCode.OK, TodoNoteSetupSample.NoteIn(state, lastError));
 
     /// <summary>A card that has read the server once, with the vault "work" chosen and the note "Todo.md" typed.</summary>
-    internal async Task<TodoNoteCardViewModel> Read(CancellationToken token)
+    internal async Task<TodoNoteCardViewModel> Read(CancellationToken token, bool importServed = true)
     {
         ServeVaults("work", "inbox");
-        var card = Card();
+        var card = Card(importServed);
         await card.Refresh(Url, token);
         return card;
     }
@@ -48,9 +50,10 @@ internal sealed class TodoNoteCardFixture
     /// <summary>A card that has read the server once and checked a note.</summary>
     /// <param name="check">The check's answer.</param>
     /// <param name="token">Cancels.</param>
-    internal async Task<TodoNoteCardViewModel> Checked(string check, CancellationToken token)
+    /// <param name="importServed">Whether the server serves note import.</param>
+    internal async Task<TodoNoteCardViewModel> Checked(string check, CancellationToken token, bool importServed = true)
     {
-        var card = await Read(token);
+        var card = await Read(token, importServed);
         Server.TodoNoteCheckAnswer = new RouteAnswer(HttpStatusCode.OK, check);
         await card.Check(token);
         return card;

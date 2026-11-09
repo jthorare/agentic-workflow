@@ -12,13 +12,14 @@ internal sealed partial class TodoNoteCardViewModel : ObservableObject
     [
         nameof(IsAvailable), nameof(Stage), nameof(ShowReading), nameof(ShowNoVaults), nameof(ShowForm), nameof(ShowResult), nameof(ShowSyncing), nameof(ShowStopAsk), nameof(IsConfirmingStop), nameof(Vaults), nameof(SelectedVault), nameof(NoteText),
         nameof(CanCheck), nameof(ShowCheck), nameof(ResultText), nameof(CountsText), nameof(HasCounts), nameof(CantImportText), nameof(HasCantImport), nameof(OverCapText), nameof(HasOverCap), nameof(OneWayText),
-        nameof(HasOneWay), nameof(ShowStart), nameof(ShowStartOneWay), nameof(ShowImport), nameof(ShowCancel), nameof(SyncingText), nameof(StopAskText), nameof(StatusText), nameof(ErrorText), nameof(HasError),
+        nameof(HasOneWay), nameof(ImportLaterText), nameof(ShowImportLater), nameof(ShowStart), nameof(ShowStartOneWay), nameof(ShowImport), nameof(ShowCancel), nameof(SyncingText), nameof(StopAskText), nameof(StatusText), nameof(ErrorText), nameof(HasError),
         nameof(IsBusy),
     ];
 
     private readonly Func<Uri?> _url;
     private readonly ISindriApi _api;
     private readonly TimeProvider _clock;
+    private readonly bool _importServed;
     private TodoNoteCheckView? _check;
     private TodoNoteView? _note;
     private string _checkedVault = string.Empty;
@@ -31,9 +32,10 @@ internal sealed partial class TodoNoteCardViewModel : ObservableObject
     /// <param name="url">The API's base URL, or null while it isn't known.</param>
     /// <param name="api">The API.</param>
     /// <param name="clock">The clock; the card words times in its time zone.</param>
-    internal TodoNoteCardViewModel(Func<Uri?> url, ISindriApi api, TimeProvider clock)
+    /// <param name="importServed">Whether this Sindri serves note import; defaults to <see cref="TodoNoteImport.Served"/>. Off, a note with open tasks offers no import (and no one-way start, which imports them too).</param>
+    internal TodoNoteCardViewModel(Func<Uri?> url, ISindriApi api, TimeProvider clock, bool importServed = TodoNoteImport.Served)
     {
-        (_url, _api, _clock) = (url, api, clock);
+        (_url, _api, _clock, _importServed) = (url, api, clock, importServed);
     }
 
     /// <summary>Raised when the Library card should be brought into view (the no-vault sentence's button).</summary>
@@ -147,6 +149,12 @@ internal sealed partial class TodoNoteCardViewModel : ObservableObject
 
     /// <summary>True when Import and start syncing is drawn: the note has open tasks and the disk can swap.</summary>
     public bool ShowImport => ShowResult && _check is { Exists: true, Open: > 0, CanSwap: true };
+
+    /// <summary>The line that stands in for the import buttons while the server has no import route; empty otherwise.</summary>
+    public string ImportLaterText => !_importServed && _check is null ? "stub" : string.Empty;
+
+    /// <summary>True when the import-later line is drawn.</summary>
+    public bool ShowImportLater => !_importServed && _check is null;
 
     /// <summary>True when Cancel is drawn: beside a shown check, or while Change edits a running sync.</summary>
     public bool ShowCancel => ShowResult || (Stage == TodoNoteCardStage.Form && _changing);
