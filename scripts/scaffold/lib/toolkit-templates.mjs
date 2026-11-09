@@ -129,7 +129,7 @@ obj/
 
 export const toolkitCsproj = (t) => `<Project Sdk="Microsoft.NET.Sdk">
   <!-- ${t.name} toolkit (scaffolded by /new-toolkit): a C# MCP stdio server built on Aw.Sindri.Toolkit. Sindri
-       learns its tools and needs from \`dotnet run -- --manifest\` and runs it in a sandbox (PR 16). -->
+       learns its tools and needs by running it with the manifest flag, and runs it in a sandbox (PR 16). -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>${t.name}.Toolkit</AssemblyName>
