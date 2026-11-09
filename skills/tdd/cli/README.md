@@ -275,3 +275,37 @@ no key, and they are the only outbound connections a run without `--push` and wi
 program ends, a `Schema.Class` decoded with `Schema.decodeUnknownEffect`, `Effect.forEach` with `concurrency: 3`)
 type-checks with typescript 7.0.2 (`bun run check`) and passes under bun 1.4.4 on effect 4.1.2, checked 2026-11-08.
 The research's gate (section 4.4) is met: the linter, the eval and the revision runner may use Effect 4.
+
+## The eval (`src/eval`, PR 15)
+
+`bin/eval-packet.ts` (also `tdd eval`) is `eval_packet.py` as one Effect program: the same argv, usage text, table,
+`--json`, exit codes, files under `<build>/eval/` and history line. Modules: `common.ts` (paths, numbers, content walks),
+`score.ts` (records, outputs, and `settle`: every scorer is an Effect settled to `scored | not_run(reason) |
+failed(error)` under its own time limit, so a throw or a hang in one never touches another), `tools.ts` (the `Tools`
+service: each command in its own process group, killed whole at its timeout or on interruption, returning at the
+deadline as subprocess.run does), `config.ts` (keys as `Config.Redacted` from the
+environment only), `capture.ts` (input.json and its digest), `artifact.ts`, `packet.ts`, `probe.ts`, `judge.ts`,
+`impl.ts`, `bugs.ts`, `tokens.ts` (the six outputs), `llm.ts` (costs and the model call), `plan.ts` (run.json),
+`push.ts` (Braintrust), `sources/linear.ts`, `sources/aws.ts` and `run.ts` (the program, `LIMITS`, the table).
+
+- The tools, the judge, the probe's agent call, the PR match and the bug sources run side by side; records are
+  assembled in the Python's order. A defect is recorded as `error: raised <Type>: <message>`, a time limit as
+  `not run: timed out after <N>s`.
+- `@anthropic-ai/sdk`, `autoevals`, `braintrust` and `@aws-sdk/client-cloudwatch-logs` / `@aws-sdk/client-cloudwatch`
+  are optional and imported only when a flag and a key need them (`bun add --no-save <pkg>` to try one). AWS
+  credentials come from the `AWS_*` environment variables only. `push.ts` loads only under `--push`.
+- Proof (`test/eval`, CPython 3.13 via `test/eval/oracle_eval.py`): `parity.test.ts` runs `eval_packet.py` and this
+  command into the same out path on each `$TDD_PARITY_PACKETS` packet (snapshotted to a temp tree) and compares every
+  output after removing the volatile fields (`captured`, `generated`, `at`, `seconds`, `*.seconds`); `units.test.ts`
+  checks the constants, prompts, schemas and helpers against the Python; `network.test.ts` runs with a fake
+  `BRAINTRUST_API_KEY` under `no-network.ts` (fetch, sockets, TLS, DNS trapped) and asserts nothing was attempted;
+  `isolation.test.ts` makes one scorer throw and one hang and checks the rest. No test pushes or calls a model.
+- Where the Python uses its own `sys.executable` (the lint scorer's `lint_packet.py`, a repo's `python -m pytest`),
+  `python()` picks the interpreter the Python eval would run under: `$TDD_PYTHON`, else the tdd-skill venv's python
+  (`~/.local/share/tdd-skill/venv/bin/python`), else `python3` on PATH, as an absolute path.
+- `sum()` follows CPython 3.12+ (Neumaier-compensated floats) so cost lines match to the last printed digit.
+- Children inherit the environment, keys included, as `subprocess.run` without `env=` does in the Python: under
+  `--run-tests` the repo's test command sees them.
+- `test/eval/tools.test.ts` checks `Tools.run` against `ev_common.run` and that a command's sleeping grandchild is
+  killed at the deadline, on a scorer's limit and on SIGTERM / SIGINT; `TDD_EVAL_SLOW=1` adds a 4-minute
+  `--run-tests` run against the 120 s cap. Test temp folders are removed at exit (`TDD_EVAL_KEEP=1` keeps them).
