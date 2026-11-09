@@ -179,7 +179,7 @@ step "(c) /new-toolkit: Contracts, tool diff_contracts, needs database:cache,dis
 [ -f "$TK/packages.lock.json" ] || fail "(c) the restore wrote no lock file"
 [ ! -e "$TK/../../AgenticWorkflow.slnx" ] || fail "(c) the toolkit sits inside a repo tree"
 step "(c) make DiffContracts green (the sample test asserts the subject comes back), then build -warnaserror again"
-perl -0pi -e 's/=> throw new NotSupportedException\("DiffContracts: make DiffContractsTests pass"\);/=> new DiffContractsResponse(request.Subject);/' "$TK/ContractsTools.cs"
+perl -0pi -e 's/=> throw new NotSupportedException\("DiffContracts: make DiffContractsTests pass"\);/=> Task.FromResult(new DiffContractsResponse(request.Subject));/' "$TK/ContractsTools.cs"
 (cd "$TK" && env -u CI dotnet build Contracts.Toolkit.Tests/Contracts.Toolkit.Tests.csproj -warnaserror) || fail "(c) build after the edit"
 (cd "$TK" && env -u CI dotnet test --project Contracts.Toolkit.Tests --filter-trait "Lane=unit") || fail "(c) the sample test is not green after the edit"
 step "(c) the toolkit prints its manifest, then NativeAOT-publishes with no trim or AOT warning"
