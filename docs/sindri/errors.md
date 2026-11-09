@@ -125,6 +125,7 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-TK-008` | This box has no sandbox for a plain process (no bubblewrap or Seatbelt), so a toolkit can't start. | `sindri doctor` names the missing piece |
 | `SND-TK-009` | No toolkit has that name. | `sindri toolkit list` |
 | `SND-TK-010` | A toolkit name (lowercase letters, digits, `-`) or tool name (lowercase letters, digits, `_`) is malformed, or `<toolkit>__<tool>` is over 64 characters. | shorten the name |
+| `SND-TK-011` | A `toolkit_*` MCP tool was called, but this build has no toolkit runtime behind it yet. | use the `sindri toolkit` verbs once they ship |
 | `SND-TRACKER-001` | The tracker's source is missing or unreadable (for plan-file: the repo path or plan dir). | Restore that directory, or fix `path` in repos/&lt;name&gt;.yaml. |
 | `SND-TRACKER-002` | The tracker's source holds no items to read (for plan-file: no plan file matches tracker.include). | Fix tracker.include in profile.yaml (or restore the plan files). |
 | `SND-TRACKER-003` | A plan file is too big to read (over 2 MiB). | Split the plan file into smaller plans. |

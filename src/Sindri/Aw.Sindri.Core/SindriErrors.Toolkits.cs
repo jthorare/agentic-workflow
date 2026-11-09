@@ -33,4 +33,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-TK-010: a toolkit or tool name is malformed or too long for a client.</summary>
     public static readonly ErrorDefinition ToolkitNameInvalid = new("SND-TK-010", ErrorKind.Invalid, "A toolkit or tool name isn't valid");
+
+    /// <summary>SND-TK-011: the toolkit management tools aren't wired to the runtime in this build.</summary>
+    public static readonly ErrorDefinition ToolkitManagementUnavailable = new("SND-TK-011", ErrorKind.Unavailable, "Toolkit management over MCP isn't available in this build yet");
 }
