@@ -66,10 +66,10 @@ public sealed class TodoNoteCardFramesTests : IDisposable
         _server.LibraryAnswer = new RouteAnswer(HttpStatusCode.OK, library.ToJsonString());
     }
 
-    private async Task<(Window Window, TodoNoteCardViewModel Card)> Show(bool vaults = true)
+    private async Task<(Window Window, TodoNoteCardViewModel Card)> Show(bool vaults = true, bool importServed = true)
     {
         Library(vaults);
-        var card = new TodoNoteCardViewModel(() => _api, _server, _clock);
+        var card = new TodoNoteCardViewModel(() => _api, _server, _clock, importServed);
         await card.Refresh(_api, Token);
         var settings = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), _ => { }) { TodoNoteCard = card };
         var window = new Window { Width = 900, Height = 1200, Content = new SettingsView { DataContext = settings } };
@@ -79,9 +79,9 @@ public sealed class TodoNoteCardFramesTests : IDisposable
         return (window, card);
     }
 
-    private async Task<(Window Window, TodoNoteCardViewModel Card)> Checked(string check)
+    private async Task<(Window Window, TodoNoteCardViewModel Card)> Checked(string check, bool importServed = true)
     {
-        var (window, card) = await Show();
+        var (window, card) = await Show(importServed: importServed);
         _server.TodoNoteCheckAnswer = new RouteAnswer(HttpStatusCode.OK, check);
         Press(window, "TodoNoteCheck");
         await Until(window, () => card.Stage == TodoNoteCardStage.Checked);
@@ -280,7 +280,7 @@ public sealed class TodoNoteCardFramesTests : IDisposable
     [Fact]
     public Task A_card_that_has_not_read_yet_shows_the_reading_line() => OnUi(async () =>
     {
-        var card = new TodoNoteCardViewModel(() => _api, _server, _clock);
+        var card = new TodoNoteCardViewModel(() => _api, _server, _clock, importServed: true);
         var settings = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), _ => { }) { TodoNoteCard = card };
         var window = new Window { Width = 900, Height = 1200, Content = new SettingsView { DataContext = settings } };
         _windows.Add(window);
@@ -302,6 +302,18 @@ public sealed class TodoNoteCardFramesTests : IDisposable
         Assert.False(Shown(window, "TodoNoteReading"));
         Assert.Equal("Sindri refused that (SND-API-500). Run `sindri doctor` for details.", Said(window, "TodoNoteError"));
         Assert.True(card.HasError);
+    });
+
+    [Fact]
+    public Task With_import_not_served_a_note_with_open_tasks_shows_the_line_and_Cancel_and_focus_lands_on_Cancel() => OnUi(async () =>
+    {
+        var (window, _) = await Checked(TodoNoteSetupSample.Check(open: 42), importServed: false);
+
+        Assert.False(Shown(window, "TodoNoteImport"));
+        Assert.False(Shown(window, "TodoNoteStartOneWay"));
+        Assert.Equal("Import comes with note sync. Notes with open tasks can't sync yet.", Said(window, "TodoNoteImportLater"));
+        Assert.True(Shown(window, "TodoNoteImportLater"));
+        Assert.True(Find<Button>(window, "TodoNoteCancel").IsFocused);
     });
 
     [Fact]
