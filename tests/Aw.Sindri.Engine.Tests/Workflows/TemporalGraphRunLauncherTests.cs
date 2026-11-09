@@ -27,6 +27,9 @@ public sealed class TemporalGraphRunLauncherTests(SindriTimeSkippingServer serve
 
         /// <summary>The call fails before Temporal started anything.</summary>
         FailsBeforeStart,
+
+        /// <summary>The server is gone: the start fails and so does the describe that follows it.</summary>
+        ServerGone,
     }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -42,9 +45,29 @@ public sealed class TemporalGraphRunLauncherTests(SindriTimeSkippingServer serve
     }
 
     [Fact]
+    public async Task An_unavailable_reply_after_Temporal_accepted_the_start_is_launched()
+    {
+        var launcher = LauncherThatLoses(RpcException.StatusCode.Unavailable, Loss.ReplyLostAfterAccept);
+
+        var launched = await launcher.Launch(NewRun(), Token);
+
+        Assert.True(launched.IsSuccess, launched.IsError ? launched.Error.Code : null);
+    }
+
+    [Fact]
     public async Task An_unavailable_server_is_nothing_ran()
     {
         var launcher = LauncherThatLoses(RpcException.StatusCode.Unavailable, Loss.FailsBeforeStart);
+
+        var launched = await launcher.Launch(NewRun(), Token);
+
+        Assert.Equal(SindriErrors.EngineUnavailable.Code, launched.Error.Code);
+    }
+
+    [Fact]
+    public async Task A_server_gone_for_both_start_and_describe_is_nothing_ran()
+    {
+        var launcher = LauncherThatLoses(RpcException.StatusCode.Unavailable, Loss.ServerGone);
 
         var launched = await launcher.Launch(NewRun(), Token);
 
@@ -104,6 +127,11 @@ public sealed class TemporalGraphRunLauncherTests(SindriTimeSkippingServer serve
 
                 throw new RpcException(code, "the reply was lost", rawStatus: null);
             }
+
+            public override Task<WorkflowExecutionDescription> DescribeWorkflowAsync(DescribeWorkflowInput input) =>
+                loss == Loss.ServerGone
+                    ? throw new RpcException(code, "the server is gone", rawStatus: null)
+                    : base.DescribeWorkflowAsync(input);
         }
     }
 }
