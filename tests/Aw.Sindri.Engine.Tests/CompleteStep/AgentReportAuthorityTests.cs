@@ -61,8 +61,8 @@ public sealed class AgentReportAuthorityTests
     }
 
     private static InstanceView AgentRunView() =>
-        new(_address, new RecipeVersion(RecipeId.From("workflow.step"), 1, RecipeHash.From("sha256:" + new string('a', 64))), "produce", Detail: null,
-            DateTimeOffset.FromUnixTimeMilliseconds(1_000), string.Empty, [], Question: null, Task: null, RunToken.For(1, 1), Children: [], Outcome: null)
+        new(_address, new RecipeVersion(RecipeId.From("workflow.step"), 1, RecipeHash.From("sha256:" + new string('a', 64))), "produce",
+            DateTimeOffset.FromUnixTimeMilliseconds(1_000))
         {
             Id = WorkflowInstanceId.Of(_address),
             Version = 3,

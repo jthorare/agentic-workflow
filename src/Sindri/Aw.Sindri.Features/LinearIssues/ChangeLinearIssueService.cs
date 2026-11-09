@@ -11,7 +11,7 @@ using Aw.Sindri.Core.Linear;
 namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>
-/// Edits a stored Linear issue (Linear hub spec 2026-11-04 §3, §5.3, D6), in this order: the write gate (a session, the write key, a picked team); the set fields read and every id checked against the team's stored lookups
+/// Edits a stored Linear issue (Linear hub spec 2026-11-04 §3, §5.3, D6), in this order: the write gate (the write key, a picked team); the set fields read and every id checked against the team's stored lookups
 /// (SND-LINEAR-006, nothing is sent); Linear's live read; a change Linear already holds is applied with nothing sent; a field Linear changed since the sheet opened is a conflict with nothing sent; then Context's Change.
 /// What Context answers is the ending: applied (the stored issue is re-read for the answer), applied but stored late (the same, with SND-LINEAR-013), unknown (SND-LINEAR-011, the one re-read already ran) or its error.
 /// </summary>
