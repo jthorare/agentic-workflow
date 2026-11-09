@@ -41,8 +41,8 @@ export interface LintResult {
 /**
  * Rule isolation. An exception lint_packet.py raises too (a kernel PyError or a file-system error: the same input makes
  * the Python rule raise at the same place) ends the run as it ends lint_packet.py's: no report, no lint.json, the
- * exception on stderr, exit 1. Any other exception is a defect of this linter: RULE/check-failed (error), and the
- * other rules run.
+ * exception on stderr, exit 1. Any other exception is a defect of this linter: RULE/check-failed (error, never filtered
+ * by --skip RULE/check-failed), and the other rules run.
  */
 export const isolate = (id: RuleId, rule: Rule): Rule =>
   rule.pipe(
@@ -52,7 +52,7 @@ export const isolate = (id: RuleId, rule: Rule): Rule =>
       return Effect.gen(function* () {
         const p = yield* Packet;
         const [name, msg] = pyException(e);
-        p.add(id, "check-failed", "error", `the ${id} rule raised ${name}: ${msg}; the other rules ran (a linter defect: please report it)`, null);
+        p.defect(id, `the ${id} rule raised ${name}: ${msg}; the other rules ran (a linter defect: please report it)`);
       });
     }),
   );

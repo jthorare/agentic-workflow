@@ -71,6 +71,13 @@ export class LintPacket {
     this.findings.push(new Finding({ rule, check: cid, severity: sev, file, line, message: squash(str(msg)) }));
   }
 
+  /** RULE/check-failed for a rule that raised a defect of this linter. --skip RULE/check-failed does not filter it out:
+   * lint_packet.py has no rule isolation, so a rule that raises always fails its run (exit 1); --skip RULE leaves the
+   * rule out instead. */
+  defect(rule: string, msg: string): void {
+    this.findings.push(new Finding({ rule, check: `${rule}/check-failed`, severity: "error", file: null, line: null, message: squash(msg) }));
+  }
+
   note(msg: string): void {
     this.notes.push(squash(msg));
   }
