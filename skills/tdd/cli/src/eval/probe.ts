@@ -250,7 +250,16 @@ export function loadLane(agents: string, budget: number): Lane | null {
 const hasToken = (tok: Py, text: string): boolean =>
   re.search(String.raw`(?<![a-z0-9])` + re.escape(ntok(tok)) + String.raw`(?![a-z0-9])`, ntok(text)) !== null;
 
-const ASTRAL = /[\ud800-\udfff]/;
+/** Whether a JS string holds a surrogate code unit (an astral character), where UTF-16 and code point indexes part. */
+const ASTRAL = {
+  test(s: string): boolean {
+    for (let i = 0; i < s.length; i++) {
+      const c = s.charCodeAt(i);
+      if (c >= 0xd800 && c <= 0xdfff) return true;
+    }
+    return false;
+  },
+};
 
 /** text.lower().find(needle, start) mapped back onto text, by code point as Python indexes. */
 function windows(text: string, needle: string): Generator<string> {

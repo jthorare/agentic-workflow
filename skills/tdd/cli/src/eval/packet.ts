@@ -9,6 +9,7 @@ import { type Input } from "./capture";
 import { type Output, type ScoreRec, error, metric, notRun, output, score } from "./score";
 
 const re = py.re;
+const HEX = re.compile("[0-9a-fA-F]+");
 const path = py.path;
 
 /** write_agents.README_MAX (the writer keeps it private; test/eval checks it against the Python). */
@@ -32,7 +33,7 @@ export function unicodeEscape(s: string): string {
   let i = 0;
   const hex = (len: number): number => {
     const h = String.fromCharCode(...b.slice(i, i + len));
-    if (h.length !== len || !/^[0-9a-fA-F]+$/.test(h)) throw new py.PyError("UnicodeDecodeError", `'unicodeescape' codec can't decode bytes: truncated \\xXX escape`);
+    if (h.length !== len || !HEX.fullmatch(h)) throw new py.PyError("UnicodeDecodeError", `'unicodeescape' codec can't decode bytes: truncated \\xXX escape`);
     i += len;
     return parseInt(h, 16);
   };
