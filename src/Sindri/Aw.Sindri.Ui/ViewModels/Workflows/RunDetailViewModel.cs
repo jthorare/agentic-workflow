@@ -71,6 +71,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         {
             Id = runId;
             Groups = [];   // another run: nothing of the old one stays
+            (IsFailed, FailedText) = (false, string.Empty);
             (TitleText, ChipText, TriggerText, RevisionText, WhenText, ErrorText, OutputsText) = (Labels.WfRunTitle(runId), string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
             Changed();
         }

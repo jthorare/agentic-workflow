@@ -62,6 +62,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
         {
             Rows.Clear();   // another workflow: none of the old runs stay
             (Head, DetailText) = (string.Empty, string.Empty);
+            (IsFailed, FailedText, IsEmpty, EmptyText) = (false, string.Empty, false, string.Empty);   // nor does the old one's failure or "off" line
         }
 
         (Slug, Title) = (slug, name);
