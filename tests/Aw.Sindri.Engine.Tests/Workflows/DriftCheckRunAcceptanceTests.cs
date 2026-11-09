@@ -17,8 +17,8 @@ using Aw.Sindri.Core.Graph.Validation;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Lease;
-using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.ActivateWorkflow;
 using Aw.Sindri.Features.ApplyWorkflowOps;
 using Aw.Sindri.Features.CreateWorkflow;
@@ -178,7 +178,7 @@ public sealed class DriftCheckRunAcceptanceTests(SindriTimeSkippingServer server
             var checker = new Checker(_registry);
             return new ServiceCollection()
                 .AddSingleton(AwJson.CreateOptions(SindriJsonContext.Default))
-                .AddSingleton(_callers)
+                .AddSingleton<ICallerContextAccessor>(_callers)
                 .AddSingleton<IService<CreateWorkflowRequest, CreateWorkflowResponse>>(new CreateWorkflowService(_workflows, checker, _ids, _log))
                 .AddSingleton<IService<ApplyWorkflowOpsRequest, ApplyWorkflowOpsResponse>>(new ApplyWorkflowOpsService(_workflows, checker, _log))
                 .AddSingleton<IService<ValidateWorkflowRequest, ValidateWorkflowResponse>>(new ValidateWorkflowService(_workflows, checker))
