@@ -187,7 +187,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         Note(string.Empty);
         try
         {
-            var (ok, note) = await Send(url, id, node, takeOver, cancellationToken).ConfigureAwait(true);
+            var (ok, note, agent) = await Send(url, id, node, takeOver, cancellationToken).ConfigureAwait(true);
             if (!string.Equals(Id, id, StringComparison.Ordinal))
             {
                 return;   // another run is open now
@@ -197,6 +197,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
             if (ok)
             {
                 await Read(url, id, cancellationToken).ConfigureAwait(true);
+                KeepAnswered(node, agent);
             }
         }
         finally
@@ -205,17 +206,27 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         }
     }
 
-    private async Task<(bool Ok, string Note)> Send(Uri url, string id, NodeRunViewModel node, bool takeOver, CancellationToken cancellationToken)
+    // The read can lag the call (the engine writes its marker late), so what Sindri answered wins on the rebuilt row of the same node and item.
+    private void KeepAnswered(NodeRunViewModel node, string? agent)
+    {
+        var row = Groups.FirstOrDefault(g => string.Equals(g.Node, node.Node, StringComparison.Ordinal))?.Runs.FirstOrDefault(r => r.ItemIndex == node.ItemIndex);
+        if (row is not null && agent is not null)
+        {
+            row.Agent = agent;
+        }
+    }
+
+    private async Task<(bool Ok, string Note, string? Agent)> Send(Uri url, string id, NodeRunViewModel node, bool takeOver, CancellationToken cancellationToken)
     {
         var sent = takeOver
             ? await api.TakeOverAgentNode(url, id, node.Node, node.ItemIndex, cancellationToken).ConfigureAwait(true)
             : await api.HandBackAgentNode(url, id, node.Node, node.ItemIndex, cancellationToken).ConfigureAwait(true);
         if (sent.IsSuccess)
         {
-            return (true, takeOver ? Labels.WfTakeOverDone : Labels.WfHandBackDone);
+            return (true, takeOver ? Labels.WfTakeOverDone : Labels.WfHandBackDone, sent.Value.Agent);
         }
 
-        return (false, takeOver ? Labels.WfTakeOverRefused(sent.Error) : Labels.WfHandBackRefused(sent.Error));
+        return (false, takeOver ? Labels.WfTakeOverRefused(sent.Error) : Labels.WfHandBackRefused(sent.Error), null);
     }
 
     /// <summary>Shows what Cancel said, in words.</summary>

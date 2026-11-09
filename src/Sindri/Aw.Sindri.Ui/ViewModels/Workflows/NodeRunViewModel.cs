@@ -30,7 +30,7 @@ internal sealed class NodeRunViewModel : ObservableObject
     public int ItemIndex { get; }
 
     /// <summary>As served: null, "waiting" or "taken_over" (ASSUMED SHAPE, #2472).</summary>
-    public string? Agent { get; }
+    public string? Agent { get; internal set { Set(ref field, value); OnChanged(nameof(CanTakeOver)); OnChanged(nameof(CanHandBack)); } }
 
     /// <summary>True on an agent node that waits on its agent: Take over shows.</summary>
     public bool CanTakeOver => string.Equals(Agent, "waiting", StringComparison.Ordinal);
