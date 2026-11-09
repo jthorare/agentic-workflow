@@ -1,2 +1,0 @@
-{"start":{"inputs":{"fact:issue":"Export button does nothing.","fact:expected":"A CSV downloads.","fact:actual":"Nothing happens."}}}
-{"trigger":{"kind":"step.completed","outcome":"diagnosed","outputs":{"fact:rootCause":"The click handler is never bound."}},"expect":{"state":"diagnosed","outcome":"resolved"}}

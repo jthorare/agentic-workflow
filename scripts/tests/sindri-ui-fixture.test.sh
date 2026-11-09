@@ -139,10 +139,6 @@ case "$*" in
   "todos --json --no-fence")
     printf '{"todos":['; sep=""; while IFS= read -r t; do grep -qx "$t" "$STUB_LOG.todos.done" 2>/dev/null || { printf '%s{"id":"%s"}' "$sep" "$t"; sep=","; }; done < "$STUB_LOG.todos"; echo ']}' ;;
   "todo done "*) echo "$3" >> "$STUB_LOG.todos.done" ;;
-  "workflow start "*)
-    for a in "$@"; do case "$a" in fact:*=*) echo "fact ${a%%=*} $(cat "${a#*=}")" >> "$STUB_LOG" ;; esac; done
-    if [ -n "${STUB_FAIL_START:-}" ]; then echo "SND-CLI-003 refused" >&2; exit 2; fi ;;
-  "recipe approve "*) IFS= read -r line; echo "typed=$line" >> "$STUB_LOG" ;;
   "ledger "*) sleep "${STUB_LEDGER_SLEEP:-0}" ;;
 esac
 exit 0
@@ -358,13 +354,6 @@ AW_SINDRI_HOME="$S" bash "$FIXTURE" sessions up 1 >/dev/null 2>&1; check "sessio
 AW_SINDRI_HOME="$S" SINDRI="$STUB" bash "$FIXTURE" sessions end 211 >/dev/null 2>&1; check "sessions end before up exits 2" "$?" "2"
 AW_SINDRI_HOME="$S" SINDRI="$STUB" bash "$FIXTURE" sessions ask x >/dev/null 2>&1; check "sessions ask refuses a non-pid (exit 2)" "$?" "2"
 
-# agent-run (issue #1004): the usage and the refusals that need no control plane.
-contains "the usage lists agent-run" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh agent-run"
-AW_SINDRI_HOME="$S" bash "$FIXTURE" agent-run extra >/dev/null 2>&1; check "agent-run takes no argument (exit 2)" "$?" "2"
-AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" agent-run >/dev/null 2>&1; check "agent-run refuses an unguarded home" "$?" "2"
-out="$(AW_SINDRI_HOME="$S" SINDRI="$STUB" bash "$FIXTURE" agent-run 2>&1)"; check "agent-run before sessions up exits 2" "$?" "2"
-contains "agent-run names the missing sessions copy" "$out" "run 'sessions up' first"
-
 own="$(jq -r '.ownUid' "$ROOT/tests/fixtures/sessions/manifest.json")"
 if [ "$(id -u)" != "$own" ]; then
   out="$(AW_SINDRI_HOME="$S" SINDRI="$STUB" bash "$FIXTURE" sessions up 2>&1)"; check "sessions up refuses another uid" "$?" "2"
@@ -562,21 +551,6 @@ check "paused waits on model-limit" "$(sqlq "$H/ledger.db" "SELECT json_extract(
 check "paused says why in its last progress line" "$(sqlq "$H/ledger.db" "SELECT json_extract(payload_json, '$.line') FROM events WHERE type = 'job.progress' AND json_extract(payload_json, '$.job') = '$job' ORDER BY seq DESC LIMIT 1")" "Paused: claude-code at its usage limit; codex at its usage limit. Resume when one is back."
 job="$(AW_SINDRI_HOME="$H" bash "$FIXTURE" model-calls none 2>/dev/null)"
 check "none writes a job and no call" "$(calls_rows job.started "$job")$(calls_rows context.model.called "$job")" "10"
-
-# agent-run's wait is wall-clock seconds, not loop passes (issue #1123): a ledger call that takes 2 s and never shows
-# launch.started must still end the wait after FIXTURE_AGENT_WAIT=3 s. The sessions copy is faked (no uid needed): agent-run
-# only checks that its proc folder exists and edits its launcher.json.
-A="$TMPDIR/agentwait"
-mkdir -p "$A"
-AW_SINDRI_HOME="$A" SINDRI="$STUB" bash "$FIXTURE" up >/dev/null 2>&1
-mkdir -p "$A/ui-fixture-sessions/proc"
-echo '{"schema":1}' > "$A/ui-fixture-sessions/launcher.json"
-start=$SECONDS
-out="$(STUB_LEDGER_SLEEP=2 FIXTURE_AGENT_WAIT=3 AW_SINDRI_HOME="$A" SINDRI="$STUB" bash "$FIXTURE" agent-run 2>&1 >/dev/null)"; rc=$?
-took=$((SECONDS - start))
-check "agent-run's wait is bounded in seconds: exits 1 when launch.started never comes" "$rc" "1"
-contains "agent-run's wait is bounded in seconds: names the missing launch.started" "$out" "no launch.started"
-check "agent-run's wait is bounded in seconds: a 2 s ledger call with FIXTURE_AGENT_WAIT=3 ends in under 10 s (took ${took}s)" "$([ "$took" -lt 10 ] && echo yes || echo no)" "yes"
 
 # sandbox (SB-6): the usage and the refusals that need no control plane.
 contains "the usage lists sandbox" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh sandbox blocked|clear"

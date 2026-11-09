@@ -9,7 +9,7 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.GetSetup;
 
-/// <summary>GET /setup: the six steps in their fixed order, each from its own source, and a source that can't be read fails only its own step.</summary>
+/// <summary>GET /setup: the five steps in their fixed order, each from its own source, and a source that can't be read fails only its own step.</summary>
 public sealed class GetSetupTests
 {
     private readonly FakeTimeProvider _clock = new(new DateTimeOffset(2026, 10, 19, 9, 30, 0, TimeSpan.Zero));
@@ -28,7 +28,7 @@ public sealed class GetSetupTests
         var result = await service.Handle(A.GetSetupRequest().Build(), Token);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal([SetupStepId.Repo, SetupStepId.Profile, SetupStepId.Recipes, SetupStepId.Mcp, SetupStepId.Map, SetupStepId.Sources], result.Value.Steps.Select(static s => s.Id));
+        Assert.Equal([SetupStepId.Repo, SetupStepId.Profile, SetupStepId.Mcp, SetupStepId.Map, SetupStepId.Sources], result.Value.Steps.Select(static s => s.Id));
         Assert.All(result.Value.Steps, static s => Assert.Equal(SetupState.Done, s.State));
         Assert.Equal(new ProjectorProgress(_clock).Current.AsOf, result.Value.AsOf);
     }
@@ -38,17 +38,17 @@ public sealed class GetSetupTests
     {
         var steps = (await Service(InMemorySetupFacts.AllDone()).Handle(A.GetSetupRequest().Build(), Token)).Value.Steps;
 
-        Assert.Equal(["Add your repo", "Save the profile", "Approve the workflows", "Connect your agents", "Build the map", "Connect your sources"], steps.Select(static s => s.Title), StringComparer.Ordinal);
-        Assert.Equal([1, 0, 0, 1, 1, 2], steps.Select(static s => s.Items.Count));
+        Assert.Equal(["Add your repo", "Save the profile", "Connect your agents", "Build the map", "Connect your sources"], steps.Select(static s => s.Title), StringComparer.Ordinal);
+        Assert.Equal([1, 0, 1, 1, 2], steps.Select(static s => s.Items.Count));
     }
 
     [Fact, Trait("Lane", "unit")]
     public async Task A_fresh_box_asks_for_a_repo_and_everything_else_waits()
     {
-        var steps = (await Service(new InMemorySetupFacts { RecipesAnswer = new RecipesFact(26, 0) }).Handle(A.GetSetupRequest().Build(), Token)).Value.Steps;
+        var steps = (await Service(new InMemorySetupFacts()).Handle(A.GetSetupRequest().Build(), Token)).Value.Steps;
 
-        Assert.Equal([SetupState.NeedsYou, SetupState.Todo, SetupState.Todo, SetupState.Todo, SetupState.Todo, SetupState.Todo], steps.Select(static s => s.State));
-        Assert.Equal([SetupActions.AddRepo, null, null, null, null, SetupActions.ConnectIndexSource], steps.Select(static s => s.Action), StringComparer.Ordinal);
+        Assert.Equal([SetupState.NeedsYou, SetupState.Todo, SetupState.Todo, SetupState.Todo, SetupState.Todo], steps.Select(static s => s.State));
+        Assert.Equal([SetupActions.AddRepo, null, null, null, SetupActions.ConnectIndexSource], steps.Select(static s => s.Action), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -61,7 +61,7 @@ public sealed class GetSetupTests
         Assert.True(result.IsSuccess);
         var failed = Assert.Single(result.Value.Steps, static s => s.State == SetupState.Failed);
         Assert.Equal((SetupStepId.Sources, SindriErrors.ApiInternal.Code), (failed.Id, failed.Error?.Code));
-        Assert.Equal(5, result.Value.Steps.Count(static s => s.State == SetupState.Done));
+        Assert.Equal(4, result.Value.Steps.Count(static s => s.State == SetupState.Done));
         var line = Assert.Single(_log.Lines);
         Assert.Contains("sources", line, StringComparison.Ordinal);
         Assert.Contains(nameof(InvalidOperationException), line, StringComparison.Ordinal);
@@ -95,8 +95,6 @@ public sealed class GetSetupTests
 
         public ValueTask<Result<ProfileFact>> Profile(CancellationToken cancellationToken) => inner.Profile(cancellationToken);
 
-        public ValueTask<Result<RecipesFact>> Recipes(CancellationToken cancellationToken) => inner.Recipes(cancellationToken);
-
         public ValueTask<Result<McpFact>> Mcp(CancellationToken cancellationToken) => inner.Mcp(cancellationToken);
 
         public ValueTask<Result<MapFact>> Map(CancellationToken cancellationToken) => inner.Map(cancellationToken);
@@ -108,14 +106,14 @@ public sealed class GetSetupTests
     public async Task A_source_that_cannot_be_read_fails_only_its_own_step_and_names_its_code()
     {
         var facts = InMemorySetupFacts.AllDone();
-        facts.RecipesAnswer = SindriErrors.LedgerUnavailable.With("the ledger is locked");
+        facts.McpAnswer = SindriErrors.LedgerUnavailable.With("the ledger is locked");
 
         var steps = (await Service(facts).Handle(A.GetSetupRequest().Build(), Token)).Value.Steps;
 
         var failed = Assert.Single(steps, static s => s.State == SetupState.Failed);
-        Assert.Equal(SetupStepId.Recipes, failed.Id);
+        Assert.Equal(SetupStepId.Mcp, failed.Id);
         Assert.Equal(SindriErrors.LedgerUnavailable.Code, failed.Error?.Code);
         Assert.DoesNotContain(SindriErrors.LedgerUnavailable.Code, failed.Detail, StringComparison.Ordinal);
-        Assert.All(steps.Where(static s => s.Id != SetupStepId.Recipes), static s => Assert.Equal(SetupState.Done, s.State));
+        Assert.All(steps.Where(static s => s.Id != SetupStepId.Mcp), static s => Assert.Equal(SetupState.Done, s.State));
     }
 }

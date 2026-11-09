@@ -50,7 +50,6 @@ public sealed class CliSetupTests : IDisposable
         var api = new Api(HttpStatusCode.OK, Body(
             SetupSteps.Repo(new RepoFact(1)),
             SetupSteps.Profile(new ProfileFact(ProfilePresence.Present), new RepoFact(1)),
-            SetupSteps.Recipes(new RecipesFact(26, 20), profileApproved: true),
             SetupSteps.Map(new MapFact(MapPhase.Failed, FailureCode: "SND-CONTEXT-040"))));
 
         var code = await Verbs(_up, api).Run([], Token);
@@ -59,9 +58,8 @@ public sealed class CliSetupTests : IDisposable
         Assert.Equal(
             "done      Add your repo: 1 repository\n"
             + "done      Save the profile: Your profile is saved and live.\n"
-            + "needs-you Approve the workflows: 6 workflows wait for your approval. (20 of 26)\n"
             + "failed    Build the map: The last try at building the map didn't finish.\n"
-            + "2 of 4 steps done.\n",
+            + "2 of 3 steps done.\n",
             _out.ToString().ReplaceLineEndings("\n"));
     }
 

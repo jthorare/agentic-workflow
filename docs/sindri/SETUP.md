@@ -395,4 +395,4 @@ The full catalogue is in `docs/csharp/sindri.md` ("Errors") and `docs/sindri/con
 - How the pieces fit: [`docs/sindri-architecture.html`](../sindri-architecture.html).
 - Every feature, with status: [`docs/sindri.html`](../sindri.html).
 - References: `docs/csharp/sindri.md` (the CLI and control plane), `docs/csharp/sindri-profile.md`,
-  `docs/sindri/context.md`, `docs/sindri/sources.md`, `docs/csharp/sindri-workflow.md`, `docs/csharp/sindri-ui.md`.
+  `docs/sindri/context.md`, `docs/sindri/sources.md`, `docs/csharp/sindri-ui.md`.

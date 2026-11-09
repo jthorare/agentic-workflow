@@ -1,3 +1,0 @@
-{"start":{"inputs":{"fact:phasePacket":{"phase":"1"},"fact:built":"https://example.test/diff/1"}}}
-{"trigger":{"kind":"step.completed","outcome":"none"},"expect":{"state":"evidence-none"}}
-{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:evidenceSummary":"The always-run checks are the proof."}},"expect":{"state":"done","outcome":"resolved"}}

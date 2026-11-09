@@ -14,7 +14,7 @@ public enum StepRuntime
     [JsonStringEnumMemberName("agent")]
     Agent = 2,
 
-    /// <summary>The engine's block runtime (DT spec §8.2): an activity runs the Step's <see cref="Workflow.Blocks.IBlockStep"/> and reports for it; outcomes are labelled 'via: block'.</summary>
+    /// <summary>The engine's block runtime (DT spec §8.2): an activity runs the Step's IBlockStep and reports for it; outcomes are labelled 'via: block'.</summary>
     [JsonStringEnumMemberName("block")]
     Block = 3,
 }

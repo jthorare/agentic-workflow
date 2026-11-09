@@ -123,6 +123,8 @@ internal sealed class LedgerDatabase : IDisposable
 
     /// <summary>The first migration with 'connection' (connections PR 10a); reads of an older file find no connection.</summary>
     internal const int ConnectionsVersion = 10;
+    /// <summary>The migration that dropped the recipe-era tables (issue 2258, PR 3).</summary>
+    internal const int RetireRecipesVersion = 12;
 
     /// <summary>The first migration with 'memory' and 'memory_fact' (agent-first PR 13); reads of an older file find no memory.</summary>
     internal const int MemoryVersion = 11;

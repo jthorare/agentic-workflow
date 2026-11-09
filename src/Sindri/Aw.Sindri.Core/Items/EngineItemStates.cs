@@ -144,7 +144,9 @@ public static class EngineItemStates
     private static bool Ends(WorkflowEventPayload payload) =>
         payload.Detail is { } detail ? detail.Delta.Outcome is not null : Cancels(payload.Trigger);
 
-    private static bool Cancels(string trigger) => string.Equals(trigger, TriggerNames.Cancel, StringComparison.Ordinal);
+    // The retire pass's note (#2258) ends the instance as a cancel does: the item reads cancelled, not done and not still waiting.
+    private static bool Cancels(string trigger) =>
+        string.Equals(trigger, TriggerNames.Cancel, StringComparison.Ordinal) || string.Equals(trigger, TriggerNames.Retire, StringComparison.Ordinal);
 
     private static SuspensionKind? Suspension(WorkflowEventDetail? detail, EngineItemPart? carried) =>
         detail is null ? carried?.Suspension : detail.Delta.Suspension?.Kind;

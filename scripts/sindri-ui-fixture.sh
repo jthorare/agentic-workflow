@@ -134,19 +134,6 @@
 #                                  removes the copy. Every restart re-exports the four variables while the copy exists, and
 #                                  down never restarts. Needs jq.
 #
-#   sindri-ui-fixture.sh agent-run
-#                                  one workflow instance on a live agent Step (recipes/dev/workflow.dev-agent-hold.yaml; run after
-#                                  'sessions up'), for the Attach control: Watch the agent, and Take over in its chevron menu. It adds
-#                                  a git repo, agent-fixture, under <home>/ui-fixture-agent to the live profile with
-#                                  workflow.agent.target claude-code and approves that, points launcher.json (the sessions copy's)
-#                                  at a stub claude-code (a script that only sleeps, so no model and no network), registers and
-#                                  approves the recipe as the owner, restarts the control plane (CLAUDE_CONFIG_DIR inside the home, so
-#                                  the launcher's trust mark never touches the real ~/.claude.json) and starts the recipe on a new item.
-#                                  The launch is real: a tmux session on Sindri's own socket, a worktree under the repo and a
-#                                  'session wrap' heartbeat; it waits (FIXTURE_AGENT_WAIT s, default 120) for launch.started in the ledger, then prints the item
-#                                  id on stdout (progress goes to stderr). The Step takes a slot of the box's heavy lock first, so a
-#                                  busy lock delays the launch. Exit 1 when no launch started in time; needs jq and git.
-#
 #   sindri-ui-fixture.sh model-calls fell-back|no-answer|paused|none
 #                                  a job with model calls for the Jobs page and the job sheet (context model routing spec 8.2, #1567),
 #                                  written as ledger rows the jobs view folds (job.started, job.progress, context.model.called and,
@@ -163,10 +150,8 @@
 #                                  ledger rows can't fake, so they restart serve (as 'sessions up' does) with AW_SANDBOX_BWRAP=/nonexistent
 #                                  (blocked: no bubblewrap, the Health row, the Settings section and the park card show the first blocker) or
 #                                  with it unset (clear: needs a working bwrap, nothing blocks). The setting is remembered in
-#                                  <home>/ui-fixture-sandbox/bwrap, so every later restart keeps it. blocked then starts the agent-run
-#                                  recipe and waits (FIXTURE_AGENT_WAIT s) for its launch.failed: that Step is parked on SND-LAUNCH-014 no-bwrap;
-#                                  run blocked twice for two parked Steps, then clear for the resume list (one Step may be closed first, so the
-#                                  list shows "has moved on"). Run after 'sessions up'; needs jq and git.
+#                                  <home>/ui-fixture-sandbox/bwrap, so every later restart keeps it. blocked starts no run: it only
+#                                  turns the blocker on. Run after 'sessions up'; needs jq.
 #                                  The other states are ledger rows on a launch of an existing item (see 'items'), written as ledger rows (fixed ids, INSERT OR IGNORE, a rerun adds nothing): every one starts with the
 #                                  launch.started row of events/launch-started-sandbox.json (all but waiting). denials: sandbox.denied x10 for github.com
 #                                  (some) and one blocked path; denials-many: the overflow row too (top 5 of n, with a fix of every kind);
@@ -178,7 +163,6 @@
 #                                  control plane serves from the launch's plan file, not from these rows.
 #
 # FIXTURE_REPO names the items' repo (default: none, so the API's default applies).
-# FIXTURE_AGENT_WAIT is how many seconds agent-run waits for launch.started (default 120; a saturated box needs more).
 # Environment: AW_SINDRI_HOME (required: sindri-prove.sh's guard, a temp or proof folder), SINDRI (the built C# CLI,
 # as sindri-prove.sh reads it), STALL_TYPE (the stalled row's type; default service.ran, a type the projector reads),
 # SINDRI_UI_FIXTURE_SQL=python (use python3's sqlite3 module even when the sqlite3 CLI is installed; without the CLI it is
@@ -410,58 +394,6 @@ todos() {
 close() {
   [[ "$1" =~ ^[A-Za-z]+-[A-Za-z0-9]+$ ]] || die "close: '$1' is not an item id"
   if [ "${2:-}" = "--cancelled" ]; then "$PROVE" human item close "$1" --cancelled; else "$PROVE" human item close "$1"; fi
-}
-
-# A new item, its id printed (the id is the first ITM- token sindri item add prints).
-new_item() {
-  local out id
-  out="$(add "$1")" || return
-  id="$(printf '%s\n' "$out" | grep -o 'ITM-[A-Za-z0-9]*' | head -1)"
-  [ -n "$id" ] || die "item add printed no item id: $out"
-  printf '%s\n' "$id"
-}
-
-# The inputs the dev recipes declare: triage-three-state takes fact:item (JSON naming the item) and fact:scope (text, its name), desk-round-trip takes
-# fact:request (text). The files live in the guarded home, one folder for all of them.
-fact_args() { # $1 recipe, $2 item, $3 title; prints the --fact arguments, one for each line
-  local dir="$AW_SINDRI_HOME/ui-fixture-facts"
-  mkdir -p "$dir" || return
-  case "$1" in
-    *triage-three-state)
-      jq -nc --arg id "$2" '{id: $id}' > "$dir/$2.item.json" || return
-      printf 'Fixture scope for %s\n' "$3" > "$dir/$2.scope.txt" || return
-      printf '%s\n%s\n%s\n%s\n' --fact "fact:item=$dir/$2.item.json" --fact "fact:scope=$dir/$2.scope.txt" ;;
-    *dev-agent-hold | *dev-agent-pick)
-      # ItemFact is positional and AwJson requires every constructor parameter, so the item names its spec too (#1134).
-      jq -nc --arg id "$2" --arg repo "$AGENT_REPO" --arg spec "Fixture spec for $3" '{id: $id, repo: $repo, spec: $spec}' > "$dir/$2.item.json" || return
-      printf '%s\n%s\n' --fact "fact:item=$dir/$2.item.json" ;;
-    *desk-round-trip)
-      printf 'Fixture request for %s\n' "$3" > "$dir/$2.request.txt" || return
-      printf '%s\n%s\n' --fact "fact:request=$dir/$2.request.txt" ;;
-  esac
-}
-
-# The dev recipes aren't embedded (the host ships recipes/sindri only), so a start needs its recipe approved first, which registers it (#1343).
-# Approves recipes/dev's recipe with id $1 as the owner, typing "approve <id> <version>"; a recipe outside recipes/dev is left alone.
-approve_dev_recipe() { # $1 recipe id
-  local file out
-  file="$(grep -lx "id: $1" "$ROOT"/recipes/dev/*.yaml 2>/dev/null | head -1)"
-  [ -n "$file" ] || return 0
-  out="$(printf 'approve %s %s\n' "$1" "$(sed -n 's/^version: *//p' "$file" | head -1)" | "$PROVE" human recipe approve "$file" 2>&1)" \
-    || die "the recipe $1 was not approved: $out"
-}
-
-start_on_new_item() { # $1 recipe, $2 item title; prints the item
-  local item facts=() line out
-  need jq
-  item="$(new_item "$2")" || return
-  while IFS= read -r line; do facts+=("$line"); done < <(fact_args "$1" "$item" "$2")
-  # The pty the owner's verbs run under joins stderr into stdout, so the output is kept to show on a refusal.
-  if ! out="$("$PROVE" human workflow start "$1" --item "$item" ${facts[@]+"${facts[@]}"} 2>&1)"; then
-    die "workflow start $1 on $item was refused: $out"
-  fi
-  printf 'started %s on %s\n' "$1" "$item" >&2
-  printf '%s\n' "$item"
 }
 
 hide_item() {
@@ -1053,8 +985,6 @@ sessions_export() {
   local d
   d="$(sessions_dir)"
   export AW_SESSIONS_PROC_ROOT="$d/proc" AW_SESSIONS_CLAUDE_DIR="$d/claude-sessions" AW_FLEET_DIR="$d/fleet" AW_LAUNCHER_CONFIG="$d/launcher.json"
-  # agent-run's launches mark their worktree trusted in Claude Code's config: keep that file inside the home.
-  if [ -d "$(agent_dir)/claude-config" ]; then export CLAUDE_CONFIG_DIR="$(agent_dir)/claude-config"; fi
   # 'sandbox blocked|clear' keeps AW_SANDBOX_BWRAP across restarts.
   if [ -s "$(sandbox_dir)/bwrap" ]; then export AW_SANDBOX_BWRAP="$(cat "$(sandbox_dir)/bwrap")"; else unset AW_SANDBOX_BWRAP; fi
   # 'reviews up' keeps serve on its forge world (acting as the viewer, as the world's PR was opened) while <home>/ui-fixture-forge exists.
@@ -1161,81 +1091,6 @@ sessions() {
   esac
 }
 
-# --- agent-run: an instance on a live agent Step (the Attach control; issue #1004) ---
-AGENT_REPO="agent-fixture"
-AGENT_RECIPE="workflow.dev-agent-hold"
-
-agent_dir() { printf '%s\n' "$AW_SINDRI_HOME/ui-fixture-agent"; }
-
-# A git repo with one commit, the stub agent (sleeps, ignores the flags the launcher adds) and Claude Code's config folder.
-agent_files() {
-  local dir="$1" repo="$1/repo" g
-  mkdir -p "$dir/claude-config" "$repo" || return
-  if [ ! -d "$repo/.git" ]; then
-    g=(env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE -u GIT_COMMON_DIR GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 GIT_AUTHOR_NAME="Fixture Author" GIT_AUTHOR_EMAIL=fixture@example.invalid
-       GIT_COMMITTER_NAME="Fixture Author" GIT_COMMITTER_EMAIL=fixture@example.invalid git -C "$repo")
-    printf '# Agent fixture\n' > "$repo/README.md"
-    "${g[@]}" init -q -b main && "${g[@]}" config core.hooksPath "$repo/.no-hooks" && "${g[@]}" add -A \
-      && "${g[@]}" commit -q --no-gpg-sign -m "Agent fixture" || die "agent-run: can't build the repo in $repo"
-  fi
-  # Named claude: the argv hash keeps only bin's base name, so a stub with another name is not a bin-only override (#1134).
-  mkdir -p "$dir/stub-bin" || return
-  printf '#!/bin/sh\nexec sleep 86400\n' > "$dir/stub-bin/claude" && chmod 755 "$dir/stub-bin/claude"
-}
-
-# The live profile gets the repo and workflow.agent.target (a workflow: block after user: when there is none).
-agent_profile_add() {
-  local profile="$1" repo="$2"
-  if ! grep -q "name: $AGENT_REPO" "$profile"; then
-    if grep -q '^repos:' "$profile"; then
-      awk -v e="  - { name: $AGENT_REPO, path: $repo }" '{print} /^repos:/ {print e}' "$profile" > "$profile.new"
-    else
-      awk -v e="repos:\n  - { name: $AGENT_REPO, path: $repo }" '{print} /^user:/ {print e}' "$profile" > "$profile.new"
-    fi && mv "$profile.new" "$profile" || return
-  fi
-  if ! grep -q '^  agent:' "$profile"; then
-    if grep -q '^workflow:' "$profile"; then
-      awk '{print} /^workflow:/ {print "  agent: { target: claude-code }"}' "$profile" > "$profile.new"
-    else
-      awk '{print} /^user:/ {print "workflow:\n  agent: { target: claude-code }"}' "$profile" > "$profile.new"
-    fi && mv "$profile.new" "$profile" || return
-  fi
-}
-
-agent_run() {
-  need jq
-  need git
-  sessions_need_copy
-  local dir profile launcher item out
-  dir="$(agent_dir)"
-  profile="$(profile_path)"
-  launcher="$(sessions_dir)/launcher.json"
-  [ -f "$profile" ] || die "no live profile at $profile: run 'up' first"
-  agent_files "$dir" || return
-  agent_profile_add "$profile" "$dir/repo" || die "agent-run: can't edit $profile"
-  approve >&2 || return
-  # A bin-only override of the built-in claude-code needs no stepArgvHash; the stub ignores the --settings and the other flags a Step adds.
-  jq --arg bin "$dir/stub-bin/claude" '.agents["claude-code"] = {override: true, bin: $bin}' "$launcher" > "$launcher.new" && mv -f "$launcher.new" "$launcher" \
-    || die "agent-run: can't update $launcher"
-  unset TMUX   # the control plane starts its own tmux server on its own socket; it must not inherit the caller's
-  sessions_restart >&2 || return
-  approve_dev_recipe "$AGENT_RECIPE" || return
-  item="$(FIXTURE_REPO="$AGENT_REPO" start_on_new_item "$AGENT_RECIPE" "Fixture agent run")" || return
-  local wait="${FIXTURE_AGENT_WAIT:-120}"
-  [[ "$wait" =~ ^[0-9]+$ ]] || die "agent-run: FIXTURE_AGENT_WAIT '$wait' is not a number of seconds"
-  local deadline=$((SECONDS + wait))
-  while [ "$SECONDS" -lt "$deadline" ]; do
-    if "$PROVE" human ledger --item "$item" --max 1000 2>&1 | tr -d '\r' | grep -q "${FIXTURE_AGENT_WANT:-launch.started}"; then
-      printf '%s\n' "$item"
-      return 0
-    fi
-    sleep 1
-  done
-  echo "sindri-ui-fixture: agent-run: no ${FIXTURE_AGENT_WANT:-launch.started} for $item in $wait s; the ledger says:" >&2
-  "$PROVE" human ledger --item "$item" --max 1000 2>&1 | tr -d '\r' | tail -15 >&2
-  return 1
-}
-
 # --- model-calls: a job's model calls on the Jobs page and the job sheet (context model routing spec 8.2, #1567 R-4) ---
 
 # $1 key, $2 type, $3 payload JSON. A fixed id and idempotency key, so a rerun adds nothing (see publish_event).
@@ -1333,8 +1188,7 @@ sandbox() { # $1 state, $2 item, $3 instance
   local state="$1" item="${2:-}" instance="${3:-}" l
   case "$state" in
     blocked)
-      sandbox_bwrap /nonexistent || return
-      FIXTURE_AGENT_WANT=launch.failed agent_run; return ;;
+      sandbox_bwrap /nonexistent; return ;;
     clear)
       sandbox_bwrap ""; return ;;
     *)
@@ -1396,7 +1250,6 @@ case "$verb" in
       *) die "usage: sessions up|ask <pid>|end <pid>|back <pid>|disable|enable|down" ;;
     esac ;;
   hide-item) { [ "$#" -eq 2 ] && case "$2" in ITM-*[!0-9a-f]* | ITM-) false ;; ITM-*) true ;; *) false ;; esac; } || die "usage: hide-item <ITM-id>" ;;
-  agent-run) [ "$#" -eq 1 ] || die "'agent-run' takes no arguments" ;;
   model-calls)
     [ "$#" -eq 2 ] || die "usage: model-calls fell-back|no-answer|paused|none"
     case "$2" in fell-back | no-answer | paused | none) ;; *) die "model-calls: '$2' is not a state (fell-back, no-answer, paused, none)" ;; esac ;;

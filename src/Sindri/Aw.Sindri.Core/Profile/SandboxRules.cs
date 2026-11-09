@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Aw.Kernel;
-using Aw.Sindri.Core.Workflow.Recipes;
+using Aw.Sindri.Core.Ids;
 
 namespace Aw.Sindri.Core.Profile;
 

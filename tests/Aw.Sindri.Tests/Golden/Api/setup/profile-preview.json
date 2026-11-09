@@ -47,21 +47,6 @@
       ]
     },
     {
-      "id": "recipes",
-      "title": "Approve the workflows",
-      "state": "needs-you",
-      "why": "26 workflows wait for your approval.",
-      "detail": "Approved 0 of 26.",
-      "error": null,
-      "action": "ApproveAllRecipes",
-      "progress": {
-        "done": 0,
-        "total": 26,
-        "unit": "workflows"
-      },
-      "items": []
-    },
-    {
       "id": "mcp",
       "title": "Connect your agents",
       "state": "todo",

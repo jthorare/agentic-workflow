@@ -1,7 +1,6 @@
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Workflow.Blocks;
-using Aw.Sindri.Features.Blocks;
 using Aw.Sindri.Features.GetProfile;
 
 namespace Aw.Sindri.Tests.GetProfile;
@@ -9,18 +8,16 @@ namespace Aw.Sindri.Tests.GetProfile;
 /// <summary>What the live profile asks for beyond the approved one, in words (setup-once spec §5.2 "Preview").</summary>
 public sealed class ProfileChangesTests
 {
-    private static readonly ShippedBlockSentences _sentences = new();
-
     [Fact, Trait("Lane", "unit")]
     public void With_nothing_approved_every_repo_service_and_effect_is_new()
     {
         var live = Profile(repos: [new RepoEntry("web", "/work/web")], services: new(StringComparer.Ordinal) { ["heartbeat"] = new ServiceSettings("5s") }, effects: ["effect.claim.ref"]);
 
-        var changes = ProfileChanges.Between(approved: null, live, _sentences);
+        var changes = ProfileChanges.Between(approved: null, live);
 
         Assert.Equal(["web"], changes.NewRepos.Select(static r => r.Name), StringComparer.Ordinal);
         Assert.Equal(["Sindri will run the heartbeat service every 5 seconds"], changes.Services);
-        Assert.Equal(["Reserves a work item so no other run starts on it"], changes.Allowance);
+        Assert.Equal(["Allows the effect \"claim ref\""], changes.Allowance);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -29,7 +26,7 @@ public sealed class ProfileChangesTests
         var approved = Profile(repos: [new RepoEntry("web", "/work/web")]);
         var live = Profile(repos: [new RepoEntry("web", "/work/web"), new RepoEntry("api", "/work/api")]);
 
-        var changes = ProfileChanges.Between(approved, live, _sentences);
+        var changes = ProfileChanges.Between(approved, live);
 
         Assert.Equal(["api"], changes.NewRepos.Select(static r => r.Name), StringComparer.Ordinal);
     }
@@ -40,20 +37,20 @@ public sealed class ProfileChangesTests
         var approved = Profile(services: new(StringComparer.Ordinal) { ["heartbeat"] = new ServiceSettings("1h"), ["observe"] = new ServiceSettings("5m") });
         var live = Profile(services: new(StringComparer.Ordinal) { ["heartbeat"] = new ServiceSettings("1m"), ["observe"] = new ServiceSettings("1h") });
 
-        var changes = ProfileChanges.Between(approved, live, _sentences);
+        var changes = ProfileChanges.Between(approved, live);
 
         Assert.Equal(["Sindri will run the heartbeat service more often: every 1 minute instead of every 1 hour"], changes.Services);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void An_effect_the_approved_profile_allows_is_not_new_and_an_unknown_kind_is_said_by_its_name()
+    public void An_effect_the_approved_profile_allows_is_not_new_and_a_new_one_is_said_by_its_name()
     {
         var approved = Profile(effects: ["effect.claim.ref"]);
         var live = Profile(effects: ["effect.claim.ref", "effect.notify.desk", "effect.deploy.canary-ring"]);
 
-        var changes = ProfileChanges.Between(approved, live, _sentences);
+        var changes = ProfileChanges.Between(approved, live);
 
-        Assert.Equal(["Puts a question or notice in your Needs you list", "Allows the effect \"deploy canary ring\""], changes.Allowance);
+        Assert.Equal(["Allows the effect \"notify desk\"", "Allows the effect \"deploy canary ring\""], changes.Allowance);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -61,7 +58,7 @@ public sealed class ProfileChangesTests
     {
         var same = Profile(repos: [new RepoEntry("web", "/work/web")], effects: ["effect.claim.ref"]);
 
-        Assert.True(ProfileChanges.Between(same, same, _sentences).IsEmpty);
+        Assert.True(ProfileChanges.Between(same, same).IsEmpty);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -80,7 +77,7 @@ public sealed class ProfileChangesTests
         var approved = Profile(agents: Agents(("claude", 5m), ("codex", 8m)), line: new LineSettings(Parallel: 2, MaxOpenPrs: 6), pr: new PrSettings(AutofixCap: 3));
         var live = Profile(agents: Agents(("claude", 10m), ("codex", 8m), ("cursor", 3m)), line: new LineSettings(Parallel: 4, MaxOpenPrs: 4, MaxStack: 6), pr: new PrSettings(AutofixCap: 5));
 
-        var changes = ProfileChanges.Between(approved, live, _sentences);
+        var changes = ProfileChanges.Between(approved, live);
 
         Assert.Equal(
             ["claude may spend up to $10 a day", "cursor may spend up to $3 a day", "Sindri may run up to 4 phases at once", "Sindri may stack phases up to 6 deep", "Sindri may push up to 5 CI fixes for one pull request"],
@@ -93,7 +90,7 @@ public sealed class ProfileChangesTests
         var approved = Profile(agents: Agents(("claude", 5m)), plan: new PlanSettings(Sizes: new Dictionary<string, SizeSettings>(StringComparer.Ordinal) { ["S"] = new SizeSettings(Budget: new BudgetSettings(Tokens: 1000, Turns: 10)) }));
         var live = Profile(agents: Agents(("claude", null)), plan: new PlanSettings(Sizes: new Dictionary<string, SizeSettings>(StringComparer.Ordinal) { ["S"] = new SizeSettings(Budget: new BudgetSettings(Tokens: 2000, Turns: 10, WallMinutes: 30)) }));
 
-        var changes = ProfileChanges.Between(approved, live, _sentences);
+        var changes = ProfileChanges.Between(approved, live);
 
         Assert.Equal(["claude will have no daily spending limit", "A S phase may use up to 2000 tokens, 30 minutes"], changes.Allowance);
     }
@@ -103,7 +100,7 @@ public sealed class ProfileChangesTests
     {
         var live = Profile(agents: Agents(("claude", 5m)), line: new LineSettings(MaxStack: 2));
 
-        Assert.Equal(["claude may spend up to $5 a day", "Sindri may stack phases up to 2 deep"], ProfileChanges.Between(approved: null, live, _sentences).Allowance);
+        Assert.Equal(["claude may spend up to $5 a day", "Sindri may stack phases up to 2 deep"], ProfileChanges.Between(approved: null, live).Allowance);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -118,7 +115,7 @@ public sealed class ProfileChangesTests
                 Forge: new ForgeSettings("github", ["github.com"], "env:GH_TOKEN")),
             Setup: new SetupSettings(SetupSettings.Auto));
 
-        var changes = ProfileChanges.Between(approved: null, live, _sentences);
+        var changes = ProfileChanges.Between(approved: null, live);
 
         Assert.Equal(
             ["Sindri will use the github forge at github.com, with the token in GH_TOKEN", "Judge steps may ask claude-cli", "Judge steps may ask jev", "Workflow steps will launch the claude agent", "Sindri will register its MCP server in each repo on its own"],
@@ -131,7 +128,7 @@ public sealed class ProfileChangesTests
         var live = new SindriProfile(1, "t", Workflow: new WorkflowSettings(Judge: new JudgeSettings(["claude-cli", "jev"]), Forge: new ForgeSettings("github", ["github.com"])));
         var approved = new SindriProfile(1, "t", Workflow: new WorkflowSettings(Judge: new JudgeSettings(["claude-cli"]), Forge: new ForgeSettings("github", ["github.com", "ghe.example"])));
 
-        var changes = ProfileChanges.Between(approved, live, _sentences);
+        var changes = ProfileChanges.Between(approved, live);
 
         Assert.Equal(["Judge steps may ask jev"], changes.Connections);
     }
@@ -141,7 +138,7 @@ public sealed class ProfileChangesTests
     {
         var live = new SindriProfile(1, "t", Workflow: new WorkflowSettings(Judge: new JudgeSettings(["claude-cli", JudgeProviderNames.Rules])));
 
-        Assert.Equal(["Judge steps may ask claude-cli"], ProfileChanges.Between(approved: null, live, _sentences).Connections);
+        Assert.Equal(["Judge steps may ask claude-cli"], ProfileChanges.Between(approved: null, live).Connections);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -149,8 +146,8 @@ public sealed class ProfileChangesTests
     {
         var live = new SindriProfile(1, "t", Workflow: new WorkflowSettings(Pr: new PrSettings(Replies: "desk", HeldBlocksMerge: true), Route: new RouteSettings(RouteSettings.None)));
 
-        var fresh = ProfileChanges.Between(approved: null, live, _sentences);
-        var same = ProfileChanges.Between(live, live, _sentences);
+        var fresh = ProfileChanges.Between(approved: null, live);
+        var same = ProfileChanges.Between(live, live);
 
         Assert.Equal(["You send every reply to a pull request comment yourself", "A held comment stops the merge until you clear it", "Routed items stop at the router until you start them"], fresh.HumanOnly);
         Assert.Empty(same.HumanOnly);
@@ -160,7 +157,7 @@ public sealed class ProfileChangesTests
     [Fact, Trait("Lane", "unit")]
     public void A_profile_with_no_such_settings_has_empty_groups()
     {
-        var changes = ProfileChanges.Between(approved: null, Profile(repos: [new RepoEntry("web", "/work/web")]), _sentences);
+        var changes = ProfileChanges.Between(approved: null, Profile(repos: [new RepoEntry("web", "/work/web")]));
 
         Assert.Empty(changes.Allowance);
         Assert.Empty(changes.Connections);

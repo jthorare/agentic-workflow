@@ -115,7 +115,7 @@ internal static partial class CommandTable
             ["request" or "requests" or "decisions" or "decide" or "needs-you", ..] => await new RequestVerbs(client, output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct).ConfigureAwait(false),
             ["index", "connect", .. var rest] => await new IndexConnectVerbs(services, output, environment).Run(["connect", .. rest], ct).ConfigureAwait(false),
             ["services" or "jobs", ..] or ["index", "embed", ..] => await JobCommands.Run(args, (client, output), start.EnsureRunning, services.GetRequiredService<TimeProvider>(), (ct, interrupt.Again)).ConfigureAwait(false),
-            ["agents" or "skill" or "skills" or "setup" or "code-index" or "index" or "library", ..] => await ReadVerbs(args, (client, output), (services, start), (ct, interrupt.Again), environment).ConfigureAwait(false),
+            ["agents" or "skill" or "skills" or "setup" or "code-index" or "index" or "library", ..] => await ReadVerbs(args, (client, output), (services, start), (ct, interrupt.Again)).ConfigureAwait(false),
             ["repo", ..] => await Repo(args, client, output, services, (ct, interrupt.Again)).ConfigureAwait(false),
             ["ledger", .. var rest] => await new LedgerVerbs(client, output, (launch, c) => start.EnsureRunning(launch, c)).Run(rest, ct).ConfigureAwait(false),
             ["launch" or "session", ..] => await LaunchOrSession(args, client, (output, environment), services, (ct, interrupt.Again)).ConfigureAwait(false),
@@ -124,34 +124,22 @@ internal static partial class CommandTable
             ["sandbox", ..] => await Sandbox(args, client, output, services, ct).ConfigureAwait(false),
             ["mcp", .. var rest] => await new McpVerbs(services, output).Run(rest, ct).ConfigureAwait(false),
             ["context", ..] => await ContextOrPin(args, (client, output), (services, start), (ct, interrupt.Again)).ConfigureAwait(false),
-            ["line", "holdout", .. var rest] => await new LineHoldoutVerbs(client, output, Interactive(), Console.In).Run(rest, ct).ConfigureAwait(false),
-            ["recipe" or "workflow" or "wf" or "scoping" or "design" or "plan" or "line" or "pack" or "outbox" or "takeover" or "handback" or "docs" or "pr", ..] => await Workflows(args, new ScopingCommandTable.Host(services, output, new RecipeDesk(client, Console.In, c => start.EnsureRunning(launch: true, c), environment), environment), ct).ConfigureAwait(false),
+            ["workflow" or "wf" or "takeover" or "handback", ..] => await Workflows(args, services, output, new RecipeDesk(client, Console.In, c => start.EnsureRunning(launch: true, c), environment), ct).ConfigureAwait(false),
             ["help" or "--help" or "-h"] => await output.Text(Usage.Text + "\n", 0).ConfigureAwait(false),
             _ => await UnknownVerb(args, output).ConfigureAwait(false),
         };
     }
 
-    /// <summary>'sindri recipe|workflow|scoping|outbox|takeover|handback|docs|pr …': the recipe family, one arm per verb.</summary>
-    private static async Task<int> Workflows(string[] args, ScopingCommandTable.Host host, CancellationToken ct)
+    /// <summary>'sindri workflow|wf|outbox|takeover|handback …'.</summary>
+    private static async Task<int> Workflows(string[] args, IServiceProvider services, Output output, RecipeDesk desk, CancellationToken ct) => args switch
     {
-        var (services, output, desk, _) = host;
-        return args switch
-        {
-            ["recipe", .. var rest] => await RecipeCommandTable.Run(rest, services, output, desk, ct).ConfigureAwait(false),
-            ["workflow", .. var rest] => await WorkflowCommandTable.Run(rest, services, output, desk, ct).ConfigureAwait(false),
-            ["scoping", .. var rest] => await ScopingCommandTable.Run(rest, host with { Desk = desk with { EnsureRunning = static _ => Task.FromResult<Kernel.Error?>(null) } }, ct).ConfigureAwait(false),
-            ["design" or "plan" or "line", ..] => await LineCommandTable.Run(args, host with { Desk = desk with { EnsureRunning = static _ => Task.FromResult<Kernel.Error?>(null) } }, ct).ConfigureAwait(false),
-            ["wf", "validate", .. var rest] => await WfValidateCommand.Run(rest, services, output, ct).ConfigureAwait(false),   // in process: reads the graph file, never starts or contacts serve
-            ["wf", "run", .. var rest] => await WfRunCommand.Run(rest, desk, output, ct).ConfigureAwait(false),
-            ["wf", "cancel", .. var rest] => await WfRunCommand.Cancel(rest, desk, output, ct).ConfigureAwait(false),
-            ["pack", .. var rest] => await PackCommandTable.Run(rest, services, output, ct).ConfigureAwait(false),
-            ["outbox", .. var rest] => await OutboxCommandTable.Run(rest, services, output, ct).ConfigureAwait(false),
-            ["docs", .. var rest] => await DocsCommandTable.Run(rest, services, output, desk, ct).ConfigureAwait(false),
-            ["pr", ..] => await Pr(args, services, output, desk, ct).ConfigureAwait(false),
-            ["takeover" or "handback", ..] => await WorkflowCommandTable.RunShort(args, services, output, desk, ct).ConfigureAwait(false),
-            _ => await UnknownVerb(args, output).ConfigureAwait(false),
-        };
-    }
+        ["workflow", .. var rest] => await WorkflowCommandTable.Run(rest, services, output, desk, ct).ConfigureAwait(false),
+        ["wf", "validate", .. var rest] => await WfValidateCommand.Run(rest, services, output, ct).ConfigureAwait(false),   // in process: reads the graph file, never starts or contacts serve
+        ["wf", "run", .. var rest] => await WfRunCommand.Run(rest, desk, output, ct).ConfigureAwait(false),
+        ["wf", "cancel", .. var rest] => await WfRunCommand.Cancel(rest, desk, output, ct).ConfigureAwait(false),
+        ["takeover" or "handback", ..] => await WorkflowCommandTable.RunShort(args, services, output, desk, ct).ConfigureAwait(false),
+        _ => await UnknownVerb(args, output).ConfigureAwait(false),
+    };
 
     /// <summary>'launch init|show' (box-local) and 'session wrap' (runs the agent under a launch).</summary>
     private static async Task<int> LaunchOrSession(string[] args, ControlPlaneClient client, (Output Output, Func<string, string?> Environment) io, IServiceProvider services, (CancellationToken Interrupt, CancellationToken Again) signals) =>

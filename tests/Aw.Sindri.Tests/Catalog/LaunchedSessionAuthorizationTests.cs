@@ -12,11 +12,10 @@ public sealed class LaunchedSessionAuthorizationTests
     private static readonly CommandCatalog _catalog = new();
 
     [Theory, Trait("Lane", "unit")]
-    [InlineData("ApproveRecipe")]
+    [InlineData("ImportContextMap")]
     [InlineData("Decide")]
-    [InlineData("ApplyCommand:takeover")]
-    [InlineData("StartInstance")]
-    [InlineData("ApplyCommand:cancel")]
+    [InlineData("RunWorkflow")]
+    [InlineData("CancelWorkflowRun")]
     [InlineData("EndLearnMode")]
     public void A_launched_session_may_decide_pause_and_run_desk_actions(string action)
     {
@@ -31,7 +30,6 @@ public sealed class LaunchedSessionAuthorizationTests
 
     [Theory, Trait("Lane", "unit")]
     [InlineData("CompleteStep:report")]
-    [InlineData("IssueNonce")]
     [InlineData("SessionHeartbeat")]
     [InlineData("SessionExit")]
     [InlineData("RecordLimitHit")]

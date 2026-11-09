@@ -1,6 +1,0 @@
-T-3/step/1  workflow.step@4ca37bf46333  v4  parked: timeout (child)  since 11:50 (10m)
-  next      Parked (timeout): the child ran past 2d.
-            Resume to give it the full time again, or cancel.
-  child     T-3/step/1/step.4  parked: timeout
-  answer    sindri workflow answer T-3/step/1 --resume
-  commands  answer (forwarded), takeover, cancel
