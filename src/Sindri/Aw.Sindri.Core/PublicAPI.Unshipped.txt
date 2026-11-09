@@ -21747,7 +21747,6 @@ static Aw.Sindri.Core.Graph.Blocks.CallableTool.operator !=(Aw.Sindri.Core.Graph
 static Aw.Sindri.Core.Graph.Blocks.CallableTool.operator ==(Aw.Sindri.Core.Graph.Blocks.CallableTool? left, Aw.Sindri.Core.Graph.Blocks.CallableTool? right) -> bool
 static Aw.Sindri.Core.Graph.Blocks.ConnectionTool.operator !=(Aw.Sindri.Core.Graph.Blocks.ConnectionTool? left, Aw.Sindri.Core.Graph.Blocks.ConnectionTool? right) -> bool
 static Aw.Sindri.Core.Graph.Blocks.ConnectionTool.operator ==(Aw.Sindri.Core.Graph.Blocks.ConnectionTool? left, Aw.Sindri.Core.Graph.Blocks.ConnectionTool? right) -> bool
-static readonly Aw.Sindri.Core.SindriErrors.ToolkitManagementUnavailable -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Connections.IMcpConnectionClient.CallTool(System.Uri! server, Aw.Sindri.Core.Connections.TokenSet! tokens, string! tool, string! argumentsJson, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
 Aw.Sindri.Core.Connections.IMcpConnectionClient.Describe(System.Uri! server, Aw.Sindri.Core.Connections.TokenSet! tokens, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Connections.McpToolInfo!>!>!>
 Aw.Sindri.Core.Connections.McpToolInfo

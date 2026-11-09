@@ -77,4 +77,23 @@ public sealed class ToolkitToolsTests
         Assert.Contains("SND-TK-009", JsonSerializer.Serialize(unknown.StructuredContent), StringComparison.Ordinal);
         Assert.Empty(runtime.Calls);
     }
+
+    [Fact(Timeout = 60_000), Trait("Lane", "integration")]
+    public async Task The_management_tools_run_their_slices_and_never_answer_the_old_placeholder()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var host = await GoldenHost.Start(temporary: true, ct, extra: services => services.AddSingleton<IRunningToolkits>(Runtime()));
+        await using var mcp = await McpSession.Open(host, "alpha", ct);
+
+        var listed = await mcp.Call("toolkit_list", "{}", ct);
+        var calls = await mcp.Call("toolkit_calls", """{"name":"notes"}""", ct);
+        var started = await mcp.Call("toolkit_start", """{"name":"missing"}""", ct);
+
+        Assert.NotEqual(true, listed.IsError);
+        Assert.Equal(JsonValueKind.Array, listed.StructuredContent!.Value.GetProperty("toolkits").ValueKind);
+        Assert.NotEqual(true, calls.IsError);
+        Assert.Equal(JsonValueKind.Array, calls.StructuredContent!.Value.GetProperty("calls").ValueKind);
+        Assert.Equal(true, started.IsError);
+        Assert.Equal("SND-TK-009", started.StructuredContent!.Value.GetProperty("code").GetString());
+    }
 }

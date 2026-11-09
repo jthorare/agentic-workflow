@@ -43,6 +43,10 @@ public sealed class McpSurfaceTests
         typeof(CreateMemoryRequest).FullName!,
         typeof(WriteMemoryFactRequest).FullName!,
         typeof(ForgetMemoryFactRequest).FullName!,
+        // why: agent parity (G8, agent-first PR 16): agents build, start and stop the toolkits they write (toolkit_build, toolkit_start, toolkit_stop); the build is a job under a heavy slot, a start refuses an unbuilt or changed toolkit (SND-TK-001), and the sandbox contains the process
+        "Aw.Sindri.Features.BuildToolkit.BuildToolkitRequest",
+        "Aw.Sindri.Features.StartToolkit.StartToolkitRequest",
+        "Aw.Sindri.Features.StopToolkit.StopToolkitRequest",
         // why: todo spec D2 (Ph1b): a todo list can't change anything outside Sindri, so agents get the six todo writes (add, change, done, reopen, remove, restore), all request class; MarkTodoRequest carries the last four
         typeof(AddTodoRequest).FullName!,
         typeof(ChangeTodoRequest).FullName!,

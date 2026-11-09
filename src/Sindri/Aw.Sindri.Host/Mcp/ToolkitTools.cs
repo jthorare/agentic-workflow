@@ -1,8 +1,16 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
+using Aw.Kernel.Services;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Toolkits;
+using Aw.Sindri.Features.BuildToolkit;
+using Aw.Sindri.Features.ListToolkitCalls;
+using Aw.Sindri.Features.ListToolkits;
+using Aw.Sindri.Features.StartToolkit;
+using Aw.Sindri.Features.StopToolkit;
 using ModelContextProtocol.Protocol;
 
 namespace Aw.Sindri.Host.Mcp;
@@ -109,11 +117,113 @@ internal static class ToolkitTools
     /// <returns>True when it splits as '&lt;toolkit&gt;__&lt;tool&gt;'.</returns>
     internal static bool IsToolkitTool(string name) => ToolNames.TryParse(name, out _, out _);
 
-    /// <summary>Runs a management tool. Until the runtime slices are merged it answers SND-TK-011.</summary>
+    private static readonly FencePlan _calls = new("sindri:toolkit-calls", [new("calls[].input"), new("calls[].output"), new("calls[].error")]);
+
+    private static readonly FencePlan _plain = new("sindri:toolkit", []);
+
+    /// <summary>Runs a management tool through its Features slice: toolkit_list, toolkit_start, toolkit_stop and toolkit_calls answer at once, toolkit_build starts the job and answers its id.</summary>
+    /// <param name="tool">One of the five management names.</param>
     /// <param name="services">The request's services.</param>
-    /// <returns>The refusal.</returns>
-    internal static CallToolResult CallManagement(IServiceProvider services) =>
-        McpResults.Failure(services, SindriErrors.ToolkitManagementUnavailable.With("this build has no toolkit runtime behind the toolkit_* tools yet (fix: use the sindri toolkit verbs once they ship)"));
+    /// <param name="arguments">The call's arguments.</param>
+    /// <param name="ct">Cancels the call.</param>
+    /// <returns>The tool result.</returns>
+    internal static async ValueTask<CallToolResult> CallManagement(string tool, IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
+    {
+        if (tool == List)
+        {
+            return await ListAll(services, arguments, ct).ConfigureAwait(false);
+        }
+
+        var refused = McpArguments.Only(tool, arguments, tool == Calls ? ["name", "limit"] : ["name"]);
+        var name = McpArguments.RequiredString(tool, arguments, "name", "github-triage");
+        var limit = McpArguments.OptionalLong(tool, arguments, "limit", min: 1);
+        if ((refused ?? name.Failed() ?? limit.Failed()) is { } error)
+        {
+            return McpResults.Failure(services, error);
+        }
+
+        return tool switch
+        {
+            Build => await BuildOne(services, name.Value, ct).ConfigureAwait(false),
+            Start => await StartOne(services, name.Value, ct).ConfigureAwait(false),
+            Stop => await StopOne(services, name.Value, ct).ConfigureAwait(false),
+            _ => await RecentCalls(services, name.Value, limit.Value, ct).ConfigureAwait(false),
+        };
+    }
+
+    private static async ValueTask<CallToolResult> ListAll(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
+    {
+        if (McpArguments.None(List, arguments) is { } extra)
+        {
+            return McpResults.Failure(services, extra);
+        }
+
+        var listed = await services.GetRequiredService<IService<ListToolkitsRequest, ListToolkitsResponse>>().Handle(new ListToolkitsRequest(), ct).ConfigureAwait(false);
+        return listed.IsError
+            ? McpResults.Failure(services, listed.Error)
+            : Answer(new JsonObject { ["toolkits"] = new JsonArray([.. listed.Value.Toolkits.Select(Row)]) }, $"{listed.Value.Toolkits.Count.ToString(CultureInfo.InvariantCulture)} toolkits", _plain);
+    }
+
+    private static async ValueTask<CallToolResult> BuildOne(IServiceProvider services, string name, CancellationToken ct)
+    {
+        var started = await services.GetRequiredService<IService<BuildToolkitRequest, JobStartedResponse>>().Handle(new BuildToolkitRequest(name), ct).ConfigureAwait(false);
+        return started.IsError
+            ? McpResults.Failure(services, started.Error)
+            : Answer(new JsonObject { ["name"] = name, ["jobId"] = started.Value.JobId.Value }, $"building {name} (job {started.Value.JobId.Value})", _plain);
+    }
+
+    private static async ValueTask<CallToolResult> StartOne(IServiceProvider services, string name, CancellationToken ct)
+    {
+        var up = await services.GetRequiredService<IService<StartToolkitRequest, StartToolkitResponse>>().Handle(new StartToolkitRequest(name), ct).ConfigureAwait(false);
+        return up.IsError ? McpResults.Failure(services, up.Error) : Answer(State(up.Value.Name, up.Value.State), $"{up.Value.Name} is running", _plain);
+    }
+
+    private static async ValueTask<CallToolResult> StopOne(IServiceProvider services, string name, CancellationToken ct)
+    {
+        var down = await services.GetRequiredService<IService<StopToolkitRequest, StopToolkitResponse>>().Handle(new StopToolkitRequest(name), ct).ConfigureAwait(false);
+        return down.IsError ? McpResults.Failure(services, down.Error) : Answer(State(down.Value.Name, down.Value.State), $"{down.Value.Name} stopped", _plain);
+    }
+
+    private static async ValueTask<CallToolResult> RecentCalls(IServiceProvider services, string name, long? limit, CancellationToken ct)
+    {
+        var request = limit is { } n ? new ListToolkitCallsRequest(name, (int)Math.Min(n, 200)) : new ListToolkitCallsRequest(name);
+        var recent = await services.GetRequiredService<IService<ListToolkitCallsRequest, ListToolkitCallsResponse>>().Handle(request, ct).ConfigureAwait(false);
+        return recent.IsError
+            ? McpResults.Failure(services, recent.Error)
+            : Answer(new JsonObject { ["calls"] = new JsonArray([.. recent.Value.Calls.Select(CallRow)]) }, $"{recent.Value.Calls.Count.ToString(CultureInfo.InvariantCulture)} calls of {name}", _calls);
+    }
+
+    private static Error? Failed<T>(this Result<T> result) => result.IsError ? result.Error : null;
+
+    private static JsonObject State(string name, ToolkitState state) => new() { ["name"] = name, ["state"] = state.ToString().ToLowerInvariant() };
+
+    private static JsonObject Row(Toolkit toolkit) => new()
+    {
+        ["name"] = toolkit.Name,
+        ["state"] = toolkit.State.ToString().ToLowerInvariant(),
+        ["tools"] = new JsonArray([.. (toolkit.Manifest?.Tools ?? []).Select(static t => (JsonNode)JsonValue.Create(t.Name))]),
+        ["builtAt"] = toolkit.BuiltAt?.ToString("O", CultureInfo.InvariantCulture),
+        ["createdBy"] = toolkit.CreatedBy,
+    };
+
+    private static JsonObject CallRow(ToolkitCall call) => new()
+    {
+        ["toolkit"] = call.Toolkit,
+        ["tool"] = call.Tool,
+        ["caller"] = call.Caller,
+        ["input"] = call.Input,
+        ["output"] = call.Output,
+        ["truncated"] = call.Truncated,
+        ["error"] = call.Error,
+        ["durationMs"] = call.DurationMs,
+        ["at"] = call.At.ToString("O", CultureInfo.InvariantCulture),
+    };
+
+    private static CallToolResult Answer(JsonObject body, string summary, FencePlan plan)
+    {
+        using var document = JsonDocument.Parse(body.ToJsonString());
+        return new CallToolResult { StructuredContent = McpFencing.Apply(document.RootElement, plan), Content = [new TextContentBlock { Text = summary }] };
+    }
 
     /// <summary>Calls a toolkit tool through the runtime.</summary>
     /// <param name="services">The request's services.</param>
