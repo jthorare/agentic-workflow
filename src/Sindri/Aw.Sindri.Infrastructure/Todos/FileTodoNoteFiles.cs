@@ -36,12 +36,15 @@ internal sealed partial class FileTodoNoteFiles(ISindriHome home, TimeProvider c
                 return new NoteRead(Text: null, Hash: null, Bytes: 0, Missing: true, Problem: null);
             }
 
-            switch (FileTodoNoteDisk.Links(note))
+            var links = FileTodoNoteDisk.Links(note);
+            if (links is null)
             {
-                case null:
-                    return Problem("its hard links can't be counted");
-                case > 1:
-                    return Problem("the note has more than one hard link");
+                return Problem("its hard links can't be counted");
+            }
+
+            if (links > 1)
+            {
+                return Problem("the note has more than one hard link");
             }
 
             var size = new FileInfo(note).Length;
