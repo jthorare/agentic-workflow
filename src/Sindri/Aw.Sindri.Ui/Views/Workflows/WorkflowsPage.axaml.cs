@@ -16,7 +16,7 @@ internal sealed partial class WorkflowsPage : UserControl
 #pragma warning disable MA0155 // why: an Avalonia RoutedEvent handler returns void, so it can only be async void
     private async void OnOpenWorkflow(object? sender, RoutedEventArgs e)
     {
-        if (DataContext is WorkflowsPageViewModel page && (sender as Control)?.DataContext is WorkflowRowViewModel row)
+        if (DataContext is WorkflowsPageViewModel page && sender is Control { DataContext: WorkflowRowViewModel row })
         {
             await page.OpenWorkflow(row.Slug, CancellationToken.None).ConfigureAwait(true);
         }
@@ -24,7 +24,7 @@ internal sealed partial class WorkflowsPage : UserControl
 
     private async void OnOpenRun(object? sender, RoutedEventArgs e)
     {
-        if (DataContext is WorkflowsPageViewModel page && (sender as Control)?.DataContext is RunRowViewModel row)
+        if (DataContext is WorkflowsPageViewModel page && sender is Control { DataContext: RunRowViewModel row })
         {
             await page.OpenRun(row.Id, CancellationToken.None).ConfigureAwait(true);
         }
