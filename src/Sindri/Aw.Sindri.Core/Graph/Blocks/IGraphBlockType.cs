@@ -11,6 +11,12 @@ public interface IGraphBlockType
     /// <summary>The name a node's 'type' uses, such as 'run_agent'.</summary>
     public string Type { get; }
 
+    /// <summary>The label the workflow picker shows, such as 'Send notification'. A spec keeps the type name, so a new label never breaks a saved workflow.</summary>
+    public string Title { get; }
+
+    /// <summary>The picker group the block sits in.</summary>
+    public BlockGroup Group { get; }
+
     /// <summary>True for a block that starts a run (schedule, poll, inbox, workflow_call): a workflow has exactly one.</summary>
     public bool IsTrigger { get; }
 
