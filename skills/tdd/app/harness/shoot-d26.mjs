@@ -7,8 +7,12 @@
 // figure.diagram holding a .tnode card.
 // Writes <prefix>-drawer-<table>-<w>-<scheme>.png, <prefix>-bands-<wide>-<w>-<scheme>.png, <prefix>-modal-<wide>-<w>-
 // <scheme>.png (wide viewports only: phones keep the banded drawer, no Expand), <prefix>-diagram-<w>-<scheme>.png and,
-// at the first width, <prefix>-diagram-tip-<w>-<scheme>.png (a sizing tile's tooltip). Prints the checks as JSON; exit 0
-// when all pass. playwright-core comes from ~/.local/share/system-design-skills/node_modules.
+// at the first width, <prefix>-diagram-tip-<w>-<scheme>.png (a sizing tile's tooltip under the pointer),
+// <prefix>-diagram-focus-<w>-<scheme>.png (the hover card of a focused table card, with every sizing line) and
+// <prefix>-diagram-touch-<w>-<scheme>.png (a tapped tile on a touch screen). The card checks: three tiles or the
+// compact card (no strip), nothing clipped, no name, column name, type, value or delta cut, and at widths of 1000 px and up type of at least 11 px for
+// column names and tile numbers and 10 px for every label (at phone widths the drawing is scaled to fit the column).
+// Prints the checks as JSON; exit 0 when all pass. playwright-core comes from ~/.local/share/system-design-skills/node_modules.
 import { createRequire } from "node:module";
 import { mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -162,13 +166,32 @@ try {
         const cards = await page.evaluate((sel) => {
           const f = document.querySelector(sel);
           const ns = [...f.querySelectorAll(".tnode")];
+          const px = (e) => parseFloat(getComputedStyle(e).fontSize);
+          const min = (n, q) => Math.min(...[...n.querySelectorAll(q)].map(px), 99);
           return ns.map((n) => {
-            const r = n.getBoundingClientRect(), tiles = n.querySelectorAll(".tn-tile");
-            const clipped = [...n.querySelectorAll(".tn-col, .tn-head, .tn-strip")].some((e) => e.getBoundingClientRect().bottom > r.bottom + 0.5);
-            return { table: n.dataset.table, tiles: tiles.length, cols: n.querySelectorAll(".tn-col").length, keys: n.querySelectorAll(".tn-col.key").length, clipped, focusable: n.tabIndex >= 0 };
+            const r = n.getBoundingClientRect(), tiles = n.querySelectorAll(".tn-tile"), inn = n.querySelector(".tn-in");
+            const clipped = [...n.querySelectorAll(".tn-col, .tn-head, .tn-strip, .tn-more")].some((e) => e.getBoundingClientRect().bottom > r.bottom + 0.5)
+              || inn.scrollHeight > inn.clientHeight + 1;
+            // natural width: the element laid out alone at max-content (an ellipsis cut by a fraction of a pixel counts)
+            const natural = (e) => { const s = e.getAttribute("style"); e.style.cssText += ";flex:none;max-width:none;width:max-content"; const w = e.getBoundingClientRect().width; if (s === null) e.removeAttribute("style"); else e.setAttribute("style", s); return w; };
+            const cut = [...n.querySelectorAll(".tn-name, .tn-d, .tn-v, .tn-cn, .tn-ty")].filter((e) => natural(e) > e.getBoundingClientRect().width + 0.25
+              || e.getBoundingClientRect().right > (e.closest(".tn-tile") || inn).getBoundingClientRect().right + 0.5).map((e) => e.textContent);
+            return {
+              table: n.dataset.table, compact: n.classList.contains("compact"), tiles: tiles.length, cols: n.querySelectorAll(".tn-col").length,
+              keys: n.querySelectorAll(".tn-col.tn-key").length, clipped, cut, focusable: n.tabIndex >= 0,
+              described: !!document.getElementById(n.getAttribute("aria-describedby") || "-")?.textContent,
+              text: +min(n, ".tn-cn, .tn-v:not(.none)").toFixed(2),
+              label: +min(n, ".tn-name, .tn-chip, .tn-desc, .tn-hidden, .tn-k, .tn-ref, .tn-ty, .tn-tag, .tn-more, .tn-l, .tn-u, .tn-v.none, .tn-d").toFixed(2),
+            };
           });
         }, figSel);
-        check(`diagram cards (${tag})`, cards.length > 0 && cards.every((c) => c.tiles === 4 && !c.clipped && c.focusable), JSON.stringify(cards));
+        const shapeOk = (c) => (c.compact ? c.tiles === 0 : c.tiles === 3) && !c.clipped && !c.cut.length && c.focusable && c.described;
+        check(`diagram cards: three tiles or compact, nothing clipped or cut, focusable, described (${tag})`,
+          cards.length > 0 && cards.every(shapeOk), JSON.stringify(cards.map(({ table, compact, tiles, cols, clipped, cut }) => ({ table, compact, tiles, cols, clipped, cut }))));
+        if (width >= 1000) {
+          check(`diagram cards: names and numbers at least 11 px, labels at least 10 px (${tag})`,
+            cards.every((c) => c.text >= 11 - 0.01 && c.label >= 10 - 0.01), JSON.stringify(cards.map(({ table, text, label }) => ({ table, text, label }))));
+        }
         p = join(outDir, `${prefix}-diagram-${tag}.png`);
         await fig.screenshot({ path: p }); results.shots.push(p);
         if (width === widths[0]) {
@@ -188,6 +211,52 @@ try {
           const box = await fig.boundingBox();
           p = join(outDir, `${prefix}-diagram-tip-${tag}.png`);
           await page.screenshot({ path: p, clip: { x: box.x, y: box.y, width: box.width, height: Math.min(box.height + 160, 2000) } }); results.shots.push(p);
+          await page.mouse.move(2, 2);
+          await page.waitForTimeout(200);
+
+          // keyboard: a focused card's hover card holds every sizing line (rows, cols, cost, writes)
+          const focusCard = page.locator(`${figSel} .tnode:not(.compact)`).first();
+          await focusCard.focus();
+          await page.waitForTimeout(300);
+          const pinned = await page.evaluate(() => {
+            const pop = document.querySelector(".hs-pop.show.has-sizing");
+            return pop ? { tiles: pop.querySelectorAll(".hs-tile").length, text: pop.textContent } : null;
+          });
+          check(`focused card shows its sizing lines in the hover card (${tag})`,
+            !!pinned && pinned.tiles >= 4 && /After this design/.test(pinned.text), pinned ? `${pinned.tiles} lines: ${pinned.text.slice(0, 140)}` : "no hover card");
+          p = join(outDir, `${prefix}-diagram-focus-${tag}.png`);
+          await page.screenshot({ path: p, clip: { x: box.x, y: box.y, width: box.width, height: Math.min(box.height + 200, 2000) } }); results.shots.push(p);
+          await page.evaluate(() => document.activeElement?.blur());
+          await page.mouse.move(2, 2);
+          await page.waitForTimeout(200);
+
+          // touch: a tap on a tile toggles its tooltip and does not open the drawer; a tap elsewhere hides it
+          const tctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 2, colorScheme: scheme, reducedMotion: "reduce", hasTouch: true });
+          const tp = await tctx.newPage();
+          tp.on("pageerror", (e) => errors.push(String(e)));
+          await tp.goto(url, { waitUntil: "load" });
+          await tp.evaluate(async () => { document.querySelectorAll("img").forEach((i) => { i.loading = "eager"; }); await document.fonts?.ready; });
+          const tfig = tp.locator(figSel).first();
+          await tfig.scrollIntoViewIfNeeded();
+          const ttile = tp.locator(`${figSel} .tnode .tn-tile:not(.k-cols)`).nth(pick);
+          await ttile.tap();
+          await tp.waitForTimeout(300);
+          const tapped = await tp.evaluate(() => ({ tip: document.querySelector(".tn-tip.show")?.textContent || "", drawer: !!document.querySelector("dialog.drawer[open]") }));
+          const tbox = await tfig.boundingBox();
+          p = join(outDir, `${prefix}-diagram-touch-${tag}.png`);
+          await tp.screenshot({ path: p, clip: { x: tbox.x, y: tbox.y, width: tbox.width, height: Math.min(tbox.height + 160, 2000) } }); results.shots.push(p);
+          await ttile.tap();
+          await tp.waitForTimeout(300);
+          const again = await tp.evaluate(() => !!document.querySelector(".tn-tip.show"));
+          await ttile.tap();
+          await tp.waitForTimeout(200);
+          await tp.locator("body").tap({ position: { x: 4, y: 4 } });
+          await tp.waitForTimeout(300);
+          const away = await tp.evaluate(() => !!document.querySelector(".tn-tip.show"));
+          check(`touch: a tap on a tile shows its tooltip, a second tap or a tap elsewhere hides it, the drawer stays shut (${tag})`,
+            tapped.tip.length > 10 && !tapped.drawer && !again && !away, JSON.stringify({ tip: tapped.tip.slice(0, 80), drawer: tapped.drawer, again, away }));
+          await tctx.close();
+
           await page.mouse.move(2, 2);
           const card = page.locator(`${figSel} .tnode`).first();
           await card.click({ position: { x: 20, y: 12 } });

@@ -112,7 +112,7 @@ function Fig({ n, base }: { n: Node; base: string }) {
       <div className="view">
         <div className="stage">
           <img src={base + n.src} alt={n.alt} width={n.width || undefined} height={n.height || undefined} />
-          {(n.hotspots || []).map((h: Hotspot, i: number) => card(h) ? <TableNode key={i} h={h} t={card(h)!} natW={natW} natH={natH} /> : (
+          {(n.hotspots || []).map((h: Hotspot, i: number) => card(h) ? <TableNode key={i} h={h} t={card(h)!} natW={natW} natH={natH} idBase={n.id} /> : (
             <a key={i} className={cx("hs", h.table && "has-table", h.image && "has-image")} href={h.href || (h.table ? `#${h.table}` : undefined)}
               style={{ left: `${h.x}%`, top: `${h.y}%`, width: `${h.w}%`, height: `${h.h}%` }}
               data-hs="" data-label={h.label} data-note={h.note || undefined} data-table={h.table || undefined}

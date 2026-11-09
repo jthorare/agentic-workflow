@@ -26,7 +26,7 @@ export function Diagram({ node: n }: { node: Node }) {
           <img src={n.src} alt={n.alt} width={n.width || undefined} height={n.height || undefined} loading="lazy" decoding="async" />
           {(n.hotspots || []).map((h: Hotspot, i: number) => {
             const t = card(h);
-            return t ? <TableNode h={h} t={t} natW={natW} natH={natH} key={i} /> : <HotspotA h={h} key={i} />;
+            return t ? <TableNode h={h} t={t} natW={natW} natH={natH} idBase={n.id} key={i} /> : <HotspotA h={h} key={i} />;
           })}
         </div>
       </div>

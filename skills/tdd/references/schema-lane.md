@@ -31,7 +31,7 @@ tables to `content.json` as `schema[]`. A box whose `table` has no file is a war
 | `sample_rows[]` | a few rows keyed by column name | synthetic and shaped like the DDL unless a reviewed, scrubbed export says otherwise; never personal data |
 | `sample_source` | where the rows came from | e.g. "synthetic, shaped like the DDL; not production data" |
 | `measured{key}` | `{value, unit, source, date, note?, label?}` | recorded facts only (below) |
-| `measured.rows`, `measured.writes` | production row count and write rate | the diagram card's rows and writes tiles show them |
+| `measured.rows`, `measured.writes` | production row count and write rate | the diagram card's rows tile shows the row count; writes is in the card's hover detail |
 | `measured.cost` | optional: what the table costs in production (storage USD per month, its share of the database bill) | from a billing export or cost dashboard, with `source` and `date`; the card's cost tile shows it, `expected.cost` beside it |
 | `measured.columns` | optional: the live table's column count, when the file lists only the columns the design names | the card's cols tile shows it; without it the tile counts the file's columns (dropped ones left out) |
 | `expected{key}` | `{value?, unit?, note, label?}` | the design's own reasoning, with the basis quoted in `note` |
@@ -93,24 +93,35 @@ too. Esc, the Close button and a click on the scrim close it; Close takes focus 
 Every diagram box whose `table` has a schema file is drawn as that table's card (`app/src/components/TableNode.tsx`),
 positioned exactly over the box (the SVG box stays underneath, covered) and server-rendered, so it reads the same with
 JavaScript off. The card is the hotspot: hover shows the hotspot card, a click opens the drawer, Tab reaches it.
+Its colours are the theme tokens, so it is light in the light theme and dark in the dark one; the box's tone (green,
+grey, blue, amber, red, violet) tints its frame and head.
 
 - Head: the table name, the state chip, and the text after " · " in the box's label.
 - Columns: primary and foreign keys first and set larger, badged `PK` / `FK`, with `→ table` when the column's note
   (`→ name`), type (`REFERENCES name`) or an `indexes[]` line (`FOREIGN KEY … (cols) → name`, `PRIMARY KEY (cols)`)
   names one; then changed columns in their change colours with a `new` / `changed` / `dropped` tag (not in a new
   table, where every column is new); then the rest, as many as the box holds, in table order, and "+N more columns".
-- Sizing strip, on every card: four tiles, rows, cols, writes and cost. Each shows an icon and label, the production
-  value from `measured.rows`, `measured.columns` (else the file's column count), `measured.writes`, `measured.cost`,
-  and beside it the expected change after the design from `expected.rows`, the column change flags (`+new −dropped`),
-  `expected.writes`, `expected.cost`. The change is red when it rises, green when it falls or stays, grey when the
-  file states no direction: a leading `+` or `−`, a word (no change, none, grows, fewer…), a comparison with the
-  measured number in the same unit, or, for a new table, any figure (a rise from nothing). An absent value reads "not
-  measured" or "not estimated" in muted type, never a zero. Hovering a tile shows the source and date of the value
-  and the basis note of the change (a native `title` tooltip without JavaScript).
-- Size: the card's type is about 11 px when the page fits the drawing to a 1440 px window, and grows with Actual size.
-  The head and the strip need about 7.3 of those ems of box height; each column line about 1.4. Draw table boxes tall
-  enough for their keys (a box of about 200 drawing px in a 2400 px wide drawing shows one key line): a shorter box
-  gets smaller type, and its column count moves into the head.
+- Sizing strip, on every card that has room: three tiles, rows, cols and cost. Each shows an icon and label, the
+  production value from `measured.rows`, `measured.columns` (else the file's column count), `measured.cost`, and under
+  it the expected change after the design from `expected.rows`, the column change flags (`+new −dropped`),
+  `expected.cost`, as a pill holding the value only (the unit and the words are in the detail), never cut: a long
+  value wraps to a second line. The change is red when it rises, green when it falls or stays, grey when the file
+  states no direction: a leading `+` or `−`, a word (no change, none, grows, fewer…), a comparison with the measured
+  number in the same unit, or, for a new table, any figure (a rise from nothing). An absent value reads "not measured"
+  or "not estimated" in muted type, never a zero. Writes (`measured.writes`, `expected.writes`) is in the detail only.
+- Detail, by every input: pointing at a tile shows its lines (the value with its unit, the source and date, the change
+  and its basis note); a focused card's hover card lists the lines of all four (rows, cols, cost, writes), so the
+  keyboard reads them; on a touch screen a tap on a tile shows its lines and a second tap, or a tap elsewhere, hides
+  them (a tap elsewhere on the card opens the drawer). The card's `aria-describedby` names a hidden text with every
+  line, and without JavaScript each tile keeps a native `title`.
+- Size: column names and tile numbers are about 11.5 to 12 px when the page fits the drawing to a 1440 px window
+  (keys 1.15 times that, labels at least 10 px), and grow with Actual size. A box that cannot hold a column line at
+  that size may go down to 11 px; below that the card drops column lines (the count moves into the head as "+N cols"),
+  then its strip, and keeps its size: a compact card shows the name, the chip, the key lines that fit and the count.
+  Only a box too short for the head itself shrinks the type. The head and the strip need about 7.6 ems of box height,
+  each column line about 1.45 (a key line 1.6). Draw table boxes tall enough for their keys and the strip (a box of
+  about 280 drawing px in a 2400 px wide drawing shows three key lines and the strip); at phone width the whole
+  drawing is scaled to the column, so read it with Actual size.
 
 ## Proof and preview
 
@@ -129,7 +140,9 @@ words, zero hydration and console errors. `--extra` previews a schema file that 
 
 `node harness/shoot-d26.mjs <build>/tdd.html <png dir>` checks the built page itself: the one-row head, the bands of
 the widest table, the Expand view (95% of the page, one band, Esc and Close return to the drawer), the table cards
-(four tiles each, nothing clipped, focusable, a tile tooltip, a click opens the drawer), and writes
-`d26-{drawer,bands,modal,diagram}-…png`.
+(three tiles or a compact card, nothing clipped, no delta or name cut, focusable and described; at 1440 names and
+numbers of at least 11 px and labels of at least 10 px; a tile tooltip under the pointer; a focused card's hover card
+with every sizing line; a tap on a tile toggles its lines on a touch screen without opening the drawer; a click opens
+the drawer), and writes `d26-{drawer,bands,modal,diagram,diagram-tip,diagram-focus,diagram-touch}-…png`.
 
 The drawer's data preview, column statistics and the in-page chat are described in `references/data-view.md` (D14).

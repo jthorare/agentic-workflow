@@ -1,15 +1,19 @@
 // TableNode (D26): an HTML card laid exactly over a schema-diagram box whose hotspot carries a `table` with a card in
 // content.schema. The SVG box stays underneath, covered. The card is the hotspot itself (`a.hs.has-table.tnode`, the
-// same data-hs / data-table attributes), so hover still shows the hotspot card, a click still opens the drawer, and it
-// is keyboard focusable. It shows the table name and state chip, a column list with primary and foreign keys set
-// larger and badged (PK / FK, "→ table" when the note, type or a FOREIGN KEY line names one), changed columns in their
-// change colours, and the standard sizing strip: rows, columns, writes and cost tiles, each with the production value
-// (or "not measured") and the expected change after the design (or "not estimated") as a green, red or neutral delta.
+// same data-hs / data-table attributes), so hover shows the hotspot card, a click opens the drawer, and Tab reaches it.
+// It shows the table name and state chip, a column list with primary and foreign keys set larger and badged (PK / FK,
+// "→ table" when the note, type or a FOREIGN KEY line names one), changed columns in their change colours, and the
+// standard sizing strip: rows, columns and cost tiles, each with the production value (or "not measured") and the
+// expected change after the design (or "not estimated") as a red, green or grey pill showing the value only. Every
+// tile's full text (and writes, which has no tile) is in [data-tip] for the tile tooltip and the hotspot card, and in a
+// visually hidden description the card's aria-describedby names.
 //
-// Everything scales with the drawing: the card is a size container and its text is sized in cqw so that 1em is 16 px
-// of the drawing's own coordinates (the diagram's natural width), at fit and at "Actual size" alike. How many column
-// lines fit is worked out here, in drawing px, from the box height, so the server render and the client agree and the
-// card reads the same with JavaScript off. Pure render: no Date, random or window.
+// Everything scales with the drawing: the card is a size container and its em is set in cqw (see cardLayout). How many
+// column lines fit is worked out here, in em of the box, so the server render and the client agree and the card reads
+// the same with JavaScript off. Text is about 11.5 to 12 px at a 1440 window (cardLayout); a box may go down to 11 px
+// to keep one column line, then drops column lines, then the strip (a compact card: the name, its keys and the count;
+// the sizing stays in the hover card), and shrinks type only when it is too short for its head. Pure render: no Date,
+// random or window.
 import type { CSSProperties, ReactNode } from "react";
 import { cx } from "../lib/raw";
 import type { Column, Hotspot, Measure, SchemaTable } from "../types";
@@ -100,11 +104,13 @@ function deltaText(v: string, dir: Dir) {
 const TILES: { key: TileKey; label: string; title: string }[] = [
   { key: "rows", label: "rows", title: "Rows in production" },
   { key: "cols", label: "cols", title: "Columns" },
-  { key: "writes", label: "writes", title: "Writes" },
   { key: "cost", label: "cost", title: "Cost" },
+  { key: "writes", label: "writes", title: "Writes" },
 ];
+/** The strip's tiles; writes is in the card's detail (tooltip list, hover card, description) only. */
+const STRIP: TileKey[] = ["rows", "cols", "cost"];
 
-/** The four standard sizing tiles for a table card. Values come only from the card: measured.rows / writes / cost /
+/** The sizing facts for a table card: rows, cols, cost (the strip) and writes. Values come only from the card: measured.rows / writes / cost /
  *  columns, the column list, expected.rows / writes / cost. Absent values are flagged missing, never zero. */
 export function sizing(t: SchemaTable): Tile[] {
   const cols = (t.columns || []) as Column[];
@@ -162,25 +168,62 @@ export function tipText(t: SchemaTable, x: Tile): string {
 
 /* ------------------------------------------------------------------------------------------------ fitting */
 
-// Heights in em (schema.css sizes .tnode in em to match): the head band and its gap (2 + .3), a column line (1.4), a
-// key line (1.4 at 1.1em), the "+N more" line (1.5 at .8em), and FIXED: head, the strip (.3 gap + a three-row tile of
-// about 3.8), the bottom padding with the frame's two borders (.4 + 2 × .125) and a small safety margin.
-const COL_EM = 1.4, KEY_EM = 1.54, MORE_EM = 1.2, FIXED_EM = 7.25;
-// 1em is sized so that it shows at about 11 px when the page fits the drawing to a 1300 px column (1440 viewport):
-// TEXT_PX × natural width / 1300 drawing px, kept between 12 and 28; a card whose box is too short or too narrow for
-// its head, strip and four tiles gets a smaller em of its own.
-const TEXT_PX = 11, FIT_COLUMN_PX = 1300, EM_MIN = 12, EM_MAX = 28, WIDTH_EM = 26;
+// Heights in em of the card (schema.css sizes .tnode in em to match): the head band and its gap (1.95 + .3), a column
+// line (1.45), a key line (1.4 at 1.15em), the "+N more" line (1.45 at .91em), the strip (.3 gap + a tile of .4
+// padding, .125 border, label 1.18, value 1.25, pill 1.4), a second pill line when a delta wraps, the bottom padding
+// with the frame's two borders (.4 + 2 × .125), and a safety margin.
+const HEAD_EM = 2.25, COL_EM = 1.45, KEY_EM = 1.61, MORE_EM = 1.32, STRIP_EM = 4.65, WRAP_EM = 1.25, PAD_EM = 0.65, SAFE_EM = 0.1;
+// A compact card (no strip) keeps .2em of bottom padding instead of .4.
+const PAD_COMPACT_EM = 0.45;
+// 1em is about 11.5 to 12 px when the page fits the drawing to its 1250 to 1300 px column at a 1440 window (a figure in a
+// folded section is the narrower one): TEXT_PX × natural width
+// / 1250 drawing px, kept between 12 and 32. Column names and tile numbers are 1em, keys 1.15em, labels .91em (10.5 px).
+// A card may go down to MIN_PX (11 px) to keep one column line; below that it drops lines, then its strip, never size.
+const TEXT_PX = 11.5, MIN_PX = 11, FIT_COLUMN_PX = 1250, EM_MIN = 12, EM_MAX = 32;
+// The narrowest card that holds three tiles at full size, and the narrowest compact card (name, chip, count), in em.
+const WIDTH_EM = 25, COMPACT_WIDTH_EM = 18;
 
-/** The card's em in drawing px. */
-export function cardEm(natW: number, boxW: number, boxH: number) {
-  const em = Math.min(EM_MAX, Math.max(EM_MIN, (TEXT_PX * natW) / FIT_COLUMN_PX));
-  return Math.max(4, Math.min(em, boxH ? boxH / FIXED_EM : em, boxW / WIDTH_EM));
+/** Rough rendered width of a delta pill's text in em of the card (digits and Inter at 650 run about 0.6em a glyph). */
+function pillEm(x: Tile) {
+  if (x.next.missing) return 0.91 * 0.56 * "not estimated".length;
+  return 0.6 * [...x.next.value].length + 0.78 + 0.25 + 0.9;
+}
+
+export interface CardLayout { em: number; strip: boolean; wrap: boolean; shown: Line[]; hidden: number; moreLine: boolean }
+
+/** The card's em (drawing px), whether it keeps its strip, whether a delta wraps to two lines, and its column lines.
+ *  Order of preference: the strip with at least one column line at the target size, then at the 11 px floor; then the
+ *  compact card (no strip: name, chip, key lines, "+N more") at the target size, then at the floor; only a box too
+ *  small for the head itself shrinks the text below the floor. */
+export function cardLayout(t: SchemaTable, keys: Map<string, ColKey>, tiles: Tile[], natW: number, boxW: number, boxH: number): CardLayout {
+  const target = Math.min(EM_MAX, Math.max(EM_MIN, (TEXT_PX * natW) / FIT_COLUMN_PX));
+  const floor = (target * MIN_PX) / TEXT_PX;
+  const noCols = !(t.columns || []).length;
+  const hOf = (em: number) => (boxH ? boxH / em : 99);
+  const sizes = (cap: number) => (cap >= target ? [target, floor] : cap >= floor - 1e-9 ? [cap, floor] : []);
+  for (const em of sizes(boxW / WIDTH_EM)) {
+    const tileEm = (boxW / em - 1.3 - 0.25 - 2 * 0.3) / 3 - 0.68 - 0.125;
+    const wrap = tiles.filter((x) => STRIP.includes(x.key)).some((x) => pillEm(x) > tileEm);
+    const room = hOf(em) - HEAD_EM - STRIP_EM - (wrap ? WRAP_EM : 0) - PAD_EM - SAFE_EM;
+    const full = fitColumns(t, keys, room);
+    if (full.shown.length || (noCols && room >= 0)) return { em, strip: true, wrap, ...full };
+  }
+  for (const em of sizes(boxW / COMPACT_WIDTH_EM)) {
+    const lay = fitColumns(t, keys, hOf(em) - HEAD_EM - PAD_COMPACT_EM - SAFE_EM);
+    if (lay.shown.length) return { em, strip: false, wrap: false, ...lay };
+  }
+  // The head alone: at the target size when it fits, else shrunk to the box.
+  const headOnly = HEAD_EM + PAD_COMPACT_EM + SAFE_EM;
+  let em = Math.min(target, boxW / COMPACT_WIDTH_EM);
+  if (boxH && boxH / em < headOnly) em = boxH / headOnly;
+  em = Math.max(4, em);
+  return { em, strip: false, wrap: false, ...fitColumns(t, keys, hOf(em) - HEAD_EM - PAD_COMPACT_EM - SAFE_EM) };
 }
 
 interface Line { c: Column; i: number; key?: ColKey; mark: string }
 
-/** The column lines that fit `availEm` (keys first, then changed columns, then the rest, shown in table order), and
- *  whether the "+N more" line fits under them (else the count goes in the head). */
+/** The column lines that fit `availEm` (keys first, then changed columns, then the rest, shown in table order). The
+ *  "+N more" line is drawn only when it costs no column line; otherwise the count goes in the head. */
 export function fitColumns(t: SchemaTable, keys: Map<string, ColKey>, availEm: number) {
   const allNew = t.state === "new";
   const lines: Line[] = (t.columns || []).map((c, i) => {
@@ -197,12 +240,9 @@ export function fitColumns(t: SchemaTable, keys: Map<string, ColKey>, availEm: n
     for (const l of ranked) { if (used + h(l) > room + 1e-9) break; out.push(l); used += h(l); }
     return out;
   };
-  let shown = take(availEm);
+  const shown = take(availEm);
   let moreLine = false;
-  if (shown.length < lines.length) {
-    const withMore = take(availEm - MORE_EM);
-    if (withMore.length) { shown = withMore; moreLine = true; }
-  }
+  if (shown.length < lines.length && take(availEm - MORE_EM).length === shown.length && shown.length) moreLine = true;
   shown.sort((a, b) => a.i - b.i);
   return { shown, hidden: lines.length - shown.length, moreLine };
 }
@@ -227,37 +267,35 @@ function DirIcon({ dir }: { dir: Dir }) {
 
 const TONE = /\b(green|grey|gray|blue|amber|red|violet)\b/;
 
-/** The card for one hotspot box. `natW` and `natH` are the drawing's own size (the diagram's width and height). */
-export function TableNode({ h, t, natW, natH }: { h: Hotspot; t: SchemaTable; natW: number; natH: number }) {
+/** The card for one hotspot box. `natW` and `natH` are the drawing's own size (the diagram's width and height);
+ *  `idBase` (the diagram's id) keeps the description's id unique when a table is in more than one diagram. */
+export function TableNode({ h, t, natW, natH, idBase }: { h: Hotspot; t: SchemaTable; natW: number; natH: number; idBase?: string }) {
   const boxW = Math.max(1, (h.w / 100) * natW);
   const boxH = Math.max(0, (h.h / 100) * natH);
-  const em = cardEm(natW, boxW, boxH);
-  return <TableCardNode h={h} t={t} em={em} boxW={boxW} availEm={boxH / em - FIXED_EM} />;
-}
-
-function TableCardNode({ h, t, em, boxW, availEm }: { h: Hotspot; t: SchemaTable; em: number; boxW: number; availEm: number }) {
   const keys = keyCols(t);
-  const { shown, hidden, moreLine } = fitColumns(t, keys, availEm);
   const tiles = sizing(t);
+  const lay = cardLayout(t, keys, tiles, natW, boxW, boxH);
   const tone = (TONE.exec(h.tone || "")?.[1] || (t.state === "new" ? "green" : "grey")).replace("gray", "grey");
   const desc = (h.label || "").split(" · ").slice(1).join(" · ");
   const chip = t.state === "existing" ? "existing" : t.state;
-  const summary = tiles.map((x) => `${x.label} ${x.now.missing ? "not measured" : [x.now.value, x.now.unit].filter(Boolean).join(" ")}, after the design ${x.next.missing ? "not estimated" : [x.next.value, x.next.unit].filter(Boolean).join(" ")}`).join("; ");
-  const style = { left: `${h.x}%`, top: `${h.y}%`, width: `${h.w}%`, height: `${h.h}%`, "--fs": ((em * 100) / boxW).toFixed(4) } as CSSProperties;
+  const tips = tiles.map((x) => ({ x, tip: tipText(t, x) }));
+  const did = `${idBase || "dg"}-${t.id}-sizing`;
+  const style = { left: `${h.x}%`, top: `${h.y}%`, width: `${h.w}%`, height: `${h.h}%`, "--fs": ((lay.em * 100) / boxW).toFixed(4) } as CSSProperties;
   return (
-    <a className={cx("hs has-table tnode", `tone-${tone}`, /\bdashed\b/.test(h.tone || "") && "dashed", `st-${t.state}`)} href={`#${t.id}`} style={style}
+    <a className={cx("hs has-table tnode", `tone-${tone}`, /\bdashed\b/.test(h.tone || "") && "dashed", `st-${t.state}`, !lay.strip && "compact")}
+      href={`#${t.id}`} style={style}
       data-hs="" data-label={h.label} data-note={h.note || undefined} data-table={t.id} data-tone={h.tone || undefined}
-      aria-label={`${t.table}, ${t.state} table, ${(t.columns || []).length} columns. ${summary}. Open table details`}>
+      aria-label={`${t.table}, ${t.state} table, ${(t.columns || []).length} columns. Open table details`} aria-describedby={did}>
       <span className="tn-in">
         <span className="tn-head">
           <b className="tn-name">{t.table}</b>
           <span className={cx("tn-chip", chip)}>{chip}</span>
           {desc ? <span className="tn-desc">{desc}</span> : null}
-          {hidden && !moreLine ? <span className="tn-hidden">+{hidden} cols</span> : null}
+          {lay.hidden && !lay.moreLine ? <span className="tn-hidden">+{lay.hidden} {lay.hidden === 1 ? "col" : "cols"}</span> : null}
         </span>
         <span className="tn-cols">
-          {shown.map(({ c, key, mark }) => (
-            <span key={c.name} className={cx("tn-col", key && "key", mark && `ch-${mark}`)}>
+          {lay.shown.map(({ c, key, mark }) => (
+            <span key={c.name} className={cx("tn-col", key && "tn-key", mark && `ch-${mark}`)}>
               {key ? <i className={cx("tn-k", key.pk ? "pk" : "fk")}>{key.pk ? "PK" : "FK"}</i> : null}
               {key?.pk && key.fk ? <i className="tn-k fk">FK</i> : null}
               <code className="tn-cn">{c.name}</code>
@@ -266,12 +304,11 @@ function TableCardNode({ h, t, em, boxW, availEm }: { h: Hotspot; t: SchemaTable
               <span className="tn-ty">{baseType(c.type)}</span>
             </span>
           ))}
-          {moreLine ? <span className="tn-more">+{hidden} more {hidden === 1 ? "column" : "columns"} · open the table for all</span> : null}
+          {lay.moreLine ? <span className="tn-more">+{lay.hidden} more {lay.hidden === 1 ? "column" : "columns"} · open the table for all</span> : null}
         </span>
-        <span className="tn-strip">
-          {tiles.map((x) => {
-            const tip = tipText(t, x);
-            return (
+        {lay.strip ? (
+          <span className={cx("tn-strip", lay.wrap && "wrap")}>
+            {tips.filter(({ x }) => STRIP.includes(x.key)).map(({ x, tip }) => (
               <span key={x.key} className={cx("tn-tile", `k-${x.key}`)} data-tip={tip} title={tip}>
                 <span className="tn-l"><Icon k={x.key} />{x.label}</span>
                 <span className="tn-t1">
@@ -280,16 +317,15 @@ function TableCardNode({ h, t, em, boxW, availEm }: { h: Hotspot; t: SchemaTable
                 </span>
                 <span className="tn-t2">
                   {x.next.missing ? <span className="tn-d none">not estimated</span> : (
-                    <span className={cx("tn-d", x.next.dir)}>
-                      <DirIcon dir={x.next.dir} />
-                      <b>{x.next.value}</b>{x.next.unit ? <span className="tn-du">{x.next.unit}</span> : null}
-                    </span>
+                    <span className={cx("tn-d", x.next.dir)}><DirIcon dir={x.next.dir} /><b>{x.next.value}</b></span>
                   )}
                 </span>
               </span>
-            );
-          })}
-        </span>
+            ))}
+          </span>
+        ) : null}
+        {tips.filter(({ x }) => !lay.strip || !STRIP.includes(x.key)).map(({ x, tip }) => <span key={x.key} className="tn-extra" hidden data-tip={tip} />)}
+        <span className="sr-only" id={did}>{tips.map(({ tip }) => tip.replace(/\n/g, ". ")).join(". ")}</span>
       </span>
     </a>
   );

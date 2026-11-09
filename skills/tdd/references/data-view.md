@@ -32,7 +32,7 @@ what the house view takes from it, the `meta.dataSources` shape, and the capabil
 | Show column stats (header mini graphs) | a stats row under the header, on by default: filled meter, then a histogram (number, date, time) or a frequency bar (everything else); a toggle hides it |
 | Columns tab + inspector statistics | **Columns**: name, D7 chip, note, type (or "not stated"), struck-through `was`, nulls %, distinct count, min/max (shortest/longest for text and JSON), the same mini graph |
 | Table Details + Query Details | **Details**: the summary, the D7 measured and expected load cards ("not measured" / "not estimated" when absent), DDL, indexes, notes, where the table appears on the page |
-| Table Details row count and size | the schema diagram's **table cards** (D26): a sizing strip of rows, cols, writes and cost tiles from `measured.rows`, `measured.columns`, `measured.writes`, `measured.cost`, each with the expected change after the design (red rises, green falls or stays); details in schema-lane.md |
+| Table Details row count and size | the schema diagram's **table cards** (D26): a sizing strip of rows, cols and cost tiles from `measured.rows`, `measured.columns`, `measured.cost`, each with the expected change after the design (red rises, green falls or stays), and writes in the card's detail (pointer, keyboard focus, tap); details in schema-lane.md |
 | Download results | not offered: the page contract forbids download links; Copy TSV covers small sample sets |
 Every statistic is computed at render from `sample_rows`, deterministically, and labelled "from sample rows"; none is a
 measurement of the real table. Glyphs (house choice): `#` number, `Aa` text, `{}` JSON, `[]` array, `id` uuid,
@@ -46,7 +46,8 @@ sideways inside its band), Expand is not offered, and the Columns tab stacks eac
 per month or its share of the database bill, from a billing export or cost dashboard) and `measured.columns` (the live
 table's column count when the file lists only the columns the design names) each take `{value, unit, source, date,
 note?}`; `expected.rows`, `expected.writes`, `expected.cost` take `{value?, unit?, note}`. The drawer's Details tab
-lists them with the other load keys; the diagram's table card turns them into its four tiles. Neither ever computes a
+lists them with the other load keys; the diagram's table card turns rows, columns and cost into its three tiles and
+puts writes in its detail. Neither ever computes a
 measurement: an absent key reads "not measured" or "not estimated".
 
 ## The chat (DataChat.tsx)

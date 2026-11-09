@@ -184,8 +184,10 @@ export function HsPop() {
 
   const d: DOMStringMap = el ? el.dataset : {};
   const href = el?.getAttribute("href") || "";
+  // a table card (D26): every sizing fact its tiles carry, so focus and hover give what a tile tooltip gives
+  const tips = el ? [...el.querySelectorAll<HTMLElement>("[data-tip]")].map((t) => t.dataset.tip || "").filter(Boolean) : [];
   return (
-    <div className={cx("hs-pop", el && "show", d.image && "has-image")} ref={pop}
+    <div className={cx("hs-pop", el && "show", d.image && "has-image", tips.length > 0 && "has-sizing")} ref={pop}
       onPointerEnter={() => { s.current.inside = true; clearTimeout(s.current.hide); }}
       onPointerLeave={() => { s.current.inside = false; bus.emit("hs", { el: null }); }}>
       {el ? (
@@ -193,6 +195,7 @@ export function HsPop() {
           <b>{d.label}</b>
           {d.note ? <span>{d.note}</span> : null}
           {d.image ? <img src={d.image} alt={d.label ? `${d.label}: full image` : ""} /> : null}
+          {tips.length ? <div className="hs-sizing">{tips.map((tip, i) => <div className="hs-tile" key={i}><TipLines text={tip} /></div>)}</div> : null}
           {d.table ? <span className="go">Click the box to open the table</span>
             : href && href !== "#" ? <a className="go" href={href}>Go to it</a> : null}
         </>
@@ -201,44 +204,12 @@ export function HsPop() {
   );
 }
 
-/** The sizing-tile tooltip on schema-diagram table cards (D26): any [data-tip] element under the pointer shows its
- *  lines (title, then "Label: text") at page size beside it, and hides the hotspot card while it shows. The server
- *  render also puts the text in `title` so a page read without JavaScript keeps a native tooltip; it is removed here. */
-export function TipPop() {
-  const pop = useRef<HTMLDivElement>(null);
-  const [el, setEl] = useState<HTMLElement | null>(null);
-  useEffect(() => {
-    document.querySelectorAll<HTMLElement>("[data-tip][title]").forEach((e) => e.removeAttribute("title"));
-    let cur: HTMLElement | null = null, timer = 0;
-    const over = (e: PointerEvent) => {
-      if (e.pointerType === "touch") return;
-      const t = e.target instanceof Element ? (e.target.closest("[data-tip]") as HTMLElement | null) : null;
-      if (t === cur) return;
-      cur = t;
-      clearTimeout(timer);
-      if (t) timer = window.setTimeout(() => { bus.emit("hs", { el: null }); setEl(t); }, 90);
-      else timer = window.setTimeout(() => setEl(null), 90);
-    };
-    const hide = () => { clearTimeout(timer); cur = null; setEl(null); };
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") hide(); };
-    document.addEventListener("pointerover", over);
-    document.addEventListener("keydown", onKey);
-    window.addEventListener("scroll", hide, { passive: true });
-    const offTable = bus.on("table", hide);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener("pointerover", over);
-      document.removeEventListener("keydown", onKey);
-      window.removeEventListener("scroll", hide);
-      offTable();
-    };
-  }, []);
-  useLayoutEffect(() => {
-    if (el && pop.current) place(pop.current, el.getBoundingClientRect(), 6);
-  }, [el]);
-  const lines = (el?.dataset.tip || "").split("\n").filter(Boolean);
+/** A tile's tooltip text as lines: the first is the title, then "Label: text" lines; a trailing "(rises)", "(falls)"
+ *  or "(stays the same)" is coloured. Shared by TipPop and the hotspot card. */
+export function TipLines({ text }: { text: string }) {
+  const lines = text.split("\n").filter(Boolean);
   return (
-    <div className={cx("tn-tip", el && "show")} ref={pop} role="tooltip">
+    <>
       {lines.map((l, i) => {
         if (!i) return <b key={i}>{l}</b>;
         const m = /^([^:]{1,40}):\s(.*)$/.exec(l);
@@ -249,6 +220,66 @@ export function TipPop() {
           <span key={i}><span className="k">{m[1]}:</span> {d ? <>{m[2].slice(0, d.index)}<span className={tone}>({d[1]})</span></> : m[2]}</span>
         );
       })}
+    </>
+  );
+}
+
+/** The sizing-tile tooltip on schema-diagram table cards (D26): a [data-tip] element under the pointer shows its lines
+ *  at page size beside it and hides the hotspot card while it shows; a tap on a tile toggles it (and does not open the
+ *  drawer). Keyboard users get the same lines in the hotspot card when the card has focus. The server render also puts
+ *  the text in `title` so a page read without JavaScript keeps a native tooltip; it is removed here. */
+export function TipPop() {
+  const pop = useRef<HTMLDivElement>(null);
+  const [el, setEl] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    document.querySelectorAll<HTMLElement>("[data-tip][title]").forEach((e) => e.removeAttribute("title"));
+    let cur: HTMLElement | null = null, timer = 0, touch = false;
+    const tipOf = (t: EventTarget | null) => (t instanceof Element ? (t.closest("[data-tip]") as HTMLElement | null) : null);
+    const over = (e: PointerEvent) => {
+      if (e.pointerType === "touch") return;
+      const t = tipOf(e.target);
+      if (t === cur) return;
+      cur = t;
+      clearTimeout(timer);
+      if (t) timer = window.setTimeout(() => { bus.emit("hs", { el: null }); setEl(t); }, 90);
+      else timer = window.setTimeout(() => setEl(null), 90);
+    };
+    const down = (e: PointerEvent) => {
+      touch = e.pointerType === "touch" || e.pointerType === "pen";
+      if (touch && !tipOf(e.target)) { cur = null; setEl(null); }
+    };
+    const click = (e: MouseEvent) => {
+      const t = tipOf(e.target);
+      if (!t || !touch) return;
+      e.preventDefault(); // a tap on a tile reads it; the rest of the card still opens the drawer
+      clearTimeout(timer);
+      cur = cur === t ? null : t;
+      setEl(cur);
+    };
+    const hide = () => { clearTimeout(timer); cur = null; setEl(null); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") hide(); };
+    document.addEventListener("pointerover", over);
+    document.addEventListener("pointerdown", down, true);
+    document.addEventListener("click", click, true);
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("scroll", hide, { passive: true });
+    const offTable = bus.on("table", hide);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("pointerover", over);
+      document.removeEventListener("pointerdown", down, true);
+      document.removeEventListener("click", click, true);
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("scroll", hide);
+      offTable();
+    };
+  }, []);
+  useLayoutEffect(() => {
+    if (el && pop.current) place(pop.current, el.getBoundingClientRect(), 6);
+  }, [el]);
+  return (
+    <div className={cx("tn-tip", el && "show")} ref={pop} role="tooltip">
+      {el ? <TipLines text={el.dataset.tip || ""} /> : null}
     </div>
   );
 }
