@@ -41,9 +41,7 @@ public sealed class AgentLaunchEndedTests
 
     [Fact]
     public async Task A_started_launch_whose_session_still_runs_is_left_to_the_launcher()
-    {
-        Assert.Null(await Guard(LaunchState.Started, new FakeAgentSessions()).Find(Request(), Token));
-    }
+        => Assert.Null(await Guard(LaunchState.Started, new FakeAgentSessions()).Find(Request(), Token));
 
     [Theory]
     [InlineData(null)]
@@ -63,11 +61,11 @@ public sealed class AgentLaunchEndedTests
     {
         public ValueTask<Result<LaunchRow?>> Get(LaunchId launch, CancellationToken cancellationToken)
         {
-            LaunchRow? row = state is { } known
+            var row = state is { } known
                 ? new LaunchRow(launch, A.FirstItemId, Repo: null, LaunchMode.Open, AgentId.From("claude-code"), "engine", known, DateTimeOffset.UnixEpoch, OutcomeAt: null,
                     Code: null, Message: null, Stage: null, SessionId: null, ReportedSessionId: null, TabTitle: null, Viewer: null, Late: false, Attach: null, CatalogSource: null, ArgvHash: null, Ended: null,
                     new LaunchStep(Instance: null, State: null, Attempt: null), Sequence: 1)
-                : null;
+                : (LaunchRow?)null;
             return ValueTask.FromResult(Results.Success(row));
         }
 
