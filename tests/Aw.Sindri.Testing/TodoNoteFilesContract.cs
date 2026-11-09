@@ -132,6 +132,17 @@ public abstract class TodoNoteFilesContract
         Expect.Equal(expected: null, files.Leftover(NotePath));
     }
 
+    /// <summary>A '-new' file beside the tmp file is a write that never finished: Leftover deletes it and never offers it as the leftover.</summary>
+    [Fact]
+    public void Leftover_deletes_an_unfinished_new_file_and_never_offers_it()
+    {
+        var files = Create();
+        Put(Tmp + "-new", "half a wri");
+
+        Expect.Equal(expected: null, files.Leftover(NotePath));
+        Expect.Equal(expected: null, Text(Tmp + "-new"));
+    }
+
     /// <summary>Keep renames a file to its own name plus '.keep-' and a time; the text goes with it and the old name is free.</summary>
     [Fact]
     public void Keep_moves_the_file_to_a_name_that_starts_with_the_old_one_and_keep()
