@@ -137,6 +137,15 @@ public sealed class WorktreeRulesTests
     public void No_pr_branch_changed_since_last_sweep_is_kept() => AssertKept(Judge(NoPr() with { ChangedSinceSweep = true }), "changed since the last sweep");
 
     [Fact, Trait("Lane", "unit")]
+    public void A_tree_changed_since_the_last_full_sweep_names_when_that_sweep_started()
+    {
+        // #2450: a --path pass never moves the marker, so "the last sweep" must say it is the last full one, and when it was.
+        var started = new DateTimeOffset(2026, 11, 8, 11, 43, 7, TimeSpan.Zero);
+
+        AssertKept(Judge(NoPr() with { ChangedSinceSweep = true, SweepStartedAt = started }), "changed since the last full sweep (2026-11-08 11:43Z)");
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void No_pr_branch_outside_the_roots_or_locked_is_kept()
     {
         AssertKept(Judge(NoPr() with { UnderAllowedRoot = false }), "allowed");
