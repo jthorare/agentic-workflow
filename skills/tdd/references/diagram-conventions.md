@@ -62,6 +62,8 @@ A legend word outside that list warns (`DIAG/legend-tone`). Known gap: `draw_dia
 
 A missing `diagrams/<key>.svg` (or `.png`) renders a placeholder and warns; the linter makes it an error (`DIAG/missing`).
 
+A new packet starts with a placeholder for each of the template's three figures: `diagrams/redesign.svg`, `flow.svg` and `schema.svg`, copied from `templates/packet/` by `new_packet.py` (and `tdd new`) and marked "PLACEHOLDER · REPLACE ME", so the page builds, lints and renders clean before anything is drawn. `draw_diagrams.mjs` writes over a placeholder when it draws the `.mmd` of the same key. A placeholder you no longer embed (you renamed the key) is a `FILES/orphan` warning: delete it. Never publish a page that still shows one.
+
 ## 5 · Hotspots
 
 `diagram_hotspots.py` lists every shape of a tldraw SVG export in `diagrams/<key>.hotspots.json`. `build_tdd.py` turns the boxes you fill in into positioned `<a class="hs">` links over the drawing (percent coordinates, so they scale with it), with a hover card (`.hs-pop`: label, note, image, a "go" link). One entry from the reference's schema diagram, with its four fields filled in for illustration:

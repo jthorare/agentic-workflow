@@ -1,10 +1,10 @@
 <!-- House TDD template (tdd skill). Syntax: the docstring of the tdd skill's scripts/build_tdd.py; how to write each part: the tdd skill's SKILL.md. Ticket {{ticket}}; evidence read at {{sha}} ({{sha_date}}), recorded in meta.json. -->
 <!-- Comment rules: build_tdd.py drops a comment only when it sits on ONE line; a comment split over lines renders as text. Never put a comment inside ::::: options, directly inside :::: cols, or before the first #### of a cards box. Delete each guidance comment once its part is written. -->
-<!-- Keep the six sections in this order. Placeholders are in <angle brackets>; replace every one. Reference tokens (R1, Q1, D1, PR 3, ...) must link to an anchor on the page: the compiler links what it can find, and the linter fails the rest. -->
+<!-- Keep the six sections in this order. Placeholders are in <angle brackets>; replace every one. The scaffold also wrote placeholder images marked "PLACEHOLDER · REPLACE ME" (diagrams/redesign.svg, flow.svg and schema.svg; mockups/*.svg) so the page builds and lints clean from the start: the page shows them until you replace each one, so never publish one. Reference tokens (R1, Q1, D1, PR 3, ...) must link to an anchor on the page: the compiler links what it can find, and the linter fails the rest. -->
 
 # {{title}}
 
-<!-- 1 · The redesign. The lead is the finding, not the topic: what changes, for whom, what stays. Then the whole-system diagram, then four cards. The first paragraph of every section is its lead unless the heading says lead: no. -->
+<!-- 1 · The redesign. The lead is the finding, not the topic: what changes, for whom, what stays. Then the whole-system diagram (diagrams/redesign.svg is a placeholder until draw_diagrams.mjs draws diagrams/redesign.mmd over it), then four cards. The first paragraph of every section is its lead unless the heading says lead: no. -->
 ## The redesign {#redesign}
 
 <The finding in two to four sentences: what changes, who it reaches first, and what stays exactly as it is today.>
@@ -27,7 +27,7 @@
 <Who sees it first, with a dated count and where the count came from.>
 :::
 
-<!-- 2 · Front end. One persona box per person and moment ("Role · Moment"): text first ({small}), then the shots, then one today fold with the screen as it is now. Shots are mocks built from the project's real components (references/mock-conventions.md); the quoted title is the caption. shots: cols3 puts three shots in a row; without it the compiler sizes each shot (phone, mid, wide, col). -->
+<!-- 2 · Front end. One persona box per person and moment ("Role · Moment"): text first ({small}), then the shots, then one today fold with the screen as it is now. Shots are mocks built from the project's real components (references/mock-conventions.md); the quoted title is the caption. The four mockups/*.svg files are placeholders: render each state to mockups/<moment>-<state>.png (today's screen: a screenshot saved as mockups/today-<moment>.png, never a mock), point the image line at it and delete the placeholder. shots: cols3 puts three shots in a row; without it the compiler sizes each shot (phone, mid, wide, col). -->
 ## Front end {#frontend; chip: First-pass mocks; lead: no}
 
 ::: persona <Role> · <Moment> {chip: changed; #fe-moment-a; shots: cols3}
@@ -35,14 +35,14 @@
 
 **<State>:** <what the screen shows in that state, and why.> {small}
 
-![<What the shot shows, with the real names and numbers on it>](mockups/moment-a-1.png "<Caption: the state this shot shows>")
+![<What the shot shows, with the real names and numbers on it>](mockups/moment-a-1.svg "<Caption: the state this shot shows>")
 
-![<What the shot shows>](mockups/moment-a-2.png "<Caption>")
+![<What the shot shows>](mockups/moment-a-2.svg "<Caption>")
 
-![<What the shot shows>](mockups/moment-a-3.png "<Caption>")
+![<What the shot shows>](mockups/moment-a-3.svg "<Caption>")
 
 :::: today <What the screen does today, in a few words>
-![<Today's screen, as it is in production>](mockups/today-moment-a.png "Today: <what today's screen does>")
+![<Today's screen, as it is in production>](mockups/today-moment-a.svg "Today: <what today's screen does>")
 ::::
 :::
 
@@ -69,7 +69,7 @@ Requirements from <the PRD, the ticket and the threads, each with the date read>
 | R2 | <The requirement> | Open | <What is still missing, and the open question that decides it (Q1)> |
 | R3 | <The requirement> | Held | <Why it is out of this design, and who agreed> |
 
-<!-- 4 · End-to-end flow. The phases in order, then the technical flow diagram, the schema diagram, and the step-by-step fold with code paths. Code paths are path:line in backticks at the sha in meta.json, shortened with meta.path_aliases (references/evidence-rules.md). -->
+<!-- 4 · End-to-end flow. The phases in order, then the technical flow diagram (diagrams/flow.svg is a placeholder until draw_diagrams.mjs draws diagrams/flow.mmd over it), the schema diagram, and the step-by-step fold with code paths. Code paths are path:line in backticks at the sha in meta.json, shortened with meta.path_aliases (references/evidence-rules.md). -->
 ## End-to-end flow {#flow}
 
 <The flow in two or three sentences: the phases in order, and what each one reads and writes.>
@@ -78,7 +78,7 @@ Requirements from <the PRD, the ticket and the threads, each with the date read>
 [legend: new or changed = new | the engine = engine | proposed = proposed]
 [reading: <What the reader should notice first, such as which step never runs inside a transaction>]
 
-<!-- The schema diagram: one box per table, new tables green. In diagrams/schema.hotspots.json give each table box "table": "<name>" so a click opens that table's card from schema/<name>.json (references/schema-lane.md). -->
+<!-- The schema diagram: one box per table, new tables green (diagrams/schema.svg is a placeholder until draw_diagrams.mjs draws diagrams/schema.mmd over it). In diagrams/schema.hotspots.json give each table box "table": "<name>" so a click opens that table's card from schema/<name>.json (references/schema-lane.md). -->
 [diagram: schema · Schema: <the new and changed tables and what they reference> {#schema}]
 [reading: Arrows point at the referenced table. The SQL, the CHECKs and example rows are in [the schema reference](#schema-sql).]
 
@@ -107,7 +107,7 @@ Requirements from <the PRD, the ticket and the threads, each with the date read>
 ::::
 :::
 
-<!-- 5 · Decisions and open questions. Open questions first (Q-numbers), then what is decided. A D-number is only ever the owner's answer, in the owner's words, with the date; status.md carries the same line. Ask one question at a time; when it is answered, rename Q<n> to the next D-number everywhere in this file and move its card under Decided. -->
+<!-- 5 · Decisions and open questions. Open questions first (Q-numbers), then what is decided. A D-number is only ever the owner's answer, in the owner's words, with the date; status.md carries the same line. Ask one question at a time; when it is answered, rename Q<n> to the next D-number everywhere in this file and move its card under Decided. D1 below is a placeholder dated the day this packet was made, so it renders as decided: replace it with the owner's first answer and the date of that answer (YYYY-MM-DD), or delete it until there is one. -->
 ## Decisions and open questions {#questions; lead: no}
 
 Still open first, then what's decided.
@@ -128,7 +128,7 @@ Still open first, then what's decided.
 ### Decided {#decided}
 
 ::: decisions
-:::: decision D1 · <The decision, in one line> {status: <Owner>, YYYY-MM-DD}
+:::: decision D1 · <The decision, in one line> {status: <Owner>, {{date}}}
 <The owner's answer in their words, then what it means for the design.>
 ::::
 :::

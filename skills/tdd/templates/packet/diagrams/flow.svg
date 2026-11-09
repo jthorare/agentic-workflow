@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-label="Placeholder: diagrams/flow.svg">
+<rect x="5" y="5" width="1190" height="350" rx="12" fill="#f4f5f7" stroke="#8a93a3" stroke-width="2" stroke-dasharray="10 8"/>
+<g font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" fill="#1f2937">
+<text x="48" y="87" font-size="14" font-weight="700" letter-spacing="1.5" fill="#9a3412">PLACEHOLDER · REPLACE ME</text>
+<text x="48" y="127" font-size="26" font-weight="700">The technical flow</text>
+<text x="48" y="153" font-size="16" font-family="ui-monospace, Menlo, Consolas, monospace" fill="#4b5563">diagrams/flow.svg</text>
+<text x="48" y="193" font-size="18" fill="#374151">Not drawn yet. Write diagrams/flow.mmd (the phases in order, and what each one reads and writes; new or changed</text>
+<text x="48" y="221" font-size="18" fill="#374151">boxes green), then run draw_diagrams.mjs as SKILL.md step 3 shows: its tldraw export overwrites this file.</text>
+<text x="48" y="277" font-size="18" fill="#374151">Read the PNG render before you embed it. Tones, legend words and hotspots: references/diagram-conventions.md.</text>
+</g>
+</svg>

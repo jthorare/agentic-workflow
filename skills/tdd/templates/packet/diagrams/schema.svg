@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-label="Placeholder: diagrams/schema.svg">
+<rect x="5" y="5" width="1190" height="350" rx="12" fill="#f4f5f7" stroke="#8a93a3" stroke-width="2" stroke-dasharray="10 8"/>
+<g font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" fill="#1f2937">
+<text x="48" y="73" font-size="14" font-weight="700" letter-spacing="1.5" fill="#9a3412">PLACEHOLDER · REPLACE ME</text>
+<text x="48" y="113" font-size="26" font-weight="700">The schema diagram</text>
+<text x="48" y="139" font-size="16" font-family="ui-monospace, Menlo, Consolas, monospace" fill="#4b5563">diagrams/schema.svg</text>
+<text x="48" y="179" font-size="18" fill="#374151">Not drawn yet. Write diagrams/schema.mmd (one box per new or changed table with its key columns; arrows point at the</text>
+<text x="48" y="207" font-size="18" fill="#374151">referenced table), then run draw_diagrams.mjs as SKILL.md step 3 shows: its tldraw export overwrites this file.</text>
+<text x="48" y="263" font-size="18" fill="#374151">Then give each table box "table": "&lt;name&gt;" in diagrams/schema.hotspots.json, so a click opens schema/&lt;name&gt;.json</text>
+<text x="48" y="291" font-size="18" fill="#374151">(references/schema-lane.md).</text>
+</g>
+</svg>

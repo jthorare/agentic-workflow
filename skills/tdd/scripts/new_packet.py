@@ -11,7 +11,10 @@ Creates <root>/<repo-slug>/system-design/<slug>/ with:
                   updated (today), rev 1, repo_url (GitHub or GitLab origin only), sha, sha_date, repo_path
   status.md       the one living doc: artifact_url placeholder, Reference, Surfaces, Counts, Decisions, Open
                   questions, Lead defaults, Revisions, Tracker
-  prs/ diagrams/ mockups/ schema/ queries/ shots/   empty working folders
+  diagrams/*.svg  templates/packet/ copied as it is: a placeholder image, marked PLACEHOLDER and REPLACE ME, for
+  mockups/*.svg   every diagram and shot the template references, so a fresh packet builds, lints and renders clean
+                  until the author replaces each one (the "todo:" line lists them)
+  prs/ diagrams/ mockups/ schema/ queries/ shots/   working folders (prs/ schema/ queries/ shots/ start empty)
 
 <root> is $SYSTEM_DESIGN_OUT, else ~/.system-design. <repo-slug> is derived the way system-design's scripts/env.sh does
 it: owner-repo from the origin remote of --repo (default: the current folder), else the repo root's folder name, else
@@ -27,6 +30,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SKILL = os.path.normpath(os.path.join(HERE, ".."))
 TEMPLATE_MD = os.path.join(SKILL, "templates", "tdd-template.md")
 TEMPLATE_META = os.path.join(SKILL, "templates", "meta.template.json")
+TEMPLATE_PACKET = os.path.join(SKILL, "templates", "packet")
 DIRS = ("prs", "diagrams", "mockups", "schema", "queries", "shots")
 
 def git(repo, *args):
@@ -72,6 +76,18 @@ def tab_title(h1, slug):
     words = t.split()
     return " ".join(words[:4]) if len(words) > 4 else t
 
+def packet_files():
+    """Every file under templates/packet/ as a '/'-separated path relative to it, sorted; names starting with '.' are
+    skipped (an editor's or Finder's droppings never reach a packet)."""
+    out = []
+    for d, dirs, files in os.walk(TEMPLATE_PACKET):
+        dirs[:] = [x for x in dirs if not x.startswith(".")]
+        rel = os.path.relpath(d, TEMPLATE_PACKET)
+        for f in files:
+            if not f.startswith("."):
+                out.append(f if rel == "." else rel.replace(os.sep, "/") + "/" + f)
+    return sorted(out)
+
 def tilde(path):
     home = os.path.expanduser("~")
     return "~" + path[len(home):] if path == home or path.startswith(home + os.sep) else path
@@ -92,6 +108,8 @@ def main(argv):
     for t in (TEMPLATE_MD, TEMPLATE_META):
         if not os.path.isfile(t):
             sys.exit(f"{t}: template missing; is the tdd skill complete?")
+    if not os.path.isdir(TEMPLATE_PACKET):
+        sys.exit(f"{TEMPLATE_PACKET}: template missing; is the tdd skill complete?")
     repo = os.path.abspath(os.path.expanduser(a.repo))
     if not os.path.isdir(repo):
         sys.exit(f"--repo {repo}: no such folder")
@@ -168,6 +186,12 @@ Slug `{a.slug}`. Ticket {ticket or "(none named)"}. Started {today}{" by " + aut
     os.makedirs(packet, exist_ok=True)
     for d in DIRS:
         os.makedirs(os.path.join(packet, d), exist_ok=True)
+    placeholders = packet_files()
+    for rel in placeholders:
+        dest = os.path.join(packet, *rel.split("/"))
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        with open(os.path.join(TEMPLATE_PACKET, *rel.split("/")), "rb") as src, open(dest, "wb") as f:
+            f.write(src.read())
     with open(os.path.join(packet, f"{a.slug}.md"), "w", encoding="utf-8") as f:
         f.write(md)
     with open(os.path.join(packet, "meta.json"), "w", encoding="utf-8") as f:
@@ -180,6 +204,8 @@ Slug `{a.slug}`. Ticket {ticket or "(none named)"}. Started {today}{" by " + aut
     print(f"repo:   {tilde(repo)} (repo slug {rslug}; origin {origin or 'none'}; repo_url {meta['repo_url'] or 'none'})")
     print(f"sha:    {sha + ' (' + ref + ', committed ' + str(sha_date) + ')' if sha else 'none recorded'}")
     print(f"wrote:  {a.slug}.md, meta.json, status.md; folders {', '.join(d + '/' for d in DIRS)}")
+    if placeholders:
+        print(f"todo:   replace the placeholder images before publishing: {', '.join(placeholders)}")
     print(f"next:   python3 -I {tilde(os.path.join(HERE, 'build_tdd.py'))} {tilde(os.path.join(packet, a.slug + '.md'))} {tilde(os.path.join(packet, 'build'))}")
 
 if __name__ == "__main__":

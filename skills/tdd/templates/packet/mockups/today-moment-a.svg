@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="480" viewBox="0 0 360 480" role="img" aria-label="Placeholder: mockups/today-moment-a.svg">
+<rect x="5" y="5" width="350" height="470" rx="12" fill="#f4f5f7" stroke="#8a93a3" stroke-width="2" stroke-dasharray="10 8"/>
+<g font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" fill="#1f2937">
+<text x="26" y="102" font-size="11" font-weight="700" letter-spacing="1.5" fill="#9a3412">PLACEHOLDER · REPLACE ME</text>
+<text x="26" y="137" font-size="21" font-weight="700">Today: moment A</text>
+<text x="26" y="160" font-size="13" font-family="ui-monospace, Menlo, Consolas, monospace" fill="#4b5563">mockups/today-moment-a.svg</text>
+<text x="26" y="198" font-size="16" fill="#374151">A screenshot of this screen as it</text>
+<text x="26" y="221" font-size="16" fill="#374151">is in production goes here, saved</text>
+<text x="26" y="244" font-size="16" fill="#374151">as mockups/today-&lt;moment&gt;.png.</text>
+<text x="26" y="267" font-size="16" fill="#374151">Never a mock.</text>
+<text x="26" y="313" font-size="16" fill="#374151">Point this image line in the</text>
+<text x="26" y="336" font-size="16" fill="#374151">source at it, then delete this</text>
+<text x="26" y="359" font-size="16" fill="#374151">file. No screenshot? Delete the</text>
+<text x="26" y="382" font-size="16" fill="#374151">image line and say so in the text.</text>
+</g>
+</svg>
