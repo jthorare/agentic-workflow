@@ -39,48 +39,42 @@ internal static class WorkflowWriteScenarios
     /// <param name="scenario">The scenario.</param>
     /// <param name="ct">Cancels the run.</param>
     /// <returns>The body.</returns>
-    public static async Task<string> Body(GoldenHost host, string slug, string scenario, CancellationToken ct)
+    public static Task<string> Body(GoldenHost host, string slug, string scenario, CancellationToken ct)
     {
         var human = Human(host.Token.Value);
-        var route = $"/sindri/workflows/{_slug.Value}";
-        switch ((slug, scenario))
-        {
-            case ("workflows", "create-nothing-to-create"):
-                return await Ask(host, Post("/sindri/workflows", $"{{\"slug\":\"{_slug.Value}\"}}", human));
-            case ("workflows-validate", "validate-nothing-to-check"):
-                return await Ask(host, Post("/sindri/workflows/validate", "{}", human));
-            case ("workflows-slug", "replace-stale"):
-                await Seed(host, newerRevision: true, ct);
-                return await Ask(host, Put(route, "{\"baseRevision\":1,\"spec\":{\"version\":1,\"name\":\"Morning check\",\"nodes\":[],\"edges\":[]}}", human));
-            case ("workflows-slug", "archived"):
-                await Seed(host, newerRevision: false, ct);
-                return await Ask(host, Delete(route, human));
-            case ("workflows-slug", "archive-not-found"):
-                return await Ask(host, Delete("/sindri/workflows/nope", human));
-            case ("workflows-slug-ops", "ops-stale"):
-                await Seed(host, newerRevision: true, ct);
-                return await Ask(host, Post(route + "/ops", $"{{\"baseRevision\":1,\"ops\":{Rename}}}", human));
-            case ("workflows-slug-ops", "ops-missing-fields"):
-                await Seed(host, newerRevision: false, ct);
-                return await Ask(host, Post(route + "/ops", "{}", human));
-            case ("workflows-slug-pause", "paused"):
-                await Seed(host, newerRevision: false, ct);
-                return await Ask(host, Post(route + "/pause", json: null, human));
-            case ("workflows-slug-ops", "ops-applied"):
-                await Seed(host, newerRevision: false, ct);
-                return await Ask(host, Post(route + "/ops", $"{{\"baseRevision\":1,\"ops\":{Rename}}}", human));
-            case ("workflows-slug-activate", "activated"):
-                await Seed(host, newerRevision: false, ct);
-                return await Ask(host, Post(route + "/activate", json: null, human));
-            case ("workflows-blocks", "listed"):
-                return await Ask(host, Get("/sindri/workflows/blocks", human));
-            case ("workflows-slug", "replaced"):
-                await Seed(host, newerRevision: false, ct);
-                return await Ask(host, Put(route, "{\"baseRevision\":1,\"spec\":{\"version\":1,\"name\":\"Morning check v2\",\"nodes\":[{\"id\":\"start\",\"type\":\"manual\",\"config\":{}}],\"edges\":[]}}", human));
-            default:
-                return await Ask(host, Post("/sindri/workflows/nope/activate", json: null, human));
-        }
+        return _bodies.TryGetValue((slug, scenario), out var run)
+            ? run(host, human, ct)
+            : Ask(host, Post("/sindri/workflows/nope/activate", json: null, human));
     }
+
+    private delegate Task<string> Scenario(GoldenHost host, (string Name, string Value)[] human, CancellationToken ct);
+
+    private static string Route => $"/sindri/workflows/{_slug.Value}";
+
+    private static Scenario Seeded(bool newerRevision, Func<(string Name, string Value)[], HttpRequestMessage> request) =>
+        async (host, human, ct) =>
+        {
+            await Seed(host, newerRevision, ct);
+            return await Ask(host, request(human));
+        };
+
+    private static Scenario Plain(Func<(string Name, string Value)[], HttpRequestMessage> request) => (host, human, _) => Ask(host, request(human));
+
+    private static readonly Dictionary<(string Slug, string Scenario), Scenario> _bodies = new()
+    {
+        [("workflows", "create-nothing-to-create")] = Plain(h => Post("/sindri/workflows", $"{{\"slug\":\"{_slug.Value}\"}}", h)),
+        [("workflows-validate", "validate-nothing-to-check")] = Plain(h => Post("/sindri/workflows/validate", "{}", h)),
+        [("workflows-slug", "replace-stale")] = Seeded(newerRevision: true, h => Put(Route, "{\"baseRevision\":1,\"spec\":{\"version\":1,\"name\":\"Morning check\",\"nodes\":[],\"edges\":[]}}", h)),
+        [("workflows-slug", "archived")] = Seeded(newerRevision: false, h => Delete(Route, h)),
+        [("workflows-slug", "archive-not-found")] = Plain(h => Delete("/sindri/workflows/nope", h)),
+        [("workflows-slug-ops", "ops-stale")] = Seeded(newerRevision: true, h => Post(Route + "/ops", $"{{\"baseRevision\":1,\"ops\":{Rename}}}", h)),
+        [("workflows-slug-ops", "ops-missing-fields")] = Seeded(newerRevision: false, h => Post(Route + "/ops", "{}", h)),
+        [("workflows-slug-pause", "paused")] = Seeded(newerRevision: false, h => Post(Route + "/pause", json: null, h)),
+        [("workflows-slug-ops", "ops-applied")] = Seeded(newerRevision: false, h => Post(Route + "/ops", $"{{\"baseRevision\":1,\"ops\":{Rename}}}", h)),
+        [("workflows-slug-activate", "activated")] = Seeded(newerRevision: false, h => Post(Route + "/activate", json: null, h)),
+        [("workflows-blocks", "listed")] = Plain(h => Get("/sindri/workflows/blocks", h)),
+        [("workflows-slug", "replaced")] = Seeded(newerRevision: false, h => Put(Route, "{\"baseRevision\":1,\"spec\":{\"version\":1,\"name\":\"Morning check v2\",\"nodes\":[{\"id\":\"start\",\"type\":\"manual\",\"config\":{}}],\"edges\":[]}}", h)),
+    };
 
     private static async Task Seed(GoldenHost host, bool newerRevision, CancellationToken ct)
     {
