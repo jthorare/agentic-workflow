@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The skill and the recipe stay one path (cutover spec §3.4): no second Playwright, and SKILL.md runs a check only through
+# The skill stays one path (cutover spec §3.4): no second Playwright, and SKILL.md runs a check only through
 # a verb of the ui-evidence binary. The per-step briefs are checked by the Sindri unit lane (EvidenceAgentGrantsTests).
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -19,7 +19,7 @@ for banned in 'node dist' 'npx ' 'npm ' 'with_stack_lock' 'doctor\.sh' 'dist/bin
   if grep -q -- "$banned" "$SKILL"; then bad "SKILL.md still names '$banned'"; fi
 done
 
-# 3. Every 'ui-evidence <verb>' in SKILL.md and in the recipes is a verb of the binary.
+# 3. Every 'ui-evidence <verb>' in SKILL.md is a verb of the binary.
 check_verbs() {
   local file="$1" verb
   while read -r verb; do
@@ -28,7 +28,6 @@ check_verbs() {
   done < <(grep -o 'ui-evidence [a-z][a-z-]*' "$file" | awk '{print $2}' | sort -u | grep -vx -e skill -e binary -e is -e and -e runs -e verb || true)
 }
 check_verbs "$SKILL"
-for recipe in "$ROOT"/recipes/sindri/*.yaml; do check_verbs "$recipe"; done
 
 [ "$fail" -eq 0 ] || exit 1
-echo "PASS: the ui-evidence skill and the recipes use one code path"
+echo "PASS: the ui-evidence skill uses one code path"

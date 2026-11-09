@@ -15,9 +15,7 @@ using Aw.Context.Core.WholeMap;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Locks;
 using Aw.Sindri.Core.Scheduling;
-using Aw.Sindri.Core.Scoping;
 using Aw.Sindri.Core.Views;
-using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.ContextCalls;
 using Microsoft.Extensions.DependencyInjection;
@@ -65,15 +63,6 @@ internal static class ContextSlicesServiceCollectionExtensions
             .AddScoped<IScheduledService, ContextConceptScanService>()
             .AddSingleton(ContextConceptScanService.BuiltIn)
             .AddScoped<SyncGaps>().AddIndexEmbedService().AddIndexSyncService()
-            .AddScoped<ContextInputScopes>()
-            .AddScoped<ContextInputFacts>()
-            .AddScoped<IScopingTextShape, ContextTextShape>()
-            .AddScoped<IScopeRunProposals, ScopeRunProposals>()
-            .AddStepInput<ContextLensesInput>()
-            .AddStepInput<ContextGraphInput>()
-            .AddStepInput<ContextHistoryInput>()
-            .AddStepInput<ContextRetrieveInput>()
-            .AddStepInput<ContextCodeInput>()
             .AddSingleton<IHeavyJobLock>(static sp => new SindriHeavyJobLock(sp.GetRequiredService<IHeavySlots>(), SindriHeavyJobLock.DefaultWait));
         _ = services.AddScoped<IValidator<CheckContextMapStructureRequest>, AcceptAllValidator<CheckContextMapStructureRequest>>().AddCommand<CheckContextMapStructureRequest, MapChecksView, CheckContextMapStructureService>();
         _ = services.AddScoped<IValidator<PromoteContextMapRequest>, AcceptAllValidator<PromoteContextMapRequest>>().AddCommand<PromoteContextMapRequest, PromoteContextMapResponse, PromoteContextMapService>();

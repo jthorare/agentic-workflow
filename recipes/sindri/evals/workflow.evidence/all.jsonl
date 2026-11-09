@@ -1,3 +1,0 @@
-{"start":{"inputs":{"fact:phasePacket":{"phase":"1"},"fact:built":"https://example.test/diff/1"}}}
-{"trigger":{"kind":"step.completed","outcome":"all"},"expect":{"state":"evidence-all"}}
-{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:evidenceSummary":"all ok"}},"expect":{"state":"done","outcome":"resolved"}}

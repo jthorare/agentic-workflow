@@ -1,4 +1,0 @@
-{"start":{"inputs":{"fact:pr":"https://example.test/pr/1","fact:phasePacket":{"phase":"1"}}}}
-{"trigger":{"kind":"step.completed","outcome":"candidates","outputs":{"fact:docsResult":{"result":"candidates","headSha":"abc123"},"fact:docsScope":{"docs":["docs/usage.md"]},"fact:prState":{"head":"abc123"},"fact:findings":{},"fact:handoffNote":"n","fact:workspace":"/tmp/docs-wt"}},"expect":{"state":"route"}}
-{"trigger":{"kind":"step.completed","outcome":"uncertain","outputs":{"fact:decision":{"choice":"uncertain"}}},"expect":{"state":"update"}}
-{"trigger":{"kind":"step.completed","outcome":"noChange","outputs":{"fact:handoffNote":"nothing to change"}},"expect":{"state":"not-needed","outcome":"alreadySatisfied"}}

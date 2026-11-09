@@ -1,2 +1,0 @@
-{"start":{"inputs":{"fact:phasePacket":{"phase":"1"},"fact:built":"https://example.test/diff/1"}}}
-{"trigger":{"kind":"step.completed","outcome":"recorded","outputs":{"fact:evidenceSummary":"Ran the migration by hand.","fact:evidenceReason":"No block covers a one-off script."}},"expect":{"state":"recorded","outcome":"resolved"}}

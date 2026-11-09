@@ -11,7 +11,7 @@ public sealed class SetupDoctorRepoHookTests
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     private static async Task<IReadOnlyList<DoctorCheck>> All(params RepoHookState[] states) =>
-        await new SetupDoctor(InMemorySetupFacts.AllDone(), build: null, new FixedHooks(states)).Run(Token);
+        await new SetupDoctor(InMemorySetupFacts.AllDone(), new FixedHooks(states)).Run(Token);
 
     [Fact, Trait("Lane", "unit")]
     public async Task A_repo_with_the_v3_hook_is_ok()

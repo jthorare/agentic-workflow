@@ -1,3 +1,0 @@
-{"start":{"inputs":{"fact:request":"Export the weekly summary."}}}
-{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"summary-week-41.csv"}},"expect":{"state":"check"}}
-{"trigger":{"kind":"step.completed","outcome":"passed"},"expect":{"state":"done","outcome":"resolved"}}

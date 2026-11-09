@@ -1,6 +1,0 @@
-T-3/step/1  workflow.step@4ca37bf46333  v4  parked: rounds (child)  since 11:50 (10m)
-  next      Parked (rounds) in T-3/step/1/step.4: the child used all 3 rounds.
-            Grant more rounds at a terminal, or cancel.
-  child     T-3/step/1/step.4  parked: rounds
-  answer    sindri workflow answer T-3/step/1 --grant 1     (at a terminal; forwarded to the child)
-  commands  answer (forwarded), takeover, cancel

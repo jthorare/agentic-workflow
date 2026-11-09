@@ -1,12 +1,9 @@
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Control;
-using Aw.Sindri.Core.Setup;
-using Aw.Sindri.Core.Workflow.Shipped;
 using Aw.Sindri.Host.Catalog;
 using Aw.Sindri.Host.ContextVectors;
 using Aw.Sindri.Host.Memory;
 using Aw.Sindri.Host.Server;
-using Aw.Sindri.Host.Shipped;
 
 namespace Aw.Sindri.Host.Registration;
 
@@ -21,8 +18,6 @@ internal static class SindriHostServiceCollectionExtensions
         .AddSingleton<IShutdown>(static sp => sp.GetRequiredService<ProcessShutdown>())
         .AddSingleton<IExitCode, ProcessExitCode>()
         .AddSingleton<ICommandCatalog, CommandCatalog>()
-        .AddSingleton<IShippedEffects, EmbeddedShippedEffects>()   // the default profile allows the effects the embedded recipes declare (setup-once §5.1)
-        .AddSingleton<IEmbeddedRecipes>(static _ => new ManifestEmbeddedRecipes(typeof(ManifestEmbeddedRecipes).Assembly))   // the recipes this build ships; nothing at run time reads recipes/sindri from disk
         .AddSingleton<Projector>()
         .AddSingleton<Endpoints.IProjectFencing, Mcp.ProjectFencing>()   // a session's Projects answer is fenced like sindri_projects' (the fence is in Mcp; Endpoints cannot name it)
         .AddSingleton<Endpoints.IMemoryFencing, Mcp.MemoryFencing>()   // a session memory read is fenced like the memory tools answers

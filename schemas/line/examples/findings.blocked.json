@@ -1,7 +1,0 @@
-[
-  {
-    "path": "src/shared/Clock.cs",
-    "why": "The expiry check needs the injected clock.",
-    "item": "AC-1"
-  }
-]

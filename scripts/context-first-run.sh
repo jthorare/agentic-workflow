@@ -20,12 +20,10 @@
 #         BuildCodeIndex job), then `sindri code-index status --repo <repo> --json` until the repo is ok.
 #      6. Context map: `sindri context map refresh` (builds, cleans and publishes the map), then `sindri context map status`.
 #      7. The Sindri app (sindri-ui) on the scratch home.
-#      8. STOP for recipe approval when workflow.scoping isn't approved: prints `sindri recipe approve-all` (typed by you), exit 3.
-#      9. An item (`sindri item add`) and the scoping recipe on it (`sindri workflow start workflow.scoping`).
-# status  The plane, the index, the map and the item, read only.
+# status  The plane, the index and the map, read only.
 # down    `sindri stop`, closes the app this script opened, and deletes the scratch home. Nothing else is touched.
 #
-# --stop-after N ends `up` with exit 0 once step N (0 to 9) is done; scripts/model-limit-check.sh stops after the index build (5).
+# --stop-after N ends `up` with exit 0 once step N (0 to 7) is done; scripts/model-limit-check.sh stops after the index build (5).
 # --dry-run prints every command it would run (and the checks it would make) and runs nothing, writes nothing: not the home,
 # not a profile, no build. It always shows the whole path as if nothing were done yet.
 #
@@ -35,7 +33,6 @@
 #   FIRST_RUN_PORT            default 7481 (owner-check.sh uses 7480, the real instance 7410)
 #   FIRST_RUN_REPO_PATH       the checkout to index; default the checkout this script runs from (the shared main checkout is never derived)
 #   FIRST_RUN_REPO_NAME       the repo's name in the profile, items and code index; default the basename of its origin URL (.git stripped), else of the path
-#   FIRST_RUN_BRIEF           the repo-relative file the scoping run reads; default docs/sindri/README.md
 #   FIRST_RUN_INDEX_TIMEOUT   seconds to wait for the first build; default 1800
 #   FIRST_RUN_MAP_POLL_SECONDS  seconds between map status reads while it is held; default 10
 #   FIRST_RUN_MAP_TIMEOUT     seconds to wait for a held map; default 1020
@@ -45,7 +42,7 @@
 #   AW_SINDRI_UI              the sindri-ui binary; default $AW_STATE_DIR/bin/cs/current/sindri-ui
 # It exports AW_SINDRI_APP_NO_MCP=1 for every Sindri it starts, so the scratch plane never registers a 'sindri' MCP server in ~/.claude.json.
 #
-# Exit: 0 ok; 1 a step failed (the message names it); 2 usage or a refused setup; 3 stopped for you to approve a recipe.
+# Exit: 0 ok; 1 a step failed (the message names it); 2 usage or a refused setup.
 # Bash 3.2 compatible (macOS /bin/bash).
 set -uo pipefail
 
@@ -67,7 +64,7 @@ while [ "$#" -gt 0 ]; do
     --no-graph) [ "$action" = up ] || usage; no_graph=1 ;;
     --stop-after)
       [ "$action" = up ] && [ "$#" -ge 2 ] || usage
-      case "$2" in [0-9]) stop_after="$2" ;; *) die "--stop-after takes a step number 0 to 9 (got '$2')" ;; esac
+      case "$2" in [0-7]) stop_after="$2" ;; *) die "--stop-after takes a step number 0 to 7 (got '$2')" ;; esac
       shift ;;
     *) echo "context-first-run: unknown option $1" >&2; usage ;;
   esac
@@ -88,7 +85,6 @@ port="${FIRST_RUN_PORT:-7481}"
 timeout_s="${FIRST_RUN_INDEX_TIMEOUT:-1800}"
 map_poll="${FIRST_RUN_MAP_POLL_SECONDS:-10}"
 map_timeout="${FIRST_RUN_MAP_TIMEOUT:-1020}"
-brief="${FIRST_RUN_BRIEF:-docs/sindri/README.md}"
 sindri_cmd="${SINDRI:-sindri}"
 read -r -a SX <<<"$sindri_cmd"
 real_home="$state/sindri-app"
@@ -398,58 +394,6 @@ open_ui() {
   echo "  open (pid $(cat "$home/first-run/ui.pid")); click Context in the rail"
 }
 
-# ---- 8. recipes gate ----
-recipes_gate() {
-  step "8. the scoping recipe must be approved (yours, at a terminal)"
-  if [ "$dry" = 1 ]; then
-    sx recipe list
-    echo "+ (stop here unless a 'workflow.scoping@… approved' line shows) print:"
-    echo "    AW_SINDRI_HOME=$home AW_SINDRI_PORT=$port $sindri_cmd recipe approve-all"
-    echo "  and exit 3; after you approve, '$self continue' resumes at step 9"
-    return 0
-  fi
-  sx_out recipe list
-  if printf '%s\n' "$OUT" | grep -Eq '^workflow\.scoping@[0-9a-f]+ approved'; then note "workflow.scoping is approved"; return 0; fi
-  cat >&2 <<EOF
-The scoping recipe isn't approved yet. Approve it with:
-
-  AW_SINDRI_HOME=$home AW_SINDRI_PORT=$port $sindri_cmd recipe approve-all
-
-It prints the plan and asks you to type the phrase it shows. Then run:  $self continue
-EOF
-  exit 3
-}
-
-# ---- 9. item and scoping ----
-start_scoping() {
-  step "9. an item and the scoping recipe on it"
-  local fact="$home/first-run/scope-input.json" title="First context run: scope $brief"
-  if [ "$dry" = 1 ]; then
-    echo "+ write $fact: {\"kind\":\"brief\",\"repo\":\"$repo\",\"path\":\"$brief\"}"
-    sx item add "$title" --repo "$repo" --no-start
-    check "prints 'ITM-… created (sequence N)'; the id is kept in $home/first-run/item.id"
-    sx workflow start workflow.scoping --item "<ITM-id>" --fact "fact:scopeInput=$fact"
-    check "prints the instance's status header; then: workflow status <ITM-id>"
-    return 0
-  fi
-  printf '{"kind":"brief","repo":"%s","path":"%s"}\n' "$repo" "$brief" >"$fact" || broke "step 9 (scoping): can't write $fact"
-  local item
-  item="$(cat "$home/first-run/item.id" 2>/dev/null || true)"
-  if [ -z "$item" ]; then
-    # --no-start: do not start the control plane for this call (it runs already, so a stopped plane fails loudly here). It does not
-    # affect recipes: 'item add' only appends item.created, and nothing starts a workflow on it.
-    sx_out item add "$title" --repo "$repo" --no-start
-    [ "$RC" = 0 ] || broke "step 9 (scoping): 'item add' exited $RC"
-    item="$(printf '%s' "$OUT" | grep -Eo 'ITM-[A-Za-z0-9]+' | head -1)"
-    [ -n "$item" ] || broke "step 9 (scoping): couldn't read the item id from: $OUT"
-    printf '%s\n' "$item" >"$home/first-run/item.id"
-  fi
-  sx workflow start workflow.scoping --item "$item" --fact "fact:scopeInput=$fact" || broke "step 9 (scoping): 'workflow start' failed for $item"
-  sx_out workflow status "$item"
-  echo "$OUT"
-  echo "  $item is being scoped. See it in the app: Work, and Context ($item): sindri-ui 'context?item=$item'"
-}
-
 # ---- the verbs ----
 # stopped <step>: with --stop-after <step>, end here (exit 0).
 stopped() {
@@ -469,8 +413,6 @@ do_up() {
   build_index; stopped 5
   publish_map; stopped 6
   open_ui; stopped 7
-  recipes_gate; stopped 8
-  start_scoping
   echo
   echo "context-first-run up: done. Look at the app, then clean up with: $self down"
 }
@@ -482,11 +424,6 @@ do_status() {
   sx status
   sx code-index status --repo "$repo"
   sx context map status
-  if [ "$dry" = 1 ]; then
-    echo "+ cat $home/first-run/item.id, then: $(shown) workflow status <ITM-id>"
-    return 0
-  fi
-  if [ -f "$home/first-run/item.id" ]; then sx workflow status "$(cat "$home/first-run/item.id")"; else echo "no item yet"; fi
 }
 
 do_down() {

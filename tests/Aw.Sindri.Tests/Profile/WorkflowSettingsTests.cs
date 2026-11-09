@@ -1,11 +1,7 @@
 using System.Text;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
-using Aw.Sindri.Infrastructure.Workflows;
-using Aw.Sindri.Testing;
-using Aw.Sindri.Testing.Workflow;
 
 namespace Aw.Sindri.Tests.Profile;
 
@@ -44,33 +40,6 @@ public sealed class WorkflowSettingsTests
         Assert.Equal(["workflow.deskTimeout"], ProfileDiff.Between(live, live with { Workflow = new("1m") }));
         Assert.DoesNotContain("workflow", Encoding.UTF8.GetString(AwJson.Serialize(live, SliceHarness.Json)), StringComparison.Ordinal);
         Assert.DoesNotContain("eventHold", Encoding.UTF8.GetString(AwJson.Serialize(live with { Workflow = new("1m") }, SliceHarness.Json)), StringComparison.Ordinal);
-    }
-
-    [Fact, Trait("Lane", "integration")]
-    public async Task The_dev_profile_matches_the_schema_and_sets_a_1m_desk_timeout()
-    {
-        using var files = new ProfileFiles();
-        files.Write(ShippedRecipes.Read("dev/profile.yaml"));
-
-        var loaded = await files.Source.Load(TestContext.Current.CancellationToken);
-
-        Assert.False(loaded.IsError, loaded.IsError ? loaded.Error.Message : null);
-        Assert.Equal(TimeSpan.FromMinutes(1), WorkflowTimes.Of(loaded.Value.Profile).DeskTimeout);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task The_worker_reads_the_times_from_the_live_profile_and_defaults_when_it_doesnt_load()
-    {
-        var profiles = new InMemoryProfiles();
-        var times = new ProfileWorkflowTimes(profiles, profiles);
-        var ct = TestContext.Current.CancellationToken;
-
-        var missing = await times.Read(ct);
-        profiles.Live = new LoadedProfile(_valid with { Workflow = new("1m", "2h") }, ProfileHash.From(new string('a', 64)), "/home/profile.yaml");
-        var set = await times.Read(ct);
-
-        Assert.Equal(WorkflowTimes.Defaults, missing);
-        Assert.Equal(new WorkflowTimes(TimeSpan.FromMinutes(1), TimeSpan.FromHours(2)), set);
     }
 
     private static (TimeSpan, TimeSpan) Times(WorkflowTimes times) => (times.DeskTimeout, times.EventHold);

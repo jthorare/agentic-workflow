@@ -65,13 +65,7 @@ internal static class Composition
             .AddScoped<IDoctorChecks>(sp => new ModelRoutingDoctorChecks(sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IModelCatalog>(), () => RoutedModelPort.InstalledHarnesses(sp.GetRequiredService<JudgeCatalog>().Get()), HarnessLogins.Of(environment)))   // the 'context:models' row (model routing spec 8.4)
             .AddPullRequests(environment)   // IPullRequests over the forge the approved profile names (workflow.forge; compose edge to Aw.Forge.Infrastructure in Forge/ForgeAdapters)
             .AddScoped<IDoctorChecks, Skills.SkillsDoctorChecks>()   // the 'skills:' rows (skill flows spec §3.2)
-            .AddProveBlocks(environment)   // input.prove.echo, only under AW_SINDRI_PROVE_BLOCKS=1 in a prover home
             .AddSindriHost();
-
-    private static IServiceCollection AddProveBlocks(this IServiceCollection services, Func<string, string?> environment) =>
-        SindriProveInfrastructureServiceCollectionExtensions.ProveBlocksAllowed(environment)
-            ? services.AddSindriProveInfrastructure(environment).AddSindriProveBlocks()
-            : services;
 
     /// <summary>
     /// The environment function Composition passes to AddContextInfrastructure (context spec §4 "Secrets"): a name that is a

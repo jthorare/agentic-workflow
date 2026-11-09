@@ -28,11 +28,9 @@ ok    context:index-ollama not configured (no record source, so nothing to embed
 ok    context:index-sync not configured (no record source, so nothing syncs)
 ok    library           the first read of aw hasn't finished yet (sindri library sync reads now)
 ok    launcher:adoption no opens in the last 30 days
-ok    pr-watch          the watcher has not run yet
-warn  setup             not finished: recipes (needs-you), mcp (todo), map (todo), sources (todo) (fix: sindri recipe approve-all)
+warn  setup             not finished: mcp (todo), map (todo), sources (todo) (fix: sindri mcp register --apply)
 warn  pre-commit:smoke  no pre-commit hook, so staged secrets are not scanned (fix: sindri scrub --install-pre-commit --repo WORK/repo)
 warn  setup:ui-evidence ui-evidence not found (ROOT/artifacts/aot-sindri-smoke/bin/ui-evidence) (fix: run ./setup.sh from the agentic-workflow checkout (the evidence tool ships with Sindri))
-warn  model:check       the TLC runner isn't installed next to sindri; the model check stops for you until it is fixed (fix: run ./setup.sh from the agentic-workflow checkout (it installs the runner and java))
 ok    context:labelpick label choice is off
 ok    context:surfacepick product surface choice is off
 ok    model:pick        model choice is off
@@ -133,9 +131,6 @@ decision · note  Smoke request  since TIME
   note request from session:cli
   recorded; acted on once the workflow engine runs
   sindri decide DEC-ID accept
-setup · workflows  Approve all new workflows (28)  since TIME
-  28 workflows wait for your approval.
-  sindri recipe approve-all
 ## sindri decide DEC-ID accept (session)
 DEC-ID decided: accept (sequence SEQ)
 ## sindri needs-you
@@ -143,9 +138,6 @@ decision · note  smoke  [smoke]  since TIME
   note request from session:mcp
   recorded; acted on once the workflow engine runs
   sindri decide DEC-ID accept
-setup · workflows  Approve all new workflows (28)  since TIME
-  28 workflows wait for your approval.
-  sindri recipe approve-all
 ## sindri requests --state accepted
 REQ-ID  note  accepted  by session:cli  since TIME  decision DEC-ID
   Smoke request
@@ -162,7 +154,7 @@ true
 "http=404"
 post http=405
 ## sindri services --json | jq (name, every, paused, job)
-[{"name":"code-index-embed","every":"1m","paused":false,"job":null},{"name":"code-index-main-move","every":"1m","paused":false,"job":null},{"name":"connection-refresh","every":"5m","paused":false,"job":null},{"name":"context-concept-scan","every":"1m","paused":false,"job":null},{"name":"context-map-refresh","every":"1m","paused":false,"job":null},{"name":"context-sync-gaps","every":"1m","paused":false,"job":null},{"name":"context-upkeep","every":"15m","paused":false,"job":null},{"name":"heartbeat","every":"5s","paused":false,"job":null},{"name":"index-decisions","every":"15m","paused":false,"job":null},{"name":"index-embed","every":"1m","paused":false,"job":null},{"name":"index-sync","every":"5m","paused":false,"job":null},{"name":"memory-expire","every":"1h","paused":false,"job":null},{"name":"pr-watch","every":"5s","paused":false,"job":null},{"name":"router-stub","every":"5s","paused":false,"job":null},{"name":"setup","every":"1m","paused":false,"job":null},{"name":"workflow-events","every":"5s","paused":false,"job":null},{"name":"workflow-schedule","every":"1m","paused":false,"job":null}]
+[{"name":"code-index-embed","every":"1m","paused":false,"job":null},{"name":"code-index-main-move","every":"1m","paused":false,"job":null},{"name":"connection-refresh","every":"5m","paused":false,"job":null},{"name":"context-concept-scan","every":"1m","paused":false,"job":null},{"name":"context-map-refresh","every":"1m","paused":false,"job":null},{"name":"context-sync-gaps","every":"1m","paused":false,"job":null},{"name":"context-upkeep","every":"15m","paused":false,"job":null},{"name":"heartbeat","every":"5s","paused":false,"job":null},{"name":"index-decisions","every":"15m","paused":false,"job":null},{"name":"index-embed","every":"1m","paused":false,"job":null},{"name":"index-sync","every":"5m","paused":false,"job":null},{"name":"memory-expire","every":"1h","paused":false,"job":null},{"name":"setup","every":"1m","paused":false,"job":null},{"name":"workflow-schedule","every":"1m","paused":false,"job":null}]
 ## sindri services run heartbeat (human, terminal)
 job JOB-ID started
 run heartbeat (manual)
@@ -197,10 +189,7 @@ index-decisions  every 15m  last: ok  next: TIME
 index-embed  every 1m  last: ok  next: TIME
 index-sync  every 5m  last: ok  next: TIME
 memory-expire  every 1h  last: ok  next: TIME
-pr-watch  every 5s  last: ok  next: TIME
-router-stub  every 5s  last: ok  next: TIME
 setup  every 1m  last: ok  next: TIME
-workflow-events  every 5s  last: ok  next: TIME
 workflow-schedule  every 1m  last: ok  next: TIME
 ## sindri services resume heartbeat (human, terminal)
 heartbeat resumed (sequence SEQ)
@@ -217,10 +206,7 @@ index-decisions  every 15m  last: ok  next: TIME
 index-embed  every 1m  last: ok  next: TIME
 index-sync  every 5m  last: ok  next: TIME
 memory-expire  every 1h  last: ok  next: TIME
-pr-watch  every 5s  last: ok  next: TIME
-router-stub  every 5s  last: ok  next: TIME
 setup  every 1m  last: ok  next: TIME
-workflow-events  every 5s  last: ok  next: TIME
 workflow-schedule  every 1m  last: ok  next: TIME
 ## sindri stop (session)
 stopped (pid PID, epoch 1 released)
@@ -229,7 +215,7 @@ SND-API-001 not running: no control plane is recorded (fix: sindri)
 exit 1
 ## sindri doctor
 ok    lease             free (last epoch 1)
-ok    ledger            schema 11/11
+ok    ledger            schema 12/12
 ok    views             cursor N of head M
 ok    profile           hash HASH6
 fail  api               unreachable: no control plane is recorded (fix: sindri)
@@ -257,12 +243,10 @@ ok    context:index-ollama not configured (no record source, so nothing to embed
 ok    context:index-sync not configured (no record source, so nothing syncs)
 ok    library           the first read of aw hasn't finished yet (sindri library sync reads now)
 ok    launcher:adoption no opens in the last 30 days
-ok    pr-watch          the watcher's last run was ok
-warn  setup             not finished: recipes (needs-you), mcp (todo), map (todo), sources (todo) (fix: sindri recipe approve-all)
+warn  setup             not finished: mcp (todo), map (todo), sources (todo) (fix: sindri mcp register --apply)
 warn  pre-commit:smoke  no pre-commit hook, so staged secrets are not scanned (fix: sindri scrub --install-pre-commit --repo WORK/repo)
 ok    setup:token       WORK/home/auth/human.token can be read by you alone
 warn  setup:ui-evidence ui-evidence not found (ROOT/artifacts/aot-sindri-smoke/bin/ui-evidence) (fix: run ./setup.sh from the agentic-workflow checkout (the evidence tool ships with Sindri))
-warn  model:check       the TLC runner isn't installed next to sindri; the model check stops for you until it is fixed (fix: run ./setup.sh from the agentic-workflow checkout (it installs the runner and java))
 ok    context:labelpick label choice is off
 ok    context:surfacepick product surface choice is off
 ok    model:pick        model choice is off
@@ -274,17 +258,3 @@ warn  codex:danger-full-access pending: owner probe (fix: in that harness, sindr
 warn  cursor-agent      pending: owner probe (fix: in that harness, sindri doctor --probe --harness cursor-agent > tests/Aw.Sindri.Tests/Golden/Probe/cursor-agent.json; docs/csharp/sindri.md, 'The harness probe')
 warn  cursor-terminal   pending: owner probe (fix: in that harness, sindri doctor --probe --harness cursor-terminal > tests/Aw.Sindri.Tests/Golden/Probe/cursor-terminal.json; docs/csharp/sindri.md, 'The harness probe')
 exit 2
-## sindri recipe validate ROOT/recipes/sindri/workflow.step.yaml
-hash sha256:HASH
-## sindri recipe validate ROOT/recipes/sindri/workflow.item.yaml
-information: RCP-RES-001: resource 'slot' has no allocator in this build at workflow.item.yaml:11:39 (states.startable.waitFor.resource); it parks with SND-WF-010 until the session-slot stub lands (P7)
-skipped: RCP-EFFECT-001: effect 'effect.claim.ref' wasn't checked against an effect allowlist, since the profile has no workflow.effects at workflow.item.yaml:24:101 (transitions[2].effects[0].use); add workflow.effects to the profile; until then the effect is refused at run time
-hash sha256:HASH
-## sindri recipe validate ROOT/recipes/sindri/workflow.review-loop.yaml
-hash sha256:HASH
-## sindri recipe validate ROOT/recipes/sindri/workflow.evidence.yaml
-hash sha256:HASH
-## sindri recipe validate ROOT/tests/Aw.Sindri.Testing/Workflow/Recipes/invalid/RCP-REACH-001.yaml
-RCP-REACH-001: state 'orphan' is unreachable from 'produce' at RCP-REACH-001.yaml:14:3 (states.orphan); add a transition into it or remove it
-hash sha256:HASH
-exit 1

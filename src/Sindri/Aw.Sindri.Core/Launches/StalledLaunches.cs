@@ -1,7 +1,6 @@
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Views;
-using Aw.Sindri.Core.Workflow.Engine.Runtime;
 
 namespace Aw.Sindri.Core.Launches;
 
@@ -84,7 +83,7 @@ public static class StalledLaunches
             return false;
         }
 
-        var root = InstanceSummaries.RootOf(launch.Instance);
+        var root = string.Join('/', launch.Instance.Value.Split('/').Take(3));
         if (EngineItemStates.PartOf(engine, root) is not { } part)
         {
             return true;
