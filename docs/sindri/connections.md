@@ -101,6 +101,10 @@ The row in `ledger.db` (table `connection`) has the name, kind, preset, non-secr
 
 `SND-CONN-001` to `SND-CONN-011` are listed in [errors.md](errors.md): not found, needs sign-in, sign-in timeout, state mismatch, refresh failed, secret store unavailable, preset needs a client id, invalid name, consent denied, already exists, key-based (no browser sign-in).
 
+## In the app
+
+The app's Connections tab (`G O`) lists the same connections with their status, and offers Test, Sign in again, Remove and Add, the same actions as the commands above. A key you paste there is sent once and is never stored by the app. See `docs/csharp/sindri-ui.md` "PR 18a".
+
 ## What this release does not do yet
 
 The `mcp` kind refreshing on its own, and passing a connection to the nodes of a workflow come in the next changes. Until then an expired mcp token is replaced with `connection signin`.

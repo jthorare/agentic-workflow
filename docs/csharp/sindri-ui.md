@@ -867,3 +867,21 @@ Description and comments are plain text (`LinearText`). Only an http(s) address 
 **Not yet.** Editing an issue, comments, New issue, Settings → Connections → Linear (Connect opens Settings) and ⌘K "Go to issue…". Y has no action on the Linear view.
 
 **Tests.** `tests/Aw.Sindri.Ui.Tests/Linear/` on `FakeSindriApi.Linear.cs`, which answers from the hand-written goldens `tests/Aw.Sindri.Tests/Golden/Api/linear-*` (pending in `ApiGoldenTests` until the routes are served).
+
+## PR 18a: the Connections and Memory pages
+
+Two list pages whose rows and actions are what the `connection_*` and `memory_*` MCP tools return and do: nothing on them that an agent can't do. Toolkits and Resources, the card's other two pages, wait on their API PRs and ship in a later part.
+
+**Navigation.** Connections is a tab, the last one (after Reviews), on `G O`. Memory is not a tab: `G M`, the palette's "Memory", System's "Memory stores" link and a `memory/<name>` link open it, as `G J` opens Jobs. `connection/<name>` opens the connection sheet over the page shown. A `memory/<name>` link opens the page but does not scroll to that store yet (`ShellViewModel.RequestedMemoryStore` is kept for it).
+
+**Connections.** `Views/Connections/ConnectionsPage`: each row is name, kind, the status chip (`connected`, `needs-sign-in`, `error`), last refresh, and Test, "Sign in again" (oauth and mcp only) and Remove (asks first; the row goes only after the API confirms). Add opens a form: a preset (github, linear, google, spotify) or a kind (`rest`, `cli`, `mcp`), then the fields that kind needs. An oauth add or "Sign in again" opens the consent URL through `Platform.ILauncher` and reads the connection every 2 s (`ConnectionActions.PollEvery`) until it is `connected`, reads `error`, or 5 minutes pass (`SignInTimeout`), which ends with a note. A pasted key goes through `SecretField`: it is sent once in the POST body and cleared after the send or a refusal; it never reaches `Preferences`, view-model state or a frame (`AddConnectionTests.A_pasted_key_is_sent_once_and_never_reaches_preferences_logs_or_view_model_state`). `ConnectionView` has no secret field. The preset list is fixed in `Labels.Connections.cs` because the API serves none.
+
+**Memory.** `Views/Memory/MemoryPage`: the stores with their fact counts, a create form, and per open store a search (the chip says `semantic` or `keyword`, with the API's note when it fell back), a write form (text, tags, optional expiry; a past expiry is refused before sending), and forget by fact, by tag, or the expired ones. A forget removes rows only after the API confirms; a forget that deleted nothing keeps the rows and says so. No edit of a fact and no delete of a store: the memory tools have neither.
+
+**Reads.** Both pages read while they are the page shown and again on every event (`Health.Follow`); the connection sheet re-reads on every event while it is open.
+
+**Routes.** `GET|POST /sindri/connections`, `GET|DELETE /sindri/connections/{name}`, `POST /sindri/connections/{name}/test|signin`; `GET|POST /sindri/memories`, `GET /sindri/memories/{name}/search`, `POST|DELETE /sindri/memories/{name}/facts`. Their served goldens are in `tests/Aw.Sindri.Tests/Golden/Api/connections*` and `memories*`. `AddConnectionBody` writes every required field, null ones too (`ConnectionsClientTests.AddConnection_writes_every_required_field_even_when_null`); without them the server answers `SND-CLI-003`.
+
+**Not yet.** The `Connection` Needs-you row's "Sign in again" (no such row kind on main yet), Slack in the preset list, fixture seeding and desktop evidence screens for these pages.
+
+**Tests.** Unit: `tests/Aw.Sindri.Ui.Tests/Connections/` (page, add form, sheet, shell wiring), `Memory/` (page, view), `Api/ConnectionsClientTests`, `Api/MemoryClientTests`. Integration: `Views/ConnectionsFramesTests`, `Views/MemoryFramesTests` (Frames.Tests), `ConnectionsApiGoldenTests`, `MemoriesApiGoldenTests` (Sindri.Tests).
