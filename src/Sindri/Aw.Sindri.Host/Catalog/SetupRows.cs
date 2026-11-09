@@ -17,9 +17,9 @@ internal static class SetupRows
         JobRows.Job("AddRepo", typeof(AddRepoRequest), "/sindri/setup/repos", "sindri repo add <path>"),   // a job-class row: a session is refused (SND-AUTH-002), the app and the terminal start it
         JobRows.Job("OnboardRepo", typeof(OnboardRepoRequest), "/sindri/setup/repos/onboard", "sindri repo onboard [<path>]"),   // a job-class row like AddRepo: the terminal and the app start it, a session is refused; the setup service onboards on its own after an approval
         JobRows.Job("RegisterMcp", typeof(RegisterMcpJobRequest), "/sindri/setup/mcp", "sindri mcp register --apply") with { ServiceGrants = ["setup"] },
-        // the sources step's action is `sindri index connect <source>`: local (no route), and the human's alone at a terminal, where the token is typed (a session and the app are refused by the verb itself)
+        // the sources step's action is `sindri index connect <source>`: local (no route); the token comes from a terminal prompt or a `--token-env NAME` pointer, so an agent session may run it too (agent-first PR 2)
         new(ActionId.From("ConnectIndexSource"), CommandType: null, Variant: null, ActionClass.Local, ServiceGrants: [],
-            NeedsTerminal: true, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
+            NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             Method: null, Route: null, ShellRows.Form("sindri index connect <source>"), "cli-only:local"),
     ];
 }
