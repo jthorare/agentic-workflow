@@ -17,9 +17,9 @@ internal static class WorkflowRoutes
 
     internal static string Blocks() => $"{Root}/blocks";
 
-    internal static string Ops(string slug) => throw new NotSupportedException();
+    internal static string Ops(string slug) => $"{One(slug)}/ops";
 
-    internal static string Activate(string slug) => throw new NotSupportedException();
+    internal static string Activate(string slug) => $"{One(slug)}/activate";
 
-    internal static string Pause(string slug) => throw new NotSupportedException();
+    internal static string Pause(string slug) => $"{One(slug)}/pause";
 }
