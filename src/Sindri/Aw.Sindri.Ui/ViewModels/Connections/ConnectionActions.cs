@@ -21,6 +21,9 @@ internal sealed class ConnectionActions(ISindriApi api, Func<Uri?> url, ILaunche
     /// <summary>How long the poll waits: Sindri's own listener gives up after 5 minutes.</summary>
     internal static readonly TimeSpan SignInTimeout = TimeSpan.FromMinutes(5);
 
+    // The consent page goes through the one launch helper, so the system's answer is kept.
+    private readonly LinkLaunch _launch = new(launcher);
+
     /// <summary>Reads one connection (connection_get).</summary>
     /// <param name="name">The connection's name.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
@@ -72,7 +75,7 @@ internal sealed class ConnectionActions(ISindriApi api, Func<Uri?> url, ILaunche
             return new SignInEnd(SignInState.Failed, added.Connection, Labels.ConnectionBadConsent);
         }
 
-        var opened = await launcher.OpenUri(consent, cancellationToken).ConfigureAwait(true);
+        var opened = await _launch.Open(consent, cancellationToken).ConfigureAwait(true);
         say(opened ? Labels.ConnectionWaitingBrowser : Labels.ConnectionBrowserRefused(added.ConsentUrl));
         var (last, deadline) = (added.Connection, clock.GetUtcNow() + SignInTimeout);
         while (clock.GetUtcNow() < deadline)

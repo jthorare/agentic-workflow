@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels.Memory;
 
 namespace Aw.Sindri.Ui.Tests.Memory;
@@ -25,7 +26,7 @@ public sealed class MemoryPageTests
     [Fact]
     public async Task No_stores_says_so()
     {
-        var shown = new MemoryPageViewModel(new Aw.Sindri.Ui.Testing.FakeSindriApi(), _f.Clock);
+        var shown = new MemoryPageViewModel(new FakeSindriApi(), _f.Clock);
         shown.SetShown(shown: true);
         await shown.Refresh(MemoryFixture.Url, Token);
 

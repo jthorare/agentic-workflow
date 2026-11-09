@@ -46,7 +46,7 @@ public sealed class ConnectionMemoryGoldenParityTests
             foreach (var (_, _, scenario, body) in served)
             {
                 var shape = others.FirstOrDefault(o => string.Equals(o.Scenario, scenario, StringComparison.Ordinal)).Shape ?? standard;
-                var golden = JsonNode.Parse(body)!;
+                var golden = JsonNode.Parse(body);
                 var expected = Keys(golden, string.Empty);
                 var actual = Names(shape);
                 Assert.True(
