@@ -1,6 +1,24 @@
 {
   "rows": [
     {
+      "action": "ActivateWorkflow",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflows/{slug}/activate",
+      "cli": "sindri wf activate <slug> [--revision <n>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "AddConnection",
       "class": "desk",
       "allowedCallers": [
@@ -68,6 +86,24 @@
       "method": "POST",
       "route": "/sindri/sandbox/allow",
       "cli": "sindri sandbox allow <launch> <target>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "ApplyWorkflowOps",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflows/{slug}/ops",
+      "cli": "sindri wf edit <slug> --base <revision> [--ops <json>] [--ops-file <file>]",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
@@ -351,7 +387,7 @@
       "action": "ConnectIndexSource",
       "class": "local",
       "allowedCallers": [],
-      "terminal": true,
+      "terminal": false,
       "method": null,
       "route": null,
       "cli": "sindri index connect <source>",
@@ -434,6 +470,24 @@
       "confirm": null
     },
     {
+      "action": "CreateWorkflow",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflows",
+      "cli": "sindri wf create <slug> [--template <name>] [--file <specFile>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "Decide",
       "class": "decision",
       "allowedCallers": [
@@ -448,6 +502,24 @@
       "ui": "ready",
       "destructive": false,
       "readsViews": true,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "DeleteWorkflow",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "DELETE",
+      "route": "/sindri/workflows/{slug}",
+      "cli": "sindri wf delete <slug>",
+      "ui": "ready",
+      "destructive": true,
+      "readsViews": false,
       "shortcut": null,
       "confirm": null
     },
@@ -581,7 +653,7 @@
     },
     {
       "action": "ImportContextMap",
-      "class": "protected",
+      "class": "desk",
       "allowedCallers": [
         "human+terminal",
         "human",
@@ -918,6 +990,24 @@
       "confirm": null
     },
     {
+      "action": "PauseWorkflow",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflows/{slug}/pause",
+      "cli": "sindri wf pause <slug>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "PickTodoHold:apply",
       "class": "request",
       "allowedCallers": [
@@ -1053,9 +1143,11 @@
       "action": "PurgeIndexSource",
       "class": "desk",
       "allowedCallers": [
-        "human+terminal"
+        "human+terminal",
+        "human",
+        "session"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/index/purge",
       "cli": "sindri index purge <source>",
@@ -1190,6 +1282,24 @@
       "cli": "sindri profile set <key> <value>",
       "ui": "ready",
       "destructive": true,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "ReplaceWorkflow",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "PUT",
+      "route": "/sindri/workflows/{slug}",
+      "cli": "sindri wf edit <slug> --base <revision> --file <specFile>",
+      "ui": "ready",
+      "destructive": false,
       "readsViews": false,
       "shortcut": null,
       "confirm": null
@@ -1817,6 +1927,24 @@
       "route": null,
       "cli": "sindri profile validate",
       "ui": "cli-only:local",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "ValidateWorkflow",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflows/validate",
+      "cli": "sindri wf validate --slug <slug> [--revision <n>]",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,

@@ -48,6 +48,29 @@ internal sealed partial class LaunchFileStore(LauncherOptions options, StaleSwee
 
     public bool ToolRunning(LaunchId launch) => MarkAt(LaunchFiles.ToolRunningName(launch)) is not null;
 
+    public bool TakenOver(LaunchId launch) => MarkAt(LaunchFiles.TakenOverName(launch)) is not null;
+
+    public void MarkTakenOver(LaunchId launch, bool taken)
+    {
+        var path = Path.Combine(options.LaunchesDirectory, LaunchFiles.TakenOverName(launch));
+        try
+        {
+            if (taken)
+            {
+                OwnerOnly.EnsureDirectory(options.LaunchesDirectory);
+                OwnerOnly.WriteAtomically(path, []);
+            }
+            else
+            {
+                _ = OwnerOnly.TryDelete(path);
+            }
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // boundary: a marker that can't be written leaves the session as it was; the engine marks it again at the next takeover
+        }
+    }
+
     public DateTimeOffset? NudgedAt(LaunchId launch) => MarkAt(LaunchFiles.NudgedName(launch));
 
     public void MarkNudged(LaunchId launch, DateTimeOffset at)
@@ -230,6 +253,7 @@ internal sealed partial class LaunchFileStore(LauncherOptions options, StaleSwee
         _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, LaunchFiles.ToolRunningName(launch)));
         _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, LaunchFiles.NudgedName(launch)));
         _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, LaunchFiles.PromptedName(launch)));
+        _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, LaunchFiles.TakenOverName(launch)));
     }
 
     /// <summary>Deletes <paramref name="file"/> when its <paramref name="directory"/> exists; whatever is gone is fine.</summary>

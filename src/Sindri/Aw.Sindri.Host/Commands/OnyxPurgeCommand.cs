@@ -9,7 +9,7 @@ namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
 /// 'sindri onyx down --purge': removes what an old `sindri onyx up` left on the box (owned-index spec §8.2 step 5): the containers and volumes labelled with its compose project, the keychain entry Sindri recorded and the onyx/ directory. Lists them, asks the human, then deletes in that order.
-/// The human's verb (a session is refused SND-AUTH-002), local, no control plane. Exit 0 done, declined or nothing left, 1 a step failed (SND-INDEX-014 names the fix), 2 refused.
+/// Local, no control plane; the owner and an agent session run it alike, and both type the yes at a terminal (no terminal: refused, nothing deleted). Exit 0 done, declined or nothing left, 1 a step failed (SND-INDEX-014 names the fix).
 /// Self-contained on purpose: it reads onyx/state.json with its own record and uses nothing from the Onyx setup code, so deleting that code leaves this building.
 /// </summary>
 /// <param name="home">The Sindri home (AW_SINDRI_HOME).</param>
@@ -17,17 +17,11 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="keychain">Deletes one keychain entry.</param>
 /// <param name="files">Reads state.json, finds and deletes onyx/.</param>
 /// <param name="output">Where the list and answers go.</param>
-/// <param name="input">Where the human's answer is read.</param>
-/// <param name="question">Where the question is asked (standard error).</param>
-internal sealed class OnyxPurgeCommand(string home, IPurgeDocker docker, IPurgeKeychain keychain, ILeftoverFiles files, Output output, TextReader input, TextWriter question)
+/// <param name="prompt">Where the typed yes is asked and read, and whether that is a terminal.</param>
+internal sealed class OnyxPurgeCommand(string home, IPurgeDocker docker, IPurgeKeychain keychain, ILeftoverFiles files, Output output, PurgePrompt prompt)
 {
-    internal async Task<int> Run(bool human, CancellationToken ct)
+    internal async Task<int> Run(CancellationToken ct)
     {
-        if (!human)
-        {
-            return await output.Error(SindriErrors.AuthRefused.With("'onyx down --purge' deletes data and is the human's verb (fix: ask the human to run it at a terminal)")).ConfigureAwait(false);
-        }
-
         var plan = OnyxLeftovers.Find(home, docker, files);
         if (plan.IsError)
         {
@@ -39,9 +33,14 @@ internal sealed class OnyxPurgeCommand(string home, IPurgeDocker docker, IPurgeK
             return await output.Text("Nothing left from Onyx on this box.\n", 0).ConfigureAwait(false);
         }
 
+        if (!prompt.Terminal)
+        {
+            return await output.Error(SindriErrors.InvalidInput.With("onyx down --purge asks for a typed yes, which needs a terminal (fix: run it in one)")).ConfigureAwait(false);
+        }
+
         _ = await output.Text(Describe(plan.Value), 0).ConfigureAwait(false);
-        await question.WriteAsync("Delete all of it? This cannot be undone. [y/N] ").ConfigureAwait(false);
-        var answer = await input.ReadLineAsync(ct).ConfigureAwait(false);
+        await prompt.Question.WriteAsync("Delete all of it? This cannot be undone. [y/N] ").ConfigureAwait(false);
+        var answer = await prompt.Input.ReadLineAsync(ct).ConfigureAwait(false);
         if (answer is null || (!answer.Trim().Equals("y", StringComparison.OrdinalIgnoreCase) && !answer.Trim().Equals("yes", StringComparison.OrdinalIgnoreCase)))
         {
             return await output.Text("Nothing deleted.\n", 0).ConfigureAwait(false);
@@ -51,8 +50,8 @@ internal sealed class OnyxPurgeCommand(string home, IPurgeDocker docker, IPurgeK
         return done.IsError ? await Failed(done.Error).ConfigureAwait(false) : await output.Text("Onyx's leftovers are gone.\n", 0).ConfigureAwait(false);
     }
 
-    internal static OnyxPurgeCommand Create(IServiceProvider services, Output output, TextReader input, TextWriter question)
-        => new(services.GetRequiredService<ISindriHome>().Path, services.GetRequiredService<IPurgeDocker>(), services.GetRequiredService<IPurgeKeychain>(), services.GetRequiredService<ILeftoverFiles>(), output, input, question);
+    internal static OnyxPurgeCommand Create(IServiceProvider services, Output output, PurgePrompt prompt)
+        => new(services.GetRequiredService<ISindriHome>().Path, services.GetRequiredService<IPurgeDocker>(), services.GetRequiredService<IPurgeKeychain>(), services.GetRequiredService<ILeftoverFiles>(), output, prompt);
 
     private static string Describe(PurgePlan plan)
     {

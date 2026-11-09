@@ -5,6 +5,7 @@ using Aw.Kernel.Json;
 using Aw.Kernel.Services;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Features.ActivateWorkflow;
 using Aw.Sindri.Host;
 using Microsoft.Extensions.DependencyInjection;
@@ -57,7 +58,9 @@ public sealed class WorkflowToolsArgumentTests
     [Fact]
     public async Task Activate_fences_the_findings_text_of_a_stored_spec()
     {
-        await using var services = Services(static s => s.AddSingleton<IService<ActivateWorkflowRequest, ActivateWorkflowResponse>>(new Findings()));
+        await using var services = Services(static s => s
+            .AddSingleton<ICallerContextAccessor>(new AsyncLocalCallerContextAccessor(new SequentialIdGenerator()))
+            .AddSingleton<IService<ActivateWorkflowRequest, ActivateWorkflowResponse>>(new Findings()));
 
         var result = await Host.Mcp.WorkflowTools.Call(Host.Mcp.WorkflowTools.Activate, services, Arguments(("slug", "drift-check")), Token);
 

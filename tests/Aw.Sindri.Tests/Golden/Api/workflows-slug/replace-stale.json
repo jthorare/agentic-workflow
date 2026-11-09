@@ -3,6 +3,6 @@
   "title": "SND-GRAPH-007",
   "status": 409,
   "detail": "This workflow is at revision 2, and this replace was made on revision 1. Read it again (current revision 2) and retry.",
-  "traceId": "<trace>",
-  "currentRevision": 2
+  "currentRevision": 2,
+  "traceId": "<trace>"
 }

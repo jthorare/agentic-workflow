@@ -55,6 +55,8 @@ internal sealed class FakeLinearSideFacts : ILinearSideFacts
         return ValueTask.FromResult(answer);
     }
 
+    public ValueTask<Result<LinearLookupsResponse?>> LookupsForWrite(string team, CancellationToken cancellationToken) => Lookups(team, cancellationToken);
+
     public ValueTask<Result<bool>> TeamsPicked(CancellationToken cancellationToken) => ValueTask.FromResult(_failure is { } failure ? failure : Results.Success(_teamsPicked));
 
     public ValueTask<Result<IReadOnlyList<LinearSinceItem>?>> Since(DateTimeOffset after, CancellationToken cancellationToken)

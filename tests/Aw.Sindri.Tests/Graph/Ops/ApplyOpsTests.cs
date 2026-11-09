@@ -161,14 +161,14 @@ public sealed class ApplyOpsTests
     {
         // the weekday-check template's shape: weekdays -> check -> gate(when check.flagged) -> tell
         var spec = Spec(
-            [Trigger("weekdays"), Search("check"), Condition("gate", "check.flagged and note == \"check.flagged\" and recheck.flagged"), Notify("tell", "{{check.summary}}")],
+            [Trigger("weekdays"), Search("check"), Condition("gate", "check.flagged and note == \"check.flagged\" and recheck.flagged"), Notify("tell", "{{check.facts}}")],
             [Edge("weekdays", "check"), Edge("check", "gate"), Edge("gate", "tell", "true")]);
 
         var result = Apply(spec, new RenameOp(Id("check"), Id("inspect")));
 
         Assert.True(result.IsSuccess);
         Assert.Equal("inspect.flagged and note == \"check.flagged\" and recheck.flagged", result.Value.Nodes[2].Config["when"]!.GetValue<string>());
-        Assert.Equal("{{inspect.summary}}", result.Value.Nodes[3].Config["body"]!.GetValue<string>());
+        Assert.Equal("{{inspect.facts}}", result.Value.Nodes[3].Config["body"]!.GetValue<string>());
     }
 
     [Fact]

@@ -54,14 +54,14 @@ public sealed class CliClientTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Refused_command_names_why_the_cli_ran_as_a_session()
+    public async Task Refused_command_shows_the_API_refusal_as_it_is()
     {
         using var client = Client(new CliStubApi(HttpStatusCode.Forbidden, Problem("SND-AUTH-002", Refusal)), new AgentSession(Terminal: true, Prover: false), human: false);
 
         var code = await Verbs(client).Stop(Token);
 
         Assert.Equal(2, code);
-        Assert.Equal($"SND-AUTH-002 {Refusal} (this CLI ran as a session: the per-start human token isn't readable)\n", _error.ToString().ReplaceLineEndings("\n"));
+        Assert.Equal($"SND-AUTH-002 {Refusal}\n", _error.ToString().ReplaceLineEndings("\n"));
     }
 
     [Fact, Trait("Lane", "unit")]

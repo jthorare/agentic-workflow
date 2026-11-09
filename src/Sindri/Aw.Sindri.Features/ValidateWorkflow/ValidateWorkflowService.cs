@@ -31,7 +31,7 @@ internal sealed class ValidateWorkflowService(IWorkflowStore workflows, IWorkflo
             [.. result.Findings.Select(static f => new WorkflowFinding(f.Code, f.Severity == GraphSeverity.Error ? "error" : "warning", f.Nodes, f.Field, f.Message, f.Fix))]);
     }
 
-    private async ValueTask<Result<GraphSpec>> Stored(Aw.Sindri.Core.Graph.Ids.WorkflowSlug slug, int? revision, CancellationToken cancellationToken)
+    private async ValueTask<Result<GraphSpec>> Stored(Core.Graph.Ids.WorkflowSlug slug, int? revision, CancellationToken cancellationToken)
     {
         var listed = await workflows.List(includeArchived: true, cancellationToken).ConfigureAwait(false);
         if (listed.IsError)

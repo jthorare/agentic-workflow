@@ -25,8 +25,8 @@ public sealed class GraphBlockListingTests
     {
         var triggers = Listing().Single(static g => g.Group == BlockGroup.Triggers);
 
-        Assert.Equal(["Schedule", "When called"], triggers.Blocks.Select(static b => b.Title), StringComparer.Ordinal);
-        Assert.Equal(["schedule", "manual"], triggers.Blocks.Select(static b => b.Type), StringComparer.Ordinal);
+        Assert.Equal(["Connection event", "Schedule", "When called"], triggers.Blocks.Select(static b => b.Title), StringComparer.Ordinal);
+        Assert.Equal(["connection_event", "schedule", "manual"], triggers.Blocks.Select(static b => b.Type), StringComparer.Ordinal);
     }
 
     [Fact]
