@@ -149,3 +149,29 @@ sanitizer), with `--no-copy` and `--strict`, on `$TDD_PARITY_PACKETS`, and on ar
 program ends, a `Schema.Class` decoded with `Schema.decodeUnknownEffect`, `Effect.forEach` with `concurrency: 3`)
 type-checks with typescript 7.0.2 (`bun run check`) and passes under bun 1.4.4 on effect 4.1.2, checked 2026-11-08.
 The research's gate (section 4.4) is met: the linter, the eval and the revision runner may use Effect 4.
+
+## The eval (`src/eval`, PR 15)
+
+`bin/eval-packet.ts` (also `tdd eval`) is `eval_packet.py` as one Effect program: the same argv, usage text, table,
+`--json`, exit codes, files under `<build>/eval/` and history line. Modules: `common.ts` (paths, numbers, content walks),
+`score.ts` (records, outputs, and `settle`: every scorer is an Effect settled to `scored | not_run(reason) |
+failed(error)` under its own time limit, so a throw or a hang in one never touches another), `tools.ts` (the `Tools`
+service: subprocesses with a kill on timeout or interruption), `config.ts` (keys as `Config.Redacted` from the
+environment only), `capture.ts` (input.json and its digest), `artifact.ts`, `packet.ts`, `probe.ts`, `judge.ts`,
+`impl.ts`, `bugs.ts`, `tokens.ts` (the six outputs), `llm.ts` (costs and the model call), `plan.ts` (run.json),
+`push.ts` (Braintrust), `sources/linear.ts`, `sources/aws.ts` and `run.ts` (the program, `LIMITS`, the table).
+
+- The tools, the judge, the probe's agent call, the PR match and the bug sources run side by side; records are
+  assembled in the Python's order. A defect is recorded as `error: raised <Type>: <message>`, a time limit as
+  `not run: timed out after <N>s`.
+- `@anthropic-ai/sdk`, `autoevals`, `braintrust` and `@aws-sdk/client-cloudwatch-logs` / `@aws-sdk/client-cloudwatch`
+  are optional and imported only when a flag and a key need them (`bun add --no-save <pkg>` to try one). AWS
+  credentials come from the `AWS_*` environment variables only. `push.ts` loads only under `--push`.
+- Proof (`test/eval`, CPython 3.13 via `test/eval/oracle_eval.py`): `parity.test.ts` runs `eval_packet.py` and this
+  command into the same out path on each `$TDD_PARITY_PACKETS` packet (snapshotted to a temp tree) and compares every
+  output after removing the volatile fields (`captured`, `generated`, `at`, `seconds`, `*.seconds`); `units.test.ts`
+  checks the constants, prompts, schemas and helpers against the Python; `network.test.ts` runs with a fake
+  `BRAINTRUST_API_KEY` under `no-network.ts` (fetch, sockets, TLS, DNS trapped) and asserts nothing was attempted;
+  `isolation.test.ts` makes one scorer throw and one hang and checks the rest. No test pushes or calls a model.
+- The lint scorer runs `scripts/lint_packet.py` with `$TDD_PYTHON` (default `python3`) where the Python uses its own
+  interpreter.
