@@ -32,6 +32,8 @@ internal enum PageId
 
     /// <summary>The memory stores agents read and write (PR 18a). Not a tab: G M, the palette, System's Memory link and a 'memory/&lt;name&gt;' link open it.</summary>
     Memory,
+    /// <summary>The workflows, their runs and a run's detail, read-only (#2258 PR 17 part 1). Not a tab: G W and the palette open it.</summary>
+    Workflows,
 
     /// <summary>Local preferences only (⌘,).</summary>
     Settings,
